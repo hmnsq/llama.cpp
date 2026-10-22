@@ -1,6 +1,6 @@
-#pragma once
+#ہدایت once
 
-#include "common.hpp"
+#شامل "common.hpp"
 
-void ggml_sycl_opt_step_adamw(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
-void ggml_sycl_opt_step_sgd(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+خالی ggml_sycl_opt_قدم_adamw(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+خالی ggml_sycl_opt_قدم_sgd(ggml_backend_sycl_context & ctx, ggml_tensor * dst);

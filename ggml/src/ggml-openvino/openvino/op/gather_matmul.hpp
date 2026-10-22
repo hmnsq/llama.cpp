@@ -11,33 +11,33 @@
 //
 // \note GatherMatmul op class is under development and subject to change.
 
-#pragma once
+#ہدایت once
 
-#include "openvino/op/op.hpp"
+#شامل "openvino/op/op.hpp"
 
-namespace ov::op::internal {
+نامخلا ov::op::internal {
 
-class OPENVINO_API GatherMatmul : public ov::op::Op {
-public:
+جماعت OPENVINO_API GatherMatmul : عوامی ov::op::Op {
+عوامی:
     OPENVINO_OP("GatherMatmul")
 
-    GatherMatmul() = default;
+    GatherMatmul() = طےشدہ;
 
-    GatherMatmul(const ov::Output<Node>& A,
-                 const ov::Output<Node>& B,
-                 const ov::Output<Node>& indices,
-                 const ov::Output<Node>& bias);
+    GatherMatmul(ثابت ov::Output<Node>& A,
+                 ثابت ov::Output<Node>& B,
+                 ثابت ov::Output<Node>& indices,
+                 ثابت ov::Output<Node>& bias);
 
-    GatherMatmul(const ov::Output<Node>& A, const ov::Output<Node>& B, const ov::Output<Node>& indices);
+    GatherMatmul(ثابت ov::Output<Node>& A, ثابت ov::Output<Node>& B, ثابت ov::Output<Node>& indices);
 
-    std::shared_ptr<Node> clone_with_new_inputs(const ov::OutputVector& new_args) const override;
+    std::shared_ptr<Node> clone_with_new_inputs(ثابت ov::Output_سمتیہ& new_دلائل) ثابت override;
 
-    void validate_and_infer_types() override;
+    خالی validate_and_infer_types() override;
 
-private:
+نجی:
     // the weights matrix B is expected to have the transposed form [group, N, K]
-    static constexpr bool transp_a = false;
-    static constexpr bool transp_b = true;
+    ساکن constexpr منطقی transp_a = جھوٹ;
+    ساکن constexpr منطقی transp_b = سچ;
 };
 
 }  // namespace ov::op::internal

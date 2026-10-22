@@ -1,6 +1,6 @@
-#pragma once
+#ہدایت once
 
-#include "ggml.h"
+#شامل "ggml.h"
 
 //
 // cache line
@@ -9,116 +9,116 @@
 // can be used consistently between C and C++ TUs; the previous macro form
 // diverged based on include order and undersized the work buffer.
 // ref: https://github.com/ggml-org/llama.cpp/pull/28882
-#if defined(__POWER9_VECTOR__)
-#define CACHE_LINE_SIZE 128
-#elif defined(__VXE__) || defined(__VXE2__)
-#define CACHE_LINE_SIZE 256
-#else
-#define CACHE_LINE_SIZE 64
-#endif
+#اگر defined(__POWER9_VECTOR__)
+#تعریف_کرو CACHE_سطر_سائز 128
+#وگرنہ_اگر defined(__VXE__) || defined(__VXE2__)
+#تعریف_کرو CACHE_سطر_سائز 256
+#ورنہ
+#تعریف_کرو CACHE_سطر_سائز 64
+#اگر_ختم
 
-static const size_t CACHE_LINE_SIZE_F32 = CACHE_LINE_SIZE/sizeof(float);
+ساکن ثابت size_t CACHE_سطر_سائز_F32 = CACHE_سطر_سائز/حجم(اعشاری);
 
 // Work buffer size for im2col operations in CONV2D
-#define GGML_IM2COL_WORK_SIZE (16 * 1024 * 1024)
+#تعریف_کرو GGML_IM2_ستون_WORK_سائز (16 * 1024 * 1024)
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#اگر_تعریف_شدہ __cplusplus
+خارجی "C" {
+#اگر_ختم
 
-void ggml_compute_forward_dup(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_add(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_add_id(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_add1(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_acc(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_sum(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_sum_rows(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_cumsum(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_mean(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_argmax(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_count_equal(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_repeat(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_repeat_back(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_concat(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_silu_back(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_norm(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_rms_norm(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_rms_norm_mul_fused(const struct ggml_compute_params * params, struct ggml_tensor * dst_rms_norm, struct ggml_tensor * dst_mul);
-void ggml_compute_forward_rms_norm_back(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_group_norm(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_l2_norm(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_out_prod(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_scale(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_set(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_cpy(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_cont(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_get_rows(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_get_rows_back(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_set_rows(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_diag(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_diag_mask_inf(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_diag_mask_zero(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_soft_max(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_soft_max_ext_back(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_rope(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_rope_back(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_clamp(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_conv_transpose_1d(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_im2col(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_im2col_back_f32(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_im2col_3d(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_col2im_1d(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_conv_2d(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_conv_3d(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_conv_transpose_2d(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_conv_2d_dw(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_pool_1d(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_pool_2d(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_pool_2d_back(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_upscale(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_pad(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_pad_reflect_1d(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_roll(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_arange(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_timestep_embedding(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_argsort(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_top_k(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_leaky_relu(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_tri(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_fill(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_flash_attn_ext(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_flash_attn_back(
-        const struct ggml_compute_params * params,
-        const bool masked,
-        struct ggml_tensor * dst);
-void ggml_compute_forward_ssm_conv(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_ssm_scan(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_win_part(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_win_unpart(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_unary(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_glu(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_get_rel_pos(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_add_rel_pos(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_rwkv_wkv6(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_rwkv_wkv7(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_solve_tri(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_gla(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_gated_delta_net(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_lightning_indexer(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_dsv4_hc_comb(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_dsv4_hc_pre(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_dsv4_hc_post(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_top_k_mask(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_map_custom1(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_map_custom2(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_map_custom3(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_custom(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_cross_entropy_loss(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_cross_entropy_loss_back(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_opt_step_adamw(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_mul_mat(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_fwht(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_opt_step_sgd(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-#ifdef __cplusplus
+خالی ggml_compute_forward_dup(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_جوڑو(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_جوڑو_id(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_add1(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_acc(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_مجموع(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_مجموع_صفیں(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_cumsum(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_اوسط(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_argmax(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_گنتی_equal(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_repeat(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_repeat_عقب(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_concat(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_silu_عقب(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_norm(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_rms_norm(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_rms_norm_mul_fused(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst_rms_norm, ساخت ggml_tensor * dst_mul);
+خالی ggml_compute_forward_rms_norm_عقب(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_گروہ_norm(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_l2_norm(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_برآمد_prod(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_scale(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_سیٹ(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_cpy(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_cont(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_get_صفیں(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_get_صفیں_عقب(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_سیٹ_صفیں(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_diag(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_diag_نقاب_inf(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_diag_نقاب_zero(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_soft_max(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_soft_max_ext_عقب(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_rope(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_rope_عقب(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_clamp(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_conv_transpose_1d(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_im2col(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_im2col_عقب_f32(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_im2col_3d(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_col2im_1d(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_conv_2d(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_conv_3d(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_conv_transpose_2d(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_conv_2d_dw(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_pool_1d(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_pool_2d(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_pool_2d_عقب(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_upscale(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_pad(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_pad_reflect_1d(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_roll(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_arange(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_timestep_embedding(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_argsort(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_چوٹی_k(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_leaky_relu(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_tri(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_fill(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_flash_attn_ext(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_flash_attn_عقب(
+        ثابت ساخت ggml_compute_params * params,
+        ثابت bool masked,
+        ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_ssm_conv(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_ssm_جائزہ(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_win_part(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_win_unpart(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_unary(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_glu(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_get_rel_pos(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_جوڑو_rel_pos(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_rwkv_wkv6(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_rwkv_wkv7(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_solve_tri(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_gla(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_gated_delta_net(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_lightning_indexer(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_dsv4_hc_comb(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_dsv4_hc_pre(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_dsv4_hc_post(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_چوٹی_k_نقاب(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_map_custom1(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_map_custom2(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_map_custom3(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_custom(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_cross_entropy_loss(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_cross_entropy_loss_عقب(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_opt_قدم_adamw(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_mul_mat(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_fwht(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_opt_قدم_sgd(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+#اگر_تعریف_شدہ __cplusplus
 }
-#endif
+#اگر_ختم

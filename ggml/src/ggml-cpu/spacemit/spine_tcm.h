@@ -1,5 +1,5 @@
-#ifndef SPINE_TCM_PUBLIC_H_
-#define SPINE_TCM_PUBLIC_H_
+#اگر_غیر_تعریف_شدہ SPINE_TCM_عوامی_H
+#تعریف_کرو SPINE_TCM_عوامی_H
 
 /*
  * spine_tcm public API
@@ -25,160 +25,160 @@
  *      }
  */
 
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
+#شامل <stddef.h>
+#شامل <stdint.h>
+#شامل <string.h>
 
-#if !defined(SPINE_TCM_BUILD_SHARED) && !defined(SPINE_TCM_DIRECT_LINK)
+#اگر !defined(SPINE_TCM_BUILD_SHARED) && !defined(SPINE_TCM_براہ_راست_LINK)
 #    include <dlfcn.h>
-#endif
+#اگر_ختم
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#اگر_تعریف_شدہ __cplusplus
+خارجی "C" {
+#اگر_ختم
 
-#if defined(_WIN32)
-#    if defined(SPINE_TCM_BUILD_SHARED)
+#اگر defined(_WIN32)
+#    اگر defined(SPINE_TCM_BUILD_SHARED)
 #        define SPINE_TCM_API __declspec(dllexport)
-#    else
+#    ورنہ
 #        define SPINE_TCM_API __declspec(dllimport)
 #    endif
-#else
+#ورنہ
 #    define SPINE_TCM_API __attribute__((visibility("default")))
-#endif
+#اگر_ختم
 
-typedef struct spine_tcm_mem_info {
-    size_t blk_size;
-    size_t blk_num;
-    int    is_fake_tcm;
+قسمتعریف ساخت spine_tcm_mem_info {
+    size_t blk_سائز;
+    size_t blk_عدد;
+    صحیح    is_fake_tcm;
 } spine_tcm_mem_info_t;
 
-typedef struct spine_tcm_block_info {
-    int      id;
-    void *   va;
-    size_t   size;
+قسمتعریف ساخت spine_tcm_بلاک_info {
+    صحیح      id;
+    خالی *   va;
+    size_t   سائز;
     uint64_t phys_addr;
-    uint64_t cpu_affinity_mask;
-    int      owner_tid;
-    int      is_acquired;
-} spine_tcm_block_info_t;
+    uint64_t cpu_affinity_نقاب;
+    صحیح      owner_tid;
+    صحیح      is_acquired;
+} spine_tcm_بلاک_info_t;
 
 /* Shared-library runtime ABI exported by libspine_tcm.so. */
-SPINE_TCM_API const char * spine_tcm_runtime_version(void);
-SPINE_TCM_API int          spine_tcm_runtime_is_available(void);
-SPINE_TCM_API int          spine_tcm_runtime_layout_info(spine_tcm_mem_info_t * info);
-SPINE_TCM_API int          spine_tcm_runtime_mem_info(int id, spine_tcm_block_info_t * info);
-SPINE_TCM_API void *       spine_tcm_runtime_mem_get(int id);
-SPINE_TCM_API int          spine_tcm_runtime_mem_free(int id);
-SPINE_TCM_API void *       spine_tcm_runtime_mem_try_wait(int id, size_t timeout_us);
-SPINE_TCM_API int          spine_tcm_runtime_mem_release(int id);
-SPINE_TCM_API int          spine_tcm_runtime_mem_force_release(int id);
-SPINE_TCM_API int          spine_tcm_runtime_mem_query(int id);
+SPINE_TCM_API ثابت حرف * spine_tcm_runtime_نسخہ(خالی);
+SPINE_TCM_API صحیح          spine_tcm_runtime_is_دستیاب(خالی);
+SPINE_TCM_API صحیح          spine_tcm_runtime_layout_info(spine_tcm_mem_info_t * info);
+SPINE_TCM_API صحیح          spine_tcm_runtime_mem_info(صحیح id, spine_tcm_بلاک_info_t * info);
+SPINE_TCM_API خالی *       spine_tcm_runtime_mem_get(صحیح id);
+SPINE_TCM_API صحیح          spine_tcm_runtime_mem_free(صحیح id);
+SPINE_TCM_API خالی *       spine_tcm_runtime_mem_try_wait(صحیح id, size_t timeout_us);
+SPINE_TCM_API صحیح          spine_tcm_runtime_mem_release(صحیح id);
+SPINE_TCM_API صحیح          spine_tcm_runtime_mem_force_release(صحیح id);
+SPINE_TCM_API صحیح          spine_tcm_runtime_mem_query(صحیح id);
 
-#if defined(SPINE_TCM_DIRECT_LINK)
+#اگر defined(SPINE_TCM_براہ_راست_LINK)
 /* Optional no-op in direct-link mode. */
-static inline int spine_tcm_open_handle(const char * so_path) {
-    (void) so_path;
-    return 0;
+ساکن اندرونی صحیح spine_tcm_open_handle(ثابت حرف * so_راستہ) {
+    (خالی) so_راستہ;
+    واپس 0;
 }
 
-static inline const char * spine_tcm_version(void) {
-    return spine_tcm_runtime_version();
+ساکن اندرونی ثابت حرف * spine_tcm_نسخہ(خالی) {
+    واپس spine_tcm_runtime_نسخہ();
 }
 
 /* Returns 1 when the runtime driver is available, otherwise 0. */
-static inline int spine_tcm_is_available(void) {
-    return spine_tcm_runtime_is_available();
+ساکن اندرونی صحیح spine_tcm_is_دستیاب(خالی) {
+    واپس spine_tcm_runtime_is_دستیاب();
 }
 
 /* Returns runtime memory geometry and whether the current backend is fake TCM. */
-static inline int spine_tcm_mem_info(spine_tcm_mem_info_t * info) {
-    return spine_tcm_runtime_layout_info(info);
+ساکن اندرونی صحیح spine_tcm_mem_info(spine_tcm_mem_info_t * info) {
+    واپس spine_tcm_runtime_layout_info(info);
 }
 
 /* Returns per-block runtime metadata for the given TCM id. */
-static inline int spine_tcm_block_info(int id, spine_tcm_block_info_t * info) {
-    return spine_tcm_runtime_mem_info(id, info);
+ساکن اندرونی صحیح spine_tcm_بلاک_info(صحیح id, spine_tcm_بلاک_info_t * info) {
+    واپس spine_tcm_runtime_mem_info(id, info);
 }
 
 /* Returns a cached buffer for the given TCM id, or NULL on failure. */
-static inline void * spine_tcm_mem_get(int id) {
-    return spine_tcm_runtime_mem_get(id);
+ساکن اندرونی خالی * spine_tcm_mem_get(صحیح id) {
+    واپس spine_tcm_runtime_mem_get(id);
 }
 
 /* Releases one reference acquired by spine_tcm_mem_get(id). */
-static inline int spine_tcm_mem_free(int id) {
-    return spine_tcm_runtime_mem_free(id);
+ساکن اندرونی صحیح spine_tcm_mem_free(صحیح id) {
+    واپس spine_tcm_runtime_mem_free(id);
 }
 
 /* Waits for a TCM block handoff and returns the driver-owned buffer when available. */
-static inline void * spine_tcm_mem_try_wait(int id, size_t over_time) {
-    return spine_tcm_runtime_mem_try_wait(id, over_time);
+ساکن اندرونی خالی * spine_tcm_mem_try_wait(صحیح id, size_t over_وقت) {
+    واپس spine_tcm_runtime_mem_try_wait(id, over_وقت);
 }
 
 /* Releases a buffer acquired by spine_tcm_mem_try_wait(id, over_time). */
-static inline int spine_tcm_mem_release(int id) {
-    return spine_tcm_runtime_mem_release(id);
+ساکن اندرونی صحیح spine_tcm_mem_release(صحیح id) {
+    واپس spine_tcm_runtime_mem_release(id);
 }
 
 /* Forces a release for the given TCM id when the backend supports it. */
-static inline int spine_tcm_mem_force_release(int id) {
-    return spine_tcm_runtime_mem_force_release(id);
+ساکن اندرونی صحیح spine_tcm_mem_force_release(صحیح id) {
+    واپس spine_tcm_runtime_mem_force_release(id);
 }
 
 /* Returns whether the given TCM id is currently acquired. */
-static inline int spine_tcm_mem_query(int id) {
-    return spine_tcm_runtime_mem_query(id);
+ساکن اندرونی صحیح spine_tcm_mem_query(صحیح id) {
+    واپس spine_tcm_runtime_mem_query(id);
 }
-#elif !defined(SPINE_TCM_BUILD_SHARED)
-typedef struct spine_tcm_handle {
-    void * module_handle;
-    int    use_global_scope;
-    int    owns_module_handle;
-    const char * (*runtime_version)(void);
-    int (*runtime_is_available)(void);
-    int (*runtime_layout_info)(spine_tcm_mem_info_t * info);
-    int (*runtime_mem_info)(int id, spine_tcm_block_info_t * info);
-    void * (*runtime_mem_get)(int id);
-    int (*runtime_mem_free)(int id);
-    void * (*runtime_mem_try_wait)(int id, size_t over_time);
-    int (*runtime_mem_release)(int id);
-    int (*runtime_mem_force_release)(int id);
-    int (*runtime_mem_query)(int id);
+#وگرنہ_اگر !defined(SPINE_TCM_BUILD_SHARED)
+قسمتعریف ساخت spine_tcm_handle {
+    خالی * module_handle;
+    صحیح    use_global_scope;
+    صحیح    owns_module_handle;
+    ثابت حرف * (*runtime_نسخہ)(خالی);
+    صحیح (*runtime_is_دستیاب)(خالی);
+    صحیح (*runtime_layout_info)(spine_tcm_mem_info_t * info);
+    صحیح (*runtime_mem_info)(صحیح id, spine_tcm_بلاک_info_t * info);
+    خالی * (*runtime_mem_get)(صحیح id);
+    صحیح (*runtime_mem_free)(صحیح id);
+    خالی * (*runtime_mem_try_wait)(صحیح id, size_t over_وقت);
+    صحیح (*runtime_mem_release)(صحیح id);
+    صحیح (*runtime_mem_force_release)(صحیح id);
+    صحیح (*runtime_mem_query)(صحیح id);
 } spine_tcm_handle_t;
 
-static inline spine_tcm_handle_t * spine_tcm_default_handle(void) {
-    static spine_tcm_handle_t handle = { 0 };
-    return &handle;
+ساکن اندرونی spine_tcm_handle_t * spine_tcm_default_handle(خالی) {
+    ساکن spine_tcm_handle_t handle = { 0 };
+    واپس &handle;
 }
 
-static inline void spine_tcm_handle_reset(spine_tcm_handle_t * handle) {
-    if (handle != NULL) {
-        memset(handle, 0, sizeof(*handle));
+ساکن اندرونی خالی spine_tcm_handle_reset(spine_tcm_handle_t * handle) {
+    اگر (handle != تہی) {
+        memset(handle, 0, حجم(*handle));
     }
 }
 
-static inline int spine_tcm_handle_bind(spine_tcm_handle_t * handle) {
-    void * symbol_scope = handle->use_global_scope ? RTLD_DEFAULT : handle->module_handle;
+ساکن اندرونی صحیح spine_tcm_handle_bind(spine_tcm_handle_t * handle) {
+    خالی * علامت_scope = handle->use_global_scope ? RTLD_DEFAULT : handle->module_handle;
 
-    handle->runtime_version      = (const char * (*) (void) ) dlsym(symbol_scope, "spine_tcm_runtime_version");
-    handle->runtime_is_available = (int (*)(void)) dlsym(symbol_scope, "spine_tcm_runtime_is_available");
+    handle->runtime_نسخہ      = (ثابت حرف * (*) (خالی) ) dlsym(علامت_scope, "spine_tcm_runtime_version");
+    handle->runtime_is_دستیاب = (صحیح (*)(خالی)) dlsym(علامت_scope, "spine_tcm_runtime_is_available");
     handle->runtime_layout_info =
-        (int (*)(spine_tcm_mem_info_t *)) dlsym(symbol_scope, "spine_tcm_runtime_layout_info");
+        (صحیح (*)(spine_tcm_mem_info_t *)) dlsym(علامت_scope, "spine_tcm_runtime_layout_info");
     handle->runtime_mem_info =
-        (int (*)(int, spine_tcm_block_info_t *)) dlsym(symbol_scope, "spine_tcm_runtime_mem_info");
-    handle->runtime_mem_get      = (void * (*) (int) ) dlsym(symbol_scope, "spine_tcm_runtime_mem_get");
-    handle->runtime_mem_free     = (int (*)(int)) dlsym(symbol_scope, "spine_tcm_runtime_mem_free");
-    handle->runtime_mem_try_wait = (void * (*) (int, size_t)) dlsym(symbol_scope, "spine_tcm_runtime_mem_try_wait");
-    handle->runtime_mem_release  = (int (*)(int)) dlsym(symbol_scope, "spine_tcm_runtime_mem_release");
-    handle->runtime_mem_force_release = (int (*)(int)) dlsym(symbol_scope, "spine_tcm_runtime_mem_force_release");
-    handle->runtime_mem_query         = (int (*)(int)) dlsym(symbol_scope, "spine_tcm_runtime_mem_query");
+        (صحیح (*)(صحیح, spine_tcm_بلاک_info_t *)) dlsym(علامت_scope, "spine_tcm_runtime_mem_info");
+    handle->runtime_mem_get      = (خالی * (*) (صحیح) ) dlsym(علامت_scope, "spine_tcm_runtime_mem_get");
+    handle->runtime_mem_free     = (صحیح (*)(صحیح)) dlsym(علامت_scope, "spine_tcm_runtime_mem_free");
+    handle->runtime_mem_try_wait = (خالی * (*) (صحیح, size_t)) dlsym(علامت_scope, "spine_tcm_runtime_mem_try_wait");
+    handle->runtime_mem_release  = (صحیح (*)(صحیح)) dlsym(علامت_scope, "spine_tcm_runtime_mem_release");
+    handle->runtime_mem_force_release = (صحیح (*)(صحیح)) dlsym(علامت_scope, "spine_tcm_runtime_mem_force_release");
+    handle->runtime_mem_query         = (صحیح (*)(صحیح)) dlsym(علامت_scope, "spine_tcm_runtime_mem_query");
 
-    return handle->runtime_version != NULL && handle->runtime_is_available != NULL &&
-                   handle->runtime_layout_info != NULL && handle->runtime_mem_info != NULL &&
-                   handle->runtime_mem_get != NULL && handle->runtime_mem_free != NULL &&
-                   handle->runtime_mem_try_wait != NULL && handle->runtime_mem_release != NULL &&
-                   handle->runtime_mem_force_release != NULL && handle->runtime_mem_query != NULL ?
+    واپس handle->runtime_نسخہ != تہی && handle->runtime_is_دستیاب != تہی &&
+                   handle->runtime_layout_info != تہی && handle->runtime_mem_info != تہی &&
+                   handle->runtime_mem_get != تہی && handle->runtime_mem_free != تہی &&
+                   handle->runtime_mem_try_wait != تہی && handle->runtime_mem_release != تہی &&
+                   handle->runtime_mem_force_release != تہی && handle->runtime_mem_query != تہی ?
                0 :
                -1;
 }
@@ -187,13 +187,13 @@ static inline int spine_tcm_handle_bind(spine_tcm_handle_t * handle) {
  * Try to bind against an already-loaded process-global spine_tcm instance.
  * The shared library exports spine_tcm_runtime_marker only for this probe.
  */
-static inline int spine_tcm_try_bind_global(spine_tcm_handle_t * handle) {
-    if (dlsym(RTLD_DEFAULT, "spine_tcm_runtime_marker") == NULL) {
-        return -1;
+ساکن اندرونی صحیح spine_tcm_try_bind_global(spine_tcm_handle_t * handle) {
+    اگر (dlsym(RTLD_DEFAULT, "spine_tcm_runtime_marker") == تہی) {
+        واپس -1;
     }
 
     handle->use_global_scope = 1;
-    return spine_tcm_handle_bind(handle);
+    واپس spine_tcm_handle_bind(handle);
 }
 
 /*
@@ -204,206 +204,206 @@ static inline int spine_tcm_try_bind_global(spine_tcm_handle_t * handle) {
  *   - Otherwise loads the shared library from so_path or the default soname.
  *   - Repeated calls are safe and return 0 after the first successful bind.
  */
-static inline int spine_tcm_open_handle(const char * so_path) {
+ساکن اندرونی صحیح spine_tcm_open_handle(ثابت حرف * so_راستہ) {
     spine_tcm_handle_t * resolved = spine_tcm_default_handle();
-    const char *         library  = (so_path != NULL && so_path[0] != '\0') ? so_path : "libspine_tcm.so";
+    ثابت حرف *         library  = (so_راستہ != تہی && so_راستہ[0] != '\0') ? so_راستہ : "libspine_tcm.so";
 
-    if (resolved->module_handle != NULL || resolved->use_global_scope) {
-        return 0;
+    اگر (resolved->module_handle != تہی || resolved->use_global_scope) {
+        واپس 0;
     }
 
-    if (spine_tcm_try_bind_global(resolved) == 0) {
-        return 0;
+    اگر (spine_tcm_try_bind_global(resolved) == 0) {
+        واپس 0;
     }
 
     spine_tcm_handle_reset(resolved);
 
     resolved->module_handle      = dlopen(library, RTLD_LAZY | RTLD_GLOBAL);
-    resolved->owns_module_handle = resolved->module_handle != NULL ? 1 : 0;
+    resolved->owns_module_handle = resolved->module_handle != تہی ? 1 : 0;
 
-    if (resolved->module_handle == NULL) {
+    اگر (resolved->module_handle == تہی) {
         spine_tcm_handle_reset(resolved);
-        return -1;
+        واپس -1;
     }
 
-    if (spine_tcm_handle_bind(resolved) != 0) {
-        if (resolved->owns_module_handle) {
+    اگر (spine_tcm_handle_bind(resolved) != 0) {
+        اگر (resolved->owns_module_handle) {
             dlclose(resolved->module_handle);
         }
         spine_tcm_handle_reset(resolved);
-        return -1;
+        واپس -1;
     }
 
-    return 0;
+    واپس 0;
 }
 
 /* Returns 1 when the runtime driver is available, otherwise 0. */
-static inline int spine_tcm_is_available(void) {
+ساکن اندرونی صحیح spine_tcm_is_دستیاب(خالی) {
     spine_tcm_handle_t * resolved = spine_tcm_default_handle();
 
-    if (resolved->module_handle == NULL && !resolved->use_global_scope) {
-        (void) spine_tcm_open_handle(NULL);
+    اگر (resolved->module_handle == تہی && !resolved->use_global_scope) {
+        (خالی) spine_tcm_open_handle(تہی);
     }
 
-    if ((resolved->module_handle == NULL && !resolved->use_global_scope) || resolved->runtime_is_available == NULL) {
-        return 0;
+    اگر ((resolved->module_handle == تہی && !resolved->use_global_scope) || resolved->runtime_is_دستیاب == تہی) {
+        واپس 0;
     }
 
-    return resolved->runtime_is_available();
+    واپس resolved->runtime_is_دستیاب();
 }
 
 /* Returns runtime memory geometry and whether the current backend is fake TCM. */
-static inline int spine_tcm_mem_info(spine_tcm_mem_info_t * info) {
+ساکن اندرونی صحیح spine_tcm_mem_info(spine_tcm_mem_info_t * info) {
     spine_tcm_handle_t * resolved = spine_tcm_default_handle();
 
-    if (resolved->module_handle == NULL && !resolved->use_global_scope) {
-        (void) spine_tcm_open_handle(NULL);
+    اگر (resolved->module_handle == تہی && !resolved->use_global_scope) {
+        (خالی) spine_tcm_open_handle(تہی);
     }
 
-    if ((resolved->module_handle == NULL && !resolved->use_global_scope) || resolved->runtime_layout_info == NULL) {
-        return -1;
+    اگر ((resolved->module_handle == تہی && !resolved->use_global_scope) || resolved->runtime_layout_info == تہی) {
+        واپس -1;
     }
 
-    return resolved->runtime_layout_info(info);
+    واپس resolved->runtime_layout_info(info);
 }
 
-static inline const char * spine_tcm_version(void) {
+ساکن اندرونی ثابت حرف * spine_tcm_نسخہ(خالی) {
     spine_tcm_handle_t * resolved = spine_tcm_default_handle();
 
-    if (resolved->module_handle == NULL && !resolved->use_global_scope) {
-        (void) spine_tcm_open_handle(NULL);
+    اگر (resolved->module_handle == تہی && !resolved->use_global_scope) {
+        (خالی) spine_tcm_open_handle(تہی);
     }
 
-    if ((resolved->module_handle == NULL && !resolved->use_global_scope) || resolved->runtime_version == NULL) {
-        return "unknown";
+    اگر ((resolved->module_handle == تہی && !resolved->use_global_scope) || resolved->runtime_نسخہ == تہی) {
+        واپس "unknown";
     }
 
-    return resolved->runtime_version();
+    واپس resolved->runtime_نسخہ();
 }
 
 /* Returns per-block runtime metadata for the given TCM id. */
-static inline int spine_tcm_block_info(int id, spine_tcm_block_info_t * info) {
+ساکن اندرونی صحیح spine_tcm_بلاک_info(صحیح id, spine_tcm_بلاک_info_t * info) {
     spine_tcm_handle_t * resolved = spine_tcm_default_handle();
 
-    if (resolved->module_handle == NULL && !resolved->use_global_scope) {
-        (void) spine_tcm_open_handle(NULL);
+    اگر (resolved->module_handle == تہی && !resolved->use_global_scope) {
+        (خالی) spine_tcm_open_handle(تہی);
     }
 
-    if ((resolved->module_handle == NULL && !resolved->use_global_scope) || resolved->runtime_mem_info == NULL) {
-        return -1;
+    اگر ((resolved->module_handle == تہی && !resolved->use_global_scope) || resolved->runtime_mem_info == تہی) {
+        واپس -1;
     }
 
-    return resolved->runtime_mem_info(id, info);
+    واپس resolved->runtime_mem_info(id, info);
 }
 
 /* Returns a cached buffer for the given TCM id, or NULL on failure. */
-static inline void * spine_tcm_mem_get(int id) {
+ساکن اندرونی خالی * spine_tcm_mem_get(صحیح id) {
     spine_tcm_handle_t * resolved = spine_tcm_default_handle();
 
-    if (resolved->module_handle == NULL && !resolved->use_global_scope) {
-        (void) spine_tcm_open_handle(NULL);
+    اگر (resolved->module_handle == تہی && !resolved->use_global_scope) {
+        (خالی) spine_tcm_open_handle(تہی);
     }
 
-    if (resolved->module_handle == NULL && !resolved->use_global_scope) {
-        return NULL;
+    اگر (resolved->module_handle == تہی && !resolved->use_global_scope) {
+        واپس تہی;
     }
 
-    if (resolved->runtime_mem_get == NULL) {
-        return NULL;
+    اگر (resolved->runtime_mem_get == تہی) {
+        واپس تہی;
     }
 
-    return resolved->runtime_mem_get(id);
+    واپس resolved->runtime_mem_get(id);
 }
 
 /* Releases one reference acquired by spine_tcm_mem_get(id). */
-static inline int spine_tcm_mem_free(int id) {
+ساکن اندرونی صحیح spine_tcm_mem_free(صحیح id) {
     spine_tcm_handle_t * resolved = spine_tcm_default_handle();
 
-    if (resolved->module_handle == NULL && !resolved->use_global_scope) {
-        (void) spine_tcm_open_handle(NULL);
+    اگر (resolved->module_handle == تہی && !resolved->use_global_scope) {
+        (خالی) spine_tcm_open_handle(تہی);
     }
 
-    if ((resolved->module_handle == NULL && !resolved->use_global_scope) || resolved->runtime_mem_free == NULL) {
-        return -1;
+    اگر ((resolved->module_handle == تہی && !resolved->use_global_scope) || resolved->runtime_mem_free == تہی) {
+        واپس -1;
     }
 
-    return resolved->runtime_mem_free(id);
+    واپس resolved->runtime_mem_free(id);
 }
 
 /* Waits for a TCM block handoff and returns the driver-owned buffer when available. */
-static inline void * spine_tcm_mem_try_wait(int id, size_t over_time) {
+ساکن اندرونی خالی * spine_tcm_mem_try_wait(صحیح id, size_t over_وقت) {
     spine_tcm_handle_t * resolved = spine_tcm_default_handle();
 
-    if (resolved->module_handle == NULL && !resolved->use_global_scope) {
-        (void) spine_tcm_open_handle(NULL);
+    اگر (resolved->module_handle == تہی && !resolved->use_global_scope) {
+        (خالی) spine_tcm_open_handle(تہی);
     }
 
-    if (resolved->module_handle == NULL && !resolved->use_global_scope) {
-        return NULL;
+    اگر (resolved->module_handle == تہی && !resolved->use_global_scope) {
+        واپس تہی;
     }
 
-    if (resolved->runtime_mem_try_wait == NULL) {
-        return NULL;
+    اگر (resolved->runtime_mem_try_wait == تہی) {
+        واپس تہی;
     }
 
-    return resolved->runtime_mem_try_wait(id, over_time);
+    واپس resolved->runtime_mem_try_wait(id, over_وقت);
 }
 
 /* Releases a buffer acquired by spine_tcm_mem_try_wait(id, over_time). */
-static inline int spine_tcm_mem_release(int id) {
+ساکن اندرونی صحیح spine_tcm_mem_release(صحیح id) {
     spine_tcm_handle_t * resolved = spine_tcm_default_handle();
 
-    if (resolved->module_handle == NULL && !resolved->use_global_scope) {
-        (void) spine_tcm_open_handle(NULL);
+    اگر (resolved->module_handle == تہی && !resolved->use_global_scope) {
+        (خالی) spine_tcm_open_handle(تہی);
     }
 
-    if ((resolved->module_handle == NULL && !resolved->use_global_scope) || resolved->runtime_mem_release == NULL) {
-        return -1;
+    اگر ((resolved->module_handle == تہی && !resolved->use_global_scope) || resolved->runtime_mem_release == تہی) {
+        واپس -1;
     }
 
-    return resolved->runtime_mem_release(id);
+    واپس resolved->runtime_mem_release(id);
 }
 
 /* Forces a release for the given TCM id when the backend supports it. */
-static inline int spine_tcm_mem_force_release(int id) {
+ساکن اندرونی صحیح spine_tcm_mem_force_release(صحیح id) {
     spine_tcm_handle_t * resolved = spine_tcm_default_handle();
 
-    if (resolved->module_handle == NULL && !resolved->use_global_scope) {
-        (void) spine_tcm_open_handle(NULL);
+    اگر (resolved->module_handle == تہی && !resolved->use_global_scope) {
+        (خالی) spine_tcm_open_handle(تہی);
     }
 
-    if ((resolved->module_handle == NULL && !resolved->use_global_scope) ||
-        resolved->runtime_mem_force_release == NULL) {
-        return -1;
+    اگر ((resolved->module_handle == تہی && !resolved->use_global_scope) ||
+        resolved->runtime_mem_force_release == تہی) {
+        واپس -1;
     }
 
-    return resolved->runtime_mem_force_release(id);
+    واپس resolved->runtime_mem_force_release(id);
 }
 
 /* Returns whether the given TCM id is currently acquired. */
-static inline int spine_tcm_mem_query(int id) {
+ساکن اندرونی صحیح spine_tcm_mem_query(صحیح id) {
     spine_tcm_handle_t * resolved = spine_tcm_default_handle();
 
-    if (resolved->module_handle == NULL && !resolved->use_global_scope) {
-        (void) spine_tcm_open_handle(NULL);
+    اگر (resolved->module_handle == تہی && !resolved->use_global_scope) {
+        (خالی) spine_tcm_open_handle(تہی);
     }
 
-    if ((resolved->module_handle == NULL && !resolved->use_global_scope) || resolved->runtime_mem_query == NULL) {
-        return -1;
+    اگر ((resolved->module_handle == تہی && !resolved->use_global_scope) || resolved->runtime_mem_query == تہی) {
+        واپس -1;
     }
 
-    return resolved->runtime_mem_query(id);
+    واپس resolved->runtime_mem_query(id);
 }
-#else
-static inline const char * spine_tcm_version(void) {
-    return spine_tcm_runtime_version();
+#ورنہ
+ساکن اندرونی ثابت حرف * spine_tcm_نسخہ(خالی) {
+    واپس spine_tcm_runtime_نسخہ();
 }
-#endif
+#اگر_ختم
 
-#define SPINE_TCM_VERSION (spine_tcm_version())
+#تعریف_کرو SPINE_TCM_نسخہ (spine_tcm_نسخہ())
 
-#ifdef __cplusplus
+#اگر_تعریف_شدہ __cplusplus
 }
-#endif
+#اگر_ختم
 
-#endif
+#اگر_ختم

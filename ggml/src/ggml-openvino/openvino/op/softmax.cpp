@@ -1,44 +1,44 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#شامل "../node_context.h"
+#شامل "../op_table.h"
+#شامل "../utils.h"
 
-#include <cmath>
-#include <cstdint>
-#include <cstring>
-#include <memory>
-#include <openvino/op/broadcast.hpp>
-#include <openvino/frontend/exception.hpp>
-#include <openvino/op/add.hpp>
-#include <openvino/op/concat.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/shape_of.hpp>
-#include <openvino/op/slice.hpp>
-#include <openvino/op/softmax.hpp>
-#include <vector>
+#شامل <cmath>
+#شامل <cstdint>
+#شامل <cstring>
+#شامل <memory>
+#شامل <openvino/op/broadcast.hpp>
+#شامل <openvino/frontend/exception.hpp>
+#شامل <openvino/op/add.hpp>
+#شامل <openvino/op/concat.hpp>
+#شامل <openvino/op/constant.hpp>
+#شامل <openvino/op/convert.hpp>
+#شامل <openvino/op/multiply.hpp>
+#شامل <openvino/op/reshape.hpp>
+#شامل <openvino/op/shape_of.hpp>
+#شامل <openvino/op/slice.hpp>
+#شامل <openvino/op/softmax.hpp>
+#شامل <vector>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+نامخلا ov {
+نامخلا frontend {
+نامخلا ggml {
+نامخلا op {
 
-static bool is_static_one(const ov::Dimension & dim) {
-    return dim.is_static() && dim.get_length() == 1;
+ساکن منطقی is_static_one(ثابت ov::Dimension & dim) {
+    واپس dim.is_static() && dim.get_لمبائی() == 1;
 }
 
-static bool same_static_dim(const ov::Dimension & lhs, const ov::Dimension & rhs) {
-    return lhs.is_static() && rhs.is_static() && lhs.get_length() == rhs.get_length();
+ساکن منطقی same_static_dim(ثابت ov::Dimension & lhs, ثابت ov::Dimension & rhs) {
+    واپس lhs.is_static() && rhs.is_static() && lhs.get_لمبائی() == rhs.get_لمبائی();
 }
 
-static bool is_attention_sinks_input_shape(const ov::PartialShape & candidate, const ov::PartialShape & logits_shape) {
-    if (candidate.rank().is_dynamic() || logits_shape.rank().is_dynamic() || candidate.rank().get_length() != 4 ||
-        logits_shape.rank().get_length() != 4) {
-        return false;
+ساکن منطقی is_attention_sinks_داخلہ_shape(ثابت ov::PartialShape & candidate, ثابت ov::PartialShape & logits_shape) {
+    اگر (candidate.rank().is_dynamic() || logits_shape.rank().is_dynamic() || candidate.rank().get_لمبائی() != 4 ||
+        logits_shape.rank().get_لمبائی() != 4) {
+        واپس جھوٹ;
     }
 
-    return is_static_one(candidate[0]) && is_static_one(candidate[1]) && is_static_one(candidate[2]) &&
+    واپس is_static_one(candidate[0]) && is_static_one(candidate[1]) && is_static_one(candidate[2]) &&
            same_static_dim(candidate[3], logits_shape[1]);
 }
 
@@ -47,117 +47,117 @@ static bool is_attention_sinks_input_shape(const ov::PartialShape & candidate, c
 // 2) logits += mask (if provided)
 // 3) append attention sinks as hidden logits (if provided)
 // 4) softmax over the last dimension and remove the hidden sink column
-OutputVector translate_soft_max(const NodeContext & context) {
-    num_inputs_check(context, 1, 3);
+Output_سمتیہ translate_soft_max(ثابت گرہ_Context & context) {
+    عدد_inputs_check(context, 1, 3);
 
-    float scale = 1.0f;
-    float max_bias = 0.0f;
-    memcpy(&scale, (float *) context.get_output_op_params() + 0, sizeof(float));
-    memcpy(&max_bias, (float *) context.get_output_op_params() + 1, sizeof(float));
+    اعشاری scale = 1.0f;
+    اعشاری max_bias = 0.0f;
+    حافظہ_نقل(&scale, (اعشاری *) context.get_output_op_params() + 0, حجم(اعشاری));
+    حافظہ_نقل(&max_bias, (اعشاری *) context.get_output_op_params() + 1, حجم(اعشاری));
 
-    ov::Output<ov::Node> logits = context.get_input(0);
-    const bool second_input_is_sinks =
-        context.get_input_size() == 2 && is_attention_sinks_input_shape(context.get_input_shape(1), context.get_output_shape());
-    const bool has_mask = context.get_input_size() > 1 && !second_input_is_sinks;
-    const bool has_sinks = second_input_is_sinks || context.get_input_size() > 2;
-    const size_t sinks_input_idx = second_input_is_sinks ? 1 : 2;
+    ov::Output<ov::Node> logits = context.get_داخلہ(0);
+    ثابت منطقی دوسرا_داخلہ_is_sinks =
+        context.get_داخلہ_سائز() == 2 && is_attention_sinks_داخلہ_shape(context.get_داخلہ_shape(1), context.get_output_shape());
+    ثابت منطقی has_نقاب = context.get_داخلہ_سائز() > 1 && !دوسرا_داخلہ_is_sinks;
+    ثابت منطقی has_sinks = دوسرا_داخلہ_is_sinks || context.get_داخلہ_سائز() > 2;
+    ثابت size_t sinks_داخلہ_idx = دوسرا_داخلہ_is_sinks ? 1 : 2;
 
     // Apply scale first: logits = src0 * scale
-    if (scale != 1.0f) {
-        auto scale_const =
-            std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{}, std::vector<float>{scale});
+    اگر (scale != 1.0f) {
+        خودکار scale_const =
+            std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{}, std::vector<اعشاری>{scale});
         logits = std::make_shared<ov::op::v1::Multiply>(logits, scale_const);
     }
 
-    FRONT_END_CHECK_IMPLEMENTED(!(max_bias > 0.0f && !has_mask),
+    FRONT_انتہا_CHECK_IMPLEMENTED(!(max_bias > 0.0f && !has_نقاب),
                                 "OpenVINO softmax ALiBi path requires mask input");
 
     // Optional mask add: logits += mask
     // For max_bias > 0 (ALiBi), apply per-head slope to mask before adding.
-    if (has_mask) {
-        ov::Output<ov::Node> mask = context.get_input(1);
+    اگر (has_نقاب) {
+        ov::Output<ov::Node> نقاب = context.get_داخلہ(1);
 
         // For stateful
-        std::string mask_name = "KQ_mask_sliced";
-        if (context.get_input_names()[1].find("swa") != std::string::npos) {
-            mask_name = "KQ_mask_swa_sliced";
+        std::string نقاب_name = "KQ_mask_sliced";
+        اگر (context.get_داخلہ_نام()[1].find("swa") != std::string::npos) {
+            نقاب_name = "KQ_mask_swa_sliced";
         }
-        if (context.has_input(mask_name)) {
-            mask = context.get_input(mask_name);
-        }
-
-        if (mask.get_element_type() != logits.get_element_type()) {
-            mask = std::make_shared<ov::op::v0::Convert>(mask, logits.get_element_type());
+        اگر (context.has_داخلہ(نقاب_name)) {
+            نقاب = context.get_داخلہ(نقاب_name);
         }
 
-        if (max_bias > 0.0f) {
-            auto out_shape = context.get_output_shape().to_shape();
-            FRONT_END_CHECK_IMPLEMENTED(out_shape.size() == 4, "OpenVINO softmax ALiBi path expects rank-4 tensor");
+        اگر (نقاب.get_element_type() != logits.get_element_type()) {
+            نقاب = std::make_shared<ov::op::v0::Convert>(نقاب, logits.get_element_type());
+        }
 
-            const uint32_t n_head = static_cast<uint32_t>(out_shape[1]);
-            FRONT_END_CHECK_IMPLEMENTED(n_head > 0, "OpenVINO softmax ALiBi path expects n_head > 0");
+        اگر (max_bias > 0.0f) {
+            خودکار برآمد_shape = context.get_output_shape().مقصد_shape();
+            FRONT_انتہا_CHECK_IMPLEMENTED(برآمد_shape.size() == 4, "OpenVINO softmax ALiBi path expects rank-4 tensor");
 
-            const uint32_t n_head_log2 = 1u << static_cast<uint32_t>(std::floor(std::log2(static_cast<float>(n_head))));
-            const float m0 = std::pow(2.0f, -(max_bias) / static_cast<float>(n_head_log2));
-            const float m1 = std::pow(2.0f, -(max_bias / 2.0f) / static_cast<float>(n_head_log2));
+            ثابت uint32_t n_سر = static_cast<uint32_t>(برآمد_shape[1]);
+            FRONT_انتہا_CHECK_IMPLEMENTED(n_سر > 0, "OpenVINO softmax ALiBi path expects n_head > 0");
 
-            std::vector<float> slopes(n_head);
-            for (uint32_t h = 0; h < n_head; ++h) {
-                slopes[h] = h < n_head_log2 ? std::pow(m0, static_cast<float>(h + 1)) :
-                                              std::pow(m1, static_cast<float>(2 * (h - n_head_log2) + 1));
+            ثابت uint32_t n_سر_log2 = 1u << static_cast<uint32_t>(std::floor(std::log2(static_cast<اعشاری>(n_سر))));
+            ثابت اعشاری m0 = std::قوت(2.0f, -(max_bias) / static_cast<اعشاری>(n_سر_log2));
+            ثابت اعشاری m1 = std::قوت(2.0f, -(max_bias / 2.0f) / static_cast<اعشاری>(n_سر_log2));
+
+            std::vector<اعشاری> slopes(n_سر);
+            برائے (uint32_t h = 0; h < n_سر; ++h) {
+                slopes[h] = h < n_سر_log2 ? std::قوت(m0, static_cast<اعشاری>(h + 1)) :
+                                              std::قوت(m1, static_cast<اعشاری>(2 * (h - n_سر_log2) + 1));
             }
 
-            ov::Output<ov::Node> slope_node =
-                std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{n_head}, slopes);
-            if (slope_node.get_element_type() != mask.get_element_type()) {
-                slope_node = std::make_shared<ov::op::v0::Convert>(slope_node, mask.get_element_type());
+            ov::Output<ov::Node> ڈھلان_گرہ =
+                std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{n_سر}, slopes);
+            اگر (ڈھلان_گرہ.get_element_type() != نقاب.get_element_type()) {
+                ڈھلان_گرہ = std::make_shared<ov::op::v0::Convert>(ڈھلان_گرہ, نقاب.get_element_type());
             }
 
-            auto slope_shape = std::make_shared<ov::op::v0::Constant>(
-                ov::element::i64, ov::Shape{4}, std::vector<int64_t>{1, static_cast<int64_t>(n_head), 1, 1});
-            auto slope_4d = std::make_shared<ov::op::v1::Reshape>(slope_node, slope_shape, false);
-            mask = std::make_shared<ov::op::v1::Multiply>(mask, slope_4d);
+            خودکار ڈھلان_shape = std::make_shared<ov::op::v0::Constant>(
+                ov::element::i64, ov::Shape{4}, std::vector<int64_t>{1, static_cast<int64_t>(n_سر), 1, 1});
+            خودکار ڈھلان_4d = std::make_shared<ov::op::v1::Reshape>(ڈھلان_گرہ, ڈھلان_shape, جھوٹ);
+            نقاب = std::make_shared<ov::op::v1::Multiply>(نقاب, ڈھلان_4d);
         }
 
-        logits = std::make_shared<ov::op::v1::Add>(logits, mask);
+        logits = std::make_shared<ov::op::v1::جوڑو>(logits, نقاب);
     }
 
-    ov::Output<ov::Node> softmax_input = logits;
-    if (has_sinks) {
-        ov::Output<ov::Node> sinks = context.get_input(sinks_input_idx);
-        if (sinks.get_element_type() != logits.get_element_type()) {
+    ov::Output<ov::Node> softmax_داخلہ = logits;
+    اگر (has_sinks) {
+        ov::Output<ov::Node> sinks = context.get_داخلہ(sinks_داخلہ_idx);
+        اگر (sinks.get_element_type() != logits.get_element_type()) {
             sinks = std::make_shared<ov::op::v0::Convert>(sinks, logits.get_element_type());
         }
 
-        auto sink_shape = ov::op::v0::Constant::create(ov::element::i64, {4}, {1, -1, 1, 1});
-        auto sinks_4d = std::make_shared<ov::op::v1::Reshape>(sinks, sink_shape, false);
+        خودکار sink_shape = ov::op::v0::Constant::create(ov::element::i64, {4}, {1, -1, 1, 1});
+        خودکار sinks_4d = std::make_shared<ov::op::v1::Reshape>(sinks, sink_shape, جھوٹ);
 
-        auto logits_shape = std::make_shared<ov::op::v3::ShapeOf>(logits, ov::element::i64);
-        auto zero = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
-        auto one = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
-        auto three = ov::op::v0::Constant::create(ov::element::i64, {1}, {3});
-        auto four = ov::op::v0::Constant::create(ov::element::i64, {1}, {4});
-        auto shape_axis = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
+        خودکار logits_shape = std::make_shared<ov::op::v3::Shape_کا>(logits, ov::element::i64);
+        خودکار zero = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
+        خودکار one = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
+        خودکار three = ov::op::v0::Constant::create(ov::element::i64, {1}, {3});
+        خودکار four = ov::op::v0::Constant::create(ov::element::i64, {1}, {4});
+        خودکار shape_axis = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
 
-        auto sink_prefix_shape = std::make_shared<ov::op::v8::Slice>(logits_shape, zero, three, one, shape_axis);
-        auto sink_last_dim = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
-        auto sink_broadcast_shape = std::make_shared<ov::op::v0::Concat>(
-            ov::OutputVector{sink_prefix_shape, sink_last_dim}, 0);
-        auto sink_column = std::make_shared<ov::op::v3::Broadcast>(sinks_4d, sink_broadcast_shape,
-                                                                   ov::op::BroadcastType::BIDIRECTIONAL);
-        softmax_input = std::make_shared<ov::op::v0::Concat>(ov::OutputVector{logits, sink_column}, 3);
+        خودکار sink_سابقہ_shape = std::make_shared<ov::op::v8::قاش>(logits_shape, zero, three, one, shape_axis);
+        خودکار sink_آخری_dim = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
+        خودکار sink_نشر_shape = std::make_shared<ov::op::v0::Concat>(
+            ov::Output_سمتیہ{sink_سابقہ_shape, sink_آخری_dim}, 0);
+        خودکار sink_عمود = std::make_shared<ov::op::v3::نشر>(sinks_4d, sink_نشر_shape,
+                                                                   ov::op::نشر_Type::BIDIRECTIONAL);
+        softmax_داخلہ = std::make_shared<ov::op::v0::Concat>(ov::Output_سمتیہ{logits, sink_عمود}, 3);
 
-        auto softmax_with_sink = std::make_shared<ov::op::v8::Softmax>(softmax_input, -1);
-        auto original_last_dim = std::make_shared<ov::op::v8::Slice>(logits_shape, three, four, one, shape_axis);
-        auto res = std::make_shared<ov::op::v8::Slice>(softmax_with_sink, zero, original_last_dim, one, three);
+        خودکار softmax_with_sink = std::make_shared<ov::op::v8::Softmax>(softmax_داخلہ, -1);
+        خودکار original_آخری_dim = std::make_shared<ov::op::v8::قاش>(logits_shape, three, four, one, shape_axis);
+        خودکار res = std::make_shared<ov::op::v8::قاش>(softmax_with_sink, zero, original_آخری_dim, one, three);
 
-        return rename_outputs_with_suffix({res}, context.get_name());
+        واپس rename_outputs_with_suffix({res}, context.get_name());
     }
 
     // Softmax along last dimension (equivalent to ggml softmax over ne[0]).
-    auto res = std::make_shared<ov::op::v8::Softmax>(softmax_input, -1);
+    خودکار res = std::make_shared<ov::op::v8::Softmax>(softmax_داخلہ, -1);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    واپس rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

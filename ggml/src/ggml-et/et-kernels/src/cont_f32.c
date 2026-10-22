@@ -9,37 +9,37 @@
 // Fallback:     nb00 != 4: scalar per-element
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "platform.h"
+#شامل "ggml_tensor.h"
+#شامل "platform.h"
 
-#include <stdbool.h>
-#include <stdint.h>
+#شامل <stdbool.h>
+#شامل <stdint.h>
 
-struct ggml_et_cont_params {
-    struct ggml_tensor src0;  // F32 input tensor (non-contiguous)
-    struct ggml_tensor dst;   // F32 output tensor (contiguous)
+ساخت ggml_et_cont_params {
+    ساخت ggml_tensor src0;  // F32 input tensor (non-contiguous)
+    ساخت ggml_tensor dst;   // F32 output tensor (contiguous)
 };
 
 // Vectorized copy with scalar tail
-static inline void vec_copy_f32(float * dst, const float * src, int32_t n) {
+ساکن اندرونی خالی vec_copy_f32(اعشاری * dst, ثابت اعشاری * src, int32_t n) {
     int32_t       i       = 0;
-    const int32_t vec_end = (n / 8) * 8;
-    for (; i < vec_end; i += 8) {
-        __asm__ volatile(
+    ثابت int32_t vec_انتہا = (n / 8) * 8;
+    برائے (; i < vec_انتہا; i += 8) {
+        __asm__ متلون(
             "flw.ps f10, %[s]\n"
             "fsw.ps f10, %[d]\n"
-            : [d] "=m"(*(float (*)[8]) & dst[i])
-            : [s] "m"(*(const float (*)[8]) & src[i])
+            : [d] "=m"(*(اعشاری (*)[8]) & dst[i])
+            : [s] "m"(*(ثابت اعشاری (*)[8]) & src[i])
             : "f10");
     }
-    for (; i < n; i++) {
+    برائے (; i < n; i++) {
         dst[i] = src[i];
     }
 }
 
 // Scalar copy
-static inline void scalar_copy_f32(float * dst, const float * src, int32_t n) {
-    for (int32_t i = 0; i < n; i++) {
+ساکن اندرونی خالی scalar_copy_f32(اعشاری * dst, ثابت اعشاری * src, int32_t n) {
+    برائے (int32_t i = 0; i < n; i++) {
         dst[i] = src[i];
     }
 }
@@ -48,121 +48,121 @@ static inline void scalar_copy_f32(float * dst, const float * src, int32_t n) {
 //     return (size_t)t->ne[0] * t->ne[1] * t->ne[2] * t->ne[3] * t->nb[0];
 // }
 
-int entry_point(struct ggml_et_cont_params * params, void * env) {
+صحیح اندراج_نقطہ(ساخت ggml_et_cont_params * params, خالی * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    اگر (!kernel_env) {
+        واپس -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    صحیح thread_id   = get_relative_thread_id(kernel_env->shire_نقاب);
+    صحیح عدد_دھاگے = get_عدد_دھاگے(kernel_env->shire_نقاب);
 
-    if (thread_id < 0) {
-        return 0;
+    اگر (thread_id < 0) {
+        واپس 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    اگر (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        واپس -1;
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * dst  = &params->dst;
+    ساخت ggml_tensor * src0 = &params->src0;
+    ساخت ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    اگر (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        واپس -1;
     }
 
-    float * src0_data = (float *) src0->data;
-    float * dst_data  = (float *) dst->data;
+    اعشاری * src0_ڈیٹا = (اعشاری *) src0->ڈیٹا;
+    اعشاری * dst_ڈیٹا  = (اعشاری *) dst->ڈیٹا;
     // evict_region_past_l2(src0_data, tensor_bytes(src0));
 
-    if (!src0_data || !dst_data) {
-        return -1;
+    اگر (!src0_ڈیٹا || !dst_ڈیٹا) {
+        واپس -1;
     }
 
-    const int64_t ne00 = src0->ne[0];
-    const int64_t ne01 = src0->ne[1];
-    const int64_t ne02 = src0->ne[2];
-    const int64_t ne03 = src0->ne[3];
+    ثابت int64_t ne00 = src0->ne[0];
+    ثابت int64_t ne01 = src0->ne[1];
+    ثابت int64_t ne02 = src0->ne[2];
+    ثابت int64_t ne03 = src0->ne[3];
 
-    const int64_t nb00 = src0->nb[0];
-    const int64_t nb01 = src0->nb[1];
-    const int64_t nb02 = src0->nb[2];
-    const int64_t nb03 = src0->nb[3];
+    ثابت int64_t nb00 = src0->nb[0];
+    ثابت int64_t nb01 = src0->nb[1];
+    ثابت int64_t nb02 = src0->nb[2];
+    ثابت int64_t nb03 = src0->nb[3];
 
-    const int64_t total_elements = ne00 * ne01 * ne02 * ne03;
+    ثابت int64_t کل_elements = ne00 * ne01 * ne02 * ne03;
 
-    if (total_elements == 0) {
-        return 0;
+    اگر (کل_elements == 0) {
+        واپس 0;
     }
 
-    const bool src_contiguous = ggml_tensor_is_contiguous(src0, 4);
+    ثابت bool src_contiguous = ggml_tensor_is_contiguous(src0, 4);
 
     //==========================================================================
     // Fast path: src is contiguous: flat vectorized copy by cache lines
     //==========================================================================
-    if (src_contiguous) {
-        const int64_t elems_per_cl = 16;
-        const int64_t total_cl     = (total_elements + elems_per_cl - 1) / elems_per_cl;
+    اگر (src_contiguous) {
+        ثابت int64_t elems_فی_cl = 16;
+        ثابت int64_t کل_cl     = (کل_elements + elems_فی_cl - 1) / elems_فی_cl;
 
-        const int64_t cl_per_thread = (total_cl + num_threads - 1) / num_threads;
-        const int64_t cl_start      = thread_id * cl_per_thread;
-        int64_t       cl_end        = cl_start + cl_per_thread;
-        if (cl_end > total_cl) {
-            cl_end = total_cl;
+        ثابت int64_t cl_فی_thread = (کل_cl + عدد_دھاگے - 1) / عدد_دھاگے;
+        ثابت int64_t cl_آغاز      = thread_id * cl_فی_thread;
+        int64_t       cl_انتہا        = cl_آغاز + cl_فی_thread;
+        اگر (cl_انتہا > کل_cl) {
+            cl_انتہا = کل_cl;
         }
-        if (cl_start >= total_cl) {
-            return 0;
-        }
-
-        const int64_t es = cl_start * elems_per_cl;
-        int64_t       ee = cl_end * elems_per_cl;
-        if (ee > total_elements) {
-            ee = total_elements;
+        اگر (cl_آغاز >= کل_cl) {
+            واپس 0;
         }
 
-        vec_copy_f32(dst_data + es, src0_data + es, (int32_t) (ee - es));
-        return 0;
+        ثابت int64_t es = cl_آغاز * elems_فی_cl;
+        int64_t       ee = cl_انتہا * elems_فی_cl;
+        اگر (ee > کل_elements) {
+            ee = کل_elements;
+        }
+
+        vec_copy_f32(dst_ڈیٹا + es, src0_ڈیٹا + es, (int32_t) (ee - es));
+        واپس 0;
     }
 
     //==========================================================================
     // Non-contiguous paths: require nb00==4 (dim 0 contiguous in src)
     //==========================================================================
-    if (nb00 != 4) {
+    اگر (nb00 != 4) {
         // Fully non-contiguous scalar fallback — distribute by cache lines
-        const int64_t elems_per_cl = 16;
-        const int64_t total_cl     = (total_elements + elems_per_cl - 1) / elems_per_cl;
+        ثابت int64_t elems_فی_cl = 16;
+        ثابت int64_t کل_cl     = (کل_elements + elems_فی_cl - 1) / elems_فی_cl;
 
-        const int64_t cl_per_thread = (total_cl + num_threads - 1) / num_threads;
-        const int64_t cl_start      = thread_id * cl_per_thread;
-        int64_t       cl_end        = cl_start + cl_per_thread;
-        if (cl_end > total_cl) {
-            cl_end = total_cl;
+        ثابت int64_t cl_فی_thread = (کل_cl + عدد_دھاگے - 1) / عدد_دھاگے;
+        ثابت int64_t cl_آغاز      = thread_id * cl_فی_thread;
+        int64_t       cl_انتہا        = cl_آغاز + cl_فی_thread;
+        اگر (cl_انتہا > کل_cl) {
+            cl_انتہا = کل_cl;
         }
-        if (cl_start >= total_cl) {
-            return 0;
-        }
-
-        const int64_t es = cl_start * elems_per_cl;
-        int64_t       ee = cl_end * elems_per_cl;
-        if (ee > total_elements) {
-            ee = total_elements;
+        اگر (cl_آغاز >= کل_cl) {
+            واپس 0;
         }
 
-        for (int64_t idx = es; idx < ee; idx++) {
-            const int64_t i00  = idx % ne00;
-            const int64_t rem1 = idx / ne00;
-            const int64_t i01  = rem1 % ne01;
-            const int64_t rem2 = rem1 / ne01;
-            const int64_t i02  = rem2 % ne02;
-            const int64_t i03  = rem2 / ne02;
-
-            const float * sp =
-                (const float *) ((const char *) src0_data + i00 * nb00 + i01 * nb01 + i02 * nb02 + i03 * nb03);
-            dst_data[idx] = *sp;
+        ثابت int64_t es = cl_آغاز * elems_فی_cl;
+        int64_t       ee = cl_انتہا * elems_فی_cl;
+        اگر (ee > کل_elements) {
+            ee = کل_elements;
         }
-        return 0;
+
+        برائے (int64_t idx = es; idx < ee; idx++) {
+            ثابت int64_t i00  = idx % ne00;
+            ثابت int64_t rem1 = idx / ne00;
+            ثابت int64_t i01  = rem1 % ne01;
+            ثابت int64_t rem2 = rem1 / ne01;
+            ثابت int64_t i02  = rem2 % ne02;
+            ثابت int64_t i03  = rem2 / ne02;
+
+            ثابت اعشاری * sp =
+                (ثابت اعشاری *) ((ثابت حرف *) src0_ڈیٹا + i00 * nb00 + i01 * nb01 + i02 * nb02 + i03 * nb03);
+            dst_ڈیٹا[idx] = *sp;
+        }
+        واپس 0;
     }
 
     // nb00 == 4 from here: dim 0 is contiguous in src
@@ -170,27 +170,27 @@ int entry_point(struct ggml_et_cont_params * params, void * env) {
     //==========================================================================
     // Aligned path: ne00 % 16 == 0: rows are cache-line aligned, distribute rows
     //==========================================================================
-    if (ne00 % 16 == 0) {
-        const int64_t total_rows      = ne01 * ne02 * ne03;
-        const int64_t rows_per_thread = (total_rows + num_threads - 1) / num_threads;
-        const int64_t start_row       = thread_id * rows_per_thread;
-        const int64_t end_row = (start_row + rows_per_thread < total_rows) ? (start_row + rows_per_thread) : total_rows;
+    اگر (ne00 % 16 == 0) {
+        ثابت int64_t کل_صفیں      = ne01 * ne02 * ne03;
+        ثابت int64_t صفیں_فی_thread = (کل_صفیں + عدد_دھاگے - 1) / عدد_دھاگے;
+        ثابت int64_t آغاز_صف       = thread_id * صفیں_فی_thread;
+        ثابت int64_t انتہا_صف = (آغاز_صف + صفیں_فی_thread < کل_صفیں) ? (آغاز_صف + صفیں_فی_thread) : کل_صفیں;
 
-        if (start_row >= total_rows) {
-            return 0;
+        اگر (آغاز_صف >= کل_صفیں) {
+            واپس 0;
         }
 
-        for (int64_t ir = start_row; ir < end_row; ir++) {
-            const int64_t i03 = ir / (ne02 * ne01);
-            const int64_t i02 = (ir - i03 * ne02 * ne01) / ne01;
-            const int64_t i01 = ir - i03 * ne02 * ne01 - i02 * ne01;
+        برائے (int64_t ir = آغاز_صف; ir < انتہا_صف; ir++) {
+            ثابت int64_t i03 = ir / (ne02 * ne01);
+            ثابت int64_t i02 = (ir - i03 * ne02 * ne01) / ne01;
+            ثابت int64_t i01 = ir - i03 * ne02 * ne01 - i02 * ne01;
 
-            const float * src_row = (const float *) ((const char *) src0_data + i01 * nb01 + i02 * nb02 + i03 * nb03);
-            float *       dst_row = dst_data + ir * ne00;
+            ثابت اعشاری * src_صف = (ثابت اعشاری *) ((ثابت حرف *) src0_ڈیٹا + i01 * nb01 + i02 * nb02 + i03 * nb03);
+            اعشاری *       dst_صف = dst_ڈیٹا + ir * ne00;
 
-            vec_copy_f32(dst_row, src_row, (int32_t) ne00);
+            vec_copy_f32(dst_صف, src_صف, (int32_t) ne00);
         }
-        return 0;
+        واپس 0;
     }
 
     //==========================================================================
@@ -198,51 +198,51 @@ int entry_point(struct ggml_et_cont_params * params, void * env) {
     // Distribute cache-line-aligned chunks of dst, handle partial rows at edges
     //==========================================================================
     {
-        const int64_t elems_per_cl = 16;
-        const int64_t total_cl     = (total_elements + elems_per_cl - 1) / elems_per_cl;
+        ثابت int64_t elems_فی_cl = 16;
+        ثابت int64_t کل_cl     = (کل_elements + elems_فی_cl - 1) / elems_فی_cl;
 
-        const int64_t cl_per_thread = (total_cl + num_threads - 1) / num_threads;
-        const int64_t cl_start      = thread_id * cl_per_thread;
-        int64_t       cl_end        = cl_start + cl_per_thread;
-        if (cl_end > total_cl) {
-            cl_end = total_cl;
+        ثابت int64_t cl_فی_thread = (کل_cl + عدد_دھاگے - 1) / عدد_دھاگے;
+        ثابت int64_t cl_آغاز      = thread_id * cl_فی_thread;
+        int64_t       cl_انتہا        = cl_آغاز + cl_فی_thread;
+        اگر (cl_انتہا > کل_cl) {
+            cl_انتہا = کل_cl;
         }
-        if (cl_start >= total_cl) {
-            return 0;
+        اگر (cl_آغاز >= کل_cl) {
+            واپس 0;
         }
 
-        const int64_t es = cl_start * elems_per_cl;
-        int64_t       ee = cl_end * elems_per_cl;
-        if (ee > total_elements) {
-            ee = total_elements;
+        ثابت int64_t es = cl_آغاز * elems_فی_cl;
+        int64_t       ee = cl_انتہا * elems_فی_cl;
+        اگر (ee > کل_elements) {
+            ee = کل_elements;
         }
 
         int64_t pos = es;
 
         // Compute starting row coordinates
-        int64_t row_idx = pos / ne00;
-        int64_t col     = pos % ne00;
+        int64_t صف_idx = pos / ne00;
+        int64_t ستون     = pos % ne00;
 
-        while (pos < ee) {
+        جب (pos < ee) {
             // Decompose row_idx -> (i01, i02, i03)
-            const int64_t i03 = row_idx / (ne02 * ne01);
-            const int64_t i02 = (row_idx - i03 * ne02 * ne01) / ne01;
-            const int64_t i01 = row_idx - i03 * ne02 * ne01 - i02 * ne01;
+            ثابت int64_t i03 = صف_idx / (ne02 * ne01);
+            ثابت int64_t i02 = (صف_idx - i03 * ne02 * ne01) / ne01;
+            ثابت int64_t i01 = صف_idx - i03 * ne02 * ne01 - i02 * ne01;
 
-            const float * src_row = (const float *) ((const char *) src0_data + i01 * nb01 + i02 * nb02 + i03 * nb03);
+            ثابت اعشاری * src_صف = (ثابت اعشاری *) ((ثابت حرف *) src0_ڈیٹا + i01 * nb01 + i02 * nb02 + i03 * nb03);
 
             // How many elements left in this row and in our chunk
-            int64_t row_remaining   = ne00 - col;
-            int64_t chunk_remaining = ee - pos;
-            int32_t n               = (int32_t) (row_remaining < chunk_remaining ? row_remaining : chunk_remaining);
+            int64_t صف_بقایا   = ne00 - ستون;
+            int64_t chunk_بقایا = ee - pos;
+            int32_t n               = (int32_t) (صف_بقایا < chunk_بقایا ? صف_بقایا : chunk_بقایا);
 
-            vec_copy_f32(dst_data + pos, src_row + col, n);
+            vec_copy_f32(dst_ڈیٹا + pos, src_صف + ستون, n);
 
             pos += n;
-            col = 0;  // subsequent rows start at column 0
-            row_idx++;
+            ستون = 0;  // subsequent rows start at column 0
+            صف_idx++;
         }
     }
 
-    return 0;
+    واپس 0;
 }

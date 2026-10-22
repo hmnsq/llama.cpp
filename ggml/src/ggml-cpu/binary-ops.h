@@ -1,16 +1,16 @@
-#pragma once
+#ہدایت once
 
-#include "common.h"
+#شامل "common.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#اگر_تعریف_شدہ __cplusplus
+خارجی "C" {
+#اگر_ختم
 
-void ggml_compute_forward_add_non_quantized(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_sub(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_mul(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_div(const struct ggml_compute_params * params, struct ggml_tensor * dst);
+خالی ggml_compute_forward_جوڑو_non_quantized(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_sub(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_mul(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
+خالی ggml_compute_forward_div(ثابت ساخت ggml_compute_params * params, ساخت ggml_tensor * dst);
 
-#ifdef __cplusplus
+#اگر_تعریف_شدہ __cplusplus
 }
-#endif
+#اگر_ختم

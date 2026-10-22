@@ -3,92 +3,92 @@
 // dst[i] = src0[i] * scale + bias
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "platform.h"
+#شامل "ggml_tensor.h"
+#شامل "platform.h"
 
-#include <stdint.h>
+#شامل <stdint.h>
 
-struct ggml_et_scale_params {
-    struct ggml_tensor src0;   // F32 input tensor
-    struct ggml_tensor dst;    // F32 output tensor
-    float              scale;  // Scale factor
-    float              bias;   // Bias (additive offset)
+ساخت ggml_et_scale_params {
+    ساخت ggml_tensor src0;   // F32 input tensor
+    ساخت ggml_tensor dst;    // F32 output tensor
+    اعشاری              scale;  // Scale factor
+    اعشاری              bias;   // Bias (additive offset)
 };
 
-int entry_point(struct ggml_et_scale_params * params, void * env) {
+صحیح اندراج_نقطہ(ساخت ggml_et_scale_params * params, خالی * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    اگر (!kernel_env) {
+        واپس -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    صحیح thread_id   = get_relative_thread_id(kernel_env->shire_نقاب);
+    صحیح عدد_دھاگے = get_عدد_دھاگے(kernel_env->shire_نقاب);
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    اگر (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        واپس -1;
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * dst  = &params->dst;
+    ساخت ggml_tensor * src0 = &params->src0;
+    ساخت ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    اگر (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        واپس -1;
     }
 
-    float * src0_data = (float *) src0->data;
-    float * dst_data  = (float *) dst->data;
+    اعشاری * src0_ڈیٹا = (اعشاری *) src0->ڈیٹا;
+    اعشاری * dst_ڈیٹا  = (اعشاری *) dst->ڈیٹا;
 
-    if (!src0_data || !dst_data) {
-        return -1;
+    اگر (!src0_ڈیٹا || !dst_ڈیٹا) {
+        واپس -1;
     }
 
 
-    float scale = params->scale;
-    float bias  = params->bias;
+    اعشاری scale = params->scale;
+    اعشاری bias  = params->bias;
 
     // Total elements across all dimensions
-    const int64_t total_elements = src0->ne[0] * src0->ne[1] * src0->ne[2] * src0->ne[3];
+    ثابت int64_t کل_elements = src0->ne[0] * src0->ne[1] * src0->ne[2] * src0->ne[3];
 
     // Cache line = 64 bytes = 16 floats, but vector width = 8 floats
     // Parallelize at cache line granularity (16 floats)
-    const int64_t elements_per_cacheline = 16;
-    const int64_t total_cachelines       = (total_elements + elements_per_cacheline - 1) / elements_per_cacheline;
+    ثابت int64_t elements_فی_cacheline = 16;
+    ثابت int64_t کل_cachelines       = (کل_elements + elements_فی_cacheline - 1) / elements_فی_cacheline;
 
-    int64_t cachelines_per_thread = (total_cachelines + num_threads - 1) / num_threads;
-    int64_t start_cacheline       = thread_id * cachelines_per_thread;
-    int64_t end_cacheline         = start_cacheline + cachelines_per_thread;
+    int64_t cachelines_فی_thread = (کل_cachelines + عدد_دھاگے - 1) / عدد_دھاگے;
+    int64_t آغاز_cacheline       = thread_id * cachelines_فی_thread;
+    int64_t انتہا_cacheline         = آغاز_cacheline + cachelines_فی_thread;
 
-    if (end_cacheline > total_cachelines) {
-        end_cacheline = total_cachelines;
+    اگر (انتہا_cacheline > کل_cachelines) {
+        انتہا_cacheline = کل_cachelines;
     }
 
-    if (start_cacheline >= total_cachelines) {
-        return 0;
+    اگر (آغاز_cacheline >= کل_cachelines) {
+        واپس 0;
     }
 
-    int64_t start_elem = start_cacheline * elements_per_cacheline;
-    int64_t end_elem   = end_cacheline * elements_per_cacheline;
-    if (end_elem > total_elements) {
-        end_elem = total_elements;
+    int64_t آغاز_elem = آغاز_cacheline * elements_فی_cacheline;
+    int64_t انتہا_elem   = انتہا_cacheline * elements_فی_cacheline;
+    اگر (انتہا_elem > کل_elements) {
+        انتہا_elem = کل_elements;
     }
 
-    unsigned long temp_mask;
-    __asm__ volatile("mova.x.m %0" : "=r"(temp_mask));
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");
-    __asm__ volatile("fbc.ps f20, %[scale_ptr]\n" : : [scale_ptr] "m"(scale) : "f20");
-    __asm__ volatile("fbc.ps f21, %[bias_ptr]\n" : : [bias_ptr] "m"(bias) : "f21");
+    غیرعلامتی طویل عارضی_نقاب;
+    __asm__ متلون("mova.x.m %0" : "=r"(عارضی_نقاب));
+    __asm__ متلون("mov.m.x m0, x0, 0xFF");
+    __asm__ متلون("fbc.ps f20, %[scale_ptr]\n" : : [scale_ptr] "m"(scale) : "f20");
+    __asm__ متلون("fbc.ps f21, %[bias_ptr]\n" : : [bias_ptr] "m"(bias) : "f21");
 
-    for (int64_t i = start_elem; i < end_elem; i += 8) {
-        __asm__ volatile(
+    برائے (int64_t i = آغاز_elem; i < انتہا_elem; i += 8) {
+        __asm__ متلون(
             "flw.ps f10, %[src]\n"
             "fmadd.ps f10, f10, f20, f21\n"  // dst = src*scale + bias
             "fsw.ps f10, %[dst_out]\n"
-            : [dst_out] "=m"(*(float (*)[8]) & dst_data[i])
-            : [src] "m"(*(const float (*)[8]) & src0_data[i])
+            : [dst_برآمد] "=m"(*(اعشاری (*)[8]) & dst_ڈیٹا[i])
+            : [src] "m"(*(ثابت اعشاری (*)[8]) & src0_ڈیٹا[i])
             : "f10", "f20", "f21");
     }
-    __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
+    __asm__ متلون("mova.m.x %0" ::"r"(عارضی_نقاب));
 
-    return 0;
+    واپس 0;
 }

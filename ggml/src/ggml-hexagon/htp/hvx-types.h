@@ -1,36 +1,36 @@
-#ifndef HVX_TYPES_H
-#define HVX_TYPES_H
+#اگر_غیر_تعریف_شدہ HVX_TYPES_H
+#تعریف_کرو HVX_TYPES_H
 
-#include <stdbool.h>
-#include <stdint.h>
+#شامل <stdbool.h>
+#شامل <stdint.h>
 
-#include <hexagon_types.h>
+#شامل <hexagon_types.h>
 
-#define SIZEOF_FP32 (4)
-#define SIZEOF_FP16 (2)
-#define VLEN        (128)
-#define VLEN_FP32   (VLEN / SIZEOF_FP32)
-#define VLEN_FP16   (VLEN / SIZEOF_FP16)
+#تعریف_کرو SIZEOF_FP32 (4)
+#تعریف_کرو SIZEOF_FP16 (2)
+#تعریف_کرو VLEN        (128)
+#تعریف_کرو VLEN_FP32   (VLEN / SIZEOF_FP32)
+#تعریف_کرو VLEN_FP16   (VLEN / SIZEOF_FP16)
 
-typedef union {
-    HVX_Vector v;
+قسمتعریف اتحاد {
+    HVX_سمتیہ v;
     uint8_t    b[VLEN];
     uint16_t   h[VLEN_FP16];
     uint32_t   w[VLEN_FP32];
     __fp16     fp16[VLEN_FP16];
-    float      fp32[VLEN_FP32];
-} __attribute__((aligned(VLEN), packed)) HVX_VectorAlias;
+    اعشاری      fp32[VLEN_FP32];
+} __attribute__((aligned(VLEN), packed)) HVX_سمتیہ_Alias;
 
-typedef struct {
-    HVX_Vector v[2];
-} HVX_Vector_x2;
+قسمتعریف ساخت {
+    HVX_سمتیہ v[2];
+} HVX_سمتیہ_x2;
 
-typedef struct {
-    HVX_Vector v[4];
-} HVX_Vector_x4;
+قسمتعریف ساخت {
+    HVX_سمتیہ v[4];
+} HVX_سمتیہ_x4;
 
-typedef struct {
-    HVX_Vector v[8];
-} HVX_Vector_x8;
+قسمتعریف ساخت {
+    HVX_سمتیہ v[8];
+} HVX_سمتیہ_x8;
 
-#endif /* HVX_TYPES_H */
+#اگر_ختم /* HVX_TYPES_H */

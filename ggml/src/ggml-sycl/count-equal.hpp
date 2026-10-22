@@ -1,9 +1,9 @@
-#ifndef GGML_SYCL_COUNT_EQUAL_HPP
-#define GGML_SYCL_COUNT_EQUAL_HPP
-#include "common.hpp"
+#اگر_غیر_تعریف_شدہ GGML_SYCL_گنتی_EQUAL_HPP
+#تعریف_کرو GGML_SYCL_گنتی_EQUAL_HPP
+#شامل "common.hpp"
 
-#define SYCL_COUNT_EQUAL_CHUNK_SIZE 128
+#تعریف_کرو SYCL_گنتی_EQUAL_CHUNK_سائز 128
 
-void ggml_sycl_count_equal(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+خالی ggml_sycl_گنتی_equal(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-#endif //GGML_SYCL_COUNT_EQUAL_HPP
+#اگر_ختم //GGML_SYCL_COUNT_EQUAL_HPP

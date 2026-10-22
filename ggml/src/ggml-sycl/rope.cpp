@@ -1,651 +1,651 @@
-#include "rope.hpp"
-#include "convert.hpp"
-#include "ggml-sycl/common.hpp"
-#include "ggml.h"
+#شامل "rope.hpp"
+#شامل "convert.hpp"
+#شامل "ggml-sycl/common.hpp"
+#شامل "ggml.h"
 
-struct rope_corr_dims {
-    float v[2];
+ساخت rope_corr_dims {
+    اعشاری v[2];
 };
 
-struct mrope_sections {
-    int v[4];
+ساخت mrope_sections {
+    صحیح v[4];
 };
 
-static float rope_yarn_ramp(const float low, const float high, const int i0) {
-    const float y = (i0 / 2 - low) / sycl::max(0.001f, high - low);
-    return 1.0f - sycl::min(1.0f, sycl::max(0.0f, y));
+ساکن اعشاری rope_yarn_ramp(ثابت اعشاری کم, ثابت اعشاری بلند, ثابت صحیح i0) {
+    ثابت اعشاری y = (i0 / 2 - کم) / sycl::max(0.001f, بلند - کم);
+    واپس 1.0f - sycl::min(1.0f, sycl::max(0.0f, y));
 }
 
-template <bool forward>
-static void rope_yarn(const float theta_extrap, const float freq_scale,
-                      const rope_corr_dims corr_dims, const int64_t i0,
-                      const float ext_factor, float mscale, float &cos_theta,
-                      float &sin_theta) {
-    float theta_interp = freq_scale * theta_extrap;
-    float theta = theta_interp;
-    if (ext_factor != 0.0f) {
-        float ramp_mix =
-            rope_yarn_ramp(corr_dims.v[0], corr_dims.v[1], i0) * ext_factor;
+سانچہ <منطقی forward>
+ساکن خالی rope_yarn(ثابت اعشاری theta_extrap, ثابت اعشاری freq_scale,
+                      ثابت rope_corr_dims corr_dims, ثابت int64_t i0,
+                      ثابت اعشاری ext_ضربی_عدد, اعشاری mscale, اعشاری &cos_theta,
+                      اعشاری &sin_theta) {
+    اعشاری theta_interp = freq_scale * theta_extrap;
+    اعشاری theta = theta_interp;
+    اگر (ext_ضربی_عدد != 0.0f) {
+        اعشاری ramp_mix =
+            rope_yarn_ramp(corr_dims.v[0], corr_dims.v[1], i0) * ext_ضربی_عدد;
         theta = theta_interp * (1 - ramp_mix) + theta_extrap * ramp_mix;
 
-        mscale *= 1.0f + 0.1f * sycl::log(1.0f / freq_scale);
+        mscale *= 1.0f + 0.1f * sycl::لوگارتھم(1.0f / freq_scale);
     }
-    cos_theta = sycl::cos(theta) * mscale;
-    sin_theta = sycl::sin(theta) * mscale;
-    if (!forward) {
+    cos_theta = sycl::جیب_تمام(theta) * mscale;
+    sin_theta = sycl::جیب(theta) * mscale;
+    اگر (!forward) {
         sin_theta *= -1.0f;
     }
 }
 
-template <bool forward, bool has_ff, typename T, typename D>
-static void rope_norm(const T *x, D *dst, const int ne00, const int ne01,
-                      const int ne02, const int s01, const int s02,
-                      const int s03, const int s1, const int s2, const int s3,
-                      const int n_dims, const int n_offs, const int32_t *pos,
-                      const float freq_scale, const float ext_factor,
-                      const float attn_factor, const rope_corr_dims corr_dims,
-                      const float theta_scale, const float *freq_factors,
-                      const int64_t *row_indices, const int set_rows_stride) {
-    auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const int i0 = 2 * (item_ct1.get_local_range(1) * item_ct1.get_group(1) +
-                        item_ct1.get_local_id(1));
+سانچہ <منطقی forward, منطقی has_ff, قسم_نام T, قسم_نام D>
+ساکن خالی rope_norm(ثابت T *x, D *dst, ثابت صحیح ne00, ثابت صحیح ne01,
+                      ثابت صحیح ne02, ثابت صحیح s01, ثابت صحیح s02,
+                      ثابت صحیح s03, ثابت صحیح s1, ثابت صحیح s2, ثابت صحیح s3,
+                      ثابت صحیح n_dims, ثابت صحیح n_offs, ثابت int32_t *pos,
+                      ثابت اعشاری freq_scale, ثابت اعشاری ext_ضربی_عدد,
+                      ثابت اعشاری attn_ضربی_عدد, ثابت rope_corr_dims corr_dims,
+                      ثابت اعشاری theta_scale, ثابت اعشاری *freq_factors,
+                      ثابت int64_t *صف_indices, ثابت صحیح سیٹ_صفیں_stride) {
+    خودکار شے_ct1 = sycl::ext::oneapi::this_work_شے::get_nd_شے<3>();
+    ثابت صحیح i0 = 2 * (شے_ct1.get_local_range(1) * شے_ct1.get_گروہ(1) +
+                        شے_ct1.get_local_id(1));
 
-    if (i0 >= ne00) {
-        return;
+    اگر (i0 >= ne00) {
+        واپس;
     }
 
-    const int row_dst = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
-                        item_ct1.get_local_id(2);
+    ثابت صحیح صف_dst = شے_ct1.get_local_range(2) * شے_ct1.get_گروہ(2) +
+                        شے_ct1.get_local_id(2);
 
-    const uint32_t i3 = row_dst / (ne01 * ne02);
-    const uint32_t i2 = (row_dst - i3 * ne01 * ne02) / ne01;
-    const uint32_t i1 = row_dst - i3 * ne01 * ne02 - i2 * ne01;
+    ثابت uint32_t i3 = صف_dst / (ne01 * ne02);
+    ثابت uint32_t i2 = (صف_dst - i3 * ne01 * ne02) / ne01;
+    ثابت uint32_t i1 = صف_dst - i3 * ne01 * ne02 - i2 * ne01;
 
-    int idst = i0 + i1 * s1 + i2 * s2 + i3 * s3;
-    const int ix = i0 + i1 * s01 + i2 * s02 + i3 * s03;
+    صحیح idst = i0 + i1 * s1 + i2 * s2 + i3 * s3;
+    ثابت صحیح ix = i0 + i1 * s01 + i2 * s02 + i3 * s03;
 
-    if (set_rows_stride != 0) {
+    اگر (سیٹ_صفیں_stride != 0) {
         idst = i1 * s1 + i0;
-        idst += row_indices[i2] * set_rows_stride;
+        idst += صف_indices[i2] * سیٹ_صفیں_stride;
     }
 
-    const auto &store_coaelsced = [&](float x0, float x1) {
-        if constexpr (std::is_same_v<float, D>) {
+    ثابت خودکار &store_coaelsced = [&](اعشاری x0, اعشاری x1) {
+        اگر constexpr (std::is_same_v<اعشاری, D>) {
             sycl::float2 v = sycl::float2(x0, x1);
             ggml_sycl_memcpy_1<8>(dst + idst, &v);
-        } else if constexpr (std::is_same_v<sycl::half, D>) {
+        } ورنہ اگر constexpr (std::is_same_v<sycl::half, D>) {
             sycl::half2 v = sycl::half2(x0, x1);
             ggml_sycl_memcpy_1<4>(dst + idst, &v);
         }
     };
-    if (i0 < n_offs || i0 >= n_offs + n_dims) {
+    اگر (i0 < n_offs || i0 >= n_offs + n_dims) {
         store_coaelsced(x[ix + 0], x[ix + 1]);
-        return;
+        واپس;
     }
 
-    const int iw = i0 - n_offs; // relative idx
+    ثابت صحیح iw = i0 - n_offs; // relative idx
 
-    const float theta_base = pos[i2] * dpct::pow(theta_scale, iw / 2.0f);
+    ثابت اعشاری theta_بنیاد = pos[i2] * dpct::قوت(theta_scale, iw / 2.0f);
 
-    const float freq_factor = has_ff ? freq_factors[iw / 2] : 1.0f;
+    ثابت اعشاری freq_ضربی_عدد = has_ff ? freq_factors[iw / 2] : 1.0f;
 
-    float cos_theta;
-    float sin_theta;
+    اعشاری cos_theta;
+    اعشاری sin_theta;
 
-    rope_yarn<forward>(theta_base / freq_factor, freq_scale, corr_dims, iw,
-                       ext_factor, attn_factor, cos_theta, sin_theta);
+    rope_yarn<forward>(theta_بنیاد / freq_ضربی_عدد, freq_scale, corr_dims, iw,
+                       ext_ضربی_عدد, attn_ضربی_عدد, cos_theta, sin_theta);
 
-    const float x0 = x[ix + 0];
-    const float x1 = x[ix + 1];
+    ثابت اعشاری x0 = x[ix + 0];
+    ثابت اعشاری x1 = x[ix + 1];
 
     store_coaelsced(x0 * cos_theta - x1 * sin_theta,
                     x0 * sin_theta + x1 * cos_theta);
 }
 
-template <bool forward, bool has_ff, typename T, typename D>
-static void rope_neox(const T *x, D *dst, const int ne00, const int ne01,
-                      const int ne02, const int s01, const int s02,
-                      const int s03, const int s1, const int s2, const int s3,
-                      const int n_dims, const int n_offs, const int32_t *pos,
-                      const float freq_scale, const float ext_factor,
-                      const float attn_factor, const rope_corr_dims corr_dims,
-                      const float theta_scale, const float *freq_factors,
-                      const int64_t *row_indices, const int set_rows_stride) {
-    auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const int i0 = 2 * (item_ct1.get_local_range(1) * item_ct1.get_group(1) +
-                        item_ct1.get_local_id(1));
+سانچہ <منطقی forward, منطقی has_ff, قسم_نام T, قسم_نام D>
+ساکن خالی rope_neox(ثابت T *x, D *dst, ثابت صحیح ne00, ثابت صحیح ne01,
+                      ثابت صحیح ne02, ثابت صحیح s01, ثابت صحیح s02,
+                      ثابت صحیح s03, ثابت صحیح s1, ثابت صحیح s2, ثابت صحیح s3,
+                      ثابت صحیح n_dims, ثابت صحیح n_offs, ثابت int32_t *pos,
+                      ثابت اعشاری freq_scale, ثابت اعشاری ext_ضربی_عدد,
+                      ثابت اعشاری attn_ضربی_عدد, ثابت rope_corr_dims corr_dims,
+                      ثابت اعشاری theta_scale, ثابت اعشاری *freq_factors,
+                      ثابت int64_t *صف_indices, ثابت صحیح سیٹ_صفیں_stride) {
+    خودکار شے_ct1 = sycl::ext::oneapi::this_work_شے::get_nd_شے<3>();
+    ثابت صحیح i0 = 2 * (شے_ct1.get_local_range(1) * شے_ct1.get_گروہ(1) +
+                        شے_ct1.get_local_id(1));
 
-    if (i0 >= ne00) {
-        return;
+    اگر (i0 >= ne00) {
+        واپس;
     }
 
-    const int row_dst = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
-                        item_ct1.get_local_id(2);
+    ثابت صحیح صف_dst = شے_ct1.get_local_range(2) * شے_ct1.get_گروہ(2) +
+                        شے_ct1.get_local_id(2);
 
-    const uint32_t i3 = row_dst / (ne01 * ne02);
-    const uint32_t i2 = (row_dst - i3 * ne01 * ne02) / ne01;
-    const uint32_t i1 = row_dst - i3 * ne01 * ne02 - i2 * ne01;
+    ثابت uint32_t i3 = صف_dst / (ne01 * ne02);
+    ثابت uint32_t i2 = (صف_dst - i3 * ne01 * ne02) / ne01;
+    ثابت uint32_t i1 = صف_dst - i3 * ne01 * ne02 - i2 * ne01;
 
-    int idst = i0 / 2 + i1 * s1 + i2 * s2 + i3 * s3;
-    const int ix = i0 / 2 + i1 * s01 + i2 * s02 + i3 * s03;
+    صحیح idst = i0 / 2 + i1 * s1 + i2 * s2 + i3 * s3;
+    ثابت صحیح ix = i0 / 2 + i1 * s01 + i2 * s02 + i3 * s03;
 
-    if (set_rows_stride != 0) {
+    اگر (سیٹ_صفیں_stride != 0) {
         idst = i1 * s1 + i0 / 2;
-        idst += row_indices[i2] * set_rows_stride;
+        idst += صف_indices[i2] * سیٹ_صفیں_stride;
     }
 
-    if (i0 < n_offs || i0 >= n_offs + n_dims) {
+    اگر (i0 < n_offs || i0 >= n_offs + n_dims) {
         dst[idst + i0 / 2 + 0] = ggml_sycl_cast<D>(x[ix + i0 / 2 + 0]);
         dst[idst + i0 / 2 + 1] = ggml_sycl_cast<D>(x[ix + i0 / 2 + 1]);
 
-        return;
+        واپس;
     }
 
-    const int iw = i0 - n_offs; // relative idx
+    ثابت صحیح iw = i0 - n_offs; // relative idx
 
-    const float theta_base = pos[i2] * dpct::pow(theta_scale, iw / 2.0f);
+    ثابت اعشاری theta_بنیاد = pos[i2] * dpct::قوت(theta_scale, iw / 2.0f);
 
-    const float freq_factor = has_ff ? freq_factors[iw / 2] : 1.0f;
+    ثابت اعشاری freq_ضربی_عدد = has_ff ? freq_factors[iw / 2] : 1.0f;
 
-    float cos_theta;
-    float sin_theta;
+    اعشاری cos_theta;
+    اعشاری sin_theta;
 
-    rope_yarn<forward>(theta_base / freq_factor, freq_scale, corr_dims, iw,
-                       ext_factor, attn_factor, cos_theta, sin_theta);
+    rope_yarn<forward>(theta_بنیاد / freq_ضربی_عدد, freq_scale, corr_dims, iw,
+                       ext_ضربی_عدد, attn_ضربی_عدد, cos_theta, sin_theta);
 
     // idst/ix point at channel i0/2; the first channel of the rotated pair is n_offs + iw/2 = i0/2 + n_offs/2
-    const float x0 = x[ix + n_offs / 2 + 0];
-    const float x1 = x[ix + n_offs / 2 + n_dims / 2];
+    ثابت اعشاری x0 = x[ix + n_offs / 2 + 0];
+    ثابت اعشاری x1 = x[ix + n_offs / 2 + n_dims / 2];
 
     dst[idst + n_offs / 2 + 0] = ggml_sycl_cast<D>(x0 * cos_theta - x1 * sin_theta);
     dst[idst + n_offs / 2 + n_dims / 2] = ggml_sycl_cast<D>(x0 * sin_theta + x1 * cos_theta);
 }
 
-template <bool forward, bool has_ff, typename T>
-static void rope_multi(const T *x, T *dst, const int ne00, const int ne01,
-                       const int ne02, const int s01, const int s02,
-                       const int s03, const int s1, const int s2, const int s3,
-                       const int n_dims, const int n_offs, const int32_t *pos,
-                       const float freq_scale, const float ext_factor,
-                       const float attn_factor, const rope_corr_dims corr_dims,
-                       const float theta_scale, const float *freq_factors,
-                       const mrope_sections sections, const bool is_imrope) {
-    auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const int i0 = 2 * (item_ct1.get_local_range(1) * item_ct1.get_group(1) +
-                        item_ct1.get_local_id(1));
+سانچہ <منطقی forward, منطقی has_ff, قسم_نام T>
+ساکن خالی rope_multi(ثابت T *x, T *dst, ثابت صحیح ne00, ثابت صحیح ne01,
+                       ثابت صحیح ne02, ثابت صحیح s01, ثابت صحیح s02,
+                       ثابت صحیح s03, ثابت صحیح s1, ثابت صحیح s2, ثابت صحیح s3,
+                       ثابت صحیح n_dims, ثابت صحیح n_offs, ثابت int32_t *pos,
+                       ثابت اعشاری freq_scale, ثابت اعشاری ext_ضربی_عدد,
+                       ثابت اعشاری attn_ضربی_عدد, ثابت rope_corr_dims corr_dims,
+                       ثابت اعشاری theta_scale, ثابت اعشاری *freq_factors,
+                       ثابت mrope_sections sections, ثابت منطقی is_imrope) {
+    خودکار شے_ct1 = sycl::ext::oneapi::this_work_شے::get_nd_شے<3>();
+    ثابت صحیح i0 = 2 * (شے_ct1.get_local_range(1) * شے_ct1.get_گروہ(1) +
+                        شے_ct1.get_local_id(1));
 
-    if (i0 >= ne00) {
-        return;
+    اگر (i0 >= ne00) {
+        واپس;
     }
 
-    const int row_dst = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
-                        item_ct1.get_local_id(2);
+    ثابت صحیح صف_dst = شے_ct1.get_local_range(2) * شے_ct1.get_گروہ(2) +
+                        شے_ct1.get_local_id(2);
 
-    const uint32_t i3 = row_dst / (ne01 * ne02);
-    const uint32_t i2 = (row_dst - i3 * ne01 * ne02) / ne01;
-    const uint32_t i1 = row_dst - i3 * ne01 * ne02 - i2 * ne01;
+    ثابت uint32_t i3 = صف_dst / (ne01 * ne02);
+    ثابت uint32_t i2 = (صف_dst - i3 * ne01 * ne02) / ne01;
+    ثابت uint32_t i1 = صف_dst - i3 * ne01 * ne02 - i2 * ne01;
 
-    int idst = i0 / 2 + i1 * s1 + i2 * s2 + i3 * s3;
-    const int ix = i0 / 2 + i1 * s01 + i2 * s02 + i3 * s03;
+    صحیح idst = i0 / 2 + i1 * s1 + i2 * s2 + i3 * s3;
+    ثابت صحیح ix = i0 / 2 + i1 * s01 + i2 * s02 + i3 * s03;
 
-    if (i0 < n_offs || i0 >= n_offs + n_dims) {
+    اگر (i0 < n_offs || i0 >= n_offs + n_dims) {
         dst[idst + i0 / 2 + 0] = x[ix + i0 / 2 + 0];
         dst[idst + i0 / 2 + 1] = x[ix + i0 / 2 + 1];
 
-        return;
+        واپس;
     }
 
-    const int iw = i0 - n_offs; // relative idx
+    ثابت صحیح iw = i0 - n_offs; // relative idx
 
-    const int sect_dims =
+    ثابت صحیح sect_dims =
         sections.v[0] + sections.v[1] + sections.v[2] + sections.v[3];
-    const int sec_w = sections.v[1] + sections.v[0];
-    const int sector = (iw / 2) % sect_dims;
+    ثابت صحیح sec_w = sections.v[1] + sections.v[0];
+    ثابت صحیح sector = (iw / 2) % sect_dims;
 
-    float theta_base = 0.0;
-    if (is_imrope) {
-        if (sector % 3 == 1 && sector < 3 * sections.v[1]) { // h
-            theta_base = pos[i2 + ne02 * 1] * dpct::pow(theta_scale, iw / 2.0f);
-        } else if (sector % 3 == 2 && sector < 3 * sections.v[2]) { // w
-            theta_base = pos[i2 + ne02 * 2] * dpct::pow(theta_scale, iw / 2.0f);
-        } else if (sector % 3 == 0 && sector < 3 * sections.v[0]) { // t
-            theta_base = pos[i2] * dpct::pow(theta_scale, iw / 2.0f);
-        } else {
-            theta_base = pos[i2 + ne02 * 3] * dpct::pow(theta_scale, iw / 2.0f);
+    اعشاری theta_بنیاد = 0.0;
+    اگر (is_imrope) {
+        اگر (sector % 3 == 1 && sector < 3 * sections.v[1]) { // h
+            theta_بنیاد = pos[i2 + ne02 * 1] * dpct::قوت(theta_scale, iw / 2.0f);
+        } ورنہ اگر (sector % 3 == 2 && sector < 3 * sections.v[2]) { // w
+            theta_بنیاد = pos[i2 + ne02 * 2] * dpct::قوت(theta_scale, iw / 2.0f);
+        } ورنہ اگر (sector % 3 == 0 && sector < 3 * sections.v[0]) { // t
+            theta_بنیاد = pos[i2] * dpct::قوت(theta_scale, iw / 2.0f);
+        } ورنہ {
+            theta_بنیاد = pos[i2 + ne02 * 3] * dpct::قوت(theta_scale, iw / 2.0f);
         }
-    } else {
-        if (sector < sections.v[0]) {
-            theta_base = pos[i2] * dpct::pow(theta_scale, iw / 2.0f);
-        } else if (sector >= sections.v[0] && sector < sec_w) {
-            theta_base = pos[i2 + ne02 * 1] * dpct::pow(theta_scale, iw / 2.0f);
-        } else if (sector >= sec_w && sector < sec_w + sections.v[2]) {
-            theta_base = pos[i2 + ne02 * 2] * dpct::pow(theta_scale, iw / 2.0f);
-        } else if (sector >= sec_w + sections.v[2]) {
-            theta_base = pos[i2 + ne02 * 3] * dpct::pow(theta_scale, iw / 2.0f);
+    } ورنہ {
+        اگر (sector < sections.v[0]) {
+            theta_بنیاد = pos[i2] * dpct::قوت(theta_scale, iw / 2.0f);
+        } ورنہ اگر (sector >= sections.v[0] && sector < sec_w) {
+            theta_بنیاد = pos[i2 + ne02 * 1] * dpct::قوت(theta_scale, iw / 2.0f);
+        } ورنہ اگر (sector >= sec_w && sector < sec_w + sections.v[2]) {
+            theta_بنیاد = pos[i2 + ne02 * 2] * dpct::قوت(theta_scale, iw / 2.0f);
+        } ورنہ اگر (sector >= sec_w + sections.v[2]) {
+            theta_بنیاد = pos[i2 + ne02 * 3] * dpct::قوت(theta_scale, iw / 2.0f);
         }
     }
 
-    const float freq_factor = has_ff ? freq_factors[iw / 2] : 1.0f;
+    ثابت اعشاری freq_ضربی_عدد = has_ff ? freq_factors[iw / 2] : 1.0f;
 
-    float cos_theta;
-    float sin_theta;
+    اعشاری cos_theta;
+    اعشاری sin_theta;
 
-    rope_yarn<forward>(theta_base / freq_factor, freq_scale, corr_dims, iw,
-                       ext_factor, attn_factor, cos_theta, sin_theta);
+    rope_yarn<forward>(theta_بنیاد / freq_ضربی_عدد, freq_scale, corr_dims, iw,
+                       ext_ضربی_عدد, attn_ضربی_عدد, cos_theta, sin_theta);
 
     // idst/ix point at channel i0/2; the first channel of the rotated pair is n_offs + iw/2 = i0/2 + n_offs/2
-    const float x0 = x[ix + n_offs / 2 + 0];
-    const float x1 = x[ix + n_offs / 2 + n_dims / 2];
+    ثابت اعشاری x0 = x[ix + n_offs / 2 + 0];
+    ثابت اعشاری x1 = x[ix + n_offs / 2 + n_dims / 2];
 
     dst[idst + n_offs / 2 + 0] = x0 * cos_theta - x1 * sin_theta;
     dst[idst + n_offs / 2 + n_dims / 2] = x0 * sin_theta + x1 * cos_theta;
 }
 
-template <bool forward, bool has_ff, typename T>
-static void rope_vision(const T *x, T *dst, const int ne00, const int ne01,
-                        const int ne02, const int s01, const int s02,
-                        const int s03, const int s1, const int s2, const int s3,
-                        const int n_dims, const int32_t *pos,
-                        const float freq_scale, const float ext_factor,
-                        const float attn_factor, const rope_corr_dims corr_dims,
-                        const float theta_scale, const float *freq_factors,
-                        const mrope_sections sections) {
-    auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const int i0 = 2 * (item_ct1.get_local_range(1) * item_ct1.get_group(1) +
-                        item_ct1.get_local_id(1));
+سانچہ <منطقی forward, منطقی has_ff, قسم_نام T>
+ساکن خالی rope_vision(ثابت T *x, T *dst, ثابت صحیح ne00, ثابت صحیح ne01,
+                        ثابت صحیح ne02, ثابت صحیح s01, ثابت صحیح s02,
+                        ثابت صحیح s03, ثابت صحیح s1, ثابت صحیح s2, ثابت صحیح s3,
+                        ثابت صحیح n_dims, ثابت int32_t *pos,
+                        ثابت اعشاری freq_scale, ثابت اعشاری ext_ضربی_عدد,
+                        ثابت اعشاری attn_ضربی_عدد, ثابت rope_corr_dims corr_dims,
+                        ثابت اعشاری theta_scale, ثابت اعشاری *freq_factors,
+                        ثابت mrope_sections sections) {
+    خودکار شے_ct1 = sycl::ext::oneapi::this_work_شے::get_nd_شے<3>();
+    ثابت صحیح i0 = 2 * (شے_ct1.get_local_range(1) * شے_ct1.get_گروہ(1) +
+                        شے_ct1.get_local_id(1));
 
-    if (i0 >= ne00) {
-        return;
+    اگر (i0 >= ne00) {
+        واپس;
     }
 
-    const int row_dst = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
-                        item_ct1.get_local_id(2);
+    ثابت صحیح صف_dst = شے_ct1.get_local_range(2) * شے_ct1.get_گروہ(2) +
+                        شے_ct1.get_local_id(2);
 
-    const uint32_t i3 = row_dst / (ne01 * ne02);
-    const uint32_t i2 = (row_dst - i3 * ne01 * ne02) / ne01;
-    const uint32_t i1 = row_dst - i3 * ne01 * ne02 - i2 * ne01;
+    ثابت uint32_t i3 = صف_dst / (ne01 * ne02);
+    ثابت uint32_t i2 = (صف_dst - i3 * ne01 * ne02) / ne01;
+    ثابت uint32_t i1 = صف_dst - i3 * ne01 * ne02 - i2 * ne01;
 
-    int idst = i0 / 2 + i1 * s1 + i2 * s2 + i3 * s3;
-    const int ix = i0 / 2 + i1 * s01 + i2 * s02 + i3 * s03;
+    صحیح idst = i0 / 2 + i1 * s1 + i2 * s2 + i3 * s3;
+    ثابت صحیح ix = i0 / 2 + i1 * s01 + i2 * s02 + i3 * s03;
 
-    const int sect_dims = sections.v[0] + sections.v[1];
-    const int sec_w = sections.v[1] + sections.v[0];
-    const int sector = (i0 / 2) % sect_dims;
+    ثابت صحیح sect_dims = sections.v[0] + sections.v[1];
+    ثابت صحیح sec_w = sections.v[1] + sections.v[0];
+    ثابت صحیح sector = (i0 / 2) % sect_dims;
 
-    float theta_base = 0.0;
-    if (sector < sections.v[0]) {
-        const int p = sector;
-        theta_base = pos[i2] * dpct::pow(theta_scale, p);
-    } else if (sector >= sections.v[0] && sector < sec_w) {
-        const int p = sector - sections.v[0];
-        theta_base = pos[i2 + ne02] * dpct::pow(theta_scale, p);
+    اعشاری theta_بنیاد = 0.0;
+    اگر (sector < sections.v[0]) {
+        ثابت صحیح p = sector;
+        theta_بنیاد = pos[i2] * dpct::قوت(theta_scale, p);
+    } ورنہ اگر (sector >= sections.v[0] && sector < sec_w) {
+        ثابت صحیح p = sector - sections.v[0];
+        theta_بنیاد = pos[i2 + ne02] * dpct::قوت(theta_scale, p);
     }
 
-    const float freq_factor = has_ff ? freq_factors[i0 / 2] : 1.0f;
+    ثابت اعشاری freq_ضربی_عدد = has_ff ? freq_factors[i0 / 2] : 1.0f;
 
-    float cos_theta;
-    float sin_theta;
+    اعشاری cos_theta;
+    اعشاری sin_theta;
 
-    rope_yarn<forward>(theta_base / freq_factor, freq_scale, corr_dims, i0,
-                       ext_factor, attn_factor, cos_theta, sin_theta);
+    rope_yarn<forward>(theta_بنیاد / freq_ضربی_عدد, freq_scale, corr_dims, i0,
+                       ext_ضربی_عدد, attn_ضربی_عدد, cos_theta, sin_theta);
 
-    const float x0 = x[ix + 0];
-    const float x1 = x[ix + n_dims];
+    ثابت اعشاری x0 = x[ix + 0];
+    ثابت اعشاری x1 = x[ix + n_dims];
 
     dst[idst + 0] = x0 * cos_theta - x1 * sin_theta;
     dst[idst + n_dims] = x0 * sin_theta + x1 * cos_theta;
 }
 
-template <bool forward, typename T, typename D>
-static void
-rope_norm_sycl(const T *x, D *dst, const int ne00, const int ne01,
-               const int ne02, const int s01, const int s02, const int s03,
-               const int s1, const int s2, const int s3, const int n_dims,
-               const int n_offs, const int nr, const int32_t *pos, const float freq_scale,
-               const float freq_base, const float ext_factor,
-               const float attn_factor, const rope_corr_dims corr_dims,
-               const float *freq_factors, const int64_t *row_indices,
-               const int set_rows_stride, dpct::queue_ptr stream) {
+سانچہ <منطقی forward, قسم_نام T, قسم_نام D>
+ساکن خالی
+rope_norm_sycl(ثابت T *x, D *dst, ثابت صحیح ne00, ثابت صحیح ne01,
+               ثابت صحیح ne02, ثابت صحیح s01, ثابت صحیح s02, ثابت صحیح s03,
+               ثابت صحیح s1, ثابت صحیح s2, ثابت صحیح s3, ثابت صحیح n_dims,
+               ثابت صحیح n_offs, ثابت صحیح nr, ثابت int32_t *pos, ثابت اعشاری freq_scale,
+               ثابت اعشاری freq_بنیاد, ثابت اعشاری ext_ضربی_عدد,
+               ثابت اعشاری attn_ضربی_عدد, ثابت rope_corr_dims corr_dims,
+               ثابت اعشاری *freq_factors, ثابت int64_t *صف_indices,
+               ثابت صحیح سیٹ_صفیں_stride, dpct::قطار_ptr stream) {
     GGML_ASSERT(ne00 % 2 == 0);
-    const dpct::dim3 block_dims(1, SYCL_ROPE_BLOCK_SIZE, 1);
-    const int n_blocks_x =
-        (ne00 + 2 * SYCL_ROPE_BLOCK_SIZE - 1) / (2 * SYCL_ROPE_BLOCK_SIZE);
-    const dpct::dim3 block_nums(nr, n_blocks_x, 1);
+    ثابت dpct::dim3 بلاک_dims(1, SYCL_ROPE_بلاک_سائز, 1);
+    ثابت صحیح n_بلاکیں_x =
+        (ne00 + 2 * SYCL_ROPE_بلاک_سائز - 1) / (2 * SYCL_ROPE_بلاک_سائز);
+    ثابت dpct::dim3 بلاک_nums(nr, n_بلاکیں_x, 1);
 
-    const float theta_scale = powf(freq_base, -2.0f / n_dims);
+    ثابت اعشاری theta_scale = powf(freq_بنیاد, -2.0f / n_dims);
 
-    if (freq_factors == nullptr) {
+    اگر (freq_factors == خالی_اشاریہ) {
         stream->parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1) {
-                GGML_UNUSED(item_ct1);
-                rope_norm<forward, false>(
+            sycl::nd_range<3>(بلاک_nums * بلاک_dims, بلاک_dims),
+            [=](sycl::nd_شے<3> شے_ct1) {
+                GGML_غیر_مستعمل(شے_ct1);
+                rope_norm<forward, جھوٹ>(
                     x, dst, ne00, ne01, ne02, s01, s02, s03, s1, s2, s3, n_dims,
-                    n_offs, pos, freq_scale, ext_factor, attn_factor, corr_dims,
-                    theta_scale, freq_factors, row_indices, set_rows_stride);
+                    n_offs, pos, freq_scale, ext_ضربی_عدد, attn_ضربی_عدد, corr_dims,
+                    theta_scale, freq_factors, صف_indices, سیٹ_صفیں_stride);
             });
-    } else {
+    } ورنہ {
         stream->parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1) {
-                GGML_UNUSED(item_ct1);
-                rope_norm<forward, true>(
+            sycl::nd_range<3>(بلاک_nums * بلاک_dims, بلاک_dims),
+            [=](sycl::nd_شے<3> شے_ct1) {
+                GGML_غیر_مستعمل(شے_ct1);
+                rope_norm<forward, سچ>(
                     x, dst, ne00, ne01, ne02, s01, s02, s03, s1, s2, s3, n_dims,
-                    n_offs, pos, freq_scale, ext_factor, attn_factor, corr_dims,
-                    theta_scale, freq_factors, row_indices, set_rows_stride);
+                    n_offs, pos, freq_scale, ext_ضربی_عدد, attn_ضربی_عدد, corr_dims,
+                    theta_scale, freq_factors, صف_indices, سیٹ_صفیں_stride);
             });
     }
 }
 
-template <bool forward, typename T, typename D>
-static void
-rope_neox_sycl(const T *x, D *dst, const int ne00, const int ne01,
-               const int ne02, const int s01, const int s02, const int s03,
-               const int s1, const int s2, const int s3, const int n_dims,
-               const int n_offs, const int nr, const int32_t *pos, const float freq_scale,
-               const float freq_base, const float ext_factor,
-               const float attn_factor, const rope_corr_dims corr_dims,
-               const float *freq_factors, const int64_t *row_indices,
-               const int set_rows_stride, dpct::queue_ptr stream) {
+سانچہ <منطقی forward, قسم_نام T, قسم_نام D>
+ساکن خالی
+rope_neox_sycl(ثابت T *x, D *dst, ثابت صحیح ne00, ثابت صحیح ne01,
+               ثابت صحیح ne02, ثابت صحیح s01, ثابت صحیح s02, ثابت صحیح s03,
+               ثابت صحیح s1, ثابت صحیح s2, ثابت صحیح s3, ثابت صحیح n_dims,
+               ثابت صحیح n_offs, ثابت صحیح nr, ثابت int32_t *pos, ثابت اعشاری freq_scale,
+               ثابت اعشاری freq_بنیاد, ثابت اعشاری ext_ضربی_عدد,
+               ثابت اعشاری attn_ضربی_عدد, ثابت rope_corr_dims corr_dims,
+               ثابت اعشاری *freq_factors, ثابت int64_t *صف_indices,
+               ثابت صحیح سیٹ_صفیں_stride, dpct::قطار_ptr stream) {
     GGML_ASSERT(ne00 % 2 == 0);
-    const dpct::dim3 block_dims(1, SYCL_ROPE_BLOCK_SIZE, 1);
-    const int n_blocks_x =
-        (ne00 + 2 * SYCL_ROPE_BLOCK_SIZE - 1) / (2 * SYCL_ROPE_BLOCK_SIZE);
-    const dpct::dim3 block_nums(nr, n_blocks_x, 1);
+    ثابت dpct::dim3 بلاک_dims(1, SYCL_ROPE_بلاک_سائز, 1);
+    ثابت صحیح n_بلاکیں_x =
+        (ne00 + 2 * SYCL_ROPE_بلاک_سائز - 1) / (2 * SYCL_ROPE_بلاک_سائز);
+    ثابت dpct::dim3 بلاک_nums(nr, n_بلاکیں_x, 1);
 
-    const float theta_scale = powf(freq_base, -2.0f / n_dims);
+    ثابت اعشاری theta_scale = powf(freq_بنیاد, -2.0f / n_dims);
 
-    if (freq_factors == nullptr) {
+    اگر (freq_factors == خالی_اشاریہ) {
         stream->parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1) {
-                GGML_UNUSED(item_ct1);
-                rope_neox<forward, false>(
+            sycl::nd_range<3>(بلاک_nums * بلاک_dims, بلاک_dims),
+            [=](sycl::nd_شے<3> شے_ct1) {
+                GGML_غیر_مستعمل(شے_ct1);
+                rope_neox<forward, جھوٹ>(
                     x, dst, ne00, ne01, ne02, s01, s02, s03, s1, s2, s3, n_dims,
-                    n_offs, pos, freq_scale, ext_factor, attn_factor, corr_dims,
-                    theta_scale, freq_factors, row_indices, set_rows_stride);
+                    n_offs, pos, freq_scale, ext_ضربی_عدد, attn_ضربی_عدد, corr_dims,
+                    theta_scale, freq_factors, صف_indices, سیٹ_صفیں_stride);
             });
-    } else {
+    } ورنہ {
         stream->parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1) {
-                GGML_UNUSED(item_ct1);
-                rope_neox<forward, true>(
+            sycl::nd_range<3>(بلاک_nums * بلاک_dims, بلاک_dims),
+            [=](sycl::nd_شے<3> شے_ct1) {
+                GGML_غیر_مستعمل(شے_ct1);
+                rope_neox<forward, سچ>(
                     x, dst, ne00, ne01, ne02, s01, s02, s03, s1, s2, s3, n_dims,
-                    n_offs, pos, freq_scale, ext_factor, attn_factor, corr_dims,
-                    theta_scale, freq_factors, row_indices, set_rows_stride);
+                    n_offs, pos, freq_scale, ext_ضربی_عدد, attn_ضربی_عدد, corr_dims,
+                    theta_scale, freq_factors, صف_indices, سیٹ_صفیں_stride);
             });
     }
 }
 
-template <bool forward, typename T>
-static void
-rope_multi_sycl(const T *x, T *dst, const int ne00, const int ne01,
-                const int ne02, const int s01, const int s02, const int s03,
-                const int s1, const int s2, const int s3, const int n_dims,
-                const int n_offs, const int nr, const int32_t *pos, const float freq_scale,
-                const float freq_base, const float ext_factor,
-                const float attn_factor, const rope_corr_dims corr_dims,
-                const float *freq_factors, const mrope_sections sections,
-                const bool is_imrope, dpct::queue_ptr stream) {
+سانچہ <منطقی forward, قسم_نام T>
+ساکن خالی
+rope_multi_sycl(ثابت T *x, T *dst, ثابت صحیح ne00, ثابت صحیح ne01,
+                ثابت صحیح ne02, ثابت صحیح s01, ثابت صحیح s02, ثابت صحیح s03,
+                ثابت صحیح s1, ثابت صحیح s2, ثابت صحیح s3, ثابت صحیح n_dims,
+                ثابت صحیح n_offs, ثابت صحیح nr, ثابت int32_t *pos, ثابت اعشاری freq_scale,
+                ثابت اعشاری freq_بنیاد, ثابت اعشاری ext_ضربی_عدد,
+                ثابت اعشاری attn_ضربی_عدد, ثابت rope_corr_dims corr_dims,
+                ثابت اعشاری *freq_factors, ثابت mrope_sections sections,
+                ثابت منطقی is_imrope, dpct::قطار_ptr stream) {
     GGML_ASSERT(ne00 % 2 == 0);
-    const dpct::dim3 block_dims(1, SYCL_ROPE_BLOCK_SIZE, 1);
-    const int n_blocks_x =
-        (ne00 + 2 * SYCL_ROPE_BLOCK_SIZE - 1) / (2 * SYCL_ROPE_BLOCK_SIZE);
-    const dpct::dim3 block_nums(nr, n_blocks_x, 1);
+    ثابت dpct::dim3 بلاک_dims(1, SYCL_ROPE_بلاک_سائز, 1);
+    ثابت صحیح n_بلاکیں_x =
+        (ne00 + 2 * SYCL_ROPE_بلاک_سائز - 1) / (2 * SYCL_ROPE_بلاک_سائز);
+    ثابت dpct::dim3 بلاک_nums(nr, n_بلاکیں_x, 1);
 
-    const float theta_scale = powf(freq_base, -2.0f / n_dims);
+    ثابت اعشاری theta_scale = powf(freq_بنیاد, -2.0f / n_dims);
 
-    if (freq_factors == nullptr) {
+    اگر (freq_factors == خالی_اشاریہ) {
         stream->parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1) {
-                GGML_UNUSED(item_ct1);
-                rope_multi<forward, false, T>(
+            sycl::nd_range<3>(بلاک_nums * بلاک_dims, بلاک_dims),
+            [=](sycl::nd_شے<3> شے_ct1) {
+                GGML_غیر_مستعمل(شے_ct1);
+                rope_multi<forward, جھوٹ, T>(
                     x, dst, ne00, ne01, ne02, s01, s02, s03, s1, s2, s3, n_dims,
-                    n_offs, pos, freq_scale, ext_factor, attn_factor, corr_dims,
+                    n_offs, pos, freq_scale, ext_ضربی_عدد, attn_ضربی_عدد, corr_dims,
                     theta_scale, freq_factors, sections, is_imrope);
             });
-    } else {
+    } ورنہ {
         stream->parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1) {
-                GGML_UNUSED(item_ct1);
-                rope_multi<forward, true, T>(
+            sycl::nd_range<3>(بلاک_nums * بلاک_dims, بلاک_dims),
+            [=](sycl::nd_شے<3> شے_ct1) {
+                GGML_غیر_مستعمل(شے_ct1);
+                rope_multi<forward, سچ, T>(
                     x, dst, ne00, ne01, ne02, s01, s02, s03, s1, s2, s3, n_dims,
-                    n_offs, pos, freq_scale, ext_factor, attn_factor, corr_dims,
+                    n_offs, pos, freq_scale, ext_ضربی_عدد, attn_ضربی_عدد, corr_dims,
                     theta_scale, freq_factors, sections, is_imrope);
             });
     }
 }
 
-template <bool forward, typename T>
-static void
-rope_vision_sycl(const T *x, T *dst, const int ne00, const int ne01,
-                 const int ne02, const int s01, const int s02, const int s03,
-                 const int s1, const int s2, const int s3, const int n_dims,
-                 const int nr, const int32_t *pos, const float freq_scale,
-                 const float freq_base, const float ext_factor,
-                 const float attn_factor, const rope_corr_dims corr_dims,
-                 const float *freq_factors, const mrope_sections sections,
-                 dpct::queue_ptr stream) {
+سانچہ <منطقی forward, قسم_نام T>
+ساکن خالی
+rope_vision_sycl(ثابت T *x, T *dst, ثابت صحیح ne00, ثابت صحیح ne01,
+                 ثابت صحیح ne02, ثابت صحیح s01, ثابت صحیح s02, ثابت صحیح s03,
+                 ثابت صحیح s1, ثابت صحیح s2, ثابت صحیح s3, ثابت صحیح n_dims,
+                 ثابت صحیح nr, ثابت int32_t *pos, ثابت اعشاری freq_scale,
+                 ثابت اعشاری freq_بنیاد, ثابت اعشاری ext_ضربی_عدد,
+                 ثابت اعشاری attn_ضربی_عدد, ثابت rope_corr_dims corr_dims,
+                 ثابت اعشاری *freq_factors, ثابت mrope_sections sections,
+                 dpct::قطار_ptr stream) {
     GGML_ASSERT(ne00 % 2 == 0);
-    const dpct::dim3 block_dims(1, SYCL_ROPE_BLOCK_SIZE, 1);
-    const int n_blocks_x =
-        (ne00 + 2 * SYCL_ROPE_BLOCK_SIZE - 1) / (2 * SYCL_ROPE_BLOCK_SIZE);
-    const dpct::dim3 block_nums(nr, n_blocks_x, 1);
+    ثابت dpct::dim3 بلاک_dims(1, SYCL_ROPE_بلاک_سائز, 1);
+    ثابت صحیح n_بلاکیں_x =
+        (ne00 + 2 * SYCL_ROPE_بلاک_سائز - 1) / (2 * SYCL_ROPE_بلاک_سائز);
+    ثابت dpct::dim3 بلاک_nums(nr, n_بلاکیں_x, 1);
 
-    const float theta_scale = powf(freq_base, -2.0f / n_dims);
+    ثابت اعشاری theta_scale = powf(freq_بنیاد, -2.0f / n_dims);
 
-    if (freq_factors == nullptr) {
+    اگر (freq_factors == خالی_اشاریہ) {
         stream->parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1) {
-                GGML_UNUSED(item_ct1);
-                rope_vision<forward, false, T>(
+            sycl::nd_range<3>(بلاک_nums * بلاک_dims, بلاک_dims),
+            [=](sycl::nd_شے<3> شے_ct1) {
+                GGML_غیر_مستعمل(شے_ct1);
+                rope_vision<forward, جھوٹ, T>(
                     x, dst, ne00, ne01, ne02, s01, s02, s03, s1, s2, s3, n_dims,
-                    pos, freq_scale, ext_factor, attn_factor, corr_dims,
+                    pos, freq_scale, ext_ضربی_عدد, attn_ضربی_عدد, corr_dims,
                     theta_scale, freq_factors, sections);
             });
-    } else {
+    } ورنہ {
         stream->parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1) {
-                GGML_UNUSED(item_ct1);
-                rope_vision<forward, true, T>(
+            sycl::nd_range<3>(بلاک_nums * بلاک_dims, بلاک_dims),
+            [=](sycl::nd_شے<3> شے_ct1) {
+                GGML_غیر_مستعمل(شے_ct1);
+                rope_vision<forward, سچ, T>(
                     x, dst, ne00, ne01, ne02, s01, s02, s03, s1, s2, s3, n_dims,
-                    pos, freq_scale, ext_factor, attn_factor, corr_dims,
+                    pos, freq_scale, ext_ضربی_عدد, attn_ضربی_عدد, corr_dims,
                     theta_scale, freq_factors, sections);
             });
     }
 }
 
-template <bool forward>
-void ggml_sycl_op_rope_impl(ggml_backend_sycl_context &ctx, ggml_tensor *dst,
-                            const ggml_tensor *set_rows = nullptr) {
-    const ggml_tensor *src0 = dst->src[0];
-    const ggml_tensor *src1 = dst->src[1];
-    const ggml_tensor *src2 = dst->src[2];
+سانچہ <منطقی forward>
+خالی ggml_sycl_op_rope_impl(ggml_backend_sycl_context &ctx, ggml_tensor *dst,
+                            ثابت ggml_tensor *سیٹ_صفیں = خالی_اشاریہ) {
+    ثابت ggml_tensor *src0 = dst->src[0];
+    ثابت ggml_tensor *src1 = dst->src[1];
+    ثابت ggml_tensor *src2 = dst->src[2];
 
-    const float *src0_d = (const float *)src0->data;
-    const float *src1_d = (const float *)src1->data;
+    ثابت اعشاری *src0_d = (ثابت اعشاری *)src0->ڈیٹا;
+    ثابت اعشاری *src1_d = (ثابت اعشاری *)src1->ڈیٹا;
 
-    void *dst_d = dst->data;
-    const int64_t *row_indices = nullptr;
+    خالی *dst_d = dst->ڈیٹا;
+    ثابت int64_t *صف_indices = خالی_اشاریہ;
     ggml_type dst_type = dst->type;
-    int set_rows_stride = 0;
+    صحیح سیٹ_صفیں_stride = 0;
 
-    if (set_rows != nullptr) {
+    اگر (سیٹ_صفیں != خالی_اشاریہ) {
         GGML_ASSERT(forward);
-        dst_d = set_rows->data;
-        row_indices = (const int64_t *)set_rows->src[1]->data;
-        dst_type = set_rows->type;
-        set_rows_stride = set_rows->nb[1] / ggml_type_size(set_rows->type);
+        dst_d = سیٹ_صفیں->ڈیٹا;
+        صف_indices = (ثابت int64_t *)سیٹ_صفیں->src[1]->ڈیٹا;
+        dst_type = سیٹ_صفیں->type;
+        سیٹ_صفیں_stride = سیٹ_صفیں->nb[1] / ggml_type_سائز(سیٹ_صفیں->type);
     }
-    dpct::queue_ptr stream = ctx.stream();
+    dpct::قطار_ptr stream = ctx.stream();
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_F16);
     GGML_ASSERT(dst->type == GGML_TYPE_F32 || dst->type == GGML_TYPE_F16);
     GGML_ASSERT(src0->type == dst->type ||
                 (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F16));
 
-    const int64_t ne00 = src0->ne[0]; // head dims
-    const int64_t ne01 = src0->ne[1]; // num heads
-    const int64_t ne02 = src0->ne[2]; // num heads
-    const int64_t nr = ggml_nrows(src0);
+    ثابت int64_t ne00 = src0->ne[0]; // head dims
+    ثابت int64_t ne01 = src0->ne[1]; // num heads
+    ثابت int64_t ne02 = src0->ne[2]; // num heads
+    ثابت int64_t nr = ggml_nrows(src0);
 
-    const size_t s01 = src0->nb[1] / ggml_type_size(src0->type);
-    const size_t s02 = src0->nb[2] / ggml_type_size(src0->type);
-    const size_t s03 = src0->nb[3] / ggml_type_size(src0->type);
+    ثابت size_t s01 = src0->nb[1] / ggml_type_سائز(src0->type);
+    ثابت size_t s02 = src0->nb[2] / ggml_type_سائز(src0->type);
+    ثابت size_t s03 = src0->nb[3] / ggml_type_سائز(src0->type);
 
-    const size_t s1 = dst->nb[1] / ggml_type_size(dst->type);
-    const size_t s2 = dst->nb[2] / ggml_type_size(dst->type);
-    const size_t s3 = dst->nb[3] / ggml_type_size(dst->type);
+    ثابت size_t s1 = dst->nb[1] / ggml_type_سائز(dst->type);
+    ثابت size_t s2 = dst->nb[2] / ggml_type_سائز(dst->type);
+    ثابت size_t s3 = dst->nb[3] / ggml_type_سائز(dst->type);
 
-    const int n_dims = ((int32_t *)dst->op_params)[1];
-    const int mode = ((int32_t *)dst->op_params)[2];
-    const int n_ctx_orig = ((int32_t *)dst->op_params)[4];
-    const int n_offs = ((int32_t *)dst->op_params)[15];
+    ثابت صحیح n_dims = ((int32_t *)dst->op_params)[1];
+    ثابت صحیح mode = ((int32_t *)dst->op_params)[2];
+    ثابت صحیح n_ctx_orig = ((int32_t *)dst->op_params)[4];
+    ثابت صحیح n_offs = ((int32_t *)dst->op_params)[15];
     mrope_sections sections;
 
-    float freq_base;
-    float freq_scale;
-    float ext_factor;
-    float attn_factor;
-    float beta_fast;
-    float beta_slow;
+    اعشاری freq_بنیاد;
+    اعشاری freq_scale;
+    اعشاری ext_ضربی_عدد;
+    اعشاری attn_ضربی_عدد;
+    اعشاری beta_fast;
+    اعشاری beta_slow;
 
-    memcpy(&freq_base, (int32_t *)dst->op_params + 5, sizeof(float));
-    memcpy(&freq_scale, (int32_t *)dst->op_params + 6, sizeof(float));
-    memcpy(&ext_factor, (int32_t *)dst->op_params + 7, sizeof(float));
-    memcpy(&attn_factor, (int32_t *)dst->op_params + 8, sizeof(float));
-    memcpy(&beta_fast, (int32_t *)dst->op_params + 9, sizeof(float));
-    memcpy(&beta_slow, (int32_t *)dst->op_params + 10, sizeof(float));
-    memcpy(&sections.v, (int32_t *)dst->op_params + 11, sizeof(int) * 4);
+    حافظہ_نقل(&freq_بنیاد, (int32_t *)dst->op_params + 5, حجم(اعشاری));
+    حافظہ_نقل(&freq_scale, (int32_t *)dst->op_params + 6, حجم(اعشاری));
+    حافظہ_نقل(&ext_ضربی_عدد, (int32_t *)dst->op_params + 7, حجم(اعشاری));
+    حافظہ_نقل(&attn_ضربی_عدد, (int32_t *)dst->op_params + 8, حجم(اعشاری));
+    حافظہ_نقل(&beta_fast, (int32_t *)dst->op_params + 9, حجم(اعشاری));
+    حافظہ_نقل(&beta_slow, (int32_t *)dst->op_params + 10, حجم(اعشاری));
+    حافظہ_نقل(&sections.v, (int32_t *)dst->op_params + 11, حجم(صحیح) * 4);
 
-    const bool is_neox = mode & GGML_ROPE_TYPE_NEOX;
-    const bool is_mrope = mode & GGML_ROPE_TYPE_MROPE;
-    const bool is_imrope = mode == GGML_ROPE_TYPE_IMROPE;
-    const bool is_vision = mode == GGML_ROPE_TYPE_VISION;
+    ثابت منطقی is_neox = mode & GGML_ROPE_TYPE_NEOX;
+    ثابت منطقی is_mrope = mode & GGML_ROPE_TYPE_MROPE;
+    ثابت منطقی is_imrope = mode == GGML_ROPE_TYPE_IMROPE;
+    ثابت منطقی is_vision = mode == GGML_ROPE_TYPE_VISION;
 
-    if (is_mrope) {
+    اگر (is_mrope) {
         GGML_ASSERT(sections.v[0] > 0 || sections.v[1] > 0 ||
                     sections.v[2] > 0);
     }
 
-    if (is_vision) {
+    اگر (is_vision) {
         GGML_ASSERT(n_dims == ne00 / 2);
         GGML_ASSERT(n_offs == 0); // offset not supported for vision, as the rotated pairs span the whole row
     }
 
-    const int32_t *pos = (const int32_t *)src1_d;
+    ثابت int32_t *pos = (ثابت int32_t *)src1_d;
 
-    const float *freq_factors = nullptr;
-    if (src2 != nullptr) {
-        freq_factors = (const float *)src2->data;
+    ثابت اعشاری *freq_factors = خالی_اشاریہ;
+    اگر (src2 != خالی_اشاریہ) {
+        freq_factors = (ثابت اعشاری *)src2->ڈیٹا;
     }
 
     rope_corr_dims corr_dims;
-    ggml_rope_yarn_corr_dims(n_dims, n_ctx_orig, freq_base, beta_fast,
+    ggml_rope_yarn_corr_dims(n_dims, n_ctx_orig, freq_بنیاد, beta_fast,
                              beta_slow, corr_dims.v);
 
     // compute
-    if (is_neox) {
+    اگر (is_neox) {
         GGML_SYCL_DEBUG("%s: neox path\n", __func__);
-        if (src0->type == GGML_TYPE_F32 && dst_type == GGML_TYPE_F32) {
-            rope_neox_sycl<forward, float, float>(
-                (const float *)src0_d, (float *)dst_d, ne00, ne01, ne02, s01,
-                s02, s03, s1, s2, s3, n_dims, n_offs, nr, pos, freq_scale, freq_base,
-                ext_factor, attn_factor, corr_dims, freq_factors, row_indices,
-                set_rows_stride, stream);
-        } else if (src0->type == GGML_TYPE_F32 && dst_type == GGML_TYPE_F16) {
-            rope_neox_sycl<forward, float, sycl::half>(
-                (const float *)src0_d, (sycl::half *)dst_d, ne00, ne01, ne02,
+        اگر (src0->type == GGML_TYPE_F32 && dst_type == GGML_TYPE_F32) {
+            rope_neox_sycl<forward, اعشاری, اعشاری>(
+                (ثابت اعشاری *)src0_d, (اعشاری *)dst_d, ne00, ne01, ne02, s01,
+                s02, s03, s1, s2, s3, n_dims, n_offs, nr, pos, freq_scale, freq_بنیاد,
+                ext_ضربی_عدد, attn_ضربی_عدد, corr_dims, freq_factors, صف_indices,
+                سیٹ_صفیں_stride, stream);
+        } ورنہ اگر (src0->type == GGML_TYPE_F32 && dst_type == GGML_TYPE_F16) {
+            rope_neox_sycl<forward, اعشاری, sycl::half>(
+                (ثابت اعشاری *)src0_d, (sycl::half *)dst_d, ne00, ne01, ne02,
                 s01, s02, s03, s1, s2, s3, n_dims, n_offs, nr, pos, freq_scale,
-                freq_base, ext_factor, attn_factor, corr_dims, freq_factors,
-                row_indices, set_rows_stride, stream);
-        } else if (src0->type == GGML_TYPE_F16 && dst_type == GGML_TYPE_F16) {
+                freq_بنیاد, ext_ضربی_عدد, attn_ضربی_عدد, corr_dims, freq_factors,
+                صف_indices, سیٹ_صفیں_stride, stream);
+        } ورنہ اگر (src0->type == GGML_TYPE_F16 && dst_type == GGML_TYPE_F16) {
             rope_neox_sycl<forward, sycl::half, sycl::half>(
-                (const sycl::half *)src0_d, (sycl::half *)dst_d, ne00, ne01,
+                (ثابت sycl::half *)src0_d, (sycl::half *)dst_d, ne00, ne01,
                 ne02, s01, s02, s03, s1, s2, s3, n_dims, n_offs, nr, pos, freq_scale,
-                freq_base, ext_factor, attn_factor, corr_dims, freq_factors,
-                row_indices, set_rows_stride, stream);
-        } else {
+                freq_بنیاد, ext_ضربی_عدد, attn_ضربی_عدد, corr_dims, freq_factors,
+                صف_indices, سیٹ_صفیں_stride, stream);
+        } ورنہ {
             GGML_ABORT("Fatal error: Tensor type unsupported!");
         }
-    } else if (is_mrope && !is_vision) {
+    } ورنہ اگر (is_mrope && !is_vision) {
         GGML_SYCL_DEBUG("%s: mrope path\n", __func__);
-        if (src0->type == GGML_TYPE_F32) {
-            rope_multi_sycl<forward>((const float *)src0_d, (float *)dst_d,
+        اگر (src0->type == GGML_TYPE_F32) {
+            rope_multi_sycl<forward>((ثابت اعشاری *)src0_d, (اعشاری *)dst_d,
                                      ne00, ne01, ne02, s01, s02, s03, s1, s2,
-                                     s3, n_dims, n_offs, nr, pos, freq_scale, freq_base,
-                                     ext_factor, attn_factor, corr_dims,
+                                     s3, n_dims, n_offs, nr, pos, freq_scale, freq_بنیاد,
+                                     ext_ضربی_عدد, attn_ضربی_عدد, corr_dims,
                                      freq_factors, sections, is_imrope, stream);
-        } else if (src0->type == GGML_TYPE_F16) {
+        } ورنہ اگر (src0->type == GGML_TYPE_F16) {
             rope_multi_sycl<forward>(
-                (const sycl::half *)src0_d, (sycl::half *)dst_d, ne00, ne01,
+                (ثابت sycl::half *)src0_d, (sycl::half *)dst_d, ne00, ne01,
                 ne02, s01, s02, s03, s1, s2, s3, n_dims, n_offs, nr, pos, freq_scale,
-                freq_base, ext_factor, attn_factor, corr_dims, freq_factors,
+                freq_بنیاد, ext_ضربی_عدد, attn_ضربی_عدد, corr_dims, freq_factors,
                 sections, is_imrope, stream);
-        } else {
+        } ورنہ {
             GGML_ABORT("Fatal error: Tensor type unsupported!");
         }
-    } else if (is_vision) {
+    } ورنہ اگر (is_vision) {
         GGML_SYCL_DEBUG("%s: vision path\n", __func__);
-        if (src0->type == GGML_TYPE_F32) {
+        اگر (src0->type == GGML_TYPE_F32) {
             rope_vision_sycl<forward>(
-                (const float *)src0_d, (float *)dst_d, ne00, ne01, ne02, s01,
-                s02, s03, s1, s2, s3, n_dims, nr, pos, freq_scale, freq_base,
-                ext_factor, attn_factor, corr_dims, freq_factors, sections,
+                (ثابت اعشاری *)src0_d, (اعشاری *)dst_d, ne00, ne01, ne02, s01,
+                s02, s03, s1, s2, s3, n_dims, nr, pos, freq_scale, freq_بنیاد,
+                ext_ضربی_عدد, attn_ضربی_عدد, corr_dims, freq_factors, sections,
                 stream);
-        } else if (src0->type == GGML_TYPE_F16) {
+        } ورنہ اگر (src0->type == GGML_TYPE_F16) {
             rope_vision_sycl<forward>(
-                (const sycl::half *)src0_d, (sycl::half *)dst_d, ne00, ne01,
+                (ثابت sycl::half *)src0_d, (sycl::half *)dst_d, ne00, ne01,
                 ne02, s01, s02, s03, s1, s2, s3, n_dims, nr, pos, freq_scale,
-                freq_base, ext_factor, attn_factor, corr_dims, freq_factors,
+                freq_بنیاد, ext_ضربی_عدد, attn_ضربی_عدد, corr_dims, freq_factors,
                 sections, stream);
-        } else {
+        } ورنہ {
             GGML_ABORT("Fatal error: Tensor type unsupported!");
         }
-    } else {
+    } ورنہ {
         GGML_SYCL_DEBUG("%s: norm path\n", __func__);
-        if (src0->type == GGML_TYPE_F32 && dst_type == GGML_TYPE_F32) {
-            rope_norm_sycl<forward, float, float>(
-                (const float *)src0_d, (float *)dst_d, ne00, ne01, ne02, s01,
-                s02, s03, s1, s2, s3, n_dims, n_offs, nr, pos, freq_scale, freq_base,
-                ext_factor, attn_factor, corr_dims, freq_factors, row_indices,
-                set_rows_stride, stream);
-        } else if (src0->type == GGML_TYPE_F32 && dst_type == GGML_TYPE_F16) {
-            rope_norm_sycl<forward, float, sycl::half>(
-                (const float *)src0_d, (sycl::half *)dst_d, ne00, ne01, ne02,
+        اگر (src0->type == GGML_TYPE_F32 && dst_type == GGML_TYPE_F32) {
+            rope_norm_sycl<forward, اعشاری, اعشاری>(
+                (ثابت اعشاری *)src0_d, (اعشاری *)dst_d, ne00, ne01, ne02, s01,
+                s02, s03, s1, s2, s3, n_dims, n_offs, nr, pos, freq_scale, freq_بنیاد,
+                ext_ضربی_عدد, attn_ضربی_عدد, corr_dims, freq_factors, صف_indices,
+                سیٹ_صفیں_stride, stream);
+        } ورنہ اگر (src0->type == GGML_TYPE_F32 && dst_type == GGML_TYPE_F16) {
+            rope_norm_sycl<forward, اعشاری, sycl::half>(
+                (ثابت اعشاری *)src0_d, (sycl::half *)dst_d, ne00, ne01, ne02,
                 s01, s02, s03, s1, s2, s3, n_dims, n_offs, nr, pos, freq_scale,
-                freq_base, ext_factor, attn_factor, corr_dims, freq_factors,
-                row_indices, set_rows_stride, stream);
-        } else if (src0->type == GGML_TYPE_F16 && dst_type == GGML_TYPE_F16) {
+                freq_بنیاد, ext_ضربی_عدد, attn_ضربی_عدد, corr_dims, freq_factors,
+                صف_indices, سیٹ_صفیں_stride, stream);
+        } ورنہ اگر (src0->type == GGML_TYPE_F16 && dst_type == GGML_TYPE_F16) {
             rope_norm_sycl<forward, sycl::half, sycl::half>(
-                (const sycl::half *)src0_d, (sycl::half *)dst_d, ne00, ne01,
+                (ثابت sycl::half *)src0_d, (sycl::half *)dst_d, ne00, ne01,
                 ne02, s01, s02, s03, s1, s2, s3, n_dims, n_offs, nr, pos, freq_scale,
-                freq_base, ext_factor, attn_factor, corr_dims, freq_factors,
-                row_indices, set_rows_stride, stream);
-        } else {
+                freq_بنیاد, ext_ضربی_عدد, attn_ضربی_عدد, corr_dims, freq_factors,
+                صف_indices, سیٹ_صفیں_stride, stream);
+        } ورنہ {
             GGML_ABORT("Fatal error: Tensor type unsupported!");
         }
     }
 }
 
-void ggml_sycl_rope(ggml_backend_sycl_context &ctx, ggml_tensor *dst) {
+خالی ggml_sycl_rope(ggml_backend_sycl_context &ctx, ggml_tensor *dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/3);
 
-    ggml_sycl_op_rope_impl<true>(ctx, dst);
+    ggml_sycl_op_rope_impl<سچ>(ctx, dst);
 }
 
-void ggml_sycl_rope_back(ggml_backend_sycl_context &ctx, ggml_tensor *dst) {
+خالی ggml_sycl_rope_عقب(ggml_backend_sycl_context &ctx, ggml_tensor *dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/3);
-    ggml_sycl_op_rope_impl<false>(ctx, dst);
+    ggml_sycl_op_rope_impl<جھوٹ>(ctx, dst);
 }
 
-void ggml_sycl_rope_fused(ggml_backend_sycl_context &ctx, ggml_tensor *rope,
-                          ggml_tensor *set_rows) {
+خالی ggml_sycl_rope_fused(ggml_backend_sycl_context &ctx, ggml_tensor *rope,
+                          ggml_tensor *سیٹ_صفیں) {
     scope_op_debug_print scope_dbg_print(__func__, rope, /*num_src=*/3);
-    ggml_sycl_op_rope_impl<true>(ctx, rope, set_rows);
+    ggml_sycl_op_rope_impl<سچ>(ctx, rope, سیٹ_صفیں);
 }

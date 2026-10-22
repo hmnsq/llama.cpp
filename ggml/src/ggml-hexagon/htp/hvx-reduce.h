@@ -1,409 +1,409 @@
-#ifndef HVX_REDUCE_H
-#define HVX_REDUCE_H
+#اگر_غیر_تعریف_شدہ HVX_REDUCE_H
+#تعریف_کرو HVX_REDUCE_H
 
-#include <math.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <assert.h>
+#شامل <math.h>
+#شامل <stdbool.h>
+#شامل <stdint.h>
+#شامل <assert.h>
 
-#include "hex-utils.h"
-#include "hvx-base.h"
-#include "hvx-types.h"
+#شامل "hex-utils.h"
+#شامل "hvx-base.h"
+#شامل "hvx-types.h"
 
-static inline HVX_Vector hvx_vec_reduce_sum_n_i32(HVX_Vector in, unsigned int n) {
-    unsigned int total = n * 4;  // total vec nbytes
-    unsigned int width = 4;      // int32
+ساکن اندرونی HVX_سمتیہ hvx_vec_reduce_مجموع_n_i32(HVX_سمتیہ اندر, غیرعلامتی صحیح n) {
+    غیرعلامتی صحیح کل = n * 4;  // total vec nbytes
+    غیرعلامتی صحیح چوڑائی = 4;      // int32
 
-    HVX_Vector sum = in, sum_t;
-    while (width < total) {
-        sum_t = Q6_V_vror_VR(sum, width);     // rotate right
-        sum   = Q6_Vw_vadd_VwVw(sum_t, sum);  // elementwise sum
-        width = width << 1;
+    HVX_سمتیہ مجموع = اندر, مجموع_t;
+    جب (چوڑائی < کل) {
+        مجموع_t = Q6_V_vror_VR(مجموع, چوڑائی);     // rotate right
+        مجموع   = Q6_Vw_vadd_VwVw(مجموع_t, مجموع);  // elementwise sum
+        چوڑائی = چوڑائی << 1;
     }
-    return sum;
+    واپس مجموع;
 }
 
-static inline HVX_Vector hvx_vec_reduce_sum_i32(HVX_Vector in) {
-    return hvx_vec_reduce_sum_n_i32(in, 32);
+ساکن اندرونی HVX_سمتیہ hvx_vec_reduce_مجموع_i32(HVX_سمتیہ اندر) {
+    واپس hvx_vec_reduce_مجموع_n_i32(اندر, 32);
 }
 
-static inline HVX_Vector hvx_vec_reduce_sum_n_qf32(HVX_Vector in, unsigned int n) {
-    unsigned int total = n * 4;  // total vec nbytes
-    unsigned int width = 4;      // fp32 nbytes
+ساکن اندرونی HVX_سمتیہ hvx_vec_reduce_مجموع_n_qf32(HVX_سمتیہ اندر, غیرعلامتی صحیح n) {
+    غیرعلامتی صحیح کل = n * 4;  // total vec nbytes
+    غیرعلامتی صحیح چوڑائی = 4;      // fp32 nbytes
 
-    HVX_Vector sum = in, sum_t;
-    while (width < total) {
-        sum_t = Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(sum), width);  // rotate right
-        sum   = Q6_Vqf32_vadd_Vqf32Vsf(sum, sum_t);             // elementwise sum
-        width = width << 1;
+    HVX_سمتیہ مجموع = اندر, مجموع_t;
+    جب (چوڑائی < کل) {
+        مجموع_t = Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(مجموع), چوڑائی);  // rotate right
+        مجموع   = Q6_Vqf32_vadd_Vqf32Vsf(مجموع, مجموع_t);             // elementwise sum
+        چوڑائی = چوڑائی << 1;
     }
-    return sum;
+    واپس مجموع;
 }
 
-static inline HVX_Vector hvx_vec_reduce_sum_qf32(HVX_Vector in) {
-    return hvx_vec_reduce_sum_n_qf32(in, 32);
+ساکن اندرونی HVX_سمتیہ hvx_vec_reduce_مجموع_qf32(HVX_سمتیہ اندر) {
+    واپس hvx_vec_reduce_مجموع_n_qf32(اندر, 32);
 }
 
-#if __HVX_ARCH__ > 75
+#اگر __HVX_ARCH__ > 75
 
-static inline HVX_Vector hvx_vec_reduce_sum_f32x4(HVX_Vector_x4 in) {
-    HVX_VectorPair sum_p01 = Q6_W_vshuff_VVR(in.v[1], in.v[0], 4);
-    HVX_VectorPair sum_p23 = Q6_W_vshuff_VVR(in.v[3], in.v[2], 4);
-    HVX_Vector  sum_sf01  = Q6_Vsf_vadd_VsfVsf(Q6_V_lo_W(sum_p01), Q6_V_hi_W(sum_p01));
-    HVX_Vector  sum_sf23  = Q6_Vsf_vadd_VsfVsf(Q6_V_lo_W(sum_p23), Q6_V_hi_W(sum_p23));
+ساکن اندرونی HVX_سمتیہ hvx_vec_reduce_مجموع_f32x4(HVX_سمتیہ_x4 اندر) {
+    HVX_سمتیہ_Pair مجموع_p01 = Q6_W_vshuff_VVR(اندر.v[1], اندر.v[0], 4);
+    HVX_سمتیہ_Pair مجموع_p23 = Q6_W_vshuff_VVR(اندر.v[3], اندر.v[2], 4);
+    HVX_سمتیہ  مجموع_sf01  = Q6_Vsf_vadd_VsfVsf(Q6_V_lo_W(مجموع_p01), Q6_V_hi_W(مجموع_p01));
+    HVX_سمتیہ  مجموع_sf23  = Q6_Vsf_vadd_VsfVsf(Q6_V_lo_W(مجموع_p23), Q6_V_hi_W(مجموع_p23));
 
-    HVX_VectorPair sum_p0123 = Q6_W_vshuff_VVR(sum_sf23, sum_sf01, 8);
-    HVX_Vector  sum_sf       = Q6_Vsf_vadd_VsfVsf(Q6_V_lo_W(sum_p0123), Q6_V_hi_W(sum_p0123));
+    HVX_سمتیہ_Pair مجموع_p0123 = Q6_W_vshuff_VVR(مجموع_sf23, مجموع_sf01, 8);
+    HVX_سمتیہ  مجموع_sf       = Q6_Vsf_vadd_VsfVsf(Q6_V_lo_W(مجموع_p0123), Q6_V_hi_W(مجموع_p0123));
 
-    sum_sf = Q6_Vsf_vadd_VsfVsf(sum_sf, Q6_V_vror_VR(sum_sf, VLEN / 2));
-    sum_sf = Q6_Vsf_vadd_VsfVsf(sum_sf, Q6_V_vror_VR(sum_sf, VLEN / 4));
-    sum_sf = Q6_Vsf_vadd_VsfVsf(sum_sf, Q6_V_vror_VR(sum_sf, VLEN / 8));
-    return sum_sf;
+    مجموع_sf = Q6_Vsf_vadd_VsfVsf(مجموع_sf, Q6_V_vror_VR(مجموع_sf, VLEN / 2));
+    مجموع_sf = Q6_Vsf_vadd_VsfVsf(مجموع_sf, Q6_V_vror_VR(مجموع_sf, VLEN / 4));
+    مجموع_sf = Q6_Vsf_vadd_VsfVsf(مجموع_sf, Q6_V_vror_VR(مجموع_sf, VLEN / 8));
+    واپس مجموع_sf;
 }
 
-static inline HVX_Vector hvx_vec_reduce_sum_f32x2(HVX_Vector in0, HVX_Vector in1) {
-    HVX_VectorPair sump = Q6_W_vshuff_VVR(in1, in0, 4);
-    HVX_Vector  sum_sf  = Q6_Vsf_vadd_VsfVsf(Q6_V_lo_W(sump), Q6_V_hi_W(sump));
+ساکن اندرونی HVX_سمتیہ hvx_vec_reduce_مجموع_f32x2(HVX_سمتیہ in0, HVX_سمتیہ in1) {
+    HVX_سمتیہ_Pair sump = Q6_W_vshuff_VVR(in1, in0, 4);
+    HVX_سمتیہ  مجموع_sf  = Q6_Vsf_vadd_VsfVsf(Q6_V_lo_W(sump), Q6_V_hi_W(sump));
 
-    sum_sf = Q6_Vsf_vadd_VsfVsf(sum_sf, Q6_V_vror_VR(sum_sf, VLEN / 2));
-    sum_sf = Q6_Vsf_vadd_VsfVsf(sum_sf, Q6_V_vror_VR(sum_sf, VLEN / 4));
-    sum_sf = Q6_Vsf_vadd_VsfVsf(sum_sf, Q6_V_vror_VR(sum_sf, VLEN / 8));
-    sum_sf = Q6_Vsf_vadd_VsfVsf(sum_sf, Q6_V_vror_VR(sum_sf, VLEN / 16));
-    return sum_sf;
+    مجموع_sf = Q6_Vsf_vadd_VsfVsf(مجموع_sf, Q6_V_vror_VR(مجموع_sf, VLEN / 2));
+    مجموع_sf = Q6_Vsf_vadd_VsfVsf(مجموع_sf, Q6_V_vror_VR(مجموع_sf, VLEN / 4));
+    مجموع_sf = Q6_Vsf_vadd_VsfVsf(مجموع_sf, Q6_V_vror_VR(مجموع_sf, VLEN / 8));
+    مجموع_sf = Q6_Vsf_vadd_VsfVsf(مجموع_sf, Q6_V_vror_VR(مجموع_sf, VLEN / 16));
+    واپس مجموع_sf;
 }
 
-static inline HVX_Vector hvx_vec_reduce_sum_n_f32(HVX_Vector in, unsigned int n) {
-    unsigned int total = n * 4;  // total vec nbytes
-    unsigned int width = 4;      // fp32 nbytes
+ساکن اندرونی HVX_سمتیہ hvx_vec_reduce_مجموع_n_f32(HVX_سمتیہ اندر, غیرعلامتی صحیح n) {
+    غیرعلامتی صحیح کل = n * 4;  // total vec nbytes
+    غیرعلامتی صحیح چوڑائی = 4;      // fp32 nbytes
 
-    HVX_Vector sum = in, sum_t;
-    while (width < total) {
-        sum_t = Q6_V_vror_VR(sum, width);       // rotate right
-        sum   = Q6_Vsf_vadd_VsfVsf(sum, sum_t); // elementwise sum
-        width = width << 1;
+    HVX_سمتیہ مجموع = اندر, مجموع_t;
+    جب (چوڑائی < کل) {
+        مجموع_t = Q6_V_vror_VR(مجموع, چوڑائی);       // rotate right
+        مجموع   = Q6_Vsf_vadd_VsfVsf(مجموع, مجموع_t); // elementwise sum
+        چوڑائی = چوڑائی << 1;
     }
-    return sum;
+    واپس مجموع;
 }
 
-#else
+#ورنہ
 
-static inline HVX_Vector hvx_vec_reduce_sum_f32x4(HVX_Vector_x4 in) {
-    HVX_VectorPair sum_p01  = Q6_W_vshuff_VVR(in.v[1], in.v[0], 4);
-    HVX_VectorPair sum_p23  = Q6_W_vshuff_VVR(in.v[3], in.v[2], 4);
-    HVX_Vector     sum_qf01 = Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(sum_p01), Q6_V_hi_W(sum_p01));
-    HVX_Vector     sum_qf23 = Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(sum_p23), Q6_V_hi_W(sum_p23));
+ساکن اندرونی HVX_سمتیہ hvx_vec_reduce_مجموع_f32x4(HVX_سمتیہ_x4 اندر) {
+    HVX_سمتیہ_Pair مجموع_p01  = Q6_W_vshuff_VVR(اندر.v[1], اندر.v[0], 4);
+    HVX_سمتیہ_Pair مجموع_p23  = Q6_W_vshuff_VVR(اندر.v[3], اندر.v[2], 4);
+    HVX_سمتیہ     مجموع_qf01 = Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(مجموع_p01), Q6_V_hi_W(مجموع_p01));
+    HVX_سمتیہ     مجموع_qf23 = Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(مجموع_p23), Q6_V_hi_W(مجموع_p23));
 
-    HVX_VectorPair sum_p0123 = Q6_W_vshuff_VVR(Q6_Vsf_equals_Vqf32(sum_qf23), Q6_Vsf_equals_Vqf32(sum_qf01), 8);
-    HVX_Vector     sum_qf    = Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(sum_p0123), Q6_V_hi_W(sum_p0123));
+    HVX_سمتیہ_Pair مجموع_p0123 = Q6_W_vshuff_VVR(Q6_Vsf_equals_Vqf32(مجموع_qf23), Q6_Vsf_equals_Vqf32(مجموع_qf01), 8);
+    HVX_سمتیہ     مجموع_qf    = Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(مجموع_p0123), Q6_V_hi_W(مجموع_p0123));
 
-    sum_qf = Q6_Vqf32_vadd_Vqf32Vsf(sum_qf, Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(sum_qf), VLEN / 2));
-    sum_qf = Q6_Vqf32_vadd_Vqf32Vsf(sum_qf, Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(sum_qf), VLEN / 4));
-    sum_qf = Q6_Vqf32_vadd_Vqf32Vsf(sum_qf, Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(sum_qf), VLEN / 8));
-    return Q6_Vsf_equals_Vqf32(sum_qf);
+    مجموع_qf = Q6_Vqf32_vadd_Vqf32Vsf(مجموع_qf, Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(مجموع_qf), VLEN / 2));
+    مجموع_qf = Q6_Vqf32_vadd_Vqf32Vsf(مجموع_qf, Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(مجموع_qf), VLEN / 4));
+    مجموع_qf = Q6_Vqf32_vadd_Vqf32Vsf(مجموع_qf, Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(مجموع_qf), VLEN / 8));
+    واپس Q6_Vsf_equals_Vqf32(مجموع_qf);
 }
 
-static inline HVX_Vector hvx_vec_reduce_sum_f32x2(HVX_Vector in0, HVX_Vector in1) {
-    HVX_VectorPair sump = Q6_W_vshuff_VVR(in1, in0, 4);
-    HVX_Vector  sum_qf  = Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(sump), Q6_V_hi_W(sump));
+ساکن اندرونی HVX_سمتیہ hvx_vec_reduce_مجموع_f32x2(HVX_سمتیہ in0, HVX_سمتیہ in1) {
+    HVX_سمتیہ_Pair sump = Q6_W_vshuff_VVR(in1, in0, 4);
+    HVX_سمتیہ  مجموع_qf  = Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(sump), Q6_V_hi_W(sump));
 
-    sum_qf = Q6_Vqf32_vadd_Vqf32Vsf(sum_qf, Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(sum_qf), VLEN / 2));
-    sum_qf = Q6_Vqf32_vadd_Vqf32Vsf(sum_qf, Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(sum_qf), VLEN / 4));
-    sum_qf = Q6_Vqf32_vadd_Vqf32Vsf(sum_qf, Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(sum_qf), VLEN / 8));
-    sum_qf = Q6_Vqf32_vadd_Vqf32Vsf(sum_qf, Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(sum_qf), VLEN / 16));
-    return Q6_Vsf_equals_Vqf32(sum_qf);
+    مجموع_qf = Q6_Vqf32_vadd_Vqf32Vsf(مجموع_qf, Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(مجموع_qf), VLEN / 2));
+    مجموع_qf = Q6_Vqf32_vadd_Vqf32Vsf(مجموع_qf, Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(مجموع_qf), VLEN / 4));
+    مجموع_qf = Q6_Vqf32_vadd_Vqf32Vsf(مجموع_qf, Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(مجموع_qf), VLEN / 8));
+    مجموع_qf = Q6_Vqf32_vadd_Vqf32Vsf(مجموع_qf, Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(مجموع_qf), VLEN / 16));
+    واپس Q6_Vsf_equals_Vqf32(مجموع_qf);
 }
 
-static inline HVX_Vector hvx_vec_reduce_sum_n_f32(HVX_Vector in, unsigned int n) {
-    unsigned int total = n * 4;  // total vec nbytes
-    unsigned int width = 4;      // fp32 nbytes
+ساکن اندرونی HVX_سمتیہ hvx_vec_reduce_مجموع_n_f32(HVX_سمتیہ اندر, غیرعلامتی صحیح n) {
+    غیرعلامتی صحیح کل = n * 4;  // total vec nbytes
+    غیرعلامتی صحیح چوڑائی = 4;      // fp32 nbytes
 
-    HVX_Vector sum = in, sum_t;
-    while (width < total) {
-        sum_t = Q6_V_vror_VR(sum, width);                               // rotate right
-        sum   = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(sum, sum_t));  // elementwise sum
-        width = width << 1;
+    HVX_سمتیہ مجموع = اندر, مجموع_t;
+    جب (چوڑائی < کل) {
+        مجموع_t = Q6_V_vror_VR(مجموع, چوڑائی);                               // rotate right
+        مجموع   = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(مجموع, مجموع_t));  // elementwise sum
+        چوڑائی = چوڑائی << 1;
     }
-    return sum;
+    واپس مجموع;
 }
 
-#endif
+#اگر_ختم
 
-static inline HVX_Vector hvx_vec_reduce_sum_f32(HVX_Vector in) {
-    return hvx_vec_reduce_sum_n_f32(in, 32);
+ساکن اندرونی HVX_سمتیہ hvx_vec_reduce_مجموع_f32(HVX_سمتیہ اندر) {
+    واپس hvx_vec_reduce_مجموع_n_f32(اندر, 32);
 }
 
-static inline HVX_Vector hvx_vec_reduce_max_f16(HVX_Vector in) {
-    unsigned total = 128;  // total vec nbytes
-    unsigned width = 2;    // fp16 nbytes
+ساکن اندرونی HVX_سمتیہ hvx_vec_reduce_max_f16(HVX_سمتیہ اندر) {
+    غیرعلامتی کل = 128;  // total vec nbytes
+    غیرعلامتی چوڑائی = 2;    // fp16 nbytes
 
-    HVX_Vector _max = in, _max_t;
-    while (width < total) {
-        _max_t = Q6_V_vror_VR(_max, width);         // rotate right
+    HVX_سمتیہ _max = اندر, _max_t;
+    جب (چوڑائی < کل) {
+        _max_t = Q6_V_vror_VR(_max, چوڑائی);         // rotate right
         _max   = Q6_Vhf_vmax_VhfVhf(_max_t, _max);  // elementwise max
-        width  = width << 1;
+        چوڑائی  = چوڑائی << 1;
     }
 
-    return _max;
+    واپس _max;
 }
 
-static inline HVX_Vector hvx_vec_reduce_max2_f16(HVX_Vector in, HVX_Vector _max) {
-    unsigned total = 128;  // total vec nbytes
-    unsigned width = 2;    // fp32 nbytes
+ساکن اندرونی HVX_سمتیہ hvx_vec_reduce_max2_f16(HVX_سمتیہ اندر, HVX_سمتیہ _max) {
+    غیرعلامتی کل = 128;  // total vec nbytes
+    غیرعلامتی چوڑائی = 2;    // fp32 nbytes
 
-    HVX_Vector _max_t;
+    HVX_سمتیہ _max_t;
 
-    _max = Q6_Vhf_vmax_VhfVhf(in, _max);
-    while (width < total) {
-        _max_t = Q6_V_vror_VR(_max, width);         // rotate right
+    _max = Q6_Vhf_vmax_VhfVhf(اندر, _max);
+    جب (چوڑائی < کل) {
+        _max_t = Q6_V_vror_VR(_max, چوڑائی);         // rotate right
         _max   = Q6_Vhf_vmax_VhfVhf(_max_t, _max);  // elementwise max
-        width  = width << 1;
+        چوڑائی  = چوڑائی << 1;
     }
 
-    return _max;
+    واپس _max;
 }
 
-static inline HVX_Vector hvx_vec_reduce_max_f32(HVX_Vector in) {
-    unsigned total = 128;  // total vec nbytes
-    unsigned width = 4;    // fp32 nbytes
+ساکن اندرونی HVX_سمتیہ hvx_vec_reduce_max_f32(HVX_سمتیہ اندر) {
+    غیرعلامتی کل = 128;  // total vec nbytes
+    غیرعلامتی چوڑائی = 4;    // fp32 nbytes
 
-    HVX_Vector _max = in, _max_t;
-    while (width < total) {
-        _max_t = Q6_V_vror_VR(_max, width);         // rotate right
+    HVX_سمتیہ _max = اندر, _max_t;
+    جب (چوڑائی < کل) {
+        _max_t = Q6_V_vror_VR(_max, چوڑائی);         // rotate right
         _max   = Q6_Vsf_vmax_VsfVsf(_max_t, _max);  // elementwise max
-        width  = width << 1;
+        چوڑائی  = چوڑائی << 1;
     }
 
-    return _max;
+    واپس _max;
 }
 
-static inline HVX_Vector hvx_vec_reduce_max2_f32(HVX_Vector in, HVX_Vector _max) {
-    unsigned total = 128;  // total vec nbytes
-    unsigned width = 4;    // fp32 nbytes
+ساکن اندرونی HVX_سمتیہ hvx_vec_reduce_max2_f32(HVX_سمتیہ اندر, HVX_سمتیہ _max) {
+    غیرعلامتی کل = 128;  // total vec nbytes
+    غیرعلامتی چوڑائی = 4;    // fp32 nbytes
 
-    HVX_Vector _max_t;
+    HVX_سمتیہ _max_t;
 
-    _max = Q6_Vsf_vmax_VsfVsf(in, _max);
-    while (width < total) {
-        _max_t = Q6_V_vror_VR(_max, width);         // rotate right
+    _max = Q6_Vsf_vmax_VsfVsf(اندر, _max);
+    جب (چوڑائی < کل) {
+        _max_t = Q6_V_vror_VR(_max, چوڑائی);         // rotate right
         _max   = Q6_Vsf_vmax_VsfVsf(_max_t, _max);  // elementwise max
-        width  = width << 1;
+        چوڑائی  = چوڑائی << 1;
     }
 
-    return _max;
+    واپس _max;
 }
 
-#define hvx_reduce_loop_body(src_type, init_vec, pad_vec, vec_op, reduce_op, scalar_reduce) \
-    do {                                                                                    \
-        src_type * restrict vsrc = (src_type *) src;                                        \
-        HVX_Vector acc = init_vec;                                                          \
+#تعریف_کرو hvx_reduce_loop_body(src_type, init_vec, pad_vec, vec_op, reduce_op, scalar_reduce) \
+    کرو {                                                                                    \
+        src_type * محدود vsrc = (src_type *) src;                                        \
+        HVX_سمتیہ acc = init_vec;                                                          \
                                                                                             \
-        const uint32_t elem_size = sizeof(float);                                           \
-        const uint32_t epv  = 128 / elem_size;                                              \
-        const uint32_t nvec = num_elems / epv;                                              \
-        const uint32_t nloe = num_elems % epv;                                              \
+        ثابت uint32_t elem_سائز = حجم(اعشاری);                                           \
+        ثابت uint32_t epv  = 128 / elem_سائز;                                              \
+        ثابت uint32_t nvec = عدد_elems / epv;                                              \
+        ثابت uint32_t nloe = عدد_elems % epv;                                              \
                                                                                             \
         uint32_t i = 0;                                                                     \
         _Pragma("unroll(4)")                                                                \
-        for (; i < nvec; i++) {                                                             \
+        برائے (; i < nvec; i++) {                                                             \
             acc = vec_op(acc, vsrc[i]);                                                     \
         }                                                                                   \
-        if (nloe) {                                                                         \
-            const float * srcf = (const float *) src + i * epv;                             \
-            HVX_Vector in = *(HVX_UVector *) srcf;                                          \
-            HVX_Vector temp = Q6_V_valign_VVR(in, pad_vec, nloe * elem_size);               \
-            acc = vec_op(acc, temp);                                                        \
+        اگر (nloe) {                                                                         \
+            ثابت اعشاری * srcf = (ثابت اعشاری *) src + i * epv;                             \
+            HVX_سمتیہ اندر = *(HVX_UVector *) srcf;                                          \
+            HVX_سمتیہ عارضی = Q6_V_valign_VVR(اندر, pad_vec, nloe * elem_سائز);               \
+            acc = vec_op(acc, عارضی);                                                        \
         }                                                                                   \
-        HVX_Vector v = reduce_op(acc);                                                      \
-        return scalar_reduce(v);                                                            \
-    } while(0)
+        HVX_سمتیہ v = reduce_op(acc);                                                      \
+        واپس scalar_reduce(v);                                                            \
+    } جب(0)
 
-#define HVX_REDUCE_MAX_OP(acc, val) Q6_Vsf_vmax_VsfVsf(acc, val)
-#define HVX_REDUCE_SUM_OP(acc, val) Q6_Vqf32_vadd_VsfVsf(Q6_Vsf_equals_Vqf32(acc), val)
-#define HVX_SUM_SQ_OP(acc, val) Q6_Vqf32_vadd_Vqf32Vqf32(acc, Q6_Vqf32_vmpy_VsfVsf(val, val))
-#define HVX_REDUCE_MAX_SCALAR(v) hvx_vec_get_f32(v)
-#define HVX_REDUCE_SUM_SCALAR(v) hvx_vec_get_f32(Q6_Vsf_equals_Vqf32(v))
+#تعریف_کرو HVX_REDUCE_MAX_OP(acc, val) Q6_Vsf_vmax_VsfVsf(acc, val)
+#تعریف_کرو HVX_REDUCE_مجموع_OP(acc, val) Q6_Vqf32_vadd_VsfVsf(Q6_Vsf_equals_Vqf32(acc), val)
+#تعریف_کرو HVX_مجموع_SQ_OP(acc, val) Q6_Vqf32_vadd_Vqf32Vqf32(acc, Q6_Vqf32_vmpy_VsfVsf(val, val))
+#تعریف_کرو HVX_REDUCE_MAX_SCALAR(v) hvx_vec_get_f32(v)
+#تعریف_کرو HVX_REDUCE_مجموع_SCALAR(v) hvx_vec_get_f32(Q6_Vsf_equals_Vqf32(v))
 
 // Max variants
 
-static inline float hvx_reduce_max_f32_a(const uint8_t * restrict src, const int num_elems) {
-    HVX_Vector init_vec = hvx_vec_splat_f32(((const float *) src)[0]);
-    assert((unsigned long) src % 128 == 0);
-    hvx_reduce_loop_body(HVX_Vector, init_vec, init_vec, HVX_REDUCE_MAX_OP, hvx_vec_reduce_max_f32, HVX_REDUCE_MAX_SCALAR);
+ساکن اندرونی اعشاری hvx_reduce_max_f32_a(ثابت uint8_t * محدود src, ثابت صحیح عدد_elems) {
+    HVX_سمتیہ init_vec = hvx_vec_splat_f32(((ثابت اعشاری *) src)[0]);
+    أكد((غیرعلامتی طویل) src % 128 == 0);
+    hvx_reduce_loop_body(HVX_سمتیہ, init_vec, init_vec, HVX_REDUCE_MAX_OP, hvx_vec_reduce_max_f32, HVX_REDUCE_MAX_SCALAR);
 }
 
-static inline float hvx_reduce_max_f32_u(const uint8_t * restrict src, const int num_elems) {
-    HVX_Vector init_vec = hvx_vec_splat_f32(((const float *) src)[0]);
+ساکن اندرونی اعشاری hvx_reduce_max_f32_u(ثابت uint8_t * محدود src, ثابت صحیح عدد_elems) {
+    HVX_سمتیہ init_vec = hvx_vec_splat_f32(((ثابت اعشاری *) src)[0]);
     hvx_reduce_loop_body(HVX_UVector, init_vec, init_vec, HVX_REDUCE_MAX_OP, hvx_vec_reduce_max_f32, HVX_REDUCE_MAX_SCALAR);
 }
 
-static inline float hvx_reduce_max_f32(const uint8_t * restrict src, const int num_elems) {
-    if (hex_is_aligned((void *) src, 128)) {
-        return hvx_reduce_max_f32_a(src, num_elems);
-    } else {
-        return hvx_reduce_max_f32_u(src, num_elems);
+ساکن اندرونی اعشاری hvx_reduce_max_f32(ثابت uint8_t * محدود src, ثابت صحیح عدد_elems) {
+    اگر (hex_is_aligned((خالی *) src, 128)) {
+        واپس hvx_reduce_max_f32_a(src, عدد_elems);
+    } ورنہ {
+        واپس hvx_reduce_max_f32_u(src, عدد_elems);
     }
 }
 
 // Sum variants
 
-static inline float hvx_reduce_sum_f32_a(const uint8_t * restrict src, const int num_elems) {
-    HVX_Vector init_vec = Q6_V_vsplat_R(0);
-    assert((unsigned long) src % 128 == 0);
-    hvx_reduce_loop_body(HVX_Vector, init_vec, init_vec, HVX_REDUCE_SUM_OP, hvx_vec_reduce_sum_qf32, HVX_REDUCE_SUM_SCALAR);
+ساکن اندرونی اعشاری hvx_reduce_مجموع_f32_a(ثابت uint8_t * محدود src, ثابت صحیح عدد_elems) {
+    HVX_سمتیہ init_vec = Q6_V_vsplat_R(0);
+    أكد((غیرعلامتی طویل) src % 128 == 0);
+    hvx_reduce_loop_body(HVX_سمتیہ, init_vec, init_vec, HVX_REDUCE_مجموع_OP, hvx_vec_reduce_مجموع_qf32, HVX_REDUCE_مجموع_SCALAR);
 }
 
-static inline float hvx_reduce_sum_f32_u(const uint8_t * restrict src, const int num_elems) {
-    HVX_Vector init_vec = Q6_V_vsplat_R(0);
-    hvx_reduce_loop_body(HVX_UVector, init_vec, init_vec, HVX_REDUCE_SUM_OP, hvx_vec_reduce_sum_qf32, HVX_REDUCE_SUM_SCALAR);
+ساکن اندرونی اعشاری hvx_reduce_مجموع_f32_u(ثابت uint8_t * محدود src, ثابت صحیح عدد_elems) {
+    HVX_سمتیہ init_vec = Q6_V_vsplat_R(0);
+    hvx_reduce_loop_body(HVX_UVector, init_vec, init_vec, HVX_REDUCE_مجموع_OP, hvx_vec_reduce_مجموع_qf32, HVX_REDUCE_مجموع_SCALAR);
 }
 
-static inline float hvx_reduce_sum_f32(const uint8_t * restrict src, const int num_elems) {
-    if (hex_is_aligned((void *) src, 128)) {
-        return hvx_reduce_sum_f32_a(src, num_elems);
-    } else {
-        return hvx_reduce_sum_f32_u(src, num_elems);
+ساکن اندرونی اعشاری hvx_reduce_مجموع_f32(ثابت uint8_t * محدود src, ثابت صحیح عدد_elems) {
+    اگر (hex_is_aligned((خالی *) src, 128)) {
+        واپس hvx_reduce_مجموع_f32_a(src, عدد_elems);
+    } ورنہ {
+        واپس hvx_reduce_مجموع_f32_u(src, عدد_elems);
     }
 }
 
 // Sum of squares variants
 
-static inline float hvx_sum_of_squares_f32_a(const uint8_t * restrict src, const int num_elems) {
-    HVX_Vector init_vec = Q6_V_vsplat_R(0);
-    assert((uintptr_t) src % 128 == 0);
-    hvx_reduce_loop_body(HVX_Vector, init_vec, init_vec, HVX_SUM_SQ_OP, hvx_vec_reduce_sum_qf32, HVX_REDUCE_SUM_SCALAR);
+ساکن اندرونی اعشاری hvx_مجموع_کا_squares_f32_a(ثابت uint8_t * محدود src, ثابت صحیح عدد_elems) {
+    HVX_سمتیہ init_vec = Q6_V_vsplat_R(0);
+    أكد((uintptr_t) src % 128 == 0);
+    hvx_reduce_loop_body(HVX_سمتیہ, init_vec, init_vec, HVX_مجموع_SQ_OP, hvx_vec_reduce_مجموع_qf32, HVX_REDUCE_مجموع_SCALAR);
 }
 
-static inline float hvx_sum_of_squares_f32_u(const uint8_t * restrict src, const int num_elems) {
-    HVX_Vector init_vec = Q6_V_vsplat_R(0);
-    hvx_reduce_loop_body(HVX_UVector, init_vec, init_vec, HVX_SUM_SQ_OP, hvx_vec_reduce_sum_qf32, HVX_REDUCE_SUM_SCALAR);
+ساکن اندرونی اعشاری hvx_مجموع_کا_squares_f32_u(ثابت uint8_t * محدود src, ثابت صحیح عدد_elems) {
+    HVX_سمتیہ init_vec = Q6_V_vsplat_R(0);
+    hvx_reduce_loop_body(HVX_UVector, init_vec, init_vec, HVX_مجموع_SQ_OP, hvx_vec_reduce_مجموع_qf32, HVX_REDUCE_مجموع_SCALAR);
 }
 
-static inline float hvx_sum_of_squares_f32(const uint8_t * restrict src, const int num_elems) {
-    if (hex_is_aligned((void *) src, 128)) {
-        return hvx_sum_of_squares_f32_a(src, num_elems);
-    } else {
-        return hvx_sum_of_squares_f32_u(src, num_elems);
+ساکن اندرونی اعشاری hvx_مجموع_کا_squares_f32(ثابت uint8_t * محدود src, ثابت صحیح عدد_elems) {
+    اگر (hex_is_aligned((خالی *) src, 128)) {
+        واپس hvx_مجموع_کا_squares_f32_a(src, عدد_elems);
+    } ورنہ {
+        واپس hvx_مجموع_کا_squares_f32_u(src, عدد_elems);
     }
 }
 
 // Signed 32-bit Integer Max variants
 
-static inline HVX_Vector hvx_vec_reduce_max_n_i32(HVX_Vector in, unsigned int n) {
-    unsigned int total = n * 4;  // total vec nbytes
-    unsigned int width = 4;      // int32 nbytes
+ساکن اندرونی HVX_سمتیہ hvx_vec_reduce_max_n_i32(HVX_سمتیہ اندر, غیرعلامتی صحیح n) {
+    غیرعلامتی صحیح کل = n * 4;  // total vec nbytes
+    غیرعلامتی صحیح چوڑائی = 4;      // int32 nbytes
 
-    HVX_Vector max_val = in, max_t;
-    while (width < total) {
-        max_t = Q6_V_vror_VR(max_val, width);          // rotate right
+    HVX_سمتیہ max_val = اندر, max_t;
+    جب (چوڑائی < کل) {
+        max_t = Q6_V_vror_VR(max_val, چوڑائی);          // rotate right
         max_val = Q6_Vw_vmax_VwVw(max_t, max_val);      // elementwise signed max
-        width = width << 1;
+        چوڑائی = چوڑائی << 1;
     }
-    return max_val;
+    واپس max_val;
 }
 
-static inline HVX_Vector hvx_vec_reduce_max_i32(HVX_Vector in) {
-    return hvx_vec_reduce_max_n_i32(in, 32);
+ساکن اندرونی HVX_سمتیہ hvx_vec_reduce_max_i32(HVX_سمتیہ اندر) {
+    واپس hvx_vec_reduce_max_n_i32(اندر, 32);
 }
 
-static inline int32_t hvx_reduce_max_i32_a(const uint8_t * restrict src, const int num_elems) {
-    HVX_Vector init_vec = Q6_V_vsplat_R(((const int32_t *) src)[0]);
-    HVX_Vector pad_vec  = Q6_V_vsplat_R(0x80000000);
-    assert((uintptr_t) src % 128 == 0);
-    hvx_reduce_loop_body(HVX_Vector, init_vec, pad_vec, Q6_Vw_vmax_VwVw, hvx_vec_reduce_max_i32, hvx_vec_get_i32);
+ساکن اندرونی int32_t hvx_reduce_max_i32_a(ثابت uint8_t * محدود src, ثابت صحیح عدد_elems) {
+    HVX_سمتیہ init_vec = Q6_V_vsplat_R(((ثابت int32_t *) src)[0]);
+    HVX_سمتیہ pad_vec  = Q6_V_vsplat_R(0x80000000);
+    أكد((uintptr_t) src % 128 == 0);
+    hvx_reduce_loop_body(HVX_سمتیہ, init_vec, pad_vec, Q6_Vw_vmax_VwVw, hvx_vec_reduce_max_i32, hvx_vec_get_i32);
 }
 
-static inline int32_t hvx_reduce_max_i32_u(const uint8_t * restrict src, const int num_elems) {
-    HVX_Vector init_vec = Q6_V_vsplat_R(((const int32_t *) src)[0]);
-    HVX_Vector pad_vec  = Q6_V_vsplat_R(0x80000000);
+ساکن اندرونی int32_t hvx_reduce_max_i32_u(ثابت uint8_t * محدود src, ثابت صحیح عدد_elems) {
+    HVX_سمتیہ init_vec = Q6_V_vsplat_R(((ثابت int32_t *) src)[0]);
+    HVX_سمتیہ pad_vec  = Q6_V_vsplat_R(0x80000000);
     hvx_reduce_loop_body(HVX_UVector, init_vec, pad_vec, Q6_Vw_vmax_VwVw, hvx_vec_reduce_max_i32, hvx_vec_get_i32);
 }
 
-static inline int32_t hvx_reduce_max_i32(const uint8_t * restrict src, const int num_elems) {
-    if (hex_is_aligned((void *) src, 128)) {
-        return hvx_reduce_max_i32_a(src, num_elems);
-    } else {
-        return hvx_reduce_max_i32_u(src, num_elems);
+ساکن اندرونی int32_t hvx_reduce_max_i32(ثابت uint8_t * محدود src, ثابت صحیح عدد_elems) {
+    اگر (hex_is_aligned((خالی *) src, 128)) {
+        واپس hvx_reduce_max_i32_a(src, عدد_elems);
+    } ورنہ {
+        واپس hvx_reduce_max_i32_u(src, عدد_elems);
     }
 }
 
-static inline void hvx_argmax_f32(
-    const float * restrict src,
+ساکن اندرونی خالی hvx_argmax_f32(
+    ثابت اعشاری * محدود src,
     uint32_t n,
-    uint32_t offset,
-    float * out_val,
-    int32_t * out_idx
+    uint32_t انحراف,
+    اعشاری * برآمد_val,
+    int32_t * برآمد_idx
 ) {
-    if (n == 0) {
-        *out_val = -INFINITY;
-        *out_idx = (int32_t) offset;
-        return;
+    اگر (n == 0) {
+        *برآمد_val = -INFINITY;
+        *برآمد_idx = (int32_t) انحراف;
+        واپس;
     }
 
-    if (n < 32 || !hex_is_aligned((void *) src, 128)) {
-        float best_val = src[0];
-        int32_t best_idx = (int32_t) offset;
-        for (uint32_t i = 1; i < n; i++) {
-            if (src[i] > best_val) {
-                best_val = src[i];
-                best_idx = (int32_t) (offset + i);
+    اگر (n < 32 || !hex_is_aligned((خالی *) src, 128)) {
+        اعشاری بہترین_val = src[0];
+        int32_t بہترین_idx = (int32_t) انحراف;
+        برائے (uint32_t i = 1; i < n; i++) {
+            اگر (src[i] > بہترین_val) {
+                بہترین_val = src[i];
+                بہترین_idx = (int32_t) (انحراف + i);
             }
         }
-        *out_val = best_val;
-        *out_idx = best_idx;
-        return;
+        *برآمد_val = بہترین_val;
+        *برآمد_idx = بہترین_idx;
+        واپس;
     }
 
-    static const int32_t c_lane_idx[32] __attribute__((aligned(128))) = {
+    ساکن ثابت int32_t c_lane_idx[32] __attribute__((aligned(128))) = {
          0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
         16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31
     };
 
-    const HVX_Vector v_init_idx = *(const HVX_Vector *) c_lane_idx;
-    const HVX_Vector v_step     = Q6_V_vsplat_R(32);
-    HVX_Vector v_cur_idx        = Q6_Vw_vadd_VwVw(v_init_idx, Q6_V_vsplat_R((int32_t) offset));
-    HVX_Vector v_max_val        = hvx_vec_splat_f32(-INFINITY);
-    HVX_Vector v_max_idx        = v_cur_idx;
+    ثابت HVX_سمتیہ v_init_idx = *(ثابت HVX_سمتیہ *) c_lane_idx;
+    ثابت HVX_سمتیہ v_قدم     = Q6_V_vsplat_R(32);
+    HVX_سمتیہ v_cur_idx        = Q6_Vw_vadd_VwVw(v_init_idx, Q6_V_vsplat_R((int32_t) انحراف));
+    HVX_سمتیہ v_max_val        = hvx_vec_splat_f32(-INFINITY);
+    HVX_سمتیہ v_max_idx        = v_cur_idx;
 
-    const HVX_Vector * vsrc = (const HVX_Vector *) src;
-    const uint32_t nvec = n / 32;
+    ثابت HVX_سمتیہ * vsrc = (ثابت HVX_سمتیہ *) src;
+    ثابت uint32_t nvec = n / 32;
 
-    for (uint32_t vi = 0; vi < nvec; vi++) {
-        HVX_Vector v = vsrc[vi];
-        HVX_VectorPred pred = Q6_Q_vcmp_gt_VsfVsf(v, v_max_val);
+    برائے (uint32_t vi = 0; vi < nvec; vi++) {
+        HVX_سمتیہ v = vsrc[vi];
+        HVX_سمتیہ_Pred pred = Q6_Q_vcmp_gt_VsfVsf(v, v_max_val);
         v_max_val = Q6_V_vmux_QVV(pred, v, v_max_val);
         v_max_idx = Q6_V_vmux_QVV(pred, v_cur_idx, v_max_idx);
-        v_cur_idx = Q6_Vw_vadd_VwVw(v_cur_idx, v_step);
+        v_cur_idx = Q6_Vw_vadd_VwVw(v_cur_idx, v_قدم);
     }
 
-    HVX_VectorAlias u_val, u_idx;
+    HVX_سمتیہ_Alias u_val, u_idx;
     u_val.v = v_max_val;
     u_idx.v = v_max_idx;
 
-    float best_val = u_val.fp32[0];
-    int32_t best_idx = (int32_t) u_idx.w[0];
-    for (int i = 1; i < 32; i++) {
-        if (u_val.fp32[i] > best_val) {
-            best_val = u_val.fp32[i];
-            best_idx = (int32_t) u_idx.w[i];
+    اعشاری بہترین_val = u_val.fp32[0];
+    int32_t بہترین_idx = (int32_t) u_idx.w[0];
+    برائے (صحیح i = 1; i < 32; i++) {
+        اگر (u_val.fp32[i] > بہترین_val) {
+            بہترین_val = u_val.fp32[i];
+            بہترین_idx = (int32_t) u_idx.w[i];
         }
     }
 
-    for (uint32_t i = nvec * 32; i < n; i++) {
-        if (src[i] > best_val) {
-            best_val = src[i];
-            best_idx = (int32_t) (offset + i);
+    برائے (uint32_t i = nvec * 32; i < n; i++) {
+        اگر (src[i] > بہترین_val) {
+            بہترین_val = src[i];
+            بہترین_idx = (int32_t) (انحراف + i);
         }
     }
 
-    *out_val = best_val;
-    *out_idx = best_idx;
+    *برآمد_val = بہترین_val;
+    *برآمد_idx = بہترین_idx;
 }
 
-#undef hvx_reduce_loop_body
-#undef HVX_REDUCE_MAX_OP
-#undef HVX_REDUCE_SUM_OP
-#undef HVX_REDUCE_MAX_SCALAR
-#undef HVX_REDUCE_SUM_SCALAR
-#undef HVX_SUM_SQ_OP
+#تعریف_منسوخ hvx_reduce_loop_body
+#تعریف_منسوخ HVX_REDUCE_MAX_OP
+#تعریف_منسوخ HVX_REDUCE_مجموع_OP
+#تعریف_منسوخ HVX_REDUCE_MAX_SCALAR
+#تعریف_منسوخ HVX_REDUCE_مجموع_SCALAR
+#تعریف_منسوخ HVX_مجموع_SQ_OP
 
-#endif /* HVX_REDUCE_H */
+#اگر_ختم /* HVX_REDUCE_H */

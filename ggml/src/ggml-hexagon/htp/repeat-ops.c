@@ -1,169 +1,169 @@
-#pragma clang diagnostic ignored "-Wunused-variable"
-#pragma clang diagnostic ignored "-Wunused-function"
-#pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#ہدایت clang diagnostic ignored "-Wunused-variable"
+#ہدایت clang diagnostic ignored "-Wunused-function"
+#ہدایت clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
+#شامل <HAP_farf.h>
+#شامل <HAP_perf.h>
 
-#include <string.h>
+#شامل <string.h>
 
-#include "hvx-utils.h"
+#شامل "hvx-utils.h"
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "htp-ctx.h"
-#include "hex-common.h"
-#include "hex-profile.h"
-#include "htp-ops.h"
-#include "htp-tensor.h"
+#تعریف_کرو GGML_COMMON_DECL_C
+#شامل "ggml-common.h"
+#شامل "htp-ctx.h"
+#شامل "hex-common.h"
+#شامل "hex-profile.h"
+#شامل "htp-ops.h"
+#شامل "htp-tensor.h"
 
-struct htp_repeat_context {
-    struct htp_ops_context * octx;
+ساخت htp_repeat_context {
+    ساخت htp_ops_context * octx;
 
     uint32_t nr0;
     uint32_t nr1;
     uint32_t nr2;
     uint32_t nr3;
 
-    uint32_t nrows_per_thread;
-    uint32_t total_dst_rows;  // ne1 * ne2 * ne3
-    uint32_t row_start;
+    uint32_t nrows_فی_thread;
+    uint32_t کل_dst_صفیں;  // ne1 * ne2 * ne3
+    uint32_t صف_آغاز;
 
-    size_t   type_size;
+    size_t   type_سائز;
 };
 
-static void repeat_job_per_thread(unsigned int nth, unsigned int ith, void * data) {
-    const struct htp_repeat_context * rctx = (const struct htp_repeat_context *) data;
-    struct htp_ops_context * octx = rctx->octx;
-    const struct htp_tensor * src = octx->src[0];
-    const struct htp_tensor * dst = octx->dst;
+ساکن خالی repeat_کام_فی_thread(غیرعلامتی صحیح nth, غیرعلامتی صحیح ith, خالی * ڈیٹا) {
+    ثابت ساخت htp_repeat_context * rctx = (ثابت ساخت htp_repeat_context *) ڈیٹا;
+    ساخت htp_ops_context * octx = rctx->octx;
+    ثابت ساخت htp_tensor * src = octx->src[0];
+    ثابت ساخت htp_tensor * dst = octx->dst;
 
-    const uint32_t ne00 = src->ne[0];
-    const uint32_t ne01 = src->ne[1];
-    const uint32_t ne02 = src->ne[2];
-    const uint32_t ne03 = src->ne[3];
+    ثابت uint32_t ne00 = src->ne[0];
+    ثابت uint32_t ne01 = src->ne[1];
+    ثابت uint32_t ne02 = src->ne[2];
+    ثابت uint32_t ne03 = src->ne[3];
 
-    const uint32_t nb00 = src->nb[0];
-    const uint32_t nb01 = src->nb[1];
-    const uint32_t nb02 = src->nb[2];
-    const uint32_t nb03 = src->nb[3];
+    ثابت uint32_t nb00 = src->nb[0];
+    ثابت uint32_t nb01 = src->nb[1];
+    ثابت uint32_t nb02 = src->nb[2];
+    ثابت uint32_t nb03 = src->nb[3];
 
-    const uint32_t ne0 = dst->ne[0];
-    const uint32_t ne1 = dst->ne[1];
-    const uint32_t ne2 = dst->ne[2];
-    const uint32_t ne3 = dst->ne[3];
+    ثابت uint32_t ne0 = dst->ne[0];
+    ثابت uint32_t ne1 = dst->ne[1];
+    ثابت uint32_t ne2 = dst->ne[2];
+    ثابت uint32_t ne3 = dst->ne[3];
 
-    const uint32_t nb0 = dst->nb[0];
-    const uint32_t nb1 = dst->nb[1];
-    const uint32_t nb2 = dst->nb[2];
-    const uint32_t nb3 = dst->nb[3];
+    ثابت uint32_t nb0 = dst->nb[0];
+    ثابت uint32_t nb1 = dst->nb[1];
+    ثابت uint32_t nb2 = dst->nb[2];
+    ثابت uint32_t nb3 = dst->nb[3];
 
-    const uint32_t nr0 = rctx->nr0;
-    const uint32_t nr1 = rctx->nr1;
-    const uint32_t nr2 = rctx->nr2;
-    const uint32_t nr3 = rctx->nr3;
+    ثابت uint32_t nr0 = rctx->nr0;
+    ثابت uint32_t nr1 = rctx->nr1;
+    ثابت uint32_t nr2 = rctx->nr2;
+    ثابت uint32_t nr3 = rctx->nr3;
 
-    const size_t row_bytes = ne00 * rctx->type_size;
+    ثابت size_t صف_بائٹیں = ne00 * rctx->type_سائز;
 
-    const uint32_t row_start = rctx->row_start + rctx->nrows_per_thread * ith;
-    const uint32_t row_end   = MIN(row_start + rctx->nrows_per_thread, rctx->row_start + rctx->total_dst_rows);
+    ثابت uint32_t صف_آغاز = rctx->صف_آغاز + rctx->nrows_فی_thread * ith;
+    ثابت uint32_t صف_انتہا   = MIN(صف_آغاز + rctx->nrows_فی_thread, rctx->صف_آغاز + rctx->کل_dst_صفیں);
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, row_start);
+    ساخت htp_thread_trace * tr = &octx->ctx->trace[ith];
+    htp_trace_event_آغاز(tr, HTP_TRACE_EVT_HVX_COMP, صف_آغاز);
 
-    for (uint32_t dst_row = row_start; dst_row < row_end; dst_row++) {
+    برائے (uint32_t dst_صف = صف_آغاز; dst_صف < صف_انتہا; dst_صف++) {
         // Decompose flat dst row index into (i1, i2, i3)
-        const uint32_t i1 = dst_row % ne1;
-        const uint32_t i2 = (dst_row / ne1) % ne2;
-        const uint32_t i3 = dst_row / (ne1 * ne2);
+        ثابت uint32_t i1 = dst_صف % ne1;
+        ثابت uint32_t i2 = (dst_صف / ne1) % ne2;
+        ثابت uint32_t i3 = dst_صف / (ne1 * ne2);
 
         // Map to source indices (tiling)
-        const uint32_t k1 = i1 % ne01;
-        const uint32_t k2 = i2 % ne02;
-        const uint32_t k3 = i3 % ne03;
+        ثابت uint32_t k1 = i1 % ne01;
+        ثابت uint32_t k2 = i2 % ne02;
+        ثابت uint32_t k3 = i3 % ne03;
 
-        const uint8_t * src_row = (const uint8_t *) src->data + k1 * nb01 + k2 * nb02 + k3 * nb03;
-        uint8_t * dst_base      = (uint8_t *) dst->data + i1 * nb1 + i2 * nb2 + i3 * nb3;
+        ثابت uint8_t * src_صف = (ثابت uint8_t *) src->ڈیٹا + k1 * nb01 + k2 * nb02 + k3 * nb03;
+        uint8_t * dst_بنیاد      = (uint8_t *) dst->ڈیٹا + i1 * nb1 + i2 * nb2 + i3 * nb3;
 
         // Tile along dimension 0
-        for (uint32_t i0 = 0; i0 < nr0; i0++) {
-            uint8_t * dst_ptr = dst_base + i0 * ne00 * nb0;
-            memcpy(dst_ptr, src_row, row_bytes);
+        برائے (uint32_t i0 = 0; i0 < nr0; i0++) {
+            uint8_t * dst_ptr = dst_بنیاد + i0 * ne00 * nb0;
+            حافظہ_نقل(dst_ptr, src_صف, صف_بائٹیں);
         }
     }
 
-    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, row_start);
+    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, صف_آغاز);
 
-    FARF(HIGH, "repeat %d/%d: (%ux%ux%ux%u) -> (%ux%ux%ux%u) rows %u:%u\n",
+    FARF(بلند_2, "repeat %d/%d: (%ux%ux%ux%u) -> (%ux%ux%ux%u) rows %u:%u\n",
          ith, nth, src->ne[0], src->ne[1], src->ne[2], src->ne[3],
          dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3],
-         row_start, row_end);
+         صف_آغاز, صف_انتہا);
 }
 
-int op_repeat(struct htp_ops_context * octx) {
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * dst  = octx->dst;
+صحیح op_repeat(ساخت htp_ops_context * octx) {
+    ثابت ساخت htp_tensor * src0 = octx->src[0];
+    ثابت ساخت htp_tensor * dst  = octx->dst;
 
     // Validate that dst dims are multiples of src dims
-    if (dst->ne[0] % src0->ne[0] != 0 ||
+    اگر (dst->ne[0] % src0->ne[0] != 0 ||
         dst->ne[1] % src0->ne[1] != 0 ||
         dst->ne[2] % src0->ne[2] != 0 ||
         dst->ne[3] % src0->ne[3] != 0) {
         FARF(ERROR, "repeat: dst dims must be multiples of src dims\n");
-        return HTP_STATUS_INVAL_PARAMS;
+        واپس HTP_حالت_INVAL_PARAMS;
     }
 
-    size_t type_size;
-    switch (src0->type) {
-        case HTP_TYPE_F32: type_size = 4; break;
-        case HTP_TYPE_F16: type_size = 2; break;
-        default:
+    size_t type_سائز;
+    انتخاب (src0->type) {
+        حالت HTP_TYPE_F32: type_سائز = 4; توڑو;
+        حالت HTP_TYPE_F16: type_سائز = 2; توڑو;
+        طےشدہ:
             FARF(ERROR, "repeat: unsupported type %u\n", src0->type);
-            return HTP_STATUS_NO_SUPPORT;
+            واپس HTP_حالت_NO_SUPPORT;
     }
 
-    if (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst)) {
-        return HTP_STATUS_NO_SUPPORT;
+    اگر (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst)) {
+        واپس HTP_حالت_NO_SUPPORT;
     }
 
-    const uint32_t total_dst_rows  = dst->ne[1] * dst->ne[2] * dst->ne[3];
-    const size_t dst_row_size = dst->ne[0] * type_size;
+    ثابت uint32_t کل_dst_صفیں  = dst->ne[1] * dst->ne[2] * dst->ne[3];
+    ثابت size_t dst_صف_سائز = dst->ne[0] * type_سائز;
 
-    uint32_t row_start = 0;
-    uint32_t nrows     = total_dst_rows;
+    uint32_t صف_آغاز = 0;
+    uint32_t nrows     = کل_dst_صفیں;
 
-    if (octx->ctx->mdev.count > 1) {
-        uint32_t rows_per_chunk = 0;
-        htp_tensor_mdev_rows_per_chunk(dst, type_size, (uint32_t) dst_row_size, &rows_per_chunk);
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_dst_rows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
-        row_start = range.start;
-        nrows     = range.count;
+    اگر (octx->ctx->mdev.گنتی > 1) {
+        uint32_t صفیں_فی_chunk = 0;
+        htp_tensor_mdev_صفیں_فی_chunk(dst, type_سائز, (uint32_t) dst_صف_سائز, &صفیں_فی_chunk);
+        ثابت ساخت htp_tensor_mdev_range range = htp_tensor_mdev_تقسیم(کل_dst_صفیں, صفیں_فی_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.گنتی, &octx->ctx->mdev.گنتی_div);
+        صف_آغاز = range.آغاز;
+        nrows     = range.گنتی;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    اگر (nrows == 0) {
+        واپس HTP_حالت_OK;
     }
 
-    const uint32_t n_threads = octx->n_threads;
+    ثابت uint32_t n_دھاگے = octx->n_دھاگے;
 
-    struct htp_repeat_context rctx = {
+    ساخت htp_repeat_context rctx = {
         .octx             = octx,
         .nr0              = dst->ne[0] / src0->ne[0],
         .nr1              = dst->ne[1] / src0->ne[1],
         .nr2              = dst->ne[2] / src0->ne[2],
         .nr3              = dst->ne[3] / src0->ne[3],
-        .nrows_per_thread = fastdiv(nrows + n_threads - 1, &octx->n_threads_div),
-        .total_dst_rows   = nrows,
-        .row_start        = row_start,
-        .type_size        = type_size,
+        .nrows_فی_thread = fastdiv(nrows + n_دھاگے - 1, &octx->n_دھاگے_div),
+        .کل_dst_صفیں   = nrows,
+        .صف_آغاز        = صف_آغاز,
+        .type_سائز        = type_سائز,
     };
 
-    FARF(HIGH, "repeat: (%ux%ux%ux%u) -> (%ux%ux%ux%u) nr=(%u,%u,%u,%u)\n",
+    FARF(بلند_2, "repeat: (%ux%ux%ux%u) -> (%ux%ux%ux%u) nr=(%u,%u,%u,%u)\n",
          src0->ne[0], src0->ne[1], src0->ne[2], src0->ne[3],
          dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3],
          rctx.nr0, rctx.nr1, rctx.nr2, rctx.nr3);
 
-    work_queue_run(octx->ctx->work_queue, repeat_job_per_thread, &rctx, n_threads);
+    work_قطار_تسلسل(octx->ctx->work_قطار, repeat_کام_فی_thread, &rctx, n_دھاگے);
 
-    return HTP_STATUS_OK;
+    واپس HTP_حالت_OK;
 }

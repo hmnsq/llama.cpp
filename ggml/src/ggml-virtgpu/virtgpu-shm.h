@@ -1,23 +1,23 @@
-#pragma once
+#ہدایت once
 
-#include "virtgpu-utils.h"
+#شامل "virtgpu-utils.h"
 
-#include <sys/mman.h>
+#شامل <sys/mman.h>
 
-#include <atomic>
-#include <cassert>
-#include <cstddef>
-#include <cstdint>
+#شامل <atomic>
+#شامل <cassert>
+#شامل <cstddef>
+#شامل <cstdint>
 
-struct virtgpu;
+ساخت virtgpu;
 
-struct virtgpu_shmem {
+ساخت virtgpu_shmem {
     uint32_t res_id;
-    size_t   mmap_size;
-    void *   mmap_ptr;
+    size_t   mmap_سائز;
+    خالی *   mmap_ptr;
 
     uint32_t gem_handle;
 };
 
-int  virtgpu_shmem_create(virtgpu * gpu, size_t size, virtgpu_shmem * shmem);
-void virtgpu_shmem_destroy(virtgpu * gpu, virtgpu_shmem * shmem);
+صحیح  virtgpu_shmem_create(virtgpu * gpu, size_t سائز, virtgpu_shmem * shmem);
+خالی virtgpu_shmem_destroy(virtgpu * gpu, virtgpu_shmem * shmem);

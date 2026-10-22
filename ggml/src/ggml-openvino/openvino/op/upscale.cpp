@@ -1,178 +1,178 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
-#include "ggml.h"
+#شامل "../node_context.h"
+#شامل "../op_table.h"
+#شامل "../utils.h"
+#شامل "ggml.h"
 
-#include <cmath>
-#include <cstddef>
-#include <memory>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/interpolate.hpp>
-#include <openvino/op/matmul.hpp>
-#include <vector>
+#شامل <cmath>
+#شامل <cstddef>
+#شامل <memory>
+#شامل <openvino/op/constant.hpp>
+#شامل <openvino/op/gather.hpp>
+#شامل <openvino/op/interpolate.hpp>
+#شامل <openvino/op/matmul.hpp>
+#شامل <vector>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+نامخلا ov {
+نامخلا frontend {
+نامخلا ggml {
+نامخلا op {
 
-OutputVector translate_upscale(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+Output_سمتیہ translate_upscale(ثابت گرہ_Context & context) {
+    عدد_inputs_check(context, 1, 1);
 
-    using Interpolate = ov::op::v4::Interpolate;
-    auto input = process_view_input_new(context, 0);
+    استعمال Interpolate = ov::op::v4::Interpolate;
+    خودکار داخلہ = process_view_داخلہ_new(context, 0);
 
-    const auto input_shape = context.get_input_shape(0).to_shape();
-    const auto output_shape = context.get_output_shape().to_shape();
+    ثابت خودکار داخلہ_shape = context.get_داخلہ_shape(0).مقصد_shape();
+    ثابت خودکار output_shape = context.get_output_shape().مقصد_shape();
 
-    if (input_shape == output_shape) {
-        return rename_outputs_with_suffix({input}, context.get_name());
+    اگر (داخلہ_shape == output_shape) {
+        واپس rename_outputs_with_suffix({داخلہ}, context.get_name());
     }
 
-    ov::Output<ov::Node> res = input;
+    ov::Output<ov::Node> res = داخلہ;
 
     // Resample batch / channel dimensions (ne[3] and ne[2], corresponding to OV axes 0 and 1)
     // using nearest-neighbor index mapping: i0_d = floor(i_d * in_d / out_d).
-    for (size_t axis = 0; axis < 2; ++axis) {
-        const size_t in_dim = input_shape[axis];
-        const size_t out_dim = output_shape[axis];
-        if (in_dim != out_dim) {
-            std::vector<int64_t> indices(out_dim);
-            for (size_t i = 0; i < out_dim; ++i) {
-                indices[i] = static_cast<int64_t>((i * in_dim) / out_dim);
+    برائے (size_t axis = 0; axis < 2; ++axis) {
+        ثابت size_t اندر_dim = داخلہ_shape[axis];
+        ثابت size_t برآمد_dim = output_shape[axis];
+        اگر (اندر_dim != برآمد_dim) {
+            std::vector<int64_t> indices(برآمد_dim);
+            برائے (size_t i = 0; i < برآمد_dim; ++i) {
+                indices[i] = static_cast<int64_t>((i * اندر_dim) / برآمد_dim);
             }
-            auto indices_node = ov::op::v0::Constant::create(ov::element::i64, {indices.size()}, indices);
-            auto axis_node = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{}, {axis});
-            res = std::make_shared<ov::op::v8::Gather>(res, indices_node, axis_node);
+            خودکار indices_گرہ = ov::op::v0::Constant::create(ov::element::i64, {indices.size()}, indices);
+            خودکار axis_گرہ = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{}, {axis});
+            res = std::make_shared<ov::op::v8::Gather>(res, indices_گرہ, axis_گرہ);
         }
     }
 
     // Spatial interpolation for ne[1] and ne[0] (OV axes 2 and 3)
-    if (input_shape[2] != output_shape[2] || input_shape[3] != output_shape[3]) {
-        const int32_t * op_params = context.get_output_op_params();
-        const int32_t mode_flags = op_params != nullptr ? op_params[0] : 0;
+    اگر (داخلہ_shape[2] != output_shape[2] || داخلہ_shape[3] != output_shape[3]) {
+        ثابت int32_t * op_params = context.get_output_op_params();
+        ثابت int32_t منوال_flags = op_params != خالی_اشاریہ ? op_params[0] : 0;
 
-        const int op_case = context.get_op_case();
-        const bool align_corners = (mode_flags & GGML_SCALE_FLAG_ALIGN_CORNERS) != 0;
-        const bool antialias = (mode_flags & GGML_SCALE_FLAG_ANTIALIAS) != 0;
+        ثابت صحیح op_case = context.get_op_case();
+        ثابت منطقی align_corners = (منوال_flags & GGML_SCALE_FLAG_ALIGN_CORNERS) != 0;
+        ثابت منطقی antialias = (منوال_flags & GGML_SCALE_FLAG_ANTIALIAS) != 0;
 
-        if (op_case == 2 && antialias) { // GGML_SCALE_MODE_BILINEAR with antialias
-            const size_t H_in = input_shape[2];
-            const size_t W_in = input_shape[3];
-            const size_t H_out = output_shape[2];
-            const size_t W_out = output_shape[3];
+        اگر (op_case == 2 && antialias) { // GGML_SCALE_MODE_BILINEAR with antialias
+            ثابت size_t H_اندر = داخلہ_shape[2];
+            ثابت size_t W_اندر = داخلہ_shape[3];
+            ثابت size_t H_برآمد = output_shape[2];
+            ثابت size_t W_برآمد = output_shape[3];
 
-            const float pixel_offset = 0.5f;
+            ثابت اعشاری pixel_انحراف = 0.5f;
 
             // Height projection: [H_out, H_in]
-            std::vector<float> Wy_data(H_out * H_in, 0.0f);
-            const float sf1 = static_cast<float>(H_out) / H_in;
-            const float support1 = std::max(1.0f, 1.0f / sf1);
-            const float invscale1 = 1.0f / support1;
+            std::vector<اعشاری> Wy_ڈیٹا(H_برآمد * H_اندر, 0.0f);
+            ثابت اعشاری sf1 = static_cast<اعشاری>(H_برآمد) / H_اندر;
+            ثابت اعشاری support1 = std::max(1.0f, 1.0f / sf1);
+            ثابت اعشاری invscale1 = 1.0f / support1;
 
-            for (size_t i1 = 0; i1 < H_out; ++i1) {
-                const float y = (static_cast<float>(i1) + pixel_offset) / sf1;
-                const auto y_start = static_cast<int64_t>(y - support1 + pixel_offset);
-                const size_t y_min = y_start > 0 ? static_cast<size_t>(y_start) : 0;
-                const auto y_end = static_cast<int64_t>(y + support1 + pixel_offset);
-                const size_t y_max = y_end > 0 ? std::min<size_t>(static_cast<size_t>(y_end), H_in) : 0;
+            برائے (size_t i1 = 0; i1 < H_برآمد; ++i1) {
+                ثابت اعشاری y = (static_cast<اعشاری>(i1) + pixel_انحراف) / sf1;
+                ثابت خودکار y_آغاز = static_cast<int64_t>(y - support1 + pixel_انحراف);
+                ثابت size_t y_min = y_آغاز > 0 ? static_cast<size_t>(y_آغاز) : 0;
+                ثابت خودکار y_انتہا = static_cast<int64_t>(y + support1 + pixel_انحراف);
+                ثابت size_t y_max = y_انتہا > 0 ? std::min<size_t>(static_cast<size_t>(y_انتہا), H_اندر) : 0;
 
-                float total_weight = 0.0f;
-                for (size_t sy = y_min; sy < y_max; ++sy) {
-                    float diff = std::abs((static_cast<float>(sy) - y + pixel_offset) * invscale1);
-                    float weight = std::max(1.0f - diff, 0.0f);
-                    Wy_data[i1 * H_in + sy] = weight;
-                    total_weight += weight;
+                اعشاری کل_وزن = 0.0f;
+                برائے (size_t sy = y_min; sy < y_max; ++sy) {
+                    اعشاری diff = std::مطلق_قدر((static_cast<اعشاری>(sy) - y + pixel_انحراف) * invscale1);
+                    اعشاری وزن = std::max(1.0f - diff, 0.0f);
+                    Wy_ڈیٹا[i1 * H_اندر + sy] = وزن;
+                    کل_وزن += وزن;
                 }
-                if (total_weight > 0.0f) {
-                    for (size_t sy = y_min; sy < y_max; ++sy) {
-                        Wy_data[i1 * H_in + sy] /= total_weight;
+                اگر (کل_وزن > 0.0f) {
+                    برائے (size_t sy = y_min; sy < y_max; ++sy) {
+                        Wy_ڈیٹا[i1 * H_اندر + sy] /= کل_وزن;
                     }
                 }
             }
 
             // Width projection: [W_in, W_out]
-            std::vector<float> Wx_data(W_in * W_out, 0.0f);
-            const float sf0 = static_cast<float>(W_out) / W_in;
-            const float support0 = std::max(1.0f, 1.0f / sf0);
-            const float invscale0 = 1.0f / support0;
+            std::vector<اعشاری> Wx_ڈیٹا(W_اندر * W_برآمد, 0.0f);
+            ثابت اعشاری sf0 = static_cast<اعشاری>(W_برآمد) / W_اندر;
+            ثابت اعشاری support0 = std::max(1.0f, 1.0f / sf0);
+            ثابت اعشاری invscale0 = 1.0f / support0;
 
-            for (size_t i0 = 0; i0 < W_out; ++i0) {
-                const float x = (static_cast<float>(i0) + pixel_offset) / sf0;
-                const auto x_start = static_cast<int64_t>(x - support0 + pixel_offset);
-                const size_t x_min = x_start > 0 ? static_cast<size_t>(x_start) : 0;
-                const auto x_end = static_cast<int64_t>(x + support0 + pixel_offset);
-                const size_t x_max = x_end > 0 ? std::min<size_t>(static_cast<size_t>(x_end), W_in) : 0;
+            برائے (size_t i0 = 0; i0 < W_برآمد; ++i0) {
+                ثابت اعشاری x = (static_cast<اعشاری>(i0) + pixel_انحراف) / sf0;
+                ثابت خودکار x_آغاز = static_cast<int64_t>(x - support0 + pixel_انحراف);
+                ثابت size_t x_min = x_آغاز > 0 ? static_cast<size_t>(x_آغاز) : 0;
+                ثابت خودکار x_انتہا = static_cast<int64_t>(x + support0 + pixel_انحراف);
+                ثابت size_t x_max = x_انتہا > 0 ? std::min<size_t>(static_cast<size_t>(x_انتہا), W_اندر) : 0;
 
-                float total_weight = 0.0f;
-                for (size_t sx = x_min; sx < x_max; ++sx) {
-                    float diff = std::abs((static_cast<float>(sx) - x + pixel_offset) * invscale0);
-                    float weight = std::max(1.0f - diff, 0.0f);
-                    Wx_data[sx * W_out + i0] = weight;
-                    total_weight += weight;
+                اعشاری کل_وزن = 0.0f;
+                برائے (size_t sx = x_min; sx < x_max; ++sx) {
+                    اعشاری diff = std::مطلق_قدر((static_cast<اعشاری>(sx) - x + pixel_انحراف) * invscale0);
+                    اعشاری وزن = std::max(1.0f - diff, 0.0f);
+                    Wx_ڈیٹا[sx * W_برآمد + i0] = وزن;
+                    کل_وزن += وزن;
                 }
-                if (total_weight > 0.0f) {
-                    for (size_t sx = x_min; sx < x_max; ++sx) {
-                        Wx_data[sx * W_out + i0] /= total_weight;
+                اگر (کل_وزن > 0.0f) {
+                    برائے (size_t sx = x_min; sx < x_max; ++sx) {
+                        Wx_ڈیٹا[sx * W_برآمد + i0] /= کل_وزن;
                     }
                 }
             }
 
-            auto Wy_node = ov::op::v0::Constant::create(ov::element::f32, {H_out, H_in}, Wy_data);
-            auto Wx_node = ov::op::v0::Constant::create(ov::element::f32, {W_in, W_out}, Wx_data);
+            خودکار Wy_گرہ = ov::op::v0::Constant::create(ov::element::f32, {H_برآمد, H_اندر}, Wy_ڈیٹا);
+            خودکار Wx_گرہ = ov::op::v0::Constant::create(ov::element::f32, {W_اندر, W_برآمد}, Wx_ڈیٹا);
 
-            auto res_y = std::make_shared<ov::op::v0::MatMul>(Wy_node, res);
-            res = std::make_shared<ov::op::v0::MatMul>(res_y, Wx_node);
-        } else {
+            خودکار res_y = std::make_shared<ov::op::v0::MatMul>(Wy_گرہ, res);
+            res = std::make_shared<ov::op::v0::MatMul>(res_y, Wx_گرہ);
+        } ورنہ {
             Interpolate::InterpolateAttrs attrs;
-            attrs.shape_calculation_mode = Interpolate::ShapeCalcMode::SIZES;
+            attrs.shape_calculation_منوال = Interpolate::Shape_Calc_منوال::SIZES;
             attrs.antialias = antialias;
             attrs.pads_begin = {0, 0, 0, 0};
-            attrs.pads_end = {0, 0, 0, 0};
+            attrs.pads_انتہا = {0, 0, 0, 0};
 
-            switch (op_case) {
-            case 1:  // GGML_SCALE_MODE_NEAREST
-                attrs.mode = Interpolate::InterpolateMode::NEAREST;
-                attrs.nearest_mode = Interpolate::NearestMode::FLOOR;
-                attrs.coordinate_transformation_mode = Interpolate::CoordinateTransformMode::ASYMMETRIC;
-                break;
-            case 2:  // GGML_SCALE_MODE_BILINEAR
-                attrs.mode = Interpolate::InterpolateMode::LINEAR;
-                attrs.coordinate_transformation_mode = align_corners
-                    ? Interpolate::CoordinateTransformMode::ALIGN_CORNERS
-                    : Interpolate::CoordinateTransformMode::HALF_PIXEL;
-                break;
-            case 3:  // GGML_SCALE_MODE_BICUBIC
-                attrs.mode = Interpolate::InterpolateMode::CUBIC;
+            انتخاب (op_case) {
+            حالت 1:  // GGML_SCALE_MODE_NEAREST
+                attrs.mode = Interpolate::Interpolate_منوال::قریب_ترین;
+                attrs.قریب_ترین_منوال = Interpolate::قریب_ترین_منوال_2::FLOOR;
+                attrs.coordinate_transformation_منوال = Interpolate::Coordinate_Transform_منوال::ASYMMETRIC;
+                توڑو;
+            حالت 2:  // GGML_SCALE_MODE_BILINEAR
+                attrs.mode = Interpolate::Interpolate_منوال::خطی;
+                attrs.coordinate_transformation_منوال = align_corners
+                    ? Interpolate::Coordinate_Transform_منوال::ALIGN_CORNERS
+                    : Interpolate::Coordinate_Transform_منوال::HALF_PIXEL;
+                توڑو;
+            حالت 3:  // GGML_SCALE_MODE_BICUBIC
+                attrs.mode = Interpolate::Interpolate_منوال::CUBIC;
                 attrs.cube_coeff = -0.75;
-                attrs.coordinate_transformation_mode = align_corners
-                    ? Interpolate::CoordinateTransformMode::ALIGN_CORNERS
-                    : Interpolate::CoordinateTransformMode::HALF_PIXEL;
-                break;
-            default:
-                FRONT_END_OP_CONVERSION_CHECK(false, "Unsupported upscale op_case: ", op_case);
+                attrs.coordinate_transformation_منوال = align_corners
+                    ? Interpolate::Coordinate_Transform_منوال::ALIGN_CORNERS
+                    : Interpolate::Coordinate_Transform_منوال::HALF_PIXEL;
+                توڑو;
+            طےشدہ:
+                FRONT_انتہا_OP_CONVERSION_CHECK(جھوٹ, "Unsupported upscale op_case: ", op_case);
             }
 
-            std::vector<int64_t> target_shape_vec = {
+            std::vector<int64_t> ہدف_shape_vec = {
                 static_cast<int64_t>(output_shape[2]),
                 static_cast<int64_t>(output_shape[3]),
             };
-            std::vector<float> scales_vec = {
-                static_cast<float>(output_shape[2]) / static_cast<float>(input_shape[2]),
-                static_cast<float>(output_shape[3]) / static_cast<float>(input_shape[3]),
+            std::vector<اعشاری> scales_vec = {
+                static_cast<اعشاری>(output_shape[2]) / static_cast<اعشاری>(داخلہ_shape[2]),
+                static_cast<اعشاری>(output_shape[3]) / static_cast<اعشاری>(داخلہ_shape[3]),
             };
 
-            auto target_shape_node = ov::op::v0::Constant::create(ov::element::i64, {2}, target_shape_vec);
-            auto scales_node = ov::op::v0::Constant::create(ov::element::f32, {2}, scales_vec);
-            auto axes_node = ov::op::v0::Constant::create(ov::element::i64, {2}, {2, 3});
+            خودکار ہدف_shape_گرہ = ov::op::v0::Constant::create(ov::element::i64, {2}, ہدف_shape_vec);
+            خودکار scales_گرہ = ov::op::v0::Constant::create(ov::element::f32, {2}, scales_vec);
+            خودکار axes_گرہ = ov::op::v0::Constant::create(ov::element::i64, {2}, {2, 3});
 
             res = std::make_shared<Interpolate>(
-                res, target_shape_node, scales_node, axes_node, attrs);
+                res, ہدف_shape_گرہ, scales_گرہ, axes_گرہ, attrs);
         }
     }
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    واپس rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

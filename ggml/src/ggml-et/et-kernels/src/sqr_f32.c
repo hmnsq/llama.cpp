@@ -3,86 +3,86 @@
 // Element-wise square: y[i] = x[i] * x[i]
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "platform.h"
+#شامل "ggml_tensor.h"
+#شامل "platform.h"
 
-#include <stdint.h>
+#شامل <stdint.h>
 
 // SQR kernel parameters structure (unary op: src0 -> dst)
-struct ggml_et_sqr_params {
-    struct ggml_tensor src0;  // F32 input tensor
-    struct ggml_tensor dst;   // F32 output tensor
+ساخت ggml_et_sqr_params {
+    ساخت ggml_tensor src0;  // F32 input tensor
+    ساخت ggml_tensor dst;   // F32 output tensor
 };
 
-int entry_point(struct ggml_et_sqr_params * params, void * env) {
+صحیح اندراج_نقطہ(ساخت ggml_et_sqr_params * params, خالی * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    اگر (!kernel_env) {
+        واپس -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    صحیح thread_id   = get_relative_thread_id(kernel_env->shire_نقاب);
+    صحیح عدد_دھاگے = get_عدد_دھاگے(kernel_env->shire_نقاب);
 
-    if (thread_id < 0) {
-        return 0;
+    اگر (thread_id < 0) {
+        واپس 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;  // Invalid pointer
+    اگر (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        واپس -1;  // Invalid pointer
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * dst  = &params->dst;
+    ساخت ggml_tensor * src0 = &params->src0;
+    ساخت ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;  // Unsupported type combination
+    اگر (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        واپس -1;  // Unsupported type combination
     }
 
-    float * src0_data = (float *) src0->data;
-    float * dst_data  = (float *) dst->data;
+    اعشاری * src0_ڈیٹا = (اعشاری *) src0->ڈیٹا;
+    اعشاری * dst_ڈیٹا  = (اعشاری *) dst->ڈیٹا;
 
-    if (!src0_data || !dst_data) {
-        return -1;  // Null data pointer
+    اگر (!src0_ڈیٹا || !dst_ڈیٹا) {
+        واپس -1;  // Null data pointer
     }
 
     // Both src and dst are contiguous F32: flatten and distribute by cache lines
-    const int64_t total_elements         = dst->ne[0] * dst->ne[1] * dst->ne[2] * dst->ne[3];
-    const int64_t elements_per_cacheline = 16;  // 64 bytes / 4 bytes per float
-    const int64_t total_cachelines       = (total_elements + elements_per_cacheline - 1) / elements_per_cacheline;
+    ثابت int64_t کل_elements         = dst->ne[0] * dst->ne[1] * dst->ne[2] * dst->ne[3];
+    ثابت int64_t elements_فی_cacheline = 16;  // 64 bytes / 4 bytes per float
+    ثابت int64_t کل_cachelines       = (کل_elements + elements_فی_cacheline - 1) / elements_فی_cacheline;
 
-    const int64_t cl_per_thread = (total_cachelines + num_threads - 1) / num_threads;
-    const int64_t cl_start      = thread_id * cl_per_thread;
-    int64_t       cl_end        = cl_start + cl_per_thread;
-    if (cl_end > total_cachelines) {
-        cl_end = total_cachelines;
+    ثابت int64_t cl_فی_thread = (کل_cachelines + عدد_دھاگے - 1) / عدد_دھاگے;
+    ثابت int64_t cl_آغاز      = thread_id * cl_فی_thread;
+    int64_t       cl_انتہا        = cl_آغاز + cl_فی_thread;
+    اگر (cl_انتہا > کل_cachelines) {
+        cl_انتہا = کل_cachelines;
     }
 
-    if (cl_start >= total_cachelines) {
-        return 0;
+    اگر (cl_آغاز >= کل_cachelines) {
+        واپس 0;
     }
 
-    const int64_t elem_start = cl_start * elements_per_cacheline;
-    int64_t       elem_end   = cl_end * elements_per_cacheline;
-    if (elem_end > total_elements) {
-        elem_end = total_elements;
+    ثابت int64_t elem_آغاز = cl_آغاز * elements_فی_cacheline;
+    int64_t       elem_انتہا   = cl_انتہا * elements_فی_cacheline;
+    اگر (elem_انتہا > کل_elements) {
+        elem_انتہا = کل_elements;
     }
 
-    const float * src_ptr = src0_data + elem_start;
-    float *       dst_ptr = dst_data + elem_start;
-    const int32_t count   = (int32_t) (elem_end - elem_start);
+    ثابت اعشاری * src_ptr = src0_ڈیٹا + elem_آغاز;
+    اعشاری *       dst_ptr = dst_ڈیٹا + elem_آغاز;
+    ثابت int32_t گنتی   = (int32_t) (elem_انتہا - elem_آغاز);
 
     // Process 8 elements at a time: dst[i] = src[i] * src[i]
-    for (int32_t i0 = 0; i0 < count; i0 += 8) {
-        __asm__ volatile(
+    برائے (int32_t i0 = 0; i0 < گنتی; i0 += 8) {
+        __asm__ متلون(
             "flw.ps f10, %[x_vec]\n"   // Load 8 input values
             "fmul.ps f11, f10, f10\n"  // x * x (8-wide)
             "fsw.ps f11, %[result]\n"  // Store 8 results
 
-            : [result] "=m"(*(float (*)[8]) & dst_ptr[i0])
-            : [x_vec] "m"(*(const float (*)[8]) & src_ptr[i0])
+            : [نتیجہ] "=m"(*(اعشاری (*)[8]) & dst_ptr[i0])
+            : [x_vec] "m"(*(ثابت اعشاری (*)[8]) & src_ptr[i0])
             : "f10", "f11");
     }
 
-    return 0;
+    واپس 0;
 }

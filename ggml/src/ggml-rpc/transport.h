@@ -1,20 +1,20 @@
-#pragma once
+#ہدایت once
 
-#include <cstddef>
-#include <cstdint>
-#include <memory>
+#شامل <cstddef>
+#شامل <cstdint>
+#شامل <memory>
 
-struct socket_t;
-typedef std::shared_ptr<socket_t> socket_ptr;
+ساخت socket_t;
+قسمتعریف std::shared_ptr<socket_t> socket_ptr;
 
-static constexpr size_t MAX_CHUNK_SIZE = 1024ull * 1024ull * 1024ull; // 1 GiB
-static constexpr size_t RPC_CONN_CAPS_SIZE = 24;
+ساکن constexpr size_t MAX_CHUNK_سائز = 1024ull * 1024ull * 1024ull; // 1 GiB
+ساکن constexpr size_t RPC_CONN_CAPS_سائز = 24;
 
-struct socket_t {
+ساخت socket_t {
     ~socket_t();
 
-    bool send_data(const void * data, size_t size);
-    bool recv_data(void * data, size_t size);
+    bool send_ڈیٹا(ثابت خالی * ڈیٹا, size_t سائز);
+    bool recv_ڈیٹا(خالی * ڈیٹا, size_t سائز);
     // Must be called at every message boundary: the RDMA transport coalesces
     // writes into fixed-size frames and posts the trailing partial frame only
     // here. No-op on TCP.
@@ -22,18 +22,18 @@ struct socket_t {
 
     socket_ptr accept();
 
-    void get_caps(uint8_t * local_caps);
-    void update_caps(const uint8_t * remote_caps);
-    const char * transport_name() const;
+    خالی get_caps(uint8_t * local_caps);
+    خالی update_caps(ثابت uint8_t * remote_caps);
+    ثابت حرف * transport_name() ثابت;
 
-    static socket_ptr create_server(const char * host, int port);
-    static socket_ptr connect(const char * host, int port);
+    ساکن socket_ptr create_server(ثابت حرف * host, صحیح پورٹ);
+    ساکن socket_ptr connect(ثابت حرف * host, صحیح پورٹ);
 
-private:
-    struct impl;
+نجی:
+    ساخت impl;
     explicit socket_t(std::unique_ptr<impl> p);
     std::unique_ptr<impl> pimpl;
 };
 
 bool rpc_transport_init();
-void rpc_transport_shutdown();
+خالی rpc_transport_shutdown();

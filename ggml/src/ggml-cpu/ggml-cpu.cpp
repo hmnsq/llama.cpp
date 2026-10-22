@@ -1,448 +1,448 @@
-#include "ggml-backend.h"
-#include "ggml-backend-impl.h"
-#include "ggml-cpu.h"
-#include "repack.h"
-#include "traits.h"
-#include "ggml-impl.h"
-#include "amx/amx.h"
+#شامل "ggml-backend.h"
+#شامل "ggml-backend-impl.h"
+#شامل "ggml-cpu.h"
+#شامل "repack.h"
+#شامل "traits.h"
+#شامل "ggml-impl.h"
+#شامل "amx/amx.h"
 
-#include <cctype>
-#include <string>
-#include <vector>
+#شامل <cctype>
+#شامل <string>
+#شامل <vector>
 
-#ifdef GGML_USE_CPU_HBM
+#اگر_تعریف_شدہ GGML_USE_CPU_HBM
 #    include "hbm.h"
-#endif
+#اگر_ختم
 
-#ifdef GGML_USE_CPU_KLEIDIAI
+#اگر_تعریف_شدہ GGML_USE_CPU_KLEIDIAI
 #    include "kleidiai/kleidiai.h"
-#endif
+#اگر_ختم
 
-#ifdef GGML_USE_CPU_RISCV64_SPACEMIT
+#اگر_تعریف_شدہ GGML_USE_CPU_RISCV64_SPACEMIT
 #    include "spacemit/ime.h"
-#endif
+#اگر_ختم
 
-#if defined(_WIN32)
-#    define WIN32_LEAN_AND_MEAN
+#اگر defined(_WIN32)
+#    define WIN32_LEAN_AND_اوسط
 #    ifndef NOMINMAX
 #        define NOMINMAX
 #    endif
 #    include <windows.h>
-#else
+#ورنہ
 #    include <unistd.h>
-#endif
+#اگر_ختم
 
-#if defined(__APPLE__)
+#اگر defined(__APPLE__)
 #    include <sys/sysctl.h>
 #    include <sys/types.h>
-#endif
+#اگر_ختم
 
 // ggml-backend interface
 
-std::vector<ggml_backend_buffer_type_t> & ggml_backend_cpu_get_extra_buffer_types() {
-    static std::vector<ggml_backend_buffer_type_t> bufts = []() {
-        std::vector<ggml_backend_buffer_type_t> bufts;
+std::vector<ggml_backend_بفر_type_t> & ggml_backend_cpu_get_extra_بفر_types() {
+    ساکن std::vector<ggml_backend_بفر_type_t> bufts = []() {
+        std::vector<ggml_backend_بفر_type_t> bufts;
 
-#if defined(__AMX_INT8__) && defined(__AVX512VNNI__)
-        if (ggml_backend_amx_buffer_type()) {
-            bufts.push_back(ggml_backend_amx_buffer_type());
+#اگر defined(__AMX_INT8__) && defined(__AVX512VNNI__)
+        اگر (ggml_backend_amx_بفر_type()) {
+            bufts.push_back(ggml_backend_amx_بفر_type());
         }
-#endif
+#اگر_ختم
 
-#ifdef GGML_USE_CPU_RISCV64_SPACEMIT
-        if (ggml_backend_cpu_riscv64_spacemit_buffer_type()) {
-            bufts.push_back(ggml_backend_cpu_riscv64_spacemit_buffer_type());
+#اگر_تعریف_شدہ GGML_USE_CPU_RISCV64_SPACEMIT
+        اگر (ggml_backend_cpu_riscv64_spacemit_بفر_type()) {
+            bufts.push_back(ggml_backend_cpu_riscv64_spacemit_بفر_type());
         }
-#endif
+#اگر_ختم
 
-#ifdef GGML_USE_CPU_KLEIDIAI
-        if (ggml_backend_cpu_kleidiai_buffer_type()) {
-            bufts.push_back(ggml_backend_cpu_kleidiai_buffer_type());
+#اگر_تعریف_شدہ GGML_USE_CPU_KLEIDIAI
+        اگر (ggml_backend_cpu_kleidiai_بفر_type()) {
+            bufts.push_back(ggml_backend_cpu_kleidiai_بفر_type());
         }
-#endif
+#اگر_ختم
 
-#ifdef GGML_USE_CPU_REPACK
-        if (ggml_backend_cpu_repack_buffer_type()) {
-            bufts.push_back(ggml_backend_cpu_repack_buffer_type());
+#اگر_تعریف_شدہ GGML_USE_CPU_REPACK
+        اگر (ggml_backend_cpu_repack_بفر_type()) {
+            bufts.push_back(ggml_backend_cpu_repack_بفر_type());
         }
-#endif
+#اگر_ختم
 
-        return bufts;
+        واپس bufts;
     }();
 
-    return bufts;
+    واپس bufts;
 }
 
-static ggml_backend_buffer_type_t * ggml_backend_cpu_device_get_extra_buffers_type(ggml_backend_dev_t device) {
-    static std::vector<ggml_backend_buffer_type_t> extra_bufts = [] {
-        std::vector<ggml_backend_buffer_type_t> bufts = ggml_backend_cpu_get_extra_buffer_types();
-        bufts.push_back(nullptr);
-        return bufts;
+ساکن ggml_backend_بفر_type_t * ggml_backend_cpu_device_get_extra_buffers_type(ggml_backend_dev_t device) {
+    ساکن std::vector<ggml_backend_بفر_type_t> extra_bufts = [] {
+        std::vector<ggml_backend_بفر_type_t> bufts = ggml_backend_cpu_get_extra_بفر_types();
+        bufts.push_back(خالی_اشاریہ);
+        واپس bufts;
     }();
 
-    return extra_bufts.data();
+    واپس extra_bufts.ڈیٹا();
 
-    GGML_UNUSED(device);
+    GGML_غیر_مستعمل(device);
 }
 
-static bool ggml_backend_cpu_is_extra_buffer_type(ggml_backend_buffer_type_t buft) {
-    for (auto * extra : ggml_backend_cpu_get_extra_buffer_types()) {
-        if (extra == buft) {
-            return true;
+ساکن منطقی ggml_backend_cpu_is_extra_بفر_type(ggml_backend_بفر_type_t buft) {
+    برائے (خودکار * extra : ggml_backend_cpu_get_extra_بفر_types()) {
+        اگر (extra == buft) {
+            واپس سچ;
         }
     }
-    return false;
+    واپس جھوٹ;
 }
 
 // CPU backend - backend (stream)
 
-struct ggml_backend_cpu_context {
-    int                 n_threads;
+ساخت ggml_backend_cpu_context {
+    صحیح                 n_دھاگے;
     ggml_threadpool_t   threadpool;
 
-    uint8_t *           work_data;
-    size_t              work_size;
+    uint8_t *           work_ڈیٹا;
+    size_t              work_سائز;
 
     ggml_abort_callback abort_callback;
-    void *              abort_callback_data;
+    خالی *              abort_callback_ڈیٹا;
 
-    bool                use_ref;  // use reference implementation
+    منطقی                use_ref;  // use reference implementation
 };
 
-static const char * ggml_backend_cpu_get_name(ggml_backend_t backend) {
-    return "CPU";
+ساکن ثابت حرف * ggml_backend_cpu_get_name(ggml_backend_t backend) {
+    واپس "CPU";
 
-    GGML_UNUSED(backend);
+    GGML_غیر_مستعمل(backend);
 }
 
-static void ggml_backend_cpu_free(ggml_backend_t backend) {
-    struct ggml_backend_cpu_context * cpu_ctx = (struct ggml_backend_cpu_context *)backend->context;
-    delete[] cpu_ctx->work_data;
-    delete cpu_ctx;
-    delete backend;
+ساکن خالی ggml_backend_cpu_free(ggml_backend_t backend) {
+    ساخت ggml_backend_cpu_context * cpu_ctx = (ساخت ggml_backend_cpu_context *)backend->context;
+    حذف[] cpu_ctx->work_ڈیٹا;
+    حذف cpu_ctx;
+    حذف backend;
 }
 
-struct ggml_backend_plan_cpu {
-    struct ggml_cplan cplan;
-    struct ggml_cgraph cgraph;
+ساخت ggml_backend_plan_cpu {
+    ساخت ggml_cplan cplan;
+    ساخت ggml_cgraph cgraph;
 };
 
-static ggml_backend_graph_plan_t ggml_backend_cpu_graph_plan_create(ggml_backend_t backend, const struct ggml_cgraph * cgraph) {
-    struct ggml_backend_cpu_context * cpu_ctx = (struct ggml_backend_cpu_context *)backend->context;
+ساکن ggml_backend_گراف_plan_t ggml_backend_cpu_گراف_plan_create(ggml_backend_t backend, ثابت ساخت ggml_cgraph * cgraph) {
+    ساخت ggml_backend_cpu_context * cpu_ctx = (ساخت ggml_backend_cpu_context *)backend->context;
 
-    struct ggml_backend_plan_cpu * cpu_plan = new ggml_backend_plan_cpu;
+    ساخت ggml_backend_plan_cpu * cpu_plan = نیا ggml_backend_plan_cpu;
 
-    cpu_plan->cplan = ggml_graph_plan(cgraph, cpu_ctx->n_threads, cpu_ctx->threadpool);
+    cpu_plan->cplan = ggml_گراف_plan(cgraph, cpu_ctx->n_دھاگے, cpu_ctx->threadpool);
     cpu_plan->cgraph = *cgraph; // FIXME: deep copy
 
-    if (cpu_plan->cplan.work_size > 0) {
-        cpu_plan->cplan.work_data = new uint8_t[cpu_plan->cplan.work_size];
-        if (cpu_plan->cplan.work_data == NULL) {
-            delete cpu_plan;
-            return NULL;
+    اگر (cpu_plan->cplan.work_سائز > 0) {
+        cpu_plan->cplan.work_ڈیٹا = نیا uint8_t[cpu_plan->cplan.work_سائز];
+        اگر (cpu_plan->cplan.work_ڈیٹا == تہی) {
+            حذف cpu_plan;
+            واپس تہی;
         }
     }
 
     cpu_plan->cplan.abort_callback      = cpu_ctx->abort_callback;
-    cpu_plan->cplan.abort_callback_data = cpu_ctx->abort_callback_data;
+    cpu_plan->cplan.abort_callback_ڈیٹا = cpu_ctx->abort_callback_ڈیٹا;
     cpu_plan->cplan.use_ref             = cpu_ctx->use_ref;
 
-    return cpu_plan;
+    واپس cpu_plan;
 }
 
-static void ggml_backend_cpu_graph_plan_free(ggml_backend_t backend, ggml_backend_graph_plan_t plan) {
-    struct ggml_backend_plan_cpu * cpu_plan = (struct ggml_backend_plan_cpu *)plan;
+ساکن خالی ggml_backend_cpu_گراف_plan_free(ggml_backend_t backend, ggml_backend_گراف_plan_t plan) {
+    ساخت ggml_backend_plan_cpu * cpu_plan = (ساخت ggml_backend_plan_cpu *)plan;
 
-    delete[] cpu_plan->cplan.work_data;
-    delete cpu_plan;
+    حذف[] cpu_plan->cplan.work_ڈیٹا;
+    حذف cpu_plan;
 
-    GGML_UNUSED(backend);
+    GGML_غیر_مستعمل(backend);
 }
 
-static enum ggml_status ggml_backend_cpu_graph_plan_compute(ggml_backend_t backend, ggml_backend_graph_plan_t plan) {
-    struct ggml_backend_plan_cpu * cpu_plan = (struct ggml_backend_plan_cpu *)plan;
+ساکن شمار ggml_حالت ggml_backend_cpu_گراف_plan_compute(ggml_backend_t backend, ggml_backend_گراف_plan_t plan) {
+    ساخت ggml_backend_plan_cpu * cpu_plan = (ساخت ggml_backend_plan_cpu *)plan;
 
-    return ggml_graph_compute(&cpu_plan->cgraph, &cpu_plan->cplan);
+    واپس ggml_گراف_compute(&cpu_plan->cgraph, &cpu_plan->cplan);
 
-    GGML_UNUSED(backend);
+    GGML_غیر_مستعمل(backend);
 }
 
-static enum ggml_status ggml_backend_cpu_graph_compute(ggml_backend_t backend, struct ggml_cgraph * cgraph) {
-    struct ggml_backend_cpu_context * cpu_ctx = (struct ggml_backend_cpu_context *)backend->context;
+ساکن شمار ggml_حالت ggml_backend_cpu_گراف_compute(ggml_backend_t backend, ساخت ggml_cgraph * cgraph) {
+    ساخت ggml_backend_cpu_context * cpu_ctx = (ساخت ggml_backend_cpu_context *)backend->context;
 
-    struct ggml_cplan cplan = ggml_graph_plan(cgraph, cpu_ctx->n_threads, cpu_ctx->threadpool);
+    ساخت ggml_cplan cplan = ggml_گراف_plan(cgraph, cpu_ctx->n_دھاگے, cpu_ctx->threadpool);
 
-    if (cpu_ctx->work_size < cplan.work_size) {
-        delete[] cpu_ctx->work_data;
-        cpu_ctx->work_data = new uint8_t[cplan.work_size];
-        if (cpu_ctx->work_data == NULL) {
-            cpu_ctx->work_size = 0;
-            return GGML_STATUS_ALLOC_FAILED;
+    اگر (cpu_ctx->work_سائز < cplan.work_سائز) {
+        حذف[] cpu_ctx->work_ڈیٹا;
+        cpu_ctx->work_ڈیٹا = نیا uint8_t[cplan.work_سائز];
+        اگر (cpu_ctx->work_ڈیٹا == تہی) {
+            cpu_ctx->work_سائز = 0;
+            واپس GGML_حالت_ALLOC_FAILED;
         }
-        cpu_ctx->work_size = cplan.work_size;
+        cpu_ctx->work_سائز = cplan.work_سائز;
     }
-    cplan.work_data = (uint8_t *)cpu_ctx->work_data;
+    cplan.work_ڈیٹا = (uint8_t *)cpu_ctx->work_ڈیٹا;
 
     cplan.abort_callback      = cpu_ctx->abort_callback;
-    cplan.abort_callback_data = cpu_ctx->abort_callback_data;
+    cplan.abort_callback_ڈیٹا = cpu_ctx->abort_callback_ڈیٹا;
     cplan.use_ref             = cpu_ctx->use_ref;
 
-    return ggml_graph_compute(cgraph, &cplan);
+    واپس ggml_گراف_compute(cgraph, &cplan);
 }
 
-static const struct ggml_backend_i ggml_backend_cpu_i = {
+ساکن ثابت ساخت ggml_backend_i ggml_backend_cpu_i = {
     /* .get_name                = */ ggml_backend_cpu_get_name,
     /* .free                    = */ ggml_backend_cpu_free,
-    /* .set_tensor_async        = */ NULL,
-    /* .get_tensor_async        = */ NULL,
-    /* .set_tensor_2d_async     = */ NULL,
-    /* .get_tensor_2d_async     = */ NULL,
-    /* .cpy_tensor_async        = */ NULL,
-    /* .synchronize             = */ NULL,
-    /* .graph_plan_create       = */ ggml_backend_cpu_graph_plan_create,
-    /* .graph_plan_free         = */ ggml_backend_cpu_graph_plan_free,
-    /* .graph_plan_update       = */ NULL,
-    /* .graph_plan_compute      = */ ggml_backend_cpu_graph_plan_compute,
-    /* .graph_compute           = */ ggml_backend_cpu_graph_compute,
-    /* .event_record            = */ NULL,
-    /* .event_wait              = */ NULL,
-    /* .graph_optimize          = */ NULL,
+    /* .set_tensor_async        = */ تہی,
+    /* .get_tensor_async        = */ تہی,
+    /* .set_tensor_2d_async     = */ تہی,
+    /* .get_tensor_2d_async     = */ تہی,
+    /* .cpy_tensor_async        = */ تہی,
+    /* .synchronize             = */ تہی,
+    /* .graph_plan_create       = */ ggml_backend_cpu_گراف_plan_create,
+    /* .graph_plan_free         = */ ggml_backend_cpu_گراف_plan_free,
+    /* .graph_plan_update       = */ تہی,
+    /* .graph_plan_compute      = */ ggml_backend_cpu_گراف_plan_compute,
+    /* .graph_compute           = */ ggml_backend_cpu_گراف_compute,
+    /* .event_record            = */ تہی,
+    /* .event_wait              = */ تہی,
+    /* .graph_optimize          = */ تہی,
 };
 
-static ggml_guid_t ggml_backend_cpu_guid(void) {
-    static ggml_guid guid = { 0xaa, 0x67, 0xc7, 0x43, 0x96, 0xe6, 0xa3, 0x8a, 0xe3, 0xaf, 0xea, 0x92, 0x36, 0xbc, 0xfc, 0x89 };
-    return &guid;
+ساکن ggml_guid_t ggml_backend_cpu_guid(خالی) {
+    ساکن ggml_guid guid = { 0xaa, 0x67, 0xc7, 0x43, 0x96, 0xe6, 0xa3, 0x8a, 0xe3, 0xaf, 0xea, 0x92, 0x36, 0xbc, 0xfc, 0x89 };
+    واپس &guid;
 }
 
-ggml_backend_t ggml_backend_cpu_init(void) {
+ggml_backend_t ggml_backend_cpu_init(خالی) {
     // initialize CPU backend now to avoid slowing the first graph computation
     ggml_cpu_init();
 
-    struct ggml_backend_cpu_context * ctx = new ggml_backend_cpu_context;
-    if (ctx == NULL) {
-        return NULL;
+    ساخت ggml_backend_cpu_context * ctx = نیا ggml_backend_cpu_context;
+    اگر (ctx == تہی) {
+        واپس تہی;
     }
 
-    ctx->n_threads           = GGML_DEFAULT_N_THREADS;
-    ctx->threadpool          = NULL;
-    ctx->work_data           = NULL;
-    ctx->work_size           = 0;
-    ctx->abort_callback      = NULL;
-    ctx->abort_callback_data = NULL;
-    ctx->use_ref             = false;
+    ctx->n_دھاگے           = GGML_DEFAULT_N_دھاگے;
+    ctx->threadpool          = تہی;
+    ctx->work_ڈیٹا           = تہی;
+    ctx->work_سائز           = 0;
+    ctx->abort_callback      = تہی;
+    ctx->abort_callback_ڈیٹا = تہی;
+    ctx->use_ref             = جھوٹ;
 
-    ggml_backend_t cpu_backend = new ggml_backend {
+    ggml_backend_t cpu_backend = نیا ggml_backend {
         /* .guid    = */ ggml_backend_cpu_guid(),
         /* .iface   = */ ggml_backend_cpu_i,
         /* .device  = */ ggml_backend_reg_dev_get(ggml_backend_cpu_reg(), 0),
         /* .context = */ ctx,
     };
 
-    if (cpu_backend == NULL) {
-        delete ctx;
-        return NULL;
+    اگر (cpu_backend == تہی) {
+        حذف ctx;
+        واپس تہی;
     }
 
-    return cpu_backend;
+    واپس cpu_backend;
 }
 
-bool ggml_backend_is_cpu(ggml_backend_t backend) {
-    return backend != NULL && ggml_guid_matches(backend->guid, ggml_backend_cpu_guid());
+منطقی ggml_backend_is_cpu(ggml_backend_t backend) {
+    واپس backend != تہی && ggml_guid_matches(backend->guid, ggml_backend_cpu_guid());
 }
 
-void ggml_backend_cpu_set_n_threads(ggml_backend_t backend_cpu, int n_threads) {
+خالی ggml_backend_cpu_سیٹ_n_دھاگے(ggml_backend_t backend_cpu, صحیح n_دھاگے) {
     GGML_ASSERT(ggml_backend_is_cpu(backend_cpu));
 
-    struct ggml_backend_cpu_context * ctx = (struct ggml_backend_cpu_context *)backend_cpu->context;
-    ctx->n_threads = n_threads;
+    ساخت ggml_backend_cpu_context * ctx = (ساخت ggml_backend_cpu_context *)backend_cpu->context;
+    ctx->n_دھاگے = n_دھاگے;
 }
 
-void ggml_backend_cpu_set_threadpool(ggml_backend_t backend_cpu, ggml_threadpool_t threadpool) {
+خالی ggml_backend_cpu_سیٹ_threadpool(ggml_backend_t backend_cpu, ggml_threadpool_t threadpool) {
     GGML_ASSERT(ggml_backend_is_cpu(backend_cpu));
 
-    struct ggml_backend_cpu_context * ctx = (struct ggml_backend_cpu_context *)backend_cpu->context;
+    ساخت ggml_backend_cpu_context * ctx = (ساخت ggml_backend_cpu_context *)backend_cpu->context;
 
-    if (ctx->threadpool && ctx->threadpool != threadpool) {
+    اگر (ctx->threadpool && ctx->threadpool != threadpool) {
         // already had a different threadpool, pause/suspend it before switching
         ggml_threadpool_pause(ctx->threadpool);
     }
     ctx->threadpool = threadpool;
 }
 
-void ggml_backend_cpu_set_abort_callback(ggml_backend_t backend_cpu, ggml_abort_callback abort_callback, void * abort_callback_data) {
+خالی ggml_backend_cpu_سیٹ_abort_callback(ggml_backend_t backend_cpu, ggml_abort_callback abort_callback, خالی * abort_callback_ڈیٹا) {
     GGML_ASSERT(ggml_backend_is_cpu(backend_cpu));
 
-    struct ggml_backend_cpu_context * ctx = (struct ggml_backend_cpu_context *)backend_cpu->context;
+    ساخت ggml_backend_cpu_context * ctx = (ساخت ggml_backend_cpu_context *)backend_cpu->context;
     ctx->abort_callback = abort_callback;
-    ctx->abort_callback_data = abort_callback_data;
+    ctx->abort_callback_ڈیٹا = abort_callback_ڈیٹا;
 }
 
-void ggml_backend_cpu_set_use_ref(ggml_backend_t backend_cpu, bool use_ref) {
+خالی ggml_backend_cpu_سیٹ_use_ref(ggml_backend_t backend_cpu, منطقی use_ref) {
     GGML_ASSERT(ggml_backend_is_cpu(backend_cpu));
 
-    struct ggml_backend_cpu_context * ctx = (struct ggml_backend_cpu_context *)backend_cpu->context;
+    ساخت ggml_backend_cpu_context * ctx = (ساخت ggml_backend_cpu_context *)backend_cpu->context;
     ctx->use_ref = use_ref;
 }
 
 // CPU backend - device
 
-struct ggml_backend_cpu_device_context {
+ساخت ggml_backend_cpu_device_context {
     std::string description = "CPU";
 
     ggml_backend_cpu_device_context() {
-#ifdef __APPLE__
+#اگر_تعریف_شدہ __APPLE__
         size_t len = 0;
-        if (!sysctlbyname("machdep.cpu.brand_string", NULL, &len, NULL, 0)) {
+        اگر (!sysctlbyname("machdep.cpu.brand_string", تہی, &len, تہی, 0)) {
             description.resize(len);
-            sysctlbyname("machdep.cpu.brand_string", &description[0], &len, NULL, 0); // NOLINT
+            sysctlbyname("machdep.cpu.brand_string", &description[0], &len, تہی, 0); // NOLINT
         }
-#elif defined(__linux__)
+#وگرنہ_اگر defined(__linux__)
         FILE * f = fopen("/proc/cpuinfo", "r");
-        if (f) {
-            char buf[1024];
-            while (fgets(buf, sizeof(buf), f)) {
-                if (strncmp(buf, "model name", 10) == 0) {
-                    char * p = strchr(buf, ':');
-                    if (p) {
+        اگر (f) {
+            حرف buf[1024];
+            جب (fgets(buf, حجم(buf), f)) {
+                اگر (لڑی_موازنہ(buf, "model name", 10) == 0) {
+                    حرف * p = strchr(buf, ':');
+                    اگر (p) {
                         p++;
-                        while (std::isspace(*p)) {
+                        جب (std::خلا_ہے(*p)) {
                             p++;
                         }
-                        while (std::isspace(p[strlen(p) - 1])) {
-                            p[strlen(p) - 1] = '\0';
+                        جب (std::خلا_ہے(p[لڑی_لمبائی(p) - 1])) {
+                            p[لڑی_لمبائی(p) - 1] = '\0';
                         }
                         description = p;
-                        break;
+                        توڑو;
                     }
                 }
             }
             fclose(f);
         }
-#elif defined(_WIN32)
-        HKEY hKey;
-        if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,
-                        TEXT("HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0"),
+#وگرنہ_اگر defined(_WIN32)
+        HKEY h_کلید;
+        اگر (Reg_Open_کلید_Ex(HKEY_LOCAL_MACHINE,
+                        متن("HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0"),
                         0,
-                        KEY_READ,
-                        &hKey) == ERROR_SUCCESS) {
-            DWORD cpu_brand_size = 0;
-            if (RegQueryValueExA(hKey,
+                        کلید_READ,
+                        &h_کلید) == ERROR_SUCCESS) {
+            DWORD cpu_brand_سائز = 0;
+            اگر (Reg_Query_قدر_Ex_A(h_کلید,
                                 "ProcessorNameString",
-                                NULL,
-                                NULL,
-                                NULL,
-                                &cpu_brand_size) == ERROR_SUCCESS) {
-                description.resize(cpu_brand_size);
-                if (RegQueryValueExA(hKey,
+                                تہی,
+                                تہی,
+                                تہی,
+                                &cpu_brand_سائز) == ERROR_SUCCESS) {
+                description.resize(cpu_brand_سائز);
+                اگر (Reg_Query_قدر_Ex_A(h_کلید,
                                     "ProcessorNameString",
-                                    NULL,
-                                    NULL,
+                                    تہی,
+                                    تہی,
                                     (LPBYTE)&description[0], // NOLINT
-                                    &cpu_brand_size) == ERROR_SUCCESS) {
-                    if (description.find('\0') != std::string::npos) {
+                                    &cpu_brand_سائز) == ERROR_SUCCESS) {
+                    اگر (description.find('\0') != std::string::npos) {
                         description.resize(description.find('\0'));
                     }
                 }
             }
-            RegCloseKey(hKey);
+            Reg_Close_کلید(h_کلید);
         }
-#endif
+#اگر_ختم
     }
 };
 
-static const char * ggml_backend_cpu_device_get_name(ggml_backend_dev_t dev) {
-    return "CPU";
+ساکن ثابت حرف * ggml_backend_cpu_device_get_name(ggml_backend_dev_t dev) {
+    واپس "CPU";
 
-    GGML_UNUSED(dev);
+    GGML_غیر_مستعمل(dev);
 }
 
-static const char * ggml_backend_cpu_device_get_description(ggml_backend_dev_t dev) {
-    struct ggml_backend_cpu_device_context * ctx = (struct ggml_backend_cpu_device_context *)dev->context;
+ساکن ثابت حرف * ggml_backend_cpu_device_get_description(ggml_backend_dev_t dev) {
+    ساخت ggml_backend_cpu_device_context * ctx = (ساخت ggml_backend_cpu_device_context *)dev->context;
 
-    return ctx->description.c_str();
+    واپس ctx->description.c_str();
 }
 
-static void ggml_backend_cpu_device_get_memory(ggml_backend_dev_t dev, size_t * free, size_t * total) {
-#ifdef _WIN32
-    MEMORYSTATUSEX status;
-    status.dwLength = sizeof(status);
-    GlobalMemoryStatusEx(&status);
-    *total = status.ullTotalPhys;
-    *free = status.ullAvailPhys;
-#else
-    long pages = sysconf(_SC_PHYS_PAGES);
-    long page_size = sysconf(_SC_PAGE_SIZE);
-    *total = pages * page_size;
+ساکن خالی ggml_backend_cpu_device_get_حافظہ(ggml_backend_dev_t dev, size_t * آزاد, size_t * کل) {
+#اگر_تعریف_شدہ _WIN32
+    MEMORYSTATUSEX حالت_2;
+    حالت_2.dw_لمبائی = حجم(حالت_2);
+    Global_حافظہ_حالت_Ex(&حالت_2);
+    *کل = حالت_2.ull_کل_Phys;
+    *آزاد = حالت_2.ullAvailPhys;
+#ورنہ
+    طویل صفحات = sysconf(_SC_PHYS_PAGES);
+    طویل صفحہ_سائز = sysconf(_SC_PAGE_SIZE);
+    *کل = صفحات * صفحہ_سائز;
 
     // "free" system memory is ill-defined, for practical purposes assume that all of it is free:
-    *free = *total;
-#endif // _WIN32
+    *آزاد = *کل;
+#اگر_ختم // _WIN32
 
-    GGML_UNUSED(dev);
+    GGML_غیر_مستعمل(dev);
 }
 
-static enum ggml_backend_dev_type ggml_backend_cpu_device_get_type(ggml_backend_dev_t dev) {
-    return GGML_BACKEND_DEVICE_TYPE_CPU;
+ساکن شمار ggml_backend_dev_type ggml_backend_cpu_device_get_type(ggml_backend_dev_t dev) {
+    واپس GGML_BACKEND_DEVICE_TYPE_CPU;
 
-    GGML_UNUSED(dev);
+    GGML_غیر_مستعمل(dev);
 }
 
-static void ggml_backend_cpu_device_get_props(ggml_backend_dev_t dev, struct ggml_backend_dev_props * props) {
+ساکن خالی ggml_backend_cpu_device_get_props(ggml_backend_dev_t dev, ساخت ggml_backend_dev_props * props) {
     props->name        = ggml_backend_cpu_device_get_name(dev);
     props->description = ggml_backend_cpu_device_get_description(dev);
     props->type        = ggml_backend_cpu_device_get_type(dev);
-    ggml_backend_cpu_device_get_memory(dev, &props->memory_free, &props->memory_total);
+    ggml_backend_cpu_device_get_حافظہ(dev, &props->حافظہ_free, &props->حافظہ_کل);
     props->caps = {
-        /* .async                 = */ false,
-        /* .host_buffer           = */ false,
-        /* .buffer_from_host_ptr  = */ true,
-        /* .events                = */ false,
-        /* .mmap_support          = */ true,
+        /* .async                 = */ جھوٹ,
+        /* .host_buffer           = */ جھوٹ,
+        /* .buffer_from_host_ptr  = */ سچ,
+        /* .events                = */ جھوٹ,
+        /* .mmap_support          = */ سچ,
     };
 }
 
-static ggml_backend_t ggml_backend_cpu_device_init_backend(ggml_backend_dev_t dev, const char * params) {
-    return ggml_backend_cpu_init();
+ساکن ggml_backend_t ggml_backend_cpu_device_init_backend(ggml_backend_dev_t dev, ثابت حرف * params) {
+    واپس ggml_backend_cpu_init();
 
-    GGML_UNUSED(dev);
-    GGML_UNUSED(params);
+    GGML_غیر_مستعمل(dev);
+    GGML_غیر_مستعمل(params);
 }
 
-static ggml_backend_buffer_type_t ggml_backend_cpu_device_get_buffer_type(ggml_backend_dev_t dev) {
-    return ggml_backend_cpu_buffer_type();
+ساکن ggml_backend_بفر_type_t ggml_backend_cpu_device_get_بفر_type(ggml_backend_dev_t dev) {
+    واپس ggml_backend_cpu_بفر_type();
 
-    GGML_UNUSED(dev);
+    GGML_غیر_مستعمل(dev);
 }
 
-static ggml_backend_buffer_t ggml_backend_cpu_device_buffer_from_host_ptr(ggml_backend_dev_t dev, void * ptr, size_t size, size_t max_tensor_size) {
-    return ggml_backend_cpu_buffer_from_ptr(ptr, size);
+ساکن ggml_backend_بفر_t ggml_backend_cpu_device_بفر_from_host_ptr(ggml_backend_dev_t dev, خالی * ptr, size_t size, size_t max_tensor_سائز) {
+    واپس ggml_backend_cpu_بفر_from_ptr(ptr, size);
 
-    GGML_UNUSED(dev);
-    GGML_UNUSED(max_tensor_size);
+    GGML_غیر_مستعمل(dev);
+    GGML_غیر_مستعمل(max_tensor_سائز);
 }
 
-static bool ggml_backend_cpu_device_supports_op(ggml_backend_dev_t dev, const struct ggml_tensor * op) {
-    const struct ggml_tensor * src0 = op->src[0];
-    const struct ggml_tensor * src1 = op->src[1];
+ساکن منطقی ggml_backend_cpu_device_supports_op(ggml_backend_dev_t dev, ثابت ساخت ggml_tensor * op) {
+    ثابت ساخت ggml_tensor * src0 = op->src[0];
+    ثابت ساخت ggml_tensor * src1 = op->src[1];
 
-    if (op->op == GGML_OP_NONE || op->op == GGML_OP_RESHAPE || op->op == GGML_OP_VIEW || op->op == GGML_OP_PERMUTE || op->op == GGML_OP_TRANSPOSE) {
-        return true;
+    اگر (op->op == GGML_OP_NONE || op->op == GGML_OP_RESHAPE || op->op == GGML_OP_VIEW || op->op == GGML_OP_ترتیب_بدلو || op->op == GGML_OP_TRANSPOSE) {
+        واپس سچ;
     }
 
     // check extra buffer types
     // note: only the first sources are checked for extra buffer types to reduce overhead, increase if necessary
-    for (int i = 0; i < 4; i++) {
-        if (op->src[i] && op->src[i]->buffer &&
-            ggml_backend_cpu_is_extra_buffer_type(op->src[i]->buffer->buft)) {
-            auto * buf_extra = (ggml::cpu::extra_buffer_type *) op->src[i]->buffer->buft->context;
-            return buf_extra->supports_op(dev, op);
+    برائے (صحیح i = 0; i < 4; i++) {
+        اگر (op->src[i] && op->src[i]->بفر &&
+            ggml_backend_cpu_is_extra_بفر_type(op->src[i]->بفر->buft)) {
+            خودکار * buf_extra = (ggml::cpu::extra_بفر_type *) op->src[i]->بفر->buft->context;
+            واپس buf_extra->supports_op(dev, op);
         }
     }
 
-    switch (op->op) {
-        case GGML_OP_CPY:
-        case GGML_OP_SET_ROWS:
-            return
+    انتخاب (op->op) {
+        حالت GGML_OP_CPY:
+        حالت GGML_OP_سیٹ_صفیں:
+            واپس
                 op->type != GGML_TYPE_IQ3_XXS &&
                 op->type != GGML_TYPE_IQ3_S   &&
                 op->type != GGML_TYPE_IQ2_XXS &&
@@ -450,270 +450,270 @@ static bool ggml_backend_cpu_device_supports_op(ggml_backend_dev_t dev, const st
                 op->type != GGML_TYPE_IQ2_S   &&
                 op->type != GGML_TYPE_IQ1_S   &&
                 op->type != GGML_TYPE_IQ1_M; // missing type_traits.from_float
-        case GGML_OP_MUL_MAT:
-            if (ggml_get_op_params_i32(op, 1) == GGML_HINT_SRC0_IS_HADAMARD &&
+        حالت GGML_OP_MUL_MAT:
+            اگر (ggml_get_op_params_i32(op, 1) == GGML_HINT_SRC0_IS_HADAMARD &&
                 src0->type == GGML_TYPE_F32 && op->type == GGML_TYPE_F32) {
-                return src1->type == GGML_TYPE_F32 || src1->type == GGML_TYPE_F16;
+                واپس src1->type == GGML_TYPE_F32 || src1->type == GGML_TYPE_F16;
             }
             // BF16 in src1 is widened into the F32 work buffer
-            return src1->type == GGML_TYPE_F32 ||
+            واپس src1->type == GGML_TYPE_F32 ||
                    src1->type == ggml_get_type_traits_cpu(src0->type)->vec_dot_type ||
                    (src1->type == GGML_TYPE_BF16 && ggml_get_type_traits_cpu(src0->type)->vec_dot_type == GGML_TYPE_F32);
-        case GGML_OP_SOFT_MAX_BACK: {
-            if (op->src[0]->type != GGML_TYPE_F32 || op->src[1]->type != GGML_TYPE_F32) {
-                return false;
+        حالت GGML_OP_SOFT_MAX_عقب: {
+            اگر (op->src[0]->type != GGML_TYPE_F32 || op->src[1]->type != GGML_TYPE_F32) {
+                واپس جھوٹ;
             }
-            float max_bias = 0.0f;
+            اعشاری max_bias = 0.0f;
 
-            memcpy(&max_bias, (const float *) op->op_params + 1, sizeof(float));
+            حافظہ_نقل(&max_bias, (ثابت اعشاری *) op->op_params + 1, حجم(اعشاری));
 
-            return max_bias == 0.0f;
+            واپس max_bias == 0.0f;
         }
-        case GGML_OP_IM2COL_BACK:
-            return src0->type == GGML_TYPE_F32 && (src1->type == GGML_TYPE_F32 || src1->type == GGML_TYPE_F16);
-        case GGML_OP_GET_ROWS_BACK:
-            return src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_F16;
-        case GGML_OP_OUT_PROD:
-            return (src0->type == GGML_TYPE_F32 ||
+        حالت GGML_OP_IM2_ستون_عقب:
+            واپس src0->type == GGML_TYPE_F32 && (src1->type == GGML_TYPE_F32 || src1->type == GGML_TYPE_F16);
+        حالت GGML_OP_GET_صفیں_عقب:
+            واپس src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_F16;
+        حالت GGML_OP_برآمد_PROD:
+            واپس (src0->type == GGML_TYPE_F32 ||
                     ((src0->type == GGML_TYPE_F16 || ggml_is_quantized(src0->type)) && src0->ne[2] == src1->ne[2] && src0->ne[3] == src1->ne[3])) &&
                 src1->type == GGML_TYPE_F32 && op->type == GGML_TYPE_F32;
-        case GGML_OP_CONV_2D:
-            return ggml_is_contiguous(op->src[0]);
-        case GGML_OP_SSM_SCAN:
-            return ggml_get_op_params_i32(op, 0) == 1 || op->src[3]->ne[0] == 1;
-        default:
-            return true;
+        حالت GGML_OP_CONV_2D:
+            واپس ggml_is_contiguous(op->src[0]);
+        حالت GGML_OP_SSM_جائزہ:
+            واپس ggml_get_op_params_i32(op, 0) == 1 || op->src[3]->ne[0] == 1;
+        طےشدہ:
+            واپس سچ;
     }
 }
 
-static bool ggml_backend_cpu_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
-    return ggml_backend_buft_is_host(buft) || ggml_backend_cpu_is_extra_buffer_type(buft);
-    GGML_UNUSED(dev);
+ساکن منطقی ggml_backend_cpu_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_بفر_type_t buft) {
+    واپس ggml_backend_buft_is_host(buft) || ggml_backend_cpu_is_extra_بفر_type(buft);
+    GGML_غیر_مستعمل(dev);
 }
 
-static const struct ggml_backend_device_i ggml_backend_cpu_device_i = {
+ساکن ثابت ساخت ggml_backend_device_i ggml_backend_cpu_device_i = {
     /* .get_name             = */ ggml_backend_cpu_device_get_name,
     /* .get_description      = */ ggml_backend_cpu_device_get_description,
-    /* .get_memory           = */ ggml_backend_cpu_device_get_memory,
+    /* .get_memory           = */ ggml_backend_cpu_device_get_حافظہ,
     /* .get_type             = */ ggml_backend_cpu_device_get_type,
     /* .get_props            = */ ggml_backend_cpu_device_get_props,
     /* .init_backend         = */ ggml_backend_cpu_device_init_backend,
-    /* .get_buffer_type      = */ ggml_backend_cpu_device_get_buffer_type,
-    /* .get_host_buffer_type = */ NULL,
-    /* .buffer_from_host_ptr = */ ggml_backend_cpu_device_buffer_from_host_ptr,
+    /* .get_buffer_type      = */ ggml_backend_cpu_device_get_بفر_type,
+    /* .get_host_buffer_type = */ تہی,
+    /* .buffer_from_host_ptr = */ ggml_backend_cpu_device_بفر_from_host_ptr,
     /* .supports_op          = */ ggml_backend_cpu_device_supports_op,
     /* .supports_buft        = */ ggml_backend_cpu_device_supports_buft,
-    /* .offload_op           = */ NULL,
-    /* .event_new            = */ NULL,
-    /* .event_free           = */ NULL,
-    /* .event_synchronize    = */ NULL,
+    /* .offload_op           = */ تہی,
+    /* .event_new            = */ تہی,
+    /* .event_free           = */ تہی,
+    /* .event_synchronize    = */ تہی,
 };
 
 // CPU backend - backend (reg)
 
-static const char * ggml_backend_cpu_reg_get_name(ggml_backend_reg_t reg) {
-    return "CPU";
+ساکن ثابت حرف * ggml_backend_cpu_reg_get_name(ggml_backend_reg_t reg) {
+    واپس "CPU";
 
-    GGML_UNUSED(reg);
+    GGML_غیر_مستعمل(reg);
 }
 
-static size_t ggml_backend_cpu_reg_get_device_count(ggml_backend_reg_t reg) {
-    return 1;
+ساکن size_t ggml_backend_cpu_reg_get_device_گنتی(ggml_backend_reg_t reg) {
+    واپس 1;
 
-    GGML_UNUSED(reg);
+    GGML_غیر_مستعمل(reg);
 }
 
-static ggml_backend_dev_t ggml_backend_cpu_reg_get_device(ggml_backend_reg_t reg, size_t index) {
-    GGML_ASSERT(index == 0);
+ساکن ggml_backend_dev_t ggml_backend_cpu_reg_get_device(ggml_backend_reg_t reg, size_t اشاریہ) {
+    GGML_ASSERT(اشاریہ == 0);
 
-    static ggml_backend_cpu_device_context ctx;
-    static ggml_backend_device ggml_backend_cpu_device = {
+    ساکن ggml_backend_cpu_device_context ctx;
+    ساکن ggml_backend_device ggml_backend_cpu_device = {
         /* .iface   = */ ggml_backend_cpu_device_i,
         /* .reg     = */ reg,
         /* .context = */ &ctx,
     };
 
-    return &ggml_backend_cpu_device;
+    واپس &ggml_backend_cpu_device;
 }
 
 // This is intended to replace the the ggml_cpu_has_* functions when loading the CPU backend dynamically,
 // and additionally to allow other backends to expose their own list of features that applications can query using the same API
-static ggml_backend_feature * ggml_backend_cpu_get_features(ggml_backend_reg_t reg) {
-    static std::vector<ggml_backend_feature> features = []() {
+ساکن ggml_backend_feature * ggml_backend_cpu_get_features(ggml_backend_reg_t reg) {
+    ساکن std::vector<ggml_backend_feature> features = []() {
         ggml_cpu_init();
 
         std::vector<ggml_backend_feature> features;
-        if (ggml_cpu_has_sse3()) {
+        اگر (ggml_cpu_has_sse3()) {
             features.push_back({ "SSE3", "1" });
         }
-        if (ggml_cpu_has_ssse3()) {
+        اگر (ggml_cpu_has_ssse3()) {
             features.push_back({ "SSSE3", "1" });
         }
-        if (ggml_cpu_has_avx()) {
+        اگر (ggml_cpu_has_avx()) {
             features.push_back({ "AVX", "1" });
         }
-        if (ggml_cpu_has_avx_vnni()) {
+        اگر (ggml_cpu_has_avx_vnni()) {
             features.push_back({ "AVX_VNNI", "1" });
         }
-        if (ggml_cpu_has_avx2()) {
+        اگر (ggml_cpu_has_avx2()) {
             features.push_back({ "AVX2", "1" });
         }
-        if (ggml_cpu_has_f16c()) {
+        اگر (ggml_cpu_has_f16c()) {
             features.push_back({ "F16C", "1" });
         }
-        if (ggml_cpu_has_fma()) {
+        اگر (ggml_cpu_has_fma()) {
             features.push_back({ "FMA", "1" });
         }
-        if (ggml_cpu_has_bmi2()) {
+        اگر (ggml_cpu_has_bmi2()) {
             features.push_back({ "BMI2", "1" });
         }
-        if (ggml_cpu_has_avx512()) {
+        اگر (ggml_cpu_has_avx512()) {
             features.push_back({ "AVX512", "1" });
         }
-        if (ggml_cpu_has_avx512_vbmi()) {
+        اگر (ggml_cpu_has_avx512_vbmi()) {
             features.push_back({ "AVX512_VBMI", "1" });
         }
-        if (ggml_cpu_has_avx512_vnni()) {
+        اگر (ggml_cpu_has_avx512_vnni()) {
             features.push_back({ "AVX512_VNNI", "1" });
         }
-        if (ggml_cpu_has_avx512_bf16()) {
+        اگر (ggml_cpu_has_avx512_bf16()) {
             features.push_back({ "AVX512_BF16", "1" });
         }
-        if (ggml_cpu_has_amx_int8()) {
+        اگر (ggml_cpu_has_amx_int8()) {
             features.push_back({ "AMX_INT8", "1" });
         }
-        if (ggml_cpu_has_neon()) {
+        اگر (ggml_cpu_has_neon()) {
             features.push_back({ "NEON", "1" });
         }
-        if (ggml_cpu_has_arm_fma()) {
+        اگر (ggml_cpu_has_arm_fma()) {
             features.push_back({ "ARM_FMA", "1" });
         }
-        if (ggml_cpu_has_fp16_va()) {
+        اگر (ggml_cpu_has_fp16_va()) {
             features.push_back({ "FP16_VA", "1" });
         }
-        if (ggml_cpu_has_matmul_int8()) {
+        اگر (ggml_cpu_has_matmul_int8()) {
             features.push_back({ "MATMUL_INT8", "1" });
         }
-        if (ggml_cpu_has_sve()) {
+        اگر (ggml_cpu_has_sve()) {
             features.push_back({ "SVE", "1" });
         }
-        if (ggml_cpu_has_dotprod()) {
+        اگر (ggml_cpu_has_dotprod()) {
             features.push_back({ "DOTPROD", "1" });
         }
-        if (ggml_cpu_get_sve_cnt() > 0) {
-            static std::string sve_cnt = std::to_string(ggml_cpu_get_sve_cnt());
+        اگر (ggml_cpu_get_sve_cnt() > 0) {
+            ساکن std::string sve_cnt = std::to_string(ggml_cpu_get_sve_cnt());
             features.push_back({ "SVE_CNT", sve_cnt.c_str() });
         }
-        if (ggml_cpu_has_sme()) {
+        اگر (ggml_cpu_has_sme()) {
             features.push_back({ "SME", "1" });
         }
-        if (ggml_cpu_has_sme2()) {
+        اگر (ggml_cpu_has_sme2()) {
             features.push_back({ "SME2", "1" });
         }
-        if (ggml_cpu_has_riscv_v()) {
+        اگر (ggml_cpu_has_riscv_v()) {
             features.push_back({ "RISCV_V", "1" });
         }
-        if (ggml_cpu_get_rvv_vlen() > 0) {
-            static std::string rvv_vlen = std::to_string(ggml_cpu_get_rvv_vlen());
+        اگر (ggml_cpu_get_rvv_vlen() > 0) {
+            ساکن std::string rvv_vlen = std::to_string(ggml_cpu_get_rvv_vlen());
             features.push_back({ "RVV_VLEN", rvv_vlen.c_str() });
         }
-        if (ggml_cpu_has_vsx()) {
+        اگر (ggml_cpu_has_vsx()) {
             features.push_back({ "VSX", "1" });
         }
-        if (ggml_cpu_has_vxe()) {
+        اگر (ggml_cpu_has_vxe()) {
             features.push_back({ "VXE", "1" });
         }
-        if (ggml_cpu_has_wasm_simd()) {
+        اگر (ggml_cpu_has_wasm_simd()) {
             features.push_back({ "WASM_SIMD", "1" });
         }
-        if (ggml_cpu_has_llamafile()) {
+        اگر (ggml_cpu_has_llamafile()) {
             features.push_back({ "LLAMAFILE", "1" });
         }
-    #ifdef GGML_USE_ACCELERATE
+    #اگر_تعریف_شدہ GGML_USE_ACCELERATE
         features.push_back({ "ACCELERATE", "1" });
-    #endif
-    #ifdef GGML_USE_CPU_HBM
+    #اگر_ختم
+    #اگر_تعریف_شدہ GGML_USE_CPU_HBM
         features.push_back({ "CPU_HBM", "1" });
-    #endif
-    #ifdef GGML_USE_OPENMP
+    #اگر_ختم
+    #اگر_تعریف_شدہ GGML_USE_OPENMP
         features.push_back({ "OPENMP", "1" });
-    #endif
-    #ifdef GGML_USE_CPU_KLEIDIAI
+    #اگر_ختم
+    #اگر_تعریف_شدہ GGML_USE_CPU_KLEIDIAI
         features.push_back({ "KLEIDIAI", "1" });
-    #endif
-    #ifdef GGML_USE_CPU_REPACK
+    #اگر_ختم
+    #اگر_تعریف_شدہ GGML_USE_CPU_REPACK
         features.push_back({ "REPACK", "1" });
-    #endif
+    #اگر_ختم
 
-        features.push_back({ nullptr, nullptr });
+        features.push_back({ خالی_اشاریہ, خالی_اشاریہ });
 
-        return features;
+        واپس features;
     }();
 
-    return features.data();
+    واپس features.ڈیٹا();
 
-    GGML_UNUSED(reg);
+    GGML_غیر_مستعمل(reg);
 }
 
-static void * ggml_backend_cpu_get_proc_address(ggml_backend_reg_t reg, const char * name) {
-    if (strcmp(name, "ggml_backend_set_n_threads") == 0) {
-        ggml_backend_set_n_threads_t fct = ggml_backend_cpu_set_n_threads;
-        return (void *)fct;
+ساکن خالی * ggml_backend_cpu_get_proc_پتہ(ggml_backend_reg_t reg, ثابت حرف * name) {
+    اگر (strcmp(name, "ggml_backend_set_n_threads") == 0) {
+        ggml_backend_سیٹ_n_دھاگے_t fct = ggml_backend_cpu_سیٹ_n_دھاگے;
+        واپس (خالی *)fct;
     }
-    if (strcmp(name, "ggml_backend_dev_get_extra_bufts") == 0) {
+    اگر (strcmp(name, "ggml_backend_dev_get_extra_bufts") == 0) {
         ggml_backend_dev_get_extra_bufts_t fct = ggml_backend_cpu_device_get_extra_buffers_type;
-        return (void *)fct;
+        واپس (خالی *)fct;
     }
-    if (strcmp(name, "ggml_backend_get_features") == 0) {
-        return (void *)ggml_backend_cpu_get_features;
+    اگر (strcmp(name, "ggml_backend_get_features") == 0) {
+        واپس (خالی *)ggml_backend_cpu_get_features;
     }
-    if (strcmp(name, "ggml_backend_set_abort_callback") == 0) {
-        return (void *)ggml_backend_cpu_set_abort_callback;
+    اگر (strcmp(name, "ggml_backend_set_abort_callback") == 0) {
+        واپس (خالی *)ggml_backend_cpu_سیٹ_abort_callback;
     }
-    if (strcmp(name, "ggml_backend_cpu_numa_init") == 0) {
-        return (void *)ggml_numa_init;
+    اگر (strcmp(name, "ggml_backend_cpu_numa_init") == 0) {
+        واپس (خالی *)ggml_numa_init;
     }
-    if (strcmp(name, "ggml_backend_cpu_is_numa") == 0) {
-        return (void *)ggml_is_numa;
+    اگر (strcmp(name, "ggml_backend_cpu_is_numa") == 0) {
+        واپس (خالی *)ggml_is_numa;
     }
-    if (strcmp(name, "ggml_backend_cpu_set_use_ref") == 0) {
-        return (void *)ggml_backend_cpu_set_use_ref;
+    اگر (strcmp(name, "ggml_backend_cpu_set_use_ref") == 0) {
+        واپس (خالی *)ggml_backend_cpu_سیٹ_use_ref;
     }
 
     // threadpool - TODO:  move to ggml-base
-    if (strcmp(name, "ggml_threadpool_new") == 0) {
-        return (void *)ggml_threadpool_new;
+    اگر (strcmp(name, "ggml_threadpool_new") == 0) {
+        واپس (خالی *)ggml_threadpool_new;
     }
-    if (strcmp(name, "ggml_threadpool_free") == 0) {
-        return (void *)ggml_threadpool_free;
+    اگر (strcmp(name, "ggml_threadpool_free") == 0) {
+        واپس (خالی *)ggml_threadpool_free;
     }
-    if (strcmp(name, "ggml_backend_cpu_set_threadpool") == 0) {
-        return (void *)ggml_backend_cpu_set_threadpool;
+    اگر (strcmp(name, "ggml_backend_cpu_set_threadpool") == 0) {
+        واپس (خالی *)ggml_backend_cpu_سیٹ_threadpool;
     }
 
-    return NULL;
+    واپس تہی;
 
-    GGML_UNUSED(reg);
+    GGML_غیر_مستعمل(reg);
 }
 
-static const struct ggml_backend_reg_i ggml_backend_cpu_reg_i = {
+ساکن ثابت ساخت ggml_backend_reg_i ggml_backend_cpu_reg_i = {
     /* .get_name         = */ ggml_backend_cpu_reg_get_name,
-    /* .get_device_count = */ ggml_backend_cpu_reg_get_device_count,
+    /* .get_device_count = */ ggml_backend_cpu_reg_get_device_گنتی,
     /* .get_device       = */ ggml_backend_cpu_reg_get_device,
-    /* .get_proc_address = */ ggml_backend_cpu_get_proc_address,
+    /* .get_proc_address = */ ggml_backend_cpu_get_proc_پتہ,
 };
 
-ggml_backend_reg_t ggml_backend_cpu_reg(void) {
+ggml_backend_reg_t ggml_backend_cpu_reg(خالی) {
     // init CPU feature detection
     ggml_cpu_init();
 
-    static struct ggml_backend_reg ggml_backend_cpu_reg = {
-        /* .api_version = */ GGML_BACKEND_API_VERSION,
+    ساکن ساخت ggml_backend_reg ggml_backend_cpu_reg = {
+        /* .api_version = */ GGML_BACKEND_API_نسخہ,
         /* .iface       = */ ggml_backend_cpu_reg_i,
-        /* .context     = */ NULL,
+        /* .context     = */ تہی,
     };
 
-    return &ggml_backend_cpu_reg;
+    واپس &ggml_backend_cpu_reg;
 }
 
 GGML_BACKEND_DL_IMPL(ggml_backend_cpu_reg)

@@ -1,10 +1,10 @@
-#pragma once
+#ہدایت once
 
-#include "decoder.h"
+#شامل "decoder.h"
 
-#include <cstdint>
-#include <openvino/frontend/node_context.hpp>
-#include <string>
+#شامل <cstdint>
+#شامل <openvino/frontend/node_context.hpp>
+#شامل <string>
 
 namespace ov {
 namespace frontend {
@@ -12,168 +12,168 @@ namespace ggml {
 
 class TranslateSession;
 
-typedef std::map<std::string, Output<Node>> TensorMap;
+قسمتعریف std::map<std::string, Output<گرہ_2>> TensorMap;
 
-class NodeContext : public frontend::NodeContext {
-public:
-    NodeContext(const std::shared_ptr<GgmlDecoder> & decoder,
+class گرہ_Context : عوامی frontend::گرہ_Context {
+عوامی:
+    گرہ_Context(ثابت std::shared_ptr<GgmlDecoder> & decoder,
                 std::shared_ptr<TensorMap> & tensor_map,
-                int node_idx,
+                صحیح گرہ_idx,
                 TranslateSession * translate_session = nullptr) :
-        ov::frontend::NodeContext(decoder->get_op_type(node_idx)),
+        ov::frontend::گرہ_Context(decoder->get_op_type(گرہ_idx)),
         m_decoder(decoder),
         m_tensor_map(tensor_map),
-        m_node_idx(node_idx),
+        m_گرہ_idx(گرہ_idx),
         m_translate_session(translate_session) {
-        m_input_names = decoder->get_input_names(m_node_idx);
-        m_output_names = decoder->get_output_names(m_node_idx);
+        m_داخلہ_نام = decoder->get_داخلہ_نام(m_گرہ_idx);
+        m_output_نام = decoder->get_output_نام(m_گرہ_idx);
     }
 
-    TranslateSession * get_translate_session() const { return m_translate_session; }
+    TranslateSession * get_translate_session() ثابت { واپس m_translate_session; }
 
-    const std::vector<std::string> & get_input_names() const { return m_input_names; }
+    ثابت std::سمتیہ<std::string> & get_داخلہ_نام() ثابت { واپس m_داخلہ_نام; }
 
-    const std::vector<std::string> & get_output_names() const { return m_output_names; }
+    ثابت std::سمتیہ<std::string> & get_output_نام() ثابت { واپس m_output_نام; }
 
-    size_t get_input_size() const override { return m_decoder->get_input_size(m_node_idx); }
+    size_t get_داخلہ_سائز() ثابت override { واپس m_decoder->get_داخلہ_سائز(m_گرہ_idx); }
 
-    ov::element::Type get_input_type(size_t index) const {
-        return m_decoder->get_input_type(m_node_idx, m_input_names[index]);
+    ov::element::Type get_داخلہ_type(size_t اشاریہ) ثابت {
+        واپس m_decoder->get_داخلہ_type(m_گرہ_idx, m_داخلہ_نام[اشاریہ]);
     }
 
-    PartialShape get_input_shape(size_t input_index) const {
-        return m_decoder->get_input_shape(m_node_idx, m_input_names[input_index]);
+    PartialShape get_داخلہ_shape(size_t داخلہ_اشاریہ) ثابت {
+        واپس m_decoder->get_داخلہ_shape(m_گرہ_idx, m_داخلہ_نام[داخلہ_اشاریہ]);
     }
 
-    std::vector<size_t> get_input_stride(size_t index) const {
-        return m_decoder->get_input_stride(m_node_idx, m_input_names[index]);
+    std::سمتیہ<size_t> get_داخلہ_stride(size_t اشاریہ) ثابت {
+        واپس m_decoder->get_داخلہ_stride(m_گرہ_idx, m_داخلہ_نام[اشاریہ]);
     }
 
-    std::string get_output_name() const { return m_output_names[0]; }
+    std::string get_output_name() ثابت { واپس m_output_نام[0]; }
 
-    PartialShape get_output_shape() const { return m_decoder->get_output_shape(m_node_idx); }
+    PartialShape get_output_shape() ثابت { واپس m_decoder->get_output_shape(m_گرہ_idx); }
 
-    int32_t * get_input_op_params(size_t index) const {
-        return m_decoder->get_input_op_params(m_node_idx, m_input_names[index]);
+    int32_t * get_داخلہ_op_params(size_t اشاریہ) ثابت {
+        واپس m_decoder->get_داخلہ_op_params(m_گرہ_idx, m_داخلہ_نام[اشاریہ]);
     }
 
-    size_t get_view_input_size(size_t index) const {
-        return m_decoder->get_view_input_size(m_node_idx, m_input_names[index]);
+    size_t get_view_داخلہ_سائز(size_t اشاریہ) ثابت {
+        واپس m_decoder->get_view_داخلہ_سائز(m_گرہ_idx, m_داخلہ_نام[اشاریہ]);
     }
 
-    size_t get_view_input_offset(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_offset(m_node_idx, m_input_names[index], view_index);
+    size_t get_view_داخلہ_انحراف(size_t اشاریہ, size_t view_اشاریہ) ثابت {
+        واپس m_decoder->get_view_داخلہ_انحراف(m_گرہ_idx, m_داخلہ_نام[اشاریہ], view_اشاریہ);
     }
 
-    size_t get_view_input_src_offset(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_src_offset(m_node_idx, m_input_names[index], view_index);
+    size_t get_view_داخلہ_src_انحراف(size_t اشاریہ, size_t view_اشاریہ) ثابت {
+        واپس m_decoder->get_view_داخلہ_src_انحراف(m_گرہ_idx, m_داخلہ_نام[اشاریہ], view_اشاریہ);
     }
 
-    std::vector<size_t> get_view_input_stride(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_stride(m_node_idx, m_input_names[index], view_index);
+    std::سمتیہ<size_t> get_view_داخلہ_stride(size_t اشاریہ, size_t view_اشاریہ) ثابت {
+        واپس m_decoder->get_view_داخلہ_stride(m_گرہ_idx, m_داخلہ_نام[اشاریہ], view_اشاریہ);
     }
 
-    std::vector<size_t> get_view_input_src_stride(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_src_stride(m_node_idx, m_input_names[index], view_index);
+    std::سمتیہ<size_t> get_view_داخلہ_src_stride(size_t اشاریہ, size_t view_اشاریہ) ثابت {
+        واپس m_decoder->get_view_داخلہ_src_stride(m_گرہ_idx, m_داخلہ_نام[اشاریہ], view_اشاریہ);
     }
 
-    ov::Shape get_view_input_ggml_shape(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_ggml_shape(m_node_idx, m_input_names[index], view_index);
+    ov::Shape get_view_داخلہ_ggml_shape(size_t اشاریہ, size_t view_اشاریہ) ثابت {
+        واپس m_decoder->get_view_داخلہ_ggml_shape(m_گرہ_idx, m_داخلہ_نام[اشاریہ], view_اشاریہ);
     }
 
-    ov::Shape get_view_input_src_ggml_shape(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_src_ggml_shape(m_node_idx, m_input_names[index], view_index);
+    ov::Shape get_view_داخلہ_src_ggml_shape(size_t اشاریہ, size_t view_اشاریہ) ثابت {
+        واپس m_decoder->get_view_داخلہ_src_ggml_shape(m_گرہ_idx, m_داخلہ_نام[اشاریہ], view_اشاریہ);
     }
 
-    ov::PartialShape get_view_input_ov_shape(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_ov_shape(m_node_idx, m_input_names[index], view_index);
+    ov::PartialShape get_view_داخلہ_ov_shape(size_t اشاریہ, size_t view_اشاریہ) ثابت {
+        واپس m_decoder->get_view_داخلہ_ov_shape(m_گرہ_idx, m_داخلہ_نام[اشاریہ], view_اشاریہ);
     }
 
-    ov::PartialShape get_view_input_src_ov_shape(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_src_ov_shape(m_node_idx, m_input_names[index], view_index);
+    ov::PartialShape get_view_داخلہ_src_ov_shape(size_t اشاریہ, size_t view_اشاریہ) ثابت {
+        واپس m_decoder->get_view_داخلہ_src_ov_shape(m_گرہ_idx, m_داخلہ_نام[اشاریہ], view_اشاریہ);
     }
 
-    std::string get_view_input_name(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_name(m_node_idx, m_input_names[index], view_index);
+    std::string get_view_داخلہ_name(size_t اشاریہ, size_t view_اشاریہ) ثابت {
+        واپس m_decoder->get_view_داخلہ_name(m_گرہ_idx, m_داخلہ_نام[اشاریہ], view_اشاریہ);
     }
 
-    std::string get_view_input_src_name(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_src_name(m_node_idx, m_input_names[index], view_index);
+    std::string get_view_داخلہ_src_name(size_t اشاریہ, size_t view_اشاریہ) ثابت {
+        واپس m_decoder->get_view_داخلہ_src_name(m_گرہ_idx, m_داخلہ_نام[اشاریہ], view_اشاریہ);
     }
 
-    int32_t get_op_dynamic_dim() const { return m_decoder->get_op_dynamic_dim(m_node_idx); }
+    int32_t get_op_dynamic_dim() ثابت { واپس m_decoder->get_op_dynamic_dim(m_گرہ_idx); }
 
-    int32_t * get_output_op_params() const { return m_decoder->get_output_op_params(m_node_idx); }
+    int32_t * get_output_op_params() ثابت { واپس m_decoder->get_output_op_params(m_گرہ_idx); }
 
-    size_t get_output_op_offset() const { return m_decoder->get_output_op_offset(m_node_idx); }
+    size_t get_output_op_انحراف() ثابت { واپس m_decoder->get_output_op_انحراف(m_گرہ_idx); }
 
-    ov::element::Type get_output_type() const { return m_decoder->get_output_type(m_node_idx); }
+    ov::element::Type get_output_type() ثابت { واپس m_decoder->get_output_type(m_گرہ_idx); }
 
-    std::vector<size_t> get_output_stride() const { return m_decoder->get_output_stride(m_node_idx); }
+    std::سمتیہ<size_t> get_output_stride() ثابت { واپس m_decoder->get_output_stride(m_گرہ_idx); }
 
-    Output<Node> get_input(int idx) const override {
+    Output<گرہ_2> get_داخلہ(صحیح idx) ثابت override {
         // Check if this input is a VIEW
-        size_t view_input_size = m_decoder->get_view_input_size(m_node_idx, m_input_names[idx]);
-        if (view_input_size > 0) {
+        size_t view_داخلہ_سائز = m_decoder->get_view_داخلہ_سائز(m_گرہ_idx, m_داخلہ_نام[idx]);
+        اگر (view_داخلہ_سائز > 0) {
             // This is a VIEW input, get the base tensor name (last element in the chain)
-            std::string base_name =
-                m_decoder->get_view_input_src_name(m_node_idx, m_input_names[idx], view_input_size - 1);
+            std::string بنیاد_name =
+                m_decoder->get_view_داخلہ_src_name(m_گرہ_idx, m_داخلہ_نام[idx], view_داخلہ_سائز - 1);
             // Check if the VIEW has been resolved (translate_view produced a Slice)
-            auto view_it = m_tensor_map->find(m_input_names[idx]);
-            if (!base_name.empty() && view_it != m_tensor_map->end()) {
-                auto base_it = m_tensor_map->find(base_name);
+            خودکار view_it = m_tensor_map->ڈھونڈو(m_داخلہ_نام[idx]);
+            اگر (!بنیاد_name.خالی_خانے() && view_it != m_tensor_map->انتہا()) {
+                خودکار بنیاد_it = m_tensor_map->ڈھونڈو(بنیاد_name);
                 // A multi-output translator can publish a VIEW directly without materializing
                 // its packed parent (GatedDeltaNet attention/state). In that case the VIEW is the
                 // authoritative value. The node comparison retains the existing resolved-VIEW path.
-                if (base_it == m_tensor_map->end() ||
-                    view_it->second.get_node_shared_ptr() != base_it->second.get_node_shared_ptr()) {
-                    return view_it->second;
+                اگر (بنیاد_it == m_tensor_map->انتہا() ||
+                    view_it->دوسرا.get_گرہ_shared_ptr() != بنیاد_it->دوسرا.get_گرہ_shared_ptr()) {
+                    واپس view_it->دوسرا;
                 }
-                return base_it->second;
+                واپس بنیاد_it->دوسرا;
             }
-            if (!base_name.empty()) {
-                return m_tensor_map->at(base_name);
+            اگر (!بنیاد_name.خالی_خانے()) {
+                واپس m_tensor_map->at(بنیاد_name);
             }
         }
         // Not a VIEW or failed to get base name, use the original logic
-        return m_tensor_map->at(m_input_names[idx]);
+        واپس m_tensor_map->at(m_داخلہ_نام[idx]);
     }
 
-    Output<Node> get_input(const std::string & name) const override {
-        if (m_tensor_map->find(name) == m_tensor_map->end()) {
+    Output<گرہ_2> get_داخلہ(ثابت std::string & name) ثابت override {
+        اگر (m_tensor_map->ڈھونڈو(name) == m_tensor_map->انتہا()) {
             throw std::runtime_error("'" + name + "' not found in tensor map.");
         }
-        return m_tensor_map->at(name);
+        واپس m_tensor_map->at(name);
     }
 
-    bool has_input(const std::string & name) const { return m_tensor_map->find(name) != m_tensor_map->end(); }
+    bool has_داخلہ(ثابت std::string & name) ثابت { واپس m_tensor_map->ڈھونڈو(name) != m_tensor_map->انتہا(); }
 
-    void put_shared(const std::string & name, const Output<Node> & value) const {
-        m_tensor_map->insert({name, value});
+    خالی put_shared(ثابت std::string & name, ثابت Output<گرہ_2> & قدر) ثابت {
+        m_tensor_map->داخل_کرو({name, قدر});
     }
 
-    const std::string & get_name() const override { return m_decoder->get_op_name(m_node_idx); }
+    ثابت std::string & get_name() ثابت override { واپس m_decoder->get_op_name(m_گرہ_idx); }
 
-    ov::Any get_attribute_as_any(const std::string & name) const override { return m_decoder->get_attribute(name); }
+    ov::Any get_attribute_as_any(ثابت std::string & name) ثابت override { واپس m_decoder->get_attribute(name); }
 
-    int get_op_case() const { return m_decoder->get_op_case(m_node_idx); }
+    صحیح get_op_case() ثابت { واپس m_decoder->get_op_case(m_گرہ_idx); }
 
-    bool is_static() const { return m_decoder->is_static(); }
+    bool is_static() ثابت { واپس m_decoder->is_static(); }
 
-    bool is_stateful() const { return m_decoder->is_stateful(); }
+    bool is_stateful() ثابت { واپس m_decoder->is_stateful(); }
 
-    int get_ssm_state_size() const { return m_decoder->get_ssm_state_size(); }
+    صحیح get_ssm_state_سائز() ثابت { واپس m_decoder->get_ssm_state_سائز(); }
 
-private:
+نجی:
     std::shared_ptr<GgmlDecoder> m_decoder;
     std::shared_ptr<TensorMap> & m_tensor_map;
-    int m_node_idx;
+    صحیح m_گرہ_idx;
     TranslateSession * m_translate_session;
-    std::vector<std::string> m_input_names;
-    std::vector<std::string> m_output_names;
+    std::سمتیہ<std::string> m_داخلہ_نام;
+    std::سمتیہ<std::string> m_output_نام;
 };
 
-using CreatorFunction = std::function<ov::OutputVector(const ov::frontend::ggml::NodeContext &)>;
+using CreatorFunction = std::function<ov::Output_سمتیہ(ثابت ov::frontend::ggml::گرہ_Context &)>;
 
 }  // namespace ggml
 }  // namespace frontend

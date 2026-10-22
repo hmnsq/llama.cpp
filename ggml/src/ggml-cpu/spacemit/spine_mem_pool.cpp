@@ -1,554 +1,554 @@
-#include "spine_mem_pool.h"
+#شامل "spine_mem_pool.h"
 
-#include "common.h"
-#include "ime_env.h"
-#include "spine_tcm.h"
+#شامل "common.h"
+#شامل "ime_env.h"
+#شامل "spine_tcm.h"
 
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <sys/mman.h>
-#include <unistd.h>
+#شامل <fcntl.h>
+#شامل <sys/ioctl.h>
+#شامل <sys/mman.h>
+#شامل <unistd.h>
 
-#include <algorithm>
-#include <cerrno>
-#include <cstdint>
-#include <cstdlib>
-#include <limits>
-#include <memory>
-#include <mutex>
-#include <unordered_map>
-#include <vector>
+#شامل <algorithm>
+#شامل <cerrno>
+#شامل <cstdint>
+#شامل <cstdlib>
+#شامل <limits>
+#شامل <memory>
+#شامل <mutex>
+#شامل <unordered_map>
+#شامل <vector>
 
-namespace ggml::cpu::riscv64_spacemit {
-namespace {
+نامخلا ggml::cpu::riscv64_spacemit {
+نامخلا {
 
-constexpr size_t   SPINE_MEM_POOL_CHUNK_SIZE         = 512ull * 1024ull * 1024ull;
-constexpr size_t   SPINE_SHARE_MEM_POOL_CHUNK_SIZE   = 512ull * 1024ull;
-constexpr size_t   SPINE_MEM_POOL_1G_REGION_SIZE     = 1ull << 30;
+constexpr size_t   SPINE_MEM_POOL_CHUNK_سائز         = 512ull * 1024ull * 1024ull;
+constexpr size_t   SPINE_SHARE_MEM_POOL_CHUNK_سائز   = 512ull * 1024ull;
+constexpr size_t   SPINE_MEM_POOL_1_G_REGION_سائز     = 1ull << 30;
 constexpr uint64_t HUGETLB_1G_FLAG_REQUIRE_PUD       = 1ull << 0;
-constexpr char     SPINE_MEM_POOL_HUGETLB_1G_DEV[]   = "/dev/hugetlb_1g";
-constexpr char     SPINE_MEM_POOL_TCM_SYNC_MEM_DEV[] = "/dev/tcm_sync_mem";
+constexpr حرف     SPINE_MEM_POOL_HUGETLB_1G_DEV[]   = "/dev/hugetlb_1g";
+constexpr حرف     SPINE_MEM_POOL_TCM_SYNC_MEM_DEV[] = "/dev/tcm_sync_mem";
 
-struct hugetlb_1g_region {
+ساخت hugetlb_1g_region {
     uint64_t size{ 0 };
     uint64_t dma_addr{ 0 };
     uint64_t flags{ 0 };
     uint64_t reserved{ 0 };
 };
 
-#define HUGETLB_1G_IOC_MAGIC 'M'
-#define HUGETLB_1G_IOC_ALLOC _IOWR(HUGETLB_1G_IOC_MAGIC, 0x00, struct hugetlb_1g_region)
-#define HUGETLB_1G_IOC_FREE  _IO(HUGETLB_1G_IOC_MAGIC, 0x01)
+#تعریف_کرو HUGETLB_1G_IOC_MAGIC 'M'
+#تعریف_کرو HUGETLB_1G_IOC_ALLOC _IOWR(HUGETLB_1G_IOC_MAGIC, 0x00, ساخت hugetlb_1g_region)
+#تعریف_کرو HUGETLB_1G_IOC_FREE  _IO(HUGETLB_1G_IOC_MAGIC, 0x01)
 
-struct free_block {
-    size_t offset{ 0 };
+ساخت free_بلاک {
+    size_t انحراف{ 0 };
     size_t size{ 0 };
 };
 
-struct pool_chunk {
-    uint8_t *               base{ nullptr };
+ساخت pool_chunk {
+    uint8_t *               بنیاد{ خالی_اشاریہ };
     size_t                  size{ 0 };
-    int                     fd{ -1 };
-    std::vector<free_block> free_blocks;
+    صحیح                     fd{ -1 };
+    std::vector<free_بلاک> free_بلاکیں;
 };
 
-struct pool_allocation {
-    void * chunk_base{ nullptr };
-    size_t chunk_size{ 0 };
-    void * base{ nullptr };
+ساخت pool_تخصیص {
+    خالی * chunk_بنیاد{ خالی_اشاریہ };
+    size_t chunk_سائز{ 0 };
+    خالی * بنیاد{ خالی_اشاریہ };
     size_t size{ 0 };
 };
 
-bool is_power_of_two(size_t value) {
-    return value != 0 && (value & (value - 1)) == 0;
+منطقی is_power_کا_two(size_t value) {
+    واپس value != 0 && (value & (value - 1)) == 0;
 }
 
-bool align_up(size_t value, size_t alignment, size_t * aligned_value) {
-    if (aligned_value == nullptr || alignment == 0) {
-        return false;
+منطقی align_اوپر(size_t value, size_t alignment, size_t * aligned_قدر) {
+    اگر (aligned_قدر == خالی_اشاریہ || alignment == 0) {
+        واپس جھوٹ;
     }
 
-    const size_t remainder = value % alignment;
-    if (remainder == 0) {
-        *aligned_value = value;
-        return true;
+    ثابت size_t remainder = value % alignment;
+    اگر (remainder == 0) {
+        *aligned_قدر = value;
+        واپس سچ;
     }
 
-    const size_t padding = alignment - remainder;
-    if (value > std::numeric_limits<size_t>::max() - padding) {
-        return false;
+    ثابت size_t padding = alignment - remainder;
+    اگر (value > std::numeric_limits<size_t>::max() - padding) {
+        واپس جھوٹ;
     }
 
-    *aligned_value = value + padding;
-    return true;
+    *aligned_قدر = value + padding;
+    واپس سچ;
 }
 
-bool align_up_uintptr(uintptr_t value, size_t alignment, uintptr_t * aligned_value) {
-    if (aligned_value == nullptr || alignment == 0) {
-        return false;
+منطقی align_اوپر_uintptr(uintptr_t value, size_t alignment, uintptr_t * aligned_قدر) {
+    اگر (aligned_قدر == خالی_اشاریہ || alignment == 0) {
+        واپس جھوٹ;
     }
 
-    const uintptr_t remainder = value % alignment;
-    if (remainder == 0) {
-        *aligned_value = value;
-        return true;
+    ثابت uintptr_t remainder = value % alignment;
+    اگر (remainder == 0) {
+        *aligned_قدر = value;
+        واپس سچ;
     }
 
-    const uintptr_t padding = alignment - remainder;
-    if (value > std::numeric_limits<uintptr_t>::max() - padding) {
-        return false;
+    ثابت uintptr_t padding = alignment - remainder;
+    اگر (value > std::numeric_limits<uintptr_t>::max() - padding) {
+        واپس جھوٹ;
     }
 
-    *aligned_value = value + padding;
-    return true;
+    *aligned_قدر = value + padding;
+    واپس سچ;
 }
 
-class spine_mem_pool_manager {
-  public:
-    explicit spine_mem_pool_manager(size_t default_chunk_size) : default_chunk_size_(default_chunk_size) {}
+جماعت spine_mem_pool_manager {
+  عوامی:
+    صریح spine_mem_pool_manager(size_t default_chunk_سائز) : default_chunk_سائز_2(default_chunk_سائز) {}
 
-    virtual ~spine_mem_pool_manager() = default;
+    مجازی ~spine_mem_pool_manager() = طےشدہ;
 
-    void * alloc(size_t size, size_t alignment) {
-        if (size == 0 || !is_power_of_two(alignment)) {
-            return nullptr;
+    خالی * alloc(size_t size, size_t alignment) {
+        اگر (size == 0 || !is_power_کا_two(alignment)) {
+            واپس خالی_اشاریہ;
         }
 
-        size_t aligned_size = 0;
-        if (!align_up(size, alignment, &aligned_size)) {
+        size_t aligned_سائز = 0;
+        اگر (!align_اوپر(size, alignment, &aligned_سائز)) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: align_up failed for size %zu alignment %zu\n", __func__, size,
                            alignment);
-            return nullptr;
+            واپس خالی_اشاریہ;
         }
 
-        pool_allocation allocation;
+        pool_تخصیص تخصیص;
 
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> تالا(mutex_);
 
-        if (!try_alloc_locked(aligned_size, alignment, &allocation)) {
-            if (!add_chunk_locked(aligned_size, alignment)) {
-                return nullptr;
+        اگر (!try_alloc_locked(aligned_سائز, alignment, &تخصیص)) {
+            اگر (!جوڑو_chunk_locked(aligned_سائز, alignment)) {
+                واپس خالی_اشاریہ;
             }
 
-            if (!try_alloc_locked(aligned_size, alignment, &allocation)) {
+            اگر (!try_alloc_locked(aligned_سائز, alignment, &تخصیص)) {
                 GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: allocation retry failed for size %zu alignment %zu\n",
-                               __func__, aligned_size, alignment);
-                return nullptr;
+                               __func__, aligned_سائز, alignment);
+                واپس خالی_اشاریہ;
             }
         }
 
-        try {
-            const auto [allocation_it, inserted] = allocations_.emplace(allocation.base, allocation);
-            if (!inserted) {
-                GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: duplicate allocation key %p\n", __func__, allocation.base);
-                rollback_allocation_locked(allocation);
-                return nullptr;
+        کوشش {
+            ثابت خودکار [تخصیص_it, inserted] = allocations_.emplace(تخصیص.بنیاد, تخصیص);
+            اگر (!inserted) {
+                GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: duplicate allocation key %p\n", __func__, تخصیص.بنیاد);
+                rollback_تخصیص_locked(تخصیص);
+                واپس خالی_اشاریہ;
             }
-        } catch (const std::bad_alloc &) {
-            rollback_allocation_locked(allocation);
-            throw;
+        } پکڑو (ثابت std::bad_alloc &) {
+            rollback_تخصیص_locked(تخصیص);
+            پھینکو;
         }
 
-        return allocation.base;
+        واپس تخصیص.بنیاد;
     }
 
-    void free(void * base) {
-        if (base == nullptr) {
-            return;
+    خالی آزاد(خالی * بنیاد) {
+        اگر (بنیاد == خالی_اشاریہ) {
+            واپس;
         }
 
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> تالا(mutex_);
 
-        auto allocation_it = allocations_.find(base);
-        if (allocation_it == allocations_.end()) {
-            GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: unknown allocation %p\n", __func__, base);
-            return;
+        خودکار تخصیص_it = allocations_.find(بنیاد);
+        اگر (تخصیص_it == allocations_.end()) {
+            GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: unknown allocation %p\n", __func__, بنیاد);
+            واپس;
         }
 
-        pool_allocation allocation = allocation_it->second;
-        allocations_.erase(allocation_it);
+        pool_تخصیص تخصیص = تخصیص_it->second;
+        allocations_.erase(تخصیص_it);
 
-        auto chunk_it = find_chunk_locked(allocation);
-        if (chunk_it == chunks_.end()) {
+        خودکار chunk_it = ڈھونڈو_chunk_locked(تخصیص);
+        اگر (chunk_it == chunks_.end()) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: unknown chunk for allocation %p size %zu\n", __func__,
-                           allocation.base, allocation.size);
-            return;
+                           تخصیص.بنیاد, تخصیص.size);
+            واپس;
         }
 
-        auto * chunk_base = chunk_it->base;
-        auto * alloc_base = static_cast<uint8_t *>(allocation.base);
-        if (alloc_base < chunk_base || alloc_base >= chunk_base + chunk_it->size) {
+        خودکار * chunk_بنیاد = chunk_it->بنیاد;
+        خودکار * alloc_بنیاد = static_cast<uint8_t *>(تخصیص.بنیاد);
+        اگر (alloc_بنیاد < chunk_بنیاد || alloc_بنیاد >= chunk_بنیاد + chunk_it->size) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: allocation %p out of chunk range %p..%p\n", __func__,
-                           allocation.base, chunk_base, chunk_base + chunk_it->size);
-            return;
+                           تخصیص.بنیاد, chunk_بنیاد, chunk_بنیاد + chunk_it->size);
+            واپس;
         }
 
-        const size_t offset = static_cast<size_t>(alloc_base - chunk_base);
-        if (offset > chunk_it->size || allocation.size > chunk_it->size - offset) {
+        ثابت size_t انحراف = static_cast<size_t>(alloc_بنیاد - chunk_بنیاد);
+        اگر (انحراف > chunk_it->size || تخصیص.size > chunk_it->size - انحراف) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: allocation %p size %zu exceeds chunk size %zu\n", __func__,
-                           allocation.base, allocation.size, chunk_it->size);
-            return;
+                           تخصیص.بنیاد, تخصیص.size, chunk_it->size);
+            واپس;
         }
 
-        insert_free_block_locked(*chunk_it, { offset, allocation.size });
-        maybe_release_empty_chunk_locked(chunk_it);
+        داخل_کرو_free_بلاک_locked(*chunk_it, { انحراف, تخصیص.size });
+        maybe_release_خالی_خانے_chunk_locked(chunk_it);
     }
 
-  protected:
-    void release_chunks() {
-        std::lock_guard<std::mutex> lock(mutex_);
+  محفوظ:
+    خالی release_chunks() {
+        std::lock_guard<std::mutex> تالا(mutex_);
 
         allocations_.clear();
-        for (auto & chunk : chunks_) {
+        برائے (خودکار & chunk : chunks_) {
             dealloc_chunk(&chunk);
         }
         chunks_.clear();
     }
 
-    size_t default_chunk_size() const { return default_chunk_size_; }
+    size_t default_chunk_سائز() ثابت { واپس default_chunk_سائز_2; }
 
-    static void clear_chunk(pool_chunk * chunk) {
-        chunk->base = nullptr;
+    ساکن خالی clear_chunk(pool_chunk * chunk) {
+        chunk->بنیاد = خالی_اشاریہ;
         chunk->size = 0;
         chunk->fd   = -1;
-        chunk->free_blocks.clear();
+        chunk->free_بلاکیں.clear();
     }
 
-    virtual bool alloc_chunk(size_t min_size, size_t alignment, void * hint_addr, pool_chunk * chunk) = 0;
-    virtual void dealloc_chunk(pool_chunk * chunk)                                                    = 0;
+    مجازی منطقی alloc_chunk(size_t min_سائز, size_t alignment, خالی * hint_addr, pool_chunk * chunk) = 0;
+    مجازی خالی dealloc_chunk(pool_chunk * chunk)                                                    = 0;
 
-  private:
-    struct alloc_candidate {
-        size_t    chunk_index{ 0 };
-        size_t    block_index{ 0 };
-        size_t    aligned_offset{ 0 };
+  نجی:
+    ساخت alloc_candidate {
+        size_t    chunk_اشاریہ{ 0 };
+        size_t    بلاک_اشاریہ{ 0 };
+        size_t    aligned_انحراف{ 0 };
         uintptr_t address{ std::numeric_limits<uintptr_t>::max() };
-        bool      valid{ false };
+        منطقی      valid{ جھوٹ };
     };
 
-    std::vector<pool_chunk>::iterator find_chunk_locked(const pool_allocation & allocation) {
-        return std::find_if(chunks_.begin(), chunks_.end(), [&](const pool_chunk & chunk) {
-            return chunk.base == allocation.chunk_base && chunk.size == allocation.chunk_size;
+    std::vector<pool_chunk>::iterator ڈھونڈو_chunk_locked(ثابت pool_تخصیص & تخصیص) {
+        واپس std::find_if(chunks_.begin(), chunks_.end(), [&](ثابت pool_chunk & chunk) {
+            واپس chunk.بنیاد == تخصیص.chunk_بنیاد && chunk.size == تخصیص.chunk_سائز;
         });
     }
 
-    bool add_chunk_locked(size_t min_size, size_t alignment) {
+    منطقی جوڑو_chunk_locked(size_t min_سائز, size_t alignment) {
         pool_chunk   chunk;
-        const size_t chunk_request = default_chunk_size_ == 0 ? min_size : std::max(min_size, default_chunk_size_);
-        void *       hint_addr     = nullptr;
+        ثابت size_t chunk_request = default_chunk_سائز_2 == 0 ? min_سائز : std::max(min_سائز, default_chunk_سائز_2);
+        خالی *       hint_addr     = خالی_اشاریہ;
 
-        for (const auto & existing_chunk : chunks_) {
-            auto * chunk_end = existing_chunk.base + existing_chunk.size;
-            if (hint_addr == nullptr || chunk_end > hint_addr) {
-                hint_addr = chunk_end;
+        برائے (ثابت خودکار & existing_chunk : chunks_) {
+            خودکار * chunk_انتہا = existing_chunk.بنیاد + existing_chunk.size;
+            اگر (hint_addr == خالی_اشاریہ || chunk_انتہا > hint_addr) {
+                hint_addr = chunk_انتہا;
             }
         }
 
-        if (!alloc_chunk(chunk_request, alignment, hint_addr, &chunk)) {
-            return false;
+        اگر (!alloc_chunk(chunk_request, alignment, hint_addr, &chunk)) {
+            واپس جھوٹ;
         }
 
-        if (chunk.base == nullptr || chunk.size < min_size) {
+        اگر (chunk.بنیاد == خالی_اشاریہ || chunk.size < min_سائز) {
             GGML_LOG_ERROR(
                 "CPU_RISCV64_SPACEMIT: %s: invalid chunk returned for request size %zu, chunk_base=%p chunk_size=%zu\n",
-                __func__, min_size, chunk.base, chunk.size);
+                __func__, min_سائز, chunk.بنیاد, chunk.size);
             dealloc_chunk(&chunk);
-            return false;
+            واپس جھوٹ;
         }
 
-        try {
-            chunk.free_blocks.push_back({ 0, chunk.size });
+        کوشش {
+            chunk.free_بلاکیں.push_back({ 0, chunk.size });
             chunks_.push_back(std::move(chunk));
-        } catch (const std::bad_alloc &) {
+        } پکڑو (ثابت std::bad_alloc &) {
             dealloc_chunk(&chunk);
-            throw;
+            پھینکو;
         }
 
-        return true;
+        واپس سچ;
     }
 
-    void rollback_allocation_locked(const pool_allocation & allocation) {
-        auto chunk_it = find_chunk_locked(allocation);
-        if (chunk_it == chunks_.end()) {
+    خالی rollback_تخصیص_locked(ثابت pool_تخصیص & تخصیص) {
+        خودکار chunk_it = ڈھونڈو_chunk_locked(تخصیص);
+        اگر (chunk_it == chunks_.end()) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: failed to rollback allocation %p, owning chunk not found\n",
-                           __func__, allocation.base);
-            return;
+                           __func__, تخصیص.بنیاد);
+            واپس;
         }
 
-        auto * chunk_base = chunk_it->base;
-        auto * alloc_base = static_cast<uint8_t *>(allocation.base);
-        if (alloc_base < chunk_base || alloc_base >= chunk_base + chunk_it->size) {
+        خودکار * chunk_بنیاد = chunk_it->بنیاد;
+        خودکار * alloc_بنیاد = static_cast<uint8_t *>(تخصیص.بنیاد);
+        اگر (alloc_بنیاد < chunk_بنیاد || alloc_بنیاد >= chunk_بنیاد + chunk_it->size) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: failed to rollback allocation %p, chunk range is invalid\n",
-                           __func__, allocation.base);
-            return;
+                           __func__, تخصیص.بنیاد);
+            واپس;
         }
 
-        const size_t offset = static_cast<size_t>(alloc_base - chunk_base);
-        if (offset > chunk_it->size || allocation.size > chunk_it->size - offset) {
+        ثابت size_t انحراف = static_cast<size_t>(alloc_بنیاد - chunk_بنیاد);
+        اگر (انحراف > chunk_it->size || تخصیص.size > chunk_it->size - انحراف) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: failed to rollback allocation %p size %zu\n", __func__,
-                           allocation.base, allocation.size);
-            return;
+                           تخصیص.بنیاد, تخصیص.size);
+            واپس;
         }
 
-        insert_free_block_locked(*chunk_it, { offset, allocation.size });
-        maybe_release_empty_chunk_locked(chunk_it);
+        داخل_کرو_free_بلاک_locked(*chunk_it, { انحراف, تخصیص.size });
+        maybe_release_خالی_خانے_chunk_locked(chunk_it);
     }
 
-    bool try_alloc_locked(size_t size, size_t alignment, pool_allocation * allocation) {
-        alloc_candidate best;
+    منطقی try_alloc_locked(size_t size, size_t alignment, pool_تخصیص * تخصیص) {
+        alloc_candidate بہترین;
 
-        for (size_t chunk_index = 0; chunk_index < chunks_.size(); ++chunk_index) {
-            const auto & chunk = chunks_[chunk_index];
-            for (size_t block_index = 0; block_index < chunk.free_blocks.size(); ++block_index) {
-                const auto & block = chunk.free_blocks[block_index];
+        برائے (size_t chunk_اشاریہ = 0; chunk_اشاریہ < chunks_.size(); ++chunk_اشاریہ) {
+            ثابت خودکار & chunk = chunks_[chunk_اشاریہ];
+            برائے (size_t بلاک_اشاریہ = 0; بلاک_اشاریہ < chunk.free_بلاکیں.size(); ++بلاک_اشاریہ) {
+                ثابت خودکار & بلاک = chunk.free_بلاکیں[بلاک_اشاریہ];
 
                 uintptr_t  aligned_addr = 0;
-                const auto block_addr   = reinterpret_cast<uintptr_t>(chunk.base + block.offset);
-                if (!align_up_uintptr(block_addr, alignment, &aligned_addr)) {
-                    continue;
+                ثابت خودکار بلاک_addr   = reinterpret_cast<uintptr_t>(chunk.بنیاد + بلاک.انحراف);
+                اگر (!align_اوپر_uintptr(بلاک_addr, alignment, &aligned_addr)) {
+                    جاری;
                 }
 
-                if (aligned_addr < block_addr) {
-                    continue;
+                اگر (aligned_addr < بلاک_addr) {
+                    جاری;
                 }
 
-                const size_t aligned_offset = block.offset + static_cast<size_t>(aligned_addr - block_addr);
-                const size_t padding        = aligned_offset - block.offset;
-                if (padding > block.size || size > block.size - padding) {
-                    continue;
+                ثابت size_t aligned_انحراف = بلاک.انحراف + static_cast<size_t>(aligned_addr - بلاک_addr);
+                ثابت size_t padding        = aligned_انحراف - بلاک.انحراف;
+                اگر (padding > بلاک.size || size > بلاک.size - padding) {
+                    جاری;
                 }
 
-                if (!best.valid || aligned_addr < best.address) {
-                    best.chunk_index    = chunk_index;
-                    best.block_index    = block_index;
-                    best.aligned_offset = aligned_offset;
-                    best.address        = aligned_addr;
-                    best.valid          = true;
+                اگر (!بہترین.valid || aligned_addr < بہترین.address) {
+                    بہترین.chunk_اشاریہ    = chunk_اشاریہ;
+                    بہترین.بلاک_اشاریہ    = بلاک_اشاریہ;
+                    بہترین.aligned_انحراف = aligned_انحراف;
+                    بہترین.address        = aligned_addr;
+                    بہترین.valid          = سچ;
                 }
             }
         }
 
-        if (!best.valid) {
-            return false;
+        اگر (!بہترین.valid) {
+            واپس جھوٹ;
         }
 
-        auto &           chunk     = chunks_[best.chunk_index];
-        const free_block block     = chunk.free_blocks[best.block_index];
-        const size_t     padding   = best.aligned_offset - block.offset;
-        const size_t     alloc_end = best.aligned_offset + size;
-        const size_t     block_end = block.offset + block.size;
+        خودکار &           chunk     = chunks_[بہترین.chunk_اشاریہ];
+        ثابت free_بلاک بلاک     = chunk.free_بلاکیں[بہترین.بلاک_اشاریہ];
+        ثابت size_t     padding   = بہترین.aligned_انحراف - بلاک.انحراف;
+        ثابت size_t     alloc_انتہا = بہترین.aligned_انحراف + size;
+        ثابت size_t     بلاک_انتہا = بلاک.انحراف + بلاک.size;
 
-        chunk.free_blocks.erase(chunk.free_blocks.begin() + best.block_index);
-        auto insert_it = chunk.free_blocks.begin() + best.block_index;
-        if (padding != 0) {
-            insert_it = chunk.free_blocks.insert(insert_it, { block.offset, padding });
-            ++insert_it;
+        chunk.free_بلاکیں.erase(chunk.free_بلاکیں.begin() + بہترین.بلاک_اشاریہ);
+        خودکار داخل_کرو_it = chunk.free_بلاکیں.begin() + بہترین.بلاک_اشاریہ;
+        اگر (padding != 0) {
+            داخل_کرو_it = chunk.free_بلاکیں.insert(داخل_کرو_it, { بلاک.انحراف, padding });
+            ++داخل_کرو_it;
         }
-        if (alloc_end < block_end) {
-            chunk.free_blocks.insert(insert_it, { alloc_end, block_end - alloc_end });
+        اگر (alloc_انتہا < بلاک_انتہا) {
+            chunk.free_بلاکیں.insert(داخل_کرو_it, { alloc_انتہا, بلاک_انتہا - alloc_انتہا });
         }
 
-        allocation->chunk_base = chunk.base;
-        allocation->chunk_size = chunk.size;
-        allocation->base       = chunk.base + best.aligned_offset;
-        allocation->size       = size;
-        return true;
+        تخصیص->chunk_بنیاد = chunk.بنیاد;
+        تخصیص->chunk_سائز = chunk.size;
+        تخصیص->بنیاد       = chunk.بنیاد + بہترین.aligned_انحراف;
+        تخصیص->size       = size;
+        واپس سچ;
     }
 
-    void maybe_release_empty_chunk_locked(std::vector<pool_chunk>::iterator chunk_it) {
-        if (chunk_it->free_blocks.size() != 1) {
-            return;
+    خالی maybe_release_خالی_خانے_chunk_locked(std::vector<pool_chunk>::iterator chunk_it) {
+        اگر (chunk_it->free_بلاکیں.size() != 1) {
+            واپس;
         }
 
-        const auto & block = chunk_it->free_blocks.front();
-        if (block.offset != 0 || block.size != chunk_it->size) {
-            return;
+        ثابت خودکار & بلاک = chunk_it->free_بلاکیں.front();
+        اگر (بلاک.انحراف != 0 || بلاک.size != chunk_it->size) {
+            واپس;
         }
 
         dealloc_chunk(&*chunk_it);
         chunks_.erase(chunk_it);
     }
 
-    void insert_free_block_locked(pool_chunk & chunk, free_block block) {
-        auto it = chunk.free_blocks.begin();
-        while (it != chunk.free_blocks.end() && it->offset < block.offset) {
+    خالی داخل_کرو_free_بلاک_locked(pool_chunk & chunk, free_بلاک بلاک) {
+        خودکار it = chunk.free_بلاکیں.begin();
+        جب (it != chunk.free_بلاکیں.end() && it->انحراف < بلاک.انحراف) {
             ++it;
         }
 
-        if (it != chunk.free_blocks.begin()) {
-            const auto & prev = *(it - 1);
-            if (prev.offset + prev.size > block.offset) {
+        اگر (it != chunk.free_بلاکیں.begin()) {
+            ثابت خودکار & پچھلا = *(it - 1);
+            اگر (پچھلا.انحراف + پچھلا.size > بلاک.انحراف) {
                 GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: overlapping free block at offset %zu size %zu\n", __func__,
-                               block.offset, block.size);
-                return;
+                               بلاک.انحراف, بلاک.size);
+                واپس;
             }
         }
 
-        if (it != chunk.free_blocks.end() && block.offset + block.size > it->offset) {
+        اگر (it != chunk.free_بلاکیں.end() && بلاک.انحراف + بلاک.size > it->انحراف) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: overlapping next free block at offset %zu size %zu\n", __func__,
-                           block.offset, block.size);
-            return;
+                           بلاک.انحراف, بلاک.size);
+            واپس;
         }
 
-        it = chunk.free_blocks.insert(it, block);
+        it = chunk.free_بلاکیں.insert(it, بلاک);
 
-        if (it != chunk.free_blocks.begin()) {
-            auto prev = it - 1;
-            if (prev->offset + prev->size == it->offset) {
-                it->offset = prev->offset;
-                it->size += prev->size;
-                it = chunk.free_blocks.erase(prev);
+        اگر (it != chunk.free_بلاکیں.begin()) {
+            خودکار پچھلا = it - 1;
+            اگر (پچھلا->انحراف + پچھلا->size == it->انحراف) {
+                it->انحراف = پچھلا->انحراف;
+                it->size += پچھلا->size;
+                it = chunk.free_بلاکیں.erase(پچھلا);
             }
         }
 
-        if (it + 1 != chunk.free_blocks.end() && it->offset + it->size == (it + 1)->offset) {
+        اگر (it + 1 != chunk.free_بلاکیں.end() && it->انحراف + it->size == (it + 1)->انحراف) {
             it->size += (it + 1)->size;
-            chunk.free_blocks.erase(it + 1);
+            chunk.free_بلاکیں.erase(it + 1);
         }
     }
 
     std::mutex                                  mutex_;
     std::vector<pool_chunk>                     chunks_;
-    std::unordered_map<void *, pool_allocation> allocations_;
-    size_t                                      default_chunk_size_{ 0 };
+    std::unordered_map<خالی *, pool_تخصیص> allocations_;
+    size_t                                      default_chunk_سائز_2{ 0 };
 };
 
-class spine_mem_pool_posix final : public spine_mem_pool_manager {
-  public:
+جماعت spine_mem_pool_posix final : عوامی spine_mem_pool_manager {
+  عوامی:
     spine_mem_pool_posix() : spine_mem_pool_manager(0) {}
 
     ~spine_mem_pool_posix() override { release_chunks(); }
 
-  private:
-    bool alloc_chunk(size_t min_size, size_t alignment, void * hint_addr, pool_chunk * chunk) override {
-        (void) hint_addr;
+  نجی:
+    منطقی alloc_chunk(size_t min_سائز, size_t alignment, خالی * hint_addr, pool_chunk * chunk) override {
+        (خالی) hint_addr;
 
-        const size_t alloc_alignment = std::max(alignment, sizeof(void *));
-        void *       base            = nullptr;
-        const int    rc              = posix_memalign(&base, alloc_alignment, min_size);
-        if (rc != 0) {
+        ثابت size_t alloc_alignment = std::max(alignment, حجم(خالی *));
+        خالی *       بنیاد            = خالی_اشاریہ;
+        ثابت صحیح    rc              = posix_memalign(&بنیاد, alloc_alignment, min_سائز);
+        اگر (rc != 0) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: posix_memalign failed for size %zu alignment %zu, rc=%d\n",
-                           __func__, min_size, alloc_alignment, rc);
-            return false;
+                           __func__, min_سائز, alloc_alignment, rc);
+            واپس جھوٹ;
         }
 
-        chunk->base = static_cast<uint8_t *>(base);
-        chunk->size = min_size;
+        chunk->بنیاد = static_cast<uint8_t *>(بنیاد);
+        chunk->size = min_سائز;
         chunk->fd   = -1;
-        return true;
+        واپس سچ;
     }
 
-    void dealloc_chunk(pool_chunk * chunk) override {
-        std::free(chunk->base);
+    خالی dealloc_chunk(pool_chunk * chunk) override {
+        std::آزاد(chunk->بنیاد);
         clear_chunk(chunk);
     }
 };
 
-class spine_mem_pool_transparent_hugepage final : public spine_mem_pool_manager {
-  public:
-    spine_mem_pool_transparent_hugepage() : spine_mem_pool_manager(SPINE_MEM_POOL_CHUNK_SIZE) {}
+جماعت spine_mem_pool_transparent_hugepage final : عوامی spine_mem_pool_manager {
+  عوامی:
+    spine_mem_pool_transparent_hugepage() : spine_mem_pool_manager(SPINE_MEM_POOL_CHUNK_سائز) {}
 
     ~spine_mem_pool_transparent_hugepage() override { release_chunks(); }
 
-  private:
-    bool alloc_chunk(size_t min_size, size_t alignment, void * hint_addr, pool_chunk * chunk) override {
-        (void) alignment;
+  نجی:
+    منطقی alloc_chunk(size_t min_سائز, size_t alignment, خالی * hint_addr, pool_chunk * chunk) override {
+        (خالی) alignment;
 
-        size_t chunk_size = 0;
-        if (!align_up(min_size, default_chunk_size(), &chunk_size)) {
-            GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: failed to round chunk size for %zu\n", __func__, min_size);
-            return false;
+        size_t chunk_سائز = 0;
+        اگر (!align_اوپر(min_سائز, default_chunk_سائز(), &chunk_سائز)) {
+            GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: failed to round chunk size for %zu\n", __func__, min_سائز);
+            واپس جھوٹ;
         }
 
-        void * map_addr = mmap(hint_addr, chunk_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-        if (map_addr == MAP_FAILED) {
-            GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: mmap failed for chunk size %zu, errno=%d\n", __func__, chunk_size,
+        خالی * map_addr = mmap(hint_addr, chunk_سائز, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+        اگر (map_addr == MAP_FAILED) {
+            GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: mmap failed for chunk size %zu, errno=%d\n", __func__, chunk_سائز,
                            errno);
-            return false;
+            واپس جھوٹ;
         }
 
-        if (madvise(map_addr, chunk_size, MADV_HUGEPAGE) != 0) {
+        اگر (madvise(map_addr, chunk_سائز, MADV_HUGEPAGE) != 0) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: madvise(MADV_HUGEPAGE) failed for chunk size %zu, errno=%d\n",
-                           __func__, chunk_size, errno);
-            munmap(map_addr, chunk_size);
-            return false;
+                           __func__, chunk_سائز, errno);
+            munmap(map_addr, chunk_سائز);
+            واپس جھوٹ;
         }
 
-        chunk->base = static_cast<uint8_t *>(map_addr);
-        chunk->size = chunk_size;
+        chunk->بنیاد = static_cast<uint8_t *>(map_addr);
+        chunk->size = chunk_سائز;
         chunk->fd   = -1;
-        return true;
+        واپس سچ;
     }
 
-    void dealloc_chunk(pool_chunk * chunk) override {
-        if (chunk->base != nullptr && chunk->size != 0 && munmap(chunk->base, chunk->size) != 0) {
+    خالی dealloc_chunk(pool_chunk * chunk) override {
+        اگر (chunk->بنیاد != خالی_اشاریہ && chunk->size != 0 && munmap(chunk->بنیاد, chunk->size) != 0) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: munmap failed for chunk %p size %zu, errno=%d\n", __func__,
-                           chunk->base, chunk->size, errno);
+                           chunk->بنیاد, chunk->size, errno);
         }
 
         clear_chunk(chunk);
     }
 };
 
-class spine_mem_pool_hugetlb_1g final : public spine_mem_pool_manager {
-  public:
-    spine_mem_pool_hugetlb_1g() : spine_mem_pool_manager(SPINE_MEM_POOL_1G_REGION_SIZE) {}
+جماعت spine_mem_pool_hugetlb_1g final : عوامی spine_mem_pool_manager {
+  عوامی:
+    spine_mem_pool_hugetlb_1g() : spine_mem_pool_manager(SPINE_MEM_POOL_1_G_REGION_سائز) {}
 
     ~spine_mem_pool_hugetlb_1g() override { release_chunks(); }
 
-  private:
-    bool alloc_chunk(size_t min_size, size_t alignment, void * hint_addr, pool_chunk * chunk) override {
-        (void) alignment;
-        (void) hint_addr;
+  نجی:
+    منطقی alloc_chunk(size_t min_سائز, size_t alignment, خالی * hint_addr, pool_chunk * chunk) override {
+        (خالی) alignment;
+        (خالی) hint_addr;
 
-        size_t region_size = 0;
-        if (!align_up(min_size, SPINE_MEM_POOL_1G_REGION_SIZE, &region_size)) {
-            GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: failed to round hugetlb_1g size for %zu\n", __func__, min_size);
-            return false;
+        size_t region_سائز = 0;
+        اگر (!align_اوپر(min_سائز, SPINE_MEM_POOL_1_G_REGION_سائز, &region_سائز)) {
+            GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: failed to round hugetlb_1g size for %zu\n", __func__, min_سائز);
+            واپس جھوٹ;
         }
 
-        const int fd = open(SPINE_MEM_POOL_HUGETLB_1G_DEV, O_RDWR);
-        if (fd < 0) {
+        ثابت صحیح fd = open(SPINE_MEM_POOL_HUGETLB_1G_DEV, O_RDWR);
+        اگر (fd < 0) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: open(%s) failed, errno=%d\n", __func__,
                            SPINE_MEM_POOL_HUGETLB_1G_DEV, errno);
-            return false;
+            واپس جھوٹ;
         }
 
         hugetlb_1g_region region;
-        region.size  = region_size;
+        region.size  = region_سائز;
         region.flags = HUGETLB_1G_FLAG_REQUIRE_PUD;
-        if (ioctl(fd, HUGETLB_1G_IOC_ALLOC, &region) < 0) {
+        اگر (ioctl(fd, HUGETLB_1G_IOC_ALLOC, &region) < 0) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: HUGETLB_1G_IOC_ALLOC failed for size %zu, errno=%d\n", __func__,
-                           region_size, errno);
+                           region_سائز, errno);
             close(fd);
-            return false;
+            واپس جھوٹ;
         }
 
-        void * map_addr = mmap(nullptr, region.size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-        if (map_addr == MAP_FAILED) {
+        خالی * map_addr = mmap(خالی_اشاریہ, region.size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+        اگر (map_addr == MAP_FAILED) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: mmap failed for hugetlb_1g size %llu, errno=%d\n", __func__,
-                           static_cast<unsigned long long>(region.size), errno);
+                           static_cast<غیرعلامتی طویل طویل>(region.size), errno);
             ioctl(fd, HUGETLB_1G_IOC_FREE);
             close(fd);
-            return false;
+            واپس جھوٹ;
         }
 
-        chunk->base = static_cast<uint8_t *>(map_addr);
+        chunk->بنیاد = static_cast<uint8_t *>(map_addr);
         chunk->size = region.size;
         chunk->fd   = fd;
-        return true;
+        واپس سچ;
     }
 
-    void dealloc_chunk(pool_chunk * chunk) override {
-        if (chunk->base != nullptr && chunk->size != 0 && munmap(chunk->base, chunk->size) != 0) {
+    خالی dealloc_chunk(pool_chunk * chunk) override {
+        اگر (chunk->بنیاد != خالی_اشاریہ && chunk->size != 0 && munmap(chunk->بنیاد, chunk->size) != 0) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: munmap failed for hugetlb_1g chunk %p size %zu, errno=%d\n",
-                           __func__, chunk->base, chunk->size, errno);
+                           __func__, chunk->بنیاد, chunk->size, errno);
         }
 
-        if (chunk->fd >= 0) {
-            if (ioctl(chunk->fd, HUGETLB_1G_IOC_FREE) < 0) {
+        اگر (chunk->fd >= 0) {
+            اگر (ioctl(chunk->fd, HUGETLB_1G_IOC_FREE) < 0) {
                 GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: HUGETLB_1G_IOC_FREE failed for chunk %p, errno=%d\n",
-                               __func__, chunk->base, errno);
+                               __func__, chunk->بنیاد, errno);
             }
 
             close(chunk->fd);
@@ -558,55 +558,55 @@ class spine_mem_pool_hugetlb_1g final : public spine_mem_pool_manager {
     }
 };
 
-class spine_mem_pool_shared_mem final : public spine_mem_pool_manager {
-  public:
-    spine_mem_pool_shared_mem() : spine_mem_pool_manager(SPINE_SHARE_MEM_POOL_CHUNK_SIZE) {}
+جماعت spine_mem_pool_shared_mem final : عوامی spine_mem_pool_manager {
+  عوامی:
+    spine_mem_pool_shared_mem() : spine_mem_pool_manager(SPINE_SHARE_MEM_POOL_CHUNK_سائز) {}
 
     ~spine_mem_pool_shared_mem() override { release_chunks(); }
 
-  private:
-    bool alloc_chunk(size_t min_size, size_t alignment, void * hint_addr, pool_chunk * chunk) override {
-        (void) alignment;
+  نجی:
+    منطقی alloc_chunk(size_t min_سائز, size_t alignment, خالی * hint_addr, pool_chunk * chunk) override {
+        (خالی) alignment;
 
-        if (hint_addr != nullptr) {
+        اگر (hint_addr != خالی_اشاریہ) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: shared_mem does not support multiple active chunks\n", __func__);
-            return false;
+            واپس جھوٹ;
         }
 
-        if (min_size > default_chunk_size()) {
+        اگر (min_سائز > default_chunk_سائز()) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: shared_mem request %zu exceeds chunk size %zu\n", __func__,
-                           min_size, default_chunk_size());
-            return false;
+                           min_سائز, default_chunk_سائز());
+            واپس جھوٹ;
         }
 
-        const int fd = open(SPINE_MEM_POOL_TCM_SYNC_MEM_DEV, O_RDWR | O_SYNC);
-        if (fd < 0) {
+        ثابت صحیح fd = open(SPINE_MEM_POOL_TCM_SYNC_MEM_DEV, O_RDWR | O_SYNC);
+        اگر (fd < 0) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: open(%s) failed, errno=%d\n", __func__,
                            SPINE_MEM_POOL_TCM_SYNC_MEM_DEV, errno);
-            return false;
+            واپس جھوٹ;
         }
 
-        void * map_addr = mmap(nullptr, default_chunk_size(), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-        if (map_addr == MAP_FAILED) {
+        خالی * map_addr = mmap(خالی_اشاریہ, default_chunk_سائز(), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+        اگر (map_addr == MAP_FAILED) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: mmap failed for %s size %zu, errno=%d\n", __func__,
-                           SPINE_MEM_POOL_TCM_SYNC_MEM_DEV, default_chunk_size(), errno);
+                           SPINE_MEM_POOL_TCM_SYNC_MEM_DEV, default_chunk_سائز(), errno);
             close(fd);
-            return false;
+            واپس جھوٹ;
         }
 
-        chunk->base = static_cast<uint8_t *>(map_addr);
-        chunk->size = default_chunk_size();
+        chunk->بنیاد = static_cast<uint8_t *>(map_addr);
+        chunk->size = default_chunk_سائز();
         chunk->fd   = fd;
-        return true;
+        واپس سچ;
     }
 
-    void dealloc_chunk(pool_chunk * chunk) override {
-        if (chunk->base != nullptr && chunk->size != 0 && munmap(chunk->base, chunk->size) != 0) {
+    خالی dealloc_chunk(pool_chunk * chunk) override {
+        اگر (chunk->بنیاد != خالی_اشاریہ && chunk->size != 0 && munmap(chunk->بنیاد, chunk->size) != 0) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: munmap failed for shared_mem chunk %p size %zu, errno=%d\n",
-                           __func__, chunk->base, chunk->size, errno);
+                           __func__, chunk->بنیاد, chunk->size, errno);
         }
 
-        if (chunk->fd >= 0) {
+        اگر (chunk->fd >= 0) {
             close(chunk->fd);
         }
 
@@ -615,146 +615,146 @@ class spine_mem_pool_shared_mem final : public spine_mem_pool_manager {
 };
 
 spine_mem_pool_manager & get_spine_mem_pool_manager() {
-    static std::once_flag                          pool_once;
-    static std::unique_ptr<spine_mem_pool_manager> selected_pool;
-    static spine_mem_pool_backend                  selected_backend = spine_mem_pool_backend::none;
+    ساکن std::once_flag                          pool_once;
+    ساکن std::unique_ptr<spine_mem_pool_manager> selected_pool;
+    ساکن spine_mem_pool_backend                  selected_backend = spine_mem_pool_backend::none;
 
     spine_mem_pool_backend backend = global_spine_env_info.mem_backend;
-    if (backend == spine_mem_pool_backend::none) {
+    اگر (backend == spine_mem_pool_backend::none) {
         backend = spine_mem_pool_backend::transparent_hugepage;
     }
 
     std::call_once(pool_once, [&]() {
         selected_backend = backend;
 
-        switch (selected_backend) {
-            case spine_mem_pool_backend::posix_memalign:
+        انتخاب (selected_backend) {
+            حالت spine_mem_pool_backend::posix_memalign:
                 selected_pool = std::make_unique<spine_mem_pool_posix>();
-                break;
-            case spine_mem_pool_backend::transparent_hugepage:
+                توڑو;
+            حالت spine_mem_pool_backend::transparent_hugepage:
                 selected_pool = std::make_unique<spine_mem_pool_transparent_hugepage>();
-                break;
-            case spine_mem_pool_backend::hugetlb_1g:
+                توڑو;
+            حالت spine_mem_pool_backend::hugetlb_1g:
                 selected_pool = std::make_unique<spine_mem_pool_hugetlb_1g>();
-                break;
-            case spine_mem_pool_backend::none:
+                توڑو;
+            حالت spine_mem_pool_backend::none:
                 selected_backend = spine_mem_pool_backend::transparent_hugepage;
                 selected_pool    = std::make_unique<spine_mem_pool_transparent_hugepage>();
-                break;
+                توڑو;
         }
     });
 
-    if (backend != selected_backend) {
+    اگر (backend != selected_backend) {
         GGML_LOG_ERROR(
             "CPU_RISCV64_SPACEMIT: %s: mem pool backend is process-global and mutually exclusive, requested=%d but "
             "selected=%d\n",
-            __func__, static_cast<int>(backend), static_cast<int>(selected_backend));
+            __func__, static_cast<صحیح>(backend), static_cast<صحیح>(selected_backend));
     }
 
-    if (selected_pool) {
-        return *selected_pool;
+    اگر (selected_pool) {
+        واپس *selected_pool;
     }
 
-    throw std::bad_alloc();
+    پھینکو std::bad_alloc();
 }
 
 spine_mem_pool_manager & get_spine_mem_pool_shared_mem_manager() {
-    static std::once_flag                             shared_mem_pool_once;
-    static std::unique_ptr<spine_mem_pool_shared_mem> shared_mem_pool;
+    ساکن std::once_flag                             shared_mem_pool_once;
+    ساکن std::unique_ptr<spine_mem_pool_shared_mem> shared_mem_pool;
 
     std::call_once(shared_mem_pool_once, [&]() { shared_mem_pool = std::make_unique<spine_mem_pool_shared_mem>(); });
 
-    if (shared_mem_pool) {
-        return *shared_mem_pool;
+    اگر (shared_mem_pool) {
+        واپس *shared_mem_pool;
     }
 
-    throw std::bad_alloc();
+    پھینکو std::bad_alloc();
 }
 
 }  // namespace
 
-bool spine_mem_pool_tcm_init(spine_mem_pool_tcm_info * info) noexcept {
-    if (info == nullptr) {
-        return false;
+منطقی spine_mem_pool_tcm_init(spine_mem_pool_tcm_info * info) noexcept {
+    اگر (info == خالی_اشاریہ) {
+        واپس جھوٹ;
     }
 
     *info = {};
 
-    if (spine_tcm_open_handle(NULL) != 0 || !spine_tcm_is_available()) {
-        return false;
+    اگر (spine_tcm_open_handle(تہی) != 0 || !spine_tcm_is_دستیاب()) {
+        واپس جھوٹ;
     }
 
     spine_tcm_mem_info_t mem_info;
-    if (spine_tcm_mem_info(&mem_info) != 0) {
-        return false;
+    اگر (spine_tcm_mem_info(&mem_info) != 0) {
+        واپس جھوٹ;
     }
 
-    info->available   = true;
-    info->blk_size    = mem_info.blk_size;
-    info->blk_num     = mem_info.blk_num;
+    info->دستیاب   = سچ;
+    info->blk_سائز    = mem_info.blk_سائز;
+    info->blk_عدد     = mem_info.blk_عدد;
     info->is_fake_tcm = mem_info.is_fake_tcm != 0;
-    return true;
+    واپس سچ;
 }
 
-void * spine_mem_pool_tcm_mem_get(int cpu_id) noexcept {
-    return spine_tcm_mem_get(cpu_id);
+خالی * spine_mem_pool_tcm_mem_get(صحیح cpu_id) noexcept {
+    واپس spine_tcm_mem_get(cpu_id);
 }
 
-void * spine_mem_pool_tcm_mem_wait(int cpu_id) noexcept {
-    return spine_tcm_mem_try_wait(cpu_id, 1000 * 1000);
+خالی * spine_mem_pool_tcm_mem_wait(صحیح cpu_id) noexcept {
+    واپس spine_tcm_mem_try_wait(cpu_id, 1000 * 1000);
 }
 
-int spine_mem_pool_tcm_mem_release(int cpu_id) noexcept {
-    return spine_tcm_mem_release(cpu_id);
+صحیح spine_mem_pool_tcm_mem_release(صحیح cpu_id) noexcept {
+    واپس spine_tcm_mem_release(cpu_id);
 }
 
-void * spine_mem_pool_alloc(size_t size, size_t alignment) noexcept {
-    try {
-        return get_spine_mem_pool_manager().alloc(size, alignment);
-    } catch (const std::bad_alloc &) {
+خالی * spine_mem_pool_alloc(size_t size, size_t alignment) noexcept {
+    کوشش {
+        واپس get_spine_mem_pool_manager().alloc(size, alignment);
+    } پکڑو (ثابت std::bad_alloc &) {
         GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: bad_alloc while allocating size %zu\n", __func__, size);
-        return nullptr;
+        واپس خالی_اشاریہ;
     }
 }
 
-void * spine_mem_pool_shared_mem_alloc(size_t size, size_t alignment) noexcept {
-    try {
-        return get_spine_mem_pool_shared_mem_manager().alloc(size, alignment);
-    } catch (const std::bad_alloc &) {
+خالی * spine_mem_pool_shared_mem_alloc(size_t size, size_t alignment) noexcept {
+    کوشش {
+        واپس get_spine_mem_pool_shared_mem_manager().alloc(size, alignment);
+    } پکڑو (ثابت std::bad_alloc &) {
         GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: bad_alloc while allocating shared memory size %zu\n", __func__, size);
-        return nullptr;
+        واپس خالی_اشاریہ;
     }
 }
 
-void spine_mem_pool_free(void * base) noexcept {
-    try {
-        get_spine_mem_pool_manager().free(base);
-    } catch (const std::bad_alloc &) {
-        GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: bad_alloc while freeing allocation %p\n", __func__, base);
+خالی spine_mem_pool_free(خالی * بنیاد) noexcept {
+    کوشش {
+        get_spine_mem_pool_manager().آزاد(بنیاد);
+    } پکڑو (ثابت std::bad_alloc &) {
+        GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: bad_alloc while freeing allocation %p\n", __func__, بنیاد);
     }
 }
 
-void spine_mem_pool_shared_mem_free(void * base) noexcept {
-    try {
-        get_spine_mem_pool_shared_mem_manager().free(base);
-    } catch (const std::bad_alloc &) {
-        GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: bad_alloc while freeing shared allocation %p\n", __func__, base);
+خالی spine_mem_pool_shared_mem_free(خالی * بنیاد) noexcept {
+    کوشش {
+        get_spine_mem_pool_shared_mem_manager().آزاد(بنیاد);
+    } پکڑو (ثابت std::bad_alloc &) {
+        GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: bad_alloc while freeing shared allocation %p\n", __func__, بنیاد);
     }
 }
 
 }  // namespace ggml::cpu::riscv64_spacemit
 
-extern "C" {
-void * ggml_backend_cpu_riscv64_spacemit_alloc_shared(size_t size, size_t alignment) {
-    void * result = ggml::cpu::riscv64_spacemit::spine_mem_pool_shared_mem_alloc(size, alignment);
-    if (result == nullptr) {
+خارجی "C" {
+خالی * ggml_backend_cpu_riscv64_spacemit_alloc_shared(size_t size, size_t alignment) {
+    خالی * نتیجہ = ggml::cpu::riscv64_spacemit::spine_mem_pool_shared_mem_alloc(size, alignment);
+    اگر (نتیجہ == خالی_اشاریہ) {
         GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: failed to allocate shared memory size %zu alignment %zu\n", __func__,
                        size, alignment);
     }
-    return result;
+    واپس نتیجہ;
 }
 
-void ggml_backend_cpu_riscv64_spacemit_free_shared(void * ptr) {
+خالی ggml_backend_cpu_riscv64_spacemit_free_shared(خالی * ptr) {
     ggml::cpu::riscv64_spacemit::spine_mem_pool_shared_mem_free(ptr);
 }
 }

@@ -1,48 +1,48 @@
-#include "ggml-backend-dl.h"
+#شامل "ggml-backend-dl.h"
 
-#ifdef _WIN32
+#اگر_تعریف_شدہ _WIN32
 
-dl_handle * dl_load_library(const fs::path & path) {
+dl_handle * dl_بھرو_library(ثابت fs::path & path) {
     // suppress error dialogs for missing DLLs
-    DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
-    SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
+    DWORD old_منوال = سیٹ_Error_منوال(SEM_FAILCRITICALERRORS);
+    سیٹ_Error_منوال(old_منوال | SEM_FAILCRITICALERRORS);
 
-    HMODULE handle = LoadLibraryW(path.wstring().c_str());
+    HMODULE handle = بھرو_Library_W(path.wstring().c_str());
 
-    SetErrorMode(old_mode);
+    سیٹ_Error_منوال(old_منوال);
 
-    return handle;
+    واپس handle;
 }
 
-void * dl_get_sym(dl_handle * handle, const char * name) {
-    DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
-    SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
+خالی * dl_get_sym(dl_handle * handle, ثابت حرف * name) {
+    DWORD old_منوال = سیٹ_Error_منوال(SEM_FAILCRITICALERRORS);
+    سیٹ_Error_منوال(old_منوال | SEM_FAILCRITICALERRORS);
 
-    void * p = (void *) GetProcAddress(handle, name);
+    خالی * p = (خالی *) Get_Proc_پتہ(handle, name);
 
-    SetErrorMode(old_mode);
+    سیٹ_Error_منوال(old_منوال);
 
-    return p;
+    واپس p;
 }
 
-const char * dl_error() {
-    return "";
+ثابت حرف * dl_error() {
+    واپس "";
 }
 
-#else
+#ورنہ
 
-dl_handle * dl_load_library(const fs::path & path) {
+dl_handle * dl_بھرو_library(ثابت fs::path & path) {
     dl_handle * handle = dlopen(path.string().c_str(), RTLD_NOW | RTLD_LOCAL);
-    return handle;
+    واپس handle;
 }
 
-void * dl_get_sym(dl_handle * handle, const char * name) {
-    return dlsym(handle, name);
+خالی * dl_get_sym(dl_handle * handle, ثابت حرف * name) {
+    واپس dlsym(handle, name);
 }
 
-const char * dl_error() {
-    const char *rslt = dlerror();
-    return rslt != nullptr ? rslt : "";
+ثابت حرف * dl_error() {
+    ثابت حرف *rslt = dlerror();
+    واپس rslt != خالی_اشاریہ ? rslt : "";
 }
 
-#endif
+#اگر_ختم

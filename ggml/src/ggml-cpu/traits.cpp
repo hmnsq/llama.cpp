@@ -1,36 +1,36 @@
-#include "traits.h"
+#شامل "traits.h"
 
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
+#شامل "ggml-backend-impl.h"
+#شامل "ggml-backend.h"
 
-namespace ggml::cpu {
+نامخلا ggml::cpu {
 tensor_traits::~tensor_traits() {}
 
-extra_buffer_type::~extra_buffer_type() {}
+extra_بفر_type::~extra_بفر_type() {}
 }  // namespace ggml::cpu
 
-bool ggml_cpu_extra_compute_forward(struct ggml_compute_params * params, struct ggml_tensor * op) {
-    for (auto extra : ggml_backend_cpu_get_extra_buffer_types()) {
-        if (extra && extra->context) {
-            auto buf_extra     = (ggml::cpu::extra_buffer_type *) extra->context;
-            auto tensor_traits = buf_extra->get_tensor_traits(op);
-            if (tensor_traits && tensor_traits->compute_forward(params, op)) {
-                return true;
+منطقی ggml_cpu_extra_compute_forward(ساخت ggml_compute_params * params, ساخت ggml_tensor * op) {
+    برائے (خودکار extra : ggml_backend_cpu_get_extra_بفر_types()) {
+        اگر (extra && extra->context) {
+            خودکار buf_extra     = (ggml::cpu::extra_بفر_type *) extra->context;
+            خودکار tensor_traits = buf_extra->get_tensor_traits(op);
+            اگر (tensor_traits && tensor_traits->compute_forward(params, op)) {
+                واپس سچ;
             }
         }
     }
-    return false;
+    واپس جھوٹ;
 }
 
-bool ggml_cpu_extra_work_size(int n_threads, const struct ggml_tensor * op, size_t * size) {
-    for (auto extra : ggml_backend_cpu_get_extra_buffer_types()) {
-        if (extra && extra->context) {
-            auto buf_extra     = (ggml::cpu::extra_buffer_type *) extra->context;
-            auto tensor_traits = buf_extra->get_tensor_traits(op);
-            if (tensor_traits && tensor_traits->work_size(n_threads, op, *size)) {
-                return true;
+منطقی ggml_cpu_extra_work_سائز(صحیح n_دھاگے, ثابت ساخت ggml_tensor * op, size_t * size) {
+    برائے (خودکار extra : ggml_backend_cpu_get_extra_بفر_types()) {
+        اگر (extra && extra->context) {
+            خودکار buf_extra     = (ggml::cpu::extra_بفر_type *) extra->context;
+            خودکار tensor_traits = buf_extra->get_tensor_traits(op);
+            اگر (tensor_traits && tensor_traits->work_سائز(n_دھاگے, op, *size)) {
+                واپس سچ;
             }
         }
     }
-    return false;
+    واپس جھوٹ;
 }

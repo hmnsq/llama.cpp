@@ -3,140 +3,140 @@
 // Matrix multiplication: C[M,N] = A[M,K] * B[K,N]
 //******************************************************************************
 
-#include "block_ops.h"
-#include "ggml_tensor.h"
-#include "math_fp.h"
-#include "platform.h"
-#include "quants.h"
+#شامل "block_ops.h"
+#شامل "ggml_tensor.h"
+#شامل "math_fp.h"
+#شامل "platform.h"
+#شامل "quants.h"
 
-#include <stdint.h>
+#شامل <stdint.h>
 
-int entry_point(struct ggml_et_binary_params * params, void * env) {
+صحیح اندراج_نقطہ(ساخت ggml_et_ثنائی_params * params, خالی * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env || params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    اگر (!kernel_env || params == 0 || ((uint64_t) params & 0x7) != 0) {
+        واپس -1;
     }
 
     // Thread coordination
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    صحیح thread_id   = get_relative_thread_id(kernel_env->shire_نقاب);
+    صحیح عدد_دھاگے = get_عدد_دھاگے(kernel_env->shire_نقاب);
 
-    if (thread_id < 0 || (thread_id & 1)) {
-        return 0;  // Skip odd threads to avoid resource contention
+    اگر (thread_id < 0 || (thread_id & 1)) {
+        واپس 0;  // Skip odd threads to avoid resource contention
     }
 
-    int effective_thread_id   = thread_id / 2;
-    int effective_num_threads = (num_threads + 1) / 2;
+    صحیح effective_thread_id   = thread_id / 2;
+    صحیح effective_عدد_دھاگے = (عدد_دھاگے + 1) / 2;
 
     // Extract tensor references
-    struct ggml_tensor * src0 = &params->src0;  // Weight matrix A (F16)
-    struct ggml_tensor * src1 = &params->src1;  // Activation matrix B (F16/F32)
-    struct ggml_tensor * dst  = &params->dst;   // Output matrix C (F32)
+    ساخت ggml_tensor * src0 = &params->src0;  // Weight matrix A (F16)
+    ساخت ggml_tensor * src1 = &params->src1;  // Activation matrix B (F16/F32)
+    ساخت ggml_tensor * dst  = &params->dst;   // Output matrix C (F32)
 
     // Generic non-matrix-engine path: F16 x (F16/F32) -> F32
-    if (src0->type != GGML_TYPE_F16 || (src1->type != GGML_TYPE_F16 && src1->type != GGML_TYPE_F32) ||
+    اگر (src0->type != GGML_TYPE_F16 || (src1->type != GGML_TYPE_F16 && src1->type != GGML_TYPE_F32) ||
         dst->type != GGML_TYPE_F32) {
-        return -1;
+        واپس -1;
     }
 
-    const uint16_t * src0_data = (const uint16_t *) src0->data;
-    float *          dst_data  = (float *) dst->data;
+    ثابت uint16_t * src0_ڈیٹا = (ثابت uint16_t *) src0->ڈیٹا;
+    اعشاری *          dst_ڈیٹا  = (اعشاری *) dst->ڈیٹا;
 
     // Dimensions and Strides
-    const int64_t K = src0->ne[0];
-    const int64_t M = src0->ne[1];
-    const int64_t N = src1->ne[1];
+    ثابت int64_t K = src0->ne[0];
+    ثابت int64_t M = src0->ne[1];
+    ثابت int64_t N = src1->ne[1];
 
-    const int64_t ne02 = src0->ne[2], ne03 = src0->ne[3];
-    const int64_t ne12 = src1->ne[2], ne13 = src1->ne[3];
-    const int64_t ne2 = dst->ne[2], ne3 = dst->ne[3];
+    ثابت int64_t ne02 = src0->ne[2], ne03 = src0->ne[3];
+    ثابت int64_t ne12 = src1->ne[2], ne13 = src1->ne[3];
+    ثابت int64_t ne2 = dst->ne[2], ne3 = dst->ne[3];
 
-    const size_t nb01 = src0->nb[1], nb02 = src0->nb[2], nb03 = src0->nb[3];
-    const size_t nb11 = src1->nb[1], nb12 = src1->nb[2], nb13 = src1->nb[3];
-    const size_t nb1 = dst->nb[1], nb2 = dst->nb[2], nb3 = dst->nb[3];
+    ثابت size_t nb01 = src0->nb[1], nb02 = src0->nb[2], nb03 = src0->nb[3];
+    ثابت size_t nb11 = src1->nb[1], nb12 = src1->nb[2], nb13 = src1->nb[3];
+    ثابت size_t nb1 = dst->nb[1], nb2 = dst->nb[2], nb3 = dst->nb[3];
 
     // F16 specific block size (Usually QK_F16)
-    const int     block_size  = QK_F16;
-    const int64_t K_blocks    = K / block_size;
-    const int64_t K_remainder = K % block_size;
+    ثابت صحیح     بلاک_سائز_3  = QK_F16;
+    ثابت int64_t K_بلاکیں    = K / بلاک_سائز_3;
+    ثابت int64_t K_remainder = K % بلاک_سائز_3;
 
     // Threading distribution
-    const uint64_t total_elements = M * N * ne2 * ne3;
-    const uint64_t per_thread     = 16;
-    const uint64_t threads_stride = per_thread * effective_num_threads;
+    ثابت uint64_t کل_elements = M * N * ne2 * ne3;
+    ثابت uint64_t فی_thread     = 16;
+    ثابت uint64_t دھاگے_stride = فی_thread * effective_عدد_دھاگے;
 
-    if (effective_thread_id * per_thread >= total_elements) {
-        return 0;
+    اگر (effective_thread_id * فی_thread >= کل_elements) {
+        واپس 0;
     }
 
     // Broadcasting support
-    const int64_t r2 = ne12 / ne02;
-    const int64_t r3 = ne13 / ne03;
+    ثابت int64_t r2 = ne12 / ne02;
+    ثابت int64_t r3 = ne13 / ne03;
 
-    for (uint64_t base_idx = effective_thread_id * per_thread; base_idx < total_elements; base_idx += threads_stride) {
-        for (uint64_t j = 0; j < per_thread; j++) {
-            const uint64_t idx = base_idx + j;
-            if (idx >= total_elements) {
-                break;
+    برائے (uint64_t بنیاد_idx = effective_thread_id * فی_thread; بنیاد_idx < کل_elements; بنیاد_idx += دھاگے_stride) {
+        برائے (uint64_t j = 0; j < فی_thread; j++) {
+            ثابت uint64_t idx = بنیاد_idx + j;
+            اگر (idx >= کل_elements) {
+                توڑو;
             }
 
             // Index decoding
-            const int64_t i3   = idx / (M * N * ne2);
-            const int64_t rem3 = idx % (M * N * ne2);
-            const int64_t i2   = rem3 / (M * N);
-            const int64_t rem2 = rem3 % (M * N);
-            const int64_t n    = rem2 / M;
-            const int64_t m    = rem2 % M;
+            ثابت int64_t i3   = idx / (M * N * ne2);
+            ثابت int64_t rem3 = idx % (M * N * ne2);
+            ثابت int64_t i2   = rem3 / (M * N);
+            ثابت int64_t rem2 = rem3 % (M * N);
+            ثابت int64_t n    = rem2 / M;
+            ثابت int64_t m    = rem2 % M;
 
-            const int64_t i03 = i3 / r3, i02 = i2 / r2;
-            const int64_t i13 = (ne13 > 1) ? i3 : 0, i12 = (ne12 > 1) ? i2 : 0;
+            ثابت int64_t i03 = i3 / r3, i02 = i2 / r2;
+            ثابت int64_t i13 = (ne13 > 1) ? i3 : 0, i12 = (ne12 > 1) ? i2 : 0;
 
-            float            sum = 0.0f;
-            const uint16_t * f16_row =
-                (const uint16_t *) ((const char *) src0_data + m * nb01 + i02 * nb02 + i03 * nb03);
+            اعشاری            مجموع = 0.0f;
+            ثابت uint16_t * f16_صف =
+                (ثابت uint16_t *) ((ثابت حرف *) src0_ڈیٹا + m * nb01 + i02 * nb02 + i03 * nb03);
 
-            if (src1->type == GGML_TYPE_F32) {
-                const float * src1_data = (const float *) src1->data;
+            اگر (src1->type == GGML_TYPE_F32) {
+                ثابت اعشاری * src1_ڈیٹا = (ثابت اعشاری *) src1->ڈیٹا;
 
-                for (int64_t kb = 0; kb < K_blocks; kb++) {
-                    const float * b_col_ptr =
-                        (const float *) ((const char *) src1_data + (kb * block_size) * sizeof(float) + n * nb11 +
+                برائے (int64_t kb = 0; kb < K_بلاکیں; kb++) {
+                    ثابت اعشاری * b_ستون_ptr =
+                        (ثابت اعشاری *) ((ثابت حرف *) src1_ڈیٹا + (kb * بلاک_سائز_3) * حجم(اعشاری) + n * nb11 +
                                          i12 * nb12 + i13 * nb13);
-                    sum += compute_block_dot_product_f16_naive(&f16_row[kb * block_size], b_col_ptr);
+                    مجموع += compute_بلاک_dot_حاصل_ضرب_f16_naive(&f16_صف[kb * بلاک_سائز_3], b_ستون_ptr);
                 }
 
-                if (K_remainder > 0) {
-                    const int64_t offset    = K_blocks * block_size;
-                    const float * b_col_ptr = (const float *) ((const char *) src1_data + offset * sizeof(float) +
+                اگر (K_remainder > 0) {
+                    ثابت int64_t انحراف    = K_بلاکیں * بلاک_سائز_3;
+                    ثابت اعشاری * b_ستون_ptr = (ثابت اعشاری *) ((ثابت حرف *) src1_ڈیٹا + انحراف * حجم(اعشاری) +
                                                                n * nb11 + i12 * nb12 + i13 * nb13);
-                    sum += compute_block_dot_product_f16_partial(&f16_row[offset], b_col_ptr, K_remainder);
+                    مجموع += compute_بلاک_dot_حاصل_ضرب_f16_partial(&f16_صف[انحراف], b_ستون_ptr, K_remainder);
                 }
-            } else {
-                const uint16_t * src1_data = (const uint16_t *) src1->data;
+            } ورنہ {
+                ثابت uint16_t * src1_ڈیٹا = (ثابت uint16_t *) src1->ڈیٹا;
 
-                for (int64_t kb = 0; kb < K_blocks; kb++) {
-                    const uint16_t * b_col_ptr =
-                        (const uint16_t *) ((const char *) src1_data + (kb * block_size) * sizeof(uint16_t) + n * nb11 +
+                برائے (int64_t kb = 0; kb < K_بلاکیں; kb++) {
+                    ثابت uint16_t * b_ستون_ptr =
+                        (ثابت uint16_t *) ((ثابت حرف *) src1_ڈیٹا + (kb * بلاک_سائز_3) * حجم(uint16_t) + n * nb11 +
                                             i12 * nb12 + i13 * nb13);
-                    sum += compute_block_dot_product_f16_f16_partial(&f16_row[kb * block_size], b_col_ptr, block_size);
+                    مجموع += compute_بلاک_dot_حاصل_ضرب_f16_f16_partial(&f16_صف[kb * بلاک_سائز_3], b_ستون_ptr, بلاک_سائز_3);
                 }
 
-                if (K_remainder > 0) {
-                    const int64_t    offset = K_blocks * block_size;
-                    const uint16_t * b_col_ptr =
-                        (const uint16_t *) ((const char *) src1_data + offset * sizeof(uint16_t) + n * nb11 +
+                اگر (K_remainder > 0) {
+                    ثابت int64_t    انحراف = K_بلاکیں * بلاک_سائز_3;
+                    ثابت uint16_t * b_ستون_ptr =
+                        (ثابت uint16_t *) ((ثابت حرف *) src1_ڈیٹا + انحراف * حجم(uint16_t) + n * nb11 +
                                             i12 * nb12 + i13 * nb13);
-                    sum += compute_block_dot_product_f16_f16_partial(&f16_row[offset], b_col_ptr, K_remainder);
+                    مجموع += compute_بلاک_dot_حاصل_ضرب_f16_f16_partial(&f16_صف[انحراف], b_ستون_ptr, K_remainder);
                 }
             }
 
             // Atomic store for output
-            volatile float * c_element =
-                (volatile float *) ((char *) dst_data + m * dst->nb[0] + n * nb1 + i2 * nb2 + i3 * nb3);
-            atomic_store_f32(c_element, sum);
+            متلون اعشاری * c_element =
+                (متلون اعشاری *) ((حرف *) dst_ڈیٹا + m * dst->nb[0] + n * nb1 + i2 * nb2 + i3 * nb3);
+            atomic_store_f32(c_element, مجموع);
         }
     }
 
-    return 0;
+    واپس 0;
 }

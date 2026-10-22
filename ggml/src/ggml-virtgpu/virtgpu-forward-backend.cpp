@@ -1,58 +1,58 @@
-#include "virtgpu-forward-impl.h"
+#شامل "virtgpu-forward-impl.h"
 
-static long long current_time_ms() {
+ساکن طویل طویل current_وقت_ms() {
     timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);  // Use CLOCK_MONOTONIC for elapsed time
-    return (long long) ts.tv_sec * 1000000000LL + ts.tv_nsec;
+    واپس (طویل طویل) ts.tv_sec * 1000000000LL + ts.tv_nsec;
 }
 
-ggml_status apir_backend_graph_compute(virtgpu * gpu, ggml_cgraph * cgraph) {
+ggml_حالت apir_backend_گراف_compute(virtgpu * gpu, ggml_cgraph * cgraph) {
     apir_encoder *        encoder;
     apir_decoder *        decoder;
-    ApirForwardReturnCode ret;
+    Apir_Forward_Return_رمز ret;
 
-    REMOTE_CALL_PREPARE(gpu, encoder, APIR_COMMAND_TYPE_BACKEND_GRAPH_COMPUTE);
+    REMOTE_CALL_PREPARE(gpu, encoder, APIR_COMMAND_TYPE_BACKEND_گراف_COMPUTE);
 
-    std::vector<uint8_t> cgraph_data;
-    size_t               cgraph_size = apir_serialize_ggml_cgraph(cgraph, cgraph_data);
+    std::vector<uint8_t> cgraph_ڈیٹا;
+    size_t               cgraph_سائز = apir_serialize_ggml_cgraph(cgraph, cgraph_ڈیٹا);
 
-    virtgpu_shmem   temp_shmem;  // Local storage for large buffers
-    virtgpu_shmem * shmem              = &temp_shmem;
-    bool            using_shared_shmem = false;
+    virtgpu_shmem   عارضی_shmem;  // Local storage for large buffers
+    virtgpu_shmem * shmem              = &عارضی_shmem;
+    منطقی            using_shared_shmem = جھوٹ;
 
-    if (cgraph_size <= gpu->data_shmem.mmap_size) {
+    اگر (cgraph_سائز <= gpu->ڈیٹا_shmem.mmap_سائز) {
         // Lock mutex before using shared data_shmem buffer
-        if (mtx_lock(&gpu->data_shmem_mutex) != thrd_success) {
+        اگر (mtx_تالا(&gpu->ڈیٹا_shmem_mutex) != thrd_success) {
             GGML_ABORT(GGML_VIRTGPU "%s: Failed to lock data_shmem mutex", __func__);
         }
-        using_shared_shmem = true;
-        shmem              = &gpu->data_shmem;
-    } else if (virtgpu_shmem_create(gpu, cgraph_size, shmem)) {
+        using_shared_shmem = سچ;
+        shmem              = &gpu->ڈیٹا_shmem;
+    } ورنہ اگر (virtgpu_shmem_create(gpu, cgraph_سائز, shmem)) {
         GGML_ABORT(GGML_VIRTGPU "%s: Couldn't allocate the guest-host shared buffer", __func__);
     }
 
     apir_encode_virtgpu_shmem_res_id(encoder, shmem->res_id);
 
-    apir_encode_size_t(encoder, &cgraph_size);
+    apir_encode_سائز_t(encoder, &cgraph_سائز);
 
-    char *       shmem_data    = (char *) shmem->mmap_ptr;
-    apir_encoder secondary_enc = apir_new_encoder(shmem_data, cgraph_size);
+    حرف *       shmem_ڈیٹا    = (حرف *) shmem->mmap_ptr;
+    apir_encoder secondary_enc = apir_new_encoder(shmem_ڈیٹا, cgraph_سائز);
 
-    apir_encode_cgraph_data(&secondary_enc, cgraph_data);
+    apir_encode_cgraph_ڈیٹا(&secondary_enc, cgraph_ڈیٹا);
 
     REMOTE_CALL(gpu, encoder, decoder, ret);
 
-    ggml_status status = GGML_STATUS_ABORTED;
-    apir_decode_ggml_status(decoder, &status);
+    ggml_حالت حالت_2 = GGML_حالت_ABORTED;
+    apir_decode_ggml_حالت(decoder, &حالت_2);
 
-    remote_call_finish(gpu, encoder, decoder);
+    remote_call_اختتام(gpu, encoder, decoder);
 
     // Unlock mutex before cleanup
-    if (using_shared_shmem) {
-        mtx_unlock(&gpu->data_shmem_mutex);
-    } else {
+    اگر (using_shared_shmem) {
+        mtx_unlock(&gpu->ڈیٹا_shmem_mutex);
+    } ورنہ {
         virtgpu_shmem_destroy(gpu, shmem);
     }
 
-    return status;
+    واپس حالت_2;
 }

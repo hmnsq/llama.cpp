@@ -1,32 +1,32 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#شامل "../node_context.h"
+#شامل "../op_table.h"
+#شامل "../utils.h"
 
-#include <memory>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/sqrt.hpp>
+#شامل <memory>
+#شامل <openvino/op/multiply.hpp>
+#شامل <openvino/op/sqrt.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+نامخلا ov {
+نامخلا frontend {
+نامخلا ggml {
+نامخلا op {
 
-OutputVector translate_sqr(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+Output_سمتیہ translate_sqr(ثابت گرہ_Context & context) {
+    عدد_inputs_check(context, 1, 1);
 
-    auto input = process_view_input_new(context, 0);
-    auto res = std::make_shared<ov::op::v1::Multiply>(input, input);
+    خودکار داخلہ = process_view_داخلہ_new(context, 0);
+    خودکار res = std::make_shared<ov::op::v1::Multiply>(داخلہ, داخلہ);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    واپس rename_outputs_with_suffix({res}, context.get_name());
 }
 
-OutputVector translate_sqrt(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+Output_سمتیہ translate_sqrt(ثابت گرہ_Context & context) {
+    عدد_inputs_check(context, 1, 1);
 
-    auto input = process_view_input_new(context, 0);
-    auto res = std::make_shared<ov::op::v0::Sqrt>(input);
+    خودکار داخلہ = process_view_داخلہ_new(context, 0);
+    خودکار res = std::make_shared<ov::op::v0::Sqrt>(داخلہ);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    واپس rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

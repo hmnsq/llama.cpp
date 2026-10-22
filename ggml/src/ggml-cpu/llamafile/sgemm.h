@@ -1,25 +1,25 @@
-#pragma once
-#include <stdint.h>
-#include <stdbool.h>
+#ہدایت once
+#شامل <stdint.h>
+#شامل <stdbool.h>
 
-#if defined(__VXE__) || defined(__VXE2__)
-#include <vecintrin.h>
-#endif
+#اگر defined(__VXE__) || defined(__VXE2__)
+#شامل <vecintrin.h>
+#اگر_ختم
 
-#ifdef _MSC_VER
-#define NOINLINE __declspec(noinline)
-#else
-#define NOINLINE __attribute__((__noinline__))
-#endif
+#اگر_تعریف_شدہ _MSC_VER
+#تعریف_کرو NOINLINE __declspec(noinline)
+#ورنہ
+#تعریف_کرو NOINLINE __attribute__((__noinline__))
+#اگر_ختم
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#اگر_تعریف_شدہ __cplusplus
+خارجی "C" {
+#اگر_ختم
 
-bool llamafile_sgemm(const struct ggml_compute_params * params, int64_t, int64_t, int64_t,
-                     const void *, int64_t, const void *, int64_t, void *, int64_t,
-                     int, int, int);
+bool llamafile_sgemm(ثابت ساخت ggml_compute_params * params, int64_t, int64_t, int64_t,
+                     ثابت خالی *, int64_t, ثابت خالی *, int64_t, خالی *, int64_t,
+                     صحیح, صحیح, صحیح);
 
-#ifdef __cplusplus
+#اگر_تعریف_شدہ __cplusplus
 }
-#endif
+#اگر_ختم

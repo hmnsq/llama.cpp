@@ -1,12 +1,12 @@
-#include "openvino/pass/matcher_pass.hpp"
+#شامل "openvino/pass/matcher_pass.hpp"
 
 namespace ov {
 namespace frontend {
 namespace ggml {
 namespace pass {
 
-class SqueezeMatmul : public ov::pass::MatcherPass {
-public:
+class SqueezeMatmul : عوامی ov::pass::MatcherPass {
+عوامی:
     OPENVINO_MATCHER_PASS_RTTI("ov::frontend::ggml::pass::SqueezeMatmul")
     SqueezeMatmul();
 };

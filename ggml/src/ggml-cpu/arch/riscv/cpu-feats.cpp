@@ -1,38 +1,38 @@
-#include "ggml-backend-impl.h"
+#شامل "ggml-backend-impl.h"
 
-#if defined(__riscv) && __riscv_xlen == 64
-#include <asm/hwprobe.h>
-#include <asm/unistd.h>
-#include <unistd.h>
+#اگر defined(__riscv) && __riscv_xlen == 64
+#شامل <asm/hwprobe.h>
+#شامل <asm/unistd.h>
+#شامل <unistd.h>
 
-struct riscv64_features {
-    bool has_rvv = false;
+ساخت riscv64_features {
+    منطقی has_rvv = جھوٹ;
 
     riscv64_features() {
-        struct riscv_hwprobe probe;
-        probe.key = RISCV_HWPROBE_KEY_IMA_EXT_0;
+        ساخت riscv_hwprobe probe;
+        probe.کلید = RISCV_HWPROBE_کلید_IMA_EXT_0;
         probe.value = 0;
 
-        int ret = syscall(__NR_riscv_hwprobe, &probe, 1, 0, NULL, 0);
+        صحیح ret = syscall(__NR_riscv_hwprobe, &probe, 1, 0, تہی, 0);
 
-        if (0 == ret) {
+        اگر (0 == ret) {
             has_rvv = !!(probe.value & RISCV_HWPROBE_IMA_V);
         }
     }
 };
 
-static int ggml_backend_cpu_riscv64_score() {
-    int score = 1;
+ساکن صحیح ggml_backend_cpu_riscv64_score() {
+    صحیح score = 1;
     riscv64_features rf;
 
-#ifdef GGML_USE_RVV
-    if (!rf.has_rvv) { return 0; }
+#اگر_تعریف_شدہ GGML_USE_RVV
+    اگر (!rf.has_rvv) { واپس 0; }
     score += 1 << 1;
-#endif
+#اگر_ختم
 
-    return score;
+    واپس score;
 }
 
 GGML_BACKEND_DL_SCORE_IMPL(ggml_backend_cpu_riscv64_score)
 
-#endif  // __riscv && __riscv_xlen == 64
+#اگر_ختم  // __riscv && __riscv_xlen == 64

@@ -1,296 +1,296 @@
-#pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
-#pragma clang diagnostic ignored "-Wunused-function"
-#pragma clang diagnostic ignored "-Wunused-variable"
-#pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#ہدایت clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
+#ہدایت clang diagnostic ignored "-Wunused-function"
+#ہدایت clang diagnostic ignored "-Wunused-variable"
+#ہدایت clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
-#include <AEEStdErr.h>
-#include <dspqueue.h>
-#include <HAP_compute_res.h>
-#include <HAP_etm_config.h>
-#include <HAP_mem.h>
-#include <HAP_power.h>
-#include <HAP_ps.h>
-#include <HAP_dcvs.h>
-#include <qurt.h>
-#include <qurt_thread.h>
-#include <qurt_memory.h>
-#include <remote.h>
-#include <string.h>
-#include <stdatomic.h>
+#شامل <HAP_farf.h>
+#شامل <HAP_perf.h>
+#شامل <AEEStdErr.h>
+#شامل <dspqueue.h>
+#شامل <HAP_compute_res.h>
+#شامل <HAP_etm_config.h>
+#شامل <HAP_mem.h>
+#شامل <HAP_power.h>
+#شامل <HAP_ps.h>
+#شامل <HAP_dcvs.h>
+#شامل <qurt.h>
+#شامل <qurt_thread.h>
+#شامل <qurt_memory.h>
+#شامل <remote.h>
+#شامل <string.h>
+#شامل <stdatomic.h>
 
-#include "hex-utils.h"
-#include "dma-queue.h"
-#include "hmx-queue.h"
+#شامل "hex-utils.h"
+#شامل "dma-queue.h"
+#شامل "hmx-queue.h"
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "hex-bitmap.h"
-#include "htp-ctx.h"
-#include "htp-dcache.h"
-#include "htp-ops.h"
-#include "htp_iface.h"
-#include "work-queue.h"
-#include "hex-profile.h"
-#include "allreduce-ops.h"
-#include "htp-fence.h"
+#تعریف_کرو GGML_COMMON_DECL_C
+#شامل "ggml-common.h"
+#شامل "hex-bitmap.h"
+#شامل "htp-ctx.h"
+#شامل "htp-dcache.h"
+#شامل "htp-ops.h"
+#شامل "htp_iface.h"
+#شامل "work-queue.h"
+#شامل "hex-profile.h"
+#شامل "allreduce-ops.h"
+#شامل "htp-fence.h"
 
-#define HMX_QUEUE_CAPACITY     128
-#define HMX_QUEUE_STACK_SIZE   16384
-#define WORK_QUEUE_CAPACITY    16
-#define WORK_QUEUE_STACK_SIZE  16384
-#define MAIN_THREAD_STACK_SIZE 32768
+#تعریف_کرو HMX_قطار_استعداد     128
+#تعریف_کرو HMX_قطار_ڈھیر_سائز   16384
+#تعریف_کرو WORK_قطار_استعداد    16
+#تعریف_کرو WORK_قطار_ڈھیر_سائز  16384
+#تعریف_کرو MAIN_THREAD_ڈھیر_سائز 32768
 
-_Static_assert(WORK_QUEUE_MAX_N_THREADS >= HTP_MAX_NTHREADS,
+_Static_assert(WORK_قطار_MAX_N_دھاگے >= HTP_MAX_NTHREADS,
                "work-queue thread cap must be >= HTP_MAX_NTHREADS");
 
-struct htp_handle {
-    struct htp_context * ctx;
+ساخت htp_handle {
+    ساخت htp_context * ctx;
 };
 
-static inline uint64_t htp_mmap(uint32_t fd, uint64_t size, uint32_t flags) {
-#if __HVX_ARCH__ > 79
-    if (flags & HTP_BUF_EXTENDED) {
+ساکن اندرونی uint64_t htp_mmap(uint32_t fd, uint64_t سائز, uint32_t flags) {
+#اگر __HVX_ARCH__ > 79
+    اگر (flags & HTP_BUF_EXTENDED) {
         HAP_mem_req_payload_t payload;
-        memset(&payload, 0, sizeof(payload));
+        memset(&payload, 0, حجم(payload));
         payload.request_id = HAP_MEM_MAP;
-        payload.mmap.len   = size;
+        payload.mmap.len   = سائز;
         payload.mmap.prot  = HAP_MEM_CACHE_NON_SHARED | HAP_PROT_READ;
         payload.mmap.flags = HAP_MEM_FLAGS_EXTENDED_MAP;
         payload.mmap.fd    = fd;
 
-        if (HAP_mem_request(&payload) != 0) {
-            FARF(ERROR, "extended mmap failed : fd %u size %llu", fd, (unsigned long long) size);
-            return 0;
+        اگر (HAP_mem_request(&payload) != 0) {
+            FARF(ERROR, "extended mmap failed : fd %u size %llu", fd, (غیرعلامتی طویل طویل) سائز);
+            واپس 0;
         }
 
-        return payload.mmap.dsp_va;
+        واپس payload.mmap.dsp_va;
     }
-#else
-    if (flags & HTP_BUF_EXTENDED) {
+#ورنہ
+    اگر (flags & HTP_BUF_EXTENDED) {
         FARF(ERROR, "extended mmap is unsupported on v%d", __HVX_ARCH__);
-        return 0;
+        واپس 0;
     }
-#endif
+#اگر_ختم
 
-    if (size > UINT32_MAX) {
-        FARF(ERROR, "mmap failed : size %llu exceeds 32-bit limit", (unsigned long long) size);
-        return 0;
+    اگر (سائز > UINT32_MAX) {
+        FARF(ERROR, "mmap failed : size %llu exceeds 32-bit limit", (غیرعلامتی طویل طویل) سائز);
+        واپس 0;
     }
 
-    void * va = (void *)-1;
-    for (int retry = 0; retry < 2; retry++) {
-#if __HVX_ARCH__ > 73
-        va = HAP_mmap2(NULL, (size_t) size, HAP_PROT_READ | HAP_PROT_WRITE, 0, fd, 0);
-#else
-        if (size > HTP_MMAP_MAX_VMEM) {
-            FARF(ERROR, "mmap failed : size %llu exceeds 2GB limit for HAP_mmap", (unsigned long long) size);
+    خالی * va = (خالی *)-1;
+    برائے (صحیح retry = 0; retry < 2; retry++) {
+#اگر __HVX_ARCH__ > 73
+        va = HAP_mmap2(تہی, (size_t) سائز, HAP_PROT_READ | HAP_PROT_WRITE, 0, fd, 0);
+#ورنہ
+        اگر (سائز > HTP_MMAP_MAX_VMEM) {
+            FARF(ERROR, "mmap failed : size %llu exceeds 2GB limit for HAP_mmap", (غیرعلامتی طویل طویل) سائز);
             abort();
         }
-        va = HAP_mmap(NULL, (int) size, HAP_PROT_READ | HAP_PROT_WRITE, 0, fd, 0);
-#endif
-        if (va != (void *)-1 && va != NULL) {
-            return (uint64_t) (uintptr_t) va;
+        va = HAP_mmap(تہی, (صحیح) سائز, HAP_PROT_READ | HAP_PROT_WRITE, 0, fd, 0);
+#اگر_ختم
+        اگر (va != (خالی *)-1 && va != تہی) {
+            واپس (uint64_t) (uintptr_t) va;
         }
-        if (retry == 0) {
-            FARF(HIGH, "mmap failed first try (va %p fd %u size %llu), retrying...", va, fd, (unsigned long long) size);
+        اگر (retry == 0) {
+            FARF(بلند_2, "mmap failed first try (va %p fd %u size %llu), retrying...", va, fd, (غیرعلامتی طویل طویل) سائز);
         }
     }
-    return 0;
+    واپس 0;
 }
 
-static inline void htp_munmap(uint64_t va, uint64_t size, uint32_t flags) {
-#if __HVX_ARCH__ > 79
-    if (flags & HTP_BUF_EXTENDED) {
+ساکن اندرونی خالی htp_munmap(uint64_t va, uint64_t سائز, uint32_t flags) {
+#اگر __HVX_ARCH__ > 79
+    اگر (flags & HTP_BUF_EXTENDED) {
         HAP_mem_req_payload_t payload;
-        memset(&payload, 0, sizeof(payload));
+        memset(&payload, 0, حجم(payload));
         payload.request_id   = HAP_MEM_UNMAP;
         payload.munmap.dsp_va = va;
-        payload.munmap.len    = size;
+        payload.munmap.len    = سائز;
         HAP_mem_request(&payload);
-        return;
+        واپس;
     }
-#endif
+#اگر_ختم
 
-#if __HVX_ARCH__ > 73
-    HAP_munmap2((void *) (uintptr_t) va, (size_t) size);
-#else
-    HAP_munmap((void *) (uintptr_t) va, (int) size);
-#endif
+#اگر __HVX_ARCH__ > 73
+    HAP_munmap2((خالی *) (uintptr_t) va, (size_t) سائز);
+#ورنہ
+    HAP_munmap((خالی *) (uintptr_t) va, (صحیح) سائز);
+#اگر_ختم
 }
 
-AEEResult htp_iface_open(const char * uri, remote_handle64 * handle) {
-    (void) uri;
-    struct htp_handle * h = calloc(1, sizeof(*h));
-    if (h == NULL) {
-        return AEE_ENOMEMORY;
+AEEResult htp_iface_open(ثابت حرف * uri, remote_handle64 * handle) {
+    (خالی) uri;
+    ساخت htp_handle * h = صفر_حافظہ_دو(1, حجم(*h));
+    اگر (h == تہی) {
+        واپس AEE_ENOMEMORY;
     }
 
     *handle = (remote_handle64) h;
-    return AEE_SUCCESS;
+    واپس AEE_SUCCESS;
 }
 
 AEEResult htp_iface_etm(remote_handle64 handle, uint32_t enable) {
-    struct htp_handle * h = (struct htp_handle *) handle;
-    if (!h) {
-        return AEE_EBADPARM;
+    ساخت htp_handle * h = (ساخت htp_handle *) handle;
+    اگر (!h) {
+        واپس AEE_EBADPARM;
     }
 
-    int err = enable ? HAP_user_etm_enable() : HAP_user_etm_disable();
-    if (err) {
-        if (err == AEE_EVERSIONNOTSUPPORT) {
+    صحیح err = enable ? HAP_user_etm_enable() : HAP_user_etm_disable();
+    اگر (err) {
+        اگر (err == AEE_EVERSIONNOTSUPPORT) {
             FARF(ERROR, "API HAP_user_etm_enable/disable is not supported\n");
-        } else {
+        } ورنہ {
             FARF(ERROR, "Error executing HAP_user_etm_enable/disable with error code : 0x%x\n", err);
         }
     }
-    return err;
+    واپس err;
 }
 
-AEEResult htp_iface_profiler(remote_handle64 handle, uint32_t mode, const htp_iface_pmu_conf* pmu_conf) {
-    struct htp_handle * h = (struct htp_handle *) handle;
-    if (!h || !h->ctx) {
-        return AEE_EBADPARM;
+AEEResult htp_iface_profiler(remote_handle64 handle, uint32_t منوال, ثابت htp_iface_pmu_conf* pmu_conf) {
+    ساخت htp_handle * h = (ساخت htp_handle *) handle;
+    اگر (!h || !h->ctx) {
+        واپس AEE_EBADPARM;
     }
-    struct htp_context * ctx = h->ctx;
+    ساخت htp_context * ctx = h->ctx;
 
-    if (mode == HTP_PROF_PMU) {
-        const uint32_t* events = pmu_conf->events;
+    اگر (منوال == HTP_PROF_PMU) {
+        ثابت uint32_t* events = pmu_conf->events;
 
         // Pack 4 event IDs (low 8 bits) into each 32-bit config register
         uint32_t evtcfg = 0, evtcfg1 = 0, cfg = 0, i = 0;
-        for (; i < HEX_NUM_PMU_COUNTERS/2; i++) {
+        برائے (; i < HEX_عدد_PMU_COUNTERS/2; i++) {
             evtcfg  |= ((events[i + 0] & 0xFF) << (i * 8));
             evtcfg1 |= ((events[i + 4] & 0xFF) << (i * 8));
         }
 
         // For events >255 pack high 2 bits of all 8 event IDs into cfg register
         // 2 bits per counter: bits [1:0] for counter 0, [3:2] for counter 1, etc.
-        for (i = 0; i < HEX_NUM_PMU_COUNTERS; i++) {
+        برائے (i = 0; i < HEX_عدد_PMU_COUNTERS; i++) {
             cfg |= (((events[i] >> 8) & 3) << (i * 2));
         }
 
         FARF(ALWAYS, "Configuring PMU registers: evtcfg = 0x%x, evtcfg1 = 0x%x, pmucfg = 0x%x", evtcfg, evtcfg1, cfg);
 
         // Configure PMU registers
-        qurt_pmu_set(QURT_PMUCFG,     cfg);
-        qurt_pmu_set(QURT_PMUEVTCFG,  evtcfg);
-        qurt_pmu_set(QURT_PMUEVTCFG1, evtcfg1);
+        qurt_pmu_سیٹ(QURT_PMUCFG,     cfg);
+        qurt_pmu_سیٹ(QURT_PMUEVTCFG,  evtcfg);
+        qurt_pmu_سیٹ(QURT_PMUEVTCFG1, evtcfg1);
         qurt_pmu_enable(1);
     }
 
-    ctx->profiler = mode;
+    ctx->profiler = منوال;
 
-    return AEE_SUCCESS;
+    واپس AEE_SUCCESS;
 }
 
 AEEResult htp_iface_close(remote_handle64 handle) {
-    struct htp_handle * h = (struct htp_handle *) handle;
-    if (!h) {
-        return AEE_EBADPARM;
+    ساخت htp_handle * h = (ساخت htp_handle *) handle;
+    اگر (!h) {
+        واپس AEE_EBADPARM;
     }
 
-    struct htp_context * ctx = h->ctx;
-    if (ctx) {
-        if (ctx->dsp_queue) {
+    ساخت htp_context * ctx = h->ctx;
+    اگر (ctx) {
+        اگر (ctx->dsp_قطار) {
             FARF(ERROR, "Closing handle with queue still open");
-            return AEE_EITEMBUSY;
+            واپس AEE_EITEMBUSY;
         }
 
         // release the mmaps (if any)
-        for (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
-            if (ctx->mmap[i].size) {
-                htp_munmap(ctx->mmap[i].base, ctx->mmap[i].size, ctx->mmap[i].flags);
-                ctx->mmap[i].size = 0;
-                ctx->mmap[i].base = 0;
+        برائے (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
+            اگر (ctx->mmap[i].سائز) {
+                htp_munmap(ctx->mmap[i].بنیاد, ctx->mmap[i].سائز, ctx->mmap[i].flags);
+                ctx->mmap[i].سائز = 0;
+                ctx->mmap[i].بنیاد = 0;
                 ctx->mmap[i].fd   = -1;
                 ctx->mmap[i].flags = 0;
             }
         }
 
-        if (ctx->profiler) {
+        اگر (ctx->profiler) {
             qurt_pmu_enable(1);
         }
 
-        if (ctx->etm) {
+        اگر (ctx->etm) {
             HAP_user_etm_disable();
         }
 
         // Free the unified block (ctx is the base address of the block)
-        free(ctx);
-        h->ctx = NULL;
+        آزاد(ctx);
+        h->ctx = تہی;
     }
 
-    free(h);
-    return AEE_SUCCESS;
+    آزاد(h);
+    واپس AEE_SUCCESS;
 }
 
-AEEResult htp_iface_mmap(remote_handle64 handle, uint32_t fd, uint64_t size) {
-    struct htp_handle * h = (struct htp_handle *) handle;
-    if (!h || !h->ctx) {
-        return AEE_EBADPARM;
+AEEResult htp_iface_mmap(remote_handle64 handle, uint32_t fd, uint64_t سائز) {
+    ساخت htp_handle * h = (ساخت htp_handle *) handle;
+    اگر (!h || !h->ctx) {
+        واپس AEE_EBADPARM;
     }
-    struct htp_context * ctx = h->ctx;
+    ساخت htp_context * ctx = h->ctx;
 
     // See if we already have this mapping
-    for (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
-        struct htp_mmap *m = &ctx->mmap[i];
-        if (m->fd == fd) {
-            return AEE_SUCCESS;
+    برائے (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
+        ساخت htp_mmap *m = &ctx->mmap[i];
+        اگر (m->fd == fd) {
+            واپس AEE_SUCCESS;
         }
     }
 
     // Add new mapping
-    for (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
-        struct htp_mmap *m = &ctx->mmap[i];
-        if (!m->size) {
-            FARF(HIGH, "mmap : fd %u size %llu", fd, (unsigned long long) size);
-            uint64_t va = htp_mmap(fd, size, 0);
-            if (va == 0) {
-                FARF(ERROR, "mmap failed : fd %u size %llu", fd, (unsigned long long) size);
-                return AEE_EFAILED;
+    برائے (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
+        ساخت htp_mmap *m = &ctx->mmap[i];
+        اگر (!m->سائز) {
+            FARF(بلند_2, "mmap : fd %u size %llu", fd, (غیرعلامتی طویل طویل) سائز);
+            uint64_t va = htp_mmap(fd, سائز, 0);
+            اگر (va == 0) {
+                FARF(ERROR, "mmap failed : fd %u size %llu", fd, (غیرعلامتی طویل طویل) سائز);
+                واپس AEE_EFAILED;
             }
 
-            m->base   = va;
+            m->بنیاد   = va;
             m->fd     = fd;
-            m->size   = size;
+            m->سائز   = سائز;
             m->flags  = 0;
 
-            return AEE_SUCCESS;
+            واپس AEE_SUCCESS;
         }
     }
 
-    return AEE_ENOMEMORY;
+    واپس AEE_ENOMEMORY;
 }
 
 AEEResult htp_iface_munmap(remote_handle64 handle, uint32 fd) {
-    struct htp_handle * h = (struct htp_handle *) handle;
-    if (!h || !h->ctx) {
-        return AEE_EBADPARM;
+    ساخت htp_handle * h = (ساخت htp_handle *) handle;
+    اگر (!h || !h->ctx) {
+        واپس AEE_EBADPARM;
     }
-    struct htp_context * ctx = h->ctx;
+    ساخت htp_context * ctx = h->ctx;
 
-    for (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
-        struct htp_mmap *m = &ctx->mmap[i];
-        if (fd < 0 || m->fd == fd) {
-            FARF(HIGH, "unmmap : base 0x%llx fd %u size %llu", (unsigned long long) m->base, m->fd, (unsigned long long) m->size);
-            htp_munmap(m->base, m->size, m->flags);
-            m->size   = 0;
-            m->base   = NULL;
+    برائے (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
+        ساخت htp_mmap *m = &ctx->mmap[i];
+        اگر (fd < 0 || m->fd == fd) {
+            FARF(بلند_2, "unmmap : base 0x%llx fd %u size %llu", (غیرعلامتی طویل طویل) m->بنیاد, m->fd, (غیرعلامتی طویل طویل) m->سائز);
+            htp_munmap(m->بنیاد, m->سائز, m->flags);
+            m->سائز   = 0;
+            m->بنیاد   = تہی;
             m->fd     = -1;
             m->flags  = 0;
         }
     }
 
-    return AEE_SUCCESS;
+    واپس AEE_SUCCESS;
 }
 
-static void vtcm_acquire(struct htp_context * ctx) {
-    if (!atomic_load(&ctx->vtcm_valid)) {
-        int err = HAP_compute_res_acquire_cached(ctx->vtcm_rctx, 10000000u);
-        if (err != 0) {
-            FARF(ERROR, "ggml-hex: failed to acquire VTCM: 0x%08x", (unsigned)err);
+ساکن خالی vtcm_acquire(ساخت htp_context * ctx) {
+    اگر (!atomic_بھرو(&ctx->vtcm_valid)) {
+        صحیح err = HAP_compute_res_acquire_cached(ctx->vtcm_rctx, 10000000u);
+        اگر (err != 0) {
+            FARF(ERROR, "ggml-hex: failed to acquire VTCM: 0x%08x", (غیرعلامتی)err);
             abort();
         }
 
@@ -298,806 +298,806 @@ static void vtcm_acquire(struct htp_context * ctx) {
         atomic_store(&ctx->vtcm_valid, true);
 
         // Drop the priority to make sure we get the release callback from other GGML-HTP and QNN-HTP sessions
-        HAP_compute_res_update_priority(ctx->vtcm_rctx, ctx->thread_prio + 10);
+        HAP_compute_res_update_ترجیح(ctx->vtcm_rctx, ctx->thread_prio + 10);
     }
 }
 
-static void vtcm_release(struct htp_context * ctx) {
-    if (atomic_load(&ctx->vtcm_valid)) {
+ساکن خالی vtcm_release(ساخت htp_context * ctx) {
+    اگر (atomic_بھرو(&ctx->vtcm_valid)) {
         atomic_store(&ctx->vtcm_valid, false);
         atomic_store(&ctx->vtcm_needs_release, false);
         HAP_compute_res_release_cached(ctx->vtcm_rctx);
     }
 }
 
-static int vtcm_release_callback(unsigned int rctx, void * state) {
-    struct htp_context * ctx = (struct htp_context *) state;
+ساکن صحیح vtcm_release_callback(غیرعلامتی صحیح rctx, خالی * state) {
+    ساخت htp_context * ctx = (ساخت htp_context *) state;
     atomic_store(&ctx->vtcm_needs_release, true);
-    return 0;
+    واپس 0;
 }
 
-static unsigned int vtcm_query_size(void) {
-    unsigned int vtcm_size = 8 * 1024 * 1024;  // 8MB default
-    unsigned int vtcm_avail;
-    compute_res_vtcm_page_t total_layout, avail_layout;
+ساکن غیرعلامتی صحیح vtcm_query_سائز(خالی) {
+    غیرعلامتی صحیح vtcm_سائز = 8 * 1024 * 1024;  // 8MB default
+    غیرعلامتی صحیح vtcm_avail;
+    compute_res_vtcm_صفحہ_t کل_layout, avail_layout;
     // some images (e.g. FuSa cDSP) fail the query when the layout out-params are NULL
-    HAP_compute_res_query_VTCM(0, &vtcm_size, &total_layout, &vtcm_avail, &avail_layout);
-    return vtcm_size;
+    HAP_compute_res_query_VTCM(0, &vtcm_سائز, &کل_layout, &vtcm_avail, &avail_layout);
+    واپس vtcm_سائز;
 }
 
-static int vtcm_alloc(struct htp_context * ctx) {
-    unsigned int vtcm_size = vtcm_query_size();
+ساکن صحیح vtcm_alloc(ساخت htp_context * ctx) {
+    غیرعلامتی صحیح vtcm_سائز = vtcm_query_سائز();
 
     compute_res_attr_t attr;
     HAP_compute_res_attr_init(&attr);
-    HAP_compute_res_attr_set_serialize(&attr, 0);
-    HAP_compute_res_attr_set_cache_mode(&attr, 1);
-    HAP_compute_res_attr_set_vtcm_param_v2(&attr, vtcm_size, vtcm_size, vtcm_size); // single page
-    HAP_compute_res_attr_set_release_callback(&attr, vtcm_release_callback, (void *) ctx);
-    HAP_compute_res_attr_set_hmx_param(&attr, 1);
+    HAP_compute_res_attr_سیٹ_serialize(&attr, 0);
+    HAP_compute_res_attr_سیٹ_cache_منوال(&attr, 1);
+    HAP_compute_res_attr_سیٹ_vtcm_param_v2(&attr, vtcm_سائز, vtcm_سائز, vtcm_سائز); // single page
+    HAP_compute_res_attr_سیٹ_release_callback(&attr, vtcm_release_callback, (خالی *) ctx);
+    HAP_compute_res_attr_سیٹ_hmx_param(&attr, 1);
 
     // Allocate VTCM for scratch pads
     uint32_t rctx = HAP_compute_res_acquire(&attr, 1000000 /* timeout */);
-    if (!rctx) {
-        FARF(ERROR, "failed to allocate %zu bytes VTCM\n", ctx->vtcm_size);
-        return AEE_ENOMEMORY;
+    اگر (!rctx) {
+        FARF(ERROR, "failed to allocate %zu bytes VTCM\n", ctx->vtcm_سائز);
+        واپس AEE_ENOMEMORY;
     }
 
-    void * vtcm_ptr;
-    if (HAP_compute_res_attr_get_vtcm_ptr_v2(&attr, &vtcm_ptr, &vtcm_size) != 0) {
+    خالی * vtcm_ptr;
+    اگر (HAP_compute_res_attr_get_vtcm_ptr_v2(&attr, &vtcm_ptr, &vtcm_سائز) != 0) {
         HAP_compute_res_release(rctx);
-        FARF(ERROR, "failed to allocate %zu bytes VTCM (new)\n", ctx->vtcm_size);
-        return AEE_ENOMEMORY;
+        FARF(ERROR, "failed to allocate %zu bytes VTCM (new)\n", ctx->vtcm_سائز);
+        واپس AEE_ENOMEMORY;
     }
 
-    ctx->vtcm_base          = (uint8_t *) vtcm_ptr;
-    ctx->vtcm_size          = vtcm_size;
+    ctx->vtcm_بنیاد          = (uint8_t *) vtcm_ptr;
+    ctx->vtcm_سائز          = vtcm_سائز;
     ctx->vtcm_rctx          = rctx;
     atomic_store(&ctx->vtcm_valid, false);
     atomic_store(&ctx->vtcm_needs_release, false);
 
-    return 0;
+    واپس 0;
 }
 
-static void vtcm_free(struct htp_context * ctx) {
-    if (ctx->vtcm_rctx) {
+ساکن خالی vtcm_free(ساخت htp_context * ctx) {
+    اگر (ctx->vtcm_rctx) {
         HAP_compute_res_release(ctx->vtcm_rctx);
-        ctx->vtcm_base = 0;
+        ctx->vtcm_بنیاد = 0;
         ctx->vtcm_rctx = 0;
     }
 }
 
-static void htp_main_thread(void * context);
-static void htp_packet_callback(dspqueue_t queue, int error, void * context);
-static void htp_error_callback(dspqueue_t queue, int error, void * context);
+ساکن خالی htp_main_thread(خالی * context);
+ساکن خالی htp_packet_callback(dspqueue_t قطار, صحیح error, خالی * context);
+ساکن خالی htp_error_callback(dspqueue_t قطار, صحیح error, خالی * context);
 
 // Non-BURST modes leave DCVS enabled and keep the HTP awake.
 // BURST pins all corners to MAX and disables DCVS.
 // Corner constants are from HAP_power.h (HAP_dcvs_voltage_corner_t / HAP_dcvs_exp_vcorner_t).
-struct htp_power_profile {
+ساخت htp_power_profile {
     boolean  dcvs_enable;
-    uint32_t bus_min_corner;
-    uint32_t bus_max_corner;
-    uint32_t bus_target_corner;
-    uint32_t core_min_corner;
-    uint32_t core_max_corner;
-    uint32_t core_target_corner;
+    uint32_t bus_min_کونا;
+    uint32_t bus_max_کونا;
+    uint32_t bus_ہدف_کونا;
+    uint32_t core_min_کونا;
+    uint32_t core_max_کونا;
+    uint32_t core_ہدف_کونا;
     boolean  sleep_disable;
-    uint32_t hmx_min_corner;    // only used when __HVX_ARCH__ >= 75
-    uint32_t hmx_max_corner;
-    uint32_t hmx_target_corner;
-    uint32_t hmx_perf_mode;
+    uint32_t hmx_min_کونا;    // only used when __HVX_ARCH__ >= 75
+    uint32_t hmx_max_کونا;
+    uint32_t hmx_ہدف_کونا;
+    uint32_t hmx_perf_منوال;
 };
 
-#define HTP_POWER_PROFILE_ENTRY(min_c, max_c, hmx_c) \
+#تعریف_کرو HTP_POWER_PROFILE_اندراج(min_c, max_c, hmx_c) \
     { \
         .dcvs_enable        = TRUE, \
-        .bus_min_corner     = (min_c), \
-        .bus_max_corner     = (max_c), \
-        .bus_target_corner  = (max_c), \
-        .core_min_corner    = (min_c), \
-        .core_max_corner    = (max_c), \
-        .core_target_corner = (max_c), \
+        .bus_min_کونا     = (min_c), \
+        .bus_max_کونا     = (max_c), \
+        .bus_ہدف_کونا  = (max_c), \
+        .core_min_کونا    = (min_c), \
+        .core_max_کونا    = (max_c), \
+        .core_ہدف_کونا = (max_c), \
         .sleep_disable      = TRUE, \
-        .hmx_min_corner     = (hmx_c), \
-        .hmx_max_corner     = (hmx_c), \
-        .hmx_target_corner  = (hmx_c), \
-        .hmx_perf_mode      = HAP_CLK_PERF_HIGH, \
+        .hmx_min_کونا     = (hmx_c), \
+        .hmx_max_کونا     = (hmx_c), \
+        .hmx_ہدف_کونا  = (hmx_c), \
+        .hmx_perf_منوال      = HAP_CLK_PERF_بلند, \
     }
 
-static const struct htp_power_profile htp_power_profiles[HTP_POWER_MODE_COUNT] = {
-    [HTP_POWER_MODE_LOW_POWER_SAVER] =
-        HTP_POWER_PROFILE_ENTRY(HAP_DCVS_VCORNER_SVS2, HAP_DCVS_VCORNER_SVS2, HAP_DCVS_EXP_VCORNER_MIN_SVS),
-    [HTP_POWER_MODE_POWER_SAVER] =
-        HTP_POWER_PROFILE_ENTRY(HAP_DCVS_VCORNER_SVS, HAP_DCVS_VCORNER_SVS_PLUS, HAP_DCVS_EXP_VCORNER_SVS),
-    [HTP_POWER_MODE_HIGH_POWER_SAVER] =
-        HTP_POWER_PROFILE_ENTRY(HAP_DCVS_VCORNER_SVS_PLUS, HAP_DCVS_VCORNER_NOM, HAP_DCVS_EXP_VCORNER_SVS_L2),
-    [HTP_POWER_MODE_LOW_BALANCED] =
-        HTP_POWER_PROFILE_ENTRY(HAP_DCVS_VCORNER_NOM, HAP_DCVS_VCORNER_NOM_PLUS, HAP_DCVS_EXP_VCORNER_NOM),
-    [HTP_POWER_MODE_BALANCED] =
-        HTP_POWER_PROFILE_ENTRY(HAP_DCVS_VCORNER_NOM_PLUS, HAP_DCVS_VCORNER_TURBO, HAP_DCVS_EXP_VCORNER_NOM_L1),
-    [HTP_POWER_MODE_HIGH_PERFORMANCE] =
-        HTP_POWER_PROFILE_ENTRY(HAP_DCVS_VCORNER_TURBO, HAP_DCVS_VCORNER_TURBO_PLUS, HAP_DCVS_EXP_VCORNER_TUR_L2),
-    [HTP_POWER_MODE_SUSTAINED_HIGH_PERFORMANCE] =
-        HTP_POWER_PROFILE_ENTRY(HAP_DCVS_VCORNER_NOM_PLUS, HAP_DCVS_VCORNER_TURBO_PLUS, HAP_DCVS_EXP_VCORNER_TUR_L2),
-    [HTP_POWER_MODE_BURST] = {
+ساکن ثابت ساخت htp_power_profile htp_power_profiles[HTP_POWER_منوال_گنتی] = {
+    [HTP_POWER_منوال_کم_POWER_SAVER] =
+        HTP_POWER_PROFILE_اندراج(HAP_DCVS_VCORNER_SVS2, HAP_DCVS_VCORNER_SVS2, HAP_DCVS_EXP_VCORNER_MIN_SVS),
+    [HTP_POWER_منوال_POWER_SAVER] =
+        HTP_POWER_PROFILE_اندراج(HAP_DCVS_VCORNER_SVS, HAP_DCVS_VCORNER_SVS_PLUS, HAP_DCVS_EXP_VCORNER_SVS),
+    [HTP_POWER_منوال_بلند_POWER_SAVER] =
+        HTP_POWER_PROFILE_اندراج(HAP_DCVS_VCORNER_SVS_PLUS, HAP_DCVS_VCORNER_NOM, HAP_DCVS_EXP_VCORNER_SVS_L2),
+    [HTP_POWER_منوال_کم_متوازن] =
+        HTP_POWER_PROFILE_اندراج(HAP_DCVS_VCORNER_NOM, HAP_DCVS_VCORNER_NOM_PLUS, HAP_DCVS_EXP_VCORNER_NOM),
+    [HTP_POWER_منوال_متوازن] =
+        HTP_POWER_PROFILE_اندراج(HAP_DCVS_VCORNER_NOM_PLUS, HAP_DCVS_VCORNER_TURBO, HAP_DCVS_EXP_VCORNER_NOM_L1),
+    [HTP_POWER_منوال_بلند_PERFORMANCE] =
+        HTP_POWER_PROFILE_اندراج(HAP_DCVS_VCORNER_TURBO, HAP_DCVS_VCORNER_TURBO_PLUS, HAP_DCVS_EXP_VCORNER_TUR_L2),
+    [HTP_POWER_منوال_SUSTAINED_بلند_PERFORMANCE] =
+        HTP_POWER_PROFILE_اندراج(HAP_DCVS_VCORNER_NOM_PLUS, HAP_DCVS_VCORNER_TURBO_PLUS, HAP_DCVS_EXP_VCORNER_TUR_L2),
+    [HTP_POWER_منوال_مدت] = {
         .dcvs_enable        = FALSE,
-        .bus_min_corner     = HAP_DCVS_VCORNER_MAX,
-        .bus_max_corner     = HAP_DCVS_VCORNER_MAX,
-        .bus_target_corner  = HAP_DCVS_VCORNER_MAX,
-        .core_min_corner    = HAP_DCVS_VCORNER_MAX,
-        .core_max_corner    = HAP_DCVS_VCORNER_MAX,
-        .core_target_corner = HAP_DCVS_VCORNER_MAX,
+        .bus_min_کونا     = HAP_DCVS_VCORNER_MAX,
+        .bus_max_کونا     = HAP_DCVS_VCORNER_MAX,
+        .bus_ہدف_کونا  = HAP_DCVS_VCORNER_MAX,
+        .core_min_کونا    = HAP_DCVS_VCORNER_MAX,
+        .core_max_کونا    = HAP_DCVS_VCORNER_MAX,
+        .core_ہدف_کونا = HAP_DCVS_VCORNER_MAX,
         .sleep_disable      = TRUE,
-        .hmx_min_corner     = HAP_DCVS_EXP_VCORNER_MAX,
-        .hmx_max_corner     = HAP_DCVS_EXP_VCORNER_MAX,
-        .hmx_target_corner  = HAP_DCVS_EXP_VCORNER_MAX,
-        .hmx_perf_mode      = HAP_CLK_PERF_HIGH,
+        .hmx_min_کونا     = HAP_DCVS_EXP_VCORNER_MAX,
+        .hmx_max_کونا     = HAP_DCVS_EXP_VCORNER_MAX,
+        .hmx_ہدف_کونا  = HAP_DCVS_EXP_VCORNER_MAX,
+        .hmx_perf_منوال      = HAP_CLK_PERF_بلند,
     },
 };
 
-#undef HTP_POWER_PROFILE_ENTRY
+#تعریف_منسوخ HTP_POWER_PROFILE_اندراج
 
-AEEResult htp_iface_start(remote_handle64 handle, uint32_t sess_id, uint64_t dsp_queue_id, uint32_t n_hvx, uint32_t n_hmx, uint64_t max_vmem, uint32_t power_mode) {
-    struct htp_handle * h = (struct htp_handle *) handle;
-    if (!h) {
-        return AEE_EBADPARM;
+AEEResult htp_iface_آغاز(remote_handle64 handle, uint32_t sess_id, uint64_t dsp_قطار_id, uint32_t n_hvx, uint32_t n_hmx, uint64_t max_vmem, uint32_t power_منوال) {
+    ساخت htp_handle * h = (ساخت htp_handle *) handle;
+    اگر (!h) {
+        واپس AEE_EBADPARM;
     }
 
-    if (power_mode >= HTP_POWER_MODE_COUNT) {
-        FARF(ERROR, "invalid power-mode %u, falling back to burst", (unsigned) power_mode);
-        power_mode = HTP_POWER_MODE_BURST;
+    اگر (power_منوال >= HTP_POWER_منوال_گنتی) {
+        FARF(ERROR, "invalid power-mode %u, falling back to burst", (غیرعلامتی) power_منوال);
+        power_منوال = HTP_POWER_منوال_مدت;
     }
-    const struct htp_power_profile * pwr = &htp_power_profiles[power_mode];
+    ثابت ساخت htp_power_profile * pwr = &htp_power_profiles[power_منوال];
     FARF(ALWAYS, "power-mode %u : dcvs-enable %d bus[%u,%u,%u] core[%u,%u,%u] sleep-disable %d hmx[%u,%u,%u]",
-         (unsigned) power_mode, (int) pwr->dcvs_enable,
-         (unsigned) pwr->bus_min_corner, (unsigned) pwr->bus_max_corner, (unsigned) pwr->bus_target_corner,
-         (unsigned) pwr->core_min_corner, (unsigned) pwr->core_max_corner, (unsigned) pwr->core_target_corner,
-         (int) pwr->sleep_disable,
-         (unsigned) pwr->hmx_min_corner, (unsigned) pwr->hmx_max_corner, (unsigned) pwr->hmx_target_corner);
+         (غیرعلامتی) power_منوال, (صحیح) pwr->dcvs_enable,
+         (غیرعلامتی) pwr->bus_min_کونا, (غیرعلامتی) pwr->bus_max_کونا, (غیرعلامتی) pwr->bus_ہدف_کونا,
+         (غیرعلامتی) pwr->core_min_کونا, (غیرعلامتی) pwr->core_max_کونا, (غیرعلامتی) pwr->core_ہدف_کونا,
+         (صحیح) pwr->sleep_disable,
+         (غیرعلامتی) pwr->hmx_min_کونا, (غیرعلامتی) pwr->hmx_max_کونا, (غیرعلامتی) pwr->hmx_ہدف_کونا);
 
-    if (h->ctx) {
+    اگر (h->ctx) {
         FARF(ERROR, "Queue already open");
-        return AEE_EITEMBUSY;
+        واپس AEE_EITEMBUSY;
     }
 
     // Cache the original FastRPC thread priority, then calculate compute priority
-    int fastrpc_tid  = qurt_thread_get_id();
-    int fastrpc_prio = qurt_thread_get_priority(fastrpc_tid);
-    int main_prio    = fastrpc_prio - 10;
-    if (main_prio < 1) main_prio = 1;
+    صحیح fastrpc_tid  = qurt_thread_get_id();
+    صحیح fastrpc_prio = qurt_thread_get_ترجیح(fastrpc_tid);
+    صحیح main_prio    = fastrpc_prio - 10;
+    اگر (main_prio < 1) main_prio = 1;
 
-    dspqueue_t dsp_queue = NULL;
+    dspqueue_t dsp_قطار = تہی;
     bool use_callbacks = false;
 
     // Import queue with NULL callbacks to avoid starting dspueue internal threads
-    int err = dspqueue_import(dsp_queue_id, NULL, NULL, (void *) h, &dsp_queue);
-    if (err == AEE_EBADPARM) {
+    صحیح err = dspqueue_import(dsp_قطار_id, تہی, تہی, (خالی *) h, &dsp_قطار);
+    اگر (err == AEE_EBADPARM) {
         // Fallback for devices that don't support NULL callbacks
-        FARF(HIGH, "dspqueue import with NULL callbacks failed, trying with callbacks");
+        FARF(بلند_2, "dspqueue import with NULL callbacks failed, trying with callbacks");
         use_callbacks = true;
-        err = dspqueue_import(dsp_queue_id, htp_packet_callback, htp_error_callback, (void *) h, &dsp_queue);
+        err = dspqueue_import(dsp_قطار_id, htp_packet_callback, htp_error_callback, (خالی *) h, &dsp_قطار);
     }
 
-    if (err) {
-        FARF(ERROR, "Queue import failed with 0x%08x", (unsigned) err);
-        return err;
+    اگر (err) {
+        FARF(ERROR, "Queue import failed with 0x%08x", (غیرعلامتی) err);
+        واپس err;
     }
 
-    qurt_sysenv_max_hthreads_t hw_threads;
-    qurt_sysenv_get_max_hw_threads(&hw_threads);
+    qurt_sysenv_max_hthreads_t hw_دھاگے;
+    qurt_sysenv_get_max_hw_دھاگے(&hw_دھاگے);
     uint32_t hw_nhvx = (qurt_hvx_get_units() >> 8) & 0xFF;
 
-    if (n_hvx == 0) {
+    اگر (n_hvx == 0) {
         n_hvx = hw_nhvx;
     }
-    if (n_hvx > hw_threads.max_hthreads) {
-        n_hvx = hw_threads.max_hthreads;
+    اگر (n_hvx > hw_دھاگے.max_hthreads) {
+        n_hvx = hw_دھاگے.max_hthreads;
     }
-    if (n_hvx > HTP_MAX_NTHREADS) {
+    اگر (n_hvx > HTP_MAX_NTHREADS) {
         n_hvx = HTP_MAX_NTHREADS;
     }
 
     // layout segments of our contiguous block
 
     // 1. htp_context : sits at the base (block is 4K-aligned via memalign below)
-    size_t offset = sizeof(struct htp_context);
+    size_t انحراف = حجم(ساخت htp_context);
 
     // 2. main_stack
-    size_t offset_main_stack = 0;
-    size_t size_main_stack   = 0;
-    if (!use_callbacks) {
-        offset_main_stack = hex_align_up(offset, 4096);
-        size_main_stack   = MAIN_THREAD_STACK_SIZE;
-        offset = offset_main_stack + size_main_stack;
+    size_t انحراف_main_ڈھیر = 0;
+    size_t سائز_main_ڈھیر   = 0;
+    اگر (!use_callbacks) {
+        انحراف_main_ڈھیر = hex_align_اوپر(انحراف, 4096);
+        سائز_main_ڈھیر   = MAIN_THREAD_ڈھیر_سائز;
+        انحراف = انحراف_main_ڈھیر + سائز_main_ڈھیر;
     }
 
     // 3. work_queue
-    size_t wq_align  = work_queue_alignof();
-    size_t offset_wq = hex_align_up(offset, wq_align);
-    size_t size_wq   = work_queue_sizeof(n_hvx, WORK_QUEUE_CAPACITY, WORK_QUEUE_STACK_SIZE);
-    offset = offset_wq + size_wq;
+    size_t wq_align  = work_قطار_alignof();
+    size_t انحراف_wq = hex_align_اوپر(انحراف, wq_align);
+    size_t سائز_wq   = work_قطار_sizeof(n_hvx, WORK_قطار_استعداد, WORK_قطار_ڈھیر_سائز);
+    انحراف = انحراف_wq + سائز_wq;
 
     // 4. dma_queue
-    size_t dma_align = dma_queue_alignof();
-    size_t offset_dma = hex_align_up(offset, dma_align);
-    size_t size_dma = 0;
-    for (uint32_t i = 0; i < n_hvx; i++) {
-        size_dma  = hex_align_up(size_dma, dma_queue_alignof());
-        size_dma += dma_queue_sizeof(256);
+    size_t dma_align = dma_قطار_alignof();
+    size_t انحراف_dma = hex_align_اوپر(انحراف, dma_align);
+    size_t سائز_dma = 0;
+    برائے (uint32_t i = 0; i < n_hvx; i++) {
+        سائز_dma  = hex_align_اوپر(سائز_dma, dma_قطار_alignof());
+        سائز_dma += dma_قطار_sizeof(256);
     }
-    offset = offset_dma + size_dma;
+    انحراف = انحراف_dma + سائز_dma;
 
     // 5. hmx_queue
-    size_t offset_hmx = 0;
-    size_t size_hmx = 0;
-    if (n_hmx) {
-        size_t hmx_align = hmx_queue_alignof();
-        offset_hmx = hex_align_up(offset, hmx_align);
-        size_hmx   = hmx_queue_sizeof(HMX_QUEUE_CAPACITY, HMX_QUEUE_STACK_SIZE);
-        offset = offset_hmx + size_hmx;
+    size_t انحراف_hmx = 0;
+    size_t سائز_hmx = 0;
+    اگر (n_hmx) {
+        size_t hmx_align = hmx_قطار_alignof();
+        انحراف_hmx = hex_align_اوپر(انحراف, hmx_align);
+        سائز_hmx   = hmx_قطار_sizeof(HMX_قطار_استعداد, HMX_قطار_ڈھیر_سائز);
+        انحراف = انحراف_hmx + سائز_hmx;
     }
 
-    size_t footprint = hex_align_up(offset, 128);
+    size_t footprint = hex_align_اوپر(انحراف, 128);
 
-    void * block = memalign(4096, footprint);
-    if (!block) {
+    خالی * بلاک = memalign(4096, footprint);
+    اگر (!بلاک) {
         FARF(ERROR, "Unable to allocate unified block of size %zu\n", footprint);
-        dspqueue_close(dsp_queue);
-        return AEE_ENOMEMORY;
+        dspqueue_close(dsp_قطار);
+        واپس AEE_ENOMEMORY;
     }
-    memset(block, 0, footprint);
+    memset(بلاک, 0, footprint);
 
-    h->ctx = (struct htp_context *) block;
-    struct htp_context * ctx = h->ctx;
+    h->ctx = (ساخت htp_context *) بلاک;
+    ساخت htp_context * ctx = h->ctx;
     ctx->footprint = footprint;
 
     ctx->thread_id   = fastrpc_tid;
     ctx->thread_prio = main_prio;
     ctx->max_vmem    = max_vmem;
-    ctx->dsp_queue   = dsp_queue;
+    ctx->dsp_قطار   = dsp_قطار;
 
     err = vtcm_alloc(ctx);
-    if (err != AEE_SUCCESS) {
+    اگر (err != AEE_SUCCESS) {
         FARF(ERROR, "Unable to allocate VTCM");
         htp_iface_stop(handle);
-        return AEE_ENOMEMORY;
+        واپس AEE_ENOMEMORY;
     }
 
-    HAP_setFARFRuntimeLoggingParams(0xffff, NULL, 0);
+    HAP_سیٹ_FARFRuntime_Logging_Params(0xffff, تہی, 0);
 
     // Set client class
     {
         HAP_power_request_t request;
-        memset(&request, 0, sizeof(HAP_power_request_t));
-        request.type    = HAP_power_set_apptype;
+        memset(&request, 0, حجم(HAP_power_request_t));
+        request.type    = HAP_power_سیٹ_apptype;
         request.apptype = HAP_POWER_COMPUTE_CLIENT_CLASS;
 
-        if ((err = HAP_power_set((void *) ctx, &request)) != 0) {
+        اگر ((err = HAP_power_سیٹ((خالی *) ctx, &request)) != 0) {
             htp_iface_stop(handle);
-            return err;
+            واپس err;
         }
     }
 
     // DCVS setup
     {
         HAP_power_request_t request;
-        memset(&request, 0, sizeof(request));
+        memset(&request, 0, حجم(request));
 
-        request.type                              = HAP_power_set_DCVS_v3;
-        request.dcvs_v3.set_dcvs_enable           = TRUE;
+        request.type                              = HAP_power_سیٹ_DCVS_v3;
+        request.dcvs_v3.سیٹ_dcvs_enable           = TRUE;
         request.dcvs_v3.dcvs_enable               = pwr->dcvs_enable;
-        request.dcvs_v3.set_bus_params            = TRUE;
-        request.dcvs_v3.bus_params.min_corner     = pwr->bus_min_corner;
-        request.dcvs_v3.bus_params.max_corner     = pwr->bus_max_corner;
-        request.dcvs_v3.bus_params.target_corner  = pwr->bus_target_corner;
-        request.dcvs_v3.set_core_params           = TRUE;
-        request.dcvs_v3.core_params.min_corner    = pwr->core_min_corner;
-        request.dcvs_v3.core_params.max_corner    = pwr->core_max_corner;
-        request.dcvs_v3.core_params.target_corner = pwr->core_target_corner;
-        request.dcvs_v3.set_sleep_disable         = TRUE;
+        request.dcvs_v3.سیٹ_bus_params            = TRUE;
+        request.dcvs_v3.bus_params.min_کونا     = pwr->bus_min_کونا;
+        request.dcvs_v3.bus_params.max_کونا     = pwr->bus_max_کونا;
+        request.dcvs_v3.bus_params.ہدف_کونا  = pwr->bus_ہدف_کونا;
+        request.dcvs_v3.سیٹ_core_params           = TRUE;
+        request.dcvs_v3.core_params.min_کونا    = pwr->core_min_کونا;
+        request.dcvs_v3.core_params.max_کونا    = pwr->core_max_کونا;
+        request.dcvs_v3.core_params.ہدف_کونا = pwr->core_ہدف_کونا;
+        request.dcvs_v3.سیٹ_sleep_disable         = TRUE;
         request.dcvs_v3.sleep_disable             = pwr->sleep_disable;
 
-#if (__HEXAGON_ARCH__ >= 79)
-        HAP_set_dcvs_v3_protected_bus_corners(&request, 1);
-#endif
-        if ((err = HAP_power_set((void *) ctx, &request)) != 0) {
+#اگر (__HEXAGON_ARCH__ >= 79)
+        HAP_سیٹ_dcvs_v3_protected_bus_corners(&request, 1);
+#اگر_ختم
+        اگر ((err = HAP_power_سیٹ((خالی *) ctx, &request)) != 0) {
             htp_iface_stop(handle);
-            return err;
+            واپس err;
         }
 
-        memset(&request, 0, sizeof(request));
-        request.type         = HAP_power_set_HVX;
-        request.hvx.power_up = TRUE;
-        if ((err = HAP_power_set((void *) ctx, &request)) != 0) {
+        memset(&request, 0, حجم(request));
+        request.type         = HAP_power_سیٹ_HVX;
+        request.hvx.power_اوپر = TRUE;
+        اگر ((err = HAP_power_سیٹ((خالی *) ctx, &request)) != 0) {
             htp_iface_stop(handle);
-            return err;
+            واپس err;
         }
     }
 
-#if __HVX_ARCH__ >= 75
+#اگر __HVX_ARCH__ >= 75
     {
         // Power on HMX and set HMX clock
         HAP_power_request_t request;
-        memset(&request, 0, sizeof(HAP_power_request_t));
-        request.type = HAP_power_set_HMX_v2;
-        request.hmx_v2.set_power     = TRUE;
-        request.hmx_v2.power_up      = TRUE;
-        request.hmx_v2.set_clock     = TRUE;
-        request.hmx_v2.target_corner = pwr->hmx_target_corner;
-        request.hmx_v2.min_corner    = pwr->hmx_min_corner;
-        request.hmx_v2.max_corner    = pwr->hmx_max_corner;
-        request.hmx_v2.perf_mode     = pwr->hmx_perf_mode;
+        memset(&request, 0, حجم(HAP_power_request_t));
+        request.type = HAP_power_سیٹ_HMX_v2;
+        request.hmx_v2.سیٹ_power     = TRUE;
+        request.hmx_v2.power_اوپر      = TRUE;
+        request.hmx_v2.سیٹ_clock     = TRUE;
+        request.hmx_v2.ہدف_کونا = pwr->hmx_ہدف_کونا;
+        request.hmx_v2.min_کونا    = pwr->hmx_min_کونا;
+        request.hmx_v2.max_کونا    = pwr->hmx_max_کونا;
+        request.hmx_v2.perf_منوال     = pwr->hmx_perf_منوال;
         FARF(ALWAYS, "Setting HMX clock\n");
-        err = HAP_power_set((void *) ctx, &request);
-        if (err != AEE_SUCCESS) {
+        err = HAP_power_سیٹ((خالی *) ctx, &request);
+        اگر (err != AEE_SUCCESS) {
             FARF(ERROR, "ggml-hex: error setting HMX clock.");
             htp_iface_stop(handle);
-            return err;
+            واپس err;
         }
     }
-#else
+#ورنہ
     {
         // Power on HMX
         HAP_power_request_t request;
-        memset(&request, 0, sizeof(HAP_power_request_t));
-        request.type         = HAP_power_set_HMX;
-        request.hmx.power_up = TRUE;
+        memset(&request, 0, حجم(HAP_power_request_t));
+        request.type         = HAP_power_سیٹ_HMX;
+        request.hmx.power_اوپر = TRUE;
         FARF(ALWAYS, "Powering HMX on\n");
-        err = HAP_power_set((void *) ctx, &request);
-        if (err != AEE_SUCCESS) {
+        err = HAP_power_سیٹ((خالی *) ctx, &request);
+        اگر (err != AEE_SUCCESS) {
             FARF(ERROR, "ggml-hex: error powering on HMX.");
             htp_iface_stop(handle);
-            return err;
+            واپس err;
         }
     }
-#endif
+#اگر_ختم
 
     ctx->hmx_enabled = n_hmx;
-    ctx->hmx_queue   = NULL;
-    if (n_hmx) {
-        void * hmx_ptr = (void *) ((uintptr_t) block + offset_hmx);
-        ctx->hmx_queue = hmx_queue_init(hmx_ptr, HMX_QUEUE_CAPACITY, HMX_QUEUE_STACK_SIZE, ctx->vtcm_rctx, &ctx->trace[HTP_MAX_NTHREADS]);
+    ctx->hmx_قطار   = تہی;
+    اگر (n_hmx) {
+        خالی * hmx_ptr = (خالی *) ((uintptr_t) بلاک + انحراف_hmx);
+        ctx->hmx_قطار = hmx_قطار_init(hmx_ptr, HMX_قطار_استعداد, HMX_قطار_ڈھیر_سائز, ctx->vtcm_rctx, &ctx->trace[HTP_MAX_NTHREADS]);
     }
-    FARF(HIGH, "HMX %s (n_hmx=%d)", ctx->hmx_enabled ? "enabled" : "disabled", n_hmx);
+    FARF(بلند_2, "HMX %s (n_hmx=%d)", ctx->hmx_enabled ? "enabled" : "disabled", n_hmx);
 
-    ctx->n_threads = n_hvx;
-    ctx->n_threads_div = init_fastdiv_values(ctx->n_threads);
+    ctx->n_دھاگے = n_hvx;
+    ctx->n_دھاگے_div = init_fastdiv_اقدار(ctx->n_دھاگے);
 
     // Initialize DMA queues
-    uint8_t * dma_ptr_curr = (uint8_t *) ((uintptr_t) block + offset_dma);
-    size_t size_dma_q = dma_queue_sizeof(256);
+    uint8_t * dma_ptr_curr = (uint8_t *) ((uintptr_t) بلاک + انحراف_dma);
+    size_t سائز_dma_q = dma_قطار_sizeof(256);
 
-    for (int i = 0; i < ctx->n_threads; i++) {
-        dma_ptr_curr = (uint8_t *) hex_align_up((uintptr_t) dma_ptr_curr, dma_queue_alignof());
-        ctx->dma[i] = dma_queue_init(dma_ptr_curr, 256, &ctx->trace[i]);
-        dma_ptr_curr += size_dma_q;
+    برائے (صحیح i = 0; i < ctx->n_دھاگے; i++) {
+        dma_ptr_curr = (uint8_t *) hex_align_اوپر((uintptr_t) dma_ptr_curr, dma_قطار_alignof());
+        ctx->dma[i] = dma_قطار_init(dma_ptr_curr, 256, &ctx->trace[i]);
+        dma_ptr_curr += سائز_dma_q;
     }
 
-    ctx->ddr_spad_size = 512 * 1024; // 512 KB
-    ctx->ddr_spad_base = memalign(128, ctx->ddr_spad_size);
+    ctx->ddr_spad_سائز = 512 * 1024; // 512 KB
+    ctx->ddr_spad_بنیاد = memalign(128, ctx->ddr_spad_سائز);
 
-    void * wq_ptr = (void *) ((uintptr_t) block + offset_wq);
-    ctx->work_queue = work_queue_init(wq_ptr, n_hvx, WORK_QUEUE_CAPACITY, WORK_QUEUE_STACK_SIZE);
+    خالی * wq_ptr = (خالی *) ((uintptr_t) بلاک + انحراف_wq);
+    ctx->work_قطار = work_قطار_init(wq_ptr, n_hvx, WORK_قطار_استعداد, WORK_قطار_ڈھیر_سائز);
 
-    ctx->main_stack = NULL;
+    ctx->main_ڈھیر = تہی;
     ctx->main_thread = 0;
     atomic_store(&ctx->killed, false);
 
-    if (!use_callbacks) {
+    اگر (!use_callbacks) {
         // Start main compute thread
-        ctx->main_stack = (void *) ((uintptr_t) block + offset_main_stack);
+        ctx->main_ڈھیر = (خالی *) ((uintptr_t) بلاک + انحراف_main_ڈھیر);
 
         qurt_thread_attr_t attr;
         qurt_thread_attr_init(&attr);
-        qurt_thread_attr_set_stack_addr(&attr, ctx->main_stack);
-        qurt_thread_attr_set_stack_size(&attr, size_main_stack);
-        qurt_thread_attr_set_priority(&attr, main_prio);
-        qurt_thread_attr_set_name(&attr, "htp-main");
+        qurt_thread_attr_سیٹ_ڈھیر_addr(&attr, ctx->main_ڈھیر);
+        qurt_thread_attr_سیٹ_ڈھیر_سائز(&attr, سائز_main_ڈھیر);
+        qurt_thread_attr_سیٹ_ترجیح(&attr, main_prio);
+        qurt_thread_attr_سیٹ_name(&attr, "htp-main");
 
-        int err_thread = qurt_thread_create(&ctx->main_thread, &attr, htp_main_thread, ctx);
-        if (err_thread) {
+        صحیح err_thread = qurt_thread_create(&ctx->main_thread, &attr, htp_main_thread, ctx);
+        اگر (err_thread) {
             FARF(ERROR, "Unable to create htp main thread: %d", err_thread);
             htp_iface_stop(handle);
-            return AEE_ENOMEMORY;
+            واپس AEE_ENOMEMORY;
         }
     }
 
-    FARF(HIGH, "session %u started: n-hvx %u vtcm-size %zu vtcm-rctx %u n-threads %u thread-id %d thread-prio %d \n",
-         sess_id, hw_nhvx, ctx->vtcm_size, ctx->vtcm_rctx, ctx->n_threads, ctx->thread_id, ctx->thread_prio);
+    FARF(بلند_2, "session %u started: n-hvx %u vtcm-size %zu vtcm-rctx %u n-threads %u thread-id %d thread-prio %d \n",
+         sess_id, hw_nhvx, ctx->vtcm_سائز, ctx->vtcm_rctx, ctx->n_دھاگے, ctx->thread_id, ctx->thread_prio);
 
-    return AEE_SUCCESS;
+    واپس AEE_SUCCESS;
 }
 
 AEEResult htp_iface_stop(remote_handle64 handle) {
-    struct htp_handle * h = (struct htp_handle *) handle;
-    if (!h || !h->ctx) {
-        return AEE_EBADPARM;
+    ساخت htp_handle * h = (ساخت htp_handle *) handle;
+    اگر (!h || !h->ctx) {
+        واپس AEE_EBADPARM;
     }
-    struct htp_context * ctx = h->ctx;
+    ساخت htp_context * ctx = h->ctx;
 
-    if (ctx->main_thread) {
+    اگر (ctx->main_thread) {
         atomic_store(&ctx->killed, true);
-        int status;
-        (void) qurt_thread_join(ctx->main_thread, &status);
+        صحیح حالت_2;
+        (خالی) qurt_thread_join(ctx->main_thread, &حالت_2);
         ctx->main_thread = 0;
     }
 
-    int err = dspqueue_close(ctx->dsp_queue); ctx->dsp_queue = NULL;
-    if (err != 0) {
-        FARF(ERROR, "Queue close failed with 0x%08x", (unsigned) err);
-        return err;
+    صحیح err = dspqueue_close(ctx->dsp_قطار); ctx->dsp_قطار = تہی;
+    اگر (err != 0) {
+        FARF(ERROR, "Queue close failed with 0x%08x", (غیرعلامتی) err);
+        واپس err;
     }
 
-    work_queue_free(ctx->work_queue);
+    work_قطار_free(ctx->work_قطار);
 
-    for (int i = 0; i < ctx->n_threads; i++) {
-        dma_queue_free(ctx->dma[i]);
+    برائے (صحیح i = 0; i < ctx->n_دھاگے; i++) {
+        dma_قطار_free(ctx->dma[i]);
     }
 
-    if (ctx->hmx_queue) {
-        hmx_queue_free(ctx->hmx_queue);
-        ctx->hmx_queue = NULL;
+    اگر (ctx->hmx_قطار) {
+        hmx_قطار_free(ctx->hmx_قطار);
+        ctx->hmx_قطار = تہی;
     }
     ctx->hmx_enabled = false;
 
     vtcm_free(ctx);
 
-    if (ctx->ddr_spad_base) {
-        free(ctx->ddr_spad_base);
-        ctx->ddr_spad_base = NULL;
-        ctx->ddr_spad_size = 0;
+    اگر (ctx->ddr_spad_بنیاد) {
+        آزاد(ctx->ddr_spad_بنیاد);
+        ctx->ddr_spad_بنیاد = تہی;
+        ctx->ddr_spad_سائز = 0;
     }
 
-    free(ctx);
-    h->ctx = NULL;
+    آزاد(ctx);
+    h->ctx = تہی;
 
-    return AEE_SUCCESS;
+    واپس AEE_SUCCESS;
 }
 
-AEEResult htp_iface_hwinfo(remote_handle64 handle, uint32_t * n_threads, uint32_t * n_hvx, uint32_t * n_hmx, uint64_t * vtcm_size) {
-    (void)handle;
-    if (!n_threads || !n_hvx || !n_hmx || !vtcm_size) {
-        return AEE_EBADPARM;
+AEEResult htp_iface_hwinfo(remote_handle64 handle, uint32_t * n_دھاگے, uint32_t * n_hvx, uint32_t * n_hmx, uint64_t * vtcm_سائز) {
+    (خالی)handle;
+    اگر (!n_دھاگے || !n_hvx || !n_hmx || !vtcm_سائز) {
+        واپس AEE_EBADPARM;
     }
 
-    qurt_sysenv_max_hthreads_t hw_threads;
-    qurt_sysenv_get_max_hw_threads(&hw_threads);
+    qurt_sysenv_max_hthreads_t hw_دھاگے;
+    qurt_sysenv_get_max_hw_دھاگے(&hw_دھاگے);
     uint32_t hw_nhvx = (qurt_hvx_get_units() >> 8) & 0xFF;
 
     uint32_t n_hvx_val = hw_nhvx;
-    if (n_hvx_val > hw_threads.max_hthreads) {
-        n_hvx_val = hw_threads.max_hthreads;
+    اگر (n_hvx_val > hw_دھاگے.max_hthreads) {
+        n_hvx_val = hw_دھاگے.max_hthreads;
     }
-    if (n_hvx_val > HTP_MAX_NTHREADS) {
+    اگر (n_hvx_val > HTP_MAX_NTHREADS) {
         n_hvx_val = HTP_MAX_NTHREADS;
     }
 
     // for now we force n_threads == n_hvx
-    *n_threads = n_hvx_val;
+    *n_دھاگے = n_hvx_val;
     *n_hvx     = n_hvx_val;
     *n_hmx     = 1;
 
-    *vtcm_size = vtcm_query_size();
+    *vtcm_سائز = vtcm_query_سائز();
 
-    return AEE_SUCCESS;
+    واپس AEE_SUCCESS;
 }
 
-static void htp_error_callback(dspqueue_t queue, int error, void * context) {
+ساکن خالی htp_error_callback(dspqueue_t قطار, صحیح error, خالی * context) {
     // No errors expected on the DSP.
-    FARF(ERROR, "Error callback: 0x%08x", (unsigned) error);
+    FARF(ERROR, "Error callback: 0x%08x", (غیرعلامتی) error);
 }
 
-struct profile_data {
+ساخت profile_ڈیٹا {
     uint64_t usecs;
-    uint64_t cycles_start;
-    uint64_t cycles_stop;
-    uint32_t pmu_counters[HEX_NUM_PMU_COUNTERS];
+    uint64_t ادوار_آغاز;
+    uint64_t ادوار_stop;
+    uint32_t pmu_counters[HEX_عدد_PMU_COUNTERS];
 };
 
-static inline void profile_start(uint32_t mode, struct profile_data * d) {
-    switch (mode) {
-        case HTP_PROF_PMU:
+ساکن اندرونی خالی profile_آغاز(uint32_t منوال, ساخت profile_ڈیٹا * d) {
+    انتخاب (منوال) {
+        حالت HTP_PROF_PMU:
             hex_get_pmu(d->pmu_counters);
             // fallthrough
-        case HTP_PROF_BASIC:
-        case HTP_PROF_TRACE:
-            d->usecs  = HAP_perf_get_qtimer_count();
-            d->cycles_start = hex_get_cycles();
-            break;
-        default:
-            break;
+        حالت HTP_PROF_BASIC:
+        حالت HTP_PROF_TRACE:
+            d->usecs  = HAP_perf_get_qtimer_گنتی();
+            d->ادوار_آغاز = hex_get_ادوار();
+            توڑو;
+        طےشدہ:
+            توڑو;
     }
 }
 
-static inline void profile_stop(uint32_t mode, struct profile_data * d) {
-    uint32_t pmu_counters[HEX_NUM_PMU_COUNTERS];
-    switch (mode) {
-        case HTP_PROF_PMU:
+ساکن اندرونی خالی profile_stop(uint32_t منوال, ساخت profile_ڈیٹا * d) {
+    uint32_t pmu_counters[HEX_عدد_PMU_COUNTERS];
+    انتخاب (منوال) {
+        حالت HTP_PROF_PMU:
             hex_get_pmu(pmu_counters);
-            for (int i = 0; i < HEX_NUM_PMU_COUNTERS; i++) {
+            برائے (صحیح i = 0; i < HEX_عدد_PMU_COUNTERS; i++) {
                 d->pmu_counters[i] = pmu_counters[i] - d->pmu_counters[i];
             }
             // fallthrough
-        case HTP_PROF_BASIC:
-        case HTP_PROF_TRACE:
-            d->usecs  = HAP_perf_qtimer_count_to_us(HAP_perf_get_qtimer_count() - d->usecs);
-            d->cycles_stop = hex_get_cycles();
-            break;
-        default:
-            break;
+        حالت HTP_PROF_BASIC:
+        حالت HTP_PROF_TRACE:
+            d->usecs  = HAP_perf_qtimer_گنتی_مقصد_us(HAP_perf_get_qtimer_گنتی() - d->usecs);
+            d->ادوار_stop = hex_get_ادوار();
+            توڑو;
+        طےشدہ:
+            توڑو;
     }
 }
 
-static int op_fence(struct htp_ops_context * octx) {
-    struct htp_context *ctx = octx->ctx;
-    struct htp_thread_trace * tr = &ctx->trace[0];
-    const uint32_t seq  = (uint32_t) octx->op_params[0];
-    const uint32_t mode = (uint32_t) octx->op_params[1];
+ساکن صحیح op_fence(ساخت htp_ops_context * octx) {
+    ساخت htp_context *ctx = octx->ctx;
+    ساخت htp_thread_trace * tr = &ctx->trace[0];
+    ثابت uint32_t seq  = (uint32_t) octx->op_params[0];
+    ثابت uint32_t منوال = (uint32_t) octx->op_params[1];
 
-    htp_trace_event_start(tr, HTP_TRACE_EVT_FENCE, (uint16_t) seq);
+    htp_trace_event_آغاز(tr, HTP_TRACE_EVT_FENCE, (uint16_t) seq);
 
-    const struct htp_tensor * sync = octx->src[0];
-    atomic_uint * sync_fence = (atomic_uint *) (uintptr_t) sync->data;
+    ثابت ساخت htp_tensor * sync = octx->src[0];
+    atomic_uint * sync_fence = (atomic_uint *) (uintptr_t) sync->ڈیٹا;
 
-    if (mode == 1) {
+    اگر (منوال == 1) {
         htp_dcache_flush_dirty_ranges(ctx);
 
-        htp_mdev_group_barrier(octx);
+        htp_mdev_گروہ_barrier(octx);
 
-        if (ctx->mdev.idx == 0) {
-            htp_fence_write(sync_fence, seq, octx->status);
+        اگر (ctx->mdev.idx == 0) {
+            htp_fence_write(sync_fence, seq, octx->حالت_2);
         }
         htp_trace_event_stop(tr, HTP_TRACE_EVT_FENCE, (uint16_t) seq);
-        FARF(HIGH, "ggml-hex: sync-signal : fence %p seq 0x%x status %d\n", sync_fence, seq, octx->status);
-        return octx->status;
+        FARF(بلند_2, "ggml-hex: sync-signal : fence %p seq 0x%x status %d\n", sync_fence, seq, octx->حالت_2);
+        واپس octx->حالت_2;
     }
 
-    int status = HTP_STATUS_OK;
+    صحیح حالت_2 = HTP_حالت_OK;
     uint64_t spins = 0;
-    while (1) {
+    جب (1) {
         uint32_t sync_seq;
-        uint32_t sync_status;
-        htp_fence_read(sync_fence, &sync_seq, &sync_status);
-        if ((int32_t)(sync_seq - seq) >= 0) {
-            if (sync_status > HTP_STATUS_OK) {
-                FARF(ERROR, "ggml-hex: sync-wait peer failed with status %u : fence %p seq 0x%x\n", sync_status, sync_fence, seq);
-                status = sync_status;
+        uint32_t sync_حالت;
+        htp_fence_read(sync_fence, &sync_seq, &sync_حالت);
+        اگر ((int32_t)(sync_seq - seq) >= 0) {
+            اگر (sync_حالت > HTP_حالت_OK) {
+                FARF(ERROR, "ggml-hex: sync-wait peer failed with status %u : fence %p seq 0x%x\n", sync_حالت, sync_fence, seq);
+                حالت_2 = sync_حالت;
             }
-            break;
+            توڑو;
         }
-        if (++spins > HTP_FENCE_TIMEOUT) {
+        اگر (++spins > HTP_FENCE_TIMEOUT) {
             FARF(ERROR, "ggml-hex: sync-wait TIMEOUT : fence %p spins %llu seq 0x%x\n", sync_fence, spins, seq);
-            status = HTP_STATUS_INTERNAL_ERR;
-            break;
+            حالت_2 = HTP_حالت_اندرونی_ERR;
+            توڑو;
         }
         hex_pause();
     }
 
     htp_trace_event_stop(tr, HTP_TRACE_EVT_FENCE, (uint16_t) seq);
 
-    FARF(HIGH, "ggml-hex: sync-done : fence %p spins %llu seq 0x%x\n", sync_fence, spins, seq);
-    return status;
+    FARF(بلند_2, "ggml-hex: sync-done : fence %p spins %llu seq 0x%x\n", sync_fence, spins, seq);
+    واپس حالت_2;
 }
 
-static int op_mdev_group(struct htp_ops_context * octx) {
-    struct htp_context * ctx = octx->ctx;
-    const struct htp_tensor * sync = octx->src[0];
+ساکن صحیح op_mdev_گروہ(ساخت htp_ops_context * octx) {
+    ساخت htp_context * ctx = octx->ctx;
+    ثابت ساخت htp_tensor * sync = octx->src[0];
     ctx->mdev.idx   = (uint16_t) octx->op_params[0];
-    ctx->mdev.count = (uint16_t) sync->ne[1];
-    if (ctx->mdev.count > 1) {
-        ctx->mdev.count_div = init_fastdiv_values(ctx->mdev.count);
-        ctx->mdev.fence_base = (uint8_t *) sync->data;
+    ctx->mdev.گنتی = (uint16_t) sync->ne[1];
+    اگر (ctx->mdev.گنتی > 1) {
+        ctx->mdev.گنتی_div = init_fastdiv_اقدار(ctx->mdev.گنتی);
+        ctx->mdev.fence_بنیاد = (uint8_t *) sync->ڈیٹا;
     }
-    return HTP_STATUS_OK;
+    واپس HTP_حالت_OK;
 }
 
-static int execute_op(struct htp_ops_context * octx) {
-    switch (octx->op) {
-        case HTP_OP_MDEV_GROUP:
-            return op_mdev_group(octx);
+ساکن صحیح execute_op(ساخت htp_ops_context * octx) {
+    انتخاب (octx->op) {
+        حالت HTP_OP_MDEV_گروہ:
+            واپس op_mdev_گروہ(octx);
 
-        case HTP_OP_FENCE:
-            return op_fence(octx);
+        حالت HTP_OP_FENCE:
+            واپس op_fence(octx);
 
-        case HTP_OP_ALLREDUCE:
-        case HTP_OP_ALLREDUCE_ADD:
-            return op_allreduce(octx);
+        حالت HTP_OP_ALLREDUCE:
+        حالت HTP_OP_ALLREDUCE_جوڑو:
+            واپس op_allreduce(octx);
 
-        case HTP_OP_MUL_MAT:
-        case HTP_OP_MUL_MAT_ADD:
-            return op_matmul(octx);
+        حالت HTP_OP_MUL_MAT:
+        حالت HTP_OP_MUL_MAT_جوڑو:
+            واپس op_matmul(octx);
 
-        case HTP_OP_MUL_MAT_ID:
-            return op_matmul_id(octx);
+        حالت HTP_OP_MUL_MAT_ID:
+            واپس op_matmul_id(octx);
 
-        case HTP_OP_MUL_MAT_ID_NX:
-            return op_matmul_id_nx(octx);
+        حالت HTP_OP_MUL_MAT_ID_NX:
+            واپس op_matmul_id_nx(octx);
 
-        case HTP_OP_MUL_MAT_NX:
-            return op_matmul_nx(octx);
+        حالت HTP_OP_MUL_MAT_NX:
+            واپس op_matmul_nx(octx);
 
-        case HTP_OP_MUL:
-        case HTP_OP_ADD:
-        case HTP_OP_SUB:
-        case HTP_OP_DIV:
-        case HTP_OP_ADD_ID:
-            return op_binary(octx);
+        حالت HTP_OP_MUL:
+        حالت HTP_OP_جوڑو:
+        حالت HTP_OP_SUB:
+        حالت HTP_OP_DIV:
+        حالت HTP_OP_جوڑو_ID:
+            واپس op_ثنائی(octx);
 
-        case HTP_OP_NORM:
-        case HTP_OP_RMS_NORM:
-        case HTP_OP_RMS_NORM_MUL:
-        case HTP_OP_SCALE:
-        case HTP_OP_CLAMP:
-        case HTP_OP_LEAKY_RELU:
-        case HTP_OP_SQR:
-        case HTP_OP_SQRT:
-        case HTP_OP_UNARY_SOFTPLUS:
-        case HTP_OP_UNARY_SIGMOID:
-        case HTP_OP_UNARY_SILU:
-        case HTP_OP_UNARY_GELU:
-        case HTP_OP_UNARY_GELU_QUICK:
-        case HTP_OP_UNARY_GELU_ERF:
-        case HTP_OP_UNARY_NEG:
-        case HTP_OP_UNARY_EXP:
-        case HTP_OP_UNARY_TANH:
-        case HTP_OP_UNARY_ABS:
-        case HTP_OP_UNARY_LOG:
-        case HTP_OP_UNARY_RELU:
-        case HTP_OP_UNARY_STEP:
-        case HTP_OP_L2_NORM:
-        case HTP_OP_HADAMARD:
-            return op_unary(octx);
+        حالت HTP_OP_NORM:
+        حالت HTP_OP_RMS_NORM:
+        حالت HTP_OP_RMS_NORM_MUL:
+        حالت HTP_OP_SCALE:
+        حالت HTP_OP_CLAMP:
+        حالت HTP_OP_LEAKY_RELU:
+        حالت HTP_OP_SQR:
+        حالت HTP_OP_SQRT:
+        حالت HTP_OP_UNARY_SOFTPLUS:
+        حالت HTP_OP_UNARY_SIGMOID:
+        حالت HTP_OP_UNARY_SILU:
+        حالت HTP_OP_UNARY_GELU:
+        حالت HTP_OP_UNARY_GELU_تیز:
+        حالت HTP_OP_UNARY_GELU_ERF:
+        حالت HTP_OP_UNARY_NEG:
+        حالت HTP_OP_UNARY_EXP:
+        حالت HTP_OP_UNARY_TANH:
+        حالت HTP_OP_UNARY_ABS:
+        حالت HTP_OP_UNARY_LOG:
+        حالت HTP_OP_UNARY_RELU:
+        حالت HTP_OP_UNARY_قدم:
+        حالت HTP_OP_L2_NORM:
+        حالت HTP_OP_HADAMARD:
+            واپس op_unary(octx);
 
-        case HTP_OP_GLU_SWIGLU:
-        case HTP_OP_GLU_SWIGLU_OAI:
-        case HTP_OP_GLU_SWIGLU_CLAMP:
-        case HTP_OP_GLU_GEGLU:
-        case HTP_OP_GLU_GEGLU_QUICK:
-        case HTP_OP_GLU_GEGLU_ERF:
-            return op_activations(octx);
+        حالت HTP_OP_GLU_SWIGLU:
+        حالت HTP_OP_GLU_SWIGLU_OAI:
+        حالت HTP_OP_GLU_SWIGLU_CLAMP:
+        حالت HTP_OP_GLU_GEGLU:
+        حالت HTP_OP_GLU_GEGLU_تیز:
+        حالت HTP_OP_GLU_GEGLU_ERF:
+            واپس op_activations(octx);
 
-        case HTP_OP_SOFTMAX:
-            return op_softmax(octx);
+        حالت HTP_OP_SOFTMAX:
+            واپس op_softmax(octx);
 
-        case HTP_OP_ROPE:
-            return op_rope(octx);
+        حالت HTP_OP_ROPE:
+            واپس op_rope(octx);
 
-        case HTP_OP_FLASH_ATTN_EXT:
-            return op_flash_attn_ext(octx);
+        حالت HTP_OP_FLASH_ATTN_EXT:
+            واپس op_flash_attn_ext(octx);
 
-        case HTP_OP_SET_ROWS:
-            return op_set_rows(octx);
+        حالت HTP_OP_سیٹ_صفیں:
+            واپس op_سیٹ_صفیں(octx);
 
-        case HTP_OP_GET_ROWS:
-            return op_get_rows(octx);
+        حالت HTP_OP_GET_صفیں:
+            واپس op_get_صفیں(octx);
 
-        case HTP_OP_SUM:
-            return op_sum(octx);
+        حالت HTP_OP_مجموع:
+            واپس op_مجموع(octx);
 
-        case HTP_OP_SUM_ROWS:
-            return op_sum_rows(octx);
+        حالت HTP_OP_مجموع_صفیں:
+            واپس op_مجموع_صفیں(octx);
 
-        case HTP_OP_CPY:
-        case HTP_OP_CPY_FENCE:
-            return op_cpy(octx);
+        حالت HTP_OP_CPY:
+        حالت HTP_OP_CPY_FENCE:
+            واپس op_cpy(octx);
 
-        case HTP_OP_REPEAT:
-            return op_repeat(octx);
+        حالت HTP_OP_REPEAT:
+            واپس op_repeat(octx);
 
-        case HTP_OP_ARGSORT:
-            return op_argsort(octx);
+        حالت HTP_OP_ARGSORT:
+            واپس op_argsort(octx);
 
-        case HTP_OP_TOP_K:
-            return op_top_k(octx);
+        حالت HTP_OP_چوٹی_K:
+            واپس op_چوٹی_k(octx);
 
-        case HTP_OP_ARGMAX:
-            return op_argmax(octx);
+        حالت HTP_OP_ARGMAX:
+            واپس op_argmax(octx);
 
-        case HTP_OP_SSM_CONV:
-            return op_ssm_conv(octx);
+        حالت HTP_OP_SSM_CONV:
+            واپس op_ssm_conv(octx);
 
-        case HTP_OP_CUMSUM:
-            return op_cumsum(octx);
+        حالت HTP_OP_CUMSUM:
+            واپس op_cumsum(octx);
 
-        case HTP_OP_FILL:
-            return op_fill(octx);
+        حالت HTP_OP_FILL:
+            واپس op_fill(octx);
 
-        case HTP_OP_DIAG:
-            return op_diag(octx);
+        حالت HTP_OP_DIAG:
+            واپس op_diag(octx);
 
-        case HTP_OP_SOLVE_TRI:
-            return op_solve_tri(octx);
+        حالت HTP_OP_SOLVE_TRI:
+            واپس op_solve_tri(octx);
 
-        case HTP_OP_PAD:
-            return op_pad(octx);
+        حالت HTP_OP_PAD:
+            واپس op_pad(octx);
 
-        case HTP_OP_IM2COL:
-            return op_im2col(octx);
+        حالت HTP_OP_IM2_ستون:
+            واپس op_im2col(octx);
 
-        case HTP_OP_IM2COL_3D:
-            return op_im2col_3d(octx);
+        حالت HTP_OP_IM2_ستون_3_D:
+            واپس op_im2col_3d(octx);
 
-        case HTP_OP_ROLL:
-            return op_roll(octx);
+        حالت HTP_OP_ROLL:
+            واپس op_roll(octx);
 
-        case HTP_OP_POOL_2D:
-            return op_pool_2d(octx);
+        حالت HTP_OP_POOL_2D:
+            واپس op_pool_2d(octx);
 
-        case HTP_OP_POOL_1D:
-            return op_pool_1d(octx);
+        حالت HTP_OP_POOL_1D:
+            واپس op_pool_1d(octx);
 
-        case HTP_OP_CONCAT:
-            return op_concat(octx);
+        حالت HTP_OP_CONCAT:
+            واپس op_concat(octx);
 
-        case HTP_OP_GATED_DELTA_NET:
-            return op_gated_delta_net(octx);
+        حالت HTP_OP_GATED_DELTA_NET:
+            واپس op_gated_delta_net(octx);
 
-        case HTP_OP_TRI:
-            return op_unary(octx);
+        حالت HTP_OP_TRI:
+            واپس op_unary(octx);
 
-        case HTP_OP_INVALID:
-            break;
+        حالت HTP_OP_INVALID:
+            توڑو;
     }
 
     FARF(ERROR, "Unknown Op %u", octx->op);
-    return HTP_STATUS_NO_SUPPORT;
+    واپس HTP_حالت_NO_SUPPORT;
 }
 
-static inline bool reuse_buf(struct htp_context *ctx, uint32_t *m_reuse, struct htp_buf_desc *b) {
-    b->base = NULL;
+ساکن اندرونی bool reuse_buf(ساخت htp_context *ctx, uint32_t *m_reuse, ساخت htp_buf_desc *b) {
+    b->بنیاد = تہی;
 
-    for (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
-        struct htp_mmap *m = ctx->mmap + i;
-        if (m->size && m->fd == b->fd && m->flags == b->flags) {
-            b->base   = m->base;
+    برائے (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
+        ساخت htp_mmap *m = ctx->mmap + i;
+        اگر (m->سائز && m->fd == b->fd && m->flags == b->flags) {
+            b->بنیاد   = m->بنیاد;
             *m_reuse |= (1 << i);
-            return true;
+            واپس true;
         }
     }
 
-    return false;
+    واپس false;
 }
 
-static inline void drop_mmap(struct htp_context *ctx, struct htp_mmap *m) {
-    if (m->size) {
-        FARF(ALWAYS, "unmap : fd %u base 0x%llx size %llu", m->fd, (unsigned long long) m->base, (unsigned long long) m->size);
-        htp_munmap(m->base, m->size, m->flags);
-        m->size = 0;
-        m->base = 0;
+ساکن اندرونی خالی drop_mmap(ساخت htp_context *ctx, ساخت htp_mmap *m) {
+    اگر (m->سائز) {
+        FARF(ALWAYS, "unmap : fd %u base 0x%llx size %llu", m->fd, (غیرعلامتی طویل طویل) m->بنیاد, (غیرعلامتی طویل طویل) m->سائز);
+        htp_munmap(m->بنیاد, m->سائز, m->flags);
+        m->سائز = 0;
+        m->بنیاد = 0;
         m->fd   = -1;
         m->flags = 0;
     }
 }
 
-static inline bool mmap_buf(struct htp_context *ctx, struct htp_buf_desc *b) {
-    if (b->base) return true; // already mapped
+ساکن اندرونی bool mmap_buf(ساخت htp_context *ctx, ساخت htp_buf_desc *b) {
+    اگر (b->بنیاد) واپس true; // already mapped
 
     // find unused mapping
-    for (uint32_t i=0; i < HTP_MAX_MMAPS; i++) {
-        struct htp_mmap *m = &ctx->mmap[i];
-        if (!m->size) {
-            uint64_t va = htp_mmap(b->fd, b->size, b->flags);
-            if (va == 0) {
-                FARF(HIGH, "mmap failed (will attempt defrag) : fd %u size %llu", b->fd, (unsigned long long) b->size);
-                return false;
+    برائے (uint32_t i=0; i < HTP_MAX_MMAPS; i++) {
+        ساخت htp_mmap *m = &ctx->mmap[i];
+        اگر (!m->سائز) {
+            uint64_t va = htp_mmap(b->fd, b->سائز, b->flags);
+            اگر (va == 0) {
+                FARF(بلند_2, "mmap failed (will attempt defrag) : fd %u size %llu", b->fd, (غیرعلامتی طویل طویل) b->سائز);
+                واپس false;
             }
 
-            m->base   = b->base = va;
+            m->بنیاد   = b->بنیاد = va;
             m->fd     = b->fd;
-            m->size   = b->size;
+            m->سائز   = b->سائز;
             m->flags  = b->flags;
 
-            FARF(ALWAYS, "mmap : fd %u base 0x%llx size %llu flags 0x%x", m->fd, (unsigned long long) m->base, (unsigned long long) m->size, m->flags);
-            return true;
+            FARF(ALWAYS, "mmap : fd %u base 0x%llx size %llu flags 0x%x", m->fd, (غیرعلامتی طویل طویل) m->بنیاد, (غیرعلامتی طویل طویل) m->سائز, m->flags);
+            واپس true;
         }
     }
 
     FARF(ERROR, "mmap failed : exceeded mapping capacity limit of %u", HTP_MAX_MMAPS);
-    return false;
+    واپس false;
 }
 
-static void prep_op_bufs(struct htp_context *ctx, struct htp_buf_desc *bufs, uint32_t n_bufs) {
+ساکن خالی prep_op_bufs(ساخت htp_context *ctx, ساخت htp_buf_desc *bufs, uint32_t n_bufs) {
     uint32_t m_reuse = 0; // mmap reuse mask (index from ctx->mmap array)
     uint32_t b_reuse = 0; // buf reuse count
 
@@ -1105,33 +1105,33 @@ static void prep_op_bufs(struct htp_context *ctx, struct htp_buf_desc *bufs, uin
     uint64_t e_vmem  = 0; // extra  vmem
 
     // See what we can reuse
-    for (uint32_t i=0; i < n_bufs; i++) {
-        struct htp_buf_desc *b = bufs + i;
-        if (reuse_buf(ctx, &m_reuse, b)) {
+    برائے (uint32_t i=0; i < n_bufs; i++) {
+        ساخت htp_buf_desc *b = bufs + i;
+        اگر (reuse_buf(ctx, &m_reuse, b)) {
             b_reuse++;
-        } else if (!(b->flags & HTP_BUF_EXTENDED)) {
-            e_vmem += b->size;
+        } ورنہ اگر (!(b->flags & HTP_BUF_EXTENDED)) {
+            e_vmem += b->سائز;
         }
-        FARF(HIGH, "prep-buf #%u : pass0 fd %u base 0x%llx size %llu flags 0x%x", i, b->fd, (unsigned long long) b->base, (unsigned long long) b->size, b->flags);
+        FARF(بلند_2, "prep-buf #%u : pass0 fd %u base 0x%llx size %llu flags 0x%x", i, b->fd, (غیرعلامتی طویل طویل) b->بنیاد, (غیرعلامتی طویل طویل) b->سائز, b->flags);
     }
 
-    if (b_reuse == n_bufs) return; // all bufs reuse existing mappings
+    اگر (b_reuse == n_bufs) واپس; // all bufs reuse existing mappings
 
     // See how much vmem we have mmaped right now
-    for (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
-        if (!(ctx->mmap[i].flags & HTP_BUF_EXTENDED)) {
-            m_vmem += ctx->mmap[i].size;
+    برائے (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
+        اگر (!(ctx->mmap[i].flags & HTP_BUF_EXTENDED)) {
+            m_vmem += ctx->mmap[i].سائز;
         }
     }
 
-    FARF(HIGH, "prep-bufs : pass1 mmap-vmem %zu extra-vmem %zu max-vmem %zu : n-bufs %u b-reuse %u",
+    FARF(بلند_2, "prep-bufs : pass1 mmap-vmem %zu extra-vmem %zu max-vmem %zu : n-bufs %u b-reuse %u",
             (size_t) m_vmem, (size_t) e_vmem, (size_t) ctx->max_vmem, n_bufs, b_reuse);
 
-    if ((m_vmem + e_vmem) > ctx->max_vmem) {
+    اگر ((m_vmem + e_vmem) > ctx->max_vmem) {
         // Drop unused mappings
-        for (uint32_t i=0; i < HTP_MAX_MMAPS; i++) {
-            bool used = m_reuse & (1<<i);
-            if (!used && !(ctx->mmap[i].flags & HTP_BUF_EXTENDED)) {
+        برائے (uint32_t i=0; i < HTP_MAX_MMAPS; i++) {
+            bool مستعمل = m_reuse & (1<<i);
+            اگر (!مستعمل && !(ctx->mmap[i].flags & HTP_BUF_EXTENDED)) {
                 drop_mmap(ctx, ctx->mmap + i);
             }
         }
@@ -1139,291 +1139,291 @@ static void prep_op_bufs(struct htp_context *ctx, struct htp_buf_desc *bufs, uin
 
     // Create missing mappings (pass 1)
     bool mmap_ok = true;
-    for (uint32_t i=0; i < n_bufs; i++) {
-        struct htp_buf_desc *b = bufs + i;
-        if (!mmap_buf(ctx, b)) {
+    برائے (uint32_t i=0; i < n_bufs; i++) {
+        ساخت htp_buf_desc *b = bufs + i;
+        اگر (!mmap_buf(ctx, b)) {
             mmap_ok = false;
-            break;
+            توڑو;
         }
-        FARF(HIGH, "prep-buf #%u : pass1 fd %u base 0x%llx size %llu flags 0x%x", i, b->fd, (unsigned long long) b->base, (unsigned long long) b->size, b->flags);
+        FARF(بلند_2, "prep-buf #%u : pass1 fd %u base 0x%llx size %llu flags 0x%x", i, b->fd, (غیرعلامتی طویل طویل) b->بنیاد, (غیرعلامتی طویل طویل) b->سائز, b->flags);
     }
 
-    if (!mmap_ok) {
+    اگر (!mmap_ok) {
         // Attempt defragmentation: drop 32-bit mappings and remap (pass 2)
-        FARF(HIGH, "prep-bufs : dropping 32-bit mappings to defragment address space");
-        for (uint32_t i=0; i < HTP_MAX_MMAPS; i++) {
-            if (!(ctx->mmap[i].flags & HTP_BUF_EXTENDED)) {
+        FARF(بلند_2, "prep-bufs : dropping 32-bit mappings to defragment address space");
+        برائے (uint32_t i=0; i < HTP_MAX_MMAPS; i++) {
+            اگر (!(ctx->mmap[i].flags & HTP_BUF_EXTENDED)) {
                 drop_mmap(ctx, ctx->mmap + i);
             }
         }
 
-        for (uint32_t i=0; i < n_bufs; i++) {
-            struct htp_buf_desc *b = bufs + i;
-            if (!(b->flags & HTP_BUF_EXTENDED)) {
-                b->base = 0;
+        برائے (uint32_t i=0; i < n_bufs; i++) {
+            ساخت htp_buf_desc *b = bufs + i;
+            اگر (!(b->flags & HTP_BUF_EXTENDED)) {
+                b->بنیاد = 0;
             }
-            if (!mmap_buf(ctx, b)) {
-                FARF(ERROR, "prep-bufs : mmap failed after defragmentation (fd %u size %llu)", b->fd, (unsigned long long) b->size);
+            اگر (!mmap_buf(ctx, b)) {
+                FARF(ERROR, "prep-bufs : mmap failed after defragmentation (fd %u size %llu)", b->fd, (غیرعلامتی طویل طویل) b->سائز);
                 abort();
             }
-            FARF(HIGH, "prep-buf #%u : pass2 fd %u base 0x%llx size %llu flags 0x%x", i, b->fd, (unsigned long long) b->base, (unsigned long long) b->size, b->flags);
+            FARF(بلند_2, "prep-buf #%u : pass2 fd %u base 0x%llx size %llu flags 0x%x", i, b->fd, (غیرعلامتی طویل طویل) b->بنیاد, (غیرعلامتی طویل طویل) b->سائز, b->flags);
         }
     }
 }
 
-static void prep_tensor(struct htp_context *ctx, struct htp_buf_desc *bufs, struct htp_tensor *tens, uint32_t idx, struct htp_tensor *t) {
-    uint64_t offset = t->data;
+ساکن خالی prep_tensor(ساخت htp_context *ctx, ساخت htp_buf_desc *bufs, ساخت htp_tensor *tens, uint32_t idx, ساخت htp_tensor *t) {
+    uint64_t انحراف = t->ڈیٹا;
     uint32_t bi     = t->bi;
 
-    t->data  = bufs[bi].base + offset;  // update data to the actual pointer
+    t->ڈیٹا  = bufs[bi].بنیاد + انحراف;  // update data to the actual pointer
 
-    FARF(HIGH, "prep-tensor #%u: bi %u offset %llu size %u data 0x%llx : %u:%u:%u:%u", idx, t->bi, (unsigned long long) offset, t->size, (unsigned long long) t->data,
+    FARF(بلند_2, "prep-tensor #%u: bi %u offset %llu size %u data 0x%llx : %u:%u:%u:%u", idx, t->bi, (غیرعلامتی طویل طویل) انحراف, t->سائز, (غیرعلامتی طویل طویل) t->ڈیٹا,
         t->ne[0], t->ne[1], t->ne[2], t->ne[3]);
 }
 
-static void prep_tensors(struct htp_context *ctx, struct htp_buf_desc *bufs, struct htp_tensor *tens, uint32_t n_tens) {
-    for (uint32_t i=0; i < n_tens; i++) {
+ساکن خالی prep_tensors(ساخت htp_context *ctx, ساخت htp_buf_desc *bufs, ساخت htp_tensor *tens, uint32_t n_tens) {
+    برائے (uint32_t i=0; i < n_tens; i++) {
         prep_tensor(ctx, bufs, tens, i, tens + i);
     }
 }
 
-static void mdev_group_init(struct htp_context * ctx, const struct htp_opbatch_req * req) {
-    memset(&ctx->mdev, 0, sizeof(ctx->mdev));
+ساکن خالی mdev_گروہ_init(ساخت htp_context * ctx, ثابت ساخت htp_opbatch_req * req) {
+    memset(&ctx->mdev, 0, حجم(ctx->mdev));
     ctx->mdev.fence_seq = (uint32_t)((req->seq & 0xfffff) << 12);
 }
 
-static int proc_op_req(struct htp_ops_context * octx, struct htp_buf_desc * bufs, uint32_t n_bufs,
-                       struct htp_tensor * tens, uint32_t idx, struct htp_op_desc * op) {
-    memcpy(octx->op_params,     op->params, sizeof(octx->op_params));
-    memcpy(octx->kernel_params, op->kernel_params, sizeof(octx->kernel_params));
+ساکن صحیح proc_op_req(ساخت htp_ops_context * octx, ساخت htp_buf_desc * bufs, uint32_t n_bufs,
+                       ساخت htp_tensor * tens, uint32_t idx, ساخت htp_op_desc * op) {
+    حافظہ_نقل(octx->op_params,     op->params, حجم(octx->op_params));
+    حافظہ_نقل(octx->kernel_params, op->kernel_params, حجم(octx->kernel_params));
     octx->flags         = op->flags;
     octx->op            = op->opcode;
-    octx->n_threads     = octx->ctx->n_threads;
-    octx->n_threads_div = octx->ctx->n_threads_div;
+    octx->n_دھاگے     = octx->ctx->n_دھاگے;
+    octx->n_دھاگے_div = octx->ctx->n_دھاگے_div;
 
-    FARF(HIGH, "proc-op #%u: opcode %u flags 0x%x", idx, octx->op, octx->flags);
+    FARF(بلند_2, "proc-op #%u: opcode %u flags 0x%x", idx, octx->op, octx->flags);
 
     // Prep input tensors
-    for (uint32_t i=0; i<HTP_OP_MAX_INPUTS; i++) {
+    برائے (uint32_t i=0; i<HTP_OP_MAX_INPUTS; i++) {
         uint16_t src_idx = op->src[i];
-        if (src_idx == 0xffff) {
-            octx->src[i]     = NULL;
-            continue;
+        اگر (src_idx == 0xffff) {
+            octx->src[i]     = تہی;
+            جاری;
         }
 
-        struct htp_tensor *src = tens + src_idx;
+        ساخت htp_tensor *src = tens + src_idx;
         octx->src[i]     = src;
 
-        FARF(HIGH, "prep-src #%u: data 0x%llx size %u : %u:%u:%u:%u", op->src[i], (unsigned long long) src->data, src->size,
+        FARF(بلند_2, "prep-src #%u: data 0x%llx size %u : %u:%u:%u:%u", op->src[i], (غیرعلامتی طویل طویل) src->ڈیٹا, src->سائز,
             src->ne[0], src->ne[1], src->ne[2], src->ne[3]);
     }
 
     htp_dcache_flush_dirty_tensors(octx->ctx, octx->src, HTP_OP_MAX_INPUTS);
 
     // Prep output tensors
-    for (uint32_t i = 0; i < HTP_OP_MAX_OUTPUTS; i++) {
+    برائے (uint32_t i = 0; i < HTP_OP_MAX_OUTPUTS; i++) {
         uint16_t dst_idx = op->dst[i];
-        if (dst_idx == 0xffff) {
-            octx->dsts[i]    = NULL;
-            continue;
+        اگر (dst_idx == 0xffff) {
+            octx->dsts[i]    = تہی;
+            جاری;
         }
-        struct htp_tensor *dst = tens + dst_idx;
+        ساخت htp_tensor *dst = tens + dst_idx;
         octx->dsts[i]    = dst;
 
-        FARF(HIGH, "prep-dst[%u] #%u: data 0x%llx size %u : %u:%u:%u:%u", i, dst_idx, (unsigned long long) dst->data, dst->size,
+        FARF(بلند_2, "prep-dst[%u] #%u: data 0x%llx size %u : %u:%u:%u:%u", i, dst_idx, (غیرعلامتی طویل طویل) dst->ڈیٹا, dst->سائز,
             dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3]);
     }
 
     htp_dcache_mark_dirty_tensors(octx->ctx, octx->dsts, HTP_OP_MAX_OUTPUTS);
 
-    htp_mdev_group_barrier(octx);
+    htp_mdev_گروہ_barrier(octx);
 
-    int status = execute_op(octx);
+    صحیح حالت_2 = execute_op(octx);
 
-    htp_ops_context_set_status(octx, status);
+    htp_ops_context_سیٹ_حالت(octx, حالت_2);
 
-    octx->src0_spad.src = NULL;
-    octx->src1_spad.src = NULL;
-    octx->src2_spad.src = NULL;
-    octx->src3_spad.src = NULL;
-    octx->dst_spad.src  = NULL;
+    octx->src0_spad.src = تہی;
+    octx->src1_spad.src = تہی;
+    octx->src2_spad.src = تہی;
+    octx->src3_spad.src = تہی;
+    octx->dst_spad.src  = تہی;
 
-    return octx->status;
+    واپس octx->حالت_2;
 }
 
-static void process_opbatch(struct htp_context * ctx, const struct htp_opbatch_req * req, const struct dspqueue_buffer * dbuf) {
-    dspqueue_t queue = ctx->dsp_queue;
-    int err;
+ساکن خالی process_opbatch(ساخت htp_context * ctx, ثابت ساخت htp_opbatch_req * req, ثابت ساخت dspqueue_بفر * dbuf) {
+    dspqueue_t قطار = ctx->dsp_قطار;
+    صحیح err;
 
-    const uint32_t n_bufs = req->n_bufs;
-    const uint32_t n_tens = req->n_tensors;
-    const uint32_t n_ops  = req->n_ops;
+    ثابت uint32_t n_bufs = req->n_bufs;
+    ثابت uint32_t n_tens = req->n_tensors;
+    ثابت uint32_t n_ops  = req->n_ops;
 
-    const uint32_t b_size = sizeof(struct htp_buf_desc)  * n_bufs;
-    const uint32_t t_size = sizeof(struct htp_tensor)    * n_tens;
-    const uint32_t o_size = sizeof(struct htp_op_desc)   * n_ops;
-    const uint32_t p_size = sizeof(struct htp_prof_desc) * n_ops;
-    const uint32_t tr_size = (HTP_MAX_NTHREADS + 1) * req->n_traces * sizeof(struct htp_trace_desc);
+    ثابت uint32_t b_سائز = حجم(ساخت htp_buf_desc)  * n_bufs;
+    ثابت uint32_t t_سائز = حجم(ساخت htp_tensor)    * n_tens;
+    ثابت uint32_t o_سائز = حجم(ساخت htp_op_desc)   * n_ops;
+    ثابت uint32_t p_سائز = حجم(ساخت htp_prof_desc) * n_ops;
+    ثابت uint32_t tr_سائز = (HTP_MAX_NTHREADS + 1) * req->n_traces * حجم(ساخت htp_trace_desc);
 
-    if (dbuf->size < b_size + t_size + o_size + p_size + tr_size) {
-        FARF(ERROR, "invalid opbatch memory block size %u (req %u)", dbuf->size, b_size + t_size + o_size + p_size + tr_size);
-        return;
+    اگر (dbuf->سائز < b_سائز + t_سائز + o_سائز + p_سائز + tr_سائز) {
+        FARF(ERROR, "invalid opbatch memory block size %u (req %u)", dbuf->سائز, b_سائز + t_سائز + o_سائز + p_سائز + tr_سائز);
+        واپس;
     }
 
-    FARF(HIGH, "processing opbatch #%llu: n-bufs %u n-tensors %u n-ops %u n-traces %u : m-size %u b-size %u t-size %u o-size %u", (unsigned long long) req->seq,
-            n_bufs, n_tens, n_ops, req->n_traces, dbuf->size, b_size, t_size, o_size);
+    FARF(بلند_2, "processing opbatch #%llu: n-bufs %u n-tensors %u n-ops %u n-traces %u : m-size %u b-size %u t-size %u o-size %u", (غیرعلامتی طویل طویل) req->seq,
+            n_bufs, n_tens, n_ops, req->n_traces, dbuf->سائز, b_سائز, t_سائز, o_سائز);
 
     // Setup descriptor pointers
     uint8_t * m_ptr = dbuf->ptr;
-    struct htp_buf_desc* bufs = (struct htp_buf_desc*)  m_ptr; m_ptr += b_size;
-    struct htp_tensor*   tens = (struct htp_tensor*)    m_ptr; m_ptr += t_size;
-    struct htp_op_desc*   ops = (struct htp_op_desc*)   m_ptr; m_ptr += o_size;
-    struct htp_prof_desc* pds = (struct htp_prof_desc*) m_ptr;
+    ساخت htp_buf_desc* bufs = (ساخت htp_buf_desc*)  m_ptr; m_ptr += b_سائز;
+    ساخت htp_tensor*   tens = (ساخت htp_tensor*)    m_ptr; m_ptr += t_سائز;
+    ساخت htp_op_desc*   ops = (ساخت htp_op_desc*)   m_ptr; m_ptr += o_سائز;
+    ساخت htp_prof_desc* pds = (ساخت htp_prof_desc*) m_ptr;
 
-    struct profile_data batch_prof;
-    profile_start(HTP_PROF_BASIC, &batch_prof);
+    ساخت profile_ڈیٹا batch_prof;
+    profile_آغاز(HTP_PROF_BASIC, &batch_prof);
 
-    memset(ctx->trace, 0, sizeof(ctx->trace));
-    if (ctx->profiler == HTP_PROF_TRACE) {
-        struct htp_trace_desc * trace_events = (struct htp_trace_desc *) (m_ptr + p_size);
-        for (int t = 0; t <= HTP_MAX_NTHREADS; t++) {
+    memset(ctx->trace, 0, حجم(ctx->trace));
+    اگر (ctx->profiler == HTP_PROF_TRACE) {
+        ساخت htp_trace_desc * trace_events = (ساخت htp_trace_desc *) (m_ptr + p_سائز);
+        برائے (صحیح t = 0; t <= HTP_MAX_NTHREADS; t++) {
             ctx->trace[t].events     = &trace_events[t * req->n_traces];
             ctx->trace[t].max_events = req->n_traces;
         }
     }
 
     // Clean cache at the start of the batch
-    htp_trace_event_start(&ctx->trace[0], HTP_TRACE_EVT_L2FLUSH, 0);
+    htp_trace_event_آغاز(&ctx->trace[0], HTP_TRACE_EVT_L2FLUSH, 0);
     qurt_mem_cache_clean((qurt_addr_t) 0, 0, QURT_MEM_CACHE_FLUSH_INVALIDATE_ALL, QURT_MEM_DCACHE);
-    hex_l2fetch_block(ctx, ctx->footprint);
-    memset(ctx->dirty_ranges, 0, sizeof(ctx->dirty_ranges));
+    hex_l2fetch_بلاک(ctx, ctx->footprint);
+    memset(ctx->dirty_ranges, 0, حجم(ctx->dirty_ranges));
     htp_trace_event_stop(&ctx->trace[0], HTP_TRACE_EVT_L2FLUSH, 0);
 
-    htp_trace_event_start(&ctx->trace[0], HTP_TRACE_EVT_BUFF, 0);
+    htp_trace_event_آغاز(&ctx->trace[0], HTP_TRACE_EVT_BUFF, 0);
     prep_op_bufs(ctx, bufs, n_bufs);
     htp_trace_event_stop(&ctx->trace[0], HTP_TRACE_EVT_BUFF, 0);
 
     prep_tensors(ctx, bufs, tens, n_tens);
 
-    struct htp_ops_context *octx = &ctx->octx;
-    memset(octx, 0, sizeof(*octx));
-    octx->n_threads     = ctx->n_threads;
-    octx->n_threads_div = ctx->n_threads_div;
+    ساخت htp_ops_context *octx = &ctx->octx;
+    memset(octx, 0, حجم(*octx));
+    octx->n_دھاگے     = ctx->n_دھاگے;
+    octx->n_دھاگے_div = ctx->n_دھاگے_div;
     octx->ctx           = ctx;
 
-    mdev_group_init(ctx, req);
+    mdev_گروہ_init(ctx, req);
 
-    work_queue_wakeup(ctx->work_queue);
-    if (ctx->hmx_queue) {
-        hmx_queue_wakeup(ctx->hmx_queue);
+    work_قطار_wakeup(ctx->work_قطار);
+    اگر (ctx->hmx_قطار) {
+        hmx_قطار_wakeup(ctx->hmx_قطار);
     }
 
-    int op_status = HTP_STATUS_OK;
-    octx->status  = HTP_STATUS_OK;
-    for (uint32_t i = 0; i < n_ops; i++) {
-        struct profile_data prof;
+    صحیح op_حالت = HTP_حالت_OK;
+    octx->حالت_2  = HTP_حالت_OK;
+    برائے (uint32_t i = 0; i < n_ops; i++) {
+        ساخت profile_ڈیٹا prof;
 
-        profile_start(ctx->profiler, &prof);
+        profile_آغاز(ctx->profiler, &prof);
 
-        op_status = proc_op_req(octx, bufs, n_bufs, tens, i, &ops[i]);
+        op_حالت = proc_op_req(octx, bufs, n_bufs, tens, i, &ops[i]);
 
         profile_stop(ctx->profiler, &prof);
 
-        htp_ops_context_set_status(octx, op_status);
+        htp_ops_context_سیٹ_حالت(octx, op_حالت);
 
-        if (ctx->profiler) {
+        اگر (ctx->profiler) {
             pds[i].opcode = ops[i].opcode;
             pds[i].usecs  = prof.usecs;
-            pds[i].cycles_start = prof.cycles_start;
-            pds[i].cycles_stop = prof.cycles_stop;
-            for (int j = 0; j < HEX_NUM_PMU_COUNTERS; j++) {
+            pds[i].ادوار_آغاز = prof.ادوار_آغاز;
+            pds[i].ادوار_stop = prof.ادوار_stop;
+            برائے (صحیح j = 0; j < HEX_عدد_PMU_COUNTERS; j++) {
                 pds[i].pmu[j] = prof.pmu_counters[j];
             }
         }
     }
 
-    if (ctx->hmx_queue) {
-        hmx_queue_suspend(ctx->hmx_queue);
-        hmx_queue_flush(ctx->hmx_queue);
+    اگر (ctx->hmx_قطار) {
+        hmx_قطار_suspend(ctx->hmx_قطار);
+        hmx_قطار_flush(ctx->hmx_قطار);
     }
-    work_queue_suspend(ctx->work_queue);
+    work_قطار_suspend(ctx->work_قطار);
 
     // Flush remaining dirty tensors at the end of the batch
-    htp_trace_event_start(&ctx->trace[0], HTP_TRACE_EVT_L2FLUSH, 0);
+    htp_trace_event_آغاز(&ctx->trace[0], HTP_TRACE_EVT_L2FLUSH, 0);
     qurt_mem_cache_clean((qurt_addr_t) 0, 0, QURT_MEM_CACHE_FLUSH_INVALIDATE_ALL, QURT_MEM_DCACHE);
     htp_trace_event_stop(&ctx->trace[0], HTP_TRACE_EVT_L2FLUSH, 0);
 
-    htp_mdev_group_barrier(octx);
+    htp_mdev_گروہ_barrier(octx);
 
     profile_stop(HTP_PROF_BASIC, &batch_prof);
 
-    struct htp_opbatch_rsp rsp;
-    memset(&rsp, 0, sizeof(rsp));
+    ساخت htp_opbatch_rsp rsp;
+    memset(&rsp, 0, حجم(rsp));
     rsp.seq          = req->seq;
-    rsp.status       = octx->status;
+    rsp.حالت_2       = octx->حالت_2;
     rsp.n_bufs       = n_bufs;
     rsp.n_tensors    = n_tens;
     rsp.n_ops        = n_ops;
     rsp.usecs        = batch_prof.usecs;
-    rsp.cycles_start = batch_prof.cycles_start;
-    rsp.cycles_stop  = batch_prof.cycles_stop;
+    rsp.ادوار_آغاز = batch_prof.ادوار_آغاز;
+    rsp.ادوار_stop  = batch_prof.ادوار_stop;
 
-    if (ctx->profiler == HTP_PROF_TRACE) {
-        for (int t = 0; t <= HTP_MAX_NTHREADS; t++) {
-            rsp.n_traces[t] = ctx->trace[t].count;
+    اگر (ctx->profiler == HTP_PROF_TRACE) {
+        برائے (صحیح t = 0; t <= HTP_MAX_NTHREADS; t++) {
+            rsp.n_traces[t] = ctx->trace[t].گنتی;
         }
     }
 
-    struct dspqueue_buffer write_dbuf = *dbuf;
-    write_dbuf.flags = DSPQUEUE_BUFFER_FLAG_FLUSH_SENDER | DSPQUEUE_BUFFER_FLAG_INVALIDATE_RECIPIENT;
+    ساخت dspqueue_بفر write_dbuf = *dbuf;
+    write_dbuf.flags = DSPQUEUE_بفر_FLAG_FLUSH_SENDER | DSPQUEUE_بفر_FLAG_INVALIDATE_RECIPIENT;
 
-    err = dspqueue_write(queue, 0, 1, &write_dbuf, sizeof(rsp), (const uint8_t *) &rsp, DSPQUEUE_TIMEOUT_NONE);
-    if (err != 0) {
-        FARF(ERROR, "dspqueue_write failed: 0x%08x", (unsigned) err);
+    err = dspqueue_write(قطار, 0, 1, &write_dbuf, حجم(rsp), (ثابت uint8_t *) &rsp, DSPQUEUE_TIMEOUT_NONE);
+    اگر (err != 0) {
+        FARF(ERROR, "dspqueue_write failed: 0x%08x", (غیرعلامتی) err);
     }
 }
 
-#define DSPQUEUE_READ_TIMEOUT_USEC 5000
-#define DSPQUEUE_POLL_TIMEOUT_USEC 100
-#define DSPQUEUE_POLL_COUNT        100
+#تعریف_کرو DSPQUEUE_READ_TIMEOUT_USEC 5000
+#تعریف_کرو DSPQUEUE_POLL_TIMEOUT_USEC 100
+#تعریف_کرو DSPQUEUE_POLL_گنتی        100
 
-static void process_ops(struct htp_context * ctx) {
-    dspqueue_t queue = ctx->dsp_queue;
-    int err;
+ساکن خالی process_ops(ساخت htp_context * ctx) {
+    dspqueue_t قطار = ctx->dsp_قطار;
+    صحیح err;
 
-    uint32_t poll_count = DSPQUEUE_POLL_COUNT;
+    uint32_t poll_گنتی = DSPQUEUE_POLL_گنتی;
 
     vtcm_acquire(ctx);
 
-    while (!atomic_load(&ctx->vtcm_needs_release) && !atomic_load(&ctx->killed)) {
-        struct htp_opbatch_req req;
-        uint32_t r_size = sizeof(req);
+    جب (!atomic_بھرو(&ctx->vtcm_needs_release) && !atomic_بھرو(&ctx->killed)) {
+        ساخت htp_opbatch_req req;
+        uint32_t r_سائز = حجم(req);
 
-        struct dspqueue_buffer dbuf;
+        ساخت dspqueue_بفر dbuf;
         uint32_t n_dbufs = 1;
         uint32_t flags   = 0;
 
-        err = dspqueue_read_noblock(queue, &flags, n_dbufs, &n_dbufs, &dbuf, r_size, &r_size, (uint8_t *) &req);
-        if (err == AEE_EWOULDBLOCK) {
-            if (--poll_count) {
+        err = dspqueue_read_noblock(قطار, &flags, n_dbufs, &n_dbufs, &dbuf, r_سائز, &r_سائز, (uint8_t *) &req);
+        اگر (err == AEE_EWOULDBLOCK) {
+            اگر (--poll_گنتی) {
                 qurt_sleep(DSPQUEUE_POLL_TIMEOUT_USEC);
-                continue;
+                جاری;
             }
-            break;
+            توڑو;
         }
 
-        if (err != 0) {
-            FARF(ERROR, "dspqueue_read_noblock failed: 0x%08x", (unsigned) err);
-            break;
+        اگر (err != 0) {
+            FARF(ERROR, "dspqueue_read_noblock failed: 0x%08x", (غیرعلامتی) err);
+            توڑو;
         }
 
-        if (r_size < sizeof(req) || n_dbufs != 1) {
-            FARF(ERROR, "invalid request : size %u n-dbufs %u", r_size, n_dbufs);
-            continue;
+        اگر (r_سائز < حجم(req) || n_dbufs != 1) {
+            FARF(ERROR, "invalid request : size %u n-dbufs %u", r_سائز, n_dbufs);
+            جاری;
         }
 
         // Reset poll count for valid requests
-        poll_count = DSPQUEUE_POLL_COUNT;
+        poll_گنتی = DSPQUEUE_POLL_گنتی;
 
         process_opbatch(ctx, &req, &dbuf);
     }
@@ -1431,35 +1431,35 @@ static void process_ops(struct htp_context * ctx) {
     vtcm_release(ctx);
 }
 
-static void htp_packet_callback(dspqueue_t queue, int error, void * context) {
-    (void) queue;
-    (void) error;
-    struct htp_handle * h = (struct htp_handle *) context;
-    if (h && h->ctx) {
+ساکن خالی htp_packet_callback(dspqueue_t قطار, صحیح error, خالی * context) {
+    (خالی) قطار;
+    (خالی) error;
+    ساخت htp_handle * h = (ساخت htp_handle *) context;
+    اگر (h && h->ctx) {
         process_ops(h->ctx);
     }
 }
 
-static void htp_main_thread(void * context) {
-    struct htp_context * ctx = (struct htp_context *) context;
+ساکن خالی htp_main_thread(خالی * context) {
+    ساخت htp_context * ctx = (ساخت htp_context *) context;
 
-    FARF(HIGH, "htp-main-thread: started");
+    FARF(بلند_2, "htp-main-thread: started");
 
-    while (!atomic_load(&ctx->killed)) {
+    جب (!atomic_بھرو(&ctx->killed)) {
         uint32_t flags = 0;
-        uint32_t num_buffers = 0;
-        uint32_t message_length = 0;
+        uint32_t عدد_buffers = 0;
+        uint32_t پیغام_لمبائی = 0;
 
-        int err = dspqueue_peek(ctx->dsp_queue, &flags, &num_buffers, &message_length, 50000);
-        if (err == 0) {
+        صحیح err = dspqueue_peek(ctx->dsp_قطار, &flags, &عدد_buffers, &پیغام_لمبائی, 50000);
+        اگر (err == 0) {
             process_ops(ctx);
-        } else if (err == AEE_EWOULDBLOCK || err == AEE_EEXPIRED) {
-            continue;
-        } else {
-            FARF(ERROR, "dspqueue_peek failed: 0x%08x", (unsigned) err);
-            break;
+        } ورنہ اگر (err == AEE_EWOULDBLOCK || err == AEE_EEXPIRED) {
+            جاری;
+        } ورنہ {
+            FARF(ERROR, "dspqueue_peek failed: 0x%08x", (غیرعلامتی) err);
+            توڑو;
         }
     }
 
-    FARF(HIGH, "htp-main-thread: stopped");
+    FARF(بلند_2, "htp-main-thread: stopped");
 }

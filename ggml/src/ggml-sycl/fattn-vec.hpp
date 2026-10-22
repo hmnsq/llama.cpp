@@ -1,86 +1,86 @@
-#ifndef GGML_SYCL_FATTN_VEC_HPP
-#define GGML_SYCL_FATTN_VEC_HPP
+#اگر_غیر_تعریف_شدہ GGML_SYCL_FATTN_VEC_HPP
+#تعریف_کرو GGML_SYCL_FATTN_VEC_HPP
 
-#include <sycl/sycl.hpp>
-#include <sycl/ext/oneapi/work_group_static.hpp>
-#include <iostream>
-#include <iomanip>
+#شامل <sycl/sycl.hpp>
+#شامل <sycl/ext/oneapi/work_group_static.hpp>
+#شامل <iostream>
+#شامل <iomanip>
 
-#include "dpct/helper.hpp"
-#include "common.hpp"
-#include "ggml.h"
-#include "fattn-common.hpp"
-#include <cmath>
-#include <float.h>
+#شامل "dpct/helper.hpp"
+#شامل "common.hpp"
+#شامل "ggml.h"
+#شامل "fattn-common.hpp"
+#شامل <cmath>
+#شامل <float.h>
 
-namespace syclex = sycl::ext::oneapi::experimental;
+نامخلا syclex = sycl::ext::oneapi::experimental;
 
-static int ggml_sycl_fattn_vec_get_nthreads_device(gpu_arch arch) {
+ساکن صحیح ggml_sycl_fattn_vec_get_nthreads_device(gpu_arch arch) {
     // Xe2 (Battlemage, Lunar Lake) runs the flash-attention vec kernel best with a 256-thread work group.
-    return (arch == gpu_arch::intel_gpu_bmg_g21 ||
+    واپس (arch == gpu_arch::intel_gpu_bmg_g21 ||
             arch == gpu_arch::intel_gpu_bmg_g31 ||
             arch == gpu_arch::intel_gpu_lnl_m) ? 256 : 128;
 }
 
 // Currenlty llvm with the amdgcn target dose not support unrolling loops
 // that contain a break that can not be resolved at compile time.
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpass-failed"
-#endif // __clang__
+#اگر_تعریف_شدہ __clang__
+#ہدایت clang diagnostic ڈالو
+#ہدایت clang diagnostic ignored "-Wpass-failed"
+#اگر_ختم // __clang__
 
-template <int D,
-          int ncols,
-          int type_K,
-          int type_V,
-          bool use_logit_softcap,
-          int warp_size,
-          int nthreads>  // D == head size
-static void flash_attn_ext_vec(const char* __restrict__ Q,
-                        const char* __restrict__ K,
-                        const char* __restrict__ V,
-                        const char* __restrict__ mask,
-                        const char* __restrict__ sinks,
-                        const int* __restrict__ KV_max,
-                        float* __restrict__ dst,
+سانچہ <صحیح D,
+          صحیح ncols,
+          صحیح type_K,
+          صحیح type_V,
+          منطقی use_logit_softcap,
+          صحیح warp_سائز,
+          صحیح nthreads>  // D == head size
+ساکن خالی flash_attn_ext_vec(ثابت حرف* __restrict__ Q,
+                        ثابت حرف* __restrict__ K,
+                        ثابت حرف* __restrict__ V,
+                        ثابت حرف* __restrict__ نقاب,
+                        ثابت حرف* __restrict__ sinks,
+                        ثابت صحیح* __restrict__ KV_max,
+                        اعشاری* __restrict__ dst,
                         sycl::float2* __restrict__ dst_meta,
-                        const float scale,
-                        const float max_bias,
-                        const float m0,
-                        const float m1,
-                        const uint32_t n_head_log2,
-                        const float logit_softcap,
-                        const int32_t ne00,
-                        const sycl::uint3 ne01,
-                        const int32_t ne02,
-                        const int32_t ne03,
-                        const int32_t nb01,
-                        const int32_t nb02,
-                        const int32_t nb03,
-                        const int32_t ne10,
-                        const int32_t ne11,
-                        const int32_t ne12,
-                        const int32_t ne13,
-                        const int32_t nb11,
-                        const int32_t nb12,
-                        const int64_t nb13,
-                        const int32_t nb21,
-                        const int32_t nb22,
-                        const int64_t nb23,
-                        const int32_t ne31,
-                        const int32_t ne32,
-                        const int32_t ne33,
-                        const int32_t nb31,
-                        const int32_t nb32,
-                        const int64_t nb33) {
+                        ثابت اعشاری scale,
+                        ثابت اعشاری max_bias,
+                        ثابت اعشاری m0,
+                        ثابت اعشاری m1,
+                        ثابت uint32_t n_سر_log2,
+                        ثابت اعشاری logit_softcap,
+                        ثابت int32_t ne00,
+                        ثابت sycl::uint3 ne01,
+                        ثابت int32_t ne02,
+                        ثابت int32_t ne03,
+                        ثابت int32_t nb01,
+                        ثابت int32_t nb02,
+                        ثابت int32_t nb03,
+                        ثابت int32_t ne10,
+                        ثابت int32_t ne11,
+                        ثابت int32_t ne12,
+                        ثابت int32_t ne13,
+                        ثابت int32_t nb11,
+                        ثابت int32_t nb12,
+                        ثابت int64_t nb13,
+                        ثابت int32_t nb21,
+                        ثابت int32_t nb22,
+                        ثابت int64_t nb23,
+                        ثابت int32_t ne31,
+                        ثابت int32_t ne32,
+                        ثابت int32_t ne33,
+                        ثابت int32_t nb31,
+                        ثابت int32_t nb32,
+                        ثابت int64_t nb33) {
 
-#ifdef SYCL_FLASH_ATTN
+#اگر_تعریف_شدہ SYCL_FLASH_ATTN
     // Skip unused kernel variants for faster compilation:
 
-    auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    if (use_logit_softcap && !(D == 128 || D == 256)) {
-        GGML_UNUSED_VARS(Q, K, V, mask, sinks, KV_max, dst, dst_meta, scale,
-            max_bias, m0, m1, n_head_log2, logit_softcap,
+    خودکار شے_ct1 = sycl::ext::oneapi::this_work_شے::get_nd_شے<3>();
+    اگر (use_logit_softcap && !(D == 128 || D == 256)) {
+        GGML_غیر_مستعمل_VARS(Q, K, V, نقاب, sinks, KV_max, dst, dst_meta, scale,
+            max_bias, m0, m1, n_سر_log2, logit_softcap,
             ne00, ne01, ne02, ne03,
                   nb01, nb02, nb03,
             ne10, ne11, ne12, ne13,
@@ -88,482 +88,482 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
                   nb21, nb22, nb23,
                   ne31, ne32, ne33,
                   nb31, nb32, nb33);
-        return;
+        واپس;
     }
 
     //In this kernel Q, K, V are matrices while i, j, k are matrix indices.
 
-    constexpr int cpy_nb = ggml_sycl_get_max_cpy_bytes();
-    constexpr int cpy_ne = cpy_nb / 4;
+    constexpr صحیح cpy_nb = ggml_sycl_get_max_cpy_بائٹیں();
+    constexpr صحیح cpy_ne = cpy_nb / 4;
 
-    constexpr int nthreads_KQ_q = (D/4 < warp_size ? D/4 : warp_size);
-    constexpr int nthreads_V_q  = (D/4 < warp_size ? D/4 : warp_size);
+    constexpr صحیح nthreads_KQ_q = (D/4 < warp_سائز ? D/4 : warp_سائز);
+    constexpr صحیح nthreads_V_q  = (D/4 < warp_سائز ? D/4 : warp_سائز);
 
-    constexpr int nthreads_KQ = type_K == GGML_TYPE_F16 ? 128 / cpy_nb : nthreads_KQ_q;
-    constexpr int nthreads_V  = type_V == GGML_TYPE_F16 ? 128 / cpy_nb : nthreads_V_q;
+    constexpr صحیح nthreads_KQ = type_K == GGML_TYPE_F16 ? 128 / cpy_nb : nthreads_KQ_q;
+    constexpr صحیح nthreads_V  = type_V == GGML_TYPE_F16 ? 128 / cpy_nb : nthreads_V_q;
 
-    static_assert(warp_size % nthreads_KQ == 0, "bad nthreads_K");
-    static_assert(warp_size % nthreads_V  == 0, "bad nthreads_V");
+    static_assert(warp_سائز % nthreads_KQ == 0, "bad nthreads_K");
+    static_assert(warp_سائز % nthreads_V  == 0, "bad nthreads_V");
 
-    constexpr int V_rows_per_thread = type_V == GGML_TYPE_F16 ? 2*cpy_ne : 4;
-    constexpr int V_cols_per_iter   = warp_size / nthreads_V;
+    constexpr صحیح V_صفیں_فی_thread = type_V == GGML_TYPE_F16 ? 2*cpy_ne : 4;
+    constexpr صحیح V_ستون_تعداد_فی_iter   = warp_سائز / nthreads_V;
 
-    constexpr vec_dot_KQ_t vec_dot_KQ = get_vec_dot_KQ<type_K, D, nthreads_KQ, warp_size>();
-    constexpr bool Q_q8_1 = type_K != GGML_TYPE_F16;
-#ifdef GGML_SYCL_F16
-    constexpr dequantize_V_t dequantize_V = get_dequantize_V<type_V, sycl::half, V_rows_per_thread>();
-#else
-    constexpr dequantize_V_t dequantize_V = get_dequantize_V<type_V, float, V_rows_per_thread>();
-#endif // GGML_SYCL_F16
+    constexpr vec_dot_KQ_t vec_dot_KQ = get_vec_dot_KQ<type_K, D, nthreads_KQ, warp_سائز>();
+    constexpr منطقی Q_q8_1 = type_K != GGML_TYPE_F16;
+#اگر_تعریف_شدہ GGML_SYCL_F16
+    constexpr dequantize_V_t dequantize_V = get_dequantize_V<type_V, sycl::half, V_صفیں_فی_thread>();
+#ورنہ
+    constexpr dequantize_V_t dequantize_V = get_dequantize_V<type_V, اعشاری, V_صفیں_فی_thread>();
+#اگر_ختم // GGML_SYCL_F16
 
-    const int ic0 = item_ct1.get_group(2) * ncols;  // Index of the Q/QKV column to work on.
+    ثابت صحیح ic0 = شے_ct1.get_گروہ(2) * ncols;  // Index of the Q/QKV column to work on.
 
-    const int sequence  = item_ct1.get_group(0) / ne02;
-    const int head      = item_ct1.get_group(0) - sequence * ne02;
-    const int gqa_ratio = ne02 / ne12; // With grouped query attention there are > 1 Q matrices per K, V matrix.
-    Q += nb03*sequence + nb02* head              + nb01*ic0;
-    K += nb13*sequence + nb12*(head / gqa_ratio);
-    V += nb23*sequence + nb22*(head / gqa_ratio);
+    ثابت صحیح sequence  = شے_ct1.get_گروہ(0) / ne02;
+    ثابت صحیح سر      = شے_ct1.get_گروہ(0) - sequence * ne02;
+    ثابت صحیح gqa_تناسب = ne02 / ne12; // With grouped query attention there are > 1 Q matrices per K, V matrix.
+    Q += nb03*sequence + nb02* سر              + nb01*ic0;
+    K += nb13*sequence + nb12*(سر / gqa_تناسب);
+    V += nb23*sequence + nb22*(سر / gqa_تناسب);
 
-    const sycl::half * maskh = (const sycl::half *) (mask + nb33 * (sequence % ne33) + nb31 * ic0);
+    ثابت sycl::half * maskh = (ثابت sycl::half *) (نقاب + nb33 * (sequence % ne33) + nb31 * ic0);
 
-    const float slope = get_alibi_slope(max_bias, head, n_head_log2, m0, m1);
+    ثابت اعشاری ڈھلان = get_alibi_ڈھلان(max_bias, سر, n_سر_log2, m0, m1);
 
-    static_assert(D % (2*warp_size) == 0, "D not divisible by 2*warp_size == 64.");
-    constexpr int nwarps = nthreads / warp_size;
-    const int     tid    = warp_size * item_ct1.get_local_id(1) + item_ct1.get_local_id(2);
+    static_assert(D % (2*warp_سائز) == 0, "D not divisible by 2*warp_size == 64.");
+    constexpr صحیح nwarps = nthreads / warp_سائز;
+    ثابت صحیح     tid    = warp_سائز * شے_ct1.get_local_id(1) + شے_ct1.get_local_id(2);
     __builtin_assume(tid < nthreads);
 
-    constexpr int ne_KQ      = ncols*D;
-    constexpr int ne_combine = nwarps*V_cols_per_iter*D;
+    constexpr صحیح ne_KQ      = ncols*D;
+    constexpr صحیح ne_combine = nwarps*V_ستون_تعداد_فی_iter*D;
 
-    constexpr size_t lsm_size1 = ncols * warp_size;
-    constexpr size_t lsm_size2 = ncols * warp_size;
-#ifdef GGML_SYCL_F16
+    constexpr size_t lsm_size1 = ncols * warp_سائز;
+    constexpr size_t lsm_size2 = ncols * warp_سائز;
+#اگر_تعریف_شدہ GGML_SYCL_F16
     sycl::half2 VKQ[ncols][(D / 2) / nthreads_V] = { { { 0.0f, 0.0f } } };
     constexpr size_t lsm_size3 = (ne_KQ > ne_combine ? ne_KQ : ne_combine);
-    constexpr size_t local_share_mem_size = (lsm_size1 + lsm_size2)*sizeof(float) + lsm_size3*sizeof(sycl::half);
+    constexpr size_t local_share_mem_سائز = (lsm_size1 + lsm_size2)*حجم(اعشاری) + lsm_size3*حجم(sycl::half);
 
-    syclex::work_group_static<char[local_share_mem_size]> lsm;
+    syclex::work_گروہ_static<حرف[local_share_mem_سائز]> lsm;
 
-    float *KQ_max_shared = (float *)&lsm;
-    float *KQ_sum_shared = KQ_max_shared+lsm_size1;
-    sycl::half* KQ = (sycl::half*)(KQ_sum_shared + lsm_size2);
+    اعشاری *KQ_max_shared = (اعشاری *)&lsm;
+    اعشاری *KQ_مجموع_shared = KQ_max_shared+lsm_size1;
+    sycl::half* KQ = (sycl::half*)(KQ_مجموع_shared + lsm_size2);
 
 
-#else
+#ورنہ
     sycl::float2 VKQ[ncols][(D/2)/nthreads_V] = {{{0.0f, 0.0f}}};
 
     constexpr size_t lsm_size3 = (ne_KQ > ne_combine ? ne_KQ : ne_combine);
-    constexpr size_t local_share_mem_size = (lsm_size1 + lsm_size2 + lsm_size3)*sizeof(float);
+    constexpr size_t local_share_mem_سائز = (lsm_size1 + lsm_size2 + lsm_size3)*حجم(اعشاری);
 
 
-    syclex::work_group_static<char[local_share_mem_size]> lsm;
-    float *KQ_max_shared = (float *)&lsm;
-    float *KQ_sum_shared = KQ_max_shared+lsm_size1;
-    float* KQ = KQ_sum_shared + lsm_size2;
+    syclex::work_گروہ_static<حرف[local_share_mem_سائز]> lsm;
+    اعشاری *KQ_max_shared = (اعشاری *)&lsm;
+    اعشاری *KQ_مجموع_shared = KQ_max_shared+lsm_size1;
+    اعشاری* KQ = KQ_مجموع_shared + lsm_size2;
 
-#endif // GGML_SYCL_F16
+#اگر_ختم // GGML_SYCL_F16
 
-    float KQ_max[ncols];
-    float KQ_sum[ncols];
-#pragma unroll
-    for (int j = 0; j < ncols; ++j) {
+    اعشاری KQ_max[ncols];
+    اعشاری KQ_مجموع[ncols];
+#ہدایت unroll
+    برائے (صحیح j = 0; j < ncols; ++j) {
         KQ_max[j] = -FLT_MAX/2.0f;
-        KQ_sum[j] = 0.0f;
+        KQ_مجموع[j] = 0.0f;
     }
 
     // Convert Q to float2 (f16 K) or q8_1 (quantized K) and store in registers:
-#ifdef GGML_SYCL_F16
+#اگر_تعریف_شدہ GGML_SYCL_F16
     sycl::half2 Q_reg[ncols][(D / 2) / nthreads_KQ] = {{{0.0f, 0.0f}}};  // Will be initialized completely.
-#else
+#ورنہ
     sycl::float2 Q_reg[ncols][(D/2)/nthreads_KQ] = {{{0.0f, 0.0f}}}; // May be only partially initialized.
-#endif // GGML_SYCL_F16
-    int    Q_i32[ncols][1 > D/(sizeof(int)*nthreads_KQ) ? 1 : D/(sizeof(int)*nthreads_KQ)];
-    sycl::float2 Q_ds[ncols][1 > D / (sizeof(int) * nthreads_KQ) ? 1 : D / (sizeof(int) * nthreads_KQ)];
-    if constexpr (Q_q8_1) {
-#pragma unroll
-        for (int j0 = 0; j0 < ncols; j0 += nwarps) {
-            const int j = j0 + item_ct1.get_local_id(1);
+#اگر_ختم // GGML_SYCL_F16
+    صحیح    Q_i32[ncols][1 > D/(حجم(صحیح)*nthreads_KQ) ? 1 : D/(حجم(صحیح)*nthreads_KQ)];
+    sycl::float2 Q_ds[ncols][1 > D / (حجم(صحیح) * nthreads_KQ) ? 1 : D / (حجم(صحیح) * nthreads_KQ)];
+    اگر constexpr (Q_q8_1) {
+#ہدایت unroll
+        برائے (صحیح j0 = 0; j0 < ncols; j0 += nwarps) {
+            ثابت صحیح j = j0 + شے_ct1.get_local_id(1);
 
-            if (j0 + nwarps > ncols && j >= ncols) {
-                break;
+            اگر (j0 + nwarps > ncols && j >= ncols) {
+                توڑو;
             }
 
             // Reuse KQ as temporary storage for converting Q to q8_1:
-            int    * tmp_q_i32 = (int    *) &KQ[j*D];
-            sycl::float2 * tmp_q_ds  = (sycl::float2 *) (tmp_q_i32 + D / sizeof(int));
+            صحیح    * tmp_q_i32 = (صحیح    *) &KQ[j*D];
+            sycl::float2 * tmp_q_ds  = (sycl::float2 *) (tmp_q_i32 + D / حجم(صحیح));
 
             // Set memory to zero if out of bounds:
-            if (ncols > 1 && ic0 + j >= int(ne01.z())) {
-#pragma unroll
-                for (int i0 = 0; i0 < int(D/sizeof(int)); i0 += warp_size) {
-                    const int i = i0 + item_ct1.get_local_id(2);
+            اگر (ncols > 1 && ic0 + j >= صحیح(ne01.z())) {
+#ہدایت unroll
+                برائے (صحیح i0 = 0; i0 < صحیح(D/حجم(صحیح)); i0 += warp_سائز) {
+                    ثابت صحیح i = i0 + شے_ct1.get_local_id(2);
 
-                    if (i0 + warp_size <= int(D/sizeof(int)) || i < int(D/sizeof(int))) {
+                    اگر (i0 + warp_سائز <= صحیح(D/حجم(صحیح)) || i < صحیح(D/حجم(صحیح))) {
                         tmp_q_i32[i] = 0;
                     }
                 }
-                if (item_ct1.get_local_id(2) < D/QK8_1) {
-                    tmp_q_ds[item_ct1.get_local_id(2)] = sycl::float2(0.0f, 0.0f);
+                اگر (شے_ct1.get_local_id(2) < D/QK8_1) {
+                    tmp_q_ds[شے_ct1.get_local_id(2)] = sycl::float2(0.0f, 0.0f);
                 }
-            } else {
-                const float * Q_f = (const float *) (Q + j*nb01);
-                constexpr int nthreads_quantize = D/sizeof(int) < warp_size ? D/sizeof(int) : warp_size;
-#pragma unroll
-                for (int i0 = 0; i0 < int(D/sizeof(int)); i0 += nthreads_quantize) {
-                    quantize_q8_1_to_shared<sycl::float2, nthreads_quantize, warp_size>
-                        (Q_f + i0*sizeof(int), scale, tmp_q_i32 + i0, tmp_q_ds + i0/QI8_1);
+            } ورنہ {
+                ثابت اعشاری * Q_f = (ثابت اعشاری *) (Q + j*nb01);
+                constexpr صحیح nthreads_quantize = D/حجم(صحیح) < warp_سائز ? D/حجم(صحیح) : warp_سائز;
+#ہدایت unroll
+                برائے (صحیح i0 = 0; i0 < صحیح(D/حجم(صحیح)); i0 += nthreads_quantize) {
+                    quantize_q8_1_مقصد_shared<sycl::float2, nthreads_quantize, warp_سائز>
+                        (Q_f + i0*حجم(صحیح), scale, tmp_q_i32 + i0, tmp_q_ds + i0/QI8_1);
                 }
             }
         }
 
 
-        item_ct1.barrier(sycl::access::fence_space::local_space);
+        شے_ct1.barrier(sycl::access::fence_space::local_space);
 
-#pragma unroll
-        for (int j = 0; j < ncols; ++j) {
-            int    * tmp_q_i32 = (int    *) &KQ[j*D];
-            sycl::float2 * tmp_q_ds  = (sycl::float2 *) (tmp_q_i32 + D / sizeof(int));
+#ہدایت unroll
+        برائے (صحیح j = 0; j < ncols; ++j) {
+            صحیح    * tmp_q_i32 = (صحیح    *) &KQ[j*D];
+            sycl::float2 * tmp_q_ds  = (sycl::float2 *) (tmp_q_i32 + D / حجم(صحیح));
 
-#pragma unroll
-            for (int i0 = 0; i0 < int(D/sizeof(int)); i0 += nthreads_KQ) {
-                const int i =
-                    i0 + (nthreads_KQ == warp_size ? item_ct1.get_local_id(2) : item_ct1.get_local_id(2) % nthreads_KQ);
+#ہدایت unroll
+            برائے (صحیح i0 = 0; i0 < صحیح(D/حجم(صحیح)); i0 += nthreads_KQ) {
+                ثابت صحیح i =
+                    i0 + (nthreads_KQ == warp_سائز ? شے_ct1.get_local_id(2) : شے_ct1.get_local_id(2) % nthreads_KQ);
 
                 Q_i32[j][i0/nthreads_KQ] = tmp_q_i32[i];
                 Q_ds[j][i0/nthreads_KQ]  = tmp_q_ds[i/QI8_1];
             }
         }
 
-        item_ct1.barrier(sycl::access::fence_space::local_space);
+        شے_ct1.barrier(sycl::access::fence_space::local_space);
 
-    } else {
-#ifdef GGML_SYCL_F16
-        const sycl::half2 scale_h2 = sycl::half2(scale, scale);
-#pragma unroll
-        for (int j = 0; j < ncols; ++j) {
-            const sycl::float2 * Q_j = (const sycl::float2 *) (Q + j * nb01);
-#pragma unroll
-            for (int i0 = 0; i0 < D/2; i0 += nthreads_KQ*cpy_ne) {
-                const int i = i0 + (nthreads_KQ == warp_size ? item_ct1.get_local_id(2) :
-                                                               item_ct1.get_local_id(2) % nthreads_KQ) *
+    } ورنہ {
+#اگر_تعریف_شدہ GGML_SYCL_F16
+        ثابت sycl::half2 scale_h2 = sycl::half2(scale, scale);
+#ہدایت unroll
+        برائے (صحیح j = 0; j < ncols; ++j) {
+            ثابت sycl::float2 * Q_j = (ثابت sycl::float2 *) (Q + j * nb01);
+#ہدایت unroll
+            برائے (صحیح i0 = 0; i0 < D/2; i0 += nthreads_KQ*cpy_ne) {
+                ثابت صحیح i = i0 + (nthreads_KQ == warp_سائز ? شے_ct1.get_local_id(2) :
+                                                               شے_ct1.get_local_id(2) % nthreads_KQ) *
                                        cpy_ne;
 
                 sycl::float2 tmp[cpy_ne] = {
                     { 0.0f, 0.0f }
                 };
-                if (ncols == 1 || ic0 + j < int(ne01.z())) {
+                اگر (ncols == 1 || ic0 + j < صحیح(ne01.z())) {
                     ggml_sycl_memcpy_1<cpy_nb>(tmp,            &Q_j[i]);
                     ggml_sycl_memcpy_1<cpy_nb>(tmp + cpy_ne/2, &Q_j[i + cpy_ne/2]);
                 }
-#pragma unroll
-                for (int i1 = 0; i1 < cpy_ne; ++i1) {
+#ہدایت unroll
+                برائے (صحیح i1 = 0; i1 < cpy_ne; ++i1) {
                     Q_reg[j][i0 / nthreads_KQ + i1] = sycl::half2(tmp[i1].x(), tmp[i1].y());
                 }
             }
-#pragma unroll
-            for (int k = 0; k < (D/2)/nthreads_KQ; ++k) {
+#ہدایت unroll
+            برائے (صحیح k = 0; k < (D/2)/nthreads_KQ; ++k) {
                 Q_reg[j][k] *= scale_h2;
             }
         }
-#else
-#pragma unroll
-        for (int j = 0; j < ncols; ++j) {
-            const sycl::float2 * Q_j = (const sycl::float2 *) (Q + j*nb01);
-#pragma unroll
-            for (int i0 = 0; i0 < D/2; i0 += nthreads_KQ*cpy_ne) {
-                const int i = i0 + (nthreads_KQ == warp_size ? item_ct1.get_local_id(2) : item_ct1.get_local_id(2) % nthreads_KQ)*cpy_ne;
-                if (ncols == 1 || ic0 + j < int(ne01.z())) {
+#ورنہ
+#ہدایت unroll
+        برائے (صحیح j = 0; j < ncols; ++j) {
+            ثابت sycl::float2 * Q_j = (ثابت sycl::float2 *) (Q + j*nb01);
+#ہدایت unroll
+            برائے (صحیح i0 = 0; i0 < D/2; i0 += nthreads_KQ*cpy_ne) {
+                ثابت صحیح i = i0 + (nthreads_KQ == warp_سائز ? شے_ct1.get_local_id(2) : شے_ct1.get_local_id(2) % nthreads_KQ)*cpy_ne;
+                اگر (ncols == 1 || ic0 + j < صحیح(ne01.z())) {
                     ggml_sycl_memcpy_1<cpy_nb>(&Q_reg[j][i0/nthreads_KQ],            &Q_j[i]);
                     ggml_sycl_memcpy_1<cpy_nb>(&Q_reg[j][i0/nthreads_KQ + cpy_ne/2], &Q_j[i + cpy_ne/2]);
                 }
             }
-#pragma unroll
-            for (int k = 0; k < (D/2)/nthreads_KQ; ++k) {
+#ہدایت unroll
+            برائے (صحیح k = 0; k < (D/2)/nthreads_KQ; ++k) {
                 Q_reg[j][k].x() *= scale;
                 Q_reg[j][k].y() *= scale;
             }
         }
-#endif // GGML_SYCL_F16
+#اگر_ختم // GGML_SYCL_F16
     }
 
-    const int k_VKQ_max = KV_max ? KV_max[sequence * item_ct1.get_group_range(2) + item_ct1.get_group(2)] : ne11;
-    K += item_ct1.get_group(1) * nthreads * nb11;
-    V += item_ct1.get_group(1) * nthreads * nb21;
-    maskh += item_ct1.get_group(1) * nthreads;
-    for (int k_VKQ_0 = item_ct1.get_group(1) * nthreads; k_VKQ_0 < k_VKQ_max;
-         k_VKQ_0 += item_ct1.get_group_range(1) * nthreads,
+    ثابت صحیح k_VKQ_max = KV_max ? KV_max[sequence * شے_ct1.get_گروہ_range(2) + شے_ct1.get_گروہ(2)] : ne11;
+    K += شے_ct1.get_گروہ(1) * nthreads * nb11;
+    V += شے_ct1.get_گروہ(1) * nthreads * nb21;
+    maskh += شے_ct1.get_گروہ(1) * nthreads;
+    برائے (صحیح k_VKQ_0 = شے_ct1.get_گروہ(1) * nthreads; k_VKQ_0 < k_VKQ_max;
+         k_VKQ_0 += شے_ct1.get_گروہ_range(1) * nthreads,
              // Increment pointers after each loop:
-         K += item_ct1.get_group_range(1) * nthreads * nb11, V += item_ct1.get_group_range(1) * nthreads * nb21,
-             maskh += item_ct1.get_group_range(1) * nthreads) {
+         K += شے_ct1.get_گروہ_range(1) * nthreads * nb11, V += شے_ct1.get_گروہ_range(1) * nthreads * nb21,
+             maskh += شے_ct1.get_گروہ_range(1) * nthreads) {
         // Calculate KQ tile and keep track of new maximum KQ values:
-        float KQ_reg[ncols]={}; // KQ in registers.
-        float KQ_max_new[ncols]={};
+        اعشاری KQ_reg[ncols]={}; // KQ in registers.
+        اعشاری KQ_max_new[ncols]={};
 
 
-#pragma unroll
-        for (int j = 0; j < ncols; ++j) {
+#ہدایت unroll
+        برائے (صحیح j = 0; j < ncols; ++j) {
             KQ_max_new[j] = KQ_max[j];
         }
 
-#pragma unroll
-        for (int i_KQ_0 = 0; i_KQ_0 < nthreads_KQ; ++i_KQ_0) {
-            const int i_KQ = item_ct1.get_local_id(1) * warp_size +
-                             (nthreads_KQ == warp_size ? 0 : (item_ct1.get_local_id(2) & ~(nthreads_KQ - 1))) + i_KQ_0;
+#ہدایت unroll
+        برائے (صحیح i_KQ_0 = 0; i_KQ_0 < nthreads_KQ; ++i_KQ_0) {
+            ثابت صحیح i_KQ = شے_ct1.get_local_id(1) * warp_سائز +
+                             (nthreads_KQ == warp_سائز ? 0 : (شے_ct1.get_local_id(2) & ~(nthreads_KQ - 1))) + i_KQ_0;
 
-#pragma unroll
-            for (int j = 0; j < ncols; ++j) {
-                float sum = vec_dot_KQ(K + i_KQ*nb11, Q_reg[j], Q_i32[j], Q_ds[j]);
-                sum = warp_reduce_sum<nthreads_KQ>(sum);
+#ہدایت unroll
+            برائے (صحیح j = 0; j < ncols; ++j) {
+                اعشاری مجموع = vec_dot_KQ(K + i_KQ*nb11, Q_reg[j], Q_i32[j], Q_ds[j]);
+                مجموع = warp_reduce_مجموع<nthreads_KQ>(مجموع);
 
-                if (use_logit_softcap) {
-                    sum = logit_softcap * sycl::tanh(sum);
+                اگر (use_logit_softcap) {
+                    مجموع = logit_softcap * sycl::tanh(مجموع);
                 }
-                if (mask) {
-                    sum += slope * sycl::vec<sycl::half, 1>(maskh[j * ne11 + i_KQ])
-                                       .convert<float, sycl::rounding_mode::automatic>()[0];
+                اگر (نقاب) {
+                    مجموع += ڈھلان * sycl::vec<sycl::half, 1>(maskh[j * ne11 + i_KQ])
+                                       .convert<اعشاری, sycl::rounding_منوال::automatic>()[0];
                 }
 
-                KQ_max_new[j] = sycl::fmax((float) KQ_max_new[j], sum);
+                KQ_max_new[j] = sycl::fmax((اعشاری) KQ_max_new[j], مجموع);
 
-                if (int(nthreads_KQ == warp_size ? item_ct1.get_local_id(2)
-                                                 : item_ct1.get_local_id(2) %
+                اگر (صحیح(nthreads_KQ == warp_سائز ? شے_ct1.get_local_id(2)
+                                                 : شے_ct1.get_local_id(2) %
                                                        nthreads_KQ) == i_KQ_0) {
-                  KQ_reg[j] = sum;
+                  KQ_reg[j] = مجموع;
                 }
             }
         }
 
-#pragma unroll
-        for (int j = 0; j < ncols; ++j) {
-#pragma unroll
-            for (int offset = nthreads_KQ; offset < warp_size; offset <<= 1) {
+#ہدایت unroll
+        برائے (صحیح j = 0; j < ncols; ++j) {
+#ہدایت unroll
+            برائے (صحیح انحراف = nthreads_KQ; انحراف < warp_سائز; انحراف <<= 1) {
                KQ_max_new[j] = sycl::fmax(
-                  (float)KQ_max_new[j],
-                  (float)dpct::permute_sub_group_by_xor(
-                      sycl::ext::oneapi::this_work_item::get_sub_group(),
+                  (اعشاری)KQ_max_new[j],
+                  (اعشاری)dpct::ترتیب_بدلو_sub_گروہ_by_xor(
+                      sycl::ext::oneapi::this_work_شے::get_sub_گروہ(),
                       KQ_max_new[j],
-                      offset,
-                      warp_size));
+                      انحراف,
+                      warp_سائز));
             }
-            const float KQ_max_scale = sycl::native::exp((float) (KQ_max[j] - KQ_max_new[j]));
+            ثابت اعشاری KQ_max_scale = sycl::native::قوت_نما((اعشاری) (KQ_max[j] - KQ_max_new[j]));
             KQ_max[j] = KQ_max_new[j];
 
-            KQ_reg[j]            = sycl::native::exp((float) (KQ_reg[j] - KQ_max[j]));
-            KQ_sum[j] = KQ_sum[j]*KQ_max_scale + KQ_reg[j];
+            KQ_reg[j]            = sycl::native::قوت_نما((اعشاری) (KQ_reg[j] - KQ_max[j]));
+            KQ_مجموع[j] = KQ_مجموع[j]*KQ_max_scale + KQ_reg[j];
             KQ[j*nthreads + tid] = KQ_reg[j];
 
-#ifdef GGML_SYCL_F16
-            const sycl::half2 KQ_max_scale_h2 = sycl::half2(KQ_max_scale, KQ_max_scale);
-#pragma unroll
-            for (int i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V) {
+#اگر_تعریف_شدہ GGML_SYCL_F16
+            ثابت sycl::half2 KQ_max_scale_h2 = sycl::half2(KQ_max_scale, KQ_max_scale);
+#ہدایت unroll
+            برائے (صحیح i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V) {
                 VKQ[j][i_VKQ_0/nthreads_V] *= KQ_max_scale_h2;
             }
-#else
-#pragma unroll
-            for (int i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V) {
+#ورنہ
+#ہدایت unroll
+            برائے (صحیح i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V) {
                 VKQ[j][i_VKQ_0/nthreads_V].x() *= KQ_max_scale;
                 VKQ[j][i_VKQ_0/nthreads_V].y() *= KQ_max_scale;
             }
-#endif // GGML_SYCL_F16
+#اگر_ختم // GGML_SYCL_F16
         }
 
-        sycl::group_barrier(sycl::ext::oneapi::this_work_item::get_sub_group());
+        sycl::گروہ_barrier(sycl::ext::oneapi::this_work_شے::get_sub_گروہ());
 
-#pragma unroll
-        for (int k0 = 0; k0 < warp_size; k0 += V_cols_per_iter) {
-            const int k = item_ct1.get_local_id(1) * warp_size + k0 +
-                          (nthreads_V == warp_size ? 0 : item_ct1.get_local_id(2) / nthreads_V);
+#ہدایت unroll
+        برائے (صحیح k0 = 0; k0 < warp_سائز; k0 += V_ستون_تعداد_فی_iter) {
+            ثابت صحیح k = شے_ct1.get_local_id(1) * warp_سائز + k0 +
+                          (nthreads_V == warp_سائز ? 0 : شے_ct1.get_local_id(2) / nthreads_V);
 
-#ifdef GGML_SYCL_F16
+#اگر_تعریف_شدہ GGML_SYCL_F16
             sycl::half2 KQ_k[ncols];
-#pragma unroll
-            for (int j = 0; j < ncols; ++j) {
+#ہدایت unroll
+            برائے (صحیح j = 0; j < ncols; ++j) {
                 KQ_k[j] = sycl::half2(KQ[j * nthreads + k]);
             }
-#pragma unroll
-            for (int i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V*V_rows_per_thread/2) {
-                sycl::half2 tmp[V_rows_per_thread / 2];
+#ہدایت unroll
+            برائے (صحیح i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V*V_صفیں_فی_thread/2) {
+                sycl::half2 tmp[V_صفیں_فی_thread / 2];
                 dequantize_V(V + k * nb21, tmp,
-                             2 * i_VKQ_0 + (nthreads_V == warp_size ? item_ct1.get_local_id(2) :
-                                                                      item_ct1.get_local_id(2) % nthreads_V) *
-                                               V_rows_per_thread);
-#pragma unroll
-                for (int i_VKQ_1 = 0; i_VKQ_1 < V_rows_per_thread/2; ++i_VKQ_1) {
-#pragma unroll
-                    for (int j = 0; j < ncols; ++j) {
+                             2 * i_VKQ_0 + (nthreads_V == warp_سائز ? شے_ct1.get_local_id(2) :
+                                                                      شے_ct1.get_local_id(2) % nthreads_V) *
+                                               V_صفیں_فی_thread);
+#ہدایت unroll
+                برائے (صحیح i_VKQ_1 = 0; i_VKQ_1 < V_صفیں_فی_thread/2; ++i_VKQ_1) {
+#ہدایت unroll
+                    برائے (صحیح j = 0; j < ncols; ++j) {
                         VKQ[j][i_VKQ_0/nthreads_V + i_VKQ_1] += tmp[i_VKQ_1]*KQ_k[j];
                     }
                 }
             }
-#else
-            float KQ_k[ncols];
-#pragma unroll
-            for (int j = 0; j < ncols; ++j) {
+#ورنہ
+            اعشاری KQ_k[ncols];
+#ہدایت unroll
+            برائے (صحیح j = 0; j < ncols; ++j) {
                 KQ_k[j] = KQ[j*nthreads + k];
             }
-#pragma unroll
-            for (int i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V*V_rows_per_thread/2) {
-                sycl::float2 tmp[V_rows_per_thread/2];
+#ہدایت unroll
+            برائے (صحیح i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V*V_صفیں_فی_thread/2) {
+                sycl::float2 tmp[V_صفیں_فی_thread/2];
                 dequantize_V(V + k*nb21, tmp,
-                    2*i_VKQ_0 + (nthreads_V == warp_size ? item_ct1.get_local_id(2) : item_ct1.get_local_id(2) % nthreads_V)*V_rows_per_thread);
-#pragma unroll
-                for (int i_VKQ_1 = 0; i_VKQ_1 < V_rows_per_thread/2; ++i_VKQ_1) {
-#pragma unroll
-                    for (int j = 0; j < ncols; ++j) {
+                    2*i_VKQ_0 + (nthreads_V == warp_سائز ? شے_ct1.get_local_id(2) : شے_ct1.get_local_id(2) % nthreads_V)*V_صفیں_فی_thread);
+#ہدایت unroll
+                برائے (صحیح i_VKQ_1 = 0; i_VKQ_1 < V_صفیں_فی_thread/2; ++i_VKQ_1) {
+#ہدایت unroll
+                    برائے (صحیح j = 0; j < ncols; ++j) {
                         VKQ[j][i_VKQ_0/nthreads_V + i_VKQ_1].x() += tmp[i_VKQ_1].x()*KQ_k[j];
                         VKQ[j][i_VKQ_0/nthreads_V + i_VKQ_1].y() += tmp[i_VKQ_1].y()*KQ_k[j];
                     }
                 }
             }
-#endif // GGML_SYCL_F16
+#اگر_ختم // GGML_SYCL_F16
         }
     }
 
-    if (sinks && item_ct1.get_group(1) == 0) {
-        const float sink = ((const float *) sinks)[head];
+    اگر (sinks && شے_ct1.get_گروہ(1) == 0) {
+        ثابت اعشاری sink = ((ثابت اعشاری *) sinks)[سر];
 
-#pragma unroll
-        for (int j0 = 0; j0 < ncols; j0 += nwarps) {
-            const int j = j0 + item_ct1.get_local_id(1);
+#ہدایت unroll
+        برائے (صحیح j0 = 0; j0 < ncols; j0 += nwarps) {
+            ثابت صحیح j = j0 + شے_ct1.get_local_id(1);
 
-            if (j0 + nwarps > ncols && j >= ncols) {
-                break;
+            اگر (j0 + nwarps > ncols && j >= ncols) {
+                توڑو;
             }
-            const float kqmax_new_j  = sycl::fmax(sink, (float) KQ_max[j]);
-            const float KQ_max_scale = sycl::native::exp((float) (KQ_max[j] - kqmax_new_j));
+            ثابت اعشاری kqmax_new_j  = sycl::fmax(sink, (اعشاری) KQ_max[j]);
+            ثابت اعشاری KQ_max_scale = sycl::native::قوت_نما((اعشاری) (KQ_max[j] - kqmax_new_j));
             KQ_max[j] = kqmax_new_j;
 
-            KQ_sum[j] = KQ_sum[j] * KQ_max_scale +
-                        (item_ct1.get_local_id(2) == 0 ? sycl::native::exp((float) (sink - KQ_max[j])) : 0.0f);
-#ifdef GGML_SYCL_F16
-            const sycl::half2 KQ_max_scale_h2 = sycl::half2(KQ_max_scale, KQ_max_scale);
-#pragma unroll
-            for (int i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V) {
+            KQ_مجموع[j] = KQ_مجموع[j] * KQ_max_scale +
+                        (شے_ct1.get_local_id(2) == 0 ? sycl::native::قوت_نما((اعشاری) (sink - KQ_max[j])) : 0.0f);
+#اگر_تعریف_شدہ GGML_SYCL_F16
+            ثابت sycl::half2 KQ_max_scale_h2 = sycl::half2(KQ_max_scale, KQ_max_scale);
+#ہدایت unroll
+            برائے (صحیح i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V) {
                 VKQ[j][i_VKQ_0/nthreads_V] *= KQ_max_scale_h2;
             }
-#else
-#pragma unroll
-            for (int i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V) {
+#ورنہ
+#ہدایت unroll
+            برائے (صحیح i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V) {
                 VKQ[j][i_VKQ_0/nthreads_V].x() *= KQ_max_scale;
                 VKQ[j][i_VKQ_0/nthreads_V].y() *= KQ_max_scale;
             }
-#endif // GGML_SYCL_F16
+#اگر_ختم // GGML_SYCL_F16
         }
     }
 
-#pragma unroll
-    for (int j = 0; j < ncols; ++j) {
-        if (item_ct1.get_local_id(1) == 0) {
-            KQ_max_shared[j*warp_size+item_ct1.get_local_id(2)] = -FLT_MAX / 2.0f;
-            KQ_sum_shared[j*warp_size+item_ct1.get_local_id(2)] = 0.0f;
+#ہدایت unroll
+    برائے (صحیح j = 0; j < ncols; ++j) {
+        اگر (شے_ct1.get_local_id(1) == 0) {
+            KQ_max_shared[j*warp_سائز+شے_ct1.get_local_id(2)] = -FLT_MAX / 2.0f;
+            KQ_مجموع_shared[j*warp_سائز+شے_ct1.get_local_id(2)] = 0.0f;
         }
     }
 
-    item_ct1.barrier(sycl::access::fence_space::local_space);
+    شے_ct1.barrier(sycl::access::fence_space::local_space);
 
-#pragma unroll
-    for (int j = 0; j < ncols; ++j) {
-        if (item_ct1.get_local_id(2) == 0) {
-            KQ_max_shared[j*warp_size+item_ct1.get_local_id(1)] = KQ_max[j];
+#ہدایت unroll
+    برائے (صحیح j = 0; j < ncols; ++j) {
+        اگر (شے_ct1.get_local_id(2) == 0) {
+            KQ_max_shared[j*warp_سائز+شے_ct1.get_local_id(1)] = KQ_max[j];
         }
     }
 
-    item_ct1.barrier(sycl::access::fence_space::local_space);
+    شے_ct1.barrier(sycl::access::fence_space::local_space);
 
-#pragma unroll
-    for (int j_VKQ = 0; j_VKQ < ncols; ++j_VKQ) {
-        if (ncols > 1 && ic0 + j_VKQ >= int(ne01.z())) {
-            break;
+#ہدایت unroll
+    برائے (صحیح j_VKQ = 0; j_VKQ < ncols; ++j_VKQ) {
+        اگر (ncols > 1 && ic0 + j_VKQ >= صحیح(ne01.z())) {
+            توڑو;
         }
 
-        float kqmax_new         = KQ_max_shared[j_VKQ*warp_size+item_ct1.get_local_id(2)];
-        kqmax_new = warp_reduce_max<warp_size>(kqmax_new);
-        const float kqmax_scale = sycl::native::exp((float) (KQ_max[j_VKQ] - kqmax_new));
+        اعشاری kqmax_new         = KQ_max_shared[j_VKQ*warp_سائز+شے_ct1.get_local_id(2)];
+        kqmax_new = warp_reduce_max<warp_سائز>(kqmax_new);
+        ثابت اعشاری kqmax_scale = sycl::native::قوت_نما((اعشاری) (KQ_max[j_VKQ] - kqmax_new));
         KQ_max[j_VKQ] = kqmax_new;
 
-#ifdef GGML_SYCL_F16
-        sycl::half2 * VKQ_tmp = (sycl::half2 *) KQ + item_ct1.get_local_id(1) * (V_cols_per_iter * D / 2) +
-                                (nthreads_V == warp_size ? 0 : item_ct1.get_local_id(2) / nthreads_V) * (D / 2);
+#اگر_تعریف_شدہ GGML_SYCL_F16
+        sycl::half2 * VKQ_tmp = (sycl::half2 *) KQ + شے_ct1.get_local_id(1) * (V_ستون_تعداد_فی_iter * D / 2) +
+                                (nthreads_V == warp_سائز ? 0 : شے_ct1.get_local_id(2) / nthreads_V) * (D / 2);
 
-        const sycl::half2 kqmax_scale_h2 = sycl::half2(kqmax_scale, kqmax_scale);
-#pragma unroll
-        for (int i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V) {
+        ثابت sycl::half2 kqmax_scale_h2 = sycl::half2(kqmax_scale, kqmax_scale);
+#ہدایت unroll
+        برائے (صحیح i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V) {
             VKQ[j_VKQ][i_VKQ_0/nthreads_V] *= kqmax_scale_h2;
         }
-#pragma unroll
-        for (int i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V*V_rows_per_thread/2) {
-            const int i_VKQ =
-                i_VKQ_0 + (nthreads_V == warp_size ? item_ct1.get_local_id(2) : item_ct1.get_local_id(2) % nthreads_V) *
-                              (V_rows_per_thread / 2);
+#ہدایت unroll
+        برائے (صحیح i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V*V_صفیں_فی_thread/2) {
+            ثابت صحیح i_VKQ =
+                i_VKQ_0 + (nthreads_V == warp_سائز ? شے_ct1.get_local_id(2) : شے_ct1.get_local_id(2) % nthreads_V) *
+                              (V_صفیں_فی_thread / 2);
 
-            ggml_sycl_memcpy_1<V_rows_per_thread * sizeof(sycl::half)>(VKQ_tmp + i_VKQ,
+            ggml_sycl_memcpy_1<V_صفیں_فی_thread * حجم(sycl::half)>(VKQ_tmp + i_VKQ,
                                                                        &VKQ[j_VKQ][i_VKQ_0 / nthreads_V]);
         }
-#else
-        sycl::float2 * VKQ_tmp = (sycl::float2 *) KQ + item_ct1.get_local_id(1)*(V_cols_per_iter*D/2)
-            + (nthreads_V == warp_size ? 0 : item_ct1.get_local_id(2) / nthreads_V)*(D/2);
-#pragma unroll
-        for (int i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V) {
+#ورنہ
+        sycl::float2 * VKQ_tmp = (sycl::float2 *) KQ + شے_ct1.get_local_id(1)*(V_ستون_تعداد_فی_iter*D/2)
+            + (nthreads_V == warp_سائز ? 0 : شے_ct1.get_local_id(2) / nthreads_V)*(D/2);
+#ہدایت unroll
+        برائے (صحیح i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V) {
             VKQ[j_VKQ][i_VKQ_0/nthreads_V].x() *= kqmax_scale;
             VKQ[j_VKQ][i_VKQ_0/nthreads_V].y() *= kqmax_scale;
         }
-#pragma unroll
-        for (int i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V*V_rows_per_thread/2) {
-            const int i_VKQ = i_VKQ_0 + (nthreads_V == warp_size ? item_ct1.get_local_id(2) : item_ct1.get_local_id(2) % nthreads_V)*(V_rows_per_thread/2);
+#ہدایت unroll
+        برائے (صحیح i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V*V_صفیں_فی_thread/2) {
+            ثابت صحیح i_VKQ = i_VKQ_0 + (nthreads_V == warp_سائز ? شے_ct1.get_local_id(2) : شے_ct1.get_local_id(2) % nthreads_V)*(V_صفیں_فی_thread/2);
 
-            ggml_sycl_memcpy_1<V_rows_per_thread/2*sizeof(float)>(VKQ_tmp + i_VKQ,                       &VKQ[j_VKQ][i_VKQ_0/nthreads_V]);
-            ggml_sycl_memcpy_1<V_rows_per_thread/2*sizeof(float)>(VKQ_tmp + i_VKQ + V_rows_per_thread/4, &VKQ[j_VKQ][i_VKQ_0/nthreads_V + V_rows_per_thread/4]);
+            ggml_sycl_memcpy_1<V_صفیں_فی_thread/2*حجم(اعشاری)>(VKQ_tmp + i_VKQ,                       &VKQ[j_VKQ][i_VKQ_0/nthreads_V]);
+            ggml_sycl_memcpy_1<V_صفیں_فی_thread/2*حجم(اعشاری)>(VKQ_tmp + i_VKQ + V_صفیں_فی_thread/4, &VKQ[j_VKQ][i_VKQ_0/nthreads_V + V_صفیں_فی_thread/4]);
         }
-#endif // GGML_SYCL_F16
+#اگر_ختم // GGML_SYCL_F16
 
-        KQ_sum[j_VKQ] *= kqmax_scale;
-        KQ_sum[j_VKQ] = warp_reduce_sum<warp_size>(KQ_sum[j_VKQ]);
-        if (item_ct1.get_local_id(2) == 0) {
-            KQ_sum_shared[j_VKQ*warp_size+item_ct1.get_local_id(1)] = KQ_sum[j_VKQ];
+        KQ_مجموع[j_VKQ] *= kqmax_scale;
+        KQ_مجموع[j_VKQ] = warp_reduce_مجموع<warp_سائز>(KQ_مجموع[j_VKQ]);
+        اگر (شے_ct1.get_local_id(2) == 0) {
+            KQ_مجموع_shared[j_VKQ*warp_سائز+شے_ct1.get_local_id(1)] = KQ_مجموع[j_VKQ];
         }
 
-        item_ct1.barrier(sycl::access::fence_space::local_space);
+        شے_ct1.barrier(sycl::access::fence_space::local_space);
 
 
-        if (nthreads <= D || tid < D) {
-            KQ_sum[j_VKQ] = KQ_sum_shared[j_VKQ*warp_size+item_ct1.get_local_id(2)];
-            KQ_sum[j_VKQ] = warp_reduce_sum<warp_size>(KQ_sum[j_VKQ]);
+        اگر (nthreads <= D || tid < D) {
+            KQ_مجموع[j_VKQ] = KQ_مجموع_shared[j_VKQ*warp_سائز+شے_ct1.get_local_id(2)];
+            KQ_مجموع[j_VKQ] = warp_reduce_مجموع<warp_سائز>(KQ_مجموع[j_VKQ]);
 
-#pragma unroll
-            for (int i0 = 0; i0 < D; i0 += nthreads) {
-                float dst_val = 0;
-#pragma unroll
-                for (int w = 0; w < nwarps; ++w) {
-#pragma unroll
-                    for (int v = 0; v < V_cols_per_iter; ++v) {
-                        dst_val += float(KQ[w*V_cols_per_iter*D + v*D + i0 + tid]);
+#ہدایت unroll
+            برائے (صحیح i0 = 0; i0 < D; i0 += nthreads) {
+                اعشاری dst_val = 0;
+#ہدایت unroll
+                برائے (صحیح w = 0; w < nwarps; ++w) {
+#ہدایت unroll
+                    برائے (صحیح v = 0; v < V_ستون_تعداد_فی_iter; ++v) {
+                        dst_val += اعشاری(KQ[w*V_ستون_تعداد_فی_iter*D + v*D + i0 + tid]);
                     }
                 }
-                if (item_ct1.get_group_range(1) == 1) {
-                    dst_val /= KQ_sum[j_VKQ];
+                اگر (شے_ct1.get_گروہ_range(1) == 1) {
+                    dst_val /= KQ_مجموع[j_VKQ];
                 }
-                dst[(((sequence * int(ne01.z()) + ic0 + j_VKQ) * ne02 + head) * item_ct1.get_group_range(1) +
-                     item_ct1.get_group(1)) *
+                dst[(((sequence * صحیح(ne01.z()) + ic0 + j_VKQ) * ne02 + سر) * شے_ct1.get_گروہ_range(1) +
+                     شے_ct1.get_گروہ(1)) *
                         D +
                     i0 + tid] = dst_val;
             }
         }
 
-        if (j_VKQ < ncols-1) {
-            item_ct1.barrier(sycl::access::fence_space::local_space);
+        اگر (j_VKQ < ncols-1) {
+            شے_ct1.barrier(sycl::access::fence_space::local_space);
         }
 
     }
 
-    if (item_ct1.get_group_range(1) != 1 && tid < ncols && (ncols == 1 || ic0 + tid < int(ne01.z()))) {
-        dst_meta[((sequence * int(ne01.z()) + ic0 + tid) * ne02 + head) * item_ct1.get_group_range(1) +
-                 item_ct1.get_group(1)] = make_float2(KQ_max[tid], KQ_sum[tid]);
+    اگر (شے_ct1.get_گروہ_range(1) != 1 && tid < ncols && (ncols == 1 || ic0 + tid < صحیح(ne01.z()))) {
+        dst_meta[((sequence * صحیح(ne01.z()) + ic0 + tid) * ne02 + سر) * شے_ct1.get_گروہ_range(1) +
+                 شے_ct1.get_گروہ(1)] = make_float2(KQ_max[tid], KQ_مجموع[tid]);
     }
-#else
-    GGML_UNUSED_VARS(Q, K, V, mask, sinks, KV_max, dst, dst_meta, scale,
-        max_bias, m0, m1, n_head_log2, logit_softcap,
+#ورنہ
+    GGML_غیر_مستعمل_VARS(Q, K, V, نقاب, sinks, KV_max, dst, dst_meta, scale,
+        max_bias, m0, m1, n_سر_log2, logit_softcap,
         ne00, ne01, ne02, ne03,
               nb01, nb02, nb03,
         ne10, ne11, ne12, ne13,
@@ -572,89 +572,89 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
               ne31, ne32, ne33,
               nb31, nb32, nb33);
 
-#endif // SYCL_FLASH_ATTN
+#اگر_ختم // SYCL_FLASH_ATTN
 }
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif // __clang__
+#اگر_تعریف_شدہ __clang__
+#ہدایت clang diagnostic نکالو
+#اگر_ختم // __clang__
 
 
 
-template <int D, int cols_per_block, int type_K, int type_V, bool use_logit_softcap>
-void ggml_sycl_flash_attn_ext_vec_case_impl(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+سانچہ <صحیح D, صحیح ستون_تعداد_فی_بلاک, صحیح type_K, صحیح type_V, منطقی use_logit_softcap>
+خالی ggml_sycl_flash_attn_ext_vec_case_impl(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
 
-    constexpr int warp_size = WARP_16_SIZE; //better performance than WARP_32_SIZE
+    constexpr صحیح warp_سائز = WARP_16_سائز; //better performance than WARP_32_SIZE
 
-    const bool need_f16_K = type_K == GGML_TYPE_F16;
-    const bool need_f16_V = type_V == GGML_TYPE_F16;
+    ثابت منطقی need_f16_K = type_K == GGML_TYPE_F16;
+    ثابت منطقی need_f16_V = type_V == GGML_TYPE_F16;
     constexpr size_t nbytes_shared = 0;
 
-    const auto arch = ggml_sycl_info().devices[ggml_sycl_get_device()].hw_info.arch;
+    ثابت خودکار arch = ggml_sycl_info().devices[ggml_sycl_get_device()].hw_info.arch;
     // D=512 does not fit the default register file; it spills up to 343 bytes per thread, against at most 57 for D <= 256. This kernel is decode only, so thread occupancy is not the limit. It is 1.9x faster at every KV depth on Battlemage.
-    constexpr bool use_large_grf = D >= 512;
+    constexpr منطقی use_large_grf = D >= 512;
 
-    const int nthreads = ggml_sycl_fattn_vec_get_nthreads_device(arch);
-    if constexpr (D <= 256) {
-        if (nthreads == 256) {
-            constexpr int nthreads_hw = 256;
-            constexpr int nwarps = nthreads_hw / warp_size;
-            launch_fattn<D, cols_per_block, 1,
-                         flash_attn_ext_vec<D, cols_per_block, type_K, type_V,
-                                            use_logit_softcap, warp_size, nthreads_hw>, warp_size, use_large_grf>(
-                ctx, dst, nwarps, nbytes_shared, D, need_f16_K, need_f16_V, false);
-            return;
+    ثابت صحیح nthreads = ggml_sycl_fattn_vec_get_nthreads_device(arch);
+    اگر constexpr (D <= 256) {
+        اگر (nthreads == 256) {
+            constexpr صحیح nthreads_hw = 256;
+            constexpr صحیح nwarps = nthreads_hw / warp_سائز;
+            launch_fattn<D, ستون_تعداد_فی_بلاک, 1,
+                         flash_attn_ext_vec<D, ستون_تعداد_فی_بلاک, type_K, type_V,
+                                            use_logit_softcap, warp_سائز, nthreads_hw>, warp_سائز, use_large_grf>(
+                ctx, dst, nwarps, nbytes_shared, D, need_f16_K, need_f16_V, جھوٹ);
+            واپس;
         }
     }
 
-    constexpr int nthreads_hw = 128;
-    constexpr int nwarps = nthreads_hw / warp_size;
-    launch_fattn<D, cols_per_block, 1,
-                 flash_attn_ext_vec<D, cols_per_block, type_K, type_V,
-                                    use_logit_softcap, warp_size, nthreads_hw>, warp_size, use_large_grf>(
-        ctx, dst, nwarps, nbytes_shared, D, need_f16_K, need_f16_V, false);
+    constexpr صحیح nthreads_hw = 128;
+    constexpr صحیح nwarps = nthreads_hw / warp_سائز;
+    launch_fattn<D, ستون_تعداد_فی_بلاک, 1,
+                 flash_attn_ext_vec<D, ستون_تعداد_فی_بلاک, type_K, type_V,
+                                    use_logit_softcap, warp_سائز, nthreads_hw>, warp_سائز, use_large_grf>(
+        ctx, dst, nwarps, nbytes_shared, D, need_f16_K, need_f16_V, جھوٹ);
 }
 
-template <int D, int type_K, int type_V>
-void ggml_sycl_flash_attn_ext_vec_case(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    const ggml_tensor * KQV = dst;
-    const ggml_tensor * Q   = dst->src[0];
+سانچہ <صحیح D, صحیح type_K, صحیح type_V>
+خالی ggml_sycl_flash_attn_ext_vec_case(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ثابت ggml_tensor * KQV = dst;
+    ثابت ggml_tensor * Q   = dst->src[0];
 
-    float logit_softcap;
-    memcpy(&logit_softcap, (const float *) KQV->op_params + 2, sizeof(float));
+    اعشاری logit_softcap;
+    حافظہ_نقل(&logit_softcap, (ثابت اعشاری *) KQV->op_params + 2, حجم(اعشاری));
 
-    if (Q->ne[1] == 1) {
-        constexpr int cols_per_block = 1;
-        if (logit_softcap == 0.0f) {
-            constexpr bool use_logit_softcap = false;
-            ggml_sycl_flash_attn_ext_vec_case_impl<D, cols_per_block, type_K, type_V, use_logit_softcap>(ctx, dst);
-        } else {
-            constexpr bool use_logit_softcap = true;
-            ggml_sycl_flash_attn_ext_vec_case_impl<D, cols_per_block, type_K, type_V, use_logit_softcap>(ctx, dst);
+    اگر (Q->ne[1] == 1) {
+        constexpr صحیح ستون_تعداد_فی_بلاک = 1;
+        اگر (logit_softcap == 0.0f) {
+            constexpr منطقی use_logit_softcap = جھوٹ;
+            ggml_sycl_flash_attn_ext_vec_case_impl<D, ستون_تعداد_فی_بلاک, type_K, type_V, use_logit_softcap>(ctx, dst);
+        } ورنہ {
+            constexpr منطقی use_logit_softcap = سچ;
+            ggml_sycl_flash_attn_ext_vec_case_impl<D, ستون_تعداد_فی_بلاک, type_K, type_V, use_logit_softcap>(ctx, dst);
         }
-        return;
+        واپس;
     }
 
-    constexpr int cols_per_block = 2;
-    if (logit_softcap == 0.0f) {
-        constexpr bool use_logit_softcap = false;
-        ggml_sycl_flash_attn_ext_vec_case_impl<D, cols_per_block, type_K, type_V, use_logit_softcap>(ctx, dst);
-    } else {
-        constexpr bool use_logit_softcap = true;
-        ggml_sycl_flash_attn_ext_vec_case_impl<D, cols_per_block, type_K, type_V, use_logit_softcap>(ctx, dst);
+    constexpr صحیح ستون_تعداد_فی_بلاک = 2;
+    اگر (logit_softcap == 0.0f) {
+        constexpr منطقی use_logit_softcap = جھوٹ;
+        ggml_sycl_flash_attn_ext_vec_case_impl<D, ستون_تعداد_فی_بلاک, type_K, type_V, use_logit_softcap>(ctx, dst);
+    } ورنہ {
+        constexpr منطقی use_logit_softcap = سچ;
+        ggml_sycl_flash_attn_ext_vec_case_impl<D, ستون_تعداد_فی_بلاک, type_K, type_V, use_logit_softcap>(ctx, dst);
     }
 }
 
-#define DECL_FATTN_VEC_CASE(D, type_K, type_V)                              \
-    template void ggml_sycl_flash_attn_ext_vec_case                         \
+#تعریف_کرو DECL_FATTN_VEC_CASE(D, type_K, type_V)                              \
+    سانچہ خالی ggml_sycl_flash_attn_ext_vec_case                         \
     <D, type_K, type_V>(ggml_backend_sycl_context & ctx, ggml_tensor * dst) \
 
-#define EXTERN_DECL_FATTN_VEC_CASES(D, type_K)             \
-    extern DECL_FATTN_VEC_CASE(D, type_K, GGML_TYPE_F16);  \
-    extern DECL_FATTN_VEC_CASE(D, type_K, GGML_TYPE_Q4_0); \
-    extern DECL_FATTN_VEC_CASE(D, type_K, GGML_TYPE_Q4_1); \
-    extern DECL_FATTN_VEC_CASE(D, type_K, GGML_TYPE_Q5_0); \
-    extern DECL_FATTN_VEC_CASE(D, type_K, GGML_TYPE_Q5_1); \
-    extern DECL_FATTN_VEC_CASE(D, type_K, GGML_TYPE_Q8_0); \
+#تعریف_کرو EXTERN_DECL_FATTN_VEC_CASES(D, type_K)             \
+    خارجی DECL_FATTN_VEC_CASE(D, type_K, GGML_TYPE_F16);  \
+    خارجی DECL_FATTN_VEC_CASE(D, type_K, GGML_TYPE_Q4_0); \
+    خارجی DECL_FATTN_VEC_CASE(D, type_K, GGML_TYPE_Q4_1); \
+    خارجی DECL_FATTN_VEC_CASE(D, type_K, GGML_TYPE_Q5_0); \
+    خارجی DECL_FATTN_VEC_CASE(D, type_K, GGML_TYPE_Q5_1); \
+    خارجی DECL_FATTN_VEC_CASE(D, type_K, GGML_TYPE_Q8_0); \
 
 EXTERN_DECL_FATTN_VEC_CASES( 64, GGML_TYPE_F16)
 EXTERN_DECL_FATTN_VEC_CASES( 64, GGML_TYPE_Q4_0)
@@ -684,4 +684,4 @@ EXTERN_DECL_FATTN_VEC_CASES(512, GGML_TYPE_Q5_0)
 EXTERN_DECL_FATTN_VEC_CASES(512, GGML_TYPE_Q5_1)
 EXTERN_DECL_FATTN_VEC_CASES(512, GGML_TYPE_Q8_0)
 
-#endif // GGML_SYCL_FATTN_VEC_HPP
+#اگر_ختم // GGML_SYCL_FATTN_VEC_HPP

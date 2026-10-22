@@ -1,10 +1,10 @@
-#ifndef GGML_SYCL_PAD_REFLECT_1D_HPP
-#define GGML_SYCL_PAD_REFLECT_1D_HPP
+#اگر_غیر_تعریف_شدہ GGML_SYCL_PAD_REFLECT_1D_HPP
+#تعریف_کرو GGML_SYCL_PAD_REFLECT_1D_HPP
 
-#include "common.hpp"
+#شامل "common.hpp"
 
-#define SYCL_PAD_REFLECT_1D_BLOCK_SIZE 256
+#تعریف_کرو SYCL_PAD_REFLECT_1_D_بلاک_سائز 256
 
-void ggml_sycl_op_pad_reflect_1d(ggml_backend_sycl_context& ctx, ggml_tensor* dst);
+خالی ggml_sycl_op_pad_reflect_1d(ggml_backend_sycl_context& ctx, ggml_tensor* dst);
 
-#endif // GGML_SYCL_PAD_REFLECT_1D_HPP
+#اگر_ختم // GGML_SYCL_PAD_REFLECT_1D_HPP

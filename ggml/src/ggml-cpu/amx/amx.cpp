@@ -1,79 +1,79 @@
-#include "amx.h"
-#include "common.h"
-#include "mmq.h"
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
-#include "ggml-impl.h"
-#include "ggml-cpu.h"
-#include "traits.h"
+#شامل "amx.h"
+#شامل "common.h"
+#شامل "mmq.h"
+#شامل "ggml-backend-impl.h"
+#شامل "ggml-backend.h"
+#شامل "ggml-impl.h"
+#شامل "ggml-cpu.h"
+#شامل "traits.h"
 
-#if defined(__linux__)
-#include <sys/syscall.h>
-#include <unistd.h>
-#endif
+#اگر defined(__linux__)
+#شامل <sys/syscall.h>
+#شامل <unistd.h>
+#اگر_ختم
 
-#include <cstdlib>
-#include <cstring>
-#include <memory>
+#شامل <cstdlib>
+#شامل <cstring>
+#شامل <memory>
 
-#if defined(__AMX_INT8__) && defined(__AVX512VNNI__)
+#اگر defined(__AMX_INT8__) && defined(__AVX512VNNI__)
 
 // AMX type_trais
-namespace ggml::cpu::amx {
-class tensor_traits : public ggml::cpu::tensor_traits {
-    bool work_size(int /* n_threads */, const struct ggml_tensor * op, size_t & size) override {
+نامخلا ggml::cpu::amx {
+جماعت tensor_traits : عوامی ggml::cpu::tensor_traits {
+    منطقی work_سائز(صحیح /* n_threads */, ثابت ساخت ggml_tensor * op, size_t & size) override {
         size = ggml_backend_amx_desired_wsize(op);
-        return true;
+        واپس سچ;
     }
 
-    bool compute_forward(struct ggml_compute_params * params, struct ggml_tensor * op) override {
-        if (op->op == GGML_OP_MUL_MAT) {
+    منطقی compute_forward(ساخت ggml_compute_params * params, ساخت ggml_tensor * op) override {
+        اگر (op->op == GGML_OP_MUL_MAT) {
             ggml_backend_amx_mul_mat(params, op);
-            return true;
+            واپس سچ;
         }
-        return false;
+        واپس جھوٹ;
     }
 };
 
-static ggml::cpu::tensor_traits * get_tensor_traits(ggml_backend_buffer_t, struct ggml_tensor *) {
-    static tensor_traits traits;
-    return &traits;
+ساکن ggml::cpu::tensor_traits * get_tensor_traits(ggml_backend_بفر_t, ساخت ggml_tensor *) {
+    ساکن tensor_traits traits;
+    واپس &traits;
 }
 }  // namespace ggml::cpu::amx
 
 // AMX buffer interface
-static void ggml_backend_amx_buffer_free_buffer(ggml_backend_buffer_t buffer) {
-    free(buffer->context);
+ساکن خالی ggml_backend_amx_بفر_free_بفر(ggml_backend_بفر_t بفر) {
+    آزاد(بفر->context);
 }
 
-static void * ggml_backend_amx_buffer_get_base(ggml_backend_buffer_t buffer) {
-    return (void *) (buffer->context);
+ساکن خالی * ggml_backend_amx_بفر_get_بنیاد(ggml_backend_بفر_t بفر) {
+    واپس (خالی *) (بفر->context);
 }
 
-static enum ggml_status ggml_backend_amx_buffer_init_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor) {
-    tensor->extra = (void *) ggml::cpu::amx::get_tensor_traits(buffer, tensor);
+ساکن شمار ggml_حالت ggml_backend_amx_بفر_init_tensor(ggml_backend_بفر_t بفر, ساخت ggml_tensor * tensor) {
+    tensor->extra = (خالی *) ggml::cpu::amx::get_tensor_traits(بفر, tensor);
 
-    GGML_UNUSED(buffer);
-    return GGML_STATUS_SUCCESS;
+    GGML_غیر_مستعمل(بفر);
+    واپس GGML_حالت_SUCCESS;
 }
 
-static void ggml_backend_amx_buffer_memset_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor,
-                                                  uint8_t value, size_t offset, size_t size) {
-    memset((char *) tensor->data + offset, value, size);
+ساکن خالی ggml_backend_amx_بفر_memset_tensor(ggml_backend_بفر_t بفر, ساخت ggml_tensor * tensor,
+                                                  uint8_t value, size_t انحراف, size_t size) {
+    memset((حرف *) tensor->ڈیٹا + انحراف, value, size);
 
-    GGML_UNUSED(buffer);
+    GGML_غیر_مستعمل(بفر);
 }
 
-static void ggml_backend_amx_buffer_set_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor,
-                                               const void * data, size_t offset, size_t size) {
-    if (qtype_has_amx_kernels(tensor->type)) {
+ساکن خالی ggml_backend_amx_بفر_سیٹ_tensor(ggml_backend_بفر_t بفر, ساخت ggml_tensor * tensor,
+                                               ثابت خالی * ڈیٹا, size_t انحراف, size_t size) {
+    اگر (qtype_has_amx_kernels(tensor->type)) {
         GGML_LOG_DEBUG("%s: amx repack tensor %s of type %s\n", __func__, tensor->name, ggml_type_name(tensor->type));
-        ggml_backend_amx_convert_weight(tensor, data, offset, size);
-    } else {
-        memcpy((char *) tensor->data + offset, data, size);
+        ggml_backend_amx_convert_وزن(tensor, ڈیٹا, انحراف, size);
+    } ورنہ {
+        حافظہ_نقل((حرف *) tensor->ڈیٹا + انحراف, ڈیٹا, size);
     }
 
-    GGML_UNUSED(buffer);
+    GGML_غیر_مستعمل(بفر);
 }
 
 /*
@@ -100,152 +100,152 @@ static bool ggml_backend_amx_buffer_cpy_tensor(ggml_backend_buffer_t buffer, con
 }
 */
 
-static void ggml_backend_amx_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value) {
-    memset(buffer->context, value, buffer->size);
+ساکن خالی ggml_backend_amx_بفر_clear(ggml_backend_بفر_t بفر, uint8_t value) {
+    memset(بفر->context, value, بفر->size);
 }
 
-static ggml_backend_buffer_i ggml_backend_amx_buffer_interface = {
-    /* .free_buffer     = */ ggml_backend_amx_buffer_free_buffer,
-    /* .get_base        = */ ggml_backend_amx_buffer_get_base,
-    /* .init_tensor     = */ ggml_backend_amx_buffer_init_tensor,
-    /* .memset_tensor   = */ ggml_backend_amx_buffer_memset_tensor,
-    /* .set_tensor      = */ ggml_backend_amx_buffer_set_tensor,
-    /* .get_tensor      = */ nullptr,
-    /* .set_tensor_2d   = */ nullptr,
-    /* .get_tensor_2d   = */ nullptr,
-    /* .cpy_tensor      = */ nullptr,
-    /* .clear           = */ ggml_backend_amx_buffer_clear,
-    /* .reset           = */ nullptr,
+ساکن ggml_backend_بفر_i ggml_backend_amx_بفر_interface = {
+    /* .free_buffer     = */ ggml_backend_amx_بفر_free_بفر,
+    /* .get_base        = */ ggml_backend_amx_بفر_get_بنیاد,
+    /* .init_tensor     = */ ggml_backend_amx_بفر_init_tensor,
+    /* .memset_tensor   = */ ggml_backend_amx_بفر_memset_tensor,
+    /* .set_tensor      = */ ggml_backend_amx_بفر_سیٹ_tensor,
+    /* .get_tensor      = */ خالی_اشاریہ,
+    /* .set_tensor_2d   = */ خالی_اشاریہ,
+    /* .get_tensor_2d   = */ خالی_اشاریہ,
+    /* .cpy_tensor      = */ خالی_اشاریہ,
+    /* .clear           = */ ggml_backend_amx_بفر_clear,
+    /* .reset           = */ خالی_اشاریہ,
 };
 
-static const char * ggml_backend_amx_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
-    return "AMX";
+ساکن ثابت حرف * ggml_backend_amx_بفر_type_get_name(ggml_backend_بفر_type_t buft) {
+    واپس "AMX";
 
-    GGML_UNUSED(buft);
+    GGML_غیر_مستعمل(buft);
 }
 
-static ggml_backend_buffer_t ggml_backend_amx_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
-    void * data = ggml_aligned_malloc(size);
-    if (data == NULL) {
+ساکن ggml_backend_بفر_t ggml_backend_amx_بفر_type_alloc_بفر(ggml_backend_بفر_type_t buft, size_t size) {
+    خالی * ڈیٹا = ggml_aligned_malloc(size);
+    اگر (ڈیٹا == تہی) {
         fprintf(stderr, "%s: failed to allocate buffer of size %zu\n", __func__, size);
-        return NULL;
+        واپس تہی;
     }
 
-    return ggml_backend_buffer_init(buft, ggml_backend_amx_buffer_interface, data, size);
+    واپس ggml_backend_بفر_init(buft, ggml_backend_amx_بفر_interface, ڈیٹا, size);
 }
 
-static size_t ggml_backend_amx_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    return TENSOR_ALIGNMENT;
+ساکن size_t ggml_backend_amx_بفر_type_get_alignment(ggml_backend_بفر_type_t buft) {
+    واپس TENSOR_ALIGNMENT;
 
-    GGML_UNUSED(buft);
+    GGML_غیر_مستعمل(buft);
 }
 
-namespace ggml::cpu::amx {
-class extra_buffer_type : ggml::cpu::extra_buffer_type {
-    bool supports_op(ggml_backend_dev_t, const struct ggml_tensor * op) override {
-        if (op->op != GGML_OP_MUL_MAT) {
-            return false;
+نامخلا ggml::cpu::amx {
+جماعت extra_بفر_type : ggml::cpu::extra_بفر_type {
+    منطقی supports_op(ggml_backend_dev_t, ثابت ساخت ggml_tensor * op) override {
+        اگر (op->op != GGML_OP_MUL_MAT) {
+            واپس جھوٹ;
         }
-        auto * src0 = op->src[0];
-        auto * src1 = op->src[1];
+        خودکار * src0 = op->src[0];
+        خودکار * src1 = op->src[1];
 
-        if (!ggml_is_contiguous(src0) || !ggml_is_contiguous(src1)) {
-            return false;
+        اگر (!ggml_is_contiguous(src0) || !ggml_is_contiguous(src1)) {
+            واپس جھوٹ;
         }
-        if (!src0->buffer || src0->buffer->buft != ggml_backend_amx_buffer_type()) {
-            return false;
+        اگر (!src0->بفر || src0->بفر->buft != ggml_backend_amx_بفر_type()) {
+            واپس جھوٹ;
         }
-        if (src1->buffer && !ggml_backend_buft_is_host(src1->buffer->buft)) {
-            return false;
+        اگر (src1->بفر && !ggml_backend_buft_is_host(src1->بفر->buft)) {
+            واپس جھوٹ;
         }
-        if (op->ne[0] % (TILE_N * 2)) {
-            return false;
+        اگر (op->ne[0] % (TILE_N * 2)) {
+            واپس جھوٹ;
         }
-        int alignment;
-        switch (src0->type) {
-            case GGML_TYPE_Q4_0:
-            case GGML_TYPE_Q4_1:
-            case GGML_TYPE_Q8_0:
+        صحیح alignment;
+        انتخاب (src0->type) {
+            حالت GGML_TYPE_Q4_0:
+            حالت GGML_TYPE_Q4_1:
+            حالت GGML_TYPE_Q8_0:
                 alignment = TILE_K;
-                break;
-            case GGML_TYPE_Q4_K:
-            case GGML_TYPE_Q5_K:
-            case GGML_TYPE_Q6_K:
-            case GGML_TYPE_IQ4_XS:
+                توڑو;
+            حالت GGML_TYPE_Q4_K:
+            حالت GGML_TYPE_Q5_K:
+            حالت GGML_TYPE_Q6_K:
+            حالت GGML_TYPE_IQ4_XS:
                 alignment = 256; // QK_K
-                break;
-            case GGML_TYPE_F16:
+                توڑو;
+            حالت GGML_TYPE_F16:
                 alignment = 16;
-                break;
-            default:
-                return false;
+                توڑو;
+            طےشدہ:
+                واپس جھوٹ;
         }
-        if (src0->ne[0] % alignment) {
-            return false;
+        اگر (src0->ne[0] % alignment) {
+            واپس جھوٹ;
         }
-        if (src1->type != GGML_TYPE_F32) {
-            return false;
+        اگر (src1->type != GGML_TYPE_F32) {
+            واپس جھوٹ;
         }
-        return true;
+        واپس سچ;
     }
 
-    ggml::cpu::tensor_traits * get_tensor_traits(const struct ggml_tensor * op) override {
-        if (op->op == GGML_OP_MUL_MAT && op->src[0]->buffer &&
-            op->src[0]->buffer->buft == ggml_backend_amx_buffer_type()) {
-            return (ggml::cpu::tensor_traits *) op->src[0]->extra;
+    ggml::cpu::tensor_traits * get_tensor_traits(ثابت ساخت ggml_tensor * op) override {
+        اگر (op->op == GGML_OP_MUL_MAT && op->src[0]->بفر &&
+            op->src[0]->بفر->buft == ggml_backend_amx_بفر_type()) {
+            واپس (ggml::cpu::tensor_traits *) op->src[0]->extra;
         }
 
-        return nullptr;
+        واپس خالی_اشاریہ;
     }
 };
 }  // namespace ggml::cpu::amx
 
-static size_t ggml_backend_amx_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, const ggml_tensor * tensor) {
-    return ggml_backend_amx_get_alloc_size(tensor);
+ساکن size_t ggml_backend_amx_بفر_type_get_alloc_سائز(ggml_backend_بفر_type_t buft, ثابت ggml_tensor * tensor) {
+    واپس ggml_backend_amx_get_alloc_سائز(tensor);
 
-    GGML_UNUSED(buft);
+    GGML_غیر_مستعمل(buft);
 }
 
-#define ARCH_GET_XCOMP_PERM     0x1022
-#define ARCH_REQ_XCOMP_PERM     0x1023
-#define XFEATURE_XTILECFG       17
-#define XFEATURE_XTILEDATA      18
+#تعریف_کرو ARCH_GET_XCOMP_PERM     0x1022
+#تعریف_کرو ARCH_REQ_XCOMP_PERM     0x1023
+#تعریف_کرو XFEATURE_XTILECFG       17
+#تعریف_کرو XFEATURE_XTILEDATA      18
 
-static bool ggml_amx_init() {
-#if defined(__linux__)
-    if (syscall(SYS_arch_prctl, ARCH_REQ_XCOMP_PERM, XFEATURE_XTILEDATA)) {
+ساکن منطقی ggml_amx_init() {
+#اگر defined(__linux__)
+    اگر (syscall(SYS_arch_prctl, ARCH_REQ_XCOMP_PERM, XFEATURE_XTILEDATA)) {
         fprintf(stderr, "AMX is not ready to be used!\n");
-        return false;
+        واپس جھوٹ;
     }
-    return true;
-#elif defined(_WIN32)
-    return true;
-#else
-    return false;
-#endif
+    واپس سچ;
+#وگرنہ_اگر defined(_WIN32)
+    واپس سچ;
+#ورنہ
+    واپس جھوٹ;
+#اگر_ختم
 }
 
-ggml_backend_buffer_type_t ggml_backend_amx_buffer_type() {
-    static struct ggml_backend_buffer_type ggml_backend_buffer_type_amx = {
+ggml_backend_بفر_type_t ggml_backend_amx_بفر_type() {
+    ساکن ساخت ggml_backend_بفر_type ggml_backend_بفر_type_amx = {
         /* .iface = */ {
-                        /* .get_name            = */ ggml_backend_amx_buffer_type_get_name,
-                        /* .alloc_buffer        = */ ggml_backend_amx_buffer_type_alloc_buffer,
-                        /* .alloc_buffer_n      = */ nullptr,
-                        /* .get_alignment       = */ ggml_backend_amx_buffer_type_get_alignment,
-                        /* .get_max_size        = */ nullptr,  // defaults to SIZE_MAX
-                        /* .get_alloc_size      = */ ggml_backend_amx_buffer_type_get_alloc_size,
-                        /* .get_alloc_size_n    = */ NULL,
-                        /* .is_host             = */ nullptr,
+                        /* .get_name            = */ ggml_backend_amx_بفر_type_get_name,
+                        /* .alloc_buffer        = */ ggml_backend_amx_بفر_type_alloc_بفر,
+                        /* .alloc_buffer_n      = */ خالی_اشاریہ,
+                        /* .get_alignment       = */ ggml_backend_amx_بفر_type_get_alignment,
+                        /* .get_max_size        = */ خالی_اشاریہ,  // defaults to SIZE_MAX
+                        /* .get_alloc_size      = */ ggml_backend_amx_بفر_type_get_alloc_سائز,
+                        /* .get_alloc_size_n    = */ تہی,
+                        /* .is_host             = */ خالی_اشاریہ,
                         },
         /* .device  = */ ggml_backend_reg_dev_get(ggml_backend_cpu_reg(), 0),
-        /* .context = */ new ggml::cpu::amx::extra_buffer_type(),
+        /* .context = */ نیا ggml::cpu::amx::extra_بفر_type(),
     };
 
-    if (!ggml_amx_init()) {
-        return nullptr;
+    اگر (!ggml_amx_init()) {
+        واپس خالی_اشاریہ;
     }
 
-    return &ggml_backend_buffer_type_amx;
+    واپس &ggml_backend_بفر_type_amx;
 }
 
-#endif  // defined(__AMX_INT8__) && defined(__AVX512VNNI__)
+#اگر_ختم  // defined(__AMX_INT8__) && defined(__AVX512VNNI__)

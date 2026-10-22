@@ -1,26 +1,26 @@
-#pragma once
+#ہدایت once
 
-#include "decoder.h"
+#شامل "decoder.h"
 
-#include <openvino/frontend/input_model.hpp>
+#شامل <openvino/frontend/input_model.hpp>
 
 namespace ov {
 namespace frontend {
 namespace ggml {
 
-class FrontEnd;
+class Front_انتہا;
 class GgmlDecoder;
 using ov::frontend::ggml::GgmlDecoder;
 
-class InputModel : public ov::frontend::InputModel {
-    friend class ::ov::frontend::ggml::FrontEnd;
+class داخلہ_Model : عوامی ov::frontend::داخلہ_Model {
+    دوست class ::ov::frontend::ggml::Front_انتہا;
 
-public:
-    explicit InputModel(const std::shared_ptr<GgmlDecoder> & gdecoder);
+عوامی:
+    explicit داخلہ_Model(ثابت std::shared_ptr<GgmlDecoder> & gdecoder);
 
-    const std::shared_ptr<GgmlDecoder> & get_model_decoder() const;
+    ثابت std::shared_ptr<GgmlDecoder> & get_model_decoder() ثابت;
 
-private:
+نجی:
     std::shared_ptr<GgmlDecoder> m_decoder;
 };
 

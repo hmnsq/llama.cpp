@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-#pragma once
+#ہدایت once
 
-#include <openvino/core/core_visibility.hpp>
-#include <openvino/core/node.hpp>
-#include <openvino/core/runtime_attribute.hpp>
+#شامل <openvino/core/core_visibility.hpp>
+#شامل <openvino/core/node.hpp>
+#شامل <openvino/core/runtime_attribute.hpp>
 
-namespace ov {
+نامخلا ov {
 
 /**
  * @brief Holds weightless caching attributes of a single constant.
@@ -20,21 +20,21 @@ namespace ov {
  * one produced during the tranformation pipeline) - in that case weightless caching
  * can't be used for that constant.
  */
-class OPENVINO_API WeightlessCacheAttribute : public RuntimeAttribute {
-public:
+جماعت OPENVINO_API WeightlessCacheAttribute : عوامی RuntimeAttribute {
+عوامی:
     OPENVINO_RTTI("WeightlessCacheAttribute", "0", RuntimeAttribute)
 
-    WeightlessCacheAttribute() = delete;
+    WeightlessCacheAttribute() = حذف;
 
-    WeightlessCacheAttribute(size_t original_size, size_t bin_offset, ov::element::Type original_dtype)
-        : original_size(original_size),
-          bin_offset(bin_offset),
+    WeightlessCacheAttribute(size_t original_سائز, size_t bin_انحراف, ov::element::Type original_dtype)
+        : original_سائز(original_سائز),
+          bin_انحراف(bin_انحراف),
           original_dtype(original_dtype) {}
 
-    bool is_copyable() const override;
+    منطقی is_copyable() ثابت override;
 
-    size_t original_size;
-    size_t bin_offset;
+    size_t original_سائز;
+    size_t bin_انحراف;
     ov::element::Type original_dtype;
 };
 

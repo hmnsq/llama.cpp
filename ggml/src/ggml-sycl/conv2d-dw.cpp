@@ -1,169 +1,169 @@
-#include "conv2d-dw.hpp"
+#شامل "conv2d-dw.hpp"
 
-struct conv2d_dw_params {
-    int in_w, in_h;
-    int out_w, out_h;
-    int kernel_w, kernel_h;
-    int stride_x, stride_y;
-    int padding_x, padding_y;
-    int dilation_x, dilation_y;
-    int channels, batches;
+ساخت conv2d_dw_params {
+    صحیح اندر_w, اندر_h;
+    صحیح برآمد_w, برآمد_h;
+    صحیح kernel_w, kernel_h;
+    صحیح stride_x, stride_y;
+    صحیح padding_x, padding_y;
+    صحیح dilation_x, dilation_y;
+    صحیح channels, batches;
 };
 
-struct conv2d_dw_kernel_bounds {
-    int y_min, y_max;
-    int x_min, x_max;
+ساخت conv2d_dw_kernel_bounds {
+    صحیح y_min, y_max;
+    صحیح x_min, x_max;
 };
 
-static inline conv2d_dw_kernel_bounds dw_calculate_kernel_bounds(int out_x, int out_y,
-                                                                  const conv2d_dw_params & p) {
+ساکن اندرونی conv2d_dw_kernel_bounds dw_calculate_kernel_bounds(صحیح برآمد_x, صحیح برآمد_y,
+                                                                  ثابت conv2d_dw_params & p) {
     conv2d_dw_kernel_bounds bounds;
-    bounds.y_min = sycl::max(0, (p.padding_y - out_y * p.stride_y + p.dilation_y - 1) / p.dilation_y);
+    bounds.y_min = sycl::max(0, (p.padding_y - برآمد_y * p.stride_y + p.dilation_y - 1) / p.dilation_y);
     bounds.y_max = sycl::min(p.kernel_h,
-                             (p.in_h + p.padding_y - out_y * p.stride_y + p.dilation_y - 1) / p.dilation_y);
-    bounds.x_min = sycl::max(0, (p.padding_x - out_x * p.stride_x + p.dilation_x - 1) / p.dilation_x);
+                             (p.اندر_h + p.padding_y - برآمد_y * p.stride_y + p.dilation_y - 1) / p.dilation_y);
+    bounds.x_min = sycl::max(0, (p.padding_x - برآمد_x * p.stride_x + p.dilation_x - 1) / p.dilation_x);
     bounds.x_max = sycl::min(p.kernel_w,
-                             (p.in_w + p.padding_x - out_x * p.stride_x + p.dilation_x - 1) / p.dilation_x);
-    return bounds;
+                             (p.اندر_w + p.padding_x - برآمد_x * p.stride_x + p.dilation_x - 1) / p.dilation_x);
+    واپس bounds;
 }
 
-static inline int dw_calculate_input_coord(int out_coord, int kern_coord, int stride, int dilation, int padding) {
-    return out_coord * stride + kern_coord * dilation - padding;
+ساکن اندرونی صحیح dw_calculate_داخلہ_coord(صحیح برآمد_coord, صحیح kern_coord, صحیح stride, صحیح dilation, صحیح padding) {
+    واپس برآمد_coord * stride + kern_coord * dilation - padding;
 }
 
 // whcn layout: input/output stored as [N, C, H, W]
-struct dw_whcn_layout {
-    static int input_index(int n, int c, int y, int x, const conv2d_dw_params & p) {
-        return n * (p.channels * p.in_w * p.in_h) + c * p.in_w * p.in_h + y * p.in_w + x;
+ساخت dw_whcn_layout {
+    ساکن صحیح داخلہ_اشاریہ(صحیح n, صحیح c, صحیح y, صحیح x, ثابت conv2d_dw_params & p) {
+        واپس n * (p.channels * p.اندر_w * p.اندر_h) + c * p.اندر_w * p.اندر_h + y * p.اندر_w + x;
     }
-    static int kernel_index(int c, int ky, int kx, const conv2d_dw_params & p) {
-        return c * p.kernel_h * p.kernel_w + ky * p.kernel_w + kx;
+    ساکن صحیح kernel_اشاریہ(صحیح c, صحیح ky, صحیح kx, ثابت conv2d_dw_params & p) {
+        واپس c * p.kernel_h * p.kernel_w + ky * p.kernel_w + kx;
     }
-    static int output_index(int n, int c, int y, int x, const conv2d_dw_params & p) {
-        return n * (p.channels * p.out_w * p.out_h) + c * p.out_w * p.out_h + y * p.out_w + x;
+    ساکن صحیح output_اشاریہ(صحیح n, صحیح c, صحیح y, صحیح x, ثابت conv2d_dw_params & p) {
+        واپس n * (p.channels * p.برآمد_w * p.برآمد_h) + c * p.برآمد_w * p.برآمد_h + y * p.برآمد_w + x;
     }
-    static void unpack_indices(int global_idx, const conv2d_dw_params & p,
-                               int & n, int & c, int & out_y, int & out_x) {
-        out_x  = global_idx % p.out_w;
-        out_y  = (global_idx / p.out_w) % p.out_h;
-        c      = (global_idx / (p.out_w * p.out_h)) % p.channels;
-        n      = global_idx / (p.out_w * p.out_h * p.channels);
+    ساکن خالی unpack_indices(صحیح global_idx, ثابت conv2d_dw_params & p,
+                               صحیح & n, صحیح & c, صحیح & برآمد_y, صحیح & برآمد_x) {
+        برآمد_x  = global_idx % p.برآمد_w;
+        برآمد_y  = (global_idx / p.برآمد_w) % p.برآمد_h;
+        c      = (global_idx / (p.برآمد_w * p.برآمد_h)) % p.channels;
+        n      = global_idx / (p.برآمد_w * p.برآمد_h * p.channels);
     }
 };
 
 // cwhn layout: input/output stored as [N, H, W, C]
-struct dw_cwhn_layout {
-    static int input_index(int n, int c, int y, int x, const conv2d_dw_params & p) {
-        return n * (p.channels * p.in_w * p.in_h) + (y * p.in_w + x) * p.channels + c;
+ساخت dw_cwhn_layout {
+    ساکن صحیح داخلہ_اشاریہ(صحیح n, صحیح c, صحیح y, صحیح x, ثابت conv2d_dw_params & p) {
+        واپس n * (p.channels * p.اندر_w * p.اندر_h) + (y * p.اندر_w + x) * p.channels + c;
     }
-    static int kernel_index(int c, int ky, int kx, const conv2d_dw_params & p) {
-        return (ky * p.kernel_w + kx) * p.channels + c;
+    ساکن صحیح kernel_اشاریہ(صحیح c, صحیح ky, صحیح kx, ثابت conv2d_dw_params & p) {
+        واپس (ky * p.kernel_w + kx) * p.channels + c;
     }
-    static int output_index(int n, int c, int y, int x, const conv2d_dw_params & p) {
-        return n * (p.channels * p.out_w * p.out_h) + y * (p.out_w * p.channels) + x * p.channels + c;
+    ساکن صحیح output_اشاریہ(صحیح n, صحیح c, صحیح y, صحیح x, ثابت conv2d_dw_params & p) {
+        واپس n * (p.channels * p.برآمد_w * p.برآمد_h) + y * (p.برآمد_w * p.channels) + x * p.channels + c;
     }
-    static void unpack_indices(int global_idx, const conv2d_dw_params & p,
-                               int & n, int & c, int & out_y, int & out_x) {
+    ساکن خالی unpack_indices(صحیح global_idx, ثابت conv2d_dw_params & p,
+                               صحیح & n, صحیح & c, صحیح & برآمد_y, صحیح & برآمد_x) {
         c      = global_idx % p.channels;
-        out_x  = (global_idx / p.channels) % p.out_w;
-        out_y  = (global_idx / (p.channels * p.out_w)) % p.out_h;
-        n      = global_idx / (p.channels * p.out_w * p.out_h);
+        برآمد_x  = (global_idx / p.channels) % p.برآمد_w;
+        برآمد_y  = (global_idx / (p.channels * p.برآمد_w)) % p.برآمد_h;
+        n      = global_idx / (p.channels * p.برآمد_w * p.برآمد_h);
     }
 };
 
-template <typename KernelT, typename Layout>
-static void conv2d_dw_kernel(const float * input, const KernelT * kernel, float * output,
-                             const conv2d_dw_params p, const sycl::nd_item<3> & item_ct1) {
-    const int global_idx     = item_ct1.get_local_id(2) +
-                               item_ct1.get_group(2) * item_ct1.get_local_range(2);
-    const int total_elements = p.batches * p.channels * p.out_h * p.out_w;
+سانچہ <قسم_نام KernelT, قسم_نام Layout>
+ساکن خالی conv2d_dw_kernel(ثابت اعشاری * داخلہ, ثابت KernelT * kernel, اعشاری * output,
+                             ثابت conv2d_dw_params p, ثابت sycl::nd_شے<3> & شے_ct1) {
+    ثابت صحیح global_idx     = شے_ct1.get_local_id(2) +
+                               شے_ct1.get_گروہ(2) * شے_ct1.get_local_range(2);
+    ثابت صحیح کل_elements = p.batches * p.channels * p.برآمد_h * p.برآمد_w;
 
-    if (global_idx >= total_elements) {
-        return;
+    اگر (global_idx >= کل_elements) {
+        واپس;
     }
 
-    int n, c, out_y, out_x;
-    Layout::unpack_indices(global_idx, p, n, c, out_y, out_x);
+    صحیح n, c, برآمد_y, برآمد_x;
+    Layout::unpack_indices(global_idx, p, n, c, برآمد_y, برآمد_x);
 
-    float acc = 0.0f;
-    const conv2d_dw_kernel_bounds bounds = dw_calculate_kernel_bounds(out_x, out_y, p);
+    اعشاری acc = 0.0f;
+    ثابت conv2d_dw_kernel_bounds bounds = dw_calculate_kernel_bounds(برآمد_x, برآمد_y, p);
 
-    for (int ky = bounds.y_min; ky < bounds.y_max; ++ky) {
-        const int in_y = dw_calculate_input_coord(out_y, ky, p.stride_y, p.dilation_y, p.padding_y);
-        for (int kx = bounds.x_min; kx < bounds.x_max; ++kx) {
-            const int in_x = dw_calculate_input_coord(out_x, kx, p.stride_x, p.dilation_x, p.padding_x);
-            acc += input[Layout::input_index(n, c, in_y, in_x, p)] *
-                   static_cast<float>(kernel[Layout::kernel_index(c, ky, kx, p)]);
+    برائے (صحیح ky = bounds.y_min; ky < bounds.y_max; ++ky) {
+        ثابت صحیح اندر_y = dw_calculate_داخلہ_coord(برآمد_y, ky, p.stride_y, p.dilation_y, p.padding_y);
+        برائے (صحیح kx = bounds.x_min; kx < bounds.x_max; ++kx) {
+            ثابت صحیح اندر_x = dw_calculate_داخلہ_coord(برآمد_x, kx, p.stride_x, p.dilation_x, p.padding_x);
+            acc += داخلہ[Layout::داخلہ_اشاریہ(n, c, اندر_y, اندر_x, p)] *
+                   static_cast<اعشاری>(kernel[Layout::kernel_اشاریہ(c, ky, kx, p)]);
         }
     }
 
-    output[Layout::output_index(n, c, out_y, out_x, p)] = acc;
+    output[Layout::output_اشاریہ(n, c, برآمد_y, برآمد_x, p)] = acc;
 }
 
-template <typename KernelT, typename Layout>
-static void conv2d_dw_sycl(const float * x_d, const KernelT * w_d, float * y_d,
-                            const conv2d_dw_params p, const queue_ptr & stream) {
-    const int total      = p.batches * p.channels * p.out_h * p.out_w;
-    const int num_blocks = (total + SYCL_CONV2D_DW_BLOCK_SIZE - 1) / SYCL_CONV2D_DW_BLOCK_SIZE;
-    const sycl::range<3> block_dims(1, 1, SYCL_CONV2D_DW_BLOCK_SIZE);
-    const sycl::range<3> block_nums(1, 1, num_blocks);
-    stream->parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-        [=](sycl::nd_item<3> item_ct1) {
-            conv2d_dw_kernel<KernelT, Layout>(x_d, w_d, y_d, p, item_ct1);
+سانچہ <قسم_نام KernelT, قسم_نام Layout>
+ساکن خالی conv2d_dw_sycl(ثابت اعشاری * x_d, ثابت KernelT * w_d, اعشاری * y_d,
+                            ثابت conv2d_dw_params p, ثابت قطار_ptr & stream) {
+    ثابت صحیح کل      = p.batches * p.channels * p.برآمد_h * p.برآمد_w;
+    ثابت صحیح عدد_بلاکیں = (کل + SYCL_CONV2_D_DW_بلاک_سائز - 1) / SYCL_CONV2_D_DW_بلاک_سائز;
+    ثابت sycl::range<3> بلاک_dims(1, 1, SYCL_CONV2_D_DW_بلاک_سائز);
+    ثابت sycl::range<3> بلاک_nums(1, 1, عدد_بلاکیں);
+    stream->parallel_for(sycl::nd_range<3>(بلاک_nums * بلاک_dims, بلاک_dims),
+        [=](sycl::nd_شے<3> شے_ct1) {
+            conv2d_dw_kernel<KernelT, Layout>(x_d, w_d, y_d, p, شے_ct1);
         });
 }
 
-void ggml_sycl_op_conv2d_dw(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+خالی ggml_sycl_op_conv2d_dw(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
 
-    const ggml_tensor * kernel = dst->src[0];
-    const ggml_tensor * input  = dst->src[1];
+    ثابت ggml_tensor * kernel = dst->src[0];
+    ثابت ggml_tensor * داخلہ  = dst->src[1];
 
     GGML_ASSERT((kernel->type == GGML_TYPE_F32 || kernel->type == GGML_TYPE_F16) &&
-                input->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32);
+                داخلہ->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32);
 
-    const float * x_d = (const float *) input->data;
-    float *       y_d = (float *) dst->data;
+    ثابت اعشاری * x_d = (ثابت اعشاری *) داخلہ->ڈیٹا;
+    اعشاری *       y_d = (اعشاری *) dst->ڈیٹا;
 
-    const int32_t * p          = (const int32_t *) dst->op_params;
-    const int       stride_x   = p[0];
-    const int       stride_y   = p[1];
-    const int       padding_x  = p[2];
-    const int       padding_y  = p[3];
-    const int       dilation_x = p[4];
-    const int       dilation_y = p[5];
+    ثابت int32_t * p          = (ثابت int32_t *) dst->op_params;
+    ثابت صحیح       stride_x   = p[0];
+    ثابت صحیح       stride_y   = p[1];
+    ثابت صحیح       padding_x  = p[2];
+    ثابت صحیح       padding_y  = p[3];
+    ثابت صحیح       dilation_x = p[4];
+    ثابت صحیح       dilation_y = p[5];
 
-    const int in_w     = input->ne[0];
-    const int in_h     = input->ne[1];
-    const int kernel_w = kernel->ne[0];
-    const int kernel_h = kernel->ne[1];
-    const int out_w    = dst->ne[0];
-    const int out_h    = dst->ne[1];
-    const int channels = dst->ne[2];
-    const int batches  = dst->ne[3];
+    ثابت صحیح اندر_w     = داخلہ->ne[0];
+    ثابت صحیح اندر_h     = داخلہ->ne[1];
+    ثابت صحیح kernel_w = kernel->ne[0];
+    ثابت صحیح kernel_h = kernel->ne[1];
+    ثابت صحیح برآمد_w    = dst->ne[0];
+    ثابت صحیح برآمد_h    = dst->ne[1];
+    ثابت صحیح channels = dst->ne[2];
+    ثابت صحیح batches  = dst->ne[3];
 
-    const conv2d_dw_params params = { in_w, in_h, out_w, out_h, kernel_w, kernel_h,
+    ثابت conv2d_dw_params params = { اندر_w, اندر_h, برآمد_w, برآمد_h, kernel_w, kernel_h,
                                       stride_x, stride_y, padding_x, padding_y,
                                       dilation_x, dilation_y, channels, batches };
 
-    const queue_ptr stream = ctx.stream();
+    ثابت قطار_ptr stream = ctx.stream();
 
-    if (kernel->type == GGML_TYPE_F16) {
-        const sycl::half * w_d = (const sycl::half *) kernel->data;
-        if (ggml_is_contiguous(input)) {
+    اگر (kernel->type == GGML_TYPE_F16) {
+        ثابت sycl::half * w_d = (ثابت sycl::half *) kernel->ڈیٹا;
+        اگر (ggml_is_contiguous(داخلہ)) {
             conv2d_dw_sycl<sycl::half, dw_whcn_layout>(x_d, w_d, y_d, params, stream);
-        } else if (ggml_is_contiguous_channels(input)) {
+        } ورنہ اگر (ggml_is_contiguous_channels(داخلہ)) {
             conv2d_dw_sycl<sycl::half, dw_cwhn_layout>(x_d, w_d, y_d, params, stream);
-        } else {
+        } ورنہ {
             GGML_ABORT("Unsupported memory layout for conv2d_dw");
         }
-    } else {
-        const float * w_d = (const float *) kernel->data;
-        if (ggml_is_contiguous(input)) {
-            conv2d_dw_sycl<float, dw_whcn_layout>(x_d, w_d, y_d, params, stream);
-        } else if (ggml_is_contiguous_channels(input)) {
-            conv2d_dw_sycl<float, dw_cwhn_layout>(x_d, w_d, y_d, params, stream);
-        } else {
+    } ورنہ {
+        ثابت اعشاری * w_d = (ثابت اعشاری *) kernel->ڈیٹا;
+        اگر (ggml_is_contiguous(داخلہ)) {
+            conv2d_dw_sycl<اعشاری, dw_whcn_layout>(x_d, w_d, y_d, params, stream);
+        } ورنہ اگر (ggml_is_contiguous_channels(داخلہ)) {
+            conv2d_dw_sycl<اعشاری, dw_cwhn_layout>(x_d, w_d, y_d, params, stream);
+        } ورنہ {
             GGML_ABORT("Unsupported memory layout for conv2d_dw");
         }
     }

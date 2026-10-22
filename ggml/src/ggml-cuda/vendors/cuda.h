@@ -1,28 +1,28 @@
-#pragma once
+#ہدایت once
 
-#include <cuda_runtime.h>
-#include <cuda.h>
-#include <cublas_v2.h>
-#include <cuda_bf16.h>
-#include <cuda_fp16.h>
+#شامل <cuda_runtime.h>
+#شامل <cuda.h>
+#شامل <cublas_v2.h>
+#شامل <cuda_bf16.h>
+#شامل <cuda_fp16.h>
 
-#ifdef GGML_USE_NCCL
-#include <nccl.h>
-#endif // GGML_USE_NCCL
+#اگر_تعریف_شدہ GGML_USE_NCCL
+#شامل <nccl.h>
+#اگر_ختم // GGML_USE_NCCL
 
-#if CUDART_VERSION >= 11080
-#include <cuda_fp8.h>
-#define FP8_AVAILABLE
-#endif // CUDART_VERSION >= 11080
+#اگر CUDART_نسخہ >= 11080
+#شامل <cuda_fp8.h>
+#تعریف_کرو FP8_دستیاب
+#اگر_ختم // CUDART_VERSION >= 11080
 
-#if CUDART_VERSION >= 12080
-#include <cuda_fp4.h>
-#endif // CUDART_VERSION >= 12080
+#اگر CUDART_نسخہ >= 12080
+#شامل <cuda_fp4.h>
+#اگر_ختم // CUDART_VERSION >= 12080
 
-#if CUDART_VERSION < 11020
-#define CU_DEVICE_ATTRIBUTE_VIRTUAL_MEMORY_MANAGEMENT_SUPPORTED CU_DEVICE_ATTRIBUTE_VIRTUAL_ADDRESS_MANAGEMENT_SUPPORTED
-#define CUBLAS_TF32_TENSOR_OP_MATH CUBLAS_TENSOR_OP_MATH
-#define CUBLAS_COMPUTE_16F CUDA_R_16F
-#define CUBLAS_COMPUTE_32F CUDA_R_32F
-#define cublasComputeType_t cudaDataType_t
-#endif // CUDART_VERSION < 11020
+#اگر CUDART_نسخہ < 11020
+#تعریف_کرو CU_DEVICE_ATTRIBUTE_VIRTUAL_حافظہ_MANAGEMENT_SUPPORTED CU_DEVICE_ATTRIBUTE_VIRTUAL_پتہ_MANAGEMENT_SUPPORTED
+#تعریف_کرو CUBLAS_TF32_TENSOR_OP_MATH CUBLAS_TENSOR_OP_MATH
+#تعریف_کرو CUBLAS_COMPUTE_16F CUDA_R_16F
+#تعریف_کرو CUBLAS_COMPUTE_32F CUDA_R_32F
+#تعریف_کرو cublasComputeType_t cuda_ڈیٹا_Type_t
+#اگر_ختم // CUDART_VERSION < 11020

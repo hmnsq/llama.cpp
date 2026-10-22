@@ -1,136 +1,136 @@
-#include "ggml-zdnn.h"
-#include "ggml-impl.h"
-#include "ggml-backend-impl.h"
+#شامل "ggml-zdnn.h"
+#شامل "ggml-impl.h"
+#شامل "ggml-backend-impl.h"
 
-#include "ggml-zdnn/common.hpp"
-#include "ggml-zdnn/fattn.hpp"
-#include "ggml-zdnn/mmf.hpp"
-#include "ggml-zdnn/mmq.hpp"
-#include "ggml-zdnn/utils.hpp"
-#include "ggml.h"
+#شامل "ggml-zdnn/common.hpp"
+#شامل "ggml-zdnn/fattn.hpp"
+#شامل "ggml-zdnn/mmf.hpp"
+#شامل "ggml-zdnn/mmq.hpp"
+#شامل "ggml-zdnn/utils.hpp"
+#شامل "ggml.h"
 
-#include <vector>
-#include <memory>
-#include <csignal>  // raise(SIGTRAP)
-#include <unistd.h>
+#شامل <vector>
+#شامل <memory>
+#شامل <csignal>  // raise(SIGTRAP)
+#شامل <unistd.h>
 
-static void ggml_zdnn_compute_forward_mul_mat(
+ساکن خالی ggml_zdnn_compute_forward_mul_mat(
     ggml_backend_zdnn_context * ctx,
           ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];  // weights
-    const ggml_tensor * src1 = dst->src[1];  // inputs
+    ثابت ggml_tensor * src0 = dst->src[0];  // weights
+    ثابت ggml_tensor * src1 = dst->src[1];  // inputs
 
-    if (ggml_is_quantized(src0->type)) {
+    اگر (ggml_is_quantized(src0->type)) {
         ggml_zdnn_mul_mat_q(ctx, src0, src1, dst);
-    } else {
+    } ورنہ {
         ggml_zdnn_mul_mat_f(ctx, src0, src1, dst);
     }
 }
 
-static bool ggml_zdnn_compute_forward(
+ساکن منطقی ggml_zdnn_compute_forward(
     ggml_backend_zdnn_context * ctx,
     ggml_tensor * dst) {
 
-    switch (dst->op) {
-        case GGML_OP_MUL_MAT:
+    انتخاب (dst->op) {
+        حالت GGML_OP_MUL_MAT:
             {
                 ggml_zdnn_compute_forward_mul_mat(ctx, dst);
-            } break;
+            } توڑو;
 
-        case GGML_OP_FLASH_ATTN_EXT:
+        حالت GGML_OP_FLASH_ATTN_EXT:
             {
                 ggml_zdnn_flash_attn_ext(ctx, dst);
-            } break;
+            } توڑو;
 
-        default:
-            return false;
+        طےشدہ:
+            واپس جھوٹ;
     }
 
-    return true;
+    واپس سچ;
 }
 
-static enum ggml_status ggml_zdnn_graph_compute(ggml_backend_t backend, ggml_cgraph * gf) {
+ساکن شمار ggml_حالت ggml_zdnn_گراف_compute(ggml_backend_t backend, ggml_cgraph * gf) {
     ggml_backend_zdnn_context        * ctx     = (       ggml_backend_zdnn_context *)backend->context;
     ggml_backend_zdnn_device_context * ctx_dev = (ggml_backend_zdnn_device_context *)backend->device->context;
 
     ctx->gf = gf;
-    for (int i = 0; i < gf->n_nodes; i++) {
-        ggml_tensor * node = gf->nodes[i];
+    برائے (صحیح i = 0; i < gf->n_nodes; i++) {
+        ggml_tensor * گرہ = gf->nodes[i];
 
-        if (ggml_is_empty(node)
-            || node->op == GGML_OP_NONE
-            || node->op == GGML_OP_RESHAPE
-            || node->op == GGML_OP_VIEW
-            || node->op == GGML_OP_PERMUTE
-            || node->op == GGML_OP_TRANSPOSE) {
-            continue;
+        اگر (ggml_is_خالی_خانے(گرہ)
+            || گرہ->op == GGML_OP_NONE
+            || گرہ->op == GGML_OP_RESHAPE
+            || گرہ->op == GGML_OP_VIEW
+            || گرہ->op == GGML_OP_ترتیب_بدلو
+            || گرہ->op == GGML_OP_TRANSPOSE) {
+            جاری;
         }
 
-        if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
-            continue;
+        اگر ((گرہ->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+            جاری;
         }
 
-        bool ok = ggml_zdnn_compute_forward(ctx, node);
-        if (!ok) {
+        منطقی ok = ggml_zdnn_compute_forward(ctx, گرہ);
+        اگر (!ok) {
             GGML_LOG_ERROR("%s: unsupported op %s (%s)\n",
-                           __func__, node->name, ggml_op_name(node->op));
+                           __func__, گرہ->name, ggml_op_name(گرہ->op));
         }
 
         GGML_ASSERT(ok);
     }
 
-    return GGML_STATUS_SUCCESS;
+    واپس GGML_حالت_SUCCESS;
 
-    GGML_UNUSED(ctx_dev);
+    GGML_غیر_مستعمل(ctx_dev);
 }
 
-static bool ggml_zdnn_supports_op(const ggml_backend_zdnn_device_context * ctx_dev, const ggml_tensor * op) {
-    switch (op->op) {
-        case GGML_OP_NONE:
-        case GGML_OP_RESHAPE:
-        case GGML_OP_VIEW:
-        case GGML_OP_TRANSPOSE:
-        case GGML_OP_PERMUTE:
-            return true;
+ساکن منطقی ggml_zdnn_supports_op(ثابت ggml_backend_zdnn_device_context * ctx_dev, ثابت ggml_tensor * op) {
+    انتخاب (op->op) {
+        حالت GGML_OP_NONE:
+        حالت GGML_OP_RESHAPE:
+        حالت GGML_OP_VIEW:
+        حالت GGML_OP_TRANSPOSE:
+        حالت GGML_OP_ترتیب_بدلو:
+            واپس سچ;
 
-        case GGML_OP_MUL_MAT:
+        حالت GGML_OP_MUL_MAT:
             {
-                const ggml_tensor * weights = op->src[0];
-                const ggml_tensor * inputs  = op->src[1];
+                ثابت ggml_tensor * weights = op->src[0];
+                ثابت ggml_tensor * inputs  = op->src[1];
 
-                const int64_t ne10 = inputs->ne[0];
-                const int64_t ne0  = op->ne[0];
-                const int64_t ne1  = op->ne[1];
+                ثابت int64_t ne10 = inputs->ne[0];
+                ثابت int64_t ne0  = op->ne[0];
+                ثابت int64_t ne1  = op->ne[1];
 
-                const int64_t max_batch = ctx_dev->max_size;
+                ثابت int64_t max_batch = ctx_dev->max_size;
 
-                if (!ggml_is_matrix(weights) || !ggml_is_matrix(inputs) ||
+                اگر (!ggml_is_میٹرکس(weights) || !ggml_is_میٹرکس(inputs) ||
                     !ggml_is_contiguous(weights) || !ggml_is_contiguous(inputs) ||
-                    weights->view_src != nullptr ||
+                    weights->view_src != خالی_اشاریہ ||
                     ne0 > max_batch || ne1 > max_batch || ne10 > max_batch) {
-                        return false;
+                        واپس جھوٹ;
                 }
 
-                switch (weights->type) {
-                    case GGML_TYPE_F32:
-                    case GGML_TYPE_F16:
-                    case GGML_TYPE_BF16:
+                انتخاب (weights->type) {
+                    حالت GGML_TYPE_F32:
+                    حالت GGML_TYPE_F16:
+                    حالت GGML_TYPE_BF16:
                         // the inputs ztensor is used, and views have none
-                        return inputs->view_src == nullptr;
-                    case GGML_TYPE_Q8_0:
+                        واپس inputs->view_src == خالی_اشاریہ;
+                    حالت GGML_TYPE_Q8_0:
                         // the inputs are quantized from their data, so views work as well
-                        return ctx_dev->has_parmblkformat_1 && inputs->type == GGML_TYPE_F32;
-                    default:
-                        return false;
+                        واپس ctx_dev->has_parmblkformat_1 && inputs->type == GGML_TYPE_F32;
+                    طےشدہ:
+                        واپس جھوٹ;
                 }
-            } break;
+            } توڑو;
 
-        case GGML_OP_FLASH_ATTN_EXT:
-            return ggml_zdnn_supports_flash_attn_ext(ctx_dev, op);
+        حالت GGML_OP_FLASH_ATTN_EXT:
+            واپس ggml_zdnn_supports_flash_attn_ext(ctx_dev, op);
 
-        default:
-            return false;
+        طےشدہ:
+            واپس جھوٹ;
     }
 }
 
@@ -141,60 +141,60 @@ static bool ggml_zdnn_supports_op(const ggml_backend_zdnn_device_context * ctx_d
 //
 
 // initialised in ggml_backend_zdnn_reg
-static ggml_backend_reg    g_ggml_backend_zdnn_reg;
-static ggml_backend_device g_ggml_backend_zdnn_device;
+ساکن ggml_backend_reg    g_ggml_backend_zdnn_reg;
+ساکن ggml_backend_device g_ggml_backend_zdnn_device;
 
-static ggml_backend_zdnn_device_context g_ggml_ctx_dev_main = {
+ساکن ggml_backend_zdnn_device_context g_ggml_ctx_dev_main = {
     /* .zdnn_device           = */ 0,
     /* .zdnn_device_ref_count = */ 0,
-    /* .has_parmblkformat_0   = */ false,
-    /* .has_parmblkformat_1   = */ false,
+    /* .has_parmblkformat_0   = */ جھوٹ,
+    /* .has_parmblkformat_1   = */ جھوٹ,
     /* .max_size              = */ 0,
     /* .name                  = */ "",
 };
 
-static int ggml_backend_zdnn_device_acq(ggml_backend_zdnn_device_context * ctx) {
-    assert(ctx != NULL);
+ساکن صحیح ggml_backend_zdnn_device_acq(ggml_backend_zdnn_device_context * ctx) {
+    أكد(ctx != تہی);
 
-    if (ctx->zdnn_device == 0) {
+    اگر (ctx->zdnn_device == 0) {
         ctx->zdnn_device = 1;
     }
 
-    if (ctx->zdnn_device >= 1) {
+    اگر (ctx->zdnn_device >= 1) {
         ctx->has_parmblkformat_0 = zdnn_is_nnpa_parmblk_fmt_installed(1, NNPA_PARMBLKFORMAT_0);
         ctx->has_parmblkformat_1 = zdnn_is_nnpa_parmblk_fmt_installed(1, NNPA_PARMBLKFORMAT_1);
-        ctx->max_size = zdnn_get_nnpa_max_dim_idx_size();
-        strncpy(ctx->name, GGML_ZDNN_NAME, sizeof(ctx->name) - 1);
+        ctx->max_size = zdnn_get_nnpa_max_dim_idx_سائز();
+        strncpy(ctx->name, GGML_ZDNN_NAME, حجم(ctx->name) - 1);
     }
 
-    ctx->zdnn_device_ref_count++;
-    return ctx->zdnn_device;
+    ctx->zdnn_device_ref_گنتی++;
+    واپس ctx->zdnn_device;
 }
 
-static void ggml_backend_zdnn_device_rel(ggml_backend_zdnn_device_context * ctx) {
-    assert(ctx != NULL);
-    assert(ctx->zdnn_device_ref_count > 0);
+ساکن خالی ggml_backend_zdnn_device_rel(ggml_backend_zdnn_device_context * ctx) {
+    أكد(ctx != تہی);
+    أكد(ctx->zdnn_device_ref_گنتی > 0);
 
-    ctx->zdnn_device_ref_count--;
-    if (ctx->zdnn_device_ref_count == 0) {
-        if (ctx->zdnn_device >= 0) {
+    ctx->zdnn_device_ref_گنتی--;
+    اگر (ctx->zdnn_device_ref_گنتی == 0) {
+        اگر (ctx->zdnn_device >= 0) {
             ctx->zdnn_device = 0;
         }
     }
 }
 
-static ggml_backend_zdnn_context * ggml_zdnn_init(ggml_backend_dev_t dev) {
+ساکن ggml_backend_zdnn_context * ggml_zdnn_init(ggml_backend_dev_t dev) {
     GGML_LOG_INFO("%s: allocating\n", __func__);
     GGML_LOG_INFO("%s: found 1 device\n", __func__);
 
-    #ifdef STATIC_LIB
+    #اگر_تعریف_شدہ STATIC_LIB
     zdnn_init();
-    #endif
+    #اگر_ختم
 
-    ggml_backend_zdnn_context * ctx = new ggml_backend_zdnn_context();
+    ggml_backend_zdnn_context * ctx = نیا ggml_backend_zdnn_context();
     ggml_backend_zdnn_device_context * ctx_dev = (ggml_backend_zdnn_device_context *)dev->context;
 
-    int device = 1;
+    صحیح device = 1;
     GGML_LOG_INFO("%s: picking default device: %s\n", __func__, ctx_dev->name);
 
     ctx->device = device;
@@ -202,325 +202,325 @@ static ggml_backend_zdnn_context * ggml_zdnn_init(ggml_backend_dev_t dev) {
     GGML_LOG_INFO("%s: NNPA_PARMBLKFORMAT_0 = %s\n", __func__, ctx_dev->has_parmblkformat_0 ? "true" : "false");
     GGML_LOG_INFO("%s: NNPA_PARMBLKFORMAT_1 = %s\n", __func__, ctx_dev->has_parmblkformat_1 ? "true" : "false");
 
-    ctx->n_threads = GGML_DEFAULT_N_THREADS;
-    ctx->gf = nullptr;
+    ctx->n_دھاگے = GGML_DEFAULT_N_دھاگے;
+    ctx->gf = خالی_اشاریہ;
 
-    return ctx;
+    واپس ctx;
 }
 
-static void ggml_zdnn_free(ggml_backend_zdnn_context * ctx) {
+ساکن خالی ggml_zdnn_free(ggml_backend_zdnn_context * ctx) {
     GGML_LOG_INFO("%s: deallocating\n", __func__);
 
-    for (const auto & it : ctx->zero_bias) {
-        ZDNN_CHECK(zdnn_free_ztensor_buffer(&it.second->ztensor));
+    برائے (ثابت خودکار & it : ctx->zero_bias) {
+        ZDNN_CHECK(zdnn_free_ztensor_بفر(&it.second->ztensor));
     }
 
-    delete ctx;
+    حذف ctx;
 }
 
 //
 // backend interface
 //
 
-static void ggml_backend_zdnn_buffer_free_buffer(ggml_backend_buffer_t buffer) {
-    ggml_backend_zdnn_buffer_context * ctx = (ggml_backend_zdnn_buffer_context *)buffer->context;
+ساکن خالی ggml_backend_zdnn_بفر_free_بفر(ggml_backend_بفر_t بفر) {
+    ggml_backend_zdnn_بفر_context * ctx = (ggml_backend_zdnn_بفر_context *)بفر->context;
 
-    for (const auto & buf_ptr : ctx->buffers) {
-        ggml_backend_zdnn_buffer * buf = buf_ptr.get();
+    برائے (ثابت خودکار & buf_ptr : ctx->buffers) {
+        ggml_backend_zdnn_بفر * buf = buf_ptr.get();
 
         // Free any extra buffer allocated for the tensor. E.g., bias for GGML_OP_MUL_MAT
-        if (buf->extra != nullptr) free(buf->extra->data);
-        if (buf->ztensor.buffer_size > 0) ZDNN_CHECK(zdnn_free_ztensor_buffer(&buf->ztensor));
+        اگر (buf->extra != خالی_اشاریہ) آزاد(buf->extra->ڈیٹا);
+        اگر (buf->ztensor.بفر_سائز > 0) ZDNN_CHECK(zdnn_free_ztensor_بفر(&buf->ztensor));
     }
 
-    if (ctx->owned) {
-        ggml_aligned_free(ctx->all_data, ctx->all_size);
+    اگر (ctx->owned) {
+        ggml_aligned_free(ctx->all_ڈیٹا, ctx->all_سائز);
     }
 
-    delete ctx;
+    حذف ctx;
 }
 
-static void * ggml_backend_zdnn_buffer_get_base(ggml_backend_buffer_t buffer) {
-    ggml_backend_zdnn_buffer_context * ctx = (ggml_backend_zdnn_buffer_context *)buffer->context;
-    return ctx->all_data;
+ساکن خالی * ggml_backend_zdnn_بفر_get_بنیاد(ggml_backend_بفر_t بفر) {
+    ggml_backend_zdnn_بفر_context * ctx = (ggml_backend_zdnn_بفر_context *)بفر->context;
+    واپس ctx->all_ڈیٹا;
 }
 
-static enum ggml_status ggml_backend_zdnn_buffer_init_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor) {
-    if (tensor->view_src != NULL) {
-        assert(tensor->view_src->buffer->buft == buffer->buft);
-        return GGML_STATUS_SUCCESS;
+ساکن شمار ggml_حالت ggml_backend_zdnn_بفر_init_tensor(ggml_backend_بفر_t بفر, ggml_tensor * tensor) {
+    اگر (tensor->view_src != تہی) {
+        أكد(tensor->view_src->بفر->buft == بفر->buft);
+        واپس GGML_حالت_SUCCESS;
     }
 
     // reject empty tensors to avoid zDNN crash
-    if (ggml_is_empty(tensor)) {
-        return GGML_STATUS_SUCCESS;
+    اگر (ggml_is_خالی_خانے(tensor)) {
+        واپس GGML_حالت_SUCCESS;
     }
 
-    ggml_backend_zdnn_buffer_context * ctx = (ggml_backend_zdnn_buffer_context *)buffer->context;
+    ggml_backend_zdnn_بفر_context * ctx = (ggml_backend_zdnn_بفر_context *)بفر->context;
 
-    const int64_t tsize = ggml_nbytes(tensor);
-    int buffer_idx = ctx->n_buffers;
+    ثابت int64_t tsize = ggml_nbytes(tensor);
+    صحیح بفر_idx = ctx->n_buffers;
 
-    std::unique_ptr<ggml_backend_zdnn_buffer> zdnn_buffer = std::make_unique<ggml_backend_zdnn_buffer>();
-    zdnn_buffer->data = tensor->data;
-    zdnn_buffer->size = tsize;
-    zdnn_buffer->extra = nullptr;
-    snprintf(zdnn_buffer->name, GGML_MAX_NAME, "%s", tensor->name);
+    std::unique_ptr<ggml_backend_zdnn_بفر> zdnn_بفر = std::make_unique<ggml_backend_zdnn_بفر>();
+    zdnn_بفر->ڈیٹا = tensor->ڈیٹا;
+    zdnn_بفر->size = tsize;
+    zdnn_بفر->extra = خالی_اشاریہ;
+    snprintf(zdnn_بفر->name, GGML_MAX_NAME, "%s", tensor->name);
 
-    ggml_zdnn_init_tensor(zdnn_buffer.get(), tensor);
-    tensor->extra = zdnn_buffer.get();
+    ggml_zdnn_init_tensor(zdnn_بفر.get(), tensor);
+    tensor->extra = zdnn_بفر.get();
 
-    switch (tensor->op) {
-        case GGML_OP_MUL_MAT:
+    انتخاب (tensor->op) {
+        حالت GGML_OP_MUL_MAT:
             {
-                std::unique_ptr<ggml_backend_zdnn_buffer> zdnn_bias_buffer = std::make_unique<ggml_backend_zdnn_buffer>();
-                zdnn_bias_buffer->data = (void *)calloc(tensor->ne[0], ggml_element_size(tensor));
-                zdnn_bias_buffer->size = ggml_element_size(tensor) * tensor->ne[0];
-                snprintf(zdnn_bias_buffer->name, GGML_MAX_NAME, "%.*s (bias)",
-                         GGML_MAX_NAME - (int)sizeof(" (bias)"), tensor->name);
+                std::unique_ptr<ggml_backend_zdnn_بفر> zdnn_bias_بفر = std::make_unique<ggml_backend_zdnn_بفر>();
+                zdnn_bias_بفر->ڈیٹا = (خالی *)صفر_حافظہ_دو(tensor->ne[0], ggml_element_سائز(tensor));
+                zdnn_bias_بفر->size = ggml_element_سائز(tensor) * tensor->ne[0];
+                snprintf(zdnn_bias_بفر->name, GGML_MAX_NAME, "%.*s (bias)",
+                         GGML_MAX_NAME - (صحیح)حجم(" (bias)"), tensor->name);
 
-                const int64_t bias_dim[GGML_MAX_DIMS] = { 1, 1, 1, tensor->ne[0] };
-                ggml_zdnn_create_tensor(zdnn_bias_buffer->pre_tfm_desc,
-                                        zdnn_bias_buffer->tfm_desc,
-                                        zdnn_bias_buffer->ztensor,
+                ثابت int64_t bias_dim[GGML_MAX_DIMS] = { 1, 1, 1, tensor->ne[0] };
+                ggml_zdnn_create_tensor(zdnn_bias_بفر->pre_tfm_desc,
+                                        zdnn_bias_بفر->tfm_desc,
+                                        zdnn_bias_بفر->ztensor,
                                         tensor, bias_dim, ZDNN_1D);
 
-                ggml_zdnn_load_tensor(zdnn_bias_buffer->ztensor, zdnn_bias_buffer->data);
-                zdnn_buffer->extra = zdnn_bias_buffer.get();
+                ggml_zdnn_بھرو_tensor(zdnn_bias_بفر->ztensor, zdnn_bias_بفر->ڈیٹا);
+                zdnn_بفر->extra = zdnn_bias_بفر.get();
 
-                ctx->buffers.push_back(std::move(zdnn_bias_buffer));
+                ctx->buffers.push_back(std::move(zdnn_bias_بفر));
                 ctx->n_buffers++;
-            } break;
-        default:
-            break;
+            } توڑو;
+        طےشدہ:
+            توڑو;
     }
 
-    ctx->buffers.push_back(std::move(zdnn_buffer));
+    ctx->buffers.push_back(std::move(zdnn_بفر));
     ctx->n_buffers++;
 
     // GGML_LOG_INFO("%s: initialised tensor '%s' in buffer %d, size = %8.2f MiB\n",
     //               __func__, tensor->name, buffer_idx, tsize);
 
-    return GGML_STATUS_SUCCESS;
+    واپس GGML_حالت_SUCCESS;
 
-    GGML_UNUSED(buffer_idx);
+    GGML_غیر_مستعمل(بفر_idx);
 }
 
-static void ggml_backend_zdnn_buffer_memset_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor, uint8_t value, size_t offset, size_t size) {
-    memset((char *)tensor->data + offset, value, size);
+ساکن خالی ggml_backend_zdnn_بفر_memset_tensor(ggml_backend_بفر_t بفر, ggml_tensor * tensor, uint8_t value, size_t انحراف, size_t size) {
+    memset((حرف *)tensor->ڈیٹا + انحراف, value, size);
 
-    GGML_UNUSED(buffer);
+    GGML_غیر_مستعمل(بفر);
 }
 
-static void ggml_backend_zdnn_buffer_set_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor, const void * data, size_t offset, size_t size) {
-    memcpy((char *)tensor->data + offset, data, size);
+ساکن خالی ggml_backend_zdnn_بفر_سیٹ_tensor(ggml_backend_بفر_t بفر, ggml_tensor * tensor, ثابت خالی * ڈیٹا, size_t انحراف, size_t size) {
+    حافظہ_نقل((حرف *)tensor->ڈیٹا + انحراف, ڈیٹا, size);
 
     // views share the ztensor of their source, which is now stale, and empty tensors have none
-    if (tensor->view_src != nullptr) {
-        ggml_backend_zdnn_buffer * src_extra = (ggml_backend_zdnn_buffer *)tensor->view_src->extra;
-        if (src_extra != nullptr && src_extra->ztensor.is_transformed) {
+    اگر (tensor->view_src != خالی_اشاریہ) {
+        ggml_backend_zdnn_بفر * src_extra = (ggml_backend_zdnn_بفر *)tensor->view_src->extra;
+        اگر (src_extra != خالی_اشاریہ && src_extra->ztensor.is_transformed) {
             zdnn_reset_ztensor(&src_extra->ztensor);
         }
-        return;
+        واپس;
     }
 
-    ggml_backend_zdnn_buffer * extra = (ggml_backend_zdnn_buffer *)tensor->extra;
-    if (extra == nullptr) {
-        return;
+    ggml_backend_zdnn_بفر * extra = (ggml_backend_zdnn_بفر *)tensor->extra;
+    اگر (extra == خالی_اشاریہ) {
+        واپس;
     }
 
-    if (ggml_is_quantized(tensor->type)) {
-        GGML_ASSERT(offset == 0 && size == ggml_nbytes(tensor));
-        ggml_zdnn_load_tensor_q(extra, tensor);
-        return;
+    اگر (ggml_is_quantized(tensor->type)) {
+        GGML_ASSERT(انحراف == 0 && size == ggml_nbytes(tensor));
+        ggml_zdnn_بھرو_tensor_q(extra, tensor);
+        واپس;
     }
 
     // Fixes the LLAMA_SET_ROWS bug
     // see: https://github.com/ggml-org/llama.cpp/issues/15414
     // only weights are transformed here, others on first use, as not every op reads the ztensor and some data (masks) is not finite
-    if (tensor->buffer->usage != GGML_BACKEND_BUFFER_USAGE_WEIGHTS) {
+    اگر (tensor->بفر->usage != GGML_BACKEND_بفر_USAGE_WEIGHTS) {
         zdnn_reset_ztensor(&extra->ztensor);
-        return;
+        واپس;
     }
-    if (extra->ztensor.is_transformed == false) ggml_zdnn_load_tensor(extra->ztensor, tensor->data);
+    اگر (extra->ztensor.is_transformed == جھوٹ) ggml_zdnn_بھرو_tensor(extra->ztensor, tensor->ڈیٹا);
 
-    GGML_UNUSED(buffer);
+    GGML_غیر_مستعمل(بفر);
 }
 
-static void ggml_backend_zdnn_buffer_get_tensor(ggml_backend_buffer_t buffer, const ggml_tensor * tensor, void * data, size_t offset, size_t size) {
-    memcpy(data, (const char *)tensor->data + offset, size);
+ساکن خالی ggml_backend_zdnn_بفر_get_tensor(ggml_backend_بفر_t بفر, ثابت ggml_tensor * tensor, خالی * ڈیٹا, size_t انحراف, size_t size) {
+    حافظہ_نقل(ڈیٹا, (ثابت حرف *)tensor->ڈیٹا + انحراف, size);
 
-    GGML_UNUSED(buffer);
+    GGML_غیر_مستعمل(بفر);
 }
 
-static void ggml_backend_zdnn_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value) {
-    ggml_backend_zdnn_buffer_context * ctx = (ggml_backend_zdnn_buffer_context *)buffer->context;
+ساکن خالی ggml_backend_zdnn_بفر_clear(ggml_backend_بفر_t بفر, uint8_t value) {
+    ggml_backend_zdnn_بفر_context * ctx = (ggml_backend_zdnn_بفر_context *)بفر->context;
 
-    memset(ctx->all_data, value, ctx->all_size);
+    memset(ctx->all_ڈیٹا, value, ctx->all_سائز);
 }
 
-static void ggml_backend_zdnn_buffer_reset(ggml_backend_buffer_t buffer) {
-    ggml_backend_zdnn_buffer_context * ctx = (ggml_backend_zdnn_buffer_context *)buffer->context;
+ساکن خالی ggml_backend_zdnn_بفر_reset(ggml_backend_بفر_t بفر) {
+    ggml_backend_zdnn_بفر_context * ctx = (ggml_backend_zdnn_بفر_context *)بفر->context;
 
-    for (const auto & buf_ptr : ctx->buffers) {
-        ggml_backend_zdnn_buffer * buf = buf_ptr.get();
+    برائے (ثابت خودکار & buf_ptr : ctx->buffers) {
+        ggml_backend_zdnn_بفر * buf = buf_ptr.get();
 
-        if (buf->extra != nullptr) {
-            free(buf->extra->data);
+        اگر (buf->extra != خالی_اشاریہ) {
+            آزاد(buf->extra->ڈیٹا);
         }
 
-        if (buf->ztensor.buffer_size > 0) {
-            ZDNN_CHECK(zdnn_free_ztensor_buffer(&buf->ztensor));
+        اگر (buf->ztensor.بفر_سائز > 0) {
+            ZDNN_CHECK(zdnn_free_ztensor_بفر(&buf->ztensor));
         }
     }
 
-    if (ctx->buffers.size() > 1) {
+    اگر (ctx->buffers.size() > 1) {
         ctx->buffers.resize(1);
     }
 
     ctx->n_buffers = 1;
 }
 
-static ggml_backend_buffer_i ggml_backend_zdnn_buffer_i = {
-    /* .free_buffer   = */ ggml_backend_zdnn_buffer_free_buffer,
-    /* .get_base      = */ ggml_backend_zdnn_buffer_get_base,
-    /* .init_tensor   = */ ggml_backend_zdnn_buffer_init_tensor,
-    /* .memset_tensor = */ ggml_backend_zdnn_buffer_memset_tensor,
-    /* .set_tensor    = */ ggml_backend_zdnn_buffer_set_tensor,
-    /* .get_tensor    = */ ggml_backend_zdnn_buffer_get_tensor,
-    /* .set_tensor_2d = */ NULL,
-    /* .get_tensor_2d = */ NULL,
-    /* .cpy_tensor    = */ NULL,
-    /* .clear         = */ ggml_backend_zdnn_buffer_clear,
-    /* .reset         = */ ggml_backend_zdnn_buffer_reset,
+ساکن ggml_backend_بفر_i ggml_backend_zdnn_بفر_i = {
+    /* .free_buffer   = */ ggml_backend_zdnn_بفر_free_بفر,
+    /* .get_base      = */ ggml_backend_zdnn_بفر_get_بنیاد,
+    /* .init_tensor   = */ ggml_backend_zdnn_بفر_init_tensor,
+    /* .memset_tensor = */ ggml_backend_zdnn_بفر_memset_tensor,
+    /* .set_tensor    = */ ggml_backend_zdnn_بفر_سیٹ_tensor,
+    /* .get_tensor    = */ ggml_backend_zdnn_بفر_get_tensor,
+    /* .set_tensor_2d = */ تہی,
+    /* .get_tensor_2d = */ تہی,
+    /* .cpy_tensor    = */ تہی,
+    /* .clear         = */ ggml_backend_zdnn_بفر_clear,
+    /* .reset         = */ ggml_backend_zdnn_بفر_reset,
 };
 
 //
 // default buffer type
 //
 
-static const char * ggml_backend_zdnn_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
-    return GGML_ZDNN_NAME;
+ساکن ثابت حرف * ggml_backend_zdnn_بفر_type_get_name(ggml_backend_بفر_type_t buft) {
+    واپس GGML_ZDNN_NAME;
 
-    GGML_UNUSED(buft);
+    GGML_غیر_مستعمل(buft);
 }
 
-static ggml_backend_buffer_t ggml_backend_zdnn_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
-    ggml_backend_zdnn_buffer_context * ctx = new ggml_backend_zdnn_buffer_context();
+ساکن ggml_backend_بفر_t ggml_backend_zdnn_بفر_type_alloc_بفر(ggml_backend_بفر_type_t buft, size_t size) {
+    ggml_backend_zdnn_بفر_context * ctx = نیا ggml_backend_zdnn_بفر_context();
 
-    const size_t size_page = sysconf(_SC_PAGESIZE);
+    ثابت size_t سائز_صفحہ = sysconf(_SC_PAGESIZE);
 
-    size_t size_aligned = size;
-    if ((size_aligned % size_page) != 0) {
-        size_aligned += size_page - (size_aligned % size_page);
+    size_t سائز_aligned = size;
+    اگر ((سائز_aligned % سائز_صفحہ) != 0) {
+        سائز_aligned += سائز_صفحہ - (سائز_aligned % سائز_صفحہ);
     }
 
     ggml_backend_zdnn_device_context * ctx_dev = (ggml_backend_zdnn_device_context *)buft->device->context;
 
     GGML_ASSERT(ctx_dev->zdnn_device >= 0);
-    int device = ctx_dev->zdnn_device; GGML_UNUSED(device);
+    صحیح device = ctx_dev->zdnn_device; GGML_غیر_مستعمل(device);
 
-    ctx->all_data  = ggml_aligned_malloc(size_aligned);
-    ctx->all_size  = size_aligned;
-    ctx->owned     = true;
+    ctx->all_ڈیٹا  = ggml_aligned_malloc(سائز_aligned);
+    ctx->all_سائز  = سائز_aligned;
+    ctx->owned     = سچ;
     ctx->n_buffers = 1;
 
-    if (ctx->all_data != NULL) {
-        std::unique_ptr<ggml_backend_zdnn_buffer> zdnn_buffer = std::make_unique<ggml_backend_zdnn_buffer>();
-        zdnn_buffer->data = ctx->all_data;
-        zdnn_buffer->size = size_aligned;
-        ctx->buffers.push_back(std::move(zdnn_buffer));
+    اگر (ctx->all_ڈیٹا != تہی) {
+        std::unique_ptr<ggml_backend_zdnn_بفر> zdnn_بفر = std::make_unique<ggml_backend_zdnn_بفر>();
+        zdnn_بفر->ڈیٹا = ctx->all_ڈیٹا;
+        zdnn_بفر->size = سائز_aligned;
+        ctx->buffers.push_back(std::move(zdnn_بفر));
     }
 
-    if (size_aligned > 0 && (ctx->all_data == NULL)) {
+    اگر (سائز_aligned > 0 && (ctx->all_ڈیٹا == تہی)) {
         GGML_LOG_ERROR("%s: error: failed to allocate buffer, size = %8.2f\n",
-                       __func__, size_aligned / 1024.0 / 1024.0);
-        delete ctx;
-        return NULL;
+                       __func__, سائز_aligned / 1024.0 / 1024.0);
+        حذف ctx;
+        واپس تہی;
     }
 
-    return ggml_backend_buffer_init(buft, ggml_backend_zdnn_buffer_i, ctx, size);
+    واپس ggml_backend_بفر_init(buft, ggml_backend_zdnn_بفر_i, ctx, size);
 }
 
-static size_t ggml_backend_zdnn_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    return 256;
+ساکن size_t ggml_backend_zdnn_بفر_type_get_alignment(ggml_backend_بفر_type_t buft) {
+    واپس 256;
 
-    GGML_UNUSED(buft);
+    GGML_غیر_مستعمل(buft);
 }
 
-static bool ggml_backend_zdnn_buffer_type_is_host(ggml_backend_buffer_type_t buft) {
+ساکن منطقی ggml_backend_zdnn_بفر_type_is_host(ggml_backend_بفر_type_t buft) {
     /* while it resides in host memory, additional transformation is needed */
-    return false;
+    واپس جھوٹ;
 
-    GGML_UNUSED(buft);
+    GGML_غیر_مستعمل(buft);
 }
 
-ggml_backend_buffer_type_t ggml_backend_zdnn_buffer_type(void) {
-    static ggml_backend_buffer_type ggml_backend_buffer_type_zdnn = {
+ggml_backend_بفر_type_t ggml_backend_zdnn_بفر_type(خالی) {
+    ساکن ggml_backend_بفر_type ggml_backend_بفر_type_zdnn = {
         /* .iface   = */ {
-            /* .get_name            = */ ggml_backend_zdnn_buffer_type_get_name,
-            /* .alloc_buffer        = */ ggml_backend_zdnn_buffer_type_alloc_buffer,
-            /* .alloc_buffer_n      = */ NULL,
-            /* .get_alignment       = */ ggml_backend_zdnn_buffer_type_get_alignment,
-            /* .get_max_size        = */ NULL,
-            /* .get_alloc_size      = */ NULL,  // defaults to ggml_nbytes
-            /* .get_alloc_size_n    = */ NULL,
-            /* .is_host             = */ ggml_backend_zdnn_buffer_type_is_host,
+            /* .get_name            = */ ggml_backend_zdnn_بفر_type_get_name,
+            /* .alloc_buffer        = */ ggml_backend_zdnn_بفر_type_alloc_بفر,
+            /* .alloc_buffer_n      = */ تہی,
+            /* .get_alignment       = */ ggml_backend_zdnn_بفر_type_get_alignment,
+            /* .get_max_size        = */ تہی,
+            /* .get_alloc_size      = */ تہی,  // defaults to ggml_nbytes
+            /* .get_alloc_size_n    = */ تہی,
+            /* .is_host             = */ ggml_backend_zdnn_بفر_type_is_host,
         },
         /* .device  = */ &g_ggml_backend_zdnn_device,
-        /* .context = */ NULL,
+        /* .context = */ تہی,
     };
 
-    return &ggml_backend_buffer_type_zdnn;
+    واپس &ggml_backend_بفر_type_zdnn;
 }
 
 //
 // backend
 //
 
-static const char * ggml_backend_zdnn_name(ggml_backend_t backend) {
-    return GGML_ZDNN_NAME;
+ساکن ثابت حرف * ggml_backend_zdnn_name(ggml_backend_t backend) {
+    واپس GGML_ZDNN_NAME;
 
-    GGML_UNUSED(backend);
+    GGML_غیر_مستعمل(backend);
 }
 
-static void ggml_backend_zdnn_free(ggml_backend_t backend) {
+ساکن خالی ggml_backend_zdnn_free(ggml_backend_t backend) {
     ggml_backend_zdnn_context * ctx = (ggml_backend_zdnn_context *)backend->context;
 
     ggml_zdnn_free(ctx);
-    free(backend);
+    آزاد(backend);
 }
 
-static enum ggml_status ggml_backend_zdnn_graph_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
-    return ggml_zdnn_graph_compute(backend, cgraph);
+ساکن شمار ggml_حالت ggml_backend_zdnn_گراف_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
+    واپس ggml_zdnn_گراف_compute(backend, cgraph);
 }
 
-static ggml_backend_i ggml_backend_zdnn_i = {
+ساکن ggml_backend_i ggml_backend_zdnn_i = {
     /* .get_name               = */ ggml_backend_zdnn_name,
     /* .free                   = */ ggml_backend_zdnn_free,
-    /* .set_tensor_async       = */ NULL,
-    /* .get_tensor_async       = */ NULL,
-    /* .set_tensor_2d_async    = */ NULL,
-    /* .get_tensor_2d_async    = */ NULL,
-    /* .cpy_tensor_async       = */ NULL,
-    /* .synchronize            = */ NULL,
-    /* .graph_plan_create      = */ NULL,
-    /* .graph_plan_free        = */ NULL,
-    /* .graph_plan_update      = */ NULL,
-    /* .graph_plan_compute     = */ NULL,
-    /* .graph_compute          = */ ggml_backend_zdnn_graph_compute,
-    /* .event_record           = */ NULL,
-    /* .event_wait             = */ NULL,
-    /* .graph_optimize         = */ NULL,
+    /* .set_tensor_async       = */ تہی,
+    /* .get_tensor_async       = */ تہی,
+    /* .set_tensor_2d_async    = */ تہی,
+    /* .get_tensor_2d_async    = */ تہی,
+    /* .cpy_tensor_async       = */ تہی,
+    /* .synchronize            = */ تہی,
+    /* .graph_plan_create      = */ تہی,
+    /* .graph_plan_free        = */ تہی,
+    /* .graph_plan_update      = */ تہی,
+    /* .graph_plan_compute     = */ تہی,
+    /* .graph_compute          = */ ggml_backend_zdnn_گراف_compute,
+    /* .event_record           = */ تہی,
+    /* .event_wait             = */ تہی,
+    /* .graph_optimize         = */ تہی,
 };
 
-static ggml_guid_t ggml_backend_zdnn_guid(void) {
-    static char guid_str[] = "IBM-ZDNN-ACCELER";
-    return reinterpret_cast<ggml_guid_t>(guid_str);
+ساکن ggml_guid_t ggml_backend_zdnn_guid(خالی) {
+    ساکن حرف guid_str[] = "IBM-ZDNN-ACCELER";
+    واپس reinterpret_cast<ggml_guid_t>(guid_str);
 }
 
-bool ggml_backend_is_zdnn(ggml_backend_t backend) {
-    return backend != NULL &&
+منطقی ggml_backend_is_zdnn(ggml_backend_t backend) {
+    واپس backend != تہی &&
            ggml_guid_matches(backend->guid, ggml_backend_zdnn_guid());
 }
 
@@ -528,53 +528,53 @@ bool ggml_backend_is_zdnn(ggml_backend_t backend) {
 // backend device
 //
 
-static const char * ggml_backend_zdnn_device_get_name(ggml_backend_dev_t dev) {
-    return GGML_ZDNN_NAME;
+ساکن ثابت حرف * ggml_backend_zdnn_device_get_name(ggml_backend_dev_t dev) {
+    واپس GGML_ZDNN_NAME;
 
-    GGML_UNUSED(dev);
+    GGML_غیر_مستعمل(dev);
 }
 
-static const char * ggml_backend_zdnn_device_get_description(ggml_backend_dev_t dev) {
-    return "IBM Z Neural Network Processing Assist (NNPA)";
+ساکن ثابت حرف * ggml_backend_zdnn_device_get_description(ggml_backend_dev_t dev) {
+    واپس "IBM Z Neural Network Processing Assist (NNPA)";
 
-    GGML_UNUSED(dev);
+    GGML_غیر_مستعمل(dev);
 }
 
-static void ggml_backend_zdnn_device_get_memory(ggml_backend_dev_t dev, size_t * free, size_t * total) {
-    *free  = 0;
-    *total = 0;
+ساکن خالی ggml_backend_zdnn_device_get_حافظہ(ggml_backend_dev_t dev, size_t * آزاد, size_t * کل) {
+    *آزاد  = 0;
+    *کل = 0;
 
-    GGML_UNUSED(dev);
+    GGML_غیر_مستعمل(dev);
 }
 
-static enum ggml_backend_dev_type ggml_backend_zdnn_device_get_type(ggml_backend_dev_t dev) {
-    return GGML_BACKEND_DEVICE_TYPE_ACCEL;
+ساکن شمار ggml_backend_dev_type ggml_backend_zdnn_device_get_type(ggml_backend_dev_t dev) {
+    واپس GGML_BACKEND_DEVICE_TYPE_ACCEL;
 
-    GGML_UNUSED(dev);
+    GGML_غیر_مستعمل(dev);
 }
 
-static void ggml_backend_zdnn_device_get_props(ggml_backend_dev_t dev, ggml_backend_dev_props * props) {
+ساکن خالی ggml_backend_zdnn_device_get_props(ggml_backend_dev_t dev, ggml_backend_dev_props * props) {
     props->name        = ggml_backend_zdnn_device_get_name(dev);
     props->description = ggml_backend_zdnn_device_get_description(dev);
     props->type        = ggml_backend_zdnn_device_get_type(dev);
-    ggml_backend_zdnn_device_get_memory(dev, &props->memory_free, &props->memory_total);
+    ggml_backend_zdnn_device_get_حافظہ(dev, &props->حافظہ_free, &props->حافظہ_کل);
     props->caps = {
-        /* .async                = */ false,
-        /* .host_buffer          = */ false,
-        /* .buffer_from_host_ptr = */ false,
-        /* .events               = */ false,
-        /* .mmap_support         = */ true,
+        /* .async                = */ جھوٹ,
+        /* .host_buffer          = */ جھوٹ,
+        /* .buffer_from_host_ptr = */ جھوٹ,
+        /* .events               = */ جھوٹ,
+        /* .mmap_support         = */ سچ,
     };
 }
 
-static ggml_backend_t ggml_backend_zdnn_device_init(ggml_backend_dev_t dev, const char * params) {
+ساکن ggml_backend_t ggml_backend_zdnn_device_init(ggml_backend_dev_t dev, ثابت حرف * params) {
     ggml_backend_zdnn_context * ctx = ggml_zdnn_init(dev);
-    if (ctx == NULL) {
+    اگر (ctx == تہی) {
         GGML_LOG_ERROR("%s: error: failed to allocate context\n", __func__);
-        return NULL;
+        واپس تہی;
     }
 
-    ggml_backend_t backend = (ggml_backend *)malloc(sizeof(ggml_backend));
+    ggml_backend_t backend = (ggml_backend *)حافظہ_دو(حجم(ggml_backend));
     *backend = {
         /* .guid       = */ ggml_backend_zdnn_guid(),
         /* .iface      = */ ggml_backend_zdnn_i,
@@ -582,122 +582,122 @@ static ggml_backend_t ggml_backend_zdnn_device_init(ggml_backend_dev_t dev, cons
         /* .context    = */ ctx
     };
 
-    return backend;
+    واپس backend;
 
-    GGML_UNUSED(params);
+    GGML_غیر_مستعمل(params);
 }
 
-static ggml_backend_buffer_type_t ggml_backend_zdnn_device_get_buffer_type(ggml_backend_dev_t dev) {
-    return ggml_backend_zdnn_buffer_type();
+ساکن ggml_backend_بفر_type_t ggml_backend_zdnn_device_get_بفر_type(ggml_backend_dev_t dev) {
+    واپس ggml_backend_zdnn_بفر_type();
 
-    GGML_UNUSED(dev);
+    GGML_غیر_مستعمل(dev);
 }
 
-static bool ggml_backend_zdnn_device_supports_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
+ساکن منطقی ggml_backend_zdnn_device_supports_op(ggml_backend_dev_t dev, ثابت ggml_tensor * op) {
     ggml_backend_zdnn_device_context * ctx_dev = (ggml_backend_zdnn_device_context *) dev->context;
 
-    return ggml_zdnn_supports_op(ctx_dev, op);
+    واپس ggml_zdnn_supports_op(ctx_dev, op);
 }
 
-static bool ggml_backend_zdnn_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
-    return
-        buft->iface.get_name == ggml_backend_zdnn_buffer_type_get_name;
+ساکن منطقی ggml_backend_zdnn_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_بفر_type_t buft) {
+    واپس
+        buft->iface.get_name == ggml_backend_zdnn_بفر_type_get_name;
 
-    GGML_UNUSED(dev);
+    GGML_غیر_مستعمل(dev);
 }
 
-static ggml_backend_device_i ggml_backend_zdnn_device_i = {
+ساکن ggml_backend_device_i ggml_backend_zdnn_device_i = {
     /* .get_name             = */ ggml_backend_zdnn_device_get_name,
     /* .get_description      = */ ggml_backend_zdnn_device_get_description,
-    /* .get_memory           = */ ggml_backend_zdnn_device_get_memory,
+    /* .get_memory           = */ ggml_backend_zdnn_device_get_حافظہ,
     /* .get_type             = */ ggml_backend_zdnn_device_get_type,
     /* .get_props            = */ ggml_backend_zdnn_device_get_props,
     /* .init_backend         = */ ggml_backend_zdnn_device_init,
-    /* .get_buffer_type      = */ ggml_backend_zdnn_device_get_buffer_type,
-    /* .get_host_buffer_type = */ NULL,
-    /* .buffer_from_host_ptr = */ NULL,
+    /* .get_buffer_type      = */ ggml_backend_zdnn_device_get_بفر_type,
+    /* .get_host_buffer_type = */ تہی,
+    /* .buffer_from_host_ptr = */ تہی,
     /* .supports_op          = */ ggml_backend_zdnn_device_supports_op,
     /* .supports_buft        = */ ggml_backend_zdnn_device_supports_buft,
-    /* .offload_op           = */ NULL,
-    /* .event_new            = */ NULL,
-    /* .event_free           = */ NULL,
-    /* .event_synchronize    = */ NULL,
+    /* .offload_op           = */ تہی,
+    /* .event_new            = */ تہی,
+    /* .event_free           = */ تہی,
+    /* .event_synchronize    = */ تہی,
 };
 
 //
 // backend registry
 //
 
-static const char * ggml_backend_zdnn_reg_get_name(ggml_backend_reg_t reg) {
-    return GGML_ZDNN_NAME;
+ساکن ثابت حرف * ggml_backend_zdnn_reg_get_name(ggml_backend_reg_t reg) {
+    واپس GGML_ZDNN_NAME;
 
-    GGML_UNUSED(reg);
+    GGML_غیر_مستعمل(reg);
 }
 
-static size_t ggml_backend_zdnn_reg_device_count(ggml_backend_reg_t reg) {
-    if (!zdnn_is_nnpa_installed()) {
-        return 0;
+ساکن size_t ggml_backend_zdnn_reg_device_گنتی(ggml_backend_reg_t reg) {
+    اگر (!zdnn_is_nnpa_installed()) {
+        واپس 0;
     }
-    return 1;
+    واپس 1;
 
-    GGML_UNUSED(reg);
+    GGML_غیر_مستعمل(reg);
 }
 
-static ggml_backend_dev_t ggml_backend_zdnn_reg_device_get(ggml_backend_reg_t reg, size_t index) {
-    GGML_ASSERT(index == 0);
+ساکن ggml_backend_dev_t ggml_backend_zdnn_reg_device_get(ggml_backend_reg_t reg, size_t اشاریہ) {
+    GGML_ASSERT(اشاریہ == 0);
 
-    return &g_ggml_backend_zdnn_device;
+    واپس &g_ggml_backend_zdnn_device;
 
-    GGML_UNUSED(reg);
-    GGML_UNUSED(index);
+    GGML_غیر_مستعمل(reg);
+    GGML_غیر_مستعمل(اشاریہ);
 }
 
-static ggml_backend_feature g_ggml_backend_zdnn_features[] = {
+ساکن ggml_backend_feature g_ggml_backend_zdnn_features[] = {
     { "NNPA", zdnn_is_nnpa_installed() ? "1" : "0" },
     { "NNPA_PARMBLKFORMAT_0", zdnn_is_nnpa_parmblk_fmt_installed(1, NNPA_PARMBLKFORMAT_0) ? "1" : "0" },
     { "NNPA_PARMBLKFORMAT_1", zdnn_is_nnpa_parmblk_fmt_installed(1, NNPA_PARMBLKFORMAT_1) ? "1" : "0" },
-    { NULL, NULL },
+    { تہی, تہی },
 };
 
-static ggml_backend_feature * ggml_backend_zdnn_get_features(ggml_backend_reg_t reg) {
-    return g_ggml_backend_zdnn_features;
+ساکن ggml_backend_feature * ggml_backend_zdnn_get_features(ggml_backend_reg_t reg) {
+    واپس g_ggml_backend_zdnn_features;
 
-    GGML_UNUSED(reg);
+    GGML_غیر_مستعمل(reg);
 }
 
-static void ggml_backend_zdnn_set_n_threads(ggml_backend_t backend, int n_threads) {
+ساکن خالی ggml_backend_zdnn_سیٹ_n_دھاگے(ggml_backend_t backend, صحیح n_دھاگے) {
     GGML_ASSERT(ggml_backend_is_zdnn(backend));
 
     ggml_backend_zdnn_context * ctx = (ggml_backend_zdnn_context *)backend->context;
-    ctx->n_threads = n_threads;
+    ctx->n_دھاگے = n_دھاگے;
 }
 
-static void * ggml_backend_zdnn_get_proc_address(ggml_backend_reg_t reg, const char * name) {
-    if (strcmp(name, "ggml_backend_get_features") == 0) {
-        return (void *) ggml_backend_zdnn_get_features;
+ساکن خالی * ggml_backend_zdnn_get_proc_پتہ(ggml_backend_reg_t reg, ثابت حرف * name) {
+    اگر (strcmp(name, "ggml_backend_get_features") == 0) {
+        واپس (خالی *) ggml_backend_zdnn_get_features;
     }
-    if (strcmp(name, "ggml_backend_set_n_threads") == 0) {
-        return (void *) ggml_backend_zdnn_set_n_threads;
+    اگر (strcmp(name, "ggml_backend_set_n_threads") == 0) {
+        واپس (خالی *) ggml_backend_zdnn_سیٹ_n_دھاگے;
     }
 
-    return NULL;
+    واپس تہی;
 
-    GGML_UNUSED(reg);
+    GGML_غیر_مستعمل(reg);
 }
 
-static ggml_backend_reg_i ggml_backend_zdnn_reg_i = {
+ساکن ggml_backend_reg_i ggml_backend_zdnn_reg_i = {
     /* .get_name         = */ ggml_backend_zdnn_reg_get_name,
-    /* .get_device_count = */ ggml_backend_zdnn_reg_device_count,
+    /* .get_device_count = */ ggml_backend_zdnn_reg_device_گنتی,
     /* .get_device       = */ ggml_backend_zdnn_reg_device_get,
-    /* .get_proc_address = */ ggml_backend_zdnn_get_proc_address
+    /* .get_proc_address = */ ggml_backend_zdnn_get_proc_پتہ
 };
 
-static void ggml_zdnn_cleanup(void) {
+ساکن خالی ggml_zdnn_cleanup(خالی) {
     ggml_backend_zdnn_device_rel(&g_ggml_ctx_dev_main);
 }
 
 // TODO: make thread-safe
-ggml_backend_reg_t ggml_backend_zdnn_reg(void) {
+ggml_backend_reg_t ggml_backend_zdnn_reg(خالی) {
     ggml_backend_zdnn_device_acq(&g_ggml_ctx_dev_main);
 
     // register cleanup callback
@@ -705,9 +705,9 @@ ggml_backend_reg_t ggml_backend_zdnn_reg(void) {
 
     {
         g_ggml_backend_zdnn_reg = {
-            /* .api_version = */ GGML_ZDNN_VERSION,
+            /* .api_version = */ GGML_ZDNN_نسخہ,
             /* .iface       = */ ggml_backend_zdnn_reg_i,
-            /* .context     = */ NULL
+            /* .context     = */ تہی
         };
 
         g_ggml_backend_zdnn_device = {
@@ -716,7 +716,7 @@ ggml_backend_reg_t ggml_backend_zdnn_reg(void) {
             /* .context     = */ &g_ggml_ctx_dev_main
         };
 
-        return &g_ggml_backend_zdnn_reg;
+        واپس &g_ggml_backend_zdnn_reg;
     }
 }
 

@@ -1,45 +1,45 @@
-#include "ggml.h"
-#include "scratch.hpp"
+#شامل "ggml.h"
+#شامل "scratch.hpp"
 
-#include <algorithm>
-#include <cstdint>
-#include <cstdlib>
+#شامل <algorithm>
+#شامل <cstdint>
+#شامل <cstdlib>
 
 ggml_zdnn_pool::~ggml_zdnn_pool() {
-    for (const buffer & b : cached) {
-        std::free(b.ptr);
+    برائے (ثابت بفر & b : cached) {
+        std::آزاد(b.ptr);
     }
 }
 
-void * ggml_zdnn_pool::alloc(size_t size, size_t * actual_size) {
+خالی * ggml_zdnn_pool::alloc(size_t size, size_t * actual_سائز) {
     int64_t ibest = -1;
-    for (int64_t i = 0; i < (int64_t)cached.size(); i++) {
-        if (cached[i].size >= size && (ibest < 0 || cached[i].size < cached[ibest].size)) {
+    برائے (int64_t i = 0; i < (int64_t)cached.size(); i++) {
+        اگر (cached[i].size >= size && (ibest < 0 || cached[i].size < cached[ibest].size)) {
             ibest = i;
         }
     }
 
-    if (ibest >= 0) {
-        void * ptr   = cached[ibest].ptr;
-        *actual_size = cached[ibest].size;
+    اگر (ibest >= 0) {
+        خالی * ptr   = cached[ibest].ptr;
+        *actual_سائز = cached[ibest].size;
         cached.erase(cached.begin() + ibest);
-        return ptr;
+        واپس ptr;
     }
 
     // every cached buffer is too small, free the largest so the pool does not grow while sizes grow with the context
-    if (!cached.empty()) {
-        const auto largest = std::max_element(cached.begin(), cached.end(), [](const buffer & a, const buffer & b) { return a.size < b.size; });
-        std::free(largest->ptr);
-        cached.erase(largest);
+    اگر (!cached.خالی_خانے()) {
+        ثابت خودکار سب_سے_بڑا = std::max_element(cached.begin(), cached.end(), [](ثابت بفر & a, ثابت بفر & b) { واپس a.size < b.size; });
+        std::آزاد(سب_سے_بڑا->ptr);
+        cached.erase(سب_سے_بڑا);
     }
 
     // 5% more, so slowly growing sizes do not allocate every time
-    *actual_size = GGML_PAD(std::max<size_t>(1, (size_t)(1.05 * size)), 4096);
-    void * ptr   = std::aligned_alloc(4096, *actual_size);
-    GGML_ASSERT(ptr != nullptr);
-    return ptr;
+    *actual_سائز = GGML_PAD(std::max<size_t>(1, (size_t)(1.05 * size)), 4096);
+    خالی * ptr   = std::aligned_alloc(4096, *actual_سائز);
+    GGML_ASSERT(ptr != خالی_اشاریہ);
+    واپس ptr;
 }
 
-void ggml_zdnn_pool::free(void * ptr, size_t size) {
+خالی ggml_zdnn_pool::آزاد(خالی * ptr, size_t size) {
     cached.push_back({ ptr, size });
 }

@@ -10,12 +10,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#ifndef GGML_SYCL_GETROWS_HPP
-#define GGML_SYCL_GETROWS_HPP
+#اگر_غیر_تعریف_شدہ GGML_SYCL_GETROWS_HPP
+#تعریف_کرو GGML_SYCL_GETROWS_HPP
 
-#include "common.hpp"
+#شامل "common.hpp"
 
-void ggml_sycl_op_get_rows(ggml_backend_sycl_context & ctx, ggml_tensor *dst);
-void ggml_sycl_op_get_rows_back(ggml_backend_sycl_context & ctx, ggml_tensor *dst);
+خالی ggml_sycl_op_get_صفیں(ggml_backend_sycl_context & ctx, ggml_tensor *dst);
+خالی ggml_sycl_op_get_صفیں_عقب(ggml_backend_sycl_context & ctx, ggml_tensor *dst);
 
-#endif // GGML_SYCL_GETROWS_HPP
+#اگر_ختم // GGML_SYCL_GETROWS_HPP

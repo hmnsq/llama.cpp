@@ -1,67 +1,67 @@
-#include "opt-step.hpp"
+#شامل "opt-step.hpp"
 
-#define SYCL_OPT_STEP_BLOCK_SIZE 256
+#تعریف_کرو SYCL_OPT_قدم_بلاک_سائز 256
 
-template <typename T>
-static void opt_step_adamw_f32_kernel(
+سانچہ <قسم_نام T>
+ساکن خالی opt_قدم_adamw_f32_kernel(
     T * __restrict__ x,
-    const T * __restrict__ g,
+    ثابت T * __restrict__ g,
     T * __restrict__ g_m,
     T * __restrict__ g_v,
-    const T * __restrict__ pars,
-    const int64_t k,
-    const sycl::nd_item<1> & item) {
+    ثابت T * __restrict__ pars,
+    ثابت int64_t k,
+    ثابت sycl::nd_شے<1> & شے) {
 
-    const int64_t i = (int64_t) item.get_global_id(0);
-    if (i >= k) {
-        return;
+    ثابت int64_t i = (int64_t) شے.get_global_id(0);
+    اگر (i >= k) {
+        واپس;
     }
 
-    const float alpha  = pars[0];
-    const float beta1  = pars[1];
-    const float beta2  = pars[2];
-    const float eps    = pars[3];
-    const float wd     = pars[4];
-    const float beta1h = pars[5];
-    const float beta2h = pars[6];
+    ثابت اعشاری alpha  = pars[0];
+    ثابت اعشاری beta1  = pars[1];
+    ثابت اعشاری beta2  = pars[2];
+    ثابت اعشاری eps    = pars[3];
+    ثابت اعشاری wd     = pars[4];
+    ثابت اعشاری beta1h = pars[5];
+    ثابت اعشاری beta2h = pars[6];
 
-    const float gi  = g[i];
-    const float gmi = g_m[i] * beta1 +      gi * (1.0f - beta1);
-    const float gvi = g_v[i] * beta2 + gi * gi * (1.0f - beta2);
+    ثابت اعشاری gi  = g[i];
+    ثابت اعشاری gmi = g_m[i] * beta1 +      gi * (1.0f - beta1);
+    ثابت اعشاری gvi = g_v[i] * beta2 + gi * gi * (1.0f - beta2);
 
     g_m[i] = gmi;
     g_v[i] = gvi;
 
-    const float mh = gmi * beta1h;
-    const float vh = sycl::sqrt(gvi * beta2h) + eps;
+    ثابت اعشاری mh = gmi * beta1h;
+    ثابت اعشاری vh = sycl::جذر(gvi * beta2h) + eps;
 
     x[i] = x[i] * (1.0f - alpha * wd) - alpha * mh / vh;
 }
 
-template <typename T>
-static void opt_step_sgd_f32_kernel(
+سانچہ <قسم_نام T>
+ساکن خالی opt_قدم_sgd_f32_kernel(
     T * __restrict__ x,
-    const T * __restrict__ g,
-    const T * __restrict__ pars,
-    const int64_t k,
-    const sycl::nd_item<1> & item) {
+    ثابت T * __restrict__ g,
+    ثابت T * __restrict__ pars,
+    ثابت int64_t k,
+    ثابت sycl::nd_شے<1> & شے) {
 
-    const int64_t i = (int64_t) item.get_global_id(0);
-    if (i >= k) {
-        return;
+    ثابت int64_t i = (int64_t) شے.get_global_id(0);
+    اگر (i >= k) {
+        واپس;
     }
 
     x[i] = x[i] * (1.0f - pars[0] * pars[1]) - pars[0] * g[i];
 }
 
-void ggml_sycl_opt_step_adamw(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+خالی ggml_sycl_opt_قدم_adamw(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/5);
 
-    const ggml_tensor * src0         = dst->src[0];
-    const ggml_tensor * src0_grad    = dst->src[1];
-    const ggml_tensor * src0_grad_m  = dst->src[2];
-    const ggml_tensor * src0_grad_v  = dst->src[3];
-    const ggml_tensor * adamw_params = dst->src[4];
+    ثابت ggml_tensor * src0         = dst->src[0];
+    ثابت ggml_tensor * src0_grad    = dst->src[1];
+    ثابت ggml_tensor * src0_grad_m  = dst->src[2];
+    ثابت ggml_tensor * src0_grad_v  = dst->src[3];
+    ثابت ggml_tensor * adamw_params = dst->src[4];
 
     GGML_ASSERT(src0->type         == GGML_TYPE_F32);
     GGML_ASSERT(src0_grad->type    == GGML_TYPE_F32);
@@ -78,31 +78,31 @@ void ggml_sycl_opt_step_adamw(ggml_backend_sycl_context & ctx, ggml_tensor * dst
     GGML_ASSERT(ggml_are_same_shape(src0, src0_grad_v));
     GGML_ASSERT(ggml_nelements(adamw_params) == 7);
 
-    dpct::queue_ptr stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    dpct::قطار_ptr stream = ctx.stream();
+    SYCL_CHECK(ggml_sycl_سیٹ_device(ctx.device));
 
-    float       * src0_d         = (float       *) src0->data;
-    const float * src0_grad_d    = (const float *) src0_grad->data;
-    float       * src0_grad_m_d  = (float       *) src0_grad_m->data;
-    float       * src0_grad_v_d  = (float       *) src0_grad_v->data;
-    const float * adamw_params_d = (const float *) adamw_params->data;
+    اعشاری       * src0_d         = (اعشاری       *) src0->ڈیٹا;
+    ثابت اعشاری * src0_grad_d    = (ثابت اعشاری *) src0_grad->ڈیٹا;
+    اعشاری       * src0_grad_m_d  = (اعشاری       *) src0_grad_m->ڈیٹا;
+    اعشاری       * src0_grad_v_d  = (اعشاری       *) src0_grad_v->ڈیٹا;
+    ثابت اعشاری * adamw_params_d = (ثابت اعشاری *) adamw_params->ڈیٹا;
 
-    const int64_t ne = ggml_nelements(src0);
-    const int64_t num_blocks = (ne + SYCL_OPT_STEP_BLOCK_SIZE - 1) / SYCL_OPT_STEP_BLOCK_SIZE;
+    ثابت int64_t ne = ggml_nelements(src0);
+    ثابت int64_t عدد_بلاکیں = (ne + SYCL_OPT_قدم_بلاک_سائز - 1) / SYCL_OPT_قدم_بلاک_سائز;
 
     stream->parallel_for(
-        sycl::nd_range<1>(num_blocks * SYCL_OPT_STEP_BLOCK_SIZE, SYCL_OPT_STEP_BLOCK_SIZE),
-        [=](sycl::nd_item<1> item) {
-            opt_step_adamw_f32_kernel(src0_d, src0_grad_d, src0_grad_m_d, src0_grad_v_d, adamw_params_d, ne, item);
+        sycl::nd_range<1>(عدد_بلاکیں * SYCL_OPT_قدم_بلاک_سائز, SYCL_OPT_قدم_بلاک_سائز),
+        [=](sycl::nd_شے<1> شے) {
+            opt_قدم_adamw_f32_kernel(src0_d, src0_grad_d, src0_grad_m_d, src0_grad_v_d, adamw_params_d, ne, شے);
         });
 }
 
-void ggml_sycl_opt_step_sgd(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+خالی ggml_sycl_opt_قدم_sgd(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/3);
 
-    const ggml_tensor * src0       = dst->src[0];
-    const ggml_tensor * src0_grad  = dst->src[1];
-    const ggml_tensor * sgd_params = dst->src[2];
+    ثابت ggml_tensor * src0       = dst->src[0];
+    ثابت ggml_tensor * src0_grad  = dst->src[1];
+    ثابت ggml_tensor * sgd_params = dst->src[2];
 
     GGML_ASSERT(src0->type      == GGML_TYPE_F32);
     GGML_ASSERT(src0_grad->type == GGML_TYPE_F32);
@@ -113,19 +113,19 @@ void ggml_sycl_opt_step_sgd(ggml_backend_sycl_context & ctx, ggml_tensor * dst) 
     GGML_ASSERT(ggml_are_same_shape(src0, src0_grad));
     GGML_ASSERT(ggml_nelements(sgd_params) == 2);
 
-    dpct::queue_ptr stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    dpct::قطار_ptr stream = ctx.stream();
+    SYCL_CHECK(ggml_sycl_سیٹ_device(ctx.device));
 
-    float       * src0_d      = (float       *) src0->data;
-    const float * src0_grad_d = (const float *) src0_grad->data;
-    const float * sgd_params_d = (const float *) sgd_params->data;
+    اعشاری       * src0_d      = (اعشاری       *) src0->ڈیٹا;
+    ثابت اعشاری * src0_grad_d = (ثابت اعشاری *) src0_grad->ڈیٹا;
+    ثابت اعشاری * sgd_params_d = (ثابت اعشاری *) sgd_params->ڈیٹا;
 
-    const int64_t ne = ggml_nelements(src0);
-    const int64_t num_blocks = (ne + SYCL_OPT_STEP_BLOCK_SIZE - 1) / SYCL_OPT_STEP_BLOCK_SIZE;
+    ثابت int64_t ne = ggml_nelements(src0);
+    ثابت int64_t عدد_بلاکیں = (ne + SYCL_OPT_قدم_بلاک_سائز - 1) / SYCL_OPT_قدم_بلاک_سائز;
 
     stream->parallel_for(
-        sycl::nd_range<1>(num_blocks * SYCL_OPT_STEP_BLOCK_SIZE, SYCL_OPT_STEP_BLOCK_SIZE),
-        [=](sycl::nd_item<1> item) {
-            opt_step_sgd_f32_kernel(src0_d, src0_grad_d, sgd_params_d, ne, item);
+        sycl::nd_range<1>(عدد_بلاکیں * SYCL_OPT_قدم_بلاک_سائز, SYCL_OPT_قدم_بلاک_سائز),
+        [=](sycl::nd_شے<1> شے) {
+            opt_قدم_sgd_f32_kernel(src0_d, src0_grad_d, sgd_params_d, ne, شے);
         });
 }

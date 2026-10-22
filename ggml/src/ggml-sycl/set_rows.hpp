@@ -1,8 +1,8 @@
-#ifndef GGML_SYCL_SET_ROWS_HPP
-#define GGML_SYCL_SET_ROWS_HPP
+#اگر_غیر_تعریف_شدہ GGML_SYCL_سیٹ_صفیں_HPP
+#تعریف_کرو GGML_SYCL_سیٹ_صفیں_HPP
 
-#include "common.hpp"
+#شامل "common.hpp"
 
-void ggml_sycl_op_set_rows(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+خالی ggml_sycl_op_سیٹ_صفیں(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-#endif // GGML_SYCL_SET_ROWS_HPP
+#اگر_ختم // GGML_SYCL_SET_ROWS_HPP

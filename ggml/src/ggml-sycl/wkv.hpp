@@ -1,10 +1,10 @@
-#ifndef GGML_SYCL_WKV_HPP
-#define GGML_SYCL_WKV_HPP
+#اگر_غیر_تعریف_شدہ GGML_SYCL_WKV_HPP
+#تعریف_کرو GGML_SYCL_WKV_HPP
 
-#include "common.hpp"
+#شامل "common.hpp"
 
-void ggml_sycl_op_rwkv_wkv6(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+خالی ggml_sycl_op_rwkv_wkv6(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-void ggml_sycl_op_rwkv_wkv7(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+خالی ggml_sycl_op_rwkv_wkv7(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-#endif // GGML_SYCL_WKV_HPP
+#اگر_ختم // GGML_SYCL_WKV_HPP

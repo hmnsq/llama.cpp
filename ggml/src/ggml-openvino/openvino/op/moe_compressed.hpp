@@ -11,79 +11,79 @@
 //
 // \note MOE op classes are under development and subject to change.
 
-#pragma once
+#ہدایت once
 
-#include <optional>
+#شامل <optional>
 
-#include "openvino/core/type/element_type.hpp"
-#include "openvino/op/op.hpp"
+#شامل "openvino/core/type/element_type.hpp"
+#شامل "openvino/op/op.hpp"
 
-namespace ov::op::internal {
+نامخلا ov::op::internal {
 
-class OPENVINO_API MOE : public ov::op::Op {
-public:
+جماعت OPENVINO_API MOE : عوامی ov::op::Op {
+عوامی:
     OPENVINO_OP("MOE")
 
-    MOE() = default;
+    MOE() = طےشدہ;
 
-    MOE(const OutputVector & args) : Op(args) {}
+    MOE(ثابت Output_سمتیہ & دلائل_2) : Op(دلائل_2) {}
 
-    enum class Expert_type { GEMM2_BIAS_SWIGLU_CLAMP, GEMM3_SWIGLU };
+    شمار جماعت Expert_type { GEMM2_BIAS_SWIGLU_CLAMP, GEMM3_SWIGLU };
 
-    enum class Activation_type { SWIGLU, GEGLU_TANH, GEGLU_ERF };
+    شمار جماعت Activation_type { SWIGLU, GEGLU_TANH, GEGLU_ERF };
 
-    struct Config {
+    ساخت Config {
         Expert_type expert_type{ Expert_type::GEMM2_BIAS_SWIGLU_CLAMP };
-        float expert_alpha{ 0.0f };
-        float expert_beta{ 1.0f };
+        اعشاری expert_alpha{ 0.0f };
+        اعشاری expert_beta{ 1.0f };
         size_t gate_idx{ 0 };
         Activation_type activation_type{ Activation_type::SWIGLU };
     };
 
-    MOE(const OutputVector & args, const Config & config);
+    MOE(ثابت Output_سمتیہ & دلائل_2, ثابت Config & config);
 
-    const Config & get_config() const;
-    void set_config(const Config & config);
+    ثابت Config & get_config() ثابت;
+    خالی سیٹ_config(ثابت Config & config);
 
-    bool visit_attributes(AttributeVisitor & visitor) override;
-    void validate_and_infer_types() override;
-    std::shared_ptr<Node> clone_with_new_inputs(const OutputVector & new_args) const override;
+    منطقی دورہ_اوصاف(AttributeVisitor & visitor) override;
+    خالی validate_and_infer_types() override;
+    std::shared_ptr<Node> clone_with_new_inputs(ثابت Output_سمتیہ & new_دلائل) ثابت override;
 
-private:
+نجی:
     Config m_config;
 };
 
-class OPENVINO_API MOECompressed : public MOE {
-public:
+جماعت OPENVINO_API MOECompressed : عوامی MOE {
+عوامی:
     OPENVINO_OP("MOECompressed", "", ov::op::internal::MOE)
 
-    MOECompressed() = default;
+    MOECompressed() = طےشدہ;
 
-    struct Config : public MOE::Config {
-        size_t hidden_size = 0;
-        size_t inter_size = 0;
-        size_t num_expert = 0;
-        size_t num_shared_expert = 0;
-        size_t top_k = 0;
+    ساخت Config : عوامی MOE::Config {
+        size_t hidden_سائز = 0;
+        size_t inter_سائز = 0;
+        size_t عدد_expert = 0;
+        size_t عدد_shared_expert = 0;
+        size_t چوٹی_k = 0;
         // numeric_limits<size_t>::max() means per_channel compression (single group)
-        size_t group_size = 0;
-        bool has_batch_dim = false;
-        bool has_zp = false;
-        ov::element::Type out_type = ov::element::dynamic;
-        std::optional<float> scale_factor;
+        size_t گروہ_سائز = 0;
+        منطقی has_batch_dim = جھوٹ;
+        منطقی has_zp = جھوٹ;
+        ov::element::Type برآمد_type = ov::element::dynamic;
+        std::optional<اعشاری> scale_ضربی_عدد;
     };
 
-    MOECompressed(const OutputVector & args, const Config & config);
+    MOECompressed(ثابت Output_سمتیہ & دلائل_2, ثابت Config & config);
 
-    const Config & get_config() const { return m_config; }
+    ثابت Config & get_config() ثابت { واپس m_config; }
 
-    void set_scale_factor(float scale_factor) { m_config.scale_factor = scale_factor; }
+    خالی سیٹ_scale_ضربی_عدد(اعشاری scale_ضربی_عدد) { m_config.scale_ضربی_عدد = scale_ضربی_عدد; }
 
-    bool visit_attributes(AttributeVisitor & visitor) override;
-    void validate_and_infer_types() override;
-    std::shared_ptr<Node> clone_with_new_inputs(const OutputVector & new_args) const override;
+    منطقی دورہ_اوصاف(AttributeVisitor & visitor) override;
+    خالی validate_and_infer_types() override;
+    std::shared_ptr<Node> clone_with_new_inputs(ثابت Output_سمتیہ & new_دلائل) ثابت override;
 
-protected:
+محفوظ:
     Config m_config;
 };
 

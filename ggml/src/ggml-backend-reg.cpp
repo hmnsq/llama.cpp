@@ -1,287 +1,287 @@
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
-#include "ggml-backend-dl.h"
-#include "ggml-impl.h"
-#include <algorithm>
-#include <cstring>
-#include <filesystem>
-#include <memory>
-#include <string>
-#include <type_traits>
-#include <vector>
-#include <cctype>
+#شامل "ggml-backend-impl.h"
+#شامل "ggml-backend.h"
+#شامل "ggml-backend-dl.h"
+#شامل "ggml-impl.h"
+#شامل <algorithm>
+#شامل <cstring>
+#شامل <filesystem>
+#شامل <memory>
+#شامل <string>
+#شامل <type_traits>
+#شامل <vector>
+#شامل <cctype>
 
-#ifdef _WIN32
-#    define WIN32_LEAN_AND_MEAN
+#اگر_تعریف_شدہ _WIN32
+#    define WIN32_LEAN_AND_اوسط
 #    ifndef NOMINMAX
 #        define NOMINMAX
 #    endif
 #    include <windows.h>
-#elif defined(__APPLE__)
+#وگرنہ_اگر defined(__APPLE__)
 #    include <mach-o/dyld.h>
 #    include <dlfcn.h>
-#else
+#ورنہ
 #    include <dlfcn.h>
 #    include <unistd.h>
-#endif
+#اگر_ختم
 
 // Backend registry
-#ifdef GGML_USE_CPU
-#include "ggml-cpu.h"
-#endif
+#اگر_تعریف_شدہ GGML_USE_CPU
+#شامل "ggml-cpu.h"
+#اگر_ختم
 
-#ifdef GGML_USE_CUDA
-#include "ggml-cuda.h"
-#endif
+#اگر_تعریف_شدہ GGML_USE_CUDA
+#شامل "ggml-cuda.h"
+#اگر_ختم
 
-#ifdef GGML_USE_METAL
-#include "ggml-metal.h"
-#endif
+#اگر_تعریف_شدہ GGML_USE_METAL
+#شامل "ggml-metal.h"
+#اگر_ختم
 
-#ifdef GGML_USE_SYCL
-#include "ggml-sycl.h"
-#endif
+#اگر_تعریف_شدہ GGML_USE_SYCL
+#شامل "ggml-sycl.h"
+#اگر_ختم
 
-#ifdef GGML_USE_VULKAN
-#include "ggml-vulkan.h"
-#endif
+#اگر_تعریف_شدہ GGML_USE_VULKAN
+#شامل "ggml-vulkan.h"
+#اگر_ختم
 
-#ifdef GGML_USE_WEBGPU
-#include "ggml-webgpu.h"
-#endif
+#اگر_تعریف_شدہ GGML_USE_WEBGPU
+#شامل "ggml-webgpu.h"
+#اگر_ختم
 
-#ifdef GGML_USE_ZDNN
-#include "ggml-zdnn.h"
-#endif
+#اگر_تعریف_شدہ GGML_USE_ZDNN
+#شامل "ggml-zdnn.h"
+#اگر_ختم
 
-#ifdef GGML_USE_OPENCL
-#include "ggml-opencl.h"
-#endif
+#اگر_تعریف_شدہ GGML_USE_OPENCL
+#شامل "ggml-opencl.h"
+#اگر_ختم
 
-#ifdef GGML_USE_HEXAGON
-#include "ggml-hexagon.h"
-#endif
+#اگر_تعریف_شدہ GGML_USE_HEXAGON
+#شامل "ggml-hexagon.h"
+#اگر_ختم
 
-#ifdef GGML_USE_BLAS
-#include "ggml-blas.h"
-#endif
+#اگر_تعریف_شدہ GGML_USE_BLAS
+#شامل "ggml-blas.h"
+#اگر_ختم
 
-#ifdef GGML_USE_RPC
-#include "ggml-rpc.h"
-#endif
+#اگر_تعریف_شدہ GGML_USE_RPC
+#شامل "ggml-rpc.h"
+#اگر_ختم
 
-#ifdef GGML_USE_VIRTGPU_FRONTEND
-#include "ggml-virtgpu.h"
-#endif
+#اگر_تعریف_شدہ GGML_USE_VIRTGPU_FRONTEND
+#شامل "ggml-virtgpu.h"
+#اگر_ختم
 
-#ifdef GGML_USE_CANN
-#include "ggml-cann.h"
-#endif
+#اگر_تعریف_شدہ GGML_USE_CANN
+#شامل "ggml-cann.h"
+#اگر_ختم
 
-#ifdef GGML_USE_ZENDNN
-#include "ggml-zendnn.h"
-#endif
+#اگر_تعریف_شدہ GGML_USE_ZENDNN
+#شامل "ggml-zendnn.h"
+#اگر_ختم
 
-#ifdef GGML_USE_OPENVINO
-#include "ggml-openvino.h"
-#endif
+#اگر_تعریف_شدہ GGML_USE_OPENVINO
+#شامل "ggml-openvino.h"
+#اگر_ختم
 
-#ifdef GGML_USE_ET
-#include "ggml-et.h"
-#endif
+#اگر_تعریف_شدہ GGML_USE_ET
+#شامل "ggml-et.h"
+#اگر_ختم
 
-namespace fs = std::filesystem;
+نامخلا fs = std::filesystem;
 
-static std::string path_str(const fs::path & path) {
-    try {
-#if defined(__cpp_lib_char8_t)
+ساکن std::string راستہ_str(ثابت fs::path & path) {
+    کوشش {
+#اگر defined(__cpp_lib_char8_t)
         // C++20 and later: u8string() returns std::u8string
-        const std::u8string u8str = path.u8string();
-        return std::string(reinterpret_cast<const char *>(u8str.data()), u8str.size());
-#else
+        ثابت std::u8string u8str = path.u8string();
+        واپس std::string(reinterpret_cast<ثابت حرف *>(u8str.ڈیٹا()), u8str.size());
+#ورنہ
         // C++17: u8string() returns std::string
-        return path.u8string();
-#endif
-    } catch (...) {
-        return std::string();
+        واپس path.u8string();
+#اگر_ختم
+    } پکڑو (...) {
+        واپس std::string();
     }
 }
 
-struct ggml_backend_reg_entry {
+ساخت ggml_backend_reg_اندراج {
     ggml_backend_reg_t reg;
     dl_handle_ptr handle;
 };
 
-struct ggml_backend_registry {
-    std::vector<ggml_backend_reg_entry> backends;
+ساخت ggml_backend_registry {
+    std::vector<ggml_backend_reg_اندراج> backends;
     std::vector<ggml_backend_dev_t> devices;
 
     ggml_backend_registry() {
-#ifdef GGML_USE_CUDA
-        register_backend(ggml_backend_cuda_reg());
-#endif
-#ifdef GGML_USE_METAL
-        register_backend(ggml_backend_metal_reg());
-#endif
-#ifdef GGML_USE_SYCL
-        register_backend(ggml_backend_sycl_reg());
-#endif
-#ifdef GGML_USE_VULKAN
+#اگر_تعریف_شدہ GGML_USE_CUDA
+        رجسٹر_backend(ggml_backend_cuda_reg());
+#اگر_ختم
+#اگر_تعریف_شدہ GGML_USE_METAL
+        رجسٹر_backend(ggml_backend_metal_reg());
+#اگر_ختم
+#اگر_تعریف_شدہ GGML_USE_SYCL
+        رجسٹر_backend(ggml_backend_sycl_reg());
+#اگر_ختم
+#اگر_تعریف_شدہ GGML_USE_VULKAN
     // Add runtime disable check
-    if (getenv("GGML_DISABLE_VULKAN") == nullptr) {
-        register_backend(ggml_backend_vk_reg());
-    } else {
+    اگر (getenv("GGML_DISABLE_VULKAN") == خالی_اشاریہ) {
+        رجسٹر_backend(ggml_backend_vk_reg());
+    } ورنہ {
         GGML_LOG_DEBUG("Vulkan backend disabled by GGML_DISABLE_VULKAN environment variable\n");
     }
-#endif
-#ifdef GGML_USE_WEBGPU
-        register_backend(ggml_backend_webgpu_reg());
-#endif
-#ifdef GGML_USE_ZDNN
-        register_backend(ggml_backend_zdnn_reg());
-#endif
-#ifdef GGML_USE_VIRTGPU_FRONTEND
-        register_backend(ggml_backend_virtgpu_reg());
-#endif
+#اگر_ختم
+#اگر_تعریف_شدہ GGML_USE_WEBGPU
+        رجسٹر_backend(ggml_backend_webgpu_reg());
+#اگر_ختم
+#اگر_تعریف_شدہ GGML_USE_ZDNN
+        رجسٹر_backend(ggml_backend_zdnn_reg());
+#اگر_ختم
+#اگر_تعریف_شدہ GGML_USE_VIRTGPU_FRONTEND
+        رجسٹر_backend(ggml_backend_virtgpu_reg());
+#اگر_ختم
 
-#ifdef GGML_USE_OPENCL
-        register_backend(ggml_backend_opencl_reg());
-#endif
-#ifdef GGML_USE_ZENDNN
-        register_backend(ggml_backend_zendnn_reg());
-#endif
-#ifdef GGML_USE_HEXAGON
-        register_backend(ggml_backend_hexagon_reg());
-#endif
-#ifdef GGML_USE_CANN
-        register_backend(ggml_backend_cann_reg());
-#endif
-#ifdef GGML_USE_BLAS
-        register_backend(ggml_backend_blas_reg());
-#endif
-#ifdef GGML_USE_RPC
-        register_backend(ggml_backend_rpc_reg());
-#endif
-#ifdef GGML_USE_OPENVINO
-        register_backend(ggml_backend_openvino_reg());
-#endif
-#ifdef GGML_USE_ET
-        register_backend(ggml_backend_et_reg());
-#endif
-#ifdef GGML_USE_CPU
-        register_backend(ggml_backend_cpu_reg());
-#endif
+#اگر_تعریف_شدہ GGML_USE_OPENCL
+        رجسٹر_backend(ggml_backend_opencl_reg());
+#اگر_ختم
+#اگر_تعریف_شدہ GGML_USE_ZENDNN
+        رجسٹر_backend(ggml_backend_zendnn_reg());
+#اگر_ختم
+#اگر_تعریف_شدہ GGML_USE_HEXAGON
+        رجسٹر_backend(ggml_backend_hexagon_reg());
+#اگر_ختم
+#اگر_تعریف_شدہ GGML_USE_CANN
+        رجسٹر_backend(ggml_backend_cann_reg());
+#اگر_ختم
+#اگر_تعریف_شدہ GGML_USE_BLAS
+        رجسٹر_backend(ggml_backend_blas_reg());
+#اگر_ختم
+#اگر_تعریف_شدہ GGML_USE_RPC
+        رجسٹر_backend(ggml_backend_rpc_reg());
+#اگر_ختم
+#اگر_تعریف_شدہ GGML_USE_OPENVINO
+        رجسٹر_backend(ggml_backend_openvino_reg());
+#اگر_ختم
+#اگر_تعریف_شدہ GGML_USE_ET
+        رجسٹر_backend(ggml_backend_et_reg());
+#اگر_ختم
+#اگر_تعریف_شدہ GGML_USE_CPU
+        رجسٹر_backend(ggml_backend_cpu_reg());
+#اگر_ختم
     }
 
     ~ggml_backend_registry() {
         // FIXME: backends cannot be safely unloaded without a function to destroy all the backend resources,
         // since backend threads may still be running and accessing resources from the dynamic library
-        for (auto & entry : backends) {
-            if (entry.handle) {
-                entry.handle.release(); // NOLINT
+        برائے (خودکار & اندراج_2 : backends) {
+            اگر (اندراج_2.handle) {
+                اندراج_2.handle.release(); // NOLINT
             }
         }
     }
 
-    void register_backend(ggml_backend_reg_t reg, dl_handle_ptr handle = nullptr) {
-        if (!reg) {
-            return;
+    خالی رجسٹر_backend(ggml_backend_reg_t reg, dl_handle_ptr handle = خالی_اشاریہ) {
+        اگر (!reg) {
+            واپس;
         }
 
-        for (auto & entry : backends) {
-            if (entry.reg == reg) {
-                return;
+        برائے (خودکار & اندراج_2 : backends) {
+            اگر (اندراج_2.reg == reg) {
+                واپس;
             }
         }
 
-#ifndef NDEBUG
+#اگر_غیر_تعریف_شدہ NDEBUG
         GGML_LOG_DEBUG("%s: registered backend %s (%zu devices)\n",
-            __func__, ggml_backend_reg_name(reg), ggml_backend_reg_dev_count(reg));
-#endif
+            __func__, ggml_backend_reg_name(reg), ggml_backend_reg_dev_گنتی(reg));
+#اگر_ختم
         backends.push_back({ reg, std::move(handle) });
-        for (size_t i = 0; i < ggml_backend_reg_dev_count(reg); i++) {
-            register_device(ggml_backend_reg_dev_get(reg, i));
+        برائے (size_t i = 0; i < ggml_backend_reg_dev_گنتی(reg); i++) {
+            رجسٹر_device(ggml_backend_reg_dev_get(reg, i));
         }
     }
 
-    void register_device(ggml_backend_dev_t device) {
-        for (auto & dev : devices) {
-            if (dev == device) {
-                return;
+    خالی رجسٹر_device(ggml_backend_dev_t device) {
+        برائے (خودکار & dev : devices) {
+            اگر (dev == device) {
+                واپس;
             }
         }
 
-#ifndef NDEBUG
+#اگر_غیر_تعریف_شدہ NDEBUG
         GGML_LOG_DEBUG("%s: registered device %s (%s)\n", __func__, ggml_backend_dev_name(device), ggml_backend_dev_description(device));
-#endif
+#اگر_ختم
         devices.push_back(device);
     }
 
-    ggml_backend_reg_t load_backend(const fs::path & path, bool silent) {
-        dl_handle_ptr handle { dl_load_library(path) };
-        if (!handle) {
-            if (!silent) {
-                GGML_LOG_ERROR("%s: failed to load %s: %s\n", __func__, path_str(path).c_str(), dl_error());
+    ggml_backend_reg_t بھرو_backend(ثابت fs::path & path, منطقی silent) {
+        dl_handle_ptr handle { dl_بھرو_library(path) };
+        اگر (!handle) {
+            اگر (!silent) {
+                GGML_LOG_ERROR("%s: failed to load %s: %s\n", __func__, راستہ_str(path).c_str(), dl_error());
             }
-            return nullptr;
+            واپس خالی_اشاریہ;
         }
 
-        auto score_fn = (ggml_backend_score_t) dl_get_sym(handle.get(), "ggml_backend_score");
-        if (score_fn && score_fn() == 0) {
-            if (!silent) {
-                GGML_LOG_INFO("%s: backend %s is not supported on this system\n", __func__, path_str(path).c_str());
+        خودکار score_fn = (ggml_backend_score_t) dl_get_sym(handle.get(), "ggml_backend_score");
+        اگر (score_fn && score_fn() == 0) {
+            اگر (!silent) {
+                GGML_LOG_INFO("%s: backend %s is not supported on this system\n", __func__, راستہ_str(path).c_str());
             }
-            return nullptr;
+            واپس خالی_اشاریہ;
         }
 
-        auto backend_init_fn = (ggml_backend_init_t) dl_get_sym(handle.get(), "ggml_backend_init");
-        if (!backend_init_fn) {
-            if (!silent) {
-                GGML_LOG_ERROR("%s: failed to find ggml_backend_init in %s\n", __func__, path_str(path).c_str());
+        خودکار backend_init_fn = (ggml_backend_init_t) dl_get_sym(handle.get(), "ggml_backend_init");
+        اگر (!backend_init_fn) {
+            اگر (!silent) {
+                GGML_LOG_ERROR("%s: failed to find ggml_backend_init in %s\n", __func__, راستہ_str(path).c_str());
             }
-            return nullptr;
+            واپس خالی_اشاریہ;
         }
 
         ggml_backend_reg_t reg = backend_init_fn();
-        if (!reg || reg->api_version != GGML_BACKEND_API_VERSION) {
-            if (!silent) {
-                if (!reg) {
+        اگر (!reg || reg->api_نسخہ != GGML_BACKEND_API_نسخہ) {
+            اگر (!silent) {
+                اگر (!reg) {
                     GGML_LOG_ERROR("%s: failed to initialize backend from %s: ggml_backend_init returned NULL\n",
-                        __func__, path_str(path).c_str());
-                } else {
+                        __func__, راستہ_str(path).c_str());
+                } ورنہ {
                     GGML_LOG_ERROR("%s: failed to initialize backend from %s: incompatible API version (backend: %d, current: %d)\n",
-                        __func__, path_str(path).c_str(), reg->api_version, GGML_BACKEND_API_VERSION);
+                        __func__, راستہ_str(path).c_str(), reg->api_نسخہ, GGML_BACKEND_API_نسخہ);
                 }
             }
-            return nullptr;
+            واپس خالی_اشاریہ;
         }
 
-        GGML_LOG_INFO("%s: loaded %s backend from %s\n", __func__, ggml_backend_reg_name(reg), path_str(path).c_str());
+        GGML_LOG_INFO("%s: loaded %s backend from %s\n", __func__, ggml_backend_reg_name(reg), راستہ_str(path).c_str());
 
-        register_backend(reg, std::move(handle));
+        رجسٹر_backend(reg, std::move(handle));
 
-        return reg;
+        واپس reg;
     }
 
-    void unload_backend(ggml_backend_reg_t reg, bool silent) {
-        auto it = std::find_if(backends.begin(), backends.end(),
-                               [reg](const ggml_backend_reg_entry & entry) { return entry.reg == reg; });
+    خالی unload_backend(ggml_backend_reg_t reg, منطقی silent) {
+        خودکار it = std::find_if(backends.begin(), backends.end(),
+                               [reg](ثابت ggml_backend_reg_اندراج & اندراج_2) { واپس اندراج_2.reg == reg; });
 
-        if (it == backends.end()) {
-            if (!silent) {
+        اگر (it == backends.end()) {
+            اگر (!silent) {
                 GGML_LOG_ERROR("%s: backend not found\n", __func__);
             }
-            return;
+            واپس;
         }
 
-        if (!silent) {
+        اگر (!silent) {
             GGML_LOG_DEBUG("%s: unloading %s backend\n", __func__, ggml_backend_reg_name(reg));
         }
 
         // remove devices
         devices.erase(
             std::remove_if(devices.begin(), devices.end(),
-                            [reg](ggml_backend_dev_t dev) { return ggml_backend_dev_backend_reg(dev) == reg; }),
+                            [reg](ggml_backend_dev_t dev) { واپس ggml_backend_dev_backend_reg(dev) == reg; }),
             devices.end());
 
         // remove backend
@@ -289,250 +289,250 @@ struct ggml_backend_registry {
     }
 };
 
-static ggml_backend_registry & get_reg() {
-    static ggml_backend_registry reg;
-    return reg;
+ساکن ggml_backend_registry & get_reg() {
+    ساکن ggml_backend_registry reg;
+    واپس reg;
 }
 
 // Internal API
-void ggml_backend_register(ggml_backend_reg_t reg) {
-    get_reg().register_backend(reg);
+خالی ggml_backend_رجسٹر(ggml_backend_reg_t reg) {
+    get_reg().رجسٹر_backend(reg);
 }
 
-void ggml_backend_device_register(ggml_backend_dev_t device) {
-    get_reg().register_device(device);
+خالی ggml_backend_device_رجسٹر(ggml_backend_dev_t device) {
+    get_reg().رجسٹر_device(device);
 }
 
 // Backend (reg) enumeration
-static bool striequals(const char * a, const char * b) {
-    for (; *a && *b; a++, b++) {
-        if (std::tolower(*a) != std::tolower(*b)) {
-            return false;
+ساکن منطقی striequals(ثابت حرف * a, ثابت حرف * b) {
+    برائے (; *a && *b; a++, b++) {
+        اگر (std::tolower(*a) != std::tolower(*b)) {
+            واپس جھوٹ;
         }
     }
-    return *a == *b;
+    واپس *a == *b;
 }
 
-size_t ggml_backend_reg_count() {
-    return get_reg().backends.size();
+size_t ggml_backend_reg_گنتی() {
+    واپس get_reg().backends.size();
 }
 
-ggml_backend_reg_t ggml_backend_reg_get(size_t index) {
-    GGML_ASSERT(index < ggml_backend_reg_count());
-    return get_reg().backends[index].reg;
+ggml_backend_reg_t ggml_backend_reg_get(size_t اشاریہ) {
+    GGML_ASSERT(اشاریہ < ggml_backend_reg_گنتی());
+    واپس get_reg().backends[اشاریہ].reg;
 }
 
-ggml_backend_reg_t ggml_backend_reg_by_name(const char * name) {
-    for (size_t i = 0; i < ggml_backend_reg_count(); i++) {
+ggml_backend_reg_t ggml_backend_reg_by_name(ثابت حرف * name) {
+    برائے (size_t i = 0; i < ggml_backend_reg_گنتی(); i++) {
         ggml_backend_reg_t reg = ggml_backend_reg_get(i);
-        if (striequals(ggml_backend_reg_name(reg), name)) {
-            return reg;
+        اگر (striequals(ggml_backend_reg_name(reg), name)) {
+            واپس reg;
         }
     }
-    return nullptr;
+    واپس خالی_اشاریہ;
 }
 
 // Device enumeration
-size_t ggml_backend_dev_count() {
-    return get_reg().devices.size();
+size_t ggml_backend_dev_گنتی() {
+    واپس get_reg().devices.size();
 }
 
-ggml_backend_dev_t ggml_backend_dev_get(size_t index) {
-    GGML_ASSERT(index < ggml_backend_dev_count());
-    return get_reg().devices[index];
+ggml_backend_dev_t ggml_backend_dev_get(size_t اشاریہ) {
+    GGML_ASSERT(اشاریہ < ggml_backend_dev_گنتی());
+    واپس get_reg().devices[اشاریہ];
 }
 
-ggml_backend_dev_t ggml_backend_dev_by_name(const char * name) {
-    for (size_t i = 0; i < ggml_backend_dev_count(); i++) {
+ggml_backend_dev_t ggml_backend_dev_by_name(ثابت حرف * name) {
+    برائے (size_t i = 0; i < ggml_backend_dev_گنتی(); i++) {
         ggml_backend_dev_t dev = ggml_backend_dev_get(i);
-        if (striequals(ggml_backend_dev_name(dev), name)) {
-            return dev;
+        اگر (striequals(ggml_backend_dev_name(dev), name)) {
+            واپس dev;
         }
     }
-    return nullptr;
+    واپس خالی_اشاریہ;
 }
 
-ggml_backend_dev_t ggml_backend_dev_by_type(enum ggml_backend_dev_type type) {
-    for (size_t i = 0; i < ggml_backend_dev_count(); i++) {
+ggml_backend_dev_t ggml_backend_dev_by_type(شمار ggml_backend_dev_type type) {
+    برائے (size_t i = 0; i < ggml_backend_dev_گنتی(); i++) {
         ggml_backend_dev_t dev = ggml_backend_dev_get(i);
-        if (ggml_backend_dev_type(dev) == type) {
-            return dev;
+        اگر (ggml_backend_dev_type(dev) == type) {
+            واپس dev;
         }
     }
-    return nullptr;
+    واپس خالی_اشاریہ;
 }
 
 // Convenience functions
-ggml_backend_t ggml_backend_init_by_name(const char * name, const char * params) {
+ggml_backend_t ggml_backend_init_by_name(ثابت حرف * name, ثابت حرف * params) {
     ggml_backend_dev_t dev = ggml_backend_dev_by_name(name);
-    if (!dev) {
-        return nullptr;
+    اگر (!dev) {
+        واپس خالی_اشاریہ;
     }
-    return ggml_backend_dev_init(dev, params);
+    واپس ggml_backend_dev_init(dev, params);
 }
 
-ggml_backend_t ggml_backend_init_by_type(enum ggml_backend_dev_type type, const char * params) {
+ggml_backend_t ggml_backend_init_by_type(شمار ggml_backend_dev_type type, ثابت حرف * params) {
     ggml_backend_dev_t dev = ggml_backend_dev_by_type(type);
-    if (!dev) {
-        return nullptr;
+    اگر (!dev) {
+        واپس خالی_اشاریہ;
     }
-    return ggml_backend_dev_init(dev, params);
+    واپس ggml_backend_dev_init(dev, params);
 }
 
-ggml_backend_t ggml_backend_init_best(void) {
+ggml_backend_t ggml_backend_init_بہترین(خالی) {
     ggml_backend_dev_t dev = ggml_backend_dev_by_type(GGML_BACKEND_DEVICE_TYPE_GPU);
     dev = dev ? dev : ggml_backend_dev_by_type(GGML_BACKEND_DEVICE_TYPE_IGPU);
     dev = dev ? dev : ggml_backend_dev_by_type(GGML_BACKEND_DEVICE_TYPE_CPU);
-    if (!dev) {
-        return nullptr;
+    اگر (!dev) {
+        واپس خالی_اشاریہ;
     }
-    return ggml_backend_dev_init(dev, nullptr);
+    واپس ggml_backend_dev_init(dev, خالی_اشاریہ);
 }
 
 // Dynamic loading
-ggml_backend_reg_t ggml_backend_load(const char * path) {
-    return get_reg().load_backend(path, false);
+ggml_backend_reg_t ggml_backend_بھرو(ثابت حرف * path) {
+    واپس get_reg().بھرو_backend(path, جھوٹ);
 }
 
-void ggml_backend_unload(ggml_backend_reg_t reg) {
-    get_reg().unload_backend(reg, true);
+خالی ggml_backend_unload(ggml_backend_reg_t reg) {
+    get_reg().unload_backend(reg, سچ);
 }
 
-static fs::path get_executable_path() {
-#if defined(__APPLE__)
+ساکن fs::path get_executable_راستہ() {
+#اگر defined(__APPLE__)
     // get executable path
-    std::vector<char> path;
+    std::vector<حرف> path;
     uint32_t size;
-    while (true) {
+    جب (سچ) {
         size = path.size();
-        if (_NSGetExecutablePath(path.data(), &size) == 0) {
-            break;
+        اگر (NSGet_Executable_راستہ(path.ڈیٹا(), &size) == 0) {
+            توڑو;
         }
         path.resize(size);
     }
-    std::string base_path(path.data(), size);
+    std::string بنیاد_راستہ(path.ڈیٹا(), size);
     // remove executable name
-    auto last_slash = base_path.find_last_of('/');
-    if (last_slash != std::string::npos) {
-        base_path = base_path.substr(0, last_slash);
+    خودکار آخری_slash = بنیاد_راستہ.find_last_of('/');
+    اگر (آخری_slash != std::string::npos) {
+        بنیاد_راستہ = بنیاد_راستہ.substr(0, آخری_slash);
     }
-    return base_path + "/";
-#elif defined(__linux__) || defined(__FreeBSD__)
-    std::string base_path = ".";
-    std::vector<char> path(1024);
-    while (true) {
+    واپس بنیاد_راستہ + "/";
+#وگرنہ_اگر defined(__linux__) || defined(__FreeBSD__)
+    std::string بنیاد_راستہ = ".";
+    std::vector<حرف> path(1024);
+    جب (سچ) {
         // get executable path
-#    if defined(__linux__)
-        ssize_t len = readlink("/proc/self/exe", path.data(), path.size());
+#    اگر defined(__linux__)
+        ssize_t len = readlink("/proc/self/exe", path.ڈیٹا(), path.size());
 #    elif defined(__FreeBSD__)
-        ssize_t len = readlink("/proc/curproc/file", path.data(), path.size());
+        ssize_t len = readlink("/proc/curproc/file", path.ڈیٹا(), path.size());
 #    endif
-        if (len == -1) {
-            break;
+        اگر (len == -1) {
+            توڑو;
         }
-        if (len < (ssize_t) path.size()) {
-            base_path = std::string(path.data(), len);
+        اگر (len < (ssize_t) path.size()) {
+            بنیاد_راستہ = std::string(path.ڈیٹا(), len);
             // remove executable name
-            auto last_slash = base_path.find_last_of('/');
-            if (last_slash != std::string::npos) {
-                base_path = base_path.substr(0, last_slash);
+            خودکار آخری_slash = بنیاد_راستہ.find_last_of('/');
+            اگر (آخری_slash != std::string::npos) {
+                بنیاد_راستہ = بنیاد_راستہ.substr(0, آخری_slash);
             }
-            break;
+            توڑو;
         }
         path.resize(path.size() * 2);
     }
 
-    return base_path + "/";
-#elif defined(_WIN32)
-    std::vector<wchar_t> path(MAX_PATH);
-    DWORD len = GetModuleFileNameW(NULL, path.data(), path.size());
-    if (len == 0) {
-        return {};
+    واپس بنیاد_راستہ + "/";
+#وگرنہ_اگر defined(_WIN32)
+    std::vector<wchar_t> path(MAX_راستہ);
+    DWORD len = GetModuleFileNameW(تہی, path.ڈیٹا(), path.size());
+    اگر (len == 0) {
+        واپس {};
     }
-    std::wstring base_path(path.data(), len);
+    std::wstring بنیاد_راستہ(path.ڈیٹا(), len);
     // remove executable name
-    auto last_slash = base_path.find_last_of('\\');
-    if (last_slash != std::string::npos) {
-        base_path = base_path.substr(0, last_slash);
+    خودکار آخری_slash = بنیاد_راستہ.find_last_of('\\');
+    اگر (آخری_slash != std::string::npos) {
+        بنیاد_راستہ = بنیاد_راستہ.substr(0, آخری_slash);
     }
-    return base_path + L"\\";
-#else
-    return {};
-#endif
+    واپس بنیاد_راستہ + L"\\";
+#ورنہ
+    واپس {};
+#اگر_ختم
 }
 
-static fs::path backend_filename_prefix() {
-#ifdef _WIN32
-    return fs::u8path("ggml-");
-#else
-    return fs::u8path("libggml-");
-#endif
+ساکن fs::path backend_filename_سابقہ() {
+#اگر_تعریف_شدہ _WIN32
+    واپس fs::u8path("ggml-");
+#ورنہ
+    واپس fs::u8path("libggml-");
+#اگر_ختم
 }
 
-static fs::path backend_filename_extension() {
-#ifdef _WIN32
-    return fs::u8path(".dll");
-#else
-    return fs::u8path(".so");
-#endif
+ساکن fs::path backend_filename_extension() {
+#اگر_تعریف_شدہ _WIN32
+    واپس fs::u8path(".dll");
+#ورنہ
+    واپس fs::u8path(".so");
+#اگر_ختم
 }
 
-static ggml_backend_reg_t ggml_backend_load_best(const char * name, bool silent, const char * user_search_path) {
+ساکن ggml_backend_reg_t ggml_backend_بھرو_بہترین(ثابت حرف * name, منطقی silent, ثابت حرف * user_تلاش_راستہ) {
     // enumerate all the files that match [lib]ggml-name-*.[so|dll] in the search paths
-    const fs::path name_path = fs::u8path(name);
-    const fs::path file_prefix = backend_filename_prefix().native() + name_path.native() + fs::u8path("-").native();
-    const fs::path file_extension = backend_filename_extension();
+    ثابت fs::path name_راستہ = fs::u8path(name);
+    ثابت fs::path file_سابقہ = backend_filename_سابقہ().native() + name_راستہ.native() + fs::u8path("-").native();
+    ثابت fs::path file_extension = backend_filename_extension();
 
-    std::vector<fs::path> search_paths;
-    if (user_search_path == nullptr) {
-#ifdef GGML_BACKEND_DIR
-        search_paths.push_back(fs::u8path(GGML_BACKEND_DIR));
-#endif
+    std::vector<fs::path> تلاش_paths;
+    اگر (user_تلاش_راستہ == خالی_اشاریہ) {
+#اگر_تعریف_شدہ GGML_BACKEND_DIR
+        تلاش_paths.push_back(fs::u8path(GGML_BACKEND_DIR));
+#اگر_ختم
         // default search paths: executable directory, current directory
-        search_paths.push_back(get_executable_path());
+        تلاش_paths.push_back(get_executable_راستہ());
         std::error_code cwd_ec;
-        const fs::path cwd = fs::current_path(cwd_ec);
-        if (cwd_ec) {
-            GGML_LOG_DEBUG("%s: failed to get current directory: %s\n", __func__, cwd_ec.message().c_str());
-        } else {
-            search_paths.push_back(cwd);
+        ثابت fs::path cwd = fs::current_path(cwd_ec);
+        اگر (cwd_ec) {
+            GGML_LOG_DEBUG("%s: failed to get current directory: %s\n", __func__, cwd_ec.پیغام().c_str());
+        } ورنہ {
+            تلاش_paths.push_back(cwd);
         }
-    } else {
-        search_paths.push_back(fs::u8path(user_search_path));
+    } ورنہ {
+        تلاش_paths.push_back(fs::u8path(user_تلاش_راستہ));
     }
 
-    int best_score = 0;
-    fs::path best_path;
+    صحیح بہترین_score = 0;
+    fs::path بہترین_راستہ;
     std::error_code ec;
 
-    for (const auto & search_path : search_paths) {
+    برائے (ثابت خودکار & تلاش_راستہ : تلاش_paths) {
         std::error_code dir_ec;
-        fs::directory_iterator dir_it(search_path, dir_ec);
+        fs::directory_iterator dir_it(تلاش_راستہ, dir_ec);
 
-        for (const fs::directory_iterator end; dir_it != end; dir_it.increment(dir_ec)) {
-            const auto & entry = *dir_it;
-            if (entry.is_regular_file(ec)) {
-                auto filename = entry.path().filename();
-                auto ext = entry.path().extension();
-                if (filename.native().find(file_prefix) == 0 && ext == file_extension) {
-                    dl_handle_ptr handle { dl_load_library(entry) };
-                    if (!handle && !silent) {
-                        GGML_LOG_ERROR("%s: failed to load %s: %s\n", __func__, path_str(entry.path()).c_str(), dl_error());
+        برائے (ثابت fs::directory_iterator end; dir_it != end; dir_it.increment(dir_ec)) {
+            ثابت خودکار & اندراج_2 = *dir_it;
+            اگر (اندراج_2.is_regular_file(ec)) {
+                خودکار filename = اندراج_2.path().filename();
+                خودکار ext = اندراج_2.path().extension();
+                اگر (filename.native().find(file_سابقہ) == 0 && ext == file_extension) {
+                    dl_handle_ptr handle { dl_بھرو_library(اندراج_2) };
+                    اگر (!handle && !silent) {
+                        GGML_LOG_ERROR("%s: failed to load %s: %s\n", __func__, راستہ_str(اندراج_2.path()).c_str(), dl_error());
                     }
-                    if (handle) {
-                        auto score_fn = (ggml_backend_score_t) dl_get_sym(handle.get(), "ggml_backend_score");
-                        if (score_fn) {
-                            int s = score_fn();
-#ifndef NDEBUG
-                            GGML_LOG_DEBUG("%s: %s score: %d\n", __func__, path_str(entry.path()).c_str(), s);
-#endif
-                            if (s > best_score) {
-                                best_score = s;
-                                best_path = entry.path();
+                    اگر (handle) {
+                        خودکار score_fn = (ggml_backend_score_t) dl_get_sym(handle.get(), "ggml_backend_score");
+                        اگر (score_fn) {
+                            صحیح s = score_fn();
+#اگر_غیر_تعریف_شدہ NDEBUG
+                            GGML_LOG_DEBUG("%s: %s score: %d\n", __func__, راستہ_str(اندراج_2.path()).c_str(), s);
+#اگر_ختم
+                            اگر (s > بہترین_score) {
+                                بہترین_score = s;
+                                بہترین_راستہ = اندراج_2.path();
                             }
-                        } else {
-                            if (!silent) {
-                                GGML_LOG_INFO("%s: failed to find ggml_backend_score in %s\n", __func__, path_str(entry.path()).c_str());
+                        } ورنہ {
+                            اگر (!silent) {
+                                GGML_LOG_INFO("%s: failed to find ggml_backend_score in %s\n", __func__, راستہ_str(اندراج_2.path()).c_str());
                             }
                         }
                     }
@@ -540,59 +540,59 @@ static ggml_backend_reg_t ggml_backend_load_best(const char * name, bool silent,
             }
         }
 
-        if (dir_ec) {
-            GGML_LOG_DEBUG("%s: failed to enumerate %s: %s\n", __func__, path_str(search_path).c_str(), dir_ec.message().c_str());
+        اگر (dir_ec) {
+            GGML_LOG_DEBUG("%s: failed to enumerate %s: %s\n", __func__, راستہ_str(تلاش_راستہ).c_str(), dir_ec.پیغام().c_str());
         }
     }
 
-    if (best_score == 0) {
+    اگر (بہترین_score == 0) {
         // try to load the base backend
-        for (const auto & search_path : search_paths) {
-            fs::path filename = backend_filename_prefix().native() + name_path.native() + backend_filename_extension().native();
-            fs::path path = search_path / filename;
-            if (std::error_code ec; fs::exists(path, ec)) {
-                return get_reg().load_backend(path, silent);
-            } else {
-                if (ec) {
-                    GGML_LOG_DEBUG("%s: posix_stat(%s) failure, error-message: %s\n", __func__, path_str(path).c_str(), ec.message().c_str());
+        برائے (ثابت خودکار & تلاش_راستہ : تلاش_paths) {
+            fs::path filename = backend_filename_سابقہ().native() + name_راستہ.native() + backend_filename_extension().native();
+            fs::path path = تلاش_راستہ / filename;
+            اگر (std::error_code ec; fs::exists(path, ec)) {
+                واپس get_reg().بھرو_backend(path, silent);
+            } ورنہ {
+                اگر (ec) {
+                    GGML_LOG_DEBUG("%s: posix_stat(%s) failure, error-message: %s\n", __func__, راستہ_str(path).c_str(), ec.پیغام().c_str());
                 }
             }
         }
-        return nullptr;
+        واپس خالی_اشاریہ;
     }
 
-    return get_reg().load_backend(best_path, silent);
+    واپس get_reg().بھرو_backend(بہترین_راستہ, silent);
 }
 
-void ggml_backend_load_all() {
-    ggml_backend_load_all_from_path(nullptr);
+خالی ggml_backend_بھرو_all() {
+    ggml_backend_بھرو_all_from_راستہ(خالی_اشاریہ);
 }
 
-void ggml_backend_load_all_from_path(const char * dir_path) {
-#ifdef NDEBUG
-    bool silent = true;
-#else
-    bool silent = false;
-#endif
+خالی ggml_backend_بھرو_all_from_راستہ(ثابت حرف * dir_راستہ) {
+#اگر_تعریف_شدہ NDEBUG
+    منطقی silent = سچ;
+#ورنہ
+    منطقی silent = جھوٹ;
+#اگر_ختم
 
-    ggml_backend_load_best("blas", silent, dir_path);
-    ggml_backend_load_best("zendnn", silent, dir_path);
-    ggml_backend_load_best("cann", silent, dir_path);
-    ggml_backend_load_best("cuda", silent, dir_path);
-    ggml_backend_load_best("hip", silent, dir_path);
-    ggml_backend_load_best("metal", silent, dir_path);
-    ggml_backend_load_best("rpc", silent, dir_path);
-    ggml_backend_load_best("sycl", silent, dir_path);
-    ggml_backend_load_best("vulkan", silent, dir_path);
-    ggml_backend_load_best("virtgpu", silent, dir_path);
-    ggml_backend_load_best("opencl", silent, dir_path);
-    ggml_backend_load_best("hexagon", silent, dir_path);
-    ggml_backend_load_best("musa", silent, dir_path);
-    ggml_backend_load_best("openvino", silent, dir_path);
-    ggml_backend_load_best("cpu", silent, dir_path);
+    ggml_backend_بھرو_بہترین("blas", silent, dir_راستہ);
+    ggml_backend_بھرو_بہترین("zendnn", silent, dir_راستہ);
+    ggml_backend_بھرو_بہترین("cann", silent, dir_راستہ);
+    ggml_backend_بھرو_بہترین("cuda", silent, dir_راستہ);
+    ggml_backend_بھرو_بہترین("hip", silent, dir_راستہ);
+    ggml_backend_بھرو_بہترین("metal", silent, dir_راستہ);
+    ggml_backend_بھرو_بہترین("rpc", silent, dir_راستہ);
+    ggml_backend_بھرو_بہترین("sycl", silent, dir_راستہ);
+    ggml_backend_بھرو_بہترین("vulkan", silent, dir_راستہ);
+    ggml_backend_بھرو_بہترین("virtgpu", silent, dir_راستہ);
+    ggml_backend_بھرو_بہترین("opencl", silent, dir_راستہ);
+    ggml_backend_بھرو_بہترین("hexagon", silent, dir_راستہ);
+    ggml_backend_بھرو_بہترین("musa", silent, dir_راستہ);
+    ggml_backend_بھرو_بہترین("openvino", silent, dir_راستہ);
+    ggml_backend_بھرو_بہترین("cpu", silent, dir_راستہ);
     // check the environment variable GGML_BACKEND_PATH to load an out-of-tree backend
-    const char * backend_path = std::getenv("GGML_BACKEND_PATH");
-    if (backend_path) {
-        ggml_backend_load(backend_path);
+    ثابت حرف * backend_راستہ = std::getenv("GGML_BACKEND_PATH");
+    اگر (backend_راستہ) {
+        ggml_backend_بھرو(backend_راستہ);
     }
 }

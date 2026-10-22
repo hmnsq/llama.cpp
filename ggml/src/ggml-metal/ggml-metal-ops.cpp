@@ -1,104 +1,104 @@
-#include "ggml-metal-ops.h"
+#شامل "ggml-metal-ops.h"
 
-#include "ggml.h"
-#include "ggml-impl.h"
-#include "ggml-backend-impl.h"
+#شامل "ggml.h"
+#شامل "ggml-impl.h"
+#شامل "ggml-backend-impl.h"
 
-#include "ggml-metal-impl.h"
-#include "ggml-metal-common.h"
-#include "ggml-metal-device.h"
-#include "ggml-metal-fusion.h"
-#include "ggml-metal-tuning.h"
+#شامل "ggml-metal-impl.h"
+#شامل "ggml-metal-common.h"
+#شامل "ggml-metal-device.h"
+#شامل "ggml-metal-fusion.h"
+#شامل "ggml-metal-tuning.h"
 
-#include <cassert>
-#include <algorithm>
-#include <limits>
-#include <cmath>
+#شامل <cassert>
+#شامل <algorithm>
+#شامل <limits>
+#شامل <cmath>
 
 // threadgroups needed to fill the GPU
 // TODO: dedup
-static constexpr int64_t GGML_METAL_MIN_THREADGROUPS = 128;
+ساکن constexpr int64_t GGML_METAL_MIN_THREADGROUPS = 128;
 
-static ggml_metal_buffer_id ggml_metal_get_buffer_id(const ggml_tensor * t) {
-    if (!t) {
-        return { nullptr, 0 };
+ساکن ggml_metal_بفر_id ggml_metal_get_بفر_id(ثابت ggml_tensor * t) {
+    اگر (!t) {
+        واپس { خالی_اشاریہ, 0 };
     }
 
-    ggml_backend_buffer_t buffer = t->view_src ? t->view_src->buffer : t->buffer;
+    ggml_backend_بفر_t بفر = t->view_src ? t->view_src->بفر : t->بفر;
 
-    ggml_metal_buffer_t ctx = (ggml_metal_buffer_t) buffer->context;
+    ggml_metal_بفر_t ctx = (ggml_metal_بفر_t) بفر->context;
 
-    return ggml_metal_buffer_get_id(ctx, t);
+    واپس ggml_metal_بفر_get_id(ctx, t);
 }
 
-struct ggml_metal_op {
+ساخت ggml_metal_op {
     ggml_metal_op(
         ggml_metal_device_t dev,
         ggml_metal_cmd_buf_t cmd_buf,
         ggml_cgraph * gf,
         ggml_metal_fusion_info * finfo,
-        int  idx_start,
-        int  idx_end,
-        bool use_concurrency,
-        bool use_capture,
-        int  debug_graph) {
-        this->dev             = dev;
-        this->lib             = ggml_metal_device_get_library(dev);
-        this->enc             = ggml_metal_encoder_init(cmd_buf, use_concurrency);
-        this->mem_ranges      = ggml_mem_ranges_init(debug_graph);
-        this->finfo           = finfo;
-        this->idx_start       = idx_start;
-        this->idx_end         = idx_end;
-        this->use_concurrency = use_concurrency;
-        this->use_capture     = use_capture;
-        this->debug_graph     = debug_graph;
-        this->gf              = gf;
+        صحیح  idx_آغاز,
+        صحیح  idx_انتہا,
+        منطقی use_concurrency,
+        منطقی use_capture,
+        صحیح  debug_گراف) {
+        یہ->dev             = dev;
+        یہ->lib             = ggml_metal_device_get_library(dev);
+        یہ->enc             = ggml_metal_encoder_init(cmd_buf, use_concurrency);
+        یہ->mem_ranges      = ggml_mem_ranges_init(debug_گراف);
+        یہ->finfo           = finfo;
+        یہ->idx_آغاز       = idx_آغاز;
+        یہ->idx_انتہا         = idx_انتہا;
+        یہ->use_concurrency = use_concurrency;
+        یہ->use_capture     = use_capture;
+        یہ->debug_گراف     = debug_گراف;
+        یہ->gf              = gf;
 
         idxs.reserve(gf->n_nodes);
 
         // filter empty nodes
         // TODO: this can be removed when the allocator starts filtering them earlier
         //       https://github.com/ggml-org/llama.cpp/pull/16130#issuecomment-3327905830
-        for (int i = idx_start; i < idx_end; i++) {
-            if (!ggml_op_is_empty(gf->nodes[i]->op) && !ggml_is_empty(gf->nodes[i])) {
+        برائے (صحیح i = idx_آغاز; i < idx_انتہا; i++) {
+            اگر (!ggml_op_is_خالی_خانے(gf->nodes[i]->op) && !ggml_is_خالی_خانے(gf->nodes[i])) {
                 idxs.push_back(i);
             }
         }
     }
 
     ~ggml_metal_op() {
-        ggml_metal_encoder_end_encoding(this->enc);
-        ggml_metal_encoder_free(this->enc);
-        ggml_mem_ranges_free(this->mem_ranges);
+        ggml_metal_encoder_انتہا_encoding(یہ->enc);
+        ggml_metal_encoder_free(یہ->enc);
+        ggml_mem_ranges_free(یہ->mem_ranges);
     }
 
-    int n_nodes() const {
-        return idxs.size();
+    صحیح n_nodes() ثابت {
+        واپس idxs.size();
     }
 
-    ggml_tensor * node(int i) const {
-        assert(i >= 0 && i < (int) idxs.size());
-        return ggml_graph_node(gf, idxs[i]);
+    ggml_tensor * گرہ(صحیح i) ثابت {
+        أكد(i >= 0 && i < (صحیح) idxs.size());
+        واپس ggml_گراف_گرہ(gf, idxs[i]);
     }
 
     // consult the fusion table for the longest pattern starting at i0
     // returns the matching pattern (nullptr if no fusion) and sets *n_out to the number of nodes
-    const ggml_metal_fusion * can_fuse(int i0, enum ggml_metal_fusion_mode mode, int * n_out) const {
-        assert(use_fusion());
-        assert(i0 >= 0 && i0 < n_nodes());
+    ثابت ggml_metal_fusion * can_fuse(صحیح i0, شمار ggml_metal_fusion_منوال mode, صحیح * n_برآمد) ثابت {
+        أكد(use_fusion());
+        أكد(i0 >= 0 && i0 < n_nodes());
 
-        return ggml_metal_fusion_next(gf, idxs.data(), (int) idxs.size(), i0, mode, n_out);
+        واپس ggml_metal_fusion_اگلا(gf, idxs.ڈیٹا(), (صحیح) idxs.size(), i0, mode, n_برآمد);
     }
 
     // whether to attempt fusion; the toggle lives in the shared fusion debugging context owned
     // by the device (initialized from GGML_METAL_FUSION_DISABLE, overridable by the test)
-    bool use_fusion() const {
-        return ggml_metal_fusion_info_enabled(finfo);
+    منطقی use_fusion() ثابت {
+        واپس ggml_metal_fusion_info_enabled(finfo);
     }
 
     // record that a fusion fired, indexed by the matching table entry
-    void count_fusions(const ggml_metal_fusion * fusion) const {
-        ggml_metal_fusion_info_count_fusion(finfo, fusion);
+    خالی گنتی_fusions(ثابت ggml_metal_fusion * fusion) ثابت {
+        ggml_metal_fusion_info_گنتی_fusion(finfo, fusion);
     }
 
     ggml_metal_device_t  dev;
@@ -109,19 +109,19 @@ struct ggml_metal_op {
     // shared fusion debugging context
     ggml_metal_fusion_info * finfo;
 
-    bool use_concurrency;
-    bool use_capture;
+    منطقی use_concurrency;
+    منطقی use_capture;
 
-    int debug_graph;
+    صحیح debug_گراف;
 
-private:
+نجی:
     ggml_cgraph * gf;
 
-    int idx_start;
-    int idx_end;
+    صحیح idx_آغاز;
+    صحیح idx_انتہا;
 
     // non-empty node indices
-    std::vector<int> idxs;
+    std::vector<صحیح> idxs;
 };
 
 ggml_metal_op_t ggml_metal_op_init(
@@ -129,97 +129,97 @@ ggml_metal_op_t ggml_metal_op_init(
         ggml_metal_cmd_buf_t cmd_buf,
         ggml_cgraph * gf,
         ggml_metal_fusion_info * finfo,
-        int idx_start,
-        int idx_end,
-        bool use_concurrency,
-        bool use_capture,
-        int debug_graph) {
-    ggml_metal_op_t res = new ggml_metal_op(
+        صحیح idx_آغاز,
+        صحیح idx_انتہا,
+        منطقی use_concurrency,
+        منطقی use_capture,
+        صحیح debug_گراف) {
+    ggml_metal_op_t res = نیا ggml_metal_op(
         dev,
         cmd_buf,
         gf,
         finfo,
-        idx_start,
-        idx_end,
+        idx_آغاز,
+        idx_انتہا,
         use_concurrency,
         use_capture,
-        debug_graph);
+        debug_گراف);
 
-    return res;
+    واپس res;
 }
 
-void ggml_metal_op_free(ggml_metal_op_t ctx) {
-    delete ctx;
+خالی ggml_metal_op_free(ggml_metal_op_t ctx) {
+    حذف ctx;
 }
 
-int ggml_metal_op_n_nodes(ggml_metal_op_t ctx) {
-    return ctx->n_nodes();
+صحیح ggml_metal_op_n_nodes(ggml_metal_op_t ctx) {
+    واپس ctx->n_nodes();
 }
 
-static bool ggml_metal_op_concurrency_reset(ggml_metal_op_t ctx) {
-    if (!ctx->mem_ranges) {
-        return true;
+ساکن منطقی ggml_metal_op_concurrency_reset(ggml_metal_op_t ctx) {
+    اگر (!ctx->mem_ranges) {
+        واپس سچ;
     }
 
-    ggml_metal_encoder_memory_barrier(ctx->enc);
+    ggml_metal_encoder_حافظہ_barrier(ctx->enc);
 
     ggml_mem_ranges_reset(ctx->mem_ranges);
 
-    return true;
+    واپس سچ;
 }
 
-static bool ggml_metal_op_concurrency_check(ggml_metal_op_t ctx, const ggml_tensor * node) {
-    if (!ctx->mem_ranges) {
-        return false;
+ساکن منطقی ggml_metal_op_concurrency_check(ggml_metal_op_t ctx, ثابت ggml_tensor * گرہ) {
+    اگر (!ctx->mem_ranges) {
+        واپس جھوٹ;
     }
 
-    return ggml_mem_ranges_check(ctx->mem_ranges, node);
+    واپس ggml_mem_ranges_check(ctx->mem_ranges, گرہ);
 }
 
-static bool ggml_metal_op_concurrency_add(ggml_metal_op_t ctx, const ggml_tensor * node) {
-    if (!ctx->mem_ranges) {
-        return true;
+ساکن منطقی ggml_metal_op_concurrency_جوڑو(ggml_metal_op_t ctx, ثابت ggml_tensor * گرہ) {
+    اگر (!ctx->mem_ranges) {
+        واپس سچ;
     }
 
-    return ggml_mem_ranges_add(ctx->mem_ranges, node);
+    واپس ggml_mem_ranges_جوڑو(ctx->mem_ranges, گرہ);
 }
 
-static int ggml_metal_op_encode_impl(ggml_metal_op_t ctx, int idx) {
-    struct ggml_tensor * node = ctx->node(idx);
+ساکن صحیح ggml_metal_op_encode_impl(ggml_metal_op_t ctx, صحیح idx) {
+    ساخت ggml_tensor * گرہ = ctx->گرہ(idx);
 
     //GGML_LOG_INFO("%s: encoding node %3d, op = %8s\n", __func__, idx, ggml_op_name(node->op));
 
-    if (ggml_is_empty(node)) {
-        return 1;
+    اگر (ggml_is_خالی_خانے(گرہ)) {
+        واپس 1;
     }
 
-    switch (node->op) {
-        case GGML_OP_NONE:
-        case GGML_OP_RESHAPE:
-        case GGML_OP_VIEW:
-        case GGML_OP_TRANSPOSE:
-        case GGML_OP_PERMUTE:
+    انتخاب (گرہ->op) {
+        حالت GGML_OP_NONE:
+        حالت GGML_OP_RESHAPE:
+        حالت GGML_OP_VIEW:
+        حالت GGML_OP_TRANSPOSE:
+        حالت GGML_OP_ترتیب_بدلو:
             {
                 // noop -> next node
-                if (ctx->debug_graph > 0) {
-                    GGML_LOG_DEBUG("%s: node[%5d] - %-12s %s\n", __func__, idx, ggml_op_name(node->op), "(noop)");
+                اگر (ctx->debug_گراف > 0) {
+                    GGML_LOG_DEBUG("%s: node[%5d] - %-12s %s\n", __func__, idx, ggml_op_name(گرہ->op), "(noop)");
                 }
-            } return 1;
-        default:
+            } واپس 1;
+        طےشدہ:
             {
-            } break;
+            } توڑو;
     }
 
-    if (!ggml_metal_device_supports_op(ctx->dev, node)) {
-        GGML_LOG_ERROR("%s: error: unsupported op '%s'\n", __func__, ggml_op_desc(node));
+    اگر (!ggml_metal_device_supports_op(ctx->dev, گرہ)) {
+        GGML_LOG_ERROR("%s: error: unsupported op '%s'\n", __func__, ggml_op_desc(گرہ));
         GGML_ABORT("unsupported op");
     }
 
-    if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
-        return 1;
+    اگر ((گرہ->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+        واپس 1;
     }
 
-    int n_fuse = 1;
+    صحیح n_fuse = 1;
 
     // check if the current node can run concurrently with other nodes before it
     // the condition is that:
@@ -230,335 +230,335 @@ static int ggml_metal_op_encode_impl(ggml_metal_op_t ctx, int idx) {
     // otherwise, we add the new ranges to the encoding context and process the node concurrently
     //
     {
-        bool is_concurrent = ggml_metal_op_concurrency_check(ctx, node);
+        منطقی is_concurrent = ggml_metal_op_concurrency_check(ctx, گرہ);
 
-        if (is_concurrent && ctx->use_fusion()) {
-            int n_fuse = 1;
-            const ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n_fuse);
-            if (fusion) {
+        اگر (is_concurrent && ctx->use_fusion()) {
+            صحیح n_fuse = 1;
+            ثابت ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_بھرا, &n_fuse);
+            اگر (fusion) {
                 // fused kernels write to the last node of the group, not necessarily to the first node's dst
-                is_concurrent = ggml_mem_ranges_check(ctx->mem_ranges, ctx->node(idx + n_fuse - 1));
+                is_concurrent = ggml_mem_ranges_check(ctx->mem_ranges, ctx->گرہ(idx + n_fuse - 1));
             }
         }
 
-        if (!is_concurrent) {
+        اگر (!is_concurrent) {
             ggml_metal_op_concurrency_reset(ctx);
         }
 
-        if (ctx->debug_graph > 0) {
-            GGML_LOG_DEBUG("%s: node[%5d] - %-12s %-12s %s\n", __func__, idx, ggml_op_name(node->op), ggml_get_name(node), is_concurrent ? "(concurrent)" : "");
+        اگر (ctx->debug_گراف > 0) {
+            GGML_LOG_DEBUG("%s: node[%5d] - %-12s %-12s %s\n", __func__, idx, ggml_op_name(گرہ->op), ggml_get_name(گرہ), is_concurrent ? "(concurrent)" : "");
         }
-        if (ctx->debug_graph > 1) {
-            GGML_TENSOR_LOCALS( int64_t, ne0, node->src[0], ne);
-            GGML_TENSOR_LOCALS(uint64_t, nb0, node->src[0], nb);
-            GGML_TENSOR_LOCALS( int64_t, ne1, node->src[1], ne);
-            GGML_TENSOR_LOCALS(uint64_t, nb1, node->src[1], nb);
-            GGML_TENSOR_LOCALS( int64_t, ne2, node->src[2], ne);
-            GGML_TENSOR_LOCALS(uint64_t, nb2, node->src[2], nb);
-            GGML_TENSOR_LOCALS( int64_t, ne3, node->src[3], ne);
-            GGML_TENSOR_LOCALS(uint64_t, nb3, node->src[3], nb);
-            GGML_TENSOR_LOCALS( int64_t, ne,  node,         ne);
-            GGML_TENSOR_LOCALS(uint64_t, nb,  node,         nb);
+        اگر (ctx->debug_گراف > 1) {
+            GGML_TENSOR_LOCALS( int64_t, ne0, گرہ->src[0], ne);
+            GGML_TENSOR_LOCALS(uint64_t, nb0, گرہ->src[0], nb);
+            GGML_TENSOR_LOCALS( int64_t, ne1, گرہ->src[1], ne);
+            GGML_TENSOR_LOCALS(uint64_t, nb1, گرہ->src[1], nb);
+            GGML_TENSOR_LOCALS( int64_t, ne2, گرہ->src[2], ne);
+            GGML_TENSOR_LOCALS(uint64_t, nb2, گرہ->src[2], nb);
+            GGML_TENSOR_LOCALS( int64_t, ne3, گرہ->src[3], ne);
+            GGML_TENSOR_LOCALS(uint64_t, nb3, گرہ->src[3], nb);
+            GGML_TENSOR_LOCALS( int64_t, ne,  گرہ,         ne);
+            GGML_TENSOR_LOCALS(uint64_t, nb,  گرہ,         nb);
 
-            if (node->src[0]) {
-                GGML_LOG_DEBUG("%s: src0 - %4s [%5lld, %5lld, %5lld, %5lld] [%5lld, %5lld, %5lld, %5lld], %d, %s\n", __func__, ggml_type_name(node->src[0]->type), ne00, ne01, ne02, ne03, nb00, nb01, nb02, nb03,
-                        ggml_is_contiguous(node->src[0]), node->src[0]->name);
+            اگر (گرہ->src[0]) {
+                GGML_LOG_DEBUG("%s: src0 - %4s [%5lld, %5lld, %5lld, %5lld] [%5lld, %5lld, %5lld, %5lld], %d, %s\n", __func__, ggml_type_name(گرہ->src[0]->type), ne00, ne01, ne02, ne03, nb00, nb01, nb02, nb03,
+                        ggml_is_contiguous(گرہ->src[0]), گرہ->src[0]->name);
             }
-            if (node->src[1]) {
-                GGML_LOG_DEBUG("%s: src1 - %4s [%5lld, %5lld, %5lld, %5lld] [%5lld, %5lld, %5lld, %5lld], %d, %s\n", __func__, ggml_type_name(node->src[1]->type), ne10, ne11, ne12, ne13, nb10, nb11, nb12, nb13,
-                        ggml_is_contiguous(node->src[1]), node->src[1]->name);
+            اگر (گرہ->src[1]) {
+                GGML_LOG_DEBUG("%s: src1 - %4s [%5lld, %5lld, %5lld, %5lld] [%5lld, %5lld, %5lld, %5lld], %d, %s\n", __func__, ggml_type_name(گرہ->src[1]->type), ne10, ne11, ne12, ne13, nb10, nb11, nb12, nb13,
+                        ggml_is_contiguous(گرہ->src[1]), گرہ->src[1]->name);
             }
-            if (node->src[2]) {
-                GGML_LOG_DEBUG("%s: src2 - %4s [%5lld, %5lld, %5lld, %5lld] [%5lld, %5lld, %5lld, %5lld], %d, %s\n", __func__, ggml_type_name(node->src[2]->type), ne20, ne21, ne22, ne23, nb20, nb21, nb22, nb23,
-                        ggml_is_contiguous(node->src[2]), node->src[2]->name);
+            اگر (گرہ->src[2]) {
+                GGML_LOG_DEBUG("%s: src2 - %4s [%5lld, %5lld, %5lld, %5lld] [%5lld, %5lld, %5lld, %5lld], %d, %s\n", __func__, ggml_type_name(گرہ->src[2]->type), ne20, ne21, ne22, ne23, nb20, nb21, nb22, nb23,
+                        ggml_is_contiguous(گرہ->src[2]), گرہ->src[2]->name);
             }
-            if (node->src[3]) {
-                GGML_LOG_DEBUG("%s: src3 - %4s [%5lld, %5lld, %5lld, %5lld] [%5lld, %5lld, %5lld, %5lld], %d, %s\n", __func__, ggml_type_name(node->src[3]->type), ne30, ne31, ne32, ne33, nb30, nb31, nb32, nb33,
-                        ggml_is_contiguous(node->src[3]), node->src[3]->name);
+            اگر (گرہ->src[3]) {
+                GGML_LOG_DEBUG("%s: src3 - %4s [%5lld, %5lld, %5lld, %5lld] [%5lld, %5lld, %5lld, %5lld], %d, %s\n", __func__, ggml_type_name(گرہ->src[3]->type), ne30, ne31, ne32, ne33, nb30, nb31, nb32, nb33,
+                        ggml_is_contiguous(گرہ->src[3]), گرہ->src[3]->name);
             }
-            if (node) {
-                GGML_LOG_DEBUG("%s: node - %4s [%5lld, %5lld, %5lld, %5lld] [%5lld, %5lld, %5lld, %5lld], 1, %s\n", __func__, ggml_type_name(node->type), ne0, ne1, ne2, ne3, nb0, nb1, nb2, nb3,
-                        node->name);
+            اگر (گرہ) {
+                GGML_LOG_DEBUG("%s: node - %4s [%5lld, %5lld, %5lld, %5lld] [%5lld, %5lld, %5lld, %5lld], 1, %s\n", __func__, ggml_type_name(گرہ->type), ne0, ne1, ne2, ne3, nb0, nb1, nb2, nb3,
+                        گرہ->name);
             }
         }
     }
 
-    switch (node->op) {
-        case GGML_OP_CONCAT:
+    انتخاب (گرہ->op) {
+        حالت GGML_OP_CONCAT:
             {
                 n_fuse = ggml_metal_op_concat(ctx, idx);
-            } break;
-        case GGML_OP_ADD:
-        case GGML_OP_SUB:
-        case GGML_OP_MUL:
-        case GGML_OP_DIV:
+            } توڑو;
+        حالت GGML_OP_جوڑو:
+        حالت GGML_OP_SUB:
+        حالت GGML_OP_MUL:
+        حالت GGML_OP_DIV:
             {
                 n_fuse = ggml_metal_op_bin(ctx, idx);
-            } break;
-        case GGML_OP_ADD_ID:
+            } توڑو;
+        حالت GGML_OP_جوڑو_ID:
             {
-                n_fuse = ggml_metal_op_add_id(ctx, idx);
-            } break;
-        case GGML_OP_REPEAT:
+                n_fuse = ggml_metal_op_جوڑو_id(ctx, idx);
+            } توڑو;
+        حالت GGML_OP_REPEAT:
             {
                 n_fuse = ggml_metal_op_repeat(ctx, idx);
-            } break;
-        case GGML_OP_ACC:
+            } توڑو;
+        حالت GGML_OP_ACC:
             {
                 n_fuse = ggml_metal_op_acc(ctx, idx);
-            } break;
-        case GGML_OP_SCALE:
-        case GGML_OP_FILL:
-        case GGML_OP_CLAMP:
-        case GGML_OP_LEAKY_RELU:
-        case GGML_OP_SQR:
-        case GGML_OP_SQRT:
-        case GGML_OP_SIN:
-        case GGML_OP_COS:
-        case GGML_OP_LOG:
-        case GGML_OP_UNARY:
+            } توڑو;
+        حالت GGML_OP_SCALE:
+        حالت GGML_OP_FILL:
+        حالت GGML_OP_CLAMP:
+        حالت GGML_OP_LEAKY_RELU:
+        حالت GGML_OP_SQR:
+        حالت GGML_OP_SQRT:
+        حالت GGML_OP_SIN:
+        حالت GGML_OP_COS:
+        حالت GGML_OP_LOG:
+        حالت GGML_OP_UNARY:
             {
                 n_fuse = ggml_metal_op_unary(ctx, idx);
-            } break;
-        case GGML_OP_SILU_BACK:
+            } توڑو;
+        حالت GGML_OP_SILU_عقب:
             {
-                n_fuse = ggml_metal_op_silu_back(ctx, idx);
-            } break;
-        case GGML_OP_GLU:
+                n_fuse = ggml_metal_op_silu_عقب(ctx, idx);
+            } توڑو;
+        حالت GGML_OP_GLU:
             {
                 n_fuse = ggml_metal_op_glu(ctx, idx);
-            } break;
-        case GGML_OP_SUM:
+            } توڑو;
+        حالت GGML_OP_مجموع:
             {
-                n_fuse = ggml_metal_op_sum(ctx, idx);
-            } break;
-        case GGML_OP_SUM_ROWS:
-        case GGML_OP_MEAN:
+                n_fuse = ggml_metal_op_مجموع(ctx, idx);
+            } توڑو;
+        حالت GGML_OP_مجموع_صفیں:
+        حالت GGML_OP_اوسط:
             {
-                n_fuse = ggml_metal_op_sum_rows(ctx, idx);
-            } break;
-        case GGML_OP_CUMSUM:
+                n_fuse = ggml_metal_op_مجموع_صفیں(ctx, idx);
+            } توڑو;
+        حالت GGML_OP_CUMSUM:
             {
                 n_fuse = ggml_metal_op_cumsum(ctx, idx);
-            } break;
-        case GGML_OP_LIGHTNING_INDEXER:
+            } توڑو;
+        حالت GGML_OP_LIGHTNING_INDEXER:
             {
                 n_fuse = ggml_metal_op_lightning_indexer(ctx, idx);
-            } break;
-        case GGML_OP_DSV4_HC_COMB:
-        case GGML_OP_DSV4_HC_PRE:
-        case GGML_OP_DSV4_HC_POST:
+            } توڑو;
+        حالت GGML_OP_DSV4_HC_COMB:
+        حالت GGML_OP_DSV4_HC_PRE:
+        حالت GGML_OP_DSV4_HC_POST:
             {
                 n_fuse = ggml_metal_op_dsv4_hc(ctx, idx);
-            } break;
-        case GGML_OP_SOFT_MAX:
+            } توڑو;
+        حالت GGML_OP_SOFT_MAX:
             {
                 n_fuse = ggml_metal_op_soft_max(ctx, idx);
-            } break;
-        case GGML_OP_SSM_CONV:
+            } توڑو;
+        حالت GGML_OP_SSM_CONV:
             {
                 n_fuse = ggml_metal_op_ssm_conv(ctx, idx);
-            } break;
-        case GGML_OP_SSM_SCAN:
+            } توڑو;
+        حالت GGML_OP_SSM_جائزہ:
             {
-                n_fuse = ggml_metal_op_ssm_scan(ctx, idx);
-            } break;
-        case GGML_OP_RWKV_WKV6:
-        case GGML_OP_RWKV_WKV7:
+                n_fuse = ggml_metal_op_ssm_جائزہ(ctx, idx);
+            } توڑو;
+        حالت GGML_OP_RWKV_WKV6:
+        حالت GGML_OP_RWKV_WKV7:
             {
                 n_fuse = ggml_metal_op_rwkv(ctx, idx);
-            } break;
-        case GGML_OP_GATED_DELTA_NET:
+            } توڑو;
+        حالت GGML_OP_GATED_DELTA_NET:
             {
                 n_fuse = ggml_metal_op_gated_delta_net(ctx, idx);
-            } break;
-        case GGML_OP_SOLVE_TRI:
+            } توڑو;
+        حالت GGML_OP_SOLVE_TRI:
             {
                 n_fuse = ggml_metal_op_solve_tri(ctx, idx);
-            } break;
-        case GGML_OP_MUL_MAT:
+            } توڑو;
+        حالت GGML_OP_MUL_MAT:
             {
                 n_fuse = ggml_metal_op_mul_mat(ctx, idx);
-            } break;
-        case GGML_OP_MUL_MAT_ID:
+            } توڑو;
+        حالت GGML_OP_MUL_MAT_ID:
             {
                 n_fuse = ggml_metal_op_mul_mat_id(ctx, idx);
-            } break;
-        case GGML_OP_GET_ROWS:
+            } توڑو;
+        حالت GGML_OP_GET_صفیں:
             {
-                n_fuse = ggml_metal_op_get_rows(ctx, idx);
-            } break;
-        case GGML_OP_SET_ROWS:
+                n_fuse = ggml_metal_op_get_صفیں(ctx, idx);
+            } توڑو;
+        حالت GGML_OP_سیٹ_صفیں:
             {
-                n_fuse = ggml_metal_op_set_rows(ctx, idx);
-            } break;
-        case GGML_OP_DIAG:
+                n_fuse = ggml_metal_op_سیٹ_صفیں(ctx, idx);
+            } توڑو;
+        حالت GGML_OP_DIAG:
             {
                 n_fuse = ggml_metal_op_diag(ctx, idx);
-            } break;
-        case GGML_OP_L2_NORM:
+            } توڑو;
+        حالت GGML_OP_L2_NORM:
             {
                 n_fuse = ggml_metal_op_l2_norm(ctx, idx);
-            } break;
-        case GGML_OP_GROUP_NORM:
+            } توڑو;
+        حالت GGML_OP_گروہ_NORM:
             {
-                n_fuse = ggml_metal_op_group_norm(ctx, idx);
-            } break;
-        case GGML_OP_NORM:
-        case GGML_OP_RMS_NORM:
+                n_fuse = ggml_metal_op_گروہ_norm(ctx, idx);
+            } توڑو;
+        حالت GGML_OP_NORM:
+        حالت GGML_OP_RMS_NORM:
             {
                 n_fuse = ggml_metal_op_norm(ctx, idx);
-            } break;
-        case GGML_OP_ROPE:
-        case GGML_OP_ROPE_BACK:
+            } توڑو;
+        حالت GGML_OP_ROPE:
+        حالت GGML_OP_ROPE_عقب:
             {
                 n_fuse = ggml_metal_op_rope(ctx, idx);
-            } break;
-        case GGML_OP_IM2COL:
+            } توڑو;
+        حالت GGML_OP_IM2_ستون:
             {
                 n_fuse = ggml_metal_op_im2col(ctx, idx);
-            } break;
-        case GGML_OP_CONV_2D:
+            } توڑو;
+        حالت GGML_OP_CONV_2D:
             {
                 n_fuse = ggml_metal_op_conv_2d(ctx, idx);
-            } break;
-        case GGML_OP_CONV_2D_DW:
+            } توڑو;
+        حالت GGML_OP_CONV_2D_DW:
             {
                 n_fuse = ggml_metal_op_conv_2d_dw(ctx, idx);
-            } break;
-        case GGML_OP_CONV_TRANSPOSE_1D:
+            } توڑو;
+        حالت GGML_OP_CONV_TRANSPOSE_1D:
             {
                 n_fuse = ggml_metal_op_conv_transpose_1d(ctx, idx);
-            } break;
-        case GGML_OP_CONV_TRANSPOSE_2D:
+            } توڑو;
+        حالت GGML_OP_CONV_TRANSPOSE_2D:
             {
                 n_fuse = ggml_metal_op_conv_transpose_2d(ctx, idx);
-            } break;
-        case GGML_OP_COL2IM_1D:
+            } توڑو;
+        حالت GGML_OP_COL2IM_1D:
             {
                 n_fuse = ggml_metal_op_col2im_1d(ctx, idx);
-            } break;
-        case GGML_OP_CONV_3D:
+            } توڑو;
+        حالت GGML_OP_CONV_3D:
             {
                 n_fuse = ggml_metal_op_conv_3d(ctx, idx);
-            } break;
-        case GGML_OP_UPSCALE:
+            } توڑو;
+        حالت GGML_OP_UPSCALE:
             {
                 n_fuse = ggml_metal_op_upscale(ctx, idx);
-            } break;
-        case GGML_OP_PAD:
+            } توڑو;
+        حالت GGML_OP_PAD:
             {
                 n_fuse = ggml_metal_op_pad(ctx, idx);
-            } break;
-        case GGML_OP_PAD_REFLECT_1D:
+            } توڑو;
+        حالت GGML_OP_PAD_REFLECT_1D:
             {
                 n_fuse = ggml_metal_op_pad_reflect_1d(ctx, idx);
-            } break;
-        case GGML_OP_ROLL:
+            } توڑو;
+        حالت GGML_OP_ROLL:
             {
                 n_fuse = ggml_metal_op_roll(ctx, idx);
-            } break;
-        case GGML_OP_ARANGE:
+            } توڑو;
+        حالت GGML_OP_ARANGE:
             {
                 n_fuse = ggml_metal_op_arange(ctx, idx);
-            } break;
-        case GGML_OP_TIMESTEP_EMBEDDING:
+            } توڑو;
+        حالت GGML_OP_TIMESTEP_EMBEDDING:
             {
                 n_fuse = ggml_metal_op_timestep_embedding(ctx, idx);
-            } break;
-        case GGML_OP_ARGSORT:
+            } توڑو;
+        حالت GGML_OP_ARGSORT:
             {
                 n_fuse = ggml_metal_op_argsort(ctx, idx);
-            } break;
-        case GGML_OP_TOP_K:
+            } توڑو;
+        حالت GGML_OP_چوٹی_K:
             {
-                n_fuse = ggml_metal_op_top_k(ctx, idx);
-            } break;
-        case GGML_OP_TRI:
+                n_fuse = ggml_metal_op_چوٹی_k(ctx, idx);
+            } توڑو;
+        حالت GGML_OP_TRI:
             {
                 n_fuse = ggml_metal_op_tri(ctx, idx);
-            } break;
-        case GGML_OP_FLASH_ATTN_EXT:
+            } توڑو;
+        حالت GGML_OP_FLASH_ATTN_EXT:
             {
                 n_fuse = ggml_metal_op_flash_attn_ext(ctx, idx);
-            } break;
-        case GGML_OP_SET:
+            } توڑو;
+        حالت GGML_OP_سیٹ:
             {
-                n_fuse = ggml_metal_op_set(ctx, idx);
-            } break;
-        case GGML_OP_DUP:
-        case GGML_OP_CPY:
-        case GGML_OP_CONT:
+                n_fuse = ggml_metal_op_سیٹ(ctx, idx);
+            } توڑو;
+        حالت GGML_OP_DUP:
+        حالت GGML_OP_CPY:
+        حالت GGML_OP_CONT:
             {
                 n_fuse = ggml_metal_op_cpy(ctx, idx);
-            } break;
-        case GGML_OP_POOL_1D:
+            } توڑو;
+        حالت GGML_OP_POOL_1D:
             {
                 n_fuse = ggml_metal_op_pool_1d(ctx, idx);
-            } break;
-        case GGML_OP_POOL_2D:
+            } توڑو;
+        حالت GGML_OP_POOL_2D:
             {
                 n_fuse = ggml_metal_op_pool_2d(ctx, idx);
-            } break;
-        case GGML_OP_ARGMAX:
+            } توڑو;
+        حالت GGML_OP_ARGMAX:
             {
                 n_fuse = ggml_metal_op_argmax(ctx, idx);
-            } break;
-        case GGML_OP_OPT_STEP_ADAMW:
+            } توڑو;
+        حالت GGML_OP_OPT_قدم_ADAMW:
             {
-                n_fuse = ggml_metal_op_opt_step_adamw(ctx, idx);
-            } break;
-        case GGML_OP_OPT_STEP_SGD:
+                n_fuse = ggml_metal_op_opt_قدم_adamw(ctx, idx);
+            } توڑو;
+        حالت GGML_OP_OPT_قدم_SGD:
             {
-                n_fuse = ggml_metal_op_opt_step_sgd(ctx, idx);
-            } break;
-        case GGML_OP_COUNT_EQUAL:
+                n_fuse = ggml_metal_op_opt_قدم_sgd(ctx, idx);
+            } توڑو;
+        حالت GGML_OP_گنتی_EQUAL:
             {
-                n_fuse = ggml_metal_op_count_equal(ctx, idx);
-            } break;
-        default:
+                n_fuse = ggml_metal_op_گنتی_equal(ctx, idx);
+            } توڑو;
+        طےشدہ:
             {
-                GGML_LOG_ERROR("%s: error: node %3d, op = %8s not implemented\n", __func__, idx, ggml_op_name(node->op));
+                GGML_LOG_ERROR("%s: error: node %3d, op = %8s not implemented\n", __func__, idx, ggml_op_name(گرہ->op));
                 GGML_ABORT("fatal error");
             }
     }
 
-    if (ctx->debug_graph > 0) {
-        if (n_fuse > 1) {
+    اگر (ctx->debug_گراف > 0) {
+        اگر (n_fuse > 1) {
             GGML_LOG_DEBUG("%s:               fuse %d ops\n", __func__, n_fuse);
         }
     }
 
     // update the mem ranges in the encoding context
-    for (int i = 0; i < n_fuse; ++i) {
-        if (!ggml_metal_op_concurrency_add(ctx, ctx->node(idx + i))) {
+    برائے (صحیح i = 0; i < n_fuse; ++i) {
+        اگر (!ggml_metal_op_concurrency_جوڑو(ctx, ctx->گرہ(idx + i))) {
             ggml_metal_op_concurrency_reset(ctx);
         }
     }
 
-    return n_fuse;
+    واپس n_fuse;
 }
 
-int ggml_metal_op_encode(ggml_metal_op_t ctx, int idx) {
-    if (ctx->use_capture) {
-        ggml_metal_encoder_debug_group_push(ctx->enc, ggml_op_desc(ctx->node(idx)));
+صحیح ggml_metal_op_encode(ggml_metal_op_t ctx, صحیح idx) {
+    اگر (ctx->use_capture) {
+        ggml_metal_encoder_debug_گروہ_ڈالو(ctx->enc, ggml_op_desc(ctx->گرہ(idx)));
     }
 
-    int res = ggml_metal_op_encode_impl(ctx, idx);
-    if (idx + res > ctx->n_nodes()) {
+    صحیح res = ggml_metal_op_encode_impl(ctx, idx);
+    اگر (idx + res > ctx->n_nodes()) {
         GGML_ABORT("fusion error: nodes spanning multiple encoders have been fused. this indicates a bug in the fusion logic %s",
                 "https://github.com/ggml-org/llama.cpp/pull/14849");
     }
 
-    if (ctx->use_capture) {
-        ggml_metal_encoder_debug_group_pop(ctx->enc);
+    اگر (ctx->use_capture) {
+        ggml_metal_encoder_debug_گروہ_نکالو(ctx->enc);
     }
 
-    return res;
+    واپس res;
 }
 
-int ggml_metal_op_concat(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_concat(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -570,16 +570,16 @@ int ggml_metal_op_concat(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    const int32_t dim = ((const int32_t *) op->op_params)[0];
+    ثابت int32_t dim = ((ثابت int32_t *) op->op_params)[0];
 
-    const bool is_q = ggml_is_quantized(op->type);
+    ثابت منطقی is_q = ggml_is_quantized(op->type);
 
     // for quantized types, concat is done at the block level (nb0 == type_size == block size)
     int32_t ne00_arg = ne00;
     int32_t ne10_arg = ne10;
     int32_t ne0_arg  = ne0;
-    if (is_q) {
-        const int32_t blck = ggml_blck_size(op->type);
+    اگر (is_q) {
+        ثابت int32_t blck = ggml_blck_سائز(op->type);
         GGML_ASSERT(ne00 % blck == 0);
         GGML_ASSERT(ne10 % blck == 0);
         GGML_ASSERT(ne0  % blck == 0);
@@ -588,28 +588,28 @@ int ggml_metal_op_concat(ggml_metal_op_t ctx, int idx) {
         ne0_arg  = ne0/blck;
     }
 
-    int nth = std::min(256, ne0_arg);
+    صحیح nth = std::min(256, ne0_arg);
 
     // when rows are small, we can batch them together in a single threadgroup
-    int nrptg = 1;
-    if (nth < 256) {
+    صحیح nrptg = 1;
+    اگر (nth < 256) {
         nrptg = std::min((256 + nth - 1) / nth, ne1);
-        if (nrptg * nth > 256) {
+        اگر (nrptg * nth > 256) {
             nrptg = 256 / nth;
         }
     }
 
-    const int nw0 = (ne1 + nrptg - 1) / nrptg;
+    ثابت صحیح nw0 = (ne1 + nrptg - 1) / nrptg;
 
     // split long rows across threadgroups when there are too few rows to fill the GPU
-    const int64_t n_rows = (int64_t) nw0*ne2*ne3;
+    ثابت int64_t n_صفیں = (int64_t) nw0*ne2*ne3;
 
-    int nc0 = 1;
-    if (nrptg == 1) {
-        nc0 = (int) std::max<int64_t>(1, std::min<int64_t>((ne0_arg + nth - 1)/nth, (GGML_METAL_MIN_THREADGROUPS + n_rows - 1)/n_rows));
+    صحیح nc0 = 1;
+    اگر (nrptg == 1) {
+        nc0 = (صحیح) std::max<int64_t>(1, std::min<int64_t>((ne0_arg + nth - 1)/nth, (GGML_METAL_MIN_THREADGROUPS + n_صفیں - 1)/n_صفیں));
     }
 
-    ggml_metal_kargs_concat args = {
+    ggml_metal_kargs_concat دلائل_2 = {
         /*.ne00 =*/ ne00_arg,
         /*.ne01 =*/ ne01,
         /*.ne02 =*/ ne02,
@@ -638,21 +638,21 @@ int ggml_metal_op_concat(ggml_metal_op_t ctx, int idx) {
         /*.nc0  =*/ nc0,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_concat(lib, op->type);
+    خودکار pipeline = ggml_metal_library_get_pipeline_concat(lib, op->type);
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[1]), 2);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         3);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, nw0*nc0, ne2, ne3, nth, nrptg, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_repeat(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_repeat(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -664,9 +664,9 @@ int ggml_metal_op_repeat(ggml_metal_op_t ctx, int idx) {
 
     // TODO: optimize for degenerate cases such as ggml_nelements(op->src[0]) == 1 and others
 
-    auto pipeline = ggml_metal_library_get_pipeline_repeat(lib, op->type);
+    خودکار pipeline = ggml_metal_library_get_pipeline_repeat(lib, op->type);
 
-    ggml_metal_kargs_repeat args = {
+    ggml_metal_kargs_repeat دلائل_2 = {
         /*.ne00 =*/ ne00,
         /*.ne01 =*/ ne01,
         /*.ne02 =*/ ne02,
@@ -685,20 +685,20 @@ int ggml_metal_op_repeat(ggml_metal_op_t ctx, int idx) {
         /*.nb3  =*/ nb3,
     };
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         2);
 
-    const int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne0);
+    ثابت صحیح nth = std::min(ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline), ne0);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne1, ne2, ne3, nth, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_acc(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_acc(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -714,25 +714,25 @@ int ggml_metal_op_acc(ggml_metal_op_t ctx, int idx) {
     GGML_ASSERT(op->src[1]->type == GGML_TYPE_F32);
     GGML_ASSERT(op->type         == GGML_TYPE_F32);
 
-    GGML_ASSERT(ggml_is_contiguous_rows(op->src[0]));
-    GGML_ASSERT(ggml_is_contiguous_rows(op->src[1]));
+    GGML_ASSERT(ggml_is_contiguous_صفیں(op->src[0]));
+    GGML_ASSERT(ggml_is_contiguous_صفیں(op->src[1]));
 
-    const size_t pnb1 = ((const int32_t *) op->op_params)[0];
-    const size_t pnb2 = ((const int32_t *) op->op_params)[1];
-    const size_t pnb3 = ((const int32_t *) op->op_params)[2];
-    const size_t offs = ((const int32_t *) op->op_params)[3];
+    ثابت size_t pnb1 = ((ثابت int32_t *) op->op_params)[0];
+    ثابت size_t pnb2 = ((ثابت int32_t *) op->op_params)[1];
+    ثابت size_t pnb3 = ((ثابت int32_t *) op->op_params)[2];
+    ثابت size_t offs = ((ثابت int32_t *) op->op_params)[3];
 
-    const bool inplace = (bool) ((const int32_t *) op->op_params)[4];
+    ثابت منطقی inplace = (منطقی) ((ثابت int32_t *) op->op_params)[4];
 
-    if (!inplace) {
+    اگر (!inplace) {
         // run a separate kernel to cpy src->dst
         // not sure how to avoid this
         // TODO: make a simpler cpy_bytes kernel
 
         //const id<MTLComputePipelineState> pipeline = ctx->pipelines[GGML_METAL_PIPELINE_TYPE_CPY_F32_F32].obj;
-        auto pipeline = ggml_metal_library_get_pipeline_cpy(lib, op->src[0]->type, op->type);
+        خودکار pipeline = ggml_metal_library_get_pipeline_cpy(lib, op->src[0]->type, op->type);
 
-        ggml_metal_kargs_cpy args = {
+        ggml_metal_kargs_cpy دلائل_2 = {
             /*.nk0  =*/ ne00,
             /*.ne00 =*/ ne00,
             /*.ne01 =*/ ne01,
@@ -752,19 +752,19 @@ int ggml_metal_op_acc(ggml_metal_op_t ctx, int idx) {
             /*.nb3  =*/ nb3,
         };
 
-        ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+        ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+        ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+        ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+        ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         2);
 
-        const int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne00);
+        ثابت صحیح nth = std::min(ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline), ne00);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
 
         ggml_metal_op_concurrency_reset(ctx);
     }
 
-    ggml_metal_kargs_bin args = {
+    ggml_metal_kargs_bin دلائل_2 = {
         /*.ne00 =*/ ne10,
         /*.ne01 =*/ ne11,
         /*.ne02 =*/ ne12,
@@ -793,29 +793,29 @@ int ggml_metal_op_acc(ggml_metal_op_t ctx, int idx) {
         /*.o1   =*/ { 0 },
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_bin_one(lib, GGML_OP_ADD);
+    خودکار pipeline = ggml_metal_library_get_pipeline_bin_one(lib, GGML_OP_جوڑو);
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[1]), 2);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         3);
 
-    const int nth_max = MIN(256, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
+    ثابت صحیح nth_max = MIN(256, ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline));
 
-    int nth = 1;
+    صحیح nth = 1;
 
-    while (2*nth < args.ne0 && nth < nth_max) {
+    جب (2*nth < دلائل_2.ne0 && nth < nth_max) {
         nth *= 2;
     }
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne11, ne12, ne13, nth, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_unary(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_unary(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -825,12 +825,12 @@ int ggml_metal_op_unary(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    GGML_ASSERT(ggml_is_contiguous_rows(op->src[0]));
+    GGML_ASSERT(ggml_is_contiguous_صفیں(op->src[0]));
 
-    ggml_metal_buffer_id bid_src0 = ggml_metal_get_buffer_id(op->src[0]);
-    ggml_metal_buffer_id bid_dst  = ggml_metal_get_buffer_id(op);
+    ggml_metal_بفر_id bid_src0 = ggml_metal_get_بفر_id(op->src[0]);
+    ggml_metal_بفر_id bid_dst  = ggml_metal_get_بفر_id(op);
 
-    ggml_metal_kargs_unary args = {
+    ggml_metal_kargs_unary دلائل_2 = {
         /*.ne00  =*/ ne00,
         /*.ne01  =*/ ne01,
         /*.ne02  =*/ ne02,
@@ -855,60 +855,60 @@ int ggml_metal_op_unary(ggml_metal_op_t ctx, int idx) {
         /*.max   =*/ 0.0,
     };
 
-    if (op->op == GGML_OP_LEAKY_RELU) {
-        args.slope = ggml_get_op_params_f32(op, 0);
+    اگر (op->op == GGML_OP_LEAKY_RELU) {
+        دلائل_2.ڈھلان = ggml_get_op_params_f32(op, 0);
     }
 
-    if (op->op == GGML_OP_SCALE) {
-        args.scale = ggml_get_op_params_f32(op, 0);
-        args.bias  = ggml_get_op_params_f32(op, 1);
+    اگر (op->op == GGML_OP_SCALE) {
+        دلائل_2.scale = ggml_get_op_params_f32(op, 0);
+        دلائل_2.bias  = ggml_get_op_params_f32(op, 1);
     }
 
-    if (op->op == GGML_OP_FILL) {
-        args.val = ggml_get_op_params_f32(op, 0);
+    اگر (op->op == GGML_OP_FILL) {
+        دلائل_2.val = ggml_get_op_params_f32(op, 0);
     }
 
-    if (op->op == GGML_OP_CLAMP) {
-        args.min = ggml_get_op_params_f32(op, 0);
-        args.max = ggml_get_op_params_f32(op, 1);
+    اگر (op->op == GGML_OP_CLAMP) {
+        دلائل_2.min = ggml_get_op_params_f32(op, 0);
+        دلائل_2.max = ggml_get_op_params_f32(op, 1);
     }
 
-    if (op->op == GGML_OP_UNARY && ggml_get_unary_op(op) == GGML_UNARY_OP_XIELU) {
-        args.slope = ggml_get_op_params_f32(op, 1); // alpha_n
-        args.scale = ggml_get_op_params_f32(op, 2); // alpha_p
-        args.bias  = ggml_get_op_params_f32(op, 3); // beta
-        args.val   = ggml_get_op_params_f32(op, 4); // eps
+    اگر (op->op == GGML_OP_UNARY && ggml_get_unary_op(op) == GGML_UNARY_OP_XIELU) {
+        دلائل_2.ڈھلان = ggml_get_op_params_f32(op, 1); // alpha_n
+        دلائل_2.scale = ggml_get_op_params_f32(op, 2); // alpha_p
+        دلائل_2.bias  = ggml_get_op_params_f32(op, 3); // beta
+        دلائل_2.val   = ggml_get_op_params_f32(op, 4); // eps
     }
 
-    auto pipeline = ggml_metal_library_get_pipeline_unary(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_unary(lib, op);
 
-    if (pipeline.c4) {
-        args.ne00 = ne00/4;
-        args.ne0  = ne0/4;
+    اگر (pipeline.c4) {
+        دلائل_2.ne00 = ne00/4;
+        دلائل_2.ne0  = ne0/4;
     }
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
-    ggml_metal_encoder_set_buffer  (enc, bid_dst,  2);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, bid_src0, 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, bid_dst,  2);
 
-    if (pipeline.cnt) {
-        const int n = pipeline.c4 ? ggml_nelements(op)/4 : ggml_nelements(op);
+    اگر (pipeline.cnt) {
+        ثابت صحیح n = pipeline.c4 ? ggml_nelements(op)/4 : ggml_nelements(op);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, n, 1, 1, 1, 1, 1);
-    } else {
-        const int nth_max = MIN(256, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
-        const int nth = MIN(args.ne00, nth_max);
-        const int nk0 = (args.ne00 + nth - 1)/nth;
+    } ورنہ {
+        ثابت صحیح nth_max = MIN(256, ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline));
+        ثابت صحیح nth = MIN(دلائل_2.ne00, nth_max);
+        ثابت صحیح nk0 = (دلائل_2.ne00 + nth - 1)/nth;
 
         ggml_metal_encoder_dispatch_threadgroups(enc, nk0*ne01, ne02, ne03, nth, 1, 1);
     }
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_glu(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_glu(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -920,20 +920,20 @@ int ggml_metal_op_glu(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    if (op->src[1]) {
+    اگر (op->src[1]) {
         GGML_ASSERT(ggml_are_same_shape(op->src[0], op->src[1]));
     }
 
-    auto pipeline = ggml_metal_library_get_pipeline_glu(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_glu(lib, op);
 
-    const int32_t swp = ggml_get_op_params_i32(op, 1);
-    const float alpha = ggml_get_op_params_f32(op, 2);
-    const float limit = ggml_get_op_params_f32(op, 3);
+    ثابت int32_t swp = ggml_get_op_params_i32(op, 1);
+    ثابت اعشاری alpha = ggml_get_op_params_f32(op, 2);
+    ثابت اعشاری حد_بندی = ggml_get_op_params_f32(op, 3);
 
-    const int32_t i00 = swp ? ne0 : 0;
-    const int32_t i10 = swp ? 0 : ne0;
+    ثابت int32_t i00 = swp ? ne0 : 0;
+    ثابت int32_t i10 = swp ? 0 : ne0;
 
-    ggml_metal_kargs_glu args = {
+    ggml_metal_kargs_glu دلائل_2 = {
         /*.ne00 =*/ ne00,
         /*.nb01 =*/ nb01,
         /*.ne10 =*/ op->src[1] ? ne10 : ne00,
@@ -943,67 +943,67 @@ int ggml_metal_op_glu(ggml_metal_op_t ctx, int idx) {
         /*.i00  =*/ op->src[1] ? 0 : i00,
         /*.i10  =*/ op->src[1] ? 0 : i10,
         /*.alpha=*/ alpha,
-        /*.limit=*/ limit
+        /*.limit=*/ حد_بندی
     };
 
-    const int64_t nrows = ggml_nrows(op->src[0]);
+    ثابت int64_t nrows = ggml_nrows(op->src[0]);
 
-    const int32_t nth = std::max(1, std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne00/2));
+    ثابت int32_t nth = std::max(1, std::min(ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline), ne00/2));
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    if (op->src[1]) {
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    } else {
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 2);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    اگر (op->src[1]) {
+        ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[1]), 2);
+    } ورنہ {
+        ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 2);
     }
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         3);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, nrows, 1, 1, nth, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_sum(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op  = ctx->node(idx);
+صحیح ggml_metal_op_مجموع(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op  = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    const uint64_t n = (uint64_t) ggml_nelements(op->src[0]);
+    ثابت uint64_t n = (uint64_t) ggml_nelements(op->src[0]);
 
-    ggml_metal_kargs_sum args = {
+    ggml_metal_kargs_مجموع دلائل_2 = {
         /*.np =*/ n,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_sum(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_مجموع(lib, op);
 
-    int nth = 32; // SIMD width
+    صحیح nth = 32; // SIMD width
 
-    while (nth < (int) n && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+    جب (nth < (صحیح) n && nth < ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline)) {
         nth *= 2;
     }
 
-    nth = std::min(nth, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
-    nth = std::min(nth, (int) n);
+    nth = std::min(nth, ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline));
+    nth = std::min(nth, (صحیح) n);
 
-    const int nsg = (nth + 31) / 32;
+    ثابت صحیح nsg = (nth + 31) / 32;
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         2);
 
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, GGML_PAD(nsg * sizeof(float), 16), 0);
+    ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, GGML_PAD(nsg * حجم(اعشاری), 16), 0);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, 1, 1, 1, nth, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_sum_rows(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_مجموع_صفیں(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -1013,12 +1013,12 @@ int ggml_metal_op_sum_rows(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    GGML_ASSERT(ggml_is_contiguous_rows(op->src[0]));
+    GGML_ASSERT(ggml_is_contiguous_صفیں(op->src[0]));
 
-    ggml_metal_buffer_id bid_src0 = ggml_metal_get_buffer_id(op->src[0]);
-    ggml_metal_buffer_id bid_dst  = ggml_metal_get_buffer_id(op);
+    ggml_metal_بفر_id bid_src0 = ggml_metal_get_بفر_id(op->src[0]);
+    ggml_metal_بفر_id bid_dst  = ggml_metal_get_بفر_id(op);
 
-    ggml_metal_kargs_sum_rows args = {
+    ggml_metal_kargs_مجموع_صفیں دلائل_2 = {
         /*.ne00 =*/ ne00,
         /*.ne01 =*/ ne01,
         /*.ne02 =*/ ne02,
@@ -1037,78 +1037,78 @@ int ggml_metal_op_sum_rows(ggml_metal_op_t ctx, int idx) {
         /*.nb3  =*/ nb3,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_sum_rows(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_مجموع_صفیں(lib, op);
 
-    if (pipeline.c4) {
-        args.ne00 = ne00/4;
-        args.ne0  = ne0/4;
+    اگر (pipeline.c4) {
+        دلائل_2.ne00 = ne00/4;
+        دلائل_2.ne0  = ne0/4;
     }
 
-    int nth = 32; // SIMD width
+    صحیح nth = 32; // SIMD width
 
-    while (nth < args.ne00 && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+    جب (nth < دلائل_2.ne00 && nth < ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline)) {
         nth *= 2;
     }
 
-    nth = std::min(nth, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
-    nth = std::min(nth, (int) args.ne00);
+    nth = std::min(nth, ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline));
+    nth = std::min(nth, (صحیح) دلائل_2.ne00);
 
-    const size_t smem = pipeline.smem;
+    ثابت size_t smem = pipeline.smem;
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
-    ggml_metal_encoder_set_buffer  (enc, bid_dst,  2);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, bid_src0, 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, bid_dst,  2);
 
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+    ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem, 0);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_cumsum(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_cumsum(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    GGML_ASSERT(ggml_is_contiguous_rows(op->src[0]));
+    GGML_ASSERT(ggml_is_contiguous_صفیں(op->src[0]));
 
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
     GGML_TENSOR_LOCALS(uint64_t, nb0, op->src[0], nb);
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    auto pipeline_blk = ggml_metal_library_get_pipeline_cumsum_blk(lib, op);
+    خودکار pipeline_blk = ggml_metal_library_get_pipeline_cumsum_blk(lib, op);
 
-    int nth = 1;
-    while (nth < ne00 && 2*nth <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline_blk)) {
+    صحیح nth = 1;
+    جب (nth < ne00 && 2*nth <= ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline_blk)) {
         nth *= 2;
     }
 
     GGML_ASSERT(ne00 <= nth*nth);
 
-    const int64_t net0 = (ne00 + nth - 1) / nth;
-    const int64_t net1 = ne01;
-    const int64_t net2 = ne02;
-    const int64_t net3 = ne03;
+    ثابت int64_t net0 = (ne00 + nth - 1) / nth;
+    ثابت int64_t net1 = ne01;
+    ثابت int64_t net2 = ne02;
+    ثابت int64_t net3 = ne03;
 
-    const uint64_t nbt0 = sizeof(float);
-    const uint64_t nbt1 = net0*nbt0;
-    const uint64_t nbt2 = net1*nbt1;
-    const uint64_t nbt3 = net2*nbt2;
+    ثابت uint64_t nbt0 = حجم(اعشاری);
+    ثابت uint64_t nbt1 = net0*nbt0;
+    ثابت uint64_t nbt2 = net1*nbt1;
+    ثابت uint64_t nbt3 = net2*nbt2;
 
-    const size_t smem = GGML_PAD(32*sizeof(float), 16);
+    ثابت size_t smem = GGML_PAD(32*حجم(اعشاری), 16);
 
-    ggml_metal_buffer_id bid_src0 = ggml_metal_get_buffer_id(op->src[0]);
-    ggml_metal_buffer_id bid_dst  = ggml_metal_get_buffer_id(op);
+    ggml_metal_بفر_id bid_src0 = ggml_metal_get_بفر_id(op->src[0]);
+    ggml_metal_بفر_id bid_dst  = ggml_metal_get_بفر_id(op);
 
-    ggml_metal_buffer_id bid_tmp = bid_dst;
+    ggml_metal_بفر_id bid_tmp = bid_dst;
     bid_tmp.offs += ggml_nbytes(op);
 
     {
-        ggml_metal_kargs_cumsum_blk args = {
+        ggml_metal_kargs_cumsum_blk دلائل_2 = {
             /*.ne00 =*/ ne00,
             /*.ne01 =*/ ne01,
             /*.ne02 =*/ ne02,
@@ -1128,22 +1128,22 @@ int ggml_metal_op_cumsum(ggml_metal_op_t ctx, int idx) {
             /*.outb =*/ ne00 > nth,
         };
 
-        ggml_metal_encoder_set_pipeline(enc, pipeline_blk);
-        ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
-        ggml_metal_encoder_set_buffer  (enc, bid_tmp,  2);
-        ggml_metal_encoder_set_buffer  (enc, bid_dst,  3);
+        ggml_metal_encoder_سیٹ_pipeline(enc, pipeline_blk);
+        ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_src0, 1);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_tmp,  2);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_dst,  3);
 
-        ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+        ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem, 0);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, net0*ne01, ne02, ne03, nth, 1, 1);
     }
 
-    if (ne00 > nth) {
+    اگر (ne00 > nth) {
         ggml_metal_op_concurrency_reset(ctx);
 
         {
-            ggml_metal_kargs_cumsum_blk args = {
+            ggml_metal_kargs_cumsum_blk دلائل_2 = {
                 /*.ne00 =*/ net0,
                 /*.ne01 =*/ net1,
                 /*.ne02 =*/ net2,
@@ -1160,16 +1160,16 @@ int ggml_metal_op_cumsum(ggml_metal_op_t ctx, int idx) {
                 /*.nbt1 =*/ nbt1,
                 /*.nbt2 =*/ nbt2,
                 /*.nbt3 =*/ nbt3,
-                /*.outb =*/ false,
+                /*.outb =*/ جھوٹ,
             };
 
-            ggml_metal_encoder_set_pipeline(enc, pipeline_blk);
-            ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-            ggml_metal_encoder_set_buffer  (enc, bid_tmp, 1);
-            ggml_metal_encoder_set_buffer  (enc, bid_tmp, 2);
-            ggml_metal_encoder_set_buffer  (enc, bid_tmp, 3);
+            ggml_metal_encoder_سیٹ_pipeline(enc, pipeline_blk);
+            ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_tmp, 1);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_tmp, 2);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_tmp, 3);
 
-            ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+            ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem, 0);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, net1, net2, net3, nth, 1, 1);
         }
@@ -1177,9 +1177,9 @@ int ggml_metal_op_cumsum(ggml_metal_op_t ctx, int idx) {
         ggml_metal_op_concurrency_reset(ctx);
 
         {
-            auto pipeline_add = ggml_metal_library_get_pipeline_cumsum_add(lib, op);
+            خودکار pipeline_جوڑو = ggml_metal_library_get_pipeline_cumsum_جوڑو(lib, op);
 
-            ggml_metal_kargs_cumsum_add args = {
+            ggml_metal_kargs_cumsum_جوڑو دلائل_2 = {
                 /*.ne00 =*/ ne00,
                 /*.ne01 =*/ ne01,
                 /*.ne02 =*/ ne02,
@@ -1198,20 +1198,20 @@ int ggml_metal_op_cumsum(ggml_metal_op_t ctx, int idx) {
                 /*.nbt3 =*/ nbt3,
             };
 
-            ggml_metal_encoder_set_pipeline(enc, pipeline_add);
-            ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-            ggml_metal_encoder_set_buffer  (enc, bid_tmp, 1);
-            ggml_metal_encoder_set_buffer  (enc, bid_dst, 2);
+            ggml_metal_encoder_سیٹ_pipeline(enc, pipeline_جوڑو);
+            ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_tmp, 1);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_dst, 2);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, net0*ne01, ne02, ne03, nth, 1, 1);
         }
     }
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_get_rows(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_get_صفیں(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -1223,9 +1223,9 @@ int ggml_metal_op_get_rows(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    auto pipeline = ggml_metal_library_get_pipeline_get_rows(lib, op->src[0]->type);
+    خودکار pipeline = ggml_metal_library_get_pipeline_get_صفیں(lib, op->src[0]->type);
 
-    ggml_metal_kargs_get_rows args = {
+    ggml_metal_kargs_get_صفیں دلائل_2 = {
         /*.ne00t =*/ ggml_is_quantized(op->src[0]->type) ? ne00/16 : ne00,
         /*.ne00  =*/ ne00,
         /*.nb01  =*/ nb01,
@@ -1240,23 +1240,23 @@ int ggml_metal_op_get_rows(ggml_metal_op_t ctx, int idx) {
         /*.nb3   =*/ nb3,
     };
 
-    const int nth = std::min(args.ne00t, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
+    ثابت صحیح nth = std::min(دلائل_2.ne00t, ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline));
 
-    const int nw0 = (args.ne00t + nth - 1)/nth;
+    ثابت صحیح nw0 = (دلائل_2.ne00t + nth - 1)/nth;
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[1]), 2);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         3);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, nw0*ne10, ne11, ne12, nth, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_set_rows(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_سیٹ_صفیں(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -1268,29 +1268,29 @@ int ggml_metal_op_set_rows(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    auto pipeline = ggml_metal_library_get_pipeline_set_rows(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_سیٹ_صفیں(lib, op);
 
-    const int32_t nk0 = ne0/ggml_blck_size(op->type);
+    ثابت int32_t nk0 = ne0/ggml_blck_سائز(op->type);
 
-    int nth = 32; // SIMD width
+    صحیح nth = 32; // SIMD width
 
-    while (nth < nk0 && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+    جب (nth < nk0 && nth < ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline)) {
         nth *= 2;
     }
 
-    int nrptg = 1;
-    if (nth > nk0) {
+    صحیح nrptg = 1;
+    اگر (nth > nk0) {
         nrptg = (nth + nk0 - 1)/nk0;
         nth   = nk0;
 
-        if (nrptg*nth > ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+        اگر (nrptg*nth > ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline)) {
             nrptg--;
         }
     }
 
     nth = std::min(nth, nk0);
 
-    ggml_metal_kargs_set_rows args = {
+    ggml_metal_kargs_سیٹ_صفیں دلائل_2 = {
         /*.nk0  =*/ nk0,
         /*.ne01 =*/ ne01,
         /*.nb01 =*/ nb01,
@@ -1306,19 +1306,19 @@ int ggml_metal_op_set_rows(ggml_metal_op_t ctx, int idx) {
         /*.nb3  =*/ nb3,
     };
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[1]), 2);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         3);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, (ne01 + nrptg - 1)/nrptg, ne02, ne03, nth, nrptg, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_diag(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_diag(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -1328,7 +1328,7 @@ int ggml_metal_op_diag(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS(int32_t,  ne, op, ne);
     GGML_TENSOR_LOCALS(uint64_t, nb, op, nb);
 
-    ggml_metal_kargs_diag args = {
+    ggml_metal_kargs_diag دلائل_2 = {
         /*.ne00 =*/ne00,
         /*.ne01 =*/ne01,
         /*.ne02 =*/ne02,
@@ -1347,29 +1347,29 @@ int ggml_metal_op_diag(ggml_metal_op_t ctx, int idx) {
         /*.nb3  =*/nb3,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_diag(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_diag(lib, op);
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes(enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں(enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(op),         2);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne1, ne2, ne3, 32, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_lightning_indexer(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_lightning_indexer(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_encoder_t enc = ctx->enc;
 
     GGML_ASSERT(op->op == GGML_OP_LIGHTNING_INDEXER);
 
-    const ggml_tensor * q = op->src[0];
-    const ggml_tensor * k = op->src[1];
-    const ggml_tensor * w = op->src[2];
-    const ggml_tensor * m = op->src[3];
+    ثابت ggml_tensor * q = op->src[0];
+    ثابت ggml_tensor * k = op->src[1];
+    ثابت ggml_tensor * w = op->src[2];
+    ثابت ggml_tensor * m = op->src[3];
 
     GGML_ASSERT(q->type == GGML_TYPE_F32);
     GGML_ASSERT(k->type == GGML_TYPE_F32  ||
@@ -1386,7 +1386,7 @@ int ggml_metal_op_lightning_indexer(ggml_metal_op_t ctx, int idx) {
 
     GGML_ASSERT(q->ne[0] == OP_LIGHTNING_INDEXER_DK);
 
-    ggml_metal_kargs_lightning_indexer args = {
+    ggml_metal_kargs_lightning_indexer دلائل_2 = {
         /*.n_kv      =*/ (int32_t) k->ne[2],
         /*.n_batch   =*/ (int32_t) q->ne[2],
         /*.mask_ne3  =*/ (int32_t) m->ne[3],
@@ -1403,85 +1403,85 @@ int ggml_metal_op_lightning_indexer(ggml_metal_op_t ctx, int idx) {
         /*.nbm3      =*/ m->nb[3],
     };
 
-    ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(q),  1);
-    ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(k),  2);
-    ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(w),  3);
-    ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(m),  4);
-    ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op), 5);
+    ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(q),  1);
+    ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(k),  2);
+    ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(w),  3);
+    ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(m),  4);
+    ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(op), 5);
 
-    const int nsg   = OP_LIGHTNING_INDEXER_NSG;
-    const int nkptg = OP_LIGHTNING_INDEXER_NKPSG*nsg;
-    const int nbptg = OP_LIGHTNING_INDEXER_NBPTG;
+    ثابت صحیح nsg   = OP_LIGHTNING_INDEXER_NSG;
+    ثابت صحیح nkptg = OP_LIGHTNING_INDEXER_NKPSG*nsg;
+    ثابت صحیح nbptg = OP_LIGHTNING_INDEXER_NBPTG;
 
-    auto pipeline = ggml_metal_library_get_pipeline_lightning_indexer(ctx->lib, op);
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes(enc, &args, sizeof(args), 0);
+    خودکار pipeline = ggml_metal_library_get_pipeline_lightning_indexer(ctx->lib, op);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں(enc, &دلائل_2, حجم(دلائل_2), 0);
     ggml_metal_encoder_dispatch_threadgroups(enc,
             (k->ne[2] + nkptg - 1)/nkptg,
             (q->ne[2] + nbptg - 1)/nbptg,
             q->ne[3], 32, nsg, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_dsv4_hc(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_dsv4_hc(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_encoder_t enc = ctx->enc;
-    auto pipeline = ggml_metal_library_get_pipeline_dsv4_hc(ctx->lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_dsv4_hc(ctx->lib, op);
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
 
-    switch (op->op) {
-        case GGML_OP_DSV4_HC_COMB:
+    انتخاب (op->op) {
+        حالت GGML_OP_DSV4_HC_COMB:
             {
-                const ggml_tensor * mixes = op->src[0];
-                const ggml_tensor * scale = op->src[1];
-                const ggml_tensor * base  = op->src[2];
+                ثابت ggml_tensor * mixes = op->src[0];
+                ثابت ggml_tensor * scale = op->src[1];
+                ثابت ggml_tensor * بنیاد  = op->src[2];
 
                 GGML_ASSERT(mixes->type == GGML_TYPE_F32);
                 GGML_ASSERT(scale->type == GGML_TYPE_F32);
-                GGML_ASSERT(base->type  == GGML_TYPE_F32);
+                GGML_ASSERT(بنیاد->type  == GGML_TYPE_F32);
                 GGML_ASSERT(op->type    == GGML_TYPE_F32);
                 GGML_ASSERT(mixes->ne[0] == 24);
                 GGML_ASSERT(op->ne[0] == 4 && op->ne[1] == 4);
 
-                ggml_metal_kargs_dsv4_hc_comb args = {
+                ggml_metal_kargs_dsv4_hc_comb دلائل_2 = {
                     /*.n_tokens =*/ (int32_t) mixes->ne[1],
                     /*.n_iter   =*/ ggml_get_op_params_i32(op, 1),
                     /*.nb_m0    =*/ mixes->nb[0],
                     /*.nb_m1    =*/ mixes->nb[1],
                     /*.nb_s0    =*/ scale->nb[0],
-                    /*.nb_b0    =*/ base->nb[0],
+                    /*.nb_b0    =*/ بنیاد->nb[0],
                     /*.nb_d0    =*/ op->nb[0],
                     /*.nb_d1    =*/ op->nb[1],
                     /*.nb_d2    =*/ op->nb[2],
                     /*.eps      =*/ ggml_get_op_params_f32(op, 0),
                 };
 
-                ggml_metal_encoder_set_bytes (enc, &args, sizeof(args), 0);
-                ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(mixes), 1);
-                ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(scale), 2);
-                ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(base),  3);
-                ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op),    4);
+                ggml_metal_encoder_سیٹ_بائٹیں (enc, &دلائل_2, حجم(دلائل_2), 0);
+                ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(mixes), 1);
+                ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(scale), 2);
+                ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(بنیاد),  3);
+                ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(op),    4);
 
                 // One SIMDgroup owns one 4x4 Sinkhorn matrix. Packing up to four
                 // independent tokens per threadgroup keeps both decode and prompt
                 // dispatches compact without any threadgroup-memory synchronization.
-                const int nsg = std::min(4, args.n_tokens);
+                ثابت صحیح nsg = std::min(4, دلائل_2.n_علامات);
                 ggml_metal_encoder_dispatch_threadgroups(
-                        enc, (args.n_tokens + nsg - 1)/nsg, 1, 1, 32, nsg, 1);
-            } break;
-        case GGML_OP_DSV4_HC_PRE:
+                        enc, (دلائل_2.n_علامات + nsg - 1)/nsg, 1, 1, 32, nsg, 1);
+            } توڑو;
+        حالت GGML_OP_DSV4_HC_PRE:
             {
-                const ggml_tensor * x       = op->src[0];
-                const ggml_tensor * weights = op->src[1];
+                ثابت ggml_tensor * x       = op->src[0];
+                ثابت ggml_tensor * weights = op->src[1];
 
                 GGML_ASSERT(x->type       == GGML_TYPE_F32);
                 GGML_ASSERT(weights->type == GGML_TYPE_F32);
                 GGML_ASSERT(op->type      == GGML_TYPE_F32);
 
-                ggml_metal_kargs_dsv4_hc_pre args = {
+                ggml_metal_kargs_dsv4_hc_pre دلائل_2 = {
                     /*.n_embd   =*/ (int32_t) x->ne[0],
                     /*.n_tokens =*/ (int32_t) x->ne[2],
                     /*.nb_x0    =*/ x->nb[0],
@@ -1495,22 +1495,22 @@ int ggml_metal_op_dsv4_hc(ggml_metal_op_t ctx, int idx) {
                     /*.scale    =*/ ggml_get_op_params_f32(op, 0),
                 };
 
-                ggml_metal_encoder_set_bytes (enc, &args, sizeof(args), 0);
-                ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(x),       1);
-                ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(weights), 2);
-                ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op),      3);
+                ggml_metal_encoder_سیٹ_بائٹیں (enc, &دلائل_2, حجم(دلائل_2), 0);
+                ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(x),       1);
+                ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(weights), 2);
+                ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(op),      3);
 
-                const int n_tiles = (args.n_embd + 31)/32;
-                const int nsg = std::min(4, n_tiles);
+                ثابت صحیح n_tiles = (دلائل_2.n_embd + 31)/32;
+                ثابت صحیح nsg = std::min(4, n_tiles);
                 ggml_metal_encoder_dispatch_threadgroups(
-                        enc, (n_tiles + nsg - 1)/nsg, args.n_tokens, 1, 32, nsg, 1);
-            } break;
-        case GGML_OP_DSV4_HC_POST:
+                        enc, (n_tiles + nsg - 1)/nsg, دلائل_2.n_علامات, 1, 32, nsg, 1);
+            } توڑو;
+        حالت GGML_OP_DSV4_HC_POST:
             {
-                const ggml_tensor * x        = op->src[0];
-                const ggml_tensor * residual = op->src[1];
-                const ggml_tensor * post     = op->src[2];
-                const ggml_tensor * comb     = op->src[3];
+                ثابت ggml_tensor * x        = op->src[0];
+                ثابت ggml_tensor * residual = op->src[1];
+                ثابت ggml_tensor * post     = op->src[2];
+                ثابت ggml_tensor * comb     = op->src[3];
 
                 GGML_ASSERT(x->type        == GGML_TYPE_F32);
                 GGML_ASSERT(residual->type == GGML_TYPE_F32);
@@ -1518,7 +1518,7 @@ int ggml_metal_op_dsv4_hc(ggml_metal_op_t ctx, int idx) {
                 GGML_ASSERT(op->type       == GGML_TYPE_F32);
                 GGML_ASSERT(residual->ne[1] == 4);
 
-                ggml_metal_kargs_dsv4_hc_post args = {
+                ggml_metal_kargs_dsv4_hc_post دلائل_2 = {
                     /*.n_embd   =*/ (int32_t) x->ne[0],
                     /*.n_tokens =*/ (int32_t) x->ne[1],
                     /*.nb_x0    =*/ x->nb[0],
@@ -1536,37 +1536,37 @@ int ggml_metal_op_dsv4_hc(ggml_metal_op_t ctx, int idx) {
                     /*.nb_d2    =*/ op->nb[2],
                 };
 
-                ggml_metal_encoder_set_bytes (enc, &args, sizeof(args), 0);
-                ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(x),        1);
-                ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(residual), 2);
-                ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(post),     3);
-                if (comb) {
-                    ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(comb), 4);
-                    ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op),   5);
-                } else {
-                    ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op),   4);
+                ggml_metal_encoder_سیٹ_بائٹیں (enc, &دلائل_2, حجم(دلائل_2), 0);
+                ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(x),        1);
+                ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(residual), 2);
+                ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(post),     3);
+                اگر (comb) {
+                    ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(comb), 4);
+                    ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(op),   5);
+                } ورنہ {
+                    ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(op),   4);
                 }
 
-                const int n_tiles = (args.n_embd + 31)/32;
-                const int nsg = std::min(4, n_tiles);
+                ثابت صحیح n_tiles = (دلائل_2.n_embd + 31)/32;
+                ثابت صحیح nsg = std::min(4, n_tiles);
                 ggml_metal_encoder_dispatch_threadgroups(
-                        enc, (n_tiles + nsg - 1)/nsg, args.n_tokens, 1, 32, nsg, 1);
-            } break;
-        default:
+                        enc, (n_tiles + nsg - 1)/nsg, دلائل_2.n_علامات, 1, 32, nsg, 1);
+            } توڑو;
+        طےشدہ:
             GGML_ABORT("fatal error");
     }
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_soft_max(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_soft_max(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
-    if (ctx->use_fusion()) {
-        int n = 1;
-        const ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n);
-        if (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_TOPK_MOE) {
-            return ggml_metal_op_topk_moe(ctx, idx);
+    اگر (ctx->use_fusion()) {
+        صحیح n = 1;
+        ثابت ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_بھرا, &n);
+        اگر (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_TOPK_MOE) {
+            واپس ggml_metal_op_topk_moe(ctx, idx);
         }
     }
 
@@ -1582,21 +1582,21 @@ int ggml_metal_op_soft_max(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    float scale;
-    float max_bias;
+    اعشاری scale;
+    اعشاری max_bias;
 
-    memcpy(&scale,    ((const int32_t *) op->op_params) + 0, sizeof(scale));
-    memcpy(&max_bias, ((const int32_t *) op->op_params) + 1, sizeof(max_bias));
+    حافظہ_نقل(&scale,    ((ثابت int32_t *) op->op_params) + 0, حجم(scale));
+    حافظہ_نقل(&max_bias, ((ثابت int32_t *) op->op_params) + 1, حجم(max_bias));
 
-    const uint32_t n_head      = op->src[0]->ne[2];
-    const  int32_t n_head_log2 = 1u << (uint32_t) floorf(log2f((float) n_head));
+    ثابت uint32_t n_سر      = op->src[0]->ne[2];
+    ثابت  int32_t n_سر_log2 = 1u << (uint32_t) floorf(log2f((اعشاری) n_سر));
 
-    const float m0 = powf(2.0f, -(max_bias       ) / n_head_log2);
-    const float m1 = powf(2.0f, -(max_bias / 2.0f) / n_head_log2);
+    ثابت اعشاری m0 = powf(2.0f, -(max_bias       ) / n_سر_log2);
+    ثابت اعشاری m1 = powf(2.0f, -(max_bias / 2.0f) / n_سر_log2);
 
     // softmax
 
-    ggml_metal_kargs_soft_max args = {
+    ggml_metal_kargs_soft_max دلائل_2 = {
         /*.ne00        =*/ ne00,
         /*.ne01        =*/ ne01,
         /*.ne02        =*/ ne02,
@@ -1616,49 +1616,49 @@ int ggml_metal_op_soft_max(ggml_metal_op_t ctx, int idx) {
         /*.max_bias    =*/ max_bias,
         /*.m0          =*/ m0,
         /*.m1          =*/ m1,
-        /*.n_head_log2 =*/ n_head_log2,
+        /*.n_head_log2 =*/ n_سر_log2,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_soft_max(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_soft_max(lib, op);
 
-    int nth = 32; // SIMD width
+    صحیح nth = 32; // SIMD width
 
-    if (ne00%4 == 0) {
-        while (nth < ne00/4 && nth*ne01*ne02*ne03 < 256) {
+    اگر (ne00%4 == 0) {
+        جب (nth < ne00/4 && nth*ne01*ne02*ne03 < 256) {
             nth *= 2;
         }
-    } else {
-        while (nth < ne00 && nth*ne01*ne02*ne03 < 256) {
+    } ورنہ {
+        جب (nth < ne00 && nth*ne01*ne02*ne03 < 256) {
             nth *= 2;
         }
     }
 
-    const size_t smem = pipeline.smem;
+    ثابت size_t smem = pipeline.smem;
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes(enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    if (op->src[1]) {
-        ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    } else {
-        ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[0]), 2);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں(enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    اگر (op->src[1]) {
+        ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(op->src[1]), 2);
+    } ورنہ {
+        ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(op->src[0]), 2);
     }
-    if (op->src[2]) {
-        ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[2]), 3);
-    } else {
-        ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[0]), 3);
+    اگر (op->src[2]) {
+        ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(op->src[2]), 3);
+    } ورنہ {
+        ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(op->src[0]), 3);
     }
-    ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op), 4);
+    ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(op), 4);
 
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+    ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem, 0);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_ssm_conv(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_ssm_conv(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -1670,21 +1670,21 @@ int ggml_metal_op_ssm_conv(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    int n_fuse = 1;
-    bool use_silu = false;
+    صحیح n_fuse = 1;
+    منطقی use_silu = جھوٹ;
 
-    if (ctx->use_fusion()) {
-        int n = 1;
-        const ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n);
-        if (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_SSM_CONV_SILU) {
+    اگر (ctx->use_fusion()) {
+        صحیح n = 1;
+        ثابت ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_بھرا, &n);
+        اگر (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_SSM_CONV_SILU) {
             n_fuse = n;
-            use_silu = true;
+            use_silu = سچ;
 
-            ctx->count_fusions(fusion);
+            ctx->گنتی_fusions(fusion);
         }
     }
 
-    ggml_metal_kargs_ssm_conv args = {
+    ggml_metal_kargs_ssm_conv دلائل_2 = {
         /*.ne00 =*/ ne00,
         /*.ne01 =*/ ne01,
         /*.ne02 =*/ ne02,
@@ -1702,59 +1702,59 @@ int ggml_metal_op_ssm_conv(ggml_metal_op_t ctx, int idx) {
         /*.nb2  =*/ nb2,
     };
 
-    const ggml_metal_buffer_id bid_dst = ggml_metal_get_buffer_id(n_fuse > 1 ? ctx->node(idx + n_fuse - 1) : op);
+    ثابت ggml_metal_بفر_id bid_dst = ggml_metal_get_بفر_id(n_fuse > 1 ? ctx->گرہ(idx + n_fuse - 1) : op);
 
     // Use batched kernel for prefill (ne1 > 1) to reduce threadgroup dispatch overhead
-    const bool use_batched = (ne1 > 1);
+    ثابت منطقی use_batched = (ne1 > 1);
 
-    if (use_batched) {
+    اگر (use_batched) {
         // Determine the smallest power of 2 that's >= ne1, but <= 256
-        int BATCH_SIZE;
-        if      (ne1 > 128) BATCH_SIZE = 256;
-        else if (ne1 > 64 ) BATCH_SIZE = 128;
-        else if (ne1 > 32 ) BATCH_SIZE = 64;
-        else if (ne1 > 16 ) BATCH_SIZE = 32;
-        else if (ne1 > 8  ) BATCH_SIZE = 16;
-        else if (ne1 > 4  ) BATCH_SIZE = 8;
-        else                BATCH_SIZE = 2;
+        صحیح BATCH_سائز;
+        اگر      (ne1 > 128) BATCH_سائز = 256;
+        ورنہ اگر (ne1 > 64 ) BATCH_سائز = 128;
+        ورنہ اگر (ne1 > 32 ) BATCH_سائز = 64;
+        ورنہ اگر (ne1 > 16 ) BATCH_سائز = 32;
+        ورنہ اگر (ne1 > 8  ) BATCH_سائز = 16;
+        ورنہ اگر (ne1 > 4  ) BATCH_سائز = 8;
+        ورنہ                BATCH_سائز = 2;
 
-        auto pipeline = ggml_metal_library_get_pipeline_ssm_conv_batched(lib, op, BATCH_SIZE, (int32_t) ne10, use_silu);
+        خودکار pipeline = ggml_metal_library_get_pipeline_ssm_conv_batched(lib, op, BATCH_سائز, (int32_t) ne10, use_silu);
 
-        ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes(enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-        ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-        ggml_metal_encoder_set_buffer(enc, bid_dst, 3);
+        ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+        ggml_metal_encoder_سیٹ_بائٹیں(enc, &دلائل_2, حجم(دلائل_2), 0);
+        ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+        ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(op->src[1]), 2);
+        ggml_metal_encoder_سیٹ_بفر(enc, bid_dst, 3);
 
         // Dispatch: ne01 rows, ceil(ne1/BATCH_SIZE) token batches, ne02 sequences
         // Each threadgroup has BATCH_SIZE threads, each handling one token
-        const int n_token_batches = (ne1 + BATCH_SIZE - 1) / BATCH_SIZE;
-        ggml_metal_encoder_dispatch_threadgroups(enc, ne01, n_token_batches, ne02, BATCH_SIZE, 1, 1);
-    } else {
-        auto pipeline = ggml_metal_library_get_pipeline_ssm_conv(lib, op, (int32_t) ne10, use_silu);
+        ثابت صحیح n_token_batches = (ne1 + BATCH_سائز - 1) / BATCH_سائز;
+        ggml_metal_encoder_dispatch_threadgroups(enc, ne01, n_token_batches, ne02, BATCH_سائز, 1, 1);
+    } ورنہ {
+        خودکار pipeline = ggml_metal_library_get_pipeline_ssm_conv(lib, op, (int32_t) ne10, use_silu);
 
-        ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes(enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-        ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-        ggml_metal_encoder_set_buffer(enc, bid_dst, 3);
+        ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+        ggml_metal_encoder_سیٹ_بائٹیں(enc, &دلائل_2, حجم(دلائل_2), 0);
+        ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+        ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(op->src[1]), 2);
+        ggml_metal_encoder_سیٹ_بفر(enc, bid_dst, 3);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne1, ne02, 1, 1, 1);
     }
 
-    if (n_fuse > 1 && ggml_metal_fusion_info_debug(ctx->finfo) > 1) {
+    اگر (n_fuse > 1 && ggml_metal_fusion_info_debug(ctx->finfo) > 1) {
         GGML_LOG_DEBUG("%s: fuse: SSM_CONV + UNARY\n", __func__);
     }
 
-    return n_fuse;
+    واپس n_fuse;
 }
 
-int ggml_metal_op_ssm_scan(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_ssm_جائزہ(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
-    const ggml_metal_device_props * props_dev = ggml_metal_device_get_props(ctx->dev);
+    ثابت ggml_metal_device_props * props_dev = ggml_metal_device_get_props(ctx->dev);
 
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
     GGML_TENSOR_LOCALS(uint64_t, nb0, op->src[0], nb);
@@ -1773,38 +1773,38 @@ int ggml_metal_op_ssm_scan(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    const ggml_tensor * src3 = op->src[3];
-    const ggml_tensor * src4 = op->src[4];
-    const ggml_tensor * src5 = op->src[5];
-    const ggml_tensor * src6 = op->src[6];
+    ثابت ggml_tensor * src3 = op->src[3];
+    ثابت ggml_tensor * src4 = op->src[4];
+    ثابت ggml_tensor * src5 = op->src[5];
+    ثابت ggml_tensor * src6 = op->src[6];
 
     GGML_ASSERT(src3);
     GGML_ASSERT(src4);
     GGML_ASSERT(src5);
     GGML_ASSERT(src6);
 
-    const int64_t d_state      = ne00;
-    const int64_t d_inner      = ne01;
-    const int64_t n_head       = ne02;
-    const int64_t n_group      = ne41;
-    const int64_t n_seq_tokens = ne12;
-    const int64_t n_seqs       = ne13;
-    const int64_t K            = ggml_get_op_params_i32(op, 0);
+    ثابت int64_t d_state      = ne00;
+    ثابت int64_t d_inner      = ne01;
+    ثابت int64_t n_سر       = ne02;
+    ثابت int64_t n_گروہ      = ne41;
+    ثابت int64_t n_seq_علامات = ne12;
+    ثابت int64_t n_seqs       = ne13;
+    ثابت int64_t K            = ggml_get_op_params_i32(op, 0);
 
     GGML_ASSERT(K >= 1);
-    GGML_ASSERT(ggml_nelements(op->src[1]) + K*d_state*d_inner*n_head*n_seqs == ggml_nelements(op));
+    GGML_ASSERT(ggml_nelements(op->src[1]) + K*d_state*d_inner*n_سر*n_seqs == ggml_nelements(op));
 
-    ggml_metal_kargs_ssm_scan args = {
+    ggml_metal_kargs_ssm_جائزہ دلائل_2 = {
         /*.d_state      =*/ d_state,
         /*.d_inner      =*/ d_inner,
-        /*.n_head       =*/ n_head,
-        /*.n_group      =*/ n_group,
-        /*.n_seq_tokens =*/ n_seq_tokens,
-        /*.n_seq_tokens_total =*/ n_seq_tokens,
+        /*.n_head       =*/ n_سر,
+        /*.n_group      =*/ n_گروہ,
+        /*.n_seq_tokens =*/ n_seq_علامات,
+        /*.n_seq_tokens_total =*/ n_seq_علامات,
         /*.token_offset =*/ 0,
         /*.n_seqs       =*/ n_seqs,
         /*.K            =*/ K,
-        /*.s_off        =*/ ggml_nelements(op->src[1]) * sizeof(float),
+        /*.s_off        =*/ ggml_nelements(op->src[1]) * حجم(اعشاری),
         /*.nb00         =*/ nb00,
         /*.nb01         =*/ nb01,
         /*.nb02         =*/ nb02,
@@ -1831,59 +1831,59 @@ int ggml_metal_op_ssm_scan(ggml_metal_op_t ctx, int idx) {
         /*.nb0          =*/ nb0,
     };
 
-    constexpr int64_t CHUNK = OP_SSM_SCAN_SSD_CS;
+    constexpr int64_t CHUNK = OP_SSM_جائزہ_SSD_CS;
 
-    const int64_t snap_reserve = K > 1 ? K : 0; // tokens reserved for sequential kernel rollback snapshots
-    const int64_t mma_tokens = ((n_seq_tokens - snap_reserve) / CHUNK) * CHUNK; // largest multiple of CHUNK that leaves snap_reserve for the tail
-    const bool use_mma =
-        mma_tokens > 0 &&
+    ثابت int64_t snap_reserve = K > 1 ? K : 0; // tokens reserved for sequential kernel rollback snapshots
+    ثابت int64_t mma_علامات = ((n_seq_علامات - snap_reserve) / CHUNK) * CHUNK; // largest multiple of CHUNK that leaves snap_reserve for the tail
+    ثابت منطقی use_mma =
+        mma_علامات > 0 &&
         ne30 == 1 && // checks that A tensor is set to scalar decay per head (A shape {1, n_head})
         props_dev->has_simdgroup_mm && // hardware check for M1 or newer
         d_state % 8 == 0 && // d_state must be multiple of 8 to align with simdgroup_float 8x8 tiles
-        d_inner == OP_SSM_SCAN_SSD_HD; // mma kernel is specialized for the Mamba-2 head dim; this checks it
+        d_inner == OP_SSM_جائزہ_SSD_HD; // mma kernel is specialized for the Mamba-2 head dim; this checks it
 
-    const auto dispatch = [&](ggml_metal_pipeline_with_params pipeline, int64_t nth, int64_t n_tg_x) {
-        GGML_ASSERT(nth <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
-        GGML_ASSERT(pipeline.smem <= props_dev->max_theadgroup_memory_size);
+    ثابت خودکار dispatch = [&](ggml_metal_pipeline_with_params pipeline, int64_t nth, int64_t n_tg_x) {
+        GGML_ASSERT(nth <= ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline));
+        GGML_ASSERT(pipeline.smem <= props_dev->max_theadgroup_حافظہ_سائز);
 
-        ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[2]), 3);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[3]), 4);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[4]), 5);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[5]), 6);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[6]), 7);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         8);
-        ggml_metal_encoder_set_threadgroup_memory_size(enc, pipeline.smem, 0);
-        ggml_metal_encoder_dispatch_threadgroups(enc, n_tg_x, n_head, n_seqs, nth, 1, 1);
+        ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+        ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+        ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+        ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[1]), 2);
+        ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[2]), 3);
+        ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[3]), 4);
+        ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[4]), 5);
+        ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[5]), 6);
+        ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[6]), 7);
+        ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         8);
+        ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, pipeline.smem, 0);
+        ggml_metal_encoder_dispatch_threadgroups(enc, n_tg_x, n_سر, n_seqs, nth, 1, 1);
     };
 
-    if (!use_mma) {
-        dispatch(ggml_metal_library_get_pipeline_ssm_scan(lib, op, false), d_state, d_inner);
-        return 1;
+    اگر (!use_mma) {
+        dispatch(ggml_metal_library_get_pipeline_ssm_جائزہ(lib, op, جھوٹ), d_state, d_inner);
+        واپس 1;
     }
 
-    args.n_seq_tokens = mma_tokens;
+    دلائل_2.n_seq_علامات = mma_علامات;
     dispatch(
-        ggml_metal_library_get_pipeline_ssm_scan_ssd_mma(lib, op),
-        OP_SSM_SCAN_SSD_NSG*32,
+        ggml_metal_library_get_pipeline_ssm_جائزہ_ssd_mma(lib, op),
+        OP_SSM_جائزہ_SSD_NSG*32,
         1);
 
-    if (mma_tokens < n_seq_tokens) {
+    اگر (mma_علامات < n_seq_علامات) {
         ggml_metal_op_concurrency_reset(ctx);
 
-        args.n_seq_tokens = n_seq_tokens - mma_tokens;
-        args.token_offset = mma_tokens;
-        dispatch(ggml_metal_library_get_pipeline_ssm_scan(lib, op, true), d_state, d_inner);
+        دلائل_2.n_seq_علامات = n_seq_علامات - mma_علامات;
+        دلائل_2.token_انحراف = mma_علامات;
+        dispatch(ggml_metal_library_get_pipeline_ssm_جائزہ(lib, op, سچ), d_state, d_inner);
     }
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_rwkv(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_rwkv(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -1893,44 +1893,44 @@ int ggml_metal_op_rwkv(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    const int64_t B = op->op == GGML_OP_RWKV_WKV6 ? op->src[5]->ne[1] : op->src[6]->ne[1];
-    const int64_t T = op->src[0]->ne[2];
-    const int64_t C = op->ne[0];
-    const int64_t H = op->src[0]->ne[1];
+    ثابت int64_t B = op->op == GGML_OP_RWKV_WKV6 ? op->src[5]->ne[1] : op->src[6]->ne[1];
+    ثابت int64_t T = op->src[0]->ne[2];
+    ثابت int64_t C = op->ne[0];
+    ثابت int64_t H = op->src[0]->ne[1];
 
-    auto pipeline = ggml_metal_library_get_pipeline_rwkv(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_rwkv(lib, op);
 
-    int ida = 0;
+    صحیح ida = 0;
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), ida++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), ida++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[2]), ida++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[3]), ida++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[4]), ida++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[5]), ida++);
-    if (op->op == GGML_OP_RWKV_WKV7) {
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[6]), ida++);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), ida++);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[1]), ida++);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[2]), ida++);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[3]), ida++);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[4]), ida++);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[5]), ida++);
+    اگر (op->op == GGML_OP_RWKV_WKV7) {
+        ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[6]), ida++);
     }
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         ida++);
-    ggml_metal_encoder_set_bytes   (enc, (void *) &B, sizeof(B), ida++);
-    ggml_metal_encoder_set_bytes   (enc, (void *) &T, sizeof(T), ida++);
-    ggml_metal_encoder_set_bytes   (enc, (void *) &C, sizeof(C), ida++);
-    ggml_metal_encoder_set_bytes   (enc, (void *) &H, sizeof(H), ida++);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         ida++);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, (خالی *) &B, حجم(B), ida++);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, (خالی *) &T, حجم(T), ida++);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, (خالی *) &C, حجم(C), ida++);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, (خالی *) &H, حجم(H), ida++);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, B * H, 1, 1, C/H, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_gated_delta_net(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_gated_delta_net(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    const bool use_fusion = ctx->use_fusion();
-    const int  debug_fusion = ggml_metal_fusion_info_debug(ctx->finfo);
+    ثابت منطقی use_fusion = ctx->use_fusion();
+    ثابت صحیح  debug_fusion = ggml_metal_fusion_info_debug(ctx->finfo);
 
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
     GGML_TENSOR_LOCALS(uint64_t, nb0, op->src[0], nb);
@@ -1941,36 +1941,36 @@ int ggml_metal_op_gated_delta_net(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    auto pipeline = ggml_metal_library_get_pipeline_gated_delta_net(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_gated_delta_net(lib, op);
 
     // when fused with the trailing cache cpy, the snapshots are written straight into the
     // recurrent cache and the cpy is skipped (see GGML_METAL_FUSION_GDN_CACHE)
-    ggml_metal_buffer_id bid_out = ggml_metal_get_buffer_id(op);
-    uint64_t nb_out = 0;
-    int n_fuse = 1;
+    ggml_metal_بفر_id bid_برآمد = ggml_metal_get_بفر_id(op);
+    uint64_t nb_برآمد = 0;
+    صحیح n_fuse = 1;
 
-    if (use_fusion) {
-        int n = 1;
-        const ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n);
+    اگر (use_fusion) {
+        صحیح n = 1;
+        ثابت ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_بھرا, &n);
 
-        if (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_GDN_CACHE) {
-            const ggml_tensor * dst_cache = ctx->node(idx + 1)->src[1]; // cache view
+        اگر (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_GDN_CACHE) {
+            ثابت ggml_tensor * dst_cache = ctx->گرہ(idx + 1)->src[1]; // cache view
 
-            bid_out = ggml_metal_get_buffer_id(dst_cache);
-            nb_out  = dst_cache->nb[2]/sizeof(float);
+            bid_برآمد = ggml_metal_get_بفر_id(dst_cache);
+            nb_برآمد  = dst_cache->nb[2]/حجم(اعشاری);
             n_fuse = 2;
 
-            ctx->count_fusions(fusion);
+            ctx->گنتی_fusions(fusion);
 
-            if (debug_fusion > 1) {
+            اگر (debug_fusion > 1) {
                 GGML_LOG_DEBUG("%s: fuse: GATED_DELTA_NET + CPY\n", __func__);
             }
         }
     }
 
-    int ida = 0;
+    صحیح ida = 0;
 
-    ggml_metal_kargs_gated_delta_net args = {
+    ggml_metal_kargs_gated_delta_net دلائل_2 = {
         /*.ne00 =*/ ne00,
         /*.ne01 =*/ ne01,
         /*.ne02 =*/ ne02,
@@ -1995,9 +1995,9 @@ int ggml_metal_op_gated_delta_net(ggml_metal_op_t ctx, int idx) {
         /*.nb21 =*/ nb21,
         /*.nb22 =*/ nb22,
         /*.nb23 =*/ nb23,
-        /*.ns02 =*/ (int32_t) (nb02/sizeof(float)),
-        /*.ns12 =*/ (int32_t) (nb12/sizeof(float)),
-        /*.ns22 =*/ (int32_t) (nb22/sizeof(float)),
+        /*.ns02 =*/ (int32_t) (nb02/حجم(اعشاری)),
+        /*.ns12 =*/ (int32_t) (nb12/حجم(اعشاری)),
+        /*.ns22 =*/ (int32_t) (nb22/حجم(اعشاری)),
         /*.ne0  =*/ ne0,
         /*.ne1  =*/ ne1,
         /*.ne2  =*/ ne2,
@@ -2006,29 +2006,29 @@ int ggml_metal_op_gated_delta_net(ggml_metal_op_t ctx, int idx) {
         /*.nb1  =*/ nb1,
         /*.nb2  =*/ nb2,
         /*.nb3  =*/ nb3,
-        /*.nb_out =*/ nb_out,
+        /*.nb_out =*/ nb_برآمد,
     };
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args),                  ida++); // args
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), ida++); // q
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), ida++); // k
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[2]), ida++); // v
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[3]), ida++); // gate
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[4]), ida++); // beta
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[5]), ida++); // state
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         ida++); // dst (attn)
-    ggml_metal_encoder_set_buffer  (enc, bid_out,                              ida++); // state_out
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2),                  ida++); //دلائل
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), ida++); // q
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[1]), ida++); // k
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[2]), ida++); // v
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[3]), ida++); // gate
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[4]), ida++); // beta
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[5]), ida++); // state
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         ida++); // dst (attn)
+    ggml_metal_encoder_سیٹ_بفر  (enc, bid_برآمد,                              ida++); // state_out
 
-    const int nsg = pipeline.nsg;
+    ثابت صحیح nsg = pipeline.nsg;
 
     ggml_metal_encoder_dispatch_threadgroups(enc, op->src[2]->ne[0]/nsg, op->src[2]->ne[1], op->src[2]->ne[3], 32, nsg, 1);
 
-    return n_fuse;
+    واپس n_fuse;
 }
 
-int ggml_metal_op_solve_tri(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_solve_tri(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -2040,7 +2040,7 @@ int ggml_metal_op_solve_tri(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    ggml_metal_kargs_solve_tri args = {
+    ggml_metal_kargs_solve_tri دلائل_2 = {
         /*.ne00 =*/ ne00,
         /*.ne01 =*/ ne01,
         /*.ne02 =*/ ne02,
@@ -2067,25 +2067,25 @@ int ggml_metal_op_solve_tri(ggml_metal_op_t ctx, int idx) {
         /*.nb3  =*/ nb3,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_solve_tri(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_solve_tri(lib, op);
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[1]), 2);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         3);
 
-    const int nsg = pipeline.nsg;
+    ثابت صحیح nsg = pipeline.nsg;
 
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, pipeline.smem, 0);
+    ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, pipeline.smem, 0);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, (ne10 + nsg - 1)/nsg, ne02, ne03, 32, nsg, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_set(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_سیٹ(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -2097,26 +2097,26 @@ int ggml_metal_op_set(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    ggml_metal_buffer_id bid_src0 = ggml_metal_get_buffer_id(op->src[0]);
-    ggml_metal_buffer_id bid_src1 = ggml_metal_get_buffer_id(op->src[1]);
-    ggml_metal_buffer_id bid_dst  = ggml_metal_get_buffer_id(op);
+    ggml_metal_بفر_id bid_src0 = ggml_metal_get_بفر_id(op->src[0]);
+    ggml_metal_بفر_id bid_src1 = ggml_metal_get_بفر_id(op->src[1]);
+    ggml_metal_بفر_id bid_dst  = ggml_metal_get_بفر_id(op);
 
-    const size_t pnb1 = ((const int32_t *) op->op_params)[0];
-    const size_t pnb2 = ((const int32_t *) op->op_params)[1];
-    const size_t pnb3 = ((const int32_t *) op->op_params)[2];
-    const size_t offs = ((const int32_t *) op->op_params)[3];
+    ثابت size_t pnb1 = ((ثابت int32_t *) op->op_params)[0];
+    ثابت size_t pnb2 = ((ثابت int32_t *) op->op_params)[1];
+    ثابت size_t pnb3 = ((ثابت int32_t *) op->op_params)[2];
+    ثابت size_t offs = ((ثابت int32_t *) op->op_params)[3];
 
-    const bool inplace = (bool) ((const int32_t *) op->op_params)[4];
+    ثابت منطقی inplace = (منطقی) ((ثابت int32_t *) op->op_params)[4];
 
-    if (!inplace) {
+    اگر (!inplace) {
         // run a separate kernel to cpy src->dst
         // not sure how to avoid this
         // TODO: make a simpler cpy_bytes kernel
 
         //const id<MTLComputePipelineState> pipeline = ctx->pipelines[GGML_METAL_PIPELINE_TYPE_CPY_F32_F32].obj;
-        auto pipeline = ggml_metal_library_get_pipeline_cpy(lib, op->src[0]->type, op->type);
+        خودکار pipeline = ggml_metal_library_get_pipeline_cpy(lib, op->src[0]->type, op->type);
 
-        ggml_metal_kargs_cpy args = {
+        ggml_metal_kargs_cpy دلائل_2 = {
             /*.nk0  =*/ ne00,
             /*.ne00 =*/ ne00,
             /*.ne01 =*/ ne01,
@@ -2136,49 +2136,49 @@ int ggml_metal_op_set(ggml_metal_op_t ctx, int idx) {
             /*.nb3  =*/ nb3,
         };
 
-        ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
-        ggml_metal_encoder_set_buffer  (enc, bid_dst,  2);
+        ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+        ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_src0, 1);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_dst,  2);
 
-        const int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne00);
+        ثابت صحیح nth = std::min(ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline), ne00);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
 
         ggml_metal_op_concurrency_reset(ctx);
     }
 
-    auto pipeline = ggml_metal_library_get_pipeline_cpy(lib, op->src[1]->type, op->type);
+    خودکار pipeline = ggml_metal_library_get_pipeline_cpy(lib, op->src[1]->type, op->type);
 
-    GGML_ASSERT(ne10 % ggml_blck_size(op->src[1]->type) == 0);
+    GGML_ASSERT(ne10 % ggml_blck_سائز(op->src[1]->type) == 0);
 
     int64_t nk0 = ne10;
-    if (ggml_is_quantized(op->src[1]->type)) {
+    اگر (ggml_is_quantized(op->src[1]->type)) {
         nk0 = ne10/16;
-    } else if (ggml_is_quantized(op->type)) {
-        nk0 = ne10/ggml_blck_size(op->type);
+    } ورنہ اگر (ggml_is_quantized(op->type)) {
+        nk0 = ne10/ggml_blck_سائز(op->type);
     }
 
-    int nth = std::min<int>(nk0*ne11, 256);
+    صحیح nth = std::min<صحیح>(nk0*ne11, 256);
 
     // when rows are small, we can batch them together in a single threadgroup
-    int nrptg = 1;
+    صحیح nrptg = 1;
 
     // TODO: relax this constraint in the future
-    if (ggml_blck_size(op->src[1]->type) == 1 && ggml_blck_size(op->type) == 1) {
-        if (nth > nk0) {
+    اگر (ggml_blck_سائز(op->src[1]->type) == 1 && ggml_blck_سائز(op->type) == 1) {
+        اگر (nth > nk0) {
             nrptg = (nth + nk0 - 1)/nk0;
             nth   = nk0;
 
-            if (nrptg*nth > 256) {
+            اگر (nrptg*nth > 256) {
                 nrptg--;
             }
         }
     }
 
-    nth = std::min<int>(nth, nk0);
+    nth = std::min<صحیح>(nth, nk0);
 
-    ggml_metal_kargs_cpy args = {
+    ggml_metal_kargs_cpy دلائل_2 = {
         /*.nk0  =*/ nk0,
         /*.ne00 =*/ ne10,
         /*.ne01 =*/ ne11,
@@ -2192,28 +2192,28 @@ int ggml_metal_op_set(ggml_metal_op_t ctx, int idx) {
         /*.ne1  =*/ ne11,
         /*.ne2  =*/ ne12,
         /*.ne3  =*/ ne13,
-        /*.nb0  =*/ ggml_element_size(op),
+        /*.nb0  =*/ ggml_element_سائز(op),
         /*.nb1  =*/ pnb1,
         /*.nb2  =*/ pnb2,
         /*.nb3  =*/ pnb3,
     };
 
-    const int nw0 = nrptg == 1 ? (nk0 + nth - 1)/nth : 1;
+    ثابت صحیح nw0 = nrptg == 1 ? (nk0 + nth - 1)/nth : 1;
 
     bid_dst.offs += offs;
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, bid_src1, 1);
-    ggml_metal_encoder_set_buffer  (enc, bid_dst,  2);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, bid_src1, 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, bid_dst,  2);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, nw0*(ne11 + nrptg - 1)/nrptg, ne12, ne13, nth, nrptg, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_cpy(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_cpy(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -2223,37 +2223,37 @@ int ggml_metal_op_cpy(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    auto pipeline = ggml_metal_library_get_pipeline_cpy(lib, op->src[0]->type, op->type);
+    خودکار pipeline = ggml_metal_library_get_pipeline_cpy(lib, op->src[0]->type, op->type);
 
-    GGML_ASSERT(ne00 % ggml_blck_size(op->src[0]->type) == 0);
+    GGML_ASSERT(ne00 % ggml_blck_سائز(op->src[0]->type) == 0);
 
     int64_t nk0 = ne00;
-    if (ggml_is_quantized(op->src[0]->type)) {
+    اگر (ggml_is_quantized(op->src[0]->type)) {
         nk0 = ne00/16;
-    } else if (ggml_is_quantized(op->type)) {
-        nk0 = ne00/ggml_blck_size(op->type);
+    } ورنہ اگر (ggml_is_quantized(op->type)) {
+        nk0 = ne00/ggml_blck_سائز(op->type);
     }
 
-    int nth = std::min<int>(nk0*ne01, 256);
+    صحیح nth = std::min<صحیح>(nk0*ne01, 256);
 
     // when rows are small, we can batch them together in a single threadgroup
-    int nrptg = 1;
+    صحیح nrptg = 1;
 
     // TODO: relax this constraint in the future
-    if (ggml_blck_size(op->src[0]->type) == 1 && ggml_blck_size(op->type) == 1) {
-        if (nth > nk0) {
+    اگر (ggml_blck_سائز(op->src[0]->type) == 1 && ggml_blck_سائز(op->type) == 1) {
+        اگر (nth > nk0) {
             nrptg = (nth + nk0 - 1)/nk0;
             nth   = nk0;
 
-            if (nrptg*nth > 256) {
+            اگر (nrptg*nth > 256) {
                 nrptg--;
             }
         }
     }
 
-    nth = std::min<int>(nth, nk0);
+    nth = std::min<صحیح>(nth, nk0);
 
-    ggml_metal_kargs_cpy args = {
+    ggml_metal_kargs_cpy دلائل_2 = {
         /*.nk0  =*/ nk0,
         /*.ne00 =*/ ne00,
         /*.ne01 =*/ ne01,
@@ -2273,20 +2273,20 @@ int ggml_metal_op_cpy(ggml_metal_op_t ctx, int idx) {
         /*.nb3  =*/ nb3,
     };
 
-    const int nw0 = nrptg == 1 ? (nk0 + nth - 1)/nth : 1;
+    ثابت صحیح nw0 = nrptg == 1 ? (nk0 + nth - 1)/nth : 1;
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         2);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, nw0*(ne01 + nrptg - 1)/nrptg, ne02, ne03, nth, nrptg, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_pool_1d(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_pool_1d(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -2296,19 +2296,19 @@ int ggml_metal_op_pool_1d(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    const int32_t * opts = op->op_params;
+    ثابت int32_t * opts = op->op_params;
     ggml_op_pool op_pool = (ggml_op_pool) opts[0];
 
-    const int32_t k0 = opts[1];
-    const int32_t s0 = opts[2];
-    const int32_t p0 = opts[3];
+    ثابت int32_t k0 = opts[1];
+    ثابت int32_t s0 = opts[2];
+    ثابت int32_t p0 = opts[3];
 
-    const int64_t IW = op->src[0]->ne[0];
-    const int64_t OW = op->ne[0];
+    ثابت int64_t IW = op->src[0]->ne[0];
+    ثابت int64_t OW = op->ne[0];
 
-    const int64_t np = ggml_nelements(op);
+    ثابت int64_t np = ggml_nelements(op);
 
-    ggml_metal_kargs_pool_1d args_pool_1d = {
+    ggml_metal_kargs_pool_1d دلائل_pool_1d = {
         /* .k0 = */  k0,
         /* .s0 = */  s0,
         /* .p0 = */  p0,
@@ -2317,70 +2317,70 @@ int ggml_metal_op_pool_1d(ggml_metal_op_t ctx, int idx) {
         /* .np = */  np
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_pool_1d(lib, op, op_pool);
+    خودکار pipeline = ggml_metal_library_get_pipeline_pool_1d(lib, op, op_pool);
 
-    const int nth = std::min(256, std::max(1, k0));
-    const int ntg = (int) np;
+    ثابت صحیح nth = std::min(256, std::max(1, k0));
+    ثابت صحیح ntg = (صحیح) np;
 
-    const size_t smem = op_pool == GGML_OP_POOL_AVG ?
-        2*32*sizeof(float) :
-        32*sizeof(float);
+    ثابت size_t smem = op_pool == GGML_OP_POOL_AVG ?
+        2*32*حجم(اعشاری) :
+        32*حجم(اعشاری);
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args_pool_1d, sizeof(args_pool_1d),  0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_pool_1d, حجم(دلائل_pool_1d),  0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         2);
+    ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem, 0);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ntg, 1, 1, nth, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_fwht(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_fwht(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
     ggml_tensor * src1 = op->src[1];
 
-    const int64_t n = src1->ne[0];
-    const int64_t nrows = ggml_nrows(src1);
+    ثابت int64_t n = src1->ne[0];
+    ثابت int64_t nrows = ggml_nrows(src1);
 
-    ggml_metal_kargs_fwht args = {
+    ggml_metal_kargs_fwht دلائل_2 = {
         /*.nrows = */ (int32_t) nrows,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_fwht(lib, n, src1->type);
+    خودکار pipeline = ggml_metal_library_get_pipeline_fwht(lib, n, src1->type);
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes(enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(src1), 1);
-    ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op), 2);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں(enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(src1), 1);
+    ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(op), 2);
 
-    const int th_max = ggml_metal_pipeline_max_theads_per_threadgroup(pipeline);
-    const int simd_size = 32;
+    ثابت صحیح th_max = ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline);
+    ثابت صحیح simd_سائز = 32;
 
-    if (n >= GGML_METAL_FWHT_TG_MIN_N) {
+    اگر (n >= GGML_METAL_FWHT_TG_MIN_N) {
         GGML_ASSERT(th_max >= GGML_METAL_FWHT_TG_NT);
         ggml_metal_encoder_dispatch_threadgroups(enc, nrows, 1, 1, GGML_METAL_FWHT_TG_NT, 1, 1);
 
-        return 1;
+        واپس 1;
     }
 
-    int sg_per_tg = 2;
-    sg_per_tg = std::min(sg_per_tg, th_max/simd_size);
-    sg_per_tg = std::max(sg_per_tg, 1);
+    صحیح sg_فی_tg = 2;
+    sg_فی_tg = std::min(sg_فی_tg, th_max/simd_سائز);
+    sg_فی_tg = std::max(sg_فی_tg, 1);
 
-    const int64_t n_tg = (nrows + sg_per_tg - 1) / sg_per_tg;
-    ggml_metal_encoder_dispatch_threadgroups(enc, n_tg, 1, 1, 32*sg_per_tg, 1, 1);
+    ثابت int64_t n_tg = (nrows + sg_فی_tg - 1) / sg_فی_tg;
+    ggml_metal_encoder_dispatch_threadgroups(enc, n_tg, 1, 1, 32*sg_فی_tg, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_pool_2d(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_pool_2d(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -2390,27 +2390,27 @@ int ggml_metal_op_pool_2d(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    const int32_t * opts = op->op_params;
+    ثابت int32_t * opts = op->op_params;
     ggml_op_pool op_pool = (ggml_op_pool) opts[0];
 
-    const int32_t k0 = opts[1];
-    const int32_t k1 = opts[2];
-    const int32_t s0 = opts[3];
-    const int32_t s1 = opts[4];
-    const int32_t p0 = opts[5];
-    const int32_t p1 = opts[6];
+    ثابت int32_t k0 = opts[1];
+    ثابت int32_t k1 = opts[2];
+    ثابت int32_t s0 = opts[3];
+    ثابت int32_t s1 = opts[4];
+    ثابت int32_t p0 = opts[5];
+    ثابت int32_t p1 = opts[6];
 
-    const int64_t IH = op->src[0]->ne[1];
-    const int64_t IW = op->src[0]->ne[0];
+    ثابت int64_t IH = op->src[0]->ne[1];
+    ثابت int64_t IW = op->src[0]->ne[0];
 
-    const int64_t N  = op->ne[3];
-    const int64_t OC = op->ne[2];
-    const int64_t OH = op->ne[1];
-    const int64_t OW = op->ne[0];
+    ثابت int64_t N  = op->ne[3];
+    ثابت int64_t OC = op->ne[2];
+    ثابت int64_t OH = op->ne[1];
+    ثابت int64_t OW = op->ne[0];
 
-    const int64_t np = N * OC * OH * OW;
+    ثابت int64_t np = N * OC * OH * OW;
 
-    ggml_metal_kargs_pool_2d args_pool_2d = {
+    ggml_metal_kargs_pool_2d دلائل_pool_2d = {
         /* .k0 = */ k0,
         /* .k1 = */ k1,
         /* .s0 = */ s0,
@@ -2424,44 +2424,44 @@ int ggml_metal_op_pool_2d(ggml_metal_op_t ctx, int idx) {
         /* .np = */ np
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_pool_2d(lib, op, op_pool);
+    خودکار pipeline = ggml_metal_library_get_pipeline_pool_2d(lib, op, op_pool);
 
-    const int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), (int) np);
-    const int ntg = (np + nth - 1) / nth;
+    ثابت صحیح nth = std::min(ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline), (صحیح) np);
+    ثابت صحیح ntg = (np + nth - 1) / nth;
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args_pool_2d, sizeof(args_pool_2d), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_pool_2d, حجم(دلائل_pool_2d), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         2);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ntg, 1, 1, nth, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
 // the number of nodes from idx on that the fusion table fuses as pattern id into one dispatch, 1 if it fuses none
-static int ggml_metal_op_try_fusion(ggml_metal_op_t ctx, int idx, ggml_metal_fusion_id id) {
-    if (!ctx->use_fusion()) {
-        return 1;
+ساکن صحیح ggml_metal_op_try_fusion(ggml_metal_op_t ctx, صحیح idx, ggml_metal_fusion_id id) {
+    اگر (!ctx->use_fusion()) {
+        واپس 1;
     }
 
-    int n = 1;
-    const ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n);
-    if (fusion == nullptr || ggml_metal_fusion_get_id(fusion) != id) {
-        return 1;
+    صحیح n = 1;
+    ثابت ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_بھرا, &n);
+    اگر (fusion == خالی_اشاریہ || ggml_metal_fusion_get_id(fusion) != id) {
+        واپس 1;
     }
 
-    ctx->count_fusions(fusion);
+    ctx->گنتی_fusions(fusion);
 
-    if (ggml_metal_fusion_info_debug(ctx->finfo) > 1) {
-        GGML_LOG_DEBUG("%s: fuse: %s to %s, %d nodes\n", __func__, ggml_op_name(ctx->node(idx)->op), ggml_op_name(ctx->node(idx + n - 1)->op), n);
+    اگر (ggml_metal_fusion_info_debug(ctx->finfo) > 1) {
+        GGML_LOG_DEBUG("%s: fuse: %s to %s, %d nodes\n", __func__, ggml_op_name(ctx->گرہ(idx)->op), ggml_op_name(ctx->گرہ(idx + n - 1)->op), n);
     }
 
-    return n;
+    واپس n;
 }
 
-static int ggml_metal_op_mul_mat_mma(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+ساکن صحیح ggml_metal_op_mul_mat_mma(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -2473,21 +2473,21 @@ static int ggml_metal_op_mul_mat_mma(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
 
     // the MMA store adds the residual when the table fuses the ADD after this mat-mul
-    const int  n_fuse   = ggml_metal_op_try_fusion(ctx, idx, GGML_METAL_FUSION_MUL_MAT_ADD);
-    const bool fuse_add = n_fuse > 1;
+    ثابت صحیح  n_fuse   = ggml_metal_op_try_fusion(ctx, idx, GGML_METAL_FUSION_MUL_MAT_جوڑو);
+    ثابت منطقی fuse_جوڑو = n_fuse > 1;
 
-    const ggml_tensor * dst = op;
-    const ggml_tensor * res = dst;
+    ثابت ggml_tensor * dst = op;
+    ثابت ggml_tensor * res = dst;
 
-    if (fuse_add) {
-        dst = ctx->node(idx + n_fuse - 1);
+    اگر (fuse_جوڑو) {
+        dst = ctx->گرہ(idx + n_fuse - 1);
         // the residual is the other operand of the ADD, by identity: it can itself be a MUL_MAT output
         res = dst->src[0] == op ? dst->src[1] : dst->src[0];
     }
 
-    auto pipeline = ggml_metal_library_get_pipeline_mul_mv_mma_auto(lib, op, fuse_add);
+    خودکار pipeline = ggml_metal_library_get_pipeline_mul_mv_mma_auto(lib, op, fuse_جوڑو);
 
-    ggml_metal_kargs_mul_mv_ext args = {
+    ggml_metal_kargs_mul_mv_ext دلائل_2 = {
         /*.ne00  =*/ ne00,
         /*.ne01  =*/ ne01,
         /*.ne02  =*/ ne02,
@@ -2508,26 +2508,26 @@ static int ggml_metal_op_mul_mat_mma(ggml_metal_op_t ctx, int idx) {
         /*.r3    =*/ (int16_t) (ne13/ne03),
     };
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(dst),        3);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(res),        4);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[1]), 2);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(dst),        3);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(res),        4);
 
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, pipeline.smem, 0);
+    ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, pipeline.smem, 0);
 
-    const int rows0 = pipeline.nr0;
-    const int rows1 = pipeline.nr1;
+    ثابت صحیح rows0 = pipeline.nr0;
+    ثابت صحیح rows1 = pipeline.nr1;
 
     ggml_metal_encoder_dispatch_threadgroups(enc, (ne01 + rows0 - 1)/rows0, (ne11 + rows1 - 1)/rows1, ne12*ne13, 32, pipeline.nsg, 1);
 
-    return n_fuse;
+    واپس n_fuse;
 }
 
 // the generic mat-vec kernel, or its 2-row Q4_0 variant if nc
-static int ggml_metal_op_mul_mat_mv(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+ساکن صحیح ggml_metal_op_mul_mat_mv(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -2538,18 +2538,18 @@ static int ggml_metal_op_mul_mat_mv(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS(uint64_t, nb1, op->src[1], nb);
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
 
-    const int16_t r2 = ne12/ne02;
-    const int16_t r3 = ne13/ne03;
+    ثابت int16_t r2 = ne12/ne02;
+    ثابت int16_t r3 = ne13/ne03;
 
-    auto pipeline = ggml_metal_library_get_pipeline_mul_mv(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_mul_mv(lib, op);
 
-    const int nr0 = pipeline.nr0;
-    const int nr1 = pipeline.nr1;
-    const int nsg = pipeline.nsg;
+    ثابت صحیح nr0 = pipeline.nr0;
+    ثابت صحیح nr1 = pipeline.nr1;
+    ثابت صحیح nsg = pipeline.nsg;
 
-    const size_t smem = pipeline.smem;
+    ثابت size_t smem = pipeline.smem;
 
-    ggml_metal_kargs_mul_mv args = {
+    ggml_metal_kargs_mul_mv دلائل_2 = {
         /*.ne00 =*/ ne00,
         /*.ne01 =*/ ne01,
         /*.ne02 =*/ ne02,
@@ -2571,40 +2571,40 @@ static int ggml_metal_op_mul_mat_mv(ggml_metal_op_t ctx, int idx) {
         /*.r3   =*/ r3,
     };
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[1]), 2);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         3);
 
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+    ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem, 0);
 
-    if (op->src[0]->type == GGML_TYPE_F32 ||
+    اگر (op->src[0]->type == GGML_TYPE_F32 ||
         op->src[0]->type == GGML_TYPE_F16 ||
         op->src[0]->type == GGML_TYPE_BF16 ||
         op->src[0]->type == GGML_TYPE_Q8_0) {
         ggml_metal_encoder_dispatch_threadgroups(enc, ((ne01 + nr0 - 1)/(nr0)), ((ne11 + nr1 - 1)/nr1), ne12*ne13, 32, nsg, 1);
-    } else {
+    } ورنہ {
         ggml_metal_encoder_dispatch_threadgroups(enc, ((ne01 + nr0*nsg - 1)/(nr0*nsg)), ((ne11 + nr1 - 1)/nr1), ne12*ne13, 32, nsg, 1);
     }
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_mul_mat(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_mul_mat(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    const ggml_metal_device_props * props_dev = ggml_metal_device_get_props(ctx->dev);
+    ثابت ggml_metal_device_props * props_dev = ggml_metal_device_get_props(ctx->dev);
 
-    if (ggml_metal_op_mul_mat_use_fwht(op, props_dev->max_theadgroup_memory_size)) {
-        return ggml_metal_op_fwht(ctx, idx);
+    اگر (ggml_metal_op_mul_mat_use_fwht(op, props_dev->max_theadgroup_حافظہ_سائز)) {
+        واپس ggml_metal_op_fwht(ctx, idx);
     }
 
-    if (props_dev->has_simdgroup_mm && ggml_metal_op_mul_mat_use_mma(op)) {
-        return ggml_metal_op_mul_mat_mma(ctx, idx);
+    اگر (props_dev->has_simdgroup_mm && ggml_metal_op_mul_mat_use_mma(op)) {
+        واپس ggml_metal_op_mul_mat_mma(ctx, idx);
     }
 
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
@@ -2619,12 +2619,12 @@ int ggml_metal_op_mul_mat(ggml_metal_op_t ctx, int idx) {
     GGML_ASSERT(ne12 % ne02 == 0);
     GGML_ASSERT(ne13 % ne03 == 0);
 
-    const int16_t r2 = ne12/ne02;
-    const int16_t r3 = ne13/ne03;
+    ثابت int16_t r2 = ne12/ne02;
+    ثابت int16_t r3 = ne13/ne03;
 
     // first try to use small-batch mat-mv kernels
     // these should be efficient for BS [2, ~8]
-    if (op->src[1]->type == GGML_TYPE_F32 && (ne00%128 == 0) &&
+    اگر (op->src[1]->type == GGML_TYPE_F32 && (ne00%128 == 0) &&
         (
          (
           (
@@ -2640,7 +2640,7 @@ int ggml_metal_op_mul_mat(ggml_metal_op_t ctx, int idx) {
            op->src[0]->type == GGML_TYPE_Q8_0 ||
            op->src[0]->type == GGML_TYPE_MXFP4 ||
            op->src[0]->type == GGML_TYPE_IQ4_NL ||
-           false) && (ne11 >= 2 && ne11 <= 8)
+           جھوٹ) && (ne11 >= 2 && ne11 <= 8)
          ) ||
          (
           (
@@ -2649,7 +2649,7 @@ int ggml_metal_op_mul_mat(ggml_metal_op_t ctx, int idx) {
            op->src[0]->type == GGML_TYPE_Q6_K ||
            op->src[0]->type == GGML_TYPE_Q2_K ||
            op->src[0]->type == GGML_TYPE_Q3_K ||
-           false) && (ne11 >= 4 && ne11 <= 8)
+           جھوٹ) && (ne11 >= 4 && ne11 <= 8)
          )
         )
        ) {
@@ -2661,42 +2661,42 @@ int ggml_metal_op_mul_mat(ggml_metal_op_t ctx, int idx) {
         //       my current hypothesis is that the work grid is not evenly divisible for different nsg
         //       values and there can be some tail effects when nsg is high. need to confirm this
         //
-        const int nsg    = 2;                 // num simdgroups per threadgroup
+        ثابت صحیح nsg    = 2;                 // num simdgroups per threadgroup
 
         // num threads along row per simdgroup
         int16_t nxpsg = 0;
-        if (ne00 % 256 == 0 && ne11 < 3) {
+        اگر (ne00 % 256 == 0 && ne11 < 3) {
             nxpsg = 16;
-        } else if (ne00 % 128 == 0) {
+        } ورنہ اگر (ne00 % 128 == 0) {
             nxpsg = 8;
-        } else {
+        } ورنہ {
             nxpsg = 4;
         }
 
-        const int16_t nypsg  = 32/nxpsg;          // num threads along col per simdgroup (i.e. a simdgroup processes that many src0 rows at a time)
-        const int16_t r0ptg  = nypsg*nsg;         // num src0 rows per threadgroup
+        ثابت int16_t nypsg  = 32/nxpsg;          // num threads along col per simdgroup (i.e. a simdgroup processes that many src0 rows at a time)
+        ثابت int16_t r0ptg  = nypsg*nsg;         // num src0 rows per threadgroup
               int16_t r1ptg  = 4;                 // num src1 rows per threadgroup
 
         // note: not sure how optimal are those across all different hardware. there might be something cleverer
-        switch (ne11) {
-            case 2:
-                r1ptg = 2; break;
-            case 3:
-            case 6:
-                r1ptg = 3; break;
-            case 4:
-            case 7:
-            case 8:
-                r1ptg = 4; break;
-            case 5:
-                r1ptg = 5; break;
-            default:
+        انتخاب (ne11) {
+            حالت 2:
+                r1ptg = 2; توڑو;
+            حالت 3:
+            حالت 6:
+                r1ptg = 3; توڑو;
+            حالت 4:
+            حالت 7:
+            حالت 8:
+                r1ptg = 4; توڑو;
+            حالت 5:
+                r1ptg = 5; توڑو;
+            طےشدہ:
                 GGML_ABORT("unsupported ne11");
         };
 
-        auto pipeline = ggml_metal_library_get_pipeline_mul_mv_ext(lib, op, nsg, nxpsg, r1ptg);
+        خودکار pipeline = ggml_metal_library_get_pipeline_mul_mv_ext(lib, op, nsg, nxpsg, r1ptg);
 
-        ggml_metal_kargs_mul_mv_ext args = {
+        ggml_metal_kargs_mul_mv_ext دلائل_2 = {
             /*.ne00  =*/ ne00,
             /*.ne01  =*/ ne01,
             /*.ne02  =*/ ne02,
@@ -2717,14 +2717,14 @@ int ggml_metal_op_mul_mat(ggml_metal_op_t ctx, int idx) {
             /*.r3    =*/ r3,
         };
 
-        ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
+        ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+        ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+        ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+        ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[1]), 2);
+        ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         3);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, ((ne01 + r0ptg - 1)/r0ptg), ((ne11 + r1ptg - 1)/r1ptg), ne12*ne13, 32, nsg, 1);
-    } else if (ggml_metal_op_mul_mat_use_mm(op, props_dev->has_simdgroup_mm)) {
+    } ورنہ اگر (ggml_metal_op_mul_mat_use_mm(op, props_dev->has_simdgroup_mm)) {
         //GGML_LOG_INFO("matrix: ne00 = %6d, ne01 = %6d, ne02 = %6d, ne11 = %6d, ne12 = %6d\n", ne00, ne01, ne02, ne11, ne12);
 
         // some Metal matrix data types require aligned pointers
@@ -2736,9 +2736,9 @@ int ggml_metal_op_mul_mat(ggml_metal_op_t ctx, int idx) {
         //    default: break;
         //}
 
-        auto pipeline = ggml_metal_library_get_pipeline_mul_mm(lib, op);
+        خودکار pipeline = ggml_metal_library_get_pipeline_mul_mm(lib, op);
 
-        ggml_metal_kargs_mul_mm args = {
+        ggml_metal_kargs_mul_mm دلائل_2 = {
             /*.ne00 =*/ ne00,
             /*.ne02 =*/ ne02,
             /*.nb01 =*/ nb01,
@@ -2755,79 +2755,79 @@ int ggml_metal_op_mul_mat(ggml_metal_op_t ctx, int idx) {
             /*.r3   =*/ r3,
         };
 
-        ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
+        ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+        ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+        ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+        ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[1]), 2);
+        ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         3);
 
-        const size_t smem = pipeline.smem;
+        ثابت size_t smem = pipeline.smem;
 
-        ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+        ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem, 0);
 
-        const int nr0 = pipeline.nr0;
-        const int nr1 = pipeline.nr1;
-        const int nsg = pipeline.nsg;
+        ثابت صحیح nr0 = pipeline.nr0;
+        ثابت صحیح nr1 = pipeline.nr1;
+        ثابت صحیح nsg = pipeline.nsg;
 
         ggml_metal_encoder_dispatch_threadgroups(enc, ((ne11 + nr1 - 1) / nr1), ((ne01 + nr0 - 1) / nr0), ne12 * ne13, 32, nsg, 1);
-    } else {
-        return ggml_metal_op_mul_mat_mv(ctx, idx);
+    } ورنہ {
+        واپس ggml_metal_op_mul_mat_mv(ctx, idx);
     }
 
-    return 1;
+    واپس 1;
 }
 
 // upper bound on the number of entry tiles emitted by kernel_mul_mm_id_map0: the full tiles
 // over all entries plus at most one partial tile per expert
-static int64_t ggml_metal_op_mul_mat_id_max_tiles(const ggml_tensor * op) {
-    const int64_t ne02 = op->src[0]->ne[2]; // n_expert
-    const int64_t ne20 = op->src[2]->ne[0]; // n_expert_used
-    const int64_t ne21 = op->src[2]->ne[1]; // n_token
+ساکن int64_t ggml_metal_op_mul_mat_id_max_tiles(ثابت ggml_tensor * op) {
+    ثابت int64_t ne02 = op->src[0]->ne[2]; // n_expert
+    ثابت int64_t ne20 = op->src[2]->ne[0]; // n_expert_used
+    ثابت int64_t ne21 = op->src[2]->ne[1]; // n_token
 
-    const int64_t n_rows = ne20*ne21;
-    const int64_t tiles  = (n_rows + 31)/32 + (ne02 < n_rows ? ne02 : n_rows) - 1;
+    ثابت int64_t n_صفیں = ne20*ne21;
+    ثابت int64_t tiles  = (n_صفیں + 31)/32 + (ne02 < n_صفیں ? ne02 : n_صفیں) - 1;
 
-    return n_rows < tiles ? n_rows : tiles;
+    واپس n_صفیں < tiles ? n_صفیں : tiles;
 }
 
-size_t ggml_metal_op_mul_mat_id_extra_tpe(const ggml_tensor * op) {
-    assert(op->op == GGML_OP_MUL_MAT_ID);
+size_t ggml_metal_op_mul_mat_id_extra_tpe(ثابت ggml_tensor * op) {
+    أكد(op->op == GGML_OP_MUL_MAT_ID);
 
     // row map of kernel_mul_mm_id: total tile count + one
     // (expert, first entry, valid rows) descriptor per tile
-    const int64_t max_tiles = ggml_metal_op_mul_mat_id_max_tiles(op);
+    ثابت int64_t max_tiles = ggml_metal_op_mul_mat_id_max_tiles(op);
 
-    return ggml_type_size(GGML_TYPE_I32)*(1 + 3*max_tiles);
+    واپس ggml_type_سائز(GGML_TYPE_I32)*(1 + 3*max_tiles);
 }
 
-size_t ggml_metal_op_mul_mat_id_extra_ids(const ggml_tensor * op) {
-    assert(op->op == GGML_OP_MUL_MAT_ID);
+size_t ggml_metal_op_mul_mat_id_extra_ids(ثابت ggml_tensor * op) {
+    أكد(op->op == GGML_OP_MUL_MAT_ID);
 
-    const int64_t ne02 = op->src[0]->ne[2]; // n_expert
-    const int64_t ne20 = op->src[2]->ne[0]; // n_expert_used
-    const int64_t ne21 = op->src[2]->ne[1]; // n_token
+    ثابت int64_t ne02 = op->src[0]->ne[2]; // n_expert
+    ثابت int64_t ne20 = op->src[2]->ne[0]; // n_expert_used
+    ثابت int64_t ne21 = op->src[2]->ne[1]; // n_token
 
     // one entry per (expert used, token) pair of ids plus one padding slot per expert
     // (see kernel_mul_mm_id_map0)
-    return ggml_type_size(GGML_TYPE_I32)*(ne20*ne21 + ne02);
+    واپس ggml_type_سائز(GGML_TYPE_I32)*(ne20*ne21 + ne02);
 }
 
-size_t ggml_metal_op_mul_mat_id_extra_amax(const ggml_tensor * op) {
-    assert(op->op == GGML_OP_MUL_MAT_ID);
+size_t ggml_metal_op_mul_mat_id_extra_amax(ثابت ggml_tensor * op) {
+    أكد(op->op == GGML_OP_MUL_MAT_ID);
 
-    GGML_UNUSED(op);
+    GGML_غیر_مستعمل(op);
 
     // 2 scaling factors (8 bytes) + N_MM_NPART_AMAX per-threadgroup scales for stage-1
-    return 8 + N_MM_NPART_AMAX*sizeof(float);
+    واپس 8 + N_MM_NPART_AMAX*حجم(اعشاری);
 }
 
-int ggml_metal_op_mul_mat_id(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_mul_mat_id(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    const ggml_metal_device_props * props_dev = ggml_metal_device_get_props(ctx->dev);
+    ثابت ggml_metal_device_props * props_dev = ggml_metal_device_get_props(ctx->dev);
 
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
     GGML_TENSOR_LOCALS(uint64_t, nb0, op->src[0], nb);
@@ -2847,15 +2847,15 @@ int ggml_metal_op_mul_mat_id(ggml_metal_op_t ctx, int idx) {
     GGML_ASSERT(ne03 == 1);
     GGML_ASSERT(ne13 == 1);
 
-    ggml_metal_buffer_id bid_src0 = ggml_metal_get_buffer_id(op->src[0]);
-    ggml_metal_buffer_id bid_src1 = ggml_metal_get_buffer_id(op->src[1]);
-    ggml_metal_buffer_id bid_src2 = ggml_metal_get_buffer_id(op->src[2]);
-    ggml_metal_buffer_id bid_dst  = ggml_metal_get_buffer_id(op);
+    ggml_metal_بفر_id bid_src0 = ggml_metal_get_بفر_id(op->src[0]);
+    ggml_metal_بفر_id bid_src1 = ggml_metal_get_بفر_id(op->src[1]);
+    ggml_metal_بفر_id bid_src2 = ggml_metal_get_بفر_id(op->src[2]);
+    ggml_metal_بفر_id bid_dst  = ggml_metal_get_بفر_id(op);
 
-    const uint32_t r2 = 1;
-    const uint32_t r3 = 1;
+    ثابت uint32_t r2 = 1;
+    ثابت uint32_t r3 = 1;
 
-    if (ggml_metal_op_mul_mat_id_use_mm(op, props_dev->has_simdgroup_mm)) {
+    اگر (ggml_metal_op_mul_mat_id_use_mm(op, props_dev->has_simdgroup_mm)) {
         // some Metal matrix data types require aligned pointers
         // ref: https://developer.apple.com/metal/Metal-Shading-Language-Specification.pdf (Table 2.5)
         //switch (op->src[0]->type) {
@@ -2866,22 +2866,22 @@ int ggml_metal_op_mul_mat_id(ggml_metal_op_t ctx, int idx) {
         //}
 
         // extra buffers for intermediate id mapping
-        ggml_metal_buffer_id bid_tpe = bid_dst;
+        ggml_metal_بفر_id bid_tpe = bid_dst;
         bid_tpe.offs += ggml_nbytes(op);
 
-        ggml_metal_buffer_id bid_ids = bid_tpe;
+        ggml_metal_بفر_id bid_ids = bid_tpe;
         bid_ids.offs += ggml_metal_op_mul_mat_id_extra_tpe(op);
 
-        ggml_metal_buffer_id bid_amax = bid_ids;
+        ggml_metal_بفر_id bid_amax = bid_ids;
         bid_amax.offs += ggml_metal_op_mul_mat_id_extra_ids(op);
 
         // src1 prec [TAG_GGML_PREC]
-        const bool use_amax = ggml_get_op_params_i32(op, 3) == GGML_PREC_F32;
+        ثابت منطقی use_amax = ggml_get_op_params_i32(op, 3) == GGML_PREC_F32;
 
         // src1 rescale factors, computed before the matmul
         // ref: https://github.com/ggml-org/llama.cpp/pull/26223
-        if (use_amax) {
-            ggml_metal_kargs_mul_mm_id_amax args = {
+        اگر (use_amax) {
+            ggml_metal_kargs_mul_mm_id_amax دلائل_2 = {
                 /*.ne00 =*/ ne10,
                 /*.ne01 =*/ ne11,
                 /*.ne02 =*/ ne12,
@@ -2889,24 +2889,24 @@ int ggml_metal_op_mul_mat_id(ggml_metal_op_t ctx, int idx) {
                 /*.nb02 =*/ nb12,
             };
 
-            auto pipeline = ggml_metal_library_get_pipeline_mul_mm_id_amax_part(lib);
+            خودکار pipeline = ggml_metal_library_get_pipeline_mul_mm_id_amax_part(lib);
 
-            const size_t smem = pipeline.smem;
+            ثابت size_t smem = pipeline.smem;
 
-            GGML_ASSERT(smem <= props_dev->max_theadgroup_memory_size);
+            GGML_ASSERT(smem <= props_dev->max_theadgroup_حافظہ_سائز);
 
-            ggml_metal_encoder_set_pipeline(enc, pipeline);
-            ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-            ggml_metal_encoder_set_buffer  (enc, bid_src1, 1);
-            ggml_metal_encoder_set_buffer  (enc, bid_amax, 2);
+            ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+            ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_src1, 1);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_amax, 2);
 
-            ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+            ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem, 0);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, N_MM_NPART_AMAX, 1, 1, 256, 1, 1);
         }
 
         {
-            ggml_metal_kargs_mul_mm_id_map0 args = {
+            ggml_metal_kargs_mul_mm_id_map0 دلائل_2 = {
                 ne10,
                 ne11, // n_expert_used (bcast)
                 nb11,
@@ -2916,32 +2916,32 @@ int ggml_metal_op_mul_mat_id(ggml_metal_op_t ctx, int idx) {
                 nb21,
             };
 
-            auto pipeline = ggml_metal_library_get_pipeline_mul_mm_id_map0(lib, ne02, ne20);
+            خودکار pipeline = ggml_metal_library_get_pipeline_mul_mm_id_map0(lib, ne02, ne20);
 
-            const size_t smem = pipeline.smem;
+            ثابت size_t smem = pipeline.smem;
 
-            GGML_ASSERT(ne02 <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
+            GGML_ASSERT(ne02 <= ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline));
 
-            GGML_ASSERT(smem <= props_dev->max_theadgroup_memory_size);
+            GGML_ASSERT(smem <= props_dev->max_theadgroup_حافظہ_سائز);
 
-            ggml_metal_encoder_set_pipeline(enc, pipeline);
-            ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-            ggml_metal_encoder_set_buffer  (enc, bid_src2, 1);
-            ggml_metal_encoder_set_buffer  (enc, bid_tpe,  2);
-            ggml_metal_encoder_set_buffer  (enc, bid_ids,  3);
+            ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+            ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_src2, 1);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_tpe,  2);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_ids,  3);
 
-            ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+            ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem, 0);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, 1, 1, 1, ne02, 1, 1);
         }
 
         ggml_metal_op_concurrency_reset(ctx);
 
-        if (use_amax) {
-            auto pipeline = ggml_metal_library_get_pipeline_mul_mm_id_amax(lib);
+        اگر (use_amax) {
+            خودکار pipeline = ggml_metal_library_get_pipeline_mul_mm_id_amax(lib);
 
-            ggml_metal_encoder_set_pipeline(enc, pipeline);
-            ggml_metal_encoder_set_buffer  (enc, bid_amax, 0);
+            ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_amax, 0);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, 1, 1, 1, 32, 1, 1);
 
@@ -2950,9 +2950,9 @@ int ggml_metal_op_mul_mat_id(ggml_metal_op_t ctx, int idx) {
         }
 
         {
-            auto pipeline = ggml_metal_library_get_pipeline_mul_mm_id(lib, op);
+            خودکار pipeline = ggml_metal_library_get_pipeline_mul_mm_id(lib, op);
 
-            ggml_metal_kargs_mul_mm_id args = {
+            ggml_metal_kargs_mul_mm_id دلائل_2 = {
                 /*.ne00  =*/ ne00,
                 /*.ne02  =*/ ne02,
                 /*.nb01  =*/ nb01,
@@ -2970,35 +2970,35 @@ int ggml_metal_op_mul_mat_id(ggml_metal_op_t ctx, int idx) {
                 /*.r3    =*/ r3,
             };
 
-            ggml_metal_encoder_set_pipeline(enc, pipeline);
-            ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-            ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
-            ggml_metal_encoder_set_buffer  (enc, bid_src1, 2);
-            ggml_metal_encoder_set_buffer  (enc, bid_tpe,  3);
-            ggml_metal_encoder_set_buffer  (enc, bid_ids,  4);
-            ggml_metal_encoder_set_buffer  (enc, bid_dst,  5);
-            ggml_metal_encoder_set_buffer  (enc, bid_amax, 6);
+            ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+            ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_src0, 1);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_src1, 2);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_tpe,  3);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_ids,  4);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_dst,  5);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_amax, 6);
 
-            const size_t smem = pipeline.smem;
+            ثابت size_t smem = pipeline.smem;
 
-            GGML_ASSERT(smem <= props_dev->max_theadgroup_memory_size);
+            GGML_ASSERT(smem <= props_dev->max_theadgroup_حافظہ_سائز);
 
-            ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+            ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem, 0);
 
-            const int max_tiles = (int) ggml_metal_op_mul_mat_id_max_tiles(op);
+            ثابت صحیح max_tiles = (صحیح) ggml_metal_op_mul_mat_id_max_tiles(op);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, max_tiles, (ne01 + 63)/64, 1, 128, 1, 1);
         }
-    } else {
-        auto pipeline = ggml_metal_library_get_pipeline_mul_mv_id(lib, op);
+    } ورنہ {
+        خودکار pipeline = ggml_metal_library_get_pipeline_mul_mv_id(lib, op);
 
-        const int nr0 = pipeline.nr0;
-        const int nr1 = pipeline.nr1;
-        const int nsg = pipeline.nsg;
+        ثابت صحیح nr0 = pipeline.nr0;
+        ثابت صحیح nr1 = pipeline.nr1;
+        ثابت صحیح nsg = pipeline.nsg;
 
-        const size_t smem = pipeline.smem;
+        ثابت size_t smem = pipeline.smem;
 
-        ggml_metal_kargs_mul_mv_id args = {
+        ggml_metal_kargs_mul_mv_id دلائل_2 = {
             /*.nei0 =*/ ne20,
             /*.nei1 =*/ ne21,
             /*.nbi1 =*/ nb21,
@@ -3021,37 +3021,37 @@ int ggml_metal_op_mul_mat_id(ggml_metal_op_t ctx, int idx) {
             /*.nr0  =*/ nr0,
         };
 
-        if (ggml_is_quantized(op->src[0]->type)) {
+        اگر (ggml_is_quantized(op->src[0]->type)) {
             GGML_ASSERT(ne00 >= nsg*nr0);
         }
 
-        ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes(enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer(enc, bid_src0, 1);
-        ggml_metal_encoder_set_buffer(enc, bid_src1, 2);
-        ggml_metal_encoder_set_buffer(enc, bid_dst,  3);
-        ggml_metal_encoder_set_buffer(enc, bid_src2, 4);
+        ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+        ggml_metal_encoder_سیٹ_بائٹیں(enc, &دلائل_2, حجم(دلائل_2), 0);
+        ggml_metal_encoder_سیٹ_بفر(enc, bid_src0, 1);
+        ggml_metal_encoder_سیٹ_بفر(enc, bid_src1, 2);
+        ggml_metal_encoder_سیٹ_بفر(enc, bid_dst,  3);
+        ggml_metal_encoder_سیٹ_بفر(enc, bid_src2, 4);
 
-        const int64_t _ne1 = 1;
-        const int64_t ne123 = ne20*ne21;
+        ثابت int64_t _ne1 = 1;
+        ثابت int64_t ne123 = ne20*ne21;
 
-        ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+        ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem, 0);
 
-        if (op->src[0]->type == GGML_TYPE_F32 ||
+        اگر (op->src[0]->type == GGML_TYPE_F32 ||
             op->src[0]->type == GGML_TYPE_F16 ||
             op->src[0]->type == GGML_TYPE_BF16 ||
             op->src[0]->type == GGML_TYPE_Q8_0) {
             ggml_metal_encoder_dispatch_threadgroups(enc, (ne01 + nr0 - 1)/(nr0), (_ne1 + nr1 - 1)/nr1, ne123, 32, nsg, 1);
-        } else {
+        } ورنہ {
             ggml_metal_encoder_dispatch_threadgroups(enc, (ne01 + nr0*nsg - 1)/(nr0*nsg), (_ne1 + nr1 - 1)/nr1, ne123, 32, nsg, 1);
         }
     }
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_add_id(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_جوڑو_id(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -3069,9 +3069,9 @@ int ggml_metal_op_add_id(ggml_metal_op_t ctx, int idx) {
     GGML_ASSERT(op->src[2]->type == GGML_TYPE_I32);
     GGML_ASSERT(op->type         == GGML_TYPE_F32);
 
-    GGML_ASSERT(ggml_is_contiguous_rows(op->src[0]));
+    GGML_ASSERT(ggml_is_contiguous_صفیں(op->src[0]));
 
-    ggml_metal_kargs_add_id args = {
+    ggml_metal_kargs_جوڑو_id دلائل_2 = {
         /*.ne0  =*/ ne0,
         /*.ne1  =*/ ne1,
         /*.nb01 =*/ nb01,
@@ -3080,127 +3080,127 @@ int ggml_metal_op_add_id(ggml_metal_op_t ctx, int idx) {
         /*.nb21 =*/ nb21,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_base(lib, GGML_OP_ADD_ID);
+    خودکار pipeline = ggml_metal_library_get_pipeline_بنیاد(lib, GGML_OP_جوڑو_ID);
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[2]), 3);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         4);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[1]), 2);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[2]), 3);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         4);
 
-    const int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne00);
+    ثابت صحیح nth = std::min(ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline), ne00);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, 1, nth, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-bool ggml_metal_op_flash_attn_ext_use_vec(const ggml_tensor * op) {
-    assert(op->op == GGML_OP_FLASH_ATTN_EXT);
+منطقی ggml_metal_op_flash_attn_ext_use_vec(ثابت ggml_tensor * op) {
+    أكد(op->op == GGML_OP_FLASH_ATTN_EXT);
 
-    const int64_t ne00 = op->src[0]->ne[0]; // head size
-    const int64_t ne01 = op->src[0]->ne[1]; // batch size
+    ثابت int64_t ne00 = op->src[0]->ne[0]; // head size
+    ثابت int64_t ne01 = op->src[0]->ne[1]; // batch size
 
     // use vec kernel if the batch size is small and if the head size is supported
-    return (ne01 < 20) && (ne00 % 32 == 0);
+    واپس (ne01 < 20) && (ne00 % 32 == 0);
 }
 
 // ref: https://github.com/ggml-org/llama.cpp/pull/27390
 // dequantize the quantized KV cache to F16 before running the F16 flash attention kernels
-static bool ggml_metal_op_flash_attn_ext_use_kv_f16(const ggml_tensor * op) {
-    assert(op->op == GGML_OP_FLASH_ATTN_EXT);
+ساکن منطقی ggml_metal_op_flash_attn_ext_use_kv_f16(ثابت ggml_tensor * op) {
+    أكد(op->op == GGML_OP_FLASH_ATTN_EXT);
 
     // depending on compute/bandwidth ratio, dequant to f16 kv is not always beneficial
     // ref: https://github.com/ggml-org/llama.cpp/pull/27390#issuecomment-5355152767
     // TODO: tune per device
     // large heads need the upfront dequant to fit the non-vec threadgroup memory
-    if (op->src[0]->ne[1] < 32 &&
+    اگر (op->src[0]->ne[1] < 32 &&
         (op->src[0]->ne[0] < 512 || ggml_metal_op_flash_attn_ext_use_vec(op))) {
-        return false;
+        واپس جھوٹ;
     }
 
-    switch (op->src[1]->type) {
-        case GGML_TYPE_Q4_0:
-        case GGML_TYPE_Q4_1:
-        case GGML_TYPE_Q5_0:
-        case GGML_TYPE_Q5_1:
-        case GGML_TYPE_Q8_0:
-            return true;
-        default:
-            return false;
+    انتخاب (op->src[1]->type) {
+        حالت GGML_TYPE_Q4_0:
+        حالت GGML_TYPE_Q4_1:
+        حالت GGML_TYPE_Q5_0:
+        حالت GGML_TYPE_Q5_1:
+        حالت GGML_TYPE_Q8_0:
+            واپس سچ;
+        طےشدہ:
+            واپس جھوٹ;
     }
 }
 
-static bool ggml_metal_op_flash_attn_ext_use_tensor(const ggml_tensor * op, bool has_tensor) {
-    assert(op->op == GGML_OP_FLASH_ATTN_EXT);
+ساکن منطقی ggml_metal_op_flash_attn_ext_use_tensor(ثابت ggml_tensor * op, منطقی has_tensor) {
+    أكد(op->op == GGML_OP_FLASH_ATTN_EXT);
 
-    if (!has_tensor || ggml_metal_op_flash_attn_ext_use_vec(op)) {
-        return false;
+    اگر (!has_tensor || ggml_metal_op_flash_attn_ext_use_vec(op)) {
+        واپس جھوٹ;
     }
 
-    const int64_t ne01 = op->src[0]->ne[1];
-    const int64_t ne02 = op->src[0]->ne[2];
-    const int64_t ne03 = op->src[0]->ne[3];
+    ثابت int64_t ne01 = op->src[0]->ne[1];
+    ثابت int64_t ne02 = op->src[0]->ne[2];
+    ثابت int64_t ne03 = op->src[0]->ne[3];
 
-    const int64_t dk = op->src[1]->ne[0];
-    const int64_t dv = op->src[2]->ne[0];
+    ثابت int64_t dk = op->src[1]->ne[0];
+    ثابت int64_t dv = op->src[2]->ne[0];
 
-    const bool dk_dv_ok = (dk == 64  && dv == 64)  ||
+    ثابت منطقی dk_dv_ok = (dk == 64  && dv == 64)  ||
                           (dk == 128 && dv == 128) ||
                           (dk == 192 && dv == 128) ||
                           (dk == 256 && dv == 256) ||
                           (dk == 512 && dv == 512) ||
                           (dk == 576 && dv == 512);
 
-    if (!dk_dv_ok) {
-        return false;
+    اگر (!dk_dv_ok) {
+        واپس جھوٹ;
     }
 
     // large heads use fewer queries per threadgroup, so that the queries fit in threadgroup memory
-    const int64_t nqptg = dk >= 512 ? OP_FLASH_ATTN_EXT_TENSOR_NQPSG_LARGE : OP_FLASH_ATTN_EXT_TENSOR_NQPSG;
+    ثابت int64_t nqptg = dk >= 512 ? OP_FLASH_ATTN_EXT_TENSOR_NQPSG_LARGE : OP_FLASH_ATTN_EXT_TENSOR_NQPSG;
 
     // few heads and small batches do not fill the GPU - the half8x8 kernel is faster there
     // TODO: tune per device
-    if (((ne01 + nqptg - 1)/nqptg)*ne02*ne03*dk < 8192) {
-        return false;
+    اگر (((ne01 + nqptg - 1)/nqptg)*ne02*ne03*dk < 8192) {
+        واپس جھوٹ;
     }
 
-    if (op->src[1]->type != GGML_TYPE_F16 && op->src[1]->type != GGML_TYPE_BF16 && !ggml_metal_op_flash_attn_ext_use_kv_f16(op)) {
-        return false;
+    اگر (op->src[1]->type != GGML_TYPE_F16 && op->src[1]->type != GGML_TYPE_BF16 && !ggml_metal_op_flash_attn_ext_use_kv_f16(op)) {
+        واپس جھوٹ;
     }
 
-    return op->src[1]->ne[1] % OP_FLASH_ATTN_EXT_TENSOR_NCPSG == 0;
+    واپس op->src[1]->ne[1] % OP_FLASH_ATTN_EXT_TENSOR_NCPSG == 0;
 }
 
 // returns the n_kv_max hint if the sparse path is available for this op, or 0 otherwise
 // the mask (src[3]) remains the single source of truth: finite entries are the valid KV positions,
 // n_kv_max is only an upper bound on their number per mask row, used to size the index lists
-static int ggml_metal_op_flash_attn_ext_n_kv_max_sparse(const ggml_tensor * op) {
-    assert(op->op == GGML_OP_FLASH_ATTN_EXT);
+ساکن صحیح ggml_metal_op_flash_attn_ext_n_kv_max_sparse(ثابت ggml_tensor * op) {
+    أكد(op->op == GGML_OP_FLASH_ATTN_EXT);
 
     int32_t n_kv_max = 0;
-    memcpy(&n_kv_max, ((const int32_t *) op->op_params) + 4, sizeof(n_kv_max));
+    حافظہ_نقل(&n_kv_max, ((ثابت int32_t *) op->op_params) + 4, حجم(n_kv_max));
 
-    if (n_kv_max <= 0) {
-        return 0;
+    اگر (n_kv_max <= 0) {
+        واپس 0;
     }
 
     // the sparse indices are gathered from the mask
-    if (!op->src[3]) {
-        return 0;
+    اگر (!op->src[3]) {
+        واپس 0;
     }
 
     // bound the size of the index lists
-    if (n_kv_max > 4096) {
-        return 0;
+    اگر (n_kv_max > 4096) {
+        واپس 0;
     }
 
     // vec kernel instantiations exist for these (type, dk, dv) combinations only
-    const int64_t dk = op->src[1]->ne[0];
-    const int64_t dv = op->src[2]->ne[0];
+    ثابت int64_t dk = op->src[1]->ne[0];
+    ثابت int64_t dv = op->src[2]->ne[0];
 
-    const bool dk_dv_ok = (dk == 32  && dv == 32)  ||
+    ثابت منطقی dk_dv_ok = (dk == 32  && dv == 32)  ||
                           (dk == 64  && dv == 64)  ||
                           (dk == 96  && dv == 96)  ||
                           (dk == 96  && dv == 64)  ||
@@ -3213,50 +3213,50 @@ static int ggml_metal_op_flash_attn_ext_n_kv_max_sparse(const ggml_tensor * op) 
                           (dk == 512 && dv == 512) ||
                           (dk == 576 && dv == 512);
 
-    if (!dk_dv_ok) {
-        return 0;
+    اگر (!dk_dv_ok) {
+        واپس 0;
     }
 
-    switch (op->src[1]->type) {
-        case GGML_TYPE_F16:
-        case GGML_TYPE_BF16:
-        case GGML_TYPE_F32:
-        case GGML_TYPE_Q4_0:
-        case GGML_TYPE_Q4_1:
-        case GGML_TYPE_Q5_0:
-        case GGML_TYPE_Q5_1:
-        case GGML_TYPE_Q8_0:
-            break;
-        default:
-            return 0;
+    انتخاب (op->src[1]->type) {
+        حالت GGML_TYPE_F16:
+        حالت GGML_TYPE_BF16:
+        حالت GGML_TYPE_F32:
+        حالت GGML_TYPE_Q4_0:
+        حالت GGML_TYPE_Q4_1:
+        حالت GGML_TYPE_Q5_0:
+        حالت GGML_TYPE_Q5_1:
+        حالت GGML_TYPE_Q8_0:
+            توڑو;
+        طےشدہ:
+            واپس 0;
     }
 
-    return n_kv_max;
+    واپس n_kv_max;
 }
 
 // in some models (e.g. MLA-based), V is a view of K (the first ne20 elements of each K row);
 // the dequantized V is then a view of the dequantized K and does not need its own dequant or scratch
 // - ref: https://github.com/ggml-org/llama.cpp/pull/13435
-static bool ggml_metal_op_flash_attn_ext_v_is_view_of_k(const ggml_tensor * op) {
-    assert(op->op == GGML_OP_FLASH_ATTN_EXT);
+ساکن منطقی ggml_metal_op_flash_attn_ext_v_is_view_کا_k(ثابت ggml_tensor * op) {
+    أكد(op->op == GGML_OP_FLASH_ATTN_EXT);
 
-    const ggml_tensor * K = op->src[1];
-    const ggml_tensor * V = op->src[2];
+    ثابت ggml_tensor * K = op->src[1];
+    ثابت ggml_tensor * V = op->src[2];
 
-    return V->view_src && (V->view_src == K || (V->view_src == K->view_src && V->view_offs == K->view_offs));
+    واپس V->view_src && (V->view_src == K || (V->view_src == K->view_src && V->view_offs == K->view_offs));
 }
 
 // size of the F16 dequantized K tensor; the dequantized V tensor follows it in the same scratch buffer
-static size_t ggml_metal_op_flash_attn_ext_kv_f16_k_size(const ggml_tensor * op) {
-    assert(op->op == GGML_OP_FLASH_ATTN_EXT);
+ساکن size_t ggml_metal_op_flash_attn_ext_kv_f16_k_سائز(ثابت ggml_tensor * op) {
+    أكد(op->op == GGML_OP_FLASH_ATTN_EXT);
 
     GGML_TENSOR_LOCALS( int32_t, ne1, op->src[1], ne);
 
-    return GGML_PAD(sizeof(ggml_fp16_t)*(size_t) ne10*ne11*ne12*ne13, 16);
+    واپس GGML_PAD(حجم(ggml_fp16_t)*(size_t) ne10*ne11*ne12*ne13, 16);
 }
 
-size_t ggml_metal_op_flash_attn_ext_extra_pad(const ggml_tensor * op) {
-    assert(op->op == GGML_OP_FLASH_ATTN_EXT);
+size_t ggml_metal_op_flash_attn_ext_extra_pad(ثابت ggml_tensor * op) {
+    أكد(op->op == GGML_OP_FLASH_ATTN_EXT);
 
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
     GGML_TENSOR_LOCALS(uint64_t, nb0, op->src[0], nb);
@@ -3269,52 +3269,52 @@ size_t ggml_metal_op_flash_attn_ext_extra_pad(const ggml_tensor * op) {
 
     size_t res = 0;
 
-    const bool has_mask = op->src[3] != nullptr;
-    const bool use_kv_f16 = ggml_metal_op_flash_attn_ext_use_kv_f16(op);
+    ثابت منطقی has_نقاب = op->src[3] != خالی_اشاریہ;
+    ثابت منطقی use_kv_f16 = ggml_metal_op_flash_attn_ext_use_kv_f16(op);
 
     // when the KV is dequantized to F16, the pad kernel copies the tail chunk from the F16 scratch buffer
     // note: when V is a view of K, the dequantized V is read from the dequantized K with K's row stride
-    const bool v_is_view_of_k = use_kv_f16 && ggml_metal_op_flash_attn_ext_v_is_view_of_k(op);
+    ثابت منطقی v_is_view_کا_k = use_kv_f16 && ggml_metal_op_flash_attn_ext_v_is_view_کا_k(op);
     uint64_t nb11_pad = nb11;
     uint64_t nb21_pad = nb21;
 
-    if (use_kv_f16) {
-        nb11_pad = sizeof(ggml_fp16_t)*ne10;
-        nb21_pad = sizeof(ggml_fp16_t)*(v_is_view_of_k ? ne10 : ne20);
+    اگر (use_kv_f16) {
+        nb11_pad = حجم(ggml_fp16_t)*ne10;
+        nb21_pad = حجم(ggml_fp16_t)*(v_is_view_کا_k ? ne10 : ne20);
     }
 
     // note: the non-vec kernel requires more extra memory, so always reserve for it
     GGML_ASSERT(OP_FLASH_ATTN_EXT_NCPSG >= OP_FLASH_ATTN_EXT_VEC_NCPSG);
 
     //if (ggml_metal_op_flash_attn_ext_use_vec(op)) {
-    if (false) {
+    اگر (جھوٹ) {
         // note: always reserve the padding space to avoid graph reallocations
         //const bool has_kvpad = ne11 % OP_FLASH_ATTN_EXT_VEC_NCPSG != 0;
-        const bool has_kvpad = true;
+        ثابت منطقی has_kvpad = سچ;
 
-        if (has_kvpad) {
+        اگر (has_kvpad) {
             res += OP_FLASH_ATTN_EXT_VEC_NCPSG*(
                 nb11_pad*ne12*ne13 +
                 nb21_pad*ne22*ne23 +
-                (has_mask ? ggml_type_size(GGML_TYPE_F16)*ne31*ne32*ne33 : 0));
+                (has_نقاب ? ggml_type_سائز(GGML_TYPE_F16)*ne31*ne32*ne33 : 0));
         }
-    } else {
+    } ورنہ {
         //const bool has_kvpad = ne11 % OP_FLASH_ATTN_EXT_NCPSG != 0;
-        const bool has_kvpad = true;
+        ثابت منطقی has_kvpad = سچ;
 
-        if (has_kvpad) {
+        اگر (has_kvpad) {
             res += OP_FLASH_ATTN_EXT_NCPSG*(
                 nb11_pad*ne12*ne13 +
                 nb21_pad*ne22*ne23 +
-                (has_mask ? ggml_type_size(GGML_TYPE_F16)*ne31*ne32*ne33 : 0));
+                (has_نقاب ? ggml_type_سائز(GGML_TYPE_F16)*ne31*ne32*ne33 : 0));
         }
     }
 
-    return res;
+    واپس res;
 }
 
-size_t ggml_metal_op_flash_attn_ext_extra_blk(const ggml_tensor * op) {
-    assert(op->op == GGML_OP_FLASH_ATTN_EXT);
+size_t ggml_metal_op_flash_attn_ext_extra_blk(ثابت ggml_tensor * op) {
+    أكد(op->op == GGML_OP_FLASH_ATTN_EXT);
 
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
   //GGML_TENSOR_LOCALS(uint64_t, nb0, op->src[0], nb);
@@ -3327,13 +3327,13 @@ size_t ggml_metal_op_flash_attn_ext_extra_blk(const ggml_tensor * op) {
 
     size_t res = 0;
 
-    const bool has_mask = op->src[3] != nullptr;
+    ثابت منطقی has_نقاب = op->src[3] != خالی_اشاریہ;
 
-    if (!has_mask) {
-        return res;
+    اگر (!has_نقاب) {
+        واپس res;
     }
 
-    const bool is_vec = ggml_metal_op_flash_attn_ext_use_vec(op);
+    ثابت منطقی is_vec = ggml_metal_op_flash_attn_ext_use_vec(op);
 
     // this optimization is not useful for the vector kernels
     // note: always reserve the blk buffer to avoid graph reallocations
@@ -3341,19 +3341,19 @@ size_t ggml_metal_op_flash_attn_ext_extra_blk(const ggml_tensor * op) {
     //    return res;
     //}
 
-    const int nqptg = is_vec ? OP_FLASH_ATTN_EXT_VEC_NQPSG : OP_FLASH_ATTN_EXT_NQPSG;
-    const int ncpsg = is_vec ? OP_FLASH_ATTN_EXT_VEC_NCPSG : OP_FLASH_ATTN_EXT_NCPSG;
+    ثابت صحیح nqptg = is_vec ? OP_FLASH_ATTN_EXT_VEC_NQPSG : OP_FLASH_ATTN_EXT_NQPSG;
+    ثابت صحیح ncpsg = is_vec ? OP_FLASH_ATTN_EXT_VEC_NCPSG : OP_FLASH_ATTN_EXT_NCPSG;
 
-    const int64_t ne1 = (ne01 + nqptg - 1)/nqptg;
-    const int64_t ne0 = (ne30 + ncpsg - 1)/ncpsg;
+    ثابت int64_t ne1 = (ne01 + nqptg - 1)/nqptg;
+    ثابت int64_t ne0 = (ne30 + ncpsg - 1)/ncpsg;
 
-    res += GGML_PAD(ggml_type_size(GGML_TYPE_I8)*ne0*ne1*ne32*ne33, 32);
+    res += GGML_PAD(ggml_type_سائز(GGML_TYPE_I8)*ne0*ne1*ne32*ne33, 32);
 
-    return res;
+    واپس res;
 }
 
-size_t ggml_metal_op_flash_attn_ext_extra_tmp(const ggml_tensor * op) {
-    assert(op->op == GGML_OP_FLASH_ATTN_EXT);
+size_t ggml_metal_op_flash_attn_ext_extra_tmp(ثابت ggml_tensor * op) {
+    أكد(op->op == GGML_OP_FLASH_ATTN_EXT);
 
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
     GGML_TENSOR_LOCALS(uint64_t, nb0, op->src[0], nb);
@@ -3368,21 +3368,21 @@ size_t ggml_metal_op_flash_attn_ext_extra_tmp(const ggml_tensor * op) {
 
     // note: always reserve the temp buffer to avoid graph reallocations
     //if (ggml_metal_op_flash_attn_ext_use_vec(op)) {
-    if (true) {
-        const int64_t nwg = 32;
-        const int64_t ne01_max = std::min(ne01, 32);
+    اگر (سچ) {
+        ثابت int64_t nwg = 32;
+        ثابت int64_t ne01_max = std::min(ne01, 32);
 
         // temp buffer for writing the results from each workgroup
         // - ne20: the size of the Value head
         // -  + 2: the S and M values for each intermediate result
-        res += ggml_type_size(GGML_TYPE_F32)*(ne01_max*ne02*ne03*nwg*(ne20 + 2));
+        res += ggml_type_سائز(GGML_TYPE_F32)*(ne01_max*ne02*ne03*nwg*(ne20 + 2));
     }
 
-    return res;
+    واپس res;
 }
 
-size_t ggml_metal_op_flash_attn_ext_extra_kv_f16(const ggml_tensor * op) {
-    assert(op->op == GGML_OP_FLASH_ATTN_EXT);
+size_t ggml_metal_op_flash_attn_ext_extra_kv_f16(ثابت ggml_tensor * op) {
+    أكد(op->op == GGML_OP_FLASH_ATTN_EXT);
 
     // note: always reserve the temp buffer to avoid graph reallocations
     //if (!ggml_metal_op_flash_attn_ext_use_kv_f16(op)) {
@@ -3391,44 +3391,44 @@ size_t ggml_metal_op_flash_attn_ext_extra_kv_f16(const ggml_tensor * op) {
 
     GGML_TENSOR_LOCALS( int32_t, ne2, op->src[2], ne);
 
-    const size_t k_size = ggml_metal_op_flash_attn_ext_kv_f16_k_size(op);
+    ثابت size_t k_سائز = ggml_metal_op_flash_attn_ext_kv_f16_k_سائز(op);
 
     // when V is a view of K, the dequantized V is a view of the dequantized K
-    const bool v_is_view_of_k = ggml_metal_op_flash_attn_ext_v_is_view_of_k(op);
-    if (v_is_view_of_k) {
-        return k_size;
+    ثابت منطقی v_is_view_کا_k = ggml_metal_op_flash_attn_ext_v_is_view_کا_k(op);
+    اگر (v_is_view_کا_k) {
+        واپس k_سائز;
     }
 
-    const size_t v_size = GGML_PAD(sizeof(ggml_fp16_t)*(size_t) ne20*ne21*ne22*ne23, 16);
+    ثابت size_t v_سائز = GGML_PAD(حجم(ggml_fp16_t)*(size_t) ne20*ne21*ne22*ne23, 16);
 
-    return k_size + v_size;
+    واپس k_سائز + v_سائز;
 }
 
 // size of the sparse index lists: one list of KV indices per mask row,
 // padded with -1 up to a multiple of OP_FLASH_ATTN_EXT_VEC_NCPSG
-size_t ggml_metal_op_flash_attn_ext_extra_idx(const ggml_tensor * op) {
-    assert(op->op == GGML_OP_FLASH_ATTN_EXT);
+size_t ggml_metal_op_flash_attn_ext_extra_idx(ثابت ggml_tensor * op) {
+    أكد(op->op == GGML_OP_FLASH_ATTN_EXT);
 
     GGML_TENSOR_LOCALS( int32_t, ne3, op->src[3], ne);
 
-    const int n_kv_max = ggml_metal_op_flash_attn_ext_n_kv_max_sparse(op);
+    ثابت صحیح n_kv_max = ggml_metal_op_flash_attn_ext_n_kv_max_sparse(op);
 
-    if (n_kv_max <= 0) {
-        return 0;
+    اگر (n_kv_max <= 0) {
+        واپس 0;
     }
 
-    const int n_kv_max_padded = GGML_PAD(n_kv_max, OP_FLASH_ATTN_EXT_VEC_NCPSG);
+    ثابت صحیح n_kv_max_padded = GGML_PAD(n_kv_max, OP_FLASH_ATTN_EXT_VEC_NCPSG);
 
-    return GGML_PAD(sizeof(int32_t)*(size_t) n_kv_max_padded*ne31*ne32*ne33, 16);
+    واپس GGML_PAD(حجم(int32_t)*(size_t) n_kv_max_padded*ne31*ne32*ne33, 16);
 }
 
-int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    const ggml_metal_device_props * props_dev = ggml_metal_device_get_props(ctx->dev);
+    ثابت ggml_metal_device_props * props_dev = ggml_metal_device_get_props(ctx->dev);
 
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
     GGML_TENSOR_LOCALS(uint64_t, nb0, op->src[0], nb);
@@ -3454,64 +3454,64 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
     GGML_ASSERT(!op->src[3] || op->src[3]->ne[1] >= op->src[0]->ne[1] &&
             "the Flash-Attention Metal kernel requires the mask to be at least n_queries big");
 
-    float scale;
-    float max_bias;
-    float logit_softcap;
+    اعشاری scale;
+    اعشاری max_bias;
+    اعشاری logit_softcap;
 
-    memcpy(&scale,         ((const int32_t *) op->op_params) + 0, sizeof(scale));
-    memcpy(&max_bias,      ((const int32_t *) op->op_params) + 1, sizeof(max_bias));
-    memcpy(&logit_softcap, ((const int32_t *) op->op_params) + 2, sizeof(logit_softcap));
+    حافظہ_نقل(&scale,         ((ثابت int32_t *) op->op_params) + 0, حجم(scale));
+    حافظہ_نقل(&max_bias,      ((ثابت int32_t *) op->op_params) + 1, حجم(max_bias));
+    حافظہ_نقل(&logit_softcap, ((ثابت int32_t *) op->op_params) + 2, حجم(logit_softcap));
 
-    if (logit_softcap != 0.0f) {
+    اگر (logit_softcap != 0.0f) {
         scale /= logit_softcap;
     }
 
-    const bool has_mask  = op->src[3] != NULL;
-    const bool has_sinks = op->src[4] != NULL;
-    const bool has_bias  = max_bias != 0.0f;
-    const bool has_scap  = logit_softcap != 0.0f;
+    ثابت منطقی has_نقاب  = op->src[3] != تہی;
+    ثابت منطقی has_sinks = op->src[4] != تہی;
+    ثابت منطقی has_bias  = max_bias != 0.0f;
+    ثابت منطقی has_scap  = logit_softcap != 0.0f;
 
-    const uint32_t n_head      = op->src[0]->ne[2];
-    const  int32_t n_head_log2 = 1u << (uint32_t) floorf(log2f((float) n_head));
+    ثابت uint32_t n_سر      = op->src[0]->ne[2];
+    ثابت  int32_t n_سر_log2 = 1u << (uint32_t) floorf(log2f((اعشاری) n_سر));
 
-    const float m0 = powf(2.0f, -(max_bias       ) / n_head_log2);
-    const float m1 = powf(2.0f, -(max_bias / 2.0f) / n_head_log2);
+    ثابت اعشاری m0 = powf(2.0f, -(max_bias       ) / n_سر_log2);
+    ثابت اعشاری m1 = powf(2.0f, -(max_bias / 2.0f) / n_سر_log2);
 
     GGML_ASSERT(ne01 < 65536);
 
-    ggml_metal_buffer_id bid_src0 = ggml_metal_get_buffer_id(op->src[0]);
-    ggml_metal_buffer_id bid_src1 = ggml_metal_get_buffer_id(op->src[1]);
-    ggml_metal_buffer_id bid_src2 = ggml_metal_get_buffer_id(op->src[2]);
-    ggml_metal_buffer_id bid_src3 = has_mask  ? ggml_metal_get_buffer_id(op->src[3]) : bid_src0;
-    ggml_metal_buffer_id bid_src4 = has_sinks ? ggml_metal_get_buffer_id(op->src[4]) : bid_src0;
+    ggml_metal_بفر_id bid_src0 = ggml_metal_get_بفر_id(op->src[0]);
+    ggml_metal_بفر_id bid_src1 = ggml_metal_get_بفر_id(op->src[1]);
+    ggml_metal_بفر_id bid_src2 = ggml_metal_get_بفر_id(op->src[2]);
+    ggml_metal_بفر_id bid_src3 = has_نقاب  ? ggml_metal_get_بفر_id(op->src[3]) : bid_src0;
+    ggml_metal_بفر_id bid_src4 = has_sinks ? ggml_metal_get_بفر_id(op->src[4]) : bid_src0;
 
-    ggml_metal_buffer_id bid_dst = ggml_metal_get_buffer_id(op);
+    ggml_metal_بفر_id bid_dst = ggml_metal_get_بفر_id(op);
 
-    ggml_metal_buffer_id bid_pad = bid_dst;
+    ggml_metal_بفر_id bid_pad = bid_dst;
     bid_pad.offs += ggml_nbytes(op);
 
-    ggml_metal_buffer_id bid_blk = bid_pad;
+    ggml_metal_بفر_id bid_blk = bid_pad;
     bid_blk.offs += ggml_metal_op_flash_attn_ext_extra_pad(op);
 
-    ggml_metal_buffer_id bid_tmp = bid_blk;
+    ggml_metal_بفر_id bid_tmp = bid_blk;
     bid_tmp.offs += ggml_metal_op_flash_attn_ext_extra_blk(op);
 
-    ggml_metal_buffer_id bid_kv_f16 = bid_tmp;
+    ggml_metal_بفر_id bid_kv_f16 = bid_tmp;
     bid_kv_f16.offs += ggml_metal_op_flash_attn_ext_extra_tmp(op);
 
     // sparse path: gather the finite mask entries into index lists and run the vec kernels over them
-    const int n_kv_max_sparse = ggml_metal_op_flash_attn_ext_n_kv_max_sparse(op);
-    const bool use_sparse = n_kv_max_sparse > 0;
-    const int n_kv_max_padded = use_sparse ? GGML_PAD(n_kv_max_sparse, OP_FLASH_ATTN_EXT_VEC_NCPSG) : 0;
+    ثابت صحیح n_kv_max_sparse = ggml_metal_op_flash_attn_ext_n_kv_max_sparse(op);
+    ثابت منطقی use_sparse = n_kv_max_sparse > 0;
+    ثابت صحیح n_kv_max_padded = use_sparse ? GGML_PAD(n_kv_max_sparse, OP_FLASH_ATTN_EXT_VEC_NCPSG) : 0;
 
     // the vec kernels dequantize the KV inline; no need for the F16 dequant pass in the sparse path
-    const bool use_kv_f16 = !use_sparse && ggml_metal_op_flash_attn_ext_use_kv_f16(op);
+    ثابت منطقی use_kv_f16 = !use_sparse && ggml_metal_op_flash_attn_ext_use_kv_f16(op);
 
-    ggml_metal_buffer_id bid_idx = bid_kv_f16;
+    ggml_metal_بفر_id bid_idx = bid_kv_f16;
     bid_idx.offs += ggml_metal_op_flash_attn_ext_extra_kv_f16(op);
 
-    ggml_metal_buffer_id bid_k = bid_src1;
-    ggml_metal_buffer_id bid_v = bid_src2;
+    ggml_metal_بفر_id bid_k = bid_src1;
+    ggml_metal_بفر_id bid_v = bid_src2;
 
     uint64_t nb10_attn = nb10;
     uint64_t nb11_attn = nb11;
@@ -3522,23 +3522,23 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
     uint64_t nb22_attn = nb22;
     uint64_t nb23_attn = nb23;
 
-    if (use_kv_f16) {
-        assert(ggml_metal_op_flash_attn_ext_extra_kv_f16(op) != 0);
+    اگر (use_kv_f16) {
+        أكد(ggml_metal_op_flash_attn_ext_extra_kv_f16(op) != 0);
 
-        const bool v_is_view_of_k = ggml_metal_op_flash_attn_ext_v_is_view_of_k(op);
+        ثابت منطقی v_is_view_کا_k = ggml_metal_op_flash_attn_ext_v_is_view_کا_k(op);
 
-        const int64_t nblocks1_64 = (ne10/ggml_blck_size(op->src[1]->type))*(int64_t) ne11*ne12*ne13;
+        ثابت int64_t nblocks1_64 = (ne10/ggml_blck_سائز(op->src[1]->type))*(int64_t) ne11*ne12*ne13;
         GGML_ASSERT(nblocks1_64 <= INT32_MAX);
-        const int32_t nblocks1 = nblocks1_64;
+        ثابت int32_t nblocks1 = nblocks1_64;
 
-        ggml_metal_buffer_id bid_v_f16 = bid_kv_f16;
-        bid_v_f16.offs += ggml_metal_op_flash_attn_ext_kv_f16_k_size(op);
+        ggml_metal_بفر_id bid_v_f16 = bid_kv_f16;
+        bid_v_f16.offs += ggml_metal_op_flash_attn_ext_kv_f16_k_سائز(op);
 
-        auto pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_kv_f16(lib, op);
-        const int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline0), 256);
+        خودکار pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_kv_f16(lib, op);
+        ثابت صحیح nth = std::min(ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline0), 256);
 
         // K
-        ggml_metal_kargs_flash_attn_ext_kv_f16 args_k = {
+        ggml_metal_kargs_flash_attn_ext_kv_f16 دلائل_k = {
             /*.ne0    =*/ ne10,
             /*.ne1    =*/ ne11,
             /*.ne2    =*/ ne12,
@@ -3550,20 +3550,20 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
             /*.nblocks =*/ nblocks1,
         };
 
-        ggml_metal_encoder_set_pipeline(enc, pipeline0);
-        ggml_metal_encoder_set_bytes   (enc, &args_k, sizeof(args_k), 0);
-        ggml_metal_encoder_set_buffer  (enc, bid_src1,        1);
-        ggml_metal_encoder_set_buffer  (enc, bid_kv_f16, 2);
+        ggml_metal_encoder_سیٹ_pipeline(enc, pipeline0);
+        ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_k, حجم(دلائل_k), 0);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_src1,        1);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_kv_f16, 2);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, (nblocks1 + nth - 1)/nth, 1, 1, nth, 1, 1);
 
         // V (skip when V is a view of K: the dequantized V is a view of the dequantized K)
-        if (!v_is_view_of_k) {
-            const int64_t nblocks2_64 = (ne20/ggml_blck_size(op->src[2]->type))*(int64_t) ne21*ne22*ne23;
+        اگر (!v_is_view_کا_k) {
+            ثابت int64_t nblocks2_64 = (ne20/ggml_blck_سائز(op->src[2]->type))*(int64_t) ne21*ne22*ne23;
             GGML_ASSERT(nblocks2_64 <= INT32_MAX);
-            const int32_t nblocks2 = nblocks2_64;
+            ثابت int32_t nblocks2 = nblocks2_64;
 
-            ggml_metal_kargs_flash_attn_ext_kv_f16 args_v = {
+            ggml_metal_kargs_flash_attn_ext_kv_f16 دلائل_v = {
                 /*.ne0    =*/ ne20,
                 /*.ne1    =*/ ne21,
                 /*.ne2    =*/ ne22,
@@ -3575,10 +3575,10 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
                 /*.nblocks =*/ nblocks2,
             };
 
-            ggml_metal_encoder_set_pipeline(enc, pipeline0);
-            ggml_metal_encoder_set_bytes   (enc, &args_v, sizeof(args_v), 0);
-            ggml_metal_encoder_set_buffer  (enc, bid_src2,        1);
-            ggml_metal_encoder_set_buffer  (enc, bid_v_f16,       2);
+            ggml_metal_encoder_سیٹ_pipeline(enc, pipeline0);
+            ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_v, حجم(دلائل_v), 0);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_src2,        1);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_v_f16,       2);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, (nblocks2 + nth - 1)/nth, 1, 1, nth, 1, 1);
         }
@@ -3587,37 +3587,37 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
         ggml_metal_op_concurrency_reset(ctx);
 
         bid_k = bid_kv_f16;
-        bid_v = v_is_view_of_k ? bid_k : bid_v_f16;
+        bid_v = v_is_view_کا_k ? bid_k : bid_v_f16;
 
         // contiguous F16 layout of the dequantized K
-        nb10_attn = sizeof(ggml_fp16_t);
+        nb10_attn = حجم(ggml_fp16_t);
         nb11_attn = nb10_attn*ne10;
         nb12_attn = nb11_attn*ne11;
         nb13_attn = nb12_attn*ne12;
 
         // if V is a view of K, the dequantized V is read from the dequantized K with K's strides
-        if (v_is_view_of_k) {
+        اگر (v_is_view_کا_k) {
             nb20_attn = nb10_attn;
             nb21_attn = nb11_attn;
             nb22_attn = nb12_attn;
             nb23_attn = nb13_attn;
-        } else {
+        } ورنہ {
             // contiguous F16 layout of the dequantized V
-            nb20_attn = sizeof(ggml_fp16_t);
+            nb20_attn = حجم(ggml_fp16_t);
             nb21_attn = nb20_attn*ne20;
             nb22_attn = nb21_attn*ne21;
             nb23_attn = nb22_attn*ne22;
         }
     }
 
-    if (!use_sparse && ggml_metal_op_flash_attn_ext_use_tensor(op, props_dev->has_tensor)) {
+    اگر (!use_sparse && ggml_metal_op_flash_attn_ext_use_tensor(op, props_dev->has_tensor)) {
         // tensor API kernel
-        const int nqptg = ne00 >= 512 ? OP_FLASH_ATTN_EXT_TENSOR_NQPSG_LARGE : OP_FLASH_ATTN_EXT_TENSOR_NQPSG; // queries per threadgroup
-        const int ncpsg = OP_FLASH_ATTN_EXT_TENSOR_NCPSG; // cache values per threadgroup
-        const int nsg   = OP_FLASH_ATTN_EXT_TENSOR_NSG;
+        ثابت صحیح nqptg = ne00 >= 512 ? OP_FLASH_ATTN_EXT_TENSOR_NQPSG_LARGE : OP_FLASH_ATTN_EXT_TENSOR_NQPSG; // queries per threadgroup
+        ثابت صحیح ncpsg = OP_FLASH_ATTN_EXT_TENSOR_NCPSG; // cache values per threadgroup
+        ثابت صحیح nsg   = OP_FLASH_ATTN_EXT_TENSOR_NSG;
 
-        if (has_mask) {
-            assert(ggml_metal_op_flash_attn_ext_extra_blk(op) != 0);
+        اگر (has_نقاب) {
+            أكد(ggml_metal_op_flash_attn_ext_extra_blk(op) != 0);
 
             ggml_metal_kargs_flash_attn_ext_blk args0 = {
                 /*.ne01 =*/ ne01,
@@ -3630,25 +3630,25 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
                 /*.nb33 =*/ nb33,
             };
 
-            auto pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_blk(lib, op, nqptg, ncpsg);
+            خودکار pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_blk(lib, op, nqptg, ncpsg);
 
-            ggml_metal_encoder_set_pipeline(enc, pipeline0);
-            ggml_metal_encoder_set_bytes   (enc, &args0, sizeof(args0), 0);
-            ggml_metal_encoder_set_buffer  (enc, bid_src3, 1);
-            ggml_metal_encoder_set_buffer  (enc, bid_blk,  2);
+            ggml_metal_encoder_سیٹ_pipeline(enc, pipeline0);
+            ggml_metal_encoder_سیٹ_بائٹیں   (enc, &args0, حجم(args0), 0);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_src3, 1);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_blk,  2);
 
-            const int32_t nblk1 = ((ne01 + nqptg - 1)/nqptg);
-            const int32_t nblk0 = ((ne30 + ncpsg - 1)/ncpsg);
+            ثابت int32_t nblk1 = ((ne01 + nqptg - 1)/nqptg);
+            ثابت int32_t nblk0 = ((ne30 + ncpsg - 1)/ncpsg);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, nblk0, nblk1, ne32*ne33, 32, 1, 1);
 
             ggml_metal_op_concurrency_reset(ctx);
         }
 
-        const int32_t ns10 = nb11_attn/nb10_attn;
-        const int32_t ns20 = nb21_attn/nb20_attn;
+        ثابت int32_t ns10 = nb11_attn/nb10_attn;
+        ثابت int32_t ns20 = nb21_attn/nb20_attn;
 
-        ggml_metal_kargs_flash_attn_ext args = {
+        ggml_metal_kargs_flash_attn_ext دلائل_2 = {
             /*.ne01          =*/ ne01,
             /*.ne02          =*/ ne02,
             /*.ne03          =*/ ne03,
@@ -3679,46 +3679,46 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
             /*.max_bias      =*/ max_bias,
             /*.m0            =*/ m0,
             /*.m1            =*/ m1,
-            /*.n_head_log2   =*/ n_head_log2,
+            /*.n_head_log2   =*/ n_سر_log2,
             /*.logit_softcap =*/ logit_softcap,
         };
 
         // shared memory layout: queries (16-bit), scores (float), probabilities (16-bit), row scale (float), rescale flag (int)
-        const size_t smem = GGML_PAD(nqptg*ne00*sizeof(ggml_fp16_t) + nqptg*ncpsg*(sizeof(float) + sizeof(ggml_fp16_t)) + nqptg*sizeof(float) + sizeof(int32_t), 16);
+        ثابت size_t smem = GGML_PAD(nqptg*ne00*حجم(ggml_fp16_t) + nqptg*ncpsg*(حجم(اعشاری) + حجم(ggml_fp16_t)) + nqptg*حجم(اعشاری) + حجم(int32_t), 16);
 
-        auto pipeline = ggml_metal_library_get_pipeline_flash_attn_ext_tensor(lib, op, has_mask, has_sinks, has_bias, has_scap);
+        خودکار pipeline = ggml_metal_library_get_pipeline_flash_attn_ext_tensor(lib, op, has_نقاب, has_sinks, has_bias, has_scap);
 
-        GGML_ASSERT(nsg*32 <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
-        GGML_ASSERT(smem <= props_dev->max_theadgroup_memory_size);
+        GGML_ASSERT(nsg*32 <= ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline));
+        GGML_ASSERT(smem <= props_dev->max_theadgroup_حافظہ_سائز);
 
-        ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
-        ggml_metal_encoder_set_buffer  (enc, bid_k,    2);
-        ggml_metal_encoder_set_buffer  (enc, bid_v,    3);
-        ggml_metal_encoder_set_buffer  (enc, bid_src3, 4);
-        ggml_metal_encoder_set_buffer  (enc, bid_src4, 5);
-        ggml_metal_encoder_set_buffer  (enc, bid_blk,  6);
-        ggml_metal_encoder_set_buffer  (enc, bid_dst,  7);
+        ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+        ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_src0, 1);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_k,    2);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_v,    3);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_src3, 4);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_src4, 5);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_blk,  6);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_dst,  7);
 
-        ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+        ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem, 0);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, (ne01 + nqptg - 1)/nqptg, ne02, ne03, 32, nsg, 1);
-    } else if (!use_sparse && !ggml_metal_op_flash_attn_ext_use_vec(op)) {
+    } ورنہ اگر (!use_sparse && !ggml_metal_op_flash_attn_ext_use_vec(op)) {
         // half8x8 kernel
-        const int nqptg = OP_FLASH_ATTN_EXT_NQPSG; // queries per threadgroup
-        const int ncpsg = OP_FLASH_ATTN_EXT_NCPSG; // cache values per simdgroup
+        ثابت صحیح nqptg = OP_FLASH_ATTN_EXT_NQPSG; // queries per threadgroup
+        ثابت صحیح ncpsg = OP_FLASH_ATTN_EXT_NCPSG; // cache values per simdgroup
 
         GGML_ASSERT(nqptg <= 32);
         GGML_ASSERT(nqptg  % 8  == 0);
         GGML_ASSERT(ncpsg  % 32 == 0);
 
-        bool need_sync = false;
+        منطقی need_sync = جھوٹ;
 
-        const bool has_kvpad = ne11 % ncpsg != 0;
+        ثابت منطقی has_kvpad = ne11 % ncpsg != 0;
 
-        if (has_kvpad) {
-            assert(ggml_metal_op_flash_attn_ext_extra_pad(op) != 0);
+        اگر (has_kvpad) {
+            أكد(ggml_metal_op_flash_attn_ext_extra_pad(op) != 0);
 
             ggml_metal_kargs_flash_attn_ext_pad args0 = {
                 /*.ne11    =*/ne11,
@@ -3738,25 +3738,25 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
                 /*.nb33    =*/nb33,
             };
 
-            auto pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_pad(lib, op, has_mask, ncpsg);
+            خودکار pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_pad(lib, op, has_نقاب, ncpsg);
 
-            ggml_metal_encoder_set_pipeline(enc, pipeline0);
-            ggml_metal_encoder_set_bytes   (enc, &args0, sizeof(args0), 0);
-            ggml_metal_encoder_set_buffer  (enc, bid_k,    1);
-            ggml_metal_encoder_set_buffer  (enc, bid_v,    2);
-            ggml_metal_encoder_set_buffer  (enc, bid_src3, 3);
-            ggml_metal_encoder_set_buffer  (enc, bid_pad,  4);
+            ggml_metal_encoder_سیٹ_pipeline(enc, pipeline0);
+            ggml_metal_encoder_سیٹ_بائٹیں   (enc, &args0, حجم(args0), 0);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_k,    1);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_v,    2);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_src3, 3);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_pad,  4);
 
-            assert(ne12 == ne22);
-            assert(ne13 == ne23);
+            أكد(ne12 == ne22);
+            أكد(ne13 == ne23);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, ncpsg, std::max(ne12, ne32), std::max(ne13, ne33), 32, 1, 1);
 
-            need_sync = true;
+            need_sync = سچ;
         }
 
-        if (has_mask) {
-            assert(ggml_metal_op_flash_attn_ext_extra_blk(op) != 0);
+        اگر (has_نقاب) {
+            أكد(ggml_metal_op_flash_attn_ext_extra_blk(op) != 0);
 
             ggml_metal_kargs_flash_attn_ext_blk args0 = {
                 /*.ne01 =*/ ne01,
@@ -3769,46 +3769,46 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
                 /*.nb33 =*/ nb33,
             };
 
-            auto pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_blk(lib, op, nqptg, ncpsg);
+            خودکار pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_blk(lib, op, nqptg, ncpsg);
 
-            ggml_metal_encoder_set_pipeline(enc, pipeline0);
-            ggml_metal_encoder_set_bytes   (enc, &args0, sizeof(args0), 0);
-            ggml_metal_encoder_set_buffer  (enc, bid_src3, 1);
-            ggml_metal_encoder_set_buffer  (enc, bid_blk,  2);
+            ggml_metal_encoder_سیٹ_pipeline(enc, pipeline0);
+            ggml_metal_encoder_سیٹ_بائٹیں   (enc, &args0, حجم(args0), 0);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_src3, 1);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_blk,  2);
 
-            const int32_t nblk1 = ((ne01 + nqptg - 1)/nqptg);
-            const int32_t nblk0 = ((ne30 + ncpsg - 1)/ncpsg);
+            ثابت int32_t nblk1 = ((ne01 + nqptg - 1)/nqptg);
+            ثابت int32_t nblk0 = ((ne30 + ncpsg - 1)/ncpsg);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, nblk0, nblk1, ne32*ne33, 32, 1, 1);
 
-            need_sync = true;
+            need_sync = سچ;
         }
 
-        if (need_sync) {
+        اگر (need_sync) {
             ggml_metal_op_concurrency_reset(ctx);
         }
 
-        const int is_q = !use_kv_f16 && ggml_is_quantized(op->src[1]->type) ? 1 : 0;
+        ثابت صحیح is_q = !use_kv_f16 && ggml_is_quantized(op->src[1]->type) ? 1 : 0;
 
         // shared memory layout (halfs unless noted):
         //   queries/attn/result: Q*(DK + 2*PAD2(DV,64) + 4*C)
         //   quantized KV scratch: 16*32*NSG (only when is_q)
-        const int64_t dv_pad = GGML_PAD(ne20, 64);
+        ثابت int64_t dv_pad = GGML_PAD(ne20, 64);
 
-        auto fa_smem = [&](int32_t nsg) -> size_t {
-            const size_t smem_half = nqptg*(ne00 + 2*dv_pad + 4*ncpsg) + is_q*(16*32*nsg);
-            return GGML_PAD(smem_half*sizeof(ggml_fp16_t), 16);
+        خودکار fa_smem = [&](int32_t nsg) -> size_t {
+            ثابت size_t smem_half = nqptg*(ne00 + 2*dv_pad + 4*ncpsg) + is_q*(16*32*nsg);
+            واپس GGML_PAD(smem_half*حجم(ggml_fp16_t), 16);
         };
 
         // simdgroups per threadgroup (a.k.a. warps)
         int32_t nsg = ne00 >= 512 ? 8 : 4;
 
-        const size_t smem = fa_smem(nsg);
+        ثابت size_t smem = fa_smem(nsg);
 
-        const int32_t ns10 = nb11_attn/nb10_attn;
-        const int32_t ns20 = nb21_attn/nb20_attn;
+        ثابت int32_t ns10 = nb11_attn/nb10_attn;
+        ثابت int32_t ns20 = nb21_attn/nb20_attn;
 
-        ggml_metal_kargs_flash_attn_ext args = {
+        ggml_metal_kargs_flash_attn_ext دلائل_2 = {
             /*.ne01          =*/ ne01,
             /*.ne02          =*/ ne02,
             /*.ne03          =*/ ne03,
@@ -3839,54 +3839,54 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
             /*.max_bias      =*/ max_bias,
             /*.m0            =*/ m0,
             /*.m1            =*/ m1,
-            /*.n_head_log2   =*/ n_head_log2,
+            /*.n_head_log2   =*/ n_سر_log2,
             /*.logit_softcap =*/ logit_softcap,
         };
 
-        auto pipeline = ggml_metal_library_get_pipeline_flash_attn_ext(lib, op, has_mask, has_sinks, has_bias, has_scap, has_kvpad, nsg, use_kv_f16, ns10, ns20);
+        خودکار pipeline = ggml_metal_library_get_pipeline_flash_attn_ext(lib, op, has_نقاب, has_sinks, has_bias, has_scap, has_kvpad, nsg, use_kv_f16, ns10, ns20);
 
-        ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
-        ggml_metal_encoder_set_buffer  (enc, bid_k,    2);
-        ggml_metal_encoder_set_buffer  (enc, bid_v,    3);
-        ggml_metal_encoder_set_buffer  (enc, bid_src3, 4);
-        ggml_metal_encoder_set_buffer  (enc, bid_src4, 5);
-        ggml_metal_encoder_set_buffer  (enc, bid_pad,  6);
-        ggml_metal_encoder_set_buffer  (enc, bid_blk,  7);
-        ggml_metal_encoder_set_buffer  (enc, bid_dst,  8);
+        ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+        ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_src0, 1);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_k,    2);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_v,    3);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_src3, 4);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_src4, 5);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_pad,  6);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_blk,  7);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_dst,  8);
 
-        GGML_ASSERT(smem <= props_dev->max_theadgroup_memory_size);
+        GGML_ASSERT(smem <= props_dev->max_theadgroup_حافظہ_سائز);
 
-        ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+        ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem, 0);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, (ne01 + nqptg - 1)/nqptg, ne02, ne03, 32, nsg, 1);
-    } else {
+    } ورنہ {
         // half4x4 kernel
         // sparse: the index lists are per query row, so a threadgroup can share KV with Q == 1 only
-        auto cfg = use_sparse
-                ? ggml_metal_tuning::fa_vec_baseline_cfg((int) ne00, (int) ne20)
+        خودکار cfg = use_sparse
+                ? ggml_metal_tuning::fa_vec_baseline_cfg((صحیح) ne00, (صحیح) ne20)
                 : ggml_metal_tuning::fa_vec_pick(
                           props_dev->gpu_family,
-                          (int) op->src[1]->type,
-                          (int) ne00, (int) ne20,   // dk, dv (ne00 == dk for FA)
+                          (صحیح) op->src[1]->type,
+                          (صحیح) ne00, (صحیح) ne20,   // dk, dv (ne00 == dk for FA)
                           ne11, ne01);
 
-        int nqptg = cfg.Q; // queries per threadgroup
+        صحیح nqptg = cfg.Q; // queries per threadgroup
 
-        const int ncpsg = OP_FLASH_ATTN_EXT_VEC_NCPSG; // cache values per simdgroup !! sync with kernel template arguments !!
-        const int nhptg = 1;                           // heads per threadgroup
+        ثابت صحیح ncpsg = OP_FLASH_ATTN_EXT_VEC_NCPSG; // cache values per simdgroup !! sync with kernel template arguments !!
+        ثابت صحیح nhptg = 1;                           // heads per threadgroup
 
         GGML_ASSERT(nqptg <= 32);
         GGML_ASSERT(nqptg == 1 || nqptg == 2 || nqptg == 4);  // only instantiated Q values
         GGML_ASSERT(ncpsg  % 32 == 0);
 
-        bool need_sync = false;
+        منطقی need_sync = جھوٹ;
 
-        const bool has_kvpad = !use_sparse && ne11 % ncpsg != 0;
+        ثابت منطقی has_kvpad = !use_sparse && ne11 % ncpsg != 0;
 
-        if (use_sparse) {
-            assert(ggml_metal_op_flash_attn_ext_extra_idx(op) != 0);
+        اگر (use_sparse) {
+            أكد(ggml_metal_op_flash_attn_ext_extra_idx(op) != 0);
 
             GGML_ASSERT(ne30 == ne11);
 
@@ -3902,23 +3902,23 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
                 /*.n_kv_max_padded   =*/ n_kv_max_padded,
             };
 
-            auto pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_vec_idx(lib, op);
+            خودکار pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_vec_idx(lib, op);
 
-            ggml_metal_encoder_set_pipeline(enc, pipeline0);
-            ggml_metal_encoder_set_bytes   (enc, &args0, sizeof(args0), 0);
-            ggml_metal_encoder_set_buffer  (enc, bid_src3, 1);
-            ggml_metal_encoder_set_buffer  (enc, bid_idx,  2);
+            ggml_metal_encoder_سیٹ_pipeline(enc, pipeline0);
+            ggml_metal_encoder_سیٹ_بائٹیں   (enc, &args0, حجم(args0), 0);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_src3, 1);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_idx,  2);
 
-            int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline0), 256);
+            صحیح nth = std::min(ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline0), 256);
             nth = std::max(32, (nth/32)*32);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, ne31, ne32, ne33, nth, 1, 1);
 
-            need_sync = true;
+            need_sync = سچ;
         }
 
-        if (has_kvpad) {
-            assert(ggml_metal_op_flash_attn_ext_extra_pad(op) != 0);
+        اگر (has_kvpad) {
+            أكد(ggml_metal_op_flash_attn_ext_extra_pad(op) != 0);
 
             ggml_metal_kargs_flash_attn_ext_pad args0 = {
                 /*.ne11    =*/ne11,
@@ -3938,24 +3938,24 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
                 /*.nb33    =*/nb33,
             };
 
-            auto pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_pad(lib, op, has_mask, ncpsg);
+            خودکار pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_pad(lib, op, has_نقاب, ncpsg);
 
-            ggml_metal_encoder_set_pipeline(enc, pipeline0);
-            ggml_metal_encoder_set_bytes   (enc, &args0, sizeof(args0), 0);
-            ggml_metal_encoder_set_buffer  (enc, bid_k,    1);
-            ggml_metal_encoder_set_buffer  (enc, bid_v,    2);
-            ggml_metal_encoder_set_buffer  (enc, bid_src3, 3);
-            ggml_metal_encoder_set_buffer  (enc, bid_pad,  4);
+            ggml_metal_encoder_سیٹ_pipeline(enc, pipeline0);
+            ggml_metal_encoder_سیٹ_بائٹیں   (enc, &args0, حجم(args0), 0);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_k,    1);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_v,    2);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_src3, 3);
+            ggml_metal_encoder_سیٹ_بفر  (enc, bid_pad,  4);
 
-            assert(ne12 == ne22);
-            assert(ne13 == ne23);
+            أكد(ne12 == ne22);
+            أكد(ne13 == ne23);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, ncpsg, std::max(ne12, ne32), std::max(ne13, ne33), 32, 1, 1);
 
-            need_sync = true;
+            need_sync = سچ;
         }
 
-        if (need_sync) {
+        اگر (need_sync) {
             ggml_metal_op_concurrency_reset(ctx);
         }
 
@@ -3967,12 +3967,12 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
         //   attn + mask:  NSG*4*Q*C
         //   results:      2*NSG*Q*PAD2(ne20, 128)
         //   sparse idx:   NSG*C ints (only when use_sparse)
-        const int64_t dk_pad = GGML_PAD(ne00, 128);
-        const int64_t dv_pad = GGML_PAD(ne20, 128);
+        ثابت int64_t dk_pad = GGML_PAD(ne00, 128);
+        ثابت int64_t dv_pad = GGML_PAD(ne20, 128);
 
-        auto fa_vec_smem = [&](int64_t nsg, int32_t nqptg) -> size_t {
-            const size_t smem_half = (size_t) (dk_pad + 4*ncpsg + 2*dv_pad)*nqptg*nsg;
-            return GGML_PAD(smem_half*sizeof(ggml_fp16_t) + (use_sparse ? (size_t) nsg*ncpsg*sizeof(int) : 0), 16);
+        خودکار fa_vec_smem = [&](int64_t nsg, int32_t nqptg) -> size_t {
+            ثابت size_t smem_half = (size_t) (dk_pad + 4*ncpsg + 2*dv_pad)*nqptg*nsg;
+            واپس GGML_PAD(smem_half*حجم(ggml_fp16_t) + (use_sparse ? (size_t) nsg*ncpsg*حجم(صحیح) : 0), 16);
         };
 
         int64_t nsg = 1;
@@ -3980,44 +3980,44 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
         // workgroups
         // each workgroup handles nsg*nkpsg cache values
         int32_t nwg = 1;
-        if (use_sparse) {
-            if (ne01 > 32) {
+        اگر (use_sparse) {
+            اگر (ne01 > 32) {
                 // large sparse batch
                 nwg = 1;
                 nsg = 1;
-                if (n_kv_max_padded == 640) {
+                اگر (n_kv_max_padded == 640) {
                     nsg = 4; // 640 % (4*32) == 0
-                } else {
-                    while (2*nwg*nsg*ncpsg < n_kv_max_padded && nsg < 4) {
+                } ورنہ {
+                    جب (2*nwg*nsg*ncpsg < n_kv_max_padded && nsg < 4) {
                         nsg *= 2;
                     }
                 }
-            } else {
+            } ورنہ {
                 // small sparse batch
                 nwg = 32;
                 nsg = 1;
-                while (2*nwg*nsg*ncpsg < n_kv_max_padded && nsg < 4) {
+                جب (2*nwg*nsg*ncpsg < n_kv_max_padded && nsg < 4) {
                     nsg *= 2;
                 }
             }
-        } else {
+        } ورنہ {
             nwg = 32;
             nsg = 1;
-            while (2*nwg*nsg*ncpsg < ne11 && nsg < 4) {
+            جب (2*nwg*nsg*ncpsg < ne11 && nsg < 4) {
                 nsg *= 2;
             }
         }
 
         // fall back to baseline (Q=1) if the tuned config exceeds threadgroup memory
-        if (fa_vec_smem(nsg, nqptg) > props_dev->max_theadgroup_memory_size) {
-            cfg   = ggml_metal_tuning::fa_vec_baseline_cfg((int) ne00, (int) ne20);
+        اگر (fa_vec_smem(nsg, nqptg) > props_dev->max_theadgroup_حافظہ_سائز) {
+            cfg   = ggml_metal_tuning::fa_vec_baseline_cfg((صحیح) ne00, (صحیح) ne20);
             nqptg = cfg.Q;  // = 1
         }
 
-        const int32_t ns10 = nb11_attn/nb10_attn;
-        const int32_t ns20 = nb21_attn/nb20_attn;
+        ثابت int32_t ns10 = nb11_attn/nb10_attn;
+        ثابت int32_t ns20 = nb21_attn/nb20_attn;
 
-        ggml_metal_kargs_flash_attn_ext_vec args = {
+        ggml_metal_kargs_flash_attn_ext_vec دلائل_2 = {
             /*.ne01          =*/ ne01,
             /*.ne02          =*/ ne02,
             /*.ne03          =*/ ne03,
@@ -4048,48 +4048,48 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
             /*.max_bias      =*/ max_bias,
             /*.m0            =*/ m0,
             /*.m1            =*/ m1,
-            /*.n_head_log2   =*/ n_head_log2,
+            /*.n_head_log2   =*/ n_سر_log2,
             /*.logit_softcap =*/ logit_softcap,
             /*.n_kv_max_padded =*/ n_kv_max_padded,
         };
 
-        auto pipeline = ggml_metal_library_get_pipeline_flash_attn_ext_vec(lib, op, has_mask, has_sinks, has_bias, has_scap, has_kvpad, use_sparse, nqptg, cfg.NE, nsg, nwg, use_kv_f16, ns10, ns20);
+        خودکار pipeline = ggml_metal_library_get_pipeline_flash_attn_ext_vec(lib, op, has_نقاب, has_sinks, has_bias, has_scap, has_kvpad, use_sparse, nqptg, cfg.NE, nsg, nwg, use_kv_f16, ns10, ns20);
 
-        GGML_ASSERT(nsg*32 <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
+        GGML_ASSERT(nsg*32 <= ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline));
 
-        ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
-        ggml_metal_encoder_set_buffer  (enc, bid_k,    2);
-        ggml_metal_encoder_set_buffer  (enc, bid_v,    3);
-        ggml_metal_encoder_set_buffer  (enc, bid_src3, 4);
-        ggml_metal_encoder_set_buffer  (enc, bid_src4, 5);
-        ggml_metal_encoder_set_buffer  (enc, use_sparse ? bid_idx : bid_src0, 8);
+        ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+        ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_src0, 1);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_k,    2);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_v,    3);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_src3, 4);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_src4, 5);
+        ggml_metal_encoder_سیٹ_بفر  (enc, use_sparse ? bid_idx : bid_src0, 8);
 
-        const size_t smem = fa_vec_smem(nsg, nqptg);
+        ثابت size_t smem = fa_vec_smem(nsg, nqptg);
 
-        GGML_ASSERT(smem <= props_dev->max_theadgroup_memory_size);
+        GGML_ASSERT(smem <= props_dev->max_theadgroup_حافظہ_سائز);
 
-        if (nwg == 1) {
+        اگر (nwg == 1) {
             // using 1 workgroup -> write the result directly into dst
-            ggml_metal_encoder_set_buffer(enc, bid_pad, 6);
-            ggml_metal_encoder_set_buffer(enc, bid_dst, 7);
+            ggml_metal_encoder_سیٹ_بفر(enc, bid_pad, 6);
+            ggml_metal_encoder_سیٹ_بفر(enc, bid_dst, 7);
 
-            ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+            ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem, 0);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, (ne01 + nqptg - 1)/nqptg, (ne02 + nhptg - 1)/nhptg, ne03*nwg, 32, nsg, 1);
-        } else {
+        } ورنہ {
             // sanity checks
-            assert(ggml_metal_op_flash_attn_ext_extra_tmp(op) != 0);
+            أكد(ggml_metal_op_flash_attn_ext_extra_tmp(op) != 0);
 
             GGML_ASSERT(ne01*ne02*ne03 == ne1*ne2*ne3);
             GGML_ASSERT((uint64_t)ne1*ne2*ne3 <= (1u << 31));
 
             // write the results from each workgroup into a temp buffer
-            ggml_metal_encoder_set_buffer(enc, bid_pad, 6);
-            ggml_metal_encoder_set_buffer(enc, bid_tmp, 7);
+            ggml_metal_encoder_سیٹ_بفر(enc, bid_pad, 6);
+            ggml_metal_encoder_سیٹ_بفر(enc, bid_tmp, 7);
 
-            ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+            ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem, 0);
             ggml_metal_encoder_dispatch_threadgroups(enc, (ne01 + nqptg - 1)/nqptg, (ne02 + nhptg - 1)/nhptg, ne03*nwg, 32, nsg, 1);
 
             // sync the 2 kernels
@@ -4097,57 +4097,57 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
 
             // reduce the results from the workgroups
             {
-                const int32_t nrows = ne1*ne2*ne3;
+                ثابت int32_t nrows = ne1*ne2*ne3;
 
                 ggml_metal_kargs_flash_attn_ext_vec_reduce args0 = {
                     nrows,
                 };
 
-                auto pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_vec_reduce(lib, op, ne20, nwg);
+                خودکار pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_vec_reduce(lib, op, ne20, nwg);
 
-                ggml_metal_encoder_set_pipeline(enc, pipeline0);
-                ggml_metal_encoder_set_bytes   (enc, &args0, sizeof(args0), 0);
-                ggml_metal_encoder_set_buffer  (enc, bid_tmp, 1);
-                ggml_metal_encoder_set_buffer  (enc, bid_dst, 2);
+                ggml_metal_encoder_سیٹ_pipeline(enc, pipeline0);
+                ggml_metal_encoder_سیٹ_بائٹیں   (enc, &args0, حجم(args0), 0);
+                ggml_metal_encoder_سیٹ_بفر  (enc, bid_tmp, 1);
+                ggml_metal_encoder_سیٹ_بفر  (enc, bid_dst, 2);
 
                 ggml_metal_encoder_dispatch_threadgroups(enc, nrows, 1, 1, 32*nwg, 1, 1);
             }
         }
     }
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_bin(ggml_metal_op_t ctx, int idx) {
-    int n_fuse = 1;
-    const ggml_metal_fusion * fusion = nullptr;
+صحیح ggml_metal_op_bin(ggml_metal_op_t ctx, صحیح idx) {
+    صحیح n_fuse = 1;
+    ثابت ggml_metal_fusion * fusion = خالی_اشاریہ;
 
-    const bool use_fusion = ctx->use_fusion();
+    ثابت منطقی use_fusion = ctx->use_fusion();
 
-    if (use_fusion) {
-        int n = 1;
-        fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n);
+    اگر (use_fusion) {
+        صحیح n = 1;
+        fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_بھرا, &n);
         n_fuse = n;
 
         // snake activation autofuse: mul -> sin -> sqr -> mul -> add
-        if (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_SNAKE) {
-            ctx->count_fusions(fusion);
-            return ggml_metal_op_snake_fused(ctx, idx);
+        اگر (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_SNAKE) {
+            ctx->گنتی_fusions(fusion);
+            واپس ggml_metal_op_snake_fused(ctx, idx);
         }
 
         // MoE output reduction: experts * weights -> weighted sum
-        if (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_MOE_REDUCE) {
-            ctx->count_fusions(fusion);
-            return ggml_metal_op_moe_reduce(ctx, idx);
+        اگر (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_MOE_REDUCE) {
+            ctx->گنتی_fusions(fusion);
+            واپس ggml_metal_op_moe_reduce(ctx, idx);
         }
     }
 
-    ggml_tensor * op = ctx->node(idx);
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    const int debug_fusion = ggml_metal_fusion_info_debug(ctx->finfo);
+    ثابت صحیح debug_fusion = ggml_metal_fusion_info_debug(ctx->finfo);
 
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
     GGML_TENSOR_LOCALS(uint64_t, nb0, op->src[0], nb);
@@ -4156,14 +4156,14 @@ int ggml_metal_op_bin(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    GGML_ASSERT(ggml_is_contiguous_rows(op->src[0]));
-    GGML_ASSERT(ggml_is_contiguous_rows(op->src[1]));
+    GGML_ASSERT(ggml_is_contiguous_صفیں(op->src[0]));
+    GGML_ASSERT(ggml_is_contiguous_صفیں(op->src[1]));
 
-    ggml_metal_buffer_id bid_src0 = ggml_metal_get_buffer_id(op->src[0]);
-    ggml_metal_buffer_id bid_src1 = ggml_metal_get_buffer_id(op->src[1]);
-    ggml_metal_buffer_id bid_dst  = ggml_metal_get_buffer_id(op);
+    ggml_metal_بفر_id bid_src0 = ggml_metal_get_بفر_id(op->src[0]);
+    ggml_metal_بفر_id bid_src1 = ggml_metal_get_بفر_id(op->src[1]);
+    ggml_metal_بفر_id bid_dst  = ggml_metal_get_بفر_id(op);
 
-    ggml_metal_kargs_bin args = {
+    ggml_metal_kargs_bin دلائل_2 = {
         /*.ne00 =*/ ne00,
         /*.ne01 =*/ ne01,
         /*.ne02 =*/ ne02,
@@ -4196,15 +4196,15 @@ int ggml_metal_op_bin(ggml_metal_op_t ctx, int idx) {
     // c[1] = add(c[0], b[1])
     // c[2] = add(c[1], b[2])
     // ...
-    if (use_fusion && fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_ADD_CHAIN) {
+    اگر (use_fusion && fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_جوڑو_CHAIN) {
         // the offsets of the fused addends are relative to the start of the src1 buffer
-        for (int i = 1; i < n_fuse; i++) {
-            args.o1[i] = ggml_metal_get_buffer_id(ctx->node(idx + i)->src[1]).offs;
+        برائے (صحیح i = 1; i < n_fuse; i++) {
+            دلائل_2.o1[i] = ggml_metal_get_بفر_id(ctx->گرہ(idx + i)->src[1]).offs;
         }
 
-        ctx->count_fusions(fusion);
+        ctx->گنتی_fusions(fusion);
 
-        if (debug_fusion > 1) {
+        اگر (debug_fusion > 1) {
             GGML_LOG_DEBUG("%s: fuse: ADD x %d\n", __func__, n_fuse);
         }
     }
@@ -4212,83 +4212,83 @@ int ggml_metal_op_bin(ggml_metal_op_t ctx, int idx) {
     // the offsets of src1 and all fused buffers are relative to the start of the src1 buffer
     bid_src1.offs = 0;
 
-    struct ggml_metal_pipeline_with_params pipeline;
+    ساخت ggml_metal_pipeline_with_params pipeline;
 
     pipeline = ggml_metal_library_get_pipeline_bin(lib, op, n_fuse);
 
-    if (n_fuse > 1) {
-        bid_dst = ggml_metal_get_buffer_id(ctx->node(idx + n_fuse - 1));
+    اگر (n_fuse > 1) {
+        bid_dst = ggml_metal_get_بفر_id(ctx->گرہ(idx + n_fuse - 1));
 
-        for (int i = 1; i < n_fuse; ++i) {
-            if (!ggml_metal_op_concurrency_check(ctx, ctx->node(idx + i))) {
+        برائے (صحیح i = 1; i < n_fuse; ++i) {
+            اگر (!ggml_metal_op_concurrency_check(ctx, ctx->گرہ(idx + i))) {
                 ggml_metal_op_concurrency_reset(ctx);
 
-                break;
+                توڑو;
             }
         }
     }
 
-    if (pipeline.c4) {
-        args.ne00 = ne00/4;
-        args.ne10 = ne10/4;
-        args.ne0  = ne0/4;
+    اگر (pipeline.c4) {
+        دلائل_2.ne00 = ne00/4;
+        دلائل_2.ne10 = ne10/4;
+        دلائل_2.ne0  = ne0/4;
     }
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
-    ggml_metal_encoder_set_buffer  (enc, bid_src1, 2);
-    ggml_metal_encoder_set_buffer  (enc, bid_dst,  3);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, bid_src0, 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, bid_src1, 2);
+    ggml_metal_encoder_سیٹ_بفر  (enc, bid_dst,  3);
 
-    if (pipeline.cnt) {
-        ggml_metal_encoder_dispatch_threadgroups(enc, args.ne0, ggml_nrows(op), 1, 1, 1, 1);
-    } else {
-        const int nth_max = MIN(256, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
+    اگر (pipeline.cnt) {
+        ggml_metal_encoder_dispatch_threadgroups(enc, دلائل_2.ne0, ggml_nrows(op), 1, 1, 1, 1);
+    } ورنہ {
+        ثابت صحیح nth_max = MIN(256, ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline));
 
-        int nth = 1;
+        صحیح nth = 1;
 
-        while (2*nth < args.ne0 && nth < nth_max) {
+        جب (2*nth < دلائل_2.ne0 && nth < nth_max) {
             nth *= 2;
         }
 
         ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
     }
 
-    return n_fuse;
+    واپس n_fuse;
 }
 
-int ggml_metal_op_silu_back(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_silu_عقب(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    auto pipeline = ggml_metal_library_get_pipeline_silu_back(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_silu_عقب(lib, op);
 
-    const int64_t ne = ggml_nelements(op);
+    ثابت int64_t ne = ggml_nelements(op);
 
-    ggml_metal_kargs_silu_back args = {
+    ggml_metal_kargs_silu_عقب دلائل_2 = {
         /*.ne =*/ ne,
     };
 
-    int arg_idx{0};
+    صحیح arg_idx{0};
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), arg_idx++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), arg_idx++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), arg_idx++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op), arg_idx++);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), arg_idx++);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), arg_idx++);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[1]), arg_idx++);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op), arg_idx++);
 
-    const int nth = std::min<int64_t>(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne);
-    const int64_t n = (ne + nth - 1) / nth;
+    ثابت صحیح nth = std::min<int64_t>(ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline), ne);
+    ثابت int64_t n = (ne + nth - 1) / nth;
 
     ggml_metal_encoder_dispatch_threadgroups(enc, n, 1, 1, nth, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_l2_norm(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_l2_norm(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -4298,15 +4298,15 @@ int ggml_metal_op_l2_norm(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    GGML_ASSERT(ggml_is_contiguous_rows(op->src[0]));
+    GGML_ASSERT(ggml_is_contiguous_صفیں(op->src[0]));
 
-    ggml_metal_buffer_id bid_src0 = ggml_metal_get_buffer_id(op->src[0]);
-    ggml_metal_buffer_id bid_dst  = ggml_metal_get_buffer_id(op);
+    ggml_metal_بفر_id bid_src0 = ggml_metal_get_بفر_id(op->src[0]);
+    ggml_metal_بفر_id bid_dst  = ggml_metal_get_بفر_id(op);
 
-    float eps;
-    memcpy(&eps, op->op_params, sizeof(float));
+    اعشاری eps;
+    حافظہ_نقل(&eps, op->op_params, حجم(اعشاری));
 
-    ggml_metal_kargs_l2_norm args = {
+    ggml_metal_kargs_l2_norm دلائل_2 = {
         /*.ne00  =*/ ne00,
         /*.ne01  =*/ ne01,
         /*.ne02  =*/ ne02,
@@ -4326,37 +4326,37 @@ int ggml_metal_op_l2_norm(ggml_metal_op_t ctx, int idx) {
         /*.eps   =*/ eps,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_l2_norm(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_l2_norm(lib, op);
 
-    if (pipeline.c4) {
-        args.ne00 = ne00/4;
-        args.ne0  = ne0/4;
+    اگر (pipeline.c4) {
+        دلائل_2.ne00 = ne00/4;
+        دلائل_2.ne0  = ne0/4;
     }
 
-    int nth = 32; // SIMD width
+    صحیح nth = 32; // SIMD width
 
-    while (nth < ne00 && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+    جب (nth < ne00 && nth < ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline)) {
         nth *= 2;
     }
 
-    nth = std::min(nth, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
+    nth = std::min(nth, ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline));
 
-    const size_t smem = pipeline.smem;
+    ثابت size_t smem = pipeline.smem;
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
-    ggml_metal_encoder_set_buffer  (enc, bid_dst,  2);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, bid_src0, 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, bid_dst,  2);
 
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+    ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem, 0);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_group_norm(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_گروہ_norm(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -4366,12 +4366,12 @@ int ggml_metal_op_group_norm(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    const int32_t ngrp = ((const int32_t *) op->op_params)[0];
+    ثابت int32_t ngrp = ((ثابت int32_t *) op->op_params)[0];
 
-    float eps;
-    memcpy(&eps, op->op_params + 1, sizeof(float));
+    اعشاری eps;
+    حافظہ_نقل(&eps, op->op_params + 1, حجم(اعشاری));
 
-    ggml_metal_kargs_group_norm args = {
+    ggml_metal_kargs_گروہ_norm دلائل_2 = {
         /*.ne00 =*/ ne00,
         /*.ne01 =*/ ne01,
         /*.ne02 =*/ ne02,
@@ -4382,9 +4382,9 @@ int ggml_metal_op_group_norm(ggml_metal_op_t ctx, int idx) {
         /*.eps  =*/ eps,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_group_norm(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_گروہ_norm(lib, op);
 
-    int nth = 32; // SIMD width
+    صحیح nth = 32; // SIMD width
     //while (nth < ne00/4 && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
     //    nth *= 2;
     //}
@@ -4392,42 +4392,42 @@ int ggml_metal_op_group_norm(ggml_metal_op_t ctx, int idx) {
     //nth = std::min(nth, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
     //nth = std::min(nth, ne00/4);
 
-    const size_t smem = pipeline.smem;
+    ثابت size_t smem = pipeline.smem;
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         2);
 
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+    ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem, 0);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ngrp, 1, 1, nth, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_norm(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_norm(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    const bool use_fusion = ctx->use_fusion();
+    ثابت منطقی use_fusion = ctx->use_fusion();
 
-    const int debug_fusion = ggml_metal_fusion_info_debug(ctx->finfo);
+    ثابت صحیح debug_fusion = ggml_metal_fusion_info_debug(ctx->finfo);
 
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
     GGML_TENSOR_LOCALS(uint64_t, nb0, op->src[0], nb);
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    float eps;
-    memcpy(&eps, op->op_params, sizeof(float));
+    اعشاری eps;
+    حافظہ_نقل(&eps, op->op_params, حجم(اعشاری));
 
-    ggml_metal_buffer_id bid_src0 = ggml_metal_get_buffer_id(op->src[0]);
-    ggml_metal_buffer_id bid_dst  = ggml_metal_get_buffer_id(op);
+    ggml_metal_بفر_id bid_src0 = ggml_metal_get_بفر_id(op->src[0]);
+    ggml_metal_بفر_id bid_dst  = ggml_metal_get_بفر_id(op);
 
-    ggml_metal_kargs_norm args = {
+    ggml_metal_kargs_norm دلائل_2 = {
         /*.ne00   =*/ ne00,
         /*.ne00_t =*/ ne00 % 4 == 0 ? ne00/4 : ne00,
         /*.nb1    =*/ nb1,
@@ -4443,105 +4443,105 @@ int ggml_metal_op_norm(ggml_metal_op_t ctx, int idx) {
         /*.scale =*/ 1.0f,
     };
 
-    int n_fuse = 1;
-    bool fused_norm_scale = false;
+    صحیح n_fuse = 1;
+    منطقی fused_norm_scale = جھوٹ;
 
-    ggml_metal_buffer_id bid_fuse[2] = { bid_src0, bid_src0 };
+    ggml_metal_بفر_id bid_fuse[2] = { bid_src0, bid_src0 };
 
     // d[0] = norm(a)
     // d[1] = mul(d[0], b) or scale(d[0])
     // d[2] = add(d[1], c)
-    if (use_fusion) {
-        int n = 1;
-        const ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n);
+    اگر (use_fusion) {
+        صحیح n = 1;
+        ثابت ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_بھرا, &n);
 
-        if (fusion && (ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_NORM_MUL || ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_NORM_MUL_ADD)) {
+        اگر (fusion && (ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_NORM_MUL || ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_NORM_MUL_جوڑو)) {
             n_fuse = n;
 
-            ctx->count_fusions(fusion);
+            ctx->گنتی_fusions(fusion);
 
-            for (int i = 1; i < n_fuse; i++) {
-                const ggml_tensor * fn = ctx->node(idx + i);
+            برائے (صحیح i = 1; i < n_fuse; i++) {
+                ثابت ggml_tensor * fn = ctx->گرہ(idx + i);
 
-                bid_fuse[i - 1] = ggml_metal_get_buffer_id(fn->src[1]);
+                bid_fuse[i - 1] = ggml_metal_get_بفر_id(fn->src[1]);
 
-                args.nef1[i] = fn->src[1]->ne[1];
-                args.nef2[i] = fn->src[1]->ne[2];
-                args.nef3[i] = fn->src[1]->ne[3];
+                دلائل_2.nef1[i] = fn->src[1]->ne[1];
+                دلائل_2.nef2[i] = fn->src[1]->ne[2];
+                دلائل_2.nef3[i] = fn->src[1]->ne[3];
 
-                args.nbf1[i] = fn->src[1]->nb[1];
-                args.nbf2[i] = fn->src[1]->nb[2];
-                args.nbf3[i] = fn->src[1]->nb[3];
+                دلائل_2.nbf1[i] = fn->src[1]->nb[1];
+                دلائل_2.nbf2[i] = fn->src[1]->nb[2];
+                دلائل_2.nbf3[i] = fn->src[1]->nb[3];
             }
 
-            if (debug_fusion > 1) {
-                if (n_fuse == 2) {
+            اگر (debug_fusion > 1) {
+                اگر (n_fuse == 2) {
                     GGML_LOG_DEBUG("%s: fuse: %s + MUL\n", __func__, ggml_op_name(op->op));
                 }
-                if (n_fuse == 3) {
+                اگر (n_fuse == 3) {
                     GGML_LOG_DEBUG("%s: fuse: %s + MUL + ADD\n", __func__, ggml_op_name(op->op));
                 }
             }
         }
 
-        if (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_NORM_SCALE) {
+        اگر (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_NORM_SCALE) {
             n_fuse = n;
-            fused_norm_scale = true;
+            fused_norm_scale = سچ;
 
-            ctx->count_fusions(fusion);
+            ctx->گنتی_fusions(fusion);
 
-            const ggml_tensor * scale_node = ctx->node(idx + 1);
-            args.scale = ggml_get_op_params_f32(scale_node, 0);
+            ثابت ggml_tensor * scale_گرہ = ctx->گرہ(idx + 1);
+            دلائل_2.scale = ggml_get_op_params_f32(scale_گرہ, 0);
 
-            if (debug_fusion > 1) {
+            اگر (debug_fusion > 1) {
                 GGML_LOG_DEBUG("%s: fuse: %s + SCALE\n", __func__, ggml_op_name(op->op));
             }
         }
     }
 
-    if (n_fuse > 1) {
-        bid_dst = ggml_metal_get_buffer_id(ctx->node(idx + n_fuse - 1));
+    اگر (n_fuse > 1) {
+        bid_dst = ggml_metal_get_بفر_id(ctx->گرہ(idx + n_fuse - 1));
 
-        for (int i = 1; i < n_fuse; ++i) {
-            if (!ggml_metal_op_concurrency_check(ctx, ctx->node(idx + i))) {
+        برائے (صحیح i = 1; i < n_fuse; ++i) {
+            اگر (!ggml_metal_op_concurrency_check(ctx, ctx->گرہ(idx + i))) {
                 ggml_metal_op_concurrency_reset(ctx);
 
-                break;
+                توڑو;
             }
         }
     }
 
-    auto pipeline = fused_norm_scale ?
+    خودکار pipeline = fused_norm_scale ?
         ggml_metal_library_get_pipeline_norm_scale(lib, op) :
         ggml_metal_library_get_pipeline_norm(lib, op, n_fuse);
 
-    int nth = 32; // SIMD width
+    صحیح nth = 32; // SIMD width
 
-    while (nth < args.ne00_t && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+    جب (nth < دلائل_2.ne00_t && nth < ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline)) {
         nth *= 2;
     }
 
-    nth = std::min(nth, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
-    nth = std::min(nth, (args.ne00_t + 31)/32*32);
+    nth = std::min(nth, ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline));
+    nth = std::min(nth, (دلائل_2.ne00_t + 31)/32*32);
 
-    const size_t smem = pipeline.smem;
+    ثابت size_t smem = pipeline.smem;
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, bid_src0,    1);
-    ggml_metal_encoder_set_buffer  (enc, bid_fuse[0], 2);
-    ggml_metal_encoder_set_buffer  (enc, bid_fuse[1], 3);
-    ggml_metal_encoder_set_buffer  (enc, bid_dst,     4);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, bid_src0,    1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, bid_fuse[0], 2);
+    ggml_metal_encoder_سیٹ_بفر  (enc, bid_fuse[1], 3);
+    ggml_metal_encoder_سیٹ_بفر  (enc, bid_dst,     4);
 
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+    ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem, 0);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
 
-    return n_fuse;
+    واپس n_fuse;
 }
 
-int ggml_metal_op_rope(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_rope(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -4557,40 +4557,40 @@ int ggml_metal_op_rope(ggml_metal_op_t ctx, int idx) {
     GGML_ASSERT(ne10 % ne02 == 0);
     GGML_ASSERT(ne10 >= ne02);
 
-    const int nth = std::min(1024, ne00);
+    ثابت صحیح nth = std::min(1024, ne00);
 
-    const int n_past     = ((const int32_t *) op->op_params)[0];
-    const int n_dims     = ((const int32_t *) op->op_params)[1];
+    ثابت صحیح n_past     = ((ثابت int32_t *) op->op_params)[0];
+    ثابت صحیح n_dims     = ((ثابت int32_t *) op->op_params)[1];
   //const int mode       = ((const int32_t *) op->op_params)[2];
     // skip 3, n_ctx, used in GLM RoPE, unimplemented in metal
-    const int n_ctx_orig = ((const int32_t *) op->op_params)[4];
+    ثابت صحیح n_ctx_orig = ((ثابت int32_t *) op->op_params)[4];
 
-    float freq_base;
-    float freq_scale;
-    float ext_factor;
-    float attn_factor;
-    float beta_fast;
-    float beta_slow;
+    اعشاری freq_بنیاد;
+    اعشاری freq_scale;
+    اعشاری ext_ضربی_عدد;
+    اعشاری attn_ضربی_عدد;
+    اعشاری beta_fast;
+    اعشاری beta_slow;
 
-    memcpy(&freq_base,   (const int32_t *) op->op_params +  5, sizeof(float));
-    memcpy(&freq_scale,  (const int32_t *) op->op_params +  6, sizeof(float));
-    memcpy(&ext_factor,  (const int32_t *) op->op_params +  7, sizeof(float));
-    memcpy(&attn_factor, (const int32_t *) op->op_params +  8, sizeof(float));
-    memcpy(&beta_fast,   (const int32_t *) op->op_params +  9, sizeof(float));
-    memcpy(&beta_slow,   (const int32_t *) op->op_params + 10, sizeof(float));
+    حافظہ_نقل(&freq_بنیاد,   (ثابت int32_t *) op->op_params +  5, حجم(اعشاری));
+    حافظہ_نقل(&freq_scale,  (ثابت int32_t *) op->op_params +  6, حجم(اعشاری));
+    حافظہ_نقل(&ext_ضربی_عدد,  (ثابت int32_t *) op->op_params +  7, حجم(اعشاری));
+    حافظہ_نقل(&attn_ضربی_عدد, (ثابت int32_t *) op->op_params +  8, حجم(اعشاری));
+    حافظہ_نقل(&beta_fast,   (ثابت int32_t *) op->op_params +  9, حجم(اعشاری));
+    حافظہ_نقل(&beta_slow,   (ثابت int32_t *) op->op_params + 10, حجم(اعشاری));
 
     // mrope
-    const int sect_0 = ((const int32_t *) op->op_params)[11];
-    const int sect_1 = ((const int32_t *) op->op_params)[12];
-    const int sect_2 = ((const int32_t *) op->op_params)[13];
-    const int sect_3 = ((const int32_t *) op->op_params)[14];
+    ثابت صحیح sect_0 = ((ثابت int32_t *) op->op_params)[11];
+    ثابت صحیح sect_1 = ((ثابت int32_t *) op->op_params)[12];
+    ثابت صحیح sect_2 = ((ثابت int32_t *) op->op_params)[13];
+    ثابت صحیح sect_3 = ((ثابت int32_t *) op->op_params)[14];
 
-    const int n_offs = ((const int32_t *) op->op_params)[15];
+    ثابت صحیح n_offs = ((ثابت int32_t *) op->op_params)[15];
 
     // when dst aliases src0, the channels outside the rotated window already hold the correct data
-    const bool inplace = op->data == op->src[0]->data;
+    ثابت منطقی inplace = op->ڈیٹا == op->src[0]->ڈیٹا;
 
-    ggml_metal_kargs_rope args = {
+    ggml_metal_kargs_rope دلائل_2 = {
         /*.ne00        =*/ ne00,
         /*.ne01        =*/ ne01,
         /*.ne02        =*/ ne02,
@@ -4611,40 +4611,40 @@ int ggml_metal_op_rope(ggml_metal_op_t ctx, int idx) {
         /*.n_dims      =*/ n_dims,
         /*.n_offs      =*/ n_offs,
         /*.n_ctx_orig  =*/ n_ctx_orig,
-        /*.freq_base   =*/ freq_base,
+        /*.freq_base   =*/ freq_بنیاد,
         /*.freq_scale  =*/ freq_scale,
-        /*.ext_factor  =*/ ext_factor,
-        /*.attn_factor =*/ attn_factor,
+        /*.ext_factor  =*/ ext_ضربی_عدد,
+        /*.attn_factor =*/ attn_ضربی_عدد,
         /*.beta_fast   =*/ beta_fast,
         /*.beta_slow   =*/ beta_slow,
         /* sect_0      =*/ sect_0,
         /* sect_1      =*/ sect_1,
         /* sect_2      =*/ sect_2,
         /* sect_3      =*/ sect_3,
-        /* src2        =*/ op->src[2] != nullptr,
+        /* src2        =*/ op->src[2] != خالی_اشاریہ,
         /* inplace     =*/ inplace,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_rope(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_rope(lib, op);
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    if (op->src[2]) {
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[2]), 3);
-    } else {
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 3);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[1]), 2);
+    اگر (op->src[2]) {
+        ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[2]), 3);
+    } ورنہ {
+        ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 3);
     }
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         4);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         4);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_im2col(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_im2col(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -4654,32 +4654,32 @@ int ggml_metal_op_im2col(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    const int32_t s0 = ((const int32_t *)(op->op_params))[0];
-    const int32_t s1 = ((const int32_t *)(op->op_params))[1];
-    const int32_t p0 = ((const int32_t *)(op->op_params))[2];
-    const int32_t p1 = ((const int32_t *)(op->op_params))[3];
-    const int32_t d0 = ((const int32_t *)(op->op_params))[4];
-    const int32_t d1 = ((const int32_t *)(op->op_params))[5];
+    ثابت int32_t s0 = ((ثابت int32_t *)(op->op_params))[0];
+    ثابت int32_t s1 = ((ثابت int32_t *)(op->op_params))[1];
+    ثابت int32_t p0 = ((ثابت int32_t *)(op->op_params))[2];
+    ثابت int32_t p1 = ((ثابت int32_t *)(op->op_params))[3];
+    ثابت int32_t d0 = ((ثابت int32_t *)(op->op_params))[4];
+    ثابت int32_t d1 = ((ثابت int32_t *)(op->op_params))[5];
 
-    const bool is_2D = ((const int32_t *)(op->op_params))[6] == 1;
+    ثابت منطقی is_2D = ((ثابت int32_t *)(op->op_params))[6] == 1;
 
-    const int32_t N  = op->src[1]->ne[is_2D ? 3 : 2];
-    const int32_t IC = op->src[1]->ne[is_2D ? 2 : 1];
-    const int32_t IH = is_2D ? op->src[1]->ne[1] : 1;
-    const int32_t IW =         op->src[1]->ne[0];
+    ثابت int32_t N  = op->src[1]->ne[is_2D ? 3 : 2];
+    ثابت int32_t IC = op->src[1]->ne[is_2D ? 2 : 1];
+    ثابت int32_t IH = is_2D ? op->src[1]->ne[1] : 1;
+    ثابت int32_t IW =         op->src[1]->ne[0];
 
-    const int32_t KH = is_2D ? op->src[0]->ne[1] : 1;
-    const int32_t KW =         op->src[0]->ne[0];
+    ثابت int32_t KH = is_2D ? op->src[0]->ne[1] : 1;
+    ثابت int32_t KW =         op->src[0]->ne[0];
 
-    const int32_t OH = is_2D ? op->ne[2] : 1;
-    const int32_t OW =         op->ne[1];
+    ثابت int32_t OH = is_2D ? op->ne[2] : 1;
+    ثابت int32_t OW =         op->ne[1];
 
-    const int32_t CHW = IC * KH * KW;
+    ثابت int32_t CHW = IC * KH * KW;
 
-    const uint64_t ofs0 = op->src[1]->nb[is_2D ? 3 : 2] / 4;
-    const uint64_t ofs1 = op->src[1]->nb[is_2D ? 2 : 1] / 4;
+    ثابت uint64_t ofs0 = op->src[1]->nb[is_2D ? 3 : 2] / 4;
+    ثابت uint64_t ofs1 = op->src[1]->nb[is_2D ? 2 : 1] / 4;
 
-    ggml_metal_kargs_im2col args = {
+    ggml_metal_kargs_im2col دلائل_2 = {
         /*.ofs0 =*/ ofs0,
         /*.ofs1 =*/ ofs1,
         /*.IW   =*/ IW,
@@ -4697,34 +4697,34 @@ int ggml_metal_op_im2col(ggml_metal_op_t ctx, int idx) {
         /*.KHW  =*/ KH * KW,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_im2col(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_im2col(lib, op);
 
-    if (KH*KW <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
-        const uint64_t ntptg0 = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)/(KH*KW), N);
+    اگر (KH*KW <= ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline)) {
+        ثابت uint64_t ntptg0 = std::min(ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline)/(KH*KW), N);
 
-        ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 1);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+        ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+        ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+        ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[1]), 1);
+        ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         2);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, IC, OH, OW, ntptg0, KH, KW);
-    } else {
-        const uint64_t n_threads = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), N);
-        const int64_t  quotient  = N / n_threads + (N % n_threads > 0 ? 1 : 0);
+    } ورنہ {
+        ثابت uint64_t n_دھاگے = std::min(ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline), N);
+        ثابت int64_t  quotient  = N / n_دھاگے + (N % n_دھاگے > 0 ? 1 : 0);
 
-        ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 1);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+        ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+        ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+        ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[1]), 1);
+        ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         2);
 
-        ggml_metal_encoder_dispatch_threadgroups(enc, quotient * CHW, OH, OW, n_threads, 1, 1);
+        ggml_metal_encoder_dispatch_threadgroups(enc, quotient * CHW, OH, OW, n_دھاگے, 1, 1);
     }
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_conv_2d(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_conv_2d(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -4741,14 +4741,14 @@ int ggml_metal_op_conv_2d(ggml_metal_op_t ctx, int idx) {
     GGML_ASSERT(op->type == GGML_TYPE_F32);
     GGML_ASSERT(op->src[0]->type == GGML_TYPE_F16 || op->src[0]->type == GGML_TYPE_F32);
 
-    const int32_t s0 = ((const int32_t *) op->op_params)[0];
-    const int32_t s1 = ((const int32_t *) op->op_params)[1];
-    const int32_t p0 = ((const int32_t *) op->op_params)[2];
-    const int32_t p1 = ((const int32_t *) op->op_params)[3];
-    const int32_t d0 = ((const int32_t *) op->op_params)[4];
-    const int32_t d1 = ((const int32_t *) op->op_params)[5];
+    ثابت int32_t s0 = ((ثابت int32_t *) op->op_params)[0];
+    ثابت int32_t s1 = ((ثابت int32_t *) op->op_params)[1];
+    ثابت int32_t p0 = ((ثابت int32_t *) op->op_params)[2];
+    ثابت int32_t p1 = ((ثابت int32_t *) op->op_params)[3];
+    ثابت int32_t d0 = ((ثابت int32_t *) op->op_params)[4];
+    ثابت int32_t d1 = ((ثابت int32_t *) op->op_params)[5];
 
-    ggml_metal_kargs_conv_2d args = {
+    ggml_metal_kargs_conv_2d دلائل_2 = {
         /*.nb00 =*/ nb00,
         /*.nb01 =*/ nb01,
         /*.nb02 =*/ nb02,
@@ -4778,31 +4778,31 @@ int ggml_metal_op_conv_2d(ggml_metal_op_t ctx, int idx) {
         /*.d1   =*/ d1,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_conv_2d(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_conv_2d(lib, op);
 
-    int nth = ggml_metal_pipeline_max_theads_per_threadgroup(pipeline);
+    صحیح nth = ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline);
     nth = std::min(nth, 256);
     nth = std::max(nth, 1);
 
-    const uint64_t n_out = ggml_nelements(op);
+    ثابت uint64_t n_برآمد = ggml_nelements(op);
 
-    uint64_t tg = (n_out + nth - 1)/nth;
+    uint64_t tg = (n_برآمد + nth - 1)/nth;
     tg = std::max<uint64_t>(tg, 1);
-    tg = std::min<uint64_t>(tg, (uint64_t) std::numeric_limits<int>::max());
+    tg = std::min<uint64_t>(tg, (uint64_t) std::numeric_limits<صحیح>::max());
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[1]), 2);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         3);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, tg, 1, 1, nth, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_conv_2d_dw(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_conv_2d_dw(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -4818,14 +4818,14 @@ int ggml_metal_op_conv_2d_dw(ggml_metal_op_t ctx, int idx) {
     GGML_ASSERT(op->type == GGML_TYPE_F32);
     GGML_ASSERT(op->src[0]->type == GGML_TYPE_F16 || op->src[0]->type == GGML_TYPE_F32);
 
-    const int32_t s0 = ((const int32_t *) op->op_params)[0];
-    const int32_t s1 = ((const int32_t *) op->op_params)[1];
-    const int32_t p0 = ((const int32_t *) op->op_params)[2];
-    const int32_t p1 = ((const int32_t *) op->op_params)[3];
-    const int32_t d0 = ((const int32_t *) op->op_params)[4];
-    const int32_t d1 = ((const int32_t *) op->op_params)[5];
+    ثابت int32_t s0 = ((ثابت int32_t *) op->op_params)[0];
+    ثابت int32_t s1 = ((ثابت int32_t *) op->op_params)[1];
+    ثابت int32_t p0 = ((ثابت int32_t *) op->op_params)[2];
+    ثابت int32_t p1 = ((ثابت int32_t *) op->op_params)[3];
+    ثابت int32_t d0 = ((ثابت int32_t *) op->op_params)[4];
+    ثابت int32_t d1 = ((ثابت int32_t *) op->op_params)[5];
 
-    ggml_metal_kargs_conv_2d_dw args = {
+    ggml_metal_kargs_conv_2d_dw دلائل_2 = {
         /*.nb00 =*/ nb00,
         /*.nb01 =*/ nb01,
         /*.nb02 =*/ nb03,
@@ -4853,36 +4853,36 @@ int ggml_metal_op_conv_2d_dw(ggml_metal_op_t ctx, int idx) {
         /*.d1   =*/ d1,
     };
 
-    const bool use_tiled = (nb12 < nb10);
+    ثابت منطقی use_tiled = (nb12 < nb10);
 
-    auto pipeline = ggml_metal_library_get_pipeline_conv_2d_dw(lib, op, use_tiled);
+    خودکار pipeline = ggml_metal_library_get_pipeline_conv_2d_dw(lib, op, use_tiled);
 
-    int nth = ggml_metal_pipeline_max_theads_per_threadgroup(pipeline);
+    صحیح nth = ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline);
     nth = std::min(nth, 256);
     nth = std::max(nth, 1);
 
-    const int32_t OW = ne0;
-    const int32_t OH = ne1;
-    const int32_t C  = ne12;
-    const int32_t N  = ne13;
+    ثابت int32_t OW = ne0;
+    ثابت int32_t OH = ne1;
+    ثابت int32_t C  = ne12;
+    ثابت int32_t N  = ne13;
 
-    const int tg_x = use_tiled ? (C + nth - 1) / nth : (OW + nth - 1) / nth;
-    const int tg_y = OH;
-    const int tg_z = use_tiled ? OW * N : C * N;
+    ثابت صحیح tg_x = use_tiled ? (C + nth - 1) / nth : (OW + nth - 1) / nth;
+    ثابت صحیح tg_y = OH;
+    ثابت صحیح tg_z = use_tiled ? OW * N : C * N;
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[1]), 2);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         3);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, tg_x, tg_y, tg_z, nth, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_conv_3d(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_conv_3d(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -4893,21 +4893,21 @@ int ggml_metal_op_conv_3d(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
     // 2. Extract hyperparams from op_params
-    const int32_t s0 = ((const int32_t *)(op->op_params))[0];
-    const int32_t s1 = ((const int32_t *)(op->op_params))[1];
-    const int32_t s2 = ((const int32_t *)(op->op_params))[2];
-    const int32_t p0 = ((const int32_t *)(op->op_params))[3];
-    const int32_t p1 = ((const int32_t *)(op->op_params))[4];
-    const int32_t p2 = ((const int32_t *)(op->op_params))[5];
-    const int32_t d0 = ((const int32_t *)(op->op_params))[6];
-    const int32_t d1 = ((const int32_t *)(op->op_params))[7];
-    const int32_t d2 = ((const int32_t *)(op->op_params))[8];
-    const int32_t IC = ((const int32_t *)(op->op_params))[9];
-    const int32_t N  = ((const int32_t *)(op->op_params))[10];
-    const int32_t OC = ((const int32_t *)(op->op_params))[11];
+    ثابت int32_t s0 = ((ثابت int32_t *)(op->op_params))[0];
+    ثابت int32_t s1 = ((ثابت int32_t *)(op->op_params))[1];
+    ثابت int32_t s2 = ((ثابت int32_t *)(op->op_params))[2];
+    ثابت int32_t p0 = ((ثابت int32_t *)(op->op_params))[3];
+    ثابت int32_t p1 = ((ثابت int32_t *)(op->op_params))[4];
+    ثابت int32_t p2 = ((ثابت int32_t *)(op->op_params))[5];
+    ثابت int32_t d0 = ((ثابت int32_t *)(op->op_params))[6];
+    ثابت int32_t d1 = ((ثابت int32_t *)(op->op_params))[7];
+    ثابت int32_t d2 = ((ثابت int32_t *)(op->op_params))[8];
+    ثابت int32_t IC = ((ثابت int32_t *)(op->op_params))[9];
+    ثابت int32_t N  = ((ثابت int32_t *)(op->op_params))[10];
+    ثابت int32_t OC = ((ثابت int32_t *)(op->op_params))[11];
 
     // 3. Build the parameter struct using the macro-generated variables
-    ggml_metal_kargs_conv_3d args = {
+    ggml_metal_kargs_conv_3d دلائل_2 = {
         /*.IW =*/ (int32_t)op->src[1]->ne[0],
         /*.IH =*/ (int32_t)op->src[1]->ne[1],
         /*.ID =*/ (int32_t)op->src[1]->ne[2],
@@ -4927,33 +4927,33 @@ int ggml_metal_op_conv_3d(ggml_metal_op_t ctx, int idx) {
     };
 
     // 4. Fetch the JIT pipeline
-    auto pipeline = ggml_metal_library_get_pipeline_conv_3d(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_conv_3d(lib, op);
 
     // 5. Grid mapping
-    int nth0 = 32; // Standard SIMD width for Apple Silicon
-    int nth1 = 1;
-    int nth2 = 1;
+    صحیح nth0 = 32; // Standard SIMD width for Apple Silicon
+    صحیح nth1 = 1;
+    صحیح nth2 = 1;
 
-    int64_t spatial_volume = args.OW * args.OH * args.OD;
+    int64_t spatial_volume = دلائل_2.OW * دلائل_2.OH * دلائل_2.OD;
 
-    int ntg0 = (spatial_volume + nth0 - 1) / nth0;
-    int ntg1 = args.OC;
-    int ntg2 = args.N;
+    صحیح ntg0 = (spatial_volume + nth0 - 1) / nth0;
+    صحیح ntg1 = دلائل_2.OC;
+    صحیح ntg2 = دلائل_2.N;
 
     // 6. Bind and Dispatch via the ggml C wrapper
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[1]), 2);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         3);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ntg0, ntg1, ntg2, nth0, nth1, nth2);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_conv_transpose_1d(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_conv_transpose_1d(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -4965,17 +4965,17 @@ int ggml_metal_op_conv_transpose_1d(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    const int32_t s0 = ((const int32_t *)(op->op_params))[0];
+    ثابت int32_t s0 = ((ثابت int32_t *)(op->op_params))[0];
 
-    const int32_t IC = op->src[1]->ne[1];
-    const int32_t IL = op->src[1]->ne[0];
+    ثابت int32_t IC = op->src[1]->ne[1];
+    ثابت int32_t IL = op->src[1]->ne[0];
 
-    const int32_t K  = op->src[0]->ne[0];
+    ثابت int32_t K  = op->src[0]->ne[0];
 
-    const int32_t OL = op->ne[0];
-    const int32_t OC = op->ne[1];
+    ثابت int32_t OL = op->ne[0];
+    ثابت int32_t OC = op->ne[1];
 
-    ggml_metal_kargs_conv_transpose_1d args = {
+    ggml_metal_kargs_conv_transpose_1d دلائل_2 = {
         /*.IC  =*/ IC,
         /*.IL  =*/ IL,
         /*.K   =*/ K,
@@ -4984,37 +4984,37 @@ int ggml_metal_op_conv_transpose_1d(ggml_metal_op_t ctx, int idx) {
         /*.nb1 =*/ nb1,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_conv_transpose_1d(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_conv_transpose_1d(lib, op);
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[1]), 2);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         3);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, OL, OC, 1, 1, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_col2im_1d(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_col2im_1d(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    const int32_t s0 = ((const int32_t *)(op->op_params))[0];
-    const int32_t OC = ((const int32_t *)(op->op_params))[1];
-    const int32_t p0 = ((const int32_t *)(op->op_params))[2];
+    ثابت int32_t s0 = ((ثابت int32_t *)(op->op_params))[0];
+    ثابت int32_t OC = ((ثابت int32_t *)(op->op_params))[1];
+    ثابت int32_t p0 = ((ثابت int32_t *)(op->op_params))[2];
 
-    const int32_t K_OC  = (int32_t) op->src[0]->ne[0];
-    const int32_t T_in  = (int32_t) op->src[0]->ne[1];
-    const int32_t K     = K_OC / OC;
-    const int32_t T_out = (int32_t) op->ne[0];
+    ثابت int32_t K_OC  = (int32_t) op->src[0]->ne[0];
+    ثابت int32_t T_اندر  = (int32_t) op->src[0]->ne[1];
+    ثابت int32_t K     = K_OC / OC;
+    ثابت int32_t T_برآمد = (int32_t) op->ne[0];
 
-    ggml_metal_kargs_col2im_1d args = {
-        /*.T_in  =*/ T_in,
-        /*.T_out =*/ T_out,
+    ggml_metal_kargs_col2im_1d دلائل_2 = {
+        /*.T_in  =*/ T_اندر,
+        /*.T_out =*/ T_برآمد,
         /*.OC    =*/ OC,
         /*.K     =*/ K,
         /*.K_OC  =*/ K_OC,
@@ -5022,73 +5022,73 @@ int ggml_metal_op_col2im_1d(ggml_metal_op_t ctx, int idx) {
         /*.p0    =*/ p0,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_col2im_1d(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_col2im_1d(lib, op);
 
-    const int total = T_out * OC;
-    const int nth   = 256;
-    const int ntg   = (total + nth - 1) / nth;
+    ثابت صحیح کل = T_برآمد * OC;
+    ثابت صحیح nth   = 256;
+    ثابت صحیح ntg   = (کل + nth - 1) / nth;
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         2);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ntg, 1, 1, nth, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
 // Dispatch the fused snake kernel from the matched mul -> sin -> sqr -> mul -> add chain.
 // idx points at the leading mul. The caller has validated the chain.
-int ggml_metal_op_snake_fused(ggml_metal_op_t ctx, int idx) {
+صحیح ggml_metal_op_snake_fused(ggml_metal_op_t ctx, صحیح idx) {
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    const ggml_tensor * mul0 = ctx->node(idx + 0);
-    const ggml_tensor * sqr  = ctx->node(idx + 2);
-    const ggml_tensor * mul1 = ctx->node(idx + 3);
-    ggml_tensor *       add  = ctx->node(idx + 4);
+    ثابت ggml_tensor * mul0 = ctx->گرہ(idx + 0);
+    ثابت ggml_tensor * sqr  = ctx->گرہ(idx + 2);
+    ثابت ggml_tensor * mul1 = ctx->گرہ(idx + 3);
+    ggml_tensor *       جوڑو_2  = ctx->گرہ(idx + 4);
 
-    const ggml_tensor * x = ggml_are_same_shape(mul0, mul0->src[0]) ? mul0->src[0] : mul0->src[1];
-    const ggml_tensor * a = (x == mul0->src[0]) ? mul0->src[1] : mul0->src[0];
-    const ggml_tensor * inv_b = (mul1->src[0] == sqr) ? mul1->src[1] : mul1->src[0];
+    ثابت ggml_tensor * x = ggml_are_same_shape(mul0, mul0->src[0]) ? mul0->src[0] : mul0->src[1];
+    ثابت ggml_tensor * a = (x == mul0->src[0]) ? mul0->src[1] : mul0->src[0];
+    ثابت ggml_tensor * inv_b = (mul1->src[0] == sqr) ? mul1->src[1] : mul1->src[0];
 
-    const int T     = (int) x->ne[0];
-    const int C     = (int) x->ne[1];
-    const int total = T * C;
+    ثابت صحیح T     = (صحیح) x->ne[0];
+    ثابت صحیح C     = (صحیح) x->ne[1];
+    ثابت صحیح کل = T * C;
 
     // the encode loop pre-checked the leading mul only, check the rest of the chain
-    for (int i = 1; i < 5; ++i) {
-        if (!ggml_metal_op_concurrency_check(ctx, ctx->node(idx + i))) {
+    برائے (صحیح i = 1; i < 5; ++i) {
+        اگر (!ggml_metal_op_concurrency_check(ctx, ctx->گرہ(idx + i))) {
             ggml_metal_op_concurrency_reset(ctx);
 
-            break;
+            توڑو;
         }
     }
 
-    auto pipeline = ggml_metal_library_get_pipeline_snake(lib, x->type);
+    خودکار pipeline = ggml_metal_library_get_pipeline_snake(lib, x->type);
 
-    ggml_metal_kargs_snake args = {
+    ggml_metal_kargs_snake دلائل_2 = {
         /*.T =*/ T,
         /*.C =*/ C,
     };
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(x),     1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(a),     2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(inv_b), 3);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(add),   4);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(x),     1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(a),     2);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(inv_b), 3);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(جوڑو_2),   4);
 
-    const int nth = 256;
-    const int ntg = (total + nth - 1) / nth;
+    ثابت صحیح nth = 256;
+    ثابت صحیح ntg = (کل + nth - 1) / nth;
     ggml_metal_encoder_dispatch_threadgroups(enc, ntg, 1, 1, nth, 1, 1);
 
-    return 5;
+    واپس 5;
 }
 
-int ggml_metal_op_conv_transpose_2d(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_conv_transpose_2d(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -5100,21 +5100,21 @@ int ggml_metal_op_conv_transpose_2d(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    const int32_t s0 = ((const int32_t *)(op->op_params))[0];
+    ثابت int32_t s0 = ((ثابت int32_t *)(op->op_params))[0];
 
-    const int32_t IC = op->src[1]->ne[2];
-    const int32_t IH = op->src[1]->ne[1];
-    const int32_t IW = op->src[1]->ne[0];
+    ثابت int32_t IC = op->src[1]->ne[2];
+    ثابت int32_t IH = op->src[1]->ne[1];
+    ثابت int32_t IW = op->src[1]->ne[0];
 
-    const int32_t KH = op->src[0]->ne[1];
-    const int32_t KW = op->src[0]->ne[0];
+    ثابت int32_t KH = op->src[0]->ne[1];
+    ثابت int32_t KW = op->src[0]->ne[0];
 
-    const int32_t OW = op->ne[0];
-    const int32_t OH = op->ne[1];
-    const int32_t OC = op->ne[2];
-    const int32_t N  = op->src[1]->ne[3];
+    ثابت int32_t OW = op->ne[0];
+    ثابت int32_t OH = op->ne[1];
+    ثابت int32_t OC = op->ne[2];
+    ثابت int32_t N  = op->src[1]->ne[3];
 
-    ggml_metal_kargs_conv_transpose_2d args = {
+    ggml_metal_kargs_conv_transpose_2d دلائل_2 = {
         /*.IC  =*/ IC,
         /*.IH  =*/ IH,
         /*.IW  =*/ IW,
@@ -5128,25 +5128,25 @@ int ggml_metal_op_conv_transpose_2d(ggml_metal_op_t ctx, int idx) {
         /*.nb3 =*/ nb3,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_conv_transpose_2d(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_conv_transpose_2d(lib, op);
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[1]), 2);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         3);
 
     // Metal requires buffer size to be multiple of 16 bytes
-    const size_t smem = GGML_PAD(KW * KH * sizeof(float), 16);
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+    ثابت size_t smem = GGML_PAD(KW * KH * حجم(اعشاری), 16);
+    ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem, 0);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, OW, OH, OC * N, KW, KH, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_upscale(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_upscale(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -5156,22 +5156,22 @@ int ggml_metal_op_upscale(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    float sf0 = (float)ne0/op->src[0]->ne[0];
-    float sf1 = (float)ne1/op->src[0]->ne[1];
-    float sf2 = (float)ne2/op->src[0]->ne[2];
-    float sf3 = (float)ne3/op->src[0]->ne[3];
+    اعشاری sf0 = (اعشاری)ne0/op->src[0]->ne[0];
+    اعشاری sf1 = (اعشاری)ne1/op->src[0]->ne[1];
+    اعشاری sf2 = (اعشاری)ne2/op->src[0]->ne[2];
+    اعشاری sf3 = (اعشاری)ne3/op->src[0]->ne[3];
 
-    const int32_t mode_flags = ggml_get_op_params_i32(op, 0);
+    ثابت int32_t منوال_flags = ggml_get_op_params_i32(op, 0);
 
-    float poffs = 0.5f;
+    اعشاری poffs = 0.5f;
 
-    if (mode_flags & GGML_SCALE_FLAG_ALIGN_CORNERS) {
+    اگر (منوال_flags & GGML_SCALE_FLAG_ALIGN_CORNERS) {
         poffs = 0.0f;
-        sf0 = ne0 > 1 && ne00 > 1 ? (float)(ne0 - 1) / (ne00 - 1) : sf0;
-        sf1 = ne1 > 1 && ne01 > 1 ? (float)(ne1 - 1) / (ne01 - 1) : sf1;
+        sf0 = ne0 > 1 && ne00 > 1 ? (اعشاری)(ne0 - 1) / (ne00 - 1) : sf0;
+        sf1 = ne1 > 1 && ne01 > 1 ? (اعشاری)(ne1 - 1) / (ne01 - 1) : sf1;
     }
 
-    ggml_metal_kargs_upscale args = {
+    ggml_metal_kargs_upscale دلائل_2 = {
         /*.ne00  =*/ ne00,
         /*.ne01  =*/ ne01,
         /*.ne02  =*/ ne02,
@@ -5195,22 +5195,22 @@ int ggml_metal_op_upscale(ggml_metal_op_t ctx, int idx) {
         /*.poffs =*/ poffs,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_upscale(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_upscale(lib, op);
 
-    const int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne0);
+    ثابت صحیح nth = std::min(ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline), ne0);
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         2);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne1, ne2, ne3, nth, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_roll(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_roll(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -5220,12 +5220,12 @@ int ggml_metal_op_roll(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    const int32_t s0 = ggml_get_op_params_i32(op, 0);
-    const int32_t s1 = ggml_get_op_params_i32(op, 1);
-    const int32_t s2 = ggml_get_op_params_i32(op, 2);
-    const int32_t s3 = ggml_get_op_params_i32(op, 3);
+    ثابت int32_t s0 = ggml_get_op_params_i32(op, 0);
+    ثابت int32_t s1 = ggml_get_op_params_i32(op, 1);
+    ثابت int32_t s2 = ggml_get_op_params_i32(op, 2);
+    ثابت int32_t s3 = ggml_get_op_params_i32(op, 3);
 
-    ggml_metal_kargs_roll args = {
+    ggml_metal_kargs_roll دلائل_2 = {
         /*.ne00 =*/ ne00,
         /*.ne01 =*/ ne01,
         /*.ne02 =*/ ne02,
@@ -5248,22 +5248,22 @@ int ggml_metal_op_roll(ggml_metal_op_t ctx, int idx) {
         /*.s3   =*/ s3
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_roll(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_roll(lib, op);
 
-    const int nth = std::min(1024, ne0);
+    ثابت صحیح nth = std::min(1024, ne0);
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         2);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne1, ne2, ne3, nth, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_pad(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_pad(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -5273,7 +5273,7 @@ int ggml_metal_op_pad(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    ggml_metal_kargs_pad args = {
+    ggml_metal_kargs_pad دلائل_2 = {
         /*.ne00 =*/ ne00,
         /*.ne01 =*/ ne01,
         /*.ne02 =*/ ne02,
@@ -5296,24 +5296,24 @@ int ggml_metal_op_pad(ggml_metal_op_t ctx, int idx) {
         /*.lp3  =*/ ggml_get_op_params_i32(op, 6),
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_pad(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_pad(lib, op);
 
-    const int nth_max = MIN(64, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
-    const int nth = MIN(args.ne0, nth_max);
-    const int nk0 = (args.ne0 + 1024 - 1)/1024; // note: 1024 is hardcoded in the kernel!
+    ثابت صحیح nth_max = MIN(64, ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline));
+    ثابت صحیح nth = MIN(دلائل_2.ne0, nth_max);
+    ثابت صحیح nk0 = (دلائل_2.ne0 + 1024 - 1)/1024; // note: 1024 is hardcoded in the kernel!
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         2);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, nk0*ne1, ne2, ne3, nth, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_pad_reflect_1d(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_pad_reflect_1d(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -5323,7 +5323,7 @@ int ggml_metal_op_pad_reflect_1d(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    ggml_metal_kargs_pad_reflect_1d args = {
+    ggml_metal_kargs_pad_reflect_1d دلائل_2 = {
         /*.ne00 =*/ ne00,
         /*.ne01 =*/ ne01,
         /*.ne02 =*/ ne02,
@@ -5340,26 +5340,26 @@ int ggml_metal_op_pad_reflect_1d(ggml_metal_op_t ctx, int idx) {
         /*.nb1  =*/ nb1,
         /*.nb2  =*/ nb2,
         /*.nb3  =*/ nb3,
-        /*.p0 =*/ ((const int32_t *)(op->op_params))[0],
-        /*.p1 =*/ ((const int32_t *)(op->op_params))[1]
+        /*.p0 =*/ ((ثابت int32_t *)(op->op_params))[0],
+        /*.p1 =*/ ((ثابت int32_t *)(op->op_params))[1]
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_pad_reflect_1d(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_pad_reflect_1d(lib, op);
 
-    const int nth = std::min(1024, ne0);
+    ثابت صحیح nth = std::min(1024, ne0);
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         2);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne1, ne2, ne3, nth, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_arange(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_arange(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -5367,33 +5367,33 @@ int ggml_metal_op_arange(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    float start;
-    float step;
+    اعشاری start;
+    اعشاری قدم;
 
-    memcpy(&start, ((const int32_t *) op->op_params) + 0, sizeof(float));
-    memcpy(&step,  ((const int32_t *) op->op_params) + 2, sizeof(float));
+    حافظہ_نقل(&start, ((ثابت int32_t *) op->op_params) + 0, حجم(اعشاری));
+    حافظہ_نقل(&قدم,  ((ثابت int32_t *) op->op_params) + 2, حجم(اعشاری));
 
-    ggml_metal_kargs_arange args = {
+    ggml_metal_kargs_arange دلائل_2 = {
         /*.ne0   =*/ ne0,
         /*.start =*/ start,
-        /*.step  =*/ step
+        /*.step  =*/ قدم
     };
 
-    const int nth = std::min(1024, ne0);
+    ثابت صحیح nth = std::min(1024, ne0);
 
-    auto pipeline = ggml_metal_library_get_pipeline_arange(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_arange(lib, op);
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op), 1);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op), 1);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, 1, 1, 1, nth, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_timestep_embedding(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_timestep_embedding(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -5403,50 +5403,50 @@ int ggml_metal_op_timestep_embedding(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    const int dim        = op->op_params[0];
-    const int max_period = op->op_params[1];
+    ثابت صحیح dim        = op->op_params[0];
+    ثابت صحیح max_period = op->op_params[1];
 
-    ggml_metal_kargs_timestep_embedding args = {
+    ggml_metal_kargs_timestep_embedding دلائل_2 = {
         /*.nb1 =*/ nb1,
         /*.dim =*/ dim,
         /*.max_period =*/ max_period,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_timestep_embedding(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_timestep_embedding(lib, op);
 
-    const int nth = std::max(1, std::min(1024, dim/2));
+    ثابت صحیح nth = std::max(1, std::min(1024, dim/2));
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         2);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne00, 1, 1, nth, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-size_t ggml_metal_op_argmax_extra(const ggml_tensor * op) {
-    assert(op->op == GGML_OP_ARGMAX);
+size_t ggml_metal_op_argmax_extra(ثابت ggml_tensor * op) {
+    أكد(op->op == GGML_OP_ARGMAX);
 
-    const int64_t ne00 = op->src[0]->ne[0];
-    const int64_t ne01 = op->src[0]->ne[1];
+    ثابت int64_t ne00 = op->src[0]->ne[0];
+    ثابت int64_t ne01 = op->src[0]->ne[1];
 
-    int npart = 1;
-    if (ne00 > N_ARGMAX_CHUNK) {
-        npart = (int) std::min<int64_t>(N_ARGMAX_NPART_MAX, (ne00 + N_ARGMAX_CHUNK - 1)/N_ARGMAX_CHUNK);
+    صحیح npart = 1;
+    اگر (ne00 > N_ARGMAX_CHUNK) {
+        npart = (صحیح) std::min<int64_t>(N_ARGMAX_NPART_MAX, (ne00 + N_ARGMAX_CHUNK - 1)/N_ARGMAX_CHUNK);
     }
 
-    if (npart == 1) {
-        return 0;
+    اگر (npart == 1) {
+        واپس 0;
     }
 
     // partial max + partial argmax for every row
-    return (sizeof(float) + sizeof(int32_t)) * npart * ne01;
+    واپس (حجم(اعشاری) + حجم(int32_t)) * npart * ne01;
 }
 
-int ggml_metal_op_argmax(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_argmax(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -5456,111 +5456,111 @@ int ggml_metal_op_argmax(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    const int64_t nrows = ggml_nrows(op->src[0]);
+    ثابت int64_t nrows = ggml_nrows(op->src[0]);
 
-    int npart = 1;
-    if (ne00 > N_ARGMAX_CHUNK) {
-        npart = (int) std::min<int64_t>(N_ARGMAX_NPART_MAX, (ne00 + N_ARGMAX_CHUNK - 1)/N_ARGMAX_CHUNK);
+    صحیح npart = 1;
+    اگر (ne00 > N_ARGMAX_CHUNK) {
+        npart = (صحیح) std::min<int64_t>(N_ARGMAX_NPART_MAX, (ne00 + N_ARGMAX_CHUNK - 1)/N_ARGMAX_CHUNK);
     }
 
-    ggml_metal_kargs_argmax args = {
+    ggml_metal_kargs_argmax دلائل_2 = {
         /*.ne00  = */ ne00,
         /*.nb01  = */ nb01,
         /*.npart = */ npart,
         /*.ne01  = */ ne01,
     };
 
-    const size_t smem = 32*(sizeof(float) + sizeof(int32_t));
+    ثابت size_t smem = 32*(حجم(اعشاری) + حجم(int32_t));
 
-    if (npart > 1) {
-        auto pipeline_part = ggml_metal_library_get_pipeline_argmax_part(lib);
-        auto pipeline_final = ggml_metal_library_get_pipeline_argmax_final(lib);
+    اگر (npart > 1) {
+        خودکار pipeline_part = ggml_metal_library_get_pipeline_argmax_part(lib);
+        خودکار pipeline_final = ggml_metal_library_get_pipeline_argmax_final(lib);
 
-        ggml_metal_buffer_id bid_dst = ggml_metal_get_buffer_id(op);
-        ggml_metal_buffer_id bid_tmp = bid_dst;
+        ggml_metal_بفر_id bid_dst = ggml_metal_get_بفر_id(op);
+        ggml_metal_بفر_id bid_tmp = bid_dst;
         bid_tmp.offs += ggml_nbytes(op);
 
-        ggml_metal_encoder_set_pipeline(enc, pipeline_part);
-        ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-        ggml_metal_encoder_set_buffer  (enc, bid_tmp, 2);
-        ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+        ggml_metal_encoder_سیٹ_pipeline(enc, pipeline_part);
+        ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+        ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_tmp, 2);
+        ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem, 0);
         ggml_metal_encoder_dispatch_threadgroups(enc, npart, nrows, 1, 256, 1, 1);
 
         ggml_metal_op_concurrency_reset(ctx);
 
-        int nth = 32; // SIMD width
-        while (nth < npart && nth < 256) {
+        صحیح nth = 32; // SIMD width
+        جب (nth < npart && nth < 256) {
             nth *= 2;
         }
 
-        ggml_metal_encoder_set_pipeline(enc, pipeline_final);
-        ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer  (enc, bid_tmp, 1);
-        ggml_metal_encoder_set_buffer  (enc, bid_dst, 2);
-        ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+        ggml_metal_encoder_سیٹ_pipeline(enc, pipeline_final);
+        ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_tmp, 1);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_dst, 2);
+        ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem, 0);
         ggml_metal_encoder_dispatch_threadgroups(enc, nrows, 1, 1, nth, 1, 1);
 
-        return 1;
+        واپس 1;
     }
 
-    auto pipeline = ggml_metal_library_get_pipeline_argmax(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_argmax(lib, op);
 
-    int nth = 32; // SIMD width
-    while (nth < ne00 && nth*ne01*ne02*ne03 < 256) {
+    صحیح nth = 32; // SIMD width
+    جب (nth < ne00 && nth*ne01*ne02*ne03 < 256) {
         nth *= 2;
     }
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         2);
 
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+    ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem, 0);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, nrows, 1, 1, nth, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_argsort(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_argsort(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    GGML_ASSERT(ggml_is_contiguous_rows(op->src[0]));
+    GGML_ASSERT(ggml_is_contiguous_صفیں(op->src[0]));
 
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
     GGML_TENSOR_LOCALS(uint64_t, nb0, op->src[0], nb);
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    auto pipeline = ggml_metal_library_get_pipeline_argsort(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_argsort(lib, op);
 
     // bitonic sort requires the number of elements to be power of 2
-    int nth = 1;
-    while (nth < ne00 && 2*nth <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+    صحیح nth = 1;
+    جب (nth < ne00 && 2*nth <= ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline)) {
         nth *= 2;
     }
 
-    const int npr = (ne00 + nth - 1)/nth;
+    ثابت صحیح npr = (ne00 + nth - 1)/nth;
 
     // Metal kernels require the buffer size to be multiple of 16 bytes
     // https://developer.apple.com/documentation/metal/mtlcomputecommandencoder/1443142-setthreadgroupmemorylength
-    const size_t smem = GGML_PAD(nth*sizeof(int32_t), 16);
+    ثابت size_t smem = GGML_PAD(nth*حجم(int32_t), 16);
 
-    ggml_metal_buffer_id bid_src0 = ggml_metal_get_buffer_id(op->src[0]);
-    ggml_metal_buffer_id bid_dst  = ggml_metal_get_buffer_id(op);
+    ggml_metal_بفر_id bid_src0 = ggml_metal_get_بفر_id(op->src[0]);
+    ggml_metal_بفر_id bid_dst  = ggml_metal_get_بفر_id(op);
 
-    ggml_metal_buffer_id bid_tmp = bid_dst;
+    ggml_metal_بفر_id bid_tmp = bid_dst;
     bid_tmp.offs += ggml_nbytes(op);
 
-    if ((int) ceil(std::log(npr) / std::log(2)) % 2 == 1) {
+    اگر ((صحیح) ceil(std::لوگارتھم(npr) / std::لوگارتھم(2)) % 2 == 1) {
         std::swap(bid_dst, bid_tmp);
     }
 
-    ggml_metal_kargs_argsort args = {
+    ggml_metal_kargs_argsort دلائل_2 = {
         /*.ne00  =*/ ne00,
         /*.ne01  =*/ ne01,
         /*.ne02  =*/ ne02,
@@ -5576,23 +5576,23 @@ int ggml_metal_op_argsort(ggml_metal_op_t ctx, int idx) {
         /*.top_k =*/ nth,
     };
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
-    ggml_metal_encoder_set_buffer  (enc, bid_dst,  2);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, bid_src0, 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, bid_dst,  2);
 
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+    ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem, 0);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, npr*ne01, ne02, ne03, nth, 1, 1);
 
-    auto pipeline_merge = ggml_metal_library_get_pipeline_argsort_merge(lib, op);
+    خودکار pipeline_ملاؤ = ggml_metal_library_get_pipeline_argsort_ملاؤ(lib, op);
 
-    int len = nth;
+    صحیح len = nth;
 
-    while (len < ne00) {
+    جب (len < ne00) {
         ggml_metal_op_concurrency_reset(ctx);
 
-        ggml_metal_kargs_argsort_merge args_merge = {
+        ggml_metal_kargs_argsort_ملاؤ دلائل_ملاؤ = {
             /*.ne00  =*/ ne00,
             /*.ne01  =*/ ne01,
             /*.ne02  =*/ ne02,
@@ -5610,15 +5610,15 @@ int ggml_metal_op_argsort(ggml_metal_op_t ctx, int idx) {
         };
 
         // merges per row
-        const int nm = (ne00 + 2*len - 1) / (2*len);
+        ثابت صحیح nm = (ne00 + 2*len - 1) / (2*len);
 
-        const int nth = std::min(512, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline_merge));
+        ثابت صحیح nth = std::min(512, ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline_ملاؤ));
 
-        ggml_metal_encoder_set_pipeline(enc, pipeline_merge);
-        ggml_metal_encoder_set_bytes   (enc, &args_merge, sizeof(args_merge), 0);
-        ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
-        ggml_metal_encoder_set_buffer  (enc, bid_dst,  2);
-        ggml_metal_encoder_set_buffer  (enc, bid_tmp,  3);
+        ggml_metal_encoder_سیٹ_pipeline(enc, pipeline_ملاؤ);
+        ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_ملاؤ, حجم(دلائل_ملاؤ), 0);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_src0, 1);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_dst,  2);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_tmp,  3);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, nm*ne01, ne02, ne03, nth, 1, 1);
 
@@ -5627,50 +5627,50 @@ int ggml_metal_op_argsort(ggml_metal_op_t ctx, int idx) {
         len <<= 1;
     }
 
-    return 1;
+    واپس 1;
 }
 
 // bitonic-sort + merge fallback: efficient when k is small and there are few rows,
 // where the single-workgroup-per-row radix-select cannot reach enough parallelism
-static void ggml_metal_op_top_k_bitonic(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+ساکن خالی ggml_metal_op_چوٹی_k_bitonic(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    GGML_ASSERT(ggml_is_contiguous_rows(op->src[0]));
+    GGML_ASSERT(ggml_is_contiguous_صفیں(op->src[0]));
 
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
     GGML_TENSOR_LOCALS(uint64_t, nb0, op->src[0], nb);
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    auto pipeline = ggml_metal_library_get_pipeline_top_k(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_چوٹی_k(lib, op);
 
     // bitonic sort requires the number of elements to be power of 2
-    int nth = 1;
-    while (nth < ne00 && 2*nth <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+    صحیح nth = 1;
+    جب (nth < ne00 && 2*nth <= ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline)) {
         nth *= 2;
     }
 
     // blocks per row
-    const int npr = (ne00 + nth - 1)/nth;
+    ثابت صحیح npr = (ne00 + nth - 1)/nth;
 
-    const size_t smem = GGML_PAD(nth*sizeof(int32_t), 16);
+    ثابت size_t smem = GGML_PAD(nth*حجم(int32_t), 16);
 
-    ggml_metal_buffer_id bid_src0 = ggml_metal_get_buffer_id(op->src[0]);
-    ggml_metal_buffer_id bid_dst  = ggml_metal_get_buffer_id(op);
+    ggml_metal_بفر_id bid_src0 = ggml_metal_get_بفر_id(op->src[0]);
+    ggml_metal_بفر_id bid_dst  = ggml_metal_get_بفر_id(op);
 
-    ggml_metal_buffer_id bid_tmp = bid_dst;
-    bid_tmp.offs += sizeof(int32_t)*ggml_nelements(op->src[0]);
+    ggml_metal_بفر_id bid_tmp = bid_dst;
+    bid_tmp.offs += حجم(int32_t)*ggml_nelements(op->src[0]);
 
-    if ((int) ceil(std::log(npr) / std::log(2)) % 2 == 1) {
+    اگر ((صحیح) ceil(std::لوگارتھم(npr) / std::لوگارتھم(2)) % 2 == 1) {
         std::swap(bid_dst, bid_tmp);
     }
 
-    const int top_k = ne0;
+    ثابت صحیح چوٹی_k = ne0;
 
-    ggml_metal_kargs_argsort args = {
+    ggml_metal_kargs_argsort دلائل_2 = {
         /*.ne00  =*/ ne00,
         /*.ne01  =*/ ne01,
         /*.ne02  =*/ ne02,
@@ -5683,35 +5683,35 @@ static void ggml_metal_op_top_k_bitonic(ggml_metal_op_t ctx, int idx) {
         /*.ne1   =*/ ne1,
         /*.ne2   =*/ ne2,
         /*.ne3   =*/ ne3,
-        /*.top_k =*/ std::min(nth, top_k), // for each block, keep just the top_k indices
+        /*.top_k =*/ std::min(nth, چوٹی_k), // for each block, keep just the top_k indices
     };
 
-    if (npr > 1) {
-        args.ne0 = (npr - 1)*args.top_k + std::min(ne00 - (npr - 1)*nth, args.top_k);
+    اگر (npr > 1) {
+        دلائل_2.ne0 = (npr - 1)*دلائل_2.چوٹی_k + std::min(ne00 - (npr - 1)*nth, دلائل_2.چوٹی_k);
     }
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
-    ggml_metal_encoder_set_buffer  (enc, bid_dst,  2);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, bid_src0, 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, bid_dst,  2);
 
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+    ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem, 0);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, npr*ne01, ne02, ne03, nth, 1, 1);
 
-    auto pipeline_merge = ggml_metal_library_get_pipeline_top_k_merge(lib, op);
+    خودکار pipeline_ملاؤ = ggml_metal_library_get_pipeline_چوٹی_k_ملاؤ(lib, op);
 
-    int len = args.top_k;
+    صحیح len = دلائل_2.چوٹی_k;
 
-    while (len < args.ne0) {
+    جب (len < دلائل_2.ne0) {
         ggml_metal_op_concurrency_reset(ctx);
 
         // merges per row
-        const int nm = (args.ne0 + 2*len - 1) / (2*len);
+        ثابت صحیح nm = (دلائل_2.ne0 + 2*len - 1) / (2*len);
 
-        const int nth = std::min(512, std::min(len, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline_merge)));
+        ثابت صحیح nth = std::min(512, std::min(len, ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline_ملاؤ)));
 
-        ggml_metal_kargs_argsort_merge args_merge = {
+        ggml_metal_kargs_argsort_ملاؤ دلائل_ملاؤ = {
             /*.ne00  =*/ ne00,
             /*.ne01  =*/ ne01,
             /*.ne02  =*/ ne02,
@@ -5720,19 +5720,19 @@ static void ggml_metal_op_top_k_bitonic(ggml_metal_op_t ctx, int idx) {
             /*.nb01  =*/ nb01,
             /*.nb02  =*/ nb02,
             /*.nb03  =*/ nb03,
-            /*.ne0   =*/ args.ne0,
+            /*.ne0   =*/ دلائل_2.ne0,
             /*.ne1   =*/ ne1,
             /*.ne2   =*/ ne2,
             /*.ne3   =*/ ne3,
-            /*.top_k =*/ nm == 1 ? top_k : args.ne0, // the final merge outputs top_k elements
+            /*.top_k =*/ nm == 1 ? چوٹی_k : دلائل_2.ne0, // the final merge outputs top_k elements
             /*.len   =*/ len,
         };
 
-        ggml_metal_encoder_set_pipeline(enc, pipeline_merge);
-        ggml_metal_encoder_set_bytes   (enc, &args_merge, sizeof(args_merge), 0);
-        ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
-        ggml_metal_encoder_set_buffer  (enc, bid_dst,  2);
-        ggml_metal_encoder_set_buffer  (enc, bid_tmp,  3);
+        ggml_metal_encoder_سیٹ_pipeline(enc, pipeline_ملاؤ);
+        ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_ملاؤ, حجم(دلائل_ملاؤ), 0);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_src0, 1);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_dst,  2);
+        ggml_metal_encoder_سیٹ_بفر  (enc, bid_tmp,  3);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, nm*ne01, ne02, ne03, nth, 1, 1);
 
@@ -5745,23 +5745,23 @@ static void ggml_metal_op_top_k_bitonic(ggml_metal_op_t ctx, int idx) {
 // radix-select: one workgroup per row. Maps each float to an order-preserving unsigned
 // key, finds the k-th largest via 4 radix-8 histogram passes, then compacts the top-k
 // indices. Fast for large k and/or many rows.
-static void ggml_metal_op_top_k_radix(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+ساکن خالی ggml_metal_op_چوٹی_k_radix(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    GGML_ASSERT(ggml_is_contiguous_rows(op->src[0]));
+    GGML_ASSERT(ggml_is_contiguous_صفیں(op->src[0]));
 
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
     GGML_TENSOR_LOCALS(uint64_t, nb0, op->src[0], nb);
 
-    auto pipeline = ggml_metal_library_get_pipeline_top_k_radix(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_چوٹی_k_radix(lib, op);
 
     // one workgroup per row; radix-select the k-th largest value
-    const int nth = std::min(1024, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
+    ثابت صحیح nth = std::min(1024, ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline));
 
-    ggml_metal_kargs_top_k args = {
+    ggml_metal_kargs_چوٹی_k دلائل_2 = {
         /*.ne00  =*/ ne00,
         /*.ne01  =*/ ne01,
         /*.ne02  =*/ ne02,
@@ -5773,151 +5773,151 @@ static void ggml_metal_op_top_k_radix(ggml_metal_op_t ctx, int idx) {
     };
 
     // shared memory: 256-entry histogram + bucket/above scalars + output counter
-    const size_t smem_histo  = GGML_PAD(256*sizeof(uint32_t), 16);
-    const size_t smem_bucket = GGML_PAD(    sizeof(uint32_t), 16);
-    const size_t smem_above  = GGML_PAD(    sizeof(uint32_t), 16);
-    const size_t smem_out    = GGML_PAD(    sizeof(uint32_t), 16);
+    ثابت size_t smem_histo  = GGML_PAD(256*حجم(uint32_t), 16);
+    ثابت size_t smem_بالٹی = GGML_PAD(    حجم(uint32_t), 16);
+    ثابت size_t smem_above  = GGML_PAD(    حجم(uint32_t), 16);
+    ثابت size_t smem_برآمد    = GGML_PAD(    حجم(uint32_t), 16);
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         2);
 
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem_histo,  0);
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem_bucket, 1);
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem_above,  2);
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem_out,    3);
+    ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem_histo,  0);
+    ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem_بالٹی, 1);
+    ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem_above,  2);
+    ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem_برآمد,    3);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
 }
 
-int ggml_metal_op_topk_moe(ggml_metal_op_t ctx, int idx) {
+صحیح ggml_metal_op_topk_moe(ggml_metal_op_t ctx, صحیح idx) {
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    int n_fuse = 1;
-    const ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n_fuse);
-    if (!fusion || ggml_metal_fusion_get_id(fusion) != GGML_METAL_FUSION_TOPK_MOE) {
-        return 1;
+    صحیح n_fuse = 1;
+    ثابت ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_بھرا, &n_fuse);
+    اگر (!fusion || ggml_metal_fusion_get_id(fusion) != GGML_METAL_FUSION_TOPK_MOE) {
+        واپس 1;
     }
 
-    ggml_tensor * softmax  = ctx->node(idx);
+    ggml_tensor * softmax  = ctx->گرہ(idx);
     ggml_tensor * logits   = softmax->src[0];
-    ggml_tensor * get_rows = ctx->node(idx + 2);
-    ggml_tensor * ids      = get_rows->src[1];
-    ggml_tensor * weights  = ctx->node(idx + n_fuse - 1);
+    ggml_tensor * get_صفیں = ctx->گرہ(idx + 2);
+    ggml_tensor * ids      = get_صفیں->src[1];
+    ggml_tensor * weights  = ctx->گرہ(idx + n_fuse - 1);
 
-    const int64_t n_expert      = logits->ne[0];
-    const int64_t n_tokens      = logits->ne[1];
-    const int64_t n_expert_used = ids->ne[0];
+    ثابت int64_t n_expert      = logits->ne[0];
+    ثابت int64_t n_علامات      = logits->ne[1];
+    ثابت int64_t n_expert_مستعمل = ids->ne[0];
 
-    const bool with_norm  = n_fuse >= 6;
-    const bool with_scale = n_fuse == 4 || n_fuse == 7;
+    ثابت منطقی with_norm  = n_fuse >= 6;
+    ثابت منطقی with_scale = n_fuse == 4 || n_fuse == 7;
 
-    float clamp = -INFINITY;
-    if (with_norm) {
-        ggml_tensor * clamp_node = ctx->node(idx + 4);
-        clamp = ggml_get_op_params_f32(clamp_node, 0);
+    اعشاری clamp = -INFINITY;
+    اگر (with_norm) {
+        ggml_tensor * clamp_گرہ = ctx->گرہ(idx + 4);
+        clamp = ggml_get_op_params_f32(clamp_گرہ, 0);
     }
 
-    float scale = 1.0f;
-    if (with_scale) {
-        ggml_tensor * scale_node = ctx->node(idx + n_fuse - 1);
-        scale = ggml_get_op_params_f32(scale_node, 0);
+    اعشاری scale = 1.0f;
+    اگر (with_scale) {
+        ggml_tensor * scale_گرہ = ctx->گرہ(idx + n_fuse - 1);
+        scale = ggml_get_op_params_f32(scale_گرہ, 0);
     }
 
-    ggml_metal_kargs_topk_moe args = {
-        /*.ne01      =*/ (int32_t) n_tokens,
+    ggml_metal_kargs_topk_moe دلائل_2 = {
+        /*.ne01      =*/ (int32_t) n_علامات,
         /*.nb01      =*/ logits->nb[1],
         /*.nb1_ids   =*/ ids->nb[1],
         /*.clamp =*/ clamp,
         /*.scale =*/ scale,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_topk_moe(lib, (int32_t) n_expert, (int32_t) n_expert_used, with_norm);
+    خودکار pipeline = ggml_metal_library_get_pipeline_topk_moe(lib, (int32_t) n_expert, (int32_t) n_expert_مستعمل, with_norm);
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(logits),  1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(weights), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(ids),     3);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(logits),  1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(weights), 2);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(ids),     3);
 
-    ggml_metal_encoder_dispatch_threadgroups(enc, (uint32_t) n_tokens, 1, 1, 32, 1, 1);
+    ggml_metal_encoder_dispatch_threadgroups(enc, (uint32_t) n_علامات, 1, 1, 32, 1, 1);
 
-    ctx->count_fusions(fusion);
+    ctx->گنتی_fusions(fusion);
 
-    if (ggml_metal_fusion_info_debug(ctx->finfo) > 1) {
+    اگر (ggml_metal_fusion_info_debug(ctx->finfo) > 1) {
         GGML_LOG_DEBUG("%s: fuse: SOFT_MAX + ARGSORT + GET_ROWS\n", __func__);
     }
 
-    return n_fuse;
+    واپس n_fuse;
 }
 
-int ggml_metal_op_moe_reduce(ggml_metal_op_t ctx, int idx) {
+صحیح ggml_metal_op_moe_reduce(ggml_metal_op_t ctx, صحیح idx) {
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    int n_fuse = 1;
-    const ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n_fuse);
-    if (!fusion || ggml_metal_fusion_get_id(fusion) != GGML_METAL_FUSION_MOE_REDUCE) {
-        return 1;
+    صحیح n_fuse = 1;
+    ثابت ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_بھرا, &n_fuse);
+    اگر (!fusion || ggml_metal_fusion_get_id(fusion) != GGML_METAL_FUSION_MOE_REDUCE) {
+        واپس 1;
     }
 
-    ggml_tensor * mul     = ctx->node(idx);
+    ggml_tensor * mul     = ctx->گرہ(idx);
     ggml_tensor * experts = mul->src[0];
     ggml_tensor * weights = mul->src[1];
-    ggml_tensor * dst     = ctx->node(idx + n_fuse - 1);
+    ggml_tensor * dst     = ctx->گرہ(idx + n_fuse - 1);
 
-    ggml_metal_kargs_moe_reduce args = {
+    ggml_metal_kargs_moe_reduce دلائل_2 = {
         /*.ne00 =*/ (int32_t) experts->ne[0],
         /*.ne02 =*/ (int32_t) experts->ne[2],
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_moe_reduce(lib, (int32_t) experts->ne[1]);
+    خودکار pipeline = ggml_metal_library_get_pipeline_moe_reduce(lib, (int32_t) experts->ne[1]);
 
-    const int nth = std::min(256, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
-    const int n_col_tiles = (args.ne00 + nth - 1) / nth;
+    ثابت صحیح nth = std::min(256, ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline));
+    ثابت صحیح n_ستون_tiles = (دلائل_2.ne00 + nth - 1) / nth;
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(experts), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(weights), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(dst),     3);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(experts), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(weights), 2);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(dst),     3);
 
-    ggml_metal_encoder_dispatch_threadgroups(enc, (uint32_t) args.ne02, (uint32_t) n_col_tiles, 1, nth, 1, 1);
+    ggml_metal_encoder_dispatch_threadgroups(enc, (uint32_t) دلائل_2.ne02, (uint32_t) n_ستون_tiles, 1, nth, 1, 1);
 
-    ctx->count_fusions(fusion);
+    ctx->گنتی_fusions(fusion);
 
-    if (ggml_metal_fusion_info_debug(ctx->finfo) > 1) {
+    اگر (ggml_metal_fusion_info_debug(ctx->finfo) > 1) {
         GGML_LOG_DEBUG("%s: fuse: MOE_REDUCE\n", __func__);
     }
 
-    return n_fuse;
+    واپس n_fuse;
 }
 
-int ggml_metal_op_top_k(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_چوٹی_k(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     // radix-select has a fixed single-workgroup-per-row cost (~50-60us) that is only
     // amortized for long rows, many rows, or a large k; otherwise the bitonic path wins
-    const int ncols = op->src[0]->ne[0];
-    const int k     = op->ne[0];
-    const int nrows = ggml_nrows(op->src[0]);
+    ثابت صحیح ncols = op->src[0]->ne[0];
+    ثابت صحیح k     = op->ne[0];
+    ثابت صحیح nrows = ggml_nrows(op->src[0]);
 
-    const bool use_radix =
+    ثابت منطقی use_radix =
         ncols > 2048 && (k > 64 || (nrows > 4 && ncols >= 8192));
 
-    if (use_radix) {
-        ggml_metal_op_top_k_radix(ctx, idx);
-    } else {
-        ggml_metal_op_top_k_bitonic(ctx, idx);
+    اگر (use_radix) {
+        ggml_metal_op_چوٹی_k_radix(ctx, idx);
+    } ورنہ {
+        ggml_metal_op_چوٹی_k_bitonic(ctx, idx);
     }
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_tri(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_tri(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -5927,7 +5927,7 @@ int ggml_metal_op_tri(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    ggml_metal_kargs_tri args = {
+    ggml_metal_kargs_tri دلائل_2 = {
         /*.ne00  =*/ ne00,
         /*.ne01  =*/ ne01,
         /*.ne02  =*/ ne02,
@@ -5946,29 +5946,29 @@ int ggml_metal_op_tri(ggml_metal_op_t ctx, int idx) {
         /*.nb3   =*/ nb3,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_tri(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_tri(lib, op);
 
-    int nth = 32; // SIMD width
+    صحیح nth = 32; // SIMD width
 
-    while (nth < ne00 && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+    جب (nth < ne00 && nth < ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline)) {
         nth *= 2;
     }
 
-    nth = std::min(nth, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
+    nth = std::min(nth, ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline));
     nth = std::min(nth, ne00);
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), 0);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op),         2);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_opt_step_adamw(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_opt_قدم_adamw(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -5978,33 +5978,33 @@ int ggml_metal_op_opt_step_adamw(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    auto pipeline = ggml_metal_library_get_pipeline_opt_step_adamw(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_opt_قدم_adamw(lib, op);
 
-    const int64_t np = ggml_nelements(op->src[0]);
-    ggml_metal_kargs_opt_step_adamw args = {
+    ثابت int64_t np = ggml_nelements(op->src[0]);
+    ggml_metal_kargs_opt_قدم_adamw دلائل_2 = {
         /*.np =*/ np,
     };
 
-    int ida = 0;
+    صحیح ida = 0;
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), ida++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), ida++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), ida++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[2]), ida++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[3]), ida++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[4]), ida++);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), ida++);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), ida++);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[1]), ida++);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[2]), ida++);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[3]), ida++);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[4]), ida++);
 
-    const int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne0);
-    const int64_t n = (np + nth - 1) / nth;
+    ثابت صحیح nth = std::min(ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline), ne0);
+    ثابت int64_t n = (np + nth - 1) / nth;
 
     ggml_metal_encoder_dispatch_threadgroups(enc, n, 1, 1, nth, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_opt_step_sgd(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_opt_قدم_sgd(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -6014,31 +6014,31 @@ int ggml_metal_op_opt_step_sgd(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    auto pipeline = ggml_metal_library_get_pipeline_opt_step_sgd(lib, op);
+    خودکار pipeline = ggml_metal_library_get_pipeline_opt_قدم_sgd(lib, op);
 
-    const int64_t np = ggml_nelements(op->src[0]);
-    ggml_metal_kargs_opt_step_sgd args = {
+    ثابت int64_t np = ggml_nelements(op->src[0]);
+    ggml_metal_kargs_opt_قدم_sgd دلائل_2 = {
         /*.np =*/ np,
     };
 
-    int ida = 0;
+    صحیح ida = 0;
 
-    ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), ida++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), ida++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), ida++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[2]), ida++);
+    ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+    ggml_metal_encoder_سیٹ_بائٹیں   (enc, &دلائل_2, حجم(دلائل_2), ida++);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[0]), ida++);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[1]), ida++);
+    ggml_metal_encoder_سیٹ_بفر  (enc, ggml_metal_get_بفر_id(op->src[2]), ida++);
 
-    const int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne0);
-    const int64_t n = (np + nth - 1) / nth;
+    ثابت صحیح nth = std::min(ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline), ne0);
+    ثابت int64_t n = (np + nth - 1) / nth;
 
     ggml_metal_encoder_dispatch_threadgroups(enc, n, 1, 1, nth, 1, 1);
 
-    return 1;
+    واپس 1;
 }
 
-int ggml_metal_op_count_equal(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+صحیح ggml_metal_op_گنتی_equal(ggml_metal_op_t ctx, صحیح idx) {
+    ggml_tensor * op = ctx->گرہ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -6048,13 +6048,13 @@ int ggml_metal_op_count_equal(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS(uint64_t, nb1, op->src[1], nb);
 
     {
-        ggml_metal_kargs_memset args = { /*.val =*/ 0 };
+        ggml_metal_kargs_memset دلائل_2 = { /*.val =*/ 0 };
 
-        auto pipeline = ggml_metal_library_get_pipeline_memset(lib, op);
+        خودکار pipeline = ggml_metal_library_get_pipeline_memset(lib, op);
 
-        ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes(enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op), 1);
+        ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+        ggml_metal_encoder_سیٹ_بائٹیں(enc, &دلائل_2, حجم(دلائل_2), 0);
+        ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(op), 1);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, 1, 1, 1, 1, 1, 1);
     }
@@ -6062,7 +6062,7 @@ int ggml_metal_op_count_equal(ggml_metal_op_t ctx, int idx) {
     ggml_metal_op_concurrency_reset(ctx);
 
     {
-        ggml_metal_kargs_count_equal args = {
+        ggml_metal_kargs_گنتی_equal دلائل_2 = {
             /*.ne00 =*/ ne00,
             /*.ne01 =*/ ne01,
             /*.ne02 =*/ ne02,
@@ -6077,23 +6077,23 @@ int ggml_metal_op_count_equal(ggml_metal_op_t ctx, int idx) {
             /*.nb13 =*/ nb13,
         };
 
-        auto pipeline = ggml_metal_library_get_pipeline_count_equal(lib, op);
+        خودکار pipeline = ggml_metal_library_get_pipeline_گنتی_equal(lib, op);
 
-        const size_t smem = pipeline.smem;
+        ثابت size_t smem = pipeline.smem;
 
-        const int nth = 32*pipeline.nsg;
+        ثابت صحیح nth = 32*pipeline.nsg;
 
-        GGML_ASSERT(nth <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
+        GGML_ASSERT(nth <= ggml_metal_pipeline_max_theads_فی_threadgroup(pipeline));
 
-        ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes(enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-        ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-        ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op), 3);
+        ggml_metal_encoder_سیٹ_pipeline(enc, pipeline);
+        ggml_metal_encoder_سیٹ_بائٹیں(enc, &دلائل_2, حجم(دلائل_2), 0);
+        ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(op->src[0]), 1);
+        ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(op->src[1]), 2);
+        ggml_metal_encoder_سیٹ_بفر(enc, ggml_metal_get_بفر_id(op), 3);
 
-        ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+        ggml_metal_encoder_سیٹ_threadgroup_حافظہ_سائز(enc, smem, 0);
         ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
     }
 
-    return 1;
+    واپس 1;
 }

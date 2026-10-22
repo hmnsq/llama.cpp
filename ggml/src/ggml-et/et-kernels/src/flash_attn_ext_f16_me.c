@@ -17,33 +17,33 @@
 // row, round-robin across all minion hart-0s. Hart 1 assists with K packing.
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "math_fp.h"
-#include "platform.h"
-#include "tensor.h"
+#شامل "ggml_tensor.h"
+#شامل "math_fp.h"
+#شامل "platform.h"
+#شامل "tensor.h"
 
-#include <etsoc/common/utils.h>
-#include <stdint.h>
-#include <string.h>
+#شامل <etsoc/common/utils.h>
+#شامل <stdint.h>
+#شامل <string.h>
 
-#define NUM_COMPUTE_SHIRES 32
-#define MINIONS_PER_SHIRE  32
+#تعریف_کرو عدد_COMPUTE_SHIRES 32
+#تعریف_کرو MINIONS_فی_SHIRE  32
 
 // QK^T tiles: 16 KV positions at a time, K in chunks of 32 F16
-#define TILE_KV 16
-#define TILE_K  32
+#تعریف_کرو TILE_KV 16
+#تعریف_کرو TILE_K  32
 
 // L1 scratchpad layout: A (Q) in lines 0-15, B (K interleaved) in lines 16-31
-#define A_L1_START 0
-#define B_L1_START 16
+#تعریف_کرو A_L1_آغاز 0
+#تعریف_کرو B_L1_آغاز 16
 
 // Max head dimensions
-#define FA_DV_MAX 512  // max value head dim (dv)
-#define FA_DK_MAX 512  // max key head dim (dk) - some models use hsk > hsv
+#تعریف_کرو FA_DV_MAX 512  // max value head dim (dv)
+#تعریف_کرو FA_DK_MAX 512  // max key head dim (dk) - some models use hsk > hsv
 
-typedef uint16_t et_fp16_t;
+قسمتعریف uint16_t et_fp16_t;
 
-#define ET_NEG_INF_F (-3.402823466e+38f)
+#تعریف_کرو ET_NEG_INF_F (-3.402823466e+38f)
 
 // L2 SCP layout per minion:
 //   [0..2047]       accumulator (FA_DV_MAX * sizeof(float))
@@ -56,67 +56,67 @@ typedef uint16_t et_fp16_t;
 // The stats line reserves a cache-line-aligned slot for split-KV softmax
 // partials (M_p, S_p). With k_splits=1 the slot is currently unused; step 2
 // will populate it and use peer minions' slots during the reduction.
-#define SCP_ACC_OFF     0
-#define SCP_ACC_STRIDE  (FA_DV_MAX * sizeof(float))       // 2048
-#define SCP_KPANEL_SIZE (32 * 32 * sizeof(et_fp16_t))     // 2048
-#define SCP_KP0_OFF     SCP_ACC_STRIDE                    // 2048
-#define SCP_KP1_OFF     (SCP_KP0_OFF + SCP_KPANEL_SIZE)   // 4096
-#define SCP_STATS_OFF   (SCP_KP1_OFF + SCP_KPANEL_SIZE)   // 6144
-#define SCP_STATS_SIZE  64                                // own cache line
-#define SCP_PER_MINION  (SCP_STATS_OFF + SCP_STATS_SIZE)  // 6208
+#تعریف_کرو SCP_ACC_OFF     0
+#تعریف_کرو SCP_ACC_STRIDE  (FA_DV_MAX * حجم(اعشاری))       // 2048
+#تعریف_کرو SCP_KPANEL_سائز (32 * 32 * حجم(et_fp16_t))     // 2048
+#تعریف_کرو SCP_KP0_OFF     SCP_ACC_STRIDE                    // 2048
+#تعریف_کرو SCP_KP1_OFF     (SCP_KP0_OFF + SCP_KPANEL_سائز)   // 4096
+#تعریف_کرو SCP_STATS_OFF   (SCP_KP1_OFF + SCP_KPANEL_سائز)   // 6144
+#تعریف_کرو SCP_STATS_سائز  64                                // own cache line
+#تعریف_کرو SCP_فی_MINION  (SCP_STATS_OFF + SCP_STATS_سائز)  // 6208
 
-struct ggml_et_flash_attn_ext_params {
-    struct ggml_tensor src0;  // Q (F32)
-    struct ggml_tensor src1;  // K (F16)
-    struct ggml_tensor src2;  // V (F16)
-    struct ggml_tensor mask;  // mask (F16 or F32), zeroed when absent
-    struct ggml_tensor dst;   // Output (F32)
-    float              scale;
-    int32_t            has_mask;
+ساخت ggml_et_flash_attn_ext_params {
+    ساخت ggml_tensor src0;  // Q (F32)
+    ساخت ggml_tensor src1;  // K (F16)
+    ساخت ggml_tensor src2;  // V (F16)
+    ساخت ggml_tensor نقاب;  // mask (F16 or F32), zeroed when absent
+    ساخت ggml_tensor dst;   // Output (F32)
+    اعشاری              scale;
+    int32_t            has_نقاب;
 };
 
-static inline float get_mask_val(const struct ggml_tensor * mask, int64_t iq1, int64_t ik1, int64_t iq2, int64_t iq3) {
-    const char * base = (const char *) mask->data + iq1 * mask->nb[1] + (iq2 % mask->ne[2]) * mask->nb[2] +
-                        (iq3 % mask->ne[3]) * mask->nb[3];
+ساکن اندرونی اعشاری get_نقاب_val(ثابت ساخت ggml_tensor * نقاب, int64_t iq1, int64_t ik1, int64_t iq2, int64_t iq3) {
+    ثابت حرف * بنیاد = (ثابت حرف *) نقاب->ڈیٹا + iq1 * نقاب->nb[1] + (iq2 % نقاب->ne[2]) * نقاب->nb[2] +
+                        (iq3 % نقاب->ne[3]) * نقاب->nb[3];
 
-    if (mask->type == GGML_TYPE_F32) {
-        return *(const float *) (base + ik1 * mask->nb[0]);
+    اگر (نقاب->type == GGML_TYPE_F32) {
+        واپس *(ثابت اعشاری *) (بنیاد + ik1 * نقاب->nb[0]);
     }
-    return fp16_to_fp32(*(const uint16_t *) (base + ik1 * mask->nb[0]));
+    واپس fp16_مقصد_fp32(*(ثابت uint16_t *) (بنیاد + ik1 * نقاب->nb[0]));
 }
 
-static inline const char * get_mask_row_base(const struct ggml_tensor * mask, int64_t iq1, int64_t iq2, int64_t iq3) {
-    return (const char *) mask->data + iq1 * mask->nb[1] + (iq2 % mask->ne[2]) * mask->nb[2] +
-           (iq3 % mask->ne[3]) * mask->nb[3];
+ساکن اندرونی ثابت حرف * get_نقاب_صف_بنیاد(ثابت ساخت ggml_tensor * نقاب, int64_t iq1, int64_t iq2, int64_t iq3) {
+    واپس (ثابت حرف *) نقاب->ڈیٹا + iq1 * نقاب->nb[1] + (iq2 % نقاب->ne[2]) * نقاب->nb[2] +
+           (iq3 % نقاب->ne[3]) * نقاب->nb[3];
 }
 
-static inline float get_mask_val_from_base(const struct ggml_tensor * mask, const char * base, int64_t ik1) {
-    if (mask->type == GGML_TYPE_F32) {
-        return *(const float *) (base + ik1 * mask->nb[0]);
+ساکن اندرونی اعشاری get_نقاب_val_from_بنیاد(ثابت ساخت ggml_tensor * نقاب, ثابت حرف * بنیاد, int64_t ik1) {
+    اگر (نقاب->type == GGML_TYPE_F32) {
+        واپس *(ثابت اعشاری *) (بنیاد + ik1 * نقاب->nb[0]);
     }
-    return fp16_to_fp32(*(const uint16_t *) (base + ik1 * mask->nb[0]));
+    واپس fp16_مقصد_fp32(*(ثابت uint16_t *) (بنیاد + ik1 * نقاب->nb[0]));
 }
 
 // Pack K rows for TensorLoadTranspose16 (even/odd deinterleave)
-static inline void __attribute__((always_inline)) pack_k_for_transpose16(et_fp16_t *  out,
-                                                                         const char * k_base,
-                                                                         int64_t      kv_start,
-                                                                         int64_t      dk_start,
-                                                                         int64_t      kv_count,
+ساکن اندرونی خالی __attribute__((always_inline)) pack_k_for_transpose16(et_fp16_t *  برآمد,
+                                                                         ثابت حرف * k_بنیاد,
+                                                                         int64_t      kv_آغاز,
+                                                                         int64_t      dk_آغاز,
+                                                                         int64_t      kv_گنتی,
                                                                          int64_t      nb1_k) {
-    unsigned long old_mask;
-    __asm__ volatile(
+    غیرعلامتی طویل old_نقاب;
+    __asm__ متلون(
         "mova.x.m  %[ms]            \n\t"
         "mov.m.x   m0, x0, 0xFF     \n\t"
-        : [ms] "=&r"(old_mask)
+        : [ms] "=&r"(old_نقاب)
         :
         :);
 
-    for (int j = 0; j < (int) kv_count; ++j) {
-        const et_fp16_t * k_row    = (const et_fp16_t *) (k_base + (kv_start + j) * nb1_k) + dk_start;
-        et_fp16_t *       even_row = out + (j * 2) * 32;
-        et_fp16_t *       odd_row  = out + (j * 2 + 1) * 32;
-        __asm__ volatile(
+    برائے (صحیح j = 0; j < (صحیح) kv_گنتی; ++j) {
+        ثابت et_fp16_t * k_صف    = (ثابت et_fp16_t *) (k_بنیاد + (kv_آغاز + j) * nb1_k) + dk_آغاز;
+        et_fp16_t *       even_صف = برآمد + (j * 2) * 32;
+        et_fp16_t *       odd_صف  = برآمد + (j * 2 + 1) * 32;
+        __asm__ متلون(
             "flw.ps    f2, 0(%[src0])  \n\t"  // load row[0..15]
             "flw.ps    f3, 0(%[src1])  \n\t"  // load row[16..31]
             "fpackreph.pi f4, f2       \n\t"  // even_lo from src0
@@ -132,40 +132,40 @@ static inline void __attribute__((always_inline)) pack_k_for_transpose16(et_fp16
             "fsw.ps    f4, 0(%[even])  \n\t"
             "fsw.ps    f5, 0(%[odd])   \n\t"
             :
-            : [src0] "r"(k_row), [src1] "r"(k_row + 16), [even] "r"(even_row), [odd] "r"(odd_row)
+            : [src0] "r"(k_صف), [src1] "r"(k_صف + 16), [even] "r"(even_صف), [odd] "r"(odd_صف)
             : "f2", "f3", "f4", "f5", "f6", "f7", "memory");
     }
 
-    __asm__ volatile("mova.m.x  %[ms]            \n\t" : : [ms] "r"(old_mask));
+    __asm__ متلون("mova.m.x  %[ms]            \n\t" : : [ms] "r"(old_نقاب));
 
-    for (int j = (int) kv_count; j < TILE_KV; ++j) {
-        et_fp16_t * even_row = out + (j * 2) * 32;
-        et_fp16_t * odd_row  = out + (j * 2 + 1) * 32;
-        for (int l = 0; l < TILE_K / 2; ++l) {
-            even_row[l] = 0;
-            odd_row[l]  = 0;
+    برائے (صحیح j = (صحیح) kv_گنتی; j < TILE_KV; ++j) {
+        et_fp16_t * even_صف = برآمد + (j * 2) * 32;
+        et_fp16_t * odd_صف  = برآمد + (j * 2 + 1) * 32;
+        برائے (صحیح l = 0; l < TILE_K / 2; ++l) {
+            even_صف[l] = 0;
+            odd_صف[l]  = 0;
         }
     }
 }
 
 // Build interleaved B panel for TensorFMA16A32 (weights @ V).
-static inline void __attribute__((always_inline)) pack_v_interleaved(et_fp16_t *  out,
-                                                                     const char * v_head,
-                                                                     int64_t      kv_base,
-                                                                     int64_t      dv_start,
-                                                                     int64_t      kv_count,
+ساکن اندرونی خالی __attribute__((always_inline)) pack_v_interleaved(et_fp16_t *  برآمد,
+                                                                     ثابت حرف * v_سر,
+                                                                     int64_t      kv_بنیاد,
+                                                                     int64_t      dv_آغاز,
+                                                                     int64_t      kv_گنتی,
                                                                      int64_t      nb1_v) {
-    for (int k = 0; k < TILE_KV; ++k) {
-        const int         l   = k >> 1;
-        const int         r   = k & 1;
-        et_fp16_t * const dst = out + l * 32 + r;
-        if (k < (int) kv_count) {
-            const et_fp16_t * v_row = (const et_fp16_t *) (v_head + (kv_base + k) * nb1_v) + dv_start;
-            for (int n = 0; n < 16; ++n) {
-                dst[n * 2] = v_row[n];
+    برائے (صحیح k = 0; k < TILE_KV; ++k) {
+        ثابت صحیح         l   = k >> 1;
+        ثابت صحیح         r   = k & 1;
+        et_fp16_t * ثابت dst = برآمد + l * 32 + r;
+        اگر (k < (صحیح) kv_گنتی) {
+            ثابت et_fp16_t * v_صف = (ثابت et_fp16_t *) (v_سر + (kv_بنیاد + k) * nb1_v) + dv_آغاز;
+            برائے (صحیح n = 0; n < 16; ++n) {
+                dst[n * 2] = v_صف[n];
             }
-        } else {
-            for (int n = 0; n < 16; ++n) {
+        } ورنہ {
+            برائے (صحیح n = 0; n < 16; ++n) {
                 dst[n * 2] = 0;
             }
         }
@@ -173,31 +173,31 @@ static inline void __attribute__((always_inline)) pack_v_interleaved(et_fp16_t *
 }
 
 // Prefetch KV rows for one chunk into L2.
-static inline void __attribute__((always_inline)) prefetch_kv_to_l2(const char * head,
-                                                                    int64_t      kv_start,
-                                                                    int64_t      d_start,
-                                                                    int64_t      kv_count,
+ساکن اندرونی خالی __attribute__((always_inline)) prefetch_kv_مقصد_l2(ثابت حرف * سر,
+                                                                    int64_t      kv_آغاز,
+                                                                    int64_t      d_آغاز,
+                                                                    int64_t      kv_گنتی,
                                                                     int64_t      nb1) {
-    const void * base = (const void *) (head + kv_start * nb1 + d_start * 2);
-    l2_prefetch(base, (uint64_t) kv_count, (uint64_t) nb1);
+    ثابت خالی * بنیاد = (ثابت خالی *) (سر + kv_آغاز * nb1 + d_آغاز * 2);
+    l2_prefetch(بنیاد, (uint64_t) kv_گنتی, (uint64_t) nb1);
 }
 
-static inline void __attribute__((always_inline)) convert_q_row_f32_to_f16(et_fp16_t *   dst,
-                                                                           const float * src,
+ساکن اندرونی خالی __attribute__((always_inline)) convert_q_صف_f32_مقصد_f16(et_fp16_t *   dst,
+                                                                           ثابت اعشاری * src,
                                                                            int64_t       n) {
-    static const int32_t __attribute__((aligned(32))) offsets[8] = { 0, 2, 4, 6, 8, 10, 12, 14 };
+    ساکن ثابت int32_t __attribute__((aligned(32))) offsets[8] = { 0, 2, 4, 6, 8, 10, 12, 14 };
 
-    unsigned long old_mask;
-    __asm__ volatile(
+    غیرعلامتی طویل old_نقاب;
+    __asm__ متلون(
         "mova.x.m  %[ms]             \n\t"
         "mov.m.x   m0, x0, 0xFF      \n\t"
         "flw.ps    f1, 0(%[offs])    \n\t"
-        : [ms] "=&r"(old_mask)
+        : [ms] "=&r"(old_نقاب)
         : [offs] "r"(offsets)
         : "f1");
 
-    for (int64_t d = 0; d < n; d += 8) {
-        __asm__ volatile(
+    برائے (int64_t d = 0; d < n; d += 8) {
+        __asm__ متلون(
             "flw.ps      f2, 0(%[src])    \n\t"
             "fcvt.f16.ps f3, f2           \n\t"
             "fsch.ps     f3, f1(%[dst])   \n\t"
@@ -206,30 +206,30 @@ static inline void __attribute__((always_inline)) convert_q_row_f32_to_f16(et_fp
             : "f2", "f3", "memory");
     }
 
-    __asm__ volatile("mova.m.x  %[ms]             \n\t" : : [ms] "r"(old_mask));
+    __asm__ متلون("mova.m.x  %[ms]             \n\t" : : [ms] "r"(old_نقاب));
 }
 
-static inline void __attribute__((always_inline)) zero_acc_vec(float * acc, int64_t dv) {
-    const float   zero = 0.0f;
-    unsigned long old_mask;
-    __asm__ volatile("mova.x.m %0" : "=r"(old_mask));
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");
-    __asm__ volatile("fbc.ps  f2, 0(%[z])" ::[z] "r"(&zero) : "f2");
+ساکن اندرونی خالی __attribute__((always_inline)) zero_acc_vec(اعشاری * acc, int64_t dv) {
+    ثابت اعشاری   zero = 0.0f;
+    غیرعلامتی طویل old_نقاب;
+    __asm__ متلون("mova.x.m %0" : "=r"(old_نقاب));
+    __asm__ متلون("mov.m.x m0, x0, 0xFF");
+    __asm__ متلون("fbc.ps  f2, 0(%[z])" ::[z] "r"(&zero) : "f2");
 
-    for (int64_t d = 0; d < dv; d += 8) {
-        __asm__ volatile("fsw.ps  f2, 0(%[a])     \n\t" ::[a] "r"(acc + d) : "f2", "memory");
+    برائے (int64_t d = 0; d < dv; d += 8) {
+        __asm__ متلون("fsw.ps  f2, 0(%[a])     \n\t" ::[a] "r"(acc + d) : "f2", "memory");
     }
 
-    __asm__ volatile("mova.m.x %0" ::"r"(old_mask));
+    __asm__ متلون("mova.m.x %0" ::"r"(old_نقاب));
 }
 
-static inline void __attribute__((always_inline)) scale_acc_vec(float * acc, int64_t dv, float scale) {
-    unsigned long old_mask;
-    __asm__ volatile("mova.x.m %0" : "=r"(old_mask));
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");
+ساکن اندرونی خالی __attribute__((always_inline)) scale_acc_vec(اعشاری * acc, int64_t dv, اعشاری scale) {
+    غیرعلامتی طویل old_نقاب;
+    __asm__ متلون("mova.x.m %0" : "=r"(old_نقاب));
+    __asm__ متلون("mov.m.x m0, x0, 0xFF");
 
-    for (int64_t d = 0; d < dv; d += 8) {
-        __asm__ volatile(
+    برائے (int64_t d = 0; d < dv; d += 8) {
+        __asm__ متلون(
             "fbc.ps    f2, 0(%[s])    \n\t"
             "flw.ps    f3, 0(%[a])    \n\t"
             "fmul.ps   f3, f3, f2     \n\t"
@@ -239,20 +239,20 @@ static inline void __attribute__((always_inline)) scale_acc_vec(float * acc, int
             : "f2", "f3", "memory");
     }
 
-    __asm__ volatile("mova.m.x %0" ::"r"(old_mask));
+    __asm__ متلون("mova.m.x %0" ::"r"(old_نقاب));
 }
 
-static inline void __attribute__((always_inline)) normalize_store_vec(float * out,
-                                                                      float * acc,
+ساکن اندرونی خالی __attribute__((always_inline)) normalize_store_vec(اعشاری * برآمد,
+                                                                      اعشاری * acc,
                                                                       int64_t dv,
-                                                                      float   inv,
-                                                                      int     use_fast_store) {
-    unsigned long old_mask;
-    __asm__ volatile("mova.x.m %0" : "=r"(old_mask));
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");
+                                                                      اعشاری   inv,
+                                                                      صحیح     use_fast_store) {
+    غیرعلامتی طویل old_نقاب;
+    __asm__ متلون("mova.x.m %0" : "=r"(old_نقاب));
+    __asm__ متلون("mov.m.x m0, x0, 0xFF");
 
-    for (int64_t d = 0; d < dv; d += 8) {
-        __asm__ volatile(
+    برائے (int64_t d = 0; d < dv; d += 8) {
+        __asm__ متلون(
             "fbc.ps    f2, 0(%[inv])   \n\t"
             "flw.ps    f3, 0(%[a])     \n\t"
             "fmul.ps   f3, f3, f2      \n\t"
@@ -260,47 +260,47 @@ static inline void __attribute__((always_inline)) normalize_store_vec(float * ou
             :
             : [inv] "r"(&inv), [a] "r"(acc + d)
             : "f2", "f3", "memory");
-        if (use_fast_store) {
-            __asm__ volatile(
+        اگر (use_fast_store) {
+            __asm__ متلون(
                 "flw.ps  f4, 0(%[a])     \n\t"
                 "fsw.ps  f4, 0(%[o])     \n\t"
                 :
-                : [a] "r"(acc + d), [o] "r"(out + d)
+                : [a] "r"(acc + d), [o] "r"(برآمد + d)
                 : "f4", "memory");
-        } else {
-            atomic_store_f32((volatile float *) &out[d + 0], acc[d + 0]);
-            atomic_store_f32((volatile float *) &out[d + 1], acc[d + 1]);
-            atomic_store_f32((volatile float *) &out[d + 2], acc[d + 2]);
-            atomic_store_f32((volatile float *) &out[d + 3], acc[d + 3]);
-            atomic_store_f32((volatile float *) &out[d + 4], acc[d + 4]);
-            atomic_store_f32((volatile float *) &out[d + 5], acc[d + 5]);
-            atomic_store_f32((volatile float *) &out[d + 6], acc[d + 6]);
-            atomic_store_f32((volatile float *) &out[d + 7], acc[d + 7]);
+        } ورنہ {
+            atomic_store_f32((متلون اعشاری *) &برآمد[d + 0], acc[d + 0]);
+            atomic_store_f32((متلون اعشاری *) &برآمد[d + 1], acc[d + 1]);
+            atomic_store_f32((متلون اعشاری *) &برآمد[d + 2], acc[d + 2]);
+            atomic_store_f32((متلون اعشاری *) &برآمد[d + 3], acc[d + 3]);
+            atomic_store_f32((متلون اعشاری *) &برآمد[d + 4], acc[d + 4]);
+            atomic_store_f32((متلون اعشاری *) &برآمد[d + 5], acc[d + 5]);
+            atomic_store_f32((متلون اعشاری *) &برآمد[d + 6], acc[d + 6]);
+            atomic_store_f32((متلون اعشاری *) &برآمد[d + 7], acc[d + 7]);
         }
     }
 
-    __asm__ volatile("mova.m.x %0" ::"r"(old_mask));
+    __asm__ متلون("mova.m.x %0" ::"r"(old_نقاب));
 }
 
-static inline size_t tensor_bytes_fa(const struct ggml_tensor * t) {
-    return (size_t) t->ne[0] * t->ne[1] * t->ne[2] * t->ne[3] * t->nb[0];
+ساکن اندرونی size_t tensor_بائٹیں_fa(ثابت ساخت ggml_tensor * t) {
+    واپس (size_t) t->ne[0] * t->ne[1] * t->ne[2] * t->ne[3] * t->nb[0];
 }
 
 // Evict a byte range from L1D to L2 SCP, splitting into batches of ≤16
 // cache lines (the hw limit for evict_to_l2). Use before a barrier when
 // another minion in the shire needs to read the region, or after a barrier
 // on the reader side to drop stale L1D copies before reading peer data.
-static inline void __attribute__((always_inline)) evict_range_to_l2(const void * addr, int64_t bytes) {
-    if (bytes <= 0) {
-        return;
+ساکن اندرونی خالی __attribute__((always_inline)) evict_range_مقصد_l2(ثابت خالی * addr, int64_t بائٹیں) {
+    اگر (بائٹیں <= 0) {
+        واپس;
     }
-    int64_t      lines = (bytes + 63) / 64;
-    const char * p     = (const char *) addr;
-    while (lines > 0) {
-        int64_t batch = lines > 16 ? 16 : lines;
-        evict_to_l2((const void *) p, (uint64_t) batch, 64);
+    int64_t      سطریں = (بائٹیں + 63) / 64;
+    ثابت حرف * p     = (ثابت حرف *) addr;
+    جب (سطریں > 0) {
+        int64_t batch = سطریں > 16 ? 16 : سطریں;
+        evict_مقصد_l2((ثابت خالی *) p, (uint64_t) batch, 64);
         p += batch * 64;
-        lines -= batch;
+        سطریں -= batch;
     }
 }
 
@@ -314,23 +314,23 @@ static inline void __attribute__((always_inline)) evict_range_to_l2(const void *
 // asm with explicit f2/f3/f4/f5 clobbers to lock register usage down — per the
 // MM register lifetime rule, never let the compiler mingle FP ops into code
 // that sits anywhere near a tensor engine output window.
-static inline void __attribute__((always_inline)) merge_rescale_add_asm(float *       acc,
-                                                                        const float * peer_acc,
+ساکن اندرونی خالی __attribute__((always_inline)) ملاؤ_rescale_جوڑو_asm(اعشاری *       acc,
+                                                                        ثابت اعشاری * peer_acc,
                                                                         int64_t       dv,
-                                                                        float         alpha_own,
-                                                                        float         alpha_peer) {
-    unsigned long old_mask;
-    __asm__ volatile(
+                                                                        اعشاری         alpha_own,
+                                                                        اعشاری         alpha_peer) {
+    غیرعلامتی طویل old_نقاب;
+    __asm__ متلون(
         "mova.x.m  %[ms]              \n\t"
         "mov.m.x   m0, x0, 0xFF       \n\t"
         "fbc.ps    f4, 0(%[ao])       \n\t"  // broadcast alpha_own
         "fbc.ps    f5, 0(%[ap])       \n\t"  // broadcast alpha_peer
-        : [ms] "=&r"(old_mask)
+        : [ms] "=&r"(old_نقاب)
         : [ao] "r"(&alpha_own), [ap] "r"(&alpha_peer)
         : "f4", "f5");
 
-    for (int64_t d = 0; d < dv; d += 8) {
-        __asm__ volatile(
+    برائے (int64_t d = 0; d < dv; d += 8) {
+        __asm__ متلون(
             "flw.ps    f2, 0(%[a])      \n\t"  // own
             "flw.ps    f3, 0(%[p])      \n\t"  // peer
             "fmul.ps   f2, f2, f4       \n\t"  // own *= alpha_own
@@ -342,65 +342,65 @@ static inline void __attribute__((always_inline)) merge_rescale_add_asm(float * 
             : "f2", "f3", "memory");
     }
 
-    __asm__ volatile("mova.m.x %0" ::"r"(old_mask));
+    __asm__ متلون("mova.m.x %0" ::"r"(old_نقاب));
 }
 
-int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
-    (void) env;
+صحیح اندراج_نقطہ(ساخت ggml_et_flash_attn_ext_params * params, خالی * env) {
+    (خالی) env;
 
     uint64_t hart_id  = get_hart_id();
     uint64_t shire_id = get_shire_id();
 
-    if (shire_id >= NUM_COMPUTE_SHIRES) {
-        return 0;
+    اگر (shire_id >= عدد_COMPUTE_SHIRES) {
+        واپس 0;
     }
 
-    const int is_hart1     = hart_id & 1;
+    ثابت صحیح is_hart1     = hart_id & 1;
     uint64_t  local_minion = (hart_id >> 1) & 0x1F;
 
-    struct ggml_tensor * q        = &params->src0;
-    struct ggml_tensor * k        = &params->src1;
-    struct ggml_tensor * v        = &params->src2;
-    struct ggml_tensor * dst      = &params->dst;
-    const int32_t        has_mask = params->has_mask;
-    struct ggml_tensor * mask     = has_mask ? &params->mask : (struct ggml_tensor *) 0;
+    ساخت ggml_tensor * q        = &params->src0;
+    ساخت ggml_tensor * k        = &params->src1;
+    ساخت ggml_tensor * v        = &params->src2;
+    ساخت ggml_tensor * dst      = &params->dst;
+    ثابت int32_t        has_نقاب = params->has_نقاب;
+    ساخت ggml_tensor * نقاب     = has_نقاب ? &params->نقاب : (ساخت ggml_tensor *) 0;
 
-    const char * q_data   = (const char *) q->data;
-    const char * k_data   = (const char *) k->data;
-    const char * v_data   = (const char *) v->data;
-    char *       dst_data = (char *) dst->data;
+    ثابت حرف * q_ڈیٹا   = (ثابت حرف *) q->ڈیٹا;
+    ثابت حرف * k_ڈیٹا   = (ثابت حرف *) k->ڈیٹا;
+    ثابت حرف * v_ڈیٹا   = (ثابت حرف *) v->ڈیٹا;
+    حرف *       dst_ڈیٹا = (حرف *) dst->ڈیٹا;
 
     // et_barrier(ET_BARRIER_GLOBAL);
-    evict_region_past_l2(q->data, tensor_bytes_fa(q));
-    evict_region_past_l2(k->data, tensor_bytes_fa(k));
-    evict_region_past_l2(v->data, tensor_bytes_fa(v));
-    if (mask) {
-        evict_region_past_l2(mask->data, tensor_bytes_fa(mask));
+    evict_region_past_l2(q->ڈیٹا, tensor_بائٹیں_fa(q));
+    evict_region_past_l2(k->ڈیٹا, tensor_بائٹیں_fa(k));
+    evict_region_past_l2(v->ڈیٹا, tensor_بائٹیں_fa(v));
+    اگر (نقاب) {
+        evict_region_past_l2(نقاب->ڈیٹا, tensor_بائٹیں_fa(نقاب));
     }
     et_barrier(ET_BARRIER_GLOBAL);
 
-    const int64_t dk  = q->ne[0];
-    const int64_t nq  = q->ne[1];
-    const int64_t nhq = q->ne[2];
-    const int64_t no  = q->ne[3];
-    const int64_t nk  = k->ne[1];
-    const int64_t nhk = k->ne[2];
-    const int64_t dv  = v->ne[0];
+    ثابت int64_t dk  = q->ne[0];
+    ثابت int64_t nq  = q->ne[1];
+    ثابت int64_t nhq = q->ne[2];
+    ثابت int64_t no  = q->ne[3];
+    ثابت int64_t nk  = k->ne[1];
+    ثابت int64_t nhk = k->ne[2];
+    ثابت int64_t dv  = v->ne[0];
 
-    if (dv > FA_DV_MAX || dk > FA_DK_MAX) {
-        return -1;
+    اگر (dv > FA_DV_MAX || dk > FA_DK_MAX) {
+        واپس -1;
     }
-    if (k->nb[0] != 2 || v->nb[0] != 2) {
-        return -1;
+    اگر (k->nb[0] != 2 || v->nb[0] != 2) {
+        واپس -1;
     }
-    if ((dk % 8) != 0 || (dv % 16) != 0) {
-        return -1;
+    اگر ((dk % 8) != 0 || (dv % 16) != 0) {
+        واپس -1;
     }
 
-    const int64_t gqa_ratio      = nhq / nhk;
-    const int64_t total_rows     = nq * nhq * no;
-    const float   scale          = params->scale;
-    const int     use_fast_store = (dv % 16 == 0);
+    ثابت int64_t gqa_تناسب      = nhq / nhk;
+    ثابت int64_t کل_صفیں     = nq * nhq * no;
+    ثابت اعشاری   scale          = params->scale;
+    ثابت صحیح     use_fast_store = (dv % 16 == 0);
 
     // Split-KV team layout (mirrors mul_mat_f16_matrix_engine.c)
     //
@@ -414,41 +414,41 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
     // k_splits is a power of two, capped at MINIONS_PER_SHIRE (so a team
     // never spans shires — L2 SCP is shire-local) and at nk_tiles (so each
     // team member gets at least one KV tile).
-    const int64_t nk_tiles      = (nk + TILE_KV - 1) / TILE_KV;
-    const int64_t total_minions = 2 * NUM_COMPUTE_SHIRES * MINIONS_PER_SHIRE;
+    ثابت int64_t nk_tiles      = (nk + TILE_KV - 1) / TILE_KV;
+    ثابت int64_t کل_minions = 2 * عدد_COMPUTE_SHIRES * MINIONS_فی_SHIRE;
     int64_t       k_splits      = 1;
-    if (total_rows < total_minions) {
-        int64_t target = total_minions / total_rows;
+    اگر (کل_صفیں < کل_minions) {
+        int64_t ہدف = کل_minions / کل_صفیں;
         int64_t ks     = 1;
-        while (ks * 2 <= target && ks * 2 <= MINIONS_PER_SHIRE && ks * 2 <= nk_tiles) {
+        جب (ks * 2 <= ہدف && ks * 2 <= MINIONS_فی_SHIRE && ks * 2 <= nk_tiles) {
             ks *= 2;
         }
         k_splits = ks;
     }
 
-    const int64_t tiles_per_shire = MINIONS_PER_SHIRE / k_splits;
-    const int64_t k_split         = (int64_t) local_minion % k_splits;
-    const int64_t local_tile_idx  = (int64_t) local_minion / k_splits;
-    const int64_t tiles_stride    = (int64_t) NUM_COMPUTE_SHIRES * tiles_per_shire;
+    ثابت int64_t tiles_فی_shire = MINIONS_فی_SHIRE / k_splits;
+    ثابت int64_t k_بانٹو         = (int64_t) local_minion % k_splits;
+    ثابت int64_t local_tile_idx  = (int64_t) local_minion / k_splits;
+    ثابت int64_t tiles_stride    = (int64_t) عدد_COMPUTE_SHIRES * tiles_فی_shire;
 
     // KV slab for this k_split. With k_splits=1 this is the full range.
-    const int64_t tiles_per_split_rounded = (nk_tiles + k_splits - 1) / k_splits;
-    const int64_t tile_start              = k_split * tiles_per_split_rounded;
-    int64_t       tile_end                = tile_start + tiles_per_split_rounded;
-    if (tile_end > nk_tiles) {
-        tile_end = nk_tiles;
+    ثابت int64_t tiles_فی_بانٹو_rounded = (nk_tiles + k_splits - 1) / k_splits;
+    ثابت int64_t tile_آغاز              = k_بانٹو * tiles_فی_بانٹو_rounded;
+    int64_t       tile_انتہا                = tile_آغاز + tiles_فی_بانٹو_rounded;
+    اگر (tile_انتہا > nk_tiles) {
+        tile_انتہا = nk_tiles;
     }
-    const int64_t kv_start = tile_start * TILE_KV;
-    int64_t       kv_end   = tile_end * TILE_KV;
-    if (kv_end > nk) {
-        kv_end = nk;
+    ثابت int64_t kv_آغاز = tile_آغاز * TILE_KV;
+    int64_t       kv_انتہا   = tile_انتہا * TILE_KV;
+    اگر (kv_انتہا > nk) {
+        kv_انتہا = nk;
     }
 
     // L2 SCP pointers for this minion
-    uint64_t    scp_base  = local_minion * SCP_PER_MINION;
+    uint64_t    scp_بنیاد  = local_minion * SCP_فی_MINION;
     et_fp16_t * scp_kp[2] = {
-        (et_fp16_t *) et_shire_l2scp_local(scp_base + SCP_KP0_OFF),
-        (et_fp16_t *) et_shire_l2scp_local(scp_base + SCP_KP1_OFF),
+        (et_fp16_t *) et_shire_l2scp_local(scp_بنیاد + SCP_KP0_OFF),
+        (et_fp16_t *) et_shire_l2scp_local(scp_بنیاد + SCP_KP1_OFF),
     };
 
     // Hart 1 does K-panel packing
@@ -464,34 +464,34 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
     // past total_rows still call the barriers but skip the packing work.
     et_barrier(ET_BARRIER_SHIRE);
     // et_barrier(ET_BARRIER_GLOBAL);
-    if (is_hart1) {
+    اگر (is_hart1) {
         uint32_t      chunk_id = 0;
-        const int64_t row_base = (int64_t) shire_id + local_tile_idx * NUM_COMPUTE_SHIRES;
+        ثابت int64_t صف_بنیاد = (int64_t) shire_id + local_tile_idx * عدد_COMPUTE_SHIRES;
 
         int64_t max_iters;
-        if (k_splits > 1) {
-            max_iters = (total_rows + tiles_stride - 1) / tiles_stride;
-        } else {
-            max_iters = (row_base >= total_rows) ? 0 : ((total_rows - row_base - 1) / tiles_stride + 1);
+        اگر (k_splits > 1) {
+            max_iters = (کل_صفیں + tiles_stride - 1) / tiles_stride;
+        } ورنہ {
+            max_iters = (صف_بنیاد >= کل_صفیں) ? 0 : ((کل_صفیں - صف_بنیاد - 1) / tiles_stride + 1);
         }
 
-        for (int64_t iter = 0; iter < max_iters; iter++) {
-            const int64_t row      = row_base + iter * tiles_stride;
-            const int     has_work = (row < total_rows);
+        برائے (int64_t iter = 0; iter < max_iters; iter++) {
+            ثابت int64_t صف      = صف_بنیاد + iter * tiles_stride;
+            ثابت صحیح     has_work = (صف < کل_صفیں);
 
-            if (has_work) {
-                const int64_t iq3 = row / (nhq * nq);
-                const int64_t rem = row % (nhq * nq);
-                const int64_t iq2 = rem / nq;
-                const int64_t ik2 = iq2 / gqa_ratio;
+            اگر (has_work) {
+                ثابت int64_t iq3 = صف / (nhq * nq);
+                ثابت int64_t rem = صف % (nhq * nq);
+                ثابت int64_t iq2 = rem / nq;
+                ثابت int64_t ik2 = iq2 / gqa_تناسب;
 
-                const char * k_head = k_data + ik2 * k->nb[2] + iq3 * k->nb[3];
+                ثابت حرف * k_سر = k_ڈیٹا + ik2 * k->nb[2] + iq3 * k->nb[3];
 
-                for (int64_t kv_base = kv_start; kv_base < kv_end; kv_base += TILE_KV) {
-                    const int64_t kv_count = (kv_base + TILE_KV <= nk) ? TILE_KV : (nk - kv_base);
+                برائے (int64_t kv_بنیاد = kv_آغاز; kv_بنیاد < kv_انتہا; kv_بنیاد += TILE_KV) {
+                    ثابت int64_t kv_گنتی = (kv_بنیاد + TILE_KV <= nk) ? TILE_KV : (nk - kv_بنیاد);
 
-                    for (int64_t dk_chunk = 0; dk_chunk < dk; dk_chunk += TILE_K) {
-                        int buf = chunk_id & 1;
+                    برائے (int64_t dk_chunk = 0; dk_chunk < dk; dk_chunk += TILE_K) {
+                        صحیح buf = chunk_id & 1;
 
                         // Back-pressure: before overwriting buf[buf] on chunk N
                         // (which will displace chunk N-2), wait for hart 0 to
@@ -503,18 +503,18 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
                         // minion barrier for minion 0 shares FLB 0 with
                         // ET_BARRIER_SHIRE. Mixing them deadlocks. See
                         // feedback_flb_collision.
-                        if (chunk_id >= 2) {
+                        اگر (chunk_id >= 2) {
                             et_sem_wait(ET_BARRIER_MINION);
                         }
 
                         // Prefetch K data for this chunk
-                        prefetch_kv_to_l2(k_head, kv_base, dk_chunk, kv_count, k->nb[1]);
+                        prefetch_kv_مقصد_l2(k_سر, kv_بنیاد, dk_chunk, kv_گنتی, k->nb[1]);
 
-                        pack_k_for_transpose16(scp_kp[buf], k_head, kv_base, dk_chunk, kv_count, k->nb[1]);
+                        pack_k_for_transpose16(scp_kp[buf], k_سر, kv_بنیاد, dk_chunk, kv_گنتی, k->nb[1]);
 
                         FENCE;
-                        flush_to_l2(scp_kp[buf], 16, 64);
-                        flush_to_l2((et_fp16_t *) ((char *) scp_kp[buf] + 1024), 16, 64);
+                        flush_مقصد_l2(scp_kp[buf], 16, 64);
+                        flush_مقصد_l2((et_fp16_t *) ((حرف *) scp_kp[buf] + 1024), 16, 64);
                         WAIT_CACHEOPS;
 
                         // Signal: this buf is ready for hart 0 to consume.
@@ -526,7 +526,7 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
             }
 
             // Shire barriers for split-KV merge (hart 1 is a passive arrival).
-            if (k_splits > 1) {
+            اگر (k_splits > 1) {
                 et_barrier(ET_BARRIER_SHIRE);  // A: team has written its partial
                 et_barrier(ET_BARRIER_SHIRE);  // B: reducer has finished merge
             }
@@ -538,32 +538,32 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
         // carries +min(chunk_id,2) credits from hart 0's matching posts
         // that hart 1 never consumed.
         uint32_t drain = (chunk_id < 2) ? chunk_id : 2;
-        for (uint32_t d = 0; d < drain; d++) {
+        برائے (uint32_t d = 0; d < drain; d++) {
             et_sem_wait(ET_BARRIER_MINION);
         }
 
         // FENCE;
         // et_barrier(ET_BARRIER_GLOBAL);
-        return 0;
+        واپس 0;
     }
 
     // Hart 0: tensor engine compute
-#ifndef UBERKERNEL_SUPPRESS_SCP_SETUP
-    setup_cache_scp();
-#endif
+#اگر_غیر_تعریف_شدہ UBERKERNEL_SUPPRESS_SCP_تیاری
+    تیاری_cache_scp();
+#اگر_ختم
     CLEAR_TENSOR_ERROR;
 
     // Q converted to F16 (one row at a time)
     et_fp16_t q_f16[FA_DK_MAX] __attribute__((aligned(64)));
 
     // Score buffer for QK^T output (16 scores per KV tile)
-    float scores[TILE_KV] __attribute__((aligned(64)));
+    اعشاری scores[TILE_KV] __attribute__((aligned(64)));
 
     // Small buffers for V accumulation
     et_fp16_t w_f16_buf[32] __attribute__((aligned(64)));       // 64 bytes
     et_fp16_t vpanel_buf[8 * 32] __attribute__((aligned(64)));  // 512 bytes
 
-    float * acc = (float *) et_shire_l2scp_local(scp_base + SCP_ACC_OFF);
+    اعشاری * acc = (اعشاری *) et_shire_l2scp_local(scp_بنیاد + SCP_ACC_OFF);
 
     uint32_t chunk_id = 0;
 
@@ -571,57 +571,57 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
     // in a shire iterate the same number of times so the per-row shire
     // barriers stay balanced; iterations with row >= total_rows skip the
     // compute but still participate in the barriers.
-    const int64_t hart0_row_base = (int64_t) shire_id + local_tile_idx * NUM_COMPUTE_SHIRES;
+    ثابت int64_t hart0_صف_بنیاد = (int64_t) shire_id + local_tile_idx * عدد_COMPUTE_SHIRES;
     int64_t       hart0_max_iters;
-    if (k_splits > 1) {
-        hart0_max_iters = (total_rows + tiles_stride - 1) / tiles_stride;
-    } else {
-        hart0_max_iters = (hart0_row_base >= total_rows) ? 0 : ((total_rows - hart0_row_base - 1) / tiles_stride + 1);
+    اگر (k_splits > 1) {
+        hart0_max_iters = (کل_صفیں + tiles_stride - 1) / tiles_stride;
+    } ورنہ {
+        hart0_max_iters = (hart0_صف_بنیاد >= کل_صفیں) ? 0 : ((کل_صفیں - hart0_صف_بنیاد - 1) / tiles_stride + 1);
     }
 
-    for (int64_t iter = 0; iter < hart0_max_iters; iter++) {
-        const int64_t row = hart0_row_base + iter * tiles_stride;
-        if (row >= total_rows) {
+    برائے (int64_t iter = 0; iter < hart0_max_iters; iter++) {
+        ثابت int64_t صف = hart0_صف_بنیاد + iter * tiles_stride;
+        اگر (صف >= کل_صفیں) {
             // No-work iteration: only participate in barriers (k_splits > 1).
-            if (k_splits > 1) {
+            اگر (k_splits > 1) {
                 et_barrier(ET_BARRIER_SHIRE);  // A
                 et_barrier(ET_BARRIER_SHIRE);  // B
             }
-            continue;
+            جاری;
         }
 
-        const int64_t iq3 = row / (nhq * nq);
-        const int64_t rem = row % (nhq * nq);
-        const int64_t iq2 = rem / nq;
-        const int64_t iq1 = rem % nq;
-        const int64_t ik2 = iq2 / gqa_ratio;
+        ثابت int64_t iq3 = صف / (nhq * nq);
+        ثابت int64_t rem = صف % (nhq * nq);
+        ثابت int64_t iq2 = rem / nq;
+        ثابت int64_t iq1 = rem % nq;
+        ثابت int64_t ik2 = iq2 / gqa_تناسب;
 
         // Read Q row (F32) and convert to F16
-        const float * pq = (const float *) (q_data + iq1 * q->nb[1] + iq2 * q->nb[2] + iq3 * q->nb[3]);
-        convert_q_row_f32_to_f16(q_f16, pq, dk);
+        ثابت اعشاری * pq = (ثابت اعشاری *) (q_ڈیٹا + iq1 * q->nb[1] + iq2 * q->nb[2] + iq3 * q->nb[3]);
+        convert_q_صف_f32_مقصد_f16(q_f16, pq, dk);
 
         // V base for this head + batch (K packing handled by hart 1)
-        const char * v_head = v_data + ik2 * v->nb[2] + iq3 * v->nb[3];
+        ثابت حرف * v_سر = v_ڈیٹا + ik2 * v->nb[2] + iq3 * v->nb[3];
 
         // Output pointer
-        float * out = (float *) (dst_data + iq2 * dst->nb[1] + iq1 * dst->nb[2] + iq3 * dst->nb[3]);
+        اعشاری * برآمد = (اعشاری *) (dst_ڈیٹا + iq2 * dst->nb[1] + iq1 * dst->nb[2] + iq3 * dst->nb[3]);
 
         zero_acc_vec(acc, dv);
-        float        M         = ET_NEG_INF_F;
-        float        S         = 0.0f;
-        const char * mask_base = has_mask ? get_mask_row_base(mask, iq1, iq2, iq3) : (const char *) 0;
+        اعشاری        M         = ET_NEG_INF_F;
+        اعشاری        S         = 0.0f;
+        ثابت حرف * نقاب_بنیاد = has_نقاب ? get_نقاب_صف_بنیاد(نقاب, iq1, iq2, iq3) : (ثابت حرف *) 0;
 
         // Flush Q_f16 to L2 so tensor_load can see it
         FENCE;
-        flush_to_l2(q_f16, (dk * 2 + 63) / 64, 64);
+        flush_مقصد_l2(q_f16, (dk * 2 + 63) / 64, 64);
         WAIT_CACHEOPS;
 
-        for (int64_t kv_base = kv_start; kv_base < kv_end; kv_base += TILE_KV) {
-            const int64_t kv_count = (kv_base + TILE_KV <= nk) ? TILE_KV : (nk - kv_base);
+        برائے (int64_t kv_بنیاد = kv_آغاز; kv_بنیاد < kv_انتہا; kv_بنیاد += TILE_KV) {
+            ثابت int64_t kv_گنتی = (kv_بنیاد + TILE_KV <= nk) ? TILE_KV : (nk - kv_بنیاد);
 
             // Set tensor_mask for partial tiles
-            if (kv_count < TILE_KV) {
-                uint64_t tmask = (1ULL << kv_count) - 1;
+            اگر (kv_گنتی < TILE_KV) {
+                uint64_t tmask = (1ULL << kv_گنتی) - 1;
                 __asm__ __volatile__("csrw 0x805, %0" : : "r"(tmask));
             }
 
@@ -641,24 +641,24 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
             //
             // L1 footprint: max dk=512 → Q uses 16 lines (0..15), K uses 32
             // lines (16..47). Within ET-SoC-1 L1 SCP (≥128 lines per minion).
-            const int64_t  n_dk_chunks = dk / TILE_K;
-            const uint64_t K_BUFS[2]   = {
-                (uint64_t) B_L1_START,         // 16..31
-                (uint64_t) (B_L1_START + 16),  // 32..47
+            ثابت int64_t  n_dk_chunks = dk / TILE_K;
+            ثابت uint64_t K_BUFS[2]   = {
+                (uint64_t) B_L1_آغاز,         // 16..31
+                (uint64_t) (B_L1_آغاز + 16),  // 32..47
             };
 
             // Preload entire Q row into A_L1[0..n_dk_chunks-1] (one tensor_load,
             // one wait, regardless of dk).
-            tensor_load(false, false, A_L1_START, TENSOR_LOAD_PLAIN, 0, (uint64_t) q_f16, 0,
+            tensor_بھرو(false, false, A_L1_آغاز, TENSOR_بھرو_PLAIN, 0, (uint64_t) q_f16, 0,
                         (uint64_t) (n_dk_chunks - 1), 64, 0);
 
             // Prologue: wait hart 1's K[0], issue K[0] load, wait both loads.
             {
-                int buf = chunk_id & 1;
+                صحیح buf = chunk_id & 1;
                 et_sem_wait(ET_BARRIER_MINION);
-                tensor_load(false, false, K_BUFS[0], TENSOR_LOAD_TRANSPOSE16, 0, (uint64_t) scp_kp[buf], 0, 15, 64, 1);
-                tensor_wait(TENSOR_LOAD_WAIT_0);  // Q row complete
-                tensor_wait(TENSOR_LOAD_WAIT_1);  // K[0] complete
+                tensor_بھرو(false, false, K_BUFS[0], TENSOR_بھرو_TRANSPOSE16, 0, (uint64_t) scp_kp[buf], 0, 15, 64, 1);
+                tensor_wait(TENSOR_بھرو_WAIT_0);  // Q row complete
+                tensor_wait(TENSOR_بھرو_WAIT_1);  // K[0] complete
                 et_sem_post(ET_BARRIER_MINION);
                 chunk_id++;
             }
@@ -671,19 +671,19 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
             // immediately (frees scp_kp[buf] for hart 1 to refill chunk i+2),
             // then wait FMA. Putting sem_post after FMA wait would stall
             // hart 1 by a full FMA latency — defeating the producer pipeline.
-            for (int64_t i = 1; i < n_dk_chunks; i++) {
-                int buf         = chunk_id & 1;
-                int k_slot_prev = (int) ((i - 1) & 1);
-                int k_slot      = (int) (i & 1);
+            برائے (int64_t i = 1; i < n_dk_chunks; i++) {
+                صحیح buf         = chunk_id & 1;
+                صحیح k_خانہ_پچھلا = (صحیح) ((i - 1) & 1);
+                صحیح k_خانہ      = (صحیح) (i & 1);
 
                 et_sem_wait(ET_BARRIER_MINION);
-                tensor_load(false, false, K_BUFS[k_slot], TENSOR_LOAD_TRANSPOSE16, 0, (uint64_t) scp_kp[buf], 0, 15, 64,
+                tensor_بھرو(false, false, K_BUFS[k_خانہ], TENSOR_بھرو_TRANSPOSE16, 0, (uint64_t) scp_kp[buf], 0, 15, 64,
                             1);
 
-                tensor_fma((kv_count < TILE_KV), 3, 0, 15, 0, false, false, false, false, K_BUFS[k_slot_prev],
+                tensor_fma((kv_گنتی < TILE_KV), 3, 0, 15, 0, false, false, false, false, K_BUFS[k_خانہ_پچھلا],
                            (uint64_t) (i - 1), TENSOR_FMA_OP_FP16, (i == 1));
 
-                tensor_wait(TENSOR_LOAD_WAIT_1);  // K[i] in L1
+                tensor_wait(TENSOR_بھرو_WAIT_1);  // K[i] in L1
                 et_sem_post(ET_BARRIER_MINION);   // release scp_kp[buf] EARLY
                 tensor_wait(TENSOR_FMA_WAIT);     // then wait FMA[i-1]
                 chunk_id++;
@@ -691,25 +691,25 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
 
             // Epilogue: FMA on the last chunk (no overlapping load).
             {
-                int k_slot_last = (int) ((n_dk_chunks - 1) & 1);
-                tensor_fma((kv_count < TILE_KV), 3, 0, 15, 0, false, false, false, false, K_BUFS[k_slot_last],
+                صحیح k_خانہ_آخری = (صحیح) ((n_dk_chunks - 1) & 1);
+                tensor_fma((kv_گنتی < TILE_KV), 3, 0, 15, 0, false, false, false, false, K_BUFS[k_خانہ_آخری],
                            (uint64_t) (n_dk_chunks - 1), TENSOR_FMA_OP_FP16, (n_dk_chunks == 1));
                 tensor_wait(TENSOR_FMA_WAIT);
             }
 
             // Prefetch V rows for this tile.
             // Only useful for the partial-tile path below
-            if (kv_count < TILE_KV) {
-                for (int64_t d = 0; d < dv; d += 32) {
-                    prefetch_kv_to_l2(v_head, kv_base, d, kv_count, v->nb[1]);
+            اگر (kv_گنتی < TILE_KV) {
+                برائے (int64_t d = 0; d < dv; d += 32) {
+                    prefetch_kv_مقصد_l2(v_سر, kv_بنیاد, d, kv_گنتی, v->nb[1]);
                 }
             }
 
             // Extract QK^T scores from vector register file
-            __asm__ volatile("" ::: "f0", "f1");
+            __asm__ متلون("" ::: "f0", "f1");
             {
-                unsigned long _ms;
-                __asm__ volatile(
+                غیرعلامتی طویل _ms;
+                __asm__ متلون(
                     "mova.x.m  %[ms]                \n\t"
                     "mov.m.x   m0, x0, 0xFF         \n\t"
                     "fbc.ps    f2, 0(%[p_scale])    \n\t"
@@ -727,28 +727,28 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
             // Two-phase softmax + V accumulation
             // ============================================================
 
-            float weights[TILE_KV] __attribute__((aligned(64)));
+            اعشاری weights[TILE_KV] __attribute__((aligned(64)));
             {
                 // A1: apply mask to scores, pad unused slots
-                for (int64_t j = 0; j < kv_count; ++j) {
-                    if (has_mask) {
-                        float mv = get_mask_val_from_base(mask, mask_base, kv_base + j);
-                        if (mv == ET_NEG_INF_F || mv != mv) {
+                برائے (int64_t j = 0; j < kv_گنتی; ++j) {
+                    اگر (has_نقاب) {
+                        اعشاری mv = get_نقاب_val_from_بنیاد(نقاب, نقاب_بنیاد, kv_بنیاد + j);
+                        اگر (mv == ET_NEG_INF_F || mv != mv) {
                             scores[j] = ET_NEG_INF_F;
-                        } else {
+                        } ورنہ {
                             scores[j] += mv;
                         }
                     }
                 }
-                for (int64_t j = kv_count; j < TILE_KV; ++j) {
+                برائے (int64_t j = kv_گنتی; j < TILE_KV; ++j) {
                     scores[j] = ET_NEG_INF_F;
                 }
 
                 // A1b: SIMD horizontal max across all 16 scores
-                float tile_max;
+                اعشاری tile_max;
                 {
-                    unsigned long _ms;
-                    __asm__ volatile(
+                    غیرعلامتی طویل _ms;
+                    __asm__ متلون(
                         "mova.x.m  %[ms]              \n\t"
                         "mov.m.x   m0, x0, 0xFF       \n\t"
                         "flw.ps    f2, 0(%[sc])       \n\t"
@@ -767,10 +767,10 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
                         : "f2", "f3", "t0", "memory");
                 }
 
-                if (tile_max > ET_NEG_INF_F) {
+                اگر (tile_max > ET_NEG_INF_F) {
                     // A2: rescale accumulator if this tile has a new global max
-                    if (tile_max > M) {
-                        float rescale = et_exp2f((M - tile_max) * 1.4426950408889634f);
+                    اگر (tile_max > M) {
+                        اعشاری rescale = et_exp2f((M - tile_max) * 1.4426950408889634f);
                         scale_acc_vec(acc, dv, rescale);
                         S *= rescale;
                         M = tile_max;
@@ -781,10 +781,10 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
                     // fexp.ps has multi-cycle latency — the two independent
                     // exp2 calls naturally pipeline.
                     {
-                        const float   log2e = 1.4426950408889634f;
-                        float         S_tile;
-                        unsigned long _ms;
-                        __asm__ volatile(
+                        ثابت اعشاری   log2e = 1.4426950408889634f;
+                        اعشاری         S_tile;
+                        غیرعلامتی طویل _ms;
+                        __asm__ متلون(
                             "mova.x.m  %[ms]              \n\t"
                             "mov.m.x   m0, x0, 0xFF       \n\t"
                             "flw.ps    f2, 0(%[sc])       \n\t"
@@ -817,10 +817,10 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
                     // Phase B: weights @ V via TensorFMA16A32
                     {
                         // B1: convert weights F32 → F16
-                        convert_q_row_f32_to_f16(w_f16_buf, weights, TILE_KV);
+                        convert_q_صف_f32_مقصد_f16(w_f16_buf, weights, TILE_KV);
 
                         FENCE;
-                        flush_to_l2(w_f16_buf, 1, 64);
+                        flush_مقصد_l2(w_f16_buf, 1, 64);
                         WAIT_CACHEOPS;
 
                         // Issue weights load (wait_id=0) and the first V chunk
@@ -830,41 +830,41 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
                         // shorter load behind the longer one. For partial
                         // tiles, V is software-packed below — we only kick
                         // off the early V load on the full-tile fast path.
-                        tensor_load(false, false, A_L1_START, TENSOR_LOAD_PLAIN, 0, (uint64_t) w_f16_buf, 0, 0, 64, 0);
+                        tensor_بھرو(false, false, A_L1_آغاز, TENSOR_بھرو_PLAIN, 0, (uint64_t) w_f16_buf, 0, 0, 64, 0);
 
-                        const int       v_full_tile = (kv_count == TILE_KV);
-                        const uintptr_t v_base      = (uintptr_t) v_head + kv_base * v->nb[1];
-                        const uint64_t  nb1_v       = (uint64_t) v->nb[1];
+                        ثابت صحیح       v_بھرا_tile = (kv_گنتی == TILE_KV);
+                        ثابت uintptr_t v_بنیاد      = (uintptr_t) v_سر + kv_بنیاد * v->nb[1];
+                        ثابت uint64_t  nb1_v       = (uint64_t) v->nb[1];
                         uint64_t        b_cur       = 8;
 
-                        if (v_full_tile) {
-                            tensor_load(false, false, b_cur, TENSOR_LOAD_INTERLEAVE16, 0, (uint64_t) v_base, 0, 7,
+                        اگر (v_بھرا_tile) {
+                            tensor_بھرو(false, false, b_cur, TENSOR_بھرو_INTERLEAVE16, 0, (uint64_t) v_بنیاد, 0, 7,
                                         nb1_v, 1);
                         }
 
-                        tensor_wait(TENSOR_LOAD_WAIT_0);      // weights in A_L1
-                        if (v_full_tile) {
-                            tensor_wait(TENSOR_LOAD_WAIT_1);  // V[0] in b_cur
+                        tensor_wait(TENSOR_بھرو_WAIT_0);      // weights in A_L1
+                        اگر (v_بھرا_tile) {
+                            tensor_wait(TENSOR_بھرو_WAIT_1);  // V[0] in b_cur
                         }
 
                         // B2: process dv in chunks of 16
-                        if (v_full_tile) {
-                            for (int64_t dv_off = 0; dv_off < dv; dv_off += 16) {
-                                const uint64_t b_nxt = b_cur ^ 24;
+                        اگر (v_بھرا_tile) {
+                            برائے (int64_t dv_off = 0; dv_off < dv; dv_off += 16) {
+                                ثابت uint64_t b_nxt = b_cur ^ 24;
 
-                                if (dv_off + 16 < dv) {
-                                    tensor_load(false, false, b_nxt, TENSOR_LOAD_INTERLEAVE16, 0,
-                                                (uint64_t) (v_base + (dv_off + 16) * 2), 0, 7, nb1_v, 1);
+                                اگر (dv_off + 16 < dv) {
+                                    tensor_بھرو(false, false, b_nxt, TENSOR_بھرو_INTERLEAVE16, 0,
+                                                (uint64_t) (v_بنیاد + (dv_off + 16) * 2), 0, 7, nb1_v, 1);
                                 }
 
-                                tensor_fma(false, 3, 0, 7, 0, false, false, false, false, b_cur, A_L1_START,
+                                tensor_fma(false, 3, 0, 7, 0, false, false, false, false, b_cur, A_L1_آغاز,
                                            TENSOR_FMA_OP_FP16, true);
                                 tensor_wait(TENSOR_FMA_WAIT);
 
-                                __asm__ volatile("" ::: "f0", "f1");
+                                __asm__ متلون("" ::: "f0", "f1");
                                 {
-                                    unsigned long _ms;
-                                    __asm__ volatile(
+                                    غیرعلامتی طویل _ms;
+                                    __asm__ متلون(
                                         "mova.x.m  %[ms]            \n\t"
                                         "mov.m.x   m0, x0, 0xFF     \n\t"
                                         "flw.ps    f2, 0(%[pa])     \n\t"
@@ -879,30 +879,30 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
                                         : "f0", "f1", "f2", "f3", "memory");
                                 }
 
-                                if (dv_off + 16 < dv) {
-                                    tensor_wait(TENSOR_LOAD_WAIT_1);
+                                اگر (dv_off + 16 < dv) {
+                                    tensor_wait(TENSOR_بھرو_WAIT_1);
                                     b_cur = b_nxt;
                                 }
                             }
-                        } else {
+                        } ورنہ {
                             // Partial tile: software pack, no pipeline
-                            for (int64_t dv_off = 0; dv_off < dv; dv_off += 16) {
-                                pack_v_interleaved(vpanel_buf, v_head, kv_base, dv_off, kv_count, v->nb[1]);
+                            برائے (int64_t dv_off = 0; dv_off < dv; dv_off += 16) {
+                                pack_v_interleaved(vpanel_buf, v_سر, kv_بنیاد, dv_off, kv_گنتی, v->nb[1]);
                                 FENCE;
-                                flush_to_l2(vpanel_buf, 8, 64);
+                                flush_مقصد_l2(vpanel_buf, 8, 64);
                                 WAIT_CACHEOPS;
-                                tensor_load(false, false, B_L1_START, TENSOR_LOAD_PLAIN, 0, (uint64_t) vpanel_buf, 0, 7,
+                                tensor_بھرو(false, false, B_L1_آغاز, TENSOR_بھرو_PLAIN, 0, (uint64_t) vpanel_buf, 0, 7,
                                             64, 0);
-                                tensor_wait(TENSOR_LOAD_WAIT_0);
+                                tensor_wait(TENSOR_بھرو_WAIT_0);
 
-                                tensor_fma(false, 3, 0, 7, 0, false, false, false, false, B_L1_START, A_L1_START,
+                                tensor_fma(false, 3, 0, 7, 0, false, false, false, false, B_L1_آغاز, A_L1_آغاز,
                                            TENSOR_FMA_OP_FP16, true);
                                 tensor_wait(TENSOR_FMA_WAIT);
 
-                                __asm__ volatile("" ::: "f0", "f1");
+                                __asm__ متلون("" ::: "f0", "f1");
                                 {
-                                    unsigned long _ms;
-                                    __asm__ volatile(
+                                    غیرعلامتی طویل _ms;
+                                    __asm__ متلون(
                                         "mova.x.m  %[ms]            \n\t"
                                         "mov.m.x   m0, x0, 0xFF     \n\t"
                                         "flw.ps    f2, 0(%[pa])     \n\t"
@@ -934,20 +934,20 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
         //                softmax combine and the final store. All tensor
         //                engine ops are complete before this block, so
         //                f0..f31 are free to use.
-        if (k_splits > 1) {
+        اگر (k_splits > 1) {
             // Publish our partial.
-            volatile float * my_stats = (volatile float *) et_shire_l2scp_local(scp_base + SCP_STATS_OFF);
+            متلون اعشاری * my_stats = (متلون اعشاری *) et_shire_l2scp_local(scp_بنیاد + SCP_STATS_OFF);
             my_stats[0]               = M;
             my_stats[1]               = S;
             FENCE;
-            evict_range_to_l2(acc, (int64_t) dv * (int64_t) sizeof(float));
-            evict_to_l2((const void *) my_stats, 1, 64);
+            evict_range_مقصد_l2(acc, (int64_t) dv * (int64_t) حجم(اعشاری));
+            evict_مقصد_l2((ثابت خالی *) my_stats, 1, 64);
             WAIT_CACHEOPS;
 
             // A: team members have all written their partials.
             et_barrier(ET_BARRIER_SHIRE);
 
-            if (k_split == 0) {
+            اگر (k_بانٹو == 0) {
                 // Online softmax merge: fold peers 1..k_splits-1 into our
                 // own (M_running, S_running, acc). For each peer p:
                 //   M_new    = max(M_running, M_p)
@@ -955,46 +955,46 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
                 //   α_p      = exp2((M_p     - M_new) * log2e)
                 //   acc[d]   = α_own * acc[d] + α_p * peer_acc[d]
                 //   S_running = α_own * S_running + α_p * S_p
-                float       M_running = M;
-                float       S_running = S;
-                const float log2e     = 1.4426950408889634f;
+                اعشاری       M_running = M;
+                اعشاری       S_running = S;
+                ثابت اعشاری log2e     = 1.4426950408889634f;
 
-                for (int64_t p = 1; p < k_splits; p++) {
-                    uint64_t         peer_scp   = (local_tile_idx * k_splits + p) * SCP_PER_MINION;
-                    volatile float * peer_stats = (volatile float *) et_shire_l2scp_local(peer_scp + SCP_STATS_OFF);
-                    float *          peer_acc   = (float *) et_shire_l2scp_local(peer_scp + SCP_ACC_OFF);
+                برائے (int64_t p = 1; p < k_splits; p++) {
+                    uint64_t         peer_scp   = (local_tile_idx * k_splits + p) * SCP_فی_MINION;
+                    متلون اعشاری * peer_stats = (متلون اعشاری *) et_shire_l2scp_local(peer_scp + SCP_STATS_OFF);
+                    اعشاری *          peer_acc   = (اعشاری *) et_shire_l2scp_local(peer_scp + SCP_ACC_OFF);
 
                     // Drop stale L1D copies before reading peer's data.
-                    evict_to_l2((const void *) peer_stats, 1, 64);
-                    evict_range_to_l2(peer_acc, (int64_t) dv * (int64_t) sizeof(float));
+                    evict_مقصد_l2((ثابت خالی *) peer_stats, 1, 64);
+                    evict_range_مقصد_l2(peer_acc, (int64_t) dv * (int64_t) حجم(اعشاری));
                     WAIT_CACHEOPS;
 
-                    const float M_p = peer_stats[0];
-                    const float S_p = peer_stats[1];
+                    ثابت اعشاری M_p = peer_stats[0];
+                    ثابت اعشاری S_p = peer_stats[1];
 
-                    const float M_new     = (M_p > M_running) ? M_p : M_running;
-                    const float alpha_own = (M_running == ET_NEG_INF_F) ? 0.0f : et_exp2f((M_running - M_new) * log2e);
-                    const float alpha_p   = (M_p == ET_NEG_INF_F) ? 0.0f : et_exp2f((M_p - M_new) * log2e);
+                    ثابت اعشاری M_new     = (M_p > M_running) ? M_p : M_running;
+                    ثابت اعشاری alpha_own = (M_running == ET_NEG_INF_F) ? 0.0f : et_exp2f((M_running - M_new) * log2e);
+                    ثابت اعشاری alpha_p   = (M_p == ET_NEG_INF_F) ? 0.0f : et_exp2f((M_p - M_new) * log2e);
 
-                    merge_rescale_add_asm(acc, peer_acc, dv, alpha_own, alpha_p);
+                    ملاؤ_rescale_جوڑو_asm(acc, peer_acc, dv, alpha_own, alpha_p);
 
                     S_running = alpha_own * S_running + alpha_p * S_p;
                     M_running = M_new;
                 }
 
-                const float S_inv = (S_running == 0.0f) ? 0.0f : et_fdiv(1.0f, S_running);
-                normalize_store_vec(out, acc, dv, S_inv, use_fast_store);
+                ثابت اعشاری S_inv = (S_running == 0.0f) ? 0.0f : et_fdiv(1.0f, S_running);
+                normalize_store_vec(برآمد, acc, dv, S_inv, use_fast_store);
             }
 
             // B: reducer is done, team may reuse its acc/stats slabs.
             et_barrier(ET_BARRIER_SHIRE);
-        } else {
+        } ورنہ {
             // k_splits == 1 fast path — this minion owns the full row.
-            const float S_inv = S == 0.0f ? 0.0f : et_fdiv(1.0f, S);
-            normalize_store_vec(out, acc, dv, S_inv, use_fast_store);
+            ثابت اعشاری S_inv = S == 0.0f ? 0.0f : et_fdiv(1.0f, S);
+            normalize_store_vec(برآمد, acc, dv, S_inv, use_fast_store);
         }
     }
 
     FENCE;
-    return 0;
+    واپس 0;
 }

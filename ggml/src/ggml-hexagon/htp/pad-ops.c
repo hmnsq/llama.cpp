@@ -1,30 +1,30 @@
-#pragma clang diagnostic ignored "-Wunused-variable"
-#pragma clang diagnostic ignored "-Wunused-function"
-#pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#ہدایت clang diagnostic ignored "-Wunused-variable"
+#ہدایت clang diagnostic ignored "-Wunused-function"
+#ہدایت clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
+#شامل <HAP_farf.h>
+#شامل <HAP_perf.h>
 
-#include <string.h>
+#شامل <string.h>
 
-#include "dma-queue.h"
-#include "hvx-utils.h"
+#شامل "dma-queue.h"
+#شامل "hvx-utils.h"
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "hex-common.h"
-#include "hex-profile.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-tensor.h"
+#تعریف_کرو GGML_COMMON_DECL_C
+#شامل "ggml-common.h"
+#شامل "hex-common.h"
+#شامل "hex-profile.h"
+#شامل "htp-ctx.h"
+#شامل "htp-ops.h"
+#شامل "htp-tensor.h"
 
 /* Circular wrap: maps any integer x into [0, n) */
-static inline uint32_t wrap_around(int32_t x, uint32_t n) {
-    return (uint32_t)(((x % (int32_t)n) + (int32_t)n) % (int32_t)n);
+ساکن اندرونی uint32_t wrap_around(int32_t x, uint32_t n) {
+    واپس (uint32_t)(((x % (int32_t)n) + (int32_t)n) % (int32_t)n);
 }
 
 /* Decompose a flat dst row index into (i1, i2, i3) */
-static inline void pad_decompose_row(uint32_t ir, uint32_t ne1, uint32_t ne2,
+ساکن اندرونی خالی pad_decompose_صف(uint32_t ir, uint32_t ne1, uint32_t ne2,
                                      uint32_t *i1, uint32_t *i2, uint32_t *i3) {
     *i1 = ir % ne1;
     *i2 = (ir / ne1) % ne2;
@@ -32,177 +32,177 @@ static inline void pad_decompose_row(uint32_t ir, uint32_t ne1, uint32_t ne2,
 }
 
 /* Return non-zero if row (i1,i2,i3) falls in the non-padded interior */
-static inline int pad_is_interior(uint32_t i1, uint32_t i2, uint32_t i3,
+ساکن اندرونی صحیح pad_is_interior(uint32_t i1, uint32_t i2, uint32_t i3,
                                    int32_t lp1, int32_t rp1, uint32_t ne1,
                                    int32_t lp2, int32_t rp2, uint32_t ne2,
                                    int32_t lp3, int32_t rp3, uint32_t ne3) {
-    return ((int32_t)i1 >= lp1 && (int32_t)i1 < (int32_t)ne1 - rp1) &&
+    واپس ((int32_t)i1 >= lp1 && (int32_t)i1 < (int32_t)ne1 - rp1) &&
            ((int32_t)i2 >= lp2 && (int32_t)i2 < (int32_t)ne2 - rp2) &&
            ((int32_t)i3 >= lp3 && (int32_t)i3 < (int32_t)ne3 - rp3);
 }
 
 /* Compute the DDR src row pointer for a zero-pad interior row */
-static inline const uint8_t * pad_src_row_ptr(const struct htp_tensor * src,
+ساکن اندرونی ثابت uint8_t * pad_src_صف_ptr(ثابت ساخت htp_tensor * src,
                                                uint32_t i1, uint32_t i2, uint32_t i3,
                                                int32_t lp1, int32_t lp2, int32_t lp3) {
-    return (const uint8_t *) src->data
+    واپس (ثابت uint8_t *) src->ڈیٹا
         + (i1 - (uint32_t)lp1) * src->nb[1]
         + (i2 - (uint32_t)lp2) * src->nb[2]
         + (i3 - (uint32_t)lp3) * src->nb[3];
 }
 
-static inline dma_addr_t pad_src_row_data(const struct htp_tensor * src,
+ساکن اندرونی dma_addr_t pad_src_صف_ڈیٹا(ثابت ساخت htp_tensor * src,
                                           uint32_t i1, uint32_t i2, uint32_t i3,
                                           int32_t lp1, int32_t lp2, int32_t lp3) {
-    return src->data
+    واپس src->ڈیٹا
         + (i1 - (uint32_t)lp1) * src->nb[1]
         + (i2 - (uint32_t)lp2) * src->nb[2]
         + (i3 - (uint32_t)lp3) * src->nb[3];
 }
 
 /* Compute the DDR src row pointer for a circular row (wrap-around indexing) */
-static inline const uint8_t * pad_circ_src_row_ptr(const struct htp_tensor * src,
+ساکن اندرونی ثابت uint8_t * pad_circ_src_صف_ptr(ثابت ساخت htp_tensor * src,
                                                     uint32_t i1, uint32_t i2, uint32_t i3,
                                                     int32_t lp1, int32_t lp2, int32_t lp3) {
-    return (const uint8_t *) src->data
+    واپس (ثابت uint8_t *) src->ڈیٹا
         + wrap_around((int32_t)i1 - lp1, src->ne[1]) * src->nb[1]
         + wrap_around((int32_t)i2 - lp2, src->ne[2]) * src->nb[2]
         + wrap_around((int32_t)i3 - lp3, src->ne[3]) * src->nb[3];
 }
 
-static inline dma_addr_t pad_circ_src_row_data(const struct htp_tensor * src,
+ساکن اندرونی dma_addr_t pad_circ_src_صف_ڈیٹا(ثابت ساخت htp_tensor * src,
                                                uint32_t i1, uint32_t i2, uint32_t i3,
                                                int32_t lp1, int32_t lp2, int32_t lp3) {
-    return src->data
+    واپس src->ڈیٹا
         + wrap_around((int32_t)i1 - lp1, src->ne[1]) * src->nb[1]
         + wrap_around((int32_t)i2 - lp2, src->ne[2]) * src->nb[2]
         + wrap_around((int32_t)i3 - lp3, src->ne[3]) * src->nb[3];
 }
 
-struct htp_pad_context {
-    struct htp_ops_context * octx;
+ساخت htp_pad_context {
+    ساخت htp_ops_context * octx;
 
     int32_t  lp0, rp0;
     int32_t  lp1, rp1;
     int32_t  lp2, rp2;
     int32_t  lp3, rp3;
 
-    uint32_t nrows_per_thread;
-    uint32_t total_dst_rows;
-    uint32_t row_start;
+    uint32_t nrows_فی_thread;
+    uint32_t کل_dst_صفیں;
+    uint32_t صف_آغاز;
 
-    size_t   type_size;
+    size_t   type_سائز;
 
     // Row sizes for DMA kernel (populated when VTCM is available)
-    size_t   src_row_size;
-    size_t   src_row_size_aligned;
-    size_t   dst_row_size;
-    size_t   dst_row_size_aligned;
+    size_t   src_صف_سائز;
+    size_t   src_صف_سائز_aligned;
+    size_t   dst_صف_سائز;
+    size_t   dst_صف_سائز_aligned;
 };
 
-#define htp_pad_preamble                                                             \
-    const struct htp_tensor * src = octx->src[0];                                    \
-    const struct htp_tensor * dst = octx->dst;                                       \
+#تعریف_کرو htp_pad_preamble                                                             \
+    ثابت ساخت htp_tensor * src = octx->src[0];                                    \
+    ثابت ساخت htp_tensor * dst = octx->dst;                                       \
                                                                                      \
-    const uint32_t ne00 = src->ne[0];                                                \
-    const uint32_t nb00 = src->nb[0];                                                \
+    ثابت uint32_t ne00 = src->ne[0];                                                \
+    ثابت uint32_t nb00 = src->nb[0];                                                \
                                                                                      \
-    const uint32_t ne0 = dst->ne[0];                                                 \
-    const uint32_t ne1 = dst->ne[1];                                                 \
-    const uint32_t ne2 = dst->ne[2];                                                 \
-    const uint32_t ne3 = dst->ne[3];                                                 \
+    ثابت uint32_t ne0 = dst->ne[0];                                                 \
+    ثابت uint32_t ne1 = dst->ne[1];                                                 \
+    ثابت uint32_t ne2 = dst->ne[2];                                                 \
+    ثابت uint32_t ne3 = dst->ne[3];                                                 \
                                                                                      \
-    const uint32_t nb1 = dst->nb[1];                                                 \
-    const uint32_t nb2 = dst->nb[2];                                                 \
-    const uint32_t nb3 = dst->nb[3];                                                 \
+    ثابت uint32_t nb1 = dst->nb[1];                                                 \
+    ثابت uint32_t nb2 = dst->nb[2];                                                 \
+    ثابت uint32_t nb3 = dst->nb[3];                                                 \
                                                                                      \
-    const int32_t lp0 = pctx->lp0, rp0 = pctx->rp0;                                  \
-    const int32_t lp1 = pctx->lp1, rp1 = pctx->rp1;                                  \
-    const int32_t lp2 = pctx->lp2, rp2 = pctx->rp2;                                  \
-    const int32_t lp3 = pctx->lp3, rp3 = pctx->rp3;                                  \
+    ثابت int32_t lp0 = pctx->lp0, rp0 = pctx->rp0;                                  \
+    ثابت int32_t lp1 = pctx->lp1, rp1 = pctx->rp1;                                  \
+    ثابت int32_t lp2 = pctx->lp2, rp2 = pctx->rp2;                                  \
+    ثابت int32_t lp3 = pctx->lp3, rp3 = pctx->rp3;                                  \
                                                                                      \
-    const size_t type_size = pctx->type_size;                                        \
+    ثابت size_t type_سائز = pctx->type_سائز;                                        \
                                                                                      \
-    const uint32_t row_start = pctx->row_start + pctx->nrows_per_thread * ith;       \
-    const uint32_t row_end   = MIN(row_start + pctx->nrows_per_thread, pctx->row_start + pctx->total_dst_rows);
+    ثابت uint32_t صف_آغاز = pctx->صف_آغاز + pctx->nrows_فی_thread * ith;       \
+    ثابت uint32_t صف_انتہا   = MIN(صف_آغاز + pctx->nrows_فی_thread, pctx->صف_آغاز + pctx->کل_dst_صفیں);
 
 
-#define htp_pad_dma_preamble                                                                \
-    const size_t src_row_size         = pctx->src_row_size;                                 \
-    const size_t src_row_size_aligned = pctx->src_row_size_aligned;                         \
-    const size_t dst_row_size         = pctx->dst_row_size;                                 \
-    const size_t dst_row_size_aligned = pctx->dst_row_size_aligned;                         \
+#تعریف_کرو htp_pad_dma_preamble                                                                \
+    ثابت size_t src_صف_سائز         = pctx->src_صف_سائز;                                 \
+    ثابت size_t src_صف_سائز_aligned = pctx->src_صف_سائز_aligned;                         \
+    ثابت size_t dst_صف_سائز         = pctx->dst_صف_سائز;                                 \
+    ثابت size_t dst_صف_سائز_aligned = pctx->dst_صف_سائز_aligned;                         \
                                                                                             \
-    uint8_t * src_spad_base = octx->src0_spad.data + ith * octx->src0_spad.size_per_thread; \
-    uint8_t * dst_spad_base = octx->dst_spad.data  + ith * octx->dst_spad.size_per_thread;  \
+    uint8_t * src_spad_بنیاد = octx->src0_spad.ڈیٹا + ith * octx->src0_spad.سائز_فی_thread; \
+    uint8_t * dst_spad_بنیاد = octx->dst_spad.ڈیٹا  + ith * octx->dst_spad.سائز_فی_thread;  \
                                                                                             \
-    dma_queue * dma_q = octx->ctx->dma[ith];
+    dma_قطار * dma_q = octx->ctx->dma[ith];
 
 // ---------------------------------------------------------------------------
 // HVX vectorized PAD kernel
 // ---------------------------------------------------------------------------
 
-static void pad_job_per_thread_hvx(unsigned int nth, unsigned int ith, void * data) {
-    const struct htp_pad_context * pctx = (const struct htp_pad_context *) data;
-    struct htp_ops_context * octx = pctx->octx;
+ساکن خالی pad_کام_فی_thread_hvx(غیرعلامتی صحیح nth, غیرعلامتی صحیح ith, خالی * ڈیٹا) {
+    ثابت ساخت htp_pad_context * pctx = (ثابت ساخت htp_pad_context *) ڈیٹا;
+    ساخت htp_ops_context * octx = pctx->octx;
     htp_pad_preamble;
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, row_start);
+    ساخت htp_thread_trace * tr = &octx->ctx->trace[ith];
+    htp_trace_event_آغاز(tr, HTP_TRACE_EVT_HVX_COMP, صف_آغاز);
 
-    for (uint32_t dst_row = row_start; dst_row < row_end; dst_row++) {
+    برائے (uint32_t dst_صف = صف_آغاز; dst_صف < صف_انتہا; dst_صف++) {
         uint32_t i1, i2, i3;
-        pad_decompose_row(dst_row, ne1, ne2, &i1, &i2, &i3);
+        pad_decompose_صف(dst_صف, ne1, ne2, &i1, &i2, &i3);
 
-        uint8_t * dst_ptr = (uint8_t *) dst->data + i1 * nb1 + i2 * nb2 + i3 * nb3;
+        uint8_t * dst_ptr = (uint8_t *) dst->ڈیٹا + i1 * nb1 + i2 * nb2 + i3 * nb3;
 
-        const int interior = pad_is_interior(i1, i2, i3,
+        ثابت صحیح interior = pad_is_interior(i1, i2, i3,
                                              lp1, rp1, ne1,
                                              lp2, rp2, ne2,
                                              lp3, rp3, ne3);
 
-        if (!interior) {
+        اگر (!interior) {
             hvx_splat_f32_u(dst_ptr, 0.0f, ne0);
-        } else {
-            const uint8_t * src_ptr = pad_src_row_ptr(src, i1, i2, i3, lp1, lp2, lp3);
+        } ورنہ {
+            ثابت uint8_t * src_ptr = pad_src_صف_ptr(src, i1, i2, i3, lp1, lp2, lp3);
 
-            if (lp0 > 0) {
+            اگر (lp0 > 0) {
                 hvx_splat_f32_u(dst_ptr, 0.0f, (uint32_t)lp0);
             }
 
-            uint8_t * dst_row_start = dst_ptr + (size_t)lp0 * type_size;
-            if (nb00 == type_size) {
-                hvx_copy_f32_uu(dst_row_start, src_ptr, ne00);
-            } else {
-                for (uint32_t i = 0; i < ne00; i++) {
-                    memcpy(dst_row_start + i * type_size,
+            uint8_t * dst_صف_آغاز = dst_ptr + (size_t)lp0 * type_سائز;
+            اگر (nb00 == type_سائز) {
+                hvx_copy_f32_uu(dst_صف_آغاز, src_ptr, ne00);
+            } ورنہ {
+                برائے (uint32_t i = 0; i < ne00; i++) {
+                    حافظہ_نقل(dst_صف_آغاز + i * type_سائز,
                            src_ptr + (size_t)i * nb00,
-                           type_size);
+                           type_سائز);
                 }
             }
 
-            if (rp0 > 0) {
-                hvx_splat_f32_u(dst_ptr + ((size_t)lp0 + ne00) * type_size, 0.0f, (uint32_t)rp0);
+            اگر (rp0 > 0) {
+                hvx_splat_f32_u(dst_ptr + ((size_t)lp0 + ne00) * type_سائز, 0.0f, (uint32_t)rp0);
             }
         }
     }
 
-    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, row_start);
+    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, صف_آغاز);
 
-    FARF(HIGH, "pad-hvx %d/%d: (%ux%ux%ux%u) -> (%ux%ux%ux%u) rows %u:%u\n",
+    FARF(بلند_2, "pad-hvx %d/%d: (%ux%ux%ux%u) -> (%ux%ux%ux%u) rows %u:%u\n",
          ith, nth,
          src->ne[0], src->ne[1], src->ne[2], src->ne[3],
          dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3],
-         row_start, row_end);
+         صف_آغاز, صف_انتہا);
 }
 
 // ---------------------------------------------------------------------------
 // HVX + DMA PAD kernel - aligned, double-buffered
 // ---------------------------------------------------------------------------
 
-static void pad_job_per_thread_hvx_dma(unsigned int nth, unsigned int ith, void * data) {
-    const struct htp_pad_context * pctx = (const struct htp_pad_context *) data;
-    struct htp_ops_context * octx = pctx->octx;
+ساکن خالی pad_کام_فی_thread_hvx_dma(غیرعلامتی صحیح nth, غیرعلامتی صحیح ith, خالی * ڈیٹا) {
+    ثابت ساخت htp_pad_context * pctx = (ثابت ساخت htp_pad_context *) ڈیٹا;
+    ساخت htp_ops_context * octx = pctx->octx;
     htp_pad_preamble;
     htp_pad_dma_preamble;
 
@@ -210,173 +210,173 @@ static void pad_job_per_thread_hvx_dma(unsigned int nth, unsigned int ith, void 
     // Priming phase: push 2 pairs of (dummy_dst_DMA, src_DMA) to seed the
     // double-buffer pipeline before the main loop begins.
     // -----------------------------------------------------------------------
-    for (uint32_t ir = row_start, spad_idx = 0; ir < row_end && spad_idx < 2; ir++, spad_idx++) {
-        uint8_t * src_spad_cur = src_spad_base + spad_idx * src_row_size_aligned;
-        uint8_t * dst_spad_cur = dst_spad_base + spad_idx * dst_row_size_aligned;
+    برائے (uint32_t ir = صف_آغاز, spad_idx = 0; ir < صف_انتہا && spad_idx < 2; ir++, spad_idx++) {
+        uint8_t * src_spad_cur = src_spad_بنیاد + spad_idx * src_صف_سائز_aligned;
+        uint8_t * dst_spad_cur = dst_spad_بنیاد + spad_idx * dst_صف_سائز_aligned;
 
-        dma_queue_push(dma_q,
-            dma_make_data(dst->data, dst_spad_cur),
-            dst_row_size, dst_row_size_aligned, dst_row_size, 0);
+        dma_قطار_ڈالو(dma_q,
+            dma_make_ڈیٹا(dst->ڈیٹا, dst_spad_cur),
+            dst_صف_سائز, dst_صف_سائز_aligned, dst_صف_سائز, 0);
 
         uint32_t i1, i2, i3;
-        pad_decompose_row(ir, ne1, ne2, &i1, &i2, &i3);
-        const int interior = pad_is_interior(i1, i2, i3,
+        pad_decompose_صف(ir, ne1, ne2, &i1, &i2, &i3);
+        ثابت صحیح interior = pad_is_interior(i1, i2, i3,
                                              lp1, rp1, ne1,
                                              lp2, rp2, ne2,
                                              lp3, rp3, ne3);
 
-        const dma_addr_t src_data = interior
-            ? pad_src_row_data(src, i1, i2, i3, lp1, lp2, lp3) : src->data;
+        ثابت dma_addr_t src_ڈیٹا = interior
+            ? pad_src_صف_ڈیٹا(src, i1, i2, i3, lp1, lp2, lp3) : src->ڈیٹا;
 
         // Interior row: real DMA (1 row) from DDR to VTCM.
         // Border row: null DMA (nrows=0)
-        dma_queue_push(dma_q,
-            dma_make_data(src_spad_cur, src_data),
-            src_row_size_aligned, src_row_size, src_row_size, interior ? 1 : 0);
+        dma_قطار_ڈالو(dma_q,
+            dma_make_ڈیٹا(src_spad_cur, src_ڈیٹا),
+            src_صف_سائز_aligned, src_صف_سائز, src_صف_سائز, interior ? 1 : 0);
     }
 
     // -----------------------------------------------------------------------
     // Main loop: pop completed DMAs, compute in VTCM with aligned HVX ops,
     // push dst DMA and prefetch src for the next+1 row.
     // -----------------------------------------------------------------------
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    ساخت htp_thread_trace * tr = &octx->ctx->trace[ith];
 
-    for (uint32_t ir = row_start; ir < row_end; ir++) {
-        uint8_t * dst_spad_cur = (uint8_t *) dma_queue_pop(dma_q).src;
-        uint8_t * src_spad_cur = (uint8_t *) dma_queue_pop(dma_q).dst;
+    برائے (uint32_t ir = صف_آغاز; ir < صف_انتہا; ir++) {
+        uint8_t * dst_spad_cur = (uint8_t *) dma_قطار_نکالو(dma_q).src;
+        uint8_t * src_spad_cur = (uint8_t *) dma_قطار_نکالو(dma_q).dst;
 
         uint32_t i1, i2, i3;
-        pad_decompose_row(ir, ne1, ne2, &i1, &i2, &i3);
+        pad_decompose_صف(ir, ne1, ne2, &i1, &i2, &i3);
 
-        const dma_addr_t dst_data = dst->data + i1 * nb1 + i2 * nb2 + i3 * nb3;
+        ثابت dma_addr_t dst_ڈیٹا = dst->ڈیٹا + i1 * nb1 + i2 * nb2 + i3 * nb3;
 
-        const int interior = pad_is_interior(i1, i2, i3,
+        ثابت صحیح interior = pad_is_interior(i1, i2, i3,
                                              lp1, rp1, ne1,
                                              lp2, rp2, ne2,
                                              lp3, rp3, ne3);
 
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
-        if (!interior) {
+        htp_trace_event_آغاز(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
+        اگر (!interior) {
             hvx_splat_f32_a(dst_spad_cur, 0.0f, ne0);
-        } else {
+        } ورنہ {
             hvx_splat_f32_a(dst_spad_cur, 0.0f, ne0);
 
-            uint8_t * dst_interior = dst_spad_cur + (size_t)lp0 * type_size;
+            uint8_t * dst_interior = dst_spad_cur + (size_t)lp0 * type_سائز;
 
-            if ((uintptr_t)dst_interior % VLEN == 0) {
+            اگر ((uintptr_t)dst_interior % VLEN == 0) {
                 hvx_copy_f32_aa(dst_interior, src_spad_cur, ne00);
-            } else {
+            } ورنہ {
                 hvx_copy_f32_ua(dst_interior, src_spad_cur, ne00);
             }
         }
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
 
-        dma_queue_push(dma_q,
-            dma_make_data(dst_data, dst_spad_cur),
-            dst_row_size, dst_row_size_aligned, dst_row_size, 1);
+        dma_قطار_ڈالو(dma_q,
+            dma_make_ڈیٹا(dst_ڈیٹا, dst_spad_cur),
+            dst_صف_سائز, dst_صف_سائز_aligned, dst_صف_سائز, 1);
 
-        const uint32_t next_row = ir + 2;
-        if (next_row < row_end) {
+        ثابت uint32_t اگلا_صف = ir + 2;
+        اگر (اگلا_صف < صف_انتہا) {
             uint32_t ni1, ni2, ni3;
-            pad_decompose_row(next_row, ne1, ne2, &ni1, &ni2, &ni3);
-            const int next_interior = pad_is_interior(ni1, ni2, ni3,
+            pad_decompose_صف(اگلا_صف, ne1, ne2, &ni1, &ni2, &ni3);
+            ثابت صحیح اگلا_interior = pad_is_interior(ni1, ni2, ni3,
                                                       lp1, rp1, ne1,
                                                       lp2, rp2, ne2,
                                                       lp3, rp3, ne3);
-            const dma_addr_t next_src_data = next_interior
-                ? pad_src_row_data(src, ni1, ni2, ni3, lp1, lp2, lp3) : src->data;
+            ثابت dma_addr_t اگلا_src_ڈیٹا = اگلا_interior
+                ? pad_src_صف_ڈیٹا(src, ni1, ni2, ni3, lp1, lp2, lp3) : src->ڈیٹا;
 
-            dma_queue_push(dma_q,
-                dma_make_data(src_spad_cur, next_src_data),
-                src_row_size_aligned, src_row_size, src_row_size, next_interior ? 1 : 0);
+            dma_قطار_ڈالو(dma_q,
+                dma_make_ڈیٹا(src_spad_cur, اگلا_src_ڈیٹا),
+                src_صف_سائز_aligned, src_صف_سائز, src_صف_سائز, اگلا_interior ? 1 : 0);
         }
     }
 
-    dma_queue_flush(dma_q);
+    dma_قطار_flush(dma_q);
 
-    FARF(HIGH, "pad-hvx-dma %d/%d: (%ux%ux%ux%u) -> (%ux%ux%ux%u) rows %u:%u\n",
+    FARF(بلند_2, "pad-hvx-dma %d/%d: (%ux%ux%ux%u) -> (%ux%ux%ux%u) rows %u:%u\n",
          ith, nth,
          src->ne[0], src->ne[1], src->ne[2], src->ne[3],
          dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3],
-         row_start, row_end);
+         صف_آغاز, صف_انتہا);
 }
 
 // ---------------------------------------------------------------------------
 // HVX circular PAD kernel
 // ---------------------------------------------------------------------------
 
-static void pad_job_per_thread_hvx_circular(unsigned int nth, unsigned int ith, void * data) {
-    const struct htp_pad_context * pctx = (const struct htp_pad_context *) data;
-    struct htp_ops_context * octx = pctx->octx;
+ساکن خالی pad_کام_فی_thread_hvx_circular(غیرعلامتی صحیح nth, غیرعلامتی صحیح ith, خالی * ڈیٹا) {
+    ثابت ساخت htp_pad_context * pctx = (ثابت ساخت htp_pad_context *) ڈیٹا;
+    ساخت htp_ops_context * octx = pctx->octx;
     htp_pad_preamble;
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, row_start);
+    ساخت htp_thread_trace * tr = &octx->ctx->trace[ith];
+    htp_trace_event_آغاز(tr, HTP_TRACE_EVT_HVX_COMP, صف_آغاز);
 
-    for (uint32_t dst_row = row_start; dst_row < row_end; dst_row++) {
+    برائے (uint32_t dst_صف = صف_آغاز; dst_صف < صف_انتہا; dst_صف++) {
         uint32_t i1, i2, i3;
-        pad_decompose_row(dst_row, ne1, ne2, &i1, &i2, &i3);
+        pad_decompose_صف(dst_صف, ne1, ne2, &i1, &i2, &i3);
 
-        uint8_t       * dst_ptr = (uint8_t *) dst->data + i1 * nb1 + i2 * nb2 + i3 * nb3;
-        const uint8_t * src_row = pad_circ_src_row_ptr(src, i1, i2, i3, lp1, lp2, lp3);
+        uint8_t       * dst_ptr = (uint8_t *) dst->ڈیٹا + i1 * nb1 + i2 * nb2 + i3 * nb3;
+        ثابت uint8_t * src_صف = pad_circ_src_صف_ptr(src, i1, i2, i3, lp1, lp2, lp3);
 
-        if (nb00 == type_size) {
+        اگر (nb00 == type_سائز) {
 
-            if (lp0 > 0) {
-                if ((uint32_t)lp0 < 32) {
-                    memcpy(dst_ptr,
-                           src_row + (size_t)(ne00 - (uint32_t)lp0) * type_size,
-                           (size_t)lp0 * type_size);
-                } else {
+            اگر (lp0 > 0) {
+                اگر ((uint32_t)lp0 < 32) {
+                    حافظہ_نقل(dst_ptr,
+                           src_صف + (size_t)(ne00 - (uint32_t)lp0) * type_سائز,
+                           (size_t)lp0 * type_سائز);
+                } ورنہ {
                     hvx_copy_f32_uu(dst_ptr,
-                                    src_row + (size_t)(ne00 - (uint32_t)lp0) * type_size,
+                                    src_صف + (size_t)(ne00 - (uint32_t)lp0) * type_سائز,
                                     (uint32_t)lp0);
                 }
             }
-            hvx_copy_f32_uu(dst_ptr + (size_t)lp0 * type_size, src_row, ne00);
-            if (rp0 > 0) {
-                if ((uint32_t)rp0 < 32) {
-                    memcpy(dst_ptr + ((size_t)lp0 + ne00) * type_size,
-                           src_row,
-                           (size_t)rp0 * type_size);
-                } else {
-                    hvx_copy_f32_uu(dst_ptr + ((size_t)lp0 + ne00) * type_size,
-                                    src_row,
+            hvx_copy_f32_uu(dst_ptr + (size_t)lp0 * type_سائز, src_صف, ne00);
+            اگر (rp0 > 0) {
+                اگر ((uint32_t)rp0 < 32) {
+                    حافظہ_نقل(dst_ptr + ((size_t)lp0 + ne00) * type_سائز,
+                           src_صف,
+                           (size_t)rp0 * type_سائز);
+                } ورنہ {
+                    hvx_copy_f32_uu(dst_ptr + ((size_t)lp0 + ne00) * type_سائز,
+                                    src_صف,
                                     (uint32_t)rp0);
                 }
             }
-        } else {
-            for (uint32_t i = 0; i < (uint32_t)lp0; i++) {
-                *(float *)(dst_ptr + i * type_size) =
-                    *(const float *)(src_row + (size_t)(ne00 - (uint32_t)lp0 + i) * nb00);
+        } ورنہ {
+            برائے (uint32_t i = 0; i < (uint32_t)lp0; i++) {
+                *(اعشاری *)(dst_ptr + i * type_سائز) =
+                    *(ثابت اعشاری *)(src_صف + (size_t)(ne00 - (uint32_t)lp0 + i) * nb00);
             }
-            for (uint32_t i = 0; i < ne00; i++) {
-                *(float *)(dst_ptr + ((size_t)lp0 + i) * type_size) =
-                    *(const float *)(src_row + (size_t)i * nb00);
+            برائے (uint32_t i = 0; i < ne00; i++) {
+                *(اعشاری *)(dst_ptr + ((size_t)lp0 + i) * type_سائز) =
+                    *(ثابت اعشاری *)(src_صف + (size_t)i * nb00);
             }
-            for (uint32_t i = 0; i < (uint32_t)rp0; i++) {
-                *(float *)(dst_ptr + ((size_t)lp0 + ne00 + i) * type_size) =
-                    *(const float *)(src_row + (size_t)i * nb00);
+            برائے (uint32_t i = 0; i < (uint32_t)rp0; i++) {
+                *(اعشاری *)(dst_ptr + ((size_t)lp0 + ne00 + i) * type_سائز) =
+                    *(ثابت اعشاری *)(src_صف + (size_t)i * nb00);
             }
         }
     }
 
-    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, row_start);
+    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, صف_آغاز);
 
-    FARF(HIGH, "pad-hvx-circ %d/%d: (%ux%ux%ux%u) -> (%ux%ux%ux%u) rows %u:%u\n",
+    FARF(بلند_2, "pad-hvx-circ %d/%d: (%ux%ux%ux%u) -> (%ux%ux%ux%u) rows %u:%u\n",
          ith, nth,
          src->ne[0], src->ne[1], src->ne[2], src->ne[3],
          dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3],
-         row_start, row_end);
+         صف_آغاز, صف_انتہا);
 }
 
 // ---------------------------------------------------------------------------
 // HVX + DMA circular PAD kernel - aligned, double-buffered
 // ---------------------------------------------------------------------------
 
-static void pad_job_per_thread_hvx_circular_dma(unsigned int nth, unsigned int ith, void * data) {
-    const struct htp_pad_context * pctx = (const struct htp_pad_context *) data;
-    struct htp_ops_context * octx = pctx->octx;
+ساکن خالی pad_کام_فی_thread_hvx_circular_dma(غیرعلامتی صحیح nth, غیرعلامتی صحیح ith, خالی * ڈیٹا) {
+    ثابت ساخت htp_pad_context * pctx = (ثابت ساخت htp_pad_context *) ڈیٹا;
+    ساخت htp_ops_context * octx = pctx->octx;
     htp_pad_preamble;
     htp_pad_dma_preamble;
 
@@ -384,192 +384,192 @@ static void pad_job_per_thread_hvx_circular_dma(unsigned int nth, unsigned int i
     // Priming phase: push 2 pairs of (dummy_dst_DMA, src_DMA) to seed the
     // double-buffer pipeline.  Every row is a real src DMA (no null DMAs).
     // -----------------------------------------------------------------------
-    for (uint32_t ir = row_start, spad_idx = 0; ir < row_end && spad_idx < 2; ir++, spad_idx++) {
-        uint8_t * src_spad_cur = src_spad_base + spad_idx * src_row_size_aligned;
-        uint8_t * dst_spad_cur = dst_spad_base + spad_idx * dst_row_size_aligned;
+    برائے (uint32_t ir = صف_آغاز, spad_idx = 0; ir < صف_انتہا && spad_idx < 2; ir++, spad_idx++) {
+        uint8_t * src_spad_cur = src_spad_بنیاد + spad_idx * src_صف_سائز_aligned;
+        uint8_t * dst_spad_cur = dst_spad_بنیاد + spad_idx * dst_صف_سائز_aligned;
 
-        dma_queue_push(dma_q,
-            dma_make_data(dst->data, dst_spad_cur),
-            dst_row_size, dst_row_size_aligned, dst_row_size, 0);
+        dma_قطار_ڈالو(dma_q,
+            dma_make_ڈیٹا(dst->ڈیٹا, dst_spad_cur),
+            dst_صف_سائز, dst_صف_سائز_aligned, dst_صف_سائز, 0);
 
         uint32_t pi1, pi2, pi3;
-        pad_decompose_row(ir, ne1, ne2, &pi1, &pi2, &pi3);
-        const dma_addr_t src_data = pad_circ_src_row_data(src, pi1, pi2, pi3, lp1, lp2, lp3);
-        dma_queue_push(dma_q,
-            dma_make_data(src_spad_cur, src_data),
-            src_row_size_aligned, src_row_size, src_row_size, 1);
+        pad_decompose_صف(ir, ne1, ne2, &pi1, &pi2, &pi3);
+        ثابت dma_addr_t src_ڈیٹا = pad_circ_src_صف_ڈیٹا(src, pi1, pi2, pi3, lp1, lp2, lp3);
+        dma_قطار_ڈالو(dma_q,
+            dma_make_ڈیٹا(src_spad_cur, src_ڈیٹا),
+            src_صف_سائز_aligned, src_صف_سائز, src_صف_سائز, 1);
     }
 
     // -----------------------------------------------------------------------
     // Main loop: pop completed DMAs, assemble circular row in VTCM with
     // aligned HVX ops, push dst DMA and prefetch src for the next+1 row.
     // -----------------------------------------------------------------------
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    ساخت htp_thread_trace * tr = &octx->ctx->trace[ith];
 
-    for (uint32_t ir = row_start; ir < row_end; ir++) {
-        uint8_t * dst_spad_cur = (uint8_t *) dma_queue_pop(dma_q).src;
-        uint8_t * src_spad_cur = (uint8_t *) dma_queue_pop(dma_q).dst;
+    برائے (uint32_t ir = صف_آغاز; ir < صف_انتہا; ir++) {
+        uint8_t * dst_spad_cur = (uint8_t *) dma_قطار_نکالو(dma_q).src;
+        uint8_t * src_spad_cur = (uint8_t *) dma_قطار_نکالو(dma_q).dst;
 
         uint32_t i1, i2, i3;
-        pad_decompose_row(ir, ne1, ne2, &i1, &i2, &i3);
-        const dma_addr_t dst_data = dst->data + i1 * nb1 + i2 * nb2 + i3 * nb3;
+        pad_decompose_صف(ir, ne1, ne2, &i1, &i2, &i3);
+        ثابت dma_addr_t dst_ڈیٹا = dst->ڈیٹا + i1 * nb1 + i2 * nb2 + i3 * nb3;
 
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
-        if (lp0 > 0) {
-            uint8_t * dst_left       = dst_spad_cur;
-            const uint8_t * src_left = src_spad_cur + (size_t)(ne00 - (uint32_t)lp0) * type_size;
-            if ((uint32_t)lp0 < 32) {
-                memcpy(dst_left, src_left, (size_t)lp0 * type_size);
-            } else {
-                hvx_copy_f32_uu(dst_left, src_left, (uint32_t)lp0);
+        htp_trace_event_آغاز(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
+        اگر (lp0 > 0) {
+            uint8_t * dst_بایاں       = dst_spad_cur;
+            ثابت uint8_t * src_بایاں = src_spad_cur + (size_t)(ne00 - (uint32_t)lp0) * type_سائز;
+            اگر ((uint32_t)lp0 < 32) {
+                حافظہ_نقل(dst_بایاں, src_بایاں, (size_t)lp0 * type_سائز);
+            } ورنہ {
+                hvx_copy_f32_uu(dst_بایاں, src_بایاں, (uint32_t)lp0);
             }
         }
 
         {
-            uint8_t * dst_mid = dst_spad_cur + (size_t)lp0 * type_size;
-            if ((uintptr_t)dst_mid % VLEN == 0) {
+            uint8_t * dst_mid = dst_spad_cur + (size_t)lp0 * type_سائز;
+            اگر ((uintptr_t)dst_mid % VLEN == 0) {
                 hvx_copy_f32_aa(dst_mid, src_spad_cur, ne00);
-            } else {
+            } ورنہ {
                 hvx_copy_f32_ua(dst_mid, src_spad_cur, ne00);
             }
         }
 
-        if (rp0 > 0) {
-            uint8_t * dst_right = dst_spad_cur + ((size_t)lp0 + ne00) * type_size;
-            if ((uint32_t)rp0 < 32) {
-                memcpy(dst_right, src_spad_cur, (size_t)rp0 * type_size);
-            } else {
-                if ((uintptr_t)dst_right % VLEN == 0) {
-                    hvx_copy_f32_aa(dst_right, src_spad_cur, (uint32_t)rp0);
-                } else {
-                    hvx_copy_f32_ua(dst_right, src_spad_cur, (uint32_t)rp0);
+        اگر (rp0 > 0) {
+            uint8_t * dst_دایاں = dst_spad_cur + ((size_t)lp0 + ne00) * type_سائز;
+            اگر ((uint32_t)rp0 < 32) {
+                حافظہ_نقل(dst_دایاں, src_spad_cur, (size_t)rp0 * type_سائز);
+            } ورنہ {
+                اگر ((uintptr_t)dst_دایاں % VLEN == 0) {
+                    hvx_copy_f32_aa(dst_دایاں, src_spad_cur, (uint32_t)rp0);
+                } ورنہ {
+                    hvx_copy_f32_ua(dst_دایاں, src_spad_cur, (uint32_t)rp0);
                 }
             }
         }
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
 
-        dma_queue_push(dma_q,
-            dma_make_data(dst_data, dst_spad_cur),
-            dst_row_size, dst_row_size_aligned, dst_row_size, 1);
+        dma_قطار_ڈالو(dma_q,
+            dma_make_ڈیٹا(dst_ڈیٹا, dst_spad_cur),
+            dst_صف_سائز, dst_صف_سائز_aligned, dst_صف_سائز, 1);
 
-        const uint32_t next_row = ir + 2;
-        if (next_row < row_end) {
+        ثابت uint32_t اگلا_صف = ir + 2;
+        اگر (اگلا_صف < صف_انتہا) {
             uint32_t nri1, nri2, nri3;
-            pad_decompose_row(next_row, ne1, ne2, &nri1, &nri2, &nri3);
-            const dma_addr_t next_src_data = pad_circ_src_row_data(src, nri1, nri2, nri3, lp1, lp2, lp3);
-            dma_queue_push(dma_q,
-                dma_make_data(src_spad_cur, next_src_data),
-                src_row_size_aligned, src_row_size, src_row_size, 1);
+            pad_decompose_صف(اگلا_صف, ne1, ne2, &nri1, &nri2, &nri3);
+            ثابت dma_addr_t اگلا_src_ڈیٹا = pad_circ_src_صف_ڈیٹا(src, nri1, nri2, nri3, lp1, lp2, lp3);
+            dma_قطار_ڈالو(dma_q,
+                dma_make_ڈیٹا(src_spad_cur, اگلا_src_ڈیٹا),
+                src_صف_سائز_aligned, src_صف_سائز, src_صف_سائز, 1);
         }
     }
 
-    dma_queue_flush(dma_q);
+    dma_قطار_flush(dma_q);
 
-    FARF(HIGH, "pad-hvx-circ-dma %d/%d: (%ux%ux%ux%u) -> (%ux%ux%ux%u) rows %u:%u\n",
+    FARF(بلند_2, "pad-hvx-circ-dma %d/%d: (%ux%ux%ux%u) -> (%ux%ux%ux%u) rows %u:%u\n",
          ith, nth,
          src->ne[0], src->ne[1], src->ne[2], src->ne[3],
          dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3],
-         row_start, row_end);
+         صف_آغاز, صف_انتہا);
 }
 
-int op_pad(struct htp_ops_context * octx) {
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * dst  = octx->dst;
+صحیح op_pad(ساخت htp_ops_context * octx) {
+    ثابت ساخت htp_tensor * src0 = octx->src[0];
+    ثابت ساخت htp_tensor * dst  = octx->dst;
 
     // Only F32 supported
-    size_t type_size;
-    switch (src0->type) {
-        case HTP_TYPE_F32: type_size = 4; break;
-        default:
+    size_t type_سائز;
+    انتخاب (src0->type) {
+        حالت HTP_TYPE_F32: type_سائز = 4; توڑو;
+        طےشدہ:
             FARF(ERROR, "pad-hvx: unsupported type %u\n", src0->type);
-            return HTP_STATUS_NO_SUPPORT;
+            واپس HTP_حالت_NO_SUPPORT;
     }
 
-    const int32_t lp0 = octx->op_params[0];
-    const int32_t rp0 = octx->op_params[1];
-    const int32_t lp1 = octx->op_params[2];
-    const int32_t rp1 = octx->op_params[3];
-    const int32_t lp2 = octx->op_params[4];
-    const int32_t rp2 = octx->op_params[5];
-    const int32_t lp3 = octx->op_params[6];
-    const int32_t rp3 = octx->op_params[7];
-    const int32_t circular = octx->op_params[8];
+    ثابت int32_t lp0 = octx->op_params[0];
+    ثابت int32_t rp0 = octx->op_params[1];
+    ثابت int32_t lp1 = octx->op_params[2];
+    ثابت int32_t rp1 = octx->op_params[3];
+    ثابت int32_t lp2 = octx->op_params[4];
+    ثابت int32_t rp2 = octx->op_params[5];
+    ثابت int32_t lp3 = octx->op_params[6];
+    ثابت int32_t rp3 = octx->op_params[7];
+    ثابت int32_t circular = octx->op_params[8];
 
-    const uint32_t ne0  = dst->ne[0];
-    const uint32_t ne00 = src0->ne[0];
+    ثابت uint32_t ne0  = dst->ne[0];
+    ثابت uint32_t ne00 = src0->ne[0];
 
-    const uint32_t total_dst_rows = dst->ne[1] * dst->ne[2] * dst->ne[3];
-    const size_t dst_row_size     = (size_t)ne0 * type_size;
+    ثابت uint32_t کل_dst_صفیں = dst->ne[1] * dst->ne[2] * dst->ne[3];
+    ثابت size_t dst_صف_سائز     = (size_t)ne0 * type_سائز;
 
-    uint32_t row_start = 0;
-    uint32_t nrows     = total_dst_rows;
+    uint32_t صف_آغاز = 0;
+    uint32_t nrows     = کل_dst_صفیں;
 
-    if (octx->ctx->mdev.count > 1) {
-        uint32_t rows_per_chunk = 0;
-        htp_tensor_mdev_rows_per_chunk(dst, type_size, (uint32_t) dst_row_size, &rows_per_chunk);
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_dst_rows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
-        row_start = range.start;
-        nrows     = range.count;
+    اگر (octx->ctx->mdev.گنتی > 1) {
+        uint32_t صفیں_فی_chunk = 0;
+        htp_tensor_mdev_صفیں_فی_chunk(dst, type_سائز, (uint32_t) dst_صف_سائز, &صفیں_فی_chunk);
+        ثابت ساخت htp_tensor_mdev_range range = htp_tensor_mdev_تقسیم(کل_dst_صفیں, صفیں_فی_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.گنتی, &octx->ctx->mdev.گنتی_div);
+        صف_آغاز = range.آغاز;
+        nrows     = range.گنتی;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    اگر (nrows == 0) {
+        واپس HTP_حالت_OK;
     }
 
-    const uint32_t n_threads = octx->n_threads;
+    ثابت uint32_t n_دھاگے = octx->n_دھاگے;
 
-    const size_t src_row_size         = (size_t)ne00 * type_size;
-    const size_t src_row_size_aligned = hex_round_up(src_row_size, VLEN);
-    const size_t dst_row_size_aligned = hex_round_up(dst_row_size, VLEN);
+    ثابت size_t src_صف_سائز         = (size_t)ne00 * type_سائز;
+    ثابت size_t src_صف_سائز_aligned = hex_باری_اوپر(src_صف_سائز, VLEN);
+    ثابت size_t dst_صف_سائز_aligned = hex_باری_اوپر(dst_صف_سائز, VLEN);
 
     // Total VTCM needed: 2 buffers (ping+pong) for src and dst, per thread
-    const size_t vtcm_needed = (size_t)n_threads * 2 * (src_row_size_aligned + dst_row_size_aligned);
+    ثابت size_t vtcm_needed = (size_t)n_دھاگے * 2 * (src_صف_سائز_aligned + dst_صف_سائز_aligned);
 
-    const int use_dma = (src0->nb[0] == (uint32_t)type_size) && (ne00 >= 512) &&
-                        (octx->ctx->vtcm_size >= vtcm_needed);
+    ثابت صحیح use_dma = (src0->nb[0] == (uint32_t)type_سائز) && (ne00 >= 512) &&
+                        (octx->ctx->vtcm_سائز >= vtcm_needed);
 
-    if (!use_dma && (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst))) {
-        return HTP_STATUS_NO_SUPPORT;
+    اگر (!use_dma && (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst))) {
+        واپس HTP_حالت_NO_SUPPORT;
     }
 
-    if (use_dma) {
-        octx->src0_spad.size_per_thread = 2 * src_row_size_aligned;
-        octx->dst_spad.size_per_thread  = 2 * dst_row_size_aligned;
-        octx->src0_spad.size = n_threads * octx->src0_spad.size_per_thread;
-        octx->dst_spad.size  = n_threads * octx->dst_spad.size_per_thread;
-        octx->src0_spad.data = octx->ctx->vtcm_base;
-        octx->dst_spad.data  = octx->src0_spad.data + octx->src0_spad.size;
-        octx->src0_spad.src  = NULL;
-        octx->dst_spad.src   = NULL;
+    اگر (use_dma) {
+        octx->src0_spad.سائز_فی_thread = 2 * src_صف_سائز_aligned;
+        octx->dst_spad.سائز_فی_thread  = 2 * dst_صف_سائز_aligned;
+        octx->src0_spad.سائز = n_دھاگے * octx->src0_spad.سائز_فی_thread;
+        octx->dst_spad.سائز  = n_دھاگے * octx->dst_spad.سائز_فی_thread;
+        octx->src0_spad.ڈیٹا = octx->ctx->vtcm_بنیاد;
+        octx->dst_spad.ڈیٹا  = octx->src0_spad.ڈیٹا + octx->src0_spad.سائز;
+        octx->src0_spad.src  = تہی;
+        octx->dst_spad.src   = تہی;
     }
 
-    struct htp_pad_context pctx = {
+    ساخت htp_pad_context pctx = {
         .octx             = octx,
         .lp0 = lp0, .rp0 = rp0,
         .lp1 = lp1, .rp1 = rp1,
         .lp2 = lp2, .rp2 = rp2,
         .lp3 = lp3, .rp3 = rp3,
-        .nrows_per_thread = fastdiv(nrows + n_threads - 1, &octx->n_threads_div),
-        .total_dst_rows   = nrows,
-        .row_start        = row_start,
-        .type_size        = type_size,
-        .src_row_size         = src_row_size,
-        .src_row_size_aligned = src_row_size_aligned,
-        .dst_row_size         = dst_row_size,
-        .dst_row_size_aligned = dst_row_size_aligned,
+        .nrows_فی_thread = fastdiv(nrows + n_دھاگے - 1, &octx->n_دھاگے_div),
+        .کل_dst_صفیں   = nrows,
+        .صف_آغاز        = صف_آغاز,
+        .type_سائز        = type_سائز,
+        .src_صف_سائز         = src_صف_سائز,
+        .src_صف_سائز_aligned = src_صف_سائز_aligned,
+        .dst_صف_سائز         = dst_صف_سائز,
+        .dst_صف_سائز_aligned = dst_صف_سائز_aligned,
     };
 
-    FARF(HIGH, "pad-hvx%s%s: (%ux%ux%ux%u) -> (%ux%ux%ux%u) pads=(%d,%d,%d,%d,%d,%d,%d,%d)\n",
+    FARF(بلند_2, "pad-hvx%s%s: (%ux%ux%ux%u) -> (%ux%ux%ux%u) pads=(%d,%d,%d,%d,%d,%d,%d,%d)\n",
          circular ? "-circ" : "",
          use_dma   ? "-dma"  : "",
          src0->ne[0], src0->ne[1], src0->ne[2], src0->ne[3],
          dst->ne[0],  dst->ne[1],  dst->ne[2],  dst->ne[3],
          lp0, rp0, lp1, rp1, lp2, rp2, lp3, rp3);
 
-    if      (circular && use_dma) { work_queue_run(octx->ctx->work_queue, pad_job_per_thread_hvx_circular_dma, &pctx, n_threads); }
-    else if (circular)            { work_queue_run(octx->ctx->work_queue, pad_job_per_thread_hvx_circular,     &pctx, n_threads); }
-    else if (use_dma)             { work_queue_run(octx->ctx->work_queue, pad_job_per_thread_hvx_dma,          &pctx, n_threads); }
-    else                          { work_queue_run(octx->ctx->work_queue, pad_job_per_thread_hvx,              &pctx, n_threads); }
+    اگر      (circular && use_dma) { work_قطار_تسلسل(octx->ctx->work_قطار, pad_کام_فی_thread_hvx_circular_dma, &pctx, n_دھاگے); }
+    ورنہ اگر (circular)            { work_قطار_تسلسل(octx->ctx->work_قطار, pad_کام_فی_thread_hvx_circular,     &pctx, n_دھاگے); }
+    ورنہ اگر (use_dma)             { work_قطار_تسلسل(octx->ctx->work_قطار, pad_کام_فی_thread_hvx_dma,          &pctx, n_دھاگے); }
+    ورنہ                          { work_قطار_تسلسل(octx->ctx->work_قطار, pad_کام_فی_thread_hvx,              &pctx, n_دھاگے); }
 
-    return HTP_STATUS_OK;
+    واپس HTP_حالت_OK;
 }

@@ -10,15 +10,15 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#ifndef GGML_SYCL_ROPE_HPP
-#define GGML_SYCL_ROPE_HPP
+#اگر_غیر_تعریف_شدہ GGML_SYCL_ROPE_HPP
+#تعریف_کرو GGML_SYCL_ROPE_HPP
 
-#include "common.hpp"
+#شامل "common.hpp"
 
-void ggml_sycl_rope(ggml_backend_sycl_context & ctx, ggml_tensor *dst);
+خالی ggml_sycl_rope(ggml_backend_sycl_context & ctx, ggml_tensor *dst);
 
-void ggml_sycl_rope_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+خالی ggml_sycl_rope_عقب(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-void ggml_sycl_rope_fused(ggml_backend_sycl_context & ctx, ggml_tensor * dst, ggml_tensor * set_rows);
+خالی ggml_sycl_rope_fused(ggml_backend_sycl_context & ctx, ggml_tensor * dst, ggml_tensor * سیٹ_صفیں);
 
-#endif // GGML_SYCL_ROPE_HPP
+#اگر_ختم // GGML_SYCL_ROPE_HPP

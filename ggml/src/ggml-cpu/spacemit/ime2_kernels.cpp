@@ -1,389 +1,389 @@
-#include "ggml-impl.h"
-#include "ggml.h"
-#include "ime_kernels.h"
-#include "rvv_kernels.h"
-#include "string.h"
+#شامل "ggml-impl.h"
+#شامل "ggml.h"
+#شامل "ime_kernels.h"
+#شامل "rvv_kernels.h"
+#شامل "string.h"
 
-#include <algorithm>
-#include <cmath>
-#include <stdexcept>
+#شامل <algorithm>
+#شامل <cmath>
+#شامل <stdexcept>
 
-#if !defined(__riscv_v) || !defined(__riscv_v_intrinsic)
+#اگر !defined(__riscv_v) || !defined(__riscv_v_intrinsic)
 #    error "riscv v extension or v_intrinsic not enabled"
-#else
+#ورنہ
 #    include <riscv_vector.h>
-#endif
+#اگر_ختم
 
-#if !defined(__riscv_zfh)
+#اگر !defined(__riscv_zfh)
 #    error "riscv zfh extension not enabled"
-#endif
+#اگر_ختم
 
-#if defined(RISCV64_SPACEMIT_IME2)
-#else
+#اگر defined(RISCV64_SPACEMIT_IME2)
+#ورنہ
 #    error "RISCV64_SPACEMIT_IME2 not defined"
-#endif
+#اگر_ختم
 
-#if defined(__GNUC__)
+#اگر defined(__GNUC__)
 #    pragma GCC diagnostic ignored "-Woverlength-strings"
 #    pragma GCC diagnostic ignored "-Wcast-qual"
 #    pragma GCC diagnostic ignored "-Wunused-parameter"
-#endif
+#اگر_ختم
 
-namespace spacemit_kernels {
-namespace ime2 {
+نامخلا spacemit_kernels {
+نامخلا ime2 {
 
-template <size_t MB_ROWS, size_t NB_COLS>
-void gemm_kernel_i8i2k_mrow_ref(size_t          blk_len,
-                                const uint8_t * quant_a_ptr,
-                                const uint8_t * quant_b_data,
-                                float *         c_ptr,
-                                size_t          count_m,
-                                size_t          count_n,
+سانچہ <size_t MB_صفیں, size_t NB_ستون_تعداد>
+خالی gemm_kernel_i8i2k_mrow_ref(size_t          blk_len,
+                                ثابت uint8_t * quant_a_ptr,
+                                ثابت uint8_t * quant_b_ڈیٹا,
+                                اعشاری *         c_ptr,
+                                size_t          گنتی_m,
+                                size_t          گنتی_n,
                                 size_t          k_blks,
                                 size_t          ldc) {
-    using blk_type                 = nrow_block_q2_k<NB_COLS>;
-    constexpr float refactor_scale = 16.0f;
-    constexpr float factor_scale   = 1.0f / refactor_scale;
+    استعمال blk_type                 = nrow_بلاک_q2_k<NB_ستون_تعداد>;
+    constexpr اعشاری refactor_scale = 16.0f;
+    constexpr اعشاری ضربی_عدد_scale   = 1.0f / refactor_scale;
 
-    int64_t a_blk_stride        = q8k_blk_size(256);
-    int64_t a_nrow_block_stride = a_blk_stride * MB_ROWS;
-    int64_t b_ncol_block_stride = sizeof(blk_type);
+    int64_t a_blk_stride        = q8k_blk_سائز(256);
+    int64_t a_nrow_بلاک_stride = a_blk_stride * MB_صفیں;
+    int64_t b_ncol_بلاک_stride = حجم(blk_type);
 
-    float      output[MB_ROWS * NB_COLS]     = { 0 };
-    _Float16   output_f16[MB_ROWS * NB_COLS] = { 0 };
-    blk_type * quant_b_blk_data              = (blk_type *) (quant_b_data);
+    اعشاری      output[MB_صفیں * NB_ستون_تعداد]     = { 0 };
+    _Float16   output_f16[MB_صفیں * NB_ستون_تعداد] = { 0 };
+    blk_type * quant_b_blk_ڈیٹا              = (blk_type *) (quant_b_ڈیٹا);
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-        size_t nb_real = std::min<size_t>(NB_COLS, count_n - ni);
+    برائے (size_t ni = 0; ni < گنتی_n; ni += NB_ستون_تعداد, c_ptr += NB_ستون_تعداد) {
+        size_t nb_real = std::min<size_t>(NB_ستون_تعداد, گنتی_n - ni);
 
-        int8_t * a_data = (int8_t *) quant_a_ptr + sizeof(float) * MB_ROWS + sizeof(int16_t) * MB_ROWS * 16;
+        int8_t * a_ڈیٹا = (int8_t *) quant_a_ptr + حجم(اعشاری) * MB_صفیں + حجم(int16_t) * MB_صفیں * 16;
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            for (size_t ci = 0; ci < NB_COLS; ci++) {
-                output[ci + mi * NB_COLS] = 0;
+        برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+            برائے (size_t ci = 0; ci < NB_ستون_تعداد; ci++) {
+                output[ci + mi * NB_ستون_تعداد] = 0;
             }
         }
 
-        for (size_t ki = 0; ki < k_blks; ki++, quant_b_blk_data++, a_data += a_nrow_block_stride) {
-            uint8_t * b_data   = quant_b_blk_data->qs;
-            uint8_t * scales   = quant_b_blk_data->scales;
-            uint8_t * scales16 = (uint8_t *) (quant_b_blk_data->scales16);
-            uint8_t * zeros16  = (uint8_t *) (quant_b_blk_data->zeros16);
+        برائے (size_t ki = 0; ki < k_blks; ki++, quant_b_blk_ڈیٹا++, a_ڈیٹا += a_nrow_بلاک_stride) {
+            uint8_t * b_ڈیٹا   = quant_b_blk_ڈیٹا->qs;
+            uint8_t * scales   = quant_b_blk_ڈیٹا->scales;
+            uint8_t * scales16 = (uint8_t *) (quant_b_blk_ڈیٹا->scales16);
+            uint8_t * zeros16  = (uint8_t *) (quant_b_blk_ڈیٹا->zeros16);
 
             _Float16 * scales_fp16 = (_Float16 *) scales16;
             _Float16 * zeros_fp16  = (_Float16 *) zeros16;
 
-            float *   a_scale_row = (float *) (a_data - sizeof(float) * MB_ROWS - sizeof(int16_t) * MB_ROWS * 16);
-            int16_t * a_sum_row   = (int16_t *) (a_data - sizeof(int16_t) * MB_ROWS * 16);
+            اعشاری *   a_scale_صف = (اعشاری *) (a_ڈیٹا - حجم(اعشاری) * MB_صفیں - حجم(int16_t) * MB_صفیں * 16);
+            int16_t * a_مجموع_صف   = (int16_t *) (a_ڈیٹا - حجم(int16_t) * MB_صفیں * 16);
 
-            memset(output_f16, 0, sizeof(output_f16));
+            memset(output_f16, 0, حجم(output_f16));
 
-            uint8_t * scales_temp = scales;
-            uint8_t * zps_temp    = scales;
-            for (size_t kii = 0; kii < 16; kii++, scales_temp += NB_COLS, zps_temp++) {
-                size_t b_shift = (kii % 4) * 2;
+            uint8_t * scales_عارضی = scales;
+            uint8_t * zps_عارضی    = scales;
+            برائے (size_t kii = 0; kii < 16; kii++, scales_عارضی += NB_ستون_تعداد, zps_عارضی++) {
+                size_t b_سرکاؤ = (kii % 4) * 2;
 
-                uint8_t * b_data_col = b_data + (kii / 4) * NB_COLS * 16;
+                uint8_t * b_ڈیٹا_ستون = b_ڈیٹا + (kii / 4) * NB_ستون_تعداد * 16;
 
-                for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                    int16_t a_sum = a_sum_row[mi * 16 + kii];
-                    for (size_t ci = 0; ci < NB_COLS; ci++) {
+                برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+                    int16_t a_مجموع = a_مجموع_صف[mi * 16 + kii];
+                    برائے (size_t ci = 0; ci < NB_ستون_تعداد; ci++) {
                         _Float16 acc_0 = 0.0;
 
-                        uint8_t b_zp    = zps_temp[ci * 16] >> 4;
-                        uint8_t b_scale = scales_temp[ci] & 0x0F;
-                        for (size_t bi = 0; bi < 16; bi++) {
-                            int8_t  a0 = a_data[mi * 256 + bi + kii * 16];
-                            uint8_t b0 = b_data_col[ci * 16 + bi];
-                            acc_0 += static_cast<int16_t>(a0) * static_cast<int16_t>((b0 >> b_shift) & 0x03);
+                        uint8_t b_zp    = zps_عارضی[ci * 16] >> 4;
+                        uint8_t b_scale = scales_عارضی[ci] & 0x0F;
+                        برائے (size_t bi = 0; bi < 16; bi++) {
+                            int8_t  a0 = a_ڈیٹا[mi * 256 + bi + kii * 16];
+                            uint8_t b0 = b_ڈیٹا_ستون[ci * 16 + bi];
+                            acc_0 += static_cast<int16_t>(a0) * static_cast<int16_t>((b0 >> b_سرکاؤ) & 0x03);
                         }
 
-                        _Float16 scale_item =
-                            static_cast<_Float16>(b_scale) * static_cast<_Float16>(factor_scale) * scales_fp16[ci];
+                        _Float16 scale_شے =
+                            static_cast<_Float16>(b_scale) * static_cast<_Float16>(ضربی_عدد_scale) * scales_fp16[ci];
 
-                        output_f16[ci + mi * NB_COLS] += acc_0 * scale_item;
-                        output[ci + mi * NB_COLS] += b_zp * a_sum * a_scale_row[mi] * zeros_fp16[ci];
+                        output_f16[ci + mi * NB_ستون_تعداد] += acc_0 * scale_شے;
+                        output[ci + mi * NB_ستون_تعداد] += b_zp * a_مجموع * a_scale_صف[mi] * zeros_fp16[ci];
                     }
                 }
             }
 
-            for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                auto a_scale = a_scale_row[mi] * refactor_scale;
-                for (size_t ci = 0; ci < NB_COLS; ci++) {
-                    output[ci + mi * NB_COLS] += output_f16[ci + mi * NB_COLS] * a_scale;
+            برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+                خودکار a_scale = a_scale_صف[mi] * refactor_scale;
+                برائے (size_t ci = 0; ci < NB_ستون_تعداد; ci++) {
+                    output[ci + mi * NB_ستون_تعداد] += output_f16[ci + mi * NB_ستون_تعداد] * a_scale;
                 }
             }
         }
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            for (size_t ci = 0; ci < nb_real; ci++) {
-                c_ptr[mi * ldc + ci] = output[mi * NB_COLS + ci];
+        برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+            برائے (size_t ci = 0; ci < nb_real; ci++) {
+                c_ptr[mi * ldc + ci] = output[mi * NB_ستون_تعداد + ci];
             }
         }
     }
 }
 
-template <size_t MB_ROWS, size_t NB_COLS>
-void gemm_kernel_i8i3k_mrow_ref(size_t          blk_len,
-                                const uint8_t * quant_a_ptr,
-                                const uint8_t * quant_b_data,
-                                float *         c_ptr,
-                                size_t          count_m,
-                                size_t          count_n,
+سانچہ <size_t MB_صفیں, size_t NB_ستون_تعداد>
+خالی gemm_kernel_i8i3k_mrow_ref(size_t          blk_len,
+                                ثابت uint8_t * quant_a_ptr,
+                                ثابت uint8_t * quant_b_ڈیٹا,
+                                اعشاری *         c_ptr,
+                                size_t          گنتی_m,
+                                size_t          گنتی_n,
                                 size_t          k_blks,
                                 size_t          ldc) {
-    using blk_type                 = nrow_block_q2_k<NB_COLS>;
-    constexpr float refactor_scale = 16.0f;
-    constexpr float factor_scale   = 1.0f / refactor_scale;
+    استعمال blk_type                 = nrow_بلاک_q2_k<NB_ستون_تعداد>;
+    constexpr اعشاری refactor_scale = 16.0f;
+    constexpr اعشاری ضربی_عدد_scale   = 1.0f / refactor_scale;
 
-    int64_t a_blk_stride        = q8k_blk_size(256);
-    int64_t a_nrow_block_stride = a_blk_stride * MB_ROWS;
-    int64_t b_ncol_block_stride = sizeof(blk_type);
+    int64_t a_blk_stride        = q8k_blk_سائز(256);
+    int64_t a_nrow_بلاک_stride = a_blk_stride * MB_صفیں;
+    int64_t b_ncol_بلاک_stride = حجم(blk_type);
 
-    float    output[MB_ROWS * NB_COLS]     = { 0 };
-    _Float16 output_f16[MB_ROWS * NB_COLS] = { 0 };
+    اعشاری    output[MB_صفیں * NB_ستون_تعداد]     = { 0 };
+    _Float16 output_f16[MB_صفیں * NB_ستون_تعداد] = { 0 };
 
-    blk_type * quant_b_blk_data = (blk_type *) (quant_b_data);
+    blk_type * quant_b_blk_ڈیٹا = (blk_type *) (quant_b_ڈیٹا);
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-        size_t nb_real = std::min<size_t>(NB_COLS, count_n - ni);
+    برائے (size_t ni = 0; ni < گنتی_n; ni += NB_ستون_تعداد, c_ptr += NB_ستون_تعداد) {
+        size_t nb_real = std::min<size_t>(NB_ستون_تعداد, گنتی_n - ni);
 
-        int8_t * a_data = (int8_t *) quant_a_ptr + sizeof(float) * MB_ROWS + sizeof(int16_t) * MB_ROWS * 16;
+        int8_t * a_ڈیٹا = (int8_t *) quant_a_ptr + حجم(اعشاری) * MB_صفیں + حجم(int16_t) * MB_صفیں * 16;
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            for (size_t ci = 0; ci < NB_COLS; ci++) {
-                output[ci + mi * NB_COLS] = 0;
+        برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+            برائے (size_t ci = 0; ci < NB_ستون_تعداد; ci++) {
+                output[ci + mi * NB_ستون_تعداد] = 0;
             }
         }
 
-        for (size_t ki = 0; ki < k_blks; ki++, quant_b_blk_data++, a_data += a_nrow_block_stride) {
-            uint8_t * b_data   = quant_b_blk_data->qs;
-            uint8_t * b_hmask  = quant_b_blk_data->hmask;
-            int8_t *  scales   = quant_b_blk_data->scales;
-            uint8_t * scales16 = (uint8_t *) (quant_b_blk_data->scales16);
+        برائے (size_t ki = 0; ki < k_blks; ki++, quant_b_blk_ڈیٹا++, a_ڈیٹا += a_nrow_بلاک_stride) {
+            uint8_t * b_ڈیٹا   = quant_b_blk_ڈیٹا->qs;
+            uint8_t * b_hmask  = quant_b_blk_ڈیٹا->hmask;
+            int8_t *  scales   = quant_b_blk_ڈیٹا->scales;
+            uint8_t * scales16 = (uint8_t *) (quant_b_blk_ڈیٹا->scales16);
 
             _Float16 * scales_fp16 = (_Float16 *) scales16;
 
-            float *   a_scale_row = (float *) (a_data - sizeof(float) * MB_ROWS - sizeof(int16_t) * MB_ROWS * 16);
-            int16_t * a_sum_row   = (int16_t *) (a_data - sizeof(int16_t) * MB_ROWS * 16);
+            اعشاری *   a_scale_صف = (اعشاری *) (a_ڈیٹا - حجم(اعشاری) * MB_صفیں - حجم(int16_t) * MB_صفیں * 16);
+            int16_t * a_مجموع_صف   = (int16_t *) (a_ڈیٹا - حجم(int16_t) * MB_صفیں * 16);
 
-            memset(output_f16, 0, sizeof(output_f16));
+            memset(output_f16, 0, حجم(output_f16));
 
-            int8_t *   scales_temp = scales;
-            uint16_t * b_mask_col  = (uint16_t *) b_hmask;
+            int8_t *   scales_عارضی = scales;
+            uint16_t * b_نقاب_ستون  = (uint16_t *) b_hmask;
 
-            float acc_0_max = 0.0f;
-            for (size_t kii = 0; kii < 16; kii++, scales_temp += NB_COLS, b_mask_col += NB_COLS) {
-                size_t b_shift = (kii % 4) * 2;
+            اعشاری acc_0_max = 0.0f;
+            برائے (size_t kii = 0; kii < 16; kii++, scales_عارضی += NB_ستون_تعداد, b_نقاب_ستون += NB_ستون_تعداد) {
+                size_t b_سرکاؤ = (kii % 4) * 2;
 
-                uint8_t * b_data_col = b_data + (kii / 4) * NB_COLS * 16;
+                uint8_t * b_ڈیٹا_ستون = b_ڈیٹا + (kii / 4) * NB_ستون_تعداد * 16;
 
-                for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                    for (size_t ci = 0; ci < NB_COLS; ci++) {
+                برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+                    برائے (size_t ci = 0; ci < NB_ستون_تعداد; ci++) {
                         _Float16 acc_0        = 0;
                         // blk 2 * kii + 0
-                        uint16_t b_shift_mask = 1;
-                        for (size_t bi = 0; bi < 16; bi++, b_shift_mask <<= 1) {
-                            int8_t a0 = a_data[mi * 256 + bi + kii * 16];
-                            int8_t b0 = static_cast<int8_t>((b_data_col[ci * 16 + bi] >> b_shift) & 0x03);
-                            b0 -= b_mask_col[ci] & b_shift_mask ? 0 : 4;
+                        uint16_t b_سرکاؤ_نقاب = 1;
+                        برائے (size_t bi = 0; bi < 16; bi++, b_سرکاؤ_نقاب <<= 1) {
+                            int8_t a0 = a_ڈیٹا[mi * 256 + bi + kii * 16];
+                            int8_t b0 = static_cast<int8_t>((b_ڈیٹا_ستون[ci * 16 + bi] >> b_سرکاؤ) & 0x03);
+                            b0 -= b_نقاب_ستون[ci] & b_سرکاؤ_نقاب ? 0 : 4;
                             acc_0 += static_cast<int16_t>(a0) * static_cast<int16_t>(b0);
                         }
 
-                        _Float16 scale_item = static_cast<_Float16>(scales_temp[ci]) * scales_fp16[ci] *
-                                              static_cast<_Float16>(factor_scale);
+                        _Float16 scale_شے = static_cast<_Float16>(scales_عارضی[ci]) * scales_fp16[ci] *
+                                              static_cast<_Float16>(ضربی_عدد_scale);
 
-                        output_f16[ci + mi * NB_COLS] += acc_0 * scale_item;
+                        output_f16[ci + mi * NB_ستون_تعداد] += acc_0 * scale_شے;
                     }
                 }
             }
 
-            for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                auto a_scale = a_scale_row[mi] * refactor_scale;
-                for (size_t ci = 0; ci < NB_COLS; ci++) {
-                    output[ci + mi * NB_COLS] += output_f16[ci + mi * NB_COLS] * a_scale;
+            برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+                خودکار a_scale = a_scale_صف[mi] * refactor_scale;
+                برائے (size_t ci = 0; ci < NB_ستون_تعداد; ci++) {
+                    output[ci + mi * NB_ستون_تعداد] += output_f16[ci + mi * NB_ستون_تعداد] * a_scale;
                 }
             }
         }
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            for (size_t ci = 0; ci < nb_real; ci++) {
-                c_ptr[mi * ldc + ci] = output[mi * NB_COLS + ci];
+        برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+            برائے (size_t ci = 0; ci < nb_real; ci++) {
+                c_ptr[mi * ldc + ci] = output[mi * NB_ستون_تعداد + ci];
             }
         }
     }
 }
 
-template <size_t MB_ROWS, size_t NB_COLS>
-void gemm_kernel_i8i4_mrow_ref(size_t          blk_len,
-                               const uint8_t * quant_a_ptr,
-                               const uint8_t * quant_b_data,
-                               const uint8_t * quant_b_zp,
-                               float *         c_ptr,
-                               size_t          count_m,
-                               size_t          count_n,
+سانچہ <size_t MB_صفیں, size_t NB_ستون_تعداد>
+خالی gemm_kernel_i8i4_mrow_ref(size_t          blk_len,
+                               ثابت uint8_t * quant_a_ptr,
+                               ثابت uint8_t * quant_b_ڈیٹا,
+                               ثابت uint8_t * quant_b_zp,
+                               اعشاری *         c_ptr,
+                               size_t          گنتی_m,
+                               size_t          گنتی_n,
                                size_t          k_blks,
                                size_t          ldc) {
-    constexpr size_t kblks_per_blk = 16;
-    GGML_ASSERT(k_blks % kblks_per_blk == 0);
+    constexpr size_t kblks_فی_blk = 16;
+    GGML_ASSERT(k_blks % kblks_فی_blk == 0);
 
-    int64_t b_blk_stride        = (sizeof(_Float16) + (blk_len / 2) + (quant_b_zp ? sizeof(uint8_t) : 0));
+    int64_t b_blk_stride        = (حجم(_Float16) + (blk_len / 2) + (quant_b_zp ? حجم(uint8_t) : 0));
     int64_t b_stride            = k_blks * b_blk_stride;
-    int64_t a_blk_stride        = q8_blk_size(blk_len, true);
-    int64_t a_nrow_block_stride = a_blk_stride * MB_ROWS;
-    int64_t b_ncol_block_stride = b_blk_stride * NB_COLS;
+    int64_t a_blk_stride        = q8_blk_سائز(blk_len, سچ);
+    int64_t a_nrow_بلاک_stride = a_blk_stride * MB_صفیں;
+    int64_t b_ncol_بلاک_stride = b_blk_stride * NB_ستون_تعداد;
 
-    float    output[MB_ROWS * NB_COLS]     = { 0 };
-    _Float16 output_f16[MB_ROWS * NB_COLS] = { 0 };
+    اعشاری    output[MB_صفیں * NB_ستون_تعداد]     = { 0 };
+    _Float16 output_f16[MB_صفیں * NB_ستون_تعداد] = { 0 };
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-        size_t    nb_real = std::min<size_t>(NB_COLS, count_n - ni);
-        uint8_t * b_data  = (uint8_t *) quant_b_data + ni * b_stride + NB_COLS * sizeof(_Float16);
-        if (quant_b_zp) {
-            b_data += NB_COLS * sizeof(uint8_t);
+    برائے (size_t ni = 0; ni < گنتی_n; ni += NB_ستون_تعداد, c_ptr += NB_ستون_تعداد) {
+        size_t    nb_real = std::min<size_t>(NB_ستون_تعداد, گنتی_n - ni);
+        uint8_t * b_ڈیٹا  = (uint8_t *) quant_b_ڈیٹا + ni * b_stride + NB_ستون_تعداد * حجم(_Float16);
+        اگر (quant_b_zp) {
+            b_ڈیٹا += NB_ستون_تعداد * حجم(uint8_t);
         }
 
-        int8_t * a_data = (int8_t *) quant_a_ptr + sizeof(float) * MB_ROWS + sizeof(int16_t) * MB_ROWS;
+        int8_t * a_ڈیٹا = (int8_t *) quant_a_ptr + حجم(اعشاری) * MB_صفیں + حجم(int16_t) * MB_صفیں;
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            for (size_t ci = 0; ci < NB_COLS; ci++) {
-                output[ci + mi * NB_COLS]     = 0.0f;
-                output_f16[ci + mi * NB_COLS] = static_cast<_Float16>(0.0f);
+        برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+            برائے (size_t ci = 0; ci < NB_ستون_تعداد; ci++) {
+                output[ci + mi * NB_ستون_تعداد]     = 0.0f;
+                output_f16[ci + mi * NB_ستون_تعداد] = static_cast<_Float16>(0.0f);
             }
         }
 
         size_t kii = 0;
-        for (size_t ki = 0; ki < k_blks; ki++, a_data += a_nrow_block_stride, b_data += b_ncol_block_stride) {
-            _Float16 * b_scale_fp16 = (_Float16 *) (b_data - NB_COLS * sizeof(_Float16));
-            uint8_t *  b_zp         = nullptr;
-            if (quant_b_zp) {
-                b_scale_fp16 = (_Float16 *) (b_data - NB_COLS * sizeof(_Float16) - NB_COLS * sizeof(uint8_t));
-                b_zp         = (uint8_t *) (b_data - NB_COLS * sizeof(uint8_t));
+        برائے (size_t ki = 0; ki < k_blks; ki++, a_ڈیٹا += a_nrow_بلاک_stride, b_ڈیٹا += b_ncol_بلاک_stride) {
+            _Float16 * b_scale_fp16 = (_Float16 *) (b_ڈیٹا - NB_ستون_تعداد * حجم(_Float16));
+            uint8_t *  b_zp         = خالی_اشاریہ;
+            اگر (quant_b_zp) {
+                b_scale_fp16 = (_Float16 *) (b_ڈیٹا - NB_ستون_تعداد * حجم(_Float16) - NB_ستون_تعداد * حجم(uint8_t));
+                b_zp         = (uint8_t *) (b_ڈیٹا - NB_ستون_تعداد * حجم(uint8_t));
             }
 
-            float *   a_scale_row = (float *) (a_data - sizeof(float) * MB_ROWS - sizeof(int16_t) * MB_ROWS);
-            int16_t * a_sum_row   = (int16_t *) (a_data - sizeof(int16_t) * MB_ROWS);
+            اعشاری *   a_scale_صف = (اعشاری *) (a_ڈیٹا - حجم(اعشاری) * MB_صفیں - حجم(int16_t) * MB_صفیں);
+            int16_t * a_مجموع_صف   = (int16_t *) (a_ڈیٹا - حجم(int16_t) * MB_صفیں);
 
-            for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                _Float16 a_scale = a_scale_row[mi];
-                int16_t  a_sum   = a_sum_row[mi];
+            برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+                _Float16 a_scale = a_scale_صف[mi];
+                int16_t  a_مجموع   = a_مجموع_صف[mi];
 
-                for (size_t ci = 0; ci < NB_COLS; ci++) {
+                برائے (size_t ci = 0; ci < NB_ستون_تعداد; ci++) {
                     _Float16 b_scale = b_scale_fp16[ci];
                     int32_t  acc     = 0;
-                    if (b_zp) {
-                        acc += a_sum * b_zp[ci];
-                    } else {
-                        acc += a_sum * 8;
+                    اگر (b_zp) {
+                        acc += a_مجموع * b_zp[ci];
+                    } ورنہ {
+                        acc += a_مجموع * 8;
                     }
-                    for (size_t bi = 0; bi < blk_len / 2; bi++) {
-                        int8_t  a0 = a_data[mi * blk_len + 2 * bi];
-                        int8_t  a1 = a_data[mi * blk_len + 2 * bi + 1];
-                        uint8_t b  = b_data[ci * blk_len / 2 + bi];
+                    برائے (size_t bi = 0; bi < blk_len / 2; bi++) {
+                        int8_t  a0 = a_ڈیٹا[mi * blk_len + 2 * bi];
+                        int8_t  a1 = a_ڈیٹا[mi * blk_len + 2 * bi + 1];
+                        uint8_t b  = b_ڈیٹا[ci * blk_len / 2 + bi];
                         int8_t  b0 = static_cast<int8_t>(b & 0x0F);
                         int8_t  b1 = static_cast<int8_t>((b & 0xF0) >> 4);
                         acc += static_cast<int32_t>(a0) * static_cast<int32_t>(b0) +
                                static_cast<int32_t>(a1) * static_cast<int32_t>(b1);
                     }
-                    output_f16[ci + mi * NB_COLS] +=
-                        static_cast<float>(acc) * static_cast<float>(a_scale) * static_cast<float>(b_scale);
+                    output_f16[ci + mi * NB_ستون_تعداد] +=
+                        static_cast<اعشاری>(acc) * static_cast<اعشاری>(a_scale) * static_cast<اعشاری>(b_scale);
                 }
             }
 
-            if (kii == kblks_per_blk - 1) {
-                for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                    for (size_t ci = 0; ci < NB_COLS; ci++) {
-                        output[ci + mi * NB_COLS] += static_cast<float>(output_f16[ci + mi * NB_COLS]);
-                        output_f16[ci + mi * NB_COLS] = 0.0f;
+            اگر (kii == kblks_فی_blk - 1) {
+                برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+                    برائے (size_t ci = 0; ci < NB_ستون_تعداد; ci++) {
+                        output[ci + mi * NB_ستون_تعداد] += static_cast<اعشاری>(output_f16[ci + mi * NB_ستون_تعداد]);
+                        output_f16[ci + mi * NB_ستون_تعداد] = 0.0f;
                     }
                 }
                 kii = 0;
-            } else {
+            } ورنہ {
                 kii++;
             }
         }
 
-        if (kii == kblks_per_blk - 1) {
-            for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                for (size_t ci = 0; ci < NB_COLS; ci++) {
-                    output[ci + mi * NB_COLS] += static_cast<float>(output_f16[ci + mi * NB_COLS]);
-                    output_f16[ci + mi * NB_COLS] = 0.0f;
+        اگر (kii == kblks_فی_blk - 1) {
+            برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+                برائے (size_t ci = 0; ci < NB_ستون_تعداد; ci++) {
+                    output[ci + mi * NB_ستون_تعداد] += static_cast<اعشاری>(output_f16[ci + mi * NB_ستون_تعداد]);
+                    output_f16[ci + mi * NB_ستون_تعداد] = 0.0f;
                 }
             }
             kii = 0;
         }
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            for (size_t ci = 0; ci < nb_real; ci++) {
-                c_ptr[mi * ldc + ci] = output[mi * NB_COLS + ci];
+        برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+            برائے (size_t ci = 0; ci < nb_real; ci++) {
+                c_ptr[mi * ldc + ci] = output[mi * NB_ستون_تعداد + ci];
             }
         }
     }
 }
 
-template <size_t MB_ROWS, size_t NB_COLS>
-void gemm_kernel_i8i4_hp_mrow_ref(size_t          blk_len,
-                                  const uint8_t * quant_a_ptr,
-                                  const uint8_t * quant_b_data,
-                                  const uint8_t * quant_b_zp,
-                                  float *         c_ptr,
-                                  size_t          count_m,
-                                  size_t          count_n,
+سانچہ <size_t MB_صفیں, size_t NB_ستون_تعداد>
+خالی gemm_kernel_i8i4_hp_mrow_ref(size_t          blk_len,
+                                  ثابت uint8_t * quant_a_ptr,
+                                  ثابت uint8_t * quant_b_ڈیٹا,
+                                  ثابت uint8_t * quant_b_zp,
+                                  اعشاری *         c_ptr,
+                                  size_t          گنتی_m,
+                                  size_t          گنتی_n,
                                   size_t          k_blks,
                                   size_t          ldc) {
-    constexpr size_t k_subblks_per_superblk = 8;
+    constexpr size_t k_subblks_فی_superblk = 8;
 
-    struct block_q4_0x32_layout {
-        _Float16 d[NB_COLS];
-        uint8_t  qs[16 * NB_COLS];
+    ساخت بلاک_q4_0x32_layout {
+        _Float16 d[NB_ستون_تعداد];
+        uint8_t  qs[16 * NB_ستون_تعداد];
     };
 
     GGML_ASSERT(blk_len == 256);
 
-    const size_t b_superblk_stride = sizeof(block_q4_0x32_layout) * k_subblks_per_superblk +
-                                     (quant_b_zp ? NB_COLS * k_subblks_per_superblk * sizeof(uint8_t) : 0);
-    const size_t b_tile_stride = k_blks * b_superblk_stride;
+    ثابت size_t b_superblk_stride = حجم(بلاک_q4_0x32_layout) * k_subblks_فی_superblk +
+                                     (quant_b_zp ? NB_ستون_تعداد * k_subblks_فی_superblk * حجم(uint8_t) : 0);
+    ثابت size_t b_tile_stride = k_blks * b_superblk_stride;
 
-    const size_t a_nrow_block_stride = q8_hp_blk_size(blk_len, true, true) * MB_ROWS;
-    const size_t a_subblk_stride     = q8_hp_blk_size(32, false, false) * MB_ROWS;
+    ثابت size_t a_nrow_بلاک_stride = q8_hp_blk_سائز(blk_len, سچ, سچ) * MB_صفیں;
+    ثابت size_t a_subblk_stride     = q8_hp_blk_سائز(32, جھوٹ, جھوٹ) * MB_صفیں;
 
-    float output[MB_ROWS * NB_COLS] = { 0 };
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-        size_t          nb_real     = std::min<size_t>(NB_COLS, count_n - ni);
-        const uint8_t * b_tile_base = quant_b_data + (ni / NB_COLS) * b_tile_stride;
-        int8_t *        a_data      = (int8_t *) quant_a_ptr;
+    اعشاری output[MB_صفیں * NB_ستون_تعداد] = { 0 };
+    برائے (size_t ni = 0; ni < گنتی_n; ni += NB_ستون_تعداد, c_ptr += NB_ستون_تعداد) {
+        size_t          nb_real     = std::min<size_t>(NB_ستون_تعداد, گنتی_n - ni);
+        ثابت uint8_t * b_tile_بنیاد = quant_b_ڈیٹا + (ni / NB_ستون_تعداد) * b_tile_stride;
+        int8_t *        a_ڈیٹا      = (int8_t *) quant_a_ptr;
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            for (size_t ci = 0; ci < NB_COLS; ci++) {
-                output[ci + mi * NB_COLS] = 0.0f;
+        برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+            برائے (size_t ci = 0; ci < NB_ستون_تعداد; ci++) {
+                output[ci + mi * NB_ستون_تعداد] = 0.0f;
             }
         }
 
-        for (size_t ki = 0; ki < k_blks; ki++, a_data += a_nrow_block_stride) {
-            _Float16 output_f16[MB_ROWS * NB_COLS] = { 0 };
+        برائے (size_t ki = 0; ki < k_blks; ki++, a_ڈیٹا += a_nrow_بلاک_stride) {
+            _Float16 output_f16[MB_صفیں * NB_ستون_تعداد] = { 0 };
 
-            const uint8_t *              b_superblk_ptr = b_tile_base + ki * b_superblk_stride;
-            const block_q4_0x32_layout * b_blocks = reinterpret_cast<const block_q4_0x32_layout *>(b_superblk_ptr);
-            const uint8_t *              b_zps =
-                quant_b_zp ? b_superblk_ptr + sizeof(block_q4_0x32_layout) * k_subblks_per_superblk : nullptr;
+            ثابت uint8_t *              b_superblk_ptr = b_tile_بنیاد + ki * b_superblk_stride;
+            ثابت بلاک_q4_0x32_layout * b_بلاکیں = reinterpret_cast<ثابت بلاک_q4_0x32_layout *>(b_superblk_ptr);
+            ثابت uint8_t *              b_zps =
+                quant_b_zp ? b_superblk_ptr + حجم(بلاک_q4_0x32_layout) * k_subblks_فی_superblk : خالی_اشاریہ;
 
-            _Float16 * a_sum_row       = (_Float16 *) (a_data + a_subblk_stride * k_subblks_per_superblk);
-            _Float16 * a_scale_avg_row = (_Float16 *) (a_data + a_nrow_block_stride - sizeof(_Float16) * MB_ROWS);
-            _Float16   scale_factor    = a_scale_avg_row[0];
+            _Float16 * a_مجموع_صف       = (_Float16 *) (a_ڈیٹا + a_subblk_stride * k_subblks_فی_superblk);
+            _Float16 * a_scale_avg_صف = (_Float16 *) (a_ڈیٹا + a_nrow_بلاک_stride - حجم(_Float16) * MB_صفیں);
+            _Float16   scale_ضربی_عدد    = a_scale_avg_صف[0];
 
-            for (size_t ksi = 0; ksi < k_subblks_per_superblk; ++ksi) {
-                const _Float16 * a_scale_row = reinterpret_cast<const _Float16 *>(a_data + a_subblk_stride * ksi);
-                int8_t *         a_subblk    = a_data + a_subblk_stride * ksi + MB_ROWS * sizeof(_Float16);
-                const _Float16   a_scale     = a_scale_row[0];
-                const block_q4_0x32_layout & b_block = b_blocks[ksi];
+            برائے (size_t ksi = 0; ksi < k_subblks_فی_superblk; ++ksi) {
+                ثابت _Float16 * a_scale_صف = reinterpret_cast<ثابت _Float16 *>(a_ڈیٹا + a_subblk_stride * ksi);
+                int8_t *         a_subblk    = a_ڈیٹا + a_subblk_stride * ksi + MB_صفیں * حجم(_Float16);
+                ثابت _Float16   a_scale     = a_scale_صف[0];
+                ثابت بلاک_q4_0x32_layout & b_بلاک = b_بلاکیں[ksi];
 
-                for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                    for (size_t ci = 0; ci < NB_COLS; ci++) {
-                        const uint8_t * b_qs    = b_block.qs + ci * 16;
-                        _Float16        b_scale = b_block.d[ci] * a_scale;
+                برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+                    برائے (size_t ci = 0; ci < NB_ستون_تعداد; ci++) {
+                        ثابت uint8_t * b_qs    = b_بلاک.qs + ci * 16;
+                        _Float16        b_scale = b_بلاک.d[ci] * a_scale;
 
                         int16_t acc = 0;
-                        for (size_t bi = 0; bi < 16; bi++) {
+                        برائے (size_t bi = 0; bi < 16; bi++) {
                             uint8_t b  = b_qs[bi];
                             int8_t  b0 = static_cast<int8_t>(b & 0x0F);
                             int8_t  b1 = static_cast<int8_t>((b & 0xF0) >> 4);
@@ -392,203 +392,203 @@ void gemm_kernel_i8i4_hp_mrow_ref(size_t          blk_len,
                                    static_cast<int16_t>(a_subblk[mi * 32 + 2 * bi + 1]) * static_cast<int16_t>(b1);
                         }
 
-                        const _Float16 scaled_acc = static_cast<_Float16>(acc) * b_scale;
-                        output_f16[ci + mi * NB_COLS] += scaled_acc;
+                        ثابت _Float16 scaled_acc = static_cast<_Float16>(acc) * b_scale;
+                        output_f16[ci + mi * NB_ستون_تعداد] += scaled_acc;
                     }
                 }
             }
 
-            for (size_t ksi = 0; ksi < k_subblks_per_superblk; ++ksi) {
-                const _Float16 * a_scale_row = reinterpret_cast<const _Float16 *>(a_data + a_subblk_stride * ksi);
-                const block_q4_0x32_layout & b_block  = b_blocks[ksi];
-                const uint8_t *              b_zp_row = b_zps ? b_zps + ksi * NB_COLS : nullptr;
-                const _Float16               a_scale  = a_scale_row[0];
+            برائے (size_t ksi = 0; ksi < k_subblks_فی_superblk; ++ksi) {
+                ثابت _Float16 * a_scale_صف = reinterpret_cast<ثابت _Float16 *>(a_ڈیٹا + a_subblk_stride * ksi);
+                ثابت بلاک_q4_0x32_layout & b_بلاک  = b_بلاکیں[ksi];
+                ثابت uint8_t *              b_zp_صف = b_zps ? b_zps + ksi * NB_ستون_تعداد : خالی_اشاریہ;
+                ثابت _Float16               a_scale  = a_scale_صف[0];
 
-                for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                    const _Float16 a_sum = a_sum_row[mi * k_subblks_per_superblk + ksi];
-                    for (size_t ci = 0; ci < NB_COLS; ci++) {
-                        _Float16 b_scale   = b_block.d[ci] * a_scale;
-                        _Float16 a_sum_bzp = a_sum;
-                        if (b_zp_row) {
-                            a_sum_bzp = a_sum * static_cast<_Float16>(0.125f) * static_cast<_Float16>(b_zp_row[ci]);
+                برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+                    ثابت _Float16 a_مجموع = a_مجموع_صف[mi * k_subblks_فی_superblk + ksi];
+                    برائے (size_t ci = 0; ci < NB_ستون_تعداد; ci++) {
+                        _Float16 b_scale   = b_بلاک.d[ci] * a_scale;
+                        _Float16 a_مجموع_bzp = a_مجموع;
+                        اگر (b_zp_صف) {
+                            a_مجموع_bzp = a_مجموع * static_cast<_Float16>(0.125f) * static_cast<_Float16>(b_zp_صف[ci]);
                         }
 
-                        const _Float16 scaled_acc = a_sum_bzp * b_scale;
-                        output[ci + mi * NB_COLS] += scaled_acc * scale_factor;
+                        ثابت _Float16 scaled_acc = a_مجموع_bzp * b_scale;
+                        output[ci + mi * NB_ستون_تعداد] += scaled_acc * scale_ضربی_عدد;
                     }
                 }
             }
 
-            for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                for (size_t ci = 0; ci < NB_COLS; ci++) {
-                    auto val = static_cast<float>(output_f16[ci + mi * NB_COLS]) * static_cast<float>(scale_factor);
-                    output[ci + mi * NB_COLS] += val;
+            برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+                برائے (size_t ci = 0; ci < NB_ستون_تعداد; ci++) {
+                    خودکار val = static_cast<اعشاری>(output_f16[ci + mi * NB_ستون_تعداد]) * static_cast<اعشاری>(scale_ضربی_عدد);
+                    output[ci + mi * NB_ستون_تعداد] += val;
                 }
             }
         }
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            for (size_t ci = 0; ci < nb_real; ci++) {
-                c_ptr[mi * ldc + ci] = output[mi * NB_COLS + ci];
+        برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+            برائے (size_t ci = 0; ci < nb_real; ci++) {
+                c_ptr[mi * ldc + ci] = output[mi * NB_ستون_تعداد + ci];
             }
         }
     }
 }
 
-template <size_t MB_ROWS, size_t NB_COLS>
-void moe_gemm_kernel_i8i4_mrow_ref(size_t           blk_len,
-                                   const uint8_t ** quant_a_ptr,
-                                   const uint8_t *  quant_b_data,
-                                   const uint8_t *  quant_b_zp,
-                                   float **         c_ptr,
-                                   size_t           count_m,
-                                   size_t           count_n,
+سانچہ <size_t MB_صفیں, size_t NB_ستون_تعداد>
+خالی moe_gemm_kernel_i8i4_mrow_ref(size_t           blk_len,
+                                   ثابت uint8_t ** quant_a_ptr,
+                                   ثابت uint8_t *  quant_b_ڈیٹا,
+                                   ثابت uint8_t *  quant_b_zp,
+                                   اعشاری **         c_ptr,
+                                   size_t           گنتی_m,
+                                   size_t           گنتی_n,
                                    size_t           k_blks,
                                    size_t           ldc) {
-    int64_t b_blk_stride        = (sizeof(ggml_fp16_t) + (blk_len / 2) + (quant_b_zp ? sizeof(uint8_t) : 0));
+    int64_t b_blk_stride        = (حجم(ggml_fp16_t) + (blk_len / 2) + (quant_b_zp ? حجم(uint8_t) : 0));
     int64_t b_stride            = k_blks * b_blk_stride;
-    int64_t a_blk_stride        = q8_blk_size(blk_len, true);
-    int64_t b_ncol_block_stride = b_blk_stride * NB_COLS;
+    int64_t a_blk_stride        = q8_blk_سائز(blk_len, سچ);
+    int64_t b_ncol_بلاک_stride = b_blk_stride * NB_ستون_تعداد;
 
-    float                         output[MB_ROWS * NB_COLS] = { 0 };
-    std::array<int8_t *, MB_ROWS> a_data;
-    std::array<float *, MB_ROWS>  c_data;
+    اعشاری                         output[MB_صفیں * NB_ستون_تعداد] = { 0 };
+    std::array<int8_t *, MB_صفیں> a_ڈیٹا;
+    std::array<اعشاری *, MB_صفیں>  c_ڈیٹا;
 
-    for (size_t mi = 0; mi < MB_ROWS; mi++) {
-        c_data[mi] = c_ptr[mi];
+    برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+        c_ڈیٹا[mi] = c_ptr[mi];
     }
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-        size_t    nb_real = std::min<size_t>(NB_COLS, count_n - ni);
-        uint8_t * b_data  = (uint8_t *) quant_b_data + ni * b_stride + NB_COLS * sizeof(ggml_fp16_t);
-        if (quant_b_zp) {
-            b_data += NB_COLS * sizeof(uint8_t);
+    برائے (size_t ni = 0; ni < گنتی_n; ni += NB_ستون_تعداد) {
+        size_t    nb_real = std::min<size_t>(NB_ستون_تعداد, گنتی_n - ni);
+        uint8_t * b_ڈیٹا  = (uint8_t *) quant_b_ڈیٹا + ni * b_stride + NB_ستون_تعداد * حجم(ggml_fp16_t);
+        اگر (quant_b_zp) {
+            b_ڈیٹا += NB_ستون_تعداد * حجم(uint8_t);
         }
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            a_data[mi] = (int8_t *) quant_a_ptr[mi] + sizeof(float) + sizeof(int16_t);
+        برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+            a_ڈیٹا[mi] = (int8_t *) quant_a_ptr[mi] + حجم(اعشاری) + حجم(int16_t);
         }
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            for (size_t ci = 0; ci < NB_COLS; ci++) {
-                output[ci + mi * NB_COLS] = 0;
+        برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+            برائے (size_t ci = 0; ci < NB_ستون_تعداد; ci++) {
+                output[ci + mi * NB_ستون_تعداد] = 0;
             }
         }
 
-        for (size_t ki = 0; ki < k_blks; ki++, b_data += b_ncol_block_stride) {
-            ggml_fp16_t * b_scale_fp16 = (ggml_fp16_t *) (b_data - NB_COLS * sizeof(ggml_fp16_t));
-            uint8_t *     b_zp         = nullptr;
-            if (quant_b_zp) {
-                b_scale_fp16 = (ggml_fp16_t *) (b_data - NB_COLS * sizeof(ggml_fp16_t) - NB_COLS * sizeof(uint8_t));
-                b_zp         = (uint8_t *) (b_data - NB_COLS * sizeof(uint8_t));
+        برائے (size_t ki = 0; ki < k_blks; ki++, b_ڈیٹا += b_ncol_بلاک_stride) {
+            ggml_fp16_t * b_scale_fp16 = (ggml_fp16_t *) (b_ڈیٹا - NB_ستون_تعداد * حجم(ggml_fp16_t));
+            uint8_t *     b_zp         = خالی_اشاریہ;
+            اگر (quant_b_zp) {
+                b_scale_fp16 = (ggml_fp16_t *) (b_ڈیٹا - NB_ستون_تعداد * حجم(ggml_fp16_t) - NB_ستون_تعداد * حجم(uint8_t));
+                b_zp         = (uint8_t *) (b_ڈیٹا - NB_ستون_تعداد * حجم(uint8_t));
             }
 
-            for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                float *   a_scale_row = (float *) (a_data[mi] - sizeof(float) - sizeof(int16_t));
-                int16_t * a_sum_row   = (int16_t *) (a_data[mi] - sizeof(int16_t));
+            برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+                اعشاری *   a_scale_صف = (اعشاری *) (a_ڈیٹا[mi] - حجم(اعشاری) - حجم(int16_t));
+                int16_t * a_مجموع_صف   = (int16_t *) (a_ڈیٹا[mi] - حجم(int16_t));
 
-                float   a_scale = *a_scale_row;
-                int16_t a_sum   = *a_sum_row;
+                اعشاری   a_scale = *a_scale_صف;
+                int16_t a_مجموع   = *a_مجموع_صف;
 
-                for (size_t ci = 0; ci < NB_COLS; ci++) {
-                    float   b_scale = ggml_fp16_to_fp32(b_scale_fp16[ci]);
+                برائے (size_t ci = 0; ci < NB_ستون_تعداد; ci++) {
+                    اعشاری   b_scale = ggml_fp16_مقصد_fp32(b_scale_fp16[ci]);
                     int32_t acc     = 0;
-                    if (b_zp) {
-                        acc += a_sum * b_zp[ci];
-                    } else {
-                        acc += a_sum * 8;
+                    اگر (b_zp) {
+                        acc += a_مجموع * b_zp[ci];
+                    } ورنہ {
+                        acc += a_مجموع * 8;
                     }
-                    for (size_t bi = 0; bi < blk_len / 2; bi++) {
-                        int8_t  a0 = (a_data[mi])[2 * bi];
-                        int8_t  a1 = (a_data[mi])[2 * bi + 1];
-                        uint8_t b  = b_data[ci * blk_len / 2 + bi];
+                    برائے (size_t bi = 0; bi < blk_len / 2; bi++) {
+                        int8_t  a0 = (a_ڈیٹا[mi])[2 * bi];
+                        int8_t  a1 = (a_ڈیٹا[mi])[2 * bi + 1];
+                        uint8_t b  = b_ڈیٹا[ci * blk_len / 2 + bi];
                         int8_t  b0 = static_cast<int8_t>(b & 0x0F);
                         int8_t  b1 = static_cast<int8_t>((b & 0xF0) >> 4);
                         acc += static_cast<int32_t>(a0) * static_cast<int32_t>(b0) +
                                static_cast<int32_t>(a1) * static_cast<int32_t>(b1);
                     }
-                    output[ci + mi * NB_COLS] += static_cast<float>(acc) * a_scale * b_scale;
+                    output[ci + mi * NB_ستون_تعداد] += static_cast<اعشاری>(acc) * a_scale * b_scale;
                 }
             }
 
-            for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                a_data[mi] += a_blk_stride;
+            برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+                a_ڈیٹا[mi] += a_blk_stride;
             }
         }
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            for (size_t ci = 0; ci < nb_real; ci++) {
-                (c_data[mi])[ci] = output[mi * NB_COLS + ci];
+        برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+            برائے (size_t ci = 0; ci < nb_real; ci++) {
+                (c_ڈیٹا[mi])[ci] = output[mi * NB_ستون_تعداد + ci];
             }
         }
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            c_data[mi] += NB_COLS;
+        برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+            c_ڈیٹا[mi] += NB_ستون_تعداد;
         }
     }
 }
 
-template <size_t MB_ROWS, size_t NB_COLS>
-void moe_gemm_kernel_i8i5_mrow_ref(size_t           blk_len,
-                                   const uint8_t ** quant_a_ptr,
-                                   const uint8_t *  quant_b_data,
-                                   const uint8_t *  quant_b_zp,
-                                   float **         c_ptr,
-                                   size_t           count_m,
-                                   size_t           count_n,
+سانچہ <size_t MB_صفیں, size_t NB_ستون_تعداد>
+خالی moe_gemm_kernel_i8i5_mrow_ref(size_t           blk_len,
+                                   ثابت uint8_t ** quant_a_ptr,
+                                   ثابت uint8_t *  quant_b_ڈیٹا,
+                                   ثابت uint8_t *  quant_b_zp,
+                                   اعشاری **         c_ptr,
+                                   size_t           گنتی_m,
+                                   size_t           گنتی_n,
                                    size_t           k_blks,
                                    size_t           ldc) {
-    GGML_UNUSED(count_m);
-    GGML_UNUSED(ldc);
+    GGML_غیر_مستعمل(گنتی_m);
+    GGML_غیر_مستعمل(ldc);
 
     // blk_len is expected to be 32 for Q5 types.
-    int64_t a_blk_stride = q8_blk_size(blk_len, true);
+    int64_t a_blk_stride = q8_blk_سائز(blk_len, سچ);
 
-    float                         output[MB_ROWS * NB_COLS] = { 0 };
-    std::array<int8_t *, MB_ROWS> a_data;
-    std::array<float *, MB_ROWS>  c_data;
+    اعشاری                         output[MB_صفیں * NB_ستون_تعداد] = { 0 };
+    std::array<int8_t *, MB_صفیں> a_ڈیٹا;
+    std::array<اعشاری *, MB_صفیں>  c_ڈیٹا;
 
-    for (size_t mi = 0; mi < MB_ROWS; ++mi) {
-        c_data[mi] = c_ptr[mi];
+    برائے (size_t mi = 0; mi < MB_صفیں; ++mi) {
+        c_ڈیٹا[mi] = c_ptr[mi];
     }
 
-    if (quant_b_zp) {
-        using blk_type = nrow_block_q5_1<NB_COLS>;
+    اگر (quant_b_zp) {
+        استعمال blk_type = nrow_بلاک_q5_1<NB_ستون_تعداد>;
 
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-            size_t     nb_real          = std::min<size_t>(NB_COLS, count_n - ni);
-            blk_type * quant_b_blk_data = (blk_type *) quant_b_data + (ni / NB_COLS) * k_blks;
+        برائے (size_t ni = 0; ni < گنتی_n; ni += NB_ستون_تعداد) {
+            size_t     nb_real          = std::min<size_t>(NB_ستون_تعداد, گنتی_n - ni);
+            blk_type * quant_b_blk_ڈیٹا = (blk_type *) quant_b_ڈیٹا + (ni / NB_ستون_تعداد) * k_blks;
 
-            for (size_t mi = 0; mi < MB_ROWS; ++mi) {
-                a_data[mi] = (int8_t *) quant_a_ptr[mi] + sizeof(float) + sizeof(int16_t);
+            برائے (size_t mi = 0; mi < MB_صفیں; ++mi) {
+                a_ڈیٹا[mi] = (int8_t *) quant_a_ptr[mi] + حجم(اعشاری) + حجم(int16_t);
             }
 
-            for (size_t mi = 0; mi < MB_ROWS; ++mi) {
-                for (size_t ci = 0; ci < NB_COLS; ++ci) {
-                    output[ci + mi * NB_COLS] = 0;
+            برائے (size_t mi = 0; mi < MB_صفیں; ++mi) {
+                برائے (size_t ci = 0; ci < NB_ستون_تعداد; ++ci) {
+                    output[ci + mi * NB_ستون_تعداد] = 0;
                 }
             }
 
-            for (size_t ki = 0; ki < k_blks; ++ki, ++quant_b_blk_data) {
-                for (size_t mi = 0; mi < MB_ROWS; ++mi) {
-                    float *   a_scale_row = (float *) (a_data[mi] - sizeof(float) - sizeof(int16_t));
-                    int16_t * a_sum_row   = (int16_t *) (a_data[mi] - sizeof(int16_t));
-                    float     a_scale     = *a_scale_row;
-                    int16_t   a_sum       = *a_sum_row;
+            برائے (size_t ki = 0; ki < k_blks; ++ki, ++quant_b_blk_ڈیٹا) {
+                برائے (size_t mi = 0; mi < MB_صفیں; ++mi) {
+                    اعشاری *   a_scale_صف = (اعشاری *) (a_ڈیٹا[mi] - حجم(اعشاری) - حجم(int16_t));
+                    int16_t * a_مجموع_صف   = (int16_t *) (a_ڈیٹا[mi] - حجم(int16_t));
+                    اعشاری     a_scale     = *a_scale_صف;
+                    int16_t   a_مجموع       = *a_مجموع_صف;
 
-                    for (size_t ci = 0; ci < NB_COLS; ++ci) {
-                        float   b_scale  = ggml_fp16_to_fp32(quant_b_blk_data->scales16[ci]);
-                        uint8_t b_zp_val = quant_b_blk_data->zp[ci];
-                        int32_t acc      = a_sum * static_cast<int32_t>(b_zp_val);
+                    برائے (size_t ci = 0; ci < NB_ستون_تعداد; ++ci) {
+                        اعشاری   b_scale  = ggml_fp16_مقصد_fp32(quant_b_blk_ڈیٹا->scales16[ci]);
+                        uint8_t b_zp_val = quant_b_blk_ڈیٹا->zp[ci];
+                        int32_t acc      = a_مجموع * static_cast<int32_t>(b_zp_val);
 
-                        for (size_t bi = 0; bi < blk_len / 2; ++bi) {
-                            int8_t  a0       = a_data[mi][2 * bi];
-                            int8_t  a1       = a_data[mi][2 * bi + 1];
-                            uint8_t qs_byte  = quant_b_blk_data->qs[ci * (blk_len / 2) + bi];
+                        برائے (size_t bi = 0; bi < blk_len / 2; ++bi) {
+                            int8_t  a0       = a_ڈیٹا[mi][2 * bi];
+                            int8_t  a1       = a_ڈیٹا[mi][2 * bi + 1];
+                            uint8_t qs_byte  = quant_b_blk_ڈیٹا->qs[ci * (blk_len / 2) + bi];
                             int8_t  b0       = static_cast<int8_t>(qs_byte & 0x0F);
                             int8_t  b1       = static_cast<int8_t>((qs_byte >> 4) & 0x0F);
-                            uint8_t qh_byte0 = quant_b_blk_data->qh[ci * 4 + (2 * bi) / 8];
-                            uint8_t qh_byte1 = quant_b_blk_data->qh[ci * 4 + (2 * bi + 1) / 8];
+                            uint8_t qh_byte0 = quant_b_blk_ڈیٹا->qh[ci * 4 + (2 * bi) / 8];
+                            uint8_t qh_byte1 = quant_b_blk_ڈیٹا->qh[ci * 4 + (2 * bi + 1) / 8];
                             uint8_t h0       = (qh_byte0 >> ((2 * bi) % 8)) & 1;
                             uint8_t h1       = (qh_byte1 >> ((2 * bi + 1) % 8)) & 1;
 
@@ -599,56 +599,56 @@ void moe_gemm_kernel_i8i5_mrow_ref(size_t           blk_len,
                                    static_cast<int32_t>(a1) * static_cast<int32_t>(b1);
                         }
 
-                        output[ci + mi * NB_COLS] += static_cast<float>(acc) * a_scale * b_scale;
+                        output[ci + mi * NB_ستون_تعداد] += static_cast<اعشاری>(acc) * a_scale * b_scale;
                     }
 
-                    a_data[mi] += a_blk_stride;
+                    a_ڈیٹا[mi] += a_blk_stride;
                 }
             }
 
-            for (size_t mi = 0; mi < MB_ROWS; ++mi) {
-                for (size_t ci = 0; ci < nb_real; ++ci) {
-                    c_data[mi][ci] = output[mi * NB_COLS + ci];
+            برائے (size_t mi = 0; mi < MB_صفیں; ++mi) {
+                برائے (size_t ci = 0; ci < nb_real; ++ci) {
+                    c_ڈیٹا[mi][ci] = output[mi * NB_ستون_تعداد + ci];
                 }
-                c_data[mi] += NB_COLS;
+                c_ڈیٹا[mi] += NB_ستون_تعداد;
             }
         }
-    } else {
-        using blk_type = nrow_block_q5_0<NB_COLS>;
+    } ورنہ {
+        استعمال blk_type = nrow_بلاک_q5_0<NB_ستون_تعداد>;
 
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-            size_t     nb_real          = std::min<size_t>(NB_COLS, count_n - ni);
-            blk_type * quant_b_blk_data = (blk_type *) quant_b_data + (ni / NB_COLS) * k_blks;
+        برائے (size_t ni = 0; ni < گنتی_n; ni += NB_ستون_تعداد) {
+            size_t     nb_real          = std::min<size_t>(NB_ستون_تعداد, گنتی_n - ni);
+            blk_type * quant_b_blk_ڈیٹا = (blk_type *) quant_b_ڈیٹا + (ni / NB_ستون_تعداد) * k_blks;
 
-            for (size_t mi = 0; mi < MB_ROWS; ++mi) {
-                a_data[mi] = (int8_t *) quant_a_ptr[mi] + sizeof(float) + sizeof(int16_t);
+            برائے (size_t mi = 0; mi < MB_صفیں; ++mi) {
+                a_ڈیٹا[mi] = (int8_t *) quant_a_ptr[mi] + حجم(اعشاری) + حجم(int16_t);
             }
 
-            for (size_t mi = 0; mi < MB_ROWS; ++mi) {
-                for (size_t ci = 0; ci < NB_COLS; ++ci) {
-                    output[ci + mi * NB_COLS] = 0;
+            برائے (size_t mi = 0; mi < MB_صفیں; ++mi) {
+                برائے (size_t ci = 0; ci < NB_ستون_تعداد; ++ci) {
+                    output[ci + mi * NB_ستون_تعداد] = 0;
                 }
             }
 
-            for (size_t ki = 0; ki < k_blks; ++ki, ++quant_b_blk_data) {
-                for (size_t mi = 0; mi < MB_ROWS; ++mi) {
-                    float *   a_scale_row = (float *) (a_data[mi] - sizeof(float) - sizeof(int16_t));
-                    int16_t * a_sum_row   = (int16_t *) (a_data[mi] - sizeof(int16_t));
-                    float     a_scale     = *a_scale_row;
-                    int16_t   a_sum       = *a_sum_row;
+            برائے (size_t ki = 0; ki < k_blks; ++ki, ++quant_b_blk_ڈیٹا) {
+                برائے (size_t mi = 0; mi < MB_صفیں; ++mi) {
+                    اعشاری *   a_scale_صف = (اعشاری *) (a_ڈیٹا[mi] - حجم(اعشاری) - حجم(int16_t));
+                    int16_t * a_مجموع_صف   = (int16_t *) (a_ڈیٹا[mi] - حجم(int16_t));
+                    اعشاری     a_scale     = *a_scale_صف;
+                    int16_t   a_مجموع       = *a_مجموع_صف;
 
-                    for (size_t ci = 0; ci < NB_COLS; ++ci) {
-                        float   b_scale = ggml_fp16_to_fp32(quant_b_blk_data->scales16[ci]);
-                        int32_t acc     = a_sum * 16;
+                    برائے (size_t ci = 0; ci < NB_ستون_تعداد; ++ci) {
+                        اعشاری   b_scale = ggml_fp16_مقصد_fp32(quant_b_blk_ڈیٹا->scales16[ci]);
+                        int32_t acc     = a_مجموع * 16;
 
-                        for (size_t bi = 0; bi < blk_len / 2; ++bi) {
-                            int8_t  a0       = a_data[mi][2 * bi];
-                            int8_t  a1       = a_data[mi][2 * bi + 1];
-                            uint8_t qs_byte  = quant_b_blk_data->qs[ci * (blk_len / 2) + bi];
+                        برائے (size_t bi = 0; bi < blk_len / 2; ++bi) {
+                            int8_t  a0       = a_ڈیٹا[mi][2 * bi];
+                            int8_t  a1       = a_ڈیٹا[mi][2 * bi + 1];
+                            uint8_t qs_byte  = quant_b_blk_ڈیٹا->qs[ci * (blk_len / 2) + bi];
                             int8_t  b0       = static_cast<int8_t>(qs_byte & 0x0F);
                             int8_t  b1       = static_cast<int8_t>((qs_byte >> 4) & 0x0F);
-                            uint8_t qh_byte0 = quant_b_blk_data->qh[ci * 4 + (2 * bi) / 8];
-                            uint8_t qh_byte1 = quant_b_blk_data->qh[ci * 4 + (2 * bi + 1) / 8];
+                            uint8_t qh_byte0 = quant_b_blk_ڈیٹا->qh[ci * 4 + (2 * bi) / 8];
+                            uint8_t qh_byte1 = quant_b_blk_ڈیٹا->qh[ci * 4 + (2 * bi + 1) / 8];
                             uint8_t h0       = (qh_byte0 >> ((2 * bi) % 8)) & 1;
                             uint8_t h1       = (qh_byte1 >> ((2 * bi + 1) % 8)) & 1;
 
@@ -659,141 +659,141 @@ void moe_gemm_kernel_i8i5_mrow_ref(size_t           blk_len,
                                    static_cast<int32_t>(a1) * static_cast<int32_t>(b1);
                         }
 
-                        output[ci + mi * NB_COLS] += static_cast<float>(acc) * a_scale * b_scale;
+                        output[ci + mi * NB_ستون_تعداد] += static_cast<اعشاری>(acc) * a_scale * b_scale;
                     }
 
-                    a_data[mi] += a_blk_stride;
+                    a_ڈیٹا[mi] += a_blk_stride;
                 }
             }
 
-            for (size_t mi = 0; mi < MB_ROWS; ++mi) {
-                for (size_t ci = 0; ci < nb_real; ++ci) {
-                    c_data[mi][ci] = output[mi * NB_COLS + ci];
+            برائے (size_t mi = 0; mi < MB_صفیں; ++mi) {
+                برائے (size_t ci = 0; ci < nb_real; ++ci) {
+                    c_ڈیٹا[mi][ci] = output[mi * NB_ستون_تعداد + ci];
                 }
-                c_data[mi] += NB_COLS;
+                c_ڈیٹا[mi] += NB_ستون_تعداد;
             }
         }
     }
 }
 
-template <size_t MB_ROWS, size_t NB_COLS>
-void gemm_kernel_i8i8_mrow_ref(size_t          blk_len,
-                               const uint8_t * quant_a_ptr,
-                               const uint8_t * quant_b_data,
-                               const uint8_t * quant_b_zp,
-                               float *         c_ptr,
-                               size_t          count_m,
-                               size_t          count_n,
+سانچہ <size_t MB_صفیں, size_t NB_ستون_تعداد>
+خالی gemm_kernel_i8i8_mrow_ref(size_t          blk_len,
+                               ثابت uint8_t * quant_a_ptr,
+                               ثابت uint8_t * quant_b_ڈیٹا,
+                               ثابت uint8_t * quant_b_zp,
+                               اعشاری *         c_ptr,
+                               size_t          گنتی_m,
+                               size_t          گنتی_n,
                                size_t          k_blks,
                                size_t          ldc) {
-    int64_t b_blk_stride        = (sizeof(ggml_fp16_t) + blk_len);
+    int64_t b_blk_stride        = (حجم(ggml_fp16_t) + blk_len);
     int64_t b_stride            = k_blks * b_blk_stride;
-    int64_t a_blk_stride        = q8_blk_size(blk_len, true);
-    int64_t a_nrow_block_stride = a_blk_stride * MB_ROWS;
-    int64_t b_ncol_block_stride = b_blk_stride * NB_COLS;
+    int64_t a_blk_stride        = q8_blk_سائز(blk_len, سچ);
+    int64_t a_nrow_بلاک_stride = a_blk_stride * MB_صفیں;
+    int64_t b_ncol_بلاک_stride = b_blk_stride * NB_ستون_تعداد;
 
-    float output[MB_ROWS * NB_COLS] = { 0 };
+    اعشاری output[MB_صفیں * NB_ستون_تعداد] = { 0 };
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-        size_t   nb_real = std::min<size_t>(NB_COLS, count_n - ni);
-        int8_t * b_data  = (int8_t *) quant_b_data + ni * b_stride + NB_COLS * sizeof(ggml_fp16_t);
+    برائے (size_t ni = 0; ni < گنتی_n; ni += NB_ستون_تعداد, c_ptr += NB_ستون_تعداد) {
+        size_t   nb_real = std::min<size_t>(NB_ستون_تعداد, گنتی_n - ni);
+        int8_t * b_ڈیٹا  = (int8_t *) quant_b_ڈیٹا + ni * b_stride + NB_ستون_تعداد * حجم(ggml_fp16_t);
 
-        int8_t * a_data = (int8_t *) quant_a_ptr + sizeof(float) * MB_ROWS + sizeof(int16_t) * MB_ROWS;
+        int8_t * a_ڈیٹا = (int8_t *) quant_a_ptr + حجم(اعشاری) * MB_صفیں + حجم(int16_t) * MB_صفیں;
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            for (size_t ci = 0; ci < NB_COLS; ci++) {
-                output[ci + mi * NB_COLS] = 0;
+        برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+            برائے (size_t ci = 0; ci < NB_ستون_تعداد; ci++) {
+                output[ci + mi * NB_ستون_تعداد] = 0;
             }
         }
 
-        for (size_t ki = 0; ki < k_blks; ki++, a_data += a_nrow_block_stride, b_data += b_ncol_block_stride) {
-            ggml_fp16_t * b_scale_fp16 = (ggml_fp16_t *) (b_data - NB_COLS * sizeof(ggml_fp16_t));
+        برائے (size_t ki = 0; ki < k_blks; ki++, a_ڈیٹا += a_nrow_بلاک_stride, b_ڈیٹا += b_ncol_بلاک_stride) {
+            ggml_fp16_t * b_scale_fp16 = (ggml_fp16_t *) (b_ڈیٹا - NB_ستون_تعداد * حجم(ggml_fp16_t));
 
-            float * a_scale_row = (float *) (a_data - sizeof(float) * MB_ROWS - sizeof(int16_t) * MB_ROWS);
+            اعشاری * a_scale_صف = (اعشاری *) (a_ڈیٹا - حجم(اعشاری) * MB_صفیں - حجم(int16_t) * MB_صفیں);
 
-            for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                float a_scale = a_scale_row[mi];
-                for (size_t ci = 0; ci < NB_COLS; ci++) {
-                    float   b_scale = ggml_fp16_to_fp32(b_scale_fp16[ci]);
+            برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+                اعشاری a_scale = a_scale_صف[mi];
+                برائے (size_t ci = 0; ci < NB_ستون_تعداد; ci++) {
+                    اعشاری   b_scale = ggml_fp16_مقصد_fp32(b_scale_fp16[ci]);
                     int32_t acc     = 0;
-                    for (size_t bi = 0; bi < blk_len; bi++) {
-                        int8_t a0 = a_data[mi * blk_len + bi];
-                        int8_t b0 = b_data[ci * blk_len + bi];
+                    برائے (size_t bi = 0; bi < blk_len; bi++) {
+                        int8_t a0 = a_ڈیٹا[mi * blk_len + bi];
+                        int8_t b0 = b_ڈیٹا[ci * blk_len + bi];
                         acc += static_cast<int32_t>(a0) * static_cast<int32_t>(b0);
                     }
-                    output[ci + mi * NB_COLS] += static_cast<float>(acc) * a_scale * b_scale;
+                    output[ci + mi * NB_ستون_تعداد] += static_cast<اعشاری>(acc) * a_scale * b_scale;
                 }
             }
         }
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            for (size_t ci = 0; ci < nb_real; ci++) {
-                c_ptr[mi * ldc + ci] = output[mi * NB_COLS + ci];
+        برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+            برائے (size_t ci = 0; ci < nb_real; ci++) {
+                c_ptr[mi * ldc + ci] = output[mi * NB_ستون_تعداد + ci];
             }
         }
     }
 }
 
-template <size_t MB_ROWS, size_t NB_COLS>
-void gemm_kernel_i8i5_mrow_ref(size_t          blk_len,
-                               const uint8_t * quant_a_ptr,
-                               const uint8_t * quant_b_data,
-                               const uint8_t * quant_b_zp,
-                               float *         c_ptr,
-                               size_t          count_m,
-                               size_t          count_n,
+سانچہ <size_t MB_صفیں, size_t NB_ستون_تعداد>
+خالی gemm_kernel_i8i5_mrow_ref(size_t          blk_len,
+                               ثابت uint8_t * quant_a_ptr,
+                               ثابت uint8_t * quant_b_ڈیٹا,
+                               ثابت uint8_t * quant_b_zp,
+                               اعشاری *         c_ptr,
+                               size_t          گنتی_m,
+                               size_t          گنتی_n,
                                size_t          k_blks,
                                size_t          ldc) {
     // blk_len is expected to be 32 for Q5 types
     // quant_b_zp != nullptr => nrow_block_q5_1<NB_COLS> (has zp)
     // quant_b_zp == nullptr => nrow_block_q5_0<NB_COLS> (no zp)
 
-    int64_t a_blk_stride        = q8_blk_size(blk_len, true);
-    int64_t a_nrow_block_stride = a_blk_stride * MB_ROWS;
+    int64_t a_blk_stride        = q8_blk_سائز(blk_len, سچ);
+    int64_t a_nrow_بلاک_stride = a_blk_stride * MB_صفیں;
 
-    float output[MB_ROWS * NB_COLS] = { 0 };
+    اعشاری output[MB_صفیں * NB_ستون_تعداد] = { 0 };
 
-    if (quant_b_zp) {
+    اگر (quant_b_zp) {
         // nrow_block_q5_1<NB_COLS>: scales16[NB_COLS] + zp[NB_COLS] + qh[4*NB_COLS] + qs[16*NB_COLS]
-        using blk_type                 = nrow_block_q5_1<NB_COLS>;
-        int64_t    b_ncol_block_stride = sizeof(blk_type);
-        blk_type * quant_b_blk_data    = (blk_type *) quant_b_data;
+        استعمال blk_type                 = nrow_بلاک_q5_1<NB_ستون_تعداد>;
+        int64_t    b_ncol_بلاک_stride = حجم(blk_type);
+        blk_type * quant_b_blk_ڈیٹا    = (blk_type *) quant_b_ڈیٹا;
 
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-            size_t nb_real = std::min<size_t>(NB_COLS, count_n - ni);
+        برائے (size_t ni = 0; ni < گنتی_n; ni += NB_ستون_تعداد, c_ptr += NB_ستون_تعداد) {
+            size_t nb_real = std::min<size_t>(NB_ستون_تعداد, گنتی_n - ni);
 
-            int8_t * a_data = (int8_t *) quant_a_ptr + sizeof(float) * MB_ROWS + sizeof(int16_t) * MB_ROWS;
+            int8_t * a_ڈیٹا = (int8_t *) quant_a_ptr + حجم(اعشاری) * MB_صفیں + حجم(int16_t) * MB_صفیں;
 
-            for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                for (size_t ci = 0; ci < NB_COLS; ci++) {
-                    output[ci + mi * NB_COLS] = 0;
+            برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+                برائے (size_t ci = 0; ci < NB_ستون_تعداد; ci++) {
+                    output[ci + mi * NB_ستون_تعداد] = 0;
                 }
             }
 
-            for (size_t ki = 0; ki < k_blks; ki++, quant_b_blk_data++, a_data += a_nrow_block_stride) {
-                float *   a_scale_row = (float *) (a_data - sizeof(float) * MB_ROWS - sizeof(int16_t) * MB_ROWS);
-                int16_t * a_sum_row   = (int16_t *) (a_data - sizeof(int16_t) * MB_ROWS);
+            برائے (size_t ki = 0; ki < k_blks; ki++, quant_b_blk_ڈیٹا++, a_ڈیٹا += a_nrow_بلاک_stride) {
+                اعشاری *   a_scale_صف = (اعشاری *) (a_ڈیٹا - حجم(اعشاری) * MB_صفیں - حجم(int16_t) * MB_صفیں);
+                int16_t * a_مجموع_صف   = (int16_t *) (a_ڈیٹا - حجم(int16_t) * MB_صفیں);
 
-                for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                    float   a_scale = a_scale_row[mi];
-                    int16_t a_sum   = a_sum_row[mi];
+                برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+                    اعشاری   a_scale = a_scale_صف[mi];
+                    int16_t a_مجموع   = a_مجموع_صف[mi];
 
-                    for (size_t ci = 0; ci < NB_COLS; ci++) {
-                        float   b_scale  = ggml_fp16_to_fp32(quant_b_blk_data->scales16[ci]);
-                        uint8_t b_zp_val = quant_b_blk_data->zp[ci];
-                        int32_t acc      = a_sum * static_cast<int32_t>(b_zp_val);
+                    برائے (size_t ci = 0; ci < NB_ستون_تعداد; ci++) {
+                        اعشاری   b_scale  = ggml_fp16_مقصد_fp32(quant_b_blk_ڈیٹا->scales16[ci]);
+                        uint8_t b_zp_val = quant_b_blk_ڈیٹا->zp[ci];
+                        int32_t acc      = a_مجموع * static_cast<int32_t>(b_zp_val);
 
-                        for (size_t bi = 0; bi < blk_len / 2; bi++) {
-                            int8_t  a0      = a_data[mi * blk_len + 2 * bi];
-                            int8_t  a1      = a_data[mi * blk_len + 2 * bi + 1];
-                            uint8_t qs_byte = quant_b_blk_data->qs[ci * (blk_len / 2) + bi];
+                        برائے (size_t bi = 0; bi < blk_len / 2; bi++) {
+                            int8_t  a0      = a_ڈیٹا[mi * blk_len + 2 * bi];
+                            int8_t  a1      = a_ڈیٹا[mi * blk_len + 2 * bi + 1];
+                            uint8_t qs_byte = quant_b_blk_ڈیٹا->qs[ci * (blk_len / 2) + bi];
                             int8_t  b0      = static_cast<int8_t>(qs_byte & 0x0F);
                             int8_t  b1      = static_cast<int8_t>((qs_byte >> 4) & 0x0F);
 
                             // Extract high bits from qh
                             // qh is packed as 4 bytes per column (32 bits for 32 elements)
-                            uint8_t qh_byte0 = quant_b_blk_data->qh[ci * 4 + (2 * bi) / 8];
-                            uint8_t qh_byte1 = quant_b_blk_data->qh[ci * 4 + (2 * bi + 1) / 8];
+                            uint8_t qh_byte0 = quant_b_blk_ڈیٹا->qh[ci * 4 + (2 * bi) / 8];
+                            uint8_t qh_byte1 = quant_b_blk_ڈیٹا->qh[ci * 4 + (2 * bi + 1) / 8];
                             uint8_t h0       = (qh_byte0 >> ((2 * bi) % 8)) & 1;
                             uint8_t h1       = (qh_byte1 >> ((2 * bi + 1) % 8)) & 1;
 
@@ -803,57 +803,57 @@ void gemm_kernel_i8i5_mrow_ref(size_t          blk_len,
                             acc += static_cast<int32_t>(a0) * static_cast<int32_t>(b0) +
                                    static_cast<int32_t>(a1) * static_cast<int32_t>(b1);
                         }
-                        output[ci + mi * NB_COLS] += static_cast<float>(acc) * a_scale * b_scale;
+                        output[ci + mi * NB_ستون_تعداد] += static_cast<اعشاری>(acc) * a_scale * b_scale;
                     }
                 }
             }
 
-            for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                for (size_t ci = 0; ci < nb_real; ci++) {
-                    c_ptr[mi * ldc + ci] = output[mi * NB_COLS + ci];
+            برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+                برائے (size_t ci = 0; ci < nb_real; ci++) {
+                    c_ptr[mi * ldc + ci] = output[mi * NB_ستون_تعداد + ci];
                 }
             }
         }
-    } else {
+    } ورنہ {
         // nrow_block_q5_0<NB_COLS>: scales16[NB_COLS] + qh[4*NB_COLS] + qs[16*NB_COLS]
-        using blk_type                 = nrow_block_q5_0<NB_COLS>;
-        int64_t    b_ncol_block_stride = sizeof(blk_type);
-        blk_type * quant_b_blk_data    = (blk_type *) quant_b_data;
+        استعمال blk_type                 = nrow_بلاک_q5_0<NB_ستون_تعداد>;
+        int64_t    b_ncol_بلاک_stride = حجم(blk_type);
+        blk_type * quant_b_blk_ڈیٹا    = (blk_type *) quant_b_ڈیٹا;
 
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-            size_t nb_real = std::min<size_t>(NB_COLS, count_n - ni);
+        برائے (size_t ni = 0; ni < گنتی_n; ni += NB_ستون_تعداد, c_ptr += NB_ستون_تعداد) {
+            size_t nb_real = std::min<size_t>(NB_ستون_تعداد, گنتی_n - ni);
 
-            int8_t * a_data = (int8_t *) quant_a_ptr + sizeof(float) * MB_ROWS + sizeof(int16_t) * MB_ROWS;
+            int8_t * a_ڈیٹا = (int8_t *) quant_a_ptr + حجم(اعشاری) * MB_صفیں + حجم(int16_t) * MB_صفیں;
 
-            for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                for (size_t ci = 0; ci < NB_COLS; ci++) {
-                    output[ci + mi * NB_COLS] = 0;
+            برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+                برائے (size_t ci = 0; ci < NB_ستون_تعداد; ci++) {
+                    output[ci + mi * NB_ستون_تعداد] = 0;
                 }
             }
 
-            for (size_t ki = 0; ki < k_blks; ki++, quant_b_blk_data++, a_data += a_nrow_block_stride) {
-                float *   a_scale_row = (float *) (a_data - sizeof(float) * MB_ROWS - sizeof(int16_t) * MB_ROWS);
-                int16_t * a_sum_row   = (int16_t *) (a_data - sizeof(int16_t) * MB_ROWS);
+            برائے (size_t ki = 0; ki < k_blks; ki++, quant_b_blk_ڈیٹا++, a_ڈیٹا += a_nrow_بلاک_stride) {
+                اعشاری *   a_scale_صف = (اعشاری *) (a_ڈیٹا - حجم(اعشاری) * MB_صفیں - حجم(int16_t) * MB_صفیں);
+                int16_t * a_مجموع_صف   = (int16_t *) (a_ڈیٹا - حجم(int16_t) * MB_صفیں);
 
-                for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                    float   a_scale = a_scale_row[mi];
-                    int16_t a_sum   = a_sum_row[mi];
+                برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+                    اعشاری   a_scale = a_scale_صف[mi];
+                    int16_t a_مجموع   = a_مجموع_صف[mi];
 
-                    for (size_t ci = 0; ci < NB_COLS; ci++) {
-                        float   b_scale = ggml_fp16_to_fp32(quant_b_blk_data->scales16[ci]);
+                    برائے (size_t ci = 0; ci < NB_ستون_تعداد; ci++) {
+                        اعشاری   b_scale = ggml_fp16_مقصد_fp32(quant_b_blk_ڈیٹا->scales16[ci]);
                         // Q5_0 has no zp, use default offset 16 (midpoint of 5-bit unsigned range)
-                        int32_t acc     = a_sum * 16;
+                        int32_t acc     = a_مجموع * 16;
 
-                        for (size_t bi = 0; bi < blk_len / 2; bi++) {
-                            int8_t  a0      = a_data[mi * blk_len + 2 * bi];
-                            int8_t  a1      = a_data[mi * blk_len + 2 * bi + 1];
-                            uint8_t qs_byte = quant_b_blk_data->qs[ci * (blk_len / 2) + bi];
+                        برائے (size_t bi = 0; bi < blk_len / 2; bi++) {
+                            int8_t  a0      = a_ڈیٹا[mi * blk_len + 2 * bi];
+                            int8_t  a1      = a_ڈیٹا[mi * blk_len + 2 * bi + 1];
+                            uint8_t qs_byte = quant_b_blk_ڈیٹا->qs[ci * (blk_len / 2) + bi];
                             int8_t  b0      = static_cast<int8_t>(qs_byte & 0x0F);
                             int8_t  b1      = static_cast<int8_t>((qs_byte >> 4) & 0x0F);
 
                             // Extract high bits from qh
-                            uint8_t qh_byte0 = quant_b_blk_data->qh[ci * 4 + (2 * bi) / 8];
-                            uint8_t qh_byte1 = quant_b_blk_data->qh[ci * 4 + (2 * bi + 1) / 8];
+                            uint8_t qh_byte0 = quant_b_blk_ڈیٹا->qh[ci * 4 + (2 * bi) / 8];
+                            uint8_t qh_byte1 = quant_b_blk_ڈیٹا->qh[ci * 4 + (2 * bi + 1) / 8];
                             uint8_t h0       = (qh_byte0 >> ((2 * bi) % 8)) & 1;
                             uint8_t h1       = (qh_byte1 >> ((2 * bi + 1) % 8)) & 1;
 
@@ -863,117 +863,117 @@ void gemm_kernel_i8i5_mrow_ref(size_t          blk_len,
                             acc += static_cast<int32_t>(a0) * static_cast<int32_t>(b0) +
                                    static_cast<int32_t>(a1) * static_cast<int32_t>(b1);
                         }
-                        output[ci + mi * NB_COLS] += static_cast<float>(acc) * a_scale * b_scale;
+                        output[ci + mi * NB_ستون_تعداد] += static_cast<اعشاری>(acc) * a_scale * b_scale;
                     }
                 }
             }
 
-            for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                for (size_t ci = 0; ci < nb_real; ci++) {
-                    c_ptr[mi * ldc + ci] = output[mi * NB_COLS + ci];
+            برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+                برائے (size_t ci = 0; ci < nb_real; ci++) {
+                    c_ptr[mi * ldc + ci] = output[mi * NB_ستون_تعداد + ci];
                 }
             }
         }
     }
 }
 
-template <size_t MB_ROWS, size_t NB_COLS>
-void gemm_kernel_i8mxfp4_mrow_ref(size_t          blk_len,
-                                  const uint8_t * quant_a_ptr,
-                                  const uint8_t * quant_b_data,
-                                  const uint8_t * quant_b_zp,
-                                  float *         c_ptr,
-                                  size_t          count_m,
-                                  size_t          count_n,
+سانچہ <size_t MB_صفیں, size_t NB_ستون_تعداد>
+خالی gemm_kernel_i8mxfp4_mrow_ref(size_t          blk_len,
+                                  ثابت uint8_t * quant_a_ptr,
+                                  ثابت uint8_t * quant_b_ڈیٹا,
+                                  ثابت uint8_t * quant_b_zp,
+                                  اعشاری *         c_ptr,
+                                  size_t          گنتی_m,
+                                  size_t          گنتی_n,
                                   size_t          k_blks,
                                   size_t          ldc) {
     // blk_len is expected to be 32 (QK_MXFP4)
     // quant_b_zp is unused for MXFP4 (symmetric quantization)
-    GGML_UNUSED(quant_b_zp);
+    GGML_غیر_مستعمل(quant_b_zp);
 
-    int64_t a_blk_stride        = q8_blk_size(blk_len, true);
-    int64_t a_nrow_block_stride = a_blk_stride * MB_ROWS;
+    int64_t a_blk_stride        = q8_blk_سائز(blk_len, سچ);
+    int64_t a_nrow_بلاک_stride = a_blk_stride * MB_صفیں;
 
-    float output[MB_ROWS * NB_COLS] = { 0 };
+    اعشاری output[MB_صفیں * NB_ستون_تعداد] = { 0 };
 
-    using blk_type              = nrow_block_mxfp4<NB_COLS>;
-    blk_type * quant_b_blk_data = (blk_type *) quant_b_data;
+    استعمال blk_type              = nrow_بلاک_mxfp4<NB_ستون_تعداد>;
+    blk_type * quant_b_blk_ڈیٹا = (blk_type *) quant_b_ڈیٹا;
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-        size_t nb_real = std::min<size_t>(NB_COLS, count_n - ni);
+    برائے (size_t ni = 0; ni < گنتی_n; ni += NB_ستون_تعداد, c_ptr += NB_ستون_تعداد) {
+        size_t nb_real = std::min<size_t>(NB_ستون_تعداد, گنتی_n - ni);
 
-        int8_t * a_data = (int8_t *) quant_a_ptr + sizeof(float) * MB_ROWS + sizeof(int16_t) * MB_ROWS;
+        int8_t * a_ڈیٹا = (int8_t *) quant_a_ptr + حجم(اعشاری) * MB_صفیں + حجم(int16_t) * MB_صفیں;
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            for (size_t ci = 0; ci < NB_COLS; ci++) {
-                output[ci + mi * NB_COLS] = 0;
+        برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+            برائے (size_t ci = 0; ci < NB_ستون_تعداد; ci++) {
+                output[ci + mi * NB_ستون_تعداد] = 0;
             }
         }
 
-        for (size_t ki = 0; ki < k_blks; ki++, quant_b_blk_data++, a_data += a_nrow_block_stride) {
-            float *   a_scale_row = (float *) (a_data - sizeof(float) * MB_ROWS - sizeof(int16_t) * MB_ROWS);
-            int16_t * a_sum_row   = (int16_t *) (a_data - sizeof(int16_t) * MB_ROWS);
+        برائے (size_t ki = 0; ki < k_blks; ki++, quant_b_blk_ڈیٹا++, a_ڈیٹا += a_nrow_بلاک_stride) {
+            اعشاری *   a_scale_صف = (اعشاری *) (a_ڈیٹا - حجم(اعشاری) * MB_صفیں - حجم(int16_t) * MB_صفیں);
+            int16_t * a_مجموع_صف   = (int16_t *) (a_ڈیٹا - حجم(int16_t) * MB_صفیں);
 
-            for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                float a_scale = a_scale_row[mi];
+            برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+                اعشاری a_scale = a_scale_صف[mi];
 
-                for (size_t ci = 0; ci < NB_COLS; ci++) {
-                    float b_scale = GGML_E8M0_TO_FP32_HALF(quant_b_blk_data->e[ci]);
+                برائے (size_t ci = 0; ci < NB_ستون_تعداد; ci++) {
+                    اعشاری b_scale = GGML_E8_M0_مقصد_FP32_HALF(quant_b_blk_ڈیٹا->e[ci]);
 
                     // Read 32 sign bits for this column
-                    uint32_t sign_bits;
-                    memcpy(&sign_bits, &quant_b_blk_data->qh[ci * 4], 4);
+                    uint32_t sign_بٹ;
+                    حافظہ_نقل(&sign_بٹ, &quant_b_blk_ڈیٹا->qh[ci * 4], 4);
 
                     int32_t acc = 0;
-                    for (size_t bi = 0; bi < blk_len / 2; bi++) {
-                        int8_t a0 = a_data[mi * blk_len + 2 * bi];
-                        int8_t a1 = a_data[mi * blk_len + 2 * bi + 1];
+                    برائے (size_t bi = 0; bi < blk_len / 2; bi++) {
+                        int8_t a0 = a_ڈیٹا[mi * blk_len + 2 * bi];
+                        int8_t a1 = a_ڈیٹا[mi * blk_len + 2 * bi + 1];
 
                         // qs[ci*16 + bi] stores abs(vals[bi*2]) in low 4 bits
                         // and abs(vals[bi*2+1]) in high 4 bits
-                        uint8_t qs_byte = quant_b_blk_data->qs[ci * 16 + bi];
+                        uint8_t qs_byte = quant_b_blk_ڈیٹا->qs[ci * 16 + bi];
                         int8_t  b_abs0  = static_cast<int8_t>(qs_byte & 0x0F);
                         int8_t  b_abs1  = static_cast<int8_t>((qs_byte >> 4) & 0x0F);
 
                         // Extract sign bits: bit (2*bi) for vals[2*bi], bit (2*bi+1) for vals[2*bi+1]
-                        int8_t b0 = (sign_bits >> (2 * bi)) & 1 ? -b_abs0 : b_abs0;
-                        int8_t b1 = (sign_bits >> (2 * bi + 1)) & 1 ? -b_abs1 : b_abs1;
+                        int8_t b0 = (sign_بٹ >> (2 * bi)) & 1 ? -b_abs0 : b_abs0;
+                        int8_t b1 = (sign_بٹ >> (2 * bi + 1)) & 1 ? -b_abs1 : b_abs1;
 
                         acc += static_cast<int32_t>(a0) * static_cast<int32_t>(b0) +
                                static_cast<int32_t>(a1) * static_cast<int32_t>(b1);
                     }
-                    output[ci + mi * NB_COLS] += static_cast<float>(acc) * a_scale * b_scale;
+                    output[ci + mi * NB_ستون_تعداد] += static_cast<اعشاری>(acc) * a_scale * b_scale;
                 }
             }
         }
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            for (size_t ci = 0; ci < nb_real; ci++) {
-                c_ptr[mi * ldc + ci] = output[mi * NB_COLS + ci];
+        برائے (size_t mi = 0; mi < MB_صفیں; mi++) {
+            برائے (size_t ci = 0; ci < nb_real; ci++) {
+                c_ptr[mi * ldc + ci] = output[mi * NB_ستون_تعداد + ci];
             }
         }
     }
 }
 
-void gemm_kernel_i8i2k_m1(size_t          blk_len,
-                          const uint8_t * quant_a_ptr,
-                          const uint8_t * quant_b_data,
-                          float *         c_ptr,
-                          size_t          count_m,
-                          size_t          count_n,
+خالی gemm_kernel_i8i2k_m1(size_t          blk_len,
+                          ثابت uint8_t * quant_a_ptr,
+                          ثابت uint8_t * quant_b_ڈیٹا,
+                          اعشاری *         c_ptr,
+                          size_t          گنتی_m,
+                          size_t          گنتی_n,
                           size_t          k_blks,
                           size_t          ldc) {
-    constexpr size_t NB_COLS = 32;
-    using blk_type           = nrow_block_q2_k<NB_COLS>;
+    constexpr size_t NB_ستون_تعداد = 32;
+    استعمال blk_type           = nrow_بلاک_q2_k<NB_ستون_تعداد>;
 
-    int64_t b_ncol_block_stride = sizeof(blk_type) * k_blks;
+    int64_t b_ncol_بلاک_stride = حجم(blk_type) * k_blks;
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-        uint8_t * b_data = (uint8_t *) quant_b_data + (ni / NB_COLS) * b_ncol_block_stride;
-        int8_t *  a_data = (int8_t *) quant_a_ptr;
-        float *   dst_c  = (float *) c_ptr + ni;
+    برائے (size_t ni = 0; ni < گنتی_n; ni += NB_ستون_تعداد) {
+        uint8_t * b_ڈیٹا = (uint8_t *) quant_b_ڈیٹا + (ni / NB_ستون_تعداد) * b_ncol_بلاک_stride;
+        int8_t *  a_ڈیٹا = (int8_t *) quant_a_ptr;
+        اعشاری *   dst_c  = (اعشاری *) c_ptr + ni;
 
-        asm volatile(
+        asm متلون(
             "vsetvli        t0, x0, e16, m1         \n\t"
             "vxor.vv        v31, v31, v31           \n\t"
             "mv             s1, %[BK]               \n\t"
@@ -1167,7 +1167,7 @@ void gemm_kernel_i8i2k_m1(size_t          blk_len,
             // save
             "vsetvli        t0, x0, e32, m1         \n\t"
             "vse32.v        v31, (%[DST])           \n\t"
-            : [A] "+r"(a_data), [B] "+r"(b_data)
+            : [A] "+r"(a_ڈیٹا), [B] "+r"(b_ڈیٹا)
             : [DST] "r"(dst_c), [BK] "r"(k_blks)
             : "t0", "t1", "t2", "t3", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12",
               "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27",
@@ -1175,27 +1175,27 @@ void gemm_kernel_i8i2k_m1(size_t          blk_len,
     }
 }
 
-void gemm_kernel_i8i2k_m4(size_t          blk_len,
-                          const uint8_t * quant_a_ptr,
-                          const uint8_t * quant_b_data,
-                          float *         c_ptr,
-                          size_t          count_m,
-                          size_t          count_n,
+خالی gemm_kernel_i8i2k_m4(size_t          blk_len,
+                          ثابت uint8_t * quant_a_ptr,
+                          ثابت uint8_t * quant_b_ڈیٹا,
+                          اعشاری *         c_ptr,
+                          size_t          گنتی_m,
+                          size_t          گنتی_n,
                           size_t          k_blks,
                           size_t          ldc) {
-    constexpr size_t NB_COLS = 32;
-    using blk_type           = nrow_block_q2_k<NB_COLS>;
+    constexpr size_t NB_ستون_تعداد = 32;
+    استعمال blk_type           = nrow_بلاک_q2_k<NB_ستون_تعداد>;
 
-    int64_t  b_ncol_block_stride = sizeof(blk_type) * k_blks;
+    int64_t  b_ncol_بلاک_stride = حجم(blk_type) * k_blks;
     _Float16 scale               = 0.0625f;
     _Float16 scale_1             = 16.0f;
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-        uint8_t * b_data = (uint8_t *) quant_b_data + (ni / NB_COLS) * b_ncol_block_stride;
-        int8_t *  a_data = (int8_t *) quant_a_ptr;
-        float *   dst_c  = (float *) c_ptr + ni;
+    برائے (size_t ni = 0; ni < گنتی_n; ni += NB_ستون_تعداد) {
+        uint8_t * b_ڈیٹا = (uint8_t *) quant_b_ڈیٹا + (ni / NB_ستون_تعداد) * b_ncol_بلاک_stride;
+        int8_t *  a_ڈیٹا = (int8_t *) quant_a_ptr;
+        اعشاری *   dst_c  = (اعشاری *) c_ptr + ni;
 
-        asm volatile(
+        asm متلون(
             "vsetvli        t0, x0, e16, m1         \n\t"
             "vxor.vv        v28, v31, v31           \n\t"  // init result
             "vxor.vv        v29, v31, v31           \n\t"
@@ -1408,7 +1408,7 @@ void gemm_kernel_i8i2k_m4(size_t          blk_len,
             "vse32.v        v30, (t1)               \n\t"
             "add            t1, t1, %[LDC]          \n\t"
             "vse32.v        v31, (t1)               \n\t"
-            : [A] "+r"(a_data), [B] "+r"(b_data)
+            : [A] "+r"(a_ڈیٹا), [B] "+r"(b_ڈیٹا)
             : [DST] "r"(dst_c), [BK] "r"(k_blks), [LDC] "r"(ldc * 4), [SCALE] "f"(scale), [SCALE_1] "f"(scale_1)
             : "t0", "t1", "t2", "t3", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12",
               "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27",
@@ -1416,33 +1416,33 @@ void gemm_kernel_i8i2k_m4(size_t          blk_len,
     }
 }
 
-void gemm_kernel_i8i3k_m1(size_t          blk_len,
-                          const uint8_t * quant_a_ptr,
-                          const uint8_t * quant_b_data,
-                          float *         c_ptr,
-                          size_t          count_m,
-                          size_t          count_n,
+خالی gemm_kernel_i8i3k_m1(size_t          blk_len,
+                          ثابت uint8_t * quant_a_ptr,
+                          ثابت uint8_t * quant_b_ڈیٹا,
+                          اعشاری *         c_ptr,
+                          size_t          گنتی_m,
+                          size_t          گنتی_n,
                           size_t          k_blks,
                           size_t          ldc) {
-    constexpr size_t NB_COLS = 32;  //only support 32 in ASM
-    using blk_type           = nrow_block_q3_k<NB_COLS>;
+    constexpr size_t NB_ستون_تعداد = 32;  //only support 32 in ASM
+    استعمال blk_type           = nrow_بلاک_q3_k<NB_ستون_تعداد>;
 
-    const blk_type * b_base = reinterpret_cast<const blk_type *>(quant_b_data);
+    ثابت blk_type * b_بنیاد = reinterpret_cast<ثابت blk_type *>(quant_b_ڈیٹا);
 
-    int64_t a_blk_stride        = q8k_blk_size(256);
-    int64_t a_nrow_block_stride = a_blk_stride;
-    int64_t b_ncol_block_stride = sizeof(blk_type);
+    int64_t a_blk_stride        = q8k_blk_سائز(256);
+    int64_t a_nrow_بلاک_stride = a_blk_stride;
+    int64_t b_ncol_بلاک_stride = حجم(blk_type);
 
     // Constants used by q3_k scaling in HP branch:
     // - k_q3k_scale_step: per-nibble scale factor (1/16).
     // - k_a_scale_post_mul: A_scale needs an extra *16 at the end (pairs with 1/16 above).
-    const _Float16 k_q3k_scale_step   = (_Float16) 0.0625f;  // 1 / 16
-    const float    k_a_scale_post_mul = 16.0f;
+    ثابت _Float16 k_q3k_scale_قدم   = (_Float16) 0.0625f;  // 1 / 16
+    ثابت اعشاری    k_a_scale_post_mul = 16.0f;
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-        size_t           nb_real          = std::min<size_t>(NB_COLS, count_n - ni);
-        const blk_type * quant_b_blk_data = b_base + (ni / NB_COLS) * k_blks;
-#if 0
+    برائے (size_t ni = 0; ni < گنتی_n; ni += NB_ستون_تعداد, c_ptr += NB_ستون_تعداد) {
+        size_t           nb_real          = std::min<size_t>(NB_ستون_تعداد, گنتی_n - ni);
+        ثابت blk_type * quant_b_blk_ڈیٹا = b_بنیاد + (ni / NB_ستون_تعداد) * k_blks;
+#اگر 0
         //------------------------------------------------------------------------------
         // A format
         // Ascale   fp32 * 1    32bit
@@ -1456,7 +1456,7 @@ void gemm_kernel_i8i3k_m1(size_t          blk_len,
         // B scl16  fp16 * N32      512bit;
         //------------------------------------------------------------------------------
         //bias always be nullptr
-        __asm__ volatile(
+        __asm__ متلون(
             // t2 = k_blks (each is K256 superblock)
             "mv           t2, %[KBLKS]            \n\t"
             // t3 = 256/64 = 4 (K64 iterations per superblock)
@@ -1753,12 +1753,12 @@ void gemm_kernel_i8i3k_m1(size_t          blk_len,
             "FUNC_END%=:                          \n\t"
 
             :
-            : [KBLKS] "r"(k_blks), [NBLKS] "r"(nb_real), [pA] "r"(quant_a_ptr), [pB] "r"(quant_b_blk_data),
-              [pC] "r"(c_ptr), [B_STR] "r"(b_ncol_block_stride)
+            : [KBLKS] "r"(k_blks), [NBLKS] "r"(nb_real), [pA] "r"(quant_a_ptr), [pB] "r"(quant_b_blk_ڈیٹا),
+              [pC] "r"(c_ptr), [B_STR] "r"(b_ncol_بلاک_stride)
             : "cc", "memory", "t0", "t2", "t3", "t4", "t5", "f0", "s2", "s3", "s4", "s5", "s6", "s7");
-#else
+#ورنہ
 
-        __asm__ volatile(
+        __asm__ متلون(
             // =========================
             // Kernel overview (M1 x N32)
             // =========================
@@ -2020,34 +2020,34 @@ void gemm_kernel_i8i3k_m1(size_t          blk_len,
             "vse32.v      v31, (%[pC])            \n\t"
 
             :
-            : [KBLKS] "r"(k_blks), [NBLKS] "r"(nb_real), [pA] "r"(quant_a_ptr), [pB] "r"(quant_b_blk_data),
-              [pC] "r"(c_ptr), [B_STR] "r"(b_ncol_block_stride), [q3_step] "f"(k_q3k_scale_step),
+            : [KBLKS] "r"(k_blks), [NBLKS] "r"(nb_real), [pA] "r"(quant_a_ptr), [pB] "r"(quant_b_blk_ڈیٹا),
+              [pC] "r"(c_ptr), [B_STR] "r"(b_ncol_بلاک_stride), [q3_قدم] "f"(k_q3k_scale_قدم),
               [a_post_mul] "f"(k_a_scale_post_mul)
             : "cc", "memory", "t0", "t2", "t3", "t4", "t5", "f0", "f1", "s2", "s3", "s4", "s5", "s6", "s7", "s8");
-#endif
+#اگر_ختم
     }
 }
 
-void gemm_kernel_i8i3k_m4(size_t          blk_len,
-                          const uint8_t * quant_a_ptr,
-                          const uint8_t * quant_b_data,
-                          float *         c_ptr,
-                          size_t          count_m,
-                          size_t          count_n,
+خالی gemm_kernel_i8i3k_m4(size_t          blk_len,
+                          ثابت uint8_t * quant_a_ptr,
+                          ثابت uint8_t * quant_b_ڈیٹا,
+                          اعشاری *         c_ptr,
+                          size_t          گنتی_m,
+                          size_t          گنتی_n,
                           size_t          k_blks,
                           size_t          ldc) {
-    using blk_type           = nrow_block_q3_k<32>;
-    constexpr size_t NB_COLS = 32;  //only support 32 in ASM
+    استعمال blk_type           = nrow_بلاک_q3_k<32>;
+    constexpr size_t NB_ستون_تعداد = 32;  //only support 32 in ASM
 
-    const blk_type * b_base = reinterpret_cast<const blk_type *>(quant_b_data);
+    ثابت blk_type * b_بنیاد = reinterpret_cast<ثابت blk_type *>(quant_b_ڈیٹا);
 
-    int64_t a_blk_stride        = q8k_blk_size(256);
-    int64_t a_nrow_block_stride = a_blk_stride * 4;
-    int64_t b_ncol_block_stride = sizeof(blk_type);
+    int64_t a_blk_stride        = q8k_blk_سائز(256);
+    int64_t a_nrow_بلاک_stride = a_blk_stride * 4;
+    int64_t b_ncol_بلاک_stride = حجم(blk_type);
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-        size_t           nb_real          = std::min<size_t>(NB_COLS, count_n - ni);
-        const blk_type * quant_b_blk_data = b_base + (ni / NB_COLS) * k_blks;
+    برائے (size_t ni = 0; ni < گنتی_n; ni += NB_ستون_تعداد, c_ptr += NB_ستون_تعداد) {
+        size_t           nb_real          = std::min<size_t>(NB_ستون_تعداد, گنتی_n - ni);
+        ثابت blk_type * quant_b_blk_ڈیٹا = b_بنیاد + (ni / NB_ستون_تعداد) * k_blks;
 
         //------------------------------------------------------------------------------
         // A format
@@ -2062,7 +2062,7 @@ void gemm_kernel_i8i3k_m4(size_t          blk_len,
         // B scl16  fp16 * N32      512bit;
         //------------------------------------------------------------------------------
         //bias always be nullptr
-        __asm__ volatile(
+        __asm__ متلون(
             // t2 = k_blks (each is K256 superblock)
             "mv           t2, %[KBLKS]            \n\t"
             // t3 = 256/64 = 4 (K64 iterations per superblock)
@@ -2421,28 +2421,28 @@ void gemm_kernel_i8i3k_m4(size_t          blk_len,
             "FUNC_END%=:                          \n\t"
 
             :
-            : [KBLKS] "r"(k_blks), [NBLKS] "r"(nb_real), [pA] "r"(quant_a_ptr), [pB] "r"(quant_b_blk_data),
-              [pC] "r"(c_ptr), [B_STR] "r"(b_ncol_block_stride), [A_STR] "r"(a_nrow_block_stride), [LDC] "r"(ldc * 4)
+            : [KBLKS] "r"(k_blks), [NBLKS] "r"(nb_real), [pA] "r"(quant_a_ptr), [pB] "r"(quant_b_blk_ڈیٹا),
+              [pC] "r"(c_ptr), [B_STR] "r"(b_ncol_بلاک_stride), [A_STR] "r"(a_nrow_بلاک_stride), [LDC] "r"(ldc * 4)
             : "cc", "memory", "t0", "t2", "t3", "t4", "t5", "f0", "f1", "f2", "f3", "s2", "s3", "s4", "s5", "s6", "s7");
     }
 }
 
-void gemm_kernel_i8i4_m1(size_t          blk_len,
-                         const uint8_t * quant_a_ptr,
-                         const uint8_t * quant_b_data,
-                         const uint8_t * quant_b_zp,
-                         float *         c_ptr,
-                         size_t          count_m,
-                         size_t          count_n,
+خالی gemm_kernel_i8i4_m1(size_t          blk_len,
+                         ثابت uint8_t * quant_a_ptr,
+                         ثابت uint8_t * quant_b_ڈیٹا,
+                         ثابت uint8_t * quant_b_zp,
+                         اعشاری *         c_ptr,
+                         size_t          گنتی_m,
+                         size_t          گنتی_n,
                          size_t          k_blks,
                          size_t          ldc) {
-    if (quant_b_zp == NULL) {
-        for (size_t n = 0; n < count_n; n += 32) {
-            size_t    nblks         = (count_n - n) > 32 ? 32 : count_n - n;
-            uint8_t * QuantBDataPtr = (uint8_t *) quant_b_data +      //
+    اگر (quant_b_zp == تہی) {
+        برائے (size_t n = 0; n < گنتی_n; n += 32) {
+            size_t    nblks         = (گنتی_n - n) > 32 ? 32 : گنتی_n - n;
+            uint8_t * QuantBDataPtr = (uint8_t *) quant_b_ڈیٹا +      //
                                       n * k_blks * blk_len / 2 +      // b data
-                                      n * k_blks * sizeof(_Float16);  // scale
-            float * CPtr = c_ptr + n;
+                                      n * k_blks * حجم(_Float16);  // scale
+            اعشاری * CPtr = c_ptr + n;
             size_t  cnt  = k_blks;
 
             // A format Version_1 (FP32 SCALE FOR Normal VMADOTins of IME2)
@@ -2456,9 +2456,9 @@ void gemm_kernel_i8i4_m1(size_t          blk_len,
             // Bscale fp16 * N32 512bit;
             // || scl*32..(fp16) | blk0 blk1 ... blk31 || scl*32..(fp16) | blk0 blk1 ... blk31 || ...
             // || Element                              || Element                              || ...
-#if 0
+#اگر 0
             //bias always be nullptr
-            __asm__ volatile(
+            __asm__ متلون(
 
                 // t3 = k/32
                 "mv           t3, %[BCK]              \n\t"
@@ -2555,8 +2555,8 @@ void gemm_kernel_i8i4_m1(size_t          blk_len,
                 :
                 : [BCK] "r"(cnt), [NBLKS] "r"(nblks), [pA] "r"(quant_a_ptr), [pB] "r"(QuantBDataPtr), [pC] "r"(CPtr)
                 : "cc", "t0", "t2", "t3", "t4", "f0", "s2", "s3", "s4", "s5", "s6");
-#else
-            __asm__ volatile(
+#ورنہ
+            __asm__ متلون(
 
                 // t3 = k/32
                 "mv           t3, %[BCK]              \n\t"
@@ -2646,16 +2646,16 @@ void gemm_kernel_i8i4_m1(size_t          blk_len,
                 : [BCK] "r"(cnt), [NBLKS] "r"(nblks), [pA] "r"(quant_a_ptr), [pB] "r"(QuantBDataPtr), [pC] "r"(CPtr)
                 : "cc", "t0", "t2", "t3", "t4", "f0", "s2", "s3", "s4", "s5", "s6");
 
-#endif
+#اگر_ختم
         }
-    } else {
-        for (size_t n = 0; n < count_n; n += 32) {
-            size_t    nblks         = (count_n - n) > 32 ? 32 : count_n - n;
-            uint8_t * QuantBDataPtr = (uint8_t *) quant_b_data +      //
+    } ورنہ {
+        برائے (size_t n = 0; n < گنتی_n; n += 32) {
+            size_t    nblks         = (گنتی_n - n) > 32 ? 32 : گنتی_n - n;
+            uint8_t * QuantBDataPtr = (uint8_t *) quant_b_ڈیٹا +      //
                                       n * k_blks * blk_len / 2 +      // b data
-                                      n * k_blks * sizeof(uint8_t) +  // b zp
-                                      n * k_blks * sizeof(_Float16);  // scale
-            float * CPtr = c_ptr + n;
+                                      n * k_blks * حجم(uint8_t) +  // b zp
+                                      n * k_blks * حجم(_Float16);  // scale
+            اعشاری * CPtr = c_ptr + n;
             size_t  cnt  = k_blks;
 
             // A format Version_1 (FP32 SCALE FOR Normal VMADOTins of IME2)
@@ -2672,8 +2672,8 @@ void gemm_kernel_i8i4_m1(size_t          blk_len,
             // || Element                                             || Element         ...
 
             //bias always be nullptr
-#if 0
-            __asm__ volatile(
+#اگر 0
+            __asm__ متلون(
 
                 // t3 = k/32
                 "mv           t3, %[BCK]              \n\t"
@@ -2774,8 +2774,8 @@ void gemm_kernel_i8i4_m1(size_t          blk_len,
                 :
                 : [BCK] "r"(cnt), [NBLKS] "r"(nblks), [pA] "r"(quant_a_ptr), [pB] "r"(QuantBDataPtr), [pC] "r"(CPtr)
                 : "cc", "t0", "t2", "t3", "t4", "f0", "s2", "s3", "s4", "s5", "s6");
-#else
-            __asm__ volatile(
+#ورنہ
+            __asm__ متلون(
 
                 // t3 = k/32
                 "mv           t3, %[BCK]              \n\t"
@@ -2875,41 +2875,41 @@ void gemm_kernel_i8i4_m1(size_t          blk_len,
                 :
                 : [BCK] "r"(cnt), [NBLKS] "r"(nblks), [pA] "r"(quant_a_ptr), [pB] "r"(QuantBDataPtr), [pC] "r"(CPtr)
                 : "cc", "t0", "t2", "t3", "t4", "f0", "s2", "s3", "s4", "s5", "s6");
-#endif
+#اگر_ختم
         }
     }
 }
 
-void gemm_kernel_i8i4_hp_m1(size_t          blk_len,
-                            const uint8_t * quant_a_ptr,
-                            const uint8_t * quant_b_data,
-                            const uint8_t * quant_b_zp,
-                            float *         c_ptr,
-                            size_t          count_m,
-                            size_t          count_n,
+خالی gemm_kernel_i8i4_hp_m1(size_t          blk_len,
+                            ثابت uint8_t * quant_a_ptr,
+                            ثابت uint8_t * quant_b_ڈیٹا,
+                            ثابت uint8_t * quant_b_zp,
+                            اعشاری *         c_ptr,
+                            size_t          گنتی_m,
+                            size_t          گنتی_n,
                             size_t          k_blks,
                             size_t          ldc) {
-    constexpr size_t NB_COLS                = 32;
-    constexpr size_t k_subblks_per_superblk = 8;
+    constexpr size_t NB_ستون_تعداد                = 32;
+    constexpr size_t k_subblks_فی_superblk = 8;
 
-    struct block_q4_0x32_layout {
-        _Float16 d[NB_COLS];
-        uint8_t  qs[16 * NB_COLS];
+    ساخت بلاک_q4_0x32_layout {
+        _Float16 d[NB_ستون_تعداد];
+        uint8_t  qs[16 * NB_ستون_تعداد];
     };
 
     GGML_ASSERT(blk_len == 256);
 
-    const size_t b_superblk_stride = sizeof(block_q4_0x32_layout) * k_subblks_per_superblk +
-                                     (quant_b_zp ? NB_COLS * k_subblks_per_superblk * sizeof(uint8_t) : 0);
-    const size_t b_tile_stride = k_blks * b_superblk_stride;
+    ثابت size_t b_superblk_stride = حجم(بلاک_q4_0x32_layout) * k_subblks_فی_superblk +
+                                     (quant_b_zp ? NB_ستون_تعداد * k_subblks_فی_superblk * حجم(uint8_t) : 0);
+    ثابت size_t b_tile_stride = k_blks * b_superblk_stride;
 
-    if (quant_b_zp == NULL) {
-        for (size_t ni = 0; ni < count_n; ni += 32) {
-            uint8_t * b_data = (uint8_t *) quant_b_data + (ni / NB_COLS) * b_tile_stride;
-            int8_t *  a_data = (int8_t *) quant_a_ptr;
-            float *   dst_c  = c_ptr + ni;
+    اگر (quant_b_zp == تہی) {
+        برائے (size_t ni = 0; ni < گنتی_n; ni += 32) {
+            uint8_t * b_ڈیٹا = (uint8_t *) quant_b_ڈیٹا + (ni / NB_ستون_تعداد) * b_tile_stride;
+            int8_t *  a_ڈیٹا = (int8_t *) quant_a_ptr;
+            اعشاری *   dst_c  = c_ptr + ni;
 
-            asm volatile(
+            asm متلون(
                 "vsetvli        t0, x0, e16, m1         \n\t"
                 "vxor.vv        v31, v31, v31           \n\t"  // init acc to zero
                 "mv             t4, %[BK]               \n\t"
@@ -2992,36 +2992,36 @@ void gemm_kernel_i8i4_hp_m1(size_t          blk_len,
                 // save
                 "vsetvli        t0, x0, e32, m1         \n\t"
                 "vse32.v        v31, (%[DST])           \n\t"
-                : [A] "+r"(a_data), [B] "+r"(b_data)
+                : [A] "+r"(a_ڈیٹا), [B] "+r"(b_ڈیٹا)
                 : [DST] "r"(dst_c), [BK] "r"(k_blks)
                 : "t0", "t1", "t2", "t3", "t4", "t5", "t6", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9",
                   "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23",
                   "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31", "fa0", "fa1", "ft0", "ft1");
         }
-    } else {
+    } ورنہ {
         // TODO: support quant_b_zp for i8i4 hp kernel
         GGML_ABORT("gemm_kernel_i8i4_hp_m1 with quant_b_zp is not supported yet");
     }
 }
 
-void gemm_kernel_i8i4_m4(size_t          blk_len,
-                         const uint8_t * quant_a_ptr,
-                         const uint8_t * quant_b_data,
-                         const uint8_t * quant_b_zp,
-                         float *         c_ptr,
-                         size_t          count_m,
-                         size_t          count_n,
+خالی gemm_kernel_i8i4_m4(size_t          blk_len,
+                         ثابت uint8_t * quant_a_ptr,
+                         ثابت uint8_t * quant_b_ڈیٹا,
+                         ثابت uint8_t * quant_b_zp,
+                         اعشاری *         c_ptr,
+                         size_t          گنتی_m,
+                         size_t          گنتی_n,
                          size_t          k_blks,
                          size_t          ldc) {
-    int64_t b_data_stride =
-        k_blks * (sizeof(ggml_fp16_t) + 16 * sizeof(int8_t) + (quant_b_zp != NULL ? sizeof(int8_t) : 0));
-    if (quant_b_zp == NULL) {
-        for (size_t ni = 0; ni < count_n; ni += 32) {
-            uint8_t * b_data = (uint8_t *) quant_b_data + ni * b_data_stride;
-            int8_t *  a_data = (int8_t *) quant_a_ptr;
-            float *   dst_c  = c_ptr + ni;
-#if 0
-            asm volatile(
+    int64_t b_ڈیٹا_stride =
+        k_blks * (حجم(ggml_fp16_t) + 16 * حجم(int8_t) + (quant_b_zp != تہی ? حجم(int8_t) : 0));
+    اگر (quant_b_zp == تہی) {
+        برائے (size_t ni = 0; ni < گنتی_n; ni += 32) {
+            uint8_t * b_ڈیٹا = (uint8_t *) quant_b_ڈیٹا + ni * b_ڈیٹا_stride;
+            int8_t *  a_ڈیٹا = (int8_t *) quant_a_ptr;
+            اعشاری *   dst_c  = c_ptr + ni;
+#اگر 0
+            asm متلون(
                 "li             t1,  8              \n\t"
                 "vsetvli        t0, x0, e32, m1     \n\t"
                 "vxor.vv        v28, v28, v28       \n\t"
@@ -3124,13 +3124,13 @@ void gemm_kernel_i8i4_m4(size_t          blk_len,
                 "add            t2, %[LDC], t3      \n\t"
                 "vse32.v        v30, (t3)           \n\t"
                 "vse32.v        v31, (t2)           \n\t"
-                : [A] "+r"(a_data), [B] "+r"(b_data)
+                : [A] "+r"(a_ڈیٹا), [B] "+r"(b_ڈیٹا)
                 : [DST] "r"(dst_c), [LDC] "r"(ldc*4), [BK] "r"(k_blks)
                 : "t0", "t1", "t2", "t3", "t4", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11",
                   "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25",
                   "v26", "v27", "v28", "v29", "v30", "v31", "fa0", "fa1", "fa2", "fa3");
-#else
-            asm volatile(
+#ورنہ
+            asm متلون(
                 "vsetvli        t0, x0, e16, m1         \n\t"
                 "vxor.vv        v28, v28, v28           \n\t"
                 "vxor.vv        v29, v29, v29           \n\t"
@@ -3222,20 +3222,20 @@ void gemm_kernel_i8i4_m4(size_t          blk_len,
                 "add            t2, %[LDC], t3          \n\t"
                 "vse32.v        v30, (t3)               \n\t"
                 "vse32.v        v31, (t2)               \n\t"
-                : [A] "+r"(a_data), [B] "+r"(b_data)
+                : [A] "+r"(a_ڈیٹا), [B] "+r"(b_ڈیٹا)
                 : [DST] "r"(dst_c), [LDC] "r"(ldc * 4), [BK] "r"(k_blks)
                 : "t0", "t1", "t2", "t3", "t4", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10",
                   "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24",
                   "v25", "v26", "v27", "v28", "v29", "v30", "v31", "fa0", "fa1", "fa2", "fa3");
-#endif
+#اگر_ختم
         }
-    } else {
-        for (size_t ni = 0; ni < count_n; ni += 32) {
-            uint8_t * b_data = (uint8_t *) quant_b_data + ni * b_data_stride;
-            int8_t *  a_data = (int8_t *) quant_a_ptr;
-            float *   dst_c  = c_ptr + ni;
+    } ورنہ {
+        برائے (size_t ni = 0; ni < گنتی_n; ni += 32) {
+            uint8_t * b_ڈیٹا = (uint8_t *) quant_b_ڈیٹا + ni * b_ڈیٹا_stride;
+            int8_t *  a_ڈیٹا = (int8_t *) quant_a_ptr;
+            اعشاری *   dst_c  = c_ptr + ni;
 
-            asm volatile(
+            asm متلون(
                 "li             t1,  8          \n\t"
                 "vsetvli        t0, x0, e32, m1 \n\t"
                 "vxor.vv        v28, v28, v28   \n\t"
@@ -3348,7 +3348,7 @@ void gemm_kernel_i8i4_m4(size_t          blk_len,
                 "add            t2, %[LDC], t3  \n\t"
                 "vse32.v        v30, (t3)       \n\t"
                 "vse32.v        v31, (t2)       \n\t"
-                : [A] "+r"(a_data), [B] "+r"(b_data)
+                : [A] "+r"(a_ڈیٹا), [B] "+r"(b_ڈیٹا)
                 : [DST] "r"(dst_c), [LDC] "r"(ldc * 4), [BK] "r"(k_blks)
                 : "t0", "t1", "t2", "t3", "t4", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10",
                   "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24",
@@ -3357,26 +3357,26 @@ void gemm_kernel_i8i4_m4(size_t          blk_len,
     }
 }
 
-void gemm_kernel_i8i4_hp_m4(size_t          blk_len,
-                            const uint8_t * quant_a_ptr,
-                            const uint8_t * quant_b_data,
-                            const uint8_t * quant_b_zp,
-                            float *         c_ptr,
-                            size_t          count_m,
-                            size_t          count_n,
+خالی gemm_kernel_i8i4_hp_m4(size_t          blk_len,
+                            ثابت uint8_t * quant_a_ptr,
+                            ثابت uint8_t * quant_b_ڈیٹا,
+                            ثابت uint8_t * quant_b_zp,
+                            اعشاری *         c_ptr,
+                            size_t          گنتی_m,
+                            size_t          گنتی_n,
                             size_t          k_blks,
                             size_t          ldc) {
-    constexpr size_t NB_COLS                = 32;
-    constexpr size_t K_SUBBLKS_PER_SUPERBLK = 8;
+    constexpr size_t NB_ستون_تعداد                = 32;
+    constexpr size_t K_SUBBLKS_فی_SUPERBLK = 8;
     constexpr size_t K_SUBBLK_LEN           = 32;
 
-    struct block_q4_0x32_layout {
-        _Float16 d[NB_COLS];
-        uint8_t  qs[16 * NB_COLS];
+    ساخت بلاک_q4_0x32_layout {
+        _Float16 d[NB_ستون_تعداد];
+        uint8_t  qs[16 * NB_ستون_تعداد];
     };
 
     GGML_ASSERT(blk_len == 256);
-    GGML_ASSERT(count_m >= 4);
+    GGML_ASSERT(گنتی_m >= 4);
 
     // Contract:
     // - computes a 4-row x 32-col tile per inner invocation
@@ -3384,22 +3384,22 @@ void gemm_kernel_i8i4_hp_m4(size_t          blk_len,
     // - B is q4 HP packed in N32 tiles, optionally with a separate zp area
     // - tail-N is currently not handled here; the caller must provide full N32 tiles
 
-    const size_t b_superblk_stride = sizeof(block_q4_0x32_layout) * K_SUBBLKS_PER_SUPERBLK +
-                                     (quant_b_zp ? NB_COLS * K_SUBBLKS_PER_SUPERBLK * sizeof(uint8_t) : 0);
-    const size_t b_tile_stride       = k_blks * b_superblk_stride;
-    const size_t a_nrow_block_stride = q8_hp_blk_size(blk_len, true, true) * 4;
-    const size_t a_subblk_stride     = q8_hp_blk_size(K_SUBBLK_LEN, false, false) * 4;
+    ثابت size_t b_superblk_stride = حجم(بلاک_q4_0x32_layout) * K_SUBBLKS_فی_SUPERBLK +
+                                     (quant_b_zp ? NB_ستون_تعداد * K_SUBBLKS_فی_SUPERBLK * حجم(uint8_t) : 0);
+    ثابت size_t b_tile_stride       = k_blks * b_superblk_stride;
+    ثابت size_t a_nrow_بلاک_stride = q8_hp_blk_سائز(blk_len, سچ, سچ) * 4;
+    ثابت size_t a_subblk_stride     = q8_hp_blk_سائز(K_SUBBLK_LEN, جھوٹ, جھوٹ) * 4;
 
-    if (quant_b_zp != nullptr) {
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-            const size_t nb_real = std::min<size_t>(NB_COLS, count_n - ni);
-            if (nb_real != NB_COLS) {
-                break;
+    اگر (quant_b_zp != خالی_اشاریہ) {
+        برائے (size_t ni = 0; ni < گنتی_n; ni += NB_ستون_تعداد) {
+            ثابت size_t nb_real = std::min<size_t>(NB_ستون_تعداد, گنتی_n - ni);
+            اگر (nb_real != NB_ستون_تعداد) {
+                توڑو;
             }
 
-            uint8_t * b_tile_base = (uint8_t *) quant_b_data + (ni / NB_COLS) * b_tile_stride;
-            uint8_t * a_block     = (uint8_t *) quant_a_ptr;
-            float *   dst_c       = c_ptr + ni;
+            uint8_t * b_tile_بنیاد = (uint8_t *) quant_b_ڈیٹا + (ni / NB_ستون_تعداد) * b_tile_stride;
+            uint8_t * a_بلاک     = (uint8_t *) quant_a_ptr;
+            اعشاری *   dst_c       = c_ptr + ni;
 
             // Data layout summary for the with-zp path.
             //
@@ -3434,9 +3434,9 @@ void gemm_kernel_i8i4_hp_m4(size_t          blk_len,
             //   - per ksi: A += 136, a_sum += 2, B_data += 576, B_zp += 32
             //   - per ki : skip the 72B A trailer and advance B to the next 4864B superblock
 
-            const _Float16 hp_scale_16   = (_Float16) 16.0f;
-            const _Float16 hp_scale_1    = (_Float16) 1.0f;
-            const _Float16 hp_scale_0125 = (_Float16) 0.125f;
+            ثابت _Float16 hp_scale_16   = (_Float16) 16.0f;
+            ثابت _Float16 hp_scale_1    = (_Float16) 1.0f;
+            ثابت _Float16 hp_scale_0125 = (_Float16) 0.125f;
 
             // VPR grouping used below:
             // - v4-v7   : B q4 payload for N32 split as 4 x N8 groups
@@ -3446,7 +3446,7 @@ void gemm_kernel_i8i4_hp_m4(size_t          blk_len,
             // - v16-v19 : temporary per-row scaled B scales
             // - v28-v31 : final fp32 accumulators for rows 0..3
 
-            asm volatile(
+            asm متلون(
                 "mv             t5, %[BK]                 \n\t"
                 "mv             t6, %[A]                  \n\t"
                 "mv             s5, %[B]                  \n\t"
@@ -3569,7 +3569,7 @@ void gemm_kernel_i8i4_hp_m4(size_t          blk_len,
                 "add            t2, %[LDC], t3            \n\t"
                 "vse32.v        v30, (t3)                 \n\t"
                 "vse32.v        v31, (t2)                 \n\t"
-                : [A] "+r"(a_block), [B] "+r"(b_tile_base)
+                : [A] "+r"(a_بلاک), [B] "+r"(b_tile_بنیاد)
                 : [DST] "r"(dst_c), [LDC] "r"(ldc * 4), [BK] "r"(k_blks), [HP16] "f"(hp_scale_16),
                   [HP1] "f"(hp_scale_1), [HP0125] "f"(hp_scale_0125)
                 : "t0", "t1", "t2", "t3", "t4", "t5", "t6", "s5", "s6", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7",
@@ -3577,17 +3577,17 @@ void gemm_kernel_i8i4_hp_m4(size_t          blk_len,
                   "v25", "v26", "v27", "v28", "v29", "v30", "v31", "fa0", "fa1", "fa2", "ft1", "ft2", "ft3", "ft4",
                   "memory");
         }
-        return;
-    } else {
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-            const size_t nb_real = std::min<size_t>(NB_COLS, count_n - ni);
-            if (nb_real != NB_COLS) {
-                break;
+        واپس;
+    } ورنہ {
+        برائے (size_t ni = 0; ni < گنتی_n; ni += NB_ستون_تعداد) {
+            ثابت size_t nb_real = std::min<size_t>(NB_ستون_تعداد, گنتی_n - ni);
+            اگر (nb_real != NB_ستون_تعداد) {
+                توڑو;
             }
 
-            uint8_t * b_tile_base = (uint8_t *) quant_b_data + (ni / NB_COLS) * b_tile_stride;
-            uint8_t * a_block     = (uint8_t *) quant_a_ptr;
-            float *   dst_c       = c_ptr + ni;
+            uint8_t * b_tile_بنیاد = (uint8_t *) quant_b_ڈیٹا + (ni / NB_ستون_تعداد) * b_tile_stride;
+            uint8_t * a_بلاک     = (uint8_t *) quant_a_ptr;
+            اعشاری *   dst_c       = c_ptr + ni;
 
             // Data layout summary for the no-zp path.
             //
@@ -3612,8 +3612,8 @@ void gemm_kernel_i8i4_hp_m4(size_t          blk_len,
             //   - per ksi: A += 136, a_sum += 2, B_data += 576
             //   - per ki : skip the 72B A trailer and advance B to the next 4608B superblock
 
-            const _Float16 hp_scale_16 = (_Float16) 16.0f;
-            const _Float16 hp_scale_1  = (_Float16) 1.0f;
+            ثابت _Float16 hp_scale_16 = (_Float16) 16.0f;
+            ثابت _Float16 hp_scale_1  = (_Float16) 1.0f;
 
             // VPR grouping used below matches the with-zp path:
             // - v4-v7   : B q4 payload for N32 split as 4 x N8 groups
@@ -3623,7 +3623,7 @@ void gemm_kernel_i8i4_hp_m4(size_t          blk_len,
             // - v16-v19 : temporary per-row scaled B scales
             // - v28-v31 : final fp32 accumulators for rows 0..3
 
-            asm volatile(
+            asm متلون(
                 "mv             t5, %[BK]                 \n\t"
                 "mv             t6, %[A]                  \n\t"
                 "mv             s5, %[B]                  \n\t"
@@ -3730,46 +3730,46 @@ void gemm_kernel_i8i4_hp_m4(size_t          blk_len,
                 "add            t2, %[LDC], t3            \n\t"
                 "vse32.v        v30, (t3)                 \n\t"
                 "vse32.v        v31, (t2)                 \n\t"
-                : [A] "+r"(a_block), [B] "+r"(b_tile_base)
+                : [A] "+r"(a_بلاک), [B] "+r"(b_tile_بنیاد)
                 : [DST] "r"(dst_c), [LDC] "r"(ldc * 4), [BK] "r"(k_blks), [HP16] "f"(hp_scale_16), [HP1] "f"(hp_scale_1)
                 : "t0", "t2", "t3", "t4", "t5", "t6", "s5", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v10",
                   "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v24", "v25", "v26",
                   "v27", "v28", "v29", "v30", "v31", "fa0", "fa1", "fa2", "ft1", "ft2", "ft3", "ft4", "memory");
         }
-        return;
+        واپس;
     }
 }
 
-void gemm_kernel_i8mxfp4_m1(size_t          blk_len,
-                            const uint8_t * quant_a_ptr,
-                            const uint8_t * quant_b_data,
-                            const uint8_t * quant_b_zp,
-                            float *         c_ptr,
-                            size_t          count_m,
-                            size_t          count_n,
+خالی gemm_kernel_i8mxfp4_m1(size_t          blk_len,
+                            ثابت uint8_t * quant_a_ptr,
+                            ثابت uint8_t * quant_b_ڈیٹا,
+                            ثابت uint8_t * quant_b_zp,
+                            اعشاری *         c_ptr,
+                            size_t          گنتی_m,
+                            size_t          گنتی_n,
                             size_t          k_blks,
                             size_t          ldc) {
-    constexpr size_t NB_COLS = 32;
+    constexpr size_t NB_ستون_تعداد = 32;
     constexpr size_t K_TILE  = 32;
-    using blk_type           = nrow_block_mxfp4<NB_COLS>;
+    استعمال blk_type           = nrow_بلاک_mxfp4<NB_ستون_تعداد>;
 
     GGML_ASSERT(blk_len == K_TILE);
-    GGML_ASSERT(count_m == 1);
-    GGML_UNUSED(quant_b_zp);
+    GGML_ASSERT(گنتی_m == 1);
+    GGML_غیر_مستعمل(quant_b_zp);
 
-    const size_t a_blk_stride  = q8_blk_size(blk_len, true);
-    const size_t b_blk_stride  = sizeof(blk_type);
-    const size_t b_tile_stride = k_blks * b_blk_stride;
+    ثابت size_t a_blk_stride  = q8_blk_سائز(blk_len, سچ);
+    ثابت size_t b_blk_stride  = حجم(blk_type);
+    ثابت size_t b_tile_stride = k_blks * b_blk_stride;
 
-    if (quant_b_zp == NULL) {
-        for (size_t n = 0; n < count_n; n += 32) {
-            size_t    nblks         = (count_n - n) > 32 ? 32 : count_n - n;
+    اگر (quant_b_zp == تہی) {
+        برائے (size_t n = 0; n < گنتی_n; n += 32) {
+            size_t    nblks         = (گنتی_n - n) > 32 ? 32 : گنتی_n - n;
             // MXFP4 no-zp: per column per k-block stride = scale_e8m0(1B) + qs(16B) + qh(4B) = 21B
-            uint8_t * QuantBDataPtr = (uint8_t *) quant_b_data +     //
+            uint8_t * QuantBDataPtr = (uint8_t *) quant_b_ڈیٹا +     //
                                       n * k_blks * (blk_len / 8) +   // qh sign/high-bit mask: n×k_blks×4
                                       n * k_blks * blk_len / 2 +     // qs packed 4-bit magnitudes: n×k_blks×16
-                                      n * k_blks * sizeof(uint8_t);  // scale: n×k_blks×1
-            float * CPtr = c_ptr + n;
+                                      n * k_blks * حجم(uint8_t);  // scale: n×k_blks×1
+            اعشاری * CPtr = c_ptr + n;
             size_t  cnt  = k_blks;
 
             // A format (q8 block with per-block scale and stored sum field):
@@ -3790,7 +3790,7 @@ void gemm_kernel_i8mxfp4_m1(size_t          blk_len,
             //   v8..v15 / v16..v23 = qs unpack/pack temporaries (build signed vmadot lanes)
             //   v24/v26/v28/v30    = int32 dot accumulators & packing temps
 
-            __asm__ volatile(
+            __asm__ متلون(
                 "mv           t3, %[BCK]              \n\t"  // t3 = k_blks
                 "mv           t4, %[NBLKS]            \n\t"  // t4 = nblks (tail guard)
 
@@ -3929,39 +3929,39 @@ void gemm_kernel_i8mxfp4_m1(size_t          blk_len,
     }
 }
 
-void gemm_kernel_i8mxfp4_m4(size_t          blk_len,
-                            const uint8_t * quant_a_ptr,
-                            const uint8_t * quant_b_data,
-                            const uint8_t * quant_b_zp,
-                            float *         c_ptr,
-                            size_t          count_m,
-                            size_t          count_n,
+خالی gemm_kernel_i8mxfp4_m4(size_t          blk_len,
+                            ثابت uint8_t * quant_a_ptr,
+                            ثابت uint8_t * quant_b_ڈیٹا,
+                            ثابت uint8_t * quant_b_zp,
+                            اعشاری *         c_ptr,
+                            size_t          گنتی_m,
+                            size_t          گنتی_n,
                             size_t          k_blks,
                             size_t          ldc) {
-    constexpr size_t NB_COLS = 32;
+    constexpr size_t NB_ستون_تعداد = 32;
     constexpr size_t K_TILE  = 32;
-    using blk_type           = nrow_block_mxfp4<NB_COLS>;
+    استعمال blk_type           = nrow_بلاک_mxfp4<NB_ستون_تعداد>;
 
     GGML_ASSERT(blk_len == K_TILE);
-    GGML_ASSERT(count_m == 4);
-    GGML_UNUSED(quant_b_zp);
+    GGML_ASSERT(گنتی_m == 4);
+    GGML_غیر_مستعمل(quant_b_zp);
 
-    const size_t a_blk_stride  = q8_blk_size(blk_len, true);
-    const size_t b_blk_stride  = sizeof(blk_type);
-    const size_t b_tile_stride = k_blks * b_blk_stride;
+    ثابت size_t a_blk_stride  = q8_blk_سائز(blk_len, سچ);
+    ثابت size_t b_blk_stride  = حجم(blk_type);
+    ثابت size_t b_tile_stride = k_blks * b_blk_stride;
 
-    if (quant_b_zp == NULL) {
+    اگر (quant_b_zp == تہی) {
         // MXFP4 block layout per K32/N32 tile:
         //   [scale_e8m0 x 32][qh sign/high-bit mask x 128B][qs packed 4-bit magnitudes x 512B]
         // There is no explicit zp stream; qh is combined with qs to reconstruct signed MXFP4 values.
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-            size_t    nb_real = std::min<size_t>(NB_COLS, count_n - ni);
-            uint8_t * b_data  = (uint8_t *) quant_b_data + (ni / NB_COLS) * b_tile_stride;
-            uint8_t * a_data  = (uint8_t *) quant_a_ptr;
-            float *   dst_c   = c_ptr + ni;
+        برائے (size_t ni = 0; ni < گنتی_n; ni += NB_ستون_تعداد) {
+            size_t    nb_real = std::min<size_t>(NB_ستون_تعداد, گنتی_n - ni);
+            uint8_t * b_ڈیٹا  = (uint8_t *) quant_b_ڈیٹا + (ni / NB_ستون_تعداد) * b_tile_stride;
+            uint8_t * a_ڈیٹا  = (uint8_t *) quant_a_ptr;
+            اعشاری *   dst_c   = c_ptr + ni;
             size_t    cnt     = k_blks;
 
-            asm volatile(
+            asm متلون(
                 // v4-v7 are the fp32 accumulators for rows 0..3 of the current N32 tile.
                 "vsetvli        t0, x0, e32, m1         \n\t"
                 "vxor.vv        v4, v4, v4              \n\t"
@@ -4079,7 +4079,7 @@ void gemm_kernel_i8mxfp4_m4(size_t          blk_len,
                 "vse32.v        v6, (t2)                \n\t"
                 "add            t3, t2, %[LDC]          \n\t"
                 "vse32.v        v7, (t3)                \n\t"
-                : [A] "+r"(a_data), [B] "+r"(b_data), [BK] "+r"(cnt)
+                : [A] "+r"(a_ڈیٹا), [B] "+r"(b_ڈیٹا), [BK] "+r"(cnt)
                 : [DST] "r"(dst_c), [LDC] "r"(ldc * 4), [NBLKS] "r"(nb_real)
                 : "cc", "memory", "t0", "t1", "t2", "t3", "t4", "t5", "t6", "s1", "s2", "s3", "s4", "v0", "v1", "v2",
                   "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17",
@@ -4089,13 +4089,13 @@ void gemm_kernel_i8mxfp4_m4(size_t          blk_len,
     }
 }
 
-void gemm_kernel_i8i5_m1(size_t          blk_len,
-                         const uint8_t * quant_a_ptr,
-                         const uint8_t * quant_b_data,
-                         const uint8_t * quant_b_zp,
-                         float *         c_ptr,
-                         size_t          count_m,
-                         size_t          count_n,
+خالی gemm_kernel_i8i5_m1(size_t          blk_len,
+                         ثابت uint8_t * quant_a_ptr,
+                         ثابت uint8_t * quant_b_ڈیٹا,
+                         ثابت uint8_t * quant_b_zp,
+                         اعشاری *         c_ptr,
+                         size_t          گنتی_m,
+                         size_t          گنتی_n,
                          size_t          k_blks,
                          size_t          ldc) {
     // =========================================================================
@@ -4126,15 +4126,15 @@ void gemm_kernel_i8i5_m1(size_t          blk_len,
     //
     // =========================================================================
 
-    if (quant_b_zp == NULL) {
-        for (size_t n = 0; n < count_n; n += 32) {
-            size_t    nblks         = (count_n - n) > 32 ? 32 : count_n - n;
+    اگر (quant_b_zp == تہی) {
+        برائے (size_t n = 0; n < گنتی_n; n += 32) {
+            size_t    nblks         = (گنتی_n - n) > 32 ? 32 : گنتی_n - n;
             // i8i5 no-zp: per column per k-block stride = fp16(2B) + i4(16B) + i1(4B) = 22B
-            uint8_t * QuantBDataPtr = (uint8_t *) quant_b_data +      //
+            uint8_t * QuantBDataPtr = (uint8_t *) quant_b_ڈیٹا +      //
                                       n * k_blks * (blk_len / 8) +    // Bh i1 mask: n×k_blks×4
                                       n * k_blks * blk_len / 2 +      // Bs i4 data: n×k_blks×16
-                                      n * k_blks * sizeof(_Float16);  // scale: n×k_blks×2
-            float * CPtr = c_ptr + n;
+                                      n * k_blks * حجم(_Float16);  // scale: n×k_blks×2
+            اعشاری * CPtr = c_ptr + n;
             size_t  cnt  = k_blks;
 
             // A format (same as i8i4):
@@ -4155,7 +4155,7 @@ void gemm_kernel_i8i5_m1(size_t          blk_len,
             //   v8..v15 / v16..v23 = Bs unpack/pack temporaries (build b5bit bytes)
             //   v24/v26/v28/v30    = int32 dot accumulators & packing temps
 
-            __asm__ volatile(
+            __asm__ متلون(
                 "mv           t3, %[BCK]              \n\t"  // t3 = k_blks
                 "mv           t4, %[NBLKS]            \n\t"  // t4 = nblks (tail guard)
 
@@ -4288,16 +4288,16 @@ void gemm_kernel_i8i5_m1(size_t          blk_len,
                   "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v16", "v17", "v18", "v19",
                   "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31");
         }
-    } else {
-        for (size_t n = 0; n < count_n; n += 32) {
-            size_t    nblks         = (count_n - n) > 32 ? 32 : count_n - n;
+    } ورنہ {
+        برائے (size_t n = 0; n < گنتی_n; n += 32) {
+            size_t    nblks         = (گنتی_n - n) > 32 ? 32 : گنتی_n - n;
             // i8i5 with-zp: per column per k-block stride = fp16(2B)+zp(1B)+i4(16B)+i1(4B)=23B
-            uint8_t * QuantBDataPtr = (uint8_t *) quant_b_data +      //
+            uint8_t * QuantBDataPtr = (uint8_t *) quant_b_ڈیٹا +      //
                                       n * k_blks * blk_len / 2 +      // Bs i4: n×k_blks×16
                                       n * k_blks * (blk_len / 8) +    // Bh i1: n×k_blks×4
-                                      n * k_blks * sizeof(uint8_t) +  // zp: n×k_blks×1
-                                      n * k_blks * sizeof(_Float16);  // scale: n×k_blks×2
-            float * CPtr = c_ptr + n;
+                                      n * k_blks * حجم(uint8_t) +  // zp: n×k_blks×1
+                                      n * k_blks * حجم(_Float16);  // scale: n×k_blks×2
+            اعشاری * CPtr = c_ptr + n;
             size_t  cnt  = k_blks;
 
             // A format (same as i8i4):
@@ -4318,7 +4318,7 @@ void gemm_kernel_i8i5_m1(size_t          blk_len,
             //   v8..v15 / v16..v23 = Bs unpack/pack temporaries (build b5bit bytes)
             //   v24/v26/v28/v30    = int32 dot accumulators & packing temps
 
-            __asm__ volatile(
+            __asm__ متلون(
                 "mv           t3, %[BCK]              \n\t"  // t3 = k_blks
                 "mv           t4, %[NBLKS]            \n\t"  // t4 = nblks (tail guard)
 
@@ -4461,36 +4461,36 @@ void gemm_kernel_i8i5_m1(size_t          blk_len,
     }
 }
 
-void gemm_kernel_i8i5_m4(size_t          blk_len,
-                         const uint8_t * quant_a_ptr,
-                         const uint8_t * quant_b_data,
-                         const uint8_t * quant_b_zp,
-                         float *         c_ptr,
-                         size_t          count_m,
-                         size_t          count_n,
+خالی gemm_kernel_i8i5_m4(size_t          blk_len,
+                         ثابت uint8_t * quant_a_ptr,
+                         ثابت uint8_t * quant_b_ڈیٹا,
+                         ثابت uint8_t * quant_b_zp,
+                         اعشاری *         c_ptr,
+                         size_t          گنتی_m,
+                         size_t          گنتی_n,
                          size_t          k_blks,
                          size_t          ldc) {
-    constexpr size_t NB_COLS = 32;
+    constexpr size_t NB_ستون_تعداد = 32;
 
-    GGML_UNUSED(count_m);
-    GGML_UNUSED(blk_len);
+    GGML_غیر_مستعمل(گنتی_m);
+    GGML_غیر_مستعمل(blk_len);
 
     // This kernel computes a 4x32 output tile. For each K32 block we decode the
     // packed Q5 weights once and reuse the decoded vectors across the 4 A rows.
-    constexpr size_t B_Q50_BLK_STRIDE = sizeof(nrow_block_q5_0<NB_COLS>);
-    constexpr size_t B_Q51_BLK_STRIDE = sizeof(nrow_block_q5_1<NB_COLS>);
+    constexpr size_t B_Q50_BLK_STRIDE = حجم(nrow_بلاک_q5_0<NB_ستون_تعداد>);
+    constexpr size_t B_Q51_BLK_STRIDE = حجم(nrow_بلاک_q5_1<NB_ستون_تعداد>);
 
-    if (quant_b_zp) {
+    اگر (quant_b_zp) {
         // Q5_1 block layout per K32/N32 tile:
         //   [scale_fp16 x 32][zp_u8 x 32][qh high-bit mask x 128B][qs low nibbles x 512B]
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-            size_t    nb_real = std::min<size_t>(NB_COLS, count_n - ni);
-            uint8_t * b_data  = (uint8_t *) quant_b_data + (ni / NB_COLS) * k_blks * B_Q51_BLK_STRIDE;
-            uint8_t * a_data  = (uint8_t *) quant_a_ptr;
-            float *   dst_c   = c_ptr + ni;
+        برائے (size_t ni = 0; ni < گنتی_n; ni += NB_ستون_تعداد) {
+            size_t    nb_real = std::min<size_t>(NB_ستون_تعداد, گنتی_n - ni);
+            uint8_t * b_ڈیٹا  = (uint8_t *) quant_b_ڈیٹا + (ni / NB_ستون_تعداد) * k_blks * B_Q51_BLK_STRIDE;
+            uint8_t * a_ڈیٹا  = (uint8_t *) quant_a_ptr;
+            اعشاری *   dst_c   = c_ptr + ni;
             size_t    cnt     = k_blks;
 
-            asm volatile(
+            asm متلون(
                 // v4-v7 are the fp32 accumulators for rows 0..3 of the current N32 tile.
                 "vsetvli        t0, x0, e32, m1         \n\t"
                 "vxor.vv        v4, v4, v4              \n\t"
@@ -4622,25 +4622,25 @@ void gemm_kernel_i8i5_m4(size_t          blk_len,
                 "vse32.v        v6, (t2)                \n\t"
                 "add            t3, t2, %[LDC]          \n\t"
                 "vse32.v        v7, (t3)                \n\t"
-                : [A] "+r"(a_data), [B] "+r"(b_data), [BK] "+r"(cnt)
+                : [A] "+r"(a_ڈیٹا), [B] "+r"(b_ڈیٹا), [BK] "+r"(cnt)
                 : [DST] "r"(dst_c), [LDC] "r"(ldc * 4), [NBLKS] "r"(nb_real)
                 : "cc", "memory", "t0", "t1", "t2", "t3", "t4", "t5", "t6", "s1", "s2", "s3", "s4", "s5", "v0", "v1",
                   "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14", "v15", "v16",
                   "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29", "v30",
                   "v31", "fa0", "fa1", "fa2", "fa3");
         }
-    } else {
+    } ورنہ {
         // Q5_0 block layout per K32/N32 tile:
         //   [scale_fp16 x 32][qh high-bit mask x 128B][qs low nibbles x 512B]
         // There is no explicit zp stream; the implicit midpoint correction is +16.
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-            size_t    nb_real = std::min<size_t>(NB_COLS, count_n - ni);
-            uint8_t * b_data  = (uint8_t *) quant_b_data + (ni / NB_COLS) * k_blks * B_Q50_BLK_STRIDE;
-            uint8_t * a_data  = (uint8_t *) quant_a_ptr;
-            float *   dst_c   = c_ptr + ni;
+        برائے (size_t ni = 0; ni < گنتی_n; ni += NB_ستون_تعداد) {
+            size_t    nb_real = std::min<size_t>(NB_ستون_تعداد, گنتی_n - ni);
+            uint8_t * b_ڈیٹا  = (uint8_t *) quant_b_ڈیٹا + (ni / NB_ستون_تعداد) * k_blks * B_Q50_BLK_STRIDE;
+            uint8_t * a_ڈیٹا  = (uint8_t *) quant_a_ptr;
+            اعشاری *   dst_c   = c_ptr + ni;
             size_t    cnt     = k_blks;
 
-            asm volatile(
+            asm متلون(
                 // v4-v7 are the fp32 accumulators for rows 0..3 of the current N32 tile.
                 "vsetvli        t0, x0, e32, m1         \n\t"
                 "vxor.vv        v4, v4, v4              \n\t"
@@ -4760,7 +4760,7 @@ void gemm_kernel_i8i5_m4(size_t          blk_len,
                 "vse32.v        v6, (t2)                \n\t"
                 "add            t3, t2, %[LDC]          \n\t"
                 "vse32.v        v7, (t3)                \n\t"
-                : [A] "+r"(a_data), [B] "+r"(b_data), [BK] "+r"(cnt)
+                : [A] "+r"(a_ڈیٹا), [B] "+r"(b_ڈیٹا), [BK] "+r"(cnt)
                 : [DST] "r"(dst_c), [LDC] "r"(ldc * 4), [NBLKS] "r"(nb_real)
                 : "cc", "memory", "t0", "t1", "t2", "t3", "t4", "t5", "t6", "s1", "s2", "s3", "s4", "v0", "v1", "v2",
                   "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17",
@@ -4770,21 +4770,21 @@ void gemm_kernel_i8i5_m4(size_t          blk_len,
     }
 }
 
-void gemm_kernel_i8i8_m1(size_t          blk_len,
-                         const uint8_t * quant_a_ptr,
-                         const uint8_t * quant_b_data,
-                         const uint8_t * quant_b_zp,
-                         float *         c_ptr,
-                         size_t          count_m,
-                         size_t          count_n,
+خالی gemm_kernel_i8i8_m1(size_t          blk_len,
+                         ثابت uint8_t * quant_a_ptr,
+                         ثابت uint8_t * quant_b_ڈیٹا,
+                         ثابت uint8_t * quant_b_zp,
+                         اعشاری *         c_ptr,
+                         size_t          گنتی_m,
+                         size_t          گنتی_n,
                          size_t          k_blks,
                          size_t          ldc) {
-    for (size_t n = 0; n < count_n; n += 32) {
-        size_t    nblks         = (count_n - n) > 32 ? 32 : count_n - n;
-        uint8_t * QuantBDataPtr = (uint8_t *) quant_b_data +      //
+    برائے (size_t n = 0; n < گنتی_n; n += 32) {
+        size_t    nblks         = (گنتی_n - n) > 32 ? 32 : گنتی_n - n;
+        uint8_t * QuantBDataPtr = (uint8_t *) quant_b_ڈیٹا +      //
                                   n * k_blks * blk_len +          // b data
-                                  n * k_blks * sizeof(_Float16);  // scale
-        float * CPtr = c_ptr + n;
+                                  n * k_blks * حجم(_Float16);  // scale
+        اعشاری * CPtr = c_ptr + n;
         size_t  cnt  = k_blks;
 
         // A format Version_1 (FP32 SCALE FOR Normal VMADOTins of IME2)
@@ -4800,7 +4800,7 @@ void gemm_kernel_i8i8_m1(size_t          blk_len,
         // || Element                              || Element                              || ...
 
         //bias always be nullptr
-        __asm__ volatile(
+        __asm__ متلون(
 
             // t3 = k/32
             "mv           t3, %[BCK]              \n\t"
@@ -4891,22 +4891,22 @@ void gemm_kernel_i8i8_m1(size_t          blk_len,
     }
 }
 
-void gemm_kernel_i8i8_m4(size_t          blk_len,
-                         const uint8_t * quant_a_ptr,
-                         const uint8_t * quant_b_data,
-                         const uint8_t * quant_b_zp,
-                         float *         c_ptr,
-                         size_t          count_m,
-                         size_t          count_n,
+خالی gemm_kernel_i8i8_m4(size_t          blk_len,
+                         ثابت uint8_t * quant_a_ptr,
+                         ثابت uint8_t * quant_b_ڈیٹا,
+                         ثابت uint8_t * quant_b_zp,
+                         اعشاری *         c_ptr,
+                         size_t          گنتی_m,
+                         size_t          گنتی_n,
                          size_t          k_blks,
                          size_t          ldc) {
-    int64_t b_data_stride = k_blks * sizeof(ggml_fp16_t) + k_blks * blk_len;
-    for (size_t ni = 0; ni < count_n; ni += 32) {
-        uint8_t * b_data = (uint8_t *) quant_b_data + ni * b_data_stride;
-        int8_t *  a_data = (int8_t *) quant_a_ptr;
-        float *   dst_c  = c_ptr + ni;
+    int64_t b_ڈیٹا_stride = k_blks * حجم(ggml_fp16_t) + k_blks * blk_len;
+    برائے (size_t ni = 0; ni < گنتی_n; ni += 32) {
+        uint8_t * b_ڈیٹا = (uint8_t *) quant_b_ڈیٹا + ni * b_ڈیٹا_stride;
+        int8_t *  a_ڈیٹا = (int8_t *) quant_a_ptr;
+        اعشاری *   dst_c  = c_ptr + ni;
 
-        asm volatile(
+        asm متلون(
             "vsetvli        t0, x0, e32, m1       \n\t"
             "vxor.vv        v28, v28, v28         \n\t"
             "vxor.vv        v29, v29, v29         \n\t"
@@ -4995,7 +4995,7 @@ void gemm_kernel_i8i8_m4(size_t          blk_len,
             "add            t2, %[LDC], t3        \n\t"
             "vse32.v        v30, (t3)             \n\t"
             "vse32.v        v31, (t2)             \n\t"
-            : [A] "+r"(a_data), [B] "+r"(b_data)
+            : [A] "+r"(a_ڈیٹا), [B] "+r"(b_ڈیٹا)
             : [DST] "r"(dst_c), [LDC] "r"(ldc * 4), [BK] "r"(k_blks)
             : "t0", "t1", "t2", "t3", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12",
               "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27",
@@ -5003,30 +5003,30 @@ void gemm_kernel_i8i8_m4(size_t          blk_len,
     }
 }
 
-void moe_m2_gemm_kernel_i8i4_impl(size_t           blk_len,
-                                  const uint8_t ** quant_a_ptr,
-                                  const uint8_t *  quant_b_data,
-                                  const uint8_t *  quant_b_zp,
-                                  float **         c_ptr,
-                                  size_t           count_m,
-                                  size_t           count_n,
+خالی moe_m2_gemm_kernel_i8i4_impl(size_t           blk_len,
+                                  ثابت uint8_t ** quant_a_ptr,
+                                  ثابت uint8_t *  quant_b_ڈیٹا,
+                                  ثابت uint8_t *  quant_b_zp,
+                                  اعشاری **         c_ptr,
+                                  size_t           گنتی_m,
+                                  size_t           گنتی_n,
                                   size_t           k_blks,
                                   size_t           ldc) {
-#if 0
-    moe_gemm_kernel_i8i4_mrow_ref<2, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks,
+#اگر 0
+    moe_gemm_kernel_i8i4_mrow_ref<2, 32>(blk_len, quant_a_ptr, quant_b_ڈیٹا, quant_b_zp, c_ptr, گنتی_m, گنتی_n, k_blks,
                                      ldc);
-#else
-    int64_t b_data_stride =
-        k_blks * (sizeof(ggml_fp16_t) + 16 * sizeof(int8_t) + (quant_b_zp != NULL ? sizeof(int8_t) : 0));
-    if (quant_b_zp == NULL) {
-        for (size_t ni = 0; ni < count_n; ni += 32) {
-            uint8_t * b_data  = (uint8_t *) quant_b_data + ni * b_data_stride;
+#ورنہ
+    int64_t b_ڈیٹا_stride =
+        k_blks * (حجم(ggml_fp16_t) + 16 * حجم(int8_t) + (quant_b_zp != تہی ? حجم(int8_t) : 0));
+    اگر (quant_b_zp == تہی) {
+        برائے (size_t ni = 0; ni < گنتی_n; ni += 32) {
+            uint8_t * b_ڈیٹا  = (uint8_t *) quant_b_ڈیٹا + ni * b_ڈیٹا_stride;
             int8_t *  a_data0 = (int8_t *) quant_a_ptr[0];
             int8_t *  a_data1 = (int8_t *) quant_a_ptr[1];
-            float *   dst_c0  = (float *) c_ptr[0] + ni;
-            float *   dst_c1  = (float *) c_ptr[1] + ni;
+            اعشاری *   dst_c0  = (اعشاری *) c_ptr[0] + ni;
+            اعشاری *   dst_c1  = (اعشاری *) c_ptr[1] + ni;
 
-            asm volatile(
+            asm متلون(
                 "vsetvli        t0, x0, e16, m1         \n\t"
                 "vxor.vv        v28, v28, v28           \n\t"
                 "vxor.vv        v29, v29, v29           \n\t"
@@ -5112,25 +5112,25 @@ void moe_m2_gemm_kernel_i8i4_impl(size_t           blk_len,
                 "vsetvli        t0, x0, e32, m1         \n\t"
                 "vse32.v        v28, (%[DST0])          \n\t"
                 "vse32.v        v29, (%[DST1])          \n\t"
-                : [A0] "+r"(a_data0), [A1] "+r"(a_data1), [B] "+r"(b_data)
+                : [A0] "+r"(a_data0), [A1] "+r"(a_data1), [B] "+r"(b_ڈیٹا)
                 : [DST0] "r"(dst_c0), [DST1] "r"(dst_c1), [BK] "r"(k_blks)
                 : "t0", "t1", "t2", "t3", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11",
                   "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25",
                   "v26", "v27", "v28", "v29", "v30", "v31", "fa0", "fa1", "fa2", "fa3");
         }
-    } else {
-#    if 0
-        moe_gemm_kernel_i8i4_mrow_ref<2, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+    } ورنہ {
+#    اگر 0
+        moe_gemm_kernel_i8i4_mrow_ref<2, 32>(blk_len, quant_a_ptr, quant_b_ڈیٹا, quant_b_zp, c_ptr, گنتی_m, گنتی_n,
                                          k_blks, ldc);
-#    else
-        for (size_t ni = 0; ni < count_n; ni += 32) {
-            uint8_t * b_data  = (uint8_t *) quant_b_data + ni * b_data_stride;
+#    ورنہ
+        برائے (size_t ni = 0; ni < گنتی_n; ni += 32) {
+            uint8_t * b_ڈیٹا  = (uint8_t *) quant_b_ڈیٹا + ni * b_ڈیٹا_stride;
             int8_t *  a_data0 = (int8_t *) quant_a_ptr[0];
             int8_t *  a_data1 = (int8_t *) quant_a_ptr[1];
-            float *   dst_c0  = (float *) c_ptr[0] + ni;
-            float *   dst_c1  = (float *) c_ptr[1] + ni;
+            اعشاری *   dst_c0  = (اعشاری *) c_ptr[0] + ni;
+            اعشاری *   dst_c1  = (اعشاری *) c_ptr[1] + ni;
 
-            asm volatile(
+            asm متلون(
                 "vsetvli        t0, x0, e16, m1         \n\t"
                 "vxor.vv        v28, v28, v28           \n\t"
                 "vxor.vv        v29, v29, v29           \n\t"
@@ -5233,7 +5233,7 @@ void moe_m2_gemm_kernel_i8i4_impl(size_t           blk_len,
                 "vsetvli        t0, x0, e32, m1         \n\t"
                 "vse32.v        v28, (%[DST0])          \n\t"
                 "vse32.v        v29, (%[DST1])          \n\t"
-                : [A0] "+r"(a_data0), [A1] "+r"(a_data1), [B] "+r"(b_data)
+                : [A0] "+r"(a_data0), [A1] "+r"(a_data1), [B] "+r"(b_ڈیٹا)
                 : [DST0] "r"(dst_c0), [DST1] "r"(dst_c1), [BK] "r"(k_blks)
                 : "t0", "t1", "t2", "t3", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11",
                   "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25",
@@ -5241,36 +5241,36 @@ void moe_m2_gemm_kernel_i8i4_impl(size_t           blk_len,
         }
 #    endif
     }
-#endif
+#اگر_ختم
 }
 
-void moe_m2_gemm_kernel_i8i5_impl(size_t           blk_len,
-                                  const uint8_t ** quant_a_ptr,
-                                  const uint8_t *  quant_b_data,
-                                  const uint8_t *  quant_b_zp,
-                                  float **         c_ptr,
-                                  size_t           count_m,
-                                  size_t           count_n,
+خالی moe_m2_gemm_kernel_i8i5_impl(size_t           blk_len,
+                                  ثابت uint8_t ** quant_a_ptr,
+                                  ثابت uint8_t *  quant_b_ڈیٹا,
+                                  ثابت uint8_t *  quant_b_zp,
+                                  اعشاری **         c_ptr,
+                                  size_t           گنتی_m,
+                                  size_t           گنتی_n,
                                   size_t           k_blks,
                                   size_t           ldc) {
-    constexpr size_t NB_COLS          = 32;
-    constexpr size_t B_Q50_BLK_STRIDE = sizeof(nrow_block_q5_0<NB_COLS>);
-    constexpr size_t B_Q51_BLK_STRIDE = sizeof(nrow_block_q5_1<NB_COLS>);
+    constexpr size_t NB_ستون_تعداد          = 32;
+    constexpr size_t B_Q50_BLK_STRIDE = حجم(nrow_بلاک_q5_0<NB_ستون_تعداد>);
+    constexpr size_t B_Q51_BLK_STRIDE = حجم(nrow_بلاک_q5_1<NB_ستون_تعداد>);
 
-    GGML_UNUSED(blk_len);
-    GGML_UNUSED(count_m);
-    GGML_UNUSED(ldc);
+    GGML_غیر_مستعمل(blk_len);
+    GGML_غیر_مستعمل(گنتی_m);
+    GGML_غیر_مستعمل(ldc);
 
-    if (quant_b_zp == NULL) {
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-            size_t    nb_real = std::min<size_t>(NB_COLS, count_n - ni);
-            uint8_t * b_data  = (uint8_t *) quant_b_data + (ni / NB_COLS) * k_blks * B_Q50_BLK_STRIDE;
+    اگر (quant_b_zp == تہی) {
+        برائے (size_t ni = 0; ni < گنتی_n; ni += NB_ستون_تعداد) {
+            size_t    nb_real = std::min<size_t>(NB_ستون_تعداد, گنتی_n - ni);
+            uint8_t * b_ڈیٹا  = (uint8_t *) quant_b_ڈیٹا + (ni / NB_ستون_تعداد) * k_blks * B_Q50_BLK_STRIDE;
             int8_t *  a_data0 = (int8_t *) quant_a_ptr[0];
             int8_t *  a_data1 = (int8_t *) quant_a_ptr[1];
-            float *   dst_c0  = (float *) c_ptr[0] + ni;
-            float *   dst_c1  = (float *) c_ptr[1] + ni;
+            اعشاری *   dst_c0  = (اعشاری *) c_ptr[0] + ni;
+            اعشاری *   dst_c1  = (اعشاری *) c_ptr[1] + ni;
 
-            asm volatile(
+            asm متلون(
                 "mv             t4, %[BK]               \n\t"
                 "vsetvli        t0, x0, e32, m1         \n\t"
                 "vxor.vv        v2, v0, v0              \n\t"
@@ -5380,22 +5380,22 @@ void moe_m2_gemm_kernel_i8i5_impl(size_t           blk_len,
                 "vsetvli        t0, %[NR], e32, m1      \n\t"
                 "vse32.v        v2, (%[DST0])           \n\t"
                 "vse32.v        v3, (%[DST1])           \n\t"
-                : [A0] "+r"(a_data0), [A1] "+r"(a_data1), [B] "+r"(b_data)
+                : [A0] "+r"(a_data0), [A1] "+r"(a_data1), [B] "+r"(b_ڈیٹا)
                 : [DST0] "r"(dst_c0), [DST1] "r"(dst_c1), [BK] "r"(k_blks), [NR] "r"(nb_real)
                 : "cc", "memory", "t0", "t1", "t2", "t3", "t4", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8",
                   "v9", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22",
                   "v23", "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31", "f0", "f1");
         }
-    } else {
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-            size_t    nb_real = std::min<size_t>(NB_COLS, count_n - ni);
-            uint8_t * b_data  = (uint8_t *) quant_b_data + (ni / NB_COLS) * k_blks * B_Q51_BLK_STRIDE;
+    } ورنہ {
+        برائے (size_t ni = 0; ni < گنتی_n; ni += NB_ستون_تعداد) {
+            size_t    nb_real = std::min<size_t>(NB_ستون_تعداد, گنتی_n - ni);
+            uint8_t * b_ڈیٹا  = (uint8_t *) quant_b_ڈیٹا + (ni / NB_ستون_تعداد) * k_blks * B_Q51_BLK_STRIDE;
             int8_t *  a_data0 = (int8_t *) quant_a_ptr[0];
             int8_t *  a_data1 = (int8_t *) quant_a_ptr[1];
-            float *   dst_c0  = (float *) c_ptr[0] + ni;
-            float *   dst_c1  = (float *) c_ptr[1] + ni;
+            اعشاری *   dst_c0  = (اعشاری *) c_ptr[0] + ni;
+            اعشاری *   dst_c1  = (اعشاری *) c_ptr[1] + ni;
 
-            asm volatile(
+            asm متلون(
                 "mv             t4, %[BK]               \n\t"
                 "vsetvli        t0, x0, e32, m1         \n\t"
                 "vxor.vv        v2, v0, v0              \n\t"
@@ -5518,7 +5518,7 @@ void moe_m2_gemm_kernel_i8i5_impl(size_t           blk_len,
                 "vsetvli        t0, %[NR], e32, m1      \n\t"
                 "vse32.v        v2, (%[DST0])           \n\t"
                 "vse32.v        v3, (%[DST1])           \n\t"
-                : [A0] "+r"(a_data0), [A1] "+r"(a_data1), [B] "+r"(b_data)
+                : [A0] "+r"(a_data0), [A1] "+r"(a_data1), [B] "+r"(b_ڈیٹا)
                 : [DST0] "r"(dst_c0), [DST1] "r"(dst_c1), [BK] "r"(k_blks), [NR] "r"(nb_real)
                 : "cc", "memory", "t0", "t1", "t2", "t3", "t4", "t5", "t6", "s1", "v0", "v1", "v2", "v3", "v4", "v5",
                   "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20",
@@ -5528,240 +5528,240 @@ void moe_m2_gemm_kernel_i8i5_impl(size_t           blk_len,
 }
 
 size_t gemm_kernel_i8i2k(size_t          blk_len,
-                         const uint8_t * quant_a_ptr,
-                         const uint8_t * quant_b_data,
-                         const uint8_t * quant_b_zp,
-                         float *         c_ptr,
-                         size_t          count_m,
-                         size_t          count_n,
+                         ثابت uint8_t * quant_a_ptr,
+                         ثابت uint8_t * quant_b_ڈیٹا,
+                         ثابت uint8_t * quant_b_zp,
+                         اعشاری *         c_ptr,
+                         size_t          گنتی_m,
+                         size_t          گنتی_n,
                          size_t          k_blks,
                          size_t          ldc) {
-    if (count_m >= 4) {
-#if 0
-        gemm_kernel_i8i2k_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_m, count_n, k_blks, ldc);
-#else
-        gemm_kernel_i8i2k_m4(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-        return 4;
-    } else {
-#if 0
-        gemm_kernel_i8i2k_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_m, count_n, k_blks,
+    اگر (گنتی_m >= 4) {
+#اگر 0
+        gemm_kernel_i8i2k_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_ڈیٹا, c_ptr, گنتی_m, گنتی_n, k_blks, ldc);
+#ورنہ
+        gemm_kernel_i8i2k_m4(blk_len, quant_a_ptr, quant_b_ڈیٹا, c_ptr, گنتی_m, گنتی_n, k_blks, ldc);
+#اگر_ختم
+        واپس 4;
+    } ورنہ {
+#اگر 0
+        gemm_kernel_i8i2k_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_ڈیٹا, c_ptr, گنتی_m, گنتی_n, k_blks,
                                       ldc);
-#else
-        gemm_kernel_i8i2k_m1(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-        return 1;
+#ورنہ
+        gemm_kernel_i8i2k_m1(blk_len, quant_a_ptr, quant_b_ڈیٹا, c_ptr, گنتی_m, گنتی_n, k_blks, ldc);
+#اگر_ختم
+        واپس 1;
     }
 }
 
 size_t gemm_kernel_i8i3k(size_t          blk_len,
-                         const uint8_t * quant_a_ptr,
-                         const uint8_t * quant_b_data,
-                         const uint8_t * quant_b_zp,
-                         float *         c_ptr,
-                         size_t          count_m,
-                         size_t          count_n,
+                         ثابت uint8_t * quant_a_ptr,
+                         ثابت uint8_t * quant_b_ڈیٹا,
+                         ثابت uint8_t * quant_b_zp,
+                         اعشاری *         c_ptr,
+                         size_t          گنتی_m,
+                         size_t          گنتی_n,
                          size_t          k_blks,
                          size_t          ldc) {
-    if (count_m >= 4) {
-#if 0
-        gemm_kernel_i8i3k_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_m, count_n, k_blks, ldc);
-#else
-        gemm_kernel_i8i3k_m4(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-        return 4;
-    } else {
-#if 0
-        gemm_kernel_i8i3k_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_m, count_n, k_blks, ldc);
-#else
-        gemm_kernel_i8i3k_m1(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-        return 1;
+    اگر (گنتی_m >= 4) {
+#اگر 0
+        gemm_kernel_i8i3k_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_ڈیٹا, c_ptr, گنتی_m, گنتی_n, k_blks, ldc);
+#ورنہ
+        gemm_kernel_i8i3k_m4(blk_len, quant_a_ptr, quant_b_ڈیٹا, c_ptr, گنتی_m, گنتی_n, k_blks, ldc);
+#اگر_ختم
+        واپس 4;
+    } ورنہ {
+#اگر 0
+        gemm_kernel_i8i3k_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_ڈیٹا, c_ptr, گنتی_m, گنتی_n, k_blks, ldc);
+#ورنہ
+        gemm_kernel_i8i3k_m1(blk_len, quant_a_ptr, quant_b_ڈیٹا, c_ptr, گنتی_m, گنتی_n, k_blks, ldc);
+#اگر_ختم
+        واپس 1;
     }
 }
 
 size_t gemm_kernel_i8i4(size_t          blk_len,
-                        const uint8_t * quant_a_ptr,
-                        const uint8_t * quant_b_data,
-                        const uint8_t * quant_b_zp,
-                        float *         c_ptr,
-                        size_t          count_m,
-                        size_t          count_n,
+                        ثابت uint8_t * quant_a_ptr,
+                        ثابت uint8_t * quant_b_ڈیٹا,
+                        ثابت uint8_t * quant_b_zp,
+                        اعشاری *         c_ptr,
+                        size_t          گنتی_m,
+                        size_t          گنتی_n,
                         size_t          k_blks,
                         size_t          ldc) {
-    if (count_m >= 4) {
-#if 0
-        gemm_kernel_i8i4_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+    اگر (گنتی_m >= 4) {
+#اگر 0
+        gemm_kernel_i8i4_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_ڈیٹا, quant_b_zp, c_ptr, گنتی_m, گنتی_n,
                                          k_blks, ldc);
-#else
-        gemm_kernel_i8i4_m4(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-        return 4;
-    } else {
-#if 0
-        gemm_kernel_i8i4_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+#ورنہ
+        gemm_kernel_i8i4_m4(blk_len, quant_a_ptr, quant_b_ڈیٹا, quant_b_zp, c_ptr, گنتی_m, گنتی_n, k_blks, ldc);
+#اگر_ختم
+        واپس 4;
+    } ورنہ {
+#اگر 0
+        gemm_kernel_i8i4_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_ڈیٹا, quant_b_zp, c_ptr, گنتی_m, گنتی_n,
                                          k_blks, ldc);
-#else
-        gemm_kernel_i8i4_m1(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-        return 1;
+#ورنہ
+        gemm_kernel_i8i4_m1(blk_len, quant_a_ptr, quant_b_ڈیٹا, quant_b_zp, c_ptr, گنتی_m, گنتی_n, k_blks, ldc);
+#اگر_ختم
+        واپس 1;
     }
 }
 
 size_t gemm_kernel_i8i4_hp(size_t          blk_len,
-                           const uint8_t * quant_a_ptr,
-                           const uint8_t * quant_b_data,
-                           const uint8_t * quant_b_zp,
-                           float *         c_ptr,
-                           size_t          count_m,
-                           size_t          count_n,
+                           ثابت uint8_t * quant_a_ptr,
+                           ثابت uint8_t * quant_b_ڈیٹا,
+                           ثابت uint8_t * quant_b_zp,
+                           اعشاری *         c_ptr,
+                           size_t          گنتی_m,
+                           size_t          گنتی_n,
                            size_t          k_blks,
                            size_t          ldc) {
-    if (count_m >= 4) {
-#if 0
-        gemm_kernel_i8i4_hp_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+    اگر (گنتی_m >= 4) {
+#اگر 0
+        gemm_kernel_i8i4_hp_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_ڈیٹا, quant_b_zp, c_ptr, گنتی_m, گنتی_n,
                                             k_blks, ldc);
-#else
-        gemm_kernel_i8i4_hp_m4(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-        return 4;
-    } else {
-#if 0
-        gemm_kernel_i8i4_hp_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+#ورنہ
+        gemm_kernel_i8i4_hp_m4(blk_len, quant_a_ptr, quant_b_ڈیٹا, quant_b_zp, c_ptr, گنتی_m, گنتی_n, k_blks, ldc);
+#اگر_ختم
+        واپس 4;
+    } ورنہ {
+#اگر 0
+        gemm_kernel_i8i4_hp_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_ڈیٹا, quant_b_zp, c_ptr, گنتی_m, گنتی_n,
                                             k_blks, ldc);
-#else
-        gemm_kernel_i8i4_hp_m1(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-        return 1;
+#ورنہ
+        gemm_kernel_i8i4_hp_m1(blk_len, quant_a_ptr, quant_b_ڈیٹا, quant_b_zp, c_ptr, گنتی_m, گنتی_n, k_blks, ldc);
+#اگر_ختم
+        واپس 1;
     }
 }
 
 size_t moe_m2_gemm_kernel_i8i4(size_t           blk_len,
-                               const uint8_t ** quant_a_ptr,
-                               const uint8_t *  quant_b_data,
-                               const uint8_t *  quant_b_zp,
-                               float **         c_ptr,
-                               size_t           count_m,
-                               size_t           count_n,
+                               ثابت uint8_t ** quant_a_ptr,
+                               ثابت uint8_t *  quant_b_ڈیٹا,
+                               ثابت uint8_t *  quant_b_zp,
+                               اعشاری **         c_ptr,
+                               size_t           گنتی_m,
+                               size_t           گنتی_n,
                                size_t           k_blks,
                                size_t           ldc) {
-    moe_m2_gemm_kernel_i8i4_impl(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
-    return 2;
+    moe_m2_gemm_kernel_i8i4_impl(blk_len, quant_a_ptr, quant_b_ڈیٹا, quant_b_zp, c_ptr, گنتی_m, گنتی_n, k_blks, ldc);
+    واپس 2;
 }
 
 size_t gemm_kernel_i8i8(size_t          blk_len,
-                        const uint8_t * quant_a_ptr,
-                        const uint8_t * quant_b_data,
-                        const uint8_t * quant_b_zp,
-                        float *         c_ptr,
-                        size_t          count_m,
-                        size_t          count_n,
+                        ثابت uint8_t * quant_a_ptr,
+                        ثابت uint8_t * quant_b_ڈیٹا,
+                        ثابت uint8_t * quant_b_zp,
+                        اعشاری *         c_ptr,
+                        size_t          گنتی_m,
+                        size_t          گنتی_n,
                         size_t          k_blks,
                         size_t          ldc) {
-    if (count_m >= 4) {
-#if 0
-        gemm_kernel_i8i8_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+    اگر (گنتی_m >= 4) {
+#اگر 0
+        gemm_kernel_i8i8_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_ڈیٹا, quant_b_zp, c_ptr, گنتی_m, گنتی_n,
                                          k_blks, ldc);
-#else
-        gemm_kernel_i8i8_m4(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-        return 4;
-    } else {
-#if 0
-        gemm_kernel_i8i8_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+#ورنہ
+        gemm_kernel_i8i8_m4(blk_len, quant_a_ptr, quant_b_ڈیٹا, quant_b_zp, c_ptr, گنتی_m, گنتی_n, k_blks, ldc);
+#اگر_ختم
+        واپس 4;
+    } ورنہ {
+#اگر 0
+        gemm_kernel_i8i8_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_ڈیٹا, quant_b_zp, c_ptr, گنتی_m, گنتی_n,
                                          k_blks, ldc);
-#else
-        gemm_kernel_i8i8_m1(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-        return 1;
+#ورنہ
+        gemm_kernel_i8i8_m1(blk_len, quant_a_ptr, quant_b_ڈیٹا, quant_b_zp, c_ptr, گنتی_m, گنتی_n, k_blks, ldc);
+#اگر_ختم
+        واپس 1;
     }
 }
 
 size_t gemm_kernel_i8mxfp4(size_t          blk_len,
-                           const uint8_t * quant_a_ptr,
-                           const uint8_t * quant_b_data,
-                           const uint8_t * quant_b_zp,
-                           float *         c_ptr,
-                           size_t          count_m,
-                           size_t          count_n,
+                           ثابت uint8_t * quant_a_ptr,
+                           ثابت uint8_t * quant_b_ڈیٹا,
+                           ثابت uint8_t * quant_b_zp,
+                           اعشاری *         c_ptr,
+                           size_t          گنتی_m,
+                           size_t          گنتی_n,
                            size_t          k_blks,
                            size_t          ldc) {
-    if (count_m >= 4) {
-#if 1
-        gemm_kernel_i8mxfp4_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+    اگر (گنتی_m >= 4) {
+#اگر 1
+        gemm_kernel_i8mxfp4_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_ڈیٹا, quant_b_zp, c_ptr, گنتی_m, گنتی_n,
                                             k_blks, ldc);
-#else
-        gemm_kernel_i8mxfp4_m4(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-        return 4;
-    } else {
-#if 1
-        gemm_kernel_i8mxfp4_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+#ورنہ
+        gemm_kernel_i8mxfp4_m4(blk_len, quant_a_ptr, quant_b_ڈیٹا, quant_b_zp, c_ptr, گنتی_m, گنتی_n, k_blks, ldc);
+#اگر_ختم
+        واپس 4;
+    } ورنہ {
+#اگر 1
+        gemm_kernel_i8mxfp4_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_ڈیٹا, quant_b_zp, c_ptr, گنتی_m, گنتی_n,
                                             k_blks, ldc);
-#else
-        gemm_kernel_i8mxfp4_m1(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-        return 1;
+#ورنہ
+        gemm_kernel_i8mxfp4_m1(blk_len, quant_a_ptr, quant_b_ڈیٹا, quant_b_zp, c_ptr, گنتی_m, گنتی_n, k_blks, ldc);
+#اگر_ختم
+        واپس 1;
     }
 }
 
 size_t moe_m2_gemm_kernel_i8mxfp4(size_t           blk_len,
-                                  const uint8_t ** quant_a_ptr,
-                                  const uint8_t *  quant_b_data,
-                                  const uint8_t *  quant_b_zp,
-                                  float **         c_ptr,
-                                  size_t           count_m,
-                                  size_t           count_n,
+                                  ثابت uint8_t ** quant_a_ptr,
+                                  ثابت uint8_t *  quant_b_ڈیٹا,
+                                  ثابت uint8_t *  quant_b_zp,
+                                  اعشاری **         c_ptr,
+                                  size_t           گنتی_m,
+                                  size_t           گنتی_n,
                                   size_t           k_blks,
                                   size_t           ldc) {
     //moe_m2_gemm_kernel_i8mxfp4_impl(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
-    return 2;
+    واپس 2;
 }
 
 size_t gemm_kernel_i8i5(size_t          blk_len,
-                        const uint8_t * quant_a_ptr,
-                        const uint8_t * quant_b_data,
-                        const uint8_t * quant_b_zp,
-                        float *         c_ptr,
-                        size_t          count_m,
-                        size_t          count_n,
+                        ثابت uint8_t * quant_a_ptr,
+                        ثابت uint8_t * quant_b_ڈیٹا,
+                        ثابت uint8_t * quant_b_zp,
+                        اعشاری *         c_ptr,
+                        size_t          گنتی_m,
+                        size_t          گنتی_n,
                         size_t          k_blks,
                         size_t          ldc) {
-    if (count_m >= 4) {
-#if 0
-        gemm_kernel_i8i5_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+    اگر (گنتی_m >= 4) {
+#اگر 0
+        gemm_kernel_i8i5_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_ڈیٹا, quant_b_zp, c_ptr, گنتی_m, گنتی_n,
                                          k_blks, ldc);
-#else
-        gemm_kernel_i8i5_m4(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-        return 4;
-    } else {
-#if 0
-        gemm_kernel_i8i5_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+#ورنہ
+        gemm_kernel_i8i5_m4(blk_len, quant_a_ptr, quant_b_ڈیٹا, quant_b_zp, c_ptr, گنتی_m, گنتی_n, k_blks, ldc);
+#اگر_ختم
+        واپس 4;
+    } ورنہ {
+#اگر 0
+        gemm_kernel_i8i5_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_ڈیٹا, quant_b_zp, c_ptr, گنتی_m, گنتی_n,
                                          k_blks, ldc);
-#else
-        gemm_kernel_i8i5_m1(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-        return 1;
+#ورنہ
+        gemm_kernel_i8i5_m1(blk_len, quant_a_ptr, quant_b_ڈیٹا, quant_b_zp, c_ptr, گنتی_m, گنتی_n, k_blks, ldc);
+#اگر_ختم
+        واپس 1;
     }
 }
 
 size_t moe_m2_gemm_kernel_i8i5(size_t           blk_len,
-                               const uint8_t ** quant_a_ptr,
-                               const uint8_t *  quant_b_data,
-                               const uint8_t *  quant_b_zp,
-                               float **         c_ptr,
-                               size_t           count_m,
-                               size_t           count_n,
+                               ثابت uint8_t ** quant_a_ptr,
+                               ثابت uint8_t *  quant_b_ڈیٹا,
+                               ثابت uint8_t *  quant_b_zp,
+                               اعشاری **         c_ptr,
+                               size_t           گنتی_m,
+                               size_t           گنتی_n,
                                size_t           k_blks,
                                size_t           ldc) {
-#if 0
-    moe_gemm_kernel_i8i5_mrow_ref<2, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+#اگر 0
+    moe_gemm_kernel_i8i5_mrow_ref<2, 32>(blk_len, quant_a_ptr, quant_b_ڈیٹا, quant_b_zp, c_ptr, گنتی_m, گنتی_n,
                                          k_blks, ldc);
-#else
-    moe_m2_gemm_kernel_i8i5_impl(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-    return 2;
+#ورنہ
+    moe_m2_gemm_kernel_i8i5_impl(blk_len, quant_a_ptr, quant_b_ڈیٹا, quant_b_zp, c_ptr, گنتی_m, گنتی_n, k_blks, ldc);
+#اگر_ختم
+    واپس 2;
 }
 
 }  // namespace ime2

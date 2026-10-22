@@ -1,34 +1,34 @@
-#pragma once
+#ہدایت once
 
-#include <atomic>
-#include <cstdint>
+#شامل <atomic>
+#شامل <cstdint>
 
-#define SPINE_CACHE_LINE  64
-#define SPINE_CACHE_ALIGN __attribute__((aligned(SPINE_CACHE_LINE)))
+#تعریف_کرو SPINE_CACHE_سطر  64
+#تعریف_کرو SPINE_CACHE_ALIGN __attribute__((aligned(SPINE_CACHE_سطر)))
 
-struct spine_barrier_t {
+ساخت spine_barrier_t {
     SPINE_CACHE_ALIGN std::atomic<int64_t> pending_;
-    SPINE_CACHE_ALIGN std::atomic<int64_t> rounds_;
-    SPINE_CACHE_ALIGN int64_t              total_;
+    SPINE_CACHE_ALIGN std::atomic<int64_t> دور;
+    SPINE_CACHE_ALIGN int64_t              کل_2;
 };
 
-inline void spine_barrier_wait(spine_barrier_t * b) {
-    auto cur_round = b->rounds_.load(std::memory_order_acquire);
-    auto cnt       = --b->pending_;
-    if (cnt == 0) {
-        b->pending_.store(b->total_);
-        b->rounds_.store(cur_round + 1);
-    } else {
-        while (cur_round == b->rounds_.load(std::memory_order_relaxed)) {
-            __asm__ volatile("pause " ::: "memory");
+اندرونی خالی spine_barrier_wait(spine_barrier_t * b) {
+    خودکار cur_باری = b->دور.بھرو(std::memory_order_acquire);
+    خودکار cnt       = --b->pending_;
+    اگر (cnt == 0) {
+        b->pending_.store(b->کل_2);
+        b->دور.store(cur_باری + 1);
+    } ورنہ {
+        جب (cur_باری == b->دور.بھرو(std::memory_order_relaxed)) {
+            __asm__ متلون("pause " ::: "memory");
         }
     }
 }
 
-inline void spine_barrier_init(spine_barrier_t * b, int num_barriers, uint64_t thread_count) {
-    for (int i = 0; i < num_barriers; i++) {
-        b[i].total_ = thread_count;
-        b[i].pending_.store(thread_count);
-        b[i].rounds_.store(0);
+اندرونی خالی spine_barrier_init(spine_barrier_t * b, صحیح عدد_barriers, uint64_t thread_گنتی) {
+    برائے (صحیح i = 0; i < عدد_barriers; i++) {
+        b[i].کل_2 = thread_گنتی;
+        b[i].pending_.store(thread_گنتی);
+        b[i].دور.store(0);
     }
 }

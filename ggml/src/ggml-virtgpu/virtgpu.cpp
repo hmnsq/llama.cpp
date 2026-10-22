@@ -1,41 +1,41 @@
-#include "virtgpu.h"
-#include "ggml-remoting.h"
+#شامل "virtgpu.h"
+#شامل "ggml-remoting.h"
 
-#include <stdio.h>
-#include <unistd.h>
+#شامل <stdio.h>
+#شامل <unistd.h>
 
-#include <cassert>
-#include <cerrno>
-#include <cstdlib>
+#شامل <cassert>
+#شامل <cerrno>
+#شامل <cstdlib>
 
-static virt_gpu_result_t virtgpu_open_device(virtgpu * gpu, const drmDevicePtr dev);
-static virt_gpu_result_t virtgpu_open(virtgpu * gpu);
+ساکن virt_gpu_نتیجہ_t virtgpu_open_device(virtgpu * gpu, ثابت drmDevicePtr dev);
+ساکن virt_gpu_نتیجہ_t virtgpu_open(virtgpu * gpu);
 
-static virt_gpu_result_t virtgpu_init_capset(virtgpu * gpu);
-static virt_gpu_result_t virtgpu_init_context(virtgpu * gpu);
+ساکن virt_gpu_نتیجہ_t virtgpu_init_capset(virtgpu * gpu);
+ساکن virt_gpu_نتیجہ_t virtgpu_init_context(virtgpu * gpu);
 
-static int      virtgpu_ioctl_context_init(virtgpu * gpu, virgl_renderer_capset capset_id);
-static int      virtgpu_ioctl_get_caps(virtgpu *             gpu,
+ساکن صحیح      virtgpu_ioctl_context_init(virtgpu * gpu, virgl_renderer_capset capset_id);
+ساکن صحیح      virtgpu_ioctl_get_caps(virtgpu *             gpu,
                                        virgl_renderer_capset id,
-                                       uint32_t              version,
-                                       void *                capset,
-                                       size_t                capset_size);
-static uint64_t virtgpu_ioctl_getparam(virtgpu * gpu, uint64_t param);
-static void     virtgpu_init_renderer_info(virtgpu * gpu);
+                                       uint32_t              نسخہ_2,
+                                       خالی *                capset,
+                                       size_t                capset_سائز);
+ساکن uint64_t virtgpu_ioctl_getparam(virtgpu * gpu, uint64_t param);
+ساکن خالی     virtgpu_init_renderer_info(virtgpu * gpu);
 
-static void log_call_duration(long long call_duration_ns, const char * name);
+ساکن خالی log_call_duration(طویل طویل call_duration_ns, ثابت حرف * name);
 
-const uint64_t APIR_HANDSHAKE_MAX_WAIT_MS   = 2 * 1000;   // 2s
-const uint64_t APIR_LOADLIBRARY_MAX_WAIT_MS = 60 * 1000;  // 60s
+ثابت uint64_t APIR_HANDSHAKE_MAX_WAIT_MS   = 2 * 1000;   // 2s
+ثابت uint64_t APIR_LOADLIBRARY_MAX_WAIT_MS = 60 * 1000;  // 60s
 
-static int virtgpu_handshake(virtgpu * gpu) {
+ساکن صحیح virtgpu_handshake(virtgpu * gpu) {
     apir_encoder * encoder;
     apir_decoder * decoder;
 
     encoder = remote_call_prepare(gpu, APIR_COMMAND_TYPE_HANDSHAKE, 0);
-    if (!encoder) {
+    اگر (!encoder) {
         GGML_ABORT(GGML_VIRTGPU "%s: failed to prepare the remote call encoder", __func__);
-        return 1;
+        واپس 1;
     }
 
     /* write handshake props */
@@ -48,16 +48,16 @@ static int virtgpu_handshake(virtgpu * gpu) {
     /* *** */
 
     uint32_t  ret_magic;
-    long long call_duration_ns;
+    طویل طویل call_duration_ns;
     ret_magic = remote_call(gpu, encoder, &decoder, APIR_HANDSHAKE_MAX_WAIT_MS, &call_duration_ns);
     log_call_duration(call_duration_ns, "API Remoting handshake");
 
-    if (!decoder) {
+    اگر (!decoder) {
         GGML_ABORT(GGML_VIRTGPU
                    "%s: failed to initiate the communication with the virglrenderer library. "
                    "Most likely, the wrong virglrenderer library was loaded in the hypervisor.",
                    __func__);
-        return 1;
+        واپس 1;
     }
 
     /* read handshake return values */
@@ -65,314 +65,314 @@ static int virtgpu_handshake(virtgpu * gpu) {
     uint32_t host_major;
     uint32_t host_minor;
 
-    if (ret_magic != APIR_HANDSHAKE_MAGIC) {
+    اگر (ret_magic != APIR_HANDSHAKE_MAGIC) {
         GGML_ABORT(GGML_VIRTGPU "%s: handshake with the virglrenderer failed (code=%d | %s)", __func__, ret_magic,
                    apir_backend_initialize_error(ret_magic));
-    } else {
+    } ورنہ {
         apir_decode_uint32_t(decoder, &host_major);
         apir_decode_uint32_t(decoder, &host_minor);
     }
 
-    remote_call_finish(gpu, encoder, decoder);
+    remote_call_اختتام(gpu, encoder, decoder);
 
-    if (ret_magic != APIR_HANDSHAKE_MAGIC) {
-        return 1;
+    اگر (ret_magic != APIR_HANDSHAKE_MAGIC) {
+        واپس 1;
     }
 
     GGML_LOG_INFO(GGML_VIRTGPU "%s: Guest is running with %u.%u\n", __func__, guest_major, guest_minor);
     GGML_LOG_INFO(GGML_VIRTGPU "%s: Host is running with %u.%u\n", __func__, host_major, host_minor);
 
-    if (guest_major != host_major) {
+    اگر (guest_major != host_major) {
         GGML_LOG_ERROR(GGML_VIRTGPU "Host major (%d) and guest major (%d) version differ\n", host_major, guest_major);
-    } else if (guest_minor != host_minor) {
+    } ورنہ اگر (guest_minor != host_minor) {
         GGML_LOG_WARN(GGML_VIRTGPU "Host minor (%d) and guest minor (%d) version differ\n", host_minor, guest_minor);
     }
 
-    return 0;
+    واپس 0;
 }
 
-static ApirLoadLibraryReturnCode virtgpu_load_library(virtgpu * gpu) {
+ساکن Apir_بھرو_Library_Return_رمز virtgpu_بھرو_library(virtgpu * gpu) {
     apir_encoder *            encoder;
     apir_decoder *            decoder;
-    ApirLoadLibraryReturnCode ret;
+    Apir_بھرو_Library_Return_رمز ret;
 
     encoder = remote_call_prepare(gpu, APIR_COMMAND_TYPE_LOADLIBRARY, 0);
-    if (!encoder) {
+    اگر (!encoder) {
         GGML_ABORT(GGML_VIRTGPU "%s: hypercall error: failed to prepare the API Remoting command encoder", __func__);
-        return APIR_LOAD_LIBRARY_HYPERCALL_INITIALIZATION_ERROR;
+        واپس APIR_بھرو_LIBRARY_HYPERCALL_INITIALIZATION_ERROR;
     }
 
-    long long call_duration_ns;
+    طویل طویل call_duration_ns;
 
-    ret = (ApirLoadLibraryReturnCode) remote_call(gpu, encoder, &decoder, APIR_LOADLIBRARY_MAX_WAIT_MS,
+    ret = (Apir_بھرو_Library_Return_رمز) remote_call(gpu, encoder, &decoder, APIR_LOADLIBRARY_MAX_WAIT_MS,
                                                   &call_duration_ns);
     log_call_duration(call_duration_ns, "API Remoting LoadLibrary");
 
-    if (!decoder) {
+    اگر (!decoder) {
         GGML_ABORT(GGML_VIRTGPU "%s: hypercall error: failed to trigger the API Remoting hypercall.\n", __func__);
-        return APIR_LOAD_LIBRARY_HYPERCALL_INITIALIZATION_ERROR;
+        واپس APIR_بھرو_LIBRARY_HYPERCALL_INITIALIZATION_ERROR;
     }
 
-    remote_call_finish(gpu, encoder, decoder);
+    remote_call_اختتام(gpu, encoder, decoder);
 
-    if (ret == APIR_LOAD_LIBRARY_SUCCESS) {
+    اگر (ret == APIR_بھرو_LIBRARY_SUCCESS) {
         GGML_LOG_INFO(GGML_VIRTGPU "The API Remoting backend was successfully loaded and initialized\n");
 
-        return ret;
+        واپس ret;
     }
 
     // something wrong happened, find out what.
-    if (ret < APIR_LOAD_LIBRARY_INIT_BASE_INDEX) {
-        if (ret == APIR_LOAD_LIBRARY_ENV_VAR_MISSING) {
+    اگر (ret < APIR_بھرو_LIBRARY_INIT_بنیاد_اشاریہ) {
+        اگر (ret == APIR_بھرو_LIBRARY_ENV_VAR_MISSING) {
             GGML_ABORT(GGML_VIRTGPU
                        "%s: virglrenderer could not open the API Remoting backend library, "
                        "some environment variables are missing. "
                        "Make sure virglrenderer is correctly configured by the hypervisor. (%s)",
-                       __func__, apir_load_library_error(ret));
-        } else if (ret == APIR_LOAD_LIBRARY_CANNOT_OPEN) {
+                       __func__, apir_بھرو_library_error(ret));
+        } ورنہ اگر (ret == APIR_بھرو_LIBRARY_CANNOT_OPEN) {
             GGML_ABORT(GGML_VIRTGPU
                        "%s: virglrenderer could not open the API Remoting backend library. "
                        "Make sure virglrenderer is correctly configured by the hypervisor. (%s)",
-                       __func__, apir_load_library_error(ret));
-        } else if (ret == APIR_LOAD_LIBRARY_ENV_VAR_MISSING) {
+                       __func__, apir_بھرو_library_error(ret));
+        } ورنہ اگر (ret == APIR_بھرو_LIBRARY_ENV_VAR_MISSING) {
             GGML_ABORT(GGML_VIRTGPU
                        "%s: could not load the backend library, some symbols are missing. "
                        "Make sure virglrenderer is correctly configured by the hypervisor. (%s) ",
-                       __func__, apir_load_library_error(ret));
-        } else {
+                       __func__, apir_بھرو_library_error(ret));
+        } ورنہ {
             GGML_ABORT(GGML_VIRTGPU "%s: virglrenderer could not load the API Remoting backend library. (%s - code %d)",
-                       __func__, apir_load_library_error(ret), ret);
+                       __func__, apir_بھرو_library_error(ret), ret);
         }
-        return ret;
+        واپس ret;
     }
 
     GGML_LOG_INFO(GGML_VIRTGPU "%s: virglrenderer successfully loaded the API Remoting backend library.\n", __func__);
 
-    ApirLoadLibraryReturnCode apir_ret = (ApirLoadLibraryReturnCode) (ret - APIR_LOAD_LIBRARY_INIT_BASE_INDEX);
+    Apir_بھرو_Library_Return_رمز apir_ret = (Apir_بھرو_Library_Return_رمز) (ret - APIR_بھرو_LIBRARY_INIT_بنیاد_اشاریہ);
 
-    if (apir_ret == APIR_LOAD_LIBRARY_CANNOT_OPEN) {
+    اگر (apir_ret == APIR_بھرو_LIBRARY_CANNOT_OPEN) {
         GGML_ABORT(GGML_VIRTGPU
                    "%s: the API Remoting backend library couldn't load the GGML backend library. "
                    "Make sure virglrenderer is correctly configured by the hypervisor. (%s)",
-                   __func__, apir_load_library_error(apir_ret));
-    } else if (apir_ret == APIR_LOAD_LIBRARY_SYMBOL_MISSING) {
+                   __func__, apir_بھرو_library_error(apir_ret));
+    } ورنہ اگر (apir_ret == APIR_بھرو_LIBRARY_علامت_MISSING) {
         GGML_ABORT(
             GGML_VIRTGPU
             "%s: the API Remoting backend library couldn't load the GGML backend library, some symbols are missing. "
             "Make sure virglrenderer is correctly configured by the hypervisor. (%s)",
-            __func__, apir_load_library_error(apir_ret));
-    } else if (apir_ret < APIR_LOAD_LIBRARY_INIT_BASE_INDEX) {
+            __func__, apir_بھرو_library_error(apir_ret));
+    } ورنہ اگر (apir_ret < APIR_بھرو_LIBRARY_INIT_بنیاد_اشاریہ) {
         GGML_ABORT(GGML_VIRTGPU
                    "%s: the API Remoting backend library couldn't load the GGML backend library: apir code=%d | %s)",
-                   __func__, apir_ret, apir_load_library_error(apir_ret));
-    } else {
-        uint32_t lib_ret = apir_ret - APIR_LOAD_LIBRARY_INIT_BASE_INDEX;
+                   __func__, apir_ret, apir_بھرو_library_error(apir_ret));
+    } ورنہ {
+        uint32_t lib_ret = apir_ret - APIR_بھرو_LIBRARY_INIT_بنیاد_اشاریہ;
         GGML_ABORT(GGML_VIRTGPU
                    "%s: the API Remoting backend library failed to initialize its backend library: apir code=%d)",
                    __func__, lib_ret);
     }
-    return ret;
+    واپس ret;
 }
 
 virtgpu * create_virtgpu() {
-    virtgpu * gpu = new virtgpu();
+    virtgpu * gpu = نیا virtgpu();
 
-    gpu->use_apir_capset = getenv("GGML_REMOTING_USE_APIR_CAPSET") != nullptr;
-    util_sparse_array_init(&gpu->shmem_array, sizeof(virtgpu_shmem), 1024);
+    gpu->use_apir_capset = getenv("GGML_REMOTING_USE_APIR_CAPSET") != خالی_اشاریہ;
+    util_sparse_array_init(&gpu->shmem_array, حجم(virtgpu_shmem), 1024);
 
     // Initialize mutex to protect shared data_shmem buffer
-    if (mtx_init(&gpu->data_shmem_mutex, mtx_plain) != thrd_success) {
-        delete gpu;
+    اگر (mtx_init(&gpu->ڈیٹا_shmem_mutex, mtx_plain) != thrd_success) {
+        حذف gpu;
         GGML_ABORT(GGML_VIRTGPU "%s: failed to initialize data_shmem mutex", __func__);
-        return NULL;
+        واپس تہی;
     }
 
-    if (virtgpu_open(gpu) != APIR_SUCCESS) {
+    اگر (virtgpu_open(gpu) != APIR_SUCCESS) {
         GGML_LOG_ERROR(GGML_VIRTGPU "%s: failed to open the virtgpu device\n", __func__);
-        return NULL;
+        واپس تہی;
     }
 
-    if (virtgpu_init_capset(gpu) != APIR_SUCCESS) {
-        if (gpu->use_apir_capset) {
+    اگر (virtgpu_init_capset(gpu) != APIR_SUCCESS) {
+        اگر (gpu->use_apir_capset) {
             GGML_ABORT(GGML_VIRTGPU
                        "%s: failed to initialize the virtgpu APIR capset. Make sure that the virglrenderer library "
                        "supports it.",
                        __func__);
-        } else {
+        } ورنہ {
             GGML_ABORT(GGML_VIRTGPU "%s: failed to initialize the virtgpu Venus capset", __func__);
         }
-        return NULL;
+        واپس تہی;
     }
 
-    if (virtgpu_init_context(gpu) != APIR_SUCCESS) {
+    اگر (virtgpu_init_context(gpu) != APIR_SUCCESS) {
         GGML_ABORT(GGML_VIRTGPU "%s: failed to initialize the GPU context", __func__);
-        return NULL;
+        واپس تہی;
     }
 
-    if (virtgpu_shmem_create(gpu, SHMEM_REPLY_SIZE, &gpu->reply_shmem)) {
+    اگر (virtgpu_shmem_create(gpu, SHMEM_جواب_سائز, &gpu->جواب_shmem)) {
         GGML_ABORT(GGML_VIRTGPU "%s: failed to create the shared reply memory pages", __func__);
-        return NULL;
+        واپس تہی;
     }
 
-    if (virtgpu_shmem_create(gpu, SHMEM_DATA_SIZE, &gpu->data_shmem)) {
+    اگر (virtgpu_shmem_create(gpu, SHMEM_ڈیٹا_سائز, &gpu->ڈیٹا_shmem)) {
         GGML_ABORT(GGML_VIRTGPU "%s: failed to create the shared data memory pages", __func__);
-        return NULL;
+        واپس تہی;
     }
 
-    if (virtgpu_handshake(gpu)) {
+    اگر (virtgpu_handshake(gpu)) {
         GGML_ABORT(GGML_VIRTGPU "%s: failed to handshake with the virglrenderer library", __func__);
-        return NULL;
+        واپس تہی;
     }
 
-    if (virtgpu_load_library(gpu) != APIR_LOAD_LIBRARY_SUCCESS) {
+    اگر (virtgpu_بھرو_library(gpu) != APIR_بھرو_LIBRARY_SUCCESS) {
         GGML_ABORT(GGML_VIRTGPU "%s: failed to load the backend library", __func__);
-        return NULL;
+        واپس تہی;
     }
 
-    return gpu;
+    واپس gpu;
 }
 
-static virt_gpu_result_t virtgpu_open(virtgpu * gpu) {
+ساکن virt_gpu_نتیجہ_t virtgpu_open(virtgpu * gpu) {
     drmDevicePtr devs[8];
-    int          count = drmGetDevices2(0, devs, ARRAY_SIZE(devs));
-    if (count < 0) {
+    صحیح          count = drmGetDevices2(0, devs, ARRAY_سائز(devs));
+    اگر (count < 0) {
         GGML_LOG_ERROR(GGML_VIRTGPU "%s: failed to enumerate DRM devices\n", __func__);
-        return APIR_ERROR_INITIALIZATION_FAILED;
+        واپس APIR_ERROR_INITIALIZATION_FAILED;
     }
 
-    virt_gpu_result_t result = APIR_ERROR_INITIALIZATION_FAILED;
-    for (int i = 0; i < count; i++) {
-        result = virtgpu_open_device(gpu, devs[i]);
-        if (result == APIR_SUCCESS) {
-            break;
+    virt_gpu_نتیجہ_t نتیجہ = APIR_ERROR_INITIALIZATION_FAILED;
+    برائے (صحیح i = 0; i < count; i++) {
+        نتیجہ = virtgpu_open_device(gpu, devs[i]);
+        اگر (نتیجہ == APIR_SUCCESS) {
+            توڑو;
         }
     }
 
     drmFreeDevices(devs, count);
 
-    return result;
+    واپس نتیجہ;
 }
 
-static virt_gpu_result_t virtgpu_open_device(virtgpu * gpu, const drmDevicePtr dev) {
-    const char * node_path = dev->nodes[DRM_NODE_RENDER];
+ساکن virt_gpu_نتیجہ_t virtgpu_open_device(virtgpu * gpu, ثابت drmDevicePtr dev) {
+    ثابت حرف * گرہ_راستہ = dev->nodes[DRM_گرہ_RENDER];
 
-    int fd = open(node_path, O_RDWR | O_CLOEXEC);
-    if (fd < 0) {
-        GGML_ABORT(GGML_VIRTGPU "%s: failed to open %s", __func__, node_path);
-        return APIR_ERROR_INITIALIZATION_FAILED;
+    صحیح fd = open(گرہ_راستہ, O_RDWR | O_CLOEXEC);
+    اگر (fd < 0) {
+        GGML_ABORT(GGML_VIRTGPU "%s: failed to open %s", __func__, گرہ_راستہ);
+        واپس APIR_ERROR_INITIALIZATION_FAILED;
     }
 
-    drmVersionPtr version = drmGetVersion(fd);
-    if (!version || strcmp(version->name, "virtio_gpu") || version->version_major != 0) {
-        if (version) {
-            GGML_LOG_ERROR(GGML_VIRTGPU "%s: unknown DRM driver %s version %d\n", __func__, version->name,
-                           version->version_major);
-        } else {
+    drm_نسخہ_Ptr نسخہ_2 = drm_Get_نسخہ(fd);
+    اگر (!نسخہ_2 || strcmp(نسخہ_2->name, "virtio_gpu") || نسخہ_2->نسخہ_major != 0) {
+        اگر (نسخہ_2) {
+            GGML_LOG_ERROR(GGML_VIRTGPU "%s: unknown DRM driver %s version %d\n", __func__, نسخہ_2->name,
+                           نسخہ_2->نسخہ_major);
+        } ورنہ {
             GGML_LOG_ERROR(GGML_VIRTGPU "%s: failed to get DRM driver version\n", __func__);
         }
 
-        if (version) {
-            drmFreeVersion(version);
+        اگر (نسخہ_2) {
+            drm_Free_نسخہ(نسخہ_2);
         }
         close(fd);
-        return APIR_ERROR_INITIALIZATION_FAILED;
+        واپس APIR_ERROR_INITIALIZATION_FAILED;
     }
 
     gpu->fd = fd;
 
-    drmFreeVersion(version);
+    drm_Free_نسخہ(نسخہ_2);
 
-    GGML_LOG_INFO(GGML_VIRTGPU "using DRM device %s\n", node_path);
+    GGML_LOG_INFO(GGML_VIRTGPU "using DRM device %s\n", گرہ_راستہ);
 
-    return APIR_SUCCESS;
+    واپس APIR_SUCCESS;
 }
 
-static virt_gpu_result_t virtgpu_init_context(virtgpu * gpu) {
-    assert(!gpu->capset.version);
-    const int ret = virtgpu_ioctl_context_init(gpu, gpu->capset.id);
-    if (ret) {
+ساکن virt_gpu_نتیجہ_t virtgpu_init_context(virtgpu * gpu) {
+    أكد(!gpu->capset.نسخہ_2);
+    ثابت صحیح ret = virtgpu_ioctl_context_init(gpu, gpu->capset.id);
+    اگر (ret) {
         GGML_LOG_ERROR(GGML_VIRTGPU "%s: failed to initialize context: %s\n", __func__, strerror(errno));
-        return APIR_ERROR_INITIALIZATION_FAILED;
+        واپس APIR_ERROR_INITIALIZATION_FAILED;
     }
 
-    return APIR_SUCCESS;
+    واپس APIR_SUCCESS;
 }
 
-static virt_gpu_result_t virtgpu_init_capset(virtgpu * gpu) {
-    if (gpu->use_apir_capset) {
+ساکن virt_gpu_نتیجہ_t virtgpu_init_capset(virtgpu * gpu) {
+    اگر (gpu->use_apir_capset) {
         GGML_LOG_INFO(GGML_VIRTGPU "Using the APIR capset\n");
         gpu->capset.id = VIRTGPU_DRM_CAPSET_APIR;
-    } else {
+    } ورنہ {
         GGML_LOG_INFO(GGML_VIRTGPU "Using the Venus capset\n");
         gpu->capset.id = VIRTGPU_DRM_CAPSET_VENUS;
     }
-    gpu->capset.version = 0;
+    gpu->capset.نسخہ_2 = 0;
 
-    int ret =
-        virtgpu_ioctl_get_caps(gpu, gpu->capset.id, gpu->capset.version, &gpu->capset.data, sizeof(gpu->capset.data));
+    صحیح ret =
+        virtgpu_ioctl_get_caps(gpu, gpu->capset.id, gpu->capset.نسخہ_2, &gpu->capset.ڈیٹا, حجم(gpu->capset.ڈیٹا));
 
-    if (ret) {
-        GGML_LOG_ERROR(GGML_VIRTGPU "%s: failed to get APIR v%d capset: %s\n", __func__, gpu->capset.version,
+    اگر (ret) {
+        GGML_LOG_ERROR(GGML_VIRTGPU "%s: failed to get APIR v%d capset: %s\n", __func__, gpu->capset.نسخہ_2,
                        strerror(errno));
-        return APIR_ERROR_INITIALIZATION_FAILED;
+        واپس APIR_ERROR_INITIALIZATION_FAILED;
     }
 
-    assert(gpu->capset.data.supports_blob_resources);
+    أكد(gpu->capset.ڈیٹا.supports_blob_resources);
 
-    return APIR_SUCCESS;
+    واپس APIR_SUCCESS;
 }
 
-static int virtgpu_ioctl_context_init(virtgpu * gpu, virgl_renderer_capset capset_id) {
-    drm_virtgpu_context_set_param ctx_set_params[3] = {
+ساکن صحیح virtgpu_ioctl_context_init(virtgpu * gpu, virgl_renderer_capset capset_id) {
+    drm_virtgpu_context_سیٹ_param ctx_سیٹ_params[3] = {
         {
          .param = VIRTGPU_CONTEXT_PARAM_CAPSET_ID,
          .value = capset_id,
          },
         {
-         .param = VIRTGPU_CONTEXT_PARAM_NUM_RINGS,
+         .param = VIRTGPU_CONTEXT_PARAM_عدد_RINGS,
          .value = 1,
          },
         {
-         .param = VIRTGPU_CONTEXT_PARAM_POLL_RINGS_MASK,
+         .param = VIRTGPU_CONTEXT_PARAM_POLL_RINGS_نقاب,
          .value = 0, /* don't generate drm_events on fence signaling */
         },
     };
 
-    drm_virtgpu_context_init args = {
-        .num_params     = ARRAY_SIZE(ctx_set_params),
+    drm_virtgpu_context_init دلائل_2 = {
+        .عدد_params     = ARRAY_سائز(ctx_سیٹ_params),
         .pad            = 0,
-        .ctx_set_params = (uintptr_t) &ctx_set_params,
+        .ctx_سیٹ_params = (uintptr_t) &ctx_سیٹ_params,
     };
 
-    return virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_CONTEXT_INIT, &args);
+    واپس virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_CONTEXT_INIT, &دلائل_2);
 }
 
-static int virtgpu_ioctl_get_caps(virtgpu *             gpu,
+ساکن صحیح virtgpu_ioctl_get_caps(virtgpu *             gpu,
                                   virgl_renderer_capset id,
-                                  uint32_t              version,
-                                  void *                capset,
-                                  size_t                capset_size) {
-    drm_virtgpu_get_caps args = {
-        .cap_set_id  = id,
-        .cap_set_ver = version,
+                                  uint32_t              نسخہ_2,
+                                  خالی *                capset,
+                                  size_t                capset_سائز) {
+    drm_virtgpu_get_caps دلائل_2 = {
+        .cap_سیٹ_id  = id,
+        .cap_سیٹ_ver = نسخہ_2,
         .addr        = (uintptr_t) capset,
-        .size        = (__u32) capset_size,
+        .size        = (__u32) capset_سائز,
         .pad         = 0,
     };
 
-    return virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_GET_CAPS, &args);
+    واپس virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_GET_CAPS, &دلائل_2);
 }
 
-static uint64_t virtgpu_ioctl_getparam(virtgpu * gpu, uint64_t param) {
+ساکن uint64_t virtgpu_ioctl_getparam(virtgpu * gpu, uint64_t param) {
     /* val must be zeroed because kernel only writes the lower 32 bits */
     uint64_t             val  = 0;
-    drm_virtgpu_getparam args = {
+    drm_virtgpu_getparam دلائل_2 = {
         .param = param,
         .value = (uintptr_t) &val,
     };
 
-    const int ret = virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_GETPARAM, &args);
-    return ret ? 0 : val;
+    ثابت صحیح ret = virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_GETPARAM, &دلائل_2);
+    واپس ret ? 0 : val;
 }
 
 apir_encoder * remote_call_prepare(virtgpu * gpu, ApirCommandType apir_cmd_type, int32_t cmd_flags) {
@@ -380,14 +380,14 @@ apir_encoder * remote_call_prepare(virtgpu * gpu, ApirCommandType apir_cmd_type,
      * Prepare the command encoder and its buffer
      */
 
-    thread_local char encoder_buffer[4096];
+    thread_local حرف encoder_بفر[4096];
 
     thread_local apir_encoder enc;
     enc = {
-        .cur   = encoder_buffer,
-        .start = encoder_buffer,
-        .end   = encoder_buffer + sizeof(encoder_buffer),
-        .fatal = false,
+        .cur   = encoder_بفر,
+        .start = encoder_بفر,
+        .end   = encoder_بفر + حجم(encoder_بفر),
+        .fatal = جھوٹ,
     };
 
     /*
@@ -400,34 +400,34 @@ apir_encoder * remote_call_prepare(virtgpu * gpu, ApirCommandType apir_cmd_type,
     int32_t cmd_type = apir_cmd_type;
 
     // for testing during the hypervisor transition
-    if (!gpu->use_apir_capset) {
-        cmd_type += VENUS_COMMAND_TYPE_LENGTH;
+    اگر (!gpu->use_apir_capset) {
+        cmd_type += VENUS_COMMAND_TYPE_لمبائی;
     }
     apir_encode_int32_t(&enc, &cmd_type);
     apir_encode_int32_t(&enc, &cmd_flags);
 
-    uint32_t reply_res_id = gpu->reply_shmem.res_id;
-    apir_encode_uint32_t(&enc, &reply_res_id);
+    uint32_t جواب_res_id = gpu->جواب_shmem.res_id;
+    apir_encode_uint32_t(&enc, &جواب_res_id);
 
-    return &enc;
+    واپس &enc;
 }
 
-void remote_call_finish(virtgpu * gpu, apir_encoder * enc, apir_decoder * dec) {
-    UNUSED(gpu);
+خالی remote_call_اختتام(virtgpu * gpu, apir_encoder * enc, apir_decoder * dec) {
+    غیر_مستعمل(gpu);
 
-    if (!enc) {
+    اگر (!enc) {
         GGML_ABORT(GGML_VIRTGPU "%s: Invalid (null) encoder", __func__);
     }
 
-    if (!dec) {
+    اگر (!dec) {
         GGML_ABORT(GGML_VIRTGPU "%s: Invalid (null) decoder", __func__);
     }
 
-    if (apir_encoder_get_fatal(enc)) {
+    اگر (apir_encoder_get_fatal(enc)) {
         GGML_LOG_ERROR(GGML_VIRTGPU "%s: Failed to encode the output parameters.", __func__);
     }
 
-    if (apir_decoder_get_fatal(dec)) {
+    اگر (apir_decoder_get_fatal(dec)) {
         GGML_LOG_ERROR(GGML_VIRTGPU "%s: Failed to decode the input parameters.", __func__);
     }
 }
@@ -435,111 +435,111 @@ void remote_call_finish(virtgpu * gpu, apir_encoder * enc, apir_decoder * dec) {
 uint32_t remote_call(virtgpu *       gpu,
                      apir_encoder *  encoder,
                      apir_decoder ** decoder,
-                     float           max_wait_ms,
-                     long long *     call_duration_ns) {
+                     اعشاری           max_wait_ms,
+                     طویل طویل *     call_duration_ns) {
     /*
      * Prepare the reply notification pointer
      */
 
-    volatile std::atomic_uint * atomic_reply_notif = (volatile std::atomic_uint *) gpu->reply_shmem.mmap_ptr;
-    *atomic_reply_notif                            = 0;
+    متلون std::atomic_uint * atomic_جواب_notif = (متلون std::atomic_uint *) gpu->جواب_shmem.mmap_ptr;
+    *atomic_جواب_notif                            = 0;
 
     /*
      * Trigger the execbuf ioctl
      */
 
-    drm_virtgpu_execbuffer args = {
+    drm_virtgpu_execbuffer دلائل_2 = {
         .flags   = VIRTGPU_EXECBUF_RING_IDX,
         .size    = (uint32_t) (encoder->cur - encoder->start),
         .command = (uintptr_t) encoder->start,
 
         .bo_handles     = 0,
-        .num_bo_handles = 0,
+        .عدد_bo_handles = 0,
 
         .fence_fd         = 0,
         .ring_idx         = 0,
         .syncobj_stride   = 0,
-        .num_in_syncobjs  = 0,
-        .num_out_syncobjs = 0,
-        .in_syncobjs      = 0,
-        .out_syncobjs     = 0,
+        .عدد_اندر_syncobjs  = 0,
+        .عدد_برآمد_syncobjs = 0,
+        .اندر_syncobjs      = 0,
+        .برآمد_syncobjs     = 0,
     };
 
-    *decoder = NULL;
+    *decoder = تہی;
 
-    int ret = drmIoctl(gpu->fd, DRM_IOCTL_VIRTGPU_EXECBUFFER, &args);
+    صحیح ret = drmIoctl(gpu->fd, DRM_IOCTL_VIRTGPU_EXECBUFFER, &دلائل_2);
 
-    if (ret != 0) {
+    اگر (ret != 0) {
         GGML_ABORT(GGML_VIRTGPU "%s: the virtgpu EXECBUFFER ioctl failed (%d)", __func__, ret);
     }
 
     /*
      * Wait for the response notification
      */
-    timer_data wait_host_reply_timer = { 0, 0, 0 };
+    timer_ڈیٹا wait_host_جواب_timer = { 0, 0, 0 };
 
-    start_timer(&wait_host_reply_timer);
+    آغاز_timer(&wait_host_جواب_timer);
 
-    timespec ts_start, ts_end;
-    clock_gettime(CLOCK_MONOTONIC, &ts_start);
-    long long start_time = (long long) ts_start.tv_sec * 1000000000LL + ts_start.tv_nsec;
+    timespec ts_آغاز, ts_انتہا;
+    clock_gettime(CLOCK_MONOTONIC, &ts_آغاز);
+    طویل طویل آغاز_وقت = (طویل طویل) ts_آغاز.tv_sec * 1000000000LL + ts_آغاز.tv_nsec;
 
-    bool     timedout    = false;
-    uint32_t notif_value = 0;
-    while (true) {
-        notif_value = std::atomic_load_explicit(atomic_reply_notif, std::memory_order_acquire);
+    منطقی     timedout    = جھوٹ;
+    uint32_t notif_قدر = 0;
+    جب (سچ) {
+        notif_قدر = std::atomic_load_explicit(atomic_جواب_notif, std::memory_order_acquire);
 
-        if (notif_value != 0) {
-            break;
+        اگر (notif_قدر != 0) {
+            توڑو;
         }
 
-        int64_t base_sleep_us = 15;
+        int64_t بنیاد_sleep_us = 15;
 
-        os_time_sleep(base_sleep_us);
+        os_وقت_sleep(بنیاد_sleep_us);
 
-        if (max_wait_ms) {
-            clock_gettime(CLOCK_MONOTONIC, &ts_end);
-            long long end_time    = (long long) ts_end.tv_sec * 1000000000LL + ts_end.tv_nsec;
-            float     duration_ms = (end_time - start_time) / 1000000;
+        اگر (max_wait_ms) {
+            clock_gettime(CLOCK_MONOTONIC, &ts_انتہا);
+            طویل طویل انتہا_وقت    = (طویل طویل) ts_انتہا.tv_sec * 1000000000LL + ts_انتہا.tv_nsec;
+            اعشاری     duration_ms = (انتہا_وقت - آغاز_وقت) / 1000000;
 
-            if (duration_ms > max_wait_ms) {
-                timedout = true;
-                break;
+            اگر (duration_ms > max_wait_ms) {
+                timedout = سچ;
+                توڑو;
             }
         }
     }
 
-    if (call_duration_ns) {
-        *call_duration_ns = stop_timer(&wait_host_reply_timer);
+    اگر (call_duration_ns) {
+        *call_duration_ns = stop_timer(&wait_host_جواب_timer);
     }
 
-    if (max_wait_ms && timedout) {
+    اگر (max_wait_ms && timedout) {
         GGML_LOG_ERROR(GGML_VIRTGPU "%s: timed out waiting for the host answer...\n", __func__);
-        return APIR_FORWARD_TIMEOUT;
+        واپس APIR_FORWARD_TIMEOUT;
     }
 
     /*
      * Prepare the decoder
      */
-    static apir_decoder response_dec;
-    response_dec.cur = (char *) gpu->reply_shmem.mmap_ptr + sizeof(*atomic_reply_notif);
-    response_dec.end = (char *) gpu->reply_shmem.mmap_ptr + gpu->reply_shmem.mmap_size;
+    ساکن apir_decoder response_dec;
+    response_dec.cur = (حرف *) gpu->جواب_shmem.mmap_ptr + حجم(*atomic_جواب_notif);
+    response_dec.end = (حرف *) gpu->جواب_shmem.mmap_ptr + gpu->جواب_shmem.mmap_سائز;
     *decoder         = &response_dec;
 
     // extract the actual return value from the notif flag
-    uint32_t returned_value = notif_value - 1;
-    return returned_value;
+    uint32_t returned_قدر = notif_قدر - 1;
+    واپس returned_قدر;
 }
 
-static void log_call_duration(long long call_duration_ns, const char * name) {
-    double call_duration_ms = (double) call_duration_ns / 1e6;  // 1 millisecond = 1e6 nanoseconds
-    double call_duration_s  = (double) call_duration_ns / 1e9;  // 1 second = 1e9 nanoseconds
+ساکن خالی log_call_duration(طویل طویل call_duration_ns, ثابت حرف * name) {
+    دوہرا call_duration_ms = (دوہرا) call_duration_ns / 1e6;  // 1 millisecond = 1e6 nanoseconds
+    دوہرا call_duration_s  = (دوہرا) call_duration_ns / 1e9;  // 1 second = 1e9 nanoseconds
 
-    if (call_duration_s > 1) {
+    اگر (call_duration_s > 1) {
         GGML_LOG_INFO(GGML_VIRTGPU "waited %.2fs for the %s host reply...\n", call_duration_s, name);
-    } else if (call_duration_ms > 1) {
+    } ورنہ اگر (call_duration_ms > 1) {
         GGML_LOG_INFO(GGML_VIRTGPU "waited %.2fms for the %s host reply...\n", call_duration_ms, name);
-    } else {
+    } ورنہ {
         GGML_LOG_INFO(GGML_VIRTGPU "waited %lldns for the %s host reply...\n", call_duration_ns, name);
     }
 }

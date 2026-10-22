@@ -1,199 +1,199 @@
-#ifndef HTP_TENSOR_H
-#define HTP_TENSOR_H
+#اگر_غیر_تعریف_شدہ HTP_TENSOR_H
+#تعریف_کرو HTP_TENSOR_H
 
-#include <stdint.h>
-#include <stdbool.h>
-#include "htp-ops.h"
-#include "hex-bitmap.h"
-#include "hex-common.h"
-#include "hex-fastdiv.h"
+#شامل <stdint.h>
+#شامل <stdbool.h>
+#شامل "htp-ops.h"
+#شامل "hex-bitmap.h"
+#شامل "hex-common.h"
+#شامل "hex-fastdiv.h"
 
-#define HTP_TENSOR_MDEV_LINE_SIZE   128
+#تعریف_کرو HTP_TENSOR_MDEV_سطر_سائز   128
 
 // Currently HMX requires 32x32 tile formats (do not change)
-#define HTP_TENSOR_TILE_N_COLS      32
-#define HTP_TENSOR_TILE_N_ROWS      32
+#تعریف_کرو HTP_TENSOR_TILE_N_ستون_تعداد      32
+#تعریف_کرو HTP_TENSOR_TILE_N_صفیں      32
 
-#define HTP_TENSOR_TILE_SIZE_F16    2048
-#define HTP_TENSOR_TILE_SIZE_Q4_0   576
-#define HTP_TENSOR_TILE_SIZE_Q4_1   640
-#define HTP_TENSOR_TILE_SIZE_Q8_0   1088
-#define HTP_TENSOR_TILE_SIZE_IQ4_NL 576
-#define HTP_TENSOR_TILE_SIZE_MXFP4  544
-#define HTP_TENSOR_TILE_SIZE_Q4_K   640
-#define HTP_TENSOR_TILE_SIZE_Q5_K   768
-#define HTP_TENSOR_TILE_SIZE_Q6_K   896
-#define HTP_TENSOR_TILE_SIZE_Q3_K   512
-#define HTP_TENSOR_TILE_SIZE_Q2_K   336
-#define HTP_TENSOR_TILE_K_Q1_0      128
-#define HTP_TENSOR_TILE_SIZE_Q1_0   576
-#define HTP_TENSOR_TILE_K_Q2_0      64
-#define HTP_TENSOR_TILE_SIZE_Q2_0   576
+#تعریف_کرو HTP_TENSOR_TILE_سائز_F16    2048
+#تعریف_کرو HTP_TENSOR_TILE_سائز_Q4_0   576
+#تعریف_کرو HTP_TENSOR_TILE_سائز_Q4_1   640
+#تعریف_کرو HTP_TENSOR_TILE_سائز_Q8_0   1088
+#تعریف_کرو HTP_TENSOR_TILE_سائز_IQ4_NL 576
+#تعریف_کرو HTP_TENSOR_TILE_سائز_MXFP4  544
+#تعریف_کرو HTP_TENSOR_TILE_سائز_Q4_K   640
+#تعریف_کرو HTP_TENSOR_TILE_سائز_Q5_K   768
+#تعریف_کرو HTP_TENSOR_TILE_سائز_Q6_K   896
+#تعریف_کرو HTP_TENSOR_TILE_سائز_Q3_K   512
+#تعریف_کرو HTP_TENSOR_TILE_سائز_Q2_K   336
+#تعریف_کرو HTP_TENSOR_TILE_K_Q1_0      128
+#تعریف_کرو HTP_TENSOR_TILE_سائز_Q1_0   576
+#تعریف_کرو HTP_TENSOR_TILE_K_Q2_0      64
+#تعریف_کرو HTP_TENSOR_TILE_سائز_Q2_0   576
 
 // Tiled weight tensor layouts (Q4_0, Q8_0, IQ4_NL, MXFP4, Q1_0, Q2_0, K-quants):
 // See docs/backend/snapdragon/developer.md ("Tiled Weight Formats").
 
-struct htp_tensor_mdev_range {
-    uint32_t start;
-    uint32_t count;
+ساخت htp_tensor_mdev_range {
+    uint32_t آغاز;
+    uint32_t گنتی;
 };
 
-static inline bool htp_tensor_is_extended(const struct htp_tensor * t) {
-    return t && (t->data >> 32) != 0;
+ساکن اندرونی bool htp_tensor_is_extended(ثابت ساخت htp_tensor * t) {
+    واپس t && (t->ڈیٹا >> 32) != 0;
 }
 
-static inline bool htp_tensor_is_contiguous(const struct htp_tensor * t, uint32_t type_size) {
-    uint32_t next_nb = type_size;
-    if (t->ne[0] != 1 && t->nb[0] != next_nb) {
-        return false;
+ساکن اندرونی bool htp_tensor_is_contiguous(ثابت ساخت htp_tensor * t, uint32_t type_سائز) {
+    uint32_t اگلا_nb = type_سائز;
+    اگر (t->ne[0] != 1 && t->nb[0] != اگلا_nb) {
+        واپس false;
     }
-    next_nb *= t->ne[0];
-    for (int i = 1; i < HTP_OP_MAX_DIMS; i++) {
-        if (t->ne[i] != 1 && t->nb[i] != next_nb) {
-            return false;
+    اگلا_nb *= t->ne[0];
+    برائے (صحیح i = 1; i < HTP_OP_MAX_DIMS; i++) {
+        اگر (t->ne[i] != 1 && t->nb[i] != اگلا_nb) {
+            واپس false;
         }
-        next_nb *= t->ne[i];
+        اگلا_nb *= t->ne[i];
     }
-    return true;
+    واپس true;
 }
 
-static inline bool htp_tensor_is_permuted(const struct htp_tensor * t) {
-    return t->nb[0] > t->nb[1] || t->nb[1] > t->nb[2] || t->nb[2] > t->nb[3];
+ساکن اندرونی bool htp_tensor_is_permuted(ثابت ساخت htp_tensor * t) {
+    واپس t->nb[0] > t->nb[1] || t->nb[1] > t->nb[2] || t->nb[2] > t->nb[3];
 }
 
-static inline bool htp_tensor_mdev_data_aligned(const struct htp_tensor * t) {
-    return ((uintptr_t) t->data & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0;
+ساکن اندرونی bool htp_tensor_mdev_ڈیٹا_aligned(ثابت ساخت htp_tensor * t) {
+    واپس ((uintptr_t) t->ڈیٹا & (HTP_TENSOR_MDEV_سطر_سائز - 1)) == 0;
 }
 
-static inline bool htp_tensor_can_row_partition(const struct htp_tensor * t, uint32_t elem_size) {
-    if (!htp_tensor_mdev_data_aligned(t)) {
-        return false;
+ساکن اندرونی bool htp_tensor_can_صف_تقسیم(ثابت ساخت htp_tensor * t, uint32_t elem_سائز) {
+    اگر (!htp_tensor_mdev_ڈیٹا_aligned(t)) {
+        واپس false;
     }
-    if (t->ne[0] != 1 && t->nb[0] != elem_size) {
-        return false;
+    اگر (t->ne[0] != 1 && t->nb[0] != elem_سائز) {
+        واپس false;
     }
-    if (htp_tensor_is_permuted(t)) {
-        return false;
+    اگر (htp_tensor_is_permuted(t)) {
+        واپس false;
     }
-    if (t->ne[1] > 1 && (t->nb[1] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) != 0) return false;
-    if (t->ne[2] > 1 && (t->nb[2] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) != 0) return false;
-    if (t->ne[3] > 1 && (t->nb[3] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) != 0) return false;
-    return true;
+    اگر (t->ne[1] > 1 && (t->nb[1] & (HTP_TENSOR_MDEV_سطر_سائز - 1)) != 0) واپس false;
+    اگر (t->ne[2] > 1 && (t->nb[2] & (HTP_TENSOR_MDEV_سطر_سائز - 1)) != 0) واپس false;
+    اگر (t->ne[3] > 1 && (t->nb[3] & (HTP_TENSOR_MDEV_سطر_سائز - 1)) != 0) واپس false;
+    واپس true;
 }
 
-static inline bool htp_tensor_mdev_rows_per_chunk(const struct htp_tensor * t, uint32_t elem_size, uint32_t row_size, uint32_t * rows_per_chunk) {
-    *rows_per_chunk = 0;
+ساکن اندرونی bool htp_tensor_mdev_صفیں_فی_chunk(ثابت ساخت htp_tensor * t, uint32_t elem_سائز, uint32_t صف_سائز, uint32_t * صفیں_فی_chunk) {
+    *صفیں_فی_chunk = 0;
 
-    if (!htp_tensor_mdev_data_aligned(t)) {
-        return false;
+    اگر (!htp_tensor_mdev_ڈیٹا_aligned(t)) {
+        واپس false;
     }
-    if (t->ne[0] != 1 && t->nb[0] != elem_size) {
-        return false;
+    اگر (t->ne[0] != 1 && t->nb[0] != elem_سائز) {
+        واپس false;
     }
-    if (htp_tensor_is_permuted(t)) {
-        return false;
+    اگر (htp_tensor_is_permuted(t)) {
+        واپس false;
     }
-    if (t->ne[1] > 1 && (t->nb[1] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0 &&
-        (t->ne[2] <= 1 || (t->nb[2] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0) &&
-        (t->ne[3] <= 1 || (t->nb[3] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0)) {
-        *rows_per_chunk = 1;
-        return true;
+    اگر (t->ne[1] > 1 && (t->nb[1] & (HTP_TENSOR_MDEV_سطر_سائز - 1)) == 0 &&
+        (t->ne[2] <= 1 || (t->nb[2] & (HTP_TENSOR_MDEV_سطر_سائز - 1)) == 0) &&
+        (t->ne[3] <= 1 || (t->nb[3] & (HTP_TENSOR_MDEV_سطر_سائز - 1)) == 0)) {
+        *صفیں_فی_chunk = 1;
+        واپس true;
     }
-    if (t->nb[1] == row_size &&
+    اگر (t->nb[1] == صف_سائز &&
         (t->ne[2] <= 1 || t->nb[2] == t->nb[1] * t->ne[1]) &&
         (t->ne[3] <= 1 || t->nb[3] == t->nb[2] * t->ne[2])) {
-        *rows_per_chunk = (row_size > 0) ? (HTP_TENSOR_MDEV_LINE_SIZE / hex_gcd_u32(row_size, HTP_TENSOR_MDEV_LINE_SIZE)) : 1;
-        return true;
+        *صفیں_فی_chunk = (صف_سائز > 0) ? (HTP_TENSOR_MDEV_سطر_سائز / hex_عاد_اعظم_u32(صف_سائز, HTP_TENSOR_MDEV_سطر_سائز)) : 1;
+        واپس true;
     }
-    return false;
+    واپس false;
 }
 
-static inline struct htp_tensor_mdev_range htp_tensor_mdev_partition(uint32_t total_units, uint32_t units_per_chunk, uint32_t mdev_idx, uint32_t mdev_count, const struct fastdiv_values * mdev_count_div) {
-    struct htp_tensor_mdev_range range = { 0, total_units };
+ساکن اندرونی ساخت htp_tensor_mdev_range htp_tensor_mdev_تقسیم(uint32_t کل_units, uint32_t units_فی_chunk, uint32_t mdev_idx, uint32_t mdev_گنتی, ثابت ساخت fastdiv_اقدار * mdev_گنتی_div) {
+    ساخت htp_tensor_mdev_range range = { 0, کل_units };
 
-    if (mdev_count <= 1) {
-        return range;
+    اگر (mdev_گنتی <= 1) {
+        واپس range;
     }
 
-    if (units_per_chunk == 0) {
-        range.start = (mdev_idx == 0) ? 0 : total_units;
-        range.count = (mdev_idx == 0) ? total_units : 0;
-        return range;
+    اگر (units_فی_chunk == 0) {
+        range.آغاز = (mdev_idx == 0) ? 0 : کل_units;
+        range.گنتی = (mdev_idx == 0) ? کل_units : 0;
+        واپس range;
     }
 
-    const uint32_t total_chunks = total_units / units_per_chunk;
-    if (total_chunks < mdev_count) {
-        range.start = (mdev_idx == 0) ? 0 : total_units;
-        range.count = (mdev_idx == 0) ? total_units : 0;
-        return range;
+    ثابت uint32_t کل_chunks = کل_units / units_فی_chunk;
+    اگر (کل_chunks < mdev_گنتی) {
+        range.آغاز = (mdev_idx == 0) ? 0 : کل_units;
+        range.گنتی = (mdev_idx == 0) ? کل_units : 0;
+        واپس range;
     }
 
-    const uint32_t chunks_per_mdev = fastdiv(total_chunks + mdev_count - 1, mdev_count_div);
-    range.start = MIN(mdev_idx * chunks_per_mdev * units_per_chunk, total_units);
-    if (mdev_idx == mdev_count - 1) {
-        range.count = total_units - range.start;
-    } else {
-        range.count = MIN(chunks_per_mdev * units_per_chunk, total_units - range.start);
+    ثابت uint32_t chunks_فی_mdev = fastdiv(کل_chunks + mdev_گنتی - 1, mdev_گنتی_div);
+    range.آغاز = MIN(mdev_idx * chunks_فی_mdev * units_فی_chunk, کل_units);
+    اگر (mdev_idx == mdev_گنتی - 1) {
+        range.گنتی = کل_units - range.آغاز;
+    } ورنہ {
+        range.گنتی = MIN(chunks_فی_mdev * units_فی_chunk, کل_units - range.آغاز);
     }
-    return range;
+    واپس range;
 }
 
-static inline uint32_t htp_tensor_get_tile_size(int type) {
-    switch (type) {
-        case HTP_TYPE_Q4_0:   return HTP_TENSOR_TILE_SIZE_Q4_0;
-        case HTP_TYPE_IQ4_NL: return HTP_TENSOR_TILE_SIZE_IQ4_NL;
-        case HTP_TYPE_Q4_1:   return HTP_TENSOR_TILE_SIZE_Q4_1;
-        case HTP_TYPE_Q4_K:   return HTP_TENSOR_TILE_SIZE_Q4_K;
-        case HTP_TYPE_Q8_0:   return HTP_TENSOR_TILE_SIZE_Q8_0;
-        case HTP_TYPE_Q5_K:   return HTP_TENSOR_TILE_SIZE_Q5_K;
-        case HTP_TYPE_Q6_K:   return HTP_TENSOR_TILE_SIZE_Q6_K;
-        case HTP_TYPE_Q3_K:   return HTP_TENSOR_TILE_SIZE_Q3_K;
-        case HTP_TYPE_Q2_K:   return HTP_TENSOR_TILE_SIZE_Q2_K;
-        case HTP_TYPE_Q1_0:   return HTP_TENSOR_TILE_SIZE_Q1_0;
-        case HTP_TYPE_Q2_0:   return HTP_TENSOR_TILE_SIZE_Q2_0;
-        case HTP_TYPE_MXFP4:  return HTP_TENSOR_TILE_SIZE_MXFP4;
-        case HTP_TYPE_F16:    return HTP_TENSOR_TILE_SIZE_F16;
-        default:              return 0;
-    }
-}
-
-static inline uint32_t htp_tensor_get_tile_k(int type) {
-    switch (type) {
-        case HTP_TYPE_Q1_0: return HTP_TENSOR_TILE_K_Q1_0;
-        case HTP_TYPE_Q2_0: return HTP_TENSOR_TILE_K_Q2_0;
-        default:            return 32;
+ساکن اندرونی uint32_t htp_tensor_get_tile_سائز(صحیح type) {
+    انتخاب (type) {
+        حالت HTP_TYPE_Q4_0:   واپس HTP_TENSOR_TILE_سائز_Q4_0;
+        حالت HTP_TYPE_IQ4_NL: واپس HTP_TENSOR_TILE_سائز_IQ4_NL;
+        حالت HTP_TYPE_Q4_1:   واپس HTP_TENSOR_TILE_سائز_Q4_1;
+        حالت HTP_TYPE_Q4_K:   واپس HTP_TENSOR_TILE_سائز_Q4_K;
+        حالت HTP_TYPE_Q8_0:   واپس HTP_TENSOR_TILE_سائز_Q8_0;
+        حالت HTP_TYPE_Q5_K:   واپس HTP_TENSOR_TILE_سائز_Q5_K;
+        حالت HTP_TYPE_Q6_K:   واپس HTP_TENSOR_TILE_سائز_Q6_K;
+        حالت HTP_TYPE_Q3_K:   واپس HTP_TENSOR_TILE_سائز_Q3_K;
+        حالت HTP_TYPE_Q2_K:   واپس HTP_TENSOR_TILE_سائز_Q2_K;
+        حالت HTP_TYPE_Q1_0:   واپس HTP_TENSOR_TILE_سائز_Q1_0;
+        حالت HTP_TYPE_Q2_0:   واپس HTP_TENSOR_TILE_سائز_Q2_0;
+        حالت HTP_TYPE_MXFP4:  واپس HTP_TENSOR_TILE_سائز_MXFP4;
+        حالت HTP_TYPE_F16:    واپس HTP_TENSOR_TILE_سائز_F16;
+        طےشدہ:              واپس 0;
     }
 }
 
-static inline uint32_t htp_tensor_get_tile_padded_size(int type) {
-    return (htp_tensor_get_tile_size(type) + 127u) & ~127u;
-}
-
-static inline bool htp_tensor_is_tiled(const struct htp_tensor * t) {
-    return t && (t->flags & HTP_TENSOR_TILED) != 0;
-}
-
-static inline uint32_t htp_tensor_get_row_size(int type, uint32_t ne00) {
-    switch (type) {
-        case HTP_TYPE_F32:    return ne00 * 4;
-        case HTP_TYPE_F16:
-        case HTP_TYPE_BF16:   return ne00 * 2;
-        case HTP_TYPE_Q8_0:   return (ne00 / 32) * 34;
-        case HTP_TYPE_Q4_0:
-        case HTP_TYPE_IQ4_NL: return (ne00 / 32) * 18;
-        case HTP_TYPE_Q4_1:   return (ne00 / 32) * 20;
-        case HTP_TYPE_MXFP4:  return (ne00 / 32) * 17;
-        case HTP_TYPE_Q2_K:   return (ne00 / 256) * 84;
-        case HTP_TYPE_Q2_0:   return (ne00 / 64) * 18;
-        case HTP_TYPE_Q3_K:   return (ne00 / 256) * 110;
-        case HTP_TYPE_Q4_K:   return (ne00 / 256) * 144;
-        case HTP_TYPE_Q5_K:   return (ne00 / 256) * 176;
-        case HTP_TYPE_Q6_K:   return (ne00 / 256) * 210;
-        case HTP_TYPE_Q1_0:   return (ne00 / HTP_TENSOR_TILE_K_Q1_0) * 18;
-        case HTP_TYPE_I32:    return ne00 * 4;
-        case HTP_TYPE_I64:    return ne00 * 8;
-        default:              return 0;
+ساکن اندرونی uint32_t htp_tensor_get_tile_k(صحیح type) {
+    انتخاب (type) {
+        حالت HTP_TYPE_Q1_0: واپس HTP_TENSOR_TILE_K_Q1_0;
+        حالت HTP_TYPE_Q2_0: واپس HTP_TENSOR_TILE_K_Q2_0;
+        طےشدہ:            واپس 32;
     }
 }
 
-#endif // HTP_TENSOR_H
+ساکن اندرونی uint32_t htp_tensor_get_tile_padded_سائز(صحیح type) {
+    واپس (htp_tensor_get_tile_سائز(type) + 127u) & ~127u;
+}
+
+ساکن اندرونی bool htp_tensor_is_tiled(ثابت ساخت htp_tensor * t) {
+    واپس t && (t->flags & HTP_TENSOR_TILED) != 0;
+}
+
+ساکن اندرونی uint32_t htp_tensor_get_صف_سائز(صحیح type, uint32_t ne00) {
+    انتخاب (type) {
+        حالت HTP_TYPE_F32:    واپس ne00 * 4;
+        حالت HTP_TYPE_F16:
+        حالت HTP_TYPE_BF16:   واپس ne00 * 2;
+        حالت HTP_TYPE_Q8_0:   واپس (ne00 / 32) * 34;
+        حالت HTP_TYPE_Q4_0:
+        حالت HTP_TYPE_IQ4_NL: واپس (ne00 / 32) * 18;
+        حالت HTP_TYPE_Q4_1:   واپس (ne00 / 32) * 20;
+        حالت HTP_TYPE_MXFP4:  واپس (ne00 / 32) * 17;
+        حالت HTP_TYPE_Q2_K:   واپس (ne00 / 256) * 84;
+        حالت HTP_TYPE_Q2_0:   واپس (ne00 / 64) * 18;
+        حالت HTP_TYPE_Q3_K:   واپس (ne00 / 256) * 110;
+        حالت HTP_TYPE_Q4_K:   واپس (ne00 / 256) * 144;
+        حالت HTP_TYPE_Q5_K:   واپس (ne00 / 256) * 176;
+        حالت HTP_TYPE_Q6_K:   واپس (ne00 / 256) * 210;
+        حالت HTP_TYPE_Q1_0:   واپس (ne00 / HTP_TENSOR_TILE_K_Q1_0) * 18;
+        حالت HTP_TYPE_I32:    واپس ne00 * 4;
+        حالت HTP_TYPE_I64:    واپس ne00 * 8;
+        طےشدہ:              واپس 0;
+    }
+}
+
+#اگر_ختم // HTP_TENSOR_H

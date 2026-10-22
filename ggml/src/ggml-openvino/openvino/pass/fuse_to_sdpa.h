@@ -1,14 +1,14 @@
-#include "openvino/pass/matcher_pass.hpp"
+#شامل "openvino/pass/matcher_pass.hpp"
 
 namespace ov {
 namespace frontend {
 namespace ggml {
 namespace pass {
 
-class FuseToSDPA : public ov::pass::MatcherPass {
-public:
+class Fuse_مقصد_SDPA : عوامی ov::pass::MatcherPass {
+عوامی:
     OPENVINO_MATCHER_PASS_RTTI("ov::frontend::ggml::pass::FuseToSDPA")
-    FuseToSDPA();
+    Fuse_مقصد_SDPA();
 };
 
 }  // namespace pass

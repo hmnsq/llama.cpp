@@ -1,360 +1,360 @@
-#include "htp-dcache.h"
+#شامل "htp-dcache.h"
 
-#include <qurt.h>
-#include <qurt_memory.h>
-#include <HAP_farf.h>
+#شامل <qurt.h>
+#شامل <qurt_memory.h>
+#شامل <HAP_farf.h>
 
-#include "hex-common.h"
-#include "hex-utils.h"
-#include "hex-fastdiv.h"
-#include "hex-profile.h"
-#include "htp-ctx.h"
-#include "work-queue.h"
+#شامل "hex-common.h"
+#شامل "hex-utils.h"
+#شامل "hex-fastdiv.h"
+#شامل "hex-profile.h"
+#شامل "htp-ctx.h"
+#شامل "work-queue.h"
 
-struct l2flush_range {
-    uint32_t start;       // line-aligned start address
-    uint32_t end;         // line-aligned end address
-    uint32_t block_first; // global block index of this range's first block
-    uint32_t n_blocks;    // number of HEX_L2_BLOCK_SIZE chunks (last may be partial)
+ساخت l2flush_range {
+    uint32_t آغاز;       // line-aligned start address
+    uint32_t انتہا;         // line-aligned end address
+    uint32_t بلاک_پہلا; // global block index of this range's first block
+    uint32_t n_بلاکیں;    // number of HEX_L2_BLOCK_SIZE chunks (last may be partial)
 };
 
-struct l2flush_multi_task {
-    struct htp_thread_trace * trace;
-    struct l2flush_range      ranges[HTP_MAX_DIRTY_RANGES];
+ساخت l2flush_multi_task {
+    ساخت htp_thread_trace * trace;
+    ساخت l2flush_range      ranges[HTP_MAX_DIRTY_RANGES];
     uint32_t                  n_ranges;
-    uint32_t                  total_blocks;
-    uint32_t                  blocks_per_thread;
+    uint32_t                  کل_بلاکیں;
+    uint32_t                  بلاکیں_فی_thread;
 };
 
-static void flush_all_dcache(struct htp_context * ctx) {
-    struct htp_thread_trace * tr = &ctx->trace[0];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_L2FLUSH, 0);
+ساکن خالی flush_all_dcache(ساخت htp_context * ctx) {
+    ساخت htp_thread_trace * tr = &ctx->trace[0];
+    htp_trace_event_آغاز(tr, HTP_TRACE_EVT_L2FLUSH, 0);
     qurt_mem_cache_clean((qurt_addr_t) 0, 0, QURT_MEM_CACHE_FLUSH_INVALIDATE_ALL, QURT_MEM_DCACHE);
-    hex_l2fetch_block(ctx, ctx->footprint);
+    hex_l2fetch_بلاک(ctx, ctx->footprint);
     htp_trace_event_stop(tr, HTP_TRACE_EVT_L2FLUSH, 0);
-    memset(ctx->dirty_ranges, 0, sizeof(ctx->dirty_ranges));
+    memset(ctx->dirty_ranges, 0, حجم(ctx->dirty_ranges));
 }
 
-static void l2flush_multi_worker(unsigned int n, unsigned int i, void * data) {
-    struct l2flush_multi_task * task = (struct l2flush_multi_task *) data;
-    (void) n;
+ساکن خالی l2flush_multi_کارکن(غیرعلامتی صحیح n, غیرعلامتی صحیح i, خالی * ڈیٹا) {
+    ساخت l2flush_multi_task * task = (ساخت l2flush_multi_task *) ڈیٹا;
+    (خالی) n;
 
-    const uint32_t gb_first = i * task->blocks_per_thread;
-    uint32_t       gb_last  = gb_first + task->blocks_per_thread;
-    if (gb_last > task->total_blocks) {
-        gb_last = task->total_blocks;
+    ثابت uint32_t gb_پہلا = i * task->بلاکیں_فی_thread;
+    uint32_t       gb_آخری  = gb_پہلا + task->بلاکیں_فی_thread;
+    اگر (gb_آخری > task->کل_بلاکیں) {
+        gb_آخری = task->کل_بلاکیں;
     }
-    if (gb_first >= gb_last) {
-        return;
+    اگر (gb_پہلا >= gb_آخری) {
+        واپس;
     }
 
-    struct htp_thread_trace * tr = &task->trace[i];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_L2FLUSH, gb_first);
+    ساخت htp_thread_trace * tr = &task->trace[i];
+    htp_trace_event_آغاز(tr, HTP_TRACE_EVT_L2FLUSH, gb_پہلا);
 
-    for (uint32_t r = 0; r < task->n_ranges; r++) {
-        const struct l2flush_range * rg = &task->ranges[r];
-        const uint32_t rb_first = rg->block_first;
-        const uint32_t rb_last  = rg->block_first + rg->n_blocks;
+    برائے (uint32_t r = 0; r < task->n_ranges; r++) {
+        ثابت ساخت l2flush_range * rg = &task->ranges[r];
+        ثابت uint32_t rb_پہلا = rg->بلاک_پہلا;
+        ثابت uint32_t rb_آخری  = rg->بلاک_پہلا + rg->n_بلاکیں;
 
-        const uint32_t lo = gb_first > rb_first ? gb_first : rb_first;
-        const uint32_t hi = gb_last  < rb_last  ? gb_last  : rb_last;
-        if (lo >= hi) {
-            continue;
+        ثابت uint32_t lo = gb_پہلا > rb_پہلا ? gb_پہلا : rb_پہلا;
+        ثابت uint32_t hi = gb_آخری  < rb_آخری  ? gb_آخری  : rb_آخری;
+        اگر (lo >= hi) {
+            جاری;
         }
 
-        const uint32_t s = rg->start + (lo - rb_first) * HEX_L2_BLOCK_SIZE;
-        uint32_t       e = rg->start + (hi - rb_first) * HEX_L2_BLOCK_SIZE;
-        if (e > rg->end) {
-            e = rg->end;
+        ثابت uint32_t s = rg->آغاز + (lo - rb_پہلا) * HEX_L2_بلاک_سائز;
+        uint32_t       e = rg->آغاز + (hi - rb_پہلا) * HEX_L2_بلاک_سائز;
+        اگر (e > rg->انتہا) {
+            e = rg->انتہا;
         }
-        hex_l2flush((void *) (uintptr_t) s, e - s);
+        hex_l2flush((خالی *) (uintptr_t) s, e - s);
     }
 
-    htp_trace_event_stop(tr, HTP_TRACE_EVT_L2FLUSH, gb_first);
+    htp_trace_event_stop(tr, HTP_TRACE_EVT_L2FLUSH, gb_پہلا);
 }
 
-static void merge_dirty_ranges(struct htp_context * ctx) {
-    for (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
-        struct htp_dirty_range * r = &ctx->dirty_ranges[i];
-        if (!r->start) continue;
+ساکن خالی ملاؤ_dirty_ranges(ساخت htp_context * ctx) {
+    برائے (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
+        ساخت htp_dirty_range * r = &ctx->dirty_ranges[i];
+        اگر (!r->آغاز) جاری;
 
-        for (uint32_t j = 0; j < HTP_MAX_DIRTY_RANGES;) {
-            struct htp_dirty_range * s = &ctx->dirty_ranges[j];
-            if (i == j || !s->start || r->end < s->start || s->end < r->start) {
+        برائے (uint32_t j = 0; j < HTP_MAX_DIRTY_RANGES;) {
+            ساخت htp_dirty_range * s = &ctx->dirty_ranges[j];
+            اگر (i == j || !s->آغاز || r->انتہا < s->آغاز || s->انتہا < r->آغاز) {
                 j++;
-                continue;
+                جاری;
             }
 
-            r->start = MIN(r->start, s->start);
-            r->end   = MAX(r->end, s->end);
-            s->start = 0;
-            s->end   = 0;
+            r->آغاز = MIN(r->آغاز, s->آغاز);
+            r->انتہا   = MAX(r->انتہا, s->انتہا);
+            s->آغاز = 0;
+            s->انتہا   = 0;
             j = 0;
         }
     }
 }
 
-void htp_dcache_mark_dirty_tensors(struct htp_context * ctx, const struct htp_tensor * const * tensors, uint32_t n) {
-    const struct htp_tensor * pending[HTP_OP_MAX_OUTPUTS];
+خالی htp_dcache_mark_dirty_tensors(ساخت htp_context * ctx, ثابت ساخت htp_tensor * ثابت * tensors, uint32_t n) {
+    ثابت ساخت htp_tensor * pending[HTP_OP_MAX_OUTPUTS];
     uint32_t n_pending = 0;
 
-    for (uint32_t i = 0; i < n; i++) {
-        const struct htp_tensor * t = tensors[i];
-        if (!t || (t->flags & (HTP_TENSOR_WEIGHT | HTP_TENSOR_FENCE))) {
-            continue;
+    برائے (uint32_t i = 0; i < n; i++) {
+        ثابت ساخت htp_tensor * t = tensors[i];
+        اگر (!t || (t->flags & (HTP_TENSOR_وزن | HTP_TENSOR_FENCE))) {
+            جاری;
         }
 
-        uint32_t t_start = t->data;
-        uint32_t t_end   = t_start + t->size;
+        uint32_t t_آغاز = t->ڈیٹا;
+        uint32_t t_انتہا   = t_آغاز + t->سائز;
 
         bool merged = false;
-        for (uint32_t j = 0; j < HTP_MAX_DIRTY_RANGES; j++) {
-            struct htp_dirty_range * r = &ctx->dirty_ranges[j];
-            if (!r->start) continue;
+        برائے (uint32_t j = 0; j < HTP_MAX_DIRTY_RANGES; j++) {
+            ساخت htp_dirty_range * r = &ctx->dirty_ranges[j];
+            اگر (!r->آغاز) جاری;
 
-            if (r->start <= t_end && t_start <= r->end) {
-                uint32_t new_start = (t_start < r->start) ? t_start : r->start;
-                uint32_t new_end   = (t_end > r->end)     ? t_end   : r->end;
-                r->start = new_start;
-                r->end   = new_end;
+            اگر (r->آغاز <= t_انتہا && t_آغاز <= r->انتہا) {
+                uint32_t new_آغاز = (t_آغاز < r->آغاز) ? t_آغاز : r->آغاز;
+                uint32_t new_انتہا   = (t_انتہا > r->انتہا)     ? t_انتہا   : r->انتہا;
+                r->آغاز = new_آغاز;
+                r->انتہا   = new_انتہا;
                 merged   = true;
             }
         }
 
-        if (!merged) {
+        اگر (!merged) {
             pending[n_pending++] = t;
         }
     }
 
-    merge_dirty_ranges(ctx);
+    ملاؤ_dirty_ranges(ctx);
 
-    if (n_pending == 0) {
-        return;
+    اگر (n_pending == 0) {
+        واپس;
     }
 
-    uint32_t empty_indices[HTP_MAX_DIRTY_RANGES];
-    uint32_t active_indices[HTP_MAX_DIRTY_RANGES];
-    uint32_t n_active = 0;
-    uint32_t n_empty  = 0;
-    for (uint32_t j = 0; j < HTP_MAX_DIRTY_RANGES; j++) {
-        if (ctx->dirty_ranges[j].start) {
-            active_indices[n_active++] = j;
-        } else {
-            empty_indices[n_empty++]   = j;
+    uint32_t خالی_خانے_indices[HTP_MAX_DIRTY_RANGES];
+    uint32_t فعال_indices[HTP_MAX_DIRTY_RANGES];
+    uint32_t n_فعال = 0;
+    uint32_t n_خالی_خانے  = 0;
+    برائے (uint32_t j = 0; j < HTP_MAX_DIRTY_RANGES; j++) {
+        اگر (ctx->dirty_ranges[j].آغاز) {
+            فعال_indices[n_فعال++] = j;
+        } ورنہ {
+            خالی_خانے_indices[n_خالی_خانے++]   = j;
         }
     }
 
-    if (n_pending <= n_empty) {
-        for (uint32_t i = 0; i < n_pending; i++) {
-            uint32_t idx = empty_indices[i];
-            struct htp_dirty_range * r = &ctx->dirty_ranges[idx];
-            r->start = pending[i]->data;
-            r->end   = pending[i]->data + pending[i]->size;
+    اگر (n_pending <= n_خالی_خانے) {
+        برائے (uint32_t i = 0; i < n_pending; i++) {
+            uint32_t idx = خالی_خانے_indices[i];
+            ساخت htp_dirty_range * r = &ctx->dirty_ranges[idx];
+            r->آغاز = pending[i]->ڈیٹا;
+            r->انتہا   = pending[i]->ڈیٹا + pending[i]->سائز;
         }
-        merge_dirty_ranges(ctx);
-        return;
+        ملاؤ_dirty_ranges(ctx);
+        واپس;
     }
 
-    uint32_t n_evict = n_pending - n_empty;
-    uint32_t total_evict_size = 0;
-    for (uint32_t i = 0; i < n_evict; i++) {
-        uint32_t idx = active_indices[i];
-        struct htp_dirty_range * r = &ctx->dirty_ranges[idx];
-        total_evict_size += r->end - r->start;
+    uint32_t n_evict = n_pending - n_خالی_خانے;
+    uint32_t کل_evict_سائز = 0;
+    برائے (uint32_t i = 0; i < n_evict; i++) {
+        uint32_t idx = فعال_indices[i];
+        ساخت htp_dirty_range * r = &ctx->dirty_ranges[idx];
+        کل_evict_سائز += r->انتہا - r->آغاز;
     }
 
-    if (total_evict_size > HEX_L2_FLUSH_ALL_THRESHOLD) {
+    اگر (کل_evict_سائز > HEX_L2_FLUSH_ALL_حد) {
         flush_all_dcache(ctx);
-        for (uint32_t i = 0; i < n_pending; i++) {
-            struct htp_dirty_range * r = &ctx->dirty_ranges[i];
-            r->start = pending[i]->data;
-            r->end   = pending[i]->data + pending[i]->size;
+        برائے (uint32_t i = 0; i < n_pending; i++) {
+            ساخت htp_dirty_range * r = &ctx->dirty_ranges[i];
+            r->آغاز = pending[i]->ڈیٹا;
+            r->انتہا   = pending[i]->ڈیٹا + pending[i]->سائز;
         }
-        merge_dirty_ranges(ctx);
-        return;
+        ملاؤ_dirty_ranges(ctx);
+        واپس;
     }
 
-    if (total_evict_size > HEX_L2_FLUSH_WQ_THRESHOLD && ctx->n_threads > 1 && n_evict <= HTP_MAX_DIRTY_RANGES) {
-        struct l2flush_multi_task task;
+    اگر (کل_evict_سائز > HEX_L2_FLUSH_WQ_حد && ctx->n_دھاگے > 1 && n_evict <= HTP_MAX_DIRTY_RANGES) {
+        ساخت l2flush_multi_task task;
         task.trace    = ctx->trace;
         task.n_ranges = n_evict;
 
-        uint32_t block_acc = 0;
-        for (uint32_t i = 0; i < n_evict; i++) {
-            uint32_t idx = active_indices[i];
-            struct htp_dirty_range * r = &ctx->dirty_ranges[idx];
+        uint32_t بلاک_acc = 0;
+        برائے (uint32_t i = 0; i < n_evict; i++) {
+            uint32_t idx = فعال_indices[i];
+            ساخت htp_dirty_range * r = &ctx->dirty_ranges[idx];
 
-            struct l2flush_range * rg = &task.ranges[i];
-            rg->start = hex_align_down((size_t) r->start, HEX_L2_LINE_SIZE);
-            rg->end   = hex_align_up((size_t) r->end, HEX_L2_LINE_SIZE);
-            rg->block_first = block_acc;
-            rg->n_blocks = (rg->end - rg->start + HEX_L2_BLOCK_SIZE - 1) / HEX_L2_BLOCK_SIZE;
-            block_acc += rg->n_blocks;
+            ساخت l2flush_range * rg = &task.ranges[i];
+            rg->آغاز = hex_align_نیچے_کو((size_t) r->آغاز, HEX_L2_سطر_سائز);
+            rg->انتہا   = hex_align_اوپر((size_t) r->انتہا, HEX_L2_سطر_سائز);
+            rg->بلاک_پہلا = بلاک_acc;
+            rg->n_بلاکیں = (rg->انتہا - rg->آغاز + HEX_L2_بلاک_سائز - 1) / HEX_L2_بلاک_سائز;
+            بلاک_acc += rg->n_بلاکیں;
         }
 
-        task.total_blocks      = block_acc;
-        task.blocks_per_thread = fastdiv(block_acc + ctx->n_threads - 1, &ctx->n_threads_div);
+        task.کل_بلاکیں      = بلاک_acc;
+        task.بلاکیں_فی_thread = fastdiv(بلاک_acc + ctx->n_دھاگے - 1, &ctx->n_دھاگے_div);
 
-        work_queue_run(ctx->work_queue, l2flush_multi_worker, &task, ctx->n_threads);
-    } else {
-        struct htp_thread_trace * tr = &ctx->trace[0];
-        htp_trace_event_start(tr, HTP_TRACE_EVT_L2FLUSH, 0);
-        for (uint32_t i = 0; i < n_evict; i++) {
-            uint32_t idx = active_indices[i];
-            struct htp_dirty_range * r = &ctx->dirty_ranges[idx];
-            uint32_t size = r->end - r->start;
-            hex_l2flush((void *) (uintptr_t) r->start, size);
+        work_قطار_تسلسل(ctx->work_قطار, l2flush_multi_کارکن, &task, ctx->n_دھاگے);
+    } ورنہ {
+        ساخت htp_thread_trace * tr = &ctx->trace[0];
+        htp_trace_event_آغاز(tr, HTP_TRACE_EVT_L2FLUSH, 0);
+        برائے (uint32_t i = 0; i < n_evict; i++) {
+            uint32_t idx = فعال_indices[i];
+            ساخت htp_dirty_range * r = &ctx->dirty_ranges[idx];
+            uint32_t سائز = r->انتہا - r->آغاز;
+            hex_l2flush((خالی *) (uintptr_t) r->آغاز, سائز);
         }
         htp_trace_event_stop(tr, HTP_TRACE_EVT_L2FLUSH, 0);
     }
 
-    for (uint32_t i = 0; i < n_evict; i++) {
-        uint32_t idx = active_indices[i];
-        struct htp_dirty_range * r = &ctx->dirty_ranges[idx];
-        r->start = pending[i]->data;
-        r->end   = pending[i]->data + pending[i]->size;
+    برائے (uint32_t i = 0; i < n_evict; i++) {
+        uint32_t idx = فعال_indices[i];
+        ساخت htp_dirty_range * r = &ctx->dirty_ranges[idx];
+        r->آغاز = pending[i]->ڈیٹا;
+        r->انتہا   = pending[i]->ڈیٹا + pending[i]->سائز;
     }
 
-    for (uint32_t i = 0; i < n_empty; i++) {
-        uint32_t idx = empty_indices[i];
-        struct htp_dirty_range * r = &ctx->dirty_ranges[idx];
-        r->start = pending[n_evict + i]->data;
-        r->end   = pending[n_evict + i]->data + pending[n_evict + i]->size;
+    برائے (uint32_t i = 0; i < n_خالی_خانے; i++) {
+        uint32_t idx = خالی_خانے_indices[i];
+        ساخت htp_dirty_range * r = &ctx->dirty_ranges[idx];
+        r->آغاز = pending[n_evict + i]->ڈیٹا;
+        r->انتہا   = pending[n_evict + i]->ڈیٹا + pending[n_evict + i]->سائز;
     }
 
-    merge_dirty_ranges(ctx);
+    ملاؤ_dirty_ranges(ctx);
 }
 
-static void make_tensor_clean(struct htp_context * ctx, const struct htp_tensor * t) {
-    if (!t || (t->flags & (HTP_TENSOR_WEIGHT | HTP_TENSOR_FENCE))) {
-        return;
+ساکن خالی make_tensor_clean(ساخت htp_context * ctx, ثابت ساخت htp_tensor * t) {
+    اگر (!t || (t->flags & (HTP_TENSOR_وزن | HTP_TENSOR_FENCE))) {
+        واپس;
     }
 
-    uint32_t t_start = t->data;
-    uint32_t t_end   = t_start + t->size;
+    uint32_t t_آغاز = t->ڈیٹا;
+    uint32_t t_انتہا   = t_آغاز + t->سائز;
 
-    for (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
-        struct htp_dirty_range * r = &ctx->dirty_ranges[i];
-        if (!r->start) continue;
+    برائے (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
+        ساخت htp_dirty_range * r = &ctx->dirty_ranges[i];
+        اگر (!r->آغاز) جاری;
 
-        if (r->start < t_end && t_start < r->end) {
-            if (t_start <= r->start && r->end <= t_end) {
-                r->start = 0;
-                r->end   = 0;
-            } else if (t_start <= r->start) {
-                r->start = t_end;
-            } else if (r->end <= t_end) {
-                r->end = t_start;
+        اگر (r->آغاز < t_انتہا && t_آغاز < r->انتہا) {
+            اگر (t_آغاز <= r->آغاز && r->انتہا <= t_انتہا) {
+                r->آغاز = 0;
+                r->انتہا   = 0;
+            } ورنہ اگر (t_آغاز <= r->آغاز) {
+                r->آغاز = t_انتہا;
+            } ورنہ اگر (r->انتہا <= t_انتہا) {
+                r->انتہا = t_آغاز;
             }
         }
     }
 }
 
-static inline bool is_tensor_dirty(struct htp_context * ctx, const struct htp_tensor * t) {
-    if (!t || (t->flags & (HTP_TENSOR_WEIGHT | HTP_TENSOR_FENCE))) {
-        return false;
+ساکن اندرونی bool is_tensor_dirty(ساخت htp_context * ctx, ثابت ساخت htp_tensor * t) {
+    اگر (!t || (t->flags & (HTP_TENSOR_وزن | HTP_TENSOR_FENCE))) {
+        واپس false;
     }
 
-    uint32_t t_start = t->data;
-    uint32_t t_end   = t_start + t->size;
+    uint32_t t_آغاز = t->ڈیٹا;
+    uint32_t t_انتہا   = t_آغاز + t->سائز;
 
-    for (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
-        struct htp_dirty_range * r = &ctx->dirty_ranges[i];
-        if (!r->start) continue;
+    برائے (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
+        ساخت htp_dirty_range * r = &ctx->dirty_ranges[i];
+        اگر (!r->آغاز) جاری;
 
-        if (r->start < t_end && t_start < r->end) {
-            return true;
+        اگر (r->آغاز < t_انتہا && t_آغاز < r->انتہا) {
+            واپس true;
         }
     }
-    return false;
+    واپس false;
 }
 
-static void flush_dirty_ranges(struct htp_context * ctx, const struct htp_dirty_range * ranges, uint32_t n_ranges, uint64_t total_dirty) {
-    if (total_dirty >= HEX_L2_FLUSH_WQ_THRESHOLD && ctx->n_threads > 1) {
-        struct l2flush_multi_task task;
+ساکن خالی flush_dirty_ranges(ساخت htp_context * ctx, ثابت ساخت htp_dirty_range * ranges, uint32_t n_ranges, uint64_t کل_dirty) {
+    اگر (کل_dirty >= HEX_L2_FLUSH_WQ_حد && ctx->n_دھاگے > 1) {
+        ساخت l2flush_multi_task task;
         task.trace    = ctx->trace;
         task.n_ranges = n_ranges;
 
-        uint32_t block_acc = 0;
-        for (uint32_t i = 0; i < n_ranges; i++) {
-            const struct htp_dirty_range * r = &ranges[i];
-            struct l2flush_range * rg = &task.ranges[i];
-            rg->start = hex_align_down((size_t) r->start, HEX_L2_LINE_SIZE);
-            rg->end   = hex_align_up((size_t) r->end, HEX_L2_LINE_SIZE);
-            rg->block_first = block_acc;
-            rg->n_blocks = (rg->end - rg->start + HEX_L2_BLOCK_SIZE - 1) / HEX_L2_BLOCK_SIZE;
-            block_acc += rg->n_blocks;
+        uint32_t بلاک_acc = 0;
+        برائے (uint32_t i = 0; i < n_ranges; i++) {
+            ثابت ساخت htp_dirty_range * r = &ranges[i];
+            ساخت l2flush_range * rg = &task.ranges[i];
+            rg->آغاز = hex_align_نیچے_کو((size_t) r->آغاز, HEX_L2_سطر_سائز);
+            rg->انتہا   = hex_align_اوپر((size_t) r->انتہا, HEX_L2_سطر_سائز);
+            rg->بلاک_پہلا = بلاک_acc;
+            rg->n_بلاکیں = (rg->انتہا - rg->آغاز + HEX_L2_بلاک_سائز - 1) / HEX_L2_بلاک_سائز;
+            بلاک_acc += rg->n_بلاکیں;
         }
 
-        task.total_blocks      = block_acc;
-        task.blocks_per_thread = fastdiv(block_acc + ctx->n_threads - 1, &ctx->n_threads_div);
+        task.کل_بلاکیں      = بلاک_acc;
+        task.بلاکیں_فی_thread = fastdiv(بلاک_acc + ctx->n_دھاگے - 1, &ctx->n_دھاگے_div);
 
-        work_queue_run(ctx->work_queue, l2flush_multi_worker, &task, ctx->n_threads);
-    } else {
-        struct htp_thread_trace * tr = &ctx->trace[0];
-        htp_trace_event_start(tr, HTP_TRACE_EVT_L2FLUSH, 0);
-        for (uint32_t i = 0; i < n_ranges; i++) {
-            const struct htp_dirty_range * r = &ranges[i];
-            hex_l2flush((void *) (uintptr_t) r->start, r->end - r->start);
+        work_قطار_تسلسل(ctx->work_قطار, l2flush_multi_کارکن, &task, ctx->n_دھاگے);
+    } ورنہ {
+        ساخت htp_thread_trace * tr = &ctx->trace[0];
+        htp_trace_event_آغاز(tr, HTP_TRACE_EVT_L2FLUSH, 0);
+        برائے (uint32_t i = 0; i < n_ranges; i++) {
+            ثابت ساخت htp_dirty_range * r = &ranges[i];
+            hex_l2flush((خالی *) (uintptr_t) r->آغاز, r->انتہا - r->آغاز);
         }
         htp_trace_event_stop(tr, HTP_TRACE_EVT_L2FLUSH, 0);
     }
 }
 
-void htp_dcache_flush_dirty_ranges(struct htp_context * ctx) {
-    struct htp_dirty_range ranges[HTP_MAX_DIRTY_RANGES];
+خالی htp_dcache_flush_dirty_ranges(ساخت htp_context * ctx) {
+    ساخت htp_dirty_range ranges[HTP_MAX_DIRTY_RANGES];
     uint32_t n_ranges = 0;
-    uint64_t total_dirty = 0;
+    uint64_t کل_dirty = 0;
 
-    for (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
-        const struct htp_dirty_range * r = &ctx->dirty_ranges[i];
-        if (!r->start) {
-            continue;
+    برائے (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
+        ثابت ساخت htp_dirty_range * r = &ctx->dirty_ranges[i];
+        اگر (!r->آغاز) {
+            جاری;
         }
         ranges[n_ranges++] = *r;
-        total_dirty += r->end - r->start;
+        کل_dirty += r->انتہا - r->آغاز;
     }
 
-    if (total_dirty == 0) {
-        return;
+    اگر (کل_dirty == 0) {
+        واپس;
     }
 
-    if (total_dirty > HEX_L2_FLUSH_ALL_THRESHOLD) {
+    اگر (کل_dirty > HEX_L2_FLUSH_ALL_حد) {
         flush_all_dcache(ctx);
-        return;
+        واپس;
     }
 
-    flush_dirty_ranges(ctx, ranges, n_ranges, total_dirty);
-    memset(ctx->dirty_ranges, 0, sizeof(ctx->dirty_ranges));
+    flush_dirty_ranges(ctx, ranges, n_ranges, کل_dirty);
+    memset(ctx->dirty_ranges, 0, حجم(ctx->dirty_ranges));
 }
 
-void htp_dcache_flush_dirty_tensors(struct htp_context * ctx, const struct htp_tensor * const * tensors, uint32_t n) {
-    const struct htp_tensor * dirty_tensors[HTP_OP_MAX_INPUTS];
-    struct htp_dirty_range ranges[HTP_OP_MAX_INPUTS];
+خالی htp_dcache_flush_dirty_tensors(ساخت htp_context * ctx, ثابت ساخت htp_tensor * ثابت * tensors, uint32_t n) {
+    ثابت ساخت htp_tensor * dirty_tensors[HTP_OP_MAX_INPUTS];
+    ساخت htp_dirty_range ranges[HTP_OP_MAX_INPUTS];
     uint32_t n_dirty = 0;
-    uint64_t total_dirty = 0;
+    uint64_t کل_dirty = 0;
 
-    for (uint32_t i = 0; i < n; i++) {
-        const struct htp_tensor * t = tensors[i];
-        if (is_tensor_dirty(ctx, t)) {
+    برائے (uint32_t i = 0; i < n; i++) {
+        ثابت ساخت htp_tensor * t = tensors[i];
+        اگر (is_tensor_dirty(ctx, t)) {
             dirty_tensors[n_dirty++] = t;
-            ranges[n_dirty - 1].start = t->data;
-            ranges[n_dirty - 1].end   = t->data + t->size;
-            total_dirty += t->size;
+            ranges[n_dirty - 1].آغاز = t->ڈیٹا;
+            ranges[n_dirty - 1].انتہا   = t->ڈیٹا + t->سائز;
+            کل_dirty += t->سائز;
         }
     }
 
-    if (total_dirty == 0) {
-        return;
+    اگر (کل_dirty == 0) {
+        واپس;
     }
 
-    if (total_dirty > HEX_L2_FLUSH_ALL_THRESHOLD) {
+    اگر (کل_dirty > HEX_L2_FLUSH_ALL_حد) {
         flush_all_dcache(ctx);
-        return;
+        واپس;
     }
 
-    flush_dirty_ranges(ctx, ranges, n_dirty, total_dirty);
-    for (uint32_t i = 0; i < n_dirty; i++) {
+    flush_dirty_ranges(ctx, ranges, n_dirty, کل_dirty);
+    برائے (uint32_t i = 0; i < n_dirty; i++) {
         make_tensor_clean(ctx, dirty_tensors[i]);
     }
 }

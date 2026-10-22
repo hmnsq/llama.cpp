@@ -37,10 +37,10 @@
 // Concurrency: writes go to <name>.tmp.<pid> then atomic rename. On race,
 // last-writer-wins. No locks.
 
-#pragma once
+#ہدایت once
 
-#include <CL/cl.h>
-#include <string>
+#شامل <CL/cl.h>
+#شامل <string>
 
 // Bumped manually if host-side OpenCL API usage changes in a way that
 // affects compile semantics but does not show up in source_bytes /
@@ -48,28 +48,28 @@
 // clCompileProgram + clLinkProgram, or changing how multiple sources
 // are concatenated). Most commits — including kernel changes — do NOT
 // require bumping this; the source bytes already capture those.
-#define CL_PROGRAM_CACHE_FORMAT_VERSION 1u
+#تعریف_کرو CL_پروگرام_CACHE_FORMAT_نسخہ 1u
 
-struct cl_program_cache_state {
+ساخت cl_پروگرام_cache_state {
     // Empty string means cache is disabled.
     std::string dir;
     // Concatenated device/driver/platform identity + cache format version,
     // computed once at init and folded into every key.
-    std::string key_suffix;
+    std::string کلید_suffix;
 };
 
-cl_program_cache_state cl_program_cache_init(cl_device_id device);
+cl_پروگرام_cache_state cl_پروگرام_cache_init(cl_device_id device);
 
-cl_program cl_program_cache_try_load(
-    const cl_program_cache_state & state,
+cl_پروگرام cl_پروگرام_cache_try_بھرو(
+    ثابت cl_پروگرام_cache_state & state,
     cl_context                     context,
     cl_device_id                   device,
-    const char *                   source,
-    const std::string &            compile_opts);
+    ثابت حرف *                   ماخذ,
+    ثابت std::string &            compile_opts);
 
-void cl_program_cache_try_save(
-    const cl_program_cache_state & state,
-    cl_program                     program,
+خالی cl_پروگرام_cache_try_save(
+    ثابت cl_پروگرام_cache_state & state,
+    cl_پروگرام                     پروگرام,
     cl_device_id                   device,
-    const char *                   source,
-    const std::string &            compile_opts);
+    ثابت حرف *                   ماخذ,
+    ثابت std::string &            compile_opts);

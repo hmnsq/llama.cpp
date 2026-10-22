@@ -1,87 +1,87 @@
-#include "backend/shared/apir_cs_rpc.h"
-#include "ggml-backend-impl.h"
-#include "ggml-impl.h"
-#include "ggml-remoting.h"
+#شامل "backend/shared/apir_cs_rpc.h"
+#شامل "ggml-backend-impl.h"
+#شامل "ggml-impl.h"
+#شامل "ggml-remoting.h"
 
-#include <cinttypes>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
+#شامل <cinttypes>
+#شامل <unordered_map>
+#شامل <unordered_set>
+#شامل <vector>
 
-apir_rpc_tensor apir_serialize_tensor(const ggml_tensor * tensor) {
-    apir_rpc_tensor result;
-    result.id   = reinterpret_cast<uint64_t>(tensor);
-    result.type = tensor->type;
-    if (tensor->buffer) {
-        ggml_backend_buffer_t buffer = tensor->buffer;
+apir_rpc_tensor apir_serialize_tensor(ثابت ggml_tensor * tensor) {
+    apir_rpc_tensor نتیجہ;
+    نتیجہ.id   = reinterpret_cast<uint64_t>(tensor);
+    نتیجہ.type = tensor->type;
+    اگر (tensor->بفر) {
+        ggml_backend_بفر_t بفر = tensor->بفر;
 
-        result.buffer = BUFFER_TO_HOST_HANDLE(buffer);
-    } else {
-        result.buffer = 0;
+        نتیجہ.بفر = بفر_مقصد_HOST_HANDLE(بفر);
+    } ورنہ {
+        نتیجہ.بفر = 0;
     }
-    for (uint32_t i = 0; i < GGML_MAX_DIMS; i++) {
-        result.ne[i] = tensor->ne[i];
-        result.nb[i] = tensor->nb[i];
+    برائے (uint32_t i = 0; i < GGML_MAX_DIMS; i++) {
+        نتیجہ.ne[i] = tensor->ne[i];
+        نتیجہ.nb[i] = tensor->nb[i];
     }
-    result.op = tensor->op;
-    for (uint32_t i = 0; i < GGML_MAX_OP_PARAMS / sizeof(int32_t); i++) {
-        result.op_params[i] = tensor->op_params[i];
+    نتیجہ.op = tensor->op;
+    برائے (uint32_t i = 0; i < GGML_MAX_OP_PARAMS / حجم(int32_t); i++) {
+        نتیجہ.op_params[i] = tensor->op_params[i];
     }
-    result.flags = tensor->flags;
-    for (uint32_t i = 0; i < GGML_MAX_SRC; i++) {
-        result.src[i] = reinterpret_cast<uint64_t>(tensor->src[i]);
+    نتیجہ.flags = tensor->flags;
+    برائے (uint32_t i = 0; i < GGML_MAX_SRC; i++) {
+        نتیجہ.src[i] = reinterpret_cast<uint64_t>(tensor->src[i]);
     }
-    result.view_src  = reinterpret_cast<uint64_t>(tensor->view_src);
-    result.view_offs = tensor->view_offs;
-    result.data      = reinterpret_cast<uint64_t>(tensor->data);
-    if (tensor->data) {
-        if (!tensor->buffer) {
+    نتیجہ.view_src  = reinterpret_cast<uint64_t>(tensor->view_src);
+    نتیجہ.view_offs = tensor->view_offs;
+    نتیجہ.ڈیٹا      = reinterpret_cast<uint64_t>(tensor->ڈیٹا);
+    اگر (tensor->ڈیٹا) {
+        اگر (!tensor->بفر) {
             GGML_ABORT("%s: tensor has data but not buffer", __func__);
         }
         // tensor->data is serialized as an offset to the buffer base address
-        result.data -= reinterpret_cast<uint64_t>(BUFFER_TO_GGML_CONTEXT(tensor->buffer)->base);
+        نتیجہ.ڈیٹا -= reinterpret_cast<uint64_t>(بفر_مقصد_GGML_CONTEXT(tensor->بفر)->بنیاد);
     }
-    snprintf(result.name, GGML_MAX_NAME, "%s", tensor->name);
-    return result;
+    snprintf(نتیجہ.name, GGML_MAX_NAME, "%s", tensor->name);
+    واپس نتیجہ;
 }
 
-void apir_add_tensor(ggml_tensor *                       tensor,
+خالی apir_جوڑو_tensor(ggml_tensor *                       tensor,
                      std::vector<apir_rpc_tensor> &      tensors,
-                     std::unordered_set<ggml_tensor *> & visited) {
-    if (tensor == nullptr) {
-        return;
+                     std::unordered_set<ggml_tensor *> & دیکھا) {
+    اگر (tensor == خالی_اشاریہ) {
+        واپس;
     }
-    if (visited.find(tensor) != visited.end()) {
-        return;
+    اگر (دیکھا.find(tensor) != دیکھا.end()) {
+        واپس;
     }
-    visited.insert(tensor);
-    for (int i = 0; i < GGML_MAX_SRC; i++) {
-        apir_add_tensor(tensor->src[i], tensors, visited);
+    دیکھا.insert(tensor);
+    برائے (صحیح i = 0; i < GGML_MAX_SRC; i++) {
+        apir_جوڑو_tensor(tensor->src[i], tensors, دیکھا);
     }
-    apir_add_tensor(tensor->view_src, tensors, visited);
+    apir_جوڑو_tensor(tensor->view_src, tensors, دیکھا);
     tensors.push_back(apir_serialize_tensor(tensor));
 }
 
-void apir_serialize_graph(const ggml_cgraph * cgraph, std::vector<uint8_t> & output) {
+خالی apir_serialize_گراف(ثابت ggml_cgraph * cgraph, std::vector<uint8_t> & output) {
     uint32_t                          n_nodes = cgraph->n_nodes;
     std::vector<apir_rpc_tensor>      tensors;
-    std::unordered_set<ggml_tensor *> visited;
-    for (uint32_t i = 0; i < n_nodes; i++) {
-        apir_add_tensor(cgraph->nodes[i], tensors, visited);
+    std::unordered_set<ggml_tensor *> دیکھا;
+    برائے (uint32_t i = 0; i < n_nodes; i++) {
+        apir_جوڑو_tensor(cgraph->nodes[i], tensors, دیکھا);
     }
     // serialization format:
     // | n_nodes (4 bytes) | nodes (n_nodes * sizeof(uint64_t) | n_tensors (4 bytes) | tensors (n_tensors * sizeof(apir_rpc_tensor)) |
     uint32_t n_tensors = tensors.size();
-    int      output_size =
-        sizeof(uint32_t) + n_nodes * sizeof(uint64_t) + sizeof(uint32_t) + n_tensors * sizeof(apir_rpc_tensor);
-    output.resize(output_size, 0);
-    memcpy(output.data(), &n_nodes, sizeof(n_nodes));
-    for (uint32_t i = 0; i < n_nodes; i++) {
-        memcpy(output.data() + sizeof(n_nodes) + i * sizeof(uint64_t), &cgraph->nodes[i], sizeof(uint64_t));
+    صحیح      output_سائز =
+        حجم(uint32_t) + n_nodes * حجم(uint64_t) + حجم(uint32_t) + n_tensors * حجم(apir_rpc_tensor);
+    output.resize(output_سائز, 0);
+    حافظہ_نقل(output.ڈیٹا(), &n_nodes, حجم(n_nodes));
+    برائے (uint32_t i = 0; i < n_nodes; i++) {
+        حافظہ_نقل(output.ڈیٹا() + حجم(n_nodes) + i * حجم(uint64_t), &cgraph->nodes[i], حجم(uint64_t));
     }
-    uint32_t * out_ntensors = (uint32_t *) (output.data() + sizeof(n_nodes) + n_nodes * sizeof(uint64_t));
-    *out_ntensors           = n_tensors;
-    apir_rpc_tensor * out_tensors =
-        (apir_rpc_tensor *) (output.data() + sizeof(n_nodes) + n_nodes * sizeof(uint64_t) + sizeof(uint32_t));
-    memcpy(out_tensors, tensors.data(), n_tensors * sizeof(apir_rpc_tensor));
+    uint32_t * برآمد_ntensors = (uint32_t *) (output.ڈیٹا() + حجم(n_nodes) + n_nodes * حجم(uint64_t));
+    *برآمد_ntensors           = n_tensors;
+    apir_rpc_tensor * برآمد_tensors =
+        (apir_rpc_tensor *) (output.ڈیٹا() + حجم(n_nodes) + n_nodes * حجم(uint64_t) + حجم(uint32_t));
+    حافظہ_نقل(برآمد_tensors, tensors.ڈیٹا(), n_tensors * حجم(apir_rpc_tensor));
 }

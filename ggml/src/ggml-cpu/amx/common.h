@@ -1,111 +1,111 @@
-#pragma once
+#ہدایت once
 
-#include "ggml.h"
-#include "ggml-cpu-impl.h"
+#شامل "ggml.h"
+#شامل "ggml-cpu-impl.h"
 
-#include <algorithm>
-#include <memory>
-#include <type_traits>
+#شامل <algorithm>
+#شامل <memory>
+#شامل <type_traits>
 
-#if defined(GGML_USE_OPENMP)
-#include <omp.h>
-#else
-#include <thread>
-#endif
+#اگر defined(GGML_USE_OPENMP)
+#شامل <omp.h>
+#ورنہ
+#شامل <thread>
+#اگر_ختم
 
-#define TILE_M 16
-#define TILE_N 16
-#define TILE_K 32
-#define VNNI_BLK 4
+#تعریف_کرو TILE_M 16
+#تعریف_کرو TILE_N 16
+#تعریف_کرو TILE_K 32
+#تعریف_کرو VNNI_BLK 4
 
-#define AMX_BLK_SIZE 32
+#تعریف_کرو AMX_BLK_سائز 32
 
-#define TMM0 0
-#define TMM1 1
-#define TMM2 2
-#define TMM3 3
-#define TMM4 4
-#define TMM5 5
-#define TMM6 6
-#define TMM7 7
+#تعریف_کرو TMM0 0
+#تعریف_کرو TMM1 1
+#تعریف_کرو TMM2 2
+#تعریف_کرو TMM3 3
+#تعریف_کرو TMM4 4
+#تعریف_کرو TMM5 5
+#تعریف_کرو TMM6 6
+#تعریف_کرو TMM7 7
 
 // parallel routines
-template <typename T, typename std::enable_if<std::is_integral<T>::value, int>::type = 0>
-inline T div_up(T x, T y) { return (x + y - 1) / y; }
+سانچہ <typename T, typename std::enable_if<std::is_integral<T>::قدر, صحیح>::type = 0>
+اندرونی T div_اوپر(T x, T y) { واپس (x + y - 1) / y; }
 
-template <typename T>
-inline void balance211(T n, T nth, T ith, T& n_start, T& n_end) {
-#if 0
+سانچہ <typename T>
+اندرونی خالی balance211(T n, T nth, T ith, T& n_آغاز, T& n_انتہا) {
+#اگر 0
     // onednn partition pattern
-    T& n_my = n_end;
-    if (nth <= 1 || n == 0) {
-        n_start = 0;
+    T& n_my = n_انتہا;
+    اگر (nth <= 1 || n == 0) {
+        n_آغاز = 0;
         n_my = n;
-    } else {
-        T n1 = div_up(n, nth);
+    } ورنہ {
+        T n1 = div_اوپر(n, nth);
         T n2 = n1 - 1;
         T T1 = n - n2 * nth;
         n_my = ith < T1 ? n1 : n2;
-        n_start = ith <= T1 ? ith*n1 : T1 * n1 + (ith - T1) * n2;
+        n_آغاز = ith <= T1 ? ith*n1 : T1 * n1 + (ith - T1) * n2;
     }
-    n_end += n_start;
-#else
+    n_انتہا += n_آغاز;
+#ورنہ
     // pytorch aten partition pattern
-    T n_my = div_up(n, nth);
-    n_start = ith * n_my;
-    n_end = std::min(n_start + n_my, n);
-#endif
+    T n_my = div_اوپر(n, nth);
+    n_آغاز = ith * n_my;
+    n_انتہا = std::min(n_آغاز + n_my, n);
+#اگر_ختم
 }
 
-template <typename func_t>
-inline void parallel_for(int n, const func_t & f) {
-    if (n <= 0) {
-        return;
+سانچہ <typename func_t>
+اندرونی خالی parallel_for(صحیح n, ثابت func_t & f) {
+    اگر (n <= 0) {
+        واپس;
     }
-#if defined(GGML_USE_OPENMP)
-    #pragma omp parallel
+#اگر defined(GGML_USE_OPENMP)
+    #ہدایت omp parallel
     {
-        int nth = omp_get_num_threads();
-        int ith = omp_get_thread_num();
-        int tbegin, tend;
+        صحیح nth = omp_get_عدد_دھاگے();
+        صحیح ith = omp_get_thread_عدد();
+        صحیح tbegin, tend;
         balance211(n, nth, ith, tbegin, tend);
         f(tbegin, tend);
     }
-#else
-    int nth = std::thread::hardware_concurrency();
-    if (nth <= 1) {
+#ورنہ
+    صحیح nth = std::thread::hardware_concurrency();
+    اگر (nth <= 1) {
         f(0, n);
-        return;
+        واپس;
     }
-    if (nth > n) {
+    اگر (nth > n) {
         nth = n;
     }
-    std::vector<std::thread> threads;
-    threads.reserve(nth);
-    for (int ith = 0; ith < nth; ++ith) {
-        threads.emplace_back([&f, n, ith, nth] {
-            int tbegin, tend;
+    std::سمتیہ<std::thread> دھاگے;
+    دھاگے.reserve(nth);
+    برائے (صحیح ith = 0; ith < nth; ++ith) {
+        دھاگے.emplace_عقب([&f, n, ith, nth] {
+            صحیح tbegin, tend;
             balance211(n, nth, ith, tbegin, tend);
             f(tbegin, tend);
         });
     }
-    for (auto & t : threads) {
+    برائے (خودکار & t : دھاگے) {
         t.join();
     }
-#endif
+#اگر_ختم
 }
 
-template <typename func_t>
-inline void parallel_for_ggml(const ggml_compute_params * params, int n, const func_t & f) {
-    int tbegin, tend;
+سانچہ <typename func_t>
+اندرونی خالی parallel_for_ggml(ثابت ggml_compute_params * params, صحیح n, ثابت func_t & f) {
+    صحیح tbegin, tend;
     balance211(n, params->nth, params->ith, tbegin, tend);
     f(tbegin, tend);
 }
 
 // quantized types that have AMX support
-inline bool qtype_has_amx_kernels(const enum ggml_type type) {
+اندرونی bool qtype_has_amx_kernels(ثابت شمار ggml_type type) {
     // TODO: fix padding for vnni format
-    return (type == GGML_TYPE_Q4_0) ||
+    واپس (type == GGML_TYPE_Q4_0) ||
         (type == GGML_TYPE_Q4_1) ||
         (type == GGML_TYPE_Q8_0) ||
         (type == GGML_TYPE_Q4_K) ||

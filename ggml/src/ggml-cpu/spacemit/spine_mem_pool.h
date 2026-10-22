@@ -1,32 +1,32 @@
-#pragma once
+#ہدایت once
 
-#include <cstddef>
-#include <cstdint>
+#شامل <cstddef>
+#شامل <cstdint>
 
 namespace ggml::cpu::riscv64_spacemit {
 
-enum class spine_mem_pool_backend : uint8_t {
+شمار class spine_mem_pool_backend : uint8_t {
     none,
     posix_memalign,
     transparent_hugepage,
     hugetlb_1g,
 };
 
-struct spine_mem_pool_tcm_info {
-    bool   available{ false };
-    size_t blk_size{ 0 };
-    size_t blk_num{ 0 };
+ساخت spine_mem_pool_tcm_info {
+    bool   دستیاب{ false };
+    size_t blk_سائز{ 0 };
+    size_t blk_عدد{ 0 };
     bool   is_fake_tcm{ false };
 };
 
 bool   spine_mem_pool_tcm_init(spine_mem_pool_tcm_info * info) noexcept;
-void * spine_mem_pool_tcm_mem_get(int cpu_id) noexcept;
-void * spine_mem_pool_tcm_mem_wait(int cpu_id) noexcept;
-int    spine_mem_pool_tcm_mem_release(int cpu_id) noexcept;
+خالی * spine_mem_pool_tcm_mem_get(صحیح cpu_id) noexcept;
+خالی * spine_mem_pool_tcm_mem_wait(صحیح cpu_id) noexcept;
+صحیح    spine_mem_pool_tcm_mem_release(صحیح cpu_id) noexcept;
 
-void * spine_mem_pool_alloc(size_t size, size_t alignment) noexcept;
-void * spine_mem_pool_shared_mem_alloc(size_t size, size_t alignment) noexcept;
-void   spine_mem_pool_free(void * base) noexcept;
-void   spine_mem_pool_shared_mem_free(void * base) noexcept;
+خالی * spine_mem_pool_alloc(size_t سائز, size_t alignment) noexcept;
+خالی * spine_mem_pool_shared_mem_alloc(size_t سائز, size_t alignment) noexcept;
+خالی   spine_mem_pool_free(خالی * بنیاد) noexcept;
+خالی   spine_mem_pool_shared_mem_free(خالی * بنیاد) noexcept;
 
 }  // namespace ggml::cpu::riscv64_spacemit

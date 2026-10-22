@@ -1,214 +1,214 @@
-#define _CRT_SECURE_NO_DEPRECATE // Disables "unsafe" warnings on Windows
-#define _USE_MATH_DEFINES // For M_PI on MSVC
+#تعریف_کرو _CRT_SECURE_NO_DEPRECATE // Disables "unsafe" warnings on Windows
+#تعریف_کرو USE_MATH_متعین_کرتا // For M_PI on MSVC
 
-#include "ggml-version.h"
-#include "ggml-backend.h"
-#include "ggml-impl.h"
-#include "ggml-threading.h"
-#include "ggml-cpu.h"
-#include "ggml.h"
+#شامل "ggml-version.h"
+#شامل "ggml-backend.h"
+#شامل "ggml-impl.h"
+#شامل "ggml-threading.h"
+#شامل "ggml-cpu.h"
+#شامل "ggml.h"
 
 // FIXME: required here for quantization functions
-#include "ggml-quants.h"
+#شامل "ggml-quants.h"
 
-#ifdef GGML_USE_CPU_HBM
-#include <hbwmalloc.h>
-#endif
+#اگر_تعریف_شدہ GGML_USE_CPU_HBM
+#شامل <hbwmalloc.h>
+#اگر_ختم
 
-#if defined(_MSC_VER) || defined(__MINGW32__)
-#include <malloc.h> // using malloc.h with MSC/MINGW
-#elif !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__OpenBSD__)
-#include <alloca.h>
-#endif
+#اگر defined(_MSC_VER) || defined(__MINGW32__)
+#شامل <malloc.h> // using malloc.h with MSC/MINGW
+#وگرنہ_اگر !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__OpenBSD__)
+#شامل <alloca.h>
+#اگر_ختم
 
-#include <assert.h>
-#include <errno.h>
-#include <time.h>
-#include <math.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdint.h>
-#include <inttypes.h>
-#include <stdio.h>
-#include <float.h>
-#include <limits.h>
-#include <stdarg.h>
-#include <signal.h>
-#if defined(__gnu_linux__)
-#include <syscall.h>
-#endif
+#شامل <assert.h>
+#شامل <errno.h>
+#شامل <time.h>
+#شامل <math.h>
+#شامل <stdlib.h>
+#شامل <string.h>
+#شامل <stdint.h>
+#شامل <inttypes.h>
+#شامل <stdio.h>
+#شامل <float.h>
+#شامل <limits.h>
+#شامل <stdarg.h>
+#شامل <signal.h>
+#اگر defined(__gnu_linux__)
+#شامل <syscall.h>
+#اگر_ختم
 
-#if defined(__APPLE__)
-#include <unistd.h>
-#include <mach/mach.h>
-#include <TargetConditionals.h>
-#endif
+#اگر defined(__APPLE__)
+#شامل <unistd.h>
+#شامل <mach/mach.h>
+#شامل <TargetConditionals.h>
+#اگر_ختم
 
-#if defined(_WIN32)
-#define WIN32_LEAN_AND_MEAN
-#ifndef NOMINMAX
-    #define NOMINMAX
-#endif
-#include <windows.h>
-#endif
+#اگر defined(_WIN32)
+#تعریف_کرو WIN32_LEAN_AND_اوسط
+#اگر_غیر_تعریف_شدہ NOMINMAX
+    #تعریف_کرو NOMINMAX
+#اگر_ختم
+#شامل <windows.h>
+#اگر_ختم
 
-#define UNUSED GGML_UNUSED
+#تعریف_کرو غیر_مستعمل GGML_غیر_مستعمل
 
-uint64_t ggml_graph_next_uid(void) {
-#ifdef _MSC_VER
-#if defined(_WIN32)
-    static volatile LONG counter = 1;
-    return (uint64_t) InterlockedIncrement(&counter) - 1;
-#else
-    static volatile long long counter = 1;
-    return (uint64_t) _InterlockedIncrement64(&counter) - 1;
-#endif
-#else
-    static uint64_t counter = 1;
-    return __atomic_fetch_add(&counter, 1, __ATOMIC_RELAXED);
-#endif
+uint64_t ggml_گراف_اگلا_uid(خالی) {
+#اگر_تعریف_شدہ _MSC_VER
+#اگر defined(_WIN32)
+    ساکن متلون LONG شمار_2 = 1;
+    واپس (uint64_t) InterlockedIncrement(&شمار_2) - 1;
+#ورنہ
+    ساکن متلون طویل طویل شمار_2 = 1;
+    واپس (uint64_t) _InterlockedIncrement64(&شمار_2) - 1;
+#اگر_ختم
+#ورنہ
+    ساکن uint64_t شمار_2 = 1;
+    واپس __atomic_fetch_add(&شمار_2, 1, __ATOMIC_RELAXED);
+#اگر_ختم
 }
 
 // Needed for ggml_fp32_to_bf16_row()
-#if defined(__AVX512BF16__)
-#if defined(_MSC_VER)
-#define m512i(p) p
-#else
-#include <immintrin.h>
-#define m512i(p) (__m512i)(p)
-#endif // defined(_MSC_VER)
-#endif // defined(__AVX512BF16__)
+#اگر defined(__AVX512BF16__)
+#اگر defined(_MSC_VER)
+#تعریف_کرو m512i(p) p
+#ورنہ
+#شامل <immintrin.h>
+#تعریف_کرو m512i(p) (__m512i)(p)
+#اگر_ختم // defined(_MSC_VER)
+#اگر_ختم // defined(__AVX512BF16__)
 
-#if defined(__linux__) || \
+#اگر defined(__linux__) || \
     defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || \
-    (defined(__APPLE__) && !TARGET_OS_TV && !TARGET_OS_WATCH)
+    (defined(__APPLE__) && !ہدف_OS_TV && !ہدف_OS_WATCH)
 
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
-#if defined(__linux__)
-#include <sys/prctl.h>
-#endif
+#شامل <unistd.h>
+#شامل <sys/types.h>
+#شامل <sys/stat.h>
+#شامل <sys/wait.h>
+#اگر defined(__linux__)
+#شامل <sys/prctl.h>
+#اگر_ختم
 
-#if defined(__ANDROID__)
-#include <unwind.h>
-#include <dlfcn.h>
-#include <stdio.h>
+#اگر defined(__ANDROID__)
+#شامل <unwind.h>
+#شامل <dlfcn.h>
+#شامل <stdio.h>
 
-struct backtrace_state {
-    void ** current;
-    void ** end;
+ساخت backtrace_state {
+    خالی ** current;
+    خالی ** انتہا;
 };
 
-static _Unwind_Reason_Code unwind_callback(struct _Unwind_Context* context, void* arg) {
-    struct backtrace_state * state = (struct backtrace_state *)arg;
+ساکن Unwind_Reason_رمز unwind_callback(ساخت _Unwind_Context* context, خالی* arg) {
+    ساخت backtrace_state * state = (ساخت backtrace_state *)arg;
     uintptr_t pc = _Unwind_GetIP(context);
-    if (pc) {
-        if (state->current == state->end) {
-            return _URC_END_OF_STACK;
-        } else {
-            *state->current++ = (void*)pc;
+    اگر (pc) {
+        اگر (state->current == state->انتہا) {
+            واپس URC_انتہا_کا_ڈھیر;
+        } ورنہ {
+            *state->current++ = (خالی*)pc;
         }
     }
-    return _URC_NO_REASON;
+    واپس _URC_NO_REASON;
 }
 
-static void ggml_print_backtrace_symbols(void) {
-    const int max = 100;
-    void* buffer[max];
+ساکن خالی ggml_print_backtrace_symbols(خالی) {
+    ثابت صحیح max = 100;
+    خالی* بفر[max];
 
-    struct backtrace_state state = {buffer, buffer + max};
+    ساخت backtrace_state state = {بفر, بفر + max};
     _Unwind_Backtrace(unwind_callback, &state);
 
-    int count = state.current - buffer;
+    صحیح گنتی = state.current - بفر;
 
-    for (int idx = 0; idx < count; ++idx) {
-        const void * addr = buffer[idx];
-        const char * symbol = "";
+    برائے (صحیح idx = 0; idx < گنتی; ++idx) {
+        ثابت خالی * addr = بفر[idx];
+        ثابت حرف * علامت = "";
 
         Dl_info info;
-        if (dladdr(addr, &info) && info.dli_sname) {
-            symbol = info.dli_sname;
+        اگر (dladdr(addr, &info) && info.dli_sname) {
+            علامت = info.dli_sname;
         }
 
-        fprintf(stderr, "%d: %p %s\n", idx, addr, symbol);
+        fprintf(stderr, "%d: %p %s\n", idx, addr, علامت);
     }
 }
-#elif defined(__linux__) && defined(__GLIBC__)
-#include <execinfo.h>
-static void ggml_print_backtrace_symbols(void) {
-    void * trace[100];
-    int nptrs = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
+#وگرنہ_اگر defined(__linux__) && defined(__GLIBC__)
+#شامل <execinfo.h>
+ساکن خالی ggml_print_backtrace_symbols(خالی) {
+    خالی * trace[100];
+    صحیح nptrs = backtrace(trace, حجم(trace)/حجم(trace[0]));
     backtrace_symbols_fd(trace, nptrs, STDERR_FILENO);
 }
-#elif defined(__APPLE__)
-#include <execinfo.h>
-static void ggml_print_backtrace_symbols(void) {
-    void * trace[100];
-    int nptrs = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
+#وگرنہ_اگر defined(__APPLE__)
+#شامل <execinfo.h>
+ساکن خالی ggml_print_backtrace_symbols(خالی) {
+    خالی * trace[100];
+    صحیح nptrs = backtrace(trace, حجم(trace)/حجم(trace[0]));
     backtrace_symbols_fd(trace, nptrs, STDERR_FILENO);
 }
-#else
-static void ggml_print_backtrace_symbols(void) {
+#ورنہ
+ساکن خالی ggml_print_backtrace_symbols(خالی) {
     // platform not supported
 }
-#endif
+#اگر_ختم
 
-void ggml_print_backtrace(void) {
-    const char * GGML_NO_BACKTRACE = getenv("GGML_NO_BACKTRACE");
-    if (GGML_NO_BACKTRACE) {
-        return;
+خالی ggml_print_backtrace(خالی) {
+    ثابت حرف * GGML_NO_BACKTRACE = getenv("GGML_NO_BACKTRACE");
+    اگر (GGML_NO_BACKTRACE) {
+        واپس;
     }
-#if defined(__APPLE__)
+#اگر defined(__APPLE__)
     // On macOS, fork+debugger attachment is problematic due to:
     // 1. libdispatch "poisons" forked child processes
     // 2. lldb has issues attaching to parent from forked child
     // Use simple backtrace() instead to avoid Terminal.app crashes
-    const char * GGML_BACKTRACE_LLDB = getenv("GGML_BACKTRACE_LLDB");
-    if (!GGML_BACKTRACE_LLDB) {
+    ثابت حرف * GGML_BACKTRACE_LLDB = getenv("GGML_BACKTRACE_LLDB");
+    اگر (!GGML_BACKTRACE_LLDB) {
         fprintf(stderr, "WARNING: Using native backtrace. Set GGML_BACKTRACE_LLDB for more info.\n");
         fprintf(stderr, "WARNING: GGML_BACKTRACE_LLDB may cause native MacOS Terminal.app to crash.\n");
         fprintf(stderr, "See: https://github.com/ggml-org/llama.cpp/pull/17869\n");
         ggml_print_backtrace_symbols();
-        return;
+        واپس;
     }
-#endif
-#if defined(__linux__)
+#اگر_ختم
+#اگر defined(__linux__)
     FILE * f = fopen("/proc/self/status", "r");
-    size_t size = 0;
-    char * line = NULL;
-    ssize_t length = 0;
-    while ((length = getline(&line, &size, f)) > 0) {
-        if (!strncmp(line, "TracerPid:", sizeof("TracerPid:") - 1) &&
-            (length != sizeof("TracerPid:\t0\n") - 1 || line[length - 2] != '0')) {
+    size_t سائز = 0;
+    حرف * سطر = تہی;
+    ssize_t لمبائی = 0;
+    جب ((لمبائی = getline(&سطر, &سائز, f)) > 0) {
+        اگر (!لڑی_موازنہ(سطر, "TracerPid:", حجم("TracerPid:") - 1) &&
+            (لمبائی != حجم("TracerPid:\t0\n") - 1 || سطر[لمبائی - 2] != '0')) {
             // Already being debugged, and the breakpoint is the later abort()
-            free(line);
+            آزاد(سطر);
             fclose(f);
-            return;
+            واپس;
         }
     }
-    free(line);
+    آزاد(سطر);
     fclose(f);
-    int lock[2] = { -1, -1 };
-    (void) !pipe(lock); // Don't start gdb until after PR_SET_PTRACER
-#endif
-    const int parent_pid = getpid();
-    const int child_pid = fork();
-    if (child_pid < 0) { // error
-#if defined(__linux__)
-        close(lock[1]);
-        close(lock[0]);
-#endif
-        return;
-    } else if (child_pid == 0) { // child
-        char attach[32];
-        snprintf(attach, sizeof(attach), "attach %d", parent_pid);
-#if defined(__linux__)
-        close(lock[1]);
-        (void) !read(lock[0], lock, 1);
-        close(lock[0]);
-#endif
+    صحیح تالا[2] = { -1, -1 };
+    (خالی) !pipe(تالا); // Don't start gdb until after PR_SET_PTRACER
+#اگر_ختم
+    ثابت صحیح والد_pid = getpid();
+    ثابت صحیح بچہ_pid = fork();
+    اگر (بچہ_pid < 0) { // error
+#اگر defined(__linux__)
+        close(تالا[1]);
+        close(تالا[0]);
+#اگر_ختم
+        واپس;
+    } ورنہ اگر (بچہ_pid == 0) { //بچہ
+        حرف attach[32];
+        snprintf(attach, حجم(attach), "attach %d", والد_pid);
+#اگر defined(__linux__)
+        close(تالا[1]);
+        (خالی) !اقرأ(تالا[0], تالا, 1);
+        close(تالا[0]);
+#اگر_ختم
         // try gdb
         execlp("gdb", "gdb", "--batch",
             "-ex", "set style enabled on",
@@ -216,56 +216,56 @@ void ggml_print_backtrace(void) {
             "-ex", "bt -frame-info source-and-location",
             "-ex", "detach",
             "-ex", "quit",
-            (char *) NULL);
+            (حرف *) تہی);
         // try lldb
         execlp("lldb", "lldb", "--batch",
             "-o", "bt",
             "-o", "quit",
-            "-p", &attach[sizeof("attach ") - 1],
-            (char *) NULL);
+            "-p", &attach[حجم("attach ") - 1],
+            (حرف *) تہی);
         // gdb failed, fallback to backtrace_symbols
         ggml_print_backtrace_symbols();
         _Exit(0);
-    } else { // parent
-#if defined(__linux__)
-        prctl(PR_SET_PTRACER, child_pid);
-        close(lock[1]);
-        close(lock[0]);
-#endif
-        waitpid(child_pid, NULL, 0);
+    } ورنہ { //والد
+#اگر defined(__linux__)
+        prctl(PR_سیٹ_PTRACER, بچہ_pid);
+        close(تالا[1]);
+        close(تالا[0]);
+#اگر_ختم
+        waitpid(بچہ_pid, تہی, 0);
     }
 }
-#else
-void ggml_print_backtrace(void) {
+#ورنہ
+خالی ggml_print_backtrace(خالی) {
     // platform not supported
 }
-#endif
+#اگر_ختم
 
-static ggml_abort_callback_t g_abort_callback = NULL;
+ساکن ggml_abort_callback_t g_abort_callback = تہی;
 
 // Set the abort callback (passing null will restore original abort functionality: printing a message to stdout)
-GGML_API ggml_abort_callback_t ggml_set_abort_callback(ggml_abort_callback_t callback) {
+GGML_API ggml_abort_callback_t ggml_سیٹ_abort_callback(ggml_abort_callback_t callback) {
     ggml_abort_callback_t ret_val = g_abort_callback;
     g_abort_callback = callback;
-    return ret_val;
+    واپس ret_val;
 }
 
-void ggml_abort(const char * file, int line, const char * fmt, ...) {
+خالی ggml_abort(ثابت حرف * file, صحیح سطر, ثابت حرف * fmt, ...) {
     fflush(stdout);
 
-    char message[2048];
-    int offset = snprintf(message, sizeof(message), "%s:%d: ", file, line);
+    حرف پیغام[2048];
+    صحیح انحراف = snprintf(پیغام, حجم(پیغام), "%s:%d: ", file, سطر);
 
-    va_list args;
-    va_start(args, fmt);
-    vsnprintf(message + offset, sizeof(message) - offset, fmt, args);
-    va_end(args);
+    va_list دلائل_2;
+    va_start(دلائل_2, fmt);
+    vsnprintf(پیغام + انحراف, حجم(پیغام) - انحراف, fmt, دلائل_2);
+    va_end(دلائل_2);
 
-    if (g_abort_callback) {
-        g_abort_callback(message);
-    } else {
+    اگر (g_abort_callback) {
+        g_abort_callback(پیغام);
+    } ورنہ {
         // default: print error and backtrace to stderr
-        fprintf(stderr, "%s\n", message);
+        fprintf(stderr, "%s\n", پیغام);
         ggml_print_backtrace();
     }
 
@@ -278,43 +278,43 @@ void ggml_abort(const char * file, int line, const char * fmt, ...) {
 // logging
 //
 
-struct ggml_logger_state {
+ساخت ggml_logger_state {
     ggml_log_callback log_callback;
-    void * log_callback_user_data;
+    خالی * log_callback_user_ڈیٹا;
 };
-static struct ggml_logger_state g_logger_state = {ggml_log_callback_default, NULL};
+ساکن ساخت ggml_logger_state g_logger_state = {ggml_log_callback_default, تہی};
 
-static void ggml_log_internal_v(enum ggml_log_level level, const char * format, va_list args) {
-    if (format == NULL) {
-        return;
+ساکن خالی ggml_log_اندرونی_v(شمار ggml_log_level level, ثابت حرف * format, va_list دلائل_2) {
+    اگر (format == تہی) {
+        واپس;
     }
-    va_list args_copy;
-    va_copy(args_copy, args);
-    char buffer[128];
-    int len = vsnprintf(buffer, 128, format, args);
-    if (len < 128) {
-        g_logger_state.log_callback(level, buffer, g_logger_state.log_callback_user_data);
-    } else {
-        char * buffer2 = (char *) calloc(len + 1, sizeof(char));
-        vsnprintf(buffer2, len + 1, format, args_copy);
+    va_list دلائل_copy;
+    va_copy(دلائل_copy, دلائل_2);
+    حرف بفر[128];
+    صحیح len = vsnprintf(بفر, 128, format, دلائل_2);
+    اگر (len < 128) {
+        g_logger_state.log_callback(level, بفر, g_logger_state.log_callback_user_ڈیٹا);
+    } ورنہ {
+        حرف * buffer2 = (حرف *) صفر_حافظہ_دو(len + 1, حجم(حرف));
+        vsnprintf(buffer2, len + 1, format, دلائل_copy);
         buffer2[len] = 0;
-        g_logger_state.log_callback(level, buffer2, g_logger_state.log_callback_user_data);
-        free(buffer2);
+        g_logger_state.log_callback(level, buffer2, g_logger_state.log_callback_user_ڈیٹا);
+        آزاد(buffer2);
     }
-    va_end(args_copy);
+    va_end(دلائل_copy);
 }
 
-void ggml_log_internal(enum ggml_log_level level, const char * format, ...) {
-    va_list args;
-    va_start(args, format);
-    ggml_log_internal_v(level, format, args);
-    va_end(args);
+خالی ggml_log_اندرونی(شمار ggml_log_level level, ثابت حرف * format, ...) {
+    va_list دلائل_2;
+    va_start(دلائل_2, format);
+    ggml_log_اندرونی_v(level, format, دلائل_2);
+    va_end(دلائل_2);
 }
 
-void ggml_log_callback_default(enum ggml_log_level level, const char * text, void * user_data) {
-    (void) level;
-    (void) user_data;
-    fputs(text, stderr);
+خالی ggml_log_callback_default(شمار ggml_log_level level, ثابت حرف * متن_2, خالی * user_ڈیٹا) {
+    (خالی) level;
+    (خالی) user_ڈیٹا;
+    fputs(متن_2, stderr);
     fflush(stderr);
 }
 
@@ -322,225 +322,225 @@ void ggml_log_callback_default(enum ggml_log_level level, const char * text, voi
 // end of logging block
 //
 
-#ifdef GGML_USE_ACCELERATE
+#اگر_تعریف_شدہ GGML_USE_ACCELERATE
 // uncomment to use vDSP for soft max computation
 // note: not sure if it is actually faster
 //#define GGML_SOFT_MAX_ACCELERATE
-#endif
+#اگر_ختم
 
 
 // the thread sanitizer does not intercept vm_allocate and vm_deallocate, so it produces false positives
-#if defined(__has_feature)
-#if __has_feature(thread_sanitizer)
-#define GGML_TSAN_ENABLED 1
-#endif
-#else
-#if defined(__SANITIZE_THREAD__)
-#define GGML_TSAN_ENABLED 1
-#endif
-#endif
+#اگر defined(__has_feature)
+#اگر __has_feature(thread_sanitizer)
+#تعریف_کرو GGML_TSAN_ENABLED 1
+#اگر_ختم
+#ورنہ
+#اگر defined(__SANITIZE_THREAD__)
+#تعریف_کرو GGML_TSAN_ENABLED 1
+#اگر_ختم
+#اگر_ختم
 
-void * ggml_aligned_malloc(size_t size) {
-#if defined(__s390x__)
-    const int alignment = 256;
-#else
-    const int alignment = 64;
-#endif
+خالی * ggml_aligned_malloc(size_t سائز) {
+#اگر defined(__s390x__)
+    ثابت صحیح alignment = 256;
+#ورنہ
+    ثابت صحیح alignment = 64;
+#اگر_ختم
 
-#if defined(_MSC_VER) || defined(__MINGW32__)
-    return _aligned_malloc(size, alignment);
-#else
-    if (size == 0) {
+#اگر defined(_MSC_VER) || defined(__MINGW32__)
+    واپس _aligned_malloc(سائز, alignment);
+#ورنہ
+    اگر (سائز == 0) {
         GGML_LOG_WARN("Behavior may be unexpected when allocating 0 bytes for ggml_aligned_malloc!\n");
-        return NULL;
+        واپس تہی;
     }
-    void * aligned_memory = NULL;
-  #ifdef GGML_USE_CPU_HBM
-    int result = hbw_posix_memalign(&aligned_memory, alignment, size);
-  #elif TARGET_OS_OSX && !defined(GGML_TSAN_ENABLED)
-    GGML_UNUSED(alignment);
-    kern_return_t alloc_status = vm_allocate((vm_map_t) mach_task_self(), (vm_address_t *) &aligned_memory, size, VM_FLAGS_ANYWHERE);
-    int result = EFAULT;
-    switch (alloc_status) {
-        case KERN_SUCCESS:
-            result = 0;
-            break;
-        case KERN_INVALID_ADDRESS:
-            result = EINVAL;
-            break;
-        case KERN_NO_SPACE:
-            result = ENOMEM;
-            break;
-        default:
-            result = EFAULT;
-            break;
+    خالی * aligned_حافظہ = تہی;
+  #اگر_تعریف_شدہ GGML_USE_CPU_HBM
+    صحیح نتیجہ = hbw_posix_memalign(&aligned_حافظہ, alignment, سائز);
+  #وگرنہ_اگر ہدف_OS_OSX && !defined(GGML_TSAN_ENABLED)
+    GGML_غیر_مستعمل(alignment);
+    kern_return_t alloc_حالت = vm_allocate((vm_map_t) mach_task_self(), (vm_پتہ_t *) &aligned_حافظہ, سائز, VM_FLAGS_ANYWHERE);
+    صحیح نتیجہ = EFAULT;
+    انتخاب (alloc_حالت) {
+        حالت KERN_SUCCESS:
+            نتیجہ = 0;
+            توڑو;
+        حالت KERN_INVALID_پتہ:
+            نتیجہ = EINVAL;
+            توڑو;
+        حالت KERN_NO_SPACE:
+            نتیجہ = ENOMEM;
+            توڑو;
+        طےشدہ:
+            نتیجہ = EFAULT;
+            توڑو;
     }
-  #else
-    int result = posix_memalign(&aligned_memory, alignment, size);
-  #endif
-    if (result != 0) {
+  #ورنہ
+    صحیح نتیجہ = posix_memalign(&aligned_حافظہ, alignment, سائز);
+  #اگر_ختم
+    اگر (نتیجہ != 0) {
         // Handle allocation failure
-        const char *error_desc = "unknown allocation error";
-        switch (result) {
-            case EINVAL:
+        ثابت حرف *error_desc = "unknown allocation error";
+        انتخاب (نتیجہ) {
+            حالت EINVAL:
                 error_desc = "invalid alignment value";
-                break;
-            case ENOMEM:
+                توڑو;
+            حالت ENOMEM:
                 error_desc = "insufficient memory";
-                break;
+                توڑو;
         }
-        GGML_LOG_ERROR("%s: %s (attempted to allocate %6.2f MB)\n", __func__, error_desc, size/(1024.0*1024.0));
-        return NULL;
+        GGML_LOG_ERROR("%s: %s (attempted to allocate %6.2f MB)\n", __func__, error_desc, سائز/(1024.0*1024.0));
+        واپس تہی;
     }
-    return aligned_memory;
-#endif
+    واپس aligned_حافظہ;
+#اگر_ختم
 }
 
-void ggml_aligned_free(void * ptr, size_t size) {
-    GGML_UNUSED(size);
-#if defined(_MSC_VER) || defined(__MINGW32__)
+خالی ggml_aligned_free(خالی * ptr, size_t سائز) {
+    GGML_غیر_مستعمل(سائز);
+#اگر defined(_MSC_VER) || defined(__MINGW32__)
     _aligned_free(ptr);
-#elif GGML_USE_CPU_HBM
-    if (ptr != NULL) {
+#وگرنہ_اگر GGML_USE_CPU_HBM
+    اگر (ptr != تہی) {
         hbw_free(ptr);
     }
-#elif TARGET_OS_OSX && !defined(GGML_TSAN_ENABLED)
-    if (ptr != NULL) {
-        vm_deallocate((vm_map_t)mach_task_self(), (vm_address_t)ptr, size);
+#وگرنہ_اگر ہدف_OS_OSX && !defined(GGML_TSAN_ENABLED)
+    اگر (ptr != تہی) {
+        vm_deallocate((vm_map_t)mach_task_self(), (vm_پتہ_t)ptr, سائز);
     }
-#else
-    free(ptr);
-#endif
+#ورنہ
+    آزاد(ptr);
+#اگر_ختم
 }
 
 
-inline static void * ggml_malloc(size_t size) {
-    if (size == 0) {
+اندرونی ساکن خالی * ggml_malloc(size_t سائز) {
+    اگر (سائز == 0) {
         GGML_LOG_WARN("Behavior may be unexpected when allocating 0 bytes for ggml_malloc!\n");
-        return NULL;
+        واپس تہی;
     }
-    void * result = malloc(size);
-    if (result == NULL) {
-        GGML_LOG_ERROR("%s: failed to allocate %6.2f MB\n", __func__, size/(1024.0*1024.0));
+    خالی * نتیجہ = حافظہ_دو(سائز);
+    اگر (نتیجہ == تہی) {
+        GGML_LOG_ERROR("%s: failed to allocate %6.2f MB\n", __func__, سائز/(1024.0*1024.0));
         GGML_ABORT("fatal error");
     }
-    return result;
+    واپس نتیجہ;
 }
 
 // calloc
-inline static void * ggml_calloc(size_t num, size_t size) {
-    if (num == 0 || size == 0) {
+اندرونی ساکن خالی * ggml_calloc(size_t عدد, size_t سائز) {
+    اگر (عدد == 0 || سائز == 0) {
         GGML_LOG_WARN("Behavior may be unexpected when allocating 0 bytes for ggml_calloc!\n");
-        return NULL;
+        واپس تہی;
     }
-    void * result = calloc(num, size);
-    if (result == NULL) {
-        GGML_LOG_ERROR("%s: failed to allocate %6.2f MB\n", __func__, size/(1024.0*1024.0));
+    خالی * نتیجہ = صفر_حافظہ_دو(عدد, سائز);
+    اگر (نتیجہ == تہی) {
+        GGML_LOG_ERROR("%s: failed to allocate %6.2f MB\n", __func__, سائز/(1024.0*1024.0));
         GGML_ABORT("fatal error");
     }
-    return result;
+    واپس نتیجہ;
 }
 
-#define GGML_MALLOC(size)      ggml_malloc(size)
-#define GGML_CALLOC(num, size) ggml_calloc(num, size)
+#تعریف_کرو GGML_MALLOC(سائز)      ggml_malloc(سائز)
+#تعریف_کرو GGML_CALLOC(عدد, سائز) ggml_calloc(عدد, سائز)
 
-#define GGML_FREE(ptr) free(ptr)
+#تعریف_کرو GGML_FREE(ptr) آزاد(ptr)
 
-const char * ggml_status_to_string(enum ggml_status status) {
-    switch (status) {
-        case GGML_STATUS_ALLOC_FAILED: return "GGML status: error (failed to allocate memory)";
-        case GGML_STATUS_FAILED:       return "GGML status: error (operation failed)";
-        case GGML_STATUS_SUCCESS:      return "GGML status: success";
-        case GGML_STATUS_ABORTED:      return "GGML status: warning (operation aborted)";
+ثابت حرف * ggml_حالت_مقصد_string(شمار ggml_حالت حالت_2) {
+    انتخاب (حالت_2) {
+        حالت GGML_حالت_ALLOC_FAILED: واپس "GGML status: error (failed to allocate memory)";
+        حالت GGML_حالت_FAILED:       واپس "GGML status: error (operation failed)";
+        حالت GGML_حالت_SUCCESS:      واپس "GGML status: success";
+        حالت GGML_حالت_ABORTED:      واپس "GGML status: warning (operation aborted)";
     }
 
-    return "GGML status: unknown";
+    واپس "GGML status: unknown";
 }
 
-float ggml_fp16_to_fp32(ggml_fp16_t x) {
-#define ggml_fp16_to_fp32 do_not_use__ggml_fp16_to_fp32__in_ggml
-    return GGML_FP16_TO_FP32(x);
+اعشاری ggml_fp16_مقصد_fp32(ggml_fp16_t x) {
+#تعریف_کرو ggml_fp16_مقصد_fp32 do_not_use_ggml_fp16_مقصد_fp32_اندر_ggml
+    واپس GGML_FP16_مقصد_FP32(x);
 }
 
-ggml_fp16_t ggml_fp32_to_fp16(float x) {
-#define ggml_fp32_to_fp16 do_not_use__ggml_fp32_to_fp16__in_ggml
-    return GGML_FP32_TO_FP16(x);
+ggml_fp16_t ggml_fp32_مقصد_fp16(اعشاری x) {
+#تعریف_کرو ggml_fp32_مقصد_fp16 do_not_use_ggml_fp32_مقصد_fp16_اندر_ggml
+    واپس GGML_FP32_مقصد_FP16(x);
 }
 
-float ggml_bf16_to_fp32(ggml_bf16_t x) {
-#define ggml_bf16_to_fp32 do_not_use__ggml_bf16_to_fp32__in_ggml
-    return GGML_BF16_TO_FP32(x);  // it just left shifts
+اعشاری ggml_bf16_مقصد_fp32(ggml_bf16_t x) {
+#تعریف_کرو ggml_bf16_مقصد_fp32 do_not_use_ggml_bf16_مقصد_fp32_اندر_ggml
+    واپس GGML_BF16_مقصد_FP32(x);  // it just left shifts
 }
 
-ggml_bf16_t ggml_fp32_to_bf16(float x) {
-#define ggml_fp32_to_bf16 do_not_use__ggml_fp32_to_bf16__in_ggml
-    return GGML_FP32_TO_BF16(x);
+ggml_bf16_t ggml_fp32_مقصد_bf16(اعشاری x) {
+#تعریف_کرو ggml_fp32_مقصد_bf16 do_not_use_ggml_fp32_مقصد_bf16_اندر_ggml
+    واپس GGML_FP32_مقصد_BF16(x);
 }
 
-void ggml_fp16_to_fp32_row(const ggml_fp16_t * x, float * y, int64_t n) {
-    for (int64_t i = 0; i < n; i++) {
-        y[i] = GGML_FP16_TO_FP32(x[i]);
-    }
-}
-
-void ggml_fp32_to_fp16_row(const float * x, ggml_fp16_t * y, int64_t n) {
-    int i = 0;
-    for (; i < n; ++i) {
-        y[i] = GGML_FP32_TO_FP16(x[i]);
+خالی ggml_fp16_مقصد_fp32_صف(ثابت ggml_fp16_t * x, اعشاری * y, int64_t n) {
+    برائے (int64_t i = 0; i < n; i++) {
+        y[i] = GGML_FP16_مقصد_FP32(x[i]);
     }
 }
 
-void ggml_bf16_to_fp32_row(const ggml_bf16_t * x, float * y, int64_t n) {
-    int i = 0;
-    for (; i < n; ++i) {
-        y[i] = GGML_BF16_TO_FP32(x[i]);
+خالی ggml_fp32_مقصد_fp16_صف(ثابت اعشاری * x, ggml_fp16_t * y, int64_t n) {
+    صحیح i = 0;
+    برائے (; i < n; ++i) {
+        y[i] = GGML_FP32_مقصد_FP16(x[i]);
     }
 }
 
-void ggml_fp32_to_bf16_row_ref(const float * x, ggml_bf16_t * y, int64_t n) {
-    for (int i = 0; i < n; i++) {
-        y[i] = ggml_compute_fp32_to_bf16(x[i]);
+خالی ggml_bf16_مقصد_fp32_صف(ثابت ggml_bf16_t * x, اعشاری * y, int64_t n) {
+    صحیح i = 0;
+    برائے (; i < n; ++i) {
+        y[i] = GGML_BF16_مقصد_FP32(x[i]);
     }
 }
 
-void ggml_fp32_to_bf16_row(const float * x, ggml_bf16_t * y, int64_t n) {
-  int i = 0;
-#if defined(__AVX512BF16__)
+خالی ggml_fp32_مقصد_bf16_صف_ref(ثابت اعشاری * x, ggml_bf16_t * y, int64_t n) {
+    برائے (صحیح i = 0; i < n; i++) {
+        y[i] = ggml_compute_fp32_مقصد_bf16(x[i]);
+    }
+}
+
+خالی ggml_fp32_مقصد_bf16_صف(ثابت اعشاری * x, ggml_bf16_t * y, int64_t n) {
+  صحیح i = 0;
+#اگر defined(__AVX512BF16__)
   // subnormals are flushed to zero on this platform
-  for (; i + 32 <= n; i += 32) {
+  برائے (; i + 32 <= n; i += 32) {
         _mm512_storeu_si512(
             (__m512i *)(y + i),
             m512i(_mm512_cvtne2ps_pbh(_mm512_loadu_ps(x + i + 16),
                                 _mm512_loadu_ps(x + i))));
   }
-#endif
-    for (; i < n; i++) {
-        y[i] = GGML_FP32_TO_BF16(x[i]);
+#اگر_ختم
+    برائے (; i < n; i++) {
+        y[i] = GGML_FP32_مقصد_BF16(x[i]);
     }
 }
 
 bool ggml_guid_matches(ggml_guid_t guid_a, ggml_guid_t guid_b) {
-    return memcmp(guid_a, guid_b, sizeof(ggml_guid)) == 0;
+    واپس memcmp(guid_a, guid_b, حجم(ggml_guid)) == 0;
 }
 
-const char * ggml_version(void) {
-    return GGML_VERSION;
+ثابت حرف * ggml_نسخہ(خالی) {
+    واپس GGML_نسخہ;
 }
 
-const char * ggml_commit(void) {
-    return GGML_COMMIT;
+ثابت حرف * ggml_commit(خالی) {
+    واپس GGML_COMMIT;
 }
 
 //
 // timing
 //
 
-#if defined(_MSC_VER) || defined(__MINGW32__)
-static int64_t timer_freq, timer_start;
-static BOOL CALLBACK ggml_time_init_once(PINIT_ONCE once, PVOID param, PVOID *ctx) {
-    UNUSED(once);
-    UNUSED(param);
-    UNUSED(ctx);
+#اگر defined(_MSC_VER) || defined(__MINGW32__)
+ساکن int64_t timer_freq, timer_آغاز;
+ساکن BOOL CALLBACK ggml_وقت_init_once(PINIT_ONCE once, PVOID param, PVOID *ctx) {
+    غیر_مستعمل(once);
+    غیر_مستعمل(param);
+    غیر_مستعمل(ctx);
 
     LARGE_INTEGER t;
     QueryPerformanceFrequency(&t);
@@ -549,82 +549,82 @@ static BOOL CALLBACK ggml_time_init_once(PINIT_ONCE once, PVOID param, PVOID *ct
     // The multiplication by 1000 or 1000000 below can cause an overflow if timer_freq
     // and the uptime is high enough.
     // We subtract the program start time to reduce the likelihood of that happening.
-    QueryPerformanceCounter(&t);
-    timer_start = t.QuadPart;
+    Query_Performance_شمار(&t);
+    timer_آغاز = t.QuadPart;
 
-    return TRUE;
+    واپس TRUE;
 }
-void ggml_time_init(void) {
-    static INIT_ONCE once = INIT_ONCE_STATIC_INIT;
-    InitOnceExecuteOnce(&once, ggml_time_init_once, NULL, NULL);
+خالی ggml_وقت_init(خالی) {
+    ساکن INIT_ONCE once = INIT_ONCE_STATIC_INIT;
+    InitOnceExecuteOnce(&once, ggml_وقت_init_once, تہی, تہی);
 }
-int64_t ggml_time_ms(void) {
+int64_t ggml_وقت_ms(خالی) {
     LARGE_INTEGER t;
-    QueryPerformanceCounter(&t);
-    return ((t.QuadPart-timer_start) * 1000) / timer_freq;
+    Query_Performance_شمار(&t);
+    واپس ((t.QuadPart-timer_آغاز) * 1000) / timer_freq;
 }
-int64_t ggml_time_us(void) {
+int64_t ggml_وقت_us(خالی) {
     LARGE_INTEGER t;
-    QueryPerformanceCounter(&t);
-    return ((t.QuadPart-timer_start) * 1000000) / timer_freq;
+    Query_Performance_شمار(&t);
+    واپس ((t.QuadPart-timer_آغاز) * 1000000) / timer_freq;
 }
-#else
-void ggml_time_init(void) {}
-int64_t ggml_time_ms(void) {
-    struct timespec ts;
+#ورنہ
+خالی ggml_وقت_init(خالی) {}
+int64_t ggml_وقت_ms(خالی) {
+    ساخت timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    return (int64_t)ts.tv_sec*1000 + (int64_t)ts.tv_nsec/1000000;
+    واپس (int64_t)ts.tv_sec*1000 + (int64_t)ts.tv_nsec/1000000;
 }
 
-int64_t ggml_time_us(void) {
-    struct timespec ts;
+int64_t ggml_وقت_us(خالی) {
+    ساخت timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    return (int64_t)ts.tv_sec*1000000 + (int64_t)ts.tv_nsec/1000;
+    واپس (int64_t)ts.tv_sec*1000000 + (int64_t)ts.tv_nsec/1000;
 }
-#endif
+#اگر_ختم
 
-int64_t ggml_cycles(void) {
-    return clock();
+int64_t ggml_ادوار(خالی) {
+    واپس clock();
 }
 
-int64_t ggml_cycles_per_ms(void) {
-    return CLOCKS_PER_SEC/1000;
+int64_t ggml_ادوار_فی_ms(خالی) {
+    واپس CLOCKS_PER_SEC/1000;
 }
 
 //
 // cross-platform UTF-8 file paths
 //
 
-#ifdef _WIN32
-static wchar_t * ggml_mbstowcs(const char * mbs) {
-    int wlen = MultiByteToWideChar(CP_UTF8, 0, mbs, -1, NULL, 0);
-    if (!wlen) {
+#اگر_تعریف_شدہ _WIN32
+ساکن wchar_t * ggml_mbstowcs(ثابت حرف * mbs) {
+    صحیح wlen = Multi_Byte_مقصد_Wide_Char(CP_UTF8, 0, mbs, -1, تہی, 0);
+    اگر (!wlen) {
         errno = EINVAL;
-        return NULL;
+        واپس تہی;
     }
 
-    wchar_t * wbuf = GGML_MALLOC(wlen * sizeof(wchar_t));
-    wlen = MultiByteToWideChar(CP_UTF8, 0, mbs, -1, wbuf, wlen);
-    if (!wlen) {
+    wchar_t * wbuf = GGML_MALLOC(wlen * حجم(wchar_t));
+    wlen = Multi_Byte_مقصد_Wide_Char(CP_UTF8, 0, mbs, -1, wbuf, wlen);
+    اگر (!wlen) {
         GGML_FREE(wbuf);
         errno = EINVAL;
-        return NULL;
+        واپس تہی;
     }
 
-    return wbuf;
+    واپس wbuf;
 }
-#endif
+#اگر_ختم
 
-FILE * ggml_fopen(const char * fname, const char * mode) {
-#ifdef _WIN32
-    FILE * file = NULL;
+FILE * ggml_fopen(ثابت حرف * fname, ثابت حرف * منوال) {
+#اگر_تعریف_شدہ _WIN32
+    FILE * file = تہی;
 
     // convert fname (UTF-8)
     wchar_t * wfname = ggml_mbstowcs(fname);
-    if (wfname) {
+    اگر (wfname) {
         // convert mode (UTF-8)
-        wchar_t * wmode = ggml_mbstowcs(mode);
-        if (wmode) {
+        wchar_t * wmode = ggml_mbstowcs(منوال);
+        اگر (wmode) {
             // open file
             file = _wfopen(wfname, wmode);
             GGML_FREE(wmode);
@@ -633,373 +633,373 @@ FILE * ggml_fopen(const char * fname, const char * mode) {
         GGML_FREE(wfname);
     }
 
-    return file;
-#else
-    return fopen(fname, mode);
-#endif
+    واپس file;
+#ورنہ
+    واپس fopen(fname, منوال);
+#اگر_ختم
 
 }
 
-static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
+ساکن ثابت ساخت ggml_type_traits type_traits[GGML_TYPE_گنتی] = {
     [GGML_TYPE_I8] = {
         .type_name                = "i8",
-        .blck_size                = 1,
-        .type_size                = sizeof(int8_t),
+        .blck_سائز                = 1,
+        .type_سائز                = حجم(int8_t),
         .is_quantized             = false,
     },
     [GGML_TYPE_I16] = {
         .type_name                = "i16",
-        .blck_size                = 1,
-        .type_size                = sizeof(int16_t),
+        .blck_سائز                = 1,
+        .type_سائز                = حجم(int16_t),
         .is_quantized             = false,
     },
     [GGML_TYPE_I32] = {
         .type_name                = "i32",
-        .blck_size                = 1,
-        .type_size                = sizeof(int32_t),
+        .blck_سائز                = 1,
+        .type_سائز                = حجم(int32_t),
         .is_quantized             = false,
     },
     [GGML_TYPE_I64] = {
         .type_name                = "i64",
-        .blck_size                = 1,
-        .type_size                = sizeof(int64_t),
+        .blck_سائز                = 1,
+        .type_سائز                = حجم(int64_t),
         .is_quantized             = false,
     },
     [GGML_TYPE_F64] = {
         .type_name                = "f64",
-        .blck_size                = 1,
-        .type_size                = sizeof(double),
+        .blck_سائز                = 1,
+        .type_سائز                = حجم(دوہرا),
         .is_quantized             = false,
     },
     [GGML_TYPE_F32] = {
         .type_name                = "f32",
-        .blck_size                = 1,
-        .type_size                = sizeof(float),
+        .blck_سائز                = 1,
+        .type_سائز                = حجم(اعشاری),
         .is_quantized             = false,
     },
     [GGML_TYPE_F16] = {
         .type_name                = "f16",
-        .blck_size                = 1,
-        .type_size                = sizeof(ggml_fp16_t),
+        .blck_سائز                = 1,
+        .type_سائز                = حجم(ggml_fp16_t),
         .is_quantized             = false,
-        .to_float                 = (ggml_to_float_t) ggml_fp16_to_fp32_row,
-        .from_float_ref           = (ggml_from_float_t) ggml_fp32_to_fp16_row,
+        .مقصد_float                 = (ggml_مقصد_float_t) ggml_fp16_مقصد_fp32_صف,
+        .from_float_ref           = (ggml_from_float_t) ggml_fp32_مقصد_fp16_صف,
     },
     [GGML_TYPE_Q1_0] = {
         .type_name                = "q1_0",
-        .blck_size                = QK1_0,
-        .type_size                = sizeof(block_q1_0),
+        .blck_سائز                = QK1_0,
+        .type_سائز                = حجم(بلاک_q1_0),
         .is_quantized             = true,
-        .to_float                 = (ggml_to_float_t) dequantize_row_q1_0,
-        .from_float_ref           = (ggml_from_float_t) quantize_row_q1_0_ref,
+        .مقصد_float                 = (ggml_مقصد_float_t) dequantize_صف_q1_0,
+        .from_float_ref           = (ggml_from_float_t) quantize_صف_q1_0_ref,
     },
     [GGML_TYPE_Q2_0] = {
         .type_name                = "q2_0",
-        .blck_size                = QK2_0,
-        .type_size                = sizeof(block_q2_0),
+        .blck_سائز                = QK2_0,
+        .type_سائز                = حجم(بلاک_q2_0),
         .is_quantized             = true,
-        .to_float                 = (ggml_to_float_t) dequantize_row_q2_0,
-        .from_float_ref           = (ggml_from_float_t) quantize_row_q2_0_ref,
+        .مقصد_float                 = (ggml_مقصد_float_t) dequantize_صف_q2_0,
+        .from_float_ref           = (ggml_from_float_t) quantize_صف_q2_0_ref,
     },
     [GGML_TYPE_Q4_0] = {
         .type_name                = "q4_0",
-        .blck_size                = QK4_0,
-        .type_size                = sizeof(block_q4_0),
+        .blck_سائز                = QK4_0,
+        .type_سائز                = حجم(بلاک_q4_0),
         .is_quantized             = true,
-        .to_float                 = (ggml_to_float_t) dequantize_row_q4_0,
-        .from_float_ref           = (ggml_from_float_t) quantize_row_q4_0_ref,
+        .مقصد_float                 = (ggml_مقصد_float_t) dequantize_صف_q4_0,
+        .from_float_ref           = (ggml_from_float_t) quantize_صف_q4_0_ref,
     },
     [GGML_TYPE_Q4_1] = {
         .type_name                = "q4_1",
-        .blck_size                = QK4_1,
-        .type_size                = sizeof(block_q4_1),
+        .blck_سائز                = QK4_1,
+        .type_سائز                = حجم(بلاک_q4_1),
         .is_quantized             = true,
-        .to_float                 = (ggml_to_float_t) dequantize_row_q4_1,
-        .from_float_ref           = (ggml_from_float_t) quantize_row_q4_1_ref,
+        .مقصد_float                 = (ggml_مقصد_float_t) dequantize_صف_q4_1,
+        .from_float_ref           = (ggml_from_float_t) quantize_صف_q4_1_ref,
     },
     [4] = { // GGML_TYPE_Q4_2
         .type_name                = "DEPRECATED",
-        .blck_size                = 0,
-        .type_size                = 0,
+        .blck_سائز                = 0,
+        .type_سائز                = 0,
         .is_quantized             = false,
     },
     [5] = { // GGML_TYPE_Q4_3
         .type_name                = "DEPRECATED",
-        .blck_size                = 0,
-        .type_size                = 0,
+        .blck_سائز                = 0,
+        .type_سائز                = 0,
         .is_quantized             = false,
     },
     [GGML_TYPE_Q5_0] = {
         .type_name                = "q5_0",
-        .blck_size                = QK5_0,
-        .type_size                = sizeof(block_q5_0),
+        .blck_سائز                = QK5_0,
+        .type_سائز                = حجم(بلاک_q5_0),
         .is_quantized             = true,
-        .to_float                 = (ggml_to_float_t) dequantize_row_q5_0,
-        .from_float_ref           = (ggml_from_float_t) quantize_row_q5_0_ref,
+        .مقصد_float                 = (ggml_مقصد_float_t) dequantize_صف_q5_0,
+        .from_float_ref           = (ggml_from_float_t) quantize_صف_q5_0_ref,
     },
     [GGML_TYPE_Q5_1] = {
         .type_name                = "q5_1",
-        .blck_size                = QK5_1,
-        .type_size                = sizeof(block_q5_1),
+        .blck_سائز                = QK5_1,
+        .type_سائز                = حجم(بلاک_q5_1),
         .is_quantized             = true,
-        .to_float                 = (ggml_to_float_t) dequantize_row_q5_1,
-        .from_float_ref           = (ggml_from_float_t) quantize_row_q5_1_ref,
+        .مقصد_float                 = (ggml_مقصد_float_t) dequantize_صف_q5_1,
+        .from_float_ref           = (ggml_from_float_t) quantize_صف_q5_1_ref,
     },
     [GGML_TYPE_Q8_0] = {
         .type_name                = "q8_0",
-        .blck_size                = QK8_0,
-        .type_size                = sizeof(block_q8_0),
+        .blck_سائز                = QK8_0,
+        .type_سائز                = حجم(بلاک_q8_0),
         .is_quantized             = true,
-        .to_float                 = (ggml_to_float_t) dequantize_row_q8_0,
-        .from_float_ref           = (ggml_from_float_t) quantize_row_q8_0_ref,
+        .مقصد_float                 = (ggml_مقصد_float_t) dequantize_صف_q8_0,
+        .from_float_ref           = (ggml_from_float_t) quantize_صف_q8_0_ref,
     },
     [GGML_TYPE_Q8_1] = {
         .type_name                = "q8_1",
-        .blck_size                = QK8_1,
-        .type_size                = sizeof(block_q8_1),
+        .blck_سائز                = QK8_1,
+        .type_سائز                = حجم(بلاک_q8_1),
         .is_quantized             = true,
-        .from_float_ref           = (ggml_from_float_t) quantize_row_q8_1_ref,
+        .from_float_ref           = (ggml_from_float_t) quantize_صف_q8_1_ref,
     },
     [GGML_TYPE_MXFP4] = {
         .type_name                = "mxfp4",
-        .blck_size                = QK_MXFP4,
-        .type_size                = sizeof(block_mxfp4),
+        .blck_سائز                = QK_MXFP4,
+        .type_سائز                = حجم(بلاک_mxfp4),
         .is_quantized             = true,
-        .to_float                 = (ggml_to_float_t) dequantize_row_mxfp4,
-        .from_float_ref           = (ggml_from_float_t)quantize_row_mxfp4_ref,
+        .مقصد_float                 = (ggml_مقصد_float_t) dequantize_صف_mxfp4,
+        .from_float_ref           = (ggml_from_float_t)quantize_صف_mxfp4_ref,
     },
     [GGML_TYPE_NVFP4] = {
         .type_name                = "nvfp4",
-        .blck_size                = QK_NVFP4,
-        .type_size                = sizeof(block_nvfp4),
+        .blck_سائز                = QK_NVFP4,
+        .type_سائز                = حجم(بلاک_nvfp4),
         .is_quantized             = true,
-        .to_float                 = (ggml_to_float_t) dequantize_row_nvfp4,
-        .from_float_ref           = (ggml_from_float_t)quantize_row_nvfp4_ref,
+        .مقصد_float                 = (ggml_مقصد_float_t) dequantize_صف_nvfp4,
+        .from_float_ref           = (ggml_from_float_t)quantize_صف_nvfp4_ref,
     },
     [GGML_TYPE_Q2_K] = {
         .type_name                = "q2_K",
-        .blck_size                = QK_K,
-        .type_size                = sizeof(block_q2_K),
+        .blck_سائز                = QK_K,
+        .type_سائز                = حجم(بلاک_q2_K),
         .is_quantized             = true,
-        .to_float                 = (ggml_to_float_t) dequantize_row_q2_K,
-        .from_float_ref           = (ggml_from_float_t) quantize_row_q2_K_ref,
+        .مقصد_float                 = (ggml_مقصد_float_t) dequantize_صف_q2_K,
+        .from_float_ref           = (ggml_from_float_t) quantize_صف_q2_K_ref,
     },
     [GGML_TYPE_Q3_K] = {
         .type_name                = "q3_K",
-        .blck_size                = QK_K,
-        .type_size                = sizeof(block_q3_K),
+        .blck_سائز                = QK_K,
+        .type_سائز                = حجم(بلاک_q3_K),
         .is_quantized             = true,
-        .to_float                 = (ggml_to_float_t) dequantize_row_q3_K,
-        .from_float_ref           = (ggml_from_float_t) quantize_row_q3_K_ref,
+        .مقصد_float                 = (ggml_مقصد_float_t) dequantize_صف_q3_K,
+        .from_float_ref           = (ggml_from_float_t) quantize_صف_q3_K_ref,
     },
     [GGML_TYPE_Q4_K] = {
         .type_name                = "q4_K",
-        .blck_size                = QK_K,
-        .type_size                = sizeof(block_q4_K),
+        .blck_سائز                = QK_K,
+        .type_سائز                = حجم(بلاک_q4_K),
         .is_quantized             = true,
-        .to_float                 = (ggml_to_float_t) dequantize_row_q4_K,
-        .from_float_ref           = (ggml_from_float_t) quantize_row_q4_K_ref,
+        .مقصد_float                 = (ggml_مقصد_float_t) dequantize_صف_q4_K,
+        .from_float_ref           = (ggml_from_float_t) quantize_صف_q4_K_ref,
     },
     [GGML_TYPE_Q5_K] = {
         .type_name                = "q5_K",
-        .blck_size                = QK_K,
-        .type_size                = sizeof(block_q5_K),
+        .blck_سائز                = QK_K,
+        .type_سائز                = حجم(بلاک_q5_K),
         .is_quantized             = true,
-        .to_float                 = (ggml_to_float_t) dequantize_row_q5_K,
-        .from_float_ref           = (ggml_from_float_t) quantize_row_q5_K_ref,
+        .مقصد_float                 = (ggml_مقصد_float_t) dequantize_صف_q5_K,
+        .from_float_ref           = (ggml_from_float_t) quantize_صف_q5_K_ref,
     },
     [GGML_TYPE_Q6_K] = {
         .type_name                = "q6_K",
-        .blck_size                = QK_K,
-        .type_size                = sizeof(block_q6_K),
+        .blck_سائز                = QK_K,
+        .type_سائز                = حجم(بلاک_q6_K),
         .is_quantized             = true,
-        .to_float                 = (ggml_to_float_t) dequantize_row_q6_K,
-        .from_float_ref           = (ggml_from_float_t) quantize_row_q6_K_ref,
+        .مقصد_float                 = (ggml_مقصد_float_t) dequantize_صف_q6_K,
+        .from_float_ref           = (ggml_from_float_t) quantize_صف_q6_K_ref,
     },
     [GGML_TYPE_IQ2_XXS] = {
         .type_name                = "iq2_xxs",
-        .blck_size                = QK_K,
-        .type_size                = sizeof(block_iq2_xxs),
+        .blck_سائز                = QK_K,
+        .type_سائز                = حجم(بلاک_iq2_xxs),
         .is_quantized             = true,
-        .to_float                 = (ggml_to_float_t) dequantize_row_iq2_xxs,
-        .from_float_ref           = NULL,
+        .مقصد_float                 = (ggml_مقصد_float_t) dequantize_صف_iq2_xxs,
+        .from_float_ref           = تہی,
     },
     [GGML_TYPE_IQ2_XS] = {
         .type_name                = "iq2_xs",
-        .blck_size                = QK_K,
-        .type_size                = sizeof(block_iq2_xs),
+        .blck_سائز                = QK_K,
+        .type_سائز                = حجم(بلاک_iq2_xs),
         .is_quantized             = true,
-        .to_float                 = (ggml_to_float_t) dequantize_row_iq2_xs,
-        .from_float_ref           = NULL,
+        .مقصد_float                 = (ggml_مقصد_float_t) dequantize_صف_iq2_xs,
+        .from_float_ref           = تہی,
     },
     [GGML_TYPE_IQ3_XXS] = {
         .type_name                = "iq3_xxs",
-        .blck_size                = QK_K,
-        .type_size                = sizeof(block_iq3_xxs),
+        .blck_سائز                = QK_K,
+        .type_سائز                = حجم(بلاک_iq3_xxs),
         .is_quantized             = true,
-        .to_float                 = (ggml_to_float_t) dequantize_row_iq3_xxs,
-        .from_float_ref           = (ggml_from_float_t)quantize_row_iq3_xxs_ref,
+        .مقصد_float                 = (ggml_مقصد_float_t) dequantize_صف_iq3_xxs,
+        .from_float_ref           = (ggml_from_float_t)quantize_صف_iq3_xxs_ref,
     },
     [GGML_TYPE_IQ3_S] = {
         .type_name                = "iq3_s",
-        .blck_size                = QK_K,
-        .type_size                = sizeof(block_iq3_s),
+        .blck_سائز                = QK_K,
+        .type_سائز                = حجم(بلاک_iq3_s),
         .is_quantized             = true,
-        .to_float                 = (ggml_to_float_t) dequantize_row_iq3_s,
-        .from_float_ref           = (ggml_from_float_t)quantize_row_iq3_s_ref,
+        .مقصد_float                 = (ggml_مقصد_float_t) dequantize_صف_iq3_s,
+        .from_float_ref           = (ggml_from_float_t)quantize_صف_iq3_s_ref,
     },
     [GGML_TYPE_IQ2_S] = {
         .type_name                = "iq2_s",
-        .blck_size                = QK_K,
-        .type_size                = sizeof(block_iq2_s),
+        .blck_سائز                = QK_K,
+        .type_سائز                = حجم(بلاک_iq2_s),
         .is_quantized             = true,
-        .to_float                 = (ggml_to_float_t) dequantize_row_iq2_s,
-        .from_float_ref           = (ggml_from_float_t)quantize_row_iq2_s_ref,
+        .مقصد_float                 = (ggml_مقصد_float_t) dequantize_صف_iq2_s,
+        .from_float_ref           = (ggml_from_float_t)quantize_صف_iq2_s_ref,
     },
     [GGML_TYPE_IQ1_S] = {
         .type_name                = "iq1_s",
-        .blck_size                = QK_K,
-        .type_size                = sizeof(block_iq1_s),
+        .blck_سائز                = QK_K,
+        .type_سائز                = حجم(بلاک_iq1_s),
         .is_quantized             = true,
-        .to_float                 = (ggml_to_float_t) dequantize_row_iq1_s,
-        .from_float_ref           = NULL,
+        .مقصد_float                 = (ggml_مقصد_float_t) dequantize_صف_iq1_s,
+        .from_float_ref           = تہی,
     },
     [GGML_TYPE_IQ1_M] = {
         .type_name                = "iq1_m",
-        .blck_size                = QK_K,
-        .type_size                = sizeof(block_iq1_m),
+        .blck_سائز                = QK_K,
+        .type_سائز                = حجم(بلاک_iq1_m),
         .is_quantized             = true,
-        .to_float                 = (ggml_to_float_t) dequantize_row_iq1_m,
-        .from_float_ref           = NULL,
+        .مقصد_float                 = (ggml_مقصد_float_t) dequantize_صف_iq1_m,
+        .from_float_ref           = تہی,
     },
     [GGML_TYPE_IQ4_NL] = {
         .type_name                = "iq4_nl",
-        .blck_size                = QK4_NL,
-        .type_size                = sizeof(block_iq4_nl),
+        .blck_سائز                = QK4_NL,
+        .type_سائز                = حجم(بلاک_iq4_nl),
         .is_quantized             = true,
-        .to_float                 = (ggml_to_float_t) dequantize_row_iq4_nl,
-        .from_float_ref           = (ggml_from_float_t)quantize_row_iq4_nl_ref,
+        .مقصد_float                 = (ggml_مقصد_float_t) dequantize_صف_iq4_nl,
+        .from_float_ref           = (ggml_from_float_t)quantize_صف_iq4_nl_ref,
     },
     [GGML_TYPE_IQ4_XS] = {
         .type_name                = "iq4_xs",
-        .blck_size                = QK_K,
-        .type_size                = sizeof(block_iq4_xs),
+        .blck_سائز                = QK_K,
+        .type_سائز                = حجم(بلاک_iq4_xs),
         .is_quantized             = true,
-        .to_float                 = (ggml_to_float_t) dequantize_row_iq4_xs,
-        .from_float_ref           = (ggml_from_float_t)quantize_row_iq4_xs_ref,
+        .مقصد_float                 = (ggml_مقصد_float_t) dequantize_صف_iq4_xs,
+        .from_float_ref           = (ggml_from_float_t)quantize_صف_iq4_xs_ref,
     },
     [GGML_TYPE_Q8_K] = {
         .type_name                = "q8_K",
-        .blck_size                = QK_K,
-        .type_size                = sizeof(block_q8_K),
+        .blck_سائز                = QK_K,
+        .type_سائز                = حجم(بلاک_q8_K),
         .is_quantized             = true,
     },
     [GGML_TYPE_BF16] = {
         .type_name                = "bf16",
-        .blck_size                = 1,
-        .type_size                = sizeof(ggml_bf16_t),
+        .blck_سائز                = 1,
+        .type_سائز                = حجم(ggml_bf16_t),
         .is_quantized             = false,
-        .to_float                 = (ggml_to_float_t) ggml_bf16_to_fp32_row,
-        .from_float_ref           = (ggml_from_float_t) ggml_fp32_to_bf16_row_ref,
+        .مقصد_float                 = (ggml_مقصد_float_t) ggml_bf16_مقصد_fp32_صف,
+        .from_float_ref           = (ggml_from_float_t) ggml_fp32_مقصد_bf16_صف_ref,
     },
     [31] = { // GGML_TYPE_Q4_0_4_4
         .type_name                = "TYPE_Q4_0_4_4 REMOVED, use Q4_0 with runtime repacking",
-        .blck_size                = 0,
-        .type_size                = 0,
+        .blck_سائز                = 0,
+        .type_سائز                = 0,
         .is_quantized             = false,
     },
     [32] = { // GGML_TYPE_Q4_0_4_8
         .type_name                = "TYPE_Q4_0_4_8 REMOVED, use Q4_0 with runtime repacking",
-        .blck_size                = 0,
-        .type_size                = 0,
+        .blck_سائز                = 0,
+        .type_سائز                = 0,
         .is_quantized             = false,
     },
     [33] = { // GGML_TYPE_Q4_0_8_8
         .type_name                = "TYPE_Q4_0_8_8 REMOVED, use Q4_0 with runtime repacking",
-        .blck_size                = 0,
-        .type_size                = 0,
+        .blck_سائز                = 0,
+        .type_سائز                = 0,
         .is_quantized             = false,
     },
     [GGML_TYPE_TQ1_0] = {
         .type_name                = "tq1_0",
-        .blck_size                = QK_K,
-        .type_size                = sizeof(block_tq1_0),
+        .blck_سائز                = QK_K,
+        .type_سائز                = حجم(بلاک_tq1_0),
         .is_quantized             = true,
-        .to_float                 = (ggml_to_float_t) dequantize_row_tq1_0,
-        .from_float_ref           = (ggml_from_float_t) quantize_row_tq1_0_ref,
+        .مقصد_float                 = (ggml_مقصد_float_t) dequantize_صف_tq1_0,
+        .from_float_ref           = (ggml_from_float_t) quantize_صف_tq1_0_ref,
     },
     [GGML_TYPE_TQ2_0] = {
         .type_name                = "tq2_0",
-        .blck_size                = QK_K,
-        .type_size                = sizeof(block_tq2_0),
+        .blck_سائز                = QK_K,
+        .type_سائز                = حجم(بلاک_tq2_0),
         .is_quantized             = true,
-        .to_float                 = (ggml_to_float_t) dequantize_row_tq2_0,
-        .from_float_ref           = (ggml_from_float_t) quantize_row_tq2_0_ref,
+        .مقصد_float                 = (ggml_مقصد_float_t) dequantize_صف_tq2_0,
+        .from_float_ref           = (ggml_from_float_t) quantize_صف_tq2_0_ref,
     },
     [36] = { // GGML_TYPE_IQ4_NL_4_4
         .type_name                = "TYPE_IQ4_NL_4_4 REMOVED, use IQ4_NL with runtime repacking",
-        .blck_size                = 0,
-        .type_size                = 0,
+        .blck_سائز                = 0,
+        .type_سائز                = 0,
         .is_quantized             = false,
     },
     [37] = { // GGML_TYPE_IQ4_NL_4_8
         .type_name                = "TYPE_IQ4_NL_4_8 REMOVED, use IQ4_NL with runtime repacking",
-        .blck_size                = 0,
-        .type_size                = 0,
+        .blck_سائز                = 0,
+        .type_سائز                = 0,
         .is_quantized             = false,
     },
     [38] = { // GGML_TYPE_IQ4_NL_8_8
         .type_name                = "TYPE_IQ4_NL_8_8 REMOVED, use IQ4_NL with runtime repacking",
-        .blck_size                = 0,
-        .type_size                = 0,
+        .blck_سائز                = 0,
+        .type_سائز                = 0,
         .is_quantized             = false,
     },
 };
 
-const struct ggml_type_traits * ggml_get_type_traits(enum ggml_type type) {
-    assert(type >= 0);
-    assert(type < GGML_TYPE_COUNT);
-    return &type_traits[type];
+ثابت ساخت ggml_type_traits * ggml_get_type_traits(شمار ggml_type type) {
+    أكد(type >= 0);
+    أكد(type < GGML_TYPE_گنتی);
+    واپس &type_traits[type];
 }
 
 //
 // ggml object
 //
 
-struct ggml_object {
+ساخت ggml_object {
     size_t offs;
-    size_t size;
+    size_t سائز;
 
-    struct ggml_object * next;
+    ساخت ggml_object * اگلا;
 
-    enum ggml_object_type type;
+    شمار ggml_object_type type;
 
-    char padding[4];
+    حرف padding[4];
 };
 
-static const size_t GGML_OBJECT_SIZE = sizeof(struct ggml_object);
+ساکن ثابت size_t GGML_OBJECT_سائز = حجم(ساخت ggml_object);
 
 //
 // ggml context
 //
 
-struct ggml_context {
-    size_t mem_size;
-    void * mem_buffer;
-    bool   mem_buffer_owned;
+ساخت ggml_context {
+    size_t mem_سائز;
+    خالی * mem_بفر;
+    bool   mem_بفر_owned;
     bool   no_alloc;
 
-    int    n_objects;
+    صحیح    n_objects;
 
-    struct ggml_object * objects_begin;
-    struct ggml_object * objects_end;
+    ساخت ggml_object * objects_begin;
+    ساخت ggml_object * objects_انتہا;
 };
 
 //
 // data types
 //
 
-static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
+ساکن ثابت حرف * GGML_OP_NAME[GGML_OP_گنتی] = {
     "NONE",
 
     "DUP",
@@ -1113,9 +1113,9 @@ static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
     "GLU",
 };
 
-static_assert(GGML_OP_COUNT == 102, "GGML_OP_COUNT != 102");
+static_assert(GGML_OP_گنتی == 102, "GGML_OP_COUNT != 102");
 
-static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
+ساکن ثابت حرف * GGML_OP_علامت[GGML_OP_گنتی] = {
     "none",
 
     "x",
@@ -1229,11 +1229,11 @@ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "glu(x)",
 };
 
-static_assert(GGML_OP_COUNT == 102, "GGML_OP_COUNT != 102");
+static_assert(GGML_OP_گنتی == 102, "GGML_OP_COUNT != 102");
 
-static_assert(GGML_OP_POOL_COUNT == 2, "GGML_OP_POOL_COUNT != 2");
+static_assert(GGML_OP_POOL_گنتی == 2, "GGML_OP_POOL_COUNT != 2");
 
-static const char * GGML_UNARY_OP_NAME[GGML_UNARY_OP_COUNT] = {
+ساکن ثابت حرف * GGML_UNARY_OP_NAME[GGML_UNARY_OP_گنتی] = {
     "ABS",
     "SGN",
     "NEG",
@@ -1258,9 +1258,9 @@ static const char * GGML_UNARY_OP_NAME[GGML_UNARY_OP_COUNT] = {
     "TRUNC",
 };
 
-static_assert(GGML_UNARY_OP_COUNT == 22, "GGML_UNARY_OP_COUNT != 22");
+static_assert(GGML_UNARY_OP_گنتی == 22, "GGML_UNARY_OP_COUNT != 22");
 
-static const char * GGML_GLU_OP_NAME[GGML_GLU_OP_COUNT] = {
+ساکن ثابت حرف * GGML_GLU_OP_NAME[GGML_GLU_OP_گنتی] = {
     "REGLU",
     "GEGLU",
     "SWIGLU",
@@ -1270,1345 +1270,1345 @@ static const char * GGML_GLU_OP_NAME[GGML_GLU_OP_COUNT] = {
     "SWIGLU_CLAMP",
 };
 
-static_assert(GGML_GLU_OP_COUNT == 7, "GGML_GLU_OP_COUNT != 7");
+static_assert(GGML_GLU_OP_گنتی == 7, "GGML_GLU_OP_COUNT != 7");
 
-static_assert(sizeof(struct ggml_object)%GGML_MEM_ALIGN == 0, "ggml_object size must be a multiple of GGML_MEM_ALIGN");
-static_assert(sizeof(struct ggml_tensor)%GGML_MEM_ALIGN == 0, "ggml_tensor size must be a multiple of GGML_MEM_ALIGN");
+static_assert(حجم(ساخت ggml_object)%GGML_MEM_ALIGN == 0, "ggml_object size must be a multiple of GGML_MEM_ALIGN");
+static_assert(حجم(ساخت ggml_tensor)%GGML_MEM_ALIGN == 0, "ggml_tensor size must be a multiple of GGML_MEM_ALIGN");
 
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ggml_print_object(const struct ggml_object * obj) {
+خالی ggml_print_object(ثابت ساخت ggml_object * obj) {
     GGML_LOG_INFO(" - ggml_object: type = %d, offset = %zu, size = %zu, next = %p\n",
-            obj->type, obj->offs, obj->size, (const void *) obj->next);
+            obj->type, obj->offs, obj->سائز, (ثابت خالی *) obj->اگلا);
 }
 
-void ggml_print_objects(const struct ggml_context * ctx) {
-    struct ggml_object * obj = ctx->objects_begin;
+خالی ggml_print_objects(ثابت ساخت ggml_context * ctx) {
+    ساخت ggml_object * obj = ctx->objects_begin;
 
-    GGML_LOG_INFO("%s: objects in context %p:\n", __func__, (const void *) ctx);
+    GGML_LOG_INFO("%s: objects in context %p:\n", __func__, (ثابت خالی *) ctx);
 
-    while (obj != NULL) {
+    جب (obj != تہی) {
         ggml_print_object(obj);
-        obj = obj->next;
+        obj = obj->اگلا;
     }
 
     GGML_LOG_INFO("%s: --- end ---\n", __func__);
 }
 
-int64_t ggml_nelements(const struct ggml_tensor * tensor) {
+int64_t ggml_nelements(ثابت ساخت ggml_tensor * tensor) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return tensor->ne[0]*tensor->ne[1]*tensor->ne[2]*tensor->ne[3];
+    واپس tensor->ne[0]*tensor->ne[1]*tensor->ne[2]*tensor->ne[3];
 }
 
-int64_t ggml_nrows(const struct ggml_tensor * tensor) {
+int64_t ggml_nrows(ثابت ساخت ggml_tensor * tensor) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return tensor->ne[1]*tensor->ne[2]*tensor->ne[3];
+    واپس tensor->ne[1]*tensor->ne[2]*tensor->ne[3];
 }
 
-size_t ggml_nbytes(const struct ggml_tensor * tensor) {
-    for (int i = 0; i < GGML_MAX_DIMS; ++i) {
-        if (tensor->ne[i] <= 0) {
-            return 0;
+size_t ggml_nbytes(ثابت ساخت ggml_tensor * tensor) {
+    برائے (صحیح i = 0; i < GGML_MAX_DIMS; ++i) {
+        اگر (tensor->ne[i] <= 0) {
+            واپس 0;
         }
     }
 
     size_t nbytes;
-    const size_t blck_size = ggml_blck_size(tensor->type);
-    if (blck_size == 1) {
-        nbytes = ggml_type_size(tensor->type);
-        for (int i = 0; i < GGML_MAX_DIMS; ++i) {
+    ثابت size_t blck_سائز = ggml_blck_سائز(tensor->type);
+    اگر (blck_سائز == 1) {
+        nbytes = ggml_type_سائز(tensor->type);
+        برائے (صحیح i = 0; i < GGML_MAX_DIMS; ++i) {
             nbytes += (tensor->ne[i] - 1)*tensor->nb[i];
         }
     }
-    else {
-        nbytes = tensor->ne[0]*tensor->nb[0]/blck_size;
-        for (int i = 1; i < GGML_MAX_DIMS; ++i) {
+    ورنہ {
+        nbytes = tensor->ne[0]*tensor->nb[0]/blck_سائز;
+        برائے (صحیح i = 1; i < GGML_MAX_DIMS; ++i) {
             nbytes += (tensor->ne[i] - 1)*tensor->nb[i];
         }
     }
 
-    return nbytes;
+    واپس nbytes;
 }
 
-size_t ggml_nbytes_pad(const struct ggml_tensor * tensor) {
-    return GGML_PAD(ggml_nbytes(tensor), GGML_MEM_ALIGN);
+size_t ggml_nbytes_pad(ثابت ساخت ggml_tensor * tensor) {
+    واپس GGML_PAD(ggml_nbytes(tensor), GGML_MEM_ALIGN);
 }
 
-int64_t ggml_blck_size(enum ggml_type type) {
-    assert(type >= 0);
-    assert(type < GGML_TYPE_COUNT);
-    return type_traits[type].blck_size;
+int64_t ggml_blck_سائز(شمار ggml_type type) {
+    أكد(type >= 0);
+    أكد(type < GGML_TYPE_گنتی);
+    واپس type_traits[type].blck_سائز;
 }
 
-size_t ggml_type_size(enum ggml_type type) {
-    assert(type >= 0);
-    assert(type < GGML_TYPE_COUNT);
-    return type_traits[type].type_size;
+size_t ggml_type_سائز(شمار ggml_type type) {
+    أكد(type >= 0);
+    أكد(type < GGML_TYPE_گنتی);
+    واپس type_traits[type].type_سائز;
 }
 
-size_t ggml_row_size(enum ggml_type type, int64_t ne) {
-    assert(type >= 0);
-    assert(type < GGML_TYPE_COUNT);
-    assert(ne % ggml_blck_size(type) == 0);
-    return ggml_type_size(type)*ne/ggml_blck_size(type);
+size_t ggml_صف_سائز(شمار ggml_type type, int64_t ne) {
+    أكد(type >= 0);
+    أكد(type < GGML_TYPE_گنتی);
+    أكد(ne % ggml_blck_سائز(type) == 0);
+    واپس ggml_type_سائز(type)*ne/ggml_blck_سائز(type);
 }
 
-double ggml_type_sizef(enum ggml_type type) {
-    assert(type >= 0);
-    assert(type < GGML_TYPE_COUNT);
-    return ((double)(type_traits[type].type_size))/type_traits[type].blck_size;
+دوہرا ggml_type_sizef(شمار ggml_type type) {
+    أكد(type >= 0);
+    أكد(type < GGML_TYPE_گنتی);
+    واپس ((دوہرا)(type_traits[type].type_سائز))/type_traits[type].blck_سائز;
 }
 
-const char * ggml_type_name(enum ggml_type type) {
-    assert(type >= 0);
-    assert(type < GGML_TYPE_COUNT);
-    return type_traits[type].type_name;
+ثابت حرف * ggml_type_name(شمار ggml_type type) {
+    أكد(type >= 0);
+    أكد(type < GGML_TYPE_گنتی);
+    واپس type_traits[type].type_name;
 }
 
-bool ggml_is_quantized(enum ggml_type type) {
-    assert(type >= 0);
-    assert(type < GGML_TYPE_COUNT);
-    return type_traits[type].is_quantized;
+bool ggml_is_quantized(شمار ggml_type type) {
+    أكد(type >= 0);
+    أكد(type < GGML_TYPE_گنتی);
+    واپس type_traits[type].is_quantized;
 }
 
-const char * ggml_op_name(enum ggml_op op) {
-    return GGML_OP_NAME[op];
+ثابت حرف * ggml_op_name(شمار ggml_op op) {
+    واپس GGML_OP_NAME[op];
 }
 
-const char * ggml_op_symbol(enum ggml_op op) {
-    return GGML_OP_SYMBOL[op];
+ثابت حرف * ggml_op_علامت(شمار ggml_op op) {
+    واپس GGML_OP_علامت[op];
 }
 
-const char * ggml_unary_op_name(enum ggml_unary_op op) {
-    return GGML_UNARY_OP_NAME[op];
+ثابت حرف * ggml_unary_op_name(شمار ggml_unary_op op) {
+    واپس GGML_UNARY_OP_NAME[op];
 }
 
-const char * ggml_glu_op_name(enum ggml_glu_op op) {
-    return GGML_GLU_OP_NAME[op];
+ثابت حرف * ggml_glu_op_name(شمار ggml_glu_op op) {
+    واپس GGML_GLU_OP_NAME[op];
 }
 
-const char * ggml_op_desc(const struct ggml_tensor * t) {
-    if (t->op == GGML_OP_UNARY) {
-        enum ggml_unary_op uop = ggml_get_unary_op(t);
-        return ggml_unary_op_name(uop);
+ثابت حرف * ggml_op_desc(ثابت ساخت ggml_tensor * t) {
+    اگر (t->op == GGML_OP_UNARY) {
+        شمار ggml_unary_op uop = ggml_get_unary_op(t);
+        واپس ggml_unary_op_name(uop);
     }
-    if (t->op == GGML_OP_GLU) {
-        enum ggml_glu_op gop = ggml_get_glu_op(t);
-        return ggml_glu_op_name(gop);
+    اگر (t->op == GGML_OP_GLU) {
+        شمار ggml_glu_op gop = ggml_get_glu_op(t);
+        واپس ggml_glu_op_name(gop);
     }
-    return ggml_op_name(t->op);
+    واپس ggml_op_name(t->op);
 }
 
-size_t ggml_element_size(const struct ggml_tensor * tensor) {
-    return ggml_type_size(tensor->type);
+size_t ggml_element_سائز(ثابت ساخت ggml_tensor * tensor) {
+    واپس ggml_type_سائز(tensor->type);
 }
 
-bool ggml_is_scalar(const struct ggml_tensor * tensor) {
+bool ggml_is_scalar(ثابت ساخت ggml_tensor * tensor) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return tensor->ne[0] == 1 && tensor->ne[1] == 1 && tensor->ne[2] == 1 && tensor->ne[3] == 1;
+    واپس tensor->ne[0] == 1 && tensor->ne[1] == 1 && tensor->ne[2] == 1 && tensor->ne[3] == 1;
 }
 
-bool ggml_is_vector(const struct ggml_tensor * tensor) {
+bool ggml_is_سمتیہ(ثابت ساخت ggml_tensor * tensor) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return tensor->ne[1] == 1 && tensor->ne[2] == 1 && tensor->ne[3] == 1;
+    واپس tensor->ne[1] == 1 && tensor->ne[2] == 1 && tensor->ne[3] == 1;
 }
 
-bool ggml_is_matrix(const struct ggml_tensor * tensor) {
+bool ggml_is_میٹرکس(ثابت ساخت ggml_tensor * tensor) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return tensor->ne[2] == 1 && tensor->ne[3] == 1;
+    واپس tensor->ne[2] == 1 && tensor->ne[3] == 1;
 }
 
-bool ggml_is_3d(const struct ggml_tensor * tensor) {
-    return tensor->ne[3] == 1;
+bool ggml_is_3d(ثابت ساخت ggml_tensor * tensor) {
+    واپس tensor->ne[3] == 1;
 }
 
-int ggml_n_dims(const struct ggml_tensor * tensor) {
-    for (int i = GGML_MAX_DIMS - 1; i >= 1; --i) {
-        if (tensor->ne[i] > 1) {
-            return i + 1;
+صحیح ggml_n_dims(ثابت ساخت ggml_tensor * tensor) {
+    برائے (صحیح i = GGML_MAX_DIMS - 1; i >= 1; --i) {
+        اگر (tensor->ne[i] > 1) {
+            واپس i + 1;
         }
     }
-    return 1;
+    واپس 1;
 }
 
-enum ggml_type ggml_ftype_to_ggml_type(enum ggml_ftype ftype) {
-    enum ggml_type wtype = GGML_TYPE_COUNT;
+شمار ggml_type ggml_ftype_مقصد_ggml_type(شمار ggml_ftype ftype) {
+    شمار ggml_type wtype = GGML_TYPE_گنتی;
 
-    switch (ftype) {
-        case GGML_FTYPE_ALL_F32:              wtype = GGML_TYPE_F32;   break;
-        case GGML_FTYPE_MOSTLY_F16:           wtype = GGML_TYPE_F16;   break;
-        case GGML_FTYPE_MOSTLY_BF16:          wtype = GGML_TYPE_BF16;  break;
-        case GGML_FTYPE_MOSTLY_Q4_0:          wtype = GGML_TYPE_Q4_0;  break;
-        case GGML_FTYPE_MOSTLY_Q4_1:          wtype = GGML_TYPE_Q4_1;  break;
-        case GGML_FTYPE_MOSTLY_Q1_0:          wtype = GGML_TYPE_Q1_0;  break;
-        case GGML_FTYPE_MOSTLY_Q2_0:          wtype = GGML_TYPE_Q2_0;  break;
-        case GGML_FTYPE_MOSTLY_Q5_0:          wtype = GGML_TYPE_Q5_0;  break;
-        case GGML_FTYPE_MOSTLY_Q5_1:          wtype = GGML_TYPE_Q5_1;  break;
-        case GGML_FTYPE_MOSTLY_Q8_0:          wtype = GGML_TYPE_Q8_0;  break;
-        case GGML_FTYPE_MOSTLY_MXFP4:         wtype = GGML_TYPE_MXFP4; break;
-        case GGML_FTYPE_MOSTLY_NVFP4:         wtype = GGML_TYPE_NVFP4; break;
-        case GGML_FTYPE_MOSTLY_Q2_K:          wtype = GGML_TYPE_Q2_K;  break;
-        case GGML_FTYPE_MOSTLY_Q3_K:          wtype = GGML_TYPE_Q3_K;  break;
-        case GGML_FTYPE_MOSTLY_Q4_K:          wtype = GGML_TYPE_Q4_K;  break;
-        case GGML_FTYPE_MOSTLY_Q5_K:          wtype = GGML_TYPE_Q5_K;  break;
-        case GGML_FTYPE_MOSTLY_Q6_K:          wtype = GGML_TYPE_Q6_K;  break;
-        case GGML_FTYPE_MOSTLY_IQ2_XXS:       wtype = GGML_TYPE_IQ2_XXS;  break;
-        case GGML_FTYPE_MOSTLY_IQ2_XS:        wtype = GGML_TYPE_IQ2_XS;   break;
-        case GGML_FTYPE_MOSTLY_IQ3_XXS:       wtype = GGML_TYPE_IQ3_XXS;  break;
-        case GGML_FTYPE_MOSTLY_IQ1_S:         wtype = GGML_TYPE_IQ1_S;    break;
-        case GGML_FTYPE_MOSTLY_IQ1_M:         wtype = GGML_TYPE_IQ1_M;    break;
-        case GGML_FTYPE_MOSTLY_IQ4_NL:        wtype = GGML_TYPE_IQ4_NL;   break;
-        case GGML_FTYPE_MOSTLY_IQ4_XS:        wtype = GGML_TYPE_IQ4_XS;   break;
-        case GGML_FTYPE_MOSTLY_IQ3_S:         wtype = GGML_TYPE_IQ3_S;    break;
-        case GGML_FTYPE_MOSTLY_IQ2_S:         wtype = GGML_TYPE_IQ2_S;    break;
-        case GGML_FTYPE_UNKNOWN:              wtype = GGML_TYPE_COUNT; break;
-        case GGML_FTYPE_MOSTLY_Q4_1_SOME_F16: wtype = GGML_TYPE_COUNT; break;
+    انتخاب (ftype) {
+        حالت GGML_FTYPE_ALL_F32:              wtype = GGML_TYPE_F32;   توڑو;
+        حالت GGML_FTYPE_MOSTLY_F16:           wtype = GGML_TYPE_F16;   توڑو;
+        حالت GGML_FTYPE_MOSTLY_BF16:          wtype = GGML_TYPE_BF16;  توڑو;
+        حالت GGML_FTYPE_MOSTLY_Q4_0:          wtype = GGML_TYPE_Q4_0;  توڑو;
+        حالت GGML_FTYPE_MOSTLY_Q4_1:          wtype = GGML_TYPE_Q4_1;  توڑو;
+        حالت GGML_FTYPE_MOSTLY_Q1_0:          wtype = GGML_TYPE_Q1_0;  توڑو;
+        حالت GGML_FTYPE_MOSTLY_Q2_0:          wtype = GGML_TYPE_Q2_0;  توڑو;
+        حالت GGML_FTYPE_MOSTLY_Q5_0:          wtype = GGML_TYPE_Q5_0;  توڑو;
+        حالت GGML_FTYPE_MOSTLY_Q5_1:          wtype = GGML_TYPE_Q5_1;  توڑو;
+        حالت GGML_FTYPE_MOSTLY_Q8_0:          wtype = GGML_TYPE_Q8_0;  توڑو;
+        حالت GGML_FTYPE_MOSTLY_MXFP4:         wtype = GGML_TYPE_MXFP4; توڑو;
+        حالت GGML_FTYPE_MOSTLY_NVFP4:         wtype = GGML_TYPE_NVFP4; توڑو;
+        حالت GGML_FTYPE_MOSTLY_Q2_K:          wtype = GGML_TYPE_Q2_K;  توڑو;
+        حالت GGML_FTYPE_MOSTLY_Q3_K:          wtype = GGML_TYPE_Q3_K;  توڑو;
+        حالت GGML_FTYPE_MOSTLY_Q4_K:          wtype = GGML_TYPE_Q4_K;  توڑو;
+        حالت GGML_FTYPE_MOSTLY_Q5_K:          wtype = GGML_TYPE_Q5_K;  توڑو;
+        حالت GGML_FTYPE_MOSTLY_Q6_K:          wtype = GGML_TYPE_Q6_K;  توڑو;
+        حالت GGML_FTYPE_MOSTLY_IQ2_XXS:       wtype = GGML_TYPE_IQ2_XXS;  توڑو;
+        حالت GGML_FTYPE_MOSTLY_IQ2_XS:        wtype = GGML_TYPE_IQ2_XS;   توڑو;
+        حالت GGML_FTYPE_MOSTLY_IQ3_XXS:       wtype = GGML_TYPE_IQ3_XXS;  توڑو;
+        حالت GGML_FTYPE_MOSTLY_IQ1_S:         wtype = GGML_TYPE_IQ1_S;    توڑو;
+        حالت GGML_FTYPE_MOSTLY_IQ1_M:         wtype = GGML_TYPE_IQ1_M;    توڑو;
+        حالت GGML_FTYPE_MOSTLY_IQ4_NL:        wtype = GGML_TYPE_IQ4_NL;   توڑو;
+        حالت GGML_FTYPE_MOSTLY_IQ4_XS:        wtype = GGML_TYPE_IQ4_XS;   توڑو;
+        حالت GGML_FTYPE_MOSTLY_IQ3_S:         wtype = GGML_TYPE_IQ3_S;    توڑو;
+        حالت GGML_FTYPE_MOSTLY_IQ2_S:         wtype = GGML_TYPE_IQ2_S;    توڑو;
+        حالت GGML_FTYPE_UNKNOWN:              wtype = GGML_TYPE_گنتی; توڑو;
+        حالت GGML_FTYPE_MOSTLY_Q4_1_SOME_F16: wtype = GGML_TYPE_گنتی; توڑو;
     }
 
-    GGML_ASSERT(wtype != GGML_TYPE_COUNT);
+    GGML_ASSERT(wtype != GGML_TYPE_گنتی);
 
-    return wtype;
+    واپس wtype;
 }
 
-size_t ggml_tensor_overhead(void) {
-    return GGML_OBJECT_SIZE + GGML_TENSOR_SIZE;
+size_t ggml_tensor_overhead(خالی) {
+    واپس GGML_OBJECT_سائز + GGML_TENSOR_سائز;
 }
 
-bool ggml_is_transposed(const struct ggml_tensor * tensor) {
-    return tensor->nb[0] > tensor->nb[1];
+bool ggml_is_transposed(ثابت ساخت ggml_tensor * tensor) {
+    واپس tensor->nb[0] > tensor->nb[1];
 }
 
-static bool ggml_is_contiguous_m_n(const struct ggml_tensor * tensor, int m, int n) {
-    size_t next_nb = ggml_type_size(tensor->type);
-    if (tensor->ne[0] != ggml_blck_size(tensor->type) && tensor->nb[0] != next_nb) {
-        return false;
+ساکن bool ggml_is_contiguous_m_n(ثابت ساخت ggml_tensor * tensor, صحیح m, صحیح n) {
+    size_t اگلا_nb = ggml_type_سائز(tensor->type);
+    اگر (tensor->ne[0] != ggml_blck_سائز(tensor->type) && tensor->nb[0] != اگلا_nb) {
+        واپس false;
     }
-    next_nb *= tensor->ne[0]/ggml_blck_size(tensor->type);
-    for (int i = 1; i < n; i++) {
-        if (i > m) {
-            if (tensor->ne[i] != 1 && tensor->nb[i] != next_nb) {
-                return false;
+    اگلا_nb *= tensor->ne[0]/ggml_blck_سائز(tensor->type);
+    برائے (صحیح i = 1; i < n; i++) {
+        اگر (i > m) {
+            اگر (tensor->ne[i] != 1 && tensor->nb[i] != اگلا_nb) {
+                واپس false;
             }
-            next_nb *= tensor->ne[i];
-        } else {
+            اگلا_nb *= tensor->ne[i];
+        } ورنہ {
             // this dimension does not need to be contiguous
-            next_nb = tensor->ne[i]*tensor->nb[i];
+            اگلا_nb = tensor->ne[i]*tensor->nb[i];
         }
     }
-    return true;
+    واپس true;
 }
 
-bool ggml_is_contiguous(const struct ggml_tensor * tensor) {
-    return ggml_is_contiguous_0(tensor);
+bool ggml_is_contiguous(ثابت ساخت ggml_tensor * tensor) {
+    واپس ggml_is_contiguous_0(tensor);
 }
 
-bool ggml_is_contiguous_0(const struct ggml_tensor * tensor) {
-    return ggml_is_contiguous_m_n(tensor, 0, GGML_MAX_DIMS);
+bool ggml_is_contiguous_0(ثابت ساخت ggml_tensor * tensor) {
+    واپس ggml_is_contiguous_m_n(tensor, 0, GGML_MAX_DIMS);
 }
 
-bool ggml_is_contiguous_1(const struct ggml_tensor * tensor) {
-    return ggml_is_contiguous_m_n(tensor, 1, GGML_MAX_DIMS);
+bool ggml_is_contiguous_1(ثابت ساخت ggml_tensor * tensor) {
+    واپس ggml_is_contiguous_m_n(tensor, 1, GGML_MAX_DIMS);
 }
 
-bool ggml_is_contiguous_2(const struct ggml_tensor * tensor) {
-    return ggml_is_contiguous_m_n(tensor, 2, GGML_MAX_DIMS);
+bool ggml_is_contiguous_2(ثابت ساخت ggml_tensor * tensor) {
+    واپس ggml_is_contiguous_m_n(tensor, 2, GGML_MAX_DIMS);
 }
 
-bool ggml_is_contiguous_to_1(const struct ggml_tensor * tensor) {
-    return ggml_is_contiguous_m_n(tensor, 0, 1);
+bool ggml_is_contiguous_مقصد_1(ثابت ساخت ggml_tensor * tensor) {
+    واپس ggml_is_contiguous_m_n(tensor, 0, 1);
 }
 
-bool ggml_is_contiguous_to_2(const struct ggml_tensor * tensor) {
-    return ggml_is_contiguous_m_n(tensor, 0, 2);
+bool ggml_is_contiguous_مقصد_2(ثابت ساخت ggml_tensor * tensor) {
+    واپس ggml_is_contiguous_m_n(tensor, 0, 2);
 }
 
-bool ggml_is_contiguous_to_3(const struct ggml_tensor * tensor) {
-    return ggml_is_contiguous_m_n(tensor, 0, 3);
+bool ggml_is_contiguous_مقصد_3(ثابت ساخت ggml_tensor * tensor) {
+    واپس ggml_is_contiguous_m_n(tensor, 0, 3);
 }
 
-bool ggml_is_contiguously_allocated(const struct ggml_tensor * tensor) {
-    return ggml_nbytes(tensor) == ggml_nelements(tensor) * ggml_type_size(tensor->type)/ggml_blck_size(tensor->type);
+bool ggml_is_contiguously_allocated(ثابت ساخت ggml_tensor * tensor) {
+    واپس ggml_nbytes(tensor) == ggml_nelements(tensor) * ggml_type_سائز(tensor->type)/ggml_blck_سائز(tensor->type);
 }
 
-bool ggml_is_permuted(const struct ggml_tensor * tensor) {
+bool ggml_is_permuted(ثابت ساخت ggml_tensor * tensor) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return tensor->nb[0] > tensor->nb[1] || tensor->nb[1] > tensor->nb[2] || tensor->nb[2] > tensor->nb[3];
+    واپس tensor->nb[0] > tensor->nb[1] || tensor->nb[1] > tensor->nb[2] || tensor->nb[2] > tensor->nb[3];
 }
 
-bool ggml_is_contiguous_channels(const struct ggml_tensor * tensor) {
-    return
+bool ggml_is_contiguous_channels(ثابت ساخت ggml_tensor * tensor) {
+    واپس
         tensor->nb[0] > tensor->nb[2] &&
         tensor->nb[1] > tensor->nb[0] &&
-        tensor->nb[2] == ggml_type_size(tensor->type);
+        tensor->nb[2] == ggml_type_سائز(tensor->type);
 }
 
-bool ggml_is_contiguous_rows(const struct ggml_tensor * tensor) {
-    return
-        tensor->ne[0] == ggml_blck_size(tensor->type) ||
-        tensor->nb[0] == ggml_type_size(tensor->type);
+bool ggml_is_contiguous_صفیں(ثابت ساخت ggml_tensor * tensor) {
+    واپس
+        tensor->ne[0] == ggml_blck_سائز(tensor->type) ||
+        tensor->nb[0] == ggml_type_سائز(tensor->type);
 }
 
-static inline bool ggml_is_padded_1d(const struct ggml_tensor * tensor) {
+ساکن اندرونی bool ggml_is_padded_1d(ثابت ساخت ggml_tensor * tensor) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return
-        tensor->nb[0] == ggml_type_size(tensor->type) &&
+    واپس
+        tensor->nb[0] == ggml_type_سائز(tensor->type) &&
         tensor->nb[2] == tensor->nb[1]*tensor->ne[1] &&
         tensor->nb[3] == tensor->nb[2]*tensor->ne[2];
 }
 
-bool ggml_is_empty(const struct ggml_tensor * tensor) {
-    for (int i = 0; i < GGML_MAX_DIMS; ++i) {
-        if (tensor->ne[i] == 0) {
+bool ggml_is_خالی_خانے(ثابت ساخت ggml_tensor * tensor) {
+    برائے (صحیح i = 0; i < GGML_MAX_DIMS; ++i) {
+        اگر (tensor->ne[i] == 0) {
             // empty if any dimension has no elements
-            return true;
+            واپس true;
         }
     }
-    return false;
+    واپس false;
 }
 
-bool ggml_are_same_shape(const struct ggml_tensor * t0, const struct ggml_tensor * t1) {
+bool ggml_are_same_shape(ثابت ساخت ggml_tensor * t0, ثابت ساخت ggml_tensor * t1) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return
+    واپس
         (t0->ne[0] == t1->ne[0]) &&
         (t0->ne[1] == t1->ne[1]) &&
         (t0->ne[2] == t1->ne[2]) &&
         (t0->ne[3] == t1->ne[3]);
 }
 
-bool ggml_are_same_stride(const struct ggml_tensor * t0, const struct ggml_tensor * t1) {
+bool ggml_are_same_stride(ثابت ساخت ggml_tensor * t0, ثابت ساخت ggml_tensor * t1) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return
+    واپس
         (t0->nb[0] == t1->nb[0]) &&
         (t0->nb[1] == t1->nb[1]) &&
         (t0->nb[2] == t1->nb[2]) &&
         (t0->nb[3] == t1->nb[3]);
 }
 
-bool ggml_is_view(const struct ggml_tensor * t) {
-    return ggml_impl_is_view(t);
+bool ggml_is_view(ثابت ساخت ggml_tensor * t) {
+    واپس ggml_impl_is_view(t);
 }
 
 // check if t1 can be represented as a repetition of t0
-bool ggml_can_repeat(const struct ggml_tensor * t0, const struct ggml_tensor * t1) {
+bool ggml_can_repeat(ثابت ساخت ggml_tensor * t0, ثابت ساخت ggml_tensor * t1) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return ggml_is_empty(t0) ? ggml_is_empty(t1) :
+    واپس ggml_is_خالی_خانے(t0) ? ggml_is_خالی_خانے(t1) :
         (t1->ne[0]%t0->ne[0] == 0) &&
         (t1->ne[1]%t0->ne[1] == 0) &&
         (t1->ne[2]%t0->ne[2] == 0) &&
         (t1->ne[3]%t0->ne[3] == 0);
 }
 
-static inline bool ggml_can_repeat_rows(const struct ggml_tensor * t0, const struct ggml_tensor * t1) {
+ساکن اندرونی bool ggml_can_repeat_صفیں(ثابت ساخت ggml_tensor * t0, ثابت ساخت ggml_tensor * t1) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return (t0->ne[0] == t1->ne[0]) && ggml_can_repeat(t0, t1);
+    واپس (t0->ne[0] == t1->ne[0]) && ggml_can_repeat(t0, t1);
 }
 
 // assert that pointer is aligned to GGML_MEM_ALIGN
-#define GGML_ASSERT_ALIGNED(ptr) \
+#تعریف_کرو GGML_ASSERT_ALIGNED(ptr) \
     GGML_ASSERT(((uintptr_t) (ptr))%GGML_MEM_ALIGN == 0)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-struct ggml_context * ggml_init(struct ggml_init_params params) {
-    static bool is_first_call = true;
+ساخت ggml_context * ggml_init(ساخت ggml_init_params params) {
+    ساکن bool is_پہلا_call = true;
 
-    ggml_critical_section_start();
+    ggml_critical_section_آغاز();
 
-    if (is_first_call) {
+    اگر (is_پہلا_call) {
         // initialize time system (required on Windows)
-        ggml_time_init();
+        ggml_وقت_init();
 
-        is_first_call = false;
+        is_پہلا_call = false;
     }
 
-    ggml_critical_section_end();
+    ggml_critical_section_انتہا();
 
-    struct ggml_context * ctx = GGML_MALLOC(sizeof(struct ggml_context));
+    ساخت ggml_context * ctx = GGML_MALLOC(حجم(ساخت ggml_context));
 
     // allow to call ggml_init with 0 size
-    if (params.mem_size == 0) {
-        params.mem_size = GGML_MEM_ALIGN;
+    اگر (params.mem_سائز == 0) {
+        params.mem_سائز = GGML_MEM_ALIGN;
     }
 
-    const size_t mem_size = params.mem_buffer ? params.mem_size : GGML_PAD(params.mem_size, GGML_MEM_ALIGN);
+    ثابت size_t mem_سائز = params.mem_بفر ? params.mem_سائز : GGML_PAD(params.mem_سائز, GGML_MEM_ALIGN);
 
-    *ctx = (struct ggml_context) {
-        /*.mem_size           =*/ mem_size,
-        /*.mem_buffer         =*/ params.mem_buffer ? params.mem_buffer : ggml_aligned_malloc(mem_size),
-        /*.mem_buffer_owned   =*/ params.mem_buffer ? false : true,
+    *ctx = (ساخت ggml_context) {
+        /*.mem_size           =*/ mem_سائز,
+        /*.mem_buffer         =*/ params.mem_بفر ? params.mem_بفر : ggml_aligned_malloc(mem_سائز),
+        /*.mem_buffer_owned   =*/ params.mem_بفر ? false : true,
         /*.no_alloc           =*/ params.no_alloc,
         /*.n_objects          =*/ 0,
-        /*.objects_begin      =*/ NULL,
-        /*.objects_end        =*/ NULL,
+        /*.objects_begin      =*/ تہی,
+        /*.objects_end        =*/ تہی,
     };
 
-    GGML_ASSERT(ctx->mem_buffer != NULL);
+    GGML_ASSERT(ctx->mem_بفر != تہی);
 
-    GGML_ASSERT_ALIGNED(ctx->mem_buffer);
+    GGML_ASSERT_ALIGNED(ctx->mem_بفر);
 
     GGML_PRINT_DEBUG("%s: context initialized\n", __func__);
 
-    return ctx;
+    واپس ctx;
 }
 
-void ggml_reset(struct ggml_context * ctx) {
-    if (ctx == NULL) {
-        return;
+خالی ggml_reset(ساخت ggml_context * ctx) {
+    اگر (ctx == تہی) {
+        واپس;
     }
 
     ctx->n_objects     = 0;
-    ctx->objects_begin = NULL;
-    ctx->objects_end   = NULL;
+    ctx->objects_begin = تہی;
+    ctx->objects_انتہا   = تہی;
 }
 
-void ggml_free(struct ggml_context * ctx) {
-    if (ctx == NULL) {
-        return;
+خالی ggml_free(ساخت ggml_context * ctx) {
+    اگر (ctx == تہی) {
+        واپس;
     }
 
-    if (ctx->mem_buffer_owned) {
-        ggml_aligned_free(ctx->mem_buffer, ctx->mem_size);
+    اگر (ctx->mem_بفر_owned) {
+        ggml_aligned_free(ctx->mem_بفر, ctx->mem_سائز);
     }
 
     GGML_FREE(ctx);
 }
 
-size_t ggml_used_mem(const struct ggml_context * ctx) {
-    return ctx->objects_end == NULL ? 0 : ctx->objects_end->offs + ctx->objects_end->size;
+size_t ggml_مستعمل_mem(ثابت ساخت ggml_context * ctx) {
+    واپس ctx->objects_انتہا == تہی ? 0 : ctx->objects_انتہا->offs + ctx->objects_انتہا->سائز;
 }
 
-bool ggml_get_no_alloc(struct ggml_context * ctx) {
-    return ctx->no_alloc;
+bool ggml_get_no_alloc(ساخت ggml_context * ctx) {
+    واپس ctx->no_alloc;
 }
 
-void ggml_set_no_alloc(struct ggml_context * ctx, bool no_alloc) {
+خالی ggml_سیٹ_no_alloc(ساخت ggml_context * ctx, bool no_alloc) {
     ctx->no_alloc = no_alloc;
 }
 
-void * ggml_get_mem_buffer(const struct ggml_context * ctx) {
-    return ctx->mem_buffer;
+خالی * ggml_get_mem_بفر(ثابت ساخت ggml_context * ctx) {
+    واپس ctx->mem_بفر;
 }
 
-size_t ggml_get_mem_size(const struct ggml_context * ctx) {
-    return ctx->mem_size;
+size_t ggml_get_mem_سائز(ثابت ساخت ggml_context * ctx) {
+    واپس ctx->mem_سائز;
 }
 
-size_t ggml_get_max_tensor_size(const struct ggml_context * ctx) {
-    size_t max_size = 0;
+size_t ggml_get_max_tensor_سائز(ثابت ساخت ggml_context * ctx) {
+    size_t max_سائز = 0;
 
-    for (struct ggml_tensor * tensor = ggml_get_first_tensor(ctx); tensor != NULL; tensor = ggml_get_next_tensor(ctx, tensor)) {
-        size_t bytes = ggml_nbytes(tensor);
-        max_size = MAX(max_size, bytes);
+    برائے (ساخت ggml_tensor * tensor = ggml_get_پہلا_tensor(ctx); tensor != تہی; tensor = ggml_get_اگلا_tensor(ctx, tensor)) {
+        size_t بائٹیں = ggml_nbytes(tensor);
+        max_سائز = MAX(max_سائز, بائٹیں);
     }
 
-    return max_size;
+    واپس max_سائز;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-static struct ggml_object * ggml_new_object(struct ggml_context * ctx, enum ggml_object_type type, size_t size) {
+ساکن ساخت ggml_object * ggml_new_object(ساخت ggml_context * ctx, شمار ggml_object_type type, size_t سائز) {
     // always insert objects at the end of the context's memory pool
-    struct ggml_object * obj_cur = ctx->objects_end;
+    ساخت ggml_object * obj_cur = ctx->objects_انتہا;
 
-    const size_t cur_offs = obj_cur == NULL ? 0 : obj_cur->offs;
-    const size_t cur_size = obj_cur == NULL ? 0 : obj_cur->size;
-    const size_t cur_end  = cur_offs + cur_size;
+    ثابت size_t cur_offs = obj_cur == تہی ? 0 : obj_cur->offs;
+    ثابت size_t cur_سائز = obj_cur == تہی ? 0 : obj_cur->سائز;
+    ثابت size_t cur_انتہا  = cur_offs + cur_سائز;
 
     // align to GGML_MEM_ALIGN
-    GGML_ASSERT(size <= SIZE_MAX - (GGML_MEM_ALIGN - 1));
-    size_t size_needed = GGML_PAD(size, GGML_MEM_ALIGN);
+    GGML_ASSERT(سائز <= SIZE_MAX - (GGML_MEM_ALIGN - 1));
+    size_t سائز_needed = GGML_PAD(سائز, GGML_MEM_ALIGN);
 
-    char * const mem_buffer = ctx->mem_buffer;
-    struct ggml_object * const obj_new = (struct ggml_object *)(mem_buffer + cur_end);
+    حرف * ثابت mem_بفر = ctx->mem_بفر;
+    ساخت ggml_object * ثابت obj_new = (ساخت ggml_object *)(mem_بفر + cur_انتہا);
 
     // integer overflow checks
-    if (cur_end > SIZE_MAX - size_needed) {
-        GGML_LOG_WARN("%s: overflow detected in cur_end (%zu) + size_needed (%zu)\n", __func__, cur_end, size_needed);
-        return NULL;
+    اگر (cur_انتہا > SIZE_MAX - سائز_needed) {
+        GGML_LOG_WARN("%s: overflow detected in cur_end (%zu) + size_needed (%zu)\n", __func__, cur_انتہا, سائز_needed);
+        واپس تہی;
     }
-    if (cur_end + size_needed > SIZE_MAX - GGML_OBJECT_SIZE) {
+    اگر (cur_انتہا + سائز_needed > SIZE_MAX - GGML_OBJECT_سائز) {
         GGML_LOG_WARN("%s: overflow detected in cur_end (%zu) + size_needed (%zu) + GGML_OBJECT_SIZE (%zu)\n", __func__,
-                cur_end, size_needed, (size_t) GGML_OBJECT_SIZE);
-        return NULL;
+                cur_انتہا, سائز_needed, (size_t) GGML_OBJECT_سائز);
+        واپس تہی;
     }
 
-    if (cur_end + size_needed + GGML_OBJECT_SIZE > ctx->mem_size) {
+    اگر (cur_انتہا + سائز_needed + GGML_OBJECT_سائز > ctx->mem_سائز) {
         GGML_LOG_WARN("%s: not enough space in the context's memory pool (needed %zu, available %zu)\n",
-                __func__, cur_end + size_needed + GGML_OBJECT_SIZE, ctx->mem_size);
-#ifndef NDEBUG
+                __func__, cur_انتہا + سائز_needed + GGML_OBJECT_سائز, ctx->mem_سائز);
+#اگر_غیر_تعریف_شدہ NDEBUG
         GGML_ABORT("not enough space in the context's memory pool");
-#endif
-        return NULL;
+#اگر_ختم
+        واپس تہی;
     }
 
-    *obj_new = (struct ggml_object) {
-        .offs = cur_end + GGML_OBJECT_SIZE,
-        .size = size_needed,
-        .next = NULL,
+    *obj_new = (ساخت ggml_object) {
+        .offs = cur_انتہا + GGML_OBJECT_سائز,
+        .سائز = سائز_needed,
+        .اگلا = تہی,
         .type = type,
     };
 
-    GGML_ASSERT_ALIGNED(mem_buffer + obj_new->offs);
+    GGML_ASSERT_ALIGNED(mem_بفر + obj_new->offs);
 
-    if (obj_cur != NULL) {
-        obj_cur->next = obj_new;
-    } else {
+    اگر (obj_cur != تہی) {
+        obj_cur->اگلا = obj_new;
+    } ورنہ {
         // this is the first object in this context
         ctx->objects_begin = obj_new;
     }
 
-    ctx->objects_end = obj_new;
+    ctx->objects_انتہا = obj_new;
 
     //printf("%s: inserted new object at %zu, size = %zu\n", __func__, cur_end, obj_new->size);
 
-    return obj_new;
+    واپس obj_new;
 }
 
-static struct ggml_tensor * ggml_new_tensor_impl(
-        struct ggml_context * ctx,
-        enum   ggml_type      type,
-        int                   n_dims,
-        const int64_t       * ne,
-        struct ggml_tensor  * view_src,
+ساکن ساخت ggml_tensor * ggml_new_tensor_impl(
+        ساخت ggml_context * ctx,
+        شمار   ggml_type      type,
+        صحیح                   n_dims,
+        ثابت int64_t       * ne,
+        ساخت ggml_tensor  * view_src,
         size_t                view_offs) {
 
-    GGML_ASSERT(type >= 0 && type < GGML_TYPE_COUNT);
+    GGML_ASSERT(type >= 0 && type < GGML_TYPE_گنتی);
     GGML_ASSERT(n_dims >= 1 && n_dims <= GGML_MAX_DIMS);
 
     // find the base tensor and absolute offset
-    if (view_src != NULL && view_src->view_src != NULL) {
+    اگر (view_src != تہی && view_src->view_src != تہی) {
         view_offs += view_src->view_offs;
         view_src   = view_src->view_src;
     }
 
     // validate number of elements to fit in int64_t
     int64_t current_nelements = ne[0];
-    for (int i = 1; i < n_dims; i++) {
-        if (ne[i] > 1) {
+    برائے (صحیح i = 1; i < n_dims; i++) {
+        اگر (ne[i] > 1) {
             GGML_ASSERT(INT64_MAX / ne[i] > current_nelements);
             current_nelements *= ne[i];
         }
     }
 
-    size_t data_size = ggml_row_size(type, ne[0]);
-    for (int i = 1; i < n_dims; i++) {
-        data_size *= ne[i];
+    size_t ڈیٹا_سائز = ggml_صف_سائز(type, ne[0]);
+    برائے (صحیح i = 1; i < n_dims; i++) {
+        ڈیٹا_سائز *= ne[i];
     }
 
-    GGML_ASSERT(view_src == NULL || data_size == 0 || data_size + view_offs <= ggml_nbytes(view_src));
+    GGML_ASSERT(view_src == تہی || ڈیٹا_سائز == 0 || ڈیٹا_سائز + view_offs <= ggml_nbytes(view_src));
 
-    void * data = view_src != NULL ? view_src->data : NULL;
-    if (data != NULL) {
-        data = (char *) data + view_offs;
+    خالی * ڈیٹا = view_src != تہی ? view_src->ڈیٹا : تہی;
+    اگر (ڈیٹا != تہی) {
+        ڈیٹا = (حرف *) ڈیٹا + view_offs;
     }
 
-    size_t obj_alloc_size = 0;
+    size_t obj_alloc_سائز = 0;
 
-    if (view_src == NULL && !ctx->no_alloc) {
+    اگر (view_src == تہی && !ctx->no_alloc) {
         // allocate tensor data in the context's memory pool
-        obj_alloc_size = data_size;
+        obj_alloc_سائز = ڈیٹا_سائز;
     }
 
-    GGML_ASSERT(GGML_TENSOR_SIZE <= SIZE_MAX - obj_alloc_size);
+    GGML_ASSERT(GGML_TENSOR_سائز <= SIZE_MAX - obj_alloc_سائز);
 
-    struct ggml_object * const obj_new = ggml_new_object(ctx, GGML_OBJECT_TYPE_TENSOR, GGML_TENSOR_SIZE + obj_alloc_size);
+    ساخت ggml_object * ثابت obj_new = ggml_new_object(ctx, GGML_OBJECT_TYPE_TENSOR, GGML_TENSOR_سائز + obj_alloc_سائز);
     GGML_ASSERT(obj_new);
 
-    struct ggml_tensor * const result = (struct ggml_tensor *)((char *)ctx->mem_buffer + obj_new->offs);
+    ساخت ggml_tensor * ثابت نتیجہ = (ساخت ggml_tensor *)((حرف *)ctx->mem_بفر + obj_new->offs);
 
-    *result = (struct ggml_tensor) {
+    *نتیجہ = (ساخت ggml_tensor) {
         /*.type         =*/ type,
-        /*.buffer       =*/ NULL,
+        /*.buffer       =*/ تہی,
         /*.ne           =*/ { 1, 1, 1, 1 },
         /*.nb           =*/ { 0, 0, 0, 0 },
         /*.op           =*/ GGML_OP_NONE,
         /*.op_params    =*/ { 0 },
         /*.flags        =*/ 0,
-        /*.src          =*/ { NULL },
+        /*.src          =*/ { تہی },
         /*.view_src     =*/ view_src,
         /*.view_offs    =*/ view_offs,
-        /*.data         =*/ obj_alloc_size > 0 ? (void *)(result + 1) : data,
+        /*.data         =*/ obj_alloc_سائز > 0 ? (خالی *)(نتیجہ + 1) : ڈیٹا,
         /*.name         =*/ { 0 },
-        /*.extra        =*/ NULL,
+        /*.extra        =*/ تہی,
         /*.padding      =*/ { 0 },
     };
 
     // TODO: this should not be needed as long as we don't rely on aligned SIMD loads
     //GGML_ASSERT_ALIGNED(result->data);
 
-    for (int i = 0; i < n_dims; i++) {
-        result->ne[i] = ne[i];
+    برائے (صحیح i = 0; i < n_dims; i++) {
+        نتیجہ->ne[i] = ne[i];
     }
 
-    result->nb[0] = ggml_type_size(type);
-    result->nb[1] = result->nb[0]*(result->ne[0]/ggml_blck_size(type));
-    for (int i = 2; i < GGML_MAX_DIMS; i++) {
-        result->nb[i] = result->nb[i - 1]*result->ne[i - 1];
+    نتیجہ->nb[0] = ggml_type_سائز(type);
+    نتیجہ->nb[1] = نتیجہ->nb[0]*(نتیجہ->ne[0]/ggml_blck_سائز(type));
+    برائے (صحیح i = 2; i < GGML_MAX_DIMS; i++) {
+        نتیجہ->nb[i] = نتیجہ->nb[i - 1]*نتیجہ->ne[i - 1];
     }
 
     ctx->n_objects++;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_new_tensor(
-        struct ggml_context * ctx,
-        enum   ggml_type      type,
-        int                   n_dims,
-        const int64_t       * ne) {
-    return ggml_new_tensor_impl(ctx, type, n_dims, ne, NULL, 0);
+ساخت ggml_tensor * ggml_new_tensor(
+        ساخت ggml_context * ctx,
+        شمار   ggml_type      type,
+        صحیح                   n_dims,
+        ثابت int64_t       * ne) {
+    واپس ggml_new_tensor_impl(ctx, type, n_dims, ne, تہی, 0);
 }
 
-struct ggml_tensor * ggml_new_tensor_1d(
-        struct ggml_context * ctx,
-        enum   ggml_type      type,
+ساخت ggml_tensor * ggml_new_tensor_1d(
+        ساخت ggml_context * ctx,
+        شمار   ggml_type      type,
         int64_t ne0) {
-    return ggml_new_tensor(ctx, type, 1, &ne0);
+    واپس ggml_new_tensor(ctx, type, 1, &ne0);
 }
 
-struct ggml_tensor * ggml_new_tensor_2d(
-        struct ggml_context * ctx,
-        enum   ggml_type      type,
+ساخت ggml_tensor * ggml_new_tensor_2d(
+        ساخت ggml_context * ctx,
+        شمار   ggml_type      type,
         int64_t ne0,
         int64_t ne1) {
-    const int64_t ne[2] = { ne0, ne1 };
-    return ggml_new_tensor(ctx, type, 2, ne);
+    ثابت int64_t ne[2] = { ne0, ne1 };
+    واپس ggml_new_tensor(ctx, type, 2, ne);
 }
 
-struct ggml_tensor * ggml_new_tensor_3d(
-        struct ggml_context * ctx,
-        enum   ggml_type      type,
+ساخت ggml_tensor * ggml_new_tensor_3d(
+        ساخت ggml_context * ctx,
+        شمار   ggml_type      type,
         int64_t ne0,
         int64_t ne1,
         int64_t ne2) {
-    const int64_t ne[3] = { ne0, ne1, ne2 };
-    return ggml_new_tensor(ctx, type, 3, ne);
+    ثابت int64_t ne[3] = { ne0, ne1, ne2 };
+    واپس ggml_new_tensor(ctx, type, 3, ne);
 }
 
-struct ggml_tensor * ggml_new_tensor_4d(
-        struct ggml_context * ctx,
-        enum   ggml_type type,
+ساخت ggml_tensor * ggml_new_tensor_4d(
+        ساخت ggml_context * ctx,
+        شمار   ggml_type type,
         int64_t ne0,
         int64_t ne1,
         int64_t ne2,
         int64_t ne3) {
-    const int64_t ne[4] = { ne0, ne1, ne2, ne3 };
-    return ggml_new_tensor(ctx, type, 4, ne);
+    ثابت int64_t ne[4] = { ne0, ne1, ne2, ne3 };
+    واپس ggml_new_tensor(ctx, type, 4, ne);
 }
 
-void * ggml_new_buffer(struct ggml_context * ctx, size_t nbytes) {
-    struct ggml_object * obj = ggml_new_object(ctx, GGML_OBJECT_TYPE_WORK_BUFFER, nbytes);
+خالی * ggml_new_بفر(ساخت ggml_context * ctx, size_t nbytes) {
+    ساخت ggml_object * obj = ggml_new_object(ctx, GGML_OBJECT_TYPE_WORK_بفر, nbytes);
 
-    return (uint8_t *)ctx->mem_buffer + obj->offs;
+    واپس (uint8_t *)ctx->mem_بفر + obj->offs;
 }
 
-struct ggml_tensor * ggml_dup_tensor(struct ggml_context * ctx, const struct ggml_tensor * src) {
-    return ggml_new_tensor(ctx, src->type, GGML_MAX_DIMS, src->ne);
+ساخت ggml_tensor * ggml_dup_tensor(ساخت ggml_context * ctx, ثابت ساخت ggml_tensor * src) {
+    واپس ggml_new_tensor(ctx, src->type, GGML_MAX_DIMS, src->ne);
 }
 
-void ggml_unravel_index(const struct ggml_tensor * tensor, int64_t i, int64_t * i0, int64_t * i1, int64_t * i2, int64_t * i3) {
-    const int64_t ne2 = tensor->ne[2];
-    const int64_t ne1 = tensor->ne[1];
-    const int64_t ne0 = tensor->ne[0];
+خالی ggml_unravel_اشاریہ(ثابت ساخت ggml_tensor * tensor, int64_t i, int64_t * i0, int64_t * i1, int64_t * i2, int64_t * i3) {
+    ثابت int64_t ne2 = tensor->ne[2];
+    ثابت int64_t ne1 = tensor->ne[1];
+    ثابت int64_t ne0 = tensor->ne[0];
 
-    const int64_t i3_ = (i/(ne2*ne1*ne0));
-    const int64_t i2_ = (i - i3_*ne2*ne1*ne0)/(ne1*ne0);
-    const int64_t i1_ = (i - i3_*ne2*ne1*ne0 - i2_*ne1*ne0)/ne0;
-    const int64_t i0_ = (i - i3_*ne2*ne1*ne0 - i2_*ne1*ne0 - i1_*ne0);
+    ثابت int64_t i3_ = (i/(ne2*ne1*ne0));
+    ثابت int64_t i2_ = (i - i3_*ne2*ne1*ne0)/(ne1*ne0);
+    ثابت int64_t i1_ = (i - i3_*ne2*ne1*ne0 - i2_*ne1*ne0)/ne0;
+    ثابت int64_t i0_ = (i - i3_*ne2*ne1*ne0 - i2_*ne1*ne0 - i1_*ne0);
 
-    if (i0) {
+    اگر (i0) {
         * i0 = i0_;
     }
-    if (i1) {
+    اگر (i1) {
         * i1 = i1_;
     }
-    if (i2) {
+    اگر (i2) {
         * i2 = i2_;
     }
-    if (i3) {
+    اگر (i3) {
         * i3 = i3_;
     }
 }
 
-void * ggml_get_data(const struct ggml_tensor * tensor) {
-    return tensor->data;
+خالی * ggml_get_ڈیٹا(ثابت ساخت ggml_tensor * tensor) {
+    واپس tensor->ڈیٹا;
 }
 
-float * ggml_get_data_f32(const struct ggml_tensor * tensor) {
-    assert(tensor->type == GGML_TYPE_F32);
-    return (float *)(tensor->data);
+اعشاری * ggml_get_ڈیٹا_f32(ثابت ساخت ggml_tensor * tensor) {
+    أكد(tensor->type == GGML_TYPE_F32);
+    واپس (اعشاری *)(tensor->ڈیٹا);
 }
 
-enum ggml_unary_op ggml_get_unary_op(const struct ggml_tensor * tensor) {
+شمار ggml_unary_op ggml_get_unary_op(ثابت ساخت ggml_tensor * tensor) {
     GGML_ASSERT(tensor->op == GGML_OP_UNARY);
-    return (enum ggml_unary_op) ggml_get_op_params_i32(tensor, 0);
+    واپس (شمار ggml_unary_op) ggml_get_op_params_i32(tensor, 0);
 }
 
-enum ggml_glu_op ggml_get_glu_op(const struct ggml_tensor * tensor) {
+شمار ggml_glu_op ggml_get_glu_op(ثابت ساخت ggml_tensor * tensor) {
     GGML_ASSERT(tensor->op == GGML_OP_GLU);
-    return (enum ggml_glu_op) ggml_get_op_params_i32(tensor, 0);
+    واپس (شمار ggml_glu_op) ggml_get_op_params_i32(tensor, 0);
 }
 
-const char * ggml_get_name(const struct ggml_tensor * tensor) {
-    return tensor->name;
+ثابت حرف * ggml_get_name(ثابت ساخت ggml_tensor * tensor) {
+    واپس tensor->name;
 }
 
-struct ggml_tensor * ggml_set_name(struct ggml_tensor * tensor, const char * name) {
+ساخت ggml_tensor * ggml_سیٹ_name(ساخت ggml_tensor * tensor, ثابت حرف * name) {
     size_t i;
-    for (i = 0; i < sizeof(tensor->name) - 1 && name[i] != '\0'; i++) {
+    برائے (i = 0; i < حجم(tensor->name) - 1 && name[i] != '\0'; i++) {
         tensor->name[i] = name[i];
     }
     tensor->name[i] = '\0';
-    return tensor;
+    واپس tensor;
 }
 
-struct ggml_tensor * ggml_format_name(struct ggml_tensor * tensor, const char * fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
-    vsnprintf(tensor->name, sizeof(tensor->name), fmt, args);
-    va_end(args);
-    return tensor;
+ساخت ggml_tensor * ggml_format_name(ساخت ggml_tensor * tensor, ثابت حرف * fmt, ...) {
+    va_list دلائل_2;
+    va_start(دلائل_2, fmt);
+    vsnprintf(tensor->name, حجم(tensor->name), fmt, دلائل_2);
+    va_end(دلائل_2);
+    واپس tensor;
 }
 
-struct ggml_tensor * ggml_view_tensor(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * src) {
-    struct ggml_tensor * result = ggml_new_tensor_impl(ctx, src->type, GGML_MAX_DIMS, src->ne, src, 0);
-    ggml_format_name(result, "%s (view)", src->name);
+ساخت ggml_tensor * ggml_view_tensor(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * src) {
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_impl(ctx, src->type, GGML_MAX_DIMS, src->ne, src, 0);
+    ggml_format_name(نتیجہ, "%s (view)", src->name);
 
-    for (int i = 0; i < GGML_MAX_DIMS; i++) {
-        result->nb[i] = src->nb[i];
+    برائے (صحیح i = 0; i < GGML_MAX_DIMS; i++) {
+        نتیجہ->nb[i] = src->nb[i];
     }
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_get_first_tensor(const struct ggml_context * ctx) {
-    struct ggml_object * obj = ctx->objects_begin;
+ساخت ggml_tensor * ggml_get_پہلا_tensor(ثابت ساخت ggml_context * ctx) {
+    ساخت ggml_object * obj = ctx->objects_begin;
 
-    char * const mem_buffer = ctx->mem_buffer;
+    حرف * ثابت mem_بفر = ctx->mem_بفر;
 
-    while (obj != NULL) {
-        if (obj->type == GGML_OBJECT_TYPE_TENSOR) {
-            return (struct ggml_tensor *)(mem_buffer + obj->offs);
+    جب (obj != تہی) {
+        اگر (obj->type == GGML_OBJECT_TYPE_TENSOR) {
+            واپس (ساخت ggml_tensor *)(mem_بفر + obj->offs);
         }
 
-        obj = obj->next;
+        obj = obj->اگلا;
     }
 
-    return NULL;
+    واپس تہی;
 }
 
-struct ggml_tensor * ggml_get_next_tensor(const struct ggml_context * ctx, struct ggml_tensor * tensor) {
-    struct ggml_object * obj = (struct ggml_object *) ((char *)tensor - GGML_OBJECT_SIZE);
-    obj = obj->next;
+ساخت ggml_tensor * ggml_get_اگلا_tensor(ثابت ساخت ggml_context * ctx, ساخت ggml_tensor * tensor) {
+    ساخت ggml_object * obj = (ساخت ggml_object *) ((حرف *)tensor - GGML_OBJECT_سائز);
+    obj = obj->اگلا;
 
-    char * const mem_buffer = ctx->mem_buffer;
+    حرف * ثابت mem_بفر = ctx->mem_بفر;
 
-    while (obj != NULL) {
-        if (obj->type == GGML_OBJECT_TYPE_TENSOR) {
-            return (struct ggml_tensor *)(mem_buffer + obj->offs);
+    جب (obj != تہی) {
+        اگر (obj->type == GGML_OBJECT_TYPE_TENSOR) {
+            واپس (ساخت ggml_tensor *)(mem_بفر + obj->offs);
         }
 
-        obj = obj->next;
+        obj = obj->اگلا;
     }
 
-    return NULL;
+    واپس تہی;
 }
 
-struct ggml_tensor * ggml_get_tensor(struct ggml_context * ctx, const char * name) {
-    struct ggml_object * obj = ctx->objects_begin;
+ساخت ggml_tensor * ggml_get_tensor(ساخت ggml_context * ctx, ثابت حرف * name) {
+    ساخت ggml_object * obj = ctx->objects_begin;
 
-    char * const mem_buffer = ctx->mem_buffer;
+    حرف * ثابت mem_بفر = ctx->mem_بفر;
 
-    while (obj != NULL) {
-        if (obj->type == GGML_OBJECT_TYPE_TENSOR) {
-            struct ggml_tensor * cur = (struct ggml_tensor *)(mem_buffer + obj->offs);
-            if (strcmp(cur->name, name) == 0) {
-                return cur;
+    جب (obj != تہی) {
+        اگر (obj->type == GGML_OBJECT_TYPE_TENSOR) {
+            ساخت ggml_tensor * cur = (ساخت ggml_tensor *)(mem_بفر + obj->offs);
+            اگر (strcmp(cur->name, name) == 0) {
+                واپس cur;
             }
         }
 
-        obj = obj->next;
+        obj = obj->اگلا;
     }
 
-    return NULL;
+    واپس تہی;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 // ggml_dup
 
-static struct ggml_tensor * ggml_dup_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ساکن ساخت ggml_tensor * ggml_dup_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    result->op     = GGML_OP_DUP;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_DUP;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_dup(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_dup_impl(ctx, a, false);
+ساخت ggml_tensor * ggml_dup(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_dup_impl(ctx, a, false);
 }
 
-struct ggml_tensor * ggml_dup_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_dup_impl(ctx, a, true);
+ساخت ggml_tensor * ggml_dup_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_dup_impl(ctx, a, true);
 }
 
 // ggml_add
 
-static struct ggml_tensor * ggml_add_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ساکن ساخت ggml_tensor * ggml_جوڑو_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
         bool                  inplace) {
     GGML_ASSERT(ggml_can_repeat(b, a));
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    result->op     = GGML_OP_ADD;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op     = GGML_OP_جوڑو;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_add(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_add_impl(ctx, a, b, false);
+ساخت ggml_tensor * ggml_جوڑو(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b) {
+    واپس ggml_جوڑو_impl(ctx, a, b, false);
 }
 
-struct ggml_tensor * ggml_add_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_add_impl(ctx, a, b, true);
+ساخت ggml_tensor * ggml_جوڑو_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b) {
+    واپس ggml_جوڑو_impl(ctx, a, b, true);
 }
 
 // ggml_add_cast
 
-static struct ggml_tensor * ggml_add_cast_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        enum   ggml_type      type) {
+ساکن ساخت ggml_tensor * ggml_جوڑو_cast_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        شمار   ggml_type      type) {
     // TODO: support less-strict constraint
     //       GGML_ASSERT(ggml_can_repeat(b, a));
-    GGML_ASSERT(ggml_can_repeat_rows(b, a));
+    GGML_ASSERT(ggml_can_repeat_صفیں(b, a));
 
     // currently only supported for quantized input and f16
     GGML_ASSERT(ggml_is_quantized(a->type) ||
                 a->type == GGML_TYPE_F16 ||
                 a->type == GGML_TYPE_BF16);
 
-    struct ggml_tensor * result = ggml_new_tensor(ctx, type, GGML_MAX_DIMS, a->ne);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, type, GGML_MAX_DIMS, a->ne);
 
-    result->op     = GGML_OP_ADD;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op     = GGML_OP_جوڑو;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_add_cast(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        enum   ggml_type      type) {
-    return ggml_add_cast_impl(ctx, a, b, type);
+ساخت ggml_tensor * ggml_جوڑو_cast(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        شمار   ggml_type      type) {
+    واپس ggml_جوڑو_cast_impl(ctx, a, b, type);
 }
 
-struct ggml_tensor * ggml_add_id(
-            struct ggml_context * ctx,
-            struct ggml_tensor  * a,
-            struct ggml_tensor  * b,
-            struct ggml_tensor  * ids) {
+ساخت ggml_tensor * ggml_جوڑو_id(
+            ساخت ggml_context * ctx,
+            ساخت ggml_tensor  * a,
+            ساخت ggml_tensor  * b,
+            ساخت ggml_tensor  * ids) {
 
     GGML_ASSERT(a->ne[0] == b->ne[0]);
     GGML_ASSERT(a->ne[1] == ids->ne[0]);
     GGML_ASSERT(a->ne[2] == ids->ne[1]);
     GGML_ASSERT(ids->type == GGML_TYPE_I32);
 
-    struct ggml_tensor * result = ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = ggml_dup_tensor(ctx, a);
 
-    result->op     = GGML_OP_ADD_ID;
-    result->src[0] = a;
-    result->src[1] = b;
-    result->src[2] = ids;
+    نتیجہ->op     = GGML_OP_جوڑو_ID;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
+    نتیجہ->src[2] = ids;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_add1
 
-static struct ggml_tensor * ggml_add1_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ساکن ساخت ggml_tensor * ggml_add1_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
         bool                  inplace) {
     GGML_ASSERT(ggml_is_scalar(b));
     GGML_ASSERT(ggml_is_padded_1d(a));
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    result->op     = GGML_OP_ADD1;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op     = GGML_OP_ADD1;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_add1(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_add1_impl(ctx, a, b, false);
+ساخت ggml_tensor * ggml_add1(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b) {
+    واپس ggml_add1_impl(ctx, a, b, false);
 }
 
-struct ggml_tensor * ggml_add1_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_add1_impl(ctx, a, b, true);
+ساخت ggml_tensor * ggml_add1_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b) {
+    واپس ggml_add1_impl(ctx, a, b, true);
 }
 
 // ggml_acc
 
-static struct ggml_tensor * ggml_acc_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ساکن ساخت ggml_tensor * ggml_acc_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
         size_t                nb1,
         size_t                nb2,
         size_t                nb3,
-        size_t                offset,
+        size_t                انحراف,
         bool                  inplace) {
     GGML_ASSERT(ggml_nelements(b) <= ggml_nelements(a));
     GGML_ASSERT(ggml_is_contiguous(a));
     GGML_ASSERT(a->type == GGML_TYPE_F32);
     GGML_ASSERT(b->type == GGML_TYPE_F32);
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    GGML_ASSERT(offset < (size_t)(1 << 30));
-    int32_t params[] = { nb1, nb2, nb3, offset, inplace ? 1 : 0 };
-    ggml_set_op_params(result, params, sizeof(params));
+    GGML_ASSERT(انحراف < (size_t)(1 << 30));
+    int32_t params[] = { nb1, nb2, nb3, انحراف, inplace ? 1 : 0 };
+    ggml_سیٹ_op_params(نتیجہ, params, حجم(params));
 
-    result->op     = GGML_OP_ACC;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op     = GGML_OP_ACC;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_acc(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ساخت ggml_tensor * ggml_acc(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
         size_t                nb1,
         size_t                nb2,
         size_t                nb3,
-        size_t                offset) {
-    return ggml_acc_impl(ctx, a, b, nb1, nb2, nb3, offset, false);
+        size_t                انحراف) {
+    واپس ggml_acc_impl(ctx, a, b, nb1, nb2, nb3, انحراف, false);
 }
 
-struct ggml_tensor * ggml_acc_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ساخت ggml_tensor * ggml_acc_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
         size_t                nb1,
         size_t                nb2,
         size_t                nb3,
-        size_t                offset) {
-    return ggml_acc_impl(ctx, a, b, nb1, nb2, nb3, offset, true);
+        size_t                انحراف) {
+    واپس ggml_acc_impl(ctx, a, b, nb1, nb2, nb3, انحراف, true);
 }
 
 // ggml_sub
 
-static struct ggml_tensor * ggml_sub_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ساکن ساخت ggml_tensor * ggml_sub_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
         bool                  inplace) {
     GGML_ASSERT(ggml_can_repeat(b, a));
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    result->op     = GGML_OP_SUB;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op     = GGML_OP_SUB;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_sub(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_sub_impl(ctx, a, b, false);
+ساخت ggml_tensor * ggml_sub(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b) {
+    واپس ggml_sub_impl(ctx, a, b, false);
 }
 
-struct ggml_tensor * ggml_sub_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_sub_impl(ctx, a, b, true);
+ساخت ggml_tensor * ggml_sub_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b) {
+    واپس ggml_sub_impl(ctx, a, b, true);
 }
 
 // ggml_mul
 
-static struct ggml_tensor * ggml_mul_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ساکن ساخت ggml_tensor * ggml_mul_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
         bool                  inplace) {
     GGML_ASSERT(ggml_can_repeat(b, a));
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    result->op     = GGML_OP_MUL;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op     = GGML_OP_MUL;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_mul(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_mul_impl(ctx, a, b, false);
+ساخت ggml_tensor * ggml_mul(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b) {
+    واپس ggml_mul_impl(ctx, a, b, false);
 }
 
-struct ggml_tensor * ggml_mul_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_mul_impl(ctx, a, b, true);
+ساخت ggml_tensor * ggml_mul_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b) {
+    واپس ggml_mul_impl(ctx, a, b, true);
 }
 
 // ggml_div
 
-static struct ggml_tensor * ggml_div_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ساکن ساخت ggml_tensor * ggml_div_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
         bool                  inplace) {
     GGML_ASSERT(ggml_can_repeat(b, a));
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    result->op     = GGML_OP_DIV;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op     = GGML_OP_DIV;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_div(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_div_impl(ctx, a, b, false);
+ساخت ggml_tensor * ggml_div(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b) {
+    واپس ggml_div_impl(ctx, a, b, false);
 }
 
-struct ggml_tensor * ggml_div_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_div_impl(ctx, a, b, true);
+ساخت ggml_tensor * ggml_div_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b) {
+    واپس ggml_div_impl(ctx, a, b, true);
 }
 
 // ggml_sqr
 
-static struct ggml_tensor * ggml_sqr_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ساکن ساخت ggml_tensor * ggml_sqr_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    result->op     = GGML_OP_SQR;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_SQR;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_sqr(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_sqr_impl(ctx, a, false);
+ساخت ggml_tensor * ggml_sqr(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_sqr_impl(ctx, a, false);
 }
 
-struct ggml_tensor * ggml_sqr_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_sqr_impl(ctx, a, true);
+ساخت ggml_tensor * ggml_sqr_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_sqr_impl(ctx, a, true);
 }
 
 // ggml_sqrt
 
-static struct ggml_tensor * ggml_sqrt_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ساکن ساخت ggml_tensor * ggml_sqrt_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    result->op     = GGML_OP_SQRT;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_SQRT;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_sqrt(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_sqrt_impl(ctx, a, false);
+ساخت ggml_tensor * ggml_sqrt(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_sqrt_impl(ctx, a, false);
 }
 
-struct ggml_tensor * ggml_sqrt_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_sqrt_impl(ctx, a, true);
+ساخت ggml_tensor * ggml_sqrt_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_sqrt_impl(ctx, a, true);
 }
 
 // ggml_log
 
-static struct ggml_tensor * ggml_log_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ساکن ساخت ggml_tensor * ggml_log_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    result->op     = GGML_OP_LOG;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_LOG;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_log(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_log_impl(ctx, a, false);
+ساخت ggml_tensor * ggml_log(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_log_impl(ctx, a, false);
 }
 
-struct ggml_tensor * ggml_log_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_log_impl(ctx, a, true);
+ساخت ggml_tensor * ggml_log_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_log_impl(ctx, a, true);
 }
 
-struct ggml_tensor * ggml_expm1(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_EXPM1);
+ساخت ggml_tensor * ggml_expm1(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary(ctx, a, GGML_UNARY_OP_EXPM1);
 }
 
-struct ggml_tensor * ggml_expm1_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_EXPM1);
+ساخت ggml_tensor * ggml_expm1_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary_inplace(ctx, a, GGML_UNARY_OP_EXPM1);
 }
 
-struct ggml_tensor * ggml_softplus(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_SOFTPLUS);
+ساخت ggml_tensor * ggml_softplus(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary(ctx, a, GGML_UNARY_OP_SOFTPLUS);
 }
 
-struct ggml_tensor * ggml_softplus_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_SOFTPLUS);
+ساخت ggml_tensor * ggml_softplus_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary_inplace(ctx, a, GGML_UNARY_OP_SOFTPLUS);
 }
 
 // ggml_sin
 
-static struct ggml_tensor * ggml_sin_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ساکن ساخت ggml_tensor * ggml_sin_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    result->op     = GGML_OP_SIN;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_SIN;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_sin(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_sin_impl(ctx, a, false);
+ساخت ggml_tensor * ggml_sin(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_sin_impl(ctx, a, false);
 }
 
-struct ggml_tensor * ggml_sin_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_sin_impl(ctx, a, true);
+ساخت ggml_tensor * ggml_sin_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_sin_impl(ctx, a, true);
 }
 
 // ggml_cos
 
-static struct ggml_tensor * ggml_cos_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ساکن ساخت ggml_tensor * ggml_cos_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    result->op     = GGML_OP_COS;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_COS;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_cos(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_cos_impl(ctx, a, false);
+ساخت ggml_tensor * ggml_cos(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_cos_impl(ctx, a, false);
 }
 
-struct ggml_tensor * ggml_cos_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_cos_impl(ctx, a, true);
+ساخت ggml_tensor * ggml_cos_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_cos_impl(ctx, a, true);
 }
 
 // ggml_sum
 
-struct ggml_tensor * ggml_sum(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    struct ggml_tensor * result = ggml_new_tensor_1d(ctx, a->type, 1);
+ساخت ggml_tensor * ggml_مجموع(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_1d(ctx, a->type, 1);
 
-    result->op     = GGML_OP_SUM;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_مجموع;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_sum_rows
 
-struct ggml_tensor * ggml_sum_rows(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
+ساخت ggml_tensor * ggml_مجموع_صفیں(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
     int64_t ne[GGML_MAX_DIMS] = { 1 };
-    for (int i = 1; i < GGML_MAX_DIMS; ++i) {
+    برائے (صحیح i = 1; i < GGML_MAX_DIMS; ++i) {
         ne[i] = a->ne[i];
     }
 
-    struct ggml_tensor * result = ggml_new_tensor(ctx, a->type, GGML_MAX_DIMS, ne);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, a->type, GGML_MAX_DIMS, ne);
 
-    result->op     = GGML_OP_SUM_ROWS;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_مجموع_صفیں;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_cumsum
 
-struct ggml_tensor * ggml_cumsum(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
+ساخت ggml_tensor * ggml_cumsum(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
     GGML_ASSERT(a->type == GGML_TYPE_F32);
 
-    struct ggml_tensor * result = ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = ggml_dup_tensor(ctx, a);
 
-    result->op     = GGML_OP_CUMSUM;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_CUMSUM;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_mean
 
-struct ggml_tensor * ggml_mean(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
+ساخت ggml_tensor * ggml_اوسط(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
     int64_t ne[4] = { 1, a->ne[1], a->ne[2], a->ne[3] };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
-    result->op     = GGML_OP_MEAN;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_اوسط;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_argmax
 
-struct ggml_tensor * ggml_argmax(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    GGML_ASSERT(ggml_is_matrix(a));
+ساخت ggml_tensor * ggml_argmax(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    GGML_ASSERT(ggml_is_میٹرکس(a));
     GGML_ASSERT(a->ne[0] <= INT32_MAX);
 
-    struct ggml_tensor * result = ggml_new_tensor_1d(ctx, GGML_TYPE_I32, a->ne[1]);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_1d(ctx, GGML_TYPE_I32, a->ne[1]);
 
-    result->op     = GGML_OP_ARGMAX;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_ARGMAX;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_count_equal
 
-struct ggml_tensor * ggml_count_equal(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
+ساخت ggml_tensor * ggml_گنتی_equal(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b) {
     GGML_ASSERT(ggml_are_same_shape(a, b));
 
-    struct ggml_tensor * result = ggml_new_tensor_1d(ctx, GGML_TYPE_I64, 1);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_1d(ctx, GGML_TYPE_I64, 1);
 
-    result->op     = GGML_OP_COUNT_EQUAL;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op     = GGML_OP_گنتی_EQUAL;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_repeat
 
-struct ggml_tensor * ggml_repeat(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
+ساخت ggml_tensor * ggml_repeat(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b) {
     GGML_ASSERT(ggml_can_repeat(a, b));
 
-    struct ggml_tensor * result = ggml_new_tensor(ctx, a->type, GGML_MAX_DIMS, b->ne);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, a->type, GGML_MAX_DIMS, b->ne);
 
-    result->op     = GGML_OP_REPEAT;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_REPEAT;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_repeat_4d(
-        struct ggml_context * ctx,
-        struct ggml_tensor * a,
+ساخت ggml_tensor * ggml_repeat_4d(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor * a,
         int64_t ne0, int64_t ne1, int64_t ne2, int64_t ne3) {
-    const bool can_repeat = ggml_is_empty(a) || (
+    ثابت bool can_repeat = ggml_is_خالی_خانے(a) || (
         (ne0 % a->ne[0] == 0) &&
         (ne1 % a->ne[1] == 0) &&
         (ne2 % a->ne[2] == 0) &&
@@ -2616,786 +2616,786 @@ struct ggml_tensor * ggml_repeat_4d(
     );
     GGML_ASSERT(can_repeat);
 
-    struct ggml_tensor * result = ggml_new_tensor_4d(ctx, a->type, ne0, ne1, ne2, ne3);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_4d(ctx, a->type, ne0, ne1, ne2, ne3);
 
-    result->op     = GGML_OP_REPEAT;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_REPEAT;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_repeat_back
 
-struct ggml_tensor * ggml_repeat_back(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
+ساخت ggml_tensor * ggml_repeat_عقب(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b) {
     GGML_ASSERT(ggml_can_repeat(b, a));
 
-    struct ggml_tensor * result = ggml_new_tensor(ctx, a->type, GGML_MAX_DIMS, b->ne);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, a->type, GGML_MAX_DIMS, b->ne);
 
-    result->op     = GGML_OP_REPEAT_BACK;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_REPEAT_عقب;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_concat
 
-struct ggml_tensor * ggml_concat(
-    struct ggml_context * ctx,
-    struct ggml_tensor  * a,
-    struct ggml_tensor  * b,
-    int                   dim) {
+ساخت ggml_tensor * ggml_concat(
+    ساخت ggml_context * ctx,
+    ساخت ggml_tensor  * a,
+    ساخت ggml_tensor  * b,
+    صحیح                   dim) {
     GGML_ASSERT(dim >= 0 && dim < GGML_MAX_DIMS);
     GGML_ASSERT(a->type == b->type);
 
     int64_t ne[GGML_MAX_DIMS];
-    for (int d = 0; d < GGML_MAX_DIMS; ++d) {
-        if (d == dim) {
+    برائے (صحیح d = 0; d < GGML_MAX_DIMS; ++d) {
+        اگر (d == dim) {
             ne[d] = a->ne[d] + b->ne[d];
-            continue;
+            جاری;
         }
         GGML_ASSERT(a->ne[d] == b->ne[d]);
         ne[d] = a->ne[d];
     }
 
-    struct ggml_tensor * result = ggml_new_tensor(ctx, a->type, GGML_MAX_DIMS, ne);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, a->type, GGML_MAX_DIMS, ne);
 
-    ggml_set_op_params_i32(result, 0, dim);
+    ggml_سیٹ_op_params_i32(نتیجہ, 0, dim);
 
-    result->op     = GGML_OP_CONCAT;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op     = GGML_OP_CONCAT;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_abs
 
-struct ggml_tensor * ggml_abs(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_ABS);
+ساخت ggml_tensor * ggml_abs(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary(ctx, a, GGML_UNARY_OP_ABS);
 }
 
-struct ggml_tensor * ggml_abs_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_ABS);
+ساخت ggml_tensor * ggml_abs_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary_inplace(ctx, a, GGML_UNARY_OP_ABS);
 }
 
 // ggml_sgn
 
-struct ggml_tensor * ggml_sgn(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_SGN);
+ساخت ggml_tensor * ggml_sgn(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary(ctx, a, GGML_UNARY_OP_SGN);
 }
 
-struct ggml_tensor * ggml_sgn_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_SGN);
+ساخت ggml_tensor * ggml_sgn_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary_inplace(ctx, a, GGML_UNARY_OP_SGN);
 }
 
 // ggml_neg
 
-struct ggml_tensor * ggml_neg(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_NEG);
+ساخت ggml_tensor * ggml_neg(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary(ctx, a, GGML_UNARY_OP_NEG);
 }
 
-struct ggml_tensor * ggml_neg_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_NEG);
+ساخت ggml_tensor * ggml_neg_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary_inplace(ctx, a, GGML_UNARY_OP_NEG);
 }
 
 // ggml_step
 
-struct ggml_tensor * ggml_step(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_STEP);
+ساخت ggml_tensor * ggml_قدم(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary(ctx, a, GGML_UNARY_OP_قدم);
 }
 
-struct ggml_tensor * ggml_step_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_STEP);
+ساخت ggml_tensor * ggml_قدم_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary_inplace(ctx, a, GGML_UNARY_OP_قدم);
 }
 
 // ggml_tanh
 
-struct ggml_tensor * ggml_tanh(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_TANH);
+ساخت ggml_tensor * ggml_tanh(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary(ctx, a, GGML_UNARY_OP_TANH);
 }
 
-struct ggml_tensor * ggml_tanh_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_TANH);
+ساخت ggml_tensor * ggml_tanh_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary_inplace(ctx, a, GGML_UNARY_OP_TANH);
 }
 
 // ggml_elu
 
-struct ggml_tensor * ggml_elu(
-    struct ggml_context * ctx,
-    struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_ELU);
+ساخت ggml_tensor * ggml_elu(
+    ساخت ggml_context * ctx,
+    ساخت ggml_tensor  * a) {
+    واپس ggml_unary(ctx, a, GGML_UNARY_OP_ELU);
 }
 
-struct ggml_tensor * ggml_elu_inplace(
-    struct ggml_context * ctx,
-    struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_ELU);
+ساخت ggml_tensor * ggml_elu_inplace(
+    ساخت ggml_context * ctx,
+    ساخت ggml_tensor  * a) {
+    واپس ggml_unary_inplace(ctx, a, GGML_UNARY_OP_ELU);
 }
 
 // ggml_relu
 
-struct ggml_tensor * ggml_relu(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_RELU);
+ساخت ggml_tensor * ggml_relu(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary(ctx, a, GGML_UNARY_OP_RELU);
 }
 
-struct ggml_tensor * ggml_relu_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_RELU);
+ساخت ggml_tensor * ggml_relu_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary_inplace(ctx, a, GGML_UNARY_OP_RELU);
 }
 
 // ggml_leaky_relu
 
-struct ggml_tensor * ggml_leaky_relu(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 negative_slope,
+ساخت ggml_tensor * ggml_leaky_relu(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        اعشاری                 negative_ڈھلان,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    ggml_set_op_params(result, &negative_slope, sizeof(negative_slope));
+    ggml_سیٹ_op_params(نتیجہ, &negative_ڈھلان, حجم(negative_ڈھلان));
 
-    result->op     = GGML_OP_LEAKY_RELU;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_LEAKY_RELU;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_sigmoid
 
-struct ggml_tensor * ggml_sigmoid(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_SIGMOID);
+ساخت ggml_tensor * ggml_sigmoid(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary(ctx, a, GGML_UNARY_OP_SIGMOID);
 }
 
-struct ggml_tensor * ggml_sigmoid_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_SIGMOID);
+ساخت ggml_tensor * ggml_sigmoid_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary_inplace(ctx, a, GGML_UNARY_OP_SIGMOID);
 }
 
 // ggml_gelu
 
-struct ggml_tensor * ggml_gelu(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_GELU);
+ساخت ggml_tensor * ggml_gelu(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary(ctx, a, GGML_UNARY_OP_GELU);
 }
 
-struct ggml_tensor * ggml_gelu_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_GELU);
+ساخت ggml_tensor * ggml_gelu_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary_inplace(ctx, a, GGML_UNARY_OP_GELU);
 }
 
 // ggml_gelu_erf
 
-struct ggml_tensor * ggml_gelu_erf(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_GELU_ERF);
+ساخت ggml_tensor * ggml_gelu_erf(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary(ctx, a, GGML_UNARY_OP_GELU_ERF);
 }
 
-struct ggml_tensor * ggml_gelu_erf_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_GELU_ERF);
+ساخت ggml_tensor * ggml_gelu_erf_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary_inplace(ctx, a, GGML_UNARY_OP_GELU_ERF);
 }
 
 // ggml_gelu_quick
 
-struct ggml_tensor * ggml_gelu_quick(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_GELU_QUICK);
+ساخت ggml_tensor * ggml_gelu_تیز(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary(ctx, a, GGML_UNARY_OP_GELU_تیز);
 }
 
-struct ggml_tensor * ggml_gelu_quick_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_GELU_QUICK);
+ساخت ggml_tensor * ggml_gelu_تیز_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary_inplace(ctx, a, GGML_UNARY_OP_GELU_تیز);
 }
 
 // ggml_silu
 
-struct ggml_tensor * ggml_silu(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_SILU);
+ساخت ggml_tensor * ggml_silu(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary(ctx, a, GGML_UNARY_OP_SILU);
 }
 
-struct ggml_tensor * ggml_silu_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_SILU);
+ساخت ggml_tensor * ggml_silu_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary_inplace(ctx, a, GGML_UNARY_OP_SILU);
 }
 
 // ggml_xielu
 
-struct ggml_tensor * ggml_xielu(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float alpha_n,
-        float alpha_p,
-        float beta,
-        float eps) {
-    struct ggml_tensor * result = ggml_dup_tensor(ctx, a);
+ساخت ggml_tensor * ggml_xielu(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        اعشاری alpha_n,
+        اعشاری alpha_p,
+        اعشاری beta,
+        اعشاری eps) {
+    ساخت ggml_tensor * نتیجہ = ggml_dup_tensor(ctx, a);
 
-    ggml_set_op_params_i32(result, 0, (int32_t) GGML_UNARY_OP_XIELU);
-    ggml_set_op_params_f32(result, 1, beta + ggml_compute_softplus_f32(alpha_n));
-    ggml_set_op_params_f32(result, 2, ggml_compute_softplus_f32(alpha_p));
-    ggml_set_op_params_f32(result, 3, beta);
-    ggml_set_op_params_f32(result, 4, eps);
+    ggml_سیٹ_op_params_i32(نتیجہ, 0, (int32_t) GGML_UNARY_OP_XIELU);
+    ggml_سیٹ_op_params_f32(نتیجہ, 1, beta + ggml_compute_softplus_f32(alpha_n));
+    ggml_سیٹ_op_params_f32(نتیجہ, 2, ggml_compute_softplus_f32(alpha_p));
+    ggml_سیٹ_op_params_f32(نتیجہ, 3, beta);
+    ggml_سیٹ_op_params_f32(نتیجہ, 4, eps);
 
-    result->op     = GGML_OP_UNARY;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_UNARY;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_silu_back
 
-struct ggml_tensor * ggml_silu_back(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    struct ggml_tensor * result = ggml_dup_tensor(ctx, a);
+ساخت ggml_tensor * ggml_silu_عقب(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b) {
+    ساخت ggml_tensor * نتیجہ = ggml_dup_tensor(ctx, a);
 
-    result->op     = GGML_OP_SILU_BACK;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op     = GGML_OP_SILU_عقب;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml hardswish
 
-struct ggml_tensor * ggml_hardswish(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_HARDSWISH);
+ساخت ggml_tensor * ggml_hardswish(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary(ctx, a, GGML_UNARY_OP_HARDSWISH);
 }
 
 // ggml hardsigmoid
 
-struct ggml_tensor * ggml_hardsigmoid(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_HARDSIGMOID);
+ساخت ggml_tensor * ggml_hardsigmoid(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary(ctx, a, GGML_UNARY_OP_HARDSIGMOID);
 }
 
 // ggml exp
 
-struct ggml_tensor * ggml_exp(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_EXP);
+ساخت ggml_tensor * ggml_exp(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary(ctx, a, GGML_UNARY_OP_EXP);
 }
 
-struct ggml_tensor * ggml_exp_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_EXP);
+ساخت ggml_tensor * ggml_exp_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary_inplace(ctx, a, GGML_UNARY_OP_EXP);
 }
 
 // ggml_glu
 
-static struct ggml_tensor * ggml_glu_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        enum ggml_glu_op      op,
+ساکن ساخت ggml_tensor * ggml_glu_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        شمار ggml_glu_op      op,
         bool                  swapped) {
     GGML_ASSERT(ggml_is_contiguous_1(a));
 
-    if (b) {
+    اگر (b) {
         GGML_ASSERT(ggml_is_contiguous_1(b));
         GGML_ASSERT(ggml_are_same_shape(a, b));
         GGML_ASSERT(a->type == b->type);
     }
 
-    int64_t ne[GGML_MAX_DIMS] = { a->ne[0] / 2 }; for (int i = 1; i < GGML_MAX_DIMS; i++) ne[i] = a->ne[i];
-    struct ggml_tensor * result = ggml_new_tensor_impl(ctx, a->type, GGML_MAX_DIMS, b ? a->ne : ne, NULL, 0);
+    int64_t ne[GGML_MAX_DIMS] = { a->ne[0] / 2 }; برائے (صحیح i = 1; i < GGML_MAX_DIMS; i++) ne[i] = a->ne[i];
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_impl(ctx, a->type, GGML_MAX_DIMS, b ? a->ne : ne, تہی, 0);
 
-    ggml_set_op_params_i32(result, 0, (int32_t) op);
-    ggml_set_op_params_i32(result, 1, (int32_t) swapped);
+    ggml_سیٹ_op_params_i32(نتیجہ, 0, (int32_t) op);
+    ggml_سیٹ_op_params_i32(نتیجہ, 1, (int32_t) swapped);
 
-    result->op     = GGML_OP_GLU;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op     = GGML_OP_GLU;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_floor
 
-struct ggml_tensor * ggml_floor(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_FLOOR);
+ساخت ggml_tensor * ggml_floor(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary(ctx, a, GGML_UNARY_OP_FLOOR);
 }
 
-struct ggml_tensor * ggml_floor_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_FLOOR);
+ساخت ggml_tensor * ggml_floor_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary_inplace(ctx, a, GGML_UNARY_OP_FLOOR);
 }
 
 // ggml_ceil
 
-struct ggml_tensor * ggml_ceil(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_CEIL);
+ساخت ggml_tensor * ggml_ceil(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary(ctx, a, GGML_UNARY_OP_CEIL);
 }
 
-struct ggml_tensor * ggml_ceil_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_CEIL);
+ساخت ggml_tensor * ggml_ceil_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary_inplace(ctx, a, GGML_UNARY_OP_CEIL);
 }
 
 //ggml_round
 
-struct ggml_tensor * ggml_round(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_ROUND);
+ساخت ggml_tensor * ggml_باری(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary(ctx, a, GGML_UNARY_OP_باری);
 }
 
-struct ggml_tensor * ggml_round_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_ROUND);
+ساخت ggml_tensor * ggml_باری_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary_inplace(ctx, a, GGML_UNARY_OP_باری);
 }
 
 //ggml_trunc
 
-struct ggml_tensor * ggml_trunc(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_TRUNC);
+ساخت ggml_tensor * ggml_trunc(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary(ctx, a, GGML_UNARY_OP_TRUNC);
 }
 
-struct ggml_tensor * ggml_trunc_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_TRUNC);
+ساخت ggml_tensor * ggml_trunc_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_unary_inplace(ctx, a, GGML_UNARY_OP_TRUNC);
 }
 
-struct ggml_tensor * ggml_glu(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        enum ggml_glu_op      op,
+ساخت ggml_tensor * ggml_glu(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        شمار ggml_glu_op      op,
         bool                  swapped) {
-    return ggml_glu_impl(ctx, a, NULL, op, swapped);
+    واپس ggml_glu_impl(ctx, a, تہی, op, swapped);
 }
 
-struct ggml_tensor * ggml_glu_split(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        enum ggml_glu_op      op) {
-    return ggml_glu_impl(ctx, a, b, op, false);
+ساخت ggml_tensor * ggml_glu_بانٹو(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        شمار ggml_glu_op      op) {
+    واپس ggml_glu_impl(ctx, a, b, op, false);
 }
 
 // ggml_reglu
 
-struct ggml_tensor * ggml_reglu(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_REGLU, false);
+ساخت ggml_tensor * ggml_reglu(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_glu_impl(ctx, a, تہی, GGML_GLU_OP_REGLU, false);
 }
 
-struct ggml_tensor * ggml_reglu_swapped(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_REGLU, true);
+ساخت ggml_tensor * ggml_reglu_swapped(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_glu_impl(ctx, a, تہی, GGML_GLU_OP_REGLU, true);
 }
 
-struct ggml_tensor * ggml_reglu_split(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_glu_impl(ctx, a, b, GGML_GLU_OP_REGLU, false);
+ساخت ggml_tensor * ggml_reglu_بانٹو(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b) {
+    واپس ggml_glu_impl(ctx, a, b, GGML_GLU_OP_REGLU, false);
 }
 
 // ggml_geglu
 
-struct ggml_tensor * ggml_geglu(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_GEGLU, false);
+ساخت ggml_tensor * ggml_geglu(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_glu_impl(ctx, a, تہی, GGML_GLU_OP_GEGLU, false);
 }
 
-struct ggml_tensor * ggml_geglu_swapped(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_GEGLU, true);
+ساخت ggml_tensor * ggml_geglu_swapped(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_glu_impl(ctx, a, تہی, GGML_GLU_OP_GEGLU, true);
 }
 
-struct ggml_tensor * ggml_geglu_split(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_glu_impl(ctx, a, b, GGML_GLU_OP_GEGLU, false);
+ساخت ggml_tensor * ggml_geglu_بانٹو(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b) {
+    واپس ggml_glu_impl(ctx, a, b, GGML_GLU_OP_GEGLU, false);
 }
 
 // ggml_swiglu
 
-struct ggml_tensor * ggml_swiglu(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_SWIGLU, false);
+ساخت ggml_tensor * ggml_swiglu(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_glu_impl(ctx, a, تہی, GGML_GLU_OP_SWIGLU, false);
 }
 
-struct ggml_tensor * ggml_swiglu_swapped(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_SWIGLU, true);
+ساخت ggml_tensor * ggml_swiglu_swapped(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_glu_impl(ctx, a, تہی, GGML_GLU_OP_SWIGLU, true);
 }
 
-struct ggml_tensor * ggml_swiglu_split(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_glu_impl(ctx, a, b, GGML_GLU_OP_SWIGLU, false);
+ساخت ggml_tensor * ggml_swiglu_بانٹو(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b) {
+    واپس ggml_glu_impl(ctx, a, b, GGML_GLU_OP_SWIGLU, false);
 }
 
 // ggml_geglu_erf
 
-struct ggml_tensor * ggml_geglu_erf(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_GEGLU_ERF, false);
+ساخت ggml_tensor * ggml_geglu_erf(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_glu_impl(ctx, a, تہی, GGML_GLU_OP_GEGLU_ERF, false);
 }
 
-struct ggml_tensor * ggml_geglu_erf_swapped(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_GEGLU_ERF, true);
+ساخت ggml_tensor * ggml_geglu_erf_swapped(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_glu_impl(ctx, a, تہی, GGML_GLU_OP_GEGLU_ERF, true);
 }
 
-struct ggml_tensor * ggml_geglu_erf_split(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_glu_impl(ctx, a, b, GGML_GLU_OP_GEGLU_ERF, false);
+ساخت ggml_tensor * ggml_geglu_erf_بانٹو(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b) {
+    واپس ggml_glu_impl(ctx, a, b, GGML_GLU_OP_GEGLU_ERF, false);
 }
 
 // ggml_geglu_quick
 
-struct ggml_tensor * ggml_geglu_quick(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_GEGLU_QUICK, false);
+ساخت ggml_tensor * ggml_geglu_تیز(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_glu_impl(ctx, a, تہی, GGML_GLU_OP_GEGLU_تیز, false);
 }
 
-struct ggml_tensor * ggml_geglu_quick_swapped(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_GEGLU_QUICK, true);
+ساخت ggml_tensor * ggml_geglu_تیز_swapped(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_glu_impl(ctx, a, تہی, GGML_GLU_OP_GEGLU_تیز, true);
 }
 
-struct ggml_tensor * ggml_geglu_quick_split(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_glu_impl(ctx, a, b, GGML_GLU_OP_GEGLU_QUICK, false);
+ساخت ggml_tensor * ggml_geglu_تیز_بانٹو(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b) {
+    واپس ggml_glu_impl(ctx, a, b, GGML_GLU_OP_GEGLU_تیز, false);
 }
 
-struct ggml_tensor * ggml_swiglu_oai(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        float                 alpha,
-        float                 limit) {
-    struct ggml_tensor * result = ggml_glu_impl(ctx, a, b, GGML_GLU_OP_SWIGLU_OAI, false);
-    ggml_set_op_params_f32(result, 2, alpha);
-    ggml_set_op_params_f32(result, 3, limit);
+ساخت ggml_tensor * ggml_swiglu_oai(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        اعشاری                 alpha,
+        اعشاری                 حد_بندی) {
+    ساخت ggml_tensor * نتیجہ = ggml_glu_impl(ctx, a, b, GGML_GLU_OP_SWIGLU_OAI, false);
+    ggml_سیٹ_op_params_f32(نتیجہ, 2, alpha);
+    ggml_سیٹ_op_params_f32(نتیجہ, 3, حد_بندی);
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_swiglu_clamp(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        float                 limit) {
-    struct ggml_tensor * result = ggml_glu_impl(ctx, a, b, GGML_GLU_OP_SWIGLU_CLAMP, false);
-    ggml_set_op_params_f32(result, 3, limit);
+ساخت ggml_tensor * ggml_swiglu_clamp(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        اعشاری                 حد_بندی) {
+    ساخت ggml_tensor * نتیجہ = ggml_glu_impl(ctx, a, b, GGML_GLU_OP_SWIGLU_CLAMP, false);
+    ggml_سیٹ_op_params_f32(نتیجہ, 3, حد_بندی);
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_norm
 
-static struct ggml_tensor * ggml_norm_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 eps,
+ساکن ساخت ggml_tensor * ggml_norm_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        اعشاری                 eps,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    ggml_set_op_params(result, &eps, sizeof(eps));
+    ggml_سیٹ_op_params(نتیجہ, &eps, حجم(eps));
 
-    result->op     = GGML_OP_NORM;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_NORM;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_norm(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 eps) {
-    return ggml_norm_impl(ctx, a, eps, false);
+ساخت ggml_tensor * ggml_norm(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        اعشاری                 eps) {
+    واپس ggml_norm_impl(ctx, a, eps, false);
 }
 
-struct ggml_tensor * ggml_norm_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 eps) {
-    return ggml_norm_impl(ctx, a, eps, true);
+ساخت ggml_tensor * ggml_norm_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        اعشاری                 eps) {
+    واپس ggml_norm_impl(ctx, a, eps, true);
 }
 
 // ggml_rms_norm
 
-static struct ggml_tensor * ggml_rms_norm_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 eps,
+ساکن ساخت ggml_tensor * ggml_rms_norm_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        اعشاری                 eps,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    ggml_set_op_params(result, &eps, sizeof(eps));
+    ggml_سیٹ_op_params(نتیجہ, &eps, حجم(eps));
 
-    result->op     = GGML_OP_RMS_NORM;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_RMS_NORM;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_rms_norm(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 eps) {
-    return ggml_rms_norm_impl(ctx, a, eps, false);
+ساخت ggml_tensor * ggml_rms_norm(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        اعشاری                 eps) {
+    واپس ggml_rms_norm_impl(ctx, a, eps, false);
 }
 
-struct ggml_tensor * ggml_rms_norm_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 eps) {
-    return ggml_rms_norm_impl(ctx, a, eps, true);
+ساخت ggml_tensor * ggml_rms_norm_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        اعشاری                 eps) {
+    واپس ggml_rms_norm_impl(ctx, a, eps, true);
 }
 
 // ggml_rms_norm_back
 
-struct ggml_tensor * ggml_rms_norm_back(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        float                 eps) {
-    struct ggml_tensor * result = ggml_dup_tensor(ctx, a);
+ساخت ggml_tensor * ggml_rms_norm_عقب(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        اعشاری                 eps) {
+    ساخت ggml_tensor * نتیجہ = ggml_dup_tensor(ctx, a);
 
-    ggml_set_op_params(result, &eps, sizeof(eps));
+    ggml_سیٹ_op_params(نتیجہ, &eps, حجم(eps));
 
-    result->op     = GGML_OP_RMS_NORM_BACK;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op     = GGML_OP_RMS_NORM_عقب;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_group_norm
 
-static struct ggml_tensor * ggml_group_norm_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   n_groups,
-        float                 eps,
+ساکن ساخت ggml_tensor * ggml_گروہ_norm_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        صحیح                   n_groups,
+        اعشاری                 eps,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    ggml_set_op_params_i32(result, 0, n_groups);
-    ggml_set_op_params_f32(result, 1, eps);
+    ggml_سیٹ_op_params_i32(نتیجہ, 0, n_groups);
+    ggml_سیٹ_op_params_f32(نتیجہ, 1, eps);
 
-    result->op     = GGML_OP_GROUP_NORM;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_گروہ_NORM;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_group_norm(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   n_groups,
-        float                 eps) {
-    return ggml_group_norm_impl(ctx, a, n_groups, eps, false);
+ساخت ggml_tensor * ggml_گروہ_norm(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        صحیح                   n_groups,
+        اعشاری                 eps) {
+    واپس ggml_گروہ_norm_impl(ctx, a, n_groups, eps, false);
 }
 
-struct ggml_tensor * ggml_group_norm_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   n_groups,
-        float                 eps) {
-    return ggml_group_norm_impl(ctx, a, n_groups, eps, true);
+ساخت ggml_tensor * ggml_گروہ_norm_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        صحیح                   n_groups,
+        اعشاری                 eps) {
+    واپس ggml_گروہ_norm_impl(ctx, a, n_groups, eps, true);
 }
 
 // ggml_l2_norm
 
-static struct ggml_tensor * ggml_l2_norm_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 eps,
+ساکن ساخت ggml_tensor * ggml_l2_norm_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        اعشاری                 eps,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    ggml_set_op_params_f32(result, 0, eps);
+    ggml_سیٹ_op_params_f32(نتیجہ, 0, eps);
 
-    result->op     = GGML_OP_L2_NORM;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_L2_NORM;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_l2_norm(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 eps) {
-    return ggml_l2_norm_impl(ctx, a, eps, false);
+ساخت ggml_tensor * ggml_l2_norm(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        اعشاری                 eps) {
+    واپس ggml_l2_norm_impl(ctx, a, eps, false);
 }
 
-struct ggml_tensor * ggml_l2_norm_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 eps) {
-    return ggml_l2_norm_impl(ctx, a, eps, true);
+ساخت ggml_tensor * ggml_l2_norm_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        اعشاری                 eps) {
+    واپس ggml_l2_norm_impl(ctx, a, eps, true);
 }
 
 // ggml_prec
 
-bool ggml_prec_set_acc(
-        struct ggml_tensor * a,
-        enum ggml_prec       prec) {
-    switch (a->op) {
-        case GGML_OP_MUL_MAT:
-        case GGML_OP_MUL_MAT_ID:
+bool ggml_prec_سیٹ_acc(
+        ساخت ggml_tensor * a,
+        شمار ggml_prec       prec) {
+    انتخاب (a->op) {
+        حالت GGML_OP_MUL_MAT:
+        حالت GGML_OP_MUL_MAT_ID:
             {
-                const int32_t prec_i32 = (int32_t) prec;
-                ggml_set_op_params_i32(a, 0, prec_i32);
+                ثابت int32_t prec_i32 = (int32_t) prec;
+                ggml_سیٹ_op_params_i32(a, 0, prec_i32);
             }
-            break;
-        case GGML_OP_FLASH_ATTN_EXT:
+            توڑو;
+        حالت GGML_OP_FLASH_ATTN_EXT:
             {
-                const int32_t prec_i32 = (int32_t) prec;
-                ggml_set_op_params_i32(a, 3, prec_i32);
+                ثابت int32_t prec_i32 = (int32_t) prec;
+                ggml_سیٹ_op_params_i32(a, 3, prec_i32);
             }
-            break;
-        default:
-            return false;
+            توڑو;
+        طےشدہ:
+            واپس false;
     };
 
-    return true;
+    واپس true;
 }
 
-bool ggml_prec_set_src(
-        struct ggml_tensor * a,
-        enum ggml_prec       prec,
-        int                  idx) {
+bool ggml_prec_سیٹ_src(
+        ساخت ggml_tensor * a,
+        شمار ggml_prec       prec,
+        صحیح                  idx) {
     GGML_ASSERT(idx >= 0 && idx < GGML_MAX_SRC);
 
-    switch (a->op) {
-        case GGML_OP_MUL_MAT:
-        case GGML_OP_MUL_MAT_ID:
+    انتخاب (a->op) {
+        حالت GGML_OP_MUL_MAT:
+        حالت GGML_OP_MUL_MAT_ID:
             {
-                if (idx != 1) {
-                    return false;
+                اگر (idx != 1) {
+                    واپس false;
                 }
 
-                const int32_t prec_i32 = (int32_t) prec;
-                ggml_set_op_params_i32(a, 2 + idx, prec_i32);
+                ثابت int32_t prec_i32 = (int32_t) prec;
+                ggml_سیٹ_op_params_i32(a, 2 + idx, prec_i32);
             }
-            break;
-        default:
-            return false;
+            توڑو;
+        طےشدہ:
+            واپس false;
     };
 
-    return true;
+    واپس true;
 }
 
 // ggml_mul_mat
 
-static inline bool ggml_can_mul_mat(const struct ggml_tensor * t0, const struct ggml_tensor * t1) {
+ساکن اندرونی bool ggml_can_mul_mat(ثابت ساخت ggml_tensor * t0, ثابت ساخت ggml_tensor * t1) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return (t0->ne[0]           == t1->ne[0])  &&
+    واپس (t0->ne[0]           == t1->ne[0])  &&
            (t1->ne[2]%t0->ne[2] == 0)          && // verify t0 is broadcastable
            (t1->ne[3]%t0->ne[3] == 0);
 }
 
-struct ggml_tensor * ggml_mul_mat(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
+ساخت ggml_tensor * ggml_mul_mat(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b) {
     GGML_ASSERT(ggml_can_mul_mat(a, b));
     GGML_ASSERT(!ggml_is_transposed(a));
 
-    const int64_t ne[4] = { a->ne[1], b->ne[1], b->ne[2], b->ne[3] };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ثابت int64_t ne[4] = { a->ne[1], b->ne[1], b->ne[2], b->ne[3] };
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
-    result->op     = GGML_OP_MUL_MAT;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op     = GGML_OP_MUL_MAT;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    return result;
+    واپس نتیجہ;
 }
 
-void ggml_mul_mat_set_prec(
-        struct ggml_tensor * a,
-        enum ggml_prec       prec) {
+خالی ggml_mul_mat_سیٹ_prec(
+        ساخت ggml_tensor * a,
+        شمار ggml_prec       prec) {
     GGML_ASSERT(a->op == GGML_OP_MUL_MAT);
 
-    const int32_t prec_i32 = (int32_t) prec;
+    ثابت int32_t prec_i32 = (int32_t) prec;
 
-    ggml_set_op_params_i32(a, 0, prec_i32);
+    ggml_سیٹ_op_params_i32(a, 0, prec_i32);
 }
 
-void ggml_mul_mat_set_hint(
-        struct ggml_tensor * a,
-        enum ggml_op_hint    hint) {
+خالی ggml_mul_mat_سیٹ_hint(
+        ساخت ggml_tensor * a,
+        شمار ggml_op_hint    hint) {
     GGML_ASSERT(a->op == GGML_OP_MUL_MAT);
 
-    const int32_t hint_i32 = (int32_t) hint;
+    ثابت int32_t hint_i32 = (int32_t) hint;
 
-    ggml_set_op_params_i32(a, 1, hint_i32);
+    ggml_سیٹ_op_params_i32(a, 1, hint_i32);
 }
 
 // ggml_mul_mat_id
@@ -3412,11 +3412,11 @@ void ggml_mul_mat_set_hint(
 
     c ~= as[:,:,i] @ b[:,i%r,t], i = ids[e,t] for all e,t in ids
 */
-struct ggml_tensor * ggml_mul_mat_id(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * as,
-        struct ggml_tensor  * b,
-        struct ggml_tensor  * ids) {
+ساخت ggml_tensor * ggml_mul_mat_id(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * as,
+        ساخت ggml_tensor  * b,
+        ساخت ggml_tensor  * ids) {
     GGML_ASSERT(!ggml_is_transposed(as));
     GGML_ASSERT(ids->type == GGML_TYPE_I32);
 
@@ -3427,363 +3427,363 @@ struct ggml_tensor * ggml_mul_mat_id(
     GGML_ASSERT(as->ne[0] == b->ne[0]); // can_mul_mat
     GGML_ASSERT(ids->ne[0] % b->ne[1] == 0); // can broadcast
 
-    const int64_t ne[4] = { as->ne[1], ids->ne[0], b->ne[2], 1 };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ثابت int64_t ne[4] = { as->ne[1], ids->ne[0], b->ne[2], 1 };
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
-    result->op     = GGML_OP_MUL_MAT_ID;
-    result->src[0] = as;
-    result->src[1] = b;
-    result->src[2] = ids;
+    نتیجہ->op     = GGML_OP_MUL_MAT_ID;
+    نتیجہ->src[0] = as;
+    نتیجہ->src[1] = b;
+    نتیجہ->src[2] = ids;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_out_prod
 
-static inline bool ggml_can_out_prod(const struct ggml_tensor * t0, const struct ggml_tensor * t1) {
+ساکن اندرونی bool ggml_can_برآمد_prod(ثابت ساخت ggml_tensor * t0, ثابت ساخت ggml_tensor * t1) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return (t0->ne[1] == t1->ne[1])   &&
+    واپس (t0->ne[1] == t1->ne[1])   &&
            (t1->ne[2]%t0->ne[2] == 0) && // verify t0 is broadcastable
            (t1->ne[3]%t0->ne[3] == 0);
 }
 
-struct ggml_tensor * ggml_out_prod(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    GGML_ASSERT(ggml_can_out_prod(a, b));
+ساخت ggml_tensor * ggml_برآمد_prod(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b) {
+    GGML_ASSERT(ggml_can_برآمد_prod(a, b));
     GGML_ASSERT(!ggml_is_transposed(a));
 
     // a is broadcastable to b for ne[2] and ne[3] -> use b->ne[2] and b->ne[3]
-    const int64_t ne[4] = { a->ne[0], b->ne[0], b->ne[2], b->ne[3] };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ثابت int64_t ne[4] = { a->ne[0], b->ne[0], b->ne[2], b->ne[3] };
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
-    result->op     = GGML_OP_OUT_PROD;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op     = GGML_OP_برآمد_PROD;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_scale
 
-static struct ggml_tensor * ggml_scale_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 s,
-        float                 b,
+ساکن ساخت ggml_tensor * ggml_scale_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        اعشاری                 s,
+        اعشاری                 b,
         bool                  inplace) {
     GGML_ASSERT(ggml_is_padded_1d(a));
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    float params[2] = { s, b };
-    ggml_set_op_params(result, &params, sizeof(params));
+    اعشاری params[2] = { s, b };
+    ggml_سیٹ_op_params(نتیجہ, &params, حجم(params));
 
-    result->op     = GGML_OP_SCALE;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_SCALE;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_scale(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 s) {
-    return ggml_scale_impl(ctx, a, s, 0.0, false);
+ساخت ggml_tensor * ggml_scale(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        اعشاری                 s) {
+    واپس ggml_scale_impl(ctx, a, s, 0.0, false);
 }
 
-struct ggml_tensor * ggml_scale_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 s) {
-    return ggml_scale_impl(ctx, a, s, 0.0, true);
+ساخت ggml_tensor * ggml_scale_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        اعشاری                 s) {
+    واپس ggml_scale_impl(ctx, a, s, 0.0, true);
 }
 
-struct ggml_tensor * ggml_scale_bias(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 s,
-        float                 b) {
-    return ggml_scale_impl(ctx, a, s, b, false);
+ساخت ggml_tensor * ggml_scale_bias(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        اعشاری                 s,
+        اعشاری                 b) {
+    واپس ggml_scale_impl(ctx, a, s, b, false);
 }
 
-struct ggml_tensor * ggml_scale_bias_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 s,
-        float                 b) {
-    return ggml_scale_impl(ctx, a, s, b, true);
+ساخت ggml_tensor * ggml_scale_bias_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        اعشاری                 s,
+        اعشاری                 b) {
+    واپس ggml_scale_impl(ctx, a, s, b, true);
 }
 
 // ggml_set
 
-static struct ggml_tensor * ggml_set_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ساکن ساخت ggml_tensor * ggml_سیٹ_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
         size_t                nb1,
         size_t                nb2,
         size_t                nb3,
-        size_t                offset,
+        size_t                انحراف,
         bool                  inplace) {
     GGML_ASSERT(ggml_nelements(a) >= ggml_nelements(b));
 
     // make a view of the destination
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    GGML_ASSERT(offset < (size_t)(1 << 30));
-    int32_t params[] = { nb1, nb2, nb3, offset, inplace ? 1 : 0 };
-    ggml_set_op_params(result, params, sizeof(params));
+    GGML_ASSERT(انحراف < (size_t)(1 << 30));
+    int32_t params[] = { nb1, nb2, nb3, انحراف, inplace ? 1 : 0 };
+    ggml_سیٹ_op_params(نتیجہ, params, حجم(params));
 
-    result->op     = GGML_OP_SET;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op     = GGML_OP_سیٹ;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_set(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ساخت ggml_tensor * ggml_سیٹ(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
         size_t                nb1,
         size_t                nb2,
         size_t                nb3,
-        size_t                offset) {
-    return ggml_set_impl(ctx, a, b, nb1, nb2, nb3, offset, false);
+        size_t                انحراف) {
+    واپس ggml_سیٹ_impl(ctx, a, b, nb1, nb2, nb3, انحراف, false);
 }
 
-struct ggml_tensor * ggml_set_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ساخت ggml_tensor * ggml_سیٹ_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
         size_t                nb1,
         size_t                nb2,
         size_t                nb3,
-        size_t                offset) {
-    return ggml_set_impl(ctx, a, b, nb1, nb2, nb3, offset, true);
+        size_t                انحراف) {
+    واپس ggml_سیٹ_impl(ctx, a, b, nb1, nb2, nb3, انحراف, true);
 }
 
-struct ggml_tensor * ggml_set_1d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        size_t                offset) {
-    return ggml_set_impl(ctx, a, b, a->nb[1], a->nb[2], a->nb[3], offset, false);
+ساخت ggml_tensor * ggml_سیٹ_1d(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        size_t                انحراف) {
+    واپس ggml_سیٹ_impl(ctx, a, b, a->nb[1], a->nb[2], a->nb[3], انحراف, false);
 }
 
-struct ggml_tensor * ggml_set_1d_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        size_t                offset) {
-    return ggml_set_impl(ctx, a, b, a->nb[1], a->nb[2], a->nb[3], offset, true);
+ساخت ggml_tensor * ggml_سیٹ_1d_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        size_t                انحراف) {
+    واپس ggml_سیٹ_impl(ctx, a, b, a->nb[1], a->nb[2], a->nb[3], انحراف, true);
 }
 
-struct ggml_tensor * ggml_set_2d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ساخت ggml_tensor * ggml_سیٹ_2d(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
         size_t                nb1,
-        size_t                offset) {
-    return ggml_set_impl(ctx, a, b, nb1, a->nb[2], a->nb[3], offset, false);
+        size_t                انحراف) {
+    واپس ggml_سیٹ_impl(ctx, a, b, nb1, a->nb[2], a->nb[3], انحراف, false);
 }
 
-struct ggml_tensor * ggml_set_2d_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ساخت ggml_tensor * ggml_سیٹ_2d_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
         size_t                nb1,
-        size_t                offset) {
-    return ggml_set_impl(ctx, a, b, nb1, a->nb[2], a->nb[3], offset, true);
+        size_t                انحراف) {
+    واپس ggml_سیٹ_impl(ctx, a, b, nb1, a->nb[2], a->nb[3], انحراف, true);
 }
 
 // ggml_cpy
 
-static struct ggml_tensor * ggml_cpy_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
+ساکن ساخت ggml_tensor * ggml_cpy_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b) {
     GGML_ASSERT(ggml_nelements(a) == ggml_nelements(b));
 
     // make a view of the destination
-    struct ggml_tensor * result = ggml_view_tensor(ctx, b);
-    if (strlen(b->name) > 0) {
-        ggml_format_name(result, "%s (copy of %s)", b->name, a->name);
-    } else {
-        ggml_format_name(result, "%s (copy)", a->name);
+    ساخت ggml_tensor * نتیجہ = ggml_view_tensor(ctx, b);
+    اگر (لڑی_لمبائی(b->name) > 0) {
+        ggml_format_name(نتیجہ, "%s (copy of %s)", b->name, a->name);
+    } ورنہ {
+        ggml_format_name(نتیجہ, "%s (copy)", a->name);
     }
 
-    result->op     = GGML_OP_CPY;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op     = GGML_OP_CPY;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_cpy(
-        struct ggml_context * ctx,
-        struct ggml_tensor * a,
-        struct ggml_tensor * b) {
-    return ggml_cpy_impl(ctx, a, b);
+ساخت ggml_tensor * ggml_cpy(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor * a,
+        ساخت ggml_tensor * b) {
+    واپس ggml_cpy_impl(ctx, a, b);
 }
 
-struct ggml_tensor * ggml_cast(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        enum   ggml_type      type) {
-    struct ggml_tensor * result = ggml_new_tensor(ctx, type, GGML_MAX_DIMS, a->ne);
-    ggml_format_name(result, "%s (copy)", a->name);
+ساخت ggml_tensor * ggml_cast(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        شمار   ggml_type      type) {
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, type, GGML_MAX_DIMS, a->ne);
+    ggml_format_name(نتیجہ, "%s (copy)", a->name);
 
-    result->op     = GGML_OP_CPY;
-    result->src[0] = a;
-    result->src[1] = result; // note: this self-reference might seem redundant, but it's actually needed by some
+    نتیجہ->op     = GGML_OP_CPY;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = نتیجہ; // note: this self-reference might seem redundant, but it's actually needed by some
                              //       backends for consistency with ggml_cpy_impl() above
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_cont
 
-static struct ggml_tensor * ggml_cont_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    struct ggml_tensor * result = ggml_dup_tensor(ctx, a);
-    ggml_format_name(result, "%s (cont)", a->name);
+ساکن ساخت ggml_tensor * ggml_cont_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    ساخت ggml_tensor * نتیجہ = ggml_dup_tensor(ctx, a);
+    ggml_format_name(نتیجہ, "%s (cont)", a->name);
 
-    result->op     = GGML_OP_CONT;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_CONT;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_cont(
-        struct ggml_context * ctx,
-        struct ggml_tensor * a) {
-    return ggml_cont_impl(ctx, a);
+ساخت ggml_tensor * ggml_cont(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor * a) {
+    واپس ggml_cont_impl(ctx, a);
 }
 
 // make contiguous, with new shape
-GGML_API struct ggml_tensor * ggml_cont_1d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+GGML_API ساخت ggml_tensor * ggml_cont_1d(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
         int64_t               ne0) {
-    return ggml_cont_4d(ctx, a, ne0, 1, 1, 1);
+    واپس ggml_cont_4d(ctx, a, ne0, 1, 1, 1);
 }
 
-GGML_API struct ggml_tensor * ggml_cont_2d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+GGML_API ساخت ggml_tensor * ggml_cont_2d(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
         int64_t               ne0,
         int64_t               ne1) {
-    return ggml_cont_4d(ctx, a, ne0, ne1, 1, 1);
+    واپس ggml_cont_4d(ctx, a, ne0, ne1, 1, 1);
 }
 
-GGML_API struct ggml_tensor * ggml_cont_3d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+GGML_API ساخت ggml_tensor * ggml_cont_3d(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
         int64_t               ne0,
         int64_t               ne1,
         int64_t               ne2) {
-    return ggml_cont_4d(ctx, a, ne0, ne1, ne2, 1);
+    واپس ggml_cont_4d(ctx, a, ne0, ne1, ne2, 1);
 }
 
-struct ggml_tensor * ggml_cont_4d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ساخت ggml_tensor * ggml_cont_4d(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
         int64_t               ne0,
         int64_t               ne1,
         int64_t               ne2,
         int64_t               ne3) {
     GGML_ASSERT(ggml_nelements(a) == (ne0*ne1*ne2*ne3));
 
-    struct ggml_tensor * result = ggml_new_tensor_4d(ctx, a->type, ne0, ne1, ne2, ne3);
-    ggml_format_name(result, "%s (cont)", a->name);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_4d(ctx, a->type, ne0, ne1, ne2, ne3);
+    ggml_format_name(نتیجہ, "%s (cont)", a->name);
 
-    result->op     = GGML_OP_CONT;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_CONT;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_reshape
 
-struct ggml_tensor * ggml_reshape(
-        struct ggml_context * ctx,
-        struct ggml_tensor * a,
-        struct ggml_tensor * b) {
+ساخت ggml_tensor * ggml_reshape(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor * a,
+        ساخت ggml_tensor * b) {
     GGML_ASSERT(ggml_is_contiguous(a));
     // as only the shape of b is relevant, and not its memory layout, b is allowed to be non contiguous.
     GGML_ASSERT(ggml_nelements(a) == ggml_nelements(b));
 
-    struct ggml_tensor * result = ggml_new_tensor_impl(ctx, a->type, GGML_MAX_DIMS, b->ne, a, 0);
-    ggml_format_name(result, "%s (reshaped)", a->name);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_impl(ctx, a->type, GGML_MAX_DIMS, b->ne, a, 0);
+    ggml_format_name(نتیجہ, "%s (reshaped)", a->name);
 
-    result->op     = GGML_OP_RESHAPE;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_RESHAPE;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_reshape_1d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ساخت ggml_tensor * ggml_reshape_1d(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
         int64_t               ne0) {
     GGML_ASSERT(ggml_is_contiguous(a));
     GGML_ASSERT(ggml_nelements(a) == ne0);
 
-    const int64_t ne[1] = { ne0 };
-    struct ggml_tensor * result = ggml_new_tensor_impl(ctx, a->type, 1, ne, a, 0);
-    ggml_format_name(result, "%s (reshaped)", a->name);
+    ثابت int64_t ne[1] = { ne0 };
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_impl(ctx, a->type, 1, ne, a, 0);
+    ggml_format_name(نتیجہ, "%s (reshaped)", a->name);
 
-    result->op     = GGML_OP_RESHAPE;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_RESHAPE;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_reshape_2d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ساخت ggml_tensor * ggml_reshape_2d(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
         int64_t               ne0,
         int64_t               ne1) {
     GGML_ASSERT(ggml_is_contiguous(a));
     GGML_ASSERT(ggml_nelements(a) == ne0*ne1);
 
-    const int64_t ne[2] = { ne0, ne1 };
-    struct ggml_tensor * result = ggml_new_tensor_impl(ctx, a->type, 2, ne, a, 0);
-    ggml_format_name(result, "%s (reshaped)", a->name);
+    ثابت int64_t ne[2] = { ne0, ne1 };
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_impl(ctx, a->type, 2, ne, a, 0);
+    ggml_format_name(نتیجہ, "%s (reshaped)", a->name);
 
-    result->op     = GGML_OP_RESHAPE;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_RESHAPE;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_reshape_3d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ساخت ggml_tensor * ggml_reshape_3d(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
         int64_t               ne0,
         int64_t               ne1,
         int64_t               ne2) {
     GGML_ASSERT(ggml_is_contiguous(a));
     GGML_ASSERT(ggml_nelements(a) == ne0*ne1*ne2);
 
-    const int64_t ne[3] = { ne0, ne1, ne2 };
-    struct ggml_tensor * result = ggml_new_tensor_impl(ctx, a->type, 3, ne, a, 0);
-    ggml_format_name(result, "%s (reshaped)", a->name);
+    ثابت int64_t ne[3] = { ne0, ne1, ne2 };
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_impl(ctx, a->type, 3, ne, a, 0);
+    ggml_format_name(نتیجہ, "%s (reshaped)", a->name);
 
-    result->op     = GGML_OP_RESHAPE;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_RESHAPE;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_reshape_4d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ساخت ggml_tensor * ggml_reshape_4d(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
         int64_t               ne0,
         int64_t               ne1,
         int64_t               ne2,
@@ -3791,92 +3791,92 @@ struct ggml_tensor * ggml_reshape_4d(
     GGML_ASSERT(ggml_is_contiguous(a));
     GGML_ASSERT(ggml_nelements(a) == ne0*ne1*ne2*ne3);
 
-    const int64_t ne[4] = { ne0, ne1, ne2, ne3 };
-    struct ggml_tensor * result = ggml_new_tensor_impl(ctx, a->type, 4, ne, a, 0);
-    ggml_format_name(result, "%s (reshaped)", a->name);
+    ثابت int64_t ne[4] = { ne0, ne1, ne2, ne3 };
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_impl(ctx, a->type, 4, ne, a, 0);
+    ggml_format_name(نتیجہ, "%s (reshaped)", a->name);
 
-    result->op     = GGML_OP_RESHAPE;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_RESHAPE;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
-static struct ggml_tensor * ggml_view_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   n_dims,
-        const int64_t       * ne,
-        size_t                offset) {
-    struct ggml_tensor * result = ggml_new_tensor_impl(ctx, a->type, n_dims, ne, a, offset);
-    ggml_format_name(result, "%s (view)", a->name);
+ساکن ساخت ggml_tensor * ggml_view_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        صحیح                   n_dims,
+        ثابت int64_t       * ne,
+        size_t                انحراف) {
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_impl(ctx, a->type, n_dims, ne, a, انحراف);
+    ggml_format_name(نتیجہ, "%s (view)", a->name);
 
-    ggml_set_op_params(result, &offset, sizeof(offset));
+    ggml_سیٹ_op_params(نتیجہ, &انحراف, حجم(انحراف));
 
-    result->op     = GGML_OP_VIEW;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_VIEW;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_view_1d
 
-struct ggml_tensor * ggml_view_1d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ساخت ggml_tensor * ggml_view_1d(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
         int64_t               ne0,
-        size_t                offset) {
-    struct ggml_tensor * result = ggml_view_impl(ctx, a, 1, &ne0, offset);
+        size_t                انحراف) {
+    ساخت ggml_tensor * نتیجہ = ggml_view_impl(ctx, a, 1, &ne0, انحراف);
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_view_2d
 
-struct ggml_tensor * ggml_view_2d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ساخت ggml_tensor * ggml_view_2d(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
         int64_t               ne0,
         int64_t               ne1,
         size_t                nb1,
-        size_t                offset) {
-    const int64_t ne[2] = { ne0, ne1 };
+        size_t                انحراف) {
+    ثابت int64_t ne[2] = { ne0, ne1 };
 
-    struct ggml_tensor * result = ggml_view_impl(ctx, a, 2, ne, offset);
+    ساخت ggml_tensor * نتیجہ = ggml_view_impl(ctx, a, 2, ne, انحراف);
 
-    result->nb[1] = nb1;
-    result->nb[2] = result->nb[1]*ne1;
-    result->nb[3] = result->nb[2];
+    نتیجہ->nb[1] = nb1;
+    نتیجہ->nb[2] = نتیجہ->nb[1]*ne1;
+    نتیجہ->nb[3] = نتیجہ->nb[2];
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_view_3d
 
-struct ggml_tensor * ggml_view_3d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ساخت ggml_tensor * ggml_view_3d(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
         int64_t               ne0,
         int64_t               ne1,
         int64_t               ne2,
         size_t                nb1,
         size_t                nb2,
-        size_t                offset) {
-    const int64_t ne[3] = { ne0, ne1, ne2 };
+        size_t                انحراف) {
+    ثابت int64_t ne[3] = { ne0, ne1, ne2 };
 
-    struct ggml_tensor * result = ggml_view_impl(ctx, a, 3, ne, offset);
+    ساخت ggml_tensor * نتیجہ = ggml_view_impl(ctx, a, 3, ne, انحراف);
 
-    result->nb[1] = nb1;
-    result->nb[2] = nb2;
-    result->nb[3] = result->nb[2]*ne2;
+    نتیجہ->nb[1] = nb1;
+    نتیجہ->nb[2] = nb2;
+    نتیجہ->nb[3] = نتیجہ->nb[2]*ne2;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_view_4d
 
-struct ggml_tensor * ggml_view_4d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ساخت ggml_tensor * ggml_view_4d(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
         int64_t               ne0,
         int64_t               ne1,
         int64_t               ne2,
@@ -3884,27 +3884,27 @@ struct ggml_tensor * ggml_view_4d(
         size_t                nb1,
         size_t                nb2,
         size_t                nb3,
-        size_t                offset) {
-    const int64_t ne[4] = { ne0, ne1, ne2, ne3 };
+        size_t                انحراف) {
+    ثابت int64_t ne[4] = { ne0, ne1, ne2, ne3 };
 
-    struct ggml_tensor * result = ggml_view_impl(ctx, a, 4, ne, offset);
+    ساخت ggml_tensor * نتیجہ = ggml_view_impl(ctx, a, 4, ne, انحراف);
 
-    result->nb[1] = nb1;
-    result->nb[2] = nb2;
-    result->nb[3] = nb3;
+    نتیجہ->nb[1] = nb1;
+    نتیجہ->nb[2] = nb2;
+    نتیجہ->nb[3] = nb3;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_permute
 
-struct ggml_tensor * ggml_permute(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   axis0,
-        int                   axis1,
-        int                   axis2,
-        int                   axis3) {
+ساخت ggml_tensor * ggml_ترتیب_بدلو(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        صحیح                   axis0,
+        صحیح                   axis1,
+        صحیح                   axis2,
+        صحیح                   axis3) {
     GGML_ASSERT(axis0 >= 0 && axis0 < GGML_MAX_DIMS);
     GGML_ASSERT(axis1 >= 0 && axis1 < GGML_MAX_DIMS);
     GGML_ASSERT(axis2 >= 0 && axis2 < GGML_MAX_DIMS);
@@ -3917,8 +3917,8 @@ struct ggml_tensor * ggml_permute(
     GGML_ASSERT(axis1 != axis3);
     GGML_ASSERT(axis2 != axis3);
 
-    struct ggml_tensor * result = ggml_view_tensor(ctx, a);
-    ggml_format_name(result, "%s (permuted)", a->name);
+    ساخت ggml_tensor * نتیجہ = ggml_view_tensor(ctx, a);
+    ggml_format_name(نتیجہ, "%s (permuted)", a->name);
 
     int64_t ne[GGML_MAX_DIMS];
     size_t nb[GGML_MAX_DIMS];
@@ -3933,98 +3933,98 @@ struct ggml_tensor * ggml_permute(
     nb[axis2] = a->nb[2];
     nb[axis3] = a->nb[3];
 
-    result->ne[0] = ne[0];
-    result->ne[1] = ne[1];
-    result->ne[2] = ne[2];
-    result->ne[3] = ne[3];
+    نتیجہ->ne[0] = ne[0];
+    نتیجہ->ne[1] = ne[1];
+    نتیجہ->ne[2] = ne[2];
+    نتیجہ->ne[3] = ne[3];
 
-    result->nb[0] = nb[0];
-    result->nb[1] = nb[1];
-    result->nb[2] = nb[2];
-    result->nb[3] = nb[3];
+    نتیجہ->nb[0] = nb[0];
+    نتیجہ->nb[1] = nb[1];
+    نتیجہ->nb[2] = nb[2];
+    نتیجہ->nb[3] = nb[3];
 
-    result->op     = GGML_OP_PERMUTE;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_ترتیب_بدلو;
+    نتیجہ->src[0] = a;
 
     int32_t params[] = { axis0, axis1, axis2, axis3 };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_سیٹ_op_params(نتیجہ, params, حجم(params));
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_transpose
 
-struct ggml_tensor * ggml_transpose(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    struct ggml_tensor * result = ggml_view_tensor(ctx, a);
-    ggml_format_name(result, "%s (transposed)", a->name);
+ساخت ggml_tensor * ggml_transpose(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    ساخت ggml_tensor * نتیجہ = ggml_view_tensor(ctx, a);
+    ggml_format_name(نتیجہ, "%s (transposed)", a->name);
 
-    result->ne[0] = a->ne[1];
-    result->ne[1] = a->ne[0];
+    نتیجہ->ne[0] = a->ne[1];
+    نتیجہ->ne[1] = a->ne[0];
 
-    result->nb[0] = a->nb[1];
-    result->nb[1] = a->nb[0];
+    نتیجہ->nb[0] = a->nb[1];
+    نتیجہ->nb[1] = a->nb[0];
 
-    result->op     = GGML_OP_TRANSPOSE;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_TRANSPOSE;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_get_rows
 
-struct ggml_tensor * ggml_get_rows(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
+ساخت ggml_tensor * ggml_get_صفیں(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b) {
     GGML_ASSERT(a->ne[2] == b->ne[1]);
     GGML_ASSERT(a->ne[3] == b->ne[2]);
     GGML_ASSERT(b->ne[3] == 1);
     GGML_ASSERT(b->type == GGML_TYPE_I32);
 
     // TODO: implement non F32 return
-    enum ggml_type type = GGML_TYPE_F32;
-    if (a->type == GGML_TYPE_I32) {
+    شمار ggml_type type = GGML_TYPE_F32;
+    اگر (a->type == GGML_TYPE_I32) {
         type = a->type;
     }
-    struct ggml_tensor * result = ggml_new_tensor_4d(ctx, type, a->ne[0], b->ne[0], b->ne[1], b->ne[2]);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_4d(ctx, type, a->ne[0], b->ne[0], b->ne[1], b->ne[2]);
 
-    result->op     = GGML_OP_GET_ROWS;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op     = GGML_OP_GET_صفیں;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_get_rows_back
 
-struct ggml_tensor * ggml_get_rows_back(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        struct ggml_tensor  * c) {
-    GGML_ASSERT(ggml_is_matrix(a) && ggml_is_vector(b) && b->type == GGML_TYPE_I32);
-    GGML_ASSERT(ggml_is_matrix(c) && (a->ne[0] == c->ne[0]));
+ساخت ggml_tensor * ggml_get_صفیں_عقب(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        ساخت ggml_tensor  * c) {
+    GGML_ASSERT(ggml_is_میٹرکس(a) && ggml_is_سمتیہ(b) && b->type == GGML_TYPE_I32);
+    GGML_ASSERT(ggml_is_میٹرکس(c) && (a->ne[0] == c->ne[0]));
 
     // TODO: implement non F32 return
     //struct ggml_tensor * result = ggml_new_tensor_2d(ctx, a->type, a->ne[0], b->ne[0]);
-    struct ggml_tensor * result = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, c->ne[0], c->ne[1]);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, c->ne[0], c->ne[1]);
 
-    result->op     = GGML_OP_GET_ROWS_BACK;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op     = GGML_OP_GET_صفیں_عقب;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_set_rows
 
-struct ggml_tensor * ggml_set_rows(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        struct ggml_tensor  * c) {
+ساخت ggml_tensor * ggml_سیٹ_صفیں(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        ساخت ggml_tensor  * c) {
     GGML_ASSERT(a->ne[0] == b->ne[0]);
     GGML_ASSERT(a->ne[2] == b->ne[2]);
     GGML_ASSERT(a->ne[3] == b->ne[3]);
@@ -4035,210 +4035,210 @@ struct ggml_tensor * ggml_set_rows(
     GGML_ASSERT(b->type == GGML_TYPE_F32 || b->type == GGML_TYPE_F16);
     GGML_ASSERT(c->type == GGML_TYPE_I64 || c->type == GGML_TYPE_I32);
 
-    GGML_ASSERT(ggml_is_contiguous_rows(a));
-    GGML_ASSERT(ggml_is_contiguous_rows(b));
+    GGML_ASSERT(ggml_is_contiguous_صفیں(a));
+    GGML_ASSERT(ggml_is_contiguous_صفیں(b));
 
-    struct ggml_tensor * result = ggml_view_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = ggml_view_tensor(ctx, a);
 
-    result->op     = GGML_OP_SET_ROWS;
-    result->src[0] = b;
-    result->src[1] = c;
-    result->src[2] = a; // note: order is weird due to legacy reasons (https://github.com/ggml-org/llama.cpp/pull/16063#discussion_r2385795931)
+    نتیجہ->op     = GGML_OP_سیٹ_صفیں;
+    نتیجہ->src[0] = b;
+    نتیجہ->src[1] = c;
+    نتیجہ->src[2] = a; // note: order is weird due to legacy reasons (https://github.com/ggml-org/llama.cpp/pull/16063#discussion_r2385795931)
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_diag
 
-struct ggml_tensor * ggml_diag(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
+ساخت ggml_tensor * ggml_diag(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
     GGML_ASSERT(a->ne[1] == 1);
 
-    const int64_t ne[4] = { a->ne[0], a->ne[0], a->ne[2], a->ne[3] };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, a->type, 4, ne);
+    ثابت int64_t ne[4] = { a->ne[0], a->ne[0], a->ne[2], a->ne[3] };
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, a->type, 4, ne);
 
-    result->op     = GGML_OP_DIAG;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_DIAG;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_diag_mask_inf
 
-static struct ggml_tensor * ggml_diag_mask_inf_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   n_past,
+ساکن ساخت ggml_tensor * ggml_diag_نقاب_inf_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        صحیح                   n_past,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
     int32_t params[] = { n_past };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_سیٹ_op_params(نتیجہ, params, حجم(params));
 
-    result->op     = GGML_OP_DIAG_MASK_INF;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_DIAG_نقاب_INF;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_diag_mask_inf(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   n_past) {
-    return ggml_diag_mask_inf_impl(ctx, a, n_past, false);
+ساخت ggml_tensor * ggml_diag_نقاب_inf(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        صحیح                   n_past) {
+    واپس ggml_diag_نقاب_inf_impl(ctx, a, n_past, false);
 }
 
-struct ggml_tensor * ggml_diag_mask_inf_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   n_past) {
-    return ggml_diag_mask_inf_impl(ctx, a, n_past, true);
+ساخت ggml_tensor * ggml_diag_نقاب_inf_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        صحیح                   n_past) {
+    واپس ggml_diag_نقاب_inf_impl(ctx, a, n_past, true);
 }
 
 // ggml_diag_mask_zero
 
-static struct ggml_tensor * ggml_diag_mask_zero_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   n_past,
+ساکن ساخت ggml_tensor * ggml_diag_نقاب_zero_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        صحیح                   n_past,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
     int32_t params[] = { n_past };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_سیٹ_op_params(نتیجہ, params, حجم(params));
 
-    result->op     = GGML_OP_DIAG_MASK_ZERO;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_DIAG_نقاب_ZERO;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_diag_mask_zero(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   n_past) {
-    return ggml_diag_mask_zero_impl(ctx, a, n_past, false);
+ساخت ggml_tensor * ggml_diag_نقاب_zero(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        صحیح                   n_past) {
+    واپس ggml_diag_نقاب_zero_impl(ctx, a, n_past, false);
 }
 
-struct ggml_tensor * ggml_diag_mask_zero_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   n_past) {
-    return ggml_diag_mask_zero_impl(ctx, a, n_past, true);
+ساخت ggml_tensor * ggml_diag_نقاب_zero_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        صحیح                   n_past) {
+    واپس ggml_diag_نقاب_zero_impl(ctx, a, n_past, true);
 }
 
 // ggml_clamp
 
-static struct ggml_tensor * ggml_clamp_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 min,
-        float                 max,
+ساکن ساخت ggml_tensor * ggml_clamp_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        اعشاری                 min,
+        اعشاری                 max,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    float params[] = { min, max };
-    ggml_set_op_params(result, params, sizeof(params));
+    اعشاری params[] = { min, max };
+    ggml_سیٹ_op_params(نتیجہ, params, حجم(params));
 
-    result->op     = GGML_OP_CLAMP;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_CLAMP;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_clamp(
-    struct ggml_context * ctx,
-    struct ggml_tensor  * a,
-    float                 min,
-    float                 max) {
-    return ggml_clamp_impl(ctx, a, min, max, false);
+ساخت ggml_tensor * ggml_clamp(
+    ساخت ggml_context * ctx,
+    ساخت ggml_tensor  * a,
+    اعشاری                 min,
+    اعشاری                 max) {
+    واپس ggml_clamp_impl(ctx, a, min, max, false);
 }
 
-struct ggml_tensor * ggml_clamp_inplace(
-    struct ggml_context * ctx,
-    struct ggml_tensor  * a,
-    float                 min,
-    float                 max) {
-    return ggml_clamp_impl(ctx, a, min, max, true);
+ساخت ggml_tensor * ggml_clamp_inplace(
+    ساخت ggml_context * ctx,
+    ساخت ggml_tensor  * a,
+    اعشاری                 min,
+    اعشاری                 max) {
+    واپس ggml_clamp_impl(ctx, a, min, max, true);
 }
 
 // ggml_soft_max
 
-static struct ggml_tensor * ggml_soft_max_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * mask,
-        float                 scale,
-        float                 max_bias,
+ساکن ساخت ggml_tensor * ggml_soft_max_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * نقاب,
+        اعشاری                 scale,
+        اعشاری                 max_bias,
         bool                  inplace) {
     GGML_ASSERT(ggml_is_contiguous(a));
 
-    if (mask) {
-        GGML_ASSERT(mask->type == GGML_TYPE_F16 || mask->type == GGML_TYPE_F32);
-        GGML_ASSERT(ggml_is_contiguous(mask));
-        GGML_ASSERT(mask->ne[0] == a->ne[0]);
-        GGML_ASSERT(mask->ne[1] >= a->ne[1]);
-        GGML_ASSERT(a->ne[2]%mask->ne[2] == 0);
-        GGML_ASSERT(a->ne[3]%mask->ne[3] == 0);
+    اگر (نقاب) {
+        GGML_ASSERT(نقاب->type == GGML_TYPE_F16 || نقاب->type == GGML_TYPE_F32);
+        GGML_ASSERT(ggml_is_contiguous(نقاب));
+        GGML_ASSERT(نقاب->ne[0] == a->ne[0]);
+        GGML_ASSERT(نقاب->ne[1] >= a->ne[1]);
+        GGML_ASSERT(a->ne[2]%نقاب->ne[2] == 0);
+        GGML_ASSERT(a->ne[3]%نقاب->ne[3] == 0);
     }
 
-    if (max_bias > 0.0f) {
-        GGML_ASSERT(mask);
+    اگر (max_bias > 0.0f) {
+        GGML_ASSERT(نقاب);
     }
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    float params[] = { scale, max_bias };
-    ggml_set_op_params(result, params, sizeof(params));
+    اعشاری params[] = { scale, max_bias };
+    ggml_سیٹ_op_params(نتیجہ, params, حجم(params));
 
-    result->op     = GGML_OP_SOFT_MAX;
-    result->src[0] = a;
-    result->src[1] = mask;
+    نتیجہ->op     = GGML_OP_SOFT_MAX;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = نقاب;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_soft_max(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_soft_max_impl(ctx, a, NULL, 1.0f, 0.0f, false);
+ساخت ggml_tensor * ggml_soft_max(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_soft_max_impl(ctx, a, تہی, 1.0f, 0.0f, false);
 }
 
-struct ggml_tensor * ggml_soft_max_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_soft_max_impl(ctx, a, NULL, 1.0f, 0.0f, true);
+ساخت ggml_tensor * ggml_soft_max_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a) {
+    واپس ggml_soft_max_impl(ctx, a, تہی, 1.0f, 0.0f, true);
 }
 
-struct ggml_tensor * ggml_soft_max_ext(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * mask,
-        float                 scale,
-        float                 max_bias) {
-    return ggml_soft_max_impl(ctx, a, mask, scale, max_bias, false);
+ساخت ggml_tensor * ggml_soft_max_ext(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * نقاب,
+        اعشاری                 scale,
+        اعشاری                 max_bias) {
+    واپس ggml_soft_max_impl(ctx, a, نقاب, scale, max_bias, false);
 }
 
-struct ggml_tensor * ggml_soft_max_ext_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * mask,
-        float                 scale,
-        float                 max_bias) {
-    return ggml_soft_max_impl(ctx, a, mask, scale, max_bias, true);
+ساخت ggml_tensor * ggml_soft_max_ext_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * نقاب,
+        اعشاری                 scale,
+        اعشاری                 max_bias) {
+    واپس ggml_soft_max_impl(ctx, a, نقاب, scale, max_bias, true);
 }
 
-void ggml_soft_max_add_sinks(
-        struct ggml_tensor * a,
-        struct ggml_tensor * sinks) {
-    if (!sinks) {
-        a->src[2] = NULL;
-        return;
+خالی ggml_soft_max_جوڑو_sinks(
+        ساخت ggml_tensor * a,
+        ساخت ggml_tensor * sinks) {
+    اگر (!sinks) {
+        a->src[2] = تہی;
+        واپس;
     }
 
     GGML_ASSERT(a->op == GGML_OP_SOFT_MAX);
-    GGML_ASSERT(a->src[2] == NULL);
+    GGML_ASSERT(a->src[2] == تہی);
     GGML_ASSERT(a->src[0]->ne[2] == sinks->ne[0]);
     GGML_ASSERT(sinks->type == GGML_TYPE_F32);
 
@@ -4247,526 +4247,526 @@ void ggml_soft_max_add_sinks(
 
 // ggml_soft_max_ext_back
 
-static struct ggml_tensor * ggml_soft_max_ext_back_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        float                 scale,
-        float                 max_bias,
+ساکن ساخت ggml_tensor * ggml_soft_max_ext_عقب_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        اعشاری                 scale,
+        اعشاری                 max_bias,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    result->op     = GGML_OP_SOFT_MAX_BACK;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op     = GGML_OP_SOFT_MAX_عقب;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    memcpy((float *) result->op_params + 0, &scale,    sizeof(float));
-    memcpy((float *) result->op_params + 1, &max_bias, sizeof(float));
+    حافظہ_نقل((اعشاری *) نتیجہ->op_params + 0, &scale,    حجم(اعشاری));
+    حافظہ_نقل((اعشاری *) نتیجہ->op_params + 1, &max_bias, حجم(اعشاری));
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_soft_max_ext_back(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        float                 scale,
-        float                 max_bias) {
-    return ggml_soft_max_ext_back_impl(ctx, a, b, scale, max_bias, false);
+ساخت ggml_tensor * ggml_soft_max_ext_عقب(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        اعشاری                 scale,
+        اعشاری                 max_bias) {
+    واپس ggml_soft_max_ext_عقب_impl(ctx, a, b, scale, max_bias, false);
 }
 
-struct ggml_tensor * ggml_soft_max_ext_back_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        float                 scale,
-        float                 max_bias) {
-    return ggml_soft_max_ext_back_impl(ctx, a, b, scale, max_bias, true);
+ساخت ggml_tensor * ggml_soft_max_ext_عقب_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        اعشاری                 scale,
+        اعشاری                 max_bias) {
+    واپس ggml_soft_max_ext_عقب_impl(ctx, a, b, scale, max_bias, true);
 }
 
 // ggml_rope
 
-static struct ggml_tensor * ggml_rope_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        struct ggml_tensor  * c,
-        int                   n_dims,
-        int                   sections[GGML_MROPE_SECTIONS],
-        int                   mode,
-        int                   n_ctx_orig,
-        float                 freq_base,
-        float                 freq_scale,
-        float                 ext_factor,
-        float                 attn_factor,
-        float                 beta_fast,
-        float                 beta_slow,
+ساکن ساخت ggml_tensor * ggml_rope_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        ساخت ggml_tensor  * c,
+        صحیح                   n_dims,
+        صحیح                   sections[GGML_MROPE_SECTIONS],
+        صحیح                   منوال,
+        صحیح                   n_ctx_orig,
+        اعشاری                 freq_بنیاد,
+        اعشاری                 freq_scale,
+        اعشاری                 ext_ضربی_عدد,
+        اعشاری                 attn_ضربی_عدد,
+        اعشاری                 beta_fast,
+        اعشاری                 beta_slow,
         bool                  inplace) {
-    GGML_ASSERT((mode & 1) == 0 && "mode & 1 == 1 is no longer supported");
+    GGML_ASSERT((منوال & 1) == 0 && "mode & 1 == 1 is no longer supported");
 
-    GGML_ASSERT(ggml_is_vector(b));
+    GGML_ASSERT(ggml_is_سمتیہ(b));
     GGML_ASSERT(b->type == GGML_TYPE_I32);
 
-    bool mrope_used = mode & GGML_ROPE_TYPE_MROPE;
-    if (mrope_used) {
+    bool mrope_مستعمل = منوال & GGML_ROPE_TYPE_MROPE;
+    اگر (mrope_مستعمل) {
         GGML_ASSERT(a->ne[2] * 4 == b->ne[0]); // mrope expecting 4 position ids per token
-    } else {
+    } ورنہ {
         GGML_ASSERT(a->ne[2] == b->ne[0]);
     }
 
-    if (c) {
+    اگر (c) {
         GGML_ASSERT(c->type == GGML_TYPE_F32);
         GGML_ASSERT(c->ne[0] >= n_dims / 2);
     }
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    int32_t params[16] = { /*n_past*/ 0, n_dims, mode, /*n_ctx*/ 0, n_ctx_orig };
-    memcpy(params +  5, &freq_base,    sizeof(float));
-    memcpy(params +  6, &freq_scale,   sizeof(float));
-    memcpy(params +  7, &ext_factor,   sizeof(float));
-    memcpy(params +  8, &attn_factor,  sizeof(float));
-    memcpy(params +  9, &beta_fast,    sizeof(float));
-    memcpy(params + 10, &beta_slow,    sizeof(float));
-    if (mrope_used && sections) {
-        memcpy(params + 11, sections,  sizeof(int32_t) * GGML_MROPE_SECTIONS);
-    } else {
-        memset(params + 11, 0,         sizeof(int32_t) * GGML_MROPE_SECTIONS);
+    int32_t params[16] = { /*n_past*/ 0, n_dims, منوال, /*n_ctx*/ 0, n_ctx_orig };
+    حافظہ_نقل(params +  5, &freq_بنیاد,    حجم(اعشاری));
+    حافظہ_نقل(params +  6, &freq_scale,   حجم(اعشاری));
+    حافظہ_نقل(params +  7, &ext_ضربی_عدد,   حجم(اعشاری));
+    حافظہ_نقل(params +  8, &attn_ضربی_عدد,  حجم(اعشاری));
+    حافظہ_نقل(params +  9, &beta_fast,    حجم(اعشاری));
+    حافظہ_نقل(params + 10, &beta_slow,    حجم(اعشاری));
+    اگر (mrope_مستعمل && sections) {
+        حافظہ_نقل(params + 11, sections,  حجم(int32_t) * GGML_MROPE_SECTIONS);
+    } ورنہ {
+        memset(params + 11, 0,         حجم(int32_t) * GGML_MROPE_SECTIONS);
     }
     params[15] = 0; // n_offs, set via ggml_rope_set_offset()
 
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_سیٹ_op_params(نتیجہ, params, حجم(params));
 
-    result->op     = GGML_OP_ROPE;
-    result->src[0] = a;
-    result->src[1] = b;
-    result->src[2] = c;
+    نتیجہ->op     = GGML_OP_ROPE;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
+    نتیجہ->src[2] = c;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_rope(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   n_dims,
-        int                   mode) {
-    return ggml_rope_impl(
-        ctx, a, b, NULL, n_dims, NULL, mode, 0, 10000.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, false
+ساخت ggml_tensor * ggml_rope(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        صحیح                   n_dims,
+        صحیح                   منوال) {
+    واپس ggml_rope_impl(
+        ctx, a, b, تہی, n_dims, تہی, منوال, 0, 10000.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, false
     );
 }
 
-struct ggml_tensor * ggml_rope_multi(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        struct ggml_tensor  * c,
-        int                   n_dims,
-        int                   sections[GGML_MROPE_SECTIONS],
-        int                   mode,
-        int                   n_ctx_orig,
-        float                 freq_base,
-        float                 freq_scale,
-        float                 ext_factor,
-        float                 attn_factor,
-        float                 beta_fast,
-        float                 beta_slow) {
-    return ggml_rope_impl(
-        ctx, a, b, c, n_dims, sections, mode, n_ctx_orig, freq_base, freq_scale,
-        ext_factor, attn_factor, beta_fast, beta_slow, false
+ساخت ggml_tensor * ggml_rope_multi(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        ساخت ggml_tensor  * c,
+        صحیح                   n_dims,
+        صحیح                   sections[GGML_MROPE_SECTIONS],
+        صحیح                   منوال,
+        صحیح                   n_ctx_orig,
+        اعشاری                 freq_بنیاد,
+        اعشاری                 freq_scale,
+        اعشاری                 ext_ضربی_عدد,
+        اعشاری                 attn_ضربی_عدد,
+        اعشاری                 beta_fast,
+        اعشاری                 beta_slow) {
+    واپس ggml_rope_impl(
+        ctx, a, b, c, n_dims, sections, منوال, n_ctx_orig, freq_بنیاد, freq_scale,
+        ext_ضربی_عدد, attn_ضربی_عدد, beta_fast, beta_slow, false
     );
 }
 
-struct ggml_tensor * ggml_rope_multi_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        struct ggml_tensor  * c,
-        int                   n_dims,
-        int                   sections[GGML_MROPE_SECTIONS],
-        int                   mode,
-        int                   n_ctx_orig,
-        float                 freq_base,
-        float                 freq_scale,
-        float                 ext_factor,
-        float                 attn_factor,
-        float                 beta_fast,
-        float                 beta_slow) {
-    return ggml_rope_impl(
-        ctx, a, b, c, n_dims, sections, mode, n_ctx_orig, freq_base, freq_scale,
-        ext_factor, attn_factor, beta_fast, beta_slow, true
+ساخت ggml_tensor * ggml_rope_multi_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        ساخت ggml_tensor  * c,
+        صحیح                   n_dims,
+        صحیح                   sections[GGML_MROPE_SECTIONS],
+        صحیح                   منوال,
+        صحیح                   n_ctx_orig,
+        اعشاری                 freq_بنیاد,
+        اعشاری                 freq_scale,
+        اعشاری                 ext_ضربی_عدد,
+        اعشاری                 attn_ضربی_عدد,
+        اعشاری                 beta_fast,
+        اعشاری                 beta_slow) {
+    واپس ggml_rope_impl(
+        ctx, a, b, c, n_dims, sections, منوال, n_ctx_orig, freq_بنیاد, freq_scale,
+        ext_ضربی_عدد, attn_ضربی_عدد, beta_fast, beta_slow, true
     );
 }
 
-struct ggml_tensor * ggml_rope_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   n_dims,
-        int                   mode) {
-    return ggml_rope_impl(
-        ctx, a, b, NULL, n_dims, NULL, mode, 0, 10000.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, true
+ساخت ggml_tensor * ggml_rope_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        صحیح                   n_dims,
+        صحیح                   منوال) {
+    واپس ggml_rope_impl(
+        ctx, a, b, تہی, n_dims, تہی, منوال, 0, 10000.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, true
     );
 }
 
-struct ggml_tensor * ggml_rope_ext(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        struct ggml_tensor  * c,
-        int                   n_dims,
-        int                   mode,
-        int                   n_ctx_orig,
-        float                 freq_base,
-        float                 freq_scale,
-        float                 ext_factor,
-        float                 attn_factor,
-        float                 beta_fast,
-        float                 beta_slow) {
-    return ggml_rope_impl(
-        ctx, a, b, c, n_dims, NULL, mode, n_ctx_orig, freq_base, freq_scale,
-        ext_factor, attn_factor, beta_fast, beta_slow, false
+ساخت ggml_tensor * ggml_rope_ext(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        ساخت ggml_tensor  * c,
+        صحیح                   n_dims,
+        صحیح                   منوال,
+        صحیح                   n_ctx_orig,
+        اعشاری                 freq_بنیاد,
+        اعشاری                 freq_scale,
+        اعشاری                 ext_ضربی_عدد,
+        اعشاری                 attn_ضربی_عدد,
+        اعشاری                 beta_fast,
+        اعشاری                 beta_slow) {
+    واپس ggml_rope_impl(
+        ctx, a, b, c, n_dims, تہی, منوال, n_ctx_orig, freq_بنیاد, freq_scale,
+        ext_ضربی_عدد, attn_ضربی_عدد, beta_fast, beta_slow, false
     );
 }
 
-struct ggml_tensor * ggml_rope_ext_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        struct ggml_tensor  * c,
-        int                   n_dims,
-        int                   mode,
-        int                   n_ctx_orig,
-        float                 freq_base,
-        float                 freq_scale,
-        float                 ext_factor,
-        float                 attn_factor,
-        float                 beta_fast,
-        float                 beta_slow) {
-    return ggml_rope_impl(
-        ctx, a, b, c, n_dims, NULL, mode, n_ctx_orig, freq_base, freq_scale,
-        ext_factor, attn_factor, beta_fast, beta_slow, true
+ساخت ggml_tensor * ggml_rope_ext_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        ساخت ggml_tensor  * c,
+        صحیح                   n_dims,
+        صحیح                   منوال,
+        صحیح                   n_ctx_orig,
+        اعشاری                 freq_بنیاد,
+        اعشاری                 freq_scale,
+        اعشاری                 ext_ضربی_عدد,
+        اعشاری                 attn_ضربی_عدد,
+        اعشاری                 beta_fast,
+        اعشاری                 beta_slow) {
+    واپس ggml_rope_impl(
+        ctx, a, b, c, n_dims, تہی, منوال, n_ctx_orig, freq_بنیاد, freq_scale,
+        ext_ضربی_عدد, attn_ضربی_عدد, beta_fast, beta_slow, true
     );
 }
 
-struct ggml_tensor * ggml_rope_custom(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   n_dims,
-        int                   mode,
-        int                   n_ctx_orig,
-        float                 freq_base,
-        float                 freq_scale,
-        float                 ext_factor,
-        float                 attn_factor,
-        float                 beta_fast,
-        float                 beta_slow) {
-    return ggml_rope_impl(
-        ctx, a, b, NULL, n_dims, NULL, mode, n_ctx_orig, freq_base, freq_scale,
-        ext_factor, attn_factor, beta_fast, beta_slow, false
+ساخت ggml_tensor * ggml_rope_custom(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        صحیح                   n_dims,
+        صحیح                   منوال,
+        صحیح                   n_ctx_orig,
+        اعشاری                 freq_بنیاد,
+        اعشاری                 freq_scale,
+        اعشاری                 ext_ضربی_عدد,
+        اعشاری                 attn_ضربی_عدد,
+        اعشاری                 beta_fast,
+        اعشاری                 beta_slow) {
+    واپس ggml_rope_impl(
+        ctx, a, b, تہی, n_dims, تہی, منوال, n_ctx_orig, freq_بنیاد, freq_scale,
+        ext_ضربی_عدد, attn_ضربی_عدد, beta_fast, beta_slow, false
     );
 }
 
-struct ggml_tensor * ggml_rope_custom_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   n_dims,
-        int                   mode,
-        int                   n_ctx_orig,
-        float                 freq_base,
-        float                 freq_scale,
-        float                 ext_factor,
-        float                 attn_factor,
-        float                 beta_fast,
-        float                 beta_slow) {
-    return ggml_rope_impl(
-        ctx, a, b, NULL, n_dims, NULL, mode, n_ctx_orig, freq_base, freq_scale,
-        ext_factor, attn_factor, beta_fast, beta_slow, true
+ساخت ggml_tensor * ggml_rope_custom_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        صحیح                   n_dims,
+        صحیح                   منوال,
+        صحیح                   n_ctx_orig,
+        اعشاری                 freq_بنیاد,
+        اعشاری                 freq_scale,
+        اعشاری                 ext_ضربی_عدد,
+        اعشاری                 attn_ضربی_عدد,
+        اعشاری                 beta_fast,
+        اعشاری                 beta_slow) {
+    واپس ggml_rope_impl(
+        ctx, a, b, تہی, n_dims, تہی, منوال, n_ctx_orig, freq_بنیاد, freq_scale,
+        ext_ضربی_عدد, attn_ضربی_عدد, beta_fast, beta_slow, true
     );
 }
 
 // Apparently solving `n_rot = 2pi * x * base^((2 * max_pos_emb) / n_dims)` for x, we get
 // `corr_dim(n_rot) = n_dims * log(max_pos_emb / (n_rot * 2pi)) / (2 * log(base))`
-static float ggml_rope_yarn_corr_dim(int n_dims, int n_ctx_orig, float n_rot, float base) {
-    return n_dims * logf(n_ctx_orig / (n_rot * 2 * (float)M_PI)) / (2 * logf(base));
+ساکن اعشاری ggml_rope_yarn_corr_dim(صحیح n_dims, صحیح n_ctx_orig, اعشاری n_rot, اعشاری بنیاد) {
+    واپس n_dims * logf(n_ctx_orig / (n_rot * 2 * (اعشاری)M_PI)) / (2 * logf(بنیاد));
 }
 
-void ggml_rope_yarn_corr_dims(
-    int n_dims, int n_ctx_orig, float freq_base, float beta_fast, float beta_slow, float dims[2]
+خالی ggml_rope_yarn_corr_dims(
+    صحیح n_dims, صحیح n_ctx_orig, اعشاری freq_بنیاد, اعشاری beta_fast, اعشاری beta_slow, اعشاری dims[2]
 ) {
     // start and end correction dims
-    float start = floorf(ggml_rope_yarn_corr_dim(n_dims, n_ctx_orig, beta_fast, freq_base));
-    float end   =  ceilf(ggml_rope_yarn_corr_dim(n_dims, n_ctx_orig, beta_slow, freq_base));
-    dims[0] = MAX(0, start);
-    dims[1] = MIN(n_dims - 1, end);
+    اعشاری آغاز = floorf(ggml_rope_yarn_corr_dim(n_dims, n_ctx_orig, beta_fast, freq_بنیاد));
+    اعشاری انتہا   =  ceilf(ggml_rope_yarn_corr_dim(n_dims, n_ctx_orig, beta_slow, freq_بنیاد));
+    dims[0] = MAX(0, آغاز);
+    dims[1] = MIN(n_dims - 1, انتہا);
 }
 
 // ggml_rope_back
 
-struct ggml_tensor * ggml_rope_ext_back(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        struct ggml_tensor  * c,
-        int                   n_dims,
-        int                   mode,
-        int                   n_ctx_orig,
-        float                 freq_base,
-        float                 freq_scale,
-        float                 ext_factor,
-        float                 attn_factor,
-        float                 beta_fast,
-        float                 beta_slow) {
-    struct ggml_tensor * result = ggml_rope_ext(
-        ctx, a, b, c, n_dims, mode, n_ctx_orig, freq_base, freq_scale, ext_factor, attn_factor, beta_fast, beta_slow);
-    result->op = GGML_OP_ROPE_BACK;
-    return result;
+ساخت ggml_tensor * ggml_rope_ext_عقب(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        ساخت ggml_tensor  * c,
+        صحیح                   n_dims,
+        صحیح                   منوال,
+        صحیح                   n_ctx_orig,
+        اعشاری                 freq_بنیاد,
+        اعشاری                 freq_scale,
+        اعشاری                 ext_ضربی_عدد,
+        اعشاری                 attn_ضربی_عدد,
+        اعشاری                 beta_fast,
+        اعشاری                 beta_slow) {
+    ساخت ggml_tensor * نتیجہ = ggml_rope_ext(
+        ctx, a, b, c, n_dims, منوال, n_ctx_orig, freq_بنیاد, freq_scale, ext_ضربی_عدد, attn_ضربی_عدد, beta_fast, beta_slow);
+    نتیجہ->op = GGML_OP_ROPE_عقب;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_rope_multi_back(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        struct ggml_tensor  * c,
-        int                   n_dims,
-        int                   sections[4],
-        int                   mode,
-        int                   n_ctx_orig,
-        float                 freq_base,
-        float                 freq_scale,
-        float                 ext_factor,
-        float                 attn_factor,
-        float                 beta_fast,
-        float                 beta_slow) {
-    struct ggml_tensor * result = ggml_rope_multi(
-        ctx, a, b, c, n_dims, sections, mode, n_ctx_orig, freq_base, freq_scale, ext_factor, attn_factor, beta_fast, beta_slow);
-    result->op = GGML_OP_ROPE_BACK;
-    return result;
+ساخت ggml_tensor * ggml_rope_multi_عقب(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        ساخت ggml_tensor  * c,
+        صحیح                   n_dims,
+        صحیح                   sections[4],
+        صحیح                   منوال,
+        صحیح                   n_ctx_orig,
+        اعشاری                 freq_بنیاد,
+        اعشاری                 freq_scale,
+        اعشاری                 ext_ضربی_عدد,
+        اعشاری                 attn_ضربی_عدد,
+        اعشاری                 beta_fast,
+        اعشاری                 beta_slow) {
+    ساخت ggml_tensor * نتیجہ = ggml_rope_multi(
+        ctx, a, b, c, n_dims, sections, منوال, n_ctx_orig, freq_بنیاد, freq_scale, ext_ضربی_عدد, attn_ضربی_عدد, beta_fast, beta_slow);
+    نتیجہ->op = GGML_OP_ROPE_عقب;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_rope_set_offset(
-        struct ggml_tensor  * a,
-        int                   n_offs) {
-    GGML_ASSERT(a->op == GGML_OP_ROPE || a->op == GGML_OP_ROPE_BACK);
+ساخت ggml_tensor * ggml_rope_سیٹ_انحراف(
+        ساخت ggml_tensor  * a,
+        صحیح                   n_offs) {
+    GGML_ASSERT(a->op == GGML_OP_ROPE || a->op == GGML_OP_ROPE_عقب);
     GGML_ASSERT(n_offs >= 0);
 
-    const int32_t mode = ggml_get_op_params_i32(a, 2);
-    GGML_ASSERT(mode != GGML_ROPE_TYPE_VISION);
+    ثابت int32_t منوال = ggml_get_op_params_i32(a, 2);
+    GGML_ASSERT(منوال != GGML_ROPE_TYPE_VISION);
 
-    ggml_set_op_params_i32(a, 15, n_offs);
-    return a;
+    ggml_سیٹ_op_params_i32(a, 15, n_offs);
+    واپس a;
 }
 
-static int64_t ggml_calc_conv_output_size(int64_t ins, int64_t ks, int s, int p, int d) {
-    return (ins + 2 * p - d * (ks - 1) - 1) / s + 1;
+ساکن int64_t ggml_calc_conv_output_سائز(int64_t ins, int64_t ks, صحیح s, صحیح p, صحیح d) {
+    واپس (ins + 2 * p - d * (ks - 1) - 1) / s + 1;
 }
 
 // im2col: [N, IC, IH, IW] => [N, OH, OW, IC*KH*KW]
 // a: [OC，IC, KH, KW]
 // b: [N, IC, IH, IW]
 // result: [N, OH, OW, IC*KH*KW]
-struct ggml_tensor * ggml_im2col(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   s0,
-        int                   s1,
-        int                   p0,
-        int                   p1,
-        int                   d0,
-        int                   d1,
+ساخت ggml_tensor * ggml_im2col(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        صحیح                   s0,
+        صحیح                   s1,
+        صحیح                   p0,
+        صحیح                   p1,
+        صحیح                   d0,
+        صحیح                   d1,
         bool                  is_2D,
-        enum ggml_type        dst_type) {
-    if (is_2D) {
+        شمار ggml_type        dst_type) {
+    اگر (is_2D) {
         GGML_ASSERT(a->ne[2] == b->ne[2]);
-    } else {
+    } ورنہ {
         //GGML_ASSERT(b->ne[1] % a->ne[1] == 0);
         GGML_ASSERT(b->ne[1] == a->ne[1]);
         GGML_ASSERT(b->ne[3] == 1);
     }
 
-    const int64_t OH = is_2D ? ggml_calc_conv_output_size(b->ne[1], a->ne[1], s1, p1, d1) : 0;
-    const int64_t OW =         ggml_calc_conv_output_size(b->ne[0], a->ne[0], s0, p0, d0);
+    ثابت int64_t OH = is_2D ? ggml_calc_conv_output_سائز(b->ne[1], a->ne[1], s1, p1, d1) : 0;
+    ثابت int64_t OW =         ggml_calc_conv_output_سائز(b->ne[0], a->ne[0], s0, p0, d0);
 
     GGML_ASSERT((!is_2D || OH > 0) && "b too small compared to a");
     GGML_ASSERT((OW > 0)           && "b too small compared to a");
 
-    const int64_t ne[4] = {
+    ثابت int64_t ne[4] = {
         is_2D ? (a->ne[2] * a->ne[1] * a->ne[0]) : a->ne[1] * a->ne[0],
         OW,
         is_2D ? OH : b->ne[2],
         is_2D ?      b->ne[3] : 1,
     };
 
-    struct ggml_tensor * result = ggml_new_tensor(ctx, dst_type, 4, ne);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, dst_type, 4, ne);
     int32_t params[] = { s0, s1, p0, p1, d0, d1, (is_2D ? 1 : 0) };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_سیٹ_op_params(نتیجہ, params, حجم(params));
 
-    result->op     = GGML_OP_IM2COL;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op     = GGML_OP_IM2_ستون;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_im2col_back(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ساخت ggml_tensor * ggml_im2col_عقب(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
         int64_t             * ne,
-        int                   s0,
-        int                   s1,
-        int                   p0,
-        int                   p1,
-        int                   d0,
-        int                   d1,
+        صحیح                   s0,
+        صحیح                   s1,
+        صحیح                   p0,
+        صحیح                   p1,
+        صحیح                   d0,
+        صحیح                   d1,
         bool                  is_2D) {
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
     int32_t params[] = { s0, s1, p0, p1, d0, d1, (is_2D ? 1 : 0) };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_سیٹ_op_params(نتیجہ, params, حجم(params));
 
-    result->op     = GGML_OP_IM2COL_BACK;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op     = GGML_OP_IM2_ستون_عقب;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_conv_1d
 
-struct ggml_tensor * ggml_conv_1d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   s0,
-        int                   p0,
-        int                   d0) {
-    struct ggml_tensor * im2col = ggml_im2col(ctx, a, b, s0, 0, p0, 0, d0, 0, false, a->type == GGML_TYPE_BF16 ? GGML_TYPE_F32 : GGML_TYPE_F16); // [N, OL, IC * K]
+ساخت ggml_tensor * ggml_conv_1d(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        صحیح                   s0,
+        صحیح                   p0,
+        صحیح                   d0) {
+    ساخت ggml_tensor * im2col = ggml_im2col(ctx, a, b, s0, 0, p0, 0, d0, 0, false, a->type == GGML_TYPE_BF16 ? GGML_TYPE_F32 : GGML_TYPE_F16); // [N, OL, IC * K]
 
-    struct ggml_tensor * result =
+    ساخت ggml_tensor * نتیجہ =
         ggml_mul_mat(ctx,
                 ggml_reshape_2d(ctx, im2col, im2col->ne[0], (im2col->ne[2] * im2col->ne[1])), // [N, OL, IC * K] => [N*OL, IC * K]
                 ggml_reshape_2d(ctx, a, (a->ne[0] * a->ne[1]), a->ne[2]));                    // [OC，IC, K] => [OC, IC * K]
 
-    result = ggml_reshape_3d(ctx, result, im2col->ne[1], im2col->ne[2], a->ne[2]); // [OC, N, OL]
-    result = ggml_cont(ctx, ggml_permute(ctx, result, 0, 2, 1, 3));                // [N, OC, OL]
+    نتیجہ = ggml_reshape_3d(ctx, نتیجہ, im2col->ne[1], im2col->ne[2], a->ne[2]); // [OC, N, OL]
+    نتیجہ = ggml_cont(ctx, ggml_ترتیب_بدلو(ctx, نتیجہ, 0, 2, 1, 3));                // [N, OC, OL]
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_conv_1d_ph
 
-struct ggml_tensor* ggml_conv_1d_ph(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   s,
-        int                   d) {
-    return ggml_conv_1d(ctx, a, b, s, a->ne[0] / 2, d);
+ساخت ggml_tensor* ggml_conv_1d_ph(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        صحیح                   s,
+        صحیح                   d) {
+    واپس ggml_conv_1d(ctx, a, b, s, a->ne[0] / 2, d);
 }
 
 // ggml_conv_1d_dw
 
-struct ggml_tensor * ggml_conv_1d_dw(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   s0,
-        int                   p0,
-        int                   d0) {
-    struct ggml_tensor * new_b = ggml_reshape_4d(ctx, b, b->ne[0], 1, b->ne[1], b->ne[2]);
+ساخت ggml_tensor * ggml_conv_1d_dw(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        صحیح                   s0,
+        صحیح                   p0,
+        صحیح                   d0) {
+    ساخت ggml_tensor * new_b = ggml_reshape_4d(ctx, b, b->ne[0], 1, b->ne[1], b->ne[2]);
 
-    struct ggml_tensor * im2col = ggml_im2col(ctx, a, new_b, s0, 0, p0, 0, d0, 0, false, a->type == GGML_TYPE_BF16 ? GGML_TYPE_F32 : GGML_TYPE_F16);
+    ساخت ggml_tensor * im2col = ggml_im2col(ctx, a, new_b, s0, 0, p0, 0, d0, 0, false, a->type == GGML_TYPE_BF16 ? GGML_TYPE_F32 : GGML_TYPE_F16);
 
-    struct ggml_tensor * result = ggml_mul_mat(ctx, im2col, a);
+    ساخت ggml_tensor * نتیجہ = ggml_mul_mat(ctx, im2col, a);
 
-    result = ggml_reshape_3d(ctx, result, result->ne[0], result->ne[2], 1);
+    نتیجہ = ggml_reshape_3d(ctx, نتیجہ, نتیجہ->ne[0], نتیجہ->ne[2], 1);
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_conv_1d_dw_ph
 
-struct ggml_tensor * ggml_conv_1d_dw_ph(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   s0,
-        int                   d0) {
-    return ggml_conv_1d_dw(ctx, a, b, s0, a->ne[0] / 2, d0);
+ساخت ggml_tensor * ggml_conv_1d_dw_ph(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        صحیح                   s0,
+        صحیح                   d0) {
+    واپس ggml_conv_1d_dw(ctx, a, b, s0, a->ne[0] / 2, d0);
 }
 
 // ggml_col2im_1d
 
-struct ggml_tensor * ggml_col2im_1d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   s0,
-        int                   oc,
-        int                   p0) {
-    GGML_ASSERT(ggml_is_matrix(a));
+ساخت ggml_tensor * ggml_col2im_1d(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        صحیح                   s0,
+        صحیح                   oc,
+        صحیح                   p0) {
+    GGML_ASSERT(ggml_is_میٹرکس(a));
     GGML_ASSERT(ggml_is_contiguous(a));
     GGML_ASSERT(a->type == GGML_TYPE_F32 || a->type == GGML_TYPE_F16 || a->type == GGML_TYPE_BF16);
     GGML_ASSERT(s0 > 0);
     GGML_ASSERT(oc > 0);
     GGML_ASSERT(p0 >= 0);
 
-    const int64_t K_OC = a->ne[0];
-    const int64_t T_in = a->ne[1];
-    const int64_t K = K_OC / oc;
-    const int64_t T_out = (T_in - 1) * s0 + K - 2 * p0;
+    ثابت int64_t K_OC = a->ne[0];
+    ثابت int64_t T_اندر = a->ne[1];
+    ثابت int64_t K = K_OC / oc;
+    ثابت int64_t T_برآمد = (T_اندر - 1) * s0 + K - 2 * p0;
 
     GGML_ASSERT(K_OC == K * oc);  // a->ne[0] must be a whole number of oc blocks
-    GGML_ASSERT(K > 0 && T_out > 0);
+    GGML_ASSERT(K > 0 && T_برآمد > 0);
 
-    const int64_t ne[4] = { T_out, oc, 1, 1 };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, a->type, 2, ne);
+    ثابت int64_t ne[4] = { T_برآمد, oc, 1, 1 };
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, a->type, 2, ne);
 
     int32_t params[] = { s0, (int32_t)oc, (int32_t)p0 };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_سیٹ_op_params(نتیجہ, params, حجم(params));
 
-    result->op     = GGML_OP_COL2IM_1D;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_COL2IM_1D;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_conv_transpose_1d
 
-static int64_t ggml_calc_conv_transpose_1d_output_size(int64_t ins, int64_t ks, int s, int p, int d) {
-    return (ins - 1) * s - 2 * p + d * (ks - 1) + 1;
+ساکن int64_t ggml_calc_conv_transpose_1d_output_سائز(int64_t ins, int64_t ks, صحیح s, صحیح p, صحیح d) {
+    واپس (ins - 1) * s - 2 * p + d * (ks - 1) + 1;
 }
 
-GGML_API struct ggml_tensor * ggml_conv_transpose_1d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   s0,
-        int                   p0,
-        int                   d0) {
-    GGML_ASSERT(ggml_is_matrix(b));
+GGML_API ساخت ggml_tensor * ggml_conv_transpose_1d(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        صحیح                   s0,
+        صحیح                   p0,
+        صحیح                   d0) {
+    GGML_ASSERT(ggml_is_میٹرکس(b));
     GGML_ASSERT(a->ne[2] == b->ne[1]);
     GGML_ASSERT(a->ne[3] == 1);
 
     GGML_ASSERT(p0 == 0);
     GGML_ASSERT(d0 == 1);
 
-    const int64_t ne[4] = {
-        ggml_calc_conv_transpose_1d_output_size(b->ne[0], a->ne[0], s0, 0 /*p0*/, 1 /*d0*/),
+    ثابت int64_t ne[4] = {
+        ggml_calc_conv_transpose_1d_output_سائز(b->ne[0], a->ne[0], s0, 0 /*p0*/, 1 /*d0*/),
         a->ne[1], b->ne[2], 1,
     };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
     int32_t params[] = { s0, p0, d0 };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_سیٹ_op_params(نتیجہ, params, حجم(params));
 
-    result->op     = GGML_OP_CONV_TRANSPOSE_1D;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op     = GGML_OP_CONV_TRANSPOSE_1D;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_conv_2d
@@ -4774,548 +4774,548 @@ GGML_API struct ggml_tensor * ggml_conv_transpose_1d(
 // a: [OC，IC, KH, KW]
 // b: [N, IC, IH, IW]
 // result: [N, OC, OH, OW]
-struct ggml_tensor * ggml_conv_2d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   s0,
-        int                   s1,
-        int                   p0,
-        int                   p1,
-        int                   d0,
-        int                   d1) {
-    struct ggml_tensor * im2col = ggml_im2col(ctx, a, b, s0, s1, p0, p1, d0, d1, true, a->type == GGML_TYPE_BF16 ? GGML_TYPE_F32 : GGML_TYPE_F16); // [N, OH, OW, IC * KH * KW]
+ساخت ggml_tensor * ggml_conv_2d(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        صحیح                   s0,
+        صحیح                   s1,
+        صحیح                   p0,
+        صحیح                   p1,
+        صحیح                   d0,
+        صحیح                   d1) {
+    ساخت ggml_tensor * im2col = ggml_im2col(ctx, a, b, s0, s1, p0, p1, d0, d1, true, a->type == GGML_TYPE_BF16 ? GGML_TYPE_F32 : GGML_TYPE_F16); // [N, OH, OW, IC * KH * KW]
 
-    struct ggml_tensor * result =
+    ساخت ggml_tensor * نتیجہ =
         ggml_mul_mat(ctx,
                 ggml_reshape_2d(ctx, im2col, im2col->ne[0],  im2col->ne[3] * im2col->ne[2] * im2col->ne[1]), // [N, OH, OW, IC * KH * KW] => [N*OH*OW, IC * KH * KW]
                 ggml_reshape_2d(ctx, a, (a->ne[0] * a->ne[1] * a->ne[2]),  a->ne[3]));                       // [OC，IC, KH, KW] => [OC, IC * KH * KW]
 
-    result = ggml_reshape_4d(ctx, result, im2col->ne[1], im2col->ne[2], im2col->ne[3], a->ne[3]); // [OC, N, OH, OW]
-    result = ggml_cont(ctx, ggml_permute(ctx, result, 0, 1, 3, 2)); // [N, OC, OH, OW]
+    نتیجہ = ggml_reshape_4d(ctx, نتیجہ, im2col->ne[1], im2col->ne[2], im2col->ne[3], a->ne[3]); // [OC, N, OH, OW]
+    نتیجہ = ggml_cont(ctx, ggml_ترتیب_بدلو(ctx, نتیجہ, 0, 1, 3, 2)); // [N, OC, OH, OW]
 
 
-    return result;
+    واپس نتیجہ;
 }
 
 // a: [OC*IC, KD, KH, KW]
 // b: [N*IC, ID, IH, IW]
 // result: [N*OD, OH, OW, IC * KD * KH * KW]
-struct ggml_tensor * ggml_im2col_3d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ساخت ggml_tensor * ggml_im2col_3d(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
         int64_t               IC,
-        int                   s0, // stride width
-        int                   s1, // stride height
-        int                   s2, // stride depth
-        int                   p0, // padding width
-        int                   p1, // padding height
-        int                   p2, // padding depth
-        int                   d0, // dilation width
-        int                   d1, // dilation height
-        int                   d2, // dilation depth
-        enum ggml_type        dst_type) {
-    const int64_t N = b->ne[3] / IC;
-    const int64_t ID = b->ne[2];
-    const int64_t IH = b->ne[1];
-    const int64_t IW = b->ne[0];
+        صحیح                   s0, // stride width
+        صحیح                   s1, // stride height
+        صحیح                   s2, // stride depth
+        صحیح                   p0, // padding width
+        صحیح                   p1, // padding height
+        صحیح                   p2, // padding depth
+        صحیح                   d0, // dilation width
+        صحیح                   d1, // dilation height
+        صحیح                   d2, // dilation depth
+        شمار ggml_type        dst_type) {
+    ثابت int64_t N = b->ne[3] / IC;
+    ثابت int64_t ID = b->ne[2];
+    ثابت int64_t IH = b->ne[1];
+    ثابت int64_t IW = b->ne[0];
 
-    const int64_t OC = a->ne[3] / IC;
-    UNUSED(OC);
-    const int64_t KD = a->ne[2];
-    const int64_t KH = a->ne[1];
-    const int64_t KW = a->ne[0];
-    const int64_t OD = ggml_calc_conv_output_size(ID, KD, s2, p2, d2);
-    const int64_t OH = ggml_calc_conv_output_size(IH, KH, s1, p1, d1);
-    const int64_t OW = ggml_calc_conv_output_size(IW, KW, s0, p0, d0);
+    ثابت int64_t OC = a->ne[3] / IC;
+    غیر_مستعمل(OC);
+    ثابت int64_t KD = a->ne[2];
+    ثابت int64_t KH = a->ne[1];
+    ثابت int64_t KW = a->ne[0];
+    ثابت int64_t OD = ggml_calc_conv_output_سائز(ID, KD, s2, p2, d2);
+    ثابت int64_t OH = ggml_calc_conv_output_سائز(IH, KH, s1, p1, d1);
+    ثابت int64_t OW = ggml_calc_conv_output_سائز(IW, KW, s0, p0, d0);
 
     GGML_ASSERT((OD > 0)  && "b too small compared to a");
     GGML_ASSERT((OH > 0)  && "b too small compared to a");
     GGML_ASSERT((OW > 0)  && "b too small compared to a");
 
 
-    const int64_t ne[4] = {KW*KH*KD*IC, OW, OH, OD*N};
+    ثابت int64_t ne[4] = {KW*KH*KD*IC, OW, OH, OD*N};
 
-    struct ggml_tensor * result = ggml_new_tensor(ctx, dst_type, 4, ne);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, dst_type, 4, ne);
     int32_t params[] = { s0, s1, s2, p0, p1, p2, d0, d1, d2, (int32_t)IC};
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_سیٹ_op_params(نتیجہ, params, حجم(params));
 
-    result->op     = GGML_OP_IM2COL_3D;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op     = GGML_OP_IM2_ستون_3_D;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // a: [OC*IC, KD, KH, KW]
 // b: [N*IC, ID, IH, IW]
 // result: [N*OC, OD, OH, OW]
-struct ggml_tensor * ggml_conv_3d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ساخت ggml_tensor * ggml_conv_3d(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
         int64_t               IC,
-        int                   s0, // stride width
-        int                   s1, // stride height
-        int                   s2, // stride depth
-        int                   p0, // padding width
-        int                   p1, // padding height
-        int                   p2, // padding depth
-        int                   d0, // dilation width
-        int                   d1, // dilation height
-        int                   d2  // dilation depth
+        صحیح                   s0, // stride width
+        صحیح                   s1, // stride height
+        صحیح                   s2, // stride depth
+        صحیح                   p0, // padding width
+        صحیح                   p1, // padding height
+        صحیح                   p2, // padding depth
+        صحیح                   d0, // dilation width
+        صحیح                   d1, // dilation height
+        صحیح                   d2  // dilation depth
         ) {
-    struct ggml_tensor * im2col = ggml_im2col_3d(ctx, a, b, IC, s0, s1, s2, p0, p1, p2, d0, d1, d2, a->type == GGML_TYPE_BF16 ? GGML_TYPE_F32 : GGML_TYPE_F16); // [N*OD, OH, OW, IC * KD * KH * KW]
+    ساخت ggml_tensor * im2col = ggml_im2col_3d(ctx, a, b, IC, s0, s1, s2, p0, p1, p2, d0, d1, d2, a->type == GGML_TYPE_BF16 ? GGML_TYPE_F32 : GGML_TYPE_F16); // [N*OD, OH, OW, IC * KD * KH * KW]
 
     int64_t OC = a->ne[3] / IC;
     int64_t N = b->ne[3] / IC;
-    struct ggml_tensor * result =
+    ساخت ggml_tensor * نتیجہ =
         ggml_mul_mat(ctx,
                 ggml_reshape_2d(ctx, im2col, im2col->ne[0], im2col->ne[3] * im2col->ne[2] * im2col->ne[1]), // [N*OD, OH, OW, IC * KD * KH * KW] => [N*OD*OH*OW, IC * KD * KH * KW]
                 ggml_reshape_2d(ctx, a, (a->ne[0] * a->ne[1] * a->ne[2] * IC), OC));                          // [OC*IC, KD, KH, KW] => [OC, IC * KD * KH * KW]
 
     int64_t OD = im2col->ne[3] / N;
-    result = ggml_reshape_4d(ctx, result, im2col->ne[1]*im2col->ne[2], OD, N, OC); // [OC, N*OD*OH*OW] => [OC, N, OD, OH*OW]
-    result = ggml_cont(ctx, ggml_permute(ctx, result, 0, 1, 3, 2)); // [N, OC, OD, OH*OW]
-    result = ggml_reshape_4d(ctx, result, im2col->ne[1], im2col->ne[2], OD, OC * N); // [N*OC, OD, OH, OW]
+    نتیجہ = ggml_reshape_4d(ctx, نتیجہ, im2col->ne[1]*im2col->ne[2], OD, N, OC); // [OC, N*OD*OH*OW] => [OC, N, OD, OH*OW]
+    نتیجہ = ggml_cont(ctx, ggml_ترتیب_بدلو(ctx, نتیجہ, 0, 1, 3, 2)); // [N, OC, OD, OH*OW]
+    نتیجہ = ggml_reshape_4d(ctx, نتیجہ, im2col->ne[1], im2col->ne[2], OD, OC * N); // [N*OC, OD, OH, OW]
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_conv_2d_sk_p0
 
-struct ggml_tensor * ggml_conv_2d_sk_p0(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_conv_2d(ctx, a, b, a->ne[0], a->ne[1], 0, 0, 1, 1);
+ساخت ggml_tensor * ggml_conv_2d_sk_p0(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b) {
+    واپس ggml_conv_2d(ctx, a, b, a->ne[0], a->ne[1], 0, 0, 1, 1);
 }
 
 // ggml_conv_2d_s1_ph
 
-struct ggml_tensor * ggml_conv_2d_s1_ph(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_conv_2d(ctx, a, b, 1, 1, a->ne[0] / 2, a->ne[1] / 2, 1, 1);
+ساخت ggml_tensor * ggml_conv_2d_s1_ph(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b) {
+    واپس ggml_conv_2d(ctx, a, b, 1, 1, a->ne[0] / 2, a->ne[1] / 2, 1, 1);
 }
 
 // ggml_conv_2d_dw
 
-struct ggml_tensor * ggml_conv_2d_dw(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   s0,
-        int                   s1,
-        int                   p0,
-        int                   p1,
-        int                   d0,
-        int                   d1) {
-    struct ggml_tensor * new_a = ggml_reshape_4d(ctx, a, a->ne[0], a->ne[1], 1, a->ne[2] * a->ne[3]);
-    struct ggml_tensor * im2col = ggml_im2col(ctx, new_a,
+ساخت ggml_tensor * ggml_conv_2d_dw(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        صحیح                   s0,
+        صحیح                   s1,
+        صحیح                   p0,
+        صحیح                   p1,
+        صحیح                   d0,
+        صحیح                   d1) {
+    ساخت ggml_tensor * new_a = ggml_reshape_4d(ctx, a, a->ne[0], a->ne[1], 1, a->ne[2] * a->ne[3]);
+    ساخت ggml_tensor * im2col = ggml_im2col(ctx, new_a,
                                         ggml_reshape_4d(ctx, b, b->ne[0], b->ne[1], 1, b->ne[2] * b->ne[3]),
                                         s0, s1, p0, p1, d0, d1, true, a->type == GGML_TYPE_BF16 ? GGML_TYPE_F32 : GGML_TYPE_F16); // [N * IC, OH, OW, KH * KW]
-    struct ggml_tensor * new_b = ggml_reshape_4d(ctx, im2col, im2col->ne[0], im2col->ne[2] * im2col->ne[1], b->ne[2], b->ne[3]); // [N * IC, OH, OW, KH * KW] => [N, IC, OH * OW, KH * KW]
+    ساخت ggml_tensor * new_b = ggml_reshape_4d(ctx, im2col, im2col->ne[0], im2col->ne[2] * im2col->ne[1], b->ne[2], b->ne[3]); // [N * IC, OH, OW, KH * KW] => [N, IC, OH * OW, KH * KW]
 
     new_a = ggml_reshape_4d(ctx, new_a, (new_a->ne[0] * new_a->ne[1]), new_a->ne[2],  new_a->ne[3], 1);                       // [OC，1, KH, KW] => [1, OC, 1, KH * KW]
-    struct ggml_tensor * result = ggml_mul_mat(ctx, new_a, new_b);
-    result = ggml_reshape_4d(ctx, result, im2col->ne[1], im2col->ne[2], b->ne[2], b->ne[3]); // [N, OC, OH, OW]
+    ساخت ggml_tensor * نتیجہ = ggml_mul_mat(ctx, new_a, new_b);
+    نتیجہ = ggml_reshape_4d(ctx, نتیجہ, im2col->ne[1], im2col->ne[2], b->ne[2], b->ne[3]); // [N, OC, OH, OW]
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_conv_2d_dw_direct
 
-struct ggml_tensor * ggml_conv_2d_dw_direct(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   stride0,
-        int                   stride1,
-        int                   pad0,
-        int                   pad1,
-        int                   dilation0,
-        int                   dilation1) {
+ساخت ggml_tensor * ggml_conv_2d_dw_براہ_راست(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        صحیح                   stride0,
+        صحیح                   stride1,
+        صحیح                   pad0,
+        صحیح                   pad1,
+        صحیح                   dilation0,
+        صحیح                   dilation1) {
     GGML_ASSERT(a->ne[2] == 1);
     GGML_ASSERT(a->ne[3] == b->ne[2]);
     int64_t ne[4];
-    ne[0] = ggml_calc_conv_output_size(b->ne[0], a->ne[0], stride0, pad0, dilation0);
-    ne[1] = ggml_calc_conv_output_size(b->ne[1], a->ne[1], stride1, pad1, dilation1);
+    ne[0] = ggml_calc_conv_output_سائز(b->ne[0], a->ne[0], stride0, pad0, dilation0);
+    ne[1] = ggml_calc_conv_output_سائز(b->ne[1], a->ne[1], stride1, pad1, dilation1);
     ne[2] = b->ne[2];
     ne[3] = b->ne[3];
 
-    struct ggml_tensor * result = ggml_new_tensor(ctx, b->type, 4, ne);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, b->type, 4, ne);
 
-    if (ggml_is_contiguous_channels(b)) {
+    اگر (ggml_is_contiguous_channels(b)) {
         // Result will be permuted the same way as input (CWHN order)
-        const int64_t type_size = ggml_type_size(result->type);
-        GGML_ASSERT(ggml_blck_size(result->type) == 1);
-        result->nb[0] = result->ne[2] * type_size;
-        result->nb[1] = result->ne[0] * result->nb[0];
-        result->nb[2] = type_size;
+        ثابت int64_t type_سائز = ggml_type_سائز(نتیجہ->type);
+        GGML_ASSERT(ggml_blck_سائز(نتیجہ->type) == 1);
+        نتیجہ->nb[0] = نتیجہ->ne[2] * type_سائز;
+        نتیجہ->nb[1] = نتیجہ->ne[0] * نتیجہ->nb[0];
+        نتیجہ->nb[2] = type_سائز;
     }
 
     int32_t params[] = { stride0, stride1, pad0, pad1, dilation0, dilation1 };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_سیٹ_op_params(نتیجہ, params, حجم(params));
 
-    result->op     = GGML_OP_CONV_2D_DW;
-    result->src[0] = a;
-    result->src[1] = b;
-    return result;
+    نتیجہ->op     = GGML_OP_CONV_2D_DW;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
+    واپس نتیجہ;
 }
 
 // ggml_conv_2d_direct
 
-struct ggml_tensor * ggml_conv_2d_direct(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,   // convolution kernel [KW, KH, IC, OC]
-        struct ggml_tensor  * b,   // input data [W, H, C, N]
-        int                   s0,  // stride dimension 0
-        int                   s1,  // stride dimension 1
-        int                   p0,  // padding dimension 0
-        int                   p1,  // padding dimension 1
-        int                   d0,  // dilation dimension 0
-        int                   d1) {// dilation dimension 1
+ساخت ggml_tensor * ggml_conv_2d_براہ_راست(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,   // convolution kernel [KW, KH, IC, OC]
+        ساخت ggml_tensor  * b,   // input data [W, H, C, N]
+        صحیح                   s0,  // stride dimension 0
+        صحیح                   s1,  // stride dimension 1
+        صحیح                   p0,  // padding dimension 0
+        صحیح                   p1,  // padding dimension 1
+        صحیح                   d0,  // dilation dimension 0
+        صحیح                   d1) {// dilation dimension 1
 
     GGML_ASSERT(a->ne[2] == b->ne[2]);
     //GGML_ASSERT(a->type == b->type);
 
     int64_t ne[4];
-    ne[0] = ggml_calc_conv_output_size(b->ne[0], a->ne[0], s0, p0, d0);
-    ne[1] = ggml_calc_conv_output_size(b->ne[1], a->ne[1], s1, p1, d1);
+    ne[0] = ggml_calc_conv_output_سائز(b->ne[0], a->ne[0], s0, p0, d0);
+    ne[1] = ggml_calc_conv_output_سائز(b->ne[1], a->ne[1], s1, p1, d1);
     ne[2] = a->ne[3];
     ne[3] = b->ne[3];
 
-    struct ggml_tensor * result = ggml_new_tensor(ctx, b->type, 4, ne);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, b->type, 4, ne);
 
-    ggml_set_op_params_i32(result, 0, s0);
-    ggml_set_op_params_i32(result, 1, s1);
-    ggml_set_op_params_i32(result, 2, p0);
-    ggml_set_op_params_i32(result, 3, p1);
-    ggml_set_op_params_i32(result, 4, d0);
-    ggml_set_op_params_i32(result, 5, d1);
+    ggml_سیٹ_op_params_i32(نتیجہ, 0, s0);
+    ggml_سیٹ_op_params_i32(نتیجہ, 1, s1);
+    ggml_سیٹ_op_params_i32(نتیجہ, 2, p0);
+    ggml_سیٹ_op_params_i32(نتیجہ, 3, p1);
+    ggml_سیٹ_op_params_i32(نتیجہ, 4, d0);
+    ggml_سیٹ_op_params_i32(نتیجہ, 5, d1);
 
-    result->op = GGML_OP_CONV_2D;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op = GGML_OP_CONV_2D;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_conv_3d_direct
 
-struct ggml_tensor * ggml_conv_3d_direct(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   s0,
-        int                   s1,
-        int                   s2,
-        int                   p0,
-        int                   p1,
-        int                   p2,
-        int                   d0,
-        int                   d1,
-        int                   d2,
-        int                   c,
-        int                   n,
-        int                   oc) {
+ساخت ggml_tensor * ggml_conv_3d_براہ_راست(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        صحیح                   s0,
+        صحیح                   s1,
+        صحیح                   s2,
+        صحیح                   p0,
+        صحیح                   p1,
+        صحیح                   p2,
+        صحیح                   d0,
+        صحیح                   d1,
+        صحیح                   d2,
+        صحیح                   c,
+        صحیح                   n,
+        صحیح                   oc) {
 
     GGML_ASSERT(a->ne[3] == (int64_t) c * oc);
     GGML_ASSERT(b->ne[3] == (int64_t) c * n);
 
     int64_t ne[4];
-    ne[0] = ggml_calc_conv_output_size(b->ne[0], a->ne[0], s0, p0, d0);
-    ne[1] = ggml_calc_conv_output_size(b->ne[1], a->ne[1], s1, p1, d1);
-    ne[2] = ggml_calc_conv_output_size(b->ne[2], a->ne[2], s2, p2, d2);
+    ne[0] = ggml_calc_conv_output_سائز(b->ne[0], a->ne[0], s0, p0, d0);
+    ne[1] = ggml_calc_conv_output_سائز(b->ne[1], a->ne[1], s1, p1, d1);
+    ne[2] = ggml_calc_conv_output_سائز(b->ne[2], a->ne[2], s2, p2, d2);
     ne[3] = (int64_t) oc * n;
 
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
-    ggml_set_op_params_i32(result, 0,  s0);
-    ggml_set_op_params_i32(result, 1,  s1);
-    ggml_set_op_params_i32(result, 2,  s2);
-    ggml_set_op_params_i32(result, 3,  p0);
-    ggml_set_op_params_i32(result, 4,  p1);
-    ggml_set_op_params_i32(result, 5,  p2);
-    ggml_set_op_params_i32(result, 6,  d0);
-    ggml_set_op_params_i32(result, 7,  d1);
-    ggml_set_op_params_i32(result, 8,  d2);
-    ggml_set_op_params_i32(result, 9,  c);
-    ggml_set_op_params_i32(result, 10, n);
-    ggml_set_op_params_i32(result, 11, oc);
+    ggml_سیٹ_op_params_i32(نتیجہ, 0,  s0);
+    ggml_سیٹ_op_params_i32(نتیجہ, 1,  s1);
+    ggml_سیٹ_op_params_i32(نتیجہ, 2,  s2);
+    ggml_سیٹ_op_params_i32(نتیجہ, 3,  p0);
+    ggml_سیٹ_op_params_i32(نتیجہ, 4,  p1);
+    ggml_سیٹ_op_params_i32(نتیجہ, 5,  p2);
+    ggml_سیٹ_op_params_i32(نتیجہ, 6,  d0);
+    ggml_سیٹ_op_params_i32(نتیجہ, 7,  d1);
+    ggml_سیٹ_op_params_i32(نتیجہ, 8,  d2);
+    ggml_سیٹ_op_params_i32(نتیجہ, 9,  c);
+    ggml_سیٹ_op_params_i32(نتیجہ, 10, n);
+    ggml_سیٹ_op_params_i32(نتیجہ, 11, oc);
 
-    result->op = GGML_OP_CONV_3D;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op = GGML_OP_CONV_3D;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_conv_transpose_2d_p0
 
-static int64_t ggml_calc_conv_transpose_output_size(int64_t ins, int64_t ks, int s, int p) {
-    return (ins - 1) * s - 2 * p + ks;
+ساکن int64_t ggml_calc_conv_transpose_output_سائز(int64_t ins, int64_t ks, صحیح s, صحیح p) {
+    واپس (ins - 1) * s - 2 * p + ks;
 }
 
-struct ggml_tensor * ggml_conv_transpose_2d_p0(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   stride) {
+ساخت ggml_tensor * ggml_conv_transpose_2d_p0(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        صحیح                   stride) {
     GGML_ASSERT(a->ne[3] == b->ne[2]);
 
-    const int64_t ne[4] = {
-        ggml_calc_conv_transpose_output_size(b->ne[0], a->ne[0], stride, 0 /*p0*/),
-        ggml_calc_conv_transpose_output_size(b->ne[1], a->ne[1], stride, 0 /*p1*/),
+    ثابت int64_t ne[4] = {
+        ggml_calc_conv_transpose_output_سائز(b->ne[0], a->ne[0], stride, 0 /*p0*/),
+        ggml_calc_conv_transpose_output_سائز(b->ne[1], a->ne[1], stride, 0 /*p1*/),
         a->ne[2], b->ne[3],
     };
 
-    struct ggml_tensor* result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ساخت ggml_tensor* نتیجہ = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
-    ggml_set_op_params_i32(result, 0, stride);
+    ggml_سیٹ_op_params_i32(نتیجہ, 0, stride);
 
-    result->op     = GGML_OP_CONV_TRANSPOSE_2D;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op     = GGML_OP_CONV_TRANSPOSE_2D;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_pool_*
 
-static int64_t ggml_calc_pool_output_size(int64_t ins, int ks, int s, float p) {
-    return (ins + 2 * p - ks) / s + 1;
+ساکن int64_t ggml_calc_pool_output_سائز(int64_t ins, صحیح ks, صحیح s, اعشاری p) {
+    واپس (ins + 2 * p - ks) / s + 1;
 }
 
 // ggml_pool_1d
 
-struct ggml_tensor * ggml_pool_1d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        enum ggml_op_pool     op,
-        int                   k0,
-        int                   s0,
-        int                   p0) {
-    const int64_t ne[4] = {
-        ggml_calc_pool_output_size(a->ne[0], k0, s0, p0),
+ساخت ggml_tensor * ggml_pool_1d(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        شمار ggml_op_pool     op,
+        صحیح                   k0,
+        صحیح                   s0,
+        صحیح                   p0) {
+    ثابت int64_t ne[4] = {
+        ggml_calc_pool_output_سائز(a->ne[0], k0, s0, p0),
         a->ne[1],
         a->ne[2],
         a->ne[3],
     };
     GGML_ASSERT(ne[0] > 0);
 
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
     int32_t params[] = { op, k0, s0, p0 };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_سیٹ_op_params(نتیجہ, params, حجم(params));
 
-    result->op     = GGML_OP_POOL_1D;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_POOL_1D;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_pool_2d
 
-struct ggml_tensor * ggml_pool_2d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        enum ggml_op_pool     op,
-        int                   k0,
-        int                   k1,
-        int                   s0,
-        int                   s1,
-        float                 p0,
-        float                 p1) {
-    struct ggml_tensor * result;
-    const int64_t ne[4] = {
-        ggml_calc_pool_output_size(a->ne[0], k0, s0, p0),
-        ggml_calc_pool_output_size(a->ne[1], k1, s1, p1),
+ساخت ggml_tensor * ggml_pool_2d(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        شمار ggml_op_pool     op,
+        صحیح                   k0,
+        صحیح                   k1,
+        صحیح                   s0,
+        صحیح                   s1,
+        اعشاری                 p0,
+        اعشاری                 p1) {
+    ساخت ggml_tensor * نتیجہ;
+    ثابت int64_t ne[4] = {
+        ggml_calc_pool_output_سائز(a->ne[0], k0, s0, p0),
+        ggml_calc_pool_output_سائز(a->ne[1], k1, s1, p1),
         a->ne[2],
         a->ne[3],
     };
     GGML_ASSERT(ne[0] > 0);
     GGML_ASSERT(ne[1] > 0);
 
-    result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    نتیجہ = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
     int32_t params[] = { op, k0, k1, s0, s1, p0, p1 };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_سیٹ_op_params(نتیجہ, params, حجم(params));
 
-    result->op     = GGML_OP_POOL_2D;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_POOL_2D;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_pool_2d_back(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * af,
-        enum ggml_op_pool     op,
-        int                   k0,
-        int                   k1,
-        int                   s0,
-        int                   s1,
-        float                 p0,
-        float                 p1) {
-    struct ggml_tensor * result;
-    result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, af->ne);
+ساخت ggml_tensor * ggml_pool_2d_عقب(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * af,
+        شمار ggml_op_pool     op,
+        صحیح                   k0,
+        صحیح                   k1,
+        صحیح                   s0,
+        صحیح                   s1,
+        اعشاری                 p0,
+        اعشاری                 p1) {
+    ساخت ggml_tensor * نتیجہ;
+    نتیجہ = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, af->ne);
 
     int32_t params[] = { op, k0, k1, s0, s1, p0, p1 };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_سیٹ_op_params(نتیجہ, params, حجم(params));
 
-    result->op     = GGML_OP_POOL_2D_BACK;
-    result->src[0] = a;
-    result->src[1] = af;
+    نتیجہ->op     = GGML_OP_POOL_2_D_عقب;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = af;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_upscale / ggml_interpolate
 
-static struct ggml_tensor * ggml_interpolate_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ساکن ساخت ggml_tensor * ggml_interpolate_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
         int64_t               ne0,
         int64_t               ne1,
         int64_t               ne2,
         int64_t               ne3,
-        uint32_t              mode) {
-    GGML_ASSERT((mode & 0xFF) < GGML_SCALE_MODE_COUNT);
+        uint32_t              منوال) {
+    GGML_ASSERT((منوال & 0xFF) < GGML_SCALE_منوال_گنتی);
     // TODO: implement antialias for modes other than bilinear
-    GGML_ASSERT(!(mode & GGML_SCALE_FLAG_ANTIALIAS) || (mode & 0xFF) == GGML_SCALE_MODE_BILINEAR);
+    GGML_ASSERT(!(منوال & GGML_SCALE_FLAG_ANTIALIAS) || (منوال & 0xFF) == GGML_SCALE_منوال_BILINEAR);
     GGML_ASSERT(a->type == GGML_TYPE_F32);
 
-    struct ggml_tensor * result = ggml_new_tensor_4d(ctx, a->type, ne0, ne1, ne2, ne3);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_4d(ctx, a->type, ne0, ne1, ne2, ne3);
 
-    ggml_set_op_params_i32(result, 0, (int32_t)mode);
+    ggml_سیٹ_op_params_i32(نتیجہ, 0, (int32_t)منوال);
 
-    result->op     = GGML_OP_UPSCALE;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_UPSCALE;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_upscale(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   scale_factor,
-        enum ggml_scale_mode  mode) {
-    GGML_ASSERT(scale_factor > 1);
-    return ggml_interpolate_impl(ctx, a, a->ne[0] * scale_factor, a->ne[1] * scale_factor, a->ne[2], a->ne[3], mode);
+ساخت ggml_tensor * ggml_upscale(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        صحیح                   scale_ضربی_عدد,
+        شمار ggml_scale_منوال  منوال) {
+    GGML_ASSERT(scale_ضربی_عدد > 1);
+    واپس ggml_interpolate_impl(ctx, a, a->ne[0] * scale_ضربی_عدد, a->ne[1] * scale_ضربی_عدد, a->ne[2], a->ne[3], منوال);
 }
 
-struct ggml_tensor * ggml_upscale_ext(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   ne0,
-        int                   ne1,
-        int                   ne2,
-        int                   ne3,
-        enum ggml_scale_mode  mode) {
-    return ggml_interpolate_impl(ctx, a, ne0, ne1, ne2, ne3, mode);
+ساخت ggml_tensor * ggml_upscale_ext(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        صحیح                   ne0,
+        صحیح                   ne1,
+        صحیح                   ne2,
+        صحیح                   ne3,
+        شمار ggml_scale_منوال  منوال) {
+    واپس ggml_interpolate_impl(ctx, a, ne0, ne1, ne2, ne3, منوال);
 }
 
-struct ggml_tensor * ggml_interpolate(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ساخت ggml_tensor * ggml_interpolate(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
         int64_t               ne0,
         int64_t               ne1,
         int64_t               ne2,
         int64_t               ne3,
-        uint32_t              mode) {
-    return ggml_interpolate_impl(ctx, a, ne0, ne1, ne2, ne3, mode);
+        uint32_t              منوال) {
+    واپس ggml_interpolate_impl(ctx, a, ne0, ne1, ne2, ne3, منوال);
 }
 
 // ggml_pad
 
-struct ggml_tensor * ggml_pad(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   p0,
-        int                   p1,
-        int                   p2,
-        int                   p3) {
-    return ggml_pad_ext(ctx, a, 0, p0, 0, p1, 0, p2, 0, p3);
+ساخت ggml_tensor * ggml_pad(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        صحیح                   p0,
+        صحیح                   p1,
+        صحیح                   p2,
+        صحیح                   p3) {
+    واپس ggml_pad_ext(ctx, a, 0, p0, 0, p1, 0, p2, 0, p3);
 }
 
 // ggml_pad_circular
 
-struct ggml_tensor * ggml_pad_circular(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   p0,
-        int                   p1,
-        int                   p2,
-        int                   p3) {
-    return ggml_pad_ext_circular(ctx, a, 0, p0, 0, p1, 0, p2, 0, p3);
+ساخت ggml_tensor * ggml_pad_circular(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        صحیح                   p0,
+        صحیح                   p1,
+        صحیح                   p2,
+        صحیح                   p3) {
+    واپس ggml_pad_ext_circular(ctx, a, 0, p0, 0, p1, 0, p2, 0, p3);
 }
 
-struct ggml_tensor * ggml_pad_ext(
-            struct ggml_context * ctx,
-            struct ggml_tensor  * a,
-            int                  lp0,
-            int                  rp0,
-            int                  lp1,
-            int                  rp1,
-            int                  lp2,
-            int                  rp2,
-            int                  lp3,
-            int                  rp3
+ساخت ggml_tensor * ggml_pad_ext(
+            ساخت ggml_context * ctx,
+            ساخت ggml_tensor  * a,
+            صحیح                  lp0,
+            صحیح                  rp0,
+            صحیح                  lp1,
+            صحیح                  rp1,
+            صحیح                  lp2,
+            صحیح                  rp2,
+            صحیح                  lp3,
+            صحیح                  rp3
             ) {
-    struct ggml_tensor * result = ggml_new_tensor_4d(ctx, a->type,
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_4d(ctx, a->type,
             a->ne[0] + lp0 + rp0,
             a->ne[1] + lp1 + rp1,
             a->ne[2] + lp2 + rp2,
             a->ne[3] + lp3 + rp3);
 
-    ggml_set_op_params_i32(result, 0, lp0);
-    ggml_set_op_params_i32(result, 1, rp0);
-    ggml_set_op_params_i32(result, 2, lp1);
-    ggml_set_op_params_i32(result, 3, rp1);
-    ggml_set_op_params_i32(result, 4, lp2);
-    ggml_set_op_params_i32(result, 5, rp2);
-    ggml_set_op_params_i32(result, 6, lp3);
-    ggml_set_op_params_i32(result, 7, rp3);
-    ggml_set_op_params_i32(result, 8, 0); // not circular by default
+    ggml_سیٹ_op_params_i32(نتیجہ, 0, lp0);
+    ggml_سیٹ_op_params_i32(نتیجہ, 1, rp0);
+    ggml_سیٹ_op_params_i32(نتیجہ, 2, lp1);
+    ggml_سیٹ_op_params_i32(نتیجہ, 3, rp1);
+    ggml_سیٹ_op_params_i32(نتیجہ, 4, lp2);
+    ggml_سیٹ_op_params_i32(نتیجہ, 5, rp2);
+    ggml_سیٹ_op_params_i32(نتیجہ, 6, lp3);
+    ggml_سیٹ_op_params_i32(نتیجہ, 7, rp3);
+    ggml_سیٹ_op_params_i32(نتیجہ, 8, 0); // not circular by default
 
 
-    result->op     = GGML_OP_PAD;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_PAD;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_pad_ext_circular
 
-struct ggml_tensor * ggml_pad_ext_circular(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                  lp0,
-        int                  rp0,
-        int                  lp1,
-        int                  rp1,
-        int                  lp2,
-        int                  rp2,
-        int                  lp3,
-        int                  rp3
+ساخت ggml_tensor * ggml_pad_ext_circular(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        صحیح                  lp0,
+        صحیح                  rp0,
+        صحیح                  lp1,
+        صحیح                  rp1,
+        صحیح                  lp2,
+        صحیح                  rp2,
+        صحیح                  lp3,
+        صحیح                  rp3
         ) {
-    struct ggml_tensor * result = ggml_pad_ext(ctx, a, lp0, rp0, lp1, rp1, lp2, rp2, lp3, rp3);
-    ggml_set_op_params_i32(result, 8, 1); // circular
-    return result;
+    ساخت ggml_tensor * نتیجہ = ggml_pad_ext(ctx, a, lp0, rp0, lp1, rp1, lp2, rp2, lp3, rp3);
+    ggml_سیٹ_op_params_i32(نتیجہ, 8, 1); // circular
+    واپس نتیجہ;
 }
 
 // ggml_pad_reflect_1d
 
-struct ggml_tensor * ggml_pad_reflect_1d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   p0,
-        int                   p1) {
+ساخت ggml_tensor * ggml_pad_reflect_1d(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        صحیح                   p0,
+        صحیح                   p1) {
     GGML_ASSERT(p0 >= 0);
     GGML_ASSERT(p1 >= 0);
 
@@ -5325,282 +5325,282 @@ struct ggml_tensor * ggml_pad_reflect_1d(
     GGML_ASSERT(ggml_is_contiguous(a));
     GGML_ASSERT(a->type == GGML_TYPE_F32);
 
-    struct ggml_tensor * result = ggml_new_tensor_4d(ctx, a->type,
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_4d(ctx, a->type,
             a->ne[0] + p0 + p1,
             a->ne[1],
             a->ne[2],
             a->ne[3]);
 
     int32_t params[] = { p0, p1 };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_سیٹ_op_params(نتیجہ, params, حجم(params));
 
-    result->op     = GGML_OP_PAD_REFLECT_1D;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_PAD_REFLECT_1D;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_roll
 
-struct ggml_tensor * ggml_roll(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   shift0,
-        int                   shift1,
-        int                   shift2,
-        int                   shift3) {
-    GGML_ASSERT(a->nb[0] == ggml_type_size(a->type));
-    GGML_ASSERT(abs(shift0) < a->ne[0]);
-    GGML_ASSERT(abs(shift1) < a->ne[1]);
-    GGML_ASSERT(abs(shift2) < a->ne[2]);
-    GGML_ASSERT(abs(shift3) < a->ne[3]);
+ساخت ggml_tensor * ggml_roll(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        صحیح                   shift0,
+        صحیح                   shift1,
+        صحیح                   shift2,
+        صحیح                   shift3) {
+    GGML_ASSERT(a->nb[0] == ggml_type_سائز(a->type));
+    GGML_ASSERT(مطلق_قدر(shift0) < a->ne[0]);
+    GGML_ASSERT(مطلق_قدر(shift1) < a->ne[1]);
+    GGML_ASSERT(مطلق_قدر(shift2) < a->ne[2]);
+    GGML_ASSERT(مطلق_قدر(shift3) < a->ne[3]);
 
-    struct ggml_tensor * result = ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = ggml_dup_tensor(ctx, a);
 
-    ggml_set_op_params_i32(result, 0, shift0);
-    ggml_set_op_params_i32(result, 1, shift1);
-    ggml_set_op_params_i32(result, 2, shift2);
-    ggml_set_op_params_i32(result, 3, shift3);
+    ggml_سیٹ_op_params_i32(نتیجہ, 0, shift0);
+    ggml_سیٹ_op_params_i32(نتیجہ, 1, shift1);
+    ggml_سیٹ_op_params_i32(نتیجہ, 2, shift2);
+    ggml_سیٹ_op_params_i32(نتیجہ, 3, shift3);
 
-    result->op     = GGML_OP_ROLL;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_ROLL;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_timestep_embedding
 
-struct ggml_tensor * ggml_timestep_embedding(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * timesteps,
-        int                   dim,
-        int                   max_period) {
+ساخت ggml_tensor * ggml_timestep_embedding(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * timesteps,
+        صحیح                   dim,
+        صحیح                   max_period) {
 
-    struct ggml_tensor * result = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, dim, timesteps->ne[0]);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, dim, timesteps->ne[0]);
 
-    ggml_set_op_params_i32(result, 0, dim);
-    ggml_set_op_params_i32(result, 1, max_period);
+    ggml_سیٹ_op_params_i32(نتیجہ, 0, dim);
+    ggml_سیٹ_op_params_i32(نتیجہ, 1, max_period);
 
-    result->op     = GGML_OP_TIMESTEP_EMBEDDING;
-    result->src[0] = timesteps;
+    نتیجہ->op     = GGML_OP_TIMESTEP_EMBEDDING;
+    نتیجہ->src[0] = timesteps;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_tri
 
-struct ggml_tensor * ggml_tri(
-    struct ggml_context * ctx,
-    struct ggml_tensor  * a,
-    enum ggml_tri_type    type) {
+ساخت ggml_tensor * ggml_tri(
+    ساخت ggml_context * ctx,
+    ساخت ggml_tensor  * a,
+    شمار ggml_tri_type    type) {
     GGML_ASSERT(a->type == GGML_TYPE_F32);
 
     GGML_ASSERT(ggml_is_contiguous(a));
     GGML_ASSERT(a->ne[0] == a->ne[1]);
 
-    struct ggml_tensor * result = ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = ggml_dup_tensor(ctx, a);
 
-    ggml_set_op_params_i32(result, 0, type);
+    ggml_سیٹ_op_params_i32(نتیجہ, 0, type);
 
-    result->op = GGML_OP_TRI;
-    result->src[0] = a;
+    نتیجہ->op = GGML_OP_TRI;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_fill
 
-static struct ggml_tensor * ggml_fill_impl(
-    struct ggml_context * ctx,
-    struct ggml_tensor  * a,
-    float                 c,
+ساکن ساخت ggml_tensor * ggml_fill_impl(
+    ساخت ggml_context * ctx,
+    ساخت ggml_tensor  * a,
+    اعشاری                 c,
     bool                  inplace) {
     GGML_ASSERT(a->type == GGML_TYPE_F32 || a->type == GGML_TYPE_F16);
     GGML_ASSERT(ggml_is_contiguous(a));
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    ggml_set_op_params_f32(result, 0, c);
+    ggml_سیٹ_op_params_f32(نتیجہ, 0, c);
 
-    result->op = GGML_OP_FILL;
-    result->src[0] = a;
+    نتیجہ->op = GGML_OP_FILL;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_fill(
-    struct ggml_context * ctx,
-    struct ggml_tensor  * a,
-    float                 c) {
-    return ggml_fill_impl(ctx, a, c, false);
+ساخت ggml_tensor * ggml_fill(
+    ساخت ggml_context * ctx,
+    ساخت ggml_tensor  * a,
+    اعشاری                 c) {
+    واپس ggml_fill_impl(ctx, a, c, false);
 }
 
-struct ggml_tensor * ggml_fill_inplace(
-    struct ggml_context * ctx,
-    struct ggml_tensor  * a,
-    float                 c) {
-    return ggml_fill_impl(ctx, a, c, true);
+ساخت ggml_tensor * ggml_fill_inplace(
+    ساخت ggml_context * ctx,
+    ساخت ggml_tensor  * a,
+    اعشاری                 c) {
+    واپس ggml_fill_impl(ctx, a, c, true);
 }
 
 // ggml_argsort
 
-struct ggml_tensor * ggml_argsort(
-        struct ggml_context  * ctx,
-        struct ggml_tensor   * a,
-        enum ggml_sort_order   order) {
+ساخت ggml_tensor * ggml_argsort(
+        ساخت ggml_context  * ctx,
+        ساخت ggml_tensor   * a,
+        شمار ggml_ترتیب_دو_ترتیب   ترتیب) {
     GGML_ASSERT(a->ne[0] <= INT32_MAX);
 
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_I32, GGML_MAX_DIMS, a->ne);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, GGML_TYPE_I32, GGML_MAX_DIMS, a->ne);
 
-    ggml_set_op_params_i32(result, 0, (int32_t) order);
+    ggml_سیٹ_op_params_i32(نتیجہ, 0, (int32_t) ترتیب);
 
-    result->op     = GGML_OP_ARGSORT;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_ARGSORT;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_argsort_top_k
 
-struct ggml_tensor * ggml_argsort_top_k(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   k) {
+ساخت ggml_tensor * ggml_argsort_چوٹی_k(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        صحیح                   k) {
     GGML_ASSERT(a->ne[0] >= k);
 
-    struct ggml_tensor * result = ggml_argsort(ctx, a, GGML_SORT_ORDER_DESC);
+    ساخت ggml_tensor * نتیجہ = ggml_argsort(ctx, a, GGML_ترتیب_دو_ترتیب_DESC);
 
-    result = ggml_view_4d(ctx, result,
-                k, result->ne[1], result->ne[2], result->ne[3],
-                   result->nb[1], result->nb[2], result->nb[3],
+    نتیجہ = ggml_view_4d(ctx, نتیجہ,
+                k, نتیجہ->ne[1], نتیجہ->ne[2], نتیجہ->ne[3],
+                   نتیجہ->nb[1], نتیجہ->nb[2], نتیجہ->nb[3],
                 0);
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_top_k
 
-struct ggml_tensor * ggml_top_k(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   k) {
+ساخت ggml_tensor * ggml_چوٹی_k(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        صحیح                   k) {
     GGML_ASSERT(a->ne[0] >= k);
 
-    struct ggml_tensor * result = ggml_new_tensor_4d(ctx, GGML_TYPE_I32, k, a->ne[1], a->ne[2], a->ne[3]);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_4d(ctx, GGML_TYPE_I32, k, a->ne[1], a->ne[2], a->ne[3]);
 
-    result->op     = GGML_OP_TOP_K;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_چوٹی_K;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_arange
 
-struct ggml_tensor * ggml_arange(
-        struct ggml_context * ctx,
-        float                 start,
-        float                 stop,
-        float                 step) {
-    GGML_ASSERT(stop > start);
+ساخت ggml_tensor * ggml_arange(
+        ساخت ggml_context * ctx,
+        اعشاری                 آغاز,
+        اعشاری                 stop,
+        اعشاری                 قدم) {
+    GGML_ASSERT(stop > آغاز);
 
-    const int64_t steps = (int64_t) ceilf((stop - start) / step);
+    ثابت int64_t اقدام = (int64_t) ceilf((stop - آغاز) / قدم);
 
-    struct ggml_tensor * result = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, steps);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, اقدام);
 
-    ggml_set_op_params_f32(result, 0, start);
-    ggml_set_op_params_f32(result, 1, stop);
-    ggml_set_op_params_f32(result, 2, step);
+    ggml_سیٹ_op_params_f32(نتیجہ, 0, آغاز);
+    ggml_سیٹ_op_params_f32(نتیجہ, 1, stop);
+    ggml_سیٹ_op_params_f32(نتیجہ, 2, قدم);
 
-    result->op = GGML_OP_ARANGE;
+    نتیجہ->op = GGML_OP_ARANGE;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_flash_attn_ext
 
-struct ggml_tensor * ggml_flash_attn_ext(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * q,
-        struct ggml_tensor  * k,
-        struct ggml_tensor  * v,
-        struct ggml_tensor  * mask,
-        float                 scale,
-        float                 max_bias,
-        float                 logit_softcap) {
+ساخت ggml_tensor * ggml_flash_attn_ext(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * q,
+        ساخت ggml_tensor  * k,
+        ساخت ggml_tensor  * v,
+        ساخت ggml_tensor  * نقاب,
+        اعشاری                 scale,
+        اعشاری                 max_bias,
+        اعشاری                 logit_softcap) {
     GGML_ASSERT(ggml_can_mul_mat(k, q));
     // TODO: check if vT can be multiplied by (k*qT)
 
     GGML_ASSERT(q->ne[3] == k->ne[3]);
     GGML_ASSERT(q->ne[3] == v->ne[3]);
 
-    if (mask) {
-        GGML_ASSERT(mask->type == GGML_TYPE_F16);
-        GGML_ASSERT(ggml_is_contiguous(mask));
+    اگر (نقاب) {
+        GGML_ASSERT(نقاب->type == GGML_TYPE_F16);
+        GGML_ASSERT(ggml_is_contiguous(نقاب));
         //GGML_ASSERT(ggml_can_repeat_rows(mask, qk));
 
-        GGML_ASSERT(q->ne[2] % mask->ne[2] == 0);
-        GGML_ASSERT(q->ne[3] % mask->ne[3] == 0);
+        GGML_ASSERT(q->ne[2] % نقاب->ne[2] == 0);
+        GGML_ASSERT(q->ne[3] % نقاب->ne[3] == 0);
     }
 
-    if (max_bias > 0.0f) {
-        GGML_ASSERT(mask);
+    اگر (max_bias > 0.0f) {
+        GGML_ASSERT(نقاب);
     }
 
     // permute(0, 2, 1, 3)
     int64_t ne[4] = { v->ne[0], q->ne[2], q->ne[1], q->ne[3] };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
-    float params[] = { scale, max_bias, logit_softcap };
-    ggml_set_op_params(result, params, sizeof(params));
+    اعشاری params[] = { scale, max_bias, logit_softcap };
+    ggml_سیٹ_op_params(نتیجہ, params, حجم(params));
 
-    result->op     = GGML_OP_FLASH_ATTN_EXT;
-    result->src[0] = q;
-    result->src[1] = k;
-    result->src[2] = v;
-    result->src[3] = mask;
+    نتیجہ->op     = GGML_OP_FLASH_ATTN_EXT;
+    نتیجہ->src[0] = q;
+    نتیجہ->src[1] = k;
+    نتیجہ->src[2] = v;
+    نتیجہ->src[3] = نقاب;
 
-    return result;
+    واپس نتیجہ;
 }
 
 
-void ggml_flash_attn_ext_set_prec(
-        struct ggml_tensor * a,
-        enum ggml_prec       prec) {
+خالی ggml_flash_attn_ext_سیٹ_prec(
+        ساخت ggml_tensor * a,
+        شمار ggml_prec       prec) {
     GGML_ASSERT(a->op == GGML_OP_FLASH_ATTN_EXT);
 
-    const int32_t prec_i32 = (int32_t) prec;
+    ثابت int32_t prec_i32 = (int32_t) prec;
 
-    ggml_set_op_params_i32(a, 3, prec_i32); // scale is on first pos, max_bias on second
+    ggml_سیٹ_op_params_i32(a, 3, prec_i32); // scale is on first pos, max_bias on second
 }
 
-enum ggml_prec ggml_flash_attn_ext_get_prec(
-        const struct ggml_tensor * a) {
+شمار ggml_prec ggml_flash_attn_ext_get_prec(
+        ثابت ساخت ggml_tensor * a) {
     GGML_ASSERT(a->op == GGML_OP_FLASH_ATTN_EXT);
 
-    const int32_t prec_i32 = ggml_get_op_params_i32(a, 3);
+    ثابت int32_t prec_i32 = ggml_get_op_params_i32(a, 3);
 
-    return (enum ggml_prec) prec_i32;
+    واپس (شمار ggml_prec) prec_i32;
 }
 
-void ggml_flash_attn_ext_set_n_kv_max(
-        struct ggml_tensor * a,
+خالی ggml_flash_attn_ext_سیٹ_n_kv_max(
+        ساخت ggml_tensor * a,
         int32_t              n_kv_max) {
     GGML_ASSERT(a->op == GGML_OP_FLASH_ATTN_EXT);
     GGML_ASSERT(n_kv_max >= 0);
 
-    ggml_set_op_params_i32(a, 4, n_kv_max);
+    ggml_سیٹ_op_params_i32(a, 4, n_kv_max);
 }
 
-void ggml_flash_attn_ext_add_sinks(
-        struct ggml_tensor * a,
-        struct ggml_tensor * sinks) {
-    if (!sinks) {
-        a->src[4] = NULL;
-        return;
+خالی ggml_flash_attn_ext_جوڑو_sinks(
+        ساخت ggml_tensor * a,
+        ساخت ggml_tensor * sinks) {
+    اگر (!sinks) {
+        a->src[4] = تہی;
+        واپس;
     }
 
     GGML_ASSERT(a->op == GGML_OP_FLASH_ATTN_EXT);
-    GGML_ASSERT(a->src[4] == NULL);
+    GGML_ASSERT(a->src[4] == تہی);
     GGML_ASSERT(a->src[0]->ne[2] == sinks->ne[0]);
     GGML_ASSERT(sinks->type == GGML_TYPE_F32);
 
@@ -5609,12 +5609,12 @@ void ggml_flash_attn_ext_add_sinks(
 
 // ggml_flash_attn_back
 
-struct ggml_tensor * ggml_flash_attn_back(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * q,
-        struct ggml_tensor  * k,
-        struct ggml_tensor  * v,
-        struct ggml_tensor  * d,
+ساخت ggml_tensor * ggml_flash_attn_عقب(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * q,
+        ساخت ggml_tensor  * k,
+        ساخت ggml_tensor  * v,
+        ساخت ggml_tensor  * d,
         bool                  masked) {
     GGML_ABORT("TODO: adapt to ggml_flash_attn_ext() changes");
 
@@ -5626,12 +5626,12 @@ struct ggml_tensor * ggml_flash_attn_back(
     // k shape [D,M,kvne2,ne3]
     // v shape [M,D,kvne2,ne3]
 
-    const int64_t     D = q->ne[0];
-    const int64_t     N = q->ne[1];
-    const int64_t     M = k->ne[1];
-    const int64_t   ne2 = q->ne[2];
-    const int64_t   ne3 = q->ne[3];
-    const int64_t kvne2 = k->ne[2];
+    ثابت int64_t     D = q->ne[0];
+    ثابت int64_t     N = q->ne[1];
+    ثابت int64_t     M = k->ne[1];
+    ثابت int64_t   ne2 = q->ne[2];
+    ثابت int64_t   ne3 = q->ne[3];
+    ثابت int64_t kvne2 = k->ne[2];
 
     GGML_ASSERT(k->ne[0] == D);
     GGML_ASSERT(v->ne[0] == M);
@@ -5649,83 +5649,83 @@ struct ggml_tensor * ggml_flash_attn_back(
 
     // store gradients of q, k and v as continuous tensors concatenated in result.
     // note: v and gradv are actually transposed, i.e. v->ne[0] != D.
-    const int64_t elem_q = ggml_nelements(q);
-    const int64_t elem_k = ggml_nelements(k);
-    const int64_t elem_v = ggml_nelements(v);
+    ثابت int64_t elem_q = ggml_nelements(q);
+    ثابت int64_t elem_k = ggml_nelements(k);
+    ثابت int64_t elem_v = ggml_nelements(v);
 
-    enum ggml_type result_type = GGML_TYPE_F32;
-    GGML_ASSERT(ggml_blck_size(result_type) == 1);
-    const size_t tsize = ggml_type_size(result_type);
+    شمار ggml_type نتیجہ_type = GGML_TYPE_F32;
+    GGML_ASSERT(ggml_blck_سائز(نتیجہ_type) == 1);
+    ثابت size_t tsize = ggml_type_سائز(نتیجہ_type);
 
-    const size_t offs_q = 0;
-    const size_t offs_k = offs_q + GGML_PAD(elem_q * tsize, GGML_MEM_ALIGN);
-    const size_t offs_v = offs_k + GGML_PAD(elem_k * tsize, GGML_MEM_ALIGN);
-    const size_t end    = offs_v + GGML_PAD(elem_v * tsize, GGML_MEM_ALIGN);
+    ثابت size_t offs_q = 0;
+    ثابت size_t offs_k = offs_q + GGML_PAD(elem_q * tsize, GGML_MEM_ALIGN);
+    ثابت size_t offs_v = offs_k + GGML_PAD(elem_k * tsize, GGML_MEM_ALIGN);
+    ثابت size_t انتہا    = offs_v + GGML_PAD(elem_v * tsize, GGML_MEM_ALIGN);
 
-    const size_t nelements = (end + tsize - 1)/tsize;
+    ثابت size_t nelements = (انتہا + tsize - 1)/tsize;
 
-    struct ggml_tensor * result = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, nelements);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, nelements);
 
     int32_t masked_i = masked ? 1 : 0;
-    ggml_set_op_params(result, &masked_i, sizeof(masked_i));
+    ggml_سیٹ_op_params(نتیجہ, &masked_i, حجم(masked_i));
 
-    result->op     = GGML_OP_FLASH_ATTN_BACK;
-    result->src[0] = q;
-    result->src[1] = k;
-    result->src[2] = v;
-    result->src[3] = d;
+    نتیجہ->op     = GGML_OP_FLASH_ATTN_عقب;
+    نتیجہ->src[0] = q;
+    نتیجہ->src[1] = k;
+    نتیجہ->src[2] = v;
+    نتیجہ->src[3] = d;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_ssm_conv
 
-struct ggml_tensor * ggml_ssm_conv(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * sx,
-        struct ggml_tensor  * c) {
+ساخت ggml_tensor * ggml_ssm_conv(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * sx,
+        ساخت ggml_tensor  * c) {
     GGML_ASSERT(ggml_is_3d(sx));
-    GGML_ASSERT(ggml_is_matrix(c));
+    GGML_ASSERT(ggml_is_میٹرکس(c));
 
-    const int64_t d_conv  = c->ne[0];
-    const int64_t d_inner = c->ne[1];
-    const int64_t n_t     = sx->ne[0] - d_conv + 1; // tokens per sequence
-    const int64_t n_s     = sx->ne[2];
+    ثابت int64_t d_conv  = c->ne[0];
+    ثابت int64_t d_inner = c->ne[1];
+    ثابت int64_t n_t     = sx->ne[0] - d_conv + 1; // tokens per sequence
+    ثابت int64_t n_s     = sx->ne[2];
 
     // TODO: maybe support other strides than 1?
     GGML_ASSERT(sx->ne[0] == d_conv - 1 + n_t);
     GGML_ASSERT(sx->ne[1] == d_inner);
     GGML_ASSERT(n_t >= 0);
 
-    struct ggml_tensor * result = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, d_inner, n_t, n_s);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, d_inner, n_t, n_s);
 
-    result->op     = GGML_OP_SSM_CONV;
-    result->src[0] = sx;
-    result->src[1] = c;
+    نتیجہ->op     = GGML_OP_SSM_CONV;
+    نتیجہ->src[0] = sx;
+    نتیجہ->src[1] = c;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_ssm_scan
 
-struct ggml_tensor * ggml_ssm_scan(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * s,
-        struct ggml_tensor  * x,
-        struct ggml_tensor  * dt,
-        struct ggml_tensor  * A,
-        struct ggml_tensor  * B,
-        struct ggml_tensor  * C,
-        struct ggml_tensor  * ids,
+ساخت ggml_tensor * ggml_ssm_جائزہ(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * s,
+        ساخت ggml_tensor  * x,
+        ساخت ggml_tensor  * dt,
+        ساخت ggml_tensor  * A,
+        ساخت ggml_tensor  * B,
+        ساخت ggml_tensor  * C,
+        ساخت ggml_tensor  * ids,
         int64_t               K) {
     GGML_ASSERT(K >= 1);
     GGML_ASSERT(K <= INT32_MAX);
     GGML_ASSERT(ggml_is_contiguous(s));
     GGML_ASSERT(ggml_is_contiguous(dt));
     GGML_ASSERT(ggml_is_contiguous(A));
-    GGML_ASSERT(x->nb[0] == ggml_type_size(x->type));
-    GGML_ASSERT(B->nb[0] == ggml_type_size(B->type));
-    GGML_ASSERT(C->nb[0] == ggml_type_size(C->type));
+    GGML_ASSERT(x->nb[0] == ggml_type_سائز(x->type));
+    GGML_ASSERT(B->nb[0] == ggml_type_سائز(B->type));
+    GGML_ASSERT(C->nb[0] == ggml_type_سائز(C->type));
     GGML_ASSERT(x->nb[1] == x->ne[0]*x->nb[0]);
     GGML_ASSERT(B->nb[1] == B->ne[0]*B->nb[0]);
     GGML_ASSERT(C->nb[1] == C->ne[0]*C->nb[0]);
@@ -5733,27 +5733,27 @@ struct ggml_tensor * ggml_ssm_scan(
     GGML_ASSERT(ids->type == GGML_TYPE_I32);
 
     {
-        const int64_t d_state      = s->ne[0];
-        const int64_t head_dim     = x->ne[0];
-        const int64_t n_head       = x->ne[1];
-        const int64_t n_seq_tokens = x->ne[2];
-        const int64_t n_seqs       = x->ne[3];
+        ثابت int64_t d_state      = s->ne[0];
+        ثابت int64_t سر_dim     = x->ne[0];
+        ثابت int64_t n_سر       = x->ne[1];
+        ثابت int64_t n_seq_علامات = x->ne[2];
+        ثابت int64_t n_seqs       = x->ne[3];
 
-        GGML_ASSERT(dt->ne[0] == n_head);
-        GGML_ASSERT(dt->ne[1] == n_seq_tokens);
+        GGML_ASSERT(dt->ne[0] == n_سر);
+        GGML_ASSERT(dt->ne[1] == n_seq_علامات);
         GGML_ASSERT(dt->ne[2] == n_seqs);
         GGML_ASSERT(ggml_is_3d(dt));
-        GGML_ASSERT(s->ne[1] == head_dim);
-        GGML_ASSERT(s->ne[2] == n_head);
+        GGML_ASSERT(s->ne[1] == سر_dim);
+        GGML_ASSERT(s->ne[2] == n_سر);
         GGML_ASSERT(B->ne[0] == d_state);
-        GGML_ASSERT(B->ne[2] == n_seq_tokens);
+        GGML_ASSERT(B->ne[2] == n_seq_علامات);
         GGML_ASSERT(B->ne[3] == n_seqs);
         GGML_ASSERT(ids->ne[0] == n_seqs);
-        GGML_ASSERT(ggml_is_vector(ids));
-        GGML_ASSERT(A->ne[1] == n_head);
-        GGML_ASSERT(ggml_is_matrix(A));
+        GGML_ASSERT(ggml_is_سمتیہ(ids));
+        GGML_ASSERT(A->ne[1] == n_سر);
+        GGML_ASSERT(ggml_is_میٹرکس(A));
 
-        if (A->ne[0] != 1) {
+        اگر (A->ne[0] != 1) {
             // Mamba-1 has more granular decay factors
             GGML_ASSERT(A->ne[0] == d_state);
             GGML_ASSERT(K == 1);
@@ -5761,99 +5761,99 @@ struct ggml_tensor * ggml_ssm_scan(
     }
 
     // concatenated y + ssm_states
-    struct ggml_tensor * result = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, ggml_nelements(x) + K*s->ne[0]*s->ne[1]*s->ne[2]*ids->ne[0]);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, ggml_nelements(x) + K*s->ne[0]*s->ne[1]*s->ne[2]*ids->ne[0]);
 
-    result->op   = GGML_OP_SSM_SCAN;
-    result->src[0] = s;
-    result->src[1] = x;
-    result->src[2] = dt;
-    result->src[3] = A;
-    result->src[4] = B;
-    result->src[5] = C;
-    result->src[6] = ids;
+    نتیجہ->op   = GGML_OP_SSM_جائزہ;
+    نتیجہ->src[0] = s;
+    نتیجہ->src[1] = x;
+    نتیجہ->src[2] = dt;
+    نتیجہ->src[3] = A;
+    نتیجہ->src[4] = B;
+    نتیجہ->src[5] = C;
+    نتیجہ->src[6] = ids;
 
-    ggml_set_op_params_i32(result, 0, (int32_t) K);
+    ggml_سیٹ_op_params_i32(نتیجہ, 0, (int32_t) K);
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_win_part
 
-struct ggml_tensor * ggml_win_part(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   w) {
+ساخت ggml_tensor * ggml_win_part(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        صحیح                   w) {
     GGML_ASSERT(a->ne[3] == 1);
     GGML_ASSERT(a->type  == GGML_TYPE_F32);
 
     // padding
-    const int px = (w - a->ne[1]%w)%w;
-    const int py = (w - a->ne[2]%w)%w;
+    ثابت صحیح px = (w - a->ne[1]%w)%w;
+    ثابت صحیح py = (w - a->ne[2]%w)%w;
 
-    const int npx = (px + a->ne[1])/w;
-    const int npy = (py + a->ne[2])/w;
-    const int np  = npx*npy;
+    ثابت صحیح npx = (px + a->ne[1])/w;
+    ثابت صحیح npy = (py + a->ne[2])/w;
+    ثابت صحیح np  = npx*npy;
 
-    const int64_t ne[4] = { a->ne[0], w, w, np, };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ثابت int64_t ne[4] = { a->ne[0], w, w, np, };
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
     int32_t params[] = { npx, npy, w };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_سیٹ_op_params(نتیجہ, params, حجم(params));
 
-    result->op     = GGML_OP_WIN_PART;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_WIN_PART;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_win_unpart
 
-struct ggml_tensor * ggml_win_unpart(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   w0,
-        int                   h0,
-        int                   w) {
+ساخت ggml_tensor * ggml_win_unpart(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        صحیح                   w0,
+        صحیح                   h0,
+        صحیح                   w) {
     GGML_ASSERT(a->type == GGML_TYPE_F32);
 
-    const int64_t ne[4] = { a->ne[0], w0, h0, 1, };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 3, ne);
+    ثابت int64_t ne[4] = { a->ne[0], w0, h0, 1, };
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, GGML_TYPE_F32, 3, ne);
 
     int32_t params[] = { w };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_سیٹ_op_params(نتیجہ, params, حجم(params));
 
-    result->op     = GGML_OP_WIN_UNPART;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_WIN_UNPART;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_get_rel_pos
 
-struct ggml_tensor * ggml_get_rel_pos(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   qh,
-        int                   kh) {
+ساخت ggml_tensor * ggml_get_rel_pos(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        صحیح                   qh,
+        صحیح                   kh) {
     GGML_ASSERT(qh == kh);
     GGML_ASSERT(2*MAX(qh, kh) - 1 == a->ne[1]);
 
-    const int64_t ne[4] = { a->ne[0], kh, qh, 1, };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F16, 3, ne);
+    ثابت int64_t ne[4] = { a->ne[0], kh, qh, 1, };
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, GGML_TYPE_F16, 3, ne);
 
-    result->op     = GGML_OP_GET_REL_POS;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_GET_REL_POS;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_add_rel_pos
 
-static struct ggml_tensor * ggml_add_rel_pos_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * pw,
-        struct ggml_tensor  * ph,
+ساکن ساخت ggml_tensor * ggml_جوڑو_rel_pos_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * pw,
+        ساخت ggml_tensor  * ph,
         bool                  inplace) {
     GGML_ASSERT(ggml_are_same_shape(pw, ph));
     GGML_ASSERT(ggml_is_contiguous(a));
@@ -5865,43 +5865,43 @@ static struct ggml_tensor * ggml_add_rel_pos_impl(
     GGML_ASSERT(pw->ne[0]*pw->ne[0] == a->ne[0]);
     GGML_ASSERT(pw->ne[1]*pw->ne[2] == a->ne[1]);
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
-    ggml_set_op_params_i32(result, 0, inplace ? 1 : 0);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ggml_سیٹ_op_params_i32(نتیجہ, 0, inplace ? 1 : 0);
 
-    result->op     = GGML_OP_ADD_REL_POS;
-    result->src[0] = a;
-    result->src[1] = pw;
-    result->src[2] = ph;
+    نتیجہ->op     = GGML_OP_جوڑو_REL_POS;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = pw;
+    نتیجہ->src[2] = ph;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_add_rel_pos(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * pw,
-        struct ggml_tensor  * ph) {
-    return ggml_add_rel_pos_impl(ctx, a, pw, ph, false);
+ساخت ggml_tensor * ggml_جوڑو_rel_pos(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * pw,
+        ساخت ggml_tensor  * ph) {
+    واپس ggml_جوڑو_rel_pos_impl(ctx, a, pw, ph, false);
 }
 
-struct ggml_tensor * ggml_add_rel_pos_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * pw,
-        struct ggml_tensor  * ph) {
-    return ggml_add_rel_pos_impl(ctx, a, pw, ph, true);
+ساخت ggml_tensor * ggml_جوڑو_rel_pos_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * pw,
+        ساخت ggml_tensor  * ph) {
+    واپس ggml_جوڑو_rel_pos_impl(ctx, a, pw, ph, true);
 }
 
 // ggml_rwkv_wkv6
 
-struct ggml_tensor * ggml_rwkv_wkv6(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * k,
-        struct ggml_tensor  * v,
-        struct ggml_tensor  * r,
-        struct ggml_tensor  * tf,
-        struct ggml_tensor  * td,
-        struct ggml_tensor  * state) {
+ساخت ggml_tensor * ggml_rwkv_wkv6(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * k,
+        ساخت ggml_tensor  * v,
+        ساخت ggml_tensor  * r,
+        ساخت ggml_tensor  * tf,
+        ساخت ggml_tensor  * td,
+        ساخت ggml_tensor  * state) {
     GGML_ASSERT(ggml_is_contiguous(k));
     GGML_ASSERT(ggml_is_contiguous(v));
     GGML_ASSERT(ggml_is_contiguous(r));
@@ -5909,86 +5909,86 @@ struct ggml_tensor * ggml_rwkv_wkv6(
     GGML_ASSERT(ggml_is_contiguous(td));
     GGML_ASSERT(ggml_is_contiguous(state));
 
-    const int64_t S = k->ne[0];
-    const int64_t H = k->ne[1];
-    const int64_t n_tokens = k->ne[2];
-    const int64_t n_seqs = state->ne[1];
+    ثابت int64_t S = k->ne[0];
+    ثابت int64_t H = k->ne[1];
+    ثابت int64_t n_علامات = k->ne[2];
+    ثابت int64_t n_seqs = state->ne[1];
     {
-        GGML_ASSERT(v->ne[0] == S && v->ne[1] == H && v->ne[2] == n_tokens);
-        GGML_ASSERT(r->ne[0] == S && r->ne[1] == H && r->ne[2] == n_tokens);
-        GGML_ASSERT(td->ne[0] == S && td->ne[1] == H && td->ne[2] == n_tokens);
+        GGML_ASSERT(v->ne[0] == S && v->ne[1] == H && v->ne[2] == n_علامات);
+        GGML_ASSERT(r->ne[0] == S && r->ne[1] == H && r->ne[2] == n_علامات);
+        GGML_ASSERT(td->ne[0] == S && td->ne[1] == H && td->ne[2] == n_علامات);
         GGML_ASSERT(ggml_nelements(state) == S * S * H * n_seqs);
     }
 
     // concat output and new_state
-    const int64_t ne[4] = { S * H, n_tokens + S * n_seqs, 1, 1 };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ثابت int64_t ne[4] = { S * H, n_علامات + S * n_seqs, 1, 1 };
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
-    result->op     = GGML_OP_RWKV_WKV6;
-    result->src[0] = k;
-    result->src[1] = v;
-    result->src[2] = r;
-    result->src[3] = tf;
-    result->src[4] = td;
-    result->src[5] = state;
+    نتیجہ->op     = GGML_OP_RWKV_WKV6;
+    نتیجہ->src[0] = k;
+    نتیجہ->src[1] = v;
+    نتیجہ->src[2] = r;
+    نتیجہ->src[3] = tf;
+    نتیجہ->src[4] = td;
+    نتیجہ->src[5] = state;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_gated_linear_attn
 
-struct ggml_tensor * ggml_gated_linear_attn(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * k,
-        struct ggml_tensor  * v,
-        struct ggml_tensor  * q,
-        struct ggml_tensor  * g,
-        struct ggml_tensor  * state,
-        float scale) {
+ساخت ggml_tensor * ggml_gated_خطی_attn(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * k,
+        ساخت ggml_tensor  * v,
+        ساخت ggml_tensor  * q,
+        ساخت ggml_tensor  * g,
+        ساخت ggml_tensor  * state,
+        اعشاری scale) {
     GGML_ASSERT(ggml_is_contiguous(k));
     GGML_ASSERT(ggml_is_contiguous(v));
     GGML_ASSERT(ggml_is_contiguous(q));
     GGML_ASSERT(ggml_is_contiguous(g));
     GGML_ASSERT(ggml_is_contiguous(state));
 
-    const int64_t S = k->ne[0];
-    const int64_t H = k->ne[1];
-    const int64_t n_tokens = k->ne[2];
-    const int64_t n_seqs = state->ne[1];
+    ثابت int64_t S = k->ne[0];
+    ثابت int64_t H = k->ne[1];
+    ثابت int64_t n_علامات = k->ne[2];
+    ثابت int64_t n_seqs = state->ne[1];
     {
-        GGML_ASSERT(v->ne[0] == S && v->ne[1] == H && v->ne[2] == n_tokens);
-        GGML_ASSERT(q->ne[0] == S && q->ne[1] == H && q->ne[2] == n_tokens);
-        GGML_ASSERT(g->ne[0] == S && g->ne[1] == H && g->ne[2] == n_tokens);
+        GGML_ASSERT(v->ne[0] == S && v->ne[1] == H && v->ne[2] == n_علامات);
+        GGML_ASSERT(q->ne[0] == S && q->ne[1] == H && q->ne[2] == n_علامات);
+        GGML_ASSERT(g->ne[0] == S && g->ne[1] == H && g->ne[2] == n_علامات);
         GGML_ASSERT(ggml_nelements(state) == S * S * H * n_seqs);
     }
 
     // concat output and new_state
-    const int64_t ne[4] = { S * H, n_tokens + S * n_seqs, 1, 1 };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ثابت int64_t ne[4] = { S * H, n_علامات + S * n_seqs, 1, 1 };
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
-    ggml_set_op_params_f32(result, 0, scale);
+    ggml_سیٹ_op_params_f32(نتیجہ, 0, scale);
 
-    result->op     = GGML_OP_GATED_LINEAR_ATTN;
-    result->src[0] = k;
-    result->src[1] = v;
-    result->src[2] = q;
-    result->src[3] = g;
-    result->src[4] = state;
+    نتیجہ->op     = GGML_OP_GATED_خطی_ATTN;
+    نتیجہ->src[0] = k;
+    نتیجہ->src[1] = v;
+    نتیجہ->src[2] = q;
+    نتیجہ->src[3] = g;
+    نتیجہ->src[4] = state;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_rwkv_wkv7
 
-struct ggml_tensor * ggml_rwkv_wkv7(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * r,
-        struct ggml_tensor  * w,
-        struct ggml_tensor  * k,
-        struct ggml_tensor  * v,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        struct ggml_tensor  * state) {
+ساخت ggml_tensor * ggml_rwkv_wkv7(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * r,
+        ساخت ggml_tensor  * w,
+        ساخت ggml_tensor  * k,
+        ساخت ggml_tensor  * v,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        ساخت ggml_tensor  * state) {
     GGML_ASSERT(ggml_is_contiguous(r));
     GGML_ASSERT(ggml_is_contiguous(w));
     GGML_ASSERT(ggml_is_contiguous(k));
@@ -5997,318 +5997,318 @@ struct ggml_tensor * ggml_rwkv_wkv7(
     GGML_ASSERT(ggml_is_contiguous(b));
     GGML_ASSERT(ggml_is_contiguous(state));
 
-    const int64_t S = k->ne[0];
-    const int64_t H = k->ne[1];
-    const int64_t n_tokens = k->ne[2];
-    const int64_t n_seqs = state->ne[1];
+    ثابت int64_t S = k->ne[0];
+    ثابت int64_t H = k->ne[1];
+    ثابت int64_t n_علامات = k->ne[2];
+    ثابت int64_t n_seqs = state->ne[1];
     {
-        GGML_ASSERT(w->ne[0] == S && w->ne[1] == H && w->ne[2] == n_tokens);
-        GGML_ASSERT(k->ne[0] == S && k->ne[1] == H && k->ne[2] == n_tokens);
-        GGML_ASSERT(v->ne[0] == S && v->ne[1] == H && v->ne[2] == n_tokens);
-        GGML_ASSERT(a->ne[0] == S && a->ne[1] == H && a->ne[2] == n_tokens);
-        GGML_ASSERT(b->ne[0] == S && b->ne[1] == H && b->ne[2] == n_tokens);
+        GGML_ASSERT(w->ne[0] == S && w->ne[1] == H && w->ne[2] == n_علامات);
+        GGML_ASSERT(k->ne[0] == S && k->ne[1] == H && k->ne[2] == n_علامات);
+        GGML_ASSERT(v->ne[0] == S && v->ne[1] == H && v->ne[2] == n_علامات);
+        GGML_ASSERT(a->ne[0] == S && a->ne[1] == H && a->ne[2] == n_علامات);
+        GGML_ASSERT(b->ne[0] == S && b->ne[1] == H && b->ne[2] == n_علامات);
         GGML_ASSERT(ggml_nelements(state) == S * S * H * n_seqs);
     }
 
     // concat output and new_state
-    const int64_t ne[4] = { S * H, n_tokens + S * n_seqs, 1, 1 };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ثابت int64_t ne[4] = { S * H, n_علامات + S * n_seqs, 1, 1 };
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
-    result->op     = GGML_OP_RWKV_WKV7;
-    result->src[0] = r;
-    result->src[1] = w;
-    result->src[2] = k;
-    result->src[3] = v;
-    result->src[4] = a;
-    result->src[5] = b;
-    result->src[6] = state;
+    نتیجہ->op     = GGML_OP_RWKV_WKV7;
+    نتیجہ->src[0] = r;
+    نتیجہ->src[1] = w;
+    نتیجہ->src[2] = k;
+    نتیجہ->src[3] = v;
+    نتیجہ->src[4] = a;
+    نتیجہ->src[5] = b;
+    نتیجہ->src[6] = state;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_unary
 
-static struct ggml_tensor * ggml_unary_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        enum ggml_unary_op    op,
+ساکن ساخت ggml_tensor * ggml_unary_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        شمار ggml_unary_op    op,
         bool                  inplace) {
-    GGML_ASSERT(ggml_is_contiguous_rows(a));
+    GGML_ASSERT(ggml_is_contiguous_صفیں(a));
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    ggml_set_op_params_i32(result, 0, (int32_t) op);
+    ggml_سیٹ_op_params_i32(نتیجہ, 0, (int32_t) op);
 
-    result->op     = GGML_OP_UNARY;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_UNARY;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_unary(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        enum ggml_unary_op    op) {
-    return ggml_unary_impl(ctx, a, op, false);
+ساخت ggml_tensor * ggml_unary(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        شمار ggml_unary_op    op) {
+    واپس ggml_unary_impl(ctx, a, op, false);
 }
 
-struct ggml_tensor * ggml_unary_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        enum ggml_unary_op    op) {
-    return ggml_unary_impl(ctx, a, op, true);
+ساخت ggml_tensor * ggml_unary_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        شمار ggml_unary_op    op) {
+    واپس ggml_unary_impl(ctx, a, op, true);
 }
 
 // ggml_map_custom1
 
-static struct ggml_tensor * ggml_map_custom1_impl(
-        struct ggml_context      * ctx,
-        struct ggml_tensor       * a,
-        const  ggml_custom1_op_t   fun,
-        int                        n_tasks,
-        void                     * userdata,
+ساکن ساخت ggml_tensor * ggml_map_custom1_impl(
+        ساخت ggml_context      * ctx,
+        ساخت ggml_tensor       * a,
+        ثابت  ggml_custom1_op_t   fun,
+        صحیح                        n_tasks,
+        خالی                     * userdata,
         bool                       inplace) {
     GGML_ASSERT(n_tasks == GGML_N_TASKS_MAX || n_tasks > 0);
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    struct ggml_map_custom1_op_params params = {
+    ساخت ggml_map_custom1_op_params params = {
         /*.fun      =*/ fun,
         /*.n_tasks  =*/ n_tasks,
         /*.userdata =*/ userdata
     };
-    ggml_set_op_params(result, &params, sizeof(params));
+    ggml_سیٹ_op_params(نتیجہ, &params, حجم(params));
 
-    result->op     = GGML_OP_MAP_CUSTOM1;
-    result->src[0] = a;
+    نتیجہ->op     = GGML_OP_MAP_CUSTOM1;
+    نتیجہ->src[0] = a;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_map_custom1(
-        struct ggml_context      * ctx,
-        struct ggml_tensor       * a,
-        const  ggml_custom1_op_t   fun,
-        int                        n_tasks,
-        void                     * userdata) {
-    return ggml_map_custom1_impl(ctx, a, fun, n_tasks, userdata, false);
+ساخت ggml_tensor * ggml_map_custom1(
+        ساخت ggml_context      * ctx,
+        ساخت ggml_tensor       * a,
+        ثابت  ggml_custom1_op_t   fun,
+        صحیح                        n_tasks,
+        خالی                     * userdata) {
+    واپس ggml_map_custom1_impl(ctx, a, fun, n_tasks, userdata, false);
 }
 
-struct ggml_tensor * ggml_map_custom1_inplace(
-        struct ggml_context      * ctx,
-        struct ggml_tensor       * a,
-        const  ggml_custom1_op_t   fun,
-        int                        n_tasks,
-        void                     * userdata) {
-    return ggml_map_custom1_impl(ctx, a, fun, n_tasks, userdata, true);
+ساخت ggml_tensor * ggml_map_custom1_inplace(
+        ساخت ggml_context      * ctx,
+        ساخت ggml_tensor       * a,
+        ثابت  ggml_custom1_op_t   fun,
+        صحیح                        n_tasks,
+        خالی                     * userdata) {
+    واپس ggml_map_custom1_impl(ctx, a, fun, n_tasks, userdata, true);
 }
 
 // ggml_map_custom2
 
-static struct ggml_tensor * ggml_map_custom2_impl(
-        struct ggml_context      * ctx,
-        struct ggml_tensor       * a,
-        struct ggml_tensor       * b,
-        const  ggml_custom2_op_t   fun,
-        int                        n_tasks,
-        void                     * userdata,
+ساکن ساخت ggml_tensor * ggml_map_custom2_impl(
+        ساخت ggml_context      * ctx,
+        ساخت ggml_tensor       * a,
+        ساخت ggml_tensor       * b,
+        ثابت  ggml_custom2_op_t   fun,
+        صحیح                        n_tasks,
+        خالی                     * userdata,
         bool                       inplace) {
     GGML_ASSERT(n_tasks == GGML_N_TASKS_MAX || n_tasks > 0);
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    struct ggml_map_custom2_op_params params = {
+    ساخت ggml_map_custom2_op_params params = {
         /*.fun      =*/ fun,
         /*.n_tasks  =*/ n_tasks,
         /*.userdata =*/ userdata
     };
-    ggml_set_op_params(result, &params, sizeof(params));
+    ggml_سیٹ_op_params(نتیجہ, &params, حجم(params));
 
-    result->op     = GGML_OP_MAP_CUSTOM2;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op     = GGML_OP_MAP_CUSTOM2;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_map_custom2(
-        struct ggml_context      * ctx,
-        struct ggml_tensor       * a,
-        struct ggml_tensor       * b,
-        const  ggml_custom2_op_t   fun,
-        int                        n_tasks,
-        void                     * userdata) {
-    return ggml_map_custom2_impl(ctx, a, b, fun, n_tasks, userdata, false);
+ساخت ggml_tensor * ggml_map_custom2(
+        ساخت ggml_context      * ctx,
+        ساخت ggml_tensor       * a,
+        ساخت ggml_tensor       * b,
+        ثابت  ggml_custom2_op_t   fun,
+        صحیح                        n_tasks,
+        خالی                     * userdata) {
+    واپس ggml_map_custom2_impl(ctx, a, b, fun, n_tasks, userdata, false);
 }
 
-struct ggml_tensor * ggml_map_custom2_inplace(
-        struct ggml_context      * ctx,
-        struct ggml_tensor       * a,
-        struct ggml_tensor       * b,
-        const  ggml_custom2_op_t   fun,
-        int                        n_tasks,
-        void                     * userdata) {
-    return ggml_map_custom2_impl(ctx, a, b, fun, n_tasks, userdata, true);
+ساخت ggml_tensor * ggml_map_custom2_inplace(
+        ساخت ggml_context      * ctx,
+        ساخت ggml_tensor       * a,
+        ساخت ggml_tensor       * b,
+        ثابت  ggml_custom2_op_t   fun,
+        صحیح                        n_tasks,
+        خالی                     * userdata) {
+    واپس ggml_map_custom2_impl(ctx, a, b, fun, n_tasks, userdata, true);
 }
 
 // ggml_map_custom3
 
-static struct ggml_tensor * ggml_map_custom3_impl(
-        struct ggml_context      * ctx,
-        struct ggml_tensor       * a,
-        struct ggml_tensor       * b,
-        struct ggml_tensor       * c,
-        const  ggml_custom3_op_t   fun,
-        int                        n_tasks,
-        void                     * userdata,
+ساکن ساخت ggml_tensor * ggml_map_custom3_impl(
+        ساخت ggml_context      * ctx,
+        ساخت ggml_tensor       * a,
+        ساخت ggml_tensor       * b,
+        ساخت ggml_tensor       * c,
+        ثابت  ggml_custom3_op_t   fun,
+        صحیح                        n_tasks,
+        خالی                     * userdata,
         bool                       inplace) {
     GGML_ASSERT(n_tasks == GGML_N_TASKS_MAX || n_tasks > 0);
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    struct ggml_map_custom3_op_params params = {
+    ساخت ggml_map_custom3_op_params params = {
         /*.fun      =*/ fun,
         /*.n_tasks  =*/ n_tasks,
         /*.userdata =*/ userdata
     };
-    ggml_set_op_params(result, &params, sizeof(params));
+    ggml_سیٹ_op_params(نتیجہ, &params, حجم(params));
 
-    result->op     = GGML_OP_MAP_CUSTOM3;
-    result->src[0] = a;
-    result->src[1] = b;
-    result->src[2] = c;
+    نتیجہ->op     = GGML_OP_MAP_CUSTOM3;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
+    نتیجہ->src[2] = c;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_map_custom3(
-        struct ggml_context      * ctx,
-        struct ggml_tensor       * a,
-        struct ggml_tensor       * b,
-        struct ggml_tensor       * c,
-        const  ggml_custom3_op_t   fun,
-        int                        n_tasks,
-        void                     * userdata) {
-    return ggml_map_custom3_impl(ctx, a, b, c, fun, n_tasks, userdata, false);
+ساخت ggml_tensor * ggml_map_custom3(
+        ساخت ggml_context      * ctx,
+        ساخت ggml_tensor       * a,
+        ساخت ggml_tensor       * b,
+        ساخت ggml_tensor       * c,
+        ثابت  ggml_custom3_op_t   fun,
+        صحیح                        n_tasks,
+        خالی                     * userdata) {
+    واپس ggml_map_custom3_impl(ctx, a, b, c, fun, n_tasks, userdata, false);
 }
 
-struct ggml_tensor * ggml_map_custom3_inplace(
-        struct ggml_context      * ctx,
-        struct ggml_tensor       * a,
-        struct ggml_tensor       * b,
-        struct ggml_tensor       * c,
-        const  ggml_custom3_op_t   fun,
-        int                        n_tasks,
-        void                     * userdata) {
-    return ggml_map_custom3_impl(ctx, a, b, c, fun, n_tasks, userdata, true);
+ساخت ggml_tensor * ggml_map_custom3_inplace(
+        ساخت ggml_context      * ctx,
+        ساخت ggml_tensor       * a,
+        ساخت ggml_tensor       * b,
+        ساخت ggml_tensor       * c,
+        ثابت  ggml_custom3_op_t   fun,
+        صحیح                        n_tasks,
+        خالی                     * userdata) {
+    واپس ggml_map_custom3_impl(ctx, a, b, c, fun, n_tasks, userdata, true);
 }
 
-struct ggml_tensor * ggml_custom_4d(
-        struct ggml_context * ctx,
-        enum ggml_type        type,
+ساخت ggml_tensor * ggml_custom_4d(
+        ساخت ggml_context * ctx,
+        شمار ggml_type        type,
         int64_t               ne0,
         int64_t               ne1,
         int64_t               ne2,
         int64_t               ne3,
-        struct ggml_tensor ** args,
-        int                   n_args,
+        ساخت ggml_tensor ** دلائل_2,
+        صحیح                   n_دلائل,
         ggml_custom_op_t      fun,
-        int                   n_tasks,
-        void                * userdata) {
+        صحیح                   n_tasks,
+        خالی                * userdata) {
 
-    GGML_ASSERT(n_args < GGML_MAX_SRC);
+    GGML_ASSERT(n_دلائل < GGML_MAX_SRC);
 
-    struct ggml_tensor * result = ggml_new_tensor_4d(ctx, type, ne0, ne1, ne2, ne3);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_4d(ctx, type, ne0, ne1, ne2, ne3);
 
-    struct ggml_custom_op_params params = {
+    ساخت ggml_custom_op_params params = {
         /*.fun      =*/ fun,
         /*.n_tasks  =*/ n_tasks,
         /*.userdata =*/ userdata
     };
-    ggml_set_op_params(result, &params, sizeof(params));
+    ggml_سیٹ_op_params(نتیجہ, &params, حجم(params));
 
-    result->op = GGML_OP_CUSTOM;
-    for (int i = 0; i < n_args; i++) {
-        result->src[i] = args[i];
+    نتیجہ->op = GGML_OP_CUSTOM;
+    برائے (صحیح i = 0; i < n_دلائل; i++) {
+        نتیجہ->src[i] = دلائل_2[i];
     }
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_custom_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor ** args,
-        int                   n_args,
+ساخت ggml_tensor * ggml_custom_inplace(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor ** دلائل_2,
+        صحیح                   n_دلائل,
         ggml_custom_op_t      fun,
-        int                   n_tasks,
-        void                * userdata) {
+        صحیح                   n_tasks,
+        خالی                * userdata) {
 
-    GGML_ASSERT(n_args < GGML_MAX_SRC - 1);
+    GGML_ASSERT(n_دلائل < GGML_MAX_SRC - 1);
 
-    struct ggml_tensor * result = ggml_view_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = ggml_view_tensor(ctx, a);
 
-    struct ggml_custom_op_params params = {
+    ساخت ggml_custom_op_params params = {
         /*.fun      =*/ fun,
         /*.n_tasks  =*/ n_tasks,
         /*.userdata =*/ userdata
     };
-    ggml_set_op_params(result, &params, sizeof(params));
+    ggml_سیٹ_op_params(نتیجہ, &params, حجم(params));
 
-    result->op = GGML_OP_CUSTOM;
-    result->src[0] = a;
-    for (int i = 0; i < n_args; i++) {
-        result->src[i + 1] = args[i];
+    نتیجہ->op = GGML_OP_CUSTOM;
+    نتیجہ->src[0] = a;
+    برائے (صحیح i = 0; i < n_دلائل; i++) {
+        نتیجہ->src[i + 1] = دلائل_2[i];
     }
 
-    return result;
+    واپس نتیجہ;
 }
 // ggml_cross_entropy_loss
 
-struct ggml_tensor * ggml_cross_entropy_loss(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
+ساخت ggml_tensor * ggml_cross_entropy_loss(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b) {
     GGML_ASSERT(ggml_are_same_shape(a, b));
 
-    struct ggml_tensor * result = ggml_new_tensor_1d(ctx, a->type, 1);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_1d(ctx, a->type, 1);
 
-    result->op     = GGML_OP_CROSS_ENTROPY_LOSS;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op     = GGML_OP_CROSS_ENTROPY_LOSS;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_cross_entropy_loss_back
 
-struct ggml_tensor * ggml_cross_entropy_loss_back(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        struct ggml_tensor  * c) {
+ساخت ggml_tensor * ggml_cross_entropy_loss_عقب(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        ساخت ggml_tensor  * c) {
     GGML_ASSERT(ggml_is_scalar(a));
     GGML_ASSERT(ggml_are_same_shape(b, c));
 
-    struct ggml_tensor * result = ggml_dup_tensor(ctx, b);
+    ساخت ggml_tensor * نتیجہ = ggml_dup_tensor(ctx, b);
 
-    result->op     = GGML_OP_CROSS_ENTROPY_LOSS_BACK;
-    result->src[0] = a;
-    result->src[1] = b;
-    result->src[2] = c;
+    نتیجہ->op     = GGML_OP_CROSS_ENTROPY_LOSS_عقب;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
+    نتیجہ->src[2] = c;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // opt_step_adamw
 
-struct ggml_tensor * ggml_opt_step_adamw(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * grad,
-        struct ggml_tensor  * m,
-        struct ggml_tensor  * v,
-        struct ggml_tensor  * adamw_params) {
+ساخت ggml_tensor * ggml_opt_قدم_adamw(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * grad,
+        ساخت ggml_tensor  * m,
+        ساخت ggml_tensor  * v,
+        ساخت ggml_tensor  * adamw_params) {
     GGML_ASSERT(a->flags & GGML_TENSOR_FLAG_PARAM);
     GGML_ASSERT(ggml_are_same_shape(a, grad));
     GGML_ASSERT(ggml_are_same_shape(a, m));
@@ -6316,48 +6316,48 @@ struct ggml_tensor * ggml_opt_step_adamw(
     GGML_ASSERT(adamw_params->type == GGML_TYPE_F32);
     GGML_ASSERT(ggml_nelements(adamw_params) == 7);
 
-    struct ggml_tensor * result = ggml_view_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = ggml_view_tensor(ctx, a);
 
-    result->op     = GGML_OP_OPT_STEP_ADAMW;
-    result->src[0] = a;
-    result->src[1] = grad;
-    result->src[2] = m;
-    result->src[3] = v;
-    result->src[4] = adamw_params;
+    نتیجہ->op     = GGML_OP_OPT_قدم_ADAMW;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = grad;
+    نتیجہ->src[2] = m;
+    نتیجہ->src[3] = v;
+    نتیجہ->src[4] = adamw_params;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // opt_step_sgd
 
-struct ggml_tensor * ggml_opt_step_sgd(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * grad,
-        struct ggml_tensor  * params) {
+ساخت ggml_tensor * ggml_opt_قدم_sgd(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * grad,
+        ساخت ggml_tensor  * params) {
     GGML_ASSERT(a->flags & GGML_TENSOR_FLAG_PARAM);
     GGML_ASSERT(ggml_are_same_shape(a, grad));
     GGML_ASSERT(params->type == GGML_TYPE_F32);
     GGML_ASSERT(ggml_nelements(params) == 2);
 
-    struct ggml_tensor * result = ggml_view_tensor(ctx, a);
+    ساخت ggml_tensor * نتیجہ = ggml_view_tensor(ctx, a);
 
-    result->op     = GGML_OP_OPT_STEP_SGD;
-    result->src[0] = a;
-    result->src[1] = grad;
-    result->src[2] = params;
+    نتیجہ->op     = GGML_OP_OPT_قدم_SGD;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = grad;
+    نتیجہ->src[2] = params;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // solve_tri
 
-struct ggml_tensor * ggml_solve_tri(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        bool                  left,
-        bool                  lower,
+ساخت ggml_tensor * ggml_solve_tri(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * a,
+        ساخت ggml_tensor  * b,
+        bool                  بایاں,
+        bool                  زیریں,
         bool                  uni) {
     GGML_ASSERT(a->type == GGML_TYPE_F32);
     GGML_ASSERT(b->type == GGML_TYPE_F32);
@@ -6374,31 +6374,31 @@ struct ggml_tensor * ggml_solve_tri(
     GGML_ASSERT(ggml_is_contiguous(a));
     GGML_ASSERT(ggml_is_contiguous(b));
 
-    GGML_ASSERT(lower && left && !uni); // TODO: support other variants
+    GGML_ASSERT(زیریں && بایاں && !uni); // TODO: support other variants
 
-    struct ggml_tensor * result = ggml_new_tensor_4d(ctx, GGML_TYPE_F32, b->ne[0], b->ne[1], b->ne[2], b->ne[3]);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_4d(ctx, GGML_TYPE_F32, b->ne[0], b->ne[1], b->ne[2], b->ne[3]);
 
-    result->op     = GGML_OP_SOLVE_TRI;
-    result->src[0] = a;
-    result->src[1] = b;
+    نتیجہ->op     = GGML_OP_SOLVE_TRI;
+    نتیجہ->src[0] = a;
+    نتیجہ->src[1] = b;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_gated_delta_net
 
-struct ggml_tensor * ggml_gated_delta_net(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * q,
-        struct ggml_tensor  * k,
-        struct ggml_tensor  * v,
-        struct ggml_tensor  * g,
-        struct ggml_tensor  * beta,
-        struct ggml_tensor  * state,
+ساخت ggml_tensor * ggml_gated_delta_net(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * q,
+        ساخت ggml_tensor  * k,
+        ساخت ggml_tensor  * v,
+        ساخت ggml_tensor  * g,
+        ساخت ggml_tensor  * beta,
+        ساخت ggml_tensor  * state,
         int64_t               K) {
-    GGML_ASSERT(ggml_is_contiguous_rows(q));
-    GGML_ASSERT(ggml_is_contiguous_rows(k));
-    GGML_ASSERT(ggml_is_contiguous_rows(v));
+    GGML_ASSERT(ggml_is_contiguous_صفیں(q));
+    GGML_ASSERT(ggml_is_contiguous_صفیں(k));
+    GGML_ASSERT(ggml_is_contiguous_صفیں(v));
     GGML_ASSERT(ggml_is_contiguous(g));
     GGML_ASSERT(ggml_is_contiguous(beta));
     GGML_ASSERT(ggml_is_contiguous(state));
@@ -6410,10 +6410,10 @@ struct ggml_tensor * ggml_gated_delta_net(
     GGML_ASSERT(beta->type == GGML_TYPE_F32);
     GGML_ASSERT(state->type == GGML_TYPE_F32);
 
-    const int64_t S_v      = v->ne[0];
-    const int64_t H        = v->ne[1];
-    const int64_t n_tokens = v->ne[2];
-    const int64_t n_seqs   = v->ne[3];
+    ثابت int64_t S_v      = v->ne[0];
+    ثابت int64_t H        = v->ne[1];
+    ثابت int64_t n_علامات = v->ne[2];
+    ثابت int64_t n_seqs   = v->ne[3];
 
     // gate: scalar [1, H, T, B] or vector [S_v, H, T, B] (KDA)
     GGML_ASSERT(g->ne[0] == 1 || g->ne[0] == S_v);
@@ -6425,81 +6425,81 @@ struct ggml_tensor * ggml_gated_delta_net(
     GGML_ASSERT(state->ne[2] == H);
     GGML_ASSERT(state->ne[3] == n_seqs);
     GGML_ASSERT(K >= 1);
-    const int64_t state_rows = K * S_v * n_seqs;
-    const int64_t ne[4] = { S_v * H, n_tokens * n_seqs + state_rows, 1, 1 };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ثابت int64_t state_صفیں = K * S_v * n_seqs;
+    ثابت int64_t ne[4] = { S_v * H, n_علامات * n_seqs + state_صفیں, 1, 1 };
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
-    ggml_set_op_params_i32(result, 0, (int32_t) K);
+    ggml_سیٹ_op_params_i32(نتیجہ, 0, (int32_t) K);
 
-    result->op     = GGML_OP_GATED_DELTA_NET;
-    result->src[0] = q;
-    result->src[1] = k;
-    result->src[2] = v;
-    result->src[3] = g;
-    result->src[4] = beta;
-    result->src[5] = state;
+    نتیجہ->op     = GGML_OP_GATED_DELTA_NET;
+    نتیجہ->src[0] = q;
+    نتیجہ->src[1] = k;
+    نتیجہ->src[2] = v;
+    نتیجہ->src[3] = g;
+    نتیجہ->src[4] = beta;
+    نتیجہ->src[5] = state;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_lightning_indexer
 
-struct ggml_tensor * ggml_lightning_indexer(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * q,
-        struct ggml_tensor  * k,
-        struct ggml_tensor  * weights,
-        struct ggml_tensor  * mask) {
+ساخت ggml_tensor * ggml_lightning_indexer(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * q,
+        ساخت ggml_tensor  * k,
+        ساخت ggml_tensor  * weights,
+        ساخت ggml_tensor  * نقاب) {
 
     GGML_ASSERT(       q->type == GGML_TYPE_F32);
     GGML_ASSERT( weights->type == GGML_TYPE_F32);
-    GGML_ASSERT(    mask->type == GGML_TYPE_F16);
+    GGML_ASSERT(    نقاب->type == GGML_TYPE_F16);
     GGML_ASSERT(      q->ne[0] == k->ne[0]);
-    GGML_ASSERT(   mask->ne[0] == k->ne[2]);
+    GGML_ASSERT(   نقاب->ne[0] == k->ne[2]);
     GGML_ASSERT(      q->ne[1] == weights->ne[0]);
     GGML_ASSERT(      k->ne[1] == 1);
-    GGML_ASSERT(   mask->ne[1] == q->ne[2]);
+    GGML_ASSERT(   نقاب->ne[1] == q->ne[2]);
     GGML_ASSERT(      q->ne[2] == weights->ne[1]);
     GGML_ASSERT(weights->ne[2] == 1);
-    GGML_ASSERT(   mask->ne[2] == 1);
+    GGML_ASSERT(   نقاب->ne[2] == 1);
     GGML_ASSERT(      q->ne[3] == k->ne[3]);
     GGML_ASSERT(      k->ne[3] == weights->ne[3]);
-    GGML_ASSERT(weights->ne[3] % mask->ne[3] == 0);
+    GGML_ASSERT(weights->ne[3] % نقاب->ne[3] == 0);
 
     int64_t ne[4] = { k->ne[2], q->ne[2], 1, q->ne[3] };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
-    result->op   = GGML_OP_LIGHTNING_INDEXER;
-    result->src[0] = q;
-    result->src[1] = k;
-    result->src[2] = weights;
-    result->src[3] = mask;
+    نتیجہ->op   = GGML_OP_LIGHTNING_INDEXER;
+    نتیجہ->src[0] = q;
+    نتیجہ->src[1] = k;
+    نتیجہ->src[2] = weights;
+    نتیجہ->src[3] = نقاب;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_dsv4_hc_comb
 
-struct ggml_tensor * ggml_dsv4_hc_comb(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * mixes,
-        struct ggml_tensor  * scale,
-        struct ggml_tensor  * base,
-        float                 eps,
+ساخت ggml_tensor * ggml_dsv4_hc_comb(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * mixes,
+        ساخت ggml_tensor  * scale,
+        ساخت ggml_tensor  * بنیاد,
+        اعشاری                 eps,
         int32_t               n_iter) {
     GGML_ASSERT(mixes->type == GGML_TYPE_F32);
     GGML_ASSERT(scale->type == GGML_TYPE_F32);
-    GGML_ASSERT(base->type == GGML_TYPE_F32);
+    GGML_ASSERT(بنیاد->type == GGML_TYPE_F32);
     GGML_ASSERT(n_iter > 0);
 
-    const int64_t hc_mix_dim = mixes->ne[0];
-    const int64_t n_tokens   = mixes->ne[1];
+    ثابت int64_t hc_mix_dim = mixes->ne[0];
+    ثابت int64_t n_علامات   = mixes->ne[1];
 
     int64_t hc = 0;
-    for (int64_t i = 1; i*i + 2*i <= hc_mix_dim; ++i) {
-        if ((2 + i)*i == hc_mix_dim) {
+    برائے (int64_t i = 1; i*i + 2*i <= hc_mix_dim; ++i) {
+        اگر ((2 + i)*i == hc_mix_dim) {
             hc = i;
-            break;
+            توڑو;
         }
     }
 
@@ -6511,229 +6511,229 @@ struct ggml_tensor * ggml_dsv4_hc_comb(
     GGML_ASSERT(scale->ne[1] == 1);
     GGML_ASSERT(scale->ne[2] == 1);
     GGML_ASSERT(scale->ne[3] == 1);
-    GGML_ASSERT(base->ne[0] == hc_mix_dim);
-    GGML_ASSERT(base->ne[1] == 1);
-    GGML_ASSERT(base->ne[2] == 1);
-    GGML_ASSERT(base->ne[3] == 1);
+    GGML_ASSERT(بنیاد->ne[0] == hc_mix_dim);
+    GGML_ASSERT(بنیاد->ne[1] == 1);
+    GGML_ASSERT(بنیاد->ne[2] == 1);
+    GGML_ASSERT(بنیاد->ne[3] == 1);
 
-    struct ggml_tensor * result = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, hc, hc, n_tokens);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, hc, hc, n_علامات);
 
-    ggml_set_op_params_f32(result, 0, eps);
-    ggml_set_op_params_i32(result, 1, n_iter);
+    ggml_سیٹ_op_params_f32(نتیجہ, 0, eps);
+    ggml_سیٹ_op_params_i32(نتیجہ, 1, n_iter);
 
-    result->op     = GGML_OP_DSV4_HC_COMB;
-    result->src[0] = mixes;
-    result->src[1] = scale;
-    result->src[2] = base;
+    نتیجہ->op     = GGML_OP_DSV4_HC_COMB;
+    نتیجہ->src[0] = mixes;
+    نتیجہ->src[1] = scale;
+    نتیجہ->src[2] = بنیاد;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_dsv4_hc_pre
 
-static struct ggml_tensor * ggml_dsv4_hc_pre_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * x,
-        struct ggml_tensor  * weights,
-        float                 scale,
+ساکن ساخت ggml_tensor * ggml_dsv4_hc_pre_impl(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * x,
+        ساخت ggml_tensor  * weights,
+        اعشاری                 scale,
         bool                  gated) {
     GGML_ASSERT(x->type == GGML_TYPE_F32);
     GGML_ASSERT(weights->type == GGML_TYPE_F32);
 
-    const int64_t n_embd   = x->ne[0];
-    const int64_t hc       = x->ne[1];
-    const int64_t n_tokens = x->ne[2];
+    ثابت int64_t n_embd   = x->ne[0];
+    ثابت int64_t hc       = x->ne[1];
+    ثابت int64_t n_علامات = x->ne[2];
 
     GGML_ASSERT(hc > 0);
     GGML_ASSERT(x->ne[3] == 1);
-    if (gated) {
+    اگر (gated) {
         GGML_ASSERT(weights->ne[0] == n_embd);
         GGML_ASSERT(weights->ne[1] == hc);
-        GGML_ASSERT(weights->ne[2] == n_tokens);
-    } else {
+        GGML_ASSERT(weights->ne[2] == n_علامات);
+    } ورنہ {
         GGML_ASSERT(weights->ne[0] == hc);
-        GGML_ASSERT(weights->ne[1] == n_tokens);
+        GGML_ASSERT(weights->ne[1] == n_علامات);
         GGML_ASSERT(weights->ne[2] == 1);
     }
     GGML_ASSERT(weights->ne[3] == 1);
 
-    struct ggml_tensor * result = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, n_embd, n_tokens);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, n_embd, n_علامات);
 
-    ggml_set_op_params_f32(result, 0, scale);
-    ggml_set_op_params_i32(result, 1, gated ? 1 : 0);
+    ggml_سیٹ_op_params_f32(نتیجہ, 0, scale);
+    ggml_سیٹ_op_params_i32(نتیجہ, 1, gated ? 1 : 0);
 
-    result->op     = GGML_OP_DSV4_HC_PRE;
-    result->src[0] = x;
-    result->src[1] = weights;
+    نتیجہ->op     = GGML_OP_DSV4_HC_PRE;
+    نتیجہ->src[0] = x;
+    نتیجہ->src[1] = weights;
 
-    return result;
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_dsv4_hc_pre(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * x,
-        struct ggml_tensor  * weights) {
-    return ggml_dsv4_hc_pre_impl(ctx, x, weights, 1.0f, false);
+ساخت ggml_tensor * ggml_dsv4_hc_pre(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * x,
+        ساخت ggml_tensor  * weights) {
+    واپس ggml_dsv4_hc_pre_impl(ctx, x, weights, 1.0f, false);
 }
 
-struct ggml_tensor * ggml_dsv4_hc_pre_gated(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * x,
-        struct ggml_tensor  * gate,
-        float                 scale) {
-    return ggml_dsv4_hc_pre_impl(ctx, x, gate, scale, true);
+ساخت ggml_tensor * ggml_dsv4_hc_pre_gated(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * x,
+        ساخت ggml_tensor  * gate,
+        اعشاری                 scale) {
+    واپس ggml_dsv4_hc_pre_impl(ctx, x, gate, scale, true);
 }
 
 // ggml_dsv4_hc_post
 
-struct ggml_tensor * ggml_dsv4_hc_post(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * x,
-        struct ggml_tensor  * residual,
-        struct ggml_tensor  * post,
-        struct ggml_tensor  * comb) {
+ساخت ggml_tensor * ggml_dsv4_hc_post(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * x,
+        ساخت ggml_tensor  * residual,
+        ساخت ggml_tensor  * post,
+        ساخت ggml_tensor  * comb) {
     GGML_ASSERT(x->type == GGML_TYPE_F32);
     GGML_ASSERT(residual->type == GGML_TYPE_F32);
     GGML_ASSERT(post->type == GGML_TYPE_F32);
 
-    const int64_t n_embd   = x->ne[0];
-    const int64_t n_tokens = x->ne[1];
-    const int64_t hc       = residual->ne[1];
+    ثابت int64_t n_embd   = x->ne[0];
+    ثابت int64_t n_علامات = x->ne[1];
+    ثابت int64_t hc       = residual->ne[1];
 
     GGML_ASSERT(hc > 0);
     GGML_ASSERT(x->ne[2] == 1);
     GGML_ASSERT(x->ne[3] == 1);
 
     GGML_ASSERT(residual->ne[0] == n_embd);
-    GGML_ASSERT(residual->ne[2] == n_tokens);
+    GGML_ASSERT(residual->ne[2] == n_علامات);
     GGML_ASSERT(residual->ne[3] == 1);
 
     GGML_ASSERT(post->ne[0] == hc);
-    GGML_ASSERT(post->ne[1] == n_tokens);
+    GGML_ASSERT(post->ne[1] == n_علامات);
     GGML_ASSERT(post->ne[2] == 1);
     GGML_ASSERT(post->ne[3] == 1);
 
-    if (comb) {
+    اگر (comb) {
         GGML_ASSERT(comb->type == GGML_TYPE_F32);
         GGML_ASSERT(comb->ne[0] == hc);
         GGML_ASSERT(comb->ne[1] == hc);
-        GGML_ASSERT(comb->ne[2] == n_tokens);
+        GGML_ASSERT(comb->ne[2] == n_علامات);
         GGML_ASSERT(comb->ne[3] == 1);
     }
 
-    struct ggml_tensor * result = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, n_embd, hc, n_tokens);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, n_embd, hc, n_علامات);
 
-    result->op     = GGML_OP_DSV4_HC_POST;
-    result->src[0] = x;
-    result->src[1] = residual;
-    result->src[2] = post;
-    result->src[3] = comb;
+    نتیجہ->op     = GGML_OP_DSV4_HC_POST;
+    نتیجہ->src[0] = x;
+    نتیجہ->src[1] = residual;
+    نتیجہ->src[2] = post;
+    نتیجہ->src[3] = comb;
 
-    return result;
+    واپس نتیجہ;
 }
 
 // ggml_top_k_mask
 
-struct ggml_tensor * ggml_top_k_mask(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * mask,
-        struct ggml_tensor  * top_k,
-        struct ggml_tensor  * score,
-        struct ggml_tensor  * blocks,
-        struct ggml_tensor  * extra) {
-    GGML_ASSERT(mask->type == GGML_TYPE_F16 || mask->type == GGML_TYPE_F32);
-    GGML_ASSERT(mask->nb[0] == ggml_type_size(mask->type));
-    GGML_ASSERT(top_k->type == GGML_TYPE_I32);
-    GGML_ASSERT(top_k->ne[1] % mask->ne[1] == 0 && top_k->ne[2] % mask->ne[2] == 0 && top_k->ne[3] % mask->ne[3] == 0);
+ساخت ggml_tensor * ggml_چوٹی_k_نقاب(
+        ساخت ggml_context * ctx,
+        ساخت ggml_tensor  * نقاب,
+        ساخت ggml_tensor  * چوٹی_k,
+        ساخت ggml_tensor  * score,
+        ساخت ggml_tensor  * بلاکیں,
+        ساخت ggml_tensor  * extra) {
+    GGML_ASSERT(نقاب->type == GGML_TYPE_F16 || نقاب->type == GGML_TYPE_F32);
+    GGML_ASSERT(نقاب->nb[0] == ggml_type_سائز(نقاب->type));
+    GGML_ASSERT(چوٹی_k->type == GGML_TYPE_I32);
+    GGML_ASSERT(چوٹی_k->ne[1] % نقاب->ne[1] == 0 && چوٹی_k->ne[2] % نقاب->ne[2] == 0 && چوٹی_k->ne[3] % نقاب->ne[3] == 0);
 
-    if (score) {
+    اگر (score) {
         GGML_ASSERT(score->type == GGML_TYPE_F32);
-        GGML_ASSERT(score->ne[1] == top_k->ne[1] && score->ne[2] == top_k->ne[2] && score->ne[3] == top_k->ne[3]);
+        GGML_ASSERT(score->ne[1] == چوٹی_k->ne[1] && score->ne[2] == چوٹی_k->ne[2] && score->ne[3] == چوٹی_k->ne[3]);
     }
 
-    if (blocks) {
-        GGML_ASSERT(blocks->type == GGML_TYPE_I32);
-        GGML_ASSERT(blocks->ne[2] == 1 && blocks->ne[3] == 1);
-        GGML_ASSERT(!score || blocks->ne[1] == score->ne[0]);
+    اگر (بلاکیں) {
+        GGML_ASSERT(بلاکیں->type == GGML_TYPE_I32);
+        GGML_ASSERT(بلاکیں->ne[2] == 1 && بلاکیں->ne[3] == 1);
+        GGML_ASSERT(!score || بلاکیں->ne[1] == score->ne[0]);
     }
 
-    if (extra) {
+    اگر (extra) {
         GGML_ASSERT(extra->type == GGML_TYPE_I32);
-        GGML_ASSERT(extra->ne[1] == top_k->ne[1] && extra->ne[2] == top_k->ne[2] && extra->ne[3] == top_k->ne[3]);
+        GGML_ASSERT(extra->ne[1] == چوٹی_k->ne[1] && extra->ne[2] == چوٹی_k->ne[2] && extra->ne[3] == چوٹی_k->ne[3]);
     }
 
-    struct ggml_tensor * result = ggml_new_tensor_4d(ctx, mask->type, mask->ne[0], top_k->ne[1], top_k->ne[2], top_k->ne[3]);
+    ساخت ggml_tensor * نتیجہ = ggml_new_tensor_4d(ctx, نقاب->type, نقاب->ne[0], چوٹی_k->ne[1], چوٹی_k->ne[2], چوٹی_k->ne[3]);
 
-    result->op     = GGML_OP_TOP_K_MASK;
-    result->src[0] = mask;
-    result->src[1] = top_k;
-    result->src[2] = score;
-    result->src[3] = blocks;
-    result->src[4] = extra;
+    نتیجہ->op     = GGML_OP_چوٹی_K_نقاب;
+    نتیجہ->src[0] = نقاب;
+    نتیجہ->src[1] = چوٹی_k;
+    نتیجہ->src[2] = score;
+    نتیجہ->src[3] = بلاکیں;
+    نتیجہ->src[4] = extra;
 
-    return result;
+    واپس نتیجہ;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-struct ggml_hash_set ggml_hash_set_new(size_t size) {
-    size = ggml_hash_size(size);
-    struct ggml_hash_set result;
-    result.size = size;
-    result.keys = GGML_MALLOC(sizeof(struct ggml_tensor *) * size);
-    result.used = GGML_CALLOC(ggml_bitset_size(size), sizeof(ggml_bitset_t));
-    return result;
+ساخت ggml_hash_سیٹ ggml_hash_سیٹ_new(size_t سائز) {
+    سائز = ggml_hash_سائز(سائز);
+    ساخت ggml_hash_سیٹ نتیجہ;
+    نتیجہ.سائز = سائز;
+    نتیجہ.کلیدیں = GGML_MALLOC(حجم(ساخت ggml_tensor *) * سائز);
+    نتیجہ.مستعمل = GGML_CALLOC(ggml_bitset_سائز(سائز), حجم(ggml_bitset_t));
+    واپس نتیجہ;
 }
 
-void ggml_hash_set_reset(struct ggml_hash_set * hash_set) {
-    memset(hash_set->used, 0, sizeof(ggml_bitset_t) * ggml_bitset_size(hash_set->size));
+خالی ggml_hash_سیٹ_reset(ساخت ggml_hash_سیٹ * hash_سیٹ) {
+    memset(hash_سیٹ->مستعمل, 0, حجم(ggml_bitset_t) * ggml_bitset_سائز(hash_سیٹ->سائز));
 }
 
-void ggml_hash_set_free(struct ggml_hash_set * hash_set) {
-    GGML_FREE(hash_set->used);
-    GGML_FREE(hash_set->keys);
+خالی ggml_hash_سیٹ_free(ساخت ggml_hash_سیٹ * hash_سیٹ) {
+    GGML_FREE(hash_سیٹ->مستعمل);
+    GGML_FREE(hash_سیٹ->کلیدیں);
 }
 
-size_t ggml_hash_size(size_t min_sz) {
+size_t ggml_hash_سائز(size_t min_sz) {
     // next primes after powers of two
-    static const size_t primes[] = {
+    ساکن ثابت size_t مفرد_اعداد[] = {
         2, 3, 5, 11, 17, 37, 67, 131, 257, 521, 1031,
         2053, 4099, 8209, 16411, 32771, 65537, 131101,
         262147, 524309, 1048583, 2097169, 4194319, 8388617,
         16777259, 33554467, 67108879, 134217757, 268435459,
         536870923, 1073741827, 2147483659
     };
-    static const size_t n_primes = sizeof(primes)/sizeof(primes[0]);
+    ساکن ثابت size_t n_مفرد_اعداد = حجم(مفرد_اعداد)/حجم(مفرد_اعداد[0]);
 
     // find the smallest prime that is larger or equal than min_sz
     size_t l = 0;
-    size_t r = n_primes;
-    while (l < r) {
+    size_t r = n_مفرد_اعداد;
+    جب (l < r) {
         size_t m = (l + r)/2;
-        if (primes[m] < min_sz) {
+        اگر (مفرد_اعداد[m] < min_sz) {
             l = m + 1;
-        } else {
+        } ورنہ {
             r = m;
         }
     }
-    size_t sz = l < n_primes ? primes[l] : min_sz | 1;
-    return sz;
+    size_t sz = l < n_مفرد_اعداد ? مفرد_اعداد[l] : min_sz | 1;
+    واپس sz;
 }
 
-struct hash_map {
-    struct ggml_hash_set set;
-    struct ggml_tensor ** vals;
+ساخت hash_map {
+    ساخت ggml_hash_سیٹ سیٹ;
+    ساخت ggml_tensor ** vals;
 };
 
-static struct hash_map * ggml_new_hash_map(size_t size) {
-    struct hash_map * result = GGML_MALLOC(sizeof(struct hash_map));
-    result->set = ggml_hash_set_new(size);
-    result->vals = GGML_CALLOC(result->set.size, sizeof(struct ggml_tensor *));
-    return result;
+ساکن ساخت hash_map * ggml_new_hash_map(size_t سائز) {
+    ساخت hash_map * نتیجہ = GGML_MALLOC(حجم(ساخت hash_map));
+    نتیجہ->سیٹ = ggml_hash_سیٹ_new(سائز);
+    نتیجہ->vals = GGML_CALLOC(نتیجہ->سیٹ.سائز, حجم(ساخت ggml_tensor *));
+    واپس نتیجہ;
 }
 
-static void ggml_hash_map_free(struct hash_map * map) {
-    ggml_hash_set_free(&map->set);
+ساکن خالی ggml_hash_map_free(ساخت hash_map * map) {
+    ggml_hash_سیٹ_free(&map->سیٹ);
     GGML_FREE(map->vals);
     GGML_FREE(map);
 }
@@ -6745,224 +6745,224 @@ static void ggml_hash_map_free(struct hash_map * map) {
 // else if there is no gradient for tensor, set the corresponding value
 // else, just add/subtract/etc. the gradients
 
-static void ggml_add_or_set(
-        struct ggml_context * ctx,
-        struct ggml_cgraph  * cgraph,
+ساکن خالی ggml_جوڑو_or_سیٹ(
+        ساخت ggml_context * ctx,
+        ساخت ggml_cgraph  * cgraph,
         size_t                isrc,
-        struct ggml_tensor  * tensor) {
-    struct ggml_tensor * src = cgraph->visited_hash_set.keys[isrc];
+        ساخت ggml_tensor  * tensor) {
+    ساخت ggml_tensor * src = cgraph->دیکھا_hash_سیٹ.کلیدیں[isrc];
     GGML_ASSERT(src);
-    if (cgraph->grads[isrc]) {
-        cgraph->grads[isrc] = ggml_add_impl(ctx, cgraph->grads[isrc], tensor, /*inplace =*/ cgraph->grad_accs[isrc]);
-    } else {
+    اگر (cgraph->grads[isrc]) {
+        cgraph->grads[isrc] = ggml_جوڑو_impl(ctx, cgraph->grads[isrc], tensor, /*inplace =*/ cgraph->grad_accs[isrc]);
+    } ورنہ {
         cgraph->grads[isrc] = tensor;
     }
     ggml_format_name(cgraph->grads[isrc], "grad for %s", src->name);
     ggml_build_forward_expand(cgraph, cgraph->grads[isrc]);
 }
 
-static void ggml_acc_or_set(
-        struct ggml_context * ctx,
-        struct ggml_cgraph  * cgraph,
+ساکن خالی ggml_acc_or_سیٹ(
+        ساخت ggml_context * ctx,
+        ساخت ggml_cgraph  * cgraph,
         size_t                isrc,
-        struct ggml_tensor  * tensor,
-        const  size_t         nb1,
-        const  size_t         nb2,
-        const  size_t         nb3,
-        const  size_t         offset) {
-    struct ggml_tensor * src = cgraph->visited_hash_set.keys[isrc];
+        ساخت ggml_tensor  * tensor,
+        ثابت  size_t         nb1,
+        ثابت  size_t         nb2,
+        ثابت  size_t         nb3,
+        ثابت  size_t         انحراف) {
+    ساخت ggml_tensor * src = cgraph->دیکھا_hash_سیٹ.کلیدیں[isrc];
     GGML_ASSERT(src);
-    if (cgraph->grads[isrc]) {
-        cgraph->grads[isrc] = ggml_acc_impl(ctx, cgraph->grads[isrc], tensor, nb1, nb2, nb3, offset, cgraph->grad_accs[isrc]);
-    } else {
-        struct ggml_tensor * a_zero = ggml_scale(ctx, src, 0.0f); // FIXME this is going to produce NaN if a contains inf/NaN
-        cgraph->grads[isrc] = ggml_acc_impl(ctx, a_zero, tensor, nb1, nb2, nb3, offset, false);
+    اگر (cgraph->grads[isrc]) {
+        cgraph->grads[isrc] = ggml_acc_impl(ctx, cgraph->grads[isrc], tensor, nb1, nb2, nb3, انحراف, cgraph->grad_accs[isrc]);
+    } ورنہ {
+        ساخت ggml_tensor * a_zero = ggml_scale(ctx, src, 0.0f); // FIXME this is going to produce NaN if a contains inf/NaN
+        cgraph->grads[isrc] = ggml_acc_impl(ctx, a_zero, tensor, nb1, nb2, nb3, انحراف, false);
     }
-    ggml_format_name(cgraph->grads[isrc], "grad for %s", cgraph->visited_hash_set.keys[isrc]->name);
+    ggml_format_name(cgraph->grads[isrc], "grad for %s", cgraph->دیکھا_hash_سیٹ.کلیدیں[isrc]->name);
     ggml_build_forward_expand(cgraph, cgraph->grads[isrc]);
 }
 
-static void ggml_add1_or_set(
-        struct ggml_context * ctx,
-        struct ggml_cgraph  * cgraph,
+ساکن خالی ggml_add1_or_سیٹ(
+        ساخت ggml_context * ctx,
+        ساخت ggml_cgraph  * cgraph,
         size_t                isrc,
-        struct ggml_tensor  * tensor) {
-    struct ggml_tensor * src = cgraph->visited_hash_set.keys[isrc];
+        ساخت ggml_tensor  * tensor) {
+    ساخت ggml_tensor * src = cgraph->دیکھا_hash_سیٹ.کلیدیں[isrc];
     GGML_ASSERT(src);
-    if (cgraph->grads[isrc]) {
+    اگر (cgraph->grads[isrc]) {
         cgraph->grads[isrc] = ggml_add1_impl(ctx, cgraph->grads[isrc], tensor, cgraph->grad_accs[isrc]);
-    } else {
+    } ورنہ {
         cgraph->grads[isrc] = ggml_repeat(ctx, tensor, src);
     }
     ggml_format_name(cgraph->grads[isrc], "grad for %s", src->name);
     ggml_build_forward_expand(cgraph, cgraph->grads[isrc]);
 }
 
-static void ggml_sub_or_set(
-        struct ggml_context * ctx,
-        struct ggml_cgraph  * cgraph,
+ساکن خالی ggml_sub_or_سیٹ(
+        ساخت ggml_context * ctx,
+        ساخت ggml_cgraph  * cgraph,
         size_t                isrc,
-        struct ggml_tensor  * tensor) {
-    struct ggml_tensor * src = cgraph->visited_hash_set.keys[isrc];
+        ساخت ggml_tensor  * tensor) {
+    ساخت ggml_tensor * src = cgraph->دیکھا_hash_سیٹ.کلیدیں[isrc];
     GGML_ASSERT(src);
-    if (cgraph->grads[isrc]) {
+    اگر (cgraph->grads[isrc]) {
         cgraph->grads[isrc] = ggml_sub_impl(ctx, cgraph->grads[isrc], tensor, cgraph->grad_accs[isrc]);
-    } else {
+    } ورنہ {
         cgraph->grads[isrc] = ggml_neg(ctx, tensor);
     }
     ggml_format_name(cgraph->grads[isrc], "grad for %s", src->name);
     ggml_build_forward_expand(cgraph, cgraph->grads[isrc]);
 }
 
-static void ggml_compute_backward(
-        struct ggml_context * ctx, struct ggml_cgraph * cgraph, int i, const bool * grads_needed) {
-    struct ggml_tensor * tensor = cgraph->nodes[i];
-    struct ggml_tensor * grad   = ggml_graph_get_grad(cgraph, tensor);
+ساکن خالی ggml_compute_backward(
+        ساخت ggml_context * ctx, ساخت ggml_cgraph * cgraph, صحیح i, ثابت bool * grads_needed) {
+    ساخت ggml_tensor * tensor = cgraph->nodes[i];
+    ساخت ggml_tensor * grad   = ggml_گراف_get_grad(cgraph, tensor);
 
-    if (!grad) {
-        return;
+    اگر (!grad) {
+        واپس;
     }
 
-    struct ggml_tensor * src0 = tensor->src[0];
-    struct ggml_tensor * src1 = tensor->src[1];
-    struct ggml_tensor * src2 = tensor->src[2];
-    struct ggml_hash_set * hash_set = &cgraph->visited_hash_set;
-    const size_t isrc0 = src0 ? ggml_hash_find(hash_set, src0) : (size_t) -1;
-    const size_t isrc1 = src1 ? ggml_hash_find(hash_set, src1) : (size_t) -1;
-    const size_t isrc2 = src2 ? ggml_hash_find(hash_set, src2) : (size_t) -1;
-    const bool src0_needs_grads = src0 && isrc0 != GGML_HASHSET_FULL && ggml_bitset_get(hash_set->used, isrc0) && grads_needed[isrc0];
-    const bool src1_needs_grads = src1 && isrc1 != GGML_HASHSET_FULL && ggml_bitset_get(hash_set->used, isrc1) && grads_needed[isrc1];
-    const bool src2_needs_grads = src2 && isrc2 != GGML_HASHSET_FULL && ggml_bitset_get(hash_set->used, isrc2) && grads_needed[isrc2];
+    ساخت ggml_tensor * src0 = tensor->src[0];
+    ساخت ggml_tensor * src1 = tensor->src[1];
+    ساخت ggml_tensor * src2 = tensor->src[2];
+    ساخت ggml_hash_سیٹ * hash_سیٹ = &cgraph->دیکھا_hash_سیٹ;
+    ثابت size_t isrc0 = src0 ? ggml_hash_ڈھونڈو(hash_سیٹ, src0) : (size_t) -1;
+    ثابت size_t isrc1 = src1 ? ggml_hash_ڈھونڈو(hash_سیٹ, src1) : (size_t) -1;
+    ثابت size_t isrc2 = src2 ? ggml_hash_ڈھونڈو(hash_سیٹ, src2) : (size_t) -1;
+    ثابت bool src0_needs_grads = src0 && isrc0 != GGML_HASHSET_بھرا && ggml_bitset_get(hash_سیٹ->مستعمل, isrc0) && grads_needed[isrc0];
+    ثابت bool src1_needs_grads = src1 && isrc1 != GGML_HASHSET_بھرا && ggml_bitset_get(hash_سیٹ->مستعمل, isrc1) && grads_needed[isrc1];
+    ثابت bool src2_needs_grads = src2 && isrc2 != GGML_HASHSET_بھرا && ggml_bitset_get(hash_سیٹ->مستعمل, isrc2) && grads_needed[isrc2];
 
-    switch (tensor->op) {
-        case GGML_OP_DUP: {
-            if (src0_needs_grads) {
-                ggml_add_or_set(ctx, cgraph, isrc0, grad);
+    انتخاب (tensor->op) {
+        حالت GGML_OP_DUP: {
+            اگر (src0_needs_grads) {
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, grad);
             }
-        } break;
-        case GGML_OP_ADD: {
-            if (src0_needs_grads) {
-                ggml_add_or_set(ctx, cgraph, isrc0, grad);
+        } توڑو;
+        حالت GGML_OP_جوڑو: {
+            اگر (src0_needs_grads) {
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, grad);
             }
-            if (src1_needs_grads) {
-                struct ggml_tensor * tmp = grad;
-                if (!ggml_are_same_shape(src0, src1)) {
-                    tmp = ggml_repeat_back(ctx, tmp, src1);
+            اگر (src1_needs_grads) {
+                ساخت ggml_tensor * tmp = grad;
+                اگر (!ggml_are_same_shape(src0, src1)) {
+                    tmp = ggml_repeat_عقب(ctx, tmp, src1);
                 }
-                ggml_add_or_set(ctx, cgraph, isrc1, tmp);
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc1, tmp);
             }
-        } break;
-        case GGML_OP_ADD1: {
-            if (src0_needs_grads) {
-                ggml_add_or_set(ctx, cgraph, isrc0, grad);
+        } توڑو;
+        حالت GGML_OP_ADD1: {
+            اگر (src0_needs_grads) {
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, grad);
             }
-            if (src1_needs_grads) {
-                ggml_add_or_set(ctx, cgraph, isrc1, ggml_mean(ctx, grad)); // TODO: should probably be sum instead of mean
+            اگر (src1_needs_grads) {
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc1, ggml_اوسط(ctx, grad)); // TODO: should probably be sum instead of mean
             }
-        } break;
-        case GGML_OP_ACC: {
-            if (src0_needs_grads) {
-                ggml_add_or_set(ctx, cgraph, isrc0, grad);
+        } توڑو;
+        حالت GGML_OP_ACC: {
+            اگر (src0_needs_grads) {
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, grad);
             }
-            if (src1_needs_grads) {
-                const size_t nb1    = ((int32_t *) tensor->op_params)[0];
-                const size_t nb2    = ((int32_t *) tensor->op_params)[1];
-                const size_t nb3    = ((int32_t *) tensor->op_params)[2];
-                const size_t offset = ((int32_t *) tensor->op_params)[3];
+            اگر (src1_needs_grads) {
+                ثابت size_t nb1    = ((int32_t *) tensor->op_params)[0];
+                ثابت size_t nb2    = ((int32_t *) tensor->op_params)[1];
+                ثابت size_t nb3    = ((int32_t *) tensor->op_params)[2];
+                ثابت size_t انحراف = ((int32_t *) tensor->op_params)[3];
 
-                struct ggml_tensor * tensor_grad_view = ggml_view_4d(ctx,
+                ساخت ggml_tensor * tensor_grad_view = ggml_view_4d(ctx,
                     grad, src1->ne[0], src1->ne[1], src1->ne[2], src1->ne[3],
-                    nb1, nb2, nb3, offset);
+                    nb1, nb2, nb3, انحراف);
 
-                ggml_add_or_set(ctx, cgraph, isrc1, ggml_reshape(ctx, ggml_cont(ctx, tensor_grad_view), src1));
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc1, ggml_reshape(ctx, ggml_cont(ctx, tensor_grad_view), src1));
             }
-        } break;
-        case GGML_OP_SUB: {
-            if (src0_needs_grads) {
-                ggml_add_or_set(ctx, cgraph, isrc0, grad);
+        } توڑو;
+        حالت GGML_OP_SUB: {
+            اگر (src0_needs_grads) {
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, grad);
             }
-            if (src1_needs_grads) {
-                ggml_sub_or_set(ctx, cgraph, isrc1, grad);
+            اگر (src1_needs_grads) {
+                ggml_sub_or_سیٹ(ctx, cgraph, isrc1, grad);
             }
-        } break;
-        case GGML_OP_MUL: {
-            if (src0_needs_grads) {
-                ggml_add_or_set(ctx, cgraph, isrc0, ggml_mul(ctx, grad, src1));
+        } توڑو;
+        حالت GGML_OP_MUL: {
+            اگر (src0_needs_grads) {
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_mul(ctx, grad, src1));
             }
-            if (src1_needs_grads) {
-                struct ggml_tensor * tmp = ggml_mul(ctx, src0, grad);
-                if (!ggml_are_same_shape(src0, src1)) {
-                    tmp = ggml_repeat_back(ctx, tmp, src1);
+            اگر (src1_needs_grads) {
+                ساخت ggml_tensor * tmp = ggml_mul(ctx, src0, grad);
+                اگر (!ggml_are_same_shape(src0, src1)) {
+                    tmp = ggml_repeat_عقب(ctx, tmp, src1);
                 }
-                ggml_add_or_set(ctx, cgraph, isrc1, tmp);
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc1, tmp);
             }
-        } break;
-        case GGML_OP_DIV: {
-            if (src0_needs_grads) {
-                ggml_add_or_set(ctx, cgraph, isrc0, ggml_div(ctx, grad, src1));
+        } توڑو;
+        حالت GGML_OP_DIV: {
+            اگر (src0_needs_grads) {
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_div(ctx, grad, src1));
             }
-            if (src1_needs_grads) {
-                ggml_sub_or_set(ctx, cgraph, isrc1, ggml_mul(ctx, grad, ggml_div(ctx, tensor, src1)));
+            اگر (src1_needs_grads) {
+                ggml_sub_or_سیٹ(ctx, cgraph, isrc1, ggml_mul(ctx, grad, ggml_div(ctx, tensor, src1)));
             }
-        } break;
-        case GGML_OP_SQR: {
-            if (src0_needs_grads) {
-                ggml_add_or_set(ctx, cgraph, isrc0, ggml_scale(ctx, ggml_mul(ctx, src0, grad), 2.0f));
+        } توڑو;
+        حالت GGML_OP_SQR: {
+            اگر (src0_needs_grads) {
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_scale(ctx, ggml_mul(ctx, src0, grad), 2.0f));
             }
-        } break;
-        case GGML_OP_SQRT: {
-            if (src0_needs_grads) {
-                ggml_add_or_set(ctx, cgraph, isrc0, ggml_scale(ctx, ggml_div(ctx, grad, tensor), 0.5f));
+        } توڑو;
+        حالت GGML_OP_SQRT: {
+            اگر (src0_needs_grads) {
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_scale(ctx, ggml_div(ctx, grad, tensor), 0.5f));
             }
-        } break;
-        case GGML_OP_LOG: {
-            if (src0_needs_grads) {
-                ggml_add_or_set(ctx, cgraph, isrc0, ggml_div(ctx, grad, src0));
+        } توڑو;
+        حالت GGML_OP_LOG: {
+            اگر (src0_needs_grads) {
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_div(ctx, grad, src0));
             }
-        } break;
-        case GGML_OP_SIN: {
-            if (src0_needs_grads) {
-                ggml_add_or_set(ctx, cgraph, isrc0, ggml_mul(ctx, grad, ggml_cos(ctx, src0)));
+        } توڑو;
+        حالت GGML_OP_SIN: {
+            اگر (src0_needs_grads) {
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_mul(ctx, grad, ggml_cos(ctx, src0)));
             }
-        } break;
-        case GGML_OP_COS: {
-            if (src0_needs_grads) {
-                ggml_sub_or_set(ctx, cgraph, isrc0, ggml_mul(ctx, grad, ggml_sin(ctx, src0)));
+        } توڑو;
+        حالت GGML_OP_COS: {
+            اگر (src0_needs_grads) {
+                ggml_sub_or_سیٹ(ctx, cgraph, isrc0, ggml_mul(ctx, grad, ggml_sin(ctx, src0)));
             }
-        } break;
-        case GGML_OP_SUM: {
-            if (src0_needs_grads) {
-                ggml_add1_or_set(ctx, cgraph, isrc0, grad);
+        } توڑو;
+        حالت GGML_OP_مجموع: {
+            اگر (src0_needs_grads) {
+                ggml_add1_or_سیٹ(ctx, cgraph, isrc0, grad);
             }
-        } break;
-        case GGML_OP_SUM_ROWS: {
-            if (src0_needs_grads) {
-                ggml_add_or_set(ctx, cgraph, isrc0, ggml_repeat(ctx, grad, src0));
+        } توڑو;
+        حالت GGML_OP_مجموع_صفیں: {
+            اگر (src0_needs_grads) {
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_repeat(ctx, grad, src0));
             }
-        } break;
-        case GGML_OP_MEAN: {
-            if (src0_needs_grads) {
-                ggml_add1_or_set(ctx, cgraph, isrc0, ggml_scale_impl(ctx, grad, 1.0f/src0->ne[0], 0.0, false));
+        } توڑو;
+        حالت GGML_OP_اوسط: {
+            اگر (src0_needs_grads) {
+                ggml_add1_or_سیٹ(ctx, cgraph, isrc0, ggml_scale_impl(ctx, grad, 1.0f/src0->ne[0], 0.0, false));
             }
-        } break;
-        case GGML_OP_REPEAT: {
-            if (src0_needs_grads) {
-                ggml_add_or_set(ctx, cgraph, isrc0, ggml_repeat_back(ctx, grad, src0));
+        } توڑو;
+        حالت GGML_OP_REPEAT: {
+            اگر (src0_needs_grads) {
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_repeat_عقب(ctx, grad, src0));
             }
-        } break;
-        case GGML_OP_REPEAT_BACK: {
-            if (src0_needs_grads) {
-                ggml_add_or_set(ctx, cgraph, isrc0, ggml_repeat(ctx, grad, src0));
+        } توڑو;
+        حالت GGML_OP_REPEAT_عقب: {
+            اگر (src0_needs_grads) {
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_repeat(ctx, grad, src0));
             }
-        } break;
-        case GGML_OP_RMS_NORM: {
-            if (src0_needs_grads) {
-                float eps;
-                memcpy(&eps, tensor->op_params, sizeof(float));
-                ggml_add_or_set(ctx, cgraph, isrc0, ggml_rms_norm_back(ctx, grad, src0, eps));
+        } توڑو;
+        حالت GGML_OP_RMS_NORM: {
+            اگر (src0_needs_grads) {
+                اعشاری eps;
+                حافظہ_نقل(&eps, tensor->op_params, حجم(اعشاری));
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_rms_norm_عقب(ctx, grad, src0, eps));
             }
-        } break;
-        case GGML_OP_MUL_MAT: {
+        } توڑو;
+        حالت GGML_OP_MUL_MAT: {
             // https://cs231n.github.io/optimization-2/#staged
             // # forward pass
             // s0 = np.random.randn(5, 10)
@@ -6978,29 +6978,29 @@ static void ggml_compute_backward(
             // src0.shape   [n,m,q1,r1]
             // src1.shape   [n,p,qq,rr]
 
-            if (src0_needs_grads) {
+            اگر (src0_needs_grads) {
                 GGML_ASSERT(grad->ne[2] == src1->ne[2]);
                 GGML_ASSERT(grad->ne[3] == src1->ne[3]);
-                struct ggml_tensor * tmp =
-                    ggml_out_prod(ctx, // [n,m,qq,rr]
+                ساخت ggml_tensor * tmp =
+                    ggml_برآمد_prod(ctx, // [n,m,qq,rr]
                         src1,          // [n,p,qq,rr]
                         grad);         // [m,p,qq,rr]
-                if (!ggml_are_same_shape(tmp, src0)) {
+                اگر (!ggml_are_same_shape(tmp, src0)) {
                     GGML_ASSERT(tmp->ne[0] == src0->ne[0]);
                     GGML_ASSERT(tmp->ne[1] == src0->ne[1]);
                     GGML_ASSERT(tmp->ne[3] == 1);
 
-                    const int64_t nr2 = tmp->ne[2] / src0->ne[2];
-                    const size_t nb2 = tmp->nb[2] * nr2;
-                    const size_t nb3 = tmp->nb[2];
+                    ثابت int64_t nr2 = tmp->ne[2] / src0->ne[2];
+                    ثابت size_t nb2 = tmp->nb[2] * nr2;
+                    ثابت size_t nb3 = tmp->nb[2];
 
                     tmp = ggml_view_4d(ctx, tmp, src0->ne[0], src0->ne[1], src0->ne[2], nr2, tmp->nb[1], nb2, nb3, 0);
-                    tmp = ggml_repeat_back(ctx, tmp, src0);
+                    tmp = ggml_repeat_عقب(ctx, tmp, src0);
                 }
-                ggml_add_or_set(ctx, cgraph, isrc0, tmp);
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, tmp);
             }
-            if (src1_needs_grads) {
-                ggml_add_or_set(ctx, cgraph, isrc1,
+            اگر (src1_needs_grads) {
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc1,
                         // ggml_mul_mat(ctx,                   // [n,p,qq,rr]
                         //     ggml_cont(ctx,                  // [m,n,q1,r1]
                         //         ggml_transpose(ctx, src0)), // [m,n,q1,r1]
@@ -7009,287 +7009,287 @@ static void ggml_compute_backward(
                         // when src0 is bigger than tensor->grad (this is mostly the case in llama),
                         // avoid transpose of src0, rather transpose smaller tensor->grad
                         // and then use ggml_out_prod
-                        ggml_out_prod(ctx,      // [n,p,qq,rr]
+                        ggml_برآمد_prod(ctx,      // [n,p,qq,rr]
                             src0,               // [n,m,q1,r1]
                             ggml_transpose(ctx, // [p,m,qq,rr]
                                 grad)));        // [m,p,qq,rr]
             }
-        } break;
-        case GGML_OP_SCALE: {
-            if (src0_needs_grads) {
-                float s;
-                memcpy(&s, tensor->op_params, sizeof(float));
-                ggml_add_or_set(ctx, cgraph, isrc0, ggml_scale_impl(ctx, grad, s, 0.0, false));
+        } توڑو;
+        حالت GGML_OP_SCALE: {
+            اگر (src0_needs_grads) {
+                اعشاری s;
+                حافظہ_نقل(&s, tensor->op_params, حجم(اعشاری));
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_scale_impl(ctx, grad, s, 0.0, false));
             }
-        } break;
-        case GGML_OP_SET: {
-            const size_t nb1    = ((const int32_t *) tensor->op_params)[0];
-            const size_t nb2    = ((const int32_t *) tensor->op_params)[1];
-            const size_t nb3    = ((const int32_t *) tensor->op_params)[2];
-            const size_t offset = ((const int32_t *) tensor->op_params)[3];
+        } توڑو;
+        حالت GGML_OP_سیٹ: {
+            ثابت size_t nb1    = ((ثابت int32_t *) tensor->op_params)[0];
+            ثابت size_t nb2    = ((ثابت int32_t *) tensor->op_params)[1];
+            ثابت size_t nb3    = ((ثابت int32_t *) tensor->op_params)[2];
+            ثابت size_t انحراف = ((ثابت int32_t *) tensor->op_params)[3];
 
-            struct ggml_tensor * tensor_grad_view = NULL;
+            ساخت ggml_tensor * tensor_grad_view = تہی;
 
-            if (src0_needs_grads || src1_needs_grads) {
+            اگر (src0_needs_grads || src1_needs_grads) {
                 GGML_ASSERT(src0->type == tensor->type);
                 GGML_ASSERT(!cgraph->grads[isrc0] ||                      cgraph->grads[isrc0]->type == grad->type);
                 GGML_ASSERT(!cgraph->grads[isrc1] || !src1_needs_grads || cgraph->grads[isrc1]->type == grad->type);
 
                 tensor_grad_view = ggml_view_4d(ctx,
                     grad, src1->ne[0], src1->ne[1], src1->ne[2], src1->ne[3],
-                    nb1, nb2, nb3, offset);
+                    nb1, nb2, nb3, انحراف);
             }
 
-            if (src0_needs_grads) {
-                struct ggml_tensor * tmp = ggml_neg(ctx, tensor_grad_view);
-                ggml_add_or_set(ctx, cgraph, isrc0, ggml_acc_impl(ctx, grad, tmp, nb1, nb2, nb3, offset, false));
+            اگر (src0_needs_grads) {
+                ساخت ggml_tensor * tmp = ggml_neg(ctx, tensor_grad_view);
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_acc_impl(ctx, grad, tmp, nb1, nb2, nb3, انحراف, false));
             }
 
-            if (src1_needs_grads) {
-                ggml_add_or_set(ctx, cgraph, isrc1, ggml_reshape(ctx, ggml_cont(ctx, tensor_grad_view), src1));
+            اگر (src1_needs_grads) {
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc1, ggml_reshape(ctx, ggml_cont(ctx, tensor_grad_view), src1));
             }
-        } break;
-        case GGML_OP_CPY: {
+        } توڑو;
+        حالت GGML_OP_CPY: {
             // cpy overwrites value of src1 by src0 and returns view(src1)
             // the overwriting is mathematically equivalent to:
             // tensor = src0 * 1 + src1 * 0
-            if (src0_needs_grads) {
+            اگر (src0_needs_grads) {
                 // dsrc0 = dtensor * 1
-                ggml_add_or_set(ctx, cgraph, isrc0, ggml_reshape(ctx, grad, src0));
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_reshape(ctx, grad, src0));
             }
-            if (src1_needs_grads) {
+            اگر (src1_needs_grads) {
                 // dsrc1 = dtensor * 0 -> noop
             }
-        } break;
-        case GGML_OP_CONT: {
+        } توڑو;
+        حالت GGML_OP_CONT: {
             // same as cpy
-            if (src0_needs_grads) {
+            اگر (src0_needs_grads) {
                 GGML_ASSERT(!cgraph->grads[isrc0] || ggml_is_contiguous(cgraph->grads[isrc0]));
                 GGML_ASSERT(ggml_is_contiguous(grad));
                 GGML_ASSERT(ggml_nelements(tensor) == ggml_nelements(src0));
-                ggml_add_or_set(ctx, cgraph, isrc0,
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0,
                     ggml_are_same_shape(tensor, src0) ? grad : ggml_reshape(ctx, grad, src0));
             }
-        } break;
-        case GGML_OP_RESHAPE: {
-            if (src0_needs_grads) {
-                struct ggml_tensor * grad_cont = ggml_is_contiguous(grad) ? grad : ggml_cont(ctx, grad);
-                ggml_add_or_set(ctx, cgraph, isrc0, ggml_reshape(ctx, grad_cont, src0));
+        } توڑو;
+        حالت GGML_OP_RESHAPE: {
+            اگر (src0_needs_grads) {
+                ساخت ggml_tensor * grad_cont = ggml_is_contiguous(grad) ? grad : ggml_cont(ctx, grad);
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_reshape(ctx, grad_cont, src0));
             }
-        } break;
-        case GGML_OP_VIEW: {
-            if (src0_needs_grads) {
-                size_t offset;
+        } توڑو;
+        حالت GGML_OP_VIEW: {
+            اگر (src0_needs_grads) {
+                size_t انحراف;
 
-                memcpy(&offset, tensor->op_params, sizeof(offset));
+                حافظہ_نقل(&انحراف, tensor->op_params, حجم(انحراف));
 
                 size_t nb1 = tensor->nb[1];
                 size_t nb2 = tensor->nb[2];
                 size_t nb3 = tensor->nb[3];
 
-                if (cgraph->grads[isrc0] && src0->type != cgraph->grads[isrc0]->type) {
+                اگر (cgraph->grads[isrc0] && src0->type != cgraph->grads[isrc0]->type) {
                     // gradient is typically F32, but src0 could be other type
-                    size_t ng = ggml_element_size(cgraph->grads[isrc0]);
-                    size_t n0 = ggml_element_size(src0);
-                    GGML_ASSERT(offset % n0 == 0);
+                    size_t ng = ggml_element_سائز(cgraph->grads[isrc0]);
+                    size_t n0 = ggml_element_سائز(src0);
+                    GGML_ASSERT(انحراف % n0 == 0);
                     GGML_ASSERT(nb1 % n0 == 0);
                     GGML_ASSERT(nb2 % n0 == 0);
                     GGML_ASSERT(nb3 % n0 == 0);
-                    offset = (offset / n0) * ng;
+                    انحراف = (انحراف / n0) * ng;
                     nb1 = (nb1 / n0) * ng;
                     nb2 = (nb2 / n0) * ng;
                     nb3 = (nb3 / n0) * ng;
                 }
 
-                ggml_acc_or_set(ctx, cgraph, isrc0, grad, nb1, nb2, nb3, offset);
+                ggml_acc_or_سیٹ(ctx, cgraph, isrc0, grad, nb1, nb2, nb3, انحراف);
             }
-        } break;
-        case GGML_OP_PERMUTE: {
-            if (src0_needs_grads) {
-                const int32_t * axes = (const int32_t *) tensor->op_params;
-                const int axis0 = axes[0] & 0x3;
-                const int axis1 = axes[1] & 0x3;
-                const int axis2 = axes[2] & 0x3;
-                const int axis3 = axes[3] & 0x3;
-                int axb[4] = {0,0,0,0}; // axes backward
+        } توڑو;
+        حالت GGML_OP_ترتیب_بدلو: {
+            اگر (src0_needs_grads) {
+                ثابت int32_t * axes = (ثابت int32_t *) tensor->op_params;
+                ثابت صحیح axis0 = axes[0] & 0x3;
+                ثابت صحیح axis1 = axes[1] & 0x3;
+                ثابت صحیح axis2 = axes[2] & 0x3;
+                ثابت صحیح axis3 = axes[3] & 0x3;
+                صحیح axb[4] = {0,0,0,0}; // axes backward
                 axb[axis0] = 0;
                 axb[axis1] = 1;
                 axb[axis2] = 2;
                 axb[axis3] = 3;
-                ggml_add_or_set(ctx, cgraph, isrc0, ggml_permute(ctx, grad, axb[0], axb[1], axb[2], axb[3]));
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_ترتیب_بدلو(ctx, grad, axb[0], axb[1], axb[2], axb[3]));
             }
-        } break;
-        case GGML_OP_TRANSPOSE: {
-            if (src0_needs_grads) {
-                ggml_add_or_set(ctx, cgraph, isrc0, ggml_transpose(ctx, grad));
+        } توڑو;
+        حالت GGML_OP_TRANSPOSE: {
+            اگر (src0_needs_grads) {
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_transpose(ctx, grad));
             }
-        } break;
-        case GGML_OP_GET_ROWS: {
-            if (src0_needs_grads) {
-                ggml_add_or_set(ctx, cgraph, isrc0, ggml_get_rows_back(ctx, grad, src1, src0));
+        } توڑو;
+        حالت GGML_OP_GET_صفیں: {
+            اگر (src0_needs_grads) {
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_get_صفیں_عقب(ctx, grad, src1, src0));
             }
-            if (src1_needs_grads) {
+            اگر (src1_needs_grads) {
                 // noop
             }
-        } break;
-        case GGML_OP_DIAG_MASK_INF: {
-            if (src0_needs_grads) {
+        } توڑو;
+        حالت GGML_OP_DIAG_نقاب_INF: {
+            اگر (src0_needs_grads) {
                 /* ggml_diag_mask_inf_impl() shouldn't be here */
                 /* ref:  https://github.com/ggml-org/llama.cpp/pull/4203#discussion_r1412377992 */
-                const int n_past = ((const int32_t *) tensor->op_params)[0];
-                ggml_add_or_set(ctx, cgraph, isrc0, ggml_diag_mask_zero_impl(ctx, grad, n_past, false));
+                ثابت صحیح n_past = ((ثابت int32_t *) tensor->op_params)[0];
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_diag_نقاب_zero_impl(ctx, grad, n_past, false));
             }
-        } break;
-        case GGML_OP_DIAG_MASK_ZERO: {
-            if (src0_needs_grads) {
-                const int n_past = ((const int32_t *) tensor->op_params)[0];
-                ggml_add_or_set(ctx, cgraph, isrc0, ggml_diag_mask_zero_impl(ctx, grad, n_past, false));
+        } توڑو;
+        حالت GGML_OP_DIAG_نقاب_ZERO: {
+            اگر (src0_needs_grads) {
+                ثابت صحیح n_past = ((ثابت int32_t *) tensor->op_params)[0];
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_diag_نقاب_zero_impl(ctx, grad, n_past, false));
             }
-        } break;
-        case GGML_OP_SOFT_MAX: {
-            if (src0_needs_grads) {
-                float scale    = 1.0f;
-                float max_bias = 0.0f;
+        } توڑو;
+        حالت GGML_OP_SOFT_MAX: {
+            اگر (src0_needs_grads) {
+                اعشاری scale    = 1.0f;
+                اعشاری max_bias = 0.0f;
 
-                memcpy(&scale,    (const float *) tensor->op_params + 0, sizeof(float));
-                memcpy(&max_bias, (const float *) tensor->op_params + 1, sizeof(float));
+                حافظہ_نقل(&scale,    (ثابت اعشاری *) tensor->op_params + 0, حجم(اعشاری));
+                حافظہ_نقل(&max_bias, (ثابت اعشاری *) tensor->op_params + 1, حجم(اعشاری));
 
-                ggml_add_or_set(ctx, cgraph, isrc0, ggml_soft_max_ext_back(ctx, grad, tensor, scale, max_bias));
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_soft_max_ext_عقب(ctx, grad, tensor, scale, max_bias));
             }
             GGML_ASSERT((!src1 || !src1_needs_grads) && "backward pass for softmax mask not implemented");
-        } break;
-        case GGML_OP_ROPE: {
-            if (src0_needs_grads) {
+        } توڑو;
+        حالت GGML_OP_ROPE: {
+            اگر (src0_needs_grads) {
                 //const int n_past = ((int32_t *) tensor->op_params)[0];
-                const int n_dims     = ((const int32_t *) tensor->op_params)[1];
-                const int mode       = ((const int32_t *) tensor->op_params)[2];
+                ثابت صحیح n_dims     = ((ثابت int32_t *) tensor->op_params)[1];
+                ثابت صحیح منوال       = ((ثابت int32_t *) tensor->op_params)[2];
                 //const int n_ctx      = ((int32_t *) tensor->op_params)[3];
-                const int n_ctx_orig = ((const int32_t *) tensor->op_params)[4];
-                float freq_base, freq_scale, ext_factor, attn_factor, beta_fast, beta_slow;
-                int sections[4] = {0, 0, 0, 0};
+                ثابت صحیح n_ctx_orig = ((ثابت int32_t *) tensor->op_params)[4];
+                اعشاری freq_بنیاد, freq_scale, ext_ضربی_عدد, attn_ضربی_عدد, beta_fast, beta_slow;
+                صحیح sections[4] = {0, 0, 0, 0};
 
-                memcpy(&freq_base,   (const float *) tensor->op_params +  5, sizeof(float));
-                memcpy(&freq_scale,  (const float *) tensor->op_params +  6, sizeof(float));
-                memcpy(&ext_factor,  (const float *) tensor->op_params +  7, sizeof(float));
-                memcpy(&attn_factor, (const float *) tensor->op_params +  8, sizeof(float));
-                memcpy(&beta_fast,   (const float *) tensor->op_params +  9, sizeof(float));
-                memcpy(&beta_slow,   (const float *) tensor->op_params + 10, sizeof(float));
-                memcpy(&sections,                    tensor->op_params + 11, sizeof(sections));
+                حافظہ_نقل(&freq_بنیاد,   (ثابت اعشاری *) tensor->op_params +  5, حجم(اعشاری));
+                حافظہ_نقل(&freq_scale,  (ثابت اعشاری *) tensor->op_params +  6, حجم(اعشاری));
+                حافظہ_نقل(&ext_ضربی_عدد,  (ثابت اعشاری *) tensor->op_params +  7, حجم(اعشاری));
+                حافظہ_نقل(&attn_ضربی_عدد, (ثابت اعشاری *) tensor->op_params +  8, حجم(اعشاری));
+                حافظہ_نقل(&beta_fast,   (ثابت اعشاری *) tensor->op_params +  9, حجم(اعشاری));
+                حافظہ_نقل(&beta_slow,   (ثابت اعشاری *) tensor->op_params + 10, حجم(اعشاری));
+                حافظہ_نقل(&sections,                    tensor->op_params + 11, حجم(sections));
 
-                struct ggml_tensor * rope_back = grad->ne[2] == src1->ne[0] ?
-                    ggml_rope_ext_back(ctx, grad, src1, src2, n_dims,
-                        mode, n_ctx_orig, freq_base, freq_scale, ext_factor, attn_factor, beta_fast, beta_slow) :
-                    ggml_rope_multi_back(ctx, grad, src1, src2, n_dims, sections,
-                        mode, n_ctx_orig, freq_base, freq_scale, ext_factor, attn_factor, beta_fast, beta_slow);
-                ggml_add_or_set(ctx, cgraph, isrc0, rope_back);
+                ساخت ggml_tensor * rope_عقب = grad->ne[2] == src1->ne[0] ?
+                    ggml_rope_ext_عقب(ctx, grad, src1, src2, n_dims,
+                        منوال, n_ctx_orig, freq_بنیاد, freq_scale, ext_ضربی_عدد, attn_ضربی_عدد, beta_fast, beta_slow) :
+                    ggml_rope_multi_عقب(ctx, grad, src1, src2, n_dims, sections,
+                        منوال, n_ctx_orig, freq_بنیاد, freq_scale, ext_ضربی_عدد, attn_ضربی_عدد, beta_fast, beta_slow);
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, rope_عقب);
             }
             GGML_ASSERT((!src2 || !src2_needs_grads) && "gradients for freq factors not implemented");
-        } break;
-        case GGML_OP_IM2COL: {
-            if (src1_needs_grads) {
-                const int32_t s0    = ggml_get_op_params_i32(tensor, 0);
-                const int32_t s1    = ggml_get_op_params_i32(tensor, 1);
-                const int32_t p0    = ggml_get_op_params_i32(tensor, 2);
-                const int32_t p1    = ggml_get_op_params_i32(tensor, 3);
-                const int32_t d0    = ggml_get_op_params_i32(tensor, 4);
-                const int32_t d1    = ggml_get_op_params_i32(tensor, 5);
-                const bool    is_2D = ggml_get_op_params_i32(tensor, 6) == 1;
+        } توڑو;
+        حالت GGML_OP_IM2_ستون: {
+            اگر (src1_needs_grads) {
+                ثابت int32_t s0    = ggml_get_op_params_i32(tensor, 0);
+                ثابت int32_t s1    = ggml_get_op_params_i32(tensor, 1);
+                ثابت int32_t p0    = ggml_get_op_params_i32(tensor, 2);
+                ثابت int32_t p1    = ggml_get_op_params_i32(tensor, 3);
+                ثابت int32_t d0    = ggml_get_op_params_i32(tensor, 4);
+                ثابت int32_t d1    = ggml_get_op_params_i32(tensor, 5);
+                ثابت bool    is_2D = ggml_get_op_params_i32(tensor, 6) == 1;
 
-                ggml_add_or_set(ctx, cgraph, isrc1, ggml_im2col_back(ctx, grad, src0, src1->ne, s0, s1, p0, p1, d0, d1, is_2D));
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc1, ggml_im2col_عقب(ctx, grad, src0, src1->ne, s0, s1, p0, p1, d0, d1, is_2D));
             }
-        } break;
-        case GGML_OP_POOL_2D: {
-            if (src0_needs_grads) {
-                const enum ggml_op_pool op = ggml_get_op_params_i32(tensor, 0);
-                const      int32_t      k0 = ggml_get_op_params_i32(tensor, 1);
-                const      int32_t      k1 = ggml_get_op_params_i32(tensor, 2);
-                const      int32_t      s0 = ggml_get_op_params_i32(tensor, 3);
-                const      int32_t      s1 = ggml_get_op_params_i32(tensor, 4);
-                const      int32_t      p0 = ggml_get_op_params_i32(tensor, 5);
-                const      int32_t      p1 = ggml_get_op_params_i32(tensor, 6);
+        } توڑو;
+        حالت GGML_OP_POOL_2D: {
+            اگر (src0_needs_grads) {
+                ثابت شمار ggml_op_pool op = ggml_get_op_params_i32(tensor, 0);
+                ثابت      int32_t      k0 = ggml_get_op_params_i32(tensor, 1);
+                ثابت      int32_t      k1 = ggml_get_op_params_i32(tensor, 2);
+                ثابت      int32_t      s0 = ggml_get_op_params_i32(tensor, 3);
+                ثابت      int32_t      s1 = ggml_get_op_params_i32(tensor, 4);
+                ثابت      int32_t      p0 = ggml_get_op_params_i32(tensor, 5);
+                ثابت      int32_t      p1 = ggml_get_op_params_i32(tensor, 6);
 
-                ggml_add_or_set(ctx, cgraph, isrc0, ggml_pool_2d_back(ctx, grad, src0, op, k0, k1, s0, s1, p0, p1));
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_pool_2d_عقب(ctx, grad, src0, op, k0, k1, s0, s1, p0, p1));
             }
-        } break;
-        case GGML_OP_WIN_PART:
-        case GGML_OP_WIN_UNPART:
-        case GGML_OP_UNARY: {
-            switch (ggml_get_unary_op(tensor)) {
-                case GGML_UNARY_OP_ABS: {
-                    if (src0_needs_grads) {
-                        ggml_add_or_set(ctx, cgraph, isrc0, ggml_mul(ctx, ggml_sgn(ctx, src0), grad));
+        } توڑو;
+        حالت GGML_OP_WIN_PART:
+        حالت GGML_OP_WIN_UNPART:
+        حالت GGML_OP_UNARY: {
+            انتخاب (ggml_get_unary_op(tensor)) {
+                حالت GGML_UNARY_OP_ABS: {
+                    اگر (src0_needs_grads) {
+                        ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_mul(ctx, ggml_sgn(ctx, src0), grad));
                     }
-                } break;
-                case GGML_UNARY_OP_SGN: {
+                } توڑو;
+                حالت GGML_UNARY_OP_SGN: {
                     // noop
-                } break;
-                case GGML_UNARY_OP_NEG: {
-                    if (src0_needs_grads) {
-                        ggml_sub_or_set(ctx, cgraph, isrc0, grad);
+                } توڑو;
+                حالت GGML_UNARY_OP_NEG: {
+                    اگر (src0_needs_grads) {
+                        ggml_sub_or_سیٹ(ctx, cgraph, isrc0, grad);
                     }
-                } break;
-                case GGML_UNARY_OP_STEP: {
+                } توڑو;
+                حالت GGML_UNARY_OP_قدم: {
                     // noop
-                } break;
-                case GGML_UNARY_OP_RELU: {
-                    if (src0_needs_grads) {
-                        ggml_add_or_set(ctx, cgraph, isrc0, ggml_mul(ctx, ggml_step(ctx, src0), grad));
+                } توڑو;
+                حالت GGML_UNARY_OP_RELU: {
+                    اگر (src0_needs_grads) {
+                        ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_mul(ctx, ggml_قدم(ctx, src0), grad));
                     }
-                } break;
-                case GGML_UNARY_OP_SILU: {
-                    if (src0_needs_grads) {
-                        ggml_add_or_set(ctx, cgraph, isrc0, ggml_silu_back(ctx, grad, src0));
+                } توڑو;
+                حالت GGML_UNARY_OP_SILU: {
+                    اگر (src0_needs_grads) {
+                        ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_silu_عقب(ctx, grad, src0));
                     }
-                } break;
-                case GGML_UNARY_OP_EXP: {
-                    if (src0_needs_grads) {
-                        ggml_add_or_set(ctx, cgraph, isrc0, ggml_mul(ctx, tensor, grad));
+                } توڑو;
+                حالت GGML_UNARY_OP_EXP: {
+                    اگر (src0_needs_grads) {
+                        ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_mul(ctx, tensor, grad));
                     }
-                } break;
-                case GGML_UNARY_OP_EXPM1: {
-                    if (src0_needs_grads) {
-                        ggml_add_or_set(ctx, cgraph, isrc0, ggml_mul(ctx, grad, ggml_exp(ctx, src0)));
+                } توڑو;
+                حالت GGML_UNARY_OP_EXPM1: {
+                    اگر (src0_needs_grads) {
+                        ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_mul(ctx, grad, ggml_exp(ctx, src0)));
                     }
-                } break;
-                case GGML_UNARY_OP_SOFTPLUS: {
-                    if (src0_needs_grads) {
-                        ggml_add_or_set(ctx, cgraph, isrc0, ggml_mul(ctx, grad, ggml_sigmoid(ctx, src0)));
+                } توڑو;
+                حالت GGML_UNARY_OP_SOFTPLUS: {
+                    اگر (src0_needs_grads) {
+                        ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_mul(ctx, grad, ggml_sigmoid(ctx, src0)));
                     }
-                } break;
-                default: {
+                } توڑو;
+                طےشدہ: {
                     fprintf(stderr, "%s: unsupported unary op for backward pass: %s\n",
                         __func__, ggml_unary_op_name(ggml_get_unary_op(tensor)));
                     GGML_ABORT("fatal error");
                 } //break;
             }
-        } break;
-        case GGML_OP_CROSS_ENTROPY_LOSS: {
-            if (src0_needs_grads) {
-                ggml_add_or_set(ctx, cgraph, isrc0, ggml_cross_entropy_loss_back(ctx, grad, src0, src1));
+        } توڑو;
+        حالت GGML_OP_CROSS_ENTROPY_LOSS: {
+            اگر (src0_needs_grads) {
+                ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_cross_entropy_loss_عقب(ctx, grad, src0, src1));
             }
             GGML_ASSERT(!src1_needs_grads && "backward pass for labels not implemented");
-        } break;
-        case GGML_OP_GLU: {
-            switch (ggml_get_glu_op(tensor)) {
-                case GGML_GLU_OP_SWIGLU: {
-                    if (src0_needs_grads) {
+        } توڑو;
+        حالت GGML_OP_GLU: {
+            انتخاب (ggml_get_glu_op(tensor)) {
+                حالت GGML_GLU_OP_SWIGLU: {
+                    اگر (src0_needs_grads) {
                         GGML_ASSERT(src1 && "backward pass only implemented for split swiglu");
-                        ggml_add_or_set(ctx, cgraph, isrc0, ggml_silu_back(ctx, ggml_mul(ctx, grad, src1), src0));
+                        ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc0, ggml_silu_عقب(ctx, ggml_mul(ctx, grad, src1), src0));
                     }
-                    if (src1_needs_grads) {
-                        ggml_add_or_set(ctx, cgraph, isrc1, ggml_mul(ctx, ggml_silu(ctx, src0), grad));
+                    اگر (src1_needs_grads) {
+                        ggml_جوڑو_or_سیٹ(ctx, cgraph, isrc1, ggml_mul(ctx, ggml_silu(ctx, src0), grad));
                     }
-                } break;
-                default: {
+                } توڑو;
+                طےشدہ: {
                     GGML_ABORT("unsupported glu op for backward pass: %s", ggml_glu_op_name(ggml_get_glu_op(tensor)));
                 } //break;
             }
-        } break;
-        case GGML_OP_NONE: {
+        } توڑو;
+        حالت GGML_OP_NONE: {
             // noop
-        } break;
-        case GGML_OP_COUNT:
-        default: {
+        } توڑو;
+        حالت GGML_OP_گنتی:
+        طےشدہ: {
             GGML_ABORT("%s: unsupported ggml op for backward pass: %s\n", __func__, ggml_op_name(tensor->op));
         } //break;
     }
@@ -7299,271 +7299,271 @@ static void ggml_compute_backward(
     GGML_ASSERT(!src2_needs_grads || ggml_are_same_shape(src2, cgraph->grads[isrc2]));
 }
 
-static size_t ggml_visit_parents_graph(struct ggml_cgraph * cgraph, struct ggml_tensor * node, bool compute) {
-    if (node->op != GGML_OP_NONE && compute) {
-        node->flags |= GGML_TENSOR_FLAG_COMPUTE;
+ساکن size_t ggml_دورہ_parents_گراف(ساخت ggml_cgraph * cgraph, ساخت ggml_tensor * گرہ, bool compute) {
+    اگر (گرہ->op != GGML_OP_NONE && compute) {
+        گرہ->flags |= GGML_TENSOR_FLAG_COMPUTE;
     }
 
-    const size_t node_hash_pos = ggml_hash_find(&cgraph->visited_hash_set, node);
-    GGML_ASSERT(node_hash_pos != GGML_HASHSET_FULL);
+    ثابت size_t گرہ_hash_pos = ggml_hash_ڈھونڈو(&cgraph->دیکھا_hash_سیٹ, گرہ);
+    GGML_ASSERT(گرہ_hash_pos != GGML_HASHSET_بھرا);
 
-    if (ggml_bitset_get(cgraph->visited_hash_set.used, node_hash_pos)) {
+    اگر (ggml_bitset_get(cgraph->دیکھا_hash_سیٹ.مستعمل, گرہ_hash_pos)) {
         // already visited
 
-        if (compute) {
+        اگر (compute) {
             // update the compute flag regardless
-            for (int i = 0; i < GGML_MAX_SRC; ++i) {
-                struct ggml_tensor * src = node->src[i];
-                if (src && ((src->flags & GGML_TENSOR_FLAG_COMPUTE) == 0)) {
-                    ggml_visit_parents_graph(cgraph, src, true);
+            برائے (صحیح i = 0; i < GGML_MAX_SRC; ++i) {
+                ساخت ggml_tensor * src = گرہ->src[i];
+                اگر (src && ((src->flags & GGML_TENSOR_FLAG_COMPUTE) == 0)) {
+                    ggml_دورہ_parents_گراف(cgraph, src, true);
                 }
             }
         }
 
-        return node_hash_pos;
+        واپس گرہ_hash_pos;
     }
 
     // This is the first time we see this node in the current graph.
-    cgraph->visited_hash_set.keys[node_hash_pos] = node;
-    ggml_bitset_set(cgraph->visited_hash_set.used, node_hash_pos);
-    cgraph->use_counts[node_hash_pos] = 0;
+    cgraph->دیکھا_hash_سیٹ.کلیدیں[گرہ_hash_pos] = گرہ;
+    ggml_bitset_سیٹ(cgraph->دیکھا_hash_سیٹ.مستعمل, گرہ_hash_pos);
+    cgraph->use_counts[گرہ_hash_pos] = 0;
 
-    for (int i = 0; i < GGML_MAX_SRC; ++i) {
-        const int k =
-            (cgraph->order == GGML_CGRAPH_EVAL_ORDER_LEFT_TO_RIGHT) ? i :
-            (cgraph->order == GGML_CGRAPH_EVAL_ORDER_RIGHT_TO_LEFT) ? (GGML_MAX_SRC-1-i) :
+    برائے (صحیح i = 0; i < GGML_MAX_SRC; ++i) {
+        ثابت صحیح k =
+            (cgraph->ترتیب == GGML_CGRAPH_EVAL_ترتیب_بایاں_مقصد_دایاں) ? i :
+            (cgraph->ترتیب == GGML_CGRAPH_EVAL_ترتیب_دایاں_مقصد_بایاں) ? (GGML_MAX_SRC-1-i) :
             /* unknown order, just fall back to using i */ i;
 
-        struct ggml_tensor * src = node->src[k];
-        if (src) {
-            const size_t src_hash_pos = ggml_visit_parents_graph(cgraph, src, compute);
+        ساخت ggml_tensor * src = گرہ->src[k];
+        اگر (src) {
+            ثابت size_t src_hash_pos = ggml_دورہ_parents_گراف(cgraph, src, compute);
 
             // Update the use count for this operand.
             cgraph->use_counts[src_hash_pos]++;
         }
     }
 
-    if (node->op == GGML_OP_NONE && !(node->flags & GGML_TENSOR_FLAG_PARAM)) {
+    اگر (گرہ->op == GGML_OP_NONE && !(گرہ->flags & GGML_TENSOR_FLAG_PARAM)) {
         // reached a leaf node, not part of the gradient graph (e.g. a constant)
-        GGML_ASSERT(cgraph->n_leafs < cgraph->size);
+        GGML_ASSERT(cgraph->n_leafs < cgraph->سائز);
 
-        if (strlen(node->name) == 0) {
-            ggml_format_name(node, "leaf_%d", cgraph->n_leafs);
+        اگر (لڑی_لمبائی(گرہ->name) == 0) {
+            ggml_format_name(گرہ, "leaf_%d", cgraph->n_leafs);
         }
 
-        cgraph->leafs[cgraph->n_leafs] = node;
+        cgraph->leafs[cgraph->n_leafs] = گرہ;
         cgraph->n_leafs++;
-    } else {
-        GGML_ASSERT(cgraph->n_nodes < cgraph->size);
+    } ورنہ {
+        GGML_ASSERT(cgraph->n_nodes < cgraph->سائز);
 
-        if (strlen(node->name) == 0) {
-            ggml_format_name(node, "node_%d", cgraph->n_nodes);
+        اگر (لڑی_لمبائی(گرہ->name) == 0) {
+            ggml_format_name(گرہ, "node_%d", cgraph->n_nodes);
         }
 
-        cgraph->nodes[cgraph->n_nodes] = node;
+        cgraph->nodes[cgraph->n_nodes] = گرہ;
         cgraph->n_nodes++;
     }
 
-    return node_hash_pos;
+    واپس گرہ_hash_pos;
 }
 
-static void ggml_build_forward_impl(struct ggml_cgraph * cgraph, struct ggml_tensor * tensor, bool expand, bool compute) {
-    if (!expand) {
+ساکن خالی ggml_build_forward_impl(ساخت ggml_cgraph * cgraph, ساخت ggml_tensor * tensor, bool expand, bool compute) {
+    اگر (!expand) {
         // TODO: this branch isn't accessible anymore, maybe move this to ggml_build_forward_expand
-        ggml_graph_clear(cgraph);
+        ggml_گراف_clear(cgraph);
     }
 
-    const int n_old = cgraph->n_nodes;
+    ثابت صحیح n_old = cgraph->n_nodes;
 
-    ggml_visit_parents_graph(cgraph, tensor, compute);
+    ggml_دورہ_parents_گراف(cgraph, tensor, compute);
 
-    const int n_new = cgraph->n_nodes - n_old;
+    ثابت صحیح n_new = cgraph->n_nodes - n_old;
     GGML_PRINT_DEBUG("%s: visited %d new nodes\n", __func__, n_new);
 
-    if (n_new > 0) {
+    اگر (n_new > 0) {
         // the last added node should always be starting point
         GGML_ASSERT(cgraph->nodes[cgraph->n_nodes - 1] == tensor);
     }
 }
 
-struct ggml_tensor * ggml_build_forward_select(
-        struct ggml_cgraph  * cgraph,
-        struct ggml_tensor ** tensors,
-        int                   n_tensors,
-        int                   idx) {
+ساخت ggml_tensor * ggml_build_forward_select(
+        ساخت ggml_cgraph  * cgraph,
+        ساخت ggml_tensor ** tensors,
+        صحیح                   n_tensors,
+        صحیح                   idx) {
     GGML_ASSERT(idx >= 0 && idx < n_tensors);
 
-    for (int i = 0; i < n_tensors; i++) {
+    برائے (صحیح i = 0; i < n_tensors; i++) {
         ggml_build_forward_impl(cgraph, tensors[i], true, i == idx ? true : false);
     }
 
-    return tensors[idx];
+    واپس tensors[idx];
 }
 
-void ggml_build_forward_expand(struct ggml_cgraph * cgraph, struct ggml_tensor * tensor) {
+خالی ggml_build_forward_expand(ساخت ggml_cgraph * cgraph, ساخت ggml_tensor * tensor) {
     ggml_build_forward_impl(cgraph, tensor, true, true);
 }
 
-void ggml_build_forward_order(struct ggml_cgraph * cgraph, struct ggml_tensor * tensor) {
+خالی ggml_build_forward_ترتیب(ساخت ggml_cgraph * cgraph, ساخت ggml_tensor * tensor) {
     ggml_build_forward_impl(cgraph, tensor, true, false);
 }
 
-void ggml_build_backward_expand(
-        struct ggml_context *  ctx,
-        struct ggml_cgraph  *  cgraph,
-        struct ggml_tensor  ** grad_accs) {
+خالی ggml_build_backward_expand(
+        ساخت ggml_context *  ctx,
+        ساخت ggml_cgraph  *  cgraph,
+        ساخت ggml_tensor  ** grad_accs) {
     GGML_ASSERT(cgraph->n_nodes > 0);
     GGML_ASSERT(cgraph->grads);
     GGML_ASSERT(cgraph->grad_accs);
 
-    const int n_nodes_f = cgraph->n_nodes;
+    ثابت صحیح n_nodes_f = cgraph->n_nodes;
 
-    memset(cgraph->grads,     0, cgraph->visited_hash_set.size*sizeof(struct ggml_tensor *));
-    memset(cgraph->grad_accs, 0, cgraph->visited_hash_set.size*sizeof(struct ggml_tensor *));
-    bool * grads_needed = calloc(cgraph->visited_hash_set.size, sizeof(bool));
+    memset(cgraph->grads,     0, cgraph->دیکھا_hash_سیٹ.سائز*حجم(ساخت ggml_tensor *));
+    memset(cgraph->grad_accs, 0, cgraph->دیکھا_hash_سیٹ.سائز*حجم(ساخت ggml_tensor *));
+    bool * grads_needed = صفر_حافظہ_دو(cgraph->دیکھا_hash_سیٹ.سائز, حجم(bool));
 
     {
         bool any_params = false;
         bool any_loss   = false;
-        for (int i = 0; i < n_nodes_f; ++i) {
-            struct ggml_tensor * node = cgraph->nodes[i];
-            any_params = any_params || (node->flags & GGML_TENSOR_FLAG_PARAM);
-            any_loss   = any_loss   || (node->flags & GGML_TENSOR_FLAG_LOSS);
+        برائے (صحیح i = 0; i < n_nodes_f; ++i) {
+            ساخت ggml_tensor * گرہ = cgraph->nodes[i];
+            any_params = any_params || (گرہ->flags & GGML_TENSOR_FLAG_PARAM);
+            any_loss   = any_loss   || (گرہ->flags & GGML_TENSOR_FLAG_LOSS);
         }
         GGML_ASSERT(any_params && "no trainable parameters found, did you forget to call ggml_set_param?");
         GGML_ASSERT(any_loss && "no training loss found, did you forget to call ggml_set_loss?");
     }
 
-    for (int i = 0; i < n_nodes_f; ++i) {
-        struct ggml_tensor * node = cgraph->nodes[i];
+    برائے (صحیح i = 0; i < n_nodes_f; ++i) {
+        ساخت ggml_tensor * گرہ = cgraph->nodes[i];
 
-        if (node->type == GGML_TYPE_I32) {
-            continue;
+        اگر (گرہ->type == GGML_TYPE_I32) {
+            جاری;
         }
 
-        bool node_needs_grad = (node->flags & GGML_TENSOR_FLAG_PARAM) || (node->flags & GGML_TENSOR_FLAG_LOSS);
+        bool گرہ_needs_grad = (گرہ->flags & GGML_TENSOR_FLAG_PARAM) || (گرہ->flags & GGML_TENSOR_FLAG_LOSS);
         bool ignore_src[GGML_MAX_SRC] = {false};
-        switch (node->op) {
+        انتخاب (گرہ->op) {
             // gradients in node->src[0] for one reason or another have no effect on output gradients
-            case GGML_OP_IM2COL:      // only used for its shape
-            case GGML_OP_IM2COL_BACK: // same as IM2COL
+            حالت GGML_OP_IM2_ستون:      // only used for its shape
+            حالت GGML_OP_IM2_ستون_عقب: // same as IM2COL
                 ignore_src[0] = true;
-                break;
-            case GGML_OP_UNARY: {
-                const enum ggml_unary_op uop = ggml_get_unary_op(node);
+                توڑو;
+            حالت GGML_OP_UNARY: {
+                ثابت شمار ggml_unary_op uop = ggml_get_unary_op(گرہ);
                 // SGN and STEP unary ops are piecewise constant
-                if (uop == GGML_UNARY_OP_SGN || uop == GGML_UNARY_OP_STEP) {
+                اگر (uop == GGML_UNARY_OP_SGN || uop == GGML_UNARY_OP_قدم) {
                     ignore_src[0] = true;
                 }
-            } break;
+            } توڑو;
 
             // gradients in node->src[1] for one reason or another have no effect on output gradients
-            case GGML_OP_CPY:           // gradients in CPY target are irrelevant
-            case GGML_OP_GET_ROWS:      // row indices not differentiable
-            case GGML_OP_GET_ROWS_BACK: // same as for GET_ROWS
-            case GGML_OP_ROPE:          // positions not differentiable
+            حالت GGML_OP_CPY:           // gradients in CPY target are irrelevant
+            حالت GGML_OP_GET_صفیں:      // row indices not differentiable
+            حالت GGML_OP_GET_صفیں_عقب: // same as for GET_ROWS
+            حالت GGML_OP_ROPE:          // positions not differentiable
                 ignore_src[1] = true;
-                break;
+                توڑو;
 
-            default:
-                break;
+            طےشدہ:
+                توڑو;
         }
-        for (int j = 0; j < GGML_MAX_SRC; ++j) {
-            if (!node->src[j] || ignore_src[j] || !grads_needed[ggml_hash_find(&cgraph->visited_hash_set, node->src[j])]) {
-                continue;
+        برائے (صحیح j = 0; j < GGML_MAX_SRC; ++j) {
+            اگر (!گرہ->src[j] || ignore_src[j] || !grads_needed[ggml_hash_ڈھونڈو(&cgraph->دیکھا_hash_سیٹ, گرہ->src[j])]) {
+                جاری;
             }
-            GGML_ASSERT(node->src[j]->type == GGML_TYPE_F32 || node->src[j]->type == GGML_TYPE_F16);
-            node_needs_grad = true;
-            break;
+            GGML_ASSERT(گرہ->src[j]->type == GGML_TYPE_F32 || گرہ->src[j]->type == GGML_TYPE_F16);
+            گرہ_needs_grad = true;
+            توڑو;
         }
-        if (!node_needs_grad) {
-            continue;
+        اگر (!گرہ_needs_grad) {
+            جاری;
         }
 
         // inplace operations are currently not supported
-        GGML_ASSERT(!node->view_src || node->op == GGML_OP_CPY || node->op == GGML_OP_SET_ROWS || node->op == GGML_OP_VIEW ||
-            node->op == GGML_OP_RESHAPE || node->op == GGML_OP_PERMUTE || node->op == GGML_OP_TRANSPOSE);
+        GGML_ASSERT(!گرہ->view_src || گرہ->op == GGML_OP_CPY || گرہ->op == GGML_OP_سیٹ_صفیں || گرہ->op == GGML_OP_VIEW ||
+            گرہ->op == GGML_OP_RESHAPE || گرہ->op == GGML_OP_ترتیب_بدلو || گرہ->op == GGML_OP_TRANSPOSE);
 
-        const size_t ihash = ggml_hash_find(&cgraph->visited_hash_set, node);
-        GGML_ASSERT(ihash != GGML_HASHSET_FULL);
-        GGML_ASSERT(ggml_bitset_get(cgraph->visited_hash_set.used, ihash));
-        if (grad_accs && grad_accs[i]) {
+        ثابت size_t ihash = ggml_hash_ڈھونڈو(&cgraph->دیکھا_hash_سیٹ, گرہ);
+        GGML_ASSERT(ihash != GGML_HASHSET_بھرا);
+        GGML_ASSERT(ggml_bitset_get(cgraph->دیکھا_hash_سیٹ.مستعمل, ihash));
+        اگر (grad_accs && grad_accs[i]) {
             cgraph->grad_accs[ihash] = grad_accs[i];
             cgraph->grads[ihash]     = cgraph->grad_accs[ihash];
-        } else if (node->flags & GGML_TENSOR_FLAG_LOSS) {
+        } ورنہ اگر (گرہ->flags & GGML_TENSOR_FLAG_LOSS) {
             // loss tensors always need a gradient accumulator
-            cgraph->grad_accs[ihash] = ggml_new_tensor(ctx, GGML_TYPE_F32, GGML_MAX_DIMS, node->ne);
+            cgraph->grad_accs[ihash] = ggml_new_tensor(ctx, GGML_TYPE_F32, GGML_MAX_DIMS, گرہ->ne);
             cgraph->grads[ihash]     = cgraph->grad_accs[ihash];
         }
         grads_needed[ihash] = true;
     }
 
-    for (int i = n_nodes_f - 1; i >= 0; --i) {
+    برائے (صحیح i = n_nodes_f - 1; i >= 0; --i) {
         // inplace operations to add gradients are not created by ggml_compute_backward except for gradient accumulation
         // use allocator to automatically make inplace operations
         ggml_compute_backward(ctx, cgraph, i, grads_needed);
     }
 
-    free(grads_needed);
+    آزاد(grads_needed);
 }
 
-static void * incr_ptr_aligned(void ** p, size_t size, size_t align) {
-    void * ptr = *p;
-    ptr = (void *) GGML_PAD((uintptr_t) ptr, align);
-    *p = (void *) ((char *) ptr + size);
-    return ptr;
+ساکن خالی * incr_ptr_aligned(خالی ** p, size_t سائز, size_t align) {
+    خالی * ptr = *p;
+    ptr = (خالی *) GGML_PAD((uintptr_t) ptr, align);
+    *p = (خالی *) ((حرف *) ptr + سائز);
+    واپس ptr;
 }
 
-static size_t ggml_graph_nbytes(size_t size, bool grads) {
-    size_t hash_size = ggml_hash_size(size * 2);
-    void * p = (char *) 1024; // workaround for ubsan error "applying non-zero offset X to null pointer"
-    incr_ptr_aligned(&p, sizeof(struct ggml_cgraph), 1);
-    incr_ptr_aligned(&p, size * sizeof(struct ggml_tensor *), sizeof(struct ggml_tensor *)); // nodes
-    incr_ptr_aligned(&p, size * sizeof(struct ggml_tensor *), sizeof(struct ggml_tensor *)); // leafs
-    incr_ptr_aligned(&p, hash_size * sizeof(int32_t), sizeof(int32_t)); // use_counts
-    incr_ptr_aligned(&p, hash_size * sizeof(struct ggml_tensor *), sizeof(struct ggml_tensor *)); // hash keys
-    if (grads) {
-        incr_ptr_aligned(&p, hash_size * sizeof(struct ggml_tensor *), sizeof(struct ggml_tensor *)); // grads
-        incr_ptr_aligned(&p, hash_size * sizeof(struct ggml_tensor *), sizeof(struct ggml_tensor *)); // grad_accs
+ساکن size_t ggml_گراف_nbytes(size_t سائز, bool grads) {
+    size_t hash_سائز = ggml_hash_سائز(سائز * 2);
+    خالی * p = (حرف *) 1024; // workaround for ubsan error "applying non-zero offset X to null pointer"
+    incr_ptr_aligned(&p, حجم(ساخت ggml_cgraph), 1);
+    incr_ptr_aligned(&p, سائز * حجم(ساخت ggml_tensor *), حجم(ساخت ggml_tensor *)); // nodes
+    incr_ptr_aligned(&p, سائز * حجم(ساخت ggml_tensor *), حجم(ساخت ggml_tensor *)); // leafs
+    incr_ptr_aligned(&p, hash_سائز * حجم(int32_t), حجم(int32_t)); // use_counts
+    incr_ptr_aligned(&p, hash_سائز * حجم(ساخت ggml_tensor *), حجم(ساخت ggml_tensor *)); // hash keys
+    اگر (grads) {
+        incr_ptr_aligned(&p, hash_سائز * حجم(ساخت ggml_tensor *), حجم(ساخت ggml_tensor *)); // grads
+        incr_ptr_aligned(&p, hash_سائز * حجم(ساخت ggml_tensor *), حجم(ساخت ggml_tensor *)); // grad_accs
     }
-    incr_ptr_aligned(&p, ggml_bitset_size(hash_size) * sizeof(ggml_bitset_t), sizeof(ggml_bitset_t));
+    incr_ptr_aligned(&p, ggml_bitset_سائز(hash_سائز) * حجم(ggml_bitset_t), حجم(ggml_bitset_t));
 
     size_t nbytes = (size_t) p;
-    return nbytes - 1024;
+    واپس nbytes - 1024;
 }
 
-size_t ggml_graph_overhead_custom(size_t size, bool grads) {
-    return GGML_OBJECT_SIZE + GGML_PAD(ggml_graph_nbytes(size, grads), GGML_MEM_ALIGN);
+size_t ggml_گراف_overhead_custom(size_t سائز, bool grads) {
+    واپس GGML_OBJECT_سائز + GGML_PAD(ggml_گراف_nbytes(سائز, grads), GGML_MEM_ALIGN);
 }
 
-size_t ggml_graph_overhead(void) {
-    return ggml_graph_overhead_custom(GGML_DEFAULT_GRAPH_SIZE, false);
+size_t ggml_گراف_overhead(خالی) {
+    واپس ggml_گراف_overhead_custom(GGML_DEFAULT_گراف_سائز, false);
 }
 
-struct ggml_cgraph * ggml_new_graph_custom(struct ggml_context * ctx, size_t size, bool grads) {
-    const size_t obj_size = ggml_graph_nbytes(size, grads);
-    struct ggml_object * obj = ggml_new_object(ctx, GGML_OBJECT_TYPE_GRAPH, obj_size);
-    struct ggml_cgraph * cgraph = (struct ggml_cgraph *) ((char *) ctx->mem_buffer + obj->offs);
+ساخت ggml_cgraph * ggml_new_گراف_custom(ساخت ggml_context * ctx, size_t سائز, bool grads) {
+    ثابت size_t obj_سائز = ggml_گراف_nbytes(سائز, grads);
+    ساخت ggml_object * obj = ggml_new_object(ctx, GGML_OBJECT_TYPE_گراف, obj_سائز);
+    ساخت ggml_cgraph * cgraph = (ساخت ggml_cgraph *) ((حرف *) ctx->mem_بفر + obj->offs);
 
     // the size of the hash table is doubled since it needs to hold both nodes and leafs
-    size_t hash_size = ggml_hash_size(size * 2);
+    size_t hash_سائز = ggml_hash_سائز(سائز * 2);
 
-    void * p = cgraph + 1;
+    خالی * p = cgraph + 1;
 
-    struct ggml_tensor ** nodes_ptr      =         incr_ptr_aligned(&p, size      * sizeof(struct ggml_tensor *), sizeof(struct ggml_tensor *));
-    struct ggml_tensor ** leafs_ptr      =         incr_ptr_aligned(&p, size      * sizeof(struct ggml_tensor *), sizeof(struct ggml_tensor *));
-    int32_t             * use_counts_ptr =         incr_ptr_aligned(&p, hash_size * sizeof(int32_t), sizeof(int32_t));
-    struct ggml_tensor ** hash_keys_ptr  =         incr_ptr_aligned(&p, hash_size * sizeof(struct ggml_tensor *), sizeof(struct ggml_tensor *));
-    struct ggml_tensor ** grads_ptr      = grads ? incr_ptr_aligned(&p, hash_size * sizeof(struct ggml_tensor *), sizeof(struct ggml_tensor *)) : NULL;
-    struct ggml_tensor ** grad_accs_ptr  = grads ? incr_ptr_aligned(&p, hash_size * sizeof(struct ggml_tensor *), sizeof(struct ggml_tensor *)) : NULL;
+    ساخت ggml_tensor ** nodes_ptr      =         incr_ptr_aligned(&p, سائز      * حجم(ساخت ggml_tensor *), حجم(ساخت ggml_tensor *));
+    ساخت ggml_tensor ** leafs_ptr      =         incr_ptr_aligned(&p, سائز      * حجم(ساخت ggml_tensor *), حجم(ساخت ggml_tensor *));
+    int32_t             * use_counts_ptr =         incr_ptr_aligned(&p, hash_سائز * حجم(int32_t), حجم(int32_t));
+    ساخت ggml_tensor ** hash_کلیدیں_ptr  =         incr_ptr_aligned(&p, hash_سائز * حجم(ساخت ggml_tensor *), حجم(ساخت ggml_tensor *));
+    ساخت ggml_tensor ** grads_ptr      = grads ? incr_ptr_aligned(&p, hash_سائز * حجم(ساخت ggml_tensor *), حجم(ساخت ggml_tensor *)) : تہی;
+    ساخت ggml_tensor ** grad_accs_ptr  = grads ? incr_ptr_aligned(&p, hash_سائز * حجم(ساخت ggml_tensor *), حجم(ساخت ggml_tensor *)) : تہی;
 
-    ggml_bitset_t * hash_used = incr_ptr_aligned(&p, ggml_bitset_size(hash_size) * sizeof(ggml_bitset_t), sizeof(ggml_bitset_t));
+    ggml_bitset_t * hash_مستعمل = incr_ptr_aligned(&p, ggml_bitset_سائز(hash_سائز) * حجم(ggml_bitset_t), حجم(ggml_bitset_t));
 
     // check that we allocated the correct amount of memory
-    assert(obj_size == (size_t)((char *)p - (char *)cgraph));
+    أكد(obj_سائز == (size_t)((حرف *)p - (حرف *)cgraph));
 
-    *cgraph = (struct ggml_cgraph) {
-        /*.size         =*/ size,
+    *cgraph = (ساخت ggml_cgraph) {
+        /*.size         =*/ سائز,
         /*.n_nodes      =*/ 0,
         /*.n_leafs      =*/ 0,
         /*.nodes        =*/ nodes_ptr,
@@ -7571,82 +7571,82 @@ struct ggml_cgraph * ggml_new_graph_custom(struct ggml_context * ctx, size_t siz
         /*.grad_accs    =*/ grad_accs_ptr,
         /*.leafs        =*/ leafs_ptr,
         /*.use_counts   =*/ use_counts_ptr,
-        /*.hash_table   =*/ { hash_size, hash_used, hash_keys_ptr },
-        /*.order        =*/ GGML_CGRAPH_EVAL_ORDER_LEFT_TO_RIGHT,
+        /*.hash_table   =*/ { hash_سائز, hash_مستعمل, hash_کلیدیں_ptr },
+        /*.order        =*/ GGML_CGRAPH_EVAL_ترتیب_بایاں_مقصد_دایاں,
         /*.uid          =*/ 0,
     };
 
-    ggml_hash_set_reset(&cgraph->visited_hash_set);
-    if (grads) {
-        memset(cgraph->grads,     0, hash_size*sizeof(struct ggml_tensor *));
-        memset(cgraph->grad_accs, 0, hash_size*sizeof(struct ggml_tensor *));
+    ggml_hash_سیٹ_reset(&cgraph->دیکھا_hash_سیٹ);
+    اگر (grads) {
+        memset(cgraph->grads,     0, hash_سائز*حجم(ساخت ggml_tensor *));
+        memset(cgraph->grad_accs, 0, hash_سائز*حجم(ساخت ggml_tensor *));
     }
 
-    return cgraph;
+    واپس cgraph;
 }
 
-struct ggml_cgraph * ggml_new_graph(struct ggml_context * ctx) {
-    return ggml_new_graph_custom(ctx, GGML_DEFAULT_GRAPH_SIZE, false);
+ساخت ggml_cgraph * ggml_new_گراف(ساخت ggml_context * ctx) {
+    واپس ggml_new_گراف_custom(ctx, GGML_DEFAULT_گراف_سائز, false);
 }
 
-struct ggml_cgraph ggml_graph_view(struct ggml_cgraph * cgraph0, int i0, int i1) {
-    struct ggml_cgraph cgraph = {
+ساخت ggml_cgraph ggml_گراف_view(ساخت ggml_cgraph * cgraph0, صحیح i0, صحیح i1) {
+    ساخت ggml_cgraph cgraph = {
         /*.size             =*/ 0,
         /*.n_nodes          =*/ i1 - i0,
         /*.n_leafs          =*/ 0,
         /*.nodes            =*/ cgraph0->nodes + i0,
-        /*.grads            =*/ NULL, // gradients would need visited_hash_set
-        /*.grad_accs        =*/ NULL,
-        /*.leafs            =*/ NULL,
+        /*.grads            =*/ تہی, // gradients would need visited_hash_set
+        /*.grad_accs        =*/ تہی,
+        /*.leafs            =*/ تہی,
         /*.use_counts       =*/ cgraph0->use_counts,
-        /*.visited_hash_set =*/ cgraph0->visited_hash_set,
-        /*.order            =*/ cgraph0->order,
+        /*.visited_hash_set =*/ cgraph0->دیکھا_hash_سیٹ,
+        /*.order            =*/ cgraph0->ترتیب,
         /*.uid              =*/ 0
     };
 
-    return cgraph;
+    واپس cgraph;
 }
 
-void ggml_graph_cpy(struct ggml_cgraph * src, struct ggml_cgraph * dst) {
-    GGML_ASSERT(dst->size >= src->n_leafs);
-    GGML_ASSERT(dst->size >= src->n_nodes);
-    GGML_ASSERT(dst->visited_hash_set.size >= src->visited_hash_set.size);
+خالی ggml_گراف_cpy(ساخت ggml_cgraph * src, ساخت ggml_cgraph * dst) {
+    GGML_ASSERT(dst->سائز >= src->n_leafs);
+    GGML_ASSERT(dst->سائز >= src->n_nodes);
+    GGML_ASSERT(dst->دیکھا_hash_سیٹ.سائز >= src->دیکھا_hash_سیٹ.سائز);
 
     dst->n_leafs = src->n_leafs;
     dst->n_nodes = src->n_nodes;
-    dst->order   = src->order;
+    dst->ترتیب   = src->ترتیب;
 
-    for (int i = 0; i < src->n_leafs; ++i) {
+    برائے (صحیح i = 0; i < src->n_leafs; ++i) {
         dst->leafs[i] = src->leafs[i];
     }
 
-    for (int i = 0; i < src->n_nodes; ++i) {
+    برائے (صحیح i = 0; i < src->n_nodes; ++i) {
         dst->nodes[i] = src->nodes[i];
     }
 
-    for (size_t i = 0; i < src->visited_hash_set.size; ++i) {
+    برائے (size_t i = 0; i < src->دیکھا_hash_سیٹ.سائز; ++i) {
         // copy all hashset keys (tensors) that are in use
-        if (ggml_bitset_get(src->visited_hash_set.used, i)) {
-            size_t new_hash_pos = ggml_hash_insert(&dst->visited_hash_set, src->visited_hash_set.keys[i]);
+        اگر (ggml_bitset_get(src->دیکھا_hash_سیٹ.مستعمل, i)) {
+            size_t new_hash_pos = ggml_hash_داخل_کرو(&dst->دیکھا_hash_سیٹ, src->دیکھا_hash_سیٹ.کلیدیں[i]);
             dst->use_counts[new_hash_pos] = src->use_counts[i];
         }
     }
 
-    if (dst->grads) {
-        memset(dst->grads,     0, dst->visited_hash_set.size*sizeof(struct ggml_tensor *));
-        memset(dst->grad_accs, 0, dst->visited_hash_set.size*sizeof(struct ggml_tensor *));
+    اگر (dst->grads) {
+        memset(dst->grads,     0, dst->دیکھا_hash_سیٹ.سائز*حجم(ساخت ggml_tensor *));
+        memset(dst->grad_accs, 0, dst->دیکھا_hash_سیٹ.سائز*حجم(ساخت ggml_tensor *));
     }
-    if (src->grads) {
-        GGML_ASSERT(dst->grads     != NULL);
-        GGML_ASSERT(dst->grad_accs != NULL);
-        for (int i = 0; i < src->n_nodes; ++i) {
-            const size_t igrad_src = ggml_hash_find(&src->visited_hash_set, src->nodes[i]);
-            const size_t igrad_dst = ggml_hash_find(&dst->visited_hash_set, dst->nodes[i]);
+    اگر (src->grads) {
+        GGML_ASSERT(dst->grads     != تہی);
+        GGML_ASSERT(dst->grad_accs != تہی);
+        برائے (صحیح i = 0; i < src->n_nodes; ++i) {
+            ثابت size_t igrad_src = ggml_hash_ڈھونڈو(&src->دیکھا_hash_سیٹ, src->nodes[i]);
+            ثابت size_t igrad_dst = ggml_hash_ڈھونڈو(&dst->دیکھا_hash_سیٹ, dst->nodes[i]);
 
-            GGML_ASSERT(igrad_src != GGML_HASHSET_FULL);
-            GGML_ASSERT(ggml_bitset_get(src->visited_hash_set.used, igrad_src));
-            GGML_ASSERT(igrad_dst != GGML_HASHSET_FULL);
-            GGML_ASSERT(ggml_bitset_get(dst->visited_hash_set.used, igrad_dst));
+            GGML_ASSERT(igrad_src != GGML_HASHSET_بھرا);
+            GGML_ASSERT(ggml_bitset_get(src->دیکھا_hash_سیٹ.مستعمل, igrad_src));
+            GGML_ASSERT(igrad_dst != GGML_HASHSET_بھرا);
+            GGML_ASSERT(ggml_bitset_get(dst->دیکھا_hash_سیٹ.مستعمل, igrad_dst));
 
             dst->grads[igrad_dst]     = src->grads[igrad_src];
             dst->grad_accs[igrad_dst] = src->grad_accs[igrad_src];
@@ -7654,282 +7654,282 @@ void ggml_graph_cpy(struct ggml_cgraph * src, struct ggml_cgraph * dst) {
     }
 }
 
-struct ggml_cgraph * ggml_graph_dup(struct ggml_context * ctx, struct ggml_cgraph * cgraph, bool force_grads) {
-    struct ggml_cgraph * result = ggml_new_graph_custom(ctx, cgraph->size, cgraph->grads || force_grads);
-    ggml_graph_cpy(cgraph, result);
-    return result;
+ساخت ggml_cgraph * ggml_گراف_dup(ساخت ggml_context * ctx, ساخت ggml_cgraph * cgraph, bool force_grads) {
+    ساخت ggml_cgraph * نتیجہ = ggml_new_گراف_custom(ctx, cgraph->سائز, cgraph->grads || force_grads);
+    ggml_گراف_cpy(cgraph, نتیجہ);
+    واپس نتیجہ;
 }
 
-struct ggml_tensor * ggml_set_zero(struct ggml_tensor * tensor) {
-    if (ggml_is_empty(tensor)) {
-        return tensor;
+ساخت ggml_tensor * ggml_سیٹ_zero(ساخت ggml_tensor * tensor) {
+    اگر (ggml_is_خالی_خانے(tensor)) {
+        واپس tensor;
     }
-    if (tensor->buffer) {
+    اگر (tensor->بفر) {
         ggml_backend_tensor_memset(tensor, 0, 0, ggml_nbytes(tensor));
-    } else {
-        GGML_ASSERT(tensor->data);
-        memset(tensor->data, 0, ggml_nbytes(tensor));
+    } ورنہ {
+        GGML_ASSERT(tensor->ڈیٹا);
+        memset(tensor->ڈیٹا, 0, ggml_nbytes(tensor));
     }
-    return tensor;
+    واپس tensor;
 }
 
-void ggml_graph_reset(struct ggml_cgraph * cgraph) {
-    if (!cgraph) {
-        return;
+خالی ggml_گراف_reset(ساخت ggml_cgraph * cgraph) {
+    اگر (!cgraph) {
+        واپس;
     }
-    GGML_ASSERT(cgraph->grads != NULL);
+    GGML_ASSERT(cgraph->grads != تہی);
 
-    for (int i = 0; i < cgraph->n_nodes; i++) {
-        struct ggml_tensor * node     = cgraph->nodes[i];
-        struct ggml_tensor * grad_acc = ggml_graph_get_grad_acc(cgraph, node);
+    برائے (صحیح i = 0; i < cgraph->n_nodes; i++) {
+        ساخت ggml_tensor * گرہ     = cgraph->nodes[i];
+        ساخت ggml_tensor * grad_acc = ggml_گراف_get_grad_acc(cgraph, گرہ);
 
-        if (node->op == GGML_OP_OPT_STEP_ADAMW) {
+        اگر (گرہ->op == GGML_OP_OPT_قدم_ADAMW) {
             // clear momenta
-            ggml_set_zero(node->src[2]);
-            ggml_set_zero(node->src[3]);
+            ggml_سیٹ_zero(گرہ->src[2]);
+            ggml_سیٹ_zero(گرہ->src[3]);
         }
 
         // initial gradients of loss should be 1, 0 otherwise
-        if (grad_acc) {
-            if (node->flags & GGML_TENSOR_FLAG_LOSS) {
+        اگر (grad_acc) {
+            اگر (گرہ->flags & GGML_TENSOR_FLAG_LOSS) {
                 GGML_ASSERT(grad_acc->type == GGML_TYPE_F32);
                 GGML_ASSERT(ggml_is_scalar(grad_acc));
 
-                const float onef = 1.0f;
-                if (grad_acc->buffer) {
-                    ggml_backend_tensor_set(grad_acc, &onef, 0, sizeof(float));
-                } else {
-                    GGML_ASSERT(grad_acc->data);
-                    *((float *) grad_acc->data) = onef;
+                ثابت اعشاری onef = 1.0f;
+                اگر (grad_acc->بفر) {
+                    ggml_backend_tensor_سیٹ(grad_acc, &onef, 0, حجم(اعشاری));
+                } ورنہ {
+                    GGML_ASSERT(grad_acc->ڈیٹا);
+                    *((اعشاری *) grad_acc->ڈیٹا) = onef;
                 }
-            } else {
-                ggml_set_zero(grad_acc);
+            } ورنہ {
+                ggml_سیٹ_zero(grad_acc);
             }
         }
     }
 }
 
-void ggml_graph_clear(struct ggml_cgraph * cgraph) {
+خالی ggml_گراف_clear(ساخت ggml_cgraph * cgraph) {
     cgraph->n_leafs = 0;
     cgraph->n_nodes = 0;
-    ggml_hash_set_reset(&cgraph->visited_hash_set);
+    ggml_hash_سیٹ_reset(&cgraph->دیکھا_hash_سیٹ);
 }
 
-int ggml_graph_size(struct ggml_cgraph * cgraph) {
-    return cgraph->size;
+صحیح ggml_گراف_سائز(ساخت ggml_cgraph * cgraph) {
+    واپس cgraph->سائز;
 }
 
-struct ggml_tensor * ggml_graph_node(struct ggml_cgraph * cgraph, int i) {
-    if (i < 0) {
+ساخت ggml_tensor * ggml_گراف_گرہ(ساخت ggml_cgraph * cgraph, صحیح i) {
+    اگر (i < 0) {
         GGML_ASSERT(cgraph->n_nodes + i >= 0);
-        return cgraph->nodes[cgraph->n_nodes + i];
+        واپس cgraph->nodes[cgraph->n_nodes + i];
     }
 
     GGML_ASSERT(i < cgraph->n_nodes);
-    return cgraph->nodes[i];
+    واپس cgraph->nodes[i];
 }
 
-struct ggml_tensor ** ggml_graph_nodes(struct ggml_cgraph * cgraph) {
-    return cgraph->nodes;
+ساخت ggml_tensor ** ggml_گراف_nodes(ساخت ggml_cgraph * cgraph) {
+    واپس cgraph->nodes;
 }
 
-int ggml_graph_n_nodes(struct ggml_cgraph * cgraph) {
-    return cgraph->n_nodes;
+صحیح ggml_گراف_n_nodes(ساخت ggml_cgraph * cgraph) {
+    واپس cgraph->n_nodes;
 }
 
-void ggml_graph_add_node(struct ggml_cgraph * cgraph, struct ggml_tensor * tensor) {
-    GGML_ASSERT(cgraph->size > cgraph->n_nodes);
+خالی ggml_گراف_جوڑو_گرہ(ساخت ggml_cgraph * cgraph, ساخت ggml_tensor * tensor) {
+    GGML_ASSERT(cgraph->سائز > cgraph->n_nodes);
     cgraph->nodes[cgraph->n_nodes] = tensor;
     cgraph->n_nodes++;
 }
 
-struct ggml_tensor * ggml_graph_get_tensor(const struct ggml_cgraph * cgraph, const char * name) {
-    for (int i = 0; i < cgraph->n_leafs; i++) {
-        struct ggml_tensor * leaf = cgraph->leafs[i];
+ساخت ggml_tensor * ggml_گراف_get_tensor(ثابت ساخت ggml_cgraph * cgraph, ثابت حرف * name) {
+    برائے (صحیح i = 0; i < cgraph->n_leafs; i++) {
+        ساخت ggml_tensor * برگ = cgraph->leafs[i];
 
-        if (strcmp(leaf->name, name) == 0) {
-            return leaf;
+        اگر (strcmp(برگ->name, name) == 0) {
+            واپس برگ;
         }
     }
 
-    for (int i = 0; i < cgraph->n_nodes; i++) {
-        struct ggml_tensor * node = cgraph->nodes[i];
+    برائے (صحیح i = 0; i < cgraph->n_nodes; i++) {
+        ساخت ggml_tensor * گرہ = cgraph->nodes[i];
 
-        if (strcmp(node->name, name) == 0) {
-            return node;
+        اگر (strcmp(گرہ->name, name) == 0) {
+            واپس گرہ;
         }
     }
 
-    return NULL;
+    واپس تہی;
 }
 
-struct ggml_tensor * ggml_graph_get_grad(const struct ggml_cgraph * cgraph, const struct ggml_tensor * node) {
-    const size_t igrad = ggml_hash_find(&cgraph->visited_hash_set, node);
-    return igrad != GGML_HASHSET_FULL && ggml_bitset_get(cgraph->visited_hash_set.used, igrad) && cgraph->grads ? cgraph->grads[igrad] : NULL;
+ساخت ggml_tensor * ggml_گراف_get_grad(ثابت ساخت ggml_cgraph * cgraph, ثابت ساخت ggml_tensor * گرہ) {
+    ثابت size_t igrad = ggml_hash_ڈھونڈو(&cgraph->دیکھا_hash_سیٹ, گرہ);
+    واپس igrad != GGML_HASHSET_بھرا && ggml_bitset_get(cgraph->دیکھا_hash_سیٹ.مستعمل, igrad) && cgraph->grads ? cgraph->grads[igrad] : تہی;
 }
 
-struct ggml_tensor * ggml_graph_get_grad_acc(const struct ggml_cgraph * cgraph, const struct ggml_tensor * node) {
-    const size_t igrad = ggml_hash_find(&cgraph->visited_hash_set, node);
-    return igrad != GGML_HASHSET_FULL && ggml_bitset_get(cgraph->visited_hash_set.used, igrad) && cgraph->grad_accs ? cgraph->grad_accs[igrad] : NULL;
+ساخت ggml_tensor * ggml_گراف_get_grad_acc(ثابت ساخت ggml_cgraph * cgraph, ثابت ساخت ggml_tensor * گرہ) {
+    ثابت size_t igrad = ggml_hash_ڈھونڈو(&cgraph->دیکھا_hash_سیٹ, گرہ);
+    واپس igrad != GGML_HASHSET_بھرا && ggml_bitset_get(cgraph->دیکھا_hash_سیٹ.مستعمل, igrad) && cgraph->grad_accs ? cgraph->grad_accs[igrad] : تہی;
 }
 
-void ggml_graph_print(const struct ggml_cgraph * cgraph) {
+خالی ggml_گراف_print(ثابت ساخت ggml_cgraph * cgraph) {
     GGML_LOG_INFO("=== GRAPH ===\n");
 
     GGML_LOG_INFO("n_nodes = %d\n", cgraph->n_nodes);
-    for (int i = 0; i < cgraph->n_nodes; i++) {
-        struct ggml_tensor * node = cgraph->nodes[i];
+    برائے (صحیح i = 0; i < cgraph->n_nodes; i++) {
+        ساخت ggml_tensor * گرہ = cgraph->nodes[i];
 
         GGML_LOG_INFO(" - %3d: [ %5" PRId64 ", %5" PRId64 ", %5" PRId64 "] %16s %s\n",
                 i,
-                node->ne[0], node->ne[1], node->ne[2],
-                ggml_op_name(node->op), (node->flags & GGML_TENSOR_FLAG_PARAM) ? "x" :
-                      ggml_graph_get_grad(cgraph, node) ? "g" : " ");
+                گرہ->ne[0], گرہ->ne[1], گرہ->ne[2],
+                ggml_op_name(گرہ->op), (گرہ->flags & GGML_TENSOR_FLAG_PARAM) ? "x" :
+                      ggml_گراف_get_grad(cgraph, گرہ) ? "g" : " ");
     }
 
     GGML_LOG_INFO("n_leafs = %d\n", cgraph->n_leafs);
-    for (int i = 0; i < cgraph->n_leafs; i++) {
-        struct ggml_tensor * node = cgraph->leafs[i];
+    برائے (صحیح i = 0; i < cgraph->n_leafs; i++) {
+        ساخت ggml_tensor * گرہ = cgraph->leafs[i];
 
         GGML_LOG_INFO(" - %3d: [ %5" PRId64 ", %5" PRId64 "] %8s %16s\n",
                 i,
-                node->ne[0], node->ne[1],
-                ggml_op_name(node->op),
-                ggml_get_name(node));
+                گرہ->ne[0], گرہ->ne[1],
+                ggml_op_name(گرہ->op),
+                ggml_get_name(گرہ));
     }
 
     GGML_LOG_INFO("========================================\n");
 }
 
-static int ggml_node_list_find_tensor(const struct ggml_cgraph * cgraph,
-                                      const int *                idxs,
-                                      int                        count,
-                                      const struct ggml_tensor * tensor) {
+ساکن صحیح ggml_گرہ_list_ڈھونڈو_tensor(ثابت ساخت ggml_cgraph * cgraph,
+                                      ثابت صحیح *                idxs,
+                                      صحیح                        گنتی,
+                                      ثابت ساخت ggml_tensor * tensor) {
     GGML_ASSERT(cgraph && idxs);
-    for (int i = 0; i < count; ++i) {
-        const int node_idx = idxs[i];
+    برائے (صحیح i = 0; i < گنتی; ++i) {
+        ثابت صحیح گرہ_idx = idxs[i];
 
-        if (node_idx >= cgraph->n_nodes) {
-            return -1;
+        اگر (گرہ_idx >= cgraph->n_nodes) {
+            واپس -1;
         }
-        if (cgraph->nodes[node_idx] == tensor) {
-            return i;
+        اگر (cgraph->nodes[گرہ_idx] == tensor) {
+            واپس i;
         }
     }
-    return -1;
+    واپس -1;
 }
 
-static bool ggml_is_constant(const struct ggml_tensor * tensor) {
-    return tensor->buffer != NULL && ggml_backend_buffer_get_usage(tensor->buffer) == GGML_BACKEND_BUFFER_USAGE_WEIGHTS && (tensor->flags & GGML_TENSOR_FLAG_PARAM) == 0;
+ساکن bool ggml_is_constant(ثابت ساخت ggml_tensor * tensor) {
+    واپس tensor->بفر != تہی && ggml_backend_بفر_get_usage(tensor->بفر) == GGML_BACKEND_بفر_USAGE_WEIGHTS && (tensor->flags & GGML_TENSOR_FLAG_PARAM) == 0;
 }
 
-bool ggml_can_fuse_subgraph_ext(const struct ggml_cgraph * cgraph,
-                                const int *                node_idxs,
-                                int                        count,
-                                const enum ggml_op *       ops,
-                                const int *                outputs,
-                                int                        num_outputs) {
-    GGML_ASSERT(outputs && num_outputs > 0);
+bool ggml_can_fuse_subgraph_ext(ثابت ساخت ggml_cgraph * cgraph,
+                                ثابت صحیح *                گرہ_idxs,
+                                صحیح                        گنتی,
+                                ثابت شمار ggml_op *       ops,
+                                ثابت صحیح *                outputs,
+                                صحیح                        عدد_outputs) {
+    GGML_ASSERT(outputs && عدد_outputs > 0);
 
-    for (int i = 0; i < count; ++i) {
-        if (node_idxs[i] >= cgraph->n_nodes) {
-            return false;
+    برائے (صحیح i = 0; i < گنتی; ++i) {
+        اگر (گرہ_idxs[i] >= cgraph->n_nodes) {
+            واپس false;
         }
 
-        const struct ggml_tensor * node = cgraph->nodes[node_idxs[i]];
+        ثابت ساخت ggml_tensor * گرہ = cgraph->nodes[گرہ_idxs[i]];
 
-        if (node->op != ops[i]) {
-            return false;
+        اگر (گرہ->op != ops[i]) {
+            واپس false;
         }
 
-        if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
-            return false;
+        اگر ((گرہ->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+            واپس false;
         }
 
-        if (ggml_node_list_find_tensor(cgraph, outputs, num_outputs, node) != -1) {
-            continue;
+        اگر (ggml_گرہ_list_ڈھونڈو_tensor(cgraph, outputs, عدد_outputs, گرہ) != -1) {
+            جاری;
         }
 
-        if (node->flags & GGML_TENSOR_FLAG_OUTPUT) {
-            return false;
+        اگر (گرہ->flags & GGML_TENSOR_FLAG_OUTPUT) {
+            واپس false;
         }
 
-        int subgraph_uses = 0;
-        for (int j = i + 1; j < count; ++j) {
-            const struct ggml_tensor * other_node = cgraph->nodes[node_idxs[j]];
-            for (int src_idx = 0; src_idx < GGML_MAX_SRC; src_idx++) {
-                if (other_node->src[src_idx] == node) {
-                    subgraph_uses++;
+        صحیح subgraph_استعمال_کرتا = 0;
+        برائے (صحیح j = i + 1; j < گنتی; ++j) {
+            ثابت ساخت ggml_tensor * other_گرہ = cgraph->nodes[گرہ_idxs[j]];
+            برائے (صحیح src_idx = 0; src_idx < GGML_MAX_SRC; src_idx++) {
+                اگر (other_گرہ->src[src_idx] == گرہ) {
+                    subgraph_استعمال_کرتا++;
                 }
             }
         }
 
-        if (subgraph_uses != ggml_node_get_use_count(cgraph, node_idxs[i])) {
-            return false;
+        اگر (subgraph_استعمال_کرتا != ggml_گرہ_get_use_گنتی(cgraph, گرہ_idxs[i])) {
+            واپس false;
         }
 
         // if node is a view, check if the view_src and all its parent view_srcs are within the subgraph.
         // external view sources are allowed only for weight tensors, which are constant for this graph execution.
-        struct ggml_tensor * view_src = node->view_src;
-        while (view_src) {
-            if (ggml_node_list_find_tensor(cgraph, node_idxs, count, view_src) == -1 && !ggml_is_constant(view_src)) {
-                return false;
+        ساخت ggml_tensor * view_src = گرہ->view_src;
+        جب (view_src) {
+            اگر (ggml_گرہ_list_ڈھونڈو_tensor(cgraph, گرہ_idxs, گنتی, view_src) == -1 && !ggml_is_constant(view_src)) {
+                واپس false;
             }
             view_src = view_src->view_src;
         }
     }
 
-    return true;
+    واپس true;
 }
 
 // check if node is part of the graph
-static bool ggml_graph_find(const struct ggml_cgraph * cgraph, const struct ggml_tensor * node) {
-    if (cgraph == NULL) {
-        return true;
+ساکن bool ggml_گراف_ڈھونڈو(ثابت ساخت ggml_cgraph * cgraph, ثابت ساخت ggml_tensor * گرہ) {
+    اگر (cgraph == تہی) {
+        واپس true;
     }
 
-    for (int i = 0; i < cgraph->n_nodes; i++) {
-        if (cgraph->nodes[i] == node) {
-            return true;
+    برائے (صحیح i = 0; i < cgraph->n_nodes; i++) {
+        اگر (cgraph->nodes[i] == گرہ) {
+            واپس true;
         }
     }
 
-    return false;
+    واپس false;
 }
 
-static struct ggml_tensor * ggml_graph_get_parent(const struct ggml_cgraph * cgraph, const struct ggml_tensor * node) {
-    for (int i = 0; i < cgraph->n_nodes; i++) {
-        struct ggml_tensor * parent = cgraph->nodes[i];
-        struct ggml_tensor * grad = ggml_graph_get_grad(cgraph, parent);
+ساکن ساخت ggml_tensor * ggml_گراف_get_والد(ثابت ساخت ggml_cgraph * cgraph, ثابت ساخت ggml_tensor * گرہ) {
+    برائے (صحیح i = 0; i < cgraph->n_nodes; i++) {
+        ساخت ggml_tensor * والد = cgraph->nodes[i];
+        ساخت ggml_tensor * grad = ggml_گراف_get_grad(cgraph, والد);
 
-        if (grad == node) {
-            return parent;
+        اگر (grad == گرہ) {
+            واپس والد;
         }
     }
 
-    return NULL;
+    واپس تہی;
 }
 
-static void ggml_graph_dump_dot_node_edge(FILE * fp, const struct ggml_cgraph * gb, struct ggml_tensor * node, struct ggml_tensor * parent, const char * label)  {
-    struct ggml_tensor * gparent = ggml_graph_get_parent(gb, node);
-    struct ggml_tensor * gparent0 = ggml_graph_get_parent(gb, parent);
+ساکن خالی ggml_گراف_dump_dot_گرہ_کنارہ(FILE * fp, ثابت ساخت ggml_cgraph * gb, ساخت ggml_tensor * گرہ, ساخت ggml_tensor * والد, ثابت حرف * label)  {
+    ساخت ggml_tensor * gparent = ggml_گراف_get_والد(gb, گرہ);
+    ساخت ggml_tensor * gparent0 = ggml_گراف_get_والد(gb, والد);
     fprintf(fp, "  \"%p\" -> \"%p\" [ arrowhead = %s; style = %s; label = \"%s\"; ]\n",
-            gparent0 ? (void *) gparent0 : (void *) parent,
-            gparent ? (void *) gparent : (void *) node,
+            gparent0 ? (خالی *) gparent0 : (خالی *) والد,
+            gparent ? (خالی *) gparent : (خالی *) گرہ,
             gparent ? "empty" : "vee",
             gparent ? "dashed" : "solid",
             label);
 }
 
-static void ggml_graph_dump_dot_leaf_edge(FILE * fp, struct ggml_tensor * node, struct ggml_tensor * parent, const char * label)  {
+ساکن خالی ggml_گراف_dump_dot_برگ_کنارہ(FILE * fp, ساخت ggml_tensor * گرہ, ساخت ggml_tensor * والد, ثابت حرف * label)  {
     fprintf(fp, "  \"%p\" -> \"%p\" [ label = \"%s\"; ]\n",
-            (void *) parent,
-            (void *) node,
+            (خالی *) والد,
+            (خالی *) گرہ,
             label);
 }
 
-void ggml_graph_dump_dot(const struct ggml_cgraph * gb, const struct ggml_cgraph * cgraph, const char * filename) {
-    char color[16];
+خالی ggml_گراف_dump_dot(ثابت ساخت ggml_cgraph * gb, ثابت ساخت ggml_cgraph * cgraph, ثابت حرف * filename) {
+    حرف color[16];
 
     FILE * fp = ggml_fopen(filename, "w");
     GGML_ASSERT(fp);
@@ -7938,70 +7938,70 @@ void ggml_graph_dump_dot(const struct ggml_cgraph * gb, const struct ggml_cgraph
     fprintf(fp, "  newrank = true;\n");
     fprintf(fp, "  rankdir = TB;\n");
 
-    for (int i = 0; i < gb->n_nodes; i++) {
-        struct ggml_tensor * node = gb->nodes[i];
-        struct ggml_tensor * grad = ggml_graph_get_grad(gb, node);
+    برائے (صحیح i = 0; i < gb->n_nodes; i++) {
+        ساخت ggml_tensor * گرہ = gb->nodes[i];
+        ساخت ggml_tensor * grad = ggml_گراف_get_grad(gb, گرہ);
 
-        if (ggml_graph_get_parent(gb, node) != NULL) {
-            continue;
+        اگر (ggml_گراف_get_والد(gb, گرہ) != تہی) {
+            جاری;
         }
 
-        if (node->flags & GGML_TENSOR_FLAG_PARAM) {
-            snprintf(color, sizeof(color), "yellow");
-        } else if (grad) {
-            if (ggml_graph_find(cgraph, node)) {
-                snprintf(color, sizeof(color), "green");
-            } else {
-                snprintf(color, sizeof(color), "lightblue");
+        اگر (گرہ->flags & GGML_TENSOR_FLAG_PARAM) {
+            snprintf(color, حجم(color), "yellow");
+        } ورنہ اگر (grad) {
+            اگر (ggml_گراف_ڈھونڈو(cgraph, گرہ)) {
+                snprintf(color, حجم(color), "green");
+            } ورنہ {
+                snprintf(color, حجم(color), "lightblue");
             }
-        } else {
-            snprintf(color, sizeof(color), "white");
+        } ورنہ {
+            snprintf(color, حجم(color), "white");
         }
 
         fprintf(fp, "  \"%p\" [ "
                     "style = filled; fillcolor = %s; shape = record; "
                     "label=\"",
-                (void *) node, color);
+                (خالی *) گرہ, color);
 
-        if (strlen(node->name) > 0) {
-            fprintf(fp, "%s (%s)|", node->name, ggml_type_name(node->type));
-        } else {
-            fprintf(fp, "(%s)|", ggml_type_name(node->type));
+        اگر (لڑی_لمبائی(گرہ->name) > 0) {
+            fprintf(fp, "%s (%s)|", گرہ->name, ggml_type_name(گرہ->type));
+        } ورنہ {
+            fprintf(fp, "(%s)|", ggml_type_name(گرہ->type));
         }
 
-        if (ggml_is_matrix(node)) {
-            fprintf(fp, "%d [%" PRId64 ", %" PRId64 "] | <x>%s", i, node->ne[0], node->ne[1], ggml_op_symbol(node->op));
-        } else {
-            fprintf(fp, "%d [%" PRId64 ", %" PRId64 ", %" PRId64 "] | <x>%s", i, node->ne[0], node->ne[1], node->ne[2], ggml_op_symbol(node->op));
+        اگر (ggml_is_میٹرکس(گرہ)) {
+            fprintf(fp, "%d [%" PRId64 ", %" PRId64 "] | <x>%s", i, گرہ->ne[0], گرہ->ne[1], ggml_op_علامت(گرہ->op));
+        } ورنہ {
+            fprintf(fp, "%d [%" PRId64 ", %" PRId64 ", %" PRId64 "] | <x>%s", i, گرہ->ne[0], گرہ->ne[1], گرہ->ne[2], ggml_op_علامت(گرہ->op));
         }
 
-        if (grad) {
-            fprintf(fp, " | <g>%s\"; ]\n", ggml_op_symbol(grad->op));
-        } else {
+        اگر (grad) {
+            fprintf(fp, " | <g>%s\"; ]\n", ggml_op_علامت(grad->op));
+        } ورنہ {
             fprintf(fp, "\"; ]\n");
         }
     }
 
-    for (int i = 0; i < gb->n_leafs; i++) {
-        struct ggml_tensor * node = gb->leafs[i];
+    برائے (صحیح i = 0; i < gb->n_leafs; i++) {
+        ساخت ggml_tensor * گرہ = gb->leafs[i];
 
-        snprintf(color, sizeof(color), "pink");
+        snprintf(color, حجم(color), "pink");
 
         fprintf(fp, "  \"%p\" [ "
                     "style = filled; fillcolor = %s; shape = record; "
                     "label=\"<x>",
-                (void *) node, color);
+                (خالی *) گرہ, color);
 
-        if (strlen(node->name) > 0) {
-            fprintf(fp, "%s (%s)|", node->name, ggml_type_name(node->type));
-        } else {
-            fprintf(fp, "(%s)|", ggml_type_name(node->type));
+        اگر (لڑی_لمبائی(گرہ->name) > 0) {
+            fprintf(fp, "%s (%s)|", گرہ->name, ggml_type_name(گرہ->type));
+        } ورنہ {
+            fprintf(fp, "(%s)|", ggml_type_name(گرہ->type));
         }
 
-        fprintf(fp, "CONST %d [%" PRId64 ", %" PRId64 "]", i, node->ne[0], node->ne[1]);
-        if (ggml_nelements(node) < 5 && node->data != NULL) {
+        fprintf(fp, "CONST %d [%" PRId64 ", %" PRId64 "]", i, گرہ->ne[0], گرہ->ne[1]);
+        اگر (ggml_nelements(گرہ) < 5 && گرہ->ڈیٹا != تہی) {
             fprintf(fp, " | (");
-            for (int j = 0; j < ggml_nelements(node); j++) {
+            برائے (صحیح j = 0; j < ggml_nelements(گرہ); j++) {
                 // FIXME: use ggml-backend to obtain the tensor data
                 //if (node->type == GGML_TYPE_I8 || node->type == GGML_TYPE_I16 || node->type == GGML_TYPE_I32) {
                 //    fprintf(fp, "%d", ggml_get_i32_1d(node, j));
@@ -8015,7 +8015,7 @@ void ggml_graph_dump_dot(const struct ggml_cgraph * gb, const struct ggml_cgraph
                 {
                     fprintf(fp, "#");
                 }
-                if (j < ggml_nelements(node) - 1) {
+                اگر (j < ggml_nelements(گرہ) - 1) {
                     fprintf(fp, ", ");
                 }
             }
@@ -8024,26 +8024,26 @@ void ggml_graph_dump_dot(const struct ggml_cgraph * gb, const struct ggml_cgraph
         fprintf(fp, "\"; ]\n");
     }
 
-    for (int i = 0; i < gb->n_nodes; i++) {
-        struct ggml_tensor * node = gb->nodes[i];
+    برائے (صحیح i = 0; i < gb->n_nodes; i++) {
+        ساخت ggml_tensor * گرہ = gb->nodes[i];
 
-        for (int j = 0; j < GGML_MAX_SRC; j++) {
-            if (node->src[j]) {
-                char label[16];
-                snprintf(label, sizeof(label), "src %d", j);
-                ggml_graph_dump_dot_node_edge(fp, gb, node, node->src[j], label);
+        برائے (صحیح j = 0; j < GGML_MAX_SRC; j++) {
+            اگر (گرہ->src[j]) {
+                حرف label[16];
+                snprintf(label, حجم(label), "src %d", j);
+                ggml_گراف_dump_dot_گرہ_کنارہ(fp, gb, گرہ, گرہ->src[j], label);
             }
         }
     }
 
-    for (int i = 0; i < gb->n_leafs; i++) {
-        struct ggml_tensor * node = gb->leafs[i];
+    برائے (صحیح i = 0; i < gb->n_leafs; i++) {
+        ساخت ggml_tensor * گرہ = gb->leafs[i];
 
-        for (int j = 0; j < GGML_MAX_SRC; j++) {
-            if (node->src[j]) {
-                char label[16];
-                snprintf(label, sizeof(label), "src %d", j);
-                ggml_graph_dump_dot_leaf_edge(fp, node, node->src[j], label);
+        برائے (صحیح j = 0; j < GGML_MAX_SRC; j++) {
+            اگر (گرہ->src[j]) {
+                حرف label[16];
+                snprintf(label, حجم(label), "src %d", j);
+                ggml_گراف_dump_dot_برگ_کنارہ(fp, گرہ, گرہ->src[j], label);
             }
         }
     }
@@ -8057,23 +8057,23 @@ void ggml_graph_dump_dot(const struct ggml_cgraph * gb, const struct ggml_cgraph
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ggml_set_input(struct ggml_tensor * tensor) {
+خالی ggml_سیٹ_داخلہ(ساخت ggml_tensor * tensor) {
     GGML_ASSERT(tensor->op == GGML_OP_NONE);
-    tensor->flags |= GGML_TENSOR_FLAG_INPUT;
+    tensor->flags |= GGML_TENSOR_FLAG_داخلہ;
 }
 
-void ggml_set_output(struct ggml_tensor * tensor) {
-    for (struct ggml_tensor * cur = tensor; cur != NULL; cur = cur->view_src) {
+خالی ggml_سیٹ_output(ساخت ggml_tensor * tensor) {
+    برائے (ساخت ggml_tensor * cur = tensor; cur != تہی; cur = cur->view_src) {
         cur->flags |= GGML_TENSOR_FLAG_OUTPUT;
     }
 }
 
-void ggml_set_param(struct ggml_tensor * tensor) {
+خالی ggml_سیٹ_param(ساخت ggml_tensor * tensor) {
     GGML_ASSERT(tensor->op == GGML_OP_NONE);
     tensor->flags |= GGML_TENSOR_FLAG_PARAM;
 }
 
-void ggml_set_loss(struct ggml_tensor * tensor) {
+خالی ggml_سیٹ_loss(ساخت ggml_tensor * tensor) {
     GGML_ASSERT(ggml_is_scalar(tensor));
     GGML_ASSERT(tensor->type == GGML_TYPE_F32);
     tensor->flags |= GGML_TENSOR_FLAG_LOSS;
@@ -8081,26 +8081,26 @@ void ggml_set_loss(struct ggml_tensor * tensor) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ggml_quantize_init(enum ggml_type type) {
-    ggml_critical_section_start();
+خالی ggml_quantize_init(شمار ggml_type type) {
+    ggml_critical_section_آغاز();
 
-    switch (type) {
-        case GGML_TYPE_IQ2_XXS:
-        case GGML_TYPE_IQ2_XS:
-        case GGML_TYPE_IQ2_S:
-        case GGML_TYPE_IQ1_S:
-        case GGML_TYPE_IQ1_M:   iq2xs_init_impl(type); break;
-        case GGML_TYPE_IQ3_XXS: iq3xs_init_impl(256); break;
-        case GGML_TYPE_IQ3_S:   iq3xs_init_impl(512); break;
-        default: // nothing
-            break;
+    انتخاب (type) {
+        حالت GGML_TYPE_IQ2_XXS:
+        حالت GGML_TYPE_IQ2_XS:
+        حالت GGML_TYPE_IQ2_S:
+        حالت GGML_TYPE_IQ1_S:
+        حالت GGML_TYPE_IQ1_M:   iq2xs_init_impl(type); توڑو;
+        حالت GGML_TYPE_IQ3_XXS: iq3xs_init_impl(256); توڑو;
+        حالت GGML_TYPE_IQ3_S:   iq3xs_init_impl(512); توڑو;
+        طےشدہ: // nothing
+            توڑو;
     }
 
-    ggml_critical_section_end();
+    ggml_critical_section_انتہا();
 }
 
-void ggml_quantize_free(void) {
-    ggml_critical_section_start();
+خالی ggml_quantize_free(خالی) {
+    ggml_critical_section_آغاز();
 
     iq2xs_free_impl(GGML_TYPE_IQ2_XXS);
     iq2xs_free_impl(GGML_TYPE_IQ2_XS);
@@ -8110,11 +8110,11 @@ void ggml_quantize_free(void) {
     iq3xs_free_impl(256);
     iq3xs_free_impl(512);
 
-    ggml_critical_section_end();
+    ggml_critical_section_انتہا();
 }
 
-bool ggml_quantize_requires_imatrix(enum ggml_type type) {
-    return
+bool ggml_quantize_requires_imatrix(شمار ggml_type type) {
+    واپس
         type == GGML_TYPE_IQ2_XXS ||
         type == GGML_TYPE_IQ2_XS  ||
         type == GGML_TYPE_IQ1_S;//   ||
@@ -8122,113 +8122,113 @@ bool ggml_quantize_requires_imatrix(enum ggml_type type) {
 }
 
 size_t ggml_quantize_chunk(
-        enum ggml_type   type,
-           const float * src,
-                  void * dst,
-               int64_t   start,
+        شمار ggml_type   type,
+           ثابت اعشاری * src,
+                  خالی * dst,
+               int64_t   آغاز,
                int64_t   nrows,
-               int64_t   n_per_row,
-           const float * imatrix) {
-    const int64_t n = nrows * n_per_row;
+               int64_t   n_فی_صف,
+           ثابت اعشاری * imatrix) {
+    ثابت int64_t n = nrows * n_فی_صف;
 
-    if (ggml_quantize_requires_imatrix(type)) {
-        GGML_ASSERT(imatrix != NULL);
+    اگر (ggml_quantize_requires_imatrix(type)) {
+        GGML_ASSERT(imatrix != تہی);
     }
 
-    GGML_ASSERT(start % type_traits[type].blck_size == 0);
-    GGML_ASSERT(start % n_per_row == 0);
+    GGML_ASSERT(آغاز % type_traits[type].blck_سائز == 0);
+    GGML_ASSERT(آغاز % n_فی_صف == 0);
 
     ggml_quantize_init(type); // this is noop if already initialized
 
-    const size_t start_row = start / n_per_row;
-    const size_t row_size  = ggml_row_size(type, n_per_row);
+    ثابت size_t آغاز_صف = آغاز / n_فی_صف;
+    ثابت size_t صف_سائز  = ggml_صف_سائز(type, n_فی_صف);
 
-    size_t result = 0;
+    size_t نتیجہ = 0;
 
-    switch (type) {
-        case GGML_TYPE_Q1_0:    result = quantize_q1_0   (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_Q2_0:    result = quantize_q2_0   (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_Q4_0:    result = quantize_q4_0   (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_Q4_1:    result = quantize_q4_1   (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_Q5_0:    result = quantize_q5_0   (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_Q5_1:    result = quantize_q5_1   (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_Q8_0:    result = quantize_q8_0   (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_MXFP4:   result = quantize_mxfp4  (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_NVFP4:   result = quantize_nvfp4  (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_Q2_K:    result = quantize_q2_K   (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_Q3_K:    result = quantize_q3_K   (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_Q4_K:    result = quantize_q4_K   (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_Q5_K:    result = quantize_q5_K   (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_Q6_K:    result = quantize_q6_K   (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_TQ1_0:   result = quantize_tq1_0  (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_TQ2_0:   result = quantize_tq2_0  (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_IQ2_XXS: result = quantize_iq2_xxs(src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_IQ2_XS:  result = quantize_iq2_xs (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_IQ3_XXS: result = quantize_iq3_xxs(src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_IQ3_S:   result = quantize_iq3_s  (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_IQ2_S:   result = quantize_iq2_s  (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_IQ1_S:   result = quantize_iq1_s  (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_IQ1_M:   result = quantize_iq1_m  (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_IQ4_NL:  result = quantize_iq4_nl (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_IQ4_XS:  result = quantize_iq4_xs (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_F16:
+    انتخاب (type) {
+        حالت GGML_TYPE_Q1_0:    نتیجہ = quantize_q1_0   (src + آغاز, (حرف *) dst + آغاز_صف * صف_سائز, nrows, n_فی_صف, imatrix); توڑو;
+        حالت GGML_TYPE_Q2_0:    نتیجہ = quantize_q2_0   (src + آغاز, (حرف *) dst + آغاز_صف * صف_سائز, nrows, n_فی_صف, imatrix); توڑو;
+        حالت GGML_TYPE_Q4_0:    نتیجہ = quantize_q4_0   (src + آغاز, (حرف *) dst + آغاز_صف * صف_سائز, nrows, n_فی_صف, imatrix); توڑو;
+        حالت GGML_TYPE_Q4_1:    نتیجہ = quantize_q4_1   (src + آغاز, (حرف *) dst + آغاز_صف * صف_سائز, nrows, n_فی_صف, imatrix); توڑو;
+        حالت GGML_TYPE_Q5_0:    نتیجہ = quantize_q5_0   (src + آغاز, (حرف *) dst + آغاز_صف * صف_سائز, nrows, n_فی_صف, imatrix); توڑو;
+        حالت GGML_TYPE_Q5_1:    نتیجہ = quantize_q5_1   (src + آغاز, (حرف *) dst + آغاز_صف * صف_سائز, nrows, n_فی_صف, imatrix); توڑو;
+        حالت GGML_TYPE_Q8_0:    نتیجہ = quantize_q8_0   (src + آغاز, (حرف *) dst + آغاز_صف * صف_سائز, nrows, n_فی_صف, imatrix); توڑو;
+        حالت GGML_TYPE_MXFP4:   نتیجہ = quantize_mxfp4  (src + آغاز, (حرف *) dst + آغاز_صف * صف_سائز, nrows, n_فی_صف, imatrix); توڑو;
+        حالت GGML_TYPE_NVFP4:   نتیجہ = quantize_nvfp4  (src + آغاز, (حرف *) dst + آغاز_صف * صف_سائز, nrows, n_فی_صف, imatrix); توڑو;
+        حالت GGML_TYPE_Q2_K:    نتیجہ = quantize_q2_K   (src + آغاز, (حرف *) dst + آغاز_صف * صف_سائز, nrows, n_فی_صف, imatrix); توڑو;
+        حالت GGML_TYPE_Q3_K:    نتیجہ = quantize_q3_K   (src + آغاز, (حرف *) dst + آغاز_صف * صف_سائز, nrows, n_فی_صف, imatrix); توڑو;
+        حالت GGML_TYPE_Q4_K:    نتیجہ = quantize_q4_K   (src + آغاز, (حرف *) dst + آغاز_صف * صف_سائز, nrows, n_فی_صف, imatrix); توڑو;
+        حالت GGML_TYPE_Q5_K:    نتیجہ = quantize_q5_K   (src + آغاز, (حرف *) dst + آغاز_صف * صف_سائز, nrows, n_فی_صف, imatrix); توڑو;
+        حالت GGML_TYPE_Q6_K:    نتیجہ = quantize_q6_K   (src + آغاز, (حرف *) dst + آغاز_صف * صف_سائز, nrows, n_فی_صف, imatrix); توڑو;
+        حالت GGML_TYPE_TQ1_0:   نتیجہ = quantize_tq1_0  (src + آغاز, (حرف *) dst + آغاز_صف * صف_سائز, nrows, n_فی_صف, imatrix); توڑو;
+        حالت GGML_TYPE_TQ2_0:   نتیجہ = quantize_tq2_0  (src + آغاز, (حرف *) dst + آغاز_صف * صف_سائز, nrows, n_فی_صف, imatrix); توڑو;
+        حالت GGML_TYPE_IQ2_XXS: نتیجہ = quantize_iq2_xxs(src + آغاز, (حرف *) dst + آغاز_صف * صف_سائز, nrows, n_فی_صف, imatrix); توڑو;
+        حالت GGML_TYPE_IQ2_XS:  نتیجہ = quantize_iq2_xs (src + آغاز, (حرف *) dst + آغاز_صف * صف_سائز, nrows, n_فی_صف, imatrix); توڑو;
+        حالت GGML_TYPE_IQ3_XXS: نتیجہ = quantize_iq3_xxs(src + آغاز, (حرف *) dst + آغاز_صف * صف_سائز, nrows, n_فی_صف, imatrix); توڑو;
+        حالت GGML_TYPE_IQ3_S:   نتیجہ = quantize_iq3_s  (src + آغاز, (حرف *) dst + آغاز_صف * صف_سائز, nrows, n_فی_صف, imatrix); توڑو;
+        حالت GGML_TYPE_IQ2_S:   نتیجہ = quantize_iq2_s  (src + آغاز, (حرف *) dst + آغاز_صف * صف_سائز, nrows, n_فی_صف, imatrix); توڑو;
+        حالت GGML_TYPE_IQ1_S:   نتیجہ = quantize_iq1_s  (src + آغاز, (حرف *) dst + آغاز_صف * صف_سائز, nrows, n_فی_صف, imatrix); توڑو;
+        حالت GGML_TYPE_IQ1_M:   نتیجہ = quantize_iq1_m  (src + آغاز, (حرف *) dst + آغاز_صف * صف_سائز, nrows, n_فی_صف, imatrix); توڑو;
+        حالت GGML_TYPE_IQ4_NL:  نتیجہ = quantize_iq4_nl (src + آغاز, (حرف *) dst + آغاز_صف * صف_سائز, nrows, n_فی_صف, imatrix); توڑو;
+        حالت GGML_TYPE_IQ4_XS:  نتیجہ = quantize_iq4_xs (src + آغاز, (حرف *) dst + آغاز_صف * صف_سائز, nrows, n_فی_صف, imatrix); توڑو;
+        حالت GGML_TYPE_F16:
             {
-                size_t elemsize = sizeof(ggml_fp16_t);
-                ggml_fp32_to_fp16_row(src + start, (ggml_fp16_t *)dst + start, n);
-                result = n * elemsize;
-            } break;
-        case GGML_TYPE_BF16:
+                size_t elemsize = حجم(ggml_fp16_t);
+                ggml_fp32_مقصد_fp16_صف(src + آغاز, (ggml_fp16_t *)dst + آغاز, n);
+                نتیجہ = n * elemsize;
+            } توڑو;
+        حالت GGML_TYPE_BF16:
             {
-                size_t elemsize = sizeof(ggml_bf16_t);
-                ggml_fp32_to_bf16_row_ref(src + start, (ggml_bf16_t *)dst + start, n);
-                result = n * elemsize;
-            } break;
-        case GGML_TYPE_F32:
+                size_t elemsize = حجم(ggml_bf16_t);
+                ggml_fp32_مقصد_bf16_صف_ref(src + آغاز, (ggml_bf16_t *)dst + آغاز, n);
+                نتیجہ = n * elemsize;
+            } توڑو;
+        حالت GGML_TYPE_F32:
             {
-                size_t elemsize = sizeof(float);
-                result = n * elemsize;
-                memcpy((uint8_t *)dst + start * elemsize, src + start, result);
-            } break;
-        default:
-            assert(false);
+                size_t elemsize = حجم(اعشاری);
+                نتیجہ = n * elemsize;
+                حافظہ_نقل((uint8_t *)dst + آغاز * elemsize, src + آغاز, نتیجہ);
+            } توڑو;
+        طےشدہ:
+            أكد(false);
     }
 
-    GGML_ASSERT(result == nrows * row_size);
+    GGML_ASSERT(نتیجہ == nrows * صف_سائز);
 
-    return result;
+    واپس نتیجہ;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ggml_log_get(ggml_log_callback * log_callback, void ** user_data) {
+خالی ggml_log_get(ggml_log_callback * log_callback, خالی ** user_ڈیٹا) {
     *log_callback = g_logger_state.log_callback;
-    *user_data    = g_logger_state.log_callback_user_data;
+    *user_ڈیٹا    = g_logger_state.log_callback_user_ڈیٹا;
 }
 
-void ggml_log_set(ggml_log_callback log_callback, void * user_data) {
+خالی ggml_log_سیٹ(ggml_log_callback log_callback, خالی * user_ڈیٹا) {
     g_logger_state.log_callback = log_callback ? log_callback : ggml_log_callback_default;
-    g_logger_state.log_callback_user_data = user_data;
+    g_logger_state.log_callback_user_ڈیٹا = user_ڈیٹا;
 }
 
-void ggml_threadpool_params_init(struct ggml_threadpool_params * p, int n_threads) {
-    p->n_threads  = n_threads;
+خالی ggml_threadpool_params_init(ساخت ggml_threadpool_params * p, صحیح n_دھاگے) {
+    p->n_دھاگے  = n_دھاگے;
     p->prio       = 0;     // default priority (usually means normal or inherited)
     p->poll       = 50;    // hybrid-polling enabled
     p->strict_cpu = false; // no strict placement (all threads share same cpumask)
     p->paused     = false; // threads are ready to go
-    memset(p->cpumask, 0, GGML_MAX_N_THREADS); // all-zero means use the default affinity (usually inherited)
+    memset(p->cpumask, 0, GGML_MAX_N_دھاگے); // all-zero means use the default affinity (usually inherited)
 }
 
-struct ggml_threadpool_params ggml_threadpool_params_default(int n_threads) {
-    struct ggml_threadpool_params p;
-    ggml_threadpool_params_init(&p, n_threads);
-    return p;
+ساخت ggml_threadpool_params ggml_threadpool_params_default(صحیح n_دھاگے) {
+    ساخت ggml_threadpool_params p;
+    ggml_threadpool_params_init(&p, n_دھاگے);
+    واپس p;
 }
 
-bool ggml_threadpool_params_match(const struct ggml_threadpool_params * p0, const struct ggml_threadpool_params * p1) {
-    if (p0->n_threads  != p1->n_threads  ) return false;
-    if (p0->prio       != p1->prio       ) return false;
-    if (p0->poll       != p1->poll       ) return false;
-    if (p0->strict_cpu != p1->strict_cpu ) return false;
-    return memcmp(p0->cpumask, p1->cpumask, GGML_MAX_N_THREADS) == 0;
+bool ggml_threadpool_params_مطابقت(ثابت ساخت ggml_threadpool_params * p0, ثابت ساخت ggml_threadpool_params * p1) {
+    اگر (p0->n_دھاگے  != p1->n_دھاگے  ) واپس false;
+    اگر (p0->prio       != p1->prio       ) واپس false;
+    اگر (p0->poll       != p1->poll       ) واپس false;
+    اگر (p0->strict_cpu != p1->strict_cpu ) واپس false;
+    واپس memcmp(p0->cpumask, p1->cpumask, GGML_MAX_N_دھاگے) == 0;
 }

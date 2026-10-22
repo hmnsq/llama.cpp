@@ -1,145 +1,145 @@
-#define GGML_COMMON_IMPL_C
-#include "ggml-common.h"
+#تعریف_کرو GGML_COMMON_IMPL_C
+#شامل "ggml-common.h"
 
-#include "ggml-quants.h"
-#include "ggml-impl.h"
-#include "ggml-cpu/ggml-cpu-impl.h"
-#include "ggml-cpu.h"
+#شامل "ggml-quants.h"
+#شامل "ggml-impl.h"
+#شامل "ggml-cpu/ggml-cpu-impl.h"
+#شامل "ggml-cpu.h"
 
-#include <math.h>
-#include <string.h>
-#include <assert.h>
-#include <float.h>
-#include <stdlib.h> // for qsort
-#include <stdio.h>  // for GGML_ASSERT
+#شامل <math.h>
+#شامل <string.h>
+#شامل <assert.h>
+#شامل <float.h>
+#شامل <stdlib.h> // for qsort
+#شامل <stdio.h>  // for GGML_ASSERT
 
-#ifdef GGML_USE_OPENMP
-#include <omp.h>
-#endif
+#اگر_تعریف_شدہ GGML_USE_OPENMP
+#شامل <omp.h>
+#اگر_ختم
 
-#define GROUP_MAX_EPS 1e-15f
-#define GROUP_MAX_EPS_IQ3_XXS 1e-8f
-#define GROUP_MAX_EPS_IQ2_S 1e-8f
-#define GROUP_MAX_EPS_IQ1_M 1e-7f
-#define GROUP_MAX_EPS_IQ1_S 1e-12f
+#تعریف_کرو گروہ_MAX_EPS 1e-15f
+#تعریف_کرو گروہ_MAX_EPS_IQ3_XXS 1e-8f
+#تعریف_کرو گروہ_MAX_EPS_IQ2_S 1e-8f
+#تعریف_کرو گروہ_MAX_EPS_IQ1_M 1e-7f
+#تعریف_کرو گروہ_MAX_EPS_IQ1_S 1e-12f
 
-#define UNUSED GGML_UNUSED
+#تعریف_کرو غیر_مستعمل GGML_غیر_مستعمل
 
-static inline int best_index_int8(int n, const int8_t * val, float x) {
-    if (x <= val[0]) return 0;
-    if (x >= val[n-1]) return n-1;
-    int ml = 0, mu = n-1;
-    while (mu-ml > 1) {
-        int mav = (ml+mu)/2;
-        if (x < val[mav]) mu = mav; else ml = mav;
+ساکن اندرونی صحیح بہترین_اشاریہ_int8(صحیح n, ثابت int8_t * val, اعشاری x) {
+    اگر (x <= val[0]) واپس 0;
+    اگر (x >= val[n-1]) واپس n-1;
+    صحیح ml = 0, mu = n-1;
+    جب (mu-ml > 1) {
+        صحیح mav = (ml+mu)/2;
+        اگر (x < val[mav]) mu = mav; ورنہ ml = mav;
     }
-    return x - val[mu-1] < val[mu] - x ? mu-1 : mu;
+    واپس x - val[mu-1] < val[mu] - x ? mu-1 : mu;
 }
 
 // reference implementation for deterministic creation of model files
-void quantize_row_q1_0_ref(const float * GGML_RESTRICT x, block_q1_0 * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK1_0;
+خالی quantize_صف_q1_0_ref(ثابت اعشاری * GGML_RESTRICT x, بلاک_q1_0 * GGML_RESTRICT y, int64_t k) {
+    ساکن ثابت صحیح qk = QK1_0;
 
-    assert(k % qk == 0);
+    أكد(k % qk == 0);
 
-    const int nb = k / qk;
+    ثابت صحیح nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        float sum_abs = 0.0f;
-        for (int j = 0; j < qk; j++) {
-            sum_abs += fabsf(x[i*qk + j]);
+    برائے (صحیح i = 0; i < nb; i++) {
+        اعشاری مجموع_abs = 0.0f;
+        برائے (صحیح j = 0; j < qk; j++) {
+            مجموع_abs += fabsf(x[i*qk + j]);
         }
-        const float d = sum_abs / qk;
+        ثابت اعشاری d = مجموع_abs / qk;
 
-        y[i].d = GGML_FP32_TO_FP16(d);
+        y[i].d = GGML_FP32_مقصد_FP16(d);
 
         // Clear all bits first
-        for (int j = 0; j < qk / 8; ++j) {
+        برائے (صحیح j = 0; j < qk / 8; ++j) {
             y[i].qs[j] = 0;
         }
 
         // Just store sign of each weight directly (no normalization)
-        for (int j = 0; j < qk; ++j) {
-            const int bit_index = j;
-            const int byte_index = bit_index / 8;
-            const int bit_offset = bit_index % 8;
+        برائے (صحیح j = 0; j < qk; ++j) {
+            ثابت صحیح ثنائی_ہندسہ_اشاریہ = j;
+            ثابت صحیح byte_اشاریہ = ثنائی_ہندسہ_اشاریہ / 8;
+            ثابت صحیح ثنائی_ہندسہ_انحراف = ثنائی_ہندسہ_اشاریہ % 8;
 
-            if (x[i*qk + j] >= 0.0f) {
-                y[i].qs[byte_index] |= (1 << bit_offset);
+            اگر (x[i*qk + j] >= 0.0f) {
+                y[i].qs[byte_اشاریہ] |= (1 << ثنائی_ہندسہ_انحراف);
             }
         }
     }
 }
 
-void quantize_row_q2_0_ref(const float * GGML_RESTRICT x, block_q2_0 * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK2_0;
+خالی quantize_صف_q2_0_ref(ثابت اعشاری * GGML_RESTRICT x, بلاک_q2_0 * GGML_RESTRICT y, int64_t k) {
+    ساکن ثابت صحیح qk = QK2_0;
 
-    assert(k % qk == 0);
+    أكد(k % qk == 0);
 
-    const int nb = k / qk;
+    ثابت صحیح nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
+    برائے (صحیح i = 0; i < nb; i++) {
         // Compute scale as max absolute value in the block
-        float amax = 0.0f;
-        for (int j = 0; j < qk; j++) {
-            const float a = fabsf(x[i*qk + j]);
-            if (a > amax) amax = a;
+        اعشاری amax = 0.0f;
+        برائے (صحیح j = 0; j < qk; j++) {
+            ثابت اعشاری a = fabsf(x[i*qk + j]);
+            اگر (a > amax) amax = a;
         }
-        const float d = amax;
-        const float id = d > 0.0f ? 1.0f / d : 0.0f;
+        ثابت اعشاری d = amax;
+        ثابت اعشاری id = d > 0.0f ? 1.0f / d : 0.0f;
 
-        y[i].d = GGML_FP32_TO_FP16(d);
+        y[i].d = GGML_FP32_مقصد_FP16(d);
 
         // Clear quant bytes
-        for (int j = 0; j < qk / 4; ++j) {
+        برائے (صحیح j = 0; j < qk / 4; ++j) {
             y[i].qs[j] = 0;
         }
 
         // Encode 2-bit values: round(w/d) clamped to [-1, 2], then add 1
         // 00 (-1) = -scale, 01 (0) = 0, 10 (+1) = +scale, 11 (+2) = 2*scale
-        for (int j = 0; j < qk; ++j) {
-            const float w = x[i*qk + j];
-            int q = (int)roundf(w * id) + 1;
-            if (q < 0) q = 0;
-            if (q > 3) q = 3;
-            const int byte_index = j / 4;
-            const int bit_offset = (j % 4) * 2;
-            y[i].qs[byte_index] |= ((uint8_t)q << bit_offset);
+        برائے (صحیح j = 0; j < qk; ++j) {
+            ثابت اعشاری w = x[i*qk + j];
+            صحیح q = (صحیح)roundf(w * id) + 1;
+            اگر (q < 0) q = 0;
+            اگر (q > 3) q = 3;
+            ثابت صحیح byte_اشاریہ = j / 4;
+            ثابت صحیح ثنائی_ہندسہ_انحراف = (j % 4) * 2;
+            y[i].qs[byte_اشاریہ] |= ((uint8_t)q << ثنائی_ہندسہ_انحراف);
         }
     }
 }
 
 // reference implementation for deterministic creation of model files
-void quantize_row_q4_0_ref(const float * GGML_RESTRICT x, block_q4_0 * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK4_0;
+خالی quantize_صف_q4_0_ref(ثابت اعشاری * GGML_RESTRICT x, بلاک_q4_0 * GGML_RESTRICT y, int64_t k) {
+    ساکن ثابت صحیح qk = QK4_0;
 
-    assert(k % qk == 0);
+    أكد(k % qk == 0);
 
-    const int nb = k / qk;
+    ثابت صحیح nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        float amax = 0.0f; // absolute max
-        float max  = 0.0f;
+    برائے (صحیح i = 0; i < nb; i++) {
+        اعشاری amax = 0.0f; // absolute max
+        اعشاری max  = 0.0f;
 
-        for (int j = 0; j < qk; j++) {
-            const float v = x[i*qk + j];
-            if (amax < fabsf(v)) {
+        برائے (صحیح j = 0; j < qk; j++) {
+            ثابت اعشاری v = x[i*qk + j];
+            اگر (amax < fabsf(v)) {
                 amax = fabsf(v);
                 max  = v;
             }
         }
 
-        const float d  = max / -8;
-        const float id = d ? 1.0f/d : 0.0f;
+        ثابت اعشاری d  = max / -8;
+        ثابت اعشاری id = d ? 1.0f/d : 0.0f;
 
-        y[i].d = GGML_FP32_TO_FP16(d);
+        y[i].d = GGML_FP32_مقصد_FP16(d);
 
-        for (int j = 0; j < qk/2; ++j) {
-            const float x0 = x[i*qk + 0    + j]*id;
-            const float x1 = x[i*qk + qk/2 + j]*id;
+        برائے (صحیح j = 0; j < qk/2; ++j) {
+            ثابت اعشاری x0 = x[i*qk + 0    + j]*id;
+            ثابت اعشاری x1 = x[i*qk + qk/2 + j]*id;
 
-            const uint8_t xi0 = MIN(15, (int8_t)(x0 + 8.5f));
-            const uint8_t xi1 = MIN(15, (int8_t)(x1 + 8.5f));
+            ثابت uint8_t xi0 = MIN(15, (int8_t)(x0 + 8.5f));
+            ثابت uint8_t xi1 = MIN(15, (int8_t)(x1 + 8.5f));
 
             y[i].qs[j]  = xi0;
             y[i].qs[j] |= xi1 << 4;
@@ -147,36 +147,36 @@ void quantize_row_q4_0_ref(const float * GGML_RESTRICT x, block_q4_0 * GGML_REST
     }
 }
 
-void quantize_row_q4_1_ref(const float * GGML_RESTRICT x, block_q4_1 * GGML_RESTRICT y, int64_t k) {
-    const int qk = QK4_1;
+خالی quantize_صف_q4_1_ref(ثابت اعشاری * GGML_RESTRICT x, بلاک_q4_1 * GGML_RESTRICT y, int64_t k) {
+    ثابت صحیح qk = QK4_1;
 
-    assert(k % qk == 0);
+    أكد(k % qk == 0);
 
-    const int nb = k / qk;
+    ثابت صحیح nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        float min = FLT_MAX;
-        float max = -FLT_MAX;
+    برائے (صحیح i = 0; i < nb; i++) {
+        اعشاری min = FLT_MAX;
+        اعشاری max = -FLT_MAX;
 
-        for (int j = 0; j < qk; j++) {
-            const float v = x[i*qk + j];
+        برائے (صحیح j = 0; j < qk; j++) {
+            ثابت اعشاری v = x[i*qk + j];
 
-            if (v < min) min = v;
-            if (v > max) max = v;
+            اگر (v < min) min = v;
+            اگر (v > max) max = v;
         }
 
-        const float d  = (max - min) / ((1 << 4) - 1);
-        const float id = d ? 1.0f/d : 0.0f;
+        ثابت اعشاری d  = (max - min) / ((1 << 4) - 1);
+        ثابت اعشاری id = d ? 1.0f/d : 0.0f;
 
-        y[i].d = GGML_FP32_TO_FP16(d);
-        y[i].m = GGML_FP32_TO_FP16(min);
+        y[i].d = GGML_FP32_مقصد_FP16(d);
+        y[i].m = GGML_FP32_مقصد_FP16(min);
 
-        for (int j = 0; j < qk/2; ++j) {
-            const float x0 = (x[i*qk + 0    + j] - min)*id;
-            const float x1 = (x[i*qk + qk/2 + j] - min)*id;
+        برائے (صحیح j = 0; j < qk/2; ++j) {
+            ثابت اعشاری x0 = (x[i*qk + 0    + j] - min)*id;
+            ثابت اعشاری x1 = (x[i*qk + qk/2 + j] - min)*id;
 
-            const uint8_t xi0 = MIN(15, (int8_t)(x0 + 0.5f));
-            const uint8_t xi1 = MIN(15, (int8_t)(x1 + 0.5f));
+            ثابت uint8_t xi0 = MIN(15, (int8_t)(x0 + 0.5f));
+            ثابت uint8_t xi1 = MIN(15, (int8_t)(x1 + 0.5f));
 
             y[i].qs[j]  = xi0;
             y[i].qs[j] |= xi1 << 4;
@@ -184,38 +184,38 @@ void quantize_row_q4_1_ref(const float * GGML_RESTRICT x, block_q4_1 * GGML_REST
     }
 }
 
-void quantize_row_q5_0_ref(const float * GGML_RESTRICT x, block_q5_0 * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK5_0;
+خالی quantize_صف_q5_0_ref(ثابت اعشاری * GGML_RESTRICT x, بلاک_q5_0 * GGML_RESTRICT y, int64_t k) {
+    ساکن ثابت صحیح qk = QK5_0;
 
-    assert(k % qk == 0);
+    أكد(k % qk == 0);
 
-    const int nb = k / qk;
+    ثابت صحیح nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        float amax = 0.0f; // absolute max
-        float max  = 0.0f;
+    برائے (صحیح i = 0; i < nb; i++) {
+        اعشاری amax = 0.0f; // absolute max
+        اعشاری max  = 0.0f;
 
-        for (int j = 0; j < qk; j++) {
-            const float v = x[i*qk + j];
-            if (amax < fabsf(v)) {
+        برائے (صحیح j = 0; j < qk; j++) {
+            ثابت اعشاری v = x[i*qk + j];
+            اگر (amax < fabsf(v)) {
                 amax = fabsf(v);
                 max  = v;
             }
         }
 
-        const float d  = max / -16;
-        const float id = d ? 1.0f/d : 0.0f;
+        ثابت اعشاری d  = max / -16;
+        ثابت اعشاری id = d ? 1.0f/d : 0.0f;
 
-        y[i].d = GGML_FP32_TO_FP16(d);
+        y[i].d = GGML_FP32_مقصد_FP16(d);
 
         uint32_t qh = 0;
 
-        for (int j = 0; j < qk/2; ++j) {
-            const float x0 = x[i*qk + 0    + j]*id;
-            const float x1 = x[i*qk + qk/2 + j]*id;
+        برائے (صحیح j = 0; j < qk/2; ++j) {
+            ثابت اعشاری x0 = x[i*qk + 0    + j]*id;
+            ثابت اعشاری x1 = x[i*qk + qk/2 + j]*id;
 
-            const uint8_t xi0 = MIN(31, (int8_t)(x0 + 16.5f));
-            const uint8_t xi1 = MIN(31, (int8_t)(x1 + 16.5f));
+            ثابت uint8_t xi0 = MIN(31, (int8_t)(x0 + 16.5f));
+            ثابت uint8_t xi1 = MIN(31, (int8_t)(x1 + 16.5f));
 
             y[i].qs[j] = (xi0 & 0x0F) | ((xi1 & 0x0F) << 4);
 
@@ -224,42 +224,42 @@ void quantize_row_q5_0_ref(const float * GGML_RESTRICT x, block_q5_0 * GGML_REST
             qh |= ((xi1 & 0x10u) >> 4) << (j + qk/2);
         }
 
-        memcpy(&y[i].qh, &qh, sizeof(qh));
+        حافظہ_نقل(&y[i].qh, &qh, حجم(qh));
     }
 }
 
-void quantize_row_q5_1_ref(const float * GGML_RESTRICT x, block_q5_1 * GGML_RESTRICT y, int64_t k) {
-    const int qk = QK5_1;
+خالی quantize_صف_q5_1_ref(ثابت اعشاری * GGML_RESTRICT x, بلاک_q5_1 * GGML_RESTRICT y, int64_t k) {
+    ثابت صحیح qk = QK5_1;
 
-    assert(k % qk == 0);
+    أكد(k % qk == 0);
 
-    const int nb = k / qk;
+    ثابت صحیح nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        float min = FLT_MAX;
-        float max = -FLT_MAX;
+    برائے (صحیح i = 0; i < nb; i++) {
+        اعشاری min = FLT_MAX;
+        اعشاری max = -FLT_MAX;
 
-        for (int j = 0; j < qk; j++) {
-            const float v = x[i*qk + j];
+        برائے (صحیح j = 0; j < qk; j++) {
+            ثابت اعشاری v = x[i*qk + j];
 
-            if (v < min) min = v;
-            if (v > max) max = v;
+            اگر (v < min) min = v;
+            اگر (v > max) max = v;
         }
 
-        const float d  = (max - min) / ((1 << 5) - 1);
-        const float id = d ? 1.0f/d : 0.0f;
+        ثابت اعشاری d  = (max - min) / ((1 << 5) - 1);
+        ثابت اعشاری id = d ? 1.0f/d : 0.0f;
 
-        y[i].d = GGML_FP32_TO_FP16(d);
-        y[i].m = GGML_FP32_TO_FP16(min);
+        y[i].d = GGML_FP32_مقصد_FP16(d);
+        y[i].m = GGML_FP32_مقصد_FP16(min);
 
         uint32_t qh = 0;
 
-        for (int j = 0; j < qk/2; ++j) {
-            const float x0 = (x[i*qk + 0    + j] - min)*id;
-            const float x1 = (x[i*qk + qk/2 + j] - min)*id;
+        برائے (صحیح j = 0; j < qk/2; ++j) {
+            ثابت اعشاری x0 = (x[i*qk + 0    + j] - min)*id;
+            ثابت اعشاری x1 = (x[i*qk + qk/2 + j] - min)*id;
 
-            const uint8_t xi0 = (uint8_t)(x0 + 0.5f);
-            const uint8_t xi1 = (uint8_t)(x1 + 0.5f);
+            ثابت uint8_t xi0 = (uint8_t)(x0 + 0.5f);
+            ثابت uint8_t xi1 = (uint8_t)(x1 + 0.5f);
 
             y[i].qs[j] = (xi0 & 0x0F) | ((xi1 & 0x0F) << 4);
 
@@ -268,30 +268,30 @@ void quantize_row_q5_1_ref(const float * GGML_RESTRICT x, block_q5_1 * GGML_REST
             qh |= ((xi1 & 0x10u) >> 4) << (j + qk/2);
         }
 
-        memcpy(&y[i].qh, &qh, sizeof(y[i].qh));
+        حافظہ_نقل(&y[i].qh, &qh, حجم(y[i].qh));
     }
 }
 
 // reference implementation for deterministic creation of model files
-void quantize_row_q8_0_ref(const float * GGML_RESTRICT x, block_q8_0 * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK8_0 == 0);
-    const int nb = k / QK8_0;
+خالی quantize_صف_q8_0_ref(ثابت اعشاری * GGML_RESTRICT x, بلاک_q8_0 * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK8_0 == 0);
+    ثابت صحیح nb = k / QK8_0;
 
-    for (int i = 0; i < nb; i++) {
-        float amax = 0.0f; // absolute max
+    برائے (صحیح i = 0; i < nb; i++) {
+        اعشاری amax = 0.0f; // absolute max
 
-        for (int j = 0; j < QK8_0; j++) {
-            const float v = x[i*QK8_0 + j];
+        برائے (صحیح j = 0; j < QK8_0; j++) {
+            ثابت اعشاری v = x[i*QK8_0 + j];
             amax = MAX(amax, fabsf(v));
         }
 
-        const float d = amax / ((1 << 7) - 1);
-        const float id = d ? 1.0f/d : 0.0f;
+        ثابت اعشاری d = amax / ((1 << 7) - 1);
+        ثابت اعشاری id = d ? 1.0f/d : 0.0f;
 
-        y[i].d = GGML_FP32_TO_FP16(d);
+        y[i].d = GGML_FP32_مقصد_FP16(d);
 
-        for (int j = 0; j < QK8_0; ++j) {
-            const float x0 = x[i*QK8_0 + j]*id;
+        برائے (صحیح j = 0; j < QK8_0; ++j) {
+            ثابت اعشاری x0 = x[i*QK8_0 + j]*id;
 
             y[i].qs[j] = roundf(x0);
         }
@@ -299,81 +299,81 @@ void quantize_row_q8_0_ref(const float * GGML_RESTRICT x, block_q8_0 * GGML_REST
 }
 
 // reference implementation for deterministic creation of model files
-void quantize_row_q8_1_ref(const float * GGML_RESTRICT x, block_q8_1 * GGML_RESTRICT y, int64_t k) {
-    assert(QK8_1 == 32);
-    assert(k % QK8_1 == 0);
-    const int nb = k / QK8_1;
+خالی quantize_صف_q8_1_ref(ثابت اعشاری * GGML_RESTRICT x, بلاک_q8_1 * GGML_RESTRICT y, int64_t k) {
+    أكد(QK8_1 == 32);
+    أكد(k % QK8_1 == 0);
+    ثابت صحیح nb = k / QK8_1;
 
-    for (int i = 0; i < nb; i++) {
-        float amax = 0.0f; // absolute max
+    برائے (صحیح i = 0; i < nb; i++) {
+        اعشاری amax = 0.0f; // absolute max
 
-        for (int j = 0; j < QK8_1; j++) {
-            const float v = x[i*QK8_1 + j];
+        برائے (صحیح j = 0; j < QK8_1; j++) {
+            ثابت اعشاری v = x[i*QK8_1 + j];
             amax = MAX(amax, fabsf(v));
         }
 
-        const float d = amax / ((1 << 7) - 1);
-        const float id = d ? 1.0f/d : 0.0f;
+        ثابت اعشاری d = amax / ((1 << 7) - 1);
+        ثابت اعشاری id = d ? 1.0f/d : 0.0f;
 
-        y[i].d = GGML_FP32_TO_FP16(d);
+        y[i].d = GGML_FP32_مقصد_FP16(d);
 
-        int sum = 0;
+        صحیح مجموع = 0;
 
-        for (int j = 0; j < QK8_1/2; ++j) {
-            const float v0 = x[i*QK8_1           + j]*id;
-            const float v1 = x[i*QK8_1 + QK8_1/2 + j]*id;
+        برائے (صحیح j = 0; j < QK8_1/2; ++j) {
+            ثابت اعشاری v0 = x[i*QK8_1           + j]*id;
+            ثابت اعشاری v1 = x[i*QK8_1 + QK8_1/2 + j]*id;
 
             y[i].qs[          j] = roundf(v0);
             y[i].qs[QK8_1/2 + j] = roundf(v1);
 
-            sum += y[i].qs[          j];
-            sum += y[i].qs[QK8_1/2 + j];
+            مجموع += y[i].qs[          j];
+            مجموع += y[i].qs[QK8_1/2 + j];
         }
 
-        y[i].s = GGML_FP32_TO_FP16(sum*d);
+        y[i].s = GGML_FP32_مقصد_FP16(مجموع*d);
     }
 }
 
-static inline int best_index_mxfp4(float x, float e) {
-    int best_index = 0;
-    float best_err = fabsf(kvalues_mxfp4[0]*e - x);
-    for (int i = 1; i < 16; i++) {
-        float err = fabsf(kvalues_mxfp4[i]*e - x);
-        if (err < best_err) {
-            best_index = i;
-            best_err = err;
+ساکن اندرونی صحیح بہترین_اشاریہ_mxfp4(اعشاری x, اعشاری e) {
+    صحیح بہترین_اشاریہ = 0;
+    اعشاری بہترین_err = fabsf(kvalues_mxfp4[0]*e - x);
+    برائے (صحیح i = 1; i < 16; i++) {
+        اعشاری err = fabsf(kvalues_mxfp4[i]*e - x);
+        اگر (err < بہترین_err) {
+            بہترین_اشاریہ = i;
+            بہترین_err = err;
         }
     }
-    return best_index;
+    واپس بہترین_اشاریہ;
 }
 
-void quantize_row_mxfp4_ref(const float * GGML_RESTRICT x, block_mxfp4 * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK_MXFP4;
+خالی quantize_صف_mxfp4_ref(ثابت اعشاری * GGML_RESTRICT x, بلاک_mxfp4 * GGML_RESTRICT y, int64_t k) {
+    ساکن ثابت صحیح qk = QK_MXFP4;
 
-    assert(k % qk == 0);
+    أكد(k % qk == 0);
 
-    const int nb = k / qk;
+    ثابت صحیح nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        float amax = 0.0f; // absolute max
+    برائے (صحیح i = 0; i < nb; i++) {
+        اعشاری amax = 0.0f; // absolute max
 
-        for (int j = 0; j < qk; j++) {
-            const float v = x[i*qk + j];
+        برائے (صحیح j = 0; j < qk; j++) {
+            ثابت اعشاری v = x[i*qk + j];
 
-            if (amax < fabsf(v)) {
+            اگر (amax < fabsf(v)) {
                 amax = fabsf(v);
             }
         }
 
-        const uint8_t e = amax > 0.0f ? (uint8_t) (floorf(log2f(amax)) - 2 + 127) : 0;
+        ثابت uint8_t e = amax > 0.0f ? (uint8_t) (floorf(log2f(amax)) - 2 + 127) : 0;
 
-        const float d = GGML_E8M0_TO_FP32_HALF(e);
+        ثابت اعشاری d = GGML_E8_M0_مقصد_FP32_HALF(e);
 
         y[i].e = e;
 
-        for (int j = 0; j < qk/2; ++j) {
-            const uint8_t x0 = best_index_mxfp4(x[i*qk + 0    + j], d);
-            const uint8_t x1 = best_index_mxfp4(x[i*qk + qk/2 + j], d);
+        برائے (صحیح j = 0; j < qk/2; ++j) {
+            ثابت uint8_t x0 = بہترین_اشاریہ_mxfp4(x[i*qk + 0    + j], d);
+            ثابت uint8_t x1 = بہترین_اشاریہ_mxfp4(x[i*qk + qk/2 + j], d);
 
             y[i].qs[j]  = x0;
             y[i].qs[j] |= x1 << 4;
@@ -381,34 +381,34 @@ void quantize_row_mxfp4_ref(const float * GGML_RESTRICT x, block_mxfp4 * GGML_RE
     }
 }
 
-void quantize_row_nvfp4_ref(const float * GGML_RESTRICT x, block_nvfp4 * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK_NVFP4;
-    static const int qk_sub = QK_NVFP4_SUB;
-    static const int n_sub = QK_NVFP4 / QK_NVFP4_SUB;
+خالی quantize_صف_nvfp4_ref(ثابت اعشاری * GGML_RESTRICT x, بلاک_nvfp4 * GGML_RESTRICT y, int64_t k) {
+    ساکن ثابت صحیح qk = QK_NVFP4;
+    ساکن ثابت صحیح qk_sub = QK_NVFP4_SUB;
+    ساکن ثابت صحیح n_sub = QK_NVFP4 / QK_NVFP4_SUB;
 
-    assert(k % qk == 0);
+    أكد(k % qk == 0);
 
-    const int nb = k / qk;
+    ثابت صحیح nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        for (int s = 0; s < n_sub; s++) {
-            const float * xb = x + i*qk + s*qk_sub;
+    برائے (صحیح i = 0; i < nb; i++) {
+        برائے (صحیح s = 0; s < n_sub; s++) {
+            ثابت اعشاری * xb = x + i*qk + s*qk_sub;
 
-            float amax = 0.0f;
-            for (int j = 0; j < qk_sub; j++) {
-                if (amax < fabsf(xb[j])) {
+            اعشاری amax = 0.0f;
+            برائے (صحیح j = 0; j < qk_sub; j++) {
+                اگر (amax < fabsf(xb[j])) {
                     amax = fabsf(xb[j]);
                 }
             }
 
             // UE4M3 scale: amax / 6.0 maps the max E2M1 value (6.0) to amax
-            const uint8_t ue = ggml_fp32_to_ue4m3(amax / 6.0f);
+            ثابت uint8_t ue = ggml_fp32_مقصد_ue4m3(amax / 6.0f);
             y[i].d[s] = ue;
-            const float d = ggml_ue4m3_to_fp32(ue);
+            ثابت اعشاری d = ggml_ue4m3_مقصد_fp32(ue);
 
-            for (int j = 0; j < qk_sub/2; ++j) {
-                const uint8_t x0 = best_index_mxfp4(xb[0        + j], d);
-                const uint8_t x1 = best_index_mxfp4(xb[qk_sub/2 + j], d);
+            برائے (صحیح j = 0; j < qk_sub/2; ++j) {
+                ثابت uint8_t x0 = بہترین_اشاریہ_mxfp4(xb[0        + j], d);
+                ثابت uint8_t x1 = بہترین_اشاریہ_mxfp4(xb[qk_sub/2 + j], d);
 
                 y[i].qs[s*(qk_sub/2) + j] = x0 | (x1 << 4);
             }
@@ -416,59 +416,59 @@ void quantize_row_nvfp4_ref(const float * GGML_RESTRICT x, block_nvfp4 * GGML_RE
     }
 }
 
-void dequantize_row_q1_0(const block_q1_0 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK1_0;
+خالی dequantize_صف_q1_0(ثابت بلاک_q1_0 * GGML_RESTRICT x, اعشاری * GGML_RESTRICT y, int64_t k) {
+    ساکن ثابت صحیح qk = QK1_0;
 
-    assert(k % qk == 0);
+    أكد(k % qk == 0);
 
-    const int nb = k / qk;
+    ثابت صحیح nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        const float d = GGML_FP16_TO_FP32(x[i].d);
-        const float neg_d = -d;
+    برائے (صحیح i = 0; i < nb; i++) {
+        ثابت اعشاری d = GGML_FP16_مقصد_FP32(x[i].d);
+        ثابت اعشاری neg_d = -d;
 
-        for (int j = 0; j < qk; ++j) {
-            const int byte_index = j / 8;
-            const int bit_offset = j % 8;
-            const uint8_t bit = (x[i].qs[byte_index] >> bit_offset) & 1;
-            y[i*qk + j] = bit ? d : neg_d;
+        برائے (صحیح j = 0; j < qk; ++j) {
+            ثابت صحیح byte_اشاریہ = j / 8;
+            ثابت صحیح ثنائی_ہندسہ_انحراف = j % 8;
+            ثابت uint8_t ثنائی_ہندسہ = (x[i].qs[byte_اشاریہ] >> ثنائی_ہندسہ_انحراف) & 1;
+            y[i*qk + j] = ثنائی_ہندسہ ? d : neg_d;
         }
     }
 }
 
-void dequantize_row_q2_0(const block_q2_0 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK2_0;
+خالی dequantize_صف_q2_0(ثابت بلاک_q2_0 * GGML_RESTRICT x, اعشاری * GGML_RESTRICT y, int64_t k) {
+    ساکن ثابت صحیح qk = QK2_0;
 
-    assert(k % qk == 0);
+    أكد(k % qk == 0);
 
-    const int nb = k / qk;
+    ثابت صحیح nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        const float d = GGML_FP16_TO_FP32(x[i].d);
+    برائے (صحیح i = 0; i < nb; i++) {
+        ثابت اعشاری d = GGML_FP16_مقصد_FP32(x[i].d);
 
-        for (int j = 0; j < qk; ++j) {
-            const int byte_index = j / 4;
-            const int bit_offset = (j % 4) * 2;
-            const uint8_t q = (x[i].qs[byte_index] >> bit_offset) & 0x03;
+        برائے (صحیح j = 0; j < qk; ++j) {
+            ثابت صحیح byte_اشاریہ = j / 4;
+            ثابت صحیح ثنائی_ہندسہ_انحراف = (j % 4) * 2;
+            ثابت uint8_t q = (x[i].qs[byte_اشاریہ] >> ثنائی_ہندسہ_انحراف) & 0x03;
             // 00=-1, 01=0, 10=+1, 11=+2
-            y[i*qk + j] = ((int)q - 1) * d;
+            y[i*qk + j] = ((صحیح)q - 1) * d;
         }
     }
 }
 
-void dequantize_row_q4_0(const block_q4_0 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK4_0;
+خالی dequantize_صف_q4_0(ثابت بلاک_q4_0 * GGML_RESTRICT x, اعشاری * GGML_RESTRICT y, int64_t k) {
+    ساکن ثابت صحیح qk = QK4_0;
 
-    assert(k % qk == 0);
+    أكد(k % qk == 0);
 
-    const int nb = k / qk;
+    ثابت صحیح nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        const float d = GGML_FP16_TO_FP32(x[i].d);
+    برائے (صحیح i = 0; i < nb; i++) {
+        ثابت اعشاری d = GGML_FP16_مقصد_FP32(x[i].d);
 
-        for (int j = 0; j < qk/2; ++j) {
-            const int x0 = (x[i].qs[j] & 0x0F) - 8;
-            const int x1 = (x[i].qs[j] >>   4) - 8;
+        برائے (صحیح j = 0; j < qk/2; ++j) {
+            ثابت صحیح x0 = (x[i].qs[j] & 0x0F) - 8;
+            ثابت صحیح x1 = (x[i].qs[j] >>   4) - 8;
 
             y[i*qk + j + 0   ] = x0*d;
             y[i*qk + j + qk/2] = x1*d;
@@ -476,20 +476,20 @@ void dequantize_row_q4_0(const block_q4_0 * GGML_RESTRICT x, float * GGML_RESTRI
     }
 }
 
-void dequantize_row_q4_1(const block_q4_1 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK4_1;
+خالی dequantize_صف_q4_1(ثابت بلاک_q4_1 * GGML_RESTRICT x, اعشاری * GGML_RESTRICT y, int64_t k) {
+    ساکن ثابت صحیح qk = QK4_1;
 
-    assert(k % qk == 0);
+    أكد(k % qk == 0);
 
-    const int nb = k / qk;
+    ثابت صحیح nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        const float d = GGML_FP16_TO_FP32(x[i].d);
-        const float m = GGML_FP16_TO_FP32(x[i].m);
+    برائے (صحیح i = 0; i < nb; i++) {
+        ثابت اعشاری d = GGML_FP16_مقصد_FP32(x[i].d);
+        ثابت اعشاری m = GGML_FP16_مقصد_FP32(x[i].m);
 
-        for (int j = 0; j < qk/2; ++j) {
-            const int x0 = (x[i].qs[j] & 0x0F);
-            const int x1 = (x[i].qs[j] >>   4);
+        برائے (صحیح j = 0; j < qk/2; ++j) {
+            ثابت صحیح x0 = (x[i].qs[j] & 0x0F);
+            ثابت صحیح x1 = (x[i].qs[j] >>   4);
 
             y[i*qk + j + 0   ] = x0*d + m;
             y[i*qk + j + qk/2] = x1*d + m;
@@ -497,25 +497,25 @@ void dequantize_row_q4_1(const block_q4_1 * GGML_RESTRICT x, float * GGML_RESTRI
     }
 }
 
-void dequantize_row_q5_0(const block_q5_0 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK5_0;
+خالی dequantize_صف_q5_0(ثابت بلاک_q5_0 * GGML_RESTRICT x, اعشاری * GGML_RESTRICT y, int64_t k) {
+    ساکن ثابت صحیح qk = QK5_0;
 
-    assert(k % qk == 0);
+    أكد(k % qk == 0);
 
-    const int nb = k / qk;
+    ثابت صحیح nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        const float d = GGML_FP16_TO_FP32(x[i].d);
+    برائے (صحیح i = 0; i < nb; i++) {
+        ثابت اعشاری d = GGML_FP16_مقصد_FP32(x[i].d);
 
         uint32_t qh;
-        memcpy(&qh, x[i].qh, sizeof(qh));
+        حافظہ_نقل(&qh, x[i].qh, حجم(qh));
 
-        for (int j = 0; j < qk/2; ++j) {
-            const uint8_t xh_0 = ((qh >> (j +  0)) << 4) & 0x10;
-            const uint8_t xh_1 = ((qh >> (j + 12))     ) & 0x10;
+        برائے (صحیح j = 0; j < qk/2; ++j) {
+            ثابت uint8_t xh_0 = ((qh >> (j +  0)) << 4) & 0x10;
+            ثابت uint8_t xh_1 = ((qh >> (j + 12))     ) & 0x10;
 
-            const int32_t x0 = ((x[i].qs[j] & 0x0F) | xh_0) - 16;
-            const int32_t x1 = ((x[i].qs[j] >>   4) | xh_1) - 16;
+            ثابت int32_t x0 = ((x[i].qs[j] & 0x0F) | xh_0) - 16;
+            ثابت int32_t x1 = ((x[i].qs[j] >>   4) | xh_1) - 16;
 
             y[i*qk + j + 0   ] = x0*d;
             y[i*qk + j + qk/2] = x1*d;
@@ -523,26 +523,26 @@ void dequantize_row_q5_0(const block_q5_0 * GGML_RESTRICT x, float * GGML_RESTRI
     }
 }
 
-void dequantize_row_q5_1(const block_q5_1 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK5_1;
+خالی dequantize_صف_q5_1(ثابت بلاک_q5_1 * GGML_RESTRICT x, اعشاری * GGML_RESTRICT y, int64_t k) {
+    ساکن ثابت صحیح qk = QK5_1;
 
-    assert(k % qk == 0);
+    أكد(k % qk == 0);
 
-    const int nb = k / qk;
+    ثابت صحیح nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        const float d = GGML_FP16_TO_FP32(x[i].d);
-        const float m = GGML_FP16_TO_FP32(x[i].m);
+    برائے (صحیح i = 0; i < nb; i++) {
+        ثابت اعشاری d = GGML_FP16_مقصد_FP32(x[i].d);
+        ثابت اعشاری m = GGML_FP16_مقصد_FP32(x[i].m);
 
         uint32_t qh;
-        memcpy(&qh, x[i].qh, sizeof(qh));
+        حافظہ_نقل(&qh, x[i].qh, حجم(qh));
 
-        for (int j = 0; j < qk/2; ++j) {
-            const uint8_t xh_0 = ((qh >> (j +  0)) << 4) & 0x10;
-            const uint8_t xh_1 = ((qh >> (j + 12))     ) & 0x10;
+        برائے (صحیح j = 0; j < qk/2; ++j) {
+            ثابت uint8_t xh_0 = ((qh >> (j +  0)) << 4) & 0x10;
+            ثابت uint8_t xh_1 = ((qh >> (j + 12))     ) & 0x10;
 
-            const int x0 = (x[i].qs[j] & 0x0F) | xh_0;
-            const int x1 = (x[i].qs[j] >>   4) | xh_1;
+            ثابت صحیح x0 = (x[i].qs[j] & 0x0F) | xh_0;
+            ثابت صحیح x1 = (x[i].qs[j] >>   4) | xh_1;
 
             y[i*qk + j + 0   ] = x0*d + m;
             y[i*qk + j + qk/2] = x1*d + m;
@@ -550,35 +550,35 @@ void dequantize_row_q5_1(const block_q5_1 * GGML_RESTRICT x, float * GGML_RESTRI
     }
 }
 
-void dequantize_row_q8_0(const block_q8_0 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK8_0;
+خالی dequantize_صف_q8_0(ثابت بلاک_q8_0 * GGML_RESTRICT x, اعشاری * GGML_RESTRICT y, int64_t k) {
+    ساکن ثابت صحیح qk = QK8_0;
 
-    assert(k % qk == 0);
+    أكد(k % qk == 0);
 
-    const int nb = k / qk;
+    ثابت صحیح nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        const float d = GGML_FP16_TO_FP32(x[i].d);
+    برائے (صحیح i = 0; i < nb; i++) {
+        ثابت اعشاری d = GGML_FP16_مقصد_FP32(x[i].d);
 
-        for (int j = 0; j < qk; ++j) {
+        برائے (صحیح j = 0; j < qk; ++j) {
             y[i*qk + j] = x[i].qs[j]*d;
         }
     }
 }
 
-void dequantize_row_mxfp4(const block_mxfp4 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK_MXFP4;
+خالی dequantize_صف_mxfp4(ثابت بلاک_mxfp4 * GGML_RESTRICT x, اعشاری * GGML_RESTRICT y, int64_t k) {
+    ساکن ثابت صحیح qk = QK_MXFP4;
 
-    assert(k % qk == 0);
+    أكد(k % qk == 0);
 
-    const int nb = k / qk;
+    ثابت صحیح nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        const float d = GGML_E8M0_TO_FP32_HALF(x[i].e);
+    برائے (صحیح i = 0; i < nb; i++) {
+        ثابت اعشاری d = GGML_E8_M0_مقصد_FP32_HALF(x[i].e);
 
-        for (int j = 0; j < qk/2; ++j) {
-            const int8_t x0 = kvalues_mxfp4[x[i].qs[j] & 0x0F];
-            const int8_t x1 = kvalues_mxfp4[x[i].qs[j] >>   4];
+        برائے (صحیح j = 0; j < qk/2; ++j) {
+            ثابت int8_t x0 = kvalues_mxfp4[x[i].qs[j] & 0x0F];
+            ثابت int8_t x1 = kvalues_mxfp4[x[i].qs[j] >>   4];
 
             y[i*qk + j + 0   ] = x0*d;
             y[i*qk + j + qk/2] = x1*d;
@@ -586,23 +586,23 @@ void dequantize_row_mxfp4(const block_mxfp4 * GGML_RESTRICT x, float * GGML_REST
     }
 }
 
-void dequantize_row_nvfp4(const block_nvfp4 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK_NVFP4;
-    static const int qk_sub = QK_NVFP4_SUB;
-    static const int n_sub = QK_NVFP4 / QK_NVFP4_SUB;
+خالی dequantize_صف_nvfp4(ثابت بلاک_nvfp4 * GGML_RESTRICT x, اعشاری * GGML_RESTRICT y, int64_t k) {
+    ساکن ثابت صحیح qk = QK_NVFP4;
+    ساکن ثابت صحیح qk_sub = QK_NVFP4_SUB;
+    ساکن ثابت صحیح n_sub = QK_NVFP4 / QK_NVFP4_SUB;
 
-    assert(k % qk == 0);
+    أكد(k % qk == 0);
 
-    const int nb = k / qk;
+    ثابت صحیح nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        for (int s = 0; s < n_sub; s++) {
-            const float d = ggml_ue4m3_to_fp32(x[i].d[s]);
-            float * yb = y + i*qk + s*qk_sub;
+    برائے (صحیح i = 0; i < nb; i++) {
+        برائے (صحیح s = 0; s < n_sub; s++) {
+            ثابت اعشاری d = ggml_ue4m3_مقصد_fp32(x[i].d[s]);
+            اعشاری * yb = y + i*qk + s*qk_sub;
 
-            for (int j = 0; j < qk_sub/2; ++j) {
-                const int8_t v0 = kvalues_mxfp4[x[i].qs[s*(qk_sub/2) + j] & 0x0F];
-                const int8_t v1 = kvalues_mxfp4[x[i].qs[s*(qk_sub/2) + j] >>   4];
+            برائے (صحیح j = 0; j < qk_sub/2; ++j) {
+                ثابت int8_t v0 = kvalues_mxfp4[x[i].qs[s*(qk_sub/2) + j] & 0x0F];
+                ثابت int8_t v1 = kvalues_mxfp4[x[i].qs[s*(qk_sub/2) + j] >>   4];
 
                 yb[j + 0       ] = v0*d;
                 yb[j + qk_sub/2] = v1*d;
@@ -618,164 +618,164 @@ void dequantize_row_nvfp4(const block_nvfp4 * GGML_RESTRICT x, float * GGML_REST
 //
 // ===================== Helper functions
 //
-static inline int nearest_int(float fval) {
-    assert(fabsf(fval) <= 4194303.f);
-    float val = fval + 12582912.f;
-    int i; memcpy(&i, &val, sizeof(int));
-    return (i & 0x007fffff) - 0x00400000;
+ساکن اندرونی صحیح قریب_ترین_int(اعشاری fval) {
+    أكد(fabsf(fval) <= 4194303.f);
+    اعشاری val = fval + 12582912.f;
+    صحیح i; حافظہ_نقل(&i, &val, حجم(صحیح));
+    واپس (i & 0x007fffff) - 0x00400000;
 }
 
-static float make_qx_quants(int n, int nmax, const float * GGML_RESTRICT x, int8_t * GGML_RESTRICT L, int rmse_type,
-        const float * GGML_RESTRICT qw) {
-    float max = 0;
-    float amax = 0;
-    for (int i = 0; i < n; ++i) {
-        float ax = fabsf(x[i]);
-        if (ax > amax) { amax = ax; max = x[i]; }
+ساکن اعشاری make_qx_quants(صحیح n, صحیح nmax, ثابت اعشاری * GGML_RESTRICT x, int8_t * GGML_RESTRICT L, صحیح rmse_type,
+        ثابت اعشاری * GGML_RESTRICT qw) {
+    اعشاری max = 0;
+    اعشاری amax = 0;
+    برائے (صحیح i = 0; i < n; ++i) {
+        اعشاری ax = fabsf(x[i]);
+        اگر (ax > amax) { amax = ax; max = x[i]; }
     }
-    if (amax < GROUP_MAX_EPS) { // all zero
-        for (int i = 0; i < n; ++i) {
+    اگر (amax < گروہ_MAX_EPS) { // all zero
+        برائے (صحیح i = 0; i < n; ++i) {
             L[i] = 0;
         }
-        return 0.f;
+        واپس 0.f;
     }
-    float iscale = -nmax / max;
-    if (rmse_type == 0) {
-        for (int i = 0; i < n; ++i) {
-            int l = nearest_int(iscale * x[i]);
+    اعشاری iscale = -nmax / max;
+    اگر (rmse_type == 0) {
+        برائے (صحیح i = 0; i < n; ++i) {
+            صحیح l = قریب_ترین_int(iscale * x[i]);
             L[i] = nmax + MAX(-nmax, MIN(nmax-1, l));
         }
-        return 1/iscale;
+        واپس 1/iscale;
     }
     bool return_early = false;
-    if (rmse_type < 0) {
+    اگر (rmse_type < 0) {
         rmse_type = -rmse_type;
         return_early = true;
     }
-    float sumlx = 0;
-    float suml2 = 0;
-#ifdef HAVE_BUGGY_APPLE_LINKER
+    اعشاری sumlx = 0;
+    اعشاری suml2 = 0;
+#اگر_تعریف_شدہ HAVE_BUGGY_APPLE_LINKER
     // use 'volatile' to prevent unroll and work around a bug in Apple ld64 1015.7
-    for (volatile int i = 0; i < n; ++i) {
-#else
-    for (int i = 0; i < n; ++i) {
-#endif
-        int l = nearest_int(iscale * x[i]);
+    برائے (متلون صحیح i = 0; i < n; ++i) {
+#ورنہ
+    برائے (صحیح i = 0; i < n; ++i) {
+#اگر_ختم
+        صحیح l = قریب_ترین_int(iscale * x[i]);
         l = MAX(-nmax, MIN(nmax-1, l));
         L[i] = l + nmax;
-        float w = qw ? qw[i] : rmse_type == 1 ? x[i] * x[i] : rmse_type == 2 ? 1 : rmse_type == 3 ? fabsf(x[i]) : sqrtf(fabsf(x[i]));
+        اعشاری w = qw ? qw[i] : rmse_type == 1 ? x[i] * x[i] : rmse_type == 2 ? 1 : rmse_type == 3 ? fabsf(x[i]) : sqrtf(fabsf(x[i]));
         sumlx += w*x[i]*l;
         suml2 += w*l*l;
     }
-    float scale = suml2 ? sumlx/suml2 : 0.0f;
-    if (return_early) return suml2 > 0 ? 0.5f*(scale + 1/iscale) : 1/iscale;
-    float best = scale * sumlx;
-    for (int is = -9; is <= 9; ++is) {
-        if (is == 0) {
-            continue;
+    اعشاری scale = suml2 ? sumlx/suml2 : 0.0f;
+    اگر (return_early) واپس suml2 > 0 ? 0.5f*(scale + 1/iscale) : 1/iscale;
+    اعشاری بہترین = scale * sumlx;
+    برائے (صحیح is = -9; is <= 9; ++is) {
+        اگر (is == 0) {
+            جاری;
         }
         iscale = -(nmax + 0.1f*is) / max;
         sumlx = suml2 = 0;
-        for (int i = 0; i < n; ++i) {
-            int l = nearest_int(iscale * x[i]);
+        برائے (صحیح i = 0; i < n; ++i) {
+            صحیح l = قریب_ترین_int(iscale * x[i]);
             l = MAX(-nmax, MIN(nmax-1, l));
-            float w = qw ? qw[i] : rmse_type == 1 ? x[i] * x[i] : rmse_type == 2 ? 1 : rmse_type == 3 ? fabsf(x[i]) : sqrtf(fabsf(x[i]));
+            اعشاری w = qw ? qw[i] : rmse_type == 1 ? x[i] * x[i] : rmse_type == 2 ? 1 : rmse_type == 3 ? fabsf(x[i]) : sqrtf(fabsf(x[i]));
             sumlx += w*x[i]*l;
             suml2 += w*l*l;
         }
-        if (suml2 > 0 && sumlx*sumlx > best*suml2) {
-            for (int i = 0; i < n; ++i) {
-                int l = nearest_int(iscale * x[i]);
+        اگر (suml2 > 0 && sumlx*sumlx > بہترین*suml2) {
+            برائے (صحیح i = 0; i < n; ++i) {
+                صحیح l = قریب_ترین_int(iscale * x[i]);
                 L[i] = nmax + MAX(-nmax, MIN(nmax-1, l));
             }
-            scale = sumlx/suml2; best = scale*sumlx;
+            scale = sumlx/suml2; بہترین = scale*sumlx;
         }
     }
-    return scale;
+    واپس scale;
 }
 
-static float make_q3_quants(int n, int nmax, const float * GGML_RESTRICT x, int8_t * GGML_RESTRICT L, bool do_rmse) {
-    float max = 0;
-    float amax = 0;
-    for (int i = 0; i < n; ++i) {
-        float ax = fabsf(x[i]);
-        if (ax > amax) { amax = ax; max = x[i]; }
+ساکن اعشاری make_q3_quants(صحیح n, صحیح nmax, ثابت اعشاری * GGML_RESTRICT x, int8_t * GGML_RESTRICT L, bool do_rmse) {
+    اعشاری max = 0;
+    اعشاری amax = 0;
+    برائے (صحیح i = 0; i < n; ++i) {
+        اعشاری ax = fabsf(x[i]);
+        اگر (ax > amax) { amax = ax; max = x[i]; }
     }
-    if (amax < GROUP_MAX_EPS) { // all zero
-        for (int i = 0; i < n; ++i) { L[i] = 0; }
-        return 0.f;
+    اگر (amax < گروہ_MAX_EPS) { // all zero
+        برائے (صحیح i = 0; i < n; ++i) { L[i] = 0; }
+        واپس 0.f;
     }
-    float iscale = -nmax / max;
-    if (do_rmse) {
-        float sumlx = 0;
-        float suml2 = 0;
-        for (int i = 0; i < n; ++i) {
-            int l = nearest_int(iscale * x[i]);
+    اعشاری iscale = -nmax / max;
+    اگر (do_rmse) {
+        اعشاری sumlx = 0;
+        اعشاری suml2 = 0;
+        برائے (صحیح i = 0; i < n; ++i) {
+            صحیح l = قریب_ترین_int(iscale * x[i]);
             l = MAX(-nmax, MIN(nmax-1, l));
             L[i] = l;
-            float w = x[i]*x[i];
+            اعشاری w = x[i]*x[i];
             sumlx += w*x[i]*l;
             suml2 += w*l*l;
         }
-        for (int itry = 0; itry < 5; ++itry) {
-            int n_changed = 0;
-            for (int i = 0; i < n; ++i) {
-                float w = x[i]*x[i];
-                float slx = sumlx - w*x[i]*L[i];
-                if (slx > 0) {
-                    float sl2 = suml2 - w*L[i]*L[i];
-                    int new_l = nearest_int(x[i] * sl2 / slx);
+        برائے (صحیح itry = 0; itry < 5; ++itry) {
+            صحیح n_بدلا = 0;
+            برائے (صحیح i = 0; i < n; ++i) {
+                اعشاری w = x[i]*x[i];
+                اعشاری slx = sumlx - w*x[i]*L[i];
+                اگر (slx > 0) {
+                    اعشاری sl2 = suml2 - w*L[i]*L[i];
+                    صحیح new_l = قریب_ترین_int(x[i] * sl2 / slx);
                     new_l = MAX(-nmax, MIN(nmax-1, new_l));
-                    if (new_l != L[i]) {
+                    اگر (new_l != L[i]) {
                         slx += w*x[i]*new_l;
                         sl2 += w*new_l*new_l;
-                        if (sl2 > 0 && slx*slx*suml2 > sumlx*sumlx*sl2) {
+                        اگر (sl2 > 0 && slx*slx*suml2 > sumlx*sumlx*sl2) {
                             L[i] = new_l; sumlx = slx; suml2 = sl2;
-                            ++n_changed;
+                            ++n_بدلا;
                         }
                     }
                 }
             }
-            if (!n_changed) {
-                break;
+            اگر (!n_بدلا) {
+                توڑو;
             }
         }
-        for (int i = 0; i < n; ++i) {
+        برائے (صحیح i = 0; i < n; ++i) {
             L[i] += nmax;
         }
-        return suml2 > 0.0f ? sumlx / suml2 : 0.0f;
+        واپس suml2 > 0.0f ? sumlx / suml2 : 0.0f;
     }
-    for (int i = 0; i < n; ++i) {
-        int l = nearest_int(iscale * x[i]);
+    برائے (صحیح i = 0; i < n; ++i) {
+        صحیح l = قریب_ترین_int(iscale * x[i]);
         l = MAX(-nmax, MIN(nmax-1, l));
         L[i] = l + nmax;
     }
-    return 1/iscale;
+    واپس 1/iscale;
 }
 
-static float make_qkx1_quants(int n, int nmax, const float * GGML_RESTRICT x, uint8_t * GGML_RESTRICT L, float * GGML_RESTRICT the_min,
-        int ntry, float alpha) {
-    float min = x[0];
-    float max = x[0];
-    for (int i = 1; i < n; ++i) {
-        if (x[i] < min) min = x[i];
-        if (x[i] > max) max = x[i];
+ساکن اعشاری make_qkx1_quants(صحیح n, صحیح nmax, ثابت اعشاری * GGML_RESTRICT x, uint8_t * GGML_RESTRICT L, اعشاری * GGML_RESTRICT the_min,
+        صحیح ntry, اعشاری alpha) {
+    اعشاری min = x[0];
+    اعشاری max = x[0];
+    برائے (صحیح i = 1; i < n; ++i) {
+        اگر (x[i] < min) min = x[i];
+        اگر (x[i] > max) max = x[i];
     }
-    if (max == min) {
-        for (int i = 0; i < n; ++i) L[i] = 0;
+    اگر (max == min) {
+        برائے (صحیح i = 0; i < n; ++i) L[i] = 0;
         *the_min = 0;
-        return 0.f;
+        واپس 0.f;
     }
-    if (min > 0) min = 0;
-    float iscale = nmax/(max - min);
-    float scale = 1/iscale;
-    for (int itry = 0; itry < ntry; ++itry) {
-        float sumlx = 0; int suml2 = 0;
+    اگر (min > 0) min = 0;
+    اعشاری iscale = nmax/(max - min);
+    اعشاری scale = 1/iscale;
+    برائے (صحیح itry = 0; itry < ntry; ++itry) {
+        اعشاری sumlx = 0; صحیح suml2 = 0;
         bool did_change = false;
-        for (int i = 0; i < n; ++i) {
-            int l = nearest_int(iscale*(x[i] - min));
+        برائے (صحیح i = 0; i < n; ++i) {
+            صحیح l = قریب_ترین_int(iscale*(x[i] - min));
             l = MAX(0, MIN(nmax, l));
-            if (l != L[i]) {
+            اگر (l != L[i]) {
                 L[i] = l;
                 did_change = true;
             }
@@ -783,104 +783,104 @@ static float make_qkx1_quants(int n, int nmax, const float * GGML_RESTRICT x, ui
             suml2 += l*l;
         }
         scale = sumlx/suml2;
-        float sum = 0;
-        for (int i = 0; i < n; ++i) {
-            sum += x[i] - scale*L[i];
+        اعشاری مجموع = 0;
+        برائے (صحیح i = 0; i < n; ++i) {
+            مجموع += x[i] - scale*L[i];
         }
-        min = alpha*min + (1 - alpha)*sum/n;
-        if (min > 0) min = 0;
+        min = alpha*min + (1 - alpha)*مجموع/n;
+        اگر (min > 0) min = 0;
         iscale = 1/scale;
-        if (!did_change) break;
+        اگر (!did_change) توڑو;
     }
     *the_min = -min;
-    return scale;
+    واپس scale;
 }
 
-static float make_qkx2_quants(int n, int nmax, const float * GGML_RESTRICT x, const float * GGML_RESTRICT weights,
-        uint8_t * GGML_RESTRICT L, float * GGML_RESTRICT the_min, uint8_t * GGML_RESTRICT Laux,
-        float rmin, float rdelta, int nstep, bool use_mad) {
-    float min = x[0];
-    float max = x[0];
-    float sum_w = weights[0];
-    float sum_x = sum_w * x[0];
-#ifdef HAVE_BUGGY_APPLE_LINKER
+ساکن اعشاری make_qkx2_quants(صحیح n, صحیح nmax, ثابت اعشاری * GGML_RESTRICT x, ثابت اعشاری * GGML_RESTRICT weights,
+        uint8_t * GGML_RESTRICT L, اعشاری * GGML_RESTRICT the_min, uint8_t * GGML_RESTRICT Laux,
+        اعشاری rmin, اعشاری rdelta, صحیح nstep, bool use_mad) {
+    اعشاری min = x[0];
+    اعشاری max = x[0];
+    اعشاری مجموع_w = weights[0];
+    اعشاری مجموع_x = مجموع_w * x[0];
+#اگر_تعریف_شدہ HAVE_BUGGY_APPLE_LINKER
     // use 'volatile' to prevent unroll and work around a bug in Apple ld64 1015.7
-    for (volatile int i = 1; i < n; ++i) {
-#else
-    for (int i = 1; i < n; ++i) {
-#endif
-        if (x[i] < min) min = x[i];
-        if (x[i] > max) max = x[i];
-        float w = weights[i];
-        sum_w += w;
-        sum_x += w * x[i];
+    برائے (متلون صحیح i = 1; i < n; ++i) {
+#ورنہ
+    برائے (صحیح i = 1; i < n; ++i) {
+#اگر_ختم
+        اگر (x[i] < min) min = x[i];
+        اگر (x[i] > max) max = x[i];
+        اعشاری w = weights[i];
+        مجموع_w += w;
+        مجموع_x += w * x[i];
     }
-    if (min > 0) min = 0;
-    if (max == min) {
-        for (int i = 0; i < n; ++i) L[i] = 0;
+    اگر (min > 0) min = 0;
+    اگر (max == min) {
+        برائے (صحیح i = 0; i < n; ++i) L[i] = 0;
         *the_min = -min;
-        return 0.f;
+        واپس 0.f;
     }
-    float iscale = nmax/(max - min);
-    float scale = 1/iscale;
-    float best_error = 0;
-    for (int i = 0; i < n; ++i) {
-        int l = nearest_int(iscale*(x[i] - min));
+    اعشاری iscale = nmax/(max - min);
+    اعشاری scale = 1/iscale;
+    اعشاری بہترین_error = 0;
+    برائے (صحیح i = 0; i < n; ++i) {
+        صحیح l = قریب_ترین_int(iscale*(x[i] - min));
         L[i] = MAX(0, MIN(nmax, l));
-        float diff = scale * L[i] + min - x[i];
+        اعشاری diff = scale * L[i] + min - x[i];
         diff = use_mad ? fabsf(diff) : diff * diff;
-        float w = weights[i];
-        best_error += w * diff;
+        اعشاری w = weights[i];
+        بہترین_error += w * diff;
     }
-    if (nstep < 1) {
+    اگر (nstep < 1) {
         *the_min = -min;
-        return scale;
+        واپس scale;
     }
-    for (int is = 0; is <= nstep; ++is) {
+    برائے (صحیح is = 0; is <= nstep; ++is) {
         iscale = (rmin + rdelta*is + nmax)/(max - min);
-        float sum_l = 0, sum_l2 = 0, sum_xl = 0;
-        for (int i = 0; i < n; ++i) {
-            int l = nearest_int(iscale*(x[i] - min));
+        اعشاری مجموع_l = 0, مجموع_l2 = 0, مجموع_xl = 0;
+        برائے (صحیح i = 0; i < n; ++i) {
+            صحیح l = قریب_ترین_int(iscale*(x[i] - min));
             l = MAX(0, MIN(nmax, l));
             Laux[i] = l;
-            float w = weights[i];
-            sum_l += w*l;
-            sum_l2 += w*l*l;
-            sum_xl += w*l*x[i];
+            اعشاری w = weights[i];
+            مجموع_l += w*l;
+            مجموع_l2 += w*l*l;
+            مجموع_xl += w*l*x[i];
         }
-        float D = sum_w * sum_l2 - sum_l * sum_l;
-        if (D > 0) {
-            float this_scale = (sum_w * sum_xl - sum_x * sum_l)/D;
-            float this_min   = (sum_l2 * sum_x - sum_l * sum_xl)/D;
-            if (this_min > 0) {
+        اعشاری D = مجموع_w * مجموع_l2 - مجموع_l * مجموع_l;
+        اگر (D > 0) {
+            اعشاری this_scale = (مجموع_w * مجموع_xl - مجموع_x * مجموع_l)/D;
+            اعشاری this_min   = (مجموع_l2 * مجموع_x - مجموع_l * مجموع_xl)/D;
+            اگر (this_min > 0) {
                 this_min = 0;
-                this_scale = sum_xl / sum_l2;
+                this_scale = مجموع_xl / مجموع_l2;
             }
-            float cur_error = 0;
-            for (int i = 0; i < n; ++i) {
-                float diff = this_scale * Laux[i] + this_min - x[i];
+            اعشاری cur_error = 0;
+            برائے (صحیح i = 0; i < n; ++i) {
+                اعشاری diff = this_scale * Laux[i] + this_min - x[i];
                 diff = use_mad ? fabsf(diff) : diff * diff;
-                float w = weights[i];
+                اعشاری w = weights[i];
                 cur_error += w * diff;
             }
-            if (cur_error < best_error) {
-                for (int i = 0; i < n; ++i) {
+            اگر (cur_error < بہترین_error) {
+                برائے (صحیح i = 0; i < n; ++i) {
                     L[i] = Laux[i];
                 }
-                best_error = cur_error;
+                بہترین_error = cur_error;
                 scale = this_scale;
                 min = this_min;
             }
         }
     }
     *the_min = -min;
-    return scale;
+    واپس scale;
 }
 
-static inline void get_scale_min_k4(int j, const uint8_t * GGML_RESTRICT q, uint8_t * GGML_RESTRICT d, uint8_t * GGML_RESTRICT m) {
-    if (j < 4) {
+ساکن اندرونی خالی get_scale_min_k4(صحیح j, ثابت uint8_t * GGML_RESTRICT q, uint8_t * GGML_RESTRICT d, uint8_t * GGML_RESTRICT m) {
+    اگر (j < 4) {
         *d = q[j] & 63; *m = q[j + 4] & 63;
-    } else {
+    } ورنہ {
         *d = (q[j+4] & 0xF) | ((q[j-4] >> 6) << 4);
         *m = (q[j+4] >>  4) | ((q[j-0] >> 6) << 4);
     }
@@ -888,68 +888,68 @@ static inline void get_scale_min_k4(int j, const uint8_t * GGML_RESTRICT q, uint
 
 //========================- 2-bit (de)-quantization
 
-void quantize_row_q2_K_ref(const float * GGML_RESTRICT x, block_q2_K * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int nb = k / QK_K;
+خالی quantize_صف_q2_K_ref(ثابت اعشاری * GGML_RESTRICT x, بلاک_q2_K * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
+    ثابت صحیح nb = k / QK_K;
 
     uint8_t L[QK_K];
     uint8_t Laux[16];
-    float   weights[16];
-    float mins[QK_K/16];
-    float scales[QK_K/16];
+    اعشاری   weights[16];
+    اعشاری mins[QK_K/16];
+    اعشاری scales[QK_K/16];
 
-    const float q4scale = 15.f;
+    ثابت اعشاری q4scale = 15.f;
 
-    for (int i = 0; i < nb; i++) {
-        float max_scale = 0; // as we are deducting the min, scales are always positive
-        float max_min = 0;
-        for (int j = 0; j < QK_K/16; ++j) {
-            for (int l = 0; l < 16; ++l) weights[l] = fabsf(x[16*j + l]);
+    برائے (صحیح i = 0; i < nb; i++) {
+        اعشاری max_scale = 0; // as we are deducting the min, scales are always positive
+        اعشاری max_min = 0;
+        برائے (صحیح j = 0; j < QK_K/16; ++j) {
+            برائے (صحیح l = 0; l < 16; ++l) weights[l] = fabsf(x[16*j + l]);
             scales[j] = make_qkx2_quants(16, 3, x + 16*j, weights, L + 16*j, &mins[j], Laux, -0.5f, 0.1f, 15, true);
-            float scale = scales[j];
-            if (scale > max_scale) {
+            اعشاری scale = scales[j];
+            اگر (scale > max_scale) {
                 max_scale = scale;
             }
-            float min = mins[j];
-            if (min > max_min) {
+            اعشاری min = mins[j];
+            اگر (min > max_min) {
                 max_min = min;
             }
         }
 
-        if (max_scale > 0) {
-            float iscale = q4scale/max_scale;
-            for (int j = 0; j < QK_K/16; ++j) {
-                int l = nearest_int(iscale*scales[j]);
+        اگر (max_scale > 0) {
+            اعشاری iscale = q4scale/max_scale;
+            برائے (صحیح j = 0; j < QK_K/16; ++j) {
+                صحیح l = قریب_ترین_int(iscale*scales[j]);
                 y[i].scales[j] = l;
             }
-            y[i].d = GGML_FP32_TO_FP16(max_scale/q4scale);
-        } else {
-            for (int j = 0; j < QK_K/16; ++j) y[i].scales[j] = 0;
-            y[i].d = GGML_FP32_TO_FP16(0.f);
+            y[i].d = GGML_FP32_مقصد_FP16(max_scale/q4scale);
+        } ورنہ {
+            برائے (صحیح j = 0; j < QK_K/16; ++j) y[i].scales[j] = 0;
+            y[i].d = GGML_FP32_مقصد_FP16(0.f);
         }
-        if (max_min > 0) {
-            float iscale = q4scale/max_min;
-            for (int j = 0; j < QK_K/16; ++j) {
-                int l = nearest_int(iscale*mins[j]);
+        اگر (max_min > 0) {
+            اعشاری iscale = q4scale/max_min;
+            برائے (صحیح j = 0; j < QK_K/16; ++j) {
+                صحیح l = قریب_ترین_int(iscale*mins[j]);
                 y[i].scales[j] |= (l << 4);
             }
-            y[i].dmin = GGML_FP32_TO_FP16(max_min/q4scale);
-        } else {
-            y[i].dmin = GGML_FP32_TO_FP16(0.f);
+            y[i].dmin = GGML_FP32_مقصد_FP16(max_min/q4scale);
+        } ورنہ {
+            y[i].dmin = GGML_FP32_مقصد_FP16(0.f);
         }
-        for (int j = 0; j < QK_K/16; ++j) {
-            const float d = GGML_FP16_TO_FP32(y[i].d) * (y[i].scales[j] & 0xF);
-            if (!d) continue;
-            const float dm = GGML_FP16_TO_FP32(y[i].dmin) * (y[i].scales[j] >> 4);
-            for (int ii = 0; ii < 16; ++ii) {
-                int l = nearest_int((x[16*j + ii] + dm)/d);
+        برائے (صحیح j = 0; j < QK_K/16; ++j) {
+            ثابت اعشاری d = GGML_FP16_مقصد_FP32(y[i].d) * (y[i].scales[j] & 0xF);
+            اگر (!d) جاری;
+            ثابت اعشاری dm = GGML_FP16_مقصد_FP32(y[i].dmin) * (y[i].scales[j] >> 4);
+            برائے (صحیح ii = 0; ii < 16; ++ii) {
+                صحیح l = قریب_ترین_int((x[16*j + ii] + dm)/d);
                 l = MAX(0, MIN(3, l));
                 L[16*j + ii] = l;
             }
         }
 
-        for (int j = 0; j < QK_K; j += 128) {
-            for (int l = 0; l < 32; ++l) {
+        برائے (صحیح j = 0; j < QK_K; j += 128) {
+            برائے (صحیح l = 0; l < 32; ++l) {
                 y[i].qs[j/4 + l] = L[j + l] | (L[j + l + 32] << 2) | (L[j + l + 64] << 4) | (L[j + l + 96] << 6);
             }
         }
@@ -958,249 +958,249 @@ void quantize_row_q2_K_ref(const float * GGML_RESTRICT x, block_q2_K * GGML_REST
     }
 }
 
-void dequantize_row_q2_K(const block_q2_K * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int nb = k / QK_K;
+خالی dequantize_صف_q2_K(ثابت بلاک_q2_K * GGML_RESTRICT x, اعشاری * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
+    ثابت صحیح nb = k / QK_K;
 
-    for (int i = 0; i < nb; i++) {
+    برائے (صحیح i = 0; i < nb; i++) {
 
-        const float d = GGML_FP16_TO_FP32(x[i].d);
-        const float min = GGML_FP16_TO_FP32(x[i].dmin);
+        ثابت اعشاری d = GGML_FP16_مقصد_FP32(x[i].d);
+        ثابت اعشاری min = GGML_FP16_مقصد_FP32(x[i].dmin);
 
-        const uint8_t * q = x[i].qs;
+        ثابت uint8_t * q = x[i].qs;
 
-        int is = 0;
-        float dl, ml;
-        for (int n = 0; n < QK_K; n += 128) {
-            int shift = 0;
-            for (int j = 0; j < 4; ++j) {
+        صحیح is = 0;
+        اعشاری dl, ml;
+        برائے (صحیح n = 0; n < QK_K; n += 128) {
+            صحیح سرکاؤ = 0;
+            برائے (صحیح j = 0; j < 4; ++j) {
 
                 uint8_t sc = x[i].scales[is++];
                 dl = d * (sc & 0xF); ml = min * (sc >> 4);
-                for (int l = 0; l < 16; ++l) *y++ = dl * ((int8_t)((q[l] >> shift) & 3)) - ml;
+                برائے (صحیح l = 0; l < 16; ++l) *y++ = dl * ((int8_t)((q[l] >> سرکاؤ) & 3)) - ml;
 
                 sc = x[i].scales[is++];
                 dl = d * (sc & 0xF); ml = min * (sc >> 4);
-                for (int l = 0; l < 16; ++l) *y++ = dl * ((int8_t)((q[l+16] >> shift) & 3)) - ml;
+                برائے (صحیح l = 0; l < 16; ++l) *y++ = dl * ((int8_t)((q[l+16] >> سرکاؤ) & 3)) - ml;
 
-                shift += 2;
+                سرکاؤ += 2;
             }
             q += 32;
         }
     }
 }
 
-static float make_qkx3_quants(int n, int nmax, const float * GGML_RESTRICT x, const float * GGML_RESTRICT weights,
-        uint8_t * GGML_RESTRICT L, float * GGML_RESTRICT the_min, uint8_t * GGML_RESTRICT Laux,
-        float rmin, float rdelta, int nstep, bool use_mad) {
-    float min = x[0];
-    float max = x[0];
-    float sum_w = weights ? weights[0] : x[0]*x[0];
-    float sum_x = sum_w * x[0];
-#ifdef HAVE_BUGGY_APPLE_LINKER
+ساکن اعشاری make_qkx3_quants(صحیح n, صحیح nmax, ثابت اعشاری * GGML_RESTRICT x, ثابت اعشاری * GGML_RESTRICT weights,
+        uint8_t * GGML_RESTRICT L, اعشاری * GGML_RESTRICT the_min, uint8_t * GGML_RESTRICT Laux,
+        اعشاری rmin, اعشاری rdelta, صحیح nstep, bool use_mad) {
+    اعشاری min = x[0];
+    اعشاری max = x[0];
+    اعشاری مجموع_w = weights ? weights[0] : x[0]*x[0];
+    اعشاری مجموع_x = مجموع_w * x[0];
+#اگر_تعریف_شدہ HAVE_BUGGY_APPLE_LINKER
     // use 'volatile' to prevent unroll and work around a bug in Apple ld64 1015.7
-    for (volatile int i = 1; i < n; ++i) {
-#else
-    for (int i = 1; i < n; ++i) {
-#endif
-        if (x[i] < min) min = x[i];
-        if (x[i] > max) max = x[i];
-        float w = weights ? weights[i] : x[i]*x[i];
-        sum_w += w;
-        sum_x += w * x[i];
+    برائے (متلون صحیح i = 1; i < n; ++i) {
+#ورنہ
+    برائے (صحیح i = 1; i < n; ++i) {
+#اگر_ختم
+        اگر (x[i] < min) min = x[i];
+        اگر (x[i] > max) max = x[i];
+        اعشاری w = weights ? weights[i] : x[i]*x[i];
+        مجموع_w += w;
+        مجموع_x += w * x[i];
     }
-    if (min > 0) {
+    اگر (min > 0) {
         min = 0;
     }
-    if (max <= min) {
+    اگر (max <= min) {
         memset(L, 0, n);
         *the_min = -min;
-        return 0.f;
+        واپس 0.f;
     }
-    float iscale = nmax/(max - min);
-    float scale = 1/iscale;
-    float best_mad = 0;
-    for (int i = 0; i < n; ++i) {
-        int l = nearest_int(iscale*(x[i] - min));
+    اعشاری iscale = nmax/(max - min);
+    اعشاری scale = 1/iscale;
+    اعشاری بہترین_mad = 0;
+    برائے (صحیح i = 0; i < n; ++i) {
+        صحیح l = قریب_ترین_int(iscale*(x[i] - min));
         L[i] = MAX(0, MIN(nmax, l));
-        float diff = scale * L[i] + min - x[i];
+        اعشاری diff = scale * L[i] + min - x[i];
         diff = use_mad ? fabsf(diff) : diff*diff;
-        float w = weights ? weights[i] : x[i]*x[i];
-        best_mad += w * diff;
+        اعشاری w = weights ? weights[i] : x[i]*x[i];
+        بہترین_mad += w * diff;
     }
-    if (nstep < 1) {
+    اگر (nstep < 1) {
         *the_min = -min;
-        return scale;
+        واپس scale;
     }
-    for (int is = 0; is <= nstep; ++is) {
+    برائے (صحیح is = 0; is <= nstep; ++is) {
         iscale = (rmin + rdelta*is + nmax)/(max - min);
-        float sum_l = 0, sum_l2 = 0, sum_xl = 0;
-        for (int i = 0; i < n; ++i) {
+        اعشاری مجموع_l = 0, مجموع_l2 = 0, مجموع_xl = 0;
+        برائے (صحیح i = 0; i < n; ++i) {
             // min is the best fit so far and can be at or near max, so v can be inf, nan or out of range for nearest_int
-            const float v = iscale*(x[i] - min);
-            const int l = v > 0 ? nearest_int(MIN(v, nmax)) : 0;
+            ثابت اعشاری v = iscale*(x[i] - min);
+            ثابت صحیح l = v > 0 ? قریب_ترین_int(MIN(v, nmax)) : 0;
             Laux[i] = l;
-            float w = weights ? weights[i] : x[i]*x[i];
-            sum_l  += w*l;
-            sum_l2 += w*l*l;
-            sum_xl += w*l*x[i];
+            اعشاری w = weights ? weights[i] : x[i]*x[i];
+            مجموع_l  += w*l;
+            مجموع_l2 += w*l*l;
+            مجموع_xl += w*l*x[i];
         }
-        float D = sum_w * sum_l2 - sum_l * sum_l;
-        if (D > 0) {
-            float this_scale = (sum_w * sum_xl - sum_x * sum_l)/D;
-            float this_min   = (sum_l2 * sum_x - sum_l * sum_xl)/D;
-            if (this_min > 0) {
+        اعشاری D = مجموع_w * مجموع_l2 - مجموع_l * مجموع_l;
+        اگر (D > 0) {
+            اعشاری this_scale = (مجموع_w * مجموع_xl - مجموع_x * مجموع_l)/D;
+            اعشاری this_min   = (مجموع_l2 * مجموع_x - مجموع_l * مجموع_xl)/D;
+            اگر (this_min > 0) {
                 this_min = 0;
-                this_scale = sum_xl / sum_l2;
+                this_scale = مجموع_xl / مجموع_l2;
             }
-            float mad = 0;
-            for (int i = 0; i < n; ++i) {
-                float diff = this_scale * Laux[i] + this_min - x[i];
+            اعشاری mad = 0;
+            برائے (صحیح i = 0; i < n; ++i) {
+                اعشاری diff = this_scale * Laux[i] + this_min - x[i];
                 diff = use_mad ? fabsf(diff) : diff*diff;
-                float w = weights ? weights[i] : x[i]*x[i];
+                اعشاری w = weights ? weights[i] : x[i]*x[i];
                 mad += w * diff;
             }
-            if (mad < best_mad) {
-                for (int i = 0; i < n; ++i) {
+            اگر (mad < بہترین_mad) {
+                برائے (صحیح i = 0; i < n; ++i) {
                     L[i] = Laux[i];
                 }
-                best_mad = mad;
+                بہترین_mad = mad;
                 scale = this_scale;
                 min = this_min;
             }
         }
     }
     *the_min = -min;
-    return scale;
+    واپس scale;
 }
 
-static float make_qp_quants(int n, int nmax, const float * GGML_RESTRICT x, uint8_t * GGML_RESTRICT L, const float * quant_weights) {
-    float max = 0;
-    for (int i = 0; i < n; ++i) {
+ساکن اعشاری make_qp_quants(صحیح n, صحیح nmax, ثابت اعشاری * GGML_RESTRICT x, uint8_t * GGML_RESTRICT L, ثابت اعشاری * quant_weights) {
+    اعشاری max = 0;
+    برائے (صحیح i = 0; i < n; ++i) {
         max = MAX(max, x[i]);
     }
-    if (max < GROUP_MAX_EPS) { // all zero
-        for (int i = 0; i < n; ++i) { L[i] = 0; }
-        return 0.f;
+    اگر (max < گروہ_MAX_EPS) { // all zero
+        برائے (صحیح i = 0; i < n; ++i) { L[i] = 0; }
+        واپس 0.f;
     }
-    float iscale = nmax / max;
-    for (int i = 0; i < n; ++i) {
-        L[i] = nearest_int(iscale * x[i]);
+    اعشاری iscale = nmax / max;
+    برائے (صحیح i = 0; i < n; ++i) {
+        L[i] = قریب_ترین_int(iscale * x[i]);
     }
-    float scale = 1/iscale;
-    float best_mse = 0;
-    for (int i = 0; i < n; ++i) {
-        float diff = x[i] - scale*L[i];
-        float w = quant_weights[i];
-        best_mse += w*diff*diff;
+    اعشاری scale = 1/iscale;
+    اعشاری بہترین_mse = 0;
+    برائے (صحیح i = 0; i < n; ++i) {
+        اعشاری diff = x[i] - scale*L[i];
+        اعشاری w = quant_weights[i];
+        بہترین_mse += w*diff*diff;
     }
-    for (int is = -4; is <= 4; ++is) {
-        if (is == 0) continue;
-        float iscale_is = (0.1f*is + nmax)/max;
-        float scale_is = 1/iscale_is;
-        float mse = 0;
-        for (int i = 0; i < n; ++i) {
-            int l = nearest_int(iscale_is*x[i]);
+    برائے (صحیح is = -4; is <= 4; ++is) {
+        اگر (is == 0) جاری;
+        اعشاری iscale_is = (0.1f*is + nmax)/max;
+        اعشاری scale_is = 1/iscale_is;
+        اعشاری mse = 0;
+        برائے (صحیح i = 0; i < n; ++i) {
+            صحیح l = قریب_ترین_int(iscale_is*x[i]);
             l = MIN(nmax, l);
-            float diff = x[i] - scale_is*l;
-            float w = quant_weights[i];
+            اعشاری diff = x[i] - scale_is*l;
+            اعشاری w = quant_weights[i];
             mse += w*diff*diff;
         }
-        if (mse < best_mse) {
-            best_mse = mse;
+        اگر (mse < بہترین_mse) {
+            بہترین_mse = mse;
             iscale = iscale_is;
         }
     }
-    float sumlx = 0;
-    float suml2 = 0;
-    for (int i = 0; i < n; ++i) {
-        int l = nearest_int(iscale * x[i]);
+    اعشاری sumlx = 0;
+    اعشاری suml2 = 0;
+    برائے (صحیح i = 0; i < n; ++i) {
+        صحیح l = قریب_ترین_int(iscale * x[i]);
         l = MIN(nmax, l);
         L[i] = l;
-        float w = quant_weights[i];
+        اعشاری w = quant_weights[i];
         sumlx += w*x[i]*l;
         suml2 += w*l*l;
     }
-    for (int itry = 0; itry < 5; ++itry) {
-        int n_changed = 0;
-        for (int i = 0; i < n; ++i) {
-            float w = quant_weights[i];
-            float slx = sumlx - w*x[i]*L[i];
-            float sl2 = suml2 - w*L[i]*L[i];
-            if (slx > 0 && sl2 > 0) {
-                int new_l = nearest_int(x[i] * sl2 / slx);
+    برائے (صحیح itry = 0; itry < 5; ++itry) {
+        صحیح n_بدلا = 0;
+        برائے (صحیح i = 0; i < n; ++i) {
+            اعشاری w = quant_weights[i];
+            اعشاری slx = sumlx - w*x[i]*L[i];
+            اعشاری sl2 = suml2 - w*L[i]*L[i];
+            اگر (slx > 0 && sl2 > 0) {
+                صحیح new_l = قریب_ترین_int(x[i] * sl2 / slx);
                 new_l = MIN(nmax, new_l);
-                if (new_l != L[i]) {
+                اگر (new_l != L[i]) {
                     slx += w*x[i]*new_l;
                     sl2 += w*new_l*new_l;
-                    if (slx*slx*suml2 > sumlx*sumlx*sl2) {
+                    اگر (slx*slx*suml2 > sumlx*sumlx*sl2) {
                         L[i] = new_l; sumlx = slx; suml2 = sl2;
-                        ++n_changed;
+                        ++n_بدلا;
                     }
                 }
             }
         }
-        if (!n_changed) {
-            break;
+        اگر (!n_بدلا) {
+            توڑو;
         }
     }
-    return suml2 > 0.0f ? sumlx / suml2 : 0.0f;
+    واپس suml2 > 0.0f ? sumlx / suml2 : 0.0f;
 }
 
-static void quantize_row_q2_K_impl(const float * GGML_RESTRICT x, block_q2_K * GGML_RESTRICT y, int k, const float * GGML_RESTRICT quant_weights) {
+ساکن خالی quantize_صف_q2_K_impl(ثابت اعشاری * GGML_RESTRICT x, بلاک_q2_K * GGML_RESTRICT y, صحیح k, ثابت اعشاری * GGML_RESTRICT quant_weights) {
     GGML_ASSERT(quant_weights);
-    assert(k % QK_K == 0);
-    const int nb = k / QK_K;
-    const bool requantize = true;
+    أكد(k % QK_K == 0);
+    ثابت صحیح nb = k / QK_K;
+    ثابت bool requantize = true;
 
     uint8_t L[QK_K];
     uint8_t Laux[16];
-    float mins[QK_K/16];
-    float scales[QK_K/16];
-    float sw[QK_K/16];
-    float weight[16];
+    اعشاری mins[QK_K/16];
+    اعشاری scales[QK_K/16];
+    اعشاری sw[QK_K/16];
+    اعشاری وزن[16];
     uint8_t Ls[QK_K/16], Lm[QK_K/16];
 
-    for (int i = 0; i < nb; i++) {
-        memset(sw, 0, QK_K/16*sizeof(float));
-        float sumx2 = 0;
-        for (int j = 0; j < QK_K; ++j) sumx2 += x[j]*x[j];
-        float sigma2 = sumx2/QK_K;
-        for (int j = 0; j < QK_K/16; ++j) {
-            const float * GGML_RESTRICT qw = quant_weights + QK_K * i + 16*j;
-            for (int l = 0; l < 16; ++l) weight[l] = qw[l] * sqrtf(sigma2 + x[16*j + l]*x[16*j + l]);
-            for (int l = 0; l < QK_K/16; ++l) sw[j] += weight[l];
-            scales[j] = make_qkx3_quants(16, 3, x + 16*j, weight, L + 16*j, &mins[j], Laux, -0.9f, 0.05f, 36, false);
+    برائے (صحیح i = 0; i < nb; i++) {
+        memset(sw, 0, QK_K/16*حجم(اعشاری));
+        اعشاری sumx2 = 0;
+        برائے (صحیح j = 0; j < QK_K; ++j) sumx2 += x[j]*x[j];
+        اعشاری sigma2 = sumx2/QK_K;
+        برائے (صحیح j = 0; j < QK_K/16; ++j) {
+            ثابت اعشاری * GGML_RESTRICT qw = quant_weights + QK_K * i + 16*j;
+            برائے (صحیح l = 0; l < 16; ++l) وزن[l] = qw[l] * sqrtf(sigma2 + x[16*j + l]*x[16*j + l]);
+            برائے (صحیح l = 0; l < QK_K/16; ++l) sw[j] += وزن[l];
+            scales[j] = make_qkx3_quants(16, 3, x + 16*j, وزن, L + 16*j, &mins[j], Laux, -0.9f, 0.05f, 36, false);
         }
 
-        float dm, mm;
+        اعشاری dm, mm;
         dm  = make_qp_quants(QK_K/16, 15, scales, Ls, sw);
         mm  = make_qp_quants(QK_K/16, 15, mins,   Lm, sw);
 
-        y[i].d    = GGML_FP32_TO_FP16(dm);
-        y[i].dmin = GGML_FP32_TO_FP16(mm);
-        dm        = GGML_FP16_TO_FP32(y[i].d);
-        mm        = GGML_FP16_TO_FP32(y[i].dmin);
+        y[i].d    = GGML_FP32_مقصد_FP16(dm);
+        y[i].dmin = GGML_FP32_مقصد_FP16(mm);
+        dm        = GGML_FP16_مقصد_FP32(y[i].d);
+        mm        = GGML_FP16_مقصد_FP32(y[i].dmin);
 
-        for (int j = 0; j < QK_K/16; ++j) {
+        برائے (صحیح j = 0; j < QK_K/16; ++j) {
             y[i].scales[j] = Ls[j] | (Lm[j] << 4);
         }
 
-        if (requantize) {
-            for (int j = 0; j < QK_K/16; ++j) {
-                const float d = dm * (y[i].scales[j] & 0xF);
-                if (!d) continue;
-                const float m = mm * (y[i].scales[j] >> 4);
-                for (int ii = 0; ii < 16; ++ii) {
-                    int l = nearest_int((x[16*j + ii] + m)/d);
+        اگر (requantize) {
+            برائے (صحیح j = 0; j < QK_K/16; ++j) {
+                ثابت اعشاری d = dm * (y[i].scales[j] & 0xF);
+                اگر (!d) جاری;
+                ثابت اعشاری m = mm * (y[i].scales[j] >> 4);
+                برائے (صحیح ii = 0; ii < 16; ++ii) {
+                    صحیح l = قریب_ترین_int((x[16*j + ii] + m)/d);
                     l = MAX(0, MIN(3, l));
                     L[16*j + ii] = l;
                 }
             }
         }
 
-        for (int j = 0; j < QK_K; j += 128) {
-            for (int l = 0; l < 32; ++l) {
+        برائے (صحیح j = 0; j < QK_K; j += 128) {
+            برائے (صحیح l = 0; l < 32; ++l) {
                 y[i].qs[j/4 + l] = L[j + l] | (L[j + l + 32] << 2) | (L[j + l + 64] << 4) | (L[j + l + 96] << 6);
             }
         }
@@ -1209,72 +1209,72 @@ static void quantize_row_q2_K_impl(const float * GGML_RESTRICT x, block_q2_K * G
     }
 }
 
-size_t quantize_q2_K(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    size_t row_size = ggml_row_size(GGML_TYPE_Q2_K, n_per_row);
-    if (!quant_weights) {
-        quantize_row_q2_K_ref(src, dst, (int64_t)nrow*n_per_row);
+size_t quantize_q2_K(ثابت اعشاری * GGML_RESTRICT src, خالی * GGML_RESTRICT dst, int64_t nrow, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
+    size_t صف_سائز = ggml_صف_سائز(GGML_TYPE_Q2_K, n_فی_صف);
+    اگر (!quant_weights) {
+        quantize_صف_q2_K_ref(src, dst, (int64_t)nrow*n_فی_صف);
     }
-    else {
-        char * qrow = (char *)dst;
-        for (int64_t row = 0; row < nrow; ++row) {
-            quantize_row_q2_K_impl(src, (block_q2_K*)qrow, n_per_row, quant_weights);
-            src += n_per_row;
-            qrow += row_size;
+    ورنہ {
+        حرف * qrow = (حرف *)dst;
+        برائے (int64_t صف = 0; صف < nrow; ++صف) {
+            quantize_صف_q2_K_impl(src, (بلاک_q2_K*)qrow, n_فی_صف, quant_weights);
+            src += n_فی_صف;
+            qrow += صف_سائز;
         }
     }
-    return nrow * row_size;
+    واپس nrow * صف_سائز;
 }
 
 //========================= 3-bit (de)-quantization
 
-void quantize_row_q3_K_ref(const float * GGML_RESTRICT x, block_q3_K * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int nb = k / QK_K;
+خالی quantize_صف_q3_K_ref(ثابت اعشاری * GGML_RESTRICT x, بلاک_q3_K * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
+    ثابت صحیح nb = k / QK_K;
 
     int8_t L[QK_K];
-    float scales[QK_K / 16];
+    اعشاری scales[QK_K / 16];
 
-    for (int i = 0; i < nb; i++) {
+    برائے (صحیح i = 0; i < nb; i++) {
 
-        float max_scale = 0;
-        float amax = 0;
-        for (int j = 0; j < QK_K/16; ++j) {
+        اعشاری max_scale = 0;
+        اعشاری amax = 0;
+        برائے (صحیح j = 0; j < QK_K/16; ++j) {
             scales[j] = make_q3_quants(16, 4, x + 16*j, L + 16*j, true);
-            float scale = fabsf(scales[j]);
-            if (scale > amax) {
+            اعشاری scale = fabsf(scales[j]);
+            اگر (scale > amax) {
                 amax = scale; max_scale = scales[j];
             }
         }
 
         memset(y[i].scales, 0, 12);
-        if (max_scale) {
-            float iscale = -32.f/max_scale;
-            for (int j = 0; j < QK_K/16; ++j) {
-                int8_t l = nearest_int(iscale*scales[j]);
+        اگر (max_scale) {
+            اعشاری iscale = -32.f/max_scale;
+            برائے (صحیح j = 0; j < QK_K/16; ++j) {
+                int8_t l = قریب_ترین_int(iscale*scales[j]);
                 l = MAX(-32, MIN(31, l)) + 32;
-                if (j < 8) {
+                اگر (j < 8) {
                     y[i].scales[j] = l & 0xF;
-                } else {
+                } ورنہ {
                     y[i].scales[j-8] |= ((l & 0xF) << 4);
                 }
                 l >>= 4;
                 y[i].scales[j%4 + 8] |= (l << (2*(j/4)));
             }
-            y[i].d = GGML_FP32_TO_FP16(1/iscale);
-        } else {
-            y[i].d = GGML_FP32_TO_FP16(0.f);
+            y[i].d = GGML_FP32_مقصد_FP16(1/iscale);
+        } ورنہ {
+            y[i].d = GGML_FP32_مقصد_FP16(0.f);
         }
 
         int8_t sc;
-        for (int j = 0; j < QK_K/16; ++j) {
+        برائے (صحیح j = 0; j < QK_K/16; ++j) {
             sc = j < 8 ? y[i].scales[j] & 0xF : y[i].scales[j-8] >> 4;
             sc = (sc | (((y[i].scales[8 + j%4] >> (2*(j/4))) & 3) << 4)) - 32;
-            float d = GGML_FP16_TO_FP32(y[i].d) * sc;
-            if (!d) {
-                continue;
+            اعشاری d = GGML_FP16_مقصد_FP32(y[i].d) * sc;
+            اگر (!d) {
+                جاری;
             }
-            for (int ii = 0; ii < 16; ++ii) {
-                int l = nearest_int(x[16*j + ii]/d);
+            برائے (صحیح ii = 0; ii < 16; ++ii) {
+                صحیح l = قریب_ترین_int(x[16*j + ii]/d);
                 l = MAX(-4, MIN(3, l));
                 L[16*j + ii] = l + 4;
             }
@@ -1282,19 +1282,19 @@ void quantize_row_q3_K_ref(const float * GGML_RESTRICT x, block_q3_K * GGML_REST
 
         memset(y[i].hmask, 0, QK_K/8);
         // We put the high-bit for the 1st 8 quants into bit 0, the next 8 into bit 1, etc.
-        int m = 0;
+        صحیح m = 0;
         uint8_t hm = 1;
-        for (int j = 0; j < QK_K; ++j) {
-            if (L[j] > 3) {
+        برائے (صحیح j = 0; j < QK_K; ++j) {
+            اگر (L[j] > 3) {
                 y[i].hmask[m] |= hm;
                 L[j] -= 4;
             }
-            if (++m == QK_K/8) {
+            اگر (++m == QK_K/8) {
                 m = 0; hm <<= 1;
             }
         }
-        for (int j = 0; j < QK_K; j += 128) {
-            for (int l = 0; l < 32; ++l) {
+        برائے (صحیح j = 0; j < QK_K; j += 128) {
+            برائے (صحیح l = 0; l < 32; ++l) {
                 y[i].qs[j/4 + l] = L[j + l] | (L[j + l + 32] << 2) | (L[j + l + 64] << 4) | (L[j + l + 96] << 6);
             }
         }
@@ -1303,48 +1303,48 @@ void quantize_row_q3_K_ref(const float * GGML_RESTRICT x, block_q3_K * GGML_REST
     }
 }
 
-void dequantize_row_q3_K(const block_q3_K * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int nb = k / QK_K;
+خالی dequantize_صف_q3_K(ثابت بلاک_q3_K * GGML_RESTRICT x, اعشاری * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
+    ثابت صحیح nb = k / QK_K;
 
-    const uint32_t kmask1 = 0x03030303;
-    const uint32_t kmask2 = 0x0f0f0f0f;
+    ثابت uint32_t kmask1 = 0x03030303;
+    ثابت uint32_t kmask2 = 0x0f0f0f0f;
 
     uint32_t aux[4];
-    const int8_t * scales = (const int8_t*)aux;
+    ثابت int8_t * scales = (ثابت int8_t*)aux;
 
-    for (int i = 0; i < nb; i++) {
+    برائے (صحیح i = 0; i < nb; i++) {
 
-        const float d_all = GGML_FP16_TO_FP32(x[i].d);
+        ثابت اعشاری d_all = GGML_FP16_مقصد_FP32(x[i].d);
 
-        const uint8_t * GGML_RESTRICT q = x[i].qs;
-        const uint8_t * GGML_RESTRICT hm = x[i].hmask;
+        ثابت uint8_t * GGML_RESTRICT q = x[i].qs;
+        ثابت uint8_t * GGML_RESTRICT hm = x[i].hmask;
         uint8_t m = 1;
 
-        memcpy(aux, x[i].scales, 12);
+        حافظہ_نقل(aux, x[i].scales, 12);
         uint32_t tmp = aux[2];
         aux[2] = ((aux[0] >> 4) & kmask2) | (((tmp >> 4) & kmask1) << 4);
         aux[3] = ((aux[1] >> 4) & kmask2) | (((tmp >> 6) & kmask1) << 4);
         aux[0] = (aux[0] & kmask2) | (((tmp >> 0) & kmask1) << 4);
         aux[1] = (aux[1] & kmask2) | (((tmp >> 2) & kmask1) << 4);
 
-        int is = 0;
-        float dl;
-        for (int n = 0; n < QK_K; n += 128) {
-            int shift = 0;
-            for (int j = 0; j < 4; ++j) {
+        صحیح is = 0;
+        اعشاری dl;
+        برائے (صحیح n = 0; n < QK_K; n += 128) {
+            صحیح سرکاؤ = 0;
+            برائے (صحیح j = 0; j < 4; ++j) {
 
                 dl = d_all * (scales[is++] - 32);
-                for (int l = 0; l < 16; ++l) {
-                    *y++ = dl * ((int8_t)((q[l+ 0] >> shift) & 3) - ((hm[l+ 0] & m) ? 0 : 4));
+                برائے (صحیح l = 0; l < 16; ++l) {
+                    *y++ = dl * ((int8_t)((q[l+ 0] >> سرکاؤ) & 3) - ((hm[l+ 0] & m) ? 0 : 4));
                 }
 
                 dl = d_all * (scales[is++] - 32);
-                for (int l = 0; l < 16; ++l) {
-                    *y++ = dl * ((int8_t)((q[l+16] >> shift) & 3) - ((hm[l+16] & m) ? 0 : 4));
+                برائے (صحیح l = 0; l < 16; ++l) {
+                    *y++ = dl * ((int8_t)((q[l+16] >> سرکاؤ) & 3) - ((hm[l+16] & m) ? 0 : 4));
                 }
 
-                shift += 2;
+                سرکاؤ += 2;
                 m <<= 1;
             }
             q += 32;
@@ -1353,62 +1353,62 @@ void dequantize_row_q3_K(const block_q3_K * GGML_RESTRICT x, float * GGML_RESTRI
     }
 }
 
-static void quantize_row_q3_K_impl(const float * GGML_RESTRICT x, block_q3_K * GGML_RESTRICT y, int64_t n_per_row, const float * GGML_RESTRICT quant_weights) {
-    assert(n_per_row % QK_K == 0);
-    const int nb = n_per_row / QK_K;
+ساکن خالی quantize_صف_q3_K_impl(ثابت اعشاری * GGML_RESTRICT x, بلاک_q3_K * GGML_RESTRICT y, int64_t n_فی_صف, ثابت اعشاری * GGML_RESTRICT quant_weights) {
+    أكد(n_فی_صف % QK_K == 0);
+    ثابت صحیح nb = n_فی_صف / QK_K;
 
     int8_t L[QK_K];
-    float scales[QK_K / 16];
-    float weight[16];
-    float sw[QK_K / 16];
+    اعشاری scales[QK_K / 16];
+    اعشاری وزن[16];
+    اعشاری sw[QK_K / 16];
     int8_t Ls[QK_K / 16];
 
-    for (int i = 0; i < nb; i++) {
+    برائے (صحیح i = 0; i < nb; i++) {
 
-        float sumx2 = 0;
-        for (int j = 0; j < QK_K; ++j) sumx2 += x[j]*x[j];
-        float sigma2 = 2*sumx2/QK_K;
+        اعشاری sumx2 = 0;
+        برائے (صحیح j = 0; j < QK_K; ++j) sumx2 += x[j]*x[j];
+        اعشاری sigma2 = 2*sumx2/QK_K;
 
-        for (int j = 0; j < QK_K/16; ++j) {
-            if (quant_weights) {
-                const float * qw = quant_weights + QK_K * i + 16*j;
-                for (int l = 0; l < 16; ++l) weight[l] = qw[l] * sqrtf(sigma2 + x[16*j+l]*x[16*j+l]);
-            } else {
-                for (int l = 0; l < 16; ++l) weight[l] = x[16*j+l]*x[16*j+l];
+        برائے (صحیح j = 0; j < QK_K/16; ++j) {
+            اگر (quant_weights) {
+                ثابت اعشاری * qw = quant_weights + QK_K * i + 16*j;
+                برائے (صحیح l = 0; l < 16; ++l) وزن[l] = qw[l] * sqrtf(sigma2 + x[16*j+l]*x[16*j+l]);
+            } ورنہ {
+                برائے (صحیح l = 0; l < 16; ++l) وزن[l] = x[16*j+l]*x[16*j+l];
             }
-            float sumw = 0;
-            for (int l = 0; l < 16; ++l) sumw += weight[l];
+            اعشاری sumw = 0;
+            برائے (صحیح l = 0; l < 16; ++l) sumw += وزن[l];
             sw[j] = sumw;
 
-            scales[j] = make_qx_quants(16, 4, x + 16*j, L + 16*j, 1, weight);
+            scales[j] = make_qx_quants(16, 4, x + 16*j, L + 16*j, 1, وزن);
 
         }
 
         memset(y[i].scales, 0, 12);
 
-        float d_block = make_qx_quants(QK_K/16, 32, scales, Ls, 1, sw);
-        for (int j = 0; j < QK_K/16; ++j) {
-            int l = Ls[j];
-            if (j < 8) {
+        اعشاری d_بلاک = make_qx_quants(QK_K/16, 32, scales, Ls, 1, sw);
+        برائے (صحیح j = 0; j < QK_K/16; ++j) {
+            صحیح l = Ls[j];
+            اگر (j < 8) {
                 y[i].scales[j] = l & 0xF;
-            } else {
+            } ورنہ {
                 y[i].scales[j-8] |= ((l & 0xF) << 4);
             }
             l >>= 4;
             y[i].scales[j%4 + 8] |= (l << (2*(j/4)));
         }
-        y[i].d = GGML_FP32_TO_FP16(d_block);
+        y[i].d = GGML_FP32_مقصد_FP16(d_بلاک);
 
         int8_t sc;
-        for (int j = 0; j < QK_K/16; ++j) {
+        برائے (صحیح j = 0; j < QK_K/16; ++j) {
             sc = j < 8 ? y[i].scales[j] & 0xF : y[i].scales[j-8] >> 4;
             sc = (sc | (((y[i].scales[8 + j%4] >> (2*(j/4))) & 3) << 4)) - 32;
-            float d = GGML_FP16_TO_FP32(y[i].d) * sc;
-            if (!d) {
-                continue;
+            اعشاری d = GGML_FP16_مقصد_FP32(y[i].d) * sc;
+            اگر (!d) {
+                جاری;
             }
-            for (int ii = 0; ii < 16; ++ii) {
-                int l = nearest_int(x[16*j + ii]/d);
+            برائے (صحیح ii = 0; ii < 16; ++ii) {
+                صحیح l = قریب_ترین_int(x[16*j + ii]/d);
                 l = MAX(-4, MIN(3, l));
                 L[16*j + ii] = l + 4;
             }
@@ -1416,19 +1416,19 @@ static void quantize_row_q3_K_impl(const float * GGML_RESTRICT x, block_q3_K * G
 
         memset(y[i].hmask, 0, QK_K/8);
         // We put the high-bit for the 1st 8 quants into bit 0, the next 8 into bit 1, etc.
-        int m = 0;
+        صحیح m = 0;
         uint8_t hm = 1;
-        for (int j = 0; j < QK_K; ++j) {
-            if (L[j] > 3) {
+        برائے (صحیح j = 0; j < QK_K; ++j) {
+            اگر (L[j] > 3) {
                 y[i].hmask[m] |= hm;
                 L[j] -= 4;
             }
-            if (++m == QK_K/8) {
+            اگر (++m == QK_K/8) {
                 m = 0; hm <<= 1;
             }
         }
-        for (int j = 0; j < QK_K; j += 128) {
-            for (int l = 0; l < 32; ++l) {
+        برائے (صحیح j = 0; j < QK_K; j += 128) {
+            برائے (صحیح l = 0; l < 32; ++l) {
                 y[i].qs[j/4 + l] = L[j + l] | (L[j + l + 32] << 2) | (L[j + l + 64] << 4) | (L[j + l + 96] << 6);
             }
         }
@@ -1437,89 +1437,89 @@ static void quantize_row_q3_K_impl(const float * GGML_RESTRICT x, block_q3_K * G
     }
 }
 
-size_t quantize_q3_K(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    size_t row_size = ggml_row_size(GGML_TYPE_Q3_K, n_per_row);
-    if (!quant_weights) {
-        quantize_row_q3_K_ref(src, dst, (int64_t)nrow*n_per_row);
+size_t quantize_q3_K(ثابت اعشاری * GGML_RESTRICT src, خالی * GGML_RESTRICT dst, int64_t nrow, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
+    size_t صف_سائز = ggml_صف_سائز(GGML_TYPE_Q3_K, n_فی_صف);
+    اگر (!quant_weights) {
+        quantize_صف_q3_K_ref(src, dst, (int64_t)nrow*n_فی_صف);
     }
-    else {
-        char * qrow = (char *)dst;
-        for (int64_t row = 0; row < nrow; ++row) {
-            quantize_row_q3_K_impl(src, (block_q3_K*)qrow, n_per_row, quant_weights);
-            src += n_per_row;
-            qrow += row_size;
+    ورنہ {
+        حرف * qrow = (حرف *)dst;
+        برائے (int64_t صف = 0; صف < nrow; ++صف) {
+            quantize_صف_q3_K_impl(src, (بلاک_q3_K*)qrow, n_فی_صف, quant_weights);
+            src += n_فی_صف;
+            qrow += صف_سائز;
         }
     }
-    return nrow * row_size;
+    واپس nrow * صف_سائز;
 }
 
 // ====================== 4-bit (de)-quantization
 
-void quantize_row_q4_K_ref(const float * GGML_RESTRICT x, block_q4_K * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int nb = k / QK_K;
+خالی quantize_صف_q4_K_ref(ثابت اعشاری * GGML_RESTRICT x, بلاک_q4_K * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
+    ثابت صحیح nb = k / QK_K;
 
     uint8_t L[QK_K];
     uint8_t Laux[32];
-    float   weights[32];
-    float mins[QK_K/32];
-    float scales[QK_K/32];
+    اعشاری   weights[32];
+    اعشاری mins[QK_K/32];
+    اعشاری scales[QK_K/32];
 
-    for (int i = 0; i < nb; i++) {
-        float max_scale = 0; // as we are deducting the min, scales are always positive
-        float max_min = 0;
-        for (int j = 0; j < QK_K/32; ++j) {
+    برائے (صحیح i = 0; i < nb; i++) {
+        اعشاری max_scale = 0; // as we are deducting the min, scales are always positive
+        اعشاری max_min = 0;
+        برائے (صحیح j = 0; j < QK_K/32; ++j) {
             //scales[j] = make_qkx1_quants(32, 15, x + 32*j, L + 32*j, &mins[j], 9, 0.5f);
-            float sum_x2 = 0;
-            for (int l = 0; l < 32; ++l) sum_x2 += x[32*j + l] * x[32*j + l];
-            float av_x = sqrtf(sum_x2/32);
-            for (int l = 0; l < 32; ++l) weights[l] = av_x + fabsf(x[32*j + l]);
+            اعشاری مجموع_x2 = 0;
+            برائے (صحیح l = 0; l < 32; ++l) مجموع_x2 += x[32*j + l] * x[32*j + l];
+            اعشاری av_x = sqrtf(مجموع_x2/32);
+            برائے (صحیح l = 0; l < 32; ++l) weights[l] = av_x + fabsf(x[32*j + l]);
             scales[j] = make_qkx2_quants(32, 15, x + 32*j, weights, L + 32*j, &mins[j], Laux, -1.f, 0.1f, 20, false);
-            float scale = scales[j];
-            if (scale > max_scale) {
+            اعشاری scale = scales[j];
+            اگر (scale > max_scale) {
                 max_scale = scale;
             }
-            float min = mins[j];
-            if (min > max_min) {
+            اعشاری min = mins[j];
+            اگر (min > max_min) {
                 max_min = min;
             }
         }
 
-        float inv_scale = max_scale > 0 ? 63.f/max_scale : 0.f;
-        float inv_min   = max_min   > 0 ? 63.f/max_min   : 0.f;
-        for (int j = 0; j < QK_K/32; ++j) {
-            uint8_t ls = nearest_int(inv_scale*scales[j]);
-            uint8_t lm = nearest_int(inv_min*mins[j]);
+        اعشاری inv_scale = max_scale > 0 ? 63.f/max_scale : 0.f;
+        اعشاری inv_min   = max_min   > 0 ? 63.f/max_min   : 0.f;
+        برائے (صحیح j = 0; j < QK_K/32; ++j) {
+            uint8_t ls = قریب_ترین_int(inv_scale*scales[j]);
+            uint8_t lm = قریب_ترین_int(inv_min*mins[j]);
             ls = MIN(63, ls);
             lm = MIN(63, lm);
-            if (j < 4) {
+            اگر (j < 4) {
                 y[i].scales[j] = ls;
                 y[i].scales[j+4] = lm;
-            } else {
+            } ورنہ {
                 y[i].scales[j+4] = (ls & 0xF) | ((lm & 0xF) << 4);
                 y[i].scales[j-4] |= ((ls >> 4) << 6);
                 y[i].scales[j-0] |= ((lm >> 4) << 6);
             }
         }
-        y[i].d = GGML_FP32_TO_FP16(max_scale/63.f);
-        y[i].dmin = GGML_FP32_TO_FP16(max_min/63.f);
+        y[i].d = GGML_FP32_مقصد_FP16(max_scale/63.f);
+        y[i].dmin = GGML_FP32_مقصد_FP16(max_min/63.f);
 
         uint8_t sc, m;
-        for (int j = 0; j < QK_K/32; ++j) {
+        برائے (صحیح j = 0; j < QK_K/32; ++j) {
             get_scale_min_k4(j, y[i].scales, &sc, &m);
-            const float d = GGML_FP16_TO_FP32(y[i].d) * sc;
-            if (!d) continue;
-            const float dm = GGML_FP16_TO_FP32(y[i].dmin) * m;
-            for (int ii = 0; ii < 32; ++ii) {
-                int l = nearest_int((x[32*j + ii] + dm)/d);
+            ثابت اعشاری d = GGML_FP16_مقصد_FP32(y[i].d) * sc;
+            اگر (!d) جاری;
+            ثابت اعشاری dm = GGML_FP16_مقصد_FP32(y[i].dmin) * m;
+            برائے (صحیح ii = 0; ii < 32; ++ii) {
+                صحیح l = قریب_ترین_int((x[32*j + ii] + dm)/d);
                 l = MAX(0, MIN(15, l));
                 L[32*j + ii] = l;
             }
         }
 
         uint8_t * q = y[i].qs;
-        for (int j = 0; j < QK_K; j += 64) {
-            for (int l = 0; l < 32; ++l) q[l] = L[j + l] | (L[j + l + 32] << 4);
+        برائے (صحیح j = 0; j < QK_K; j += 64) {
+            برائے (صحیح l = 0; l < 32; ++l) q[l] = L[j + l] | (L[j + l + 32] << 4);
             q += 32;
         }
 
@@ -1527,95 +1527,95 @@ void quantize_row_q4_K_ref(const float * GGML_RESTRICT x, block_q4_K * GGML_REST
     }
 }
 
-void dequantize_row_q4_K(const block_q4_K * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int nb = k / QK_K;
+خالی dequantize_صف_q4_K(ثابت بلاک_q4_K * GGML_RESTRICT x, اعشاری * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
+    ثابت صحیح nb = k / QK_K;
 
-    for (int i = 0; i < nb; i++) {
-        const uint8_t * q = x[i].qs;
+    برائے (صحیح i = 0; i < nb; i++) {
+        ثابت uint8_t * q = x[i].qs;
 
-        const float d   = GGML_FP16_TO_FP32(x[i].d);
-        const float min = GGML_FP16_TO_FP32(x[i].dmin);
+        ثابت اعشاری d   = GGML_FP16_مقصد_FP32(x[i].d);
+        ثابت اعشاری min = GGML_FP16_مقصد_FP32(x[i].dmin);
 
-        int is = 0;
+        صحیح is = 0;
         uint8_t sc, m;
-        for (int j = 0; j < QK_K; j += 64) {
+        برائے (صحیح j = 0; j < QK_K; j += 64) {
             get_scale_min_k4(is + 0, x[i].scales, &sc, &m);
-            const float d1 = d * sc; const float m1 = min * m;
+            ثابت اعشاری d1 = d * sc; ثابت اعشاری m1 = min * m;
             get_scale_min_k4(is + 1, x[i].scales, &sc, &m);
-            const float d2 = d * sc; const float m2 = min * m;
-            for (int l = 0; l < 32; ++l) *y++ = d1 * (q[l] & 0xF) - m1;
-            for (int l = 0; l < 32; ++l) *y++ = d2 * (q[l]  >> 4) - m2;
+            ثابت اعشاری d2 = d * sc; ثابت اعشاری m2 = min * m;
+            برائے (صحیح l = 0; l < 32; ++l) *y++ = d1 * (q[l] & 0xF) - m1;
+            برائے (صحیح l = 0; l < 32; ++l) *y++ = d2 * (q[l]  >> 4) - m2;
             q += 32; is += 2;
         }
     }
 }
 
-static void quantize_row_q4_K_impl(const float * GGML_RESTRICT x, block_q4_K * GGML_RESTRICT y, int64_t n_per_row, const float * quant_weights) {
-    assert(n_per_row % QK_K == 0);
-    const int64_t nb = n_per_row / QK_K;
+ساکن خالی quantize_صف_q4_K_impl(ثابت اعشاری * GGML_RESTRICT x, بلاک_q4_K * GGML_RESTRICT y, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
+    أكد(n_فی_صف % QK_K == 0);
+    ثابت int64_t nb = n_فی_صف / QK_K;
 
     uint8_t L[QK_K];
     uint8_t Laux[32];
     uint8_t Ls[QK_K/32];
     uint8_t Lm[QK_K/32];
-    float   weights[32];
-    float   sw[QK_K/32];
-    float   mins[QK_K/32];
-    float   scales[QK_K/32];
+    اعشاری   weights[32];
+    اعشاری   sw[QK_K/32];
+    اعشاری   mins[QK_K/32];
+    اعشاری   scales[QK_K/32];
 
-    for (int i = 0; i < nb; i++) {
+    برائے (صحیح i = 0; i < nb; i++) {
 
-        float sum_x2 = 0;
-        for (int l = 0; l < QK_K; ++l) sum_x2 += x[l] * x[l];
-        float sigma2 = 2*sum_x2/QK_K;
-        float av_x = sqrtf(sigma2);
+        اعشاری مجموع_x2 = 0;
+        برائے (صحیح l = 0; l < QK_K; ++l) مجموع_x2 += x[l] * x[l];
+        اعشاری sigma2 = 2*مجموع_x2/QK_K;
+        اعشاری av_x = sqrtf(sigma2);
 
-        for (int j = 0; j < QK_K/32; ++j) {
-            if (quant_weights) {
-                const float * qw = quant_weights + QK_K*i + 32*j;
-                for (int l = 0; l < 32; ++l) weights[l] = qw[l] * sqrtf(sigma2 + x[32*j + l]*x[32*j + l]);
-            } else {
-                for (int l = 0; l < 32; ++l) weights[l] = av_x + fabsf(x[32*j + l]);
+        برائے (صحیح j = 0; j < QK_K/32; ++j) {
+            اگر (quant_weights) {
+                ثابت اعشاری * qw = quant_weights + QK_K*i + 32*j;
+                برائے (صحیح l = 0; l < 32; ++l) weights[l] = qw[l] * sqrtf(sigma2 + x[32*j + l]*x[32*j + l]);
+            } ورنہ {
+                برائے (صحیح l = 0; l < 32; ++l) weights[l] = av_x + fabsf(x[32*j + l]);
             }
-            float sumw = 0;
-            for (int l = 0; l < 32; ++l) sumw += weights[l];
+            اعشاری sumw = 0;
+            برائے (صحیح l = 0; l < 32; ++l) sumw += weights[l];
             sw[j] = sumw;
             scales[j] = make_qkx3_quants(32, 15, x + 32*j, weights, L + 32*j, &mins[j], Laux, -0.9f, 0.05f, 36, false);
         }
 
-        float d_block = make_qp_quants(QK_K/32, 63, scales, Ls, sw);
-        float m_block = make_qp_quants(QK_K/32, 63, mins,   Lm, sw);
-        for (int j = 0; j < QK_K/32; ++j) {
+        اعشاری d_بلاک = make_qp_quants(QK_K/32, 63, scales, Ls, sw);
+        اعشاری m_بلاک = make_qp_quants(QK_K/32, 63, mins,   Lm, sw);
+        برائے (صحیح j = 0; j < QK_K/32; ++j) {
             uint8_t ls = Ls[j];
             uint8_t lm = Lm[j];
-            if (j < 4) {
+            اگر (j < 4) {
                 y[i].scales[j] = ls;
                 y[i].scales[j+4] = lm;
-            } else {
+            } ورنہ {
                 y[i].scales[j+4] = (ls & 0xF) | ((lm & 0xF) << 4);
                 y[i].scales[j-4] |= ((ls >> 4) << 6);
                 y[i].scales[j-0] |= ((lm >> 4) << 6);
             }
         }
-        y[i].d = GGML_FP32_TO_FP16(d_block);
-        y[i].dmin = GGML_FP32_TO_FP16(m_block);
+        y[i].d = GGML_FP32_مقصد_FP16(d_بلاک);
+        y[i].dmin = GGML_FP32_مقصد_FP16(m_بلاک);
 
         uint8_t sc, m;
-        for (int j = 0; j < QK_K/32; ++j) {
+        برائے (صحیح j = 0; j < QK_K/32; ++j) {
             get_scale_min_k4(j, y[i].scales, &sc, &m);
-            const float d = GGML_FP16_TO_FP32(y[i].d) * sc;
-            if (!d) continue;
-            const float dm = GGML_FP16_TO_FP32(y[i].dmin) * m;
-            for (int ii = 0; ii < 32; ++ii) {
-                int l = nearest_int((x[32*j + ii] + dm)/d);
+            ثابت اعشاری d = GGML_FP16_مقصد_FP32(y[i].d) * sc;
+            اگر (!d) جاری;
+            ثابت اعشاری dm = GGML_FP16_مقصد_FP32(y[i].dmin) * m;
+            برائے (صحیح ii = 0; ii < 32; ++ii) {
+                صحیح l = قریب_ترین_int((x[32*j + ii] + dm)/d);
                 l = MAX(0, MIN(15, l));
                 L[32*j + ii] = l;
             }
         }
         uint8_t * q = y[i].qs;
-        for (int j = 0; j < QK_K; j += 64) {
-            for (int l = 0; l < 32; ++l) q[l] = L[j + l] | (L[j + l + 32] << 4);
+        برائے (صحیح j = 0; j < QK_K; j += 64) {
+            برائے (صحیح l = 0; l < 32; ++l) q[l] = L[j + l] | (L[j + l + 32] << 4);
             q += 32;
         }
 
@@ -1624,81 +1624,81 @@ static void quantize_row_q4_K_impl(const float * GGML_RESTRICT x, block_q4_K * G
     }
 }
 
-size_t quantize_q4_K(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    size_t row_size = ggml_row_size(GGML_TYPE_Q4_K, n_per_row);
-    if (!quant_weights) {
-        quantize_row_q4_K_ref(src, dst, (int64_t)nrow*n_per_row);
+size_t quantize_q4_K(ثابت اعشاری * GGML_RESTRICT src, خالی * GGML_RESTRICT dst, int64_t nrow, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
+    size_t صف_سائز = ggml_صف_سائز(GGML_TYPE_Q4_K, n_فی_صف);
+    اگر (!quant_weights) {
+        quantize_صف_q4_K_ref(src, dst, (int64_t)nrow*n_فی_صف);
     }
-    else {
-        char * qrow = (char *)dst;
-        for (int64_t row = 0; row < nrow; ++row) {
-            quantize_row_q4_K_impl(src, (block_q4_K*)qrow, n_per_row, quant_weights);
-            src += n_per_row;
-            qrow += row_size;
+    ورنہ {
+        حرف * qrow = (حرف *)dst;
+        برائے (int64_t صف = 0; صف < nrow; ++صف) {
+            quantize_صف_q4_K_impl(src, (بلاک_q4_K*)qrow, n_فی_صف, quant_weights);
+            src += n_فی_صف;
+            qrow += صف_سائز;
         }
     }
-    return nrow * row_size;
+    واپس nrow * صف_سائز;
 }
 
 // ====================== 5-bit (de)-quantization
 
-void quantize_row_q5_K_ref(const float * GGML_RESTRICT x, block_q5_K * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+خالی quantize_صف_q5_K_ref(ثابت اعشاری * GGML_RESTRICT x, بلاک_q5_K * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
+    ثابت int64_t nb = k / QK_K;
 
     uint8_t L[QK_K];
-    float mins[QK_K/32];
-    float scales[QK_K/32];
-    float weights[32];
+    اعشاری mins[QK_K/32];
+    اعشاری scales[QK_K/32];
+    اعشاری weights[32];
     uint8_t Laux[32];
 
-    for (int i = 0; i < nb; i++) {
-        float max_scale = 0; // as we are deducting the min, scales are always positive
-        float max_min = 0;
-        for (int j = 0; j < QK_K/32; ++j) {
+    برائے (صحیح i = 0; i < nb; i++) {
+        اعشاری max_scale = 0; // as we are deducting the min, scales are always positive
+        اعشاری max_min = 0;
+        برائے (صحیح j = 0; j < QK_K/32; ++j) {
             //scales[j] = make_qkx1_quants(32, 31, x + 32*j, L + 32*j, &mins[j], 9, 0.5f);
-            float sum_x2 = 0;
-            for (int l = 0; l < 32; ++l) sum_x2 += x[32*j + l] * x[32*j + l];
-            float av_x = sqrtf(sum_x2/32);
-            for (int l = 0; l < 32; ++l) weights[l] = av_x + fabsf(x[32*j + l]);
+            اعشاری مجموع_x2 = 0;
+            برائے (صحیح l = 0; l < 32; ++l) مجموع_x2 += x[32*j + l] * x[32*j + l];
+            اعشاری av_x = sqrtf(مجموع_x2/32);
+            برائے (صحیح l = 0; l < 32; ++l) weights[l] = av_x + fabsf(x[32*j + l]);
             scales[j] = make_qkx2_quants(32, 31, x + 32*j, weights, L + 32*j, &mins[j], Laux, -0.5f, 0.1f, 15, false);
-            float scale = scales[j];
-            if (scale > max_scale) {
+            اعشاری scale = scales[j];
+            اگر (scale > max_scale) {
                 max_scale = scale;
             }
-            float min = mins[j];
-            if (min > max_min) {
+            اعشاری min = mins[j];
+            اگر (min > max_min) {
                 max_min = min;
             }
         }
 
-        float inv_scale = max_scale > 0 ? 63.f/max_scale : 0.f;
-        float inv_min   = max_min   > 0 ? 63.f/max_min   : 0.f;
-        for (int j = 0; j < QK_K/32; ++j) {
-            uint8_t ls = nearest_int(inv_scale*scales[j]);
-            uint8_t lm = nearest_int(inv_min*mins[j]);
+        اعشاری inv_scale = max_scale > 0 ? 63.f/max_scale : 0.f;
+        اعشاری inv_min   = max_min   > 0 ? 63.f/max_min   : 0.f;
+        برائے (صحیح j = 0; j < QK_K/32; ++j) {
+            uint8_t ls = قریب_ترین_int(inv_scale*scales[j]);
+            uint8_t lm = قریب_ترین_int(inv_min*mins[j]);
             ls = MIN(63, ls);
             lm = MIN(63, lm);
-            if (j < 4) {
+            اگر (j < 4) {
                 y[i].scales[j] = ls;
                 y[i].scales[j+4] = lm;
-            } else {
+            } ورنہ {
                 y[i].scales[j+4] = (ls & 0xF) | ((lm & 0xF) << 4);
                 y[i].scales[j-4] |= ((ls >> 4) << 6);
                 y[i].scales[j-0] |= ((lm >> 4) << 6);
             }
         }
-        y[i].d = GGML_FP32_TO_FP16(max_scale/63.f);
-        y[i].dmin = GGML_FP32_TO_FP16(max_min/63.f);
+        y[i].d = GGML_FP32_مقصد_FP16(max_scale/63.f);
+        y[i].dmin = GGML_FP32_مقصد_FP16(max_min/63.f);
 
         uint8_t sc, m;
-        for (int j = 0; j < QK_K/32; ++j) {
+        برائے (صحیح j = 0; j < QK_K/32; ++j) {
             get_scale_min_k4(j, y[i].scales, &sc, &m);
-            const float d = GGML_FP16_TO_FP32(y[i].d) * sc;
-            if (!d) continue;
-            const float dm = GGML_FP16_TO_FP32(y[i].dmin) * m;
-            for (int ii = 0; ii < 32; ++ii) {
-                int l = nearest_int((x[32*j + ii] + dm)/d);
+            ثابت اعشاری d = GGML_FP16_مقصد_FP32(y[i].d) * sc;
+            اگر (!d) جاری;
+            ثابت اعشاری dm = GGML_FP16_مقصد_FP32(y[i].dmin) * m;
+            برائے (صحیح ii = 0; ii < 32; ++ii) {
+                صحیح l = قریب_ترین_int((x[32*j + ii] + dm)/d);
                 l = MAX(0, MIN(31, l));
                 L[32*j + ii] = l;
             }
@@ -1709,14 +1709,14 @@ void quantize_row_q5_K_ref(const float * GGML_RESTRICT x, block_q5_K * GGML_REST
         memset(qh, 0, QK_K/8);
 
         uint8_t m1 = 1, m2 = 2;
-        for (int n = 0; n < QK_K; n += 64) {
-            for (int j = 0; j < 32; ++j) {
-                int l1 = L[n + j];
-                if (l1 > 15) {
+        برائے (صحیح n = 0; n < QK_K; n += 64) {
+            برائے (صحیح j = 0; j < 32; ++j) {
+                صحیح l1 = L[n + j];
+                اگر (l1 > 15) {
                     l1 -= 16; qh[j] |= m1;
                 }
-                int l2 = L[n + j + 32];
-                if (l2 > 15) {
+                صحیح l2 = L[n + j + 32];
+                اگر (l2 > 15) {
                     l2 -= 16; qh[j] |= m2;
                 }
                 ql[j] = l1 | (l2 << 4);
@@ -1729,95 +1729,95 @@ void quantize_row_q5_K_ref(const float * GGML_RESTRICT x, block_q5_K * GGML_REST
     }
 }
 
-void dequantize_row_q5_K(const block_q5_K * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+خالی dequantize_صف_q5_K(ثابت بلاک_q5_K * GGML_RESTRICT x, اعشاری * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
+    ثابت int64_t nb = k / QK_K;
 
-    for (int i = 0; i < nb; i++) {
-        const uint8_t * ql = x[i].qs;
-        const uint8_t * qh = x[i].qh;
+    برائے (صحیح i = 0; i < nb; i++) {
+        ثابت uint8_t * ql = x[i].qs;
+        ثابت uint8_t * qh = x[i].qh;
 
-        const float d = GGML_FP16_TO_FP32(x[i].d);
-        const float min = GGML_FP16_TO_FP32(x[i].dmin);
+        ثابت اعشاری d = GGML_FP16_مقصد_FP32(x[i].d);
+        ثابت اعشاری min = GGML_FP16_مقصد_FP32(x[i].dmin);
 
-        int is = 0;
+        صحیح is = 0;
         uint8_t sc, m;
         uint8_t u1 = 1, u2 = 2;
-        for (int j = 0; j < QK_K; j += 64) {
+        برائے (صحیح j = 0; j < QK_K; j += 64) {
             get_scale_min_k4(is + 0, x[i].scales, &sc, &m);
-            const float d1 = d * sc; const float m1 = min * m;
+            ثابت اعشاری d1 = d * sc; ثابت اعشاری m1 = min * m;
             get_scale_min_k4(is + 1, x[i].scales, &sc, &m);
-            const float d2 = d * sc; const float m2 = min * m;
-            for (int l = 0; l < 32; ++l) *y++ = d1 * ((ql[l] & 0xF) + (qh[l] & u1 ? 16 : 0)) - m1;
-            for (int l = 0; l < 32; ++l) *y++ = d2 * ((ql[l]  >> 4) + (qh[l] & u2 ? 16 : 0)) - m2;
+            ثابت اعشاری d2 = d * sc; ثابت اعشاری m2 = min * m;
+            برائے (صحیح l = 0; l < 32; ++l) *y++ = d1 * ((ql[l] & 0xF) + (qh[l] & u1 ? 16 : 0)) - m1;
+            برائے (صحیح l = 0; l < 32; ++l) *y++ = d2 * ((ql[l]  >> 4) + (qh[l] & u2 ? 16 : 0)) - m2;
             ql += 32; is += 2;
             u1 <<= 2; u2 <<= 2;
         }
     }
 }
 
-static void quantize_row_q5_K_impl(const float * GGML_RESTRICT x, block_q5_K * GGML_RESTRICT y, int64_t n_per_row, const float * quant_weights) {
-    assert(n_per_row % QK_K == 0);
-    const int64_t nb = n_per_row / QK_K;
+ساکن خالی quantize_صف_q5_K_impl(ثابت اعشاری * GGML_RESTRICT x, بلاک_q5_K * GGML_RESTRICT y, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
+    أكد(n_فی_صف % QK_K == 0);
+    ثابت int64_t nb = n_فی_صف / QK_K;
 
     uint8_t L[QK_K];
     uint8_t Laux[32];
     uint8_t Ls[QK_K/32];
     uint8_t Lm[QK_K/32];
-    float   mins[QK_K/32];
-    float   scales[QK_K/32];
-    float   sw[QK_K/32];
-    float   weights[32];
+    اعشاری   mins[QK_K/32];
+    اعشاری   scales[QK_K/32];
+    اعشاری   sw[QK_K/32];
+    اعشاری   weights[32];
 
-    for (int i = 0; i < nb; i++) {
+    برائے (صحیح i = 0; i < nb; i++) {
 
-        float sum_x2 = 0;
-        for (int l = 0; l < QK_K; ++l) sum_x2 += x[l] * x[l];
-        float sigma2 = 2*sum_x2/QK_K;
-        float av_x = sqrtf(sigma2);
+        اعشاری مجموع_x2 = 0;
+        برائے (صحیح l = 0; l < QK_K; ++l) مجموع_x2 += x[l] * x[l];
+        اعشاری sigma2 = 2*مجموع_x2/QK_K;
+        اعشاری av_x = sqrtf(sigma2);
 
-        for (int j = 0; j < QK_K/32; ++j) {
-            if (quant_weights) {
-                const float * qw = quant_weights + QK_K*i + 32*j;
-                for (int l = 0; l < 32; ++l) weights[l] = qw[l] * sqrtf(sigma2 + x[32*j + l]*x[32*j + l]);
-            } else {
-                for (int l = 0; l < 32; ++l) weights[l] = av_x + fabsf(x[32*j + l]);
+        برائے (صحیح j = 0; j < QK_K/32; ++j) {
+            اگر (quant_weights) {
+                ثابت اعشاری * qw = quant_weights + QK_K*i + 32*j;
+                برائے (صحیح l = 0; l < 32; ++l) weights[l] = qw[l] * sqrtf(sigma2 + x[32*j + l]*x[32*j + l]);
+            } ورنہ {
+                برائے (صحیح l = 0; l < 32; ++l) weights[l] = av_x + fabsf(x[32*j + l]);
             }
-            float sumw = 0;
-            for (int l = 0; l < 32; ++l) sumw += weights[l];
+            اعشاری sumw = 0;
+            برائے (صحیح l = 0; l < 32; ++l) sumw += weights[l];
             sw[j] = sumw;
 
             scales[j] = make_qkx3_quants(32, 31, x + 32*j, weights, L + 32*j, &mins[j], Laux, -0.9f, 0.05f, 36, false);
         }
 
-        float d_block = make_qp_quants(QK_K/32, 63, scales, Ls, sw);
-        float m_block = make_qp_quants(QK_K/32, 63, mins,   Lm, sw);
+        اعشاری d_بلاک = make_qp_quants(QK_K/32, 63, scales, Ls, sw);
+        اعشاری m_بلاک = make_qp_quants(QK_K/32, 63, mins,   Lm, sw);
 
-        for (int j = 0; j < QK_K/32; ++j) {
+        برائے (صحیح j = 0; j < QK_K/32; ++j) {
             uint8_t ls = Ls[j];
             uint8_t lm = Lm[j];
             ls = MIN(63, ls);
             lm = MIN(63, lm);
-            if (j < 4) {
+            اگر (j < 4) {
                 y[i].scales[j] = ls;
                 y[i].scales[j+4] = lm;
-            } else {
+            } ورنہ {
                 y[i].scales[j+4] = (ls & 0xF) | ((lm & 0xF) << 4);
                 y[i].scales[j-4] |= ((ls >> 4) << 6);
                 y[i].scales[j-0] |= ((lm >> 4) << 6);
             }
         }
-        y[i].d = GGML_FP32_TO_FP16(d_block);
-        y[i].dmin = GGML_FP32_TO_FP16(m_block);
+        y[i].d = GGML_FP32_مقصد_FP16(d_بلاک);
+        y[i].dmin = GGML_FP32_مقصد_FP16(m_بلاک);
 
         uint8_t sc, m;
-        for (int j = 0; j < QK_K/32; ++j) {
+        برائے (صحیح j = 0; j < QK_K/32; ++j) {
             get_scale_min_k4(j, y[i].scales, &sc, &m);
-            const float d = GGML_FP16_TO_FP32(y[i].d) * sc;
-            if (!d) continue;
-            const float dm = GGML_FP16_TO_FP32(y[i].dmin) * m;
-            for (int ii = 0; ii < 32; ++ii) {
-                int l = nearest_int((x[32*j + ii] + dm)/d);
+            ثابت اعشاری d = GGML_FP16_مقصد_FP32(y[i].d) * sc;
+            اگر (!d) جاری;
+            ثابت اعشاری dm = GGML_FP16_مقصد_FP32(y[i].dmin) * m;
+            برائے (صحیح ii = 0; ii < 32; ++ii) {
+                صحیح l = قریب_ترین_int((x[32*j + ii] + dm)/d);
                 l = MAX(0, MIN(31, l));
                 L[32*j + ii] = l;
             }
@@ -1828,14 +1828,14 @@ static void quantize_row_q5_K_impl(const float * GGML_RESTRICT x, block_q5_K * G
         memset(qh, 0, QK_K/8);
 
         uint8_t m1 = 1, m2 = 2;
-        for (int n = 0; n < QK_K; n += 64) {
-            for (int j = 0; j < 32; ++j) {
-                int l1 = L[n + j];
-                if (l1 > 15) {
+        برائے (صحیح n = 0; n < QK_K; n += 64) {
+            برائے (صحیح j = 0; j < 32; ++j) {
+                صحیح l1 = L[n + j];
+                اگر (l1 > 15) {
                     l1 -= 16; qh[j] |= m1;
                 }
-                int l2 = L[n + j + 32];
-                if (l2 > 15) {
+                صحیح l2 = L[n + j + 32];
+                اگر (l2 > 15) {
                     l2 -= 16; qh[j] |= m2;
                 }
                 ql[j] = l1 | (l2 << 4);
@@ -1849,69 +1849,69 @@ static void quantize_row_q5_K_impl(const float * GGML_RESTRICT x, block_q5_K * G
     }
 }
 
-size_t quantize_q5_K(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    size_t row_size = ggml_row_size(GGML_TYPE_Q5_K, n_per_row);
-    if (!quant_weights) {
-        quantize_row_q5_K_ref(src, dst, (int64_t)nrow*n_per_row);
+size_t quantize_q5_K(ثابت اعشاری * GGML_RESTRICT src, خالی * GGML_RESTRICT dst, int64_t nrow, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
+    size_t صف_سائز = ggml_صف_سائز(GGML_TYPE_Q5_K, n_فی_صف);
+    اگر (!quant_weights) {
+        quantize_صف_q5_K_ref(src, dst, (int64_t)nrow*n_فی_صف);
     }
-    else {
-        char * qrow = (char *)dst;
-        for (int64_t row = 0; row < nrow; ++row) {
-            quantize_row_q5_K_impl(src, (block_q5_K*)qrow, n_per_row, quant_weights);
-            src += n_per_row;
-            qrow += row_size;
+    ورنہ {
+        حرف * qrow = (حرف *)dst;
+        برائے (int64_t صف = 0; صف < nrow; ++صف) {
+            quantize_صف_q5_K_impl(src, (بلاک_q5_K*)qrow, n_فی_صف, quant_weights);
+            src += n_فی_صف;
+            qrow += صف_سائز;
         }
     }
-    return nrow * row_size;
+    واپس nrow * صف_سائز;
 }
 
 // ====================== 6-bit (de)-quantization
 
-void quantize_row_q6_K_ref(const float * GGML_RESTRICT x, block_q6_K * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+خالی quantize_صف_q6_K_ref(ثابت اعشاری * GGML_RESTRICT x, بلاک_q6_K * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
+    ثابت int64_t nb = k / QK_K;
 
     int8_t L[QK_K];
-    float   scales[QK_K/16];
+    اعشاری   scales[QK_K/16];
 
-    for (int i = 0; i < nb; i++) {
+    برائے (صحیح i = 0; i < nb; i++) {
 
-        float max_scale = 0;
-        float max_abs_scale = 0;
+        اعشاری max_scale = 0;
+        اعشاری max_abs_scale = 0;
 
-        for (int ib = 0; ib < QK_K/16; ++ib) {
+        برائے (صحیح ib = 0; ib < QK_K/16; ++ib) {
 
-            const float scale = make_qx_quants(16, 32, x + 16*ib, L + 16*ib, 1, NULL);
+            ثابت اعشاری scale = make_qx_quants(16, 32, x + 16*ib, L + 16*ib, 1, تہی);
             scales[ib] = scale;
 
-            const float abs_scale = fabsf(scale);
-            if (abs_scale > max_abs_scale) {
+            ثابت اعشاری abs_scale = fabsf(scale);
+            اگر (abs_scale > max_abs_scale) {
                 max_abs_scale = abs_scale;
                 max_scale = scale;
             }
 
         }
 
-        if (max_abs_scale < GROUP_MAX_EPS) {
-            memset(&y[i], 0, sizeof(block_q6_K));
-            y[i].d = GGML_FP32_TO_FP16(0.f);
+        اگر (max_abs_scale < گروہ_MAX_EPS) {
+            memset(&y[i], 0, حجم(بلاک_q6_K));
+            y[i].d = GGML_FP32_مقصد_FP16(0.f);
             x += QK_K;
-            continue;
+            جاری;
         }
 
-        float iscale = -128.f/max_scale;
-        y[i].d = GGML_FP32_TO_FP16(1/iscale);
-        for (int ib = 0; ib < QK_K/16; ++ib) {
-            y[i].scales[ib] = MIN(127, nearest_int(iscale*scales[ib]));
+        اعشاری iscale = -128.f/max_scale;
+        y[i].d = GGML_FP32_مقصد_FP16(1/iscale);
+        برائے (صحیح ib = 0; ib < QK_K/16; ++ib) {
+            y[i].scales[ib] = MIN(127, قریب_ترین_int(iscale*scales[ib]));
         }
 
-        for (int j = 0; j < QK_K/16; ++j) {
-            float d = GGML_FP16_TO_FP32(y[i].d) * y[i].scales[j];
-            if (!d) {
-                continue;
+        برائے (صحیح j = 0; j < QK_K/16; ++j) {
+            اعشاری d = GGML_FP16_مقصد_FP32(y[i].d) * y[i].scales[j];
+            اگر (!d) {
+                جاری;
             }
-            for (int ii = 0; ii < 16; ++ii) {
-                int l = nearest_int(x[16*j + ii]/d);
+            برائے (صحیح ii = 0; ii < 16; ++ii) {
+                صحیح l = قریب_ترین_int(x[16*j + ii]/d);
                 l = MAX(-32, MIN(31, l));
                 L[16*j + ii] = l + 32;
             }
@@ -1919,12 +1919,12 @@ void quantize_row_q6_K_ref(const float * GGML_RESTRICT x, block_q6_K * GGML_REST
 
         uint8_t * GGML_RESTRICT ql = y[i].ql;
         uint8_t * GGML_RESTRICT qh = y[i].qh;
-        for (int j = 0; j < QK_K; j += 128) {
-            for (int l = 0; l < 32; ++l) {
-                const uint8_t q1 = L[j + l +  0] & 0xF;
-                const uint8_t q2 = L[j + l + 32] & 0xF;
-                const uint8_t q3 = L[j + l + 64] & 0xF;
-                const uint8_t q4 = L[j + l + 96] & 0xF;
+        برائے (صحیح j = 0; j < QK_K; j += 128) {
+            برائے (صحیح l = 0; l < 32; ++l) {
+                ثابت uint8_t q1 = L[j + l +  0] & 0xF;
+                ثابت uint8_t q2 = L[j + l + 32] & 0xF;
+                ثابت uint8_t q3 = L[j + l + 64] & 0xF;
+                ثابت uint8_t q4 = L[j + l + 96] & 0xF;
                 ql[l+ 0] = q1 | (q3 << 4);
                 ql[l+32] = q2 | (q4 << 4);
                 qh[l] = (L[j + l] >> 4) | ((L[j + l + 32] >> 4) << 2) | ((L[j + l + 64] >> 4) << 4) | ((L[j + l + 96] >> 4) << 6);
@@ -1937,24 +1937,24 @@ void quantize_row_q6_K_ref(const float * GGML_RESTRICT x, block_q6_K * GGML_REST
     }
 }
 
-void dequantize_row_q6_K(const block_q6_K * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+خالی dequantize_صف_q6_K(ثابت بلاک_q6_K * GGML_RESTRICT x, اعشاری * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
+    ثابت int64_t nb = k / QK_K;
 
-    for (int i = 0; i < nb; i++) {
-        const float d = GGML_FP16_TO_FP32(x[i].d);
+    برائے (صحیح i = 0; i < nb; i++) {
+        ثابت اعشاری d = GGML_FP16_مقصد_FP32(x[i].d);
 
-        const uint8_t * GGML_RESTRICT ql = x[i].ql;
-        const uint8_t * GGML_RESTRICT qh = x[i].qh;
-        const int8_t  * GGML_RESTRICT sc = x[i].scales;
+        ثابت uint8_t * GGML_RESTRICT ql = x[i].ql;
+        ثابت uint8_t * GGML_RESTRICT qh = x[i].qh;
+        ثابت int8_t  * GGML_RESTRICT sc = x[i].scales;
 
-        for (int n = 0; n < QK_K; n += 128) {
-            for (int l = 0; l < 32; ++l) {
-                int is = l/16;
-                const int8_t q1 = (int8_t)((ql[l +  0] & 0xF) | (((qh[l] >> 0) & 3) << 4)) - 32;
-                const int8_t q2 = (int8_t)((ql[l + 32] & 0xF) | (((qh[l] >> 2) & 3) << 4)) - 32;
-                const int8_t q3 = (int8_t)((ql[l +  0]  >> 4) | (((qh[l] >> 4) & 3) << 4)) - 32;
-                const int8_t q4 = (int8_t)((ql[l + 32]  >> 4) | (((qh[l] >> 6) & 3) << 4)) - 32;
+        برائے (صحیح n = 0; n < QK_K; n += 128) {
+            برائے (صحیح l = 0; l < 32; ++l) {
+                صحیح is = l/16;
+                ثابت int8_t q1 = (int8_t)((ql[l +  0] & 0xF) | (((qh[l] >> 0) & 3) << 4)) - 32;
+                ثابت int8_t q2 = (int8_t)((ql[l + 32] & 0xF) | (((qh[l] >> 2) & 3) << 4)) - 32;
+                ثابت int8_t q3 = (int8_t)((ql[l +  0]  >> 4) | (((qh[l] >> 4) & 3) << 4)) - 32;
+                ثابت int8_t q4 = (int8_t)((ql[l + 32]  >> 4) | (((qh[l] >> 6) & 3) << 4)) - 32;
                 y[l +  0] = d * sc[is + 0] * q1;
                 y[l + 32] = d * sc[is + 2] * q2;
                 y[l + 64] = d * sc[is + 4] * q3;
@@ -1968,64 +1968,64 @@ void dequantize_row_q6_K(const block_q6_K * GGML_RESTRICT x, float * GGML_RESTRI
     }
 }
 
-static void quantize_row_q6_K_impl(const float * GGML_RESTRICT x, block_q6_K * GGML_RESTRICT y, int64_t n_per_row, const float * quant_weights) {
-    assert(n_per_row % QK_K == 0);
-    const int64_t nb = n_per_row / QK_K;
+ساکن خالی quantize_صف_q6_K_impl(ثابت اعشاری * GGML_RESTRICT x, بلاک_q6_K * GGML_RESTRICT y, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
+    أكد(n_فی_صف % QK_K == 0);
+    ثابت int64_t nb = n_فی_صف / QK_K;
 
     int8_t L[QK_K];
-    float   scales[QK_K/16];
+    اعشاری   scales[QK_K/16];
     //float   weights[16];
 
-    for (int i = 0; i < nb; i++) {
+    برائے (صحیح i = 0; i < nb; i++) {
 
         //float sum_x2 = 0;
         //for (int j = 0; j < QK_K; ++j) sum_x2 += x[j]*x[j];
         //float sigma2 = sum_x2/QK_K;
 
-        float max_scale = 0;
-        float max_abs_scale = 0;
+        اعشاری max_scale = 0;
+        اعشاری max_abs_scale = 0;
 
-        for (int ib = 0; ib < QK_K/16; ++ib) {
+        برائے (صحیح ib = 0; ib < QK_K/16; ++ib) {
 
-            float scale;
-            if (quant_weights) {
-                const float * qw = quant_weights + QK_K*i + 16*ib;
+            اعشاری scale;
+            اگر (quant_weights) {
+                ثابت اعشاری * qw = quant_weights + QK_K*i + 16*ib;
                 //for (int j = 0; j < 16; ++j) weights[j] = qw[j] * sqrtf(sigma2 + x[16*ib + j]*x[16*ib + j]);
                 //scale = make_qx_quants(16, 32, x + 16*ib, L + 16*ib, 1, weights);
                 scale = make_qx_quants(16, 32, x + 16*ib, L + 16*ib, 1, qw);
-            } else {
-                scale = make_qx_quants(16, 32, x + 16*ib, L + 16*ib, 1, NULL);
+            } ورنہ {
+                scale = make_qx_quants(16, 32, x + 16*ib, L + 16*ib, 1, تہی);
             }
             scales[ib] = scale;
 
-            const float abs_scale = fabsf(scale);
-            if (abs_scale > max_abs_scale) {
+            ثابت اعشاری abs_scale = fabsf(scale);
+            اگر (abs_scale > max_abs_scale) {
                 max_abs_scale = abs_scale;
                 max_scale = scale;
             }
 
         }
 
-        if (max_abs_scale < GROUP_MAX_EPS) {
-            memset(&y[i], 0, sizeof(block_q6_K));
-            y[i].d = GGML_FP32_TO_FP16(0.f);
+        اگر (max_abs_scale < گروہ_MAX_EPS) {
+            memset(&y[i], 0, حجم(بلاک_q6_K));
+            y[i].d = GGML_FP32_مقصد_FP16(0.f);
             x += QK_K;
-            continue;
+            جاری;
         }
 
-        float iscale = -128.f/max_scale;
-        y[i].d = GGML_FP32_TO_FP16(1/iscale);
-        for (int ib = 0; ib < QK_K/16; ++ib) {
-            y[i].scales[ib] = MIN(127, nearest_int(iscale*scales[ib]));
+        اعشاری iscale = -128.f/max_scale;
+        y[i].d = GGML_FP32_مقصد_FP16(1/iscale);
+        برائے (صحیح ib = 0; ib < QK_K/16; ++ib) {
+            y[i].scales[ib] = MIN(127, قریب_ترین_int(iscale*scales[ib]));
         }
 
-        for (int j = 0; j < QK_K/16; ++j) {
-            float d = GGML_FP16_TO_FP32(y[i].d) * y[i].scales[j];
-            if (!d) {
-                continue;
+        برائے (صحیح j = 0; j < QK_K/16; ++j) {
+            اعشاری d = GGML_FP16_مقصد_FP32(y[i].d) * y[i].scales[j];
+            اگر (!d) {
+                جاری;
             }
-            for (int ii = 0; ii < 16; ++ii) {
-                int l = nearest_int(x[16*j + ii]/d);
+            برائے (صحیح ii = 0; ii < 16; ++ii) {
+                صحیح l = قریب_ترین_int(x[16*j + ii]/d);
                 l = MAX(-32, MIN(31, l));
                 L[16*j + ii] = l + 32;
             }
@@ -2033,12 +2033,12 @@ static void quantize_row_q6_K_impl(const float * GGML_RESTRICT x, block_q6_K * G
 
         uint8_t * GGML_RESTRICT ql = y[i].ql;
         uint8_t * GGML_RESTRICT qh = y[i].qh;
-        for (int j = 0; j < QK_K; j += 128) {
-            for (int l = 0; l < 32; ++l) {
-                const uint8_t q1 = L[j + l +  0] & 0xF;
-                const uint8_t q2 = L[j + l + 32] & 0xF;
-                const uint8_t q3 = L[j + l + 64] & 0xF;
-                const uint8_t q4 = L[j + l + 96] & 0xF;
+        برائے (صحیح j = 0; j < QK_K; j += 128) {
+            برائے (صحیح l = 0; l < 32; ++l) {
+                ثابت uint8_t q1 = L[j + l +  0] & 0xF;
+                ثابت uint8_t q2 = L[j + l + 32] & 0xF;
+                ثابت uint8_t q3 = L[j + l + 64] & 0xF;
+                ثابت uint8_t q4 = L[j + l + 96] & 0xF;
                 ql[l+ 0] = q1 | (q3 << 4);
                 ql[l+32] = q2 | (q4 << 4);
                 qh[l] = (L[j + l] >> 4) | ((L[j + l + 32] >> 4) << 2) | ((L[j + l + 64] >> 4) << 4) | ((L[j + l + 96] >> 4) << 6);
@@ -2052,168 +2052,168 @@ static void quantize_row_q6_K_impl(const float * GGML_RESTRICT x, block_q6_K * G
     }
 }
 
-size_t quantize_q6_K(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    size_t row_size = ggml_row_size(GGML_TYPE_Q6_K, n_per_row);
-    if (!quant_weights) {
-        quantize_row_q6_K_ref(src, dst, (int64_t)nrow*n_per_row);
+size_t quantize_q6_K(ثابت اعشاری * GGML_RESTRICT src, خالی * GGML_RESTRICT dst, int64_t nrow, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
+    size_t صف_سائز = ggml_صف_سائز(GGML_TYPE_Q6_K, n_فی_صف);
+    اگر (!quant_weights) {
+        quantize_صف_q6_K_ref(src, dst, (int64_t)nrow*n_فی_صف);
     }
-    else {
-        char * qrow = (char *)dst;
-        for (int64_t row = 0; row < nrow; ++row) {
-            quantize_row_q6_K_impl(src, (block_q6_K*)qrow, n_per_row, quant_weights);
-            src += n_per_row;
-            qrow += row_size;
+    ورنہ {
+        حرف * qrow = (حرف *)dst;
+        برائے (int64_t صف = 0; صف < nrow; ++صف) {
+            quantize_صف_q6_K_impl(src, (بلاک_q6_K*)qrow, n_فی_صف, quant_weights);
+            src += n_فی_صف;
+            qrow += صف_سائز;
         }
     }
-    return nrow * row_size;
+    واپس nrow * صف_سائز;
 }
 
-static void quantize_row_q4_0_impl(const float * GGML_RESTRICT x, block_q4_0 * GGML_RESTRICT y, int64_t n_per_row, const float * quant_weights) {
+ساکن خالی quantize_صف_q4_0_impl(ثابت اعشاری * GGML_RESTRICT x, بلاک_q4_0 * GGML_RESTRICT y, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
     static_assert(QK4_0 == 32, "QK4_0 must be 32");
 
-    if (!quant_weights) {
-        quantize_row_q4_0_ref(x, y, n_per_row);
-        return;
+    اگر (!quant_weights) {
+        quantize_صف_q4_0_ref(x, y, n_فی_صف);
+        واپس;
     }
 
-    float weight[QK4_0];
+    اعشاری وزن[QK4_0];
     int8_t L[QK4_0];
 
-    float sum_x2 = 0;
-    for (int j = 0; j < n_per_row; ++j) sum_x2 += x[j]*x[j];
-    float sigma2 = sum_x2/n_per_row;
+    اعشاری مجموع_x2 = 0;
+    برائے (صحیح j = 0; j < n_فی_صف; ++j) مجموع_x2 += x[j]*x[j];
+    اعشاری sigma2 = مجموع_x2/n_فی_صف;
 
-    const int64_t nb = n_per_row/QK4_0;
-    for (int ib = 0; ib < nb; ++ib) {
-        const float * xb = x + QK4_0 * ib;
-        const float * qw = quant_weights + QK4_0 * ib;
-        for (int j = 0; j < QK4_0; ++j) weight[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
-        float d = make_qx_quants(QK4_0, 8, xb, L, 1, weight);
-        y[ib].d = GGML_FP32_TO_FP16(d);
-        for (int j = 0; j < 16; ++j) {
+    ثابت int64_t nb = n_فی_صف/QK4_0;
+    برائے (صحیح ib = 0; ib < nb; ++ib) {
+        ثابت اعشاری * xb = x + QK4_0 * ib;
+        ثابت اعشاری * qw = quant_weights + QK4_0 * ib;
+        برائے (صحیح j = 0; j < QK4_0; ++j) وزن[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
+        اعشاری d = make_qx_quants(QK4_0, 8, xb, L, 1, وزن);
+        y[ib].d = GGML_FP32_مقصد_FP16(d);
+        برائے (صحیح j = 0; j < 16; ++j) {
             y[ib].qs[j] = L[j] | (L[j+16] << 4);
         }
     }
 }
 
-size_t quantize_q1_0(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    if (!quant_weights) {
-        quantize_row_q1_0_ref(src, dst, (int64_t)nrow*n_per_row);
-        return nrow * ggml_row_size(GGML_TYPE_Q1_0, n_per_row);
+size_t quantize_q1_0(ثابت اعشاری * GGML_RESTRICT src, خالی * GGML_RESTRICT dst, int64_t nrow, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
+    اگر (!quant_weights) {
+        quantize_صف_q1_0_ref(src, dst, (int64_t)nrow*n_فی_صف);
+        واپس nrow * ggml_صف_سائز(GGML_TYPE_Q1_0, n_فی_صف);
     }
-    size_t row_size = ggml_row_size(GGML_TYPE_Q1_0, n_per_row);
-    char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
-        quantize_row_q1_0_ref(src, (block_q1_0*)qrow, n_per_row);
-        src += n_per_row;
-        qrow += row_size;
+    size_t صف_سائز = ggml_صف_سائز(GGML_TYPE_Q1_0, n_فی_صف);
+    حرف * qrow = (حرف *)dst;
+    برائے (int64_t صف = 0; صف < nrow; ++صف) {
+        quantize_صف_q1_0_ref(src, (بلاک_q1_0*)qrow, n_فی_صف);
+        src += n_فی_صف;
+        qrow += صف_سائز;
     }
-    return nrow * row_size;
+    واپس nrow * صف_سائز;
 }
 
-size_t quantize_q2_0(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    if (!quant_weights) {
-        quantize_row_q2_0_ref(src, dst, (int64_t)nrow*n_per_row);
-        return nrow * ggml_row_size(GGML_TYPE_Q2_0, n_per_row);
+size_t quantize_q2_0(ثابت اعشاری * GGML_RESTRICT src, خالی * GGML_RESTRICT dst, int64_t nrow, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
+    اگر (!quant_weights) {
+        quantize_صف_q2_0_ref(src, dst, (int64_t)nrow*n_فی_صف);
+        واپس nrow * ggml_صف_سائز(GGML_TYPE_Q2_0, n_فی_صف);
     }
-    size_t row_size = ggml_row_size(GGML_TYPE_Q2_0, n_per_row);
-    char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
-        quantize_row_q2_0_ref(src, (block_q2_0*)qrow, n_per_row);
-        src += n_per_row;
-        qrow += row_size;
+    size_t صف_سائز = ggml_صف_سائز(GGML_TYPE_Q2_0, n_فی_صف);
+    حرف * qrow = (حرف *)dst;
+    برائے (int64_t صف = 0; صف < nrow; ++صف) {
+        quantize_صف_q2_0_ref(src, (بلاک_q2_0*)qrow, n_فی_صف);
+        src += n_فی_صف;
+        qrow += صف_سائز;
     }
-    return nrow * row_size;
+    واپس nrow * صف_سائز;
 }
 
-size_t quantize_q4_0(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    if (!quant_weights) {
-        quantize_row_q4_0_ref(src, dst, (int64_t)nrow*n_per_row);
-        return nrow * ggml_row_size(GGML_TYPE_Q4_0, n_per_row);
+size_t quantize_q4_0(ثابت اعشاری * GGML_RESTRICT src, خالی * GGML_RESTRICT dst, int64_t nrow, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
+    اگر (!quant_weights) {
+        quantize_صف_q4_0_ref(src, dst, (int64_t)nrow*n_فی_صف);
+        واپس nrow * ggml_صف_سائز(GGML_TYPE_Q4_0, n_فی_صف);
     }
-    size_t row_size = ggml_row_size(GGML_TYPE_Q4_0, n_per_row);
-    char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
-        quantize_row_q4_0_impl(src, (block_q4_0*)qrow, n_per_row, quant_weights);
-        src += n_per_row;
-        qrow += row_size;
+    size_t صف_سائز = ggml_صف_سائز(GGML_TYPE_Q4_0, n_فی_صف);
+    حرف * qrow = (حرف *)dst;
+    برائے (int64_t صف = 0; صف < nrow; ++صف) {
+        quantize_صف_q4_0_impl(src, (بلاک_q4_0*)qrow, n_فی_صف, quant_weights);
+        src += n_فی_صف;
+        qrow += صف_سائز;
     }
-    return nrow * row_size;
+    واپس nrow * صف_سائز;
 }
 
-static void quantize_row_q4_1_impl(const float * GGML_RESTRICT x, block_q4_1 * GGML_RESTRICT y, int64_t n_per_row, const float * quant_weights) {
+ساکن خالی quantize_صف_q4_1_impl(ثابت اعشاری * GGML_RESTRICT x, بلاک_q4_1 * GGML_RESTRICT y, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
     static_assert(QK4_1 == 32, "QK4_1 must be 32");
 
-    if (!quant_weights) {
-        quantize_row_q4_1_ref(x, y, n_per_row);
-        return;
+    اگر (!quant_weights) {
+        quantize_صف_q4_1_ref(x, y, n_فی_صف);
+        واپس;
     }
 
-    float weight[QK4_1];
+    اعشاری وزن[QK4_1];
     uint8_t L[QK4_1], Laux[QK4_1];
 
-    float sum_x2 = 0;
-    for (int j = 0; j < n_per_row; ++j) sum_x2 += x[j]*x[j];
-    float sigma2 = sum_x2/n_per_row;
+    اعشاری مجموع_x2 = 0;
+    برائے (صحیح j = 0; j < n_فی_صف; ++j) مجموع_x2 += x[j]*x[j];
+    اعشاری sigma2 = مجموع_x2/n_فی_صف;
 
-    const int64_t nb = n_per_row/QK4_1;
-    for (int ib = 0; ib < nb; ++ib) {
-        const float * xb = x + QK4_1 * ib;
-        const float * qw = quant_weights + QK4_1 * ib;
-        for (int j = 0; j < QK4_1; ++j) weight[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
-        float min;
-        float d = make_qkx3_quants(QK4_1, 15, xb, weight, L, &min, Laux, -0.9f, 0.05f, 36, false);
-        y[ib].d = GGML_FP32_TO_FP16(d);
-        y[ib].m = GGML_FP32_TO_FP16(-min);
-        for (int j = 0; j < 16; ++j) {
+    ثابت int64_t nb = n_فی_صف/QK4_1;
+    برائے (صحیح ib = 0; ib < nb; ++ib) {
+        ثابت اعشاری * xb = x + QK4_1 * ib;
+        ثابت اعشاری * qw = quant_weights + QK4_1 * ib;
+        برائے (صحیح j = 0; j < QK4_1; ++j) وزن[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
+        اعشاری min;
+        اعشاری d = make_qkx3_quants(QK4_1, 15, xb, وزن, L, &min, Laux, -0.9f, 0.05f, 36, false);
+        y[ib].d = GGML_FP32_مقصد_FP16(d);
+        y[ib].m = GGML_FP32_مقصد_FP16(-min);
+        برائے (صحیح j = 0; j < 16; ++j) {
             y[ib].qs[j] = L[j] | (L[j+16] << 4);
         }
     }
 }
 
-size_t quantize_q4_1(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    if (!quant_weights) {
-        quantize_row_q4_1_ref(src, dst, (int64_t)nrow*n_per_row);
-        return nrow * ggml_row_size(GGML_TYPE_Q4_1, n_per_row);
+size_t quantize_q4_1(ثابت اعشاری * GGML_RESTRICT src, خالی * GGML_RESTRICT dst, int64_t nrow, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
+    اگر (!quant_weights) {
+        quantize_صف_q4_1_ref(src, dst, (int64_t)nrow*n_فی_صف);
+        واپس nrow * ggml_صف_سائز(GGML_TYPE_Q4_1, n_فی_صف);
     }
-    size_t row_size = ggml_row_size(GGML_TYPE_Q4_1, n_per_row);
-    char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
-        quantize_row_q4_1_impl(src, (block_q4_1*)qrow, n_per_row, quant_weights);
-        src += n_per_row;
-        qrow += row_size;
+    size_t صف_سائز = ggml_صف_سائز(GGML_TYPE_Q4_1, n_فی_صف);
+    حرف * qrow = (حرف *)dst;
+    برائے (int64_t صف = 0; صف < nrow; ++صف) {
+        quantize_صف_q4_1_impl(src, (بلاک_q4_1*)qrow, n_فی_صف, quant_weights);
+        src += n_فی_صف;
+        qrow += صف_سائز;
     }
-    return nrow * row_size;
+    واپس nrow * صف_سائز;
 }
 
-static void quantize_row_q5_0_impl(const float * GGML_RESTRICT x, block_q5_0 * GGML_RESTRICT y, int64_t n_per_row, const float * quant_weights) {
+ساکن خالی quantize_صف_q5_0_impl(ثابت اعشاری * GGML_RESTRICT x, بلاک_q5_0 * GGML_RESTRICT y, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
     static_assert(QK5_0 == 32, "QK5_0 must be 32");
 
-    if (!quant_weights) {
-        quantize_row_q5_0_ref(x, y, n_per_row);
-        return;
+    اگر (!quant_weights) {
+        quantize_صف_q5_0_ref(x, y, n_فی_صف);
+        واپس;
     }
 
-    float weight[QK5_0];
+    اعشاری وزن[QK5_0];
     int8_t L[QK5_0];
 
-    float sum_x2 = 0;
-    for (int j = 0; j < n_per_row; ++j) sum_x2 += x[j]*x[j];
-    float sigma2 = sum_x2/n_per_row;
+    اعشاری مجموع_x2 = 0;
+    برائے (صحیح j = 0; j < n_فی_صف; ++j) مجموع_x2 += x[j]*x[j];
+    اعشاری sigma2 = مجموع_x2/n_فی_صف;
 
-    const int64_t nb = n_per_row/QK5_0;
-    for (int ib = 0; ib < nb; ++ib) {
-        const float * xb = x + QK5_0 * ib;
-        const float * qw = quant_weights + QK5_0 * ib;
-        for (int j = 0; j < QK5_0; ++j) weight[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
-        float d = make_qx_quants(QK5_0, 16, xb, L, 1, weight);
-        y[ib].d = GGML_FP32_TO_FP16(d);
+    ثابت int64_t nb = n_فی_صف/QK5_0;
+    برائے (صحیح ib = 0; ib < nb; ++ib) {
+        ثابت اعشاری * xb = x + QK5_0 * ib;
+        ثابت اعشاری * qw = quant_weights + QK5_0 * ib;
+        برائے (صحیح j = 0; j < QK5_0; ++j) وزن[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
+        اعشاری d = make_qx_quants(QK5_0, 16, xb, L, 1, وزن);
+        y[ib].d = GGML_FP32_مقصد_FP16(d);
 
         uint32_t qh = 0;
 
-        for (int j = 0; j < 16; ++j) {
-            const uint8_t xi0 = L[j];
-            const uint8_t xi1 = L[j+16];
+        برائے (صحیح j = 0; j < 16; ++j) {
+            ثابت uint8_t xi0 = L[j];
+            ثابت uint8_t xi1 = L[j+16];
             y[ib].qs[j] = (xi0 & 0x0F) | ((xi1 & 0x0F) << 4);
 
             // get the 5-th bit and store it in qh at the right position
@@ -2221,122 +2221,122 @@ static void quantize_row_q5_0_impl(const float * GGML_RESTRICT x, block_q5_0 * G
             qh |= ((xi1 & 0x10u) >> 4) << (j + QK5_0/2);
         }
 
-        memcpy(&y[ib].qh, &qh, sizeof(qh));
+        حافظہ_نقل(&y[ib].qh, &qh, حجم(qh));
     }
 }
 
-size_t quantize_q5_0(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    if (!quant_weights) {
-        quantize_row_q5_0_ref(src, dst, (int64_t)nrow*n_per_row);
-        return nrow * ggml_row_size(GGML_TYPE_Q5_0, n_per_row);
+size_t quantize_q5_0(ثابت اعشاری * GGML_RESTRICT src, خالی * GGML_RESTRICT dst, int64_t nrow, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
+    اگر (!quant_weights) {
+        quantize_صف_q5_0_ref(src, dst, (int64_t)nrow*n_فی_صف);
+        واپس nrow * ggml_صف_سائز(GGML_TYPE_Q5_0, n_فی_صف);
     }
-    size_t row_size = ggml_row_size(GGML_TYPE_Q5_0, n_per_row);
-    char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
-        quantize_row_q5_0_impl(src, (block_q5_0*)qrow, n_per_row, quant_weights);
-        src += n_per_row;
-        qrow += row_size;
+    size_t صف_سائز = ggml_صف_سائز(GGML_TYPE_Q5_0, n_فی_صف);
+    حرف * qrow = (حرف *)dst;
+    برائے (int64_t صف = 0; صف < nrow; ++صف) {
+        quantize_صف_q5_0_impl(src, (بلاک_q5_0*)qrow, n_فی_صف, quant_weights);
+        src += n_فی_صف;
+        qrow += صف_سائز;
     }
-    return nrow * row_size;
+    واپس nrow * صف_سائز;
 }
 
-static void quantize_row_q5_1_impl(const float * GGML_RESTRICT x, block_q5_1 * GGML_RESTRICT y, int64_t n_per_row, const float * quant_weights) {
+ساکن خالی quantize_صف_q5_1_impl(ثابت اعشاری * GGML_RESTRICT x, بلاک_q5_1 * GGML_RESTRICT y, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
     static_assert(QK5_1 == 32, "QK5_1 must be 32");
 
-    if (!quant_weights) {
-        quantize_row_q5_1_ref(x, y, n_per_row);
-        return;
+    اگر (!quant_weights) {
+        quantize_صف_q5_1_ref(x, y, n_فی_صف);
+        واپس;
     }
 
-    float weight[QK5_1];
+    اعشاری وزن[QK5_1];
     uint8_t L[QK5_1], Laux[QK5_1];
 
-    float sum_x2 = 0;
-    for (int j = 0; j < n_per_row; ++j) sum_x2 += x[j]*x[j];
-    float sigma2 = sum_x2/n_per_row;
+    اعشاری مجموع_x2 = 0;
+    برائے (صحیح j = 0; j < n_فی_صف; ++j) مجموع_x2 += x[j]*x[j];
+    اعشاری sigma2 = مجموع_x2/n_فی_صف;
 
-    const int64_t nb = n_per_row/QK5_1;
-    for (int ib = 0; ib < nb; ++ib) {
-        const float * xb = x + QK5_1 * ib;
-        const float * qw = quant_weights + QK5_1 * ib;
-        for (int j = 0; j < QK5_1; ++j) weight[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
-        float min;
-        float d = make_qkx3_quants(QK5_1, 31, xb, weight, L, &min, Laux, -0.9f, 0.05f, 36, false);
-        y[ib].d = GGML_FP32_TO_FP16(d);
-        y[ib].m = GGML_FP32_TO_FP16(-min);
+    ثابت int64_t nb = n_فی_صف/QK5_1;
+    برائے (صحیح ib = 0; ib < nb; ++ib) {
+        ثابت اعشاری * xb = x + QK5_1 * ib;
+        ثابت اعشاری * qw = quant_weights + QK5_1 * ib;
+        برائے (صحیح j = 0; j < QK5_1; ++j) وزن[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
+        اعشاری min;
+        اعشاری d = make_qkx3_quants(QK5_1, 31, xb, وزن, L, &min, Laux, -0.9f, 0.05f, 36, false);
+        y[ib].d = GGML_FP32_مقصد_FP16(d);
+        y[ib].m = GGML_FP32_مقصد_FP16(-min);
 
         uint32_t qh = 0;
-        for (int j = 0; j < 16; ++j) {
-            const uint8_t xi0 = L[j];
-            const uint8_t xi1 = L[j+16];
+        برائے (صحیح j = 0; j < 16; ++j) {
+            ثابت uint8_t xi0 = L[j];
+            ثابت uint8_t xi1 = L[j+16];
             y[ib].qs[j] = (xi0 & 0x0F) | ((xi1 & 0x0F) << 4);
             // get the 5-th bit and store it in qh at the right position
             qh |= ((xi0 & 0x10u) >> 4) << (j + 0);
             qh |= ((xi1 & 0x10u) >> 4) << (j + QK5_0/2);
         }
-        memcpy(&y[ib].qh, &qh, sizeof(qh));
+        حافظہ_نقل(&y[ib].qh, &qh, حجم(qh));
     }
 }
 
-size_t quantize_q5_1(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    if (!quant_weights) {
-        quantize_row_q5_1_ref(src, dst, (int64_t)nrow*n_per_row);
-        return nrow * ggml_row_size(GGML_TYPE_Q5_1, n_per_row);
+size_t quantize_q5_1(ثابت اعشاری * GGML_RESTRICT src, خالی * GGML_RESTRICT dst, int64_t nrow, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
+    اگر (!quant_weights) {
+        quantize_صف_q5_1_ref(src, dst, (int64_t)nrow*n_فی_صف);
+        واپس nrow * ggml_صف_سائز(GGML_TYPE_Q5_1, n_فی_صف);
     }
-    size_t row_size = ggml_row_size(GGML_TYPE_Q5_1, n_per_row);
-    char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
-        quantize_row_q5_1_impl(src, (block_q5_1*)qrow, n_per_row, quant_weights);
-        src += n_per_row;
-        qrow += row_size;
+    size_t صف_سائز = ggml_صف_سائز(GGML_TYPE_Q5_1, n_فی_صف);
+    حرف * qrow = (حرف *)dst;
+    برائے (int64_t صف = 0; صف < nrow; ++صف) {
+        quantize_صف_q5_1_impl(src, (بلاک_q5_1*)qrow, n_فی_صف, quant_weights);
+        src += n_فی_صف;
+        qrow += صف_سائز;
     }
-    return nrow * row_size;
+    واپس nrow * صف_سائز;
 }
 
-size_t quantize_q8_0(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    (void)quant_weights; // not used
-    const size_t row_size = ggml_row_size(GGML_TYPE_Q8_0, n_per_row);
-    quantize_row_q8_0_ref(src, dst, (int64_t)nrow*n_per_row);
-    return nrow * row_size;
+size_t quantize_q8_0(ثابت اعشاری * GGML_RESTRICT src, خالی * GGML_RESTRICT dst, int64_t nrow, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
+    (خالی)quant_weights; // not used
+    ثابت size_t صف_سائز = ggml_صف_سائز(GGML_TYPE_Q8_0, n_فی_صف);
+    quantize_صف_q8_0_ref(src, dst, (int64_t)nrow*n_فی_صف);
+    واپس nrow * صف_سائز;
 }
 
-size_t quantize_mxfp4(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    GGML_UNUSED(quant_weights);
-    quantize_row_mxfp4_ref(src, dst, (int64_t)nrow*n_per_row);
-    return nrow * ggml_row_size(GGML_TYPE_MXFP4, n_per_row);
+size_t quantize_mxfp4(ثابت اعشاری * GGML_RESTRICT src, خالی * GGML_RESTRICT dst, int64_t nrow, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
+    GGML_غیر_مستعمل(quant_weights);
+    quantize_صف_mxfp4_ref(src, dst, (int64_t)nrow*n_فی_صف);
+    واپس nrow * ggml_صف_سائز(GGML_TYPE_MXFP4, n_فی_صف);
 }
 
-size_t quantize_nvfp4(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    GGML_UNUSED(quant_weights);
-    quantize_row_nvfp4_ref(src, dst, (int64_t)nrow*n_per_row);
-    return nrow * ggml_row_size(GGML_TYPE_NVFP4, n_per_row);
+size_t quantize_nvfp4(ثابت اعشاری * GGML_RESTRICT src, خالی * GGML_RESTRICT dst, int64_t nrow, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
+    GGML_غیر_مستعمل(quant_weights);
+    quantize_صف_nvfp4_ref(src, dst, (int64_t)nrow*n_فی_صف);
+    واپس nrow * ggml_صف_سائز(GGML_TYPE_NVFP4, n_فی_صف);
 }
 
 // ====================== Ternary (de)-quantization (BitNet b1.58 and TriLMs)
 
-void quantize_row_tq1_0_ref(const float * GGML_RESTRICT x, block_tq1_0 * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+خالی quantize_صف_tq1_0_ref(ثابت اعشاری * GGML_RESTRICT x, بلاک_tq1_0 * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
+    ثابت int64_t nb = k / QK_K;
 
-    for (int64_t i = 0; i < nb; i++) {
-        float amax = 0.0f; // absolute max
+    برائے (int64_t i = 0; i < nb; i++) {
+        اعشاری amax = 0.0f; // absolute max
 
-        for (int j = 0; j < QK_K; j++) {
-            const float v = x[j];
+        برائے (صحیح j = 0; j < QK_K; j++) {
+            ثابت اعشاری v = x[j];
             amax = MAX(amax, fabsf(v));
         }
 
-        const float d = amax;
-        const float id = d ? 1.0f/d : 0.0f;
+        ثابت اعشاری d = amax;
+        ثابت اعشاری id = d ? 1.0f/d : 0.0f;
 
-        y[i].d = GGML_FP32_TO_FP16(d);
+        y[i].d = GGML_FP32_مقصد_FP16(d);
 
         // 5 elements per byte, along 32 bytes
-        for (size_t j = 0; j < sizeof(y->qs) - sizeof(y->qs) % 32; j += 32) {
-            for (size_t m = 0; m < 32; ++m) {
+        برائے (size_t j = 0; j < حجم(y->qs) - حجم(y->qs) % 32; j += 32) {
+            برائے (size_t m = 0; m < 32; ++m) {
                 uint8_t q = 0;
-                for (size_t n = 0; n < 5; ++n) {
-                    int xi = lroundf(x[m + n*32] * id) + 1; // -1, 0, 1 -> 0, 1, 2
+                برائے (size_t n = 0; n < 5; ++n) {
+                    صحیح xi = lroundf(x[m + n*32] * id) + 1; // -1, 0, 1 -> 0, 1, 2
                     q *= 3;
                     q += xi;
                 }
@@ -2347,11 +2347,11 @@ void quantize_row_tq1_0_ref(const float * GGML_RESTRICT x, block_tq1_0 * GGML_RE
             x += 5*32;
         }
         // along 16 bytes
-        for (size_t j = sizeof(y->qs) - sizeof(y->qs) % 32; j < sizeof(y->qs); j += 16) {
-            for (size_t m = 0; m < 16; ++m) {
+        برائے (size_t j = حجم(y->qs) - حجم(y->qs) % 32; j < حجم(y->qs); j += 16) {
+            برائے (size_t m = 0; m < 16; ++m) {
                 uint8_t q = 0;
-                for (size_t n = 0; n < 5; ++n) {
-                    int xi = lroundf(x[m + n*16] * id) + 1; // -1, 0, 1 -> 0, 1, 2
+                برائے (size_t n = 0; n < 5; ++n) {
+                    صحیح xi = lroundf(x[m + n*16] * id) + 1; // -1, 0, 1 -> 0, 1, 2
                     q *= 3;
                     q += xi;
                 }
@@ -2362,11 +2362,11 @@ void quantize_row_tq1_0_ref(const float * GGML_RESTRICT x, block_tq1_0 * GGML_RE
             x += 5*16;
         }
         // 4 elements per byte
-        for (size_t j = 0; j < sizeof(y->qh); ++j) {
+        برائے (size_t j = 0; j < حجم(y->qh); ++j) {
             uint8_t q = 0;
-            for (size_t m = 0; m < 4; ++m) {
+            برائے (size_t m = 0; m < 4; ++m) {
                 // -1, 0, 1 -> 0, 1, 2
-                int xi = lroundf(x[j + m*sizeof(y->qh)] * id) + 1;
+                صحیح xi = lroundf(x[j + m*حجم(y->qh)] * id) + 1;
                 q *= 3;
                 q += xi;
             }
@@ -2376,33 +2376,33 @@ void quantize_row_tq1_0_ref(const float * GGML_RESTRICT x, block_tq1_0 * GGML_RE
             q = ((uint16_t)q * 256 + (243 - 1)) / 243;
             y[i].qh[j] = q;
         }
-        x += 4*sizeof(y->qh);
+        x += 4*حجم(y->qh);
     }
 }
 
-void quantize_row_tq2_0_ref(const float * GGML_RESTRICT x, block_tq2_0 * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+خالی quantize_صف_tq2_0_ref(ثابت اعشاری * GGML_RESTRICT x, بلاک_tq2_0 * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
+    ثابت int64_t nb = k / QK_K;
 
-    for (int64_t i = 0; i < nb; i++) {
-        float amax = 0.0f; // absolute max
+    برائے (int64_t i = 0; i < nb; i++) {
+        اعشاری amax = 0.0f; // absolute max
 
-        for (int j = 0; j < QK_K; j++) {
-            const float v = x[j];
+        برائے (صحیح j = 0; j < QK_K; j++) {
+            ثابت اعشاری v = x[j];
             amax = MAX(amax, fabsf(v));
         }
 
-        const float d = amax;
-        const float id = d ? 1.0f/d : 0.0f;
+        ثابت اعشاری d = amax;
+        ثابت اعشاری id = d ? 1.0f/d : 0.0f;
 
-        y[i].d = GGML_FP32_TO_FP16(d);
+        y[i].d = GGML_FP32_مقصد_FP16(d);
 
-        for (size_t j = 0; j < sizeof(y->qs); j += 32) {
-            for (size_t m = 0; m < 32; ++m) {
+        برائے (size_t j = 0; j < حجم(y->qs); j += 32) {
+            برائے (size_t m = 0; m < 32; ++m) {
                 uint8_t q = 0;
-                for (size_t n = 0; n < 4; ++n) {
+                برائے (size_t n = 0; n < 4; ++n) {
                     // -1, 0, 1 -> 0, 1, 2
-                    int xi = lroundf(x[m + n*32] * id) + 1;
+                    صحیح xi = lroundf(x[m + n*32] * id) + 1;
                     q += (xi & 3) << (2*n);
                 }
                 y[i].qs[j + m] = q;
@@ -2412,72 +2412,72 @@ void quantize_row_tq2_0_ref(const float * GGML_RESTRICT x, block_tq2_0 * GGML_RE
     }
 }
 
-size_t quantize_tq1_0(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    (void)quant_weights; // not used
-    const size_t row_size = ggml_row_size(GGML_TYPE_TQ1_0, n_per_row);
-    quantize_row_tq1_0_ref(src, dst, (int64_t)nrow*n_per_row);
-    return nrow * row_size;
+size_t quantize_tq1_0(ثابت اعشاری * GGML_RESTRICT src, خالی * GGML_RESTRICT dst, int64_t nrow, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
+    (خالی)quant_weights; // not used
+    ثابت size_t صف_سائز = ggml_صف_سائز(GGML_TYPE_TQ1_0, n_فی_صف);
+    quantize_صف_tq1_0_ref(src, dst, (int64_t)nrow*n_فی_صف);
+    واپس nrow * صف_سائز;
 }
 
-size_t quantize_tq2_0(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    (void)quant_weights; // not used
-    const size_t row_size = ggml_row_size(GGML_TYPE_TQ2_0, n_per_row);
-    quantize_row_tq2_0_ref(src, dst, (int64_t)nrow*n_per_row);
-    return nrow * row_size;
+size_t quantize_tq2_0(ثابت اعشاری * GGML_RESTRICT src, خالی * GGML_RESTRICT dst, int64_t nrow, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
+    (خالی)quant_weights; // not used
+    ثابت size_t صف_سائز = ggml_صف_سائز(GGML_TYPE_TQ2_0, n_فی_صف);
+    quantize_صف_tq2_0_ref(src, dst, (int64_t)nrow*n_فی_صف);
+    واپس nrow * صف_سائز;
 }
 
-void dequantize_row_tq1_0(const block_tq1_0 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+خالی dequantize_صف_tq1_0(ثابت بلاک_tq1_0 * GGML_RESTRICT x, اعشاری * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
+    ثابت int64_t nb = k / QK_K;
 
-    const uint8_t pow3[6] = {1, 3, 9, 27, 81, 243};
+    ثابت uint8_t pow3[6] = {1, 3, 9, 27, 81, 243};
 
-    for (int64_t i = 0; i < nb; ++i) {
+    برائے (int64_t i = 0; i < nb; ++i) {
 
-        const float d = GGML_FP16_TO_FP32(x[i].d);
+        ثابت اعشاری d = GGML_FP16_مقصد_FP32(x[i].d);
 
-        for (size_t j = 0; j < sizeof(x->qs) - sizeof(x->qs) % 32; j += 32) {
-            for (size_t n = 0; n < 5; ++n) {
-                for (size_t m = 0; m < 32; ++m) {
+        برائے (size_t j = 0; j < حجم(x->qs) - حجم(x->qs) % 32; j += 32) {
+            برائے (size_t n = 0; n < 5; ++n) {
+                برائے (size_t m = 0; m < 32; ++m) {
                     uint8_t q = x[i].qs[j + m] * pow3[n];
                     int16_t xi = ((uint16_t) q * 3) >> 8;
-                    *y++ = (float) (xi - 1) * d;
+                    *y++ = (اعشاری) (xi - 1) * d;
                 }
             }
         }
-        for (size_t j = sizeof(x->qs) - sizeof(x->qs) % 32; j < sizeof(x->qs); j += 16) {
-            for (size_t n = 0; n < 5; ++n) {
-                for (size_t m = 0; m < 16; ++m) {
+        برائے (size_t j = حجم(x->qs) - حجم(x->qs) % 32; j < حجم(x->qs); j += 16) {
+            برائے (size_t n = 0; n < 5; ++n) {
+                برائے (size_t m = 0; m < 16; ++m) {
                     uint8_t q = x[i].qs[j + m] * pow3[n];
                     int16_t xi = ((uint16_t) q * 3) >> 8;
-                    *y++ = (float) (xi - 1) * d;
+                    *y++ = (اعشاری) (xi - 1) * d;
                 }
             }
         }
 
-        for (size_t n = 0; n < 4; ++n) {
-            for (size_t j = 0; j < sizeof(x->qh); ++j) {
+        برائے (size_t n = 0; n < 4; ++n) {
+            برائے (size_t j = 0; j < حجم(x->qh); ++j) {
                 uint8_t q = x[i].qh[j] * pow3[n];
                 int16_t xi = ((uint16_t) q * 3) >> 8;
-                *y++ = (float) (xi - 1) * d;
+                *y++ = (اعشاری) (xi - 1) * d;
             }
         }
     }
 }
 
-void dequantize_row_tq2_0(const block_tq2_0 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+خالی dequantize_صف_tq2_0(ثابت بلاک_tq2_0 * GGML_RESTRICT x, اعشاری * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
+    ثابت int64_t nb = k / QK_K;
 
-    for (int64_t i = 0; i < nb; ++i) {
+    برائے (int64_t i = 0; i < nb; ++i) {
 
-        const float d = GGML_FP16_TO_FP32(x[i].d);
+        ثابت اعشاری d = GGML_FP16_مقصد_FP32(x[i].d);
 
-        for (size_t j = 0; j < sizeof(x->qs); j += 32) {
-            for (size_t l = 0; l < 4; ++l) {
-                for (size_t m = 0; m < 32; ++m) {
+        برائے (size_t j = 0; j < حجم(x->qs); j += 32) {
+            برائے (size_t l = 0; l < 4; ++l) {
+                برائے (size_t m = 0; m < 32; ++m) {
                     int8_t q = (x[i].qs[j + m] >> (l*2)) & 3;
-                    *y++ = (float) (q - 1) * d;
+                    *y++ = (اعشاری) (q - 1) * d;
                 }
             }
         }
@@ -2486,24 +2486,24 @@ void dequantize_row_tq2_0(const block_tq2_0 * GGML_RESTRICT x, float * GGML_REST
 
 // ====================== "True" 2-bit (de)-quantization
 
-void dequantize_row_iq2_xxs(const block_iq2_xxs * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+خالی dequantize_صف_iq2_xxs(ثابت بلاک_iq2_xxs * GGML_RESTRICT x, اعشاری * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
+    ثابت int64_t nb = k / QK_K;
 
     uint32_t aux32[2];
-    const uint8_t * aux8 = (const uint8_t *)aux32;
+    ثابت uint8_t * aux8 = (ثابت uint8_t *)aux32;
 
-    for (int i = 0; i < nb; i++) {
+    برائے (صحیح i = 0; i < nb; i++) {
 
-        const float d = GGML_FP16_TO_FP32(x[i].d);
+        ثابت اعشاری d = GGML_FP16_مقصد_FP32(x[i].d);
 
-        for (int ib32 = 0; ib32 < QK_K/32; ++ib32) {
-            memcpy(aux32, x[i].qs + 4*ib32, 2*sizeof(uint32_t));
-            const float db = d * (0.5f + (aux32[1] >> 28)) * 0.25f;
-            for (int l = 0; l < 4; ++l) {
-                const uint8_t * grid = (const uint8_t *)(iq2xxs_grid + aux8[l]);
-                const uint8_t  signs = ksigns_iq2xs[(aux32[1] >> 7*l) & 127];
-                for (int j = 0; j < 8; ++j) {
+        برائے (صحیح ib32 = 0; ib32 < QK_K/32; ++ib32) {
+            حافظہ_نقل(aux32, x[i].qs + 4*ib32, 2*حجم(uint32_t));
+            ثابت اعشاری db = d * (0.5f + (aux32[1] >> 28)) * 0.25f;
+            برائے (صحیح l = 0; l < 4; ++l) {
+                ثابت uint8_t * grid = (ثابت uint8_t *)(iq2xxs_grid + aux8[l]);
+                ثابت uint8_t  signs = ksigns_iq2xs[(aux32[1] >> 7*l) & 127];
+                برائے (صحیح j = 0; j < 8; ++j) {
                     y[j] = db * grid[j] * (signs & kmask_iq2xs[j] ? -1.f : 1.f);
                 }
                 y += 8;
@@ -2514,23 +2514,23 @@ void dequantize_row_iq2_xxs(const block_iq2_xxs * GGML_RESTRICT x, float * GGML_
 
 // ====================== 2.3125 bpw (de)-quantization
 
-void dequantize_row_iq2_xs(const block_iq2_xs * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+خالی dequantize_صف_iq2_xs(ثابت بلاک_iq2_xs * GGML_RESTRICT x, اعشاری * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
+    ثابت int64_t nb = k / QK_K;
 
-    float db[2];
+    اعشاری db[2];
 
-    for (int i = 0; i < nb; i++) {
+    برائے (صحیح i = 0; i < nb; i++) {
 
-        const float d = GGML_FP16_TO_FP32(x[i].d);
+        ثابت اعشاری d = GGML_FP16_مقصد_FP32(x[i].d);
 
-        for (int ib32 = 0; ib32 < QK_K/32; ++ib32) {
+        برائے (صحیح ib32 = 0; ib32 < QK_K/32; ++ib32) {
             db[0] = d * (0.5f + (x[i].scales[ib32] & 0xf)) * 0.25f;
             db[1] = d * (0.5f + (x[i].scales[ib32] >>  4)) * 0.25f;
-            for (int l = 0; l < 4; ++l) {
-                const uint8_t * grid = (const uint8_t *)(iq2xs_grid + (x[i].qs[4*ib32 + l] & 511));
-                const uint8_t  signs = ksigns_iq2xs[x[i].qs[4*ib32 + l] >> 9];
-                for (int j = 0; j < 8; ++j) {
+            برائے (صحیح l = 0; l < 4; ++l) {
+                ثابت uint8_t * grid = (ثابت uint8_t *)(iq2xs_grid + (x[i].qs[4*ib32 + l] & 511));
+                ثابت uint8_t  signs = ksigns_iq2xs[x[i].qs[4*ib32 + l] >> 9];
+                برائے (صحیح j = 0; j < 8; ++j) {
                     y[j] = db[l/2] * grid[j] * (signs & kmask_iq2xs[j] ? -1.f : 1.f);
                 }
                 y += 8;
@@ -2541,26 +2541,26 @@ void dequantize_row_iq2_xs(const block_iq2_xs * GGML_RESTRICT x, float * GGML_RE
 
 // ====================== 2.5625 bpw (de)-quantization
 
-void dequantize_row_iq2_s(const block_iq2_s * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+خالی dequantize_صف_iq2_s(ثابت بلاک_iq2_s * GGML_RESTRICT x, اعشاری * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
+    ثابت int64_t nb = k / QK_K;
 
-    float db[2];
+    اعشاری db[2];
 
-    for (int i = 0; i < nb; i++) {
+    برائے (صحیح i = 0; i < nb; i++) {
 
-        const float d = GGML_FP16_TO_FP32(x[i].d);
-        const uint8_t * qs = x[i].qs;
-        const uint8_t * qh = x[i].qh;
-        const uint8_t * signs = qs + QK_K/8;
+        ثابت اعشاری d = GGML_FP16_مقصد_FP32(x[i].d);
+        ثابت uint8_t * qs = x[i].qs;
+        ثابت uint8_t * qh = x[i].qh;
+        ثابت uint8_t * signs = qs + QK_K/8;
 
-        for (int ib32 = 0; ib32 < QK_K/32; ++ib32) {
+        برائے (صحیح ib32 = 0; ib32 < QK_K/32; ++ib32) {
             db[0] = d * (0.5f + (x[i].scales[ib32] & 0xf)) * 0.25f;
             db[1] = d * (0.5f + (x[i].scales[ib32] >>  4)) * 0.25f;
-            for (int l = 0; l < 4; ++l) {
-                const float dl = db[l/2];
-                const uint8_t * grid = (const uint8_t *)(iq2s_grid + (qs[l] | (qh[ib32] << (8-2*l) & 0x300)));
-                for (int j = 0; j < 8; ++j) {
+            برائے (صحیح l = 0; l < 4; ++l) {
+                ثابت اعشاری dl = db[l/2];
+                ثابت uint8_t * grid = (ثابت uint8_t *)(iq2s_grid + (qs[l] | (qh[ib32] << (8-2*l) & 0x300)));
+                برائے (صحیح j = 0; j < 8; ++j) {
                     y[j] = dl * grid[j] * (signs[l] & kmask_iq2xs[j] ? -1.f : 1.f);
                 }
                 y += 8;
@@ -2573,26 +2573,26 @@ void dequantize_row_iq2_s(const block_iq2_s * GGML_RESTRICT x, float * GGML_REST
 
 // ====================== 3.0625 bpw (de)-quantization
 
-void dequantize_row_iq3_xxs(const block_iq3_xxs * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+خالی dequantize_صف_iq3_xxs(ثابت بلاک_iq3_xxs * GGML_RESTRICT x, اعشاری * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
+    ثابت int64_t nb = k / QK_K;
 
     uint32_t aux32;
 
-    for (int i = 0; i < nb; i++) {
+    برائے (صحیح i = 0; i < nb; i++) {
 
-        const float d = GGML_FP16_TO_FP32(x[i].d);
-        const uint8_t * qs = x[i].qs;
-        const uint8_t * scales_and_signs = qs + QK_K/4;
+        ثابت اعشاری d = GGML_FP16_مقصد_FP32(x[i].d);
+        ثابت uint8_t * qs = x[i].qs;
+        ثابت uint8_t * scales_and_signs = qs + QK_K/4;
 
-        for (int ib32 = 0; ib32 < QK_K/32; ++ib32) {
-            memcpy(&aux32, scales_and_signs + 4*ib32, sizeof(uint32_t));
-            const float db = d * (0.5f + (aux32 >> 28)) * 0.5f;
-            for (int l = 0; l < 4; ++l) {
-                const uint8_t  signs = ksigns_iq2xs[(aux32 >> 7*l) & 127];
-                const uint8_t * grid1 = (const uint8_t *)(iq3xxs_grid + qs[2*l+0]);
-                const uint8_t * grid2 = (const uint8_t *)(iq3xxs_grid + qs[2*l+1]);
-                for (int j = 0; j < 4; ++j) {
+        برائے (صحیح ib32 = 0; ib32 < QK_K/32; ++ib32) {
+            حافظہ_نقل(&aux32, scales_and_signs + 4*ib32, حجم(uint32_t));
+            ثابت اعشاری db = d * (0.5f + (aux32 >> 28)) * 0.5f;
+            برائے (صحیح l = 0; l < 4; ++l) {
+                ثابت uint8_t  signs = ksigns_iq2xs[(aux32 >> 7*l) & 127];
+                ثابت uint8_t * grid1 = (ثابت uint8_t *)(iq3xxs_grid + qs[2*l+0]);
+                ثابت uint8_t * grid2 = (ثابت uint8_t *)(iq3xxs_grid + qs[2*l+1]);
+                برائے (صحیح j = 0; j < 4; ++j) {
                     y[j+0] = db * grid1[j] * (signs & kmask_iq2xs[j+0] ? -1.f : 1.f);
                     y[j+4] = db * grid2[j] * (signs & kmask_iq2xs[j+4] ? -1.f : 1.f);
                 }
@@ -2605,24 +2605,24 @@ void dequantize_row_iq3_xxs(const block_iq3_xxs * GGML_RESTRICT x, float * GGML_
 
 // ====================== 3.3125 bpw (de)-quantization
 
-void dequantize_row_iq3_s(const block_iq3_s * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+خالی dequantize_صف_iq3_s(ثابت بلاک_iq3_s * GGML_RESTRICT x, اعشاری * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
+    ثابت int64_t nb = k / QK_K;
 
-    for (int i = 0; i < nb; i++) {
+    برائے (صحیح i = 0; i < nb; i++) {
 
-        const float d = GGML_FP16_TO_FP32(x[i].d);
-        const uint8_t * qs = x[i].qs;
-        const uint8_t * qh = x[i].qh;
-        const uint8_t * signs = x[i].signs;
+        ثابت اعشاری d = GGML_FP16_مقصد_FP32(x[i].d);
+        ثابت uint8_t * qs = x[i].qs;
+        ثابت uint8_t * qh = x[i].qh;
+        ثابت uint8_t * signs = x[i].signs;
 
-        for (int ib32 = 0; ib32 < QK_K/32; ib32 += 2) {
-            const float db1 = d * (1 + 2*(x[i].scales[ib32/2] & 0xf));
-            const float db2 = d * (1 + 2*(x[i].scales[ib32/2] >>  4));
-            for (int l = 0; l < 4; ++l) {
-                const uint8_t * grid1 = (const uint8_t *)(iq3s_grid + (qs[2*l+0] | ((qh[0] << (8-2*l)) & 256)));
-                const uint8_t * grid2 = (const uint8_t *)(iq3s_grid + (qs[2*l+1] | ((qh[0] << (7-2*l)) & 256)));
-                for (int j = 0; j < 4; ++j) {
+        برائے (صحیح ib32 = 0; ib32 < QK_K/32; ib32 += 2) {
+            ثابت اعشاری db1 = d * (1 + 2*(x[i].scales[ib32/2] & 0xf));
+            ثابت اعشاری db2 = d * (1 + 2*(x[i].scales[ib32/2] >>  4));
+            برائے (صحیح l = 0; l < 4; ++l) {
+                ثابت uint8_t * grid1 = (ثابت uint8_t *)(iq3s_grid + (qs[2*l+0] | ((qh[0] << (8-2*l)) & 256)));
+                ثابت uint8_t * grid2 = (ثابت uint8_t *)(iq3s_grid + (qs[2*l+1] | ((qh[0] << (7-2*l)) & 256)));
+                برائے (صحیح j = 0; j < 4; ++j) {
                     y[j+0] = db1 * grid1[j] * (signs[l] & kmask_iq2xs[j+0] ? -1.f : 1.f);
                     y[j+4] = db1 * grid2[j] * (signs[l] & kmask_iq2xs[j+4] ? -1.f : 1.f);
                 }
@@ -2630,10 +2630,10 @@ void dequantize_row_iq3_s(const block_iq3_s * GGML_RESTRICT x, float * GGML_REST
             }
             qs += 8;
             signs += 4;
-            for (int l = 0; l < 4; ++l) {
-                const uint8_t * grid1 = (const uint8_t *)(iq3s_grid + (qs[2*l+0] | ((qh[1] << (8-2*l)) & 256)));
-                const uint8_t * grid2 = (const uint8_t *)(iq3s_grid + (qs[2*l+1] | ((qh[1] << (7-2*l)) & 256)));
-                for (int j = 0; j < 4; ++j) {
+            برائے (صحیح l = 0; l < 4; ++l) {
+                ثابت uint8_t * grid1 = (ثابت uint8_t *)(iq3s_grid + (qs[2*l+0] | ((qh[1] << (8-2*l)) & 256)));
+                ثابت uint8_t * grid2 = (ثابت uint8_t *)(iq3s_grid + (qs[2*l+1] | ((qh[1] << (7-2*l)) & 256)));
+                برائے (صحیح j = 0; j < 4; ++j) {
                     y[j+0] = db2 * grid1[j] * (signs[l] & kmask_iq2xs[j+0] ? -1.f : 1.f);
                     y[j+4] = db2 * grid2[j] * (signs[l] & kmask_iq2xs[j+4] ? -1.f : 1.f);
                 }
@@ -2648,22 +2648,22 @@ void dequantize_row_iq3_s(const block_iq3_s * GGML_RESTRICT x, float * GGML_REST
 
 // ====================== 1.5625 bpw (de)-quantization
 
-void dequantize_row_iq1_s(const block_iq1_s * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+خالی dequantize_صف_iq1_s(ثابت بلاک_iq1_s * GGML_RESTRICT x, اعشاری * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
+    ثابت int64_t nb = k / QK_K;
 
-    for (int i = 0; i < nb; i++) {
+    برائے (صحیح i = 0; i < nb; i++) {
 
-        const float d = GGML_FP16_TO_FP32(x[i].d);
-        const uint8_t  * qs = x[i].qs;
-        const uint16_t * qh = x[i].qh;
+        ثابت اعشاری d = GGML_FP16_مقصد_FP32(x[i].d);
+        ثابت uint8_t  * qs = x[i].qs;
+        ثابت uint16_t * qh = x[i].qh;
 
-        for (int ib = 0; ib < QK_K/32; ++ib) {
-            const float dl = d * (2*((qh[ib] >> 12) & 7) + 1);
-            const float delta = qh[ib] & 0x8000 ? -IQ1S_DELTA : IQ1S_DELTA;
-            for (int l = 0; l < 4; ++l) {
-                const int8_t * grid = (const int8_t *)(iq1s_grid + (qs[l] | (((qh[ib] >> 3*l) & 7) << 8)));
-                for (int j = 0; j < 8; ++j) {
+        برائے (صحیح ib = 0; ib < QK_K/32; ++ib) {
+            ثابت اعشاری dl = d * (2*((qh[ib] >> 12) & 7) + 1);
+            ثابت اعشاری delta = qh[ib] & 0x8000 ? -IQ1S_DELTA : IQ1S_DELTA;
+            برائے (صحیح l = 0; l < 4; ++l) {
+                ثابت int8_t * grid = (ثابت int8_t *)(iq1s_grid + (qs[l] | (((qh[ib] >> 3*l) & 7) << 8)));
+                برائے (صحیح j = 0; j < 8; ++j) {
                     y[j] = dl * (grid[j] + delta);
                 }
                 y += 8;
@@ -2673,27 +2673,27 @@ void dequantize_row_iq1_s(const block_iq1_s * GGML_RESTRICT x, float * GGML_REST
     }
 }
 
-void dequantize_row_iq1_m(const block_iq1_m * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+خالی dequantize_صف_iq1_m(ثابت بلاک_iq1_m * GGML_RESTRICT x, اعشاری * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
+    ثابت int64_t nb = k / QK_K;
 
-    float delta[4];
+    اعشاری delta[4];
     uint16_t idx[4];
 
     iq1m_scale_t scale;
 
-    for (int i = 0; i < nb; i++) {
+    برائے (صحیح i = 0; i < nb; i++) {
 
-        const uint16_t * sc = (const uint16_t *)x[i].scales;
+        ثابت uint16_t * sc = (ثابت uint16_t *)x[i].scales;
         scale.u16 = (sc[0] >> 12) | ((sc[1] >> 8) & 0x00f0) | ((sc[2] >> 4) & 0x0f00) | (sc[3] & 0xf000);
-        const float d = GGML_FP16_TO_FP32(scale.f16);
+        ثابت اعشاری d = GGML_FP16_مقصد_FP32(scale.f16);
 
-        const uint8_t * qs = x[i].qs;
-        const uint8_t * qh = x[i].qh;
+        ثابت uint8_t * qs = x[i].qs;
+        ثابت uint8_t * qh = x[i].qh;
 
-        for (int ib = 0; ib < QK_K/32; ++ib) {
-            const float dl1 = d * (2*((sc[ib/2] >> (6*(ib%2)+0)) & 0x7) + 1);
-            const float dl2 = d * (2*((sc[ib/2] >> (6*(ib%2)+3)) & 0x7) + 1);
+        برائے (صحیح ib = 0; ib < QK_K/32; ++ib) {
+            ثابت اعشاری dl1 = d * (2*((sc[ib/2] >> (6*(ib%2)+0)) & 0x7) + 1);
+            ثابت اعشاری dl2 = d * (2*((sc[ib/2] >> (6*(ib%2)+3)) & 0x7) + 1);
 
             idx[0] = qs[0] | ((qh[0] << 8) & 0x700);
             idx[1] = qs[1] | ((qh[0] << 4) & 0x700);
@@ -2703,16 +2703,16 @@ void dequantize_row_iq1_m(const block_iq1_m * GGML_RESTRICT x, float * GGML_REST
             delta[1] = qh[0] & 0x80 ? -IQ1S_DELTA : IQ1S_DELTA;
             delta[2] = qh[1] & 0x08 ? -IQ1S_DELTA : IQ1S_DELTA;
             delta[3] = qh[1] & 0x80 ? -IQ1S_DELTA : IQ1S_DELTA;
-            for (int l = 0; l < 2; ++l) {
-                const int8_t * grid = (const int8_t *)(iq1s_grid + idx[l]);
-                for (int j = 0; j < 8; ++j) {
+            برائے (صحیح l = 0; l < 2; ++l) {
+                ثابت int8_t * grid = (ثابت int8_t *)(iq1s_grid + idx[l]);
+                برائے (صحیح j = 0; j < 8; ++j) {
                     y[j] = dl1 * (grid[j] + delta[l]);
                 }
                 y += 8;
             }
-            for (int l = 2; l < 4; ++l) {
-                const int8_t * grid = (const int8_t *)(iq1s_grid + idx[l]);
-                for (int j = 0; j < 8; ++j) {
+            برائے (صحیح l = 2; l < 4; ++l) {
+                ثابت int8_t * grid = (ثابت int8_t *)(iq1s_grid + idx[l]);
+                برائے (صحیح j = 0; j < 8; ++j) {
                     y[j] = dl2 * (grid[j] + delta[l]);
                 }
                 y += 8;
@@ -2723,16 +2723,16 @@ void dequantize_row_iq1_m(const block_iq1_m * GGML_RESTRICT x, float * GGML_REST
     }
 }
 
-void dequantize_row_iq4_nl(const block_iq4_nl * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK4_NL == 0);
-    const int64_t nb = k / QK4_NL;
+خالی dequantize_صف_iq4_nl(ثابت بلاک_iq4_nl * GGML_RESTRICT x, اعشاری * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK4_NL == 0);
+    ثابت int64_t nb = k / QK4_NL;
 
-    for (int i = 0; i < nb; i++) {
+    برائے (صحیح i = 0; i < nb; i++) {
 
-        const uint8_t * qs = x[i].qs;
+        ثابت uint8_t * qs = x[i].qs;
 
-        const float d = GGML_FP16_TO_FP32(x[i].d);
-        for (int j = 0; j < QK4_NL/2; ++j) {
+        ثابت اعشاری d = GGML_FP16_مقصد_FP32(x[i].d);
+        برائے (صحیح j = 0; j < QK4_NL/2; ++j) {
             y[j+       0] = d * kvalues_iq4nl[qs[j] & 0xf];
             y[j+QK4_NL/2] = d * kvalues_iq4nl[qs[j] >>  4];
         }
@@ -2741,20 +2741,20 @@ void dequantize_row_iq4_nl(const block_iq4_nl * GGML_RESTRICT x, float * GGML_RE
     }
 }
 
-void dequantize_row_iq4_xs(const block_iq4_xs * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+خالی dequantize_صف_iq4_xs(ثابت بلاک_iq4_xs * GGML_RESTRICT x, اعشاری * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
+    ثابت int64_t nb = k / QK_K;
 
-    for (int i = 0; i < nb; i++) {
+    برائے (صحیح i = 0; i < nb; i++) {
 
-        const uint8_t * qs = x[i].qs;
+        ثابت uint8_t * qs = x[i].qs;
 
-        const float d = GGML_FP16_TO_FP32(x[i].d);
+        ثابت اعشاری d = GGML_FP16_مقصد_FP32(x[i].d);
 
-        for (int ib = 0; ib < QK_K/32; ++ib) {
-            const int ls = ((x[i].scales_l[ib/2] >> 4*(ib%2)) & 0xf) | (((x[i].scales_h >> 2*ib) & 3) << 4);
-            const float dl = d * (ls - 32);
-            for (int j = 0; j < 16; ++j) {
+        برائے (صحیح ib = 0; ib < QK_K/32; ++ib) {
+            ثابت صحیح ls = ((x[i].scales_l[ib/2] >> 4*(ib%2)) & 0xf) | (((x[i].scales_h >> 2*ib) & 3) << 4);
+            ثابت اعشاری dl = d * (ls - 32);
+            برائے (صحیح j = 0; j < 16; ++j) {
                 y[j+ 0] = dl * kvalues_iq4nl[qs[j] & 0xf];
                 y[j+16] = dl * kvalues_iq4nl[qs[j] >>  4];
             }
@@ -2766,51 +2766,51 @@ void dequantize_row_iq4_xs(const block_iq4_xs * GGML_RESTRICT x, float * GGML_RE
 
 //===================================== Q8_K ==============================================
 
-void quantize_row_q8_K_ref(const float * GGML_RESTRICT x, block_q8_K * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+خالی quantize_صف_q8_K_ref(ثابت اعشاری * GGML_RESTRICT x, بلاک_q8_K * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
+    ثابت int64_t nb = k / QK_K;
 
-    for (int i = 0; i < nb; i++) {
+    برائے (صحیح i = 0; i < nb; i++) {
 
-        float max = 0;
-        float amax = 0;
-        for (int j = 0; j < QK_K; ++j) {
-            float ax = fabsf(x[j]);
-            if (ax > amax) {
+        اعشاری max = 0;
+        اعشاری amax = 0;
+        برائے (صحیح j = 0; j < QK_K; ++j) {
+            اعشاری ax = fabsf(x[j]);
+            اگر (ax > amax) {
                 amax = ax; max = x[j];
             }
         }
-        if (!amax) {
+        اگر (!amax) {
             y[i].d = 0;
             memset(y[i].qs, 0, QK_K);
             x += QK_K;
-            continue;
+            جاری;
         }
         //const float iscale = -128.f/max;
         // We need this change for IQ2_XXS, else the AVX implementation becomes very awkward
-        const float iscale = -127.f/max;
-        for (int j = 0; j < QK_K; ++j) {
-            int v = nearest_int(iscale*x[j]);
+        ثابت اعشاری iscale = -127.f/max;
+        برائے (صحیح j = 0; j < QK_K; ++j) {
+            صحیح v = قریب_ترین_int(iscale*x[j]);
             y[i].qs[j] = MIN(127, v);
         }
-        for (int j = 0; j < QK_K/16; ++j) {
-            int sum = 0;
-            for (int ii = 0; ii < 16; ++ii) {
-                sum += y[i].qs[j*16 + ii];
+        برائے (صحیح j = 0; j < QK_K/16; ++j) {
+            صحیح مجموع = 0;
+            برائے (صحیح ii = 0; ii < 16; ++ii) {
+                مجموع += y[i].qs[j*16 + ii];
             }
-            y[i].bsums[j] = sum;
+            y[i].bsums[j] = مجموع;
         }
         y[i].d = 1/iscale;
         x += QK_K;
     }
 }
 
-void dequantize_row_q8_K(const block_q8_K * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+خالی dequantize_صف_q8_K(ثابت بلاک_q8_K * GGML_RESTRICT x, اعشاری * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
+    ثابت int64_t nb = k / QK_K;
 
-    for (int i = 0; i < nb; i++) {
-        for (int j = 0; j < QK_K; ++j) {
+    برائے (صحیح i = 0; i < nb; i++) {
+        برائے (صحیح j = 0; j < QK_K; ++j) {
             *y++ = x[i].d * x[i].qs[j];
         }
     }
@@ -2818,46 +2818,46 @@ void dequantize_row_q8_K(const block_q8_K * GGML_RESTRICT x, float * GGML_RESTRI
 
 // ================================ IQ2 quantization =============================================
 
-typedef struct {
+قسمتعریف ساخت {
     uint64_t * grid;
-    int      * map;
+    صحیح      * map;
     uint16_t * neighbours;
-} iq2_entry_t;
+} iq2_اندراج_t;
 
-static iq2_entry_t iq2_data[4] = {
-    {NULL, NULL, NULL},
-    {NULL, NULL, NULL},
-    {NULL, NULL, NULL},
-    {NULL, NULL, NULL},
+ساکن iq2_اندراج_t iq2_ڈیٹا[4] = {
+    {تہی, تہی, تہی},
+    {تہی, تہی, تہی},
+    {تہی, تہی, تہی},
+    {تہی, تہی, تہی},
 };
 
-static inline int iq2_data_index(enum ggml_type type) {
+ساکن اندرونی صحیح iq2_ڈیٹا_اشاریہ(شمار ggml_type type) {
     GGML_ASSERT(type == GGML_TYPE_IQ2_XXS || type == GGML_TYPE_IQ2_XS || type == GGML_TYPE_IQ1_S || type == GGML_TYPE_IQ1_M || type == GGML_TYPE_IQ2_S);
-    return type == GGML_TYPE_IQ2_XXS ? 0 :
+    واپس type == GGML_TYPE_IQ2_XXS ? 0 :
            type == GGML_TYPE_IQ2_XS  ? 1 :
            type == GGML_TYPE_IQ1_S || type == GGML_TYPE_IQ1_M ? 2 : 3;
 }
 
-static inline int iq2_grid_size(enum ggml_type type) {
+ساکن اندرونی صحیح iq2_grid_سائز(شمار ggml_type type) {
     GGML_ASSERT(type == GGML_TYPE_IQ2_XXS || type == GGML_TYPE_IQ2_XS || type == GGML_TYPE_IQ1_S || type == GGML_TYPE_IQ1_M || type == GGML_TYPE_IQ2_S);
-    return type == GGML_TYPE_IQ2_XXS ? 256 :
+    واپس type == GGML_TYPE_IQ2_XXS ? 256 :
            type == GGML_TYPE_IQ2_XS  ? 512 :
            type == GGML_TYPE_IQ1_S || type == GGML_TYPE_IQ1_M ? NGRID_IQ1S : 1024;
 }
 
-static int iq2_compare_func(const void * left, const void * right) {
-    const int * l = (const int *)left;
-    const int * r = (const int *)right;
-    return l[0] < r[0] ? -1 : l[0] > r[0] ? 1 : l[1] < r[1] ? -1 : l[1] > r[1] ? 1 : 0;
+ساکن صحیح iq2_compare_func(ثابت خالی * بایاں, ثابت خالی * دایاں) {
+    ثابت صحیح * l = (ثابت صحیح *)بایاں;
+    ثابت صحیح * r = (ثابت صحیح *)دایاں;
+    واپس l[0] < r[0] ? -1 : l[0] > r[0] ? 1 : l[1] < r[1] ? -1 : l[1] > r[1] ? 1 : 0;
 }
 
-void iq2xs_init_impl(enum ggml_type type) {
-    const int gindex = iq2_data_index(type);
-    const int grid_size = iq2_grid_size(type);
-    if (iq2_data[gindex].grid) {
-        return;
+خالی iq2xs_init_impl(شمار ggml_type type) {
+    ثابت صحیح gindex = iq2_ڈیٹا_اشاریہ(type);
+    ثابت صحیح grid_سائز = iq2_grid_سائز(type);
+    اگر (iq2_ڈیٹا[gindex].grid) {
+        واپس;
     }
-    static const uint16_t kgrid_2bit_256[256] = {
+    ساکن ثابت uint16_t kgrid_2bit_256[256] = {
             0,     2,     5,     8,    10,    17,    20,    32,    34,    40,    42,    65,    68,    80,    88,    97,
           100,   128,   130,   138,   162,   257,   260,   272,   277,   320,   388,   408,   512,   514,   546,   642,
          1025,  1028,  1040,  1057,  1060,  1088,  1090,  1096,  1120,  1153,  1156,  1168,  1188,  1280,  1282,  1288,
@@ -2875,7 +2875,7 @@ void iq2xs_init_impl(enum ggml_type type) {
         33888, 34048, 34118, 34196, 34313, 34368, 34400, 34818, 35076, 35345, 36868, 36880, 36900, 36928, 37025, 37142,
         37248, 37445, 37888, 37922, 37956, 38225, 39041, 39200, 40962, 41040, 41093, 41225, 41472, 42008, 43088, 43268,
     };
-    static const uint16_t kgrid_2bit_512[512] = {
+    ساکن ثابت uint16_t kgrid_2bit_512[512] = {
             0,     2,     5,     8,    10,    17,    20,    22,    25,    32,    34,    37,    40,    65,    68,    70,
            73,    80,    82,    85,    88,    97,   100,   128,   130,   133,   136,   145,   148,   153,   160,   257,
           260,   262,   265,   272,   274,   277,   280,   282,   289,   292,   320,   322,   325,   328,   337,   340,
@@ -2909,7 +2909,7 @@ void iq2xs_init_impl(enum ggml_type type) {
         40962, 40968, 40970, 40992, 41002, 41120, 41297, 41305, 41382, 41472, 41474, 41480, 41514, 41600, 41632, 42048,
         42133, 42597, 42648, 43018, 43040, 43042, 43048, 43168, 43176, 43268, 43396, 43398, 43560, 43562, 43665, 43690,
     };
-    static const uint16_t kgrid_1bit_2048[NGRID_IQ1S] = {
+    ساکن ثابت uint16_t kgrid_1bit_2048[NGRID_IQ1S] = {
             0,     2,     5,     8,    10,    17,    21,    32,    34,    40,    42,    69,    81,    84,    86,   101,
           128,   130,   136,   138,   149,   160,   162,   168,   170,   260,   261,   273,   276,   278,   281,   282,
           293,   321,   326,   329,   338,   341,   346,   353,   356,   358,   360,   389,   401,   404,   406,   421,
@@ -3039,7 +3039,7 @@ void iq2xs_init_impl(enum ggml_type type) {
         43289, 43297, 43301, 43329, 43344, 43349, 43354, 43361, 43366, 43369, 43408, 43414, 43520, 43522, 43528, 43530,
         43552, 43554, 43560, 43562, 43601, 43604, 43606, 43648, 43650, 43656, 43658, 43669, 43680, 43682, 43688, 43690,
     };
-    static const uint16_t kgrid_2bit_1024[1024] = {
+    ساکن ثابت uint16_t kgrid_2bit_1024[1024] = {
             0,     2,     5,     8,    10,    17,    20,    22,    25,    32,    34,    37,    40,    65,    68,    70,
            73,    80,    82,    85,    88,    97,   100,   102,   105,   128,   130,   133,   136,   145,   148,   160,
           165,   170,   257,   260,   262,   265,   272,   274,   277,   280,   289,   292,   320,   322,   325,   328,
@@ -3106,40 +3106,40 @@ void iq2xs_init_impl(enum ggml_type type) {
         42148, 42240, 42265, 42577, 43018, 43048, 43170, 43348, 43398, 43528, 43530, 43552, 43554, 43560, 43656, 43690,
     };
 
-    const int kmap_size = 43692;
+    ثابت صحیح kmap_سائز = 43692;
     //const int nwant = type == GGML_TYPE_IQ1_S ? 3 : 2;
-    const int nwant = type == GGML_TYPE_IQ1_S || type == GGML_TYPE_IQ1_M ? 3 : type == GGML_TYPE_IQ2_S ? 1 : 2;
-    const uint16_t * kgrid = type == GGML_TYPE_IQ2_XXS ? kgrid_2bit_256 :
+    ثابت صحیح nwant = type == GGML_TYPE_IQ1_S || type == GGML_TYPE_IQ1_M ? 3 : type == GGML_TYPE_IQ2_S ? 1 : 2;
+    ثابت uint16_t * kgrid = type == GGML_TYPE_IQ2_XXS ? kgrid_2bit_256 :
                              type == GGML_TYPE_IQ2_XS  ? kgrid_2bit_512 :
                              type == GGML_TYPE_IQ1_S || type == GGML_TYPE_IQ1_M ? kgrid_1bit_2048 : kgrid_2bit_1024;
     uint64_t * kgrid_q2xs;
-    int      * kmap_q2xs;
+    صحیح      * kmap_q2xs;
     uint16_t * kneighbors_q2xs;
 
     //printf("================================================================= %s(grid_size = %d)\n", __func__, grid_size);
-    uint64_t * the_grid = (uint64_t *)malloc(grid_size*sizeof(uint64_t));
-    for (int k = 0; k < grid_size; ++k) {
+    uint64_t * the_grid = (uint64_t *)حافظہ_دو(grid_سائز*حجم(uint64_t));
+    برائے (صحیح k = 0; k < grid_سائز; ++k) {
         int8_t * pos = (int8_t *)(the_grid + k);
-        for (int i = 0; i < 8; ++i) {
-            int l = (kgrid[k] >> 2*i) & 0x3;
+        برائے (صحیح i = 0; i < 8; ++i) {
+            صحیح l = (kgrid[k] >> 2*i) & 0x3;
             pos[i] = 2*l + 1;
         }
     }
     kgrid_q2xs = the_grid;
-    iq2_data[gindex].grid = the_grid;
-    kmap_q2xs = (int *)malloc(kmap_size*sizeof(int));
-    iq2_data[gindex].map = kmap_q2xs;
-    for (int i = 0; i < kmap_size; ++i) kmap_q2xs[i] = -1;
+    iq2_ڈیٹا[gindex].grid = the_grid;
+    kmap_q2xs = (صحیح *)حافظہ_دو(kmap_سائز*حجم(صحیح));
+    iq2_ڈیٹا[gindex].map = kmap_q2xs;
+    برائے (صحیح i = 0; i < kmap_سائز; ++i) kmap_q2xs[i] = -1;
     uint64_t aux64;
     uint8_t * aux8 = (uint8_t *)&aux64;
-    for (int i = 0; i < grid_size; ++i) {
+    برائے (صحیح i = 0; i < grid_سائز; ++i) {
         aux64 = kgrid_q2xs[i];
-        uint16_t index = 0;
-        for (int k=0; k<8; ++k) {
+        uint16_t اشاریہ = 0;
+        برائے (صحیح k=0; k<8; ++k) {
             uint16_t q = (aux8[k] - 1)/2;
-            index |= (q << 2*k);
+            اشاریہ |= (q << 2*k);
         }
-        kmap_q2xs[index] = i;
+        kmap_q2xs[اشاریہ] = i;
     }
     // The neighbour search runs in three passes:
     //   1. Parallel: for each i, qsort and count its neighbours into n_per_i,
@@ -3148,157 +3148,157 @@ void iq2xs_init_impl(enum ggml_type type) {
     //      pre-assigned slice of kneighbors_q2xs to write into.
     //   3. Parallel: redo the qsort and write each i's neighbour list at
     //      offsets[i].
-    int * n_per_i = (int *)malloc(kmap_size*sizeof(int));
-    GGML_ASSERT(n_per_i);
-    int num_neighbors = 0, num_not_in_map = 0;
-#ifdef GGML_USE_OPENMP
-    #pragma omp parallel reduction(+:num_neighbors,num_not_in_map)
-#endif
+    صحیح * n_فی_i = (صحیح *)حافظہ_دو(kmap_سائز*حجم(صحیح));
+    GGML_ASSERT(n_فی_i);
+    صحیح عدد_neighbors = 0, عدد_not_اندر_map = 0;
+#اگر_تعریف_شدہ GGML_USE_OPENMP
+    #ہدایت omp parallel reduction(+:عدد_neighbors,عدد_not_اندر_map)
+#اگر_ختم
     {
-        int * dist2 = (int *)malloc(2*grid_size*sizeof(int));
+        صحیح * dist2 = (صحیح *)حافظہ_دو(2*grid_سائز*حجم(صحیح));
         GGML_ASSERT(dist2);
         int8_t pos[8];
-        int i;
-#ifdef GGML_USE_OPENMP
-        #pragma omp for schedule(dynamic, 64)
-#endif
-        for (i = 0; i < kmap_size; ++i) {
-            if (kmap_q2xs[i] >= 0) {
-                n_per_i[i] = 0;
-                continue;
+        صحیح i;
+#اگر_تعریف_شدہ GGML_USE_OPENMP
+        #ہدایت omp برائے جدول_وقت(dynamic, 64)
+#اگر_ختم
+        برائے (i = 0; i < kmap_سائز; ++i) {
+            اگر (kmap_q2xs[i] >= 0) {
+                n_فی_i[i] = 0;
+                جاری;
             }
-            ++num_not_in_map;
-            for (int k = 0; k < 8; ++k) {
-                int l = (i >> 2*k) & 0x3;
+            ++عدد_not_اندر_map;
+            برائے (صحیح k = 0; k < 8; ++k) {
+                صحیح l = (i >> 2*k) & 0x3;
                 pos[k] = 2*l + 1;
             }
-            for (int j = 0; j < grid_size; ++j) {
-                const int8_t * pg = (const int8_t *)(kgrid_q2xs + j);
-                int d2 = 0;
-                for (int k = 0; k < 8; ++k) d2 += (pg[k] - pos[k])*(pg[k] - pos[k]);
+            برائے (صحیح j = 0; j < grid_سائز; ++j) {
+                ثابت int8_t * pg = (ثابت int8_t *)(kgrid_q2xs + j);
+                صحیح d2 = 0;
+                برائے (صحیح k = 0; k < 8; ++k) d2 += (pg[k] - pos[k])*(pg[k] - pos[k]);
                 dist2[2*j+0] = d2;
                 dist2[2*j+1] = j;
             }
-            qsort(dist2, grid_size, 2*sizeof(int), iq2_compare_func);
-            int n = 0; int d2 = dist2[0];
-            int nhave = 1;
-            for (int j = 0; j < grid_size; ++j) {
-                if (dist2[2*j] > d2) {
-                    if (nhave == nwant) break;
+            qsort(dist2, grid_سائز, 2*حجم(صحیح), iq2_compare_func);
+            صحیح n = 0; صحیح d2 = dist2[0];
+            صحیح nhave = 1;
+            برائے (صحیح j = 0; j < grid_سائز; ++j) {
+                اگر (dist2[2*j] > d2) {
+                    اگر (nhave == nwant) توڑو;
                     d2 = dist2[2*j];
                     ++nhave;
                 }
                 ++n;
             }
-            n_per_i[i] = n;
-            num_neighbors += n;
+            n_فی_i[i] = n;
+            عدد_neighbors += n;
         }
-        free(dist2);
+        آزاد(dist2);
     }
     //printf("%s: %d neighbours in total\n", __func__, num_neighbors);
-    kneighbors_q2xs = (uint16_t *)malloc((num_neighbors + num_not_in_map)*sizeof(uint16_t));
-    iq2_data[gindex].neighbours = kneighbors_q2xs;
+    kneighbors_q2xs = (uint16_t *)حافظہ_دو((عدد_neighbors + عدد_not_اندر_map)*حجم(uint16_t));
+    iq2_ڈیٹا[gindex].neighbours = kneighbors_q2xs;
 
-    int * offsets = (int *)malloc(kmap_size*sizeof(int));
+    صحیح * offsets = (صحیح *)حافظہ_دو(kmap_سائز*حجم(صحیح));
     GGML_ASSERT(offsets);
-    int counter = 0;
-    for (int i = 0; i < kmap_size; ++i) {
-        if (kmap_q2xs[i] >= 0) {
+    صحیح شمار_2 = 0;
+    برائے (صحیح i = 0; i < kmap_سائز; ++i) {
+        اگر (kmap_q2xs[i] >= 0) {
             offsets[i] = -1;
-            continue;
+            جاری;
         }
-        offsets[i] = counter;
-        counter += 1 + n_per_i[i];
+        offsets[i] = شمار_2;
+        شمار_2 += 1 + n_فی_i[i];
     }
 
-#ifdef GGML_USE_OPENMP
-    #pragma omp parallel
-#endif
+#اگر_تعریف_شدہ GGML_USE_OPENMP
+    #ہدایت omp parallel
+#اگر_ختم
     {
-        int * dist2 = (int *)malloc(2*grid_size*sizeof(int));
+        صحیح * dist2 = (صحیح *)حافظہ_دو(2*grid_سائز*حجم(صحیح));
         GGML_ASSERT(dist2);
         int8_t pos[8];
-        int i;
-#ifdef GGML_USE_OPENMP
-        #pragma omp for schedule(dynamic, 64)
-#endif
-        for (i = 0; i < kmap_size; ++i) {
-            if (kmap_q2xs[i] >= 0) continue;
-            for (int k = 0; k < 8; ++k) {
-                int l = (i >> 2*k) & 0x3;
+        صحیح i;
+#اگر_تعریف_شدہ GGML_USE_OPENMP
+        #ہدایت omp برائے جدول_وقت(dynamic, 64)
+#اگر_ختم
+        برائے (i = 0; i < kmap_سائز; ++i) {
+            اگر (kmap_q2xs[i] >= 0) جاری;
+            برائے (صحیح k = 0; k < 8; ++k) {
+                صحیح l = (i >> 2*k) & 0x3;
                 pos[k] = 2*l + 1;
             }
-            for (int j = 0; j < grid_size; ++j) {
-                const int8_t * pg = (const int8_t *)(kgrid_q2xs + j);
-                int d2 = 0;
-                for (int k = 0; k < 8; ++k) d2 += (pg[k] - pos[k])*(pg[k] - pos[k]);
+            برائے (صحیح j = 0; j < grid_سائز; ++j) {
+                ثابت int8_t * pg = (ثابت int8_t *)(kgrid_q2xs + j);
+                صحیح d2 = 0;
+                برائے (صحیح k = 0; k < 8; ++k) d2 += (pg[k] - pos[k])*(pg[k] - pos[k]);
                 dist2[2*j+0] = d2;
                 dist2[2*j+1] = j;
             }
-            qsort(dist2, grid_size, 2*sizeof(int), iq2_compare_func);
-            int local_counter = offsets[i];
-            kmap_q2xs[i] = -(local_counter + 1);
-            int d2 = dist2[0];
-            uint16_t * start = &kneighbors_q2xs[local_counter++];
-            int n = 0, nhave = 1;
-            for (int j = 0; j < grid_size; ++j) {
-                if (dist2[2*j] > d2) {
-                    if (nhave == nwant) break;
+            qsort(dist2, grid_سائز, 2*حجم(صحیح), iq2_compare_func);
+            صحیح local_شمار = offsets[i];
+            kmap_q2xs[i] = -(local_شمار + 1);
+            صحیح d2 = dist2[0];
+            uint16_t * آغاز = &kneighbors_q2xs[local_شمار++];
+            صحیح n = 0, nhave = 1;
+            برائے (صحیح j = 0; j < grid_سائز; ++j) {
+                اگر (dist2[2*j] > d2) {
+                    اگر (nhave == nwant) توڑو;
                     d2 = dist2[2*j];
                     ++nhave;
                 }
-                kneighbors_q2xs[local_counter++] = dist2[2*j+1];
+                kneighbors_q2xs[local_شمار++] = dist2[2*j+1];
                 ++n;
             }
-            *start = n;
+            *آغاز = n;
         }
-        free(dist2);
+        آزاد(dist2);
     }
-    free(offsets);
-    free(n_per_i);
+    آزاد(offsets);
+    آزاد(n_فی_i);
 }
 
-void iq2xs_free_impl(enum ggml_type type) {
+خالی iq2xs_free_impl(شمار ggml_type type) {
     GGML_ASSERT(type == GGML_TYPE_IQ2_XXS || type == GGML_TYPE_IQ2_XS || type == GGML_TYPE_IQ1_S || type == GGML_TYPE_IQ1_M || type == GGML_TYPE_IQ2_S);
-    const int gindex = iq2_data_index(type);
-    if (iq2_data[gindex].grid) {
-        free(iq2_data[gindex].grid);       iq2_data[gindex].grid = NULL;
-        free(iq2_data[gindex].map);        iq2_data[gindex].map  = NULL;
-        free(iq2_data[gindex].neighbours); iq2_data[gindex].neighbours = NULL;
+    ثابت صحیح gindex = iq2_ڈیٹا_اشاریہ(type);
+    اگر (iq2_ڈیٹا[gindex].grid) {
+        آزاد(iq2_ڈیٹا[gindex].grid);       iq2_ڈیٹا[gindex].grid = تہی;
+        آزاد(iq2_ڈیٹا[gindex].map);        iq2_ڈیٹا[gindex].map  = تہی;
+        آزاد(iq2_ڈیٹا[gindex].neighbours); iq2_ڈیٹا[gindex].neighbours = تہی;
     }
 }
 
-static int iq2_find_best_neighbour(const uint16_t * GGML_RESTRICT neighbours, const uint64_t * GGML_RESTRICT grid,
-        const float * GGML_RESTRICT xval, const float * GGML_RESTRICT weight, float scale, int8_t * GGML_RESTRICT L) {
-    int num_neighbors = neighbours[0];
-    GGML_ASSERT(num_neighbors > 0);
-    float best_d2 = FLT_MAX;
-    int grid_index = -1;
-    for (int j = 1; j <= num_neighbors; ++j) {
-        const int8_t * pg = (const int8_t *)(grid + neighbours[j]);
-        float d2 = 0;
-        for (int i = 0; i < 8; ++i) {
-            float q = pg[i];
-            float diff = scale*q - xval[i];
-            d2 += weight[i]*diff*diff;
+ساکن صحیح iq2_ڈھونڈو_بہترین_neighbour(ثابت uint16_t * GGML_RESTRICT neighbours, ثابت uint64_t * GGML_RESTRICT grid,
+        ثابت اعشاری * GGML_RESTRICT xval, ثابت اعشاری * GGML_RESTRICT وزن, اعشاری scale, int8_t * GGML_RESTRICT L) {
+    صحیح عدد_neighbors = neighbours[0];
+    GGML_ASSERT(عدد_neighbors > 0);
+    اعشاری بہترین_d2 = FLT_MAX;
+    صحیح grid_اشاریہ = -1;
+    برائے (صحیح j = 1; j <= عدد_neighbors; ++j) {
+        ثابت int8_t * pg = (ثابت int8_t *)(grid + neighbours[j]);
+        اعشاری d2 = 0;
+        برائے (صحیح i = 0; i < 8; ++i) {
+            اعشاری q = pg[i];
+            اعشاری diff = scale*q - xval[i];
+            d2 += وزن[i]*diff*diff;
         }
-        if (d2 < best_d2) {
-            best_d2 = d2; grid_index = neighbours[j];
+        اگر (d2 < بہترین_d2) {
+            بہترین_d2 = d2; grid_اشاریہ = neighbours[j];
         }
     }
-    GGML_ASSERT(grid_index >= 0);
-    const int8_t * pg = (const int8_t *)(grid + grid_index);
-    for (int i = 0; i < 8; ++i) L[i] = (pg[i] - 1)/2;
-    return grid_index;
+    GGML_ASSERT(grid_اشاریہ >= 0);
+    ثابت int8_t * pg = (ثابت int8_t *)(grid + grid_اشاریہ);
+    برائے (صحیح i = 0; i < 8; ++i) L[i] = (pg[i] - 1)/2;
+    واپس grid_اشاریہ;
 }
 
-static void quantize_row_iq2_xxs_impl(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t n, const float * GGML_RESTRICT quant_weights) {
+ساکن خالی quantize_صف_iq2_xxs_impl(ثابت اعشاری * GGML_RESTRICT x, خالی * GGML_RESTRICT vy, int64_t n, ثابت اعشاری * GGML_RESTRICT quant_weights) {
 
-    const int gindex = iq2_data_index(GGML_TYPE_IQ2_XXS);
+    ثابت صحیح gindex = iq2_ڈیٹا_اشاریہ(GGML_TYPE_IQ2_XXS);
 
-    const uint64_t * kgrid_q2xs      = iq2_data[gindex].grid;
-    const int      * kmap_q2xs       = iq2_data[gindex].map;
-    const uint16_t * kneighbors_q2xs = iq2_data[gindex].neighbours;
+    ثابت uint64_t * kgrid_q2xs      = iq2_ڈیٹا[gindex].grid;
+    ثابت صحیح      * kmap_q2xs       = iq2_ڈیٹا[gindex].map;
+    ثابت uint16_t * kneighbors_q2xs = iq2_ڈیٹا[gindex].neighbours;
 
     GGML_ASSERT(quant_weights   && "missing quantization weights");
     GGML_ASSERT(kgrid_q2xs      && "forgot to call ggml_quantize_init()?");
@@ -3306,177 +3306,177 @@ static void quantize_row_iq2_xxs_impl(const float * GGML_RESTRICT x, void * GGML
     GGML_ASSERT(kneighbors_q2xs && "forgot to call ggml_quantize_init()?");
     GGML_ASSERT(n%QK_K == 0);
 
-    const int kMaxQ = 3;
+    ثابت صحیح kMaxQ = 3;
 
-    const int64_t nbl = n/QK_K;
+    ثابت int64_t nbl = n/QK_K;
 
-    block_iq2_xxs * y = vy;
+    بلاک_iq2_xxs * y = vy;
 
-    float scales[QK_K/32];
-    float weight[32];
-    float xval[32];
+    اعشاری scales[QK_K/32];
+    اعشاری وزن[32];
+    اعشاری xval[32];
     int8_t L[32];
     int8_t Laux[32];
-    float  waux[32];
-    uint8_t block_signs[4];
+    اعشاری  waux[32];
+    uint8_t بلاک_signs[4];
     uint32_t q2[2*(QK_K/32)];
 
-    for (int ibl = 0; ibl < nbl; ++ibl) {
+    برائے (صحیح ibl = 0; ibl < nbl; ++ibl) {
 
-        y[ibl].d = GGML_FP32_TO_FP16(0.f);
+        y[ibl].d = GGML_FP32_مقصد_FP16(0.f);
         memset(q2, 0, QK_K/4);
 
-        float max_scale = 0;
+        اعشاری max_scale = 0;
 
-        const float * xbl = x + QK_K*ibl;
-        float sumx2 = 0;
-        for (int i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
-        float sigma2 = sumx2/QK_K;
+        ثابت اعشاری * xbl = x + QK_K*ibl;
+        اعشاری sumx2 = 0;
+        برائے (صحیح i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
+        اعشاری sigma2 = sumx2/QK_K;
 
-        for (int ib = 0; ib < QK_K/32; ++ib) {
-            const float * xb = xbl + 32*ib;
-            const float * qw = quant_weights + QK_K*ibl + 32*ib;
-            for (int i = 0; i < 32; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
-            for (int i = 0; i < 32; ++i) waux[i] = sqrtf(weight[i]);
-            for (int k = 0; k < 4; ++k) {
-                int nflip = 0;
+        برائے (صحیح ib = 0; ib < QK_K/32; ++ib) {
+            ثابت اعشاری * xb = xbl + 32*ib;
+            ثابت اعشاری * qw = quant_weights + QK_K*ibl + 32*ib;
+            برائے (صحیح i = 0; i < 32; ++i) وزن[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
+            برائے (صحیح i = 0; i < 32; ++i) waux[i] = sqrtf(وزن[i]);
+            برائے (صحیح k = 0; k < 4; ++k) {
+                صحیح nflip = 0;
                 uint8_t s = 0;
-                for (int i = 0; i < 8; ++i) {
-                    if (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
-                    else {
+                برائے (صحیح i = 0; i < 8; ++i) {
+                    اگر (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
+                    ورنہ {
                         xval[8*k + i] = -xb[8*k + i]; ++nflip; s |= (1 << i);
                     }
                 }
-                if (nflip%2) {
-                    int imin = 0; float min = weight[8*k+imin]*xb[8*k+imin]*xb[8*k+imin];
-                    for (int i = 1; i < 8; ++i) {
-                        float ax = weight[8*k+i]*xb[8*k+i]*xb[8*k+i];
-                        if (ax < min) {
+                اگر (nflip%2) {
+                    صحیح imin = 0; اعشاری min = وزن[8*k+imin]*xb[8*k+imin]*xb[8*k+imin];
+                    برائے (صحیح i = 1; i < 8; ++i) {
+                        اعشاری ax = وزن[8*k+i]*xb[8*k+i]*xb[8*k+i];
+                        اگر (ax < min) {
                             min = ax; imin = i;
                         }
                     }
                     xval[8*k+imin] = -xval[8*k+imin];
                     s ^= (1 << imin);
                 }
-                block_signs[k] = s & 127;
+                بلاک_signs[k] = s & 127;
             }
-            float max = xval[0];
-            for (int i = 1; i < 32; ++i) max = MAX(max, xval[i]);
-            if (max < GROUP_MAX_EPS) {
+            اعشاری max = xval[0];
+            برائے (صحیح i = 1; i < 32; ++i) max = MAX(max, xval[i]);
+            اگر (max < گروہ_MAX_EPS) {
                 scales[ib] = 0;
                 memset(L, 0, 32);
-                continue;
+                جاری;
             }
-            float scale = make_qp_quants(32, kMaxQ+1, xval, (uint8_t*)L, weight);
-            float eff_max = scale*kMaxQ;
-            if (eff_max <= 0) {
+            اعشاری scale = make_qp_quants(32, kMaxQ+1, xval, (uint8_t*)L, وزن);
+            اعشاری eff_max = scale*kMaxQ;
+            اگر (eff_max <= 0) {
                 scales[ib] = 0;
                 memset(L, 0, 32);
-                continue;
+                جاری;
             }
-            float best = 0;
-            for (int is = -6; is <= 6; ++is) {
-                float id = (2*kMaxQ-1+is*0.1f)/eff_max;
-                float this_scale = 1/id;
-                for (int k = 0; k < 4; ++k) {
-                    for (int i = 0; i < 8; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[8*k+i]-1));
+            اعشاری بہترین = 0;
+            برائے (صحیح is = -6; is <= 6; ++is) {
+                اعشاری id = (2*kMaxQ-1+is*0.1f)/eff_max;
+                اعشاری this_scale = 1/id;
+                برائے (صحیح k = 0; k < 4; ++k) {
+                    برائے (صحیح i = 0; i < 8; ++i) {
+                        صحیح l = قریب_ترین_int(0.5f*(id*xval[8*k+i]-1));
                         Laux[8*k+i] = MAX(0, MIN(kMaxQ-1, l));
                     }
                     uint16_t u = 0;
-                    for (int i = 0; i < 8; ++i) u |= (Laux[8*k+i] << 2*i);
-                    int grid_index = kmap_q2xs[u];
-                    if (grid_index < 0) {
-                        const uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
-                        grid_index = iq2_find_best_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, this_scale, Laux + 8*k);
+                    برائے (صحیح i = 0; i < 8; ++i) u |= (Laux[8*k+i] << 2*i);
+                    صحیح grid_اشاریہ = kmap_q2xs[u];
+                    اگر (grid_اشاریہ < 0) {
+                        ثابت uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
+                        grid_اشاریہ = iq2_ڈھونڈو_بہترین_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, this_scale, Laux + 8*k);
                     }
                 }
-                float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < 32; ++i) {
-                    float w = weight[i];
-                    float q = 2*Laux[i] + 1;
+                اعشاری sumqx = 0, sumq2 = 0;
+                برائے (صحیح i = 0; i < 32; ++i) {
+                    اعشاری w = وزن[i];
+                    اعشاری q = 2*Laux[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0 && sumqx*sumqx > best*sumq2) {
-                    scale = sumqx/sumq2; best = scale*sumqx;
-                    memcpy(L, Laux, 32);
+                اگر (sumq2 > 0 && sumqx*sumqx > بہترین*sumq2) {
+                    scale = sumqx/sumq2; بہترین = scale*sumqx;
+                    حافظہ_نقل(L, Laux, 32);
                 }
             }
-            if (scale > 0) {
-                float id = 1/scale;
-                for (int k = 0; k < 4; ++k) {
+            اگر (scale > 0) {
+                اعشاری id = 1/scale;
+                برائے (صحیح k = 0; k < 4; ++k) {
                     uint16_t u = 0;
-                    for (int i = 0; i < 8; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[8*k+i]-1));
+                    برائے (صحیح i = 0; i < 8; ++i) {
+                        صحیح l = قریب_ترین_int(0.5f*(id*xval[8*k+i]-1));
                         l = MAX(0, MIN(kMaxQ-1, l));
                         u |= (l << 2*i);
                     }
-                    int grid_index = kmap_q2xs[u];
-                    if (grid_index < 0) {
-                        const uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
-                        grid_index = iq2_find_best_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, scale, L + 8*k);
+                    صحیح grid_اشاریہ = kmap_q2xs[u];
+                    اگر (grid_اشاریہ < 0) {
+                        ثابت uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
+                        grid_اشاریہ = iq2_ڈھونڈو_بہترین_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, scale, L + 8*k);
                     }
-                    const int8_t * pg = (const int8_t *)(kgrid_q2xs + grid_index);
-                    for (int i = 0; i < 8; ++i) L[8*k+i] = (pg[i] - 1)/2;
+                    ثابت int8_t * pg = (ثابت int8_t *)(kgrid_q2xs + grid_اشاریہ);
+                    برائے (صحیح i = 0; i < 8; ++i) L[8*k+i] = (pg[i] - 1)/2;
                 }
-                float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < 32; ++i) {
-                    float w = weight[i];
-                    float q = 2*L[i] + 1;
+                اعشاری sumqx = 0, sumq2 = 0;
+                برائے (صحیح i = 0; i < 32; ++i) {
+                    اعشاری w = وزن[i];
+                    اعشاری q = 2*L[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0) scale = sumqx/sumq2;
+                اگر (sumq2 > 0) scale = sumqx/sumq2;
             }
-            if (scale < 0) {
+            اگر (scale < 0) {
                 // This should never happen, but just in case, flip scale so that it is positive (we use uint's to encode the scale)
                 // and correspondingly flip quant signs.
                 scale = -scale;
-                for (int k = 0; k < 4; ++k) block_signs[k] = (~block_signs[k]) & 127;
+                برائے (صحیح k = 0; k < 4; ++k) بلاک_signs[k] = (~بلاک_signs[k]) & 127;
             }
-            for (int k = 0; k < 4; ++k) {
+            برائے (صحیح k = 0; k < 4; ++k) {
                 uint16_t u = 0;
-                for (int i = 0; i < 8; ++i) u |= (L[8*k+i] << 2*i);
-                int grid_index = kmap_q2xs[u];
-                if (grid_index < 0) {
-                    printf("Oops: found point %u not on grid:", u);
-                    for (int i = 0; i < 8; ++i) printf(" %d", L[8*k+i]);
-                    printf("\n");
+                برائے (صحیح i = 0; i < 8; ++i) u |= (L[8*k+i] << 2*i);
+                صحیح grid_اشاریہ = kmap_q2xs[u];
+                اگر (grid_اشاریہ < 0) {
+                    لکھو("Oops: found point %u not on grid:", u);
+                    برائے (صحیح i = 0; i < 8; ++i) لکھو(" %d", L[8*k+i]);
+                    لکھو("\n");
                     GGML_ABORT("fatal error");
                 }
-                q2[2*ib+0] |= ((uint32_t) grid_index << 8*k);
-                q2[2*ib+1] |= (block_signs[k] << 7*k);
+                q2[2*ib+0] |= ((uint32_t) grid_اشاریہ << 8*k);
+                q2[2*ib+1] |= (بلاک_signs[k] << 7*k);
             }
             GGML_ASSERT(scale >= 0);
             scales[ib] = scale;
             max_scale = MAX(max_scale, scale);
         }
 
-        if (!max_scale) {
+        اگر (!max_scale) {
             memset(y[ibl].qs, 0, QK_K/4);
-            continue;
+            جاری;
         }
 
-        float d = max_scale/31;
-        y[ibl].d = GGML_FP32_TO_FP16(d);
-        float id = 1/d;
-        for (int ib = 0; ib < QK_K/32; ++ib) {
-            int l = nearest_int(0.5f*(id*scales[ib]-1));
+        اعشاری d = max_scale/31;
+        y[ibl].d = GGML_FP32_مقصد_FP16(d);
+        اعشاری id = 1/d;
+        برائے (صحیح ib = 0; ib < QK_K/32; ++ib) {
+            صحیح l = قریب_ترین_int(0.5f*(id*scales[ib]-1));
             l = MAX(0, MIN(15, l));
             q2[2*ib+1] |= ((uint32_t)l << 28);
         }
-        memcpy(y[ibl].qs, q2, QK_K/4);
+        حافظہ_نقل(y[ibl].qs, q2, QK_K/4);
     }
 }
 
-static void quantize_row_iq2_xs_impl(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t n, const float * GGML_RESTRICT quant_weights) {
+ساکن خالی quantize_صف_iq2_xs_impl(ثابت اعشاری * GGML_RESTRICT x, خالی * GGML_RESTRICT vy, int64_t n, ثابت اعشاری * GGML_RESTRICT quant_weights) {
 
-    const int gindex = iq2_data_index(GGML_TYPE_IQ2_XS);
+    ثابت صحیح gindex = iq2_ڈیٹا_اشاریہ(GGML_TYPE_IQ2_XS);
 
-    const uint64_t * kgrid_q2xs      = iq2_data[gindex].grid;
-    const int      * kmap_q2xs       = iq2_data[gindex].map;
-    const uint16_t * kneighbors_q2xs = iq2_data[gindex].neighbours;
+    ثابت uint64_t * kgrid_q2xs      = iq2_ڈیٹا[gindex].grid;
+    ثابت صحیح      * kmap_q2xs       = iq2_ڈیٹا[gindex].map;
+    ثابت uint16_t * kneighbors_q2xs = iq2_ڈیٹا[gindex].neighbours;
 
     GGML_ASSERT(quant_weights   && "missing quantization weights");
     GGML_ASSERT(kmap_q2xs       && "forgot to call ggml_quantize_init()?");
@@ -3484,229 +3484,229 @@ static void quantize_row_iq2_xs_impl(const float * GGML_RESTRICT x, void * GGML_
     GGML_ASSERT(kneighbors_q2xs && "forgot to call ggml_quantize_init()?");
     GGML_ASSERT(n%QK_K == 0);
 
-    const int kMaxQ = 3;
+    ثابت صحیح kMaxQ = 3;
 
-    const int64_t nbl = n/QK_K;
+    ثابت int64_t nbl = n/QK_K;
 
-    block_iq2_xs * y = vy;
+    بلاک_iq2_xs * y = vy;
 
-    float scales[QK_K/16];
-    float weight[16];
-    float xval[16];
+    اعشاری scales[QK_K/16];
+    اعشاری وزن[16];
+    اعشاری xval[16];
     int8_t L[16];
     int8_t Laux[16];
-    float  waux[16];
+    اعشاری  waux[16];
     bool   is_on_grid[2];
     bool   is_on_grid_aux[2];
-    uint8_t block_signs[2];
+    uint8_t بلاک_signs[2];
     uint16_t q2[2*(QK_K/16)];
 
-    for (int ibl = 0; ibl < nbl; ++ibl) {
+    برائے (صحیح ibl = 0; ibl < nbl; ++ibl) {
 
-        y[ibl].d = GGML_FP32_TO_FP16(0.f);
+        y[ibl].d = GGML_FP32_مقصد_FP16(0.f);
         memset(q2, 0, QK_K/4);
         memset(y[ibl].scales, 0, QK_K/32);
 
-        float max_scale = 0;
+        اعشاری max_scale = 0;
 
-        const float * xbl = x + QK_K*ibl;
-        float sumx2 = 0;
-        for (int i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
-        float sigma2 = sumx2/QK_K;
+        ثابت اعشاری * xbl = x + QK_K*ibl;
+        اعشاری sumx2 = 0;
+        برائے (صحیح i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
+        اعشاری sigma2 = sumx2/QK_K;
 
-        for (int ib = 0; ib < QK_K/16; ++ib) {
-            const float * xb = xbl + 16*ib;
-            const float * qw = quant_weights + QK_K*ibl + 16*ib;
-            for (int i = 0; i < 16; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
-            for (int i = 0; i < 16; ++i) waux[i] = sqrtf(weight[i]);
-            for (int k = 0; k < 2; ++k) {
-                int nflip = 0;
+        برائے (صحیح ib = 0; ib < QK_K/16; ++ib) {
+            ثابت اعشاری * xb = xbl + 16*ib;
+            ثابت اعشاری * qw = quant_weights + QK_K*ibl + 16*ib;
+            برائے (صحیح i = 0; i < 16; ++i) وزن[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
+            برائے (صحیح i = 0; i < 16; ++i) waux[i] = sqrtf(وزن[i]);
+            برائے (صحیح k = 0; k < 2; ++k) {
+                صحیح nflip = 0;
                 uint8_t s = 0;
-                for (int i = 0; i < 8; ++i) {
-                    if (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
-                    else {
+                برائے (صحیح i = 0; i < 8; ++i) {
+                    اگر (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
+                    ورنہ {
                         xval[8*k + i] = -xb[8*k + i]; ++nflip; s |= (1 << i);
                     }
                 }
-                if (nflip%2) {
-                    int imin = 0; float min = weight[8*k+imin]*xb[8*k+imin]*xb[8*k+imin];
-                    for (int i = 1; i < 8; ++i) {
-                        float ax = weight[8*k+i]*xb[8*k+i]*xb[8*k+i];
-                        if (ax < min) {
+                اگر (nflip%2) {
+                    صحیح imin = 0; اعشاری min = وزن[8*k+imin]*xb[8*k+imin]*xb[8*k+imin];
+                    برائے (صحیح i = 1; i < 8; ++i) {
+                        اعشاری ax = وزن[8*k+i]*xb[8*k+i]*xb[8*k+i];
+                        اگر (ax < min) {
                             min = ax; imin = i;
                         }
                     }
                     xval[8*k+imin] = -xval[8*k+imin];
                     s ^= (1 << imin);
                 }
-                block_signs[k] = s & 127;
+                بلاک_signs[k] = s & 127;
             }
-            float max = xval[0];
-            for (int i = 1; i < 16; ++i) max = MAX(max, xval[i]);
+            اعشاری max = xval[0];
+            برائے (صحیح i = 1; i < 16; ++i) max = MAX(max, xval[i]);
             memset(L, 0, 16);
-            if (max < GROUP_MAX_EPS) {
+            اگر (max < گروہ_MAX_EPS) {
                 scales[ib] = 0;
-                continue;
+                جاری;
             }
-            float best = 0;
-            float scale = max/(2*kMaxQ-1);
+            اعشاری بہترین = 0;
+            اعشاری scale = max/(2*kMaxQ-1);
             is_on_grid[0] = is_on_grid[1] = true;
-            for (int is = -9; is <= 9; ++is) {
-                float id = (2*kMaxQ-1+is*0.1f)/max;
-                float this_scale = 1/id;
-                for (int k = 0; k < 2; ++k) {
-                    for (int i = 0; i < 8; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[8*k+i]-1));
+            برائے (صحیح is = -9; is <= 9; ++is) {
+                اعشاری id = (2*kMaxQ-1+is*0.1f)/max;
+                اعشاری this_scale = 1/id;
+                برائے (صحیح k = 0; k < 2; ++k) {
+                    برائے (صحیح i = 0; i < 8; ++i) {
+                        صحیح l = قریب_ترین_int(0.5f*(id*xval[8*k+i]-1));
                         Laux[8*k+i] = MAX(0, MIN(kMaxQ-1, l));
                     }
                     uint16_t u = 0;
-                    for (int i = 0; i < 8; ++i) u |= (Laux[8*k+i] << 2*i);
-                    int grid_index = kmap_q2xs[u];
+                    برائے (صحیح i = 0; i < 8; ++i) u |= (Laux[8*k+i] << 2*i);
+                    صحیح grid_اشاریہ = kmap_q2xs[u];
                     is_on_grid_aux[k] = true;
-                    if (grid_index < 0) {
+                    اگر (grid_اشاریہ < 0) {
                         is_on_grid_aux[k] = false;
-                        const uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
-                        grid_index = iq2_find_best_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, this_scale, Laux + 8*k);
+                        ثابت uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
+                        grid_اشاریہ = iq2_ڈھونڈو_بہترین_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, this_scale, Laux + 8*k);
                     }
                 }
-                float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < 16; ++i) {
-                    float w = weight[i];
-                    float q = 2*Laux[i] + 1;
+                اعشاری sumqx = 0, sumq2 = 0;
+                برائے (صحیح i = 0; i < 16; ++i) {
+                    اعشاری w = وزن[i];
+                    اعشاری q = 2*Laux[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0 && sumqx*sumqx > best*sumq2) {
-                    scale = sumqx/sumq2; best = scale*sumqx;
-                    for (int i = 0; i < 16; ++i) L[i] = Laux[i];
-                    for (int k = 0; k <  2; ++k) is_on_grid[k] = is_on_grid_aux[k];
+                اگر (sumq2 > 0 && sumqx*sumqx > بہترین*sumq2) {
+                    scale = sumqx/sumq2; بہترین = scale*sumqx;
+                    برائے (صحیح i = 0; i < 16; ++i) L[i] = Laux[i];
+                    برائے (صحیح k = 0; k <  2; ++k) is_on_grid[k] = is_on_grid_aux[k];
                 }
             }
-            int n_not_ongrid = 0;
-            for (int k = 0; k < 2; ++k) if (!is_on_grid[k]) ++n_not_ongrid;
-            if (n_not_ongrid > 0 && scale > 0) {
-                float id = 1/scale;
-                for (int k = 0; k < 2; ++k) {
-                    if (is_on_grid[k]) continue;
+            صحیح n_not_ongrid = 0;
+            برائے (صحیح k = 0; k < 2; ++k) اگر (!is_on_grid[k]) ++n_not_ongrid;
+            اگر (n_not_ongrid > 0 && scale > 0) {
+                اعشاری id = 1/scale;
+                برائے (صحیح k = 0; k < 2; ++k) {
+                    اگر (is_on_grid[k]) جاری;
                     uint16_t u = 0;
-                    for (int i = 0; i < 8; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[8*k+i]-1));
+                    برائے (صحیح i = 0; i < 8; ++i) {
+                        صحیح l = قریب_ترین_int(0.5f*(id*xval[8*k+i]-1));
                         l = MAX(0, MIN(kMaxQ-1, l));
                         u |= (l << 2*i);
                         L[8*k + i] = l;
                     }
-                    int grid_index = kmap_q2xs[u];
-                    if (grid_index < 0) {
-                        const uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
-                        grid_index = iq2_find_best_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, scale, L + 8*k);
+                    صحیح grid_اشاریہ = kmap_q2xs[u];
+                    اگر (grid_اشاریہ < 0) {
+                        ثابت uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
+                        grid_اشاریہ = iq2_ڈھونڈو_بہترین_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, scale, L + 8*k);
                     }
                 }
-                float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < 16; ++i) {
-                    float w = weight[i];
-                    float q = 2*L[i] + 1;
+                اعشاری sumqx = 0, sumq2 = 0;
+                برائے (صحیح i = 0; i < 16; ++i) {
+                    اعشاری w = وزن[i];
+                    اعشاری q = 2*L[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0) scale = sumqx/sumq2;
+                اگر (sumq2 > 0) scale = sumqx/sumq2;
             }
-            if (scale < 0) {
+            اگر (scale < 0) {
                 scale = -scale;
-                for (int k = 0; k < 2; ++k) block_signs[k] = (~block_signs[k]) & 127;
+                برائے (صحیح k = 0; k < 2; ++k) بلاک_signs[k] = (~بلاک_signs[k]) & 127;
             }
-            for (int k = 0; k < 2; ++k) {
+            برائے (صحیح k = 0; k < 2; ++k) {
                 uint16_t u = 0;
-                for (int i = 0; i < 8; ++i) u |= (L[8*k+i] << 2*i);
-                int grid_index = kmap_q2xs[u];
-                if (grid_index < 0) {
-                    printf("Oops: found point %u not on grid:", u);
-                    for (int i = 0; i < 8; ++i) printf(" %d", L[8*k+i]);
-                    printf("\n");
+                برائے (صحیح i = 0; i < 8; ++i) u |= (L[8*k+i] << 2*i);
+                صحیح grid_اشاریہ = kmap_q2xs[u];
+                اگر (grid_اشاریہ < 0) {
+                    لکھو("Oops: found point %u not on grid:", u);
+                    برائے (صحیح i = 0; i < 8; ++i) لکھو(" %d", L[8*k+i]);
+                    لکھو("\n");
                     GGML_ABORT("fatal error");
                 }
-                q2[2*ib+k] = grid_index | (block_signs[k] << 9);
+                q2[2*ib+k] = grid_اشاریہ | (بلاک_signs[k] << 9);
             }
             GGML_ASSERT(scale >= 0);
             scales[ib] = scale;
             max_scale = MAX(max_scale, scale);
         }
 
-        if (!max_scale) {
+        اگر (!max_scale) {
             memset(y[ibl].qs, 0, QK_K/4);
-            continue;
+            جاری;
         }
 
-        float d = max_scale/31;
-        y[ibl].d = GGML_FP32_TO_FP16(d);
-        float id = 1/d;
-        for (int ib = 0; ib < QK_K/16; ++ib) {
-            int l = nearest_int(0.5f*(id*scales[ib]-1));
+        اعشاری d = max_scale/31;
+        y[ibl].d = GGML_FP32_مقصد_FP16(d);
+        اعشاری id = 1/d;
+        برائے (صحیح ib = 0; ib < QK_K/16; ++ib) {
+            صحیح l = قریب_ترین_int(0.5f*(id*scales[ib]-1));
             l = MAX(0, MIN(15, l));
-            if (ib%2 == 0) y[ibl].scales[ib/2] = l;
-            else y[ibl].scales[ib/2] |= (l << 4);
+            اگر (ib%2 == 0) y[ibl].scales[ib/2] = l;
+            ورنہ y[ibl].scales[ib/2] |= (l << 4);
         }
-        memcpy(y[ibl].qs, q2, QK_K/4);
+        حافظہ_نقل(y[ibl].qs, q2, QK_K/4);
 
     }
 }
 
-size_t quantize_iq2_xxs(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    GGML_ASSERT(n_per_row%QK_K == 0);
-    int64_t nblock = n_per_row/QK_K;
-    char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
-        quantize_row_iq2_xxs_impl(src, qrow, n_per_row, quant_weights);
-        src += n_per_row;
-        qrow += nblock*sizeof(block_iq2_xxs);
+size_t quantize_iq2_xxs(ثابت اعشاری * GGML_RESTRICT src, خالی * GGML_RESTRICT dst, int64_t nrow, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
+    GGML_ASSERT(n_فی_صف%QK_K == 0);
+    int64_t nblock = n_فی_صف/QK_K;
+    حرف * qrow = (حرف *)dst;
+    برائے (int64_t صف = 0; صف < nrow; ++صف) {
+        quantize_صف_iq2_xxs_impl(src, qrow, n_فی_صف, quant_weights);
+        src += n_فی_صف;
+        qrow += nblock*حجم(بلاک_iq2_xxs);
     }
-    return nrow * nblock * sizeof(block_iq2_xxs);
+    واپس nrow * nblock * حجم(بلاک_iq2_xxs);
 }
 
-size_t quantize_iq2_xs(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    GGML_ASSERT(n_per_row%QK_K == 0);
-    int64_t nblock = n_per_row/QK_K;
-    char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
-        quantize_row_iq2_xs_impl(src, qrow, n_per_row, quant_weights);
-        src += n_per_row;
-        qrow += nblock*sizeof(block_iq2_xs);
+size_t quantize_iq2_xs(ثابت اعشاری * GGML_RESTRICT src, خالی * GGML_RESTRICT dst, int64_t nrow, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
+    GGML_ASSERT(n_فی_صف%QK_K == 0);
+    int64_t nblock = n_فی_صف/QK_K;
+    حرف * qrow = (حرف *)dst;
+    برائے (int64_t صف = 0; صف < nrow; ++صف) {
+        quantize_صف_iq2_xs_impl(src, qrow, n_فی_صف, quant_weights);
+        src += n_فی_صف;
+        qrow += nblock*حجم(بلاک_iq2_xs);
     }
-    return nrow * nblock * sizeof(block_iq2_xs);
+    واپس nrow * nblock * حجم(بلاک_iq2_xs);
 }
 
 //
 // ============================================= 3-bit using D4 lattice
 //
 
-typedef struct {
+قسمتعریف ساخت {
     uint32_t * grid;
-    int      * map;
+    صحیح      * map;
     uint16_t * neighbours;
-} iq3_entry_t;
+} iq3_اندراج_t;
 
-static iq3_entry_t iq3_data[2] = {
-    {NULL, NULL, NULL},
-    {NULL, NULL, NULL},
+ساکن iq3_اندراج_t iq3_ڈیٹا[2] = {
+    {تہی, تہی, تہی},
+    {تہی, تہی, تہی},
 };
 
-static inline int iq3_data_index(int grid_size) {
-    (void)grid_size;
-    GGML_ASSERT(grid_size == 256 || grid_size == 512);
-    return grid_size == 256 ? 0 : 1;
+ساکن اندرونی صحیح iq3_ڈیٹا_اشاریہ(صحیح grid_سائز) {
+    (خالی)grid_سائز;
+    GGML_ASSERT(grid_سائز == 256 || grid_سائز == 512);
+    واپس grid_سائز == 256 ? 0 : 1;
 }
 
-static int iq3_compare_func(const void * left, const void * right) {
-    const int * l = (const int *)left;
-    const int * r = (const int *)right;
-    return l[0] < r[0] ? -1 : l[0] > r[0] ? 1 : l[1] < r[1] ? -1 : l[1] > r[1] ? 1 : 0;
+ساکن صحیح iq3_compare_func(ثابت خالی * بایاں, ثابت خالی * دایاں) {
+    ثابت صحیح * l = (ثابت صحیح *)بایاں;
+    ثابت صحیح * r = (ثابت صحیح *)دایاں;
+    واپس l[0] < r[0] ? -1 : l[0] > r[0] ? 1 : l[1] < r[1] ? -1 : l[1] > r[1] ? 1 : 0;
 }
 
-void iq3xs_init_impl(int grid_size) {
-    const int gindex = iq3_data_index(grid_size);
-    if (iq3_data[gindex].grid) {
-        return;
+خالی iq3xs_init_impl(صحیح grid_سائز) {
+    ثابت صحیح gindex = iq3_ڈیٹا_اشاریہ(grid_سائز);
+    اگر (iq3_ڈیٹا[gindex].grid) {
+        واپس;
     }
-    static const uint16_t kgrid_256[256] = {
+    ساکن ثابت uint16_t kgrid_256[256] = {
             0,     2,     4,     9,    11,    15,    16,    18,    25,    34,    59,    61,    65,    67,    72,    74,
            81,    85,    88,    90,    97,   108,   120,   128,   130,   132,   137,   144,   146,   153,   155,   159,
           169,   175,   189,   193,   199,   200,   202,   213,   248,   267,   287,   292,   303,   315,   317,   321,
@@ -3724,7 +3724,7 @@ void iq3xs_init_impl(int grid_size) {
          3185,  3215,  3252,  3288,  3294,  3364,  3397,  3434,  3483,  3523,  3537,  3587,  3589,  3591,  3592,  3610,
          3626,  3670,  3680,  3722,  3749,  3754,  3776,  3789,  3803,  3824,  3857,  3873,  3904,  3906,  3924,  3992,
     };
-    static const uint16_t kgrid_512[512] = {
+    ساکن ثابت uint16_t kgrid_512[512] = {
             0,     1,     2,     5,     7,     8,     9,    10,    12,    14,    16,    17,    21,    27,    32,    34,
            37,    39,    41,    43,    48,    50,    57,    60,    63,    64,    65,    66,    68,    72,    73,    77,
            80,    83,    87,    89,    93,   100,   113,   117,   122,   128,   129,   133,   135,   136,   139,   142,
@@ -3759,191 +3759,191 @@ void iq3xs_init_impl(int grid_size) {
          3736,  3753,  3778,  3802,  3805,  3819,  3841,  3845,  3851,  3856,  3880,  3922,  3938,  3970,  3993,  4032,
     };
 
-    const int kmap_size = 4096;
-    const int nwant = grid_size == 256 ? 2 : 3;
-    const uint16_t * kgrid = grid_size == 256 ? kgrid_256 : kgrid_512;
+    ثابت صحیح kmap_سائز = 4096;
+    ثابت صحیح nwant = grid_سائز == 256 ? 2 : 3;
+    ثابت uint16_t * kgrid = grid_سائز == 256 ? kgrid_256 : kgrid_512;
     uint32_t * kgrid_q3xs;
-    int      * kmap_q3xs;
+    صحیح      * kmap_q3xs;
     uint16_t * kneighbors_q3xs;
 
     //printf("================================================================= %s(grid_size = %d)\n", __func__, grid_size);
-    uint32_t * the_grid = (uint32_t *)malloc(grid_size*sizeof(uint32_t));
-    for (int k = 0; k < grid_size; ++k) {
+    uint32_t * the_grid = (uint32_t *)حافظہ_دو(grid_سائز*حجم(uint32_t));
+    برائے (صحیح k = 0; k < grid_سائز; ++k) {
         int8_t * pos = (int8_t *)(the_grid + k);
-        for (int i = 0; i < 4; ++i) {
-            int l = (kgrid[k] >> 3*i) & 0x7;
+        برائے (صحیح i = 0; i < 4; ++i) {
+            صحیح l = (kgrid[k] >> 3*i) & 0x7;
             pos[i] = 2*l + 1;
         }
     }
     kgrid_q3xs = the_grid;
-    iq3_data[gindex].grid = the_grid;
-    kmap_q3xs = (int *)malloc(kmap_size*sizeof(int));
-    iq3_data[gindex].map = kmap_q3xs;
-    for (int i = 0; i < kmap_size; ++i) kmap_q3xs[i] = -1;
+    iq3_ڈیٹا[gindex].grid = the_grid;
+    kmap_q3xs = (صحیح *)حافظہ_دو(kmap_سائز*حجم(صحیح));
+    iq3_ڈیٹا[gindex].map = kmap_q3xs;
+    برائے (صحیح i = 0; i < kmap_سائز; ++i) kmap_q3xs[i] = -1;
     uint32_t aux32;
     uint8_t * aux8 = (uint8_t *)&aux32;
-    for (int i = 0; i < grid_size; ++i) {
+    برائے (صحیح i = 0; i < grid_سائز; ++i) {
         aux32 = kgrid_q3xs[i];
-        uint16_t index = 0;
-        for (int k=0; k<4; ++k) {
+        uint16_t اشاریہ = 0;
+        برائے (صحیح k=0; k<4; ++k) {
             uint16_t q = (aux8[k] - 1)/2;
-            index |= (q << 3*k);
+            اشاریہ |= (q << 3*k);
         }
-        kmap_q3xs[index] = i;
+        kmap_q3xs[اشاریہ] = i;
     }
     // See explanation of parallelism in iq2xs_init_impl
-    int * n_per_i = (int *)malloc(kmap_size*sizeof(int));
-    GGML_ASSERT(n_per_i);
-    int num_neighbors = 0, num_not_in_map = 0;
-#ifdef GGML_USE_OPENMP
-    #pragma omp parallel reduction(+:num_neighbors,num_not_in_map)
-#endif
+    صحیح * n_فی_i = (صحیح *)حافظہ_دو(kmap_سائز*حجم(صحیح));
+    GGML_ASSERT(n_فی_i);
+    صحیح عدد_neighbors = 0, عدد_not_اندر_map = 0;
+#اگر_تعریف_شدہ GGML_USE_OPENMP
+    #ہدایت omp parallel reduction(+:عدد_neighbors,عدد_not_اندر_map)
+#اگر_ختم
     {
-        int * dist2 = (int *)malloc(2*grid_size*sizeof(int));
+        صحیح * dist2 = (صحیح *)حافظہ_دو(2*grid_سائز*حجم(صحیح));
         GGML_ASSERT(dist2);
         int8_t pos[4];
-        int i;
-#ifdef GGML_USE_OPENMP
-        #pragma omp for schedule(dynamic, 64)
-#endif
-        for (i = 0; i < kmap_size; ++i) {
-            if (kmap_q3xs[i] >= 0) {
-                n_per_i[i] = 0;
-                continue;
+        صحیح i;
+#اگر_تعریف_شدہ GGML_USE_OPENMP
+        #ہدایت omp برائے جدول_وقت(dynamic, 64)
+#اگر_ختم
+        برائے (i = 0; i < kmap_سائز; ++i) {
+            اگر (kmap_q3xs[i] >= 0) {
+                n_فی_i[i] = 0;
+                جاری;
             }
-            ++num_not_in_map;
-            for (int k = 0; k < 4; ++k) {
-                int l = (i >> 3*k) & 0x7;
+            ++عدد_not_اندر_map;
+            برائے (صحیح k = 0; k < 4; ++k) {
+                صحیح l = (i >> 3*k) & 0x7;
                 pos[k] = 2*l + 1;
             }
-            for (int j = 0; j < grid_size; ++j) {
-                const int8_t * pg = (const int8_t *)(kgrid_q3xs + j);
-                int d2 = 0;
-                for (int k = 0; k < 4; ++k) d2 += (pg[k] - pos[k])*(pg[k] - pos[k]);
+            برائے (صحیح j = 0; j < grid_سائز; ++j) {
+                ثابت int8_t * pg = (ثابت int8_t *)(kgrid_q3xs + j);
+                صحیح d2 = 0;
+                برائے (صحیح k = 0; k < 4; ++k) d2 += (pg[k] - pos[k])*(pg[k] - pos[k]);
                 dist2[2*j+0] = d2;
                 dist2[2*j+1] = j;
             }
-            qsort(dist2, grid_size, 2*sizeof(int), iq3_compare_func);
-            int n = 0; int d2 = dist2[0];
-            int nhave = 1;
-            for (int j = 0; j < grid_size; ++j) {
-                if (dist2[2*j] > d2) {
-                    if (nhave == nwant) break;
+            qsort(dist2, grid_سائز, 2*حجم(صحیح), iq3_compare_func);
+            صحیح n = 0; صحیح d2 = dist2[0];
+            صحیح nhave = 1;
+            برائے (صحیح j = 0; j < grid_سائز; ++j) {
+                اگر (dist2[2*j] > d2) {
+                    اگر (nhave == nwant) توڑو;
                     d2 = dist2[2*j];
                     ++nhave;
                 }
                 ++n;
             }
-            n_per_i[i] = n;
-            num_neighbors += n;
+            n_فی_i[i] = n;
+            عدد_neighbors += n;
         }
-        free(dist2);
+        آزاد(dist2);
     }
     //printf("%s: %d neighbours in total\n", __func__, num_neighbors);
-    kneighbors_q3xs = (uint16_t *)malloc((num_neighbors + num_not_in_map)*sizeof(uint16_t));
-    iq3_data[gindex].neighbours = kneighbors_q3xs;
+    kneighbors_q3xs = (uint16_t *)حافظہ_دو((عدد_neighbors + عدد_not_اندر_map)*حجم(uint16_t));
+    iq3_ڈیٹا[gindex].neighbours = kneighbors_q3xs;
 
-    int * offsets = (int *)malloc(kmap_size*sizeof(int));
+    صحیح * offsets = (صحیح *)حافظہ_دو(kmap_سائز*حجم(صحیح));
     GGML_ASSERT(offsets);
-    int counter = 0;
-    for (int i = 0; i < kmap_size; ++i) {
-        if (kmap_q3xs[i] >= 0) {
+    صحیح شمار_2 = 0;
+    برائے (صحیح i = 0; i < kmap_سائز; ++i) {
+        اگر (kmap_q3xs[i] >= 0) {
             offsets[i] = -1;
-            continue;
+            جاری;
         }
-        offsets[i] = counter;
-        counter += 1 + n_per_i[i];
+        offsets[i] = شمار_2;
+        شمار_2 += 1 + n_فی_i[i];
     }
 
-#ifdef GGML_USE_OPENMP
-    #pragma omp parallel
-#endif
+#اگر_تعریف_شدہ GGML_USE_OPENMP
+    #ہدایت omp parallel
+#اگر_ختم
     {
-        int * dist2 = (int *)malloc(2*grid_size*sizeof(int));
+        صحیح * dist2 = (صحیح *)حافظہ_دو(2*grid_سائز*حجم(صحیح));
         GGML_ASSERT(dist2);
         int8_t pos[4];
-        int i;
-#ifdef GGML_USE_OPENMP
-        #pragma omp for schedule(dynamic, 64)
-#endif
-        for (i = 0; i < kmap_size; ++i) {
-            if (kmap_q3xs[i] >= 0) continue;
-            for (int k = 0; k < 4; ++k) {
-                int l = (i >> 3*k) & 0x7;
+        صحیح i;
+#اگر_تعریف_شدہ GGML_USE_OPENMP
+        #ہدایت omp برائے جدول_وقت(dynamic, 64)
+#اگر_ختم
+        برائے (i = 0; i < kmap_سائز; ++i) {
+            اگر (kmap_q3xs[i] >= 0) جاری;
+            برائے (صحیح k = 0; k < 4; ++k) {
+                صحیح l = (i >> 3*k) & 0x7;
                 pos[k] = 2*l + 1;
             }
-            for (int j = 0; j < grid_size; ++j) {
-                const int8_t * pg = (const int8_t *)(kgrid_q3xs + j);
-                int d2 = 0;
-                for (int k = 0; k < 4; ++k) d2 += (pg[k] - pos[k])*(pg[k] - pos[k]);
+            برائے (صحیح j = 0; j < grid_سائز; ++j) {
+                ثابت int8_t * pg = (ثابت int8_t *)(kgrid_q3xs + j);
+                صحیح d2 = 0;
+                برائے (صحیح k = 0; k < 4; ++k) d2 += (pg[k] - pos[k])*(pg[k] - pos[k]);
                 dist2[2*j+0] = d2;
                 dist2[2*j+1] = j;
             }
-            qsort(dist2, grid_size, 2*sizeof(int), iq3_compare_func);
-            int local_counter = offsets[i];
-            kmap_q3xs[i] = -(local_counter + 1);
-            int d2 = dist2[0];
-            uint16_t * start = &kneighbors_q3xs[local_counter++];
-            int n = 0, nhave = 1;
-            for (int j = 0; j < grid_size; ++j) {
-                if (dist2[2*j] > d2) {
-                    if (nhave == nwant) break;
+            qsort(dist2, grid_سائز, 2*حجم(صحیح), iq3_compare_func);
+            صحیح local_شمار = offsets[i];
+            kmap_q3xs[i] = -(local_شمار + 1);
+            صحیح d2 = dist2[0];
+            uint16_t * آغاز = &kneighbors_q3xs[local_شمار++];
+            صحیح n = 0, nhave = 1;
+            برائے (صحیح j = 0; j < grid_سائز; ++j) {
+                اگر (dist2[2*j] > d2) {
+                    اگر (nhave == nwant) توڑو;
                     d2 = dist2[2*j];
                     ++nhave;
                 }
-                kneighbors_q3xs[local_counter++] = dist2[2*j+1];
+                kneighbors_q3xs[local_شمار++] = dist2[2*j+1];
                 ++n;
             }
-            *start = n;
+            *آغاز = n;
         }
-        free(dist2);
+        آزاد(dist2);
     }
-    free(offsets);
-    free(n_per_i);
+    آزاد(offsets);
+    آزاد(n_فی_i);
 }
 
-void iq3xs_free_impl(int grid_size) {
-    GGML_ASSERT(grid_size == 256 || grid_size == 512);
-    const int gindex = iq3_data_index(grid_size);
-    if (iq3_data[gindex].grid) {
-        free(iq3_data[gindex].grid);       iq3_data[gindex].grid = NULL;
-        free(iq3_data[gindex].map);        iq3_data[gindex].map  = NULL;
-        free(iq3_data[gindex].neighbours); iq3_data[gindex].neighbours = NULL;
+خالی iq3xs_free_impl(صحیح grid_سائز) {
+    GGML_ASSERT(grid_سائز == 256 || grid_سائز == 512);
+    ثابت صحیح gindex = iq3_ڈیٹا_اشاریہ(grid_سائز);
+    اگر (iq3_ڈیٹا[gindex].grid) {
+        آزاد(iq3_ڈیٹا[gindex].grid);       iq3_ڈیٹا[gindex].grid = تہی;
+        آزاد(iq3_ڈیٹا[gindex].map);        iq3_ڈیٹا[gindex].map  = تہی;
+        آزاد(iq3_ڈیٹا[gindex].neighbours); iq3_ڈیٹا[gindex].neighbours = تہی;
     }
 }
 
-static int iq3_find_best_neighbour(const uint16_t * GGML_RESTRICT neighbours, const uint32_t * GGML_RESTRICT grid,
-        const float * GGML_RESTRICT xval, const float * GGML_RESTRICT weight, float scale, int8_t * GGML_RESTRICT L) {
-    int num_neighbors = neighbours[0];
-    GGML_ASSERT(num_neighbors > 0);
-    float best_d2 = FLT_MAX;
-    int grid_index = -1;
-    for (int j = 1; j <= num_neighbors; ++j) {
-        const int8_t * pg = (const int8_t *)(grid + neighbours[j]);
-        float d2 = 0;
-        for (int i = 0; i < 4; ++i) {
-            float q = pg[i];
-            float diff = scale*q - xval[i];
-            d2 += weight[i]*diff*diff;
+ساکن صحیح iq3_ڈھونڈو_بہترین_neighbour(ثابت uint16_t * GGML_RESTRICT neighbours, ثابت uint32_t * GGML_RESTRICT grid,
+        ثابت اعشاری * GGML_RESTRICT xval, ثابت اعشاری * GGML_RESTRICT وزن, اعشاری scale, int8_t * GGML_RESTRICT L) {
+    صحیح عدد_neighbors = neighbours[0];
+    GGML_ASSERT(عدد_neighbors > 0);
+    اعشاری بہترین_d2 = FLT_MAX;
+    صحیح grid_اشاریہ = -1;
+    برائے (صحیح j = 1; j <= عدد_neighbors; ++j) {
+        ثابت int8_t * pg = (ثابت int8_t *)(grid + neighbours[j]);
+        اعشاری d2 = 0;
+        برائے (صحیح i = 0; i < 4; ++i) {
+            اعشاری q = pg[i];
+            اعشاری diff = scale*q - xval[i];
+            d2 += وزن[i]*diff*diff;
         }
-        if (d2 < best_d2) {
-            best_d2 = d2; grid_index = neighbours[j];
+        اگر (d2 < بہترین_d2) {
+            بہترین_d2 = d2; grid_اشاریہ = neighbours[j];
         }
     }
-    GGML_ASSERT(grid_index >= 0);
-    const int8_t * pg = (const int8_t *)(grid + grid_index);
-    for (int i = 0; i < 4; ++i) L[i] = (pg[i] - 1)/2;
-    return grid_index;
+    GGML_ASSERT(grid_اشاریہ >= 0);
+    ثابت int8_t * pg = (ثابت int8_t *)(grid + grid_اشاریہ);
+    برائے (صحیح i = 0; i < 4; ++i) L[i] = (pg[i] - 1)/2;
+    واپس grid_اشاریہ;
 }
 
-static void quantize_row_iq3_xxs_impl(int grid_size, const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t n,
-        const float * GGML_RESTRICT quant_weights) {
+ساکن خالی quantize_صف_iq3_xxs_impl(صحیح grid_سائز, ثابت اعشاری * GGML_RESTRICT x, خالی * GGML_RESTRICT vy, int64_t n,
+        ثابت اعشاری * GGML_RESTRICT quant_weights) {
 
-    const int gindex = iq3_data_index(grid_size);
+    ثابت صحیح gindex = iq3_ڈیٹا_اشاریہ(grid_سائز);
 
-    const uint32_t * kgrid_q3xs      = iq3_data[gindex].grid;
-    const int      * kmap_q3xs       = iq3_data[gindex].map;
-    const uint16_t * kneighbors_q3xs = iq3_data[gindex].neighbours;
+    ثابت uint32_t * kgrid_q3xs      = iq3_ڈیٹا[gindex].grid;
+    ثابت صحیح      * kmap_q3xs       = iq3_ڈیٹا[gindex].map;
+    ثابت uint16_t * kneighbors_q3xs = iq3_ڈیٹا[gindex].neighbours;
 
     //GGML_ASSERT(quant_weights   && "missing quantization weights");
     GGML_ASSERT(kgrid_q3xs      && "forgot to call ggml_quantize_init()?");
@@ -3951,239 +3951,239 @@ static void quantize_row_iq3_xxs_impl(int grid_size, const float * GGML_RESTRICT
     GGML_ASSERT(kneighbors_q3xs && "forgot to call ggml_quantize_init()?");
     GGML_ASSERT(n%QK_K == 0);
 
-    const int kMaxQ = 8;
+    ثابت صحیح kMaxQ = 8;
 
-    const int64_t nbl = n/QK_K;
+    ثابت int64_t nbl = n/QK_K;
 
     ggml_fp16_t * dh;
     uint8_t * qs;
-    int block_size;
-    if (grid_size == 256) {
-        block_iq3_xxs * y = vy;
+    صحیح بلاک_سائز_3;
+    اگر (grid_سائز == 256) {
+        بلاک_iq3_xxs * y = vy;
         dh = &y->d;
         qs = y->qs;
-        block_size = sizeof(block_iq3_xxs);
-    } else {
-        block_iq3_s * y = vy;
+        بلاک_سائز_3 = حجم(بلاک_iq3_xxs);
+    } ورنہ {
+        بلاک_iq3_s * y = vy;
         dh = &y->d;
         qs = y->qs;
-        block_size = sizeof(block_iq3_s);
+        بلاک_سائز_3 = حجم(بلاک_iq3_s);
     }
-    int quant_size = block_size - sizeof(ggml_fp16_t);
+    صحیح quant_سائز = بلاک_سائز_3 - حجم(ggml_fp16_t);
 
-    float scales[QK_K/32];
-    float weight[32];
-    float xval[32];
+    اعشاری scales[QK_K/32];
+    اعشاری وزن[32];
+    اعشاری xval[32];
     int8_t L[32];
     int8_t Laux[32];
-    float  waux[32];
+    اعشاری  waux[32];
     bool   is_on_grid[8];
     bool   is_on_grid_aux[8];
-    uint8_t block_signs[8];
+    uint8_t بلاک_signs[8];
     uint8_t q3[3*(QK_K/8)+QK_K/32];
     uint32_t * scales_and_signs = (uint32_t *)(q3 + QK_K/4);
     uint8_t  * qh = q3 + 3*(QK_K/8);
 
-    for (int ibl = 0; ibl < nbl; ++ibl) {
+    برائے (صحیح ibl = 0; ibl < nbl; ++ibl) {
 
-        dh[0] = GGML_FP32_TO_FP16(0.f);
+        dh[0] = GGML_FP32_مقصد_FP16(0.f);
         memset(q3, 0, 3*QK_K/8+QK_K/32);
 
-        float max_scale = 0;
+        اعشاری max_scale = 0;
 
-        const float * xbl = x + QK_K*ibl;
-        float sumx2 = 0;
-        for (int i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
-        float sigma2 = 2*sumx2/QK_K;
+        ثابت اعشاری * xbl = x + QK_K*ibl;
+        اعشاری sumx2 = 0;
+        برائے (صحیح i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
+        اعشاری sigma2 = 2*sumx2/QK_K;
 
-        for (int ib = 0; ib < QK_K/32; ++ib) {
-            const float * xb = xbl + 32*ib;
-            if (quant_weights) {
-                const float * qw = quant_weights + QK_K*ibl + 32*ib;
-                for (int i = 0; i < 32; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
-            } else {
-                for (int i = 0; i < 32; ++i) weight[i] = xb[i]*xb[i];
+        برائے (صحیح ib = 0; ib < QK_K/32; ++ib) {
+            ثابت اعشاری * xb = xbl + 32*ib;
+            اگر (quant_weights) {
+                ثابت اعشاری * qw = quant_weights + QK_K*ibl + 32*ib;
+                برائے (صحیح i = 0; i < 32; ++i) وزن[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
+            } ورنہ {
+                برائے (صحیح i = 0; i < 32; ++i) وزن[i] = xb[i]*xb[i];
             }
-            for (int i = 0; i < 32; ++i) waux[i] = sqrtf(weight[i]);
-            for (int k = 0; k < 4; ++k) {
-                int nflip = 0;
+            برائے (صحیح i = 0; i < 32; ++i) waux[i] = sqrtf(وزن[i]);
+            برائے (صحیح k = 0; k < 4; ++k) {
+                صحیح nflip = 0;
                 uint8_t s = 0;
-                for (int i = 0; i < 8; ++i) {
-                    if (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
-                    else {
+                برائے (صحیح i = 0; i < 8; ++i) {
+                    اگر (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
+                    ورنہ {
                         xval[8*k + i] = -xb[8*k + i]; ++nflip; s |= (1 << i);
                     }
                 }
-                if (nflip%2) {
-                    int imin = 0; float min = weight[8*k+imin]*xb[8*k+imin]*xb[8*k+imin];
-                    for (int i = 1; i < 8; ++i) {
-                        float ax = weight[8*k+i]*xb[8*k+i]*xb[8*k+i];
-                        if (ax < min) {
+                اگر (nflip%2) {
+                    صحیح imin = 0; اعشاری min = وزن[8*k+imin]*xb[8*k+imin]*xb[8*k+imin];
+                    برائے (صحیح i = 1; i < 8; ++i) {
+                        اعشاری ax = وزن[8*k+i]*xb[8*k+i]*xb[8*k+i];
+                        اگر (ax < min) {
                             min = ax; imin = i;
                         }
                     }
                     xval[8*k+imin] = -xval[8*k+imin];
                     s ^= (1 << imin);
                 }
-                block_signs[k] = s & 127;
+                بلاک_signs[k] = s & 127;
             }
-            float max = xval[0];
-            for (int i = 1; i < 32; ++i) max = MAX(max, xval[i]);
+            اعشاری max = xval[0];
+            برائے (صحیح i = 1; i < 32; ++i) max = MAX(max, xval[i]);
             memset(L, 0, 32);
-            if (max < GROUP_MAX_EPS_IQ3_XXS) {
+            اگر (max < گروہ_MAX_EPS_IQ3_XXS) {
                 scales[ib] = 0;
-                continue;
+                جاری;
             }
-            float best = 0;
-            float scale = max/(2*kMaxQ-1);
-            for (int k = 0; k < 8; ++k) is_on_grid[k] = true;
-            for (int is = -15; is <= 15; ++is) {
-                float id = (2*kMaxQ-1+is*0.2f)/max;
-                float this_scale = 1/id;
-                for (int k = 0; k < 8; ++k) {
-                    for (int i = 0; i < 4; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[4*k+i]-1));
+            اعشاری بہترین = 0;
+            اعشاری scale = max/(2*kMaxQ-1);
+            برائے (صحیح k = 0; k < 8; ++k) is_on_grid[k] = true;
+            برائے (صحیح is = -15; is <= 15; ++is) {
+                اعشاری id = (2*kMaxQ-1+is*0.2f)/max;
+                اعشاری this_scale = 1/id;
+                برائے (صحیح k = 0; k < 8; ++k) {
+                    برائے (صحیح i = 0; i < 4; ++i) {
+                        صحیح l = قریب_ترین_int(0.5f*(id*xval[4*k+i]-1));
                         Laux[4*k+i] = MAX(0, MIN(kMaxQ-1, l));
                     }
                     uint16_t u = 0;
-                    for (int i = 0; i < 4; ++i) u |= (Laux[4*k+i] << 3*i);
-                    int grid_index = kmap_q3xs[u];
+                    برائے (صحیح i = 0; i < 4; ++i) u |= (Laux[4*k+i] << 3*i);
+                    صحیح grid_اشاریہ = kmap_q3xs[u];
                     is_on_grid_aux[k] = true;
-                    if (grid_index < 0) {
+                    اگر (grid_اشاریہ < 0) {
                         is_on_grid_aux[k] = false;
-                        const uint16_t * neighbours = kneighbors_q3xs - kmap_q3xs[u] - 1;
-                        grid_index = iq3_find_best_neighbour(neighbours, kgrid_q3xs, xval + 4*k, waux + 4*k, this_scale, Laux + 4*k);
+                        ثابت uint16_t * neighbours = kneighbors_q3xs - kmap_q3xs[u] - 1;
+                        grid_اشاریہ = iq3_ڈھونڈو_بہترین_neighbour(neighbours, kgrid_q3xs, xval + 4*k, waux + 4*k, this_scale, Laux + 4*k);
                     }
                 }
-                float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < 32; ++i) {
-                    float w = weight[i];
-                    float q = 2*Laux[i] + 1;
+                اعشاری sumqx = 0, sumq2 = 0;
+                برائے (صحیح i = 0; i < 32; ++i) {
+                    اعشاری w = وزن[i];
+                    اعشاری q = 2*Laux[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0 && sumqx*sumqx > best*sumq2) {
-                    scale = sumqx/sumq2; best = scale*sumqx;
-                    for (int i = 0; i < 32; ++i) L[i] = Laux[i];
-                    for (int k = 0; k <  8; ++k) is_on_grid[k] = is_on_grid_aux[k];
+                اگر (sumq2 > 0 && sumqx*sumqx > بہترین*sumq2) {
+                    scale = sumqx/sumq2; بہترین = scale*sumqx;
+                    برائے (صحیح i = 0; i < 32; ++i) L[i] = Laux[i];
+                    برائے (صحیح k = 0; k <  8; ++k) is_on_grid[k] = is_on_grid_aux[k];
                 }
             }
-            int n_not_ongrid = 0;
-            for (int k = 0; k < 8; ++k) if (!is_on_grid[k]) ++n_not_ongrid;
-            if (n_not_ongrid > 0 && scale > 0) {
-                float id = 1/scale;
-                for (int k = 0; k < 8; ++k) {
-                    if (is_on_grid[k]) continue;
+            صحیح n_not_ongrid = 0;
+            برائے (صحیح k = 0; k < 8; ++k) اگر (!is_on_grid[k]) ++n_not_ongrid;
+            اگر (n_not_ongrid > 0 && scale > 0) {
+                اعشاری id = 1/scale;
+                برائے (صحیح k = 0; k < 8; ++k) {
+                    اگر (is_on_grid[k]) جاری;
                     uint16_t u = 0;
-                    for (int i = 0; i < 4; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[4*k+i]-1));
+                    برائے (صحیح i = 0; i < 4; ++i) {
+                        صحیح l = قریب_ترین_int(0.5f*(id*xval[4*k+i]-1));
                         l = MAX(0, MIN(kMaxQ-1, l));
                         u |= (l << 3*i);
                     }
-                    int grid_index = kmap_q3xs[u];
-                    if (grid_index < 0) {
-                        const uint16_t * neighbours = kneighbors_q3xs - kmap_q3xs[u] - 1;
-                        grid_index = iq3_find_best_neighbour(neighbours, kgrid_q3xs, xval + 4*k, waux + 4*k, scale, L + 4*k);
+                    صحیح grid_اشاریہ = kmap_q3xs[u];
+                    اگر (grid_اشاریہ < 0) {
+                        ثابت uint16_t * neighbours = kneighbors_q3xs - kmap_q3xs[u] - 1;
+                        grid_اشاریہ = iq3_ڈھونڈو_بہترین_neighbour(neighbours, kgrid_q3xs, xval + 4*k, waux + 4*k, scale, L + 4*k);
                     }
-                    const int8_t * pg = (const int8_t *)(kgrid_q3xs + grid_index);
-                    for (int i = 0; i < 4; ++i) L[4*k+i] = (pg[i] - 1)/2;
+                    ثابت int8_t * pg = (ثابت int8_t *)(kgrid_q3xs + grid_اشاریہ);
+                    برائے (صحیح i = 0; i < 4; ++i) L[4*k+i] = (pg[i] - 1)/2;
                 }
-                float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < 32; ++i) {
-                    float w = weight[i];
-                    float q = 2*L[i] + 1;
+                اعشاری sumqx = 0, sumq2 = 0;
+                برائے (صحیح i = 0; i < 32; ++i) {
+                    اعشاری w = وزن[i];
+                    اعشاری q = 2*L[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0) scale = sumqx/sumq2;
+                اگر (sumq2 > 0) scale = sumqx/sumq2;
             }
-            if (scale < 0) {
+            اگر (scale < 0) {
                 // This should never happen, but just in case, flip scale so that it is positive (we use uint's to encode the scale)
                 // and correspondingly flip quant signs.
                 scale = -scale;
-                for (int k = 0; k < 4; ++k) block_signs[k] = (~block_signs[k]) & 127;
+                برائے (صحیح k = 0; k < 4; ++k) بلاک_signs[k] = (~بلاک_signs[k]) & 127;
             }
-            for (int k = 0; k < 8; ++k) {
+            برائے (صحیح k = 0; k < 8; ++k) {
                 uint16_t u = 0;
-                for (int i = 0; i < 4; ++i) u |= (L[4*k+i] << 3*i);
-                int grid_index = kmap_q3xs[u];
-                if (grid_index < 0) {
-                    printf("Oops: found point %u not on grid:", u);
-                    for (int i = 0; i < 4; ++i) printf(" %d", L[4*k+i]);
-                    printf("\n");
+                برائے (صحیح i = 0; i < 4; ++i) u |= (L[4*k+i] << 3*i);
+                صحیح grid_اشاریہ = kmap_q3xs[u];
+                اگر (grid_اشاریہ < 0) {
+                    لکھو("Oops: found point %u not on grid:", u);
+                    برائے (صحیح i = 0; i < 4; ++i) لکھو(" %d", L[4*k+i]);
+                    لکھو("\n");
                     GGML_ABORT("fatal error");
                 }
-                if (grid_size == 256) {
-                    q3[8*ib+k] = grid_index;
-                } else {
-                    q3[8*ib+k] = grid_index & 255;
-                    qh[ib] |= ((grid_index >> 8) << k);
+                اگر (grid_سائز == 256) {
+                    q3[8*ib+k] = grid_اشاریہ;
+                } ورنہ {
+                    q3[8*ib+k] = grid_اشاریہ & 255;
+                    qh[ib] |= ((grid_اشاریہ >> 8) << k);
                 }
 
             }
-            scales_and_signs[ib] = block_signs[0] | (block_signs[1] << 7) | (block_signs[2] << 14) | (block_signs[3] << 21);
+            scales_and_signs[ib] = بلاک_signs[0] | (بلاک_signs[1] << 7) | (بلاک_signs[2] << 14) | (بلاک_signs[3] << 21);
             GGML_ASSERT(scale >= 0);
             scales[ib] = scale;
             max_scale = MAX(max_scale, scale);
         }
 
-        if (!max_scale) {
-            memset(qs, 0, quant_size);
-            dh += block_size/sizeof(ggml_fp16_t);
-            qs += block_size;
-            continue;
+        اگر (!max_scale) {
+            memset(qs, 0, quant_سائز);
+            dh += بلاک_سائز_3/حجم(ggml_fp16_t);
+            qs += بلاک_سائز_3;
+            جاری;
         }
 
-        float d = max_scale/31;
-        dh[0] = GGML_FP32_TO_FP16(d * 1.0125f);  // small improvement via this fudge factor
-        float id = 1/d;
-        for (int ib = 0; ib < QK_K/32; ++ib) {
-            int l = nearest_int(0.5f*(id*scales[ib]-1));
+        اعشاری d = max_scale/31;
+        dh[0] = GGML_FP32_مقصد_FP16(d * 1.0125f);  // small improvement via this fudge factor
+        اعشاری id = 1/d;
+        برائے (صحیح ib = 0; ib < QK_K/32; ++ib) {
+            صحیح l = قریب_ترین_int(0.5f*(id*scales[ib]-1));
             l = MAX(0, MIN(15, l));
             scales_and_signs[ib] |= ((uint32_t)l << 28);
         }
-        memcpy(qs, q3, quant_size);
+        حافظہ_نقل(qs, q3, quant_سائز);
 
-        dh += block_size/sizeof(ggml_fp16_t);
-        qs += block_size;
+        dh += بلاک_سائز_3/حجم(ggml_fp16_t);
+        qs += بلاک_سائز_3;
 
     }
 }
 
-size_t quantize_iq3_xxs(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    GGML_ASSERT(n_per_row%QK_K == 0);
-    int64_t nblock = n_per_row/QK_K;
-    char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
-        quantize_row_iq3_xxs_impl(256, src, qrow, n_per_row, quant_weights);
-        src += n_per_row;
-        qrow += nblock*sizeof(block_iq3_xxs);
+size_t quantize_iq3_xxs(ثابت اعشاری * GGML_RESTRICT src, خالی * GGML_RESTRICT dst, int64_t nrow, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
+    GGML_ASSERT(n_فی_صف%QK_K == 0);
+    int64_t nblock = n_فی_صف/QK_K;
+    حرف * qrow = (حرف *)dst;
+    برائے (int64_t صف = 0; صف < nrow; ++صف) {
+        quantize_صف_iq3_xxs_impl(256, src, qrow, n_فی_صف, quant_weights);
+        src += n_فی_صف;
+        qrow += nblock*حجم(بلاک_iq3_xxs);
     }
-    return nrow * nblock * sizeof(block_iq3_xxs);
+    واپس nrow * nblock * حجم(بلاک_iq3_xxs);
 }
 
-void quantize_row_iq3_xxs_ref(const float * GGML_RESTRICT x, block_iq3_xxs * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    quantize_row_iq3_xxs_impl(256, x, y, k, NULL);
+خالی quantize_صف_iq3_xxs_ref(ثابت اعشاری * GGML_RESTRICT x, بلاک_iq3_xxs * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
+    quantize_صف_iq3_xxs_impl(256, x, y, k, تہی);
 }
 
-static void quantize_row_iq3_s_impl(int block_size, const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int n,
-        const float * GGML_RESTRICT quant_weights,
-        float   * scales,
-        float   * weight,
-        float   * xval,
+ساکن خالی quantize_صف_iq3_s_impl(صحیح بلاک_سائز_3, ثابت اعشاری * GGML_RESTRICT x, خالی * GGML_RESTRICT vy, صحیح n,
+        ثابت اعشاری * GGML_RESTRICT quant_weights,
+        اعشاری   * scales,
+        اعشاری   * وزن,
+        اعشاری   * xval,
         int8_t  * L,
         int8_t  * Laux,
-        float   * waux,
+        اعشاری   * waux,
         bool    * is_on_grid,
         bool    * is_on_grid_aux,
-        uint8_t * block_signs) {
+        uint8_t * بلاک_signs) {
 
-    const int gindex = iq3_data_index(512);
+    ثابت صحیح gindex = iq3_ڈیٹا_اشاریہ(512);
 
-    const uint32_t * kgrid_q3xs      = iq3_data[gindex].grid;
-    const int      * kmap_q3xs       = iq3_data[gindex].map;
-    const uint16_t * kneighbors_q3xs = iq3_data[gindex].neighbours;
+    ثابت uint32_t * kgrid_q3xs      = iq3_ڈیٹا[gindex].grid;
+    ثابت صحیح      * kmap_q3xs       = iq3_ڈیٹا[gindex].map;
+    ثابت uint16_t * kneighbors_q3xs = iq3_ڈیٹا[gindex].neighbours;
 
     //GGML_ASSERT(quant_weights   && "missing quantization weights");
     GGML_ASSERT(kgrid_q3xs      && "forgot to call ggml_quantize_init()?");
@@ -4191,158 +4191,158 @@ static void quantize_row_iq3_s_impl(int block_size, const float * GGML_RESTRICT 
     GGML_ASSERT(kneighbors_q3xs && "forgot to call ggml_quantize_init()?");
     GGML_ASSERT(n%QK_K == 0);
 
-    const int kMaxQ = 8;
+    ثابت صحیح kMaxQ = 8;
 
-    const int64_t nbl = n/QK_K;
+    ثابت int64_t nbl = n/QK_K;
 
-    block_iq3_s * y = vy;
+    بلاک_iq3_s * y = vy;
 
-    const int bs4 = block_size/4;
-    const int bs8 = block_size/8;
+    ثابت صحیح bs4 = بلاک_سائز_3/4;
+    ثابت صحیح bs8 = بلاک_سائز_3/8;
 
-    for (int ibl = 0; ibl < nbl; ++ibl) {
+    برائے (صحیح ibl = 0; ibl < nbl; ++ibl) {
 
-        memset(&y[ibl], 0, sizeof(block_iq3_s));
-        y[ibl].d = GGML_FP32_TO_FP16(0.f);
+        memset(&y[ibl], 0, حجم(بلاک_iq3_s));
+        y[ibl].d = GGML_FP32_مقصد_FP16(0.f);
 
         uint8_t * qs = y[ibl].qs;
         uint8_t * qh = y[ibl].qh;
         uint8_t * signs = y[ibl].signs;
 
-        float max_scale = 0;
+        اعشاری max_scale = 0;
 
-        const float * xbl = x + QK_K*ibl;
-        float sumx2 = 0;
-        for (int i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
-        float sigma2 = 2*sumx2/QK_K;
+        ثابت اعشاری * xbl = x + QK_K*ibl;
+        اعشاری sumx2 = 0;
+        برائے (صحیح i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
+        اعشاری sigma2 = 2*sumx2/QK_K;
 
-        for (int ib = 0; ib < QK_K/block_size; ++ib) {
-            const float * xb = xbl + block_size*ib;
-            if (quant_weights) {
-                const float * qw = quant_weights + QK_K*ibl + block_size*ib;
-                for (int i = 0; i < block_size; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
-            } else {
-                for (int i = 0; i < block_size; ++i) weight[i] = xb[i]*xb[i];
+        برائے (صحیح ib = 0; ib < QK_K/بلاک_سائز_3; ++ib) {
+            ثابت اعشاری * xb = xbl + بلاک_سائز_3*ib;
+            اگر (quant_weights) {
+                ثابت اعشاری * qw = quant_weights + QK_K*ibl + بلاک_سائز_3*ib;
+                برائے (صحیح i = 0; i < بلاک_سائز_3; ++i) وزن[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
+            } ورنہ {
+                برائے (صحیح i = 0; i < بلاک_سائز_3; ++i) وزن[i] = xb[i]*xb[i];
             }
-            for (int i = 0; i < block_size; ++i) waux[i] = sqrtf(weight[i]);
-            for (int k = 0; k < bs8; ++k) {
+            برائے (صحیح i = 0; i < بلاک_سائز_3; ++i) waux[i] = sqrtf(وزن[i]);
+            برائے (صحیح k = 0; k < bs8; ++k) {
                 uint8_t s = 0;
-                for (int i = 0; i < 8; ++i) {
-                    if (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
-                    else {
+                برائے (صحیح i = 0; i < 8; ++i) {
+                    اگر (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
+                    ورنہ {
                         xval[8*k + i] = -xb[8*k + i]; s |= (1 << i);
                     }
                 }
-                block_signs[k] = s;
+                بلاک_signs[k] = s;
             }
-            float max = xval[0];
-            for (int i = 1; i < block_size; ++i) max = MAX(max, xval[i]);
-            memset(L, 0, block_size);
-            if (!max) {
+            اعشاری max = xval[0];
+            برائے (صحیح i = 1; i < بلاک_سائز_3; ++i) max = MAX(max, xval[i]);
+            memset(L, 0, بلاک_سائز_3);
+            اگر (!max) {
                 scales[ib] = 0;
-                continue;
+                جاری;
             }
-            float best = 0;
-            float scale = max/(2*kMaxQ-1);
-            for (int k = 0; k < bs4; ++k) is_on_grid[k] = false;
-            for (int is = -9; is <= 9; ++is) {
-                float id = (2*kMaxQ-1+is*0.2f)/max;
-                float this_scale = 1/id;
-                for (int k = 0; k < bs4; ++k) {
-                    for (int i = 0; i < 4; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[4*k+i]-1));
+            اعشاری بہترین = 0;
+            اعشاری scale = max/(2*kMaxQ-1);
+            برائے (صحیح k = 0; k < bs4; ++k) is_on_grid[k] = false;
+            برائے (صحیح is = -9; is <= 9; ++is) {
+                اعشاری id = (2*kMaxQ-1+is*0.2f)/max;
+                اعشاری this_scale = 1/id;
+                برائے (صحیح k = 0; k < bs4; ++k) {
+                    برائے (صحیح i = 0; i < 4; ++i) {
+                        صحیح l = قریب_ترین_int(0.5f*(id*xval[4*k+i]-1));
                         Laux[4*k+i] = MAX(0, MIN(kMaxQ-1, l));
                     }
                     uint16_t u = 0;
-                    for (int i = 0; i < 4; ++i) u |= (Laux[4*k+i] << 3*i);
-                    int grid_index = kmap_q3xs[u];
+                    برائے (صحیح i = 0; i < 4; ++i) u |= (Laux[4*k+i] << 3*i);
+                    صحیح grid_اشاریہ = kmap_q3xs[u];
                     is_on_grid_aux[k] = true;
-                    if (grid_index < 0) {
+                    اگر (grid_اشاریہ < 0) {
                         is_on_grid_aux[k] = false;
-                        const uint16_t * neighbours = kneighbors_q3xs - kmap_q3xs[u] - 1;
-                        grid_index = iq3_find_best_neighbour(neighbours, kgrid_q3xs, xval + 4*k, waux + 4*k, this_scale, Laux + 4*k);
+                        ثابت uint16_t * neighbours = kneighbors_q3xs - kmap_q3xs[u] - 1;
+                        grid_اشاریہ = iq3_ڈھونڈو_بہترین_neighbour(neighbours, kgrid_q3xs, xval + 4*k, waux + 4*k, this_scale, Laux + 4*k);
                     }
                 }
-                float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < block_size; ++i) {
-                    float w = weight[i];
-                    float q = 2*Laux[i] + 1;
+                اعشاری sumqx = 0, sumq2 = 0;
+                برائے (صحیح i = 0; i < بلاک_سائز_3; ++i) {
+                    اعشاری w = وزن[i];
+                    اعشاری q = 2*Laux[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0 && sumqx*sumqx > best*sumq2) {
-                    scale = sumqx/sumq2; best = scale*sumqx;
-                    for (int i = 0; i < block_size; ++i) L[i] = Laux[i];
-                    for (int k = 0; k < bs4; ++k) is_on_grid[k] = is_on_grid_aux[k];
+                اگر (sumq2 > 0 && sumqx*sumqx > بہترین*sumq2) {
+                    scale = sumqx/sumq2; بہترین = scale*sumqx;
+                    برائے (صحیح i = 0; i < بلاک_سائز_3; ++i) L[i] = Laux[i];
+                    برائے (صحیح k = 0; k < bs4; ++k) is_on_grid[k] = is_on_grid_aux[k];
                 }
             }
-            int n_not_ongrid = 0;
-            for (int k = 0; k < bs4; ++k) if (!is_on_grid[k]) ++n_not_ongrid;
-            if (n_not_ongrid > 0 && scale > 0) {
-                float id = 1/scale;
-                for (int k = 0; k < bs4; ++k) {
+            صحیح n_not_ongrid = 0;
+            برائے (صحیح k = 0; k < bs4; ++k) اگر (!is_on_grid[k]) ++n_not_ongrid;
+            اگر (n_not_ongrid > 0 && scale > 0) {
+                اعشاری id = 1/scale;
+                برائے (صحیح k = 0; k < bs4; ++k) {
                     //if (is_on_grid[k]) continue;
                     uint16_t u = 0;
-                    for (int i = 0; i < 4; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[4*k+i]-1));
+                    برائے (صحیح i = 0; i < 4; ++i) {
+                        صحیح l = قریب_ترین_int(0.5f*(id*xval[4*k+i]-1));
                         l = MAX(0, MIN(kMaxQ-1, l));
                         u |= (l << 3*i);
                     }
-                    int grid_index = kmap_q3xs[u];
-                    if (grid_index < 0) {
-                        const uint16_t * neighbours = kneighbors_q3xs - kmap_q3xs[u] - 1;
-                        grid_index = iq3_find_best_neighbour(neighbours, kgrid_q3xs, xval + 4*k, waux + 4*k, scale, L + 4*k);
+                    صحیح grid_اشاریہ = kmap_q3xs[u];
+                    اگر (grid_اشاریہ < 0) {
+                        ثابت uint16_t * neighbours = kneighbors_q3xs - kmap_q3xs[u] - 1;
+                        grid_اشاریہ = iq3_ڈھونڈو_بہترین_neighbour(neighbours, kgrid_q3xs, xval + 4*k, waux + 4*k, scale, L + 4*k);
                     }
-                    const int8_t * pg = (const int8_t *)(kgrid_q3xs + grid_index);
-                    for (int i = 0; i < 4; ++i) L[4*k+i] = (pg[i] - 1)/2;
+                    ثابت int8_t * pg = (ثابت int8_t *)(kgrid_q3xs + grid_اشاریہ);
+                    برائے (صحیح i = 0; i < 4; ++i) L[4*k+i] = (pg[i] - 1)/2;
                 }
-                float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < block_size; ++i) {
-                    float w = weight[i];
-                    float q = 2*L[i] + 1;
+                اعشاری sumqx = 0, sumq2 = 0;
+                برائے (صحیح i = 0; i < بلاک_سائز_3; ++i) {
+                    اعشاری w = وزن[i];
+                    اعشاری q = 2*L[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0) scale = sumqx/sumq2;
+                اگر (sumq2 > 0) scale = sumqx/sumq2;
             }
-            if (scale < 0) {
+            اگر (scale < 0) {
                 // This should never happen, but just in case, flip scale so that it is positive (we use uint's to encode the scale)
                 // and correspondingly flip quant signs.
                 scale = -scale;
-                for (int k = 0; k < bs8; ++k) block_signs[k] = ~block_signs[k];
+                برائے (صحیح k = 0; k < bs8; ++k) بلاک_signs[k] = ~بلاک_signs[k];
             }
-            for (int k = 0; k < bs4; ++k) {
+            برائے (صحیح k = 0; k < bs4; ++k) {
                 uint16_t u = 0;
-                for (int i = 0; i < 4; ++i) u |= (L[4*k+i] << 3*i);
-                int grid_index = kmap_q3xs[u];
-                if (grid_index < 0) {
-                    printf("Oops: found point %u not on grid:", u);
-                    for (int i = 0; i < 4; ++i) printf(" %d", L[4*k+i]);
-                    printf("\n");
+                برائے (صحیح i = 0; i < 4; ++i) u |= (L[4*k+i] << 3*i);
+                صحیح grid_اشاریہ = kmap_q3xs[u];
+                اگر (grid_اشاریہ < 0) {
+                    لکھو("Oops: found point %u not on grid:", u);
+                    برائے (صحیح i = 0; i < 4; ++i) لکھو(" %d", L[4*k+i]);
+                    لکھو("\n");
                     GGML_ABORT("fatal error");
                 }
-                qs[k] = grid_index & 255;
-                qh[(ib*bs4+k)/8] |= ((grid_index >> 8) << ((ib*bs4+k)%8));
+                qs[k] = grid_اشاریہ & 255;
+                qh[(ib*bs4+k)/8] |= ((grid_اشاریہ >> 8) << ((ib*bs4+k)%8));
             }
             qs += bs4;
-            for (int k = 0; k < bs8; ++k) signs[k] = block_signs[k];
+            برائے (صحیح k = 0; k < bs8; ++k) signs[k] = بلاک_signs[k];
             signs += bs8;
             GGML_ASSERT(scale >= 0);
             scales[ib] = scale;
             max_scale = MAX(max_scale, scale);
         }
 
-        if (!max_scale) {
-            continue;
+        اگر (!max_scale) {
+            جاری;
         }
 
-        float d = max_scale/31;
-        y[ibl].d = GGML_FP32_TO_FP16(d * 1.033f);
-        float id = 1/d;
-        for (int ib = 0; ib < QK_K/block_size; ib += 2) {
-            int l1 = nearest_int(0.5f*(id*scales[ib+0]-1));
+        اعشاری d = max_scale/31;
+        y[ibl].d = GGML_FP32_مقصد_FP16(d * 1.033f);
+        اعشاری id = 1/d;
+        برائے (صحیح ib = 0; ib < QK_K/بلاک_سائز_3; ib += 2) {
+            صحیح l1 = قریب_ترین_int(0.5f*(id*scales[ib+0]-1));
             l1 = MAX(0, MIN(15, l1));
-            int l2 = nearest_int(0.5f*(id*scales[ib+1]-1));
+            صحیح l2 = قریب_ترین_int(0.5f*(id*scales[ib+1]-1));
             l2 = MAX(0, MIN(15, l2));
             y[ibl].scales[ib/2] = l1 | (l2 << 4);
         }
@@ -4350,177 +4350,177 @@ static void quantize_row_iq3_s_impl(int block_size, const float * GGML_RESTRICT 
     }
 }
 
-#define IQ3S_BLOCK_SIZE 32
-size_t quantize_iq3_s(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    GGML_ASSERT(n_per_row%QK_K == 0);
-    int64_t nblock = n_per_row/QK_K;
-    float scales[QK_K/IQ3S_BLOCK_SIZE];
-    float weight[IQ3S_BLOCK_SIZE];
-    float xval[IQ3S_BLOCK_SIZE];
-    int8_t L[IQ3S_BLOCK_SIZE];
-    int8_t Laux[IQ3S_BLOCK_SIZE];
-    float  waux[IQ3S_BLOCK_SIZE];
-    bool   is_on_grid[IQ3S_BLOCK_SIZE/4];
-    bool   is_on_grid_aux[IQ3S_BLOCK_SIZE/4];
-    uint8_t block_signs[IQ3S_BLOCK_SIZE/8];
-    char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
-        quantize_row_iq3_s_impl(IQ3S_BLOCK_SIZE, src, qrow, n_per_row, quant_weights,
-                scales, weight, xval, L, Laux, waux, is_on_grid, is_on_grid_aux, block_signs);
-        src += n_per_row;
-        qrow += nblock*sizeof(block_iq3_s);
+#تعریف_کرو IQ3_S_بلاک_سائز 32
+size_t quantize_iq3_s(ثابت اعشاری * GGML_RESTRICT src, خالی * GGML_RESTRICT dst, int64_t nrow, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
+    GGML_ASSERT(n_فی_صف%QK_K == 0);
+    int64_t nblock = n_فی_صف/QK_K;
+    اعشاری scales[QK_K/IQ3_S_بلاک_سائز];
+    اعشاری وزن[IQ3_S_بلاک_سائز];
+    اعشاری xval[IQ3_S_بلاک_سائز];
+    int8_t L[IQ3_S_بلاک_سائز];
+    int8_t Laux[IQ3_S_بلاک_سائز];
+    اعشاری  waux[IQ3_S_بلاک_سائز];
+    bool   is_on_grid[IQ3_S_بلاک_سائز/4];
+    bool   is_on_grid_aux[IQ3_S_بلاک_سائز/4];
+    uint8_t بلاک_signs[IQ3_S_بلاک_سائز/8];
+    حرف * qrow = (حرف *)dst;
+    برائے (int64_t صف = 0; صف < nrow; ++صف) {
+        quantize_صف_iq3_s_impl(IQ3_S_بلاک_سائز, src, qrow, n_فی_صف, quant_weights,
+                scales, وزن, xval, L, Laux, waux, is_on_grid, is_on_grid_aux, بلاک_signs);
+        src += n_فی_صف;
+        qrow += nblock*حجم(بلاک_iq3_s);
     }
-    return nrow * nblock * sizeof(block_iq3_s);
+    واپس nrow * nblock * حجم(بلاک_iq3_s);
 }
 
-void quantize_row_iq3_s_ref(const float * GGML_RESTRICT x, block_iq3_s * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    quantize_iq3_s(x, y, 1, k, NULL);
+خالی quantize_صف_iq3_s_ref(ثابت اعشاری * GGML_RESTRICT x, بلاک_iq3_s * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
+    quantize_iq3_s(x, y, 1, k, تہی);
 }
 
 
 // =================================== 1.5 bpw ===================================================
 
-static int iq1_find_best_neighbour(const uint16_t * GGML_RESTRICT neighbours, const uint64_t * GGML_RESTRICT grid,
-        const float * GGML_RESTRICT xval, const float * GGML_RESTRICT weight, float * scale, int8_t * GGML_RESTRICT L, int ngrid) {
-    int num_neighbors = neighbours[0];
-    GGML_ASSERT(num_neighbors > 0);
-    float best_score = -FLT_MAX;
-    int grid_index = -1;
-    for (int j = 1; j <= num_neighbors; ++j) {
-        const int8_t * pg = (const int8_t *)(grid + neighbours[j]);
-        float sumqx = 0, sumq2 = 0;
-        for (int i = 0; i < 8; ++i) {
-            float q = (pg[i] - 3)/2;
-            float w = weight[i];
+ساکن صحیح iq1_ڈھونڈو_بہترین_neighbour(ثابت uint16_t * GGML_RESTRICT neighbours, ثابت uint64_t * GGML_RESTRICT grid,
+        ثابت اعشاری * GGML_RESTRICT xval, ثابت اعشاری * GGML_RESTRICT وزن, اعشاری * scale, int8_t * GGML_RESTRICT L, صحیح ngrid) {
+    صحیح عدد_neighbors = neighbours[0];
+    GGML_ASSERT(عدد_neighbors > 0);
+    اعشاری بہترین_score = -FLT_MAX;
+    صحیح grid_اشاریہ = -1;
+    برائے (صحیح j = 1; j <= عدد_neighbors; ++j) {
+        ثابت int8_t * pg = (ثابت int8_t *)(grid + neighbours[j]);
+        اعشاری sumqx = 0, sumq2 = 0;
+        برائے (صحیح i = 0; i < 8; ++i) {
+            اعشاری q = (pg[i] - 3)/2;
+            اعشاری w = وزن[i];
             sumqx += w*q*xval[i];
             sumq2 += w*q*q;
         }
-        if (sumqx > 0 && sumq2 > 0 && sumqx*sumqx > best_score*sumq2) {
-            *scale = sumqx/sumq2; best_score = *scale * sumqx;
-            grid_index = neighbours[j];
+        اگر (sumqx > 0 && sumq2 > 0 && sumqx*sumqx > بہترین_score*sumq2) {
+            *scale = sumqx/sumq2; بہترین_score = *scale * sumqx;
+            grid_اشاریہ = neighbours[j];
         }
     }
-    if (grid_index < 0) {
-        for (int i = 0; i < ngrid; ++i) {
-            const int8_t * grid_i = (const int8_t *)(grid + i);
-            float sumqx = 0, sumq2 = 0;
-            for (int j = 0; j < 8; ++j) {
-                float w = weight[j];
-                float q = (grid_i[j] - 3)/2;
+    اگر (grid_اشاریہ < 0) {
+        برائے (صحیح i = 0; i < ngrid; ++i) {
+            ثابت int8_t * grid_i = (ثابت int8_t *)(grid + i);
+            اعشاری sumqx = 0, sumq2 = 0;
+            برائے (صحیح j = 0; j < 8; ++j) {
+                اعشاری w = وزن[j];
+                اعشاری q = (grid_i[j] - 3)/2;
                 sumqx += w*q*xval[j];
                 sumq2 += w*q*q;
             }
-            if (sumqx > 0 && sumq2 > 0 && sumqx*sumqx > best_score*sumq2) {
-                *scale = sumqx/sumq2; best_score = *scale*sumqx;
-                grid_index = i;
+            اگر (sumqx > 0 && sumq2 > 0 && sumqx*sumqx > بہترین_score*sumq2) {
+                *scale = sumqx/sumq2; بہترین_score = *scale*sumqx;
+                grid_اشاریہ = i;
             }
         }
     }
-    if (grid_index < 0) {
-        printf("Oops, did not find grid point\n");
-        printf("Have %d neighbours\n", num_neighbors);
-        for (int j = 1; j <= num_neighbors; ++j) {
-            const int8_t * pg = (const int8_t *)(grid + neighbours[j]);
-            float sumqx = 0, sumq2 = 0;
-            for (int i = 0; i < 8; ++i) {
-                float q = (pg[i] - 3)/2;
-                float w = weight[i];
+    اگر (grid_اشاریہ < 0) {
+        لکھو("Oops, did not find grid point\n");
+        لکھو("Have %d neighbours\n", عدد_neighbors);
+        برائے (صحیح j = 1; j <= عدد_neighbors; ++j) {
+            ثابت int8_t * pg = (ثابت int8_t *)(grid + neighbours[j]);
+            اعشاری sumqx = 0, sumq2 = 0;
+            برائے (صحیح i = 0; i < 8; ++i) {
+                اعشاری q = (pg[i] - 3)/2;
+                اعشاری w = وزن[i];
                 sumqx += w*q*xval[i];
                 sumq2 += w*q*q;
             }
-            printf("    neighbour %d: sumqx = %g sumq2 = %g\n", j, (double)sumqx, (double)sumq2);
+            لکھو("    neighbour %d: sumqx = %g sumq2 = %g\n", j, (دوہرا)sumqx, (دوہرا)sumq2);
         }
     }
-    GGML_ASSERT(grid_index >= 0);
+    GGML_ASSERT(grid_اشاریہ >= 0);
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     *scale *= 1.05f;  // This is a fudge factor. Don't ask me why it improves the result.
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    const int8_t * pg = (const int8_t *)(grid + grid_index);
-    for (int i = 0; i < 8; ++i) L[i] = (pg[i] - 1)/2;
-    return grid_index;
+    ثابت int8_t * pg = (ثابت int8_t *)(grid + grid_اشاریہ);
+    برائے (صحیح i = 0; i < 8; ++i) L[i] = (pg[i] - 1)/2;
+    واپس grid_اشاریہ;
 }
 
-static int iq1_find_best_neighbour2(const uint16_t * GGML_RESTRICT neighbours, const uint64_t * GGML_RESTRICT grid,
-        const float * GGML_RESTRICT xval, const float * GGML_RESTRICT weight, float scale, const float * GGML_RESTRICT xg, int8_t * GGML_RESTRICT L, int ngrid) {
-    int num_neighbors = neighbours[0];
-    GGML_ASSERT(num_neighbors > 0);
-    float best_score = FLT_MAX;
-    int grid_index = -1;
-    for (int j = 1; j <= num_neighbors; ++j) {
-        const int8_t * pg = (const int8_t *)(grid + neighbours[j]);
-        float d2 = 0;
-        for (int i = 0; i < 8; ++i) {
-            float q = xg[(pg[i] - 1)/2];
-            float w = weight[i];
-            float diff = scale*q - xval[i];
+ساکن صحیح iq1_ڈھونڈو_بہترین_neighbour2(ثابت uint16_t * GGML_RESTRICT neighbours, ثابت uint64_t * GGML_RESTRICT grid,
+        ثابت اعشاری * GGML_RESTRICT xval, ثابت اعشاری * GGML_RESTRICT وزن, اعشاری scale, ثابت اعشاری * GGML_RESTRICT xg, int8_t * GGML_RESTRICT L, صحیح ngrid) {
+    صحیح عدد_neighbors = neighbours[0];
+    GGML_ASSERT(عدد_neighbors > 0);
+    اعشاری بہترین_score = FLT_MAX;
+    صحیح grid_اشاریہ = -1;
+    برائے (صحیح j = 1; j <= عدد_neighbors; ++j) {
+        ثابت int8_t * pg = (ثابت int8_t *)(grid + neighbours[j]);
+        اعشاری d2 = 0;
+        برائے (صحیح i = 0; i < 8; ++i) {
+            اعشاری q = xg[(pg[i] - 1)/2];
+            اعشاری w = وزن[i];
+            اعشاری diff = scale*q - xval[i];
             d2 += w*diff*diff;
         }
-        if (d2 < best_score) {
-            best_score = d2;
-            grid_index = neighbours[j];
+        اگر (d2 < بہترین_score) {
+            بہترین_score = d2;
+            grid_اشاریہ = neighbours[j];
         }
     }
-    if (grid_index < 0) {
-        for (int i = 0; i < ngrid; ++i) {
-            const int8_t * grid_i = (const int8_t *)(grid + i);
-            float d2 = 0;
-            for (int j = 0; j < 8; ++j) {
-                float w = weight[j];
-                float q = xg[(grid_i[j] - 1)/2];
-                float diff = scale*q - xval[i];
+    اگر (grid_اشاریہ < 0) {
+        برائے (صحیح i = 0; i < ngrid; ++i) {
+            ثابت int8_t * grid_i = (ثابت int8_t *)(grid + i);
+            اعشاری d2 = 0;
+            برائے (صحیح j = 0; j < 8; ++j) {
+                اعشاری w = وزن[j];
+                اعشاری q = xg[(grid_i[j] - 1)/2];
+                اعشاری diff = scale*q - xval[i];
                 d2 += w*diff*diff;
             }
-            if (d2 < best_score) {
-                best_score = d2;
-                grid_index = i;
+            اگر (d2 < بہترین_score) {
+                بہترین_score = d2;
+                grid_اشاریہ = i;
             }
         }
     }
-    if (grid_index < 0) {
-        printf("Oops, did not find grid point\n");
-        printf("Have %d neighbours\n", num_neighbors);
-        for (int j = 1; j <= num_neighbors; ++j) {
-            const int8_t * pg = (const int8_t *)(grid + neighbours[j]);
-            float sumqx = 0, sumq2 = 0;
-            for (int i = 0; i < 8; ++i) {
-                float q = xg[(pg[i] - 1)/2];
-                float w = weight[i];
+    اگر (grid_اشاریہ < 0) {
+        لکھو("Oops, did not find grid point\n");
+        لکھو("Have %d neighbours\n", عدد_neighbors);
+        برائے (صحیح j = 1; j <= عدد_neighbors; ++j) {
+            ثابت int8_t * pg = (ثابت int8_t *)(grid + neighbours[j]);
+            اعشاری sumqx = 0, sumq2 = 0;
+            برائے (صحیح i = 0; i < 8; ++i) {
+                اعشاری q = xg[(pg[i] - 1)/2];
+                اعشاری w = وزن[i];
                 sumqx += w*q*xval[i];
                 sumq2 += w*q*q;
             }
-            printf("    neighbour %d: sumqx = %g sumq2 = %g\n", j, (double)sumqx, (double)sumq2);
+            لکھو("    neighbour %d: sumqx = %g sumq2 = %g\n", j, (دوہرا)sumqx, (دوہرا)sumq2);
         }
     }
-    GGML_ASSERT(grid_index >= 0);
-    const int8_t * pg = (const int8_t *)(grid + grid_index);
-    for (int i = 0; i < 8; ++i) L[i] = (pg[i] - 1)/2;
-    return grid_index;
+    GGML_ASSERT(grid_اشاریہ >= 0);
+    ثابت int8_t * pg = (ثابت int8_t *)(grid + grid_اشاریہ);
+    برائے (صحیح i = 0; i < 8; ++i) L[i] = (pg[i] - 1)/2;
+    واپس grid_اشاریہ;
 }
 
-static int iq1_sort_helper(const void * left, const void * right) {
-    const float * l = left;
-    const float * r = right;
-    return *l < *r ? -1 : *l > *r ? 1 : 0;
+ساکن صحیح iq1_ترتیب_دو_helper(ثابت خالی * بایاں, ثابت خالی * دایاں) {
+    ثابت اعشاری * l = بایاں;
+    ثابت اعشاری * r = دایاں;
+    واپس *l < *r ? -1 : *l > *r ? 1 : 0;
 }
 
-#define IQ1S_BLOCK_SIZE 32
-#define IQ1M_BLOCK_SIZE 16
-static void quantize_row_iq1_s_impl(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t n, const float * GGML_RESTRICT quant_weights,
-        float    * scales,
-        float    * weight,
-        float    * sumx,
-        float    * sumw,
-        float    * pairs,
+#تعریف_کرو IQ1_S_بلاک_سائز 32
+#تعریف_کرو IQ1_M_بلاک_سائز 16
+ساکن خالی quantize_صف_iq1_s_impl(ثابت اعشاری * GGML_RESTRICT x, خالی * GGML_RESTRICT vy, int64_t n, ثابت اعشاری * GGML_RESTRICT quant_weights,
+        اعشاری    * scales,
+        اعشاری    * وزن,
+        اعشاری    * sumx,
+        اعشاری    * sumw,
+        اعشاری    * جوڑے,
         int8_t   * L,
-        uint16_t * index,
+        uint16_t * اشاریہ,
         int8_t   * shifts) {
 
-    const int gindex = iq2_data_index(GGML_TYPE_IQ1_S);
+    ثابت صحیح gindex = iq2_ڈیٹا_اشاریہ(GGML_TYPE_IQ1_S);
 
-    const uint64_t * kgrid_q2xs      = iq2_data[gindex].grid;
-    const int      * kmap_q2xs       = iq2_data[gindex].map;
-    const uint16_t * kneighbors_q2xs = iq2_data[gindex].neighbours;
+    ثابت uint64_t * kgrid_q2xs      = iq2_ڈیٹا[gindex].grid;
+    ثابت صحیح      * kmap_q2xs       = iq2_ڈیٹا[gindex].map;
+    ثابت uint16_t * kneighbors_q2xs = iq2_ڈیٹا[gindex].neighbours;
 
     GGML_ASSERT(quant_weights   && "missing quantization weights");
     GGML_ASSERT(kgrid_q2xs      && "forgot to call ggml_quantize_init()?");
@@ -4528,42 +4528,42 @@ static void quantize_row_iq1_s_impl(const float * GGML_RESTRICT x, void * GGML_R
     GGML_ASSERT(kneighbors_q2xs && "forgot to call ggml_quantize_init()?");
     GGML_ASSERT(n%QK_K == 0);
 
-    block_iq1_s * y = vy;
+    بلاک_iq1_s * y = vy;
 
-    const int64_t nbl = n/QK_K;
+    ثابت int64_t nbl = n/QK_K;
 
-    const int block_size = IQ1S_BLOCK_SIZE;
+    ثابت صحیح بلاک_سائز_3 = IQ1_S_بلاک_سائز;
 
-    const float x_p[3] = {-1 + IQ1S_DELTA,  IQ1S_DELTA, 1 + IQ1S_DELTA};
-    const float x_m[3] = {-1 - IQ1S_DELTA, -IQ1S_DELTA, 1 - IQ1S_DELTA};
+    ثابت اعشاری x_p[3] = {-1 + IQ1S_DELTA,  IQ1S_DELTA, 1 + IQ1S_DELTA};
+    ثابت اعشاری x_m[3] = {-1 - IQ1S_DELTA, -IQ1S_DELTA, 1 - IQ1S_DELTA};
 
 
-    int * idx = (int *)(pairs + 1);
+    صحیح * idx = (صحیح *)(جوڑے + 1);
 
-    for (int ibl = 0; ibl < nbl; ++ibl) {
+    برائے (صحیح ibl = 0; ibl < nbl; ++ibl) {
 
-        y[ibl].d = GGML_FP32_TO_FP16(0.f);
+        y[ibl].d = GGML_FP32_مقصد_FP16(0.f);
         memset(y[ibl].qs, 0, QK_K/8);
         memset(y[ibl].qh, 0, QK_K/16);
 
-        float max_scale = 0;
+        اعشاری max_scale = 0;
 
-        const float * xbl = x + QK_K*ibl;
-        float sumx2 = 0;
-        for (int i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
-        float sigma2 = 2*sumx2/QK_K;
+        ثابت اعشاری * xbl = x + QK_K*ibl;
+        اعشاری sumx2 = 0;
+        برائے (صحیح i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
+        اعشاری sigma2 = 2*sumx2/QK_K;
 
-        for (int ib = 0; ib < QK_K/block_size; ++ib) {
-            const float * xb = xbl + block_size*ib;
-            const float * qw = quant_weights + QK_K*ibl + block_size*ib;
-            for (int i = 0; i < block_size; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
-            float max = fabsf(xb[0]);
-            for (int i = 1; i < block_size; ++i) max = MAX(max, fabsf(xb[i]));
-            if (max < GROUP_MAX_EPS_IQ1_S) {
+        برائے (صحیح ib = 0; ib < QK_K/بلاک_سائز_3; ++ib) {
+            ثابت اعشاری * xb = xbl + بلاک_سائز_3*ib;
+            ثابت اعشاری * qw = quant_weights + QK_K*ibl + بلاک_سائز_3*ib;
+            برائے (صحیح i = 0; i < بلاک_سائز_3; ++i) وزن[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
+            اعشاری max = fabsf(xb[0]);
+            برائے (صحیح i = 1; i < بلاک_سائز_3; ++i) max = MAX(max, fabsf(xb[i]));
+            اگر (max < گروہ_MAX_EPS_IQ1_S) {
                 scales[ib] = 0;
                 shifts[ib] = 1;
-                memset(L, 1, block_size);
-                continue;
+                memset(L, 1, بلاک_سائز_3);
+                جاری;
             }
             // Here we solve exactly the sum of squared difference (SSD) weighted minimization problem.
             // With just 3 allowed quant values (-1, 0, 1), we can search exhaustively for the two
@@ -4571,138 +4571,138 @@ static void quantize_row_iq1_s_impl(const float * GGML_RESTRICT x, void * GGML_R
             // in ascending order, compute Si = sum[weight[j] xb[j], j = 0...i] and
             // Wi = sum[weight[j], j = 0...i], and use these to quckly get get the optimum scale
             // for each possible and score for each split.
-            for (int j = 0; j < block_size; ++j) {
-                pairs[2*j] = xb[j];
+            برائے (صحیح j = 0; j < بلاک_سائز_3; ++j) {
+                جوڑے[2*j] = xb[j];
                 idx[2*j] = j;
             }
-            qsort(pairs, block_size, 2*sizeof(float), iq1_sort_helper);
+            qsort(جوڑے, بلاک_سائز_3, 2*حجم(اعشاری), iq1_ترتیب_دو_helper);
             {
                 sumx[0] = sumw[0] = 0;
-                for (int j = 0; j < block_size; ++j) {
-                    int i = idx[2*j];
-                    sumx[j+1] = sumx[j] + weight[i]*xb[i];
-                    sumw[j+1] = sumw[j] + weight[i];
+                برائے (صحیح j = 0; j < بلاک_سائز_3; ++j) {
+                    صحیح i = idx[2*j];
+                    sumx[j+1] = sumx[j] + وزن[i]*xb[i];
+                    sumw[j+1] = sumw[j] + وزن[i];
                 }
             }
-            float best_score = -FLT_MAX, scale = max;
-            int besti1 = -1, besti2 = -1, best_shift = 0;
-            for (int i1 = 0; i1 <= block_size; ++i1) {
-                for (int i2 = i1; i2 <= block_size; ++i2) {
-                    float sumqx = (sumx[i1] - sumx[0])*x_p[0] + (sumx[i2] - sumx[i1])*x_p[1] + (sumx[block_size] - sumx[i2])*x_p[2];
-                    float sumq2 = (sumw[i1] - sumw[0])*x_p[0]*x_p[0] + (sumw[i2] - sumw[i1])*x_p[1]*x_p[1] + (sumw[block_size] - sumw[i2])*x_p[2]*x_p[2];
-                    if (sumq2 > 0 && sumqx*sumqx > best_score*sumq2) {
-                        scale = sumqx/sumq2; best_score = scale*sumqx;
-                        besti1 = i1; besti2 = i2; best_shift = 1;
+            اعشاری بہترین_score = -FLT_MAX, scale = max;
+            صحیح besti1 = -1, besti2 = -1, بہترین_سرکاؤ = 0;
+            برائے (صحیح i1 = 0; i1 <= بلاک_سائز_3; ++i1) {
+                برائے (صحیح i2 = i1; i2 <= بلاک_سائز_3; ++i2) {
+                    اعشاری sumqx = (sumx[i1] - sumx[0])*x_p[0] + (sumx[i2] - sumx[i1])*x_p[1] + (sumx[بلاک_سائز_3] - sumx[i2])*x_p[2];
+                    اعشاری sumq2 = (sumw[i1] - sumw[0])*x_p[0]*x_p[0] + (sumw[i2] - sumw[i1])*x_p[1]*x_p[1] + (sumw[بلاک_سائز_3] - sumw[i2])*x_p[2]*x_p[2];
+                    اگر (sumq2 > 0 && sumqx*sumqx > بہترین_score*sumq2) {
+                        scale = sumqx/sumq2; بہترین_score = scale*sumqx;
+                        besti1 = i1; besti2 = i2; بہترین_سرکاؤ = 1;
                     }
-                    sumqx = (sumx[i1] - sumx[0])*x_m[0] + (sumx[i2] - sumx[i1])*x_m[1] + (sumx[block_size] - sumx[i2])*x_m[2];
-                    sumq2 = (sumw[i1] - sumw[0])*x_m[0]*x_m[0] + (sumw[i2] - sumw[i1])*x_m[1]*x_m[1] + (sumw[block_size] - sumw[i2])*x_m[2]*x_m[2];
-                    if (sumq2 > 0 && sumqx*sumqx > best_score*sumq2) {
-                        scale = sumqx/sumq2; best_score = scale*sumqx;
-                        besti1 = i1; besti2 = i2; best_shift = -1;
+                    sumqx = (sumx[i1] - sumx[0])*x_m[0] + (sumx[i2] - sumx[i1])*x_m[1] + (sumx[بلاک_سائز_3] - sumx[i2])*x_m[2];
+                    sumq2 = (sumw[i1] - sumw[0])*x_m[0]*x_m[0] + (sumw[i2] - sumw[i1])*x_m[1]*x_m[1] + (sumw[بلاک_سائز_3] - sumw[i2])*x_m[2]*x_m[2];
+                    اگر (sumq2 > 0 && sumqx*sumqx > بہترین_score*sumq2) {
+                        scale = sumqx/sumq2; بہترین_score = scale*sumqx;
+                        besti1 = i1; besti2 = i2; بہترین_سرکاؤ = -1;
                     }
                 }
             }
-            if (besti1 < 0 || besti2 < 0 || best_shift == 0) {
+            اگر (besti1 < 0 || besti2 < 0 || بہترین_سرکاؤ == 0) {
                 scales[ib] = 0;
                 shifts[ib] = 1;
-                memset(L, 1, block_size);
-                continue;
+                memset(L, 1, بلاک_سائز_3);
+                جاری;
             }
-            for (int j =      0; j < besti1; ++j) L[idx[2*j]] = 0;
-            for (int j = besti1; j < besti2; ++j) L[idx[2*j]] = 1;
-            for (int j = besti2; j < block_size; ++j) L[idx[2*j]] = 2;
-            if (scale < 0) {
-                for (int j = 0; j < block_size; ++j) L[j] = 2 - L[j];
-                scale = -scale; best_shift = -best_shift;
+            برائے (صحیح j =      0; j < besti1; ++j) L[idx[2*j]] = 0;
+            برائے (صحیح j = besti1; j < besti2; ++j) L[idx[2*j]] = 1;
+            برائے (صحیح j = besti2; j < بلاک_سائز_3; ++j) L[idx[2*j]] = 2;
+            اگر (scale < 0) {
+                برائے (صحیح j = 0; j < بلاک_سائز_3; ++j) L[j] = 2 - L[j];
+                scale = -scale; بہترین_سرکاؤ = -بہترین_سرکاؤ;
             }
             bool all_on_grid = true;
-            const float * xx = best_shift == 1 ? x_p : x_m;
-            for (int k = 0; k < block_size/8; ++k) {
+            ثابت اعشاری * xx = بہترین_سرکاؤ == 1 ? x_p : x_m;
+            برائے (صحیح k = 0; k < بلاک_سائز_3/8; ++k) {
                 uint16_t u = 0;
-                for (int j = 0; j < 8; ++j) u |= (L[8*k+j] << 2*j);
-                int grid_index = kmap_q2xs[u];
-                if (grid_index < 0) {
+                برائے (صحیح j = 0; j < 8; ++j) u |= (L[8*k+j] << 2*j);
+                صحیح grid_اشاریہ = kmap_q2xs[u];
+                اگر (grid_اشاریہ < 0) {
                     all_on_grid = false;
-                    const uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
-                    grid_index = iq1_find_best_neighbour2(neighbours, kgrid_q2xs, xb + 8*k, weight + 8*k, scale, xx, L + 8*k, NGRID_IQ1S);
-                    GGML_ASSERT(grid_index >= 0);
+                    ثابت uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
+                    grid_اشاریہ = iq1_ڈھونڈو_بہترین_neighbour2(neighbours, kgrid_q2xs, xb + 8*k, وزن + 8*k, scale, xx, L + 8*k, NGRID_IQ1S);
+                    GGML_ASSERT(grid_اشاریہ >= 0);
                 }
-                index[k] = grid_index;
+                اشاریہ[k] = grid_اشاریہ;
             }
-            if (!all_on_grid) {
-                float sumqx = 0, sumq2 = 0;
-                for (int k = 0; k < block_size/8; ++k) {
-                    const int8_t * pg = (const int8_t *)(kgrid_q2xs + index[k]);
-                    for (int j = 0; j < 8; ++j) {
-                        float w = weight[8*k + j];
-                        float q = xx[(pg[j] - 1)/2];
+            اگر (!all_on_grid) {
+                اعشاری sumqx = 0, sumq2 = 0;
+                برائے (صحیح k = 0; k < بلاک_سائز_3/8; ++k) {
+                    ثابت int8_t * pg = (ثابت int8_t *)(kgrid_q2xs + اشاریہ[k]);
+                    برائے (صحیح j = 0; j < 8; ++j) {
+                        اعشاری w = وزن[8*k + j];
+                        اعشاری q = xx[(pg[j] - 1)/2];
                         sumqx += w*q*xb[8*k+j];
                         sumq2 += w*q*q;
                     }
                 }
-                if (sumqx > 0 && sumq2 > 0) scale = sumqx/sumq2;
+                اگر (sumqx > 0 && sumq2 > 0) scale = sumqx/sumq2;
             }
             uint16_t h = 0;
-            for (int k = 0; k < block_size/8; ++k) {
-                y[ibl].qs[(block_size/8)*ib + k] = index[k] & 255;
-                h |= (index[k] >> 8) << 3*k;
+            برائے (صحیح k = 0; k < بلاک_سائز_3/8; ++k) {
+                y[ibl].qs[(بلاک_سائز_3/8)*ib + k] = اشاریہ[k] & 255;
+                h |= (اشاریہ[k] >> 8) << 3*k;
             }
             y[ibl].qh[ib] = h;
             GGML_ASSERT(scale >= 0);
             scales[ib] = scale;
-            shifts[ib] = best_shift;
+            shifts[ib] = بہترین_سرکاؤ;
             max_scale = MAX(max_scale, scale);
         }
 
-        if (!max_scale) {
-            continue;
+        اگر (!max_scale) {
+            جاری;
         }
 
-        float d = max_scale/15;
-        y[ibl].d = GGML_FP32_TO_FP16(d*1.125f); // 1.125f is another fudge factor. Don't ask me why it is needed.
-        float id = 1/d;
-        for (int ib = 0; ib < QK_K/block_size; ++ib) {
-            int l = nearest_int(0.5f*(id*scales[ib]-1));
+        اعشاری d = max_scale/15;
+        y[ibl].d = GGML_FP32_مقصد_FP16(d*1.125f); // 1.125f is another fudge factor. Don't ask me why it is needed.
+        اعشاری id = 1/d;
+        برائے (صحیح ib = 0; ib < QK_K/بلاک_سائز_3; ++ib) {
+            صحیح l = قریب_ترین_int(0.5f*(id*scales[ib]-1));
             l = MAX(0, MIN(7, l));
-            if (shifts[ib] == -1) l |= 8;
+            اگر (shifts[ib] == -1) l |= 8;
             y[ibl].qh[ib] |= (l << 12);
         }
     }
 }
 
-size_t quantize_iq1_s(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    GGML_ASSERT(n_per_row%QK_K == 0);
-    float  scales[QK_K/IQ1S_BLOCK_SIZE];
-    float  weight[IQ1S_BLOCK_SIZE];
-    int8_t L[IQ1S_BLOCK_SIZE];
-    float  sumx[IQ1S_BLOCK_SIZE+1];
-    float  sumw[IQ1S_BLOCK_SIZE+1];
-    float  pairs[2*IQ1S_BLOCK_SIZE];
-    uint16_t index[IQ1S_BLOCK_SIZE/8];
-    int8_t shifts[QK_K/IQ1S_BLOCK_SIZE];
-    int64_t nblock = n_per_row/QK_K;
-    char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
-        quantize_row_iq1_s_impl(src, qrow, n_per_row, quant_weights, scales, weight, sumx, sumw, pairs, L, index, shifts);
-        src += n_per_row;
-        qrow += nblock*sizeof(block_iq1_s);
+size_t quantize_iq1_s(ثابت اعشاری * GGML_RESTRICT src, خالی * GGML_RESTRICT dst, int64_t nrow, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
+    GGML_ASSERT(n_فی_صف%QK_K == 0);
+    اعشاری  scales[QK_K/IQ1_S_بلاک_سائز];
+    اعشاری  وزن[IQ1_S_بلاک_سائز];
+    int8_t L[IQ1_S_بلاک_سائز];
+    اعشاری  sumx[IQ1_S_بلاک_سائز+1];
+    اعشاری  sumw[IQ1_S_بلاک_سائز+1];
+    اعشاری  جوڑے[2*IQ1_S_بلاک_سائز];
+    uint16_t اشاریہ[IQ1_S_بلاک_سائز/8];
+    int8_t shifts[QK_K/IQ1_S_بلاک_سائز];
+    int64_t nblock = n_فی_صف/QK_K;
+    حرف * qrow = (حرف *)dst;
+    برائے (int64_t صف = 0; صف < nrow; ++صف) {
+        quantize_صف_iq1_s_impl(src, qrow, n_فی_صف, quant_weights, scales, وزن, sumx, sumw, جوڑے, L, اشاریہ, shifts);
+        src += n_فی_صف;
+        qrow += nblock*حجم(بلاک_iq1_s);
     }
-    return nrow * nblock * sizeof(block_iq1_s);
+    واپس nrow * nblock * حجم(بلاک_iq1_s);
 }
 
-static void quantize_row_iq1_m_impl(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t n, const float * GGML_RESTRICT quant_weights,
-        float    * scales,
-        float    * weight,
-        float    * pairs,
+ساکن خالی quantize_صف_iq1_m_impl(ثابت اعشاری * GGML_RESTRICT x, خالی * GGML_RESTRICT vy, int64_t n, ثابت اعشاری * GGML_RESTRICT quant_weights,
+        اعشاری    * scales,
+        اعشاری    * وزن,
+        اعشاری    * جوڑے,
         int8_t   * L,
-        uint16_t * index,
+        uint16_t * اشاریہ,
         int8_t   * shifts) {
 
-    const int gindex = iq2_data_index(GGML_TYPE_IQ1_M);
+    ثابت صحیح gindex = iq2_ڈیٹا_اشاریہ(GGML_TYPE_IQ1_M);
 
-    const uint64_t * kgrid_q2xs      = iq2_data[gindex].grid;
-    const int      * kmap_q2xs       = iq2_data[gindex].map;
-    const uint16_t * kneighbors_q2xs = iq2_data[gindex].neighbours;
+    ثابت uint64_t * kgrid_q2xs      = iq2_ڈیٹا[gindex].grid;
+    ثابت صحیح      * kmap_q2xs       = iq2_ڈیٹا[gindex].map;
+    ثابت uint16_t * kneighbors_q2xs = iq2_ڈیٹا[gindex].neighbours;
 
     //GGML_ASSERT(quant_weights   && "missing quantization weights");
     GGML_ASSERT(kgrid_q2xs      && "forgot to call ggml_quantize_init()?");
@@ -4710,50 +4710,50 @@ static void quantize_row_iq1_m_impl(const float * GGML_RESTRICT x, void * GGML_R
     GGML_ASSERT(kneighbors_q2xs && "forgot to call ggml_quantize_init()?");
     GGML_ASSERT(n%QK_K == 0);
 
-    block_iq1_m * y = vy;
+    بلاک_iq1_m * y = vy;
 
-    const int64_t nbl = n/QK_K;
+    ثابت int64_t nbl = n/QK_K;
 
-    const int block_size = IQ1M_BLOCK_SIZE;
+    ثابت صحیح بلاک_سائز_3 = IQ1_M_بلاک_سائز;
 
-    const float x_p[3] = {-1 + IQ1M_DELTA,  IQ1M_DELTA, 1 + IQ1M_DELTA};
-    const float x_m[3] = {-1 - IQ1M_DELTA, -IQ1M_DELTA, 1 - IQ1M_DELTA};
-    const uint8_t masks[4] = {0x00, 0x80, 0x08, 0x88};
+    ثابت اعشاری x_p[3] = {-1 + IQ1M_DELTA,  IQ1M_DELTA, 1 + IQ1M_DELTA};
+    ثابت اعشاری x_m[3] = {-1 - IQ1M_DELTA, -IQ1M_DELTA, 1 - IQ1M_DELTA};
+    ثابت uint8_t masks[4] = {0x00, 0x80, 0x08, 0x88};
 
-    int * idx = (int *)(pairs + 1);
+    صحیح * idx = (صحیح *)(جوڑے + 1);
 
-    float sumqx[4], sumq2[4];
+    اعشاری sumqx[4], sumq2[4];
 
     iq1m_scale_t s;
-    const float * xx;
+    ثابت اعشاری * xx;
 
-    for (int ibl = 0; ibl < nbl; ++ibl) {
+    برائے (صحیح ibl = 0; ibl < nbl; ++ibl) {
         memset(y[ibl].qs, 0, QK_K/8);
         memset(y[ibl].qh, 0, QK_K/16);
         memset(y[ibl].scales, 0, QK_K/32);
 
-        float max_scale = 0;
+        اعشاری max_scale = 0;
 
-        const float * xbl = x + QK_K*ibl;
-        float sumx2 = 0;
-        for (int i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
-        float sigma2 = 2*sumx2/QK_K;
+        ثابت اعشاری * xbl = x + QK_K*ibl;
+        اعشاری sumx2 = 0;
+        برائے (صحیح i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
+        اعشاری sigma2 = 2*sumx2/QK_K;
 
-        for (int ib = 0; ib < QK_K/block_size; ++ib) {
-            const float * xb = xbl + block_size*ib;
-            if (quant_weights) {
-                const float * qw = quant_weights + QK_K*ibl + block_size*ib;
-                for (int i = 0; i < block_size; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
-            } else {
-                for (int i = 0; i < block_size; ++i) weight[i] = xb[i]*xb[i];
+        برائے (صحیح ib = 0; ib < QK_K/بلاک_سائز_3; ++ib) {
+            ثابت اعشاری * xb = xbl + بلاک_سائز_3*ib;
+            اگر (quant_weights) {
+                ثابت اعشاری * qw = quant_weights + QK_K*ibl + بلاک_سائز_3*ib;
+                برائے (صحیح i = 0; i < بلاک_سائز_3; ++i) وزن[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
+            } ورنہ {
+                برائے (صحیح i = 0; i < بلاک_سائز_3; ++i) وزن[i] = xb[i]*xb[i];
             }
-            float max = fabsf(xb[0]);
-            for (int i = 1; i < block_size; ++i) max = MAX(max, fabsf(xb[i]));
-            if (max < GROUP_MAX_EPS_IQ1_M) {
+            اعشاری max = fabsf(xb[0]);
+            برائے (صحیح i = 1; i < بلاک_سائز_3; ++i) max = MAX(max, fabsf(xb[i]));
+            اگر (max < گروہ_MAX_EPS_IQ1_M) {
                 scales[ib] = 0;
                 shifts[ib] = 0;
-                memset(L, 1, block_size);
-                continue;
+                memset(L, 1, بلاک_سائز_3);
+                جاری;
             }
             // Here we solve exactly the sum of squared difference (SSD) weighted minimization problem.
             // With just 3 allowed quant values (-1, 0, 1), we can search exhaustively for the two
@@ -4761,13 +4761,13 @@ static void quantize_row_iq1_m_impl(const float * GGML_RESTRICT x, void * GGML_R
             // in ascending order, compute Si = sum[weight[j] xb[j], j = 0...i] and
             // Wi = sum[weight[j], j = 0...i], and use these to quckly get get the optimum scale
             // for each possible and score for each split.
-            for (int j = 0; j < block_size; ++j) {
-                pairs[2*j] = xb[j];
+            برائے (صحیح j = 0; j < بلاک_سائز_3; ++j) {
+                جوڑے[2*j] = xb[j];
                 idx[2*j] = j;
             }
-            qsort(pairs, block_size, 2*sizeof(float), iq1_sort_helper);
-            float best_score = -FLT_MAX, scale = max;
-            int besti1 = -1, besti2 = -1, best_k = -1;
+            qsort(جوڑے, بلاک_سائز_3, 2*حجم(اعشاری), iq1_ترتیب_دو_helper);
+            اعشاری بہترین_score = -FLT_MAX, scale = max;
+            صحیح besti1 = -1, besti2 = -1, بہترین_k = -1;
             // 0: +, +
             // 1: +, -
             // 2: -, +
@@ -4775,30 +4775,30 @@ static void quantize_row_iq1_m_impl(const float * GGML_RESTRICT x, void * GGML_R
             // prefix sums are kept per half of the block because each half can use a different sign (x_p or x_m)
             // since v[0]-v[1] = v[1]-v[2] = -1 for both x_p and x_m, the 3-group sum for a split collapses to T*v[2] - px[i1] - px[i2]
             {
-                float px[2][IQ1M_BLOCK_SIZE+1];
-                float pw[2][IQ1M_BLOCK_SIZE+1];
+                اعشاری px[2][IQ1_M_بلاک_سائز+1];
+                اعشاری pw[2][IQ1_M_بلاک_سائز+1];
                 px[0][0] = px[1][0] = 0;
                 pw[0][0] = pw[1][0] = 0;
-                for (int j = 0; j < block_size; ++j) {
-                    const int i = idx[2*j];
-                    const int h = i < block_size/2 ? 0 : 1;
-                    px[h][j+1]   = px[h][j] + weight[i]*xb[i];
+                برائے (صحیح j = 0; j < بلاک_سائز_3; ++j) {
+                    ثابت صحیح i = idx[2*j];
+                    ثابت صحیح h = i < بلاک_سائز_3/2 ? 0 : 1;
+                    px[h][j+1]   = px[h][j] + وزن[i]*xb[i];
                     px[1-h][j+1] = px[1-h][j];
-                    pw[h][j+1]   = pw[h][j] + weight[i];
+                    pw[h][j+1]   = pw[h][j] + وزن[i];
                     pw[1-h][j+1] = pw[1-h][j];
                 }
-                const float txs[2] = {px[0][block_size], px[1][block_size]}; // total weight*x per half
-                const float tws[2] = {pw[0][block_size], pw[1][block_size]}; // total weight per half
-                const float p2   = x_p[2], m2 = x_m[2];
-                const float cp1  = x_p[0]*x_p[0] - x_p[1]*x_p[1];
-                const float cp2  = x_p[1]*x_p[1] - x_p[2]*x_p[2];
-                const float cm1  = x_m[0]*x_m[0] - x_m[1]*x_m[1];
-                const float cm2  = x_m[1]*x_m[1] - x_m[2]*x_m[2];
-                for (int i1 = 0; i1 <= block_size; ++i1) {
-                    for (int i2 = i1; i2 <= block_size; ++i2) {
-                        float qx_p[2], qx_m[2], q2_p[2], q2_m[2];
-                        for (int h = 0; h < 2; ++h) {
-                            const float sx = px[h][i1] + px[h][i2];
+                ثابت اعشاری txs[2] = {px[0][بلاک_سائز_3], px[1][بلاک_سائز_3]}; // total weight*x per half
+                ثابت اعشاری tws[2] = {pw[0][بلاک_سائز_3], pw[1][بلاک_سائز_3]}; // total weight per half
+                ثابت اعشاری p2   = x_p[2], m2 = x_m[2];
+                ثابت اعشاری cp1  = x_p[0]*x_p[0] - x_p[1]*x_p[1];
+                ثابت اعشاری cp2  = x_p[1]*x_p[1] - x_p[2]*x_p[2];
+                ثابت اعشاری cm1  = x_m[0]*x_m[0] - x_m[1]*x_m[1];
+                ثابت اعشاری cm2  = x_m[1]*x_m[1] - x_m[2]*x_m[2];
+                برائے (صحیح i1 = 0; i1 <= بلاک_سائز_3; ++i1) {
+                    برائے (صحیح i2 = i1; i2 <= بلاک_سائز_3; ++i2) {
+                        اعشاری qx_p[2], qx_m[2], q2_p[2], q2_m[2];
+                        برائے (صحیح h = 0; h < 2; ++h) {
+                            ثابت اعشاری sx = px[h][i1] + px[h][i2];
                             qx_p[h] = txs[h]*p2 - sx;
                             qx_m[h] = txs[h]*m2 - sx;
                             q2_p[h] = tws[h]*p2*p2 + pw[h][i1]*cp1 + pw[h][i2]*cp2;
@@ -4812,102 +4812,102 @@ static void quantize_row_iq1_m_impl(const float * GGML_RESTRICT x, void * GGML_R
                         sumq2[1] = q2_p[0] + q2_m[1];
                         sumq2[2] = q2_m[0] + q2_p[1];
                         sumq2[3] = q2_m[0] + q2_m[1];
-                        for (int k = 0; k < 4; ++k) {
-                            if (sumq2[k] > 0 && sumqx[k]*sumqx[k] > best_score*sumq2[k]) {
-                                scale = sumqx[k]/sumq2[k]; best_score = scale*sumqx[k];
-                                besti1 = i1; besti2 = i2; best_k = k;
+                        برائے (صحیح k = 0; k < 4; ++k) {
+                            اگر (sumq2[k] > 0 && sumqx[k]*sumqx[k] > بہترین_score*sumq2[k]) {
+                                scale = sumqx[k]/sumq2[k]; بہترین_score = scale*sumqx[k];
+                                besti1 = i1; besti2 = i2; بہترین_k = k;
                             }
                         }
                     }
                 }
             }
-            if (besti1 < 0 || besti2 < 0 || best_k < 0) {
+            اگر (besti1 < 0 || besti2 < 0 || بہترین_k < 0) {
                 scales[ib] = 0;
                 shifts[ib] = 0;
-                memset(L, 1, block_size);
-                continue;
+                memset(L, 1, بلاک_سائز_3);
+                جاری;
             }
-            for (int j =      0; j < besti1; ++j) L[idx[2*j]] = 0;
-            for (int j = besti1; j < besti2; ++j) L[idx[2*j]] = 1;
-            for (int j = besti2; j < block_size; ++j) L[idx[2*j]] = 2;
-            if (scale < 0) {
-                for (int j = 0; j < block_size; ++j) L[j] = 2 - L[j];
+            برائے (صحیح j =      0; j < besti1; ++j) L[idx[2*j]] = 0;
+            برائے (صحیح j = besti1; j < besti2; ++j) L[idx[2*j]] = 1;
+            برائے (صحیح j = besti2; j < بلاک_سائز_3; ++j) L[idx[2*j]] = 2;
+            اگر (scale < 0) {
+                برائے (صحیح j = 0; j < بلاک_سائز_3; ++j) L[j] = 2 - L[j];
                 scale = -scale;
-                best_k = best_k == 0 ? 3 : best_k == 1 ? 2 : best_k == 2 ? 1 : 0;
+                بہترین_k = بہترین_k == 0 ? 3 : بہترین_k == 1 ? 2 : بہترین_k == 2 ? 1 : 0;
             }
             bool all_on_grid = true;
-            for (int k = 0; k < block_size/8; ++k) {
-                if (k == 0) xx = best_k < 2 ? x_p : x_m;
-                else xx = best_k%2 == 0 ? x_p : x_m;
+            برائے (صحیح k = 0; k < بلاک_سائز_3/8; ++k) {
+                اگر (k == 0) xx = بہترین_k < 2 ? x_p : x_m;
+                ورنہ xx = بہترین_k%2 == 0 ? x_p : x_m;
                 uint16_t u = 0;
-                for (int j = 0; j < 8; ++j) u |= (L[8*k+j] << 2*j);
-                int grid_index = kmap_q2xs[u];
-                if (grid_index < 0) {
+                برائے (صحیح j = 0; j < 8; ++j) u |= (L[8*k+j] << 2*j);
+                صحیح grid_اشاریہ = kmap_q2xs[u];
+                اگر (grid_اشاریہ < 0) {
                     all_on_grid = false;
-                    const uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
-                    grid_index = iq1_find_best_neighbour2(neighbours, kgrid_q2xs, xb + 8*k, weight + 8*k, scale, xx, L + 8*k, NGRID_IQ1S);
-                    GGML_ASSERT(grid_index >= 0);
+                    ثابت uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
+                    grid_اشاریہ = iq1_ڈھونڈو_بہترین_neighbour2(neighbours, kgrid_q2xs, xb + 8*k, وزن + 8*k, scale, xx, L + 8*k, NGRID_IQ1S);
+                    GGML_ASSERT(grid_اشاریہ >= 0);
                 }
-                index[k] = grid_index;
+                اشاریہ[k] = grid_اشاریہ;
             }
-            if (!all_on_grid) {
-                float sumqx_f = 0, sumq2_f = 0;
-                for (int k = 0; k < block_size/8; ++k) {
-                    if (k == 0) xx = best_k < 2 ? x_p : x_m;
-                    else xx = best_k%2 == 0 ? x_p : x_m;
-                    const int8_t * pg = (const int8_t *)(kgrid_q2xs + index[k]);
-                    for (int j = 0; j < 8; ++j) {
-                        float w = weight[8*k + j];
-                        float q = xx[(pg[j] - 1)/2];
+            اگر (!all_on_grid) {
+                اعشاری sumqx_f = 0, sumq2_f = 0;
+                برائے (صحیح k = 0; k < بلاک_سائز_3/8; ++k) {
+                    اگر (k == 0) xx = بہترین_k < 2 ? x_p : x_m;
+                    ورنہ xx = بہترین_k%2 == 0 ? x_p : x_m;
+                    ثابت int8_t * pg = (ثابت int8_t *)(kgrid_q2xs + اشاریہ[k]);
+                    برائے (صحیح j = 0; j < 8; ++j) {
+                        اعشاری w = وزن[8*k + j];
+                        اعشاری q = xx[(pg[j] - 1)/2];
                         sumqx_f += w*q*xb[8*k+j];
                         sumq2_f += w*q*q;
                     }
                 }
-                if (sumqx_f > 0 && sumq2_f > 0) scale = sumqx_f/sumq2_f;
+                اگر (sumqx_f > 0 && sumq2_f > 0) scale = sumqx_f/sumq2_f;
             }
-            y[ibl].qs[2*ib + 0] = index[0] & 255;
-            y[ibl].qs[2*ib + 1] = index[1] & 255;
-            y[ibl].qh[ib] = (index[0] >> 8) | ((index[1] >> 8) << 4);
+            y[ibl].qs[2*ib + 0] = اشاریہ[0] & 255;
+            y[ibl].qs[2*ib + 1] = اشاریہ[1] & 255;
+            y[ibl].qh[ib] = (اشاریہ[0] >> 8) | ((اشاریہ[1] >> 8) << 4);
             GGML_ASSERT(scale >= 0);
             scales[ib] = scale;
-            shifts[ib] = best_k;
+            shifts[ib] = بہترین_k;
             max_scale = MAX(max_scale, scale);
         }
 
-        if (!max_scale) {
-            continue;
+        اگر (!max_scale) {
+            جاری;
         }
 
         uint16_t * sc = (uint16_t *)y[ibl].scales;
-        float d = max_scale/15;
-        float id = 1/d;
-        float sumqx_f = 0, sumq2_f = 0;
-        for (int ib = 0; ib < QK_K/block_size; ++ib) {
-            int l = nearest_int(0.5f*(id*scales[ib+0]-1));
+        اعشاری d = max_scale/15;
+        اعشاری id = 1/d;
+        اعشاری sumqx_f = 0, sumq2_f = 0;
+        برائے (صحیح ib = 0; ib < QK_K/بلاک_سائز_3; ++ib) {
+            صحیح l = قریب_ترین_int(0.5f*(id*scales[ib+0]-1));
             l = MAX(0, MIN(7, l));
             sc[ib/4] |= (l << 3*(ib%4));
             y[ibl].qh[ib] |= masks[shifts[ib]];
-            const float * xb = xbl + block_size*ib;
-            if (quant_weights) {
-                const float * qw = quant_weights + QK_K*ibl + block_size*ib;
-                for (int i = 0; i < block_size; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
-            } else {
-                for (int i = 0; i < block_size; ++i) weight[i] = xb[i]*xb[i];
+            ثابت اعشاری * xb = xbl + بلاک_سائز_3*ib;
+            اگر (quant_weights) {
+                ثابت اعشاری * qw = quant_weights + QK_K*ibl + بلاک_سائز_3*ib;
+                برائے (صحیح i = 0; i < بلاک_سائز_3; ++i) وزن[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
+            } ورنہ {
+                برائے (صحیح i = 0; i < بلاک_سائز_3; ++i) وزن[i] = xb[i]*xb[i];
             }
-            for (int k = 0; k < block_size/8; ++k) {
-                if (k == 0) xx = shifts[ib] < 2 ? x_p : x_m;
-                else xx = shifts[ib]%2 == 0 ? x_p : x_m;
-                const int8_t * pg = (const int8_t *)(kgrid_q2xs + y[ibl].qs[2*ib+k] + ((y[ibl].qh[ib] << (8 - 4*k)) & 0x700));
-                for (int j = 0; j < 8; ++j) {
-                    float w = weight[8*k + j];
-                    float q = xx[(pg[j] - 1)/2]*(2*l+1);
+            برائے (صحیح k = 0; k < بلاک_سائز_3/8; ++k) {
+                اگر (k == 0) xx = shifts[ib] < 2 ? x_p : x_m;
+                ورنہ xx = shifts[ib]%2 == 0 ? x_p : x_m;
+                ثابت int8_t * pg = (ثابت int8_t *)(kgrid_q2xs + y[ibl].qs[2*ib+k] + ((y[ibl].qh[ib] << (8 - 4*k)) & 0x700));
+                برائے (صحیح j = 0; j < 8; ++j) {
+                    اعشاری w = وزن[8*k + j];
+                    اعشاری q = xx[(pg[j] - 1)/2]*(2*l+1);
                     sumqx_f += w*q*xb[8*k+j];
                     sumq2_f += w*q*q;
                 }
             }
         }
-        if (sumq2_f > 0) d = sumqx_f/sumq2_f;
-        s.f16 = GGML_FP32_TO_FP16(d*1.1125f); // 1.1125f is another fudge factor. Don't ask me why it is needed.
+        اگر (sumq2_f > 0) d = sumqx_f/sumq2_f;
+        s.f16 = GGML_FP32_مقصد_FP16(d*1.1125f); // 1.1125f is another fudge factor. Don't ask me why it is needed.
         sc[0] |= ((s.u16 & 0x000f) << 12);
         sc[1] |= ((s.u16 & 0x00f0) <<  8);
         sc[2] |= ((s.u16 & 0x0f00) <<  4);
@@ -4915,725 +4915,725 @@ static void quantize_row_iq1_m_impl(const float * GGML_RESTRICT x, void * GGML_R
     }
 }
 
-size_t quantize_iq1_m(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    GGML_ASSERT(n_per_row%QK_K == 0);
-    float  scales[QK_K/IQ1M_BLOCK_SIZE];
-    float  weight[IQ1M_BLOCK_SIZE];
-    int8_t L[IQ1M_BLOCK_SIZE];
-    float  pairs[2*IQ1M_BLOCK_SIZE];
-    uint16_t index[IQ1M_BLOCK_SIZE/8];
-    int8_t shifts[QK_K/IQ1M_BLOCK_SIZE];
-    int64_t nblock = n_per_row/QK_K;
-    char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
-        quantize_row_iq1_m_impl(src, qrow, n_per_row, quant_weights, scales, weight, pairs, L, index, shifts);
-        src += n_per_row;
-        qrow += nblock*sizeof(block_iq1_m);
+size_t quantize_iq1_m(ثابت اعشاری * GGML_RESTRICT src, خالی * GGML_RESTRICT dst, int64_t nrow, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
+    GGML_ASSERT(n_فی_صف%QK_K == 0);
+    اعشاری  scales[QK_K/IQ1_M_بلاک_سائز];
+    اعشاری  وزن[IQ1_M_بلاک_سائز];
+    int8_t L[IQ1_M_بلاک_سائز];
+    اعشاری  جوڑے[2*IQ1_M_بلاک_سائز];
+    uint16_t اشاریہ[IQ1_M_بلاک_سائز/8];
+    int8_t shifts[QK_K/IQ1_M_بلاک_سائز];
+    int64_t nblock = n_فی_صف/QK_K;
+    حرف * qrow = (حرف *)dst;
+    برائے (int64_t صف = 0; صف < nrow; ++صف) {
+        quantize_صف_iq1_m_impl(src, qrow, n_فی_صف, quant_weights, scales, وزن, جوڑے, L, اشاریہ, shifts);
+        src += n_فی_صف;
+        qrow += nblock*حجم(بلاک_iq1_m);
     }
-    return nrow * nblock * sizeof(block_iq1_m);
+    واپس nrow * nblock * حجم(بلاک_iq1_m);
 }
 
 // ============================ 4-bit non-linear quants
 
-static void quantize_row_iq4_nl_impl(const int super_block_size, const int block_size, const float * GGML_RESTRICT x,
+ساکن خالی quantize_صف_iq4_nl_impl(ثابت صحیح super_بلاک_سائز, ثابت صحیح بلاک_سائز_3, ثابت اعشاری * GGML_RESTRICT x,
         ggml_fp16_t * dh, uint8_t * q4, uint16_t * scales_h, uint8_t * scales_l,
-        float * scales, float * weight, uint8_t * L,
-        const int8_t * values,
-        const float * quant_weights,
-        const int ntry) {
+        اعشاری * scales, اعشاری * وزن, uint8_t * L,
+        ثابت int8_t * اقدار,
+        ثابت اعشاری * quant_weights,
+        ثابت صحیح ntry) {
 
-    float sigma2 = 0;
-    for (int j = 0; j < super_block_size; ++j) sigma2 += x[j]*x[j];
-    sigma2 *= 2.f/super_block_size;
+    اعشاری sigma2 = 0;
+    برائے (صحیح j = 0; j < super_بلاک_سائز; ++j) sigma2 += x[j]*x[j];
+    sigma2 *= 2.f/super_بلاک_سائز;
 
-    memset(q4, 0, super_block_size/2);
-    dh[0] = GGML_FP32_TO_FP16(0.f);
+    memset(q4, 0, super_بلاک_سائز/2);
+    dh[0] = GGML_FP32_مقصد_FP16(0.f);
 
-    float max_scale = 0, amax_scale = 0;
-    for (int ib = 0; ib < super_block_size/block_size; ++ib) {
-        const float * xb = x + ib*block_size;
-        uint8_t * Lb = L + ib*block_size;
-        if (quant_weights) {
-            const float * qw = quant_weights + ib*block_size;
-            for (int j = 0; j < block_size; ++j) weight[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
-        } else {
-            for (int j = 0; j < block_size; ++j) weight[j] = xb[j]*xb[j];
+    اعشاری max_scale = 0, amax_scale = 0;
+    برائے (صحیح ib = 0; ib < super_بلاک_سائز/بلاک_سائز_3; ++ib) {
+        ثابت اعشاری * xb = x + ib*بلاک_سائز_3;
+        uint8_t * Lb = L + ib*بلاک_سائز_3;
+        اگر (quant_weights) {
+            ثابت اعشاری * qw = quant_weights + ib*بلاک_سائز_3;
+            برائے (صحیح j = 0; j < بلاک_سائز_3; ++j) وزن[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
+        } ورنہ {
+            برائے (صحیح j = 0; j < بلاک_سائز_3; ++j) وزن[j] = xb[j]*xb[j];
         }
-        float amax = 0, max = 0;
-        for (int j = 0; j < block_size; ++j) {
-            float ax = fabsf(xb[j]);
-            if (ax > amax) {
+        اعشاری amax = 0, max = 0;
+        برائے (صحیح j = 0; j < بلاک_سائز_3; ++j) {
+            اعشاری ax = fabsf(xb[j]);
+            اگر (ax > amax) {
                 amax = ax; max = xb[j];
             }
         }
-        if (amax < GROUP_MAX_EPS) {
+        اگر (amax < گروہ_MAX_EPS) {
             scales[ib] = 0;
-            continue;
+            جاری;
         }
-        float d = ntry > 0 ? -max/values[0] : max/values[0];
-        float id = 1/d;
-        float sumqx = 0, sumq2 = 0;
-        for (int j = 0; j < block_size; ++j) {
-            float al = id*xb[j];
-            int l = best_index_int8(16, values, al);
+        اعشاری d = ntry > 0 ? -max/اقدار[0] : max/اقدار[0];
+        اعشاری id = 1/d;
+        اعشاری sumqx = 0, sumq2 = 0;
+        برائے (صحیح j = 0; j < بلاک_سائز_3; ++j) {
+            اعشاری al = id*xb[j];
+            صحیح l = بہترین_اشاریہ_int8(16, اقدار, al);
             Lb[j] = l;
-            float q = values[l];
-            float w = weight[j];
+            اعشاری q = اقدار[l];
+            اعشاری w = وزن[j];
             sumqx += w*q*xb[j];
             sumq2 += w*q*q;
         }
         d = sumq2 > 0 ? sumqx/sumq2 : 0.f;
-        float best = d*sumqx;
-        for (int itry = -ntry; itry <= ntry; ++itry) {
-            id = (itry + values[0])/max;
+        اعشاری بہترین = d*sumqx;
+        برائے (صحیح itry = -ntry; itry <= ntry; ++itry) {
+            id = (itry + اقدار[0])/max;
             sumqx = sumq2 = 0;
-            for (int j = 0; j < block_size; ++j) {
-                float al = id*xb[j];
-                int l = best_index_int8(16, values, al);
-                float q = values[l];
-                float w = weight[j];
+            برائے (صحیح j = 0; j < بلاک_سائز_3; ++j) {
+                اعشاری al = id*xb[j];
+                صحیح l = بہترین_اشاریہ_int8(16, اقدار, al);
+                اعشاری q = اقدار[l];
+                اعشاری w = وزن[j];
                 sumqx += w*q*xb[j];
                 sumq2 += w*q*q;
             }
-            if (sumq2 > 0 && sumqx*sumqx > best*sumq2) {
-                d = sumqx/sumq2; best = d * sumqx;
+            اگر (sumq2 > 0 && sumqx*sumqx > بہترین*sumq2) {
+                d = sumqx/sumq2; بہترین = d * sumqx;
             }
         }
         scales[ib] = d;
-        float abs_d = fabsf(d);
-        if (abs_d > amax_scale) {
+        اعشاری abs_d = fabsf(d);
+        اگر (abs_d > amax_scale) {
             amax_scale = abs_d; max_scale = d;
         }
     }
 
-    if (super_block_size/block_size > 1) {
-        int nb = super_block_size/block_size;
-        memset(scales_h, 0, ((nb+7)/8)*sizeof(uint16_t));
-        float d = -max_scale/32;
-        dh[0] = GGML_FP32_TO_FP16(d);
-        float id = d ? 1/d : 0.f;
-        for (int ib = 0; ib < super_block_size/block_size; ++ib) {
-            int l = nearest_int(id*scales[ib]);
+    اگر (super_بلاک_سائز/بلاک_سائز_3 > 1) {
+        صحیح nb = super_بلاک_سائز/بلاک_سائز_3;
+        memset(scales_h, 0, ((nb+7)/8)*حجم(uint16_t));
+        اعشاری d = -max_scale/32;
+        dh[0] = GGML_FP32_مقصد_FP16(d);
+        اعشاری id = d ? 1/d : 0.f;
+        برائے (صحیح ib = 0; ib < super_بلاک_سائز/بلاک_سائز_3; ++ib) {
+            صحیح l = قریب_ترین_int(id*scales[ib]);
             l = MAX(-32, MIN(31, l));
-            float dl = d * l;
-            float idl = dl ? 1/dl : 0.f;
-            uint8_t * Lb = L + ib*block_size;
-            const float * xb = x + ib*block_size;
-            for (int j = 0; j < block_size; ++j) {
-                Lb[j] = best_index_int8(16, values, idl*xb[j]);
+            اعشاری dl = d * l;
+            اعشاری idl = dl ? 1/dl : 0.f;
+            uint8_t * Lb = L + ib*بلاک_سائز_3;
+            ثابت اعشاری * xb = x + ib*بلاک_سائز_3;
+            برائے (صحیح j = 0; j < بلاک_سائز_3; ++j) {
+                Lb[j] = بہترین_اشاریہ_int8(16, اقدار, idl*xb[j]);
             }
             l += 32;
             uint8_t l_l = l & 0xf;
             uint8_t l_h = l >>  4;
-            if (ib%2 == 0) scales_l[ib/2] = l_l;
-            else scales_l[ib/2] |= (l_l << 4);
+            اگر (ib%2 == 0) scales_l[ib/2] = l_l;
+            ورنہ scales_l[ib/2] |= (l_l << 4);
             scales_h[ib/8] |= (l_h << 2*(ib%8));
         }
-    } else {
-        dh[0] = GGML_FP32_TO_FP16(scales[0]);
-        if (ntry > 0) {
-            float id = scales[0] ? 1/scales[0] : 0;
-            for (int j = 0; j < super_block_size; ++j) {
-                L[j] = best_index_int8(16, values, id*x[j]);
+    } ورنہ {
+        dh[0] = GGML_FP32_مقصد_FP16(scales[0]);
+        اگر (ntry > 0) {
+            اعشاری id = scales[0] ? 1/scales[0] : 0;
+            برائے (صحیح j = 0; j < super_بلاک_سائز; ++j) {
+                L[j] = بہترین_اشاریہ_int8(16, اقدار, id*x[j]);
             }
         }
     }
 
-    for (int i = 0; i < super_block_size/32; ++i) {
-        for (int j = 0; j < 16; ++j) {
+    برائے (صحیح i = 0; i < super_بلاک_سائز/32; ++i) {
+        برائے (صحیح j = 0; j < 16; ++j) {
             q4[16*i + j] = L[32*i + j] | (L[32*i + 16 + j] << 4);
         }
     }
 }
 
-size_t quantize_iq4_nl(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    GGML_ASSERT(n_per_row%QK4_NL == 0);
-    int64_t nblock = n_per_row/QK4_NL;
-    char * qrow = (char *)dst;
+size_t quantize_iq4_nl(ثابت اعشاری * GGML_RESTRICT src, خالی * GGML_RESTRICT dst, int64_t nrow, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
+    GGML_ASSERT(n_فی_صف%QK4_NL == 0);
+    int64_t nblock = n_فی_صف/QK4_NL;
+    حرف * qrow = (حرف *)dst;
     uint8_t L[QK4_NL];
-    float weight[QK4_NL];
-    uint16_t unused_h;
-    uint8_t * unused_l = NULL;
-    float scale;
-    for (int64_t row = 0; row < nrow; ++row) {
-        block_iq4_nl * iq4 = (block_iq4_nl *)qrow;
-        for (int ibl = 0; ibl < nblock; ++ibl) {
-            const float * qw = quant_weights ? quant_weights + QK4_NL*ibl : NULL;
-            quantize_row_iq4_nl_impl(QK4_NL, 32, src + QK4_NL*ibl, &iq4[ibl].d, iq4[ibl].qs, &unused_h, unused_l,
-                    &scale, weight, L, kvalues_iq4nl, qw, 7);
+    اعشاری وزن[QK4_NL];
+    uint16_t غیر_مستعمل_h;
+    uint8_t * غیر_مستعمل_l = تہی;
+    اعشاری scale;
+    برائے (int64_t صف = 0; صف < nrow; ++صف) {
+        بلاک_iq4_nl * iq4 = (بلاک_iq4_nl *)qrow;
+        برائے (صحیح ibl = 0; ibl < nblock; ++ibl) {
+            ثابت اعشاری * qw = quant_weights ? quant_weights + QK4_NL*ibl : تہی;
+            quantize_صف_iq4_nl_impl(QK4_NL, 32, src + QK4_NL*ibl, &iq4[ibl].d, iq4[ibl].qs, &غیر_مستعمل_h, غیر_مستعمل_l,
+                    &scale, وزن, L, kvalues_iq4nl, qw, 7);
         }
-        src += n_per_row;
-        qrow += nblock*sizeof(block_iq4_nl);
+        src += n_فی_صف;
+        qrow += nblock*حجم(بلاک_iq4_nl);
     }
-    return nrow * nblock * sizeof(block_iq4_nl);
+    واپس nrow * nblock * حجم(بلاک_iq4_nl);
 }
 
 //void quantize_row_iq4_nl_ref(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
-void quantize_row_iq4_nl_ref(const float * GGML_RESTRICT x, block_iq4_nl * GGML_RESTRICT y, int64_t k) {
+خالی quantize_صف_iq4_nl_ref(ثابت اعشاری * GGML_RESTRICT x, بلاک_iq4_nl * GGML_RESTRICT y, int64_t k) {
     GGML_ASSERT(k%QK4_NL == 0);
     int64_t nblock = k/QK4_NL;
     uint8_t L[QK4_NL];
-    float weight[QK4_NL];
-    uint16_t unused_h;
-    uint8_t * unused_l = NULL;
-    float scale;
-    block_iq4_nl * iq4 = y;
-    for (int ibl = 0; ibl < nblock; ++ibl) {
-        quantize_row_iq4_nl_impl(QK4_NL, 32, x + QK4_NL*ibl, &iq4[ibl].d, iq4[ibl].qs, &unused_h, unused_l,
-                &scale, weight, L, kvalues_iq4nl, NULL, -1);
+    اعشاری وزن[QK4_NL];
+    uint16_t غیر_مستعمل_h;
+    uint8_t * غیر_مستعمل_l = تہی;
+    اعشاری scale;
+    بلاک_iq4_nl * iq4 = y;
+    برائے (صحیح ibl = 0; ibl < nblock; ++ibl) {
+        quantize_صف_iq4_nl_impl(QK4_NL, 32, x + QK4_NL*ibl, &iq4[ibl].d, iq4[ibl].qs, &غیر_مستعمل_h, غیر_مستعمل_l,
+                &scale, وزن, L, kvalues_iq4nl, تہی, -1);
     }
 }
 
-size_t quantize_iq4_xs(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    GGML_ASSERT(n_per_row%QK_K == 0);
-    int64_t nblock = n_per_row/QK_K;
-    char * qrow = (char *)dst;
+size_t quantize_iq4_xs(ثابت اعشاری * GGML_RESTRICT src, خالی * GGML_RESTRICT dst, int64_t nrow, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
+    GGML_ASSERT(n_فی_صف%QK_K == 0);
+    int64_t nblock = n_فی_صف/QK_K;
+    حرف * qrow = (حرف *)dst;
     uint8_t L[QK_K];
-    float weight[32];
-    float scales[QK_K/32];
-    for (int64_t row = 0; row < nrow; ++row) {
-        block_iq4_xs * iq4 = (block_iq4_xs *)qrow;
-        for (int ibl = 0; ibl < nblock; ++ibl) {
-            const float * qw = quant_weights ? quant_weights + QK_K*ibl : NULL;
-            quantize_row_iq4_nl_impl(QK_K, 32, src + QK_K*ibl, &iq4[ibl].d, iq4[ibl].qs, &iq4[ibl].scales_h, iq4[ibl].scales_l,
-                    scales, weight, L, kvalues_iq4nl, qw, 7);
+    اعشاری وزن[32];
+    اعشاری scales[QK_K/32];
+    برائے (int64_t صف = 0; صف < nrow; ++صف) {
+        بلاک_iq4_xs * iq4 = (بلاک_iq4_xs *)qrow;
+        برائے (صحیح ibl = 0; ibl < nblock; ++ibl) {
+            ثابت اعشاری * qw = quant_weights ? quant_weights + QK_K*ibl : تہی;
+            quantize_صف_iq4_nl_impl(QK_K, 32, src + QK_K*ibl, &iq4[ibl].d, iq4[ibl].qs, &iq4[ibl].scales_h, iq4[ibl].scales_l,
+                    scales, وزن, L, kvalues_iq4nl, qw, 7);
         }
-        src += n_per_row;
-        qrow += nblock*sizeof(block_iq4_xs);
+        src += n_فی_صف;
+        qrow += nblock*حجم(بلاک_iq4_xs);
     }
-    return nrow * nblock * sizeof(block_iq4_xs);
+    واپس nrow * nblock * حجم(بلاک_iq4_xs);
 }
 
-void quantize_row_iq4_xs_ref(const float * GGML_RESTRICT x, block_iq4_xs * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    quantize_iq4_xs(x, y, 1, k, NULL);
+خالی quantize_صف_iq4_xs_ref(ثابت اعشاری * GGML_RESTRICT x, بلاک_iq4_xs * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
+    quantize_iq4_xs(x, y, 1, k, تہی);
 }
 
 // =============================== 2.5625 bpw
 
-static void quantize_row_iq2_s_impl(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t n, const float * GGML_RESTRICT quant_weights) {
+ساکن خالی quantize_صف_iq2_s_impl(ثابت اعشاری * GGML_RESTRICT x, خالی * GGML_RESTRICT vy, int64_t n, ثابت اعشاری * GGML_RESTRICT quant_weights) {
 
-    const int gindex = iq2_data_index(GGML_TYPE_IQ2_S);
+    ثابت صحیح gindex = iq2_ڈیٹا_اشاریہ(GGML_TYPE_IQ2_S);
 
-    const uint64_t * kgrid_q2xs      = iq2_data[gindex].grid;
-    const int      * kmap_q2xs       = iq2_data[gindex].map;
-    const uint16_t * kneighbors_q2xs = iq2_data[gindex].neighbours;
+    ثابت uint64_t * kgrid_q2xs      = iq2_ڈیٹا[gindex].grid;
+    ثابت صحیح      * kmap_q2xs       = iq2_ڈیٹا[gindex].map;
+    ثابت uint16_t * kneighbors_q2xs = iq2_ڈیٹا[gindex].neighbours;
 
     GGML_ASSERT(kmap_q2xs       && "forgot to call ggml_quantize_init()?");
     GGML_ASSERT(kgrid_q2xs      && "forgot to call ggml_quantize_init()?");
     GGML_ASSERT(kneighbors_q2xs && "forgot to call ggml_quantize_init()?");
     GGML_ASSERT(n%QK_K == 0);
 
-    const int kMaxQ = 3;
+    ثابت صحیح kMaxQ = 3;
 
-    const int64_t nbl = n/QK_K;
+    ثابت int64_t nbl = n/QK_K;
 
-    block_iq2_s * y = vy;
+    بلاک_iq2_s * y = vy;
 
-    float scales[QK_K/16];
-    float weight[16];
-    float xval[16];
+    اعشاری scales[QK_K/16];
+    اعشاری وزن[16];
+    اعشاری xval[16];
     int8_t L[16];
     int8_t Laux[16];
-    float  waux[16];
+    اعشاری  waux[16];
     bool   is_on_grid[2];
     bool   is_on_grid_aux[2];
-    uint8_t block_signs[2];
+    uint8_t بلاک_signs[2];
 
-    for (int ibl = 0; ibl < nbl; ++ibl) {
+    برائے (صحیح ibl = 0; ibl < nbl; ++ibl) {
 
-        memset(&y[ibl], 0, sizeof(block_iq2_s));
-        y[ibl].d = GGML_FP32_TO_FP16(0.f);
+        memset(&y[ibl], 0, حجم(بلاک_iq2_s));
+        y[ibl].d = GGML_FP32_مقصد_FP16(0.f);
 
-        float max_scale = 0;
+        اعشاری max_scale = 0;
 
-        const float * xbl = x + QK_K*ibl;
-        float sumx2 = 0;
-        for (int i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
-        float sigma2 = 2*sumx2/QK_K;
+        ثابت اعشاری * xbl = x + QK_K*ibl;
+        اعشاری sumx2 = 0;
+        برائے (صحیح i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
+        اعشاری sigma2 = 2*sumx2/QK_K;
 
-        for (int ib = 0; ib < QK_K/16; ++ib) {
-            const float * xb = xbl + 16*ib;
-            if (quant_weights) {
-                const float * qw = quant_weights + QK_K*ibl + 16*ib;
-                for (int i = 0; i < 16; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
-            } else {
-                for (int i = 0; i < 16; ++i) weight[i] = 0.25f*sigma2 + xb[i]*xb[i];
+        برائے (صحیح ib = 0; ib < QK_K/16; ++ib) {
+            ثابت اعشاری * xb = xbl + 16*ib;
+            اگر (quant_weights) {
+                ثابت اعشاری * qw = quant_weights + QK_K*ibl + 16*ib;
+                برائے (صحیح i = 0; i < 16; ++i) وزن[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
+            } ورنہ {
+                برائے (صحیح i = 0; i < 16; ++i) وزن[i] = 0.25f*sigma2 + xb[i]*xb[i];
             }
-            for (int i = 0; i < 16; ++i) waux[i] = sqrtf(weight[i]);
-            for (int k = 0; k < 2; ++k) {
+            برائے (صحیح i = 0; i < 16; ++i) waux[i] = sqrtf(وزن[i]);
+            برائے (صحیح k = 0; k < 2; ++k) {
                 uint8_t s = 0;
-                for (int i = 0; i < 8; ++i) {
-                    if (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
-                    else {
+                برائے (صحیح i = 0; i < 8; ++i) {
+                    اگر (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
+                    ورنہ {
                         xval[8*k + i] = -xb[8*k + i]; s |= (1 << i);
                     }
                 }
-                block_signs[k] = s;
+                بلاک_signs[k] = s;
             }
-            float max = xval[0];
-            for (int i = 1; i < 16; ++i) max = MAX(max, xval[i]);
+            اعشاری max = xval[0];
+            برائے (صحیح i = 1; i < 16; ++i) max = MAX(max, xval[i]);
             memset(L, 0, 16);
-            if (max < GROUP_MAX_EPS_IQ2_S) {
+            اگر (max < گروہ_MAX_EPS_IQ2_S) {
                 scales[ib] = 0;
-                continue;
+                جاری;
             }
-            float best = 0;
-            float scale = max/(2*kMaxQ-1);
+            اعشاری بہترین = 0;
+            اعشاری scale = max/(2*kMaxQ-1);
             is_on_grid[0] = is_on_grid[1] = true;
-            for (int is = -9; is <= 9; ++is) {
-                float id = (2*kMaxQ-1+is*0.1f)/max;
-                float this_scale = 1/id;
-                for (int k = 0; k < 2; ++k) {
-                    for (int i = 0; i < 8; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[8*k+i]-1));
+            برائے (صحیح is = -9; is <= 9; ++is) {
+                اعشاری id = (2*kMaxQ-1+is*0.1f)/max;
+                اعشاری this_scale = 1/id;
+                برائے (صحیح k = 0; k < 2; ++k) {
+                    برائے (صحیح i = 0; i < 8; ++i) {
+                        صحیح l = قریب_ترین_int(0.5f*(id*xval[8*k+i]-1));
                         Laux[8*k+i] = MAX(0, MIN(kMaxQ-1, l));
                     }
                     uint16_t u = 0;
-                    for (int i = 0; i < 8; ++i) u |= (Laux[8*k+i] << 2*i);
-                    int grid_index = kmap_q2xs[u];
+                    برائے (صحیح i = 0; i < 8; ++i) u |= (Laux[8*k+i] << 2*i);
+                    صحیح grid_اشاریہ = kmap_q2xs[u];
                     is_on_grid_aux[k] = true;
-                    if (grid_index < 0) {
+                    اگر (grid_اشاریہ < 0) {
                         is_on_grid_aux[k] = false;
-                        const uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
-                        grid_index = iq2_find_best_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, this_scale, Laux + 8*k);
+                        ثابت uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
+                        grid_اشاریہ = iq2_ڈھونڈو_بہترین_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, this_scale, Laux + 8*k);
                     }
                 }
-                float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < 16; ++i) {
-                    float w = weight[i];
-                    float q = 2*Laux[i] + 1;
+                اعشاری sumqx = 0, sumq2 = 0;
+                برائے (صحیح i = 0; i < 16; ++i) {
+                    اعشاری w = وزن[i];
+                    اعشاری q = 2*Laux[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0 && sumqx*sumqx > best*sumq2) {
-                    scale = sumqx/sumq2; best = scale*sumqx;
-                    for (int i = 0; i < 16; ++i) L[i] = Laux[i];
-                    for (int k = 0; k <  2; ++k) is_on_grid[k] = is_on_grid_aux[k];
+                اگر (sumq2 > 0 && sumqx*sumqx > بہترین*sumq2) {
+                    scale = sumqx/sumq2; بہترین = scale*sumqx;
+                    برائے (صحیح i = 0; i < 16; ++i) L[i] = Laux[i];
+                    برائے (صحیح k = 0; k <  2; ++k) is_on_grid[k] = is_on_grid_aux[k];
                 }
             }
-            int n_not_ongrid = 0;
-            for (int k = 0; k < 2; ++k) if (!is_on_grid[k]) ++n_not_ongrid;
-            if (n_not_ongrid > 0 && scale > 0) {
-                float id = 1/scale;
-                for (int k = 0; k < 2; ++k) {
-                    if (is_on_grid[k]) continue;
+            صحیح n_not_ongrid = 0;
+            برائے (صحیح k = 0; k < 2; ++k) اگر (!is_on_grid[k]) ++n_not_ongrid;
+            اگر (n_not_ongrid > 0 && scale > 0) {
+                اعشاری id = 1/scale;
+                برائے (صحیح k = 0; k < 2; ++k) {
+                    اگر (is_on_grid[k]) جاری;
                     uint16_t u = 0;
-                    for (int i = 0; i < 8; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[8*k+i]-1));
+                    برائے (صحیح i = 0; i < 8; ++i) {
+                        صحیح l = قریب_ترین_int(0.5f*(id*xval[8*k+i]-1));
                         l = MAX(0, MIN(kMaxQ-1, l));
                         u |= (l << 2*i);
                         L[8*k + i] = l;
                     }
-                    int grid_index = kmap_q2xs[u];
-                    if (grid_index < 0) {
-                        const uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
-                        grid_index = iq2_find_best_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, scale, L + 8*k);
+                    صحیح grid_اشاریہ = kmap_q2xs[u];
+                    اگر (grid_اشاریہ < 0) {
+                        ثابت uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
+                        grid_اشاریہ = iq2_ڈھونڈو_بہترین_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, scale, L + 8*k);
                     }
                 }
-                float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < 16; ++i) {
-                    float w = weight[i];
-                    float q = 2*L[i] + 1;
+                اعشاری sumqx = 0, sumq2 = 0;
+                برائے (صحیح i = 0; i < 16; ++i) {
+                    اعشاری w = وزن[i];
+                    اعشاری q = 2*L[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0) scale = sumqx/sumq2;
+                اگر (sumq2 > 0) scale = sumqx/sumq2;
             }
-            if (scale < 0) {
+            اگر (scale < 0) {
                 scale = -scale;
-                for (int k = 0; k < 2; ++k) block_signs[k] = ~block_signs[k];
+                برائے (صحیح k = 0; k < 2; ++k) بلاک_signs[k] = ~بلاک_signs[k];
             }
-            for (int k = 0; k < 2; ++k) {
+            برائے (صحیح k = 0; k < 2; ++k) {
                 uint16_t u = 0;
-                for (int i = 0; i < 8; ++i) u |= (L[8*k+i] << 2*i);
-                int grid_index = kmap_q2xs[u];
-                if (grid_index < 0) {
-                    printf("Oops: found point %u not on grid:", u);
-                    for (int i = 0; i < 8; ++i) printf(" %d", L[8*k+i]);
-                    printf("\n");
+                برائے (صحیح i = 0; i < 8; ++i) u |= (L[8*k+i] << 2*i);
+                صحیح grid_اشاریہ = kmap_q2xs[u];
+                اگر (grid_اشاریہ < 0) {
+                    لکھو("Oops: found point %u not on grid:", u);
+                    برائے (صحیح i = 0; i < 8; ++i) لکھو(" %d", L[8*k+i]);
+                    لکھو("\n");
                     GGML_ABORT("fatal error");
                 }
-                const int i8 = 2*ib + k;
-                y[ibl].qs[i8] = grid_index & 255;
-                y[ibl].qh[i8/4] |= ((grid_index >> 8) << 2*(i8%4));
-                y[ibl].qs[QK_K/8 + i8] = block_signs[k];
+                ثابت صحیح i8 = 2*ib + k;
+                y[ibl].qs[i8] = grid_اشاریہ & 255;
+                y[ibl].qh[i8/4] |= ((grid_اشاریہ >> 8) << 2*(i8%4));
+                y[ibl].qs[QK_K/8 + i8] = بلاک_signs[k];
             }
             GGML_ASSERT(scale >= 0);
             scales[ib] = scale;
             max_scale = MAX(max_scale, scale);
         }
 
-        if (!max_scale) {
-            continue;
+        اگر (!max_scale) {
+            جاری;
         }
 
-        float d = max_scale/31;
-        y[ibl].d = GGML_FP32_TO_FP16(d * 0.9875f);
-        float id = 1/d;
-        for (int ib = 0; ib < QK_K/16; ++ib) {
-            int l = nearest_int(0.5f*(id*scales[ib]-1));
+        اعشاری d = max_scale/31;
+        y[ibl].d = GGML_FP32_مقصد_FP16(d * 0.9875f);
+        اعشاری id = 1/d;
+        برائے (صحیح ib = 0; ib < QK_K/16; ++ib) {
+            صحیح l = قریب_ترین_int(0.5f*(id*scales[ib]-1));
             l = MAX(0, MIN(15, l));
-            if (ib%2 == 0) y[ibl].scales[ib/2] = l;
-            else y[ibl].scales[ib/2] |= (l << 4);
+            اگر (ib%2 == 0) y[ibl].scales[ib/2] = l;
+            ورنہ y[ibl].scales[ib/2] |= (l << 4);
         }
     }
 }
 
-size_t quantize_iq2_s(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    GGML_ASSERT(n_per_row%QK_K == 0);
-    int64_t nblock = n_per_row/QK_K;
-    char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
-        quantize_row_iq2_s_impl(src, qrow, n_per_row, quant_weights);
-        src += n_per_row;
-        qrow += nblock*sizeof(block_iq2_s);
+size_t quantize_iq2_s(ثابت اعشاری * GGML_RESTRICT src, خالی * GGML_RESTRICT dst, int64_t nrow, int64_t n_فی_صف, ثابت اعشاری * quant_weights) {
+    GGML_ASSERT(n_فی_صف%QK_K == 0);
+    int64_t nblock = n_فی_صف/QK_K;
+    حرف * qrow = (حرف *)dst;
+    برائے (int64_t صف = 0; صف < nrow; ++صف) {
+        quantize_صف_iq2_s_impl(src, qrow, n_فی_صف, quant_weights);
+        src += n_فی_صف;
+        qrow += nblock*حجم(بلاک_iq2_s);
     }
-    return nrow * nblock * sizeof(block_iq2_s);
+    واپس nrow * nblock * حجم(بلاک_iq2_s);
 }
 
-void quantize_row_iq2_s_ref(const float * GGML_RESTRICT x, block_iq2_s * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    quantize_iq2_s(x, y, 1, k, NULL);
+خالی quantize_صف_iq2_s_ref(ثابت اعشاری * GGML_RESTRICT x, بلاک_iq2_s * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
+    quantize_iq2_s(x, y, 1, k, تہی);
 }
 
 // =============================== data validation
 
-static bool validate_float(float f, size_t i) {
-    if (isinf(f)) {
+ساکن bool validate_float(اعشاری f, size_t i) {
+    اگر (isinf(f)) {
         fprintf(stderr, "ggml_validate_row_data: found inf value at block %zu\n", i);
-        return false;
+        واپس false;
     }
 
-    if (isnan(f)) {
+    اگر (isnan(f)) {
         fprintf(stderr, "ggml_validate_row_data: found nan value at block %zu\n", i);
-        return false;
+        واپس false;
     }
 
-    return true;
+    واپس true;
 }
 
-static bool isinf_fp16(ggml_fp16_t f) {
-    return (f & 0x7c00) == 0x7c00 && (f & 0x03ff) == 0;
+ساکن bool isinf_fp16(ggml_fp16_t f) {
+    واپس (f & 0x7c00) == 0x7c00 && (f & 0x03ff) == 0;
 }
 
-static bool isnan_fp16(ggml_fp16_t f) {
-    return (f & 0x7c00) == 0x7c00 && (f & 0x03ff) != 0;
+ساکن bool isnan_fp16(ggml_fp16_t f) {
+    واپس (f & 0x7c00) == 0x7c00 && (f & 0x03ff) != 0;
 }
 
-static bool validate_fp16(ggml_fp16_t f, size_t i) {
-    if (isinf_fp16(f)) {
+ساکن bool validate_fp16(ggml_fp16_t f, size_t i) {
+    اگر (isinf_fp16(f)) {
         fprintf(stderr, "ggml_validate_row_data: found inf value at block %zu\n", i);
-        return false;
+        واپس false;
     }
 
-    if (isnan_fp16(f)) {
+    اگر (isnan_fp16(f)) {
         fprintf(stderr, "ggml_validate_row_data: found nan value at block %zu\n", i);
-        return false;
+        واپس false;
     }
 
-    return true;
+    واپس true;
 }
 
-static bool validate_e_e8m0(uint8_t e, size_t i) {
-    if (e == 0xff) {
+ساکن bool validate_e_e8m0(uint8_t e, size_t i) {
+    اگر (e == 0xff) {
         fprintf(stderr, "ggml_validate_row_data: found invalid e value %d at block %zu\n", e, i);
-        return false;
+        واپس false;
     }
 
-    return true;
+    واپس true;
 }
 
-#define VALIDATE_ROW_DATA_D_F16_IMPL(type, data, nb) \
-    const type * q = (const type *) (data); \
-    for (size_t i = 0; i < (nb); ++i) { \
-        if (!validate_fp16(q[i].d, i)) { \
-            return false; \
+#تعریف_کرو VALIDATE_صف_ڈیٹا_D_F16_IMPL(type, ڈیٹا, nb) \
+    ثابت type * q = (ثابت type *) (ڈیٹا); \
+    برائے (size_t i = 0; i < (nb); ++i) { \
+        اگر (!validate_fp16(q[i].d, i)) { \
+            واپس false; \
         } \
     }
 
-#define VALIDATE_ROW_DATA_DM_F16_IMPL(type, data, nb, d, m) \
-    const type * q = (const type *) (data); \
-    for (size_t i = 0; i < (nb); ++i) { \
-        if (!validate_fp16(q[i].d, i) || !validate_fp16(q[i].m, i)) { \
-            return false; \
+#تعریف_کرو VALIDATE_صف_ڈیٹا_DM_F16_IMPL(type, ڈیٹا, nb, d, m) \
+    ثابت type * q = (ثابت type *) (ڈیٹا); \
+    برائے (size_t i = 0; i < (nb); ++i) { \
+        اگر (!validate_fp16(q[i].d, i) || !validate_fp16(q[i].m, i)) { \
+            واپس false; \
         } \
     }
 
-#define VALIDATE_ROW_DATA_E_E8M0_IMPL(type, data, nb) \
-    const type * q = (const type *) (data); \
-    for (size_t i = 0; i < (nb); ++i) { \
-        if (!validate_e_e8m0(q[i].e, i)) { \
-            return false; \
+#تعریف_کرو VALIDATE_صف_ڈیٹا_E_E8_M0_IMPL(type, ڈیٹا, nb) \
+    ثابت type * q = (ثابت type *) (ڈیٹا); \
+    برائے (size_t i = 0; i < (nb); ++i) { \
+        اگر (!validate_e_e8m0(q[i].e, i)) { \
+            واپس false; \
         } \
     }
 
-#define VALIDATE_ROW_DATA_DVEC_F16_IMPL(type, data, nb, nr) \
-    const type * q = (const type *) (data); \
-    for (size_t i = 0; i < (nb); ++i) { \
-        for (size_t j = 0; j < (nr); ++j) { \
-            if (!validate_fp16(q[i].d[j], i)) { \
-                return false; \
+#تعریف_کرو VALIDATE_صف_ڈیٹا_DVEC_F16_IMPL(type, ڈیٹا, nb, nr) \
+    ثابت type * q = (ثابت type *) (ڈیٹا); \
+    برائے (size_t i = 0; i < (nb); ++i) { \
+        برائے (size_t j = 0; j < (nr); ++j) { \
+            اگر (!validate_fp16(q[i].d[j], i)) { \
+                واپس false; \
             } \
         } \
     }
 
-bool ggml_validate_row_data(enum ggml_type type, const void * data, size_t nbytes) {
-    if (type < 0 || type >= GGML_TYPE_COUNT) {
+bool ggml_validate_صف_ڈیٹا(شمار ggml_type type, ثابت خالی * ڈیٹا, size_t nbytes) {
+    اگر (type < 0 || type >= GGML_TYPE_گنتی) {
         fprintf(stderr, "%s: invalid type %d\n", __func__, type);
-        return false;
+        واپس false;
     }
 
-    if (nbytes % ggml_type_size(type) != 0) {
-        fprintf(stderr, "%s: invalid size %zu for type %s (type size = %zu)\n", __func__, nbytes, ggml_type_name(type), ggml_type_size(type));
-        return false;
+    اگر (nbytes % ggml_type_سائز(type) != 0) {
+        fprintf(stderr, "%s: invalid size %zu for type %s (type size = %zu)\n", __func__, nbytes, ggml_type_name(type), ggml_type_سائز(type));
+        واپس false;
     }
 
-    const size_t nb = nbytes/ggml_type_size(type);
+    ثابت size_t nb = nbytes/ggml_type_سائز(type);
 
-    switch (type) {
-        case GGML_TYPE_BF16:
+    انتخاب (type) {
+        حالت GGML_TYPE_BF16:
             {
-                int nans = 0;
-                int infs = 0;
-                const unsigned short * f = (const unsigned short *) data;
-                for (size_t i = 0; i < nb; ++i) {
+                صحیح nans = 0;
+                صحیح infs = 0;
+                ثابت غیرعلامتی مختصر * f = (ثابت غیرعلامتی مختصر *) ڈیٹا;
+                برائے (size_t i = 0; i < nb; ++i) {
                     nans += (f[i] & 0x7fff) > 0x7f80;
                     infs += (f[i] & 0x7fff) == 0x7f80;
                 }
-                if (nans) {
+                اگر (nans) {
                     fprintf(stderr, "%s: found %d NaNs in row of %zu BF16 values\n", __func__, nans, nb);
-                    return false;
+                    واپس false;
                 }
-                if (infs) {
+                اگر (infs) {
                     fprintf(stderr, "%s: found %d infinities in row of %zu BF16 values\n", __func__, infs, nb);
-                    return false;
+                    واپس false;
                 }
-            } break;
-        case GGML_TYPE_F16:
+            } توڑو;
+        حالت GGML_TYPE_F16:
             {
-                const ggml_fp16_t * f = (const ggml_fp16_t *) data;
+                ثابت ggml_fp16_t * f = (ثابت ggml_fp16_t *) ڈیٹا;
                 size_t i = 0;
-#if defined(__AVX2__)
-                for (; i + 15 < nb; i += 16) {
-                    __m256i v = _mm256_loadu_si256((const __m256i *)(f + i));
+#اگر defined(__AVX2__)
+                برائے (; i + 15 < nb; i += 16) {
+                    __m256i v = _mm256_loadu_si256((ثابت __m256i *)(f + i));
                     __m256i vexp = _mm256_and_si256(v, _mm256_set1_epi16(0x7c00));
                     __m256i cmp = _mm256_cmpeq_epi16(vexp, _mm256_set1_epi16(0x7c00));
-                    int mask = _mm256_movemask_epi8(cmp);
-                    if (mask) {
-                        for (size_t j = 0; j < 16; ++j) {
-                            if (!validate_fp16(f[i + j], i + j)) {
-                                return false;
+                    صحیح نقاب = _mm256_movemask_epi8(cmp);
+                    اگر (نقاب) {
+                        برائے (size_t j = 0; j < 16; ++j) {
+                            اگر (!validate_fp16(f[i + j], i + j)) {
+                                واپس false;
                             }
                         }
                         GGML_UNREACHABLE();
                     }
                 }
-#elif defined(__ARM_NEON)
-                for (; i + 7 < nb; i += 8) {
+#وگرنہ_اگر defined(__ARM_NEON)
+                برائے (; i + 7 < nb; i += 8) {
                     uint16x8_t v = vld1q_u16(f + i);
                     uint16x8_t vexp = vandq_u16(v, vdupq_n_u16(0x7c00));
                     uint16x8_t cmp = vceqq_u16(vexp, vdupq_n_u16(0x7c00));
-                    uint64_t mask = vget_lane_u64(vreinterpret_u64_u8(vshrn_n_u16(cmp, 4)), 0);
-                    if (mask) {
-                        for (size_t j = 0; j < 8; ++j) {
-                            if (!validate_fp16(f[i + j], i + j)) {
-                                return false;
+                    uint64_t نقاب = vget_lane_u64(vreinterpret_u64_u8(vshrn_n_u16(cmp, 4)), 0);
+                    اگر (نقاب) {
+                        برائے (size_t j = 0; j < 8; ++j) {
+                            اگر (!validate_fp16(f[i + j], i + j)) {
+                                واپس false;
                             }
                         }
                         GGML_UNREACHABLE();
                     }
                 }
-#endif
-                for (; i < nb; ++i) {
-                    if (!validate_fp16(f[i], i)) {
-                        return false;
+#اگر_ختم
+                برائے (; i < nb; ++i) {
+                    اگر (!validate_fp16(f[i], i)) {
+                        واپس false;
                     }
                 }
-            } break;
-        case GGML_TYPE_F32:
+            } توڑو;
+        حالت GGML_TYPE_F32:
             {
-                const float * f = (const float *) data;
+                ثابت اعشاری * f = (ثابت اعشاری *) ڈیٹا;
                 size_t i = 0;
-#if defined(__AVX2__)
-                for (; i + 7 < nb; i += 8) {
-                    __m256i v = _mm256_loadu_si256((const __m256i *)(f + i));
+#اگر defined(__AVX2__)
+                برائے (; i + 7 < nb; i += 8) {
+                    __m256i v = _mm256_loadu_si256((ثابت __m256i *)(f + i));
                     __m256i vexp = _mm256_and_si256(v, _mm256_set1_epi32(0x7f800000));
                     __m256i cmp = _mm256_cmpeq_epi32(vexp, _mm256_set1_epi32(0x7f800000));
-                    int mask = _mm256_movemask_epi8(cmp);
-                    if (mask) {
-                        for (size_t j = 0; j < 8; ++j) {
-                            if (!validate_float(f[i + j], i + j)) {
-                                return false;
+                    صحیح نقاب = _mm256_movemask_epi8(cmp);
+                    اگر (نقاب) {
+                        برائے (size_t j = 0; j < 8; ++j) {
+                            اگر (!validate_float(f[i + j], i + j)) {
+                                واپس false;
                             }
                         }
                         GGML_UNREACHABLE();
                     }
                 }
-#elif defined(__ARM_NEON)
-                for (; i + 3 < nb; i += 4) {
-                    uint32x4_t v = vld1q_u32((const uint32_t *)f + i);
+#وگرنہ_اگر defined(__ARM_NEON)
+                برائے (; i + 3 < nb; i += 4) {
+                    uint32x4_t v = vld1q_u32((ثابت uint32_t *)f + i);
                     uint32x4_t vexp = vandq_u32(v, vdupq_n_u32(0x7f800000));
                     uint32x4_t cmp = vceqq_u32(vexp, vdupq_n_u32(0x7f800000));
-                    uint64_t mask = vget_lane_u64(vreinterpret_u64_u16(vshrn_n_u32(cmp, 8)), 0);
-                    if (mask) {
-                        for (size_t j = 0; j < 4; ++j) {
-                            if (!validate_float(f[i + j], i + j)) {
-                                return false;
+                    uint64_t نقاب = vget_lane_u64(vreinterpret_u64_u16(vshrn_n_u32(cmp, 8)), 0);
+                    اگر (نقاب) {
+                        برائے (size_t j = 0; j < 4; ++j) {
+                            اگر (!validate_float(f[i + j], i + j)) {
+                                واپس false;
                             }
                         }
                         GGML_UNREACHABLE();
                     }
                 }
-#endif
-                for (; i < nb; ++i) {
-                    if (!validate_float(f[i], i)) {
-                        return false;
+#اگر_ختم
+                برائے (; i < nb; ++i) {
+                    اگر (!validate_float(f[i], i)) {
+                        واپس false;
                     }
                 }
-            } break;
-        case GGML_TYPE_F64:
+            } توڑو;
+        حالت GGML_TYPE_F64:
             {
-                const double * f = (const double *) data;
-                for (size_t i = 0; i < nb; ++i) {
-                    if (!validate_float(f[i], i)) {
-                        return false;
+                ثابت دوہرا * f = (ثابت دوہرا *) ڈیٹا;
+                برائے (size_t i = 0; i < nb; ++i) {
+                    اگر (!validate_float(f[i], i)) {
+                        واپس false;
                     }
                 }
-            } break;
-        case GGML_TYPE_Q1_0:
+            } توڑو;
+        حالت GGML_TYPE_Q1_0:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_q1_0, data, nb);
-            } break;
-        case GGML_TYPE_Q2_0:
+                VALIDATE_صف_ڈیٹا_D_F16_IMPL(بلاک_q1_0, ڈیٹا, nb);
+            } توڑو;
+        حالت GGML_TYPE_Q2_0:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_q2_0, data, nb);
-            } break;
-        case GGML_TYPE_Q4_0:
+                VALIDATE_صف_ڈیٹا_D_F16_IMPL(بلاک_q2_0, ڈیٹا, nb);
+            } توڑو;
+        حالت GGML_TYPE_Q4_0:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_q4_0, data, nb);
-            } break;
-        case GGML_TYPE_Q4_1:
+                VALIDATE_صف_ڈیٹا_D_F16_IMPL(بلاک_q4_0, ڈیٹا, nb);
+            } توڑو;
+        حالت GGML_TYPE_Q4_1:
             {
-                VALIDATE_ROW_DATA_DM_F16_IMPL(block_q4_1, data, nb, d, m);
-            } break;
-        case GGML_TYPE_Q5_0:
+                VALIDATE_صف_ڈیٹا_DM_F16_IMPL(بلاک_q4_1, ڈیٹا, nb, d, m);
+            } توڑو;
+        حالت GGML_TYPE_Q5_0:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_q5_0, data, nb);
-            } break;
-        case GGML_TYPE_Q5_1:
+                VALIDATE_صف_ڈیٹا_D_F16_IMPL(بلاک_q5_0, ڈیٹا, nb);
+            } توڑو;
+        حالت GGML_TYPE_Q5_1:
             {
-                VALIDATE_ROW_DATA_DM_F16_IMPL(block_q5_1, data, nb, d, m);
-            } break;
-        case GGML_TYPE_Q8_0:
+                VALIDATE_صف_ڈیٹا_DM_F16_IMPL(بلاک_q5_1, ڈیٹا, nb, d, m);
+            } توڑو;
+        حالت GGML_TYPE_Q8_0:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_q8_0, data, nb);
-            } break;
-        case GGML_TYPE_MXFP4:
+                VALIDATE_صف_ڈیٹا_D_F16_IMPL(بلاک_q8_0, ڈیٹا, nb);
+            } توڑو;
+        حالت GGML_TYPE_MXFP4:
             {
-                VALIDATE_ROW_DATA_E_E8M0_IMPL(block_mxfp4, data, nb);
-            } break;
-        case GGML_TYPE_NVFP4:
+                VALIDATE_صف_ڈیٹا_E_E8_M0_IMPL(بلاک_mxfp4, ڈیٹا, nb);
+            } توڑو;
+        حالت GGML_TYPE_NVFP4:
             {
                 // UE4M3 scales are uint8_t — all byte values are valid
-                GGML_UNUSED(data);
-                GGML_UNUSED(nb);
-            } break;
-        case GGML_TYPE_Q2_K:
+                GGML_غیر_مستعمل(ڈیٹا);
+                GGML_غیر_مستعمل(nb);
+            } توڑو;
+        حالت GGML_TYPE_Q2_K:
             {
-                VALIDATE_ROW_DATA_DM_F16_IMPL(block_q2_K, data, nb, d, dmin);
-            } break;
-        case GGML_TYPE_Q3_K:
+                VALIDATE_صف_ڈیٹا_DM_F16_IMPL(بلاک_q2_K, ڈیٹا, nb, d, dmin);
+            } توڑو;
+        حالت GGML_TYPE_Q3_K:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_q3_K, data, nb);
-            } break;
-        case GGML_TYPE_Q4_K:
+                VALIDATE_صف_ڈیٹا_D_F16_IMPL(بلاک_q3_K, ڈیٹا, nb);
+            } توڑو;
+        حالت GGML_TYPE_Q4_K:
             {
-                VALIDATE_ROW_DATA_DM_F16_IMPL(block_q4_K, data, nb, d, dmin);
-            } break;
-        case GGML_TYPE_Q5_K:
+                VALIDATE_صف_ڈیٹا_DM_F16_IMPL(بلاک_q4_K, ڈیٹا, nb, d, dmin);
+            } توڑو;
+        حالت GGML_TYPE_Q5_K:
             {
-                VALIDATE_ROW_DATA_DM_F16_IMPL(block_q5_K, data, nb, d, dmin);
-            } break;
-        case GGML_TYPE_Q6_K:
+                VALIDATE_صف_ڈیٹا_DM_F16_IMPL(بلاک_q5_K, ڈیٹا, nb, d, dmin);
+            } توڑو;
+        حالت GGML_TYPE_Q6_K:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_q6_K, data, nb);
-            } break;
-        case GGML_TYPE_Q8_K:
+                VALIDATE_صف_ڈیٹا_D_F16_IMPL(بلاک_q6_K, ڈیٹا, nb);
+            } توڑو;
+        حالت GGML_TYPE_Q8_K:
             {
-                const block_q8_K * q = (const block_q8_K *) data;
-                for (size_t i = 0; i < nb; ++i) {
-                    if (!validate_float(q[i].d, i)) {
-                        return false;
+                ثابت بلاک_q8_K * q = (ثابت بلاک_q8_K *) ڈیٹا;
+                برائے (size_t i = 0; i < nb; ++i) {
+                    اگر (!validate_float(q[i].d, i)) {
+                        واپس false;
                     }
                 }
-            } break;
-        case GGML_TYPE_TQ1_0:
+            } توڑو;
+        حالت GGML_TYPE_TQ1_0:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_tq1_0, data, nb);
-            } break;
-        case GGML_TYPE_TQ2_0:
+                VALIDATE_صف_ڈیٹا_D_F16_IMPL(بلاک_tq1_0, ڈیٹا, nb);
+            } توڑو;
+        حالت GGML_TYPE_TQ2_0:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_tq2_0, data, nb);
-            } break;
-        case GGML_TYPE_IQ1_S:
+                VALIDATE_صف_ڈیٹا_D_F16_IMPL(بلاک_tq2_0, ڈیٹا, nb);
+            } توڑو;
+        حالت GGML_TYPE_IQ1_S:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_iq1_s, data, nb);
-            } break;
-        case GGML_TYPE_IQ1_M:
+                VALIDATE_صف_ڈیٹا_D_F16_IMPL(بلاک_iq1_s, ڈیٹا, nb);
+            } توڑو;
+        حالت GGML_TYPE_IQ1_M:
             {
-                const block_iq1_m * q = (const block_iq1_m *) data;
-                for (size_t i = 0; i < nb; ++i) {
+                ثابت بلاک_iq1_m * q = (ثابت بلاک_iq1_m *) ڈیٹا;
+                برائے (size_t i = 0; i < nb; ++i) {
                     iq1m_scale_t scale;
-                    const uint16_t * sc = (const uint16_t *)q[i].scales;
+                    ثابت uint16_t * sc = (ثابت uint16_t *)q[i].scales;
                     scale.u16 = (sc[0] >> 12) | ((sc[1] >> 8) & 0x00f0) | ((sc[2] >> 4) & 0x0f00) | (sc[3] & 0xf000);
-                    if (!validate_fp16(scale.f16, i)) {
-                        return false;
+                    اگر (!validate_fp16(scale.f16, i)) {
+                        واپس false;
                     }
                 }
-            } break;
-        case GGML_TYPE_IQ2_XXS:
+            } توڑو;
+        حالت GGML_TYPE_IQ2_XXS:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_iq2_xxs, data, nb);
-            } break;
-        case GGML_TYPE_IQ2_XS:
+                VALIDATE_صف_ڈیٹا_D_F16_IMPL(بلاک_iq2_xxs, ڈیٹا, nb);
+            } توڑو;
+        حالت GGML_TYPE_IQ2_XS:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_iq2_xs, data, nb);
-            } break;
-        case GGML_TYPE_IQ2_S:
+                VALIDATE_صف_ڈیٹا_D_F16_IMPL(بلاک_iq2_xs, ڈیٹا, nb);
+            } توڑو;
+        حالت GGML_TYPE_IQ2_S:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_iq2_s, data, nb);
-            } break;
-        case GGML_TYPE_IQ3_XXS:
+                VALIDATE_صف_ڈیٹا_D_F16_IMPL(بلاک_iq2_s, ڈیٹا, nb);
+            } توڑو;
+        حالت GGML_TYPE_IQ3_XXS:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_iq3_xxs, data, nb);
-            } break;
+                VALIDATE_صف_ڈیٹا_D_F16_IMPL(بلاک_iq3_xxs, ڈیٹا, nb);
+            } توڑو;
 
-        case GGML_TYPE_IQ3_S:
+        حالت GGML_TYPE_IQ3_S:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_iq3_s, data, nb);
-            } break;
-        case GGML_TYPE_IQ4_XS:
+                VALIDATE_صف_ڈیٹا_D_F16_IMPL(بلاک_iq3_s, ڈیٹا, nb);
+            } توڑو;
+        حالت GGML_TYPE_IQ4_XS:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_iq4_xs, data, nb);
-            } break;
-        case GGML_TYPE_IQ4_NL:
+                VALIDATE_صف_ڈیٹا_D_F16_IMPL(بلاک_iq4_xs, ڈیٹا, nb);
+            } توڑو;
+        حالت GGML_TYPE_IQ4_NL:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_iq4_nl, data, nb);
-            } break;
+                VALIDATE_صف_ڈیٹا_D_F16_IMPL(بلاک_iq4_nl, ڈیٹا, nb);
+            } توڑو;
 
-        case GGML_TYPE_I8:
-        case GGML_TYPE_I16:
-        case GGML_TYPE_I32:
-        case GGML_TYPE_I64:
+        حالت GGML_TYPE_I8:
+        حالت GGML_TYPE_I16:
+        حالت GGML_TYPE_I32:
+        حالت GGML_TYPE_I64:
             // nothing to validate
-            break;
-        default:
+            توڑو;
+        طےشدہ:
             {
                 fprintf(stderr, "%s: invalid type %d\n", __func__, type);
-                return false;
+                واپس false;
             }
     }
 
-    return true;
+    واپس true;
 }

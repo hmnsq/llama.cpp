@@ -1,86 +1,86 @@
-#pragma once
+#ہدایت once
 
-#include <atomic>
-#include <cassert>
-#include <cerrno>
-#include <cstdarg>
-#include <cstddef>
-#include <cstdint>
-#include <cstdio>
-#include <cstdlib>
-#include <ctime>
+#شامل <atomic>
+#شامل <cassert>
+#شامل <cerrno>
+#شامل <cstdarg>
+#شامل <cstddef>
+#شامل <cstdint>
+#شامل <cstdio>
+#شامل <cstdlib>
+#شامل <ctime>
 
-#define unlikely(x) __builtin_expect(!!(x), 0)
-#define likely(x)   __builtin_expect(!!(x), 1)
+#تعریف_کرو unlikely(x) __builtin_expect(!!(x), 0)
+#تعریف_کرو likely(x)   __builtin_expect(!!(x), 1)
 
-#ifndef UNUSED
-#    define UNUSED(x) (void) (x)
-#endif
+#اگر_غیر_تعریف_شدہ غیر_مستعمل
+#    define غیر_مستعمل(x) (خالی) (x)
+#اگر_ختم
 
 /** Checks is a value is a power of two. Does not handle zero. */
-#define IS_POT(v) (((v) & ((v) - 1)) == 0)
+#تعریف_کرو IS_POT(v) (((v) & ((v) - 1)) == 0)
 
 /** Checks is a value is a power of two. Zero handled. */
-#define IS_POT_NONZERO(v) ((v) != 0 && IS_POT(v))
+#تعریف_کرو IS_POT_NONZERO(v) ((v) != 0 && IS_POT(v))
 
 /** Align a value to a power of two */
-#define ALIGN_POT(x, pot_align) (((x) + (pot_align) - 1) & ~((pot_align) - 1))
+#تعریف_کرو ALIGN_POT(x, pot_align) (((x) + (pot_align) - 1) & ~((pot_align) - 1))
 
-#define p_atomic_read(_v) __atomic_load_n((_v), __ATOMIC_ACQUIRE)
+#تعریف_کرو p_atomic_read(_v) __atomic_load_n((_v), __ATOMIC_ACQUIRE)
 
-static inline bool util_is_power_of_two_nonzero64(uint64_t v) {
-    return IS_POT_NONZERO(v);
+ساکن اندرونی bool util_is_power_کا_two_nonzero64(uint64_t v) {
+    واپس IS_POT_NONZERO(v);
 }
 
-static inline uint64_t align64(uint64_t value, uint64_t alignment) {
-    assert(util_is_power_of_two_nonzero64(alignment));
-    return ALIGN_POT(value, alignment);
+ساکن اندرونی uint64_t align64(uint64_t قدر, uint64_t alignment) {
+    أكد(util_is_power_کا_two_nonzero64(alignment));
+    واپس ALIGN_POT(قدر, alignment);
 }
 
-struct list_head {
-    list_head * prev;
-    list_head * next;
+ساخت list_سر {
+    list_سر * پچھلا;
+    list_سر * اگلا;
 };
 
-struct util_sparse_array {
-    size_t   elem_size;
-    unsigned node_size_log2;
+ساخت util_sparse_array {
+    size_t   elem_سائز;
+    غیرعلامتی گرہ_سائز_log2;
 
-    uintptr_t root;
+    uintptr_t جڑ;
 };
 
-void * util_sparse_array_get(util_sparse_array * arr, uint64_t idx);
-void   util_sparse_array_init(util_sparse_array * arr, size_t elem_size, size_t node_size);
+خالی * util_sparse_array_get(util_sparse_array * arr, uint64_t idx);
+خالی   util_sparse_array_init(util_sparse_array * arr, size_t elem_سائز, size_t گرہ_سائز);
 
-inline void os_time_sleep(int64_t usecs) {
-    timespec time;
-    time.tv_sec  = usecs / 1000000;
-    time.tv_nsec = (usecs % 1000000) * 1000;
-    while (clock_nanosleep(CLOCK_MONOTONIC, 0, &time, &time) == EINTR)
+اندرونی خالی os_وقت_sleep(int64_t usecs) {
+    timespec وقت;
+    وقت.tv_sec  = usecs / 1000000;
+    وقت.tv_nsec = (usecs % 1000000) * 1000;
+    جب (clock_nanosleep(CLOCK_MONOTONIC, 0, &وقت, &وقت) == EINTR)
         ;
 }
 
-struct timer_data {
-    long long start;
-    long long total;
-    long long count;
+ساخت timer_ڈیٹا {
+    طویل طویل آغاز;
+    طویل طویل کل;
+    طویل طویل گنتی;
 };
 
-static inline void start_timer(timer_data * timer) {
+ساکن اندرونی خالی آغاز_timer(timer_ڈیٹا * timer) {
     timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    timer->start = (long long) ts.tv_sec * 1000000000LL + ts.tv_nsec;
+    timer->آغاز = (طویل طویل) ts.tv_sec * 1000000000LL + ts.tv_nsec;
 }
 
 // returns the duration in ns
-static inline long long stop_timer(timer_data * timer) {
+ساکن اندرونی طویل طویل stop_timer(timer_ڈیٹا * timer) {
     timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    long long timer_end = (long long) ts.tv_sec * 1000000000LL + ts.tv_nsec;
+    طویل طویل timer_انتہا = (طویل طویل) ts.tv_sec * 1000000000LL + ts.tv_nsec;
 
-    long long duration = (timer_end - timer->start);
-    timer->total += duration;
-    timer->count += 1;
+    طویل طویل duration = (timer_انتہا - timer->آغاز);
+    timer->کل += duration;
+    timer->گنتی += 1;
 
-    return duration;
+    واپس duration;
 }

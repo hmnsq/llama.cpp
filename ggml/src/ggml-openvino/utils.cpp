@@ -1,45 +1,45 @@
-#include "utils.h"
+#شامل "utils.h"
 
-#include "ggml-impl.h"
-#include "ggml-openvino-extra.h"
-#include "ggml-openvino.h"
-#include "ggml-openvino/ggml-decoder.h"
-#include "ggml.h"
-#include "model-cache.h"
-#include "openvino/frontend.h"
-#include "openvino/input_model.h"
+#شامل "ggml-impl.h"
+#شامل "ggml-openvino-extra.h"
+#شامل "ggml-openvino.h"
+#شامل "ggml-openvino/ggml-decoder.h"
+#شامل "ggml.h"
+#شامل "model-cache.h"
+#شامل "openvino/frontend.h"
+#شامل "openvino/input_model.h"
 
-#include <algorithm>
-#include <cassert>
-#include <cmath>
-#include <cstddef>
-#include <cstdint>
-#include <cstdlib>
-#include <cstring>
-#include <fstream>
-#include <functional>
-#include <iomanip>
-#include <iostream>
-#include <memory>
-#include <openvino/core/any.hpp>
-#include <openvino/core/graph_util.hpp>
-#include <openvino/core/shape.hpp>
-#include <openvino/core/type/float16.hpp>
-#include <openvino/frontend/manager.hpp>
-#include <openvino/openvino.hpp>
-#include <openvino/runtime/compiled_model.hpp>
-#include <openvino/runtime/infer_request.hpp>
-#include <openvino/runtime/intel_gpu/ocl/ocl.hpp>
-#include <openvino/runtime/intel_npu/properties.hpp>
-#include <openvino/runtime/properties.hpp>
-#include <openvino/runtime/tensor.hpp>
-#include <optional>
-#include <set>
-#include <string>
-#include <unordered_map>
-#include <vector>
+#شامل <algorithm>
+#شامل <cassert>
+#شامل <cmath>
+#شامل <cstddef>
+#شامل <cstdint>
+#شامل <cstdlib>
+#شامل <cstring>
+#شامل <fstream>
+#شامل <functional>
+#شامل <iomanip>
+#شامل <iostream>
+#شامل <memory>
+#شامل <openvino/core/any.hpp>
+#شامل <openvino/core/graph_util.hpp>
+#شامل <openvino/core/shape.hpp>
+#شامل <openvino/core/type/float16.hpp>
+#شامل <openvino/frontend/manager.hpp>
+#شامل <openvino/openvino.hpp>
+#شامل <openvino/runtime/compiled_model.hpp>
+#شامل <openvino/runtime/infer_request.hpp>
+#شامل <openvino/runtime/intel_gpu/ocl/ocl.hpp>
+#شامل <openvino/runtime/intel_npu/properties.hpp>
+#شامل <openvino/runtime/properties.hpp>
+#شامل <openvino/runtime/tensor.hpp>
+#شامل <optional>
+#شامل <set>
+#شامل <string>
+#شامل <unordered_map>
+#شامل <vector>
 
-namespace {
+نامخلا {
 // For a KV cache input, return an ov::Tensor sized to n_kv (== attention_size
 // for that layer) instead of the fully-allocated ctx_per_seq. Pre-conditions:
 //   * non-static (CPU/GPU) backend, single sequence, seq_active_start == 0
@@ -50,67 +50,67 @@ namespace {
 //     n_kv rows no longer contain the live prefix
 // On any unmet pre-condition returns std::nullopt; the caller falls back to
 // the full-size tensor.
-std::optional<ov::Tensor> try_make_kv_sliced_tensor(const std::shared_ptr<GgmlOvDecoder> & ggml_decoder,
-                                                    const std::string & name,
-                                                    const ggml_tensor * ggml_tensor) {
-    static const bool kv_slice_disabled = ggml_openvino_getenv_int("GGML_OPENVINO_DISABLE_KV_SLICE");
-    if (kv_slice_disabled) {
-        return std::nullopt;
+std::optional<ov::Tensor> try_make_kv_sliced_tensor(ثابت std::shared_ptr<GgmlOvDecoder> & ggml_decoder,
+                                                    ثابت std::string & name,
+                                                    ثابت ggml_tensor * ggml_tensor) {
+    ساکن ثابت منطقی kv_قاش_disabled = ggml_openvino_getenv_int("GGML_OPENVINO_DISABLE_KV_SLICE");
+    اگر (kv_قاش_disabled) {
+        واپس std::nullopt;
     }
-    if (ggml_decoder->is_static() || ggml_decoder->is_stateful()) {
-        return std::nullopt;
+    اگر (ggml_decoder->is_static() || ggml_decoder->is_stateful()) {
+        واپس std::nullopt;
     }
-    if (ggml_tensor->op != GGML_OP_NONE || ggml_tensor->view_src != nullptr) {
-        return std::nullopt;
+    اگر (ggml_tensor->op != GGML_OP_NONE || ggml_tensor->view_src != خالی_اشاریہ) {
+        واپس std::nullopt;
     }
-    const auto * op = ggml_decoder->get_tensor_used_op(ggml_tensor);
-    if (!GgmlOvDecoder::is_kvcache(ggml_tensor, op)) {
-        return std::nullopt;
-    }
-
-    const auto & compute_params = ggml_decoder->get_compute_params();
-    if (compute_params.n_seq_active != 1 || compute_params.seq_active_start != 0) {
-        return std::nullopt;
+    ثابت خودکار * op = ggml_decoder->get_tensor_مستعمل_op(ggml_tensor);
+    اگر (!GgmlOvDecoder::is_kvcache(ggml_tensor, op)) {
+        واپس std::nullopt;
     }
 
-    int layer;
-    if (auto layer_opt = extract_layer_from_name(name); layer_opt.has_value()) {
+    ثابت خودکار & compute_params = ggml_decoder->get_compute_params();
+    اگر (compute_params.n_seq_فعال != 1 || compute_params.seq_فعال_آغاز != 0) {
+        واپس std::nullopt;
+    }
+
+    صحیح layer;
+    اگر (خودکار layer_opt = نکالو_layer_from_name(name); layer_opt.has_value()) {
         layer = layer_opt.value();
-    } else {
-        return std::nullopt;
+    } ورنہ {
+        واپس std::nullopt;
     }
 
-    const bool is_swa = ggml_decoder->is_swa_layer(layer);
-    if (is_swa) {
-        return std::nullopt;
+    ثابت منطقی is_swa = ggml_decoder->is_swa_layer(layer);
+    اگر (is_swa) {
+        واپس std::nullopt;
     }
-    const int ctx_per_seq = ggml_decoder->get_ctx_per_seq();
-    const int n_kv = compute_params.attention_size;
-    if (ctx_per_seq <= 0 || n_kv <= 0 || n_kv >= ctx_per_seq) {
-        return std::nullopt;
-    }
-
-    ov::Shape full_shape = GgmlOvDecoder::get_shape(ggml_tensor);
-    if (full_shape.size() != 4 || full_shape[0] != 1 || full_shape[1] != 1 ||
-        static_cast<int>(full_shape[2]) != ctx_per_seq) {
-        return std::nullopt;
+    ثابت صحیح ctx_فی_seq = ggml_decoder->get_ctx_فی_seq();
+    ثابت صحیح n_kv = compute_params.attention_سائز;
+    اگر (ctx_فی_seq <= 0 || n_kv <= 0 || n_kv >= ctx_فی_seq) {
+        واپس std::nullopt;
     }
 
-    ov::Shape sliced_shape = full_shape;
+    ov::Shape بھرا_shape = GgmlOvDecoder::get_shape(ggml_tensor);
+    اگر (بھرا_shape.size() != 4 || بھرا_shape[0] != 1 || بھرا_shape[1] != 1 ||
+        static_cast<صحیح>(بھرا_shape[2]) != ctx_فی_seq) {
+        واپس std::nullopt;
+    }
+
+    ov::Shape sliced_shape = بھرا_shape;
     sliced_shape[2] = static_cast<size_t>(n_kv);
 
-    if (ggml_openvino_buffer_is_remote(ggml_tensor)) {
-        auto remote_context = ggml_openvino_get_remote_context();
-        auto gpu_context = remote_context->as<ov::intel_gpu::ocl::ClContext>();
-        return gpu_context.create_tensor(ggml_decoder->get_ov_type(ggml_tensor), sliced_shape, ggml_tensor->data);
+    اگر (ggml_openvino_بفر_is_remote(ggml_tensor)) {
+        خودکار remote_context = ggml_openvino_get_remote_context();
+        خودکار gpu_context = remote_context->as<ov::intel_gpu::ocl::ClContext>();
+        واپس gpu_context.create_tensor(ggml_decoder->get_ov_type(ggml_tensor), sliced_shape, ggml_tensor->ڈیٹا);
     }
 
-    return ov::Tensor(GgmlOvDecoder::get_ov_type(ggml_tensor), sliced_shape, ggml_tensor->data);
+    واپس ov::Tensor(GgmlOvDecoder::get_ov_type(ggml_tensor), sliced_shape, ggml_tensor->ڈیٹا);
 }
 
-static uint64_t ggml_openvino_model_cache_extra_cfg(bool stateful, bool recurrent) {
-    const char * manual_gqa_env = ggml_openvino_getenv_str("GGML_OPENVINO_MANUAL_GQA_ATTN");
-    const bool manual_gqa_enabled = manual_gqa_env != nullptr ?
+ساکن uint64_t ggml_openvino_model_cache_extra_cfg(منطقی stateful, منطقی recurrent) {
+    ثابت حرف * manual_gqa_env = ggml_openvino_getenv_str("GGML_OPENVINO_MANUAL_GQA_ATTN");
+    ثابت منطقی manual_gqa_enabled = manual_gqa_env != خالی_اشاریہ ?
                                         ggml_openvino_getenv_int("GGML_OPENVINO_MANUAL_GQA_ATTN") > 0 :
                                         ggml_openvino_is_gpu();
 
@@ -120,49 +120,49 @@ static uint64_t ggml_openvino_model_cache_extra_cfg(bool stateful, bool recurren
     extra_cfg = extra_cfg * 131 + (ggml_openvino_getenv_int("GGML_OPENVINO_DISABLE_KV_SLICE") ? 1u : 0u);
     extra_cfg = extra_cfg * 131 + (manual_gqa_enabled ? 1u : 0u);
     extra_cfg = extra_cfg * 131 + (ggml_openvino_getenv_int("GGML_OPENVINO_PROFILING") >= 2 ? 1u : 0u);
-    return extra_cfg;
+    واپس extra_cfg;
 }
 
-std::map<std::string, std::shared_ptr<ov::Node>> get_weight_names(ggml_cgraph * cgraph) {
-    std::map<std::string, std::shared_ptr<ov::Node>> names;
-    for (const auto & name : GgmlOvDecoder::collect_weight_names(cgraph)) {
-        names[name] = nullptr;
+std::map<std::string, std::shared_ptr<ov::Node>> get_وزن_نام(ggml_cgraph * cgraph) {
+    std::map<std::string, std::shared_ptr<ov::Node>> نام;
+    برائے (ثابت خودکار & name : GgmlOvDecoder::collect_وزن_نام(cgraph)) {
+        نام[name] = خالی_اشاریہ;
     }
-    return names;
+    واپس نام;
 }
 
 // A conservative, exact in-process key, evaluated only on a context-local cache
 // miss. Include topology, layouts, op parameters, constant extra inputs and weight
 // allocation identities. Never use a sampled weight hash or a graph name alone:
 // different models can have identical topology. OV buffer IDs survive address reuse.
-static std::string compiled_graph_key(const ggml_cgraph * graph,
-                                      const GgmlOvDecoder & decoder,
-                                      const std::string & device,
-                                      int prefill_chunk_size = 0,
-                                      bool disk_cache = false) {
-    std::string key;
-    auto append = [&key](const auto & value) {
-        key.append(reinterpret_cast<const char *>(&value), sizeof(value));
+ساکن std::string compiled_گراف_کلید(ثابت ggml_cgraph * graph,
+                                      ثابت GgmlOvDecoder & decoder,
+                                      ثابت std::string & device,
+                                      صحیح prefill_chunk_سائز = 0,
+                                      منطقی disk_cache = جھوٹ) {
+    std::string کلید;
+    خودکار append = [&کلید](ثابت خودکار & value) {
+        کلید.append(reinterpret_cast<ثابت حرف *>(&value), حجم(value));
     };
-    auto append_string = [&](const std::string & value) {
+    خودکار append_string = [&](ثابت std::string & value) {
         append(value.size());
-        key.append(value);
+        کلید.append(value);
     };
     append_string(device);
     append(decoder.is_static());
     append(decoder.is_stateful());
-    append(prefill_chunk_size);
-    bool has_weight_buffer_id = false;
-    std::unordered_map<const ggml_tensor *, size_t> ids;
-    std::function<void(const ggml_tensor *)> visit = [&](const ggml_tensor * tensor) {
-        if (!tensor) {
+    append(prefill_chunk_سائز);
+    منطقی has_وزن_بفر_id = جھوٹ;
+    std::unordered_map<ثابت ggml_tensor *, size_t> ids;
+    std::function<خالی(ثابت ggml_tensor *)> دورہ = [&](ثابت ggml_tensor * tensor) {
+        اگر (!tensor) {
             append(size_t(0));
-            return;
+            واپس;
         }
-        auto inserted = ids.emplace(tensor, ids.size() + 1);
-        append(inserted.first->second);
-        if (!inserted.second) {
-            return;
+        خودکار inserted = ids.emplace(tensor, ids.size() + 1);
+        append(inserted.پہلا->second);
+        اگر (!inserted.second) {
+            واپس;
         }
         append_string(tensor->name);
         append(tensor->type);
@@ -172,617 +172,617 @@ static std::string compiled_graph_key(const ggml_cgraph * graph,
         append(tensor->nb);
         append(tensor->op_params);
         append(tensor->view_offs);
-        const auto * base = tensor->view_src ? tensor->view_src : tensor;
-        const bool weight = base->buffer && base->buffer->usage == GGML_BACKEND_BUFFER_USAGE_WEIGHTS;
-        append(weight);
-        if (weight && !disk_cache) {
-            const size_t buffer_id = ggml_backend_openvino_buffer_get_ctx_id(base->buffer);
-            has_weight_buffer_id |= buffer_id != 0;
-            append(buffer_id);
-            append(tensor->data);
+        ثابت خودکار * بنیاد = tensor->view_src ? tensor->view_src : tensor;
+        ثابت منطقی وزن = بنیاد->بفر && بنیاد->بفر->usage == GGML_BACKEND_بفر_USAGE_WEIGHTS;
+        append(وزن);
+        اگر (وزن && !disk_cache) {
+            ثابت size_t بفر_id = ggml_backend_openvino_بفر_get_ctx_id(بنیاد->بفر);
+            has_وزن_بفر_id |= بفر_id != 0;
+            append(بفر_id);
+            append(tensor->ڈیٹا);
         }
-        visit(tensor->view_src);
-        for (const auto * src : tensor->src) {
-            visit(src);
+        دورہ(tensor->view_src);
+        برائے (ثابت خودکار * src : tensor->src) {
+            دورہ(src);
         }
     };
     append(graph->n_nodes);
-    for (int i = 0; i < graph->n_nodes; ++i) {
-        visit(graph->nodes[i]);
+    برائے (صحیح i = 0; i < graph->n_nodes; ++i) {
+        دورہ(graph->nodes[i]);
     }
     append(graph->n_leafs);
-    for (int i = 0; i < graph->n_leafs; ++i) {
-        visit(graph->leafs[i]);
+    برائے (صحیح i = 0; i < graph->n_leafs; ++i) {
+        دورہ(graph->leafs[i]);
     }
-    for (const auto & input : decoder.get_model_extra_inputs()) {
-        append_string(input.first);
-        append_string(input.second.type.get_type_name());
-        append(input.second.shape.size());
-        for (auto dim : input.second.shape) {
+    برائے (ثابت خودکار & داخلہ : decoder.get_model_extra_inputs()) {
+        append_string(داخلہ.پہلا);
+        append_string(داخلہ.second.type.get_type_name());
+        append(داخلہ.second.shape.size());
+        برائے (خودکار dim : داخلہ.second.shape) {
             append(dim);
         }
-        append(input.second.is_parameter);
-        if (!input.second.is_parameter) {
-            append(input.second.value);
+        append(داخلہ.second.is_parameter);
+        اگر (!داخلہ.second.is_parameter) {
+            append(داخلہ.second.value);
         }
     }
     // Without an allocation generation, pointer reuse could select stale weights.
     // Such graphs still get private requests; they simply do not share compilation.
-    return disk_cache || has_weight_buffer_id ? key : std::string{};
+    واپس disk_cache || has_وزن_بفر_id ? کلید : std::string{};
 }
 
-static std::string dynamic_graph_signature(const ggml_cgraph * graph,
-                                           const GgmlOvDecoder & decoder,
-                                           const ModelParams & params) {
-    std::string key = "dynamic-1";
-    auto append = [&key](const auto & value) {
-        key.append(reinterpret_cast<const char *>(&value), sizeof(value));
+ساکن std::string dynamic_گراف_signature(ثابت ggml_cgraph * graph,
+                                           ثابت GgmlOvDecoder & decoder,
+                                           ثابت ModelParams & params) {
+    std::string کلید = "dynamic-1";
+    خودکار append = [&کلید](ثابت خودکار & value) {
+        کلید.append(reinterpret_cast<ثابت حرف *>(&value), حجم(value));
     };
-    auto append_string = [&](const std::string & value) {
+    خودکار append_string = [&](ثابت std::string & value) {
         append(value.size());
-        key.append(value);
+        کلید.append(value);
     };
-    graph_key graph_id(graph, true);
-    append(graph_id.n_nodes);
-    append(graph_id.n_leaves);
-    append_string(graph_id.first_node_name);
-    append_string(graph_id.last_node_name);
-    for (const auto & name : graph_id.input_srcs) {
+    گراف_کلید گراف_id(graph, سچ);
+    append(گراف_id.n_nodes);
+    append(گراف_id.n_leaves);
+    append_string(گراف_id.پہلا_گرہ_name);
+    append_string(گراف_id.آخری_گرہ_name);
+    برائے (ثابت خودکار & name : گراف_id.داخلہ_srcs) {
         append_string(name);
     }
     append(params.n_rs_slots);
     append(params.has_rs_rollback);
     append(params.mixed_rope_params);
     append(params.is_cacheless_attn);
-    for (int layer : params.swa_layers) {
+    برائے (صحیح layer : params.swa_layers) {
         append(layer);
     }
-    for (const auto & [layer, heads] : params.n_heads_kv_per_layer) {
+    برائے (ثابت خودکار & [layer, heads] : params.n_heads_kv_فی_layer) {
         append(layer);
         append(heads);
     }
-    for (const auto & [name, input] : decoder.get_model_inputs()) {
+    برائے (ثابت خودکار & [name, داخلہ] : decoder.get_model_inputs()) {
         append_string(name);
-        append_string(input.type.get_type_name());
+        append_string(داخلہ.type.get_type_name());
     }
-    for (const auto & [name, tensor] : decoder.get_model_outputs()) {
+    برائے (ثابت خودکار & [name, tensor] : decoder.get_model_outputs()) {
         append_string(name);
         append(tensor->type);
     }
-    for (const auto & [name, input] : decoder.get_model_extra_inputs()) {
+    برائے (ثابت خودکار & [name, داخلہ] : decoder.get_model_extra_inputs()) {
         append_string(name);
-        append_string(input.type.get_type_name());
-        append(input.is_parameter);
-        if (!input.is_parameter) {
-            append(input.value);
+        append_string(داخلہ.type.get_type_name());
+        append(داخلہ.is_parameter);
+        اگر (!داخلہ.is_parameter) {
+            append(داخلہ.value);
         }
     }
-    return key;
+    واپس کلید;
 }
 
-static bool compiled_model_matches_graph(const ov::CompiledModel & model,
-                                         const std::vector<std::string> & inputs,
-                                         const std::vector<std::string> & outputs,
-                                         const GgmlOvDecoder & decoder) {
-    if (model.inputs().size() != inputs.size() || model.outputs().size() != outputs.size()) {
-        return false;
+ساکن منطقی compiled_model_matches_گراف(ثابت ov::CompiledModel & model,
+                                         ثابت std::vector<std::string> & inputs,
+                                         ثابت std::vector<std::string> & outputs,
+                                         ثابت GgmlOvDecoder & decoder) {
+    اگر (model.inputs().size() != inputs.size() || model.outputs().size() != outputs.size()) {
+        واپس جھوٹ;
     }
-    const auto & graph_inputs = decoder.get_model_inputs();
-    const auto & extra_inputs = decoder.get_model_extra_inputs();
-    const auto & graph_outputs = decoder.get_model_outputs();
-    for (size_t i = 0; i < inputs.size(); ++i) {
-        const auto & port = model.input(i);
-        auto graph_it = graph_inputs.find(inputs[i]);
-        if (graph_it != graph_inputs.end()) {
-            if (port.get_element_type() != graph_it->second.type ||
-                !port.get_partial_shape().compatible(graph_it->second.shape)) {
-                return false;
+    ثابت خودکار & گراف_inputs = decoder.get_model_inputs();
+    ثابت خودکار & extra_inputs = decoder.get_model_extra_inputs();
+    ثابت خودکار & گراف_outputs = decoder.get_model_outputs();
+    برائے (size_t i = 0; i < inputs.size(); ++i) {
+        ثابت خودکار & پورٹ = model.داخلہ(i);
+        خودکار گراف_it = گراف_inputs.find(inputs[i]);
+        اگر (گراف_it != گراف_inputs.end()) {
+            اگر (پورٹ.get_element_type() != گراف_it->second.type ||
+                !پورٹ.get_partial_shape().compatible(گراف_it->second.shape)) {
+                واپس جھوٹ;
             }
-            continue;
+            جاری;
         }
-        auto extra_it = extra_inputs.find(inputs[i]);
-        if (extra_it == extra_inputs.end() || port.get_element_type() != extra_it->second.type ||
-            !port.get_partial_shape().compatible(ov::PartialShape(extra_it->second.shape))) {
-            return false;
+        خودکار extra_it = extra_inputs.find(inputs[i]);
+        اگر (extra_it == extra_inputs.end() || پورٹ.get_element_type() != extra_it->second.type ||
+            !پورٹ.get_partial_shape().compatible(ov::PartialShape(extra_it->second.shape))) {
+            واپس جھوٹ;
         }
     }
-    for (size_t i = 0; i < outputs.size(); ++i) {
-        auto graph_it = graph_outputs.find(outputs[i]);
-        if (graph_it == graph_outputs.end()) {
-            if (outputs[i].compare(0, 8, "__debug_") != 0) {
-                return false;
+    برائے (size_t i = 0; i < outputs.size(); ++i) {
+        خودکار گراف_it = گراف_outputs.find(outputs[i]);
+        اگر (گراف_it == گراف_outputs.end()) {
+            اگر (outputs[i].compare(0, 8, "__debug_") != 0) {
+                واپس جھوٹ;
             }
-            continue;
+            جاری;
         }
-        const auto & port = model.output(i);
-        if (port.get_element_type() != GgmlOvDecoder::get_ov_type(graph_it->second) ||
-            !port.get_partial_shape().compatible(ov::PartialShape(GgmlOvDecoder::get_shape(graph_it->second)))) {
-            return false;
+        ثابت خودکار & پورٹ = model.output(i);
+        اگر (پورٹ.get_element_type() != GgmlOvDecoder::get_ov_type(گراف_it->second) ||
+            !پورٹ.get_partial_shape().compatible(ov::PartialShape(GgmlOvDecoder::get_shape(گراف_it->second)))) {
+            واپس جھوٹ;
         }
     }
-    return true;
+    واپس سچ;
 }
 
-static std::string ov_profiling_csv_field(const std::string & value) {
+ساکن std::string ov_profiling_csv_میدان(ثابت std::string & value) {
     std::string escaped = "\"";
-    for (char c : value) {
+    برائے (حرف c : value) {
         escaped += c;
-        if (c == '"') {
+        اگر (c == '"') {
             escaped += c;
         }
     }
     escaped += '"';
-    return escaped;
+    واپس escaped;
 }
 
-static void dump_ov_profiling_info(const ov::InferRequest & infer_request) {
-    if (ggml_openvino_getenv_int("GGML_OPENVINO_PROFILING") < 2) {
-        return;
+ساکن خالی dump_ov_profiling_info(ثابت ov::InferRequest & infer_request) {
+    اگر (ggml_openvino_getenv_int("GGML_OPENVINO_PROFILING") < 2) {
+        واپس;
     }
 
-    static std::atomic<uint64_t> inference_index{0};
-    const uint64_t index = inference_index.fetch_add(1);
-    const std::string path = "openvino_profile_" + std::to_string(index) + ".csv";
+    ساکن std::atomic<uint64_t> inference_اشاریہ{0};
+    ثابت uint64_t اشاریہ = inference_اشاریہ.fetch_add(1);
+    ثابت std::string path = "openvino_profile_" + std::to_string(اشاریہ) + ".csv";
     std::ofstream output(path, std::ios::trunc);
-    if (!output.is_open()) {
+    اگر (!output.is_open()) {
         GGML_LOG_WARN("ggml-openvino: failed to write profiling data to %s\n", path.c_str());
-        return;
+        واپس;
     }
 
     output << "status,real_time_us,cpu_time_us,start_time_us,node_type,node_name,exec_type\n";
-    int64_t total_real_time = 0;
-    int64_t total_cpu_time = 0;
-    size_t executed_count = 0;
-    for (const auto & info : infer_request.get_profiling_info()) {
-        const char * status = "NOT_RUN";
-        if (info.status == ov::ProfilingInfo::Status::EXECUTED) {
-            status = "EXECUTED";
-            total_real_time += info.real_time.count();
-            total_cpu_time += info.cpu_time.count();
-            executed_count++;
-        } else if (info.status == ov::ProfilingInfo::Status::OPTIMIZED_OUT) {
-            status = "OPTIMIZED_OUT";
+    int64_t کل_real_وقت = 0;
+    int64_t کل_cpu_وقت = 0;
+    size_t executed_گنتی = 0;
+    برائے (ثابت خودکار & info : infer_request.get_profiling_info()) {
+        ثابت حرف * حالت_2 = "NOT_RUN";
+        اگر (info.حالت_2 == ov::ProfilingInfo::حالت_3::EXECUTED) {
+            حالت_2 = "EXECUTED";
+            کل_real_وقت += info.real_وقت.count();
+            کل_cpu_وقت += info.cpu_وقت.count();
+            executed_گنتی++;
+        } ورنہ اگر (info.حالت_2 == ov::ProfilingInfo::حالت_3::OPTIMIZED_برآمد) {
+            حالت_2 = "OPTIMIZED_OUT";
         }
 
-        output << status << ',' << info.real_time.count() << ',' << info.cpu_time.count() << ','
-               << info.start_time.count() << ',' << ov_profiling_csv_field(info.node_type) << ','
-               << ov_profiling_csv_field(info.node_name) << ',' << ov_profiling_csv_field(info.exec_type) << '\n';
+        output << حالت_2 << ',' << info.real_وقت.count() << ',' << info.cpu_وقت.count() << ','
+               << info.آغاز_وقت.count() << ',' << ov_profiling_csv_میدان(info.node_type) << ','
+               << ov_profiling_csv_میدان(info.گرہ_name) << ',' << ov_profiling_csv_میدان(info.exec_type) << '\n';
     }
 
     GGML_LOG_INFO("ggml-openvino: profile %s: %zu executed nodes, %.3f ms device, %.3f ms CPU\n", path.c_str(),
-                  executed_count, total_real_time / 1000.0, total_cpu_time / 1000.0);
+                  executed_گنتی, کل_real_وقت / 1000.0, کل_cpu_وقت / 1000.0);
 }
 
-static void reset_single_slot_recurrent_cache(ggml_cgraph * cgraph,
-                                              const ModelParams & model_params,
-                                              const ComputeParams & compute_params) {
-    if (model_params.n_rs_slots != 1 || compute_params.cache_rs_reset_len == 0) {
-        return;
+ساکن خالی reset_single_خانہ_recurrent_cache(ggml_cgraph * cgraph,
+                                              ثابت ModelParams & model_params,
+                                              ثابت ComputeParams & compute_params) {
+    اگر (model_params.n_rs_slots != 1 || compute_params.cache_rs_reset_len == 0) {
+        واپس;
     }
     GGML_ASSERT(compute_params.cache_rs_reset_idx == 0 && compute_params.cache_rs_reset_len == 1);
 
-    std::set<ggml_backend_buffer_t> buffers;
-    for (int i = 0; i < cgraph->n_nodes; i++) {
-        auto * node = cgraph->nodes[i];
-        if (node->op == GGML_OP_SCALE && GgmlOvDecoder::is_recurrent_cache(node->view_src) &&
-            node->view_src->ne[1] == 1 && node->view_src->buffer != nullptr) {
-            buffers.insert(node->view_src->buffer);
+    std::set<ggml_backend_بفر_t> buffers;
+    برائے (صحیح i = 0; i < cgraph->n_nodes; i++) {
+        خودکار * گرہ = cgraph->nodes[i];
+        اگر (گرہ->op == GGML_OP_SCALE && GgmlOvDecoder::is_recurrent_cache(گرہ->view_src) &&
+            گرہ->view_src->ne[1] == 1 && گرہ->view_src->بفر != خالی_اشاریہ) {
+            buffers.insert(گرہ->view_src->بفر);
         }
     }
-    for (auto * buffer : buffers) {
-        ggml_backend_buffer_clear(buffer, 0);
+    برائے (خودکار * بفر : buffers) {
+        ggml_backend_بفر_clear(بفر, 0);
     }
 }
 
-ov::Tensor create_ov_output_tensor(const std::shared_ptr<GgmlOvDecoder> & ggml_decoder,
-                                   const std::shared_ptr<ov::InferRequest> & infer_request,
-                                   int output_index,
-                                   const ggml_tensor * ggml_tensor) {
-    if (auto sliced = try_make_kv_sliced_tensor(ggml_decoder, std::string(ggml_tensor->name), ggml_tensor)) {
-        return *sliced;
+ov::Tensor create_ov_output_tensor(ثابت std::shared_ptr<GgmlOvDecoder> & ggml_decoder,
+                                   ثابت std::shared_ptr<ov::InferRequest> & infer_request,
+                                   صحیح output_اشاریہ,
+                                   ثابت ggml_tensor * ggml_tensor) {
+    اگر (خودکار sliced = try_make_kv_sliced_tensor(ggml_decoder, std::string(ggml_tensor->name), ggml_tensor)) {
+        واپس *sliced;
     }
 
-    auto output_type = ggml_decoder->get_ov_type(ggml_tensor);
+    خودکار output_type = ggml_decoder->get_ov_type(ggml_tensor);
     ov::Shape output_shape;
-    void * output_data = ggml_tensor->data;
-    if (ggml_decoder->is_static()) {
-        output_shape = infer_request->get_output_tensor(output_index).get_shape();
-    } else {
+    خالی * output_ڈیٹا = ggml_tensor->ڈیٹا;
+    اگر (ggml_decoder->is_static()) {
+        output_shape = infer_request->get_output_tensor(output_اشاریہ).get_shape();
+    } ورنہ {
         // For a CPY into a padded view_src (e.g. a padded KV cache buffer), the
         // OV ScatterUpdate node outputs the full view_src shape, not the CPY node's
         // own (smaller) shape.  Using the CPY shape here causes set_output_tensor to
         // fail with a shape-incompatibility error.  Use view_src's shape and data
         // pointer instead so the OV tensor matches the model output exactly.
-        if (ggml_tensor->op == GGML_OP_CPY && ggml_tensor->view_src != nullptr &&
+        اگر (ggml_tensor->op == GGML_OP_CPY && ggml_tensor->view_src != خالی_اشاریہ &&
             ggml_nbytes(ggml_tensor) != ggml_nbytes(ggml_tensor->view_src)) {
             output_shape = GgmlOvDecoder::get_shape(ggml_tensor->view_src);
-            output_data = ggml_tensor->view_src->data;
-        } else {
+            output_ڈیٹا = ggml_tensor->view_src->ڈیٹا;
+        } ورنہ {
             output_shape = GgmlOvDecoder::get_shape(ggml_tensor);
         }
     }
 
     // The sliced path above covers eligible KV outputs. This also covers recurrent state and full-size KV fallbacks.
-    if (!ggml_openvino_getenv_int("GGML_OPENVINO_DISABLE_REMOTE_OUTPUTS") && !ggml_decoder->is_static() &&
-        !ggml_decoder->is_splited_model() && ggml_openvino_buffer_is_remote(ggml_tensor) &&
-        ggml_tensor->extra != nullptr) {
-        auto * extra_base = static_cast<ggml_openvino_extra_base *>(ggml_tensor->extra);
-        if (extra_base->type == ggml_openvino_extra_base::Type::TENSOR) {
-            auto * tensor_extra = static_cast<ggml_openvino_tensor_extra *>(extra_base);
-            if (tensor_extra->tensor != nullptr && tensor_extra->tensor->get_element_type() == output_type &&
+    اگر (!ggml_openvino_getenv_int("GGML_OPENVINO_DISABLE_REMOTE_OUTPUTS") && !ggml_decoder->is_static() &&
+        !ggml_decoder->is_splited_model() && ggml_openvino_بفر_is_remote(ggml_tensor) &&
+        ggml_tensor->extra != خالی_اشاریہ) {
+        خودکار * extra_بنیاد = static_cast<ggml_openvino_extra_بنیاد *>(ggml_tensor->extra);
+        اگر (extra_بنیاد->type == ggml_openvino_extra_بنیاد::Type::TENSOR) {
+            خودکار * tensor_extra = static_cast<ggml_openvino_tensor_extra *>(extra_بنیاد);
+            اگر (tensor_extra->tensor != خالی_اشاریہ && tensor_extra->tensor->get_element_type() == output_type &&
                 tensor_extra->tensor->get_shape() == output_shape) {
-                return *tensor_extra->tensor;
+                واپس *tensor_extra->tensor;
             }
         }
     }
 
-    ov::Tensor output_tensor(output_type, output_shape, output_data);
-    return output_tensor;
+    ov::Tensor output_tensor(output_type, output_shape, output_ڈیٹا);
+    واپس output_tensor;
 }
 
 // Rewrite ggml's KV rows into a relayout state that keeps the sequence on dim 2.
 // ggml stores [seq][n_heads_kv * head_size]; the state wants [1, n_heads_kv, seq, head_size],
 // a different element order, so the rows are copied instead of reinterpreted.
-ov::Tensor kv_rows_to_seq_axis_2(const ov::Tensor & kv_tensor, size_t n_heads_kv) {
-    const size_t rows = kv_tensor.get_shape()[2];
-    const size_t head_size = kv_tensor.get_shape()[3] / n_heads_kv;
-    const size_t elem = kv_tensor.get_element_type().size();
-    const size_t head_bytes = head_size * elem;
+ov::Tensor kv_صفیں_مقصد_seq_axis_2(ثابت ov::Tensor & kv_tensor, size_t n_heads_kv) {
+    ثابت size_t صفیں = kv_tensor.get_shape()[2];
+    ثابت size_t سر_سائز = kv_tensor.get_shape()[3] / n_heads_kv;
+    ثابت size_t elem = kv_tensor.get_element_type().size();
+    ثابت size_t سر_بائٹیں = سر_سائز * elem;
 
-    ov::Tensor out(kv_tensor.get_element_type(), ov::Shape{1, n_heads_kv, rows, head_size});
-    const auto * src = static_cast<const uint8_t *>(kv_tensor.data());
-    auto * dst = static_cast<uint8_t *>(out.data());
-    for (size_t s = 0; s < rows; s++) {
-        for (size_t h = 0; h < n_heads_kv; h++) {
-            memcpy(dst + (h * rows + s) * head_bytes, src + (s * n_heads_kv + h) * head_bytes, head_bytes);
+    ov::Tensor برآمد(kv_tensor.get_element_type(), ov::Shape{1, n_heads_kv, صفیں, سر_سائز});
+    ثابت خودکار * src = static_cast<ثابت uint8_t *>(kv_tensor.ڈیٹا());
+    خودکار * dst = static_cast<uint8_t *>(برآمد.ڈیٹا());
+    برائے (size_t s = 0; s < صفیں; s++) {
+        برائے (size_t h = 0; h < n_heads_kv; h++) {
+            حافظہ_نقل(dst + (h * صفیں + s) * سر_بائٹیں, src + (s * n_heads_kv + h) * سر_بائٹیں, سر_بائٹیں);
         }
     }
-    return out;
+    واپس برآمد;
 }
 
-template <typename T> void set_zero_diagonal(std::vector<T> & matrix, size_t rows, size_t cols, T zero_value = T{}) {
-    for (size_t i = 0; i < rows; ++i) {
-        size_t diag_col = std::min(i, cols - 1);
-        matrix[i * cols + diag_col] = zero_value;
+سانچہ <قسم_نام T> خالی سیٹ_zero_diagonal(std::vector<T> & میٹرکس, size_t صفیں, size_t ستون_تعداد_2, T zero_قدر = T{}) {
+    برائے (size_t i = 0; i < صفیں; ++i) {
+        size_t diag_ستون = std::min(i, ستون_تعداد_2 - 1);
+        میٹرکس[i * ستون_تعداد_2 + diag_ستون] = zero_قدر;
     }
 }
 
-ov::Tensor make_contiguous_split_input_tensor(const struct ggml_tensor * ggml_tensor, const ov::Shape & input_shape) {
-    const size_t element_size = ggml_type_size(ggml_tensor->type);
-    const size_t block_size = ggml_blck_size(ggml_tensor->type);
+ov::Tensor make_contiguous_بانٹو_داخلہ_tensor(ثابت ساخت ggml_tensor * ggml_tensor, ثابت ov::Shape & داخلہ_shape) {
+    ثابت size_t element_سائز = ggml_type_سائز(ggml_tensor->type);
+    ثابت size_t بلاک_سائز_3 = ggml_blck_سائز(ggml_tensor->type);
 
-    GGML_ASSERT(block_size == 1 && "non-contiguous split inputs must be plain element types");
+    GGML_ASSERT(بلاک_سائز_3 == 1 && "non-contiguous split inputs must be plain element types");
 
-    const struct ggml_tensor * source_tensor = ggml_tensor->view_src != nullptr ? ggml_tensor->view_src : ggml_tensor;
-    const size_t source_offset = ggml_tensor->view_src != nullptr ? ggml_tensor->view_offs : 0;
+    ثابت ساخت ggml_tensor * ماخذ_tensor = ggml_tensor->view_src != خالی_اشاریہ ? ggml_tensor->view_src : ggml_tensor;
+    ثابت size_t ماخذ_انحراف = ggml_tensor->view_src != خالی_اشاریہ ? ggml_tensor->view_offs : 0;
 
-    std::vector<uint8_t> source_data(ggml_nbytes(source_tensor));
-    ggml_backend_tensor_get(source_tensor, source_data.data(), 0, source_data.size());
+    std::vector<uint8_t> ماخذ_ڈیٹا(ggml_nbytes(ماخذ_tensor));
+    ggml_backend_tensor_get(ماخذ_tensor, ماخذ_ڈیٹا.ڈیٹا(), 0, ماخذ_ڈیٹا.size());
 
-    ov::Tensor input_tensor(GgmlOvDecoder::get_ov_type(ggml_tensor), input_shape);
-    auto * dst = static_cast<uint8_t *>(input_tensor.data());
-    size_t dst_offset = 0;
+    ov::Tensor داخلہ_tensor(GgmlOvDecoder::get_ov_type(ggml_tensor), داخلہ_shape);
+    خودکار * dst = static_cast<uint8_t *>(داخلہ_tensor.ڈیٹا());
+    size_t dst_انحراف = 0;
 
-    for (size_t i3 = 0; i3 < static_cast<size_t>(ggml_tensor->ne[3]); ++i3) {
-        for (size_t i2 = 0; i2 < static_cast<size_t>(ggml_tensor->ne[2]); ++i2) {
-            for (size_t i1 = 0; i1 < static_cast<size_t>(ggml_tensor->ne[1]); ++i1) {
-                for (size_t i0 = 0; i0 < static_cast<size_t>(ggml_tensor->ne[0]); ++i0) {
-                    const size_t src_offset = source_offset + i3 * ggml_tensor->nb[3] + i2 * ggml_tensor->nb[2] +
+    برائے (size_t i3 = 0; i3 < static_cast<size_t>(ggml_tensor->ne[3]); ++i3) {
+        برائے (size_t i2 = 0; i2 < static_cast<size_t>(ggml_tensor->ne[2]); ++i2) {
+            برائے (size_t i1 = 0; i1 < static_cast<size_t>(ggml_tensor->ne[1]); ++i1) {
+                برائے (size_t i0 = 0; i0 < static_cast<size_t>(ggml_tensor->ne[0]); ++i0) {
+                    ثابت size_t src_انحراف = ماخذ_انحراف + i3 * ggml_tensor->nb[3] + i2 * ggml_tensor->nb[2] +
                                               i1 * ggml_tensor->nb[1] + i0 * ggml_tensor->nb[0];
-                    std::memcpy(dst + dst_offset, source_data.data() + src_offset, element_size);
-                    dst_offset += element_size;
+                    std::حافظہ_نقل(dst + dst_انحراف, ماخذ_ڈیٹا.ڈیٹا() + src_انحراف, element_سائز);
+                    dst_انحراف += element_سائز;
                 }
             }
         }
     }
 
-    return input_tensor;
+    واپس داخلہ_tensor;
 }
 
-ov::Tensor convert_ggml_input_to_ov(const std::shared_ptr<GgmlOvDecoder> & ggml_decoder, const std::string & name) {
-    const auto * ggml_tensor = ggml_decoder->get_input_ggml_tensor(name);
+ov::Tensor convert_ggml_داخلہ_مقصد_ov(ثابت std::shared_ptr<GgmlOvDecoder> & ggml_decoder, ثابت std::string & name) {
+    ثابت خودکار * ggml_tensor = ggml_decoder->get_داخلہ_ggml_tensor(name);
 
-    if (auto sliced = try_make_kv_sliced_tensor(ggml_decoder, name, ggml_tensor)) {
-        return *sliced;
+    اگر (خودکار sliced = try_make_kv_sliced_tensor(ggml_decoder, name, ggml_tensor)) {
+        واپس *sliced;
     }
 
-    if (ggml_tensor->extra != nullptr && !ggml_decoder->is_splited_model()) {
-        auto * extra_base = static_cast<ggml_openvino_extra_base *>(ggml_tensor->extra);
-        if (extra_base->type == ggml_openvino_extra_base::Type::TENSOR) {
+    اگر (ggml_tensor->extra != خالی_اشاریہ && !ggml_decoder->is_splited_model()) {
+        خودکار * extra_بنیاد = static_cast<ggml_openvino_extra_بنیاد *>(ggml_tensor->extra);
+        اگر (extra_بنیاد->type == ggml_openvino_extra_بنیاد::Type::TENSOR) {
             // GGML_LOG_DEBUG("Using ggml_tensor->extra as ov::Tensor for input: %s\n", name.c_str());
-            auto * tensor_extra = static_cast<ggml_openvino_tensor_extra *>(extra_base);
-            return *tensor_extra->tensor;
+            خودکار * tensor_extra = static_cast<ggml_openvino_tensor_extra *>(extra_بنیاد);
+            واپس *tensor_extra->tensor;
         }
     }
 
     // GGML_LOG_DEBUG("Converting ggml tensor to ov::Tensor for input: %s\n", name.c_str());
-    auto * input_data = ggml_tensor->data;
-    ov::Shape input_shape;
-    if (ggml_tensor->op == GGML_OP_VIEW && !ggml_decoder->is_splited_model()) {
+    خودکار * داخلہ_ڈیٹا = ggml_tensor->ڈیٹا;
+    ov::Shape داخلہ_shape;
+    اگر (ggml_tensor->op == GGML_OP_VIEW && !ggml_decoder->is_splited_model()) {
         // This case is added to make test-backend-ops work
-        input_shape = GgmlOvDecoder::get_shape(ggml_tensor->view_src);
-    } else {
-        input_shape = GgmlOvDecoder::get_shape(ggml_tensor);
+        داخلہ_shape = GgmlOvDecoder::get_shape(ggml_tensor->view_src);
+    } ورنہ {
+        داخلہ_shape = GgmlOvDecoder::get_shape(ggml_tensor);
     }
 
-    if (ggml_decoder->is_splited_model() && !ggml_is_contiguous(ggml_tensor)) {
-        return make_contiguous_split_input_tensor(ggml_tensor, input_shape);
+    اگر (ggml_decoder->is_splited_model() && !ggml_is_contiguous(ggml_tensor)) {
+        واپس make_contiguous_بانٹو_داخلہ_tensor(ggml_tensor, داخلہ_shape);
     }
 
-    auto input_tensor = ov::Tensor(GgmlOvDecoder::get_ov_type(ggml_tensor), input_shape, input_data);
-    return input_tensor;
+    خودکار داخلہ_tensor = ov::Tensor(GgmlOvDecoder::get_ov_type(ggml_tensor), داخلہ_shape, داخلہ_ڈیٹا);
+    واپس داخلہ_tensor;
 }
 
-ov::Tensor get_ov_input_tensor(const std::shared_ptr<GgmlOvDecoder> & ggml_decoder, const std::string & param_name) {
-    ov::Tensor input_tensor;
-    auto extra_input = ggml_decoder->get_model_extra_inputs().find(param_name);
-    if (extra_input != ggml_decoder->get_model_extra_inputs().end()) {
-        input_tensor = ov::Tensor(extra_input->second.type, extra_input->second.shape);
-        *input_tensor.data<int64_t>() = extra_input->second.value;
-    } else {
-        input_tensor = convert_ggml_input_to_ov(ggml_decoder, param_name);
+ov::Tensor get_ov_داخلہ_tensor(ثابت std::shared_ptr<GgmlOvDecoder> & ggml_decoder, ثابت std::string & param_name) {
+    ov::Tensor داخلہ_tensor;
+    خودکار extra_داخلہ = ggml_decoder->get_model_extra_inputs().find(param_name);
+    اگر (extra_داخلہ != ggml_decoder->get_model_extra_inputs().end()) {
+        داخلہ_tensor = ov::Tensor(extra_داخلہ->second.type, extra_داخلہ->second.shape);
+        *داخلہ_tensor.ڈیٹا<int64_t>() = extra_داخلہ->second.value;
+    } ورنہ {
+        داخلہ_tensor = convert_ggml_داخلہ_مقصد_ov(ggml_decoder, param_name);
     }
-    return input_tensor;
+    واپس داخلہ_tensor;
 }
 
-ov::Tensor get_ov_input_tensor_static_decode(const std::shared_ptr<GgmlOvDecoder> & ggml_decoder,
-                                             const std::string & param_name) {
+ov::Tensor get_ov_داخلہ_tensor_static_decode(ثابت std::shared_ptr<GgmlOvDecoder> & ggml_decoder,
+                                             ثابت std::string & param_name) {
     // NPU decoding stage
-    if (ggml_decoder->get_model_extra_inputs().count(param_name)) {
-        return get_ov_input_tensor(ggml_decoder, param_name);
+    اگر (ggml_decoder->get_model_extra_inputs().count(param_name)) {
+        واپس get_ov_داخلہ_tensor(ggml_decoder, param_name);
     }
-    const auto * ggml_tensor = ggml_decoder->get_input_ggml_tensor(param_name);
-    const auto * op = ggml_decoder->get_tensor_used_op(ggml_tensor);
+    ثابت خودکار * ggml_tensor = ggml_decoder->get_داخلہ_ggml_tensor(param_name);
+    ثابت خودکار * op = ggml_decoder->get_tensor_مستعمل_op(ggml_tensor);
 
-    if (GgmlOvDecoder::is_inp_tok(ggml_tensor, op) || GgmlOvDecoder::is_inp_pos(ggml_tensor, op) ||
+    اگر (GgmlOvDecoder::is_inp_tok(ggml_tensor, op) || GgmlOvDecoder::is_inp_pos(ggml_tensor, op) ||
         GgmlOvDecoder::is_kv_idx(ggml_tensor, op)) {
         // IMROPE's inp_pos holds one value per t/h/w/e plane instead of a single position;
         // with a single decode token the planes are still contiguous, so a flat copy works.
-        const int n_planes = GgmlOvDecoder::is_inp_pos(ggml_tensor, op) ? GgmlOvDecoder::get_inp_pos_n_planes(op) : 1;
-        assert(ggml_tensor->ne[0] == n_planes);
-        ov::Shape input_shape = {1, 1, 1, (size_t) n_planes};
-        ov::Tensor input_tensor(GgmlOvDecoder::get_ov_type(ggml_tensor), input_shape);
-        std::memcpy(input_tensor.data(), ggml_tensor->data, n_planes * ggml_type_size(ggml_tensor->type));
-        return input_tensor;
+        ثابت صحیح n_planes = GgmlOvDecoder::is_inp_pos(ggml_tensor, op) ? GgmlOvDecoder::get_inp_pos_n_planes(op) : 1;
+        أكد(ggml_tensor->ne[0] == n_planes);
+        ov::Shape داخلہ_shape = {1, 1, 1, (size_t) n_planes};
+        ov::Tensor داخلہ_tensor(GgmlOvDecoder::get_ov_type(ggml_tensor), داخلہ_shape);
+        std::حافظہ_نقل(داخلہ_tensor.ڈیٹا(), ggml_tensor->ڈیٹا, n_planes * ggml_type_سائز(ggml_tensor->type));
+        واپس داخلہ_tensor;
     }
 
-    if (GgmlOvDecoder::is_output_idx(ggml_tensor, op)) {
-        ov::Shape input_shape = {1, 1, 1, 1};
-        ov::Tensor input_tensor(GgmlOvDecoder::get_ov_type(ggml_tensor), input_shape);
-        int32_t inp_out_id = *((int32_t *) ggml_tensor->data);
-        assert(ggml_tensor->ne[0] == 1);
-        assert(inp_out_id == 0);
-        *input_tensor.data<int32_t>() = inp_out_id;
-        return input_tensor;
+    اگر (GgmlOvDecoder::is_output_idx(ggml_tensor, op)) {
+        ov::Shape داخلہ_shape = {1, 1, 1, 1};
+        ov::Tensor داخلہ_tensor(GgmlOvDecoder::get_ov_type(ggml_tensor), داخلہ_shape);
+        int32_t inp_برآمد_id = *((int32_t *) ggml_tensor->ڈیٹا);
+        أكد(ggml_tensor->ne[0] == 1);
+        أكد(inp_برآمد_id == 0);
+        *داخلہ_tensor.ڈیٹا<int32_t>() = inp_برآمد_id;
+        واپس داخلہ_tensor;
     }
 
-    if (GgmlOvDecoder::is_inp_mask(ggml_tensor, op)) {
-        size_t context_size = ggml_decoder->get_ctx_size();
-        if (ggml_tensor->type == GGML_TYPE_F16) {
-            std::vector<ggml_fp16_t> padded_data =
-                pad_input<ggml_fp16_t>(ggml_tensor, 1, context_size, GGML_FP32_TO_FP16(-INFINITY));
-            ov::Tensor input_tensor(ov::element::f16, ov::Shape{1, 1, 1, context_size});
-            std::memcpy(input_tensor.data(), padded_data.data(), padded_data.size() * sizeof(ggml_fp16_t));
-            return input_tensor;
+    اگر (GgmlOvDecoder::is_inp_نقاب(ggml_tensor, op)) {
+        size_t context_سائز = ggml_decoder->get_ctx_سائز();
+        اگر (ggml_tensor->type == GGML_TYPE_F16) {
+            std::vector<ggml_fp16_t> padded_ڈیٹا =
+                pad_داخلہ<ggml_fp16_t>(ggml_tensor, 1, context_سائز, GGML_FP32_مقصد_FP16(-INFINITY));
+            ov::Tensor داخلہ_tensor(ov::element::f16, ov::Shape{1, 1, 1, context_سائز});
+            std::حافظہ_نقل(داخلہ_tensor.ڈیٹا(), padded_ڈیٹا.ڈیٹا(), padded_ڈیٹا.size() * حجم(ggml_fp16_t));
+            واپس داخلہ_tensor;
         }
 
-        std::vector<float> padded_data = pad_input<float>(ggml_tensor, 1, context_size, -INFINITY);
-        ov::Tensor input_tensor(ov::element::f32, ov::Shape{1, 1, 1, context_size});
-        auto * data_ptr = input_tensor.data<float>();
-        std::copy(padded_data.begin(), padded_data.begin() + context_size, data_ptr);
-        return input_tensor;
+        std::vector<اعشاری> padded_ڈیٹا = pad_داخلہ<اعشاری>(ggml_tensor, 1, context_سائز, -INFINITY);
+        ov::Tensor داخلہ_tensor(ov::element::f32, ov::Shape{1, 1, 1, context_سائز});
+        خودکار * ڈیٹا_ptr = داخلہ_tensor.ڈیٹا<اعشاری>();
+        std::copy(padded_ڈیٹا.begin(), padded_ڈیٹا.begin() + context_سائز, ڈیٹا_ptr);
+        واپس داخلہ_tensor;
     }
 
-    return get_ov_input_tensor(ggml_decoder, param_name);
+    واپس get_ov_داخلہ_tensor(ggml_decoder, param_name);
 }
 
-ov::Tensor get_ov_input_tensor_static_prefill(const std::shared_ptr<GgmlOvDecoder> & ggml_decoder,
-                                              const std::string & param_name,
-                                              int chunk_index) {
+ov::Tensor get_ov_داخلہ_tensor_static_prefill(ثابت std::shared_ptr<GgmlOvDecoder> & ggml_decoder,
+                                              ثابت std::string & param_name,
+                                              صحیح chunk_اشاریہ) {
     // NPU prompt processing stage
-    const size_t input_len = ggml_decoder->get_input_len();
-    const size_t chunk_size = ggml_decoder->m_prefill_chunk_size;
-    const size_t chunk_valid_size = std::min(chunk_size, input_len - chunk_index * chunk_size);
-    const size_t chunk_pad_size = chunk_size - chunk_valid_size;
+    ثابت size_t داخلہ_len = ggml_decoder->get_داخلہ_len();
+    ثابت size_t chunk_سائز = ggml_decoder->m_prefill_chunk_سائز;
+    ثابت size_t chunk_valid_سائز = std::min(chunk_سائز, داخلہ_len - chunk_اشاریہ * chunk_سائز);
+    ثابت size_t chunk_pad_سائز = chunk_سائز - chunk_valid_سائز;
 
-    if (param_name == "chunk_valid_len") {
-        ov::Tensor input_tensor(ov::element::i64, ov::Shape{1});
-        *input_tensor.data<int64_t>() = (int64_t) chunk_valid_size;
-        return input_tensor;
+    اگر (param_name == "chunk_valid_len") {
+        ov::Tensor داخلہ_tensor(ov::element::i64, ov::Shape{1});
+        *داخلہ_tensor.ڈیٹا<int64_t>() = (int64_t) chunk_valid_سائز;
+        واپس داخلہ_tensor;
     }
-    if (chunk_index > 0 && param_name == "cache_rs_reset_len") {
+    اگر (chunk_اشاریہ > 0 && param_name == "cache_rs_reset_len") {
         // The recurrent-state clear belongs to the start of the sequence. Re-applying it on every
         // chunk would wipe the state accumulated by the preceding chunks, so disable it (a zero
         // length makes scale.cpp's keep-mask select every slot) after the first chunk.
-        ov::Tensor input_tensor(ov::element::i64, ov::Shape{1});
-        *input_tensor.data<int64_t>() = 0;
-        return input_tensor;
+        ov::Tensor داخلہ_tensor(ov::element::i64, ov::Shape{1});
+        *داخلہ_tensor.ڈیٹا<int64_t>() = 0;
+        واپس داخلہ_tensor;
     }
-    if (ggml_decoder->get_model_extra_inputs().count(param_name)) {
-        return get_ov_input_tensor(ggml_decoder, param_name);
+    اگر (ggml_decoder->get_model_extra_inputs().count(param_name)) {
+        واپس get_ov_داخلہ_tensor(ggml_decoder, param_name);
     }
-    const auto * ggml_tensor = ggml_decoder->get_input_ggml_tensor(param_name);
-    const auto * op = ggml_decoder->get_tensor_used_op(ggml_tensor);
+    ثابت خودکار * ggml_tensor = ggml_decoder->get_داخلہ_ggml_tensor(param_name);
+    ثابت خودکار * op = ggml_decoder->get_tensor_مستعمل_op(ggml_tensor);
 
-    if (GgmlOvDecoder::is_inp_pos(ggml_tensor, op) && GgmlOvDecoder::get_inp_pos_n_planes(op) > 1) {
+    اگر (GgmlOvDecoder::is_inp_pos(ggml_tensor, op) && GgmlOvDecoder::get_inp_pos_n_planes(op) > 1) {
         // IMROPE: inp_pos stacks n_planes (t/h/w/e) position planes, each of length
         // input_len; pad every plane independently so they stay aligned to chunk_size.
-        const int n_planes = GgmlOvDecoder::get_inp_pos_n_planes(op);
-        const size_t element_size = ggml_type_size(ggml_tensor->type);
-        ov::Shape input_shape = {1, 1, 1, (size_t) n_planes * chunk_size};
-        ov::Tensor input_tensor(GgmlOvDecoder::get_ov_type(ggml_tensor), input_shape);
-        for (int p = 0; p < n_planes; p++) {
-            const char * src =
-                (const char *) ggml_tensor->data + (p * input_len + chunk_index * chunk_size) * element_size;
-            char * dst = (char *) input_tensor.data() + p * chunk_size * element_size;
-            std::memcpy(dst, src, chunk_valid_size * element_size);
-            if (chunk_pad_size > 0) {
-                if (ggml_tensor->type == GGML_TYPE_I32) {
-                    int32_t last_value = *((const int32_t *) src + chunk_valid_size - 1);
-                    int32_t * out = (int32_t *) dst;
-                    std::fill(out + chunk_valid_size, out + chunk_size, last_value + 1);
-                } else if (ggml_tensor->type == GGML_TYPE_I64) {
-                    int64_t last_value = *((const int64_t *) src + chunk_valid_size - 1);
-                    int64_t * out = (int64_t *) dst;
-                    std::fill(out + chunk_valid_size, out + chunk_size, last_value + 1);
-                } else {
-                    throw std::runtime_error("Unexpected tensor type for " + param_name);
+        ثابت صحیح n_planes = GgmlOvDecoder::get_inp_pos_n_planes(op);
+        ثابت size_t element_سائز = ggml_type_سائز(ggml_tensor->type);
+        ov::Shape داخلہ_shape = {1, 1, 1, (size_t) n_planes * chunk_سائز};
+        ov::Tensor داخلہ_tensor(GgmlOvDecoder::get_ov_type(ggml_tensor), داخلہ_shape);
+        برائے (صحیح p = 0; p < n_planes; p++) {
+            ثابت حرف * src =
+                (ثابت حرف *) ggml_tensor->ڈیٹا + (p * داخلہ_len + chunk_اشاریہ * chunk_سائز) * element_سائز;
+            حرف * dst = (حرف *) داخلہ_tensor.ڈیٹا() + p * chunk_سائز * element_سائز;
+            std::حافظہ_نقل(dst, src, chunk_valid_سائز * element_سائز);
+            اگر (chunk_pad_سائز > 0) {
+                اگر (ggml_tensor->type == GGML_TYPE_I32) {
+                    int32_t آخری_قدر = *((ثابت int32_t *) src + chunk_valid_سائز - 1);
+                    int32_t * برآمد = (int32_t *) dst;
+                    std::fill(برآمد + chunk_valid_سائز, برآمد + chunk_سائز, آخری_قدر + 1);
+                } ورنہ اگر (ggml_tensor->type == GGML_TYPE_I64) {
+                    int64_t آخری_قدر = *((ثابت int64_t *) src + chunk_valid_سائز - 1);
+                    int64_t * برآمد = (int64_t *) dst;
+                    std::fill(برآمد + chunk_valid_سائز, برآمد + chunk_سائز, آخری_قدر + 1);
+                } ورنہ {
+                    پھینکو std::runtime_error("Unexpected tensor type for " + param_name);
                 }
             }
         }
-        return input_tensor;
+        واپس داخلہ_tensor;
     }
 
-    if (GgmlOvDecoder::is_inp_tok(ggml_tensor, op) || GgmlOvDecoder::is_inp_pos(ggml_tensor, op) ||
+    اگر (GgmlOvDecoder::is_inp_tok(ggml_tensor, op) || GgmlOvDecoder::is_inp_pos(ggml_tensor, op) ||
         GgmlOvDecoder::is_kv_idx(ggml_tensor, op)) {
-        ov::Shape input_shape = {1, 1, 1, chunk_size};
-        ov::Tensor input_tensor(GgmlOvDecoder::get_ov_type(ggml_tensor), input_shape);
+        ov::Shape داخلہ_shape = {1, 1, 1, chunk_سائز};
+        ov::Tensor داخلہ_tensor(GgmlOvDecoder::get_ov_type(ggml_tensor), داخلہ_shape);
         // copy the chunk_index-th chunk from ggml_tensor
-        size_t element_size = ggml_type_size(ggml_tensor->type);
-        void * input_data = (char *) ggml_tensor->data + chunk_index * chunk_size * element_size;
-        std::memcpy(input_tensor.data(), input_data, chunk_valid_size * element_size);
+        size_t element_سائز = ggml_type_سائز(ggml_tensor->type);
+        خالی * داخلہ_ڈیٹا = (حرف *) ggml_tensor->ڈیٹا + chunk_اشاریہ * chunk_سائز * element_سائز;
+        std::حافظہ_نقل(داخلہ_tensor.ڈیٹا(), داخلہ_ڈیٹا, chunk_valid_سائز * element_سائز);
         // pad the rest with last_value + 1, so that kv's of padded positions are inserted
         // to the next row after the valids row in the kvcache
-        if (chunk_pad_size > 0) {
-            if (ggml_tensor->type == GGML_TYPE_I32) {
-                int32_t last_value =
-                    *((int32_t *) ggml_tensor->data + (chunk_index * chunk_size + chunk_valid_size - 1));
-                int32_t * output_data = input_tensor.data<int32_t>();
-                std::fill(output_data + chunk_valid_size, output_data + chunk_size, last_value + 1);
-            } else if (ggml_tensor->type == GGML_TYPE_I64) {
-                int64_t last_value =
-                    *((int64_t *) ggml_tensor->data + (chunk_index * chunk_size + chunk_valid_size - 1));
-                int64_t * output_data = input_tensor.data<int64_t>();
-                std::fill(output_data + chunk_valid_size, output_data + chunk_size, last_value + 1);
-            } else {
-                throw std::runtime_error("Unexpected tensor type for " + param_name);
+        اگر (chunk_pad_سائز > 0) {
+            اگر (ggml_tensor->type == GGML_TYPE_I32) {
+                int32_t آخری_قدر =
+                    *((int32_t *) ggml_tensor->ڈیٹا + (chunk_اشاریہ * chunk_سائز + chunk_valid_سائز - 1));
+                int32_t * output_ڈیٹا = داخلہ_tensor.ڈیٹا<int32_t>();
+                std::fill(output_ڈیٹا + chunk_valid_سائز, output_ڈیٹا + chunk_سائز, آخری_قدر + 1);
+            } ورنہ اگر (ggml_tensor->type == GGML_TYPE_I64) {
+                int64_t آخری_قدر =
+                    *((int64_t *) ggml_tensor->ڈیٹا + (chunk_اشاریہ * chunk_سائز + chunk_valid_سائز - 1));
+                int64_t * output_ڈیٹا = داخلہ_tensor.ڈیٹا<int64_t>();
+                std::fill(output_ڈیٹا + chunk_valid_سائز, output_ڈیٹا + chunk_سائز, آخری_قدر + 1);
+            } ورنہ {
+                پھینکو std::runtime_error("Unexpected tensor type for " + param_name);
             }
         }
-        return input_tensor;
+        واپس داخلہ_tensor;
     }
 
-    if (GgmlOvDecoder::is_output_idx(ggml_tensor, op)) {
+    اگر (GgmlOvDecoder::is_output_idx(ggml_tensor, op)) {
         size_t output_len = ggml_decoder->get_compute_params().output_len;
-        ov::Shape input_shape = {1, 1, 1, output_len};
-        ov::Tensor input_tensor(GgmlOvDecoder::get_ov_type(ggml_tensor), input_shape);
-        if (ggml_tensor->ne[0] == 0) {
-            *input_tensor.data<int32_t>() = 0;
-        } else {
-            auto * data_addr = input_tensor.data<int32_t>();
-            for (size_t i = 0; i < output_len; i++) {
-                data_addr[i] = ((int32_t *) ggml_tensor->data)[i] % chunk_size;
+        ov::Shape داخلہ_shape = {1, 1, 1, output_len};
+        ov::Tensor داخلہ_tensor(GgmlOvDecoder::get_ov_type(ggml_tensor), داخلہ_shape);
+        اگر (ggml_tensor->ne[0] == 0) {
+            *داخلہ_tensor.ڈیٹا<int32_t>() = 0;
+        } ورنہ {
+            خودکار * ڈیٹا_addr = داخلہ_tensor.ڈیٹا<int32_t>();
+            برائے (size_t i = 0; i < output_len; i++) {
+                ڈیٹا_addr[i] = ((int32_t *) ggml_tensor->ڈیٹا)[i] % chunk_سائز;
             }
         }
-        return input_tensor;
+        واپس داخلہ_tensor;
     }
 
-    if (GgmlOvDecoder::is_inp_scale_rows(ggml_tensor, op)) {
-        ov::Tensor input_tensor(ov::element::f32, ov::Shape{1, 1, chunk_size, 1});
-        auto * dst = input_tensor.data<float>();
-        const auto * src = static_cast<const float *>(ggml_tensor->data) + chunk_index * chunk_size;
-        std::copy(src, src + chunk_valid_size, dst);
-        std::fill(dst + chunk_valid_size, dst + chunk_size, 1.0f);
-        return input_tensor;
+    اگر (GgmlOvDecoder::is_inp_scale_صفیں(ggml_tensor, op)) {
+        ov::Tensor داخلہ_tensor(ov::element::f32, ov::Shape{1, 1, chunk_سائز, 1});
+        خودکار * dst = داخلہ_tensor.ڈیٹا<اعشاری>();
+        ثابت خودکار * src = static_cast<ثابت اعشاری *>(ggml_tensor->ڈیٹا) + chunk_اشاریہ * chunk_سائز;
+        std::copy(src, src + chunk_valid_سائز, dst);
+        std::fill(dst + chunk_valid_سائز, dst + chunk_سائز, 1.0f);
+        واپس داخلہ_tensor;
     }
 
-    if (GgmlOvDecoder::is_inp_mean(ggml_tensor, op)) {
-        const size_t n_seqs = ggml_tensor->ne[1];
-        const size_t src_stride = ggml_tensor->ne[0];
-        const size_t copy_len = std::min<size_t>(chunk_valid_size, src_stride - chunk_index * chunk_size);
-        ov::Tensor input_tensor(ov::element::f32, ov::Shape{1, 1, n_seqs, chunk_size});
-        auto * dst = input_tensor.data<float>();
-        std::fill(dst, dst + n_seqs * chunk_size, 0.0f);
-        const auto * src = static_cast<const float *>(ggml_tensor->data) + chunk_index * chunk_size;
-        for (size_t s = 0; s < n_seqs; s++) {
-            std::memcpy(dst + s * chunk_size, src + s * src_stride, copy_len * sizeof(float));
+    اگر (GgmlOvDecoder::is_inp_اوسط(ggml_tensor, op)) {
+        ثابت size_t n_seqs = ggml_tensor->ne[1];
+        ثابت size_t src_stride = ggml_tensor->ne[0];
+        ثابت size_t copy_len = std::min<size_t>(chunk_valid_سائز, src_stride - chunk_اشاریہ * chunk_سائز);
+        ov::Tensor داخلہ_tensor(ov::element::f32, ov::Shape{1, 1, n_seqs, chunk_سائز});
+        خودکار * dst = داخلہ_tensor.ڈیٹا<اعشاری>();
+        std::fill(dst, dst + n_seqs * chunk_سائز, 0.0f);
+        ثابت خودکار * src = static_cast<ثابت اعشاری *>(ggml_tensor->ڈیٹا) + chunk_اشاریہ * chunk_سائز;
+        برائے (size_t s = 0; s < n_seqs; s++) {
+            std::حافظہ_نقل(dst + s * chunk_سائز, src + s * src_stride, copy_len * حجم(اعشاری));
         }
-        return input_tensor;
+        واپس داخلہ_tensor;
     }
 
-    if (GgmlOvDecoder::is_inp_mask(ggml_tensor, op)) {
-        size_t cols = ggml_tensor->ne[0];
-        size_t rows = ggml_tensor->ne[1];
-        size_t chunk_valid_rows = std::min(chunk_size, rows - chunk_index * chunk_size);
-        size_t context_size = ggml_decoder->get_ctx_size();
-        if (ggml_tensor->type == GGML_TYPE_F16) {
-            const auto * ggml_data =
-                static_cast<const ggml_fp16_t *>(ggml_tensor->data) + chunk_index * chunk_size * cols;
-            std::vector<ggml_fp16_t> padded_data = pad_input<ggml_fp16_t>(ggml_data, chunk_valid_rows, cols, chunk_size,
-                                                                          context_size, GGML_FP32_TO_FP16(-INFINITY));
-            set_zero_diagonal(padded_data, chunk_size, context_size, GGML_FP32_TO_FP16(0.0f));
-            ov::Tensor input_tensor(ov::element::f16, ov::Shape{1, 1, chunk_size, context_size});
-            std::memcpy(input_tensor.data(), padded_data.data(), padded_data.size() * sizeof(ggml_fp16_t));
-            return input_tensor;
+    اگر (GgmlOvDecoder::is_inp_نقاب(ggml_tensor, op)) {
+        size_t ستون_تعداد_2 = ggml_tensor->ne[0];
+        size_t صفیں = ggml_tensor->ne[1];
+        size_t chunk_valid_صفیں = std::min(chunk_سائز, صفیں - chunk_اشاریہ * chunk_سائز);
+        size_t context_سائز = ggml_decoder->get_ctx_سائز();
+        اگر (ggml_tensor->type == GGML_TYPE_F16) {
+            ثابت خودکار * ggml_ڈیٹا =
+                static_cast<ثابت ggml_fp16_t *>(ggml_tensor->ڈیٹا) + chunk_اشاریہ * chunk_سائز * ستون_تعداد_2;
+            std::vector<ggml_fp16_t> padded_ڈیٹا = pad_داخلہ<ggml_fp16_t>(ggml_ڈیٹا, chunk_valid_صفیں, ستون_تعداد_2, chunk_سائز,
+                                                                          context_سائز, GGML_FP32_مقصد_FP16(-INFINITY));
+            سیٹ_zero_diagonal(padded_ڈیٹا, chunk_سائز, context_سائز, GGML_FP32_مقصد_FP16(0.0f));
+            ov::Tensor داخلہ_tensor(ov::element::f16, ov::Shape{1, 1, chunk_سائز, context_سائز});
+            std::حافظہ_نقل(داخلہ_tensor.ڈیٹا(), padded_ڈیٹا.ڈیٹا(), padded_ڈیٹا.size() * حجم(ggml_fp16_t));
+            واپس داخلہ_tensor;
         }
 
-        const auto * ggml_data = static_cast<const float *>(ggml_tensor->data) + chunk_index * chunk_size * cols;
-        std::vector<float> padded_data =
-            pad_input<float>(ggml_data, chunk_valid_rows, cols, chunk_size, context_size, -INFINITY);
-        set_zero_diagonal(padded_data, chunk_size, context_size);
-        ov::Tensor input_tensor(ov::element::f32, ov::Shape{1, 1, chunk_size, context_size});
-        auto * data_ptr = input_tensor.data<float>();
-        std::copy(padded_data.begin(), padded_data.begin() + chunk_size * context_size, data_ptr);
-        return input_tensor;
+        ثابت خودکار * ggml_ڈیٹا = static_cast<ثابت اعشاری *>(ggml_tensor->ڈیٹا) + chunk_اشاریہ * chunk_سائز * ستون_تعداد_2;
+        std::vector<اعشاری> padded_ڈیٹا =
+            pad_داخلہ<اعشاری>(ggml_ڈیٹا, chunk_valid_صفیں, ستون_تعداد_2, chunk_سائز, context_سائز, -INFINITY);
+        سیٹ_zero_diagonal(padded_ڈیٹا, chunk_سائز, context_سائز);
+        ov::Tensor داخلہ_tensor(ov::element::f32, ov::Shape{1, 1, chunk_سائز, context_سائز});
+        خودکار * ڈیٹا_ptr = داخلہ_tensor.ڈیٹا<اعشاری>();
+        std::copy(padded_ڈیٹا.begin(), padded_ڈیٹا.begin() + chunk_سائز * context_سائز, ڈیٹا_ptr);
+        واپس داخلہ_tensor;
     }
 
-    return get_ov_input_tensor(ggml_decoder, param_name);
+    واپس get_ov_داخلہ_tensor(ggml_decoder, param_name);
 }
 
-enum ggml_status naive_compute(ggml_cgraph * cgraph,
+شمار ggml_حالت naive_compute(ggml_cgraph * cgraph,
                                ov::Core & core,
-                               const std::string & device,
-                               const ov::AnyMap & config,
+                               ثابت std::string & device,
+                               ثابت ov::AnyMap & config,
                                ov_compiled_model_cache & cache) {
-    if (cgraph->n_nodes == 1 && (cgraph->nodes[0]->op == GGML_OP_NONE || cgraph->nodes[0]->op == GGML_OP_VIEW)) {
-        return GGML_STATUS_SUCCESS;
+    اگر (cgraph->n_nodes == 1 && (cgraph->nodes[0]->op == GGML_OP_NONE || cgraph->nodes[0]->op == GGML_OP_VIEW)) {
+        واپس GGML_حالت_SUCCESS;
     }
 
-    std::unique_lock<std::mutex> compile_lock(cache.mutex);
-    bool naive = true;
-    auto model_weights = GgmlOvDecoder::create_weight_nodes(cgraph, naive);
-    auto decoder = std::make_shared<GgmlOvDecoder>(cgraph, model_weights);
-    auto input_model = std::make_shared<ov::frontend::ggml::InputModel>(decoder);
-    auto model = ov::frontend::ggml::FrontEnd::convert(input_model, naive);
-    if (ggml_openvino_getenv_int("GGML_OPENVINO_DUMP_IR")) {
+    std::unique_lock<std::mutex> compile_تالا(cache.mutex);
+    منطقی naive = سچ;
+    خودکار model_weights = GgmlOvDecoder::create_وزن_nodes(cgraph, naive);
+    خودکار decoder = std::make_shared<GgmlOvDecoder>(cgraph, model_weights);
+    خودکار داخلہ_model = std::make_shared<ov::frontend::ggml::داخلہ_Model>(decoder);
+    خودکار model = ov::frontend::ggml::Front_انتہا::convert(داخلہ_model, naive);
+    اگر (ggml_openvino_getenv_int("GGML_OPENVINO_DUMP_IR")) {
         ov::serialize(model, "IR_naive.xml");
     }
 
     std::shared_ptr<ov::InferRequest> infer_request;
-    auto remote_context = ggml_openvino_get_remote_context();
+    خودکار remote_context = ggml_openvino_get_remote_context();
     ov::AnyMap compile_config = config;
-    if (cgraph->nodes[0]->op == GGML_OP_MUL_MAT) {
+    اگر (cgraph->nodes[0]->op == GGML_OP_MUL_MAT) {
         // TODO ACCURACY hint triggers a bug in GPU plugin/driver on Lunar Lake. Remove once CVS-182166 is resolved
-        compile_config[ov::hint::execution_mode.name()] = ov::hint::ExecutionMode::PERFORMANCE;
-    } else {
-        compile_config[ov::hint::execution_mode.name()] = ov::hint::ExecutionMode::ACCURACY;
+        compile_config[ov::hint::execution_منوال.name()] = ov::hint::Execution_منوال::PERFORMANCE;
+    } ورنہ {
+        compile_config[ov::hint::execution_منوال.name()] = ov::hint::Execution_منوال::ACCURACY;
     }
-    if (remote_context.has_value()) {
+    اگر (remote_context.has_value()) {
         infer_request = std::make_shared<ov::InferRequest>(
             core.compile_model(model, remote_context.value(), compile_config).create_infer_request());
-    } else {
+    } ورنہ {
         infer_request = std::make_shared<ov::InferRequest>(
             core.compile_model(model, device, compile_config).create_infer_request());
     }
-    std::vector<std::string> input_names;
-    std::vector<std::string> output_names;
-    for (const auto & param : model->get_parameters()) {
-        input_names.push_back(param->get_friendly_name());
+    std::vector<std::string> داخلہ_نام;
+    std::vector<std::string> output_نام;
+    برائے (ثابت خودکار & param : model->get_parameters()) {
+        داخلہ_نام.push_back(param->get_friendly_name());
     }
-    for (const auto & result : model->get_results()) {
-        output_names.push_back(result->get_friendly_name());
+    برائے (ثابت خودکار & نتیجہ : model->get_results()) {
+        output_نام.push_back(نتیجہ->get_friendly_name());
     }
     // Destroy the frontend graph under the compilation lock as well: it can
     // still own edges into the shared weight nodes.
     model.reset();
-    input_model.reset();
+    داخلہ_model.reset();
     decoder->clear_model_weights();
     model_weights.clear();
-    compile_lock.unlock();
+    compile_تالا.unlock();
 
-    for (size_t i = 0; i < input_names.size(); i++) {
-        const auto & param_name = input_names[i];
-        auto input_tensor = get_ov_input_tensor(decoder, param_name);
-        infer_request->set_input_tensor(i, input_tensor);
+    برائے (size_t i = 0; i < داخلہ_نام.size(); i++) {
+        ثابت خودکار & param_name = داخلہ_نام[i];
+        خودکار داخلہ_tensor = get_ov_داخلہ_tensor(decoder, param_name);
+        infer_request->سیٹ_داخلہ_tensor(i, داخلہ_tensor);
     }
 
     // Use get_output_tensor + memcpy instead of set_output_tensor to avoid memory overwritten
@@ -790,62 +790,62 @@ enum ggml_status naive_compute(ggml_cgraph * cgraph,
 
     infer_request->infer();
 
-    for (size_t i = 0; i < output_names.size(); i++) {
-        auto output_tensor = infer_request->get_output_tensor(i);
-        const auto & model_outputs = decoder->get_model_outputs();
-        auto model_output_it = model_outputs.find(output_names[i]);
-        if (model_output_it == model_outputs.end()) {
+    برائے (size_t i = 0; i < output_نام.size(); i++) {
+        خودکار output_tensor = infer_request->get_output_tensor(i);
+        ثابت خودکار & model_outputs = decoder->get_model_outputs();
+        خودکار model_output_it = model_outputs.find(output_نام[i]);
+        اگر (model_output_it == model_outputs.end()) {
             // Debug-only output added via GGML_OPENVINO_DEBUG_NODE; nothing to copy into.
-            if (ggml_openvino_getenv_int("GGML_OPENVINO_DEBUG_OUTPUT") ||
+            اگر (ggml_openvino_getenv_int("GGML_OPENVINO_DEBUG_OUTPUT") ||
                 ggml_openvino_getenv_str("GGML_OPENVINO_DEBUG_NODE")) {
-                print_output_tensor_info(output_names[i], output_tensor, output_tensor.data());
+                print_output_tensor_info(output_نام[i], output_tensor, output_tensor.ڈیٹا());
             }
-            continue;
+            جاری;
         }
-        auto * ggml_tensor = model_output_it->second;
-        std::memcpy(ggml_tensor->data, output_tensor.data(), output_tensor.get_byte_size());
+        خودکار * ggml_tensor = model_output_it->second;
+        std::حافظہ_نقل(ggml_tensor->ڈیٹا, output_tensor.ڈیٹا(), output_tensor.get_byte_سائز());
     }
-    return GGML_STATUS_SUCCESS;
+    واپس GGML_حالت_SUCCESS;
 }
 
-enum ggml_status ov_graph_compute_dynamic(ggml_cgraph * cgraph, const std::shared_ptr<ov_runtime_context> & r_ctx) {
-    auto & core = ov_singleton_core();
-    const auto & config = ggml_openvino_get_compile_config();
-    const auto & device = r_ctx->device;
-    static auto is_static = false;
+شمار ggml_حالت ov_گراف_compute_dynamic(ggml_cgraph * cgraph, ثابت std::shared_ptr<ov_runtime_context> & r_ctx) {
+    خودکار & core = ov_singleton_core();
+    ثابت خودکار & config = ggml_openvino_get_compile_config();
+    ثابت خودکار & device = r_ctx->device;
+    ساکن خودکار is_static = جھوٹ;
 
-    static const bool cache_disabled = ggml_openvino_getenv_int("GGML_OPENVINO_DISABLE_CACHE");
+    ساکن ثابت منطقی cache_disabled = ggml_openvino_getenv_int("GGML_OPENVINO_DISABLE_CACHE");
 
-    auto start_time = ggml_time_us();
+    خودکار آغاز_وقت = ggml_وقت_us();
 
     // is_model_splitted is O(n_nodes^2) plus a create_weight_nodes scan and takes ~20 ms
     // on a Llama-1B decode graph. It is called once per graph_compute invocation but the
     // graph shape is identical across all decode steps, so memoize by graph_key: compute
     // graph_key first (a few hundred us), and if the same key is already in decoder_cache
     // we know the graph is not splitted (only not-splitted graphs get inserted there).
-    const int64_t cache_key_start_time = ggml_time_us();
-    graph_key key(cgraph);
-    const int64_t cache_key_compute_time = ggml_time_us() - cache_key_start_time;
-    int64_t cache_lookup_time = 0;
-    bool key_seen = false;
-    if (!cache_disabled) {
-        const int64_t cache_lookup_start_time = ggml_time_us();
-        std::lock_guard<std::mutex> map_lock(r_ctx->ctx_mutex);
-        key_seen = r_ctx->decoder_cache.find(key) != r_ctx->decoder_cache.end();
-        cache_lookup_time += ggml_time_us() - cache_lookup_start_time;
+    ثابت int64_t cache_کلید_آغاز_وقت = ggml_وقت_us();
+    گراف_کلید کلید(cgraph);
+    ثابت int64_t cache_کلید_compute_وقت = ggml_وقت_us() - cache_کلید_آغاز_وقت;
+    int64_t cache_lookup_وقت = 0;
+    منطقی کلید_نظر_آیا = جھوٹ;
+    اگر (!cache_disabled) {
+        ثابت int64_t cache_lookup_آغاز_وقت = ggml_وقت_us();
+        std::lock_guard<std::mutex> map_تالا(r_ctx->ctx_mutex);
+        کلید_نظر_آیا = r_ctx->decoder_cache.find(کلید) != r_ctx->decoder_cache.end();
+        cache_lookup_وقت += ggml_وقت_us() - cache_lookup_آغاز_وقت;
     }
 
-    const int64_t model_split_check_start_time = ggml_time_us();
-    bool model_is_splitted = key_seen ? false : is_model_splitted(cgraph);
-    const int64_t model_split_check_time = ggml_time_us() - model_split_check_start_time;
+    ثابت int64_t model_بانٹو_check_آغاز_وقت = ggml_وقت_us();
+    منطقی model_is_splitted = کلید_نظر_آیا ? جھوٹ : is_model_splitted(cgraph);
+    ثابت int64_t model_بانٹو_check_وقت = ggml_وقت_us() - model_بانٹو_check_آغاز_وقت;
 
-    if (ggml_openvino_model_cache_only() && (model_is_splitted || is_naive(cgraph))) {
+    اگر (ggml_openvino_model_cache_only() && (model_is_splitted || is_naive(cgraph))) {
         GGML_LOG_ERROR("ggml-openvino: cache-only mode requires a complete model graph\n");
-        return GGML_STATUS_FAILED;
+        واپس GGML_حالت_FAILED;
     }
-    if (is_naive(cgraph)) {
-        if (!model_is_splitted) {
-            return naive_compute(cgraph, core, device, config, *r_ctx->compiled_cache);
+    اگر (is_naive(cgraph)) {
+        اگر (!model_is_splitted) {
+            واپس naive_compute(cgraph, core, device, config, *r_ctx->compiled_cache);
         }
     }
 
@@ -853,123 +853,123 @@ enum ggml_status ov_graph_compute_dynamic(ggml_cgraph * cgraph, const std::share
     std::shared_ptr<ov::InferRequest> infer_request;
     ModelParams m_params;
     ComputeParams c_params;
-    const int64_t graph_param_compute_start_time = ggml_time_us();
+    ثابت int64_t گراف_param_compute_آغاز_وقت = ggml_وقت_us();
     std::tie(m_params, c_params) = GgmlOvDecoder::compute_llm_params(cgraph, is_static);
-    const int64_t graph_param_compute_time = ggml_time_us() - graph_param_compute_start_time;
+    ثابت int64_t گراف_param_compute_وقت = ggml_وقت_us() - گراف_param_compute_آغاز_وقت;
 
-    const bool cache_enabled = !model_is_splitted && !cache_disabled;
-    const bool stateful_recurrent = r_ctx->stateful && m_params.state_size >= 0;
-    const bool stateful_kv_only = r_ctx->stateful && !stateful_recurrent;
-    if (r_ctx->stateful &&
-        (m_params.n_seq > 1 || c_params.n_seq_active > 1 || m_params.n_rs_slots > 1 || m_params.has_rs_rollback)) {
+    ثابت منطقی cache_enabled = !model_is_splitted && !cache_disabled;
+    ثابت منطقی stateful_recurrent = r_ctx->stateful && m_params.state_سائز >= 0;
+    ثابت منطقی stateful_kv_only = r_ctx->stateful && !stateful_recurrent;
+    اگر (r_ctx->stateful &&
+        (m_params.n_seq > 1 || c_params.n_seq_فعال > 1 || m_params.n_rs_slots > 1 || m_params.has_rs_rollback)) {
         GGML_LOG_ERROR("OpenVINO stateful execution requires a single slot without recurrent rollback. Use -np 1.\n");
-        return GGML_STATUS_FAILED;
+        واپس GGML_حالت_FAILED;
     }
-    if (stateful_recurrent && !cache_enabled) {
+    اگر (stateful_recurrent && !cache_enabled) {
         GGML_LOG_ERROR("OpenVINO recurrent stateful execution requires an unsplit graph with model caching enabled.\n");
-        return GGML_STATUS_FAILED;
+        واپس GGML_حالت_FAILED;
     }
-    bool cache_hit = false;
+    منطقی cache_کامیابی = جھوٹ;
 
-    int64_t decoder_end_time;
-    int64_t conversion_end_time;
-    int64_t compile_end_time;
-    int64_t infer_end_time;
-    int64_t ov_raw_infer_start;
+    int64_t decoder_انتہا_وقت;
+    int64_t conversion_انتہا_وقت;
+    int64_t compile_انتہا_وقت;
+    int64_t infer_انتہا_وقت;
+    int64_t ov_raw_infer_آغاز;
 
     {
-        std::shared_ptr<decoder_runtime_ctx> entry;
+        std::shared_ptr<decoder_runtime_ctx> اندراج_2;
         ModelParams old_m_params;
 
-        const int64_t cache_lookup_start_time = ggml_time_us();
-        if (cache_enabled) {
-            std::lock_guard<std::mutex> map_lock(r_ctx->ctx_mutex);
-            auto it = r_ctx->decoder_cache.find(key);
-            cache_hit = it != r_ctx->decoder_cache.end();
-            if (cache_hit) {
-                entry = it->second;
-            } else {
+        ثابت int64_t cache_lookup_آغاز_وقت = ggml_وقت_us();
+        اگر (cache_enabled) {
+            std::lock_guard<std::mutex> map_تالا(r_ctx->ctx_mutex);
+            خودکار it = r_ctx->decoder_cache.find(کلید);
+            cache_کامیابی = it != r_ctx->decoder_cache.end();
+            اگر (cache_کامیابی) {
+                اندراج_2 = it->second;
+            } ورنہ {
                 r_ctx->clear_caches_locked();
-                auto mutex = std::make_shared<std::mutex>();
-                entry = std::make_shared<decoder_runtime_ctx>(mutex);
-                r_ctx->decoder_cache[key] = entry;
+                خودکار mutex = std::make_shared<std::mutex>();
+                اندراج_2 = std::make_shared<decoder_runtime_ctx>(mutex);
+                r_ctx->decoder_cache[کلید] = اندراج_2;
             }
-        } else {
-            auto mutex = std::make_shared<std::mutex>();
-            entry = std::make_shared<decoder_runtime_ctx>(mutex);
-            cache_hit = false;
+        } ورنہ {
+            خودکار mutex = std::make_shared<std::mutex>();
+            اندراج_2 = std::make_shared<decoder_runtime_ctx>(mutex);
+            cache_کامیابی = جھوٹ;
         }
-        cache_lookup_time += ggml_time_us() - cache_lookup_start_time;
+        cache_lookup_وقت += ggml_وقت_us() - cache_lookup_آغاز_وقت;
 
-        std::lock_guard<std::mutex> lock(*(entry->mutex));
-        cache_hit = cache_hit && entry->ptr && r_ctx->infer_request_cache.count(key) != 0;
+        std::lock_guard<std::mutex> تالا(*(اندراج_2->mutex));
+        cache_کامیابی = cache_کامیابی && اندراج_2->ptr && r_ctx->infer_request_cache.count(کلید) != 0;
 
-        if (cache_hit) {
-            ggml_decoder = entry->ptr;
+        اگر (cache_کامیابی) {
+            ggml_decoder = اندراج_2->ptr;
             old_m_params = ggml_decoder->get_model_params();
-            if (!ggml_decoder->is_splited_model()) {
-                cache_hit = old_m_params.can_reuse_dynamically(m_params);
+            اگر (!ggml_decoder->is_splited_model()) {
+                cache_کامیابی = old_m_params.can_reuse_dynamically(m_params);
             }
         }
 
-        std::vector<std::string> ov_input_names;
-        std::vector<std::string> ov_output_names;
+        std::vector<std::string> ov_داخلہ_نام;
+        std::vector<std::string> ov_output_نام;
 
-        if (cache_hit) {
+        اگر (cache_کامیابی) {
             std::map<std::string, std::shared_ptr<ov::Node>> model_weights;
-            ggml_decoder->set_compute_params(c_params);
-            ggml_decoder->set_model_params(m_params);
-            if (old_m_params.kv_buffer_changed(m_params) || !ggml_decoder->is_bound_to(cgraph)) {
+            ggml_decoder->سیٹ_compute_params(c_params);
+            ggml_decoder->سیٹ_model_params(m_params);
+            اگر (old_m_params.kv_بفر_بدلا(m_params) || !ggml_decoder->is_bound_مقصد(cgraph)) {
                 ggml_decoder->update_io(cgraph);
             }
-            ggml_decoder->add_extra_inputs();
+            ggml_decoder->جوڑو_extra_inputs();
             {
-                std::lock_guard<std::mutex> map_lock(r_ctx->ctx_mutex);
-                infer_request = r_ctx->infer_request_cache.at(key);
-                ov_input_names = r_ctx->ov_input_names_cache.at(key);
-                ov_output_names = r_ctx->ov_output_names_cache.at(key);
+                std::lock_guard<std::mutex> map_تالا(r_ctx->ctx_mutex);
+                infer_request = r_ctx->infer_request_cache.at(کلید);
+                ov_داخلہ_نام = r_ctx->ov_داخلہ_نام_cache.at(کلید);
+                ov_output_نام = r_ctx->ov_output_نام_cache.at(کلید);
             }
 
-            if (stateful_kv_only) {
-                const auto * inp_pos = get_inp_pos_tensor(cgraph);
-                int32_t * pos_data = (int32_t *) inp_pos->data;
-                auto pos_shape = GgmlOvDecoder::get_shape(inp_pos);
-                if (pos_data[0] == 0) {
+            اگر (stateful_kv_only) {
+                ثابت خودکار * inp_pos = get_inp_pos_tensor(cgraph);
+                int32_t * pos_ڈیٹا = (int32_t *) inp_pos->ڈیٹا;
+                خودکار pos_shape = GgmlOvDecoder::get_shape(inp_pos);
+                اگر (pos_ڈیٹا[0] == 0) {
                     infer_request->reset_state();
-                    r_ctx->stateful_kv_size = pos_shape[3];
-                } else if (r_ctx->stateful_kv_size == static_cast<size_t>(pos_data[0])) {
-                    r_ctx->stateful_kv_size += pos_shape[3];
-                } else {
-                    const size_t pos_begin = static_cast<size_t>(pos_data[0]);
-                    const bool refill = pos_begin > r_ctx->stateful_kv_size;
+                    r_ctx->stateful_kv_سائز = pos_shape[3];
+                } ورنہ اگر (r_ctx->stateful_kv_سائز == static_cast<size_t>(pos_ڈیٹا[0])) {
+                    r_ctx->stateful_kv_سائز += pos_shape[3];
+                } ورنہ {
+                    ثابت size_t pos_begin = static_cast<size_t>(pos_ڈیٹا[0]);
+                    ثابت منطقی refill = pos_begin > r_ctx->stateful_kv_سائز;
 
                     // A refill seeds the state from ggml's KV cache, so it needs that cache to be a
                     // plain prefix: cell i must hold position i. An SWA layer keeps only the last
                     // n_swa positions, so once a position leaves the window ggml drops it and the
                     // remaining cells shift - cell i stops holding position i. While every position
                     // is still inside the window nothing has been dropped and the refill is sound.
-                    if (refill && !ggml_decoder->get_model_params().swa_layers.empty()) {
-                        const int n_swa = ggml_decoder->get_compute_params().swa_window;
-                        if (n_swa < 0 || static_cast<size_t>(n_swa) < pos_begin) {
+                    اگر (refill && !ggml_decoder->get_model_params().swa_layers.خالی_خانے()) {
+                        ثابت صحیح n_swa = ggml_decoder->get_compute_params().swa_کھڑکی;
+                        اگر (n_swa < 0 || static_cast<size_t>(n_swa) < pos_begin) {
                             GGML_LOG_ERROR(
                                 "GGML OpenVINO backend stateful inference failed: cannot resume at position %zu from a "
                                 "state that holds %zu tokens, because the sliding-window layers keep only the last %d "
                                 "positions. Run without GGML_OPENVINO_STATEFUL_EXECUTION.\n",
-                                pos_begin, r_ctx->stateful_kv_size, n_swa);
-                            return GGML_STATUS_FAILED;
+                                pos_begin, r_ctx->stateful_kv_سائز, n_swa);
+                            واپس GGML_حالت_FAILED;
                         }
                     }
 
-                    const bool relayout_enabled = !ggml_openvino_getenv_int("GGML_OPENVINO_DISABLE_KV_STATE_RELAYOUT");
+                    ثابت منطقی relayout_enabled = !ggml_openvino_getenv_int("GGML_OPENVINO_DISABLE_KV_STATE_RELAYOUT");
 
-                    auto states = infer_request->query_state();
-                    for (auto state : states) {
-                        auto state_tensor = state.get_state();
-                        auto state_tensor_shape = state_tensor.get_shape();
+                    خودکار حالتیں = infer_request->query_state();
+                    برائے (خودکار state : حالتیں) {
+                        خودکار state_tensor = state.get_state();
+                        خودکار state_tensor_shape = state_tensor.get_shape();
 
                         std::string state_name;
-                        if (auto it = r_ctx->kv_state_input_name_map.find(state.get_name());
-                            it != r_ctx->kv_state_input_name_map.end()) {
+                        اگر (خودکار it = r_ctx->kv_state_داخلہ_name_map.find(state.get_name());
+                            it != r_ctx->kv_state_داخلہ_name_map.end()) {
                             state_name = it->second;
                         }
 
@@ -977,407 +977,407 @@ enum ggml_status ov_graph_compute_dynamic(ggml_cgraph * cgraph, const std::share
                         // to dim 2. The head count is still needed below, because only a 1-head
                         // state stays byte-compatible with ggml's cache buffer. gemma-4 12B mixes
                         // 1-head full layers with 8-head sliding layers, so it is per state.
-                        int n_heads_kv = ggml_decoder->get_model_params().n_heads_kv;
-                        if (auto layer = extract_layer_from_name(state_name); layer.has_value()) {
+                        صحیح n_heads_kv = ggml_decoder->get_model_params().n_heads_kv;
+                        اگر (خودکار layer = نکالو_layer_from_name(state_name); layer.has_value()) {
                             n_heads_kv = ggml_decoder->get_n_heads_kv_for_layer(layer.value());
                         }
-                        const bool relayout_this_state = relayout_enabled;
-                        const size_t seq_axis = relayout_this_state ? 2 : 1;
-                        const size_t head_axis = seq_axis == 2 ? 1 : 2;
+                        ثابت منطقی relayout_this_state = relayout_enabled;
+                        ثابت size_t seq_axis = relayout_this_state ? 2 : 1;
+                        ثابت size_t سر_axis = seq_axis == 2 ? 1 : 2;
 
-                        if (refill) {
-                            if (state_name.empty()) {
+                        اگر (refill) {
+                            اگر (state_name.خالی_خانے()) {
                                 GGML_LOG_ERROR(
                                     "GGML OpenVINO backend stateful inference failed: no input found for the state\n");
-                                return GGML_STATUS_FAILED;
+                                واپس GGML_حالت_FAILED;
                             }
-                            auto kv_tensor = get_ov_input_tensor(ggml_decoder, state_name);
-                            if (relayout_this_state && n_heads_kv != 1) {
+                            خودکار kv_tensor = get_ov_داخلہ_tensor(ggml_decoder, state_name);
+                            اگر (relayout_this_state && n_heads_kv != 1) {
                                 // several heads with seq on dim 2: not the same bytes as ggml's
                                 // buffer, so the rows have to be copied into the new order
-                                state_tensor = kv_rows_to_seq_axis_2(kv_tensor, (size_t) n_heads_kv);
-                            } else {
+                                state_tensor = kv_صفیں_مقصد_seq_axis_2(kv_tensor, (size_t) n_heads_kv);
+                            } ورنہ {
                                 ov::Shape refill_shape(4);
                                 refill_shape[0] = state_tensor_shape[0];
                                 refill_shape[seq_axis] = kv_tensor.get_shape()[2];
-                                refill_shape[head_axis] = state_tensor_shape[head_axis];
+                                refill_shape[سر_axis] = state_tensor_shape[سر_axis];
                                 refill_shape[3] = state_tensor_shape[3];
-                                kv_tensor.set_shape(refill_shape);
+                                kv_tensor.سیٹ_shape(refill_shape);
                                 state_tensor = kv_tensor;
                             }
                             state_tensor_shape = state_tensor.get_shape();
                         }
                         // Only ever shrink to a prefix the source really has. Slicing past it used to
                         // surface as a bare ov::Exception from the ROI constructor.
-                        if (state_tensor_shape[seq_axis] < pos_begin) {
+                        اگر (state_tensor_shape[seq_axis] < pos_begin) {
                             GGML_LOG_ERROR(
                                 "GGML OpenVINO backend stateful inference failed: state '%s' holds %zu tokens on axis "
                                 "%zu, cannot resume at position %zu\n",
                                 state.get_name().c_str(), state_tensor_shape[seq_axis], seq_axis, pos_begin);
-                            return GGML_STATUS_FAILED;
+                            واپس GGML_حالت_FAILED;
                         }
                         ov::Coordinate begin = {0, 0, 0, 0};
                         ov::Coordinate end(state_tensor_shape.begin(), state_tensor_shape.end());
                         end[seq_axis] = pos_begin;
                         ov::Tensor new_state_tensor(state_tensor, begin, end);
-                        state.set_state(new_state_tensor);
+                        state.سیٹ_state(new_state_tensor);
                     }
-                    r_ctx->stateful_kv_size = pos_begin + pos_shape[3];
+                    r_ctx->stateful_kv_سائز = pos_begin + pos_shape[3];
                 }
             }
 
-            decoder_end_time = ggml_time_us();
-            conversion_end_time = decoder_end_time;
-            compile_end_time = decoder_end_time;
-        } else {
+            decoder_انتہا_وقت = ggml_وقت_us();
+            conversion_انتہا_وقت = decoder_انتہا_وقت;
+            compile_انتہا_وقت = decoder_انتہا_وقت;
+        } ورنہ {
             // Compilation can mutate shared weight nodes, so serialize cold paths.
             // The lock is released before binding tensors or running inference.
-            auto shared_cache = r_ctx->compiled_cache;
-            std::unique_lock<std::mutex> compile_lock(shared_cache->mutex);
-            auto weight_names = get_weight_names(cgraph);
-            ggml_decoder = std::make_shared<GgmlOvDecoder>(cgraph, m_params, c_params, weight_names,
+            خودکار shared_cache = r_ctx->compiled_cache;
+            std::unique_lock<std::mutex> compile_تالا(shared_cache->mutex);
+            خودکار وزن_نام = get_وزن_نام(cgraph);
+            ggml_decoder = std::make_shared<GgmlOvDecoder>(cgraph, m_params, c_params, وزن_نام,
                                                           is_static, r_ctx->stateful, model_is_splitted);
-            const std::string model_cache_dir = ggml_openvino_model_cache_dir();
-            const std::string exact_key = cache_enabled ? compiled_graph_key(cgraph, *ggml_decoder, device) : "";
+            ثابت std::string model_cache_dir = ggml_openvino_model_cache_dir();
+            ثابت std::string exact_کلید = cache_enabled ? compiled_گراف_کلید(cgraph, *ggml_decoder, device) : "";
             uint64_t model_fp = 0;
             uint64_t exact_fp = 0;
-            std::string blob_path, manifest_path;
-            if (!model_cache_dir.empty() && !model_is_splitted) {
-                const uint64_t extra_cfg =
+            std::string blob_راستہ, manifest_راستہ;
+            اگر (!model_cache_dir.خالی_خانے() && !model_is_splitted) {
+                ثابت uint64_t extra_cfg =
                     ggml_openvino_model_cache_extra_cfg(r_ctx->stateful, stateful_recurrent);
                 model_fp =
-                    ggml_openvino_model_fingerprint(cgraph, device, /*fa=*/true, m_params.rope_params, 16, extra_cfg,
-                                                    dynamic_graph_signature(cgraph, *ggml_decoder, m_params));
+                    ggml_openvino_model_fingerprint(cgraph, device, /*fa=*/سچ, m_params.rope_params, 16, extra_cfg,
+                                                    dynamic_گراف_signature(cgraph, *ggml_decoder, m_params));
                 exact_fp =
-                    ggml_openvino_model_fingerprint(cgraph, device, /*fa=*/true, m_params.rope_params, 16, extra_cfg,
-                                                    compiled_graph_key(cgraph, *ggml_decoder, device, 0, true));
-                blob_path = ggml_openvino_model_cache_blob_path(model_cache_dir, model_fp);
-                manifest_path = ggml_openvino_model_cache_manifest_path(model_cache_dir, model_fp);
+                    ggml_openvino_model_fingerprint(cgraph, device, /*fa=*/سچ, m_params.rope_params, 16, extra_cfg,
+                                                    compiled_گراف_کلید(cgraph, *ggml_decoder, device, 0, سچ));
+                blob_راستہ = ggml_openvino_model_cache_blob_راستہ(model_cache_dir, model_fp);
+                manifest_راستہ = ggml_openvino_model_cache_manifest_راستہ(model_cache_dir, model_fp);
             }
-            std::string shared_key =
-                cache_enabled ? (model_fp ? "dynamic:" + std::to_string(model_fp) : exact_key) : "";
+            std::string shared_کلید =
+                cache_enabled ? (model_fp ? "dynamic:" + std::to_string(model_fp) : exact_کلید) : "";
             ov::CompiledModel shared_model;
-            bool imported = false;
-            auto shared_it = shared_cache->graphs.find(shared_key);
-            if (!shared_key.empty() && shared_it != shared_cache->graphs.end() &&
-                (model_fp == 0 || compiled_model_matches_graph(shared_it->second.decode, shared_it->second.input_names,
-                                                               shared_it->second.output_names, *ggml_decoder))) {
+            منطقی imported = جھوٹ;
+            خودکار shared_it = shared_cache->graphs.find(shared_کلید);
+            اگر (!shared_کلید.خالی_خانے() && shared_it != shared_cache->graphs.end() &&
+                (model_fp == 0 || compiled_model_matches_گراف(shared_it->second.decode, shared_it->second.داخلہ_نام,
+                                                               shared_it->second.output_نام, *ggml_decoder))) {
                 shared_model = shared_it->second.decode;
                 infer_request = std::make_shared<ov::InferRequest>(shared_model.create_infer_request());
-                ov_input_names = shared_it->second.input_names;
-                ov_output_names = shared_it->second.output_names;
-                imported = true;
+                ov_داخلہ_نام = shared_it->second.داخلہ_نام;
+                ov_output_نام = shared_it->second.output_نام;
+                imported = سچ;
                 GGML_LOG_DEBUG("ggml-openvino: shared compiled model HIT (dynamic)\n");
-            } else if (model_fp && shared_it != shared_cache->graphs.end()) {
-                shared_key = exact_key;
-                shared_it = shared_cache->graphs.find(shared_key);
-                if (shared_it != shared_cache->graphs.end()) {
+            } ورنہ اگر (model_fp && shared_it != shared_cache->graphs.end()) {
+                shared_کلید = exact_کلید;
+                shared_it = shared_cache->graphs.find(shared_کلید);
+                اگر (shared_it != shared_cache->graphs.end()) {
                     shared_model = shared_it->second.decode;
                     infer_request = std::make_shared<ov::InferRequest>(shared_model.create_infer_request());
-                    ov_input_names = shared_it->second.input_names;
-                    ov_output_names = shared_it->second.output_names;
-                    imported = true;
+                    ov_داخلہ_نام = shared_it->second.داخلہ_نام;
+                    ov_output_نام = shared_it->second.output_نام;
+                    imported = سچ;
                 }
                 model_fp = exact_fp;
-                blob_path = ggml_openvino_model_cache_blob_path(model_cache_dir, model_fp);
-                manifest_path = ggml_openvino_model_cache_manifest_path(model_cache_dir, model_fp);
+                blob_راستہ = ggml_openvino_model_cache_blob_راستہ(model_cache_dir, model_fp);
+                manifest_راستہ = ggml_openvino_model_cache_manifest_راستہ(model_cache_dir, model_fp);
             }
-            if (cache_enabled) {
-                std::lock_guard<std::mutex> map_lock(r_ctx->ctx_mutex);
-                r_ctx->infer_request_cache.erase(key);
+            اگر (cache_enabled) {
+                std::lock_guard<std::mutex> map_تالا(r_ctx->ctx_mutex);
+                r_ctx->infer_request_cache.erase(کلید);
             }
 
             // Import standalone blobs with weights before graph conversion and compilation.
             // Split models use the plugin cache instead. The decoder still maps graph I/O.
             ov::AnyMap mc_config = config;
-            if (!model_cache_dir.empty()) {
+            اگر (!model_cache_dir.خالی_خانے()) {
                 mc_config.erase("CACHE_DIR");
-                mc_config[ov::cache_mode.name()] = ov::CacheMode::OPTIMIZE_SPEED;
+                mc_config[ov::cache_منوال.name()] = ov::Cache_منوال::OPTIMIZE_رفتار;
             }
-            if (!imported && !model_cache_dir.empty() && !model_is_splitted) {
-                const uint64_t preferred_fp = model_fp;
-                bool dynamic_incompatible = preferred_fp == exact_fp;
-                for (int candidate = 0; candidate < 2; ++candidate) {
-                    if (imported || (candidate == 1 && preferred_fp == exact_fp)) {
-                        break;
+            اگر (!imported && !model_cache_dir.خالی_خانے() && !model_is_splitted) {
+                ثابت uint64_t preferred_fp = model_fp;
+                منطقی dynamic_incompatible = preferred_fp == exact_fp;
+                برائے (صحیح candidate = 0; candidate < 2; ++candidate) {
+                    اگر (imported || (candidate == 1 && preferred_fp == exact_fp)) {
+                        توڑو;
                     }
-                    const uint64_t candidate_fp = candidate == 0 ? preferred_fp : exact_fp;
-                    const std::string candidate_blob =
-                        ggml_openvino_model_cache_blob_path(model_cache_dir, candidate_fp);
-                    const std::string candidate_manifest =
-                        ggml_openvino_model_cache_manifest_path(model_cache_dir, candidate_fp);
-                    std::ifstream blob_in(candidate_blob, std::ios::binary);
+                    ثابت uint64_t candidate_fp = candidate == 0 ? preferred_fp : exact_fp;
+                    ثابت std::string candidate_blob =
+                        ggml_openvino_model_cache_blob_راستہ(model_cache_dir, candidate_fp);
+                    ثابت std::string candidate_manifest =
+                        ggml_openvino_model_cache_manifest_راستہ(model_cache_dir, candidate_fp);
+                    std::ifstream blob_اندر(candidate_blob, std::ios::binary);
                     std::vector<std::string> saved_inputs, saved_outputs;
-                    if (!blob_in.is_open() ||
+                    اگر (!blob_اندر.is_open() ||
                         !ggml_openvino_model_cache_verify_manifest(candidate_manifest, cgraph, candidate_fp,
                                                                    saved_inputs, saved_outputs)) {
-                        continue;
+                        جاری;
                     }
-                    const int64_t import_start = ggml_time_us();
-                    try {
+                    ثابت int64_t import_آغاز = ggml_وقت_us();
+                    کوشش {
                         ov::CompiledModel cm;
-                        auto remote_context = ggml_openvino_get_remote_context();
-                        if (remote_context.has_value()) {
-                            cm = core.import_model(blob_in, remote_context.value(), mc_config);
-                        } else {
-                            cm = core.import_model(blob_in, device, mc_config);
+                        خودکار remote_context = ggml_openvino_get_remote_context();
+                        اگر (remote_context.has_value()) {
+                            cm = core.import_model(blob_اندر, remote_context.value(), mc_config);
+                        } ورنہ {
+                            cm = core.import_model(blob_اندر, device, mc_config);
                         }
                         // CPU serialization can rename Results that share a name with a Parameter.
-                        if (!saved_inputs.empty() || !saved_outputs.empty()) {
-                            ov_input_names = std::move(saved_inputs);
-                            ov_output_names = std::move(saved_outputs);
-                        } else {
-                            for (const auto & p : cm.inputs()) {
-                                ov_input_names.push_back(p.get_node()->get_friendly_name());
+                        اگر (!saved_inputs.خالی_خانے() || !saved_outputs.خالی_خانے()) {
+                            ov_داخلہ_نام = std::move(saved_inputs);
+                            ov_output_نام = std::move(saved_outputs);
+                        } ورنہ {
+                            برائے (ثابت خودکار & p : cm.inputs()) {
+                                ov_داخلہ_نام.push_back(p.get_گرہ()->get_friendly_name());
                             }
-                            for (const auto & o : cm.outputs()) {
-                                ov_output_names.push_back(o.get_node()->get_friendly_name());
+                            برائے (ثابت خودکار & o : cm.outputs()) {
+                                ov_output_نام.push_back(o.get_گرہ()->get_friendly_name());
                             }
                         }
-                        if (!compiled_model_matches_graph(cm, ov_input_names, ov_output_names, *ggml_decoder)) {
+                        اگر (!compiled_model_matches_گراف(cm, ov_داخلہ_نام, ov_output_نام, *ggml_decoder)) {
                             dynamic_incompatible |= candidate == 0;
-                            ov_input_names.clear();
-                            ov_output_names.clear();
-                            continue;
+                            ov_داخلہ_نام.clear();
+                            ov_output_نام.clear();
+                            جاری;
                         }
                         infer_request = std::make_shared<ov::InferRequest>(cm.create_infer_request());
                         shared_model = cm;
-                        entry->ptr = ggml_decoder;
-                        imported = true;
+                        اندراج_2->ptr = ggml_decoder;
+                        imported = سچ;
                         model_fp = candidate_fp;
-                        blob_path = candidate_blob;
-                        manifest_path = candidate_manifest;
-                        if (candidate_fp == exact_fp) {
-                            shared_key = exact_key;
-                            shared_it = shared_cache->graphs.find(shared_key);
+                        blob_راستہ = candidate_blob;
+                        manifest_راستہ = candidate_manifest;
+                        اگر (candidate_fp == exact_fp) {
+                            shared_کلید = exact_کلید;
+                            shared_it = shared_cache->graphs.find(shared_کلید);
                         }
-                        if (ggml_openvino_getenv_int("GGML_OPENVINO_PROFILING")) {
+                        اگر (ggml_openvino_getenv_int("GGML_OPENVINO_PROFILING")) {
                             GGML_LOG_INFO("  - Model cache import time: %.3f ms \n",
-                                          (ggml_time_us() - import_start) / 1000.0);
+                                          (ggml_وقت_us() - import_آغاز) / 1000.0);
                         }
                         GGML_LOG_INFO("ggml-openvino: model cache HIT %s\n", candidate_blob.c_str());
-                    } catch (const std::exception & e) {
+                    } پکڑو (ثابت std::exception & e) {
                         GGML_LOG_WARN("ggml-openvino: model cache import failed: %s\n", e.what());
                         dynamic_incompatible |= candidate == 0;
-                        imported = false;
-                        ov_input_names.clear();
-                        ov_output_names.clear();
+                        imported = جھوٹ;
+                        ov_داخلہ_نام.clear();
+                        ov_output_نام.clear();
                         infer_request.reset();
                         shared_model = {};
                     }
                 }
-                if (!imported && dynamic_incompatible) {
+                اگر (!imported && dynamic_incompatible) {
                     model_fp = exact_fp;
-                    shared_key = exact_key;
-                    shared_it = shared_cache->graphs.find(shared_key);
-                    blob_path = ggml_openvino_model_cache_blob_path(model_cache_dir, model_fp);
-                    manifest_path = ggml_openvino_model_cache_manifest_path(model_cache_dir, model_fp);
+                    shared_کلید = exact_کلید;
+                    shared_it = shared_cache->graphs.find(shared_کلید);
+                    blob_راستہ = ggml_openvino_model_cache_blob_راستہ(model_cache_dir, model_fp);
+                    manifest_راستہ = ggml_openvino_model_cache_manifest_راستہ(model_cache_dir, model_fp);
                 }
             }
 
             std::shared_ptr<ov::Model> model;
-            if (!imported && ggml_openvino_model_cache_only()) {
+            اگر (!imported && ggml_openvino_model_cache_only()) {
                 GGML_LOG_ERROR(
                     "ggml-openvino: missing or incompatible compiled model: %s; run once without "
                     "GGML_OPENVINO_COMPILED_MODEL_CACHE_ONLY\n",
-                    blob_path.c_str());
-                return GGML_STATUS_FAILED;
+                    blob_راستہ.c_str());
+                واپس GGML_حالت_FAILED;
             }
-            if (!imported && ggml_openvino_weight_buffers_released()) {
+            اگر (!imported && ggml_openvino_وزن_buffers_released()) {
                 GGML_LOG_ERROR("ggml-openvino: cannot compile a new graph after releasing host weights\n");
-                return GGML_STATUS_FAILED;
+                واپس GGML_حالت_FAILED;
             }
-            if (imported) {
-                decoder_end_time = conversion_end_time = compile_end_time = ggml_time_us();
-            } else {
-                auto model_weights = GgmlOvDecoder::create_weight_nodes(cgraph);
+            اگر (imported) {
+                decoder_انتہا_وقت = conversion_انتہا_وقت = compile_انتہا_وقت = ggml_وقت_us();
+            } ورنہ {
+                خودکار model_weights = GgmlOvDecoder::create_وزن_nodes(cgraph);
 
                 ggml_decoder = std::make_shared<GgmlOvDecoder>(cgraph, m_params, c_params, model_weights, is_static,
                                                                r_ctx->stateful, model_is_splitted);
-                decoder_end_time = ggml_time_us();
+                decoder_انتہا_وقت = ggml_وقت_us();
 
-                auto input_model = std::make_shared<ov::frontend::ggml::InputModel>(ggml_decoder);
-                model = ov::frontend::ggml::FrontEnd::convert(input_model);
+                خودکار داخلہ_model = std::make_shared<ov::frontend::ggml::داخلہ_Model>(ggml_decoder);
+                model = ov::frontend::ggml::Front_انتہا::convert(داخلہ_model);
                 ggml_decoder->clear_model_weights();
-                conversion_end_time = ggml_time_us();
+                conversion_انتہا_وقت = ggml_وقت_us();
 
-                if (ggml_openvino_getenv_int("GGML_OPENVINO_DUMP_IR")) {
-                    char timestamped_filename[64];
-                    auto timestamp = (long long) ggml_time_us();
-                    snprintf(timestamped_filename, sizeof(timestamped_filename), "model_%lld.xml", timestamp);
+                اگر (ggml_openvino_getenv_int("GGML_OPENVINO_DUMP_IR")) {
+                    حرف timestamped_filename[64];
+                    خودکار timestamp = (طویل طویل) ggml_وقت_us();
+                    snprintf(timestamped_filename, حجم(timestamped_filename), "model_%lld.xml", timestamp);
                     ov::serialize(model, timestamped_filename);
                 }
 
                 // Use the cache-stripped config when the frontend model cache is active, so
                 // the resulting CompiledModel can be exported and later re-imported.
-                const ov::AnyMap & compile_config = model_cache_dir.empty() ? config : mc_config;
+                ثابت ov::AnyMap & compile_config = model_cache_dir.خالی_خانے() ? config : mc_config;
                 ov::CompiledModel compiled_model;
-                auto remote_context = ggml_openvino_get_remote_context();
-                if (remote_context.has_value()) {
+                خودکار remote_context = ggml_openvino_get_remote_context();
+                اگر (remote_context.has_value()) {
                     compiled_model = core.compile_model(model, remote_context.value(), compile_config);
-                } else {
+                } ورنہ {
                     compiled_model = core.compile_model(model, device, compile_config);
                 }
-                compile_end_time = ggml_time_us();
+                compile_انتہا_وقت = ggml_وقت_us();
 
-                for (const auto & ov_param : model->get_parameters()) {
-                    ov_input_names.push_back(ov_param->get_friendly_name());
+                برائے (ثابت خودکار & ov_param : model->get_parameters()) {
+                    ov_داخلہ_نام.push_back(ov_param->get_friendly_name());
                 }
-                for (const auto & ov_output : model->get_results()) {
-                    ov_output_names.push_back(ov_output->get_friendly_name());
+                برائے (ثابت خودکار & ov_output : model->get_results()) {
+                    ov_output_نام.push_back(ov_output->get_friendly_name());
                 }
 
                 // Export to the frontend model cache for next time. Publish the blob first,
                 // then the manifest, so a cache hit only sees fully written artifacts.
-                if (!model_cache_dir.empty() && !model_is_splitted && model_fp != 0) {
-                    try {
-                        const std::string blob_tmp = ggml_openvino_model_cache_temp_path(blob_path);
-                        const std::string manifest_tmp = ggml_openvino_model_cache_temp_path(manifest_path);
-                        if (ggml_openvino_model_cache_write_manifest(manifest_tmp, cgraph, model_fp, ov_input_names,
-                                                                     ov_output_names)) {
-                            std::ofstream blob_out(blob_tmp, std::ios::binary | std::ios::trunc);
-                            if (blob_out.is_open()) {
-                                compiled_model.export_model(blob_out);
-                                blob_out.close();
-                                if (blob_out.good()) {
-                                    if (std::rename(blob_tmp.c_str(), blob_path.c_str()) == 0 &&
-                                        std::rename(manifest_tmp.c_str(), manifest_path.c_str()) == 0) {
-                                        GGML_LOG_INFO("ggml-openvino: model cache WROTE %s\n", blob_path.c_str());
-                                    } else {
+                اگر (!model_cache_dir.خالی_خانے() && !model_is_splitted && model_fp != 0) {
+                    کوشش {
+                        ثابت std::string blob_tmp = ggml_openvino_model_cache_عارضی_راستہ(blob_راستہ);
+                        ثابت std::string manifest_tmp = ggml_openvino_model_cache_عارضی_راستہ(manifest_راستہ);
+                        اگر (ggml_openvino_model_cache_write_manifest(manifest_tmp, cgraph, model_fp, ov_داخلہ_نام,
+                                                                     ov_output_نام)) {
+                            std::ofstream blob_برآمد(blob_tmp, std::ios::binary | std::ios::trunc);
+                            اگر (blob_برآمد.is_open()) {
+                                compiled_model.export_model(blob_برآمد);
+                                blob_برآمد.close();
+                                اگر (blob_برآمد.good()) {
+                                    اگر (std::rename(blob_tmp.c_str(), blob_راستہ.c_str()) == 0 &&
+                                        std::rename(manifest_tmp.c_str(), manifest_راستہ.c_str()) == 0) {
+                                        GGML_LOG_INFO("ggml-openvino: model cache WROTE %s\n", blob_راستہ.c_str());
+                                    } ورنہ {
                                         std::remove(blob_tmp.c_str());
                                         std::remove(manifest_tmp.c_str());
                                     }
-                                } else {
+                                } ورنہ {
                                     std::remove(blob_tmp.c_str());
                                     std::remove(manifest_tmp.c_str());
                                 }
-                            } else {
+                            } ورنہ {
                                 std::remove(manifest_tmp.c_str());
                             }
                         }
-                    } catch (const std::exception & e) {
+                    } پکڑو (ثابت std::exception & e) {
                         GGML_LOG_WARN("ggml-openvino: model cache export failed: %s\n", e.what());
                     }
                 }
 
                 infer_request = std::make_shared<ov::InferRequest>(compiled_model.create_infer_request());
                 shared_model = compiled_model;
-                entry->ptr = ggml_decoder;
+                اندراج_2->ptr = ggml_decoder;
 
             }  // end non-imported (compile) path
 
-            entry->ptr = ggml_decoder;
-            if (!shared_key.empty() && shared_it == shared_cache->graphs.end()) {
-                shared_cache->graphs.emplace(shared_key,
-                                             ov_compiled_graph{shared_model, {}, ov_input_names, ov_output_names});
+            اندراج_2->ptr = ggml_decoder;
+            اگر (!shared_کلید.خالی_خانے() && shared_it == shared_cache->graphs.end()) {
+                shared_cache->graphs.emplace(shared_کلید,
+                                             ov_compiled_گراف{shared_model, {}, ov_داخلہ_نام, ov_output_نام});
             }
-            if (cache_enabled) {
-                std::lock_guard<std::mutex> map_lock(r_ctx->ctx_mutex);
-                r_ctx->infer_request_cache[key] = infer_request;
-                r_ctx->ov_input_names_cache[key] = ov_input_names;
-                r_ctx->ov_output_names_cache[key] = ov_output_names;
+            اگر (cache_enabled) {
+                std::lock_guard<std::mutex> map_تالا(r_ctx->ctx_mutex);
+                r_ctx->infer_request_cache[کلید] = infer_request;
+                r_ctx->ov_داخلہ_نام_cache[کلید] = ov_داخلہ_نام;
+                r_ctx->ov_output_نام_cache[کلید] = ov_output_نام;
             }
 
-            if (stateful_kv_only && cache_enabled) {
-                const auto * inp_pos = get_inp_pos_tensor(cgraph);
-                auto pos_shape = GgmlOvDecoder::get_shape(inp_pos);
+            اگر (stateful_kv_only && cache_enabled) {
+                ثابت خودکار * inp_pos = get_inp_pos_tensor(cgraph);
+                خودکار pos_shape = GgmlOvDecoder::get_shape(inp_pos);
                 // A freshly compiled model starts with an empty state, so it can only serve a
                 // sequence from its beginning. A non-zero start position means the KV history was
                 // built elsewhere (a restored ggml cache), which the state cannot adopt.
-                const int32_t pos_begin = ((int32_t *) inp_pos->data)[0];
-                if (pos_begin != 0) {
+                ثابت int32_t pos_begin = ((int32_t *) inp_pos->ڈیٹا)[0];
+                اگر (pos_begin != 0) {
                     GGML_LOG_ERROR(
                         "GGML OpenVINO backend stateful inference failed: a new model was compiled for a sequence that "
                         "starts at position %d, but its state is empty. Run without "
                         "GGML_OPENVINO_STATEFUL_EXECUTION.\n",
                         pos_begin);
-                    return GGML_STATUS_FAILED;
+                    واپس GGML_حالت_FAILED;
                 }
-                r_ctx->stateful_kv_size = pos_shape[3];
-                const auto kv_param_res_names = ggml_decoder->get_kv_param_res_names();
-                for (const auto & pair : kv_param_res_names) {
-                    r_ctx->kv_state_input_name_map[pair.first + pair.second] = pair.first;
+                r_ctx->stateful_kv_سائز = pos_shape[3];
+                ثابت خودکار kv_param_res_نام = ggml_decoder->get_kv_param_res_نام();
+                برائے (ثابت خودکار & pair : kv_param_res_نام) {
+                    r_ctx->kv_state_داخلہ_name_map[pair.پہلا + pair.second] = pair.پہلا;
                 }
             }
         }
 
-        if (stateful_recurrent) {
-            const auto * inp_pos = get_inp_pos_tensor(cgraph);
-            const int32_t pos_begin = static_cast<const int32_t *>(inp_pos->data)[0];
-            if (pos_begin == 0) {
+        اگر (stateful_recurrent) {
+            ثابت خودکار * inp_pos = get_inp_pos_tensor(cgraph);
+            ثابت int32_t pos_begin = static_cast<ثابت int32_t *>(inp_pos->ڈیٹا)[0];
+            اگر (pos_begin == 0) {
                 infer_request->reset_state();
-            } else if (!cache_hit || old_m_params.kv_buffer_changed(m_params) || c_params.cache_rs_reset_len > 0 ||
-                       pos_begin < 0 || static_cast<size_t>(pos_begin) != r_ctx->stateful_kv_size) {
+            } ورنہ اگر (!cache_کامیابی || old_m_params.kv_بفر_بدلا(m_params) || c_params.cache_rs_reset_len > 0 ||
+                       pos_begin < 0 || static_cast<size_t>(pos_begin) != r_ctx->stateful_kv_سائز) {
                 GGML_LOG_ERROR(
                     "OpenVINO recurrent stateful execution cannot restore or rewind a sequence. Restart at position 0 "
                     "or disable GGML_OPENVINO_STATEFUL_EXECUTION.\n");
-                return GGML_STATUS_FAILED;
+                واپس GGML_حالت_FAILED;
             }
-        } else {
-            reset_single_slot_recurrent_cache(cgraph, m_params, c_params);
+        } ورنہ {
+            reset_single_خانہ_recurrent_cache(cgraph, m_params, c_params);
         }
 
-        for (size_t i = 0; i < ov_input_names.size(); i++) {
-            const auto & param_name = ov_input_names[i];
-            auto input_tensor = get_ov_input_tensor(ggml_decoder, param_name);
-            infer_request->set_input_tensor(i, input_tensor);
+        برائے (size_t i = 0; i < ov_داخلہ_نام.size(); i++) {
+            ثابت خودکار & param_name = ov_داخلہ_نام[i];
+            خودکار داخلہ_tensor = get_ov_داخلہ_tensor(ggml_decoder, param_name);
+            infer_request->سیٹ_داخلہ_tensor(i, داخلہ_tensor);
 
-            if (ggml_openvino_getenv_int("GGML_OPENVINO_DEBUG_INPUT")) {
-                print_input_tensor_info(param_name, input_tensor);
+            اگر (ggml_openvino_getenv_int("GGML_OPENVINO_DEBUG_INPUT")) {
+                print_داخلہ_tensor_info(param_name, داخلہ_tensor);
             }
         }
 
-        for (size_t i = 0; i < ov_output_names.size(); i++) {
+        برائے (size_t i = 0; i < ov_output_نام.size(); i++) {
             // Debug-only outputs added via GGML_OPENVINO_DEBUG_NODE (see
             // translate_session.cpp) have no corresponding ggml tensor; leave
             // them unbound so OpenVINO allocates its own tensor for them,
             // rather than aliasing a ggml buffer that may be overwritten by a
             // later in-place op before we get to read it.
-            const auto & model_outputs = ggml_decoder->get_model_outputs();
-            auto model_output_it = model_outputs.find(ov_output_names[i]);
-            if (model_output_it == model_outputs.end()) {
-                continue;
+            ثابت خودکار & model_outputs = ggml_decoder->get_model_outputs();
+            خودکار model_output_it = model_outputs.find(ov_output_نام[i]);
+            اگر (model_output_it == model_outputs.end()) {
+                جاری;
             }
-            auto * ggml_tensor = model_output_it->second;
-            if (ggml_nbytes(ggml_tensor) == 0) {
-                continue;
+            خودکار * ggml_tensor = model_output_it->second;
+            اگر (ggml_nbytes(ggml_tensor) == 0) {
+                جاری;
             }
-            auto output_tensor = create_ov_output_tensor(ggml_decoder, infer_request, i, ggml_tensor);
-            infer_request->set_output_tensor(i, output_tensor);
+            خودکار output_tensor = create_ov_output_tensor(ggml_decoder, infer_request, i, ggml_tensor);
+            infer_request->سیٹ_output_tensor(i, output_tensor);
         }
 
-        ov_raw_infer_start = ggml_time_us();
+        ov_raw_infer_آغاز = ggml_وقت_us();
         infer_request->infer();
-        infer_end_time = ggml_time_us();
-        if (stateful_recurrent) {
-            const auto * inp_pos = get_inp_pos_tensor(cgraph);
-            r_ctx->stateful_kv_size =
-                static_cast<const int32_t *>(inp_pos->data)[0] + get_inp_pos_n_tokens(cgraph, inp_pos);
+        infer_انتہا_وقت = ggml_وقت_us();
+        اگر (stateful_recurrent) {
+            ثابت خودکار * inp_pos = get_inp_pos_tensor(cgraph);
+            r_ctx->stateful_kv_سائز =
+                static_cast<ثابت int32_t *>(inp_pos->ڈیٹا)[0] + get_inp_pos_n_علامات(cgraph, inp_pos);
         }
         dump_ov_profiling_info(*infer_request);
 
-        if (ggml_openvino_getenv_int("GGML_OPENVINO_DEBUG_OUTPUT") ||
+        اگر (ggml_openvino_getenv_int("GGML_OPENVINO_DEBUG_OUTPUT") ||
             ggml_openvino_getenv_str("GGML_OPENVINO_DEBUG_NODE")) {
-            for (size_t i = 0; i < ov_output_names.size(); i++) {
-                const auto output_tensor = infer_request->get_output_tensor(i);
-                print_output_tensor_info(ov_output_names[i], output_tensor, output_tensor.data());
+            برائے (size_t i = 0; i < ov_output_نام.size(); i++) {
+                ثابت خودکار output_tensor = infer_request->get_output_tensor(i);
+                print_output_tensor_info(ov_output_نام[i], output_tensor, output_tensor.ڈیٹا());
             }
         }
 
-        if (ggml_openvino_getenv_int("GGML_OPENVINO_PROFILING")) {
+        اگر (ggml_openvino_getenv_int("GGML_OPENVINO_PROFILING")) {
             GGML_LOG_INFO("\nGGML OpenVINO Backend: \n");
-            GGML_LOG_INFO("  - Graph decoder time: %.3f ms \n", (decoder_end_time - start_time) / 1000.0);
-            GGML_LOG_INFO("    - cache key compute time: %.3f ms \n", cache_key_compute_time / 1000.0);
-            GGML_LOG_INFO("    - model split check time: %.3f ms \n", model_split_check_time / 1000.0);
-            GGML_LOG_INFO("    - graph param compute time: %.3f ms \n", graph_param_compute_time / 1000.0);
-            GGML_LOG_INFO("    - cache lookup time: %.3f ms \n", cache_lookup_time / 1000.0);
-            if (!cache_hit) {
+            GGML_LOG_INFO("  - Graph decoder time: %.3f ms \n", (decoder_انتہا_وقت - آغاز_وقت) / 1000.0);
+            GGML_LOG_INFO("    - cache key compute time: %.3f ms \n", cache_کلید_compute_وقت / 1000.0);
+            GGML_LOG_INFO("    - model split check time: %.3f ms \n", model_بانٹو_check_وقت / 1000.0);
+            GGML_LOG_INFO("    - graph param compute time: %.3f ms \n", گراف_param_compute_وقت / 1000.0);
+            GGML_LOG_INFO("    - cache lookup time: %.3f ms \n", cache_lookup_وقت / 1000.0);
+            اگر (!cache_کامیابی) {
                 GGML_LOG_INFO("  - Graph conversion time: %.3f ms \n",
-                              (conversion_end_time - decoder_end_time) / 1000.0);
-                GGML_LOG_INFO("  - Graph compile time: %.3f ms \n", (compile_end_time - conversion_end_time) / 1000.0);
+                              (conversion_انتہا_وقت - decoder_انتہا_وقت) / 1000.0);
+                GGML_LOG_INFO("  - Graph compile time: %.3f ms \n", (compile_انتہا_وقت - conversion_انتہا_وقت) / 1000.0);
             }
-            GGML_LOG_INFO("  - Graph inference time: %.3f ms \n", (infer_end_time - compile_end_time) / 1000.0);
-            GGML_LOG_INFO("    - OV raw infer time: %.3f ms \n", (infer_end_time - ov_raw_infer_start) / 1000.0);
+            GGML_LOG_INFO("  - Graph inference time: %.3f ms \n", (infer_انتہا_وقت - compile_انتہا_وقت) / 1000.0);
+            GGML_LOG_INFO("    - OV raw infer time: %.3f ms \n", (infer_انتہا_وقت - ov_raw_infer_آغاز) / 1000.0);
         }
     }
 
@@ -1387,52 +1387,52 @@ enum ggml_status ov_graph_compute_dynamic(ggml_cgraph * cgraph, const std::share
     // be reading host weights during conversion/compilation. Pin the shared compiled
     // models across backend teardown; a later context can create its own request without
     // reading the dropped pages. A new, uncached graph still fails fast above.
-    if (cache_hit && ggml_openvino_release_weights_enabled()) {
-        std::lock_guard<std::mutex> compile_lock(r_ctx->compiled_cache->mutex);
-        if (!ggml_openvino_weight_buffers_released()) {
-            ggml_openvino_release_weight_buffers();
+    اگر (cache_کامیابی && ggml_openvino_release_weights_enabled()) {
+        std::lock_guard<std::mutex> compile_تالا(r_ctx->compiled_cache->mutex);
+        اگر (!ggml_openvino_وزن_buffers_released()) {
+            ggml_openvino_release_وزن_buffers();
         }
     }
 
-    return GGML_STATUS_SUCCESS;
+    واپس GGML_حالت_SUCCESS;
 }
 
-ov::AnyMap without_npuw(const ov::AnyMap & config) {
-    ov::AnyMap out;
-    for (const auto & kv : config) {
-        if (kv.first.rfind("NPUW", 0) == 0 || kv.first == "NPU_USE_NPUW") {
-            continue;
+ov::AnyMap without_npuw(ثابت ov::AnyMap & config) {
+    ov::AnyMap برآمد;
+    برائے (ثابت خودکار & kv : config) {
+        اگر (kv.پہلا.rfind("NPUW", 0) == 0 || kv.پہلا == "NPU_USE_NPUW") {
+            جاری;
         }
-        out.insert(kv);
+        برآمد.insert(kv);
     }
-    return out;
+    واپس برآمد;
 }
 
-enum ggml_status ov_graph_compute_static(ggml_cgraph * cgraph, const std::shared_ptr<ov_runtime_context> & r_ctx) {
-    auto & core = ov_singleton_core();
+شمار ggml_حالت ov_گراف_compute_static(ggml_cgraph * cgraph, ثابت std::shared_ptr<ov_runtime_context> & r_ctx) {
+    خودکار & core = ov_singleton_core();
 
-    auto get_prefill_chunk_size = [] {
-        static const int chunk_size = []() {
-            int env_prefill_chunk_size = ggml_openvino_getenv_int("GGML_OPENVINO_PREFILL_CHUNK_SIZE");
-            return env_prefill_chunk_size > 0 ? env_prefill_chunk_size : 256;
+    خودکار get_prefill_chunk_سائز = [] {
+        ساکن ثابت صحیح chunk_سائز = []() {
+            صحیح env_prefill_chunk_سائز = ggml_openvino_getenv_int("GGML_OPENVINO_PREFILL_CHUNK_SIZE");
+            واپس env_prefill_chunk_سائز > 0 ? env_prefill_chunk_سائز : 256;
         }();
-        return chunk_size;
+        واپس chunk_سائز;
     };
 
     // Normally NPU, but honors GGML_OPENVINO_DEVICE so GGML_OPENVINO_FORCE_STATIC can run the
     // static-shape path on CPU/GPU to isolate translation bugs from NPUW/NPU-driver issues.
-    static std::string device = ggml_openvino_get_device_name();
-    static auto is_static = true;
-    static auto stateful = false;
+    ساکن std::string device = ggml_openvino_get_device_name();
+    ساکن خودکار is_static = سچ;
+    ساکن خودکار stateful = جھوٹ;
 
-    auto prefill_chunk_size = get_prefill_chunk_size();
-    const auto & config = ggml_openvino_get_compile_config();
+    خودکار prefill_chunk_سائز = get_prefill_chunk_سائز();
+    ثابت خودکار & config = ggml_openvino_get_compile_config();
 
-    if (is_naive(cgraph)) {
-        return naive_compute(cgraph, core, device, config, *r_ctx->compiled_cache);
+    اگر (is_naive(cgraph)) {
+        واپس naive_compute(cgraph, core, device, config, *r_ctx->compiled_cache);
     }
 
-    auto start_time = ggml_time_us();
+    خودکار آغاز_وقت = ggml_وقت_us();
 
     std::shared_ptr<GgmlOvDecoder> ggml_decoder;
     std::shared_ptr<ov::InferRequest> infer_request;
@@ -1440,147 +1440,147 @@ enum ggml_status ov_graph_compute_static(ggml_cgraph * cgraph, const std::shared
     ComputeParams c_params;
     std::tie(m_params, c_params) = GgmlOvDecoder::compute_llm_params(cgraph, is_static);
 
-    const auto * inp_pos = get_inp_pos_tensor(cgraph);
-    const bool no_kv_cache = m_params.is_cacheless_attn;
-    const auto is_prefill = no_kv_cache ? true : get_is_prefill(cgraph, inp_pos);
-    const ov::AnyMap compile_config = no_kv_cache ? without_npuw(config) : config;
-    if (m_params.n_heads_kv == -1) {
-        prefill_chunk_size = inp_pos->ne[0];
+    ثابت خودکار * inp_pos = get_inp_pos_tensor(cgraph);
+    ثابت منطقی no_kv_cache = m_params.is_cacheless_attn;
+    ثابت خودکار is_prefill = no_kv_cache ? سچ : get_is_prefill(cgraph, inp_pos);
+    ثابت ov::AnyMap compile_config = no_kv_cache ? without_npuw(config) : config;
+    اگر (m_params.n_heads_kv == -1) {
+        prefill_chunk_سائز = inp_pos->ne[0];
     }
-    graph_key key(cgraph);
-    static const bool cache_enabled = !ggml_openvino_getenv_int("GGML_OPENVINO_DISABLE_CACHE");
-    bool cache_hit = false;
+    گراف_کلید کلید(cgraph);
+    ساکن ثابت منطقی cache_enabled = !ggml_openvino_getenv_int("GGML_OPENVINO_DISABLE_CACHE");
+    منطقی cache_کامیابی = جھوٹ;
 
-    int64_t decoder_end_time;
-    int64_t conversion_end_time;
-    int64_t compile_end_time;
-    int64_t infer_end_time;
-    int64_t ov_raw_infer_start;
-    int64_t ov_raw_infer_total = 0;
+    int64_t decoder_انتہا_وقت;
+    int64_t conversion_انتہا_وقت;
+    int64_t compile_انتہا_وقت;
+    int64_t infer_انتہا_وقت;
+    int64_t ov_raw_infer_آغاز;
+    int64_t ov_raw_infer_کل = 0;
 
-    std::shared_ptr<decoder_runtime_ctx> entry;
+    std::shared_ptr<decoder_runtime_ctx> اندراج_2;
     ModelParams old_m_params;
 
-    if (cache_enabled) {
-        std::lock_guard<std::mutex> map_lock(r_ctx->ctx_mutex);
-        auto it = r_ctx->decoder_cache.find(key);
-        cache_hit = it != r_ctx->decoder_cache.end();
-        if (cache_hit) {
-            entry = it->second;
-        } else {
+    اگر (cache_enabled) {
+        std::lock_guard<std::mutex> map_تالا(r_ctx->ctx_mutex);
+        خودکار it = r_ctx->decoder_cache.find(کلید);
+        cache_کامیابی = it != r_ctx->decoder_cache.end();
+        اگر (cache_کامیابی) {
+            اندراج_2 = it->second;
+        } ورنہ {
             r_ctx->clear_caches_locked();
-            auto mutex = std::make_shared<std::mutex>();
-            entry = std::make_shared<decoder_runtime_ctx>(mutex);
-            r_ctx->decoder_cache[key] = entry;
+            خودکار mutex = std::make_shared<std::mutex>();
+            اندراج_2 = std::make_shared<decoder_runtime_ctx>(mutex);
+            r_ctx->decoder_cache[کلید] = اندراج_2;
         }
-    } else {
-        auto mutex = std::make_shared<std::mutex>();
-        entry = std::make_shared<decoder_runtime_ctx>(mutex);
-        cache_hit = false;
+    } ورنہ {
+        خودکار mutex = std::make_shared<std::mutex>();
+        اندراج_2 = std::make_shared<decoder_runtime_ctx>(mutex);
+        cache_کامیابی = جھوٹ;
     }
 
-    std::lock_guard<std::mutex> lock(*(entry->mutex));
-    cache_hit = cache_hit && entry->ptr && r_ctx->infer_request_cache.count(key) != 0 &&
-                r_ctx->infer_request_cache_prefill.count(key) != 0;
+    std::lock_guard<std::mutex> تالا(*(اندراج_2->mutex));
+    cache_کامیابی = cache_کامیابی && اندراج_2->ptr && r_ctx->infer_request_cache.count(کلید) != 0 &&
+                r_ctx->infer_request_cache_prefill.count(کلید) != 0;
 
-    if (cache_hit) {
-        ggml_decoder = entry->ptr;
+    اگر (cache_کامیابی) {
+        ggml_decoder = اندراج_2->ptr;
         old_m_params = ggml_decoder->get_model_params();
-        cache_hit = old_m_params.can_reuse_statically(m_params);
+        cache_کامیابی = old_m_params.can_reuse_statically(m_params);
     }
 
-    std::vector<std::string> ov_input_names_local;
-    std::vector<std::string> ov_output_names_local;
+    std::vector<std::string> ov_داخلہ_نام_local;
+    std::vector<std::string> ov_output_نام_local;
 
-    if (cache_hit) {
+    اگر (cache_کامیابی) {
         std::map<std::string, std::shared_ptr<ov::Node>> model_weights;
         ggml_decoder->m_is_prefill = is_prefill;
-        ggml_decoder->set_model_params(m_params);
-        ggml_decoder->set_compute_params(c_params);
-        if (old_m_params.kv_buffer_changed(m_params) || !ggml_decoder->is_bound_to(cgraph)) {
+        ggml_decoder->سیٹ_model_params(m_params);
+        ggml_decoder->سیٹ_compute_params(c_params);
+        اگر (old_m_params.kv_بفر_بدلا(m_params) || !ggml_decoder->is_bound_مقصد(cgraph)) {
             ggml_decoder->update_io(cgraph);
         }
-        ggml_decoder->add_extra_inputs();
+        ggml_decoder->جوڑو_extra_inputs();
         {
-            std::lock_guard<std::mutex> map_lock(r_ctx->ctx_mutex);
+            std::lock_guard<std::mutex> map_تالا(r_ctx->ctx_mutex);
             infer_request =
-                is_prefill ? r_ctx->infer_request_cache_prefill.at(key) : r_ctx->infer_request_cache.at(key);
-            ov_input_names_local = r_ctx->ov_input_names_cache.at(key);
-            ov_output_names_local = r_ctx->ov_output_names_cache.at(key);
+                is_prefill ? r_ctx->infer_request_cache_prefill.at(کلید) : r_ctx->infer_request_cache.at(کلید);
+            ov_داخلہ_نام_local = r_ctx->ov_داخلہ_نام_cache.at(کلید);
+            ov_output_نام_local = r_ctx->ov_output_نام_cache.at(کلید);
         }
 
-        decoder_end_time = ggml_time_us();
-        conversion_end_time = decoder_end_time;
-        compile_end_time = decoder_end_time;
-    } else {
-        if (cache_enabled) {
-            std::lock_guard<std::mutex> map_lock(r_ctx->ctx_mutex);
-            r_ctx->infer_request_cache.erase(key);
-            r_ctx->infer_request_cache_prefill.erase(key);
+        decoder_انتہا_وقت = ggml_وقت_us();
+        conversion_انتہا_وقت = decoder_انتہا_وقت;
+        compile_انتہا_وقت = decoder_انتہا_وقت;
+    } ورنہ {
+        اگر (cache_enabled) {
+            std::lock_guard<std::mutex> map_تالا(r_ctx->ctx_mutex);
+            r_ctx->infer_request_cache.erase(کلید);
+            r_ctx->infer_request_cache_prefill.erase(کلید);
         }
 
         // Static execution shares a compiled prefill/decode pair. Each backend
         // creates and retains its own requests for both phases.
-        auto shared_cache = r_ctx->compiled_cache;
-        std::unique_lock<std::mutex> compile_lock(shared_cache->mutex);
-        auto weight_names = get_weight_names(cgraph);
-        auto local_decoder = std::make_shared<GgmlOvDecoder>(cgraph, m_params, c_params, weight_names, is_static,
-                                                             stateful, false, is_prefill, prefill_chunk_size);
-        const std::string shared_key =
-            cache_enabled ? compiled_graph_key(cgraph, *local_decoder, device, prefill_chunk_size) : "";
-        auto shared_it = shared_cache->graphs.find(shared_key);
-        if (!shared_key.empty() && shared_it != shared_cache->graphs.end()) {
-            auto & compiled = shared_it->second;
-            auto prefill_request = std::make_shared<ov::InferRequest>(compiled.prefill.create_infer_request());
-            auto decode_request = no_kv_cache ?
+        خودکار shared_cache = r_ctx->compiled_cache;
+        std::unique_lock<std::mutex> compile_تالا(shared_cache->mutex);
+        خودکار وزن_نام = get_وزن_نام(cgraph);
+        خودکار local_decoder = std::make_shared<GgmlOvDecoder>(cgraph, m_params, c_params, وزن_نام, is_static,
+                                                             stateful, جھوٹ, is_prefill, prefill_chunk_سائز);
+        ثابت std::string shared_کلید =
+            cache_enabled ? compiled_گراف_کلید(cgraph, *local_decoder, device, prefill_chunk_سائز) : "";
+        خودکار shared_it = shared_cache->graphs.find(shared_کلید);
+        اگر (!shared_کلید.خالی_خانے() && shared_it != shared_cache->graphs.end()) {
+            خودکار & compiled = shared_it->second;
+            خودکار prefill_request = std::make_shared<ov::InferRequest>(compiled.prefill.create_infer_request());
+            خودکار decode_request = no_kv_cache ?
                                       prefill_request :
                                       std::make_shared<ov::InferRequest>(compiled.decode.create_infer_request());
             ggml_decoder = local_decoder;
-            entry->ptr = ggml_decoder;
+            اندراج_2->ptr = ggml_decoder;
             infer_request = is_prefill ? prefill_request : decode_request;
-            ov_input_names_local = compiled.input_names;
-            ov_output_names_local = compiled.output_names;
-            r_ctx->infer_request_cache_prefill[key] = prefill_request;
-            r_ctx->infer_request_cache[key] = decode_request;
-            r_ctx->ov_input_names_cache[key] = ov_input_names_local;
-            r_ctx->ov_output_names_cache[key] = ov_output_names_local;
-            decoder_end_time = conversion_end_time = compile_end_time = ggml_time_us();
+            ov_داخلہ_نام_local = compiled.داخلہ_نام;
+            ov_output_نام_local = compiled.output_نام;
+            r_ctx->infer_request_cache_prefill[کلید] = prefill_request;
+            r_ctx->infer_request_cache[کلید] = decode_request;
+            r_ctx->ov_داخلہ_نام_cache[کلید] = ov_داخلہ_نام_local;
+            r_ctx->ov_output_نام_cache[کلید] = ov_output_نام_local;
+            decoder_انتہا_وقت = conversion_انتہا_وقت = compile_انتہا_وقت = ggml_وقت_us();
             GGML_LOG_DEBUG("ggml-openvino: shared compiled model HIT (static)\n");
-        } else {
+        } ورنہ {
             std::shared_ptr<ov::Model> model;
-            auto model_weights = GgmlOvDecoder::create_weight_nodes(cgraph);
+            خودکار model_weights = GgmlOvDecoder::create_وزن_nodes(cgraph);
 
-            auto ggml_decoder_prefill = std::make_shared<GgmlOvDecoder>(
-                cgraph, m_params, c_params, model_weights, is_static, stateful, false, true, prefill_chunk_size);
-            auto ggml_decoder_decode =
+            خودکار ggml_decoder_prefill = std::make_shared<GgmlOvDecoder>(
+                cgraph, m_params, c_params, model_weights, is_static, stateful, جھوٹ, سچ, prefill_chunk_سائز);
+            خودکار ggml_decoder_decode =
                 no_kv_cache ? ggml_decoder_prefill :
                               std::make_shared<GgmlOvDecoder>(cgraph, m_params, c_params, model_weights, is_static,
-                                                              stateful, false, false, prefill_chunk_size);
-            decoder_end_time = ggml_time_us();
+                                                              stateful, جھوٹ, جھوٹ, prefill_chunk_سائز);
+            decoder_انتہا_وقت = ggml_وقت_us();
 
-            const bool dump_ir = ggml_openvino_getenv_int("GGML_OPENVINO_DUMP_IR");
-            const auto dump_ir_timestamp = static_cast<long long>(ggml_time_us());
+            ثابت منطقی dump_ir = ggml_openvino_getenv_int("GGML_OPENVINO_DUMP_IR");
+            ثابت خودکار dump_ir_timestamp = static_cast<طویل طویل>(ggml_وقت_us());
 
-            auto build_static_model = [&core, &compile_config, dump_ir, dump_ir_timestamp](
-                                          const std::shared_ptr<GgmlOvDecoder> & decoder, const char * tag,
+            خودکار build_static_model = [&core, &compile_config, dump_ir, dump_ir_timestamp](
+                                          ثابت std::shared_ptr<GgmlOvDecoder> & decoder, ثابت حرف * لیبل,
                                           std::shared_ptr<ov::Model> & model, ov::CompiledModel & compiled_model,
                                           std::shared_ptr<ov::InferRequest> & infer_request,
-                                          int64_t & local_conversion_end_time, int64_t & local_compile_end_time) {
-                auto input_model = std::make_shared<ov::frontend::ggml::InputModel>(decoder);
-                model = ov::frontend::ggml::FrontEnd::convert(input_model);
+                                          int64_t & local_conversion_انتہا_وقت, int64_t & local_compile_انتہا_وقت) {
+                خودکار داخلہ_model = std::make_shared<ov::frontend::ggml::داخلہ_Model>(decoder);
+                model = ov::frontend::ggml::Front_انتہا::convert(داخلہ_model);
                 decoder->clear_model_weights();
-                local_conversion_end_time = ggml_time_us();
+                local_conversion_انتہا_وقت = ggml_وقت_us();
 
-                if (dump_ir) {
-                    char timestamped_filename[64];
-                    snprintf(timestamped_filename, sizeof(timestamped_filename), "model_%s_%lld.xml", tag,
+                اگر (dump_ir) {
+                    حرف timestamped_filename[64];
+                    snprintf(timestamped_filename, حجم(timestamped_filename), "model_%s_%lld.xml", لیبل,
                              dump_ir_timestamp);
                     ov::serialize(model, timestamped_filename);
                 }
 
                 compiled_model = core.compile_model(model, device, compile_config);
                 infer_request = std::make_shared<ov::InferRequest>(compiled_model.create_infer_request());
-                local_compile_end_time = ggml_time_us();
+                local_compile_انتہا_وقت = ggml_وقت_us();
             };
             std::shared_ptr<ov::Model> model_prefill;
             std::shared_ptr<ov::Model> model_decode;
@@ -1588,170 +1588,170 @@ enum ggml_status ov_graph_compute_static(ggml_cgraph * cgraph, const std::shared
             ov::CompiledModel compiled_model_decode;
             std::shared_ptr<ov::InferRequest> infer_request_prefill;
             std::shared_ptr<ov::InferRequest> infer_request_decode;
-            int64_t prefill_conversion_end_time;
-            int64_t decode_conversion_end_time;
-            int64_t prefill_compile_end_time;
-            int64_t decode_compile_end_time;
+            int64_t prefill_conversion_انتہا_وقت;
+            int64_t decode_conversion_انتہا_وقت;
+            int64_t prefill_compile_انتہا_وقت;
+            int64_t decode_compile_انتہا_وقت;
             build_static_model(ggml_decoder_prefill, "prefill", model_prefill, compiled_model_prefill,
-                               infer_request_prefill, prefill_conversion_end_time, prefill_compile_end_time);
-            if (no_kv_cache) {
+                               infer_request_prefill, prefill_conversion_انتہا_وقت, prefill_compile_انتہا_وقت);
+            اگر (no_kv_cache) {
                 model_decode = model_prefill;
                 compiled_model_decode = compiled_model_prefill;
                 infer_request_decode = infer_request_prefill;
-                decode_conversion_end_time = prefill_conversion_end_time;
-                decode_compile_end_time = prefill_compile_end_time;
-            } else {
+                decode_conversion_انتہا_وقت = prefill_conversion_انتہا_وقت;
+                decode_compile_انتہا_وقت = prefill_compile_انتہا_وقت;
+            } ورنہ {
                 build_static_model(ggml_decoder_decode, "decode", model_decode, compiled_model_decode,
-                                   infer_request_decode, decode_conversion_end_time, decode_compile_end_time);
+                                   infer_request_decode, decode_conversion_انتہا_وقت, decode_compile_انتہا_وقت);
             }
-            conversion_end_time = std::max(prefill_conversion_end_time, decode_conversion_end_time);
-            compile_end_time = std::max(prefill_compile_end_time, decode_compile_end_time);
+            conversion_انتہا_وقت = std::max(prefill_conversion_انتہا_وقت, decode_conversion_انتہا_وقت);
+            compile_انتہا_وقت = std::max(prefill_compile_انتہا_وقت, decode_compile_انتہا_وقت);
 
             model = is_prefill ? model_prefill : model_decode;
             ggml_decoder = is_prefill ? ggml_decoder_prefill : ggml_decoder_decode;
             infer_request = is_prefill ? infer_request_prefill : infer_request_decode;
-            entry->ptr = ggml_decoder;
+            اندراج_2->ptr = ggml_decoder;
 
-            for (const auto & ov_param : model->get_parameters()) {
-                ov_input_names_local.push_back(ov_param->get_friendly_name());
+            برائے (ثابت خودکار & ov_param : model->get_parameters()) {
+                ov_داخلہ_نام_local.push_back(ov_param->get_friendly_name());
             }
-            for (const auto & ov_output : model->get_results()) {
-                ov_output_names_local.push_back(ov_output->get_friendly_name());
+            برائے (ثابت خودکار & ov_output : model->get_results()) {
+                ov_output_نام_local.push_back(ov_output->get_friendly_name());
             }
 
-            if (!shared_key.empty()) {
+            اگر (!shared_کلید.خالی_خانے()) {
                 shared_cache->graphs.emplace(
-                    shared_key, ov_compiled_graph{compiled_model_decode, compiled_model_prefill, ov_input_names_local,
-                                                  ov_output_names_local});
+                    shared_کلید, ov_compiled_گراف{compiled_model_decode, compiled_model_prefill, ov_داخلہ_نام_local,
+                                                  ov_output_نام_local});
             }
 
-            if (cache_enabled) {
-                std::lock_guard<std::mutex> map_lock(r_ctx->ctx_mutex);
-                r_ctx->infer_request_cache_prefill[key] = infer_request_prefill;
-                r_ctx->infer_request_cache[key] = infer_request_decode;
-                r_ctx->ov_input_names_cache[key] = ov_input_names_local;
-                r_ctx->ov_output_names_cache[key] = ov_output_names_local;
+            اگر (cache_enabled) {
+                std::lock_guard<std::mutex> map_تالا(r_ctx->ctx_mutex);
+                r_ctx->infer_request_cache_prefill[کلید] = infer_request_prefill;
+                r_ctx->infer_request_cache[کلید] = infer_request_decode;
+                r_ctx->ov_داخلہ_نام_cache[کلید] = ov_داخلہ_نام_local;
+                r_ctx->ov_output_نام_cache[کلید] = ov_output_نام_local;
             }
         }
     }
 
-    reset_single_slot_recurrent_cache(cgraph, m_params, c_params);
+    reset_single_خانہ_recurrent_cache(cgraph, m_params, c_params);
 
-    if (is_prefill) {
-        auto inp_len = get_inp_pos_n_tokens(cgraph, inp_pos);
-        for (int chunk_index = 0; chunk_index * prefill_chunk_size < inp_len; chunk_index++) {
-            for (size_t i = 0; i < ov_input_names_local.size(); i++) {
-                const auto & param_name = ov_input_names_local[i];
-                auto input_tensor = get_ov_input_tensor_static_prefill(ggml_decoder, param_name, chunk_index);
-                infer_request->set_input_tensor(i, input_tensor);
+    اگر (is_prefill) {
+        خودکار inp_len = get_inp_pos_n_علامات(cgraph, inp_pos);
+        برائے (صحیح chunk_اشاریہ = 0; chunk_اشاریہ * prefill_chunk_سائز < inp_len; chunk_اشاریہ++) {
+            برائے (size_t i = 0; i < ov_داخلہ_نام_local.size(); i++) {
+                ثابت خودکار & param_name = ov_داخلہ_نام_local[i];
+                خودکار داخلہ_tensor = get_ov_داخلہ_tensor_static_prefill(ggml_decoder, param_name, chunk_اشاریہ);
+                infer_request->سیٹ_داخلہ_tensor(i, داخلہ_tensor);
 
-                if (ggml_openvino_getenv_int("GGML_OPENVINO_DEBUG_INPUT")) {
-                    const auto input_tensor = infer_request->get_input_tensor(i);
-                    print_input_tensor_info(param_name, input_tensor);
+                اگر (ggml_openvino_getenv_int("GGML_OPENVINO_DEBUG_INPUT")) {
+                    ثابت خودکار داخلہ_tensor = infer_request->get_داخلہ_tensor(i);
+                    print_داخلہ_tensor_info(param_name, داخلہ_tensor);
                 }
             }
 
-            for (size_t i = 0; i < ov_output_names_local.size(); i++) {
-                const auto & model_outputs = ggml_decoder->get_model_outputs();
-                auto model_output_it = model_outputs.find(ov_output_names_local[i]);
-                if (model_output_it == model_outputs.end()) {
-                    continue;
+            برائے (size_t i = 0; i < ov_output_نام_local.size(); i++) {
+                ثابت خودکار & model_outputs = ggml_decoder->get_model_outputs();
+                خودکار model_output_it = model_outputs.find(ov_output_نام_local[i]);
+                اگر (model_output_it == model_outputs.end()) {
+                    جاری;
                 }
-                auto * ggml_tensor = model_output_it->second;
-                if (ggml_nbytes(ggml_tensor) == 0) {
+                خودکار * ggml_tensor = model_output_it->second;
+                اگر (ggml_nbytes(ggml_tensor) == 0) {
                     // Zero-row in-place writeback (e.g. the empty s_copy defrag remainder). The OV
                     // Result is the full cache, so binding it over this 0-byte buffer overflows it.
-                    continue;
+                    جاری;
                 }
-                auto output_tensor = create_ov_output_tensor(ggml_decoder, infer_request, i, ggml_tensor);
-                infer_request->set_output_tensor(i, output_tensor);
+                خودکار output_tensor = create_ov_output_tensor(ggml_decoder, infer_request, i, ggml_tensor);
+                infer_request->سیٹ_output_tensor(i, output_tensor);
             }
 
-            ov_raw_infer_start = ggml_time_us();
+            ov_raw_infer_آغاز = ggml_وقت_us();
             infer_request->infer();
-            ov_raw_infer_total += ggml_time_us() - ov_raw_infer_start;
+            ov_raw_infer_کل += ggml_وقت_us() - ov_raw_infer_آغاز;
 
-            if (ggml_openvino_getenv_int("GGML_OPENVINO_DEBUG_OUTPUT") ||
+            اگر (ggml_openvino_getenv_int("GGML_OPENVINO_DEBUG_OUTPUT") ||
                 ggml_openvino_getenv_str("GGML_OPENVINO_DEBUG_NODE")) {
-                for (size_t i = 0; i < ov_output_names_local.size(); i++) {
-                    const auto output_tensor = infer_request->get_output_tensor(i);
-                    print_output_tensor_info(ov_output_names_local[i], output_tensor, output_tensor.data());
+                برائے (size_t i = 0; i < ov_output_نام_local.size(); i++) {
+                    ثابت خودکار output_tensor = infer_request->get_output_tensor(i);
+                    print_output_tensor_info(ov_output_نام_local[i], output_tensor, output_tensor.ڈیٹا());
                 }
             }
         }
-        infer_end_time = ggml_time_us();
-    } else {
-        for (size_t i = 0; i < ov_input_names_local.size(); i++) {
-            const auto & param_name = ov_input_names_local[i];
-            auto input_tensor = get_ov_input_tensor_static_decode(ggml_decoder, param_name);
-            infer_request->set_input_tensor(i, input_tensor);
+        infer_انتہا_وقت = ggml_وقت_us();
+    } ورنہ {
+        برائے (size_t i = 0; i < ov_داخلہ_نام_local.size(); i++) {
+            ثابت خودکار & param_name = ov_داخلہ_نام_local[i];
+            خودکار داخلہ_tensor = get_ov_داخلہ_tensor_static_decode(ggml_decoder, param_name);
+            infer_request->سیٹ_داخلہ_tensor(i, داخلہ_tensor);
 
-            if (ggml_openvino_getenv_int("GGML_OPENVINO_DEBUG_INPUT")) {
-                const auto input_tensor = infer_request->get_input_tensor(i);
-                print_input_tensor_info(param_name, input_tensor);
+            اگر (ggml_openvino_getenv_int("GGML_OPENVINO_DEBUG_INPUT")) {
+                ثابت خودکار داخلہ_tensor = infer_request->get_داخلہ_tensor(i);
+                print_داخلہ_tensor_info(param_name, داخلہ_tensor);
             }
         }
 
-        for (size_t i = 0; i < ov_output_names_local.size(); i++) {
-            const auto & model_outputs = ggml_decoder->get_model_outputs();
-            auto model_output_it = model_outputs.find(ov_output_names_local[i]);
-            if (model_output_it == model_outputs.end()) {
-                continue;
+        برائے (size_t i = 0; i < ov_output_نام_local.size(); i++) {
+            ثابت خودکار & model_outputs = ggml_decoder->get_model_outputs();
+            خودکار model_output_it = model_outputs.find(ov_output_نام_local[i]);
+            اگر (model_output_it == model_outputs.end()) {
+                جاری;
             }
-            auto * ggml_tensor = model_output_it->second;
-            if (ggml_nbytes(ggml_tensor) == 0) {
-                continue;
+            خودکار * ggml_tensor = model_output_it->second;
+            اگر (ggml_nbytes(ggml_tensor) == 0) {
+                جاری;
             }
-            auto output_tensor = create_ov_output_tensor(ggml_decoder, infer_request, i, ggml_tensor);
-            infer_request->set_output_tensor(i, output_tensor);
+            خودکار output_tensor = create_ov_output_tensor(ggml_decoder, infer_request, i, ggml_tensor);
+            infer_request->سیٹ_output_tensor(i, output_tensor);
         }
 
-        ov_raw_infer_start = ggml_time_us();
+        ov_raw_infer_آغاز = ggml_وقت_us();
         infer_request->infer();
-        infer_end_time = ggml_time_us();
-        ov_raw_infer_total = infer_end_time - ov_raw_infer_start;
+        infer_انتہا_وقت = ggml_وقت_us();
+        ov_raw_infer_کل = infer_انتہا_وقت - ov_raw_infer_آغاز;
 
-        if (ggml_openvino_getenv_int("GGML_OPENVINO_DEBUG_OUTPUT") ||
+        اگر (ggml_openvino_getenv_int("GGML_OPENVINO_DEBUG_OUTPUT") ||
             ggml_openvino_getenv_str("GGML_OPENVINO_DEBUG_NODE")) {
-            for (size_t i = 0; i < ov_output_names_local.size(); i++) {
-                const auto output_tensor = infer_request->get_output_tensor(i);
-                print_output_tensor_info(ov_output_names_local[i], output_tensor, output_tensor.data());
+            برائے (size_t i = 0; i < ov_output_نام_local.size(); i++) {
+                ثابت خودکار output_tensor = infer_request->get_output_tensor(i);
+                print_output_tensor_info(ov_output_نام_local[i], output_tensor, output_tensor.ڈیٹا());
             }
         }
     }
 
-    if (ggml_openvino_getenv_int("GGML_OPENVINO_PROFILING")) {
+    اگر (ggml_openvino_getenv_int("GGML_OPENVINO_PROFILING")) {
         GGML_LOG_INFO("\nGGML OpenVINO Backend: \n");
-        GGML_LOG_INFO("  - Graph decoder time: %.3f ms \n", (decoder_end_time - start_time) / 1000.0);
-        if (!cache_hit) {
-            GGML_LOG_INFO("  - Graph conversion time: %.3f ms \n", (conversion_end_time - decoder_end_time) / 1000.0);
-            GGML_LOG_INFO("  - Graph compile time: %.3f ms \n", (compile_end_time - conversion_end_time) / 1000.0);
+        GGML_LOG_INFO("  - Graph decoder time: %.3f ms \n", (decoder_انتہا_وقت - آغاز_وقت) / 1000.0);
+        اگر (!cache_کامیابی) {
+            GGML_LOG_INFO("  - Graph conversion time: %.3f ms \n", (conversion_انتہا_وقت - decoder_انتہا_وقت) / 1000.0);
+            GGML_LOG_INFO("  - Graph compile time: %.3f ms \n", (compile_انتہا_وقت - conversion_انتہا_وقت) / 1000.0);
         }
-        GGML_LOG_INFO("  - Graph inference time: %.3f ms \n", (infer_end_time - compile_end_time) / 1000.0);
-        GGML_LOG_INFO("  - OV raw infer time: %.3f ms \n", ov_raw_infer_total / 1000.0);
+        GGML_LOG_INFO("  - Graph inference time: %.3f ms \n", (infer_انتہا_وقت - compile_انتہا_وقت) / 1000.0);
+        GGML_LOG_INFO("  - OV raw infer time: %.3f ms \n", ov_raw_infer_کل / 1000.0);
     }
 
-    return GGML_STATUS_SUCCESS;
+    واپس GGML_حالت_SUCCESS;
 }
 }  // namespace
 
 // Nodes on the unselected branches of ggml_build_forward_select() stay in the graph but must not be
 // computed. Keep them out of the OV model, or their inputs become parameters with fixed shapes.
-static ggml_cgraph * get_compute_graph(ggml_cgraph * cgraph, ov_runtime_context & r_ctx) {
-    auto is_skipped = [](const ggml_tensor * node) {
-        return node->op != GGML_OP_NONE && !(node->flags & GGML_TENSOR_FLAG_COMPUTE);
+ساکن ggml_cgraph * get_compute_گراف(ggml_cgraph * cgraph, ov_runtime_context & r_ctx) {
+    خودکار is_skipped = [](ثابت ggml_tensor * گرہ) {
+        واپس گرہ->op != GGML_OP_NONE && !(گرہ->flags & GGML_TENSOR_FLAG_COMPUTE);
     };
-    if (std::none_of(cgraph->nodes, cgraph->nodes + cgraph->n_nodes, is_skipped)) {
-        return cgraph;
+    اگر (std::none_of(cgraph->nodes, cgraph->nodes + cgraph->n_nodes, is_skipped)) {
+        واپس cgraph;
     }
-    auto & compute = r_ctx.compute_graphs[cgraph];
+    خودکار & compute = r_ctx.compute_graphs[cgraph];
     compute.nodes.clear();
     std::copy_if(cgraph->nodes, cgraph->nodes + cgraph->n_nodes, std::back_inserter(compute.nodes),
-                 [&](const ggml_tensor * node) { return !is_skipped(node); });
+                 [&](ثابت ggml_tensor * گرہ) { واپس !is_skipped(گرہ); });
     compute.graph = *cgraph;
-    compute.graph.nodes = compute.nodes.data();
-    compute.graph.n_nodes = (int) compute.nodes.size();
-    return &compute.graph;
+    compute.graph.nodes = compute.nodes.ڈیٹا();
+    compute.graph.n_nodes = (صحیح) compute.nodes.size();
+    واپس &compute.graph;
 }
 
 // Both execution paths use two cache levels:
@@ -1759,75 +1759,75 @@ static ggml_cgraph * get_compute_graph(ggml_cgraph * cgraph, ov_runtime_context 
 // 2. On a local miss, look up compiled_graph_key in the shared compilation cache,
 //    compile if needed, then create a private request from the compiled model.
 // The shared lock covers compilation and frontend cleanup, never inference.
-enum ggml_status ov_graph_compute(ggml_cgraph * cgraph, ggml_backend_t backend) {
+شمار ggml_حالت ov_گراف_compute(ggml_cgraph * cgraph, ggml_backend_t backend) {
     ggml_backend_openvino_context * ctx = (ggml_backend_openvino_context *) backend->context;
-    try {
-        if (ggml_openvino_getenv_int("GGML_OPENVINO_DUMP_CGRAPH")) {
+    کوشش {
+        اگر (ggml_openvino_getenv_int("GGML_OPENVINO_DUMP_CGRAPH")) {
             std::string filename = "cgraph_ov.txt";
             GgmlOvDecoder::dump_cgraph(cgraph, filename);
         }
 
-        const auto is_static = ggml_openvino_is_npu() || ggml_openvino_getenv_int("GGML_OPENVINO_FORCE_STATIC");
+        ثابت خودکار is_static = ggml_openvino_is_npu() || ggml_openvino_getenv_int("GGML_OPENVINO_FORCE_STATIC");
 
-        GGML_ASSERT(ctx->runtime_context != nullptr);
+        GGML_ASSERT(ctx->runtime_context != خالی_اشاریہ);
         std::shared_ptr<ov_runtime_context> r_ctx = std::static_pointer_cast<ov_runtime_context>(ctx->runtime_context);
-        std::lock_guard<std::mutex> execution_lock(r_ctx->execution_mutex);
-        cgraph = get_compute_graph(cgraph, *r_ctx);
+        std::lock_guard<std::mutex> execution_تالا(r_ctx->execution_mutex);
+        cgraph = get_compute_گراف(cgraph, *r_ctx);
 
-        return is_static ? ov_graph_compute_static(cgraph, r_ctx) : ov_graph_compute_dynamic(cgraph, r_ctx);
-    } catch (const ov::Exception & e) {
+        واپس is_static ? ov_گراف_compute_static(cgraph, r_ctx) : ov_گراف_compute_dynamic(cgraph, r_ctx);
+    } پکڑو (ثابت ov::Exception & e) {
         GGML_LOG_ERROR("GGML OpenVINO backend ov::Exception: %s\n", e.what());
-        return GGML_STATUS_FAILED;
-    } catch (const std::exception & e) {
+        واپس GGML_حالت_FAILED;
+    } پکڑو (ثابت std::exception & e) {
         GGML_LOG_ERROR("GGML OpenVINO backend std::exception: %s\n", e.what());
-        return GGML_STATUS_FAILED;
-    } catch (...) {
+        واپس GGML_حالت_FAILED;
+    } پکڑو (...) {
         GGML_LOG_ERROR("GGML OpenVINO backend unknown exception\n");
-        return GGML_STATUS_FAILED;
+        واپس GGML_حالت_FAILED;
     }
 }
 
 // Detect whether a cgraph is a split subgraph or not.
 // Step 1 compares each node's recorded use_count with actual fan-out references in node->src.
 // Step 2 verifies that node inputs come from model nodes/weights/leafs; external sources imply split.
-bool is_model_splitted(ggml_cgraph * cgraph) {
-    static const bool fallback_enabled = ggml_openvino_getenv_int("GGML_OPENVINO_ENABLE_FALLBACK") != 0;
-    if (!fallback_enabled) {
-        return false;
+منطقی is_model_splitted(ggml_cgraph * cgraph) {
+    ساکن ثابت منطقی fallback_enabled = ggml_openvino_getenv_int("GGML_OPENVINO_ENABLE_FALLBACK") != 0;
+    اگر (!fallback_enabled) {
+        واپس جھوٹ;
     }
 
     // Backend op tests execute each node through ggml_graph_view(), which preserves the original
     // graph use_counts while exposing only one node. Treat those single-node views as regular
     // naive graphs so intermediate ops do not look like split-model fragments.
-    if (cgraph->n_nodes <= 1 && cgraph->n_leafs == 0) {
-        return false;
+    اگر (cgraph->n_nodes <= 1 && cgraph->n_leafs == 0) {
+        واپس جھوٹ;
     }
 
     // check the nodes of the model are used by the following nodes, through compare the node's use count and the count of nodes that use it as input. If does not match, return true, else return false.
-    for (int i = 0; i < cgraph->n_nodes; i++) {
-        ggml_tensor * node = cgraph->nodes[i];
-        int use_count = cgraph->use_counts[ggml_hash_find(&cgraph->visited_hash_set, node)];
+    برائے (صحیح i = 0; i < cgraph->n_nodes; i++) {
+        ggml_tensor * گرہ = cgraph->nodes[i];
+        صحیح use_گنتی = cgraph->use_counts[ggml_hash_ڈھونڈو(&cgraph->دیکھا_hash_سیٹ, گرہ)];
         // TODO: this is a workround for the tests case from llama.cpp, fix should from the root cause in the future.
-        if ((cgraph->n_nodes <= 1 && use_count == 0) ||
-            (cgraph->n_nodes <= 1 && node->op == GGML_OP_VIEW && use_count == 1 && node->src[0] != nullptr &&
-             node->src[0]->op == GGML_OP_NONE)) {
-            return false;
+        اگر ((cgraph->n_nodes <= 1 && use_گنتی == 0) ||
+            (cgraph->n_nodes <= 1 && گرہ->op == GGML_OP_VIEW && use_گنتی == 1 && گرہ->src[0] != خالی_اشاریہ &&
+             گرہ->src[0]->op == GGML_OP_NONE)) {
+            واپس جھوٹ;
         }
-        if (cgraph->n_nodes == 1 &&
-            (cgraph->nodes[0]->op == GGML_OP_TRANSPOSE || cgraph->nodes[0]->op == GGML_OP_PERMUTE)) {
-            return false;
+        اگر (cgraph->n_nodes == 1 &&
+            (cgraph->nodes[0]->op == GGML_OP_TRANSPOSE || cgraph->nodes[0]->op == GGML_OP_ترتیب_بدلو)) {
+            واپس جھوٹ;
         }
-        int input_use_count = 0;
-        for (int j = 0; j < cgraph->n_nodes; j++) {
-            ggml_tensor * other_node = cgraph->nodes[j];
-            for (int k = 0; k < GGML_MAX_SRC; k++) {
-                if (other_node->src[k] == node) {
-                    input_use_count++;
+        صحیح داخلہ_use_گنتی = 0;
+        برائے (صحیح j = 0; j < cgraph->n_nodes; j++) {
+            ggml_tensor * other_گرہ = cgraph->nodes[j];
+            برائے (صحیح k = 0; k < GGML_MAX_SRC; k++) {
+                اگر (other_گرہ->src[k] == گرہ) {
+                    داخلہ_use_گنتی++;
                 }
             }
         }
-        if (use_count != input_use_count && node->op != GGML_OP_NONE) {
-            return true;
+        اگر (use_گنتی != داخلہ_use_گنتی && گرہ->op != GGML_OP_NONE) {
+            واپس سچ;
         }
     }
     // if all nodes's src node's src is not come from the nodes in the model, we think the model is splitted. This is a complementary check for the above check, because for some special case like the output node is not used by any node, the use count and input use count are both 0, we can not determine whether the model is splitted or not just based on the first check.
@@ -1835,240 +1835,240 @@ bool is_model_splitted(ggml_cgraph * cgraph) {
     // use the name-only collector (no weight extraction); otherwise keep the original
     // behavior of building (naive) weight nodes and take their names.
     std::set<std::string> model_weights;
-    if (ggml_openvino_reduce_compile_mem_enabled()) {
-        model_weights = GgmlOvDecoder::collect_weight_names(cgraph);
-    } else {
-        for (const auto & kv : GgmlOvDecoder::create_weight_nodes(cgraph, true)) {
-            model_weights.insert(kv.first);
+    اگر (ggml_openvino_reduce_compile_mem_enabled()) {
+        model_weights = GgmlOvDecoder::collect_وزن_نام(cgraph);
+    } ورنہ {
+        برائے (ثابت خودکار & kv : GgmlOvDecoder::create_وزن_nodes(cgraph, سچ)) {
+            model_weights.insert(kv.پہلا);
         }
     }
     std::set<ggml_tensor *> model_nodes(cgraph->nodes, cgraph->nodes + cgraph->n_nodes);
     // leaf nodes
     std::set<ggml_tensor *> model_leafs(cgraph->leafs, cgraph->leafs + cgraph->n_leafs);
-    for (int i = 0; i < cgraph->n_nodes; i++) {
-        ggml_tensor * node = cgraph->nodes[i];
-        for (int j = 0; j < GGML_MAX_SRC; j++) {
-            ggml_tensor * src = node->src[j];
+    برائے (صحیح i = 0; i < cgraph->n_nodes; i++) {
+        ggml_tensor * گرہ = cgraph->nodes[i];
+        برائے (صحیح j = 0; j < GGML_MAX_SRC; j++) {
+            ggml_tensor * src = گرہ->src[j];
             // the src is also not the model weights, we think the model is splitted.
             // the src is also not in model leafs, we think the model is splitted.
-            if (src != nullptr && model_nodes.find(src) == model_nodes.end() &&
-                model_weights.find(std::string(src->name)) == model_weights.end() && !model_leafs.empty() == false &&
+            اگر (src != خالی_اشاریہ && model_nodes.find(src) == model_nodes.end() &&
+                model_weights.find(std::string(src->name)) == model_weights.end() && !model_leafs.خالی_خانے() == جھوٹ &&
                 model_leafs.find(src) == model_leafs.end()) {
-                if (GgmlOvDecoder::is_inp_tok(src, node)) {
-                    return false;
+                اگر (GgmlOvDecoder::is_inp_tok(src, گرہ)) {
+                    واپس جھوٹ;
                 }
-                return true;
+                واپس سچ;
             }
         }
     }
-    return false;
+    واپس جھوٹ;
 }
 
-bool is_naive(ggml_cgraph * cgraph) {
-    constexpr int naive_graph_size_threshold = 20;
-    int count = 0;
-    for (int i = 0; i < cgraph->n_nodes; i++) {
-        if (cgraph->nodes[i]->op != GGML_OP_NONE) {
+منطقی is_naive(ggml_cgraph * cgraph) {
+    constexpr صحیح naive_گراف_سائز_حد = 20;
+    صحیح count = 0;
+    برائے (صحیح i = 0; i < cgraph->n_nodes; i++) {
+        اگر (cgraph->nodes[i]->op != GGML_OP_NONE) {
             count++;
         }
     }
-    return count < naive_graph_size_threshold;
+    واپس count < naive_گراف_سائز_حد;
 }
 
-size_t checksum(const void * data, size_t size) {
-    const uint8_t * bytes = static_cast<const uint8_t *>(data);
-    size_t sum = 0;
-    for (size_t i = 0; i < size; ++i) {
-        sum += (uint8_t) i;
-        sum += bytes[i];
+size_t checksum(ثابت خالی * ڈیٹا, size_t size) {
+    ثابت uint8_t * بائٹیں = static_cast<ثابت uint8_t *>(ڈیٹا);
+    size_t مجموع = 0;
+    برائے (size_t i = 0; i < size; ++i) {
+        مجموع += (uint8_t) i;
+        مجموع += بائٹیں[i];
     }
-    return sum;
+    واپس مجموع;
 }
 
-bool save_ggml_tensor_data_to_txt(const ggml_tensor * tensor, const std::string & file_path) {
-    if (tensor == nullptr || tensor->data == nullptr) {
-        return false;
+منطقی save_ggml_tensor_ڈیٹا_مقصد_txt(ثابت ggml_tensor * tensor, ثابت std::string & file_راستہ) {
+    اگر (tensor == خالی_اشاریہ || tensor->ڈیٹا == خالی_اشاریہ) {
+        واپس جھوٹ;
     }
 
-    std::ofstream out(file_path);
-    if (!out.is_open()) {
-        return false;
+    std::ofstream برآمد(file_راستہ);
+    اگر (!برآمد.is_open()) {
+        واپس جھوٹ;
     }
 
-    const size_t n = ggml_nelements(tensor);
-    out << "name: " << tensor->name << ", type: " << ggml_type_name(tensor->type) << ", shape: [" << tensor->ne[0]
+    ثابت size_t n = ggml_nelements(tensor);
+    برآمد << "name: " << tensor->name << ", type: " << ggml_type_name(tensor->type) << ", shape: [" << tensor->ne[0]
         << ", " << tensor->ne[1] << ", " << tensor->ne[2] << ", " << tensor->ne[3] << "]" << ", elements: " << n
         << ", data:" << '\n';
 
-    switch (tensor->type) {
-    case GGML_TYPE_F32: {
-        const auto * data = static_cast<const float *>(tensor->data);
-        for (size_t i = 0; i < n; ++i) {
-            out << data[i] << '\n';
+    انتخاب (tensor->type) {
+    حالت GGML_TYPE_F32: {
+        ثابت خودکار * ڈیٹا = static_cast<ثابت اعشاری *>(tensor->ڈیٹا);
+        برائے (size_t i = 0; i < n; ++i) {
+            برآمد << ڈیٹا[i] << '\n';
         }
-        break;
+        توڑو;
     }
-    case GGML_TYPE_F16: {
-        const auto * data = static_cast<const ggml_fp16_t *>(tensor->data);
-        for (size_t i = 0; i < n; ++i) {
-            out << ggml_fp16_to_fp32(data[i]) << '\n';
+    حالت GGML_TYPE_F16: {
+        ثابت خودکار * ڈیٹا = static_cast<ثابت ggml_fp16_t *>(tensor->ڈیٹا);
+        برائے (size_t i = 0; i < n; ++i) {
+            برآمد << ggml_fp16_مقصد_fp32(ڈیٹا[i]) << '\n';
         }
-        break;
+        توڑو;
     }
-    case GGML_TYPE_BF16: {
-        const auto * data = static_cast<const ggml_bf16_t *>(tensor->data);
-        for (size_t i = 0; i < n; ++i) {
-            out << ggml_bf16_to_fp32(data[i]) << '\n';
+    حالت GGML_TYPE_BF16: {
+        ثابت خودکار * ڈیٹا = static_cast<ثابت ggml_bf16_t *>(tensor->ڈیٹا);
+        برائے (size_t i = 0; i < n; ++i) {
+            برآمد << ggml_bf16_مقصد_fp32(ڈیٹا[i]) << '\n';
         }
-        break;
+        توڑو;
     }
-    case GGML_TYPE_I32: {
-        const auto * data = static_cast<const int32_t *>(tensor->data);
-        for (size_t i = 0; i < n; ++i) {
-            out << data[i] << '\n';
+    حالت GGML_TYPE_I32: {
+        ثابت خودکار * ڈیٹا = static_cast<ثابت int32_t *>(tensor->ڈیٹا);
+        برائے (size_t i = 0; i < n; ++i) {
+            برآمد << ڈیٹا[i] << '\n';
         }
-        break;
+        توڑو;
     }
-    case GGML_TYPE_I64: {
-        const auto * data = static_cast<const int64_t *>(tensor->data);
-        for (size_t i = 0; i < n; ++i) {
-            out << data[i] << '\n';
+    حالت GGML_TYPE_I64: {
+        ثابت خودکار * ڈیٹا = static_cast<ثابت int64_t *>(tensor->ڈیٹا);
+        برائے (size_t i = 0; i < n; ++i) {
+            برآمد << ڈیٹا[i] << '\n';
         }
-        break;
+        توڑو;
     }
-    default:
-        out << "unsupported tensor type for text dump" << '\n';
-        return false;
+    طےشدہ:
+        برآمد << "unsupported tensor type for text dump" << '\n';
+        واپس جھوٹ;
     }
 
-    return true;
+    واپس سچ;
 }
 
-void print_input_tensor_info(const std::string & name, const ov::Tensor & tensor) {
-    std::cout << "Input name: " << name << ", Input shape: " << tensor.get_shape() << ", Address: " << tensor.data()
+خالی print_داخلہ_tensor_info(ثابت std::string & name, ثابت ov::Tensor & tensor) {
+    std::خارج << "Input name: " << name << ", Input shape: " << tensor.get_shape() << ", Address: " << tensor.ڈیٹا()
               << '\n';
-    switch (tensor.get_element_type()) {
-    case ov::element::f32: {
-        if (name.find("self_kq_mask") == std::string::npos && name.find("KQ_mask") == std::string::npos) {
-            std::cout << *(tensor.data<float>()) << '\n';
-        } else {
-            size_t rows = tensor.get_shape()[2];
-            size_t cols = tensor.get_shape()[3];
-            const float * data = tensor.data<float>();
-            for (size_t i = 0; i < rows; ++i) {
-                for (size_t j = 0; j < cols; ++j) {
-                    float val = data[i * cols + j];
-                    if (std::isinf(val) && val < 0) {
-                        std::cout << std::setw(5) << "-inf";
-                    } else {
-                        std::cout << std::setw(5) << val;
+    انتخاب (tensor.get_element_type()) {
+    حالت ov::element::f32: {
+        اگر (name.find("self_kq_mask") == std::string::npos && name.find("KQ_mask") == std::string::npos) {
+            std::خارج << *(tensor.ڈیٹا<اعشاری>()) << '\n';
+        } ورنہ {
+            size_t صفیں = tensor.get_shape()[2];
+            size_t ستون_تعداد_2 = tensor.get_shape()[3];
+            ثابت اعشاری * ڈیٹا = tensor.ڈیٹا<اعشاری>();
+            برائے (size_t i = 0; i < صفیں; ++i) {
+                برائے (size_t j = 0; j < ستون_تعداد_2; ++j) {
+                    اعشاری val = ڈیٹا[i * ستون_تعداد_2 + j];
+                    اگر (std::isinf(val) && val < 0) {
+                        std::خارج << std::setw(5) << "-inf";
+                    } ورنہ {
+                        std::خارج << std::setw(5) << val;
                     }
                 }
-                std::cout << '\n';
+                std::خارج << '\n';
             }
         }
 
-        break;
+        توڑو;
     }
-    case ov::element::f16:
-        std::cout << *(tensor.data<ov::float16>()) << '\n';
-        break;
-    case ov::element::i32:
-        for (size_t i = 0; i < tensor.get_size(); ++i) {
-            std::cout << tensor.data<int32_t>()[i] << ' ';
+    حالت ov::element::f16:
+        std::خارج << *(tensor.ڈیٹا<ov::float16>()) << '\n';
+        توڑو;
+    حالت ov::element::i32:
+        برائے (size_t i = 0; i < tensor.get_سائز(); ++i) {
+            std::خارج << tensor.ڈیٹا<int32_t>()[i] << ' ';
         }
-        std::cout << '\n';
-        break;
-    case ov::element::i64:
-        for (size_t i = 0; i < tensor.get_size(); ++i) {
-            std::cout << tensor.data<int64_t>()[i] << ' ';
+        std::خارج << '\n';
+        توڑو;
+    حالت ov::element::i64:
+        برائے (size_t i = 0; i < tensor.get_سائز(); ++i) {
+            std::خارج << tensor.ڈیٹا<int64_t>()[i] << ' ';
         }
-        std::cout << '\n';
-        break;
-    default:
-        break;
+        std::خارج << '\n';
+        توڑو;
+    طےشدہ:
+        توڑو;
     }
 }
 
-void print_output_tensor_info(const std::string & name, const ov::Tensor & tensor, const void * output_dst) {
-    std::cout << "Output name: " << name << ", Output shape: " << tensor.get_shape() << ", Address: " << output_dst
+خالی print_output_tensor_info(ثابت std::string & name, ثابت ov::Tensor & tensor, ثابت خالی * output_dst) {
+    std::خارج << "Output name: " << name << ", Output shape: " << tensor.get_shape() << ", Address: " << output_dst
               << '\n';
 
-    auto print_float_stats = [](const std::string & type_name, size_t size, auto get_value) {
-        if (size == 0) {
-            return;
+    خودکار print_float_stats = [](ثابت std::string & type_name, size_t size, خودکار get_قدر) {
+        اگر (size == 0) {
+            واپس;
         }
 
-        float first = get_value(0);
-        float min = first;
-        float max = first;
-        double sum = first;
+        اعشاری پہلا = get_قدر(0);
+        اعشاری min = پہلا;
+        اعشاری max = پہلا;
+        دوہرا مجموع = پہلا;
 
-        for (size_t i = 1; i < size; ++i) {
-            float v = get_value(i);
+        برائے (size_t i = 1; i < size; ++i) {
+            اعشاری v = get_قدر(i);
             min = std::min(v, min);
             max = std::max(v, max);
-            sum += v;
+            مجموع += v;
         }
-        double mean = sum / size;
+        دوہرا اوسط_2 = مجموع / size;
 
-        std::cout << std::right << std::setw(6) << type_name << std::right << std::setw(12) << "First" << std::setw(12)
+        std::خارج << std::دائیں << std::setw(6) << type_name << std::دائیں << std::setw(12) << "First" << std::setw(12)
                   << "Min" << std::setw(12) << "Max" << std::setw(12) << "Mean" << '\n';
-        std::cout << std::right << std::setw(6) << "" << std::right << std::setw(12) << first << std::setw(12) << min
-                  << std::setw(12) << max << std::setw(12) << mean << '\n';
+        std::خارج << std::دائیں << std::setw(6) << "" << std::دائیں << std::setw(12) << پہلا << std::setw(12) << min
+                  << std::setw(12) << max << std::setw(12) << اوسط_2 << '\n';
     };
 
-    switch (tensor.get_element_type()) {
-    case ov::element::f32: {
-        const float * data = tensor.data<float>();
-        size_t size = tensor.get_size();
-        print_float_stats("[f32]", size, [data](size_t i) { return data[i]; });
-        break;
+    انتخاب (tensor.get_element_type()) {
+    حالت ov::element::f32: {
+        ثابت اعشاری * ڈیٹا = tensor.ڈیٹا<اعشاری>();
+        size_t size = tensor.get_سائز();
+        print_float_stats("[f32]", size, [ڈیٹا](size_t i) { واپس ڈیٹا[i]; });
+        توڑو;
     }
-    case ov::element::f16: {
-        const ov::float16 * data = tensor.data<ov::float16>();
-        size_t size = tensor.get_size();
-        print_float_stats("[f16]", size, [data](size_t i) { return static_cast<float>(data[i]); });
-        break;
+    حالت ov::element::f16: {
+        ثابت ov::float16 * ڈیٹا = tensor.ڈیٹا<ov::float16>();
+        size_t size = tensor.get_سائز();
+        print_float_stats("[f16]", size, [ڈیٹا](size_t i) { واپس static_cast<اعشاری>(ڈیٹا[i]); });
+        توڑو;
     }
-    default:
-        break;
+    طےشدہ:
+        توڑو;
     }
 }
 
-const ggml_tensor * get_inp_pos_tensor(ggml_cgraph * cgraph) {
-    for (int i = 0; i < cgraph->n_nodes; ++i) {
-        auto * op = cgraph->nodes[i];
-        for (int j = 0; j < GGML_MAX_SRC; ++j) {
-            auto * src = op->src[j];
-            if (src == nullptr) {
-                break;
+ثابت ggml_tensor * get_inp_pos_tensor(ggml_cgraph * cgraph) {
+    برائے (صحیح i = 0; i < cgraph->n_nodes; ++i) {
+        خودکار * op = cgraph->nodes[i];
+        برائے (صحیح j = 0; j < GGML_MAX_SRC; ++j) {
+            خودکار * src = op->src[j];
+            اگر (src == خالی_اشاریہ) {
+                توڑو;
             }
-            if (GgmlOvDecoder::is_inp_pos(src, op)) {
-                return src;
+            اگر (GgmlOvDecoder::is_inp_pos(src, op)) {
+                واپس src;
             }
         }
     }
     GGML_LOG_ERROR("get_inp_pos_tensor: inp_pos not found in cgraph");
-    throw std::runtime_error("get_inp_pos_tensor: inp_pos not found in cgraph");
+    پھینکو std::runtime_error("get_inp_pos_tensor: inp_pos not found in cgraph");
 }
 
-int64_t get_inp_pos_n_tokens(ggml_cgraph * cgraph, const ggml_tensor * inp_pos) {
+int64_t get_inp_pos_n_علامات(ggml_cgraph * cgraph, ثابت ggml_tensor * inp_pos) {
     // IMROPE stacks n_planes (t/h/w/e) position planes into inp_pos, so ne[0] is
     // n_planes * n_tokens. Callers that need a token count must divide the planes out.
-    int n_planes = 1;
-    for (int i = 0; i < cgraph->n_nodes; ++i) {
-        auto * op = cgraph->nodes[i];
-        for (int j = 0; j < GGML_MAX_SRC; ++j) {
-            if (op->src[j] == inp_pos) {
+    صحیح n_planes = 1;
+    برائے (صحیح i = 0; i < cgraph->n_nodes; ++i) {
+        خودکار * op = cgraph->nodes[i];
+        برائے (صحیح j = 0; j < GGML_MAX_SRC; ++j) {
+            اگر (op->src[j] == inp_pos) {
                 n_planes = GgmlOvDecoder::get_inp_pos_n_planes(op);
-                break;
+                توڑو;
             }
         }
     }
-    return inp_pos->ne[0] / n_planes;
+    واپس inp_pos->ne[0] / n_planes;
 }
 
-bool get_is_prefill(ggml_cgraph * cgraph, const ggml_tensor * inp_pos) {
-    return get_inp_pos_n_tokens(cgraph, inp_pos) > 1;
+منطقی get_is_prefill(ggml_cgraph * cgraph, ثابت ggml_tensor * inp_pos) {
+    واپس get_inp_pos_n_علامات(cgraph, inp_pos) > 1;
 }

@@ -1,5 +1,5 @@
-#pragma once
+#ہدایت once
 
-#include "common.hpp"
+#شامل "common.hpp"
 
-void ggml_sycl_ssm_scan(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+خالی ggml_sycl_ssm_جائزہ(ggml_backend_sycl_context & ctx, ggml_tensor * dst);

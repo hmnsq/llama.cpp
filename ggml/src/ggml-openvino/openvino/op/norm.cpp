@@ -1,28 +1,28 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#شامل "../node_context.h"
+#شامل "../op_table.h"
+#شامل "../utils.h"
 
-#include <cstring>
-#include <memory>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/mvn.hpp>
+#شامل <cstring>
+#شامل <memory>
+#شامل <openvino/op/constant.hpp>
+#شامل <openvino/op/mvn.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+نامخلا ov {
+نامخلا frontend {
+نامخلا ggml {
+نامخلا op {
 
-OutputVector translate_norm(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+Output_سمتیہ translate_norm(ثابت گرہ_Context & context) {
+    عدد_inputs_check(context, 1, 1);
 
-    auto input_node = process_view_input_new(context, 0);
-    float eps;
-    memcpy(&eps, context.get_output_op_params(), sizeof(float));
+    خودکار داخلہ_گرہ = process_view_داخلہ_new(context, 0);
+    اعشاری eps;
+    حافظہ_نقل(&eps, context.get_output_op_params(), حجم(اعشاری));
 
-    auto axes = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {-1});
-    auto res = std::make_shared<ov::op::v6::MVN>(input_node, axes, true, eps, ov::op::MVNEpsMode::INSIDE_SQRT);
+    خودکار axes = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {-1});
+    خودکار res = std::make_shared<ov::op::v6::MVN>(داخلہ_گرہ, axes, سچ, eps, ov::op::MVNEps_منوال::INSIDE_SQRT);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    واپس rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

@@ -1,510 +1,510 @@
-#pragma clang diagnostic ignored "-Wunused-variable"
-#pragma clang diagnostic ignored "-Wunused-function"
-#pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#ہدایت clang diagnostic ignored "-Wunused-variable"
+#ہدایت clang diagnostic ignored "-Wunused-function"
+#ہدایت clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
+#شامل <HAP_farf.h>
+#شامل <HAP_perf.h>
 
-#include <math.h>
-#include <string.h>
+#شامل <math.h>
+#شامل <string.h>
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "hex-common.h"
-#include "dma-queue.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-tensor.h"
-#include "hvx-utils.h"
-#include "hvx-quant.h"
-#include "get-rows-ops.h"
-#include "work-queue.h"
+#تعریف_کرو GGML_COMMON_DECL_C
+#شامل "ggml-common.h"
+#شامل "hex-common.h"
+#شامل "dma-queue.h"
+#شامل "htp-ctx.h"
+#شامل "htp-ops.h"
+#شامل "htp-tensor.h"
+#شامل "hvx-utils.h"
+#شامل "hvx-quant.h"
+#شامل "get-rows-ops.h"
+#شامل "work-queue.h"
 
-struct get_rows_context;
+ساخت get_صفیں_context;
 
-typedef uint32_t (*get_rows_read_index_fn_t)(const void * src1, uint32_t idx, int idx_type);
-typedef void (*get_rows_flat_compute_fn_t)(float * dst_spad, const void * src_spad, uint32_t cur_elems);
-typedef void (*get_rows_tiled_compute_fn_t)(float * dst_spad, const uint8_t * src_spad, uint32_t n_k_tiles, uint32_t tile_stride, uint32_t row);
+قسمتعریف uint32_t (*get_صفیں_read_اشاریہ_fn_t)(ثابت خالی * src1, uint32_t idx, صحیح idx_type);
+قسمتعریف خالی (*get_صفیں_flat_compute_fn_t)(اعشاری * dst_spad, ثابت خالی * src_spad, uint32_t cur_elems);
+قسمتعریف خالی (*get_صفیں_tiled_compute_fn_t)(اعشاری * dst_spad, ثابت uint8_t * src_spad, uint32_t n_k_tiles, uint32_t tile_stride, uint32_t صف);
 
-struct get_rows_context {
-    struct htp_ops_context * octx;
-    const struct htp_get_rows_kernel_params * kparams;
-    struct htp_get_rows_vtcm_layout vtcm_layout;
-    uint8_t    * vtcm_base;
-    const void * src1_data;
-    get_rows_read_index_fn_t    read_index;
-    get_rows_flat_compute_fn_t  compute_flat;
-    get_rows_tiled_compute_fn_t compute_tiled;
-    uint32_t task_start;
+ساخت get_صفیں_context {
+    ساخت htp_ops_context * octx;
+    ثابت ساخت htp_get_صفیں_kernel_params * kparams;
+    ساخت htp_get_صفیں_vtcm_layout vtcm_layout;
+    uint8_t    * vtcm_بنیاد;
+    ثابت خالی * src1_ڈیٹا;
+    get_صفیں_read_اشاریہ_fn_t    read_اشاریہ;
+    get_صفیں_flat_compute_fn_t  compute_flat;
+    get_صفیں_tiled_compute_fn_t compute_tiled;
+    uint32_t task_آغاز;
     uint32_t tasks;
-    uint32_t tasks_per_thread;
-    uint32_t tile_size;
+    uint32_t tasks_فی_thread;
+    uint32_t tile_سائز;
     uint32_t tile_stride;
-    uint32_t src0_row_size;
-    uint32_t dst_row_size;
-    int idx_type;
+    uint32_t src0_صف_سائز;
+    uint32_t dst_صف_سائز;
+    صحیح idx_type;
 };
 
-#define get_rows_preamble                      \
-    const uint32_t ne00 = octx->src[0]->ne[0]; \
-    const uint32_t ne01 = octx->src[0]->ne[1]; \
-    const uint32_t ne02 = octx->src[0]->ne[2]; \
-    const uint32_t ne03 = octx->src[0]->ne[3]; \
+#تعریف_کرو get_صفیں_preamble                      \
+    ثابت uint32_t ne00 = octx->src[0]->ne[0]; \
+    ثابت uint32_t ne01 = octx->src[0]->ne[1]; \
+    ثابت uint32_t ne02 = octx->src[0]->ne[2]; \
+    ثابت uint32_t ne03 = octx->src[0]->ne[3]; \
                                                \
-    const uint32_t ne10 = octx->src[1]->ne[0]; \
-    const uint32_t ne11 = octx->src[1]->ne[1]; \
-    const uint32_t ne12 = octx->src[1]->ne[2]; \
-    const uint32_t ne13 = octx->src[1]->ne[3]; \
+    ثابت uint32_t ne10 = octx->src[1]->ne[0]; \
+    ثابت uint32_t ne11 = octx->src[1]->ne[1]; \
+    ثابت uint32_t ne12 = octx->src[1]->ne[2]; \
+    ثابت uint32_t ne13 = octx->src[1]->ne[3]; \
                                                \
-    const uint32_t ne0 = octx->dst->ne[0];     \
-    const uint32_t ne1 = octx->dst->ne[1];     \
-    const uint32_t ne2 = octx->dst->ne[2];     \
-    const uint32_t ne3 = octx->dst->ne[3];     \
+    ثابت uint32_t ne0 = octx->dst->ne[0];     \
+    ثابت uint32_t ne1 = octx->dst->ne[1];     \
+    ثابت uint32_t ne2 = octx->dst->ne[2];     \
+    ثابت uint32_t ne3 = octx->dst->ne[3];     \
                                                \
-    const uint32_t nb01 = octx->src[0]->nb[1]; \
-    const uint32_t nb02 = octx->src[0]->nb[2]; \
-    const uint32_t nb03 = octx->src[0]->nb[3]; \
+    ثابت uint32_t nb01 = octx->src[0]->nb[1]; \
+    ثابت uint32_t nb02 = octx->src[0]->nb[2]; \
+    ثابت uint32_t nb03 = octx->src[0]->nb[3]; \
                                                \
-    const uint32_t nb10 = octx->src[1]->nb[0]; \
-    const uint32_t nb11 = octx->src[1]->nb[1]; \
-    const uint32_t nb12 = octx->src[1]->nb[2]; \
+    ثابت uint32_t nb10 = octx->src[1]->nb[0]; \
+    ثابت uint32_t nb11 = octx->src[1]->nb[1]; \
+    ثابت uint32_t nb12 = octx->src[1]->nb[2]; \
                                                \
-    const uint32_t nb1 = octx->dst->nb[1];     \
-    const uint32_t nb2 = octx->dst->nb[2];     \
-    const uint32_t nb3 = octx->dst->nb[3];     \
+    ثابت uint32_t nb1 = octx->dst->nb[1];     \
+    ثابت uint32_t nb2 = octx->dst->nb[2];     \
+    ثابت uint32_t nb3 = octx->dst->nb[3];     \
                                                \
-    const uint32_t nr = ne10 * ne11 * ne12;
+    ثابت uint32_t nr = ne10 * ne11 * ne12;
 
-static uint32_t get_rows_read_index_ddr(
-    const void * src1,
+ساکن uint32_t get_صفیں_read_اشاریہ_ddr(
+    ثابت خالی * src1,
     uint32_t idx,
-    int idx_type
+    صحیح idx_type
 ) {
-    const uint32_t off = idx * ((idx_type == HTP_TYPE_I64) ? sizeof(int64_t) : sizeof(int32_t));
-    return *(const uint32_t *) ((const uint8_t *) src1 + off);
+    ثابت uint32_t off = idx * ((idx_type == HTP_TYPE_I64) ? حجم(int64_t) : حجم(int32_t));
+    واپس *(ثابت uint32_t *) ((ثابت uint8_t *) src1 + off);
 }
 
-static __attribute__((noinline)) uint32_t get_rows_read_index_vtcm(
-    const void * src1,
+ساکن __attribute__((noinline)) uint32_t get_صفیں_read_اشاریہ_vtcm(
+    ثابت خالی * src1,
     uint32_t idx,
-    int idx_type
+    صحیح idx_type
 ) {
-    const uint32_t off = idx * ((idx_type == HTP_TYPE_I64) ? sizeof(int64_t) : sizeof(int32_t));
-    const HVX_Vector v = hvx_vmem((const uint8_t *) src1 + off); // off & ~127u in HW
+    ثابت uint32_t off = idx * ((idx_type == HTP_TYPE_I64) ? حجم(int64_t) : حجم(int32_t));
+    ثابت HVX_سمتیہ v = hvx_vmem((ثابت uint8_t *) src1 + off); // off & ~127u in HW
     // vextract is normally slow, but here it avoids an HVX->L2 store and L1D miss
-    return (uint32_t) Q6_R_vextract_VR(v, off);
+    واپس (uint32_t) Q6_R_vextract_VR(v, off);
 }
 
-static void get_rows_thread_sametype(unsigned int nth, unsigned int ith, void * data) {
-    struct get_rows_context * grctx = (struct get_rows_context *) data;
-    struct htp_ops_context * octx = grctx->octx;
-    const struct htp_get_rows_kernel_params * kparams = grctx->kparams;
-    get_rows_preamble;
+ساکن خالی get_صفیں_thread_sametype(غیرعلامتی صحیح nth, غیرعلامتی صحیح ith, خالی * ڈیٹا) {
+    ساخت get_صفیں_context * grctx = (ساخت get_صفیں_context *) ڈیٹا;
+    ساخت htp_ops_context * octx = grctx->octx;
+    ثابت ساخت htp_get_صفیں_kernel_params * kparams = grctx->kparams;
+    get_صفیں_preamble;
 
-    const uint32_t dr  = grctx->tasks_per_thread;
-    const uint32_t ir0 = grctx->task_start + dr * ith;
-    if (ir0 >= grctx->task_start + grctx->tasks) {
-        return;
+    ثابت uint32_t dr  = grctx->tasks_فی_thread;
+    ثابت uint32_t ir0 = grctx->task_آغاز + dr * ith;
+    اگر (ir0 >= grctx->task_آغاز + grctx->tasks) {
+        واپس;
     }
-    const uint32_t ir1 = MIN(ir0 + dr, grctx->task_start + grctx->tasks);
-    const uint32_t row_size_bytes = grctx->src0_row_size;
-    dma_queue * dma_q = octx->ctx->dma[ith];
+    ثابت uint32_t ir1 = MIN(ir0 + dr, grctx->task_آغاز + grctx->tasks);
+    ثابت uint32_t صف_سائز_بائٹیں = grctx->src0_صف_سائز;
+    dma_قطار * dma_q = octx->ctx->dma[ith];
 
-    for (uint32_t i = ir0; i < ir1; ++i) {
-        const uint32_t i12 = fastdiv(i, &kparams->div_ne10_ne11);
-        const uint32_t rem = i - i12 * ne11 * ne10;
-        const uint32_t i11 = fastdiv(rem, &kparams->div_ne10);
-        const uint32_t i10 = rem - i11 * ne10;
+    برائے (uint32_t i = ir0; i < ir1; ++i) {
+        ثابت uint32_t i12 = fastdiv(i, &kparams->div_ne10_ne11);
+        ثابت uint32_t rem = i - i12 * ne11 * ne10;
+        ثابت uint32_t i11 = fastdiv(rem, &kparams->div_ne10);
+        ثابت uint32_t i10 = rem - i11 * ne10;
 
-        const uint32_t i01 = grctx->read_index(grctx->src1_data, i, grctx->idx_type);
-        assert(i01 < ne01);
+        ثابت uint32_t i01 = grctx->read_اشاریہ(grctx->src1_ڈیٹا, i, grctx->idx_type);
+        أكد(i01 < ne01);
 
-        const uint32_t q02 = fastdiv(i11, &kparams->div_ne02);
-        const uint32_t i02 = i11 - q02 * ne02;
-        const uint32_t q03 = fastdiv(i12, &kparams->div_ne03);
-        const uint32_t i03 = i12 - q03 * ne03;
+        ثابت uint32_t q02 = fastdiv(i11, &kparams->div_ne02);
+        ثابت uint32_t i02 = i11 - q02 * ne02;
+        ثابت uint32_t q03 = fastdiv(i12, &kparams->div_ne03);
+        ثابت uint32_t i03 = i12 - q03 * ne03;
 
-        const dma_addr_t src0_data = octx->src[0]->data + i01*nb01 + i02*nb02 + i03*nb03;
-        const dma_addr_t dst_data  = octx->dst->data    + i10*nb1  + i11*nb2  + i12*nb3;
+        ثابت dma_addr_t src0_ڈیٹا = octx->src[0]->ڈیٹا + i01*nb01 + i02*nb02 + i03*nb03;
+        ثابت dma_addr_t dst_ڈیٹا  = octx->dst->ڈیٹا    + i10*nb1  + i11*nb2  + i12*nb3;
 
-        while (!dma_queue_push(dma_q, dma_make_data(dst_data, src0_data), nb1, nb01, row_size_bytes, 1)) {
-            dma_queue_pop(dma_q);
+        جب (!dma_قطار_ڈالو(dma_q, dma_make_ڈیٹا(dst_ڈیٹا, src0_ڈیٹا), nb1, nb01, صف_سائز_بائٹیں, 1)) {
+            dma_قطار_نکالو(dma_q);
         }
     }
-    dma_queue_flush(dma_q);
+    dma_قطار_flush(dma_q);
 }
 
 
 
-struct get_rows_flat_task {
-    dma_addr_t src0_data;
-    dma_addr_t dst_data;
+ساخت get_صفیں_flat_task {
+    dma_addr_t src0_ڈیٹا;
+    dma_addr_t dst_ڈیٹا;
 };
 
-static inline struct get_rows_flat_task get_rows_flat_calc_task(
-    const struct htp_ops_context * octx,
-    const struct get_rows_context * grctx,
+ساکن اندرونی ساخت get_صفیں_flat_task get_صفیں_flat_calc_task(
+    ثابت ساخت htp_ops_context * octx,
+    ثابت ساخت get_صفیں_context * grctx,
     uint32_t i,
     bool need_src0
 ) {
-    const struct htp_get_rows_kernel_params * kparams = grctx->kparams;
-    get_rows_preamble;
+    ثابت ساخت htp_get_صفیں_kernel_params * kparams = grctx->kparams;
+    get_صفیں_preamble;
 
-    const uint32_t i12 = fastdiv(i, &kparams->div_ne10_ne11);
-    const uint32_t rem = i - i12 * ne11 * ne10;
-    const uint32_t i11 = fastdiv(rem, &kparams->div_ne10);
-    const uint32_t i10 = rem - i11 * ne10;
+    ثابت uint32_t i12 = fastdiv(i, &kparams->div_ne10_ne11);
+    ثابت uint32_t rem = i - i12 * ne11 * ne10;
+    ثابت uint32_t i11 = fastdiv(rem, &kparams->div_ne10);
+    ثابت uint32_t i10 = rem - i11 * ne10;
 
-    struct get_rows_flat_task task;
-    task.src0_data = 0;
-    task.dst_data  = octx->dst->data + i10*nb1 + i11*nb2 + i12*nb3;
+    ساخت get_صفیں_flat_task task;
+    task.src0_ڈیٹا = 0;
+    task.dst_ڈیٹا  = octx->dst->ڈیٹا + i10*nb1 + i11*nb2 + i12*nb3;
 
-    if (need_src0) {
-        const uint32_t i01 = grctx->read_index(grctx->src1_data, i, grctx->idx_type);
-        assert(i01 < ne01);
+    اگر (need_src0) {
+        ثابت uint32_t i01 = grctx->read_اشاریہ(grctx->src1_ڈیٹا, i, grctx->idx_type);
+        أكد(i01 < ne01);
 
-        const uint32_t q02 = fastdiv(i11, &kparams->div_ne02);
-        const uint32_t i02 = i11 - q02 * ne02;
-        const uint32_t q03 = fastdiv(i12, &kparams->div_ne03);
-        const uint32_t i03 = i12 - q03 * ne03;
+        ثابت uint32_t q02 = fastdiv(i11, &kparams->div_ne02);
+        ثابت uint32_t i02 = i11 - q02 * ne02;
+        ثابت uint32_t q03 = fastdiv(i12, &kparams->div_ne03);
+        ثابت uint32_t i03 = i12 - q03 * ne03;
 
-        task.src0_data = octx->src[0]->data + i01*nb01 + i02*nb02 + i03*nb03;
+        task.src0_ڈیٹا = octx->src[0]->ڈیٹا + i01*nb01 + i02*nb02 + i03*nb03;
     }
 
-    return task;
+    واپس task;
 }
 
-static void get_rows_thread_flat(unsigned int nth, unsigned int ith, void * data) {
-    struct get_rows_context * grctx = (struct get_rows_context *) data;
-    struct htp_ops_context * octx = grctx->octx;
-    get_rows_preamble;
+ساکن خالی get_صفیں_thread_flat(غیرعلامتی صحیح nth, غیرعلامتی صحیح ith, خالی * ڈیٹا) {
+    ساخت get_صفیں_context * grctx = (ساخت get_صفیں_context *) ڈیٹا;
+    ساخت htp_ops_context * octx = grctx->octx;
+    get_صفیں_preamble;
 
-    const uint32_t dr  = grctx->tasks_per_thread;
-    const uint32_t ir0 = grctx->task_start + dr * ith;
-    if (ir0 >= grctx->task_start + grctx->tasks) {
-        return;
+    ثابت uint32_t dr  = grctx->tasks_فی_thread;
+    ثابت uint32_t ir0 = grctx->task_آغاز + dr * ith;
+    اگر (ir0 >= grctx->task_آغاز + grctx->tasks) {
+        واپس;
     }
-    const uint32_t ir1 = MIN(ir0 + dr, grctx->task_start + grctx->tasks);
+    ثابت uint32_t ir1 = MIN(ir0 + dr, grctx->task_آغاز + grctx->tasks);
 
-    dma_queue * dma_q = octx->ctx->dma[ith];
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
-    const struct htp_get_rows_vtcm_layout * vtcm_layout = &grctx->vtcm_layout;
-    uint8_t * vtcm_src0 = VTCM_LAYOUT_PTR(uint8_t, grctx->vtcm_base, vtcm_layout->off_src0) + ith * vtcm_layout->src0_bytes_per_thread;
-    uint8_t * vtcm_dst  = VTCM_LAYOUT_PTR(uint8_t, grctx->vtcm_base, vtcm_layout->off_dst)  + ith * vtcm_layout->dst_bytes_per_thread;
-    const uint32_t src0_bytes = grctx->src0_row_size;
-    const uint32_t dst_bytes  = grctx->dst_row_size;
-    get_rows_flat_compute_fn_t compute = grctx->compute_flat;
+    dma_قطار * dma_q = octx->ctx->dma[ith];
+    ساخت htp_thread_trace * tr = &octx->ctx->trace[ith];
+    ثابت ساخت htp_get_صفیں_vtcm_layout * vtcm_layout = &grctx->vtcm_layout;
+    uint8_t * vtcm_src0 = VTCM_LAYOUT_PTR(uint8_t, grctx->vtcm_بنیاد, vtcm_layout->off_src0) + ith * vtcm_layout->src0_بائٹیں_فی_thread;
+    uint8_t * vtcm_dst  = VTCM_LAYOUT_PTR(uint8_t, grctx->vtcm_بنیاد, vtcm_layout->off_dst)  + ith * vtcm_layout->dst_بائٹیں_فی_thread;
+    ثابت uint32_t src0_بائٹیں = grctx->src0_صف_سائز;
+    ثابت uint32_t dst_بائٹیں  = grctx->dst_صف_سائز;
+    get_صفیں_flat_compute_fn_t compute = grctx->compute_flat;
 
-    for (uint32_t step = 0, spad_idx = 0; step < ir1 - ir0 && spad_idx < 2; ++step, spad_idx++) {
-        const uint32_t i = ir0 + step;
-        struct get_rows_flat_task task = get_rows_flat_calc_task(octx, grctx, i, true);
+    برائے (uint32_t قدم = 0, spad_idx = 0; قدم < ir1 - ir0 && spad_idx < 2; ++قدم, spad_idx++) {
+        ثابت uint32_t i = ir0 + قدم;
+        ساخت get_صفیں_flat_task task = get_صفیں_flat_calc_task(octx, grctx, i, true);
 
-        dma_queue_push(dma_q,
-                       dma_make_data(octx->dst->data,
-                                     vtcm_dst + spad_idx * vtcm_layout->dst_spad_half_size),
-                       dst_bytes, vtcm_layout->dst_spad_half_size, dst_bytes, 0);
-        dma_queue_push(dma_q,
-                       dma_make_data(vtcm_src0 + spad_idx * vtcm_layout->src0_spad_half_size, task.src0_data),
-                       vtcm_layout->src0_spad_half_size, src0_bytes, src0_bytes, 1);
+        dma_قطار_ڈالو(dma_q,
+                       dma_make_ڈیٹا(octx->dst->ڈیٹا,
+                                     vtcm_dst + spad_idx * vtcm_layout->dst_spad_half_سائز),
+                       dst_بائٹیں, vtcm_layout->dst_spad_half_سائز, dst_بائٹیں, 0);
+        dma_قطار_ڈالو(dma_q,
+                       dma_make_ڈیٹا(vtcm_src0 + spad_idx * vtcm_layout->src0_spad_half_سائز, task.src0_ڈیٹا),
+                       vtcm_layout->src0_spad_half_سائز, src0_بائٹیں, src0_بائٹیں, 1);
     }
 
-    for (uint32_t step = 0; step < ir1 - ir0; ++step) {
-        const uint32_t i = ir0 + step;
-        void * dst_spad = (void *) dma_queue_pop(dma_q).src;
-        void * src_spad = (void *) dma_queue_pop(dma_q).dst;
+    برائے (uint32_t قدم = 0; قدم < ir1 - ir0; ++قدم) {
+        ثابت uint32_t i = ir0 + قدم;
+        خالی * dst_spad = (خالی *) dma_قطار_نکالو(dma_q).src;
+        خالی * src_spad = (خالی *) dma_قطار_نکالو(dma_q).dst;
 
-        struct get_rows_flat_task task = get_rows_flat_calc_task(octx, grctx, i, false);
+        ساخت get_صفیں_flat_task task = get_صفیں_flat_calc_task(octx, grctx, i, false);
 
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) i);
-        compute((float *) dst_spad, src_spad, ne00);
+        htp_trace_event_آغاز(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) i);
+        compute((اعشاری *) dst_spad, src_spad, ne00);
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) i);
 
-        dma_queue_push(dma_q,
-                       dma_make_data(task.dst_data, dst_spad),
-                       dst_bytes, vtcm_layout->dst_spad_half_size, dst_bytes, 1);
+        dma_قطار_ڈالو(dma_q,
+                       dma_make_ڈیٹا(task.dst_ڈیٹا, dst_spad),
+                       dst_بائٹیں, vtcm_layout->dst_spad_half_سائز, dst_بائٹیں, 1);
 
-        const uint32_t next_step = step + 2;
-        if (next_step < ir1 - ir0) {
-            const uint32_t pi = ir0 + next_step;
-            struct get_rows_flat_task next_task = get_rows_flat_calc_task(octx, grctx, pi, true);
-            dma_queue_push(dma_q,
-                           dma_make_data(src_spad, next_task.src0_data),
-                           vtcm_layout->src0_spad_half_size, src0_bytes, src0_bytes, 1);
+        ثابت uint32_t اگلا_قدم = قدم + 2;
+        اگر (اگلا_قدم < ir1 - ir0) {
+            ثابت uint32_t pi = ir0 + اگلا_قدم;
+            ساخت get_صفیں_flat_task اگلا_task = get_صفیں_flat_calc_task(octx, grctx, pi, true);
+            dma_قطار_ڈالو(dma_q,
+                           dma_make_ڈیٹا(src_spad, اگلا_task.src0_ڈیٹا),
+                           vtcm_layout->src0_spad_half_سائز, src0_بائٹیں, src0_بائٹیں, 1);
         }
     }
 
-    dma_queue_flush(dma_q);
+    dma_قطار_flush(dma_q);
 }
 
 
 
-struct get_rows_tiled_task {
-    dma_addr_t tile_src_base;
-    dma_addr_t dst_data;
-    uint32_t   row;
+ساخت get_صفیں_tiled_task {
+    dma_addr_t tile_src_بنیاد;
+    dma_addr_t dst_ڈیٹا;
+    uint32_t   صف;
 };
 
-static inline struct get_rows_tiled_task get_rows_tiled_calc_task(
-    const struct htp_ops_context * octx,
-    const struct get_rows_context * grctx,
+ساکن اندرونی ساخت get_صفیں_tiled_task get_صفیں_tiled_calc_task(
+    ثابت ساخت htp_ops_context * octx,
+    ثابت ساخت get_صفیں_context * grctx,
     uint32_t i,
     uint32_t n_k_tiles,
-    uint32_t tile_size
+    uint32_t tile_سائز
 ) {
-    const struct htp_get_rows_kernel_params * kparams = grctx->kparams;
-    get_rows_preamble;
+    ثابت ساخت htp_get_صفیں_kernel_params * kparams = grctx->kparams;
+    get_صفیں_preamble;
 
-    const uint32_t i12 = fastdiv(i, &kparams->div_ne10_ne11);
-    const uint32_t rem = i - i12 * ne11 * ne10;
-    const uint32_t i11 = fastdiv(rem, &kparams->div_ne10);
-    const uint32_t i10 = rem - i11 * ne10;
-    const uint32_t i01 = grctx->read_index(grctx->src1_data, i, grctx->idx_type);
-    assert(i01 < ne01);
+    ثابت uint32_t i12 = fastdiv(i, &kparams->div_ne10_ne11);
+    ثابت uint32_t rem = i - i12 * ne11 * ne10;
+    ثابت uint32_t i11 = fastdiv(rem, &kparams->div_ne10);
+    ثابت uint32_t i10 = rem - i11 * ne10;
+    ثابت uint32_t i01 = grctx->read_اشاریہ(grctx->src1_ڈیٹا, i, grctx->idx_type);
+    أكد(i01 < ne01);
 
-    const uint32_t q02 = fastdiv(i11, &kparams->div_ne02);
-    const uint32_t i02 = i11 - q02 * ne02;
-    const uint32_t q03 = fastdiv(i12, &kparams->div_ne03);
-    const uint32_t i03 = i12 - q03 * ne03;
-    const uint32_t column_tile = i01 / HTP_TENSOR_TILE_N_ROWS;
-    const uint32_t row = i01 % HTP_TENSOR_TILE_N_ROWS;
-    const dma_addr_t matrix = octx->src[0]->data + i02*nb02 + i03*nb03;
+    ثابت uint32_t q02 = fastdiv(i11, &kparams->div_ne02);
+    ثابت uint32_t i02 = i11 - q02 * ne02;
+    ثابت uint32_t q03 = fastdiv(i12, &kparams->div_ne03);
+    ثابت uint32_t i03 = i12 - q03 * ne03;
+    ثابت uint32_t عمود_tile = i01 / HTP_TENSOR_TILE_N_صفیں;
+    ثابت uint32_t صف = i01 % HTP_TENSOR_TILE_N_صفیں;
+    ثابت dma_addr_t میٹرکس = octx->src[0]->ڈیٹا + i02*nb02 + i03*nb03;
 
-    struct get_rows_tiled_task task;
-    task.tile_src_base = matrix + (column_tile * n_k_tiles) * tile_size;
-    task.dst_data      = octx->dst->data + i10*nb1 + i11*nb2 + i12*nb3;
-    task.row           = row;
-    return task;
+    ساخت get_صفیں_tiled_task task;
+    task.tile_src_بنیاد = میٹرکس + (عمود_tile * n_k_tiles) * tile_سائز;
+    task.dst_ڈیٹا      = octx->dst->ڈیٹا + i10*nb1 + i11*nb2 + i12*nb3;
+    task.صف           = صف;
+    واپس task;
 }
 
-static void get_rows_thread_tiled(unsigned int nth, unsigned int ith, void * data) {
-    struct get_rows_context * grctx = (struct get_rows_context *) data;
-    struct htp_ops_context * octx = grctx->octx;
-    get_rows_preamble;
+ساکن خالی get_صفیں_thread_tiled(غیرعلامتی صحیح nth, غیرعلامتی صحیح ith, خالی * ڈیٹا) {
+    ساخت get_صفیں_context * grctx = (ساخت get_صفیں_context *) ڈیٹا;
+    ساخت htp_ops_context * octx = grctx->octx;
+    get_صفیں_preamble;
 
-    const uint32_t dr  = grctx->tasks_per_thread;
-    const uint32_t ir0 = grctx->task_start + dr * ith;
-    if (ir0 >= grctx->task_start + grctx->tasks) {
-        return;
+    ثابت uint32_t dr  = grctx->tasks_فی_thread;
+    ثابت uint32_t ir0 = grctx->task_آغاز + dr * ith;
+    اگر (ir0 >= grctx->task_آغاز + grctx->tasks) {
+        واپس;
     }
 
-    const uint32_t ir1 = MIN(ir0 + dr, grctx->task_start + grctx->tasks);
-    const uint32_t n_k_tiles = ne00 / htp_tensor_get_tile_k(octx->src[0]->type);
-    const struct htp_get_rows_vtcm_layout * vtcm_layout = &grctx->vtcm_layout;
-    uint8_t * src_spad_base = VTCM_LAYOUT_PTR(uint8_t, grctx->vtcm_base, vtcm_layout->off_src0) + ith * vtcm_layout->src0_bytes_per_thread;
-    uint8_t * dst_spad_base = VTCM_LAYOUT_PTR(uint8_t, grctx->vtcm_base, vtcm_layout->off_dst)  + ith * vtcm_layout->dst_bytes_per_thread;
-    dma_queue * dma_q = octx->ctx->dma[ith];
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    ثابت uint32_t ir1 = MIN(ir0 + dr, grctx->task_آغاز + grctx->tasks);
+    ثابت uint32_t n_k_tiles = ne00 / htp_tensor_get_tile_k(octx->src[0]->type);
+    ثابت ساخت htp_get_صفیں_vtcm_layout * vtcm_layout = &grctx->vtcm_layout;
+    uint8_t * src_spad_بنیاد = VTCM_LAYOUT_PTR(uint8_t, grctx->vtcm_بنیاد, vtcm_layout->off_src0) + ith * vtcm_layout->src0_بائٹیں_فی_thread;
+    uint8_t * dst_spad_بنیاد = VTCM_LAYOUT_PTR(uint8_t, grctx->vtcm_بنیاد, vtcm_layout->off_dst)  + ith * vtcm_layout->dst_بائٹیں_فی_thread;
+    dma_قطار * dma_q = octx->ctx->dma[ith];
+    ساخت htp_thread_trace * tr = &octx->ctx->trace[ith];
 
-    const uint32_t tile_size   = grctx->tile_size;
-    const uint32_t tile_stride = grctx->tile_stride;
-    const uint32_t dst_bytes   = grctx->dst_row_size;
-    get_rows_tiled_compute_fn_t compute_tiled = grctx->compute_tiled;
+    ثابت uint32_t tile_سائز   = grctx->tile_سائز;
+    ثابت uint32_t tile_stride = grctx->tile_stride;
+    ثابت uint32_t dst_بائٹیں   = grctx->dst_صف_سائز;
+    get_صفیں_tiled_compute_fn_t compute_tiled = grctx->compute_tiled;
 
-    for (uint32_t step = 0, spad_idx = 0; step < ir1 - ir0 && spad_idx < 2; ++step, ++spad_idx) {
-        const uint32_t i = ir0 + step;
-        struct get_rows_tiled_task task = get_rows_tiled_calc_task(octx, grctx, i, n_k_tiles, tile_size);
+    برائے (uint32_t قدم = 0, spad_idx = 0; قدم < ir1 - ir0 && spad_idx < 2; ++قدم, ++spad_idx) {
+        ثابت uint32_t i = ir0 + قدم;
+        ساخت get_صفیں_tiled_task task = get_صفیں_tiled_calc_task(octx, grctx, i, n_k_tiles, tile_سائز);
 
         // Dummy writeback to prime the queue with dst descriptor
-        dma_queue_push(dma_q,
-                       dma_make_data(task.dst_data, dst_spad_base + spad_idx * vtcm_layout->dst_spad_half_size),
-                       dst_bytes, vtcm_layout->dst_spad_half_size, dst_bytes, 0);
+        dma_قطار_ڈالو(dma_q,
+                       dma_make_ڈیٹا(task.dst_ڈیٹا, dst_spad_بنیاد + spad_idx * vtcm_layout->dst_spad_half_سائز),
+                       dst_بائٹیں, vtcm_layout->dst_spad_half_سائز, dst_بائٹیں, 0);
 
         // Prefetch row tiles
-        dma_queue_push(dma_q,
-                       dma_make_data(src_spad_base + spad_idx * vtcm_layout->src0_spad_half_size, task.tile_src_base),
-                       tile_stride, tile_size, tile_size, n_k_tiles);
+        dma_قطار_ڈالو(dma_q,
+                       dma_make_ڈیٹا(src_spad_بنیاد + spad_idx * vtcm_layout->src0_spad_half_سائز, task.tile_src_بنیاد),
+                       tile_stride, tile_سائز, tile_سائز, n_k_tiles);
     }
 
-    for (uint32_t step = 0; step < ir1 - ir0; ++step) {
-        const uint32_t i = ir0 + step;
-        float * dst_spad   = (float *) dma_queue_pop(dma_q).src;
-        uint8_t * src_spad = (uint8_t *) dma_queue_pop(dma_q).dst;
+    برائے (uint32_t قدم = 0; قدم < ir1 - ir0; ++قدم) {
+        ثابت uint32_t i = ir0 + قدم;
+        اعشاری * dst_spad   = (اعشاری *) dma_قطار_نکالو(dma_q).src;
+        uint8_t * src_spad = (uint8_t *) dma_قطار_نکالو(dma_q).dst;
 
-        struct get_rows_tiled_task task = get_rows_tiled_calc_task(octx, grctx, i, n_k_tiles, tile_size);
+        ساخت get_صفیں_tiled_task task = get_صفیں_tiled_calc_task(octx, grctx, i, n_k_tiles, tile_سائز);
 
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) i);
-        compute_tiled(dst_spad, src_spad, n_k_tiles, tile_stride, task.row);
+        htp_trace_event_آغاز(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) i);
+        compute_tiled(dst_spad, src_spad, n_k_tiles, tile_stride, task.صف);
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) i);
 
         // Real writeback of dst_spad
-        dma_queue_push(dma_q,
-                       dma_make_data(task.dst_data, dst_spad),
-                       dst_bytes, vtcm_layout->dst_spad_half_size, dst_bytes, 1);
+        dma_قطار_ڈالو(dma_q,
+                       dma_make_ڈیٹا(task.dst_ڈیٹا, dst_spad),
+                       dst_بائٹیں, vtcm_layout->dst_spad_half_سائز, dst_بائٹیں, 1);
 
-        const uint32_t next_step = step + 2;
-        if (next_step < ir1 - ir0) {
-            const uint32_t ni = ir0 + next_step;
-            struct get_rows_tiled_task next_task = get_rows_tiled_calc_task(octx, grctx, ni, n_k_tiles, tile_size);
-            dma_queue_push(dma_q,
-                           dma_make_data(src_spad, next_task.tile_src_base),
-                           tile_stride, tile_size, tile_size, n_k_tiles);
+        ثابت uint32_t اگلا_قدم = قدم + 2;
+        اگر (اگلا_قدم < ir1 - ir0) {
+            ثابت uint32_t ni = ir0 + اگلا_قدم;
+            ساخت get_صفیں_tiled_task اگلا_task = get_صفیں_tiled_calc_task(octx, grctx, ni, n_k_tiles, tile_سائز);
+            dma_قطار_ڈالو(dma_q,
+                           dma_make_ڈیٹا(src_spad, اگلا_task.tile_src_بنیاد),
+                           tile_stride, tile_سائز, tile_سائز, n_k_tiles);
         }
     }
 
-    dma_queue_flush(dma_q);
+    dma_قطار_flush(dma_q);
 }
 
-static __attribute__((noinline)) void get_rows_dma_src1(
-    struct htp_ops_context * octx,
+ساکن __attribute__((noinline)) خالی get_صفیں_dma_src1(
+    ساخت htp_ops_context * octx,
     uint8_t * vtcm_src1,
-    uint32_t elem_size
+    uint32_t elem_سائز
 ) {
-    const uint32_t ne10 = octx->src[1]->ne[0];
-    const uint32_t ne11 = octx->src[1]->ne[1];
-    const uint32_t ne12 = octx->src[1]->ne[2];
-    const uint32_t ne13 = octx->src[1]->ne[3];
-    const uint32_t nb11 = octx->src[1]->nb[1];
-    const uint32_t nb12 = octx->src[1]->nb[2];
-    const uint32_t nb13 = octx->src[1]->nb[3];
+    ثابت uint32_t ne10 = octx->src[1]->ne[0];
+    ثابت uint32_t ne11 = octx->src[1]->ne[1];
+    ثابت uint32_t ne12 = octx->src[1]->ne[2];
+    ثابت uint32_t ne13 = octx->src[1]->ne[3];
+    ثابت uint32_t nb11 = octx->src[1]->nb[1];
+    ثابت uint32_t nb12 = octx->src[1]->nb[2];
+    ثابت uint32_t nb13 = octx->src[1]->nb[3];
 
-    dma_queue * dma_q = octx->ctx->dma[0];
+    dma_قطار * dma_q = octx->ctx->dma[0];
     uint8_t * cur_dst = vtcm_src1;
-    for (uint32_t i13 = 0; i13 < ne13; ++i13) {
-        for (uint32_t i12 = 0; i12 < ne12; ++i12) {
-            const dma_addr_t src_plane = octx->src[1]->data + i12 * nb12 + i13 * nb13;
-            while (!dma_queue_push(dma_q, dma_make_data(cur_dst, src_plane),
-                                   ne10 * elem_size, nb11, ne10 * elem_size, ne11)) {
-                dma_queue_pop(dma_q);
+    برائے (uint32_t i13 = 0; i13 < ne13; ++i13) {
+        برائے (uint32_t i12 = 0; i12 < ne12; ++i12) {
+            ثابت dma_addr_t src_plane = octx->src[1]->ڈیٹا + i12 * nb12 + i13 * nb13;
+            جب (!dma_قطار_ڈالو(dma_q, dma_make_ڈیٹا(cur_dst, src_plane),
+                                   ne10 * elem_سائز, nb11, ne10 * elem_سائز, ne11)) {
+                dma_قطار_نکالو(dma_q);
             }
-            cur_dst += ne10 * ne11 * elem_size;
+            cur_dst += ne10 * ne11 * elem_سائز;
         }
     }
-    dma_queue_flush(dma_q);
+    dma_قطار_flush(dma_q);
 }
 
-int op_get_rows(struct htp_ops_context * octx) {
-    const struct htp_get_rows_kernel_params * kparams = (const struct htp_get_rows_kernel_params *) octx->kernel_params;
+صحیح op_get_صفیں(ساخت htp_ops_context * octx) {
+    ثابت ساخت htp_get_صفیں_kernel_params * kparams = (ثابت ساخت htp_get_صفیں_kernel_params *) octx->kernel_params;
 
-    const uint32_t ne00          = octx->src[0]->ne[0];
-    const uint32_t src0_row_size = htp_tensor_get_row_size(octx->src[0]->type, ne00);
-    if (src0_row_size == 0) {
-        return HTP_STATUS_NO_SUPPORT;
+    ثابت uint32_t ne00          = octx->src[0]->ne[0];
+    ثابت uint32_t src0_صف_سائز = htp_tensor_get_صف_سائز(octx->src[0]->type, ne00);
+    اگر (src0_صف_سائز == 0) {
+        واپس HTP_حالت_NO_SUPPORT;
     }
 
-    if (kparams->kernel_type == HTP_GET_ROWS_KERNEL_SAMETYPE) {
-        if (octx->src[0]->type != octx->dst->type) {
-            return HTP_STATUS_NO_SUPPORT;
+    اگر (kparams->kernel_type == HTP_GET_صفیں_KERNEL_SAMETYPE) {
+        اگر (octx->src[0]->type != octx->dst->type) {
+            واپس HTP_حالت_NO_SUPPORT;
         }
-    } else {
-        if (octx->dst->type != HTP_TYPE_F32) {
-            return HTP_STATUS_NO_SUPPORT;
+    } ورنہ {
+        اگر (octx->dst->type != HTP_TYPE_F32) {
+            واپس HTP_حالت_NO_SUPPORT;
         }
     }
 
-    if (octx->src[1]->type != HTP_TYPE_I32 && octx->src[1]->type != HTP_TYPE_I64) {
-        return HTP_STATUS_NO_SUPPORT;
+    اگر (octx->src[1]->type != HTP_TYPE_I32 && octx->src[1]->type != HTP_TYPE_I64) {
+        واپس HTP_حالت_NO_SUPPORT;
     }
 
-    const struct htp_tensor * dst = octx->dst;
-    const uint32_t total_tasks    = kparams->total_tasks;
-    const uint32_t dst_row_size   = (kparams->kernel_type == HTP_GET_ROWS_KERNEL_SAMETYPE) ? src0_row_size : ne00 * sizeof(float);
+    ثابت ساخت htp_tensor * dst = octx->dst;
+    ثابت uint32_t کل_tasks    = kparams->کل_tasks;
+    ثابت uint32_t dst_صف_سائز   = (kparams->kernel_type == HTP_GET_صفیں_KERNEL_SAMETYPE) ? src0_صف_سائز : ne00 * حجم(اعشاری);
 
-    uint32_t task_start = 0;
-    uint32_t tasks      = total_tasks;
+    uint32_t task_آغاز = 0;
+    uint32_t tasks      = کل_tasks;
 
-    if (octx->ctx->mdev.count > 1) {
-        uint32_t tasks_per_chunk = 1;
-        htp_tensor_mdev_rows_per_chunk(dst, dst_row_size / dst->ne[0], dst_row_size, &tasks_per_chunk);
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_tasks, tasks_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
-        task_start = range.start;
-        tasks      = range.count;
+    اگر (octx->ctx->mdev.گنتی > 1) {
+        uint32_t tasks_فی_chunk = 1;
+        htp_tensor_mdev_صفیں_فی_chunk(dst, dst_صف_سائز / dst->ne[0], dst_صف_سائز, &tasks_فی_chunk);
+        ثابت ساخت htp_tensor_mdev_range range = htp_tensor_mdev_تقسیم(کل_tasks, tasks_فی_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.گنتی, &octx->ctx->mdev.گنتی_div);
+        task_آغاز = range.آغاز;
+        tasks      = range.گنتی;
     }
 
-    if (tasks == 0) {
-        return HTP_STATUS_OK;
+    اگر (tasks == 0) {
+        واپس HTP_حالت_OK;
     }
 
-    if (!htp_ops_context_set_n_threads(octx, (uint32_t) kparams->n_threads)) {
-        return HTP_STATUS_INVAL_PARAMS;
+    اگر (!htp_ops_context_سیٹ_n_دھاگے(octx, (uint32_t) kparams->n_دھاگے)) {
+        واپس HTP_حالت_INVAL_PARAMS;
     }
 
-    const uint32_t n_threads = octx->n_threads;
+    ثابت uint32_t n_دھاگے = octx->n_دھاگے;
 
-    struct get_rows_context grctx;
+    ساخت get_صفیں_context grctx;
     grctx.octx = octx;
     grctx.kparams = kparams;
-    grctx.vtcm_base = (uint8_t *)octx->ctx->vtcm_base;
-    grctx.compute_flat = NULL;
-    grctx.compute_tiled = NULL;
-    grctx.task_start = task_start;
+    grctx.vtcm_بنیاد = (uint8_t *)octx->ctx->vtcm_بنیاد;
+    grctx.compute_flat = تہی;
+    grctx.compute_tiled = تہی;
+    grctx.task_آغاز = task_آغاز;
     grctx.tasks = tasks;
-    grctx.tasks_per_thread = octx->ctx->mdev.count == 1 ? kparams->tasks_per_thread : fastdiv(tasks + n_threads - 1, &octx->n_threads_div);
-    grctx.tile_size   = 0;
+    grctx.tasks_فی_thread = octx->ctx->mdev.گنتی == 1 ? kparams->tasks_فی_thread : fastdiv(tasks + n_دھاگے - 1, &octx->n_دھاگے_div);
+    grctx.tile_سائز   = 0;
     grctx.tile_stride = 0;
-    grctx.src0_row_size = src0_row_size;
-    grctx.dst_row_size  = dst_row_size;
+    grctx.src0_صف_سائز = src0_صف_سائز;
+    grctx.dst_صف_سائز  = dst_صف_سائز;
     grctx.idx_type      = octx->src[1]->type;
 
-    htp_get_rows_vtcm_layout_build(&grctx.vtcm_layout, kparams->kernel_type, octx->src[0]->type, ne00, total_tasks, grctx.idx_type, n_threads);
+    htp_get_صفیں_vtcm_layout_build(&grctx.vtcm_layout, kparams->kernel_type, octx->src[0]->type, ne00, کل_tasks, grctx.idx_type, n_دھاگے);
 
-    if (grctx.vtcm_layout.total_bytes > octx->ctx->vtcm_size) {
+    اگر (grctx.vtcm_layout.کل_بائٹیں > octx->ctx->vtcm_سائز) {
         FARF(ERROR, "get-rows: VTCM reservation %zu is too small, needed %zu\n",
-             octx->ctx->vtcm_size, grctx.vtcm_layout.total_bytes);
-        return HTP_STATUS_INVAL_PARAMS;
+             octx->ctx->vtcm_سائز, grctx.vtcm_layout.کل_بائٹیں);
+        واپس HTP_حالت_INVAL_PARAMS;
     }
 
-    work_queue_func_t q_func = NULL;
-    switch (kparams->kernel_type) {
-        case HTP_GET_ROWS_KERNEL_SAMETYPE:
-            q_func = get_rows_thread_sametype;
-            break;
-        case HTP_GET_ROWS_KERNEL_TILED:
-            switch (octx->src[0]->type) {
-                case HTP_TYPE_F16:  grctx.compute_tiled = hvx_dequantize_row_tiled_f16_f32;  break;
-                case HTP_TYPE_Q1_0: grctx.compute_tiled = hvx_dequantize_row_tiled_q1_0_f32; break;
-                case HTP_TYPE_Q2_0: grctx.compute_tiled = hvx_dequantize_row_tiled_q2_0_f32; break;
-                case HTP_TYPE_Q8_0: grctx.compute_tiled = hvx_dequantize_row_tiled_q8_0_f32; break;
-                case HTP_TYPE_Q4_0: grctx.compute_tiled = hvx_dequantize_row_tiled_q4_0_f32; break;
-                case HTP_TYPE_Q4_K: grctx.compute_tiled = hvx_dequantize_row_tiled_q4_k_f32; break;
-                case HTP_TYPE_Q5_K: grctx.compute_tiled = hvx_dequantize_row_tiled_q5_k_f32; break;
-                case HTP_TYPE_Q6_K: grctx.compute_tiled = hvx_dequantize_row_tiled_q6_k_f32; break;
-                default:            return HTP_STATUS_NO_SUPPORT;
+    work_قطار_func_t q_func = تہی;
+    انتخاب (kparams->kernel_type) {
+        حالت HTP_GET_صفیں_KERNEL_SAMETYPE:
+            q_func = get_صفیں_thread_sametype;
+            توڑو;
+        حالت HTP_GET_صفیں_KERNEL_TILED:
+            انتخاب (octx->src[0]->type) {
+                حالت HTP_TYPE_F16:  grctx.compute_tiled = hvx_dequantize_صف_tiled_f16_f32;  توڑو;
+                حالت HTP_TYPE_Q1_0: grctx.compute_tiled = hvx_dequantize_صف_tiled_q1_0_f32; توڑو;
+                حالت HTP_TYPE_Q2_0: grctx.compute_tiled = hvx_dequantize_صف_tiled_q2_0_f32; توڑو;
+                حالت HTP_TYPE_Q8_0: grctx.compute_tiled = hvx_dequantize_صف_tiled_q8_0_f32; توڑو;
+                حالت HTP_TYPE_Q4_0: grctx.compute_tiled = hvx_dequantize_صف_tiled_q4_0_f32; توڑو;
+                حالت HTP_TYPE_Q4_K: grctx.compute_tiled = hvx_dequantize_صف_tiled_q4_k_f32; توڑو;
+                حالت HTP_TYPE_Q5_K: grctx.compute_tiled = hvx_dequantize_صف_tiled_q5_k_f32; توڑو;
+                حالت HTP_TYPE_Q6_K: grctx.compute_tiled = hvx_dequantize_صف_tiled_q6_k_f32; توڑو;
+                طےشدہ:            واپس HTP_حالت_NO_SUPPORT;
             }
-            grctx.tile_size   = htp_tensor_get_tile_size(octx->src[0]->type);
-            grctx.tile_stride = htp_tensor_get_tile_padded_size(octx->src[0]->type);
-            q_func = get_rows_thread_tiled;
-            break;
-        case HTP_GET_ROWS_KERNEL_FLAT:
-            switch (octx->src[0]->type) {
-                case HTP_TYPE_F16:  grctx.compute_flat = hvx_dequantize_row_flat_f16_f32;  break;
-                case HTP_TYPE_BF16: grctx.compute_flat = hvx_dequantize_row_flat_bf16_f32; break;
-                case HTP_TYPE_Q1_0: grctx.compute_flat = hvx_dequantize_row_flat_q1_0_f32; break;
-                case HTP_TYPE_Q2_0: grctx.compute_flat = hvx_dequantize_row_flat_q2_0_f32; break;
-                case HTP_TYPE_Q8_0: grctx.compute_flat = hvx_dequantize_row_flat_q8_0_f32; break;
-                case HTP_TYPE_Q4_0: grctx.compute_flat = hvx_dequantize_row_flat_q4_0_f32; break;
-                case HTP_TYPE_Q4_K: grctx.compute_flat = hvx_dequantize_row_flat_q4_k_f32; break;
-                case HTP_TYPE_Q5_K: grctx.compute_flat = hvx_dequantize_row_flat_q5_k_f32; break;
-                case HTP_TYPE_Q6_K: grctx.compute_flat = hvx_dequantize_row_flat_q6_k_f32; break;
-                default:            return HTP_STATUS_NO_SUPPORT;
+            grctx.tile_سائز   = htp_tensor_get_tile_سائز(octx->src[0]->type);
+            grctx.tile_stride = htp_tensor_get_tile_padded_سائز(octx->src[0]->type);
+            q_func = get_صفیں_thread_tiled;
+            توڑو;
+        حالت HTP_GET_صفیں_KERNEL_FLAT:
+            انتخاب (octx->src[0]->type) {
+                حالت HTP_TYPE_F16:  grctx.compute_flat = hvx_dequantize_صف_flat_f16_f32;  توڑو;
+                حالت HTP_TYPE_BF16: grctx.compute_flat = hvx_dequantize_صف_flat_bf16_f32; توڑو;
+                حالت HTP_TYPE_Q1_0: grctx.compute_flat = hvx_dequantize_صف_flat_q1_0_f32; توڑو;
+                حالت HTP_TYPE_Q2_0: grctx.compute_flat = hvx_dequantize_صف_flat_q2_0_f32; توڑو;
+                حالت HTP_TYPE_Q8_0: grctx.compute_flat = hvx_dequantize_صف_flat_q8_0_f32; توڑو;
+                حالت HTP_TYPE_Q4_0: grctx.compute_flat = hvx_dequantize_صف_flat_q4_0_f32; توڑو;
+                حالت HTP_TYPE_Q4_K: grctx.compute_flat = hvx_dequantize_صف_flat_q4_k_f32; توڑو;
+                حالت HTP_TYPE_Q5_K: grctx.compute_flat = hvx_dequantize_صف_flat_q5_k_f32; توڑو;
+                حالت HTP_TYPE_Q6_K: grctx.compute_flat = hvx_dequantize_صف_flat_q6_k_f32; توڑو;
+                طےشدہ:            واپس HTP_حالت_NO_SUPPORT;
             }
-            q_func = get_rows_thread_flat;
-            break;
-        default:
-            return HTP_STATUS_NO_SUPPORT;
+            q_func = get_صفیں_thread_flat;
+            توڑو;
+        طےشدہ:
+            واپس HTP_حالت_NO_SUPPORT;
     }
 
-    const uint32_t elem_size = (grctx.idx_type == HTP_TYPE_I64) ? sizeof(int64_t) : sizeof(int32_t);
-    const size_t src1_bytes  = (size_t) total_tasks * elem_size;
+    ثابت uint32_t elem_سائز = (grctx.idx_type == HTP_TYPE_I64) ? حجم(int64_t) : حجم(int32_t);
+    ثابت size_t src1_بائٹیں  = (size_t) کل_tasks * elem_سائز;
 
-    if (!htp_tensor_is_extended(octx->src[1]) && src1_bytes <= 128 &&
-        htp_tensor_is_contiguous(octx->src[1], elem_size)) {
-        grctx.src1_data  = (const void *) (uintptr_t) octx->src[1]->data;
-        grctx.read_index = get_rows_read_index_ddr;
-    } else {
-        uint8_t * vtcm_src1 = VTCM_LAYOUT_PTR(uint8_t, grctx.vtcm_base, grctx.vtcm_layout.off_src1);
-        get_rows_dma_src1(octx, vtcm_src1, elem_size);
-        grctx.src1_data  = vtcm_src1;
-        grctx.read_index = get_rows_read_index_vtcm;
+    اگر (!htp_tensor_is_extended(octx->src[1]) && src1_بائٹیں <= 128 &&
+        htp_tensor_is_contiguous(octx->src[1], elem_سائز)) {
+        grctx.src1_ڈیٹا  = (ثابت خالی *) (uintptr_t) octx->src[1]->ڈیٹا;
+        grctx.read_اشاریہ = get_صفیں_read_اشاریہ_ddr;
+    } ورنہ {
+        uint8_t * vtcm_src1 = VTCM_LAYOUT_PTR(uint8_t, grctx.vtcm_بنیاد, grctx.vtcm_layout.off_src1);
+        get_صفیں_dma_src1(octx, vtcm_src1, elem_سائز);
+        grctx.src1_ڈیٹا  = vtcm_src1;
+        grctx.read_اشاریہ = get_صفیں_read_اشاریہ_vtcm;
     }
 
-    FARF(HIGH, "get-rows: (%ux%ux%ux%u) x (%ux%ux%ux%u) -> (%ux%ux%ux%u) : src0-vtcm-size %zu dst-vtcm-size %zu kernel-type %d n-threads %d\n",
+    FARF(بلند_2, "get-rows: (%ux%ux%ux%u) x (%ux%ux%ux%u) -> (%ux%ux%ux%u) : src0-vtcm-size %zu dst-vtcm-size %zu kernel-type %d n-threads %d\n",
          octx->src[0]->ne[0], octx->src[0]->ne[1], octx->src[0]->ne[2], octx->src[0]->ne[3],
          octx->src[1]->ne[0], octx->src[1]->ne[1], octx->src[1]->ne[2], octx->src[1]->ne[3],
          octx->dst->ne[0], octx->dst->ne[1], octx->dst->ne[2], octx->dst->ne[3],
-         grctx.vtcm_layout.src0_bytes_per_thread * n_threads,
-         grctx.vtcm_layout.dst_bytes_per_thread  * n_threads,
-         kparams->kernel_type, n_threads);
+         grctx.vtcm_layout.src0_بائٹیں_فی_thread * n_دھاگے,
+         grctx.vtcm_layout.dst_بائٹیں_فی_thread  * n_دھاگے,
+         kparams->kernel_type, n_دھاگے);
 
-    work_queue_run(octx->ctx->work_queue, q_func, &grctx, n_threads);
-    return HTP_STATUS_OK;
+    work_قطار_تسلسل(octx->ctx->work_قطار, q_func, &grctx, n_دھاگے);
+    واپس HTP_حالت_OK;
 }
