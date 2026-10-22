@@ -1,36 +1,36 @@
-#include "traits.h"
+#अन्तर्भाव "traits.h"
 
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
+#अन्तर्भाव "ggml-backend-impl.h"
+#अन्तर्भाव "ggml-backend.h"
 
-namespace ggml::cpu {
+नामाकाश ggml::cpu {
 tensor_traits::~tensor_traits() {}
 
 extra_buffer_type::~extra_buffer_type() {}
 }  // namespace ggml::cpu
 
-bool ggml_cpu_extra_compute_forward(struct ggml_compute_params * params, struct ggml_tensor * op) {
-    for (auto extra : ggml_backend_cpu_get_extra_buffer_types()) {
-        if (extra && extra->context) {
+तार्किक ggml_cpu_extra_compute_forward(संरचना ggml_compute_params * params, संरचना ggml_tensor * op) {
+    प्रति (auto extra : ggml_backend_cpu_get_extra_buffer_types()) {
+        यदि (extra && extra->context) {
             auto buf_extra     = (ggml::cpu::extra_buffer_type *) extra->context;
             auto tensor_traits = buf_extra->get_tensor_traits(op);
-            if (tensor_traits && tensor_traits->compute_forward(params, op)) {
-                return true;
+            यदि (tensor_traits && tensor_traits->compute_forward(params, op)) {
+                प्रत्यागम सत्य;
             }
         }
     }
-    return false;
+    प्रत्यागम असत्य;
 }
 
-bool ggml_cpu_extra_work_size(int n_threads, const struct ggml_tensor * op, size_t * size) {
-    for (auto extra : ggml_backend_cpu_get_extra_buffer_types()) {
-        if (extra && extra->context) {
+तार्किक ggml_cpu_extra_work_size(पूर्णाङ्क n_threads, ध्रुव संरचना ggml_tensor * op, size_t * size) {
+    प्रति (auto extra : ggml_backend_cpu_get_extra_buffer_types()) {
+        यदि (extra && extra->context) {
             auto buf_extra     = (ggml::cpu::extra_buffer_type *) extra->context;
             auto tensor_traits = buf_extra->get_tensor_traits(op);
-            if (tensor_traits && tensor_traits->work_size(n_threads, op, *size)) {
-                return true;
+            यदि (tensor_traits && tensor_traits->work_size(n_threads, op, *size)) {
+                प्रत्यागम सत्य;
             }
         }
     }
-    return false;
+    प्रत्यागम असत्य;
 }
