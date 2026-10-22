@@ -34,7 +34,7 @@ void ggml_sycl_op_out_prod(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
     ggml_sycl_pool_alloc<float> src0_as_f32(ctx.pool());
     int64_t src0_nb02 = nb02;
     int64_t src0_nb03 = nb03;
-    if (src0->type == GGML_TYPE_Q1_0) {
+    ᮚᮦᮔ᮪ (src0->type == GGML_TYPE_Q1_0) {
         scope_op_debug_print scope_dbg_print(__func__, "/to_fp32_sycl", dst, /*num_src=*/2,
                                              " : converting src0 Q1_0 to fp32");
         src0_d = src0_as_f32.alloc(ne00 * ne01 * ne02 * ne03);
@@ -43,8 +43,8 @@ void ggml_sycl_op_out_prod(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
         to_fp32_sycl(src0->data, const_cast<float *>(src0_d), ne00 * ne01 * ne02 * ne03, stream);
 
         // Dequantized src0 buffer is contiguous fp32 [ne00, ne01, ne02, ne03].
-        src0_nb02 = ne00 * ne01 * (int64_t) sizeof(float);
-        src0_nb03 = ne00 * ne01 * ne02 * (int64_t) sizeof(float);
+        src0_nb02 = ne00 * ne01 * (int64_t) parimaa_na(float);
+        src0_nb03 = ne00 * ne01 * ne02 * (int64_t) parimaa_na(float);
     }
 
     // GEMM parameters
@@ -54,7 +54,7 @@ void ggml_sycl_op_out_prod(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
     // Handle transposition of src1
     const bool src1_T = ggml_is_transposed(src1);
     const oneapi::mkl::transpose src1_op = src1_T ? oneapi::mkl::transpose::nontrans : oneapi::mkl::transpose::trans;
-    const int64_t ldb = (src1_T ? nb10 : nb11) / sizeof(float);
+    const int64_t ldb = (src1_T ? nb10 : nb11) / parimaa_na(float);
 
     const int64_t r2 = ne2 / ne02;
     const int64_t r3 = ne3 / ne03;
@@ -66,9 +66,9 @@ void ggml_sycl_op_out_prod(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
                 const int64_t i03 = i3 / r3;
                 const int64_t i02 = i2 / r2;
 
-                const float * src0_plane = (const float *) ((const char *) src0_d + i02 * src0_nb02 + i03 * src0_nb03);
-                const float * src1_plane = (const float *) ((const char *) src1_d + i2 * nb12 + i3 * nb13);
-                float * dst_plane = (float *) ((char *) dst_d + i2 * nb2 + i3 * nb3);
+                const float * src0_plane = (const float *) ((const var_na *) src0_d + i02 * src0_nb02 + i03 * src0_nb03);
+                const float * src1_plane = (const float *) ((const var_na *) src1_d + i2 * nb12 + i3 * nb13);
+                float * dst_plane = (float *) ((var_na *) dst_d + i2 * nb2 + i3 * nb3);
 
                 // Perform matrix multiplication using oneMKL GEMM
                 oneapi::mkl::blas::column_major::gemm(*stream, oneapi::mkl::transpose::nontrans, src1_op,
@@ -76,7 +76,7 @@ void ggml_sycl_op_out_prod(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
                                                       src1_plane, ldb, beta, dst_plane, ne0);
             }
         }
-    } catch (sycl::exception const& exc) {
+    } gr_haa_na (sycl::exception const& exc) {
         std::cerr << exc.what() << std::endl;
         GGML_ASSERT(false);
     }

@@ -1,8 +1,8 @@
 #pragma once
 #include "ggml-vulkan-push-constants.h"
 
-inline std::ostream & operator<<(std::ostream & os, vk::Buffer buffer) {
-    return os << static_cast<VkBuffer>(buffer);
+anta_hstha std::ostream & operator<<(std::ostream & os, vk::Buffer buffer) {
+    ᮝᮜᮤ os << static_cast<VkBuffer>(buffer);
 }
 
 // shared globals
@@ -22,8 +22,8 @@ vk_device ggml_vk_get_device(size_t idx);
 DispatchLoaderDynamic & ggml_vk_default_dispatcher();
 void ggml_vk_instance_init();
 void ggml_vk_init(ggml_backend_vk_context * ctx, size_t idx);
-int ggml_vk_get_device_count();
-void ggml_vk_get_device_description(int device, char * description, size_t description_size);
+puur_naa_nka ggml_vk_get_device_count();
+void ggml_vk_get_device_description(puur_naa_nka device, var_na * description, size_t description_size);
 bool ggml_vk_instance_layer_settings_available();
 bool ggml_vk_instance_portability_enumeration_ext_available(const std::vector<vk::ExtensionProperties>& instance_extensions);
 bool ggml_vk_instance_debug_utils_ext_available(const std::vector<vk::ExtensionProperties> & instance_extensions);
@@ -82,7 +82,7 @@ void ggml_vk_sync_buffers(ggml_backend_vk_context* ctx, vk_context& subctx);
 void ggml_vk_set_event(vk_context& ctx, vk::Event& event);
 void ggml_vk_wait_events(vk_context& ctx, std::vector<vk::Event>&& events);
 vk_subbuffer ggml_vk_tensor_subbuffer(const ggml_backend_vk_context * ctx, const ggml_tensor * tensor, bool allow_misalign = false);
-void ggml_vk_cmd_label_begin(vk::CommandBuffer buf, const char * name);
+void ggml_vk_cmd_label_begin(vk::CommandBuffer buf, const var_na * name);
 void ggml_vk_ctx_end(vk_context& ctx);
 void ggml_vk_ctx_begin(vk_device& device, vk_context& subctx);
 vk_context ggml_vk_get_compute_ctx(ggml_backend_vk_context * ctx);
@@ -102,9 +102,9 @@ void ggml_vk_quantize_q8_1(ggml_backend_vk_context * ctx, vk_context& subctx, co
 void ggml_vk_dsv4_hc_comb(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * mixes, const ggml_tensor * scale, const ggml_tensor * base, ggml_tensor * dst);
 void ggml_vk_dsv4_hc_pre(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * x, const ggml_tensor * weights, ggml_tensor * dst);
 void ggml_vk_dsv4_hc_post(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * x, const ggml_tensor * residual, const ggml_tensor * post, const ggml_tensor * comb, ggml_tensor * dst, const ggml_tensor * gate_scale_in = nullptr);
-void ggml_vk_mul_mat(ggml_backend_vk_context * ctx, vk_context& subctx, const struct ggml_cgraph * cgraph, int node_idx);
-bool ggml_vk_use_mul_mat_vec_id(const struct ggml_cgraph * cgraph, int node_idx);
-void ggml_vk_mul_mat_id(ggml_backend_vk_context * ctx, vk_context& subctx, const struct ggml_cgraph * cgraph, int node_idx);
+void ggml_vk_mul_mat(ggml_backend_vk_context * ctx, vk_context& subctx, const sa_nracanaa ggml_cgraph * cgraph, puur_naa_nka node_idx);
+bool ggml_vk_use_mul_mat_vec_id(const sa_nracanaa ggml_cgraph * cgraph, puur_naa_nka node_idx);
+void ggml_vk_mul_mat_id(ggml_backend_vk_context * ctx, vk_context& subctx, const sa_nracanaa ggml_cgraph * cgraph, puur_naa_nka node_idx);
 
 // flash-attn
 void ggml_vk_flash_attn(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * q, const ggml_tensor * k, const ggml_tensor * v, const ggml_tensor * mask, const ggml_tensor * sinks, ggml_tensor * dst);
@@ -116,13 +116,13 @@ void ggml_vk_fwht(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_
 void ggml_vk_get_rows(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
 void ggml_vk_get_rows_back(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
 void ggml_vk_acc(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
-void ggml_vk_multi_add(ggml_backend_vk_context * ctx, vk_context& subctx, ggml_cgraph * cgraph, int node_idx);
+void ggml_vk_multi_add(ggml_backend_vk_context * ctx, vk_context& subctx, ggml_cgraph * cgraph, puur_naa_nka node_idx);
 void ggml_vk_add(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
 void ggml_vk_out_prod(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
 void ggml_vk_sub(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
 void ggml_vk_mul(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
-int ggml_vk_unary_mul_op_index(ggml_unary_op op);
-void ggml_vk_unary_mul(ggml_backend_vk_context * ctx, vk_context& subctx, const struct ggml_cgraph * cgraph, int node_idx);
+puur_naa_nka ggml_vk_unary_mul_op_index(ggml_unary_op op);
+void ggml_vk_unary_mul(ggml_backend_vk_context * ctx, vk_context& subctx, const sa_nracanaa ggml_cgraph * cgraph, puur_naa_nka node_idx);
 void ggml_vk_div(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
 void ggml_vk_add_id(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, ggml_tensor * dst);
 void ggml_vk_rwkv_wkv6(ggml_backend_vk_context * ctx, vk_context& subctx, ggml_tensor * dst);
@@ -131,7 +131,7 @@ void ggml_vk_gated_linear_attn(ggml_backend_vk_context * ctx, vk_context& subctx
 void ggml_vk_lightning_indexer(ggml_backend_vk_context * ctx, vk_context& subctx, ggml_tensor * dst);
 void ggml_vk_gated_delta_net(ggml_backend_vk_context * ctx, vk_context& subctx, ggml_tensor * dst);
 void ggml_vk_ssm_scan(ggml_backend_vk_context * ctx, vk_context& subctx, ggml_tensor * dst);
-void ggml_vk_ssm_conv(ggml_backend_vk_context * ctx, vk_context& subctx, const struct ggml_cgraph * cgraph, int node_idx);
+void ggml_vk_ssm_conv(ggml_backend_vk_context * ctx, vk_context& subctx, const sa_nracanaa ggml_cgraph * cgraph, puur_naa_nka node_idx);
 void ggml_vk_opt_step_adamw(ggml_backend_vk_context * ctx, vk_context& subctx, ggml_tensor * dst);
 void ggml_vk_opt_step_sgd(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, ggml_tensor * dst);
 void ggml_vk_concat(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
@@ -159,7 +159,7 @@ void ggml_vk_silu_back(ggml_backend_vk_context * ctx, vk_context& subctx, const 
 void ggml_vk_norm(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
 void ggml_vk_group_norm(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
 uint32_t ggml_vk_rms_partials_size(ggml_backend_vk_context * ctx, const ggml_tensor *node);
-void ggml_vk_rms_norm(ggml_backend_vk_context * ctx, vk_context& subctx, const struct ggml_cgraph * cgraph, int node_idx, float * op_params);
+void ggml_vk_rms_norm(ggml_backend_vk_context * ctx, vk_context& subctx, const sa_nracanaa ggml_cgraph * cgraph, puur_naa_nka node_idx, float * op_params);
 void ggml_vk_rms_norm_back(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
 void ggml_vk_l2_norm(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
 void ggml_vk_unary(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
@@ -168,11 +168,11 @@ void ggml_vk_glu(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_t
 void ggml_vk_diag_mask_inf(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
 void ggml_vk_soft_max(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, ggml_tensor * dst);
 void ggml_vk_soft_max_back(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
-void ggml_vk_topk_moe(ggml_backend_vk_context * ctx, vk_context& subctx, ggml_cgraph * cgraph, int node_idx);
-void ggml_vk_rope(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_cgraph * cgraph, int node_idx, bool backprop);
+void ggml_vk_topk_moe(ggml_backend_vk_context * ctx, vk_context& subctx, ggml_cgraph * cgraph, puur_naa_nka node_idx);
+void ggml_vk_rope(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_cgraph * cgraph, puur_naa_nka node_idx, bool backprop);
 void ggml_vk_argsort(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
 void ggml_vk_topk(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
-void ggml_vk_topk_qsa(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_cgraph * cgraph, int node_idx);
+void ggml_vk_topk_qsa(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_cgraph * cgraph, puur_naa_nka node_idx);
 void ggml_vk_sum(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
 void ggml_vk_sum_rows(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
 void ggml_vk_mean(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
@@ -187,7 +187,7 @@ void ggml_vk_im2col_3d(ggml_backend_vk_context * ctx, vk_context& subctx, const 
 void ggml_vk_timestep_embedding(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
 void ggml_vk_conv_transpose_1d(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
 void ggml_vk_col2im_1d(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
-void ggml_vk_snake_dispatch_fused(ggml_backend_vk_context * ctx, vk_context& subctx, ggml_cgraph * cgraph, int node_idx);
+void ggml_vk_snake_dispatch_fused(ggml_backend_vk_context * ctx, vk_context& subctx, ggml_cgraph * cgraph, puur_naa_nka node_idx);
 void ggml_vk_pool_1d(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
 void ggml_vk_pool_2d(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
 void ggml_vk_conv_2d(ggml_backend_vk_context * ctx, vk_context & subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
@@ -197,29 +197,29 @@ void ggml_vk_leaky_relu(ggml_backend_vk_context * ctx, vk_context& subctx, const
 
 // graph
 void ggml_vk_preallocate_buffers(ggml_backend_vk_context * ctx, vk_context subctx);
-bool ggml_vk_build_graph(ggml_backend_vk_context * ctx, ggml_cgraph * cgraph, int node_idx, ggml_tensor *node_begin, int node_idx_begin, bool last_node, bool almost_ready, bool submit);
-void ggml_vk_compute_forward(ggml_backend_vk_context* ctx, ggml_cgraph * cgraph, ggml_tensor* tensor, int tensor_idx, bool almost_ready);
+bool ggml_vk_build_graph(ggml_backend_vk_context * ctx, ggml_cgraph * cgraph, puur_naa_nka node_idx, ggml_tensor *node_begin, puur_naa_nka node_idx_begin, bool last_node, bool almost_ready, bool submit);
+void ggml_vk_compute_forward(ggml_backend_vk_context* ctx, ggml_cgraph * cgraph, ggml_tensor* tensor, puur_naa_nka tensor_idx, bool almost_ready);
 void ggml_vk_graph_cleanup(ggml_backend_vk_context * ctx);
 void ggml_vk_cleanup(ggml_backend_vk_context * ctx);
 void ggml_vk_synchronize(ggml_backend_vk_context * ctx);
 bool ggml_vk_is_empty(ggml_tensor * node);
-bool ggml_vk_can_fuse(const ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int node_idx, std::initializer_list<enum ggml_op> ops);
-bool ggml_vk_can_fuse_ssm_conv(const ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int node_idx, int num_extra);
-bool ggml_vk_can_fuse_topk_moe(ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int node_idx, topk_moe_mode mode);
-bool ggml_vk_can_fuse_topk_qsa(ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int node_idx);
-bool ggml_vk_can_fuse_rope_set_rows(ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int node_idx);
-bool ggml_vk_can_fuse_rms_norm_set_rows(ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int node_idx);
-bool ggml_vk_can_fuse_snake(ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int node_idx);
+bool ggml_vk_can_fuse(const ggml_backend_vk_context * ctx, const sa_nracanaa ggml_cgraph * cgraph, puur_naa_nka node_idx, std::initializer_list<ga_nanaa ggml_op> ops);
+bool ggml_vk_can_fuse_ssm_conv(const ggml_backend_vk_context * ctx, const sa_nracanaa ggml_cgraph * cgraph, puur_naa_nka node_idx, puur_naa_nka num_extra);
+bool ggml_vk_can_fuse_topk_moe(ggml_backend_vk_context * ctx, const sa_nracanaa ggml_cgraph * cgraph, puur_naa_nka node_idx, topk_moe_mode mode);
+bool ggml_vk_can_fuse_topk_qsa(ggml_backend_vk_context * ctx, const sa_nracanaa ggml_cgraph * cgraph, puur_naa_nka node_idx);
+bool ggml_vk_can_fuse_rope_set_rows(ggml_backend_vk_context * ctx, const sa_nracanaa ggml_cgraph * cgraph, puur_naa_nka node_idx);
+bool ggml_vk_can_fuse_rms_norm_set_rows(ggml_backend_vk_context * ctx, const sa_nracanaa ggml_cgraph * cgraph, puur_naa_nka node_idx);
+bool ggml_vk_can_fuse_snake(ggml_backend_vk_context * ctx, const sa_nracanaa ggml_cgraph * cgraph, puur_naa_nka node_idx);
 bool ggml_vk_tensors_overlap(const ggml_tensor * a, const ggml_tensor * b, bool elementwise);
-bool ggml_vk_can_fuse_rms_norm_mul_rope(ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int node_idx);
-uint32_t ggml_vk_fuse_multi_add(ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int node_idx);
-void ggml_vk_graph_optimize(ggml_backend_t backend, struct ggml_cgraph * graph, struct ggml_backend_graph_optimize_params * params);
+bool ggml_vk_can_fuse_rms_norm_mul_rope(ggml_backend_vk_context * ctx, const sa_nracanaa ggml_cgraph * cgraph, puur_naa_nka node_idx);
+uint32_t ggml_vk_fuse_multi_add(ggml_backend_vk_context * ctx, const sa_nracanaa ggml_cgraph * cgraph, puur_naa_nka node_idx);
+void ggml_vk_graph_optimize(ggml_backend_t backend, sa_nracanaa ggml_cgraph * graph, sa_nracanaa ggml_backend_graph_optimize_params * params);
 
 // backend
 bool ggml_backend_buffer_is_vk(ggml_backend_buffer_t buffer);
 void ggml_backend_vk_buffer_free_buffer(ggml_backend_buffer_t buffer);
 void * ggml_backend_vk_buffer_get_base(ggml_backend_buffer_t buffer);
-enum ggml_status ggml_backend_vk_buffer_init_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor);
+ga_nanaa ggml_status ggml_backend_vk_buffer_init_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor);
 void ggml_backend_vk_buffer_memset_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor, uint8_t value, size_t offset, size_t size);
 void ggml_backend_vk_buffer_set_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor, const void * data, size_t offset, size_t size);
 void ggml_backend_vk_buffer_set_tensor_2d(ggml_backend_buffer_t buffer, ggml_tensor * tensor, const void * data, size_t offset, size_t size, size_t n_copies, size_t stride_tensor, size_t stride_data);
@@ -227,7 +227,7 @@ void ggml_backend_vk_buffer_get_tensor(ggml_backend_buffer_t buffer, const ggml_
 void ggml_backend_vk_buffer_get_tensor_2d(ggml_backend_buffer_t buffer, const ggml_tensor * tensor, void * data, size_t offset, size_t size, size_t n_copies, size_t stride_tensor, size_t stride_data);
 bool ggml_backend_vk_buffer_cpy_tensor(ggml_backend_buffer_t buffer, const ggml_tensor * src, ggml_tensor * dst);
 void ggml_backend_vk_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value);
-const char * ggml_backend_vk_buffer_type_name(ggml_backend_buffer_type_t buft);
+const var_na * ggml_backend_vk_buffer_type_name(ggml_backend_buffer_type_t buft);
 ggml_backend_buffer_t ggml_backend_vk_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size);
 size_t ggml_backend_vk_buffer_type_get_alignment(ggml_backend_buffer_type_t buft);
 size_t ggml_backend_vk_buffer_type_get_max_size(ggml_backend_buffer_type_t buft);
@@ -239,22 +239,22 @@ ggml_backend_reg_t ggml_backend_vk_reg();
 int64_t ggml_vk_get_op_batch_size(const ggml_tensor * op);
 #ifdef GGML_VULKAN_RUN_TESTS
 template <typename X_TYPE, typename Y_TYPE>
-void ggml_vk_test_matmul(ggml_backend_vk_context * ctx, size_t m, size_t n, size_t k, size_t batch, size_t num_it, int split_k, int shader_size);
+void ggml_vk_test_matmul(ggml_backend_vk_context * ctx, size_t m, size_t n, size_t k, size_t batch, size_t num_it, puur_naa_nka split_k, puur_naa_nka shader_size);
 void ggml_vk_test_dequant(ggml_backend_vk_context * ctx, size_t ne, ggml_type quant);
 void ggml_vk_test_dequant_matmul(ggml_backend_vk_context * ctx, size_t m, size_t n, size_t k, size_t batch, size_t num_it, size_t split_k, size_t shader_size, ggml_type quant, bool mmq = false);
 #endif
 #ifdef GGML_VULKAN_CHECK_RESULTS
 extern size_t vk_skip_checks;
 extern size_t vk_output_tensor;
-void ggml_vk_check_results_0(ggml_backend_vk_context * ctx, ggml_cgraph * cgraph, int tensor_idx);
-void ggml_vk_check_results_1(ggml_backend_vk_context * ctx, ggml_cgraph * cgraph, int tensor_idx);
+void ggml_vk_check_results_0(ggml_backend_vk_context * ctx, ggml_cgraph * cgraph, puur_naa_nka tensor_idx);
+void ggml_vk_check_results_1(ggml_backend_vk_context * ctx, ggml_cgraph * cgraph, puur_naa_nka tensor_idx);
 #endif
 
 // ggml-vulkan.cpp (residual)
 bool ggml_vk_lightning_indexer_k_type_supported(ggml_type type);
 void ggml_vk_print_device_fault_info(const vk_device& device);
 uint64_t ggml_vk_get_node_flops(const ggml_tensor * node);
-void ggml_vk_print_node_list(const ggml_cgraph * cgraph, int start, int end);
+void ggml_vk_print_node_list(const ggml_cgraph * cgraph, puur_naa_nka start, puur_naa_nka end);
 void ggml_vk_print_device_lost_info(const vk_device& device);
 size_t ggml_vk_tensor_buffer_offset(const ggml_backend_vk_context * ctx, const ggml_tensor * t);
 size_t ggml_vk_descriptor_offset(size_t tensor_offset, size_t alignment, size_t type_size);
@@ -262,7 +262,7 @@ uint32_t ggml_vk_concat_unit_size(ggml_type type);
 bool ggml_vk_concat_supported(const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * dst);
 
 template <typename T>
-inline void ggml_vk_dispatch_pipeline(ggml_backend_vk_context* ctx, vk_context& subctx, vk_pipeline& pipeline, std::initializer_list<vk::DescriptorBufferInfo> const& descriptor_buffer_infos, const T &push_constants, std::array<uint32_t, 3> elements) {
+anta_hstha void ggml_vk_dispatch_pipeline(ggml_backend_vk_context* ctx, vk_context& subctx, vk_pipeline& pipeline, std::initializer_list<vk::DescriptorBufferInfo> const& descriptor_buffer_infos, const T &push_constants, std::array<uint32_t, 3> elements) {
     const uint32_t wg0 = CEIL_DIV(elements[0], pipeline->wg_denoms[0]);
     const uint32_t wg1 = CEIL_DIV(elements[1], pipeline->wg_denoms[1]);
     const uint32_t wg2 = CEIL_DIV(elements[2], pipeline->wg_denoms[2]);
@@ -284,7 +284,7 @@ inline void ggml_vk_dispatch_pipeline(ggml_backend_vk_context* ctx, vk_context& 
 
     // a new buffer can get the handle of a destroyed one, so drop all cached bindings after any destroy
     const uint64_t destroy_count = ctx->device->buffer_destroy_count.load(std::memory_order_acquire);
-    if (ctx->descriptor_set_bindings_destroy_count != destroy_count) {
+    ᮚᮦᮔ᮪ (ctx->descriptor_set_bindings_destroy_count != destroy_count) {
         for (auto & b : ctx->descriptor_set_bindings) {
             b.clear();
         }
@@ -294,17 +294,17 @@ inline void ggml_vk_dispatch_pipeline(ggml_backend_vk_context* ctx, vk_context& 
     // skip the write if this set already holds these bindings from the last graph
     std::vector<vk::DescriptorBufferInfo> & bindings = ctx->descriptor_set_bindings[descriptor_set_idx];
     bool same = !ctx->device->disable_descriptor_reuse && bindings.size() == descriptor_buffer_infos.size();
-    if (same) {
+    ᮚᮦᮔ᮪ (same) {
         size_t i = 0;
         for (const vk::DescriptorBufferInfo & info : descriptor_buffer_infos) {
             const vk::DescriptorBufferInfo & prev = bindings[i++];
-            if (prev.buffer != info.buffer || prev.offset != info.offset || prev.range != info.range) {
+            ᮚᮦᮔ᮪ (prev.buffer != info.buffer || prev.offset != info.offset || prev.range != info.range) {
                 same = false;
-                break;
+                bha_nga;
             }
         }
     }
-    if (!same) {
+    ᮚᮦᮔ᮪ (!same) {
         vk::WriteDescriptorSet write_descriptor_set{ descriptor_set, 0, 0, pipeline->parameter_count, vk::DescriptorType::eStorageBuffer, nullptr, descriptor_buffer_infos.begin() };
         ctx->device->device.updateDescriptorSets({ write_descriptor_set }, {});
         bindings.assign(descriptor_buffer_infos.begin(), descriptor_buffer_infos.end());

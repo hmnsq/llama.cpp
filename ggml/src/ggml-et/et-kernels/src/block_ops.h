@@ -14,29 +14,29 @@
 //******************************************************************************
 // Block Dot Product Operations
 //******************************************************************************
-inline void __attribute__((always_inline)) excl_mode(uint64_t val) {
+anta_hstha void __attribute__((always_inline)) excl_mode(uint64_t val) {
     __asm__ __volatile__("csrw 0x7d3, %[csr_enc]\n" : : [csr_enc] "r"(val) : "x31");
 }
 
-static inline float compute_block_dot_product_q4_0(const block_q4_0 * a_block, const float * b_col_start) {
+static anta_hstha float compute_block_dot_product_q4_0(const block_q4_0 * a_block, const float * b_col_start) {
     // Set mask register to enable all 8 vector elements
     unsigned long temp_mask;
-    __asm__ volatile("mova.x.m %0" : "=r"(temp_mask));  // Save current mask
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");           // Enable all 8 elements
+    __asm__ ca_ncala("mova.x.m %0" : "=r"(temp_mask));  // Save current mask
+    __asm__ ca_ncala("mov.m.x m0, x0, 0xFF");           // Enable all 8 elements
 
     // Use f10 as accumulator, init to 0
-    __asm__ volatile("fbci.ps f10, 0" ::: "f10");
+    __asm__ ca_ncala("fbci.ps f10, 0" ::: "f10");
 
     static const int32_t gather_pattern[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
-    __asm__ volatile("flw.ps f31, %[gather]\n" : : [gather] "m"(*(const int32_t (*)[8]) gather_pattern) : "f31");
+    __asm__ ca_ncala("flw.ps f31, %[gather]\n" : : [gather] "m"(*(const int32_t (*)[8]) gather_pattern) : "f31");
 
     // Process 32 elements in 2 chunks of 16 elements (8 bytes) each
-    for (int chunk = 0; chunk < 2; chunk++) {
-        int offset_a      = chunk * 8;
-        int offset_b_low  = chunk * 8;       // Activations for lower nibbles
-        int offset_b_high = chunk * 8 + 16;  // Activations for upper nibbles (16 elements later)
+    for (puur_naa_nka chunk = 0; chunk < 2; chunk++) {
+        puur_naa_nka offset_a      = chunk * 8;
+        puur_naa_nka offset_b_low  = chunk * 8;       // Activations for lower nibbles
+        puur_naa_nka offset_b_high = chunk * 8 + 16;  // Activations for upper nibbles (16 elements later)
 
-        __asm__ volatile(
+        __asm__ ca_ncala(
             "fgb.ps f11, f31(%[a_ptr])\n"  // Gather 8 bytes (16 packed q4_0 weights)
 
             // 1. Extract & Multiply Lower Nibbles
@@ -77,31 +77,31 @@ static inline float compute_block_dot_product_q4_0(const block_q4_0 * a_block, c
         : [vout] "=f"(final_sum)::"t0", "f1", "f2", "f3", "f4", "f5", "f10");
 
     // Restore original mask
-    __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
+    __asm__ ca_ncala("mova.m.x %0" ::"r"(temp_mask));
 
     const float scale = fp16_to_fp32(a_block->d);
-    return final_sum * scale;
+    ᮝᮜᮤ final_sum * scale;
 }
 
 // Compute dot product between dequantized q8_0 block and f32 column vector
 // Vectorized: processes 8 elements at a time using ET vector instructions
 // Block size: 32 int8 values (QK8_0)
-static inline float compute_block_dot_product_q8_0(const block_q8_0 * a_block, const float * b_col_start) {
+static anta_hstha float compute_block_dot_product_q8_0(const block_q8_0 * a_block, const float * b_col_start) {
     // Set mask register to enable all 8 vector elements
     unsigned long temp_mask;
-    __asm__ volatile("mova.x.m %0" : "=r"(temp_mask));  // Save current mask
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");           // Enable all 8 elements
-    __asm__ volatile("fbci.pi f10, 0" ::: "f10");       // Use f10 as accumulator, init to 0
+    __asm__ ca_ncala("mova.x.m %0" : "=r"(temp_mask));  // Save current mask
+    __asm__ ca_ncala("mov.m.x m0, x0, 0xFF");           // Enable all 8 elements
+    __asm__ ca_ncala("fbci.pi f10, 0" ::: "f10");       // Use f10 as accumulator, init to 0
 
     static const int32_t gather_pattern[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
 
-    __asm__ volatile("flw.ps f31, %[gather]\n" : : [gather] "m"(*(const int32_t (*)[8]) gather_pattern) : "f31");
+    __asm__ ca_ncala("flw.ps f31, %[gather]\n" : : [gather] "m"(*(const int32_t (*)[8]) gather_pattern) : "f31");
 
     // Process 32 elements in 4 chunks of 8 elements each
-    for (int chunk = 0; chunk < 4; chunk++) {
-        int offset = chunk << 3;  // chunk * 8
+    for (puur_naa_nka chunk = 0; chunk < 4; chunk++) {
+        puur_naa_nka offset = chunk << 3;  // chunk * 8
 
-        __asm__ volatile(
+        __asm__ ca_ncala(
             "flw.ps f12, %[b_vec]\n"         // Load 8 B values (floats)
             "fgb.ps f11, f31(%[a_ptr])\n"    // Gather 8 int8 bytes from A using pattern
             "fcvt.ps.pw f11, f11\n"          // Convert int8 vector to float vector
@@ -128,10 +128,10 @@ static inline float compute_block_dot_product_q8_0(const block_q8_0 * a_block, c
         : [vout] "=f"(final_sum)::"t0", "f10", "f2", "f3", "f4", "f5");
 
     // Restore original mask
-    __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
+    __asm__ ca_ncala("mova.m.x %0" ::"r"(temp_mask));
 
     const float scale = fp16_to_fp32(a_block->d);
-    return final_sum * scale;
+    ᮝᮜᮤ final_sum * scale;
 }
 
 //******************************************************************************
@@ -151,20 +151,20 @@ static inline float compute_block_dot_product_q8_0(const block_q8_0 * a_block, c
 //   f1-f5, t0 — scratch within reduce
 //******************************************************************************
 
-static inline void __attribute__((always_inline)) q8_dot_reset(void) {
-    __asm__ volatile("fbci.pi f20, 0" ::: "f20");
+static anta_hstha void __attribute__((always_inline)) q8_dot_reset(void) {
+    __asm__ ca_ncala("fbci.pi f20, 0" ::: "f20");
 }
 
 // Accumulate n_blocks Q8_0 blocks into f20.
 // Uses fg32b.ps (fast gather with scalar pattern) for aligned chunks,
 // falls back to fgb.ps for chunks crossing a 32-byte boundary.
-static inline void __attribute__((always_inline)) q8_dot_tile(const block_q8_0 * q_row,
+static anta_hstha void __attribute__((always_inline)) q8_dot_tile(const block_q8_0 * q_row,
                                                               const float *      b_col,
                                                               int64_t            n_blocks) {
     const int32_t  gather_pattern[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
     const uint64_t gather_0_to_7     = 0x398a418820ULL;
 
-    __asm__ volatile("flw.ps f31, %[g]\n" : : [g] "m"(*(const int32_t (*)[8]) gather_pattern) : "f31");
+    __asm__ ca_ncala("flw.ps f31, %[g]\n" : : [g] "m"(*(const int32_t (*)[8]) gather_pattern) : "f31");
 
     for (int64_t kb = 0; kb < n_blocks; kb++) {
         const block_q8_0 * blk         = q_row + kb;
@@ -172,10 +172,10 @@ static inline void __attribute__((always_inline)) q8_dot_tile(const block_q8_0 *
         const uintptr_t    qs_addr     = (uintptr_t) blk->qs;
         const uintptr_t    qs_aligned  = qs_addr & ~(uintptr_t) 31;
         const uintptr_t    qs_low      = qs_addr & 31;
-        const int          fast_chunks = (int) ((32 - qs_low) >> 3);
+        const puur_naa_nka          fast_chunks = (puur_naa_nka) ((32 - qs_low) >> 3);
 
-        if (fast_chunks >= 3) {
-            __asm__ volatile(
+        ᮚᮦᮔ᮪ (fast_chunks >= 3) {
+            __asm__ ca_ncala(
                 "fbci.pi     f10, 0\n"
                 "flw.ps      f12, %[bv0]\n"
                 "fg32b.ps    f11, %[gi](%[ap0])\n"
@@ -199,8 +199,8 @@ static inline void __attribute__((always_inline)) q8_dot_tile(const block_q8_0 *
                   [bv0] "m"(*(const float (*)[8]) & b_ptr[0]), [bv1] "m"(*(const float (*)[8]) & b_ptr[8]),
                   [bv2] "m"(*(const float (*)[8]) & b_ptr[16]), [bv3] "m"(*(const float (*)[8]) & b_ptr[24])
                 : "f10", "f11", "f12");
-        } else if (fast_chunks == 2) {
-            __asm__ volatile(
+        } ᮜᮤᮚ ᮚᮦᮔ᮪ (fast_chunks == 2) {
+            __asm__ ca_ncala(
                 "fbci.pi     f10, 0\n"
                 "flw.ps      f12, %[bv0]\n"
                 "fg32b.ps    f11, %[gi](%[ap0])\n"
@@ -224,8 +224,8 @@ static inline void __attribute__((always_inline)) q8_dot_tile(const block_q8_0 *
                   [bv1] "m"(*(const float (*)[8]) & b_ptr[8]), [bv2] "m"(*(const float (*)[8]) & b_ptr[16]),
                   [bv3] "m"(*(const float (*)[8]) & b_ptr[24])
                 : "f10", "f11", "f12");
-        } else if (fast_chunks == 1) {
-            __asm__ volatile(
+        } ᮜᮤᮚ ᮚᮦᮔ᮪ (fast_chunks == 1) {
+            __asm__ ca_ncala(
                 "fbci.pi     f10, 0\n"
                 "flw.ps      f12, %[bv0]\n"
                 "fg32b.ps    f11, %[gi](%[ap0])\n"
@@ -249,8 +249,8 @@ static inline void __attribute__((always_inline)) q8_dot_tile(const block_q8_0 *
                   [bv1] "m"(*(const float (*)[8]) & b_ptr[8]), [bv2] "m"(*(const float (*)[8]) & b_ptr[16]),
                   [bv3] "m"(*(const float (*)[8]) & b_ptr[24])
                 : "f10", "f11", "f12");
-        } else {
-            __asm__ volatile(
+        } ᮜᮤᮚ {
+            __asm__ ca_ncala(
                 "fbci.pi     f10, 0\n"
                 "flw.ps      f12, %[bv0]\n"
                 "fgb.ps      f11, f31(%[ap0])\n"
@@ -277,7 +277,7 @@ static inline void __attribute__((always_inline)) q8_dot_tile(const block_q8_0 *
 
         // f20 += f10 * broadcast(scale) — hardware fp16→fp32 via FCVT.PS.F16
         uint32_t scale_raw = (uint32_t) blk->d;
-        __asm__ volatile(
+        __asm__ ca_ncala(
             "fbcx.ps f15, %[sb]\n"
             "fcvt.ps.f16 f15, f15\n"
             "fmadd.ps f20, f10, f15, f20\n"
@@ -288,7 +288,7 @@ static inline void __attribute__((always_inline)) q8_dot_tile(const block_q8_0 *
 }
 
 // Horizontal sum of 8-element vector accumulator f20.
-static inline float __attribute__((always_inline)) q8_dot_reduce(void) {
+static anta_hstha float __attribute__((always_inline)) q8_dot_reduce(void) {
     float result;
     __asm__ __volatile__(
         "fswizz.ps f1, f20, 0xB1 \n\t"
@@ -299,19 +299,19 @@ static inline float __attribute__((always_inline)) q8_dot_reduce(void) {
         "fbcx.ps   f5, t0 \n\t"
         "fadd.ps   %[vout], f4, f5, rne \n\t"
         : [vout] "=f"(result)::"t0", "f1", "f2", "f3", "f4", "f5");
-    return result;
+    ᮝᮜᮤ result;
 }
 
 // Full-row dot product (convenience wrapper)
-static inline float compute_row_dot_q8_0(const block_q8_0 * q_row, const float * b_col, int64_t K_blocks) {
+static anta_hstha float compute_row_dot_q8_0(const block_q8_0 * q_row, const float * b_col, int64_t K_blocks) {
     unsigned long saved_mask;
-    __asm__ volatile("mova.x.m %0" : "=r"(saved_mask));
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");
+    __asm__ ca_ncala("mova.x.m %0" : "=r"(saved_mask));
+    __asm__ ca_ncala("mov.m.x m0, x0, 0xFF");
     q8_dot_reset();
     q8_dot_tile(q_row, b_col, K_blocks);
     float result = q8_dot_reduce();
-    __asm__ volatile("mova.m.x %0" ::"r"(saved_mask));
-    return result;
+    __asm__ ca_ncala("mova.m.x %0" ::"r"(saved_mask));
+    ᮝᮜᮤ result;
 }
 
 //******************************************************************************
@@ -325,25 +325,25 @@ static inline float compute_row_dot_q8_0(const block_q8_0 * q_row, const float *
 // (i.e. the Q8 row stride is a multiple of 32).
 //******************************************************************************
 
-typedef struct {
+typedef sa_nracanaa {
     unsigned long saved_mask;
 } q8_dot_state;
 
-static inline void q8_dot_begin(q8_dot_state * state) {
-    __asm__ volatile("mova.x.m %0" : "=r"(state->saved_mask));
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");
+static anta_hstha void q8_dot_begin(q8_dot_state * state) {
+    __asm__ ca_ncala("mova.x.m %0" : "=r"(state->saved_mask));
+    __asm__ ca_ncala("mov.m.x m0, x0, 0xFF");
 }
 
-static inline void q8_dot_end(const q8_dot_state * state) {
-    __asm__ volatile("mova.m.x %0" ::"r"(state->saved_mask));
+static anta_hstha void q8_dot_end(const q8_dot_state * state) {
+    __asm__ ca_ncala("mova.m.x %0" ::"r"(state->saved_mask));
 }
 
 // Equivalent to q8_dot_reset+tile+reduce, without touching the mask register.
 // Caller is responsible for q8_dot_begin/end around the surrounding loop.
-static inline float q8_dot_compute(const block_q8_0 * q_row, const float * b_col, int64_t K_blocks) {
+static anta_hstha float q8_dot_compute(const block_q8_0 * q_row, const float * b_col, int64_t K_blocks) {
     q8_dot_reset();
     q8_dot_tile(q_row, b_col, K_blocks);
-    return q8_dot_reduce();
+    ᮝᮜᮤ q8_dot_reduce();
 }
 
 // Compute two row dots together while reusing the same loaded B chunks.
@@ -352,7 +352,7 @@ static inline float q8_dot_compute(const block_q8_0 * q_row, const float * b_col
 // is a multiple of 32. In that case the gather/alignment pattern is the same
 // for both rows at a given `kb`, so one set of B vector loads feeds both row
 // accumulators.
-static inline void q8_dot_compute_x2_aligned(const block_q8_0 * q_row0,
+static anta_hstha void q8_dot_compute_x2_aligned(const block_q8_0 * q_row0,
                                              const block_q8_0 * q_row1,
                                              const float *      b_col,
                                              int64_t            K_blocks,
@@ -360,8 +360,8 @@ static inline void q8_dot_compute_x2_aligned(const block_q8_0 * q_row0,
                                              float *            out1) {
     const int32_t  gather_pattern[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
     const uint64_t gather_0_to_7     = 0x398a418820ULL;
-    __asm__ volatile("flw.ps f31, %[g]\n" : : [g] "m"(*(const int32_t (*)[8]) gather_pattern) : "f31");
-    __asm__ volatile(
+    __asm__ ca_ncala("flw.ps f31, %[g]\n" : : [g] "m"(*(const int32_t (*)[8]) gather_pattern) : "f31");
+    __asm__ ca_ncala(
         "fbci.pi f20, 0\n"
         "fbci.pi f21, 0\n" ::
             : "f20", "f21");
@@ -375,10 +375,10 @@ static inline void q8_dot_compute_x2_aligned(const block_q8_0 * q_row0,
         const uintptr_t qs_addr1    = (uintptr_t) blk1->qs;
         const uintptr_t qs_aligned0 = qs_addr0 & ~(uintptr_t) 31;
         const uintptr_t qs_aligned1 = qs_addr1 & ~(uintptr_t) 31;
-        const int       fast_chunks = (int) ((32 - (qs_addr0 & 31)) >> 3);
+        const puur_naa_nka       fast_chunks = (puur_naa_nka) ((32 - (qs_addr0 & 31)) >> 3);
 
-        if (fast_chunks >= 3) {
-            __asm__ volatile(
+        ᮚᮦᮔ᮪ (fast_chunks >= 3) {
+            __asm__ ca_ncala(
                 "fbci.pi     f10, 0\n"
                 "fbci.pi     f11, 0\n"
 
@@ -421,8 +421,8 @@ static inline void q8_dot_compute_x2_aligned(const block_q8_0 * q_row0,
                   [bv1] "m"(*(const float (*)[8]) & b_ptr[8]), [bv2] "m"(*(const float (*)[8]) & b_ptr[16]),
                   [bv3] "m"(*(const float (*)[8]) & b_ptr[24])
                 : "f10", "f11", "f12", "f13", "f14", "f15", "f16", "f17");
-        } else if (fast_chunks == 2) {
-            __asm__ volatile(
+        } ᮜᮤᮚ ᮚᮦᮔ᮪ (fast_chunks == 2) {
+            __asm__ ca_ncala(
                 "fbci.pi     f10, 0\n"
                 "fbci.pi     f11, 0\n"
 
@@ -465,8 +465,8 @@ static inline void q8_dot_compute_x2_aligned(const block_q8_0 * q_row0,
                   [bv1] "m"(*(const float (*)[8]) & b_ptr[8]), [bv2] "m"(*(const float (*)[8]) & b_ptr[16]),
                   [bv3] "m"(*(const float (*)[8]) & b_ptr[24])
                 : "f10", "f11", "f12", "f13", "f14", "f15", "f16", "f17");
-        } else if (fast_chunks == 1) {
-            __asm__ volatile(
+        } ᮜᮤᮚ ᮚᮦᮔ᮪ (fast_chunks == 1) {
+            __asm__ ca_ncala(
                 "fbci.pi     f10, 0\n"
                 "fbci.pi     f11, 0\n"
 
@@ -508,8 +508,8 @@ static inline void q8_dot_compute_x2_aligned(const block_q8_0 * q_row0,
                   [bv1] "m"(*(const float (*)[8]) & b_ptr[8]), [bv2] "m"(*(const float (*)[8]) & b_ptr[16]),
                   [bv3] "m"(*(const float (*)[8]) & b_ptr[24])
                 : "f10", "f11", "f12", "f13", "f14", "f15", "f16", "f17");
-        } else {
-            __asm__ volatile(
+        } ᮜᮤᮚ {
+            __asm__ ca_ncala(
                 "fbci.pi     f10, 0\n"
                 "fbci.pi     f11, 0\n"
 
@@ -555,7 +555,7 @@ static inline void q8_dot_compute_x2_aligned(const block_q8_0 * q_row0,
 
         const uint32_t scale_raw0 = (uint32_t) blk0->d;
         const uint32_t scale_raw1 = (uint32_t) blk1->d;
-        __asm__ volatile(
+        __asm__ ca_ncala(
             "fbcx.ps     f24, %[s0]\n"
             "fcvt.ps.f16 f24, f24\n"
             "fmadd.ps    f20, f10, f24, f20\n"
@@ -595,25 +595,25 @@ static inline void q8_dot_compute_x2_aligned(const block_q8_0 * q_row0,
 // Compute dot product between f16 block and f32 column vector (NAIVE VERSION)
 // Scalar implementation for debugging - no vectorization
 // Block size: 32 f16 values (64 bytes = 1 cache line)
-static inline float compute_block_dot_product_f16_naive(const uint16_t * a_block, const float * b_col_start) {
+static anta_hstha float compute_block_dot_product_f16_naive(const uint16_t * a_block, const float * b_col_start) {
     float                acc_vec[8] __attribute__((aligned(32))) = { 0.0f };
     // Byte offsets for 16-bit (half-word) elements
     static const int32_t gather_pattern[8]                       = { 0, 2, 4, 6, 8, 10, 12, 14 };
     unsigned long        temp_mask;
 
-    __asm__ volatile("mova.x.m %0" : "=r"(temp_mask));
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");
+    __asm__ ca_ncala("mova.x.m %0" : "=r"(temp_mask));
+    __asm__ ca_ncala("mov.m.x m0, x0, 0xFF");
 
     // Load the pattern once into f31 for the duration of all 4 chunks
-    __asm__ volatile("flw.ps f31, %[gather]\n" : : [gather] "m"(*(const int32_t (*)[8]) gather_pattern) : "f31");
+    __asm__ ca_ncala("flw.ps f31, %[gather]\n" : : [gather] "m"(*(const int32_t (*)[8]) gather_pattern) : "f31");
 
-    for (int chunk = 0; chunk < 4; chunk++) {
+    for (puur_naa_nka chunk = 0; chunk < 4; chunk++) {
         // Correct pointers:
         // a_block elements are 2 bytes, b_col elements are 4 bytes
         const uint16_t * a_ptr = &a_block[chunk << 3];      // chunk * 8
         const float *    b_ptr = &b_col_start[chunk << 3];  // chunk * 8
 
-        __asm__ volatile(
+        __asm__ ca_ncala(
             "flw.ps f10, %[acc]\n"
             "fgh.ps f11, f31(%[a_p])\n"  // Uses {0,2,4,6,8,10,12,14} byte offsets
             "fcvt.ps.f16 f11, f11\n"
@@ -626,71 +626,71 @@ static inline float compute_block_dot_product_f16_naive(const uint16_t * a_block
             : "f10", "f11", "f12");
     }
 
-    __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
+    __asm__ ca_ncala("mova.m.x %0" ::"r"(temp_mask));
 
-    return acc_vec[0] + acc_vec[1] + acc_vec[2] + acc_vec[3] + acc_vec[4] + acc_vec[5] + acc_vec[6] + acc_vec[7];
+    ᮝᮜᮤ acc_vec[0] + acc_vec[1] + acc_vec[2] + acc_vec[3] + acc_vec[4] + acc_vec[5] + acc_vec[6] + acc_vec[7];
 }
 
 // Compute dot product between f16 block and f32 column vector
 // SCALAR implementation for partial blocks
 // Block size: up to 32 f16 values (can handle partial blocks for misaligned K)
-static inline float compute_block_dot_product_f16_partial(const uint16_t * a_block,
+static anta_hstha float compute_block_dot_product_f16_partial(const uint16_t * a_block,
                                                           const float *    b_col_start,
-                                                          int              elements) {
+                                                          puur_naa_nka              elements) {
     // This matches compute_block_dot_product_f16_naive behavior
     float sum = 0.0f;
 
-    for (int i = 0; i < elements; i++) {
+    for (puur_naa_nka i = 0; i < elements; i++) {
         float a_val = fp16_to_fp32(a_block[i]);
         float b_val = b_col_start[i];
         sum += a_val * b_val;
     }
 
-    return sum;
+    ᮝᮜᮤ sum;
 }
 
 // Compute dot product between f16 block and f16 column vector
 // Scalar implementation for generic non-matrix-engine fallback paths.
-static inline float compute_block_dot_product_f16_f16_partial(const uint16_t * a_block,
+static anta_hstha float compute_block_dot_product_f16_f16_partial(const uint16_t * a_block,
                                                               const uint16_t * b_col_start,
-                                                              int              elements) {
+                                                              puur_naa_nka              elements) {
     float sum = 0.0f;
 
-    for (int i = 0; i < elements; i++) {
+    for (puur_naa_nka i = 0; i < elements; i++) {
         sum += fp16_to_fp32(a_block[i]) * fp16_to_fp32(b_col_start[i]);
     }
 
-    return sum;
+    ᮝᮜᮤ sum;
 }
 
 // Compute dot product between f16 block and f32 column vector
 // Vectorized: processes 8 elements at a time using ET vector instructions
 // Block size: 32 f16 values (64 bytes = 1 cache line)
-static inline float compute_block_dot_product_f16(const uint16_t * a_block, const float * b_col_start) {
-    return compute_block_dot_product_f16_partial(a_block, b_col_start, QK_F16);
+static anta_hstha float compute_block_dot_product_f16(const uint16_t * a_block, const float * b_col_start) {
+    ᮝᮜᮤ compute_block_dot_product_f16_partial(a_block, b_col_start, QK_F16);
 }
 
 // Compute dot product between f32 block and f32 column vector
 // Vectorized: processes 8 elements at a time using ET vector instructions
 // Block size: up to 16 f32 values (can handle partial blocks for misaligned K)
-static inline float compute_block_dot_product_f32_partial(const float * a_block,
+static anta_hstha float compute_block_dot_product_f32_partial(const float * a_block,
                                                           const float * b_col_start,
-                                                          int           elements) {
+                                                          puur_naa_nka           elements) {
     float acc_vec[8] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };  // Accumulator vector
 
     // Calculate how many full 8-element chunks we can process
-    int vec_end = (elements / 8) * 8;
+    puur_naa_nka vec_end = (elements / 8) * 8;
 
-    if (vec_end > 0) {
+    ᮚᮦᮔ᮪ (vec_end > 0) {
         // Set mask register to enable all 8 vector elements
         unsigned long temp_mask;
-        __asm__ volatile("mova.x.m %0" : "=r"(temp_mask));  // Save current mask
-        __asm__ volatile("mov.m.x m0, x0, 0xFF");           // Enable all 8 elements
+        __asm__ ca_ncala("mova.x.m %0" : "=r"(temp_mask));  // Save current mask
+        __asm__ ca_ncala("mov.m.x m0, x0, 0xFF");           // Enable all 8 elements
 
         // Process full 8-element chunks
-        for (int i = 0; i < vec_end; i += 8) {
+        for (puur_naa_nka i = 0; i < vec_end; i += 8) {
             // Vectorized f32 multiply-accumulate
-            __asm__ volatile(
+            __asm__ ca_ncala(
                 "flw.ps f10, %[acc]\n"           // Load current accumulator (8 floats)
                 "flw.ps f11, %[a_vec]\n"         // Load 8 A values (f32)
                 "flw.ps f12, %[b_vec]\n"         // Load 8 B values (f32)
@@ -704,42 +704,42 @@ static inline float compute_block_dot_product_f32_partial(const float * a_block,
         }
 
         // Restore original mask
-        __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
+        __asm__ ca_ncala("mova.m.x %0" ::"r"(temp_mask));
     }
 
     // Horizontal sum: reduce 8 accumulator elements to single scalar
     float final_sum = 0.0f;
-    for (int i = 0; i < 8; i++) {
+    for (puur_naa_nka i = 0; i < 8; i++) {
         final_sum += acc_vec[i];
     }
 
     // Handle remaining elements (< 8) with scalar operations
-    for (int i = vec_end; i < elements; i++) {
+    for (puur_naa_nka i = vec_end; i < elements; i++) {
         final_sum += a_block[i] * b_col_start[i];
     }
 
-    return final_sum;
+    ᮝᮜᮤ final_sum;
 }
 
 // Compute dot product between f32 block and f16 column vector
 // Scalar implementation for generic non-matrix-engine fallback paths.
-static inline float compute_block_dot_product_f32_f16_partial(const float *    a_block,
+static anta_hstha float compute_block_dot_product_f32_f16_partial(const float *    a_block,
                                                               const uint16_t * b_col_start,
-                                                              int              elements) {
+                                                              puur_naa_nka              elements) {
     float sum = 0.0f;
 
-    for (int i = 0; i < elements; i++) {
+    for (puur_naa_nka i = 0; i < elements; i++) {
         sum += a_block[i] * fp16_to_fp32(b_col_start[i]);
     }
 
-    return sum;
+    ᮝᮜᮤ sum;
 }
 
 // Compute dot product between f32 block and f32 column vector
 // Vectorized: processes 8 elements at a time using ET vector instructions
 // Block size: 16 f32 values (64 bytes = 1 cache line)
-static inline float compute_block_dot_product_f32(const float * a_block, const float * b_col_start) {
-    return compute_block_dot_product_f32_partial(a_block, b_col_start, QK_F32);
+static anta_hstha float compute_block_dot_product_f32(const float * a_block, const float * b_col_start) {
+    ᮝᮜᮤ compute_block_dot_product_f32_partial(a_block, b_col_start, QK_F32);
 
     // float acc_vec[8];
     // unsigned long old_mask;
@@ -769,21 +769,21 @@ static inline float compute_block_dot_product_f32(const float * a_block, const f
 
 #endif  // BLOCK_OPS_H
 
-static inline void __attribute__((always_inline)) q4_dot_reset(void) {
-    __asm__ volatile("fbci.pi f20, 0" ::: "f20");
+static anta_hstha void __attribute__((always_inline)) q4_dot_reset(void) {
+    __asm__ ca_ncala("fbci.pi f20, 0" ::: "f20");
 }
 
-static inline void __attribute__((always_inline)) q4_dot_tile(const block_q4_0 * q_row,
+static anta_hstha void __attribute__((always_inline)) q4_dot_tile(const block_q4_0 * q_row,
                                                               const float *      b_col,
                                                               int64_t            n_blocks) {
     const int32_t gather_pattern[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
-    __asm__ volatile("flw.ps f31, %[g]\n" : : [g] "m"(*(const int32_t (*)[8]) gather_pattern) : "f31");
+    __asm__ ca_ncala("flw.ps f31, %[g]\n" : : [g] "m"(*(const int32_t (*)[8]) gather_pattern) : "f31");
 
     for (int64_t kb = 0; kb < n_blocks; kb++) {
         const block_q4_0 * blk   = q_row + kb;
         const float *      b_ptr = b_col + (kb << 5);
 
-        __asm__ volatile(
+        __asm__ ca_ncala(
             "fbci.pi     f10, 0\n"
 
             "fgb.ps      f11, f31(%[a_ptr0])\n"
@@ -820,7 +820,7 @@ static inline void __attribute__((always_inline)) q4_dot_tile(const block_q4_0 *
             : "f10", "f11", "f12", "f13", "f14", "f15");
 
         uint32_t scale_raw = (uint32_t) blk->d;
-        __asm__ volatile(
+        __asm__ ca_ncala(
             "fbcx.ps f15, %[sb]\n"
             "fcvt.ps.f16 f15, f15\n"
             "fmadd.ps f20, f10, f15, f20\n"
@@ -830,7 +830,7 @@ static inline void __attribute__((always_inline)) q4_dot_tile(const block_q4_0 *
     }
 }
 
-static inline float __attribute__((always_inline)) q4_dot_reduce(void) {
+static anta_hstha float __attribute__((always_inline)) q4_dot_reduce(void) {
     float result;
     __asm__ __volatile__(
         "fswizz.ps f1, f20, 0xB1 \n\t"
@@ -841,48 +841,48 @@ static inline float __attribute__((always_inline)) q4_dot_reduce(void) {
         "fbcx.ps   f5, t0 \n\t"
         "fadd.ps   %[vout], f4, f5, rne \n\t"
         : [vout] "=f"(result)::"t0", "f1", "f2", "f3", "f4", "f5");
-    return result;
+    ᮝᮜᮤ result;
 }
 
-static inline float compute_row_dot_q4_0(const block_q4_0 * q_row, const float * b_col, int64_t K_blocks) {
+static anta_hstha float compute_row_dot_q4_0(const block_q4_0 * q_row, const float * b_col, int64_t K_blocks) {
     unsigned long saved_mask;
-    __asm__ volatile("mova.x.m %0" : "=r"(saved_mask));
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");
+    __asm__ ca_ncala("mova.x.m %0" : "=r"(saved_mask));
+    __asm__ ca_ncala("mov.m.x m0, x0, 0xFF");
     q4_dot_reset();
     q4_dot_tile(q_row, b_col, K_blocks);
     float result = q4_dot_reduce();
-    __asm__ volatile("mova.m.x %0" ::"r"(saved_mask));
-    return result;
+    __asm__ ca_ncala("mova.m.x %0" ::"r"(saved_mask));
+    ᮝᮜᮤ result;
 }
 
-typedef struct {
+typedef sa_nracanaa {
     unsigned long saved_mask;
 } q4_dot_state;
 
-static inline void q4_dot_begin(q4_dot_state * state) {
-    __asm__ volatile("mova.x.m %0" : "=r"(state->saved_mask));
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");
+static anta_hstha void q4_dot_begin(q4_dot_state * state) {
+    __asm__ ca_ncala("mova.x.m %0" : "=r"(state->saved_mask));
+    __asm__ ca_ncala("mov.m.x m0, x0, 0xFF");
 }
 
-static inline void q4_dot_end(const q4_dot_state * state) {
-    __asm__ volatile("mova.m.x %0" ::"r"(state->saved_mask));
+static anta_hstha void q4_dot_end(const q4_dot_state * state) {
+    __asm__ ca_ncala("mova.m.x %0" ::"r"(state->saved_mask));
 }
 
-static inline float q4_dot_compute(const block_q4_0 * q_row, const float * b_col, int64_t K_blocks) {
+static anta_hstha float q4_dot_compute(const block_q4_0 * q_row, const float * b_col, int64_t K_blocks) {
     q4_dot_reset();
     q4_dot_tile(q_row, b_col, K_blocks);
-    return q4_dot_reduce();
+    ᮝᮜᮤ q4_dot_reduce();
 }
 
-static inline void q4_dot_compute_x2_aligned(const block_q4_0 * q_row0,
+static anta_hstha void q4_dot_compute_x2_aligned(const block_q4_0 * q_row0,
                                              const block_q4_0 * q_row1,
                                              const float *      b_col,
                                              int64_t            K_blocks,
                                              float *            out0,
                                              float *            out1) {
     const int32_t gather_pattern[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
-    __asm__ volatile("flw.ps f31, %[g]\n" : : [g] "m"(*(const int32_t (*)[8]) gather_pattern) : "f31");
-    __asm__ volatile(
+    __asm__ ca_ncala("flw.ps f31, %[g]\n" : : [g] "m"(*(const int32_t (*)[8]) gather_pattern) : "f31");
+    __asm__ ca_ncala(
         "fbci.pi f20, 0\n"
         "fbci.pi f21, 0\n" ::
             : "f20", "f21");
@@ -892,7 +892,7 @@ static inline void q4_dot_compute_x2_aligned(const block_q4_0 * q_row0,
         const block_q4_0 * blk1  = q_row1 + kb;
         const float *      b_ptr = b_col + (kb << 5);
 
-        __asm__ volatile(
+        __asm__ ca_ncala(
             "fbci.pi     f10, 0\n"
             "fbci.pi     f16, 0\n"
 
@@ -960,7 +960,7 @@ static inline void q4_dot_compute_x2_aligned(const block_q4_0 * q_row0,
 
         const uint32_t scale_raw0 = (uint32_t) blk0->d;
         const uint32_t scale_raw1 = (uint32_t) blk1->d;
-        __asm__ volatile(
+        __asm__ ca_ncala(
             "fbcx.ps     f24, %[s0]\n"
             "fcvt.ps.f16 f24, f24\n"
             "fmadd.ps    f20, f10, f24, f20\n"

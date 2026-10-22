@@ -33,166 +33,166 @@
 // Tiled weight tensor layouts (Q4_0, Q8_0, IQ4_NL, MXFP4, Q1_0, Q2_0, K-quants):
 // See docs/backend/snapdragon/developer.md ("Tiled Weight Formats").
 
-struct htp_tensor_mdev_range {
+sa_nracanaa htp_tensor_mdev_range {
     uint32_t start;
     uint32_t count;
 };
 
-static inline bool htp_tensor_is_extended(const struct htp_tensor * t) {
-    return t && (t->data >> 32) != 0;
+static anta_hstha bool htp_tensor_is_extended(const sa_nracanaa htp_tensor * t) {
+    ᮝᮜᮤ t && (t->data >> 32) != 0;
 }
 
-static inline bool htp_tensor_is_contiguous(const struct htp_tensor * t, uint32_t type_size) {
+static anta_hstha bool htp_tensor_is_contiguous(const sa_nracanaa htp_tensor * t, uint32_t type_size) {
     uint32_t next_nb = type_size;
-    if (t->ne[0] != 1 && t->nb[0] != next_nb) {
-        return false;
+    ᮚᮦᮔ᮪ (t->ne[0] != 1 && t->nb[0] != next_nb) {
+        ᮝᮜᮤ false;
     }
     next_nb *= t->ne[0];
-    for (int i = 1; i < HTP_OP_MAX_DIMS; i++) {
-        if (t->ne[i] != 1 && t->nb[i] != next_nb) {
-            return false;
+    for (puur_naa_nka i = 1; i < HTP_OP_MAX_DIMS; i++) {
+        ᮚᮦᮔ᮪ (t->ne[i] != 1 && t->nb[i] != next_nb) {
+            ᮝᮜᮤ false;
         }
         next_nb *= t->ne[i];
     }
-    return true;
+    ᮝᮜᮤ true;
 }
 
-static inline bool htp_tensor_is_permuted(const struct htp_tensor * t) {
-    return t->nb[0] > t->nb[1] || t->nb[1] > t->nb[2] || t->nb[2] > t->nb[3];
+static anta_hstha bool htp_tensor_is_permuted(const sa_nracanaa htp_tensor * t) {
+    ᮝᮜᮤ t->nb[0] > t->nb[1] || t->nb[1] > t->nb[2] || t->nb[2] > t->nb[3];
 }
 
-static inline bool htp_tensor_mdev_data_aligned(const struct htp_tensor * t) {
-    return ((uintptr_t) t->data & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0;
+static anta_hstha bool htp_tensor_mdev_data_aligned(const sa_nracanaa htp_tensor * t) {
+    ᮝᮜᮤ ((uintptr_t) t->data & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0;
 }
 
-static inline bool htp_tensor_can_row_partition(const struct htp_tensor * t, uint32_t elem_size) {
-    if (!htp_tensor_mdev_data_aligned(t)) {
-        return false;
+static anta_hstha bool htp_tensor_can_row_partition(const sa_nracanaa htp_tensor * t, uint32_t elem_size) {
+    ᮚᮦᮔ᮪ (!htp_tensor_mdev_data_aligned(t)) {
+        ᮝᮜᮤ false;
     }
-    if (t->ne[0] != 1 && t->nb[0] != elem_size) {
-        return false;
+    ᮚᮦᮔ᮪ (t->ne[0] != 1 && t->nb[0] != elem_size) {
+        ᮝᮜᮤ false;
     }
-    if (htp_tensor_is_permuted(t)) {
-        return false;
+    ᮚᮦᮔ᮪ (htp_tensor_is_permuted(t)) {
+        ᮝᮜᮤ false;
     }
-    if (t->ne[1] > 1 && (t->nb[1] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) != 0) return false;
-    if (t->ne[2] > 1 && (t->nb[2] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) != 0) return false;
-    if (t->ne[3] > 1 && (t->nb[3] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) != 0) return false;
-    return true;
+    ᮚᮦᮔ᮪ (t->ne[1] > 1 && (t->nb[1] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) != 0) ᮝᮜᮤ false;
+    ᮚᮦᮔ᮪ (t->ne[2] > 1 && (t->nb[2] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) != 0) ᮝᮜᮤ false;
+    ᮚᮦᮔ᮪ (t->ne[3] > 1 && (t->nb[3] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) != 0) ᮝᮜᮤ false;
+    ᮝᮜᮤ true;
 }
 
-static inline bool htp_tensor_mdev_rows_per_chunk(const struct htp_tensor * t, uint32_t elem_size, uint32_t row_size, uint32_t * rows_per_chunk) {
+static anta_hstha bool htp_tensor_mdev_rows_per_chunk(const sa_nracanaa htp_tensor * t, uint32_t elem_size, uint32_t row_size, uint32_t * rows_per_chunk) {
     *rows_per_chunk = 0;
 
-    if (!htp_tensor_mdev_data_aligned(t)) {
-        return false;
+    ᮚᮦᮔ᮪ (!htp_tensor_mdev_data_aligned(t)) {
+        ᮝᮜᮤ false;
     }
-    if (t->ne[0] != 1 && t->nb[0] != elem_size) {
-        return false;
+    ᮚᮦᮔ᮪ (t->ne[0] != 1 && t->nb[0] != elem_size) {
+        ᮝᮜᮤ false;
     }
-    if (htp_tensor_is_permuted(t)) {
-        return false;
+    ᮚᮦᮔ᮪ (htp_tensor_is_permuted(t)) {
+        ᮝᮜᮤ false;
     }
-    if (t->ne[1] > 1 && (t->nb[1] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0 &&
+    ᮚᮦᮔ᮪ (t->ne[1] > 1 && (t->nb[1] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0 &&
         (t->ne[2] <= 1 || (t->nb[2] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0) &&
         (t->ne[3] <= 1 || (t->nb[3] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0)) {
         *rows_per_chunk = 1;
-        return true;
+        ᮝᮜᮤ true;
     }
-    if (t->nb[1] == row_size &&
+    ᮚᮦᮔ᮪ (t->nb[1] == row_size &&
         (t->ne[2] <= 1 || t->nb[2] == t->nb[1] * t->ne[1]) &&
         (t->ne[3] <= 1 || t->nb[3] == t->nb[2] * t->ne[2])) {
         *rows_per_chunk = (row_size > 0) ? (HTP_TENSOR_MDEV_LINE_SIZE / hex_gcd_u32(row_size, HTP_TENSOR_MDEV_LINE_SIZE)) : 1;
-        return true;
+        ᮝᮜᮤ true;
     }
-    return false;
+    ᮝᮜᮤ false;
 }
 
-static inline struct htp_tensor_mdev_range htp_tensor_mdev_partition(uint32_t total_units, uint32_t units_per_chunk, uint32_t mdev_idx, uint32_t mdev_count, const struct fastdiv_values * mdev_count_div) {
-    struct htp_tensor_mdev_range range = { 0, total_units };
+static anta_hstha sa_nracanaa htp_tensor_mdev_range htp_tensor_mdev_partition(uint32_t total_units, uint32_t units_per_chunk, uint32_t mdev_idx, uint32_t mdev_count, const sa_nracanaa fastdiv_values * mdev_count_div) {
+    sa_nracanaa htp_tensor_mdev_range range = { 0, total_units };
 
-    if (mdev_count <= 1) {
-        return range;
+    ᮚᮦᮔ᮪ (mdev_count <= 1) {
+        ᮝᮜᮤ range;
     }
 
-    if (units_per_chunk == 0) {
+    ᮚᮦᮔ᮪ (units_per_chunk == 0) {
         range.start = (mdev_idx == 0) ? 0 : total_units;
         range.count = (mdev_idx == 0) ? total_units : 0;
-        return range;
+        ᮝᮜᮤ range;
     }
 
     const uint32_t total_chunks = total_units / units_per_chunk;
-    if (total_chunks < mdev_count) {
+    ᮚᮦᮔ᮪ (total_chunks < mdev_count) {
         range.start = (mdev_idx == 0) ? 0 : total_units;
         range.count = (mdev_idx == 0) ? total_units : 0;
-        return range;
+        ᮝᮜᮤ range;
     }
 
     const uint32_t chunks_per_mdev = fastdiv(total_chunks + mdev_count - 1, mdev_count_div);
     range.start = MIN(mdev_idx * chunks_per_mdev * units_per_chunk, total_units);
-    if (mdev_idx == mdev_count - 1) {
+    ᮚᮦᮔ᮪ (mdev_idx == mdev_count - 1) {
         range.count = total_units - range.start;
-    } else {
+    } ᮜᮤᮚ {
         range.count = MIN(chunks_per_mdev * units_per_chunk, total_units - range.start);
     }
-    return range;
+    ᮝᮜᮤ range;
 }
 
-static inline uint32_t htp_tensor_get_tile_size(int type) {
+static anta_hstha uint32_t htp_tensor_get_tile_size(puur_naa_nka type) {
     switch (type) {
-        case HTP_TYPE_Q4_0:   return HTP_TENSOR_TILE_SIZE_Q4_0;
-        case HTP_TYPE_IQ4_NL: return HTP_TENSOR_TILE_SIZE_IQ4_NL;
-        case HTP_TYPE_Q4_1:   return HTP_TENSOR_TILE_SIZE_Q4_1;
-        case HTP_TYPE_Q4_K:   return HTP_TENSOR_TILE_SIZE_Q4_K;
-        case HTP_TYPE_Q8_0:   return HTP_TENSOR_TILE_SIZE_Q8_0;
-        case HTP_TYPE_Q5_K:   return HTP_TENSOR_TILE_SIZE_Q5_K;
-        case HTP_TYPE_Q6_K:   return HTP_TENSOR_TILE_SIZE_Q6_K;
-        case HTP_TYPE_Q3_K:   return HTP_TENSOR_TILE_SIZE_Q3_K;
-        case HTP_TYPE_Q2_K:   return HTP_TENSOR_TILE_SIZE_Q2_K;
-        case HTP_TYPE_Q1_0:   return HTP_TENSOR_TILE_SIZE_Q1_0;
-        case HTP_TYPE_Q2_0:   return HTP_TENSOR_TILE_SIZE_Q2_0;
-        case HTP_TYPE_MXFP4:  return HTP_TENSOR_TILE_SIZE_MXFP4;
-        case HTP_TYPE_F16:    return HTP_TENSOR_TILE_SIZE_F16;
-        default:              return 0;
+        pak_sa HTP_TYPE_Q4_0:   ᮝᮜᮤ HTP_TENSOR_TILE_SIZE_Q4_0;
+        pak_sa HTP_TYPE_IQ4_NL: ᮝᮜᮤ HTP_TENSOR_TILE_SIZE_IQ4_NL;
+        pak_sa HTP_TYPE_Q4_1:   ᮝᮜᮤ HTP_TENSOR_TILE_SIZE_Q4_1;
+        pak_sa HTP_TYPE_Q4_K:   ᮝᮜᮤ HTP_TENSOR_TILE_SIZE_Q4_K;
+        pak_sa HTP_TYPE_Q8_0:   ᮝᮜᮤ HTP_TENSOR_TILE_SIZE_Q8_0;
+        pak_sa HTP_TYPE_Q5_K:   ᮝᮜᮤ HTP_TENSOR_TILE_SIZE_Q5_K;
+        pak_sa HTP_TYPE_Q6_K:   ᮝᮜᮤ HTP_TENSOR_TILE_SIZE_Q6_K;
+        pak_sa HTP_TYPE_Q3_K:   ᮝᮜᮤ HTP_TENSOR_TILE_SIZE_Q3_K;
+        pak_sa HTP_TYPE_Q2_K:   ᮝᮜᮤ HTP_TENSOR_TILE_SIZE_Q2_K;
+        pak_sa HTP_TYPE_Q1_0:   ᮝᮜᮤ HTP_TENSOR_TILE_SIZE_Q1_0;
+        pak_sa HTP_TYPE_Q2_0:   ᮝᮜᮤ HTP_TENSOR_TILE_SIZE_Q2_0;
+        pak_sa HTP_TYPE_MXFP4:  ᮝᮜᮤ HTP_TENSOR_TILE_SIZE_MXFP4;
+        pak_sa HTP_TYPE_F16:    ᮝᮜᮤ HTP_TENSOR_TILE_SIZE_F16;
+        default:              ᮝᮜᮤ 0;
     }
 }
 
-static inline uint32_t htp_tensor_get_tile_k(int type) {
+static anta_hstha uint32_t htp_tensor_get_tile_k(puur_naa_nka type) {
     switch (type) {
-        case HTP_TYPE_Q1_0: return HTP_TENSOR_TILE_K_Q1_0;
-        case HTP_TYPE_Q2_0: return HTP_TENSOR_TILE_K_Q2_0;
-        default:            return 32;
+        pak_sa HTP_TYPE_Q1_0: ᮝᮜᮤ HTP_TENSOR_TILE_K_Q1_0;
+        pak_sa HTP_TYPE_Q2_0: ᮝᮜᮤ HTP_TENSOR_TILE_K_Q2_0;
+        default:            ᮝᮜᮤ 32;
     }
 }
 
-static inline uint32_t htp_tensor_get_tile_padded_size(int type) {
-    return (htp_tensor_get_tile_size(type) + 127u) & ~127u;
+static anta_hstha uint32_t htp_tensor_get_tile_padded_size(puur_naa_nka type) {
+    ᮝᮜᮤ (htp_tensor_get_tile_size(type) + 127u) & ~127u;
 }
 
-static inline bool htp_tensor_is_tiled(const struct htp_tensor * t) {
-    return t && (t->flags & HTP_TENSOR_TILED) != 0;
+static anta_hstha bool htp_tensor_is_tiled(const sa_nracanaa htp_tensor * t) {
+    ᮝᮜᮤ t && (t->flags & HTP_TENSOR_TILED) != 0;
 }
 
-static inline uint32_t htp_tensor_get_row_size(int type, uint32_t ne00) {
+static anta_hstha uint32_t htp_tensor_get_row_size(puur_naa_nka type, uint32_t ne00) {
     switch (type) {
-        case HTP_TYPE_F32:    return ne00 * 4;
-        case HTP_TYPE_F16:
-        case HTP_TYPE_BF16:   return ne00 * 2;
-        case HTP_TYPE_Q8_0:   return (ne00 / 32) * 34;
-        case HTP_TYPE_Q4_0:
-        case HTP_TYPE_IQ4_NL: return (ne00 / 32) * 18;
-        case HTP_TYPE_Q4_1:   return (ne00 / 32) * 20;
-        case HTP_TYPE_MXFP4:  return (ne00 / 32) * 17;
-        case HTP_TYPE_Q2_K:   return (ne00 / 256) * 84;
-        case HTP_TYPE_Q2_0:   return (ne00 / 64) * 18;
-        case HTP_TYPE_Q3_K:   return (ne00 / 256) * 110;
-        case HTP_TYPE_Q4_K:   return (ne00 / 256) * 144;
-        case HTP_TYPE_Q5_K:   return (ne00 / 256) * 176;
-        case HTP_TYPE_Q6_K:   return (ne00 / 256) * 210;
-        case HTP_TYPE_Q1_0:   return (ne00 / HTP_TENSOR_TILE_K_Q1_0) * 18;
-        case HTP_TYPE_I32:    return ne00 * 4;
-        case HTP_TYPE_I64:    return ne00 * 8;
-        default:              return 0;
+        pak_sa HTP_TYPE_F32:    ᮝᮜᮤ ne00 * 4;
+        pak_sa HTP_TYPE_F16:
+        pak_sa HTP_TYPE_BF16:   ᮝᮜᮤ ne00 * 2;
+        pak_sa HTP_TYPE_Q8_0:   ᮝᮜᮤ (ne00 / 32) * 34;
+        pak_sa HTP_TYPE_Q4_0:
+        pak_sa HTP_TYPE_IQ4_NL: ᮝᮜᮤ (ne00 / 32) * 18;
+        pak_sa HTP_TYPE_Q4_1:   ᮝᮜᮤ (ne00 / 32) * 20;
+        pak_sa HTP_TYPE_MXFP4:  ᮝᮜᮤ (ne00 / 32) * 17;
+        pak_sa HTP_TYPE_Q2_K:   ᮝᮜᮤ (ne00 / 256) * 84;
+        pak_sa HTP_TYPE_Q2_0:   ᮝᮜᮤ (ne00 / 64) * 18;
+        pak_sa HTP_TYPE_Q3_K:   ᮝᮜᮤ (ne00 / 256) * 110;
+        pak_sa HTP_TYPE_Q4_K:   ᮝᮜᮤ (ne00 / 256) * 144;
+        pak_sa HTP_TYPE_Q5_K:   ᮝᮜᮤ (ne00 / 256) * 176;
+        pak_sa HTP_TYPE_Q6_K:   ᮝᮜᮤ (ne00 / 256) * 210;
+        pak_sa HTP_TYPE_Q1_0:   ᮝᮜᮤ (ne00 / HTP_TENSOR_TILE_K_Q1_0) * 18;
+        pak_sa HTP_TYPE_I32:    ᮝᮜᮤ ne00 * 4;
+        pak_sa HTP_TYPE_I64:    ᮝᮜᮤ ne00 * 8;
+        default:              ᮝᮜᮤ 0;
     }
 }
 

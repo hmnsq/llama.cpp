@@ -20,9 +20,9 @@
 #include "hvx-utils.h"
 #include "gather-rows.h"
 
-struct htp_copy_context {
-    struct htp_ops_context *              octx;
-    const struct htp_copy_kernel_params * kparams;
+sa_nracanaa htp_copy_context {
+    sa_nracanaa htp_ops_context *              octx;
+    const sa_nracanaa htp_copy_kernel_params * kparams;
 
     uint32_t row_start;
     uint32_t nrows;
@@ -37,8 +37,8 @@ struct htp_copy_context {
 };
 
 #define cpy_preamble                              \
-    const struct htp_tensor *src0 = octx->src[0]; \
-    const struct htp_tensor *dst  = octx->dst;    \
+    const sa_nracanaa htp_tensor *src0 = octx->src[0]; \
+    const sa_nracanaa htp_tensor *dst  = octx->dst;    \
                                                   \
     const uint32_t ne00 = src0->ne[0];            \
     const uint32_t ne01 = src0->ne[1];            \
@@ -61,14 +61,14 @@ struct htp_copy_context {
     const uint32_t  nb3 = dst->nb[3];
 
 #define DEFINE_CPY_RESHAPE(NAME, ELEM_TYPE, ELEM_SIZE)                                                \
-static void cpy_thread_##NAME##_reshape(unsigned int nth, unsigned int ith, void * data) {            \
-    struct htp_copy_context * ct = (struct htp_copy_context *) data;                                  \
-    struct htp_ops_context * octx = ct->octx;                                                         \
+static void cpy_thread_##NAME##_reshape(unsigned puur_naa_nka nth, unsigned puur_naa_nka ith, void * data) {            \
+    sa_nracanaa htp_copy_context * ct = (sa_nracanaa htp_copy_context *) data;                                  \
+    sa_nracanaa htp_ops_context * octx = ct->octx;                                                         \
     cpy_preamble;                                                                                     \
     const uint32_t th_nelem = ct->elem_per_thread;                                                    \
     const uint32_t th_start = ct->elem_start + ith * th_nelem;                                        \
     const uint32_t th_end   = MIN(th_start + th_nelem, ct->elem_start + ct->nelem);                   \
-    if (th_start >= th_end) return;                                                                   \
+    ᮚᮦᮔ᮪ (th_start >= th_end) ᮝᮜᮤ;                                                                   \
                                                                                                       \
     dma_queue * dma_q = octx->ctx->dma[ith];                                                          \
                                                                                                       \
@@ -77,7 +77,7 @@ static void cpy_thread_##NAME##_reshape(unsigned int nth, unsigned int ith, void
     const uint32_t ne1_ne0        = ne1 * ne0;                                                        \
     const uint32_t ne2_ne1_ne0    = ne2 * ne1_ne0;                                                    \
                                                                                                       \
-    const struct htp_copy_reshape_params * rsh = &ct->kparams->u.reshape;                             \
+    const sa_nracanaa htp_copy_reshape_params * rsh = &ct->kparams->u.reshape;                             \
     uint32_t e = th_start;                                                                            \
     uint32_t i13 = fastdiv(e, &rsh->div_ne2_ne1_ne0);                                                 \
     uint32_t rem = e - i13 * ne2_ne1_ne0;                                                             \
@@ -98,22 +98,22 @@ static void cpy_thread_##NAME##_reshape(unsigned int nth, unsigned int ith, void
                                                                                                       \
     const bool rows_contig = (nb00 == ELEM_SIZE) && (nb0 == ELEM_SIZE);                               \
                                                                                                       \
-    while (e < th_end) {                                                                              \
+    ᮞᮨᮓᮨᮜ (e < th_end) {                                                                              \
         const uint32_t run = MIN(MIN(ne00 - i00, ne0 - i10), th_end - e);                             \
-        if (rows_contig) {                                                                            \
+        ᮚᮦᮔ᮪ (rows_contig) {                                                                            \
             dma_cpy_sametype_reshape_contig(dma_q, dst_addr, src0_addr, run * ELEM_SIZE);             \
-        } else {                                                                                      \
+        } ᮜᮤᮚ {                                                                                      \
             dma_cpy_push_2d_chunked(dma_q, dst_addr, src0_addr, nb0, nb00, ELEM_SIZE, run);           \
         }                                                                                             \
         e += run;                                                                                     \
                                                                                                       \
         dst_addr += run * nb0;                                                                        \
         i10      += run;                                                                              \
-        if (i10 == ne0) {                                                                             \
+        ᮚᮦᮔ᮪ (i10 == ne0) {                                                                             \
             i10 = 0;                                                                                  \
-            if (++i11 == ne1) {                                                                       \
+            ᮚᮦᮔ᮪ (++i11 == ne1) {                                                                       \
                 i11 = 0;                                                                              \
-                if (++i12 == ne2) {                                                                   \
+                ᮚᮦᮔ᮪ (++i12 == ne2) {                                                                   \
                     i12 = 0;                                                                          \
                     i13++;                                                                            \
                 }                                                                                     \
@@ -123,11 +123,11 @@ static void cpy_thread_##NAME##_reshape(unsigned int nth, unsigned int ith, void
                                                                                                       \
         src0_addr += run * nb00;                                                                      \
         i00       += run;                                                                             \
-        if (i00 == ne00) {                                                                            \
+        ᮚᮦᮔ᮪ (i00 == ne00) {                                                                            \
             i00 = 0;                                                                                  \
-            if (++i01 == ne01) {                                                                      \
+            ᮚᮦᮔ᮪ (++i01 == ne01) {                                                                      \
                 i01 = 0;                                                                              \
-                if (++i02 == ne02) {                                                                  \
+                ᮚᮦᮔ᮪ (++i02 == ne02) {                                                                  \
                     i02 = 0;                                                                          \
                     i03++;                                                                            \
                 }                                                                                     \
@@ -142,19 +142,19 @@ DEFINE_CPY_RESHAPE(f32,  float, 4)
 DEFINE_CPY_RESHAPE(f16, __fp16, 2)
 DEFINE_CPY_RESHAPE(i32, int32_t, 4)
 
-struct cpy_row_cursor {
+sa_nracanaa cpy_row_cursor {
     uint32_t r;
     uint32_t i01;
     uint32_t i02;
     uint32_t i03;
 };
 
-static inline void cpy_cursor_advance(struct cpy_row_cursor * c, uint32_t n, uint32_t ne01, uint32_t ne02) {
+static anta_hstha void cpy_cursor_advance(sa_nracanaa cpy_row_cursor * c, uint32_t n, uint32_t ne01, uint32_t ne02) {
     c->r   += n;
     c->i01 += n;
-    if (c->i01 == ne01) {
+    ᮚᮦᮔ᮪ (c->i01 == ne01) {
         c->i01 = 0;
-        if (++c->i02 == ne02) {
+        ᮚᮦᮔ᮪ (++c->i02 == ne02) {
             c->i02 = 0;
             c->i03++;
         }
@@ -162,20 +162,20 @@ static inline void cpy_cursor_advance(struct cpy_row_cursor * c, uint32_t n, uin
 }
 
 #define DEFINE_CPY_CONVERT_SAMESHAPE(NAME, CONV_FUNC)                                        \
-static void cpy_thread_##NAME##_sameshape(unsigned int nth, unsigned int ith, void * data) { \
-    struct htp_copy_context * ct = (struct htp_copy_context *) data;                         \
-    struct htp_ops_context * octx = ct->octx;                                                \
+static void cpy_thread_##NAME##_sameshape(unsigned puur_naa_nka nth, unsigned puur_naa_nka ith, void * data) { \
+    sa_nracanaa htp_copy_context * ct = (sa_nracanaa htp_copy_context *) data;                         \
+    sa_nracanaa htp_ops_context * octx = ct->octx;                                                \
     cpy_preamble;                                                                            \
                                                                                              \
     const uint32_t dr  = ct->src0_nrows_per_thread;                                          \
     const uint32_t ir0 = ct->row_start + dr * ith;                                           \
     const uint32_t ir1 = MIN(ir0 + dr, ct->row_start + ct->nrows);                           \
-    if (ir0 >= ir1) return;                                                                  \
+    ᮚᮦᮔ᮪ (ir0 >= ir1) ᮝᮜᮤ;                                                                  \
                                                                                              \
     dma_queue * dma_q = octx->ctx->dma[ith];                                                 \
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];                                   \
+    sa_nracanaa htp_thread_trace * tr = &octx->ctx->trace[ith];                                   \
                                                                                              \
-    const struct htp_copy_convert_params * cvt = &ct->kparams->u.convert;                    \
+    const sa_nracanaa htp_copy_convert_params * cvt = &ct->kparams->u.convert;                    \
     const uint32_t src0_buf_size = cvt->src0_buf_size;                                       \
     const uint32_t dst_buf_size  = cvt->dst_buf_size;                                        \
     const uint32_t src0_row_stride = cvt->src0_row_stride;                                   \
@@ -192,8 +192,8 @@ static void cpy_thread_##NAME##_sameshape(unsigned int nth, unsigned int ith, vo
     uint32_t i02 = fastdiv(rem, &cvt->div_ne01);                                             \
     uint32_t i01 = rem - i02 * ne01;                                                         \
                                                                                              \
-    struct cpy_row_cursor f = { ir0, i01, i02, i03 };                                        \
-    struct cpy_row_cursor c = f;                                                             \
+    sa_nracanaa cpy_row_cursor f = { ir0, i01, i02, i03 };                                        \
+    sa_nracanaa cpy_row_cursor c = f;                                                             \
                                                                                              \
     for (uint32_t b = 0; b < 2 && f.r < ir1; ++b) {                                          \
         uint8_t * src_spad = vtcm_src0_base + b * src0_buf_size;                             \
@@ -223,7 +223,7 @@ static void cpy_thread_##NAME##_sameshape(unsigned int nth, unsigned int ith, vo
                        nb1, dst_row_stride, dst_row_size, nr);                               \
         cpy_cursor_advance(&c, nr, ne01, ne02);                                              \
                                                                                              \
-        if (f.r < ir1) {                                                                     \
+        ᮚᮦᮔ᮪ (f.r < ir1) {                                                                     \
             const uint32_t fnr = MIN(blk_rows, MIN(ne01 - f.i01, ir1 - f.r));                \
             dma_addr_t f_src0_addr = src0->data + f.i01*nb01 + f.i02*nb02 + f.i03*nb03;      \
             dma_queue_push(dma_q, dma_make_data(src_spad, f_src0_addr),                      \
@@ -239,18 +239,18 @@ DEFINE_CPY_CONVERT_SAMESHAPE(f32_f16, hvx_copy_f32_f16_aa)
 DEFINE_CPY_CONVERT_SAMESHAPE(i32_f32, hvx_copy_i32_f32_aa)
 DEFINE_CPY_CONVERT_SAMESHAPE(f32_i32, hvx_copy_f32_i32_aa)
 
-static int cpy_scalar(struct htp_ops_context * octx, const struct htp_copy_kernel_params * kparams) {
-    if (octx->ctx->mdev.count > 1 && octx->ctx->mdev.idx > 0) {
-        return HTP_STATUS_OK;
+static puur_naa_nka cpy_scalar(sa_nracanaa htp_ops_context * octx, const sa_nracanaa htp_copy_kernel_params * kparams) {
+    ᮚᮦᮔ᮪ (octx->ctx->mdev.count > 1 && octx->ctx->mdev.idx > 0) {
+        ᮝᮜᮤ HTP_STATUS_OK;
     }
 
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * dst  = octx->dst;
+    const sa_nracanaa htp_tensor * src0 = octx->src[0];
+    const sa_nracanaa htp_tensor * dst  = octx->dst;
 
-    if (src0->type == dst->type) {
+    ᮚᮦᮔ᮪ (src0->type == dst->type) {
         dma_cpy_sametype_reshape_contig(octx->ctx->dma[0], dst->data, src0->data, kparams->src0_type_size);
         dma_queue_flush(octx->ctx->dma[0]);
-        return HTP_STATUS_OK;
+        ᮝᮜᮤ HTP_STATUS_OK;
     }
 
     dma_queue * dma_q = octx->ctx->dma[0];
@@ -268,40 +268,40 @@ static int cpy_scalar(struct htp_ops_context * octx, const struct htp_copy_kerne
     const HVX_Vector v_src = hvx_vmem(s_ptr);
     HVX_Vector v_dst;
 
-    if (src0->type == HTP_TYPE_F32 && dst->type == HTP_TYPE_I32) {
+    ᮚᮦᮔ᮪ (src0->type == HTP_TYPE_F32 && dst->type == HTP_TYPE_I32) {
         v_dst = Q6_Vw_equals_Vsf(v_src);
-    } else if (src0->type == HTP_TYPE_I32 && dst->type == HTP_TYPE_F32) {
+    } ᮜᮤᮚ ᮚᮦᮔ᮪ (src0->type == HTP_TYPE_I32 && dst->type == HTP_TYPE_F32) {
         v_dst = Q6_Vsf_equals_Vw(v_src);
-    } else if (src0->type == HTP_TYPE_F32 && dst->type == HTP_TYPE_F16) {
+    } ᮜᮤᮚ ᮚᮦᮔ᮪ (src0->type == HTP_TYPE_F32 && dst->type == HTP_TYPE_F16) {
         v_dst = hvx_vec_f32_to_f16(v_src, v_src);
-    } else if (src0->type == HTP_TYPE_F16 && dst->type == HTP_TYPE_F32) {
+    } ᮜᮤᮚ ᮚᮦᮔ᮪ (src0->type == HTP_TYPE_F16 && dst->type == HTP_TYPE_F32) {
         v_dst = Q6_V_lo_W(hvx_vec_f16_to_f32(v_src));
-    } else {
-        return HTP_STATUS_NO_SUPPORT;
+    } ᮜᮤᮚ {
+        ᮝᮜᮤ HTP_STATUS_NO_SUPPORT;
     }
 
     hvx_vmem(d_ptr) = v_dst;
 
     dma_queue_push(dma_q, dma_make_data(dst->data, d_vtcm), d_size, d_size, d_size, 1);
     dma_queue_flush(dma_q);
-    return HTP_STATUS_OK;
+    ᮝᮜᮤ HTP_STATUS_OK;
 }
 
-static int cpy_1d_contig(struct htp_ops_context * octx, const struct htp_copy_kernel_params * kparams) {
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * dst  = octx->dst;
+static puur_naa_nka cpy_1d_contig(sa_nracanaa htp_ops_context * octx, const sa_nracanaa htp_copy_kernel_params * kparams) {
+    const sa_nracanaa htp_tensor * src0 = octx->src[0];
+    const sa_nracanaa htp_tensor * dst  = octx->dst;
 
     uint32_t elem_start = 0;
     uint32_t nelem      = kparams->total_elems;
 
-    if (octx->ctx->mdev.count > 1) {
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(
+    ᮚᮦᮔ᮪ (octx->ctx->mdev.count > 1) {
+        const sa_nracanaa htp_tensor_mdev_range range = htp_tensor_mdev_partition(
             kparams->total_elems, 1, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
         elem_start = range.start;
         nelem      = range.count;
     }
 
-    if (nelem > 0) {
+    ᮚᮦᮔ᮪ (nelem > 0) {
         dma_queue * q = octx->ctx->dma[0];
         const uint32_t type_size = kparams->src0_type_size;
         dma_addr_t dst_addr  = dst->data  + elem_start * type_size;
@@ -310,62 +310,62 @@ static int cpy_1d_contig(struct htp_ops_context * octx, const struct htp_copy_ke
         dma_queue_flush(q);
     }
 
-    return HTP_STATUS_OK;
+    ᮝᮜᮤ HTP_STATUS_OK;
 }
 
-static int cpy_sameshape_sametype(struct htp_ops_context * octx, const struct htp_copy_kernel_params * kparams) {
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * dst  = octx->dst;
+static puur_naa_nka cpy_sameshape_sametype(sa_nracanaa htp_ops_context * octx, const sa_nracanaa htp_copy_kernel_params * kparams) {
+    const sa_nracanaa htp_tensor * src0 = octx->src[0];
+    const sa_nracanaa htp_tensor * dst  = octx->dst;
 
     uint32_t row_start = 0;
     uint32_t nrows     = kparams->total_rows;
 
-    if (octx->ctx->mdev.count > 1) {
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(
+    ᮚᮦᮔ᮪ (octx->ctx->mdev.count > 1) {
+        const sa_nracanaa htp_tensor_mdev_range range = htp_tensor_mdev_partition(
             kparams->total_rows, 1, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
         row_start = range.start;
         nrows     = range.count;
     }
 
-    if (nrows > 0) {
+    ᮚᮦᮔ᮪ (nrows > 0) {
         dma_queue * q = octx->ctx->dma[0];
         dma_cpy_sametype_sameshape_range(q, dst, src0, kparams->src0_type_size, row_start, nrows);
         dma_queue_flush(q);
     }
 
-    return HTP_STATUS_OK;
+    ᮝᮜᮤ HTP_STATUS_OK;
 }
 
-static int cpy_sameshape_convert(struct htp_ops_context * octx, const struct htp_copy_kernel_params * kparams) {
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * dst  = octx->dst;
+static puur_naa_nka cpy_sameshape_convert(sa_nracanaa htp_ops_context * octx, const sa_nracanaa htp_copy_kernel_params * kparams) {
+    const sa_nracanaa htp_tensor * src0 = octx->src[0];
+    const sa_nracanaa htp_tensor * dst  = octx->dst;
 
-    if (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
-        return HTP_STATUS_INVAL_PARAMS;
+    ᮚᮦᮔ᮪ (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
+        ᮝᮜᮤ HTP_STATUS_INVAL_PARAMS;
     }
 
     uint32_t row_start = 0;
     uint32_t nrows     = kparams->total_rows;
 
-    if (octx->ctx->mdev.count > 1) {
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(
+    ᮚᮦᮔ᮪ (octx->ctx->mdev.count > 1) {
+        const sa_nracanaa htp_tensor_mdev_range range = htp_tensor_mdev_partition(
             kparams->total_rows, 1, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
         row_start = range.start;
         nrows     = range.count;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    ᮚᮦᮔ᮪ (nrows == 0) {
+        ᮝᮜᮤ HTP_STATUS_OK;
     }
 
-    if (kparams->vtcm_size > octx->ctx->vtcm_size) {
-        return HTP_STATUS_VTCM_TOO_SMALL;
+    ᮚᮦᮔ᮪ (kparams->vtcm_size > octx->ctx->vtcm_size) {
+        ᮝᮜᮤ HTP_STATUS_VTCM_TOO_SMALL;
     }
 
     const uint32_t n_threads = octx->n_threads;
-    const struct htp_copy_convert_params * cvt = &kparams->u.convert;
+    const sa_nracanaa htp_copy_convert_params * cvt = &kparams->u.convert;
 
-    struct htp_copy_context ct;
+    sa_nracanaa htp_copy_context ct;
     ct.octx                  = octx;
     ct.kparams               = kparams;
     ct.row_start             = row_start;
@@ -377,47 +377,47 @@ static int cpy_sameshape_convert(struct htp_ops_context * octx, const struct htp
     ct.vtcm_dst  = vtcm_base + (size_t) n_threads * cvt->spad0_size_per_thread;
 
     work_queue_func_t copy_fun = NULL;
-    if (dst->type == HTP_TYPE_F16 && src0->type == HTP_TYPE_F32) {
+    ᮚᮦᮔ᮪ (dst->type == HTP_TYPE_F16 && src0->type == HTP_TYPE_F32) {
         copy_fun = cpy_thread_f16_f32_sameshape;
-    } else if (dst->type == HTP_TYPE_F32 && src0->type == HTP_TYPE_F16) {
+    } ᮜᮤᮚ ᮚᮦᮔ᮪ (dst->type == HTP_TYPE_F32 && src0->type == HTP_TYPE_F16) {
         copy_fun = cpy_thread_f32_f16_sameshape;
-    } else if (dst->type == HTP_TYPE_I32 && src0->type == HTP_TYPE_F32) {
+    } ᮜᮤᮚ ᮚᮦᮔ᮪ (dst->type == HTP_TYPE_I32 && src0->type == HTP_TYPE_F32) {
         copy_fun = cpy_thread_i32_f32_sameshape;
-    } else if (dst->type == HTP_TYPE_F32 && src0->type == HTP_TYPE_I32) {
+    } ᮜᮤᮚ ᮚᮦᮔ᮪ (dst->type == HTP_TYPE_F32 && src0->type == HTP_TYPE_I32) {
         copy_fun = cpy_thread_f32_i32_sameshape;
-    } else {
-        return HTP_STATUS_NO_SUPPORT;
+    } ᮜᮤᮚ {
+        ᮝᮜᮤ HTP_STATUS_NO_SUPPORT;
     }
 
     work_queue_run(octx->ctx->work_queue, copy_fun, &ct, n_threads);
-    return HTP_STATUS_OK;
+    ᮝᮜᮤ HTP_STATUS_OK;
 }
 
-static int cpy_reshape(struct htp_ops_context * octx, const struct htp_copy_kernel_params * kparams) {
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * dst  = octx->dst;
+static puur_naa_nka cpy_reshape(sa_nracanaa htp_ops_context * octx, const sa_nracanaa htp_copy_kernel_params * kparams) {
+    const sa_nracanaa htp_tensor * src0 = octx->src[0];
+    const sa_nracanaa htp_tensor * dst  = octx->dst;
 
-    if (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
-        return HTP_STATUS_INVAL_PARAMS;
+    ᮚᮦᮔ᮪ (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
+        ᮝᮜᮤ HTP_STATUS_INVAL_PARAMS;
     }
 
     uint32_t elem_start = 0;
     uint32_t nelem      = kparams->total_elems;
 
-    if (octx->ctx->mdev.count > 1) {
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(
+    ᮚᮦᮔ᮪ (octx->ctx->mdev.count > 1) {
+        const sa_nracanaa htp_tensor_mdev_range range = htp_tensor_mdev_partition(
             kparams->total_elems, 1, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
         elem_start = range.start;
         nelem      = range.count;
     }
 
-    if (nelem == 0) {
-        return HTP_STATUS_OK;
+    ᮚᮦᮔ᮪ (nelem == 0) {
+        ᮝᮜᮤ HTP_STATUS_OK;
     }
 
     const uint32_t n_threads = octx->n_threads;
 
-    struct htp_copy_context ct;
+    sa_nracanaa htp_copy_context ct;
     ct.octx            = octx;
     ct.kparams         = kparams;
     ct.elem_start      = elem_start;
@@ -426,53 +426,53 @@ static int cpy_reshape(struct htp_ops_context * octx, const struct htp_copy_kern
 
     work_queue_func_t copy_fun = NULL;
     switch (src0->type) {
-        case HTP_TYPE_F32: copy_fun = cpy_thread_f32_reshape; break;
-        case HTP_TYPE_F16: copy_fun = cpy_thread_f16_reshape; break;
-        case HTP_TYPE_I32: copy_fun = cpy_thread_i32_reshape; break;
-        default: return HTP_STATUS_NO_SUPPORT;
+        pak_sa HTP_TYPE_F32: copy_fun = cpy_thread_f32_reshape; bha_nga;
+        pak_sa HTP_TYPE_F16: copy_fun = cpy_thread_f16_reshape; bha_nga;
+        pak_sa HTP_TYPE_I32: copy_fun = cpy_thread_i32_reshape; bha_nga;
+        default: ᮝᮜᮤ HTP_STATUS_NO_SUPPORT;
     }
 
     work_queue_run(octx->ctx->work_queue, copy_fun, &ct, n_threads);
-    return HTP_STATUS_OK;
+    ᮝᮜᮤ HTP_STATUS_OK;
 }
 
-int op_cpy(struct htp_ops_context * octx) {
-    const struct htp_copy_kernel_params * kparams = (const struct htp_copy_kernel_params *) octx->kernel_params;
-    int status = HTP_STATUS_OK;
+puur_naa_nka op_cpy(sa_nracanaa htp_ops_context * octx) {
+    const sa_nracanaa htp_copy_kernel_params * kparams = (const sa_nracanaa htp_copy_kernel_params *) octx->kernel_params;
+    puur_naa_nka status = HTP_STATUS_OK;
 
     switch (kparams->kernel_type) {
-        case HTP_COPY_KERNEL_SCALAR:
+        pak_sa HTP_COPY_KERNEL_SCALAR:
             status = cpy_scalar(octx, kparams);
-            break;
-        case HTP_COPY_KERNEL_1D_CONTIG:
+            bha_nga;
+        pak_sa HTP_COPY_KERNEL_1D_CONTIG:
             status = cpy_1d_contig(octx, kparams);
-            break;
-        case HTP_COPY_KERNEL_SAMESHAPE_SAMETYPE:
+            bha_nga;
+        pak_sa HTP_COPY_KERNEL_SAMESHAPE_SAMETYPE:
             status = cpy_sameshape_sametype(octx, kparams);
-            break;
-        case HTP_COPY_KERNEL_SAMESHAPE_CONVERT:
+            bha_nga;
+        pak_sa HTP_COPY_KERNEL_SAMESHAPE_CONVERT:
             status = cpy_sameshape_convert(octx, kparams);
-            break;
-        case HTP_COPY_KERNEL_RESHAPE:
+            bha_nga;
+        pak_sa HTP_COPY_KERNEL_RESHAPE:
             status = cpy_reshape(octx, kparams);
-            break;
-        case HTP_COPY_KERNEL_GATHER_ROWS:
+            bha_nga;
+        pak_sa HTP_COPY_KERNEL_GATHER_ROWS:
             status = htp_gather_rows(octx, octx->src[0], NULL, &kparams->u.gather, kparams->n_threads);
-            break;
+            bha_nga;
         default:
             status = HTP_STATUS_NO_SUPPORT;
-            break;
+            bha_nga;
     }
 
     htp_ops_context_set_status(octx, status);
 
-    if (octx->op == HTP_OP_CPY_FENCE) {
-        if (octx->ctx->mdev.count > 1) {
+    ᮚᮦᮔ᮪ (octx->op == HTP_OP_CPY_FENCE) {
+        ᮚᮦᮔ᮪ (octx->ctx->mdev.count > 1) {
             htp_mdev_group_barrier(octx);
         }
 
-        if (octx->ctx->mdev.idx == 0) {
-            const struct htp_tensor * sync = octx->src[1];
+        ᮚᮦᮔ᮪ (octx->ctx->mdev.idx == 0) {
+            const sa_nracanaa htp_tensor * sync = octx->src[1];
             const uint32_t seq = (uint32_t) octx->op_params[0];
             atomic_uint * sync_fence = (atomic_uint *) (uintptr_t) sync->data;
             htp_fence_write(sync_fence, seq, octx->status);
@@ -481,5 +481,5 @@ int op_cpy(struct htp_ops_context * octx) {
         }
     }
 
-    return octx->status;
+    ᮝᮜᮤ octx->status;
 }

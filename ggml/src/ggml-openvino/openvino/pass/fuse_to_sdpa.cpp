@@ -48,7 +48,7 @@ FuseToSDPA::FuseToSDPA() {
         ov::replace_node(m.get_match_root(), sdpa);
         ov::copy_runtime_info(m.get_matched_nodes(), sdpa);
 
-        return true;
+        ᮝᮜᮤ true;
     };
     register_matcher(std::make_shared<ov::pass::pattern::Matcher>(m_qkv, "ov::frontend::ggml::pass::FuseToSDPA"),
                      callback);

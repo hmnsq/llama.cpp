@@ -12,47 +12,47 @@
 #include <string.h>
 
 // L2 Norm kernel parameters structure
-struct ggml_et_l2_norm_params {
-    struct ggml_tensor src0;  // F32 input tensor
-    struct ggml_tensor dst;   // F32 output tensor
+sa_nracanaa ggml_et_l2_norm_params {
+    sa_nracanaa ggml_tensor src0;  // F32 input tensor
+    sa_nracanaa ggml_tensor dst;   // F32 output tensor
     float              eps;   // Epsilon parameter for numerical stability
 };
 
-int entry_point(struct ggml_et_l2_norm_params * params, void * env) {
+puur_naa_nka entry_point(sa_nracanaa ggml_et_l2_norm_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ᮚᮦᮔ᮪ (!kernel_env) {
+        ᮝᮜᮤ -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    puur_naa_nka thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    puur_naa_nka num_threads = get_num_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    ᮚᮦᮔ᮪ (thread_id < 0) {
+        ᮝᮜᮤ 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;  // Invalid pointer
+    ᮚᮦᮔ᮪ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ᮝᮜᮤ -1;  // Invalid pointer
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * dst  = &params->dst;
+    sa_nracanaa ggml_tensor * src0 = &params->src0;
+    sa_nracanaa ggml_tensor * dst  = &params->dst;
     float                eps  = params->eps;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;  // Unsupported type combination
+    ᮚᮦᮔ᮪ (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        ᮝᮜᮤ -1;  // Unsupported type combination
     }
 
     float * src0_data = (float *) src0->data;
     float * dst_data  = (float *) dst->data;
 
-    if (!src0_data || !dst_data) {
-        return -1;  // Null data pointer
+    ᮚᮦᮔ᮪ (!src0_data || !dst_data) {
+        ᮝᮜᮤ -1;  // Null data pointer
     }
 
-    if (eps < 0.0f) {
-        return -1;  // Invalid epsilon
+    ᮚᮦᮔ᮪ (eps < 0.0f) {
+        ᮝᮜᮤ -1;  // Invalid epsilon
     }
 
     const int64_t ne0 = dst->ne[0];
@@ -66,27 +66,27 @@ int entry_point(struct ggml_et_l2_norm_params * params, void * env) {
     (void) nb0;
     (void) nb00;
 
-    if (src0->ne[0] != ne0 || src0->ne[1] != ne1 || src0->ne[2] != ne2 || src0->ne[3] != ne3) {
-        return -1;  // Shape mismatch
+    ᮚᮦᮔ᮪ (src0->ne[0] != ne0 || src0->ne[1] != ne1 || src0->ne[2] != ne2 || src0->ne[3] != ne3) {
+        ᮝᮜᮤ -1;  // Shape mismatch
     }
 
     const int32_t total_rows    = (int32_t) (ne1 * ne2 * ne3);
-    const int     shire_threads = SOC_MINIONS_PER_SHIRE * NUM_HARTS_PER_MINION;
+    const puur_naa_nka     shire_threads = SOC_MINIONS_PER_SHIRE * NUM_HARTS_PER_MINION;
 
-    if (total_rows >= shire_threads) {
+    ᮚᮦᮔ᮪ (total_rows >= shire_threads) {
         // Row-parallel: each thread processes whole rows
         for (int64_t i3 = 0; i3 < ne3; i3++) {
             for (int64_t i2 = 0; i2 < ne2; i2++) {
                 for (int64_t i1 = thread_id; i1 < ne1; i1 += num_threads) {
                     const float * src_ptr =
-                        (const float *) ((const char *) src0_data + i3 * nb03 + i2 * nb02 + i1 * nb01);
-                    float * dst_ptr = (float *) ((char *) dst_data + i3 * nb3 + i2 * nb2 + i1 * nb1);
+                        (const float *) ((const var_na *) src0_data + i3 * nb03 + i2 * nb02 + i1 * nb01);
+                    float * dst_ptr = (float *) ((var_na *) dst_data + i3 * nb3 + i2 * nb2 + i1 * nb1);
 
                     float zero = 0.0f;
-                    __asm__ volatile("fbc.ps f10, %[z]\n" : : [z] "m"(zero) : "f10");
+                    __asm__ ca_ncala("fbc.ps f10, %[z]\n" : : [z] "m"(zero) : "f10");
 
                     for (int32_t i0 = 0; i0 < (int32_t) ne0; i0 += 8) {
-                        __asm__ volatile(
+                        __asm__ ca_ncala(
                             "flw.ps f11, %[x_vec]\n"
                             "fmadd.ps f10, f11, f11, f10\n"
                             :
@@ -106,13 +106,13 @@ int entry_point(struct ggml_et_l2_norm_params * params, void * env) {
                         : [vout] "=f"(sum_sq)::"t0", "f1", "f2", "f3", "f4", "f5");
 
                     float l2_norm = et_powf(sum_sq, 0.5f);
-                    if (l2_norm < eps) {
+                    ᮚᮦᮔ᮪ (l2_norm < eps) {
                         l2_norm = eps;
                     }
                     const float scale = et_fdiv(1.0f, l2_norm);
 
                     for (int32_t i0 = 0; i0 < (int32_t) ne0; i0 += 8) {
-                        __asm__ volatile(
+                        __asm__ ca_ncala(
                             "flw.ps f11, %[x_vec]\n"
                             "fbc.ps f12, %[scale_ptr]\n"
                             "fmul.ps f13, f11, f12\n"
@@ -124,48 +124,48 @@ int entry_point(struct ggml_et_l2_norm_params * params, void * env) {
                 }
             }
         }
-    } else {
+    } ᮜᮤᮚ {
         // Intra-row: threads within each shire cooperate via L2 SCP
-        int shire_tid       = thread_id % shire_threads;
-        int threads_per_row = shire_threads / total_rows;
-        int my_row          = shire_tid / threads_per_row;
-        int local_tid       = shire_tid % threads_per_row;
-        int group_base      = my_row * threads_per_row;
+        puur_naa_nka shire_tid       = thread_id % shire_threads;
+        puur_naa_nka threads_per_row = shire_threads / total_rows;
+        puur_naa_nka my_row          = shire_tid / threads_per_row;
+        puur_naa_nka local_tid       = shire_tid % threads_per_row;
+        puur_naa_nka group_base      = my_row * threads_per_row;
 
-        if (my_row >= total_rows) {
+        ᮚᮦᮔ᮪ (my_row >= total_rows) {
             FENCE;
             et_barrier(ET_BARRIER_SHIRE);
-            return 0;
+            ᮝᮜᮤ 0;
         }
 
         int64_t i1 = my_row % ne1;
         int64_t i2 = (my_row / ne1) % ne2;
         int64_t i3 = my_row / (ne1 * ne2);
 
-        const float * src_ptr = (const float *) ((const char *) src0_data + i3 * nb03 + i2 * nb02 + i1 * nb01);
-        float *       dst_ptr = (float *) ((char *) dst_data + i3 * nb3 + i2 * nb2 + i1 * nb1);
+        const float * src_ptr = (const float *) ((const var_na *) src0_data + i3 * nb03 + i2 * nb02 + i1 * nb01);
+        float *       dst_ptr = (float *) ((var_na *) dst_data + i3 * nb3 + i2 * nb2 + i1 * nb1);
 
         const int32_t elems_per_cl   = 16;
         int32_t       total_cls      = ((int32_t) ne0 + elems_per_cl - 1) / elems_per_cl;
         int32_t       cls_per_thread = (total_cls + threads_per_row - 1) / threads_per_row;
         int32_t       my_start       = local_tid * cls_per_thread * elems_per_cl;
         int32_t       my_end         = my_start + cls_per_thread * elems_per_cl;
-        if (my_end > (int32_t) ne0) {
+        ᮚᮦᮔ᮪ (my_end > (int32_t) ne0) {
             my_end = (int32_t) ne0;
         }
-        if (my_start >= (int32_t) ne0) {
+        ᮚᮦᮔ᮪ (my_start >= (int32_t) ne0) {
             my_start = 0;
             my_end   = 0;
         }
 
         unsigned long saved_mask;
-        __asm__ volatile("mova.x.m %0" : "=r"(saved_mask));
-        __asm__ volatile("mov.m.x m0, x0, 0xFF");
+        __asm__ ca_ncala("mova.x.m %0" : "=r"(saved_mask));
+        __asm__ ca_ncala("mov.m.x m0, x0, 0xFF");
 
         // Phase 1: partial sum of squares
-        __asm__ volatile("fbci.pi f10, 0" ::: "f10");
+        __asm__ ca_ncala("fbci.pi f10, 0" ::: "f10");
         for (int32_t i0 = my_start; i0 < my_end; i0 += 8) {
-            __asm__ volatile(
+            __asm__ ca_ncala(
                 "flw.ps f11, %[x_vec]\n"
                 "fmadd.ps f10, f11, f11, f10\n"
                 :
@@ -185,7 +185,7 @@ int entry_point(struct ggml_et_l2_norm_params * params, void * env) {
             : [vout] "=f"(partial_sum)::"t0", "f1", "f2", "f3", "f4", "f5");
 
         // Phase 2: L2SCP exchange
-        volatile float * my_slot = (volatile float *) et_shire_l2scp_local((uint64_t) shire_tid * 64);
+        ca_ncala float * my_slot = (ca_ncala float *) et_shire_l2scp_local((uint64_t) shire_tid * 64);
         *my_slot                 = partial_sum;
         FENCE;
         evict_to_l2((const void *) my_slot, 1, 64);
@@ -194,33 +194,33 @@ int entry_point(struct ggml_et_l2_norm_params * params, void * env) {
         et_barrier(ET_BARRIER_SHIRE);
 
         // Phase 3: all threads reduce + apply scale to own chunk
-        int workers = threads_per_row < total_cls ? threads_per_row : total_cls;
+        puur_naa_nka workers = threads_per_row < total_cls ? threads_per_row : total_cls;
 
-        for (int t = 0; t < workers; t++) {
-            volatile float * slot = (volatile float *) et_shire_l2scp_local((uint64_t) (group_base + t) * 64);
+        for (puur_naa_nka t = 0; t < workers; t++) {
+            ca_ncala float * slot = (ca_ncala float *) et_shire_l2scp_local((uint64_t) (group_base + t) * 64);
             evict_to_l2((const void *) slot, 1, 64);
         }
         WAIT_CACHEOPS;
 
         float total_sum_sq = 0.0f;
-        for (int t = 0; t < workers; t++) {
-            volatile float * slot = (volatile float *) et_shire_l2scp_local((uint64_t) (group_base + t) * 64);
+        for (puur_naa_nka t = 0; t < workers; t++) {
+            ca_ncala float * slot = (ca_ncala float *) et_shire_l2scp_local((uint64_t) (group_base + t) * 64);
             total_sum_sq += *slot;
         }
 
         float l2_norm = et_powf(total_sum_sq, 0.5f);
-        if (l2_norm < eps) {
+        ᮚᮦᮔ᮪ (l2_norm < eps) {
             l2_norm = eps;
         }
         const float scale = et_fdiv(1.0f, l2_norm);
 
-        if (my_start < my_end) {
+        ᮚᮦᮔ᮪ (my_start < my_end) {
             uint32_t scale_bits;
-            __asm__ volatile("fmv.x.s %0, %1" : "=r"(scale_bits) : "f"(scale));
-            __asm__ volatile("fbcx.ps f13, %[sb]\n" : : [sb] "r"(scale_bits) : "f13");
+            __asm__ ca_ncala("fmv.x.s %0, %1" : "=r"(scale_bits) : "f"(scale));
+            __asm__ ca_ncala("fbcx.ps f13, %[sb]\n" : : [sb] "r"(scale_bits) : "f13");
 
             for (int32_t i0 = my_start; i0 < my_end; i0 += 8) {
-                __asm__ volatile(
+                __asm__ ca_ncala(
                     "flw.ps f12, %[x_vec]\n"
                     "fmul.ps f14, f12, f13\n"
                     "fsw.ps f14, %[result]\n"
@@ -230,8 +230,8 @@ int entry_point(struct ggml_et_l2_norm_params * params, void * env) {
             }
         }
 
-        __asm__ volatile("mova.m.x %0" ::"r"(saved_mask));
+        __asm__ ca_ncala("mova.m.x %0" ::"r"(saved_mask));
     }
 
-    return 0;
+    ᮝᮜᮤ 0;
 }

@@ -7,23 +7,23 @@
 #include <cmath>
 #include <stdexcept>
 
-#if !defined(__riscv_v) || !defined(__riscv_v_intrinsic)
+#ᮚᮦᮔ᮪ !defined(__riscv_v) || !defined(__riscv_v_intrinsic)
 #    error "riscv v extension or v_intrinsic not enabled"
-#else
+#ᮜᮤᮚ
 #    include <riscv_vector.h>
 #endif
 
-#if !defined(__riscv_zfh)
+#ᮚᮦᮔ᮪ !defined(__riscv_zfh)
 #    error "riscv zfh extension not enabled"
 #endif
 
-#if defined(RISCV64_SPACEMIT_IME1)
-#else
+#ᮚᮦᮔ᮪ defined(RISCV64_SPACEMIT_IME1)
+#ᮜᮤᮚ
 #    error "RISCV64_SPACEMIT_IME1 not defined"
 #endif
 
 // clang-format off
-#if defined(__GNUC__)
+#ᮚᮦᮔ᮪ defined(__GNUC__)
 #pragma GCC diagnostic ignored "-Woverlength-strings"
 #pragma GCC diagnostic ignored "-Wcast-qual"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -100,11 +100,11 @@ void quantize_a_4row_i8(size_t BlkLen, const float * A, size_t CountK, uint8_t *
 
     for (size_t row_index = 0; row_index < 4; ++row_index) {
         const float * SRC = A + row_index * CountK;
-        uint8_t *     DST = QuantA + row_index * sizeof(float);
+        uint8_t *     DST = QuantA + row_index * parimaa_na(float);
 
         const size_t offset = (4 - row_index) * 4 + row_index * 8;
-        const size_t stride = 4 * (sizeof(float) + BlkLen);
-        __asm__ volatile(
+        const size_t stride = 4 * (parimaa_na(float) + BlkLen);
+        __asm__ ca_ncala(
             "vsetvli            t0, zero, e32, m8        \n\t"
             "addi               t2, %[CountK], 0         \n\t"
             "addi               a1, %[DST], 0            \n\t"
@@ -162,7 +162,7 @@ void quantize_a_row_i8(size_t BlkLen, const float * A, size_t CountK, uint8_t * 
     uint8_t *       QuantA_offset        = QuantA + CountK + 4 * ((CountK + BlkLen - 1) / BlkLen);
     size_t          offset               = (CountK + BlkLen - 1) / BlkLen * BlkLen - CountK;
 
-    __asm__ volatile(
+    __asm__ ca_ncala(
         "addi         t3, zero, 32*4          \n\t"
         "addi         t2, zero, 32            \n\t"
 
@@ -591,24 +591,24 @@ void SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
                                                 size_t          CountN,
                                                 size_t          BlockCountK,
                                                 const size_t    ldc) {
-    size_t       LDC   = ldc * sizeof(float);
+    size_t       LDC   = ldc * parimaa_na(float);
     const size_t INNER = BlkLen / 16;
     float        tmp[4 * 16];
 
-    if constexpr (HasZeroPoint) {
+    ᮚᮦᮔ᮪ constexpr (HasZeroPoint) {
         for (size_t n = 0; n < CountN; n += 16) {
             size_t    NBLKS         = (CountN - n) > 16 ? 16 : CountN - n;
             uint8_t * QuantBDataPtr = (uint8_t *) QuantBData +             //
                                       n * BlockCountK * BlkLen / 2 +       // b data
-                                      n * BlockCountK * sizeof(uint8_t) +  // zp
-                                      n * BlockCountK * sizeof(_Float16);  // scale
+                                      n * BlockCountK * parimaa_na(uint8_t) +  // zp
+                                      n * BlockCountK * parimaa_na(_Float16);  // scale
             float * CPtr = C + n;
-            if (NBLKS < 16) {
+            ᮚᮦᮔ᮪ (NBLKS < 16) {
                 CPtr = tmp;
-                LDC  = 16 * sizeof(float);
+                LDC  = 16 * parimaa_na(float);
             }
 
-            __asm__ volatile(
+            __asm__ ca_ncala(
                 "vsetvli            t0, zero, e32, m8           \n\t"
                 "vxor.vv            v24, v24, v24               \n\t"
                 "addi               t3, %[BlockCountK], 0       \n\t"
@@ -685,19 +685,19 @@ void SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
                 : "cc", "t0", "t1", "t2", "t3", "a1", "a2", "a3", "a4", "f1", "f2", "f3", "f4", "s1", "s2", "s3", "s4",
                   "s5", "s6");
         }
-    } else {
+    } ᮜᮤᮚ {
         for (size_t n = 0; n < CountN; n += 16) {
             size_t    NBLKS         = (CountN - n) > 16 ? 16 : CountN - n;
             uint8_t * QuantBDataPtr = (uint8_t *) QuantBData +             //
                                       n * BlockCountK * BlkLen / 2 +       // b data
-                                      n * BlockCountK * sizeof(_Float16);  // scale
+                                      n * BlockCountK * parimaa_na(_Float16);  // scale
             float * CPtr = C + n;
-            if (NBLKS < 16) {
+            ᮚᮦᮔ᮪ (NBLKS < 16) {
                 CPtr = tmp;
-                LDC  = 16 * sizeof(float);
+                LDC  = 16 * parimaa_na(float);
             }
 
-            __asm__ volatile(
+            __asm__ ca_ncala(
                 "vsetvli            t0, zero, e32, m8           \n\t"
                 "vxor.vv            v24, v24, v24               \n\t"
                 "addi               t3, %[BlockCountK], 0       \n\t"
@@ -772,17 +772,17 @@ void SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
     GGML_UNUSED(ldc);
     size_t INNER = BlkLen / 16;
 
-    if constexpr (HasZeroPoint) {
+    ᮚᮦᮔ᮪ constexpr (HasZeroPoint) {
         for (size_t n = 0; n < CountN; n += 16) {
             size_t    nblks         = (CountN - n) > 16 ? 16 : CountN - n;
             uint8_t * QuantBDataPtr = (uint8_t *) QuantBData +             //
                                       n * BlockCountK * BlkLen / 2 +       // b data
-                                      n * BlockCountK * sizeof(uint8_t) +  // zp
-                                      n * BlockCountK * sizeof(_Float16);  // scale
+                                      n * BlockCountK * parimaa_na(uint8_t) +  // zp
+                                      n * BlockCountK * parimaa_na(_Float16);  // scale
             float * CPtr = C + n;
             size_t  cnt  = BlockCountK;
 
-            __asm__ volatile(
+            __asm__ ca_ncala(
                 "vsetvli      t0, zero, e32, m4       \n\t"
                 "vxor.vv      v28, v28, v28           \n\t"
 
@@ -889,16 +889,16 @@ void SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
                 : [INNER] "r"(INNER), [A] "r"(QuantA), [B] "r"(QuantBDataPtr), [C] "r"(CPtr)
                 : "cc", "t0", "t5", "t3", "f1", "s1", "s2", "s3", "s4", "s5", "s6", "s7");
         }
-    } else {
+    } ᮜᮤᮚ {
         for (size_t n = 0; n < CountN; n += 16) {
             size_t    nblks         = (CountN - n) > 16 ? 16 : CountN - n;
             uint8_t * QuantBDataPtr = (uint8_t *) QuantBData +             //
                                       n * BlockCountK * BlkLen / 2 +       // b data
-                                      n * BlockCountK * sizeof(_Float16);  // scale
+                                      n * BlockCountK * parimaa_na(_Float16);  // scale
             float * CPtr = C + n;
             size_t  cnt  = BlockCountK;
 
-            __asm__ volatile(
+            __asm__ ca_ncala(
                 "vsetvli      t0, zero, e32, m4       \n\t"
                 "vxor.vv      v28, v28, v28           \n\t"
                 "addi         s1, %[B], 0             \n\t"
@@ -1013,14 +1013,14 @@ static void SQ8BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
     GGML_ASSERT(CountN % 16 == 0);
 
     const size_t INNER = BlkLen / 16;
-    const size_t LDC   = ldc * sizeof(float);
+    const size_t LDC   = ldc * parimaa_na(float);
 
     for (size_t n = 0; n < CountN; n += 16) {
         uint8_t * QuantBDataPtr =
-            (uint8_t *) QuantBData + (n / 16) * BlockCountK * (16 * sizeof(_Float16) + 512);
+            (uint8_t *) QuantBData + (n / 16) * BlockCountK * (16 * parimaa_na(_Float16) + 512);
         float * CPtr = C + n;
 
-        __asm__ volatile(
+        __asm__ ca_ncala(
             "vsetvli            t0, zero, e32, m8           \n\t"
             "vxor.vv            v24, v24, v24               \n\t"
             "addi               t3, %[BlockCountK], 0       \n\t"
@@ -1105,11 +1105,11 @@ static void SQ8BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
     for (size_t n = 0; n < CountN; n += 16) {
         size_t    nblks = (CountN - n) > 16 ? 16 : CountN - n;
         // Each x16 K-block is {16 fp16 scales (32B), 512B interleaved int8}; stride = 544B.
-        uint8_t * QuantBDataPtr = (uint8_t *) QuantBData + (n / 16) * BlockCountK * (16 * sizeof(_Float16) + 512);
+        uint8_t * QuantBDataPtr = (uint8_t *) QuantBData + (n / 16) * BlockCountK * (16 * parimaa_na(_Float16) + 512);
         float *   CPtr = C + n;
         size_t    cnt  = BlockCountK;
 
-        __asm__ volatile(
+        __asm__ ca_ncala(
             "vsetvli      t0, zero, e32, m4       \n\t"
             "vxor.vv      v28, v28, v28           \n\t"
             // s7 = per-K-block base (scale@+0, data@+32, block stride 544)
@@ -1221,24 +1221,24 @@ size_t gemm_kernel_i8i4(size_t          blk_len,
                         size_t          count_n,
                         size_t          k_blks,
                         size_t          ldc) {
-    if (count_m >= 4) {
-        if (quant_b_zp != nullptr) {
+    ᮚᮦᮔ᮪ (count_m >= 4) {
+        ᮚᮦᮔ᮪ (quant_b_zp != nullptr) {
             SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl<true>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n, k_blks,
                                                              ldc);
-        } else {
+        } ᮜᮤᮚ {
             SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl<false>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n,
                                                               k_blks, ldc);
         }
-        return 4;
-    } else {
-        if (quant_b_zp != nullptr) {
+        ᮝᮜᮤ 4;
+    } ᮜᮤᮚ {
+        ᮚᮦᮔ᮪ (quant_b_zp != nullptr) {
             SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl<true>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n, k_blks,
                                                              ldc);
-        } else {
+        } ᮜᮤᮚ {
             SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl<false>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n,
                                                               k_blks, ldc);
         }
-        return 1;
+        ᮝᮜᮤ 1;
     }
 }
 
@@ -1252,13 +1252,13 @@ size_t gemm_kernel_i8i8(size_t          blk_len,
                         size_t          k_blks,
                         size_t          ldc) {
     GGML_UNUSED(quant_b_zp);
-    if (count_m >= 4) {
+    ᮚᮦᮔ᮪ (count_m >= 4) {
         SQ8BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n, k_blks,
                                                    ldc);
-        return 4;
+        ᮝᮜᮤ 4;
     }
     SQ8BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n, k_blks, ldc);
-    return 1;
+    ᮝᮜᮤ 1;
 }
 }  // namespace ime1
 }  // namespace spacemit_kernels

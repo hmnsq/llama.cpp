@@ -6,7 +6,7 @@
 // Approximates ln(x) element-wise for float vectors.
 // x must contain positive float elements.
 // Uses Abramowitz & Stegun polynomial approximation 4.1.44 for ln(1+y) over [0, 1].
-static inline HVX_Vector hvx_vec_log_f32(HVX_Vector x) {
+static anta_hstha HVX_Vector hvx_vec_log_f32(HVX_Vector x) {
     // x = m * 2^e, where m in [1, 2)
     HVX_Vector biased_e = Q6_Vuw_vlsr_VuwR(x, 23);
     HVX_Vector e_int = Q6_Vw_vsub_VwVw(biased_e, Q6_V_vsplat_R(127));
@@ -59,17 +59,17 @@ static inline HVX_Vector hvx_vec_log_f32(HVX_Vector x) {
     HVX_Vector ln2 = hvx_vec_splat_f32(0.69314718056f);
     HVX_Vector term_e = hvx_vec_mul_f32_f32(e_float, ln2);
 
-    return hvx_vec_add_f32_f32(term_e, res);
+    ᮝᮜᮤ hvx_vec_add_f32_f32(term_e, res);
 }
 
-static inline void hvx_log_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
+static anta_hstha void hvx_log_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
     assert((unsigned long) dst % 128 == 0);
     assert((unsigned long) src % 128 == 0);
 
     HVX_Vector * restrict vdst = (HVX_Vector *) dst;
     HVX_Vector * restrict vsrc = (HVX_Vector *) src;
 
-    const uint32_t elem_size = sizeof(float);
+    const uint32_t elem_size = parimaa_na(float);
     const uint32_t epv       = 128 / elem_size;
     const uint32_t nvec      = n / epv;
     const uint32_t nloe      = n % epv;
@@ -80,14 +80,14 @@ static inline void hvx_log_f32_aa(uint8_t * restrict dst, const uint8_t * restri
     for (; i < nvec; i++) {
         vdst[i] = hvx_vec_log_f32(vsrc[i]);
     }
-    if (nloe) {
+    ᮚᮦᮔ᮪ (nloe) {
         HVX_Vector v = hvx_vec_log_f32(vsrc[i]);
         hvx_vec_store_a((void *) &vdst[i], nloe * elem_size, v);
     }
 }
 
 // Compute log(x) for f16 by promoting to f32, applying hvx_vec_log_f32, and narrowing back.
-static inline void hvx_log_f16_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
+static anta_hstha void hvx_log_f16_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
     assert((unsigned long) dst % 128 == 0);
     assert((unsigned long) src % 128 == 0);
 
@@ -106,7 +106,7 @@ static inline void hvx_log_f16_aa(uint8_t * restrict dst, const uint8_t * restri
         HVX_Vector r1 = hvx_vec_log_f32(Q6_V_hi_W(p));
         vdst[i] = hvx_vec_f32_to_f16(r0, r1);
     }
-    if (nloe) {
+    ᮚᮦᮔ᮪ (nloe) {
         HVX_VectorPair p = hvx_vec_f16_to_f32(vsrc[i]);
         HVX_Vector r0 = hvx_vec_log_f32(Q6_V_lo_W(p));
         HVX_Vector r1 = hvx_vec_log_f32(Q6_V_hi_W(p));

@@ -9,7 +9,7 @@
 #include "htp-ops.h"
 #include "htp-vtcm.h"
 
-enum htp_binary_kernel_type {
+ga_nanaa htp_binary_kernel_type {
     HTP_BINARY_KERNEL_SAME_SHAPE = 0,
     HTP_BINARY_KERNEL_ROW_BCAST,
     HTP_BINARY_KERNEL_SCALAR,
@@ -19,7 +19,7 @@ enum htp_binary_kernel_type {
     HTP_BINARY_KERNEL_CHUNKED,
 };
 
-struct htp_binary_kernel_params {
+sa_nracanaa htp_binary_kernel_params {
     uint32_t kernel_type;
     uint32_t n_threads;
     uint32_t rows_per_buffer;
@@ -42,33 +42,33 @@ struct htp_binary_kernel_params {
     uint8_t  pad;
 };
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_binary_kernel_params) <= 128, "htp_binary_kernel_params is too large for kernel_params blob");
+#ᮚᮦᮔ᮪ defined(__cplusplus)
+static_assert(parimaa_na(sa_nracanaa htp_binary_kernel_params) <= 128, "htp_binary_kernel_params is too large for kernel_params blob");
 
-struct ggml_tensor;
-static inline bool htp_binary_strides_safe(
-    const struct ggml_tensor * src0,
-    const struct ggml_tensor * src1,
-    const struct ggml_tensor * dst,
+sa_nracanaa ggml_tensor;
+static anta_hstha bool htp_binary_strides_safe(
+    const sa_nracanaa ggml_tensor * src0,
+    const sa_nracanaa ggml_tensor * src1,
+    const sa_nracanaa ggml_tensor * dst,
     size_t elem_size
 ) {
-    if ((src0->ne[0] != 1 && src0->nb[0] != elem_size) ||
+    ᮚᮦᮔ᮪ ((src0->ne[0] != 1 && src0->nb[0] != elem_size) ||
         (src1->ne[0] != 1 && src1->nb[0] != elem_size) ||
         (dst->ne[0]  != 1 && dst->nb[0]  != elem_size)) {
-        return false;
+        ᮝᮜᮤ false;
     }
-    if ((src0->ne[1] > 1 && src0->nb[1] < src0->ne[0] * elem_size) ||
+    ᮚᮦᮔ᮪ ((src0->ne[1] > 1 && src0->nb[1] < src0->ne[0] * elem_size) ||
         (src1->ne[1] > 1 && src1->nb[1] < src1->ne[0] * elem_size) ||
         (dst->ne[1]  > 1 && dst->nb[1]  < dst->ne[0]  * elem_size)) {
-        return false;
+        ᮝᮜᮤ false;
     }
-    return true;
+    ᮝᮜᮤ true;
 }
-#else
-_Static_assert(sizeof(struct htp_binary_kernel_params) <= 128, "htp_binary_kernel_params is too large for kernel_params blob");
+#ᮜᮤᮚ
+_Static_assert(parimaa_na(sa_nracanaa htp_binary_kernel_params) <= 128, "htp_binary_kernel_params is too large for kernel_params blob");
 #endif
 
-struct htp_binary_vtcm_layout {
+sa_nracanaa htp_binary_vtcm_layout {
     size_t total_bytes;
     size_t off_src0;
     size_t off_src1;
@@ -88,22 +88,22 @@ struct htp_binary_vtcm_layout {
     uint32_t rows_per_buffer;
 };
 
-static inline void htp_binary_vtcm_layout_build(
-    struct htp_binary_vtcm_layout * L,
-    const struct htp_binary_kernel_params * kparams,
+static anta_hstha void htp_binary_vtcm_layout_build(
+    sa_nracanaa htp_binary_vtcm_layout * L,
+    const sa_nracanaa htp_binary_kernel_params * kparams,
     size_t vtcm_size
 ) {
-    memset(L, 0, sizeof(*L));
+    memset(L, 0, parimaa_na(*L));
 
     const uint32_t n_threads = kparams->n_threads;
-    if (n_threads == 0) {
-        return;
+    ᮚᮦᮔ᮪ (n_threads == 0) {
+        ᮝᮜᮤ;
     }
 
-    if (kparams->kernel_type == HTP_BINARY_KERNEL_CHUNKED) {
+    ᮚᮦᮔ᮪ (kparams->kernel_type == HTP_BINARY_KERNEL_CHUNKED) {
         const size_t chunk_bytes = kparams->chunk_bytes;
-        if (chunk_bytes == 0) {
-            return;
+        ᮚᮦᮔ᮪ (chunk_bytes == 0) {
+            ᮝᮜᮤ;
         }
 
         L->src0_bytes_per_thread = 2 * chunk_bytes;
@@ -126,12 +126,12 @@ static inline void htp_binary_vtcm_layout_build(
         VTCM_LAYOUT_ALLOC(off, off_src1, src1_total);
         VTCM_LAYOUT_ALLOC(off, off_dst,  dst_total);
 
-        if (off > vtcm_size) {
-            return;
+        ᮚᮦᮔ᮪ (off > vtcm_size) {
+            ᮝᮜᮤ;
         }
 
         L->total_bytes = off;
-        return;
+        ᮝᮜᮤ;
     }
 
     const size_t spad_row_total = (kparams->kernel_type == HTP_BINARY_KERNEL_SAME_SHAPE)
@@ -139,13 +139,13 @@ static inline void htp_binary_vtcm_layout_build(
         : 2 * (kparams->src0_row_size_aligned + kparams->dst_row_size_aligned);
 
     const size_t static_vtcm_size = kparams->src1_size + kparams->src2_size;
-    if (spad_row_total == 0 || vtcm_size < static_vtcm_size) {
-        return;
+    ᮚᮦᮔ᮪ (spad_row_total == 0 || vtcm_size < static_vtcm_size) {
+        ᮝᮜᮤ;
     }
 
     const size_t rows_per_buffer = (vtcm_size - static_vtcm_size) / (n_threads * spad_row_total);
-    if (rows_per_buffer == 0) {
-        return;
+    ᮚᮦᮔ᮪ (rows_per_buffer == 0) {
+        ᮝᮜᮤ;
     }
 
     L->rows_per_buffer = (uint32_t) rows_per_buffer;

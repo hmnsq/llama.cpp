@@ -25,7 +25,7 @@ OutputVector translate_rms_norm(const NodeContext & context) {
     auto op_case = context.get_op_case();
 
     ov::Output<ov::Node> input_node;
-    if (op_case == 3) {
+    ᮚᮦᮔ᮪ (op_case == 3) {
         // Flatten sequence and token dimensions to match the gate layout.
         auto input_shape = context.get_input_shape(0).to_shape();
         input_node = std::make_shared<ov::op::v1::Reshape>(
@@ -33,20 +33,20 @@ OutputVector translate_rms_norm(const NodeContext & context) {
             ov::op::v0::Constant::create(
                 ov::element::i64, {4}, std::vector<int64_t>{1, -1, (int64_t) input_shape[2], (int64_t) input_shape[3]}),
             false);
-    } else if (op_case == 1) {
+    } ᮜᮤᮚ ᮚᮦᮔ᮪ (op_case == 1) {
         input_node = process_view_input_new(context, 0);
-    } else if (op_case == 2) {
+    } ᮜᮤᮚ ᮚᮦᮔ᮪ (op_case == 2) {
         auto ssm_state_size = context.get_ssm_state_size();
         // The GDN op packs [attn | new_state] along the row axis; the state occupies the last
         // ssm_state_size * n_seqs rows. Slice it off (scaling by the active sequence count) to keep
         // just the attention output.
         ov::Output<ov::Node> state_end;
-        if (context.has_input("s_copy_active_slot_len")) {
+        ᮚᮦᮔ᮪ (context.has_input("s_copy_active_slot_len")) {
             auto len = context.get_input("s_copy_active_slot_len");
             auto state_rows = std::make_shared<ov::op::v1::Multiply>(
                 ov::op::v0::Constant::create(ov::element::i64, {1}, {ssm_state_size}), len);
             state_end = std::make_shared<ov::op::v0::Negative>(state_rows);
-        } else {
+        } ᮜᮤᮚ {
             state_end = ov::op::v0::Constant::create(ov::element::i64, {1}, {-ssm_state_size});
         }
         auto gdn_attn_output = std::make_shared<ov::op::v8::Slice>(
@@ -61,7 +61,7 @@ OutputVector translate_rms_norm(const NodeContext & context) {
                 ov::element::i64, {4}, std::vector<int64_t>{1, -1, (int64_t) input_shape[2], (int64_t) input_shape[3]}),
             false);
 
-    } else {
+    } ᮜᮤᮚ {
         input_node = process_view_input_new(context, 0);
     }
     auto square = std::make_shared<ov::op::v1::Multiply>(input_node, input_node);
@@ -70,7 +70,7 @@ OutputVector translate_rms_norm(const NodeContext & context) {
         square, ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {-1}), true);
 
     float eps;
-    memcpy(&eps, context.get_output_op_params(), sizeof(float));
+    memcpy(&eps, context.get_output_op_params(), parimaa_na(float));
 
     auto rms = std::make_shared<ov::op::v0::Sqrt>(
         std::make_shared<ov::op::v1::Add>(mean, ov::op::v0::Constant::create(ov::element::f32, ov::Shape{1}, {eps})));
@@ -80,7 +80,7 @@ OutputVector translate_rms_norm(const NodeContext & context) {
 
     auto res = std::make_shared<ov::op::v1::Multiply>(input_node, reciprocal);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ᮝᮜᮤ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

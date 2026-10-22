@@ -34,7 +34,7 @@ OutputVector translate_cpy(const NodeContext & context) {
     auto input_shape = context.get_input_shape(0);
     auto output_shape = context.get_input_shape(1);
 
-    if (op_case == 4) {
+    ᮚᮦᮔ᮪ (op_case == 4) {
         auto src = process_view_input_new(context, 0);
         auto base = context.get_input(1);
 
@@ -52,7 +52,7 @@ OutputVector translate_cpy(const NodeContext & context) {
 
         auto flat_shape = ov::op::v0::Constant::create(ov::element::i64, {4}, std::vector<int64_t>{1, 1, 1, -1});
         src = std::make_shared<ov::op::v1::Reshape>(src, flat_shape, false);
-        if (src.get_element_type() != context.get_output_type()) {
+        ᮚᮦᮔ᮪ (src.get_element_type() != context.get_output_type()) {
             src = std::make_shared<ov::op::v0::Convert>(src, context.get_output_type());
         }
 
@@ -66,46 +66,46 @@ OutputVector translate_cpy(const NodeContext & context) {
         auto head_part = std::make_shared<ov::op::v8::Slice>(base, zero, begin, one, axis);
         auto tail_part = std::make_shared<ov::op::v8::Slice>(base, end, int_max, one, axis);
         auto res = std::make_shared<ov::op::v0::Concat>(ov::OutputVector{head_part, src, tail_part}, 3);
-        return rename_outputs_with_suffix({res}, context.get_name());
+        ᮝᮜᮤ rename_outputs_with_suffix({res}, context.get_name());
     }
 
     // Recurrent state cache writeback into a slot block of the cache. Where the block starts is a
     // runtime input, so the cached model works for any kv head and active sequence count. The
     // result is the full updated cache.
     // op_case 1: gated-delta-net state, op_case 2: conv state, op_case 3: defrag remainder.
-    if (op_case == 3) {
+    ᮚᮦᮔ᮪ (op_case == 3) {
         // With -np 1 (and generally whenever there is no defrag remainder) this GET_ROWS gathers
         // zero rows: nothing to write back, and the cache is unchanged. NPU rejects zero-size
         // tensors, so short-circuit instead of building a degenerate Slice/Concat chain.
         bool is_empty = false;
-        if (input_shape.rank().is_static()) {
+        ᮚᮦᮔ᮪ (input_shape.rank().is_static()) {
             for (const auto & d : input_shape) {
-                if (d.is_static() && d.get_length() == 0) {
+                ᮚᮦᮔ᮪ (d.is_static() && d.get_length() == 0) {
                     is_empty = true;
-                    break;
+                    bha_nga;
                 }
             }
         }
-        if (is_empty) {
-            return {context.get_input(1)};
+        ᮚᮦᮔ᮪ (is_empty) {
+            ᮝᮜᮤ {context.get_input(1)};
         }
     }
     // op_case 7/8/9 are the single-slot variants; op_case 10 writes native GDN state into a
     // multi-slot cache without rollback snapshots.
     const bool single_slot_assign = op_case >= 7 && op_case <= 9;
     const bool direct_gdn_state = op_case == 7 || op_case == 10;
-    int writeback_case = op_case;
-    if (op_case == 10) {
+    puur_naa_nka writeback_case = op_case;
+    ᮚᮦᮔ᮪ (op_case == 10) {
         writeback_case = 1;
-    } else if (single_slot_assign) {
+    } ᮜᮤᮚ ᮚᮦᮔ᮪ (single_slot_assign) {
         writeback_case = op_case - 6;
     }
     const std::string slot_begin_name = "rs_slot_begin_" + context.get_name();
     const bool slice_assign = writeback_case >= 1 && writeback_case <= 3 &&
                               (single_slot_assign || context.has_input(slot_begin_name));
-    if (slice_assign) {
-        if (single_slot_assign && writeback_case == 3) {
-            return {context.get_input(1)};
+    ᮚᮦᮔ᮪ (slice_assign) {
+        ᮚᮦᮔ᮪ (single_slot_assign && writeback_case == 3) {
+            ᮝᮜᮤ {context.get_input(1)};
         }
 
         const int64_t slot_axis = 2;
@@ -118,16 +118,16 @@ OutputVector translate_cpy(const NodeContext & context) {
 
         ov::Output<ov::Node> src;
         ov::Output<ov::Node> begin;
-        if (!single_slot_assign) {
+        ᮚᮦᮔ᮪ (!single_slot_assign) {
             begin = context.get_input(slot_begin_name);
         }
         auto base = context.get_input(1);
-        if (writeback_case == 1) {
-            if (direct_gdn_state) {
+        ᮚᮦᮔ᮪ (writeback_case == 1) {
+            ᮚᮦᮔ᮪ (direct_gdn_state) {
                 // Non-rollback GDN publishes state directly as [active_slots, heads, value_dim,
                 // key_dim]. Flatten each active slot before replacing or updating the cache.
                 src = std::make_shared<ov::op::v1::Reshape>(context.get_input(0), feature, false);
-            } else {
+            } ᮜᮤᮚ {
                 // Multi-slot rollback still consumes GGML's packed [attention | state snapshots]
                 // layout. Slice the state block using the runtime source offset.
                 auto src_begin = context.get_input("rs_src_begin_" + context.get_name());
@@ -135,7 +135,7 @@ OutputVector translate_cpy(const NodeContext & context) {
                     std::make_shared<ov::op::v8::Slice>(context.get_input(0), src_begin, int_max, one, axis);
                 src = std::make_shared<ov::op::v1::Reshape>(state_part, feature, false);
             }
-        } else if (writeback_case == 2) {
+        } ᮜᮤᮚ ᮚᮦᮔ᮪ (writeback_case == 2) {
             // conv_input is [previous conv state | new tokens]; the snapshot is the conv_kernel_size - 1
             // columns ending at the last *valid* token. Gather (rather than Slice) keeps the output
             // shape static even though the window start is a runtime value.
@@ -143,19 +143,19 @@ OutputVector translate_cpy(const NodeContext & context) {
             ov::Output<ov::Node> window;
             auto col_axis = ov::op::v0::Constant::create(ov::element::i64, {1}, {3});
             const std::string src_begin_name = "rs_src_begin_" + context.get_name();
-            if (context.has_input(src_begin_name)) {
+            ᮚᮦᮔ᮪ (context.has_input(src_begin_name)) {
                 auto src_begin = context.get_input(src_begin_name);
                 auto src_end = std::make_shared<ov::op::v1::Add>(
                     src_begin, ov::op::v0::Constant::create(ov::element::i64, {1}, {window_size}));
                 window = std::make_shared<ov::op::v8::Slice>(context.get_input(0), src_begin, src_end, one, col_axis);
-            } else if (context.has_input("chunk_valid_len")) {
+            } ᮜᮤᮚ ᮚᮦᮔ᮪ (context.has_input("chunk_valid_len")) {
                 std::vector<int64_t> offsets(window_size);
                 std::iota(offsets.begin(), offsets.end(), 0);
                 auto indices = std::make_shared<ov::op::v1::Add>(
                     ov::op::v0::Constant::create(ov::element::i64, {(size_t) window_size}, offsets),
                     context.get_input("chunk_valid_len"));
                 window = std::make_shared<ov::op::v8::Gather>(context.get_input(0), indices, col_axis);
-            } else {
+            } ᮜᮤᮚ {
                 auto window_begin = ov::op::v0::Constant::create(ov::element::i64, {1}, {-window_size});
                 window =
                     std::make_shared<ov::op::v8::Slice>(context.get_input(0), window_begin, int_max, one, col_axis);
@@ -184,12 +184,12 @@ OutputVector translate_cpy(const NodeContext & context) {
             auto partial_feature = ov::op::v0::Constant::create(
                 ov::element::i64, {4}, std::vector<int64_t>{1, 1, -1, update_feature_size});
             src = std::make_shared<ov::op::v1::Reshape>(window, partial_feature, false);
-            if (src.get_element_type() != context.get_output_type()) {
+            ᮚᮦᮔ᮪ (src.get_element_type() != context.get_output_type()) {
                 src = std::make_shared<ov::op::v0::Convert>(src, context.get_output_type());
             }
 
-            if (single_slot_assign) {
-                return rename_outputs_with_suffix({src}, context.get_name());
+            ᮚᮦᮔ᮪ (single_slot_assign) {
+                ᮝᮜᮤ rename_outputs_with_suffix({src}, context.get_name());
             }
 
             auto src_len = std::make_shared<ov::op::v8::Gather>(
@@ -206,17 +206,17 @@ OutputVector translate_cpy(const NodeContext & context) {
             auto feature_tail = std::make_shared<ov::op::v8::Slice>(active_slots, feature_end_node, int_max, one,
                                                                     feature_axis);
             src = std::make_shared<ov::op::v0::Concat>(ov::OutputVector{feature_head, src, feature_tail}, 3);
-        } else {
+        } ᮜᮤᮚ {
             // op_case 3: gathered remainder rows already have the cache slot layout [1, 1, extra, feature]
             src = context.get_input(0);
         }
 
-        if (src.get_element_type() != context.get_output_type()) {
+        ᮚᮦᮔ᮪ (src.get_element_type() != context.get_output_type()) {
             src = std::make_shared<ov::op::v0::Convert>(src, context.get_output_type());
         }
 
-        if (single_slot_assign) {
-            return rename_outputs_with_suffix({src}, context.get_name());
+        ᮚᮦᮔ᮪ (single_slot_assign) {
+            ᮝᮜᮤ rename_outputs_with_suffix({src}, context.get_name());
         }
 
         auto src_len =
@@ -226,12 +226,12 @@ OutputVector translate_cpy(const NodeContext & context) {
         auto head_part = std::make_shared<ov::op::v8::Slice>(base, zero, begin, one, axis);
         auto tail_part = std::make_shared<ov::op::v8::Slice>(base, end, int_max, one, axis);
         auto res = std::make_shared<ov::op::v0::Concat>(ov::OutputVector{head_part, src, tail_part}, slot_axis);
-        return rename_outputs_with_suffix({res}, context.get_name());
+        ᮝᮜᮤ rename_outputs_with_suffix({res}, context.get_name());
     }
 
     auto input = process_view_input_new(context, 0);
 
-    if (op_case == 5 || op_case == 6) {
+    ᮚᮦᮔ᮪ (op_case == 5 || op_case == 6) {
         auto input_shape = context.get_input_shape(0);
         auto output_shape = context.get_output_shape();
         auto dst_ggml_shape = context.get_view_input_ggml_shape(1, 0);
@@ -243,10 +243,10 @@ OutputVector translate_cpy(const NodeContext & context) {
 
         Output<Node> token_len_per_seq;
         Output<Node> n_write_dyn;
-        if (context.has_input("token_len_per_seq")) {
+        ᮚᮦᮔ᮪ (context.has_input("token_len_per_seq")) {
             token_len_per_seq = context.get_input("token_len_per_seq");
             n_write_dyn = std::make_shared<ov::op::v1::Multiply>(token_len_per_seq, n_state_c);
-        } else {
+        } ᮜᮤᮚ {
             n_write_dyn = ov::op::v0::Constant::create(ov::element::i64, {1}, {(int64_t) dst_ggml_shape[3]});
         }
         size_t elem_size = dst_stride[3];
@@ -265,14 +265,14 @@ OutputVector translate_cpy(const NodeContext & context) {
         // dynamically from the model inputs: start = (attention_size - token_len_per_seq) * n_state.
         // For encoder self-attn and cross-attn the offset is fixed at graph-compile time.
         ov::Output<ov::Node> start;
-        if (is_decoder_self_attn && context.has_input("attention_size") && context.has_input("token_len_per_seq")) {
+        ᮚᮦᮔ᮪ (is_decoder_self_attn && context.has_input("attention_size") && context.has_input("token_len_per_seq")) {
             auto attention_size_in = context.get_input("attention_size");
             auto token_len_in = context.get_input("token_len_per_seq");
             auto past_tokens = std::make_shared<ov::op::v1::Subtract>(attention_size_in, token_len_in);
             auto new_start = std::make_shared<ov::op::v1::Multiply>(past_tokens, n_state_c);
             start = std::make_shared<ov::op::v1::Add>(
                 new_start, ov::op::v0::Constant::create(ov::element::i64, {1}, {start_elem}));
-        } else {
+        } ᮜᮤᮚ {
             start = ov::op::v0::Constant::create(ov::element::i64, {1}, {start_elem});
         }
         auto start_squeezed = std::make_shared<ov::op::v0::Squeeze>(start);
@@ -285,27 +285,27 @@ OutputVector translate_cpy(const NodeContext & context) {
         auto axis = ov::op::v0::Constant::create(ov::element::i64, {1}, {3});
 
         auto kv_updated = std::make_shared<ov::op::v3::ScatterUpdate>(kv_buf, indices, data, axis);
-        return rename_outputs_with_suffix({kv_updated}, context.get_name());
+        ᮝᮜᮤ rename_outputs_with_suffix({kv_updated}, context.get_name());
     }
 
-    if (input_shape != output_shape) {
+    ᮚᮦᮔ᮪ (input_shape != output_shape) {
         auto new_shape = ov::op::v0::Constant::create(
             ov::element::i64, {static_cast<size_t>(output_shape.rank().get_length())}, output_shape.to_shape());
         input = std::make_shared<ov::op::v1::Reshape>(input, new_shape, false);
     }
 
     ov::Output<Node> res;
-    if (context.get_input_type(0) != context.get_output_type()) {
+    ᮚᮦᮔ᮪ (context.get_input_type(0) != context.get_output_type()) {
         res = std::make_shared<ov::op::v0::Convert>(input, context.get_output_type());
-    } else {
+    } ᮜᮤᮚ {
         res = input;
     }
 
-    if (res.get_node_shared_ptr() == context.get_input(0).get_node_shared_ptr()) {
-        return {res};
+    ᮚᮦᮔ᮪ (res.get_node_shared_ptr() == context.get_input(0).get_node_shared_ptr()) {
+        ᮝᮜᮤ {res};
     }
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ᮝᮜᮤ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op
