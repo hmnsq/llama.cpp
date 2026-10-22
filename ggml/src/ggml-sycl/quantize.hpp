@@ -17,117 +17,117 @@
  *     Sycl backend specific quantization functions
  **************************************************************************/
 
-#pragma once
+#هدايت once
 
-#include <sycl/nd_item.hpp>
+#ضمن <sycl/nd_item.hpp>
 
-#include "ggml-sycl/dpct/helper.hpp"
+#ضمن "ggml-sycl/dpct/helper.hpp"
 
-template <int ElementsPerWI>
-__dpct_inline__ static void quantize_q8_1_impl(const float * __restrict__ x,
-                                               sycl::vec<int8_t, ElementsPerWI> & quantized_values, float & d,
-                                               float & sum, const sycl::nd_item<1> & it) {
-    auto subgroup_id = it.get_group(0);
-    auto wi_id       = it.get_local_id(0);
+سانچو <صحيح Elements_في_WI>
+__dpct_inline__ ساكن فراغ quantize_q8_1_impl(ثابت عائم * __restrict__ x,
+                                               sycl::vec<int8_t, Elements_في_WI> & quantized_قدرون, عائم & d,
+                                               عائم & جوڙ, ثابت sycl::nd_شي<1> & it) {
+    خودڪار subgroup_id = it.get_گروهه(0);
+    خودڪار wi_id       = it.get_local_id(0);
 
-    sycl::vec<float, ElementsPerWI> wi_f32_vals;
+    sycl::vec<عائم, Elements_في_WI> wi_f32_vals;
 
-    auto float_ptr_offset = subgroup_id * QK8_1 + ElementsPerWI * wi_id;
-    wi_f32_vals           = *reinterpret_cast<const sycl::vec<float, ElementsPerWI> *>(x + float_ptr_offset);
+    خودڪار float_ptr_وٿي = subgroup_id * QK8_1 + Elements_في_WI * wi_id;
+    wi_f32_vals           = *reinterpret_cast<ثابت sycl::vec<عائم, Elements_في_WI> *>(x + float_ptr_وٿي);
 
-    float amax = 0.0f;
+    عائم amax = 0.0f;
 
-#pragma unroll(ElementsPerWI)
-    for (int i = 0; i < ElementsPerWI; i++) {
-        sum += wi_f32_vals[i];
+#هدايت unroll(Elements_في_WI)
+    لكل (صحيح i = 0; i < Elements_في_WI; i++) {
+        جوڙ += wi_f32_vals[i];
         amax                = sycl::fmax(amax, sycl::fabs(wi_f32_vals[i]));
-        quantized_values[i] = 0;
+        quantized_قدرون[i] = 0;
     }
-    sum  = sycl::reduce_over_group(it.get_sub_group(), sum, sycl::plus<float>());
-    amax = sycl::reduce_over_group(it.get_sub_group(), amax, sycl::maximum<float>());
+    جوڙ  = sycl::reduce_over_گروهه(it.get_sub_گروهه(), جوڙ, sycl::plus<عائم>());
+    amax = sycl::reduce_over_گروهه(it.get_sub_گروهه(), amax, sycl::وڌ_کان_وڌ<عائم>());
     d    = amax == 0 ? 1 : amax / 127;
 
-#pragma unroll(ElementsPerWI)
-    for (int i = 0; i < ElementsPerWI; i++) {
-        quantized_values[i] = sycl::round(wi_f32_vals[i] / d);
+#هدايت unroll(Elements_في_WI)
+    لكل (صحيح i = 0; i < Elements_في_WI; i++) {
+        quantized_قدرون[i] = sycl::round(wi_f32_vals[i] / d);
     }
 
     d = amax == 0 ? 0 : d;
 }
 
 // No op to control codepath in ggml_sycl_op_mul_mat
-template <int ElementsPerWI> struct no_quantize_q8_1 {
-    void operator()(const float *, void *, int, int, const sycl::nd_item<1> &) const {}
+سانچو <صحيح Elements_في_WI> بنية no_quantize_q8_1 {
+    فراغ عامل()(ثابت عائم *, فراغ *, صحيح, صحيح, ثابت sycl::nd_شي<1> &) ثابت {}
 };
 
-template <int ElementsPerWI> struct quantize_and_reorder_q8_1_soa {
-    __dpct_inline__ void operator()(const float * __restrict__ x, void * reordered_q8_tensor, const int kx,
-                                    const int kx_padded, const sycl::nd_item<1> & it) const {
+سانچو <صحيح Elements_في_WI> بنية quantize_and_reorder_q8_1_soa {
+    __dpct_inline__ فراغ عامل()(ثابت عائم * __restrict__ x, فراغ * reordered_q8_tensor, ثابت صحيح kx,
+                                    ثابت صحيح kx_padded, ثابت sycl::nd_شي<1> & it) ثابت {
         /*
         Quantizes and reorders the resultant q8 tensor in a per row fashion
         Each sub-group calculates one quant block. i.e. QK8_1 quant values and the d and sum values
     */
-        auto subgroup_id = it.get_group(0);
-        auto wi_id       = it.get_local_id(0);
+        خودڪار subgroup_id = it.get_گروهه(0);
+        خودڪار wi_id       = it.get_local_id(0);
 
-        sycl::vec<int8_t, ElementsPerWI> quantized_values;
-        float                            d   = 0.0f;
-        float                            sum = 0.0f;
-        quantize_q8_1_impl<ElementsPerWI>(x, quantized_values, d, sum, it);
+        sycl::vec<int8_t, Elements_في_WI> quantized_قدرون;
+        عائم                            d   = 0.0f;
+        عائم                            جوڙ = 0.0f;
+        quantize_q8_1_impl<Elements_في_WI>(x, quantized_قدرون, d, جوڙ, it);
 
-        const int num_blocks_per_row = kx / QK8_1;
-        auto      row                = subgroup_id / num_blocks_per_row;
-        auto      col                = subgroup_id % num_blocks_per_row;
-        auto      row_offset         = row * (kx_padded / QK8_1) * sizeof(block_q8_1);
-        auto      col_offset         = QK8_1 * col + wi_id * ElementsPerWI;
+        ثابت صحيح انگ_بلاڪون_في_صف = kx / QK8_1;
+        خودڪار      صف                = subgroup_id / انگ_بلاڪون_في_صف;
+        خودڪار      کانو                = subgroup_id % انگ_بلاڪون_في_صف;
+        خودڪار      صف_وٿي         = صف * (kx_padded / QK8_1) * حجم(بلاڪ_q8_1);
+        خودڪار      کانو_وٿي         = QK8_1 * کانو + wi_id * Elements_في_WI;
 
-        auto quant_ptr = (int8_t *) ((char *) reordered_q8_tensor + row_offset + col_offset);
-        *reinterpret_cast<sycl::vec<int8_t, ElementsPerWI> *>(quant_ptr) = quantized_values;
+        خودڪار quant_ptr = (int8_t *) ((حرف *) reordered_q8_tensor + صف_وٿي + کانو_وٿي);
+        *reinterpret_cast<sycl::vec<int8_t, Elements_في_WI> *>(quant_ptr) = quantized_قدرون;
 
-        auto ds_ptr = (sycl::half2 *) ((char *) reordered_q8_tensor + row_offset + kx + col * sizeof(sycl::half2));
-        if (wi_id == 0) {
-            *ds_ptr = sycl::half2(sycl::half(d), sycl::half(sum));
+        خودڪار ds_ptr = (sycl::half2 *) ((حرف *) reordered_q8_tensor + صف_وٿي + kx + کانو * حجم(sycl::half2));
+        إذا (wi_id == 0) {
+            *ds_ptr = sycl::half2(sycl::half(d), sycl::half(جوڙ));
         }
     }
 };
 
-template <int ElementsPerWI> struct quantize_q8_1 {
-    __dpct_inline__ void operator()(const float * __restrict__ x, void * q8_tensor, const int kx, const int kx_padded,
-                                    const sycl::nd_item<1> & it) const {
-        auto subgroup_id = it.get_group(0);
-        auto wi_id       = it.get_local_id(0);
+سانچو <صحيح Elements_في_WI> بنية quantize_q8_1 {
+    __dpct_inline__ فراغ عامل()(ثابت عائم * __restrict__ x, فراغ * q8_tensor, ثابت صحيح kx, ثابت صحيح kx_padded,
+                                    ثابت sycl::nd_شي<1> & it) ثابت {
+        خودڪار subgroup_id = it.get_گروهه(0);
+        خودڪار wi_id       = it.get_local_id(0);
 
-        const int num_blocks_per_row = kx / QK8_1;
-        auto      row                = subgroup_id / num_blocks_per_row;
-        const int pitch              = kx_padded / QK8_1;
+        ثابت صحيح انگ_بلاڪون_في_صف = kx / QK8_1;
+        خودڪار      صف                = subgroup_id / انگ_بلاڪون_في_صف;
+        ثابت صحيح pitch              = kx_padded / QK8_1;
 
-        sycl::vec<int8_t, ElementsPerWI> quantized_values;
-        float                            d   = 0.0f;
-        float                            sum = 0.0f;
-        quantize_q8_1_impl<ElementsPerWI>(x, quantized_values, d, sum, it);
+        sycl::vec<int8_t, Elements_في_WI> quantized_قدرون;
+        عائم                            d   = 0.0f;
+        عائم                            جوڙ = 0.0f;
+        quantize_q8_1_impl<Elements_في_WI>(x, quantized_قدرون, d, جوڙ, it);
 
-        block_q8_1 * quant_ptr = (block_q8_1 *) q8_tensor;
-        auto         block_id  = subgroup_id % num_blocks_per_row + row * pitch;
+        بلاڪ_q8_1 * quant_ptr = (بلاڪ_q8_1 *) q8_tensor;
+        خودڪار         بلاڪ_id  = subgroup_id % انگ_بلاڪون_في_صف + صف * pitch;
 
-        int8_t * qs                                               = &(quant_ptr[block_id].qs[wi_id * ElementsPerWI]);
-        *reinterpret_cast<sycl::vec<int8_t, ElementsPerWI> *>(qs) = quantized_values;
-        if (wi_id == 0) {
-            quant_ptr[block_id].ds = sycl::half2(sycl::half(d), sycl::half(sum));
+        int8_t * qs                                               = &(quant_ptr[بلاڪ_id].qs[wi_id * Elements_في_WI]);
+        *reinterpret_cast<sycl::vec<int8_t, Elements_في_WI> *>(qs) = quantized_قدرون;
+        إذا (wi_id == 0) {
+            quant_ptr[بلاڪ_id].ds = sycl::half2(sycl::half(d), sycl::half(جوڙ));
         }
     }
 };
 
-template <template <int> typename quantize_f>
-void quantize_row_q8_1_sycl(const float * x, void * vy, const int kx, const int ky, const int kx_padded,
-                            dpct::queue_ptr stream) {
-    static_assert(QK8_1 % WARP_SIZE == 0);
-    auto local_range      = std::size_t(WARP_SIZE);
-    auto num_quant_blocks = ky * (kx / QK8_1);
-    auto global_range     = num_quant_blocks * local_range;
+سانچو <سانچو <صحيح> قسم_نالو quantize_f>
+فراغ quantize_صف_q8_1_sycl(ثابت عائم * x, فراغ * vy, ثابت صحيح kx, ثابت صحيح ky, ثابت صحيح kx_padded,
+                            dpct::قطار_ptr stream) {
+    static_assert(QK8_1 % WARP_سائيز == 0);
+    خودڪار local_range      = std::size_t(WARP_سائيز);
+    خودڪار انگ_quant_بلاڪون = ky * (kx / QK8_1);
+    خودڪار global_range     = انگ_quant_بلاڪون * local_range;
     dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
 
     stream->parallel_for(sycl::nd_range<1>({ global_range }, { local_range }),
-                         [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                             quantize_f<QK8_1 / WARP_SIZE>()(x, vy, kx, kx_padded, it);
+                         [=](sycl::nd_شي<1> it) [[sycl::reqd_sub_گروهه_سائيز(WARP_سائيز)]] {
+                             quantize_f<QK8_1 / WARP_سائيز>()(x, vy, kx, kx_padded, it);
                          });
 }

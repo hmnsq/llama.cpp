@@ -1,105 +1,105 @@
-#pragma once
+#هدايت once
 
 // clang-format off
-#include "virtgpu-utils.h"
-#include "virtgpu-shm.h"
-#include "virtgpu-apir.h"
+#ضمن "virtgpu-utils.h"
+#ضمن "virtgpu-shm.h"
+#ضمن "virtgpu-apir.h"
 
-#include "backend/shared/api_remoting.h"
-#include "backend/shared/apir_cs.h"
+#ضمن "backend/shared/api_remoting.h"
+#ضمن "backend/shared/apir_cs.h"
 
-#include <fcntl.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <sys/stat.h>
-#include <sys/sysmacros.h>
-#include <threads.h>
-#include <xf86drm.h>
+#ضمن <fcntl.h>
+#ضمن <stdbool.h>
+#ضمن <stdio.h>
+#ضمن <sys/stat.h>
+#ضمن <sys/sysmacros.h>
+#ضمن <threads.h>
+#ضمن <xf86drm.h>
 
-#include <cstring>
+#ضمن <cstring>
 
-#define VIRGL_RENDERER_UNSTABLE_APIS 1
-#include "apir_hw.h"
-#include <drm/virtgpu_drm.h>
-#include "venus_hw.h"
+#وصف_ڪريو VIRGL_RENDERER_UNSTABLE_APIS 1
+#ضمن "apir_hw.h"
+#ضمن <drm/virtgpu_drm.h>
+#ضمن "venus_hw.h"
 // clang-format on
 
-#ifndef VIRTGPU_DRM_CAPSET_APIR
+#جيڪڏهن_وصف_نه_ٿيل VIRTGPU_DRM_CAPSET_APIR
 // Will be defined include/drm/virtgpu_drm.h when
 // https://gitlab.freedesktop.org/virgl/virglrenderer/-/merge_requests/1590/diffs
 // is merged
 #    define VIRTGPU_DRM_CAPSET_APIR 10
-#endif
+#جيڪڏهن_پورو
 
 // Mesa/Virlgrenderer Venus internal. Only necessary during the
 // Venus->APIR transition in Virglrenderer
-#define VENUS_COMMAND_TYPE_LENGTH 331
+#وصف_ڪريو VENUS_COMMAND_TYPE_ڊيگهائي 331
 
-#ifndef VIRTGPU_DRM_CAPSET_VENUS  // only available with Linux >= v6.16
+#جيڪڏهن_وصف_نه_ٿيل VIRTGPU_DRM_CAPSET_VENUS  // only available with Linux >= v6.16
 #    define VIRTGPU_DRM_CAPSET_VENUS 4
-#endif
+#جيڪڏهن_پورو
 
-typedef uint32_t virgl_renderer_capset;
+تعريفنوع uint32_t virgl_renderer_capset;
 
 /* from src/virtio/vulkan/vn_renderer_virtgpu.c */
-#define VIRTGPU_PCI_VENDOR_ID       0x1af4
-#define VIRTGPU_PCI_DEVICE_ID       0x1050
-#define VIRTGPU_BLOB_MEM_GUEST_VRAM 0x0004
-#define VIRTGPU_PARAM_GUEST_VRAM    9
+#وصف_ڪريو VIRTGPU_PCI_VENDOR_ID       0x1af4
+#وصف_ڪريو VIRTGPU_PCI_DEVICE_ID       0x1050
+#وصف_ڪريو VIRTGPU_BLOB_MEM_GUEST_VRAM 0x0004
+#وصف_ڪريو VIRTGPU_PARAM_GUEST_VRAM    9
 
-#define SHMEM_DATA_SIZE  0x1830000  // 24MiB
-#define SHMEM_REPLY_SIZE 0x4000
+#وصف_ڪريو SHMEM_معلومات_سائيز  0x1830000  // 24MiB
+#وصف_ڪريو SHMEM_جواب_سائيز 0x4000
 
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#وصف_ڪريو ARRAY_سائيز(x) (حجم(x) / حجم((x)[0]))
 
-enum virt_gpu_result_t {
+تعداد virt_gpu_نتيجو_t {
     APIR_SUCCESS                     = 0,
     APIR_ERROR_INITIALIZATION_FAILED = -1,
 };
 
-#define PRINTFLIKE(f, a) __attribute__((format(__printf__, f, a)))
+#وصف_ڪريو PRINTFLIKE(f, a) __attribute__((format(__printf__, f, a)))
 
-struct virtgpu {
+بنية virtgpu {
     bool use_apir_capset;
 
-    int fd;
+    صحيح fd;
 
-    struct {
+    بنية {
         virgl_renderer_capset      id;
-        uint32_t                   version;
-        virgl_renderer_capset_apir data;
+        uint32_t                   نسخو_2;
+        virgl_renderer_capset_apir معلومات;
     } capset;
 
     util_sparse_array shmem_array;
 
     /* APIR communication pages */
-    virtgpu_shmem reply_shmem;
-    virtgpu_shmem data_shmem;
+    virtgpu_shmem جواب_shmem;
+    virtgpu_shmem معلومات_shmem;
 
     /* Mutex to protect shared data_shmem buffer from concurrent access */
-    mtx_t data_shmem_mutex;
+    mtx_t معلومات_shmem_mutex;
 
     /* Cached device information to prevent memory leaks and race conditions */
-    struct {
-        char *   description;
-        char *   name;
-        int32_t  device_count;
+    بنية {
+        حرف *   description;
+        حرف *   name;
+        int32_t  device_ڳڻپ;
         uint32_t type;
-        size_t   memory_free;
-        size_t   memory_total;
+        size_t   يادگيري_free;
+        size_t   يادگيري_ڪل;
     } cached_device_info;
 
     /* Cached buffer type information to prevent memory leaks and race conditions */
-    struct {
-        apir_buffer_type_host_handle_t host_handle;
-        char *                         name;
+    بنية {
+        apir_بفر_type_host_handle_t host_handle;
+        حرف *                         name;
         size_t                         alignment;
-        size_t                         max_size;
-    } cached_buffer_type;
+        size_t                         max_سائيز;
+    } cached_بفر_type;
 };
 
-static inline int virtgpu_ioctl(virtgpu * gpu, unsigned long request, void * args) {
-    return drmIoctl(gpu->fd, request, args);
+ساكن مضمن صحيح virtgpu_ioctl(virtgpu * gpu, بنانشان ڊگهو request, فراغ * دليلون_2) {
+    أرجع drmIoctl(gpu->fd, request, دليلون_2);
 }
 
 virtgpu * create_virtgpu();
@@ -109,7 +109,7 @@ apir_encoder * remote_call_prepare(virtgpu * gpu, ApirCommandType apir_cmd_type,
 uint32_t remote_call(virtgpu *       gpu,
                      apir_encoder *  enc,
                      apir_decoder ** dec,
-                     float           max_wait_ms,
-                     long long *     call_duration_ns);
+                     عائم           max_wait_ms,
+                     ڊگهو ڊگهو *     call_duration_ns);
 
-void remote_call_finish(virtgpu * gpu, apir_encoder * enc, apir_decoder * dec);
+فراغ remote_call_پڄاڻي(virtgpu * gpu, apir_encoder * enc, apir_decoder * dec);

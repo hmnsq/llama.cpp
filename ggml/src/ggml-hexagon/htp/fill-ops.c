@@ -1,146 +1,146 @@
-#pragma clang diagnostic ignored "-Wunused-variable"
-#pragma clang diagnostic ignored "-Wunused-function"
-#pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#هدايت clang diagnostic ignored "-Wunused-variable"
+#هدايت clang diagnostic ignored "-Wunused-function"
+#هدايت clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <string.h>
+#ضمن <HAP_farf.h>
+#ضمن <string.h>
 
-#include "hex-common.h"
-#include "hex-profile.h"
+#ضمن "hex-common.h"
+#ضمن "hex-profile.h"
 
-#include "hvx-copy.h"
-#include "hvx-utils.h"
+#ضمن "hvx-copy.h"
+#ضمن "hvx-utils.h"
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-tensor.h"
+#وصف_ڪريو GGML_COMMON_DECL_C
+#ضمن "ggml-common.h"
+#ضمن "htp-ctx.h"
+#ضمن "htp-ops.h"
+#ضمن "htp-tensor.h"
 
 // ggml op_params layout for FILL:
 //   op_params[0] (as float) - the scalar fill value
 
-#define fill_preamble                          \
-    const struct htp_tensor * dst = octx->dst; \
+#وصف_ڪريو fill_preamble                          \
+    ثابت بنية htp_tensor * dst = octx->dst; \
                                                \
-    const uint32_t ne0 = dst->ne[0];           \
-    const uint32_t ne1 = dst->ne[1];           \
-    const uint32_t ne2 = dst->ne[2];           \
-    const uint32_t ne3 = dst->ne[3];           \
+    ثابت uint32_t ne0 = dst->ne[0];           \
+    ثابت uint32_t ne1 = dst->ne[1];           \
+    ثابت uint32_t ne2 = dst->ne[2];           \
+    ثابت uint32_t ne3 = dst->ne[3];           \
                                                \
-    const uint32_t nb1 = dst->nb[1];           \
-    const uint32_t nb2 = dst->nb[2];           \
-    const uint32_t nb3 = dst->nb[3];           \
+    ثابت uint32_t nb1 = dst->nb[1];           \
+    ثابت uint32_t nb2 = dst->nb[2];           \
+    ثابت uint32_t nb3 = dst->nb[3];           \
                                                \
-    const uint32_t nr = ne1 * ne2 * ne3;
+    ثابت uint32_t nr = ne1 * ne2 * ne3;
 
-struct htp_fill_context {
-    struct htp_ops_context * octx;
-    uint32_t nrows_per_thread;
-    uint32_t total_rows;  // ne1 * ne2 * ne3
-    uint32_t row_start;
-    bool     opt_path;
-    HVX_Vector splat_vec;
-    uint32_t   elem_size;
+بنية htp_fill_context {
+    بنية htp_ops_context * octx;
+    uint32_t nrows_في_thread;
+    uint32_t ڪل_صفون;  // ne1 * ne2 * ne3
+    uint32_t صف_شروعات;
+    bool     opt_رستو;
+    HVX_ويڪٽر splat_vec;
+    uint32_t   elem_سائيز;
 };
 
-static void fill_thread(unsigned int nth, unsigned int ith, void * data) {
-    const struct htp_fill_context * fctx = (const struct htp_fill_context *) data;
-    struct htp_ops_context        * octx = fctx->octx;
+ساكن فراغ fill_thread(بنانشان صحيح nth, بنانشان صحيح ith, فراغ * معلومات) {
+    ثابت بنية htp_fill_context * fctx = (ثابت بنية htp_fill_context *) معلومات;
+    بنية htp_ops_context        * octx = fctx->octx;
     fill_preamble;
 
     // Parallelise over the flat row index spanning ne1*ne2*ne3
-    const uint32_t ir0 = fctx->row_start + fctx->nrows_per_thread * ith;
-    const uint32_t ir1 = MIN(ir0 + fctx->nrows_per_thread, fctx->row_start + fctx->total_rows);
+    ثابت uint32_t ir0 = fctx->صف_شروعات + fctx->nrows_في_thread * ith;
+    ثابت uint32_t ir1 = MIN(ir0 + fctx->nrows_في_thread, fctx->صف_شروعات + fctx->ڪل_صفون);
 
-    if (ir0 >= ir1) {
-        return;
+    إذا (ir0 >= ir1) {
+        أرجع;
     }
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir0);
+    بنية htp_thread_trace * tr = &octx->ctx->trace[ith];
+    htp_trace_event_شروعات(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir0);
 
-    if (fctx->opt_path) {
+    إذا (fctx->opt_رستو) {
         // Opt path: tensor is fully contiguous, treat as flat array
-        const uint32_t elem_start = ir0 * ne0;
-        const uint32_t elem_end = ir1 * ne0;
-        uint8_t * dst_ptr = (uint8_t *) dst->data + elem_start * fctx->elem_size;
-        hvx_splat_u(dst_ptr, fctx->splat_vec, elem_end - elem_start, fctx->elem_size);
-    } else {
+        ثابت uint32_t elem_شروعات = ir0 * ne0;
+        ثابت uint32_t elem_پڇاڙي = ir1 * ne0;
+        uint8_t * dst_ptr = (uint8_t *) dst->معلومات + elem_شروعات * fctx->elem_سائيز;
+        hvx_splat_u(dst_ptr, fctx->splat_vec, elem_پڇاڙي - elem_شروعات, fctx->elem_سائيز);
+    } وإلا {
         // Non-contiguous path: must respect strides
-        for (uint32_t ir = ir0; ir < ir1; ++ir) {
-            const uint32_t i1 = ir % ne1;
-            const uint32_t i2 = (ir / ne1) % ne2;
-            const uint32_t i3 = ir / (ne1 * ne2);
-            uint8_t * dst_ptr = (uint8_t *) dst->data + i1*nb1 + i2*nb2 + i3*nb3;
-            hvx_splat_u(dst_ptr, fctx->splat_vec, ne0, fctx->elem_size);
+        لكل (uint32_t ir = ir0; ir < ir1; ++ir) {
+            ثابت uint32_t i1 = ir % ne1;
+            ثابت uint32_t i2 = (ir / ne1) % ne2;
+            ثابت uint32_t i3 = ir / (ne1 * ne2);
+            uint8_t * dst_ptr = (uint8_t *) dst->معلومات + i1*nb1 + i2*nb2 + i3*nb3;
+            hvx_splat_u(dst_ptr, fctx->splat_vec, ne0, fctx->elem_سائيز);
         }
     }
 
     htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir1);
-    FARF(HIGH, "fill %u/%u: rows %u:%u\n", ith, nth, ir0, ir1);
+    FARF(مٿاهون_2, "fill %u/%u: rows %u:%u\n", ith, nth, ir0, ir1);
 }
 
-int op_fill(struct htp_ops_context * octx) {
+صحيح op_fill(بنية htp_ops_context * octx) {
     fill_preamble;
 
-    if (dst->type != HTP_TYPE_F32 && dst->type != HTP_TYPE_F16) {
-        return HTP_STATUS_NO_SUPPORT;
+    إذا (dst->type != HTP_TYPE_F32 && dst->type != HTP_TYPE_F16) {
+        أرجع HTP_حالت_NO_SUPPORT;
     }
 
-    if (htp_tensor_is_extended(dst)) {
-        return HTP_STATUS_NO_SUPPORT;
+    إذا (htp_tensor_is_extended(dst)) {
+        أرجع HTP_حالت_NO_SUPPORT;
     }
 
-    uint32_t row_start = 0;
+    uint32_t صف_شروعات = 0;
     uint32_t nrows     = nr;
 
-    if (octx->ctx->mdev.count > 1) {
-        const uint32_t row_size = nb1;
-        const uint32_t rows_per_chunk = (row_size > 0) ? (HEX_L2_LINE_SIZE / hex_gcd_u32(row_size, HEX_L2_LINE_SIZE)) : 1;
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(nr, htp_tensor_mdev_data_aligned(dst) ? rows_per_chunk : 0, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
-        row_start = range.start;
-        nrows     = range.count;
+    إذا (octx->ctx->mdev.ڳڻپ > 1) {
+        ثابت uint32_t صف_سائيز = nb1;
+        ثابت uint32_t صفون_في_chunk = (صف_سائيز > 0) ? (HEX_L2_سٽ_سائيز / hex_وڏو_گڏيل_ونڊيندڙ_u32(صف_سائيز, HEX_L2_سٽ_سائيز)) : 1;
+        ثابت بنية htp_tensor_mdev_range range = htp_tensor_mdev_حصا_ڪريو(nr, htp_tensor_mdev_معلومات_aligned(dst) ? صفون_في_chunk : 0, octx->ctx->mdev.idx, octx->ctx->mdev.ڳڻپ, &octx->ctx->mdev.ڳڻپ_div);
+        صف_شروعات = range.شروعات;
+        nrows     = range.ڳڻپ;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    إذا (nrows == 0) {
+        أرجع HTP_حالت_OK;
     }
 
     // nr = ne1*ne2*ne3 (flat row count across all outer dims); parallelise over it.
-    const uint32_t n_threads = octx->n_threads;
+    ثابت uint32_t n_ڌاڳا = octx->n_ڌاڳا;
 
     // Optimize if fully contiguous: skip stride arithmetic, treat as flat array
-    const bool opt_path = (nb2 == nb1 * ne1) && (nb3 == nb2 * ne2);
+    ثابت bool opt_رستو = (nb2 == nb1 * ne1) && (nb3 == nb2 * ne2);
 
-    FARF(HIGH, "fill: (%ux%ux%ux%u) type=%u opt=%d\n",
-         dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3], dst->type, (int) opt_path);
+    FARF(مٿاهون_2, "fill: (%ux%ux%ux%u) type=%u opt=%d\n",
+         dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3], dst->type, (صحيح) opt_رستو);
 
-    float val_f32 = 0.f;
-    memcpy(&val_f32, &octx->op_params[0], sizeof(float));
+    عائم val_f32 = 0.f;
+    يادگيري_نقل(&val_f32, &octx->op_params[0], حجم(عائم));
 
-    struct htp_fill_context fctx = {
+    بنية htp_fill_context fctx = {
         .octx             = octx,
-        .nrows_per_thread = fastdiv(nrows + n_threads - 1, &octx->n_threads_div),
-        .total_rows       = nrows,
-        .row_start        = row_start,
-        .opt_path         = opt_path,
+        .nrows_في_thread = fastdiv(nrows + n_ڌاڳا - 1, &octx->n_ڌاڳا_div),
+        .ڪل_صفون       = nrows,
+        .صف_شروعات        = صف_شروعات,
+        .opt_رستو         = opt_رستو,
     };
 
-    switch (dst->type) {
-    case HTP_TYPE_F32:
+    بدل (dst->type) {
+    حالة HTP_TYPE_F32:
         fctx.splat_vec = hvx_vec_splat_f32(val_f32);
-        fctx.elem_size = sizeof(float);
-        break;
-    case HTP_TYPE_F16:
+        fctx.elem_سائيز = حجم(عائم);
+        اكسر;
+    حالة HTP_TYPE_F16:
         fctx.splat_vec = hvx_vec_splat_f16((_Float16) val_f32);
-        fctx.elem_size = sizeof(_Float16);
-        break;
-    default:
-        return HTP_STATUS_NO_SUPPORT;
+        fctx.elem_سائيز = حجم(_Float16);
+        اكسر;
+    افتراضي:
+        أرجع HTP_حالت_NO_SUPPORT;
     }
 
-    work_queue_run(octx->ctx->work_queue, fill_thread, &fctx, n_threads);
+    work_قطار_لاڳيتو(octx->ctx->work_قطار, fill_thread, &fctx, n_ڌاڳا);
 
-    return HTP_STATUS_OK;
+    أرجع HTP_حالت_OK;
 }

@@ -1,14 +1,14 @@
-#pragma once
+#هدايت once
 
-#include "ggml-common.h"
-#include "ggml.h"
+#ضمن "ggml-common.h"
+#ضمن "ggml.h"
 
-#include <cstddef>
-#include <cstdint>
+#ضمن <cstddef>
+#ضمن <cstdint>
 
 namespace ggml::cpu::riscv64_spacemit {
 
-template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS>
-int repack(ggml_tensor * t, const void * data, size_t data_size);
+سانچو <typename BLOC_TYPE, int64_t INTER_سائيز, int64_t NB_کانن_ڳڻپ>
+صحيح repack(ggml_tensor * t, ثابت فراغ * معلومات, size_t معلومات_سائيز);
 
 }  // namespace ggml::cpu::riscv64_spacemit

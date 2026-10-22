@@ -1,23 +1,23 @@
-#pragma once
+#هدايت once
 
-#include "ggml-impl.h"
+#ضمن "ggml-impl.h"
 
-#include <cassert>
-#include <cstring>
+#ضمن <cassert>
+#ضمن <cstring>
 
-#define likely(x)   __builtin_expect(!!(x), 1)
-#define unlikely(x) __builtin_expect(!!(x), 0)
+#وصف_ڪريو likely(x)   __builtin_expect(!!(x), 1)
+#وصف_ڪريو unlikely(x) __builtin_expect(!!(x), 0)
 
-struct apir_encoder {
-    char *       cur;
-    const char * start;
-    const char * end;
+بنية apir_encoder {
+    حرف *       cur;
+    ثابت حرف * شروعات;
+    ثابت حرف * پڇاڙي;
     bool         fatal;
 };
 
-struct apir_decoder {
-    const char * cur;
-    const char * end;
+بنية apir_decoder {
+    ثابت حرف * cur;
+    ثابت حرف * پڇاڙي;
     bool         fatal;
 };
 
@@ -25,124 +25,124 @@ struct apir_decoder {
  * new encoder and decoder
  */
 
-static apir_decoder apir_new_decoder(const char * ptr, size_t size) {
+ساكن apir_decoder apir_new_decoder(ثابت حرف * ptr, size_t سائيز) {
     apir_decoder dec = {
         .cur   = ptr,
-        .end   = ptr + size,
+        .پڇاڙي   = ptr + سائيز,
         .fatal = false,
     };
 
-    return dec;
+    أرجع dec;
 }
 
-static apir_encoder apir_new_encoder(char * ptr, size_t size) {
+ساكن apir_encoder apir_new_encoder(حرف * ptr, size_t سائيز) {
     apir_encoder enc = {
         .cur   = ptr,
-        .start = ptr,
-        .end   = ptr + size,
+        .شروعات = ptr,
+        .پڇاڙي   = ptr + سائيز,
         .fatal = false,
     };
 
-    return enc;
+    أرجع enc;
 }
 
 /*
  * fatal flag handling
  */
 
-static inline void apir_encoder_reset_fatal(apir_encoder * enc) {
+ساكن مضمن فراغ apir_encoder_reset_fatal(apir_encoder * enc) {
     enc->fatal = false;
 }
 
-static inline void apir_encoder_set_fatal(apir_encoder * enc) {
+ساكن مضمن فراغ apir_encoder_سيٽ_fatal(apir_encoder * enc) {
     enc->fatal = true;
 }
 
-static inline bool apir_encoder_get_fatal(const apir_encoder * enc) {
-    return enc->fatal;
+ساكن مضمن bool apir_encoder_get_fatal(ثابت apir_encoder * enc) {
+    أرجع enc->fatal;
 }
 
-static inline void apir_decoder_reset_fatal(apir_decoder * dec) {
+ساكن مضمن فراغ apir_decoder_reset_fatal(apir_decoder * dec) {
     dec->fatal = false;
 }
 
-static inline void apir_decoder_set_fatal(apir_decoder * dec) {
+ساكن مضمن فراغ apir_decoder_سيٽ_fatal(apir_decoder * dec) {
     dec->fatal = true;
 }
 
-static inline bool apir_decoder_get_fatal(const apir_decoder * dec) {
-    return dec->fatal;
+ساكن مضمن bool apir_decoder_get_fatal(ثابت apir_decoder * dec) {
+    أرجع dec->fatal;
 }
 
 /*
  * encode peek
  */
 
-static inline bool apir_decoder_peek_internal(apir_decoder * dec, size_t size, void * val, size_t val_size) {
-    assert(val_size <= size);
+ساكن مضمن bool apir_decoder_peek_اندروني(apir_decoder * dec, size_t سائيز, فراغ * val, size_t val_سائيز) {
+    أكد(val_سائيز <= سائيز);
 
-    if (unlikely(size > (size_t) (dec->end - dec->cur))) {
+    إذا (unlikely(سائيز > (size_t) (dec->پڇاڙي - dec->cur))) {
         GGML_LOG_ERROR("%s: reading too much from the decoder ...\n", __func__);
-        apir_decoder_set_fatal(dec);
-        memset(val, 0, val_size);
-        return false;
+        apir_decoder_سيٽ_fatal(dec);
+        memset(val, 0, val_سائيز);
+        أرجع false;
     }
 
     /* we should not rely on the compiler to optimize away memcpy... */
-    memcpy(val, dec->cur, val_size);
-    return true;
+    يادگيري_نقل(val, dec->cur, val_سائيز);
+    أرجع true;
 }
 
-static inline void apir_decoder_peek(apir_decoder * dec, size_t size, void * val, size_t val_size) {
-    apir_decoder_peek_internal(dec, size, val, val_size);
+ساكن مضمن فراغ apir_decoder_peek(apir_decoder * dec, size_t سائيز, فراغ * val, size_t val_سائيز) {
+    apir_decoder_peek_اندروني(dec, سائيز, val, val_سائيز);
 }
 
-static inline const void * apir_decoder_use_inplace(apir_decoder * dec, size_t size) {
-    if (unlikely(size > (size_t) (dec->end - dec->cur))) {
+ساكن مضمن ثابت فراغ * apir_decoder_use_inplace(apir_decoder * dec, size_t سائيز) {
+    إذا (unlikely(سائيز > (size_t) (dec->پڇاڙي - dec->cur))) {
         GGML_LOG_ERROR("%s: reading too much from the decoder ...\n", __func__);
-        apir_decoder_set_fatal(dec);
-        return NULL;
+        apir_decoder_سيٽ_fatal(dec);
+        أرجع عدم;
     }
-    const void * addr = dec->cur;
-    dec->cur += size;
+    ثابت فراغ * addr = dec->cur;
+    dec->cur += سائيز;
 
-    return addr;
+    أرجع addr;
 }
 
 /*
  * read/write
  */
 
-static inline void apir_decoder_read(apir_decoder * dec, size_t size, void * val, size_t val_size) {
-    if (apir_decoder_peek_internal(dec, size, val, val_size)) {
-        dec->cur += size;
+ساكن مضمن فراغ apir_decoder_read(apir_decoder * dec, size_t سائيز, فراغ * val, size_t val_سائيز) {
+    إذا (apir_decoder_peek_اندروني(dec, سائيز, val, val_سائيز)) {
+        dec->cur += سائيز;
     }
 }
 
-static inline char * apir_encoder_write(apir_encoder * enc, size_t size, const void * val, size_t val_size) {
-    assert(val_size <= size);
-    assert(size <= ((size_t) (enc->end - enc->cur)));
+ساكن مضمن حرف * apir_encoder_write(apir_encoder * enc, size_t سائيز, ثابت فراغ * val, size_t val_سائيز) {
+    أكد(val_سائيز <= سائيز);
+    أكد(سائيز <= ((size_t) (enc->پڇاڙي - enc->cur)));
 
-    char * write_addr = enc->cur;
+    حرف * write_addr = enc->cur;
     /* we should not rely on the compiler to optimize away memcpy... */
-    memcpy(write_addr, val, val_size);
-    enc->cur += size;
+    يادگيري_نقل(write_addr, val, val_سائيز);
+    enc->cur += سائيز;
 
-    return write_addr;
+    أرجع write_addr;
 }
 
 /*
  * encode/decode
  */
 
-static inline void apir_decode(apir_decoder * dec, size_t size, void * data, size_t data_size) {
-    assert(size % 4 == 0);
-    apir_decoder_read(dec, size, data, data_size);
+ساكن مضمن فراغ apir_decode(apir_decoder * dec, size_t سائيز, فراغ * معلومات, size_t معلومات_سائيز) {
+    أكد(سائيز % 4 == 0);
+    apir_decoder_read(dec, سائيز, معلومات, معلومات_سائيز);
 }
 
-static inline void apir_encode(apir_encoder * enc, size_t size, const void * data, size_t data_size) {
-    assert(size % 4 == 0);
-    apir_encoder_write(enc, size, data, data_size);
+ساكن مضمن فراغ apir_encode(apir_encoder * enc, size_t سائيز, ثابت فراغ * معلومات, size_t معلومات_سائيز) {
+    أكد(سائيز % 4 == 0);
+    apir_encoder_write(enc, سائيز, معلومات, معلومات_سائيز);
 }
 
 /*
@@ -151,228 +151,228 @@ static inline void apir_encode(apir_encoder * enc, size_t size, const void * dat
 
 /* uint8_t */
 
-static inline void apir_encode_uint8_t(apir_encoder * enc, const uint8_t * val) {
-    apir_encode(enc, sizeof(int), val, sizeof(*val));
+ساكن مضمن فراغ apir_encode_uint8_t(apir_encoder * enc, ثابت uint8_t * val) {
+    apir_encode(enc, حجم(صحيح), val, حجم(*val));
 }
 
-static inline void apir_decode_uint8_t(apir_decoder * dec, uint8_t * val) {
-    apir_decode(dec, sizeof(int), val, sizeof(*val));
+ساكن مضمن فراغ apir_decode_uint8_t(apir_decoder * dec, uint8_t * val) {
+    apir_decode(dec, حجم(صحيح), val, حجم(*val));
 }
 
 /* uint64_t */
 
-static inline void apir_encode_uint64_t(apir_encoder * enc, const uint64_t * val) {
-    apir_encode(enc, 8, val, sizeof(*val));
+ساكن مضمن فراغ apir_encode_uint64_t(apir_encoder * enc, ثابت uint64_t * val) {
+    apir_encode(enc, 8, val, حجم(*val));
 }
 
-static inline void apir_decode_uint64_t(apir_decoder * dec, uint64_t * val) {
-    apir_decode(dec, 8, val, sizeof(*val));
+ساكن مضمن فراغ apir_decode_uint64_t(apir_decoder * dec, uint64_t * val) {
+    apir_decode(dec, 8, val, حجم(*val));
 }
 
-static inline void apir_encode_uint64_t_array(apir_encoder * enc, const uint64_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
-    apir_encode(enc, size, val, size);
+ساكن مضمن فراغ apir_encode_uint64_t_array(apir_encoder * enc, ثابت uint64_t * val, uint32_t ڳڻپ) {
+    ثابت size_t سائيز = حجم(*val) * ڳڻپ;
+    أكد(سائيز >= ڳڻپ);
+    apir_encode(enc, سائيز, val, سائيز);
 }
 
-static inline void apir_decode_uint64_t_array(apir_decoder * dec, uint64_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
-    apir_decode(dec, size, val, size);
+ساكن مضمن فراغ apir_decode_uint64_t_array(apir_decoder * dec, uint64_t * val, uint32_t ڳڻپ) {
+    ثابت size_t سائيز = حجم(*val) * ڳڻپ;
+    أكد(سائيز >= ڳڻپ);
+    apir_decode(dec, سائيز, val, سائيز);
 }
 
-static inline const uint64_t * apir_decode_uint64_t_array_inplace(apir_decoder * dec, uint32_t count) {
-    return (uint64_t *) (uintptr_t) apir_decoder_use_inplace(dec, count * sizeof(uint64_t));
+ساكن مضمن ثابت uint64_t * apir_decode_uint64_t_array_inplace(apir_decoder * dec, uint32_t ڳڻپ) {
+    أرجع (uint64_t *) (uintptr_t) apir_decoder_use_inplace(dec, ڳڻپ * حجم(uint64_t));
 }
 
 /* int32_t */
 
-static inline void apir_encode_int32_t(apir_encoder * enc, const int32_t * val) {
-    apir_encode(enc, 4, val, sizeof(*val));
+ساكن مضمن فراغ apir_encode_int32_t(apir_encoder * enc, ثابت int32_t * val) {
+    apir_encode(enc, 4, val, حجم(*val));
 }
 
-static inline void apir_decode_int32_t(apir_decoder * dec, int32_t * val) {
-    apir_decode(dec, 4, val, sizeof(*val));
+ساكن مضمن فراغ apir_decode_int32_t(apir_decoder * dec, int32_t * val) {
+    apir_decode(dec, 4, val, حجم(*val));
 }
 
-static inline void apir_encode_int32_t_array(apir_encoder * enc, const int32_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
-    apir_encode(enc, size, val, size);
+ساكن مضمن فراغ apir_encode_int32_t_array(apir_encoder * enc, ثابت int32_t * val, uint32_t ڳڻپ) {
+    ثابت size_t سائيز = حجم(*val) * ڳڻپ;
+    أكد(سائيز >= ڳڻپ);
+    apir_encode(enc, سائيز, val, سائيز);
 }
 
-static inline void apir_decode_int32_t_array(apir_decoder * dec, int32_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
-    apir_decode(dec, size, val, size);
+ساكن مضمن فراغ apir_decode_int32_t_array(apir_decoder * dec, int32_t * val, uint32_t ڳڻپ) {
+    ثابت size_t سائيز = حجم(*val) * ڳڻپ;
+    أكد(سائيز >= ڳڻپ);
+    apir_decode(dec, سائيز, val, سائيز);
 }
 
 /* array size (uint64_t) */
 
-static inline void apir_encode_array_size(apir_encoder * enc, uint64_t size) {
-    apir_encode_uint64_t(enc, &size);
+ساكن مضمن فراغ apir_encode_array_سائيز(apir_encoder * enc, uint64_t سائيز) {
+    apir_encode_uint64_t(enc, &سائيز);
 }
 
-static inline uint64_t apir_decode_array_size(apir_decoder * dec, uint64_t expected_size) {
-    uint64_t size;
-    apir_decode_uint64_t(dec, &size);
-    if (size != expected_size) {
+ساكن مضمن uint64_t apir_decode_array_سائيز(apir_decoder * dec, uint64_t expected_سائيز) {
+    uint64_t سائيز;
+    apir_decode_uint64_t(dec, &سائيز);
+    إذا (سائيز != expected_سائيز) {
         GGML_LOG_ERROR("%s: Couldn't decode array from the decoder\n", __func__);
-        apir_decoder_set_fatal(dec);
-        size = 0;
+        apir_decoder_سيٽ_fatal(dec);
+        سائيز = 0;
     }
-    return size;
+    أرجع سائيز;
 }
 
-static inline uint64_t apir_decode_array_size_unchecked(apir_decoder * dec) {
-    uint64_t size;
-    apir_decode_uint64_t(dec, &size);
-    return size;
+ساكن مضمن uint64_t apir_decode_array_سائيز_unchecked(apir_decoder * dec) {
+    uint64_t سائيز;
+    apir_decode_uint64_t(dec, &سائيز);
+    أرجع سائيز;
 }
 
 /* non-array pointer */
 
-static inline bool apir_encode_simple_pointer(apir_encoder * enc, const void * val) {
-    apir_encode_array_size(enc, val ? 1 : 0);
-    return val;
+ساكن مضمن bool apir_encode_simple_اشارو(apir_encoder * enc, ثابت فراغ * val) {
+    apir_encode_array_سائيز(enc, val ? 1 : 0);
+    أرجع val;
 }
 
-static inline bool apir_decode_simple_pointer(apir_decoder * dec) {
-    return apir_decode_array_size_unchecked(dec);
+ساكن مضمن bool apir_decode_simple_اشارو(apir_decoder * dec) {
+    أرجع apir_decode_array_سائيز_unchecked(dec);
 }
 
 /* uint32_t */
 
-static inline void apir_encode_uint32_t(apir_encoder * enc, const uint32_t * val) {
-    apir_encode(enc, 4, val, sizeof(*val));
+ساكن مضمن فراغ apir_encode_uint32_t(apir_encoder * enc, ثابت uint32_t * val) {
+    apir_encode(enc, 4, val, حجم(*val));
 }
 
-static inline void apir_decode_uint32_t(apir_decoder * dec, uint32_t * val) {
-    apir_decode(dec, 4, val, sizeof(*val));
+ساكن مضمن فراغ apir_decode_uint32_t(apir_decoder * dec, uint32_t * val) {
+    apir_decode(dec, 4, val, حجم(*val));
 }
 
-static inline void apir_encode_uint32_t_array(apir_encoder * enc, const uint32_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
-    apir_encode(enc, size, val, size);
+ساكن مضمن فراغ apir_encode_uint32_t_array(apir_encoder * enc, ثابت uint32_t * val, uint32_t ڳڻپ) {
+    ثابت size_t سائيز = حجم(*val) * ڳڻپ;
+    أكد(سائيز >= ڳڻپ);
+    apir_encode(enc, سائيز, val, سائيز);
 }
 
-static inline void apir_decode_uint32_t_array(apir_decoder * dec, uint32_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
-    apir_decode(dec, size, val, size);
+ساكن مضمن فراغ apir_decode_uint32_t_array(apir_decoder * dec, uint32_t * val, uint32_t ڳڻپ) {
+    ثابت size_t سائيز = حجم(*val) * ڳڻپ;
+    أكد(سائيز >= ڳڻپ);
+    apir_decode(dec, سائيز, val, سائيز);
 }
 
 /* size_t */
 
-static inline void apir_encode_size_t(apir_encoder * enc, const size_t * val) {
-    const uint64_t tmp = *val;
+ساكن مضمن فراغ apir_encode_سائيز_t(apir_encoder * enc, ثابت size_t * val) {
+    ثابت uint64_t tmp = *val;
     apir_encode_uint64_t(enc, &tmp);
 }
 
-static inline void apir_decode_size_t(apir_decoder * dec, size_t * val) {
+ساكن مضمن فراغ apir_decode_سائيز_t(apir_decoder * dec, size_t * val) {
     uint64_t tmp;
     apir_decode_uint64_t(dec, &tmp);
     *val = tmp;
 }
 
-static inline void apir_encode_size_t_array(apir_encoder * enc, const size_t * val, uint32_t count) {
-    if (sizeof(size_t) == sizeof(uint64_t)) {
-        apir_encode_uint64_t_array(enc, (const uint64_t *) val, count);
-    } else {
-        for (uint32_t i = 0; i < count; i++) {
-            apir_encode_size_t(enc, &val[i]);
+ساكن مضمن فراغ apir_encode_سائيز_t_array(apir_encoder * enc, ثابت size_t * val, uint32_t ڳڻپ) {
+    إذا (حجم(size_t) == حجم(uint64_t)) {
+        apir_encode_uint64_t_array(enc, (ثابت uint64_t *) val, ڳڻپ);
+    } وإلا {
+        لكل (uint32_t i = 0; i < ڳڻپ; i++) {
+            apir_encode_سائيز_t(enc, &val[i]);
         }
     }
 }
 
-static inline void apir_decode_size_t_array(apir_decoder * dec, size_t * val, uint32_t count) {
-    if (sizeof(size_t) == sizeof(uint64_t)) {
-        apir_decode_uint64_t_array(dec, (uint64_t *) val, count);
-    } else {
-        for (uint32_t i = 0; i < count; i++) {
-            apir_decode_size_t(dec, &val[i]);
+ساكن مضمن فراغ apir_decode_سائيز_t_array(apir_decoder * dec, size_t * val, uint32_t ڳڻپ) {
+    إذا (حجم(size_t) == حجم(uint64_t)) {
+        apir_decode_uint64_t_array(dec, (uint64_t *) val, ڳڻپ);
+    } وإلا {
+        لكل (uint32_t i = 0; i < ڳڻپ; i++) {
+            apir_decode_سائيز_t(dec, &val[i]);
         }
     }
 }
 
 /* opaque blob */
 
-static inline void apir_encode_blob_array(apir_encoder * enc, const void * val, size_t size) {
-    apir_encode(enc, (size + 3) & ~3, val, size);
+ساكن مضمن فراغ apir_encode_blob_array(apir_encoder * enc, ثابت فراغ * val, size_t سائيز) {
+    apir_encode(enc, (سائيز + 3) & ~3, val, سائيز);
 }
 
-static inline void apir_decode_blob_array(apir_decoder * dec, void * val, size_t size) {
-    apir_decode(dec, (size + 3) & ~3, val, size);
+ساكن مضمن فراغ apir_decode_blob_array(apir_decoder * dec, فراغ * val, size_t سائيز) {
+    apir_decode(dec, (سائيز + 3) & ~3, val, سائيز);
 }
 
 /* string */
 
-static inline void apir_encode_char_array(apir_encoder * enc, const char * val, size_t size) {
-    assert(size && strlen(val) < size);
-    apir_encode_blob_array(enc, val, size);
+ساكن مضمن فراغ apir_encode_char_array(apir_encoder * enc, ثابت حرف * val, size_t سائيز) {
+    أكد(سائيز && لڙي_ڊيگهه(val) < سائيز);
+    apir_encode_blob_array(enc, val, سائيز);
 }
 
-static inline void apir_decode_char_array(apir_decoder * dec, char * val, size_t size) {
-    apir_decode_blob_array(dec, val, size);
-    if (size) {
-        val[size - 1] = '\0';
-    } else {
+ساكن مضمن فراغ apir_decode_char_array(apir_decoder * dec, حرف * val, size_t سائيز) {
+    apir_decode_blob_array(dec, val, سائيز);
+    إذا (سائيز) {
+        val[سائيز - 1] = '\0';
+    } وإلا {
         GGML_LOG_ERROR("%s: Couldn't decode the blog array\n", __func__);
-        apir_decoder_set_fatal(dec);
+        apir_decoder_سيٽ_fatal(dec);
     }
 }
 
 /* (temp) buffer allocation */
 
-static inline void * apir_decoder_alloc_array(size_t size, size_t count) {
-    size_t alloc_size;
-    if (unlikely(__builtin_mul_overflow(size, count, &alloc_size))) {
-        GGML_LOG_ERROR("%s: overflow in array allocation of %zu * %zu bytes\n", __func__, size, count);
-        return NULL;
+ساكن مضمن فراغ * apir_decoder_alloc_array(size_t سائيز, size_t ڳڻپ) {
+    size_t alloc_سائيز;
+    إذا (unlikely(__builtin_mul_overflow(سائيز, ڳڻپ, &alloc_سائيز))) {
+        GGML_LOG_ERROR("%s: overflow in array allocation of %zu * %zu bytes\n", __func__, سائيز, ڳڻپ);
+        أرجع عدم;
     }
 
-    return malloc(alloc_size);
+    أرجع يادگيري_ڏيو(alloc_سائيز);
 }
 
 /* bool */
 
-static inline void apir_encode_bool_t(apir_encoder * enc, const bool * val) {
-    apir_encode(enc, sizeof(int), val, sizeof(bool));
+ساكن مضمن فراغ apir_encode_bool_t(apir_encoder * enc, ثابت bool * val) {
+    apir_encode(enc, حجم(صحيح), val, حجم(bool));
 }
 
-static inline void apir_decode_bool_t(apir_decoder * dec, bool * val) {
-    apir_decode(dec, sizeof(int), val, sizeof(bool));
+ساكن مضمن فراغ apir_decode_bool_t(apir_decoder * dec, bool * val) {
+    apir_decode(dec, حجم(صحيح), val, حجم(bool));
 }
 
 /* apir_buffer_type_host_handle_t */
 
-static inline void apir_encode_apir_buffer_type_host_handle_t(apir_encoder *                         enc,
-                                                              const apir_buffer_type_host_handle_t * val) {
-    apir_encode(enc, sizeof(apir_buffer_type_host_handle_t), val, sizeof(apir_buffer_type_host_handle_t));
+ساكن مضمن فراغ apir_encode_apir_بفر_type_host_handle_t(apir_encoder *                         enc,
+                                                              ثابت apir_بفر_type_host_handle_t * val) {
+    apir_encode(enc, حجم(apir_بفر_type_host_handle_t), val, حجم(apir_بفر_type_host_handle_t));
 }
 
-static inline void apir_decode_apir_buffer_type_host_handle_t(apir_decoder *                   dec,
-                                                              apir_buffer_type_host_handle_t * val) {
-    apir_decode(dec, sizeof(apir_buffer_type_host_handle_t), val, sizeof(apir_buffer_type_host_handle_t));
+ساكن مضمن فراغ apir_decode_apir_بفر_type_host_handle_t(apir_decoder *                   dec,
+                                                              apir_بفر_type_host_handle_t * val) {
+    apir_decode(dec, حجم(apir_بفر_type_host_handle_t), val, حجم(apir_بفر_type_host_handle_t));
 }
 
 /* apir_buffer_host_handle_t */
 
-static inline void apir_encode_apir_buffer_host_handle_t(apir_encoder * enc, const apir_buffer_host_handle_t * val) {
-    apir_encode(enc, sizeof(apir_buffer_host_handle_t), val, sizeof(apir_buffer_host_handle_t));
+ساكن مضمن فراغ apir_encode_apir_بفر_host_handle_t(apir_encoder * enc, ثابت apir_بفر_host_handle_t * val) {
+    apir_encode(enc, حجم(apir_بفر_host_handle_t), val, حجم(apir_بفر_host_handle_t));
 }
 
-static inline void apir_decode_apir_buffer_host_handle_t(apir_decoder * dec, apir_buffer_host_handle_t * val) {
-    apir_decode(dec, sizeof(apir_buffer_host_handle_t), val, sizeof(apir_buffer_host_handle_t));
+ساكن مضمن فراغ apir_decode_apir_بفر_host_handle_t(apir_decoder * dec, apir_بفر_host_handle_t * val) {
+    apir_decode(dec, حجم(apir_بفر_host_handle_t), val, حجم(apir_بفر_host_handle_t));
 }
 
 /* uintptr_t */
 
-static inline void apir_encode_uintptr_t(apir_encoder * enc, const uintptr_t * val) {
-    apir_encode(enc, sizeof(*val), val, sizeof(*val));
+ساكن مضمن فراغ apir_encode_uintptr_t(apir_encoder * enc, ثابت uintptr_t * val) {
+    apir_encode(enc, حجم(*val), val, حجم(*val));
 }
 
-static inline void apir_decode_uintptr_t(apir_decoder * dec, uintptr_t * val) {
-    apir_decode(dec, sizeof(*val), val, sizeof(*val));
+ساكن مضمن فراغ apir_decode_uintptr_t(apir_decoder * dec, uintptr_t * val) {
+    apir_decode(dec, حجم(*val), val, حجم(*val));
 }

@@ -1,61 +1,61 @@
-#ifndef GGML_ZDNN_SCRATCH_HPP
-#define GGML_ZDNN_SCRATCH_HPP
+#جيڪڏهن_وصف_نه_ٿيل GGML_ZDNN_SCRATCH_HPP
+#وصف_ڪريو GGML_ZDNN_SCRATCH_HPP
 
-#include "ggml.h"
+#ضمن "ggml.h"
 
-#include <cstddef>
-#include <vector>
+#ضمن <cstddef>
+#ضمن <vector>
 
 // 4K aligned host buffers that are cached for reuse, see ggml_cuda_pool_leg
-struct ggml_zdnn_pool {
-    struct buffer {
-        void * ptr  = nullptr;
+بنية ggml_zdnn_pool {
+    بنية بفر {
+        فراغ * ptr  = خالي_اشارو;
         size_t size = 0;
     };
 
-    std::vector<buffer> cached;
+    std::vector<بفر> cached;
 
     ~ggml_zdnn_pool();
 
-    void * alloc(size_t size, size_t * actual_size);
-    void   free(void * ptr, size_t size);
+    فراغ * alloc(size_t size, size_t * actual_سائيز);
+    فراغ   حرر(فراغ * ptr, size_t size);
 };
 
 // a buffer of the pool that goes back to it at the end of its scope, see ggml_cuda_pool_alloc
-template <typename T>
-struct ggml_zdnn_pool_alloc {
-    ggml_zdnn_pool * pool = nullptr;
-    T * ptr = nullptr;
-    size_t actual_size = 0;
+سانچو <قسم_نالو T>
+بنية ggml_zdnn_pool_alloc {
+    ggml_zdnn_pool * pool = خالي_اشارو;
+    T * ptr = خالي_اشارو;
+    size_t actual_سائيز = 0;
 
-    ggml_zdnn_pool_alloc() = default;
+    ggml_zdnn_pool_alloc() = افتراضي;
 
     ggml_zdnn_pool_alloc(ggml_zdnn_pool & pool, size_t size) {
         alloc(pool, size);
     }
 
     ~ggml_zdnn_pool_alloc() {
-        if (ptr != nullptr) {
-            pool->free(ptr, actual_size);
+        إذا (ptr != خالي_اشارو) {
+            pool->حرر(ptr, actual_سائيز);
         }
     }
 
     // size is in number of elements
     T * alloc(ggml_zdnn_pool & pool, size_t size) {
-        GGML_ASSERT(ptr == nullptr);
-        this->pool = &pool;
-        ptr = (T *) pool.alloc(size * sizeof(T), &actual_size);
-        return ptr;
+        GGML_ASSERT(ptr == خالي_اشارو);
+        هذا->pool = &pool;
+        ptr = (T *) pool.alloc(size * حجم(T), &actual_سائيز);
+        أرجع ptr;
     }
 
     T * get() {
-        return ptr;
+        أرجع ptr;
     }
 
-    ggml_zdnn_pool_alloc(const ggml_zdnn_pool_alloc &) = delete;
-    ggml_zdnn_pool_alloc(ggml_zdnn_pool_alloc &&) = delete;
-    ggml_zdnn_pool_alloc & operator=(const ggml_zdnn_pool_alloc &) = delete;
-    ggml_zdnn_pool_alloc & operator=(ggml_zdnn_pool_alloc &&) = delete;
+    ggml_zdnn_pool_alloc(ثابت ggml_zdnn_pool_alloc &) = ميٽيو;
+    ggml_zdnn_pool_alloc(ggml_zdnn_pool_alloc &&) = ميٽيو;
+    ggml_zdnn_pool_alloc & عامل=(ثابت ggml_zdnn_pool_alloc &) = ميٽيو;
+    ggml_zdnn_pool_alloc & عامل=(ggml_zdnn_pool_alloc &&) = ميٽيو;
 };
 
-#endif  // GGML_ZDNN_SCRATCH_HPP
+#جيڪڏهن_پورو  // GGML_ZDNN_SCRATCH_HPP

@@ -1,14 +1,14 @@
-#pragma once
+#هدايت once
 
-#include "ggml.h"
+#ضمن "ggml.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#جيڪڏهن_وصف_ٿيل __cplusplus
+خارجي "C" {
+#جيڪڏهن_پورو
 
-GGML_API void ggml_critical_section_start(void);
-GGML_API void ggml_critical_section_end(void);
+GGML_API فراغ ggml_critical_section_شروعات(فراغ);
+GGML_API فراغ ggml_critical_section_پڇاڙي(فراغ);
 
-#ifdef __cplusplus
+#جيڪڏهن_وصف_ٿيل __cplusplus
 }
-#endif
+#جيڪڏهن_پورو

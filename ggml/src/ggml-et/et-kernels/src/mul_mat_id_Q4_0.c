@@ -11,159 +11,159 @@
 // expert lookups and 2-row x2 dot products.
 //******************************************************************************
 
-#include "block_ops.h"
-#include "ggml_tensor.h"
-#include "math_fp.h"
-#include "platform.h"
-#include "quants.h"
+#ضمن "block_ops.h"
+#ضمن "ggml_tensor.h"
+#ضمن "math_fp.h"
+#ضمن "platform.h"
+#ضمن "quants.h"
 
-#include <stdint.h>
+#ضمن <stdint.h>
 
-int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
+صحيح داخلا_نقطو(بنية ggml_et_mul_mat_id_params * params, فراغ * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
-    if (!kernel_env || !params) {
-        return -1;
+    إذا (!kernel_env || !params) {
+        أرجع -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
-    if (thread_id < 0) {
-        return 0;
+    صحيح thread_id   = get_relative_thread_id(kernel_env->shire_نقاب);
+    صحيح انگ_ڌاڳا = get_انگ_ڌاڳا(kernel_env->shire_نقاب);
+    إذا (thread_id < 0) {
+        أرجع 0;
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * src1 = &params->src1;
-    struct ggml_tensor * src2 = &params->src2;
-    struct ggml_tensor * dst  = &params->dst;
+    بنية ggml_tensor * src0 = &params->src0;
+    بنية ggml_tensor * src1 = &params->src1;
+    بنية ggml_tensor * src2 = &params->src2;
+    بنية ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_Q4_0 || src1->type != GGML_TYPE_F32 || src2->type != GGML_TYPE_I32 ||
+    إذا (src0->type != GGML_TYPE_Q4_0 || src1->type != GGML_TYPE_F32 || src2->type != GGML_TYPE_I32 ||
         dst->type != GGML_TYPE_F32) {
-        return -1;
+        أرجع -1;
     }
 
-    const void *    src0_data = src0->data;
-    const float *   src1_data = (const float *) src1->data;
-    const int32_t * src2_data = (const int32_t *) src2->data;
-    float *         dst_data  = (float *) dst->data;
-    if (!src0_data || !src1_data || !src2_data || !dst_data) {
-        return -1;
+    ثابت فراغ *    src0_معلومات = src0->معلومات;
+    ثابت عائم *   src1_معلومات = (ثابت عائم *) src1->معلومات;
+    ثابت int32_t * src2_معلومات = (ثابت int32_t *) src2->معلومات;
+    عائم *         dst_معلومات  = (عائم *) dst->معلومات;
+    إذا (!src0_معلومات || !src1_معلومات || !src2_معلومات || !dst_معلومات) {
+        أرجع -1;
     }
 
-    const int64_t K             = src0->ne[0];
-    const int64_t M             = src0->ne[1];
-    const int64_t n_expert      = src0->ne[2];
-    const int64_t n_expert_used = src2->ne[0];
-    const int64_t batch         = src2->ne[1];
-    const int64_t ne11          = src1->ne[1];
+    ثابت int64_t K             = src0->ne[0];
+    ثابت int64_t M             = src0->ne[1];
+    ثابت int64_t n_expert      = src0->ne[2];
+    ثابت int64_t n_expert_استعمال_ٿيل = src2->ne[0];
+    ثابت int64_t batch         = src2->ne[1];
+    ثابت int64_t ne11          = src1->ne[1];
 
-    if (K % QK4_0 != 0) {
-        return -1;
+    إذا (K % QK4_0 != 0) {
+        أرجع -1;
     }
 
-    const size_t nb01 = src0->nb[1];  // Q4_0 row stride
-    const size_t nb02 = src0->nb[2];  // expert stride
-    const size_t nb11 = src1->nb[1];  // activation column stride
-    const size_t nb12 = src1->nb[2];  // activation batch stride
-    const size_t nb20 = src2->nb[0];
-    const size_t nb21 = src2->nb[1];
-    const size_t nbd0 = dst->nb[0];
-    const size_t nbd1 = dst->nb[1];
-    const size_t nbd2 = dst->nb[2];
+    ثابت size_t nb01 = src0->nb[1];  // Q4_0 row stride
+    ثابت size_t nb02 = src0->nb[2];  // expert stride
+    ثابت size_t nb11 = src1->nb[1];  // activation column stride
+    ثابت size_t nb12 = src1->nb[2];  // activation batch stride
+    ثابت size_t nb20 = src2->nb[0];
+    ثابت size_t nb21 = src2->nb[1];
+    ثابت size_t nbd0 = dst->nb[0];
+    ثابت size_t nbd1 = dst->nb[1];
+    ثابت size_t nbd2 = dst->nb[2];
 
-    if (src0->nb[0] != sizeof(block_q4_0) || src1->nb[0] != sizeof(float) || src2->nb[0] != sizeof(int32_t) ||
-        nbd0 != sizeof(float)) {
-        return -1;
+    إذا (src0->nb[0] != حجم(بلاڪ_q4_0) || src1->nb[0] != حجم(عائم) || src2->nb[0] != حجم(int32_t) ||
+        nbd0 != حجم(عائم)) {
+        أرجع -1;
     }
 
-    const int64_t K_blocks = K / QK4_0;
-    const int     use_x2   = ((nb01 & 31) == 0);
+    ثابت int64_t K_بلاڪون = K / QK4_0;
+    ثابت صحيح     use_x2   = ((nb01 & 31) == 0);
 
-    const uint64_t total_outputs = (uint64_t) M * (uint64_t) n_expert_used * (uint64_t) batch;
-    if (total_outputs == 0) {
-        return 0;
+    ثابت uint64_t ڪل_outputs = (uint64_t) M * (uint64_t) n_expert_استعمال_ٿيل * (uint64_t) batch;
+    إذا (ڪل_outputs == 0) {
+        أرجع 0;
     }
 
     // Even partition: hart h owns outputs [h*chunk, (h+1)*chunk).
-    const uint64_t chunk    = (total_outputs + (uint64_t) num_threads - 1) / (uint64_t) num_threads;
-    const uint64_t my_start = (uint64_t) thread_id * chunk;
-    if (my_start >= total_outputs) {
-        return 0;
+    ثابت uint64_t chunk    = (ڪل_outputs + (uint64_t) انگ_ڌاڳا - 1) / (uint64_t) انگ_ڌاڳا;
+    ثابت uint64_t my_شروعات = (uint64_t) thread_id * chunk;
+    إذا (my_شروعات >= ڪل_outputs) {
+        أرجع 0;
     }
-    uint64_t my_end = my_start + chunk;
-    if (my_end > total_outputs) {
-        my_end = total_outputs;
+    uint64_t my_پڇاڙي = my_شروعات + chunk;
+    إذا (my_پڇاڙي > ڪل_outputs) {
+        my_پڇاڙي = ڪل_outputs;
     }
 
     // Save mask register once; full lanes for vector dot.
     q4_dot_state q4_state;
     q4_dot_begin(&q4_state);
 
-    const uint64_t per_batch = (uint64_t) M * (uint64_t) n_expert_used;
+    ثابت uint64_t في_batch = (uint64_t) M * (uint64_t) n_expert_استعمال_ٿيل;
 
-    uint64_t idx = my_start;
-    while (idx < my_end) {
+    uint64_t idx = my_شروعات;
+    طالما (idx < my_پڇاڙي) {
         // Decode (m, slot, batch) from the m-major linear index.
-        const int64_t  batch_idx = (int64_t) (idx / per_batch);
-        const uint64_t rem       = idx - (uint64_t) batch_idx * per_batch;
-        const int64_t  slot_idx  = (int64_t) (rem / (uint64_t) M);
-        const int64_t  m0        = (int64_t) (rem - (uint64_t) slot_idx * (uint64_t) M);
+        ثابت int64_t  batch_idx = (int64_t) (idx / في_batch);
+        ثابت uint64_t rem       = idx - (uint64_t) batch_idx * في_batch;
+        ثابت int64_t  جڳهه_idx  = (int64_t) (rem / (uint64_t) M);
+        ثابت int64_t  m0        = (int64_t) (rem - (uint64_t) جڳهه_idx * (uint64_t) M);
 
         // How many outputs left in this (slot, batch) run AND in my range.
-        const uint64_t run_end_global =
-            (uint64_t) batch_idx * per_batch + (uint64_t) slot_idx * (uint64_t) M + (uint64_t) M;
-        const uint64_t end_in_my = (run_end_global < my_end) ? run_end_global : my_end;
-        int64_t        run_len   = (int64_t) (end_in_my - idx);
+        ثابت uint64_t لاڳيتو_پڇاڙي_global =
+            (uint64_t) batch_idx * في_batch + (uint64_t) جڳهه_idx * (uint64_t) M + (uint64_t) M;
+        ثابت uint64_t پڇاڙي_اندريون_my = (لاڳيتو_پڇاڙي_global < my_پڇاڙي) ? لاڳيتو_پڇاڙي_global : my_پڇاڙي;
+        int64_t        لاڳيتو_len   = (int64_t) (پڇاڙي_اندريون_my - idx);
 
         // Resolve expert + B column + dst slot for this run.
-        const int32_t expert_id =
-            *(const int32_t *) ((const char *) src2_data + slot_idx * (int64_t) nb20 + batch_idx * (int64_t) nb21);
+        ثابت int32_t expert_id =
+            *(ثابت int32_t *) ((ثابت حرف *) src2_معلومات + جڳهه_idx * (int64_t) nb20 + batch_idx * (int64_t) nb21);
 
-        char * dst_slot = (char *) dst_data + slot_idx * (int64_t) nbd1 + batch_idx * (int64_t) nbd2;
+        حرف * dst_جڳهه = (حرف *) dst_معلومات + جڳهه_idx * (int64_t) nbd1 + batch_idx * (int64_t) nbd2;
 
-        if (expert_id < 0 || expert_id >= n_expert) {
+        إذا (expert_id < 0 || expert_id >= n_expert) {
             // Invalid expert id — zero out this run's outputs.
             int64_t m = m0;
-            for (int64_t i = 0; i < run_len; i++, m++) {
-                atomic_store_f32((volatile float *) (dst_slot + m * (int64_t) nbd0), 0.0f);
+            لكل (int64_t i = 0; i < لاڳيتو_len; i++, m++) {
+                atomic_store_f32((متطاير عائم *) (dst_جڳهه + m * (int64_t) nbd0), 0.0f);
             }
-            idx += (uint64_t) run_len;
-            continue;
+            idx += (uint64_t) لاڳيتو_len;
+            استمر;
         }
 
-        const int64_t col_idx = slot_idx % ne11;
-        const float * b_col_base =
-            (const float *) ((const char *) src1_data + col_idx * (int64_t) nb11 + batch_idx * (int64_t) nb12);
-        const char * expert_base = (const char *) src0_data + expert_id * (int64_t) nb02;
+        ثابت int64_t کانو_idx = جڳهه_idx % ne11;
+        ثابت عائم * b_کانو_بنياد =
+            (ثابت عائم *) ((ثابت حرف *) src1_معلومات + کانو_idx * (int64_t) nb11 + batch_idx * (int64_t) nb12);
+        ثابت حرف * expert_بنياد = (ثابت حرف *) src0_معلومات + expert_id * (int64_t) nb02;
 
         int64_t m    = m0;
-        int64_t left = run_len;
+        int64_t کاٻو = لاڳيتو_len;
 
         // Paired-row dots: halves B bandwidth for runs >= 2.
-        if (use_x2) {
-            while (left >= 2) {
-                const block_q4_0 * row0 = (const block_q4_0 *) (expert_base + m * (int64_t) nb01);
-                const block_q4_0 * row1 = (const block_q4_0 *) (expert_base + (m + 1) * (int64_t) nb01);
-                float              s0, s1;
-                q4_dot_compute_x2_aligned(row0, row1, b_col_base, K_blocks, &s0, &s1);
-                atomic_store_f32((volatile float *) (dst_slot + m * (int64_t) nbd0), s0);
-                atomic_store_f32((volatile float *) (dst_slot + (m + 1) * (int64_t) nbd0), s1);
+        إذا (use_x2) {
+            طالما (کاٻو >= 2) {
+                ثابت بلاڪ_q4_0 * row0 = (ثابت بلاڪ_q4_0 *) (expert_بنياد + m * (int64_t) nb01);
+                ثابت بلاڪ_q4_0 * row1 = (ثابت بلاڪ_q4_0 *) (expert_بنياد + (m + 1) * (int64_t) nb01);
+                عائم              s0, s1;
+                q4_dot_compute_x2_aligned(row0, row1, b_کانو_بنياد, K_بلاڪون, &s0, &s1);
+                atomic_store_f32((متطاير عائم *) (dst_جڳهه + m * (int64_t) nbd0), s0);
+                atomic_store_f32((متطاير عائم *) (dst_جڳهه + (m + 1) * (int64_t) nbd0), s1);
                 m += 2;
-                left -= 2;
+                کاٻو -= 2;
             }
         }
 
         // Tail / non-aligned fallback: single-row dots.
-        while (left > 0) {
-            const block_q4_0 * row = (const block_q4_0 *) (expert_base + m * (int64_t) nb01);
-            float              s   = q4_dot_compute(row, b_col_base, K_blocks);
-            atomic_store_f32((volatile float *) (dst_slot + m * (int64_t) nbd0), s);
+        طالما (کاٻو > 0) {
+            ثابت بلاڪ_q4_0 * صف = (ثابت بلاڪ_q4_0 *) (expert_بنياد + m * (int64_t) nb01);
+            عائم              s   = q4_dot_compute(صف, b_کانو_بنياد, K_بلاڪون);
+            atomic_store_f32((متطاير عائم *) (dst_جڳهه + m * (int64_t) nbd0), s);
             m++;
-            left--;
+            کاٻو--;
         }
 
-        idx += (uint64_t) run_len;
+        idx += (uint64_t) لاڳيتو_len;
     }
 
-    q4_dot_end(&q4_state);
-    return 0;
+    q4_dot_پڇاڙي(&q4_state);
+    أرجع 0;
 }

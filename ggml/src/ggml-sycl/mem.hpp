@@ -1,16 +1,16 @@
-#ifndef GGML_SYCL_MEM_HPP
-#define GGML_SYCL_MEM_HPP
+#جيڪڏهن_وصف_نه_ٿيل GGML_SYCL_MEM_HPP
+#وصف_ڪريو GGML_SYCL_MEM_HPP
 
-#include <sycl/sycl.hpp>
+#ضمن <sycl/sycl.hpp>
 
-enum MemoryAPIType {
-    MEMORY_API_TYPE_LEVEL_ZERO = 0,
-    MEMORY_API_TYPE_SYCL = 1,
+تعداد يادگيري_APIType {
+    يادگيري_API_TYPE_LEVEL_ZERO = 0,
+    يادگيري_API_TYPE_SYCL = 1,
 };
 
-const char* mem_api_int2str(int mem_api);
+ثابت حرف* mem_api_int2str(صحيح mem_api);
 
-bool get_memory_size(sycl::device dev, size_t & free_bytes, size_t & total_bytes,
-    MemoryAPIType api_type);
+منطقي get_يادگيري_سائيز(sycl::device dev, size_t & free_بائيٽون, size_t & ڪل_بائيٽون,
+    يادگيري_APIType api_type);
 
-#endif  // GGML_SYCL_MEM_HPP
+#جيڪڏهن_پورو  // GGML_SYCL_MEM_HPP

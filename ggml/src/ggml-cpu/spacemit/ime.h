@@ -1,21 +1,21 @@
-#pragma once
+#هدايت once
 
-#include "ggml-alloc.h"
+#ضمن "ggml-alloc.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#جيڪڏهن_وصف_ٿيل __cplusplus
+خارجي "C" {
+#جيڪڏهن_پورو
 
-ggml_backend_buffer_type_t ggml_backend_cpu_riscv64_spacemit_buffer_type(void);
+ggml_backend_بفر_type_t ggml_backend_cpu_riscv64_spacemit_بفر_type(فراغ);
 
-void ggml_backend_cpu_riscv64_spacemit_set_numa_thread_affinity(int thread_n);
+فراغ ggml_backend_cpu_riscv64_spacemit_سيٽ_numa_thread_affinity(صحيح thread_n);
 
-void ggml_backend_cpu_riscv64_spacemit_clear_numa_thread_affinity_threaded(int thread_n);
+فراغ ggml_backend_cpu_riscv64_spacemit_clear_numa_thread_affinity_threaded(صحيح thread_n);
 
-void * ggml_backend_cpu_riscv64_spacemit_alloc_shared(size_t size, size_t alignment);
+فراغ * ggml_backend_cpu_riscv64_spacemit_alloc_shared(size_t سائيز, size_t alignment);
 
-void ggml_backend_cpu_riscv64_spacemit_free_shared(void * ptr);
+فراغ ggml_backend_cpu_riscv64_spacemit_free_shared(فراغ * ptr);
 
-#ifdef __cplusplus
+#جيڪڏهن_وصف_ٿيل __cplusplus
 }
-#endif
+#جيڪڏهن_پورو

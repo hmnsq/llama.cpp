@@ -1,9 +1,9 @@
-#include "lightning-indexer.hpp"
-#include "dequantize.hpp"
+#ضمن "lightning-indexer.hpp"
+#ضمن "dequantize.hpp"
 
-static void lightning_indexer_f32_sycl(
-        const char * q, const char * k, const char * w, const char * m, float * dst,
-        int64_t n_embd, int64_t n_head, int64_t n_batch, int64_t n_stream, int64_t n_kv,
+ساكن فراغ lightning_indexer_f32_sycl(
+        ثابت حرف * q, ثابت حرف * k, ثابت حرف * w, ثابت حرف * m, عائم * dst,
+        int64_t n_embd, int64_t n_سر, int64_t n_batch, int64_t n_وهڪرو, int64_t n_kv,
         int64_t nem3,
         int64_t nbq1, int64_t nbq2, int64_t nbq3,
         int64_t nbk2, int64_t nbk3,
@@ -11,145 +11,145 @@ static void lightning_indexer_f32_sycl(
         int64_t nbm1, int64_t nbm3,
         int64_t nb1, int64_t nb3,
         ggml_type k_type,
-        queue_ptr stream) {
+        قطار_ptr stream) {
 
-    constexpr int64_t LANES = WARP_SIZE;
-    constexpr int64_t ELEMS_PER_LANE = 8;
-    constexpr int64_t ROWS_PER_BLOCK = 4;
-    constexpr int64_t BLOCK_SIZE = ROWS_PER_BLOCK * LANES;
+    constexpr int64_t LANES = WARP_سائيز;
+    constexpr int64_t ELEMS_في_LANE = 8;
+    constexpr int64_t صفون_في_بلاڪ_2 = 4;
+    constexpr int64_t بلاڪ_سائيز_2 = صفون_في_بلاڪ_2 * LANES;
 
-    const int64_t n_rows = n_batch * n_stream * n_kv;
-    const int64_t n_blocks = (n_rows + ROWS_PER_BLOCK - 1) / ROWS_PER_BLOCK;
+    ثابت int64_t n_صفون = n_batch * n_وهڪرو * n_kv;
+    ثابت int64_t n_بلاڪون = (n_صفون + صفون_في_بلاڪ_2 - 1) / صفون_في_بلاڪ_2;
 
     stream->parallel_for(
         sycl::nd_range<1>(
-            sycl::range<1>(n_blocks * BLOCK_SIZE),
-            sycl::range<1>(BLOCK_SIZE)),
-        [=](sycl::nd_item<1> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-            const int64_t ir   = item.get_global_id(0);
-            const int64_t lane = ir % LANES;
-            const int64_t row  = ir / LANES;
-            if (row >= n_rows) {
-                return;
+            sycl::range<1>(n_بلاڪون * بلاڪ_سائيز_2),
+            sycl::range<1>(بلاڪ_سائيز_2)),
+        [=](sycl::nd_شي<1> شي) [[sycl::reqd_sub_گروهه_سائيز(WARP_سائيز)]] {
+            ثابت int64_t ir   = شي.get_global_id(0);
+            ثابت int64_t lane = ir % LANES;
+            ثابت int64_t صف  = ir / LANES;
+            إذا (صف >= n_صفون) {
+                أرجع;
             }
 
-            const int64_t i_bs     = row / n_kv;
-            const int64_t i_kv     = row % n_kv;
-            const int64_t i_batch  = i_bs / n_stream;
-            const int64_t i_stream = i_bs % n_stream;
+            ثابت int64_t i_bs     = صف / n_kv;
+            ثابت int64_t i_kv     = صف % n_kv;
+            ثابت int64_t i_batch  = i_bs / n_وهڪرو;
+            ثابت int64_t i_وهڪرو = i_bs % n_وهڪرو;
 
             // load K row slice into registers (row is contiguous, nbk0 == type size)
-            const char * k_base = k + i_kv*nbk2 + i_stream*nbk3;
-            float k_local[ELEMS_PER_LANE];
-            if (k_type == GGML_TYPE_F16) {
-                const sycl::half * k_row = (const sycl::half *) k_base;
-#pragma unroll
-                for (int64_t j = 0; j < ELEMS_PER_LANE; ++j) {
-                    k_local[j] = static_cast<float>(k_row[lane*ELEMS_PER_LANE + j]);
+            ثابت حرف * k_بنياد = k + i_kv*nbk2 + i_وهڪرو*nbk3;
+            عائم k_local[ELEMS_في_LANE];
+            إذا (k_type == GGML_TYPE_F16) {
+                ثابت sycl::half * k_صف = (ثابت sycl::half *) k_بنياد;
+#هدايت unroll
+                لكل (int64_t j = 0; j < ELEMS_في_LANE; ++j) {
+                    k_local[j] = static_cast<عائم>(k_صف[lane*ELEMS_في_LANE + j]);
                 }
-            } else if (k_type == GGML_TYPE_F32) {
-                const float * k_row = (const float *) k_base;
-#pragma unroll
-                for (int64_t j = 0; j < ELEMS_PER_LANE; ++j) {
-                    k_local[j] = k_row[lane*ELEMS_PER_LANE + j];
+            } وإلا إذا (k_type == GGML_TYPE_F32) {
+                ثابت عائم * k_صف = (ثابت عائم *) k_بنياد;
+#هدايت unroll
+                لكل (int64_t j = 0; j < ELEMS_في_LANE; ++j) {
+                    k_local[j] = k_صف[lane*ELEMS_في_LANE + j];
                 }
-            } else {
-                const int64_t lane_base = lane * ELEMS_PER_LANE;
-                switch (k_type) {
-                    case GGML_TYPE_BF16: {
-                        const sycl::ext::oneapi::bfloat16 * k_row = (const sycl::ext::oneapi::bfloat16 *) k_base;
-#pragma unroll
-                        for (int64_t j = 0; j < ELEMS_PER_LANE; ++j) {
-                            k_local[j] = static_cast<float>(k_row[lane_base + j]);
+            } وإلا {
+                ثابت int64_t lane_بنياد = lane * ELEMS_في_LANE;
+                بدل (k_type) {
+                    حالة GGML_TYPE_BF16: {
+                        ثابت sycl::ext::oneapi::bfloat16 * k_صف = (ثابت sycl::ext::oneapi::bfloat16 *) k_بنياد;
+#هدايت unroll
+                        لكل (int64_t j = 0; j < ELEMS_في_LANE; ++j) {
+                            k_local[j] = static_cast<عائم>(k_صف[lane_بنياد + j]);
                         }
-                    } break;
-                    case GGML_TYPE_Q4_0:
-                    case GGML_TYPE_Q4_1:
-                    case GGML_TYPE_Q5_0:
-                    case GGML_TYPE_Q5_1: {
-#pragma unroll
-                        for (int64_t j = 0; j < ELEMS_PER_LANE; ++j) {
-                            const int64_t idx = lane_base + j;
-                            const int64_t ib  = idx / QK4_0;
-                            const int iqs     = idx % (QK4_0/2);
+                    } اكسر;
+                    حالة GGML_TYPE_Q4_0:
+                    حالة GGML_TYPE_Q4_1:
+                    حالة GGML_TYPE_Q5_0:
+                    حالة GGML_TYPE_Q5_1: {
+#هدايت unroll
+                        لكل (int64_t j = 0; j < ELEMS_في_LANE; ++j) {
+                            ثابت int64_t idx = lane_بنياد + j;
+                            ثابت int64_t ib  = idx / QK4_0;
+                            ثابت صحيح iqs     = idx % (QK4_0/2);
                             dfloat2 kv;
-                            if (k_type == GGML_TYPE_Q4_0) {
-                                dequantize_q4_0(k_base, ib, iqs, kv);
-                            } else if (k_type == GGML_TYPE_Q4_1) {
-                                dequantize_q4_1(k_base, ib, iqs, kv);
-                            } else if (k_type == GGML_TYPE_Q5_0) {
-                                dequantize_q5_0(k_base, ib, iqs, kv);
-                            } else {
-                                dequantize_q5_1(k_base, ib, iqs, kv);
+                            إذا (k_type == GGML_TYPE_Q4_0) {
+                                dequantize_q4_0(k_بنياد, ib, iqs, kv);
+                            } وإلا إذا (k_type == GGML_TYPE_Q4_1) {
+                                dequantize_q4_1(k_بنياد, ib, iqs, kv);
+                            } وإلا إذا (k_type == GGML_TYPE_Q5_0) {
+                                dequantize_q5_0(k_بنياد, ib, iqs, kv);
+                            } وإلا {
+                                dequantize_q5_1(k_بنياد, ib, iqs, kv);
                             }
-                            k_local[j] = (idx % QK4_0) < (QK4_0/2) ? static_cast<float>(kv.x()) : static_cast<float>(kv.y());
+                            k_local[j] = (idx % QK4_0) < (QK4_0/2) ? static_cast<عائم>(kv.x()) : static_cast<عائم>(kv.y());
                         }
-                    } break;
-                    case GGML_TYPE_Q8_0: {
-#pragma unroll
-                        for (int64_t pair = 0; pair < ELEMS_PER_LANE / 2; ++pair) {
-                            const int64_t elem0 = lane_base + 2 * pair;
+                    } اكسر;
+                    حالة GGML_TYPE_Q8_0: {
+#هدايت unroll
+                        لكل (int64_t pair = 0; pair < ELEMS_في_LANE / 2; ++pair) {
+                            ثابت int64_t elem0 = lane_بنياد + 2 * pair;
                             dfloat2 kv;
-                            dequantize_q8_0(k_base, elem0 / QK8_0, elem0 % QK8_0, kv);
-                            k_local[2 * pair + 0] = static_cast<float>(kv.x());
-                            k_local[2 * pair + 1] = static_cast<float>(kv.y());
+                            dequantize_q8_0(k_بنياد, elem0 / QK8_0, elem0 % QK8_0, kv);
+                            k_local[2 * pair + 0] = static_cast<عائم>(kv.x());
+                            k_local[2 * pair + 1] = static_cast<عائم>(kv.y());
                         }
-                    } break;
-                    case GGML_TYPE_IQ4_NL: {
-#pragma unroll
-                        for (int64_t pair = 0; pair < ELEMS_PER_LANE / 2; ++pair) {
-                            const int64_t elem0 = lane_base + 2 * pair;
+                    } اكسر;
+                    حالة GGML_TYPE_IQ4_NL: {
+#هدايت unroll
+                        لكل (int64_t pair = 0; pair < ELEMS_في_LANE / 2; ++pair) {
+                            ثابت int64_t elem0 = lane_بنياد + 2 * pair;
                             dfloat2 kv;
-                            dequantize_iq4_nl(k_base, elem0 / QK4_NL, elem0 % QK4_NL, kv);
-                            k_local[2 * pair + 0] = static_cast<float>(kv.x());
-                            k_local[2 * pair + 1] = static_cast<float>(kv.y());
+                            dequantize_iq4_nl(k_بنياد, elem0 / QK4_NL, elem0 % QK4_NL, kv);
+                            k_local[2 * pair + 0] = static_cast<عائم>(kv.x());
+                            k_local[2 * pair + 1] = static_cast<عائم>(kv.y());
                         }
-                    } break;
-                    default:
-#pragma unroll
-                        for (int64_t j = 0; j < ELEMS_PER_LANE; ++j) {
+                    } اكسر;
+                    افتراضي:
+#هدايت unroll
+                        لكل (int64_t j = 0; j < ELEMS_في_LANE; ++j) {
                             k_local[j] = 0.0f;
                         }
-                        break;
+                        اكسر;
                 }
             }
 
-            const char  * q_base = q + i_batch*nbq2 + i_stream*nbq3;
-            const float * w_base = (const float *) (w + i_batch*nbw1 + i_stream*nbw3);
+            ثابت حرف  * q_بنياد = q + i_batch*nbq2 + i_وهڪرو*nbq3;
+            ثابت عائم * w_بنياد = (ثابت عائم *) (w + i_batch*nbw1 + i_وهڪرو*nbw3);
 
-            float score = 0.0f;
-            for (int64_t h = 0; h < n_head; ++h) {
-                const float * q_row = (const float *) (q_base + h*nbq1);
-                float dot = 0.0f;
-#pragma unroll
-                for (int64_t j = 0; j < ELEMS_PER_LANE; ++j) {
-                    const int64_t i = lane*ELEMS_PER_LANE + j;
-                    if (i < n_embd) {
-                        dot += q_row[i] * k_local[j];
+            عائم score = 0.0f;
+            لكل (int64_t h = 0; h < n_سر; ++h) {
+                ثابت عائم * q_صف = (ثابت عائم *) (q_بنياد + h*nbq1);
+                عائم dot = 0.0f;
+#هدايت unroll
+                لكل (int64_t j = 0; j < ELEMS_في_LANE; ++j) {
+                    ثابت int64_t i = lane*ELEMS_في_LANE + j;
+                    إذا (i < n_embd) {
+                        dot += q_صف[i] * k_local[j];
                     }
                 }
-                dot = sycl::reduce_over_group(item.get_sub_group(), dot, sycl::plus<float>());
-                if (lane == 0) {
-                    score += sycl::max(dot, 0.0f) * w_base[h];
+                dot = sycl::reduce_over_گروهه(شي.get_sub_گروهه(), dot, sycl::plus<عائم>());
+                إذا (lane == 0) {
+                    score += sycl::max(dot, 0.0f) * w_بنياد[h];
                 }
             }
 
-            if (lane == 0) {
-                const sycl::half * m_base = (const sycl::half *) (m + i_batch*nbm1 + (i_stream % nem3)*nbm3);
+            إذا (lane == 0) {
+                ثابت sycl::half * m_بنياد = (ثابت sycl::half *) (m + i_batch*nbm1 + (i_وهڪرو % nem3)*nbm3);
                 // flat-index store: storing through a strided base pointer
                 // hangs/misroutes writes on this stack when n_batch*n_stream > 1
-                const int64_t dst_idx = i_kv + i_batch*(nb1/sizeof(float)) + i_stream*(nb3/sizeof(float));
-                dst[dst_idx] = score + static_cast<float>(m_base[i_kv]);
+                ثابت int64_t dst_idx = i_kv + i_batch*(nb1/حجم(عائم)) + i_وهڪرو*(nb3/حجم(عائم));
+                dst[dst_idx] = score + static_cast<عائم>(m_بنياد[i_kv]);
             }
         });
 }
 
-void ggml_sycl_op_lightning_indexer(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+فراغ ggml_sycl_op_lightning_indexer(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/4);
-    const ggml_tensor * q = dst->src[0];
-    const ggml_tensor * k = dst->src[1];
-    const ggml_tensor * w = dst->src[2]; // weights
-    const ggml_tensor * m = dst->src[3]; // mask
+    ثابت ggml_tensor * q = dst->src[0];
+    ثابت ggml_tensor * k = dst->src[1];
+    ثابت ggml_tensor * w = dst->src[2]; // weights
+    ثابت ggml_tensor * m = dst->src[3]; //نقاب
 
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
     GGML_ASSERT(  q->type == GGML_TYPE_F32);
@@ -170,23 +170,23 @@ void ggml_sycl_op_lightning_indexer(ggml_backend_sycl_context & ctx, ggml_tensor
     GGML_TENSOR_LOCALS(size_t,  nb, dst, nb);
 
     // input rows must be contiguous
-    GGML_ASSERT(nbq0 == ggml_type_size(q->type));
-    GGML_ASSERT(nbk0 == ggml_type_size(k->type));
-    GGML_ASSERT(nbm0 == ggml_type_size(m->type));
-    GGML_ASSERT(nb0  == ggml_type_size(dst->type));
+    GGML_ASSERT(nbq0 == ggml_type_سائيز(q->type));
+    GGML_ASSERT(nbk0 == ggml_type_سائيز(k->type));
+    GGML_ASSERT(nbm0 == ggml_type_سائيز(m->type));
+    GGML_ASSERT(nb0  == ggml_type_سائيز(dst->type));
 
-    const int64_t n_embd   = neq0;
-    const int64_t n_head   = neq1;
-    const int64_t n_batch  = neq2;
-    const int64_t n_stream = neq3;
-    const int64_t n_kv     = nek2;
+    ثابت int64_t n_embd   = neq0;
+    ثابت int64_t n_سر   = neq1;
+    ثابت int64_t n_batch  = neq2;
+    ثابت int64_t n_وهڪرو = neq3;
+    ثابت int64_t n_kv     = nek2;
 
-    GGML_ASSERT(n_embd == WARP_SIZE * 8);
+    GGML_ASSERT(n_embd == WARP_سائيز * 8);
 
     lightning_indexer_f32_sycl(
-            (const char *) q->data, (const char *) k->data,
-            (const char *) w->data, (const char *) m->data, (float *) dst->data,
-            n_embd, n_head, n_batch, n_stream, n_kv, nem3,
+            (ثابت حرف *) q->معلومات, (ثابت حرف *) k->معلومات,
+            (ثابت حرف *) w->معلومات, (ثابت حرف *) m->معلومات, (عائم *) dst->معلومات,
+            n_embd, n_سر, n_batch, n_وهڪرو, n_kv, nem3,
             nbq1, nbq2, nbq3,
             nbk2, nbk3,
             nbw1, nbw3,

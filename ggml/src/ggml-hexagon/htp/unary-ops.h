@@ -1,138 +1,138 @@
-#ifndef HTP_UNARY_OPS_H
-#define HTP_UNARY_OPS_H
+#جيڪڏهن_وصف_نه_ٿيل HTP_UNARY_OPS_H
+#وصف_ڪريو HTP_UNARY_OPS_H
 
-#include "hex-common.h"
-#include "htp-ops.h"
+#ضمن "hex-common.h"
+#ضمن "htp-ops.h"
 
 // Op-specific struct for precomputed unary params
-struct htp_unary_kernel_params {
-    uint32_t  n_threads;
-    uint32_t  col_tile;
-    uint32_t  vtcm_row_per_thread;
-    uint32_t  block;
-    uint32_t  broadcast_weight;
+بنية htp_unary_kernel_params {
+    uint32_t  n_ڌاڳا;
+    uint32_t  کانو_tile;
+    uint32_t  vtcm_صف_في_thread;
+    uint32_t  بلاڪ;
+    uint32_t  نشر_وزن;
 
-    uint32_t  vtcm_src0_size_per_thread;
-    uint32_t  vtcm_src1_size_per_thread;
-    uint32_t  vtcm_dst_size_per_thread;
+    uint32_t  vtcm_src0_سائيز_في_thread;
+    uint32_t  vtcm_src1_سائيز_في_thread;
+    uint32_t  vtcm_dst_سائيز_في_thread;
 
-    uint32_t  vtcm_src0_size;
-    uint32_t  vtcm_src1_size;
-    uint32_t  vtcm_dst_size;
+    uint32_t  vtcm_src0_سائيز;
+    uint32_t  vtcm_src1_سائيز;
+    uint32_t  vtcm_dst_سائيز;
 
-    uint32_t  src0_row_size_aligned;
-    uint32_t  src1_row_size_aligned;
-    uint32_t  dst_row_size_aligned;
+    uint32_t  src0_صف_سائيز_aligned;
+    uint32_t  src1_صف_سائيز_aligned;
+    uint32_t  dst_صف_سائيز_aligned;
 
-    uint32_t  vtcm_size;
+    uint32_t  vtcm_سائيز;
 
     // Fastdiv helpers
-    struct fastdiv_values div_ne01;
-    struct fastdiv_values div_ne02;
-    struct fastdiv_values div_ne012;
-    struct fastdiv_values div_tpr;
+    بنية fastdiv_قدرون div_ne01;
+    بنية fastdiv_قدرون div_ne02;
+    بنية fastdiv_قدرون div_ne012;
+    بنية fastdiv_قدرون div_tpr;
 };
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_unary_kernel_params) <= 128, "htp_unary_kernel_params is too large for kernel_params blob");
-#else
-_Static_assert(sizeof(struct htp_unary_kernel_params) <= 128, "htp_unary_kernel_params is too large for kernel_params blob");
-#endif
+#إذا defined(__cplusplus)
+static_assert(حجم(بنية htp_unary_kernel_params) <= 128, "htp_unary_kernel_params is too large for kernel_params blob");
+#وإلا
+_Static_assert(حجم(بنية htp_unary_kernel_params) <= 128, "htp_unary_kernel_params is too large for kernel_params blob");
+#جيڪڏهن_پورو
 
-static inline bool htp_op_is_unary(uint32_t opcode) {
-    switch (opcode) {
-        case HTP_OP_CLAMP:
-        case HTP_OP_LEAKY_RELU:
-        case HTP_OP_NORM:
-        case HTP_OP_RMS_NORM:
-        case HTP_OP_RMS_NORM_MUL:
-        case HTP_OP_SCALE:
-        case HTP_OP_SQR:
-        case HTP_OP_SQRT:
-        case HTP_OP_UNARY_NEG:
-        case HTP_OP_UNARY_EXP:
-        case HTP_OP_UNARY_SIGMOID:
-        case HTP_OP_UNARY_SILU:
-        case HTP_OP_UNARY_GELU:
-        case HTP_OP_UNARY_GELU_QUICK:
-        case HTP_OP_UNARY_GELU_ERF:
-        case HTP_OP_UNARY_SOFTPLUS:
-        case HTP_OP_UNARY_TANH:
-        case HTP_OP_UNARY_ABS:
-        case HTP_OP_UNARY_LOG:
-        case HTP_OP_UNARY_RELU:
-        case HTP_OP_UNARY_STEP:
-        case HTP_OP_L2_NORM:
-        case HTP_OP_TRI:
-        case HTP_OP_HADAMARD:
-            return true;
-        default:
-            return false;
+ساكن مضمن bool htp_op_is_unary(uint32_t opcode) {
+    بدل (opcode) {
+        حالة HTP_OP_CLAMP:
+        حالة HTP_OP_LEAKY_RELU:
+        حالة HTP_OP_NORM:
+        حالة HTP_OP_RMS_NORM:
+        حالة HTP_OP_RMS_NORM_MUL:
+        حالة HTP_OP_SCALE:
+        حالة HTP_OP_SQR:
+        حالة HTP_OP_SQRT:
+        حالة HTP_OP_UNARY_NEG:
+        حالة HTP_OP_UNARY_EXP:
+        حالة HTP_OP_UNARY_SIGMOID:
+        حالة HTP_OP_UNARY_SILU:
+        حالة HTP_OP_UNARY_GELU:
+        حالة HTP_OP_UNARY_GELU_تيز:
+        حالة HTP_OP_UNARY_GELU_ERF:
+        حالة HTP_OP_UNARY_SOFTPLUS:
+        حالة HTP_OP_UNARY_TANH:
+        حالة HTP_OP_UNARY_ABS:
+        حالة HTP_OP_UNARY_LOG:
+        حالة HTP_OP_UNARY_RELU:
+        حالة HTP_OP_UNARY_قدم:
+        حالة HTP_OP_L2_NORM:
+        حالة HTP_OP_TRI:
+        حالة HTP_OP_HADAMARD:
+            أرجع true;
+        افتراضي:
+            أرجع false;
     }
 }
 
-struct htp_unary_vtcm_layout {
-    size_t total_bytes;
+بنية htp_unary_vtcm_layout {
+    size_t ڪل_بائيٽون;
     size_t off_src0;
     size_t off_src1;
     size_t off_dst;
 
-    size_t src0_bytes;
-    size_t src1_bytes;
-    size_t dst_bytes;
+    size_t src0_بائيٽون;
+    size_t src1_بائيٽون;
+    size_t dst_بائيٽون;
 };
 
-static inline void htp_unary_vtcm_layout_build(
-    struct htp_unary_vtcm_layout * L,
+ساكن مضمن فراغ htp_unary_vtcm_layout_build(
+    بنية htp_unary_vtcm_layout * L,
     uint32_t op,
     uint32_t ne00,
     uint32_t ne10,
     uint32_t ne11,
-    bool broadcast_weight,
-    uint32_t n_threads,
-    size_t vtcm_size,
-    size_t elem_size,
-    uint32_t * out_col_tile,
-    uint32_t * out_vtcm_row_per_thread
+    bool نشر_وزن,
+    uint32_t n_ڌاڳا,
+    size_t vtcm_سائيز,
+    size_t elem_سائيز,
+    uint32_t * ٻاهريون_کانو_tile,
+    uint32_t * ٻاهريون_vtcm_صف_في_thread
 ) {
-    const size_t dst_elem_size      = (op == HTP_OP_HADAMARD) ? sizeof(float) : elem_size;
-    const size_t src0_data_row_size = ne00 * elem_size;
-    const size_t dst_data_row_size  = ne10 * dst_elem_size;
+    ثابت size_t dst_elem_سائيز      = (op == HTP_OP_HADAMARD) ? حجم(عائم) : elem_سائيز;
+    ثابت size_t src0_معلومات_صف_سائيز = ne00 * elem_سائيز;
+    ثابت size_t dst_معلومات_صف_سائيز  = ne10 * dst_elem_سائيز;
 
-    const size_t src0_row_size_aligned = hex_round_up(src0_data_row_size, 128);
-    const size_t dst_row_size_aligned  = hex_round_up(dst_data_row_size,  128);
+    ثابت size_t src0_صف_سائيز_aligned = hex_ڦيرو_مٿي(src0_معلومات_صف_سائيز, 128);
+    ثابت size_t dst_صف_سائيز_aligned  = hex_ڦيرو_مٿي(dst_معلومات_صف_سائيز,  128);
 
-    size_t src1_row_size_aligned = 0;
-    if (op == HTP_OP_RMS_NORM_MUL) {
+    size_t src1_صف_سائيز_aligned = 0;
+    إذا (op == HTP_OP_RMS_NORM_MUL) {
         // RMS_NORM_MUL fusion is F32-only; its weight tensor is always F32.
-        const size_t src1_data_row_size = ne11 * sizeof(float);
-        src1_row_size_aligned = hex_round_up(src1_data_row_size, 128);
+        ثابت size_t src1_معلومات_صف_سائيز = ne11 * حجم(عائم);
+        src1_صف_سائيز_aligned = hex_ڦيرو_مٿي(src1_معلومات_صف_سائيز, 128);
     }
 
-    size_t vtcm_size_per_row = 0;
-    size_t vtcm_row_per_thread = 0;
+    size_t vtcm_سائيز_في_صف = 0;
+    size_t vtcm_صف_في_thread = 0;
 
-    if (op == HTP_OP_RMS_NORM_MUL) {
-        if (broadcast_weight) {
-            size_t available_vtcm = vtcm_size;
-            size_t src1_vtcm_total = n_threads * src1_row_size_aligned;
-            if (available_vtcm > src1_vtcm_total) {
-                available_vtcm -= src1_vtcm_total;
-            } else {
-                available_vtcm = 0;
+    إذا (op == HTP_OP_RMS_NORM_MUL) {
+        إذا (نشر_وزن) {
+            size_t موجود_vtcm = vtcm_سائيز;
+            size_t src1_vtcm_ڪل = n_ڌاڳا * src1_صف_سائيز_aligned;
+            إذا (موجود_vtcm > src1_vtcm_ڪل) {
+                موجود_vtcm -= src1_vtcm_ڪل;
+            } وإلا {
+                موجود_vtcm = 0;
             }
-            vtcm_size_per_row = 2 * (src0_row_size_aligned + dst_row_size_aligned);
-            vtcm_row_per_thread = available_vtcm / (n_threads * vtcm_size_per_row);
-        } else {
-            vtcm_size_per_row = 2 * (src0_row_size_aligned + dst_row_size_aligned + src1_row_size_aligned);
-            vtcm_row_per_thread = vtcm_size / (n_threads * vtcm_size_per_row);
+            vtcm_سائيز_في_صف = 2 * (src0_صف_سائيز_aligned + dst_صف_سائيز_aligned);
+            vtcm_صف_في_thread = موجود_vtcm / (n_ڌاڳا * vtcm_سائيز_في_صف);
+        } وإلا {
+            vtcm_سائيز_في_صف = 2 * (src0_صف_سائيز_aligned + dst_صف_سائيز_aligned + src1_صف_سائيز_aligned);
+            vtcm_صف_في_thread = vtcm_سائيز / (n_ڌاڳا * vtcm_سائيز_في_صف);
         }
-    } else {
-        vtcm_size_per_row   = 2 * (src0_row_size_aligned + dst_row_size_aligned);
-        vtcm_row_per_thread = vtcm_size / (n_threads * vtcm_size_per_row);
+    } وإلا {
+        vtcm_سائيز_في_صف   = 2 * (src0_صف_سائيز_aligned + dst_صف_سائيز_aligned);
+        vtcm_صف_في_thread = vtcm_سائيز / (n_ڌاڳا * vtcm_سائيز_في_صف);
     }
 
-    const bool is_reduction = (op == HTP_OP_NORM || op == HTP_OP_RMS_NORM ||
+    ثابت bool is_reduction = (op == HTP_OP_NORM || op == HTP_OP_RMS_NORM ||
                                op == HTP_OP_RMS_NORM_MUL || op == HTP_OP_L2_NORM ||
                                op == HTP_OP_HADAMARD);
     // The tiled fallback path below only has F32 task functions (unary_task_f32_tiled_*);
@@ -141,44 +141,44 @@ static inline void htp_unary_vtcm_layout_build(
     // budget), execute_op_unary() will see BLOCK == 0 and skip computation for that op
     // (logged via FARF(ERROR, ...)) since there is no F16 tiled fallback. This is a known
     // limitation; supporting it would require adding F16 tiled kernels.
-    const bool is_f16 = (elem_size == sizeof(_Float16));
-    uint32_t col_tile = 0;
+    ثابت bool is_f16 = (elem_سائيز == حجم(_Float16));
+    uint32_t کانو_tile = 0;
 
-    if (vtcm_row_per_thread == 0 && !is_reduction && !is_f16) {
-        const size_t per_thread_budget = vtcm_size / n_threads;
-        const size_t col_tile_bytes = hex_align_down(per_thread_budget / 4, 128);
-        col_tile = (uint32_t) (col_tile_bytes / elem_size);
+    إذا (vtcm_صف_في_thread == 0 && !is_reduction && !is_f16) {
+        ثابت size_t في_thread_budget = vtcm_سائيز / n_ڌاڳا;
+        ثابت size_t کانو_tile_بائيٽون = hex_align_هيٺ_ڏانهن(في_thread_budget / 4, 128);
+        کانو_tile = (uint32_t) (کانو_tile_بائيٽون / elem_سائيز);
 
-        L->src0_bytes = col_tile_bytes * 2;
-        L->dst_bytes  = col_tile_bytes * 2;
-        L->src1_bytes = 0;
-    } else {
-        L->src0_bytes = src0_row_size_aligned * vtcm_row_per_thread * 2;
-        L->dst_bytes  = dst_row_size_aligned * vtcm_row_per_thread * 2;
-        if (op == HTP_OP_RMS_NORM_MUL) {
-            if (broadcast_weight) {
-                L->src1_bytes = src1_row_size_aligned;
-            } else {
-                L->src1_bytes = src1_row_size_aligned * vtcm_row_per_thread * 2;
+        L->src0_بائيٽون = کانو_tile_بائيٽون * 2;
+        L->dst_بائيٽون  = کانو_tile_بائيٽون * 2;
+        L->src1_بائيٽون = 0;
+    } وإلا {
+        L->src0_بائيٽون = src0_صف_سائيز_aligned * vtcm_صف_في_thread * 2;
+        L->dst_بائيٽون  = dst_صف_سائيز_aligned * vtcm_صف_في_thread * 2;
+        إذا (op == HTP_OP_RMS_NORM_MUL) {
+            إذا (نشر_وزن) {
+                L->src1_بائيٽون = src1_صف_سائيز_aligned;
+            } وإلا {
+                L->src1_بائيٽون = src1_صف_سائيز_aligned * vtcm_صف_في_thread * 2;
             }
-        } else {
-            L->src1_bytes = 0;
+        } وإلا {
+            L->src1_بائيٽون = 0;
         }
     }
 
     L->off_src0 = 0;
-    if (op == HTP_OP_RMS_NORM_MUL) {
-        L->off_src1 = L->off_src0 + L->src0_bytes * n_threads;
-        L->off_dst  = L->off_src1 + L->src1_bytes * n_threads;
-    } else {
+    إذا (op == HTP_OP_RMS_NORM_MUL) {
+        L->off_src1 = L->off_src0 + L->src0_بائيٽون * n_ڌاڳا;
+        L->off_dst  = L->off_src1 + L->src1_بائيٽون * n_ڌاڳا;
+    } وإلا {
         L->off_src1 = 0;
-        L->off_dst  = L->off_src0 + L->src0_bytes * n_threads;
+        L->off_dst  = L->off_src0 + L->src0_بائيٽون * n_ڌاڳا;
     }
 
-    L->total_bytes = L->off_dst + L->dst_bytes * n_threads;
+    L->ڪل_بائيٽون = L->off_dst + L->dst_بائيٽون * n_ڌاڳا;
 
-    *out_col_tile = col_tile;
-    *out_vtcm_row_per_thread = vtcm_row_per_thread;
+    *ٻاهريون_کانو_tile = کانو_tile;
+    *ٻاهريون_vtcm_صف_في_thread = vtcm_صف_في_thread;
 }
 
-#endif /* HTP_UNARY_OPS_H */
+#جيڪڏهن_پورو /* HTP_UNARY_OPS_H */

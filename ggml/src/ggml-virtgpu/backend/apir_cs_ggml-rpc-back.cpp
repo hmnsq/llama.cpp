@@ -1,115 +1,115 @@
-#include "ggml-backend-impl.h"
-#include "ggml-impl.h"
-#include "shared/apir_cs_rpc.h"
+#ضمن "ggml-backend-impl.h"
+#ضمن "ggml-impl.h"
+#ضمن "shared/apir_cs_rpc.h"
 
-#include <cinttypes>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
+#ضمن <cinttypes>
+#ضمن <unordered_map>
+#ضمن <unordered_set>
+#ضمن <vector>
 
-std::unordered_set<ggml_backend_buffer_t> backend_buffers;
+std::unordered_set<ggml_backend_بفر_t> backend_buffers;
 
-void apir_track_backend_buffer(ggml_backend_buffer_t buffer) {
-    backend_buffers.insert(buffer);
+فراغ apir_track_backend_بفر(ggml_backend_بفر_t بفر) {
+    backend_buffers.insert(بفر);
 }
 
-bool apir_untrack_backend_buffer(ggml_backend_buffer_t buffer) {
-    auto it = backend_buffers.find(buffer);
-    if (it == backend_buffers.end()) {
-        return false;
+منطقي apir_untrack_backend_بفر(ggml_backend_بفر_t بفر) {
+    خودڪار it = backend_buffers.find(بفر);
+    إذا (it == backend_buffers.end()) {
+        أرجع خطأ;
     }
 
     backend_buffers.erase(it);
-    return true;
+    أرجع سچ;
 }
 
-std::unordered_set<ggml_backend_buffer_t> apir_get_track_backend_buffers() {
-    return backend_buffers;
+std::unordered_set<ggml_backend_بفر_t> apir_get_track_backend_buffers() {
+    أرجع backend_buffers;
 }
 
-ggml_tensor * apir_deserialize_tensor(ggml_context * ctx, const apir_rpc_tensor * tensor) {
-    ggml_tensor * result =
+ggml_tensor * apir_deserialize_tensor(ggml_context * ctx, ثابت apir_rpc_tensor * tensor) {
+    ggml_tensor * نتيجو =
         ggml_new_tensor_4d(ctx, (ggml_type) tensor->type, tensor->ne[0], tensor->ne[1], tensor->ne[2], tensor->ne[3]);
-    for (uint32_t i = 0; i < GGML_MAX_DIMS; i++) {
-        result->nb[i] = tensor->nb[i];
+    لكل (uint32_t i = 0; i < GGML_MAX_DIMS; i++) {
+        نتيجو->nb[i] = tensor->nb[i];
     }
-    result->buffer = reinterpret_cast<ggml_backend_buffer_t>(tensor->buffer);
-    if (result->buffer && backend_buffers.find(result->buffer) == backend_buffers.end()) {
-        printf("WARNING: HOST BUFFER NOT FOUND | %p\n", (void *) result->buffer);
-        result->buffer = nullptr;
+    نتيجو->بفر = reinterpret_cast<ggml_backend_بفر_t>(tensor->بفر);
+    إذا (نتيجو->بفر && backend_buffers.find(نتيجو->بفر) == backend_buffers.end()) {
+        لکو("WARNING: HOST BUFFER NOT FOUND | %p\n", (فراغ *) نتيجو->بفر);
+        نتيجو->بفر = خالي_اشارو;
     }
 
-    uint64_t tensor_data = tensor->data;
-    if (result->buffer) {
+    uint64_t tensor_معلومات = tensor->معلومات;
+    إذا (نتيجو->بفر) {
         // require that the tensor data does not go beyond the buffer end
-        uint64_t tensor_size  = (uint64_t) ggml_nbytes(result);
-        uint64_t buffer_start = (uint64_t) ggml_backend_buffer_get_base(result->buffer);
-        uint64_t buffer_size  = (uint64_t) ggml_backend_buffer_get_size(result->buffer);
+        uint64_t tensor_سائيز  = (uint64_t) ggml_nbytes(نتيجو);
+        uint64_t بفر_شروعات = (uint64_t) ggml_backend_بفر_get_بنياد(نتيجو->بفر);
+        uint64_t بفر_سائيز  = (uint64_t) ggml_backend_بفر_get_سائيز(نتيجو->بفر);
 
         // tensor->data is serialized as an offset to the buffer base address
-        tensor_data += buffer_start;
+        tensor_معلومات += بفر_شروعات;
 
-        GGML_ASSERT(tensor_data + tensor_size >= tensor_data);  // check for overflow
-        GGML_ASSERT(tensor_data >= buffer_start && tensor_data + tensor_size <= buffer_start + buffer_size);
+        GGML_ASSERT(tensor_معلومات + tensor_سائيز >= tensor_معلومات);  // check for overflow
+        GGML_ASSERT(tensor_معلومات >= بفر_شروعات && tensor_معلومات + tensor_سائيز <= بفر_شروعات + بفر_سائيز);
     }
 
-    result->op = (ggml_op) tensor->op;
-    for (uint32_t i = 0; i < GGML_MAX_OP_PARAMS / sizeof(int32_t); i++) {
-        result->op_params[i] = tensor->op_params[i];
+    نتيجو->op = (ggml_op) tensor->op;
+    لكل (uint32_t i = 0; i < GGML_MAX_OP_PARAMS / حجم(int32_t); i++) {
+        نتيجو->op_params[i] = tensor->op_params[i];
     }
-    result->flags = tensor->flags;
-    result->data  = reinterpret_cast<void *>(tensor_data);
-    ggml_set_name(result, tensor->name);
-    return result;
+    نتيجو->flags = tensor->flags;
+    نتيجو->معلومات  = reinterpret_cast<فراغ *>(tensor_معلومات);
+    ggml_سيٽ_name(نتيجو, tensor->name);
+    أرجع نتيجو;
 }
 
-ggml_tensor * apir_create_node(uint64_t                                                      id,
+ggml_tensor * apir_create_ڳنڍ(uint64_t                                                      id,
                                ggml_context *                                                ctx,
-                               const std::unordered_map<uint64_t, const apir_rpc_tensor *> & tensor_ptrs,
+                               ثابت std::unordered_map<uint64_t, ثابت apir_rpc_tensor *> & tensor_ptrs,
                                std::unordered_map<uint64_t, ggml_tensor *> &                 tensor_map) {
-    if (id == 0) {
-        return nullptr;
+    إذا (id == 0) {
+        أرجع خالي_اشارو;
     }
-    if (tensor_map.find(id) != tensor_map.end()) {
-        return tensor_map[id];
+    إذا (tensor_map.find(id) != tensor_map.end()) {
+        أرجع tensor_map[id];
     }
-    const apir_rpc_tensor * tensor = tensor_ptrs.at(id);
-    ggml_tensor *           result = apir_deserialize_tensor(ctx, tensor);
-    if (result == nullptr) {
-        return nullptr;
+    ثابت apir_rpc_tensor * tensor = tensor_ptrs.at(id);
+    ggml_tensor *           نتيجو = apir_deserialize_tensor(ctx, tensor);
+    إذا (نتيجو == خالي_اشارو) {
+        أرجع خالي_اشارو;
     }
-    tensor_map[id] = result;
-    for (int i = 0; i < GGML_MAX_SRC; i++) {
-        result->src[i] = apir_create_node(tensor->src[i], ctx, tensor_ptrs, tensor_map);
+    tensor_map[id] = نتيجو;
+    لكل (صحيح i = 0; i < GGML_MAX_SRC; i++) {
+        نتيجو->src[i] = apir_create_ڳنڍ(tensor->src[i], ctx, tensor_ptrs, tensor_map);
     }
-    result->view_src  = apir_create_node(tensor->view_src, ctx, tensor_ptrs, tensor_map);
-    result->view_offs = tensor->view_offs;
-    return result;
+    نتيجو->view_src  = apir_create_ڳنڍ(tensor->view_src, ctx, tensor_ptrs, tensor_map);
+    نتيجو->view_offs = tensor->view_offs;
+    أرجع نتيجو;
 }
 
-ggml_cgraph * apir_deserialize_graph(uint32_t                n_nodes,
+ggml_cgraph * apir_deserialize_گراف(uint32_t                n_nodes,
                                      uint32_t                n_tensors,
-                                     const apir_rpc_tensor * tensors,
-                                     const uint64_t *        nodes) {
-    size_t buf_size = ggml_tensor_overhead() * (n_nodes + n_tensors) + ggml_graph_overhead_custom(n_nodes, false);
+                                     ثابت apir_rpc_tensor * tensors,
+                                     ثابت uint64_t *        nodes) {
+    size_t buf_سائيز = ggml_tensor_overhead() * (n_nodes + n_tensors) + ggml_گراف_overhead_custom(n_nodes, خطأ);
     ggml_init_params params = {
-        /*.mem_size   =*/buf_size,
-        /*.mem_buffer =*/NULL,
-        /*.no_alloc   =*/true,
+        /*.mem_size   =*/buf_سائيز,
+        /*.mem_buffer =*/عدم,
+        /*.no_alloc   =*/سچ,
     };
     ggml_context * ctx   = ggml_init(params);
-    ggml_cgraph *  graph = ggml_new_graph_custom(ctx, n_nodes, false);
+    ggml_cgraph *  graph = ggml_new_گراف_custom(ctx, n_nodes, خطأ);
     graph->n_nodes       = n_nodes;
-    std::unordered_map<uint64_t, const apir_rpc_tensor *> tensor_ptrs;
-    for (uint32_t i = 0; i < n_tensors; i++) {
+    std::unordered_map<uint64_t, ثابت apir_rpc_tensor *> tensor_ptrs;
+    لكل (uint32_t i = 0; i < n_tensors; i++) {
         tensor_ptrs[tensors[i].id] = &tensors[i];
     }
     std::unordered_map<uint64_t, ggml_tensor *> tensor_map;
-    for (uint32_t i = 0; i < n_nodes; i++) {
+    لكل (uint32_t i = 0; i < n_nodes; i++) {
         int64_t id;
-        memcpy(&id, &nodes[i], sizeof(id));
-        graph->nodes[i] = apir_create_node(id, ctx, tensor_ptrs, tensor_map);
+        يادگيري_نقل(&id, &nodes[i], حجم(id));
+        graph->nodes[i] = apir_create_ڳنڍ(id, ctx, tensor_ptrs, tensor_map);
     }
 
-    return graph;
+    أرجع graph;
 }

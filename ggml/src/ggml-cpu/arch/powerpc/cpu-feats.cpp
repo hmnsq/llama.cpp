@@ -1,82 +1,82 @@
 # include "ggml-backend-impl.h"
 
-#if defined(__powerpc64__) || defined(__ppc64__) || defined(__PPC64__)
+#إذا defined(__powerpc64__) || defined(__ppc64__) || defined(__PPC64__)
 
-#if defined(__linux__)
-#include <sys/auxv.h>
-#endif
+#إذا defined(__linux__)
+#ضمن <sys/auxv.h>
+#جيڪڏهن_پورو
 
-#include <string>
+#ضمن <string>
 
-struct powerpc_features {
+بنية powerpc_features {
     std::string platform = "";
-    int power_version    = -1;
+    صحيح power_نسخو    = -1;
 
-    bool has_vsx         = false;
+    منطقي has_vsx         = خطأ;
 
     powerpc_features() {
-#if defined(__linux__)
-        unsigned long auxval = getauxval(AT_PLATFORM);
-        if (auxval) {
-            platform = std::string(reinterpret_cast<const char*>(auxval));
+#إذا defined(__linux__)
+        بنانشان ڊگهو auxval = getauxval(AT_PLATFORM);
+        إذا (auxval) {
+            platform = std::string(reinterpret_cast<ثابت حرف*>(auxval));
             // TBD: Do systems exist that return this in uppercase?
-            if (platform.substr(0, 5) == "power") {
+            إذا (platform.substr(0, 5) == "power") {
                 // Extractt a numeric suffix, if one exists
-                int vpos = -1;
-                for (int i = platform.length() - 1; i >= 0; i--) {
-                    if (std::isdigit(platform[i])) {
+                صحيح vpos = -1;
+                لكل (صحيح i = platform.ڊيگهائي() - 1; i >= 0; i--) {
+                    إذا (std::انگ_آهي(platform[i])) {
                         vpos = i;
-                    } else {
-                        break;
+                    } وإلا {
+                        اكسر;
                     }
                 }
-                if (vpos > -1) {
-                    power_version = std::stoi(platform.substr(vpos));
+                إذا (vpos > -1) {
+                    power_نسخو = std::stoi(platform.substr(vpos));
                 }
             }
         }
-#endif
-        if (power_version >= 9) {
-            has_vsx = true;
+#جيڪڏهن_پورو
+        إذا (power_نسخو >= 9) {
+            has_vsx = سچ;
         }
     }
 };
 
-static int ggml_backend_cpu_powerpc_score() {
-    int score = 1;
+ساكن صحيح ggml_backend_cpu_powerpc_score() {
+    صحيح score = 1;
     powerpc_features pf;
 
 // Platform scores
-#if defined(GGML_USE_POWER7)
-    if (pf.power_version < 7) { return 0; }
+#إذا defined(GGML_USE_POWER7)
+    إذا (pf.power_نسخو < 7) { أرجع 0; }
     score += 1<<1;
-#endif
-#if defined(GGML_USE_POWER8)
-    if (pf.power_version < 8) { return 0; }
+#جيڪڏهن_پورو
+#إذا defined(GGML_USE_POWER8)
+    إذا (pf.power_نسخو < 8) { أرجع 0; }
     score += 1<<2;
-#endif
-#if defined(GGML_USE_POWER9)
-    if (pf.power_version < 9) { return 0; }
+#جيڪڏهن_پورو
+#إذا defined(GGML_USE_POWER9)
+    إذا (pf.power_نسخو < 9) { أرجع 0; }
     score += 1<<3;
-#endif
-#if defined(GGML_USE_POWER10)
-    if (pf.power_version < 10) { return 0; }
+#جيڪڏهن_پورو
+#إذا defined(GGML_USE_POWER10)
+    إذا (pf.power_نسخو < 10) { أرجع 0; }
     score += 1<<4;
-#endif
-#if defined(GGML_USE_POWER11)
-    if (pf.power_version < 11) { return 0; }
+#جيڪڏهن_پورو
+#إذا defined(GGML_USE_POWER11)
+    إذا (pf.power_نسخو < 11) { أرجع 0; }
     score += 1<<5;
-#endif
+#جيڪڏهن_پورو
 
 // Feature scores
-#if defined(GGML_USE_VSX)
-    if (!pf.has_vsx) { return 0; }
+#إذا defined(GGML_USE_VSX)
+    إذا (!pf.has_vsx) { أرجع 0; }
     score += 1<<6;
-#endif
+#جيڪڏهن_پورو
 
-    return score;
+    أرجع score;
 }
 
 GGML_BACKEND_DL_SCORE_IMPL(ggml_backend_cpu_powerpc_score)
 
-#endif // defined(__powerpc64__) || defined(__ppc64__) || defined(__PPC64__)
+#جيڪڏهن_پورو // defined(__powerpc64__) || defined(__ppc64__) || defined(__PPC64__)

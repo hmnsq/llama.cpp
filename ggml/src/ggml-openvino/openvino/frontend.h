@@ -2,19 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-#pragma once
+#هدايت once
 
-#include <openvino/frontend/frontend.hpp>
+#ضمن <openvino/frontend/frontend.hpp>
 
 namespace ov {
 namespace frontend {
 namespace ggml {
 
-class FrontEnd {
-public:
-    FrontEnd();
+class Front_پڇاڙي {
+عام:
+    Front_پڇاڙي();
 
-    static std::shared_ptr<Model> convert(const InputModel::Ptr & model, bool naive = false);
+    ساكن std::shared_ptr<Model> convert(ثابت داخلا_Model::Ptr & model, bool naive = false);
 };
 
 }  // namespace ggml

@@ -1,93 +1,93 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#ضمن "../node_context.h"
+#ضمن "../op_table.h"
+#ضمن "../utils.h"
 
-#include <cassert>
-#include <cstdint>
-#include <memory>
-#include <openvino/core/node.hpp>
-#include <openvino/core/node_output.hpp>
-#include <openvino/core/type.hpp>
-#include <openvino/frontend/exception.hpp>
-#include <openvino/op/broadcast.hpp>
-#include <openvino/op/concat.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/scatter_elements_update.hpp>
-#include <openvino/op/scatter_update.hpp>
-#include <openvino/op/shape_of.hpp>
-#include <openvino/op/slice.hpp>
-#include <openvino/op/squeeze.hpp>
-#include <openvino/op/transpose.hpp>
-#include <vector>
+#ضمن <cassert>
+#ضمن <cstdint>
+#ضمن <memory>
+#ضمن <openvino/core/node.hpp>
+#ضمن <openvino/core/node_output.hpp>
+#ضمن <openvino/core/type.hpp>
+#ضمن <openvino/frontend/exception.hpp>
+#ضمن <openvino/op/broadcast.hpp>
+#ضمن <openvino/op/concat.hpp>
+#ضمن <openvino/op/constant.hpp>
+#ضمن <openvino/op/convert.hpp>
+#ضمن <openvino/op/gather.hpp>
+#ضمن <openvino/op/reshape.hpp>
+#ضمن <openvino/op/scatter_elements_update.hpp>
+#ضمن <openvino/op/scatter_update.hpp>
+#ضمن <openvino/op/shape_of.hpp>
+#ضمن <openvino/op/slice.hpp>
+#ضمن <openvino/op/squeeze.hpp>
+#ضمن <openvino/op/transpose.hpp>
+#ضمن <vector>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+نطاق ov {
+نطاق frontend {
+نطاق ggml {
+نطاق op {
 
-OutputVector translate_set_rows(const NodeContext & context) {
-    num_inputs_check(context, 3, 3);
+Output_ويڪٽر translate_سيٽ_صفون(ثابت ڳنڍ_Context & context) {
+    انگ_inputs_check(context, 3, 3);
 
-    auto data = process_view_input_new(context, 0);
-    auto indices = process_view_input_new(context, 1);
-    auto dst = process_view_input_new(context, 2);
+    خودڪار معلومات = process_view_داخلا_new(context, 0);
+    خودڪار indices = process_view_داخلا_new(context, 1);
+    خودڪار dst = process_view_داخلا_new(context, 2);
 
-    data = std::make_shared<ov::op::v0::Convert>(data, context.get_output_type());
+    معلومات = std::make_shared<ov::op::v0::Convert>(معلومات, context.get_output_type());
 
-    const auto indices_shape = context.get_input_shape(1);
-    const bool multidim_indices = indices_shape.rank().is_static() &&
-                                  indices_shape.rank().get_length() == 4 &&
-                                  ((indices_shape[1].is_static() && indices_shape[1].get_length() > 1) ||
-                                   (indices_shape[2].is_static() && indices_shape[2].get_length() > 1));
+    ثابت خودڪار indices_shape = context.get_داخلا_shape(1);
+    ثابت منطقي multidim_indices = indices_shape.rank().is_static() &&
+                                  indices_shape.rank().get_ڊيگهائي() == 4 &&
+                                  ((indices_shape[1].is_static() && indices_shape[1].get_ڊيگهائي() > 1) ||
+                                   (indices_shape[2].is_static() && indices_shape[2].get_ڊيگهائي() > 1));
 
-    auto axes = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{}, {2});
+    خودڪار axes = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{}, {2});
 
     Output<Node> res;
-    if (context.is_stateful()) {
-        int concat_axis = 1;
-        int64_t dim2 = dst.get_partial_shape()[2].get_length();
-        int64_t dim3 = dst.get_partial_shape()[3].get_length();
-        data = std::make_shared<ov::op::v1::Reshape>(
-            data, ov::op::v0::Constant::create(ov::element::i64, {4}, {(int64_t) 1, (int64_t) -1, dim2, dim3}), false);
-        res = std::make_shared<ov::op::v0::Concat>(OutputVector{dst, data}, concat_axis);
-    } else if (multidim_indices) {
-        auto updates_shape = std::make_shared<ov::op::v3::ShapeOf>(data, ov::element::i64);
+    إذا (context.is_stateful()) {
+        صحيح concat_axis = 1;
+        int64_t dim2 = dst.get_partial_shape()[2].get_ڊيگهائي();
+        int64_t dim3 = dst.get_partial_shape()[3].get_ڊيگهائي();
+        معلومات = std::make_shared<ov::op::v1::Reshape>(
+            معلومات, ov::op::v0::Constant::create(ov::element::i64, {4}, {(int64_t) 1, (int64_t) -1, dim2, dim3}), خطأ);
+        res = std::make_shared<ov::op::v0::Concat>(Output_ويڪٽر{dst, معلومات}, concat_axis);
+    } وإلا إذا (multidim_indices) {
+        خودڪار updates_shape = std::make_shared<ov::op::v3::Shape_جو>(معلومات, ov::element::i64);
 
-        auto indices_rank3 = std::make_shared<ov::op::v0::Squeeze>(
+        خودڪار indices_rank3 = std::make_shared<ov::op::v0::Squeeze>(
             indices, ov::op::v0::Constant::create(ov::element::i64, {1}, {0}));
-        auto one = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
-        auto indices_rank4_shape = std::make_shared<ov::op::v0::Concat>(OutputVector{get_dimensions(updates_shape, {0, 1, 2}), one}, 0);
-        auto indices_rank4 = std::make_shared<ov::op::v1::Reshape>(indices_rank3, indices_rank4_shape, false);
-        auto broadcasted_indices = std::make_shared<ov::op::v3::Broadcast>(indices_rank4, updates_shape);
+        خودڪار one = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
+        خودڪار indices_rank4_shape = std::make_shared<ov::op::v0::Concat>(Output_ويڪٽر{get_dimensions(updates_shape, {0, 1, 2}), one}, 0);
+        خودڪار indices_rank4 = std::make_shared<ov::op::v1::Reshape>(indices_rank3, indices_rank4_shape, خطأ);
+        خودڪار broadcasted_indices = std::make_shared<ov::op::v3::نشر>(indices_rank4, updates_shape);
 
-        res = std::make_shared<ov::op::v3::ScatterElementsUpdate>(dst, broadcasted_indices, data, axes);
-    } else {
-        auto row_size = context.get_input_shape(2)[3].get_length();
-        auto ind_squeezed = std::make_shared<ov::op::v0::Squeeze>(
+        res = std::make_shared<ov::op::v3::ScatterElementsUpdate>(dst, broadcasted_indices, معلومات, axes);
+    } وإلا {
+        خودڪار صف_سائيز = context.get_داخلا_shape(2)[3].get_ڊيگهائي();
+        خودڪار ind_squeezed = std::make_shared<ov::op::v0::Squeeze>(
             indices, ov::op::v0::Constant::create(ov::element::i64, {3}, {0, 1, 2}));
-        auto data_reshaped = std::make_shared<ov::op::v1::Reshape>(
-            data,
+        خودڪار معلومات_reshaped = std::make_shared<ov::op::v1::Reshape>(
+            معلومات,
             ov::op::v0::Constant::create(ov::element::i64, {4},
-                                         {(int64_t) 1, (int64_t) 1, (int64_t) -1, (int64_t) row_size}),
-            false);
-        res = std::make_shared<ov::op::v3::ScatterUpdate>(dst, ind_squeezed, data_reshaped, axes);
+                                         {(int64_t) 1, (int64_t) 1, (int64_t) -1, (int64_t) صف_سائيز}),
+            خطأ);
+        res = std::make_shared<ov::op::v3::ScatterUpdate>(dst, ind_squeezed, معلومات_reshaped, axes);
     }
 
-    auto dst_reshape = ov::as_type_ptr<ov::op::v1::Reshape>(dst.get_node_shared_ptr());
-    if (!multidim_indices && dst_reshape) {
+    خودڪار dst_reshape = ov::as_type_ptr<ov::op::v1::Reshape>(dst.get_ڳنڍ_shared_ptr());
+    إذا (!multidim_indices && dst_reshape) {
         // Fix the case of multiple sequences, reshape back to original shape [1, n_seq, ctx_per_seq, emb]
         // ctx_per_seq is not fixed due to llama-bench compatibility
-        auto dst_shape_partial = dst_reshape->get_input_partial_shape(0);
-        std::vector<int64_t> dst_shape = {dst_shape_partial[0].get_length(), dst_shape_partial[1].get_length(),
-                                          dst_shape_partial[2].is_static() ? dst_shape_partial[2].get_length() : -1,
-                                          dst_shape_partial[3].get_length()};
+        خودڪار dst_shape_partial = dst_reshape->get_داخلا_partial_shape(0);
+        std::vector<int64_t> dst_shape = {dst_shape_partial[0].get_ڊيگهائي(), dst_shape_partial[1].get_ڊيگهائي(),
+                                          dst_shape_partial[2].is_static() ? dst_shape_partial[2].get_ڊيگهائي() : -1,
+                                          dst_shape_partial[3].get_ڊيگهائي()};
         res = std::make_shared<ov::op::v1::Reshape>(res, ov::op::v0::Constant::create(ov::element::i64, {4}, dst_shape),
-                                                    false);
+                                                    خطأ);
     }
-    return rename_outputs_with_suffix({res}, context.get_name());
+    أرجع rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

@@ -1,192 +1,192 @@
-#include "memtrace.hpp"
+#ضمن "memtrace.hpp"
 
-#include "common.hpp"
-#include "ggml-impl.h"
+#ضمن "common.hpp"
+#ضمن "ggml-impl.h"
 
-#include <cstdio>
-#include <mutex>
-#include <unordered_map>
+#ضمن <cstdio>
+#ضمن <mutex>
+#ضمن <unordered_map>
 
 constexpr size_t MIB = 1024 * 1024;
 
-static const char * mem_type_name(ggml_sycl_mem_type type) {
-    switch (type) {
-        case GGML_SYCL_MEM_BUFFER:   return "buffer";
-        case GGML_SYCL_MEM_POOL_LEG: return "pool_leg";
-        case GGML_SYCL_MEM_POOL_VMM: return "pool_vmm";
-        case GGML_SYCL_MEM_ASYNC:    return "async";
-        case GGML_SYCL_MEM_DIRECT:   return "direct";
-        default:                     GGML_ABORT("[%s] The type value %d is not supported\n", __func__, (int) type);
+ساكن ثابت حرف * mem_type_name(ggml_sycl_mem_type type) {
+    بدل (type) {
+        حالة GGML_SYCL_MEM_بفر:   أرجع "buffer";
+        حالة GGML_SYCL_MEM_POOL_LEG: أرجع "pool_leg";
+        حالة GGML_SYCL_MEM_POOL_VMM: أرجع "pool_vmm";
+        حالة GGML_SYCL_MEM_ASYNC:    أرجع "async";
+        حالة GGML_SYCL_MEM_سڌو:   أرجع "direct";
+        افتراضي:                     GGML_ABORT("[%s] The type value %d is not supported\n", __func__, (صحيح) type);
     }
 }
 
-struct mem_tracker {
+بنية mem_tracker {
     std::mutex mutex;
-    std::unordered_map<const void *, std::pair<ggml_sycl_mem_type, size_t>> live_by_ptr;
-    size_t live[GGML_SYCL_MEM_TYPE_COUNT] = {};
-    size_t peak[GGML_SYCL_MEM_TYPE_COUNT] = {};
-    size_t total_live = 0;
-    size_t total_peak = 0;
-    size_t last_logged_peak = 0;
+    std::unordered_map<ثابت فراغ *, std::pair<ggml_sycl_mem_type, size_t>> جيئرو_by_ptr;
+    size_t جيئرو[GGML_SYCL_MEM_TYPE_ڳڻپ] = {};
+    size_t peak[GGML_SYCL_MEM_TYPE_ڳڻپ] = {};
+    size_t ڪل_جيئرو = 0;
+    size_t ڪل_peak = 0;
+    size_t آخري_logged_peak = 0;
 };
 
-static mem_tracker & get_tracker() {
-    static mem_tracker t;
-    return t;
+ساكن mem_tracker & get_tracker() {
+    ساكن mem_tracker t;
+    أرجع t;
 }
 
-static size_t step_bytes() {
-    const int mib = g_ggml_sycl_memtrace_step > 0 ? g_ggml_sycl_memtrace_step : 64;
-    return (size_t) mib * MIB;
+ساكن size_t قدم_بائيٽون() {
+    ثابت صحيح mib = g_ggml_sycl_memtrace_قدم > 0 ? g_ggml_sycl_memtrace_قدم : 64;
+    أرجع (size_t) mib * MIB;
 }
 
-static void report_sites_locked() {
+ساكن فراغ report_sites_locked() {
     mem_tracker & t = get_tracker();
-    for (int i = 0; i < GGML_SYCL_MEM_TYPE_COUNT; i++) {
-        if (t.peak[i] == 0) {
-            continue;
+    لكل (صحيح i = 0; i < GGML_SYCL_MEM_TYPE_ڳڻپ; i++) {
+        إذا (t.peak[i] == 0) {
+            استمر;
         }
-        GGML_LOG_INFO(GGML_SYCL_MEMTRACE_TAG "   %-9s allocated %5zu MiB, peak %5zu MiB\n",
-                      mem_type_name((ggml_sycl_mem_type) i), t.live[i] / MIB, t.peak[i] / MIB);
+        GGML_LOG_INFO(GGML_SYCL_MEMTRACE_ٽيگ "   %-9s allocated %5zu MiB, peak %5zu MiB\n",
+                      mem_type_name((ggml_sycl_mem_type) i), t.جيئرو[i] / MIB, t.peak[i] / MIB);
     }
 }
 
-static void report_locked(const char * tag) {
+ساكن فراغ report_locked(ثابت حرف * ٽيگ) {
     mem_tracker & t = get_tracker();
 
-    const size_t allocated = t.total_live / MIB;
-    const size_t buffers   = t.live[GGML_SYCL_MEM_BUFFER] / MIB;
+    ثابت size_t allocated = t.ڪل_جيئرو / MIB;
+    ثابت size_t buffers   = t.جيئرو[GGML_SYCL_MEM_بفر] / MIB;
 
-    GGML_LOG_INFO(GGML_SYCL_MEMTRACE_TAG " %s: allocated %5zu MiB (buffers %5zu + scratch %5zu),"
+    GGML_LOG_INFO(GGML_SYCL_MEMTRACE_ٽيگ " %s: allocated %5zu MiB (buffers %5zu + scratch %5zu),"
                   " peak %5zu MiB\n",
-                  tag, allocated, buffers, allocated - buffers, t.total_peak / MIB);
+                  ٽيگ, allocated, buffers, allocated - buffers, t.ڪل_peak / MIB);
     report_sites_locked();
 }
 
-static void log_event_locked(const char * op, ggml_sycl_mem_type type, const void * ptr, size_t bytes) {
-    GGML_LOG_INFO(GGML_SYCL_MEMTRACE_TAG " allocated %5zu MiB  %-5s %-9s %9.3f MiB  ptr=%p\n",
-                  get_tracker().total_live / MIB, op, mem_type_name(type),
-                  (double) bytes / MIB, ptr);
+ساكن فراغ log_event_locked(ثابت حرف * op, ggml_sycl_mem_type type, ثابت فراغ * ptr, size_t بائيٽون) {
+    GGML_LOG_INFO(GGML_SYCL_MEMTRACE_ٽيگ " allocated %5zu MiB  %-5s %-9s %9.3f MiB  ptr=%p\n",
+                  get_tracker().ڪل_جيئرو / MIB, op, mem_type_name(type),
+                  (مزدوج) بائيٽون / MIB, ptr);
 }
 
-bool ggml_sycl_memtrace_enabled() {
-    return g_ggml_sycl_memtrace > 0;
+منطقي ggml_sycl_memtrace_enabled() {
+    أرجع g_ggml_sycl_memtrace > 0;
 }
 
-void ggml_sycl_memtrace_add(ggml_sycl_mem_type type, const void * ptr, size_t bytes) {
-    if (!ggml_sycl_memtrace_enabled()) {
-        return;
+فراغ ggml_sycl_memtrace_جوڙيو(ggml_sycl_mem_type type, ثابت فراغ * ptr, size_t بائيٽون) {
+    إذا (!ggml_sycl_memtrace_enabled()) {
+        أرجع;
     }
-    GGML_ASSERT(ptr != nullptr);
-    GGML_ASSERT(bytes != 0);
+    GGML_ASSERT(ptr != خالي_اشارو);
+    GGML_ASSERT(بائيٽون != 0);
 
     mem_tracker & t = get_tracker();
-    std::lock_guard<std::mutex> lock(t.mutex);
+    std::lock_guard<std::mutex> تالو(t.mutex);
 
-    auto it = t.live_by_ptr.find(ptr);
-    if (it != t.live_by_ptr.end()) {
-        t.live[it->second.first] -= it->second.second;
-        t.total_live -= it->second.second;
+    خودڪار it = t.جيئرو_by_ptr.find(ptr);
+    إذا (it != t.جيئرو_by_ptr.end()) {
+        t.جيئرو[it->second.پهريون] -= it->second.second;
+        t.ڪل_جيئرو -= it->second.second;
     }
 
-    t.live_by_ptr[ptr] = { type, bytes };
-    t.live[type] += bytes;
-    t.total_live += bytes;
+    t.جيئرو_by_ptr[ptr] = { type, بائيٽون };
+    t.جيئرو[type] += بائيٽون;
+    t.ڪل_جيئرو += بائيٽون;
 
-    if (t.live[type] > t.peak[type]) {
-        t.peak[type] = t.live[type];
+    إذا (t.جيئرو[type] > t.peak[type]) {
+        t.peak[type] = t.جيئرو[type];
     }
-    if (t.total_live > t.total_peak) {
-        t.total_peak = t.total_live;
-    }
-
-    if (g_ggml_sycl_memtrace >= 2) {
-        log_event_locked("alloc", type, ptr, bytes);
+    إذا (t.ڪل_جيئرو > t.ڪل_peak) {
+        t.ڪل_peak = t.ڪل_جيئرو;
     }
 
-    static const size_t step = step_bytes();
-    if (t.total_peak >= t.last_logged_peak + step) {
-        t.last_logged_peak = t.total_peak;
-        char tag[96];
-        std::snprintf(tag, sizeof(tag), "peak grew (+%zu MiB from %s)", bytes / MIB,
+    إذا (g_ggml_sycl_memtrace >= 2) {
+        log_event_locked("alloc", type, ptr, بائيٽون);
+    }
+
+    ساكن ثابت size_t قدم = قدم_بائيٽون();
+    إذا (t.ڪل_peak >= t.آخري_logged_peak + قدم) {
+        t.آخري_logged_peak = t.ڪل_peak;
+        حرف ٽيگ[96];
+        std::snprintf(ٽيگ, حجم(ٽيگ), "peak grew (+%zu MiB from %s)", بائيٽون / MIB,
                       mem_type_name(type));
-        report_locked(tag);
+        report_locked(ٽيگ);
     }
 }
 
-void ggml_sycl_memtrace_del(const void * ptr) {
-    if (!ggml_sycl_memtrace_enabled() || ptr == nullptr) {
-        return;
+فراغ ggml_sycl_memtrace_del(ثابت فراغ * ptr) {
+    إذا (!ggml_sycl_memtrace_enabled() || ptr == خالي_اشارو) {
+        أرجع;
     }
     mem_tracker & t = get_tracker();
-    std::lock_guard<std::mutex> lock(t.mutex);
+    std::lock_guard<std::mutex> تالو(t.mutex);
 
-    auto it = t.live_by_ptr.find(ptr);
-    if (it == t.live_by_ptr.end()) {
-        return;
+    خودڪار it = t.جيئرو_by_ptr.find(ptr);
+    إذا (it == t.جيئرو_by_ptr.end()) {
+        أرجع;
     }
-    const ggml_sycl_mem_type type = it->second.first;
-    const size_t bytes = it->second.second;
-    t.live[type] -= bytes;
-    t.total_live -= bytes;
-    t.live_by_ptr.erase(it);
+    ثابت ggml_sycl_mem_type type = it->second.پهريون;
+    ثابت size_t بائيٽون = it->second.second;
+    t.جيئرو[type] -= بائيٽون;
+    t.ڪل_جيئرو -= بائيٽون;
+    t.جيئرو_by_ptr.erase(it);
 
-    if (g_ggml_sycl_memtrace >= 2) {
-        log_event_locked("free", type, ptr, bytes);
+    إذا (g_ggml_sycl_memtrace >= 2) {
+        log_event_locked("free", type, ptr, بائيٽون);
     }
 }
 
-void ggml_sycl_memtrace_fail(ggml_sycl_mem_type type, size_t bytes) {
-    GGML_LOG_ERROR(GGML_SYCL_MEMTRACE_TAG " alloc FAILED: %9.3f MiB %s\n",
-                   (double) bytes / MIB, mem_type_name(type));
-    if (!ggml_sycl_memtrace_enabled()) {
-        return;
+فراغ ggml_sycl_memtrace_fail(ggml_sycl_mem_type type, size_t بائيٽون) {
+    GGML_LOG_ERROR(GGML_SYCL_MEMTRACE_ٽيگ " alloc FAILED: %9.3f MiB %s\n",
+                   (مزدوج) بائيٽون / MIB, mem_type_name(type));
+    إذا (!ggml_sycl_memtrace_enabled()) {
+        أرجع;
     }
     mem_tracker & t = get_tracker();
-    std::lock_guard<std::mutex> lock(t.mutex);
+    std::lock_guard<std::mutex> تالو(t.mutex);
     report_locked("at allocation failure");
 }
 
-void ggml_sycl_memtrace_report(const char * tag) {
-    if (!ggml_sycl_memtrace_enabled()) {
-        return;
+فراغ ggml_sycl_memtrace_report(ثابت حرف * ٽيگ) {
+    إذا (!ggml_sycl_memtrace_enabled()) {
+        أرجع;
     }
     mem_tracker & t = get_tracker();
-    std::lock_guard<std::mutex> lock(t.mutex);
-    report_locked(tag);
+    std::lock_guard<std::mutex> تالو(t.mutex);
+    report_locked(ٽيگ);
 }
 
-static bool device_memory_is_dedicated(int device) {
-    if (device < 0 || device >= ggml_sycl_info().device_count) {
-        return false;
+ساكن منطقي device_يادگيري_is_dedicated(صحيح device) {
+    إذا (device < 0 || device >= ggml_sycl_info().device_ڳڻپ) {
+        أرجع خطأ;
     }
-    const sycl_device_info & info = ggml_sycl_info().devices[device];
-    return info.l0_device_type_valid && info.l0_discrete_gpu;
+    ثابت sycl_device_info & info = ggml_sycl_info().devices[device];
+    أرجع info.l0_device_type_valid && info.l0_discrete_gpu;
 }
 
-void ggml_sycl_memtrace_report_device(const char * tag, int device, size_t dev_free, size_t dev_total) {
-    if (!ggml_sycl_memtrace_enabled()) {
-        return;
+فراغ ggml_sycl_memtrace_report_device(ثابت حرف * ٽيگ, صحيح device, size_t dev_free, size_t dev_ڪل) {
+    إذا (!ggml_sycl_memtrace_enabled()) {
+        أرجع;
     }
     mem_tracker & t = get_tracker();
-    std::lock_guard<std::mutex> lock(t.mutex);
+    std::lock_guard<std::mutex> تالو(t.mutex);
 
-    const size_t in_use    = dev_total > dev_free ? dev_total - dev_free : 0;
-    const size_t total     = dev_total / MIB;
-    const size_t freed     = dev_free / MIB;
-    const size_t allocated = t.total_live / MIB;
-    const size_t buffers   = t.live[GGML_SYCL_MEM_BUFFER] / MIB;
-    const size_t peak      = t.total_peak / MIB;
+    ثابت size_t اندريون_use    = dev_ڪل > dev_free ? dev_ڪل - dev_free : 0;
+    ثابت size_t ڪل     = dev_ڪل / MIB;
+    ثابت size_t freed     = dev_free / MIB;
+    ثابت size_t allocated = t.ڪل_جيئرو / MIB;
+    ثابت size_t buffers   = t.جيئرو[GGML_SYCL_MEM_بفر] / MIB;
+    ثابت size_t peak      = t.ڪل_peak / MIB;
 
-    if (in_use >= t.total_live && device_memory_is_dedicated(device) && total >= freed + allocated) {
-        GGML_LOG_INFO(GGML_SYCL_MEMTRACE_TAG " %s: total %5zu MiB = free %5zu + allocated %5zu"
+    إذا (اندريون_use >= t.ڪل_جيئرو && device_يادگيري_is_dedicated(device) && ڪل >= freed + allocated) {
+        GGML_LOG_INFO(GGML_SYCL_MEMTRACE_ٽيگ " %s: total %5zu MiB = free %5zu + allocated %5zu"
                       " (buffers %5zu + scratch %5zu) + other %5zu, peak %5zu MiB\n",
-                      tag, total, freed, allocated, buffers, allocated - buffers,
-                      total - freed - allocated, peak);
-    } else {
-        GGML_LOG_INFO(GGML_SYCL_MEMTRACE_TAG " %s: total %5zu MiB, free %5zu, in use %5zu;"
+                      ٽيگ, ڪل, freed, allocated, buffers, allocated - buffers,
+                      ڪل - freed - allocated, peak);
+    } وإلا {
+        GGML_LOG_INFO(GGML_SYCL_MEMTRACE_ٽيگ " %s: total %5zu MiB, free %5zu, in use %5zu;"
                       " allocated %5zu (buffers %5zu + scratch %5zu), peak %5zu MiB\n",
-                      tag, total, freed, in_use / MIB, allocated, buffers,
+                      ٽيگ, ڪل, freed, اندريون_use / MIB, allocated, buffers,
                       allocated - buffers, peak);
     }
     report_sites_locked();

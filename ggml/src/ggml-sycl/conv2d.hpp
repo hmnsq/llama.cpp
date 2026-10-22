@@ -1,10 +1,10 @@
-#ifndef GGML_SYCL_CONV2D_HPP
-#define GGML_SYCL_CONV2D_HPP
+#جيڪڏهن_وصف_نه_ٿيل GGML_SYCL_CONV2D_HPP
+#وصف_ڪريو GGML_SYCL_CONV2D_HPP
 
-#include "common.hpp"
+#ضمن "common.hpp"
 
-#define SYCL_CONV2D_BLOCK_SIZE 256
+#وصف_ڪريو SYCL_CONV2_D_بلاڪ_سائيز 256
 
-void ggml_sycl_op_conv2d(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+فراغ ggml_sycl_op_conv2d(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-#endif // GGML_SYCL_CONV2D_HPP
+#جيڪڏهن_پورو // GGML_SYCL_CONV2D_HPP

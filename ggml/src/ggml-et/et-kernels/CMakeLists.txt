@@ -89,7 +89,7 @@ endforeach()
 add_dependencies(uberkernel.elf et-uberkernel-map)
 
 # Each supported kernel is compiled in its own translation unit with
-#   -Dentry_point=<kernel>_entry
+#   -Dداخلا_نقطو=<kernel>_entry
 # so symbols and macros don't leak between kernels. The dispatcher
 # (uberkernel.c) calls the renamed entries via extern declarations.
 #

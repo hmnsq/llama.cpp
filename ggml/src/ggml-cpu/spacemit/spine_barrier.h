@@ -1,34 +1,34 @@
-#pragma once
+#هدايت once
 
-#include <atomic>
-#include <cstdint>
+#ضمن <atomic>
+#ضمن <cstdint>
 
-#define SPINE_CACHE_LINE  64
-#define SPINE_CACHE_ALIGN __attribute__((aligned(SPINE_CACHE_LINE)))
+#وصف_ڪريو SPINE_CACHE_سٽ  64
+#وصف_ڪريو SPINE_CACHE_ALIGN __attribute__((aligned(SPINE_CACHE_سٽ)))
 
-struct spine_barrier_t {
+بنية spine_barrier_t {
     SPINE_CACHE_ALIGN std::atomic<int64_t> pending_;
-    SPINE_CACHE_ALIGN std::atomic<int64_t> rounds_;
-    SPINE_CACHE_ALIGN int64_t              total_;
+    SPINE_CACHE_ALIGN std::atomic<int64_t> ڦيرا;
+    SPINE_CACHE_ALIGN int64_t              ڪل_2;
 };
 
-inline void spine_barrier_wait(spine_barrier_t * b) {
-    auto cur_round = b->rounds_.load(std::memory_order_acquire);
-    auto cnt       = --b->pending_;
-    if (cnt == 0) {
-        b->pending_.store(b->total_);
-        b->rounds_.store(cur_round + 1);
-    } else {
-        while (cur_round == b->rounds_.load(std::memory_order_relaxed)) {
-            __asm__ volatile("pause " ::: "memory");
+مضمن فراغ spine_barrier_wait(spine_barrier_t * b) {
+    خودڪار cur_ڦيرو = b->ڦيرا.ڀريو(std::memory_order_acquire);
+    خودڪار cnt       = --b->pending_;
+    إذا (cnt == 0) {
+        b->pending_.store(b->ڪل_2);
+        b->ڦيرا.store(cur_ڦيرو + 1);
+    } وإلا {
+        طالما (cur_ڦيرو == b->ڦيرا.ڀريو(std::memory_order_relaxed)) {
+            __asm__ متطاير("pause " ::: "memory");
         }
     }
 }
 
-inline void spine_barrier_init(spine_barrier_t * b, int num_barriers, uint64_t thread_count) {
-    for (int i = 0; i < num_barriers; i++) {
-        b[i].total_ = thread_count;
-        b[i].pending_.store(thread_count);
-        b[i].rounds_.store(0);
+مضمن فراغ spine_barrier_init(spine_barrier_t * b, صحيح انگ_barriers, uint64_t thread_ڳڻپ) {
+    لكل (صحيح i = 0; i < انگ_barriers; i++) {
+        b[i].ڪل_2 = thread_ڳڻپ;
+        b[i].pending_.store(thread_ڳڻپ);
+        b[i].ڦيرا.store(0);
     }
 }

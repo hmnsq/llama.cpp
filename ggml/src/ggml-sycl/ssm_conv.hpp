@@ -1,6 +1,6 @@
-#pragma once
+#هدايت once
 
-#include "common.hpp"
+#ضمن "common.hpp"
 
-void ggml_sycl_ssm_conv(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
-void ggml_sycl_ssm_conv_fused(ggml_backend_sycl_context & ctx, ggml_tensor * dst, ggml_tensor * add, ggml_tensor * silu_dst);
+فراغ ggml_sycl_ssm_conv(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+فراغ ggml_sycl_ssm_conv_fused(ggml_backend_sycl_context & ctx, ggml_tensor * dst, ggml_tensor * جوڙيو_2, ggml_tensor * silu_dst);

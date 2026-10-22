@@ -1,475 +1,475 @@
-#pragma clang diagnostic ignored "-Wunused-variable"
-#pragma clang diagnostic ignored "-Wunused-function"
-#pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#هدايت clang diagnostic ignored "-Wunused-variable"
+#هدايت clang diagnostic ignored "-Wunused-function"
+#هدايت clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
-#include <stdatomic.h>
-#include <math.h>
-#include <string.h>
+#ضمن <HAP_farf.h>
+#ضمن <HAP_perf.h>
+#ضمن <stdatomic.h>
+#ضمن <math.h>
+#ضمن <string.h>
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "hvx-utils.h"
-#include "htp-tensor.h"
-#include "dma-queue.h"
-#include "hex-profile.h"
-#include "allreduce-ops.h"
-#include "htp-fence.h"
+#وصف_ڪريو GGML_COMMON_DECL_C
+#ضمن "ggml-common.h"
+#ضمن "htp-ctx.h"
+#ضمن "htp-ops.h"
+#ضمن "hvx-utils.h"
+#ضمن "htp-tensor.h"
+#ضمن "dma-queue.h"
+#ضمن "hex-profile.h"
+#ضمن "allreduce-ops.h"
+#ضمن "htp-fence.h"
 
-struct htp_allreduce_context {
-    struct htp_ops_context * octx;
+بنية htp_allreduce_context {
+    بنية htp_ops_context * octx;
     uint32_t n_ranks;
     uint32_t n_dsts;
     uint32_t nelem;
     uint32_t ne0;
     uint32_t ne1;
-    uint32_t row_size_aligned;
-    uint32_t rank_elem_start;
+    uint32_t صف_سائيز_aligned;
+    uint32_t rank_elem_شروعات;
     uint32_t rank_nelem;
-    uint32_t elems_per_thread;
-    uint32_t block_elems;
-    uint32_t vtcm_size_per_thread;
-    bool     is_row_bcast;
-    uint8_t * src_spad_base[HTP_ALLREDUCE_MAX_RANKS];
-    uint8_t * dst_spad_base;
-    uint8_t * res_spad_base;
+    uint32_t elems_في_thread;
+    uint32_t بلاڪ_elems;
+    uint32_t vtcm_سائيز_في_thread;
+    bool     is_صف_bcast;
+    uint8_t * src_spad_بنياد[HTP_ALLREDUCE_MAX_RANKS];
+    uint8_t * dst_spad_بنياد;
+    uint8_t * res_spad_بنياد;
 };
 
-#define DEFINE_ALLREDUCE_THREAD_DMA_1D(SUFFIX, TYPE, HVX_ADD_FN, HAS_ADD)                                         \
-static void allreduce_thread_dma_1d_##SUFFIX(unsigned int nth, unsigned int ith, void * data) {                   \
-    struct htp_allreduce_context * actx = (struct htp_allreduce_context *) data;                                  \
-    struct htp_ops_context * octx = actx->octx;                                                                   \
+#وصف_ڪريو DEFINE_ALLREDUCE_THREAD_DMA_1D(SUFFIX, TYPE, HVX_جوڙيو_FN, HAS_جوڙيو)                                         \
+ساكن فراغ allreduce_thread_dma_1d_##SUFFIX(بنانشان صحيح nth, بنانشان صحيح ith, فراغ * معلومات) {                   \
+    بنية htp_allreduce_context * actx = (بنية htp_allreduce_context *) معلومات;                                  \
+    بنية htp_ops_context * octx = actx->octx;                                                                   \
                                                                                                                   \
-    const uint32_t n_ranks     = actx->n_ranks;                                                                   \
-    const uint32_t n_dsts      = actx->n_dsts;                                                                    \
-    const uint32_t block_elems = actx->block_elems;                                                               \
+    ثابت uint32_t n_ranks     = actx->n_ranks;                                                                   \
+    ثابت uint32_t n_dsts      = actx->n_dsts;                                                                    \
+    ثابت uint32_t بلاڪ_elems = actx->بلاڪ_elems;                                                               \
                                                                                                                   \
-    const uint32_t dr  = actx->elems_per_thread;                                                                  \
-    const uint32_t ir0 = actx->rank_elem_start + dr * ith;                                                        \
-    const uint32_t ir1 = MIN(ir0 + dr, actx->rank_elem_start + actx->rank_nelem);                                 \
-    if (ir0 >= ir1) return;                                                                                       \
+    ثابت uint32_t dr  = actx->elems_في_thread;                                                                  \
+    ثابت uint32_t ir0 = actx->rank_elem_شروعات + dr * ith;                                                        \
+    ثابت uint32_t ir1 = MIN(ir0 + dr, actx->rank_elem_شروعات + actx->rank_nelem);                                 \
+    إذا (ir0 >= ir1) أرجع;                                                                                       \
                                                                                                                   \
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];                                                        \
-    dma_queue * dma_q = octx->ctx->dma[ith];                                                                      \
+    بنية htp_thread_trace * tr = &octx->ctx->trace[ith];                                                        \
+    dma_قطار * dma_q = octx->ctx->dma[ith];                                                                      \
                                                                                                                   \
-    const size_t vtcm_thread_offset = ith * actx->vtcm_size_per_thread;                                           \
-    uint8_t * dst_spad_base = actx->dst_spad_base + vtcm_thread_offset;                                           \
-    uint8_t * res_spad_base = HAS_ADD ? (actx->res_spad_base + vtcm_thread_offset) : NULL;                        \
+    ثابت size_t vtcm_thread_وٿي = ith * actx->vtcm_سائيز_في_thread;                                           \
+    uint8_t * dst_spad_بنياد = actx->dst_spad_بنياد + vtcm_thread_وٿي;                                           \
+    uint8_t * res_spad_بنياد = HAS_جوڙيو ? (actx->res_spad_بنياد + vtcm_thread_وٿي) : عدم;                        \
                                                                                                                   \
-    const size_t spad_half = actx->vtcm_size_per_thread / 2;                                                      \
+    ثابت size_t spad_half = actx->vtcm_سائيز_في_thread / 2;                                                      \
     uint32_t ir_prefetch = ir0;                                                                                   \
-    int spad_idx = 0;                                                                                             \
+    صحيح spad_idx = 0;                                                                                             \
                                                                                                                   \
-    for (int k = 0; k < 2 && ir_prefetch < ir1; k++) {                                                            \
-        uint32_t cur_elems = MIN(block_elems, ir1 - ir_prefetch);                                                 \
-        size_t   cur_bytes = cur_elems * sizeof(TYPE);                                                            \
-        uint8_t * d_spad = dst_spad_base + spad_idx * spad_half;                                                  \
-        for (uint32_t d = 0; d < n_dsts; d++) {                                                                   \
-            dma_addr_t d_ddr = octx->dsts[d]->data + ir_prefetch * sizeof(TYPE);                                  \
-            dma_queue_push(dma_q, dma_make_data(d_ddr, d_spad), cur_bytes, cur_bytes, cur_bytes, 0);              \
+    لكل (صحيح k = 0; k < 2 && ir_prefetch < ir1; k++) {                                                            \
+        uint32_t cur_elems = MIN(بلاڪ_elems, ir1 - ir_prefetch);                                                 \
+        size_t   cur_بائيٽون = cur_elems * حجم(TYPE);                                                            \
+        uint8_t * d_spad = dst_spad_بنياد + spad_idx * spad_half;                                                  \
+        لكل (uint32_t d = 0; d < n_dsts; d++) {                                                                   \
+            dma_addr_t d_ddr = octx->dsts[d]->معلومات + ir_prefetch * حجم(TYPE);                                  \
+            dma_قطار_ڌڪو(dma_q, dma_make_معلومات(d_ddr, d_spad), cur_بائيٽون, cur_بائيٽون, cur_بائيٽون, 0);              \
         }                                                                                                         \
-        for (uint32_t s = 0; s < n_ranks; s++) {                                                                  \
-            uint8_t * s_spad = actx->src_spad_base[s] + vtcm_thread_offset + spad_idx * spad_half;                \
-            const dma_addr_t s_ddr = octx->src[s]->data + ir_prefetch * sizeof(TYPE);                             \
-            dma_queue_push(dma_q, dma_make_data(s_spad, s_ddr), cur_bytes, cur_bytes, cur_bytes, 1);              \
+        لكل (uint32_t s = 0; s < n_ranks; s++) {                                                                  \
+            uint8_t * s_spad = actx->src_spad_بنياد[s] + vtcm_thread_وٿي + spad_idx * spad_half;                \
+            ثابت dma_addr_t s_ddr = octx->src[s]->معلومات + ir_prefetch * حجم(TYPE);                             \
+            dma_قطار_ڌڪو(dma_q, dma_make_معلومات(s_spad, s_ddr), cur_بائيٽون, cur_بائيٽون, cur_بائيٽون, 1);              \
         }                                                                                                         \
-        if (HAS_ADD) {                                                                                            \
-            uint8_t * r_spad = res_spad_base + spad_idx * spad_half;                                              \
-            const dma_addr_t r_ddr = octx->src[2 * n_ranks]->data + ir_prefetch * sizeof(TYPE);                   \
-            dma_queue_push(dma_q, dma_make_data(r_spad, r_ddr), cur_bytes, cur_bytes, cur_bytes, 1);              \
+        إذا (HAS_جوڙيو) {                                                                                            \
+            uint8_t * r_spad = res_spad_بنياد + spad_idx * spad_half;                                              \
+            ثابت dma_addr_t r_ddr = octx->src[2 * n_ranks]->معلومات + ir_prefetch * حجم(TYPE);                   \
+            dma_قطار_ڌڪو(dma_q, dma_make_معلومات(r_spad, r_ddr), cur_بائيٽون, cur_بائيٽون, cur_بائيٽون, 1);              \
         }                                                                                                         \
         ir_prefetch += cur_elems;                                                                                 \
         spad_idx ^= 1;                                                                                            \
     }                                                                                                             \
                                                                                                                   \
-    int comp_spad_idx = 0;                                                                                        \
-    for (uint32_t ir = ir0; ir < ir1; ) {                                                                         \
-        uint32_t cur_elems = MIN(block_elems, ir1 - ir);                                                          \
-        size_t   cur_bytes = cur_elems * sizeof(TYPE);                                                            \
-        for (uint32_t d = 0; d < n_dsts; d++) {                                                                   \
-            dma_queue_pop(dma_q);                                                                                 \
+    صحيح comp_spad_idx = 0;                                                                                        \
+    لكل (uint32_t ir = ir0; ir < ir1; ) {                                                                         \
+        uint32_t cur_elems = MIN(بلاڪ_elems, ir1 - ir);                                                          \
+        size_t   cur_بائيٽون = cur_elems * حجم(TYPE);                                                            \
+        لكل (uint32_t d = 0; d < n_dsts; d++) {                                                                   \
+            dma_قطار_ڪڍو(dma_q);                                                                                 \
         }                                                                                                         \
-        for (uint32_t s = 0; s < n_ranks; s++) {                                                                  \
-            dma_queue_pop(dma_q);                                                                                 \
+        لكل (uint32_t s = 0; s < n_ranks; s++) {                                                                  \
+            dma_قطار_ڪڍو(dma_q);                                                                                 \
         }                                                                                                         \
-        if (HAS_ADD) {                                                                                            \
-            dma_queue_pop(dma_q);                                                                                 \
+        إذا (HAS_جوڙيو) {                                                                                            \
+            dma_قطار_ڪڍو(dma_q);                                                                                 \
         }                                                                                                         \
-        uint8_t * d_spad  = dst_spad_base + comp_spad_idx * spad_half;                                            \
-        uint8_t * s0_spad = actx->src_spad_base[0] + vtcm_thread_offset + comp_spad_idx * spad_half;              \
-        uint8_t * s1_spad = actx->src_spad_base[1] + vtcm_thread_offset + comp_spad_idx * spad_half;              \
-        uint8_t * r_spad  = HAS_ADD ? (res_spad_base + comp_spad_idx * spad_half) : NULL;                         \
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);                                         \
-        HVX_ADD_FN(d_spad, s0_spad, s1_spad, cur_elems);                                                          \
-        for (uint32_t s = 2; s < n_ranks; s++) {                                                                  \
-            uint8_t * ss_spad = actx->src_spad_base[s] + vtcm_thread_offset + comp_spad_idx * spad_half;          \
-            HVX_ADD_FN(d_spad, d_spad, ss_spad, cur_elems);                                                       \
+        uint8_t * d_spad  = dst_spad_بنياد + comp_spad_idx * spad_half;                                            \
+        uint8_t * s0_spad = actx->src_spad_بنياد[0] + vtcm_thread_وٿي + comp_spad_idx * spad_half;              \
+        uint8_t * s1_spad = actx->src_spad_بنياد[1] + vtcm_thread_وٿي + comp_spad_idx * spad_half;              \
+        uint8_t * r_spad  = HAS_جوڙيو ? (res_spad_بنياد + comp_spad_idx * spad_half) : عدم;                         \
+        htp_trace_event_شروعات(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);                                         \
+        HVX_جوڙيو_FN(d_spad, s0_spad, s1_spad, cur_elems);                                                          \
+        لكل (uint32_t s = 2; s < n_ranks; s++) {                                                                  \
+            uint8_t * ss_spad = actx->src_spad_بنياد[s] + vtcm_thread_وٿي + comp_spad_idx * spad_half;          \
+            HVX_جوڙيو_FN(d_spad, d_spad, ss_spad, cur_elems);                                                       \
         }                                                                                                         \
-        if (HAS_ADD) {                                                                                            \
-            HVX_ADD_FN(d_spad, d_spad, r_spad, cur_elems);                                                        \
+        إذا (HAS_جوڙيو) {                                                                                            \
+            HVX_جوڙيو_FN(d_spad, d_spad, r_spad, cur_elems);                                                        \
         }                                                                                                         \
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);                                          \
-        for (uint32_t d = 0; d < n_dsts; d++) {                                                                   \
-            dma_addr_t d_ddr = octx->dsts[d]->data + ir * sizeof(TYPE);                                           \
-            dma_queue_push(dma_q, dma_make_data(d_ddr, d_spad), cur_bytes, cur_bytes, cur_bytes, 1);              \
+        لكل (uint32_t d = 0; d < n_dsts; d++) {                                                                   \
+            dma_addr_t d_ddr = octx->dsts[d]->معلومات + ir * حجم(TYPE);                                           \
+            dma_قطار_ڌڪو(dma_q, dma_make_معلومات(d_ddr, d_spad), cur_بائيٽون, cur_بائيٽون, cur_بائيٽون, 1);              \
         }                                                                                                         \
-        if (ir_prefetch < ir1) {                                                                                  \
-            uint32_t next_elems = MIN(block_elems, ir1 - ir_prefetch);                                            \
-            size_t   next_bytes = next_elems * sizeof(TYPE);                                                      \
-            for (uint32_t s = 0; s < n_ranks; s++) {                                                              \
-                uint8_t * s_spad = actx->src_spad_base[s] + vtcm_thread_offset + comp_spad_idx * spad_half;       \
-                const dma_addr_t s_next = octx->src[s]->data + ir_prefetch * sizeof(TYPE);                        \
-                dma_queue_push(dma_q, dma_make_data(s_spad, s_next), next_bytes, next_bytes, next_bytes, 1);      \
+        إذا (ir_prefetch < ir1) {                                                                                  \
+            uint32_t ايندڙ_elems = MIN(بلاڪ_elems, ir1 - ir_prefetch);                                            \
+            size_t   ايندڙ_بائيٽون = ايندڙ_elems * حجم(TYPE);                                                      \
+            لكل (uint32_t s = 0; s < n_ranks; s++) {                                                              \
+                uint8_t * s_spad = actx->src_spad_بنياد[s] + vtcm_thread_وٿي + comp_spad_idx * spad_half;       \
+                ثابت dma_addr_t s_ايندڙ = octx->src[s]->معلومات + ir_prefetch * حجم(TYPE);                        \
+                dma_قطار_ڌڪو(dma_q, dma_make_معلومات(s_spad, s_ايندڙ), ايندڙ_بائيٽون, ايندڙ_بائيٽون, ايندڙ_بائيٽون, 1);      \
             }                                                                                                     \
-            if (HAS_ADD) {                                                                                        \
-                uint8_t * r_spad_next = res_spad_base + comp_spad_idx * spad_half;                                \
-                const dma_addr_t r_next = octx->src[2 * n_ranks]->data + ir_prefetch * sizeof(TYPE);              \
-                dma_queue_push(dma_q, dma_make_data(r_spad_next, r_next), next_bytes, next_bytes, next_bytes, 1); \
+            إذا (HAS_جوڙيو) {                                                                                        \
+                uint8_t * r_spad_ايندڙ = res_spad_بنياد + comp_spad_idx * spad_half;                                \
+                ثابت dma_addr_t r_ايندڙ = octx->src[2 * n_ranks]->معلومات + ir_prefetch * حجم(TYPE);              \
+                dma_قطار_ڌڪو(dma_q, dma_make_معلومات(r_spad_ايندڙ, r_ايندڙ), ايندڙ_بائيٽون, ايندڙ_بائيٽون, ايندڙ_بائيٽون, 1); \
             }                                                                                                     \
-            ir_prefetch += next_elems;                                                                            \
+            ir_prefetch += ايندڙ_elems;                                                                            \
         }                                                                                                         \
         comp_spad_idx ^= 1;                                                                                       \
         ir += cur_elems;                                                                                          \
     }                                                                                                             \
-    dma_queue_flush(dma_q);                                                                                       \
+    dma_قطار_flush(dma_q);                                                                                       \
 }
 
-DEFINE_ALLREDUCE_THREAD_DMA_1D(f16,     __fp16, hvx_add_f16_aaa, 0)
-DEFINE_ALLREDUCE_THREAD_DMA_1D(f32,     float,  hvx_add_f32_aaa, 0)
-DEFINE_ALLREDUCE_THREAD_DMA_1D(add_f16, __fp16, hvx_add_f16_aaa, 1)
-DEFINE_ALLREDUCE_THREAD_DMA_1D(add_f32, float,  hvx_add_f32_aaa, 1)
+DEFINE_ALLREDUCE_THREAD_DMA_1D(f16,     __fp16, hvx_جوڙيو_f16_aaa, 0)
+DEFINE_ALLREDUCE_THREAD_DMA_1D(f32,     عائم,  hvx_جوڙيو_f32_aaa, 0)
+DEFINE_ALLREDUCE_THREAD_DMA_1D(جوڙيو_f16, __fp16, hvx_جوڙيو_f16_aaa, 1)
+DEFINE_ALLREDUCE_THREAD_DMA_1D(جوڙيو_f32, عائم,  hvx_جوڙيو_f32_aaa, 1)
 
-#define DEFINE_ALLREDUCE_THREAD_DMA_2D(SUFFIX, TYPE, HVX_ADD_FN, HAS_ADD, IS_ROW_BCAST)                                                           \
-static void allreduce_thread_dma_2d_##SUFFIX(unsigned int nth, unsigned int ith, void * data) {                                                   \
-    struct htp_allreduce_context * actx = (struct htp_allreduce_context *) data;                                                                  \
-    struct htp_ops_context * octx = actx->octx;                                                                                                   \
+#وصف_ڪريو DEFINE_ALLREDUCE_THREAD_DMA_2D(SUFFIX, TYPE, HVX_جوڙيو_FN, HAS_جوڙيو, IS_صف_BCAST)                                                           \
+ساكن فراغ allreduce_thread_dma_2d_##SUFFIX(بنانشان صحيح nth, بنانشان صحيح ith, فراغ * معلومات) {                                                   \
+    بنية htp_allreduce_context * actx = (بنية htp_allreduce_context *) معلومات;                                                                  \
+    بنية htp_ops_context * octx = actx->octx;                                                                                                   \
                                                                                                                                                   \
-    const uint32_t n_ranks          = actx->n_ranks;                                                                                              \
-    const uint32_t n_dsts           = actx->n_dsts;                                                                                               \
-    const uint32_t ne0              = actx->ne0;                                                                                                  \
-    const uint32_t block_rows       = actx->block_elems;                                                                                          \
-    const uint32_t row_size_aligned = actx->row_size_aligned;                                                                                     \
-    const uint32_t row_bytes        = ne0 * sizeof(TYPE);                                                                                         \
+    ثابت uint32_t n_ranks          = actx->n_ranks;                                                                                              \
+    ثابت uint32_t n_dsts           = actx->n_dsts;                                                                                               \
+    ثابت uint32_t ne0              = actx->ne0;                                                                                                  \
+    ثابت uint32_t بلاڪ_صفون       = actx->بلاڪ_elems;                                                                                          \
+    ثابت uint32_t صف_سائيز_aligned = actx->صف_سائيز_aligned;                                                                                     \
+    ثابت uint32_t صف_بائيٽون        = ne0 * حجم(TYPE);                                                                                         \
                                                                                                                                                   \
-    const uint32_t dr  = actx->elems_per_thread;                                                                                                  \
-    const uint32_t r0  = actx->rank_elem_start + dr * ith;                                                                                        \
-    const uint32_t r1  = MIN(r0 + dr, actx->rank_elem_start + actx->rank_nelem);                                                                  \
-    if (r0 >= r1) return;                                                                                                                         \
+    ثابت uint32_t dr  = actx->elems_في_thread;                                                                                                  \
+    ثابت uint32_t r0  = actx->rank_elem_شروعات + dr * ith;                                                                                        \
+    ثابت uint32_t r1  = MIN(r0 + dr, actx->rank_elem_شروعات + actx->rank_nelem);                                                                  \
+    إذا (r0 >= r1) أرجع;                                                                                                                         \
                                                                                                                                                   \
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];                                                                                        \
-    dma_queue * dma_q = octx->ctx->dma[ith];                                                                                                      \
+    بنية htp_thread_trace * tr = &octx->ctx->trace[ith];                                                                                        \
+    dma_قطار * dma_q = octx->ctx->dma[ith];                                                                                                      \
                                                                                                                                                   \
-    const size_t vtcm_thread_offset = ith * actx->vtcm_size_per_thread;                                                                           \
-    uint8_t * dst_spad_base = actx->dst_spad_base + vtcm_thread_offset;                                                                           \
-    uint8_t * res_spad_base = HAS_ADD ? (IS_ROW_BCAST ? actx->res_spad_base : (actx->res_spad_base + vtcm_thread_offset)) : NULL;                 \
+    ثابت size_t vtcm_thread_وٿي = ith * actx->vtcm_سائيز_في_thread;                                                                           \
+    uint8_t * dst_spad_بنياد = actx->dst_spad_بنياد + vtcm_thread_وٿي;                                                                           \
+    uint8_t * res_spad_بنياد = HAS_جوڙيو ? (IS_صف_BCAST ? actx->res_spad_بنياد : (actx->res_spad_بنياد + vtcm_thread_وٿي)) : عدم;                 \
                                                                                                                                                   \
-    const size_t spad_half = actx->vtcm_size_per_thread / 2;                                                                                      \
+    ثابت size_t spad_half = actx->vtcm_سائيز_في_thread / 2;                                                                                      \
     uint32_t r_prefetch = r0;                                                                                                                     \
-    int spad_idx = 0;                                                                                                                             \
+    صحيح spad_idx = 0;                                                                                                                             \
                                                                                                                                                   \
-    for (int k = 0; k < 2 && r_prefetch < r1; k++) {                                                                                              \
-        uint32_t cur_rows = MIN(block_rows, r1 - r_prefetch);                                                                                     \
-        uint8_t * d_spad = dst_spad_base + spad_idx * spad_half;                                                                                  \
-        for (uint32_t d = 0; d < n_dsts; d++) {                                                                                                   \
-            dma_addr_t d_ddr = octx->dsts[d]->data + r_prefetch * octx->dsts[d]->nb[1];                                                           \
-            dma_queue_push(dma_q, dma_make_data(d_ddr, d_spad), octx->dsts[d]->nb[1], row_size_aligned, row_bytes, 0);                            \
+    لكل (صحيح k = 0; k < 2 && r_prefetch < r1; k++) {                                                                                              \
+        uint32_t cur_صفون = MIN(بلاڪ_صفون, r1 - r_prefetch);                                                                                     \
+        uint8_t * d_spad = dst_spad_بنياد + spad_idx * spad_half;                                                                                  \
+        لكل (uint32_t d = 0; d < n_dsts; d++) {                                                                                                   \
+            dma_addr_t d_ddr = octx->dsts[d]->معلومات + r_prefetch * octx->dsts[d]->nb[1];                                                           \
+            dma_قطار_ڌڪو(dma_q, dma_make_معلومات(d_ddr, d_spad), octx->dsts[d]->nb[1], صف_سائيز_aligned, صف_بائيٽون, 0);                            \
         }                                                                                                                                         \
-        for (uint32_t s = 0; s < n_ranks; s++) {                                                                                                  \
-            uint8_t * s_spad = actx->src_spad_base[s] + vtcm_thread_offset + spad_idx * spad_half;                                                \
-            const dma_addr_t s_ddr = octx->src[s]->data + r_prefetch * octx->src[s]->nb[1];                                                       \
-            dma_queue_push(dma_q, dma_make_data(s_spad, s_ddr), row_size_aligned, octx->src[s]->nb[1], row_bytes, cur_rows);                      \
+        لكل (uint32_t s = 0; s < n_ranks; s++) {                                                                                                  \
+            uint8_t * s_spad = actx->src_spad_بنياد[s] + vtcm_thread_وٿي + spad_idx * spad_half;                                                \
+            ثابت dma_addr_t s_ddr = octx->src[s]->معلومات + r_prefetch * octx->src[s]->nb[1];                                                       \
+            dma_قطار_ڌڪو(dma_q, dma_make_معلومات(s_spad, s_ddr), صف_سائيز_aligned, octx->src[s]->nb[1], صف_بائيٽون, cur_صفون);                      \
         }                                                                                                                                         \
-        if (HAS_ADD && !IS_ROW_BCAST) {                                                                                                           \
-            uint8_t * r_spad = res_spad_base + spad_idx * spad_half;                                                                              \
-            const dma_addr_t r_ddr = octx->src[2 * n_ranks]->data + r_prefetch * octx->src[2 * n_ranks]->nb[1];                                   \
-            dma_queue_push(dma_q, dma_make_data(r_spad, r_ddr), row_size_aligned, octx->src[2 * n_ranks]->nb[1], row_bytes, cur_rows);            \
+        إذا (HAS_جوڙيو && !IS_صف_BCAST) {                                                                                                           \
+            uint8_t * r_spad = res_spad_بنياد + spad_idx * spad_half;                                                                              \
+            ثابت dma_addr_t r_ddr = octx->src[2 * n_ranks]->معلومات + r_prefetch * octx->src[2 * n_ranks]->nb[1];                                   \
+            dma_قطار_ڌڪو(dma_q, dma_make_معلومات(r_spad, r_ddr), صف_سائيز_aligned, octx->src[2 * n_ranks]->nb[1], صف_بائيٽون, cur_صفون);            \
         }                                                                                                                                         \
-        r_prefetch += cur_rows;                                                                                                                   \
+        r_prefetch += cur_صفون;                                                                                                                   \
         spad_idx ^= 1;                                                                                                                            \
     }                                                                                                                                             \
                                                                                                                                                   \
-    int comp_spad_idx = 0;                                                                                                                        \
-    for (uint32_t r = r0; r < r1; ) {                                                                                                             \
-        uint32_t cur_rows = MIN(block_rows, r1 - r);                                                                                              \
-        for (uint32_t d = 0; d < n_dsts; d++) {                                                                                                   \
-            dma_queue_pop(dma_q);                                                                                                                 \
+    صحيح comp_spad_idx = 0;                                                                                                                        \
+    لكل (uint32_t r = r0; r < r1; ) {                                                                                                             \
+        uint32_t cur_صفون = MIN(بلاڪ_صفون, r1 - r);                                                                                              \
+        لكل (uint32_t d = 0; d < n_dsts; d++) {                                                                                                   \
+            dma_قطار_ڪڍو(dma_q);                                                                                                                 \
         }                                                                                                                                         \
-        for (uint32_t s = 0; s < n_ranks; s++) {                                                                                                  \
-            dma_queue_pop(dma_q);                                                                                                                 \
+        لكل (uint32_t s = 0; s < n_ranks; s++) {                                                                                                  \
+            dma_قطار_ڪڍو(dma_q);                                                                                                                 \
         }                                                                                                                                         \
-        if (HAS_ADD && !IS_ROW_BCAST) {                                                                                                           \
-            dma_queue_pop(dma_q);                                                                                                                 \
+        إذا (HAS_جوڙيو && !IS_صف_BCAST) {                                                                                                           \
+            dma_قطار_ڪڍو(dma_q);                                                                                                                 \
         }                                                                                                                                         \
-        uint8_t * d_spad  = dst_spad_base + comp_spad_idx * spad_half;                                                                            \
-        uint8_t * s0_spad = actx->src_spad_base[0] + vtcm_thread_offset + comp_spad_idx * spad_half;                                              \
-        uint8_t * s1_spad = actx->src_spad_base[1] + vtcm_thread_offset + comp_spad_idx * spad_half;                                              \
-        uint8_t * r_spad  = (HAS_ADD && !IS_ROW_BCAST) ? (res_spad_base + comp_spad_idx * spad_half) : NULL;                                      \
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) r);                                                                          \
-        for (uint32_t row = 0; row < cur_rows; row++) {                                                                                           \
-            uint8_t * d_row = d_spad + row * row_size_aligned;                                                                                    \
-            const uint8_t * s0_row = s0_spad + row * row_size_aligned;                                                                            \
-            const uint8_t * s1_row = s1_spad + row * row_size_aligned;                                                                            \
-            HVX_ADD_FN(d_row, s0_row, s1_row, ne0);                                                                                               \
-            for (uint32_t s = 2; s < n_ranks; s++) {                                                                                              \
-                const uint8_t * ss_row = actx->src_spad_base[s] + vtcm_thread_offset + comp_spad_idx * spad_half + row * row_size_aligned;        \
-                HVX_ADD_FN(d_row, d_row, ss_row, ne0);                                                                                            \
+        uint8_t * d_spad  = dst_spad_بنياد + comp_spad_idx * spad_half;                                                                            \
+        uint8_t * s0_spad = actx->src_spad_بنياد[0] + vtcm_thread_وٿي + comp_spad_idx * spad_half;                                              \
+        uint8_t * s1_spad = actx->src_spad_بنياد[1] + vtcm_thread_وٿي + comp_spad_idx * spad_half;                                              \
+        uint8_t * r_spad  = (HAS_جوڙيو && !IS_صف_BCAST) ? (res_spad_بنياد + comp_spad_idx * spad_half) : عدم;                                      \
+        htp_trace_event_شروعات(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) r);                                                                          \
+        لكل (uint32_t صف = 0; صف < cur_صفون; صف++) {                                                                                           \
+            uint8_t * d_صف = d_spad + صف * صف_سائيز_aligned;                                                                                    \
+            ثابت uint8_t * s0_صف = s0_spad + صف * صف_سائيز_aligned;                                                                            \
+            ثابت uint8_t * s1_صف = s1_spad + صف * صف_سائيز_aligned;                                                                            \
+            HVX_جوڙيو_FN(d_صف, s0_صف, s1_صف, ne0);                                                                                               \
+            لكل (uint32_t s = 2; s < n_ranks; s++) {                                                                                              \
+                ثابت uint8_t * ss_صف = actx->src_spad_بنياد[s] + vtcm_thread_وٿي + comp_spad_idx * spad_half + صف * صف_سائيز_aligned;        \
+                HVX_جوڙيو_FN(d_صف, d_صف, ss_صف, ne0);                                                                                            \
             }                                                                                                                                     \
-            if (HAS_ADD) {                                                                                                                        \
-                const uint8_t * res_row = IS_ROW_BCAST ? res_spad_base : (r_spad + row * row_size_aligned);                                       \
-                HVX_ADD_FN(d_row, d_row, res_row, ne0);                                                                                           \
+            إذا (HAS_جوڙيو) {                                                                                                                        \
+                ثابت uint8_t * res_صف = IS_صف_BCAST ? res_spad_بنياد : (r_spad + صف * صف_سائيز_aligned);                                       \
+                HVX_جوڙيو_FN(d_صف, d_صف, res_صف, ne0);                                                                                           \
             }                                                                                                                                     \
         }                                                                                                                                         \
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) r);                                                                           \
-        for (uint32_t d = 0; d < n_dsts; d++) {                                                                                                   \
-            dma_addr_t d_ddr = octx->dsts[d]->data + r * octx->dsts[d]->nb[1];                                                                    \
-            dma_queue_push(dma_q, dma_make_data(d_ddr, d_spad), octx->dsts[d]->nb[1], row_size_aligned, row_bytes, cur_rows);                     \
+        لكل (uint32_t d = 0; d < n_dsts; d++) {                                                                                                   \
+            dma_addr_t d_ddr = octx->dsts[d]->معلومات + r * octx->dsts[d]->nb[1];                                                                    \
+            dma_قطار_ڌڪو(dma_q, dma_make_معلومات(d_ddr, d_spad), octx->dsts[d]->nb[1], صف_سائيز_aligned, صف_بائيٽون, cur_صفون);                     \
         }                                                                                                                                         \
-        if (r_prefetch < r1) {                                                                                                                    \
-            uint32_t next_rows = MIN(block_rows, r1 - r_prefetch);                                                                                \
-            for (uint32_t s = 0; s < n_ranks; s++) {                                                                                              \
-                uint8_t * s_spad = actx->src_spad_base[s] + vtcm_thread_offset + comp_spad_idx * spad_half;                                       \
-                const dma_addr_t s_next = octx->src[s]->data + r_prefetch * octx->src[s]->nb[1];                                                  \
-                dma_queue_push(dma_q, dma_make_data(s_spad, s_next), row_size_aligned, octx->src[s]->nb[1], row_bytes, next_rows);                \
+        إذا (r_prefetch < r1) {                                                                                                                    \
+            uint32_t ايندڙ_صفون = MIN(بلاڪ_صفون, r1 - r_prefetch);                                                                                \
+            لكل (uint32_t s = 0; s < n_ranks; s++) {                                                                                              \
+                uint8_t * s_spad = actx->src_spad_بنياد[s] + vtcm_thread_وٿي + comp_spad_idx * spad_half;                                       \
+                ثابت dma_addr_t s_ايندڙ = octx->src[s]->معلومات + r_prefetch * octx->src[s]->nb[1];                                                  \
+                dma_قطار_ڌڪو(dma_q, dma_make_معلومات(s_spad, s_ايندڙ), صف_سائيز_aligned, octx->src[s]->nb[1], صف_بائيٽون, ايندڙ_صفون);                \
             }                                                                                                                                     \
-            if (HAS_ADD && !IS_ROW_BCAST) {                                                                                                       \
-                uint8_t * r_spad_next = res_spad_base + comp_spad_idx * spad_half;                                                                \
-                const dma_addr_t r_next = octx->src[2 * n_ranks]->data + r_prefetch * octx->src[2 * n_ranks]->nb[1];                              \
-                dma_queue_push(dma_q, dma_make_data(r_spad_next, r_next), row_size_aligned, octx->src[2 * n_ranks]->nb[1], row_bytes, next_rows); \
+            إذا (HAS_جوڙيو && !IS_صف_BCAST) {                                                                                                       \
+                uint8_t * r_spad_ايندڙ = res_spad_بنياد + comp_spad_idx * spad_half;                                                                \
+                ثابت dma_addr_t r_ايندڙ = octx->src[2 * n_ranks]->معلومات + r_prefetch * octx->src[2 * n_ranks]->nb[1];                              \
+                dma_قطار_ڌڪو(dma_q, dma_make_معلومات(r_spad_ايندڙ, r_ايندڙ), صف_سائيز_aligned, octx->src[2 * n_ranks]->nb[1], صف_بائيٽون, ايندڙ_صفون); \
             }                                                                                                                                     \
-            r_prefetch += next_rows;                                                                                                              \
+            r_prefetch += ايندڙ_صفون;                                                                                                              \
         }                                                                                                                                         \
         comp_spad_idx ^= 1;                                                                                                                       \
-        r += cur_rows;                                                                                                                            \
+        r += cur_صفون;                                                                                                                            \
     }                                                                                                                                             \
-    dma_queue_flush(dma_q);                                                                                                                       \
+    dma_قطار_flush(dma_q);                                                                                                                       \
 }
 
-DEFINE_ALLREDUCE_THREAD_DMA_2D(f16,           __fp16, hvx_add_f16_aaa, 0, 0)
-DEFINE_ALLREDUCE_THREAD_DMA_2D(f32,           float,  hvx_add_f32_aaa, 0, 0)
-DEFINE_ALLREDUCE_THREAD_DMA_2D(add_f16,       __fp16, hvx_add_f16_aaa, 1, 0)
-DEFINE_ALLREDUCE_THREAD_DMA_2D(add_f32,       float,  hvx_add_f32_aaa, 1, 0)
-DEFINE_ALLREDUCE_THREAD_DMA_2D(add_bcast_f16, __fp16, hvx_add_f16_aaa, 1, 1)
-DEFINE_ALLREDUCE_THREAD_DMA_2D(add_bcast_f32, float,  hvx_add_f32_aaa, 1, 1)
+DEFINE_ALLREDUCE_THREAD_DMA_2D(f16,           __fp16, hvx_جوڙيو_f16_aaa, 0, 0)
+DEFINE_ALLREDUCE_THREAD_DMA_2D(f32,           عائم,  hvx_جوڙيو_f32_aaa, 0, 0)
+DEFINE_ALLREDUCE_THREAD_DMA_2D(جوڙيو_f16,       __fp16, hvx_جوڙيو_f16_aaa, 1, 0)
+DEFINE_ALLREDUCE_THREAD_DMA_2D(جوڙيو_f32,       عائم,  hvx_جوڙيو_f32_aaa, 1, 0)
+DEFINE_ALLREDUCE_THREAD_DMA_2D(جوڙيو_bcast_f16, __fp16, hvx_جوڙيو_f16_aaa, 1, 1)
+DEFINE_ALLREDUCE_THREAD_DMA_2D(جوڙيو_bcast_f32, عائم,  hvx_جوڙيو_f32_aaa, 1, 1)
 
-static int validate_allreduce(
-    struct htp_ops_context * octx,
-    const struct htp_allreduce_kernel_params * kparams,
+ساكن صحيح validate_allreduce(
+    بنية htp_ops_context * octx,
+    ثابت بنية htp_allreduce_kernel_params * kparams,
     uint32_t n_ranks
 ) {
-    if (kparams->n_threads == 0 || (uint32_t) kparams->n_threads > octx->ctx->n_threads) {
-        return HTP_STATUS_INVAL_PARAMS;
+    إذا (kparams->n_ڌاڳا == 0 || (uint32_t) kparams->n_ڌاڳا > octx->ctx->n_ڌاڳا) {
+        أرجع HTP_حالت_INVAL_PARAMS;
     }
-    octx->n_threads = (uint32_t) kparams->n_threads;
+    octx->n_ڌاڳا = (uint32_t) kparams->n_ڌاڳا;
 
-    if (kparams->vtcm_size_per_thread <= 0 || kparams->vtcm_size <= 0) {
-        return HTP_STATUS_INVAL_PARAMS;
-    }
-
-    const bool has_add = (octx->op == HTP_OP_ALLREDUCE_ADD);
-    const size_t n_vtcm_buffers = htp_allreduce_vtcm_buffer_count(
-        n_ranks, octx->n_threads, has_add, kparams->is_row_bcast != 0);
-    const size_t vtcm_size = n_vtcm_buffers * (size_t) kparams->vtcm_size_per_thread;
-    if (vtcm_size != (size_t) kparams->vtcm_size) {
-        return HTP_STATUS_INVAL_PARAMS;
-    }
-    if (vtcm_size > octx->ctx->vtcm_size) {
-        return HTP_STATUS_VTCM_TOO_SMALL;
+    إذا (kparams->vtcm_سائيز_في_thread <= 0 || kparams->vtcm_سائيز <= 0) {
+        أرجع HTP_حالت_INVAL_PARAMS;
     }
 
-    if (octx->dst->type != HTP_TYPE_F16 && octx->dst->type != HTP_TYPE_F32) {
-        return HTP_STATUS_NO_SUPPORT;
+    ثابت bool has_جوڙيو = (octx->op == HTP_OP_ALLREDUCE_جوڙيو);
+    ثابت size_t n_vtcm_buffers = htp_allreduce_vtcm_بفر_ڳڻپ(
+        n_ranks, octx->n_ڌاڳا, has_جوڙيو, kparams->is_صف_bcast != 0);
+    ثابت size_t vtcm_سائيز = n_vtcm_buffers * (size_t) kparams->vtcm_سائيز_في_thread;
+    إذا (vtcm_سائيز != (size_t) kparams->vtcm_سائيز) {
+        أرجع HTP_حالت_INVAL_PARAMS;
+    }
+    إذا (vtcm_سائيز > octx->ctx->vtcm_سائيز) {
+        أرجع HTP_حالت_VTCM_TOO_SMALL;
     }
 
-    return HTP_STATUS_OK;
+    إذا (octx->dst->type != HTP_TYPE_F16 && octx->dst->type != HTP_TYPE_F32) {
+        أرجع HTP_حالت_NO_SUPPORT;
+    }
+
+    أرجع HTP_حالت_OK;
 }
 
-int op_allreduce(struct htp_ops_context * octx) {
-    if (octx->ctx->mdev.count > 1 && octx->ctx->mdev.idx > 0) {
-        return HTP_STATUS_OK;
+صحيح op_allreduce(بنية htp_ops_context * octx) {
+    إذا (octx->ctx->mdev.ڳڻپ > 1 && octx->ctx->mdev.idx > 0) {
+        أرجع HTP_حالت_OK;
     }
 
-    const struct htp_allreduce_kernel_params * kparams = (const struct htp_allreduce_kernel_params *) octx->kernel_params;
-    const struct htp_tensor * dst = octx->dst;
+    ثابت بنية htp_allreduce_kernel_params * kparams = (ثابت بنية htp_allreduce_kernel_params *) octx->kernel_params;
+    ثابت بنية htp_tensor * dst = octx->dst;
 
-    const uint32_t rank    = (uint32_t) kparams->rank;
-    const uint32_t n_ranks = (uint32_t) kparams->n_ranks;
+    ثابت uint32_t rank    = (uint32_t) kparams->rank;
+    ثابت uint32_t n_ranks = (uint32_t) kparams->n_ranks;
 
-    if (n_ranks < 2 || n_ranks > HTP_ALLREDUCE_MAX_RANKS || rank >= n_ranks) {
-        return HTP_STATUS_INVAL_PARAMS;
+    إذا (n_ranks < 2 || n_ranks > HTP_ALLREDUCE_MAX_RANKS || rank >= n_ranks) {
+        أرجع HTP_حالت_INVAL_PARAMS;
     }
 
-    const uint32_t fence_seq_entry = (uint32_t) octx->op_params[0];
-    const uint32_t fence_seq_exit  = (uint32_t) octx->op_params[1];
+    ثابت uint32_t fence_seq_داخلا = (uint32_t) octx->op_params[0];
+    ثابت uint32_t fence_seq_exit  = (uint32_t) octx->op_params[1];
 
-    const struct htp_tensor * my_sync = octx->src[n_ranks + rank];
-    atomic_uint * my_fence = (atomic_uint *) (uintptr_t) my_sync->data;
+    ثابت بنية htp_tensor * my_sync = octx->src[n_ranks + rank];
+    atomic_uint * my_fence = (atomic_uint *) (uintptr_t) my_sync->معلومات;
 
-    const int status = validate_allreduce(octx, kparams, n_ranks);
-    if (status != HTP_STATUS_OK) {
-        if (status == HTP_STATUS_NO_SUPPORT) {
+    ثابت صحيح حالت = validate_allreduce(octx, kparams, n_ranks);
+    إذا (حالت != HTP_حالت_OK) {
+        إذا (حالت == HTP_حالت_NO_SUPPORT) {
             FARF(ERROR, "ggml-hex: allreduce unsupported type %d : rank %u\n", dst->type, rank);
         }
-        htp_fence_write(my_fence, fence_seq_exit, status);
-        return status;
+        htp_fence_write(my_fence, fence_seq_exit, حالت);
+        أرجع حالت;
     }
 
-    const bool has_add = (octx->op == HTP_OP_ALLREDUCE_ADD);
-    const uint32_t nelem = dst->ne[0] * dst->ne[1] * dst->ne[2] * dst->ne[3];
-    const int32_t  mode  = kparams->mode;
+    ثابت bool has_جوڙيو = (octx->op == HTP_OP_ALLREDUCE_جوڙيو);
+    ثابت uint32_t nelem = dst->ne[0] * dst->ne[1] * dst->ne[2] * dst->ne[3];
+    ثابت int32_t  گهڻائي  = kparams->گهڻائي;
 
     // 1. Entry Barrier: Synchronize all ranks before reading
-    struct htp_thread_trace * tr0 = &octx->ctx->trace[0];
-    htp_trace_event_start(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_entry);
+    بنية htp_thread_trace * tr0 = &octx->ctx->trace[0];
+    htp_trace_event_شروعات(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_داخلا);
 
-    htp_fence_write(my_fence, fence_seq_entry, octx->status);
+    htp_fence_write(my_fence, fence_seq_داخلا, octx->حالت);
 
-    for (uint32_t j = 0; j < n_ranks; j++) {
-        if (j == rank) continue;
-        const struct htp_tensor * peer_sync = octx->src[n_ranks + j];
-        atomic_uint * peer_fence = (atomic_uint *) (uintptr_t) peer_sync->data;
+    لكل (uint32_t j = 0; j < n_ranks; j++) {
+        إذا (j == rank) استمر;
+        ثابت بنية htp_tensor * peer_sync = octx->src[n_ranks + j];
+        atomic_uint * peer_fence = (atomic_uint *) (uintptr_t) peer_sync->معلومات;
         uint64_t spins = 0;
-        while (1) {
+        طالما (1) {
             uint32_t peer_seq;
-            uint32_t peer_status;
-            htp_fence_read(peer_fence, &peer_seq, &peer_status);
-            if ((int32_t)(peer_seq - fence_seq_entry) >= 0) {
-                if (peer_status > HTP_STATUS_OK) {
-                    FARF(ERROR, "ggml-hex: allreduce entry peer %u failed with status %u\n", j, peer_status);
-                    htp_fence_write(my_fence, fence_seq_exit, peer_status);
-                    htp_trace_event_stop(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_entry);
-                    return peer_status;
+            uint32_t peer_حالت;
+            htp_fence_read(peer_fence, &peer_seq, &peer_حالت);
+            إذا ((int32_t)(peer_seq - fence_seq_داخلا) >= 0) {
+                إذا (peer_حالت > HTP_حالت_OK) {
+                    FARF(ERROR, "ggml-hex: allreduce entry peer %u failed with status %u\n", j, peer_حالت);
+                    htp_fence_write(my_fence, fence_seq_exit, peer_حالت);
+                    htp_trace_event_stop(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_داخلا);
+                    أرجع peer_حالت;
                 }
-                break;
+                اكسر;
             }
-            if (++spins > HTP_FENCE_TIMEOUT) {
+            إذا (++spins > HTP_FENCE_TIMEOUT) {
                 FARF(ERROR, "ggml-hex: allreduce entry fence-wait TIMEOUT : rank %u waiting on %u fence %p seq 0x%x peer-seq 0x%x\n",
-                     rank, j, peer_fence, fence_seq_entry, peer_seq);
-                htp_fence_write(my_fence, fence_seq_exit, HTP_STATUS_INTERNAL_ERR);
-                htp_trace_event_stop(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_entry);
-                return HTP_STATUS_INTERNAL_ERR;
+                     rank, j, peer_fence, fence_seq_داخلا, peer_seq);
+                htp_fence_write(my_fence, fence_seq_exit, HTP_حالت_اندروني_ERR);
+                htp_trace_event_stop(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_داخلا);
+                أرجع HTP_حالت_اندروني_ERR;
             }
             hex_pause();
         }
     }
-    asm volatile ("syncht" : : : "memory");
+    asm متطاير ("syncht" : : : "memory");
 
-    htp_trace_event_stop(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_entry);
+    htp_trace_event_stop(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_داخلا);
 
     // 2. Multi-threaded Reduction across assigned rank chunk
-    if (nelem > 0) {
-        const uint32_t n_threads            = (uint32_t) kparams->n_threads;
-        const uint32_t block_elems          = (uint32_t) kparams->block_elems;
-        const uint32_t elems_per_thread     = (uint32_t) kparams->elems_per_thread;
-        const uint32_t vtcm_size_per_thread = (uint32_t) kparams->vtcm_size_per_thread;
+    إذا (nelem > 0) {
+        ثابت uint32_t n_ڌاڳا            = (uint32_t) kparams->n_ڌاڳا;
+        ثابت uint32_t بلاڪ_elems          = (uint32_t) kparams->بلاڪ_elems;
+        ثابت uint32_t elems_في_thread     = (uint32_t) kparams->elems_في_thread;
+        ثابت uint32_t vtcm_سائيز_في_thread = (uint32_t) kparams->vtcm_سائيز_في_thread;
 
-        struct htp_allreduce_context actx;
+        بنية htp_allreduce_context actx;
         actx.octx                 = octx;
         actx.n_ranks              = n_ranks;
         actx.n_dsts               = (uint32_t) kparams->n_dsts ? (uint32_t) kparams->n_dsts : n_ranks;
         actx.nelem                = nelem;
         actx.ne0                  = (uint32_t) kparams->ne0;
         actx.ne1                  = (uint32_t) kparams->ne1;
-        actx.row_size_aligned     = (uint32_t) kparams->row_size_aligned;
-        actx.rank_elem_start      = (uint32_t) kparams->rank_elem_start;
+        actx.صف_سائيز_aligned     = (uint32_t) kparams->صف_سائيز_aligned;
+        actx.rank_elem_شروعات      = (uint32_t) kparams->rank_elem_شروعات;
         actx.rank_nelem           = (uint32_t) kparams->rank_nelem;
-        actx.elems_per_thread     = elems_per_thread;
-        actx.block_elems          = block_elems;
-        actx.vtcm_size_per_thread = vtcm_size_per_thread;
-        actx.is_row_bcast         = (kparams->is_row_bcast != 0);
+        actx.elems_في_thread     = elems_في_thread;
+        actx.بلاڪ_elems          = بلاڪ_elems;
+        actx.vtcm_سائيز_في_thread = vtcm_سائيز_في_thread;
+        actx.is_صف_bcast         = (kparams->is_صف_bcast != 0);
 
-        work_queue_func_t reduce_fun = NULL;
-        switch (kparams->kernel_type) {
-            case HTP_ALLREDUCE_KERNEL_DMA_1D:
-                if (has_add) {
-                    reduce_fun = (dst->type == HTP_TYPE_F16) ? allreduce_thread_dma_1d_add_f16 : allreduce_thread_dma_1d_add_f32;
-                } else {
+        work_قطار_func_t reduce_fun = عدم;
+        بدل (kparams->kernel_type) {
+            حالة HTP_ALLREDUCE_KERNEL_DMA_1D:
+                إذا (has_جوڙيو) {
+                    reduce_fun = (dst->type == HTP_TYPE_F16) ? allreduce_thread_dma_1d_جوڙيو_f16 : allreduce_thread_dma_1d_جوڙيو_f32;
+                } وإلا {
                     reduce_fun = (dst->type == HTP_TYPE_F16) ? allreduce_thread_dma_1d_f16 : allreduce_thread_dma_1d_f32;
                 }
-                break;
-            case HTP_ALLREDUCE_KERNEL_DMA_2D:
-                if (has_add) {
-                    if (kparams->is_row_bcast) {
-                        reduce_fun = (dst->type == HTP_TYPE_F16) ? allreduce_thread_dma_2d_add_bcast_f16 : allreduce_thread_dma_2d_add_bcast_f32;
-                    } else {
-                        reduce_fun = (dst->type == HTP_TYPE_F16) ? allreduce_thread_dma_2d_add_f16 : allreduce_thread_dma_2d_add_f32;
+                اكسر;
+            حالة HTP_ALLREDUCE_KERNEL_DMA_2D:
+                إذا (has_جوڙيو) {
+                    إذا (kparams->is_صف_bcast) {
+                        reduce_fun = (dst->type == HTP_TYPE_F16) ? allreduce_thread_dma_2d_جوڙيو_bcast_f16 : allreduce_thread_dma_2d_جوڙيو_bcast_f32;
+                    } وإلا {
+                        reduce_fun = (dst->type == HTP_TYPE_F16) ? allreduce_thread_dma_2d_جوڙيو_f16 : allreduce_thread_dma_2d_جوڙيو_f32;
                     }
-                } else {
+                } وإلا {
                     reduce_fun = (dst->type == HTP_TYPE_F16) ? allreduce_thread_dma_2d_f16 : allreduce_thread_dma_2d_f32;
                 }
-                break;
-            default:
+                اكسر;
+            افتراضي:
                 FARF(ERROR, "ggml-hex: allreduce unsupported kernel %d : rank %u\n", kparams->kernel_type, rank);
-                htp_fence_write(my_fence, fence_seq_exit, HTP_STATUS_NO_SUPPORT);
-                return HTP_STATUS_NO_SUPPORT;
+                htp_fence_write(my_fence, fence_seq_exit, HTP_حالت_NO_SUPPORT);
+                أرجع HTP_حالت_NO_SUPPORT;
         }
 
-        uint8_t * vtcm_ptr = (uint8_t *) octx->ctx->vtcm_base;
-        for (uint32_t s = 0; s < n_ranks; s++) {
-            actx.src_spad_base[s] = vtcm_ptr;
-            vtcm_ptr += n_threads * vtcm_size_per_thread;
+        uint8_t * vtcm_ptr = (uint8_t *) octx->ctx->vtcm_بنياد;
+        لكل (uint32_t s = 0; s < n_ranks; s++) {
+            actx.src_spad_بنياد[s] = vtcm_ptr;
+            vtcm_ptr += n_ڌاڳا * vtcm_سائيز_في_thread;
         }
-        actx.dst_spad_base = vtcm_ptr;
-        vtcm_ptr += n_threads * vtcm_size_per_thread;
-        if (has_add) {
-            actx.res_spad_base = vtcm_ptr;
-            vtcm_ptr += (actx.is_row_bcast ? 1 : n_threads) * vtcm_size_per_thread;
-        }
-
-        if (has_add && actx.is_row_bcast) {
-            const dma_addr_t r_ddr = octx->src[2 * n_ranks]->data;
-            const uint32_t row_bytes = actx.ne0 * (dst->type == HTP_TYPE_F16 ? sizeof(__fp16) : sizeof(float));
-            dma_queue * dma_q = octx->ctx->dma[0];
-            dma_queue_push(dma_q, dma_make_data(actx.res_spad_base, r_ddr), actx.row_size_aligned, 0, row_bytes, 1);
-            dma_queue_pop(dma_q);
+        actx.dst_spad_بنياد = vtcm_ptr;
+        vtcm_ptr += n_ڌاڳا * vtcm_سائيز_في_thread;
+        إذا (has_جوڙيو) {
+            actx.res_spad_بنياد = vtcm_ptr;
+            vtcm_ptr += (actx.is_صف_bcast ? 1 : n_ڌاڳا) * vtcm_سائيز_في_thread;
         }
 
-        work_queue_run(octx->ctx->work_queue, reduce_fun, &actx, n_threads);
+        إذا (has_جوڙيو && actx.is_صف_bcast) {
+            ثابت dma_addr_t r_ddr = octx->src[2 * n_ranks]->معلومات;
+            ثابت uint32_t صف_بائيٽون = actx.ne0 * (dst->type == HTP_TYPE_F16 ? حجم(__fp16) : حجم(عائم));
+            dma_قطار * dma_q = octx->ctx->dma[0];
+            dma_قطار_ڌڪو(dma_q, dma_make_معلومات(actx.res_spad_بنياد, r_ddr), actx.صف_سائيز_aligned, 0, صف_بائيٽون, 1);
+            dma_قطار_ڪڍو(dma_q);
+        }
+
+        work_قطار_لاڳيتو(octx->ctx->work_قطار, reduce_fun, &actx, n_ڌاڳا);
     }
 
     // 4. Exit Barrier: Synchronize all ranks after writing
-    htp_trace_event_start(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_exit);
+    htp_trace_event_شروعات(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_exit);
 
     // drain fan-out DMA writes before exit barrier
-    if (mode == HTP_ALLREDUCE_SHARDED_FANOUT) {
-        asm volatile ("syncht" : : : "memory");
+    إذا (گهڻائي == HTP_ALLREDUCE_SHARDED_FANOUT) {
+        asm متطاير ("syncht" : : : "memory");
     }
 
-    htp_fence_write(my_fence, fence_seq_exit, octx->status);
+    htp_fence_write(my_fence, fence_seq_exit, octx->حالت);
 
-    for (uint32_t j = 0; j < n_ranks; j++) {
-        if (j == rank) continue;
-        const struct htp_tensor * peer_sync = octx->src[n_ranks + j];
-        atomic_uint * peer_fence = (atomic_uint *) (uintptr_t) peer_sync->data;
+    لكل (uint32_t j = 0; j < n_ranks; j++) {
+        إذا (j == rank) استمر;
+        ثابت بنية htp_tensor * peer_sync = octx->src[n_ranks + j];
+        atomic_uint * peer_fence = (atomic_uint *) (uintptr_t) peer_sync->معلومات;
         uint64_t spins = 0;
-        while (1) {
+        طالما (1) {
             uint32_t peer_seq;
-            uint32_t peer_status;
-            htp_fence_read(peer_fence, &peer_seq, &peer_status);
-            if ((int32_t)(peer_seq - fence_seq_exit) >= 0) {
-                if (peer_status > HTP_STATUS_OK) {
-                    FARF(ERROR, "ggml-hex: allreduce exit peer %u failed with status %u\n", j, peer_status);
-                    htp_fence_write(my_fence, fence_seq_exit, peer_status);
+            uint32_t peer_حالت;
+            htp_fence_read(peer_fence, &peer_seq, &peer_حالت);
+            إذا ((int32_t)(peer_seq - fence_seq_exit) >= 0) {
+                إذا (peer_حالت > HTP_حالت_OK) {
+                    FARF(ERROR, "ggml-hex: allreduce exit peer %u failed with status %u\n", j, peer_حالت);
+                    htp_fence_write(my_fence, fence_seq_exit, peer_حالت);
                     htp_trace_event_stop(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_exit);
-                    return peer_status;
+                    أرجع peer_حالت;
                 }
-                break;
+                اكسر;
             }
-            if (++spins > HTP_FENCE_TIMEOUT) {
+            إذا (++spins > HTP_FENCE_TIMEOUT) {
                 FARF(ERROR, "ggml-hex: allreduce exit fence-wait TIMEOUT : rank %u waiting on %u fence %p seq 0x%x peer-seq 0x%x\n",
                      rank, j, peer_fence, fence_seq_exit, peer_seq);
-                htp_fence_write(my_fence, fence_seq_exit, HTP_STATUS_INTERNAL_ERR);
+                htp_fence_write(my_fence, fence_seq_exit, HTP_حالت_اندروني_ERR);
                 htp_trace_event_stop(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_exit);
-                return HTP_STATUS_INTERNAL_ERR;
+                أرجع HTP_حالت_اندروني_ERR;
             }
             hex_pause();
         }
     }
-    asm volatile ("syncht" : : : "memory");
+    asm متطاير ("syncht" : : : "memory");
 
     htp_trace_event_stop(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_exit);
 
-    return octx->status;
+    أرجع octx->حالت;
 }

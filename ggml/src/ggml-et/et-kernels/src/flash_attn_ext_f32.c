@@ -16,202 +16,202 @@
 // - assign rows round-robin across ET threads
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "math_fp.h"
-#include "platform.h"
+#ضمن "ggml_tensor.h"
+#ضمن "math_fp.h"
+#ضمن "platform.h"
 
-#include <stdbool.h>
-#include <stdint.h>
+#ضمن <stdbool.h>
+#ضمن <stdint.h>
 
-struct ggml_et_flash_attn_ext_params {
-    struct ggml_tensor src0;      // Q tensor (F32)
-    struct ggml_tensor src1;      // K tensor (F16 or F32)
-    struct ggml_tensor src2;      // V tensor (F16 or F32)
-    struct ggml_tensor mask;      // mask tensor (F16 or F32), zeroed when absent
-    struct ggml_tensor dst;       // Output tensor (F32)
-    float              scale;     // Scale factor applied to QK
-    int32_t            has_mask;  // nonzero if mask is present
+بنية ggml_et_flash_attn_ext_params {
+    بنية ggml_tensor src0;      // Q tensor (F32)
+    بنية ggml_tensor src1;      // K tensor (F16 or F32)
+    بنية ggml_tensor src2;      // V tensor (F16 or F32)
+    بنية ggml_tensor نقاب;      // mask tensor (F16 or F32), zeroed when absent
+    بنية ggml_tensor dst;       // Output tensor (F32)
+    عائم              scale;     // Scale factor applied to QK
+    int32_t            has_نقاب;  // nonzero if mask is present
 };
 
 // Maximum head dimension supported (128 covers all common LLMs).
-#define FA_DV_MAX 128
+#وصف_ڪريو FA_DV_MAX 128
 
 // Read element d from a row, handling F16 or F32 type.
 // row_base points to the start of the row (byte address).
 // nb0 is the stride per element (2 for F16, 4 for F32).
-static inline float read_kv_f32(const char * row_base, int64_t d, int64_t nb0, int type) {
-    if (type == GGML_TYPE_F32) {
-        return *(const float *) (row_base + d * nb0);
+ساكن مضمن عائم read_kv_f32(ثابت حرف * صف_بنياد, int64_t d, int64_t nb0, صحيح type) {
+    إذا (type == GGML_TYPE_F32) {
+        أرجع *(ثابت عائم *) (صف_بنياد + d * nb0);
     }
     // F16
-    return fp16_to_fp32(*(const uint16_t *) (row_base + d * nb0));
+    أرجع fp16_منزل_fp32(*(ثابت uint16_t *) (صف_بنياد + d * nb0));
 }
 
 // Dot product of F32 query vector with a K row (F16 or F32).
-static inline float dot_qk(const float * q, const char * k_row, int64_t dk, int64_t k_nb0, int k_type) {
-    float acc = 0.0f;
-    if (k_type == GGML_TYPE_F32) {
-        const float * kf = (const float *) k_row;
-        for (int64_t i = 0; i < dk; ++i) {
+ساكن مضمن عائم dot_qk(ثابت عائم * q, ثابت حرف * k_صف, int64_t dk, int64_t k_nb0, صحيح k_type) {
+    عائم acc = 0.0f;
+    إذا (k_type == GGML_TYPE_F32) {
+        ثابت عائم * kf = (ثابت عائم *) k_صف;
+        لكل (int64_t i = 0; i < dk; ++i) {
             acc += q[i] * kf[i];
         }
-    } else {
+    } وإلا {
         // F16 stride-aware read
-        for (int64_t i = 0; i < dk; ++i) {
-            acc += q[i] * fp16_to_fp32(*(const uint16_t *) (k_row + i * k_nb0));
+        لكل (int64_t i = 0; i < dk; ++i) {
+            acc += q[i] * fp16_منزل_fp32(*(ثابت uint16_t *) (k_صف + i * k_nb0));
         }
     }
-    return acc;
+    أرجع acc;
 }
 
-static inline float get_mask_val(const struct ggml_tensor * mask, int64_t iq1, int64_t ik1, int64_t iq2, int64_t iq3) {
+ساكن مضمن عائم get_نقاب_val(ثابت بنية ggml_tensor * نقاب, int64_t iq1, int64_t ik1, int64_t iq2, int64_t iq3) {
     // mask layout: [nk, nq, ne2, ne3] -> broadcast via modulo
-    const char * base = (const char *) mask->data + iq1 * mask->nb[1] + (iq2 % mask->ne[2]) * mask->nb[2] +
-                        (iq3 % mask->ne[3]) * mask->nb[3];
+    ثابت حرف * بنياد = (ثابت حرف *) نقاب->معلومات + iq1 * نقاب->nb[1] + (iq2 % نقاب->ne[2]) * نقاب->nb[2] +
+                        (iq3 % نقاب->ne[3]) * نقاب->nb[3];
 
-    if (mask->type == GGML_TYPE_F32) {
-        return *(const float *) (base + ik1 * mask->nb[0]);
+    إذا (نقاب->type == GGML_TYPE_F32) {
+        أرجع *(ثابت عائم *) (بنياد + ik1 * نقاب->nb[0]);
     }
     // F16
-    return fp16_to_fp32(*(const uint16_t *) (base + ik1 * mask->nb[0]));
+    أرجع fp16_منزل_fp32(*(ثابت uint16_t *) (بنياد + ik1 * نقاب->nb[0]));
 }
 
-int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
+صحيح داخلا_نقطو(بنية ggml_et_flash_attn_ext_params * params, فراغ * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env || !params) {
-        return -1;
+    إذا (!kernel_env || !params) {
+        أرجع -1;
     }
 
-    const int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    const int num_threads = get_num_threads(kernel_env->shire_mask);
-    if (thread_id < 0 || num_threads <= 0) {
-        return 0;
+    ثابت صحيح thread_id   = get_relative_thread_id(kernel_env->shire_نقاب);
+    ثابت صحيح انگ_ڌاڳا = get_انگ_ڌاڳا(kernel_env->shire_نقاب);
+    إذا (thread_id < 0 || انگ_ڌاڳا <= 0) {
+        أرجع 0;
     }
 
-    struct ggml_tensor * q        = &params->src0;
-    struct ggml_tensor * k        = &params->src1;
-    struct ggml_tensor * v        = &params->src2;
-    struct ggml_tensor * dst      = &params->dst;
-    const int32_t        has_mask = params->has_mask;
-    struct ggml_tensor * mask     = has_mask ? &params->mask : (struct ggml_tensor *) 0;
+    بنية ggml_tensor * q        = &params->src0;
+    بنية ggml_tensor * k        = &params->src1;
+    بنية ggml_tensor * v        = &params->src2;
+    بنية ggml_tensor * dst      = &params->dst;
+    ثابت int32_t        has_نقاب = params->has_نقاب;
+    بنية ggml_tensor * نقاب     = has_نقاب ? &params->نقاب : (بنية ggml_tensor *) 0;
 
-    const char * q_data   = (const char *) q->data;
-    const char * k_data   = (const char *) k->data;
-    const char * v_data   = (const char *) v->data;
-    char *       dst_data = (char *) dst->data;
+    ثابت حرف * q_معلومات   = (ثابت حرف *) q->معلومات;
+    ثابت حرف * k_معلومات   = (ثابت حرف *) k->معلومات;
+    ثابت حرف * v_معلومات   = (ثابت حرف *) v->معلومات;
+    حرف *       dst_معلومات = (حرف *) dst->معلومات;
 
-    const int     k_type = k->type;
-    const int     v_type = v->type;
-    const int64_t k_nb0  = k->nb[0];
-    const int64_t v_nb0  = v->nb[0];
+    ثابت صحيح     k_type = k->type;
+    ثابت صحيح     v_type = v->type;
+    ثابت int64_t k_nb0  = k->nb[0];
+    ثابت int64_t v_nb0  = v->nb[0];
 
-    const int64_t dk  = q->ne[0];  // head dim for keys/queries
-    const int64_t nq  = q->ne[1];  // number of query positions
-    const int64_t nhq = q->ne[2];  // number of query heads
-    const int64_t no  = q->ne[3];  // outer batch
+    ثابت int64_t dk  = q->ne[0];  // head dim for keys/queries
+    ثابت int64_t nq  = q->ne[1];  // number of query positions
+    ثابت int64_t nhq = q->ne[2];  // number of query heads
+    ثابت int64_t no  = q->ne[3];  // outer batch
 
-    const int64_t nk  = k->ne[1];  // number of key/value positions
-    const int64_t nhk = k->ne[2];  // number of kv heads
-    const int64_t dv  = v->ne[0];  // head dim for values
+    ثابت int64_t nk  = k->ne[1];  // number of key/value positions
+    ثابت int64_t nhk = k->ne[2];  // number of kv heads
+    ثابت int64_t dv  = v->ne[0];  // head dim for values
 
-    if (dv > FA_DV_MAX) {
-        return -1;
+    إذا (dv > FA_DV_MAX) {
+        أرجع -1;
     }
 
     // GQA: query heads per kv head
-    const int64_t gqa_ratio = nhq / nhk;
+    ثابت int64_t gqa_تناسب = nhq / nhk;
 
-    const int64_t total_rows = nq * nhq * no;
-    const float   scale      = params->scale;
+    ثابت int64_t ڪل_صفون = nq * nhq * no;
+    ثابت عائم   scale      = params->scale;
 
     // When dv is a multiple of 16 (64 bytes = cache line), output rows are
     // cache-line aligned and we can use fast normal stores. Otherwise we must
     // use atomic stores to avoid cache-line sharing corruption.
-    const int use_fast_store = (dv % 16 == 0);
+    ثابت صحيح use_fast_store = (dv % 16 == 0);
 
-    for (int64_t row = thread_id; row < total_rows; row += num_threads) {
-        const int64_t iq3 = row / (nhq * nq);
-        const int64_t rem = row % (nhq * nq);
-        const int64_t iq2 = rem / nq;  // query head index
-        const int64_t iq1 = rem % nq;  // query position
+    لكل (int64_t صف = thread_id; صف < ڪل_صفون; صف += انگ_ڌاڳا) {
+        ثابت int64_t iq3 = صف / (nhq * nq);
+        ثابت int64_t rem = صف % (nhq * nq);
+        ثابت int64_t iq2 = rem / nq;  // query head index
+        ثابت int64_t iq1 = rem % nq;  // query position
 
         // Map query head -> kv head for GQA
-        const int64_t ik2 = iq2 / gqa_ratio;
+        ثابت int64_t ik2 = iq2 / gqa_تناسب;
 
         // Q is always F32
-        const float * pq = (const float *) (q_data + iq1 * q->nb[1] + iq2 * q->nb[2] + iq3 * q->nb[3]);
+        ثابت عائم * pq = (ثابت عائم *) (q_معلومات + iq1 * q->nb[1] + iq2 * q->nb[2] + iq3 * q->nb[3]);
 
         // dst layout: [dv, nhq, nq, no]
-        float * out = (float *) (dst_data + iq2 * dst->nb[1] + iq1 * dst->nb[2] + iq3 * dst->nb[3]);
+        عائم * ٻاهريون = (عائم *) (dst_معلومات + iq2 * dst->nb[1] + iq1 * dst->nb[2] + iq3 * dst->nb[3]);
 
         // Base byte offsets for K and V head+batch slice
-        const int64_t kv_base = ik2 * k->nb[2] + iq3 * k->nb[3];
-        const int64_t vv_base = ik2 * v->nb[2] + iq3 * v->nb[3];
+        ثابت int64_t kv_بنياد = ik2 * k->nb[2] + iq3 * k->nb[3];
+        ثابت int64_t vv_بنياد = ik2 * v->nb[2] + iq3 * v->nb[3];
 
-        float acc[FA_DV_MAX];
-        for (int64_t d = 0; d < dv; ++d) {
+        عائم acc[FA_DV_MAX];
+        لكل (int64_t d = 0; d < dv; ++d) {
             acc[d] = 0.0f;
         }
 
-        float M = -3.402823466e+38f;
-        float S = 0.0f;
+        عائم M = -3.402823466e+38f;
+        عائم S = 0.0f;
 
-        for (int64_t ik1 = 0; ik1 < nk; ++ik1) {
+        لكل (int64_t ik1 = 0; ik1 < nk; ++ik1) {
             // If mask is present, check for -inf (skip masked positions)
-            float mask_val = 0.0f;
-            if (has_mask) {
-                mask_val = get_mask_val(mask, iq1, ik1, iq2, iq3);
+            عائم نقاب_val = 0.0f;
+            إذا (has_نقاب) {
+                نقاب_val = get_نقاب_val(نقاب, iq1, ik1, iq2, iq3);
                 // llama.cpp uses -inf for masked positions
-                if (mask_val == -3.402823466e+38f || mask_val != mask_val) {
-                    continue;
+                إذا (نقاب_val == -3.402823466e+38f || نقاب_val != نقاب_val) {
+                    استمر;
                 }
             }
 
-            const char * pk = k_data + ik1 * k->nb[1] + kv_base;
-            const char * pv = v_data + ik1 * v->nb[1] + vv_base;
+            ثابت حرف * pk = k_معلومات + ik1 * k->nb[1] + kv_بنياد;
+            ثابت حرف * pv = v_معلومات + ik1 * v->nb[1] + vv_بنياد;
 
-            float       s    = dot_qk(pq, pk, dk, k_nb0, k_type) * scale + mask_val;
-            const float Mold = M;
+            عائم       s    = dot_qk(pq, pk, dk, k_nb0, k_type) * scale + نقاب_val;
+            ثابت عائم Mold = M;
 
-            float ms = 1.0f;
-            float vs = 1.0f;
-            if (s > M) {
+            عائم ms = 1.0f;
+            عائم vs = 1.0f;
+            إذا (s > M) {
                 M  = s;
                 ms = et_expf(Mold - M);
-                for (int64_t d = 0; d < dv; ++d) {
+                لكل (int64_t d = 0; d < dv; ++d) {
                     acc[d] *= ms;
                 }
-            } else {
+            } وإلا {
                 vs = et_expf(s - M);
             }
 
             // Accumulate weighted V
-            if (v_type == GGML_TYPE_F32) {
-                const float * pvf = (const float *) pv;
-                for (int64_t d = 0; d < dv; ++d) {
+            إذا (v_type == GGML_TYPE_F32) {
+                ثابت عائم * pvf = (ثابت عائم *) pv;
+                لكل (int64_t d = 0; d < dv; ++d) {
                     acc[d] += pvf[d] * vs;
                 }
-            } else {
-                for (int64_t d = 0; d < dv; ++d) {
-                    acc[d] += fp16_to_fp32(*(const uint16_t *) (pv + d * v_nb0)) * vs;
+            } وإلا {
+                لكل (int64_t d = 0; d < dv; ++d) {
+                    acc[d] += fp16_منزل_fp32(*(ثابت uint16_t *) (pv + d * v_nb0)) * vs;
                 }
             }
 
             S = S * ms + vs;
         }
 
-        const float S_inv = S == 0.0f ? 0.0f : et_fdiv(1.0f, S);
-        if (use_fast_store) {
-            for (int64_t d = 0; d < dv; ++d) {
-                out[d] = acc[d] * S_inv;
+        ثابت عائم S_inv = S == 0.0f ? 0.0f : et_fdiv(1.0f, S);
+        إذا (use_fast_store) {
+            لكل (int64_t d = 0; d < dv; ++d) {
+                ٻاهريون[d] = acc[d] * S_inv;
             }
-        } else {
-            for (int64_t d = 0; d < dv; ++d) {
-                atomic_store_f32((volatile float *) &out[d], acc[d] * S_inv);
+        } وإلا {
+            لكل (int64_t d = 0; d < dv; ++d) {
+                atomic_store_f32((متطاير عائم *) &ٻاهريون[d], acc[d] * S_inv);
             }
         }
     }
 
-    return 0;
+    أرجع 0;
 }

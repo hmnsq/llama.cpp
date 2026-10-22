@@ -1,71 +1,71 @@
 #!/usr/bin/env python3
 
-import argparse
-import logging
-import os
-import shutil
-import struct
-import sys
-import tempfile
-import zlib
+استورد argparse
+استورد logging
+استورد os
+استورد shutil
+استورد struct
+استورد sys
+استورد tempfile
+استورد zlib
 
 ELF_MAGIC = b'\x7fELF'
-ELF_CLASS_INDEX = 4
+ELF_CLASS_اشاريو = 4
 ELFCLASS32 = 1
 ELFCLASS64 = 2
-ELF_VERSION_INDEX = 6
+ELF_نسخو_اشاريو = 6
 EV_CURRENT = 1
-MAX_PHDR_COUNT = 100
+MAX_PHDR_ڳڻپ = 100
 
-LOAD_TYPE = 0x1
+ڀريو_TYPE = 0x1
 
 SHT_NOBITS = 8
 
 SWIV_MAGIC = b'SWIV'
-SWIV_SEG_SIZE_MIN = 16
+SWIV_SEG_سائيز_MIN = 16
 # SHT_LOUSER plus ASCII "SWIV".
 SWIV_SECTION_TYPE = 0xD3574956
 
 logger = logging.getLogger("htp-swiv")
 
 
-class Elf_Ehdr_common:
+صنف Elf_Ehdr_common:
     s = struct.Struct('16sHHI')
 
-    def __init__(self, data):
-        unpacked_data = (Elf_Ehdr_common.s).unpack(data)
-        self.e_ident = unpacked_data[0]
-        self.e_type = unpacked_data[1]
-        self.e_machine = unpacked_data[2]
-        self.e_version = unpacked_data[3]
+    وصف __init__(self, معلومات):
+        unpacked_معلومات = (Elf_Ehdr_common.s).unpack(معلومات)
+        self.e_ident = unpacked_معلومات[0]
+        self.e_type = unpacked_معلومات[1]
+        self.e_machine = unpacked_معلومات[2]
+        self.e_نسخو = unpacked_معلومات[3]
 
 
-class Elf32_Ehdr:
+صنف Elf32_Ehdr:
     s = struct.Struct('16sHHIIIIIHHHHHH')
 
-    def __init__(self, data):
-        unpacked_data = (Elf32_Ehdr.s).unpack(data)
-        self.e_ident = unpacked_data[0]
-        self.e_type = unpacked_data[1]
-        self.e_machine = unpacked_data[2]
-        self.e_version = unpacked_data[3]
-        self.e_entry = unpacked_data[4]
-        self.e_phoff = unpacked_data[5]
-        self.e_shoff = unpacked_data[6]
-        self.e_flags = unpacked_data[7]
-        self.e_ehsize = unpacked_data[8]
-        self.e_phentsize = unpacked_data[9]
-        self.e_phnum = unpacked_data[10]
-        self.e_shentsize = unpacked_data[11]
-        self.e_shnum = unpacked_data[12]
-        self.e_shstrndx = unpacked_data[13]
+    وصف __init__(self, معلومات):
+        unpacked_معلومات = (Elf32_Ehdr.s).unpack(معلومات)
+        self.e_ident = unpacked_معلومات[0]
+        self.e_type = unpacked_معلومات[1]
+        self.e_machine = unpacked_معلومات[2]
+        self.e_نسخو = unpacked_معلومات[3]
+        self.e_داخلا = unpacked_معلومات[4]
+        self.e_phoff = unpacked_معلومات[5]
+        self.e_shoff = unpacked_معلومات[6]
+        self.e_flags = unpacked_معلومات[7]
+        self.e_ehsize = unpacked_معلومات[8]
+        self.e_phentsize = unpacked_معلومات[9]
+        self.e_phnum = unpacked_معلومات[10]
+        self.e_shentsize = unpacked_معلومات[11]
+        self.e_shnum = unpacked_معلومات[12]
+        self.e_shstrndx = unpacked_معلومات[13]
 
-    def get_packed_data(self):
-        values = [self.e_ident,
+    وصف get_packed_معلومات(self):
+        قدرون = [self.e_ident,
                   self.e_type,
                   self.e_machine,
-                  self.e_version,
-                  self.e_entry,
+                  self.e_نسخو,
+                  self.e_داخلا,
                   self.e_phoff,
                   self.e_shoff,
                   self.e_flags,
@@ -77,26 +77,26 @@ class Elf32_Ehdr:
                   self.e_shstrndx
                   ]
 
-        return (Elf32_Ehdr.s).pack(*values)
+        أرجع (Elf32_Ehdr.s).pack(*قدرون)
 
 
-class Elf32_Phdr:
+صنف Elf32_Phdr:
     s = struct.Struct('I' * 8)
 
-    def __init__(self, data):
-        unpacked_data = (Elf32_Phdr.s).unpack(data)
-        self.p_type = unpacked_data[0]
-        self.p_offset = unpacked_data[1]
-        self.p_vaddr = unpacked_data[2]
-        self.p_paddr = unpacked_data[3]
-        self.p_filesz = unpacked_data[4]
-        self.p_memsz = unpacked_data[5]
-        self.p_flags = unpacked_data[6]
-        self.p_align = unpacked_data[7]
+    وصف __init__(self, معلومات):
+        unpacked_معلومات = (Elf32_Phdr.s).unpack(معلومات)
+        self.p_type = unpacked_معلومات[0]
+        self.p_وٿي = unpacked_معلومات[1]
+        self.p_vaddr = unpacked_معلومات[2]
+        self.p_paddr = unpacked_معلومات[3]
+        self.p_filesz = unpacked_معلومات[4]
+        self.p_memsz = unpacked_معلومات[5]
+        self.p_flags = unpacked_معلومات[6]
+        self.p_align = unpacked_معلومات[7]
 
-    def get_packed_data(self):
-        values = [self.p_type,
-                  self.p_offset,
+    وصف get_packed_معلومات(self):
+        قدرون = [self.p_type,
+                  self.p_وٿي,
                   self.p_vaddr,
                   self.p_paddr,
                   self.p_filesz,
@@ -105,67 +105,67 @@ class Elf32_Phdr:
                   self.p_align
                   ]
 
-        return (Elf32_Phdr.s).pack(*values)
+        أرجع (Elf32_Phdr.s).pack(*قدرون)
 
 
-class Elf32_Shdr:
+صنف Elf32_Shdr:
     s = struct.Struct('I' * 10)
 
-    def __init__(self, data):
-        unpacked_data = (Elf32_Shdr.s).unpack(data)
-        self.sh_name = unpacked_data[0]
-        self.sh_type = unpacked_data[1]
-        self.sh_flags = unpacked_data[2]
-        self.sh_addr = unpacked_data[3]
-        self.sh_offset = unpacked_data[4]
-        self.sh_size = unpacked_data[5]
-        self.sh_link = unpacked_data[6]
-        self.sh_info = unpacked_data[7]
-        self.sh_addralign = unpacked_data[8]
-        self.sh_entsize = unpacked_data[9]
+    وصف __init__(self, معلومات):
+        unpacked_معلومات = (Elf32_Shdr.s).unpack(معلومات)
+        self.sh_name = unpacked_معلومات[0]
+        self.sh_type = unpacked_معلومات[1]
+        self.sh_flags = unpacked_معلومات[2]
+        self.sh_addr = unpacked_معلومات[3]
+        self.sh_وٿي = unpacked_معلومات[4]
+        self.sh_سائيز = unpacked_معلومات[5]
+        self.sh_link = unpacked_معلومات[6]
+        self.sh_info = unpacked_معلومات[7]
+        self.sh_addralign = unpacked_معلومات[8]
+        self.sh_entsize = unpacked_معلومات[9]
         self.sh_name_str = ""
 
-    def get_packed_data(self):
-        values = [self.sh_name,
+    وصف get_packed_معلومات(self):
+        قدرون = [self.sh_name,
                   self.sh_type,
                   self.sh_flags,
                   self.sh_addr,
-                  self.sh_offset,
-                  self.sh_size,
+                  self.sh_وٿي,
+                  self.sh_سائيز,
                   self.sh_link,
                   self.sh_info,
                   self.sh_addralign,
                   self.sh_entsize]
 
-        return (Elf32_Shdr.s).pack(*values)
+        أرجع (Elf32_Shdr.s).pack(*قدرون)
 
 
-class Elf64_Ehdr:
+صنف Elf64_Ehdr:
     s = struct.Struct('16sHHIQQQIHHHHHH')
 
-    def __init__(self, data):
-        unpacked_data = (Elf64_Ehdr.s).unpack(data)
-        self.e_ident = unpacked_data[0]
-        self.e_type = unpacked_data[1]
-        self.e_machine = unpacked_data[2]
-        self.e_version = unpacked_data[3]
-        self.e_entry = unpacked_data[4]
-        self.e_phoff = unpacked_data[5]
-        self.e_shoff = unpacked_data[6]
-        self.e_flags = unpacked_data[7]
-        self.e_ehsize = unpacked_data[8]
-        self.e_phentsize = unpacked_data[9]
-        self.e_phnum = unpacked_data[10]
-        self.e_shentsize = unpacked_data[11]
-        self.e_shnum = unpacked_data[12]
-        self.e_shstrndx = unpacked_data[13]
+    وصف __init__(self, معلومات):
+        unpacked_معلومات = (Elf64_Ehdr.s).unpack(معلومات)
+        self.e_ident = unpacked_معلومات[0]
+        self.e_type = unpacked_معلومات[1]
+        self.e_machine = unpacked_معلومات[2]
+        self.e_نسخو = unpacked_معلومات[3]
+        self.e_داخلا = unpacked_معلومات[4]
+        self.e_phoff = unpacked_معلومات[5]
+        self.e_shoff = unpacked_معلومات[6]
+        self.e_flags = unpacked_معلومات[7]
+        self.e_ehsize = unpacked_معلومات[8]
+        self.e_phentsize = unpacked_معلومات[9]
+        self.e_phnum = unpacked_معلومات[10]
+        self.e_shentsize = unpacked_معلومات[11]
+        self.e_shnum = unpacked_معلومات[12]
+        self.e_shstrndx = unpacked_معلومات[13]
 
-    def get_packed_data(self):
-        values = [self.e_ident,
+    وصف get_packed_معلومات(self):
+        قدرون = [self.e_ident,
                   self.e_type,
                   self.e_machine,
-                  self.e_version,
-                  self.e_entry,
+                  self.e_نسخو,
+                  self.e_داخلا,
                   self.e_phoff,
                   self.e_shoff,
                   self.e_flags,
@@ -177,27 +177,27 @@ class Elf64_Ehdr:
                   self.e_shstrndx
                   ]
 
-        return (Elf64_Ehdr.s).pack(*values)
+        أرجع (Elf64_Ehdr.s).pack(*قدرون)
 
 
-class Elf64_Phdr:
+صنف Elf64_Phdr:
     s = struct.Struct('IIQQQQQQ')
 
-    def __init__(self, data):
-        unpacked_data = (Elf64_Phdr.s).unpack(data)
-        self.p_type = unpacked_data[0]
-        self.p_flags = unpacked_data[1]
-        self.p_offset = unpacked_data[2]
-        self.p_vaddr = unpacked_data[3]
-        self.p_paddr = unpacked_data[4]
-        self.p_filesz = unpacked_data[5]
-        self.p_memsz = unpacked_data[6]
-        self.p_align = unpacked_data[7]
+    وصف __init__(self, معلومات):
+        unpacked_معلومات = (Elf64_Phdr.s).unpack(معلومات)
+        self.p_type = unpacked_معلومات[0]
+        self.p_flags = unpacked_معلومات[1]
+        self.p_وٿي = unpacked_معلومات[2]
+        self.p_vaddr = unpacked_معلومات[3]
+        self.p_paddr = unpacked_معلومات[4]
+        self.p_filesz = unpacked_معلومات[5]
+        self.p_memsz = unpacked_معلومات[6]
+        self.p_align = unpacked_معلومات[7]
 
-    def get_packed_data(self):
-        values = [self.p_type,
+    وصف get_packed_معلومات(self):
+        قدرون = [self.p_type,
                   self.p_flags,
-                  self.p_offset,
+                  self.p_وٿي,
                   self.p_vaddr,
                   self.p_paddr,
                   self.p_filesz,
@@ -205,308 +205,308 @@ class Elf64_Phdr:
                   self.p_align
                   ]
 
-        return (Elf64_Phdr.s).pack(*values)
+        أرجع (Elf64_Phdr.s).pack(*قدرون)
 
 
-class Elf64_Shdr:
+صنف Elf64_Shdr:
     s = struct.Struct('IIQQQQIIQQ')
 
-    def __init__(self, data):
-        unpacked_data = (Elf64_Shdr.s).unpack(data)
-        self.sh_name = unpacked_data[0]
-        self.sh_type = unpacked_data[1]
-        self.sh_flags = unpacked_data[2]
-        self.sh_addr = unpacked_data[3]
-        self.sh_offset = unpacked_data[4]
-        self.sh_size = unpacked_data[5]
-        self.sh_link = unpacked_data[6]
-        self.sh_info = unpacked_data[7]
-        self.sh_addralign = unpacked_data[8]
-        self.sh_entsize = unpacked_data[9]
+    وصف __init__(self, معلومات):
+        unpacked_معلومات = (Elf64_Shdr.s).unpack(معلومات)
+        self.sh_name = unpacked_معلومات[0]
+        self.sh_type = unpacked_معلومات[1]
+        self.sh_flags = unpacked_معلومات[2]
+        self.sh_addr = unpacked_معلومات[3]
+        self.sh_وٿي = unpacked_معلومات[4]
+        self.sh_سائيز = unpacked_معلومات[5]
+        self.sh_link = unpacked_معلومات[6]
+        self.sh_info = unpacked_معلومات[7]
+        self.sh_addralign = unpacked_معلومات[8]
+        self.sh_entsize = unpacked_معلومات[9]
         self.sh_name_str = ""
 
-    def get_packed_data(self):
-        values = [self.sh_name,
+    وصف get_packed_معلومات(self):
+        قدرون = [self.sh_name,
                   self.sh_type,
                   self.sh_flags,
                   self.sh_addr,
-                  self.sh_offset,
-                  self.sh_size,
+                  self.sh_وٿي,
+                  self.sh_سائيز,
                   self.sh_link,
                   self.sh_info,
                   self.sh_addralign,
                   self.sh_entsize]
 
-        return (Elf64_Shdr.s).pack(*values)
+        أرجع (Elf64_Shdr.s).pack(*قدرون)
 
 
-class SWIV_Seg:
+صنف SWIV_Seg:
     s = struct.Struct('4sIQ')
 
-    def __init__(self):
+    وصف __init__(self):
         self.magic = SWIV_MAGIC
-        self.crc = 0
+        self.چڪري_جاچ = 0
         self.padding = 0
 
-    def get_packed_data(self):
-        values = [self.magic,
-                  self.crc,
+    وصف get_packed_معلومات(self):
+        قدرون = [self.magic,
+                  self.چڪري_جاچ,
                   self.padding
                   ]
 
-        return (SWIV_Seg.s).pack(*values)
+        أرجع (SWIV_Seg.s).pack(*قدرون)
 
 
-def is_elf64(elf_header):
-    return elf_header.e_ident[ELF_CLASS_INDEX] == ELFCLASS64
+وصف is_elf64(elf_سرو):
+    أرجع elf_سرو.e_ident[ELF_CLASS_اشاريو] == ELFCLASS64
 
 
-def verify_elf_header(elf_header):
-    ident = elf_header.e_ident
-    return (ident.startswith(ELF_MAGIC)
-            and ident[ELF_CLASS_INDEX] in (ELFCLASS32, ELFCLASS64)
-            and ident[ELF_VERSION_INDEX] == EV_CURRENT)
+وصف verify_elf_سرو(elf_سرو):
+    ident = elf_سرو.e_ident
+    أرجع (ident.startswith(ELF_MAGIC)
+            و ident[ELF_CLASS_اشاريو] في (ELFCLASS32, ELFCLASS64)
+            و ident[ELF_نسخو_اشاريو] == EV_CURRENT)
 
 
-def file_copy_offset(in_fp, in_off, out_fp, out_off, num_bytes):
-    in_fp.seek(in_off)
-    read_in = in_fp.read(num_bytes)
-    out_fp.seek(out_off)
-    out_fp.write(read_in)
+وصف file_copy_وٿي(اندريون_fp, اندريون_off, ٻاهريون_fp, ٻاهريون_off, انگ_بائيٽون):
+    اندريون_fp.seek(اندريون_off)
+    read_اندريون = اندريون_fp.اقرأ(انگ_بائيٽون)
+    ٻاهريون_fp.seek(ٻاهريون_off)
+    ٻاهريون_fp.اكتب(read_اندريون)
 
-    return num_bytes
-
-
-def preprocess_elf_file(elf_file_name):
-    with open(elf_file_name, 'rb') as elf_fp:
-        elf_header = Elf_Ehdr_common(elf_fp.read(Elf_Ehdr_common.s.size))
-
-        if verify_elf_header(elf_header) is False:
-            raise RuntimeError("Input ELF verification failed : " + elf_file_name)
-
-        elf_fp.seek(0)
-
-        if is_elf64(elf_header):
-            elf_header = Elf64_Ehdr(elf_fp.read(Elf64_Ehdr.s.size))
-        else:
-            elf_header = Elf32_Ehdr(elf_fp.read(Elf32_Ehdr.s.size))
-
-        phdr_table = []
-
-        phdr_size = elf_header.e_phentsize
-
-        file_offset = elf_header.e_phoff
-        elf_fp.seek(file_offset)
-
-        for _ in range(elf_header.e_phnum):
-            if is_elf64(elf_header):
-                phdr_table.append(Elf64_Phdr(elf_fp.read(phdr_size)))
-            else:
-                phdr_table.append(Elf32_Phdr(elf_fp.read(phdr_size)))
-
-    return [elf_header, phdr_table]
+    أرجع انگ_بائيٽون
 
 
-def process_section_header(elf_file_name):
-    with open(elf_file_name, 'rb') as elf_fp:
-        elf_header = Elf_Ehdr_common(elf_fp.read(Elf_Ehdr_common.s.size))
+وصف preprocess_elf_file(elf_file_name):
+    سان open(elf_file_name, 'rb') كـ elf_fp:
+        elf_سرو = Elf_Ehdr_common(elf_fp.اقرأ(Elf_Ehdr_common.s.سائيز))
 
-        if verify_elf_header(elf_header) is False:
-            raise RuntimeError("Input ELF verification failed : " + elf_file_name)
+        إذا verify_elf_سرو(elf_سرو) آهي خطأ:
+            ارفع RuntimeError("Input ELF verification failed : " + elf_file_name)
 
         elf_fp.seek(0)
 
-        if is_elf64(elf_header):
-            elf_header = Elf64_Ehdr(elf_fp.read(Elf64_Ehdr.s.size))
-        else:
-            elf_header = Elf32_Ehdr(elf_fp.read(Elf32_Ehdr.s.size))
+        إذا is_elf64(elf_سرو):
+            elf_سرو = Elf64_Ehdr(elf_fp.اقرأ(Elf64_Ehdr.s.سائيز))
+        وإلا:
+            elf_سرو = Elf32_Ehdr(elf_fp.اقرأ(Elf32_Ehdr.s.سائيز))
 
-        shdr_table = []
+        phdr_جدول = []
 
-        shdr_size = elf_header.e_shentsize
-        elf_fp.seek(elf_header.e_shoff)
+        phdr_سائيز = elf_سرو.e_phentsize
 
-        for _ in range(elf_header.e_shnum):
-            if is_elf64(elf_header):
-                shdr_table.append(Elf64_Shdr(elf_fp.read(shdr_size)))
-            else:
-                shdr_table.append(Elf32_Shdr(elf_fp.read(shdr_size)))
+        file_وٿي = elf_سرو.e_phoff
+        elf_fp.seek(file_وٿي)
 
-    return shdr_table
+        لكل _ في سلسلو(elf_سرو.e_phnum):
+            إذا is_elf64(elf_سرو):
+                phdr_جدول.append(Elf64_Phdr(elf_fp.اقرأ(phdr_سائيز)))
+            وإلا:
+                phdr_جدول.append(Elf32_Phdr(elf_fp.اقرأ(phdr_سائيز)))
 
-
-def crc32_update_file(elf_fp, offset, size, crc):
-    elf_fp.seek(offset)
-    remaining = size
-    while remaining > 0:
-        chunk = elf_fp.read(min(1024 * 1024, remaining))
-        if not chunk:
-            raise RuntimeError("Unexpected EOF while calculating CRC")
-        crc = zlib.crc32(chunk, crc)
-        remaining -= len(chunk)
-    return crc
+    أرجع [elf_سرو, phdr_جدول]
 
 
-def crc32_update_zeros(size, crc):
-    zero_chunk = b'\x00' * min(1024 * 1024, size)
-    remaining = size
-    while remaining > 0:
-        chunk = zero_chunk[:min(len(zero_chunk), remaining)]
-        crc = zlib.crc32(chunk, crc)
-        remaining -= len(chunk)
-    return crc
+وصف process_section_سرو(elf_file_name):
+    سان open(elf_file_name, 'rb') كـ elf_fp:
+        elf_سرو = Elf_Ehdr_common(elf_fp.اقرأ(Elf_Ehdr_common.s.سائيز))
+
+        إذا verify_elf_سرو(elf_سرو) آهي خطأ:
+            ارفع RuntimeError("Input ELF verification failed : " + elf_file_name)
+
+        elf_fp.seek(0)
+
+        إذا is_elf64(elf_سرو):
+            elf_سرو = Elf64_Ehdr(elf_fp.اقرأ(Elf64_Ehdr.s.سائيز))
+        وإلا:
+            elf_سرو = Elf32_Ehdr(elf_fp.اقرأ(Elf32_Ehdr.s.سائيز))
+
+        shdr_جدول = []
+
+        shdr_سائيز = elf_سرو.e_shentsize
+        elf_fp.seek(elf_سرو.e_shoff)
+
+        لكل _ في سلسلو(elf_سرو.e_shnum):
+            إذا is_elf64(elf_سرو):
+                shdr_جدول.append(Elf64_Shdr(elf_fp.اقرأ(shdr_سائيز)))
+            وإلا:
+                shdr_جدول.append(Elf32_Shdr(elf_fp.اقرأ(shdr_سائيز)))
+
+    أرجع shdr_جدول
 
 
-def crc32_calculate(elf_fp, phdr_table):
-    crc = 0
+وصف چڪري_جاچ_32_update_file(elf_fp, وٿي, سائيز, چڪري_جاچ):
+    elf_fp.seek(وٿي)
+    بچيل = سائيز
+    طالما بچيل > 0:
+        chunk = elf_fp.اقرأ(min(1024 * 1024, بچيل))
+        إذا ليس chunk:
+            ارفع RuntimeError("Unexpected EOF while calculating CRC")
+        چڪري_جاچ = zlib.چڪري_جاچ_32(chunk, چڪري_جاچ)
+        بچيل -= ڊيگهه(chunk)
+    أرجع چڪري_جاچ
+
+
+وصف چڪري_جاچ_32_update_zeros(سائيز, چڪري_جاچ):
+    zero_chunk = b'\x00' * min(1024 * 1024, سائيز)
+    بچيل = سائيز
+    طالما بچيل > 0:
+        chunk = zero_chunk[:min(ڊيگهه(zero_chunk), بچيل)]
+        چڪري_جاچ = zlib.چڪري_جاچ_32(chunk, چڪري_جاچ)
+        بچيل -= ڊيگهه(chunk)
+    أرجع چڪري_جاچ
+
+
+وصف چڪري_جاچ_32_calculate(elf_fp, phdr_جدول):
+    چڪري_جاچ = 0
 
     # SWIV validates loadable segment contents, including BSS as zeros.
-    for curr_phdr in phdr_table:
-        if curr_phdr.p_type != LOAD_TYPE:
-            continue
+    لكل curr_phdr في phdr_جدول:
+        إذا curr_phdr.p_type != ڀريو_TYPE:
+            استمر
 
-        crc = crc32_update_file(elf_fp, curr_phdr.p_offset, curr_phdr.p_filesz, crc)
+        چڪري_جاچ = چڪري_جاچ_32_update_file(elf_fp, curr_phdr.p_وٿي, curr_phdr.p_filesz, چڪري_جاچ)
 
-        zero_size = curr_phdr.p_memsz - curr_phdr.p_filesz
-        if zero_size > 0:
-            crc = crc32_update_zeros(zero_size, crc)
+        zero_سائيز = curr_phdr.p_memsz - curr_phdr.p_filesz
+        إذا zero_سائيز > 0:
+            چڪري_جاچ = چڪري_جاچ_32_update_zeros(zero_سائيز, چڪري_جاچ)
 
-    crc &= 0xffffffff
-    logger.info("calculated CRC: %#x", crc)
+    چڪري_جاچ &= 0xffffffff
+    logger.info("calculated CRC: %#x", چڪري_جاچ)
 
-    return crc
+    أرجع چڪري_جاچ
 
 
-def verify_swiv_seg(elf_in_fp, offset):
+وصف verify_swiv_seg(elf_اندريون_fp, وٿي):
 
-    elf_in_fp.seek(offset)
+    elf_اندريون_fp.seek(وٿي)
     swiv_seg = SWIV_Seg()
-    unpacked_data = (SWIV_Seg.s).unpack(elf_in_fp.read(SWIV_SEG_SIZE_MIN))
-    swiv_seg.magic = unpacked_data[0]
+    unpacked_معلومات = (SWIV_Seg.s).unpack(elf_اندريون_fp.اقرأ(SWIV_SEG_سائيز_MIN))
+    swiv_seg.magic = unpacked_معلومات[0]
 
-    return swiv_seg.magic == SWIV_MAGIC
-
-
-def same_output_file(input_elf, output_elf):
-    try:
-        return os.path.exists(output_elf) and os.path.samefile(input_elf, output_elf)
-    except FileNotFoundError:
-        return False
+    أرجع swiv_seg.magic == SWIV_MAGIC
 
 
-def make_output_target(input_elf, output_elf):
-    if not same_output_file(input_elf, output_elf):
-        return output_elf, None
+وصف same_output_file(داخلا_elf, output_elf):
+    حاول:
+        أرجع os.رستو.exists(output_elf) و os.رستو.samefile(داخلا_elf, output_elf)
+    استثناء File_Not_مليو_Error:
+        أرجع خطأ
 
-    output_dir = os.path.dirname(os.path.abspath(output_elf))
-    output_base = os.path.basename(output_elf)
-    fd, temp_output = tempfile.mkstemp(prefix=output_base + ".", suffix=".tmp", dir=output_dir)
+
+وصف make_output_هدف(داخلا_elf, output_elf):
+    إذا ليس same_output_file(داخلا_elf, output_elf):
+        أرجع output_elf, ڪجهه_نه
+
+    output_dir = os.رستو.dirname(os.رستو.abspath(output_elf))
+    output_بنياد = os.رستو.basename(output_elf)
+    fd, عارضي_output = tempfile.mkstemp(اڳياڙي=output_بنياد + ".", suffix=".tmp", dir=output_dir)
     os.close(fd)
-    shutil.copymode(input_elf, temp_output)
-    return temp_output, temp_output
+    shutil.copymode(داخلا_elf, عارضي_output)
+    أرجع عارضي_output, عارضي_output
 
 
-def swiv_generate(input_elf, output_elf):
-    output_target, temp_output = make_output_target(input_elf, output_elf)
+وصف swiv_generate(داخلا_elf, output_elf):
+    output_هدف, عارضي_output = make_output_هدف(داخلا_elf, output_elf)
 
-    try:
-        with open(input_elf, "rb") as elf_in_fp, open(output_target, "wb+") as elf_out_fp:
-            [elf_header, phdr_table] = preprocess_elf_file(input_elf)
+    حاول:
+        سان open(داخلا_elf, "rb") كـ elf_اندريون_fp, open(output_هدف, "wb+") كـ elf_ٻاهريون_fp:
+            [elf_سرو, phdr_جدول] = preprocess_elf_file(داخلا_elf)
 
-            num_phdrs = elf_header.e_phnum
-            num_shdrs = elf_header.e_shnum
-            phdr_size = elf_header.e_phentsize
+            انگ_phdrs = elf_سرو.e_phnum
+            انگ_shdrs = elf_سرو.e_shnum
+            phdr_سائيز = elf_سرو.e_phentsize
 
-            if num_phdrs == 0 or num_phdrs > MAX_PHDR_COUNT:
-                raise RuntimeError("Input ELF has invalid number of program headers.")
+            إذا انگ_phdrs == 0 أو انگ_phdrs > MAX_PHDR_ڳڻپ:
+                ارفع RuntimeError("Input ELF has invalid number of program headers.")
 
-            if elf_header.e_shoff == 0 or num_shdrs == 0:
-                raise RuntimeError("Input ELF does not contain a section header table.")
+            إذا elf_سرو.e_shoff == 0 أو انگ_shdrs == 0:
+                ارفع RuntimeError("Input ELF does not contain a section header table.")
 
-            shdr_table_input = process_section_header(input_elf)
-            shdr_table_output = process_section_header(input_elf)
+            shdr_جدول_داخلا = process_section_سرو(داخلا_elf)
+            shdr_جدول_output = process_section_سرو(داخلا_elf)
 
-            last_phdr = phdr_table[num_phdrs - 1]
-            if last_phdr.p_memsz == SWIV_SEG_SIZE_MIN and verify_swiv_seg(elf_in_fp, last_phdr.p_offset):
-                raise RuntimeError("A SWIV segment is detected in the input ELF.")
+            آخري_phdr = phdr_جدول[انگ_phdrs - 1]
+            إذا آخري_phdr.p_memsz == SWIV_SEG_سائيز_MIN و verify_swiv_seg(elf_اندريون_fp, آخري_phdr.p_وٿي):
+                ارفع RuntimeError("A SWIV segment is detected in the input ELF.")
 
-            last_shdr = shdr_table_input[elf_header.e_shnum - 1]
-            if last_shdr.sh_size == SWIV_SEG_SIZE_MIN and verify_swiv_seg(elf_in_fp, last_shdr.sh_offset):
-                raise RuntimeError("A SWIV section is detected in the input ELF.")
+            آخري_shdr = shdr_جدول_داخلا[elf_سرو.e_shnum - 1]
+            إذا آخري_shdr.sh_سائيز == SWIV_SEG_سائيز_MIN و verify_swiv_seg(elf_اندريون_fp, آخري_shdr.sh_وٿي):
+                ارفع RuntimeError("A SWIV section is detected in the input ELF.")
 
-            if is_elf64(elf_header):
-                swiv_shdr = Elf64_Shdr(b'\0' * Elf64_Shdr.s.size)
-            else:
-                swiv_shdr = Elf32_Shdr(b'\0' * Elf32_Shdr.s.size)
+            إذا is_elf64(elf_سرو):
+                swiv_shdr = Elf64_Shdr(b'\0' * Elf64_Shdr.s.سائيز)
+            وإلا:
+                swiv_shdr = Elf32_Shdr(b'\0' * Elf32_Shdr.s.سائيز)
 
             swiv_shdr.sh_name = 0
             swiv_shdr.sh_type = SWIV_SECTION_TYPE
             swiv_shdr.sh_flags = 0
             swiv_shdr.sh_addr = 0
-            swiv_shdr.sh_size = SWIV_SEG_SIZE_MIN
-            swiv_shdr.sh_offset = elf_header.e_shoff + (elf_header.e_shnum + 1) * elf_header.e_shentsize
-            shdr_table_output.append(swiv_shdr)
-            elf_header.e_shnum += 1
+            swiv_shdr.sh_سائيز = SWIV_SEG_سائيز_MIN
+            swiv_shdr.sh_وٿي = elf_سرو.e_shoff + (elf_سرو.e_shnum + 1) * elf_سرو.e_shentsize
+            shdr_جدول_output.append(swiv_shdr)
+            elf_سرو.e_shnum += 1
 
-            if elf_header.e_phoff != 0:
-                for phdr in phdr_table:
-                    file_copy_offset(elf_in_fp, phdr.p_offset, elf_out_fp, phdr.p_offset, phdr.p_filesz)
+            إذا elf_سرو.e_phoff != 0:
+                لكل phdr في phdr_جدول:
+                    file_copy_وٿي(elf_اندريون_fp, phdr.p_وٿي, elf_ٻاهريون_fp, phdr.p_وٿي, phdr.p_filesz)
 
-            elf_out_fp.seek(0)
-            elf_out_fp.write(elf_header.get_packed_data())
+            elf_ٻاهريون_fp.seek(0)
+            elf_ٻاهريون_fp.اكتب(elf_سرو.get_packed_معلومات())
 
-            phdr_start = elf_header.e_phoff
-            for phdr in phdr_table:
-                elf_out_fp.seek(phdr_start)
-                elf_out_fp.write(phdr.get_packed_data())
-                phdr_start += phdr_size
+            phdr_شروعات = elf_سرو.e_phoff
+            لكل phdr في phdr_جدول:
+                elf_ٻاهريون_fp.seek(phdr_شروعات)
+                elf_ٻاهريون_fp.اكتب(phdr.get_packed_معلومات())
+                phdr_شروعات += phdr_سائيز
 
-            for shdr in shdr_table_input[:num_shdrs]:
-                if shdr.sh_type == SHT_NOBITS or shdr.sh_size == 0:
-                    continue
-                file_copy_offset(elf_in_fp, shdr.sh_offset, elf_out_fp, shdr.sh_offset, shdr.sh_size)
+            لكل shdr في shdr_جدول_داخلا[:انگ_shdrs]:
+                إذا shdr.sh_type == SHT_NOBITS أو shdr.sh_سائيز == 0:
+                    استمر
+                file_copy_وٿي(elf_اندريون_fp, shdr.sh_وٿي, elf_ٻاهريون_fp, shdr.sh_وٿي, shdr.sh_سائيز)
 
-            shdr_start = elf_header.e_shoff
-            for shdr in shdr_table_output:
-                elf_out_fp.seek(shdr_start)
-                elf_out_fp.write(shdr.get_packed_data())
-                shdr_start += elf_header.e_shentsize
+            shdr_شروعات = elf_سرو.e_shoff
+            لكل shdr في shdr_جدول_output:
+                elf_ٻاهريون_fp.seek(shdr_شروعات)
+                elf_ٻاهريون_fp.اكتب(shdr.get_packed_معلومات())
+                shdr_شروعات += elf_سرو.e_shentsize
 
-            elf_out_fp.flush()
+            elf_ٻاهريون_fp.flush()
 
             swiv_seg = SWIV_Seg()
-            swiv_seg.crc = crc32_calculate(elf_out_fp, phdr_table)
-            elf_out_fp.seek(swiv_shdr.sh_offset)
-            elf_out_fp.write(swiv_seg.get_packed_data())
+            swiv_seg.چڪري_جاچ = چڪري_جاچ_32_calculate(elf_ٻاهريون_fp, phdr_جدول)
+            elf_ٻاهريون_fp.seek(swiv_shdr.sh_وٿي)
+            elf_ٻاهريون_fp.اكتب(swiv_seg.get_packed_معلومات())
 
-        if temp_output is not None:
-            os.replace(temp_output, output_elf)
-            temp_output = None
+        إذا عارضي_output آهي ليس ڪجهه_نه:
+            os.replace(عارضي_output, output_elf)
+            عارضي_output = ڪجهه_نه
 
-        return 0
-    finally:
-        if temp_output is not None and os.path.exists(temp_output):
-            os.unlink(temp_output)
+        أرجع 0
+    أخيرا:
+        إذا عارضي_output آهي ليس ڪجهه_نه و os.رستو.exists(عارضي_output):
+            os.unlink(عارضي_output)
 
 
-def main(argv):
-    parser = argparse.ArgumentParser(description="Add a Software Image Validation (SWIV) section to an HTP ELF file.")
-    parser.add_argument("-i", "--input", dest="input_file", metavar="INPUT", required=True)
-    parser.add_argument("-o", "--output", dest="output_file", metavar="OUTPUT", required=True)
-    parser.add_argument("-v", "--verbose", action="store_true", help="show calculated CRC")
-    args = parser.parse_args(argv)
+وصف مکيه(argv):
+    parser = argparse.دليل_Parser(description="Add a Software Image Validation (SWIV) section to an HTP ELF file.")
+    parser.جوڙيو_دليل("-i", "--input", dest="input_file", metavar="INPUT", required=سچ)
+    parser.جوڙيو_دليل("-o", "--output", dest="output_file", metavar="OUTPUT", required=سچ)
+    parser.جوڙيو_دليل("-v", "--verbose", action="store_true", help="show calculated CRC")
+    دليلون_2 = parser.parse_دليلون(argv)
 
     logging.basicConfig(
-        level=logging.INFO if args.verbose else logging.WARNING,
+        level=logging.INFO إذا دليلون_2.verbose وإلا logging.WARNING,
         format="%(message)s",
     )
 
-    try:
-        return swiv_generate(args.input_file, args.output_file)
-    except RuntimeError as exc:
+    حاول:
+        أرجع swiv_generate(دليلون_2.داخلا_file, دليلون_2.output_file)
+    استثناء RuntimeError كـ exc:
         logger.error("ERROR: %s", exc)
-        return 2
+        أرجع 2
 
 
-if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+إذا __name__ == "__main__":
+    sys.exit(مکيه(sys.argv[1:]))

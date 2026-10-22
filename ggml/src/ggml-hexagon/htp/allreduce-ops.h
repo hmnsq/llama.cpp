@@ -1,57 +1,57 @@
-#ifndef ALLREDUCE_OPS_H
-#define ALLREDUCE_OPS_H
+#جيڪڏهن_وصف_نه_ٿيل ALLREDUCE_OPS_H
+#وصف_ڪريو ALLREDUCE_OPS_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
+#ضمن <stdint.h>
+#ضمن <stddef.h>
+#ضمن <stdbool.h>
 
-#define HTP_ALLREDUCE_MAX_RANKS 4
+#وصف_ڪريو HTP_ALLREDUCE_MAX_RANKS 4
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#جيڪڏهن_وصف_ٿيل __cplusplus
+خارجي "C" {
+#جيڪڏهن_پورو
 
-enum htp_allreduce_kernel_type {
+تعداد htp_allreduce_kernel_type {
     HTP_ALLREDUCE_KERNEL_UNSUPPORTED = 0,
     HTP_ALLREDUCE_KERNEL_DMA_1D,
     HTP_ALLREDUCE_KERNEL_DMA_2D,
 };
 
-enum htp_allreduce_mode {
-    HTP_ALLREDUCE_FULL           = 0, // all ranks reduce full tensor
+تعداد htp_allreduce_گهڻائي {
+    HTP_ALLREDUCE_ڀريل           = 0, // all ranks reduce full tensor
     HTP_ALLREDUCE_SHARDED_FANOUT = 1, // each rank reduces 1/N shard and fans out to all buffers
 };
 
-static inline size_t htp_allreduce_vtcm_buffer_count(
+ساكن مضمن size_t htp_allreduce_vtcm_بفر_ڳڻپ(
     uint32_t n_ranks,
-    uint32_t n_threads,
-    bool has_add,
-    bool is_row_bcast
+    uint32_t n_ڌاڳا,
+    bool has_جوڙيو,
+    bool is_صف_bcast
 ) {
-    return (size_t) (n_ranks + 1) * n_threads + (has_add ? (is_row_bcast ? 1 : n_threads) : 0);
+    أرجع (size_t) (n_ranks + 1) * n_ڌاڳا + (has_جوڙيو ? (is_صف_bcast ? 1 : n_ڌاڳا) : 0);
 }
 
-struct htp_allreduce_kernel_params {
+بنية htp_allreduce_kernel_params {
     int32_t rank;
     int32_t n_ranks;
-    int32_t n_threads;
-    int32_t block_elems;          // 1D: block_elems, 2D: block_rows
-    int32_t elems_per_thread;     // 1D: nelem_per_thread, 2D: nrows_per_thread
-    int32_t vtcm_size_per_thread;
-    int32_t vtcm_size;
+    int32_t n_ڌاڳا;
+    int32_t بلاڪ_elems;          // 1D: block_elems, 2D: block_rows
+    int32_t elems_في_thread;     // 1D: nelem_per_thread, 2D: nrows_per_thread
+    int32_t vtcm_سائيز_في_thread;
+    int32_t vtcm_سائيز;
     int32_t kernel_type;
     int32_t ne0;
     int32_t ne1;
-    int32_t row_size_aligned;
-    int32_t rank_elem_start;
+    int32_t صف_سائيز_aligned;
+    int32_t rank_elem_شروعات;
     int32_t rank_nelem;
     int32_t n_dsts;
-    int32_t is_row_bcast;
-    int32_t mode;                 // enum htp_allreduce_mode: FULL or SHARDED_FANOUT
+    int32_t is_صف_bcast;
+    int32_t گهڻائي;                 // enum htp_allreduce_mode: FULL or SHARDED_FANOUT
 };
 
-#ifdef __cplusplus
+#جيڪڏهن_وصف_ٿيل __cplusplus
 }
-#endif
+#جيڪڏهن_پورو
 
-#endif /* ALLREDUCE_OPS_H */
+#جيڪڏهن_پورو /* ALLREDUCE_OPS_H */

@@ -1,78 +1,78 @@
-#include <cfloat>
-#include <initializer_list>
-#include <vector>
+#ضمن <cfloat>
+#ضمن <initializer_list>
+#ضمن <vector>
 
-#include "ggml.h"
-#include "ggml-impl.h"
-#include "ggml-backend-impl.h"
-#include "topk-moe.hpp"
+#ضمن "ggml.h"
+#ضمن "ggml-impl.h"
+#ضمن "ggml-backend-impl.h"
+#ضمن "topk-moe.hpp"
 
 // SYCL port of ggml-cuda/topk-moe.cu. The kernel is a translation of the CUDA no-bias, no-PDL
 // path of topk_moe_cuda; the fusion-detection helpers below are ported near-verbatim from
 // ggml-cuda.cu (pure graph / pointer inspection, backend-agnostic). Bias is not implemented here:
 // if a routing bias is detected, the fusion is declined and the eager path runs unchanged.
 
-struct ggml_sycl_topk_moe_args {
-    bool sigmoid{};
-    bool softmax{};
-    bool delayed_softmax{};
-    bool prob_bias{};
-    bool norm{};
-    bool scale{};
+بنية ggml_sycl_topk_moe_دليلون {
+    منطقي sigmoid{};
+    منطقي softmax{};
+    منطقي delayed_softmax{};
+    منطقي prob_bias{};
+    منطقي norm{};
+    منطقي scale{};
 };
 
-struct topk_moe_config {
-    bool use_sigmoid;
-    bool with_norm;
-    bool delayed_softmax;
+بنية topk_moe_config {
+    منطقي use_sigmoid;
+    منطقي with_norm;
+    منطقي delayed_softmax;
 };
 
 // warp-local softmax used for both the pre-top-k logits and the post-top-k delayed path
-template <int experts_per_thread, bool use_limit>
-static inline void softmax_warp_inplace(float (&vals)[experts_per_thread], const int limit, const int lane) {
-    float max_val = -INFINITY;
-#pragma unroll
-    for (int i = 0; i < experts_per_thread; i++) {
-        const int  idx    = lane + i * WARP_SIZE;
-        const bool active = !use_limit || (idx < limit);
-        if (active) {
+سانچو <صحيح experts_في_thread, منطقي use_حد_بندي>
+ساكن مضمن فراغ softmax_warp_inplace(عائم (&vals)[experts_في_thread], ثابت صحيح حد_بندي, ثابت صحيح lane) {
+    عائم max_val = -INFINITY;
+#هدايت unroll
+    لكل (صحيح i = 0; i < experts_في_thread; i++) {
+        ثابت صحيح  idx    = lane + i * WARP_سائيز;
+        ثابت منطقي سرگرم = !use_حد_بندي || (idx < حد_بندي);
+        إذا (سرگرم) {
             max_val = sycl::fmax(max_val, vals[i]);
         }
     }
-    max_val = warp_reduce_max<WARP_SIZE>(max_val);
+    max_val = warp_reduce_max<WARP_سائيز>(max_val);
 
-    float sum = 0.f;
-#pragma unroll
-    for (int i = 0; i < experts_per_thread; i++) {
-        const int  idx    = lane + i * WARP_SIZE;
-        const bool active = !use_limit || (idx < limit);
-        if (active) {
-            const float val = sycl::exp(vals[i] - max_val);
+    عائم جوڙ = 0.f;
+#هدايت unroll
+    لكل (صحيح i = 0; i < experts_في_thread; i++) {
+        ثابت صحيح  idx    = lane + i * WARP_سائيز;
+        ثابت منطقي سرگرم = !use_حد_بندي || (idx < حد_بندي);
+        إذا (سرگرم) {
+            ثابت عائم val = sycl::قوت_نما(vals[i] - max_val);
             vals[i]         = val;
-            sum += val;
-        } else {
+            جوڙ += val;
+        } وإلا {
             vals[i] = 0.f;
         }
     }
-    sum = warp_reduce_sum<WARP_SIZE>(sum);
+    جوڙ = warp_reduce_جوڙ<WARP_سائيز>(جوڙ);
 
-    const float inv_sum = 1.0f / sum;
-#pragma unroll
-    for (int i = 0; i < experts_per_thread; i++) {
-        const int idx = lane + i * WARP_SIZE;
-        if (!use_limit || idx < limit) {
-            vals[i] *= inv_sum;
+    ثابت عائم inv_جوڙ = 1.0f / جوڙ;
+#هدايت unroll
+    لكل (صحيح i = 0; i < experts_في_thread; i++) {
+        ثابت صحيح idx = lane + i * WARP_سائيز;
+        إذا (!use_حد_بندي || idx < حد_بندي) {
+            vals[i] *= inv_جوڙ;
         }
     }
 }
 
-template <int experts_per_thread, bool use_limit>
-static inline void sigmoid_warp_inplace(float (&vals)[experts_per_thread], const int limit, const int lane) {
-#pragma unroll
-    for (int i = 0; i < experts_per_thread; i++) {
-        const int  idx    = lane + i * WARP_SIZE;
-        const bool active = !use_limit || (idx < limit);
-        vals[i]           = active ? 1.f / (1.f + sycl::exp(-vals[i])) : -INFINITY;
+سانچو <صحيح experts_في_thread, منطقي use_حد_بندي>
+ساكن مضمن فراغ sigmoid_warp_inplace(عائم (&vals)[experts_في_thread], ثابت صحيح حد_بندي, ثابت صحيح lane) {
+#هدايت unroll
+    لكل (صحيح i = 0; i < experts_في_thread; i++) {
+        ثابت صحيح  idx    = lane + i * WARP_سائيز;
+        ثابت منطقي سرگرم = !use_حد_بندي || (idx < حد_بندي);
+        vals[i]           = سرگرم ? 1.f / (1.f + sycl::قوت_نما(-vals[i])) : -INFINITY;
     }
 }
 
@@ -86,52 +86,52 @@ static inline void sigmoid_warp_inplace(float (&vals)[experts_per_thread], const
     It is intended as a fusion of the softmax->top-k->get_rows pipeline for MoE models.
     One sub-group handles one row/token, mirroring topk_moe_cuda's one-warp-per-row layout.
 */
-template <int n_experts>
-static void topk_moe_kernel(const float * __restrict__ logits,
-                            float * __restrict__       weights,
+سانچو <صحيح n_experts>
+ساكن فراغ topk_moe_kernel(ثابت عائم * __restrict__ logits,
+                            عائم * __restrict__       weights,
                             int32_t * __restrict__     ids,
-                            const int                  n_rows,
-                            const int                  n_expert_used,
-                            const float                clamp_val,
-                            const float                scale_val,
-                            const topk_moe_config       config) {
-    auto      item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<1>();
-    const int row       = item_ct1.get_group(0);
-    if (row >= n_rows) {
-        return;
+                            ثابت صحيح                  n_صفون,
+                            ثابت صحيح                  n_expert_استعمال_ٿيل,
+                            ثابت عائم                clamp_val,
+                            ثابت عائم                scale_val,
+                            ثابت topk_moe_config       config) {
+    خودڪار      شي_ct1 = sycl::ext::oneapi::this_work_شي::get_nd_شي<1>();
+    ثابت صحيح صف       = شي_ct1.get_گروهه(0);
+    إذا (صف >= n_صفون) {
+        أرجع;
     }
-    const int lane = item_ct1.get_local_id(0);
+    ثابت صحيح lane = شي_ct1.get_local_id(0);
 
-    logits  += (size_t) n_experts * row;
-    weights += (size_t) n_expert_used * row;
-    ids     += (size_t) n_experts * row;  // ids row stride is n_experts (matches the argsort tensor)
+    logits  += (size_t) n_experts * صف;
+    weights += (size_t) n_expert_استعمال_ٿيل * صف;
+    ids     += (size_t) n_experts * صف;  // ids row stride is n_experts (matches the argsort tensor)
 
-    constexpr int experts_per_thread = (n_experts > WARP_SIZE) ? n_experts / WARP_SIZE : 1;
+    constexpr صحيح experts_في_thread = (n_experts > WARP_سائيز) ? n_experts / WARP_سائيز : 1;
 
-    float wt[experts_per_thread];
-#pragma unroll
-    for (int i = 0; i < experts_per_thread; i++) {
+    عائم wt[experts_في_thread];
+#هدايت unroll
+    لكل (صحيح i = 0; i < experts_في_thread; i++) {
         wt[i] = -INFINITY;
     }
-#pragma unroll
-    for (int i = 0; i < n_experts; i += WARP_SIZE) {
-        const int expert  = i + lane;
-        wt[i / WARP_SIZE] = (n_experts % WARP_SIZE == 0 || expert < n_experts) ? logits[expert] : -INFINITY;
+#هدايت unroll
+    لكل (صحيح i = 0; i < n_experts; i += WARP_سائيز) {
+        ثابت صحيح expert  = i + lane;
+        wt[i / WARP_سائيز] = (n_experts % WARP_سائيز == 0 || expert < n_experts) ? logits[expert] : -INFINITY;
     }
 
-    if (!config.delayed_softmax) {
-        if (config.use_sigmoid) {
-            sigmoid_warp_inplace<experts_per_thread, false>(wt, n_experts, lane);
-        } else {
-            softmax_warp_inplace<experts_per_thread, false>(wt, n_experts, lane);
+    إذا (!config.delayed_softmax) {
+        إذا (config.use_sigmoid) {
+            sigmoid_warp_inplace<experts_في_thread, خطأ>(wt, n_experts, lane);
+        } وإلا {
+            softmax_warp_inplace<experts_في_thread, خطأ>(wt, n_experts, lane);
         }
     }
 
     // Sanitize NaN to -FLT_MAX so the iterative argmax produces unique expert IDs. NaN comparisons
     // always return false, which would cause the same expert to be selected repeatedly.
-#pragma unroll
-    for (int i = 0; i < experts_per_thread; i++) {
-        if (sycl::isnan(wt[i])) {
+#هدايت unroll
+    لكل (صحيح i = 0; i < experts_في_thread; i++) {
+        إذا (sycl::isnan(wt[i])) {
             wt[i] = -FLT_MAX;
         }
     }
@@ -140,480 +140,480 @@ static void topk_moe_kernel(const float * __restrict__ logits,
     // argmax reduce over n_expert_used, each time marking the selected expert as -inf to exclude it
     // from the next iteration.
 
-    float wt_sum = 0.f;
-    float output_weights[experts_per_thread];
-#pragma unroll
-    for (int i = 0; i < experts_per_thread; i++) {
+    عائم wt_جوڙ = 0.f;
+    عائم output_weights[experts_في_thread];
+#هدايت unroll
+    لكل (صحيح i = 0; i < experts_في_thread; i++) {
         output_weights[i] = 0.f;
     }
 
-    const sycl::sub_group sg = item_ct1.get_sub_group();
+    ثابت sycl::sub_گروهه sg = شي_ct1.get_sub_گروهه();
 
-    for (int k = 0; k < n_expert_used; k++) {
-        float max_val    = wt[0];
-        int   max_expert = lane;
-#pragma unroll
-        for (int i = 1; i < experts_per_thread; i++) {
-            const int expert = lane + i * WARP_SIZE;
-            if ((n_experts % WARP_SIZE == 0 || expert < n_experts) && wt[i] > max_val) {
+    لكل (صحيح k = 0; k < n_expert_استعمال_ٿيل; k++) {
+        عائم max_val    = wt[0];
+        صحيح   max_expert = lane;
+#هدايت unroll
+        لكل (صحيح i = 1; i < experts_في_thread; i++) {
+            ثابت صحيح expert = lane + i * WARP_سائيز;
+            إذا ((n_experts % WARP_سائيز == 0 || expert < n_experts) && wt[i] > max_val) {
                 max_val    = wt[i];
                 max_expert = expert;
             }
         }
-#pragma unroll
-        for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
-            const float val    = dpct::permute_sub_group_by_xor(sg, max_val, mask);
-            const int   expert = dpct::permute_sub_group_by_xor(sg, max_expert, mask);
-            if (val > max_val || (val == max_val && expert < max_expert)) {
+#هدايت unroll
+        لكل (صحيح نقاب = WARP_سائيز / 2; نقاب > 0; نقاب >>= 1) {
+            ثابت عائم val    = dpct::ترتيب_بدلايو_sub_گروهه_by_xor(sg, max_val, نقاب);
+            ثابت صحيح   expert = dpct::ترتيب_بدلايو_sub_گروهه_by_xor(sg, max_expert, نقاب);
+            إذا (val > max_val || (val == max_val && expert < max_expert)) {
                 max_val    = val;
                 max_expert = expert;
             }
         }
 
-        if ((max_expert & (WARP_SIZE - 1)) == lane) {
-            wt[max_expert / WARP_SIZE] = -INFINITY;
+        إذا ((max_expert & (WARP_سائيز - 1)) == lane) {
+            wt[max_expert / WARP_سائيز] = -INFINITY;
         }
-        if ((k & (WARP_SIZE - 1)) == lane) {
-            output_weights[k / WARP_SIZE] = max_val;
+        إذا ((k & (WARP_سائيز - 1)) == lane) {
+            output_weights[k / WARP_سائيز] = max_val;
         }
-        if ((max_expert & (WARP_SIZE - 1)) == lane) {
+        إذا ((max_expert & (WARP_سائيز - 1)) == lane) {
             ids[k] = max_expert;
-            if (config.with_norm) {
-                wt_sum += max_val;
+            إذا (config.with_norm) {
+                wt_جوڙ += max_val;
             }
         }
     }
 
-    if (config.with_norm) {
-        wt_sum          = warp_reduce_sum<WARP_SIZE>(wt_sum);
-        wt_sum          = sycl::fmax(wt_sum, clamp_val);
-        const float inv = 1.0f / wt_sum;
-#pragma unroll
-        for (int i = 0; i < experts_per_thread; i++) {
+    إذا (config.with_norm) {
+        wt_جوڙ          = warp_reduce_جوڙ<WARP_سائيز>(wt_جوڙ);
+        wt_جوڙ          = sycl::fmax(wt_جوڙ, clamp_val);
+        ثابت عائم inv = 1.0f / wt_جوڙ;
+#هدايت unroll
+        لكل (صحيح i = 0; i < experts_في_thread; i++) {
             output_weights[i] *= inv;
         }
     }
 
-    if (config.delayed_softmax) {
-        softmax_warp_inplace<experts_per_thread, true>(output_weights, n_expert_used, lane);
+    إذا (config.delayed_softmax) {
+        softmax_warp_inplace<experts_في_thread, سچ>(output_weights, n_expert_استعمال_ٿيل, lane);
     }
 
-#pragma unroll
-    for (int i = 0; i < experts_per_thread; i++) {
-        const int idx = i * WARP_SIZE + lane;
-        if (idx < n_expert_used) {
+#هدايت unroll
+    لكل (صحيح i = 0; i < experts_في_thread; i++) {
+        ثابت صحيح idx = i * WARP_سائيز + lane;
+        إذا (idx < n_expert_استعمال_ٿيل) {
             weights[idx] = output_weights[i] * scale_val;
         }
     }
 }
 
-template <int n_experts>
-static void launch_topk_moe(queue_ptr stream, const float * logits, float * weights, int32_t * ids, int n_rows,
-                            int n_expert_used, float clamp_val, float scale_val, const topk_moe_config & config) {
-    const sycl::range<1> block_dims(WARP_SIZE);
-    const sycl::range<1> block_nums(n_rows);
-    stream->parallel_for(sycl::nd_range<1>(block_nums * block_dims, block_dims),
-                         [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                             topk_moe_kernel<n_experts>(logits, weights, ids, n_rows, n_expert_used, clamp_val,
+سانچو <صحيح n_experts>
+ساكن فراغ launch_topk_moe(قطار_ptr stream, ثابت عائم * logits, عائم * weights, int32_t * ids, صحيح n_صفون,
+                            صحيح n_expert_استعمال_ٿيل, عائم clamp_val, عائم scale_val, ثابت topk_moe_config & config) {
+    ثابت sycl::range<1> بلاڪ_dims(WARP_سائيز);
+    ثابت sycl::range<1> بلاڪ_nums(n_صفون);
+    stream->parallel_for(sycl::nd_range<1>(بلاڪ_nums * بلاڪ_dims, بلاڪ_dims),
+                         [=](sycl::nd_شي<1> شي_ct1) [[sycl::reqd_sub_گروهه_سائيز(WARP_سائيز)]] {
+                             topk_moe_kernel<n_experts>(logits, weights, ids, n_صفون, n_expert_استعمال_ٿيل, clamp_val,
                                                         scale_val, config);
-                             GGML_UNUSED(item_ct1);
+                             GGML_اڻ_استعمال_ٿيل(شي_ct1);
                          });
 }
 
-static void ggml_sycl_op_topk_moe(ggml_backend_sycl_context &     ctx,
-                                  const ggml_tensor *             logits,
+ساكن فراغ ggml_sycl_op_topk_moe(ggml_backend_sycl_context &     ctx,
+                                  ثابت ggml_tensor *             logits,
                                   ggml_tensor *                   weights,
                                   ggml_tensor *                   ids,
-                                  const ggml_tensor *             clamp,
-                                  const ggml_tensor *             scale,
-                                  const ggml_sycl_topk_moe_args & args) {
+                                  ثابت ggml_tensor *             clamp,
+                                  ثابت ggml_tensor *             scale,
+                                  ثابت ggml_sycl_topk_moe_دليلون & دليلون_2) {
     GGML_ASSERT(logits->type  == GGML_TYPE_F32);
     GGML_ASSERT(weights->type == GGML_TYPE_F32);
     GGML_ASSERT(ids->type     == GGML_TYPE_I32);
 
-    const int n_experts     = logits->ne[0];
-    const int n_rows        = logits->ne[1];
-    const int n_expert_used = weights->ne[1];
+    ثابت صحيح n_experts     = logits->ne[0];
+    ثابت صحيح n_صفون        = logits->ne[1];
+    ثابت صحيح n_expert_استعمال_ٿيل = weights->ne[1];
 
-    GGML_ASSERT(ids->nb[1] / ggml_type_size(ids->type) == (size_t) n_experts);
+    GGML_ASSERT(ids->nb[1] / ggml_type_سائيز(ids->type) == (size_t) n_experts);
 
-    const float * logits_d  = (const float *) logits->data;
-    float *       weights_d = (float *) weights->data;
-    int32_t *     ids_d     = (int32_t *) ids->data;
+    ثابت عائم * logits_d  = (ثابت عائم *) logits->معلومات;
+    عائم *       weights_d = (عائم *) weights->معلومات;
+    int32_t *     ids_d     = (int32_t *) ids->معلومات;
 
-    const bool  with_norm = clamp != nullptr;
-    const float clamp_val = clamp ? ggml_get_op_params_f32(clamp, 0) : -INFINITY;
-    const float scale_val = scale ? ggml_get_op_params_f32(scale, 0) : 1.0f;
+    ثابت منطقي  with_norm = clamp != خالي_اشارو;
+    ثابت عائم clamp_val = clamp ? ggml_get_op_params_f32(clamp, 0) : -INFINITY;
+    ثابت عائم scale_val = scale ? ggml_get_op_params_f32(scale, 0) : 1.0f;
 
     topk_moe_config config;
-    config.use_sigmoid     = args.sigmoid;
+    config.use_sigmoid     = دليلون_2.sigmoid;
     config.with_norm       = with_norm;
-    config.delayed_softmax = args.delayed_softmax;
+    config.delayed_softmax = دليلون_2.delayed_softmax;
 
-    queue_ptr stream = ctx.stream();
-    ggml_sycl_set_device(ctx.device);
+    قطار_ptr stream = ctx.stream();
+    ggml_sycl_سيٽ_device(ctx.device);
 
-    switch (n_experts) {
-        case 1:
-            launch_topk_moe<1>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
+    بدل (n_experts) {
+        حالة 1:
+            launch_topk_moe<1>(stream, logits_d, weights_d, ids_d, n_صفون, n_expert_استعمال_ٿيل, clamp_val, scale_val,
                                config);
-            break;
-        case 2:
-            launch_topk_moe<2>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
+            اكسر;
+        حالة 2:
+            launch_topk_moe<2>(stream, logits_d, weights_d, ids_d, n_صفون, n_expert_استعمال_ٿيل, clamp_val, scale_val,
                                config);
-            break;
-        case 4:
-            launch_topk_moe<4>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
+            اكسر;
+        حالة 4:
+            launch_topk_moe<4>(stream, logits_d, weights_d, ids_d, n_صفون, n_expert_استعمال_ٿيل, clamp_val, scale_val,
                                config);
-            break;
-        case 8:
-            launch_topk_moe<8>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
+            اكسر;
+        حالة 8:
+            launch_topk_moe<8>(stream, logits_d, weights_d, ids_d, n_صفون, n_expert_استعمال_ٿيل, clamp_val, scale_val,
                                config);
-            break;
-        case 16:
-            launch_topk_moe<16>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
+            اكسر;
+        حالة 16:
+            launch_topk_moe<16>(stream, logits_d, weights_d, ids_d, n_صفون, n_expert_استعمال_ٿيل, clamp_val, scale_val,
                                 config);
-            break;
-        case 32:
-            launch_topk_moe<32>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
+            اكسر;
+        حالة 32:
+            launch_topk_moe<32>(stream, logits_d, weights_d, ids_d, n_صفون, n_expert_استعمال_ٿيل, clamp_val, scale_val,
                                 config);
-            break;
-        case 64:
-            launch_topk_moe<64>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
+            اكسر;
+        حالة 64:
+            launch_topk_moe<64>(stream, logits_d, weights_d, ids_d, n_صفون, n_expert_استعمال_ٿيل, clamp_val, scale_val,
                                 config);
-            break;
-        case 128:
-            launch_topk_moe<128>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
+            اكسر;
+        حالة 128:
+            launch_topk_moe<128>(stream, logits_d, weights_d, ids_d, n_صفون, n_expert_استعمال_ٿيل, clamp_val, scale_val,
                                  config);
-            break;
-        case 256:
-            launch_topk_moe<256>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
+            اكسر;
+        حالة 256:
+            launch_topk_moe<256>(stream, logits_d, weights_d, ids_d, n_صفون, n_expert_استعمال_ٿيل, clamp_val, scale_val,
                                  config);
-            break;
-        case 512:
-            launch_topk_moe<512>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
+            اكسر;
+        حالة 512:
+            launch_topk_moe<512>(stream, logits_d, weights_d, ids_d, n_صفون, n_expert_استعمال_ٿيل, clamp_val, scale_val,
                                  config);
-            break;
-        default:
-            GGML_ASSERT(false && "fatal error");
+            اكسر;
+        افتراضي:
+            GGML_ASSERT(خطأ && "fatal error");
     }
 }
 
-static bool ggml_sycl_should_use_topk_moe(const ggml_tensor * gating_op, const ggml_tensor * weights,
-                                          const ggml_tensor * logits, const ggml_tensor * ids) {
-    const int n_expert = ids->nb[1] / ids->nb[0];
-    if ((n_expert & (n_expert - 1)) != 0 || n_expert > 512) {
-        return false;
+ساكن منطقي ggml_sycl_should_use_topk_moe(ثابت ggml_tensor * gating_op, ثابت ggml_tensor * weights,
+                                          ثابت ggml_tensor * logits, ثابت ggml_tensor * ids) {
+    ثابت صحيح n_expert = ids->nb[1] / ids->nb[0];
+    إذا ((n_expert & (n_expert - 1)) != 0 || n_expert > 512) {
+        أرجع خطأ;
     }
 
-    if (!ggml_is_contiguous(weights) || !ggml_is_contiguous(logits)) {
-        return false;
+    إذا (!ggml_is_contiguous(weights) || !ggml_is_contiguous(logits)) {
+        أرجع خطأ;
     }
 
-    if (gating_op->op == GGML_OP_SOFT_MAX) {
-        float scale    = 1.0f;
-        float max_bias = 0.0f;
+    إذا (gating_op->op == GGML_OP_SOFT_MAX) {
+        عائم scale    = 1.0f;
+        عائم max_bias = 0.0f;
 
-        memcpy(&scale, (const float *) gating_op->op_params + 0, sizeof(float));
-        memcpy(&max_bias, (const float *) gating_op->op_params + 1, sizeof(float));
+        يادگيري_نقل(&scale, (ثابت عائم *) gating_op->op_params + 0, حجم(عائم));
+        يادگيري_نقل(&max_bias, (ثابت عائم *) gating_op->op_params + 1, حجم(عائم));
 
-        if (!ggml_is_contiguous(gating_op->src[0])) {
-            return false;
+        إذا (!ggml_is_contiguous(gating_op->src[0])) {
+            أرجع خطأ;
         }
-        if (scale != 1.0f || max_bias != 0.0f) {
-            return false;
+        إذا (scale != 1.0f || max_bias != 0.0f) {
+            أرجع خطأ;
         }
         // don't fuse when masks or sinks are present
-        if (gating_op->src[1] || gating_op->src[2]) {
-            return false;
+        إذا (gating_op->src[1] || gating_op->src[2]) {
+            أرجع خطأ;
         }
-    } else if (gating_op->op == GGML_OP_UNARY) {
-        if (ggml_get_unary_op(gating_op) != GGML_UNARY_OP_SIGMOID) {
-            return false;
+    } وإلا إذا (gating_op->op == GGML_OP_UNARY) {
+        إذا (ggml_get_unary_op(gating_op) != GGML_UNARY_OP_SIGMOID) {
+            أرجع خطأ;
         }
     }
 
-    return true;
+    أرجع سچ;
 }
 
 // ported from ggml_cuda_topk_moe_fusion - pure graph inspection, backend-agnostic
-static bool ggml_sycl_topk_moe_fusion(const ggml_cgraph * cgraph, int node_idx, ggml_sycl_topk_moe_args & args) {
-    args = ggml_sycl_topk_moe_args{};
+ساكن منطقي ggml_sycl_topk_moe_fusion(ثابت ggml_cgraph * cgraph, صحيح ڳنڍ_idx, ggml_sycl_topk_moe_دليلون & دليلون_2) {
+    دليلون_2 = ggml_sycl_topk_moe_دليلون{};
 
-    const int      n_nodes = cgraph->n_nodes;
+    ثابت صحيح      n_nodes = cgraph->n_nodes;
     ggml_tensor ** nodes   = cgraph->nodes;
 
-    if (nodes[node_idx]->op == GGML_OP_SOFT_MAX) {
-        args.softmax = true;
+    إذا (nodes[ڳنڍ_idx]->op == GGML_OP_SOFT_MAX) {
+        دليلون_2.softmax = سچ;
     }
 
-    if (nodes[node_idx]->op == GGML_OP_UNARY) {
-        if (ggml_get_unary_op(nodes[node_idx]) != GGML_UNARY_OP_SIGMOID) {
-            return false;
+    إذا (nodes[ڳنڍ_idx]->op == GGML_OP_UNARY) {
+        إذا (ggml_get_unary_op(nodes[ڳنڍ_idx]) != GGML_UNARY_OP_SIGMOID) {
+            أرجع خطأ;
         }
-        args.sigmoid = true;
+        دليلون_2.sigmoid = سچ;
     }
 
-    if (nodes[node_idx]->op == GGML_OP_ARGSORT) {
-        args.delayed_softmax = true;
+    إذا (nodes[ڳنڍ_idx]->op == GGML_OP_ARGSORT) {
+        دليلون_2.delayed_softmax = سچ;
     }
 
-    node_idx++;
+    ڳنڍ_idx++;
 
-    if (args.sigmoid || args.softmax) {
+    إذا (دليلون_2.sigmoid || دليلون_2.softmax) {
         // SOFTMAX -> RESHAPE
-        if (node_idx >= n_nodes || nodes[node_idx]->op != GGML_OP_RESHAPE ||
-            nodes[node_idx]->src[0] != nodes[node_idx - 1]) {
-            return false;
+        إذا (ڳنڍ_idx >= n_nodes || nodes[ڳنڍ_idx]->op != GGML_OP_RESHAPE ||
+            nodes[ڳنڍ_idx]->src[0] != nodes[ڳنڍ_idx - 1]) {
+            أرجع خطأ;
         }
-        ggml_tensor * probs_reshaped = nodes[node_idx];
-        node_idx++;
+        ggml_tensor * probs_reshaped = nodes[ڳنڍ_idx];
+        ڳنڍ_idx++;
 
-        if (node_idx >= n_nodes) {
-            return false;
+        إذا (ڳنڍ_idx >= n_nodes) {
+            أرجع خطأ;
         }
 
         // src of bias add is the unreshaped probs (-2 instead of -1)
-        if (nodes[node_idx]->op == GGML_OP_ADD && nodes[node_idx]->src[0] == nodes[node_idx - 2]) {
-            args.prob_bias = true;
-            node_idx++;
+        إذا (nodes[ڳنڍ_idx]->op == GGML_OP_جوڙيو && nodes[ڳنڍ_idx]->src[0] == nodes[ڳنڍ_idx - 2]) {
+            دليلون_2.prob_bias = سچ;
+            ڳنڍ_idx++;
         }
         // RESHAPE/ADD -> ARGSORT
-        if (node_idx >= n_nodes || nodes[node_idx]->op != GGML_OP_ARGSORT) {
-            return false;
+        إذا (ڳنڍ_idx >= n_nodes || nodes[ڳنڍ_idx]->op != GGML_OP_ARGSORT) {
+            أرجع خطأ;
         }
 
-        if (args.prob_bias && nodes[node_idx]->src[0] != nodes[node_idx - 1]) {
-            return false;
-        } else if (!args.prob_bias && nodes[node_idx]->src[0] != nodes[node_idx - 2]) {
-            return false;
+        إذا (دليلون_2.prob_bias && nodes[ڳنڍ_idx]->src[0] != nodes[ڳنڍ_idx - 1]) {
+            أرجع خطأ;
+        } وإلا إذا (!دليلون_2.prob_bias && nodes[ڳنڍ_idx]->src[0] != nodes[ڳنڍ_idx - 2]) {
+            أرجع خطأ;
         }
 
-        node_idx++;
+        ڳنڍ_idx++;
 
         // ARGSORT -> VIEW
-        if (node_idx >= n_nodes || nodes[node_idx]->op != GGML_OP_VIEW ||
-            nodes[node_idx]->src[0] != nodes[node_idx - 1]) {
-            return false;
+        إذا (ڳنڍ_idx >= n_nodes || nodes[ڳنڍ_idx]->op != GGML_OP_VIEW ||
+            nodes[ڳنڍ_idx]->src[0] != nodes[ڳنڍ_idx - 1]) {
+            أرجع خطأ;
         }
-        node_idx++;
+        ڳنڍ_idx++;
 
-        if (node_idx >= n_nodes || nodes[node_idx]->op != GGML_OP_GET_ROWS) {
-            return false;
+        إذا (ڳنڍ_idx >= n_nodes || nodes[ڳنڍ_idx]->op != GGML_OP_GET_صفون) {
+            أرجع خطأ;
         }
 
         // GET_ROWS
-        if (nodes[node_idx]->src[0] != probs_reshaped || nodes[node_idx]->src[1] != nodes[node_idx - 1]) {
-            return false;
+        إذا (nodes[ڳنڍ_idx]->src[0] != probs_reshaped || nodes[ڳنڍ_idx]->src[1] != nodes[ڳنڍ_idx - 1]) {
+            أرجع خطأ;
         }
-        node_idx++;
-    } else if (args.delayed_softmax) {
-        if (node_idx - 2 < 0) {
-            return false;
+        ڳنڍ_idx++;
+    } وإلا إذا (دليلون_2.delayed_softmax) {
+        إذا (ڳنڍ_idx - 2 < 0) {
+            أرجع خطأ;
         }
-        ggml_tensor * probs_reshaped = nodes[node_idx - 2];
+        ggml_tensor * probs_reshaped = nodes[ڳنڍ_idx - 2];
 
         // VIEW -> ARGSORT
-        if (node_idx >= n_nodes || nodes[node_idx]->op != GGML_OP_VIEW ||
-            nodes[node_idx]->src[0] != nodes[node_idx - 1]) {
-            return false;
+        إذا (ڳنڍ_idx >= n_nodes || nodes[ڳنڍ_idx]->op != GGML_OP_VIEW ||
+            nodes[ڳنڍ_idx]->src[0] != nodes[ڳنڍ_idx - 1]) {
+            أرجع خطأ;
         }
-        node_idx++;
+        ڳنڍ_idx++;
 
         // GET_ROWS
-        if (node_idx >= n_nodes || nodes[node_idx]->src[1] != nodes[node_idx - 1] ||
-            nodes[node_idx]->src[0] != probs_reshaped) {
-            return false;
+        إذا (ڳنڍ_idx >= n_nodes || nodes[ڳنڍ_idx]->src[1] != nodes[ڳنڍ_idx - 1] ||
+            nodes[ڳنڍ_idx]->src[0] != probs_reshaped) {
+            أرجع خطأ;
         }
-        node_idx++;
+        ڳنڍ_idx++;
 
-        static const std::vector<ggml_op> remaining_ops = { GGML_OP_RESHAPE, GGML_OP_SOFT_MAX, GGML_OP_RESHAPE };
+        ساكن ثابت std::vector<ggml_op> بچيل_ops = { GGML_OP_RESHAPE, GGML_OP_SOFT_MAX, GGML_OP_RESHAPE };
 
-        for (const ggml_op op : remaining_ops) {
-            if (node_idx >= n_nodes || nodes[node_idx]->op != op || nodes[node_idx]->src[0] != nodes[node_idx - 1]) {
-                return false;
+        لكل (ثابت ggml_op op : بچيل_ops) {
+            إذا (ڳنڍ_idx >= n_nodes || nodes[ڳنڍ_idx]->op != op || nodes[ڳنڍ_idx]->src[0] != nodes[ڳنڍ_idx - 1]) {
+                أرجع خطأ;
             }
-            node_idx++;
+            ڳنڍ_idx++;
         }
     }
 
     // at this point we can check for norm + scale; everything is now at least valid up to the norm
-    if (node_idx >= n_nodes) {
-        return true;
+    إذا (ڳنڍ_idx >= n_nodes) {
+        أرجع سچ;
     }
 
-    if (nodes[node_idx]->op == GGML_OP_RESHAPE) {
+    إذا (nodes[ڳنڍ_idx]->op == GGML_OP_RESHAPE) {
         // check RESHAPE -> SUM_ROWS -> CLAMP -> DIV -> RESHAPE
-        static const std::vector<ggml_op> norm_ops = { GGML_OP_RESHAPE, GGML_OP_SUM_ROWS, GGML_OP_CLAMP };
+        ساكن ثابت std::vector<ggml_op> norm_ops = { GGML_OP_RESHAPE, GGML_OP_جوڙ_صفون, GGML_OP_CLAMP };
 
-        args.norm = true;
-        for (const ggml_op op : norm_ops) {
-            if (nodes[node_idx]->op == op && nodes[node_idx]->src[0] == nodes[node_idx - 1]) {
-                node_idx++;
-            } else {
-                args.norm = false;
-                return true;
+        دليلون_2.norm = سچ;
+        لكل (ثابت ggml_op op : norm_ops) {
+            إذا (nodes[ڳنڍ_idx]->op == op && nodes[ڳنڍ_idx]->src[0] == nodes[ڳنڍ_idx - 1]) {
+                ڳنڍ_idx++;
+            } وإلا {
+                دليلون_2.norm = خطأ;
+                أرجع سچ;
             }
         }
 
         // DIV <- CLAMP, RESHAPE
-        if (nodes[node_idx]->op != GGML_OP_DIV || nodes[node_idx]->src[1] != nodes[node_idx - 1] ||
-            nodes[node_idx]->src[0] != nodes[node_idx - 3]) {
-            args.norm = false;
-            return true;
+        إذا (nodes[ڳنڍ_idx]->op != GGML_OP_DIV || nodes[ڳنڍ_idx]->src[1] != nodes[ڳنڍ_idx - 1] ||
+            nodes[ڳنڍ_idx]->src[0] != nodes[ڳنڍ_idx - 3]) {
+            دليلون_2.norm = خطأ;
+            أرجع سچ;
         }
-        node_idx++;
+        ڳنڍ_idx++;
 
-        if (nodes[node_idx]->op != GGML_OP_RESHAPE || nodes[node_idx]->src[0] != nodes[node_idx - 1]) {
-            args.norm = false;
-            return true;
+        إذا (nodes[ڳنڍ_idx]->op != GGML_OP_RESHAPE || nodes[ڳنڍ_idx]->src[0] != nodes[ڳنڍ_idx - 1]) {
+            دليلون_2.norm = خطأ;
+            أرجع سچ;
         }
-        node_idx++;
+        ڳنڍ_idx++;
     }
 
-    if (nodes[node_idx]->op == GGML_OP_SCALE && nodes[node_idx]->src[0] == nodes[node_idx - 1]) {
-        args.scale = true;
+    إذا (nodes[ڳنڍ_idx]->op == GGML_OP_SCALE && nodes[ڳنڍ_idx]->src[0] == nodes[ڳنڍ_idx - 1]) {
+        دليلون_2.scale = سچ;
     }
 
-    return true;
+    أرجع سچ;
 }
 
 // returns whether the write (out) nodes overwrite the read nodes in operation
 // ported from ggml_cuda_check_fusion_memory_ranges - pure pointer/range inspection
-static bool ggml_sycl_check_fusion_memory_ranges(const ggml_cgraph * cgraph, const int node_idx,
-                                                 const int node_count, const int * out_nodes, const int out_count,
-                                                 const bool is_topk_moe = false) {
-    auto nodes_overlap = [&](const ggml_tensor * a, const ggml_tensor * b) {
-        const int64_t a_start = (int64_t) a->data;
-        const int64_t a_end   = a_start + ggml_backend_buft_get_alloc_size(a->buffer->buft, a);
+ساكن منطقي ggml_sycl_check_fusion_يادگيري_ranges(ثابت ggml_cgraph * cgraph, ثابت صحيح ڳنڍ_idx,
+                                                 ثابت صحيح ڳنڍ_ڳڻپ, ثابت صحيح * ٻاهريون_nodes, ثابت صحيح ٻاهريون_ڳڻپ,
+                                                 ثابت منطقي is_topk_moe = خطأ) {
+    خودڪار nodes_overlap = [&](ثابت ggml_tensor * a, ثابت ggml_tensor * b) {
+        ثابت int64_t a_شروعات = (int64_t) a->معلومات;
+        ثابت int64_t a_پڇاڙي   = a_شروعات + ggml_backend_buft_get_alloc_سائيز(a->بفر->buft, a);
 
-        const int64_t b_start = (int64_t) b->data;
-        const int64_t b_end   = b_start + ggml_backend_buft_get_alloc_size(b->buffer->buft, b);
+        ثابت int64_t b_شروعات = (int64_t) b->معلومات;
+        ثابت int64_t b_پڇاڙي   = b_شروعات + ggml_backend_buft_get_alloc_سائيز(b->بفر->buft, b);
 
-        if ((b_start <= a_start && a_start < b_end) || (a_start <= b_start && b_start < a_end)) {
-            return true;
+        إذا ((b_شروعات <= a_شروعات && a_شروعات < b_پڇاڙي) || (a_شروعات <= b_شروعات && b_شروعات < a_پڇاڙي)) {
+            أرجع سچ;
         }
 
-        return false;
+        أرجع خطأ;
     };
 
-    bool is_ok = true;
+    منطقي is_ok = سچ;
     // exception for topk-moe, as each row is read entirely before writing
-    if (ggml_nrows(cgraph->nodes[node_idx]) == 1 && is_topk_moe) {
-        return true;
+    إذا (ggml_nrows(cgraph->nodes[ڳنڍ_idx]) == 1 && is_topk_moe) {
+        أرجع سچ;
     }
 
-    for (int i = 0; i < out_count; ++i) {
-        const ggml_tensor * dst = cgraph->nodes[out_nodes[i]];
+    لكل (صحيح i = 0; i < ٻاهريون_ڳڻپ; ++i) {
+        ثابت ggml_tensor * dst = cgraph->nodes[ٻاهريون_nodes[i]];
 
-        for (int j = node_idx; j < node_idx + node_count; ++j) {
+        لكل (صحيح j = ڳنڍ_idx; j < ڳنڍ_idx + ڳنڍ_ڳڻپ; ++j) {
             // loop over all srcs of all nodes in the fusion. If the src overlaps the destination and
             // the src is not an intermediate node that's being elided, then disable fusion.
-            for (int src_idx = 0; src_idx < GGML_MAX_SRC; ++src_idx) {
-                const ggml_tensor * src = cgraph->nodes[j]->src[src_idx];
+            لكل (صحيح src_idx = 0; src_idx < GGML_MAX_SRC; ++src_idx) {
+                ثابت ggml_tensor * src = cgraph->nodes[j]->src[src_idx];
 
-                if (!src || src->op == GGML_OP_NONE) {
-                    continue;
+                إذا (!src || src->op == GGML_OP_NONE) {
+                    استمر;
                 }
 
-                if (nodes_overlap(dst, src)) {
-                    bool found = false;
+                إذا (nodes_overlap(dst, src)) {
+                    منطقي مليو = خطأ;
 
-                    for (int k = node_idx; k < j; ++k) {
-                        if (cgraph->nodes[k] == src) {
-                            found = true;
-                            break;
+                    لكل (صحيح k = ڳنڍ_idx; k < j; ++k) {
+                        إذا (cgraph->nodes[k] == src) {
+                            مليو = سچ;
+                            اكسر;
                         }
                     }
 
-                    if (!found) {
-                        is_ok = false;
-                        break;
+                    إذا (!مليو) {
+                        is_ok = خطأ;
+                        اكسر;
                     }
                 }
             }
         }
     }
 
-    return is_ok;
+    أرجع is_ok;
 }
 
-int ggml_sycl_fuse(ggml_backend_sycl_context & ctx, ggml_cgraph * cgraph, int i) {
-    if (!g_ggml_sycl_enable_fusion) {
-        return 0;
+صحيح ggml_sycl_fuse(ggml_backend_sycl_context & ctx, ggml_cgraph * cgraph, صحيح i) {
+    إذا (!g_ggml_sycl_enable_fusion) {
+        أرجع 0;
     }
 
-    return ggml_sycl_fuse_topk_moe(ctx, cgraph, i);
+    أرجع ggml_sycl_fuse_topk_moe(ctx, cgraph, i);
 }
 
-int ggml_sycl_fuse_topk_moe(ggml_backend_sycl_context & ctx, ggml_cgraph * cgraph, int i) {
-    ggml_tensor * node = cgraph->nodes[i];
+صحيح ggml_sycl_fuse_topk_moe(ggml_backend_sycl_context & ctx, ggml_cgraph * cgraph, صحيح i) {
+    ggml_tensor * ڳنڍ = cgraph->nodes[i];
 
-    if (node->op != GGML_OP_UNARY && node->op != GGML_OP_SOFT_MAX && node->op != GGML_OP_ARGSORT) {
-        return 0;
+    إذا (ڳنڍ->op != GGML_OP_UNARY && ڳنڍ->op != GGML_OP_SOFT_MAX && ڳنڍ->op != GGML_OP_ARGSORT) {
+        أرجع 0;
     }
 
-    ggml_sycl_topk_moe_args args;
-    if (!ggml_sycl_topk_moe_fusion(cgraph, i, args)) {
-        return 0;
+    ggml_sycl_topk_moe_دليلون دليلون_2;
+    إذا (!ggml_sycl_topk_moe_fusion(cgraph, i, دليلون_2)) {
+        أرجع 0;
     }
 
     // this kernel implements the no-bias path only; decline anything with a routing bias
-    if (args.prob_bias) {
-        return 0;
+    إذا (دليلون_2.prob_bias) {
+        أرجع 0;
     }
 
-    const ggml_tensor * logits  = node->src[0];
-    ggml_tensor *       weights = nullptr;
-    ggml_tensor *       ids     = nullptr;
-    const ggml_tensor * clamp   = nullptr;
-    const ggml_tensor * scale   = nullptr;
+    ثابت ggml_tensor * logits  = ڳنڍ->src[0];
+    ggml_tensor *       weights = خالي_اشارو;
+    ggml_tensor *       ids     = خالي_اشارو;
+    ثابت ggml_tensor * clamp   = خالي_اشارو;
+    ثابت ggml_tensor * scale   = خالي_اشارو;
 
     std::vector<ggml_op> ops;
-    int                  out_nodes[2];
+    صحيح                  ٻاهريون_nodes[2];
 
-    if (!args.delayed_softmax) {
-        const ggml_op gating_op = args.sigmoid ? GGML_OP_UNARY : GGML_OP_SOFT_MAX;
-        ops.insert(ops.end(), { gating_op, GGML_OP_RESHAPE, GGML_OP_ARGSORT, GGML_OP_VIEW, GGML_OP_GET_ROWS });
-        out_nodes[0] = i + 3;
+    إذا (!دليلون_2.delayed_softmax) {
+        ثابت ggml_op gating_op = دليلون_2.sigmoid ? GGML_OP_UNARY : GGML_OP_SOFT_MAX;
+        ops.insert(ops.end(), { gating_op, GGML_OP_RESHAPE, GGML_OP_ARGSORT, GGML_OP_VIEW, GGML_OP_GET_صفون });
+        ٻاهريون_nodes[0] = i + 3;
         ids          = cgraph->nodes[i + 3];
 
-        if (args.norm) {
-            ops.insert(ops.end(), { GGML_OP_RESHAPE, GGML_OP_SUM_ROWS, GGML_OP_CLAMP, GGML_OP_DIV, GGML_OP_RESHAPE });
-            clamp = cgraph->nodes[i + (int) ops.size() - 3];
+        إذا (دليلون_2.norm) {
+            ops.insert(ops.end(), { GGML_OP_RESHAPE, GGML_OP_جوڙ_صفون, GGML_OP_CLAMP, GGML_OP_DIV, GGML_OP_RESHAPE });
+            clamp = cgraph->nodes[i + (صحيح) ops.size() - 3];
         }
-        if (args.scale) {
+        إذا (دليلون_2.scale) {
             ops.insert(ops.end(), { GGML_OP_SCALE });
-            scale = cgraph->nodes[i + (int) ops.size() - 1];
+            scale = cgraph->nodes[i + (صحيح) ops.size() - 1];
         }
 
-        weights      = cgraph->nodes[i + (int) ops.size() - 1];
-        out_nodes[1] = i + (int) ops.size() - 1;
+        weights      = cgraph->nodes[i + (صحيح) ops.size() - 1];
+        ٻاهريون_nodes[1] = i + (صحيح) ops.size() - 1;
 
-        if (ggml_can_fuse_subgraph(cgraph, i, ops.size(), ops.data(), out_nodes, 2) &&
-            ggml_sycl_should_use_topk_moe(node, weights, logits, ids) &&
-            ggml_sycl_check_fusion_memory_ranges(cgraph, i, (int) ops.size(), out_nodes, 2, /*is_topk_moe=*/true)) {
-            ggml_sycl_op_topk_moe(ctx, logits, weights, ids, clamp, scale, args);
-            return (int) ops.size() - 1;
+        إذا (ggml_can_fuse_subgraph(cgraph, i, ops.size(), ops.معلومات(), ٻاهريون_nodes, 2) &&
+            ggml_sycl_should_use_topk_moe(ڳنڍ, weights, logits, ids) &&
+            ggml_sycl_check_fusion_يادگيري_ranges(cgraph, i, (صحيح) ops.size(), ٻاهريون_nodes, 2, /*is_topk_moe=*/سچ)) {
+            ggml_sycl_op_topk_moe(ctx, logits, weights, ids, clamp, scale, دليلون_2);
+            أرجع (صحيح) ops.size() - 1;
         }
-    } else if (!args.norm && !args.prob_bias) {
+    } وإلا إذا (!دليلون_2.norm && !دليلون_2.prob_bias) {
         // gpt-oss style: argsort -> view -> get_rows -> reshape -> softmax -> reshape, no norm/bias
         ops.insert(ops.end(),
-                   { GGML_OP_ARGSORT, GGML_OP_VIEW, GGML_OP_GET_ROWS, GGML_OP_RESHAPE, GGML_OP_SOFT_MAX,
+                   { GGML_OP_ARGSORT, GGML_OP_VIEW, GGML_OP_GET_صفون, GGML_OP_RESHAPE, GGML_OP_SOFT_MAX,
                      GGML_OP_RESHAPE });
         weights                     = cgraph->nodes[i + 5];
         ids                         = cgraph->nodes[i + 1];
-        const ggml_tensor * softmax = cgraph->nodes[i + 4];
-        out_nodes[0]                = i + 1;
-        out_nodes[1]                = i + 5;
+        ثابت ggml_tensor * softmax = cgraph->nodes[i + 4];
+        ٻاهريون_nodes[0]                = i + 1;
+        ٻاهريون_nodes[1]                = i + 5;
 
-        if (ggml_can_fuse_subgraph(cgraph, i, ops.size(), ops.data(), out_nodes, 2) &&
+        إذا (ggml_can_fuse_subgraph(cgraph, i, ops.size(), ops.معلومات(), ٻاهريون_nodes, 2) &&
             ggml_sycl_should_use_topk_moe(softmax, weights, logits, ids) &&
-            ggml_sycl_check_fusion_memory_ranges(cgraph, i, (int) ops.size(), out_nodes, 2, /*is_topk_moe=*/true)) {
-            ggml_sycl_op_topk_moe(ctx, logits, weights, ids, clamp, scale, args);
-            return (int) ops.size() - 1;
+            ggml_sycl_check_fusion_يادگيري_ranges(cgraph, i, (صحيح) ops.size(), ٻاهريون_nodes, 2, /*is_topk_moe=*/سچ)) {
+            ggml_sycl_op_topk_moe(ctx, logits, weights, ids, clamp, scale, دليلون_2);
+            أرجع (صحيح) ops.size() - 1;
         }
     }
 
-    return 0;
+    أرجع 0;
 }

@@ -1,91 +1,91 @@
-#include "ggml-opt.h"
+#ضمن "ggml-opt.h"
 
-#include "ggml.h"
-#include "ggml-alloc.h"
-#include "ggml-backend.h"
-#include "ggml-impl.h"
+#ضمن "ggml.h"
+#ضمن "ggml-alloc.h"
+#ضمن "ggml-backend.h"
+#ضمن "ggml-impl.h"
 
-#include <algorithm>
-#include <cmath>
-#include <cstdint>
-#include <cinttypes>
-#include <map>
-#include <random>
-#include <vector>
+#ضمن <algorithm>
+#ضمن <cmath>
+#ضمن <cstdint>
+#ضمن <cinttypes>
+#ضمن <map>
+#ضمن <random>
+#ضمن <vector>
 
-struct ggml_opt_dataset {
-    struct ggml_context   * ctx    = nullptr;
-    ggml_backend_buffer_t   buf    = nullptr;
-    struct ggml_tensor    * data   = nullptr;
-    struct ggml_tensor    * labels = nullptr;
+بنية ggml_opt_dataset {
+    بنية ggml_context   * ctx    = خالي_اشارو;
+    ggml_backend_بفر_t   buf    = خالي_اشارو;
+    بنية ggml_tensor    * معلومات   = خالي_اشارو;
+    بنية ggml_tensor    * labels = خالي_اشارو;
 
     int64_t ndata       = -1;
     int64_t ndata_shard = -1;
-    size_t  nbs_data    = -1;
+    size_t  nbs_معلومات    = -1;
     size_t  nbs_labels  = -1;
 
     std::vector<int64_t> permutation;
 };
 
-struct ggml_opt_context {
-    ggml_backend_sched_t       backend_sched        = nullptr;
-    ggml_cgraph              * allocated_graph      = nullptr;
-    ggml_cgraph              * allocated_graph_copy = nullptr;
-    struct ggml_context      * ctx_static           = nullptr;
-    struct ggml_context      * ctx_cpu              = nullptr;
-    struct ggml_context      * ctx_compute          = nullptr;
-    struct ggml_context      * ctx_copy             = nullptr;
-    ggml_backend_buffer_t      buf_static           = nullptr;
-    ggml_backend_buffer_t      buf_cpu              = nullptr;
+بنية ggml_opt_context {
+    ggml_backend_sched_t       backend_sched        = خالي_اشارو;
+    ggml_cgraph              * allocated_گراف      = خالي_اشارو;
+    ggml_cgraph              * allocated_گراف_copy = خالي_اشارو;
+    بنية ggml_context      * ctx_static           = خالي_اشارو;
+    بنية ggml_context      * ctx_cpu              = خالي_اشارو;
+    بنية ggml_context      * ctx_compute          = خالي_اشارو;
+    بنية ggml_context      * ctx_copy             = خالي_اشارو;
+    ggml_backend_بفر_t      buf_static           = خالي_اشارو;
+    ggml_backend_بفر_t      buf_cpu              = خالي_اشارو;
     std::mt19937               rng;
-    enum ggml_opt_loss_type    loss_type;
-    enum ggml_opt_build_type   build_type;
-    enum ggml_opt_build_type   build_type_alloc;
+    تعداد ggml_opt_loss_type    loss_type;
+    تعداد ggml_opt_build_type   build_type;
+    تعداد ggml_opt_build_type   build_type_alloc;
 
-    struct ggml_tensor * inputs  = nullptr;
-    struct ggml_tensor * outputs = nullptr;
-    struct ggml_tensor * labels  = nullptr;
+    بنية ggml_tensor * inputs  = خالي_اشارو;
+    بنية ggml_tensor * outputs = خالي_اشارو;
+    بنية ggml_tensor * labels  = خالي_اشارو;
 
-    struct ggml_tensor * loss     = nullptr;
-    struct ggml_tensor * pred     = nullptr;
-    struct ggml_tensor * ncorrect = nullptr;
+    بنية ggml_tensor * loss     = خالي_اشارو;
+    بنية ggml_tensor * pred     = خالي_اشارو;
+    بنية ggml_tensor * ncorrect = خالي_اشارو;
 
-    struct ggml_cgraph * gf      = nullptr;
-    struct ggml_cgraph * gb_grad = nullptr;
-    struct ggml_cgraph * gb_opt  = nullptr;
-    bool static_graphs           = false;
-    bool eval_ready              = false;
-    std::vector<struct ggml_tensor *> grad_accs;
-    std::vector<struct ggml_tensor *> grad_m;
-    std::vector<struct ggml_tensor *> grad_v;
+    بنية ggml_cgraph * gf      = خالي_اشارو;
+    بنية ggml_cgraph * gb_grad = خالي_اشارو;
+    بنية ggml_cgraph * gb_opt  = خالي_اشارو;
+    منطقي static_graphs           = خطأ;
+    منطقي eval_ready              = خطأ;
+    std::vector<بنية ggml_tensor *> grad_accs;
+    std::vector<بنية ggml_tensor *> grad_m;
+    std::vector<بنية ggml_tensor *> grad_v;
 
     int64_t iter               = 1;
     int32_t opt_period         = 1;
     int32_t opt_i              = 0;
-    bool    loss_per_datapoint = false;
+    منطقي    loss_في_datapoint = خطأ;
 
-    ggml_opt_get_optimizer_params get_opt_pars    = nullptr;
-    void *                        get_opt_pars_ud = nullptr;
-    struct ggml_tensor *          opt_step_params = nullptr; // Stores output of get_opt_pars.
+    ggml_opt_get_optimizer_params get_opt_pars    = خالي_اشارو;
+    فراغ *                        get_opt_pars_ud = خالي_اشارو;
+    بنية ggml_tensor *          opt_قدم_params = خالي_اشارو; // Stores output of get_opt_pars.
 
-    enum ggml_opt_optimizer_type optimizer = GGML_OPT_OPTIMIZER_TYPE_ADAMW;
+    تعداد ggml_opt_optimizer_type optimizer = GGML_OPT_OPTIMIZER_TYPE_ADAMW;
 };
 
-struct ggml_opt_result {
+بنية ggml_opt_نتيجو {
     int64_t              ndata    = 0;
-    std::vector<float>   loss;
+    std::vector<عائم>   loss;
     std::vector<int32_t> pred;
     int64_t              ncorrect = 0;
 
     int64_t opt_period         = -1;
-    bool    loss_per_datapoint = false;
+    منطقي    loss_في_datapoint = خطأ;
 };
 
 // ====== Dataset ======
 
 ggml_opt_dataset_t ggml_opt_dataset_init(
-        enum ggml_type type_data,
-        enum ggml_type type_label,
+        تعداد ggml_type type_معلومات,
+        تعداد ggml_type type_label,
         int64_t        ne_datapoint,
         int64_t        ne_label,
         int64_t        ndata,
@@ -95,255 +95,255 @@ ggml_opt_dataset_t ggml_opt_dataset_init(
     GGML_ASSERT(ndata        >  0);
     GGML_ASSERT(ndata_shard  >  0);
 
-    ggml_opt_dataset_t result = new ggml_opt_dataset;
-    result->ndata       = ndata;
-    result->ndata_shard = ndata_shard;
+    ggml_opt_dataset_t نتيجو = جديد ggml_opt_dataset;
+    نتيجو->ndata       = ndata;
+    نتيجو->ndata_shard = ndata_shard;
 
     {
-        struct ggml_init_params params = {
+        بنية ggml_init_params params = {
             /*.mem_size   =*/ 2*ggml_tensor_overhead(),
-            /*.mem_buffer =*/ nullptr,
-            /*.no_alloc   =*/ true,
+            /*.mem_buffer =*/ خالي_اشارو,
+            /*.no_alloc   =*/ سچ,
         };
-        result->ctx = ggml_init(params);
+        نتيجو->ctx = ggml_init(params);
     }
 
-    result->data = ggml_new_tensor_2d(result->ctx, type_data, ne_datapoint, ndata);
-    result->nbs_data = ggml_nbytes(result->data) * ndata_shard/ndata;
+    نتيجو->معلومات = ggml_new_tensor_2d(نتيجو->ctx, type_معلومات, ne_datapoint, ndata);
+    نتيجو->nbs_معلومات = ggml_nbytes(نتيجو->معلومات) * ndata_shard/ndata;
 
-    if (ne_label > 0) {
-        result->labels = ggml_new_tensor_2d(result->ctx, type_label, ne_label, ndata);
-        result->nbs_labels = ggml_nbytes(result->labels) * ndata_shard/ndata;
-    } else {
-        result->labels = nullptr;
-        result->nbs_labels = 0;
+    إذا (ne_label > 0) {
+        نتيجو->labels = ggml_new_tensor_2d(نتيجو->ctx, type_label, ne_label, ndata);
+        نتيجو->nbs_labels = ggml_nbytes(نتيجو->labels) * ndata_shard/ndata;
+    } وإلا {
+        نتيجو->labels = خالي_اشارو;
+        نتيجو->nbs_labels = 0;
     }
 
-    result->buf = ggml_backend_alloc_ctx_tensors_from_buft(result->ctx, ggml_backend_cpu_buffer_type());
+    نتيجو->buf = ggml_backend_alloc_ctx_tensors_from_buft(نتيجو->ctx, ggml_backend_cpu_بفر_type());
 
-    const int64_t nshards = ndata/ndata_shard;
-    result->permutation.resize(nshards);
-    for (int64_t i = 0; i < nshards; ++i) {
-        result->permutation[i] = i;
+    ثابت int64_t nshards = ndata/ndata_shard;
+    نتيجو->permutation.resize(nshards);
+    لكل (int64_t i = 0; i < nshards; ++i) {
+        نتيجو->permutation[i] = i;
     }
-    return result;
+    أرجع نتيجو;
 }
 
-void ggml_opt_dataset_free(ggml_opt_dataset_t dataset) {
-    ggml_backend_buffer_free(dataset->buf);
+فراغ ggml_opt_dataset_free(ggml_opt_dataset_t dataset) {
+    ggml_backend_بفر_free(dataset->buf);
     ggml_free(dataset->ctx);
-    delete dataset;
+    ميٽيو dataset;
 }
 
 int64_t ggml_opt_dataset_ndata(ggml_opt_dataset_t dataset) {
-    return dataset->ndata;
+    أرجع dataset->ndata;
 }
 
-struct ggml_tensor * ggml_opt_dataset_data(ggml_opt_dataset_t dataset) {
-    return dataset->data;
+بنية ggml_tensor * ggml_opt_dataset_معلومات(ggml_opt_dataset_t dataset) {
+    أرجع dataset->معلومات;
 }
 
-struct ggml_tensor * ggml_opt_dataset_labels(ggml_opt_dataset_t dataset) {
-    return dataset->labels;
+بنية ggml_tensor * ggml_opt_dataset_labels(ggml_opt_dataset_t dataset) {
+    أرجع dataset->labels;
 }
 
-void ggml_opt_dataset_shuffle(ggml_opt_context_t opt_ctx, ggml_opt_dataset_t dataset, int64_t idata) {
+فراغ ggml_opt_dataset_shuffle(ggml_opt_context_t opt_ctx, ggml_opt_dataset_t dataset, int64_t idata) {
     GGML_ASSERT(idata <= dataset->ndata);
 
-    if (idata < 0) {
+    إذا (idata < 0) {
         std::shuffle(dataset->permutation.begin(), dataset->permutation.end(), opt_ctx->rng);
-        return;
+        أرجع;
     }
 
     GGML_ASSERT(idata % dataset->ndata_shard == 0);
-    const int64_t ishard_max = idata / dataset->ndata_shard;
+    ثابت int64_t ishard_max = idata / dataset->ndata_shard;
     std::shuffle(dataset->permutation.begin(), dataset->permutation.begin() + ishard_max, opt_ctx->rng);
 }
 
-void ggml_opt_dataset_get_batch(ggml_opt_dataset_t dataset, struct ggml_tensor * data_batch, struct ggml_tensor * labels_batch, int64_t ibatch) {
-    GGML_ASSERT(   data_batch && ggml_is_contiguous(data_batch));
+فراغ ggml_opt_dataset_get_batch(ggml_opt_dataset_t dataset, بنية ggml_tensor * معلومات_batch, بنية ggml_tensor * labels_batch, int64_t ibatch) {
+    GGML_ASSERT(   معلومات_batch && ggml_is_contiguous(معلومات_batch));
     GGML_ASSERT(!labels_batch || ggml_is_contiguous(labels_batch));
-    GGML_ASSERT((labels_batch == nullptr) == (dataset->labels == nullptr));
-    GGML_ASSERT(                   data_batch->type == dataset->data->type);
+    GGML_ASSERT((labels_batch == خالي_اشارو) == (dataset->labels == خالي_اشارو));
+    GGML_ASSERT(                   معلومات_batch->type == dataset->معلومات->type);
     GGML_ASSERT(!labels_batch || labels_batch->type == dataset->labels->type);
 
-    const size_t nb_data_batch = ggml_nbytes(data_batch);
-    GGML_ASSERT(nb_data_batch % dataset->nbs_data == 0);
-    const int64_t shards_per_batch = nb_data_batch / dataset->nbs_data;
+    ثابت size_t nb_معلومات_batch = ggml_nbytes(معلومات_batch);
+    GGML_ASSERT(nb_معلومات_batch % dataset->nbs_معلومات == 0);
+    ثابت int64_t shards_في_batch = nb_معلومات_batch / dataset->nbs_معلومات;
 
-    if (labels_batch) {
-        const size_t nb_labels_batch = ggml_nbytes(labels_batch);
-        GGML_ASSERT(nb_labels_batch == shards_per_batch*dataset->nbs_labels);
+    إذا (labels_batch) {
+        ثابت size_t nb_labels_batch = ggml_nbytes(labels_batch);
+        GGML_ASSERT(nb_labels_batch == shards_في_batch*dataset->nbs_labels);
     }
 
-    GGML_ASSERT((ibatch + 1)*shards_per_batch <= int64_t(dataset->permutation.size()));
+    GGML_ASSERT((ibatch + 1)*shards_في_batch <= int64_t(dataset->permutation.size()));
 
-    for (int64_t ishard_batch = 0; ishard_batch < shards_per_batch; ++ishard_batch) {
-        const int64_t ishard = dataset->permutation[ibatch*shards_per_batch + ishard_batch];
+    لكل (int64_t ishard_batch = 0; ishard_batch < shards_في_batch; ++ishard_batch) {
+        ثابت int64_t ishard = dataset->permutation[ibatch*shards_في_batch + ishard_batch];
 
-        const char * ptr_data = (const char *) dataset->data->data + ishard*dataset->nbs_data;
-        ggml_backend_tensor_set(data_batch, ptr_data, ishard_batch*dataset->nbs_data, dataset->nbs_data);
+        ثابت حرف * ptr_معلومات = (ثابت حرف *) dataset->معلومات->معلومات + ishard*dataset->nbs_معلومات;
+        ggml_backend_tensor_سيٽ(معلومات_batch, ptr_معلومات, ishard_batch*dataset->nbs_معلومات, dataset->nbs_معلومات);
 
-        if (!labels_batch) {
-            continue;
+        إذا (!labels_batch) {
+            استمر;
         }
 
-        const char * ptr_labels = (const char *) dataset->labels->data + ishard*dataset->nbs_labels;
-        ggml_backend_tensor_set(labels_batch, ptr_labels, ishard_batch*dataset->nbs_labels, dataset->nbs_labels);
+        ثابت حرف * ptr_labels = (ثابت حرف *) dataset->labels->معلومات + ishard*dataset->nbs_labels;
+        ggml_backend_tensor_سيٽ(labels_batch, ptr_labels, ishard_batch*dataset->nbs_labels, dataset->nbs_labels);
     }
 }
 
-void ggml_opt_dataset_get_batch_host(ggml_opt_dataset_t dataset, void * data_batch, size_t nb_data_batch, void * labels_batch, int64_t ibatch) {
-    GGML_ASSERT((labels_batch == nullptr) == (dataset->labels == nullptr));
-    GGML_ASSERT(nb_data_batch % dataset->nbs_data == 0);
+فراغ ggml_opt_dataset_get_batch_host(ggml_opt_dataset_t dataset, فراغ * معلومات_batch, size_t nb_معلومات_batch, فراغ * labels_batch, int64_t ibatch) {
+    GGML_ASSERT((labels_batch == خالي_اشارو) == (dataset->labels == خالي_اشارو));
+    GGML_ASSERT(nb_معلومات_batch % dataset->nbs_معلومات == 0);
 
-    const int64_t shards_per_batch = nb_data_batch / dataset->nbs_data;
+    ثابت int64_t shards_في_batch = nb_معلومات_batch / dataset->nbs_معلومات;
 
-    GGML_ASSERT((ibatch + 1)*shards_per_batch <= int64_t(dataset->permutation.size()));
+    GGML_ASSERT((ibatch + 1)*shards_في_batch <= int64_t(dataset->permutation.size()));
 
-    for (int64_t ishard_batch = 0; ishard_batch < shards_per_batch; ++ishard_batch) {
-        const int64_t ishard = dataset->permutation[ibatch*shards_per_batch + ishard_batch];
+    لكل (int64_t ishard_batch = 0; ishard_batch < shards_في_batch; ++ishard_batch) {
+        ثابت int64_t ishard = dataset->permutation[ibatch*shards_في_batch + ishard_batch];
 
-        const char * ptr_data       = (const char *) dataset->data->data + ishard      *dataset->nbs_data;
-        char       * ptr_data_batch = (char       *) data_batch          + ishard_batch*dataset->nbs_data;
-        memcpy(ptr_data_batch, ptr_data, dataset->nbs_data);
+        ثابت حرف * ptr_معلومات       = (ثابت حرف *) dataset->معلومات->معلومات + ishard      *dataset->nbs_معلومات;
+        حرف       * ptr_معلومات_batch = (حرف       *) معلومات_batch          + ishard_batch*dataset->nbs_معلومات;
+        يادگيري_نقل(ptr_معلومات_batch, ptr_معلومات, dataset->nbs_معلومات);
 
-        if (!labels_batch) {
-            continue;
+        إذا (!labels_batch) {
+            استمر;
         }
 
-        const char * ptr_labels       = (const char *) dataset->labels->data + ishard      *dataset->nbs_labels;
-        char       * ptr_labels_batch = (char       *) labels_batch          + ishard_batch*dataset->nbs_labels;
-        memcpy(ptr_labels_batch, ptr_labels, dataset->nbs_labels);
+        ثابت حرف * ptr_labels       = (ثابت حرف *) dataset->labels->معلومات + ishard      *dataset->nbs_labels;
+        حرف       * ptr_labels_batch = (حرف       *) labels_batch          + ishard_batch*dataset->nbs_labels;
+        يادگيري_نقل(ptr_labels_batch, ptr_labels, dataset->nbs_labels);
     }
 }
 
 // ====== Model / Context ======
 
-struct ggml_opt_optimizer_params ggml_opt_get_default_optimizer_params(void * userdata) {
-    GGML_UNUSED(userdata);
+بنية ggml_opt_optimizer_params ggml_opt_get_default_optimizer_params(فراغ * userdata) {
+    GGML_اڻ_استعمال_ٿيل(userdata);
 
-    ggml_opt_optimizer_params result;
+    ggml_opt_optimizer_params نتيجو;
 
-    result.adamw.alpha = 0.001f;
-    result.adamw.beta1 = 0.9f;
-    result.adamw.beta2 = 0.999f;
-    result.adamw.eps   = 1e-8f;
-    result.adamw.wd    = 0.0f;
+    نتيجو.adamw.alpha = 0.001f;
+    نتيجو.adamw.beta1 = 0.9f;
+    نتيجو.adamw.beta2 = 0.999f;
+    نتيجو.adamw.eps   = 1e-8f;
+    نتيجو.adamw.wd    = 0.0f;
 
-    result.sgd.alpha   = 1e-3f;
-    result.sgd.wd      = 0.0f;
+    نتيجو.sgd.alpha   = 1e-3f;
+    نتيجو.sgd.wd      = 0.0f;
 
-    return result;
+    أرجع نتيجو;
 }
 
 
-struct ggml_opt_optimizer_params ggml_opt_get_constant_optimizer_params(void * userdata) {
-    return *((struct ggml_opt_optimizer_params *) userdata);
+بنية ggml_opt_optimizer_params ggml_opt_get_constant_optimizer_params(فراغ * userdata) {
+    أرجع *((بنية ggml_opt_optimizer_params *) userdata);
 }
 
-struct ggml_opt_params ggml_opt_default_params(
+بنية ggml_opt_params ggml_opt_default_params(
         ggml_backend_sched_t      backend_sched,
-        enum ggml_opt_loss_type   loss_type) {
-    return {
+        تعداد ggml_opt_loss_type   loss_type) {
+    أرجع {
         /*backend_sched   =*/ backend_sched,
-        /*ctx_compute     =*/ nullptr,
-        /*inputs          =*/ nullptr,
-        /*logits          =*/ nullptr,
+        /*ctx_compute     =*/ خالي_اشارو,
+        /*inputs          =*/ خالي_اشارو,
+        /*logits          =*/ خالي_اشارو,
         /*loss_type       =*/ loss_type,
         /*build_type      =*/ GGML_OPT_BUILD_TYPE_OPT,
         /*opt_period      =*/ 1,
         /*get_opt_pars    =*/ ggml_opt_get_default_optimizer_params,
-        /*get_opt_pars_ud =*/ nullptr,
+        /*get_opt_pars_ud =*/ خالي_اشارو,
         /*optimizer       =*/ GGML_OPT_OPTIMIZER_TYPE_ADAMW,
     };
 }
 
-static ggml_tensor * map_tensor(std::map<ggml_tensor *, ggml_tensor *> & tensor_map, ggml_context * ctx, ggml_tensor * tensor) {
-    if (!tensor) {
-        return nullptr;
+ساكن ggml_tensor * map_tensor(std::map<ggml_tensor *, ggml_tensor *> & tensor_map, ggml_context * ctx, ggml_tensor * tensor) {
+    إذا (!tensor) {
+        أرجع خالي_اشارو;
     }
 
-    if (tensor_map.find(tensor) != tensor_map.end()) {
-        return tensor_map[tensor];
+    إذا (tensor_map.find(tensor) != tensor_map.end()) {
+        أرجع tensor_map[tensor];
     }
 
     ggml_tensor * new_tensor = ggml_dup_tensor(ctx, tensor);
     tensor_map[tensor] = new_tensor;
 
     new_tensor->op = tensor->op;
-    for (int i = 0; i < GGML_MAX_DIMS; i++) {
+    لكل (صحيح i = 0; i < GGML_MAX_DIMS; i++) {
         new_tensor->nb[i] = tensor->nb[i];
     }
     new_tensor->flags = tensor->flags;
-    memcpy(new_tensor->op_params, tensor->op_params, sizeof(tensor->op_params));
+    يادگيري_نقل(new_tensor->op_params, tensor->op_params, حجم(tensor->op_params));
     strcpy(new_tensor->name, tensor->name);
-    new_tensor->data = tensor->data;
-    new_tensor->buffer = tensor->buffer;
+    new_tensor->معلومات = tensor->معلومات;
+    new_tensor->بفر = tensor->بفر;
     new_tensor->extra = tensor->extra;
     new_tensor->view_offs = tensor->view_offs;
     new_tensor->view_src = map_tensor(tensor_map, ctx, tensor->view_src);
-    for (int i = 0; i < GGML_MAX_SRC; i++) {
+    لكل (صحيح i = 0; i < GGML_MAX_SRC; i++) {
         new_tensor->src[i] = map_tensor(tensor_map, ctx, tensor->src[i]);
     }
 
-    return new_tensor;
+    أرجع new_tensor;
 }
 
-static ggml_cgraph * dup_graph(ggml_context * ctx, ggml_cgraph * src) {
+ساكن ggml_cgraph * dup_گراف(ggml_context * ctx, ggml_cgraph * src) {
     std::map<ggml_tensor *, ggml_tensor *> tensor_map;
 
-    ggml_cgraph * dst = ggml_new_graph_custom(ctx, src->size, /*grads =*/ true);
+    ggml_cgraph * dst = ggml_new_گراف_custom(ctx, src->size, /*grads =*/ سچ);
 
-    for (int i = 0; i < src->n_leafs; i++) {
+    لكل (صحيح i = 0; i < src->n_leafs; i++) {
         ggml_build_forward_expand(dst, map_tensor(tensor_map, ctx, src->leafs[i]));
     }
     GGML_ASSERT(dst->n_leafs == src->n_leafs);
-    for (int i = 0; i < src->n_nodes; i++) {
+    لكل (صحيح i = 0; i < src->n_nodes; i++) {
         ggml_build_forward_expand(dst, map_tensor(tensor_map, ctx, src->nodes[i]));
     }
     GGML_ASSERT(dst->n_nodes == src->n_nodes);
-    for (int i = 0; i < src->n_nodes; ++i) {
-        const size_t igrad_src = ggml_hash_find(&src->visited_hash_set, src->nodes[i]);
-        const size_t igrad_dst = ggml_hash_find(&dst->visited_hash_set, dst->nodes[i]);
+    لكل (صحيح i = 0; i < src->n_nodes; ++i) {
+        ثابت size_t igrad_src = ggml_hash_ڳوليو(&src->گهميل_hash_سيٽ, src->nodes[i]);
+        ثابت size_t igrad_dst = ggml_hash_ڳوليو(&dst->گهميل_hash_سيٽ, dst->nodes[i]);
 
-        GGML_ASSERT(igrad_src != GGML_HASHSET_FULL);
-        GGML_ASSERT(ggml_bitset_get(src->visited_hash_set.used, igrad_src));
-        GGML_ASSERT(igrad_dst != GGML_HASHSET_FULL);
-        GGML_ASSERT(ggml_bitset_get(dst->visited_hash_set.used, igrad_dst));
+        GGML_ASSERT(igrad_src != GGML_HASHSET_ڀريل);
+        GGML_ASSERT(ggml_bitset_get(src->گهميل_hash_سيٽ.استعمال_ٿيل, igrad_src));
+        GGML_ASSERT(igrad_dst != GGML_HASHSET_ڀريل);
+        GGML_ASSERT(ggml_bitset_get(dst->گهميل_hash_سيٽ.استعمال_ٿيل, igrad_dst));
 
         dst->grads[igrad_dst]     = src->grads[igrad_src];
         dst->grad_accs[igrad_dst] = src->grad_accs[igrad_src];
     }
 
-    return dst;
+    أرجع dst;
 }
 
-static void ggml_opt_build(ggml_opt_context_t opt_ctx) {
+ساكن فراغ ggml_opt_build(ggml_opt_context_t opt_ctx) {
     GGML_ASSERT(opt_ctx->ctx_compute && "no compute context set, either use static graphs or set one with ggml_opt_prepare_alloc");
-    GGML_ASSERT((!opt_ctx->static_graphs || opt_ctx->inputs->data) && "when using static graphs the inputs must be allocated statically");
+    GGML_ASSERT((!opt_ctx->static_graphs || opt_ctx->inputs->معلومات) && "when using static graphs the inputs must be allocated statically");
 
-    const enum ggml_opt_optimizer_type optimizer = opt_ctx->optimizer;
+    ثابت تعداد ggml_opt_optimizer_type optimizer = opt_ctx->optimizer;
 
-    const bool accumulate = opt_ctx->build_type_alloc >= GGML_OPT_BUILD_TYPE_GRAD &&
+    ثابت منطقي accumulate = opt_ctx->build_type_alloc >= GGML_OPT_BUILD_TYPE_GRAD &&
         !(opt_ctx->static_graphs && opt_ctx->build_type_alloc == GGML_OPT_BUILD_TYPE_OPT && opt_ctx->opt_period == 1);
 
-    const bool need_momenta = opt_ctx->build_type_alloc == GGML_OPT_BUILD_TYPE_OPT &&
+    ثابت منطقي need_momenta = opt_ctx->build_type_alloc == GGML_OPT_BUILD_TYPE_OPT &&
         opt_ctx->optimizer == GGML_OPT_OPTIMIZER_TYPE_ADAMW;
 
-    ggml_set_input(opt_ctx->inputs);
-    ggml_set_output(opt_ctx->outputs);
+    ggml_سيٽ_داخلا(opt_ctx->inputs);
+    ggml_سيٽ_output(opt_ctx->outputs);
 
-    int n_param = 0;
-    for (int i = 0; i < opt_ctx->gf->n_nodes; ++i) {
-        const struct ggml_tensor * node = opt_ctx->gf->nodes[i];
-        if (node->flags & GGML_TENSOR_FLAG_PARAM) {
+    صحيح n_param = 0;
+    لكل (صحيح i = 0; i < opt_ctx->gf->n_nodes; ++i) {
+        ثابت بنية ggml_tensor * ڳنڍ = opt_ctx->gf->nodes[i];
+        إذا (ڳنڍ->flags & GGML_TENSOR_FLAG_PARAM) {
             n_param++;
         }
-        GGML_ASSERT(!(node->flags & GGML_TENSOR_FLAG_LOSS) && "support for extra loss terms not implemented");
+        GGML_ASSERT(!(ڳنڍ->flags & GGML_TENSOR_FLAG_LOSS) && "support for extra loss terms not implemented");
     }
 
-    if (!opt_ctx->ctx_static) {
+    إذا (!opt_ctx->ctx_static) {
         // The static context is used for:
         //   - gradients (1 per loss, 1 tensor per param if using gradient accumulation)
         //   - optimizer momenta (2 tensors per param)
@@ -352,13 +352,13 @@ static void ggml_opt_build(ggml_opt_context_t opt_ctx) {
         //   - pred (if using static graphs)
         //   - ncorrect (if using static graphs, 2 tensors).
         constexpr size_t n_loss = 1;
-        const size_t tensors_per_param = (accumulate ? 1 : 0) + (need_momenta ? 2 : 0);
-        const size_t tensors_const = opt_ctx->static_graphs ? 9 : 0;
-        const size_t size_meta = (n_loss + tensors_per_param*n_param + tensors_const) * ggml_tensor_overhead();
-        struct ggml_init_params params = {
-            /*.mem_size   =*/ size_meta,
-            /*.mem_buffer =*/ nullptr,
-            /*.no_alloc   =*/ true,
+        ثابت size_t tensors_في_param = (accumulate ? 1 : 0) + (need_momenta ? 2 : 0);
+        ثابت size_t tensors_const = opt_ctx->static_graphs ? 9 : 0;
+        ثابت size_t سائيز_meta = (n_loss + tensors_في_param*n_param + tensors_const) * ggml_tensor_overhead();
+        بنية ggml_init_params params = {
+            /*.mem_size   =*/ سائيز_meta,
+            /*.mem_buffer =*/ خالي_اشارو,
+            /*.no_alloc   =*/ سچ,
         };
         opt_ctx->ctx_static = ggml_init(params);
     }
@@ -368,353 +368,353 @@ static void ggml_opt_build(ggml_opt_context_t opt_ctx) {
         // The cpu context is allocated statically if using static graphs, dynamically otherwise.
         // It is used for:
         //   - optimizer parameters (1 shared for all optimizer invocations)
-        const size_t size_meta = 1 * ggml_tensor_overhead();
-        struct ggml_init_params params = {
-            /*.mem_size   =*/ size_meta,
-            /*.mem_buffer =*/ nullptr,
-            /*.no_alloc   =*/ true,
+        ثابت size_t سائيز_meta = 1 * ggml_tensor_overhead();
+        بنية ggml_init_params params = {
+            /*.mem_size   =*/ سائيز_meta,
+            /*.mem_buffer =*/ خالي_اشارو,
+            /*.no_alloc   =*/ سچ,
         };
         ggml_free(opt_ctx->ctx_cpu);
         opt_ctx->ctx_cpu = ggml_init(params);
 
-        ggml_backend_buffer_free(opt_ctx->buf_cpu);
-        opt_ctx->buf_cpu = nullptr;
+        ggml_backend_بفر_free(opt_ctx->buf_cpu);
+        opt_ctx->buf_cpu = خالي_اشارو;
     }
 
-    struct ggml_context * ctx_results = opt_ctx->static_graphs ? opt_ctx->ctx_static : opt_ctx->ctx_compute;
+    بنية ggml_context * ctx_results = opt_ctx->static_graphs ? opt_ctx->ctx_static : opt_ctx->ctx_compute;
 
-    switch (opt_ctx->loss_type) {
-        case GGML_OPT_LOSS_TYPE_MEAN: {
-            opt_ctx->loss = ggml_sum(ctx_results, opt_ctx->outputs);
-            ggml_set_name(opt_ctx->loss, "loss_sum");
-            const float scale = 1.0f / (opt_ctx->opt_period * ggml_nelements(opt_ctx->outputs));
+    بدل (opt_ctx->loss_type) {
+        حالة GGML_OPT_LOSS_TYPE_سراسري: {
+            opt_ctx->loss = ggml_جوڙ(ctx_results, opt_ctx->outputs);
+            ggml_سيٽ_name(opt_ctx->loss, "loss_sum");
+            ثابت عائم scale = 1.0f / (opt_ctx->opt_period * ggml_nelements(opt_ctx->outputs));
             opt_ctx->loss = ggml_scale(ctx_results, opt_ctx->loss, scale);
-            ggml_set_name(opt_ctx->loss, "loss_mean");
-            opt_ctx->loss_per_datapoint = true;
-            break;
+            ggml_سيٽ_name(opt_ctx->loss, "loss_mean");
+            opt_ctx->loss_في_datapoint = سچ;
+            اكسر;
         }
-        case GGML_OPT_LOSS_TYPE_SUM: {
-            opt_ctx->loss = ggml_sum(ctx_results, opt_ctx->outputs);
-            ggml_set_name(opt_ctx->loss, "loss_sum");
-            opt_ctx->loss_per_datapoint = false;
-            break;
+        حالة GGML_OPT_LOSS_TYPE_جوڙ: {
+            opt_ctx->loss = ggml_جوڙ(ctx_results, opt_ctx->outputs);
+            ggml_سيٽ_name(opt_ctx->loss, "loss_sum");
+            opt_ctx->loss_في_datapoint = خطأ;
+            اكسر;
         }
-        case GGML_OPT_LOSS_TYPE_CROSS_ENTROPY: {
+        حالة GGML_OPT_LOSS_TYPE_CROSS_ENTROPY: {
             opt_ctx->labels = ggml_dup_tensor(ctx_results, opt_ctx->outputs);
-            ggml_set_input(opt_ctx->labels);
-            ggml_set_name(opt_ctx->labels, "labels");
+            ggml_سيٽ_داخلا(opt_ctx->labels);
+            ggml_سيٽ_name(opt_ctx->labels, "labels");
             opt_ctx->loss = ggml_cross_entropy_loss(ctx_results, opt_ctx->outputs, opt_ctx->labels);
-            ggml_set_name(opt_ctx->loss, "loss_cross_entropy");
-            if (opt_ctx->opt_period > 1) {
+            ggml_سيٽ_name(opt_ctx->loss, "loss_cross_entropy");
+            إذا (opt_ctx->opt_period > 1) {
                 opt_ctx->loss = ggml_scale(ctx_results, opt_ctx->loss, 1.0f / opt_ctx->opt_period);
-                ggml_set_name(opt_ctx->loss, "loss_cross_entropy_scaled");
+                ggml_سيٽ_name(opt_ctx->loss, "loss_cross_entropy_scaled");
             }
-            opt_ctx->loss_per_datapoint = true;
-            break;
+            opt_ctx->loss_في_datapoint = سچ;
+            اكسر;
         }
-        case GGML_OPT_LOSS_TYPE_MEAN_SQUARED_ERROR: {
+        حالة GGML_OPT_LOSS_TYPE_سراسري_SQUARED_ERROR: {
             opt_ctx->labels = ggml_dup_tensor(ctx_results, opt_ctx->outputs);
-            ggml_set_input(opt_ctx->labels);
-            ggml_set_name(opt_ctx->labels, "labels");
+            ggml_سيٽ_داخلا(opt_ctx->labels);
+            ggml_سيٽ_name(opt_ctx->labels, "labels");
             opt_ctx->loss = ggml_sub(ctx_results, opt_ctx->outputs, opt_ctx->labels);
-            ggml_set_name(opt_ctx->loss, "loss_error");
+            ggml_سيٽ_name(opt_ctx->loss, "loss_error");
             opt_ctx->loss = ggml_sqr(ctx_results, opt_ctx->loss);
-            ggml_set_name(opt_ctx->loss, "loss_squared_error");
-            opt_ctx->loss = ggml_sum(ctx_results, opt_ctx->loss);
-            ggml_set_name(opt_ctx->loss, "loss_sum_squared_error");
-            const float scale = 1.0f / (opt_ctx->opt_period * ggml_nelements(opt_ctx->outputs));
+            ggml_سيٽ_name(opt_ctx->loss, "loss_squared_error");
+            opt_ctx->loss = ggml_جوڙ(ctx_results, opt_ctx->loss);
+            ggml_سيٽ_name(opt_ctx->loss, "loss_sum_squared_error");
+            ثابت عائم scale = 1.0f / (opt_ctx->opt_period * ggml_nelements(opt_ctx->outputs));
             opt_ctx->loss = ggml_scale(ctx_results, opt_ctx->loss, scale);
-            ggml_set_name(opt_ctx->loss, "loss_mean_squared_error");
-            opt_ctx->loss_per_datapoint = true;
-            break;
+            ggml_سيٽ_name(opt_ctx->loss, "loss_mean_squared_error");
+            opt_ctx->loss_في_datapoint = سچ;
+            اكسر;
         }
     }
-    ggml_set_output(opt_ctx->loss);
-    ggml_set_loss(opt_ctx->loss);
+    ggml_سيٽ_output(opt_ctx->loss);
+    ggml_سيٽ_loss(opt_ctx->loss);
     ggml_build_forward_expand(opt_ctx->gf, opt_ctx->loss);
 
-    if (opt_ctx->loss_type == GGML_OPT_LOSS_TYPE_CROSS_ENTROPY) {
+    إذا (opt_ctx->loss_type == GGML_OPT_LOSS_TYPE_CROSS_ENTROPY) {
         opt_ctx->pred = ggml_argmax(ctx_results, opt_ctx->outputs);
-        ggml_set_name(opt_ctx->pred, "pred");
-        ggml_set_output(opt_ctx->pred);
+        ggml_سيٽ_name(opt_ctx->pred, "pred");
+        ggml_سيٽ_output(opt_ctx->pred);
         ggml_build_forward_expand(opt_ctx->gf, opt_ctx->pred);
 
-        opt_ctx->ncorrect = ggml_count_equal(ctx_results, opt_ctx->pred, ggml_argmax(ctx_results, opt_ctx->labels));
-        ggml_set_name(opt_ctx->ncorrect, "ncorrect");
-        ggml_set_output(opt_ctx->ncorrect);
+        opt_ctx->ncorrect = ggml_ڳڻپ_equal(ctx_results, opt_ctx->pred, ggml_argmax(ctx_results, opt_ctx->labels));
+        ggml_سيٽ_name(opt_ctx->ncorrect, "ncorrect");
+        ggml_سيٽ_output(opt_ctx->ncorrect);
         ggml_build_forward_expand(opt_ctx->gf, opt_ctx->ncorrect);
     }
 
-    if (opt_ctx->buf_static) {
-        if (opt_ctx->build_type == GGML_OPT_BUILD_TYPE_FORWARD) {
-            return;
+    إذا (opt_ctx->buf_static) {
+        إذا (opt_ctx->build_type == GGML_OPT_BUILD_TYPE_FORWARD) {
+            أرجع;
         }
-    } else if (opt_ctx->build_type_alloc == GGML_OPT_BUILD_TYPE_FORWARD) {
+    } وإلا إذا (opt_ctx->build_type_alloc == GGML_OPT_BUILD_TYPE_FORWARD) {
         opt_ctx->buf_static = ggml_backend_alloc_ctx_tensors(
             opt_ctx->ctx_static, ggml_backend_sched_get_backend(opt_ctx->backend_sched, 0));
-        return;
+        أرجع;
     }
 
-    if (opt_ctx->grad_accs.empty()) {
+    إذا (opt_ctx->grad_accs.خالي_جايون()) {
         GGML_ASSERT(opt_ctx->build_type_alloc >= GGML_OPT_BUILD_TYPE_GRAD);
 
-        const int n_nodes = opt_ctx->gf->n_nodes;
+        ثابت صحيح n_nodes = opt_ctx->gf->n_nodes;
         opt_ctx->grad_accs.resize(n_nodes);
-        for (int i = 0; i < n_nodes; ++i) {
-            ggml_tensor * node = opt_ctx->gf->nodes[i];
-            if ((accumulate && (node->flags & GGML_TENSOR_FLAG_PARAM)) || (node->flags & GGML_TENSOR_FLAG_LOSS)) {
-                opt_ctx->grad_accs[i] = ggml_new_tensor(opt_ctx->ctx_static, GGML_TYPE_F32, GGML_MAX_DIMS, node->ne);
-            } else {
-                opt_ctx->grad_accs[i] = nullptr;
+        لكل (صحيح i = 0; i < n_nodes; ++i) {
+            ggml_tensor * ڳنڍ = opt_ctx->gf->nodes[i];
+            إذا ((accumulate && (ڳنڍ->flags & GGML_TENSOR_FLAG_PARAM)) || (ڳنڍ->flags & GGML_TENSOR_FLAG_LOSS)) {
+                opt_ctx->grad_accs[i] = ggml_new_tensor(opt_ctx->ctx_static, GGML_TYPE_F32, GGML_MAX_DIMS, ڳنڍ->ne);
+            } وإلا {
+                opt_ctx->grad_accs[i] = خالي_اشارو;
             }
         }
 
-        if (need_momenta && opt_ctx->build_type_alloc >= GGML_OPT_BUILD_TYPE_OPT) {
+        إذا (need_momenta && opt_ctx->build_type_alloc >= GGML_OPT_BUILD_TYPE_OPT) {
             opt_ctx->grad_m.resize(n_nodes);
             opt_ctx->grad_v.resize(n_nodes);
-            for (int i = 0; i < n_nodes; ++i) {
-                ggml_tensor * node = opt_ctx->gf->nodes[i];
-                if (node->flags & GGML_TENSOR_FLAG_PARAM) {
-                    opt_ctx->grad_m[i] = ggml_new_tensor(opt_ctx->ctx_static, GGML_TYPE_F32, GGML_MAX_DIMS, node->ne);
-                    opt_ctx->grad_v[i] = ggml_new_tensor(opt_ctx->ctx_static, GGML_TYPE_F32, GGML_MAX_DIMS, node->ne);
-                } else {
-                    opt_ctx->grad_m[i] = nullptr;
-                    opt_ctx->grad_v[i] = nullptr;
+            لكل (صحيح i = 0; i < n_nodes; ++i) {
+                ggml_tensor * ڳنڍ = opt_ctx->gf->nodes[i];
+                إذا (ڳنڍ->flags & GGML_TENSOR_FLAG_PARAM) {
+                    opt_ctx->grad_m[i] = ggml_new_tensor(opt_ctx->ctx_static, GGML_TYPE_F32, GGML_MAX_DIMS, ڳنڍ->ne);
+                    opt_ctx->grad_v[i] = ggml_new_tensor(opt_ctx->ctx_static, GGML_TYPE_F32, GGML_MAX_DIMS, ڳنڍ->ne);
+                } وإلا {
+                    opt_ctx->grad_m[i] = خالي_اشارو;
+                    opt_ctx->grad_v[i] = خالي_اشارو;
                 }
             }
         }
     }
 
     // gb_grad == graph backward gradients, forward pass, then backward pass to calculate gradients.
-    opt_ctx->gb_grad = ggml_graph_dup(opt_ctx->ctx_compute, opt_ctx->gf, /*force_grads =*/ true);
-    ggml_build_backward_expand(opt_ctx->ctx_compute, opt_ctx->gb_grad, opt_ctx->grad_accs.data());
+    opt_ctx->gb_grad = ggml_گراف_dup(opt_ctx->ctx_compute, opt_ctx->gf, /*force_grads =*/ سچ);
+    ggml_build_backward_expand(opt_ctx->ctx_compute, opt_ctx->gb_grad, opt_ctx->grad_accs.معلومات());
 
-    if (opt_ctx->buf_static) {
-        if (opt_ctx->build_type == GGML_OPT_BUILD_TYPE_GRAD) {
-            return;
+    إذا (opt_ctx->buf_static) {
+        إذا (opt_ctx->build_type == GGML_OPT_BUILD_TYPE_GRAD) {
+            أرجع;
         }
-    } else if (opt_ctx->build_type_alloc == GGML_OPT_BUILD_TYPE_GRAD) {
+    } وإلا إذا (opt_ctx->build_type_alloc == GGML_OPT_BUILD_TYPE_GRAD) {
         opt_ctx->buf_static = ggml_backend_alloc_ctx_tensors(opt_ctx->ctx_static, ggml_backend_sched_get_backend(opt_ctx->backend_sched, 0));
-        ggml_graph_reset(opt_ctx->gb_grad);
+        ggml_گراف_reset(opt_ctx->gb_grad);
     }
 
     GGML_ASSERT(opt_ctx->build_type_alloc == GGML_OPT_BUILD_TYPE_OPT);
 
     // gb_opt == graph backward optimize, forward pass, then backward pass to calculate gradients, then optimizer step.
-    opt_ctx->gb_opt = ggml_graph_dup(opt_ctx->ctx_compute, opt_ctx->gb_grad, /*force_grads =*/ true);
+    opt_ctx->gb_opt = ggml_گراف_dup(opt_ctx->ctx_compute, opt_ctx->gb_grad, /*force_grads =*/ سچ);
 
-    opt_ctx->opt_step_params = ggml_new_tensor_1d(opt_ctx->ctx_cpu, GGML_TYPE_F32, need_momenta ? 7 : 2);
-    ggml_tensor * adamw_params = opt_ctx->opt_step_params;
-    ggml_set_input(adamw_params);
-    const char * optimizer_name = ggml_opt_optimizer_name(opt_ctx->optimizer);
+    opt_ctx->opt_قدم_params = ggml_new_tensor_1d(opt_ctx->ctx_cpu, GGML_TYPE_F32, need_momenta ? 7 : 2);
+    ggml_tensor * adamw_params = opt_ctx->opt_قدم_params;
+    ggml_سيٽ_داخلا(adamw_params);
+    ثابت حرف * optimizer_name = ggml_opt_optimizer_name(opt_ctx->optimizer);
     ggml_format_name(adamw_params, "%s_params", optimizer_name);
-    for (int i = opt_ctx->gf->n_nodes-1; i >= 0; --i) {
-        struct ggml_tensor * node = opt_ctx->gb_opt->nodes[i];
-        struct ggml_tensor * grad = ggml_graph_get_grad(opt_ctx->gb_opt, node);
+    لكل (صحيح i = opt_ctx->gf->n_nodes-1; i >= 0; --i) {
+        بنية ggml_tensor * ڳنڍ = opt_ctx->gb_opt->nodes[i];
+        بنية ggml_tensor * grad = ggml_گراف_get_grad(opt_ctx->gb_opt, ڳنڍ);
 
-        if (grad && (node->flags & GGML_TENSOR_FLAG_PARAM)) {
-            struct ggml_tensor * m = nullptr;
-            struct ggml_tensor * v = nullptr;
-            if (need_momenta) {
+        إذا (grad && (ڳنڍ->flags & GGML_TENSOR_FLAG_PARAM)) {
+            بنية ggml_tensor * m = خالي_اشارو;
+            بنية ggml_tensor * v = خالي_اشارو;
+            إذا (need_momenta) {
                 m = opt_ctx->grad_m[i];
                 v = opt_ctx->grad_v[i];
-                ggml_format_name(m, "AdamW m for %s", node->name);
-                ggml_format_name(v, "AdamW v for %s", node->name);
+                ggml_format_name(m, "AdamW m for %s", ڳنڍ->name);
+                ggml_format_name(v, "AdamW v for %s", ڳنڍ->name);
             }
-            struct ggml_tensor * opt_step;
-            switch (optimizer) {
-                case GGML_OPT_OPTIMIZER_TYPE_ADAMW:
-                    opt_step = ggml_opt_step_adamw(opt_ctx->ctx_compute, node, grad, m, v, adamw_params);
-                    break;
-                case GGML_OPT_OPTIMIZER_TYPE_SGD:
-                    opt_step = ggml_opt_step_sgd(opt_ctx->ctx_compute, node, grad, adamw_params);
-                    break;
-                default:
+            بنية ggml_tensor * opt_قدم;
+            بدل (optimizer) {
+                حالة GGML_OPT_OPTIMIZER_TYPE_ADAMW:
+                    opt_قدم = ggml_opt_قدم_adamw(opt_ctx->ctx_compute, ڳنڍ, grad, m, v, adamw_params);
+                    اكسر;
+                حالة GGML_OPT_OPTIMIZER_TYPE_SGD:
+                    opt_قدم = ggml_opt_قدم_sgd(opt_ctx->ctx_compute, ڳنڍ, grad, adamw_params);
+                    اكسر;
+                افتراضي:
                     GGML_ABORT("fatal error");
             }
-            ggml_format_name(opt_step, "%s step for %s", optimizer_name, node->name);
-            ggml_build_forward_expand(opt_ctx->gb_opt, opt_step);
+            ggml_format_name(opt_قدم, "%s step for %s", optimizer_name, ڳنڍ->name);
+            ggml_build_forward_expand(opt_ctx->gb_opt, opt_قدم);
         }
     }
 
-    if (!opt_ctx->buf_static) {
+    إذا (!opt_ctx->buf_static) {
         opt_ctx->buf_static = ggml_backend_alloc_ctx_tensors(
             opt_ctx->ctx_static, ggml_backend_sched_get_backend(opt_ctx->backend_sched, 0));
-        ggml_graph_reset(opt_ctx->gb_opt);
+        ggml_گراف_reset(opt_ctx->gb_opt);
     }
 
-    opt_ctx->buf_cpu = ggml_backend_alloc_ctx_tensors_from_buft(opt_ctx->ctx_cpu, ggml_backend_cpu_buffer_type());
+    opt_ctx->buf_cpu = ggml_backend_alloc_ctx_tensors_from_buft(opt_ctx->ctx_cpu, ggml_backend_cpu_بفر_type());
 }
 
-ggml_opt_context_t ggml_opt_init(struct ggml_opt_params params) {
-    ggml_opt_context_t result = new struct ggml_opt_context;
-    result->backend_sched    = params.backend_sched;
-    result->ctx_compute      = params.ctx_compute;
-    result->loss_type        = params.loss_type;
-    result->build_type       = params.build_type;
-    result->build_type_alloc = params.build_type;
-    result->inputs           = params.inputs;
-    result->outputs          = params.outputs;
-    result->opt_period       = params.opt_period;
-    result->get_opt_pars     = params.get_opt_pars;
-    result->get_opt_pars_ud  = params.get_opt_pars_ud;
-    result->optimizer        = params.optimizer;
+ggml_opt_context_t ggml_opt_init(بنية ggml_opt_params params) {
+    ggml_opt_context_t نتيجو = جديد بنية ggml_opt_context;
+    نتيجو->backend_sched    = params.backend_sched;
+    نتيجو->ctx_compute      = params.ctx_compute;
+    نتيجو->loss_type        = params.loss_type;
+    نتيجو->build_type       = params.build_type;
+    نتيجو->build_type_alloc = params.build_type;
+    نتيجو->inputs           = params.inputs;
+    نتيجو->outputs          = params.outputs;
+    نتيجو->opt_period       = params.opt_period;
+    نتيجو->get_opt_pars     = params.get_opt_pars;
+    نتيجو->get_opt_pars_ud  = params.get_opt_pars_ud;
+    نتيجو->optimizer        = params.optimizer;
 
-    GGML_ASSERT(result->opt_period >= 1);
+    GGML_ASSERT(نتيجو->opt_period >= 1);
 
-    result->static_graphs = result->ctx_compute;
+    نتيجو->static_graphs = نتيجو->ctx_compute;
 
-    if (!result->static_graphs) {
-        GGML_ASSERT(!result->inputs);
-        GGML_ASSERT(!result->outputs);
-        return result;
+    إذا (!نتيجو->static_graphs) {
+        GGML_ASSERT(!نتيجو->inputs);
+        GGML_ASSERT(!نتيجو->outputs);
+        أرجع نتيجو;
     }
 
-    GGML_ASSERT(result->inputs);
-    GGML_ASSERT(result->outputs);
+    GGML_ASSERT(نتيجو->inputs);
+    GGML_ASSERT(نتيجو->outputs);
 
-    result->gf = ggml_new_graph_custom(result->ctx_compute, GGML_DEFAULT_GRAPH_SIZE, /*grads =*/ true); // Forward pass.
-    ggml_build_forward_expand(result->gf, result->outputs);
+    نتيجو->gf = ggml_new_گراف_custom(نتيجو->ctx_compute, GGML_DEFAULT_گراف_سائيز, /*grads =*/ سچ); // Forward pass.
+    ggml_build_forward_expand(نتيجو->gf, نتيجو->outputs);
 
-    ggml_opt_build(result);
+    ggml_opt_build(نتيجو);
 
-    return result;
+    أرجع نتيجو;
 }
 
-void ggml_opt_free(ggml_opt_context_t opt_ctx) {
-    if (opt_ctx == nullptr) {
-        return;
+فراغ ggml_opt_free(ggml_opt_context_t opt_ctx) {
+    إذا (opt_ctx == خالي_اشارو) {
+        أرجع;
     }
-    ggml_backend_buffer_free(opt_ctx->buf_static);
-    ggml_backend_buffer_free(opt_ctx->buf_cpu);
+    ggml_backend_بفر_free(opt_ctx->buf_static);
+    ggml_backend_بفر_free(opt_ctx->buf_cpu);
     ggml_free(opt_ctx->ctx_static);
     ggml_free(opt_ctx->ctx_cpu);
     ggml_free(opt_ctx->ctx_copy);
-    delete opt_ctx;
+    ميٽيو opt_ctx;
 }
 
-void ggml_opt_reset(ggml_opt_context_t opt_ctx, bool optimizer) {
-    if (optimizer) {
-        ggml_graph_reset(opt_ctx->gb_opt);
+فراغ ggml_opt_reset(ggml_opt_context_t opt_ctx, منطقي optimizer) {
+    إذا (optimizer) {
+        ggml_گراف_reset(opt_ctx->gb_opt);
         opt_ctx->iter = 1;
-    } else {
-        ggml_graph_reset(opt_ctx->gb_grad);
+    } وإلا {
+        ggml_گراف_reset(opt_ctx->gb_grad);
     }
 }
 
-bool ggml_opt_static_graphs(ggml_opt_context_t opt_ctx) {
-    return opt_ctx->static_graphs;
+منطقي ggml_opt_static_graphs(ggml_opt_context_t opt_ctx) {
+    أرجع opt_ctx->static_graphs;
 }
 
-struct ggml_tensor * ggml_opt_inputs(ggml_opt_context_t opt_ctx) {
-    return opt_ctx->inputs;
+بنية ggml_tensor * ggml_opt_inputs(ggml_opt_context_t opt_ctx) {
+    أرجع opt_ctx->inputs;
 }
 
-struct ggml_tensor * ggml_opt_outputs(ggml_opt_context_t opt_ctx) {
-    return opt_ctx->outputs;
+بنية ggml_tensor * ggml_opt_outputs(ggml_opt_context_t opt_ctx) {
+    أرجع opt_ctx->outputs;
 }
 
-struct ggml_tensor * ggml_opt_labels(ggml_opt_context_t opt_ctx) {
-    return opt_ctx->labels;
+بنية ggml_tensor * ggml_opt_labels(ggml_opt_context_t opt_ctx) {
+    أرجع opt_ctx->labels;
 }
 
-struct ggml_tensor * ggml_opt_loss(ggml_opt_context_t opt_ctx) {
-    return opt_ctx->loss;
+بنية ggml_tensor * ggml_opt_loss(ggml_opt_context_t opt_ctx) {
+    أرجع opt_ctx->loss;
 }
 
-struct ggml_tensor * ggml_opt_pred(ggml_opt_context_t opt_ctx) {
-    return opt_ctx->pred;
+بنية ggml_tensor * ggml_opt_pred(ggml_opt_context_t opt_ctx) {
+    أرجع opt_ctx->pred;
 }
 
-struct ggml_tensor * ggml_opt_ncorrect(ggml_opt_context_t opt_ctx) {
-    return opt_ctx->ncorrect;
+بنية ggml_tensor * ggml_opt_ncorrect(ggml_opt_context_t opt_ctx) {
+    أرجع opt_ctx->ncorrect;
 }
 
-struct ggml_tensor * ggml_opt_grad_acc(ggml_opt_context_t opt_ctx, struct ggml_tensor * node) {
-    return ggml_graph_get_grad_acc(opt_ctx->gb_opt, node);
+بنية ggml_tensor * ggml_opt_grad_acc(ggml_opt_context_t opt_ctx, بنية ggml_tensor * ڳنڍ) {
+    أرجع ggml_گراف_get_grad_acc(opt_ctx->gb_opt, ڳنڍ);
 }
 
 // ====== Optimization Result ======
 
-ggml_opt_result_t ggml_opt_result_init() {
-    return new ggml_opt_result;
+ggml_opt_نتيجو_t ggml_opt_نتيجو_init() {
+    أرجع جديد ggml_opt_نتيجو;
 }
 
-void ggml_opt_result_free(ggml_opt_result_t result) {
-    delete result;
+فراغ ggml_opt_نتيجو_free(ggml_opt_نتيجو_t نتيجو) {
+    ميٽيو نتيجو;
 }
 
-void ggml_opt_result_reset(ggml_opt_result_t result) {
-    result->ndata = 0;
-    result->loss.clear();
-    result->pred.clear();
-    result->ncorrect = 0;
+فراغ ggml_opt_نتيجو_reset(ggml_opt_نتيجو_t نتيجو) {
+    نتيجو->ndata = 0;
+    نتيجو->loss.clear();
+    نتيجو->pred.clear();
+    نتيجو->ncorrect = 0;
 }
 
-void ggml_opt_result_ndata(ggml_opt_result_t result, int64_t * ndata) {
-    *ndata = result->ndata;
+فراغ ggml_opt_نتيجو_ndata(ggml_opt_نتيجو_t نتيجو, int64_t * ndata) {
+    *ndata = نتيجو->ndata;
 }
 
-void ggml_opt_result_loss(ggml_opt_result_t result, double * loss, double * unc) {
-    const int64_t nbatches = result->loss.size(); // Number of physical batches.
+فراغ ggml_opt_نتيجو_loss(ggml_opt_نتيجو_t نتيجو, مزدوج * loss, مزدوج * unc) {
+    ثابت int64_t nbatches = نتيجو->loss.size(); // Number of physical batches.
 
-    if (nbatches == 0) {
+    إذا (nbatches == 0) {
         *loss = 0.0;
         *unc  = NAN;
-        return;
+        أرجع;
     }
 
-    double sum         = 0.0;
-    double sum_squared = 0.0;
+    مزدوج جوڙ         = 0.0;
+    مزدوج جوڙ_squared = 0.0;
 
-    for (const float & loss : result->loss) {
+    لكل (ثابت عائم & loss : نتيجو->loss) {
         // If the loss is per datapoint it was scaled by 1.0f/opt_period for each physical batch.
-        const float loss_scaled = result->loss_per_datapoint ? loss*result->opt_period : loss;
-        sum         += loss_scaled;
-        sum_squared += loss_scaled*loss_scaled;
+        ثابت عائم loss_scaled = نتيجو->loss_في_datapoint ? loss*نتيجو->opt_period : loss;
+        جوڙ         += loss_scaled;
+        جوڙ_squared += loss_scaled*loss_scaled;
     }
 
-    const double mean = sum/nbatches;
-    *loss = result->loss_per_datapoint ? mean : sum;
+    ثابت مزدوج سراسري_2 = جوڙ/nbatches;
+    *loss = نتيجو->loss_في_datapoint ? سراسري_2 : جوڙ;
 
-    if (!unc) {
-        return;
+    إذا (!unc) {
+        أرجع;
     }
 
-    if (nbatches < 2) {
+    إذا (nbatches < 2) {
         *unc = NAN;
-        return;
+        أرجع;
     }
 
-    const double var_sum = sum_squared/nbatches - mean*mean; // variance without Bessel's correction, i.e. nbatches/(nbatches-1)
-    *unc = result->loss_per_datapoint ? sqrt(var_sum / (nbatches - 1)) : sqrt(var_sum * nbatches/(nbatches - 1));
+    ثابت مزدوج var_جوڙ = جوڙ_squared/nbatches - سراسري_2*سراسري_2; // variance without Bessel's correction, i.e. nbatches/(nbatches-1)
+    *unc = نتيجو->loss_في_datapoint ? جذر(var_جوڙ / (nbatches - 1)) : جذر(var_جوڙ * nbatches/(nbatches - 1));
 }
 
-void ggml_opt_result_pred(ggml_opt_result_t result, int32_t * pred) {
-    for (size_t i = 0; i < result->pred.size(); ++i) {
-        pred[i] = result->pred[i];
+فراغ ggml_opt_نتيجو_pred(ggml_opt_نتيجو_t نتيجو, int32_t * pred) {
+    لكل (size_t i = 0; i < نتيجو->pred.size(); ++i) {
+        pred[i] = نتيجو->pred[i];
     }
 }
 
-void ggml_opt_result_accuracy(ggml_opt_result_t result, double * accuracy, double * unc) {
-    *accuracy = result->ncorrect >= 0 ? double(result->ncorrect) / double(result->ndata) : NAN;
+فراغ ggml_opt_نتيجو_accuracy(ggml_opt_نتيجو_t نتيجو, مزدوج * accuracy, مزدوج * unc) {
+    *accuracy = نتيجو->ncorrect >= 0 ? مزدوج(نتيجو->ncorrect) / مزدوج(نتيجو->ndata) : NAN;
 
-    if (!unc) {
-        return;
+    إذا (!unc) {
+        أرجع;
     }
 
-    *unc = result->ncorrect >= 0 && result->ndata >= 2 ?
-        sqrt((*accuracy) * (1.0 - (*accuracy)) / double(result->ndata - 1)) : NAN;
+    *unc = نتيجو->ncorrect >= 0 && نتيجو->ndata >= 2 ?
+        جذر((*accuracy) * (1.0 - (*accuracy)) / مزدوج(نتيجو->ndata - 1)) : NAN;
 }
 
 // ====== Computation ======
 
-void ggml_opt_prepare_alloc(
+فراغ ggml_opt_prepare_alloc(
         ggml_opt_context_t    opt_ctx,
-        struct ggml_context * ctx_compute,
-        struct ggml_cgraph  * gf,
-        struct ggml_tensor  * inputs,
-        struct ggml_tensor  * outputs) {
+        بنية ggml_context * ctx_compute,
+        بنية ggml_cgraph  * gf,
+        بنية ggml_tensor  * inputs,
+        بنية ggml_tensor  * outputs) {
     GGML_ASSERT(!opt_ctx->static_graphs);
     opt_ctx->ctx_compute = ctx_compute;
     opt_ctx->gf          = gf;
@@ -722,70 +722,70 @@ void ggml_opt_prepare_alloc(
     opt_ctx->outputs     = outputs;
 }
 
-void ggml_opt_alloc(ggml_opt_context_t opt_ctx, bool backward) {
+فراغ ggml_opt_alloc(ggml_opt_context_t opt_ctx, منطقي backward) {
     GGML_ASSERT(!opt_ctx->eval_ready);
-    if (opt_ctx->build_type == GGML_OPT_BUILD_TYPE_OPT && opt_ctx->opt_period > 1 && opt_ctx->opt_i == 0) {
-        ggml_graph_reset(opt_ctx->gb_grad);
+    إذا (opt_ctx->build_type == GGML_OPT_BUILD_TYPE_OPT && opt_ctx->opt_period > 1 && opt_ctx->opt_i == 0) {
+        ggml_گراف_reset(opt_ctx->gb_grad);
     }
-    if (backward) {
-        const int32_t opt_i_next = (opt_ctx->opt_i + 1) % opt_ctx->opt_period;
-        opt_ctx->build_type = opt_i_next == 0 ? GGML_OPT_BUILD_TYPE_OPT : GGML_OPT_BUILD_TYPE_GRAD;
-    } else {
+    إذا (backward) {
+        ثابت int32_t opt_i_ايندڙ = (opt_ctx->opt_i + 1) % opt_ctx->opt_period;
+        opt_ctx->build_type = opt_i_ايندڙ == 0 ? GGML_OPT_BUILD_TYPE_OPT : GGML_OPT_BUILD_TYPE_GRAD;
+    } وإلا {
         opt_ctx->build_type = GGML_OPT_BUILD_TYPE_FORWARD;
     }
 
-    if (!opt_ctx->static_graphs) {
+    إذا (!opt_ctx->static_graphs) {
         ggml_opt_build(opt_ctx);
     }
 
-    struct ggml_cgraph * graph = nullptr;
-    switch (opt_ctx->build_type) {
-        case GGML_OPT_BUILD_TYPE_FORWARD: {
+    بنية ggml_cgraph * graph = خالي_اشارو;
+    بدل (opt_ctx->build_type) {
+        حالة GGML_OPT_BUILD_TYPE_FORWARD: {
             graph = opt_ctx->gf;
-        } break;
-        case GGML_OPT_BUILD_TYPE_GRAD: {
+        } اكسر;
+        حالة GGML_OPT_BUILD_TYPE_GRAD: {
             graph = opt_ctx->gb_grad;
-        } break;
-        case GGML_OPT_BUILD_TYPE_OPT: {
+        } اكسر;
+        حالة GGML_OPT_BUILD_TYPE_OPT: {
             graph = opt_ctx->gb_opt;
-        } break;
+        } اكسر;
     }
     GGML_ASSERT(graph);
 
-    if (opt_ctx->allocated_graph == graph) {
-        opt_ctx->eval_ready = true;
-        return;
+    إذا (opt_ctx->allocated_گراف == graph) {
+        opt_ctx->eval_ready = سچ;
+        أرجع;
     }
 
     ggml_backend_sched_reset(opt_ctx->backend_sched); // clear allocation of previous graph
 
-    if (opt_ctx->static_graphs) {
+    إذا (opt_ctx->static_graphs) {
         ggml_init_params params = {
-            /*.mem_size   =*/ graph->size*ggml_tensor_overhead() + ggml_graph_overhead_custom(graph->size, graph->grads),
-            /*.mem_buffer =*/ nullptr,
-            /*.no_alloc   =*/ true,
+            /*.mem_size   =*/ graph->size*ggml_tensor_overhead() + ggml_گراف_overhead_custom(graph->size, graph->grads),
+            /*.mem_buffer =*/ خالي_اشارو,
+            /*.no_alloc   =*/ سچ,
         };
         ggml_free(opt_ctx->ctx_copy);
         opt_ctx->ctx_copy = ggml_init(params);
 
-        opt_ctx->allocated_graph_copy = dup_graph(opt_ctx->ctx_copy, graph);
-    } else {
-        opt_ctx->allocated_graph_copy = graph;
+        opt_ctx->allocated_گراف_copy = dup_گراف(opt_ctx->ctx_copy, graph);
+    } وإلا {
+        opt_ctx->allocated_گراف_copy = graph;
     }
 
-    ggml_backend_sched_alloc_graph(opt_ctx->backend_sched, opt_ctx->allocated_graph_copy);
-    opt_ctx->allocated_graph = graph;
+    ggml_backend_sched_alloc_گراف(opt_ctx->backend_sched, opt_ctx->allocated_گراف_copy);
+    opt_ctx->allocated_گراف = graph;
 
-    opt_ctx->eval_ready = true;
+    opt_ctx->eval_ready = سچ;
 }
 
-void ggml_opt_eval(ggml_opt_context_t opt_ctx, ggml_opt_result_t result) {
+فراغ ggml_opt_eval(ggml_opt_context_t opt_ctx, ggml_opt_نتيجو_t نتيجو) {
     GGML_ASSERT(opt_ctx->eval_ready);
-    if (opt_ctx->allocated_graph == opt_ctx->gb_opt) {
-        const ggml_opt_optimizer_params & opt_pars = opt_ctx->get_opt_pars(opt_ctx->get_opt_pars_ud);
+    إذا (opt_ctx->allocated_گراف == opt_ctx->gb_opt) {
+        ثابت ggml_opt_optimizer_params & opt_pars = opt_ctx->get_opt_pars(opt_ctx->get_opt_pars_ud);
 
-        switch (opt_ctx->optimizer) {
-            case GGML_OPT_OPTIMIZER_TYPE_ADAMW: {
+        بدل (opt_ctx->optimizer) {
+            حالة GGML_OPT_OPTIMIZER_TYPE_ADAMW: {
                 GGML_ASSERT(opt_pars.adamw.alpha > 0.0f);
                 GGML_ASSERT(opt_pars.adamw.beta1 >= 0.0f);
                 GGML_ASSERT(opt_pars.adamw.beta1 <= 1.0f);
@@ -796,234 +796,234 @@ void ggml_opt_eval(ggml_opt_context_t opt_ctx, ggml_opt_result_t result) {
                 GGML_ASSERT(opt_pars.adamw.wd <= 1.0f);
 
                 // beta1, beta2 after applying warmup
-                const float beta1h = 1.0f / (1.0f - powf(opt_pars.adamw.beta1, opt_ctx->iter));
-                const float beta2h = 1.0f / (1.0f - powf(opt_pars.adamw.beta2, opt_ctx->iter));
+                ثابت عائم beta1h = 1.0f / (1.0f - powf(opt_pars.adamw.beta1, opt_ctx->iter));
+                ثابت عائم beta2h = 1.0f / (1.0f - powf(opt_pars.adamw.beta2, opt_ctx->iter));
 
-                float * adamw_par_data = ggml_get_data_f32(opt_ctx->opt_step_params);
-                adamw_par_data[0] = opt_pars.adamw.alpha;
-                adamw_par_data[1] = opt_pars.adamw.beta1;
-                adamw_par_data[2] = opt_pars.adamw.beta2;
-                adamw_par_data[3] = opt_pars.adamw.eps;
-                adamw_par_data[4] = opt_pars.adamw.wd;
-                adamw_par_data[5] = beta1h;
-                adamw_par_data[6] = beta2h;
-            } break;
-            case GGML_OPT_OPTIMIZER_TYPE_SGD: {
+                عائم * adamw_par_معلومات = ggml_get_معلومات_f32(opt_ctx->opt_قدم_params);
+                adamw_par_معلومات[0] = opt_pars.adamw.alpha;
+                adamw_par_معلومات[1] = opt_pars.adamw.beta1;
+                adamw_par_معلومات[2] = opt_pars.adamw.beta2;
+                adamw_par_معلومات[3] = opt_pars.adamw.eps;
+                adamw_par_معلومات[4] = opt_pars.adamw.wd;
+                adamw_par_معلومات[5] = beta1h;
+                adamw_par_معلومات[6] = beta2h;
+            } اكسر;
+            حالة GGML_OPT_OPTIMIZER_TYPE_SGD: {
                 GGML_ASSERT(opt_pars.sgd.alpha > 0.0f);
                 GGML_ASSERT(opt_pars.sgd.wd >= 0.0f);
                 GGML_ASSERT(opt_pars.sgd.wd <= 1.0f);
-                float * sgd = ggml_get_data_f32(opt_ctx->opt_step_params);
+                عائم * sgd = ggml_get_معلومات_f32(opt_ctx->opt_قدم_params);
                 sgd[0] = opt_pars.sgd.alpha;
                 sgd[1] = opt_pars.sgd.wd;
-            } break;
-            default:
+            } اكسر;
+            افتراضي:
                 GGML_ABORT("fatal error");
         }
     }
 
-    ggml_backend_sched_graph_compute(opt_ctx->backend_sched, opt_ctx->allocated_graph_copy);
-    opt_ctx->iter += opt_ctx->allocated_graph == opt_ctx->gb_opt;
+    ggml_backend_sched_گراف_compute(opt_ctx->backend_sched, opt_ctx->allocated_گراف_copy);
+    opt_ctx->iter += opt_ctx->allocated_گراف == opt_ctx->gb_opt;
     opt_ctx->opt_i = (opt_ctx->opt_i + 1) % opt_ctx->opt_period;
 
-    if (!opt_ctx->static_graphs) {
-        opt_ctx->gf                   = nullptr;
-        opt_ctx->gb_grad              = nullptr;
-        opt_ctx->gb_opt               = nullptr;
-        opt_ctx->allocated_graph      = nullptr;
-        opt_ctx->allocated_graph_copy = nullptr;
+    إذا (!opt_ctx->static_graphs) {
+        opt_ctx->gf                   = خالي_اشارو;
+        opt_ctx->gb_grad              = خالي_اشارو;
+        opt_ctx->gb_opt               = خالي_اشارو;
+        opt_ctx->allocated_گراف      = خالي_اشارو;
+        opt_ctx->allocated_گراف_copy = خالي_اشارو;
     }
 
-    opt_ctx->eval_ready = false;
+    opt_ctx->eval_ready = خطأ;
 
-    if (!result) {
-        return;
+    إذا (!نتيجو) {
+        أرجع;
     }
 
-    if (result->ndata == 0) {
-        result->loss_per_datapoint = opt_ctx->loss_per_datapoint;
-        result->opt_period         = opt_ctx->opt_period;
-    } else {
-        GGML_ASSERT(result->loss_per_datapoint == opt_ctx->loss_per_datapoint);
-        GGML_ASSERT(result->opt_period         == opt_ctx->opt_period);
+    إذا (نتيجو->ndata == 0) {
+        نتيجو->loss_في_datapoint = opt_ctx->loss_في_datapoint;
+        نتيجو->opt_period         = opt_ctx->opt_period;
+    } وإلا {
+        GGML_ASSERT(نتيجو->loss_في_datapoint == opt_ctx->loss_في_datapoint);
+        GGML_ASSERT(نتيجو->opt_period         == opt_ctx->opt_period);
     }
 
-    const int64_t ndata = opt_ctx->outputs->ne[1];
-    GGML_ASSERT(result->ndata == ndata*int64_t(result->loss.size()) && "varying batch size not supported");
-    result->ndata += ndata;
+    ثابت int64_t ndata = opt_ctx->outputs->ne[1];
+    GGML_ASSERT(نتيجو->ndata == ndata*int64_t(نتيجو->loss.size()) && "varying batch size not supported");
+    نتيجو->ndata += ndata;
 
     GGML_ASSERT(ggml_is_scalar(opt_ctx->loss));
     GGML_ASSERT(opt_ctx->loss->type == GGML_TYPE_F32);
-    float loss;
+    عائم loss;
     ggml_backend_tensor_get(opt_ctx->loss, &loss, 0, ggml_nbytes(opt_ctx->loss));
-    result->loss.push_back(loss);
+    نتيجو->loss.push_back(loss);
 
-    if (opt_ctx->pred) {
+    إذا (opt_ctx->pred) {
         GGML_ASSERT(opt_ctx->pred->type == GGML_TYPE_I32);
         std::vector<int32_t> pred(ndata);
-        ggml_backend_tensor_get(opt_ctx->pred, pred.data(), 0, ggml_nbytes(opt_ctx->pred));
-        result->pred.insert(result->pred.end(), pred.begin(), pred.end());
+        ggml_backend_tensor_get(opt_ctx->pred, pred.معلومات(), 0, ggml_nbytes(opt_ctx->pred));
+        نتيجو->pred.insert(نتيجو->pred.end(), pred.begin(), pred.end());
     }
 
-    if (!opt_ctx->ncorrect || result->ncorrect < 0) {
-        result->ncorrect = -1;
-        return;
+    إذا (!opt_ctx->ncorrect || نتيجو->ncorrect < 0) {
+        نتيجو->ncorrect = -1;
+        أرجع;
     }
 
     GGML_ASSERT(ggml_is_scalar(opt_ctx->ncorrect));
     GGML_ASSERT(opt_ctx->ncorrect->type == GGML_TYPE_I64);
     int64_t ncorrect;
     ggml_backend_tensor_get(opt_ctx->ncorrect, &ncorrect, 0, ggml_nbytes(opt_ctx->ncorrect));
-    result->ncorrect += ncorrect;
+    نتيجو->ncorrect += ncorrect;
 }
 
 // ====== High-Level Functions ======
 
-void ggml_opt_epoch(
+فراغ ggml_opt_epoch(
         ggml_opt_context_t      opt_ctx,
         ggml_opt_dataset_t      dataset,
-        ggml_opt_result_t       result_train,
-        ggml_opt_result_t       result_eval,
-        int64_t                 idata_split,
+        ggml_opt_نتيجو_t       نتيجو_train,
+        ggml_opt_نتيجو_t       نتيجو_eval,
+        int64_t                 idata_ورهايو,
         ggml_opt_epoch_callback callback_train,
         ggml_opt_epoch_callback callback_eval) {
     GGML_ASSERT(ggml_opt_static_graphs(opt_ctx) && "ggml_opt_epoch requires static graphs");
-    struct ggml_tensor * inputs = ggml_opt_inputs(opt_ctx);
-    struct ggml_tensor * labels = ggml_opt_labels(opt_ctx);
-    struct ggml_tensor * data   = ggml_opt_dataset_data(dataset);
-    GGML_ASSERT(data->ne[0] == inputs->ne[0]);
+    بنية ggml_tensor * inputs = ggml_opt_inputs(opt_ctx);
+    بنية ggml_tensor * labels = ggml_opt_labels(opt_ctx);
+    بنية ggml_tensor * معلومات   = ggml_opt_dataset_معلومات(dataset);
+    GGML_ASSERT(معلومات->ne[0] == inputs->ne[0]);
 
-    const int64_t ndata       =   data->ne[1];
-    const int64_t ndata_batch = inputs->ne[1];
+    ثابت int64_t ndata       =   معلومات->ne[1];
+    ثابت int64_t ndata_batch = inputs->ne[1];
 
-    GGML_ASSERT(data->ne[1] % inputs->ne[1] == 0);
-    const int64_t nbatches = ndata/ndata_batch;
+    GGML_ASSERT(معلومات->ne[1] % inputs->ne[1] == 0);
+    ثابت int64_t nbatches = ndata/ndata_batch;
 
-    idata_split = idata_split < 0 ? ndata : idata_split;
-    GGML_ASSERT(idata_split % ndata_batch == 0);
-    const int64_t ibatch_split = idata_split / ndata_batch;
+    idata_ورهايو = idata_ورهايو < 0 ? ndata : idata_ورهايو;
+    GGML_ASSERT(idata_ورهايو % ndata_batch == 0);
+    ثابت int64_t ibatch_ورهايو = idata_ورهايو / ndata_batch;
 
     int64_t ibatch = 0;
-    int64_t t_loop_start = ggml_time_us();
-    for (; ibatch < ibatch_split; ++ibatch) {
-        ggml_opt_alloc(opt_ctx, /*backward =*/ true);
+    int64_t t_loop_شروعات = ggml_وقت_us();
+    لكل (; ibatch < ibatch_ورهايو; ++ibatch) {
+        ggml_opt_alloc(opt_ctx, /*backward =*/ سچ);
         ggml_opt_dataset_get_batch(dataset, inputs, labels, ibatch);
-        ggml_opt_eval(opt_ctx, result_train);
-        if (callback_train) {
-            callback_train(true, opt_ctx, dataset, result_train, ibatch+1, ibatch_split, t_loop_start);
+        ggml_opt_eval(opt_ctx, نتيجو_train);
+        إذا (callback_train) {
+            callback_train(سچ, opt_ctx, dataset, نتيجو_train, ibatch+1, ibatch_ورهايو, t_loop_شروعات);
         }
     }
-    t_loop_start = ggml_time_us();
-    for (; ibatch < nbatches; ++ibatch) {
-        ggml_opt_alloc(opt_ctx, /*backward =*/ false);
+    t_loop_شروعات = ggml_وقت_us();
+    لكل (; ibatch < nbatches; ++ibatch) {
+        ggml_opt_alloc(opt_ctx, /*backward =*/ خطأ);
         ggml_opt_dataset_get_batch(dataset, inputs, labels, ibatch);
-        ggml_opt_eval(opt_ctx, result_eval);
-        if (callback_eval) {
-            callback_eval(false, opt_ctx, dataset, result_eval, ibatch+1-ibatch_split, nbatches-ibatch_split, t_loop_start);
+        ggml_opt_eval(opt_ctx, نتيجو_eval);
+        إذا (callback_eval) {
+            callback_eval(خطأ, opt_ctx, dataset, نتيجو_eval, ibatch+1-ibatch_ورهايو, nbatches-ibatch_ورهايو, t_loop_شروعات);
         }
     }
 }
 
-void ggml_opt_epoch_callback_progress_bar(
-        bool               train,
+فراغ ggml_opt_epoch_callback_ترقي_bar(
+        منطقي               train,
         ggml_opt_context_t opt_ctx,
         ggml_opt_dataset_t dataset,
-        ggml_opt_result_t  result,
+        ggml_opt_نتيجو_t  نتيجو,
         int64_t            ibatch,
         int64_t            ibatch_max,
-        int64_t            t_start_us) {
+        int64_t            t_شروعات_us) {
     fprintf(stderr, "%s[", train ? "train: " : "val:   ");
 
     // The progress bar consists of partially filled blocks, unicode has 8 separate fill levels.
-    constexpr int64_t bar_length = 8;
-    const int64_t ibatch8 = 8 * ibatch;
-    for (int64_t j = 0; j < bar_length; ++j) {
-        if        (ibatch_max * (8*j + 8) / bar_length < ibatch8) {
+    constexpr int64_t bar_ڊيگهائي = 8;
+    ثابت int64_t ibatch8 = 8 * ibatch;
+    لكل (int64_t j = 0; j < bar_ڊيگهائي; ++j) {
+        إذا        (ibatch_max * (8*j + 8) / bar_ڊيگهائي < ibatch8) {
             fprintf(stderr, "\u2588"); // full block
-        } else if (ibatch_max * (8*j + 7) / bar_length < ibatch8) {
+        } وإلا إذا (ibatch_max * (8*j + 7) / bar_ڊيگهائي < ibatch8) {
             fprintf(stderr, "\u2589"); // 7/8 filled
-        } else if (ibatch_max * (8*j + 6) / bar_length < ibatch8) {
+        } وإلا إذا (ibatch_max * (8*j + 6) / bar_ڊيگهائي < ibatch8) {
             fprintf(stderr, "\u258A"); // 6/8 filled
-        } else if (ibatch_max * (8*j + 5) / bar_length < ibatch8) {
+        } وإلا إذا (ibatch_max * (8*j + 5) / bar_ڊيگهائي < ibatch8) {
             fprintf(stderr, "\u258B"); // 5/8 filled
-        } else if (ibatch_max * (8*j + 4) / bar_length < ibatch8) {
+        } وإلا إذا (ibatch_max * (8*j + 4) / bar_ڊيگهائي < ibatch8) {
             fprintf(stderr, "\u258C"); // 4/8 filled
-        } else if (ibatch_max * (8*j + 3) / bar_length < ibatch8) {
+        } وإلا إذا (ibatch_max * (8*j + 3) / bar_ڊيگهائي < ibatch8) {
             fprintf(stderr, "\u258D"); // 3/8 filled
-        } else if (ibatch_max * (8*j + 2) / bar_length < ibatch8) {
+        } وإلا إذا (ibatch_max * (8*j + 2) / bar_ڊيگهائي < ibatch8) {
             fprintf(stderr, "\u258E"); // 2/8 filled
-        } else if (ibatch_max * (8*j + 1) / bar_length < ibatch8) {
+        } وإلا إذا (ibatch_max * (8*j + 1) / bar_ڊيگهائي < ibatch8) {
             fprintf(stderr, "\u258F"); // 1/8 filled
-        } else {
+        } وإلا {
             fprintf(stderr, " ");
         }
     }
 
-    const int64_t batch_size = ggml_opt_inputs(opt_ctx)->ne[1];
-    const int64_t idata      = ibatch*batch_size;
-    const int64_t idata_max  = ibatch_max*batch_size;
+    ثابت int64_t batch_سائيز = ggml_opt_inputs(opt_ctx)->ne[1];
+    ثابت int64_t idata      = ibatch*batch_سائيز;
+    ثابت int64_t idata_max  = ibatch_max*batch_سائيز;
 
-    double loss;
-    double loss_unc;
-    ggml_opt_result_loss(result, &loss, &loss_unc);
+    مزدوج loss;
+    مزدوج loss_unc;
+    ggml_opt_نتيجو_loss(نتيجو, &loss, &loss_unc);
 
-    double accuracy;
-    double accuracy_unc;
-    ggml_opt_result_accuracy(result, &accuracy, &accuracy_unc);
+    مزدوج accuracy;
+    مزدوج accuracy_unc;
+    ggml_opt_نتيجو_accuracy(نتيجو, &accuracy, &accuracy_unc);
 
-    const int64_t t_ibatch_us = ggml_time_us() - t_start_us;
+    ثابت int64_t t_ibatch_us = ggml_وقت_us() - t_شروعات_us;
     int64_t t_ibatch_s = t_ibatch_us / 1000000;
-    const int64_t t_ibatch_h = t_ibatch_s / 3600;
+    ثابت int64_t t_ibatch_h = t_ibatch_s / 3600;
     t_ibatch_s -= t_ibatch_h * 3600;
-    const int64_t t_ibatch_m = t_ibatch_s / 60;
+    ثابت int64_t t_ibatch_m = t_ibatch_s / 60;
     t_ibatch_s -= t_ibatch_m * 60;
 
-    const int64_t t_eta_us = t_ibatch_us * (ibatch_max - ibatch)/ibatch;
+    ثابت int64_t t_eta_us = t_ibatch_us * (ibatch_max - ibatch)/ibatch;
     int64_t t_eta_s = t_eta_us / 1000000;
-    const int64_t t_eta_h = t_eta_s / 3600;
+    ثابت int64_t t_eta_h = t_eta_s / 3600;
     t_eta_s -= t_eta_h * 3600;
-    const int64_t t_eta_m = t_eta_s / 60;
+    ثابت int64_t t_eta_m = t_eta_s / 60;
     t_eta_s -= t_eta_m * 60;
 
     fprintf(stderr, "] data=%07" PRId64 "/%07" PRId64 " loss=%.5lf±%.5lf acc=%.2lf±%.2lf%% "
             "t=%02" PRId64 ":%02" PRId64 ":%02" PRId64 " ETA=%02" PRId64 ":%02" PRId64 ":%02" PRId64 " \r",
             idata, idata_max, loss, loss_unc, 100.0*accuracy, 100.0*accuracy_unc,
             t_ibatch_h, t_ibatch_m, t_ibatch_s, t_eta_h, t_eta_m, t_eta_s);
-    if (ibatch == ibatch_max) {
+    إذا (ibatch == ibatch_max) {
         fprintf(stderr, "\n");
     }
     fflush(stderr);
 
-    GGML_UNUSED(dataset);
+    GGML_اڻ_استعمال_ٿيل(dataset);
 }
 
-void ggml_opt_fit(
+فراغ ggml_opt_fit(
         ggml_backend_sched_t            backend_sched,
         ggml_context                  * ctx_compute,
         ggml_tensor                   * inputs,
         ggml_tensor                   * outputs,
         ggml_opt_dataset_t              dataset,
-        enum ggml_opt_loss_type         loss_type,
-        enum ggml_opt_optimizer_type    optimizer,
+        تعداد ggml_opt_loss_type         loss_type,
+        تعداد ggml_opt_optimizer_type    optimizer,
         ggml_opt_get_optimizer_params   get_opt_pars,
         int64_t                         nepoch,
         int64_t                         nbatch_logical,
-        float                           val_split,
-        bool                            silent) {
-    ggml_time_init();
-    const int64_t t_start_us = ggml_time_us();
+        عائم                           val_ورهايو,
+        منطقي                            silent) {
+    ggml_وقت_init();
+    ثابت int64_t t_شروعات_us = ggml_وقت_us();
 
-    const int64_t ndata           = ggml_opt_dataset_data(dataset)->ne[1];
-    const int64_t nbatch_physical = inputs->ne[1];
+    ثابت int64_t ndata           = ggml_opt_dataset_معلومات(dataset)->ne[1];
+    ثابت int64_t nbatch_physical = inputs->ne[1];
     GGML_ASSERT(ndata          % nbatch_logical  == 0);
     GGML_ASSERT(nbatch_logical % nbatch_physical == 0);
 
-    const int64_t opt_period       = nbatch_logical / nbatch_physical;
-    const int64_t nbatches_logical = ndata / nbatch_logical;
+    ثابت int64_t opt_period       = nbatch_logical / nbatch_physical;
+    ثابت int64_t nbatches_logical = ndata / nbatch_logical;
 
-    GGML_ASSERT(val_split >= 0.0f);
-    GGML_ASSERT(val_split <  1.0f);
-    const int64_t ibatch_split = int64_t(((1.0f - val_split) * nbatches_logical)) * opt_period; // train <-> val split index (physical)
-    const int64_t idata_split  = ibatch_split * nbatch_physical;
+    GGML_ASSERT(val_ورهايو >= 0.0f);
+    GGML_ASSERT(val_ورهايو <  1.0f);
+    ثابت int64_t ibatch_ورهايو = int64_t(((1.0f - val_ورهايو) * nbatches_logical)) * opt_period; // train <-> val split index (physical)
+    ثابت int64_t idata_ورهايو  = ibatch_ورهايو * nbatch_physical;
 
     int64_t epoch = 1;
 
@@ -1038,57 +1038,57 @@ void ggml_opt_fit(
     ggml_opt_context_t opt_ctx = ggml_opt_init(params);
 
     // Shuffling the data is generally useful but there is only a point if not all data is used in a single batch.
-    if (nbatch_logical < ndata) {
+    إذا (nbatch_logical < ndata) {
         ggml_opt_dataset_shuffle(opt_ctx, dataset, -1); // Shuffle all data (train + validation).
     }
 
-    ggml_opt_result_t result_train = ggml_opt_result_init();
-    ggml_opt_result_t result_val   = ggml_opt_result_init();
+    ggml_opt_نتيجو_t نتيجو_train = ggml_opt_نتيجو_init();
+    ggml_opt_نتيجو_t نتيجو_val   = ggml_opt_نتيجو_init();
 
-    ggml_opt_epoch_callback epoch_callback = silent ? nullptr : ggml_opt_epoch_callback_progress_bar;
+    ggml_opt_epoch_callback epoch_callback = silent ? خالي_اشارو : ggml_opt_epoch_callback_ترقي_bar;
 
-    for (; epoch <= nepoch; ++epoch) {
-        if (nbatch_logical < idata_split) {
-            ggml_opt_dataset_shuffle(opt_ctx, dataset, idata_split);
+    لكل (; epoch <= nepoch; ++epoch) {
+        إذا (nbatch_logical < idata_ورهايو) {
+            ggml_opt_dataset_shuffle(opt_ctx, dataset, idata_ورهايو);
         }
 
-        ggml_opt_result_reset(result_train);
-        ggml_opt_result_reset(result_val);
+        ggml_opt_نتيجو_reset(نتيجو_train);
+        ggml_opt_نتيجو_reset(نتيجو_val);
 
-        if (!silent) {
+        إذا (!silent) {
             fprintf(stderr, "%s: epoch %04" PRId64 "/%04" PRId64 ":\n", __func__, epoch, nepoch);
         }
-        ggml_opt_epoch(opt_ctx, dataset, result_train, result_val, idata_split, epoch_callback, epoch_callback);
-        if (!silent) {
+        ggml_opt_epoch(opt_ctx, dataset, نتيجو_train, نتيجو_val, idata_ورهايو, epoch_callback, epoch_callback);
+        إذا (!silent) {
             fprintf(stderr, "\n");
         }
     }
 
-    if (!silent) {
-        int64_t t_total_s = (ggml_time_us() - t_start_us) / 1000000;
-        const int64_t t_total_h = t_total_s / 3600;
-        t_total_s -= t_total_h * 3600;
-        const int64_t t_total_m = t_total_s / 60;
-        t_total_s -= t_total_m * 60;
-        fprintf(stderr, "%s: training took %02" PRId64 ":%02" PRId64 ":%02" PRId64 "\n", __func__, t_total_h, t_total_m, t_total_s);
+    إذا (!silent) {
+        int64_t t_ڪل_s = (ggml_وقت_us() - t_شروعات_us) / 1000000;
+        ثابت int64_t t_ڪل_h = t_ڪل_s / 3600;
+        t_ڪل_s -= t_ڪل_h * 3600;
+        ثابت int64_t t_ڪل_m = t_ڪل_s / 60;
+        t_ڪل_s -= t_ڪل_m * 60;
+        fprintf(stderr, "%s: training took %02" PRId64 ":%02" PRId64 ":%02" PRId64 "\n", __func__, t_ڪل_h, t_ڪل_m, t_ڪل_s);
     }
 
     ggml_opt_free(opt_ctx);
-    ggml_opt_result_free(result_train);
-    ggml_opt_result_free(result_val);
+    ggml_opt_نتيجو_free(نتيجو_train);
+    ggml_opt_نتيجو_free(نتيجو_val);
 }
 
-enum ggml_opt_optimizer_type ggml_opt_context_optimizer_type(ggml_opt_context_t c) {
-    return c->optimizer;
+تعداد ggml_opt_optimizer_type ggml_opt_context_optimizer_type(ggml_opt_context_t c) {
+    أرجع c->optimizer;
 }
 
-GGML_API const char * ggml_opt_optimizer_name(enum ggml_opt_optimizer_type o) {
-    switch (o) {
-        case GGML_OPT_OPTIMIZER_TYPE_ADAMW:
-            return "adamw";
-        case GGML_OPT_OPTIMIZER_TYPE_SGD:
-            return "sgd";
-        default:
-            return "undefined";
+GGML_API ثابت حرف * ggml_opt_optimizer_name(تعداد ggml_opt_optimizer_type o) {
+    بدل (o) {
+        حالة GGML_OPT_OPTIMIZER_TYPE_ADAMW:
+            أرجع "adamw";
+        حالة GGML_OPT_OPTIMIZER_TYPE_SGD:
+            أرجع "sgd";
+        افتراضي:
+            أرجع "undefined";
     };
 }
