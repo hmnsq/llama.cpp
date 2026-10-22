@@ -1,100 +1,100 @@
-#include "ggml-impl.h"
-#include "ggml.h"
-#include "ime_kernels.h"
-#include "rvv_kernels.h"
-#include "string.h"
+#समावेश "ggml-impl.h"
+#समावेश "ggml.h"
+#समावेश "ime_kernels.h"
+#समावेश "rvv_kernels.h"
+#समावेश "string.h"
 
-#include <algorithm>
-#include <cmath>
-#include <stdexcept>
+#समावेश <algorithm>
+#समावेश <cmath>
+#समावेश <stdexcept>
 
-#if !defined(__riscv_v) || !defined(__riscv_v_intrinsic)
+#अगर !defined(__riscv_v) || !defined(__riscv_v_intrinsic)
 #    error "riscv v extension or v_intrinsic not enabled"
-#else
+#अन्यथा
 #    include <riscv_vector.h>
-#endif
+#पूर्ण_अगर
 
-#if !defined(__riscv_zfh)
+#अगर !defined(__riscv_zfh)
 #    error "riscv zfh extension not enabled"
-#endif
+#पूर्ण_अगर
 
-#if defined(RISCV64_SPACEMIT_IME2)
-#else
+#अगर defined(RISCV64_SPACEMIT_IME2)
+#अन्यथा
 #    error "RISCV64_SPACEMIT_IME2 not defined"
-#endif
+#पूर्ण_अगर
 
-#if defined(__GNUC__)
+#अगर defined(__GNUC__)
 #    pragma GCC diagnostic ignored "-Woverlength-strings"
 #    pragma GCC diagnostic ignored "-Wcast-qual"
 #    pragma GCC diagnostic ignored "-Wunused-parameter"
-#endif
+#पूर्ण_अगर
 
 namespace spacemit_kernels {
 namespace ime2 {
 
-template <size_t MB_ROWS, size_t NB_COLS>
-void gemm_kernel_i8i2k_mrow_ref(size_t          blk_len,
-                                const uint8_t * quant_a_ptr,
-                                const uint8_t * quant_b_data,
-                                float *         c_ptr,
-                                size_t          count_m,
-                                size_t          count_n,
-                                size_t          k_blks,
-                                size_t          ldc) {
+ढाँचा <माप_प्रकार MB_ROWS, माप_प्रकार NB_COLS>
+व्योम gemm_kernel_i8i2k_mrow_ref(माप_प्रकार          blk_len,
+                                स्थिर uint8_t * quant_a_ptr,
+                                स्थिर uint8_t * quant_b_तथ्य,
+                                भग्न *         c_ptr,
+                                माप_प्रकार          गिनती_m,
+                                माप_प्रकार          गिनती_n,
+                                माप_प्रकार          k_blks,
+                                माप_प्रकार          ldc) {
     using blk_type                 = nrow_block_q2_k<NB_COLS>;
-    constexpr float refactor_scale = 16.0f;
-    constexpr float factor_scale   = 1.0f / refactor_scale;
+    constexpr भग्न refactor_scale = 16.0f;
+    constexpr भग्न factor_scale   = 1.0f / refactor_scale;
 
-    int64_t a_blk_stride        = q8k_blk_size(256);
+    int64_t a_blk_stride        = q8k_blk_आकार(256);
     int64_t a_nrow_block_stride = a_blk_stride * MB_ROWS;
-    int64_t b_ncol_block_stride = sizeof(blk_type);
+    int64_t b_ncol_block_stride = माप(blk_type);
 
-    float      output[MB_ROWS * NB_COLS]     = { 0 };
+    भग्न      output[MB_ROWS * NB_COLS]     = { 0 };
     _Float16   output_f16[MB_ROWS * NB_COLS] = { 0 };
-    blk_type * quant_b_blk_data              = (blk_type *) (quant_b_data);
+    blk_type * quant_b_blk_तथ्य              = (blk_type *) (quant_b_तथ्य);
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-        size_t nb_real = std::min<size_t>(NB_COLS, count_n - ni);
+    क्रम (माप_प्रकार ni = 0; ni < गिनती_n; ni += NB_COLS, c_ptr += NB_COLS) {
+        माप_प्रकार nb_real = std::min<माप_प्रकार>(NB_COLS, गिनती_n - ni);
 
-        int8_t * a_data = (int8_t *) quant_a_ptr + sizeof(float) * MB_ROWS + sizeof(int16_t) * MB_ROWS * 16;
+        int8_t * a_तथ्य = (int8_t *) quant_a_ptr + माप(भग्न) * MB_ROWS + माप(int16_t) * MB_ROWS * 16;
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            for (size_t ci = 0; ci < NB_COLS; ci++) {
+        क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+            क्रम (माप_प्रकार ci = 0; ci < NB_COLS; ci++) {
                 output[ci + mi * NB_COLS] = 0;
             }
         }
 
-        for (size_t ki = 0; ki < k_blks; ki++, quant_b_blk_data++, a_data += a_nrow_block_stride) {
-            uint8_t * b_data   = quant_b_blk_data->qs;
-            uint8_t * scales   = quant_b_blk_data->scales;
-            uint8_t * scales16 = (uint8_t *) (quant_b_blk_data->scales16);
-            uint8_t * zeros16  = (uint8_t *) (quant_b_blk_data->zeros16);
+        क्रम (माप_प्रकार ki = 0; ki < k_blks; ki++, quant_b_blk_तथ्य++, a_तथ्य += a_nrow_block_stride) {
+            uint8_t * b_तथ्य   = quant_b_blk_तथ्य->qs;
+            uint8_t * scales   = quant_b_blk_तथ्य->scales;
+            uint8_t * scales16 = (uint8_t *) (quant_b_blk_तथ्य->scales16);
+            uint8_t * zeros16  = (uint8_t *) (quant_b_blk_तथ्य->zeros16);
 
             _Float16 * scales_fp16 = (_Float16 *) scales16;
             _Float16 * zeros_fp16  = (_Float16 *) zeros16;
 
-            float *   a_scale_row = (float *) (a_data - sizeof(float) * MB_ROWS - sizeof(int16_t) * MB_ROWS * 16);
-            int16_t * a_sum_row   = (int16_t *) (a_data - sizeof(int16_t) * MB_ROWS * 16);
+            भग्न *   a_scale_row = (भग्न *) (a_तथ्य - माप(भग्न) * MB_ROWS - माप(int16_t) * MB_ROWS * 16);
+            int16_t * a_योग_row   = (int16_t *) (a_तथ्य - माप(int16_t) * MB_ROWS * 16);
 
-            memset(output_f16, 0, sizeof(output_f16));
+            स_रखो(output_f16, 0, माप(output_f16));
 
-            uint8_t * scales_temp = scales;
-            uint8_t * zps_temp    = scales;
-            for (size_t kii = 0; kii < 16; kii++, scales_temp += NB_COLS, zps_temp++) {
-                size_t b_shift = (kii % 4) * 2;
+            uint8_t * scales_अस्थायी = scales;
+            uint8_t * zps_अस्थायी    = scales;
+            क्रम (माप_प्रकार kii = 0; kii < 16; kii++, scales_अस्थायी += NB_COLS, zps_अस्थायी++) {
+                माप_प्रकार b_shift = (kii % 4) * 2;
 
-                uint8_t * b_data_col = b_data + (kii / 4) * NB_COLS * 16;
+                uint8_t * b_तथ्य_col = b_तथ्य + (kii / 4) * NB_COLS * 16;
 
-                for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                    int16_t a_sum = a_sum_row[mi * 16 + kii];
-                    for (size_t ci = 0; ci < NB_COLS; ci++) {
+                क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+                    int16_t a_योग = a_योग_row[mi * 16 + kii];
+                    क्रम (माप_प्रकार ci = 0; ci < NB_COLS; ci++) {
                         _Float16 acc_0 = 0.0;
 
-                        uint8_t b_zp    = zps_temp[ci * 16] >> 4;
-                        uint8_t b_scale = scales_temp[ci] & 0x0F;
-                        for (size_t bi = 0; bi < 16; bi++) {
-                            int8_t  a0 = a_data[mi * 256 + bi + kii * 16];
-                            uint8_t b0 = b_data_col[ci * 16 + bi];
+                        uint8_t b_zp    = zps_अस्थायी[ci * 16] >> 4;
+                        uint8_t b_scale = scales_अस्थायी[ci] & 0x0F;
+                        क्रम (माप_प्रकार bi = 0; bi < 16; bi++) {
+                            int8_t  a0 = a_तथ्य[mi * 256 + bi + kii * 16];
+                            uint8_t b0 = b_तथ्य_col[ci * 16 + bi];
                             acc_0 += static_cast<int16_t>(a0) * static_cast<int16_t>((b0 >> b_shift) & 0x03);
                         }
 
@@ -102,95 +102,95 @@ void gemm_kernel_i8i2k_mrow_ref(size_t          blk_len,
                             static_cast<_Float16>(b_scale) * static_cast<_Float16>(factor_scale) * scales_fp16[ci];
 
                         output_f16[ci + mi * NB_COLS] += acc_0 * scale_item;
-                        output[ci + mi * NB_COLS] += b_zp * a_sum * a_scale_row[mi] * zeros_fp16[ci];
+                        output[ci + mi * NB_COLS] += b_zp * a_योग * a_scale_row[mi] * zeros_fp16[ci];
                     }
                 }
             }
 
-            for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                auto a_scale = a_scale_row[mi] * refactor_scale;
-                for (size_t ci = 0; ci < NB_COLS; ci++) {
+            क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+                स्वतः a_scale = a_scale_row[mi] * refactor_scale;
+                क्रम (माप_प्रकार ci = 0; ci < NB_COLS; ci++) {
                     output[ci + mi * NB_COLS] += output_f16[ci + mi * NB_COLS] * a_scale;
                 }
             }
         }
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            for (size_t ci = 0; ci < nb_real; ci++) {
+        क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+            क्रम (माप_प्रकार ci = 0; ci < nb_real; ci++) {
                 c_ptr[mi * ldc + ci] = output[mi * NB_COLS + ci];
             }
         }
     }
 }
 
-template <size_t MB_ROWS, size_t NB_COLS>
-void gemm_kernel_i8i3k_mrow_ref(size_t          blk_len,
-                                const uint8_t * quant_a_ptr,
-                                const uint8_t * quant_b_data,
-                                float *         c_ptr,
-                                size_t          count_m,
-                                size_t          count_n,
-                                size_t          k_blks,
-                                size_t          ldc) {
+ढाँचा <माप_प्रकार MB_ROWS, माप_प्रकार NB_COLS>
+व्योम gemm_kernel_i8i3k_mrow_ref(माप_प्रकार          blk_len,
+                                स्थिर uint8_t * quant_a_ptr,
+                                स्थिर uint8_t * quant_b_तथ्य,
+                                भग्न *         c_ptr,
+                                माप_प्रकार          गिनती_m,
+                                माप_प्रकार          गिनती_n,
+                                माप_प्रकार          k_blks,
+                                माप_प्रकार          ldc) {
     using blk_type                 = nrow_block_q2_k<NB_COLS>;
-    constexpr float refactor_scale = 16.0f;
-    constexpr float factor_scale   = 1.0f / refactor_scale;
+    constexpr भग्न refactor_scale = 16.0f;
+    constexpr भग्न factor_scale   = 1.0f / refactor_scale;
 
-    int64_t a_blk_stride        = q8k_blk_size(256);
+    int64_t a_blk_stride        = q8k_blk_आकार(256);
     int64_t a_nrow_block_stride = a_blk_stride * MB_ROWS;
-    int64_t b_ncol_block_stride = sizeof(blk_type);
+    int64_t b_ncol_block_stride = माप(blk_type);
 
-    float    output[MB_ROWS * NB_COLS]     = { 0 };
+    भग्न    output[MB_ROWS * NB_COLS]     = { 0 };
     _Float16 output_f16[MB_ROWS * NB_COLS] = { 0 };
 
-    blk_type * quant_b_blk_data = (blk_type *) (quant_b_data);
+    blk_type * quant_b_blk_तथ्य = (blk_type *) (quant_b_तथ्य);
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-        size_t nb_real = std::min<size_t>(NB_COLS, count_n - ni);
+    क्रम (माप_प्रकार ni = 0; ni < गिनती_n; ni += NB_COLS, c_ptr += NB_COLS) {
+        माप_प्रकार nb_real = std::min<माप_प्रकार>(NB_COLS, गिनती_n - ni);
 
-        int8_t * a_data = (int8_t *) quant_a_ptr + sizeof(float) * MB_ROWS + sizeof(int16_t) * MB_ROWS * 16;
+        int8_t * a_तथ्य = (int8_t *) quant_a_ptr + माप(भग्न) * MB_ROWS + माप(int16_t) * MB_ROWS * 16;
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            for (size_t ci = 0; ci < NB_COLS; ci++) {
+        क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+            क्रम (माप_प्रकार ci = 0; ci < NB_COLS; ci++) {
                 output[ci + mi * NB_COLS] = 0;
             }
         }
 
-        for (size_t ki = 0; ki < k_blks; ki++, quant_b_blk_data++, a_data += a_nrow_block_stride) {
-            uint8_t * b_data   = quant_b_blk_data->qs;
-            uint8_t * b_hmask  = quant_b_blk_data->hmask;
-            int8_t *  scales   = quant_b_blk_data->scales;
-            uint8_t * scales16 = (uint8_t *) (quant_b_blk_data->scales16);
+        क्रम (माप_प्रकार ki = 0; ki < k_blks; ki++, quant_b_blk_तथ्य++, a_तथ्य += a_nrow_block_stride) {
+            uint8_t * b_तथ्य   = quant_b_blk_तथ्य->qs;
+            uint8_t * b_hmask  = quant_b_blk_तथ्य->hmask;
+            int8_t *  scales   = quant_b_blk_तथ्य->scales;
+            uint8_t * scales16 = (uint8_t *) (quant_b_blk_तथ्य->scales16);
 
             _Float16 * scales_fp16 = (_Float16 *) scales16;
 
-            float *   a_scale_row = (float *) (a_data - sizeof(float) * MB_ROWS - sizeof(int16_t) * MB_ROWS * 16);
-            int16_t * a_sum_row   = (int16_t *) (a_data - sizeof(int16_t) * MB_ROWS * 16);
+            भग्न *   a_scale_row = (भग्न *) (a_तथ्य - माप(भग्न) * MB_ROWS - माप(int16_t) * MB_ROWS * 16);
+            int16_t * a_योग_row   = (int16_t *) (a_तथ्य - माप(int16_t) * MB_ROWS * 16);
 
-            memset(output_f16, 0, sizeof(output_f16));
+            स_रखो(output_f16, 0, माप(output_f16));
 
-            int8_t *   scales_temp = scales;
+            int8_t *   scales_अस्थायी = scales;
             uint16_t * b_mask_col  = (uint16_t *) b_hmask;
 
-            float acc_0_max = 0.0f;
-            for (size_t kii = 0; kii < 16; kii++, scales_temp += NB_COLS, b_mask_col += NB_COLS) {
-                size_t b_shift = (kii % 4) * 2;
+            भग्न acc_0_max = 0.0f;
+            क्रम (माप_प्रकार kii = 0; kii < 16; kii++, scales_अस्थायी += NB_COLS, b_mask_col += NB_COLS) {
+                माप_प्रकार b_shift = (kii % 4) * 2;
 
-                uint8_t * b_data_col = b_data + (kii / 4) * NB_COLS * 16;
+                uint8_t * b_तथ्य_col = b_तथ्य + (kii / 4) * NB_COLS * 16;
 
-                for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                    for (size_t ci = 0; ci < NB_COLS; ci++) {
+                क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+                    क्रम (माप_प्रकार ci = 0; ci < NB_COLS; ci++) {
                         _Float16 acc_0        = 0;
                         // blk 2 * kii + 0
                         uint16_t b_shift_mask = 1;
-                        for (size_t bi = 0; bi < 16; bi++, b_shift_mask <<= 1) {
-                            int8_t a0 = a_data[mi * 256 + bi + kii * 16];
-                            int8_t b0 = static_cast<int8_t>((b_data_col[ci * 16 + bi] >> b_shift) & 0x03);
+                        क्रम (माप_प्रकार bi = 0; bi < 16; bi++, b_shift_mask <<= 1) {
+                            int8_t a0 = a_तथ्य[mi * 256 + bi + kii * 16];
+                            int8_t b0 = static_cast<int8_t>((b_तथ्य_col[ci * 16 + bi] >> b_shift) & 0x03);
                             b0 -= b_mask_col[ci] & b_shift_mask ? 0 : 4;
                             acc_0 += static_cast<int16_t>(a0) * static_cast<int16_t>(b0);
                         }
 
-                        _Float16 scale_item = static_cast<_Float16>(scales_temp[ci]) * scales_fp16[ci] *
+                        _Float16 scale_item = static_cast<_Float16>(scales_अस्थायी[ci]) * scales_fp16[ci] *
                                               static_cast<_Float16>(factor_scale);
 
                         output_f16[ci + mi * NB_COLS] += acc_0 * scale_item;
@@ -198,192 +198,192 @@ void gemm_kernel_i8i3k_mrow_ref(size_t          blk_len,
                 }
             }
 
-            for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                auto a_scale = a_scale_row[mi] * refactor_scale;
-                for (size_t ci = 0; ci < NB_COLS; ci++) {
+            क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+                स्वतः a_scale = a_scale_row[mi] * refactor_scale;
+                क्रम (माप_प्रकार ci = 0; ci < NB_COLS; ci++) {
                     output[ci + mi * NB_COLS] += output_f16[ci + mi * NB_COLS] * a_scale;
                 }
             }
         }
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            for (size_t ci = 0; ci < nb_real; ci++) {
+        क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+            क्रम (माप_प्रकार ci = 0; ci < nb_real; ci++) {
                 c_ptr[mi * ldc + ci] = output[mi * NB_COLS + ci];
             }
         }
     }
 }
 
-template <size_t MB_ROWS, size_t NB_COLS>
-void gemm_kernel_i8i4_mrow_ref(size_t          blk_len,
-                               const uint8_t * quant_a_ptr,
-                               const uint8_t * quant_b_data,
-                               const uint8_t * quant_b_zp,
-                               float *         c_ptr,
-                               size_t          count_m,
-                               size_t          count_n,
-                               size_t          k_blks,
-                               size_t          ldc) {
-    constexpr size_t kblks_per_blk = 16;
+ढाँचा <माप_प्रकार MB_ROWS, माप_प्रकार NB_COLS>
+व्योम gemm_kernel_i8i4_mrow_ref(माप_प्रकार          blk_len,
+                               स्थिर uint8_t * quant_a_ptr,
+                               स्थिर uint8_t * quant_b_तथ्य,
+                               स्थिर uint8_t * quant_b_zp,
+                               भग्न *         c_ptr,
+                               माप_प्रकार          गिनती_m,
+                               माप_प्रकार          गिनती_n,
+                               माप_प्रकार          k_blks,
+                               माप_प्रकार          ldc) {
+    constexpr माप_प्रकार kblks_per_blk = 16;
     GGML_ASSERT(k_blks % kblks_per_blk == 0);
 
-    int64_t b_blk_stride        = (sizeof(_Float16) + (blk_len / 2) + (quant_b_zp ? sizeof(uint8_t) : 0));
+    int64_t b_blk_stride        = (माप(_Float16) + (blk_len / 2) + (quant_b_zp ? माप(uint8_t) : 0));
     int64_t b_stride            = k_blks * b_blk_stride;
-    int64_t a_blk_stride        = q8_blk_size(blk_len, true);
+    int64_t a_blk_stride        = q8_blk_आकार(blk_len, true);
     int64_t a_nrow_block_stride = a_blk_stride * MB_ROWS;
     int64_t b_ncol_block_stride = b_blk_stride * NB_COLS;
 
-    float    output[MB_ROWS * NB_COLS]     = { 0 };
+    भग्न    output[MB_ROWS * NB_COLS]     = { 0 };
     _Float16 output_f16[MB_ROWS * NB_COLS] = { 0 };
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-        size_t    nb_real = std::min<size_t>(NB_COLS, count_n - ni);
-        uint8_t * b_data  = (uint8_t *) quant_b_data + ni * b_stride + NB_COLS * sizeof(_Float16);
-        if (quant_b_zp) {
-            b_data += NB_COLS * sizeof(uint8_t);
+    क्रम (माप_प्रकार ni = 0; ni < गिनती_n; ni += NB_COLS, c_ptr += NB_COLS) {
+        माप_प्रकार    nb_real = std::min<माप_प्रकार>(NB_COLS, गिनती_n - ni);
+        uint8_t * b_तथ्य  = (uint8_t *) quant_b_तथ्य + ni * b_stride + NB_COLS * माप(_Float16);
+        अगर (quant_b_zp) {
+            b_तथ्य += NB_COLS * माप(uint8_t);
         }
 
-        int8_t * a_data = (int8_t *) quant_a_ptr + sizeof(float) * MB_ROWS + sizeof(int16_t) * MB_ROWS;
+        int8_t * a_तथ्य = (int8_t *) quant_a_ptr + माप(भग्न) * MB_ROWS + माप(int16_t) * MB_ROWS;
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            for (size_t ci = 0; ci < NB_COLS; ci++) {
+        क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+            क्रम (माप_प्रकार ci = 0; ci < NB_COLS; ci++) {
                 output[ci + mi * NB_COLS]     = 0.0f;
                 output_f16[ci + mi * NB_COLS] = static_cast<_Float16>(0.0f);
             }
         }
 
-        size_t kii = 0;
-        for (size_t ki = 0; ki < k_blks; ki++, a_data += a_nrow_block_stride, b_data += b_ncol_block_stride) {
-            _Float16 * b_scale_fp16 = (_Float16 *) (b_data - NB_COLS * sizeof(_Float16));
+        माप_प्रकार kii = 0;
+        क्रम (माप_प्रकार ki = 0; ki < k_blks; ki++, a_तथ्य += a_nrow_block_stride, b_तथ्य += b_ncol_block_stride) {
+            _Float16 * b_scale_fp16 = (_Float16 *) (b_तथ्य - NB_COLS * माप(_Float16));
             uint8_t *  b_zp         = nullptr;
-            if (quant_b_zp) {
-                b_scale_fp16 = (_Float16 *) (b_data - NB_COLS * sizeof(_Float16) - NB_COLS * sizeof(uint8_t));
-                b_zp         = (uint8_t *) (b_data - NB_COLS * sizeof(uint8_t));
+            अगर (quant_b_zp) {
+                b_scale_fp16 = (_Float16 *) (b_तथ्य - NB_COLS * माप(_Float16) - NB_COLS * माप(uint8_t));
+                b_zp         = (uint8_t *) (b_तथ्य - NB_COLS * माप(uint8_t));
             }
 
-            float *   a_scale_row = (float *) (a_data - sizeof(float) * MB_ROWS - sizeof(int16_t) * MB_ROWS);
-            int16_t * a_sum_row   = (int16_t *) (a_data - sizeof(int16_t) * MB_ROWS);
+            भग्न *   a_scale_row = (भग्न *) (a_तथ्य - माप(भग्न) * MB_ROWS - माप(int16_t) * MB_ROWS);
+            int16_t * a_योग_row   = (int16_t *) (a_तथ्य - माप(int16_t) * MB_ROWS);
 
-            for (size_t mi = 0; mi < MB_ROWS; mi++) {
+            क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
                 _Float16 a_scale = a_scale_row[mi];
-                int16_t  a_sum   = a_sum_row[mi];
+                int16_t  a_योग   = a_योग_row[mi];
 
-                for (size_t ci = 0; ci < NB_COLS; ci++) {
+                क्रम (माप_प्रकार ci = 0; ci < NB_COLS; ci++) {
                     _Float16 b_scale = b_scale_fp16[ci];
                     int32_t  acc     = 0;
-                    if (b_zp) {
-                        acc += a_sum * b_zp[ci];
-                    } else {
-                        acc += a_sum * 8;
+                    अगर (b_zp) {
+                        acc += a_योग * b_zp[ci];
+                    } अन्यथा {
+                        acc += a_योग * 8;
                     }
-                    for (size_t bi = 0; bi < blk_len / 2; bi++) {
-                        int8_t  a0 = a_data[mi * blk_len + 2 * bi];
-                        int8_t  a1 = a_data[mi * blk_len + 2 * bi + 1];
-                        uint8_t b  = b_data[ci * blk_len / 2 + bi];
+                    क्रम (माप_प्रकार bi = 0; bi < blk_len / 2; bi++) {
+                        int8_t  a0 = a_तथ्य[mi * blk_len + 2 * bi];
+                        int8_t  a1 = a_तथ्य[mi * blk_len + 2 * bi + 1];
+                        uint8_t b  = b_तथ्य[ci * blk_len / 2 + bi];
                         int8_t  b0 = static_cast<int8_t>(b & 0x0F);
                         int8_t  b1 = static_cast<int8_t>((b & 0xF0) >> 4);
                         acc += static_cast<int32_t>(a0) * static_cast<int32_t>(b0) +
                                static_cast<int32_t>(a1) * static_cast<int32_t>(b1);
                     }
                     output_f16[ci + mi * NB_COLS] +=
-                        static_cast<float>(acc) * static_cast<float>(a_scale) * static_cast<float>(b_scale);
+                        static_cast<भग्न>(acc) * static_cast<भग्न>(a_scale) * static_cast<भग्न>(b_scale);
                 }
             }
 
-            if (kii == kblks_per_blk - 1) {
-                for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                    for (size_t ci = 0; ci < NB_COLS; ci++) {
-                        output[ci + mi * NB_COLS] += static_cast<float>(output_f16[ci + mi * NB_COLS]);
+            अगर (kii == kblks_per_blk - 1) {
+                क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+                    क्रम (माप_प्रकार ci = 0; ci < NB_COLS; ci++) {
+                        output[ci + mi * NB_COLS] += static_cast<भग्न>(output_f16[ci + mi * NB_COLS]);
                         output_f16[ci + mi * NB_COLS] = 0.0f;
                     }
                 }
                 kii = 0;
-            } else {
+            } अन्यथा {
                 kii++;
             }
         }
 
-        if (kii == kblks_per_blk - 1) {
-            for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                for (size_t ci = 0; ci < NB_COLS; ci++) {
-                    output[ci + mi * NB_COLS] += static_cast<float>(output_f16[ci + mi * NB_COLS]);
+        अगर (kii == kblks_per_blk - 1) {
+            क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+                क्रम (माप_प्रकार ci = 0; ci < NB_COLS; ci++) {
+                    output[ci + mi * NB_COLS] += static_cast<भग्न>(output_f16[ci + mi * NB_COLS]);
                     output_f16[ci + mi * NB_COLS] = 0.0f;
                 }
             }
             kii = 0;
         }
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            for (size_t ci = 0; ci < nb_real; ci++) {
+        क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+            क्रम (माप_प्रकार ci = 0; ci < nb_real; ci++) {
                 c_ptr[mi * ldc + ci] = output[mi * NB_COLS + ci];
             }
         }
     }
 }
 
-template <size_t MB_ROWS, size_t NB_COLS>
-void gemm_kernel_i8i4_hp_mrow_ref(size_t          blk_len,
-                                  const uint8_t * quant_a_ptr,
-                                  const uint8_t * quant_b_data,
-                                  const uint8_t * quant_b_zp,
-                                  float *         c_ptr,
-                                  size_t          count_m,
-                                  size_t          count_n,
-                                  size_t          k_blks,
-                                  size_t          ldc) {
-    constexpr size_t k_subblks_per_superblk = 8;
+ढाँचा <माप_प्रकार MB_ROWS, माप_प्रकार NB_COLS>
+व्योम gemm_kernel_i8i4_hp_mrow_ref(माप_प्रकार          blk_len,
+                                  स्थिर uint8_t * quant_a_ptr,
+                                  स्थिर uint8_t * quant_b_तथ्य,
+                                  स्थिर uint8_t * quant_b_zp,
+                                  भग्न *         c_ptr,
+                                  माप_प्रकार          गिनती_m,
+                                  माप_प्रकार          गिनती_n,
+                                  माप_प्रकार          k_blks,
+                                  माप_प्रकार          ldc) {
+    constexpr माप_प्रकार k_subblks_per_superblk = 8;
 
-    struct block_q4_0x32_layout {
+    काष्ठा block_q4_0x32_layout {
         _Float16 d[NB_COLS];
         uint8_t  qs[16 * NB_COLS];
     };
 
     GGML_ASSERT(blk_len == 256);
 
-    const size_t b_superblk_stride = sizeof(block_q4_0x32_layout) * k_subblks_per_superblk +
-                                     (quant_b_zp ? NB_COLS * k_subblks_per_superblk * sizeof(uint8_t) : 0);
-    const size_t b_tile_stride = k_blks * b_superblk_stride;
+    स्थिर माप_प्रकार b_superblk_stride = माप(block_q4_0x32_layout) * k_subblks_per_superblk +
+                                     (quant_b_zp ? NB_COLS * k_subblks_per_superblk * माप(uint8_t) : 0);
+    स्थिर माप_प्रकार b_tile_stride = k_blks * b_superblk_stride;
 
-    const size_t a_nrow_block_stride = q8_hp_blk_size(blk_len, true, true) * MB_ROWS;
-    const size_t a_subblk_stride     = q8_hp_blk_size(32, false, false) * MB_ROWS;
+    स्थिर माप_प्रकार a_nrow_block_stride = q8_hp_blk_आकार(blk_len, true, true) * MB_ROWS;
+    स्थिर माप_प्रकार a_subblk_stride     = q8_hp_blk_आकार(32, false, false) * MB_ROWS;
 
-    float output[MB_ROWS * NB_COLS] = { 0 };
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-        size_t          nb_real     = std::min<size_t>(NB_COLS, count_n - ni);
-        const uint8_t * b_tile_base = quant_b_data + (ni / NB_COLS) * b_tile_stride;
-        int8_t *        a_data      = (int8_t *) quant_a_ptr;
+    भग्न output[MB_ROWS * NB_COLS] = { 0 };
+    क्रम (माप_प्रकार ni = 0; ni < गिनती_n; ni += NB_COLS, c_ptr += NB_COLS) {
+        माप_प्रकार          nb_real     = std::min<माप_प्रकार>(NB_COLS, गिनती_n - ni);
+        स्थिर uint8_t * b_tile_base = quant_b_तथ्य + (ni / NB_COLS) * b_tile_stride;
+        int8_t *        a_तथ्य      = (int8_t *) quant_a_ptr;
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            for (size_t ci = 0; ci < NB_COLS; ci++) {
+        क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+            क्रम (माप_प्रकार ci = 0; ci < NB_COLS; ci++) {
                 output[ci + mi * NB_COLS] = 0.0f;
             }
         }
 
-        for (size_t ki = 0; ki < k_blks; ki++, a_data += a_nrow_block_stride) {
+        क्रम (माप_प्रकार ki = 0; ki < k_blks; ki++, a_तथ्य += a_nrow_block_stride) {
             _Float16 output_f16[MB_ROWS * NB_COLS] = { 0 };
 
-            const uint8_t *              b_superblk_ptr = b_tile_base + ki * b_superblk_stride;
-            const block_q4_0x32_layout * b_blocks = reinterpret_cast<const block_q4_0x32_layout *>(b_superblk_ptr);
-            const uint8_t *              b_zps =
-                quant_b_zp ? b_superblk_ptr + sizeof(block_q4_0x32_layout) * k_subblks_per_superblk : nullptr;
+            स्थिर uint8_t *              b_superblk_ptr = b_tile_base + ki * b_superblk_stride;
+            स्थिर block_q4_0x32_layout * b_blocks = reinterpret_cast<स्थिर block_q4_0x32_layout *>(b_superblk_ptr);
+            स्थिर uint8_t *              b_zps =
+                quant_b_zp ? b_superblk_ptr + माप(block_q4_0x32_layout) * k_subblks_per_superblk : nullptr;
 
-            _Float16 * a_sum_row       = (_Float16 *) (a_data + a_subblk_stride * k_subblks_per_superblk);
-            _Float16 * a_scale_avg_row = (_Float16 *) (a_data + a_nrow_block_stride - sizeof(_Float16) * MB_ROWS);
+            _Float16 * a_योग_row       = (_Float16 *) (a_तथ्य + a_subblk_stride * k_subblks_per_superblk);
+            _Float16 * a_scale_avg_row = (_Float16 *) (a_तथ्य + a_nrow_block_stride - माप(_Float16) * MB_ROWS);
             _Float16   scale_factor    = a_scale_avg_row[0];
 
-            for (size_t ksi = 0; ksi < k_subblks_per_superblk; ++ksi) {
-                const _Float16 * a_scale_row = reinterpret_cast<const _Float16 *>(a_data + a_subblk_stride * ksi);
-                int8_t *         a_subblk    = a_data + a_subblk_stride * ksi + MB_ROWS * sizeof(_Float16);
-                const _Float16   a_scale     = a_scale_row[0];
-                const block_q4_0x32_layout & b_block = b_blocks[ksi];
+            क्रम (माप_प्रकार ksi = 0; ksi < k_subblks_per_superblk; ++ksi) {
+                स्थिर _Float16 * a_scale_row = reinterpret_cast<स्थिर _Float16 *>(a_तथ्य + a_subblk_stride * ksi);
+                int8_t *         a_subblk    = a_तथ्य + a_subblk_stride * ksi + MB_ROWS * माप(_Float16);
+                स्थिर _Float16   a_scale     = a_scale_row[0];
+                स्थिर block_q4_0x32_layout & b_block = b_blocks[ksi];
 
-                for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                    for (size_t ci = 0; ci < NB_COLS; ci++) {
-                        const uint8_t * b_qs    = b_block.qs + ci * 16;
+                क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+                    क्रम (माप_प्रकार ci = 0; ci < NB_COLS; ci++) {
+                        स्थिर uint8_t * b_qs    = b_block.qs + ci * 16;
                         _Float16        b_scale = b_block.d[ci] * a_scale;
 
                         int16_t acc = 0;
-                        for (size_t bi = 0; bi < 16; bi++) {
+                        क्रम (माप_प्रकार bi = 0; bi < 16; bi++) {
                             uint8_t b  = b_qs[bi];
                             int8_t  b0 = static_cast<int8_t>(b & 0x0F);
                             int8_t  b1 = static_cast<int8_t>((b & 0xF0) >> 4);
@@ -392,203 +392,203 @@ void gemm_kernel_i8i4_hp_mrow_ref(size_t          blk_len,
                                    static_cast<int16_t>(a_subblk[mi * 32 + 2 * bi + 1]) * static_cast<int16_t>(b1);
                         }
 
-                        const _Float16 scaled_acc = static_cast<_Float16>(acc) * b_scale;
+                        स्थिर _Float16 scaled_acc = static_cast<_Float16>(acc) * b_scale;
                         output_f16[ci + mi * NB_COLS] += scaled_acc;
                     }
                 }
             }
 
-            for (size_t ksi = 0; ksi < k_subblks_per_superblk; ++ksi) {
-                const _Float16 * a_scale_row = reinterpret_cast<const _Float16 *>(a_data + a_subblk_stride * ksi);
-                const block_q4_0x32_layout & b_block  = b_blocks[ksi];
-                const uint8_t *              b_zp_row = b_zps ? b_zps + ksi * NB_COLS : nullptr;
-                const _Float16               a_scale  = a_scale_row[0];
+            क्रम (माप_प्रकार ksi = 0; ksi < k_subblks_per_superblk; ++ksi) {
+                स्थिर _Float16 * a_scale_row = reinterpret_cast<स्थिर _Float16 *>(a_तथ्य + a_subblk_stride * ksi);
+                स्थिर block_q4_0x32_layout & b_block  = b_blocks[ksi];
+                स्थिर uint8_t *              b_zp_row = b_zps ? b_zps + ksi * NB_COLS : nullptr;
+                स्थिर _Float16               a_scale  = a_scale_row[0];
 
-                for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                    const _Float16 a_sum = a_sum_row[mi * k_subblks_per_superblk + ksi];
-                    for (size_t ci = 0; ci < NB_COLS; ci++) {
+                क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+                    स्थिर _Float16 a_योग = a_योग_row[mi * k_subblks_per_superblk + ksi];
+                    क्रम (माप_प्रकार ci = 0; ci < NB_COLS; ci++) {
                         _Float16 b_scale   = b_block.d[ci] * a_scale;
-                        _Float16 a_sum_bzp = a_sum;
-                        if (b_zp_row) {
-                            a_sum_bzp = a_sum * static_cast<_Float16>(0.125f) * static_cast<_Float16>(b_zp_row[ci]);
+                        _Float16 a_योग_bzp = a_योग;
+                        अगर (b_zp_row) {
+                            a_योग_bzp = a_योग * static_cast<_Float16>(0.125f) * static_cast<_Float16>(b_zp_row[ci]);
                         }
 
-                        const _Float16 scaled_acc = a_sum_bzp * b_scale;
+                        स्थिर _Float16 scaled_acc = a_योग_bzp * b_scale;
                         output[ci + mi * NB_COLS] += scaled_acc * scale_factor;
                     }
                 }
             }
 
-            for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                for (size_t ci = 0; ci < NB_COLS; ci++) {
-                    auto val = static_cast<float>(output_f16[ci + mi * NB_COLS]) * static_cast<float>(scale_factor);
+            क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+                क्रम (माप_प्रकार ci = 0; ci < NB_COLS; ci++) {
+                    स्वतः val = static_cast<भग्न>(output_f16[ci + mi * NB_COLS]) * static_cast<भग्न>(scale_factor);
                     output[ci + mi * NB_COLS] += val;
                 }
             }
         }
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            for (size_t ci = 0; ci < nb_real; ci++) {
+        क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+            क्रम (माप_प्रकार ci = 0; ci < nb_real; ci++) {
                 c_ptr[mi * ldc + ci] = output[mi * NB_COLS + ci];
             }
         }
     }
 }
 
-template <size_t MB_ROWS, size_t NB_COLS>
-void moe_gemm_kernel_i8i4_mrow_ref(size_t           blk_len,
-                                   const uint8_t ** quant_a_ptr,
-                                   const uint8_t *  quant_b_data,
-                                   const uint8_t *  quant_b_zp,
-                                   float **         c_ptr,
-                                   size_t           count_m,
-                                   size_t           count_n,
-                                   size_t           k_blks,
-                                   size_t           ldc) {
-    int64_t b_blk_stride        = (sizeof(ggml_fp16_t) + (blk_len / 2) + (quant_b_zp ? sizeof(uint8_t) : 0));
+ढाँचा <माप_प्रकार MB_ROWS, माप_प्रकार NB_COLS>
+व्योम moe_gemm_kernel_i8i4_mrow_ref(माप_प्रकार           blk_len,
+                                   स्थिर uint8_t ** quant_a_ptr,
+                                   स्थिर uint8_t *  quant_b_तथ्य,
+                                   स्थिर uint8_t *  quant_b_zp,
+                                   भग्न **         c_ptr,
+                                   माप_प्रकार           गिनती_m,
+                                   माप_प्रकार           गिनती_n,
+                                   माप_प्रकार           k_blks,
+                                   माप_प्रकार           ldc) {
+    int64_t b_blk_stride        = (माप(ggml_fp16_t) + (blk_len / 2) + (quant_b_zp ? माप(uint8_t) : 0));
     int64_t b_stride            = k_blks * b_blk_stride;
-    int64_t a_blk_stride        = q8_blk_size(blk_len, true);
+    int64_t a_blk_stride        = q8_blk_आकार(blk_len, true);
     int64_t b_ncol_block_stride = b_blk_stride * NB_COLS;
 
-    float                         output[MB_ROWS * NB_COLS] = { 0 };
-    std::array<int8_t *, MB_ROWS> a_data;
-    std::array<float *, MB_ROWS>  c_data;
+    भग्न                         output[MB_ROWS * NB_COLS] = { 0 };
+    std::array<int8_t *, MB_ROWS> a_तथ्य;
+    std::array<भग्न *, MB_ROWS>  c_तथ्य;
 
-    for (size_t mi = 0; mi < MB_ROWS; mi++) {
-        c_data[mi] = c_ptr[mi];
+    क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+        c_तथ्य[mi] = c_ptr[mi];
     }
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-        size_t    nb_real = std::min<size_t>(NB_COLS, count_n - ni);
-        uint8_t * b_data  = (uint8_t *) quant_b_data + ni * b_stride + NB_COLS * sizeof(ggml_fp16_t);
-        if (quant_b_zp) {
-            b_data += NB_COLS * sizeof(uint8_t);
+    क्रम (माप_प्रकार ni = 0; ni < गिनती_n; ni += NB_COLS) {
+        माप_प्रकार    nb_real = std::min<माप_प्रकार>(NB_COLS, गिनती_n - ni);
+        uint8_t * b_तथ्य  = (uint8_t *) quant_b_तथ्य + ni * b_stride + NB_COLS * माप(ggml_fp16_t);
+        अगर (quant_b_zp) {
+            b_तथ्य += NB_COLS * माप(uint8_t);
         }
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            a_data[mi] = (int8_t *) quant_a_ptr[mi] + sizeof(float) + sizeof(int16_t);
+        क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+            a_तथ्य[mi] = (int8_t *) quant_a_ptr[mi] + माप(भग्न) + माप(int16_t);
         }
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            for (size_t ci = 0; ci < NB_COLS; ci++) {
+        क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+            क्रम (माप_प्रकार ci = 0; ci < NB_COLS; ci++) {
                 output[ci + mi * NB_COLS] = 0;
             }
         }
 
-        for (size_t ki = 0; ki < k_blks; ki++, b_data += b_ncol_block_stride) {
-            ggml_fp16_t * b_scale_fp16 = (ggml_fp16_t *) (b_data - NB_COLS * sizeof(ggml_fp16_t));
+        क्रम (माप_प्रकार ki = 0; ki < k_blks; ki++, b_तथ्य += b_ncol_block_stride) {
+            ggml_fp16_t * b_scale_fp16 = (ggml_fp16_t *) (b_तथ्य - NB_COLS * माप(ggml_fp16_t));
             uint8_t *     b_zp         = nullptr;
-            if (quant_b_zp) {
-                b_scale_fp16 = (ggml_fp16_t *) (b_data - NB_COLS * sizeof(ggml_fp16_t) - NB_COLS * sizeof(uint8_t));
-                b_zp         = (uint8_t *) (b_data - NB_COLS * sizeof(uint8_t));
+            अगर (quant_b_zp) {
+                b_scale_fp16 = (ggml_fp16_t *) (b_तथ्य - NB_COLS * माप(ggml_fp16_t) - NB_COLS * माप(uint8_t));
+                b_zp         = (uint8_t *) (b_तथ्य - NB_COLS * माप(uint8_t));
             }
 
-            for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                float *   a_scale_row = (float *) (a_data[mi] - sizeof(float) - sizeof(int16_t));
-                int16_t * a_sum_row   = (int16_t *) (a_data[mi] - sizeof(int16_t));
+            क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+                भग्न *   a_scale_row = (भग्न *) (a_तथ्य[mi] - माप(भग्न) - माप(int16_t));
+                int16_t * a_योग_row   = (int16_t *) (a_तथ्य[mi] - माप(int16_t));
 
-                float   a_scale = *a_scale_row;
-                int16_t a_sum   = *a_sum_row;
+                भग्न   a_scale = *a_scale_row;
+                int16_t a_योग   = *a_योग_row;
 
-                for (size_t ci = 0; ci < NB_COLS; ci++) {
-                    float   b_scale = ggml_fp16_to_fp32(b_scale_fp16[ci]);
+                क्रम (माप_प्रकार ci = 0; ci < NB_COLS; ci++) {
+                    भग्न   b_scale = ggml_fp16_to_fp32(b_scale_fp16[ci]);
                     int32_t acc     = 0;
-                    if (b_zp) {
-                        acc += a_sum * b_zp[ci];
-                    } else {
-                        acc += a_sum * 8;
+                    अगर (b_zp) {
+                        acc += a_योग * b_zp[ci];
+                    } अन्यथा {
+                        acc += a_योग * 8;
                     }
-                    for (size_t bi = 0; bi < blk_len / 2; bi++) {
-                        int8_t  a0 = (a_data[mi])[2 * bi];
-                        int8_t  a1 = (a_data[mi])[2 * bi + 1];
-                        uint8_t b  = b_data[ci * blk_len / 2 + bi];
+                    क्रम (माप_प्रकार bi = 0; bi < blk_len / 2; bi++) {
+                        int8_t  a0 = (a_तथ्य[mi])[2 * bi];
+                        int8_t  a1 = (a_तथ्य[mi])[2 * bi + 1];
+                        uint8_t b  = b_तथ्य[ci * blk_len / 2 + bi];
                         int8_t  b0 = static_cast<int8_t>(b & 0x0F);
                         int8_t  b1 = static_cast<int8_t>((b & 0xF0) >> 4);
                         acc += static_cast<int32_t>(a0) * static_cast<int32_t>(b0) +
                                static_cast<int32_t>(a1) * static_cast<int32_t>(b1);
                     }
-                    output[ci + mi * NB_COLS] += static_cast<float>(acc) * a_scale * b_scale;
+                    output[ci + mi * NB_COLS] += static_cast<भग्न>(acc) * a_scale * b_scale;
                 }
             }
 
-            for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                a_data[mi] += a_blk_stride;
+            क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+                a_तथ्य[mi] += a_blk_stride;
             }
         }
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            for (size_t ci = 0; ci < nb_real; ci++) {
-                (c_data[mi])[ci] = output[mi * NB_COLS + ci];
+        क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+            क्रम (माप_प्रकार ci = 0; ci < nb_real; ci++) {
+                (c_तथ्य[mi])[ci] = output[mi * NB_COLS + ci];
             }
         }
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            c_data[mi] += NB_COLS;
+        क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+            c_तथ्य[mi] += NB_COLS;
         }
     }
 }
 
-template <size_t MB_ROWS, size_t NB_COLS>
-void moe_gemm_kernel_i8i5_mrow_ref(size_t           blk_len,
-                                   const uint8_t ** quant_a_ptr,
-                                   const uint8_t *  quant_b_data,
-                                   const uint8_t *  quant_b_zp,
-                                   float **         c_ptr,
-                                   size_t           count_m,
-                                   size_t           count_n,
-                                   size_t           k_blks,
-                                   size_t           ldc) {
-    GGML_UNUSED(count_m);
+ढाँचा <माप_प्रकार MB_ROWS, माप_प्रकार NB_COLS>
+व्योम moe_gemm_kernel_i8i5_mrow_ref(माप_प्रकार           blk_len,
+                                   स्थिर uint8_t ** quant_a_ptr,
+                                   स्थिर uint8_t *  quant_b_तथ्य,
+                                   स्थिर uint8_t *  quant_b_zp,
+                                   भग्न **         c_ptr,
+                                   माप_प्रकार           गिनती_m,
+                                   माप_प्रकार           गिनती_n,
+                                   माप_प्रकार           k_blks,
+                                   माप_प्रकार           ldc) {
+    GGML_UNUSED(गिनती_m);
     GGML_UNUSED(ldc);
 
     // blk_len is expected to be 32 for Q5 types.
-    int64_t a_blk_stride = q8_blk_size(blk_len, true);
+    int64_t a_blk_stride = q8_blk_आकार(blk_len, true);
 
-    float                         output[MB_ROWS * NB_COLS] = { 0 };
-    std::array<int8_t *, MB_ROWS> a_data;
-    std::array<float *, MB_ROWS>  c_data;
+    भग्न                         output[MB_ROWS * NB_COLS] = { 0 };
+    std::array<int8_t *, MB_ROWS> a_तथ्य;
+    std::array<भग्न *, MB_ROWS>  c_तथ्य;
 
-    for (size_t mi = 0; mi < MB_ROWS; ++mi) {
-        c_data[mi] = c_ptr[mi];
+    क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; ++mi) {
+        c_तथ्य[mi] = c_ptr[mi];
     }
 
-    if (quant_b_zp) {
+    अगर (quant_b_zp) {
         using blk_type = nrow_block_q5_1<NB_COLS>;
 
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-            size_t     nb_real          = std::min<size_t>(NB_COLS, count_n - ni);
-            blk_type * quant_b_blk_data = (blk_type *) quant_b_data + (ni / NB_COLS) * k_blks;
+        क्रम (माप_प्रकार ni = 0; ni < गिनती_n; ni += NB_COLS) {
+            माप_प्रकार     nb_real          = std::min<माप_प्रकार>(NB_COLS, गिनती_n - ni);
+            blk_type * quant_b_blk_तथ्य = (blk_type *) quant_b_तथ्य + (ni / NB_COLS) * k_blks;
 
-            for (size_t mi = 0; mi < MB_ROWS; ++mi) {
-                a_data[mi] = (int8_t *) quant_a_ptr[mi] + sizeof(float) + sizeof(int16_t);
+            क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; ++mi) {
+                a_तथ्य[mi] = (int8_t *) quant_a_ptr[mi] + माप(भग्न) + माप(int16_t);
             }
 
-            for (size_t mi = 0; mi < MB_ROWS; ++mi) {
-                for (size_t ci = 0; ci < NB_COLS; ++ci) {
+            क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; ++mi) {
+                क्रम (माप_प्रकार ci = 0; ci < NB_COLS; ++ci) {
                     output[ci + mi * NB_COLS] = 0;
                 }
             }
 
-            for (size_t ki = 0; ki < k_blks; ++ki, ++quant_b_blk_data) {
-                for (size_t mi = 0; mi < MB_ROWS; ++mi) {
-                    float *   a_scale_row = (float *) (a_data[mi] - sizeof(float) - sizeof(int16_t));
-                    int16_t * a_sum_row   = (int16_t *) (a_data[mi] - sizeof(int16_t));
-                    float     a_scale     = *a_scale_row;
-                    int16_t   a_sum       = *a_sum_row;
+            क्रम (माप_प्रकार ki = 0; ki < k_blks; ++ki, ++quant_b_blk_तथ्य) {
+                क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; ++mi) {
+                    भग्न *   a_scale_row = (भग्न *) (a_तथ्य[mi] - माप(भग्न) - माप(int16_t));
+                    int16_t * a_योग_row   = (int16_t *) (a_तथ्य[mi] - माप(int16_t));
+                    भग्न     a_scale     = *a_scale_row;
+                    int16_t   a_योग       = *a_योग_row;
 
-                    for (size_t ci = 0; ci < NB_COLS; ++ci) {
-                        float   b_scale  = ggml_fp16_to_fp32(quant_b_blk_data->scales16[ci]);
-                        uint8_t b_zp_val = quant_b_blk_data->zp[ci];
-                        int32_t acc      = a_sum * static_cast<int32_t>(b_zp_val);
+                    क्रम (माप_प्रकार ci = 0; ci < NB_COLS; ++ci) {
+                        भग्न   b_scale  = ggml_fp16_to_fp32(quant_b_blk_तथ्य->scales16[ci]);
+                        uint8_t b_zp_val = quant_b_blk_तथ्य->zp[ci];
+                        int32_t acc      = a_योग * static_cast<int32_t>(b_zp_val);
 
-                        for (size_t bi = 0; bi < blk_len / 2; ++bi) {
-                            int8_t  a0       = a_data[mi][2 * bi];
-                            int8_t  a1       = a_data[mi][2 * bi + 1];
-                            uint8_t qs_byte  = quant_b_blk_data->qs[ci * (blk_len / 2) + bi];
+                        क्रम (माप_प्रकार bi = 0; bi < blk_len / 2; ++bi) {
+                            int8_t  a0       = a_तथ्य[mi][2 * bi];
+                            int8_t  a1       = a_तथ्य[mi][2 * bi + 1];
+                            uint8_t qs_byte  = quant_b_blk_तथ्य->qs[ci * (blk_len / 2) + bi];
                             int8_t  b0       = static_cast<int8_t>(qs_byte & 0x0F);
                             int8_t  b1       = static_cast<int8_t>((qs_byte >> 4) & 0x0F);
-                            uint8_t qh_byte0 = quant_b_blk_data->qh[ci * 4 + (2 * bi) / 8];
-                            uint8_t qh_byte1 = quant_b_blk_data->qh[ci * 4 + (2 * bi + 1) / 8];
+                            uint8_t qh_byte0 = quant_b_blk_तथ्य->qh[ci * 4 + (2 * bi) / 8];
+                            uint8_t qh_byte1 = quant_b_blk_तथ्य->qh[ci * 4 + (2 * bi + 1) / 8];
                             uint8_t h0       = (qh_byte0 >> ((2 * bi) % 8)) & 1;
                             uint8_t h1       = (qh_byte1 >> ((2 * bi + 1) % 8)) & 1;
 
@@ -599,56 +599,56 @@ void moe_gemm_kernel_i8i5_mrow_ref(size_t           blk_len,
                                    static_cast<int32_t>(a1) * static_cast<int32_t>(b1);
                         }
 
-                        output[ci + mi * NB_COLS] += static_cast<float>(acc) * a_scale * b_scale;
+                        output[ci + mi * NB_COLS] += static_cast<भग्न>(acc) * a_scale * b_scale;
                     }
 
-                    a_data[mi] += a_blk_stride;
+                    a_तथ्य[mi] += a_blk_stride;
                 }
             }
 
-            for (size_t mi = 0; mi < MB_ROWS; ++mi) {
-                for (size_t ci = 0; ci < nb_real; ++ci) {
-                    c_data[mi][ci] = output[mi * NB_COLS + ci];
+            क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; ++mi) {
+                क्रम (माप_प्रकार ci = 0; ci < nb_real; ++ci) {
+                    c_तथ्य[mi][ci] = output[mi * NB_COLS + ci];
                 }
-                c_data[mi] += NB_COLS;
+                c_तथ्य[mi] += NB_COLS;
             }
         }
-    } else {
+    } अन्यथा {
         using blk_type = nrow_block_q5_0<NB_COLS>;
 
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-            size_t     nb_real          = std::min<size_t>(NB_COLS, count_n - ni);
-            blk_type * quant_b_blk_data = (blk_type *) quant_b_data + (ni / NB_COLS) * k_blks;
+        क्रम (माप_प्रकार ni = 0; ni < गिनती_n; ni += NB_COLS) {
+            माप_प्रकार     nb_real          = std::min<माप_प्रकार>(NB_COLS, गिनती_n - ni);
+            blk_type * quant_b_blk_तथ्य = (blk_type *) quant_b_तथ्य + (ni / NB_COLS) * k_blks;
 
-            for (size_t mi = 0; mi < MB_ROWS; ++mi) {
-                a_data[mi] = (int8_t *) quant_a_ptr[mi] + sizeof(float) + sizeof(int16_t);
+            क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; ++mi) {
+                a_तथ्य[mi] = (int8_t *) quant_a_ptr[mi] + माप(भग्न) + माप(int16_t);
             }
 
-            for (size_t mi = 0; mi < MB_ROWS; ++mi) {
-                for (size_t ci = 0; ci < NB_COLS; ++ci) {
+            क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; ++mi) {
+                क्रम (माप_प्रकार ci = 0; ci < NB_COLS; ++ci) {
                     output[ci + mi * NB_COLS] = 0;
                 }
             }
 
-            for (size_t ki = 0; ki < k_blks; ++ki, ++quant_b_blk_data) {
-                for (size_t mi = 0; mi < MB_ROWS; ++mi) {
-                    float *   a_scale_row = (float *) (a_data[mi] - sizeof(float) - sizeof(int16_t));
-                    int16_t * a_sum_row   = (int16_t *) (a_data[mi] - sizeof(int16_t));
-                    float     a_scale     = *a_scale_row;
-                    int16_t   a_sum       = *a_sum_row;
+            क्रम (माप_प्रकार ki = 0; ki < k_blks; ++ki, ++quant_b_blk_तथ्य) {
+                क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; ++mi) {
+                    भग्न *   a_scale_row = (भग्न *) (a_तथ्य[mi] - माप(भग्न) - माप(int16_t));
+                    int16_t * a_योग_row   = (int16_t *) (a_तथ्य[mi] - माप(int16_t));
+                    भग्न     a_scale     = *a_scale_row;
+                    int16_t   a_योग       = *a_योग_row;
 
-                    for (size_t ci = 0; ci < NB_COLS; ++ci) {
-                        float   b_scale = ggml_fp16_to_fp32(quant_b_blk_data->scales16[ci]);
-                        int32_t acc     = a_sum * 16;
+                    क्रम (माप_प्रकार ci = 0; ci < NB_COLS; ++ci) {
+                        भग्न   b_scale = ggml_fp16_to_fp32(quant_b_blk_तथ्य->scales16[ci]);
+                        int32_t acc     = a_योग * 16;
 
-                        for (size_t bi = 0; bi < blk_len / 2; ++bi) {
-                            int8_t  a0       = a_data[mi][2 * bi];
-                            int8_t  a1       = a_data[mi][2 * bi + 1];
-                            uint8_t qs_byte  = quant_b_blk_data->qs[ci * (blk_len / 2) + bi];
+                        क्रम (माप_प्रकार bi = 0; bi < blk_len / 2; ++bi) {
+                            int8_t  a0       = a_तथ्य[mi][2 * bi];
+                            int8_t  a1       = a_तथ्य[mi][2 * bi + 1];
+                            uint8_t qs_byte  = quant_b_blk_तथ्य->qs[ci * (blk_len / 2) + bi];
                             int8_t  b0       = static_cast<int8_t>(qs_byte & 0x0F);
                             int8_t  b1       = static_cast<int8_t>((qs_byte >> 4) & 0x0F);
-                            uint8_t qh_byte0 = quant_b_blk_data->qh[ci * 4 + (2 * bi) / 8];
-                            uint8_t qh_byte1 = quant_b_blk_data->qh[ci * 4 + (2 * bi + 1) / 8];
+                            uint8_t qh_byte0 = quant_b_blk_तथ्य->qh[ci * 4 + (2 * bi) / 8];
+                            uint8_t qh_byte1 = quant_b_blk_तथ्य->qh[ci * 4 + (2 * bi + 1) / 8];
                             uint8_t h0       = (qh_byte0 >> ((2 * bi) % 8)) & 1;
                             uint8_t h1       = (qh_byte1 >> ((2 * bi + 1) % 8)) & 1;
 
@@ -659,141 +659,141 @@ void moe_gemm_kernel_i8i5_mrow_ref(size_t           blk_len,
                                    static_cast<int32_t>(a1) * static_cast<int32_t>(b1);
                         }
 
-                        output[ci + mi * NB_COLS] += static_cast<float>(acc) * a_scale * b_scale;
+                        output[ci + mi * NB_COLS] += static_cast<भग्न>(acc) * a_scale * b_scale;
                     }
 
-                    a_data[mi] += a_blk_stride;
+                    a_तथ्य[mi] += a_blk_stride;
                 }
             }
 
-            for (size_t mi = 0; mi < MB_ROWS; ++mi) {
-                for (size_t ci = 0; ci < nb_real; ++ci) {
-                    c_data[mi][ci] = output[mi * NB_COLS + ci];
+            क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; ++mi) {
+                क्रम (माप_प्रकार ci = 0; ci < nb_real; ++ci) {
+                    c_तथ्य[mi][ci] = output[mi * NB_COLS + ci];
                 }
-                c_data[mi] += NB_COLS;
+                c_तथ्य[mi] += NB_COLS;
             }
         }
     }
 }
 
-template <size_t MB_ROWS, size_t NB_COLS>
-void gemm_kernel_i8i8_mrow_ref(size_t          blk_len,
-                               const uint8_t * quant_a_ptr,
-                               const uint8_t * quant_b_data,
-                               const uint8_t * quant_b_zp,
-                               float *         c_ptr,
-                               size_t          count_m,
-                               size_t          count_n,
-                               size_t          k_blks,
-                               size_t          ldc) {
-    int64_t b_blk_stride        = (sizeof(ggml_fp16_t) + blk_len);
+ढाँचा <माप_प्रकार MB_ROWS, माप_प्रकार NB_COLS>
+व्योम gemm_kernel_i8i8_mrow_ref(माप_प्रकार          blk_len,
+                               स्थिर uint8_t * quant_a_ptr,
+                               स्थिर uint8_t * quant_b_तथ्य,
+                               स्थिर uint8_t * quant_b_zp,
+                               भग्न *         c_ptr,
+                               माप_प्रकार          गिनती_m,
+                               माप_प्रकार          गिनती_n,
+                               माप_प्रकार          k_blks,
+                               माप_प्रकार          ldc) {
+    int64_t b_blk_stride        = (माप(ggml_fp16_t) + blk_len);
     int64_t b_stride            = k_blks * b_blk_stride;
-    int64_t a_blk_stride        = q8_blk_size(blk_len, true);
+    int64_t a_blk_stride        = q8_blk_आकार(blk_len, true);
     int64_t a_nrow_block_stride = a_blk_stride * MB_ROWS;
     int64_t b_ncol_block_stride = b_blk_stride * NB_COLS;
 
-    float output[MB_ROWS * NB_COLS] = { 0 };
+    भग्न output[MB_ROWS * NB_COLS] = { 0 };
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-        size_t   nb_real = std::min<size_t>(NB_COLS, count_n - ni);
-        int8_t * b_data  = (int8_t *) quant_b_data + ni * b_stride + NB_COLS * sizeof(ggml_fp16_t);
+    क्रम (माप_प्रकार ni = 0; ni < गिनती_n; ni += NB_COLS, c_ptr += NB_COLS) {
+        माप_प्रकार   nb_real = std::min<माप_प्रकार>(NB_COLS, गिनती_n - ni);
+        int8_t * b_तथ्य  = (int8_t *) quant_b_तथ्य + ni * b_stride + NB_COLS * माप(ggml_fp16_t);
 
-        int8_t * a_data = (int8_t *) quant_a_ptr + sizeof(float) * MB_ROWS + sizeof(int16_t) * MB_ROWS;
+        int8_t * a_तथ्य = (int8_t *) quant_a_ptr + माप(भग्न) * MB_ROWS + माप(int16_t) * MB_ROWS;
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            for (size_t ci = 0; ci < NB_COLS; ci++) {
+        क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+            क्रम (माप_प्रकार ci = 0; ci < NB_COLS; ci++) {
                 output[ci + mi * NB_COLS] = 0;
             }
         }
 
-        for (size_t ki = 0; ki < k_blks; ki++, a_data += a_nrow_block_stride, b_data += b_ncol_block_stride) {
-            ggml_fp16_t * b_scale_fp16 = (ggml_fp16_t *) (b_data - NB_COLS * sizeof(ggml_fp16_t));
+        क्रम (माप_प्रकार ki = 0; ki < k_blks; ki++, a_तथ्य += a_nrow_block_stride, b_तथ्य += b_ncol_block_stride) {
+            ggml_fp16_t * b_scale_fp16 = (ggml_fp16_t *) (b_तथ्य - NB_COLS * माप(ggml_fp16_t));
 
-            float * a_scale_row = (float *) (a_data - sizeof(float) * MB_ROWS - sizeof(int16_t) * MB_ROWS);
+            भग्न * a_scale_row = (भग्न *) (a_तथ्य - माप(भग्न) * MB_ROWS - माप(int16_t) * MB_ROWS);
 
-            for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                float a_scale = a_scale_row[mi];
-                for (size_t ci = 0; ci < NB_COLS; ci++) {
-                    float   b_scale = ggml_fp16_to_fp32(b_scale_fp16[ci]);
+            क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+                भग्न a_scale = a_scale_row[mi];
+                क्रम (माप_प्रकार ci = 0; ci < NB_COLS; ci++) {
+                    भग्न   b_scale = ggml_fp16_to_fp32(b_scale_fp16[ci]);
                     int32_t acc     = 0;
-                    for (size_t bi = 0; bi < blk_len; bi++) {
-                        int8_t a0 = a_data[mi * blk_len + bi];
-                        int8_t b0 = b_data[ci * blk_len + bi];
+                    क्रम (माप_प्रकार bi = 0; bi < blk_len; bi++) {
+                        int8_t a0 = a_तथ्य[mi * blk_len + bi];
+                        int8_t b0 = b_तथ्य[ci * blk_len + bi];
                         acc += static_cast<int32_t>(a0) * static_cast<int32_t>(b0);
                     }
-                    output[ci + mi * NB_COLS] += static_cast<float>(acc) * a_scale * b_scale;
+                    output[ci + mi * NB_COLS] += static_cast<भग्न>(acc) * a_scale * b_scale;
                 }
             }
         }
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            for (size_t ci = 0; ci < nb_real; ci++) {
+        क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+            क्रम (माप_प्रकार ci = 0; ci < nb_real; ci++) {
                 c_ptr[mi * ldc + ci] = output[mi * NB_COLS + ci];
             }
         }
     }
 }
 
-template <size_t MB_ROWS, size_t NB_COLS>
-void gemm_kernel_i8i5_mrow_ref(size_t          blk_len,
-                               const uint8_t * quant_a_ptr,
-                               const uint8_t * quant_b_data,
-                               const uint8_t * quant_b_zp,
-                               float *         c_ptr,
-                               size_t          count_m,
-                               size_t          count_n,
-                               size_t          k_blks,
-                               size_t          ldc) {
+ढाँचा <माप_प्रकार MB_ROWS, माप_प्रकार NB_COLS>
+व्योम gemm_kernel_i8i5_mrow_ref(माप_प्रकार          blk_len,
+                               स्थिर uint8_t * quant_a_ptr,
+                               स्थिर uint8_t * quant_b_तथ्य,
+                               स्थिर uint8_t * quant_b_zp,
+                               भग्न *         c_ptr,
+                               माप_प्रकार          गिनती_m,
+                               माप_प्रकार          गिनती_n,
+                               माप_प्रकार          k_blks,
+                               माप_प्रकार          ldc) {
     // blk_len is expected to be 32 for Q5 types
     // quant_b_zp != nullptr => nrow_block_q5_1<NB_COLS> (has zp)
     // quant_b_zp == nullptr => nrow_block_q5_0<NB_COLS> (no zp)
 
-    int64_t a_blk_stride        = q8_blk_size(blk_len, true);
+    int64_t a_blk_stride        = q8_blk_आकार(blk_len, true);
     int64_t a_nrow_block_stride = a_blk_stride * MB_ROWS;
 
-    float output[MB_ROWS * NB_COLS] = { 0 };
+    भग्न output[MB_ROWS * NB_COLS] = { 0 };
 
-    if (quant_b_zp) {
+    अगर (quant_b_zp) {
         // nrow_block_q5_1<NB_COLS>: scales16[NB_COLS] + zp[NB_COLS] + qh[4*NB_COLS] + qs[16*NB_COLS]
         using blk_type                 = nrow_block_q5_1<NB_COLS>;
-        int64_t    b_ncol_block_stride = sizeof(blk_type);
-        blk_type * quant_b_blk_data    = (blk_type *) quant_b_data;
+        int64_t    b_ncol_block_stride = माप(blk_type);
+        blk_type * quant_b_blk_तथ्य    = (blk_type *) quant_b_तथ्य;
 
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-            size_t nb_real = std::min<size_t>(NB_COLS, count_n - ni);
+        क्रम (माप_प्रकार ni = 0; ni < गिनती_n; ni += NB_COLS, c_ptr += NB_COLS) {
+            माप_प्रकार nb_real = std::min<माप_प्रकार>(NB_COLS, गिनती_n - ni);
 
-            int8_t * a_data = (int8_t *) quant_a_ptr + sizeof(float) * MB_ROWS + sizeof(int16_t) * MB_ROWS;
+            int8_t * a_तथ्य = (int8_t *) quant_a_ptr + माप(भग्न) * MB_ROWS + माप(int16_t) * MB_ROWS;
 
-            for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                for (size_t ci = 0; ci < NB_COLS; ci++) {
+            क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+                क्रम (माप_प्रकार ci = 0; ci < NB_COLS; ci++) {
                     output[ci + mi * NB_COLS] = 0;
                 }
             }
 
-            for (size_t ki = 0; ki < k_blks; ki++, quant_b_blk_data++, a_data += a_nrow_block_stride) {
-                float *   a_scale_row = (float *) (a_data - sizeof(float) * MB_ROWS - sizeof(int16_t) * MB_ROWS);
-                int16_t * a_sum_row   = (int16_t *) (a_data - sizeof(int16_t) * MB_ROWS);
+            क्रम (माप_प्रकार ki = 0; ki < k_blks; ki++, quant_b_blk_तथ्य++, a_तथ्य += a_nrow_block_stride) {
+                भग्न *   a_scale_row = (भग्न *) (a_तथ्य - माप(भग्न) * MB_ROWS - माप(int16_t) * MB_ROWS);
+                int16_t * a_योग_row   = (int16_t *) (a_तथ्य - माप(int16_t) * MB_ROWS);
 
-                for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                    float   a_scale = a_scale_row[mi];
-                    int16_t a_sum   = a_sum_row[mi];
+                क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+                    भग्न   a_scale = a_scale_row[mi];
+                    int16_t a_योग   = a_योग_row[mi];
 
-                    for (size_t ci = 0; ci < NB_COLS; ci++) {
-                        float   b_scale  = ggml_fp16_to_fp32(quant_b_blk_data->scales16[ci]);
-                        uint8_t b_zp_val = quant_b_blk_data->zp[ci];
-                        int32_t acc      = a_sum * static_cast<int32_t>(b_zp_val);
+                    क्रम (माप_प्रकार ci = 0; ci < NB_COLS; ci++) {
+                        भग्न   b_scale  = ggml_fp16_to_fp32(quant_b_blk_तथ्य->scales16[ci]);
+                        uint8_t b_zp_val = quant_b_blk_तथ्य->zp[ci];
+                        int32_t acc      = a_योग * static_cast<int32_t>(b_zp_val);
 
-                        for (size_t bi = 0; bi < blk_len / 2; bi++) {
-                            int8_t  a0      = a_data[mi * blk_len + 2 * bi];
-                            int8_t  a1      = a_data[mi * blk_len + 2 * bi + 1];
-                            uint8_t qs_byte = quant_b_blk_data->qs[ci * (blk_len / 2) + bi];
+                        क्रम (माप_प्रकार bi = 0; bi < blk_len / 2; bi++) {
+                            int8_t  a0      = a_तथ्य[mi * blk_len + 2 * bi];
+                            int8_t  a1      = a_तथ्य[mi * blk_len + 2 * bi + 1];
+                            uint8_t qs_byte = quant_b_blk_तथ्य->qs[ci * (blk_len / 2) + bi];
                             int8_t  b0      = static_cast<int8_t>(qs_byte & 0x0F);
                             int8_t  b1      = static_cast<int8_t>((qs_byte >> 4) & 0x0F);
 
                             // Extract high bits from qh
                             // qh is packed as 4 bytes per column (32 bits for 32 elements)
-                            uint8_t qh_byte0 = quant_b_blk_data->qh[ci * 4 + (2 * bi) / 8];
-                            uint8_t qh_byte1 = quant_b_blk_data->qh[ci * 4 + (2 * bi + 1) / 8];
+                            uint8_t qh_byte0 = quant_b_blk_तथ्य->qh[ci * 4 + (2 * bi) / 8];
+                            uint8_t qh_byte1 = quant_b_blk_तथ्य->qh[ci * 4 + (2 * bi + 1) / 8];
                             uint8_t h0       = (qh_byte0 >> ((2 * bi) % 8)) & 1;
                             uint8_t h1       = (qh_byte1 >> ((2 * bi + 1) % 8)) & 1;
 
@@ -803,57 +803,57 @@ void gemm_kernel_i8i5_mrow_ref(size_t          blk_len,
                             acc += static_cast<int32_t>(a0) * static_cast<int32_t>(b0) +
                                    static_cast<int32_t>(a1) * static_cast<int32_t>(b1);
                         }
-                        output[ci + mi * NB_COLS] += static_cast<float>(acc) * a_scale * b_scale;
+                        output[ci + mi * NB_COLS] += static_cast<भग्न>(acc) * a_scale * b_scale;
                     }
                 }
             }
 
-            for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                for (size_t ci = 0; ci < nb_real; ci++) {
+            क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+                क्रम (माप_प्रकार ci = 0; ci < nb_real; ci++) {
                     c_ptr[mi * ldc + ci] = output[mi * NB_COLS + ci];
                 }
             }
         }
-    } else {
+    } अन्यथा {
         // nrow_block_q5_0<NB_COLS>: scales16[NB_COLS] + qh[4*NB_COLS] + qs[16*NB_COLS]
         using blk_type                 = nrow_block_q5_0<NB_COLS>;
-        int64_t    b_ncol_block_stride = sizeof(blk_type);
-        blk_type * quant_b_blk_data    = (blk_type *) quant_b_data;
+        int64_t    b_ncol_block_stride = माप(blk_type);
+        blk_type * quant_b_blk_तथ्य    = (blk_type *) quant_b_तथ्य;
 
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-            size_t nb_real = std::min<size_t>(NB_COLS, count_n - ni);
+        क्रम (माप_प्रकार ni = 0; ni < गिनती_n; ni += NB_COLS, c_ptr += NB_COLS) {
+            माप_प्रकार nb_real = std::min<माप_प्रकार>(NB_COLS, गिनती_n - ni);
 
-            int8_t * a_data = (int8_t *) quant_a_ptr + sizeof(float) * MB_ROWS + sizeof(int16_t) * MB_ROWS;
+            int8_t * a_तथ्य = (int8_t *) quant_a_ptr + माप(भग्न) * MB_ROWS + माप(int16_t) * MB_ROWS;
 
-            for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                for (size_t ci = 0; ci < NB_COLS; ci++) {
+            क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+                क्रम (माप_प्रकार ci = 0; ci < NB_COLS; ci++) {
                     output[ci + mi * NB_COLS] = 0;
                 }
             }
 
-            for (size_t ki = 0; ki < k_blks; ki++, quant_b_blk_data++, a_data += a_nrow_block_stride) {
-                float *   a_scale_row = (float *) (a_data - sizeof(float) * MB_ROWS - sizeof(int16_t) * MB_ROWS);
-                int16_t * a_sum_row   = (int16_t *) (a_data - sizeof(int16_t) * MB_ROWS);
+            क्रम (माप_प्रकार ki = 0; ki < k_blks; ki++, quant_b_blk_तथ्य++, a_तथ्य += a_nrow_block_stride) {
+                भग्न *   a_scale_row = (भग्न *) (a_तथ्य - माप(भग्न) * MB_ROWS - माप(int16_t) * MB_ROWS);
+                int16_t * a_योग_row   = (int16_t *) (a_तथ्य - माप(int16_t) * MB_ROWS);
 
-                for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                    float   a_scale = a_scale_row[mi];
-                    int16_t a_sum   = a_sum_row[mi];
+                क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+                    भग्न   a_scale = a_scale_row[mi];
+                    int16_t a_योग   = a_योग_row[mi];
 
-                    for (size_t ci = 0; ci < NB_COLS; ci++) {
-                        float   b_scale = ggml_fp16_to_fp32(quant_b_blk_data->scales16[ci]);
+                    क्रम (माप_प्रकार ci = 0; ci < NB_COLS; ci++) {
+                        भग्न   b_scale = ggml_fp16_to_fp32(quant_b_blk_तथ्य->scales16[ci]);
                         // Q5_0 has no zp, use default offset 16 (midpoint of 5-bit unsigned range)
-                        int32_t acc     = a_sum * 16;
+                        int32_t acc     = a_योग * 16;
 
-                        for (size_t bi = 0; bi < blk_len / 2; bi++) {
-                            int8_t  a0      = a_data[mi * blk_len + 2 * bi];
-                            int8_t  a1      = a_data[mi * blk_len + 2 * bi + 1];
-                            uint8_t qs_byte = quant_b_blk_data->qs[ci * (blk_len / 2) + bi];
+                        क्रम (माप_प्रकार bi = 0; bi < blk_len / 2; bi++) {
+                            int8_t  a0      = a_तथ्य[mi * blk_len + 2 * bi];
+                            int8_t  a1      = a_तथ्य[mi * blk_len + 2 * bi + 1];
+                            uint8_t qs_byte = quant_b_blk_तथ्य->qs[ci * (blk_len / 2) + bi];
                             int8_t  b0      = static_cast<int8_t>(qs_byte & 0x0F);
                             int8_t  b1      = static_cast<int8_t>((qs_byte >> 4) & 0x0F);
 
                             // Extract high bits from qh
-                            uint8_t qh_byte0 = quant_b_blk_data->qh[ci * 4 + (2 * bi) / 8];
-                            uint8_t qh_byte1 = quant_b_blk_data->qh[ci * 4 + (2 * bi + 1) / 8];
+                            uint8_t qh_byte0 = quant_b_blk_तथ्य->qh[ci * 4 + (2 * bi) / 8];
+                            uint8_t qh_byte1 = quant_b_blk_तथ्य->qh[ci * 4 + (2 * bi + 1) / 8];
                             uint8_t h0       = (qh_byte0 >> ((2 * bi) % 8)) & 1;
                             uint8_t h1       = (qh_byte1 >> ((2 * bi + 1) % 8)) & 1;
 
@@ -863,13 +863,13 @@ void gemm_kernel_i8i5_mrow_ref(size_t          blk_len,
                             acc += static_cast<int32_t>(a0) * static_cast<int32_t>(b0) +
                                    static_cast<int32_t>(a1) * static_cast<int32_t>(b1);
                         }
-                        output[ci + mi * NB_COLS] += static_cast<float>(acc) * a_scale * b_scale;
+                        output[ci + mi * NB_COLS] += static_cast<भग्न>(acc) * a_scale * b_scale;
                     }
                 }
             }
 
-            for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                for (size_t ci = 0; ci < nb_real; ci++) {
+            क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+                क्रम (माप_प्रकार ci = 0; ci < nb_real; ci++) {
                     c_ptr[mi * ldc + ci] = output[mi * NB_COLS + ci];
                 }
             }
@@ -877,61 +877,61 @@ void gemm_kernel_i8i5_mrow_ref(size_t          blk_len,
     }
 }
 
-template <size_t MB_ROWS, size_t NB_COLS>
-void gemm_kernel_i8mxfp4_mrow_ref(size_t          blk_len,
-                                  const uint8_t * quant_a_ptr,
-                                  const uint8_t * quant_b_data,
-                                  const uint8_t * quant_b_zp,
-                                  float *         c_ptr,
-                                  size_t          count_m,
-                                  size_t          count_n,
-                                  size_t          k_blks,
-                                  size_t          ldc) {
+ढाँचा <माप_प्रकार MB_ROWS, माप_प्रकार NB_COLS>
+व्योम gemm_kernel_i8mxfp4_mrow_ref(माप_प्रकार          blk_len,
+                                  स्थिर uint8_t * quant_a_ptr,
+                                  स्थिर uint8_t * quant_b_तथ्य,
+                                  स्थिर uint8_t * quant_b_zp,
+                                  भग्न *         c_ptr,
+                                  माप_प्रकार          गिनती_m,
+                                  माप_प्रकार          गिनती_n,
+                                  माप_प्रकार          k_blks,
+                                  माप_प्रकार          ldc) {
     // blk_len is expected to be 32 (QK_MXFP4)
     // quant_b_zp is unused for MXFP4 (symmetric quantization)
     GGML_UNUSED(quant_b_zp);
 
-    int64_t a_blk_stride        = q8_blk_size(blk_len, true);
+    int64_t a_blk_stride        = q8_blk_आकार(blk_len, true);
     int64_t a_nrow_block_stride = a_blk_stride * MB_ROWS;
 
-    float output[MB_ROWS * NB_COLS] = { 0 };
+    भग्न output[MB_ROWS * NB_COLS] = { 0 };
 
     using blk_type              = nrow_block_mxfp4<NB_COLS>;
-    blk_type * quant_b_blk_data = (blk_type *) quant_b_data;
+    blk_type * quant_b_blk_तथ्य = (blk_type *) quant_b_तथ्य;
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-        size_t nb_real = std::min<size_t>(NB_COLS, count_n - ni);
+    क्रम (माप_प्रकार ni = 0; ni < गिनती_n; ni += NB_COLS, c_ptr += NB_COLS) {
+        माप_प्रकार nb_real = std::min<माप_प्रकार>(NB_COLS, गिनती_n - ni);
 
-        int8_t * a_data = (int8_t *) quant_a_ptr + sizeof(float) * MB_ROWS + sizeof(int16_t) * MB_ROWS;
+        int8_t * a_तथ्य = (int8_t *) quant_a_ptr + माप(भग्न) * MB_ROWS + माप(int16_t) * MB_ROWS;
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            for (size_t ci = 0; ci < NB_COLS; ci++) {
+        क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+            क्रम (माप_प्रकार ci = 0; ci < NB_COLS; ci++) {
                 output[ci + mi * NB_COLS] = 0;
             }
         }
 
-        for (size_t ki = 0; ki < k_blks; ki++, quant_b_blk_data++, a_data += a_nrow_block_stride) {
-            float *   a_scale_row = (float *) (a_data - sizeof(float) * MB_ROWS - sizeof(int16_t) * MB_ROWS);
-            int16_t * a_sum_row   = (int16_t *) (a_data - sizeof(int16_t) * MB_ROWS);
+        क्रम (माप_प्रकार ki = 0; ki < k_blks; ki++, quant_b_blk_तथ्य++, a_तथ्य += a_nrow_block_stride) {
+            भग्न *   a_scale_row = (भग्न *) (a_तथ्य - माप(भग्न) * MB_ROWS - माप(int16_t) * MB_ROWS);
+            int16_t * a_योग_row   = (int16_t *) (a_तथ्य - माप(int16_t) * MB_ROWS);
 
-            for (size_t mi = 0; mi < MB_ROWS; mi++) {
-                float a_scale = a_scale_row[mi];
+            क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+                भग्न a_scale = a_scale_row[mi];
 
-                for (size_t ci = 0; ci < NB_COLS; ci++) {
-                    float b_scale = GGML_E8M0_TO_FP32_HALF(quant_b_blk_data->e[ci]);
+                क्रम (माप_प्रकार ci = 0; ci < NB_COLS; ci++) {
+                    भग्न b_scale = GGML_E8M0_TO_FP32_HALF(quant_b_blk_तथ्य->e[ci]);
 
                     // Read 32 sign bits for this column
                     uint32_t sign_bits;
-                    memcpy(&sign_bits, &quant_b_blk_data->qh[ci * 4], 4);
+                    स_नकल(&sign_bits, &quant_b_blk_तथ्य->qh[ci * 4], 4);
 
                     int32_t acc = 0;
-                    for (size_t bi = 0; bi < blk_len / 2; bi++) {
-                        int8_t a0 = a_data[mi * blk_len + 2 * bi];
-                        int8_t a1 = a_data[mi * blk_len + 2 * bi + 1];
+                    क्रम (माप_प्रकार bi = 0; bi < blk_len / 2; bi++) {
+                        int8_t a0 = a_तथ्य[mi * blk_len + 2 * bi];
+                        int8_t a1 = a_तथ्य[mi * blk_len + 2 * bi + 1];
 
                         // qs[ci*16 + bi] stores abs(vals[bi*2]) in low 4 bits
                         // and abs(vals[bi*2+1]) in high 4 bits
-                        uint8_t qs_byte = quant_b_blk_data->qs[ci * 16 + bi];
+                        uint8_t qs_byte = quant_b_blk_तथ्य->qs[ci * 16 + bi];
                         int8_t  b_abs0  = static_cast<int8_t>(qs_byte & 0x0F);
                         int8_t  b_abs1  = static_cast<int8_t>((qs_byte >> 4) & 0x0F);
 
@@ -942,38 +942,38 @@ void gemm_kernel_i8mxfp4_mrow_ref(size_t          blk_len,
                         acc += static_cast<int32_t>(a0) * static_cast<int32_t>(b0) +
                                static_cast<int32_t>(a1) * static_cast<int32_t>(b1);
                     }
-                    output[ci + mi * NB_COLS] += static_cast<float>(acc) * a_scale * b_scale;
+                    output[ci + mi * NB_COLS] += static_cast<भग्न>(acc) * a_scale * b_scale;
                 }
             }
         }
 
-        for (size_t mi = 0; mi < MB_ROWS; mi++) {
-            for (size_t ci = 0; ci < nb_real; ci++) {
+        क्रम (माप_प्रकार mi = 0; mi < MB_ROWS; mi++) {
+            क्रम (माप_प्रकार ci = 0; ci < nb_real; ci++) {
                 c_ptr[mi * ldc + ci] = output[mi * NB_COLS + ci];
             }
         }
     }
 }
 
-void gemm_kernel_i8i2k_m1(size_t          blk_len,
-                          const uint8_t * quant_a_ptr,
-                          const uint8_t * quant_b_data,
-                          float *         c_ptr,
-                          size_t          count_m,
-                          size_t          count_n,
-                          size_t          k_blks,
-                          size_t          ldc) {
-    constexpr size_t NB_COLS = 32;
+व्योम gemm_kernel_i8i2k_m1(माप_प्रकार          blk_len,
+                          स्थिर uint8_t * quant_a_ptr,
+                          स्थिर uint8_t * quant_b_तथ्य,
+                          भग्न *         c_ptr,
+                          माप_प्रकार          गिनती_m,
+                          माप_प्रकार          गिनती_n,
+                          माप_प्रकार          k_blks,
+                          माप_प्रकार          ldc) {
+    constexpr माप_प्रकार NB_COLS = 32;
     using blk_type           = nrow_block_q2_k<NB_COLS>;
 
-    int64_t b_ncol_block_stride = sizeof(blk_type) * k_blks;
+    int64_t b_ncol_block_stride = माप(blk_type) * k_blks;
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-        uint8_t * b_data = (uint8_t *) quant_b_data + (ni / NB_COLS) * b_ncol_block_stride;
-        int8_t *  a_data = (int8_t *) quant_a_ptr;
-        float *   dst_c  = (float *) c_ptr + ni;
+    क्रम (माप_प्रकार ni = 0; ni < गिनती_n; ni += NB_COLS) {
+        uint8_t * b_तथ्य = (uint8_t *) quant_b_तथ्य + (ni / NB_COLS) * b_ncol_block_stride;
+        int8_t *  a_तथ्य = (int8_t *) quant_a_ptr;
+        भग्न *   dst_c  = (भग्न *) c_ptr + ni;
 
-        asm volatile(
+        यंत्र अस्थिर(
             "vsetvli        t0, x0, e16, m1         \n\t"
             "vxor.vv        v31, v31, v31           \n\t"
             "mv             s1, %[BK]               \n\t"
@@ -1167,7 +1167,7 @@ void gemm_kernel_i8i2k_m1(size_t          blk_len,
             // save
             "vsetvli        t0, x0, e32, m1         \n\t"
             "vse32.v        v31, (%[DST])           \n\t"
-            : [A] "+r"(a_data), [B] "+r"(b_data)
+            : [A] "+r"(a_तथ्य), [B] "+r"(b_तथ्य)
             : [DST] "r"(dst_c), [BK] "r"(k_blks)
             : "t0", "t1", "t2", "t3", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12",
               "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27",
@@ -1175,27 +1175,27 @@ void gemm_kernel_i8i2k_m1(size_t          blk_len,
     }
 }
 
-void gemm_kernel_i8i2k_m4(size_t          blk_len,
-                          const uint8_t * quant_a_ptr,
-                          const uint8_t * quant_b_data,
-                          float *         c_ptr,
-                          size_t          count_m,
-                          size_t          count_n,
-                          size_t          k_blks,
-                          size_t          ldc) {
-    constexpr size_t NB_COLS = 32;
+व्योम gemm_kernel_i8i2k_m4(माप_प्रकार          blk_len,
+                          स्थिर uint8_t * quant_a_ptr,
+                          स्थिर uint8_t * quant_b_तथ्य,
+                          भग्न *         c_ptr,
+                          माप_प्रकार          गिनती_m,
+                          माप_प्रकार          गिनती_n,
+                          माप_प्रकार          k_blks,
+                          माप_प्रकार          ldc) {
+    constexpr माप_प्रकार NB_COLS = 32;
     using blk_type           = nrow_block_q2_k<NB_COLS>;
 
-    int64_t  b_ncol_block_stride = sizeof(blk_type) * k_blks;
+    int64_t  b_ncol_block_stride = माप(blk_type) * k_blks;
     _Float16 scale               = 0.0625f;
     _Float16 scale_1             = 16.0f;
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-        uint8_t * b_data = (uint8_t *) quant_b_data + (ni / NB_COLS) * b_ncol_block_stride;
-        int8_t *  a_data = (int8_t *) quant_a_ptr;
-        float *   dst_c  = (float *) c_ptr + ni;
+    क्रम (माप_प्रकार ni = 0; ni < गिनती_n; ni += NB_COLS) {
+        uint8_t * b_तथ्य = (uint8_t *) quant_b_तथ्य + (ni / NB_COLS) * b_ncol_block_stride;
+        int8_t *  a_तथ्य = (int8_t *) quant_a_ptr;
+        भग्न *   dst_c  = (भग्न *) c_ptr + ni;
 
-        asm volatile(
+        यंत्र अस्थिर(
             "vsetvli        t0, x0, e16, m1         \n\t"
             "vxor.vv        v28, v31, v31           \n\t"  // init result
             "vxor.vv        v29, v31, v31           \n\t"
@@ -1408,7 +1408,7 @@ void gemm_kernel_i8i2k_m4(size_t          blk_len,
             "vse32.v        v30, (t1)               \n\t"
             "add            t1, t1, %[LDC]          \n\t"
             "vse32.v        v31, (t1)               \n\t"
-            : [A] "+r"(a_data), [B] "+r"(b_data)
+            : [A] "+r"(a_तथ्य), [B] "+r"(b_तथ्य)
             : [DST] "r"(dst_c), [BK] "r"(k_blks), [LDC] "r"(ldc * 4), [SCALE] "f"(scale), [SCALE_1] "f"(scale_1)
             : "t0", "t1", "t2", "t3", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12",
               "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27",
@@ -1416,33 +1416,33 @@ void gemm_kernel_i8i2k_m4(size_t          blk_len,
     }
 }
 
-void gemm_kernel_i8i3k_m1(size_t          blk_len,
-                          const uint8_t * quant_a_ptr,
-                          const uint8_t * quant_b_data,
-                          float *         c_ptr,
-                          size_t          count_m,
-                          size_t          count_n,
-                          size_t          k_blks,
-                          size_t          ldc) {
-    constexpr size_t NB_COLS = 32;  //only support 32 in ASM
+व्योम gemm_kernel_i8i3k_m1(माप_प्रकार          blk_len,
+                          स्थिर uint8_t * quant_a_ptr,
+                          स्थिर uint8_t * quant_b_तथ्य,
+                          भग्न *         c_ptr,
+                          माप_प्रकार          गिनती_m,
+                          माप_प्रकार          गिनती_n,
+                          माप_प्रकार          k_blks,
+                          माप_प्रकार          ldc) {
+    constexpr माप_प्रकार NB_COLS = 32;  //only support 32 in ASM
     using blk_type           = nrow_block_q3_k<NB_COLS>;
 
-    const blk_type * b_base = reinterpret_cast<const blk_type *>(quant_b_data);
+    स्थिर blk_type * b_base = reinterpret_cast<स्थिर blk_type *>(quant_b_तथ्य);
 
-    int64_t a_blk_stride        = q8k_blk_size(256);
+    int64_t a_blk_stride        = q8k_blk_आकार(256);
     int64_t a_nrow_block_stride = a_blk_stride;
-    int64_t b_ncol_block_stride = sizeof(blk_type);
+    int64_t b_ncol_block_stride = माप(blk_type);
 
     // Constants used by q3_k scaling in HP branch:
     // - k_q3k_scale_step: per-nibble scale factor (1/16).
     // - k_a_scale_post_mul: A_scale needs an extra *16 at the end (pairs with 1/16 above).
-    const _Float16 k_q3k_scale_step   = (_Float16) 0.0625f;  // 1 / 16
-    const float    k_a_scale_post_mul = 16.0f;
+    स्थिर _Float16 k_q3k_scale_step   = (_Float16) 0.0625f;  // 1 / 16
+    स्थिर भग्न    k_a_scale_post_mul = 16.0f;
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-        size_t           nb_real          = std::min<size_t>(NB_COLS, count_n - ni);
-        const blk_type * quant_b_blk_data = b_base + (ni / NB_COLS) * k_blks;
-#if 0
+    क्रम (माप_प्रकार ni = 0; ni < गिनती_n; ni += NB_COLS, c_ptr += NB_COLS) {
+        माप_प्रकार           nb_real          = std::min<माप_प्रकार>(NB_COLS, गिनती_n - ni);
+        स्थिर blk_type * quant_b_blk_तथ्य = b_base + (ni / NB_COLS) * k_blks;
+#अगर 0
         //------------------------------------------------------------------------------
         // A format
         // Ascale   fp32 * 1    32bit
@@ -1456,7 +1456,7 @@ void gemm_kernel_i8i3k_m1(size_t          blk_len,
         // B scl16  fp16 * N32      512bit;
         //------------------------------------------------------------------------------
         //bias always be nullptr
-        __asm__ volatile(
+        __asm__ अस्थिर(
             // t2 = k_blks (each is K256 superblock)
             "mv           t2, %[KBLKS]            \n\t"
             // t3 = 256/64 = 4 (K64 iterations per superblock)
@@ -1753,12 +1753,12 @@ void gemm_kernel_i8i3k_m1(size_t          blk_len,
             "FUNC_END%=:                          \n\t"
 
             :
-            : [KBLKS] "r"(k_blks), [NBLKS] "r"(nb_real), [pA] "r"(quant_a_ptr), [pB] "r"(quant_b_blk_data),
+            : [KBLKS] "r"(k_blks), [NBLKS] "r"(nb_real), [pA] "r"(quant_a_ptr), [pB] "r"(quant_b_blk_तथ्य),
               [pC] "r"(c_ptr), [B_STR] "r"(b_ncol_block_stride)
             : "cc", "memory", "t0", "t2", "t3", "t4", "t5", "f0", "s2", "s3", "s4", "s5", "s6", "s7");
-#else
+#अन्यथा
 
-        __asm__ volatile(
+        __asm__ अस्थिर(
             // =========================
             // Kernel overview (M1 x N32)
             // =========================
@@ -2020,34 +2020,34 @@ void gemm_kernel_i8i3k_m1(size_t          blk_len,
             "vse32.v      v31, (%[pC])            \n\t"
 
             :
-            : [KBLKS] "r"(k_blks), [NBLKS] "r"(nb_real), [pA] "r"(quant_a_ptr), [pB] "r"(quant_b_blk_data),
+            : [KBLKS] "r"(k_blks), [NBLKS] "r"(nb_real), [pA] "r"(quant_a_ptr), [pB] "r"(quant_b_blk_तथ्य),
               [pC] "r"(c_ptr), [B_STR] "r"(b_ncol_block_stride), [q3_step] "f"(k_q3k_scale_step),
               [a_post_mul] "f"(k_a_scale_post_mul)
             : "cc", "memory", "t0", "t2", "t3", "t4", "t5", "f0", "f1", "s2", "s3", "s4", "s5", "s6", "s7", "s8");
-#endif
+#पूर्ण_अगर
     }
 }
 
-void gemm_kernel_i8i3k_m4(size_t          blk_len,
-                          const uint8_t * quant_a_ptr,
-                          const uint8_t * quant_b_data,
-                          float *         c_ptr,
-                          size_t          count_m,
-                          size_t          count_n,
-                          size_t          k_blks,
-                          size_t          ldc) {
+व्योम gemm_kernel_i8i3k_m4(माप_प्रकार          blk_len,
+                          स्थिर uint8_t * quant_a_ptr,
+                          स्थिर uint8_t * quant_b_तथ्य,
+                          भग्न *         c_ptr,
+                          माप_प्रकार          गिनती_m,
+                          माप_प्रकार          गिनती_n,
+                          माप_प्रकार          k_blks,
+                          माप_प्रकार          ldc) {
     using blk_type           = nrow_block_q3_k<32>;
-    constexpr size_t NB_COLS = 32;  //only support 32 in ASM
+    constexpr माप_प्रकार NB_COLS = 32;  //only support 32 in ASM
 
-    const blk_type * b_base = reinterpret_cast<const blk_type *>(quant_b_data);
+    स्थिर blk_type * b_base = reinterpret_cast<स्थिर blk_type *>(quant_b_तथ्य);
 
-    int64_t a_blk_stride        = q8k_blk_size(256);
+    int64_t a_blk_stride        = q8k_blk_आकार(256);
     int64_t a_nrow_block_stride = a_blk_stride * 4;
-    int64_t b_ncol_block_stride = sizeof(blk_type);
+    int64_t b_ncol_block_stride = माप(blk_type);
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-        size_t           nb_real          = std::min<size_t>(NB_COLS, count_n - ni);
-        const blk_type * quant_b_blk_data = b_base + (ni / NB_COLS) * k_blks;
+    क्रम (माप_प्रकार ni = 0; ni < गिनती_n; ni += NB_COLS, c_ptr += NB_COLS) {
+        माप_प्रकार           nb_real          = std::min<माप_प्रकार>(NB_COLS, गिनती_n - ni);
+        स्थिर blk_type * quant_b_blk_तथ्य = b_base + (ni / NB_COLS) * k_blks;
 
         //------------------------------------------------------------------------------
         // A format
@@ -2062,7 +2062,7 @@ void gemm_kernel_i8i3k_m4(size_t          blk_len,
         // B scl16  fp16 * N32      512bit;
         //------------------------------------------------------------------------------
         //bias always be nullptr
-        __asm__ volatile(
+        __asm__ अस्थिर(
             // t2 = k_blks (each is K256 superblock)
             "mv           t2, %[KBLKS]            \n\t"
             // t3 = 256/64 = 4 (K64 iterations per superblock)
@@ -2421,29 +2421,29 @@ void gemm_kernel_i8i3k_m4(size_t          blk_len,
             "FUNC_END%=:                          \n\t"
 
             :
-            : [KBLKS] "r"(k_blks), [NBLKS] "r"(nb_real), [pA] "r"(quant_a_ptr), [pB] "r"(quant_b_blk_data),
+            : [KBLKS] "r"(k_blks), [NBLKS] "r"(nb_real), [pA] "r"(quant_a_ptr), [pB] "r"(quant_b_blk_तथ्य),
               [pC] "r"(c_ptr), [B_STR] "r"(b_ncol_block_stride), [A_STR] "r"(a_nrow_block_stride), [LDC] "r"(ldc * 4)
             : "cc", "memory", "t0", "t2", "t3", "t4", "t5", "f0", "f1", "f2", "f3", "s2", "s3", "s4", "s5", "s6", "s7");
     }
 }
 
-void gemm_kernel_i8i4_m1(size_t          blk_len,
-                         const uint8_t * quant_a_ptr,
-                         const uint8_t * quant_b_data,
-                         const uint8_t * quant_b_zp,
-                         float *         c_ptr,
-                         size_t          count_m,
-                         size_t          count_n,
-                         size_t          k_blks,
-                         size_t          ldc) {
-    if (quant_b_zp == NULL) {
-        for (size_t n = 0; n < count_n; n += 32) {
-            size_t    nblks         = (count_n - n) > 32 ? 32 : count_n - n;
-            uint8_t * QuantBDataPtr = (uint8_t *) quant_b_data +      //
+व्योम gemm_kernel_i8i4_m1(माप_प्रकार          blk_len,
+                         स्थिर uint8_t * quant_a_ptr,
+                         स्थिर uint8_t * quant_b_तथ्य,
+                         स्थिर uint8_t * quant_b_zp,
+                         भग्न *         c_ptr,
+                         माप_प्रकार          गिनती_m,
+                         माप_प्रकार          गिनती_n,
+                         माप_प्रकार          k_blks,
+                         माप_प्रकार          ldc) {
+    अगर (quant_b_zp == शून्य) {
+        क्रम (माप_प्रकार n = 0; n < गिनती_n; n += 32) {
+            माप_प्रकार    nblks         = (गिनती_n - n) > 32 ? 32 : गिनती_n - n;
+            uint8_t * QuantBDataPtr = (uint8_t *) quant_b_तथ्य +      //
                                       n * k_blks * blk_len / 2 +      // b data
-                                      n * k_blks * sizeof(_Float16);  // scale
-            float * CPtr = c_ptr + n;
-            size_t  cnt  = k_blks;
+                                      n * k_blks * माप(_Float16);  // scale
+            भग्न * CPtr = c_ptr + n;
+            माप_प्रकार  cnt  = k_blks;
 
             // A format Version_1 (FP32 SCALE FOR Normal VMADOTins of IME2)
             // A M1K32 int8    256bit
@@ -2456,9 +2456,9 @@ void gemm_kernel_i8i4_m1(size_t          blk_len,
             // Bscale fp16 * N32 512bit;
             // || scl*32..(fp16) | blk0 blk1 ... blk31 || scl*32..(fp16) | blk0 blk1 ... blk31 || ...
             // || Element                              || Element                              || ...
-#if 0
+#अगर 0
             //bias always be nullptr
-            __asm__ volatile(
+            __asm__ अस्थिर(
 
                 // t3 = k/32
                 "mv           t3, %[BCK]              \n\t"
@@ -2555,8 +2555,8 @@ void gemm_kernel_i8i4_m1(size_t          blk_len,
                 :
                 : [BCK] "r"(cnt), [NBLKS] "r"(nblks), [pA] "r"(quant_a_ptr), [pB] "r"(QuantBDataPtr), [pC] "r"(CPtr)
                 : "cc", "t0", "t2", "t3", "t4", "f0", "s2", "s3", "s4", "s5", "s6");
-#else
-            __asm__ volatile(
+#अन्यथा
+            __asm__ अस्थिर(
 
                 // t3 = k/32
                 "mv           t3, %[BCK]              \n\t"
@@ -2646,17 +2646,17 @@ void gemm_kernel_i8i4_m1(size_t          blk_len,
                 : [BCK] "r"(cnt), [NBLKS] "r"(nblks), [pA] "r"(quant_a_ptr), [pB] "r"(QuantBDataPtr), [pC] "r"(CPtr)
                 : "cc", "t0", "t2", "t3", "t4", "f0", "s2", "s3", "s4", "s5", "s6");
 
-#endif
+#पूर्ण_अगर
         }
-    } else {
-        for (size_t n = 0; n < count_n; n += 32) {
-            size_t    nblks         = (count_n - n) > 32 ? 32 : count_n - n;
-            uint8_t * QuantBDataPtr = (uint8_t *) quant_b_data +      //
+    } अन्यथा {
+        क्रम (माप_प्रकार n = 0; n < गिनती_n; n += 32) {
+            माप_प्रकार    nblks         = (गिनती_n - n) > 32 ? 32 : गिनती_n - n;
+            uint8_t * QuantBDataPtr = (uint8_t *) quant_b_तथ्य +      //
                                       n * k_blks * blk_len / 2 +      // b data
-                                      n * k_blks * sizeof(uint8_t) +  // b zp
-                                      n * k_blks * sizeof(_Float16);  // scale
-            float * CPtr = c_ptr + n;
-            size_t  cnt  = k_blks;
+                                      n * k_blks * माप(uint8_t) +  // b zp
+                                      n * k_blks * माप(_Float16);  // scale
+            भग्न * CPtr = c_ptr + n;
+            माप_प्रकार  cnt  = k_blks;
 
             // A format Version_1 (FP32 SCALE FOR Normal VMADOTins of IME2)
             // A M1K32 int8    256bit
@@ -2672,8 +2672,8 @@ void gemm_kernel_i8i4_m1(size_t          blk_len,
             // || Element                                             || Element         ...
 
             //bias always be nullptr
-#if 0
-            __asm__ volatile(
+#अगर 0
+            __asm__ अस्थिर(
 
                 // t3 = k/32
                 "mv           t3, %[BCK]              \n\t"
@@ -2774,8 +2774,8 @@ void gemm_kernel_i8i4_m1(size_t          blk_len,
                 :
                 : [BCK] "r"(cnt), [NBLKS] "r"(nblks), [pA] "r"(quant_a_ptr), [pB] "r"(QuantBDataPtr), [pC] "r"(CPtr)
                 : "cc", "t0", "t2", "t3", "t4", "f0", "s2", "s3", "s4", "s5", "s6");
-#else
-            __asm__ volatile(
+#अन्यथा
+            __asm__ अस्थिर(
 
                 // t3 = k/32
                 "mv           t3, %[BCK]              \n\t"
@@ -2875,41 +2875,41 @@ void gemm_kernel_i8i4_m1(size_t          blk_len,
                 :
                 : [BCK] "r"(cnt), [NBLKS] "r"(nblks), [pA] "r"(quant_a_ptr), [pB] "r"(QuantBDataPtr), [pC] "r"(CPtr)
                 : "cc", "t0", "t2", "t3", "t4", "f0", "s2", "s3", "s4", "s5", "s6");
-#endif
+#पूर्ण_अगर
         }
     }
 }
 
-void gemm_kernel_i8i4_hp_m1(size_t          blk_len,
-                            const uint8_t * quant_a_ptr,
-                            const uint8_t * quant_b_data,
-                            const uint8_t * quant_b_zp,
-                            float *         c_ptr,
-                            size_t          count_m,
-                            size_t          count_n,
-                            size_t          k_blks,
-                            size_t          ldc) {
-    constexpr size_t NB_COLS                = 32;
-    constexpr size_t k_subblks_per_superblk = 8;
+व्योम gemm_kernel_i8i4_hp_m1(माप_प्रकार          blk_len,
+                            स्थिर uint8_t * quant_a_ptr,
+                            स्थिर uint8_t * quant_b_तथ्य,
+                            स्थिर uint8_t * quant_b_zp,
+                            भग्न *         c_ptr,
+                            माप_प्रकार          गिनती_m,
+                            माप_प्रकार          गिनती_n,
+                            माप_प्रकार          k_blks,
+                            माप_प्रकार          ldc) {
+    constexpr माप_प्रकार NB_COLS                = 32;
+    constexpr माप_प्रकार k_subblks_per_superblk = 8;
 
-    struct block_q4_0x32_layout {
+    काष्ठा block_q4_0x32_layout {
         _Float16 d[NB_COLS];
         uint8_t  qs[16 * NB_COLS];
     };
 
     GGML_ASSERT(blk_len == 256);
 
-    const size_t b_superblk_stride = sizeof(block_q4_0x32_layout) * k_subblks_per_superblk +
-                                     (quant_b_zp ? NB_COLS * k_subblks_per_superblk * sizeof(uint8_t) : 0);
-    const size_t b_tile_stride = k_blks * b_superblk_stride;
+    स्थिर माप_प्रकार b_superblk_stride = माप(block_q4_0x32_layout) * k_subblks_per_superblk +
+                                     (quant_b_zp ? NB_COLS * k_subblks_per_superblk * माप(uint8_t) : 0);
+    स्थिर माप_प्रकार b_tile_stride = k_blks * b_superblk_stride;
 
-    if (quant_b_zp == NULL) {
-        for (size_t ni = 0; ni < count_n; ni += 32) {
-            uint8_t * b_data = (uint8_t *) quant_b_data + (ni / NB_COLS) * b_tile_stride;
-            int8_t *  a_data = (int8_t *) quant_a_ptr;
-            float *   dst_c  = c_ptr + ni;
+    अगर (quant_b_zp == शून्य) {
+        क्रम (माप_प्रकार ni = 0; ni < गिनती_n; ni += 32) {
+            uint8_t * b_तथ्य = (uint8_t *) quant_b_तथ्य + (ni / NB_COLS) * b_tile_stride;
+            int8_t *  a_तथ्य = (int8_t *) quant_a_ptr;
+            भग्न *   dst_c  = c_ptr + ni;
 
-            asm volatile(
+            यंत्र अस्थिर(
                 "vsetvli        t0, x0, e16, m1         \n\t"
                 "vxor.vv        v31, v31, v31           \n\t"  // init acc to zero
                 "mv             t4, %[BK]               \n\t"
@@ -2992,36 +2992,36 @@ void gemm_kernel_i8i4_hp_m1(size_t          blk_len,
                 // save
                 "vsetvli        t0, x0, e32, m1         \n\t"
                 "vse32.v        v31, (%[DST])           \n\t"
-                : [A] "+r"(a_data), [B] "+r"(b_data)
+                : [A] "+r"(a_तथ्य), [B] "+r"(b_तथ्य)
                 : [DST] "r"(dst_c), [BK] "r"(k_blks)
                 : "t0", "t1", "t2", "t3", "t4", "t5", "t6", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9",
                   "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23",
                   "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31", "fa0", "fa1", "ft0", "ft1");
         }
-    } else {
+    } अन्यथा {
         // TODO: support quant_b_zp for i8i4 hp kernel
         GGML_ABORT("gemm_kernel_i8i4_hp_m1 with quant_b_zp is not supported yet");
     }
 }
 
-void gemm_kernel_i8i4_m4(size_t          blk_len,
-                         const uint8_t * quant_a_ptr,
-                         const uint8_t * quant_b_data,
-                         const uint8_t * quant_b_zp,
-                         float *         c_ptr,
-                         size_t          count_m,
-                         size_t          count_n,
-                         size_t          k_blks,
-                         size_t          ldc) {
-    int64_t b_data_stride =
-        k_blks * (sizeof(ggml_fp16_t) + 16 * sizeof(int8_t) + (quant_b_zp != NULL ? sizeof(int8_t) : 0));
-    if (quant_b_zp == NULL) {
-        for (size_t ni = 0; ni < count_n; ni += 32) {
-            uint8_t * b_data = (uint8_t *) quant_b_data + ni * b_data_stride;
-            int8_t *  a_data = (int8_t *) quant_a_ptr;
-            float *   dst_c  = c_ptr + ni;
-#if 0
-            asm volatile(
+व्योम gemm_kernel_i8i4_m4(माप_प्रकार          blk_len,
+                         स्थिर uint8_t * quant_a_ptr,
+                         स्थिर uint8_t * quant_b_तथ्य,
+                         स्थिर uint8_t * quant_b_zp,
+                         भग्न *         c_ptr,
+                         माप_प्रकार          गिनती_m,
+                         माप_प्रकार          गिनती_n,
+                         माप_प्रकार          k_blks,
+                         माप_प्रकार          ldc) {
+    int64_t b_तथ्य_stride =
+        k_blks * (माप(ggml_fp16_t) + 16 * माप(int8_t) + (quant_b_zp != शून्य ? माप(int8_t) : 0));
+    अगर (quant_b_zp == शून्य) {
+        क्रम (माप_प्रकार ni = 0; ni < गिनती_n; ni += 32) {
+            uint8_t * b_तथ्य = (uint8_t *) quant_b_तथ्य + ni * b_तथ्य_stride;
+            int8_t *  a_तथ्य = (int8_t *) quant_a_ptr;
+            भग्न *   dst_c  = c_ptr + ni;
+#अगर 0
+            यंत्र अस्थिर(
                 "li             t1,  8              \n\t"
                 "vsetvli        t0, x0, e32, m1     \n\t"
                 "vxor.vv        v28, v28, v28       \n\t"
@@ -3124,13 +3124,13 @@ void gemm_kernel_i8i4_m4(size_t          blk_len,
                 "add            t2, %[LDC], t3      \n\t"
                 "vse32.v        v30, (t3)           \n\t"
                 "vse32.v        v31, (t2)           \n\t"
-                : [A] "+r"(a_data), [B] "+r"(b_data)
+                : [A] "+r"(a_तथ्य), [B] "+r"(b_तथ्य)
                 : [DST] "r"(dst_c), [LDC] "r"(ldc*4), [BK] "r"(k_blks)
                 : "t0", "t1", "t2", "t3", "t4", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11",
                   "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25",
                   "v26", "v27", "v28", "v29", "v30", "v31", "fa0", "fa1", "fa2", "fa3");
-#else
-            asm volatile(
+#अन्यथा
+            यंत्र अस्थिर(
                 "vsetvli        t0, x0, e16, m1         \n\t"
                 "vxor.vv        v28, v28, v28           \n\t"
                 "vxor.vv        v29, v29, v29           \n\t"
@@ -3222,20 +3222,20 @@ void gemm_kernel_i8i4_m4(size_t          blk_len,
                 "add            t2, %[LDC], t3          \n\t"
                 "vse32.v        v30, (t3)               \n\t"
                 "vse32.v        v31, (t2)               \n\t"
-                : [A] "+r"(a_data), [B] "+r"(b_data)
+                : [A] "+r"(a_तथ्य), [B] "+r"(b_तथ्य)
                 : [DST] "r"(dst_c), [LDC] "r"(ldc * 4), [BK] "r"(k_blks)
                 : "t0", "t1", "t2", "t3", "t4", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10",
                   "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24",
                   "v25", "v26", "v27", "v28", "v29", "v30", "v31", "fa0", "fa1", "fa2", "fa3");
-#endif
+#पूर्ण_अगर
         }
-    } else {
-        for (size_t ni = 0; ni < count_n; ni += 32) {
-            uint8_t * b_data = (uint8_t *) quant_b_data + ni * b_data_stride;
-            int8_t *  a_data = (int8_t *) quant_a_ptr;
-            float *   dst_c  = c_ptr + ni;
+    } अन्यथा {
+        क्रम (माप_प्रकार ni = 0; ni < गिनती_n; ni += 32) {
+            uint8_t * b_तथ्य = (uint8_t *) quant_b_तथ्य + ni * b_तथ्य_stride;
+            int8_t *  a_तथ्य = (int8_t *) quant_a_ptr;
+            भग्न *   dst_c  = c_ptr + ni;
 
-            asm volatile(
+            यंत्र अस्थिर(
                 "li             t1,  8          \n\t"
                 "vsetvli        t0, x0, e32, m1 \n\t"
                 "vxor.vv        v28, v28, v28   \n\t"
@@ -3348,7 +3348,7 @@ void gemm_kernel_i8i4_m4(size_t          blk_len,
                 "add            t2, %[LDC], t3  \n\t"
                 "vse32.v        v30, (t3)       \n\t"
                 "vse32.v        v31, (t2)       \n\t"
-                : [A] "+r"(a_data), [B] "+r"(b_data)
+                : [A] "+r"(a_तथ्य), [B] "+r"(b_तथ्य)
                 : [DST] "r"(dst_c), [LDC] "r"(ldc * 4), [BK] "r"(k_blks)
                 : "t0", "t1", "t2", "t3", "t4", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10",
                   "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24",
@@ -3357,26 +3357,26 @@ void gemm_kernel_i8i4_m4(size_t          blk_len,
     }
 }
 
-void gemm_kernel_i8i4_hp_m4(size_t          blk_len,
-                            const uint8_t * quant_a_ptr,
-                            const uint8_t * quant_b_data,
-                            const uint8_t * quant_b_zp,
-                            float *         c_ptr,
-                            size_t          count_m,
-                            size_t          count_n,
-                            size_t          k_blks,
-                            size_t          ldc) {
-    constexpr size_t NB_COLS                = 32;
-    constexpr size_t K_SUBBLKS_PER_SUPERBLK = 8;
-    constexpr size_t K_SUBBLK_LEN           = 32;
+व्योम gemm_kernel_i8i4_hp_m4(माप_प्रकार          blk_len,
+                            स्थिर uint8_t * quant_a_ptr,
+                            स्थिर uint8_t * quant_b_तथ्य,
+                            स्थिर uint8_t * quant_b_zp,
+                            भग्न *         c_ptr,
+                            माप_प्रकार          गिनती_m,
+                            माप_प्रकार          गिनती_n,
+                            माप_प्रकार          k_blks,
+                            माप_प्रकार          ldc) {
+    constexpr माप_प्रकार NB_COLS                = 32;
+    constexpr माप_प्रकार K_SUBBLKS_PER_SUPERBLK = 8;
+    constexpr माप_प्रकार K_SUBBLK_LEN           = 32;
 
-    struct block_q4_0x32_layout {
+    काष्ठा block_q4_0x32_layout {
         _Float16 d[NB_COLS];
         uint8_t  qs[16 * NB_COLS];
     };
 
     GGML_ASSERT(blk_len == 256);
-    GGML_ASSERT(count_m >= 4);
+    GGML_ASSERT(गिनती_m >= 4);
 
     // Contract:
     // - computes a 4-row x 32-col tile per inner invocation
@@ -3384,22 +3384,22 @@ void gemm_kernel_i8i4_hp_m4(size_t          blk_len,
     // - B is q4 HP packed in N32 tiles, optionally with a separate zp area
     // - tail-N is currently not handled here; the caller must provide full N32 tiles
 
-    const size_t b_superblk_stride = sizeof(block_q4_0x32_layout) * K_SUBBLKS_PER_SUPERBLK +
-                                     (quant_b_zp ? NB_COLS * K_SUBBLKS_PER_SUPERBLK * sizeof(uint8_t) : 0);
-    const size_t b_tile_stride       = k_blks * b_superblk_stride;
-    const size_t a_nrow_block_stride = q8_hp_blk_size(blk_len, true, true) * 4;
-    const size_t a_subblk_stride     = q8_hp_blk_size(K_SUBBLK_LEN, false, false) * 4;
+    स्थिर माप_प्रकार b_superblk_stride = माप(block_q4_0x32_layout) * K_SUBBLKS_PER_SUPERBLK +
+                                     (quant_b_zp ? NB_COLS * K_SUBBLKS_PER_SUPERBLK * माप(uint8_t) : 0);
+    स्थिर माप_प्रकार b_tile_stride       = k_blks * b_superblk_stride;
+    स्थिर माप_प्रकार a_nrow_block_stride = q8_hp_blk_आकार(blk_len, true, true) * 4;
+    स्थिर माप_प्रकार a_subblk_stride     = q8_hp_blk_आकार(K_SUBBLK_LEN, false, false) * 4;
 
-    if (quant_b_zp != nullptr) {
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-            const size_t nb_real = std::min<size_t>(NB_COLS, count_n - ni);
-            if (nb_real != NB_COLS) {
-                break;
+    अगर (quant_b_zp != nullptr) {
+        क्रम (माप_प्रकार ni = 0; ni < गिनती_n; ni += NB_COLS) {
+            स्थिर माप_प्रकार nb_real = std::min<माप_प्रकार>(NB_COLS, गिनती_n - ni);
+            अगर (nb_real != NB_COLS) {
+                अवरोध;
             }
 
-            uint8_t * b_tile_base = (uint8_t *) quant_b_data + (ni / NB_COLS) * b_tile_stride;
+            uint8_t * b_tile_base = (uint8_t *) quant_b_तथ्य + (ni / NB_COLS) * b_tile_stride;
             uint8_t * a_block     = (uint8_t *) quant_a_ptr;
-            float *   dst_c       = c_ptr + ni;
+            भग्न *   dst_c       = c_ptr + ni;
 
             // Data layout summary for the with-zp path.
             //
@@ -3434,9 +3434,9 @@ void gemm_kernel_i8i4_hp_m4(size_t          blk_len,
             //   - per ksi: A += 136, a_sum += 2, B_data += 576, B_zp += 32
             //   - per ki : skip the 72B A trailer and advance B to the next 4864B superblock
 
-            const _Float16 hp_scale_16   = (_Float16) 16.0f;
-            const _Float16 hp_scale_1    = (_Float16) 1.0f;
-            const _Float16 hp_scale_0125 = (_Float16) 0.125f;
+            स्थिर _Float16 hp_scale_16   = (_Float16) 16.0f;
+            स्थिर _Float16 hp_scale_1    = (_Float16) 1.0f;
+            स्थिर _Float16 hp_scale_0125 = (_Float16) 0.125f;
 
             // VPR grouping used below:
             // - v4-v7   : B q4 payload for N32 split as 4 x N8 groups
@@ -3446,7 +3446,7 @@ void gemm_kernel_i8i4_hp_m4(size_t          blk_len,
             // - v16-v19 : temporary per-row scaled B scales
             // - v28-v31 : final fp32 accumulators for rows 0..3
 
-            asm volatile(
+            यंत्र अस्थिर(
                 "mv             t5, %[BK]                 \n\t"
                 "mv             t6, %[A]                  \n\t"
                 "mv             s5, %[B]                  \n\t"
@@ -3577,17 +3577,17 @@ void gemm_kernel_i8i4_hp_m4(size_t          blk_len,
                   "v25", "v26", "v27", "v28", "v29", "v30", "v31", "fa0", "fa1", "fa2", "ft1", "ft2", "ft3", "ft4",
                   "memory");
         }
-        return;
-    } else {
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-            const size_t nb_real = std::min<size_t>(NB_COLS, count_n - ni);
-            if (nb_real != NB_COLS) {
-                break;
+        वापस;
+    } अन्यथा {
+        क्रम (माप_प्रकार ni = 0; ni < गिनती_n; ni += NB_COLS) {
+            स्थिर माप_प्रकार nb_real = std::min<माप_प्रकार>(NB_COLS, गिनती_n - ni);
+            अगर (nb_real != NB_COLS) {
+                अवरोध;
             }
 
-            uint8_t * b_tile_base = (uint8_t *) quant_b_data + (ni / NB_COLS) * b_tile_stride;
+            uint8_t * b_tile_base = (uint8_t *) quant_b_तथ्य + (ni / NB_COLS) * b_tile_stride;
             uint8_t * a_block     = (uint8_t *) quant_a_ptr;
-            float *   dst_c       = c_ptr + ni;
+            भग्न *   dst_c       = c_ptr + ni;
 
             // Data layout summary for the no-zp path.
             //
@@ -3612,8 +3612,8 @@ void gemm_kernel_i8i4_hp_m4(size_t          blk_len,
             //   - per ksi: A += 136, a_sum += 2, B_data += 576
             //   - per ki : skip the 72B A trailer and advance B to the next 4608B superblock
 
-            const _Float16 hp_scale_16 = (_Float16) 16.0f;
-            const _Float16 hp_scale_1  = (_Float16) 1.0f;
+            स्थिर _Float16 hp_scale_16 = (_Float16) 16.0f;
+            स्थिर _Float16 hp_scale_1  = (_Float16) 1.0f;
 
             // VPR grouping used below matches the with-zp path:
             // - v4-v7   : B q4 payload for N32 split as 4 x N8 groups
@@ -3623,7 +3623,7 @@ void gemm_kernel_i8i4_hp_m4(size_t          blk_len,
             // - v16-v19 : temporary per-row scaled B scales
             // - v28-v31 : final fp32 accumulators for rows 0..3
 
-            asm volatile(
+            यंत्र अस्थिर(
                 "mv             t5, %[BK]                 \n\t"
                 "mv             t6, %[A]                  \n\t"
                 "mv             s5, %[B]                  \n\t"
@@ -3736,41 +3736,41 @@ void gemm_kernel_i8i4_hp_m4(size_t          blk_len,
                   "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v24", "v25", "v26",
                   "v27", "v28", "v29", "v30", "v31", "fa0", "fa1", "fa2", "ft1", "ft2", "ft3", "ft4", "memory");
         }
-        return;
+        वापस;
     }
 }
 
-void gemm_kernel_i8mxfp4_m1(size_t          blk_len,
-                            const uint8_t * quant_a_ptr,
-                            const uint8_t * quant_b_data,
-                            const uint8_t * quant_b_zp,
-                            float *         c_ptr,
-                            size_t          count_m,
-                            size_t          count_n,
-                            size_t          k_blks,
-                            size_t          ldc) {
-    constexpr size_t NB_COLS = 32;
-    constexpr size_t K_TILE  = 32;
+व्योम gemm_kernel_i8mxfp4_m1(माप_प्रकार          blk_len,
+                            स्थिर uint8_t * quant_a_ptr,
+                            स्थिर uint8_t * quant_b_तथ्य,
+                            स्थिर uint8_t * quant_b_zp,
+                            भग्न *         c_ptr,
+                            माप_प्रकार          गिनती_m,
+                            माप_प्रकार          गिनती_n,
+                            माप_प्रकार          k_blks,
+                            माप_प्रकार          ldc) {
+    constexpr माप_प्रकार NB_COLS = 32;
+    constexpr माप_प्रकार K_TILE  = 32;
     using blk_type           = nrow_block_mxfp4<NB_COLS>;
 
     GGML_ASSERT(blk_len == K_TILE);
-    GGML_ASSERT(count_m == 1);
+    GGML_ASSERT(गिनती_m == 1);
     GGML_UNUSED(quant_b_zp);
 
-    const size_t a_blk_stride  = q8_blk_size(blk_len, true);
-    const size_t b_blk_stride  = sizeof(blk_type);
-    const size_t b_tile_stride = k_blks * b_blk_stride;
+    स्थिर माप_प्रकार a_blk_stride  = q8_blk_आकार(blk_len, true);
+    स्थिर माप_प्रकार b_blk_stride  = माप(blk_type);
+    स्थिर माप_प्रकार b_tile_stride = k_blks * b_blk_stride;
 
-    if (quant_b_zp == NULL) {
-        for (size_t n = 0; n < count_n; n += 32) {
-            size_t    nblks         = (count_n - n) > 32 ? 32 : count_n - n;
+    अगर (quant_b_zp == शून्य) {
+        क्रम (माप_प्रकार n = 0; n < गिनती_n; n += 32) {
+            माप_प्रकार    nblks         = (गिनती_n - n) > 32 ? 32 : गिनती_n - n;
             // MXFP4 no-zp: per column per k-block stride = scale_e8m0(1B) + qs(16B) + qh(4B) = 21B
-            uint8_t * QuantBDataPtr = (uint8_t *) quant_b_data +     //
+            uint8_t * QuantBDataPtr = (uint8_t *) quant_b_तथ्य +     //
                                       n * k_blks * (blk_len / 8) +   // qh sign/high-bit mask: n×k_blks×4
                                       n * k_blks * blk_len / 2 +     // qs packed 4-bit magnitudes: n×k_blks×16
-                                      n * k_blks * sizeof(uint8_t);  // scale: n×k_blks×1
-            float * CPtr = c_ptr + n;
-            size_t  cnt  = k_blks;
+                                      n * k_blks * माप(uint8_t);  // scale: n×k_blks×1
+            भग्न * CPtr = c_ptr + n;
+            माप_प्रकार  cnt  = k_blks;
 
             // A format (q8 block with per-block scale and stored sum field):
             //   || scl(fp32,4B) | asum(int16,2B) | data(int8,32B) || × k_blks
@@ -3790,7 +3790,7 @@ void gemm_kernel_i8mxfp4_m1(size_t          blk_len,
             //   v8..v15 / v16..v23 = qs unpack/pack temporaries (build signed vmadot lanes)
             //   v24/v26/v28/v30    = int32 dot accumulators & packing temps
 
-            __asm__ volatile(
+            __asm__ अस्थिर(
                 "mv           t3, %[BCK]              \n\t"  // t3 = k_blks
                 "mv           t4, %[NBLKS]            \n\t"  // t4 = nblks (tail guard)
 
@@ -3929,39 +3929,39 @@ void gemm_kernel_i8mxfp4_m1(size_t          blk_len,
     }
 }
 
-void gemm_kernel_i8mxfp4_m4(size_t          blk_len,
-                            const uint8_t * quant_a_ptr,
-                            const uint8_t * quant_b_data,
-                            const uint8_t * quant_b_zp,
-                            float *         c_ptr,
-                            size_t          count_m,
-                            size_t          count_n,
-                            size_t          k_blks,
-                            size_t          ldc) {
-    constexpr size_t NB_COLS = 32;
-    constexpr size_t K_TILE  = 32;
+व्योम gemm_kernel_i8mxfp4_m4(माप_प्रकार          blk_len,
+                            स्थिर uint8_t * quant_a_ptr,
+                            स्थिर uint8_t * quant_b_तथ्य,
+                            स्थिर uint8_t * quant_b_zp,
+                            भग्न *         c_ptr,
+                            माप_प्रकार          गिनती_m,
+                            माप_प्रकार          गिनती_n,
+                            माप_प्रकार          k_blks,
+                            माप_प्रकार          ldc) {
+    constexpr माप_प्रकार NB_COLS = 32;
+    constexpr माप_प्रकार K_TILE  = 32;
     using blk_type           = nrow_block_mxfp4<NB_COLS>;
 
     GGML_ASSERT(blk_len == K_TILE);
-    GGML_ASSERT(count_m == 4);
+    GGML_ASSERT(गिनती_m == 4);
     GGML_UNUSED(quant_b_zp);
 
-    const size_t a_blk_stride  = q8_blk_size(blk_len, true);
-    const size_t b_blk_stride  = sizeof(blk_type);
-    const size_t b_tile_stride = k_blks * b_blk_stride;
+    स्थिर माप_प्रकार a_blk_stride  = q8_blk_आकार(blk_len, true);
+    स्थिर माप_प्रकार b_blk_stride  = माप(blk_type);
+    स्थिर माप_प्रकार b_tile_stride = k_blks * b_blk_stride;
 
-    if (quant_b_zp == NULL) {
+    अगर (quant_b_zp == शून्य) {
         // MXFP4 block layout per K32/N32 tile:
         //   [scale_e8m0 x 32][qh sign/high-bit mask x 128B][qs packed 4-bit magnitudes x 512B]
         // There is no explicit zp stream; qh is combined with qs to reconstruct signed MXFP4 values.
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-            size_t    nb_real = std::min<size_t>(NB_COLS, count_n - ni);
-            uint8_t * b_data  = (uint8_t *) quant_b_data + (ni / NB_COLS) * b_tile_stride;
-            uint8_t * a_data  = (uint8_t *) quant_a_ptr;
-            float *   dst_c   = c_ptr + ni;
-            size_t    cnt     = k_blks;
+        क्रम (माप_प्रकार ni = 0; ni < गिनती_n; ni += NB_COLS) {
+            माप_प्रकार    nb_real = std::min<माप_प्रकार>(NB_COLS, गिनती_n - ni);
+            uint8_t * b_तथ्य  = (uint8_t *) quant_b_तथ्य + (ni / NB_COLS) * b_tile_stride;
+            uint8_t * a_तथ्य  = (uint8_t *) quant_a_ptr;
+            भग्न *   dst_c   = c_ptr + ni;
+            माप_प्रकार    cnt     = k_blks;
 
-            asm volatile(
+            यंत्र अस्थिर(
                 // v4-v7 are the fp32 accumulators for rows 0..3 of the current N32 tile.
                 "vsetvli        t0, x0, e32, m1         \n\t"
                 "vxor.vv        v4, v4, v4              \n\t"
@@ -4079,7 +4079,7 @@ void gemm_kernel_i8mxfp4_m4(size_t          blk_len,
                 "vse32.v        v6, (t2)                \n\t"
                 "add            t3, t2, %[LDC]          \n\t"
                 "vse32.v        v7, (t3)                \n\t"
-                : [A] "+r"(a_data), [B] "+r"(b_data), [BK] "+r"(cnt)
+                : [A] "+r"(a_तथ्य), [B] "+r"(b_तथ्य), [BK] "+r"(cnt)
                 : [DST] "r"(dst_c), [LDC] "r"(ldc * 4), [NBLKS] "r"(nb_real)
                 : "cc", "memory", "t0", "t1", "t2", "t3", "t4", "t5", "t6", "s1", "s2", "s3", "s4", "v0", "v1", "v2",
                   "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17",
@@ -4089,15 +4089,15 @@ void gemm_kernel_i8mxfp4_m4(size_t          blk_len,
     }
 }
 
-void gemm_kernel_i8i5_m1(size_t          blk_len,
-                         const uint8_t * quant_a_ptr,
-                         const uint8_t * quant_b_data,
-                         const uint8_t * quant_b_zp,
-                         float *         c_ptr,
-                         size_t          count_m,
-                         size_t          count_n,
-                         size_t          k_blks,
-                         size_t          ldc) {
+व्योम gemm_kernel_i8i5_m1(माप_प्रकार          blk_len,
+                         स्थिर uint8_t * quant_a_ptr,
+                         स्थिर uint8_t * quant_b_तथ्य,
+                         स्थिर uint8_t * quant_b_zp,
+                         भग्न *         c_ptr,
+                         माप_प्रकार          गिनती_m,
+                         माप_प्रकार          गिनती_n,
+                         माप_प्रकार          k_blks,
+                         माप_प्रकार          ldc) {
     // =========================================================================
     // i8i5: 8-bit activation × 5-bit weight (4-bit low + 1-bit high mask)
     //
@@ -4126,16 +4126,16 @@ void gemm_kernel_i8i5_m1(size_t          blk_len,
     //
     // =========================================================================
 
-    if (quant_b_zp == NULL) {
-        for (size_t n = 0; n < count_n; n += 32) {
-            size_t    nblks         = (count_n - n) > 32 ? 32 : count_n - n;
+    अगर (quant_b_zp == शून्य) {
+        क्रम (माप_प्रकार n = 0; n < गिनती_n; n += 32) {
+            माप_प्रकार    nblks         = (गिनती_n - n) > 32 ? 32 : गिनती_n - n;
             // i8i5 no-zp: per column per k-block stride = fp16(2B) + i4(16B) + i1(4B) = 22B
-            uint8_t * QuantBDataPtr = (uint8_t *) quant_b_data +      //
+            uint8_t * QuantBDataPtr = (uint8_t *) quant_b_तथ्य +      //
                                       n * k_blks * (blk_len / 8) +    // Bh i1 mask: n×k_blks×4
                                       n * k_blks * blk_len / 2 +      // Bs i4 data: n×k_blks×16
-                                      n * k_blks * sizeof(_Float16);  // scale: n×k_blks×2
-            float * CPtr = c_ptr + n;
-            size_t  cnt  = k_blks;
+                                      n * k_blks * माप(_Float16);  // scale: n×k_blks×2
+            भग्न * CPtr = c_ptr + n;
+            माप_प्रकार  cnt  = k_blks;
 
             // A format (same as i8i4):
             //   || scl(fp32,4B) | asum(int16,2B) | data(int8,32B) || × k_blks
@@ -4155,7 +4155,7 @@ void gemm_kernel_i8i5_m1(size_t          blk_len,
             //   v8..v15 / v16..v23 = Bs unpack/pack temporaries (build b5bit bytes)
             //   v24/v26/v28/v30    = int32 dot accumulators & packing temps
 
-            __asm__ volatile(
+            __asm__ अस्थिर(
                 "mv           t3, %[BCK]              \n\t"  // t3 = k_blks
                 "mv           t4, %[NBLKS]            \n\t"  // t4 = nblks (tail guard)
 
@@ -4288,17 +4288,17 @@ void gemm_kernel_i8i5_m1(size_t          blk_len,
                   "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v16", "v17", "v18", "v19",
                   "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31");
         }
-    } else {
-        for (size_t n = 0; n < count_n; n += 32) {
-            size_t    nblks         = (count_n - n) > 32 ? 32 : count_n - n;
+    } अन्यथा {
+        क्रम (माप_प्रकार n = 0; n < गिनती_n; n += 32) {
+            माप_प्रकार    nblks         = (गिनती_n - n) > 32 ? 32 : गिनती_n - n;
             // i8i5 with-zp: per column per k-block stride = fp16(2B)+zp(1B)+i4(16B)+i1(4B)=23B
-            uint8_t * QuantBDataPtr = (uint8_t *) quant_b_data +      //
+            uint8_t * QuantBDataPtr = (uint8_t *) quant_b_तथ्य +      //
                                       n * k_blks * blk_len / 2 +      // Bs i4: n×k_blks×16
                                       n * k_blks * (blk_len / 8) +    // Bh i1: n×k_blks×4
-                                      n * k_blks * sizeof(uint8_t) +  // zp: n×k_blks×1
-                                      n * k_blks * sizeof(_Float16);  // scale: n×k_blks×2
-            float * CPtr = c_ptr + n;
-            size_t  cnt  = k_blks;
+                                      n * k_blks * माप(uint8_t) +  // zp: n×k_blks×1
+                                      n * k_blks * माप(_Float16);  // scale: n×k_blks×2
+            भग्न * CPtr = c_ptr + n;
+            माप_प्रकार  cnt  = k_blks;
 
             // A format (same as i8i4):
             //   || scl(fp32,4B) | asum(int16,2B) | data(int8,32B) || × k_blks
@@ -4318,7 +4318,7 @@ void gemm_kernel_i8i5_m1(size_t          blk_len,
             //   v8..v15 / v16..v23 = Bs unpack/pack temporaries (build b5bit bytes)
             //   v24/v26/v28/v30    = int32 dot accumulators & packing temps
 
-            __asm__ volatile(
+            __asm__ अस्थिर(
                 "mv           t3, %[BCK]              \n\t"  // t3 = k_blks
                 "mv           t4, %[NBLKS]            \n\t"  // t4 = nblks (tail guard)
 
@@ -4461,36 +4461,36 @@ void gemm_kernel_i8i5_m1(size_t          blk_len,
     }
 }
 
-void gemm_kernel_i8i5_m4(size_t          blk_len,
-                         const uint8_t * quant_a_ptr,
-                         const uint8_t * quant_b_data,
-                         const uint8_t * quant_b_zp,
-                         float *         c_ptr,
-                         size_t          count_m,
-                         size_t          count_n,
-                         size_t          k_blks,
-                         size_t          ldc) {
-    constexpr size_t NB_COLS = 32;
+व्योम gemm_kernel_i8i5_m4(माप_प्रकार          blk_len,
+                         स्थिर uint8_t * quant_a_ptr,
+                         स्थिर uint8_t * quant_b_तथ्य,
+                         स्थिर uint8_t * quant_b_zp,
+                         भग्न *         c_ptr,
+                         माप_प्रकार          गिनती_m,
+                         माप_प्रकार          गिनती_n,
+                         माप_प्रकार          k_blks,
+                         माप_प्रकार          ldc) {
+    constexpr माप_प्रकार NB_COLS = 32;
 
-    GGML_UNUSED(count_m);
+    GGML_UNUSED(गिनती_m);
     GGML_UNUSED(blk_len);
 
     // This kernel computes a 4x32 output tile. For each K32 block we decode the
     // packed Q5 weights once and reuse the decoded vectors across the 4 A rows.
-    constexpr size_t B_Q50_BLK_STRIDE = sizeof(nrow_block_q5_0<NB_COLS>);
-    constexpr size_t B_Q51_BLK_STRIDE = sizeof(nrow_block_q5_1<NB_COLS>);
+    constexpr माप_प्रकार B_Q50_BLK_STRIDE = माप(nrow_block_q5_0<NB_COLS>);
+    constexpr माप_प्रकार B_Q51_BLK_STRIDE = माप(nrow_block_q5_1<NB_COLS>);
 
-    if (quant_b_zp) {
+    अगर (quant_b_zp) {
         // Q5_1 block layout per K32/N32 tile:
         //   [scale_fp16 x 32][zp_u8 x 32][qh high-bit mask x 128B][qs low nibbles x 512B]
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-            size_t    nb_real = std::min<size_t>(NB_COLS, count_n - ni);
-            uint8_t * b_data  = (uint8_t *) quant_b_data + (ni / NB_COLS) * k_blks * B_Q51_BLK_STRIDE;
-            uint8_t * a_data  = (uint8_t *) quant_a_ptr;
-            float *   dst_c   = c_ptr + ni;
-            size_t    cnt     = k_blks;
+        क्रम (माप_प्रकार ni = 0; ni < गिनती_n; ni += NB_COLS) {
+            माप_प्रकार    nb_real = std::min<माप_प्रकार>(NB_COLS, गिनती_n - ni);
+            uint8_t * b_तथ्य  = (uint8_t *) quant_b_तथ्य + (ni / NB_COLS) * k_blks * B_Q51_BLK_STRIDE;
+            uint8_t * a_तथ्य  = (uint8_t *) quant_a_ptr;
+            भग्न *   dst_c   = c_ptr + ni;
+            माप_प्रकार    cnt     = k_blks;
 
-            asm volatile(
+            यंत्र अस्थिर(
                 // v4-v7 are the fp32 accumulators for rows 0..3 of the current N32 tile.
                 "vsetvli        t0, x0, e32, m1         \n\t"
                 "vxor.vv        v4, v4, v4              \n\t"
@@ -4622,25 +4622,25 @@ void gemm_kernel_i8i5_m4(size_t          blk_len,
                 "vse32.v        v6, (t2)                \n\t"
                 "add            t3, t2, %[LDC]          \n\t"
                 "vse32.v        v7, (t3)                \n\t"
-                : [A] "+r"(a_data), [B] "+r"(b_data), [BK] "+r"(cnt)
+                : [A] "+r"(a_तथ्य), [B] "+r"(b_तथ्य), [BK] "+r"(cnt)
                 : [DST] "r"(dst_c), [LDC] "r"(ldc * 4), [NBLKS] "r"(nb_real)
                 : "cc", "memory", "t0", "t1", "t2", "t3", "t4", "t5", "t6", "s1", "s2", "s3", "s4", "s5", "v0", "v1",
                   "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14", "v15", "v16",
                   "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29", "v30",
                   "v31", "fa0", "fa1", "fa2", "fa3");
         }
-    } else {
+    } अन्यथा {
         // Q5_0 block layout per K32/N32 tile:
         //   [scale_fp16 x 32][qh high-bit mask x 128B][qs low nibbles x 512B]
         // There is no explicit zp stream; the implicit midpoint correction is +16.
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-            size_t    nb_real = std::min<size_t>(NB_COLS, count_n - ni);
-            uint8_t * b_data  = (uint8_t *) quant_b_data + (ni / NB_COLS) * k_blks * B_Q50_BLK_STRIDE;
-            uint8_t * a_data  = (uint8_t *) quant_a_ptr;
-            float *   dst_c   = c_ptr + ni;
-            size_t    cnt     = k_blks;
+        क्रम (माप_प्रकार ni = 0; ni < गिनती_n; ni += NB_COLS) {
+            माप_प्रकार    nb_real = std::min<माप_प्रकार>(NB_COLS, गिनती_n - ni);
+            uint8_t * b_तथ्य  = (uint8_t *) quant_b_तथ्य + (ni / NB_COLS) * k_blks * B_Q50_BLK_STRIDE;
+            uint8_t * a_तथ्य  = (uint8_t *) quant_a_ptr;
+            भग्न *   dst_c   = c_ptr + ni;
+            माप_प्रकार    cnt     = k_blks;
 
-            asm volatile(
+            यंत्र अस्थिर(
                 // v4-v7 are the fp32 accumulators for rows 0..3 of the current N32 tile.
                 "vsetvli        t0, x0, e32, m1         \n\t"
                 "vxor.vv        v4, v4, v4              \n\t"
@@ -4760,7 +4760,7 @@ void gemm_kernel_i8i5_m4(size_t          blk_len,
                 "vse32.v        v6, (t2)                \n\t"
                 "add            t3, t2, %[LDC]          \n\t"
                 "vse32.v        v7, (t3)                \n\t"
-                : [A] "+r"(a_data), [B] "+r"(b_data), [BK] "+r"(cnt)
+                : [A] "+r"(a_तथ्य), [B] "+r"(b_तथ्य), [BK] "+r"(cnt)
                 : [DST] "r"(dst_c), [LDC] "r"(ldc * 4), [NBLKS] "r"(nb_real)
                 : "cc", "memory", "t0", "t1", "t2", "t3", "t4", "t5", "t6", "s1", "s2", "s3", "s4", "v0", "v1", "v2",
                   "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17",
@@ -4770,22 +4770,22 @@ void gemm_kernel_i8i5_m4(size_t          blk_len,
     }
 }
 
-void gemm_kernel_i8i8_m1(size_t          blk_len,
-                         const uint8_t * quant_a_ptr,
-                         const uint8_t * quant_b_data,
-                         const uint8_t * quant_b_zp,
-                         float *         c_ptr,
-                         size_t          count_m,
-                         size_t          count_n,
-                         size_t          k_blks,
-                         size_t          ldc) {
-    for (size_t n = 0; n < count_n; n += 32) {
-        size_t    nblks         = (count_n - n) > 32 ? 32 : count_n - n;
-        uint8_t * QuantBDataPtr = (uint8_t *) quant_b_data +      //
+व्योम gemm_kernel_i8i8_m1(माप_प्रकार          blk_len,
+                         स्थिर uint8_t * quant_a_ptr,
+                         स्थिर uint8_t * quant_b_तथ्य,
+                         स्थिर uint8_t * quant_b_zp,
+                         भग्न *         c_ptr,
+                         माप_प्रकार          गिनती_m,
+                         माप_प्रकार          गिनती_n,
+                         माप_प्रकार          k_blks,
+                         माप_प्रकार          ldc) {
+    क्रम (माप_प्रकार n = 0; n < गिनती_n; n += 32) {
+        माप_प्रकार    nblks         = (गिनती_n - n) > 32 ? 32 : गिनती_n - n;
+        uint8_t * QuantBDataPtr = (uint8_t *) quant_b_तथ्य +      //
                                   n * k_blks * blk_len +          // b data
-                                  n * k_blks * sizeof(_Float16);  // scale
-        float * CPtr = c_ptr + n;
-        size_t  cnt  = k_blks;
+                                  n * k_blks * माप(_Float16);  // scale
+        भग्न * CPtr = c_ptr + n;
+        माप_प्रकार  cnt  = k_blks;
 
         // A format Version_1 (FP32 SCALE FOR Normal VMADOTins of IME2)
         // A M1K32 int8    256bit
@@ -4800,7 +4800,7 @@ void gemm_kernel_i8i8_m1(size_t          blk_len,
         // || Element                              || Element                              || ...
 
         //bias always be nullptr
-        __asm__ volatile(
+        __asm__ अस्थिर(
 
             // t3 = k/32
             "mv           t3, %[BCK]              \n\t"
@@ -4891,22 +4891,22 @@ void gemm_kernel_i8i8_m1(size_t          blk_len,
     }
 }
 
-void gemm_kernel_i8i8_m4(size_t          blk_len,
-                         const uint8_t * quant_a_ptr,
-                         const uint8_t * quant_b_data,
-                         const uint8_t * quant_b_zp,
-                         float *         c_ptr,
-                         size_t          count_m,
-                         size_t          count_n,
-                         size_t          k_blks,
-                         size_t          ldc) {
-    int64_t b_data_stride = k_blks * sizeof(ggml_fp16_t) + k_blks * blk_len;
-    for (size_t ni = 0; ni < count_n; ni += 32) {
-        uint8_t * b_data = (uint8_t *) quant_b_data + ni * b_data_stride;
-        int8_t *  a_data = (int8_t *) quant_a_ptr;
-        float *   dst_c  = c_ptr + ni;
+व्योम gemm_kernel_i8i8_m4(माप_प्रकार          blk_len,
+                         स्थिर uint8_t * quant_a_ptr,
+                         स्थिर uint8_t * quant_b_तथ्य,
+                         स्थिर uint8_t * quant_b_zp,
+                         भग्न *         c_ptr,
+                         माप_प्रकार          गिनती_m,
+                         माप_प्रकार          गिनती_n,
+                         माप_प्रकार          k_blks,
+                         माप_प्रकार          ldc) {
+    int64_t b_तथ्य_stride = k_blks * माप(ggml_fp16_t) + k_blks * blk_len;
+    क्रम (माप_प्रकार ni = 0; ni < गिनती_n; ni += 32) {
+        uint8_t * b_तथ्य = (uint8_t *) quant_b_तथ्य + ni * b_तथ्य_stride;
+        int8_t *  a_तथ्य = (int8_t *) quant_a_ptr;
+        भग्न *   dst_c  = c_ptr + ni;
 
-        asm volatile(
+        यंत्र अस्थिर(
             "vsetvli        t0, x0, e32, m1       \n\t"
             "vxor.vv        v28, v28, v28         \n\t"
             "vxor.vv        v29, v29, v29         \n\t"
@@ -4995,7 +4995,7 @@ void gemm_kernel_i8i8_m4(size_t          blk_len,
             "add            t2, %[LDC], t3        \n\t"
             "vse32.v        v30, (t3)             \n\t"
             "vse32.v        v31, (t2)             \n\t"
-            : [A] "+r"(a_data), [B] "+r"(b_data)
+            : [A] "+r"(a_तथ्य), [B] "+r"(b_तथ्य)
             : [DST] "r"(dst_c), [LDC] "r"(ldc * 4), [BK] "r"(k_blks)
             : "t0", "t1", "t2", "t3", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12",
               "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27",
@@ -5003,30 +5003,30 @@ void gemm_kernel_i8i8_m4(size_t          blk_len,
     }
 }
 
-void moe_m2_gemm_kernel_i8i4_impl(size_t           blk_len,
-                                  const uint8_t ** quant_a_ptr,
-                                  const uint8_t *  quant_b_data,
-                                  const uint8_t *  quant_b_zp,
-                                  float **         c_ptr,
-                                  size_t           count_m,
-                                  size_t           count_n,
-                                  size_t           k_blks,
-                                  size_t           ldc) {
-#if 0
-    moe_gemm_kernel_i8i4_mrow_ref<2, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks,
+व्योम moe_m2_gemm_kernel_i8i4_impl(माप_प्रकार           blk_len,
+                                  स्थिर uint8_t ** quant_a_ptr,
+                                  स्थिर uint8_t *  quant_b_तथ्य,
+                                  स्थिर uint8_t *  quant_b_zp,
+                                  भग्न **         c_ptr,
+                                  माप_प्रकार           गिनती_m,
+                                  माप_प्रकार           गिनती_n,
+                                  माप_प्रकार           k_blks,
+                                  माप_प्रकार           ldc) {
+#अगर 0
+    moe_gemm_kernel_i8i4_mrow_ref<2, 32>(blk_len, quant_a_ptr, quant_b_तथ्य, quant_b_zp, c_ptr, गिनती_m, गिनती_n, k_blks,
                                      ldc);
-#else
-    int64_t b_data_stride =
-        k_blks * (sizeof(ggml_fp16_t) + 16 * sizeof(int8_t) + (quant_b_zp != NULL ? sizeof(int8_t) : 0));
-    if (quant_b_zp == NULL) {
-        for (size_t ni = 0; ni < count_n; ni += 32) {
-            uint8_t * b_data  = (uint8_t *) quant_b_data + ni * b_data_stride;
+#अन्यथा
+    int64_t b_तथ्य_stride =
+        k_blks * (माप(ggml_fp16_t) + 16 * माप(int8_t) + (quant_b_zp != शून्य ? माप(int8_t) : 0));
+    अगर (quant_b_zp == शून्य) {
+        क्रम (माप_प्रकार ni = 0; ni < गिनती_n; ni += 32) {
+            uint8_t * b_तथ्य  = (uint8_t *) quant_b_तथ्य + ni * b_तथ्य_stride;
             int8_t *  a_data0 = (int8_t *) quant_a_ptr[0];
             int8_t *  a_data1 = (int8_t *) quant_a_ptr[1];
-            float *   dst_c0  = (float *) c_ptr[0] + ni;
-            float *   dst_c1  = (float *) c_ptr[1] + ni;
+            भग्न *   dst_c0  = (भग्न *) c_ptr[0] + ni;
+            भग्न *   dst_c1  = (भग्न *) c_ptr[1] + ni;
 
-            asm volatile(
+            यंत्र अस्थिर(
                 "vsetvli        t0, x0, e16, m1         \n\t"
                 "vxor.vv        v28, v28, v28           \n\t"
                 "vxor.vv        v29, v29, v29           \n\t"
@@ -5112,25 +5112,25 @@ void moe_m2_gemm_kernel_i8i4_impl(size_t           blk_len,
                 "vsetvli        t0, x0, e32, m1         \n\t"
                 "vse32.v        v28, (%[DST0])          \n\t"
                 "vse32.v        v29, (%[DST1])          \n\t"
-                : [A0] "+r"(a_data0), [A1] "+r"(a_data1), [B] "+r"(b_data)
+                : [A0] "+r"(a_data0), [A1] "+r"(a_data1), [B] "+r"(b_तथ्य)
                 : [DST0] "r"(dst_c0), [DST1] "r"(dst_c1), [BK] "r"(k_blks)
                 : "t0", "t1", "t2", "t3", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11",
                   "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25",
                   "v26", "v27", "v28", "v29", "v30", "v31", "fa0", "fa1", "fa2", "fa3");
         }
-    } else {
-#    if 0
-        moe_gemm_kernel_i8i4_mrow_ref<2, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+    } अन्यथा {
+#    अगर 0
+        moe_gemm_kernel_i8i4_mrow_ref<2, 32>(blk_len, quant_a_ptr, quant_b_तथ्य, quant_b_zp, c_ptr, गिनती_m, गिनती_n,
                                          k_blks, ldc);
-#    else
-        for (size_t ni = 0; ni < count_n; ni += 32) {
-            uint8_t * b_data  = (uint8_t *) quant_b_data + ni * b_data_stride;
+#    अन्यथा
+        क्रम (माप_प्रकार ni = 0; ni < गिनती_n; ni += 32) {
+            uint8_t * b_तथ्य  = (uint8_t *) quant_b_तथ्य + ni * b_तथ्य_stride;
             int8_t *  a_data0 = (int8_t *) quant_a_ptr[0];
             int8_t *  a_data1 = (int8_t *) quant_a_ptr[1];
-            float *   dst_c0  = (float *) c_ptr[0] + ni;
-            float *   dst_c1  = (float *) c_ptr[1] + ni;
+            भग्न *   dst_c0  = (भग्न *) c_ptr[0] + ni;
+            भग्न *   dst_c1  = (भग्न *) c_ptr[1] + ni;
 
-            asm volatile(
+            यंत्र अस्थिर(
                 "vsetvli        t0, x0, e16, m1         \n\t"
                 "vxor.vv        v28, v28, v28           \n\t"
                 "vxor.vv        v29, v29, v29           \n\t"
@@ -5233,7 +5233,7 @@ void moe_m2_gemm_kernel_i8i4_impl(size_t           blk_len,
                 "vsetvli        t0, x0, e32, m1         \n\t"
                 "vse32.v        v28, (%[DST0])          \n\t"
                 "vse32.v        v29, (%[DST1])          \n\t"
-                : [A0] "+r"(a_data0), [A1] "+r"(a_data1), [B] "+r"(b_data)
+                : [A0] "+r"(a_data0), [A1] "+r"(a_data1), [B] "+r"(b_तथ्य)
                 : [DST0] "r"(dst_c0), [DST1] "r"(dst_c1), [BK] "r"(k_blks)
                 : "t0", "t1", "t2", "t3", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11",
                   "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25",
@@ -5241,36 +5241,36 @@ void moe_m2_gemm_kernel_i8i4_impl(size_t           blk_len,
         }
 #    endif
     }
-#endif
+#पूर्ण_अगर
 }
 
-void moe_m2_gemm_kernel_i8i5_impl(size_t           blk_len,
-                                  const uint8_t ** quant_a_ptr,
-                                  const uint8_t *  quant_b_data,
-                                  const uint8_t *  quant_b_zp,
-                                  float **         c_ptr,
-                                  size_t           count_m,
-                                  size_t           count_n,
-                                  size_t           k_blks,
-                                  size_t           ldc) {
-    constexpr size_t NB_COLS          = 32;
-    constexpr size_t B_Q50_BLK_STRIDE = sizeof(nrow_block_q5_0<NB_COLS>);
-    constexpr size_t B_Q51_BLK_STRIDE = sizeof(nrow_block_q5_1<NB_COLS>);
+व्योम moe_m2_gemm_kernel_i8i5_impl(माप_प्रकार           blk_len,
+                                  स्थिर uint8_t ** quant_a_ptr,
+                                  स्थिर uint8_t *  quant_b_तथ्य,
+                                  स्थिर uint8_t *  quant_b_zp,
+                                  भग्न **         c_ptr,
+                                  माप_प्रकार           गिनती_m,
+                                  माप_प्रकार           गिनती_n,
+                                  माप_प्रकार           k_blks,
+                                  माप_प्रकार           ldc) {
+    constexpr माप_प्रकार NB_COLS          = 32;
+    constexpr माप_प्रकार B_Q50_BLK_STRIDE = माप(nrow_block_q5_0<NB_COLS>);
+    constexpr माप_प्रकार B_Q51_BLK_STRIDE = माप(nrow_block_q5_1<NB_COLS>);
 
     GGML_UNUSED(blk_len);
-    GGML_UNUSED(count_m);
+    GGML_UNUSED(गिनती_m);
     GGML_UNUSED(ldc);
 
-    if (quant_b_zp == NULL) {
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-            size_t    nb_real = std::min<size_t>(NB_COLS, count_n - ni);
-            uint8_t * b_data  = (uint8_t *) quant_b_data + (ni / NB_COLS) * k_blks * B_Q50_BLK_STRIDE;
+    अगर (quant_b_zp == शून्य) {
+        क्रम (माप_प्रकार ni = 0; ni < गिनती_n; ni += NB_COLS) {
+            माप_प्रकार    nb_real = std::min<माप_प्रकार>(NB_COLS, गिनती_n - ni);
+            uint8_t * b_तथ्य  = (uint8_t *) quant_b_तथ्य + (ni / NB_COLS) * k_blks * B_Q50_BLK_STRIDE;
             int8_t *  a_data0 = (int8_t *) quant_a_ptr[0];
             int8_t *  a_data1 = (int8_t *) quant_a_ptr[1];
-            float *   dst_c0  = (float *) c_ptr[0] + ni;
-            float *   dst_c1  = (float *) c_ptr[1] + ni;
+            भग्न *   dst_c0  = (भग्न *) c_ptr[0] + ni;
+            भग्न *   dst_c1  = (भग्न *) c_ptr[1] + ni;
 
-            asm volatile(
+            यंत्र अस्थिर(
                 "mv             t4, %[BK]               \n\t"
                 "vsetvli        t0, x0, e32, m1         \n\t"
                 "vxor.vv        v2, v0, v0              \n\t"
@@ -5380,22 +5380,22 @@ void moe_m2_gemm_kernel_i8i5_impl(size_t           blk_len,
                 "vsetvli        t0, %[NR], e32, m1      \n\t"
                 "vse32.v        v2, (%[DST0])           \n\t"
                 "vse32.v        v3, (%[DST1])           \n\t"
-                : [A0] "+r"(a_data0), [A1] "+r"(a_data1), [B] "+r"(b_data)
+                : [A0] "+r"(a_data0), [A1] "+r"(a_data1), [B] "+r"(b_तथ्य)
                 : [DST0] "r"(dst_c0), [DST1] "r"(dst_c1), [BK] "r"(k_blks), [NR] "r"(nb_real)
                 : "cc", "memory", "t0", "t1", "t2", "t3", "t4", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8",
                   "v9", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22",
                   "v23", "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31", "f0", "f1");
         }
-    } else {
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-            size_t    nb_real = std::min<size_t>(NB_COLS, count_n - ni);
-            uint8_t * b_data  = (uint8_t *) quant_b_data + (ni / NB_COLS) * k_blks * B_Q51_BLK_STRIDE;
+    } अन्यथा {
+        क्रम (माप_प्रकार ni = 0; ni < गिनती_n; ni += NB_COLS) {
+            माप_प्रकार    nb_real = std::min<माप_प्रकार>(NB_COLS, गिनती_n - ni);
+            uint8_t * b_तथ्य  = (uint8_t *) quant_b_तथ्य + (ni / NB_COLS) * k_blks * B_Q51_BLK_STRIDE;
             int8_t *  a_data0 = (int8_t *) quant_a_ptr[0];
             int8_t *  a_data1 = (int8_t *) quant_a_ptr[1];
-            float *   dst_c0  = (float *) c_ptr[0] + ni;
-            float *   dst_c1  = (float *) c_ptr[1] + ni;
+            भग्न *   dst_c0  = (भग्न *) c_ptr[0] + ni;
+            भग्न *   dst_c1  = (भग्न *) c_ptr[1] + ni;
 
-            asm volatile(
+            यंत्र अस्थिर(
                 "mv             t4, %[BK]               \n\t"
                 "vsetvli        t0, x0, e32, m1         \n\t"
                 "vxor.vv        v2, v0, v0              \n\t"
@@ -5518,7 +5518,7 @@ void moe_m2_gemm_kernel_i8i5_impl(size_t           blk_len,
                 "vsetvli        t0, %[NR], e32, m1      \n\t"
                 "vse32.v        v2, (%[DST0])           \n\t"
                 "vse32.v        v3, (%[DST1])           \n\t"
-                : [A0] "+r"(a_data0), [A1] "+r"(a_data1), [B] "+r"(b_data)
+                : [A0] "+r"(a_data0), [A1] "+r"(a_data1), [B] "+r"(b_तथ्य)
                 : [DST0] "r"(dst_c0), [DST1] "r"(dst_c1), [BK] "r"(k_blks), [NR] "r"(nb_real)
                 : "cc", "memory", "t0", "t1", "t2", "t3", "t4", "t5", "t6", "s1", "v0", "v1", "v2", "v3", "v4", "v5",
                   "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20",
@@ -5527,241 +5527,241 @@ void moe_m2_gemm_kernel_i8i5_impl(size_t           blk_len,
     }
 }
 
-size_t gemm_kernel_i8i2k(size_t          blk_len,
-                         const uint8_t * quant_a_ptr,
-                         const uint8_t * quant_b_data,
-                         const uint8_t * quant_b_zp,
-                         float *         c_ptr,
-                         size_t          count_m,
-                         size_t          count_n,
-                         size_t          k_blks,
-                         size_t          ldc) {
-    if (count_m >= 4) {
-#if 0
-        gemm_kernel_i8i2k_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_m, count_n, k_blks, ldc);
-#else
-        gemm_kernel_i8i2k_m4(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-        return 4;
-    } else {
-#if 0
-        gemm_kernel_i8i2k_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_m, count_n, k_blks,
+माप_प्रकार gemm_kernel_i8i2k(माप_प्रकार          blk_len,
+                         स्थिर uint8_t * quant_a_ptr,
+                         स्थिर uint8_t * quant_b_तथ्य,
+                         स्थिर uint8_t * quant_b_zp,
+                         भग्न *         c_ptr,
+                         माप_प्रकार          गिनती_m,
+                         माप_प्रकार          गिनती_n,
+                         माप_प्रकार          k_blks,
+                         माप_प्रकार          ldc) {
+    अगर (गिनती_m >= 4) {
+#अगर 0
+        gemm_kernel_i8i2k_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_तथ्य, c_ptr, गिनती_m, गिनती_n, k_blks, ldc);
+#अन्यथा
+        gemm_kernel_i8i2k_m4(blk_len, quant_a_ptr, quant_b_तथ्य, c_ptr, गिनती_m, गिनती_n, k_blks, ldc);
+#पूर्ण_अगर
+        वापस 4;
+    } अन्यथा {
+#अगर 0
+        gemm_kernel_i8i2k_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_तथ्य, c_ptr, गिनती_m, गिनती_n, k_blks,
                                       ldc);
-#else
-        gemm_kernel_i8i2k_m1(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-        return 1;
+#अन्यथा
+        gemm_kernel_i8i2k_m1(blk_len, quant_a_ptr, quant_b_तथ्य, c_ptr, गिनती_m, गिनती_n, k_blks, ldc);
+#पूर्ण_अगर
+        वापस 1;
     }
 }
 
-size_t gemm_kernel_i8i3k(size_t          blk_len,
-                         const uint8_t * quant_a_ptr,
-                         const uint8_t * quant_b_data,
-                         const uint8_t * quant_b_zp,
-                         float *         c_ptr,
-                         size_t          count_m,
-                         size_t          count_n,
-                         size_t          k_blks,
-                         size_t          ldc) {
-    if (count_m >= 4) {
-#if 0
-        gemm_kernel_i8i3k_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_m, count_n, k_blks, ldc);
-#else
-        gemm_kernel_i8i3k_m4(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-        return 4;
-    } else {
-#if 0
-        gemm_kernel_i8i3k_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_m, count_n, k_blks, ldc);
-#else
-        gemm_kernel_i8i3k_m1(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-        return 1;
+माप_प्रकार gemm_kernel_i8i3k(माप_प्रकार          blk_len,
+                         स्थिर uint8_t * quant_a_ptr,
+                         स्थिर uint8_t * quant_b_तथ्य,
+                         स्थिर uint8_t * quant_b_zp,
+                         भग्न *         c_ptr,
+                         माप_प्रकार          गिनती_m,
+                         माप_प्रकार          गिनती_n,
+                         माप_प्रकार          k_blks,
+                         माप_प्रकार          ldc) {
+    अगर (गिनती_m >= 4) {
+#अगर 0
+        gemm_kernel_i8i3k_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_तथ्य, c_ptr, गिनती_m, गिनती_n, k_blks, ldc);
+#अन्यथा
+        gemm_kernel_i8i3k_m4(blk_len, quant_a_ptr, quant_b_तथ्य, c_ptr, गिनती_m, गिनती_n, k_blks, ldc);
+#पूर्ण_अगर
+        वापस 4;
+    } अन्यथा {
+#अगर 0
+        gemm_kernel_i8i3k_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_तथ्य, c_ptr, गिनती_m, गिनती_n, k_blks, ldc);
+#अन्यथा
+        gemm_kernel_i8i3k_m1(blk_len, quant_a_ptr, quant_b_तथ्य, c_ptr, गिनती_m, गिनती_n, k_blks, ldc);
+#पूर्ण_अगर
+        वापस 1;
     }
 }
 
-size_t gemm_kernel_i8i4(size_t          blk_len,
-                        const uint8_t * quant_a_ptr,
-                        const uint8_t * quant_b_data,
-                        const uint8_t * quant_b_zp,
-                        float *         c_ptr,
-                        size_t          count_m,
-                        size_t          count_n,
-                        size_t          k_blks,
-                        size_t          ldc) {
-    if (count_m >= 4) {
-#if 0
-        gemm_kernel_i8i4_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+माप_प्रकार gemm_kernel_i8i4(माप_प्रकार          blk_len,
+                        स्थिर uint8_t * quant_a_ptr,
+                        स्थिर uint8_t * quant_b_तथ्य,
+                        स्थिर uint8_t * quant_b_zp,
+                        भग्न *         c_ptr,
+                        माप_प्रकार          गिनती_m,
+                        माप_प्रकार          गिनती_n,
+                        माप_प्रकार          k_blks,
+                        माप_प्रकार          ldc) {
+    अगर (गिनती_m >= 4) {
+#अगर 0
+        gemm_kernel_i8i4_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_तथ्य, quant_b_zp, c_ptr, गिनती_m, गिनती_n,
                                          k_blks, ldc);
-#else
-        gemm_kernel_i8i4_m4(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-        return 4;
-    } else {
-#if 0
-        gemm_kernel_i8i4_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+#अन्यथा
+        gemm_kernel_i8i4_m4(blk_len, quant_a_ptr, quant_b_तथ्य, quant_b_zp, c_ptr, गिनती_m, गिनती_n, k_blks, ldc);
+#पूर्ण_अगर
+        वापस 4;
+    } अन्यथा {
+#अगर 0
+        gemm_kernel_i8i4_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_तथ्य, quant_b_zp, c_ptr, गिनती_m, गिनती_n,
                                          k_blks, ldc);
-#else
-        gemm_kernel_i8i4_m1(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-        return 1;
+#अन्यथा
+        gemm_kernel_i8i4_m1(blk_len, quant_a_ptr, quant_b_तथ्य, quant_b_zp, c_ptr, गिनती_m, गिनती_n, k_blks, ldc);
+#पूर्ण_अगर
+        वापस 1;
     }
 }
 
-size_t gemm_kernel_i8i4_hp(size_t          blk_len,
-                           const uint8_t * quant_a_ptr,
-                           const uint8_t * quant_b_data,
-                           const uint8_t * quant_b_zp,
-                           float *         c_ptr,
-                           size_t          count_m,
-                           size_t          count_n,
-                           size_t          k_blks,
-                           size_t          ldc) {
-    if (count_m >= 4) {
-#if 0
-        gemm_kernel_i8i4_hp_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+माप_प्रकार gemm_kernel_i8i4_hp(माप_प्रकार          blk_len,
+                           स्थिर uint8_t * quant_a_ptr,
+                           स्थिर uint8_t * quant_b_तथ्य,
+                           स्थिर uint8_t * quant_b_zp,
+                           भग्न *         c_ptr,
+                           माप_प्रकार          गिनती_m,
+                           माप_प्रकार          गिनती_n,
+                           माप_प्रकार          k_blks,
+                           माप_प्रकार          ldc) {
+    अगर (गिनती_m >= 4) {
+#अगर 0
+        gemm_kernel_i8i4_hp_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_तथ्य, quant_b_zp, c_ptr, गिनती_m, गिनती_n,
                                             k_blks, ldc);
-#else
-        gemm_kernel_i8i4_hp_m4(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-        return 4;
-    } else {
-#if 0
-        gemm_kernel_i8i4_hp_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+#अन्यथा
+        gemm_kernel_i8i4_hp_m4(blk_len, quant_a_ptr, quant_b_तथ्य, quant_b_zp, c_ptr, गिनती_m, गिनती_n, k_blks, ldc);
+#पूर्ण_अगर
+        वापस 4;
+    } अन्यथा {
+#अगर 0
+        gemm_kernel_i8i4_hp_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_तथ्य, quant_b_zp, c_ptr, गिनती_m, गिनती_n,
                                             k_blks, ldc);
-#else
-        gemm_kernel_i8i4_hp_m1(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-        return 1;
+#अन्यथा
+        gemm_kernel_i8i4_hp_m1(blk_len, quant_a_ptr, quant_b_तथ्य, quant_b_zp, c_ptr, गिनती_m, गिनती_n, k_blks, ldc);
+#पूर्ण_अगर
+        वापस 1;
     }
 }
 
-size_t moe_m2_gemm_kernel_i8i4(size_t           blk_len,
-                               const uint8_t ** quant_a_ptr,
-                               const uint8_t *  quant_b_data,
-                               const uint8_t *  quant_b_zp,
-                               float **         c_ptr,
-                               size_t           count_m,
-                               size_t           count_n,
-                               size_t           k_blks,
-                               size_t           ldc) {
-    moe_m2_gemm_kernel_i8i4_impl(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
-    return 2;
+माप_प्रकार moe_m2_gemm_kernel_i8i4(माप_प्रकार           blk_len,
+                               स्थिर uint8_t ** quant_a_ptr,
+                               स्थिर uint8_t *  quant_b_तथ्य,
+                               स्थिर uint8_t *  quant_b_zp,
+                               भग्न **         c_ptr,
+                               माप_प्रकार           गिनती_m,
+                               माप_प्रकार           गिनती_n,
+                               माप_प्रकार           k_blks,
+                               माप_प्रकार           ldc) {
+    moe_m2_gemm_kernel_i8i4_impl(blk_len, quant_a_ptr, quant_b_तथ्य, quant_b_zp, c_ptr, गिनती_m, गिनती_n, k_blks, ldc);
+    वापस 2;
 }
 
-size_t gemm_kernel_i8i8(size_t          blk_len,
-                        const uint8_t * quant_a_ptr,
-                        const uint8_t * quant_b_data,
-                        const uint8_t * quant_b_zp,
-                        float *         c_ptr,
-                        size_t          count_m,
-                        size_t          count_n,
-                        size_t          k_blks,
-                        size_t          ldc) {
-    if (count_m >= 4) {
-#if 0
-        gemm_kernel_i8i8_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+माप_प्रकार gemm_kernel_i8i8(माप_प्रकार          blk_len,
+                        स्थिर uint8_t * quant_a_ptr,
+                        स्थिर uint8_t * quant_b_तथ्य,
+                        स्थिर uint8_t * quant_b_zp,
+                        भग्न *         c_ptr,
+                        माप_प्रकार          गिनती_m,
+                        माप_प्रकार          गिनती_n,
+                        माप_प्रकार          k_blks,
+                        माप_प्रकार          ldc) {
+    अगर (गिनती_m >= 4) {
+#अगर 0
+        gemm_kernel_i8i8_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_तथ्य, quant_b_zp, c_ptr, गिनती_m, गिनती_n,
                                          k_blks, ldc);
-#else
-        gemm_kernel_i8i8_m4(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-        return 4;
-    } else {
-#if 0
-        gemm_kernel_i8i8_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+#अन्यथा
+        gemm_kernel_i8i8_m4(blk_len, quant_a_ptr, quant_b_तथ्य, quant_b_zp, c_ptr, गिनती_m, गिनती_n, k_blks, ldc);
+#पूर्ण_अगर
+        वापस 4;
+    } अन्यथा {
+#अगर 0
+        gemm_kernel_i8i8_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_तथ्य, quant_b_zp, c_ptr, गिनती_m, गिनती_n,
                                          k_blks, ldc);
-#else
-        gemm_kernel_i8i8_m1(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-        return 1;
+#अन्यथा
+        gemm_kernel_i8i8_m1(blk_len, quant_a_ptr, quant_b_तथ्य, quant_b_zp, c_ptr, गिनती_m, गिनती_n, k_blks, ldc);
+#पूर्ण_अगर
+        वापस 1;
     }
 }
 
-size_t gemm_kernel_i8mxfp4(size_t          blk_len,
-                           const uint8_t * quant_a_ptr,
-                           const uint8_t * quant_b_data,
-                           const uint8_t * quant_b_zp,
-                           float *         c_ptr,
-                           size_t          count_m,
-                           size_t          count_n,
-                           size_t          k_blks,
-                           size_t          ldc) {
-    if (count_m >= 4) {
-#if 1
-        gemm_kernel_i8mxfp4_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+माप_प्रकार gemm_kernel_i8mxfp4(माप_प्रकार          blk_len,
+                           स्थिर uint8_t * quant_a_ptr,
+                           स्थिर uint8_t * quant_b_तथ्य,
+                           स्थिर uint8_t * quant_b_zp,
+                           भग्न *         c_ptr,
+                           माप_प्रकार          गिनती_m,
+                           माप_प्रकार          गिनती_n,
+                           माप_प्रकार          k_blks,
+                           माप_प्रकार          ldc) {
+    अगर (गिनती_m >= 4) {
+#अगर 1
+        gemm_kernel_i8mxfp4_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_तथ्य, quant_b_zp, c_ptr, गिनती_m, गिनती_n,
                                             k_blks, ldc);
-#else
-        gemm_kernel_i8mxfp4_m4(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-        return 4;
-    } else {
-#if 1
-        gemm_kernel_i8mxfp4_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+#अन्यथा
+        gemm_kernel_i8mxfp4_m4(blk_len, quant_a_ptr, quant_b_तथ्य, quant_b_zp, c_ptr, गिनती_m, गिनती_n, k_blks, ldc);
+#पूर्ण_अगर
+        वापस 4;
+    } अन्यथा {
+#अगर 1
+        gemm_kernel_i8mxfp4_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_तथ्य, quant_b_zp, c_ptr, गिनती_m, गिनती_n,
                                             k_blks, ldc);
-#else
-        gemm_kernel_i8mxfp4_m1(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-        return 1;
+#अन्यथा
+        gemm_kernel_i8mxfp4_m1(blk_len, quant_a_ptr, quant_b_तथ्य, quant_b_zp, c_ptr, गिनती_m, गिनती_n, k_blks, ldc);
+#पूर्ण_अगर
+        वापस 1;
     }
 }
 
-size_t moe_m2_gemm_kernel_i8mxfp4(size_t           blk_len,
-                                  const uint8_t ** quant_a_ptr,
-                                  const uint8_t *  quant_b_data,
-                                  const uint8_t *  quant_b_zp,
-                                  float **         c_ptr,
-                                  size_t           count_m,
-                                  size_t           count_n,
-                                  size_t           k_blks,
-                                  size_t           ldc) {
+माप_प्रकार moe_m2_gemm_kernel_i8mxfp4(माप_प्रकार           blk_len,
+                                  स्थिर uint8_t ** quant_a_ptr,
+                                  स्थिर uint8_t *  quant_b_तथ्य,
+                                  स्थिर uint8_t *  quant_b_zp,
+                                  भग्न **         c_ptr,
+                                  माप_प्रकार           गिनती_m,
+                                  माप_प्रकार           गिनती_n,
+                                  माप_प्रकार           k_blks,
+                                  माप_प्रकार           ldc) {
     //moe_m2_gemm_kernel_i8mxfp4_impl(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
-    return 2;
+    वापस 2;
 }
 
-size_t gemm_kernel_i8i5(size_t          blk_len,
-                        const uint8_t * quant_a_ptr,
-                        const uint8_t * quant_b_data,
-                        const uint8_t * quant_b_zp,
-                        float *         c_ptr,
-                        size_t          count_m,
-                        size_t          count_n,
-                        size_t          k_blks,
-                        size_t          ldc) {
-    if (count_m >= 4) {
-#if 0
-        gemm_kernel_i8i5_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+माप_प्रकार gemm_kernel_i8i5(माप_प्रकार          blk_len,
+                        स्थिर uint8_t * quant_a_ptr,
+                        स्थिर uint8_t * quant_b_तथ्य,
+                        स्थिर uint8_t * quant_b_zp,
+                        भग्न *         c_ptr,
+                        माप_प्रकार          गिनती_m,
+                        माप_प्रकार          गिनती_n,
+                        माप_प्रकार          k_blks,
+                        माप_प्रकार          ldc) {
+    अगर (गिनती_m >= 4) {
+#अगर 0
+        gemm_kernel_i8i5_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_तथ्य, quant_b_zp, c_ptr, गिनती_m, गिनती_n,
                                          k_blks, ldc);
-#else
-        gemm_kernel_i8i5_m4(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-        return 4;
-    } else {
-#if 0
-        gemm_kernel_i8i5_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+#अन्यथा
+        gemm_kernel_i8i5_m4(blk_len, quant_a_ptr, quant_b_तथ्य, quant_b_zp, c_ptr, गिनती_m, गिनती_n, k_blks, ldc);
+#पूर्ण_अगर
+        वापस 4;
+    } अन्यथा {
+#अगर 0
+        gemm_kernel_i8i5_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_तथ्य, quant_b_zp, c_ptr, गिनती_m, गिनती_n,
                                          k_blks, ldc);
-#else
-        gemm_kernel_i8i5_m1(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-        return 1;
+#अन्यथा
+        gemm_kernel_i8i5_m1(blk_len, quant_a_ptr, quant_b_तथ्य, quant_b_zp, c_ptr, गिनती_m, गिनती_n, k_blks, ldc);
+#पूर्ण_अगर
+        वापस 1;
     }
 }
 
-size_t moe_m2_gemm_kernel_i8i5(size_t           blk_len,
-                               const uint8_t ** quant_a_ptr,
-                               const uint8_t *  quant_b_data,
-                               const uint8_t *  quant_b_zp,
-                               float **         c_ptr,
-                               size_t           count_m,
-                               size_t           count_n,
-                               size_t           k_blks,
-                               size_t           ldc) {
-#if 0
-    moe_gemm_kernel_i8i5_mrow_ref<2, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+माप_प्रकार moe_m2_gemm_kernel_i8i5(माप_प्रकार           blk_len,
+                               स्थिर uint8_t ** quant_a_ptr,
+                               स्थिर uint8_t *  quant_b_तथ्य,
+                               स्थिर uint8_t *  quant_b_zp,
+                               भग्न **         c_ptr,
+                               माप_प्रकार           गिनती_m,
+                               माप_प्रकार           गिनती_n,
+                               माप_प्रकार           k_blks,
+                               माप_प्रकार           ldc) {
+#अगर 0
+    moe_gemm_kernel_i8i5_mrow_ref<2, 32>(blk_len, quant_a_ptr, quant_b_तथ्य, quant_b_zp, c_ptr, गिनती_m, गिनती_n,
                                          k_blks, ldc);
-#else
-    moe_m2_gemm_kernel_i8i5_impl(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
-#endif
-    return 2;
+#अन्यथा
+    moe_m2_gemm_kernel_i8i5_impl(blk_len, quant_a_ptr, quant_b_तथ्य, quant_b_zp, c_ptr, गिनती_m, गिनती_n, k_blks, ldc);
+#पूर्ण_अगर
+    वापस 2;
 }
 
 }  // namespace ime2

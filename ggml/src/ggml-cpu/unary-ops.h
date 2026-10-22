@@ -1,35 +1,35 @@
-#pragma once
+#आशय once
 
-#include "common.h"
+#समावेश "common.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#अगर_घोषित __cplusplus
+बाह्य "C" {
+#पूर्ण_अगर
 
-void ggml_compute_forward_abs(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_sgn(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_neg(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_step(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_tanh(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_elu(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_relu(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_sigmoid(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_hardsigmoid(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_exp(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_hardswish(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_sqr(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_sqrt(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_sin(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_cos(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_log(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_expm1(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_softplus(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_floor(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_ceil(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_round(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_trunc(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_xielu(const struct ggml_compute_params * params, struct ggml_tensor * dst);
+व्योम ggml_compute_forward_abs(स्थिर काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * dst);
+व्योम ggml_compute_forward_sgn(स्थिर काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * dst);
+व्योम ggml_compute_forward_neg(स्थिर काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * dst);
+व्योम ggml_compute_forward_step(स्थिर काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * dst);
+व्योम ggml_compute_forward_tanh(स्थिर काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * dst);
+व्योम ggml_compute_forward_elu(स्थिर काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * dst);
+व्योम ggml_compute_forward_relu(स्थिर काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * dst);
+व्योम ggml_compute_forward_sigmoid(स्थिर काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * dst);
+व्योम ggml_compute_forward_hardsigmoid(स्थिर काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * dst);
+व्योम ggml_compute_forward_exp(स्थिर काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * dst);
+व्योम ggml_compute_forward_hardswish(स्थिर काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * dst);
+व्योम ggml_compute_forward_sqr(स्थिर काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * dst);
+व्योम ggml_compute_forward_sqrt(स्थिर काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * dst);
+व्योम ggml_compute_forward_sin(स्थिर काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * dst);
+व्योम ggml_compute_forward_cos(स्थिर काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * dst);
+व्योम ggml_compute_forward_log(स्थिर काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * dst);
+व्योम ggml_compute_forward_expm1(स्थिर काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * dst);
+व्योम ggml_compute_forward_softplus(स्थिर काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * dst);
+व्योम ggml_compute_forward_floor(स्थिर काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * dst);
+व्योम ggml_compute_forward_ceil(स्थिर काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * dst);
+व्योम ggml_compute_forward_round(स्थिर काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * dst);
+व्योम ggml_compute_forward_trunc(स्थिर काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * dst);
+व्योम ggml_compute_forward_xielu(स्थिर काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * dst);
 
-#ifdef __cplusplus
+#अगर_घोषित __cplusplus
 }
-#endif
+#पूर्ण_अगर

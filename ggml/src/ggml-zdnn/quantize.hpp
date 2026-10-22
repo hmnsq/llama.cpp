@@ -1,14 +1,14 @@
-#ifndef GGML_ZDNN_QUANTIZE_HPP
-#define GGML_ZDNN_QUANTIZE_HPP
+#अगर_अघोषित GGML_ZDNN_QUANTIZE_HPP
+#घोषणा GGML_ZDNN_QUANTIZE_HPP
 
-#include "common.hpp"
+#समावेश "common.hpp"
 
-void ggml_zdnn_quantize_inputs(int32_t       n_threads,
-                         const ggml_tensor * inputs,
-                               int64_t       group_size,
-                         const float       * channel_scales,
+व्योम ggml_zdnn_quantize_inputs(int32_t       n_threads,
+                         स्थिर ggml_tensor * inputs,
+                               int64_t       group_आकार,
+                         स्थिर भग्न       * channel_scales,
                                int8_t      * quants,
                                int8_t      * residuals,
-                               float       * scales);
+                               भग्न       * scales);
 
-#endif  // GGML_ZDNN_QUANTIZE_HPP
+#पूर्ण_अगर  // GGML_ZDNN_QUANTIZE_HPP

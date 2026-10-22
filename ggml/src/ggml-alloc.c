@@ -1,243 +1,243 @@
-#include "ggml-alloc.h"
-#include "ggml-backend-impl.h"
-#include "ggml.h"
-#include "ggml-impl.h"
+#समावेश "ggml-alloc.h"
+#समावेश "ggml-backend-impl.h"
+#समावेश "ggml.h"
+#समावेश "ggml-impl.h"
 
-#include <assert.h>
-#include <limits.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#समावेश <assert.h>
+#समावेश <limits.h>
+#समावेश <stdarg.h>
+#समावेश <stdio.h>
+#समावेश <stdlib.h>
+#समावेश <string.h>
 
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define MAX_FREE_BLOCKS 256
+#घोषणा MAX(a, b) ((a) > (b) ? (a) : (b))
+#घोषणा MAX_FREE_BLOCKS 256
 
 //#define GGML_ALLOCATOR_DEBUG
 
 //#define AT_PRINTF(...) GGML_LOG_DEBUG(__VA_ARGS__)
-#define AT_PRINTF(...)
+#घोषणा AT_PRINTF(...)
 
 // ops that return true for this function must not use restrict pointers for their backend implementations
-bool ggml_op_can_inplace(enum ggml_op op) {
-    switch (op) {
-        case GGML_OP_FILL:
-        case GGML_OP_SCALE:
-        case GGML_OP_DIAG_MASK_ZERO:
-        case GGML_OP_DIAG_MASK_INF:
-        case GGML_OP_ADD:
-        case GGML_OP_ADD_ID:
-        case GGML_OP_ADD1:
-        case GGML_OP_SUB:
-        case GGML_OP_MUL:
-        case GGML_OP_DIV:
-        case GGML_OP_SQR:
-        case GGML_OP_SQRT:
-        case GGML_OP_LOG:
-        case GGML_OP_UNARY:
-        case GGML_OP_ROPE:
-        case GGML_OP_ROPE_BACK:
-        case GGML_OP_SILU_BACK:
-        case GGML_OP_RMS_NORM:
-        case GGML_OP_RMS_NORM_BACK:
-        case GGML_OP_CLAMP:
-        case GGML_OP_SOFT_MAX:
-        case GGML_OP_SOFT_MAX_BACK:
-            return true;
+bool ggml_op_can_inplace(क्रमागत ggml_op op) {
+    चयन (op) {
+        हाल GGML_OP_FILL:
+        हाल GGML_OP_SCALE:
+        हाल GGML_OP_DIAG_MASK_ZERO:
+        हाल GGML_OP_DIAG_MASK_INF:
+        हाल GGML_OP_ADD:
+        हाल GGML_OP_ADD_ID:
+        हाल GGML_OP_ADD1:
+        हाल GGML_OP_SUB:
+        हाल GGML_OP_MUL:
+        हाल GGML_OP_DIV:
+        हाल GGML_OP_SQR:
+        हाल GGML_OP_SQRT:
+        हाल GGML_OP_LOG:
+        हाल GGML_OP_UNARY:
+        हाल GGML_OP_ROPE:
+        हाल GGML_OP_ROPE_BACK:
+        हाल GGML_OP_SILU_BACK:
+        हाल GGML_OP_RMS_NORM:
+        हाल GGML_OP_RMS_NORM_BACK:
+        हाल GGML_OP_CLAMP:
+        हाल GGML_OP_SOFT_MAX:
+        हाल GGML_OP_SOFT_MAX_BACK:
+            वापस true;
 
-        default:
-            return false;
+        शेष:
+            वापस false;
     }
 }
 
-static size_t aligned_offset(const void * buffer, size_t offset, size_t alignment) {
-    assert(alignment && !(alignment & (alignment - 1))); // power of 2
-    size_t align = (alignment - (((uintptr_t)buffer + offset) % alignment)) % alignment;
-    return offset + align;
+अटल माप_प्रकार aligned_offset(स्थिर व्योम * बफर, माप_प्रकार offset, माप_प्रकार alignment) {
+    निश्चित(alignment && !(alignment & (alignment - 1))); // power of 2
+    माप_प्रकार align = (alignment - (((uintptr_t)बफर + offset) % alignment)) % alignment;
+    वापस offset + align;
 }
 
 // tallocr
 
-struct ggml_tallocr ggml_tallocr_new(ggml_backend_buffer_t buffer) {
-    void * base = ggml_backend_buffer_get_base(buffer);
-    size_t align = ggml_backend_buffer_get_alignment(buffer);
+काष्ठा ggml_tallocr ggml_tallocr_new(ggml_backend_बफर_t बफर) {
+    व्योम * base = ggml_backend_बफर_get_base(बफर);
+    माप_प्रकार align = ggml_backend_बफर_get_alignment(बफर);
 
-    assert(align && !(align & (align - 1))); // power of 2
+    निश्चित(align && !(align & (align - 1))); // power of 2
 
-    struct ggml_tallocr talloc = (struct ggml_tallocr) {
-        /*.buffer    = */ buffer,
+    काष्ठा ggml_tallocr talloc = (काष्ठा ggml_tallocr) {
+        /*.buffer    = */ बफर,
         /*.base      = */ base,
         /*.alignment = */ align,
         /*.offset    = */ aligned_offset(base, 0, align),
     };
-    return talloc;
+    वापस talloc;
 }
 
-enum ggml_status ggml_tallocr_alloc(struct ggml_tallocr * talloc, struct ggml_tensor * tensor) {
-    size_t size = ggml_backend_buffer_get_alloc_size(talloc->buffer, tensor);
-    size = GGML_PAD(size, talloc->alignment);
+क्रमागत ggml_status ggml_tallocr_alloc(काष्ठा ggml_tallocr * talloc, काष्ठा ggml_tensor * tensor) {
+    माप_प्रकार आकार = ggml_backend_बफर_get_alloc_आकार(talloc->बफर, tensor);
+    आकार = GGML_PAD(आकार, talloc->alignment);
 
-    if (talloc->offset + size > ggml_backend_buffer_get_size(talloc->buffer)) {
+    अगर (talloc->offset + आकार > ggml_backend_बफर_get_आकार(talloc->बफर)) {
         GGML_LOG_ERROR("%s: not enough space in the buffer to allocate %s (needed %zu, available %zu)\n",
-                __func__, tensor->name, size, ggml_backend_buffer_get_size(talloc->buffer) - talloc->offset);
+                __func__, tensor->name, आकार, ggml_backend_बफर_get_आकार(talloc->बफर) - talloc->offset);
         GGML_ABORT("not enough space in the buffer");
     }
 
-    void * addr = (char *)ggml_backend_buffer_get_base(talloc->buffer) + talloc->offset;
-    talloc->offset += size;
+    व्योम * addr = (अक्षर *)ggml_backend_बफर_get_base(talloc->बफर) + talloc->offset;
+    talloc->offset += आकार;
 
-    assert(((uintptr_t)addr % talloc->alignment) == 0);
+    निश्चित(((uintptr_t)addr % talloc->alignment) == 0);
 
-    return ggml_backend_tensor_alloc(talloc->buffer, tensor, addr);
+    वापस ggml_backend_tensor_alloc(talloc->बफर, tensor, addr);
 }
 
 // dynamic tensor allocator
 
-#define GGML_VBUFFER_MAX_CHUNKS 16
+#घोषणा GGML_VBUFFER_MAX_CHUNKS 16
 
 // relative memory address within an allocation that can be split into multiple buffers (chunks)
-struct buffer_address {
-    int chunk;     // index of a backend buffer
-    size_t offset; // local memory offset within the buffer
+काष्ठा बफर_address {
+    पूर्णांक chunk;     // index of a backend buffer
+    माप_प्रकार offset; // local memory offset within the buffer
 };
 
-static const struct buffer_address GGML_BUFFER_ADDRESS_INVALID = { -1, SIZE_MAX };
+अटल स्थिर काष्ठा बफर_address GGML_बफर_ADDRESS_INVALID = { -1, SIZE_MAX };
 
-static bool ggml_buffer_address_less(struct buffer_address a, struct buffer_address b) {
-    return a.chunk != b.chunk ? a.chunk < b.chunk : a.offset < b.offset;
+अटल bool ggml_बफर_address_less(काष्ठा बफर_address a, काष्ठा बफर_address b) {
+    वापस a.chunk != b.chunk ? a.chunk < b.chunk : a.offset < b.offset;
 }
 
-struct free_block {
-    size_t offset;
-    size_t size;
+काष्ठा free_block {
+    माप_प्रकार offset;
+    माप_प्रकार आकार;
 };
 
-struct tallocr_chunk {
-    struct free_block free_blocks[MAX_FREE_BLOCKS];
-    int n_free_blocks;
-    size_t max_size;
+काष्ठा tallocr_chunk {
+    काष्ठा free_block free_blocks[MAX_FREE_BLOCKS];
+    पूर्णांक n_free_blocks;
+    माप_प्रकार max_आकार;
 };
 
-struct ggml_dyn_tallocr {
-    size_t alignment;
-    size_t max_chunk_size;
-    struct tallocr_chunk * chunks[GGML_VBUFFER_MAX_CHUNKS];
-    int n_chunks;
+काष्ठा ggml_dyn_tallocr {
+    माप_प्रकार alignment;
+    माप_प्रकार max_chunk_आकार;
+    काष्ठा tallocr_chunk * chunks[GGML_VBUFFER_MAX_CHUNKS];
+    पूर्णांक n_chunks;
 
-#ifdef GGML_ALLOCATOR_DEBUG
-    struct {
-        const struct ggml_tensor * tensor;
-        struct buffer_address addr;
+#अगर_घोषित GGML_ALLOCATOR_DEBUG
+    काष्ठा {
+        स्थिर काष्ठा ggml_tensor * tensor;
+        काष्ठा बफर_address addr;
     } allocated_tensors[1024];
-#endif
+#पूर्ण_अगर
 };
 
-static void ggml_dyn_tallocr_insert_block(struct tallocr_chunk * chunk, size_t offset, size_t size) {
+अटल व्योम ggml_dyn_tallocr_जोड़ो_block(काष्ठा tallocr_chunk * chunk, माप_प्रकार offset, माप_प्रकार आकार) {
     GGML_ASSERT(chunk->n_free_blocks < MAX_FREE_BLOCKS && "out of free blocks");
     // insert the new block in the correct position to keep the array sorted by address (to make merging blocks faster)
-    int insert_pos = 0;
-    while (insert_pos < chunk->n_free_blocks && chunk->free_blocks[insert_pos].offset < offset) {
-        insert_pos++;
+    पूर्णांक जोड़ो_pos = 0;
+    जबतक (जोड़ो_pos < chunk->n_free_blocks && chunk->free_blocks[जोड़ो_pos].offset < offset) {
+        जोड़ो_pos++;
     }
     // shift all blocks from insert_pos onward to make room for the new block
-    for (int i = chunk->n_free_blocks; i > insert_pos; i--) {
+    क्रम (पूर्णांक i = chunk->n_free_blocks; i > जोड़ो_pos; i--) {
         chunk->free_blocks[i] = chunk->free_blocks[i-1];
     }
     // insert the new block
-    chunk->free_blocks[insert_pos].offset = offset;
-    chunk->free_blocks[insert_pos].size = size;
+    chunk->free_blocks[जोड़ो_pos].offset = offset;
+    chunk->free_blocks[जोड़ो_pos].आकार = आकार;
     chunk->n_free_blocks++;
 }
 
-static void ggml_dyn_tallocr_remove_block(struct tallocr_chunk * chunk, int idx) {
+अटल व्योम ggml_dyn_tallocr_remove_block(काष्ठा tallocr_chunk * chunk, पूर्णांक idx) {
     // shift all elements after idx by 1 to the left, overwriting the element at idx
-    for (int i = idx; i < chunk->n_free_blocks - 1; i++) {
+    क्रम (पूर्णांक i = idx; i < chunk->n_free_blocks - 1; i++) {
         chunk->free_blocks[i] = chunk->free_blocks[i+1];
     }
     chunk->n_free_blocks--;
 }
 
-static int ggml_dyn_tallocr_new_chunk(struct ggml_dyn_tallocr * alloc, size_t min_size) {
-    if (alloc->n_chunks >= GGML_VBUFFER_MAX_CHUNKS) {
-        return -1;
+अटल पूर्णांक ggml_dyn_tallocr_new_chunk(काष्ठा ggml_dyn_tallocr * alloc, माप_प्रकार min_आकार) {
+    अगर (alloc->n_chunks >= GGML_VBUFFER_MAX_CHUNKS) {
+        वापस -1;
     }
-    struct tallocr_chunk * chunk = calloc(1, sizeof(struct tallocr_chunk));
+    काष्ठा tallocr_chunk * chunk = सुस्मृति(1, माप(काष्ठा tallocr_chunk));
     chunk->n_free_blocks = 1;
     chunk->free_blocks[0].offset = 0;
     // available space in a chunk is limited to max_chunk_size, but can be higher if:
     // 1. a single tensor exceeds the maximum, and cannot fit any other way
     // 2. we are running out of chunks
     // backends will either manage to allocate the larger size, or report an error.
-    chunk->free_blocks[0].size = MAX(min_size, alloc->max_chunk_size);
-    if (alloc->n_chunks == GGML_VBUFFER_MAX_CHUNKS - 1) {
-        chunk->free_blocks[0].size = SIZE_MAX/2;
+    chunk->free_blocks[0].आकार = MAX(min_आकार, alloc->max_chunk_आकार);
+    अगर (alloc->n_chunks == GGML_VBUFFER_MAX_CHUNKS - 1) {
+        chunk->free_blocks[0].आकार = SIZE_MAX/2;
     }
     alloc->chunks[alloc->n_chunks] = chunk;
     alloc->n_chunks++;
-    return alloc->n_chunks - 1;
+    वापस alloc->n_chunks - 1;
 }
 
-#ifdef GGML_ALLOCATOR_DEBUG
-static void add_allocated_tensor(struct ggml_dyn_tallocr * alloc, struct buffer_address addr, const struct ggml_tensor * tensor) {
-    for (int i = 0; i < 1024; i++) {
-        if (alloc->allocated_tensors[i].tensor == NULL) {
+#अगर_घोषित GGML_ALLOCATOR_DEBUG
+अटल व्योम add_allocated_tensor(काष्ठा ggml_dyn_tallocr * alloc, काष्ठा बफर_address addr, स्थिर काष्ठा ggml_tensor * tensor) {
+    क्रम (पूर्णांक i = 0; i < 1024; i++) {
+        अगर (alloc->allocated_tensors[i].tensor == शून्य) {
             alloc->allocated_tensors[i].tensor = tensor;
             alloc->allocated_tensors[i].addr = addr;
-            return;
+            वापस;
         }
     }
     GGML_ABORT("out of allocated_tensors");
 }
-static void remove_allocated_tensor(struct ggml_dyn_tallocr * alloc, struct buffer_address addr, const struct ggml_tensor * tensor) {
-    for (int i = 0; i < 1024; i++) {
-        if (alloc->allocated_tensors[i].addr.chunk == addr.chunk && alloc->allocated_tensors[i].addr.offset == addr.offset) {
-            alloc->allocated_tensors[i].tensor = NULL;
-            return;
+अटल व्योम remove_allocated_tensor(काष्ठा ggml_dyn_tallocr * alloc, काष्ठा बफर_address addr, स्थिर काष्ठा ggml_tensor * tensor) {
+    क्रम (पूर्णांक i = 0; i < 1024; i++) {
+        अगर (alloc->allocated_tensors[i].addr.chunk == addr.chunk && alloc->allocated_tensors[i].addr.offset == addr.offset) {
+            alloc->allocated_tensors[i].tensor = शून्य;
+            वापस;
         }
     }
     GGML_ABORT("tried to free tensor %s not found\n", tensor->name);
 }
-#endif
+#पूर्ण_अगर
 
-static struct buffer_address ggml_dyn_tallocr_alloc(struct ggml_dyn_tallocr * alloc, size_t size, const struct ggml_tensor * tensor) {
-    size = aligned_offset(NULL, size, alloc->alignment);
+अटल काष्ठा बफर_address ggml_dyn_tallocr_alloc(काष्ठा ggml_dyn_tallocr * alloc, माप_प्रकार आकार, स्थिर काष्ठा ggml_tensor * tensor) {
+    आकार = aligned_offset(शून्य, आकार, alloc->alignment);
 
-    AT_PRINTF("%s: allocating %s (%zu bytes) - ", __func__, tensor->name, size);
+    AT_PRINTF("%s: allocating %s (%zu bytes) - ", __func__, tensor->name, आकार);
 
-    int best_fit_chunk = -1;
-    int best_fit_block = -1;
-    size_t max_avail = 0;
+    पूर्णांक best_fit_chunk = -1;
+    पूर्णांक best_fit_block = -1;
+    माप_प्रकार max_avail = 0;
 
     // find the best fitting free block besides the last block, within any chunk
-    for (int c = 0; c < alloc->n_chunks; ++c) {
-        struct tallocr_chunk * chunk = alloc->chunks[c];
-        size_t best_fit_size = SIZE_MAX;
-        for (int i = 0; i < chunk->n_free_blocks - 1; i++) {
-            struct free_block * block = &chunk->free_blocks[i];
-            max_avail = MAX(max_avail, block->size);
-            if (block->size >= size && block->size <= best_fit_size) {
+    क्रम (पूर्णांक c = 0; c < alloc->n_chunks; ++c) {
+        काष्ठा tallocr_chunk * chunk = alloc->chunks[c];
+        माप_प्रकार best_fit_आकार = SIZE_MAX;
+        क्रम (पूर्णांक i = 0; i < chunk->n_free_blocks - 1; i++) {
+            काष्ठा free_block * block = &chunk->free_blocks[i];
+            max_avail = MAX(max_avail, block->आकार);
+            अगर (block->आकार >= आकार && block->आकार <= best_fit_आकार) {
                 best_fit_chunk = c;
                 best_fit_block = i;
-                best_fit_size = block->size;
+                best_fit_आकार = block->आकार;
             }
         }
     }
 
-    if (best_fit_block == -1) {
+    अगर (best_fit_block == -1) {
         // no suitable block found, try the last block (this may grow a chunks size)
         int64_t best_reuse = INT64_MIN;
-        for (int c = 0; c < alloc->n_chunks; ++c) {
-            struct tallocr_chunk * chunk = alloc->chunks[c];
-            if (chunk->n_free_blocks > 0) {
-                struct free_block * block = &chunk->free_blocks[chunk->n_free_blocks - 1];
-                max_avail = MAX(max_avail, block->size);
-                int64_t reuse_factor = chunk->max_size - block->offset - size;
+        क्रम (पूर्णांक c = 0; c < alloc->n_chunks; ++c) {
+            काष्ठा tallocr_chunk * chunk = alloc->chunks[c];
+            अगर (chunk->n_free_blocks > 0) {
+                काष्ठा free_block * block = &chunk->free_blocks[chunk->n_free_blocks - 1];
+                max_avail = MAX(max_avail, block->आकार);
+                int64_t reuse_factor = chunk->max_आकार - block->offset - आकार;
                 // reuse_factor < 0 : amount of extra memory that needs to be allocated
                 // reuse_factor = 0 : allocated free space exactly matches tensor size
                 // reuse_factor > 0 : superfluous memory that will remain unused
                 bool better_reuse = best_reuse < 0 && reuse_factor > best_reuse;
                 bool better_fit = reuse_factor >= 0 && reuse_factor < best_reuse;
-                if (block->size >= size && (better_reuse || better_fit)) {
+                अगर (block->आकार >= आकार && (better_reuse || better_fit)) {
                     best_fit_chunk = c;
                     best_fit_block = chunk->n_free_blocks - 1;
                     best_reuse = reuse_factor;
@@ -246,40 +246,40 @@ static struct buffer_address ggml_dyn_tallocr_alloc(struct ggml_dyn_tallocr * al
         }
     }
 
-    if (best_fit_block == -1) {
+    अगर (best_fit_block == -1) {
         // none of the existing chunks have enough space left
-        best_fit_chunk = ggml_dyn_tallocr_new_chunk(alloc, size);
+        best_fit_chunk = ggml_dyn_tallocr_new_chunk(alloc, आकार);
         best_fit_block = 0;
     }
-    if (best_fit_chunk == -1) {
+    अगर (best_fit_chunk == -1) {
         // since the last chunk always has virtually endless memory, this should never happen
         GGML_LOG_ERROR("%s: not enough space in the buffer to allocate %zu bytes, largest block available %zu bytes\n",
-            __func__, size, max_avail);
+            __func__, आकार, max_avail);
         GGML_ABORT("graph allocation: failed to reserve memory");
     }
 
-    struct tallocr_chunk * chunk = alloc->chunks[best_fit_chunk];
-    struct free_block    * block = &chunk->free_blocks[best_fit_block];
-    struct buffer_address  addr  = {.chunk = best_fit_chunk, .offset = block->offset };
-    block->offset += size;
-    block->size -= size;
-    if (block->size == 0) {
+    काष्ठा tallocr_chunk * chunk = alloc->chunks[best_fit_chunk];
+    काष्ठा free_block    * block = &chunk->free_blocks[best_fit_block];
+    काष्ठा बफर_address  addr  = {.chunk = best_fit_chunk, .offset = block->offset };
+    block->offset += आकार;
+    block->आकार -= आकार;
+    अगर (block->आकार == 0) {
         // remove block if empty
         ggml_dyn_tallocr_remove_block(chunk, best_fit_block);
     }
 
     AT_PRINTF("block %d, offset %zu, chunk %d\n", best_fit_block, addr.offset, addr.chunk);
 
-#ifdef GGML_ALLOCATOR_DEBUG
+#अगर_घोषित GGML_ALLOCATOR_DEBUG
     add_allocated_tensor(alloc, addr, tensor);
-    size_t cur_max = addr.offset + size;
-    if (cur_max > chunk->max_size) {
+    माप_प्रकार cur_max = addr.offset + आकार;
+    अगर (cur_max > chunk->max_आकार) {
         // sort allocated_tensors by chunk/offset
-        for (int i = 0; i < 1024; i++) {
-            for (int j = i + 1; j < 1024; j++) {
-                if (ggml_buffer_address_less(alloc->allocated_tensors[j].addr, alloc->allocated_tensors[i].addr)) {
-                    const struct ggml_tensor * tmp_tensor = alloc->allocated_tensors[i].tensor;
-                    struct buffer_address tmp_addr = alloc->allocated_tensors[i].addr;
+        क्रम (पूर्णांक i = 0; i < 1024; i++) {
+            क्रम (पूर्णांक j = i + 1; j < 1024; j++) {
+                अगर (ggml_बफर_address_less(alloc->allocated_tensors[j].addr, alloc->allocated_tensors[i].addr)) {
+                    स्थिर काष्ठा ggml_tensor * tmp_tensor = alloc->allocated_tensors[i].tensor;
+                    काष्ठा बफर_address tmp_addr = alloc->allocated_tensors[i].addr;
                     alloc->allocated_tensors[i].tensor = alloc->allocated_tensors[j].tensor;
                     alloc->allocated_tensors[i].addr = alloc->allocated_tensors[j].addr;
                     alloc->allocated_tensors[j].tensor = tmp_tensor;
@@ -288,8 +288,8 @@ static struct buffer_address ggml_dyn_tallocr_alloc(struct ggml_dyn_tallocr * al
             }
         }
         GGML_LOG_DEBUG("max_size[%d] = %.2f MB: tensors: ", addr.chunk, cur_max / 1024.0 / 1024.0);
-        for (int i = 0; i < 1024; i++) {
-            if (alloc->allocated_tensors[i].tensor) {
+        क्रम (पूर्णांक i = 0; i < 1024; i++) {
+            अगर (alloc->allocated_tensors[i].tensor) {
                 GGML_LOG_DEBUG("%s [%d: %zx-%zx] (%.2f MB) ", alloc->allocated_tensors[i].tensor->name,
                     alloc->allocated_tensors[i].addr.chunk,
                     alloc->allocated_tensors[i].addr.offset,
@@ -299,155 +299,155 @@ static struct buffer_address ggml_dyn_tallocr_alloc(struct ggml_dyn_tallocr * al
         }
         GGML_LOG_DEBUG("\n");
     }
-#endif
+#पूर्ण_अगर
 
-    chunk->max_size = MAX(chunk->max_size, addr.offset + size);
+    chunk->max_आकार = MAX(chunk->max_आकार, addr.offset + आकार);
 
-    return addr;
+    वापस addr;
 
     GGML_UNUSED(tensor);
 }
 
 // this is a very naive implementation, but for our case the number of free blocks should be very small
-static void ggml_dyn_tallocr_free_bytes(struct ggml_dyn_tallocr * alloc, struct buffer_address addr, size_t size) {
-    size = aligned_offset(NULL, size, alloc->alignment);
+अटल व्योम ggml_dyn_tallocr_free_bytes(काष्ठा ggml_dyn_tallocr * alloc, काष्ठा बफर_address addr, माप_प्रकार आकार) {
+    आकार = aligned_offset(शून्य, आकार, alloc->alignment);
 
-    struct tallocr_chunk * chunk = alloc->chunks[addr.chunk];
+    काष्ठा tallocr_chunk * chunk = alloc->chunks[addr.chunk];
 
     // see if we can merge with an existing block
-    for (int i = 0; i < chunk->n_free_blocks; i++) {
-        struct free_block * block = &chunk->free_blocks[i];
+    क्रम (पूर्णांक i = 0; i < chunk->n_free_blocks; i++) {
+        काष्ठा free_block * block = &chunk->free_blocks[i];
         // check if ptr is at the end of the block
-        if (block->offset + block->size == addr.offset) {
-            block->size += size;
+        अगर (block->offset + block->आकार == addr.offset) {
+            block->आकार += आकार;
             // check if we can merge with the next block
-            if (i < chunk->n_free_blocks - 1) {
-                struct free_block * next = &chunk->free_blocks[i+1];
-                if (block->offset + block->size == next->offset) {
-                    block->size += next->size;
+            अगर (i < chunk->n_free_blocks - 1) {
+                काष्ठा free_block * अग्र = &chunk->free_blocks[i+1];
+                अगर (block->offset + block->आकार == अग्र->offset) {
+                    block->आकार += अग्र->आकार;
                     ggml_dyn_tallocr_remove_block(chunk, i+1);
                 }
             }
-            return;
+            वापस;
         }
         // check if ptr is at the beginning of the block
-        if (addr.offset + size == block->offset) {
+        अगर (addr.offset + आकार == block->offset) {
             block->offset = addr.offset;
-            block->size += size;
+            block->आकार += आकार;
             // check if we can merge with the previous block
-            if (i > 0) {
-                struct free_block * prev = &chunk->free_blocks[i-1];
-                if (prev->offset + prev->size == block->offset) {
-                    prev->size += block->size;
+            अगर (i > 0) {
+                काष्ठा free_block * पूर्व = &chunk->free_blocks[i-1];
+                अगर (पूर्व->offset + पूर्व->आकार == block->offset) {
+                    पूर्व->आकार += block->आकार;
                     ggml_dyn_tallocr_remove_block(chunk, i);
                 }
             }
-            return;
+            वापस;
         }
     }
     // otherwise, add a new block
-    ggml_dyn_tallocr_insert_block(chunk, addr.offset, size);
+    ggml_dyn_tallocr_जोड़ो_block(chunk, addr.offset, आकार);
 }
 
-static void ggml_dyn_tallocr_reset(struct ggml_dyn_tallocr * alloc) {
-    for (int i = 0; i < GGML_VBUFFER_MAX_CHUNKS; i++) {
-        free(alloc->chunks[i]);
-        alloc->chunks[i] = NULL;
+अटल व्योम ggml_dyn_tallocr_reset(काष्ठा ggml_dyn_tallocr * alloc) {
+    क्रम (पूर्णांक i = 0; i < GGML_VBUFFER_MAX_CHUNKS; i++) {
+        मुक्त(alloc->chunks[i]);
+        alloc->chunks[i] = शून्य;
     }
     alloc->n_chunks = 0;
 
-#ifdef GGML_ALLOCATOR_DEBUG
-    for (int i = 0; i < 1024; i++) {
-        alloc->allocated_tensors[i].tensor = NULL;
+#अगर_घोषित GGML_ALLOCATOR_DEBUG
+    क्रम (पूर्णांक i = 0; i < 1024; i++) {
+        alloc->allocated_tensors[i].tensor = शून्य;
     }
-#endif
+#पूर्ण_अगर
 }
 
-static struct ggml_dyn_tallocr * ggml_dyn_tallocr_new(size_t alignment, size_t max_buffer_size) {
-    struct ggml_dyn_tallocr * alloc = (struct ggml_dyn_tallocr *)malloc(sizeof(struct ggml_dyn_tallocr));
+अटल काष्ठा ggml_dyn_tallocr * ggml_dyn_tallocr_new(माप_प्रकार alignment, माप_प्रकार max_बफर_आकार) {
+    काष्ठा ggml_dyn_tallocr * alloc = (काष्ठा ggml_dyn_tallocr *)दो_स्मृति(माप(काष्ठा ggml_dyn_tallocr));
 
-    *alloc = (struct ggml_dyn_tallocr) {
+    *alloc = (काष्ठा ggml_dyn_tallocr) {
         /*.alignment      = */ alignment,
-        /*.max_chunk_size = */ MIN(max_buffer_size, SIZE_MAX/2), // clamp to avoid overflows
-        /*.chunks         = */ {NULL},
+        /*.max_chunk_size = */ MIN(max_बफर_आकार, SIZE_MAX/2), // clamp to avoid overflows
+        /*.chunks         = */ {शून्य},
         /*.n_chunks       = */ 0,
-#ifdef GGML_ALLOCATOR_DEBUG
+#अगर_घोषित GGML_ALLOCATOR_DEBUG
         /*.allocated_tensors = */ {{0}},
-#endif
+#पूर्ण_अगर
     };
 
     ggml_dyn_tallocr_reset(alloc);
 
-    return alloc;
+    वापस alloc;
 }
 
-static void ggml_dyn_tallocr_free(struct ggml_dyn_tallocr * alloc) {
-    for (int i = 0; i < alloc->n_chunks; ++i) {
-        free(alloc->chunks[i]);
+अटल व्योम ggml_dyn_tallocr_free(काष्ठा ggml_dyn_tallocr * alloc) {
+    क्रम (पूर्णांक i = 0; i < alloc->n_chunks; ++i) {
+        मुक्त(alloc->chunks[i]);
     }
-    free(alloc);
+    मुक्त(alloc);
 }
 
-static size_t ggml_dyn_tallocr_max_size(struct ggml_dyn_tallocr * alloc, int chunk) {
-    return chunk < alloc->n_chunks ? alloc->chunks[chunk]->max_size : 0;
+अटल माप_प्रकार ggml_dyn_tallocr_max_आकार(काष्ठा ggml_dyn_tallocr * alloc, पूर्णांक chunk) {
+    वापस chunk < alloc->n_chunks ? alloc->chunks[chunk]->max_आकार : 0;
 }
 
 
 // virtual buffer with contiguous memory range, split into multiple backend buffers (chunks)
 
-struct vbuffer {
-    ggml_backend_buffer_t chunks[GGML_VBUFFER_MAX_CHUNKS];
+काष्ठा vbuffer {
+    ggml_backend_बफर_t chunks[GGML_VBUFFER_MAX_CHUNKS];
 };
 
-static void ggml_vbuffer_free(struct vbuffer * buf) {
-    if (buf == NULL) {
-        return;
+अटल व्योम ggml_vbuffer_free(काष्ठा vbuffer * buf) {
+    अगर (buf == शून्य) {
+        वापस;
     }
-    for (int i = 0; i < GGML_VBUFFER_MAX_CHUNKS; ++i) {
-        ggml_backend_buffer_free(buf->chunks[i]);
+    क्रम (पूर्णांक i = 0; i < GGML_VBUFFER_MAX_CHUNKS; ++i) {
+        ggml_backend_बफर_free(buf->chunks[i]);
     }
-    free(buf);
+    मुक्त(buf);
 }
 
-static size_t ggml_vbuffer_chunk_size(struct vbuffer * buf, int chunk) {
-    return buf->chunks[chunk] ? ggml_backend_buffer_get_size(buf->chunks[chunk]) : 0;
+अटल माप_प्रकार ggml_vbuffer_chunk_आकार(काष्ठा vbuffer * buf, पूर्णांक chunk) {
+    वापस buf->chunks[chunk] ? ggml_backend_बफर_get_आकार(buf->chunks[chunk]) : 0;
 }
 
-static size_t ggml_vbuffer_size(struct vbuffer * buf) {
-    size_t size = 0;
-    for (int i = 0; i < GGML_VBUFFER_MAX_CHUNKS && buf->chunks[i]; ++i) {
-        size += ggml_backend_buffer_get_size(buf->chunks[i]);
+अटल माप_प्रकार ggml_vbuffer_आकार(काष्ठा vbuffer * buf) {
+    माप_प्रकार आकार = 0;
+    क्रम (पूर्णांक i = 0; i < GGML_VBUFFER_MAX_CHUNKS && buf->chunks[i]; ++i) {
+        आकार += ggml_backend_बफर_get_आकार(buf->chunks[i]);
     }
-    return size;
+    वापस आकार;
 }
 
-static struct vbuffer * ggml_vbuffer_alloc(ggml_backend_buffer_type_t buft, const struct ggml_dyn_tallocr * talloc, enum ggml_backend_buffer_usage usage) {
-    struct vbuffer * buf = (struct vbuffer *)calloc(1, sizeof(struct vbuffer));
-    if (buf == NULL) {
-        return NULL;
+अटल काष्ठा vbuffer * ggml_vbuffer_alloc(ggml_backend_बफर_type_t buft, स्थिर काष्ठा ggml_dyn_tallocr * talloc, क्रमागत ggml_backend_बफर_usage usage) {
+    काष्ठा vbuffer * buf = (काष्ठा vbuffer *)सुस्मृति(1, माप(काष्ठा vbuffer));
+    अगर (buf == शून्य) {
+        वापस शून्य;
     }
 
-    for (int n = 0; n < talloc->n_chunks; n++) {
-        size_t chunk_size = talloc->chunks[n]->max_size;
-        buf->chunks[n] = ggml_backend_buft_alloc_buffer(buft, chunk_size);
-        if (buf->chunks[n] == NULL) {
+    क्रम (पूर्णांक n = 0; n < talloc->n_chunks; n++) {
+        माप_प्रकार chunk_आकार = talloc->chunks[n]->max_आकार;
+        buf->chunks[n] = ggml_backend_buft_alloc_बफर(buft, chunk_आकार);
+        अगर (buf->chunks[n] == शून्य) {
             ggml_vbuffer_free(buf);
-            return NULL;
+            वापस शून्य;
         }
-        ggml_backend_buffer_set_usage(buf->chunks[n], usage);
+        ggml_backend_बफर_set_usage(buf->chunks[n], usage);
     }
-    return buf;
+    वापस buf;
 }
 
-static void ggml_vbuffer_tensor_alloc(struct vbuffer * buf, struct ggml_tensor * tensor, struct buffer_address buf_addr) {
-    void * base = ggml_backend_buffer_get_base(buf->chunks[buf_addr.chunk]);
-    void * addr = (char *)base + buf_addr.offset;
+अटल व्योम ggml_vbuffer_tensor_alloc(काष्ठा vbuffer * buf, काष्ठा ggml_tensor * tensor, काष्ठा बफर_address buf_addr) {
+    व्योम * base = ggml_backend_बफर_get_base(buf->chunks[buf_addr.chunk]);
+    व्योम * addr = (अक्षर *)base + buf_addr.offset;
     ggml_backend_tensor_alloc(buf->chunks[buf_addr.chunk], tensor, addr);
 }
 
-static void ggml_vbuffer_reset(struct vbuffer * buf) {
-    for (int i = 0; i < GGML_VBUFFER_MAX_CHUNKS && buf->chunks[i]; ++i) {
-        ggml_backend_buffer_reset(buf->chunks[i]);
+अटल व्योम ggml_vbuffer_reset(काष्ठा vbuffer * buf) {
+    क्रम (पूर्णांक i = 0; i < GGML_VBUFFER_MAX_CHUNKS && buf->chunks[i]; ++i) {
+        ggml_backend_बफर_reset(buf->chunks[i]);
     }
 }
 
@@ -456,365 +456,365 @@ static void ggml_vbuffer_reset(struct vbuffer * buf) {
 
 // graph allocator
 
-struct hash_node {
-    int n_children;
-    int n_views;
-    int buffer_id;
-    struct buffer_address addr;
+काष्ठा hash_गाँठ {
+    पूर्णांक n_children;
+    पूर्णांक n_views;
+    पूर्णांक बफर_id;
+    काष्ठा बफर_address addr;
     bool allocated;
 };
 
-struct tensor_alloc {
-    int buffer_id;
-    struct buffer_address addr;
-    size_t size_max; // 0 = pre-allocated, unused, or view
+काष्ठा tensor_alloc {
+    पूर्णांक बफर_id;
+    काष्ठा बफर_address addr;
+    माप_प्रकार आकार_max; // 0 = pre-allocated, unused, or view
 };
 
-struct leaf_alloc {
-    struct tensor_alloc leaf;
+काष्ठा leaf_alloc {
+    काष्ठा tensor_alloc leaf;
 };
 
-struct node_alloc {
-    struct tensor_alloc dst;
-    struct tensor_alloc src[GGML_MAX_SRC];
+काष्ठा गाँठ_alloc {
+    काष्ठा tensor_alloc dst;
+    काष्ठा tensor_alloc src[GGML_MAX_SRC];
 };
 
-struct ggml_gallocr {
-    ggml_backend_buffer_type_t * bufts; // [n_buffers]
-    struct vbuffer ** buffers; // [n_buffers]
-    struct ggml_dyn_tallocr ** buf_tallocs; // [n_buffers]
-    int n_buffers;
+काष्ठा ggml_gallocr {
+    ggml_backend_बफर_type_t * bufts; // [n_buffers]
+    काष्ठा vbuffer ** buffers; // [n_buffers]
+    काष्ठा ggml_dyn_tallocr ** buf_tallocs; // [n_buffers]
+    पूर्णांक n_buffers;
 
-    struct ggml_hash_set hash_set;
-    struct hash_node * hash_values; // [hash_set.size]
+    काष्ठा ggml_hash_set hash_set;
+    काष्ठा hash_गाँठ * hash_मूल्यावली; // [hash_set.size]
 
-    struct node_alloc * node_allocs; // [n_nodes]
-    int n_nodes;
+    काष्ठा गाँठ_alloc * गाँठ_allocs; // [n_nodes]
+    पूर्णांक n_nodes;
 
-    struct leaf_alloc * leaf_allocs; // [n_leafs]
-    int n_leafs;
+    काष्ठा leaf_alloc * leaf_allocs; // [n_leafs]
+    पूर्णांक n_leafs;
 };
 
-ggml_gallocr_t ggml_gallocr_new_n(ggml_backend_buffer_type_t * bufts, int n_bufs) {
-    ggml_gallocr_t galloc = (ggml_gallocr_t)calloc(1, sizeof(struct ggml_gallocr));
-    GGML_ASSERT(galloc != NULL);
+ggml_gallocr_t ggml_gallocr_new_n(ggml_backend_बफर_type_t * bufts, पूर्णांक n_bufs) {
+    ggml_gallocr_t galloc = (ggml_gallocr_t)सुस्मृति(1, माप(काष्ठा ggml_gallocr));
+    GGML_ASSERT(galloc != शून्य);
 
-    galloc->bufts = calloc(n_bufs, sizeof(ggml_backend_buffer_type_t));
-    GGML_ASSERT(galloc->bufts != NULL);
+    galloc->bufts = सुस्मृति(n_bufs, माप(ggml_backend_बफर_type_t));
+    GGML_ASSERT(galloc->bufts != शून्य);
 
-    galloc->buffers = calloc(n_bufs, sizeof(struct vbuffer *));
-    GGML_ASSERT(galloc->buffers != NULL);
+    galloc->buffers = सुस्मृति(n_bufs, माप(काष्ठा vbuffer *));
+    GGML_ASSERT(galloc->buffers != शून्य);
 
-    galloc->buf_tallocs = calloc(n_bufs, sizeof(struct ggml_dyn_tallocr *));
-    GGML_ASSERT(galloc->buf_tallocs != NULL);
+    galloc->buf_tallocs = सुस्मृति(n_bufs, माप(काष्ठा ggml_dyn_tallocr *));
+    GGML_ASSERT(galloc->buf_tallocs != शून्य);
 
-    for (int i = 0; i < n_bufs; i++) {
+    क्रम (पूर्णांक i = 0; i < n_bufs; i++) {
         galloc->bufts[i] = bufts[i];
-        galloc->buffers[i] = NULL;
+        galloc->buffers[i] = शून्य;
 
         // check if the same buffer type is used multiple times and reuse the same allocator
-        for (int j = 0; j < i; j++) {
-            if (bufts[i] == bufts[j]) {
+        क्रम (पूर्णांक j = 0; j < i; j++) {
+            अगर (bufts[i] == bufts[j]) {
                 galloc->buf_tallocs[i] = galloc->buf_tallocs[j];
-                break;
+                अवरोध;
             }
         }
 
-        if (galloc->buf_tallocs[i] == NULL) {
-            size_t alignment = ggml_backend_buft_get_alignment(bufts[i]);
-            size_t max_size = ggml_backend_buft_get_max_size(bufts[i]);
-            galloc->buf_tallocs[i] = ggml_dyn_tallocr_new(alignment, max_size);
+        अगर (galloc->buf_tallocs[i] == शून्य) {
+            माप_प्रकार alignment = ggml_backend_buft_get_alignment(bufts[i]);
+            माप_प्रकार max_आकार = ggml_backend_buft_get_max_आकार(bufts[i]);
+            galloc->buf_tallocs[i] = ggml_dyn_tallocr_new(alignment, max_आकार);
         }
     }
     galloc->n_buffers = n_bufs;
 
-    return galloc;
+    वापस galloc;
 }
 
-ggml_gallocr_t ggml_gallocr_new(ggml_backend_buffer_type_t buft) {
-    return ggml_gallocr_new_n(&buft, 1);
+ggml_gallocr_t ggml_gallocr_new(ggml_backend_बफर_type_t buft) {
+    वापस ggml_gallocr_new_n(&buft, 1);
 }
 
-void ggml_gallocr_free(ggml_gallocr_t galloc) {
-    if (galloc == NULL) {
-        return;
+व्योम ggml_gallocr_free(ggml_gallocr_t galloc) {
+    अगर (galloc == शून्य) {
+        वापस;
     }
 
-    for (int i = 0; i < galloc->n_buffers; i++) {
-        if (galloc->buffers != NULL) {
+    क्रम (पूर्णांक i = 0; i < galloc->n_buffers; i++) {
+        अगर (galloc->buffers != शून्य) {
             // skip if already freed
             bool freed = false;
-            for (int j = 0; j < i; j++) {
-                if (galloc->buffers[j] == galloc->buffers[i]) {
+            क्रम (पूर्णांक j = 0; j < i; j++) {
+                अगर (galloc->buffers[j] == galloc->buffers[i]) {
                     freed = true;
-                    break;
+                    अवरोध;
                 }
             }
-            if (!freed) {
+            अगर (!freed) {
                 ggml_vbuffer_free(galloc->buffers[i]);
             }
         }
-        if (galloc->buf_tallocs != NULL) {
+        अगर (galloc->buf_tallocs != शून्य) {
             // skip if already freed
             bool freed = false;
-            for (int j = 0; j < i; j++) {
-                if (galloc->buf_tallocs[j] == galloc->buf_tallocs[i]) {
+            क्रम (पूर्णांक j = 0; j < i; j++) {
+                अगर (galloc->buf_tallocs[j] == galloc->buf_tallocs[i]) {
                     freed = true;
-                    break;
+                    अवरोध;
                 }
             }
-            if (!freed) {
+            अगर (!freed) {
                 ggml_dyn_tallocr_free(galloc->buf_tallocs[i]);
             }
         }
     }
 
     ggml_hash_set_free(&galloc->hash_set);
-    free(galloc->hash_values);
-    free(galloc->bufts);
-    free(galloc->buffers);
-    free(galloc->buf_tallocs);
-    free(galloc->node_allocs);
-    free(galloc->leaf_allocs);
-    free(galloc);
+    मुक्त(galloc->hash_मूल्यावली);
+    मुक्त(galloc->bufts);
+    मुक्त(galloc->buffers);
+    मुक्त(galloc->buf_tallocs);
+    मुक्त(galloc->गाँठ_allocs);
+    मुक्त(galloc->leaf_allocs);
+    मुक्त(galloc);
 }
 
-typedef struct ggml_gallocr * ggml_gallocr_t;
+प्रकार काष्ठा ggml_gallocr * ggml_gallocr_t;
 
-static struct hash_node * ggml_gallocr_hash_get(ggml_gallocr_t galloc, struct ggml_tensor * t) {
-    size_t i = ggml_hash_find_or_insert(&galloc->hash_set, t);
-    return &galloc->hash_values[i];
+अटल काष्ठा hash_गाँठ * ggml_gallocr_hash_get(ggml_gallocr_t galloc, काष्ठा ggml_tensor * t) {
+    माप_प्रकार i = ggml_hash_find_or_जोड़ो(&galloc->hash_set, t);
+    वापस &galloc->hash_मूल्यावली[i];
 }
 
-static bool ggml_gallocr_is_own(ggml_gallocr_t galloc, struct ggml_tensor * t) {
-    return ggml_gallocr_hash_get(galloc, t)->allocated;
+अटल bool ggml_gallocr_is_own(ggml_gallocr_t galloc, काष्ठा ggml_tensor * t) {
+    वापस ggml_gallocr_hash_get(galloc, t)->allocated;
 }
 
-static bool ggml_gallocr_is_allocated(ggml_gallocr_t galloc, struct ggml_tensor * t) {
-    return t->data != NULL // tensor data already set externally
-        || t->buffer // tensor on external buffer (but not yet allocated)
+अटल bool ggml_gallocr_is_allocated(ggml_gallocr_t galloc, काष्ठा ggml_tensor * t) {
+    वापस t->तथ्य != शून्य // tensor data already set externally
+        || t->बफर // tensor on external buffer (but not yet allocated)
         || ggml_gallocr_is_own(galloc, t); // tensor will be allocated by galloc
 }
 
 // free the extra space at the end if the new tensor is smaller
-static void ggml_gallocr_free_extra_space(ggml_gallocr_t galloc, struct ggml_tensor * node, struct ggml_tensor * parent) {
-    struct hash_node * hn = ggml_gallocr_hash_get(galloc, node);
-    struct hash_node * p_hn = ggml_gallocr_hash_get(galloc, parent);
+अटल व्योम ggml_gallocr_free_extra_space(ggml_gallocr_t galloc, काष्ठा ggml_tensor * गाँठ, काष्ठा ggml_tensor * parent) {
+    काष्ठा hash_गाँठ * hn = ggml_gallocr_hash_get(galloc, गाँठ);
+    काष्ठा hash_गाँठ * p_hn = ggml_gallocr_hash_get(galloc, parent);
 
-    size_t parent_size = ggml_backend_buft_get_alloc_size(galloc->bufts[p_hn->buffer_id], parent);
-    size_t node_size = ggml_backend_buft_get_alloc_size(galloc->bufts[hn->buffer_id], node);
+    माप_प्रकार parent_आकार = ggml_backend_buft_get_alloc_आकार(galloc->bufts[p_hn->बफर_id], parent);
+    माप_प्रकार गाँठ_आकार = ggml_backend_buft_get_alloc_आकार(galloc->bufts[hn->बफर_id], गाँठ);
 
-    GGML_ASSERT(parent_size >= node_size);
+    GGML_ASSERT(parent_आकार >= गाँठ_आकार);
 
     // note: we want after the freeing the chunks to continue to be aligned
-    struct ggml_dyn_tallocr * p_alloc = galloc->buf_tallocs[p_hn->buffer_id];
-    parent_size = aligned_offset(NULL, parent_size, p_alloc->alignment);
-    node_size = aligned_offset(NULL, node_size, p_alloc->alignment);
+    काष्ठा ggml_dyn_tallocr * p_alloc = galloc->buf_tallocs[p_hn->बफर_id];
+    parent_आकार = aligned_offset(शून्य, parent_आकार, p_alloc->alignment);
+    गाँठ_आकार = aligned_offset(शून्य, गाँठ_आकार, p_alloc->alignment);
 
-    if (parent_size > node_size) {
-        struct buffer_address p_addr = p_hn->addr;
-        p_addr.offset += node_size;
-        size_t extra_size = parent_size - node_size;
-        AT_PRINTF("freeing extra %zu bytes from parent %s for %s\n", extra_size, parent->name, node->name);
-        ggml_dyn_tallocr_free_bytes(p_alloc, p_addr, extra_size);
+    अगर (parent_आकार > गाँठ_आकार) {
+        काष्ठा बफर_address p_addr = p_hn->addr;
+        p_addr.offset += गाँठ_आकार;
+        माप_प्रकार extra_आकार = parent_आकार - गाँठ_आकार;
+        AT_PRINTF("freeing extra %zu bytes from parent %s for %s\n", extra_आकार, parent->name, गाँठ->name);
+        ggml_dyn_tallocr_free_bytes(p_alloc, p_addr, extra_आकार);
     }
 }
 
-static void ggml_gallocr_allocate_node(ggml_gallocr_t galloc, struct ggml_tensor * node, int buffer_id) {
-    GGML_ASSERT(buffer_id >= 0);
-    struct hash_node * hn = ggml_gallocr_hash_get(galloc, node);
+अटल व्योम ggml_gallocr_allocate_गाँठ(ggml_gallocr_t galloc, काष्ठा ggml_tensor * गाँठ, पूर्णांक बफर_id) {
+    GGML_ASSERT(बफर_id >= 0);
+    काष्ठा hash_गाँठ * hn = ggml_gallocr_hash_get(galloc, गाँठ);
 
-    if (!ggml_gallocr_is_allocated(galloc, node) && !ggml_impl_is_view(node)) {
+    अगर (!ggml_gallocr_is_allocated(galloc, गाँठ) && !ggml_impl_is_view(गाँठ)) {
         hn->allocated = true;
-        assert(hn->addr.offset == 0);
+        निश्चित(hn->addr.offset == 0);
 
         // try to reuse a parent's buffer (inplace)
-        if (ggml_op_can_inplace(node->op)) {
-            for (int i = 0; i < GGML_MAX_SRC; i++) {
-                struct ggml_tensor * parent = node->src[i];
-                if (parent == NULL) {
-                    continue;
+        अगर (ggml_op_can_inplace(गाँठ->op)) {
+            क्रम (पूर्णांक i = 0; i < GGML_MAX_SRC; i++) {
+                काष्ठा ggml_tensor * parent = गाँठ->src[i];
+                अगर (parent == शून्य) {
+                    जारी;
                 }
 
                 // if the node's data is external, then we cannot re-use it
-                if (!ggml_gallocr_is_own(galloc, parent)) {
-                    AT_PRINTF("not reusing parent %s for %s as %p is external\n", parent->name, node->name, parent->data);
-                    continue;
+                अगर (!ggml_gallocr_is_own(galloc, parent)) {
+                    AT_PRINTF("not reusing parent %s for %s as %p is external\n", parent->name, गाँठ->name, parent->तथ्य);
+                    जारी;
                 }
 
                 // outputs cannot be reused
-                if (parent->flags & GGML_TENSOR_FLAG_OUTPUT || (parent->view_src != NULL && parent->view_src->flags & GGML_TENSOR_FLAG_OUTPUT)) {
-                    AT_PRINTF("not reusing parent %s for %s as it is an output\n", parent->name, node->name);
-                    continue;
+                अगर (parent->flags & GGML_TENSOR_FLAG_OUTPUT || (parent->view_src != शून्य && parent->view_src->flags & GGML_TENSOR_FLAG_OUTPUT)) {
+                    AT_PRINTF("not reusing parent %s for %s as it is an output\n", parent->name, गाँठ->name);
+                    जारी;
                 }
 
-                if (!ggml_are_same_layout(node, parent)) {
-                    AT_PRINTF("not reusing parent %s for %s as layouts are different\n", parent->name, node->name);
-                    continue;
+                अगर (!ggml_are_same_layout(गाँठ, parent)) {
+                    AT_PRINTF("not reusing parent %s for %s as layouts are different\n", parent->name, गाँठ->name);
+                    जारी;
                 }
 
-                struct hash_node * p_hn = ggml_gallocr_hash_get(galloc, parent);
-                if (p_hn->n_children == 1 && p_hn->n_views == 0) {
-                    if (ggml_impl_is_view(parent)) {
-                        struct ggml_tensor * view_src = parent->view_src;
-                        struct hash_node * view_src_hn = ggml_gallocr_hash_get(galloc, view_src);
-                        if (view_src_hn->n_views == 1 && view_src_hn->n_children == 0 && view_src->data == parent->data) {
-                            AT_PRINTF("reusing view parent %s (%s) for %s\n", parent->name, view_src->name, node->name);
-                            assert(view_src_hn->addr.chunk == p_hn->addr.chunk && view_src_hn->addr.offset == p_hn->addr.offset);
-                            hn->buffer_id = p_hn->buffer_id;
+                काष्ठा hash_गाँठ * p_hn = ggml_gallocr_hash_get(galloc, parent);
+                अगर (p_hn->n_children == 1 && p_hn->n_views == 0) {
+                    अगर (ggml_impl_is_view(parent)) {
+                        काष्ठा ggml_tensor * view_src = parent->view_src;
+                        काष्ठा hash_गाँठ * view_src_hn = ggml_gallocr_hash_get(galloc, view_src);
+                        अगर (view_src_hn->n_views == 1 && view_src_hn->n_children == 0 && view_src->तथ्य == parent->तथ्य) {
+                            AT_PRINTF("reusing view parent %s (%s) for %s\n", parent->name, view_src->name, गाँठ->name);
+                            निश्चित(view_src_hn->addr.chunk == p_hn->addr.chunk && view_src_hn->addr.offset == p_hn->addr.offset);
+                            hn->बफर_id = p_hn->बफर_id;
                             hn->addr = p_hn->addr;
                             p_hn->allocated = false; // avoid freeing the parent
                             view_src_hn->allocated = false;
-                            ggml_gallocr_free_extra_space(galloc, node, view_src);
-                            return;
+                            ggml_gallocr_free_extra_space(galloc, गाँठ, view_src);
+                            वापस;
                         }
-                    } else {
-                        AT_PRINTF("reusing parent %s for %s\n", parent->name, node->name);
-                        hn->buffer_id = p_hn->buffer_id;
+                    } अन्यथा {
+                        AT_PRINTF("reusing parent %s for %s\n", parent->name, गाँठ->name);
+                        hn->बफर_id = p_hn->बफर_id;
                         hn->addr = p_hn->addr;
                         p_hn->allocated = false; // avoid freeing the parent
-                        ggml_gallocr_free_extra_space(galloc, node, parent);
-                        return;
+                        ggml_gallocr_free_extra_space(galloc, गाँठ, parent);
+                        वापस;
                     }
                 }
             }
         }
         // allocate tensor from the buffer
-        struct ggml_dyn_tallocr * alloc = galloc->buf_tallocs[buffer_id];
-        ggml_backend_buffer_type_t buft = galloc->bufts[buffer_id];
-        size_t size = ggml_backend_buft_get_alloc_size(buft, node);
-        hn->buffer_id = buffer_id;
-        hn->addr = ggml_dyn_tallocr_alloc(alloc, size, node);
+        काष्ठा ggml_dyn_tallocr * alloc = galloc->buf_tallocs[बफर_id];
+        ggml_backend_बफर_type_t buft = galloc->bufts[बफर_id];
+        माप_प्रकार आकार = ggml_backend_buft_get_alloc_आकार(buft, गाँठ);
+        hn->बफर_id = बफर_id;
+        hn->addr = ggml_dyn_tallocr_alloc(alloc, आकार, गाँठ);
     }
 }
 
-static void ggml_gallocr_free_node(ggml_gallocr_t galloc, struct ggml_tensor * node) {
+अटल व्योम ggml_gallocr_free_गाँठ(ggml_gallocr_t galloc, काष्ठा ggml_tensor * गाँठ) {
     // graph outputs are never freed
-    if (node->flags & GGML_TENSOR_FLAG_OUTPUT) {
-        AT_PRINTF("not freeing output %s\n", node->name);
-        return;
+    अगर (गाँठ->flags & GGML_TENSOR_FLAG_OUTPUT) {
+        AT_PRINTF("not freeing output %s\n", गाँठ->name);
+        वापस;
     }
 
-    struct hash_node * hn = ggml_gallocr_hash_get(galloc, node);
-    int buffer_id = hn->buffer_id;
-    struct ggml_dyn_tallocr * alloc = galloc->buf_tallocs[buffer_id];
-    ggml_backend_buffer_type_t buft = galloc->bufts[buffer_id];
-    size_t size = ggml_backend_buft_get_alloc_size(buft, node);
+    काष्ठा hash_गाँठ * hn = ggml_gallocr_hash_get(galloc, गाँठ);
+    पूर्णांक बफर_id = hn->बफर_id;
+    काष्ठा ggml_dyn_tallocr * alloc = galloc->buf_tallocs[बफर_id];
+    ggml_backend_बफर_type_t buft = galloc->bufts[बफर_id];
+    माप_प्रकार आकार = ggml_backend_buft_get_alloc_आकार(buft, गाँठ);
 
     AT_PRINTF("%s: freeing %s at {chunk=%d, offset=%zu} (%zu bytes) - n_free_blocks = %d\n",
-        __func__, node->name, hn->addr.chunk, hn->addr.offset, size, alloc->chunks[hn->addr.chunk]->n_free_blocks);
-#ifdef GGML_ALLOCATOR_DEBUG
-    remove_allocated_tensor(alloc, hn->addr, node);
-#endif
+        __func__, गाँठ->name, hn->addr.chunk, hn->addr.offset, आकार, alloc->chunks[hn->addr.chunk]->n_free_blocks);
+#अगर_घोषित GGML_ALLOCATOR_DEBUG
+    remove_allocated_tensor(alloc, hn->addr, गाँठ);
+#पूर्ण_अगर
 
-    ggml_dyn_tallocr_free_bytes(alloc, hn->addr, size);
+    ggml_dyn_tallocr_free_bytes(alloc, hn->addr, आकार);
     hn->allocated = false;
 }
 
-static int get_node_buffer_id(const int * node_buffer_ids, int i) {
-    return node_buffer_ids ? node_buffer_ids[i] : 0;
+अटल पूर्णांक get_गाँठ_बफर_id(स्थिर पूर्णांक * गाँठ_बफर_ids, पूर्णांक i) {
+    वापस गाँठ_बफर_ids ? गाँठ_बफर_ids[i] : 0;
 }
 
-static void ggml_gallocr_alloc_graph_impl(ggml_gallocr_t galloc, struct ggml_cgraph * graph, const int * node_buffer_ids, const int * leaf_buffer_ids) {
+अटल व्योम ggml_gallocr_alloc_graph_impl(ggml_gallocr_t galloc, काष्ठा ggml_cgraph * graph, स्थिर पूर्णांक * गाँठ_बफर_ids, स्थिर पूर्णांक * leaf_बफर_ids) {
     // clear hash tables
     ggml_hash_set_reset(&galloc->hash_set);
-    memset(galloc->hash_values, 0, sizeof(struct hash_node) * galloc->hash_set.size);
+    स_रखो(galloc->hash_मूल्यावली, 0, माप(काष्ठा hash_गाँठ) * galloc->hash_set.आकार);
 
     // allocate leafs
     // these may be tensors that the application is not using in the graph, but may still want to allocate for other purposes
-    for (int i = 0; i < graph->n_leafs; i++) {
-        struct ggml_tensor * leaf = graph->leafs[i];
-        ggml_gallocr_allocate_node(galloc, leaf, get_node_buffer_id(leaf_buffer_ids, i));
+    क्रम (पूर्णांक i = 0; i < graph->n_leafs; i++) {
+        काष्ठा ggml_tensor * leaf = graph->leafs[i];
+        ggml_gallocr_allocate_गाँठ(galloc, leaf, get_गाँठ_बफर_id(leaf_बफर_ids, i));
     }
 
     // count number of children and views
     // allocate other graph inputs and leafs first to avoid overwriting them
-    for (int i = 0; i < graph->n_nodes; i++) {
-        struct ggml_tensor * node = graph->nodes[i];
+    क्रम (पूर्णांक i = 0; i < graph->n_nodes; i++) {
+        काष्ठा ggml_tensor * गाँठ = graph->nodes[i];
 
         // TODO: better way to add external dependencies
         // GGML_OP_NONE does not appear normally in the graph nodes, but is used by ggml-backend to add dependencies to
         // control when some tensors are allocated and freed. in this case, the dependencies are in `src`, but the node
         // itself is never used and should not be considered a dependency
-        if (ggml_impl_is_view(node) && node->op != GGML_OP_NONE) {
-            struct ggml_tensor * view_src = node->view_src;
+        अगर (ggml_impl_is_view(गाँठ) && गाँठ->op != GGML_OP_NONE) {
+            काष्ठा ggml_tensor * view_src = गाँठ->view_src;
             ggml_gallocr_hash_get(galloc, view_src)->n_views += 1;
         }
 
-        if (node->flags & GGML_TENSOR_FLAG_INPUT) {
-            ggml_gallocr_allocate_node(galloc, graph->nodes[i], get_node_buffer_id(node_buffer_ids, i));
+        अगर (गाँठ->flags & GGML_TENSOR_FLAG_निवेश) {
+            ggml_gallocr_allocate_गाँठ(galloc, graph->nodes[i], get_गाँठ_बफर_id(गाँठ_बफर_ids, i));
         }
 
-        for (int j = 0; j < GGML_MAX_SRC; j++) {
-            struct ggml_tensor * src = node->src[j];
-            if (src == NULL) {
-                continue;
+        क्रम (पूर्णांक j = 0; j < GGML_MAX_SRC; j++) {
+            काष्ठा ggml_tensor * src = गाँठ->src[j];
+            अगर (src == शून्य) {
+                जारी;
             }
 
             ggml_gallocr_hash_get(galloc, src)->n_children += 1;
 
             // allocate explicit inputs
-            if (src->flags & GGML_TENSOR_FLAG_INPUT) {
-                ggml_gallocr_allocate_node(galloc, src, get_node_buffer_id(node_buffer_ids, i));
+            अगर (src->flags & GGML_TENSOR_FLAG_निवेश) {
+                ggml_gallocr_allocate_गाँठ(galloc, src, get_गाँठ_बफर_id(गाँठ_बफर_ids, i));
             }
         }
     }
 
     // allocate tensors
-    for (int i = 0; i < graph->n_nodes; i++) {
-        struct ggml_tensor * node = graph->nodes[i];
-        int buffer_id = get_node_buffer_id(node_buffer_ids, i);
+    क्रम (पूर्णांक i = 0; i < graph->n_nodes; i++) {
+        काष्ठा ggml_tensor * गाँठ = graph->nodes[i];
+        पूर्णांक बफर_id = get_गाँठ_बफर_id(गाँठ_बफर_ids, i);
 
         // allocate parents (only leafs need to be allocated at this point)
-        for (int j = 0; j < GGML_MAX_SRC; j++) {
-            struct ggml_tensor * parent = node->src[j];
-            if (parent == NULL) {
-                continue;
+        क्रम (पूर्णांक j = 0; j < GGML_MAX_SRC; j++) {
+            काष्ठा ggml_tensor * parent = गाँठ->src[j];
+            अगर (parent == शून्य) {
+                जारी;
             }
-            ggml_gallocr_allocate_node(galloc, parent, buffer_id);
+            ggml_gallocr_allocate_गाँठ(galloc, parent, बफर_id);
         }
 
         // allocate node
-        ggml_gallocr_allocate_node(galloc, node, buffer_id);
+        ggml_gallocr_allocate_गाँठ(galloc, गाँठ, बफर_id);
 
-        AT_PRINTF("exec: %s (%s) <= ", ggml_op_desc(node), node->name);
-        for (int j = 0; j < GGML_MAX_SRC; j++) {
-            struct ggml_tensor * parent = node->src[j];
-            if (parent == NULL) {
-                continue;
+        AT_PRINTF("exec: %s (%s) <= ", ggml_op_desc(गाँठ), गाँठ->name);
+        क्रम (पूर्णांक j = 0; j < GGML_MAX_SRC; j++) {
+            काष्ठा ggml_tensor * parent = गाँठ->src[j];
+            अगर (parent == शून्य) {
+                जारी;
             }
             AT_PRINTF("%s", parent->name);
-            if (j < GGML_MAX_SRC - 1 && node->src[j + 1] != NULL) {
+            अगर (j < GGML_MAX_SRC - 1 && गाँठ->src[j + 1] != शून्य) {
                 AT_PRINTF(", ");
             }
         }
         AT_PRINTF("\n");
 
         // update parents
-        for (int j = 0; j < GGML_MAX_SRC; j++) {
-            struct ggml_tensor * parent = node->src[j];
-            if (parent == NULL) {
-                continue;
+        क्रम (पूर्णांक j = 0; j < GGML_MAX_SRC; j++) {
+            काष्ठा ggml_tensor * parent = गाँठ->src[j];
+            अगर (parent == शून्य) {
+                जारी;
             }
-            struct hash_node * p_hn = ggml_gallocr_hash_get(galloc, parent);
+            काष्ठा hash_गाँठ * p_hn = ggml_gallocr_hash_get(galloc, parent);
             p_hn->n_children -= 1;
 
             AT_PRINTF("parent %s: %d children, %d views, allocated: %d\n",
                 parent->name, p_hn->n_children, p_hn->n_views, p_hn->allocated);
 
-            if (p_hn->n_children == 0 && p_hn->n_views == 0) {
-                if (ggml_impl_is_view(parent)) {
-                    struct ggml_tensor * view_src = parent->view_src;
-                    struct hash_node * view_src_hn = ggml_gallocr_hash_get(galloc, view_src);
+            अगर (p_hn->n_children == 0 && p_hn->n_views == 0) {
+                अगर (ggml_impl_is_view(parent)) {
+                    काष्ठा ggml_tensor * view_src = parent->view_src;
+                    काष्ठा hash_गाँठ * view_src_hn = ggml_gallocr_hash_get(galloc, view_src);
                     view_src_hn->n_views -= 1;
                     AT_PRINTF("view_src %s: %d children, %d views\n",
                         view_src->name, view_src_hn->n_children, view_src_hn->n_views);
-                    if (view_src_hn->n_views == 0 && view_src_hn->n_children == 0 && view_src_hn->allocated) {
-                        ggml_gallocr_free_node(galloc, view_src);
+                    अगर (view_src_hn->n_views == 0 && view_src_hn->n_children == 0 && view_src_hn->allocated) {
+                        ggml_gallocr_free_गाँठ(galloc, view_src);
                     }
                 }
-                else if (p_hn->allocated) {
-                    ggml_gallocr_free_node(galloc, parent);
+                अन्यथा अगर (p_hn->allocated) {
+                    ggml_gallocr_free_गाँठ(galloc, parent);
                 }
             }
             AT_PRINTF("\n");
@@ -822,352 +822,352 @@ static void ggml_gallocr_alloc_graph_impl(ggml_gallocr_t galloc, struct ggml_cgr
     }
 }
 
-static bool ggml_gallocr_reserve_n_impl(
-        ggml_gallocr_t galloc, struct ggml_cgraph * graph, const int * node_buffer_ids, const int * leaf_buffer_ids, bool no_alloc) {
-    size_t min_hash_size = graph->n_nodes + graph->n_leafs;
+अटल bool ggml_gallocr_reserve_n_impl(
+        ggml_gallocr_t galloc, काष्ठा ggml_cgraph * graph, स्थिर पूर्णांक * गाँठ_बफर_ids, स्थिर पूर्णांक * leaf_बफर_ids, bool no_alloc) {
+    माप_प्रकार min_hash_आकार = graph->n_nodes + graph->n_leafs;
     // add 25% margin to avoid hash collisions
-    min_hash_size += min_hash_size / 4;
+    min_hash_आकार += min_hash_आकार / 4;
 
     // initialize hash table
-    if (galloc->hash_set.size < min_hash_size) {
+    अगर (galloc->hash_set.आकार < min_hash_आकार) {
         ggml_hash_set_free(&galloc->hash_set);
-        galloc->hash_set = ggml_hash_set_new(min_hash_size);
-        GGML_ASSERT(galloc->hash_set.keys != NULL);
+        galloc->hash_set = ggml_hash_set_new(min_hash_आकार);
+        GGML_ASSERT(galloc->hash_set.कुंजियाँ != शून्य);
 
-        free(galloc->hash_values);
-        galloc->hash_values = malloc(sizeof(struct hash_node) * galloc->hash_set.size);
-        GGML_ASSERT(galloc->hash_values != NULL);
+        मुक्त(galloc->hash_मूल्यावली);
+        galloc->hash_मूल्यावली = दो_स्मृति(माप(काष्ठा hash_गाँठ) * galloc->hash_set.आकार);
+        GGML_ASSERT(galloc->hash_मूल्यावली != शून्य);
     }
 
     // reset allocators
-    for (int i = 0; i < galloc->n_buffers; i++) {
+    क्रम (पूर्णांक i = 0; i < galloc->n_buffers; i++) {
         ggml_dyn_tallocr_reset(galloc->buf_tallocs[i]);
     }
 
     // allocate in hash table
-    ggml_gallocr_alloc_graph_impl(galloc, graph, node_buffer_ids, leaf_buffer_ids);
+    ggml_gallocr_alloc_graph_impl(galloc, graph, गाँठ_बफर_ids, leaf_बफर_ids);
 
     // set the node_allocs from the hash table
-    if (galloc->n_nodes < graph->n_nodes) {
-        free(galloc->node_allocs);
-        galloc->node_allocs = calloc(graph->n_nodes, sizeof(struct node_alloc));
-        GGML_ASSERT(galloc->node_allocs != NULL);
+    अगर (galloc->n_nodes < graph->n_nodes) {
+        मुक्त(galloc->गाँठ_allocs);
+        galloc->गाँठ_allocs = सुस्मृति(graph->n_nodes, माप(काष्ठा गाँठ_alloc));
+        GGML_ASSERT(galloc->गाँठ_allocs != शून्य);
     }
     galloc->n_nodes = graph->n_nodes;
-    for (int i = 0; i < graph->n_nodes; i++) {
-        struct ggml_tensor * node = graph->nodes[i];
-        struct node_alloc * node_alloc = &galloc->node_allocs[i];
-        if (node->view_src || node->data) {
-            node_alloc->dst.buffer_id = -1;
-            node_alloc->dst.addr = GGML_BUFFER_ADDRESS_INVALID;
-            node_alloc->dst.size_max = 0;
-        } else {
-            struct hash_node * hn = ggml_gallocr_hash_get(galloc, node);
-            node_alloc->dst.buffer_id = hn->buffer_id;
-            node_alloc->dst.addr = hn->addr;
-            node_alloc->dst.size_max  = ggml_backend_buft_get_alloc_size(galloc->bufts[hn->buffer_id], node);
+    क्रम (पूर्णांक i = 0; i < graph->n_nodes; i++) {
+        काष्ठा ggml_tensor * गाँठ = graph->nodes[i];
+        काष्ठा गाँठ_alloc * गाँठ_alloc = &galloc->गाँठ_allocs[i];
+        अगर (गाँठ->view_src || गाँठ->तथ्य) {
+            गाँठ_alloc->dst.बफर_id = -1;
+            गाँठ_alloc->dst.addr = GGML_बफर_ADDRESS_INVALID;
+            गाँठ_alloc->dst.आकार_max = 0;
+        } अन्यथा {
+            काष्ठा hash_गाँठ * hn = ggml_gallocr_hash_get(galloc, गाँठ);
+            गाँठ_alloc->dst.बफर_id = hn->बफर_id;
+            गाँठ_alloc->dst.addr = hn->addr;
+            गाँठ_alloc->dst.आकार_max  = ggml_backend_buft_get_alloc_आकार(galloc->bufts[hn->बफर_id], गाँठ);
         }
-        for (int j = 0; j < GGML_MAX_SRC; j++) {
-            struct ggml_tensor * src = node->src[j];
-            if (!src || src->view_src || src->data) {
-                node_alloc->src[j].buffer_id = -1;
-                node_alloc->src[j].addr = GGML_BUFFER_ADDRESS_INVALID;
-                node_alloc->src[j].size_max = 0;
-            } else {
-                struct hash_node * hn = ggml_gallocr_hash_get(galloc, src);
-                node_alloc->src[j].buffer_id = hn->buffer_id;
-                node_alloc->src[j].addr = hn->addr;
-                node_alloc->src[j].size_max = ggml_backend_buft_get_alloc_size(galloc->bufts[hn->buffer_id], src);
+        क्रम (पूर्णांक j = 0; j < GGML_MAX_SRC; j++) {
+            काष्ठा ggml_tensor * src = गाँठ->src[j];
+            अगर (!src || src->view_src || src->तथ्य) {
+                गाँठ_alloc->src[j].बफर_id = -1;
+                गाँठ_alloc->src[j].addr = GGML_बफर_ADDRESS_INVALID;
+                गाँठ_alloc->src[j].आकार_max = 0;
+            } अन्यथा {
+                काष्ठा hash_गाँठ * hn = ggml_gallocr_hash_get(galloc, src);
+                गाँठ_alloc->src[j].बफर_id = hn->बफर_id;
+                गाँठ_alloc->src[j].addr = hn->addr;
+                गाँठ_alloc->src[j].आकार_max = ggml_backend_buft_get_alloc_आकार(galloc->bufts[hn->बफर_id], src);
             }
         }
     }
-    if (galloc->n_leafs < graph->n_leafs) {
-        free(galloc->leaf_allocs);
-        galloc->leaf_allocs = calloc(graph->n_leafs, sizeof(galloc->leaf_allocs[0]));
-        GGML_ASSERT(galloc->leaf_allocs != NULL);
+    अगर (galloc->n_leafs < graph->n_leafs) {
+        मुक्त(galloc->leaf_allocs);
+        galloc->leaf_allocs = सुस्मृति(graph->n_leafs, माप(galloc->leaf_allocs[0]));
+        GGML_ASSERT(galloc->leaf_allocs != शून्य);
     }
     galloc->n_leafs = graph->n_leafs;
-    for (int i = 0; i < graph->n_leafs; i++) {
-        struct ggml_tensor * leaf = graph->leafs[i];
-        struct hash_node * hn = ggml_gallocr_hash_get(galloc, leaf);
-        if (leaf->view_src || leaf->data) {
-            galloc->leaf_allocs[i].leaf.buffer_id = -1;
-            galloc->leaf_allocs[i].leaf.addr = GGML_BUFFER_ADDRESS_INVALID;
-            galloc->leaf_allocs[i].leaf.size_max = 0;
-        } else {
-            galloc->leaf_allocs[i].leaf.buffer_id = hn->buffer_id;
+    क्रम (पूर्णांक i = 0; i < graph->n_leafs; i++) {
+        काष्ठा ggml_tensor * leaf = graph->leafs[i];
+        काष्ठा hash_गाँठ * hn = ggml_gallocr_hash_get(galloc, leaf);
+        अगर (leaf->view_src || leaf->तथ्य) {
+            galloc->leaf_allocs[i].leaf.बफर_id = -1;
+            galloc->leaf_allocs[i].leaf.addr = GGML_बफर_ADDRESS_INVALID;
+            galloc->leaf_allocs[i].leaf.आकार_max = 0;
+        } अन्यथा {
+            galloc->leaf_allocs[i].leaf.बफर_id = hn->बफर_id;
             galloc->leaf_allocs[i].leaf.addr = hn->addr;
-            galloc->leaf_allocs[i].leaf.size_max = ggml_backend_buft_get_alloc_size(galloc->bufts[hn->buffer_id], leaf);
+            galloc->leaf_allocs[i].leaf.आकार_max = ggml_backend_buft_get_alloc_आकार(galloc->bufts[hn->बफर_id], leaf);
         }
     }
 
     // reallocate buffers if needed
-    for (int i = 0; i < galloc->n_buffers; i++) {
+    क्रम (पूर्णांक i = 0; i < galloc->n_buffers; i++) {
         // if the buffer type is used multiple times, we reuse the same buffer
-        for (int j = 0; j < i; j++) {
-            if (galloc->buf_tallocs[j] == galloc->buf_tallocs[i]) {
+        क्रम (पूर्णांक j = 0; j < i; j++) {
+            अगर (galloc->buf_tallocs[j] == galloc->buf_tallocs[i]) {
                 galloc->buffers[i] = galloc->buffers[j];
-                break;
+                अवरोध;
             }
         }
 
         // even if there are no tensors allocated in this buffer, we still need to allocate it to initialize views
-        bool realloc = galloc->buffers[i] == NULL;
-        size_t new_size = 0;
-        for (int c = 0; c < galloc->buf_tallocs[i]->n_chunks; c++) {
-            size_t cur_chunk_size = galloc->buffers[i] ? ggml_vbuffer_chunk_size(galloc->buffers[i], c) : 0;
-            size_t new_chunk_size = ggml_dyn_tallocr_max_size(galloc->buf_tallocs[i], c);
-            new_size += new_chunk_size;
-            if (new_chunk_size > cur_chunk_size) {
-                realloc = true;
+        bool पुनः_स्मृति = galloc->buffers[i] == शून्य;
+        माप_प्रकार new_आकार = 0;
+        क्रम (पूर्णांक c = 0; c < galloc->buf_tallocs[i]->n_chunks; c++) {
+            माप_प्रकार cur_chunk_आकार = galloc->buffers[i] ? ggml_vbuffer_chunk_आकार(galloc->buffers[i], c) : 0;
+            माप_प्रकार new_chunk_आकार = ggml_dyn_tallocr_max_आकार(galloc->buf_tallocs[i], c);
+            new_आकार += new_chunk_आकार;
+            अगर (new_chunk_आकार > cur_chunk_आकार) {
+                पुनः_स्मृति = true;
             }
         }
-        if (realloc) {
-#ifndef NDEBUG
+        अगर (पुनः_स्मृति) {
+#अगर_अघोषित न_संशोधन
             {
-                size_t cur_size = galloc->buffers[i] ? ggml_vbuffer_size(galloc->buffers[i]) : 0;
-                if (cur_size > 0) {
+                माप_प्रकार cur_आकार = galloc->buffers[i] ? ggml_vbuffer_आकार(galloc->buffers[i]) : 0;
+                अगर (cur_आकार > 0) {
                     GGML_LOG_DEBUG("%s: reallocating %s buffer from size %.02f MiB to %.02f MiB\n",
-                        __func__, ggml_backend_buft_name(galloc->bufts[i]), cur_size / 1024.0 / 1024.0, new_size / 1024.0 / 1024.0);
+                        __func__, ggml_backend_buft_name(galloc->bufts[i]), cur_आकार / 1024.0 / 1024.0, new_आकार / 1024.0 / 1024.0);
                 }
             }
-#endif
+#पूर्ण_अगर
             ggml_vbuffer_free(galloc->buffers[i]);
-            if (no_alloc) {
-                galloc->buffers[i] = NULL;
-            } else {
-                galloc->buffers[i] = ggml_vbuffer_alloc(galloc->bufts[i], galloc->buf_tallocs[i], GGML_BACKEND_BUFFER_USAGE_COMPUTE);
-                if (galloc->buffers[i] == NULL) {
-                    GGML_LOG_ERROR("%s: failed to allocate %s buffer of size %zu\n", __func__, ggml_backend_buft_name(galloc->bufts[i]), new_size);
-                    return false;
+            अगर (no_alloc) {
+                galloc->buffers[i] = शून्य;
+            } अन्यथा {
+                galloc->buffers[i] = ggml_vbuffer_alloc(galloc->bufts[i], galloc->buf_tallocs[i], GGML_BACKEND_बफर_USAGE_COMPUTE);
+                अगर (galloc->buffers[i] == शून्य) {
+                    GGML_LOG_ERROR("%s: failed to allocate %s buffer of size %zu\n", __func__, ggml_backend_buft_name(galloc->bufts[i]), new_आकार);
+                    वापस false;
                 }
             }
         }
     }
 
-    return true;
+    वापस true;
 }
 
-void ggml_gallocr_reserve_n_size(
-        ggml_gallocr_t galloc, struct ggml_cgraph * graph, const int * node_buffer_ids, const int * leaf_buffer_ids, size_t * sizes) {
-    GGML_ASSERT(ggml_gallocr_reserve_n_impl(galloc, graph, node_buffer_ids, leaf_buffer_ids, /*no_alloc =*/ true));
-    for (int i = 0; i < galloc->n_buffers; i++) {
+व्योम ggml_gallocr_reserve_n_आकार(
+        ggml_gallocr_t galloc, काष्ठा ggml_cgraph * graph, स्थिर पूर्णांक * गाँठ_बफर_ids, स्थिर पूर्णांक * leaf_बफर_ids, माप_प्रकार * sizes) {
+    GGML_ASSERT(ggml_gallocr_reserve_n_impl(galloc, graph, गाँठ_बफर_ids, leaf_बफर_ids, /*no_alloc =*/ true));
+    क्रम (पूर्णांक i = 0; i < galloc->n_buffers; i++) {
         sizes[i] = 0;
-        for (int c = 0; c < galloc->buf_tallocs[i]->n_chunks; c++) {
-            sizes[i] += galloc->buf_tallocs[i]->chunks[c]->max_size;
+        क्रम (पूर्णांक c = 0; c < galloc->buf_tallocs[i]->n_chunks; c++) {
+            sizes[i] += galloc->buf_tallocs[i]->chunks[c]->max_आकार;
         }
     }
 }
 
-bool ggml_gallocr_reserve_n(ggml_gallocr_t galloc, struct ggml_cgraph * graph, const int * node_buffer_ids, const int * leaf_buffer_ids) {
-    return ggml_gallocr_reserve_n_impl(galloc, graph, node_buffer_ids, leaf_buffer_ids, /*no_alloc =*/ false);
+bool ggml_gallocr_reserve_n(ggml_gallocr_t galloc, काष्ठा ggml_cgraph * graph, स्थिर पूर्णांक * गाँठ_बफर_ids, स्थिर पूर्णांक * leaf_बफर_ids) {
+    वापस ggml_gallocr_reserve_n_impl(galloc, graph, गाँठ_बफर_ids, leaf_बफर_ids, /*no_alloc =*/ false);
 }
 
-bool ggml_gallocr_reserve(ggml_gallocr_t galloc, struct ggml_cgraph *graph) {
-    return ggml_gallocr_reserve_n(galloc, graph, NULL, NULL);
+bool ggml_gallocr_reserve(ggml_gallocr_t galloc, काष्ठा ggml_cgraph *graph) {
+    वापस ggml_gallocr_reserve_n(galloc, graph, शून्य, शून्य);
 }
 
-static void ggml_gallocr_init_tensor(ggml_gallocr_t galloc, struct ggml_tensor * tensor, struct tensor_alloc * tensor_alloc) {
-    int buffer_id = tensor_alloc->buffer_id;
-    assert(tensor->data || tensor->view_src || ggml_backend_buft_get_alloc_size(galloc->bufts[buffer_id], tensor) <= tensor_alloc->size_max);
+अटल व्योम ggml_gallocr_init_tensor(ggml_gallocr_t galloc, काष्ठा ggml_tensor * tensor, काष्ठा tensor_alloc * tensor_alloc) {
+    पूर्णांक बफर_id = tensor_alloc->बफर_id;
+    निश्चित(tensor->तथ्य || tensor->view_src || ggml_backend_buft_get_alloc_आकार(galloc->bufts[बफर_id], tensor) <= tensor_alloc->आकार_max);
 
-    if (tensor->view_src != NULL) {
-        if (tensor->buffer == NULL) {
-            assert(tensor_alloc->addr.offset == SIZE_MAX);
-            if (tensor->view_src->buffer == NULL) {
+    अगर (tensor->view_src != शून्य) {
+        अगर (tensor->बफर == शून्य) {
+            निश्चित(tensor_alloc->addr.offset == SIZE_MAX);
+            अगर (tensor->view_src->बफर == शून्य) {
                 // this tensor was allocated without ggml-backend
-                return;
+                वापस;
             }
             ggml_backend_view_init(tensor);
         }
-    } else {
-        if (tensor->data == NULL) {
-            assert(tensor_alloc->addr.offset != SIZE_MAX);
-            assert(ggml_backend_buft_get_alloc_size(galloc->bufts[buffer_id], tensor) <= tensor_alloc->size_max);
-            ggml_vbuffer_tensor_alloc(galloc->buffers[buffer_id], tensor, tensor_alloc->addr);
-        } else {
-            if (tensor->buffer == NULL) {
+    } अन्यथा {
+        अगर (tensor->तथ्य == शून्य) {
+            निश्चित(tensor_alloc->addr.offset != SIZE_MAX);
+            निश्चित(ggml_backend_buft_get_alloc_आकार(galloc->bufts[बफर_id], tensor) <= tensor_alloc->आकार_max);
+            ggml_vbuffer_tensor_alloc(galloc->buffers[बफर_id], tensor, tensor_alloc->addr);
+        } अन्यथा {
+            अगर (tensor->बफर == शून्य) {
                 // this tensor was allocated without ggml-backend
-                return;
+                वापस;
             }
         }
     }
 }
 
-static bool ggml_gallocr_node_needs_realloc(ggml_gallocr_t galloc, struct ggml_tensor * node, struct tensor_alloc * talloc) {
-    size_t node_size = 0;
-    if (!node->data && !node->view_src) {
+अटल bool ggml_gallocr_गाँठ_needs_realloc(ggml_gallocr_t galloc, काष्ठा ggml_tensor * गाँठ, काष्ठा tensor_alloc * talloc) {
+    माप_प्रकार गाँठ_आकार = 0;
+    अगर (!गाँठ->तथ्य && !गाँठ->view_src) {
         // If we previously had data but don't now then reallocate
-        if (talloc->buffer_id < 0) {
-            return false;
+        अगर (talloc->बफर_id < 0) {
+            वापस false;
         }
-        node_size = ggml_backend_buft_get_alloc_size(galloc->bufts[talloc->buffer_id], node);
+        गाँठ_आकार = ggml_backend_buft_get_alloc_आकार(galloc->bufts[talloc->बफर_id], गाँठ);
     }
-    return talloc->size_max >= node_size;
+    वापस talloc->आकार_max >= गाँठ_आकार;
 }
 
-static bool ggml_gallocr_needs_realloc(ggml_gallocr_t galloc, struct ggml_cgraph * graph) {
-    if (galloc->n_nodes != graph->n_nodes) {
-#ifndef NDEBUG
+अटल bool ggml_gallocr_needs_realloc(ggml_gallocr_t galloc, काष्ठा ggml_cgraph * graph) {
+    अगर (galloc->n_nodes != graph->n_nodes) {
+#अगर_अघोषित न_संशोधन
         GGML_LOG_DEBUG("%s: graph has different number of nodes\n", __func__);
-#endif
-        return true;
+#पूर्ण_अगर
+        वापस true;
     }
 
-    if (galloc->n_leafs != graph->n_leafs) {
-#ifndef NDEBUG
+    अगर (galloc->n_leafs != graph->n_leafs) {
+#अगर_अघोषित न_संशोधन
         GGML_LOG_DEBUG("%s: graph has different number of leafs\n", __func__);
-#endif
-        return true;
+#पूर्ण_अगर
+        वापस true;
     }
 
-    for (int i = 0; i < graph->n_nodes; i++) {
-        struct ggml_tensor * node = graph->nodes[i];
-        struct node_alloc * node_alloc = &galloc->node_allocs[i];
+    क्रम (पूर्णांक i = 0; i < graph->n_nodes; i++) {
+        काष्ठा ggml_tensor * गाँठ = graph->nodes[i];
+        काष्ठा गाँठ_alloc * गाँठ_alloc = &galloc->गाँठ_allocs[i];
 
-        if (!ggml_gallocr_node_needs_realloc(galloc, node, &node_alloc->dst)) {
-#ifndef NDEBUG
-            GGML_LOG_DEBUG("%s: node %s is not valid\n", __func__, node->name);
-#endif
-            return true;
+        अगर (!ggml_gallocr_गाँठ_needs_realloc(galloc, गाँठ, &गाँठ_alloc->dst)) {
+#अगर_अघोषित न_संशोधन
+            GGML_LOG_DEBUG("%s: node %s is not valid\n", __func__, गाँठ->name);
+#पूर्ण_अगर
+            वापस true;
         }
 
-        for (int j = 0; j < GGML_MAX_SRC; j++) {
-            struct ggml_tensor * src = node->src[j];
-            if (src == NULL) {
-                continue;
+        क्रम (पूर्णांक j = 0; j < GGML_MAX_SRC; j++) {
+            काष्ठा ggml_tensor * src = गाँठ->src[j];
+            अगर (src == शून्य) {
+                जारी;
             }
-            if (!ggml_gallocr_node_needs_realloc(galloc, src, &node_alloc->src[j])) {
-#ifndef NDEBUG
-                GGML_LOG_DEBUG("%s: src %d (%s) of node %s is not valid\n", __func__, j, src->name, node->name);
-#endif
-                return true;
+            अगर (!ggml_gallocr_गाँठ_needs_realloc(galloc, src, &गाँठ_alloc->src[j])) {
+#अगर_अघोषित न_संशोधन
+                GGML_LOG_DEBUG("%s: src %d (%s) of node %s is not valid\n", __func__, j, src->name, गाँठ->name);
+#पूर्ण_अगर
+                वापस true;
             }
         }
     }
 
-    return false;
+    वापस false;
 }
 
-bool ggml_gallocr_alloc_graph(ggml_gallocr_t galloc, struct ggml_cgraph * graph) {
-    if (ggml_gallocr_needs_realloc(galloc, graph)) {
-        if (galloc->n_buffers == 1) {
-#ifndef NDEBUG
+bool ggml_gallocr_alloc_graph(ggml_gallocr_t galloc, काष्ठा ggml_cgraph * graph) {
+    अगर (ggml_gallocr_needs_realloc(galloc, graph)) {
+        अगर (galloc->n_buffers == 1) {
+#अगर_अघोषित न_संशोधन
             GGML_LOG_DEBUG("%s: reallocating buffers automatically\n", __func__);
-#endif
-            if (!ggml_gallocr_reserve(galloc, graph)) {
-                return false;
+#पूर्ण_अगर
+            अगर (!ggml_gallocr_reserve(galloc, graph)) {
+                वापस false;
             }
-        } else {
-#ifndef NDEBUG
+        } अन्यथा {
+#अगर_अघोषित न_संशोधन
             GGML_LOG_DEBUG("%s: cannot reallocate multi buffer graph automatically, call reserve\n", __func__);
-#endif
-            return false;
+#पूर्ण_अगर
+            वापस false;
         }
     }
 
     // reset buffers
-    for (int i = 0; i < galloc->n_buffers; i++) {
-        if (galloc->buffers[i] != NULL) {
+    क्रम (पूर्णांक i = 0; i < galloc->n_buffers; i++) {
+        अगर (galloc->buffers[i] != शून्य) {
             ggml_vbuffer_reset(galloc->buffers[i]);
         }
     }
 
     // allocate the graph tensors from the previous assignments
     // leafs
-    for (int i = 0; i < graph->n_leafs; i++) {
-        struct ggml_tensor * leaf = graph->leafs[i];
-        struct leaf_alloc * leaf_alloc = &galloc->leaf_allocs[i];
+    क्रम (पूर्णांक i = 0; i < graph->n_leafs; i++) {
+        काष्ठा ggml_tensor * leaf = graph->leafs[i];
+        काष्ठा leaf_alloc * leaf_alloc = &galloc->leaf_allocs[i];
         ggml_gallocr_init_tensor(galloc, leaf, &leaf_alloc->leaf);
     }
     // nodes
-    for (int i = 0; i < graph->n_nodes; i++) {
-        struct ggml_tensor * node = graph->nodes[i];
-        struct node_alloc * node_alloc = &galloc->node_allocs[i];
-        for (int j = 0; j < GGML_MAX_SRC; j++) {
-            struct ggml_tensor * src = node->src[j];
-            if (src == NULL) {
-                continue;
+    क्रम (पूर्णांक i = 0; i < graph->n_nodes; i++) {
+        काष्ठा ggml_tensor * गाँठ = graph->nodes[i];
+        काष्ठा गाँठ_alloc * गाँठ_alloc = &galloc->गाँठ_allocs[i];
+        क्रम (पूर्णांक j = 0; j < GGML_MAX_SRC; j++) {
+            काष्ठा ggml_tensor * src = गाँठ->src[j];
+            अगर (src == शून्य) {
+                जारी;
             }
-            ggml_gallocr_init_tensor(galloc, src, &node_alloc->src[j]);
+            ggml_gallocr_init_tensor(galloc, src, &गाँठ_alloc->src[j]);
         }
-        ggml_gallocr_init_tensor(galloc, node, &node_alloc->dst);
+        ggml_gallocr_init_tensor(galloc, गाँठ, &गाँठ_alloc->dst);
     }
 
-    return true;
+    वापस true;
 }
 
-size_t ggml_gallocr_get_buffer_size(ggml_gallocr_t galloc, int buffer_id) {
-    GGML_ASSERT(buffer_id >= 0 && buffer_id < galloc->n_buffers);
+माप_प्रकार ggml_gallocr_get_बफर_आकार(ggml_gallocr_t galloc, पूर्णांक बफर_id) {
+    GGML_ASSERT(बफर_id >= 0 && बफर_id < galloc->n_buffers);
 
-    if (galloc->buffers[buffer_id] == NULL) {
-        return 0;
+    अगर (galloc->buffers[बफर_id] == शून्य) {
+        वापस 0;
     }
 
-    for (int i = 0; i < buffer_id; i++) {
-        if (galloc->buffers[i] == galloc->buffers[buffer_id]) {
+    क्रम (पूर्णांक i = 0; i < बफर_id; i++) {
+        अगर (galloc->buffers[i] == galloc->buffers[बफर_id]) {
             // this buffer is the same as a previous one due to the same buffer type being used multiple times
             // only return the buffer size the first time it appears to avoid double counting
-            return 0;
+            वापस 0;
         }
     }
 
-    return ggml_vbuffer_size(galloc->buffers[buffer_id]);
+    वापस ggml_vbuffer_आकार(galloc->buffers[बफर_id]);
 }
 
 // utils
 
-static struct ggml_tensor ** ggml_backend_alloc_ctx_tensors_from_buft_collect(
-        struct ggml_context * ctx, int * n_tensors) {
-    int n = 0;
-    for (struct ggml_tensor * t = ggml_get_first_tensor(ctx); t != NULL; t = ggml_get_next_tensor(ctx, t)) {
+अटल काष्ठा ggml_tensor ** ggml_backend_alloc_ctx_tensors_from_buft_collect(
+        काष्ठा ggml_context * ctx, पूर्णांक * n_tensors) {
+    पूर्णांक n = 0;
+    क्रम (काष्ठा ggml_tensor * t = ggml_get_first_tensor(ctx); t != शून्य; t = ggml_get_अग्र_tensor(ctx, t)) {
         n++;
     }
     *n_tensors = n;
-    if (n == 0) {
-        return NULL;
+    अगर (n == 0) {
+        वापस शून्य;
     }
 
-    struct ggml_tensor ** tensors = (struct ggml_tensor **) malloc(n * sizeof(struct ggml_tensor *));
-    if (tensors == NULL) {
-        GGML_LOG_ERROR("%s: failed to allocate %zu bytes\n", __func__, n * sizeof(struct ggml_tensor *));
-        return NULL;
+    काष्ठा ggml_tensor ** tensors = (काष्ठा ggml_tensor **) दो_स्मृति(n * माप(काष्ठा ggml_tensor *));
+    अगर (tensors == शून्य) {
+        GGML_LOG_ERROR("%s: failed to allocate %zu bytes\n", __func__, n * माप(काष्ठा ggml_tensor *));
+        वापस शून्य;
     }
-    int i = 0;
-    for (struct ggml_tensor * t = ggml_get_first_tensor(ctx); t != NULL; t = ggml_get_next_tensor(ctx, t)) {
+    पूर्णांक i = 0;
+    क्रम (काष्ठा ggml_tensor * t = ggml_get_first_tensor(ctx); t != शून्य; t = ggml_get_अग्र_tensor(ctx, t)) {
         tensors[i++] = t;
     }
-    return tensors;
+    वापस tensors;
 }
 
-ggml_backend_buffer_t ggml_backend_alloc_ctx_tensors_from_buft(struct ggml_context * ctx, ggml_backend_buffer_type_t buft) {
+ggml_backend_बफर_t ggml_backend_alloc_ctx_tensors_from_buft(काष्ठा ggml_context * ctx, ggml_backend_बफर_type_t buft) {
     GGML_ASSERT(ggml_get_no_alloc(ctx) == true);
 
-    int n_tensors = 0;
-    struct ggml_tensor ** tensors = ggml_backend_alloc_ctx_tensors_from_buft_collect(ctx, &n_tensors);
-    if (tensors == NULL) {
-        return NULL;
+    पूर्णांक n_tensors = 0;
+    काष्ठा ggml_tensor ** tensors = ggml_backend_alloc_ctx_tensors_from_buft_collect(ctx, &n_tensors);
+    अगर (tensors == शून्य) {
+        वापस शून्य;
     }
 
-    ggml_backend_buffer_t buffer = ggml_backend_buft_alloc_buffer_n(buft, tensors, n_tensors);
-    free(tensors);
-    return buffer;
+    ggml_backend_बफर_t बफर = ggml_backend_buft_alloc_बफर_n(buft, tensors, n_tensors);
+    मुक्त(tensors);
+    वापस बफर;
 }
 
-size_t ggml_backend_alloc_ctx_tensors_from_buft_size(struct ggml_context * ctx, ggml_backend_buffer_type_t buft) {
+माप_प्रकार ggml_backend_alloc_ctx_tensors_from_buft_आकार(काष्ठा ggml_context * ctx, ggml_backend_बफर_type_t buft) {
     GGML_ASSERT(ggml_get_no_alloc(ctx) == true);
 
-    int n_tensors = 0;
-    struct ggml_tensor ** tensors = ggml_backend_alloc_ctx_tensors_from_buft_collect(ctx, &n_tensors);
-    if (tensors == NULL) {
-        return 0;
+    पूर्णांक n_tensors = 0;
+    काष्ठा ggml_tensor ** tensors = ggml_backend_alloc_ctx_tensors_from_buft_collect(ctx, &n_tensors);
+    अगर (tensors == शून्य) {
+        वापस 0;
     }
 
-    size_t nbytes_total = ggml_backend_buft_get_alloc_size_n(buft, tensors, n_tensors);
-    free(tensors);
-    return nbytes_total;
+    माप_प्रकार nbytes_योग = ggml_backend_buft_get_alloc_आकार_n(buft, tensors, n_tensors);
+    मुक्त(tensors);
+    वापस nbytes_योग;
 }
 
-ggml_backend_buffer_t ggml_backend_alloc_ctx_tensors(struct ggml_context * ctx, ggml_backend_t backend) {
-    return ggml_backend_alloc_ctx_tensors_from_buft(ctx, ggml_backend_get_default_buffer_type(backend));
+ggml_backend_बफर_t ggml_backend_alloc_ctx_tensors(काष्ठा ggml_context * ctx, ggml_backend_t backend) {
+    वापस ggml_backend_alloc_ctx_tensors_from_buft(ctx, ggml_backend_get_default_बफर_type(backend));
 }

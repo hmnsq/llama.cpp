@@ -1,23 +1,23 @@
-#ifndef GGML_ZDNN_UTILITIES_HPP
-#define GGML_ZDNN_UTILITIES_HPP
+#अगर_अघोषित GGML_ZDNN_UTILITIES_HPP
+#घोषणा GGML_ZDNN_UTILITIES_HPP
 
-#include "common.hpp"
+#समावेश "common.hpp"
 
-zdnn_data_types ggml_zdnn_type_mapping(ggml_type type);
+zdnn_तथ्य_types ggml_zdnn_type_mapping(ggml_type type);
 
-void ggml_zdnn_create_tensor(zdnn_tensor_desc & pre_tfm_desc,
+व्योम ggml_zdnn_create_tensor(zdnn_tensor_desc & pre_tfm_desc,
                              zdnn_tensor_desc & tfm_desc,
                              zdnn_ztensor     & ztensor,
-                      const ggml_tensor       * src,
-                      const int64_t           * ne,
-                      const zdnn_data_layouts   layout);
+                      स्थिर ggml_tensor       * src,
+                      स्थिर int64_t           * ne,
+                      स्थिर zdnn_तथ्य_layouts   layout);
 
-void ggml_zdnn_load_tensor(zdnn_ztensor & ztensor, void * buffer);
+व्योम ggml_zdnn_load_tensor(zdnn_ztensor & ztensor, व्योम * बफर);
 
-int64_t ggml_zdnn_q_group_size(const ggml_tensor * tensor);
+int64_t ggml_zdnn_q_group_आकार(स्थिर ggml_tensor * tensor);
 
-void ggml_zdnn_load_tensor_q(ggml_backend_zdnn_buffer * buffer, const ggml_tensor * tensor);
+व्योम ggml_zdnn_load_tensor_q(ggml_backend_zdnn_बफर * बफर, स्थिर ggml_tensor * tensor);
 
-void ggml_zdnn_init_tensor(ggml_backend_zdnn_buffer * buffer, const ggml_tensor * tensor);
+व्योम ggml_zdnn_init_tensor(ggml_backend_zdnn_बफर * बफर, स्थिर ggml_tensor * tensor);
 
-#endif  // GGML_ZDNN_UTILITIES_HPP
+#पूर्ण_अगर  // GGML_ZDNN_UTILITIES_HPP

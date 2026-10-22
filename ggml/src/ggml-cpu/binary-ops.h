@@ -1,16 +1,16 @@
-#pragma once
+#आशय once
 
-#include "common.h"
+#समावेश "common.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#अगर_घोषित __cplusplus
+बाह्य "C" {
+#पूर्ण_अगर
 
-void ggml_compute_forward_add_non_quantized(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_sub(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_mul(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_div(const struct ggml_compute_params * params, struct ggml_tensor * dst);
+व्योम ggml_compute_forward_add_non_quantized(स्थिर काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * dst);
+व्योम ggml_compute_forward_sub(स्थिर काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * dst);
+व्योम ggml_compute_forward_mul(स्थिर काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * dst);
+व्योम ggml_compute_forward_div(स्थिर काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * dst);
 
-#ifdef __cplusplus
+#अगर_घोषित __cplusplus
 }
-#endif
+#पूर्ण_अगर

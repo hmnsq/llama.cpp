@@ -1,55 +1,55 @@
-#pragma clang diagnostic ignored "-Wunused-function"
+#आशय clang diagnostic ignored "-Wunused-function"
 
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
+#समावेश <stdbool.h>
+#समावेश <stdlib.h>
+#समावेश <string.h>
 
-#include <qurt_thread.h>
-#include <qurt_futex.h>
-#include <qurt_hvx.h>
+#समावेश <qurt_thread.h>
+#समावेश <qurt_futex.h>
+#समावेश <qurt_hvx.h>
 
-#include <HAP_compute_res.h>
+#समावेश <HAP_compute_res.h>
 
-#include "hmx-queue.h"
+#समावेश "hmx-queue.h"
 
-#define QURT_LOWEST_PRIO (254)
+#घोषणा QURT_LOWEST_PRIO (254)
 
-static inline void hmx_lock(hmx_queue_t q)
+अटल अंतरभूत व्योम hmx_lock(hmx_queue_t q)
 {
-    if (!q->hmx_locked) {
+    अगर (!q->hmx_locked) {
         HAP_compute_res_hmx_lock(q->hap_rctx);
         q->hmx_locked = true;
     }
 }
 
-static inline void hmx_unlock(hmx_queue_t q)
+अटल अंतरभूत व्योम hmx_unlock(hmx_queue_t q)
 {
-    if (q->hmx_locked) {
+    अगर (q->hmx_locked) {
         HAP_compute_res_hmx_unlock(q->hap_rctx);
         q->hmx_locked = false;
     }
 }
 
-static inline void hmx_queue_process(hmx_queue_t q, bool* killed) {
-    unsigned int ir = atomic_load(&q->idx_read);
+अटल अंतरभूत व्योम hmx_queue_process(hmx_queue_t q, bool* killed) {
+    अचिन्हित पूर्णांक ir = atomic_load(&q->idx_read);
 
-    while (ir != atomic_load(&q->idx_write)) {
-        struct hmx_queue_desc *d = &q->desc[ir];
-        if (!d->done) {
-            FARF(HIGH, "hmx-queue-process: ir %u func %p data %p", ir, d->func, d->data);
+    जबतक (ir != atomic_load(&q->idx_write)) {
+        काष्ठा hmx_queue_desc *d = &q->desc[ir];
+        अगर (!d->done) {
+            FARF(ऊपरी_2, "hmx-queue-process: ir %u func %p data %p", ir, d->func, d->तथ्य);
 
             uintptr_t sig = (uintptr_t) d->func;
-            switch (sig) {
-                case HMX_QUEUE_NOOP:    /* noop */;     break;
-                case HMX_QUEUE_KILL:    *killed = true; break;
-                case HMX_QUEUE_SUSPEND: hmx_unlock(q);  break;
-                case HMX_QUEUE_WAKEUP:  hmx_lock(q);    break;
-                default:
+            चयन (sig) {
+                हाल HMX_QUEUE_NOOP:    /* noop */;     अवरोध;
+                हाल HMX_QUEUE_KILL:    *killed = true; अवरोध;
+                हाल HMX_QUEUE_SUSPEND: hmx_unlock(q);  अवरोध;
+                हाल HMX_QUEUE_WAKEUP:  hmx_lock(q);    अवरोध;
+                शेष:
                     hmx_lock(q);
                     htp_trace_event_start(q->trace, HTP_TRACE_EVT_HMX_COMP, ir);
-                    d->func(d->data);
+                    d->func(d->तथ्य);
                     htp_trace_event_stop(q->trace, HTP_TRACE_EVT_HMX_COMP, ir);
-                    break;
+                    अवरोध;
             }
 
             atomic_fetch_add(&d->done, 1);
@@ -60,104 +60,104 @@ static inline void hmx_queue_process(hmx_queue_t q, bool* killed) {
     }
 }
 
-static void hmx_queue_thread(void * arg) {
+अटल व्योम hmx_queue_thread(व्योम * arg) {
     hmx_queue_t q = (hmx_queue_t) arg;
 
-    FARF(HIGH, "hmx-queue-thread: started");
+    FARF(ऊपरी_2, "hmx-queue-thread: started");
 
     bool killed = false;
 
-    unsigned int poll_cnt  = HMX_QUEUE_POLL_COUNT;
-    unsigned int prev_seqn = 0;
-    while (!killed) {
-        unsigned int seqn = atomic_load(&q->seqn);
-        if (seqn == prev_seqn) {
+    अचिन्हित पूर्णांक poll_cnt  = HMX_QUEUE_POLL_गिनती;
+    अचिन्हित पूर्णांक पूर्व_seqn = 0;
+    जबतक (!killed) {
+        अचिन्हित पूर्णांक seqn = atomic_load(&q->seqn);
+        अगर (seqn == पूर्व_seqn) {
             // drop HVX context while spinning
-            if (poll_cnt > 1 && poll_cnt == HMX_QUEUE_POLL_COUNT) {
+            अगर (poll_cnt > 1 && poll_cnt == HMX_QUEUE_POLL_गिनती) {
                 qurt_hvx_unlock();
             }
-            if (--poll_cnt) { hex_pause(); continue; }
-            FARF(HIGH, "hmx-queue-thread: sleeping");
-            qurt_futex_wait(&q->seqn, prev_seqn);
-            poll_cnt = HMX_QUEUE_POLL_COUNT;
-            continue;
+            अगर (--poll_cnt) { hex_pause(); जारी; }
+            FARF(ऊपरी_2, "hmx-queue-thread: sleeping");
+            qurt_futex_wait(&q->seqn, पूर्व_seqn);
+            poll_cnt = HMX_QUEUE_POLL_गिनती;
+            जारी;
         }
-        prev_seqn = seqn;
-        poll_cnt  = HMX_QUEUE_POLL_COUNT;
+        पूर्व_seqn = seqn;
+        poll_cnt  = HMX_QUEUE_POLL_गिनती;
 
-        FARF(HIGH, "hmx-queue-thread: new work");
+        FARF(ऊपरी_2, "hmx-queue-thread: new work");
 
         hmx_queue_process(q, &killed);
     }
 
-    FARF(HIGH, "hmx-queue-thread: stopped");
+    FARF(ऊपरी_2, "hmx-queue-thread: stopped");
 }
 
-size_t hmx_queue_sizeof(size_t capacity, uint32_t stack_size) {
+माप_प्रकार hmx_queue_sizeof(माप_प्रकार capacity, uint32_t ढेर_आकार) {
     capacity = hex_ceil_pow2(capacity);
-    size_t size_q = hex_align_up(sizeof(struct hmx_queue_s), HEX_L2_LINE_SIZE);
-    size_t size_desc = hex_align_up(capacity * sizeof(struct hmx_queue_desc), HEX_L2_LINE_SIZE);
-    size_t size_stack = stack_size;
-    return size_q + size_desc + size_stack;
+    माप_प्रकार आकार_q = hex_align_up(माप(काष्ठा hmx_queue_s), HEX_L2_पंक्ति_आकार);
+    माप_प्रकार आकार_desc = hex_align_up(capacity * माप(काष्ठा hmx_queue_desc), HEX_L2_पंक्ति_आकार);
+    माप_प्रकार आकार_ढेर = ढेर_आकार;
+    वापस आकार_q + आकार_desc + आकार_ढेर;
 }
 
-size_t hmx_queue_alignof(void) {
-    return HEX_L2_LINE_SIZE;
+माप_प्रकार hmx_queue_alignof(व्योम) {
+    वापस HEX_L2_पंक्ति_आकार;
 }
 
-hmx_queue_t hmx_queue_init(void * ptr, size_t capacity, uint32_t stack_size, uint32_t hap_rctx, struct htp_thread_trace * trace) {
+hmx_queue_t hmx_queue_init(व्योम * ptr, माप_प्रकार capacity, uint32_t ढेर_आकार, uint32_t hap_rctx, काष्ठा htp_thread_trace * trace) {
     capacity = hex_ceil_pow2(capacity);
-    size_t size_q = hex_align_up(sizeof(struct hmx_queue_s), HEX_L2_LINE_SIZE);
-    size_t size_desc = hex_align_up(capacity * sizeof(struct hmx_queue_desc), HEX_L2_LINE_SIZE);
+    माप_प्रकार आकार_q = hex_align_up(माप(काष्ठा hmx_queue_s), HEX_L2_पंक्ति_आकार);
+    माप_प्रकार आकार_desc = hex_align_up(capacity * माप(काष्ठा hmx_queue_desc), HEX_L2_पंक्ति_आकार);
 
     uint8_t * block = (uint8_t *) ptr;
 
-    hmx_queue_t q = (hmx_queue_t) block; block += size_q;
-    memset(q, 0, sizeof(struct hmx_queue_s));
+    hmx_queue_t q = (hmx_queue_t) block; block += आकार_q;
+    स_रखो(q, 0, माप(काष्ठा hmx_queue_s));
 
     q->capacity = capacity;
     q->idx_mask = capacity - 1;
     q->hap_rctx = hap_rctx;
     q->external_mem = true;
 
-    q->desc = (struct hmx_queue_desc *) block; block += size_desc;
-    memset(q->desc, 0, capacity * sizeof(struct hmx_queue_desc));
+    q->desc = (काष्ठा hmx_queue_desc *) block; block += आकार_desc;
+    स_रखो(q->desc, 0, capacity * माप(काष्ठा hmx_queue_desc));
 
-    q->stack = block;
-    memset(q->stack, 0, stack_size);
+    q->ढेर_2 = block;
+    स_रखो(q->ढेर_2, 0, ढेर_आकार);
 
     q->trace = trace;
 
     // Match caller thread priority (same pattern as worker-pool.c).
-    int prio = qurt_thread_get_priority(qurt_thread_get_id());
-    if (prio < 1) {
+    पूर्णांक prio = qurt_thread_get_priority(qurt_thread_get_id());
+    अगर (prio < 1) {
         prio = 1;
     }
-    if (prio > QURT_LOWEST_PRIO) {
+    अगर (prio > QURT_LOWEST_PRIO) {
         prio = QURT_LOWEST_PRIO;
     }
 
     qurt_thread_attr_t attr;
     qurt_thread_attr_init(&attr);
-    qurt_thread_attr_set_stack_addr(&attr, q->stack);
-    qurt_thread_attr_set_stack_size(&attr, stack_size);
+    qurt_thread_attr_set_ढेर_addr(&attr, q->ढेर_2);
+    qurt_thread_attr_set_ढेर_आकार(&attr, ढेर_आकार);
     qurt_thread_attr_set_priority(&attr, prio);
     qurt_thread_attr_set_name(&attr, "hmx-queue");
 
-    int err = qurt_thread_create(&q->thread, &attr, hmx_queue_thread, q);
-    if (err) {
+    पूर्णांक err = qurt_thread_create(&q->thread, &attr, hmx_queue_thread, q);
+    अगर (err) {
         FARF(ERROR, "hmx-worker: thread create failed (%d)", err);
-        return NULL;
+        वापस शून्य;
     }
 
-    FARF(HIGH, "hmx-queue: capacity %u\n", capacity);
+    FARF(ऊपरी_2, "hmx-queue: capacity %u\n", capacity);
 
-    return q;
+    वापस q;
 }
 
-void hmx_queue_free(hmx_queue_t q) {
-    if (!q) {
-        return;
+व्योम hmx_queue_free(hmx_queue_t q) {
+    अगर (!q) {
+        वापस;
     }
 
     // Tell the worker to exit.
@@ -165,6 +165,6 @@ void hmx_queue_free(hmx_queue_t q) {
     hmx_queue_signal(q, HMX_QUEUE_KILL);
     hmx_queue_flush(q);
 
-    int status;
+    पूर्णांक status;
     qurt_thread_join(q->thread, &status);
 }

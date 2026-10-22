@@ -1,36 +1,36 @@
-#include "traits.h"
+#समावेश "traits.h"
 
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
+#समावेश "ggml-backend-impl.h"
+#समावेश "ggml-backend.h"
 
 namespace ggml::cpu {
 tensor_traits::~tensor_traits() {}
 
-extra_buffer_type::~extra_buffer_type() {}
+extra_बफर_type::~extra_बफर_type() {}
 }  // namespace ggml::cpu
 
-bool ggml_cpu_extra_compute_forward(struct ggml_compute_params * params, struct ggml_tensor * op) {
-    for (auto extra : ggml_backend_cpu_get_extra_buffer_types()) {
-        if (extra && extra->context) {
-            auto buf_extra     = (ggml::cpu::extra_buffer_type *) extra->context;
-            auto tensor_traits = buf_extra->get_tensor_traits(op);
-            if (tensor_traits && tensor_traits->compute_forward(params, op)) {
-                return true;
+bool ggml_cpu_extra_compute_forward(काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * op) {
+    क्रम (स्वतः extra : ggml_backend_cpu_get_extra_बफर_types()) {
+        अगर (extra && extra->context) {
+            स्वतः buf_extra     = (ggml::cpu::extra_बफर_type *) extra->context;
+            स्वतः tensor_traits = buf_extra->get_tensor_traits(op);
+            अगर (tensor_traits && tensor_traits->compute_forward(params, op)) {
+                वापस true;
             }
         }
     }
-    return false;
+    वापस false;
 }
 
-bool ggml_cpu_extra_work_size(int n_threads, const struct ggml_tensor * op, size_t * size) {
-    for (auto extra : ggml_backend_cpu_get_extra_buffer_types()) {
-        if (extra && extra->context) {
-            auto buf_extra     = (ggml::cpu::extra_buffer_type *) extra->context;
-            auto tensor_traits = buf_extra->get_tensor_traits(op);
-            if (tensor_traits && tensor_traits->work_size(n_threads, op, *size)) {
-                return true;
+bool ggml_cpu_extra_work_आकार(पूर्णांक n_threads, स्थिर काष्ठा ggml_tensor * op, माप_प्रकार * size) {
+    क्रम (स्वतः extra : ggml_backend_cpu_get_extra_बफर_types()) {
+        अगर (extra && extra->context) {
+            स्वतः buf_extra     = (ggml::cpu::extra_बफर_type *) extra->context;
+            स्वतः tensor_traits = buf_extra->get_tensor_traits(op);
+            अगर (tensor_traits && tensor_traits->work_आकार(n_threads, op, *size)) {
+                वापस true;
             }
         }
     }
-    return false;
+    वापस false;
 }

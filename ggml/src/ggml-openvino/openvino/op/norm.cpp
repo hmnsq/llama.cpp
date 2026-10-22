@@ -1,28 +1,28 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#समावेश "../node_context.h"
+#समावेश "../op_table.h"
+#समावेश "../utils.h"
 
-#include <cstring>
-#include <memory>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/mvn.hpp>
+#समावेश <cstring>
+#समावेश <memory>
+#समावेश <openvino/op/constant.hpp>
+#समावेश <openvino/op/mvn.hpp>
 
 namespace ov {
 namespace frontend {
 namespace ggml {
 namespace op {
 
-OutputVector translate_norm(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+OutputVector translate_norm(स्थिर गाँठ_Context & context) {
+    अंक_inputs_check(context, 1, 1);
 
-    auto input_node = process_view_input_new(context, 0);
-    float eps;
-    memcpy(&eps, context.get_output_op_params(), sizeof(float));
+    स्वतः निवेश_गाँठ = process_view_निवेश_new(context, 0);
+    भग्न eps;
+    स_नकल(&eps, context.get_output_op_params(), माप(भग्न));
 
-    auto axes = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {-1});
-    auto res = std::make_shared<ov::op::v6::MVN>(input_node, axes, true, eps, ov::op::MVNEpsMode::INSIDE_SQRT);
+    स्वतः axes = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {-1});
+    स्वतः res = std::make_shared<ov::op::v6::MVN>(निवेश_गाँठ, axes, true, eps, ov::op::MVNEpsMode::INSIDE_SQRT);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    वापस rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

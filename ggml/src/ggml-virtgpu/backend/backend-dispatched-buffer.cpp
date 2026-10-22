@@ -1,179 +1,179 @@
-#include "backend-dispatched.h"
-#include "backend-virgl-apir.h"
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
-#include "ggml-impl.h"
+#समावेश "backend-dispatched.h"
+#समावेश "backend-virgl-apir.h"
+#समावेश "ggml-backend-impl.h"
+#समावेश "ggml-backend.h"
+#समावेश "ggml-impl.h"
 
-#include <cstdint>
+#समावेश <cstdint>
 
-static uint32_t validate_buffer_operation(size_t offset, size_t size, const char * operation) {
+अटल uint32_t validate_बफर_operation(माप_प्रकार offset, माप_प्रकार size, स्थिर अक्षर * operation) {
     // Only check for critical integer overflow - no arbitrary size limits
-    if (offset > SIZE_MAX - size) {
+    अगर (offset > SIZE_MAX - size) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Integer overflow in offset+size: %zu + %zu\n", operation, offset, size);
-        return 1;
+        वापस 1;
     }
 
-    return 0;  // Valid
+    वापस 0;  // Valid
 }
 
-uint32_t backend_buffer_get_base(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+uint32_t backend_बफर_get_base(apir_encoder * enc, apir_decoder * डेसी, virgl_apir_context * ctx) {
     GGML_UNUSED(ctx);
-    ggml_backend_buffer_t buffer;
-    buffer = apir_decode_ggml_buffer(dec);
+    ggml_backend_बफर_t बफर;
+    बफर = apir_decode_ggml_बफर(डेसी);
 
-    if (!buffer || apir_decoder_get_fatal(dec)) {
+    अगर (!बफर || apir_decoder_get_fatal(डेसी)) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Invalid buffer handle from guest\n", __func__);
-        return 1;
+        वापस 1;
     }
 
-    uintptr_t base = (uintptr_t) buffer->iface.get_base(buffer);
+    uintptr_t base = (uintptr_t) बफर->iface.get_base(बफर);
     apir_encode_uintptr_t(enc, &base);
 
-    return 0;
+    वापस 0;
 }
 
-uint32_t backend_buffer_set_tensor(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+uint32_t backend_बफर_set_tensor(apir_encoder * enc, apir_decoder * डेसी, virgl_apir_context * ctx) {
     GGML_UNUSED(ctx);
     GGML_UNUSED(enc);
 
-    ggml_backend_buffer_t buffer;
-    buffer = apir_decode_ggml_buffer(dec);
+    ggml_backend_बफर_t बफर;
+    बफर = apir_decode_ggml_बफर(डेसी);
 
-    if (!buffer || apir_decoder_get_fatal(dec)) {
+    अगर (!बफर || apir_decoder_get_fatal(डेसी)) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Invalid buffer handle from guest\n", __func__);
-        return 1;
+        वापस 1;
     }
 
     ggml_tensor * tensor;
     // safe to remove the const qualifier here
-    tensor = (ggml_tensor *) (uintptr_t) apir_decode_ggml_tensor(dec);
+    tensor = (ggml_tensor *) (uintptr_t) apir_decode_ggml_tensor(डेसी);
 
     uint32_t shmem_res_id;
-    apir_decode_virtgpu_shmem_res_id(dec, &shmem_res_id);
+    apir_decode_virtgpu_shmem_res_id(डेसी, &shmem_res_id);
 
-    size_t offset;
-    apir_decode_size_t(dec, &offset);
+    माप_प्रकार offset;
+    apir_decode_आकार_t(डेसी, &offset);
 
-    size_t size;
-    apir_decode_size_t(dec, &size);
+    माप_प्रकार size;
+    apir_decode_आकार_t(डेसी, &size);
 
-    if (validate_buffer_operation(offset, size, __func__) != 0) {
-        return 1;
+    अगर (validate_बफर_operation(offset, size, __func__) != 0) {
+        वापस 1;
     }
 
-    void * shmem_data = ctx->iface->get_shmem_ptr(ctx->ctx_id, shmem_res_id);
+    व्योम * shmem_तथ्य = ctx->iface->get_shmem_ptr(ctx->ctx_id, shmem_res_id);
 
-    if (!shmem_data) {
+    अगर (!shmem_तथ्य) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Couldn't get the shmem addr from virgl\n", __func__);
-        return 1;
+        वापस 1;
     }
 
-    buffer->iface.set_tensor(buffer, tensor, shmem_data, offset, size);
+    बफर->iface.set_tensor(बफर, tensor, shmem_तथ्य, offset, size);
 
-    return 0;
+    वापस 0;
 }
 
-uint32_t backend_buffer_get_tensor(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+uint32_t backend_बफर_get_tensor(apir_encoder * enc, apir_decoder * डेसी, virgl_apir_context * ctx) {
     GGML_UNUSED(ctx);
     GGML_UNUSED(enc);
 
-    ggml_backend_buffer_t buffer;
-    buffer = apir_decode_ggml_buffer(dec);
+    ggml_backend_बफर_t बफर;
+    बफर = apir_decode_ggml_बफर(डेसी);
 
-    if (!buffer || apir_decoder_get_fatal(dec)) {
+    अगर (!बफर || apir_decoder_get_fatal(डेसी)) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Invalid buffer handle from guest\n", __func__);
-        return 1;
+        वापस 1;
     }
 
-    const ggml_tensor * tensor;
+    स्थिर ggml_tensor * tensor;
     // safe to remove the const qualifier here
-    tensor = apir_decode_ggml_tensor(dec);
+    tensor = apir_decode_ggml_tensor(डेसी);
 
     uint32_t shmem_res_id;
-    apir_decode_virtgpu_shmem_res_id(dec, &shmem_res_id);
+    apir_decode_virtgpu_shmem_res_id(डेसी, &shmem_res_id);
 
-    size_t offset;
-    apir_decode_size_t(dec, &offset);
+    माप_प्रकार offset;
+    apir_decode_आकार_t(डेसी, &offset);
 
-    size_t size;
-    apir_decode_size_t(dec, &size);
+    माप_प्रकार size;
+    apir_decode_आकार_t(डेसी, &size);
 
-    if (validate_buffer_operation(offset, size, __func__) != 0) {
-        return 1;
+    अगर (validate_बफर_operation(offset, size, __func__) != 0) {
+        वापस 1;
     }
 
-    void * shmem_data = ctx->iface->get_shmem_ptr(ctx->ctx_id, shmem_res_id);
-    if (!shmem_data) {
+    व्योम * shmem_तथ्य = ctx->iface->get_shmem_ptr(ctx->ctx_id, shmem_res_id);
+    अगर (!shmem_तथ्य) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Couldn't get the shmem addr from virgl\n", __func__);
-        return 1;
+        वापस 1;
     }
 
-    buffer->iface.get_tensor(buffer, tensor, shmem_data, offset, size);
+    बफर->iface.get_tensor(बफर, tensor, shmem_तथ्य, offset, size);
 
-    return 0;
+    वापस 0;
 }
 
-uint32_t backend_buffer_cpy_tensor(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+uint32_t backend_बफर_cpy_tensor(apir_encoder * enc, apir_decoder * डेसी, virgl_apir_context * ctx) {
     GGML_UNUSED(ctx);
 
-    ggml_backend_buffer_t buffer;
-    buffer = apir_decode_ggml_buffer(dec);
+    ggml_backend_बफर_t बफर;
+    बफर = apir_decode_ggml_बफर(डेसी);
 
-    if (!buffer || apir_decoder_get_fatal(dec)) {
+    अगर (!बफर || apir_decoder_get_fatal(डेसी)) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Invalid buffer handle from guest\n", __func__);
-        return 1;
+        वापस 1;
     }
 
-    const ggml_tensor * src;
+    स्थिर ggml_tensor * src;
     // safe to remove the const qualifier here
-    src               = apir_decode_ggml_tensor(dec);
-    ggml_tensor * dst = (ggml_tensor *) (uintptr_t) apir_decode_ggml_tensor(dec);
+    src               = apir_decode_ggml_tensor(डेसी);
+    ggml_tensor * dst = (ggml_tensor *) (uintptr_t) apir_decode_ggml_tensor(डेसी);
 
-    bool ret = buffer->iface.cpy_tensor(buffer, src, (ggml_tensor *) dst);
+    bool ret = बफर->iface.cpy_tensor(बफर, src, (ggml_tensor *) dst);
 
     apir_encode_bool_t(enc, &ret);
 
-    return 0;
+    वापस 0;
 }
 
-uint32_t backend_buffer_clear(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+uint32_t backend_बफर_clear(apir_encoder * enc, apir_decoder * डेसी, virgl_apir_context * ctx) {
     GGML_UNUSED(ctx);
     GGML_UNUSED(enc);
 
-    ggml_backend_buffer_t buffer;
-    buffer = apir_decode_ggml_buffer(dec);
+    ggml_backend_बफर_t बफर;
+    बफर = apir_decode_ggml_बफर(डेसी);
 
-    if (!buffer || apir_decoder_get_fatal(dec)) {
+    अगर (!बफर || apir_decoder_get_fatal(डेसी)) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Invalid buffer handle from guest\n", __func__);
-        return 1;
+        वापस 1;
     }
 
     uint8_t value;
-    apir_decode_uint8_t(dec, &value);
+    apir_decode_uint8_t(डेसी, &value);
 
-    buffer->iface.clear(buffer, value);
+    बफर->iface.सफा(बफर, value);
 
-    return 0;
+    वापस 0;
 }
 
-uint32_t backend_buffer_free_buffer(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+uint32_t backend_बफर_free_बफर(apir_encoder * enc, apir_decoder * डेसी, virgl_apir_context * ctx) {
     GGML_UNUSED(ctx);
     GGML_UNUSED(enc);
 
-    ggml_backend_buffer_t buffer;
-    buffer = apir_decode_ggml_buffer(dec);
+    ggml_backend_बफर_t बफर;
+    बफर = apir_decode_ggml_बफर(डेसी);
 
-    if (!buffer || apir_decoder_get_fatal(dec)) {
+    अगर (!बफर || apir_decoder_get_fatal(डेसी)) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Invalid buffer handle from guest\n", __func__);
-        return 1;
+        वापस 1;
     }
 
-    if (!apir_untrack_backend_buffer(buffer)) {
-        GGML_LOG_WARN(GGML_VIRTGPU_BCK "%s: unknown buffer %p\n", __func__, (void *) buffer);
-        return 1;
+    अगर (!apir_untrack_backend_बफर(बफर)) {
+        GGML_LOG_WARN(GGML_VIRTGPU_BCK "%s: unknown buffer %p\n", __func__, (व्योम *) बफर);
+        वापस 1;
     }
 
-    buffer->iface.free_buffer(buffer);
+    बफर->iface.free_बफर(बफर);
 
-    return 0;
+    वापस 0;
 }

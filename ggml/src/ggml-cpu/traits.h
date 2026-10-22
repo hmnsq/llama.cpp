@@ -1,38 +1,38 @@
-#pragma once
-#include "ggml-backend-impl.h"
-#include "ggml-cpu-impl.h"
-#include "ggml.h"
+#आशय once
+#समावेश "ggml-backend-impl.h"
+#समावेश "ggml-cpu-impl.h"
+#समावेश "ggml.h"
 
-#ifdef __cplusplus
+#अगर_घोषित __cplusplus
 #    include <vector>
-extern "C" {
-#endif
+बाह्य "C" {
+#पूर्ण_अगर
 
 // return true if op part of extra "accelerator"
-bool ggml_cpu_extra_compute_forward(struct ggml_compute_params * params, struct ggml_tensor * op);
-bool ggml_cpu_extra_work_size(int n_threads, const struct ggml_tensor * op, size_t * size);
+bool ggml_cpu_extra_compute_forward(काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * op);
+bool ggml_cpu_extra_work_आकार(पूर्णांक n_threads, स्थिर काष्ठा ggml_tensor * op, माप_प्रकार * आकार);
 
-#ifdef __cplusplus
+#अगर_घोषित __cplusplus
 }
 
 namespace ggml::cpu {
 // register in tensor->extra
 class tensor_traits {
-  public:
-    virtual ~tensor_traits();
-    virtual bool work_size(int n_threads, const struct ggml_tensor * op, size_t & size)        = 0;
-    virtual bool compute_forward(struct ggml_compute_params * params, struct ggml_tensor * op) = 0;
+  खुला:
+    भव ~tensor_traits();
+    भव bool work_आकार(पूर्णांक n_threads, स्थिर काष्ठा ggml_tensor * op, माप_प्रकार & आकार)        = 0;
+    भव bool compute_forward(काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * op) = 0;
 };
 
-class extra_buffer_type {
-  public:
-    virtual ~extra_buffer_type();
-    virtual bool            supports_op(ggml_backend_dev_t dev, const struct ggml_tensor * op) = 0;
-    virtual tensor_traits * get_tensor_traits(const struct ggml_tensor * op)                   = 0;
+class extra_बफर_type {
+  खुला:
+    भव ~extra_बफर_type();
+    भव bool            supports_op(ggml_backend_dev_t dev, स्थिर काष्ठा ggml_tensor * op) = 0;
+    भव tensor_traits * get_tensor_traits(स्थिर काष्ठा ggml_tensor * op)                   = 0;
 };
 }  // namespace ggml::cpu
 
 // implemented in ggml-cpu.cpp.
-std::vector<ggml_backend_buffer_type_t> & ggml_backend_cpu_get_extra_buffer_types();
+std::vector<ggml_backend_बफर_type_t> & ggml_backend_cpu_get_extra_बफर_types();
 
-#endif
+#पूर्ण_अगर

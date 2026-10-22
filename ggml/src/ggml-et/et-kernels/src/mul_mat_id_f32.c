@@ -40,84 +40,84 @@
 //     ne11 = src1->ne[1]       - number of columns in src1
 //******************************************************************************
 
-#include "block_ops.h"
-#include "ggml_tensor.h"
-#include "math_fp.h"
-#include "platform.h"
-#include "quants.h"
+#समावेश "block_ops.h"
+#समावेश "ggml_tensor.h"
+#समावेश "math_fp.h"
+#समावेश "platform.h"
+#समावेश "quants.h"
 
-#include <stdint.h>
+#समावेश <stdint.h>
 
 // Main entry point for MUL_MAT_ID kernel (Mixture of Experts)
-int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
+पूर्णांक entry_point(काष्ठा ggml_et_mul_mat_id_params * params, व्योम * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    अगर (!kernel_env) {
+        वापस -1;
     }
 
     // Get thread coordination info
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    पूर्णांक thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    पूर्णांक अंक_threads = get_अंक_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return -1;
+    अगर (thread_id < 0) {
+        वापस -1;
     }
 
     // Use even threads only to avoid resource contention
     // Each minion has 2 threads sharing instruction/data cache, NOC to RAM, and FPU
     // Odd threads return immediately to avoid fighting for shared resources
-    if (thread_id & 1) {
-        return 0;  // Odd thread - skip work
+    अगर (thread_id & 1) {
+        वापस 0;  // Odd thread - skip work
     }
 
     // Adjust thread count and ID for even-only threading
-    int effective_thread_id   = thread_id / 2;
-    int effective_num_threads = (num_threads + 1) / 2;  // Ceiling division
+    पूर्णांक effective_thread_id   = thread_id / 2;
+    पूर्णांक effective_अंक_threads = (अंक_threads + 1) / 2;  // Ceiling division
 
     // Validate params
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    अगर (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        वापस -1;
     }
 
     // Extract tensor references
-    struct ggml_tensor * src0 = &params->src0;  // Expert weight matrices [K, M, n_expert]
-    struct ggml_tensor * src1 = &params->src1;  // Activations [K, n_expert_used, batch]
-    struct ggml_tensor * src2 = &params->src2;  // Expert indices [n_expert_used, batch] (I32)
-    struct ggml_tensor * dst  = &params->dst;   // Output [M, n_expert_used, batch, 1]
+    काष्ठा ggml_tensor * src0 = &params->src0;  // Expert weight matrices [K, M, n_expert]
+    काष्ठा ggml_tensor * src1 = &params->src1;  // Activations [K, n_expert_used, batch]
+    काष्ठा ggml_tensor * src2 = &params->src2;  // Expert indices [n_expert_used, batch] (I32)
+    काष्ठा ggml_tensor * dst  = &params->dst;   // Output [M, n_expert_used, batch, 1]
 
     // Validate tensor types
-    if (src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32 || src2->type != GGML_TYPE_I32) {
-        return -1;
+    अगर (src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32 || src2->type != GGML_TYPE_I32) {
+        वापस -1;
     }
 
     // Get data pointers
-    const void *    src0_data = src0->data;                    // Expert matrices (Q8_0/F16/F32)
-    const float *   src1_data = (const float *) src1->data;    // Activations (F32)
-    const int32_t * src2_data = (const int32_t *) src2->data;  // Expert IDs (I32)
-    float *         dst_data  = (float *) dst->data;           // Output (F32)
+    स्थिर व्योम *    src0_तथ्य = src0->तथ्य;                    // Expert matrices (Q8_0/F16/F32)
+    स्थिर भग्न *   src1_तथ्य = (स्थिर भग्न *) src1->तथ्य;    // Activations (F32)
+    स्थिर int32_t * src2_तथ्य = (स्थिर int32_t *) src2->तथ्य;  // Expert IDs (I32)
+    भग्न *         dst_तथ्य  = (भग्न *) dst->तथ्य;           // Output (F32)
 
-    if (!src0_data || !src1_data || !src2_data || !dst_data) {
-        return -1;
+    अगर (!src0_तथ्य || !src1_तथ्य || !src2_तथ्य || !dst_तथ्य) {
+        वापस -1;
     }
 
     // Determine block size based on src0 type
-    int block_size;
-    switch (src0->type) {
-        case GGML_TYPE_Q8_0:
-            block_size = QK8_0;
-            break;
-        case GGML_TYPE_Q4_0:
-            block_size = QK4_0;
-            break;
-        case GGML_TYPE_F16:
-            block_size = QK_F16;
-            break;
-        case GGML_TYPE_F32:
-            block_size = QK_F32;
-            break;
-        default:
-            return -1;
+    पूर्णांक block_आकार_2;
+    चयन (src0->type) {
+        हाल GGML_TYPE_Q8_0:
+            block_आकार_2 = QK8_0;
+            अवरोध;
+        हाल GGML_TYPE_Q4_0:
+            block_आकार_2 = QK4_0;
+            अवरोध;
+        हाल GGML_TYPE_F16:
+            block_आकार_2 = QK_F16;
+            अवरोध;
+        हाल GGML_TYPE_F32:
+            block_आकार_2 = QK_F32;
+            अवरोध;
+        शेष:
+            वापस -1;
     }
 
     // Get dimensions
@@ -125,164 +125,164 @@ int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
     // src1: [K, n_expert_used, batch] - activations
     // src2: [n_expert_used, batch] - expert indices
     // dst:  [M, n_expert_used, batch, 1] - output
-    const int64_t K             = src0->ne[0];  // Hidden dimension
-    const int64_t M             = src0->ne[1];  // Output features
-    const int64_t n_expert      = src0->ne[2];  // Number of experts
-    const int64_t n_expert_used = src2->ne[0];  // Experts used per token
-    const int64_t batch         = src2->ne[1];  // Batch size
+    स्थिर int64_t K             = src0->ne[0];  // Hidden dimension
+    स्थिर int64_t M             = src0->ne[1];  // Output features
+    स्थिर int64_t n_expert      = src0->ne[2];  // Number of experts
+    स्थिर int64_t n_expert_used = src2->ne[0];  // Experts used per token
+    स्थिर int64_t batch         = src2->ne[1];  // Batch size
 
     // Strides (in bytes)
-    const size_t nb01 = src0->nb[1];  // src0 row stride
-    const size_t nb02 = src0->nb[2];  // src0 expert stride
-    const size_t nb11 = src1->nb[1];  // src1 column stride
-    const size_t nb12 = src1->nb[2];  // src1 batch stride
-    const size_t nb20 = src2->nb[0];  // src2 element stride
-    const size_t nb21 = src2->nb[1];  // src2 batch stride
-    const size_t nb1  = dst->nb[1];   // dst column stride
-    const size_t nb2  = dst->nb[2];   // dst batch stride
+    स्थिर माप_प्रकार nb01 = src0->nb[1];  // src0 row stride
+    स्थिर माप_प्रकार nb02 = src0->nb[2];  // src0 expert stride
+    स्थिर माप_प्रकार nb11 = src1->nb[1];  // src1 column stride
+    स्थिर माप_प्रकार nb12 = src1->nb[2];  // src1 batch stride
+    स्थिर माप_प्रकार nb20 = src2->nb[0];  // src2 element stride
+    स्थिर माप_प्रकार nb21 = src2->nb[1];  // src2 batch stride
+    स्थिर माप_प्रकार nb1  = dst->nb[1];   // dst column stride
+    स्थिर माप_प्रकार nb2  = dst->nb[2];   // dst batch stride
 
     // Verify K dimension alignment for quantization
     // Q8_0 requires strict alignment (quantized data must be block-aligned)
     // F32 and F16 can handle partial blocks with scalar remainders
-    if ((src0->type == GGML_TYPE_Q8_0 || src0->type == GGML_TYPE_Q4_0) && K % block_size != 0) {
-        return -1;  // Q8_0 requires K to be multiple of block_size
+    अगर ((src0->type == GGML_TYPE_Q8_0 || src0->type == GGML_TYPE_Q4_0) && K % block_आकार_2 != 0) {
+        वापस -1;  // Q8_0 requires K to be multiple of block_size
     }
 
     // Verify first dimension is contiguous
-    size_t expected_element_size_src0;
-    if (src0->type == GGML_TYPE_Q8_0) {
-        expected_element_size_src0 = sizeof(block_q8_0);
-    } else if (src0->type == GGML_TYPE_Q4_0) {
-        expected_element_size_src0 = sizeof(block_q4_0);
-    } else if (src0->type == GGML_TYPE_F16) {
-        expected_element_size_src0 = sizeof(uint16_t);
-    } else if (src0->type == GGML_TYPE_F32) {
-        expected_element_size_src0 = sizeof(float);
-    } else {
-        return -1;
+    माप_प्रकार expected_element_आकार_src0;
+    अगर (src0->type == GGML_TYPE_Q8_0) {
+        expected_element_आकार_src0 = माप(block_q8_0);
+    } अन्यथा अगर (src0->type == GGML_TYPE_Q4_0) {
+        expected_element_आकार_src0 = माप(block_q4_0);
+    } अन्यथा अगर (src0->type == GGML_TYPE_F16) {
+        expected_element_आकार_src0 = माप(uint16_t);
+    } अन्यथा अगर (src0->type == GGML_TYPE_F32) {
+        expected_element_आकार_src0 = माप(भग्न);
+    } अन्यथा {
+        वापस -1;
     }
 
-    if (src0->nb[0] != expected_element_size_src0 || src1->nb[0] != sizeof(float) || src2->nb[0] != sizeof(int32_t) ||
-        dst->nb[0] != sizeof(float)) {
-        return -1;
+    अगर (src0->nb[0] != expected_element_आकार_src0 || src1->nb[0] != माप(भग्न) || src2->nb[0] != माप(int32_t) ||
+        dst->nb[0] != माप(भग्न)) {
+        वापस -1;
     }
 
-    const int64_t K_blocks = K / block_size;
+    स्थिर int64_t K_blocks = K / block_आकार_2;
 
     // Threading: distribute output elements across threads
     // Total output elements = M * n_expert_used * batch
-    const uint64_t total_elements = M * n_expert_used * batch;
+    स्थिर uint64_t योग_elements = M * n_expert_used * batch;
 
-    const uint64_t per_thread     = 16;
-    const uint64_t threads_stride = per_thread * effective_num_threads;
+    स्थिर uint64_t per_thread     = 16;
+    स्थिर uint64_t threads_stride = per_thread * effective_अंक_threads;
 
-    if (effective_thread_id * per_thread >= total_elements) {
-        return 0;
+    अगर (effective_thread_id * per_thread >= योग_elements) {
+        वापस 0;
     }
 
     // Process elements assigned to this thread
-    for (uint64_t base_idx = effective_thread_id * per_thread; base_idx < total_elements; base_idx += threads_stride) {
-        for (uint64_t j = 0; j < per_thread; j++) {
-            const uint64_t idx = base_idx + j;
+    क्रम (uint64_t base_idx = effective_thread_id * per_thread; base_idx < योग_elements; base_idx += threads_stride) {
+        क्रम (uint64_t j = 0; j < per_thread; j++) {
+            स्थिर uint64_t idx = base_idx + j;
 
-            if (idx >= total_elements) {
-                break;
+            अगर (idx >= योग_elements) {
+                अवरोध;
             }
 
             // Decode linear index to (m, n_idx, batch_idx)
             // Layout: m + M * (n_idx + n_expert_used * batch_idx)
-            const int64_t batch_idx = idx / (M * n_expert_used);
-            const int64_t rem       = idx % (M * n_expert_used);
-            const int64_t n_idx     = rem / M;
-            const int64_t m         = rem % M;
+            स्थिर int64_t batch_idx = idx / (M * n_expert_used);
+            स्थिर int64_t rem       = idx % (M * n_expert_used);
+            स्थिर int64_t n_idx     = rem / M;
+            स्थिर int64_t m         = rem % M;
 
             // Get expert ID from src2[n_idx, batch_idx]
-            const int32_t expert_id = *(const int32_t *) ((const char *) src2_data + n_idx * nb20 + batch_idx * nb21);
+            स्थिर int32_t expert_id = *(स्थिर int32_t *) ((स्थिर अक्षर *) src2_तथ्य + n_idx * nb20 + batch_idx * nb21);
 
             // Validate expert ID
-            if (expert_id < 0 || expert_id >= n_expert) {
+            अगर (expert_id < 0 || expert_id >= n_expert) {
                 // Invalid expert ID - write zero and continue
-                volatile float * dst_element =
-                    (volatile float *) ((char *) dst_data + m * dst->nb[0] + n_idx * nb1 + batch_idx * nb2);
+                अस्थिर भग्न * dst_element =
+                    (अस्थिर भग्न *) ((अक्षर *) dst_तथ्य + m * dst->nb[0] + n_idx * nb1 + batch_idx * nb2);
                 atomic_store_f32(dst_element, 0.0f);
-                continue;
+                जारी;
             }
 
             // Compute dot product: expert_matrix[m, :] x activations[:, col_idx, batch_idx]
             // Use modulo to handle broadcasting: when src1 has fewer columns than expert slots,
             // multiple slots share the same activation column (col_idx = n_idx % src1->ne[1])
-            const int64_t col_idx = n_idx % src1->ne[1];
-            float         sum     = 0.0f;
+            स्थिर int64_t col_idx = n_idx % src1->ne[1];
+            भग्न         योग_2     = 0.0f;
 
             // Type switch hoisted outside block loop: one branch per element, not per block
-            const char * expert_row_base = (const char *) src0_data + m * nb01 + expert_id * nb02;
+            स्थिर अक्षर * expert_row_base = (स्थिर अक्षर *) src0_तथ्य + m * nb01 + expert_id * nb02;
 
-            switch (src0->type) {
-                case GGML_TYPE_Q8_0:
+            चयन (src0->type) {
+                हाल GGML_TYPE_Q8_0:
                     {
-                        const block_q8_0 * q8_row = (const block_q8_0 *) expert_row_base;
-                        const float *      b_col_base =
-                            (const float *) ((const char *) src1_data + col_idx * nb11 + batch_idx * nb12);
-                        sum += compute_row_dot_q8_0(q8_row, b_col_base, K_blocks);
-                        break;
+                        स्थिर block_q8_0 * q8_row = (स्थिर block_q8_0 *) expert_row_base;
+                        स्थिर भग्न *      b_col_base =
+                            (स्थिर भग्न *) ((स्थिर अक्षर *) src1_तथ्य + col_idx * nb11 + batch_idx * nb12);
+                        योग_2 += compute_row_dot_q8_0(q8_row, b_col_base, K_blocks);
+                        अवरोध;
                     }
-                case GGML_TYPE_Q4_0:
+                हाल GGML_TYPE_Q4_0:
                     {
-                        const block_q4_0 * q4_row = (const block_q4_0 *) expert_row_base;
-                        const float *      b_col_base =
-                            (const float *) ((const char *) src1_data + col_idx * nb11 + batch_idx * nb12);
-                        sum += compute_row_dot_q4_0(q4_row, b_col_base, K_blocks);
-                        break;
+                        स्थिर block_q4_0 * q4_row = (स्थिर block_q4_0 *) expert_row_base;
+                        स्थिर भग्न *      b_col_base =
+                            (स्थिर भग्न *) ((स्थिर अक्षर *) src1_तथ्य + col_idx * nb11 + batch_idx * nb12);
+                        योग_2 += compute_row_dot_q4_0(q4_row, b_col_base, K_blocks);
+                        अवरोध;
                     }
-                case GGML_TYPE_F16:
+                हाल GGML_TYPE_F16:
                     {
-                        const uint16_t * f16_row     = (const uint16_t *) expert_row_base;
-                        const int64_t    K_remainder = K % block_size;
-                        for (int64_t kb = 0; kb < K_blocks; kb++) {
-                            const float * b_col_ptr =
-                                (const float *) ((const char *) src1_data + (kb * block_size) * sizeof(float) +
+                        स्थिर uint16_t * f16_row     = (स्थिर uint16_t *) expert_row_base;
+                        स्थिर int64_t    K_remainder = K % block_आकार_2;
+                        क्रम (int64_t kb = 0; kb < K_blocks; kb++) {
+                            स्थिर भग्न * b_col_ptr =
+                                (स्थिर भग्न *) ((स्थिर अक्षर *) src1_तथ्य + (kb * block_आकार_2) * माप(भग्न) +
                                                  col_idx * nb11 + batch_idx * nb12);
-                            sum += compute_block_dot_product_f16_naive(&f16_row[kb * block_size], b_col_ptr);
+                            योग_2 += compute_block_dot_product_f16_naive(&f16_row[kb * block_आकार_2], b_col_ptr);
                         }
-                        if (K_remainder > 0) {
-                            const int64_t offset = K_blocks * block_size;
-                            const float * b_col_ptr =
-                                (const float *) ((const char *) src1_data + offset * sizeof(float) + col_idx * nb11 +
+                        अगर (K_remainder > 0) {
+                            स्थिर int64_t offset = K_blocks * block_आकार_2;
+                            स्थिर भग्न * b_col_ptr =
+                                (स्थिर भग्न *) ((स्थिर अक्षर *) src1_तथ्य + offset * माप(भग्न) + col_idx * nb11 +
                                                  batch_idx * nb12);
-                            sum += compute_block_dot_product_f16_partial(&f16_row[offset], b_col_ptr, K_remainder);
+                            योग_2 += compute_block_dot_product_f16_partial(&f16_row[offset], b_col_ptr, K_remainder);
                         }
-                        break;
+                        अवरोध;
                     }
-                case GGML_TYPE_F32:
+                हाल GGML_TYPE_F32:
                     {
-                        const float * f32_row     = (const float *) expert_row_base;
-                        const int64_t K_remainder = K % block_size;
-                        for (int64_t kb = 0; kb < K_blocks; kb++) {
-                            const float * b_col_ptr =
-                                (const float *) ((const char *) src1_data + (kb * block_size) * sizeof(float) +
+                        स्थिर भग्न * f32_row     = (स्थिर भग्न *) expert_row_base;
+                        स्थिर int64_t K_remainder = K % block_आकार_2;
+                        क्रम (int64_t kb = 0; kb < K_blocks; kb++) {
+                            स्थिर भग्न * b_col_ptr =
+                                (स्थिर भग्न *) ((स्थिर अक्षर *) src1_तथ्य + (kb * block_आकार_2) * माप(भग्न) +
                                                  col_idx * nb11 + batch_idx * nb12);
-                            sum += compute_block_dot_product_f32(&f32_row[kb * block_size], b_col_ptr);
+                            योग_2 += compute_block_dot_product_f32(&f32_row[kb * block_आकार_2], b_col_ptr);
                         }
-                        if (K_remainder > 0) {
-                            const int64_t offset = K_blocks * block_size;
-                            const float * b_col_ptr =
-                                (const float *) ((const char *) src1_data + offset * sizeof(float) + col_idx * nb11 +
+                        अगर (K_remainder > 0) {
+                            स्थिर int64_t offset = K_blocks * block_आकार_2;
+                            स्थिर भग्न * b_col_ptr =
+                                (स्थिर भग्न *) ((स्थिर अक्षर *) src1_तथ्य + offset * माप(भग्न) + col_idx * nb11 +
                                                  batch_idx * nb12);
-                            sum += compute_block_dot_product_f32_partial(&f32_row[offset], b_col_ptr, K_remainder);
+                            योग_2 += compute_block_dot_product_f32_partial(&f32_row[offset], b_col_ptr, K_remainder);
                         }
-                        break;
+                        अवरोध;
                     }
-                default:
-                    return -1;
+                शेष:
+                    वापस -1;
             }
 
             // Store result using atomic store to avoid cache coherency issues
             // when multiple threads write to the same cache line (64 bytes = 16 floats)
-            volatile float * dst_element =
-                (volatile float *) ((char *) dst_data + m * dst->nb[0] + n_idx * nb1 + batch_idx * nb2);
-            atomic_store_f32(dst_element, sum);
+            अस्थिर भग्न * dst_element =
+                (अस्थिर भग्न *) ((अक्षर *) dst_तथ्य + m * dst->nb[0] + n_idx * nb1 + batch_idx * nb2);
+            atomic_store_f32(dst_element, योग_2);
         }
     }
 
-    return 0;
+    वापस 0;
 }

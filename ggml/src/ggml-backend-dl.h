@@ -1,45 +1,45 @@
-#pragma once
+#आशय once
 
-#ifdef _WIN32
+#अगर_घोषित _WIN32
 #   define WIN32_LEAN_AND_MEAN
 #   ifndef NOMINMAX
 #       define NOMINMAX
 #   endif
 #   include <windows.h>
 #   include <winevt.h>
-#else
+#अन्यथा
 #    include <dlfcn.h>
 #    include <unistd.h>
-#endif
-#include <filesystem>
+#पूर्ण_अगर
+#समावेश <filesystem>
 
 namespace fs = std::filesystem;
 
-#ifdef _WIN32
+#अगर_घोषित _WIN32
 
 using dl_handle = std::remove_pointer_t<HMODULE>;
 
-struct dl_handle_deleter {
-    void operator()(HMODULE handle) {
+काष्ठा dl_handle_deleter {
+    व्योम चालक()(HMODULE handle) {
         FreeLibrary(handle);
     }
 };
 
-#else
+#अन्यथा
 
-using dl_handle = void;
+using dl_handle = व्योम;
 
-struct dl_handle_deleter {
-    void operator()(void * handle) {
+काष्ठा dl_handle_deleter {
+    व्योम चालक()(व्योम * handle) {
         dlclose(handle);
     }
 };
 
-#endif
+#पूर्ण_अगर
 
 using dl_handle_ptr = std::unique_ptr<dl_handle, dl_handle_deleter>;
 
-dl_handle * dl_load_library(const fs::path & path);
-void * dl_get_sym(dl_handle * handle, const char * name);
-const char * dl_error();
+dl_handle * dl_load_library(स्थिर fs::path & path);
+व्योम * dl_get_sym(dl_handle * handle, स्थिर अक्षर * name);
+स्थिर अक्षर * dl_error();
 

@@ -1,25 +1,25 @@
-#pragma once
-#include <stdint.h>
-#include <stdbool.h>
+#आशय once
+#समावेश <stdint.h>
+#समावेश <stdbool.h>
 
-#if defined(__VXE__) || defined(__VXE2__)
-#include <vecintrin.h>
-#endif
+#अगर defined(__VXE__) || defined(__VXE2__)
+#समावेश <vecintrin.h>
+#पूर्ण_अगर
 
-#ifdef _MSC_VER
-#define NOINLINE __declspec(noinline)
-#else
-#define NOINLINE __attribute__((__noinline__))
-#endif
+#अगर_घोषित _MSC_VER
+#घोषणा NOINLINE __declspec(noinline)
+#अन्यथा
+#घोषणा NOINLINE __attribute__((__noinline__))
+#पूर्ण_अगर
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#अगर_घोषित __cplusplus
+बाह्य "C" {
+#पूर्ण_अगर
 
-bool llamafile_sgemm(const struct ggml_compute_params * params, int64_t, int64_t, int64_t,
-                     const void *, int64_t, const void *, int64_t, void *, int64_t,
-                     int, int, int);
+bool llamafile_sgemm(स्थिर काष्ठा ggml_compute_params * params, int64_t, int64_t, int64_t,
+                     स्थिर व्योम *, int64_t, स्थिर व्योम *, int64_t, व्योम *, int64_t,
+                     पूर्णांक, पूर्णांक, पूर्णांक);
 
-#ifdef __cplusplus
+#अगर_घोषित __cplusplus
 }
-#endif
+#पूर्ण_अगर

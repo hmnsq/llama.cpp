@@ -1,6 +1,6 @@
-#pragma once
+#आशय once
 
-#include "node_context.h"
+#समावेश "node_context.h"
 
 namespace ov {
 namespace frontend {
@@ -8,7 +8,7 @@ namespace ggml {
 
 namespace op {
 
-#define GGML_OP_CONVERTER(op) OutputVector op(const NodeContext & context)
+#घोषणा GGML_OP_CONVERTER(op) OutputVector op(स्थिर गाँठ_Context & context)
 
 GGML_OP_CONVERTER(translate_add);
 GGML_OP_CONVERTER(translate_cont);
@@ -26,7 +26,7 @@ GGML_OP_CONVERTER(translate_reshape);
 GGML_OP_CONVERTER(translate_rms_norm);
 GGML_OP_CONVERTER(translate_norm);
 GGML_OP_CONVERTER(translate_l2_norm);
-GGML_OP_CONVERTER(translate_sum_rows);
+GGML_OP_CONVERTER(translate_योग_rows);
 GGML_OP_CONVERTER(translate_sqr);
 GGML_OP_CONVERTER(translate_rope);
 GGML_OP_CONVERTER(translate_scale);
@@ -59,7 +59,7 @@ GGML_OP_CONVERTER(translate_pool_2d);
 GGML_OP_CONVERTER(translate_roll);
 GGML_OP_CONVERTER(translate_upscale);
 GGML_OP_CONVERTER(translate_mean);
-GGML_OP_CONVERTER(translate_sum);
+GGML_OP_CONVERTER(translate_योग);
 GGML_OP_CONVERTER(translate_unary_gelu);
 GGML_OP_CONVERTER(translate_unary_gelu_erf);
 GGML_OP_CONVERTER(translate_unary_gelu_quick);

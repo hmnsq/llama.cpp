@@ -1,61 +1,61 @@
-#ifndef GGML_ZDNN_SCRATCH_HPP
-#define GGML_ZDNN_SCRATCH_HPP
+#अगर_अघोषित GGML_ZDNN_SCRATCH_HPP
+#घोषणा GGML_ZDNN_SCRATCH_HPP
 
-#include "ggml.h"
+#समावेश "ggml.h"
 
-#include <cstddef>
-#include <vector>
+#समावेश <cstddef>
+#समावेश <vector>
 
 // 4K aligned host buffers that are cached for reuse, see ggml_cuda_pool_leg
-struct ggml_zdnn_pool {
-    struct buffer {
-        void * ptr  = nullptr;
-        size_t size = 0;
+काष्ठा ggml_zdnn_pool {
+    काष्ठा बफर {
+        व्योम * ptr  = nullptr;
+        माप_प्रकार size = 0;
     };
 
-    std::vector<buffer> cached;
+    std::vector<बफर> cached;
 
     ~ggml_zdnn_pool();
 
-    void * alloc(size_t size, size_t * actual_size);
-    void   free(void * ptr, size_t size);
+    व्योम * alloc(माप_प्रकार size, माप_प्रकार * actual_आकार);
+    व्योम   मुक्त(व्योम * ptr, माप_प्रकार size);
 };
 
 // a buffer of the pool that goes back to it at the end of its scope, see ggml_cuda_pool_alloc
-template <typename T>
-struct ggml_zdnn_pool_alloc {
+ढाँचा <typename T>
+काष्ठा ggml_zdnn_pool_alloc {
     ggml_zdnn_pool * pool = nullptr;
     T * ptr = nullptr;
-    size_t actual_size = 0;
+    माप_प्रकार actual_आकार = 0;
 
-    ggml_zdnn_pool_alloc() = default;
+    ggml_zdnn_pool_alloc() = शेष;
 
-    ggml_zdnn_pool_alloc(ggml_zdnn_pool & pool, size_t size) {
+    ggml_zdnn_pool_alloc(ggml_zdnn_pool & pool, माप_प्रकार size) {
         alloc(pool, size);
     }
 
     ~ggml_zdnn_pool_alloc() {
-        if (ptr != nullptr) {
-            pool->free(ptr, actual_size);
+        अगर (ptr != nullptr) {
+            pool->मुक्त(ptr, actual_आकार);
         }
     }
 
     // size is in number of elements
-    T * alloc(ggml_zdnn_pool & pool, size_t size) {
+    T * alloc(ggml_zdnn_pool & pool, माप_प्रकार size) {
         GGML_ASSERT(ptr == nullptr);
-        this->pool = &pool;
-        ptr = (T *) pool.alloc(size * sizeof(T), &actual_size);
-        return ptr;
+        यह->pool = &pool;
+        ptr = (T *) pool.alloc(size * माप(T), &actual_आकार);
+        वापस ptr;
     }
 
-    T * get() {
-        return ptr;
+    T * लो() {
+        वापस ptr;
     }
 
-    ggml_zdnn_pool_alloc(const ggml_zdnn_pool_alloc &) = delete;
-    ggml_zdnn_pool_alloc(ggml_zdnn_pool_alloc &&) = delete;
-    ggml_zdnn_pool_alloc & operator=(const ggml_zdnn_pool_alloc &) = delete;
-    ggml_zdnn_pool_alloc & operator=(ggml_zdnn_pool_alloc &&) = delete;
+    ggml_zdnn_pool_alloc(स्थिर ggml_zdnn_pool_alloc &) = मिटाओ;
+    ggml_zdnn_pool_alloc(ggml_zdnn_pool_alloc &&) = मिटाओ;
+    ggml_zdnn_pool_alloc & चालक=(स्थिर ggml_zdnn_pool_alloc &) = मिटाओ;
+    ggml_zdnn_pool_alloc & चालक=(ggml_zdnn_pool_alloc &&) = मिटाओ;
 };
 
-#endif  // GGML_ZDNN_SCRATCH_HPP
+#पूर्ण_अगर  // GGML_ZDNN_SCRATCH_HPP

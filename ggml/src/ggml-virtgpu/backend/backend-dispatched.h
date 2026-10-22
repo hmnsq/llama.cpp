@@ -1,27 +1,27 @@
-#pragma once
+#आशय once
 
 // clang-format off
-#include <cstdint>
-#include <cstddef>
+#समावेश <cstdint>
+#समावेश <cstddef>
 
-#include <ggml-backend.h>
+#समावेश <ggml-backend.h>
 
-#include "backend-convert.h"
-#include "backend-virgl-apir.h"
-#include "shared/apir_backend.h"
-#include "shared/apir_cs.h"
-#include "shared/apir_cs_ggml.h"
+#समावेश "backend-convert.h"
+#समावेश "backend-virgl-apir.h"
+#समावेश "shared/apir_backend.h"
+#समावेश "shared/apir_cs.h"
+#समावेश "shared/apir_cs_ggml.h"
 // clang-format on
 
-#define GGML_VIRTGPU_BCK "ggml-virtgpu-backend: "
+#घोषणा GGML_VIRTGPU_BCK "ggml-virtgpu-backend: "
 
-struct virgl_apir_context {
+काष्ठा virgl_apir_context {
     uint32_t               ctx_id;
     virgl_apir_callbacks * iface;
 };
 
-typedef uint32_t (*backend_dispatch_t)(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx);
+प्रकार uint32_t (*backend_dispatch_t)(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx);
 
-#include "backend-dispatched.gen.h"
+#समावेश "backend-dispatched.gen.h"
 
-uint32_t backend_dispatch_initialize(void * ggml_backend_reg_fct_p);
+uint32_t backend_dispatch_initialize(व्योम * ggml_backend_reg_fct_p);

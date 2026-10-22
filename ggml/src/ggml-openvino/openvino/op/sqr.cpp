@@ -1,32 +1,32 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#समावेश "../node_context.h"
+#समावेश "../op_table.h"
+#समावेश "../utils.h"
 
-#include <memory>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/sqrt.hpp>
+#समावेश <memory>
+#समावेश <openvino/op/multiply.hpp>
+#समावेश <openvino/op/sqrt.hpp>
 
 namespace ov {
 namespace frontend {
 namespace ggml {
 namespace op {
 
-OutputVector translate_sqr(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+OutputVector translate_sqr(स्थिर गाँठ_Context & context) {
+    अंक_inputs_check(context, 1, 1);
 
-    auto input = process_view_input_new(context, 0);
-    auto res = std::make_shared<ov::op::v1::Multiply>(input, input);
+    स्वतः निवेश = process_view_निवेश_new(context, 0);
+    स्वतः res = std::make_shared<ov::op::v1::Multiply>(निवेश, निवेश);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    वापस rename_outputs_with_suffix({res}, context.get_name());
 }
 
-OutputVector translate_sqrt(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+OutputVector translate_sqrt(स्थिर गाँठ_Context & context) {
+    अंक_inputs_check(context, 1, 1);
 
-    auto input = process_view_input_new(context, 0);
-    auto res = std::make_shared<ov::op::v0::Sqrt>(input);
+    स्वतः निवेश = process_view_निवेश_new(context, 0);
+    स्वतः res = std::make_shared<ov::op::v0::Sqrt>(निवेश);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    वापस rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

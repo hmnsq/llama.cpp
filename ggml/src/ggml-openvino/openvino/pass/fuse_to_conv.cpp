@@ -1,20 +1,20 @@
-#include "fuse_to_conv.h"
+#समावेश "fuse_to_conv.h"
 
-#include <openvino/core/graph_util.hpp>
-#include <openvino/core/rt_info.hpp>
-#include <openvino/op/add.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/convolution.hpp>
-#include <openvino/op/extractimagepatches.hpp>
-#include <openvino/op/group_conv.hpp>
-#include <openvino/op/matmul.hpp>
-#include <openvino/op/pad.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/transpose.hpp>
-#include <openvino/pass/pattern/op/pattern.hpp>
-#include <openvino/pass/pattern/op/wrap_type.hpp>
-#include <utility>
+#समावेश <openvino/core/graph_util.hpp>
+#समावेश <openvino/core/rt_info.hpp>
+#समावेश <openvino/op/add.hpp>
+#समावेश <openvino/op/constant.hpp>
+#समावेश <openvino/op/convert.hpp>
+#समावेश <openvino/op/convolution.hpp>
+#समावेश <openvino/op/extractimagepatches.hpp>
+#समावेश <openvino/op/group_conv.hpp>
+#समावेश <openvino/op/matmul.hpp>
+#समावेश <openvino/op/pad.hpp>
+#समावेश <openvino/op/reshape.hpp>
+#समावेश <openvino/op/transpose.hpp>
+#समावेश <openvino/pass/pattern/op/pattern.hpp>
+#समावेश <openvino/pass/pattern/op/wrap_type.hpp>
+#समावेश <utility>
 
 namespace opp = ov::pass::pattern;
 
@@ -24,254 +24,254 @@ namespace ggml {
 namespace pass {
 
 FuseToConv::FuseToConv() {
-    const auto m_in0 = opp::any_input();
-    const auto m_in1 = opp::any_input();
-    const auto m_matmul = opp::wrap_type<ov::op::v0::MatMul>({m_in0, m_in1});
+    स्थिर स्वतः m_in0 = opp::any_निवेश();
+    स्थिर स्वतः m_in1 = opp::any_निवेश();
+    स्थिर स्वतः m_matmul = opp::wrap_type<ov::op::v0::MatMul>({m_in0, m_in1});
 
-    const auto callback = [=](opp::Matcher & m) {
-        auto matmul_node = ov::as_type_ptr<ov::op::v0::MatMul>(m.get_match_root());
-        if (!matmul_node) {
-            return false;
+    स्थिर स्वतः callback = [=](opp::Matcher & m) {
+        स्वतः matmul_गाँठ = ov::as_type_ptr<ov::op::v0::MatMul>(m.get_match_मूल());
+        अगर (!matmul_गाँठ) {
+            वापस false;
         }
 
-        auto unwrap = [](ov::Output<Node> n) {
-            while (ov::is_type<ov::op::v0::Convert>(n.get_node_shared_ptr()) ||
-                   ov::is_type<ov::op::v1::Reshape>(n.get_node_shared_ptr())) {
-                n = n.get_node_shared_ptr()->input_value(0);
+        स्वतः unwrap = [](ov::Output<Node> n) {
+            जबतक (ov::is_type<ov::op::v0::Convert>(n.get_गाँठ_shared_ptr()) ||
+                   ov::is_type<ov::op::v1::Reshape>(n.get_गाँठ_shared_ptr())) {
+                n = n.get_गाँठ_shared_ptr()->निवेश_मूल्य(0);
             }
-            return n;
+            वापस n;
         };
 
-        auto get_im2col = [&](ov::Output<Node> trace)
+        स्वतः get_im2col = [&](ov::Output<Node> trace)
             -> std::pair<std::shared_ptr<ov::op::v3::ExtractImagePatches>, std::shared_ptr<ov::op::v1::Pad>> {
-            auto t2 = ov::as_type_ptr<ov::op::v1::Transpose>(unwrap(std::move(trace)).get_node_shared_ptr());
-            auto r1 = t2 ? ov::as_type_ptr<ov::op::v1::Reshape>(t2->get_input_node_shared_ptr(0)) : nullptr;
-            auto t1 = r1 ? ov::as_type_ptr<ov::op::v1::Transpose>(r1->get_input_node_shared_ptr(0)) : nullptr;
-            auto eip =
-                t1 ? ov::as_type_ptr<ov::op::v3::ExtractImagePatches>(t1->get_input_node_shared_ptr(0)) : nullptr;
-            auto pad = eip ? ov::as_type_ptr<ov::op::v1::Pad>(eip->get_input_node_shared_ptr(0)) : nullptr;
-            return {eip, pad};
+            स्वतः t2 = ov::as_type_ptr<ov::op::v1::Transpose>(unwrap(std::move(trace)).get_गाँठ_shared_ptr());
+            स्वतः r1 = t2 ? ov::as_type_ptr<ov::op::v1::Reshape>(t2->get_निवेश_गाँठ_shared_ptr(0)) : nullptr;
+            स्वतः t1 = r1 ? ov::as_type_ptr<ov::op::v1::Transpose>(r1->get_निवेश_गाँठ_shared_ptr(0)) : nullptr;
+            स्वतः eip =
+                t1 ? ov::as_type_ptr<ov::op::v3::ExtractImagePatches>(t1->get_निवेश_गाँठ_shared_ptr(0)) : nullptr;
+            स्वतः pad = eip ? ov::as_type_ptr<ov::op::v1::Pad>(eip->get_निवेश_गाँठ_shared_ptr(0)) : nullptr;
+            वापस {eip, pad};
         };
 
         bool weight_is_in0 = true;
-        auto [eip, pad] = get_im2col(matmul_node->input_value(1));
-        ov::Output<Node> w_trace = matmul_node->input_value(0);
-        if (!pad) {
-            std::tie(eip, pad) = get_im2col(matmul_node->input_value(0));
-            w_trace = matmul_node->input_value(1);
+        स्वतः [eip, pad] = get_im2col(matmul_गाँठ->निवेश_मूल्य(1));
+        ov::Output<Node> w_trace = matmul_गाँठ->निवेश_मूल्य(0);
+        अगर (!pad) {
+            std::tie(eip, pad) = get_im2col(matmul_गाँठ->निवेश_मूल्य(0));
+            w_trace = matmul_गाँठ->निवेश_मूल्य(1);
             weight_is_in0 = false;
-            if (!pad) {
-                return false;
+            अगर (!pad) {
+                वापस false;
             }
         }
 
-        auto pb_const = ov::as_type_ptr<ov::op::v0::Constant>(pad->get_input_node_shared_ptr(1));
-        auto pe_const = ov::as_type_ptr<ov::op::v0::Constant>(pad->get_input_node_shared_ptr(2));
-        if (!pb_const || !pe_const) {
-            return false;
+        स्वतः pb_const = ov::as_type_ptr<ov::op::v0::Constant>(pad->get_निवेश_गाँठ_shared_ptr(1));
+        स्वतः pe_const = ov::as_type_ptr<ov::op::v0::Constant>(pad->get_निवेश_गाँठ_shared_ptr(2));
+        अगर (!pb_const || !pe_const) {
+            वापस false;
         }
 
-        const auto pb = pb_const->cast_vector<std::ptrdiff_t>();
-        const auto pe = pe_const->cast_vector<std::ptrdiff_t>();
-        if (pb.size() < 4 || pe.size() < 4) {
-            return false;
+        स्थिर स्वतः pb = pb_const->cast_vector<std::सूचक_भेद_प्रकार>();
+        स्थिर स्वतः pe = pe_const->cast_vector<std::सूचक_भेद_प्रकार>();
+        अगर (pb.size() < 4 || pe.size() < 4) {
+            वापस false;
         }
 
-        auto image_input = pad->input_value(0);
-        auto image_shape = image_input.get_partial_shape();
-        if (image_shape.rank() != 4 || image_shape[1].is_dynamic()) {
-            return false;
+        स्वतः image_निवेश = pad->निवेश_मूल्य(0);
+        स्वतः image_shape = image_निवेश.get_partial_shape();
+        अगर (image_shape.rank() != 4 || image_shape[1].is_dynamic()) {
+            वापस false;
         }
-        const size_t IC = static_cast<size_t>(image_shape[1].get_length());
+        स्थिर माप_प्रकार IC = static_cast<माप_प्रकार>(image_shape[1].get_लंबाई());
 
         w_trace = unwrap(w_trace);
-        auto weight_pshape = w_trace.get_partial_shape();
-        if (!weight_pshape.is_static()) {
-            return false;
+        स्वतः weight_pshape = w_trace.get_partial_shape();
+        अगर (!weight_pshape.is_static()) {
+            वापस false;
         }
 
-        const auto & ws = weight_pshape.to_shape();
-        const size_t KH = eip->get_sizes()[0];
-        const size_t KW = eip->get_sizes()[1];
-        const size_t kernel_spatial_ic = IC * KH * KW;
+        स्थिर स्वतः & खाली = weight_pshape.to_shape();
+        स्थिर माप_प्रकार KH = eip->get_sizes()[0];
+        स्थिर माप_प्रकार KW = eip->get_sizes()[1];
+        स्थिर माप_प्रकार kernel_spatial_ic = IC * KH * KW;
 
-        size_t groups = 0;
-        if (IC == 1 && image_shape[0].is_static() && image_shape[2].is_static() && image_shape[3].is_static()) {
-            if ((ws.size() == 4 && ws[1] == 1 && ws[2] == KH && ws[3] == KW && ws[0] > 1) ||
-                (ws.size() == 2 && ws[1] == KH * KW && ws[0] > 1) ||
-                (ws.size() == 3 && ws[1] == 1 && ws[2] == KH * KW && ws[0] > 1)) {
-                groups = ws[0];
-            } else if (ws.size() == 4 && ws[0] == 1 && ws[2] == 1 && ws[3] == KH * KW && ws[1] > 1) {
-                groups = ws[1];
+        माप_प्रकार groups = 0;
+        अगर (IC == 1 && image_shape[0].is_static() && image_shape[2].is_static() && image_shape[3].is_static()) {
+            अगर ((खाली.size() == 4 && खाली[1] == 1 && खाली[2] == KH && खाली[3] == KW && खाली[0] > 1) ||
+                (खाली.size() == 2 && खाली[1] == KH * KW && खाली[0] > 1) ||
+                (खाली.size() == 3 && खाली[1] == 1 && खाली[2] == KH * KW && खाली[0] > 1)) {
+                groups = खाली[0];
+            } अन्यथा अगर (खाली.size() == 4 && खाली[0] == 1 && खाली[2] == 1 && खाली[3] == KH * KW && खाली[1] > 1) {
+                groups = खाली[1];
             }
         }
 
-        const bool is_depthwise = groups > 1 && (image_shape[0].get_length() % groups == 0);
+        स्थिर bool is_depthwise = groups > 1 && (image_shape[0].get_लंबाई() % groups == 0);
 
         ov::Output<Node> conv_out;
-        size_t OC = 0;
+        माप_प्रकार OC = 0;
 
-        if (is_depthwise) {
-            const size_t N = static_cast<size_t>(image_shape[0].get_length()) / groups;
-            const size_t IH = static_cast<size_t>(image_shape[2].get_length());
-            const size_t IW = static_cast<size_t>(image_shape[3].get_length());
+        अगर (is_depthwise) {
+            स्थिर माप_प्रकार N = static_cast<माप_प्रकार>(image_shape[0].get_लंबाई()) / groups;
+            स्थिर माप_प्रकार IH = static_cast<माप_प्रकार>(image_shape[2].get_लंबाई());
+            स्थिर माप_प्रकार IW = static_cast<माप_प्रकार>(image_shape[3].get_लंबाई());
             OC = groups;
 
-            auto img_shape_const = register_new_node<ov::op::v0::Constant>(
+            स्वतः img_shape_const = register_new_गाँठ<ov::op::v0::Constant>(
                 ov::element::i64, ov::Shape{4},
                 std::vector<int64_t>{static_cast<int64_t>(N), static_cast<int64_t>(groups), static_cast<int64_t>(IH),
                                      static_cast<int64_t>(IW)});
             ov::Output<Node> image_reshaped =
-                register_new_node<ov::op::v1::Reshape>(image_input, img_shape_const, false);
+                register_new_गाँठ<ov::op::v1::Reshape>(image_निवेश, img_shape_const, false);
 
-            const ov::Shape conv_w_shape = {groups, 1, 1, KH, KW};
-            ov::Output<Node> weight_input;
-            if (auto weight_const = ov::as_type_ptr<ov::op::v0::Constant>(w_trace.get_node_shared_ptr())) {
-                weight_input = register_new_node<ov::op::v0::Constant>(weight_const->get_element_type(), conv_w_shape,
-                                                                       weight_const->get_data_ptr());
-            } else {
-                auto shape_const = register_new_node<ov::op::v0::Constant>(
+            स्थिर ov::Shape conv_w_shape = {groups, 1, 1, KH, KW};
+            ov::Output<Node> weight_निवेश;
+            अगर (स्वतः weight_const = ov::as_type_ptr<ov::op::v0::Constant>(w_trace.get_गाँठ_shared_ptr())) {
+                weight_निवेश = register_new_गाँठ<ov::op::v0::Constant>(weight_const->get_element_type(), conv_w_shape,
+                                                                       weight_const->get_तथ्य_ptr());
+            } अन्यथा {
+                स्वतः shape_const = register_new_गाँठ<ov::op::v0::Constant>(
                     ov::element::i64, ov::Shape{5},
                     std::vector<int64_t>{static_cast<int64_t>(groups), 1, 1, static_cast<int64_t>(KH),
                                          static_cast<int64_t>(KW)});
-                weight_input = register_new_node<ov::op::v1::Reshape>(w_trace, shape_const, false);
+                weight_निवेश = register_new_गाँठ<ov::op::v1::Reshape>(w_trace, shape_const, false);
             }
 
-            if (weight_input.get_element_type() != image_reshaped.get_element_type()) {
-                weight_input = register_new_node<ov::op::v0::Convert>(weight_input, image_reshaped.get_element_type());
+            अगर (weight_निवेश.get_element_type() != image_reshaped.get_element_type()) {
+                weight_निवेश = register_new_गाँठ<ov::op::v0::Convert>(weight_निवेश, image_reshaped.get_element_type());
             }
 
-            conv_out = register_new_node<ov::op::v1::GroupConvolution>(
-                image_reshaped, weight_input, eip->get_strides(), ov::CoordinateDiff{pb[2], pb[3]},
+            conv_out = register_new_गाँठ<ov::op::v1::GroupConvolution>(
+                image_reshaped, weight_निवेश, eip->get_strides(), ov::CoordinateDiff{pb[2], pb[3]},
                 ov::CoordinateDiff{pe[2], pe[3]}, ov::Strides{eip->get_rates()[0], eip->get_rates()[1]},
                 ov::op::PadType::EXPLICIT);
-        } else {
-            if ((ws.size() == 4 && ws[1] == IC && ws[2] == KH && ws[3] == KW) ||
-                (ws.size() == 3 && ws[1] == IC && ws[2] == KW) || (ws.size() == 2 && ws[1] == kernel_spatial_ic)) {
-                OC = ws[0];
-            } else if ((ws.size() == 4 && ws[0] == 1 && ws[2] == IC && ws[3] == KW) ||
-                       (ws.size() == 2 && ws[0] == kernel_spatial_ic)) {
-                OC = ws[1];
-            } else if (ws.size() == 3 && ws[0] == 1 && ws[1] == IC && ws[2] == KW) {
+        } अन्यथा {
+            अगर ((खाली.size() == 4 && खाली[1] == IC && खाली[2] == KH && खाली[3] == KW) ||
+                (खाली.size() == 3 && खाली[1] == IC && खाली[2] == KW) || (खाली.size() == 2 && खाली[1] == kernel_spatial_ic)) {
+                OC = खाली[0];
+            } अन्यथा अगर ((खाली.size() == 4 && खाली[0] == 1 && खाली[2] == IC && खाली[3] == KW) ||
+                       (खाली.size() == 2 && खाली[0] == kernel_spatial_ic)) {
+                OC = खाली[1];
+            } अन्यथा अगर (खाली.size() == 3 && खाली[0] == 1 && खाली[1] == IC && खाली[2] == KW) {
                 OC = 1;
-            } else if (ws.size() == 4 && ws[3] == kernel_spatial_ic) {
-                OC = ws[2];
-            } else if (ws.size() == 4 && ws[2] == kernel_spatial_ic) {
-                OC = ws[3];
-            } else if (kernel_spatial_ic && ov::shape_size(ws) % kernel_spatial_ic == 0) {
-                OC = ov::shape_size(ws) / kernel_spatial_ic;
-            } else {
-                return false;
+            } अन्यथा अगर (खाली.size() == 4 && खाली[3] == kernel_spatial_ic) {
+                OC = खाली[2];
+            } अन्यथा अगर (खाली.size() == 4 && खाली[2] == kernel_spatial_ic) {
+                OC = खाली[3];
+            } अन्यथा अगर (kernel_spatial_ic && ov::shape_आकार(खाली) % kernel_spatial_ic == 0) {
+                OC = ov::shape_आकार(खाली) / kernel_spatial_ic;
+            } अन्यथा {
+                वापस false;
             }
 
-            const ov::Shape conv_w_shape = {OC, IC, KH, KW};
+            स्थिर ov::Shape conv_w_shape = {OC, IC, KH, KW};
 
-            ov::Output<Node> weight_input;
-            if (auto weight_const = ov::as_type_ptr<ov::op::v0::Constant>(w_trace.get_node_shared_ptr())) {
-                weight_input = register_new_node<ov::op::v0::Constant>(weight_const->get_element_type(), conv_w_shape,
-                                                                       weight_const->get_data_ptr());
-            } else {
-                auto shape_const = register_new_node<ov::op::v0::Constant>(
+            ov::Output<Node> weight_निवेश;
+            अगर (स्वतः weight_const = ov::as_type_ptr<ov::op::v0::Constant>(w_trace.get_गाँठ_shared_ptr())) {
+                weight_निवेश = register_new_गाँठ<ov::op::v0::Constant>(weight_const->get_element_type(), conv_w_shape,
+                                                                       weight_const->get_तथ्य_ptr());
+            } अन्यथा {
+                स्वतः shape_const = register_new_गाँठ<ov::op::v0::Constant>(
                     ov::element::i64, ov::Shape{4},
                     std::vector<int64_t>{static_cast<int64_t>(OC), static_cast<int64_t>(IC), static_cast<int64_t>(KH),
                                          static_cast<int64_t>(KW)});
-                weight_input = register_new_node<ov::op::v1::Reshape>(w_trace, shape_const, false);
+                weight_निवेश = register_new_गाँठ<ov::op::v1::Reshape>(w_trace, shape_const, false);
             }
 
-            if (weight_input.get_element_type() != image_input.get_element_type()) {
-                weight_input = register_new_node<ov::op::v0::Convert>(weight_input, image_input.get_element_type());
+            अगर (weight_निवेश.get_element_type() != image_निवेश.get_element_type()) {
+                weight_निवेश = register_new_गाँठ<ov::op::v0::Convert>(weight_निवेश, image_निवेश.get_element_type());
             }
 
-            conv_out = register_new_node<ov::op::v1::Convolution>(
-                image_input, weight_input, eip->get_strides(), ov::CoordinateDiff{pb[2], pb[3]},
+            conv_out = register_new_गाँठ<ov::op::v1::Convolution>(
+                image_निवेश, weight_निवेश, eip->get_strides(), ov::CoordinateDiff{pb[2], pb[3]},
                 ov::CoordinateDiff{pe[2], pe[3]}, ov::Strides{eip->get_rates()[0], eip->get_rates()[1]},
                 ov::op::PadType::EXPLICIT);
         }
 
-        constexpr auto target_type = ov::element::f32;
-        if (conv_out.get_element_type() != target_type) {
-            conv_out = register_new_node<ov::op::v0::Convert>(conv_out, target_type);
+        constexpr स्वतः target_type = ov::element::f32;
+        अगर (conv_out.get_element_type() != target_type) {
+            conv_out = register_new_गाँठ<ov::op::v0::Convert>(conv_out, target_type);
         }
 
-        std::shared_ptr<ov::op::v1::Add> add_node;
-        ov::Output<Node> bias_input;
+        std::shared_ptr<ov::op::v1::Add> add_गाँठ;
+        ov::Output<Node> bias_निवेश;
 
-        auto try_fuse_bias = [&](const std::shared_ptr<Node> & n) {
-            auto add = ov::as_type_ptr<ov::op::v1::Add>(n);
-            if (!add) {
-                return false;
+        स्वतः try_fuse_bias = [&](स्थिर std::shared_ptr<Node> & n) {
+            स्वतः add = ov::as_type_ptr<ov::op::v1::Add>(n);
+            अगर (!add) {
+                वापस false;
             }
-            for (size_t i = 0; i < 2; ++i) {
-                if (ov::is_type<ov::op::v0::Constant>(add->get_input_node_shared_ptr(i))) {
-                    bias_input = add->input_value(i);
-                    add_node = add;
-                    return true;
+            क्रम (माप_प्रकार i = 0; i < 2; ++i) {
+                अगर (ov::is_type<ov::op::v0::Constant>(add->get_निवेश_गाँठ_shared_ptr(i))) {
+                    bias_निवेश = add->निवेश_मूल्य(i);
+                    add_गाँठ = add;
+                    वापस true;
                 }
             }
-            return false;
+            वापस false;
         };
 
-        for (const auto & consumer : matmul_node->output(0).get_target_inputs()) {
-            auto n = consumer.get_node()->shared_from_this();
-            if (try_fuse_bias(n)) {
-                break;
+        क्रम (स्थिर स्वतः & consumer : matmul_गाँठ->output(0).get_target_inputs()) {
+            स्वतः n = consumer.get_गाँठ()->shared_from_this();
+            अगर (try_fuse_bias(n)) {
+                अवरोध;
             }
-            if (ov::is_type<ov::op::v0::Convert>(n) || ov::is_type<ov::op::v1::Reshape>(n)) {
-                for (const auto & next : n->output(0).get_target_inputs()) {
-                    if (try_fuse_bias(next.get_node()->shared_from_this())) {
-                        break;
+            अगर (ov::is_type<ov::op::v0::Convert>(n) || ov::is_type<ov::op::v1::Reshape>(n)) {
+                क्रम (स्थिर स्वतः & अग्र : n->output(0).get_target_inputs()) {
+                    अगर (try_fuse_bias(अग्र.get_गाँठ()->shared_from_this())) {
+                        अवरोध;
                     }
                 }
             }
-            if (add_node) {
-                break;
+            अगर (add_गाँठ) {
+                अवरोध;
             }
         }
 
         ov::Output<Node> final_out = conv_out;
-        std::shared_ptr<Node> target_node = matmul_node;
+        std::shared_ptr<Node> target_गाँठ = matmul_गाँठ;
 
-        if (add_node) {
-            ov::Output<Node> bias = bias_input;
-            if (bias.get_element_type() != target_type) {
-                bias = register_new_node<ov::op::v0::Convert>(bias, target_type);
+        अगर (add_गाँठ) {
+            ov::Output<Node> bias = bias_निवेश;
+            अगर (bias.get_element_type() != target_type) {
+                bias = register_new_गाँठ<ov::op::v0::Convert>(bias, target_type);
             }
-            auto bias_shape = register_new_node<ov::op::v0::Constant>(
+            स्वतः bias_shape = register_new_गाँठ<ov::op::v0::Constant>(
                 ov::element::i64, ov::Shape{4}, std::vector<int64_t>{1, static_cast<int64_t>(OC), 1, 1});
-            bias = register_new_node<ov::op::v1::Reshape>(bias, bias_shape, false);
-            final_out = register_new_node<ov::op::v1::Add>(conv_out, bias);
-            target_node = add_node;
+            bias = register_new_गाँठ<ov::op::v1::Reshape>(bias, bias_shape, false);
+            final_out = register_new_गाँठ<ov::op::v1::Add>(conv_out, bias);
+            target_गाँठ = add_गाँठ;
         }
 
-        if (!is_depthwise) {
-            auto perm = register_new_node<ov::op::v0::Constant>(
+        अगर (!is_depthwise) {
+            स्वतः perm = register_new_गाँठ<ov::op::v0::Constant>(
                 ov::element::i64, ov::Shape{4},
                 weight_is_in0 ? std::vector<int64_t>{1, 0, 2, 3} : std::vector<int64_t>{0, 2, 3, 1});
-            final_out = register_new_node<ov::op::v1::Transpose>(final_out, perm);
+            final_out = register_new_गाँठ<ov::op::v1::Transpose>(final_out, perm);
         }
 
-        auto orig_shape = target_node->get_output_partial_shape(0);
-        if (orig_shape.is_static() && final_out.get_partial_shape().is_static()) {
-            if (ov::shape_size(orig_shape.to_shape()) != ov::shape_size(final_out.get_shape())) {
-                return false;
+        स्वतः orig_shape = target_गाँठ->get_output_partial_shape(0);
+        अगर (orig_shape.is_static() && final_out.get_partial_shape().is_static()) {
+            अगर (ov::shape_आकार(orig_shape.to_shape()) != ov::shape_आकार(final_out.get_shape())) {
+                वापस false;
             }
         }
-        if (orig_shape.is_static() && final_out.get_partial_shape() != orig_shape) {
-            auto shape_const = register_new_node<ov::op::v0::Constant>(ov::element::i64, ov::Shape{orig_shape.size()},
+        अगर (orig_shape.is_static() && final_out.get_partial_shape() != orig_shape) {
+            स्वतः shape_const = register_new_गाँठ<ov::op::v0::Constant>(ov::element::i64, ov::Shape{orig_shape.size()},
                                                                        orig_shape.to_shape());
-            final_out = register_new_node<ov::op::v1::Reshape>(final_out, shape_const, false);
+            final_out = register_new_गाँठ<ov::op::v1::Reshape>(final_out, shape_const, false);
         }
 
-        auto orig_type = target_node->get_output_element_type(0);
-        if (final_out.get_element_type() != orig_type) {
-            final_out = register_new_node<ov::op::v0::Convert>(final_out, orig_type);
+        स्वतः orig_type = target_गाँठ->get_output_element_type(0);
+        अगर (final_out.get_element_type() != orig_type) {
+            final_out = register_new_गाँठ<ov::op::v0::Convert>(final_out, orig_type);
         }
 
-        final_out.get_node_shared_ptr()->set_friendly_name(target_node->get_friendly_name());
-        ov::copy_runtime_info(m.get_matched_nodes(), final_out.get_node_shared_ptr());
-        ov::replace_node(target_node, final_out.get_node_shared_ptr());
+        final_out.get_गाँठ_shared_ptr()->set_friendly_name(target_गाँठ->get_friendly_name());
+        ov::copy_runtime_info(m.get_matched_nodes(), final_out.get_गाँठ_shared_ptr());
+        ov::replace_गाँठ(target_गाँठ, final_out.get_गाँठ_shared_ptr());
 
-        return true;
+        वापस true;
     };
 
     register_matcher(std::make_shared<opp::Matcher>(m_matmul, "ov::frontend::ggml::pass::FuseToConv"), callback);

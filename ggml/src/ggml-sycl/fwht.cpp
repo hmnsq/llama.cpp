@@ -1,11 +1,11 @@
-#include "fwht.hpp"
+#समावेश "fwht.hpp"
 
-#include <cmath>
-#define P 1.0f
-#define N -1.0f
+#समावेश <cmath>
+#घोषणा P 1.0f
+#घोषणा N -1.0f
 
 // constant Hadamard matrix via Paley I construction
-static constexpr float H12[12][12] = {
+अटल constexpr भग्न H12[12][12] = {
     { P, P, P, P, P, P, P, P, P, P, P, P },
     { P, N, P, N, P, P, P, N, N, N, P, N },
     { P, N, N, P, N, P, P, P, N, N, N, P },
@@ -20,7 +20,7 @@ static constexpr float H12[12][12] = {
     { P, P, N, P, P, P, N, N, N, P, N, N }
 };
 
-static constexpr float H20[20][20] = {
+अटल constexpr भग्न H20[20][20] = {
     { P, P, P, P, P, P, P, P, P, P, P, P, P, P, P, P, P, P, P, P },
     { P, N, P, N, N, P, P, P, P, N, P, N, P, N, N, N, N, P, P, N },
     { P, N, N, P, N, N, P, P, P, P, N, P, N, P, N, N, N, N, P, P },
@@ -43,41 +43,41 @@ static constexpr float H20[20][20] = {
     { P, P, N, N, P, P, P, P, N, P, N, P, N, N, N, N, P, P, N, N }
 };
 
-#undef P
-#undef N
+#अघोषित P
+#अघोषित N
 
-template <int N, typename T>
-static void fwht_kernel(const T * __restrict__ src, float * __restrict__ dst, const int64_t n_rows,
-                        const float scale, const sycl::nd_item<2> & item) {
-    const sycl::sub_group sg = item.get_sub_group();
+ढाँचा <पूर्णांक N, typename T>
+अटल व्योम fwht_kernel(स्थिर T * __restrict__ src, भग्न * __restrict__ dst, स्थिर int64_t n_rows,
+                        स्थिर भग्न scale, स्थिर sycl::nd_item<2> & item) {
+    स्थिर sycl::sub_group sg = item.get_sub_group();
 
-    const int64_t r = item.get_global_id(0);
-    if (r >= n_rows) {
-        return;
+    स्थिर int64_t r = item.get_global_id(0);
+    अगर (r >= n_rows) {
+        वापस;
     }
 
     src += r * N;
     dst += r * N;
 
-    constexpr int el_w = N / WARP_SIZE;
-    static_assert(el_w >= 1 && N % WARP_SIZE == 0, "row must be a whole number of sub-group widths");
+    constexpr पूर्णांक el_w = N / WARP_आकार;
+    static_assert(el_w >= 1 && N % WARP_आकार == 0, "row must be a whole number of sub-group widths");
 
-    float     reg[el_w];
-    const int lane = sg.get_local_linear_id();
+    भग्न     reg[el_w];
+    स्थिर पूर्णांक lane = sg.get_local_linear_id();
 
-#pragma unroll
-    for (int i = 0; i < el_w; ++i) {
-        reg[i] = static_cast<float>(src[i * WARP_SIZE + lane]) * scale;
+#आशय unroll
+    क्रम (पूर्णांक i = 0; i < el_w; ++i) {
+        reg[i] = static_cast<भग्न>(src[i * WARP_आकार + lane]) * scale;
     }
 
     // Butterflies inside the sub-group. The partner of a lane with bit h clear is the
     // lower index of the pair, so it takes the sum and the upper takes lower - upper.
-#pragma unroll
-    for (int h = 1; h < WARP_SIZE; h *= 2) {
-#pragma unroll
-        for (int j = 0; j < el_w; ++j) {
-            const float val  = reg[j];
-            const float val2 = dpct::permute_sub_group_by_xor(sg, val, h, WARP_SIZE);
+#आशय unroll
+    क्रम (पूर्णांक h = 1; h < WARP_आकार; h *= 2) {
+#आशय unroll
+        क्रम (पूर्णांक j = 0; j < el_w; ++j) {
+            स्थिर भग्न val  = reg[j];
+            स्थिर भग्न val2 = dpct::permute_sub_group_by_xor(sg, val, h, WARP_आकार);
 
             reg[j] = (lane & h) == 0 ? val + val2 : val2 - val;
         }
@@ -85,15 +85,15 @@ static void fwht_kernel(const T * __restrict__ src, float * __restrict__ dst, co
 
     // Butterflies across registers: h is a multiple of WARP_SIZE, so the partner of
     // element i*WARP_SIZE + lane lives in reg[i + h/WARP_SIZE] on the same lane.
-#pragma unroll
-    for (int h = WARP_SIZE; h < N; h *= 2) {
-        const int step = h / WARP_SIZE;
-#pragma unroll
-        for (int j = 0; j < el_w; j += 2 * step) {
-#pragma unroll
-            for (int k = 0; k < step; ++k) {
-                const float x = reg[j + k];
-                const float y = reg[j + k + step];
+#आशय unroll
+    क्रम (पूर्णांक h = WARP_आकार; h < N; h *= 2) {
+        स्थिर पूर्णांक step = h / WARP_आकार;
+#आशय unroll
+        क्रम (पूर्णांक j = 0; j < el_w; j += 2 * step) {
+#आशय unroll
+            क्रम (पूर्णांक k = 0; k < step; ++k) {
+                स्थिर भग्न x = reg[j + k];
+                स्थिर भग्न y = reg[j + k + step];
 
                 reg[j + k]        = x + y;
                 reg[j + k + step] = x - y;
@@ -101,25 +101,25 @@ static void fwht_kernel(const T * __restrict__ src, float * __restrict__ dst, co
         }
     }
 
-#pragma unroll
-    for (int i = 0; i < el_w; ++i) {
-        dst[i * WARP_SIZE + lane] = reg[i];
+#आशय unroll
+    क्रम (पूर्णांक i = 0; i < el_w; ++i) {
+        dst[i * WARP_आकार + lane] = reg[i];
     }
 }
 
-template <int N, typename T>
-static void launch_fwht(const T * src, float * dst, const int64_t n_rows, const float scale,
+ढाँचा <पूर्णांक N, typename T>
+अटल व्योम launch_fwht(स्थिर T * src, भग्न * dst, स्थिर int64_t n_rows, स्थिर भग्न scale,
                         dpct::queue_ptr stream) {
-    constexpr int rows_per_block = 4;
+    constexpr पूर्णांक rows_per_block = 4;
 
-    const int64_t num_blocks = (n_rows + rows_per_block - 1) / rows_per_block;
+    स्थिर int64_t अंक_blocks = (n_rows + rows_per_block - 1) / rows_per_block;
 
     // dim 1 is the fastest-varying, so a sub-group is exactly one row's WARP_SIZE lanes.
-    const sycl::range<2> global(num_blocks * rows_per_block, WARP_SIZE);
-    const sycl::range<2> local(rows_per_block, WARP_SIZE);
+    स्थिर sycl::range<2> global(अंक_blocks * rows_per_block, WARP_आकार);
+    स्थिर sycl::range<2> local(rows_per_block, WARP_आकार);
 
     stream->parallel_for(sycl::nd_range<2>(global, local),
-                         [=](sycl::nd_item<2> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                         [=](sycl::nd_item<2> item) [[sycl::reqd_sub_group_आकार(WARP_आकार)]] {
                              fwht_kernel<N, T>(src, dst, n_rows, scale, item);
                          });
 }
@@ -128,42 +128,42 @@ static void launch_fwht(const T * src, float * dst, const int64_t n_rows, const 
 // keeps N/NT values rather than N/WARP_SIZE. Butterflies below the sub-group width
 // still shuffle; those up to NT go through work-group local memory; the rest stay
 // in registers.
-template <int N, int NT, typename T>
-static void fwht_kernel_wide(const T * __restrict__ src,
-                             float * __restrict__ dst,
-                             const int64_t            n_rows,
-                             const float              scale,
-                             const sycl::nd_item<2> & item,
-                             float *                  smem) {
-    const int64_t r = item.get_global_id(0);
-    if (r >= n_rows) {
-        return;
+ढाँचा <पूर्णांक N, पूर्णांक NT, typename T>
+अटल व्योम fwht_kernel_wide(स्थिर T * __restrict__ src,
+                             भग्न * __restrict__ dst,
+                             स्थिर int64_t            n_rows,
+                             स्थिर भग्न              scale,
+                             स्थिर sycl::nd_item<2> & item,
+                             भग्न *                  smem) {
+    स्थिर int64_t r = item.get_global_id(0);
+    अगर (r >= n_rows) {
+        वापस;
     }
 
     src += r * N;
     dst += r * N;
 
-    constexpr int el_w = N / NT;
+    constexpr पूर्णांक el_w = N / NT;
     static_assert(el_w >= 1 && N % NT == 0, "row must be a whole number of work-group widths");
 
-    const int tid = item.get_local_id(1);
+    स्थिर पूर्णांक tid = item.get_local_id(1);
 
-    float reg[el_w];
-#pragma unroll
-    for (int i = 0; i < el_w; ++i) {
-        reg[i] = static_cast<float>(src[i * NT + tid]) * scale;
+    भग्न reg[el_w];
+#आशय unroll
+    क्रम (पूर्णांक i = 0; i < el_w; ++i) {
+        reg[i] = static_cast<भग्न>(src[i * NT + tid]) * scale;
     }
 
-    const sycl::sub_group sg   = item.get_sub_group();
-    const int             lane = sg.get_local_linear_id();
+    स्थिर sycl::sub_group sg   = item.get_sub_group();
+    स्थिर पूर्णांक             lane = sg.get_local_linear_id();
 
     // Butterflies inside the sub-group, same pattern as the narrow kernel.
-#pragma unroll
-    for (int h = 1; h < WARP_SIZE; h *= 2) {
-#pragma unroll
-        for (int j = 0; j < el_w; ++j) {
-            const float val  = reg[j];
-            const float val2 = dpct::permute_sub_group_by_xor(sg, val, h, WARP_SIZE);
+#आशय unroll
+    क्रम (पूर्णांक h = 1; h < WARP_आकार; h *= 2) {
+#आशय unroll
+        क्रम (पूर्णांक j = 0; j < el_w; ++j) {
+            स्थिर भग्न val  = reg[j];
+            स्थिर भग्न val2 = dpct::permute_sub_group_by_xor(sg, val, h, WARP_आकार);
 
             reg[j] = (lane & h) == 0 ? val + val2 : val2 - val;
         }
@@ -171,16 +171,16 @@ static void fwht_kernel_wide(const T * __restrict__ src,
 
     // Butterflies from the sub-group width up to NT: the partner lane is outside
     // this sub-group, so it goes through work-group local memory instead of a shuffle.
-    for (int h = WARP_SIZE; h < NT; h *= 2) {
-#pragma unroll
-        for (int j = 0; j < el_w; ++j) {
+    क्रम (पूर्णांक h = WARP_आकार; h < NT; h *= 2) {
+#आशय unroll
+        क्रम (पूर्णांक j = 0; j < el_w; ++j) {
             smem[j * NT + tid] = reg[j];
         }
         item.barrier(sycl::access::fence_space::local_space);
-#pragma unroll
-        for (int j = 0; j < el_w; ++j) {
-            const float val  = reg[j];
-            const float val2 = smem[j * NT + (tid ^ h)];
+#आशय unroll
+        क्रम (पूर्णांक j = 0; j < el_w; ++j) {
+            स्थिर भग्न val  = reg[j];
+            स्थिर भग्न val2 = smem[j * NT + (tid ^ h)];
             reg[j]           = (tid & h) == 0 ? val + val2 : val2 - val;
         }
         item.barrier(sycl::access::fence_space::local_space);
@@ -188,12 +188,12 @@ static void fwht_kernel_wide(const T * __restrict__ src,
 
     // Butterflies across registers: h is a multiple of NT, so the partner of element
     // i*NT + tid lives in reg[i + h/NT] on the same work-item.
-    for (int h = NT; h < N; h *= 2) {
-        const int step = h / NT;
-        for (int j = 0; j < el_w; j += 2 * step) {
-            for (int k = 0; k < step; ++k) {
-                const float x = reg[j + k];
-                const float y = reg[j + k + step];
+    क्रम (पूर्णांक h = NT; h < N; h *= 2) {
+        स्थिर पूर्णांक step = h / NT;
+        क्रम (पूर्णांक j = 0; j < el_w; j += 2 * step) {
+            क्रम (पूर्णांक k = 0; k < step; ++k) {
+                स्थिर भग्न x = reg[j + k];
+                स्थिर भग्न y = reg[j + k + step];
 
                 reg[j + k]        = x + y;
                 reg[j + k + step] = x - y;
@@ -201,108 +201,108 @@ static void fwht_kernel_wide(const T * __restrict__ src,
         }
     }
 
-#pragma unroll
-    for (int i = 0; i < el_w; ++i) {
+#आशय unroll
+    क्रम (पूर्णांक i = 0; i < el_w; ++i) {
         dst[i * NT + tid] = reg[i];
     }
 }
 
-template <int N, int NT, typename T>
-static void launch_fwht_wide(const T *       src,
-                             float *         dst,
-                             const int64_t   n_rows,
-                             const float     scale,
+ढाँचा <पूर्णांक N, पूर्णांक NT, typename T>
+अटल व्योम launch_fwht_wide(स्थिर T *       src,
+                             भग्न *         dst,
+                             स्थिर int64_t   n_rows,
+                             स्थिर भग्न     scale,
                              dpct::queue_ptr stream) {
-    const sycl::range<2> global(n_rows, NT);
-    const sycl::range<2> local(1, NT);
+    स्थिर sycl::range<2> global(n_rows, NT);
+    स्थिर sycl::range<2> local(1, NT);
 
     stream->submit([&](sycl::handler & cgh) {
-        sycl::local_accessor<float, 1> smem(sycl::range<1>(N), cgh);
+        sycl::local_accessor<भग्न, 1> smem(sycl::range<1>(N), cgh);
         cgh.parallel_for(sycl::nd_range<2>(global, local),
-                         [=](sycl::nd_item<2> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                         [=](sycl::nd_item<2> item) [[sycl::reqd_sub_group_आकार(WARP_आकार)]] {
                              fwht_kernel_wide<N, NT, T>(src, dst, n_rows, scale, item, get_pointer(smem));
                          });
     });
 }
 
-template <int N, int m, typename T>
-static void kronecker_kernel(const T * __restrict__ src,
-                             float * __restrict__ dst,
-                             const int64_t            n_rows,
-                             const float              scale,
-                             const sycl::nd_item<2> & item) {
+ढाँचा <पूर्णांक N, पूर्णांक m, typename T>
+अटल व्योम kronecker_kernel(स्थिर T * __restrict__ src,
+                             भग्न * __restrict__ dst,
+                             स्थिर int64_t            n_rows,
+                             स्थिर भग्न              scale,
+                             स्थिर sycl::nd_item<2> & item) {
     static_assert(m == 12 || m == 20, "block size has to be 12 or 20.");
 
-    const sycl::sub_group sg = item.get_sub_group();
+    स्थिर sycl::sub_group sg = item.get_sub_group();
 
-    const int64_t r = item.get_global_id(0);
-    if (r >= n_rows) {
-        return;
+    स्थिर int64_t r = item.get_global_id(0);
+    अगर (r >= n_rows) {
+        वापस;
     }
 
     src += r * N;
     dst += r * N;
 
-    constexpr int blocks_per_group = N / m;
-    constexpr int el_w             = blocks_per_group / WARP_SIZE;
-    static_assert(el_w >= 1 && blocks_per_group % WARP_SIZE == 0, "blocks_per_group must be a multiple of WARP_SIZE");
-    float     reg[el_w * m];
-    const int lane = sg.get_local_linear_id();
+    constexpr पूर्णांक blocks_per_group = N / m;
+    constexpr पूर्णांक el_w             = blocks_per_group / WARP_आकार;
+    static_assert(el_w >= 1 && blocks_per_group % WARP_आकार == 0, "blocks_per_group must be a multiple of WARP_SIZE");
+    भग्न     reg[el_w * m];
+    स्थिर पूर्णांक lane = sg.get_local_linear_id();
 
-#pragma unroll
-    for (int i = 0; i < el_w; ++i) {
-        const int b_idx = i * WARP_SIZE + lane;
+#आशय unroll
+    क्रम (पूर्णांक i = 0; i < el_w; ++i) {
+        स्थिर पूर्णांक b_idx = i * WARP_आकार + lane;
 
-#pragma unroll
-        for (int j = 0; j < m; ++j) {
-            reg[i * m + j] = static_cast<float>(src[b_idx * m + j]) * scale;
+#आशय unroll
+        क्रम (पूर्णांक j = 0; j < m; ++j) {
+            reg[i * m + j] = static_cast<भग्न>(src[b_idx * m + j]) * scale;
         }
     }
 
-#pragma unroll
-    for (int b = 0; b < el_w; ++b) {
-        float z[m] = { 0.0f };
+#आशय unroll
+    क्रम (पूर्णांक b = 0; b < el_w; ++b) {
+        भग्न z[m] = { 0.0f };
 
-#pragma unroll
-        for (int i = 0; i < m; ++i) {
-#pragma unroll
-            for (int j = 0; j < m; ++j) {
-                const float h = (m == 12 ? H12[j][i] : H20[j][i]);
+#आशय unroll
+        क्रम (पूर्णांक i = 0; i < m; ++i) {
+#आशय unroll
+            क्रम (पूर्णांक j = 0; j < m; ++j) {
+                स्थिर भग्न h = (m == 12 ? H12[j][i] : H20[j][i]);
                 z[i] += reg[b * m + j] * h;
             }
         }
 
-#pragma unroll
-        for (int i = 0; i < m; ++i) {
+#आशय unroll
+        क्रम (पूर्णांक i = 0; i < m; ++i) {
             reg[b * m + i] = z[i];
         }
     }
 
-#pragma unroll
-    for (int h = 1; h < WARP_SIZE; h *= 2) {
-#pragma unroll
-        for (int j = 0; j < el_w; ++j) {
-#pragma unroll
-            for (int k = 0; k < m; ++k) {
-                const float val  = reg[j * m + k];
-                const float val2 = dpct::permute_sub_group_by_xor(sg, val, h, WARP_SIZE);
+#आशय unroll
+    क्रम (पूर्णांक h = 1; h < WARP_आकार; h *= 2) {
+#आशय unroll
+        क्रम (पूर्णांक j = 0; j < el_w; ++j) {
+#आशय unroll
+            क्रम (पूर्णांक k = 0; k < m; ++k) {
+                स्थिर भग्न val  = reg[j * m + k];
+                स्थिर भग्न val2 = dpct::permute_sub_group_by_xor(sg, val, h, WARP_आकार);
 
                 reg[j * m + k] = (lane & h) == 0 ? val + val2 : val2 - val;
             }
         }
     }
 
-#pragma unroll
-    for (int h = WARP_SIZE; h < blocks_per_group; h *= 2) {
-        const int step = h / WARP_SIZE;
-#pragma unroll
-        for (int j = 0; j < el_w; j += 2 * step) {
-#pragma unroll
-            for (int s = 0; s < step; ++s) {
-#pragma unroll
-                for (int k = 0; k < m; ++k) {
-                    const float x = reg[(j + s) * m + k];
-                    const float y = reg[(j + s + step) * m + k];
+#आशय unroll
+    क्रम (पूर्णांक h = WARP_आकार; h < blocks_per_group; h *= 2) {
+        स्थिर पूर्णांक step = h / WARP_आकार;
+#आशय unroll
+        क्रम (पूर्णांक j = 0; j < el_w; j += 2 * step) {
+#आशय unroll
+            क्रम (पूर्णांक s = 0; s < step; ++s) {
+#आशय unroll
+                क्रम (पूर्णांक k = 0; k < m; ++k) {
+                    स्थिर भग्न x = reg[(j + s) * m + k];
+                    स्थिर भग्न y = reg[(j + s + step) * m + k];
 
                     reg[(j + s) * m + k]        = x + y;
                     reg[(j + s + step) * m + k] = x - y;
@@ -311,106 +311,106 @@ static void kronecker_kernel(const T * __restrict__ src,
         }
     }
 
-#pragma unroll
-    for (int i = 0; i < el_w; ++i) {
-        const int b_idx = i * WARP_SIZE + lane;
-#pragma unroll
-        for (int k = 0; k < m; ++k) {
+#आशय unroll
+    क्रम (पूर्णांक i = 0; i < el_w; ++i) {
+        स्थिर पूर्णांक b_idx = i * WARP_आकार + lane;
+#आशय unroll
+        क्रम (पूर्णांक k = 0; k < m; ++k) {
             dst[b_idx * m + k] = reg[i * m + k];
         }
     }
 }
 
-template <int N, int m, typename T>
-static void launch_kronecker(const T *       src,
-                             float *         dst,
-                             const int64_t   n_rows,
-                             const float     scale,
+ढाँचा <पूर्णांक N, पूर्णांक m, typename T>
+अटल व्योम launch_kronecker(स्थिर T *       src,
+                             भग्न *         dst,
+                             स्थिर int64_t   n_rows,
+                             स्थिर भग्न     scale,
                              dpct::queue_ptr stream) {
-    constexpr int rows_per_block = 4;
+    constexpr पूर्णांक rows_per_block = 4;
 
-    const int64_t num_blocks = (n_rows + rows_per_block - 1) / rows_per_block;
+    स्थिर int64_t अंक_blocks = (n_rows + rows_per_block - 1) / rows_per_block;
 
     // dim 1 is the fastest-varying, so a sub-group is exactly one row's WARP_SIZE lanes.
-    const sycl::range<2> global(num_blocks * rows_per_block, WARP_SIZE);
-    const sycl::range<2> local(rows_per_block, WARP_SIZE);
+    स्थिर sycl::range<2> global(अंक_blocks * rows_per_block, WARP_आकार);
+    स्थिर sycl::range<2> local(rows_per_block, WARP_आकार);
 
     stream->parallel_for(sycl::nd_range<2>(global, local),
-                         [=](sycl::nd_item<2> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                         [=](sycl::nd_item<2> item) [[sycl::reqd_sub_group_आकार(WARP_आकार)]] {
                              kronecker_kernel<N, m, T>(src, dst, n_rows, scale, item);
                          });
 }
 
-template <typename T>
-static bool ggml_sycl_op_fwht_impl(ggml_backend_sycl_context & ctx, const ggml_tensor * src, ggml_tensor * dst) {
-    const int     n    = (int) src->ne[0];
-    const int64_t rows = ggml_nrows(src);
+ढाँचा <typename T>
+अटल bool ggml_sycl_op_fwht_impl(ggml_backend_sycl_context & ctx, स्थिर ggml_tensor * src, ggml_tensor * dst) {
+    स्थिर पूर्णांक     n    = (पूर्णांक) src->ne[0];
+    स्थिर int64_t rows = ggml_nrows(src);
 
-    const T *       src_d  = (const T *) src->data;
-    float *         dst_d  = (float *) dst->data;
+    स्थिर T *       src_d  = (स्थिर T *) src->तथ्य;
+    भग्न *         dst_d  = (भग्न *) dst->तथ्य;
     dpct::queue_ptr stream = ctx.stream();
 
-    const float scale = 1.0f / std::sqrt((float) n);
+    स्थिर भग्न scale = 1.0f / std::वर्ग_मूल((भग्न) n);
 
-    switch (n) {
-        case 64:
+    चयन (n) {
+        हाल 64:
             launch_fwht<64>(src_d, dst_d, rows, scale, stream);
-            return true;
-        case 128:
+            वापस true;
+        हाल 128:
             launch_fwht<128>(src_d, dst_d, rows, scale, stream);
-            return true;
-        case 256:
+            वापस true;
+        हाल 256:
             launch_fwht<256>(src_d, dst_d, rows, scale, stream);
-            return true;
-        case 512:
+            वापस true;
+        हाल 512:
             launch_fwht<512>(src_d, dst_d, rows, scale, stream);
-            return true;
-        case 384:
+            वापस true;
+        हाल 384:
             launch_kronecker<384, 12>(src_d, dst_d, rows, scale, stream);
-            return true;
-        case 768:
+            वापस true;
+        हाल 768:
             launch_kronecker<768, 12>(src_d, dst_d, rows, scale, stream);
-            return true;
-        case 640:
+            वापस true;
+        हाल 640:
             launch_kronecker<640, 20>(src_d, dst_d, rows, scale, stream);
-            return true;
-        case 1280:
+            वापस true;
+        हाल 1280:
             launch_kronecker<1280, 20>(src_d, dst_d, rows, scale, stream);
-            return true;
-        case 1024:
+            वापस true;
+        हाल 1024:
             launch_fwht_wide<1024, 256>(src_d, dst_d, rows, scale, stream);
-            return true;
-        case 2048:
+            वापस true;
+        हाल 2048:
             launch_fwht_wide<2048, 256>(src_d, dst_d, rows, scale, stream);
-            return true;
-        case 4096:
+            वापस true;
+        हाल 4096:
             launch_fwht_wide<4096, 256>(src_d, dst_d, rows, scale, stream);
-            return true;
-        case 8192:
+            वापस true;
+        हाल 8192:
             launch_fwht_wide<8192, 256>(src_d, dst_d, rows, scale, stream);
-            return true;
-        default:
-            return false;
+            वापस true;
+        शेष:
+            वापस false;
     }
 }
 
-bool ggml_sycl_op_fwht(ggml_backend_sycl_context & ctx, const ggml_tensor * src, ggml_tensor * dst) {
-    if (dst->type != GGML_TYPE_F32) {
-        return false;
+bool ggml_sycl_op_fwht(ggml_backend_sycl_context & ctx, स्थिर ggml_tensor * src, ggml_tensor * dst) {
+    अगर (dst->type != GGML_TYPE_F32) {
+        वापस false;
     }
-    if (!ggml_are_same_shape(src, dst)) {
-        return false;
+    अगर (!ggml_are_same_shape(src, dst)) {
+        वापस false;
     }
-    if (!ggml_is_contiguous(src) || !ggml_is_contiguous(dst)) {
-        return false;
+    अगर (!ggml_is_contiguous(src) || !ggml_is_contiguous(dst)) {
+        वापस false;
     }
 
-    switch (src->type) {
-        case GGML_TYPE_F32:
-            return ggml_sycl_op_fwht_impl<float>(ctx, src, dst);
-        case GGML_TYPE_F16:
-            return ggml_sycl_op_fwht_impl<sycl::half>(ctx, src, dst);
-        default:
-            return false;
+    चयन (src->type) {
+        हाल GGML_TYPE_F32:
+            वापस ggml_sycl_op_fwht_impl<भग्न>(ctx, src, dst);
+        हाल GGML_TYPE_F16:
+            वापस ggml_sycl_op_fwht_impl<sycl::half>(ctx, src, dst);
+        शेष:
+            वापस false;
     }
 }

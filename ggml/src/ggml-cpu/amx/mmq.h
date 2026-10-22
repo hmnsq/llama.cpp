@@ -1,10 +1,10 @@
-#pragma once
-#include "common.h"
+#आशय once
+#समावेश "common.h"
 
-size_t ggml_backend_amx_desired_wsize(const struct ggml_tensor * dst);
+माप_प्रकार ggml_backend_amx_desired_wsize(स्थिर काष्ठा ggml_tensor * dst);
 
-size_t ggml_backend_amx_get_alloc_size(const struct ggml_tensor * tensor);
+माप_प्रकार ggml_backend_amx_get_alloc_आकार(स्थिर काष्ठा ggml_tensor * tensor);
 
-void ggml_backend_amx_convert_weight(struct ggml_tensor * tensor, const void * data, size_t offset, size_t size);
+व्योम ggml_backend_amx_convert_weight(काष्ठा ggml_tensor * tensor, स्थिर व्योम * तथ्य, माप_प्रकार offset, माप_प्रकार आकार);
 
-void ggml_backend_amx_mul_mat(const struct ggml_compute_params * params, struct ggml_tensor * dst);
+व्योम ggml_backend_amx_mul_mat(स्थिर काष्ठा ggml_compute_params * params, काष्ठा ggml_tensor * dst);

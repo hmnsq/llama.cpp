@@ -1,22 +1,22 @@
-#ifndef PRE_WGSL_HPP
-#define PRE_WGSL_HPP
+#अगर_अघोषित PRE_WGSL_HPP
+#घोषणा PRE_WGSL_HPP
 
-#include <cctype>
-#include <fstream>
-#include <sstream>
-#include <stdexcept>
-#include <string>
-#include <string_view>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
+#समावेश <cctype>
+#समावेश <fstream>
+#समावेश <sstream>
+#समावेश <stdexcept>
+#समावेश <string>
+#समावेश <string_view>
+#समावेश <unordered_map>
+#समावेश <unordered_set>
+#समावेश <vector>
 
 namespace pre_wgsl {
 
 //==============================================================
 // Options
 //==============================================================
-struct Options {
+काष्ठा Options {
     std::string              include_path = ".";
     std::vector<std::string> macros;
 };
@@ -24,186 +24,186 @@ struct Options {
 //==============================================================
 // Utility: trim
 //==============================================================
-static std::string trim(const std::string & s) {
-    size_t a = 0;
-    while (a < s.size() && std::isspace((unsigned char) s[a])) {
+अटल std::string trim(स्थिर std::string & s) {
+    माप_प्रकार a = 0;
+    जबतक (a < s.size() && std::है_खाली((अचिन्हित अक्षर) s[a])) {
         a++;
     }
-    size_t b = s.size();
-    while (b > a && std::isspace((unsigned char) s[b - 1])) {
+    माप_प्रकार b = s.size();
+    जबतक (b > a && std::है_खाली((अचिन्हित अक्षर) s[b - 1])) {
         b--;
     }
-    return s.substr(a, b - a);
+    वापस s.substr(a, b - a);
 }
 
-static std::string trim_value(std::istream & is) {
+अटल std::string trim_मूल्य(std::अ_प्रवाह & is) {
     std::ostringstream ss;
     ss << is.rdbuf();
-    return trim(ss.str());
+    वापस trim(ss.str());
 }
 
-static bool isIdentChar(char c) {
-    return std::isalnum(static_cast<unsigned char>(c)) || c == '_';
+अटल bool isIdentChar(अक्षर c) {
+    वापस std::है_अक्षर_अंक(static_cast<अचिन्हित अक्षर>(c)) || c == '_';
 }
 
-static bool endsWithContinuation(const std::string & line) {
-    size_t i = line.size();
-    while (i > 0 && std::isspace((unsigned char) line[i - 1])) {
+अटल bool endsWithContinuation(स्थिर std::string & पंक्ति) {
+    माप_प्रकार i = पंक्ति.size();
+    जबतक (i > 0 && std::है_खाली((अचिन्हित अक्षर) पंक्ति[i - 1])) {
         i--;
     }
-    return i > 0 && line[i - 1] == '\\';
+    वापस i > 0 && पंक्ति[i - 1] == '\\';
 }
 
-static void stripContinuation(std::string & line) {
-    size_t i = line.size();
-    while (i > 0 && std::isspace((unsigned char) line[i - 1])) {
+अटल व्योम stripContinuation(std::string & पंक्ति) {
+    माप_प्रकार i = पंक्ति.size();
+    जबतक (i > 0 && std::है_खाली((अचिन्हित अक्षर) पंक्ति[i - 1])) {
         i--;
     }
-    if (i > 0 && line[i - 1] == '\\') {
-        line.erase(i - 1);
+    अगर (i > 0 && पंक्ति[i - 1] == '\\') {
+        पंक्ति.erase(i - 1);
     }
 }
 
-static std::string expandMacrosRecursiveInternal(const std::string &                                  line,
-                                                 const std::unordered_map<std::string, std::string> & macros,
+अटल std::string expandMacrosRecursiveInternal(स्थिर std::string &                                  पंक्ति,
+                                                 स्थिर std::unordered_map<std::string, std::string> & macros,
                                                  std::unordered_set<std::string> &                    visiting);
 
-static std::string expandMacroValue(const std::string &                                  name,
-                                    const std::unordered_map<std::string, std::string> & macros,
+अटल std::string expand_Macro_मूल्य(स्थिर std::string &                                  name,
+                                    स्थिर std::unordered_map<std::string, std::string> & macros,
                                     std::unordered_set<std::string> &                    visiting) {
-    if (visiting.count(name)) {
-        throw std::runtime_error("Recursive macro: " + name);
+    अगर (visiting.count(name)) {
+        फेंको std::runtime_error("Recursive macro: " + name);
     }
     visiting.insert(name);
 
-    auto it = macros.find(name);
-    if (it == macros.end()) {
+    स्वतः it = macros.find(name);
+    अगर (it == macros.end()) {
         visiting.erase(name);
-        return name;
+        वापस name;
     }
 
-    const std::string & value = it->second;
-    if (value.empty()) {
+    स्थिर std::string & value = it->second;
+    अगर (value.empty()) {
         visiting.erase(name);
-        return "";
+        वापस "";
     }
 
     std::string expanded = expandMacrosRecursiveInternal(value, macros, visiting);
     visiting.erase(name);
-    return expanded;
+    वापस expanded;
 }
 
-static std::string expandMacrosRecursiveInternal(const std::string &                                  line,
-                                                 const std::unordered_map<std::string, std::string> & macros,
+अटल std::string expandMacrosRecursiveInternal(स्थिर std::string &                                  पंक्ति,
+                                                 स्थिर std::unordered_map<std::string, std::string> & macros,
                                                  std::unordered_set<std::string> &                    visiting) {
-    std::string result;
-    result.reserve(line.size());
+    std::string परिणाम;
+    परिणाम.reserve(पंक्ति.size());
 
-    size_t i = 0;
-    while (i < line.size()) {
-        if (isIdentChar(line[i])) {
-            size_t start = i;
-            while (i < line.size() && isIdentChar(line[i])) {
+    माप_प्रकार i = 0;
+    जबतक (i < पंक्ति.size()) {
+        अगर (isIdentChar(पंक्ति[i])) {
+            माप_प्रकार start = i;
+            जबतक (i < पंक्ति.size() && isIdentChar(पंक्ति[i])) {
                 i++;
             }
-            std::string token = line.substr(start, i - start);
+            std::string token = पंक्ति.substr(start, i - start);
 
-            auto it = macros.find(token);
-            if (it != macros.end()) {
-                result += expandMacroValue(token, macros, visiting);
-            } else {
-                result += token;
+            स्वतः it = macros.find(token);
+            अगर (it != macros.end()) {
+                परिणाम += expand_Macro_मूल्य(token, macros, visiting);
+            } अन्यथा {
+                परिणाम += token;
             }
-        } else {
-            result += line[i];
+        } अन्यथा {
+            परिणाम += पंक्ति[i];
             i++;
         }
     }
 
-    return result;
+    वापस परिणाम;
 }
 
-static std::string expandMacrosRecursive(const std::string &                                  line,
-                                         const std::unordered_map<std::string, std::string> & macros) {
+अटल std::string expandMacrosRecursive(स्थिर std::string &                                  पंक्ति,
+                                         स्थिर std::unordered_map<std::string, std::string> & macros) {
     std::unordered_set<std::string> visiting;
-    return expandMacrosRecursiveInternal(line, macros, visiting);
+    वापस expandMacrosRecursiveInternal(पंक्ति, macros, visiting);
 }
 
 //==============================================================
 // Tokenizer for expressions in #if/#elif
 //==============================================================
-class ExprLexer {
-  public:
-    enum Kind { END, IDENT, NUMBER, OP, LPAREN, RPAREN };
+श्रेणी व्यंजक_Lexer {
+  खुला:
+    क्रमागत Kind { END, IDENT, संख्या_2, OP, LPAREN, RPAREN };
 
-    struct Tok {
+    काष्ठा Tok {
         Kind        kind;
         std::string text;
     };
 
-    explicit ExprLexer(std::string_view sv) : src(sv), pos(0) {}
+    explicit व्यंजक_Lexer(std::string_view sv) : src(sv), pos(0) {}
 
-    Tok next() {
+    Tok अग्र() {
         skipWS();
-        if (pos >= src.size()) {
-            return { END, "" };
+        अगर (pos >= src.size()) {
+            वापस { END, "" };
         }
 
-        char c = src[pos];
+        अक्षर c = src[pos];
 
-        // number
-        if (std::isdigit((unsigned char) c)) {
-            size_t start = pos;
-            while (pos < src.size() && std::isdigit((unsigned char) src[pos])) {
+        //संख्या
+        अगर (std::है_अंक((अचिन्हित अक्षर) c)) {
+            माप_प्रकार start = pos;
+            जबतक (pos < src.size() && std::है_अंक((अचिन्हित अक्षर) src[pos])) {
                 pos++;
             }
-            return { NUMBER, std::string(src.substr(start, pos - start)) };
+            वापस { संख्या_2, std::string(src.substr(start, pos - start)) };
         }
 
         // identifier
-        if (std::isalpha((unsigned char) c) || c == '_') {
-            size_t start = pos;
-            while (pos < src.size() && (std::isalnum((unsigned char) src[pos]) || src[pos] == '_')) {
+        अगर (std::है_अक्षर((अचिन्हित अक्षर) c) || c == '_') {
+            माप_प्रकार start = pos;
+            जबतक (pos < src.size() && (std::है_अक्षर_अंक((अचिन्हित अक्षर) src[pos]) || src[pos] == '_')) {
                 pos++;
             }
-            return { IDENT, std::string(src.substr(start, pos - start)) };
+            वापस { IDENT, std::string(src.substr(start, pos - start)) };
         }
 
-        if (c == '(') {
+        अगर (c == '(') {
             pos++;
-            return { LPAREN, "(" };
+            वापस { LPAREN, "(" };
         }
-        if (c == ')') {
+        अगर (c == ')') {
             pos++;
-            return { RPAREN, ")" };
+            वापस { RPAREN, ")" };
         }
 
         // multi-char operators
-        static const char * two_ops[] = { "==", "!=", "<=", ">=", "&&", "||", "<<", ">>" };
-        for (auto op : two_ops) {
-            if (src.substr(pos, 2) == op) {
+        अटल स्थिर अक्षर * two_ops[] = { "==", "!=", "<=", ">=", "&&", "||", "<<", ">>" };
+        क्रम (स्वतः op : two_ops) {
+            अगर (src.substr(pos, 2) == op) {
                 pos += 2;
-                return { OP, std::string(op) };
+                वापस { OP, std::string(op) };
             }
         }
 
         // single-char operators
-        if (std::string("+-*/%<>!").find(c) != std::string::npos) {
+        अगर (std::string("+-*/%<>!").find(c) != std::string::npos) {
             pos++;
-            return { OP, std::string(1, c) };
+            वापस { OP, std::string(1, c) };
         }
 
         // unexpected
         pos++;
-        return { END, "" };
+        वापस { END, "" };
     }
 
-  private:
+  निजी:
     std::string_view src;
-    size_t           pos;
+    माप_प्रकार           pos;
 
-    void skipWS() {
-        while (pos < src.size() && std::isspace((unsigned char) src[pos])) {
+    व्योम skipWS() {
+        जबतक (pos < src.size() && std::है_खाली((अचिन्हित अक्षर) src[pos])) {
             pos++;
         }
     }
@@ -212,291 +212,291 @@ class ExprLexer {
 //==============================================================
 // Expression Parser (recursive descent)
 //==============================================================
-class ExprParser {
-  public:
-    ExprParser(std::string_view                                     expr,
-               const std::unordered_map<std::string, std::string> & macros,
+श्रेणी व्यंजक_Parser {
+  खुला:
+    व्यंजक_Parser(std::string_view                                     व्यंजक,
+               स्थिर std::unordered_map<std::string, std::string> & macros,
                std::unordered_set<std::string> &                    visiting) :
-        lex(expr),
+        lex(व्यंजक),
         macros(macros),
         visiting(visiting) {
         advance();
     }
 
-    int parse() { return parseLogicalOr(); }
+    पूर्णांक parse() { वापस parseLogicalOr(); }
 
-  private:
-    ExprLexer                                            lex;
-    ExprLexer::Tok                                       tok;
-    const std::unordered_map<std::string, std::string> & macros;
+  निजी:
+    व्यंजक_Lexer                                            lex;
+    व्यंजक_Lexer::Tok                                       tok;
+    स्थिर std::unordered_map<std::string, std::string> & macros;
     std::unordered_set<std::string> &                    visiting;
 
-    void advance() { tok = lex.next(); }
+    व्योम advance() { tok = lex.अग्र(); }
 
-    bool acceptOp(const std::string & s) {
-        if (tok.kind == ExprLexer::OP && tok.text == s) {
+    bool acceptOp(स्थिर std::string & s) {
+        अगर (tok.kind == व्यंजक_Lexer::OP && tok.text == s) {
             advance();
-            return true;
+            वापस true;
         }
-        return false;
+        वापस false;
     }
 
-    bool acceptKind(ExprLexer::Kind k) {
-        if (tok.kind == k) {
+    bool acceptKind(व्यंजक_Lexer::Kind k) {
+        अगर (tok.kind == k) {
             advance();
-            return true;
+            वापस true;
         }
-        return false;
+        वापस false;
     }
 
-    int parseLogicalOr() {
-        int v = parseLogicalAnd();
-        while (acceptOp("||")) {
-            int rhs = parseLogicalAnd();
+    पूर्णांक parseLogicalOr() {
+        पूर्णांक v = parseLogicalAnd();
+        जबतक (acceptOp("||")) {
+            पूर्णांक rhs = parseLogicalAnd();
             v       = (v || rhs);
         }
-        return v;
+        वापस v;
     }
 
-    int parseLogicalAnd() {
-        int v = parseEquality();
-        while (acceptOp("&&")) {
-            int rhs = parseEquality();
+    पूर्णांक parseLogicalAnd() {
+        पूर्णांक v = parseEquality();
+        जबतक (acceptOp("&&")) {
+            पूर्णांक rhs = parseEquality();
             v       = (v && rhs);
         }
-        return v;
+        वापस v;
     }
 
-    int parseEquality() {
-        int v = parseRelational();
-        for (;;) {
-            if (acceptOp("==")) {
-                int rhs = parseRelational();
+    पूर्णांक parseEquality() {
+        पूर्णांक v = parseRelational();
+        क्रम (;;) {
+            अगर (acceptOp("==")) {
+                पूर्णांक rhs = parseRelational();
                 v       = (v == rhs);
-            } else if (acceptOp("!=")) {
-                int rhs = parseRelational();
+            } अन्यथा अगर (acceptOp("!=")) {
+                पूर्णांक rhs = parseRelational();
                 v       = (v != rhs);
-            } else {
-                break;
+            } अन्यथा {
+                अवरोध;
             }
         }
-        return v;
+        वापस v;
     }
 
-    int parseRelational() {
-        int v = parseShift();
-        for (;;) {
-            if (acceptOp("<")) {
-                int rhs = parseShift();
+    पूर्णांक parseRelational() {
+        पूर्णांक v = parseShift();
+        क्रम (;;) {
+            अगर (acceptOp("<")) {
+                पूर्णांक rhs = parseShift();
                 v       = (v < rhs);
-            } else if (acceptOp(">")) {
-                int rhs = parseShift();
+            } अन्यथा अगर (acceptOp(">")) {
+                पूर्णांक rhs = parseShift();
                 v       = (v > rhs);
-            } else if (acceptOp("<=")) {
-                int rhs = parseShift();
+            } अन्यथा अगर (acceptOp("<=")) {
+                पूर्णांक rhs = parseShift();
                 v       = (v <= rhs);
-            } else if (acceptOp(">=")) {
-                int rhs = parseShift();
+            } अन्यथा अगर (acceptOp(">=")) {
+                पूर्णांक rhs = parseShift();
                 v       = (v >= rhs);
-            } else {
-                break;
+            } अन्यथा {
+                अवरोध;
             }
         }
-        return v;
+        वापस v;
     }
 
-    int parseShift() {
-        int v = parseAdd();
-        for (;;) {
-            if (acceptOp("<<")) {
-                int rhs = parseAdd();
+    पूर्णांक parseShift() {
+        पूर्णांक v = parseAdd();
+        क्रम (;;) {
+            अगर (acceptOp("<<")) {
+                पूर्णांक rhs = parseAdd();
                 v       = (v << rhs);
-            } else if (acceptOp(">>")) {
-                int rhs = parseAdd();
+            } अन्यथा अगर (acceptOp(">>")) {
+                पूर्णांक rhs = parseAdd();
                 v       = (v >> rhs);
-            } else {
-                break;
+            } अन्यथा {
+                अवरोध;
             }
         }
-        return v;
+        वापस v;
     }
 
-    int parseAdd() {
-        int v = parseMult();
-        for (;;) {
-            if (acceptOp("+")) {
-                int rhs = parseMult();
+    पूर्णांक parseAdd() {
+        पूर्णांक v = parseMult();
+        क्रम (;;) {
+            अगर (acceptOp("+")) {
+                पूर्णांक rhs = parseMult();
                 v       = (v + rhs);
-            } else if (acceptOp("-")) {
-                int rhs = parseMult();
+            } अन्यथा अगर (acceptOp("-")) {
+                पूर्णांक rhs = parseMult();
                 v       = (v - rhs);
-            } else {
-                break;
+            } अन्यथा {
+                अवरोध;
             }
         }
-        return v;
+        वापस v;
     }
 
-    int parseMult() {
-        int v = parseUnary();
-        for (;;) {
-            if (acceptOp("*")) {
-                int rhs = parseUnary();
+    पूर्णांक parseMult() {
+        पूर्णांक v = parseUnary();
+        क्रम (;;) {
+            अगर (acceptOp("*")) {
+                पूर्णांक rhs = parseUnary();
                 v       = (v * rhs);
-            } else if (acceptOp("/")) {
-                int rhs = parseUnary();
+            } अन्यथा अगर (acceptOp("/")) {
+                पूर्णांक rhs = parseUnary();
                 v       = (rhs == 0 ? 0 : v / rhs);
-            } else if (acceptOp("%")) {
-                int rhs = parseUnary();
+            } अन्यथा अगर (acceptOp("%")) {
+                पूर्णांक rhs = parseUnary();
                 v       = (rhs == 0 ? 0 : v % rhs);
-            } else {
-                break;
+            } अन्यथा {
+                अवरोध;
             }
         }
-        return v;
+        वापस v;
     }
 
-    int parseUnary() {
-        if (acceptOp("!")) {
-            return !parseUnary();
+    पूर्णांक parseUnary() {
+        अगर (acceptOp("!")) {
+            वापस !parseUnary();
         }
-        if (acceptOp("-")) {
-            return -parseUnary();
+        अगर (acceptOp("-")) {
+            वापस -parseUnary();
         }
-        if (acceptOp("+")) {
-            return +parseUnary();
+        अगर (acceptOp("+")) {
+            वापस +parseUnary();
         }
-        return parsePrimary();
+        वापस parsePrimary();
     }
 
-    int parsePrimary() {
+    पूर्णांक parsePrimary() {
         // '(' expr ')'
-        if (acceptKind(ExprLexer::LPAREN)) {
-            int v = parse();
-            if (!acceptKind(ExprLexer::RPAREN)) {
-                throw std::runtime_error("missing ')'");
+        अगर (acceptKind(व्यंजक_Lexer::LPAREN)) {
+            पूर्णांक v = parse();
+            अगर (!acceptKind(व्यंजक_Lexer::RPAREN)) {
+                फेंको std::runtime_error("missing ')'");
             }
-            return v;
+            वापस v;
         }
 
-        // number
-        if (tok.kind == ExprLexer::NUMBER) {
-            int v = std::stoi(tok.text);
+        //संख्या
+        अगर (tok.kind == व्यंजक_Lexer::संख्या_2) {
+            पूर्णांक v = std::stoi(tok.text);
             advance();
-            return v;
+            वापस v;
         }
 
         // defined(identifier)
-        if (tok.kind == ExprLexer::IDENT && tok.text == "defined") {
+        अगर (tok.kind == व्यंजक_Lexer::IDENT && tok.text == "defined") {
             advance();
-            if (acceptKind(ExprLexer::LPAREN)) {
-                if (tok.kind != ExprLexer::IDENT) {
-                    throw std::runtime_error("expected identifier in defined()");
+            अगर (acceptKind(व्यंजक_Lexer::LPAREN)) {
+                अगर (tok.kind != व्यंजक_Lexer::IDENT) {
+                    फेंको std::runtime_error("expected identifier in defined()");
                 }
                 std::string name = tok.text;
                 advance();
-                if (!acceptKind(ExprLexer::RPAREN)) {
-                    throw std::runtime_error("missing ) in defined()");
+                अगर (!acceptKind(व्यंजक_Lexer::RPAREN)) {
+                    फेंको std::runtime_error("missing ) in defined()");
                 }
-                return macros.count(name) ? 1 : 0;
-            } else {
+                वापस macros.count(name) ? 1 : 0;
+            } अन्यथा {
                 // defined NAME
-                if (tok.kind != ExprLexer::IDENT) {
-                    throw std::runtime_error("expected identifier in defined NAME");
+                अगर (tok.kind != व्यंजक_Lexer::IDENT) {
+                    फेंको std::runtime_error("expected identifier in defined NAME");
                 }
                 std::string name = tok.text;
                 advance();
-                return macros.count(name) ? 1 : 0;
+                वापस macros.count(name) ? 1 : 0;
             }
         }
 
         // identifier -> treat as integer, if defined use its value else 0
-        if (tok.kind == ExprLexer::IDENT) {
+        अगर (tok.kind == व्यंजक_Lexer::IDENT) {
             std::string name = tok.text;
             advance();
-            auto it = macros.find(name);
-            if (it == macros.end()) {
-                return 0;
+            स्वतः it = macros.find(name);
+            अगर (it == macros.end()) {
+                वापस 0;
             }
-            if (it->second.empty()) {
-                return 1;
+            अगर (it->second.empty()) {
+                वापस 1;
             }
-            return evalMacroExpression(name, it->second);
+            वापस evalMacroExpression(name, it->second);
         }
 
         // unexpected
-        return 0;
+        वापस 0;
     }
 
-    int evalMacroExpression(const std::string & name, const std::string & value) {
-        if (visiting.count(name)) {
-            throw std::runtime_error("Recursive macro: " + name);
+    पूर्णांक evalMacroExpression(स्थिर std::string & name, स्थिर std::string & value) {
+        अगर (visiting.count(name)) {
+            फेंको std::runtime_error("Recursive macro: " + name);
         }
 
         visiting.insert(name);
-        ExprParser ep(value, macros, visiting);
-        int        v = ep.parse();
+        व्यंजक_Parser ep(value, macros, visiting);
+        पूर्णांक        v = ep.parse();
         visiting.erase(name);
-        return v;
+        वापस v;
     }
 };
 
 //==============================================================
 // Preprocessor
 //==============================================================
-class Preprocessor {
-  public:
+श्रेणी Preprocessor {
+  खुला:
     explicit Preprocessor(Options opts = {}) : opts_(std::move(opts)) {
         // Treat empty include path as current directory
-        if (opts_.include_path.empty()) {
+        अगर (opts_.include_path.empty()) {
             opts_.include_path = ".";
         }
         parseMacroDefinitions(opts_.macros);
     }
 
-    std::string preprocess_file(const std::string & filename, const std::vector<std::string> & additional_macros = {}) {
+    std::string preprocess_file(स्थिर std::string & filename, स्थिर std::vector<std::string> & additional_macros = {}) {
         std::unordered_map<std::string, std::string> macros;
         std::unordered_set<std::string>              predefined;
-        std::unordered_set<std::string>              include_stack;
+        std::unordered_set<std::string>              include_ढेर;
         buildMacros(additional_macros, macros, predefined);
 
-        std::string result = processFile(filename, macros, predefined, include_stack, DirectiveMode::All);
-        return result;
+        std::string परिणाम = processFile(filename, macros, predefined, include_ढेर, DirectiveMode::All);
+        वापस परिणाम;
     }
 
-    std::string preprocess(const std::string & contents, const std::vector<std::string> & additional_macros = {}) {
+    std::string preprocess(स्थिर std::string & contents, स्थिर std::vector<std::string> & additional_macros = {}) {
         std::unordered_map<std::string, std::string> macros;
         std::unordered_set<std::string>              predefined;
-        std::unordered_set<std::string>              include_stack;
+        std::unordered_set<std::string>              include_ढेर;
         buildMacros(additional_macros, macros, predefined);
 
-        std::string result = processString(contents, macros, predefined, include_stack, DirectiveMode::All);
-        return result;
+        std::string परिणाम = processString(contents, macros, predefined, include_ढेर, DirectiveMode::All);
+        वापस परिणाम;
     }
 
-    std::string preprocess_includes_file(const std::string & filename) {
+    std::string preprocess_includes_file(स्थिर std::string & filename) {
         std::unordered_map<std::string, std::string> macros;
         std::unordered_set<std::string>              predefined;
-        std::unordered_set<std::string>              include_stack;
-        std::string result = processFile(filename, macros, predefined, include_stack, DirectiveMode::IncludesOnly);
-        return result;
+        std::unordered_set<std::string>              include_ढेर;
+        std::string परिणाम = processFile(filename, macros, predefined, include_ढेर, DirectiveMode::IncludesOnly);
+        वापस परिणाम;
     }
 
-    std::string preprocess_includes(const std::string & contents) {
+    std::string preprocess_includes(स्थिर std::string & contents) {
         std::unordered_map<std::string, std::string> macros;
         std::unordered_set<std::string>              predefined;
-        std::unordered_set<std::string>              include_stack;
-        std::string result = processString(contents, macros, predefined, include_stack, DirectiveMode::IncludesOnly);
-        return result;
+        std::unordered_set<std::string>              include_ढेर;
+        std::string परिणाम = processString(contents, macros, predefined, include_ढेर, DirectiveMode::IncludesOnly);
+        वापस परिणाम;
     }
 
-  private:
+  निजी:
     Options                                      opts_;
     std::unordered_map<std::string, std::string> global_macros;
 
-    enum class DirectiveMode { All, IncludesOnly };
+    क्रमागत श्रेणी DirectiveMode { All, IncludesOnly };
 
-    struct Cond {
+    काष्ठा Cond {
         bool parent_active;
         bool active;
         bool taken;
@@ -505,15 +505,15 @@ class Preprocessor {
     //----------------------------------------------------------
     // Parse macro definitions into global_macros
     //----------------------------------------------------------
-    void parseMacroDefinitions(const std::vector<std::string> & macro_defs) {
-        for (const auto & def : macro_defs) {
-            size_t eq_pos = def.find('=');
-            if (eq_pos != std::string::npos) {
+    व्योम parseMacroDefinitions(स्थिर std::vector<std::string> & macro_defs) {
+        क्रम (स्थिर स्वतः & def : macro_defs) {
+            माप_प्रकार eq_pos = def.find('=');
+            अगर (eq_pos != std::string::npos) {
                 // Format: NAME=VALUE
                 std::string name    = trim(def.substr(0, eq_pos));
                 std::string value   = trim(def.substr(eq_pos + 1));
                 global_macros[name] = value;
-            } else {
+            } अन्यथा {
                 // Format: NAME
                 std::string name    = trim(def);
                 global_macros[name] = "";
@@ -524,23 +524,23 @@ class Preprocessor {
     //----------------------------------------------------------
     // Build combined macro map and predefined set for a preprocessing operation
     //----------------------------------------------------------
-    void buildMacros(const std::vector<std::string> &               additional_macros,
+    व्योम buildMacros(स्थिर std::vector<std::string> &               additional_macros,
                      std::unordered_map<std::string, std::string> & macros,
                      std::unordered_set<std::string> &              predefined) {
         macros = global_macros;
-        predefined.clear();
+        predefined.सफा();
 
-        for (const auto & [name, value] : global_macros) {
+        क्रम (स्थिर स्वतः & [name, value] : global_macros) {
             predefined.insert(name);
         }
 
-        for (const auto & def : additional_macros) {
-            size_t      eq_pos = def.find('=');
+        क्रम (स्थिर स्वतः & def : additional_macros) {
+            माप_प्रकार      eq_pos = def.find('=');
             std::string name, value;
-            if (eq_pos != std::string::npos) {
+            अगर (eq_pos != std::string::npos) {
                 name  = trim(def.substr(0, eq_pos));
                 value = trim(def.substr(eq_pos + 1));
-            } else {
+            } अन्यथा {
                 name  = trim(def);
                 value = "";
             }
@@ -554,88 +554,88 @@ class Preprocessor {
     //----------------------------------------------------------
     // Helpers
     //----------------------------------------------------------
-    std::string loadFile(const std::string & fname) {
-        std::ifstream f(fname);
-        if (!f.is_open()) {
-            throw std::runtime_error("Could not open file: " + fname);
+    std::string loadFile(स्थिर std::string & fname) {
+        std::अख_प्रवाह f(fname);
+        अगर (!f.is_open()) {
+            फेंको std::runtime_error("Could not open file: " + fname);
         }
         std::stringstream ss;
         ss << f.rdbuf();
-        return ss.str();
+        वापस ss.str();
     }
 
-    bool condActive(const std::vector<Cond> & cond) const {
-        if (cond.empty()) {
-            return true;
+    bool condActive(स्थिर std::vector<Cond> & cond) स्थिर {
+        अगर (cond.empty()) {
+            वापस true;
         }
-        return cond.back().active;
+        वापस cond.back().active;
     }
 
     //----------------------------------------------------------
     // Process a file
     //----------------------------------------------------------
-    std::string processFile(const std::string &                            name,
+    std::string processFile(स्थिर std::string &                            name,
                             std::unordered_map<std::string, std::string> & macros,
-                            const std::unordered_set<std::string> &        predefined_macros,
-                            std::unordered_set<std::string> &              include_stack,
+                            स्थिर std::unordered_set<std::string> &        predefined_macros,
+                            std::unordered_set<std::string> &              include_ढेर,
                             DirectiveMode                                  mode) {
-        if (include_stack.count(name)) {
-            throw std::runtime_error("Recursive include: " + name);
+        अगर (include_ढेर.count(name)) {
+            फेंको std::runtime_error("Recursive include: " + name);
         }
 
-        include_stack.insert(name);
+        include_ढेर.insert(name);
         std::string shader_code = loadFile(name);
-        std::string out         = processString(shader_code, macros, predefined_macros, include_stack, mode);
-        include_stack.erase(name);
-        return out;
+        std::string out         = processString(shader_code, macros, predefined_macros, include_ढेर, mode);
+        include_ढेर.erase(name);
+        वापस out;
     }
 
-    std::string processIncludeFile(const std::string &                            fname,
+    std::string processIncludeFile(स्थिर std::string &                            fname,
                                    std::unordered_map<std::string, std::string> & macros,
-                                   const std::unordered_set<std::string> &        predefined_macros,
-                                   std::unordered_set<std::string> &              include_stack,
+                                   स्थिर std::unordered_set<std::string> &        predefined_macros,
+                                   std::unordered_set<std::string> &              include_ढेर,
                                    DirectiveMode                                  mode) {
         std::string full_path = opts_.include_path + "/" + fname;
-        return processFile(full_path, macros, predefined_macros, include_stack, mode);
+        वापस processFile(full_path, macros, predefined_macros, include_ढेर, mode);
     }
 
     //----------------------------------------------------------
     // Process text
     //----------------------------------------------------------
-    std::string processString(const std::string &                            shader_code,
+    std::string processString(स्थिर std::string &                            shader_code,
                               std::unordered_map<std::string, std::string> & macros,
-                              const std::unordered_set<std::string> &        predefined_macros,
-                              std::unordered_set<std::string> &              include_stack,
+                              स्थिर std::unordered_set<std::string> &        predefined_macros,
+                              std::unordered_set<std::string> &              include_ढेर,
                               DirectiveMode                                  mode) {
         std::vector<Cond>  cond;  // Conditional stack for this shader
         std::stringstream  out;
         std::istringstream in(shader_code);
-        std::string        line;
+        std::string        पंक्ति;
 
-        while (std::getline(in, line)) {
-            std::string logical = line;
+        जबतक (std::लो_पंक्ति(in, पंक्ति)) {
+            std::string logical = पंक्ति;
             std::string t       = trim(logical);
-            if (!t.empty() && t[0] == '#') {
-                while (endsWithContinuation(logical)) {
+            अगर (!t.empty() && t[0] == '#') {
+                जबतक (endsWithContinuation(logical)) {
                     stripContinuation(logical);
-                    if (!std::getline(in, line)) {
-                        break;
+                    अगर (!std::लो_पंक्ति(in, पंक्ति)) {
+                        अवरोध;
                     }
                     logical += "\n";
-                    logical += line;
+                    logical += पंक्ति;
                 }
                 t = trim(logical);
             }
 
-            if (!t.empty() && t[0] == '#') {
-                bool handled = handleDirective(t, out, macros, predefined_macros, cond, include_stack, mode);
-                if (mode == DirectiveMode::IncludesOnly && !handled) {
+            अगर (!t.empty() && t[0] == '#') {
+                bool handled = handleDirective(t, out, macros, predefined_macros, cond, include_ढेर, mode);
+                अगर (mode == DirectiveMode::IncludesOnly && !handled) {
                     out << logical << "\n";
                 }
-            } else {
-                if (mode == DirectiveMode::IncludesOnly) {
+            } अन्यथा {
+                अगर (mode == DirectiveMode::IncludesOnly) {
                     out << logical << "\n";
-                } else if (condActive(cond)) {
+                } अन्यथा अगर (condActive(cond)) {
                     // Expand macros in the line before outputting
                     std::string expanded = expandMacrosRecursive(logical, macros);
                     out << expanded << "\n";
@@ -643,22 +643,22 @@ class Preprocessor {
             }
         }
 
-        if (mode == DirectiveMode::All && !cond.empty()) {
-            throw std::runtime_error("Unclosed #if directive");
+        अगर (mode == DirectiveMode::All && !cond.empty()) {
+            फेंको std::runtime_error("Unclosed #if directive");
         }
 
-        return out.str();
+        वापस out.str();
     }
 
     //----------------------------------------------------------
     // Directive handler
     //----------------------------------------------------------
-    bool handleDirective(const std::string &                            t,
+    bool handleDirective(स्थिर std::string &                            t,
                          std::stringstream &                            out,
                          std::unordered_map<std::string, std::string> & macros,
-                         const std::unordered_set<std::string> &        predefined_macros,
+                         स्थिर std::unordered_set<std::string> &        predefined_macros,
                          std::vector<Cond> &                            cond,
-                         std::unordered_set<std::string> &              include_stack,
+                         std::unordered_set<std::string> &              include_ढेर,
                          DirectiveMode                                  mode) {
         // split into tokens
         std::string        body = t.substr(1);
@@ -666,143 +666,143 @@ class Preprocessor {
         std::string        cmd;
         iss >> cmd;
 
-        if (cmd == "include") {
-            if (mode == DirectiveMode::All && !condActive(cond)) {
-                return true;
+        अगर (cmd == "include") {
+            अगर (mode == DirectiveMode::All && !condActive(cond)) {
+                वापस true;
             }
             std::string file;
             iss >> file;
-            if (file.size() >= 2 && file.front() == '"' && file.back() == '"') {
+            अगर (file.size() >= 2 && file.front() == '"' && file.back() == '"') {
                 file = file.substr(1, file.size() - 2);
             }
-            out << processIncludeFile(file, macros, predefined_macros, include_stack, mode);
-            return true;
+            out << processIncludeFile(file, macros, predefined_macros, include_ढेर, mode);
+            वापस true;
         }
 
-        if (mode == DirectiveMode::IncludesOnly) {
-            return false;
+        अगर (mode == DirectiveMode::IncludesOnly) {
+            वापस false;
         }
 
-        if (cmd == "define") {
-            if (!condActive(cond)) {
-                return true;
+        अगर (cmd == "define") {
+            अगर (!condActive(cond)) {
+                वापस true;
             }
             std::string name;
             iss >> name;
             // Don't override predefined macros from options
-            if (predefined_macros.count(name)) {
-                return true;
+            अगर (predefined_macros.count(name)) {
+                वापस true;
             }
-            std::string value = trim_value(iss);
+            std::string value = trim_मूल्य(iss);
             macros[name]      = value;
-            return true;
+            वापस true;
         }
 
-        if (cmd == "undef") {
-            if (!condActive(cond)) {
-                return true;
+        अगर (cmd == "undef") {
+            अगर (!condActive(cond)) {
+                वापस true;
             }
             std::string name;
             iss >> name;
             // Don't undef predefined macros from options
-            if (predefined_macros.count(name)) {
-                return true;
+            अगर (predefined_macros.count(name)) {
+                वापस true;
             }
             macros.erase(name);
-            return true;
+            वापस true;
         }
 
-        if (cmd == "ifdef") {
+        अगर (cmd == "ifdef") {
             std::string name;
             iss >> name;
             bool p = condActive(cond);
             bool v = macros.count(name);
             cond.push_back({ p, p && v, p && v });
-            return true;
+            वापस true;
         }
 
-        if (cmd == "ifndef") {
+        अगर (cmd == "ifndef") {
             std::string name;
             iss >> name;
             bool p = condActive(cond);
             bool v = !macros.count(name);
             cond.push_back({ p, p && v, p && v });
-            return true;
+            वापस true;
         }
 
-        if (cmd == "if") {
-            std::string expr = trim_value(iss);
+        अगर (cmd == "if") {
+            std::string व्यंजक = trim_मूल्य(iss);
             bool        p    = condActive(cond);
             bool        v    = false;
-            if (p) {
+            अगर (p) {
                 std::unordered_set<std::string> visiting;
-                ExprParser                      ep(expr, macros, visiting);
+                व्यंजक_Parser                      ep(व्यंजक, macros, visiting);
                 v = ep.parse() != 0;
             }
             cond.push_back({ p, p && v, p && v });
-            return true;
+            वापस true;
         }
 
-        if (cmd == "elif") {
-            std::string expr = trim_value(iss);
+        अगर (cmd == "elif") {
+            std::string व्यंजक = trim_मूल्य(iss);
 
-            if (cond.empty()) {
-                throw std::runtime_error("#elif without #if");
+            अगर (cond.empty()) {
+                फेंको std::runtime_error("#elif without #if");
             }
 
             Cond & c = cond.back();
-            if (!c.parent_active) {
+            अगर (!c.parent_active) {
                 c.active = false;
-                return true;
+                वापस true;
             }
 
-            if (c.taken) {
+            अगर (c.taken) {
                 c.active = false;
-                return true;
+                वापस true;
             }
 
             std::unordered_set<std::string> visiting;
-            ExprParser                      ep(expr, macros, visiting);
+            व्यंजक_Parser                      ep(व्यंजक, macros, visiting);
             bool                            v = ep.parse() != 0;
             c.active                          = v;
-            if (v) {
+            अगर (v) {
                 c.taken = true;
             }
-            return true;
+            वापस true;
         }
 
-        if (cmd == "else") {
-            if (cond.empty()) {
-                throw std::runtime_error("#else without #if");
+        अगर (cmd == "else") {
+            अगर (cond.empty()) {
+                फेंको std::runtime_error("#else without #if");
             }
 
             Cond & c = cond.back();
-            if (!c.parent_active) {
+            अगर (!c.parent_active) {
                 c.active = false;
-                return true;
+                वापस true;
             }
-            if (c.taken) {
+            अगर (c.taken) {
                 c.active = false;
-            } else {
+            } अन्यथा {
                 c.active = true;
                 c.taken  = true;
             }
-            return true;
+            वापस true;
         }
 
-        if (cmd == "endif") {
-            if (cond.empty()) {
-                throw std::runtime_error("#endif without #if");
+        अगर (cmd == "endif") {
+            अगर (cond.empty()) {
+                फेंको std::runtime_error("#endif without #if");
             }
             cond.pop_back();
-            return true;
+            वापस true;
         }
 
         // Unknown directive
-        throw std::runtime_error("Unknown directive: #" + cmd);
+        फेंको std::runtime_error("Unknown directive: #" + cmd);
     }
 };
 
 }  // namespace pre_wgsl
 
-#endif  // PRE_WGSL_HPP
+#पूर्ण_अगर  // PRE_WGSL_HPP

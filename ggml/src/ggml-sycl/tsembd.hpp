@@ -10,11 +10,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#ifndef GGML_SYCL_TSEMBD_HPP
-#define GGML_SYCL_TSEMBD_HPP
+#अगर_अघोषित GGML_SYCL_TSEMBD_HPP
+#घोषणा GGML_SYCL_TSEMBD_HPP
 
-#include "common.hpp"
+#समावेश "common.hpp"
 
-void ggml_sycl_op_timestep_embedding(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+व्योम ggml_sycl_op_timestep_embedding(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-#endif // GGML_SYCL_TSEMBD_HPP
+#पूर्ण_अगर // GGML_SYCL_TSEMBD_HPP

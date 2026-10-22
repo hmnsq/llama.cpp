@@ -1,81 +1,81 @@
-#include "memtrace.hpp"
+#समावेश "memtrace.hpp"
 
-#include "common.hpp"
-#include "ggml-impl.h"
+#समावेश "common.hpp"
+#समावेश "ggml-impl.h"
 
-#include <cstdio>
-#include <mutex>
-#include <unordered_map>
+#समावेश <cstdio>
+#समावेश <mutex>
+#समावेश <unordered_map>
 
-constexpr size_t MIB = 1024 * 1024;
+constexpr माप_प्रकार MIB = 1024 * 1024;
 
-static const char * mem_type_name(ggml_sycl_mem_type type) {
-    switch (type) {
-        case GGML_SYCL_MEM_BUFFER:   return "buffer";
-        case GGML_SYCL_MEM_POOL_LEG: return "pool_leg";
-        case GGML_SYCL_MEM_POOL_VMM: return "pool_vmm";
-        case GGML_SYCL_MEM_ASYNC:    return "async";
-        case GGML_SYCL_MEM_DIRECT:   return "direct";
-        default:                     GGML_ABORT("[%s] The type value %d is not supported\n", __func__, (int) type);
+अटल स्थिर अक्षर * mem_type_name(ggml_sycl_mem_type type) {
+    चयन (type) {
+        हाल GGML_SYCL_MEM_बफर:   वापस "buffer";
+        हाल GGML_SYCL_MEM_POOL_LEG: वापस "pool_leg";
+        हाल GGML_SYCL_MEM_POOL_VMM: वापस "pool_vmm";
+        हाल GGML_SYCL_MEM_ASYNC:    वापस "async";
+        हाल GGML_SYCL_MEM_DIRECT:   वापस "direct";
+        शेष:                     GGML_ABORT("[%s] The type value %d is not supported\n", __func__, (पूर्णांक) type);
     }
 }
 
-struct mem_tracker {
+काष्ठा mem_tracker {
     std::mutex mutex;
-    std::unordered_map<const void *, std::pair<ggml_sycl_mem_type, size_t>> live_by_ptr;
-    size_t live[GGML_SYCL_MEM_TYPE_COUNT] = {};
-    size_t peak[GGML_SYCL_MEM_TYPE_COUNT] = {};
-    size_t total_live = 0;
-    size_t total_peak = 0;
-    size_t last_logged_peak = 0;
+    std::unordered_map<स्थिर व्योम *, std::pair<ggml_sycl_mem_type, माप_प्रकार>> live_by_ptr;
+    माप_प्रकार live[GGML_SYCL_MEM_TYPE_गिनती] = {};
+    माप_प्रकार peak[GGML_SYCL_MEM_TYPE_गिनती] = {};
+    माप_प्रकार योग_live = 0;
+    माप_प्रकार योग_peak = 0;
+    माप_प्रकार last_logged_peak = 0;
 };
 
-static mem_tracker & get_tracker() {
-    static mem_tracker t;
-    return t;
+अटल mem_tracker & get_tracker() {
+    अटल mem_tracker t;
+    वापस t;
 }
 
-static size_t step_bytes() {
-    const int mib = g_ggml_sycl_memtrace_step > 0 ? g_ggml_sycl_memtrace_step : 64;
-    return (size_t) mib * MIB;
+अटल माप_प्रकार step_bytes() {
+    स्थिर पूर्णांक mib = g_ggml_sycl_memtrace_step > 0 ? g_ggml_sycl_memtrace_step : 64;
+    वापस (माप_प्रकार) mib * MIB;
 }
 
-static void report_sites_locked() {
+अटल व्योम report_sites_locked() {
     mem_tracker & t = get_tracker();
-    for (int i = 0; i < GGML_SYCL_MEM_TYPE_COUNT; i++) {
-        if (t.peak[i] == 0) {
-            continue;
+    क्रम (पूर्णांक i = 0; i < GGML_SYCL_MEM_TYPE_गिनती; i++) {
+        अगर (t.peak[i] == 0) {
+            जारी;
         }
         GGML_LOG_INFO(GGML_SYCL_MEMTRACE_TAG "   %-9s allocated %5zu MiB, peak %5zu MiB\n",
                       mem_type_name((ggml_sycl_mem_type) i), t.live[i] / MIB, t.peak[i] / MIB);
     }
 }
 
-static void report_locked(const char * tag) {
+अटल व्योम report_locked(स्थिर अक्षर * tag) {
     mem_tracker & t = get_tracker();
 
-    const size_t allocated = t.total_live / MIB;
-    const size_t buffers   = t.live[GGML_SYCL_MEM_BUFFER] / MIB;
+    स्थिर माप_प्रकार allocated = t.योग_live / MIB;
+    स्थिर माप_प्रकार buffers   = t.live[GGML_SYCL_MEM_बफर] / MIB;
 
     GGML_LOG_INFO(GGML_SYCL_MEMTRACE_TAG " %s: allocated %5zu MiB (buffers %5zu + scratch %5zu),"
                   " peak %5zu MiB\n",
-                  tag, allocated, buffers, allocated - buffers, t.total_peak / MIB);
+                  tag, allocated, buffers, allocated - buffers, t.योग_peak / MIB);
     report_sites_locked();
 }
 
-static void log_event_locked(const char * op, ggml_sycl_mem_type type, const void * ptr, size_t bytes) {
+अटल व्योम log_event_locked(स्थिर अक्षर * op, ggml_sycl_mem_type type, स्थिर व्योम * ptr, माप_प्रकार bytes) {
     GGML_LOG_INFO(GGML_SYCL_MEMTRACE_TAG " allocated %5zu MiB  %-5s %-9s %9.3f MiB  ptr=%p\n",
-                  get_tracker().total_live / MIB, op, mem_type_name(type),
-                  (double) bytes / MIB, ptr);
+                  get_tracker().योग_live / MIB, op, mem_type_name(type),
+                  (द्विगुन) bytes / MIB, ptr);
 }
 
 bool ggml_sycl_memtrace_enabled() {
-    return g_ggml_sycl_memtrace > 0;
+    वापस g_ggml_sycl_memtrace > 0;
 }
 
-void ggml_sycl_memtrace_add(ggml_sycl_mem_type type, const void * ptr, size_t bytes) {
-    if (!ggml_sycl_memtrace_enabled()) {
-        return;
+व्योम ggml_sycl_memtrace_add(ggml_sycl_mem_type type, स्थिर व्योम * ptr, माप_प्रकार bytes) {
+    अगर (!ggml_sycl_memtrace_enabled()) {
+        वापस;
     }
     GGML_ASSERT(ptr != nullptr);
     GGML_ASSERT(bytes != 0);
@@ -83,110 +83,110 @@ void ggml_sycl_memtrace_add(ggml_sycl_mem_type type, const void * ptr, size_t by
     mem_tracker & t = get_tracker();
     std::lock_guard<std::mutex> lock(t.mutex);
 
-    auto it = t.live_by_ptr.find(ptr);
-    if (it != t.live_by_ptr.end()) {
+    स्वतः it = t.live_by_ptr.find(ptr);
+    अगर (it != t.live_by_ptr.end()) {
         t.live[it->second.first] -= it->second.second;
-        t.total_live -= it->second.second;
+        t.योग_live -= it->second.second;
     }
 
     t.live_by_ptr[ptr] = { type, bytes };
     t.live[type] += bytes;
-    t.total_live += bytes;
+    t.योग_live += bytes;
 
-    if (t.live[type] > t.peak[type]) {
+    अगर (t.live[type] > t.peak[type]) {
         t.peak[type] = t.live[type];
     }
-    if (t.total_live > t.total_peak) {
-        t.total_peak = t.total_live;
+    अगर (t.योग_live > t.योग_peak) {
+        t.योग_peak = t.योग_live;
     }
 
-    if (g_ggml_sycl_memtrace >= 2) {
+    अगर (g_ggml_sycl_memtrace >= 2) {
         log_event_locked("alloc", type, ptr, bytes);
     }
 
-    static const size_t step = step_bytes();
-    if (t.total_peak >= t.last_logged_peak + step) {
-        t.last_logged_peak = t.total_peak;
-        char tag[96];
-        std::snprintf(tag, sizeof(tag), "peak grew (+%zu MiB from %s)", bytes / MIB,
+    अटल स्थिर माप_प्रकार step = step_bytes();
+    अगर (t.योग_peak >= t.last_logged_peak + step) {
+        t.last_logged_peak = t.योग_peak;
+        अक्षर tag[96];
+        std::snprintf(tag, माप(tag), "peak grew (+%zu MiB from %s)", bytes / MIB,
                       mem_type_name(type));
         report_locked(tag);
     }
 }
 
-void ggml_sycl_memtrace_del(const void * ptr) {
-    if (!ggml_sycl_memtrace_enabled() || ptr == nullptr) {
-        return;
+व्योम ggml_sycl_memtrace_del(स्थिर व्योम * ptr) {
+    अगर (!ggml_sycl_memtrace_enabled() || ptr == nullptr) {
+        वापस;
     }
     mem_tracker & t = get_tracker();
     std::lock_guard<std::mutex> lock(t.mutex);
 
-    auto it = t.live_by_ptr.find(ptr);
-    if (it == t.live_by_ptr.end()) {
-        return;
+    स्वतः it = t.live_by_ptr.find(ptr);
+    अगर (it == t.live_by_ptr.end()) {
+        वापस;
     }
-    const ggml_sycl_mem_type type = it->second.first;
-    const size_t bytes = it->second.second;
+    स्थिर ggml_sycl_mem_type type = it->second.first;
+    स्थिर माप_प्रकार bytes = it->second.second;
     t.live[type] -= bytes;
-    t.total_live -= bytes;
+    t.योग_live -= bytes;
     t.live_by_ptr.erase(it);
 
-    if (g_ggml_sycl_memtrace >= 2) {
+    अगर (g_ggml_sycl_memtrace >= 2) {
         log_event_locked("free", type, ptr, bytes);
     }
 }
 
-void ggml_sycl_memtrace_fail(ggml_sycl_mem_type type, size_t bytes) {
+व्योम ggml_sycl_memtrace_fail(ggml_sycl_mem_type type, माप_प्रकार bytes) {
     GGML_LOG_ERROR(GGML_SYCL_MEMTRACE_TAG " alloc FAILED: %9.3f MiB %s\n",
-                   (double) bytes / MIB, mem_type_name(type));
-    if (!ggml_sycl_memtrace_enabled()) {
-        return;
+                   (द्विगुन) bytes / MIB, mem_type_name(type));
+    अगर (!ggml_sycl_memtrace_enabled()) {
+        वापस;
     }
     mem_tracker & t = get_tracker();
     std::lock_guard<std::mutex> lock(t.mutex);
     report_locked("at allocation failure");
 }
 
-void ggml_sycl_memtrace_report(const char * tag) {
-    if (!ggml_sycl_memtrace_enabled()) {
-        return;
+व्योम ggml_sycl_memtrace_report(स्थिर अक्षर * tag) {
+    अगर (!ggml_sycl_memtrace_enabled()) {
+        वापस;
     }
     mem_tracker & t = get_tracker();
     std::lock_guard<std::mutex> lock(t.mutex);
     report_locked(tag);
 }
 
-static bool device_memory_is_dedicated(int device) {
-    if (device < 0 || device >= ggml_sycl_info().device_count) {
-        return false;
+अटल bool device_memory_is_dedicated(पूर्णांक device) {
+    अगर (device < 0 || device >= ggml_sycl_info().device_गिनती) {
+        वापस false;
     }
-    const sycl_device_info & info = ggml_sycl_info().devices[device];
-    return info.l0_device_type_valid && info.l0_discrete_gpu;
+    स्थिर sycl_device_info & info = ggml_sycl_info().devices[device];
+    वापस info.l0_device_type_valid && info.l0_discrete_gpu;
 }
 
-void ggml_sycl_memtrace_report_device(const char * tag, int device, size_t dev_free, size_t dev_total) {
-    if (!ggml_sycl_memtrace_enabled()) {
-        return;
+व्योम ggml_sycl_memtrace_report_device(स्थिर अक्षर * tag, पूर्णांक device, माप_प्रकार dev_free, माप_प्रकार dev_योग) {
+    अगर (!ggml_sycl_memtrace_enabled()) {
+        वापस;
     }
     mem_tracker & t = get_tracker();
     std::lock_guard<std::mutex> lock(t.mutex);
 
-    const size_t in_use    = dev_total > dev_free ? dev_total - dev_free : 0;
-    const size_t total     = dev_total / MIB;
-    const size_t freed     = dev_free / MIB;
-    const size_t allocated = t.total_live / MIB;
-    const size_t buffers   = t.live[GGML_SYCL_MEM_BUFFER] / MIB;
-    const size_t peak      = t.total_peak / MIB;
+    स्थिर माप_प्रकार in_use    = dev_योग > dev_free ? dev_योग - dev_free : 0;
+    स्थिर माप_प्रकार योग     = dev_योग / MIB;
+    स्थिर माप_प्रकार freed     = dev_free / MIB;
+    स्थिर माप_प्रकार allocated = t.योग_live / MIB;
+    स्थिर माप_प्रकार buffers   = t.live[GGML_SYCL_MEM_बफर] / MIB;
+    स्थिर माप_प्रकार peak      = t.योग_peak / MIB;
 
-    if (in_use >= t.total_live && device_memory_is_dedicated(device) && total >= freed + allocated) {
+    अगर (in_use >= t.योग_live && device_memory_is_dedicated(device) && योग >= freed + allocated) {
         GGML_LOG_INFO(GGML_SYCL_MEMTRACE_TAG " %s: total %5zu MiB = free %5zu + allocated %5zu"
                       " (buffers %5zu + scratch %5zu) + other %5zu, peak %5zu MiB\n",
-                      tag, total, freed, allocated, buffers, allocated - buffers,
-                      total - freed - allocated, peak);
-    } else {
+                      tag, योग, freed, allocated, buffers, allocated - buffers,
+                      योग - freed - allocated, peak);
+    } अन्यथा {
         GGML_LOG_INFO(GGML_SYCL_MEMTRACE_TAG " %s: total %5zu MiB, free %5zu, in use %5zu;"
                       " allocated %5zu (buffers %5zu + scratch %5zu), peak %5zu MiB\n",
-                      tag, total, freed, in_use / MIB, allocated, buffers,
+                      tag, योग, freed, in_use / MIB, allocated, buffers,
                       allocated - buffers, peak);
     }
     report_sites_locked();

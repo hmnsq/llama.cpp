@@ -1,102 +1,102 @@
-#include "ggml-openvino-extra.h"
+#समावेश "ggml-openvino-extra.h"
 
-#include "ggml-impl.h"
-#include "ggml.h"
-#include "model-cache.h"
+#समावेश "ggml-impl.h"
+#समावेश "ggml.h"
+#समावेश "model-cache.h"
 
-#include <algorithm>
-#include <cstdlib>
-#include <cstring>
-#include <openvino/runtime/intel_gpu/ocl/ocl.hpp>
-#include <openvino/runtime/intel_npu/level_zero/level_zero.hpp>
-#include <openvino/runtime/properties.hpp>
-#include <mutex>
-#include <optional>
+#समावेश <algorithm>
+#समावेश <cstdlib>
+#समावेश <cstring>
+#समावेश <openvino/runtime/intel_gpu/ocl/ocl.hpp>
+#समावेश <openvino/runtime/intel_npu/level_zero/level_zero.hpp>
+#समावेश <openvino/runtime/properties.hpp>
+#समावेश <mutex>
+#समावेश <optional>
 
 ov::Core & ov_singleton_core() {
-    static ov::Core core;
-    return core;
+    अटल ov::Core core;
+    वापस core;
 }
 
-static bool has_prefix(const std::string & s, const std::string & prefix) {
-    return s.size() >= prefix.size() && std::equal(prefix.begin(), prefix.end(), s.begin());
+अटल bool has_prefix(स्थिर std::string & s, स्थिर std::string & prefix) {
+    वापस s.size() >= prefix.size() && std::equal(prefix.begin(), prefix.end(), s.begin());
 }
 
-static bool is_virtual_routing_device(const std::string & device_name) {
-    return has_prefix(device_name, "AUTO") || has_prefix(device_name, "MULTI") || has_prefix(device_name, "HETERO");
+अटल bool is_virtual_routing_device(स्थिर std::string & device_name) {
+    वापस has_prefix(device_name, "AUTO") || has_prefix(device_name, "MULTI") || has_prefix(device_name, "HETERO");
 }
 
-static std::vector<std::string> ov_enumerate_devices() {
-    std::vector<std::string> result;
+अटल std::vector<std::string> ov_enumerate_devices() {
+    std::vector<std::string> परिणाम;
 
-    for (const auto & device : ov_singleton_core().get_available_devices()) {
-        if (!is_virtual_routing_device(device)) {
-            result.push_back(device);
+    क्रम (स्थिर स्वतः & device : ov_singleton_core().get_available_devices()) {
+        अगर (!is_virtual_routing_device(device)) {
+            परिणाम.push_back(device);
         }
     }
 
-    if (result.empty()) {
-        result.push_back("CPU");
+    अगर (परिणाम.empty()) {
+        परिणाम.push_back("CPU");
     }
 
-    std::sort(result.begin(), result.end());
-    result.erase(std::unique(result.begin(), result.end()), result.end());
-    return result;
+    std::sort(परिणाम.begin(), परिणाम.end());
+    परिणाम.erase(std::unique(परिणाम.begin(), परिणाम.end()), परिणाम.end());
+    वापस परिणाम;
 }
 
-std::string ggml_openvino_get_device_description(const std::string & device_name) {
+std::string ggml_openvino_get_device_description(स्थिर std::string & device_name) {
     std::string description = device_name;
-    try {
+    प्रयास {
         description = ov_singleton_core().get_property(device_name, ov::device::full_name);
-    } catch (...) {
-        return device_name;
+    } पकड़ो (...) {
+        वापस device_name;
     }
 
-    if (has_prefix(device_name, "NPU")) {
-        try {
-            const std::string arch = ov_singleton_core().get_property(device_name, "DEVICE_ARCHITECTURE").as<std::string>();
-            if (!arch.empty()) {
+    अगर (has_prefix(device_name, "NPU")) {
+        प्रयास {
+            स्थिर std::string arch = ov_singleton_core().get_property(device_name, "DEVICE_ARCHITECTURE").as<std::string>();
+            अगर (!arch.empty()) {
                 description += " (NPU " + arch + ")";
             }
-        } catch (...) {
+        } पकड़ो (...) {
         }
     }
 
-    return description;
+    वापस description;
 }
 
 // requested: GGML_OPENVINO_DEVICE, nullptr if unset. available_devices is never empty (see ov_enumerate_devices)
-static std::string resolve_openvino_device_name(const std::vector<std::string> & available_devices,
-                                                const char * requested) {
-    auto available = [&](const std::string & name) {
-        return std::find(available_devices.begin(), available_devices.end(), name) != available_devices.end();
+अटल std::string resolve_openvino_device_name(स्थिर std::vector<std::string> & available_devices,
+                                                स्थिर अक्षर * requested) {
+    स्वतः available = [&](स्थिर std::string & name) {
+        वापस std::find(available_devices.begin(), available_devices.end(), name) != available_devices.end();
     };
-    if (requested == nullptr) {
-        return available("CPU") ? "CPU" : available_devices.front();
+    अगर (requested == nullptr) {
+        वापस available("CPU") ? "CPU" : available_devices.front();
     }
-    if (!available(requested)) {
+    अगर (!available(requested)) {
         // No fallback to CPU (easy to miss) and no GPU -> GPU.0 alias (with iGPU + dGPU, GPU.0 is often the
         // wrong one). List the devices here: --list-devices initializes this backend and would abort too.
         std::string list;
-        for (const std::string & name : available_devices) {
+        क्रम (स्थिर std::string & name : available_devices) {
             list += "\n  " + name + ": " + ggml_openvino_get_device_description(name);
         }
         GGML_ABORT("GGML OpenVINO Backend: GGML_OPENVINO_DEVICE=%s is not available. "
                    "Set it to one of the available OpenVINO devices:%s",
                    requested, list.c_str());
     }
-    return requested;
+    वापस requested;
 }
 
 // =====================================================
 // Device Configuration Implementations
 // =====================================================
 
-void ggml_openvino_device_config::init() {
-    static std::mutex mutex;
+व्योम ggml_openvino_device_config::init() {
+    अटल std::mutex mutex;
     std::lock_guard<std::mutex> lock(mutex);
-    if (initialized) {
-        return;
+    अगर (initialized) {
+        वापस;
     }
     // Set up front: a failed OpenCL setup below is not retried on every call
     initialized = true;
@@ -104,7 +104,7 @@ void ggml_openvino_device_config::init() {
     // All recognized GGML_OPENVINO_* env vars. Their values are cached here
     // once at backend init time and read back via ggml_openvino_getenv_str()
     // (raw string) or ggml_openvino_getenv_int() (integer / boolean toggle).
-    static constexpr const char * env_var_names[] = {
+    अटल constexpr स्थिर अक्षर * env_var_names[] = {
         // String values (use ggml_openvino_getenv_str)
         "GGML_OPENVINO_DEVICE",
         "GGML_OPENVINO_CACHE_DIR",
@@ -146,9 +146,9 @@ void ggml_openvino_device_config::init() {
         "GGML_OPENVINO_FULL_GRAPH_KEY",
     };
 
-    for (const char * const & env_var : env_var_names) {
-        auto * env = getenv(env_var);
-        if (env) {
+    क्रम (स्थिर अक्षर * स्थिर & env_var : env_var_names) {
+        स्वतः * env = दो_पर्या(env_var);
+        अगर (env) {
             environment_variables[env_var] = env;
         }
     }
@@ -159,8 +159,8 @@ void ggml_openvino_device_config::init() {
 
     ggml_openvino_model_cache_init();
 
-    const char * cache_dir = ggml_openvino_getenv_str("GGML_OPENVINO_CACHE_DIR");
-    if (has_prefix(device_name, "NPU")) {
+    स्थिर अक्षर * cache_dir = ggml_openvino_getenv_str("GGML_OPENVINO_CACHE_DIR");
+    अगर (has_prefix(device_name, "NPU")) {
         compile_config = {
             {"NPU_COMPILER_DYNAMIC_QUANTIZATION", "YES"   },
             {"NPU_USE_NPUW",                      "YES"   },
@@ -172,32 +172,32 @@ void ggml_openvino_device_config::init() {
             {"NPUW_DQ",                           "YES"   },
             {"NPUW_DQ_FULL",                      "NO"    },
         };
-        if (cache_dir && strlen(cache_dir) > 0) {
+        अगर (cache_dir && म_माप(cache_dir) > 0) {
             compile_config["NPUW_CACHE_DIR"] = cache_dir;
-            compile_config.insert(ov::cache_mode(ov::CacheMode::OPTIMIZE_SIZE));
+            compile_config.insert(ov::cache_mode(ov::CacheMode::OPTIMIZE_आकार));
         }
-        const char * compilation_mode_params =
+        स्थिर अक्षर * compilation_mode_params =
             ggml_openvino_getenv_str("GGML_OPENVINO_NPU_COMPILE_CONFIG");
-        if (compilation_mode_params && strlen(compilation_mode_params) > 0) {
+        अगर (compilation_mode_params && म_माप(compilation_mode_params) > 0) {
             compile_config["NPU_COMPILATION_MODE_PARAMS"] = compilation_mode_params;
         }
-    } else if (cache_dir && strlen(cache_dir) > 0) {
+    } अन्यथा अगर (cache_dir && म_माप(cache_dir) > 0) {
         compile_config.insert(ov::cache_dir(cache_dir));
-        compile_config.insert(ov::cache_mode(ov::CacheMode::OPTIMIZE_SIZE));
+        compile_config.insert(ov::cache_mode(ov::CacheMode::OPTIMIZE_आकार));
     }
 
-    if (ggml_openvino_getenv_int("GGML_OPENVINO_PROFILING") >= 2) {
+    अगर (ggml_openvino_getenv_int("GGML_OPENVINO_PROFILING") >= 2) {
         compile_config.insert(ov::enable_profiling(true));
     }
 
     // Initialize remote context with queue sharing for GPU
-    if (has_prefix(device_name, "GPU")) {
+    अगर (has_prefix(device_name, "GPU")) {
         // Use the OpenCL context OpenVINO created for this device, so GPU.N gets its own device
         cl_context cl_ctx;
-        try {
-            auto ov_ctx = ov_singleton_core().get_default_context(device_name).as<ov::intel_gpu::ocl::ClContext>();
-            cl_ctx = ov_ctx.get();
-        } catch (const std::exception & e) {
+        प्रयास {
+            स्वतः ov_ctx = ov_singleton_core().get_default_context(device_name).as<ov::intel_gpu::ocl::ClContext>();
+            cl_ctx = ov_ctx.लो();
+        } पकड़ो (स्थिर std::exception & e) {
             // The consumers of the remote context have no host fallback, and OpenVINO
             // already reported the device as present.
             GGML_ABORT("ggml-openvino: failed to get the OpenCL context for %s: %s", device_name.c_str(), e.what());
@@ -205,14 +205,14 @@ void ggml_openvino_device_config::init() {
 
         cl_int err;
         cl_device_id cl_device;
-        err = clGetContextInfo(cl_ctx, CL_CONTEXT_DEVICES, sizeof(cl_device), &cl_device, nullptr);
-        if (err != CL_SUCCESS) {
+        err = clGetContextInfo(cl_ctx, CL_CONTEXT_DEVICES, माप(cl_device), &cl_device, nullptr);
+        अगर (err != CL_SUCCESS) {
             GGML_ABORT("ggml-openvino: failed to get the OpenCL device for %s: %d", device_name.c_str(), err);
         }
 
         cl_platform_id cl_platform;
-        err = clGetDeviceInfo(cl_device, CL_DEVICE_PLATFORM, sizeof(cl_platform), &cl_platform, nullptr);
-        if (err != CL_SUCCESS) {
+        err = clGetDeviceInfo(cl_device, CL_DEVICE_PLATFORM, माप(cl_platform), &cl_platform, nullptr);
+        अगर (err != CL_SUCCESS) {
             GGML_ABORT("ggml-openvino: failed to get the OpenCL platform for %s: %d", device_name.c_str(), err);
         }
 
@@ -222,37 +222,37 @@ void ggml_openvino_device_config::init() {
             (clEnqueueMemcpyINTEL_fn) clGetExtensionFunctionAddressForPlatform(cl_platform, "clEnqueueMemcpyINTEL");
 
         cl_ulong device_max_alloc = 0;
-        err = clGetDeviceInfo(cl_device, CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(device_max_alloc), &device_max_alloc,
+        err = clGetDeviceInfo(cl_device, CL_DEVICE_MAX_MEM_ALLOC_आकार, माप(device_max_alloc), &device_max_alloc,
                               nullptr);
-        if (err == CL_SUCCESS) {
-            max_alloc_size = device_max_alloc;
-        } else {
+        अगर (err == CL_SUCCESS) {
+            max_alloc_आकार = device_max_alloc;
+        } अन्यथा {
             // not fatal, ggml then allocates one buffer
             GGML_LOG_WARN("Failed to get OpenCL max allocation size: %d\n", err);
         }
 
-        const cl_queue_properties profiling_properties[] = {
+        स्थिर cl_queue_properties profiling_properties[] = {
             CL_QUEUE_PROPERTIES,
             CL_QUEUE_PROFILING_ENABLE,
             0,
         };
-        const cl_queue_properties * queue_properties =
+        स्थिर cl_queue_properties * queue_properties =
             ggml_openvino_getenv_int("GGML_OPENVINO_PROFILING") >= 2 ? profiling_properties : nullptr;
         cl_queue = clCreateCommandQueueWithProperties(cl_ctx, cl_device, queue_properties, &err);
-        if (err != CL_SUCCESS) {
+        अगर (err != CL_SUCCESS) {
             GGML_ABORT("ggml-openvino: failed to create the OpenCL queue for %s: %d", device_name.c_str(), err);
         }
 
         // Create OpenVINO remote context with queue sharing
         remote_context = ov::intel_gpu::ocl::ClContext(ov_singleton_core(), cl_queue);
-    } else if (has_prefix(device_name, "NPU")) {
+    } अन्यथा अगर (has_prefix(device_name, "NPU")) {
         // remote tensor is not used for NPU yet
         // remote_context = ov_singleton_core().get_default_context(device_name);
     }
 }
 
 ggml_openvino_device_config::~ggml_openvino_device_config() {
-    if (cl_queue != nullptr) {
+    अगर (cl_queue != nullptr) {
         clReleaseCommandQueue(cl_queue);
         cl_queue = nullptr;
     }
@@ -260,111 +260,111 @@ ggml_openvino_device_config::~ggml_openvino_device_config() {
 
 // Get the global device config singleton
 ggml_openvino_device_config & ggml_openvino_get_device_config() {
-    static ggml_openvino_device_config config;
-    return config;
+    अटल ggml_openvino_device_config config;
+    वापस config;
 }
 
 // Initialize device config (call during backend init)
-void ggml_openvino_init_device_config() {
+व्योम ggml_openvino_init_device_config() {
     ggml_openvino_get_device_config().init();
 }
 
 // Get the device name
-const std::string & ggml_openvino_get_device_name() {
-    return ggml_openvino_get_device_config().device_name;
+स्थिर std::string & ggml_openvino_get_device_name() {
+    वापस ggml_openvino_get_device_config().device_name;
 }
 
 std::vector<std::string> ggml_openvino_get_available_devices() {
-    auto & config = ggml_openvino_get_device_config();
+    स्वतः & config = ggml_openvino_get_device_config();
     config.init();
-    return config.available_devices;
+    वापस config.available_devices;
 }
 
 // Get the value of a GGML_OPENVINO_* env var as a string. Returns
 // default_value when the var is unset or set to an empty string.
-const char * ggml_openvino_getenv_str(const char * var, const char * default_value) {
-    auto & env_map = ggml_openvino_get_device_config().environment_variables;
-    auto it = env_map.find(var);
-    return (it == env_map.end() || it->second.empty()) ? default_value : it->second.c_str();
+स्थिर अक्षर * ggml_openvino_getenv_str(स्थिर अक्षर * var, स्थिर अक्षर * default_मूल्य) {
+    स्वतः & env_map = ggml_openvino_get_device_config().environment_variables;
+    स्वतः it = env_map.find(var);
+    वापस (it == env_map.end() || it->second.empty()) ? default_मूल्य : it->second.c_str();
 }
 
 // Get the value of a GGML_OPENVINO_* env var as an int (via std::atoi).
 // Returns default_value (0) when the var is unset or empty. Used for both
 // integer settings (e.g. GGML_OPENVINO_PREFILL_CHUNK_SIZE) and boolean
 // toggles: "0" disables, any non-zero integer enables.
-int ggml_openvino_getenv_int(const char * var, int default_value) {
-    const char * v = ggml_openvino_getenv_str(var, nullptr);
-    return v ? std::atoi(v) : default_value;
+पूर्णांक ggml_openvino_getenv_int(स्थिर अक्षर * var, पूर्णांक default_मूल्य) {
+    स्थिर अक्षर * v = ggml_openvino_getenv_str(var, nullptr);
+    वापस v ? std::म_से_प(v) : default_मूल्य;
 }
 
 bool ggml_openvino_reduce_compile_mem_enabled() {
-    const char * reduce_compile_mem = ggml_openvino_getenv_str("GGML_OPENVINO_REDUCE_COMPILE_MEM");
-    if (reduce_compile_mem != nullptr) {
-        return ggml_openvino_getenv_int("GGML_OPENVINO_REDUCE_COMPILE_MEM") != 0;
+    स्थिर अक्षर * reduce_compile_mem = ggml_openvino_getenv_str("GGML_OPENVINO_REDUCE_COMPILE_MEM");
+    अगर (reduce_compile_mem != nullptr) {
+        वापस ggml_openvino_getenv_int("GGML_OPENVINO_REDUCE_COMPILE_MEM") != 0;
     }
-    return ggml_openvino_getenv_int("GGML_OPENVINO_MEMORY_OPTIMIZE") != 0;
+    वापस ggml_openvino_getenv_int("GGML_OPENVINO_MEMORY_OPTIMIZE") != 0;
 }
 
 bool ggml_openvino_release_weights_enabled() {
-    const char * release_weights = ggml_openvino_getenv_str("GGML_OPENVINO_RELEASE_WEIGHTS");
-    if (release_weights != nullptr) {
-        return ggml_openvino_is_gpu() && ggml_openvino_getenv_int("GGML_OPENVINO_RELEASE_WEIGHTS") != 0;
+    स्थिर अक्षर * release_weights = ggml_openvino_getenv_str("GGML_OPENVINO_RELEASE_WEIGHTS");
+    अगर (release_weights != nullptr) {
+        वापस ggml_openvino_is_gpu() && ggml_openvino_getenv_int("GGML_OPENVINO_RELEASE_WEIGHTS") != 0;
     }
-    return ggml_openvino_is_gpu() && ggml_openvino_getenv_int("GGML_OPENVINO_MEMORY_OPTIMIZE") != 0;
+    वापस ggml_openvino_is_gpu() && ggml_openvino_getenv_int("GGML_OPENVINO_MEMORY_OPTIMIZE") != 0;
 }
 
 // Check if running on NPU
 bool ggml_openvino_is_npu() {
-    return ggml_openvino_get_device_config().is_npu;
+    वापस ggml_openvino_get_device_config().is_npu;
 }
 
 bool ggml_openvino_is_gpu() {
-    return has_prefix(ggml_openvino_get_device_name(), "GPU");
+    वापस has_prefix(ggml_openvino_get_device_name(), "GPU");
 }
 
-size_t ggml_openvino_max_alloc_size() {
-    return ggml_openvino_get_device_config().max_alloc_size;
+माप_प्रकार ggml_openvino_max_alloc_आकार() {
+    वापस ggml_openvino_get_device_config().max_alloc_आकार;
 }
 
 // Get the remote context for the current device (returns empty optional for CPU)
 std::optional<ov::RemoteContext> ggml_openvino_get_remote_context() {
-    return ggml_openvino_get_device_config().remote_context;
+    वापस ggml_openvino_get_device_config().remote_context;
 }
 
 // Get the compile config for the current device
-const ov::AnyMap & ggml_openvino_get_compile_config() {
-    return ggml_openvino_get_device_config().compile_config;
+स्थिर ov::AnyMap & ggml_openvino_get_compile_config() {
+    वापस ggml_openvino_get_device_config().compile_config;
 }
 
 // Get the OpenCL command queue for GPU operations
 cl_command_queue ggml_openvino_get_cl_queue() {
-    return ggml_openvino_get_device_config().cl_queue;
+    वापस ggml_openvino_get_device_config().cl_queue;
 }
 
 // Get the clEnqueueMemFillINTEL function pointer
 clEnqueueMemFillINTEL_fn ggml_openvino_get_clEnqueueMemFillINTEL() {
-    return ggml_openvino_get_device_config().cl_mem_fill_fn;
+    वापस ggml_openvino_get_device_config().cl_mem_fill_fn;
 }
 
 // Get the clEnqueueMemcpyINTEL function pointer
 clEnqueueMemcpyINTEL_fn ggml_openvino_get_clEnqueueMemcpyINTEL() {
-    return ggml_openvino_get_device_config().cl_mem_cpy_fn;
+    वापस ggml_openvino_get_device_config().cl_mem_cpy_fn;
 }
 
 // Get requantization type for a tensor type (returns nullopt if no requant needed)
-std::optional<ExtraQuantType> ggml_openvino_get_requant_type(const ggml_tensor * tensor, bool no_requant) {
-    if (no_requant) {
-        return std::nullopt;
+std::optional<ExtraQuantType> ggml_openvino_get_requant_type(स्थिर ggml_tensor * tensor, bool no_requant) {
+    अगर (no_requant) {
+        वापस std::nullopt;
     }
-    if (strncmp(tensor->name, "token_embd.weight", 17) == 0) {
-        return ((ggml_openvino_is_npu() && tensor->type == GGML_TYPE_Q6_K) ? ExtraQuantType::F16 :
+    अगर (म_भेदन(tensor->name, "token_embd.weight", 17) == 0) {
+        वापस ((ggml_openvino_is_npu() && tensor->type == GGML_TYPE_Q6_K) ? ExtraQuantType::F16 :
                                                                              ExtraQuantType::Q8_0_C);
     }
-    if (strncmp(tensor->name, "output.weight", 13) == 0) {
-        return ExtraQuantType::Q8_0_C;
+    अगर (म_भेदन(tensor->name, "output.weight", 13) == 0) {
+        वापस ExtraQuantType::Q8_0_C;
     }
-    if (ggml_openvino_is_npu()) {
-        return ExtraQuantType::Q4_0_128;
+    अगर (ggml_openvino_is_npu()) {
+        वापस ExtraQuantType::Q4_0_128;
     }
     // By default Q6_K/Q5_K are requantized to Q8_0_C, which *inflates* 6- and 5-bit weights to 8
     // while the rest of the model stays at 4 bits, and Q4_K keeps its native group-32 layout
@@ -382,21 +382,21 @@ std::optional<ExtraQuantType> ggml_openvino_get_requant_type(const ggml_tensor *
     //   native         no requantization at all (keep Q6_K/Q5_K as they are)
     //
     // q4_asym64 leaves Q4_K at its native group 32. Use q4_asym64_all to keep the group size uniform.
-    const char * rq = ggml_openvino_getenv_str("GGML_OPENVINO_REQUANT_KQUANT");
-    auto is_opt = [rq](const char * name) {
-        return rq && strcmp(rq, name) == 0;
+    स्थिर अक्षर * rq = ggml_openvino_getenv_str("GGML_OPENVINO_REQUANT_KQUANT");
+    स्वतः is_opt = [rq](स्थिर अक्षर * name) {
+        वापस rq && म_भेद(rq, name) == 0;
     };
-    const bool sym128 = is_opt("q4_sym128");
-    const bool sym128_all = is_opt("q4_sym128_all");
-    const bool asym64_all = is_opt("q4_asym64_all");
-    const bool asym64 = is_opt("q4_asym64");
+    स्थिर bool sym128 = is_opt("q4_sym128");
+    स्थिर bool sym128_all = is_opt("q4_sym128_all");
+    स्थिर bool asym64_all = is_opt("q4_asym64_all");
+    स्थिर bool asym64 = is_opt("q4_asym64");
 
-    if (tensor->type == GGML_TYPE_Q4_K) {
-        if (sym128_all) {
-            return ExtraQuantType::Q4_0_128;
+    अगर (tensor->type == GGML_TYPE_Q4_K) {
+        अगर (sym128_all) {
+            वापस ExtraQuantType::Q4_0_128;
         }
-        if (asym64_all) {
-            return ExtraQuantType::Q4_1_64;
+        अगर (asym64_all) {
+            वापस ExtraQuantType::Q4_1_64;
         }
     }
     // MoE expert weights (3D, ne[2] = n_expert) stored as Q5_1/Q8_0 are the expert-side
@@ -404,12 +404,12 @@ std::optional<ExtraQuantType> ggml_openvino_get_requant_type(const ggml_tensor *
     // (gemma-4 26B-A4B keeps its down projection there). Send them to 4 bits under the same
     // option, at group 64 rather than 128: the down expert has k=704, which 64 divides
     // (704/64 = 11) and 128 does not.
-    if (tensor->ne[2] > 1 && (tensor->type == GGML_TYPE_Q5_1 || tensor->type == GGML_TYPE_Q8_0)) {
-        if (sym128 || sym128_all) {
-            return ExtraQuantType::Q4_0_64;
+    अगर (tensor->ne[2] > 1 && (tensor->type == GGML_TYPE_Q5_1 || tensor->type == GGML_TYPE_Q8_0)) {
+        अगर (sym128 || sym128_all) {
+            वापस ExtraQuantType::Q4_0_64;
         }
-        if (asym64 || asym64_all) {
-            return ExtraQuantType::Q4_1_64;
+        अगर (asym64 || asym64_all) {
+            वापस ExtraQuantType::Q4_1_64;
         }
         // TODO: temporary workaround for a known OpenVINO GPU-plugin bug -- remove once the
         // plugin computes grouped 8-bit GatherMatmulCompressed correctly. This costs accuracy
@@ -423,25 +423,25 @@ std::optional<ExtraQuantType> ggml_openvino_get_requant_type(const ggml_tensor *
         // already requantize to per-channel Q8_0_C (grouped=0). Sending these to grouped 4 bit
         // avoids the broken layout and restores correct output.
         // Opt out with GGML_OPENVINO_REQUANT_KQUANT=native.
-        if (ggml_openvino_is_gpu() && !is_opt("native")) {
-            return ExtraQuantType::Q4_0_64;
+        अगर (ggml_openvino_is_gpu() && !is_opt("native")) {
+            वापस ExtraQuantType::Q4_0_64;
         }
     }
-    switch (tensor->type) {
-    case GGML_TYPE_Q6_K:
-    case GGML_TYPE_Q5_K:
-        if (sym128 || sym128_all) {
-            return ExtraQuantType::Q4_0_128;
+    चयन (tensor->type) {
+    हाल GGML_TYPE_Q6_K:
+    हाल GGML_TYPE_Q5_K:
+        अगर (sym128 || sym128_all) {
+            वापस ExtraQuantType::Q4_0_128;
         }
-        if (asym64 || asym64_all) {
-            return ExtraQuantType::Q4_1_64;
+        अगर (asym64 || asym64_all) {
+            वापस ExtraQuantType::Q4_1_64;
         }
-        if (is_opt("native")) {
-            return std::nullopt;
+        अगर (is_opt("native")) {
+            वापस std::nullopt;
         }
-        return ExtraQuantType::Q8_0_C;
-    default:
-        return std::nullopt;
+        वापस ExtraQuantType::Q8_0_C;
+    शेष:
+        वापस std::nullopt;
     }
 }
 
@@ -449,112 +449,112 @@ std::optional<ExtraQuantType> ggml_openvino_get_requant_type(const ggml_tensor *
 // Extracted Layout Calculation
 // =====================================================
 
-ggml_openvino_extracted_layout ggml_openvino_get_extracted_layout(const ggml_tensor * tensor, bool use_bias) {
+ggml_openvino_extracted_layout ggml_openvino_get_extracted_layout(स्थिर ggml_tensor * tensor, bool use_bias) {
     ggml_openvino_extracted_layout layout = {};
     layout.is_symmetric = false;
 
-    if (!ggml_is_quantized(tensor->type)) {
-        return layout;
+    अगर (!ggml_is_quantized(tensor->type)) {
+        वापस layout;
     }
 
     // Most quantized weights use the existing 2D extraction path. 3D expert weights for
     // MUL_MAT_ID (MoE) are also supported, either as MXFP4 (packed, dedicated branch below) or via the
     // generic sizing math below, which is shape-agnostic (based on total element count). Only reject 4D.
-    if (tensor->ne[3] != 1) {
-        return layout;
+    अगर (tensor->ne[3] != 1) {
+        वापस layout;
     }
 
     // 3D MoE expert weights that are not requantized (see below) always use the exact f16
     // zero-point extraction (see extract_quantized_weights), which needs a wider zp slot than
     // the packed integer zero point -- must be kept in sync with that function so the buffer
     // sizing here matches what process_weight_tensor actually writes.
-    const bool for_gather_matmul = tensor->ne[2] > 1;
+    स्थिर bool for_gather_matmul = tensor->ne[2] > 1;
 
     int64_t n_elements = ggml_nelements(tensor);
-    const size_t alignment = 64;  // Good for SIMD
+    स्थिर माप_प्रकार alignment = 64;  // Good for SIMD
 
-    if (tensor->type == GGML_TYPE_MXFP4 && (tensor->ne[2] > 1 || tensor->ne[3] > 1)) {
+    अगर (tensor->type == GGML_TYPE_MXFP4 && (tensor->ne[2] > 1 || tensor->ne[3] > 1)) {
         layout.weights_per_block = 32;
         layout.is_symmetric = true;
-        layout.weights_size = ggml_nbytes(tensor);
+        layout.weights_आकार = ggml_nbytes(tensor);
         layout.weights_offset = 0;
-        layout.total_size = layout.weights_size;
-        return layout;
+        layout.योग_आकार = layout.weights_आकार;
+        वापस layout;
     }
 
     // Check if requantization is needed (NPU-specific)
-    auto requant_type = ggml_openvino_get_requant_type(tensor, use_bias);
-    if (requant_type.has_value()) {
+    स्वतः requant_type = ggml_openvino_get_requant_type(tensor, use_bias);
+    अगर (requant_type.has_value()) {
         layout.is_requant = true;
         layout.requant_type = requant_type;
 
         // Special case: requant to F16 - just store F16 weights, no scales/zp
-        if (requant_type.value() == ExtraQuantType::F16) {
-            layout.weights_size = n_elements * sizeof(uint16_t);  // F16 = 2 bytes
-            layout.total_size = layout.weights_size;
+        अगर (requant_type.value() == ExtraQuantType::F16) {
+            layout.weights_आकार = n_elements * माप(uint16_t);  // F16 = 2 bytes
+            layout.योग_आकार = layout.weights_आकार;
             layout.weights_offset = 0;
             // No scales/zp for F16
-            return layout;
+            वापस layout;
         }
 
         // Requant to different quantized format (e.g., Q4_0_128)
-        switch (requant_type.value()) {
-        case ExtraQuantType::Q4_0_128:
+        चयन (requant_type.value()) {
+        हाल ExtraQuantType::Q4_0_128:
             layout.is_u4 = true;
             layout.weights_per_block = 128;
             layout.is_symmetric = true;
-            break;
-        case ExtraQuantType::Q4_1_64:
+            अवरोध;
+        हाल ExtraQuantType::Q4_1_64:
             layout.is_u4 = true;
             layout.weights_per_block = 64;
             layout.is_symmetric = false;
-            break;
-        case ExtraQuantType::Q4_0_64:
+            अवरोध;
+        हाल ExtraQuantType::Q4_0_64:
             layout.is_u4 = true;
             layout.weights_per_block = 64;
             layout.is_symmetric = true;
-            break;
-        case ExtraQuantType::Q4_0_C:
+            अवरोध;
+        हाल ExtraQuantType::Q4_0_C:
             layout.is_u4 = true;
             layout.weights_per_block = tensor->ne[0];
             layout.is_symmetric = true;
-            break;
-        case ExtraQuantType::Q8_0_32:
+            अवरोध;
+        हाल ExtraQuantType::Q8_0_32:
             layout.is_u4 = false;
             layout.weights_per_block = 32;
             layout.is_symmetric = true;
-            break;
-        case ExtraQuantType::Q8_0_C:
+            अवरोध;
+        हाल ExtraQuantType::Q8_0_C:
             layout.is_u4 = false;
             layout.weights_per_block = tensor->ne[0];
             layout.is_symmetric = true;
-            break;
-        case ExtraQuantType::Q8_1_C:
+            अवरोध;
+        हाल ExtraQuantType::Q8_1_C:
             layout.is_u4 = false;
             layout.weights_per_block = tensor->ne[0];
-            break;
-        default:
+            अवरोध;
+        शेष:
             GGML_ABORT("Code of re-quantizing to channel-wise is not updated");
         }
 
-        if (layout.is_requant) {
+        अगर (layout.is_requant) {
             // Calculate sizes for requantized format
-            layout.weights_size = layout.is_u4 ? (n_elements / 2) : n_elements;
+            layout.weights_आकार = layout.is_u4 ? (n_elements / 2) : n_elements;
             int64_t n_blocks = n_elements / layout.weights_per_block;
-            layout.scales_size = n_blocks * sizeof(uint16_t);
+            layout.scales_आकार = n_blocks * माप(uint16_t);
             // For symmetric quantization, no zp needed (weights stored as signed)
-            if (layout.is_symmetric) {
-                layout.zp_size = 0;
-            } else {
-                layout.zp_size = layout.is_u4 ? ((n_blocks + 1) / 2) : n_blocks;
+            अगर (layout.is_symmetric) {
+                layout.zp_आकार = 0;
+            } अन्यथा {
+                layout.zp_आकार = layout.is_u4 ? ((n_blocks + 1) / 2) : n_blocks;
             }
 
             layout.weights_offset = 0;
-            layout.scales_offset = ((layout.weights_size + alignment - 1) / alignment) * alignment;
-            layout.zp_offset = layout.scales_offset + ((layout.scales_size + alignment - 1) / alignment) * alignment;
-            layout.total_size = layout.zp_offset + layout.zp_size;
-            layout.total_size = std::max(layout.total_size, ggml_nbytes(tensor));
-            return layout;
+            layout.scales_offset = ((layout.weights_आकार + alignment - 1) / alignment) * alignment;
+            layout.zp_offset = layout.scales_offset + ((layout.scales_आकार + alignment - 1) / alignment) * alignment;
+            layout.योग_आकार = layout.zp_offset + layout.zp_आकार;
+            layout.योग_आकार = std::max(layout.योग_आकार, ggml_nbytes(tensor));
+            वापस layout;
         }
     }
 
@@ -563,107 +563,107 @@ ggml_openvino_extracted_layout ggml_openvino_get_extracted_layout(const ggml_ten
     layout.weights_per_block = 32;
     layout.is_symmetric = false;
 
-    switch (tensor->type) {
-    case GGML_TYPE_MXFP4:
-    case GGML_TYPE_Q4_0:
+    चयन (tensor->type) {
+    हाल GGML_TYPE_MXFP4:
+    हाल GGML_TYPE_Q4_0:
         layout.is_u4 = true;
         layout.is_symmetric = true;
-        break;
+        अवरोध;
 
-    case GGML_TYPE_Q4_1:
-    case GGML_TYPE_Q4_K:
+    हाल GGML_TYPE_Q4_1:
+    हाल GGML_TYPE_Q4_K:
         layout.is_u4 = true;
-        break;
+        अवरोध;
 
-    case GGML_TYPE_Q8_0:
+    हाल GGML_TYPE_Q8_0:
         layout.is_symmetric = true;
-        break;
+        अवरोध;
 
-    case GGML_TYPE_Q5_1:
+    हाल GGML_TYPE_Q5_1:
         // u8 weights (5-bit values), asymmetric (scale + zero point)
-        break;
+        अवरोध;
 
-    case GGML_TYPE_Q6_K:
+    हाल GGML_TYPE_Q6_K:
         layout.weights_per_block = 16;
         layout.is_symmetric = true;
-        break;
+        अवरोध;
 
-    case GGML_TYPE_Q5_K:
-        break;
+    हाल GGML_TYPE_Q5_K:
+        अवरोध;
 
-    default:
+    शेष:
         // Unsupported quantization type
-        return layout;
+        वापस layout;
     }
 
     // Calculate sizes
     // Weights: U4 = n_elements/2 bytes, U8 = n_elements bytes
-    layout.weights_size = layout.is_u4 ? (n_elements / 2) : n_elements;
+    layout.weights_आकार = layout.is_u4 ? (n_elements / 2) : n_elements;
 
     // Scales: F16 per block, except MXFP4 which stores one E8M0 byte per block.
     int64_t n_blocks = n_elements / layout.weights_per_block;
-    layout.scales_size = n_blocks * (tensor->type == GGML_TYPE_MXFP4 ? sizeof(uint8_t) : sizeof(uint16_t));
+    layout.scales_आकार = n_blocks * (tensor->type == GGML_TYPE_MXFP4 ? माप(uint8_t) : माप(uint16_t));
     // For symmetric quantization, no zp needed (weights stored as signed). Asymmetric
     // for_gather_matmul (3D MoE expert) weights use an exact f16 zero point (see
     // extract_quantized_weights/make_int8_weights/make_int4_weights), which needs one f16 per
     // block instead of a packed u4/u8 integer zero point.
-    if (layout.is_symmetric) {
-        layout.zp_size = 0;
-    } else if (use_bias || for_gather_matmul) {
-        layout.zp_size = n_blocks * sizeof(uint16_t);
-    } else {
-        layout.zp_size = layout.is_u4 ? ((n_blocks + 1) / 2) : n_blocks;
+    अगर (layout.is_symmetric) {
+        layout.zp_आकार = 0;
+    } अन्यथा अगर (use_bias || for_gather_matmul) {
+        layout.zp_आकार = n_blocks * माप(uint16_t);
+    } अन्यथा {
+        layout.zp_आकार = layout.is_u4 ? ((n_blocks + 1) / 2) : n_blocks;
     }
 
     // Layout in buffer: [weights | scales | zp] with alignment
     layout.weights_offset = 0;
-    layout.scales_offset = ((layout.weights_size + alignment - 1) / alignment) * alignment;
-    layout.zp_offset = layout.scales_offset + ((layout.scales_size + alignment - 1) / alignment) * alignment;
-    layout.total_size = layout.zp_offset + layout.zp_size;
-    layout.total_size = std::max(layout.total_size, ggml_nbytes(tensor));
+    layout.scales_offset = ((layout.weights_आकार + alignment - 1) / alignment) * alignment;
+    layout.zp_offset = layout.scales_offset + ((layout.scales_आकार + alignment - 1) / alignment) * alignment;
+    layout.योग_आकार = layout.zp_offset + layout.zp_आकार;
+    layout.योग_आकार = std::max(layout.योग_आकार, ggml_nbytes(tensor));
 
-    return layout;
+    वापस layout;
 }
 
-ggml_openvino_tensor_extra * ggml_openvino_create_tensor_extra(const ggml_tensor * tensor, bool is_remote) {
+ggml_openvino_tensor_extra * ggml_openvino_create_tensor_extra(स्थिर ggml_tensor * tensor, bool is_remote) {
     ov::Shape shape;
-    for (int i = GGML_MAX_DIMS - 1; i >= 0; --i) {
-        shape.push_back(static_cast<size_t>(tensor->ne[i]));
+    क्रम (पूर्णांक i = GGML_MAX_DIMS - 1; i >= 0; --i) {
+        shape.push_back(static_cast<माप_प्रकार>(tensor->ne[i]));
     }
 
     ov::element::Type element_type;
-    switch (tensor->type) {
-    case GGML_TYPE_F32:
+    चयन (tensor->type) {
+    हाल GGML_TYPE_F32:
         element_type = ov::element::f32;
-        break;
-    case GGML_TYPE_F16:
+        अवरोध;
+    हाल GGML_TYPE_F16:
         element_type = ov::element::f16;
-        break;
-    case GGML_TYPE_BF16:
+        अवरोध;
+    हाल GGML_TYPE_BF16:
         element_type = ov::element::bf16;
-        break;
-    case GGML_TYPE_I32:
+        अवरोध;
+    हाल GGML_TYPE_I32:
         element_type = ov::element::i32;
-        break;
-    case GGML_TYPE_I64:
+        अवरोध;
+    हाल GGML_TYPE_I64:
         element_type = ov::element::i64;
-        break;
-    default:
+        अवरोध;
+    शेष:
         // GGML_LOG_WARN("%s: unsupported tensor type for ov::Tensor: %s\n", __func__, ggml_type_name(tensor->type));
-        return nullptr;
+        वापस nullptr;
     }
 
-    auto remote_context = ggml_openvino_get_remote_context();
+    स्वतः remote_context = ggml_openvino_get_remote_context();
 
     std::shared_ptr<ov::Tensor> ov_tensor;
-    if (is_remote) {
+    अगर (is_remote) {
         GGML_ASSERT(ggml_openvino_is_gpu());
-        auto gpu_context = remote_context->as<ov::intel_gpu::ocl::ClContext>();
-        auto usm_tensor = gpu_context.create_tensor(element_type, shape, tensor->data);
+        स्वतः gpu_context = remote_context->as<ov::intel_gpu::ocl::ClContext>();
+        स्वतः usm_tensor = gpu_context.create_tensor(element_type, shape, tensor->तथ्य);
         ov_tensor = std::make_shared<ov::intel_gpu::ocl::USMTensor>(std::move(usm_tensor));
-    } else {
-        ov_tensor = std::make_shared<ov::Tensor>(element_type, shape, tensor->data);
+    } अन्यथा {
+        ov_tensor = std::make_shared<ov::Tensor>(element_type, shape, tensor->तथ्य);
     }
 
-    return new ggml_openvino_tensor_extra(ov_tensor);
+    वापस नया ggml_openvino_tensor_extra(ov_tensor);
 }

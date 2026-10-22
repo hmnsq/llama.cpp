@@ -1,11 +1,11 @@
-#ifndef HTP_OPS_H
-#define HTP_OPS_H
+#अगर_अघोषित HTP_OPS_H
+#घोषणा HTP_OPS_H
 
-#include <assert.h>
+#समावेश <assert.h>
 
 // ggml-common.h must be included prio to this header
 
-enum htp_status {
+क्रमागत htp_status {
     HTP_STATUS_OK             = 1,
     HTP_STATUS_INTERNAL_ERR   = 2,
     HTP_STATUS_NO_SUPPORT     = 3,
@@ -16,7 +16,7 @@ enum htp_status {
 // First set of values must match the ggml_type.
 // Duplicated here because we can't include full ggml.h in the htp build.
 // We have some static_asserts in the cpp code to ensure things are in sync.
-enum htp_data_type {
+क्रमागत htp_तथ्य_type {
     HTP_TYPE_F32    = 0,
     HTP_TYPE_F16    = 1,
     HTP_TYPE_Q4_0   = 2,
@@ -39,12 +39,12 @@ enum htp_data_type {
 };
 
 // Constants for internal types
-#define QK_Q8_0_TILED  128  // 32x32 Q8_0 tiled layout
+#घोषणा QK_Q8_0_TILED  128  // 32x32 Q8_0 tiled layout
 
 
 
 // Do not reorder first 4 (used as an index)
-enum htp_op_code {
+क्रमागत htp_op_code {
     HTP_OP_MUL = 0,
     HTP_OP_ADD = 1,
     HTP_OP_SUB = 2,
@@ -81,11 +81,11 @@ enum htp_op_code {
     HTP_OP_CPY,
     HTP_OP_CPY_FENCE,
     HTP_OP_ARGSORT,
-    HTP_OP_TOP_K,
+    HTP_OP_शीर्ष_K,
     HTP_OP_SQR,
     HTP_OP_SQRT,
-    HTP_OP_SUM,
-    HTP_OP_SUM_ROWS,
+    HTP_OP_योग,
+    HTP_OP_योग_ROWS,
     HTP_OP_SSM_CONV,
     HTP_OP_REPEAT,
     HTP_OP_CUMSUM,
@@ -119,36 +119,36 @@ enum htp_op_code {
     HTP_OP_INVALID
 };
 
-#define HTP_OP_MAX_DIMS    4    // aka GGML_MAX_DIMS
-#define HTP_OP_MAX_INPUTS  10   // aka GGML_MAX_SRCS
-#define HTP_OP_MAX_OUTPUTS 4
-#define HTP_OP_MAX_PARAMS  16   // aka GGML_MAX_OP_PARAMS
-#define HTP_OP_MAX_KERN_PARAMS 32
+#घोषणा HTP_OP_MAX_DIMS    4    // aka GGML_MAX_DIMS
+#घोषणा HTP_OP_MAX_INPUTS  10   // aka GGML_MAX_SRCS
+#घोषणा HTP_OP_MAX_OUTPUTS 4
+#घोषणा HTP_OP_MAX_PARAMS  16   // aka GGML_MAX_OP_PARAMS
+#घोषणा HTP_OP_MAX_KERN_PARAMS 32
 
-#define HTP_OP_MAX_BUFS    16
-#define HTP_OP_MAX_TENSORS 8192 // must stay under 64K (uint16)
+#घोषणा HTP_OP_MAX_BUFS    16
+#घोषणा HTP_OP_MAX_TENSORS 8192 // must stay under 64K (uint16)
 
-#define HTP_FENCE_TIMEOUT  (1000000000ULL)
-#define HTP_FENCE_SLOT_SIZE 128
+#घोषणा HTP_FENCE_TIMEOUT  (1000000000ULL)
+#घोषणा HTP_FENCE_SLOT_आकार 128
 
-#define HTP_OP_MAX_VMEM_DEFAULT (3355443200u)
+#घोषणा HTP_OP_MAX_VMEM_DEFAULT (3355443200u)
 
-#define HTP_MMAP_MAX_VMEM  (2147483648u)
+#घोषणा HTP_MMAP_MAX_VMEM  (2147483648u)
 
-enum htp_tensor_flags {
+क्रमागत htp_tensor_flags {
     HTP_TENSOR_WEIGHT  = (1U << 0), // Tensor buffer model weight data (not compute)
     HTP_TENSOR_TILED   = (1U << 1), // Tensor is in tiled format
     HTP_TENSOR_FENCE   = (1U << 2)  // Tensor is synchronization fence (explicitly managed)
 };
 
-enum htp_buf_flags {
+क्रमागत htp_buf_flags {
     HTP_BUF_EXTENDED = (1U << 0),
 };
 
 // Tensor descriptor
-struct htp_tensor {
-    uint64_t data;                 // Buffer offset in the messages, and data pointer on the NPU
-    uint32_t size;                 // Data size in bytes
+काष्ठा htp_tensor {
+    uint64_t तथ्य;                 // Buffer offset in the messages, and data pointer on the NPU
+    uint32_t आकार;                 // Data size in bytes
     uint32_t flags;                // Buffer / tensor flags
     uint32_t type;                 // Data type
     uint16_t bi;                   // Buffer index
@@ -158,19 +158,19 @@ struct htp_tensor {
 };
 
 // Buffer descriptor
-struct htp_buf_desc {
+काष्ठा htp_buf_desc {
     uint64_t base;     // base address
-    uint64_t size;     // total size
+    uint64_t आकार;     // total size
     uint32_t flags;    // HTP_BUF_*
     uint32_t fd;       // file descriptor
 };
 
-enum htp_op_flags {
+क्रमागत htp_op_flags {
     HTP_OPFLAGS_STUB  = (1U << 0),
 };
 
 // Op descriptor
-struct htp_op_desc {
+काष्ठा htp_op_desc {
     uint32_t opcode;                    // GGML/HTP Op
     uint32_t flags;                     // Op flags
     int32_t  params[HTP_OP_MAX_PARAMS]; // Params for the op, e.g. epsilon of RMS norm
@@ -180,13 +180,13 @@ struct htp_op_desc {
     uint16_t pad[2];                    // padding to align to 64 bits
 };
 
-#ifndef HTP_MAX_NTHREADS
-#define HTP_MAX_NTHREADS 10
-#endif
+#अगर_अघोषित HTP_MAX_NTHREADS
+#घोषणा HTP_MAX_NTHREADS 10
+#पूर्ण_अगर
 
-#define HTP_TRACE_MAX_EVENTS 256
+#घोषणा HTP_TRACE_MAX_EVENTS 256
 
-enum htp_profiler_mode {
+क्रमागत htp_profiler_mode {
     HTP_PROF_DISABLED = 0,
     HTP_PROF_BASIC    = 1,
     HTP_PROF_PMU      = 2,
@@ -194,20 +194,20 @@ enum htp_profiler_mode {
 };
 
 // DCVS/HMX power profile requested for the session.
-enum htp_power_mode {
-    HTP_POWER_MODE_LOW_POWER_SAVER            = 0,
+क्रमागत htp_power_mode {
+    HTP_POWER_MODE_निचला_POWER_SAVER            = 0,
     HTP_POWER_MODE_POWER_SAVER                = 1,
-    HTP_POWER_MODE_HIGH_POWER_SAVER           = 2,
-    HTP_POWER_MODE_LOW_BALANCED               = 3,
+    HTP_POWER_MODE_ऊपरी_POWER_SAVER           = 2,
+    HTP_POWER_MODE_निचला_BALANCED               = 3,
     HTP_POWER_MODE_BALANCED                   = 4,
-    HTP_POWER_MODE_HIGH_PERFORMANCE           = 5,
-    HTP_POWER_MODE_SUSTAINED_HIGH_PERFORMANCE = 6,
+    HTP_POWER_MODE_ऊपरी_PERFORMANCE           = 5,
+    HTP_POWER_MODE_SUSTAINED_ऊपरी_PERFORMANCE = 6,
     HTP_POWER_MODE_BURST                      = 7,
 
-    HTP_POWER_MODE_COUNT
+    HTP_POWER_MODE_गिनती
 };
 
-enum htp_trace_event_id {
+क्रमागत htp_trace_event_id {
     HTP_TRACE_EVT_DMA                 = 0,
     HTP_TRACE_EVT_L2FLUSH             = 1,
     HTP_TRACE_EVT_INIT                = 2,
@@ -237,16 +237,16 @@ enum htp_trace_event_id {
     HTP_TRACE_EVT_HMX_COMP            = 40,
 };
 
-struct htp_trace_desc {
+काष्ठा htp_trace_desc {
     uint32_t cycles;  // lower 32-bits of cycle counter
     uint16_t id;      // Event ID
     uint16_t info;    // bit 15: is_stop. bits 14-0: tile/chunk index or other metadata.
 };
 
-#define HTP_PROF_PMU_NCNT 8
+#घोषणा HTP_PROF_PMU_NCNT 8
 
 // Profile descriptor
-struct htp_prof_desc {
+काष्ठा htp_prof_desc {
     uint32_t opcode;                 // GGML/HTP Op
     uint32_t usecs;                  // Number of usec
     uint32_t cycles_start;           // Start cycle counter
@@ -254,7 +254,7 @@ struct htp_prof_desc {
     uint32_t pmu[HTP_PROF_PMU_NCNT]; // PMU counters
 };
 
-struct htp_opbatch_req {
+काष्ठा htp_opbatch_req {
     uint64_t seq;         // Sequence number
     uint32_t n_bufs;      // Number of buffers
     uint32_t n_tensors;   // Number of tensors
@@ -265,7 +265,7 @@ struct htp_opbatch_req {
     // struct htp_op_desc   ops[];     -- dspqueue buf 0
 };
 
-struct htp_opbatch_rsp {
+काष्ठा htp_opbatch_rsp {
     uint64_t seq;            // Sequence number
     uint64_t cycles_start;   // Start cycle counter
     uint64_t cycles_stop;    // Stop cycle counter
@@ -278,4 +278,4 @@ struct htp_opbatch_rsp {
     // struct htp_prof_desc profs[];  -- dspqueue buf 0
 };
 
-#endif /* HTP_OPS_H */
+#पूर्ण_अगर /* HTP_OPS_H */

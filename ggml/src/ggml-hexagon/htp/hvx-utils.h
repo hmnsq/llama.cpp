@@ -1,25 +1,25 @@
-#ifndef HVX_UTILS_H
-#define HVX_UTILS_H
+#अगर_अघोषित HVX_UTILS_H
+#घोषणा HVX_UTILS_H
 
-#include "hex-utils.h"
+#समावेश "hex-utils.h"
 
-#include "hvx-types.h"
-#include "hvx-copy.h"
-#include "hvx-repl.h"
-#include "hvx-scale.h"
-#include "hvx-exp.h"
-#include "hvx-erf.h"
-#include "hvx-inverse.h"
-#include "hvx-reduce.h"
-#include "hvx-sigmoid.h"
-#include "hvx-sqrt.h"
-#include "hvx-arith.h"
-#include "hvx-div.h"
-#include "hvx-floor.h"
-#include "hvx-sin-cos.h"
-#include "hvx-base.h"
-#include "hvx-pow.h"
-#include "hvx-log.h"
-#include "hvx-norm.h"
+#समावेश "hvx-types.h"
+#समावेश "hvx-copy.h"
+#समावेश "hvx-repl.h"
+#समावेश "hvx-scale.h"
+#समावेश "hvx-exp.h"
+#समावेश "hvx-erf.h"
+#समावेश "hvx-inverse.h"
+#समावेश "hvx-reduce.h"
+#समावेश "hvx-sigmoid.h"
+#समावेश "hvx-sqrt.h"
+#समावेश "hvx-arith.h"
+#समावेश "hvx-div.h"
+#समावेश "hvx-floor.h"
+#समावेश "hvx-sin-cos.h"
+#समावेश "hvx-base.h"
+#समावेश "hvx-pow.h"
+#समावेश "hvx-log.h"
+#समावेश "hvx-norm.h"
 
-#endif /* HVX_UTILS_H */
+#पूर्ण_अगर /* HVX_UTILS_H */

@@ -1,9 +1,9 @@
-#ifndef GGML_SYCL_COUNT_EQUAL_HPP
-#define GGML_SYCL_COUNT_EQUAL_HPP
-#include "common.hpp"
+#अगर_अघोषित GGML_SYCL_गिनती_EQUAL_HPP
+#घोषणा GGML_SYCL_गिनती_EQUAL_HPP
+#समावेश "common.hpp"
 
-#define SYCL_COUNT_EQUAL_CHUNK_SIZE 128
+#घोषणा SYCL_गिनती_EQUAL_CHUNK_आकार 128
 
-void ggml_sycl_count_equal(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+व्योम ggml_sycl_गिनती_equal(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-#endif //GGML_SYCL_COUNT_EQUAL_HPP
+#पूर्ण_अगर //GGML_SYCL_COUNT_EQUAL_HPP

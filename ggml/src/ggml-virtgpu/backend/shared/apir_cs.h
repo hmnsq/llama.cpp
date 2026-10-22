@@ -1,23 +1,23 @@
-#pragma once
+#आशय once
 
-#include "ggml-impl.h"
+#समावेश "ggml-impl.h"
 
-#include <cassert>
-#include <cstring>
+#समावेश <cassert>
+#समावेश <cstring>
 
-#define likely(x)   __builtin_expect(!!(x), 1)
-#define unlikely(x) __builtin_expect(!!(x), 0)
+#घोषणा likely(x)   __builtin_expect(!!(x), 1)
+#घोषणा unlikely(x) __builtin_expect(!!(x), 0)
 
-struct apir_encoder {
-    char *       cur;
-    const char * start;
-    const char * end;
+काष्ठा apir_encoder {
+    अक्षर *       cur;
+    स्थिर अक्षर * start;
+    स्थिर अक्षर * end;
     bool         fatal;
 };
 
-struct apir_decoder {
-    const char * cur;
-    const char * end;
+काष्ठा apir_decoder {
+    स्थिर अक्षर * cur;
+    स्थिर अक्षर * end;
     bool         fatal;
 };
 
@@ -25,124 +25,124 @@ struct apir_decoder {
  * new encoder and decoder
  */
 
-static apir_decoder apir_new_decoder(const char * ptr, size_t size) {
+अटल apir_decoder apir_new_decoder(स्थिर अक्षर * ptr, माप_प्रकार आकार) {
     apir_decoder dec = {
         .cur   = ptr,
-        .end   = ptr + size,
+        .end   = ptr + आकार,
         .fatal = false,
     };
 
-    return dec;
+    वापस dec;
 }
 
-static apir_encoder apir_new_encoder(char * ptr, size_t size) {
+अटल apir_encoder apir_new_encoder(अक्षर * ptr, माप_प्रकार आकार) {
     apir_encoder enc = {
         .cur   = ptr,
         .start = ptr,
-        .end   = ptr + size,
+        .end   = ptr + आकार,
         .fatal = false,
     };
 
-    return enc;
+    वापस enc;
 }
 
 /*
  * fatal flag handling
  */
 
-static inline void apir_encoder_reset_fatal(apir_encoder * enc) {
+अटल अंतरभूत व्योम apir_encoder_reset_fatal(apir_encoder * enc) {
     enc->fatal = false;
 }
 
-static inline void apir_encoder_set_fatal(apir_encoder * enc) {
+अटल अंतरभूत व्योम apir_encoder_set_fatal(apir_encoder * enc) {
     enc->fatal = true;
 }
 
-static inline bool apir_encoder_get_fatal(const apir_encoder * enc) {
-    return enc->fatal;
+अटल अंतरभूत bool apir_encoder_get_fatal(स्थिर apir_encoder * enc) {
+    वापस enc->fatal;
 }
 
-static inline void apir_decoder_reset_fatal(apir_decoder * dec) {
+अटल अंतरभूत व्योम apir_decoder_reset_fatal(apir_decoder * dec) {
     dec->fatal = false;
 }
 
-static inline void apir_decoder_set_fatal(apir_decoder * dec) {
+अटल अंतरभूत व्योम apir_decoder_set_fatal(apir_decoder * dec) {
     dec->fatal = true;
 }
 
-static inline bool apir_decoder_get_fatal(const apir_decoder * dec) {
-    return dec->fatal;
+अटल अंतरभूत bool apir_decoder_get_fatal(स्थिर apir_decoder * dec) {
+    वापस dec->fatal;
 }
 
 /*
  * encode peek
  */
 
-static inline bool apir_decoder_peek_internal(apir_decoder * dec, size_t size, void * val, size_t val_size) {
-    assert(val_size <= size);
+अटल अंतरभूत bool apir_decoder_peek_internal(apir_decoder * dec, माप_प्रकार आकार, व्योम * val, माप_प्रकार val_आकार) {
+    निश्चित(val_आकार <= आकार);
 
-    if (unlikely(size > (size_t) (dec->end - dec->cur))) {
+    अगर (unlikely(आकार > (माप_प्रकार) (dec->end - dec->cur))) {
         GGML_LOG_ERROR("%s: reading too much from the decoder ...\n", __func__);
         apir_decoder_set_fatal(dec);
-        memset(val, 0, val_size);
-        return false;
+        स_रखो(val, 0, val_आकार);
+        वापस false;
     }
 
     /* we should not rely on the compiler to optimize away memcpy... */
-    memcpy(val, dec->cur, val_size);
-    return true;
+    स_नकल(val, dec->cur, val_आकार);
+    वापस true;
 }
 
-static inline void apir_decoder_peek(apir_decoder * dec, size_t size, void * val, size_t val_size) {
-    apir_decoder_peek_internal(dec, size, val, val_size);
+अटल अंतरभूत व्योम apir_decoder_peek(apir_decoder * dec, माप_प्रकार आकार, व्योम * val, माप_प्रकार val_आकार) {
+    apir_decoder_peek_internal(dec, आकार, val, val_आकार);
 }
 
-static inline const void * apir_decoder_use_inplace(apir_decoder * dec, size_t size) {
-    if (unlikely(size > (size_t) (dec->end - dec->cur))) {
+अटल अंतरभूत स्थिर व्योम * apir_decoder_use_inplace(apir_decoder * dec, माप_प्रकार आकार) {
+    अगर (unlikely(आकार > (माप_प्रकार) (dec->end - dec->cur))) {
         GGML_LOG_ERROR("%s: reading too much from the decoder ...\n", __func__);
         apir_decoder_set_fatal(dec);
-        return NULL;
+        वापस शून्य;
     }
-    const void * addr = dec->cur;
-    dec->cur += size;
+    स्थिर व्योम * addr = dec->cur;
+    dec->cur += आकार;
 
-    return addr;
+    वापस addr;
 }
 
 /*
  * read/write
  */
 
-static inline void apir_decoder_read(apir_decoder * dec, size_t size, void * val, size_t val_size) {
-    if (apir_decoder_peek_internal(dec, size, val, val_size)) {
-        dec->cur += size;
+अटल अंतरभूत व्योम apir_decoder_read(apir_decoder * dec, माप_प्रकार आकार, व्योम * val, माप_प्रकार val_आकार) {
+    अगर (apir_decoder_peek_internal(dec, आकार, val, val_आकार)) {
+        dec->cur += आकार;
     }
 }
 
-static inline char * apir_encoder_write(apir_encoder * enc, size_t size, const void * val, size_t val_size) {
-    assert(val_size <= size);
-    assert(size <= ((size_t) (enc->end - enc->cur)));
+अटल अंतरभूत अक्षर * apir_encoder_write(apir_encoder * enc, माप_प्रकार आकार, स्थिर व्योम * val, माप_प्रकार val_आकार) {
+    निश्चित(val_आकार <= आकार);
+    निश्चित(आकार <= ((माप_प्रकार) (enc->end - enc->cur)));
 
-    char * write_addr = enc->cur;
+    अक्षर * write_addr = enc->cur;
     /* we should not rely on the compiler to optimize away memcpy... */
-    memcpy(write_addr, val, val_size);
-    enc->cur += size;
+    स_नकल(write_addr, val, val_आकार);
+    enc->cur += आकार;
 
-    return write_addr;
+    वापस write_addr;
 }
 
 /*
  * encode/decode
  */
 
-static inline void apir_decode(apir_decoder * dec, size_t size, void * data, size_t data_size) {
-    assert(size % 4 == 0);
-    apir_decoder_read(dec, size, data, data_size);
+अटल अंतरभूत व्योम apir_decode(apir_decoder * dec, माप_प्रकार आकार, व्योम * तथ्य, माप_प्रकार तथ्य_आकार) {
+    निश्चित(आकार % 4 == 0);
+    apir_decoder_read(dec, आकार, तथ्य, तथ्य_आकार);
 }
 
-static inline void apir_encode(apir_encoder * enc, size_t size, const void * data, size_t data_size) {
-    assert(size % 4 == 0);
-    apir_encoder_write(enc, size, data, data_size);
+अटल अंतरभूत व्योम apir_encode(apir_encoder * enc, माप_प्रकार आकार, स्थिर व्योम * तथ्य, माप_प्रकार तथ्य_आकार) {
+    निश्चित(आकार % 4 == 0);
+    apir_encoder_write(enc, आकार, तथ्य, तथ्य_आकार);
 }
 
 /*
@@ -151,173 +151,173 @@ static inline void apir_encode(apir_encoder * enc, size_t size, const void * dat
 
 /* uint8_t */
 
-static inline void apir_encode_uint8_t(apir_encoder * enc, const uint8_t * val) {
-    apir_encode(enc, sizeof(int), val, sizeof(*val));
+अटल अंतरभूत व्योम apir_encode_uint8_t(apir_encoder * enc, स्थिर uint8_t * val) {
+    apir_encode(enc, माप(पूर्णांक), val, माप(*val));
 }
 
-static inline void apir_decode_uint8_t(apir_decoder * dec, uint8_t * val) {
-    apir_decode(dec, sizeof(int), val, sizeof(*val));
+अटल अंतरभूत व्योम apir_decode_uint8_t(apir_decoder * dec, uint8_t * val) {
+    apir_decode(dec, माप(पूर्णांक), val, माप(*val));
 }
 
 /* uint64_t */
 
-static inline void apir_encode_uint64_t(apir_encoder * enc, const uint64_t * val) {
-    apir_encode(enc, 8, val, sizeof(*val));
+अटल अंतरभूत व्योम apir_encode_uint64_t(apir_encoder * enc, स्थिर uint64_t * val) {
+    apir_encode(enc, 8, val, माप(*val));
 }
 
-static inline void apir_decode_uint64_t(apir_decoder * dec, uint64_t * val) {
-    apir_decode(dec, 8, val, sizeof(*val));
+अटल अंतरभूत व्योम apir_decode_uint64_t(apir_decoder * dec, uint64_t * val) {
+    apir_decode(dec, 8, val, माप(*val));
 }
 
-static inline void apir_encode_uint64_t_array(apir_encoder * enc, const uint64_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
-    apir_encode(enc, size, val, size);
+अटल अंतरभूत व्योम apir_encode_uint64_t_array(apir_encoder * enc, स्थिर uint64_t * val, uint32_t गिनती) {
+    स्थिर माप_प्रकार आकार = माप(*val) * गिनती;
+    निश्चित(आकार >= गिनती);
+    apir_encode(enc, आकार, val, आकार);
 }
 
-static inline void apir_decode_uint64_t_array(apir_decoder * dec, uint64_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
-    apir_decode(dec, size, val, size);
+अटल अंतरभूत व्योम apir_decode_uint64_t_array(apir_decoder * dec, uint64_t * val, uint32_t गिनती) {
+    स्थिर माप_प्रकार आकार = माप(*val) * गिनती;
+    निश्चित(आकार >= गिनती);
+    apir_decode(dec, आकार, val, आकार);
 }
 
-static inline const uint64_t * apir_decode_uint64_t_array_inplace(apir_decoder * dec, uint32_t count) {
-    return (uint64_t *) (uintptr_t) apir_decoder_use_inplace(dec, count * sizeof(uint64_t));
+अटल अंतरभूत स्थिर uint64_t * apir_decode_uint64_t_array_inplace(apir_decoder * dec, uint32_t गिनती) {
+    वापस (uint64_t *) (uintptr_t) apir_decoder_use_inplace(dec, गिनती * माप(uint64_t));
 }
 
 /* int32_t */
 
-static inline void apir_encode_int32_t(apir_encoder * enc, const int32_t * val) {
-    apir_encode(enc, 4, val, sizeof(*val));
+अटल अंतरभूत व्योम apir_encode_int32_t(apir_encoder * enc, स्थिर int32_t * val) {
+    apir_encode(enc, 4, val, माप(*val));
 }
 
-static inline void apir_decode_int32_t(apir_decoder * dec, int32_t * val) {
-    apir_decode(dec, 4, val, sizeof(*val));
+अटल अंतरभूत व्योम apir_decode_int32_t(apir_decoder * dec, int32_t * val) {
+    apir_decode(dec, 4, val, माप(*val));
 }
 
-static inline void apir_encode_int32_t_array(apir_encoder * enc, const int32_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
-    apir_encode(enc, size, val, size);
+अटल अंतरभूत व्योम apir_encode_int32_t_array(apir_encoder * enc, स्थिर int32_t * val, uint32_t गिनती) {
+    स्थिर माप_प्रकार आकार = माप(*val) * गिनती;
+    निश्चित(आकार >= गिनती);
+    apir_encode(enc, आकार, val, आकार);
 }
 
-static inline void apir_decode_int32_t_array(apir_decoder * dec, int32_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
-    apir_decode(dec, size, val, size);
+अटल अंतरभूत व्योम apir_decode_int32_t_array(apir_decoder * dec, int32_t * val, uint32_t गिनती) {
+    स्थिर माप_प्रकार आकार = माप(*val) * गिनती;
+    निश्चित(आकार >= गिनती);
+    apir_decode(dec, आकार, val, आकार);
 }
 
 /* array size (uint64_t) */
 
-static inline void apir_encode_array_size(apir_encoder * enc, uint64_t size) {
-    apir_encode_uint64_t(enc, &size);
+अटल अंतरभूत व्योम apir_encode_array_आकार(apir_encoder * enc, uint64_t आकार) {
+    apir_encode_uint64_t(enc, &आकार);
 }
 
-static inline uint64_t apir_decode_array_size(apir_decoder * dec, uint64_t expected_size) {
-    uint64_t size;
-    apir_decode_uint64_t(dec, &size);
-    if (size != expected_size) {
+अटल अंतरभूत uint64_t apir_decode_array_आकार(apir_decoder * dec, uint64_t expected_आकार) {
+    uint64_t आकार;
+    apir_decode_uint64_t(dec, &आकार);
+    अगर (आकार != expected_आकार) {
         GGML_LOG_ERROR("%s: Couldn't decode array from the decoder\n", __func__);
         apir_decoder_set_fatal(dec);
-        size = 0;
+        आकार = 0;
     }
-    return size;
+    वापस आकार;
 }
 
-static inline uint64_t apir_decode_array_size_unchecked(apir_decoder * dec) {
-    uint64_t size;
-    apir_decode_uint64_t(dec, &size);
-    return size;
+अटल अंतरभूत uint64_t apir_decode_array_आकार_unchecked(apir_decoder * dec) {
+    uint64_t आकार;
+    apir_decode_uint64_t(dec, &आकार);
+    वापस आकार;
 }
 
 /* non-array pointer */
 
-static inline bool apir_encode_simple_pointer(apir_encoder * enc, const void * val) {
-    apir_encode_array_size(enc, val ? 1 : 0);
-    return val;
+अटल अंतरभूत bool apir_encode_simple_pointer(apir_encoder * enc, स्थिर व्योम * val) {
+    apir_encode_array_आकार(enc, val ? 1 : 0);
+    वापस val;
 }
 
-static inline bool apir_decode_simple_pointer(apir_decoder * dec) {
-    return apir_decode_array_size_unchecked(dec);
+अटल अंतरभूत bool apir_decode_simple_pointer(apir_decoder * dec) {
+    वापस apir_decode_array_आकार_unchecked(dec);
 }
 
 /* uint32_t */
 
-static inline void apir_encode_uint32_t(apir_encoder * enc, const uint32_t * val) {
-    apir_encode(enc, 4, val, sizeof(*val));
+अटल अंतरभूत व्योम apir_encode_uint32_t(apir_encoder * enc, स्थिर uint32_t * val) {
+    apir_encode(enc, 4, val, माप(*val));
 }
 
-static inline void apir_decode_uint32_t(apir_decoder * dec, uint32_t * val) {
-    apir_decode(dec, 4, val, sizeof(*val));
+अटल अंतरभूत व्योम apir_decode_uint32_t(apir_decoder * dec, uint32_t * val) {
+    apir_decode(dec, 4, val, माप(*val));
 }
 
-static inline void apir_encode_uint32_t_array(apir_encoder * enc, const uint32_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
-    apir_encode(enc, size, val, size);
+अटल अंतरभूत व्योम apir_encode_uint32_t_array(apir_encoder * enc, स्थिर uint32_t * val, uint32_t गिनती) {
+    स्थिर माप_प्रकार आकार = माप(*val) * गिनती;
+    निश्चित(आकार >= गिनती);
+    apir_encode(enc, आकार, val, आकार);
 }
 
-static inline void apir_decode_uint32_t_array(apir_decoder * dec, uint32_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
-    apir_decode(dec, size, val, size);
+अटल अंतरभूत व्योम apir_decode_uint32_t_array(apir_decoder * dec, uint32_t * val, uint32_t गिनती) {
+    स्थिर माप_प्रकार आकार = माप(*val) * गिनती;
+    निश्चित(आकार >= गिनती);
+    apir_decode(dec, आकार, val, आकार);
 }
 
 /* size_t */
 
-static inline void apir_encode_size_t(apir_encoder * enc, const size_t * val) {
-    const uint64_t tmp = *val;
+अटल अंतरभूत व्योम apir_encode_आकार_t(apir_encoder * enc, स्थिर माप_प्रकार * val) {
+    स्थिर uint64_t tmp = *val;
     apir_encode_uint64_t(enc, &tmp);
 }
 
-static inline void apir_decode_size_t(apir_decoder * dec, size_t * val) {
+अटल अंतरभूत व्योम apir_decode_आकार_t(apir_decoder * dec, माप_प्रकार * val) {
     uint64_t tmp;
     apir_decode_uint64_t(dec, &tmp);
     *val = tmp;
 }
 
-static inline void apir_encode_size_t_array(apir_encoder * enc, const size_t * val, uint32_t count) {
-    if (sizeof(size_t) == sizeof(uint64_t)) {
-        apir_encode_uint64_t_array(enc, (const uint64_t *) val, count);
-    } else {
-        for (uint32_t i = 0; i < count; i++) {
-            apir_encode_size_t(enc, &val[i]);
+अटल अंतरभूत व्योम apir_encode_आकार_t_array(apir_encoder * enc, स्थिर माप_प्रकार * val, uint32_t गिनती) {
+    अगर (माप(माप_प्रकार) == माप(uint64_t)) {
+        apir_encode_uint64_t_array(enc, (स्थिर uint64_t *) val, गिनती);
+    } अन्यथा {
+        क्रम (uint32_t i = 0; i < गिनती; i++) {
+            apir_encode_आकार_t(enc, &val[i]);
         }
     }
 }
 
-static inline void apir_decode_size_t_array(apir_decoder * dec, size_t * val, uint32_t count) {
-    if (sizeof(size_t) == sizeof(uint64_t)) {
-        apir_decode_uint64_t_array(dec, (uint64_t *) val, count);
-    } else {
-        for (uint32_t i = 0; i < count; i++) {
-            apir_decode_size_t(dec, &val[i]);
+अटल अंतरभूत व्योम apir_decode_आकार_t_array(apir_decoder * dec, माप_प्रकार * val, uint32_t गिनती) {
+    अगर (माप(माप_प्रकार) == माप(uint64_t)) {
+        apir_decode_uint64_t_array(dec, (uint64_t *) val, गिनती);
+    } अन्यथा {
+        क्रम (uint32_t i = 0; i < गिनती; i++) {
+            apir_decode_आकार_t(dec, &val[i]);
         }
     }
 }
 
 /* opaque blob */
 
-static inline void apir_encode_blob_array(apir_encoder * enc, const void * val, size_t size) {
-    apir_encode(enc, (size + 3) & ~3, val, size);
+अटल अंतरभूत व्योम apir_encode_blob_array(apir_encoder * enc, स्थिर व्योम * val, माप_प्रकार आकार) {
+    apir_encode(enc, (आकार + 3) & ~3, val, आकार);
 }
 
-static inline void apir_decode_blob_array(apir_decoder * dec, void * val, size_t size) {
-    apir_decode(dec, (size + 3) & ~3, val, size);
+अटल अंतरभूत व्योम apir_decode_blob_array(apir_decoder * dec, व्योम * val, माप_प्रकार आकार) {
+    apir_decode(dec, (आकार + 3) & ~3, val, आकार);
 }
 
 /* string */
 
-static inline void apir_encode_char_array(apir_encoder * enc, const char * val, size_t size) {
-    assert(size && strlen(val) < size);
-    apir_encode_blob_array(enc, val, size);
+अटल अंतरभूत व्योम apir_encode_char_array(apir_encoder * enc, स्थिर अक्षर * val, माप_प्रकार आकार) {
+    निश्चित(आकार && म_माप(val) < आकार);
+    apir_encode_blob_array(enc, val, आकार);
 }
 
-static inline void apir_decode_char_array(apir_decoder * dec, char * val, size_t size) {
-    apir_decode_blob_array(dec, val, size);
-    if (size) {
-        val[size - 1] = '\0';
-    } else {
+अटल अंतरभूत व्योम apir_decode_char_array(apir_decoder * dec, अक्षर * val, माप_प्रकार आकार) {
+    apir_decode_blob_array(dec, val, आकार);
+    अगर (आकार) {
+        val[आकार - 1] = '\0';
+    } अन्यथा {
         GGML_LOG_ERROR("%s: Couldn't decode the blog array\n", __func__);
         apir_decoder_set_fatal(dec);
     }
@@ -325,54 +325,54 @@ static inline void apir_decode_char_array(apir_decoder * dec, char * val, size_t
 
 /* (temp) buffer allocation */
 
-static inline void * apir_decoder_alloc_array(size_t size, size_t count) {
-    size_t alloc_size;
-    if (unlikely(__builtin_mul_overflow(size, count, &alloc_size))) {
-        GGML_LOG_ERROR("%s: overflow in array allocation of %zu * %zu bytes\n", __func__, size, count);
-        return NULL;
+अटल अंतरभूत व्योम * apir_decoder_alloc_array(माप_प्रकार आकार, माप_प्रकार गिनती) {
+    माप_प्रकार alloc_आकार;
+    अगर (unlikely(__builtin_mul_overflow(आकार, गिनती, &alloc_आकार))) {
+        GGML_LOG_ERROR("%s: overflow in array allocation of %zu * %zu bytes\n", __func__, आकार, गिनती);
+        वापस शून्य;
     }
 
-    return malloc(alloc_size);
+    वापस दो_स्मृति(alloc_आकार);
 }
 
 /* bool */
 
-static inline void apir_encode_bool_t(apir_encoder * enc, const bool * val) {
-    apir_encode(enc, sizeof(int), val, sizeof(bool));
+अटल अंतरभूत व्योम apir_encode_bool_t(apir_encoder * enc, स्थिर bool * val) {
+    apir_encode(enc, माप(पूर्णांक), val, माप(bool));
 }
 
-static inline void apir_decode_bool_t(apir_decoder * dec, bool * val) {
-    apir_decode(dec, sizeof(int), val, sizeof(bool));
+अटल अंतरभूत व्योम apir_decode_bool_t(apir_decoder * dec, bool * val) {
+    apir_decode(dec, माप(पूर्णांक), val, माप(bool));
 }
 
 /* apir_buffer_type_host_handle_t */
 
-static inline void apir_encode_apir_buffer_type_host_handle_t(apir_encoder *                         enc,
-                                                              const apir_buffer_type_host_handle_t * val) {
-    apir_encode(enc, sizeof(apir_buffer_type_host_handle_t), val, sizeof(apir_buffer_type_host_handle_t));
+अटल अंतरभूत व्योम apir_encode_apir_बफर_type_host_handle_t(apir_encoder *                         enc,
+                                                              स्थिर apir_बफर_type_host_handle_t * val) {
+    apir_encode(enc, माप(apir_बफर_type_host_handle_t), val, माप(apir_बफर_type_host_handle_t));
 }
 
-static inline void apir_decode_apir_buffer_type_host_handle_t(apir_decoder *                   dec,
-                                                              apir_buffer_type_host_handle_t * val) {
-    apir_decode(dec, sizeof(apir_buffer_type_host_handle_t), val, sizeof(apir_buffer_type_host_handle_t));
+अटल अंतरभूत व्योम apir_decode_apir_बफर_type_host_handle_t(apir_decoder *                   dec,
+                                                              apir_बफर_type_host_handle_t * val) {
+    apir_decode(dec, माप(apir_बफर_type_host_handle_t), val, माप(apir_बफर_type_host_handle_t));
 }
 
 /* apir_buffer_host_handle_t */
 
-static inline void apir_encode_apir_buffer_host_handle_t(apir_encoder * enc, const apir_buffer_host_handle_t * val) {
-    apir_encode(enc, sizeof(apir_buffer_host_handle_t), val, sizeof(apir_buffer_host_handle_t));
+अटल अंतरभूत व्योम apir_encode_apir_बफर_host_handle_t(apir_encoder * enc, स्थिर apir_बफर_host_handle_t * val) {
+    apir_encode(enc, माप(apir_बफर_host_handle_t), val, माप(apir_बफर_host_handle_t));
 }
 
-static inline void apir_decode_apir_buffer_host_handle_t(apir_decoder * dec, apir_buffer_host_handle_t * val) {
-    apir_decode(dec, sizeof(apir_buffer_host_handle_t), val, sizeof(apir_buffer_host_handle_t));
+अटल अंतरभूत व्योम apir_decode_apir_बफर_host_handle_t(apir_decoder * dec, apir_बफर_host_handle_t * val) {
+    apir_decode(dec, माप(apir_बफर_host_handle_t), val, माप(apir_बफर_host_handle_t));
 }
 
 /* uintptr_t */
 
-static inline void apir_encode_uintptr_t(apir_encoder * enc, const uintptr_t * val) {
-    apir_encode(enc, sizeof(*val), val, sizeof(*val));
+अटल अंतरभूत व्योम apir_encode_uintptr_t(apir_encoder * enc, स्थिर uintptr_t * val) {
+    apir_encode(enc, माप(*val), val, माप(*val));
 }
 
-static inline void apir_decode_uintptr_t(apir_decoder * dec, uintptr_t * val) {
-    apir_decode(dec, sizeof(*val), val, sizeof(*val));
+अटल अंतरभूत व्योम apir_decode_uintptr_t(apir_decoder * dec, uintptr_t * val) {
+    apir_decode(dec, माप(*val), val, माप(*val));
 }

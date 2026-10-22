@@ -1,105 +1,105 @@
-#include "backend-dispatched.h"
-#include "backend-virgl-apir.h"
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
-#include "ggml-impl.h"
+#समावेश "backend-dispatched.h"
+#समावेश "backend-virgl-apir.h"
+#समावेश "ggml-backend-impl.h"
+#समावेश "ggml-backend.h"
+#समावेश "ggml-impl.h"
 
-#include <cstdint>
+#समावेश <cstdint>
 
-uint32_t backend_buffer_type_get_name(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+uint32_t backend_बफर_type_get_name(apir_encoder * enc, apir_decoder * डेसी, virgl_apir_context * ctx) {
     GGML_UNUSED(ctx);
-    ggml_backend_buffer_type_t buft;
-    buft = apir_decode_ggml_buffer_type(dec);
+    ggml_backend_बफर_type_t buft;
+    buft = apir_decode_ggml_बफर_type(डेसी);
 
-    const char * string = buft->iface.get_name(buft);
+    स्थिर अक्षर * string = buft->iface.get_name(buft);
 
-    const size_t string_size = strlen(string) + 1;
-    apir_encode_array_size(enc, string_size);
-    apir_encode_char_array(enc, string, string_size);
+    स्थिर माप_प्रकार string_आकार = म_माप(string) + 1;
+    apir_encode_array_आकार(enc, string_आकार);
+    apir_encode_char_array(enc, string, string_आकार);
 
-    return 0;
+    वापस 0;
 }
 
-uint32_t backend_buffer_type_get_alignment(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+uint32_t backend_बफर_type_get_alignment(apir_encoder * enc, apir_decoder * डेसी, virgl_apir_context * ctx) {
     GGML_UNUSED(ctx);
-    ggml_backend_buffer_type_t buft;
-    buft = apir_decode_ggml_buffer_type(dec);
+    ggml_backend_बफर_type_t buft;
+    buft = apir_decode_ggml_बफर_type(डेसी);
 
-    size_t value = buft->iface.get_alignment(buft);
-    apir_encode_size_t(enc, &value);
+    माप_प्रकार value = buft->iface.get_alignment(buft);
+    apir_encode_आकार_t(enc, &value);
 
-    return 0;
+    वापस 0;
 }
 
-uint32_t backend_buffer_type_get_max_size(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+uint32_t backend_बफर_type_get_max_आकार(apir_encoder * enc, apir_decoder * डेसी, virgl_apir_context * ctx) {
     GGML_UNUSED(ctx);
-    ggml_backend_buffer_type_t buft;
-    buft = apir_decode_ggml_buffer_type(dec);
+    ggml_backend_बफर_type_t buft;
+    buft = apir_decode_ggml_बफर_type(डेसी);
 
-    size_t value = SIZE_MAX;
-    if (buft->iface.get_max_size) {
-        value = buft->iface.get_max_size(buft);
+    माप_प्रकार value = SIZE_MAX;
+    अगर (buft->iface.get_max_आकार) {
+        value = buft->iface.get_max_आकार(buft);
     }
 
-    apir_encode_size_t(enc, &value);
+    apir_encode_आकार_t(enc, &value);
 
-    return 0;
+    वापस 0;
 }
 
 /* APIR_COMMAND_TYPE_BUFFER_TYPE_IS_HOST is deprecated. Keeping the handler for backward compatibility. */
-uint32_t backend_buffer_type_is_host(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+uint32_t backend_बफर_type_is_host(apir_encoder * enc, apir_decoder * डेसी, virgl_apir_context * ctx) {
     GGML_UNUSED(ctx);
-    GGML_UNUSED(dec);
-    const bool is_host = false;
+    GGML_UNUSED(डेसी);
+    स्थिर bool is_host = false;
 
     apir_encode_bool_t(enc, &is_host);
 
-    return 0;
+    वापस 0;
 }
 
-uint32_t backend_buffer_type_alloc_buffer(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+uint32_t backend_बफर_type_alloc_बफर(apir_encoder * enc, apir_decoder * डेसी, virgl_apir_context * ctx) {
     GGML_UNUSED(ctx);
-    ggml_backend_buffer_type_t buft;
-    buft = apir_decode_ggml_buffer_type(dec);
+    ggml_backend_बफर_type_t buft;
+    buft = apir_decode_ggml_बफर_type(डेसी);
 
-    size_t size;
-    apir_decode_size_t(dec, &size);
+    माप_प्रकार size;
+    apir_decode_आकार_t(डेसी, &size);
 
-    ggml_backend_buffer_t buffer;
+    ggml_backend_बफर_t बफर;
 
-    buffer = buft->iface.alloc_buffer(buft, size);
+    बफर = buft->iface.alloc_बफर(buft, size);
 
-    apir_encode_ggml_buffer(enc, buffer);
+    apir_encode_ggml_बफर(enc, बफर);
 
-    if (buffer) {
-        apir_track_backend_buffer(buffer);
+    अगर (बफर) {
+        apir_track_backend_बफर(बफर);
     }
 
-    return 0;
+    वापस 0;
 }
 
-uint32_t backend_buffer_type_get_alloc_size(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+uint32_t backend_बफर_type_get_alloc_आकार(apir_encoder * enc, apir_decoder * डेसी, virgl_apir_context * ctx) {
     GGML_UNUSED(ctx);
-    ggml_backend_buffer_type_t buft;
-    buft = apir_decode_ggml_buffer_type(dec);
+    ggml_backend_बफर_type_t buft;
+    buft = apir_decode_ggml_बफर_type(डेसी);
 
-    const ggml_tensor * op = apir_decode_ggml_tensor_inplace(dec);
+    स्थिर ggml_tensor * op = apir_decode_ggml_tensor_inplace(डेसी);
 
     // Check for decode error
-    if (op == nullptr) {
+    अगर (op == nullptr) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Failed to decode tensor\n", __func__);
-        apir_decoder_set_fatal(dec);
-        return 1;
+        apir_decoder_set_fatal(डेसी);
+        वापस 1;
     }
 
-    size_t value;
-    if (buft->iface.get_alloc_size) {
-        value = buft->iface.get_alloc_size(buft, op);
-    } else {
+    माप_प्रकार value;
+    अगर (buft->iface.get_alloc_आकार) {
+        value = buft->iface.get_alloc_आकार(buft, op);
+    } अन्यथा {
         value = ggml_nbytes(op);  // Default fallback
     }
 
-    apir_encode_size_t(enc, &value);
+    apir_encode_आकार_t(enc, &value);
 
-    return 0;
+    वापस 0;
 }

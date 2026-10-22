@@ -1,22 +1,22 @@
 // Match the version setup ggml-opencl.cpp uses, so any cl.h declarations we
 // touch are consistent across this backend's translation units.
-#define CL_TARGET_OPENCL_VERSION GGML_OPENCL_TARGET_VERSION
-#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
+#घोषणा CL_TARGET_OPENCL_VERSION GGML_OPENCL_TARGET_VERSION
+#घोषणा CL_USE_DEPRECATED_OPENCL_1_2_APIS
 
-#include "cl-program-cache.h"
+#समावेश "cl-program-cache.h"
 
-#include "ggml-impl.h"  // GGML_LOG_INFO / WARN
+#समावेश "ggml-impl.h"  // GGML_LOG_INFO / WARN
 
-#include <cstdint>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <filesystem>
-#include <fstream>
-#include <system_error>
-#include <vector>
+#समावेश <cstdint>
+#समावेश <cstdio>
+#समावेश <cstdlib>
+#समावेश <cstring>
+#समावेश <filesystem>
+#समावेश <fstream>
+#समावेश <system_error>
+#समावेश <vector>
 
-#if defined(_WIN32)
+#अगर defined(_WIN32)
 #  ifndef WIN32_LEAN_AND_MEAN
 #    define WIN32_LEAN_AND_MEAN
 #  endif
@@ -25,11 +25,11 @@
 #  endif
 #  include <windows.h>
 #  include <process.h>
-#  define ggml_getpid()    ((int) GetCurrentProcessId())
-#else
+#  define ggml_getpid()    ((पूर्णांक) GetCurrentProcessId())
+#अन्यथा
 #  include <unistd.h>
-#  define ggml_getpid()    ((int) getpid())
-#endif
+#  define ggml_getpid()    ((पूर्णांक) getpid())
+#पूर्ण_अगर
 
 namespace fs = std::filesystem;
 
@@ -40,14 +40,14 @@ namespace fs = std::filesystem;
 
 namespace {
 
-struct sha256_ctx {
+काष्ठा sha256_ctx {
     uint32_t state[8];
     uint64_t bitlen;
     uint8_t  buf[64];
-    size_t   buf_len;
+    माप_प्रकार   buf_len;
 };
 
-const uint32_t K256[64] = {
+स्थिर uint32_t K256[64] = {
     0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
     0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
     0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
@@ -58,17 +58,17 @@ const uint32_t K256[64] = {
     0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2,
 };
 
-inline uint32_t rotr32(uint32_t x, unsigned n) { return (x >> n) | (x << (32 - n)); }
+अंतरभूत uint32_t rotr32(uint32_t x, अचिन्हित n) { वापस (x >> n) | (x << (32 - n)); }
 
-void sha256_compress(uint32_t state[8], const uint8_t block[64]) {
+व्योम sha256_compress(uint32_t state[8], स्थिर uint8_t block[64]) {
     uint32_t w[64];
-    for (int i = 0; i < 16; ++i) {
+    क्रम (पूर्णांक i = 0; i < 16; ++i) {
         w[i] = ((uint32_t)block[i*4    ] << 24) |
                ((uint32_t)block[i*4 + 1] << 16) |
                ((uint32_t)block[i*4 + 2] <<  8) |
                ((uint32_t)block[i*4 + 3]      );
     }
-    for (int i = 16; i < 64; ++i) {
+    क्रम (पूर्णांक i = 16; i < 64; ++i) {
         uint32_t s0 = rotr32(w[i-15], 7) ^ rotr32(w[i-15], 18) ^ (w[i-15] >> 3);
         uint32_t s1 = rotr32(w[i-2], 17) ^ rotr32(w[i-2],  19) ^ (w[i-2]  >> 10);
         w[i] = w[i-16] + s0 + w[i-7] + s1;
@@ -76,7 +76,7 @@ void sha256_compress(uint32_t state[8], const uint8_t block[64]) {
 
     uint32_t a = state[0],b = state[1],c = state[2],d = state[3],e = state[4],f = state[5],g = state[6],h = state[7];
 
-    for (int i = 0; i < 64; ++i) {
+    क्रम (पूर्णांक i = 0; i < 64; ++i) {
         uint32_t S1   = rotr32(e, 6) ^ rotr32(e, 11) ^ rotr32(e, 25);
         uint32_t ch   = (e & f) ^ ((~e) & g);
         uint32_t t1   = h + S1 + ch + K256[i] + w[i];
@@ -90,51 +90,51 @@ void sha256_compress(uint32_t state[8], const uint8_t block[64]) {
     state[4]+=e; state[5]+=f; state[6]+=g; state[7]+=h;
 }
 
-void sha256_init(sha256_ctx & c) {
+व्योम sha256_init(sha256_ctx & c) {
     c.state[0]=0x6a09e667; c.state[1]=0xbb67ae85; c.state[2]=0x3c6ef372; c.state[3]=0xa54ff53a;
     c.state[4]=0x510e527f; c.state[5]=0x9b05688c; c.state[6]=0x1f83d9ab; c.state[7]=0x5be0cd19;
     c.bitlen  = 0;
     c.buf_len = 0;
 }
 
-void sha256_update(sha256_ctx & c, const void * data, size_t len) {
-    const uint8_t * p = (const uint8_t *) data;
+व्योम sha256_update(sha256_ctx & c, स्थिर व्योम * तथ्य, माप_प्रकार len) {
+    स्थिर uint8_t * p = (स्थिर uint8_t *) तथ्य;
     c.bitlen += (uint64_t) len * 8;
-    if (c.buf_len > 0) {
-        size_t n = 64 - c.buf_len;
-        if (n > len) { n = len; }
-        memcpy(c.buf + c.buf_len, p, n);
+    अगर (c.buf_len > 0) {
+        माप_प्रकार n = 64 - c.buf_len;
+        अगर (n > len) { n = len; }
+        स_नकल(c.buf + c.buf_len, p, n);
         c.buf_len += n;
         p   += n;
         len -= n;
-        if (c.buf_len == 64) {
+        अगर (c.buf_len == 64) {
             sha256_compress(c.state, c.buf);
             c.buf_len = 0;
         }
     }
-    while (len >= 64) {
+    जबतक (len >= 64) {
         sha256_compress(c.state, p);
         p   += 64;
         len -= 64;
     }
-    if (len > 0) {
-        memcpy(c.buf, p, len);
+    अगर (len > 0) {
+        स_नकल(c.buf, p, len);
         c.buf_len = len;
     }
 }
 
-void sha256_final(sha256_ctx & c, uint8_t out[32]) {
+व्योम sha256_final(sha256_ctx & c, uint8_t out[32]) {
     uint64_t bitlen = c.bitlen;
     c.buf[c.buf_len++] = 0x80;
-    if (c.buf_len > 56) {
-        while (c.buf_len < 64) { c.buf[c.buf_len++] = 0; }
+    अगर (c.buf_len > 56) {
+        जबतक (c.buf_len < 64) { c.buf[c.buf_len++] = 0; }
         sha256_compress(c.state, c.buf);
         c.buf_len = 0;
     }
-    while (c.buf_len < 56) { c.buf[c.buf_len++] = 0; }
-    for (int i = 7; i >= 0; --i) { c.buf[c.buf_len++] = (uint8_t) (bitlen >> (i * 8)); }
+    जबतक (c.buf_len < 56) { c.buf[c.buf_len++] = 0; }
+    क्रम (पूर्णांक i = 7; i >= 0; --i) { c.buf[c.buf_len++] = (uint8_t) (bitlen >> (i * 8)); }
     sha256_compress(c.state, c.buf);
-    for (int i = 0; i < 8; ++i) {
+    क्रम (पूर्णांक i = 0; i < 8; ++i) {
         out[i*4    ] = (uint8_t) (c.state[i] >> 24);
         out[i*4 + 1] = (uint8_t) (c.state[i] >> 16);
         out[i*4 + 2] = (uint8_t) (c.state[i] >>  8);
@@ -142,294 +142,294 @@ void sha256_final(sha256_ctx & c, uint8_t out[32]) {
     }
 }
 
-std::string sha256_hex(const uint8_t digest[32]) {
-    static const char hex[] = "0123456789abcdef";
+std::string sha256_hex(स्थिर uint8_t digest[32]) {
+    अटल स्थिर अक्षर षष्ठ[] = "0123456789abcdef";
     std::string s(64, '0');
-    for (int i = 0; i < 32; ++i) {
-        s[i*2    ] = hex[digest[i] >> 4];
-        s[i*2 + 1] = hex[digest[i] & 0xf];
+    क्रम (पूर्णांक i = 0; i < 32; ++i) {
+        s[i*2    ] = षष्ठ[digest[i] >> 4];
+        s[i*2 + 1] = षष्ठ[digest[i] & 0xf];
     }
-    return s;
+    वापस s;
 }
 
-std::string compute_key(const std::string & key_suffix,
-                        const char *        source,
-                        const std::string & compile_opts) {
+std::string compute_कुंजी(स्थिर std::string & कुंजी_suffix,
+                        स्थिर अक्षर *        source,
+                        स्थिर std::string & compile_opts) {
     sha256_ctx c;
     sha256_init(c);
 
-    static const uint8_t sep = 0;
-    sha256_update(c, source,             strlen(source));
+    अटल स्थिर uint8_t sep = 0;
+    sha256_update(c, source,             म_माप(source));
     sha256_update(c, &sep,               1);
-    sha256_update(c, compile_opts.data(), compile_opts.size());
+    sha256_update(c, compile_opts.तथ्य(), compile_opts.size());
     sha256_update(c, &sep,               1);
-    sha256_update(c, key_suffix.data(),  key_suffix.size());
+    sha256_update(c, कुंजी_suffix.तथ्य(),  कुंजी_suffix.size());
 
     uint8_t digest[32];
     sha256_final(c, digest);
-    return sha256_hex(digest);
+    वापस sha256_hex(digest);
 }
 
-bool make_dir_recursive(const std::string & path) {
-    if (path.empty()) { return false; }
+bool make_dir_recursive(स्थिर std::string & path) {
+    अगर (path.empty()) { वापस false; }
     // create_directories() already creates missing parents. It returns false
     // (with ec clear) when the directory is already there, so re-check.
-    const fs::path p = fs::u8path(path);
+    स्थिर fs::path p = fs::u8path(path);
     std::error_code ec;
-    if (fs::create_directories(p, ec)) { return true; }
+    अगर (fs::create_directories(p, ec)) { वापस true; }
     std::error_code ec_stat;
-    return fs::is_directory(p, ec_stat);
+    वापस fs::is_directory(p, ec_stat);
 }
 
 std::string default_cache_dir() {
-#if defined(_WIN32)
-    const char * base = std::getenv("LOCALAPPDATA");
-    if (!base || !*base) { base = std::getenv("APPDATA"); }
-    if (!base || !*base) { base = std::getenv("TEMP"); }
-    if (!base || !*base) { base = "."; }
-    return std::string(base) + "\\llama.cpp\\cl-cache";
-#elif defined(__APPLE__)
-    const char * home = std::getenv("HOME");
-    if (!home || !*home) { home = "."; }
-    return std::string(home) + "/Library/Caches/llama.cpp/cl-cache";
-#else
+#अगर defined(_WIN32)
+    स्थिर अक्षर * base = std::दो_पर्या("LOCALAPPDATA");
+    अगर (!base || !*base) { base = std::दो_पर्या("APPDATA"); }
+    अगर (!base || !*base) { base = std::दो_पर्या("TEMP"); }
+    अगर (!base || !*base) { base = "."; }
+    वापस std::string(base) + "\\llama.cpp\\cl-cache";
+#या_अगर defined(__APPLE__)
+    स्थिर अक्षर * home = std::दो_पर्या("HOME");
+    अगर (!home || !*home) { home = "."; }
+    वापस std::string(home) + "/Library/Caches/llama.cpp/cl-cache";
+#अन्यथा
     // The throwing overload aborts the process when no usable temp directory
     // exists (e.g. Android app contexts with TMPDIR unset); an empty return
     // here just disables the cache instead.
     std::error_code ec;
-    const fs::path tmp_path = fs::temp_directory_path(ec);
-    if (ec || tmp_path.empty()) { return {}; }
-    return tmp_path.string() + "/llama.cpp/cl-cache";
-#endif
+    स्थिर fs::path tmp_path = fs::temp_directory_path(ec);
+    अगर (ec || tmp_path.empty()) { वापस {}; }
+    वापस tmp_path.string() + "/llama.cpp/cl-cache";
+#पूर्ण_अगर
 }
 
 // Query a NUL-terminated string from clGetDeviceInfo / clGetPlatformInfo.
-template <typename GetInfoFn, typename Object>
+ढाँचा <typename GetInfoFn, typename Object>
 std::string query_string(GetInfoFn fn, Object obj, cl_uint name) {
-    size_t sz = 0;
-    if (fn(obj, name, 0, nullptr, &sz) != CL_SUCCESS || sz == 0) {
-        return {};
+    माप_प्रकार sz = 0;
+    अगर (fn(obj, name, 0, nullptr, &sz) != CL_SUCCESS || sz == 0) {
+        वापस {};
     }
     std::string s(sz, '\0');
-    if (fn(obj, name, sz, &s[0], nullptr) != CL_SUCCESS) {
-        return {};
+    अगर (fn(obj, name, sz, &s[0], nullptr) != CL_SUCCESS) {
+        वापस {};
     }
-    if (!s.empty() && s.back() == '\0') {
+    अगर (!s.empty() && s.back() == '\0') {
         s.pop_back();
     }
-    return s;
+    वापस s;
 }
 
-std::string compute_key_suffix(cl_device_id device) {
+std::string compute_कुंजी_suffix(cl_device_id device) {
     cl_platform_id platform = nullptr;
-    clGetDeviceInfo(device, CL_DEVICE_PLATFORM, sizeof(platform), &platform, nullptr);
+    clGetDeviceInfo(device, CL_DEVICE_PLATFORM, माप(platform), &platform, nullptr);
 
     std::string s;
     s.reserve(512);
     s += query_string(clGetDeviceInfo,   device,   CL_DEVICE_NAME);       s.push_back('\0');
     s += query_string(clGetDeviceInfo,   device,   CL_DRIVER_VERSION);    s.push_back('\0');
     s += query_string(clGetDeviceInfo,   device,   CL_DEVICE_VERSION);    s.push_back('\0');
-    if (platform) {
+    अगर (platform) {
         s += query_string(clGetPlatformInfo, platform, CL_PLATFORM_VERSION); s.push_back('\0');
     }
     s += "fmt=" + std::to_string(CL_PROGRAM_CACHE_FORMAT_VERSION);
-    return s;
+    वापस s;
 }
 
-const uint8_t MAGIC[8] = { 'G','G','M','L','C','L','B','C' };
+स्थिर uint8_t MAGIC[8] = { 'G','G','M','L','C','L','B','C' };
 
-bool read_all(const std::string & path, std::vector<uint8_t> & out) {
-    std::ifstream f(fs::u8path(path), std::ios::binary);
-    if (!f) { return false; }
-    f.seekg(0, std::ios::end);
+bool read_all(स्थिर std::string & path, std::vector<uint8_t> & out) {
+    std::अख_प्रवाह f(fs::u8path(path), std::पनप::द्विग);
+    अगर (!f) { वापस false; }
+    f.ग_स्थान(0, std::पनप::end);
     std::streamsize sz = f.tellg();
-    if (sz < 0) { return false; }
-    f.seekg(0, std::ios::beg);
-    out.resize((size_t) sz);
-    if (sz > 0) { f.read((char *) out.data(), sz); }
-    return f.good() || f.eof();
+    अगर (sz < 0) { वापस false; }
+    f.ग_स्थान(0, std::पनप::beg);
+    out.resize((माप_प्रकार) sz);
+    अगर (sz > 0) { f.पढ़ो((अक्षर *) out.तथ्य(), sz); }
+    वापस f.अच्छा() || f.खप();
 }
 
-bool write_atomic(const std::string & path, const uint8_t * data, size_t len) {
-    const fs::path dst = fs::u8path(path);
-    const fs::path tmp = fs::u8path(path + ".tmp." + std::to_string(ggml_getpid()));
+bool write_atomic(स्थिर std::string & path, स्थिर uint8_t * तथ्य, माप_प्रकार len) {
+    स्थिर fs::path dst = fs::u8path(path);
+    स्थिर fs::path tmp = fs::u8path(path + ".tmp." + std::to_string(ggml_getpid()));
     {
-        std::ofstream f(tmp, std::ios::binary | std::ios::trunc);
-        if (!f) { return false; }
-        f.write((const char *) data, (std::streamsize) len);
-        if (!f.good()) {
+        std::बख_प्रवाह f(tmp, std::पनप::द्विग | std::पनप::छाँटो);
+        अगर (!f) { वापस false; }
+        f.ग_लिखो((स्थिर अक्षर *) तथ्य, (std::streamsize) len);
+        अगर (!f.अच्छा()) {
             std::error_code ec_rm;
-            fs::remove(tmp, ec_rm);
-            return false;
+            fs::हटाओ(tmp, ec_rm);
+            वापस false;
         }
     }
 
     std::error_code ec;
-    fs::rename(tmp, dst, ec);
-    if (ec) {
+    fs::नाम(tmp, dst, ec);
+    अगर (ec) {
         std::error_code ec_rm;
-        fs::remove(tmp, ec_rm);
-        return false;
+        fs::हटाओ(tmp, ec_rm);
+        वापस false;
     }
-    return true;
+    वापस true;
 }
 
 }  // namespace
 
-static bool cache_debug_enabled() {
-    static int cached = -1;
-    if (cached < 0) {
-        const char * e = std::getenv("GGML_OPENCL_KERNEL_CACHE_DEBUG");
+अटल bool cache_debug_enabled() {
+    अटल पूर्णांक cached = -1;
+    अगर (cached < 0) {
+        स्थिर अक्षर * e = std::दो_पर्या("GGML_OPENCL_KERNEL_CACHE_DEBUG");
         cached = (e && *e) ? 1 : 0;
     }
-    return cached != 0;
+    वापस cached != 0;
 }
 
-static std::string opts_preview(const std::string & opts, size_t n = 120) {
-    if (opts.size() <= n) { return opts; }
-    return opts.substr(0, n) + "...";
+अटल std::string opts_preview(स्थिर std::string & opts, माप_प्रकार n = 120) {
+    अगर (opts.size() <= n) { वापस opts; }
+    वापस opts.substr(0, n) + "...";
 }
 
 // Running cache tally (diagnostic; plain ints — a benign race in the rare
 // multi-threaded lazy-compile case at worst miscounts by one).
-static int g_cache_hits = 0, g_cache_misses = 0, g_cache_saves = 0;
+अटल पूर्णांक g_cache_hits = 0, g_cache_misses = 0, g_cache_saves = 0;
 
 // Debug trace directly to stderr
-static void cache_debug_line(const char * kind, const std::string & key,
-                             const char * source, const std::string & opts) {
-    if (!cache_debug_enabled()) { return; }
-    fprintf(stderr, "ggml_opencl: cache %-4s [h=%d m=%d s=%d] key=%s src=%zuB opts='%s'\n",
+अटल व्योम cache_debug_पंक्ति(स्थिर अक्षर * kind, स्थिर std::string & कुंजी,
+                             स्थिर अक्षर * source, स्थिर std::string & opts) {
+    अगर (!cache_debug_enabled()) { वापस; }
+    ख_लिखो(मानक_त्रुटि, "ggml_opencl: cache %-4s [h=%d m=%d s=%d] key=%s src=%zuB opts='%s'\n",
             kind, g_cache_hits, g_cache_misses, g_cache_saves,
-            key.substr(0, 16).c_str(), strlen(source), opts_preview(opts).c_str());
-    fflush(stderr);
+            कुंजी.substr(0, 16).c_str(), म_माप(source), opts_preview(opts).c_str());
+    ख_साफ(मानक_त्रुटि);
 }
 
 cl_program_cache_state cl_program_cache_init(cl_device_id device) {
     cl_program_cache_state st;
 
-    const char * env = std::getenv("GGML_OPENCL_KERNEL_CACHE_DIR");
-    if (env && (!std::strcmp(env, "0")    || !std::strcmp(env, "off")  ||
-                !std::strcmp(env, "none") || !std::strcmp(env, "disable") ||
-                !std::strcmp(env, "disabled"))) {
-        if (cache_debug_enabled()) {
-            fprintf(stderr, "ggml_opencl: kernel cache disabled by GGML_OPENCL_KERNEL_CACHE_DIR=%s\n", env);
-            fflush(stderr);
+    स्थिर अक्षर * env = std::दो_पर्या("GGML_OPENCL_KERNEL_CACHE_DIR");
+    अगर (env && (!std::म_भेद(env, "0")    || !std::म_भेद(env, "off")  ||
+                !std::म_भेद(env, "none") || !std::म_भेद(env, "disable") ||
+                !std::म_भेद(env, "disabled"))) {
+        अगर (cache_debug_enabled()) {
+            ख_लिखो(मानक_त्रुटि, "ggml_opencl: kernel cache disabled by GGML_OPENCL_KERNEL_CACHE_DIR=%s\n", env);
+            ख_साफ(मानक_त्रुटि);
         }
-        return st;
+        वापस st;
     }
 
     std::string dir;
-    if (!env || !*env || !std::strcmp(env, "1") || !std::strcmp(env, "default")) {
+    अगर (!env || !*env || !std::म_भेद(env, "1") || !std::म_भेद(env, "default")) {
         dir = default_cache_dir();
-        if (dir.empty()) {
+        अगर (dir.empty()) {
             GGML_LOG_INFO("ggml_opencl: kernel cache disabled (no usable default cache directory)\n");
-            return st;
+            वापस st;
         }
-    } else {
+    } अन्यथा {
         dir = env;
     }
 
-    if (!make_dir_recursive(dir)) {
+    अगर (!make_dir_recursive(dir)) {
         GGML_LOG_INFO("ggml_opencl: kernel cache disabled (cannot create directory '%s')\n", dir.c_str());
-        return st;
+        वापस st;
     }
 
     st.dir        = dir;
-    st.key_suffix = compute_key_suffix(device);
+    st.कुंजी_suffix = compute_कुंजी_suffix(device);
     GGML_LOG_INFO("ggml_opencl: kernel cache enabled at '%s'\n", st.dir.c_str());
-    if (cache_debug_enabled()) {
-        fprintf(stderr, "ggml_opencl: kernel cache enabled at '%s' "
+    अगर (cache_debug_enabled()) {
+        ख_लिखो(मानक_त्रुटि, "ggml_opencl: kernel cache enabled at '%s' "
                         "(GGML_OPENCL_KERNEL_CACHE_DIR=off to disable)\n", st.dir.c_str());
-        fflush(stderr);
+        ख_साफ(मानक_त्रुटि);
     }
-    return st;
+    वापस st;
 }
 
 cl_program cl_program_cache_try_load(
-    const cl_program_cache_state & state,
+    स्थिर cl_program_cache_state & state,
     cl_context                     context,
     cl_device_id                   device,
-    const char *                   source,
-    const std::string &            compile_opts) {
+    स्थिर अक्षर *                   source,
+    स्थिर std::string &            compile_opts) {
 
-    if (state.dir.empty() || !source) { return nullptr; }
+    अगर (state.dir.empty() || !source) { वापस nullptr; }
 
-    const std::string key  = compute_key(state.key_suffix, source, compile_opts);
-    const std::string path = state.dir + "/" + key + ".clbin";
+    स्थिर std::string कुंजी  = compute_कुंजी(state.कुंजी_suffix, source, compile_opts);
+    स्थिर std::string path = state.dir + "/" + कुंजी + ".clbin";
 
     std::vector<uint8_t> file;
-    if (!read_all(path, file)) {
+    अगर (!read_all(path, file)) {
         ++g_cache_misses;
-        cache_debug_line("MISS", key, source, compile_opts);
-        return nullptr;
+        cache_debug_पंक्ति("MISS", कुंजी, source, compile_opts);
+        वापस nullptr;
     }
-    if (file.size() < 16 || std::memcmp(file.data(), MAGIC, 8) != 0) { return nullptr; }
+    अगर (file.size() < 16 || std::स_भेद(file.तथ्य(), MAGIC, 8) != 0) { वापस nullptr; }
 
     uint32_t fmt =
         ((uint32_t) file[ 8]) | ((uint32_t) file[ 9] <<  8) |
         ((uint32_t) file[10] << 16) | ((uint32_t) file[11] << 24);
-    if (fmt != CL_PROGRAM_CACHE_FORMAT_VERSION) { return nullptr; }
+    अगर (fmt != CL_PROGRAM_CACHE_FORMAT_VERSION) { वापस nullptr; }
 
-    const size_t hdr_len = 16;
-    const unsigned char * bin     = file.data() + hdr_len;
-    const size_t          bin_len = file.size() - hdr_len;
+    स्थिर माप_प्रकार hdr_len = 16;
+    स्थिर अचिन्हित अक्षर * bin     = file.तथ्य() + hdr_len;
+    स्थिर माप_प्रकार          bin_len = file.size() - hdr_len;
 
     cl_int err     = CL_SUCCESS;
     cl_int bin_err = CL_SUCCESS;
-    cl_program p = clCreateProgramWithBinary(context, 1, &device, &bin_len, &bin, &bin_err, &err);
-    if (err != CL_SUCCESS || bin_err != CL_SUCCESS || p == nullptr) {
-        if (p) { clReleaseProgram(p); }
-        return nullptr;
+    cl_program p = cl_Create_Program_With_द्विआधारी(context, 1, &device, &bin_len, &bin, &bin_err, &err);
+    अगर (err != CL_SUCCESS || bin_err != CL_SUCCESS || p == nullptr) {
+        अगर (p) { clReleaseProgram(p); }
+        वापस nullptr;
     }
 
     err = clBuildProgram(p, 0, nullptr, compile_opts.c_str(), nullptr, nullptr);
-    if (err != CL_SUCCESS) {
+    अगर (err != CL_SUCCESS) {
         clReleaseProgram(p);
-        return nullptr;
+        वापस nullptr;
     }
     ++g_cache_hits;
-    cache_debug_line("HIT", key, source, compile_opts);
-    return p;
+    cache_debug_पंक्ति("HIT", कुंजी, source, compile_opts);
+    वापस p;
 }
 
-void cl_program_cache_try_save(
-    const cl_program_cache_state & state,
+व्योम cl_program_cache_try_save(
+    स्थिर cl_program_cache_state & state,
     cl_program                     program,
     cl_device_id                   /*device*/,
-    const char *                   source,
-    const std::string &            compile_opts) {
+    स्थिर अक्षर *                   source,
+    स्थिर std::string &            compile_opts) {
 
-    if (state.dir.empty() || !program || !source) {
-        return;
+    अगर (state.dir.empty() || !program || !source) {
+        वापस;
     }
 
     cl_uint n_dev = 0;
-    if (clGetProgramInfo(program, CL_PROGRAM_NUM_DEVICES, sizeof(n_dev), &n_dev, nullptr) != CL_SUCCESS || n_dev == 0) {
-        return;
+    अगर (clGetProgramInfo(program, CL_PROGRAM_अंक_DEVICES, माप(n_dev), &n_dev, nullptr) != CL_SUCCESS || n_dev == 0) {
+        वापस;
     }
 
-    std::vector<size_t> sizes(n_dev);
-    if (clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, sizeof(size_t) * n_dev, sizes.data(), nullptr) != CL_SUCCESS) {
-        return;
+    std::vector<माप_प्रकार> sizes(n_dev);
+    अगर (clGetProgramInfo(program, CL_PROGRAM_द्विआधारी_SIZES, माप(माप_प्रकार) * n_dev, sizes.तथ्य(), nullptr) != CL_SUCCESS) {
+        वापस;
     }
-    if (sizes.empty() || sizes[0] == 0) {
-        return;
+    अगर (sizes.empty() || sizes[0] == 0) {
+        वापस;
     }
 
     std::vector<std::vector<uint8_t>> binaries(n_dev);
-    std::vector<unsigned char *>      bin_ptrs(n_dev);
-    for (cl_uint i = 0; i < n_dev; ++i) {
+    std::vector<अचिन्हित अक्षर *>      bin_ptrs(n_dev);
+    क्रम (cl_uint i = 0; i < n_dev; ++i) {
         binaries[i].resize(sizes[i]);
-        bin_ptrs[i] = binaries[i].data();
+        bin_ptrs[i] = binaries[i].तथ्य();
     }
-    if (clGetProgramInfo(program, CL_PROGRAM_BINARIES, sizeof(unsigned char *) * n_dev, bin_ptrs.data(), nullptr) != CL_SUCCESS) {
-        return;
+    अगर (clGetProgramInfo(program, CL_PROGRAM_BINARIES, माप(अचिन्हित अक्षर *) * n_dev, bin_ptrs.तथ्य(), nullptr) != CL_SUCCESS) {
+        वापस;
     }
 
     // We only care about the first device's binary — that's the one we'd
     // re-load with on a future cache hit. Multi-device contexts aren't a
     // pattern this backend uses today.
-    const std::vector<uint8_t> & bin = binaries[0];
+    स्थिर std::vector<uint8_t> & bin = binaries[0];
 
     std::vector<uint8_t> file;
     file.reserve(16 + bin.size());
@@ -442,12 +442,12 @@ void cl_program_cache_try_save(
     file.push_back(0); file.push_back(0); file.push_back(0); file.push_back(0); // reserved
     file.insert(file.end(), bin.begin(), bin.end());
 
-    const std::string key  = compute_key(state.key_suffix, source, compile_opts);
-    const std::string path = state.dir + "/" + key + ".clbin";
-    if (!write_atomic(path, file.data(), file.size())) {
+    स्थिर std::string कुंजी  = compute_कुंजी(state.कुंजी_suffix, source, compile_opts);
+    स्थिर std::string path = state.dir + "/" + कुंजी + ".clbin";
+    अगर (!write_atomic(path, file.तथ्य(), file.size())) {
         GGML_LOG_INFO("ggml_opencl: kernel cache: failed to write '%s'\n", path.c_str());
-    } else {
+    } अन्यथा {
         ++g_cache_saves;
-        cache_debug_line("SAVE", key, source, compile_opts);
+        cache_debug_पंक्ति("SAVE", कुंजी, source, compile_opts);
     }
 }

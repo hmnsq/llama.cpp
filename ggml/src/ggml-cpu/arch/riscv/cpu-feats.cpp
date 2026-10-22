@@ -1,38 +1,38 @@
-#include "ggml-backend-impl.h"
+#समावेश "ggml-backend-impl.h"
 
-#if defined(__riscv) && __riscv_xlen == 64
-#include <asm/hwprobe.h>
-#include <asm/unistd.h>
-#include <unistd.h>
+#अगर defined(__riscv) && __riscv_xlen == 64
+#समावेश <asm/hwprobe.h>
+#समावेश <asm/unistd.h>
+#समावेश <unistd.h>
 
-struct riscv64_features {
+काष्ठा riscv64_features {
     bool has_rvv = false;
 
     riscv64_features() {
-        struct riscv_hwprobe probe;
-        probe.key = RISCV_HWPROBE_KEY_IMA_EXT_0;
+        काष्ठा riscv_hwprobe probe;
+        probe.कुंजी = RISCV_HWPROBE_कुंजी_IMA_EXT_0;
         probe.value = 0;
 
-        int ret = syscall(__NR_riscv_hwprobe, &probe, 1, 0, NULL, 0);
+        पूर्णांक ret = syscall(__NR_riscv_hwprobe, &probe, 1, 0, शून्य, 0);
 
-        if (0 == ret) {
+        अगर (0 == ret) {
             has_rvv = !!(probe.value & RISCV_HWPROBE_IMA_V);
         }
     }
 };
 
-static int ggml_backend_cpu_riscv64_score() {
-    int score = 1;
+अटल पूर्णांक ggml_backend_cpu_riscv64_score() {
+    पूर्णांक score = 1;
     riscv64_features rf;
 
-#ifdef GGML_USE_RVV
-    if (!rf.has_rvv) { return 0; }
+#अगर_घोषित GGML_USE_RVV
+    अगर (!rf.has_rvv) { वापस 0; }
     score += 1 << 1;
-#endif
+#पूर्ण_अगर
 
-    return score;
+    वापस score;
 }
 
 GGML_BACKEND_DL_SCORE_IMPL(ggml_backend_cpu_riscv64_score)
 
-#endif  // __riscv && __riscv_xlen == 64
+#पूर्ण_अगर  // __riscv && __riscv_xlen == 64

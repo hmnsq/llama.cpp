@@ -1,57 +1,57 @@
 
 // Fused RMS Norm + MUL F32 Kernel
 
-#include "ggml_tensor.h"
-#include "math_fp.h"
-#include "platform.h"
+#समावेश "ggml_tensor.h"
+#समावेश "math_fp.h"
+#समावेश "platform.h"
 
-#include <assert.h>
-#include <stdint.h>
-#include <string.h>
+#समावेश <assert.h>
+#समावेश <stdint.h>
+#समावेश <string.h>
 
 // Fused RMS norm + MUL kernel parameters structure
-struct ggml_et_rms_norm_mul_params {
-    struct ggml_tensor src0;  // F32 input tensor (to be normalized)
-    struct ggml_tensor src1;  // F32 weights tensor (element-wise multiply)
-    struct ggml_tensor dst;   // F32 output tensor
-    float              eps;   // Epsilon for numerical stability
+काष्ठा ggml_et_rms_norm_mul_params {
+    काष्ठा ggml_tensor src0;  // F32 input tensor (to be normalized)
+    काष्ठा ggml_tensor src1;  // F32 weights tensor (element-wise multiply)
+    काष्ठा ggml_tensor dst;   // F32 output tensor
+    भग्न              eps;   // Epsilon for numerical stability
 };
 
-static inline size_t tensor_bytes(const struct ggml_tensor * t) {
-    return (size_t) t->ne[0] * t->ne[1] * t->ne[2] * t->ne[3] * t->nb[0];
+अटल अंतरभूत माप_प्रकार tensor_bytes(स्थिर काष्ठा ggml_tensor * t) {
+    वापस (माप_प्रकार) t->ne[0] * t->ne[1] * t->ne[2] * t->ne[3] * t->nb[0];
 }
 
-int entry_point(struct ggml_et_rms_norm_mul_params * params, void * env) {
+पूर्णांक entry_point(काष्ठा ggml_et_rms_norm_mul_params * params, व्योम * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    अगर (!kernel_env) {
+        वापस -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    पूर्णांक thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    पूर्णांक अंक_threads = get_अंक_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    अगर (thread_id < 0) {
+        वापस 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;  // Invalid pointer
+    अगर (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        वापस -1;  // Invalid pointer
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * src1 = &params->src1;
-    struct ggml_tensor * dst  = &params->dst;
+    काष्ठा ggml_tensor * src0 = &params->src0;
+    काष्ठा ggml_tensor * src1 = &params->src1;
+    काष्ठा ggml_tensor * dst  = &params->dst;
 
-    float eps = params->eps;
+    भग्न eps = params->eps;
 
-    if (src0->type != GGML_TYPE_F32 || src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;  // Unsupported type combination
+    अगर (src0->type != GGML_TYPE_F32 || src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        वापस -1;  // Unsupported type combination
     }
 
-    float * src0_data = (float *) src0->data;
-    float * src1_data = (float *) src1->data;
-    float * dst_data  = (float *) dst->data;
+    भग्न * src0_तथ्य = (भग्न *) src0->तथ्य;
+    भग्न * src1_तथ्य = (भग्न *) src1->तथ्य;
+    भग्न * dst_तथ्य  = (भग्न *) dst->तथ्य;
     // #ifdef ET_UBERKERNEL
     //     evict_region_past_l2(src0_data, tensor_bytes(src0));
     //     evict_region_past_l2(src1_data, tensor_bytes(src1));
@@ -59,66 +59,66 @@ int entry_point(struct ggml_et_rms_norm_mul_params * params, void * env) {
     //     FENCE;
     //     // et_barrier(ET_BARRIER_GLOBAL);
     // #endif
-    if (!src0_data || !src1_data || !dst_data) {
-        return -1;  // Null data pointer
+    अगर (!src0_तथ्य || !src1_तथ्य || !dst_तथ्य) {
+        वापस -1;  // Null data pointer
     }
 
-    if (eps < 0.0f) {
-        return -1;  // Invalid epsilon
+    अगर (eps < 0.0f) {
+        वापस -1;  // Invalid epsilon
     }
 
-    const int64_t ne0 = dst->ne[0];  // Inner dimension (row size)
-    const int64_t ne1 = dst->ne[1];  // Dimension 1
-    const int64_t ne2 = dst->ne[2];  // Dimension 2
-    const int64_t ne3 = dst->ne[3];  // Dimension 3
+    स्थिर int64_t ne0 = dst->ne[0];  // Inner dimension (row size)
+    स्थिर int64_t ne1 = dst->ne[1];  // Dimension 1
+    स्थिर int64_t ne2 = dst->ne[2];  // Dimension 2
+    स्थिर int64_t ne3 = dst->ne[3];  // Dimension 3
 
     // Get dst strides (in bytes)
-    const size_t nb0 = dst->nb[0], nb1 = dst->nb[1], nb2 = dst->nb[2], nb3 = dst->nb[3];
+    स्थिर माप_प्रकार nb0 = dst->nb[0], nb1 = dst->nb[1], nb2 = dst->nb[2], nb3 = dst->nb[3];
 
     // Get src0 strides (in bytes)
-    const size_t nb00 = src0->nb[0], nb01 = src0->nb[1], nb02 = src0->nb[2], nb03 = src0->nb[3];
+    स्थिर माप_प्रकार nb00 = src0->nb[0], nb01 = src0->nb[1], nb02 = src0->nb[2], nb03 = src0->nb[3];
 
     // Get src1 (weights) strides (in bytes), supports broadcasting in dims 1,2,3
-    const size_t nb10 = src1->nb[0], nb11 = src1->nb[1], nb12 = src1->nb[2], nb13 = src1->nb[3];
+    स्थिर माप_प्रकार nb10 = src1->nb[0], nb11 = src1->nb[1], nb12 = src1->nb[2], nb13 = src1->nb[3];
 
     // Verify that src0 and dst have same shape (required for RMS norm)
-    if (src0->ne[0] != ne0 || src0->ne[1] != ne1 || src0->ne[2] != ne2 || src0->ne[3] != ne3) {
-        return -1;  // Shape mismatch
+    अगर (src0->ne[0] != ne0 || src0->ne[1] != ne1 || src0->ne[2] != ne2 || src0->ne[3] != ne3) {
+        वापस -1;  // Shape mismatch
     }
     // et_barrier(ET_BARRIER_GLOBAL);
 
-    const float   inv_ne0       = et_fdiv(1.0f, (float) (int32_t) ne0);
-    const int32_t total_rows    = (int32_t) (ne1 * ne2 * ne3);
-    const int     shire_threads = SOC_MINIONS_PER_SHIRE * NUM_HARTS_PER_MINION;
+    स्थिर भग्न   inv_ne0       = et_fdiv(1.0f, (भग्न) (int32_t) ne0);
+    स्थिर int32_t योग_rows    = (int32_t) (ne1 * ne2 * ne3);
+    स्थिर पूर्णांक     shire_threads = SOC_MINIONS_PER_SHIRE * अंक_HARTS_PER_MINION;
 
-    if (total_rows >= shire_threads) {
+    अगर (योग_rows >= shire_threads) {
         // Row-parallel: each thread processes whole rows
-        for (int64_t i3 = 0; i3 < ne3; i3++) {
-            for (int64_t i2 = 0; i2 < ne2; i2++) {
-                for (int64_t i1 = thread_id; i1 < ne1; i1 += num_threads) {
-                    const float * src_ptr =
-                        (const float *) ((const char *) src0_data + i3 * nb03 + i2 * nb02 + i1 * nb01);
-                    float * dst_ptr = (float *) ((char *) dst_data + i3 * nb3 + i2 * nb2 + i1 * nb1);
+        क्रम (int64_t i3 = 0; i3 < ne3; i3++) {
+            क्रम (int64_t i2 = 0; i2 < ne2; i2++) {
+                क्रम (int64_t i1 = thread_id; i1 < ne1; i1 += अंक_threads) {
+                    स्थिर भग्न * src_ptr =
+                        (स्थिर भग्न *) ((स्थिर अक्षर *) src0_तथ्य + i3 * nb03 + i2 * nb02 + i1 * nb01);
+                    भग्न * dst_ptr = (भग्न *) ((अक्षर *) dst_तथ्य + i3 * nb3 + i2 * nb2 + i1 * nb1);
 
-                    const float * wgt_ptr = (const float *) ((const char *) src1_data + (i3 % src1->ne[3]) * nb13 +
+                    स्थिर भग्न * wgt_ptr = (स्थिर भग्न *) ((स्थिर अक्षर *) src1_तथ्य + (i3 % src1->ne[3]) * nb13 +
                                                              (i2 % src1->ne[2]) * nb12 + (i1 % src1->ne[1]) * nb11);
 
-                    unsigned long saved_mask;
-                    __asm__ volatile("mova.x.m %0" : "=r"(saved_mask));
-                    __asm__ volatile("mov.m.x m0, x0, 0xFF");
+                    अचिन्हित दीर्घ saved_mask;
+                    __asm__ अस्थिर("mova.x.m %0" : "=r"(saved_mask));
+                    __asm__ अस्थिर("mov.m.x m0, x0, 0xFF");
 
                     // Sum of squares
-                    __asm__ volatile("fbci.pi f10, 0" ::: "f10");
-                    for (int32_t i0 = 0; i0 < (int32_t) ne0; i0 += 8) {
-                        __asm__ volatile(
+                    __asm__ अस्थिर("fbci.pi f10, 0" ::: "f10");
+                    क्रम (int32_t i0 = 0; i0 < (int32_t) ne0; i0 += 8) {
+                        __asm__ अस्थिर(
                             "flw.ps f11, %[x_vec]\n"
                             "fmadd.ps f10, f11, f11, f10\n"
                             :
-                            : [x_vec] "m"(*(const float (*)[8]) & src_ptr[i0])
+                            : [x_vec] "m"(*(स्थिर भग्न (*)[8]) & src_ptr[i0])
                             : "f10", "f11");
                     }
 
-                    float sum;
+                    भग्न योग_2;
                     __asm__ __volatile__(
                         "fswizz.ps f1, f10, 0xB1 \n\t"
                         "fadd.ps   f2, f10, f1, rne \n\t"
@@ -127,27 +127,27 @@ int entry_point(struct ggml_et_rms_norm_mul_params * params, void * env) {
                         "fmvz.x.ps t0, f4, 4 \n\t"
                         "fbcx.ps   f5, t0 \n\t"
                         "fadd.ps   %[vout], f4, f5, rne \n\t"
-                        : [vout] "=f"(sum)::"t0", "f1", "f2", "f3", "f4", "f5");
+                        : [vout] "=f"(योग_2)::"t0", "f1", "f2", "f3", "f4", "f5");
 
-                    const float scale = et_powf(sum * inv_ne0 + eps, -0.5f);
-                    if (!(scale > 0.0f)) {
-                        __asm__ volatile("mova.m.x %0" ::"r"(saved_mask));
-                        return -1;
+                    स्थिर भग्न scale = et_powf(योग_2 * inv_ne0 + eps, -0.5f);
+                    अगर (!(scale > 0.0f)) {
+                        __asm__ अस्थिर("mova.m.x %0" ::"r"(saved_mask));
+                        वापस -1;
                     }
 
                     uint32_t scale_bits;
-                    __asm__ volatile("fmv.x.s %0, %1" : "=r"(scale_bits) : "f"(scale));
-                    __asm__ volatile("fbcx.ps f13, %[sb]\n" : : [sb] "r"(scale_bits) : "f13");
+                    __asm__ अस्थिर("fmv.x.s %0, %1" : "=r"(scale_bits) : "f"(scale));
+                    __asm__ अस्थिर("fbcx.ps f13, %[sb]\n" : : [sb] "r"(scale_bits) : "f13");
 
-                    for (int32_t i0 = 0; i0 < (int32_t) ne0; i0 += 8) {
-                        __asm__ volatile(
+                    क्रम (int32_t i0 = 0; i0 < (int32_t) ne0; i0 += 8) {
+                        __asm__ अस्थिर(
                             "flw.ps f12, %[x_vec]\n"
                             "flw.ps f15, %[w_vec]\n"
                             "fmul.ps f14, f12, f13\n"
                             "fmul.ps f14, f14, f15\n"
                             "fsw.ps f14, %[result]\n"
-                            : [result] "=m"(*(float (*)[8]) & dst_ptr[i0])
-                            : [x_vec] "m"(*(const float (*)[8]) & src_ptr[i0]), [w_vec] "m"(*(const float (*)[8]) &
+                            : [परिणाम] "=m"(*(भग्न (*)[8]) & dst_ptr[i0])
+                            : [x_vec] "m"(*(स्थिर भग्न (*)[8]) & src_ptr[i0]), [w_vec] "m"(*(स्थिर भग्न (*)[8]) &
                                                                                             wgt_ptr[i0])
                             : "f12", "f14", "f15");
                     }
@@ -157,24 +157,24 @@ int entry_point(struct ggml_et_rms_norm_mul_params * params, void * env) {
                     //                 WAIT_CACHEOPS;
                     //                 FENCE;
                     // #endif
-                    __asm__ volatile("mova.m.x %0" ::"r"(saved_mask));
+                    __asm__ अस्थिर("mova.m.x %0" ::"r"(saved_mask));
                 }
             }
         }
-    } else {
+    } अन्यथा {
         // Intra-row: threads within each shire cooperate on rows via L2 SCP.
         // L2 SCP + barrier are shire-local, so use shire-local thread index.
-        int shire_tid       = thread_id % shire_threads;
-        int threads_per_row = shire_threads / total_rows;
-        int my_row          = shire_tid / threads_per_row;
-        int local_tid       = shire_tid % threads_per_row;
-        int group_base      = my_row * threads_per_row;
+        पूर्णांक shire_tid       = thread_id % shire_threads;
+        पूर्णांक threads_per_row = shire_threads / योग_rows;
+        पूर्णांक my_row          = shire_tid / threads_per_row;
+        पूर्णांक local_tid       = shire_tid % threads_per_row;
+        पूर्णांक group_base      = my_row * threads_per_row;
 
         // Excess threads within this shire
-        if (my_row >= total_rows) {
+        अगर (my_row >= योग_rows) {
             __asm__ __volatile__("fence\n" ::: "memory");
             et_barrier(ET_BARRIER_SHIRE);
-            return 0;
+            वापस 0;
         }
 
         // Unflatten row index
@@ -182,42 +182,42 @@ int entry_point(struct ggml_et_rms_norm_mul_params * params, void * env) {
         int64_t i2 = (my_row / ne1) % ne2;
         int64_t i3 = my_row / (ne1 * ne2);
 
-        const float * src_ptr = (const float *) ((const char *) src0_data + i3 * nb03 + i2 * nb02 + i1 * nb01);
-        float *       dst_ptr = (float *) ((char *) dst_data + i3 * nb3 + i2 * nb2 + i1 * nb1);
+        स्थिर भग्न * src_ptr = (स्थिर भग्न *) ((स्थिर अक्षर *) src0_तथ्य + i3 * nb03 + i2 * nb02 + i1 * nb01);
+        भग्न *       dst_ptr = (भग्न *) ((अक्षर *) dst_तथ्य + i3 * nb3 + i2 * nb2 + i1 * nb1);
 
-        const float * wgt_ptr = (const float *) ((const char *) src1_data + (i3 % src1->ne[3]) * nb13 +
+        स्थिर भग्न * wgt_ptr = (स्थिर भग्न *) ((स्थिर अक्षर *) src1_तथ्य + (i3 % src1->ne[3]) * nb13 +
                                                  (i2 % src1->ne[2]) * nb12 + (i1 % src1->ne[1]) * nb11);
 
         // Chunk boundaries aligned to 16 floats (64-byte cache line)
-        const int32_t elems_per_cl   = 16;
-        int32_t       total_cls      = ((int32_t) ne0 + elems_per_cl - 1) / elems_per_cl;
-        int32_t       cls_per_thread = (total_cls + threads_per_row - 1) / threads_per_row;
+        स्थिर int32_t elems_per_cl   = 16;
+        int32_t       योग_cls      = ((int32_t) ne0 + elems_per_cl - 1) / elems_per_cl;
+        int32_t       cls_per_thread = (योग_cls + threads_per_row - 1) / threads_per_row;
         int32_t       my_start       = local_tid * cls_per_thread * elems_per_cl;
         int32_t       my_end         = my_start + cls_per_thread * elems_per_cl;
-        if (my_end > (int32_t) ne0) {
+        अगर (my_end > (int32_t) ne0) {
             my_end = (int32_t) ne0;
         }
-        if (my_start >= (int32_t) ne0) {
+        अगर (my_start >= (int32_t) ne0) {
             my_start = 0;
             my_end   = 0;
         }
 
-        unsigned long saved_mask;
-        __asm__ volatile("mova.x.m %0" : "=r"(saved_mask));
-        __asm__ volatile("mov.m.x m0, x0, 0xFF");
+        अचिन्हित दीर्घ saved_mask;
+        __asm__ अस्थिर("mova.x.m %0" : "=r"(saved_mask));
+        __asm__ अस्थिर("mov.m.x m0, x0, 0xFF");
 
         // Phase 1: partial sum of squares on own chunk
-        __asm__ volatile("fbci.pi f10, 0" ::: "f10");
-        for (int32_t i0 = my_start; i0 < my_end; i0 += 8) {
-            __asm__ volatile(
+        __asm__ अस्थिर("fbci.pi f10, 0" ::: "f10");
+        क्रम (int32_t i0 = my_start; i0 < my_end; i0 += 8) {
+            __asm__ अस्थिर(
                 "flw.ps f11, %[x_vec]\n"
                 "fmadd.ps f10, f11, f11, f10\n"
                 :
-                : [x_vec] "m"(*(const float (*)[8]) & src_ptr[i0])
+                : [x_vec] "m"(*(स्थिर भग्न (*)[8]) & src_ptr[i0])
                 : "f10", "f11");
         }
 
-        float partial_sum;
+        भग्न partial_योग;
         __asm__ __volatile__(
             "fswizz.ps f1, f10, 0xB1 \n\t"
             "fadd.ps   f2, f10, f1, rne \n\t"
@@ -226,53 +226,53 @@ int entry_point(struct ggml_et_rms_norm_mul_params * params, void * env) {
             "fmvz.x.ps t0, f4, 4 \n\t"
             "fbcx.ps   f5, t0 \n\t"
             "fadd.ps   %[vout], f4, f5, rne \n\t"
-            : [vout] "=f"(partial_sum)::"t0", "f1", "f2", "f3", "f4", "f5");
+            : [vout] "=f"(partial_योग)::"t0", "f1", "f2", "f3", "f4", "f5");
 
         // Phase 2: write partial sum to L2 SCP, evict from L1D
-        volatile float * my_slot = (volatile float *) et_shire_l2scp_local((uint64_t) shire_tid * 64);
-        *my_slot                 = partial_sum;
+        अस्थिर भग्न * my_slot = (अस्थिर भग्न *) et_shire_l2scp_local((uint64_t) shire_tid * 64);
+        *my_slot                 = partial_योग;
         __asm__ __volatile__("fence\n" ::: "memory");
-        evict_to_l2((const void *) my_slot, 1, 64);
+        evict_to_l2((स्थिर व्योम *) my_slot, 1, 64);
         WAIT_CACHEOPS;
 
         et_barrier(ET_BARRIER_SHIRE);
 
         // Phase 3: all threads read partial sums, compute scale, apply to own chunk
-        int workers = threads_per_row < total_cls ? threads_per_row : total_cls;
+        पूर्णांक workers = threads_per_row < योग_cls ? threads_per_row : योग_cls;
 
-        for (int t = 0; t < workers; t++) {
-            volatile float * slot = (volatile float *) et_shire_l2scp_local((uint64_t) (group_base + t) * 64);
-            evict_to_l2((const void *) slot, 1, 64);
+        क्रम (पूर्णांक t = 0; t < workers; t++) {
+            अस्थिर भग्न * slot = (अस्थिर भग्न *) et_shire_l2scp_local((uint64_t) (group_base + t) * 64);
+            evict_to_l2((स्थिर व्योम *) slot, 1, 64);
         }
         WAIT_CACHEOPS;
 
-        float total_sum = 0.0f;
-        for (int t = 0; t < workers; t++) {
-            volatile float * slot = (volatile float *) et_shire_l2scp_local((uint64_t) (group_base + t) * 64);
-            total_sum += *slot;
+        भग्न योग_योग = 0.0f;
+        क्रम (पूर्णांक t = 0; t < workers; t++) {
+            अस्थिर भग्न * slot = (अस्थिर भग्न *) et_shire_l2scp_local((uint64_t) (group_base + t) * 64);
+            योग_योग += *slot;
         }
 
-        const float scale = et_powf(total_sum * inv_ne0 + eps, -0.5f);
-        if (!(scale > 0.0f)) {
-            __asm__ volatile("mova.m.x %0" ::"r"(saved_mask));
-            return -1;
+        स्थिर भग्न scale = et_powf(योग_योग * inv_ne0 + eps, -0.5f);
+        अगर (!(scale > 0.0f)) {
+            __asm__ अस्थिर("mova.m.x %0" ::"r"(saved_mask));
+            वापस -1;
         }
 
         // Apply scale * weights to own chunk
-        if (my_start < my_end) {
+        अगर (my_start < my_end) {
             uint32_t scale_bits;
-            __asm__ volatile("fmv.x.s %0, %1" : "=r"(scale_bits) : "f"(scale));
-            __asm__ volatile("fbcx.ps f13, %[sb]\n" : : [sb] "r"(scale_bits) : "f13");
+            __asm__ अस्थिर("fmv.x.s %0, %1" : "=r"(scale_bits) : "f"(scale));
+            __asm__ अस्थिर("fbcx.ps f13, %[sb]\n" : : [sb] "r"(scale_bits) : "f13");
 
-            for (int32_t i0 = my_start; i0 < my_end; i0 += 8) {
-                __asm__ volatile(
+            क्रम (int32_t i0 = my_start; i0 < my_end; i0 += 8) {
+                __asm__ अस्थिर(
                     "flw.ps f12, %[x_vec]\n"
                     "flw.ps f15, %[w_vec]\n"
                     "fmul.ps f14, f12, f13\n"
                     "fmul.ps f14, f14, f15\n"
                     "fsw.ps f14, %[result]\n"
-                    : [result] "=m"(*(float (*)[8]) & dst_ptr[i0])
-                    : [x_vec] "m"(*(const float (*)[8]) & src_ptr[i0]), [w_vec] "m"(*(const float (*)[8]) & wgt_ptr[i0])
+                    : [परिणाम] "=m"(*(भग्न (*)[8]) & dst_ptr[i0])
+                    : [x_vec] "m"(*(स्थिर भग्न (*)[8]) & src_ptr[i0]), [w_vec] "m"(*(स्थिर भग्न (*)[8]) & wgt_ptr[i0])
                     : "f12", "f14", "f15");
             }
             // #ifdef ET_UBERKERNEL
@@ -283,8 +283,8 @@ int entry_point(struct ggml_et_rms_norm_mul_params * params, void * env) {
             // #endif
         }
 
-        __asm__ volatile("mova.m.x %0" ::"r"(saved_mask));
+        __asm__ अस्थिर("mova.m.x %0" ::"r"(saved_mask));
     }
 
-    return 0;
+    वापस 0;
 }

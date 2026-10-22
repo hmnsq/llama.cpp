@@ -3,288 +3,288 @@
 //
 
 // KleidiAI micro-kernels
-#include <cstddef>
+#समावेश <cstddef>
 
-#include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_interface.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp_qsi8cxp_interface.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x8_qsi4c32p4x8_1x4x32_neon_dotprod.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p4x4_qsi4c32p4x4_16x4_neon_dotprod.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p4x8_qsi4c32p4x8_16x4_neon_i8mm.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot.h"
-#include "kai/ukernels/matmul/matmul_clamp_fp32_bf16p_bf16p/kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme_mopa.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme_dot.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4x4_1x4_neon_dotprod.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp4x4_qsi8cxp4x4_16x4_neon_dotprod.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p4x8_qsi4c32p8x8_16x8_sve_i8mm.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x8_qsi4c32p8x8_1x8_sve_dotprod.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_f16p_qsi4c32p/kai_matmul_clamp_f32_f16p1vlx2_qsi4c32p4vlx2_1vlx4vl_sme2_mopa.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p2vlx1b_1x16vl_sme2_mla.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa.h"
+#समावेश "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_interface.h"
+#समावेश "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp_qsi8cxp_interface.h"
+#समावेश "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x8_qsi4c32p4x8_1x4x32_neon_dotprod.h"
+#समावेश "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod.h"
+#समावेश "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p4x4_qsi4c32p4x4_16x4_neon_dotprod.h"
+#समावेश "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p4x8_qsi4c32p4x8_16x4_neon_i8mm.h"
+#समावेश "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot.h"
+#समावेश "kai/ukernels/matmul/matmul_clamp_fp32_bf16p_bf16p/kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa.h"
+#समावेश "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa.h"
+#समावेश "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot.h"
+#समावेश "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme_mopa.h"
+#समावेश "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme_dot.h"
+#समावेश "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod.h"
+#समावेश "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4x4_1x4_neon_dotprod.h"
+#समावेश "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp4x4_qsi8cxp4x4_16x4_neon_dotprod.h"
+#समावेश "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm.h"
+#समावेश "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p4x8_qsi4c32p8x8_16x8_sve_i8mm.h"
+#समावेश "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x8_qsi4c32p8x8_1x8_sve_dotprod.h"
+#समावेश "kai/ukernels/matmul/matmul_clamp_f32_f16p_qsi4c32p/kai_matmul_clamp_f32_f16p1vlx2_qsi4c32p4vlx2_1vlx4vl_sme2_mopa.h"
+#समावेश "kai/ukernels/matmul/matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa.h"
+#समावेश "kai/ukernels/matmul/matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p2vlx1b_1x16vl_sme2_mla.h"
+#समावेश "kai/ukernels/matmul/matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa.h"
 
-#include "kai/ukernels/matmul/pack/kai_lhs_pack_bf16p2vlx2_f32_sme.h"
-#include "kai/ukernels/matmul/pack/kai_lhs_pack_f32p2vlx1_f32_sme.h"
-#include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qsi8d32p_f32.h"
-#include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qsi8d32p4x8sb_f32_neon.h"
-#include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qsi8d32p_f32_neon.h"
-#include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp_f32.h"
+#समावेश "kai/ukernels/matmul/pack/kai_lhs_pack_bf16p2vlx2_f32_sme.h"
+#समावेश "kai/ukernels/matmul/pack/kai_lhs_pack_f32p2vlx1_f32_sme.h"
+#समावेश "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qsi8d32p_f32.h"
+#समावेश "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qsi8d32p4x8sb_f32_neon.h"
+#समावेश "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qsi8d32p_f32_neon.h"
+#समावेश "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp_f32.h"
 
-#include "kai/ukernels/matmul/kai_matmul.h"
-#include "kai/ukernels/matmul/kai_matmul_pack_lhs.h"
-#include "kai/ukernels/matmul/kai_matmul_pack_rhs.h"
+#समावेश "kai/ukernels/matmul/kai_matmul.h"
+#समावेश "kai/ukernels/matmul/kai_matmul_pack_lhs.h"
+#समावेश "kai/ukernels/matmul/kai_matmul_pack_rhs.h"
 
-#include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_bf16p2vlx2b_f32_x32_sme.h"
-#include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_f32p2vlx1biasf32_f32_f32_sme.h"
-#include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0.h"
-#include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon.h"
-#include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon.h"
-#include "kai/ukernels/matmul/pack/kai_lhs_pack_f16pmrx2_f32_neon.h"
+#समावेश "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_bf16p2vlx2b_f32_x32_sme.h"
+#समावेश "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_f32p2vlx1biasf32_f32_f32_sme.h"
+#समावेश "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0.h"
+#समावेश "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon.h"
+#समावेश "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon.h"
+#समावेश "kai/ukernels/matmul/pack/kai_lhs_pack_f16pmrx2_f32_neon.h"
 
-#include "kai/kai_common.h"
+#समावेश "kai/kai_common.h"
 
-#define GGML_COMMON_DECL_CPP
-#include "ggml-common.h"
+#घोषणा GGML_COMMON_DECL_CPP
+#समावेश "ggml-common.h"
 
-#include "kernels.h"
+#समावेश "kernels.h"
 
-#define NELEMS(x) (sizeof(x) / sizeof(*x))
+#घोषणा NELEMS(x) (माप(x) / माप(*x))
 
-template<size_t(*Fn)(size_t,size_t,size_t)>
-static inline size_t kernel_offs_fn3(size_t a, size_t b, size_t c) {
-    return Fn(a, b, c);
+ढाँचा<माप_प्रकार(*Fn)(माप_प्रकार,माप_प्रकार,माप_प्रकार)>
+अटल अंतरभूत माप_प्रकार kernel_offs_fn3(माप_प्रकार a, माप_प्रकार b, माप_प्रकार c) {
+    वापस Fn(a, b, c);
 }
 
-template<size_t(*Fn)(size_t,size_t)>
-static inline size_t kernel_offs_fn2(size_t a, size_t b, size_t) {
-    return Fn(a, b);
+ढाँचा<माप_प्रकार(*Fn)(माप_प्रकार,माप_प्रकार)>
+अटल अंतरभूत माप_प्रकार kernel_offs_fn2(माप_प्रकार a, माप_प्रकार b, माप_प्रकार) {
+    वापस Fn(a, b);
 }
 
-template<void(*Fn)(size_t,size_t,size_t,size_t,const void*,const void*,float*,size_t,size_t,float,float)>
-static inline void kernel_run_fn11(size_t m, size_t n, size_t k, size_t bl,
-                                     const void* lhs, const void* rhs, void* dst,
-                                     size_t dst_stride_row, size_t dst_stride_col,
-                                     float clamp_min, float clamp_max) {
-    Fn(m, n, k, bl, lhs, rhs, static_cast<float*>(dst), dst_stride_row, dst_stride_col, clamp_min, clamp_max);
+ढाँचा<व्योम(*Fn)(माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,स्थिर व्योम*,स्थिर व्योम*,भग्न*,माप_प्रकार,माप_प्रकार,भग्न,भग्न)>
+अटल अंतरभूत व्योम kernel_run_fn11(माप_प्रकार m, माप_प्रकार n, माप_प्रकार k, माप_प्रकार bl,
+                                     स्थिर व्योम* lhs, स्थिर व्योम* rhs, व्योम* dst,
+                                     माप_प्रकार dst_stride_row, माप_प्रकार dst_stride_col,
+                                     भग्न clamp_min, भग्न clamp_max) {
+    Fn(m, n, k, bl, lhs, rhs, static_cast<भग्न*>(dst), dst_stride_row, dst_stride_col, clamp_min, clamp_max);
 }
 
-template<void(*Fn)(size_t,size_t,size_t,const void*,const void*,void*,size_t,size_t,float,float)>
-static inline void kernel_run_fn10(size_t m, size_t n, size_t k, size_t /*bl*/,
-                                   const void* lhs, const void* rhs, void* dst,
-                                   size_t dst_stride_row, size_t dst_stride_col,
-                                   float clamp_min, float clamp_max) {
+ढाँचा<व्योम(*Fn)(माप_प्रकार,माप_प्रकार,माप_प्रकार,स्थिर व्योम*,स्थिर व्योम*,व्योम*,माप_प्रकार,माप_प्रकार,भग्न,भग्न)>
+अटल अंतरभूत व्योम kernel_run_fn10(माप_प्रकार m, माप_प्रकार n, माप_प्रकार k, माप_प्रकार /*bl*/,
+                                   स्थिर व्योम* lhs, स्थिर व्योम* rhs, व्योम* dst,
+                                   माप_प्रकार dst_stride_row, माप_प्रकार dst_stride_col,
+                                   भग्न clamp_min, भग्न clamp_max) {
     Fn(m, n, k, lhs, rhs, dst, dst_stride_row, dst_stride_col, clamp_min, clamp_max);
 }
 
-template <void (*Fn)(size_t, size_t, size_t, const void *, size_t, const void *, void *, size_t, size_t, float, float)>
-static inline void kernel_run_lhs_stride_fn10(size_t       m,
-                                              size_t       n,
-                                              size_t       k,
-                                              size_t       lhs_stride,
-                                              const void * lhs,
-                                              const void * rhs,
-                                              void *       dst,
-                                              size_t       dst_stride_row,
-                                              size_t       dst_stride_col,
-                                              float        clamp_min,
-                                              float        clamp_max) {
+ढाँचा <व्योम (*Fn)(माप_प्रकार, माप_प्रकार, माप_प्रकार, स्थिर व्योम *, माप_प्रकार, स्थिर व्योम *, व्योम *, माप_प्रकार, माप_प्रकार, भग्न, भग्न)>
+अटल अंतरभूत व्योम kernel_run_lhs_stride_fn10(माप_प्रकार       m,
+                                              माप_प्रकार       n,
+                                              माप_प्रकार       k,
+                                              माप_प्रकार       lhs_stride,
+                                              स्थिर व्योम * lhs,
+                                              स्थिर व्योम * rhs,
+                                              व्योम *       dst,
+                                              माप_प्रकार       dst_stride_row,
+                                              माप_प्रकार       dst_stride_col,
+                                              भग्न        clamp_min,
+                                              भग्न        clamp_max) {
     Fn(m, n, k, lhs, lhs_stride, rhs, dst, dst_stride_row, dst_stride_col, clamp_min, clamp_max);
 }
 
-template<void(*Fn)(size_t,size_t,size_t,const void*,const void*,float*,size_t,size_t,float,float)>
-static inline void kernel_run_float_fn10(size_t m, size_t n, size_t k, size_t /*bl*/,
-                                         const void* lhs, const void* rhs, void* dst,
-                                         size_t dst_stride_row, size_t dst_stride_col,
-                                         float clamp_min, float clamp_max) {
-    Fn(m, n, k, lhs, rhs, static_cast<float*>(dst), dst_stride_row, dst_stride_col, clamp_min, clamp_max);
+ढाँचा<व्योम(*Fn)(माप_प्रकार,माप_प्रकार,माप_प्रकार,स्थिर व्योम*,स्थिर व्योम*,भग्न*,माप_प्रकार,माप_प्रकार,भग्न,भग्न)>
+अटल अंतरभूत व्योम kernel_run_float_fn10(माप_प्रकार m, माप_प्रकार n, माप_प्रकार k, माप_प्रकार /*bl*/,
+                                         स्थिर व्योम* lhs, स्थिर व्योम* rhs, व्योम* dst,
+                                         माप_प्रकार dst_stride_row, माप_प्रकार dst_stride_col,
+                                         भग्न clamp_min, भग्न clamp_max) {
+    Fn(m, n, k, lhs, rhs, static_cast<भग्न*>(dst), dst_stride_row, dst_stride_col, clamp_min, clamp_max);
 }
 
-template<size_t(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t)>
-static inline size_t lhs_ps_fn6(size_t m, size_t k, size_t bl, size_t mr, size_t kr, size_t sr) {
-    return Fn(m, k, bl, mr, kr, sr);
+ढाँचा<माप_प्रकार(*Fn)(माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार)>
+अटल अंतरभूत माप_प्रकार lhs_ps_fn6(माप_प्रकार m, माप_प्रकार k, माप_प्रकार bl, माप_प्रकार mr, माप_प्रकार kr, माप_प्रकार sr) {
+    वापस Fn(m, k, bl, mr, kr, sr);
 }
 
-template<size_t(*Fn)(size_t,size_t,size_t,size_t,size_t)>
-static inline size_t lhs_ps_fn5(size_t m, size_t k, size_t /*bl*/, size_t mr, size_t kr, size_t sr) {
-    return Fn(m, k, mr, kr, sr);
+ढाँचा<माप_प्रकार(*Fn)(माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार)>
+अटल अंतरभूत माप_प्रकार lhs_ps_fn5(माप_प्रकार m, माप_प्रकार k, माप_प्रकार /*bl*/, माप_प्रकार mr, माप_प्रकार kr, माप_प्रकार sr) {
+    वापस Fn(m, k, mr, kr, sr);
 }
 
-template<size_t(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t)>
-static inline size_t lhs_offs_fn6(size_t m_idx, size_t k, size_t bl, size_t mr, size_t kr, size_t sr) {
-    return Fn(m_idx, k, bl, mr, kr, sr);
+ढाँचा<माप_प्रकार(*Fn)(माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार)>
+अटल अंतरभूत माप_प्रकार lhs_offs_fn6(माप_प्रकार m_idx, माप_प्रकार k, माप_प्रकार bl, माप_प्रकार mr, माप_प्रकार kr, माप_प्रकार sr) {
+    वापस Fn(m_idx, k, bl, mr, kr, sr);
 }
 
-template<size_t(*Fn)(size_t,size_t,size_t,size_t,size_t)>
-static inline size_t lhs_offs_fn5(size_t m_idx, size_t k, size_t /*bl*/, size_t mr, size_t kr, size_t sr) {
-    return Fn(m_idx, k, mr, kr, sr);
+ढाँचा<माप_प्रकार(*Fn)(माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार)>
+अटल अंतरभूत माप_प्रकार lhs_offs_fn5(माप_प्रकार m_idx, माप_प्रकार k, माप_प्रकार /*bl*/, माप_प्रकार mr, माप_प्रकार kr, माप_प्रकार sr) {
+    वापस Fn(m_idx, k, mr, kr, sr);
 }
 
-template<void(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t,size_t,const float*,size_t,void*)>
-static inline void lhs_pack_float_fn10(size_t m, size_t k, size_t bl, size_t mr, size_t kr, size_t sr,
-                                            size_t m_idx_start, const void* lhs, size_t lhs_stride, void* lhs_packed) {
-    Fn(m, k, bl, mr, kr, sr, m_idx_start, static_cast<const float*>(lhs), lhs_stride, lhs_packed);
+ढाँचा<व्योम(*Fn)(माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,स्थिर भग्न*,माप_प्रकार,व्योम*)>
+अटल अंतरभूत व्योम lhs_pack_float_fn10(माप_प्रकार m, माप_प्रकार k, माप_प्रकार bl, माप_प्रकार mr, माप_प्रकार kr, माप_प्रकार sr,
+                                            माप_प्रकार m_idx_start, स्थिर व्योम* lhs, माप_प्रकार lhs_stride, व्योम* lhs_packed) {
+    Fn(m, k, bl, mr, kr, sr, m_idx_start, static_cast<स्थिर भग्न*>(lhs), lhs_stride, lhs_packed);
 }
 
-template<void(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t,size_t,const void*,size_t,void*)>
-static inline void lhs_pack_void_fn10(size_t m, size_t k, size_t bl, size_t mr, size_t kr, size_t sr,
-                                           size_t m_idx_start, const void* lhs, size_t lhs_stride, void* lhs_packed) {
+ढाँचा<व्योम(*Fn)(माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,स्थिर व्योम*,माप_प्रकार,व्योम*)>
+अटल अंतरभूत व्योम lhs_pack_void_fn10(माप_प्रकार m, माप_प्रकार k, माप_प्रकार bl, माप_प्रकार mr, माप_प्रकार kr, माप_प्रकार sr,
+                                           माप_प्रकार m_idx_start, स्थिर व्योम* lhs, माप_प्रकार lhs_stride, व्योम* lhs_packed) {
     Fn(m, k, bl, mr, kr, sr, m_idx_start, lhs, lhs_stride, lhs_packed);
 }
 
-template<void(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t,const void*,size_t,void*)>
-static inline void lhs_pack_void_fn9(size_t m, size_t k, size_t /*bl*/, size_t mr, size_t kr, size_t sr,
-                                             size_t m_idx_start, const void* lhs, size_t lhs_stride, void* lhs_packed) {
+ढाँचा<व्योम(*Fn)(माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,स्थिर व्योम*,माप_प्रकार,व्योम*)>
+अटल अंतरभूत व्योम lhs_pack_void_fn9(माप_प्रकार m, माप_प्रकार k, माप_प्रकार /*bl*/, माप_प्रकार mr, माप_प्रकार kr, माप_प्रकार sr,
+                                             माप_प्रकार m_idx_start, स्थिर व्योम* lhs, माप_प्रकार lhs_stride, व्योम* lhs_packed) {
     Fn(m, k, mr, kr, sr, m_idx_start, lhs, lhs_stride, lhs_packed);
 }
 
-template<void(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t,const float*,size_t,void*)>
-static inline void lhs_pack_float_fn9_no_bl(size_t m, size_t k, size_t /*bl*/, size_t mr, size_t kr, size_t sr,
-                                            size_t m_idx_start, const void * lhs, size_t lhs_stride, void * lhs_packed) {
-    Fn(m, k, mr, kr, sr, m_idx_start, static_cast<const float*>(lhs), lhs_stride, lhs_packed);
+ढाँचा<व्योम(*Fn)(माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,स्थिर भग्न*,माप_प्रकार,व्योम*)>
+अटल अंतरभूत व्योम lhs_pack_float_fn9_no_bl(माप_प्रकार m, माप_प्रकार k, माप_प्रकार /*bl*/, माप_प्रकार mr, माप_प्रकार kr, माप_प्रकार sr,
+                                            माप_प्रकार m_idx_start, स्थिर व्योम * lhs, माप_प्रकार lhs_stride, व्योम * lhs_packed) {
+    Fn(m, k, mr, kr, sr, m_idx_start, static_cast<स्थिर भग्न*>(lhs), lhs_stride, lhs_packed);
 }
 
-template<size_t(*Fn)(size_t,size_t,size_t,size_t,size_t)>
-static inline size_t rhs_ps_fn5(size_t n, size_t k, size_t nr, size_t kr, size_t bl) {
-    return Fn(n, k, nr, kr, bl);
+ढाँचा<माप_प्रकार(*Fn)(माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार)>
+अटल अंतरभूत माप_प्रकार rhs_ps_fn5(माप_प्रकार n, माप_प्रकार k, माप_प्रकार nr, माप_प्रकार kr, माप_प्रकार bl) {
+    वापस Fn(n, k, nr, kr, bl);
 }
 
-template<size_t(*Fn)(size_t,size_t)>
-static inline size_t rhs_ps_fn2(size_t n, size_t k, size_t /*nr*/, size_t /*kr*/, size_t /*bl*/) {
-    return Fn(n, k);
+ढाँचा<माप_प्रकार(*Fn)(माप_प्रकार,माप_प्रकार)>
+अटल अंतरभूत माप_प्रकार rhs_ps_fn2(माप_प्रकार n, माप_प्रकार k, माप_प्रकार /*nr*/, माप_प्रकार /*kr*/, माप_प्रकार /*bl*/) {
+    वापस Fn(n, k);
 }
 
-template<void(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t,size_t,const uint8_t*,const float*,void*,size_t,const struct kai_rhs_pack_qs4cxs1s0_param*)>
-static inline void rhs_pack_fn12(size_t num_groups, size_t n, size_t k, size_t nr, size_t kr, size_t sr, size_t bl,
-                                      size_t /*rhs_stride*/, const void* rhs, const void* bias, const void* /*scale*/,
-                                      void* rhs_packed, size_t extra_bytes, const void* params) {
-    Fn(num_groups, n, k, nr, kr, sr, bl,
-       static_cast<const uint8_t*>(rhs),
-       static_cast<const float*>(bias),
+ढाँचा<व्योम(*Fn)(माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,स्थिर uint8_t*,स्थिर भग्न*,व्योम*,माप_प्रकार,स्थिर काष्ठा kai_rhs_pack_qs4cxs1s0_param*)>
+अटल अंतरभूत व्योम rhs_pack_fn12(माप_प्रकार अंक_groups, माप_प्रकार n, माप_प्रकार k, माप_प्रकार nr, माप_प्रकार kr, माप_प्रकार sr, माप_प्रकार bl,
+                                      माप_प्रकार /*rhs_stride*/, स्थिर व्योम* rhs, स्थिर व्योम* bias, स्थिर व्योम* /*scale*/,
+                                      व्योम* rhs_packed, माप_प्रकार extra_bytes, स्थिर व्योम* params) {
+    Fn(अंक_groups, n, k, nr, kr, sr, bl,
+       static_cast<स्थिर uint8_t*>(rhs),
+       static_cast<स्थिर भग्न*>(bias),
        rhs_packed, extra_bytes,
-       static_cast<const kai_rhs_pack_qs4cxs1s0_param*>(params));
+       static_cast<स्थिर kai_rhs_pack_qs4cxs1s0_param*>(params));
 }
 
-template<void(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t,const int8_t*,const float*,const float*,void*,size_t,const struct kai_rhs_pack_qsi8cx_params*)>
-static inline void rhs_pack_scale_fn12(size_t num_groups, size_t n, size_t k, size_t nr, size_t kr, size_t sr, size_t /*bl*/,
-                                       size_t /*rhs_stride*/, const void* rhs, const void* bias, const void* scale,
-                                       void* rhs_packed, size_t extra_bytes, const void* params) {
-    Fn(num_groups, n, k, nr, kr, sr,
-       static_cast<const int8_t*>(rhs),
-       static_cast<const float*>(bias),
-       static_cast<const float*>(scale),
+ढाँचा<व्योम(*Fn)(माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,स्थिर int8_t*,स्थिर भग्न*,स्थिर भग्न*,व्योम*,माप_प्रकार,स्थिर काष्ठा kai_rhs_pack_qsi8cx_params*)>
+अटल अंतरभूत व्योम rhs_pack_scale_fn12(माप_प्रकार अंक_groups, माप_प्रकार n, माप_प्रकार k, माप_प्रकार nr, माप_प्रकार kr, माप_प्रकार sr, माप_प्रकार /*bl*/,
+                                       माप_प्रकार /*rhs_stride*/, स्थिर व्योम* rhs, स्थिर व्योम* bias, स्थिर व्योम* scale,
+                                       व्योम* rhs_packed, माप_प्रकार extra_bytes, स्थिर व्योम* params) {
+    Fn(अंक_groups, n, k, nr, kr, sr,
+       static_cast<स्थिर int8_t*>(rhs),
+       static_cast<स्थिर भग्न*>(bias),
+       static_cast<स्थिर भग्न*>(scale),
        rhs_packed, extra_bytes,
-       static_cast<const kai_rhs_pack_qsi8cx_params*>(params));
+       static_cast<स्थिर kai_rhs_pack_qsi8cx_params*>(params));
 }
 
-template<void(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t,size_t,const void*,const void*,const void*,void*,size_t,const void*)>
-static inline void rhs_pack_fn13(size_t num_groups, size_t n, size_t k, size_t nr, size_t kr, size_t sr, size_t /*bl*/,
-                                               size_t rhs_stride, const void* rhs, const void* bias, const void* scale,
-                                               void* rhs_packed, size_t extra_bytes, const void* params) {
-    Fn(num_groups, n, k, nr, kr, sr, rhs_stride, rhs, bias, scale, rhs_packed, extra_bytes, params);
+ढाँचा<व्योम(*Fn)(माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,माप_प्रकार,स्थिर व्योम*,स्थिर व्योम*,स्थिर व्योम*,व्योम*,माप_प्रकार,स्थिर व्योम*)>
+अटल अंतरभूत व्योम rhs_pack_fn13(माप_प्रकार अंक_groups, माप_प्रकार n, माप_प्रकार k, माप_प्रकार nr, माप_प्रकार kr, माप_प्रकार sr, माप_प्रकार /*bl*/,
+                                               माप_प्रकार rhs_stride, स्थिर व्योम* rhs, स्थिर व्योम* bias, स्थिर व्योम* scale,
+                                               व्योम* rhs_packed, माप_प्रकार extra_bytes, स्थिर व्योम* params) {
+    Fn(अंक_groups, n, k, nr, kr, sr, rhs_stride, rhs, bias, scale, rhs_packed, extra_bytes, params);
 }
 
-static constexpr size_t KLEIDIAI_Q4_K_BLOCK_LENGTH = QK_K / 8;
+अटल constexpr माप_प्रकार KLEIDIAI_Q4_K_BLOCK_लंबाई = QK_K / 8;
 
 static_assert(QK_K == 256, "KleidiAI Q4_K kernels require 256-value super-blocks");
-static_assert(sizeof(block_q4_K) == 144, "Unexpected ggml Q4_K block layout");
-static_assert(offsetof(block_q4_K, scales) == 4, "Unexpected ggml Q4_K metadata offset");
-static_assert(offsetof(block_q4_K, qs) == 16, "Unexpected ggml Q4_K data offset");
+static_assert(माप(block_q4_K) == 144, "Unexpected ggml Q4_K block layout");
+static_assert(दुरत्व(block_q4_K, scales) == 4, "Unexpected ggml Q4_K metadata offset");
+static_assert(दुरत्व(block_q4_K, qs) == 16, "Unexpected ggml Q4_K data offset");
 
-static struct kai_matmul_uker_config q4_k_matmul_config() {
-    struct kai_matmul_uker_config config = {};
-    config.format.bl = KLEIDIAI_Q4_K_BLOCK_LENGTH;
-    return config;
+अटल काष्ठा kai_matmul_uker_config q4_k_matmul_config() {
+    काष्ठा kai_matmul_uker_config config = {};
+    config.format.bl = KLEIDIAI_Q4_K_BLOCK_लंबाई;
+    वापस config;
 }
 
-static struct kai_matmul_uker_config default_matmul_config() {
-    return {};
+अटल काष्ठा kai_matmul_uker_config default_matmul_config() {
+    वापस {};
 }
 
-template<
-        struct kai_matmul_uker_api (*GetApi)(void),
-        struct kai_matmul_uker_config (*GetConfig)(void),
-        size_t MR, size_t NR, size_t KR, size_t SR>
-struct matmul_uker_adapter {
-    static size_t get_m_step() {
-        const struct kai_matmul_uker_api api = GetApi();
-        const struct kai_matmul_uker_config config = GetConfig();
-        return api.get_step(&config).m;
+ढाँचा<
+        काष्ठा kai_matmul_uker_api (*GetApi)(व्योम),
+        काष्ठा kai_matmul_uker_config (*GetConfig)(व्योम),
+        माप_प्रकार MR, माप_प्रकार NR, माप_प्रकार KR, माप_प्रकार SR>
+काष्ठा matmul_uker_adapter {
+    अटल माप_प्रकार get_m_step() {
+        स्थिर काष्ठा kai_matmul_uker_api api = GetApi();
+        स्थिर काष्ठा kai_matmul_uker_config config = GetConfig();
+        वापस api.get_step(&config).m;
     }
 
-    static size_t get_n_step() {
-        const struct kai_matmul_uker_api api = GetApi();
-        const struct kai_matmul_uker_config config = GetConfig();
-        return api.get_step(&config).n;
+    अटल माप_प्रकार get_n_step() {
+        स्थिर काष्ठा kai_matmul_uker_api api = GetApi();
+        स्थिर काष्ठा kai_matmul_uker_config config = GetConfig();
+        वापस api.get_step(&config).n;
     }
 
-    static size_t get_mr() {
-        if constexpr (MR == 0) {
-            return get_m_step();
+    अटल माप_प्रकार get_mr() {
+        अगर constexpr (MR == 0) {
+            वापस get_m_step();
         }
-        return MR;
+        वापस MR;
     }
 
-    static size_t get_nr() {
-        if constexpr (NR == 0) {
-            return get_n_step();
+    अटल माप_प्रकार get_nr() {
+        अगर constexpr (NR == 0) {
+            वापस get_n_step();
         }
-        return NR;
+        वापस NR;
     }
 
-    static size_t get_kr() {
-        return KR;
+    अटल माप_प्रकार get_kr() {
+        वापस KR;
     }
 
-    static size_t get_sr() {
-        return SR;
+    अटल माप_प्रकार get_sr() {
+        वापस SR;
     }
 
-    static size_t get_dst_offset(size_t m_idx, size_t n_idx, size_t dst_stride) {
-        const struct kai_matmul_uker_api api = GetApi();
-        const struct kai_matmul_uker_config config = GetConfig();
-        const struct kai_matmul_uker_dst_dim_args index = { m_idx, n_idx };
-        const struct kai_matmul_uker_dst_stride_args stride = { dst_stride };
-        return api.get_dst_offset(&config, &index, &stride);
+    अटल माप_प्रकार get_dst_offset(माप_प्रकार m_idx, माप_प्रकार n_idx, माप_प्रकार dst_stride) {
+        स्थिर काष्ठा kai_matmul_uker_api api = GetApi();
+        स्थिर काष्ठा kai_matmul_uker_config config = GetConfig();
+        स्थिर काष्ठा kai_matmul_uker_dst_dim_args सूचकांक = { m_idx, n_idx };
+        स्थिर काष्ठा kai_matmul_uker_dst_stride_args stride = { dst_stride };
+        वापस api.get_dst_offset(&config, &सूचकांक, &stride);
     }
 
-    static size_t get_lhs_packed_offset(size_t m_idx, size_t k, size_t bl) {
-        const struct kai_matmul_uker_api api = GetApi();
-        const struct kai_matmul_uker_config config = GetConfig();
+    अटल माप_प्रकार get_lhs_packed_offset(माप_प्रकार m_idx, माप_प्रकार k, माप_प्रकार bl) {
+        स्थिर काष्ठा kai_matmul_uker_api api = GetApi();
+        स्थिर काष्ठा kai_matmul_uker_config config = GetConfig();
         GGML_ASSERT(bl == config.format.bl);
-        const struct kai_matmul_uker_lhs_dim_args shape = { m_idx, k };
-        const struct kai_matmul_uker_lhs_dim_args index = { m_idx, 0 };
-        const struct kai_matmul_uker_lhs_stride_args stride = api.get_lhs_stride(&config, &shape);
-        return api.get_lhs_offset(&config, &index, &stride);
+        स्थिर काष्ठा kai_matmul_uker_lhs_dim_args shape = { m_idx, k };
+        स्थिर काष्ठा kai_matmul_uker_lhs_dim_args सूचकांक = { m_idx, 0 };
+        स्थिर काष्ठा kai_matmul_uker_lhs_stride_args stride = api.get_lhs_stride(&config, &shape);
+        वापस api.get_lhs_offset(&config, &सूचकांक, &stride);
     }
 
-    static size_t get_rhs_packed_offset(size_t n_idx, size_t k, size_t bl) {
-        const struct kai_matmul_uker_api api = GetApi();
-        const struct kai_matmul_uker_config config = GetConfig();
+    अटल माप_प्रकार get_rhs_packed_offset(माप_प्रकार n_idx, माप_प्रकार k, माप_प्रकार bl) {
+        स्थिर काष्ठा kai_matmul_uker_api api = GetApi();
+        स्थिर काष्ठा kai_matmul_uker_config config = GetConfig();
         GGML_ASSERT(bl == config.format.bl);
-        const struct kai_matmul_uker_rhs_dim_args shape = { n_idx, k };
-        const struct kai_matmul_uker_rhs_dim_args index = { n_idx, 0 };
-        const struct kai_matmul_uker_rhs_stride_args stride = api.get_rhs_stride(&config, &shape);
-        return api.get_rhs_offset(&config, &index, &stride);
+        स्थिर काष्ठा kai_matmul_uker_rhs_dim_args shape = { n_idx, k };
+        स्थिर काष्ठा kai_matmul_uker_rhs_dim_args सूचकांक = { n_idx, 0 };
+        स्थिर काष्ठा kai_matmul_uker_rhs_stride_args stride = api.get_rhs_stride(&config, &shape);
+        वापस api.get_rhs_offset(&config, &सूचकांक, &stride);
     }
 
-    static void run(
-            size_t m, size_t n, size_t k, size_t bl,
-            const void * lhs_packed, const void * rhs_packed,
-            void * dst, size_t dst_stride_row, size_t dst_stride_col,
-            float clamp_min, float clamp_max) {
-        const struct kai_matmul_uker_api api = GetApi();
-        const struct kai_matmul_uker_config config = GetConfig();
+    अटल व्योम run(
+            माप_प्रकार m, माप_प्रकार n, माप_प्रकार k, माप_प्रकार bl,
+            स्थिर व्योम * lhs_packed, स्थिर व्योम * rhs_packed,
+            व्योम * dst, माप_प्रकार dst_stride_row, माप_प्रकार dst_stride_col,
+            भग्न clamp_min, भग्न clamp_max) {
+        स्थिर काष्ठा kai_matmul_uker_api api = GetApi();
+        स्थिर काष्ठा kai_matmul_uker_config config = GetConfig();
         GGML_ASSERT(bl == config.format.bl);
-        GGML_ASSERT(dst_stride_col == sizeof(float));
-        const struct kai_matmul_uker_lhs_dim_args lhs_shape = { m, k };
-        const struct kai_matmul_uker_rhs_dim_args rhs_shape = { n, k };
+        GGML_ASSERT(dst_stride_col == माप(भग्न));
+        स्थिर काष्ठा kai_matmul_uker_lhs_dim_args lhs_shape = { m, k };
+        स्थिर काष्ठा kai_matmul_uker_rhs_dim_args rhs_shape = { n, k };
 
-        struct kai_matmul_uker_args args = {};
+        काष्ठा kai_matmul_uker_args args = {};
         args.flags = KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP;
         args.shape = { m, n, k };
         args.operand.lhs.ptr = lhs_packed;
@@ -313,56 +313,56 @@ using sve_q8_gemv_adapter = matmul_uker_adapter<
     kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot,
     default_matmul_config, 1, 8, 8, 1>;
 
-static struct kai_matmul_pack_lhs_uker_config q4_k_lhs_pack_config() {
-    struct kai_matmul_pack_lhs_uker_config config = {};
-    return config;
+अटल काष्ठा kai_matmul_pack_lhs_uker_config q4_k_lhs_pack_config() {
+    काष्ठा kai_matmul_pack_lhs_uker_config config = {};
+    वापस config;
 }
 
-static size_t q4_k_lhs_get_offset(size_t m_idx, size_t lhs_stride) {
-    const struct kai_matmul_pack_lhs_uker_api api = kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon();
-    const struct kai_matmul_pack_lhs_uker_config config = q4_k_lhs_pack_config();
-    const struct kai_matmul_pack_lhs_uker_lhs_dim_args index = { m_idx, 0 };
-    const struct kai_matmul_pack_lhs_uker_lhs_stride_args stride = { lhs_stride };
-    return api.get_lhs_offset(&config, &index, &stride);
+अटल माप_प्रकार q4_k_lhs_get_offset(माप_प्रकार m_idx, माप_प्रकार lhs_stride) {
+    स्थिर काष्ठा kai_matmul_pack_lhs_uker_api api = kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon();
+    स्थिर काष्ठा kai_matmul_pack_lhs_uker_config config = q4_k_lhs_pack_config();
+    स्थिर काष्ठा kai_matmul_pack_lhs_uker_lhs_dim_args सूचकांक = { m_idx, 0 };
+    स्थिर काष्ठा kai_matmul_pack_lhs_uker_lhs_stride_args stride = { lhs_stride };
+    वापस api.get_lhs_offset(&config, &सूचकांक, &stride);
 }
 
-static size_t q4_k_lhs_get_packed_offset(
-        size_t m_idx, size_t k, size_t bl, size_t mr, size_t kr, size_t sr) {
-    GGML_ASSERT(bl == KLEIDIAI_Q4_K_BLOCK_LENGTH);
+अटल माप_प्रकार q4_k_lhs_get_packed_offset(
+        माप_प्रकार m_idx, माप_प्रकार k, माप_प्रकार bl, माप_प्रकार mr, माप_प्रकार kr, माप_प्रकार sr) {
+    GGML_ASSERT(bl == KLEIDIAI_Q4_K_BLOCK_लंबाई);
     GGML_ASSERT(mr == 1 && kr == 4 && sr == 2);
 
-    const struct kai_matmul_pack_lhs_uker_api api = kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon();
-    const struct kai_matmul_pack_lhs_uker_config config = q4_k_lhs_pack_config();
-    const struct kai_matmul_pack_lhs_uker_lhs_packed_dim_args shape = { m_idx, k };
-    const struct kai_matmul_pack_lhs_uker_lhs_packed_dim_args index = { m_idx, 0 };
-    const struct kai_matmul_pack_lhs_uker_lhs_packed_stride_args stride = api.get_lhs_packed_stride(&config, &shape);
-    return api.get_lhs_packed_offset(&config, &index, &stride);
+    स्थिर काष्ठा kai_matmul_pack_lhs_uker_api api = kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon();
+    स्थिर काष्ठा kai_matmul_pack_lhs_uker_config config = q4_k_lhs_pack_config();
+    स्थिर काष्ठा kai_matmul_pack_lhs_uker_lhs_packed_dim_args shape = { m_idx, k };
+    स्थिर काष्ठा kai_matmul_pack_lhs_uker_lhs_packed_dim_args सूचकांक = { m_idx, 0 };
+    स्थिर काष्ठा kai_matmul_pack_lhs_uker_lhs_packed_stride_args stride = api.get_lhs_packed_stride(&config, &shape);
+    वापस api.get_lhs_packed_offset(&config, &सूचकांक, &stride);
 }
 
-static size_t q4_k_lhs_get_packed_size(
-        size_t m, size_t k, size_t bl, size_t mr, size_t kr, size_t sr) {
-    GGML_ASSERT(bl == KLEIDIAI_Q4_K_BLOCK_LENGTH);
+अटल माप_प्रकार q4_k_lhs_get_packed_आकार(
+        माप_प्रकार m, माप_प्रकार k, माप_प्रकार bl, माप_प्रकार mr, माप_प्रकार kr, माप_प्रकार sr) {
+    GGML_ASSERT(bl == KLEIDIAI_Q4_K_BLOCK_लंबाई);
     GGML_ASSERT(mr == 1 && kr == 4 && sr == 2);
 
-    const struct kai_matmul_pack_lhs_uker_api api = kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon();
-    const struct kai_matmul_pack_lhs_uker_config config = q4_k_lhs_pack_config();
-    const struct kai_matmul_pack_lhs_uker_lhs_packed_dim_args shape = { m, k };
-    const struct kai_matmul_pack_lhs_uker_lhs_packed_stride_args stride = api.get_lhs_packed_stride(&config, &shape);
-    return api.get_lhs_packed_size(&config, &shape, &stride);
+    स्थिर काष्ठा kai_matmul_pack_lhs_uker_api api = kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon();
+    स्थिर काष्ठा kai_matmul_pack_lhs_uker_config config = q4_k_lhs_pack_config();
+    स्थिर काष्ठा kai_matmul_pack_lhs_uker_lhs_packed_dim_args shape = { m, k };
+    स्थिर काष्ठा kai_matmul_pack_lhs_uker_lhs_packed_stride_args stride = api.get_lhs_packed_stride(&config, &shape);
+    वापस api.get_lhs_packed_आकार(&config, &shape, &stride);
 }
 
-static void q4_k_lhs_pack(
-        size_t m, size_t k, size_t bl, size_t mr, size_t kr, size_t sr,
-        size_t m_idx_start, const void * lhs, size_t lhs_stride, void * lhs_packed) {
-    GGML_ASSERT(bl == KLEIDIAI_Q4_K_BLOCK_LENGTH);
+अटल व्योम q4_k_lhs_pack(
+        माप_प्रकार m, माप_प्रकार k, माप_प्रकार bl, माप_प्रकार mr, माप_प्रकार kr, माप_प्रकार sr,
+        माप_प्रकार m_idx_start, स्थिर व्योम * lhs, माप_प्रकार lhs_stride, व्योम * lhs_packed) {
+    GGML_ASSERT(bl == KLEIDIAI_Q4_K_BLOCK_लंबाई);
     GGML_ASSERT(mr == 1 && kr == 4 && sr == 2);
     GGML_ASSERT(m_idx_start == 0);
 
-    const struct kai_matmul_pack_lhs_uker_api api = kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon();
-    const struct kai_matmul_pack_lhs_uker_config config = q4_k_lhs_pack_config();
-    const struct kai_matmul_pack_lhs_uker_lhs_packed_dim_args packed_shape = { m, k };
+    स्थिर काष्ठा kai_matmul_pack_lhs_uker_api api = kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon();
+    स्थिर काष्ठा kai_matmul_pack_lhs_uker_config config = q4_k_lhs_pack_config();
+    स्थिर काष्ठा kai_matmul_pack_lhs_uker_lhs_packed_dim_args packed_shape = { m, k };
 
-    struct kai_matmul_pack_lhs_uker_args args = {};
+    काष्ठा kai_matmul_pack_lhs_uker_args args = {};
     args.flags = 0;
     args.shape = { m, k };
     args.operand.lhs.ptr = lhs;
@@ -372,47 +372,47 @@ static void q4_k_lhs_pack(
     api.run(&config, &args);
 }
 
-static struct kai_matmul_pack_rhs_uker_config q4_k_rhs_pack_config() {
-    struct kai_matmul_pack_rhs_uker_config config = {};
-    return config;
+अटल काष्ठा kai_matmul_pack_rhs_uker_config q4_k_rhs_pack_config() {
+    काष्ठा kai_matmul_pack_rhs_uker_config config = {};
+    वापस config;
 }
 
-static size_t q4_k_rhs_get_packed_size(size_t n, size_t k, size_t nr, size_t /*kr*/, size_t bl) {
-    GGML_ASSERT(bl == KLEIDIAI_Q4_K_BLOCK_LENGTH);
+अटल माप_प्रकार q4_k_rhs_get_packed_आकार(माप_प्रकार n, माप_प्रकार k, माप_प्रकार nr, माप_प्रकार /*kr*/, माप_प्रकार bl) {
+    GGML_ASSERT(bl == KLEIDIAI_Q4_K_BLOCK_लंबाई);
 
-    const struct kai_matmul_pack_rhs_uker_api api =
+    स्थिर काष्ठा kai_matmul_pack_rhs_uker_api api =
         kai_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme();
-    const struct kai_matmul_pack_rhs_uker_config config = q4_k_rhs_pack_config();
+    स्थिर काष्ठा kai_matmul_pack_rhs_uker_config config = q4_k_rhs_pack_config();
     GGML_ASSERT(api.get_step(&config).n == nr);
-    const struct kai_matmul_pack_rhs_uker_rhs_packed_dim_args shape = { n, k };
-    const struct kai_matmul_pack_rhs_uker_rhs_packed_stride_args stride = api.get_rhs_packed_stride(&config, &shape);
-    return api.get_rhs_packed_size(&config, &shape, &stride);
+    स्थिर काष्ठा kai_matmul_pack_rhs_uker_rhs_packed_dim_args shape = { n, k };
+    स्थिर काष्ठा kai_matmul_pack_rhs_uker_rhs_packed_stride_args stride = api.get_rhs_packed_stride(&config, &shape);
+    वापस api.get_rhs_packed_आकार(&config, &shape, &stride);
 }
 
-static void q4_k_rhs_pack(
-        size_t num_groups, size_t n, size_t k, size_t nr, size_t /*kr*/, size_t /*sr*/, size_t bl,
-        size_t rhs_stride, const void * rhs, const void * bias, const void * scale,
-        void * rhs_packed, size_t extra_bytes, const void * params) {
-    GGML_ASSERT(num_groups == 1);
-    GGML_ASSERT(bl == KLEIDIAI_Q4_K_BLOCK_LENGTH);
+अटल व्योम q4_k_rhs_pack(
+        माप_प्रकार अंक_groups, माप_प्रकार n, माप_प्रकार k, माप_प्रकार nr, माप_प्रकार /*kr*/, माप_प्रकार /*sr*/, माप_प्रकार bl,
+        माप_प्रकार rhs_stride, स्थिर व्योम * rhs, स्थिर व्योम * bias, स्थिर व्योम * scale,
+        व्योम * rhs_packed, माप_प्रकार extra_bytes, स्थिर व्योम * params) {
+    GGML_ASSERT(अंक_groups == 1);
+    GGML_ASSERT(bl == KLEIDIAI_Q4_K_BLOCK_लंबाई);
     GGML_ASSERT(bias == nullptr);
     GGML_ASSERT(scale == nullptr);
     GGML_ASSERT(extra_bytes == 0);
     GGML_ASSERT(params == nullptr);
 
-    const struct kai_matmul_pack_rhs_uker_api api =
+    स्थिर काष्ठा kai_matmul_pack_rhs_uker_api api =
         kai_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme();
-    const struct kai_matmul_pack_rhs_uker_config config = q4_k_rhs_pack_config();
+    स्थिर काष्ठा kai_matmul_pack_rhs_uker_config config = q4_k_rhs_pack_config();
     GGML_ASSERT(api.get_step(&config).n == nr);
-    const struct kai_matmul_pack_rhs_uker_rhs_dim_args rhs_shape = { n, k };
-    const struct kai_matmul_pack_rhs_uker_rhs_packed_dim_args packed_shape = { n, k };
+    स्थिर काष्ठा kai_matmul_pack_rhs_uker_rhs_dim_args rhs_shape = { n, k };
+    स्थिर काष्ठा kai_matmul_pack_rhs_uker_rhs_packed_dim_args packed_shape = { n, k };
 
-    struct kai_matmul_pack_rhs_uker_args args = {};
+    काष्ठा kai_matmul_pack_rhs_uker_args args = {};
     args.flags = 0;
     args.shape = { n, k };
     args.operand.rhs.ptr = rhs;
     args.operand.rhs.stride = api.get_rhs_stride(&config, &rhs_shape);
-    if (rhs_stride != 0) {
+    अगर (rhs_stride != 0) {
         GGML_ASSERT(rhs_stride >= args.operand.rhs.stride.n);
         args.operand.rhs.stride.n = rhs_stride;
     }
@@ -421,7 +421,7 @@ static void q4_k_rhs_pack(
     api.run(&config, &args);
 }
 
-static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
+अटल ggml_kleidiai_kernels gemm_gemv_kernels[] = {
     {
         /* SME2 GEMM */
         /* .kern_info = */ {
@@ -440,7 +440,7 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
         /* .gemm_lhs_info = */ {
             /* .get_offset            = */ kai_get_lhs_offset_lhs_pack_f16pmrx2_f32_neon,
             /* .get_packed_offset_ex  = */ &lhs_offs_fn6<kai_get_lhs_packed_offset_lhs_pack_f16pmrx2_f32_neon>,
-            /* .packed_size_ex        = */ &lhs_ps_fn6<kai_get_lhs_packed_size_lhs_pack_f16pmrx2_f32_neon>,
+            /* .packed_size_ex        = */ &lhs_ps_fn6<kai_get_lhs_packed_आकार_lhs_pack_f16pmrx2_f32_neon>,
             /* .pack_func_ex          = */ &lhs_pack_void_fn10<kai_run_lhs_pack_f16pmrx2_f32_neon>,
         },
         /* SME2 GEMV */
@@ -459,11 +459,11 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
         /* .gemv_lhs_info = */ {
             /* .get_offset            = */ kai_get_lhs_offset_lhs_quant_pack_qsi8d32p_f32_neon,
             /* .get_packed_offset_ex  = */ &lhs_offs_fn6<kai_get_lhs_packed_offset_lhs_quant_pack_qsi8d32p_f32_neon>,
-            /* .packed_size_ex        = */ &lhs_ps_fn6<kai_get_lhs_packed_size_lhs_quant_pack_qsi8d32p_f32_neon>,
+            /* .packed_size_ex        = */ &lhs_ps_fn6<kai_get_lhs_packed_आकार_lhs_quant_pack_qsi8d32p_f32_neon>,
             /* .pack_func_ex          = */ &lhs_pack_float_fn10<kai_run_lhs_quant_pack_qsi8d32p_f32_neon>,
         },
         /* .rhs_info = */ {
-            /* .packed_size_ex        = */ &rhs_ps_fn5<kai_get_rhs_packed_size_rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon>,
+            /* .packed_size_ex        = */ &rhs_ps_fn5<kai_get_rhs_packed_आकार_rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon>,
             /* .pack_func_ex          = */ &rhs_pack_fn12<kai_run_rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon>,
         },
         /* .required_cpu       = */ CPU_FEATURE_SME2 | CPU_FEATURE_FP16,
@@ -488,7 +488,7 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
         /* .gemm_lhs_info = */ {
             /* .get_offset            = */ kai_get_lhs_offset_lhs_pack_bf16p2vlx2_f32_sme,
             /* .get_packed_offset_ex  = */ &lhs_offs_fn5<kai_get_lhs_packed_offset_lhs_pack_bf16p2vlx2_f32_sme>,
-            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_size_lhs_pack_bf16p2vlx2_f32_sme>,
+            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_आकार_lhs_pack_bf16p2vlx2_f32_sme>,
             /* .pack_func_ex          = */ &lhs_pack_void_fn9<kai_run_lhs_pack_bf16p2vlx2_f32_sme>,
         },
         /* SME2 GEMV */
@@ -507,11 +507,11 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
         /* .gemv_lhs_info = */ {
             /* .get_offset            = */ kai_get_lhs_offset_lhs_pack_bf16p2vlx2_f32_sme,
             /* .get_packed_offset_ex  = */ &lhs_offs_fn5<kai_get_lhs_packed_offset_lhs_pack_bf16p2vlx2_f32_sme>,
-            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_size_lhs_pack_bf16p2vlx2_f32_sme>,
+            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_आकार_lhs_pack_bf16p2vlx2_f32_sme>,
             /* .pack_func_ex          = */ &lhs_pack_void_fn9<kai_run_lhs_pack_bf16p2vlx2_f32_sme>,
         },
         /* .rhs_info = */ {
-            /* .packed_size_ex        = */ &rhs_ps_fn2<kai_get_rhs_packed_size_rhs_pack_kxn_bf16p2vlx2b_f32_x32_sme>,
+            /* .packed_size_ex        = */ &rhs_ps_fn2<kai_get_rhs_packed_आकार_rhs_pack_kxn_bf16p2vlx2b_f32_x32_sme>,
             /* .pack_func_ex          = */ &rhs_pack_fn13<kai_run_rhs_pack_kxn_bf16p2vlx2b_f32_x32_sme>,
         },
         /* .required_cpu       = */ CPU_FEATURE_SME2,
@@ -519,7 +519,7 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
         /* .rhs_type           = */ GGML_TYPE_F16,
         /* .op_type            = */ GGML_TYPE_F32,
     },
-#if defined(__APPLE__)
+#अगर defined(__APPLE__)
     {
         /* DOTPROD GEMM */
         /* .kern_info = */ {
@@ -537,7 +537,7 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
         /* .gemm_lhs_info = */ {
             /* .get_offset            = */ kai_get_lhs_offset_lhs_quant_pack_qsi8d32p_f32,
             /* .get_packed_offset_ex  = */ &lhs_offs_fn6<kai_get_lhs_packed_offset_lhs_quant_pack_qsi8d32p_f32>,
-            /* .packed_size_ex        = */ &lhs_ps_fn6<kai_get_lhs_packed_size_lhs_quant_pack_qsi8d32p_f32>,
+            /* .packed_size_ex        = */ &lhs_ps_fn6<kai_get_lhs_packed_आकार_lhs_quant_pack_qsi8d32p_f32>,
             /* .pack_func_ex          = */ &lhs_pack_float_fn10<kai_run_lhs_quant_pack_qsi8d32p_f32>,
         },
         /* DOTPROD GEMV */
@@ -556,11 +556,11 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
         /* .gemv_lhs_info = */ {
             /* .get_offset            = */ kai_get_lhs_offset_lhs_quant_pack_qsi8d32p_f32,
             /* .get_packed_offset_ex  = */ &lhs_offs_fn6<kai_get_lhs_packed_offset_lhs_quant_pack_qsi8d32p_f32>,
-            /* .packed_size_ex        = */ &lhs_ps_fn6<kai_get_lhs_packed_size_lhs_quant_pack_qsi8d32p_f32>,
+            /* .packed_size_ex        = */ &lhs_ps_fn6<kai_get_lhs_packed_आकार_lhs_quant_pack_qsi8d32p_f32>,
             /* .pack_func_ex          = */ &lhs_pack_float_fn10<kai_run_lhs_quant_pack_qsi8d32p_f32>,
         },
         /* .rhs_info = */ {
-            /* .packed_size_ex        = */ &rhs_ps_fn5<kai_get_rhs_packed_size_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0>,
+            /* .packed_size_ex        = */ &rhs_ps_fn5<kai_get_rhs_packed_आकार_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0>,
             /* .pack_func_ex          = */ &rhs_pack_fn12<kai_run_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0>,
         },
         /* .required_cpu       = */ CPU_FEATURE_DOTPROD,
@@ -585,7 +585,7 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
         /* .gemm_lhs_info = */ {
             /* .get_offset            = */ kai_get_lhs_offset_lhs_quant_pack_qsi8d32p4x8sb_f32_neon,
             /* .get_packed_offset_ex  = */ &lhs_offs_fn6<kai_get_lhs_packed_offset_lhs_quant_pack_qsi8d32p4x8sb_f32_neon>,
-            /* .packed_size_ex        = */ &lhs_ps_fn6<kai_get_lhs_packed_size_lhs_quant_pack_qsi8d32p4x8sb_f32_neon>,
+            /* .packed_size_ex        = */ &lhs_ps_fn6<kai_get_lhs_packed_आकार_lhs_quant_pack_qsi8d32p4x8sb_f32_neon>,
             /* .pack_func_ex          = */ &lhs_pack_float_fn10<kai_run_lhs_quant_pack_qsi8d32p4x8sb_f32_neon>,
         },
         /* DOTPROD GEMV */
@@ -604,11 +604,11 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
         /* .gemv_lhs_info = */ {
             /* .get_offset            = */ kai_get_lhs_offset_lhs_quant_pack_qsi8d32p_f32,
             /* .get_packed_offset_ex  = */ &lhs_offs_fn6<kai_get_lhs_packed_offset_lhs_quant_pack_qsi8d32p_f32>,
-            /* .packed_size_ex        = */ &lhs_ps_fn6<kai_get_lhs_packed_size_lhs_quant_pack_qsi8d32p_f32>,
+            /* .packed_size_ex        = */ &lhs_ps_fn6<kai_get_lhs_packed_आकार_lhs_quant_pack_qsi8d32p_f32>,
             /* .pack_func_ex          = */ &lhs_pack_float_fn10<kai_run_lhs_quant_pack_qsi8d32p_f32>,
         },
         /* .rhs_info = */ {
-            /* .packed_size_ex        = */ &rhs_ps_fn5<kai_get_rhs_packed_size_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0>,
+            /* .packed_size_ex        = */ &rhs_ps_fn5<kai_get_rhs_packed_आकार_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0>,
             /* .pack_func_ex          = */ &rhs_pack_fn12<kai_run_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0>,
         },
         /* .required_cpu       = */ CPU_FEATURE_I8MM | CPU_FEATURE_DOTPROD,
@@ -616,7 +616,7 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
         /* .rhs_type           = */ GGML_TYPE_Q4_0,
         /* .op_type            = */ GGML_TYPE_F32,
     },
-#else
+#अन्यथा
     {
         /* SVE i8mm GEMM */
         /* .kern_info = */ {
@@ -634,7 +634,7 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
         /* .gemm_lhs_info = */ {
             /* .get_offset            = */ kai_get_lhs_offset_lhs_quant_pack_qsi8d32p4x8sb_f32_neon,
             /* .get_packed_offset_ex  = */ &lhs_offs_fn6<kai_get_lhs_packed_offset_lhs_quant_pack_qsi8d32p4x8sb_f32_neon>,
-            /* .packed_size_ex        = */ &lhs_ps_fn6<kai_get_lhs_packed_size_lhs_quant_pack_qsi8d32p4x8sb_f32_neon>,
+            /* .packed_size_ex        = */ &lhs_ps_fn6<kai_get_lhs_packed_आकार_lhs_quant_pack_qsi8d32p4x8sb_f32_neon>,
             /* .pack_func_ex          = */ &lhs_pack_float_fn10<kai_run_lhs_quant_pack_qsi8d32p4x8sb_f32_neon>,
         },
         /* SVE dotprod GEMV */
@@ -653,11 +653,11 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
         /* .gemv_lhs_info = */ {
             /* .get_offset            = */ kai_get_lhs_offset_lhs_quant_pack_qsi8d32p_f32,
             /* .get_packed_offset_ex  = */ &lhs_offs_fn6<kai_get_lhs_packed_offset_lhs_quant_pack_qsi8d32p_f32>,
-            /* .packed_size_ex        = */ &lhs_ps_fn6<kai_get_lhs_packed_size_lhs_quant_pack_qsi8d32p_f32>,
+            /* .packed_size_ex        = */ &lhs_ps_fn6<kai_get_lhs_packed_आकार_lhs_quant_pack_qsi8d32p_f32>,
             /* .pack_func_ex          = */ &lhs_pack_float_fn10<kai_run_lhs_quant_pack_qsi8d32p_f32>,
         },
         /* .rhs_info = */ {
-            /* .packed_size_ex        = */ &rhs_ps_fn5<kai_get_rhs_packed_size_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0>,
+            /* .packed_size_ex        = */ &rhs_ps_fn5<kai_get_rhs_packed_आकार_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0>,
             /* .pack_func_ex          = */ &rhs_pack_fn12<kai_run_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0>,
         },
         /* .required_cpu       = */ CPU_FEATURE_SVE | CPU_FEATURE_SVEI8MM | CPU_FEATURE_DOTPROD,
@@ -682,7 +682,7 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
         /* .gemm_lhs_info = */ {
             /* .get_offset            = */ kai_get_lhs_offset_lhs_quant_pack_qsi8d32p4x8sb_f32_neon,
             /* .get_packed_offset_ex  = */ &lhs_offs_fn6<kai_get_lhs_packed_offset_lhs_quant_pack_qsi8d32p4x8sb_f32_neon>,
-            /* .packed_size_ex        = */ &lhs_ps_fn6<kai_get_lhs_packed_size_lhs_quant_pack_qsi8d32p4x8sb_f32_neon>,
+            /* .packed_size_ex        = */ &lhs_ps_fn6<kai_get_lhs_packed_आकार_lhs_quant_pack_qsi8d32p4x8sb_f32_neon>,
             /* .pack_func_ex          = */ &lhs_pack_float_fn10<kai_run_lhs_quant_pack_qsi8d32p4x8sb_f32_neon>,
         },
         /* DOTPROD GEMV */
@@ -701,11 +701,11 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
         /* .gemv_lhs_info = */ {
             /* .get_offset            = */ kai_get_lhs_offset_lhs_quant_pack_qsi8d32p_f32,
             /* .get_packed_offset_ex  = */ &lhs_offs_fn6<kai_get_lhs_packed_offset_lhs_quant_pack_qsi8d32p_f32>,
-            /* .packed_size_ex        = */ &lhs_ps_fn6<kai_get_lhs_packed_size_lhs_quant_pack_qsi8d32p_f32>,
+            /* .packed_size_ex        = */ &lhs_ps_fn6<kai_get_lhs_packed_आकार_lhs_quant_pack_qsi8d32p_f32>,
             /* .pack_func_ex          = */ &lhs_pack_float_fn10<kai_run_lhs_quant_pack_qsi8d32p_f32>,
         },
         /* .rhs_info = */ {
-            /* .packed_size_ex        = */ &rhs_ps_fn5<kai_get_rhs_packed_size_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0>,
+            /* .packed_size_ex        = */ &rhs_ps_fn5<kai_get_rhs_packed_आकार_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0>,
             /* .pack_func_ex          = */ &rhs_pack_fn12<kai_run_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0>,
         },
         /* .required_cpu       = */ CPU_FEATURE_I8MM | CPU_FEATURE_DOTPROD,
@@ -730,7 +730,7 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
         /* .gemm_lhs_info = */ {
             /* .get_offset            = */ kai_get_lhs_offset_lhs_quant_pack_qsi8d32p_f32,
             /* .get_packed_offset_ex  = */ &lhs_offs_fn6<kai_get_lhs_packed_offset_lhs_quant_pack_qsi8d32p_f32>,
-            /* .packed_size_ex        = */ &lhs_ps_fn6<kai_get_lhs_packed_size_lhs_quant_pack_qsi8d32p_f32>,
+            /* .packed_size_ex        = */ &lhs_ps_fn6<kai_get_lhs_packed_आकार_lhs_quant_pack_qsi8d32p_f32>,
             /* .pack_func_ex          = */ &lhs_pack_float_fn10<kai_run_lhs_quant_pack_qsi8d32p_f32>,
         },
         /* DOTPROD GEMV */
@@ -749,11 +749,11 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
         /* .gemv_lhs_info = */ {
             /* .get_offset            = */ kai_get_lhs_offset_lhs_quant_pack_qsi8d32p_f32,
             /* .get_packed_offset_ex  = */ &lhs_offs_fn6<kai_get_lhs_packed_offset_lhs_quant_pack_qsi8d32p_f32>,
-            /* .packed_size_ex        = */ &lhs_ps_fn6<kai_get_lhs_packed_size_lhs_quant_pack_qsi8d32p_f32>,
+            /* .packed_size_ex        = */ &lhs_ps_fn6<kai_get_lhs_packed_आकार_lhs_quant_pack_qsi8d32p_f32>,
             /* .pack_func_ex          = */ &lhs_pack_float_fn10<kai_run_lhs_quant_pack_qsi8d32p_f32>,
         },
         /* .rhs_info = */ {
-            /* .packed_size_ex        = */ &rhs_ps_fn5<kai_get_rhs_packed_size_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0>,
+            /* .packed_size_ex        = */ &rhs_ps_fn5<kai_get_rhs_packed_आकार_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0>,
             /* .pack_func_ex          = */ &rhs_pack_fn12<kai_run_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0>,
         },
         /* .required_cpu       = */ CPU_FEATURE_DOTPROD,
@@ -761,11 +761,11 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
         /* .rhs_type           = */ GGML_TYPE_Q4_0,
         /* .op_type            = */ GGML_TYPE_F32,
     },
-#endif
+#पूर्ण_अगर
     { /* Sentinel */ }
 };
 
-static ggml_kleidiai_kernels gemm_gemv_kernels_q4_k[] = {
+अटल ggml_kleidiai_kernels gemm_gemv_kernels_q4_k[] = {
     {
         /* SME2 GEMM */
         {
@@ -783,7 +783,7 @@ static ggml_kleidiai_kernels gemm_gemv_kernels_q4_k[] = {
         {
             /* .get_offset            = */ kai_get_lhs_offset_lhs_pack_f16pmrx2_f32_neon,
             /* .get_packed_offset_ex  = */ &lhs_offs_fn6<kai_get_lhs_packed_offset_lhs_pack_f16pmrx2_f32_neon>,
-            /* .packed_size_ex        = */ &lhs_ps_fn6<kai_get_lhs_packed_size_lhs_pack_f16pmrx2_f32_neon>,
+            /* .packed_size_ex        = */ &lhs_ps_fn6<kai_get_lhs_packed_आकार_lhs_pack_f16pmrx2_f32_neon>,
             /* .pack_func_ex          = */ &lhs_pack_void_fn10<kai_run_lhs_pack_f16pmrx2_f32_neon>,
         },
         /* SME2 GEMV */
@@ -802,11 +802,11 @@ static ggml_kleidiai_kernels gemm_gemv_kernels_q4_k[] = {
         {
             /* .get_offset            = */ q4_k_lhs_get_offset,
             /* .get_packed_offset_ex  = */ q4_k_lhs_get_packed_offset,
-            /* .packed_size_ex        = */ q4_k_lhs_get_packed_size,
+            /* .packed_size_ex        = */ q4_k_lhs_get_packed_आकार,
             /* .pack_func_ex          = */ q4_k_lhs_pack,
         },
         {
-            /* .packed_size_ex        = */ q4_k_rhs_get_packed_size,
+            /* .packed_size_ex        = */ q4_k_rhs_get_packed_आकार,
             /* .pack_func_ex          = */ q4_k_rhs_pack,
             /* .repack_mode           = */ RHS_REPACK_SINGLE_ONLY,
         },
@@ -818,7 +818,7 @@ static ggml_kleidiai_kernels gemm_gemv_kernels_q4_k[] = {
     { /* Sentinel */ }
 };
 
-static ggml_kleidiai_kernels gemm_gemv_kernels_q8[] = {
+अटल ggml_kleidiai_kernels gemm_gemv_kernels_q8[] = {
     {
         /* SME2 GEMM */
         {
@@ -836,7 +836,7 @@ static ggml_kleidiai_kernels gemm_gemv_kernels_q8[] = {
         /* .gemm_lhs_info = */ {
             /* .get_offset            = */ kai_get_lhs_offset_lhs_quant_pack_qai8dxp_f32,
             /* .get_packed_offset_ex  = */ &lhs_offs_fn5<kai_get_lhs_packed_offset_lhs_quant_pack_qai8dxp_f32>,
-            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp_f32>,
+            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_आकार_lhs_quant_pack_qai8dxp_f32>,
             /* .pack_func_ex          = */ &lhs_pack_float_fn9_no_bl<kai_run_lhs_quant_pack_qai8dxp_f32>,
         },
         /* SME2 GEMV */
@@ -855,11 +855,11 @@ static ggml_kleidiai_kernels gemm_gemv_kernels_q8[] = {
         /* .gemv_lhs_info = */ {
             /* .get_offset            = */ kai_get_lhs_offset_lhs_quant_pack_qai8dxp_f32,
             /* .get_packed_offset_ex  = */ &lhs_offs_fn5<kai_get_lhs_packed_offset_lhs_quant_pack_qai8dxp_f32>,
-            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp_f32>,
+            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_आकार_lhs_quant_pack_qai8dxp_f32>,
             /* .pack_func_ex          = */ &lhs_pack_float_fn9_no_bl<kai_run_lhs_quant_pack_qai8dxp_f32>,
         },
         /* .rhs_info = */ {
-            /* .packed_size_ex        = */ &rhs_ps_fn5<kai_get_rhs_packed_size_rhs_pack_nxk_qsi8cxp_qsi8cx_neon>,
+            /* .packed_size_ex        = */ &rhs_ps_fn5<kai_get_rhs_packed_आकार_rhs_pack_nxk_qsi8cxp_qsi8cx_neon>,
             /* .pack_func_ex          = */ &rhs_pack_scale_fn12<kai_run_rhs_pack_nxk_qsi8cxp_qsi8cx_neon>,
         },
         /* .required_cpu       = */ CPU_FEATURE_SME2,
@@ -884,7 +884,7 @@ static ggml_kleidiai_kernels gemm_gemv_kernels_q8[] = {
         /* .gemm_lhs_info = */ {
             /* .get_offset            = */ kai_get_lhs_offset_lhs_quant_pack_qai8dxp_f32,
             /* .get_packed_offset_ex  = */ &lhs_offs_fn5<kai_get_lhs_packed_offset_lhs_quant_pack_qai8dxp_f32>,
-            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp_f32>,
+            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_आकार_lhs_quant_pack_qai8dxp_f32>,
             /* .pack_func_ex          = */ &lhs_pack_float_fn9_no_bl<kai_run_lhs_quant_pack_qai8dxp_f32>,
         },
         /* SME GEMV (pure SME, no SME2 required) */
@@ -903,11 +903,11 @@ static ggml_kleidiai_kernels gemm_gemv_kernels_q8[] = {
         /* .gemv_lhs_info = */ {
             /* .get_offset            = */ kai_get_lhs_offset_lhs_quant_pack_qai8dxp_f32,
             /* .get_packed_offset_ex  = */ &lhs_offs_fn5<kai_get_lhs_packed_offset_lhs_quant_pack_qai8dxp_f32>,
-            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp_f32>,
+            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_आकार_lhs_quant_pack_qai8dxp_f32>,
             /* .pack_func_ex          = */ &lhs_pack_float_fn9_no_bl<kai_run_lhs_quant_pack_qai8dxp_f32>,
         },
         /* .rhs_info = */ {
-            /* .packed_size_ex        = */ &rhs_ps_fn5<kai_get_rhs_packed_size_rhs_pack_nxk_qsi8cxp_qsi8cx_neon>,
+            /* .packed_size_ex        = */ &rhs_ps_fn5<kai_get_rhs_packed_आकार_rhs_pack_nxk_qsi8cxp_qsi8cx_neon>,
             /* .pack_func_ex          = */ &rhs_pack_scale_fn12<kai_run_rhs_pack_nxk_qsi8cxp_qsi8cx_neon>,
         },
         /* .required_cpu       = */ CPU_FEATURE_SME,
@@ -932,7 +932,7 @@ static ggml_kleidiai_kernels gemm_gemv_kernels_q8[] = {
         /* .gemm_lhs_info = */ {
             /* .get_offset            = */ kai_get_lhs_offset_lhs_quant_pack_qai8dxp_f32,
             /* .get_packed_offset_ex  = */ &lhs_offs_fn5<kai_get_lhs_packed_offset_lhs_quant_pack_qai8dxp_f32>,
-            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp_f32>,
+            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_आकार_lhs_quant_pack_qai8dxp_f32>,
             /* .pack_func_ex          = */ &lhs_pack_float_fn9_no_bl<kai_run_lhs_quant_pack_qai8dxp_f32>,
         },
         /* SVE DOT GEMV */
@@ -951,11 +951,11 @@ static ggml_kleidiai_kernels gemm_gemv_kernels_q8[] = {
         /* .gemv_lhs_info = */ {
             /* .get_offset            = */ kai_get_lhs_offset_lhs_quant_pack_qai8dxp_f32,
             /* .get_packed_offset_ex  = */ &lhs_offs_fn5<kai_get_lhs_packed_offset_lhs_quant_pack_qai8dxp_f32>,
-            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp_f32>,
+            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_आकार_lhs_quant_pack_qai8dxp_f32>,
             /* .pack_func_ex          = */ &lhs_pack_float_fn9_no_bl<kai_run_lhs_quant_pack_qai8dxp_f32>,
         },
         /* .rhs_info = */ {
-            /* .packed_size_ex        = */ &rhs_ps_fn5<kai_get_rhs_packed_size_rhs_pack_nxk_qsi8cxp_qsi8cx_neon>,
+            /* .packed_size_ex        = */ &rhs_ps_fn5<kai_get_rhs_packed_आकार_rhs_pack_nxk_qsi8cxp_qsi8cx_neon>,
             /* .pack_func_ex          = */ &rhs_pack_scale_fn12<kai_run_rhs_pack_nxk_qsi8cxp_qsi8cx_neon>,
         },
         /* .required_cpu       = */ CPU_FEATURE_SVE | CPU_FEATURE_SVEI8MM | CPU_FEATURE_DOTPROD,
@@ -980,7 +980,7 @@ static ggml_kleidiai_kernels gemm_gemv_kernels_q8[] = {
         /* .gemm_lhs_info = */ {
             /* .get_offset            = */ kai_get_lhs_offset_lhs_quant_pack_qai8dxp_f32,
             /* .get_packed_offset_ex  = */ &lhs_offs_fn5<kai_get_lhs_packed_offset_lhs_quant_pack_qai8dxp_f32>,
-            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp_f32>,
+            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_आकार_lhs_quant_pack_qai8dxp_f32>,
             /* .pack_func_ex          = */ &lhs_pack_float_fn9_no_bl<kai_run_lhs_quant_pack_qai8dxp_f32>,
         },
         /* I8MM GEMV (dotprod fallback) */
@@ -999,11 +999,11 @@ static ggml_kleidiai_kernels gemm_gemv_kernels_q8[] = {
         /* .gemv_lhs_info = */ {
             /* .get_offset            = */ kai_get_lhs_offset_lhs_quant_pack_qai8dxp_f32,
             /* .get_packed_offset_ex  = */ &lhs_offs_fn5<kai_get_lhs_packed_offset_lhs_quant_pack_qai8dxp_f32>,
-            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp_f32>,
+            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_आकार_lhs_quant_pack_qai8dxp_f32>,
             /* .pack_func_ex          = */ &lhs_pack_float_fn9_no_bl<kai_run_lhs_quant_pack_qai8dxp_f32>,
         },
         /* .rhs_info = */ {
-            /* .packed_size_ex        = */ &rhs_ps_fn5<kai_get_rhs_packed_size_rhs_pack_nxk_qsi8cxp_qsi8cx_neon>,
+            /* .packed_size_ex        = */ &rhs_ps_fn5<kai_get_rhs_packed_आकार_rhs_pack_nxk_qsi8cxp_qsi8cx_neon>,
             /* .pack_func_ex          = */ &rhs_pack_scale_fn12<kai_run_rhs_pack_nxk_qsi8cxp_qsi8cx_neon>,
         },
         /* .required_cpu       = */ CPU_FEATURE_I8MM | CPU_FEATURE_DOTPROD,
@@ -1028,7 +1028,7 @@ static ggml_kleidiai_kernels gemm_gemv_kernels_q8[] = {
         /* .gemm_lhs_info = */ {
             /* .get_offset            = */ kai_get_lhs_offset_lhs_quant_pack_qai8dxp_f32,
             /* .get_packed_offset_ex  = */ &lhs_offs_fn5<kai_get_lhs_packed_offset_lhs_quant_pack_qai8dxp_f32>,
-            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp_f32>,
+            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_आकार_lhs_quant_pack_qai8dxp_f32>,
             /* .pack_func_ex          = */ &lhs_pack_float_fn9_no_bl<kai_run_lhs_quant_pack_qai8dxp_f32>,
         },
         /* DOTPROD GEMV */
@@ -1047,11 +1047,11 @@ static ggml_kleidiai_kernels gemm_gemv_kernels_q8[] = {
         /* .gemv_lhs_info = */ {
             /* .get_offset            = */ kai_get_lhs_offset_lhs_quant_pack_qai8dxp_f32,
             /* .get_packed_offset_ex  = */ &lhs_offs_fn5<kai_get_lhs_packed_offset_lhs_quant_pack_qai8dxp_f32>,
-            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_size_lhs_quant_pack_qai8dxp_f32>,
+            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_आकार_lhs_quant_pack_qai8dxp_f32>,
             /* .pack_func_ex          = */ &lhs_pack_float_fn9_no_bl<kai_run_lhs_quant_pack_qai8dxp_f32>,
         },
         /* .rhs_info = */ {
-            /* .packed_size_ex        = */ &rhs_ps_fn5<kai_get_rhs_packed_size_rhs_pack_nxk_qsi8cxp_qsi8cx_neon>,
+            /* .packed_size_ex        = */ &rhs_ps_fn5<kai_get_rhs_packed_आकार_rhs_pack_nxk_qsi8cxp_qsi8cx_neon>,
             /* .pack_func_ex          = */ &rhs_pack_scale_fn12<kai_run_rhs_pack_nxk_qsi8cxp_qsi8cx_neon>,
         },
         /* .required_cpu       = */ CPU_FEATURE_DOTPROD,
@@ -1062,7 +1062,7 @@ static ggml_kleidiai_kernels gemm_gemv_kernels_q8[] = {
     { /* Sentinel */ }
 };
 
-static ggml_kleidiai_kernels ggml_kleidiai_kernels_f32[] = {
+अटल ggml_kleidiai_kernels ggml_kleidiai_kernels_f32[] = {
     {
         /* SME2 GEMM */
         {
@@ -1080,7 +1080,7 @@ static ggml_kleidiai_kernels ggml_kleidiai_kernels_f32[] = {
         /* .gemm_lhs_info = */ {
             /* .get_offset            = */ kai_get_lhs_offset_lhs_pack_f32p2vlx1_f32_sme,
             /* .get_packed_offset_ex  = */ &lhs_offs_fn5<kai_get_lhs_packed_offset_lhs_pack_f32p2vlx1_f32_sme>,
-            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_size_lhs_pack_f32p2vlx1_f32_sme>,
+            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_आकार_lhs_pack_f32p2vlx1_f32_sme>,
             /* .pack_func_ex          = */ &lhs_pack_void_fn9<kai_run_lhs_pack_f32p2vlx1_f32_sme>,
         },
         /* SME2 GEMV */
@@ -1103,7 +1103,7 @@ static ggml_kleidiai_kernels ggml_kleidiai_kernels_f32[] = {
             /* .pack_func_ex          = */ nullptr,
         },
         /* .rhs_info = */ {
-            /* .packed_size_ex        = */ &rhs_ps_fn2<kai_get_rhs_packed_size_rhs_pack_nxk_f32p2vlx1biasf32_f32_f32_sme>,
+            /* .packed_size_ex        = */ &rhs_ps_fn2<kai_get_rhs_packed_आकार_rhs_pack_nxk_f32p2vlx1biasf32_f32_f32_sme>,
             /* .pack_func_ex          = */ &rhs_pack_fn13<kai_run_rhs_pack_nxk_f32p2vlx1biasf32_f32_f32_sme>,
         },
         /* .required_cpu       = */ CPU_FEATURE_SME2,
@@ -1128,7 +1128,7 @@ static ggml_kleidiai_kernels ggml_kleidiai_kernels_f32[] = {
         /* .gemm_lhs_info = */ {
             /* .get_offset            = */ kai_get_lhs_offset_lhs_pack_f32p2vlx1_f32_sme,
             /* .get_packed_offset_ex  = */ &lhs_offs_fn5<kai_get_lhs_packed_offset_lhs_pack_f32p2vlx1_f32_sme>,
-            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_size_lhs_pack_f32p2vlx1_f32_sme>,
+            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_आकार_lhs_pack_f32p2vlx1_f32_sme>,
             /* .pack_func_ex          = */ &lhs_pack_void_fn9<kai_run_lhs_pack_f32p2vlx1_f32_sme>,
         },
         /* SME GEMV */
@@ -1147,11 +1147,11 @@ static ggml_kleidiai_kernels ggml_kleidiai_kernels_f32[] = {
         /* .gemv_lhs_info = */ {
             /* .get_offset            = */ kai_get_lhs_offset_lhs_pack_f32p2vlx1_f32_sme,
             /* .get_packed_offset_ex  = */ &lhs_offs_fn5<kai_get_lhs_packed_offset_lhs_pack_f32p2vlx1_f32_sme>,
-            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_size_lhs_pack_f32p2vlx1_f32_sme>,
+            /* .packed_size_ex        = */ &lhs_ps_fn5<kai_get_lhs_packed_आकार_lhs_pack_f32p2vlx1_f32_sme>,
             /* .pack_func_ex          = */ &lhs_pack_void_fn9<kai_run_lhs_pack_f32p2vlx1_f32_sme>,
         },
         /* .rhs_info = */ {
-            /* .packed_size_ex        = */ &rhs_ps_fn2<kai_get_rhs_packed_size_rhs_pack_nxk_f32p2vlx1biasf32_f32_f32_sme>,
+            /* .packed_size_ex        = */ &rhs_ps_fn2<kai_get_rhs_packed_आकार_rhs_pack_nxk_f32p2vlx1biasf32_f32_f32_sme>,
             /* .pack_func_ex          = */ &rhs_pack_fn13<kai_run_rhs_pack_nxk_f32p2vlx1biasf32_f32_f32_sme>,
         },
         /* .required_cpu       = */ CPU_FEATURE_SME,
@@ -1162,98 +1162,98 @@ static ggml_kleidiai_kernels ggml_kleidiai_kernels_f32[] = {
     { /* Sentinel */ }
 };
 
-ggml_kleidiai_kernels * ggml_kleidiai_select_kernels(cpu_feature cpu_features, const ggml_tensor * tensor) {
+ggml_kleidiai_kernels * ggml_kleidiai_select_kernels(cpu_feature cpu_features, स्थिर ggml_tensor * tensor) {
     ggml_kleidiai_kernels * kernel = nullptr;
 
-    if (tensor->op == GGML_OP_MUL_MAT && tensor->src[0] != nullptr && tensor->src[1] != nullptr) {
-        auto try_table = [&](auto & table) {
-            for (size_t i = 0; i < NELEMS(table) - 1; ++i) {
-                if ((cpu_features & table[i].required_cpu) == table[i].required_cpu &&
+    अगर (tensor->op == GGML_OP_MUL_MAT && tensor->src[0] != nullptr && tensor->src[1] != nullptr) {
+        स्वतः try_table = [&](स्वतः & table) {
+            क्रम (माप_प्रकार i = 0; i < NELEMS(table) - 1; ++i) {
+                अगर ((cpu_features & table[i].required_cpu) == table[i].required_cpu &&
                     table[i].lhs_type == tensor->src[1]->type &&
                     table[i].rhs_type == tensor->src[0]->type &&
                     table[i].op_type  == tensor->type) {
                     kernel = &table[i];
-                    return true;
+                    वापस true;
                 }
             }
-            return false;
+            वापस false;
         };
 
-        if (tensor->src[0]->type == GGML_TYPE_Q4_K) {
+        अगर (tensor->src[0]->type == GGML_TYPE_Q4_K) {
             try_table(gemm_gemv_kernels_q4_k);
-        } else if (tensor->src[0]->type == GGML_TYPE_Q8_0 || tensor->src[0]->type == GGML_TYPE_Q6_K) {
-            const ggml_type original_type = tensor->src[0]->type;
-            if (original_type == GGML_TYPE_Q6_K) {
-                for (size_t i = 0; i < NELEMS(gemm_gemv_kernels_q8) - 1; ++i) {
-                    if ((cpu_features & gemm_gemv_kernels_q8[i].required_cpu) == gemm_gemv_kernels_q8[i].required_cpu &&
+        } अन्यथा अगर (tensor->src[0]->type == GGML_TYPE_Q8_0 || tensor->src[0]->type == GGML_TYPE_Q6_K) {
+            स्थिर ggml_type original_type = tensor->src[0]->type;
+            अगर (original_type == GGML_TYPE_Q6_K) {
+                क्रम (माप_प्रकार i = 0; i < NELEMS(gemm_gemv_kernels_q8) - 1; ++i) {
+                    अगर ((cpu_features & gemm_gemv_kernels_q8[i].required_cpu) == gemm_gemv_kernels_q8[i].required_cpu &&
                         gemm_gemv_kernels_q8[i].lhs_type == tensor->src[1]->type &&
                         gemm_gemv_kernels_q8[i].rhs_type == GGML_TYPE_Q8_0 &&
                         gemm_gemv_kernels_q8[i].op_type == tensor->type) {
                         kernel = &gemm_gemv_kernels_q8[i];
-                        break;
+                        अवरोध;
                     }
                 }
-            } else {
+            } अन्यथा {
                 try_table(gemm_gemv_kernels_q8);
             }
-        } else if (tensor->src[0]->type == GGML_TYPE_F32) {
+        } अन्यथा अगर (tensor->src[0]->type == GGML_TYPE_F32) {
             try_table(ggml_kleidiai_kernels_f32);
-        } else {
+        } अन्यथा {
             try_table(gemm_gemv_kernels);
         }
     }
 
-    return kernel;
+    वापस kernel;
 }
 
 ggml_kleidiai_kernels * ggml_kleidiai_select_kernels_q4_0(cpu_feature features) {
     ggml_kleidiai_kernels * kernels = nullptr;
 
-    for (size_t i = 0; i < NELEMS(gemm_gemv_kernels) - 1; ++i) {
-        if ((features & gemm_gemv_kernels[i].required_cpu) == gemm_gemv_kernels[i].required_cpu &&
+    क्रम (माप_प्रकार i = 0; i < NELEMS(gemm_gemv_kernels) - 1; ++i) {
+        अगर ((features & gemm_gemv_kernels[i].required_cpu) == gemm_gemv_kernels[i].required_cpu &&
             gemm_gemv_kernels[i].rhs_type == GGML_TYPE_Q4_0) {
             kernels = &gemm_gemv_kernels[i];
-            break;
+            अवरोध;
         }
     }
 
-    return kernels;
+    वापस kernels;
 }
 
 ggml_kleidiai_kernels * ggml_kleidiai_select_kernels_q4_k(cpu_feature features) {
     ggml_kleidiai_kernels * kernels = nullptr;
 
-    for (size_t i = 0; i < NELEMS(gemm_gemv_kernels_q4_k) - 1; ++i) {
-        if ((features & gemm_gemv_kernels_q4_k[i].required_cpu) == gemm_gemv_kernels_q4_k[i].required_cpu) {
+    क्रम (माप_प्रकार i = 0; i < NELEMS(gemm_gemv_kernels_q4_k) - 1; ++i) {
+        अगर ((features & gemm_gemv_kernels_q4_k[i].required_cpu) == gemm_gemv_kernels_q4_k[i].required_cpu) {
             kernels = &gemm_gemv_kernels_q4_k[i];
-            break;
+            अवरोध;
         }
     }
 
-    return kernels;
+    वापस kernels;
 }
 
 ggml_kleidiai_kernels * ggml_kleidiai_select_kernels_q8_0(cpu_feature features) {
     ggml_kleidiai_kernels * kernels = nullptr;
 
-    for (size_t i = 0; i < NELEMS(gemm_gemv_kernels_q8) - 1; ++i) {
-        if ((features & gemm_gemv_kernels_q8[i].required_cpu) == gemm_gemv_kernels_q8[i].required_cpu) {
+    क्रम (माप_प्रकार i = 0; i < NELEMS(gemm_gemv_kernels_q8) - 1; ++i) {
+        अगर ((features & gemm_gemv_kernels_q8[i].required_cpu) == gemm_gemv_kernels_q8[i].required_cpu) {
             kernels = &gemm_gemv_kernels_q8[i];
-            break;
+            अवरोध;
         }
     }
 
-    return kernels;
+    वापस kernels;
 }
 
 ggml_kleidiai_kernels * ggml_kleidiai_select_kernels_f32(cpu_feature features) {
     ggml_kleidiai_kernels * kernels = nullptr;
 
-    for (size_t i = 0; i < NELEMS(ggml_kleidiai_kernels_f32) - 1; ++i) {
-        if ((features & ggml_kleidiai_kernels_f32[i].required_cpu) == ggml_kleidiai_kernels_f32[i].required_cpu) {
+    क्रम (माप_प्रकार i = 0; i < NELEMS(ggml_kleidiai_kernels_f32) - 1; ++i) {
+        अगर ((features & ggml_kleidiai_kernels_f32[i].required_cpu) == ggml_kleidiai_kernels_f32[i].required_cpu) {
             kernels = &ggml_kleidiai_kernels_f32[i];
-            break;
+            अवरोध;
         }
     }
-    return kernels;
+    वापस kernels;
 }

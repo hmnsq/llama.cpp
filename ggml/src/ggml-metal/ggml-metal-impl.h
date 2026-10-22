@@ -1,23 +1,23 @@
-#ifndef GGML_METAL_IMPL
-#define GGML_METAL_IMPL
+#अगर_अघोषित GGML_METAL_IMPL
+#घोषणा GGML_METAL_IMPL
 
 // kernel parameters for mat-mat threadgroups
 //
 // TODO: become function constants
 
-#define SZ_SIMDGROUP 16
-#define N_MM_NK 2
-#define N_MM_NK_TOTAL (SZ_SIMDGROUP * N_MM_NK)
+#घोषणा SZ_SIMDGROUP 16
+#घोषणा N_MM_NK 2
+#घोषणा N_MM_NK_योग (SZ_SIMDGROUP * N_MM_NK)
 
-#define N_MM_BLOCK_X 4
-#define N_MM_BLOCK_Y 2
-#define N_MM_SIMD_GROUP_X 2
-#define N_MM_SIMD_GROUP_Y 2
+#घोषणा N_MM_BLOCK_X 4
+#घोषणा N_MM_BLOCK_Y 2
+#घोषणा N_MM_SIMD_GROUP_X 2
+#घोषणा N_MM_SIMD_GROUP_Y 2
 
-#define N_MM_NPART_AMAX 256
+#घोषणा N_MM_NPART_AMAX 256
 
-#define N_ARGMAX_NPART_MAX 256
-#define N_ARGMAX_CHUNK 4096
+#घोषणा N_ARGMAX_NPART_MAX 256
+#घोषणा N_ARGMAX_CHUNK 4096
 
 // kernel parameters for mat-vec threadgroups
 //
@@ -26,165 +26,165 @@
 //
 // TODO: for optimal performance, become function of the device and work size
 
-#define N_R0_Q1_0 8
-#define N_SG_Q1_0 2
+#घोषणा N_R0_Q1_0 8
+#घोषणा N_SG_Q1_0 2
 
-#define N_R0_Q2_0 8
-#define N_SG_Q2_0 2
+#घोषणा N_R0_Q2_0 8
+#घोषणा N_SG_Q2_0 2
 
-#define N_R0_Q4_0 4
-#define N_SG_Q4_0 2
+#घोषणा N_R0_Q4_0 4
+#घोषणा N_SG_Q4_0 2
 
-#define N_R0_Q4_1 4
-#define N_SG_Q4_1 2
+#घोषणा N_R0_Q4_1 4
+#घोषणा N_SG_Q4_1 2
 
-#define N_R0_Q5_0 4
-#define N_SG_Q5_0 2
+#घोषणा N_R0_Q5_0 4
+#घोषणा N_SG_Q5_0 2
 
-#define N_R0_Q5_1 4
-#define N_SG_Q5_1 2
+#घोषणा N_R0_Q5_1 4
+#घोषणा N_SG_Q5_1 2
 
-#define N_R0_Q8_0 2
-#define N_SG_Q8_0 4
+#घोषणा N_R0_Q8_0 2
+#घोषणा N_SG_Q8_0 4
 
-#define N_R0_MXFP4 2
-#define N_SG_MXFP4 2
+#घोषणा N_R0_MXFP4 2
+#घोषणा N_SG_MXFP4 2
 
-#define N_R0_Q2_K 4
-#define N_SG_Q2_K 2
+#घोषणा N_R0_Q2_K 4
+#घोषणा N_SG_Q2_K 2
 
-#define N_R0_Q3_K 2
-#define N_SG_Q3_K 2
+#घोषणा N_R0_Q3_K 2
+#घोषणा N_SG_Q3_K 2
 
-#define N_R0_Q4_K 2
-#define N_SG_Q4_K 2
+#घोषणा N_R0_Q4_K 2
+#घोषणा N_SG_Q4_K 2
 
-#define N_R0_Q5_K 1
-#define N_SG_Q5_K 2
+#घोषणा N_R0_Q5_K 1
+#घोषणा N_SG_Q5_K 2
 
-#define N_R0_Q6_K 2
-#define N_SG_Q6_K 2
+#घोषणा N_R0_Q6_K 2
+#घोषणा N_SG_Q6_K 2
 
-#define N_R0_IQ1_S 4
-#define N_SG_IQ1_S 2
-#define N_R0_IQ1_S_SPLIT 8
+#घोषणा N_R0_IQ1_S 4
+#घोषणा N_SG_IQ1_S 2
+#घोषणा N_R0_IQ1_S_SPLIT 8
 
-#define N_R0_IQ1_M 4
-#define N_SG_IQ1_M 2
-#define N_R0_IQ1_M_SPLIT 8
+#घोषणा N_R0_IQ1_M 4
+#घोषणा N_SG_IQ1_M 2
+#घोषणा N_R0_IQ1_M_SPLIT 8
 
-#define N_R0_IQ2_XXS 4
-#define N_SG_IQ2_XXS 2
-#define N_R0_IQ2_XXS_SPLIT 8
+#घोषणा N_R0_IQ2_XXS 4
+#घोषणा N_SG_IQ2_XXS 2
+#घोषणा N_R0_IQ2_XXS_SPLIT 8
 
-#define N_R0_IQ2_XS 4
-#define N_SG_IQ2_XS 2
-#define N_R0_IQ2_XS_SPLIT 8
+#घोषणा N_R0_IQ2_XS 4
+#घोषणा N_SG_IQ2_XS 2
+#घोषणा N_R0_IQ2_XS_SPLIT 8
 
-#define N_R0_IQ2_S 4
-#define N_SG_IQ2_S 2
-#define N_R0_IQ2_S_SPLIT 8
+#घोषणा N_R0_IQ2_S 4
+#घोषणा N_SG_IQ2_S 2
+#घोषणा N_R0_IQ2_S_SPLIT 8
 
-#define N_R0_IQ3_XXS 4
-#define N_SG_IQ3_XXS 2
-#define N_R0_IQ3_XXS_SPLIT 8
+#घोषणा N_R0_IQ3_XXS 4
+#घोषणा N_SG_IQ3_XXS 2
+#घोषणा N_R0_IQ3_XXS_SPLIT 8
 
-#define N_R0_IQ3_S 4
-#define N_SG_IQ3_S 2
-#define N_R0_IQ3_S_SPLIT 8
+#घोषणा N_R0_IQ3_S 4
+#घोषणा N_SG_IQ3_S 2
+#घोषणा N_R0_IQ3_S_SPLIT 8
 
-#define N_R0_IQ4_NL 2
-#define N_SG_IQ4_NL 2
+#घोषणा N_R0_IQ4_NL 2
+#घोषणा N_SG_IQ4_NL 2
 
-#define N_R0_IQ4_XS 2
-#define N_SG_IQ4_XS 2
+#घोषणा N_R0_IQ4_XS 2
+#घोषणा N_SG_IQ4_XS 2
 
-#define N_R0_TQ2_0 4
-#define N_SG_TQ2_0 2
+#घोषणा N_R0_TQ2_0 4
+#घोषणा N_SG_TQ2_0 2
 
 // function constants offsets
-#define FC_FLASH_ATTN_EXT_PAD          100
-#define FC_FLASH_ATTN_EXT_BLK          200
-#define FC_FLASH_ATTN_EXT              300
-#define FC_FLASH_ATTN_EXT_VEC          400
-#define FC_FLASH_ATTN_EXT_VEC_REDUCE   500
-#define FC_MUL_MV                      600
-#define FC_MUL_MM                      700
-#define FC_ROPE                        800
-#define FC_SSM_CONV                    900
-#define FC_SOLVE_TRI                   1000
-#define FC_COUNT_EQUAL                 1100
-#define FC_UNARY                       1200
-#define FC_BIN                         1300
-#define FC_SUM_ROWS                    1400
-#define FC_UPSCALE                     1500
-#define FC_GATED_DELTA_NET             1600
-#define FC_NORM                        1700
-#define FC_TOPK_MOE                    1800
-#define FC_MOE_REDUCE                  1900
-#define FC_DSV4_HC                     2000
-#define FC_PAD                         2100
-#define FC_FLASH_ATTN_EXT_TENSOR       2200
-#define FC_LIGHTNING_INDEXER           2200
-#define FC_MUL_MV_MMA                  2300
+#घोषणा FC_FLASH_ATTN_EXT_PAD          100
+#घोषणा FC_FLASH_ATTN_EXT_BLK          200
+#घोषणा FC_FLASH_ATTN_EXT              300
+#घोषणा FC_FLASH_ATTN_EXT_VEC          400
+#घोषणा FC_FLASH_ATTN_EXT_VEC_REDUCE   500
+#घोषणा FC_MUL_MV                      600
+#घोषणा FC_MUL_MM                      700
+#घोषणा FC_ROPE                        800
+#घोषणा FC_SSM_CONV                    900
+#घोषणा FC_SOLVE_TRI                   1000
+#घोषणा FC_गिनती_EQUAL                 1100
+#घोषणा FC_UNARY                       1200
+#घोषणा FC_BIN                         1300
+#घोषणा FC_योग_ROWS                    1400
+#घोषणा FC_UPSCALE                     1500
+#घोषणा FC_GATED_DELTA_NET             1600
+#घोषणा FC_NORM                        1700
+#घोषणा FC_TOPK_MOE                    1800
+#घोषणा FC_MOE_REDUCE                  1900
+#घोषणा FC_DSV4_HC                     2000
+#घोषणा FC_PAD                         2100
+#घोषणा FC_FLASH_ATTN_EXT_TENSOR       2200
+#घोषणा FC_LIGHTNING_INDEXER           2200
+#घोषणा FC_MUL_MV_MMA                  2300
 
 // op-specific constants
-#define OP_FLASH_ATTN_EXT_NQPSG 8
-#define OP_FLASH_ATTN_EXT_NCPSG 64
+#घोषणा OP_FLASH_ATTN_EXT_NQPSG 8
+#घोषणा OP_FLASH_ATTN_EXT_NCPSG 64
 
-#define OP_FLASH_ATTN_EXT_TENSOR_NQPSG       32
-#define OP_FLASH_ATTN_EXT_TENSOR_NQPSG_LARGE 16
-#define OP_FLASH_ATTN_EXT_TENSOR_NCPSG       64
-#define OP_FLASH_ATTN_EXT_TENSOR_NSG         8
+#घोषणा OP_FLASH_ATTN_EXT_TENSOR_NQPSG       32
+#घोषणा OP_FLASH_ATTN_EXT_TENSOR_NQPSG_LARGE 16
+#घोषणा OP_FLASH_ATTN_EXT_TENSOR_NCPSG       64
+#घोषणा OP_FLASH_ATTN_EXT_TENSOR_NSG         8
 
-#define OP_FLASH_ATTN_EXT_VEC_NQPSG 1
-#define OP_FLASH_ATTN_EXT_VEC_NCPSG 32
+#घोषणा OP_FLASH_ATTN_EXT_VEC_NQPSG 1
+#घोषणा OP_FLASH_ATTN_EXT_VEC_NCPSG 32
 
-#define OP_LIGHTNING_INDEXER_DK    128
-#define OP_LIGHTNING_INDEXER_NHPTG   8
-#define OP_LIGHTNING_INDEXER_NKPSG   8
-#define OP_LIGHTNING_INDEXER_NSG     8
-#define OP_LIGHTNING_INDEXER_NBPTG   8
+#घोषणा OP_LIGHTNING_INDEXER_DK    128
+#घोषणा OP_LIGHTNING_INDEXER_NHPTG   8
+#घोषणा OP_LIGHTNING_INDEXER_NKPSG   8
+#घोषणा OP_LIGHTNING_INDEXER_NSG     8
+#घोषणा OP_LIGHTNING_INDEXER_NBPTG   8
 
-#define OP_UNARY_NUM_SCALE      10
-#define OP_UNARY_NUM_FILL       11
-#define OP_UNARY_NUM_CLAMP      12
-#define OP_UNARY_NUM_SQR        13
-#define OP_UNARY_NUM_SQRT       14
-#define OP_UNARY_NUM_SIN        15
-#define OP_UNARY_NUM_COS        16
-#define OP_UNARY_NUM_LOG        17
-#define OP_UNARY_NUM_LEAKY_RELU 18
+#घोषणा OP_UNARY_अंक_SCALE      10
+#घोषणा OP_UNARY_अंक_FILL       11
+#घोषणा OP_UNARY_अंक_CLAMP      12
+#घोषणा OP_UNARY_अंक_SQR        13
+#घोषणा OP_UNARY_अंक_SQRT       14
+#घोषणा OP_UNARY_अंक_SIN        15
+#घोषणा OP_UNARY_अंक_COS        16
+#घोषणा OP_UNARY_अंक_LOG        17
+#घोषणा OP_UNARY_अंक_LEAKY_RELU 18
 
-#define OP_UNARY_NUM_TANH        100
-#define OP_UNARY_NUM_RELU        101
-#define OP_UNARY_NUM_SIGMOID     102
-#define OP_UNARY_NUM_GELU        103
-#define OP_UNARY_NUM_GELU_ERF    104
-#define OP_UNARY_NUM_GELU_QUICK  105
-#define OP_UNARY_NUM_SILU        106
-#define OP_UNARY_NUM_ELU         107
-#define OP_UNARY_NUM_NEG         108
-#define OP_UNARY_NUM_ABS         109
-#define OP_UNARY_NUM_SGN         110
-#define OP_UNARY_NUM_STEP        111
-#define OP_UNARY_NUM_HARDSWISH   112
-#define OP_UNARY_NUM_HARDSIGMOID 113
-#define OP_UNARY_NUM_EXP         114
-#define OP_UNARY_NUM_SOFTPLUS    115
-#define OP_UNARY_NUM_EXPM1       116
-#define OP_UNARY_NUM_FLOOR       117
-#define OP_UNARY_NUM_CEIL        118
-#define OP_UNARY_NUM_ROUND       119
-#define OP_UNARY_NUM_TRUNC       120
-#define OP_UNARY_NUM_XIELU       121
+#घोषणा OP_UNARY_अंक_TANH        100
+#घोषणा OP_UNARY_अंक_RELU        101
+#घोषणा OP_UNARY_अंक_SIGMOID     102
+#घोषणा OP_UNARY_अंक_GELU        103
+#घोषणा OP_UNARY_अंक_GELU_ERF    104
+#घोषणा OP_UNARY_अंक_GELU_QUICK  105
+#घोषणा OP_UNARY_अंक_SILU        106
+#घोषणा OP_UNARY_अंक_ELU         107
+#घोषणा OP_UNARY_अंक_NEG         108
+#घोषणा OP_UNARY_अंक_ABS         109
+#घोषणा OP_UNARY_अंक_SGN         110
+#घोषणा OP_UNARY_अंक_STEP        111
+#घोषणा OP_UNARY_अंक_HARDSWISH   112
+#घोषणा OP_UNARY_अंक_HARDSIGMOID 113
+#घोषणा OP_UNARY_अंक_EXP         114
+#घोषणा OP_UNARY_अंक_SOFTPLUS    115
+#घोषणा OP_UNARY_अंक_EXPM1       116
+#घोषणा OP_UNARY_अंक_FLOOR       117
+#घोषणा OP_UNARY_अंक_CEIL        118
+#घोषणा OP_UNARY_अंक_ROUND       119
+#घोषणा OP_UNARY_अंक_TRUNC       120
+#घोषणा OP_UNARY_अंक_XIELU       121
 
-#define OP_SUM_ROWS_NUM_SUM_ROWS 10
-#define OP_SUM_ROWS_NUM_MEAN     11
+#घोषणा OP_योग_ROWS_अंक_योग_ROWS 10
+#घोषणा OP_योग_ROWS_अंक_MEAN     11
 
-#define OP_SSM_SCAN_SSD_CS  64 // Metal-specific; Chunk Size; 64 is largest multiple of 8 (simdgroup tile) fitting into 32 KiB Metal threadgroup mem limit (~26.75 KiB shared mem; see smem layout comment in kernel_ssm_scan_ssd_mma_f32)
-#define OP_SSM_SCAN_SSD_HD  64 // Metal-specific; Head Dim the MMA kernel is specialized for (Mamba-2); use_mma gates on d_inner == this
-#define OP_SSM_SCAN_SSD_NSG 4  // Metal-specific; Number of SimdGroups per threadgroup; NSG*32 == threads dispatched per threadgroup
+#घोषणा OP_SSM_SCAN_SSD_CS  64 // Metal-specific; Chunk Size; 64 is largest multiple of 8 (simdgroup tile) fitting into 32 KiB Metal threadgroup mem limit (~26.75 KiB shared mem; see smem layout comment in kernel_ssm_scan_ssd_mma_f32)
+#घोषणा OP_SSM_SCAN_SSD_HD  64 // Metal-specific; Head Dim the MMA kernel is specialized for (Mamba-2); use_mma gates on d_inner == this
+#घोषणा OP_SSM_SCAN_SSD_NSG 4  // Metal-specific; Number of SimdGroups per threadgroup; NSG*32 == threads dispatched per threadgroup
 
 // kernel argument structs
 //
@@ -193,7 +193,7 @@
 //
 // - strides (e.g. nb00) use uint64_t
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -222,7 +222,7 @@ typedef struct {
     int32_t  nc0;
 } ggml_metal_kargs_concat;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -239,15 +239,15 @@ typedef struct {
     uint64_t nb1;
     uint64_t nb2;
     uint64_t nb3;
-    float    slope;
-    float    scale;
-    float    bias;
-    float    val;
-    float    min;
-    float    max;
+    भग्न    slope;
+    भग्न    scale;
+    भग्न    bias;
+    भग्न    val;
+    भग्न    min;
+    भग्न    max;
 } ggml_metal_kargs_unary;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -276,16 +276,16 @@ typedef struct {
     uint64_t o1[8];
 } ggml_metal_kargs_bin;
 
-typedef struct {
+प्रकार काष्ठा {
     int64_t ne0;
     int64_t ne1;
-    size_t nb01;
-    size_t nb02;
-    size_t nb11;
-    size_t nb21;
+    माप_प्रकार nb01;
+    माप_प्रकार nb02;
+    माप_प्रकार nb11;
+    माप_प्रकार nb21;
 } ggml_metal_kargs_add_id;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -304,7 +304,7 @@ typedef struct {
     uint64_t nb3;
 } ggml_metal_kargs_repeat;
 
-typedef struct {
+प्रकार काष्ठा {
     int64_t  nk0;
     int64_t  ne00;
     int64_t  ne01;
@@ -324,7 +324,7 @@ typedef struct {
     uint64_t nb3;
 } ggml_metal_kargs_cpy;
 
-typedef struct {
+प्रकार काष्ठा {
     int64_t  ne10;
     int64_t  ne11;
     int64_t  ne12;
@@ -339,7 +339,7 @@ typedef struct {
     bool     inplace;
 } ggml_metal_kargs_set;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -360,12 +360,12 @@ typedef struct {
     int32_t  n_dims;
     int32_t  n_offs;
     int32_t  n_ctx_orig;
-    float    freq_base;
-    float    freq_scale;
-    float    ext_factor;
-    float    attn_factor;
-    float    beta_fast;
-    float    beta_slow;
+    भग्न    freq_base;
+    भग्न    freq_scale;
+    भग्न    ext_factor;
+    भग्न    attn_factor;
+    भग्न    beta_fast;
+    भग्न    beta_slow;
     int32_t  sect_0;
     int32_t  sect_1;
     int32_t  sect_2;
@@ -374,7 +374,7 @@ typedef struct {
     bool     inplace;
 } ggml_metal_kargs_rope;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne0;
     int32_t  ne1;
     int32_t  ne2;
@@ -386,7 +386,7 @@ typedef struct {
     int32_t  nblocks;
 } ggml_metal_kargs_flash_attn_ext_kv_f16;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne11;
     int32_t  ne_12_2; // assume K and V are same shape
     int32_t  ne_12_3;
@@ -404,7 +404,7 @@ typedef struct {
     uint64_t nb33;
 } ggml_metal_kargs_flash_attn_ext_pad;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne01;
     int32_t  ne30;
     int32_t  ne31;
@@ -415,7 +415,7 @@ typedef struct {
     uint64_t nb33;
 } ggml_metal_kargs_flash_attn_ext_blk;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne01;
     int32_t  ne02;
     int32_t  ne03;
@@ -442,15 +442,15 @@ typedef struct {
     int32_t  ne1;
     int32_t  ne2;
     int32_t  ne3;
-    float    scale;
-    float    max_bias;
-    float    m0;
-    float    m1;
-    int32_t  n_head_log2;
-    float    logit_softcap;
+    भग्न    scale;
+    भग्न    max_bias;
+    भग्न    m0;
+    भग्न    m1;
+    int32_t  n_शीर्ष_log2;
+    भग्न    logit_softcap;
 } ggml_metal_kargs_flash_attn_ext;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne01;
     int32_t  ne02;
     int32_t  ne03;
@@ -477,16 +477,16 @@ typedef struct {
     int32_t  ne1;
     int32_t  ne2;
     int32_t  ne3;
-    float    scale;
-    float    max_bias;
-    float    m0;
-    float    m1;
-    int32_t  n_head_log2;
-    float    logit_softcap;
+    भग्न    scale;
+    भग्न    max_bias;
+    भग्न    m0;
+    भग्न    m1;
+    int32_t  n_शीर्ष_log2;
+    भग्न    logit_softcap;
     int32_t  n_kv_max_padded;
 } ggml_metal_kargs_flash_attn_ext_vec;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne30;
     int32_t  ne31;
     int32_t  ne32;
@@ -498,11 +498,11 @@ typedef struct {
     int32_t  n_kv_max_padded;
 } ggml_metal_kargs_flash_attn_ext_vec_idx;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  nrows;
 } ggml_metal_kargs_flash_attn_ext_vec_reduce;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne00;
     int32_t  ne02;
     uint64_t nb01;
@@ -519,7 +519,7 @@ typedef struct {
     int16_t  r3;
 } ggml_metal_kargs_mul_mm;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -541,7 +541,7 @@ typedef struct {
     int16_t  r3;
 } ggml_metal_kargs_mul_mv;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -562,7 +562,7 @@ typedef struct {
     int16_t  r3;
 } ggml_metal_kargs_mul_mv_ext;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne10;
     int32_t  ne11;  // n_expert_used (bcast)
     uint64_t nb11;
@@ -572,7 +572,7 @@ typedef struct {
     uint64_t nb21;
 } ggml_metal_kargs_mul_mm_id_map0;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -580,7 +580,7 @@ typedef struct {
     uint64_t nb02;
 } ggml_metal_kargs_mul_mm_id_amax;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne00;
     int32_t  ne02;
     uint64_t nb01;
@@ -598,7 +598,7 @@ typedef struct {
     int16_t  r3;
 } ggml_metal_kargs_mul_mm_id;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  nei0;
     int32_t  nei1;
     uint64_t nbi1;
@@ -623,23 +623,23 @@ typedef struct {
 
 // NORM
 // RMS_NORM
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne00;
     int32_t  ne00_t;
     uint64_t nb1;
     uint64_t nb2;
     uint64_t nb3;
-    float    eps;
+    भग्न    eps;
     int32_t  nef1[3];
     int32_t  nef2[3];
     int32_t  nef3[3];
     uint64_t nbf1[3];
     uint64_t nbf2[3];
     uint64_t nbf3[3];
-    float    scale;
+    भग्न    scale;
 } ggml_metal_kargs_norm;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -656,10 +656,10 @@ typedef struct {
     uint64_t nb1;
     uint64_t nb2;
     uint64_t nb3;
-    float    eps;
+    भग्न    eps;
 } ggml_metal_kargs_l2_norm;
 
-typedef struct {
+प्रकार काष्ठा {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -667,10 +667,10 @@ typedef struct {
     uint64_t nb01;
     uint64_t nb02;
     int32_t  ngrp;
-    float    eps;
+    भग्न    eps;
 } ggml_metal_kargs_group_norm;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  IC;
     int32_t  IL;
     int32_t  K;
@@ -679,7 +679,7 @@ typedef struct {
     uint64_t nb1;
 } ggml_metal_kargs_conv_transpose_1d;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  T_in;
     int32_t  T_out;
     int32_t  OC;
@@ -689,12 +689,12 @@ typedef struct {
     int32_t  p0;
 } ggml_metal_kargs_col2im_1d;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t T;
     int32_t C;
 } ggml_metal_kargs_snake;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  IC;
     int32_t  IH;
     int32_t  IW;
@@ -708,7 +708,7 @@ typedef struct {
     uint64_t nb3;
 } ggml_metal_kargs_conv_transpose_2d;
 
-typedef struct {
+प्रकार काष्ठा {
     uint64_t nb00;
     uint64_t nb01;
     uint64_t nb02;
@@ -738,7 +738,7 @@ typedef struct {
     int32_t  d1;
 } ggml_metal_kargs_conv_2d;
 
-typedef struct {
+प्रकार काष्ठा {
     uint64_t nb00;  // kernel strides
     uint64_t nb01;
     uint64_t nb02;
@@ -766,7 +766,7 @@ typedef struct {
     int32_t  d1;    // dilation y
 } ggml_metal_kargs_conv_2d_dw;
 
-typedef struct {
+प्रकार काष्ठा {
     uint64_t  ofs0;
     uint64_t  ofs1;
     int32_t  IW;
@@ -784,7 +784,7 @@ typedef struct {
     int32_t  KHW; // KH * KW, pre-computed on CPU to save GPU resources
 } ggml_metal_kargs_im2col;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  IW;
     int32_t  IH;
     int32_t  ID;
@@ -820,7 +820,7 @@ typedef struct {
     uint64_t nb3;
 } ggml_metal_kargs_conv_3d;
 
-typedef struct{
+प्रकार काष्ठा{
     int32_t  ne00;
     uint64_t nb01;
     int32_t  ne10;
@@ -829,15 +829,15 @@ typedef struct{
     uint64_t nb1;
     int32_t  i00;
     int32_t  i10;
-    float    alpha;
-    float    limit;
+    भग्न    alpha;
+    भग्न    limit;
 } ggml_metal_kargs_glu;
 
-typedef struct {
+प्रकार काष्ठा {
     uint64_t np;
-} ggml_metal_kargs_sum;
+} ggml_metal_kargs_योग;
 
-typedef struct {
+प्रकार काष्ठा {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -854,9 +854,9 @@ typedef struct {
     uint64_t nb1;
     uint64_t nb2;
     uint64_t nb3;
-} ggml_metal_kargs_sum_rows;
+} ggml_metal_kargs_योग_rows;
 
-typedef struct {
+प्रकार काष्ठा {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -876,7 +876,7 @@ typedef struct {
     bool     outb;
 } ggml_metal_kargs_cumsum_blk;
 
-typedef struct {
+प्रकार काष्ठा {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -895,7 +895,7 @@ typedef struct {
     uint64_t nbt3;
 } ggml_metal_kargs_cumsum_add;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -911,14 +911,14 @@ typedef struct {
     uint64_t nb1;
     uint64_t nb2;
     uint64_t nb3;
-    float    scale;
-    float    max_bias;
-    float    m0;
-    float    m1;
-    int32_t  n_head_log2;
+    भग्न    scale;
+    भग्न    max_bias;
+    भग्न    m0;
+    भग्न    m1;
+    int32_t  n_शीर्ष_log2;
 } ggml_metal_kargs_soft_max;
 
-typedef struct {
+प्रकार काष्ठा {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -936,13 +936,13 @@ typedef struct {
     uint64_t nb2;
 } ggml_metal_kargs_ssm_conv;
 
-typedef struct {
+प्रकार काष्ठा {
     int64_t  d_state;
     int64_t  d_inner;
-    int64_t  n_head;
+    int64_t  n_शीर्ष;
     int64_t  n_group;
     int64_t  n_seq_tokens;
-    int64_t  n_seq_tokens_total;
+    int64_t  n_seq_tokens_योग;
     int64_t  token_offset;
     int64_t  n_seqs;
     int64_t  K;
@@ -973,7 +973,7 @@ typedef struct {
     uint64_t nb0;
 } ggml_metal_kargs_ssm_scan;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -1012,7 +1012,7 @@ typedef struct {
     uint64_t nb_out; // 0 => snapshots are appended after the attn scores (unfused)
 } ggml_metal_kargs_gated_delta_net;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -1039,7 +1039,7 @@ typedef struct {
     uint64_t nb3;
 } ggml_metal_kargs_solve_tri;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne00t;
     int32_t  ne00;
     uint64_t nb01;
@@ -1054,7 +1054,7 @@ typedef struct {
     uint64_t nb3;
 } ggml_metal_kargs_get_rows;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  nk0;
     int32_t  ne01;
     uint64_t nb01;
@@ -1070,7 +1070,7 @@ typedef struct {
     uint64_t nb3;
 } ggml_metal_kargs_set_rows;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -1089,7 +1089,7 @@ typedef struct {
     uint64_t nb3;
 } ggml_metal_kargs_diag;
 
-typedef struct {
+प्रकार काष्ठा {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -1106,14 +1106,14 @@ typedef struct {
     uint64_t nb1;
     uint64_t nb2;
     uint64_t nb3;
-    float    sf0;
-    float    sf1;
-    float    sf2;
-    float    sf3;
-    float    poffs;
+    भग्न    sf0;
+    भग्न    sf1;
+    भग्न    sf2;
+    भग्न    sf3;
+    भग्न    poffs;
 } ggml_metal_kargs_upscale;
 
-typedef struct {
+प्रकार काष्ठा {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -1136,7 +1136,7 @@ typedef struct {
     int32_t  lp3;
 } ggml_metal_kargs_pad;
 
-typedef struct {
+प्रकार काष्ठा {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -1157,7 +1157,7 @@ typedef struct {
     int32_t  p1;
 } ggml_metal_kargs_pad_reflect_1d;
 
-typedef struct {
+प्रकार काष्ठा {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -1180,13 +1180,13 @@ typedef struct {
     int32_t  s3;
 } ggml_metal_kargs_roll;
 
-typedef struct {
+प्रकार काष्ठा {
     uint64_t nb1;
-    int      dim;
-    int      max_period;
+    पूर्णांक      dim;
+    पूर्णांक      max_period;
 } ggml_metal_kargs_timestep_embedding;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -1205,7 +1205,7 @@ typedef struct {
     uint64_t nb3;
 } ggml_metal_kargs_tri;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -1218,10 +1218,10 @@ typedef struct {
     int32_t  ne1;
     int32_t  ne2;
     int32_t  ne3;
-    int32_t  top_k;
+    int32_t  शीर्ष_k;
 } ggml_metal_kargs_argsort;
 
-typedef struct {
+प्रकार काष्ठा {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -1234,11 +1234,11 @@ typedef struct {
     int32_t  ne1;
     int32_t  ne2;
     int32_t  ne3;
-    int32_t  top_k;
+    int32_t  शीर्ष_k;
     int32_t  len;
 } ggml_metal_kargs_argsort_merge;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne00;   // number of columns (elements per row)
     int32_t  ne01;   // rows
     int32_t  ne02;
@@ -1246,42 +1246,42 @@ typedef struct {
     uint64_t nb01;   // row stride in src0
     uint64_t nb02;
     uint64_t nb03;
-    int32_t  top_k;  // k
-} ggml_metal_kargs_top_k;
+    int32_t  शीर्ष_k;  // k
+} ggml_metal_kargs_शीर्ष_k;
 
 // widths at or above this use the threadgroup FWHT kernel, one row per threadgroup
 // with GGML_METAL_FWHT_TG_NT threads, instead of one row per simdgroup
-#define GGML_METAL_FWHT_TG_MIN_N 512
-#define GGML_METAL_FWHT_TG_NT    256
+#घोषणा GGML_METAL_FWHT_TG_MIN_N 512
+#घोषणा GGML_METAL_FWHT_TG_NT    256
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne01;      // n_tokens
     uint64_t nb01;      // logits row stride
     uint64_t nb1_ids;   // ids row stride
-    float    clamp;
-    float    scale;
+    भग्न    clamp;
+    भग्न    scale;
 } ggml_metal_kargs_topk_moe;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t ne00; // n_embd
     int32_t ne02; // n_tokens
 } ggml_metal_kargs_moe_reduce;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t nrows;
 } ggml_metal_kargs_fwht;
 
-typedef struct {
+प्रकार काष्ठा {
     int64_t  ne0;
-    float    start;
-    float    step;
+    भग्न    start;
+    भग्न    step;
 } ggml_metal_kargs_arange;
 
-typedef struct {
+प्रकार काष्ठा {
     int64_t val;
 } ggml_metal_kargs_memset;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  n_kv;
     int32_t  n_batch;
     int32_t  mask_ne3;
@@ -1298,7 +1298,7 @@ typedef struct {
     uint64_t nbm3;
 } ggml_metal_kargs_lightning_indexer;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  n_tokens;
     int32_t  n_iter;
     uint64_t nb_m0;
@@ -1308,10 +1308,10 @@ typedef struct {
     uint64_t nb_d0;
     uint64_t nb_d1;
     uint64_t nb_d2;
-    float    eps;
+    भग्न    eps;
 } ggml_metal_kargs_dsv4_hc_comb;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  n_embd;
     int32_t  n_tokens;
     uint64_t nb_x0;
@@ -1322,10 +1322,10 @@ typedef struct {
     uint64_t nb_w2;
     uint64_t nb_d0;
     uint64_t nb_d1;
-    float    scale;
+    भग्न    scale;
 } ggml_metal_kargs_dsv4_hc_pre;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  n_embd;
     int32_t  n_tokens;
     uint64_t nb_x0;
@@ -1343,7 +1343,7 @@ typedef struct {
     uint64_t nb_d2;
 } ggml_metal_kargs_dsv4_hc_post;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -1356,9 +1356,9 @@ typedef struct {
     uint64_t nb11;
     uint64_t nb12;
     uint64_t nb13;
-} ggml_metal_kargs_count_equal;
+} ggml_metal_kargs_गिनती_equal;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  k0;
     int32_t  k1;
     int32_t  s0;
@@ -1372,7 +1372,7 @@ typedef struct {
     int64_t  np;
 } ggml_metal_kargs_pool_2d;
 
-typedef struct {
+प्रकार काष्ठा {
     int32_t  k0;
     int32_t  s0;
     int32_t  p0;
@@ -1381,23 +1381,23 @@ typedef struct {
     int64_t  np;
 } ggml_metal_kargs_pool_1d;
 
-typedef struct {
+प्रकार काष्ठा {
     int64_t ne00;
     uint64_t nb01;
     int64_t npart;
     int64_t ne01;
 } ggml_metal_kargs_argmax;
 
-typedef struct {
+प्रकार काष्ठा {
     int64_t  np;
 } ggml_metal_kargs_opt_step_adamw;
 
-typedef struct {
+प्रकार काष्ठा {
     int64_t  np;
 } ggml_metal_kargs_opt_step_sgd;
 
-typedef struct {
+प्रकार काष्ठा {
     int64_t ne;
 } ggml_metal_kargs_silu_back;
 
-#endif // GGML_METAL_IMPL
+#पूर्ण_अगर // GGML_METAL_IMPL

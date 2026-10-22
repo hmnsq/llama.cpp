@@ -1,12 +1,12 @@
-#ifndef HTP_SSM_CONV_H
-#define HTP_SSM_CONV_H
+#अगर_अघोषित HTP_SSM_CONV_H
+#घोषणा HTP_SSM_CONV_H
 
-#include <stdint.h>
+#समावेश <stdint.h>
 
-#include "hex-fastdiv.h"
-#include "htp-ops.h"
+#समावेश "hex-fastdiv.h"
+#समावेश "htp-ops.h"
 
-struct htp_ssm_conv_kernel_params {
+काष्ठा htp_ssm_conv_kernel_params {
     uint32_t n_threads;
     uint32_t d_conv;
     uint32_t d_inner;
@@ -14,20 +14,20 @@ struct htp_ssm_conv_kernel_params {
     uint32_t n_s;
     uint32_t d_inner_tile;
 
-    uint32_t vtcm_src0_size_per_thread;
-    uint32_t vtcm_src1_size_per_thread;
-    uint32_t vtcm_dst_size_per_thread;
+    uint32_t vtcm_src0_आकार_per_thread;
+    uint32_t vtcm_src1_आकार_per_thread;
+    uint32_t vtcm_dst_आकार_per_thread;
 
-    uint32_t vtcm_src0_size;
-    uint32_t vtcm_src1_size;
-    uint32_t vtcm_dst_size;
-    uint32_t vtcm_size;
+    uint32_t vtcm_src0_आकार;
+    uint32_t vtcm_src1_आकार;
+    uint32_t vtcm_dst_आकार;
+    uint32_t vtcm_आकार;
 };
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_ssm_conv_kernel_params) <= 128, "htp_ssm_conv_kernel_params is too large for kernel_params blob");
-#else
-_Static_assert(sizeof(struct htp_ssm_conv_kernel_params) <= 128, "htp_ssm_conv_kernel_params is too large for kernel_params blob");
-#endif
+#अगर defined(__cplusplus)
+static_assert(माप(काष्ठा htp_ssm_conv_kernel_params) <= 128, "htp_ssm_conv_kernel_params is too large for kernel_params blob");
+#अन्यथा
+_Static_assert(माप(काष्ठा htp_ssm_conv_kernel_params) <= 128, "htp_ssm_conv_kernel_params is too large for kernel_params blob");
+#पूर्ण_अगर
 
-#endif // HTP_SSM_CONV_H
+#पूर्ण_अगर // HTP_SSM_CONV_H

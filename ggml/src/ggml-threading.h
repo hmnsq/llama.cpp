@@ -1,14 +1,14 @@
-#pragma once
+#आशय once
 
-#include "ggml.h"
+#समावेश "ggml.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#अगर_घोषित __cplusplus
+बाह्य "C" {
+#पूर्ण_अगर
 
-GGML_API void ggml_critical_section_start(void);
-GGML_API void ggml_critical_section_end(void);
+GGML_API व्योम ggml_critical_section_start(व्योम);
+GGML_API व्योम ggml_critical_section_end(व्योम);
 
-#ifdef __cplusplus
+#अगर_घोषित __cplusplus
 }
-#endif
+#पूर्ण_अगर

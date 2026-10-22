@@ -1,105 +1,105 @@
-#pragma once
+#आशय once
 
 // clang-format off
-#include "virtgpu-utils.h"
-#include "virtgpu-shm.h"
-#include "virtgpu-apir.h"
+#समावेश "virtgpu-utils.h"
+#समावेश "virtgpu-shm.h"
+#समावेश "virtgpu-apir.h"
 
-#include "backend/shared/api_remoting.h"
-#include "backend/shared/apir_cs.h"
+#समावेश "backend/shared/api_remoting.h"
+#समावेश "backend/shared/apir_cs.h"
 
-#include <fcntl.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <sys/stat.h>
-#include <sys/sysmacros.h>
-#include <threads.h>
-#include <xf86drm.h>
+#समावेश <fcntl.h>
+#समावेश <stdbool.h>
+#समावेश <stdio.h>
+#समावेश <sys/stat.h>
+#समावेश <sys/sysmacros.h>
+#समावेश <threads.h>
+#समावेश <xf86drm.h>
 
-#include <cstring>
+#समावेश <cstring>
 
-#define VIRGL_RENDERER_UNSTABLE_APIS 1
-#include "apir_hw.h"
-#include <drm/virtgpu_drm.h>
-#include "venus_hw.h"
+#घोषणा VIRGL_RENDERER_UNSTABLE_APIS 1
+#समावेश "apir_hw.h"
+#समावेश <drm/virtgpu_drm.h>
+#समावेश "venus_hw.h"
 // clang-format on
 
-#ifndef VIRTGPU_DRM_CAPSET_APIR
+#अगर_अघोषित VIRTGPU_DRM_CAPSET_APIR
 // Will be defined include/drm/virtgpu_drm.h when
 // https://gitlab.freedesktop.org/virgl/virglrenderer/-/merge_requests/1590/diffs
 // is merged
 #    define VIRTGPU_DRM_CAPSET_APIR 10
-#endif
+#पूर्ण_अगर
 
 // Mesa/Virlgrenderer Venus internal. Only necessary during the
 // Venus->APIR transition in Virglrenderer
-#define VENUS_COMMAND_TYPE_LENGTH 331
+#घोषणा VENUS_COMMAND_TYPE_लंबाई 331
 
-#ifndef VIRTGPU_DRM_CAPSET_VENUS  // only available with Linux >= v6.16
+#अगर_अघोषित VIRTGPU_DRM_CAPSET_VENUS  // only available with Linux >= v6.16
 #    define VIRTGPU_DRM_CAPSET_VENUS 4
-#endif
+#पूर्ण_अगर
 
-typedef uint32_t virgl_renderer_capset;
+प्रकार uint32_t virgl_renderer_capset;
 
 /* from src/virtio/vulkan/vn_renderer_virtgpu.c */
-#define VIRTGPU_PCI_VENDOR_ID       0x1af4
-#define VIRTGPU_PCI_DEVICE_ID       0x1050
-#define VIRTGPU_BLOB_MEM_GUEST_VRAM 0x0004
-#define VIRTGPU_PARAM_GUEST_VRAM    9
+#घोषणा VIRTGPU_PCI_VENDOR_ID       0x1af4
+#घोषणा VIRTGPU_PCI_DEVICE_ID       0x1050
+#घोषणा VIRTGPU_BLOB_MEM_GUEST_VRAM 0x0004
+#घोषणा VIRTGPU_PARAM_GUEST_VRAM    9
 
-#define SHMEM_DATA_SIZE  0x1830000  // 24MiB
-#define SHMEM_REPLY_SIZE 0x4000
+#घोषणा SHMEM_तथ्य_आकार  0x1830000  // 24MiB
+#घोषणा SHMEM_REPLY_आकार 0x4000
 
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#घोषणा ARRAY_आकार(x) (माप(x) / माप((x)[0]))
 
-enum virt_gpu_result_t {
+क्रमागत virt_gpu_परिणाम_t {
     APIR_SUCCESS                     = 0,
     APIR_ERROR_INITIALIZATION_FAILED = -1,
 };
 
-#define PRINTFLIKE(f, a) __attribute__((format(__printf__, f, a)))
+#घोषणा PRINTFLIKE(f, a) __attribute__((format(__printf__, f, a)))
 
-struct virtgpu {
+काष्ठा virtgpu {
     bool use_apir_capset;
 
-    int fd;
+    पूर्णांक fd;
 
-    struct {
+    काष्ठा {
         virgl_renderer_capset      id;
         uint32_t                   version;
-        virgl_renderer_capset_apir data;
+        virgl_renderer_capset_apir तथ्य;
     } capset;
 
     util_sparse_array shmem_array;
 
     /* APIR communication pages */
     virtgpu_shmem reply_shmem;
-    virtgpu_shmem data_shmem;
+    virtgpu_shmem तथ्य_shmem;
 
     /* Mutex to protect shared data_shmem buffer from concurrent access */
-    mtx_t data_shmem_mutex;
+    mtx_t तथ्य_shmem_mutex;
 
     /* Cached device information to prevent memory leaks and race conditions */
-    struct {
-        char *   description;
-        char *   name;
-        int32_t  device_count;
+    काष्ठा {
+        अक्षर *   description;
+        अक्षर *   name;
+        int32_t  device_गिनती;
         uint32_t type;
-        size_t   memory_free;
-        size_t   memory_total;
+        माप_प्रकार   memory_free;
+        माप_प्रकार   memory_योग;
     } cached_device_info;
 
     /* Cached buffer type information to prevent memory leaks and race conditions */
-    struct {
-        apir_buffer_type_host_handle_t host_handle;
-        char *                         name;
-        size_t                         alignment;
-        size_t                         max_size;
-    } cached_buffer_type;
+    काष्ठा {
+        apir_बफर_type_host_handle_t host_handle;
+        अक्षर *                         name;
+        माप_प्रकार                         alignment;
+        माप_प्रकार                         max_आकार;
+    } cached_बफर_type;
 };
 
-static inline int virtgpu_ioctl(virtgpu * gpu, unsigned long request, void * args) {
-    return drmIoctl(gpu->fd, request, args);
+अटल अंतरभूत पूर्णांक virtgpu_ioctl(virtgpu * gpu, अचिन्हित दीर्घ request, व्योम * args) {
+    वापस drmIoctl(gpu->fd, request, args);
 }
 
 virtgpu * create_virtgpu();
@@ -109,7 +109,7 @@ apir_encoder * remote_call_prepare(virtgpu * gpu, ApirCommandType apir_cmd_type,
 uint32_t remote_call(virtgpu *       gpu,
                      apir_encoder *  enc,
                      apir_decoder ** dec,
-                     float           max_wait_ms,
-                     long long *     call_duration_ns);
+                     भग्न           max_wait_ms,
+                     दीर्घ दीर्घ *     call_duration_ns);
 
-void remote_call_finish(virtgpu * gpu, apir_encoder * enc, apir_decoder * dec);
+व्योम remote_call_finish(virtgpu * gpu, apir_encoder * enc, apir_decoder * dec);

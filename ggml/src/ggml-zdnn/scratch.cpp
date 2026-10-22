@@ -1,45 +1,45 @@
-#include "ggml.h"
-#include "scratch.hpp"
+#समावेश "ggml.h"
+#समावेश "scratch.hpp"
 
-#include <algorithm>
-#include <cstdint>
-#include <cstdlib>
+#समावेश <algorithm>
+#समावेश <cstdint>
+#समावेश <cstdlib>
 
 ggml_zdnn_pool::~ggml_zdnn_pool() {
-    for (const buffer & b : cached) {
-        std::free(b.ptr);
+    क्रम (स्थिर बफर & b : cached) {
+        std::मुक्त(b.ptr);
     }
 }
 
-void * ggml_zdnn_pool::alloc(size_t size, size_t * actual_size) {
+व्योम * ggml_zdnn_pool::alloc(माप_प्रकार size, माप_प्रकार * actual_आकार) {
     int64_t ibest = -1;
-    for (int64_t i = 0; i < (int64_t)cached.size(); i++) {
-        if (cached[i].size >= size && (ibest < 0 || cached[i].size < cached[ibest].size)) {
+    क्रम (int64_t i = 0; i < (int64_t)cached.size(); i++) {
+        अगर (cached[i].size >= size && (ibest < 0 || cached[i].size < cached[ibest].size)) {
             ibest = i;
         }
     }
 
-    if (ibest >= 0) {
-        void * ptr   = cached[ibest].ptr;
-        *actual_size = cached[ibest].size;
+    अगर (ibest >= 0) {
+        व्योम * ptr   = cached[ibest].ptr;
+        *actual_आकार = cached[ibest].size;
         cached.erase(cached.begin() + ibest);
-        return ptr;
+        वापस ptr;
     }
 
     // every cached buffer is too small, free the largest so the pool does not grow while sizes grow with the context
-    if (!cached.empty()) {
-        const auto largest = std::max_element(cached.begin(), cached.end(), [](const buffer & a, const buffer & b) { return a.size < b.size; });
-        std::free(largest->ptr);
+    अगर (!cached.empty()) {
+        स्थिर स्वतः largest = std::max_element(cached.begin(), cached.end(), [](स्थिर बफर & a, स्थिर बफर & b) { वापस a.size < b.size; });
+        std::मुक्त(largest->ptr);
         cached.erase(largest);
     }
 
     // 5% more, so slowly growing sizes do not allocate every time
-    *actual_size = GGML_PAD(std::max<size_t>(1, (size_t)(1.05 * size)), 4096);
-    void * ptr   = std::aligned_alloc(4096, *actual_size);
+    *actual_आकार = GGML_PAD(std::max<माप_प्रकार>(1, (माप_प्रकार)(1.05 * size)), 4096);
+    व्योम * ptr   = std::aligned_alloc(4096, *actual_आकार);
     GGML_ASSERT(ptr != nullptr);
-    return ptr;
+    वापस ptr;
 }
 
-void ggml_zdnn_pool::free(void * ptr, size_t size) {
+व्योम ggml_zdnn_pool::मुक्त(व्योम * ptr, माप_प्रकार size) {
     cached.push_back({ ptr, size });
 }

@@ -1,104 +1,104 @@
-#include "ggml-metal-ops.h"
+#समावेश "ggml-metal-ops.h"
 
-#include "ggml.h"
-#include "ggml-impl.h"
-#include "ggml-backend-impl.h"
+#समावेश "ggml.h"
+#समावेश "ggml-impl.h"
+#समावेश "ggml-backend-impl.h"
 
-#include "ggml-metal-impl.h"
-#include "ggml-metal-common.h"
-#include "ggml-metal-device.h"
-#include "ggml-metal-fusion.h"
-#include "ggml-metal-tuning.h"
+#समावेश "ggml-metal-impl.h"
+#समावेश "ggml-metal-common.h"
+#समावेश "ggml-metal-device.h"
+#समावेश "ggml-metal-fusion.h"
+#समावेश "ggml-metal-tuning.h"
 
-#include <cassert>
-#include <algorithm>
-#include <limits>
-#include <cmath>
+#समावेश <cassert>
+#समावेश <algorithm>
+#समावेश <limits>
+#समावेश <cmath>
 
 // threadgroups needed to fill the GPU
 // TODO: dedup
-static constexpr int64_t GGML_METAL_MIN_THREADGROUPS = 128;
+अटल constexpr int64_t GGML_METAL_MIN_THREADGROUPS = 128;
 
-static ggml_metal_buffer_id ggml_metal_get_buffer_id(const ggml_tensor * t) {
-    if (!t) {
-        return { nullptr, 0 };
+अटल ggml_metal_बफर_id ggml_metal_get_बफर_id(स्थिर ggml_tensor * t) {
+    अगर (!t) {
+        वापस { nullptr, 0 };
     }
 
-    ggml_backend_buffer_t buffer = t->view_src ? t->view_src->buffer : t->buffer;
+    ggml_backend_बफर_t बफर = t->view_src ? t->view_src->बफर : t->बफर;
 
-    ggml_metal_buffer_t ctx = (ggml_metal_buffer_t) buffer->context;
+    ggml_metal_बफर_t ctx = (ggml_metal_बफर_t) बफर->context;
 
-    return ggml_metal_buffer_get_id(ctx, t);
+    वापस ggml_metal_बफर_get_id(ctx, t);
 }
 
-struct ggml_metal_op {
+काष्ठा ggml_metal_op {
     ggml_metal_op(
         ggml_metal_device_t dev,
         ggml_metal_cmd_buf_t cmd_buf,
         ggml_cgraph * gf,
         ggml_metal_fusion_info * finfo,
-        int  idx_start,
-        int  idx_end,
+        पूर्णांक  idx_start,
+        पूर्णांक  idx_end,
         bool use_concurrency,
         bool use_capture,
-        int  debug_graph) {
-        this->dev             = dev;
-        this->lib             = ggml_metal_device_get_library(dev);
-        this->enc             = ggml_metal_encoder_init(cmd_buf, use_concurrency);
-        this->mem_ranges      = ggml_mem_ranges_init(debug_graph);
-        this->finfo           = finfo;
-        this->idx_start       = idx_start;
-        this->idx_end         = idx_end;
-        this->use_concurrency = use_concurrency;
-        this->use_capture     = use_capture;
-        this->debug_graph     = debug_graph;
-        this->gf              = gf;
+        पूर्णांक  debug_graph) {
+        यह->dev             = dev;
+        यह->lib             = ggml_metal_device_get_library(dev);
+        यह->enc             = ggml_metal_encoder_init(cmd_buf, use_concurrency);
+        यह->mem_ranges      = ggml_mem_ranges_init(debug_graph);
+        यह->finfo           = finfo;
+        यह->idx_start       = idx_start;
+        यह->idx_end         = idx_end;
+        यह->use_concurrency = use_concurrency;
+        यह->use_capture     = use_capture;
+        यह->debug_graph     = debug_graph;
+        यह->gf              = gf;
 
         idxs.reserve(gf->n_nodes);
 
         // filter empty nodes
         // TODO: this can be removed when the allocator starts filtering them earlier
         //       https://github.com/ggml-org/llama.cpp/pull/16130#issuecomment-3327905830
-        for (int i = idx_start; i < idx_end; i++) {
-            if (!ggml_op_is_empty(gf->nodes[i]->op) && !ggml_is_empty(gf->nodes[i])) {
+        क्रम (पूर्णांक i = idx_start; i < idx_end; i++) {
+            अगर (!ggml_op_is_empty(gf->nodes[i]->op) && !ggml_is_empty(gf->nodes[i])) {
                 idxs.push_back(i);
             }
         }
     }
 
     ~ggml_metal_op() {
-        ggml_metal_encoder_end_encoding(this->enc);
-        ggml_metal_encoder_free(this->enc);
-        ggml_mem_ranges_free(this->mem_ranges);
+        ggml_metal_encoder_end_encoding(यह->enc);
+        ggml_metal_encoder_free(यह->enc);
+        ggml_mem_ranges_free(यह->mem_ranges);
     }
 
-    int n_nodes() const {
-        return idxs.size();
+    पूर्णांक n_nodes() स्थिर {
+        वापस idxs.size();
     }
 
-    ggml_tensor * node(int i) const {
-        assert(i >= 0 && i < (int) idxs.size());
-        return ggml_graph_node(gf, idxs[i]);
+    ggml_tensor * गाँठ(पूर्णांक i) स्थिर {
+        निश्चित(i >= 0 && i < (पूर्णांक) idxs.size());
+        वापस ggml_graph_गाँठ(gf, idxs[i]);
     }
 
     // consult the fusion table for the longest pattern starting at i0
     // returns the matching pattern (nullptr if no fusion) and sets *n_out to the number of nodes
-    const ggml_metal_fusion * can_fuse(int i0, enum ggml_metal_fusion_mode mode, int * n_out) const {
-        assert(use_fusion());
-        assert(i0 >= 0 && i0 < n_nodes());
+    स्थिर ggml_metal_fusion * can_fuse(पूर्णांक i0, क्रमागत ggml_metal_fusion_mode mode, पूर्णांक * n_out) स्थिर {
+        निश्चित(use_fusion());
+        निश्चित(i0 >= 0 && i0 < n_nodes());
 
-        return ggml_metal_fusion_next(gf, idxs.data(), (int) idxs.size(), i0, mode, n_out);
+        वापस ggml_metal_fusion_अग्र(gf, idxs.तथ्य(), (पूर्णांक) idxs.size(), i0, mode, n_out);
     }
 
     // whether to attempt fusion; the toggle lives in the shared fusion debugging context owned
     // by the device (initialized from GGML_METAL_FUSION_DISABLE, overridable by the test)
-    bool use_fusion() const {
-        return ggml_metal_fusion_info_enabled(finfo);
+    bool use_fusion() स्थिर {
+        वापस ggml_metal_fusion_info_enabled(finfo);
     }
 
     // record that a fusion fired, indexed by the matching table entry
-    void count_fusions(const ggml_metal_fusion * fusion) const {
-        ggml_metal_fusion_info_count_fusion(finfo, fusion);
+    व्योम गिनती_fusions(स्थिर ggml_metal_fusion * fusion) स्थिर {
+        ggml_metal_fusion_info_गिनती_fusion(finfo, fusion);
     }
 
     ggml_metal_device_t  dev;
@@ -112,16 +112,16 @@ struct ggml_metal_op {
     bool use_concurrency;
     bool use_capture;
 
-    int debug_graph;
+    पूर्णांक debug_graph;
 
-private:
+निजी:
     ggml_cgraph * gf;
 
-    int idx_start;
-    int idx_end;
+    पूर्णांक idx_start;
+    पूर्णांक idx_end;
 
     // non-empty node indices
-    std::vector<int> idxs;
+    std::vector<पूर्णांक> idxs;
 };
 
 ggml_metal_op_t ggml_metal_op_init(
@@ -129,12 +129,12 @@ ggml_metal_op_t ggml_metal_op_init(
         ggml_metal_cmd_buf_t cmd_buf,
         ggml_cgraph * gf,
         ggml_metal_fusion_info * finfo,
-        int idx_start,
-        int idx_end,
+        पूर्णांक idx_start,
+        पूर्णांक idx_end,
         bool use_concurrency,
         bool use_capture,
-        int debug_graph) {
-    ggml_metal_op_t res = new ggml_metal_op(
+        पूर्णांक debug_graph) {
+    ggml_metal_op_t res = नया ggml_metal_op(
         dev,
         cmd_buf,
         gf,
@@ -145,81 +145,81 @@ ggml_metal_op_t ggml_metal_op_init(
         use_capture,
         debug_graph);
 
-    return res;
+    वापस res;
 }
 
-void ggml_metal_op_free(ggml_metal_op_t ctx) {
-    delete ctx;
+व्योम ggml_metal_op_free(ggml_metal_op_t ctx) {
+    मिटाओ ctx;
 }
 
-int ggml_metal_op_n_nodes(ggml_metal_op_t ctx) {
-    return ctx->n_nodes();
+पूर्णांक ggml_metal_op_n_nodes(ggml_metal_op_t ctx) {
+    वापस ctx->n_nodes();
 }
 
-static bool ggml_metal_op_concurrency_reset(ggml_metal_op_t ctx) {
-    if (!ctx->mem_ranges) {
-        return true;
+अटल bool ggml_metal_op_concurrency_reset(ggml_metal_op_t ctx) {
+    अगर (!ctx->mem_ranges) {
+        वापस true;
     }
 
     ggml_metal_encoder_memory_barrier(ctx->enc);
 
     ggml_mem_ranges_reset(ctx->mem_ranges);
 
-    return true;
+    वापस true;
 }
 
-static bool ggml_metal_op_concurrency_check(ggml_metal_op_t ctx, const ggml_tensor * node) {
-    if (!ctx->mem_ranges) {
-        return false;
+अटल bool ggml_metal_op_concurrency_check(ggml_metal_op_t ctx, स्थिर ggml_tensor * गाँठ) {
+    अगर (!ctx->mem_ranges) {
+        वापस false;
     }
 
-    return ggml_mem_ranges_check(ctx->mem_ranges, node);
+    वापस ggml_mem_ranges_check(ctx->mem_ranges, गाँठ);
 }
 
-static bool ggml_metal_op_concurrency_add(ggml_metal_op_t ctx, const ggml_tensor * node) {
-    if (!ctx->mem_ranges) {
-        return true;
+अटल bool ggml_metal_op_concurrency_add(ggml_metal_op_t ctx, स्थिर ggml_tensor * गाँठ) {
+    अगर (!ctx->mem_ranges) {
+        वापस true;
     }
 
-    return ggml_mem_ranges_add(ctx->mem_ranges, node);
+    वापस ggml_mem_ranges_add(ctx->mem_ranges, गाँठ);
 }
 
-static int ggml_metal_op_encode_impl(ggml_metal_op_t ctx, int idx) {
-    struct ggml_tensor * node = ctx->node(idx);
+अटल पूर्णांक ggml_metal_op_encode_impl(ggml_metal_op_t ctx, पूर्णांक idx) {
+    काष्ठा ggml_tensor * गाँठ = ctx->गाँठ(idx);
 
     //GGML_LOG_INFO("%s: encoding node %3d, op = %8s\n", __func__, idx, ggml_op_name(node->op));
 
-    if (ggml_is_empty(node)) {
-        return 1;
+    अगर (ggml_is_empty(गाँठ)) {
+        वापस 1;
     }
 
-    switch (node->op) {
-        case GGML_OP_NONE:
-        case GGML_OP_RESHAPE:
-        case GGML_OP_VIEW:
-        case GGML_OP_TRANSPOSE:
-        case GGML_OP_PERMUTE:
+    चयन (गाँठ->op) {
+        हाल GGML_OP_NONE:
+        हाल GGML_OP_RESHAPE:
+        हाल GGML_OP_VIEW:
+        हाल GGML_OP_TRANSPOSE:
+        हाल GGML_OP_PERMUTE:
             {
                 // noop -> next node
-                if (ctx->debug_graph > 0) {
-                    GGML_LOG_DEBUG("%s: node[%5d] - %-12s %s\n", __func__, idx, ggml_op_name(node->op), "(noop)");
+                अगर (ctx->debug_graph > 0) {
+                    GGML_LOG_DEBUG("%s: node[%5d] - %-12s %s\n", __func__, idx, ggml_op_name(गाँठ->op), "(noop)");
                 }
-            } return 1;
-        default:
+            } वापस 1;
+        शेष:
             {
-            } break;
+            } अवरोध;
     }
 
-    if (!ggml_metal_device_supports_op(ctx->dev, node)) {
-        GGML_LOG_ERROR("%s: error: unsupported op '%s'\n", __func__, ggml_op_desc(node));
+    अगर (!ggml_metal_device_supports_op(ctx->dev, गाँठ)) {
+        GGML_LOG_ERROR("%s: error: unsupported op '%s'\n", __func__, ggml_op_desc(गाँठ));
         GGML_ABORT("unsupported op");
     }
 
-    if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
-        return 1;
+    अगर ((गाँठ->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+        वापस 1;
     }
 
-    int n_fuse = 1;
+    पूर्णांक n_fuse = 1;
 
     // check if the current node can run concurrently with other nodes before it
     // the condition is that:
@@ -230,335 +230,335 @@ static int ggml_metal_op_encode_impl(ggml_metal_op_t ctx, int idx) {
     // otherwise, we add the new ranges to the encoding context and process the node concurrently
     //
     {
-        bool is_concurrent = ggml_metal_op_concurrency_check(ctx, node);
+        bool is_concurrent = ggml_metal_op_concurrency_check(ctx, गाँठ);
 
-        if (is_concurrent && ctx->use_fusion()) {
-            int n_fuse = 1;
-            const ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n_fuse);
-            if (fusion) {
+        अगर (is_concurrent && ctx->use_fusion()) {
+            पूर्णांक n_fuse = 1;
+            स्थिर ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n_fuse);
+            अगर (fusion) {
                 // fused kernels write to the last node of the group, not necessarily to the first node's dst
-                is_concurrent = ggml_mem_ranges_check(ctx->mem_ranges, ctx->node(idx + n_fuse - 1));
+                is_concurrent = ggml_mem_ranges_check(ctx->mem_ranges, ctx->गाँठ(idx + n_fuse - 1));
             }
         }
 
-        if (!is_concurrent) {
+        अगर (!is_concurrent) {
             ggml_metal_op_concurrency_reset(ctx);
         }
 
-        if (ctx->debug_graph > 0) {
-            GGML_LOG_DEBUG("%s: node[%5d] - %-12s %-12s %s\n", __func__, idx, ggml_op_name(node->op), ggml_get_name(node), is_concurrent ? "(concurrent)" : "");
+        अगर (ctx->debug_graph > 0) {
+            GGML_LOG_DEBUG("%s: node[%5d] - %-12s %-12s %s\n", __func__, idx, ggml_op_name(गाँठ->op), ggml_get_name(गाँठ), is_concurrent ? "(concurrent)" : "");
         }
-        if (ctx->debug_graph > 1) {
-            GGML_TENSOR_LOCALS( int64_t, ne0, node->src[0], ne);
-            GGML_TENSOR_LOCALS(uint64_t, nb0, node->src[0], nb);
-            GGML_TENSOR_LOCALS( int64_t, ne1, node->src[1], ne);
-            GGML_TENSOR_LOCALS(uint64_t, nb1, node->src[1], nb);
-            GGML_TENSOR_LOCALS( int64_t, ne2, node->src[2], ne);
-            GGML_TENSOR_LOCALS(uint64_t, nb2, node->src[2], nb);
-            GGML_TENSOR_LOCALS( int64_t, ne3, node->src[3], ne);
-            GGML_TENSOR_LOCALS(uint64_t, nb3, node->src[3], nb);
-            GGML_TENSOR_LOCALS( int64_t, ne,  node,         ne);
-            GGML_TENSOR_LOCALS(uint64_t, nb,  node,         nb);
+        अगर (ctx->debug_graph > 1) {
+            GGML_TENSOR_LOCALS( int64_t, ne0, गाँठ->src[0], ne);
+            GGML_TENSOR_LOCALS(uint64_t, nb0, गाँठ->src[0], nb);
+            GGML_TENSOR_LOCALS( int64_t, ne1, गाँठ->src[1], ne);
+            GGML_TENSOR_LOCALS(uint64_t, nb1, गाँठ->src[1], nb);
+            GGML_TENSOR_LOCALS( int64_t, ne2, गाँठ->src[2], ne);
+            GGML_TENSOR_LOCALS(uint64_t, nb2, गाँठ->src[2], nb);
+            GGML_TENSOR_LOCALS( int64_t, ne3, गाँठ->src[3], ne);
+            GGML_TENSOR_LOCALS(uint64_t, nb3, गाँठ->src[3], nb);
+            GGML_TENSOR_LOCALS( int64_t, ne,  गाँठ,         ne);
+            GGML_TENSOR_LOCALS(uint64_t, nb,  गाँठ,         nb);
 
-            if (node->src[0]) {
-                GGML_LOG_DEBUG("%s: src0 - %4s [%5lld, %5lld, %5lld, %5lld] [%5lld, %5lld, %5lld, %5lld], %d, %s\n", __func__, ggml_type_name(node->src[0]->type), ne00, ne01, ne02, ne03, nb00, nb01, nb02, nb03,
-                        ggml_is_contiguous(node->src[0]), node->src[0]->name);
+            अगर (गाँठ->src[0]) {
+                GGML_LOG_DEBUG("%s: src0 - %4s [%5lld, %5lld, %5lld, %5lld] [%5lld, %5lld, %5lld, %5lld], %d, %s\n", __func__, ggml_type_name(गाँठ->src[0]->type), ne00, ne01, ne02, ne03, nb00, nb01, nb02, nb03,
+                        ggml_is_contiguous(गाँठ->src[0]), गाँठ->src[0]->name);
             }
-            if (node->src[1]) {
-                GGML_LOG_DEBUG("%s: src1 - %4s [%5lld, %5lld, %5lld, %5lld] [%5lld, %5lld, %5lld, %5lld], %d, %s\n", __func__, ggml_type_name(node->src[1]->type), ne10, ne11, ne12, ne13, nb10, nb11, nb12, nb13,
-                        ggml_is_contiguous(node->src[1]), node->src[1]->name);
+            अगर (गाँठ->src[1]) {
+                GGML_LOG_DEBUG("%s: src1 - %4s [%5lld, %5lld, %5lld, %5lld] [%5lld, %5lld, %5lld, %5lld], %d, %s\n", __func__, ggml_type_name(गाँठ->src[1]->type), ne10, ne11, ne12, ne13, nb10, nb11, nb12, nb13,
+                        ggml_is_contiguous(गाँठ->src[1]), गाँठ->src[1]->name);
             }
-            if (node->src[2]) {
-                GGML_LOG_DEBUG("%s: src2 - %4s [%5lld, %5lld, %5lld, %5lld] [%5lld, %5lld, %5lld, %5lld], %d, %s\n", __func__, ggml_type_name(node->src[2]->type), ne20, ne21, ne22, ne23, nb20, nb21, nb22, nb23,
-                        ggml_is_contiguous(node->src[2]), node->src[2]->name);
+            अगर (गाँठ->src[2]) {
+                GGML_LOG_DEBUG("%s: src2 - %4s [%5lld, %5lld, %5lld, %5lld] [%5lld, %5lld, %5lld, %5lld], %d, %s\n", __func__, ggml_type_name(गाँठ->src[2]->type), ne20, ne21, ne22, ne23, nb20, nb21, nb22, nb23,
+                        ggml_is_contiguous(गाँठ->src[2]), गाँठ->src[2]->name);
             }
-            if (node->src[3]) {
-                GGML_LOG_DEBUG("%s: src3 - %4s [%5lld, %5lld, %5lld, %5lld] [%5lld, %5lld, %5lld, %5lld], %d, %s\n", __func__, ggml_type_name(node->src[3]->type), ne30, ne31, ne32, ne33, nb30, nb31, nb32, nb33,
-                        ggml_is_contiguous(node->src[3]), node->src[3]->name);
+            अगर (गाँठ->src[3]) {
+                GGML_LOG_DEBUG("%s: src3 - %4s [%5lld, %5lld, %5lld, %5lld] [%5lld, %5lld, %5lld, %5lld], %d, %s\n", __func__, ggml_type_name(गाँठ->src[3]->type), ne30, ne31, ne32, ne33, nb30, nb31, nb32, nb33,
+                        ggml_is_contiguous(गाँठ->src[3]), गाँठ->src[3]->name);
             }
-            if (node) {
-                GGML_LOG_DEBUG("%s: node - %4s [%5lld, %5lld, %5lld, %5lld] [%5lld, %5lld, %5lld, %5lld], 1, %s\n", __func__, ggml_type_name(node->type), ne0, ne1, ne2, ne3, nb0, nb1, nb2, nb3,
-                        node->name);
+            अगर (गाँठ) {
+                GGML_LOG_DEBUG("%s: node - %4s [%5lld, %5lld, %5lld, %5lld] [%5lld, %5lld, %5lld, %5lld], 1, %s\n", __func__, ggml_type_name(गाँठ->type), ne0, ne1, ne2, ne3, nb0, nb1, nb2, nb3,
+                        गाँठ->name);
             }
         }
     }
 
-    switch (node->op) {
-        case GGML_OP_CONCAT:
+    चयन (गाँठ->op) {
+        हाल GGML_OP_CONCAT:
             {
                 n_fuse = ggml_metal_op_concat(ctx, idx);
-            } break;
-        case GGML_OP_ADD:
-        case GGML_OP_SUB:
-        case GGML_OP_MUL:
-        case GGML_OP_DIV:
+            } अवरोध;
+        हाल GGML_OP_ADD:
+        हाल GGML_OP_SUB:
+        हाल GGML_OP_MUL:
+        हाल GGML_OP_DIV:
             {
                 n_fuse = ggml_metal_op_bin(ctx, idx);
-            } break;
-        case GGML_OP_ADD_ID:
+            } अवरोध;
+        हाल GGML_OP_ADD_ID:
             {
                 n_fuse = ggml_metal_op_add_id(ctx, idx);
-            } break;
-        case GGML_OP_REPEAT:
+            } अवरोध;
+        हाल GGML_OP_REPEAT:
             {
                 n_fuse = ggml_metal_op_repeat(ctx, idx);
-            } break;
-        case GGML_OP_ACC:
+            } अवरोध;
+        हाल GGML_OP_ACC:
             {
                 n_fuse = ggml_metal_op_acc(ctx, idx);
-            } break;
-        case GGML_OP_SCALE:
-        case GGML_OP_FILL:
-        case GGML_OP_CLAMP:
-        case GGML_OP_LEAKY_RELU:
-        case GGML_OP_SQR:
-        case GGML_OP_SQRT:
-        case GGML_OP_SIN:
-        case GGML_OP_COS:
-        case GGML_OP_LOG:
-        case GGML_OP_UNARY:
+            } अवरोध;
+        हाल GGML_OP_SCALE:
+        हाल GGML_OP_FILL:
+        हाल GGML_OP_CLAMP:
+        हाल GGML_OP_LEAKY_RELU:
+        हाल GGML_OP_SQR:
+        हाल GGML_OP_SQRT:
+        हाल GGML_OP_SIN:
+        हाल GGML_OP_COS:
+        हाल GGML_OP_LOG:
+        हाल GGML_OP_UNARY:
             {
                 n_fuse = ggml_metal_op_unary(ctx, idx);
-            } break;
-        case GGML_OP_SILU_BACK:
+            } अवरोध;
+        हाल GGML_OP_SILU_BACK:
             {
                 n_fuse = ggml_metal_op_silu_back(ctx, idx);
-            } break;
-        case GGML_OP_GLU:
+            } अवरोध;
+        हाल GGML_OP_GLU:
             {
                 n_fuse = ggml_metal_op_glu(ctx, idx);
-            } break;
-        case GGML_OP_SUM:
+            } अवरोध;
+        हाल GGML_OP_योग:
             {
-                n_fuse = ggml_metal_op_sum(ctx, idx);
-            } break;
-        case GGML_OP_SUM_ROWS:
-        case GGML_OP_MEAN:
+                n_fuse = ggml_metal_op_योग(ctx, idx);
+            } अवरोध;
+        हाल GGML_OP_योग_ROWS:
+        हाल GGML_OP_MEAN:
             {
-                n_fuse = ggml_metal_op_sum_rows(ctx, idx);
-            } break;
-        case GGML_OP_CUMSUM:
+                n_fuse = ggml_metal_op_योग_rows(ctx, idx);
+            } अवरोध;
+        हाल GGML_OP_CUMSUM:
             {
                 n_fuse = ggml_metal_op_cumsum(ctx, idx);
-            } break;
-        case GGML_OP_LIGHTNING_INDEXER:
+            } अवरोध;
+        हाल GGML_OP_LIGHTNING_INDEXER:
             {
                 n_fuse = ggml_metal_op_lightning_indexer(ctx, idx);
-            } break;
-        case GGML_OP_DSV4_HC_COMB:
-        case GGML_OP_DSV4_HC_PRE:
-        case GGML_OP_DSV4_HC_POST:
+            } अवरोध;
+        हाल GGML_OP_DSV4_HC_COMB:
+        हाल GGML_OP_DSV4_HC_PRE:
+        हाल GGML_OP_DSV4_HC_POST:
             {
                 n_fuse = ggml_metal_op_dsv4_hc(ctx, idx);
-            } break;
-        case GGML_OP_SOFT_MAX:
+            } अवरोध;
+        हाल GGML_OP_SOFT_MAX:
             {
                 n_fuse = ggml_metal_op_soft_max(ctx, idx);
-            } break;
-        case GGML_OP_SSM_CONV:
+            } अवरोध;
+        हाल GGML_OP_SSM_CONV:
             {
                 n_fuse = ggml_metal_op_ssm_conv(ctx, idx);
-            } break;
-        case GGML_OP_SSM_SCAN:
+            } अवरोध;
+        हाल GGML_OP_SSM_SCAN:
             {
                 n_fuse = ggml_metal_op_ssm_scan(ctx, idx);
-            } break;
-        case GGML_OP_RWKV_WKV6:
-        case GGML_OP_RWKV_WKV7:
+            } अवरोध;
+        हाल GGML_OP_RWKV_WKV6:
+        हाल GGML_OP_RWKV_WKV7:
             {
                 n_fuse = ggml_metal_op_rwkv(ctx, idx);
-            } break;
-        case GGML_OP_GATED_DELTA_NET:
+            } अवरोध;
+        हाल GGML_OP_GATED_DELTA_NET:
             {
                 n_fuse = ggml_metal_op_gated_delta_net(ctx, idx);
-            } break;
-        case GGML_OP_SOLVE_TRI:
+            } अवरोध;
+        हाल GGML_OP_SOLVE_TRI:
             {
                 n_fuse = ggml_metal_op_solve_tri(ctx, idx);
-            } break;
-        case GGML_OP_MUL_MAT:
+            } अवरोध;
+        हाल GGML_OP_MUL_MAT:
             {
                 n_fuse = ggml_metal_op_mul_mat(ctx, idx);
-            } break;
-        case GGML_OP_MUL_MAT_ID:
+            } अवरोध;
+        हाल GGML_OP_MUL_MAT_ID:
             {
                 n_fuse = ggml_metal_op_mul_mat_id(ctx, idx);
-            } break;
-        case GGML_OP_GET_ROWS:
+            } अवरोध;
+        हाल GGML_OP_GET_ROWS:
             {
                 n_fuse = ggml_metal_op_get_rows(ctx, idx);
-            } break;
-        case GGML_OP_SET_ROWS:
+            } अवरोध;
+        हाल GGML_OP_SET_ROWS:
             {
                 n_fuse = ggml_metal_op_set_rows(ctx, idx);
-            } break;
-        case GGML_OP_DIAG:
+            } अवरोध;
+        हाल GGML_OP_DIAG:
             {
                 n_fuse = ggml_metal_op_diag(ctx, idx);
-            } break;
-        case GGML_OP_L2_NORM:
+            } अवरोध;
+        हाल GGML_OP_L2_NORM:
             {
                 n_fuse = ggml_metal_op_l2_norm(ctx, idx);
-            } break;
-        case GGML_OP_GROUP_NORM:
+            } अवरोध;
+        हाल GGML_OP_GROUP_NORM:
             {
                 n_fuse = ggml_metal_op_group_norm(ctx, idx);
-            } break;
-        case GGML_OP_NORM:
-        case GGML_OP_RMS_NORM:
+            } अवरोध;
+        हाल GGML_OP_NORM:
+        हाल GGML_OP_RMS_NORM:
             {
                 n_fuse = ggml_metal_op_norm(ctx, idx);
-            } break;
-        case GGML_OP_ROPE:
-        case GGML_OP_ROPE_BACK:
+            } अवरोध;
+        हाल GGML_OP_ROPE:
+        हाल GGML_OP_ROPE_BACK:
             {
                 n_fuse = ggml_metal_op_rope(ctx, idx);
-            } break;
-        case GGML_OP_IM2COL:
+            } अवरोध;
+        हाल GGML_OP_IM2COL:
             {
                 n_fuse = ggml_metal_op_im2col(ctx, idx);
-            } break;
-        case GGML_OP_CONV_2D:
+            } अवरोध;
+        हाल GGML_OP_CONV_2D:
             {
                 n_fuse = ggml_metal_op_conv_2d(ctx, idx);
-            } break;
-        case GGML_OP_CONV_2D_DW:
+            } अवरोध;
+        हाल GGML_OP_CONV_2D_DW:
             {
                 n_fuse = ggml_metal_op_conv_2d_dw(ctx, idx);
-            } break;
-        case GGML_OP_CONV_TRANSPOSE_1D:
+            } अवरोध;
+        हाल GGML_OP_CONV_TRANSPOSE_1D:
             {
                 n_fuse = ggml_metal_op_conv_transpose_1d(ctx, idx);
-            } break;
-        case GGML_OP_CONV_TRANSPOSE_2D:
+            } अवरोध;
+        हाल GGML_OP_CONV_TRANSPOSE_2D:
             {
                 n_fuse = ggml_metal_op_conv_transpose_2d(ctx, idx);
-            } break;
-        case GGML_OP_COL2IM_1D:
+            } अवरोध;
+        हाल GGML_OP_COL2IM_1D:
             {
                 n_fuse = ggml_metal_op_col2im_1d(ctx, idx);
-            } break;
-        case GGML_OP_CONV_3D:
+            } अवरोध;
+        हाल GGML_OP_CONV_3D:
             {
                 n_fuse = ggml_metal_op_conv_3d(ctx, idx);
-            } break;
-        case GGML_OP_UPSCALE:
+            } अवरोध;
+        हाल GGML_OP_UPSCALE:
             {
                 n_fuse = ggml_metal_op_upscale(ctx, idx);
-            } break;
-        case GGML_OP_PAD:
+            } अवरोध;
+        हाल GGML_OP_PAD:
             {
                 n_fuse = ggml_metal_op_pad(ctx, idx);
-            } break;
-        case GGML_OP_PAD_REFLECT_1D:
+            } अवरोध;
+        हाल GGML_OP_PAD_REFLECT_1D:
             {
                 n_fuse = ggml_metal_op_pad_reflect_1d(ctx, idx);
-            } break;
-        case GGML_OP_ROLL:
+            } अवरोध;
+        हाल GGML_OP_ROLL:
             {
                 n_fuse = ggml_metal_op_roll(ctx, idx);
-            } break;
-        case GGML_OP_ARANGE:
+            } अवरोध;
+        हाल GGML_OP_ARANGE:
             {
                 n_fuse = ggml_metal_op_arange(ctx, idx);
-            } break;
-        case GGML_OP_TIMESTEP_EMBEDDING:
+            } अवरोध;
+        हाल GGML_OP_TIMESTEP_EMBEDDING:
             {
                 n_fuse = ggml_metal_op_timestep_embedding(ctx, idx);
-            } break;
-        case GGML_OP_ARGSORT:
+            } अवरोध;
+        हाल GGML_OP_ARGSORT:
             {
                 n_fuse = ggml_metal_op_argsort(ctx, idx);
-            } break;
-        case GGML_OP_TOP_K:
+            } अवरोध;
+        हाल GGML_OP_शीर्ष_K:
             {
-                n_fuse = ggml_metal_op_top_k(ctx, idx);
-            } break;
-        case GGML_OP_TRI:
+                n_fuse = ggml_metal_op_शीर्ष_k(ctx, idx);
+            } अवरोध;
+        हाल GGML_OP_TRI:
             {
                 n_fuse = ggml_metal_op_tri(ctx, idx);
-            } break;
-        case GGML_OP_FLASH_ATTN_EXT:
+            } अवरोध;
+        हाल GGML_OP_FLASH_ATTN_EXT:
             {
                 n_fuse = ggml_metal_op_flash_attn_ext(ctx, idx);
-            } break;
-        case GGML_OP_SET:
+            } अवरोध;
+        हाल GGML_OP_SET:
             {
                 n_fuse = ggml_metal_op_set(ctx, idx);
-            } break;
-        case GGML_OP_DUP:
-        case GGML_OP_CPY:
-        case GGML_OP_CONT:
+            } अवरोध;
+        हाल GGML_OP_DUP:
+        हाल GGML_OP_CPY:
+        हाल GGML_OP_CONT:
             {
                 n_fuse = ggml_metal_op_cpy(ctx, idx);
-            } break;
-        case GGML_OP_POOL_1D:
+            } अवरोध;
+        हाल GGML_OP_POOL_1D:
             {
                 n_fuse = ggml_metal_op_pool_1d(ctx, idx);
-            } break;
-        case GGML_OP_POOL_2D:
+            } अवरोध;
+        हाल GGML_OP_POOL_2D:
             {
                 n_fuse = ggml_metal_op_pool_2d(ctx, idx);
-            } break;
-        case GGML_OP_ARGMAX:
+            } अवरोध;
+        हाल GGML_OP_ARGMAX:
             {
                 n_fuse = ggml_metal_op_argmax(ctx, idx);
-            } break;
-        case GGML_OP_OPT_STEP_ADAMW:
+            } अवरोध;
+        हाल GGML_OP_OPT_STEP_ADAMW:
             {
                 n_fuse = ggml_metal_op_opt_step_adamw(ctx, idx);
-            } break;
-        case GGML_OP_OPT_STEP_SGD:
+            } अवरोध;
+        हाल GGML_OP_OPT_STEP_SGD:
             {
                 n_fuse = ggml_metal_op_opt_step_sgd(ctx, idx);
-            } break;
-        case GGML_OP_COUNT_EQUAL:
+            } अवरोध;
+        हाल GGML_OP_गिनती_EQUAL:
             {
-                n_fuse = ggml_metal_op_count_equal(ctx, idx);
-            } break;
-        default:
+                n_fuse = ggml_metal_op_गिनती_equal(ctx, idx);
+            } अवरोध;
+        शेष:
             {
-                GGML_LOG_ERROR("%s: error: node %3d, op = %8s not implemented\n", __func__, idx, ggml_op_name(node->op));
+                GGML_LOG_ERROR("%s: error: node %3d, op = %8s not implemented\n", __func__, idx, ggml_op_name(गाँठ->op));
                 GGML_ABORT("fatal error");
             }
     }
 
-    if (ctx->debug_graph > 0) {
-        if (n_fuse > 1) {
+    अगर (ctx->debug_graph > 0) {
+        अगर (n_fuse > 1) {
             GGML_LOG_DEBUG("%s:               fuse %d ops\n", __func__, n_fuse);
         }
     }
 
     // update the mem ranges in the encoding context
-    for (int i = 0; i < n_fuse; ++i) {
-        if (!ggml_metal_op_concurrency_add(ctx, ctx->node(idx + i))) {
+    क्रम (पूर्णांक i = 0; i < n_fuse; ++i) {
+        अगर (!ggml_metal_op_concurrency_add(ctx, ctx->गाँठ(idx + i))) {
             ggml_metal_op_concurrency_reset(ctx);
         }
     }
 
-    return n_fuse;
+    वापस n_fuse;
 }
 
-int ggml_metal_op_encode(ggml_metal_op_t ctx, int idx) {
-    if (ctx->use_capture) {
-        ggml_metal_encoder_debug_group_push(ctx->enc, ggml_op_desc(ctx->node(idx)));
+पूर्णांक ggml_metal_op_encode(ggml_metal_op_t ctx, पूर्णांक idx) {
+    अगर (ctx->use_capture) {
+        ggml_metal_encoder_debug_group_धकेलो(ctx->enc, ggml_op_desc(ctx->गाँठ(idx)));
     }
 
-    int res = ggml_metal_op_encode_impl(ctx, idx);
-    if (idx + res > ctx->n_nodes()) {
+    पूर्णांक res = ggml_metal_op_encode_impl(ctx, idx);
+    अगर (idx + res > ctx->n_nodes()) {
         GGML_ABORT("fusion error: nodes spanning multiple encoders have been fused. this indicates a bug in the fusion logic %s",
                 "https://github.com/ggml-org/llama.cpp/pull/14849");
     }
 
-    if (ctx->use_capture) {
-        ggml_metal_encoder_debug_group_pop(ctx->enc);
+    अगर (ctx->use_capture) {
+        ggml_metal_encoder_debug_group_निकालो(ctx->enc);
     }
 
-    return res;
+    वापस res;
 }
 
-int ggml_metal_op_concat(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_concat(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -570,16 +570,16 @@ int ggml_metal_op_concat(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    const int32_t dim = ((const int32_t *) op->op_params)[0];
+    स्थिर int32_t dim = ((स्थिर int32_t *) op->op_params)[0];
 
-    const bool is_q = ggml_is_quantized(op->type);
+    स्थिर bool is_q = ggml_is_quantized(op->type);
 
     // for quantized types, concat is done at the block level (nb0 == type_size == block size)
     int32_t ne00_arg = ne00;
     int32_t ne10_arg = ne10;
     int32_t ne0_arg  = ne0;
-    if (is_q) {
-        const int32_t blck = ggml_blck_size(op->type);
+    अगर (is_q) {
+        स्थिर int32_t blck = ggml_blck_आकार(op->type);
         GGML_ASSERT(ne00 % blck == 0);
         GGML_ASSERT(ne10 % blck == 0);
         GGML_ASSERT(ne0  % blck == 0);
@@ -588,25 +588,25 @@ int ggml_metal_op_concat(ggml_metal_op_t ctx, int idx) {
         ne0_arg  = ne0/blck;
     }
 
-    int nth = std::min(256, ne0_arg);
+    पूर्णांक nth = std::min(256, ne0_arg);
 
     // when rows are small, we can batch them together in a single threadgroup
-    int nrptg = 1;
-    if (nth < 256) {
+    पूर्णांक nrptg = 1;
+    अगर (nth < 256) {
         nrptg = std::min((256 + nth - 1) / nth, ne1);
-        if (nrptg * nth > 256) {
+        अगर (nrptg * nth > 256) {
             nrptg = 256 / nth;
         }
     }
 
-    const int nw0 = (ne1 + nrptg - 1) / nrptg;
+    स्थिर पूर्णांक nw0 = (ne1 + nrptg - 1) / nrptg;
 
     // split long rows across threadgroups when there are too few rows to fill the GPU
-    const int64_t n_rows = (int64_t) nw0*ne2*ne3;
+    स्थिर int64_t n_rows = (int64_t) nw0*ne2*ne3;
 
-    int nc0 = 1;
-    if (nrptg == 1) {
-        nc0 = (int) std::max<int64_t>(1, std::min<int64_t>((ne0_arg + nth - 1)/nth, (GGML_METAL_MIN_THREADGROUPS + n_rows - 1)/n_rows));
+    पूर्णांक nc0 = 1;
+    अगर (nrptg == 1) {
+        nc0 = (पूर्णांक) std::max<int64_t>(1, std::min<int64_t>((ne0_arg + nth - 1)/nth, (GGML_METAL_MIN_THREADGROUPS + n_rows - 1)/n_rows));
     }
 
     ggml_metal_kargs_concat args = {
@@ -638,21 +638,21 @@ int ggml_metal_op_concat(ggml_metal_op_t ctx, int idx) {
         /*.nc0  =*/ nc0,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_concat(lib, op->type);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_concat(lib, op->type);
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[1]), 2);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         3);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, nw0*nc0, ne2, ne3, nth, nrptg, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_repeat(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_repeat(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -664,7 +664,7 @@ int ggml_metal_op_repeat(ggml_metal_op_t ctx, int idx) {
 
     // TODO: optimize for degenerate cases such as ggml_nelements(op->src[0]) == 1 and others
 
-    auto pipeline = ggml_metal_library_get_pipeline_repeat(lib, op->type);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_repeat(lib, op->type);
 
     ggml_metal_kargs_repeat args = {
         /*.ne00 =*/ ne00,
@@ -686,19 +686,19 @@ int ggml_metal_op_repeat(ggml_metal_op_t ctx, int idx) {
     };
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         2);
 
-    const int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne0);
+    स्थिर पूर्णांक nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne0);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne1, ne2, ne3, nth, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_acc(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_acc(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -717,20 +717,20 @@ int ggml_metal_op_acc(ggml_metal_op_t ctx, int idx) {
     GGML_ASSERT(ggml_is_contiguous_rows(op->src[0]));
     GGML_ASSERT(ggml_is_contiguous_rows(op->src[1]));
 
-    const size_t pnb1 = ((const int32_t *) op->op_params)[0];
-    const size_t pnb2 = ((const int32_t *) op->op_params)[1];
-    const size_t pnb3 = ((const int32_t *) op->op_params)[2];
-    const size_t offs = ((const int32_t *) op->op_params)[3];
+    स्थिर माप_प्रकार pnb1 = ((स्थिर int32_t *) op->op_params)[0];
+    स्थिर माप_प्रकार pnb2 = ((स्थिर int32_t *) op->op_params)[1];
+    स्थिर माप_प्रकार pnb3 = ((स्थिर int32_t *) op->op_params)[2];
+    स्थिर माप_प्रकार offs = ((स्थिर int32_t *) op->op_params)[3];
 
-    const bool inplace = (bool) ((const int32_t *) op->op_params)[4];
+    स्थिर bool inplace = (bool) ((स्थिर int32_t *) op->op_params)[4];
 
-    if (!inplace) {
+    अगर (!inplace) {
         // run a separate kernel to cpy src->dst
         // not sure how to avoid this
         // TODO: make a simpler cpy_bytes kernel
 
         //const id<MTLComputePipelineState> pipeline = ctx->pipelines[GGML_METAL_PIPELINE_TYPE_CPY_F32_F32].obj;
-        auto pipeline = ggml_metal_library_get_pipeline_cpy(lib, op->src[0]->type, op->type);
+        स्वतः pipeline = ggml_metal_library_get_pipeline_cpy(lib, op->src[0]->type, op->type);
 
         ggml_metal_kargs_cpy args = {
             /*.nk0  =*/ ne00,
@@ -753,11 +753,11 @@ int ggml_metal_op_acc(ggml_metal_op_t ctx, int idx) {
         };
 
         ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+        ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+        ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+        ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         2);
 
-        const int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne00);
+        स्थिर पूर्णांक nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne00);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
 
@@ -793,29 +793,29 @@ int ggml_metal_op_acc(ggml_metal_op_t ctx, int idx) {
         /*.o1   =*/ { 0 },
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_bin_one(lib, GGML_OP_ADD);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_bin_one(lib, GGML_OP_ADD);
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[1]), 2);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         3);
 
-    const int nth_max = MIN(256, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
+    स्थिर पूर्णांक nth_max = MIN(256, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
 
-    int nth = 1;
+    पूर्णांक nth = 1;
 
-    while (2*nth < args.ne0 && nth < nth_max) {
+    जबतक (2*nth < args.ne0 && nth < nth_max) {
         nth *= 2;
     }
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne11, ne12, ne13, nth, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_unary(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_unary(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -827,8 +827,8 @@ int ggml_metal_op_unary(ggml_metal_op_t ctx, int idx) {
 
     GGML_ASSERT(ggml_is_contiguous_rows(op->src[0]));
 
-    ggml_metal_buffer_id bid_src0 = ggml_metal_get_buffer_id(op->src[0]);
-    ggml_metal_buffer_id bid_dst  = ggml_metal_get_buffer_id(op);
+    ggml_metal_बफर_id bid_src0 = ggml_metal_get_बफर_id(op->src[0]);
+    ggml_metal_बफर_id bid_dst  = ggml_metal_get_बफर_id(op);
 
     ggml_metal_kargs_unary args = {
         /*.ne00  =*/ ne00,
@@ -855,60 +855,60 @@ int ggml_metal_op_unary(ggml_metal_op_t ctx, int idx) {
         /*.max   =*/ 0.0,
     };
 
-    if (op->op == GGML_OP_LEAKY_RELU) {
+    अगर (op->op == GGML_OP_LEAKY_RELU) {
         args.slope = ggml_get_op_params_f32(op, 0);
     }
 
-    if (op->op == GGML_OP_SCALE) {
+    अगर (op->op == GGML_OP_SCALE) {
         args.scale = ggml_get_op_params_f32(op, 0);
         args.bias  = ggml_get_op_params_f32(op, 1);
     }
 
-    if (op->op == GGML_OP_FILL) {
+    अगर (op->op == GGML_OP_FILL) {
         args.val = ggml_get_op_params_f32(op, 0);
     }
 
-    if (op->op == GGML_OP_CLAMP) {
+    अगर (op->op == GGML_OP_CLAMP) {
         args.min = ggml_get_op_params_f32(op, 0);
         args.max = ggml_get_op_params_f32(op, 1);
     }
 
-    if (op->op == GGML_OP_UNARY && ggml_get_unary_op(op) == GGML_UNARY_OP_XIELU) {
+    अगर (op->op == GGML_OP_UNARY && ggml_get_unary_op(op) == GGML_UNARY_OP_XIELU) {
         args.slope = ggml_get_op_params_f32(op, 1); // alpha_n
         args.scale = ggml_get_op_params_f32(op, 2); // alpha_p
         args.bias  = ggml_get_op_params_f32(op, 3); // beta
         args.val   = ggml_get_op_params_f32(op, 4); // eps
     }
 
-    auto pipeline = ggml_metal_library_get_pipeline_unary(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_unary(lib, op);
 
-    if (pipeline.c4) {
+    अगर (pipeline.c4) {
         args.ne00 = ne00/4;
         args.ne0  = ne0/4;
     }
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
-    ggml_metal_encoder_set_buffer  (enc, bid_dst,  2);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, bid_src0, 1);
+    ggml_metal_encoder_set_बफर  (enc, bid_dst,  2);
 
-    if (pipeline.cnt) {
-        const int n = pipeline.c4 ? ggml_nelements(op)/4 : ggml_nelements(op);
+    अगर (pipeline.cnt) {
+        स्थिर पूर्णांक n = pipeline.c4 ? ggml_nelements(op)/4 : ggml_nelements(op);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, n, 1, 1, 1, 1, 1);
-    } else {
-        const int nth_max = MIN(256, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
-        const int nth = MIN(args.ne00, nth_max);
-        const int nk0 = (args.ne00 + nth - 1)/nth;
+    } अन्यथा {
+        स्थिर पूर्णांक nth_max = MIN(256, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
+        स्थिर पूर्णांक nth = MIN(args.ne00, nth_max);
+        स्थिर पूर्णांक nk0 = (args.ne00 + nth - 1)/nth;
 
         ggml_metal_encoder_dispatch_threadgroups(enc, nk0*ne01, ne02, ne03, nth, 1, 1);
     }
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_glu(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_glu(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -920,18 +920,18 @@ int ggml_metal_op_glu(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    if (op->src[1]) {
+    अगर (op->src[1]) {
         GGML_ASSERT(ggml_are_same_shape(op->src[0], op->src[1]));
     }
 
-    auto pipeline = ggml_metal_library_get_pipeline_glu(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_glu(lib, op);
 
-    const int32_t swp = ggml_get_op_params_i32(op, 1);
-    const float alpha = ggml_get_op_params_f32(op, 2);
-    const float limit = ggml_get_op_params_f32(op, 3);
+    स्थिर int32_t swp = ggml_get_op_params_i32(op, 1);
+    स्थिर भग्न alpha = ggml_get_op_params_f32(op, 2);
+    स्थिर भग्न limit = ggml_get_op_params_f32(op, 3);
 
-    const int32_t i00 = swp ? ne0 : 0;
-    const int32_t i10 = swp ? 0 : ne0;
+    स्थिर int32_t i00 = swp ? ne0 : 0;
+    स्थिर int32_t i10 = swp ? 0 : ne0;
 
     ggml_metal_kargs_glu args = {
         /*.ne00 =*/ ne00,
@@ -946,64 +946,64 @@ int ggml_metal_op_glu(ggml_metal_op_t ctx, int idx) {
         /*.limit=*/ limit
     };
 
-    const int64_t nrows = ggml_nrows(op->src[0]);
+    स्थिर int64_t nrows = ggml_nrows(op->src[0]);
 
-    const int32_t nth = std::max(1, std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne00/2));
+    स्थिर int32_t nth = std::max(1, std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne00/2));
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    if (op->src[1]) {
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    } else {
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 2);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    अगर (op->src[1]) {
+        ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[1]), 2);
+    } अन्यथा {
+        ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 2);
     }
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         3);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, nrows, 1, 1, nth, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_sum(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op  = ctx->node(idx);
+पूर्णांक ggml_metal_op_योग(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op  = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    const uint64_t n = (uint64_t) ggml_nelements(op->src[0]);
+    स्थिर uint64_t n = (uint64_t) ggml_nelements(op->src[0]);
 
-    ggml_metal_kargs_sum args = {
+    ggml_metal_kargs_योग args = {
         /*.np =*/ n,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_sum(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_योग(lib, op);
 
-    int nth = 32; // SIMD width
+    पूर्णांक nth = 32; // SIMD width
 
-    while (nth < (int) n && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+    जबतक (nth < (पूर्णांक) n && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
         nth *= 2;
     }
 
     nth = std::min(nth, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
-    nth = std::min(nth, (int) n);
+    nth = std::min(nth, (पूर्णांक) n);
 
-    const int nsg = (nth + 31) / 32;
+    स्थिर पूर्णांक nsg = (nth + 31) / 32;
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         2);
 
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, GGML_PAD(nsg * sizeof(float), 16), 0);
+    ggml_metal_encoder_set_threadgroup_memory_आकार(enc, GGML_PAD(nsg * माप(भग्न), 16), 0);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, 1, 1, 1, nth, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_sum_rows(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_योग_rows(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -1015,10 +1015,10 @@ int ggml_metal_op_sum_rows(ggml_metal_op_t ctx, int idx) {
 
     GGML_ASSERT(ggml_is_contiguous_rows(op->src[0]));
 
-    ggml_metal_buffer_id bid_src0 = ggml_metal_get_buffer_id(op->src[0]);
-    ggml_metal_buffer_id bid_dst  = ggml_metal_get_buffer_id(op);
+    ggml_metal_बफर_id bid_src0 = ggml_metal_get_बफर_id(op->src[0]);
+    ggml_metal_बफर_id bid_dst  = ggml_metal_get_बफर_id(op);
 
-    ggml_metal_kargs_sum_rows args = {
+    ggml_metal_kargs_योग_rows args = {
         /*.ne00 =*/ ne00,
         /*.ne01 =*/ ne01,
         /*.ne02 =*/ ne02,
@@ -1037,38 +1037,38 @@ int ggml_metal_op_sum_rows(ggml_metal_op_t ctx, int idx) {
         /*.nb3  =*/ nb3,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_sum_rows(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_योग_rows(lib, op);
 
-    if (pipeline.c4) {
+    अगर (pipeline.c4) {
         args.ne00 = ne00/4;
         args.ne0  = ne0/4;
     }
 
-    int nth = 32; // SIMD width
+    पूर्णांक nth = 32; // SIMD width
 
-    while (nth < args.ne00 && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+    जबतक (nth < args.ne00 && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
         nth *= 2;
     }
 
     nth = std::min(nth, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
-    nth = std::min(nth, (int) args.ne00);
+    nth = std::min(nth, (पूर्णांक) args.ne00);
 
-    const size_t smem = pipeline.smem;
+    स्थिर माप_प्रकार smem = pipeline.smem;
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
-    ggml_metal_encoder_set_buffer  (enc, bid_dst,  2);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, bid_src0, 1);
+    ggml_metal_encoder_set_बफर  (enc, bid_dst,  2);
 
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+    ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem, 0);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_cumsum(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_cumsum(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -1080,31 +1080,31 @@ int ggml_metal_op_cumsum(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    auto pipeline_blk = ggml_metal_library_get_pipeline_cumsum_blk(lib, op);
+    स्वतः pipeline_blk = ggml_metal_library_get_pipeline_cumsum_blk(lib, op);
 
-    int nth = 1;
-    while (nth < ne00 && 2*nth <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline_blk)) {
+    पूर्णांक nth = 1;
+    जबतक (nth < ne00 && 2*nth <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline_blk)) {
         nth *= 2;
     }
 
     GGML_ASSERT(ne00 <= nth*nth);
 
-    const int64_t net0 = (ne00 + nth - 1) / nth;
-    const int64_t net1 = ne01;
-    const int64_t net2 = ne02;
-    const int64_t net3 = ne03;
+    स्थिर int64_t net0 = (ne00 + nth - 1) / nth;
+    स्थिर int64_t net1 = ne01;
+    स्थिर int64_t net2 = ne02;
+    स्थिर int64_t net3 = ne03;
 
-    const uint64_t nbt0 = sizeof(float);
-    const uint64_t nbt1 = net0*nbt0;
-    const uint64_t nbt2 = net1*nbt1;
-    const uint64_t nbt3 = net2*nbt2;
+    स्थिर uint64_t nbt0 = माप(भग्न);
+    स्थिर uint64_t nbt1 = net0*nbt0;
+    स्थिर uint64_t nbt2 = net1*nbt1;
+    स्थिर uint64_t nbt3 = net2*nbt2;
 
-    const size_t smem = GGML_PAD(32*sizeof(float), 16);
+    स्थिर माप_प्रकार smem = GGML_PAD(32*माप(भग्न), 16);
 
-    ggml_metal_buffer_id bid_src0 = ggml_metal_get_buffer_id(op->src[0]);
-    ggml_metal_buffer_id bid_dst  = ggml_metal_get_buffer_id(op);
+    ggml_metal_बफर_id bid_src0 = ggml_metal_get_बफर_id(op->src[0]);
+    ggml_metal_बफर_id bid_dst  = ggml_metal_get_बफर_id(op);
 
-    ggml_metal_buffer_id bid_tmp = bid_dst;
+    ggml_metal_बफर_id bid_tmp = bid_dst;
     bid_tmp.offs += ggml_nbytes(op);
 
     {
@@ -1129,17 +1129,17 @@ int ggml_metal_op_cumsum(ggml_metal_op_t ctx, int idx) {
         };
 
         ggml_metal_encoder_set_pipeline(enc, pipeline_blk);
-        ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
-        ggml_metal_encoder_set_buffer  (enc, bid_tmp,  2);
-        ggml_metal_encoder_set_buffer  (enc, bid_dst,  3);
+        ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+        ggml_metal_encoder_set_बफर  (enc, bid_src0, 1);
+        ggml_metal_encoder_set_बफर  (enc, bid_tmp,  2);
+        ggml_metal_encoder_set_बफर  (enc, bid_dst,  3);
 
-        ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+        ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem, 0);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, net0*ne01, ne02, ne03, nth, 1, 1);
     }
 
-    if (ne00 > nth) {
+    अगर (ne00 > nth) {
         ggml_metal_op_concurrency_reset(ctx);
 
         {
@@ -1164,12 +1164,12 @@ int ggml_metal_op_cumsum(ggml_metal_op_t ctx, int idx) {
             };
 
             ggml_metal_encoder_set_pipeline(enc, pipeline_blk);
-            ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-            ggml_metal_encoder_set_buffer  (enc, bid_tmp, 1);
-            ggml_metal_encoder_set_buffer  (enc, bid_tmp, 2);
-            ggml_metal_encoder_set_buffer  (enc, bid_tmp, 3);
+            ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+            ggml_metal_encoder_set_बफर  (enc, bid_tmp, 1);
+            ggml_metal_encoder_set_बफर  (enc, bid_tmp, 2);
+            ggml_metal_encoder_set_बफर  (enc, bid_tmp, 3);
 
-            ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+            ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem, 0);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, net1, net2, net3, nth, 1, 1);
         }
@@ -1177,7 +1177,7 @@ int ggml_metal_op_cumsum(ggml_metal_op_t ctx, int idx) {
         ggml_metal_op_concurrency_reset(ctx);
 
         {
-            auto pipeline_add = ggml_metal_library_get_pipeline_cumsum_add(lib, op);
+            स्वतः pipeline_add = ggml_metal_library_get_pipeline_cumsum_add(lib, op);
 
             ggml_metal_kargs_cumsum_add args = {
                 /*.ne00 =*/ ne00,
@@ -1199,19 +1199,19 @@ int ggml_metal_op_cumsum(ggml_metal_op_t ctx, int idx) {
             };
 
             ggml_metal_encoder_set_pipeline(enc, pipeline_add);
-            ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-            ggml_metal_encoder_set_buffer  (enc, bid_tmp, 1);
-            ggml_metal_encoder_set_buffer  (enc, bid_dst, 2);
+            ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+            ggml_metal_encoder_set_बफर  (enc, bid_tmp, 1);
+            ggml_metal_encoder_set_बफर  (enc, bid_dst, 2);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, net0*ne01, ne02, ne03, nth, 1, 1);
         }
     }
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_get_rows(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_get_rows(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -1223,7 +1223,7 @@ int ggml_metal_op_get_rows(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    auto pipeline = ggml_metal_library_get_pipeline_get_rows(lib, op->src[0]->type);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_get_rows(lib, op->src[0]->type);
 
     ggml_metal_kargs_get_rows args = {
         /*.ne00t =*/ ggml_is_quantized(op->src[0]->type) ? ne00/16 : ne00,
@@ -1240,23 +1240,23 @@ int ggml_metal_op_get_rows(ggml_metal_op_t ctx, int idx) {
         /*.nb3   =*/ nb3,
     };
 
-    const int nth = std::min(args.ne00t, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
+    स्थिर पूर्णांक nth = std::min(args.ne00t, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
 
-    const int nw0 = (args.ne00t + nth - 1)/nth;
+    स्थिर पूर्णांक nw0 = (args.ne00t + nth - 1)/nth;
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[1]), 2);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         3);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, nw0*ne10, ne11, ne12, nth, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_set_rows(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_set_rows(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -1268,22 +1268,22 @@ int ggml_metal_op_set_rows(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    auto pipeline = ggml_metal_library_get_pipeline_set_rows(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_set_rows(lib, op);
 
-    const int32_t nk0 = ne0/ggml_blck_size(op->type);
+    स्थिर int32_t nk0 = ne0/ggml_blck_आकार(op->type);
 
-    int nth = 32; // SIMD width
+    पूर्णांक nth = 32; // SIMD width
 
-    while (nth < nk0 && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+    जबतक (nth < nk0 && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
         nth *= 2;
     }
 
-    int nrptg = 1;
-    if (nth > nk0) {
+    पूर्णांक nrptg = 1;
+    अगर (nth > nk0) {
         nrptg = (nth + nk0 - 1)/nk0;
         nth   = nk0;
 
-        if (nrptg*nth > ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+        अगर (nrptg*nth > ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
             nrptg--;
         }
     }
@@ -1307,18 +1307,18 @@ int ggml_metal_op_set_rows(ggml_metal_op_t ctx, int idx) {
     };
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[1]), 2);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         3);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, (ne01 + nrptg - 1)/nrptg, ne02, ne03, nth, nrptg, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_diag(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_diag(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -1347,29 +1347,29 @@ int ggml_metal_op_diag(ggml_metal_op_t ctx, int idx) {
         /*.nb3  =*/nb3,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_diag(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_diag(lib, op);
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes(enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_set_bytes(enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(op),         2);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne1, ne2, ne3, 32, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_lightning_indexer(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_lightning_indexer(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_encoder_t enc = ctx->enc;
 
     GGML_ASSERT(op->op == GGML_OP_LIGHTNING_INDEXER);
 
-    const ggml_tensor * q = op->src[0];
-    const ggml_tensor * k = op->src[1];
-    const ggml_tensor * w = op->src[2];
-    const ggml_tensor * m = op->src[3];
+    स्थिर ggml_tensor * q = op->src[0];
+    स्थिर ggml_tensor * k = op->src[1];
+    स्थिर ggml_tensor * w = op->src[2];
+    स्थिर ggml_tensor * m = op->src[3];
 
     GGML_ASSERT(q->type == GGML_TYPE_F32);
     GGML_ASSERT(k->type == GGML_TYPE_F32  ||
@@ -1403,41 +1403,41 @@ int ggml_metal_op_lightning_indexer(ggml_metal_op_t ctx, int idx) {
         /*.nbm3      =*/ m->nb[3],
     };
 
-    ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(q),  1);
-    ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(k),  2);
-    ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(w),  3);
-    ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(m),  4);
-    ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op), 5);
+    ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(q),  1);
+    ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(k),  2);
+    ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(w),  3);
+    ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(m),  4);
+    ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(op), 5);
 
-    const int nsg   = OP_LIGHTNING_INDEXER_NSG;
-    const int nkptg = OP_LIGHTNING_INDEXER_NKPSG*nsg;
-    const int nbptg = OP_LIGHTNING_INDEXER_NBPTG;
+    स्थिर पूर्णांक nsg   = OP_LIGHTNING_INDEXER_NSG;
+    स्थिर पूर्णांक nkptg = OP_LIGHTNING_INDEXER_NKPSG*nsg;
+    स्थिर पूर्णांक nbptg = OP_LIGHTNING_INDEXER_NBPTG;
 
-    auto pipeline = ggml_metal_library_get_pipeline_lightning_indexer(ctx->lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_lightning_indexer(ctx->lib, op);
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes(enc, &args, sizeof(args), 0);
+    ggml_metal_encoder_set_bytes(enc, &args, माप(args), 0);
     ggml_metal_encoder_dispatch_threadgroups(enc,
             (k->ne[2] + nkptg - 1)/nkptg,
             (q->ne[2] + nbptg - 1)/nbptg,
             q->ne[3], 32, nsg, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_dsv4_hc(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_dsv4_hc(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_encoder_t enc = ctx->enc;
-    auto pipeline = ggml_metal_library_get_pipeline_dsv4_hc(ctx->lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_dsv4_hc(ctx->lib, op);
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
 
-    switch (op->op) {
-        case GGML_OP_DSV4_HC_COMB:
+    चयन (op->op) {
+        हाल GGML_OP_DSV4_HC_COMB:
             {
-                const ggml_tensor * mixes = op->src[0];
-                const ggml_tensor * scale = op->src[1];
-                const ggml_tensor * base  = op->src[2];
+                स्थिर ggml_tensor * mixes = op->src[0];
+                स्थिर ggml_tensor * scale = op->src[1];
+                स्थिर ggml_tensor * base  = op->src[2];
 
                 GGML_ASSERT(mixes->type == GGML_TYPE_F32);
                 GGML_ASSERT(scale->type == GGML_TYPE_F32);
@@ -1459,23 +1459,23 @@ int ggml_metal_op_dsv4_hc(ggml_metal_op_t ctx, int idx) {
                     /*.eps      =*/ ggml_get_op_params_f32(op, 0),
                 };
 
-                ggml_metal_encoder_set_bytes (enc, &args, sizeof(args), 0);
-                ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(mixes), 1);
-                ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(scale), 2);
-                ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(base),  3);
-                ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op),    4);
+                ggml_metal_encoder_set_bytes (enc, &args, माप(args), 0);
+                ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(mixes), 1);
+                ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(scale), 2);
+                ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(base),  3);
+                ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(op),    4);
 
                 // One SIMDgroup owns one 4x4 Sinkhorn matrix. Packing up to four
                 // independent tokens per threadgroup keeps both decode and prompt
                 // dispatches compact without any threadgroup-memory synchronization.
-                const int nsg = std::min(4, args.n_tokens);
+                स्थिर पूर्णांक nsg = std::min(4, args.n_tokens);
                 ggml_metal_encoder_dispatch_threadgroups(
                         enc, (args.n_tokens + nsg - 1)/nsg, 1, 1, 32, nsg, 1);
-            } break;
-        case GGML_OP_DSV4_HC_PRE:
+            } अवरोध;
+        हाल GGML_OP_DSV4_HC_PRE:
             {
-                const ggml_tensor * x       = op->src[0];
-                const ggml_tensor * weights = op->src[1];
+                स्थिर ggml_tensor * x       = op->src[0];
+                स्थिर ggml_tensor * weights = op->src[1];
 
                 GGML_ASSERT(x->type       == GGML_TYPE_F32);
                 GGML_ASSERT(weights->type == GGML_TYPE_F32);
@@ -1495,22 +1495,22 @@ int ggml_metal_op_dsv4_hc(ggml_metal_op_t ctx, int idx) {
                     /*.scale    =*/ ggml_get_op_params_f32(op, 0),
                 };
 
-                ggml_metal_encoder_set_bytes (enc, &args, sizeof(args), 0);
-                ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(x),       1);
-                ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(weights), 2);
-                ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op),      3);
+                ggml_metal_encoder_set_bytes (enc, &args, माप(args), 0);
+                ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(x),       1);
+                ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(weights), 2);
+                ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(op),      3);
 
-                const int n_tiles = (args.n_embd + 31)/32;
-                const int nsg = std::min(4, n_tiles);
+                स्थिर पूर्णांक n_tiles = (args.n_embd + 31)/32;
+                स्थिर पूर्णांक nsg = std::min(4, n_tiles);
                 ggml_metal_encoder_dispatch_threadgroups(
                         enc, (n_tiles + nsg - 1)/nsg, args.n_tokens, 1, 32, nsg, 1);
-            } break;
-        case GGML_OP_DSV4_HC_POST:
+            } अवरोध;
+        हाल GGML_OP_DSV4_HC_POST:
             {
-                const ggml_tensor * x        = op->src[0];
-                const ggml_tensor * residual = op->src[1];
-                const ggml_tensor * post     = op->src[2];
-                const ggml_tensor * comb     = op->src[3];
+                स्थिर ggml_tensor * x        = op->src[0];
+                स्थिर ggml_tensor * residual = op->src[1];
+                स्थिर ggml_tensor * post     = op->src[2];
+                स्थिर ggml_tensor * comb     = op->src[3];
 
                 GGML_ASSERT(x->type        == GGML_TYPE_F32);
                 GGML_ASSERT(residual->type == GGML_TYPE_F32);
@@ -1536,37 +1536,37 @@ int ggml_metal_op_dsv4_hc(ggml_metal_op_t ctx, int idx) {
                     /*.nb_d2    =*/ op->nb[2],
                 };
 
-                ggml_metal_encoder_set_bytes (enc, &args, sizeof(args), 0);
-                ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(x),        1);
-                ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(residual), 2);
-                ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(post),     3);
-                if (comb) {
-                    ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(comb), 4);
-                    ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op),   5);
-                } else {
-                    ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op),   4);
+                ggml_metal_encoder_set_bytes (enc, &args, माप(args), 0);
+                ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(x),        1);
+                ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(residual), 2);
+                ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(post),     3);
+                अगर (comb) {
+                    ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(comb), 4);
+                    ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(op),   5);
+                } अन्यथा {
+                    ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(op),   4);
                 }
 
-                const int n_tiles = (args.n_embd + 31)/32;
-                const int nsg = std::min(4, n_tiles);
+                स्थिर पूर्णांक n_tiles = (args.n_embd + 31)/32;
+                स्थिर पूर्णांक nsg = std::min(4, n_tiles);
                 ggml_metal_encoder_dispatch_threadgroups(
                         enc, (n_tiles + nsg - 1)/nsg, args.n_tokens, 1, 32, nsg, 1);
-            } break;
-        default:
+            } अवरोध;
+        शेष:
             GGML_ABORT("fatal error");
     }
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_soft_max(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_soft_max(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
-    if (ctx->use_fusion()) {
-        int n = 1;
-        const ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n);
-        if (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_TOPK_MOE) {
-            return ggml_metal_op_topk_moe(ctx, idx);
+    अगर (ctx->use_fusion()) {
+        पूर्णांक n = 1;
+        स्थिर ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n);
+        अगर (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_TOPK_MOE) {
+            वापस ggml_metal_op_topk_moe(ctx, idx);
         }
     }
 
@@ -1582,17 +1582,17 @@ int ggml_metal_op_soft_max(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    float scale;
-    float max_bias;
+    भग्न scale;
+    भग्न max_bias;
 
-    memcpy(&scale,    ((const int32_t *) op->op_params) + 0, sizeof(scale));
-    memcpy(&max_bias, ((const int32_t *) op->op_params) + 1, sizeof(max_bias));
+    स_नकल(&scale,    ((स्थिर int32_t *) op->op_params) + 0, माप(scale));
+    स_नकल(&max_bias, ((स्थिर int32_t *) op->op_params) + 1, माप(max_bias));
 
-    const uint32_t n_head      = op->src[0]->ne[2];
-    const  int32_t n_head_log2 = 1u << (uint32_t) floorf(log2f((float) n_head));
+    स्थिर uint32_t n_शीर्ष      = op->src[0]->ne[2];
+    स्थिर  int32_t n_शीर्ष_log2 = 1u << (uint32_t) floorf(log2f((भग्न) n_शीर्ष));
 
-    const float m0 = powf(2.0f, -(max_bias       ) / n_head_log2);
-    const float m1 = powf(2.0f, -(max_bias / 2.0f) / n_head_log2);
+    स्थिर भग्न m0 = powf(2.0f, -(max_bias       ) / n_शीर्ष_log2);
+    स्थिर भग्न m1 = powf(2.0f, -(max_bias / 2.0f) / n_शीर्ष_log2);
 
     // softmax
 
@@ -1616,49 +1616,49 @@ int ggml_metal_op_soft_max(ggml_metal_op_t ctx, int idx) {
         /*.max_bias    =*/ max_bias,
         /*.m0          =*/ m0,
         /*.m1          =*/ m1,
-        /*.n_head_log2 =*/ n_head_log2,
+        /*.n_head_log2 =*/ n_शीर्ष_log2,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_soft_max(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_soft_max(lib, op);
 
-    int nth = 32; // SIMD width
+    पूर्णांक nth = 32; // SIMD width
 
-    if (ne00%4 == 0) {
-        while (nth < ne00/4 && nth*ne01*ne02*ne03 < 256) {
+    अगर (ne00%4 == 0) {
+        जबतक (nth < ne00/4 && nth*ne01*ne02*ne03 < 256) {
             nth *= 2;
         }
-    } else {
-        while (nth < ne00 && nth*ne01*ne02*ne03 < 256) {
+    } अन्यथा {
+        जबतक (nth < ne00 && nth*ne01*ne02*ne03 < 256) {
             nth *= 2;
         }
     }
 
-    const size_t smem = pipeline.smem;
+    स्थिर माप_प्रकार smem = pipeline.smem;
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes(enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    if (op->src[1]) {
-        ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    } else {
-        ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[0]), 2);
+    ggml_metal_encoder_set_bytes(enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    अगर (op->src[1]) {
+        ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(op->src[1]), 2);
+    } अन्यथा {
+        ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(op->src[0]), 2);
     }
-    if (op->src[2]) {
-        ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[2]), 3);
-    } else {
-        ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[0]), 3);
+    अगर (op->src[2]) {
+        ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(op->src[2]), 3);
+    } अन्यथा {
+        ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(op->src[0]), 3);
     }
-    ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op), 4);
+    ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(op), 4);
 
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+    ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem, 0);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_ssm_conv(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_ssm_conv(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -1670,17 +1670,17 @@ int ggml_metal_op_ssm_conv(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    int n_fuse = 1;
+    पूर्णांक n_fuse = 1;
     bool use_silu = false;
 
-    if (ctx->use_fusion()) {
-        int n = 1;
-        const ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n);
-        if (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_SSM_CONV_SILU) {
+    अगर (ctx->use_fusion()) {
+        पूर्णांक n = 1;
+        स्थिर ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n);
+        अगर (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_SSM_CONV_SILU) {
             n_fuse = n;
             use_silu = true;
 
-            ctx->count_fusions(fusion);
+            ctx->गिनती_fusions(fusion);
         }
     }
 
@@ -1702,59 +1702,59 @@ int ggml_metal_op_ssm_conv(ggml_metal_op_t ctx, int idx) {
         /*.nb2  =*/ nb2,
     };
 
-    const ggml_metal_buffer_id bid_dst = ggml_metal_get_buffer_id(n_fuse > 1 ? ctx->node(idx + n_fuse - 1) : op);
+    स्थिर ggml_metal_बफर_id bid_dst = ggml_metal_get_बफर_id(n_fuse > 1 ? ctx->गाँठ(idx + n_fuse - 1) : op);
 
     // Use batched kernel for prefill (ne1 > 1) to reduce threadgroup dispatch overhead
-    const bool use_batched = (ne1 > 1);
+    स्थिर bool use_batched = (ne1 > 1);
 
-    if (use_batched) {
+    अगर (use_batched) {
         // Determine the smallest power of 2 that's >= ne1, but <= 256
-        int BATCH_SIZE;
-        if      (ne1 > 128) BATCH_SIZE = 256;
-        else if (ne1 > 64 ) BATCH_SIZE = 128;
-        else if (ne1 > 32 ) BATCH_SIZE = 64;
-        else if (ne1 > 16 ) BATCH_SIZE = 32;
-        else if (ne1 > 8  ) BATCH_SIZE = 16;
-        else if (ne1 > 4  ) BATCH_SIZE = 8;
-        else                BATCH_SIZE = 2;
+        पूर्णांक BATCH_आकार;
+        अगर      (ne1 > 128) BATCH_आकार = 256;
+        अन्यथा अगर (ne1 > 64 ) BATCH_आकार = 128;
+        अन्यथा अगर (ne1 > 32 ) BATCH_आकार = 64;
+        अन्यथा अगर (ne1 > 16 ) BATCH_आकार = 32;
+        अन्यथा अगर (ne1 > 8  ) BATCH_आकार = 16;
+        अन्यथा अगर (ne1 > 4  ) BATCH_आकार = 8;
+        अन्यथा                BATCH_आकार = 2;
 
-        auto pipeline = ggml_metal_library_get_pipeline_ssm_conv_batched(lib, op, BATCH_SIZE, (int32_t) ne10, use_silu);
+        स्वतः pipeline = ggml_metal_library_get_pipeline_ssm_conv_batched(lib, op, BATCH_आकार, (int32_t) ne10, use_silu);
 
         ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes(enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-        ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-        ggml_metal_encoder_set_buffer(enc, bid_dst, 3);
+        ggml_metal_encoder_set_bytes(enc, &args, माप(args), 0);
+        ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+        ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(op->src[1]), 2);
+        ggml_metal_encoder_set_बफर(enc, bid_dst, 3);
 
         // Dispatch: ne01 rows, ceil(ne1/BATCH_SIZE) token batches, ne02 sequences
         // Each threadgroup has BATCH_SIZE threads, each handling one token
-        const int n_token_batches = (ne1 + BATCH_SIZE - 1) / BATCH_SIZE;
-        ggml_metal_encoder_dispatch_threadgroups(enc, ne01, n_token_batches, ne02, BATCH_SIZE, 1, 1);
-    } else {
-        auto pipeline = ggml_metal_library_get_pipeline_ssm_conv(lib, op, (int32_t) ne10, use_silu);
+        स्थिर पूर्णांक n_token_batches = (ne1 + BATCH_आकार - 1) / BATCH_आकार;
+        ggml_metal_encoder_dispatch_threadgroups(enc, ne01, n_token_batches, ne02, BATCH_आकार, 1, 1);
+    } अन्यथा {
+        स्वतः pipeline = ggml_metal_library_get_pipeline_ssm_conv(lib, op, (int32_t) ne10, use_silu);
 
         ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes(enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-        ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-        ggml_metal_encoder_set_buffer(enc, bid_dst, 3);
+        ggml_metal_encoder_set_bytes(enc, &args, माप(args), 0);
+        ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+        ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(op->src[1]), 2);
+        ggml_metal_encoder_set_बफर(enc, bid_dst, 3);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne1, ne02, 1, 1, 1);
     }
 
-    if (n_fuse > 1 && ggml_metal_fusion_info_debug(ctx->finfo) > 1) {
+    अगर (n_fuse > 1 && ggml_metal_fusion_info_debug(ctx->finfo) > 1) {
         GGML_LOG_DEBUG("%s: fuse: SSM_CONV + UNARY\n", __func__);
     }
 
-    return n_fuse;
+    वापस n_fuse;
 }
 
-int ggml_metal_op_ssm_scan(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_ssm_scan(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
-    const ggml_metal_device_props * props_dev = ggml_metal_device_get_props(ctx->dev);
+    स्थिर ggml_metal_device_props * props_dev = ggml_metal_device_get_props(ctx->dev);
 
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
     GGML_TENSOR_LOCALS(uint64_t, nb0, op->src[0], nb);
@@ -1773,38 +1773,38 @@ int ggml_metal_op_ssm_scan(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    const ggml_tensor * src3 = op->src[3];
-    const ggml_tensor * src4 = op->src[4];
-    const ggml_tensor * src5 = op->src[5];
-    const ggml_tensor * src6 = op->src[6];
+    स्थिर ggml_tensor * src3 = op->src[3];
+    स्थिर ggml_tensor * src4 = op->src[4];
+    स्थिर ggml_tensor * src5 = op->src[5];
+    स्थिर ggml_tensor * src6 = op->src[6];
 
     GGML_ASSERT(src3);
     GGML_ASSERT(src4);
     GGML_ASSERT(src5);
     GGML_ASSERT(src6);
 
-    const int64_t d_state      = ne00;
-    const int64_t d_inner      = ne01;
-    const int64_t n_head       = ne02;
-    const int64_t n_group      = ne41;
-    const int64_t n_seq_tokens = ne12;
-    const int64_t n_seqs       = ne13;
-    const int64_t K            = ggml_get_op_params_i32(op, 0);
+    स्थिर int64_t d_state      = ne00;
+    स्थिर int64_t d_inner      = ne01;
+    स्थिर int64_t n_शीर्ष       = ne02;
+    स्थिर int64_t n_group      = ne41;
+    स्थिर int64_t n_seq_tokens = ne12;
+    स्थिर int64_t n_seqs       = ne13;
+    स्थिर int64_t K            = ggml_get_op_params_i32(op, 0);
 
     GGML_ASSERT(K >= 1);
-    GGML_ASSERT(ggml_nelements(op->src[1]) + K*d_state*d_inner*n_head*n_seqs == ggml_nelements(op));
+    GGML_ASSERT(ggml_nelements(op->src[1]) + K*d_state*d_inner*n_शीर्ष*n_seqs == ggml_nelements(op));
 
     ggml_metal_kargs_ssm_scan args = {
         /*.d_state      =*/ d_state,
         /*.d_inner      =*/ d_inner,
-        /*.n_head       =*/ n_head,
+        /*.n_head       =*/ n_शीर्ष,
         /*.n_group      =*/ n_group,
         /*.n_seq_tokens =*/ n_seq_tokens,
         /*.n_seq_tokens_total =*/ n_seq_tokens,
         /*.token_offset =*/ 0,
         /*.n_seqs       =*/ n_seqs,
         /*.K            =*/ K,
-        /*.s_off        =*/ ggml_nelements(op->src[1]) * sizeof(float),
+        /*.s_off        =*/ ggml_nelements(op->src[1]) * माप(भग्न),
         /*.nb00         =*/ nb00,
         /*.nb01         =*/ nb01,
         /*.nb02         =*/ nb02,
@@ -1833,36 +1833,36 @@ int ggml_metal_op_ssm_scan(ggml_metal_op_t ctx, int idx) {
 
     constexpr int64_t CHUNK = OP_SSM_SCAN_SSD_CS;
 
-    const int64_t snap_reserve = K > 1 ? K : 0; // tokens reserved for sequential kernel rollback snapshots
-    const int64_t mma_tokens = ((n_seq_tokens - snap_reserve) / CHUNK) * CHUNK; // largest multiple of CHUNK that leaves snap_reserve for the tail
-    const bool use_mma =
+    स्थिर int64_t snap_reserve = K > 1 ? K : 0; // tokens reserved for sequential kernel rollback snapshots
+    स्थिर int64_t mma_tokens = ((n_seq_tokens - snap_reserve) / CHUNK) * CHUNK; // largest multiple of CHUNK that leaves snap_reserve for the tail
+    स्थिर bool use_mma =
         mma_tokens > 0 &&
         ne30 == 1 && // checks that A tensor is set to scalar decay per head (A shape {1, n_head})
         props_dev->has_simdgroup_mm && // hardware check for M1 or newer
         d_state % 8 == 0 && // d_state must be multiple of 8 to align with simdgroup_float 8x8 tiles
         d_inner == OP_SSM_SCAN_SSD_HD; // mma kernel is specialized for the Mamba-2 head dim; this checks it
 
-    const auto dispatch = [&](ggml_metal_pipeline_with_params pipeline, int64_t nth, int64_t n_tg_x) {
+    स्थिर स्वतः dispatch = [&](ggml_metal_pipeline_with_params pipeline, int64_t nth, int64_t n_tg_x) {
         GGML_ASSERT(nth <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
-        GGML_ASSERT(pipeline.smem <= props_dev->max_theadgroup_memory_size);
+        GGML_ASSERT(pipeline.smem <= props_dev->max_theadgroup_memory_आकार);
 
         ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[2]), 3);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[3]), 4);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[4]), 5);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[5]), 6);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[6]), 7);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         8);
-        ggml_metal_encoder_set_threadgroup_memory_size(enc, pipeline.smem, 0);
-        ggml_metal_encoder_dispatch_threadgroups(enc, n_tg_x, n_head, n_seqs, nth, 1, 1);
+        ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+        ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+        ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[1]), 2);
+        ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[2]), 3);
+        ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[3]), 4);
+        ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[4]), 5);
+        ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[5]), 6);
+        ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[6]), 7);
+        ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         8);
+        ggml_metal_encoder_set_threadgroup_memory_आकार(enc, pipeline.smem, 0);
+        ggml_metal_encoder_dispatch_threadgroups(enc, n_tg_x, n_शीर्ष, n_seqs, nth, 1, 1);
     };
 
-    if (!use_mma) {
+    अगर (!use_mma) {
         dispatch(ggml_metal_library_get_pipeline_ssm_scan(lib, op, false), d_state, d_inner);
-        return 1;
+        वापस 1;
     }
 
     args.n_seq_tokens = mma_tokens;
@@ -1871,7 +1871,7 @@ int ggml_metal_op_ssm_scan(ggml_metal_op_t ctx, int idx) {
         OP_SSM_SCAN_SSD_NSG*32,
         1);
 
-    if (mma_tokens < n_seq_tokens) {
+    अगर (mma_tokens < n_seq_tokens) {
         ggml_metal_op_concurrency_reset(ctx);
 
         args.n_seq_tokens = n_seq_tokens - mma_tokens;
@@ -1879,11 +1879,11 @@ int ggml_metal_op_ssm_scan(ggml_metal_op_t ctx, int idx) {
         dispatch(ggml_metal_library_get_pipeline_ssm_scan(lib, op, true), d_state, d_inner);
     }
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_rwkv(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_rwkv(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -1893,44 +1893,44 @@ int ggml_metal_op_rwkv(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    const int64_t B = op->op == GGML_OP_RWKV_WKV6 ? op->src[5]->ne[1] : op->src[6]->ne[1];
-    const int64_t T = op->src[0]->ne[2];
-    const int64_t C = op->ne[0];
-    const int64_t H = op->src[0]->ne[1];
+    स्थिर int64_t B = op->op == GGML_OP_RWKV_WKV6 ? op->src[5]->ne[1] : op->src[6]->ne[1];
+    स्थिर int64_t T = op->src[0]->ne[2];
+    स्थिर int64_t C = op->ne[0];
+    स्थिर int64_t H = op->src[0]->ne[1];
 
-    auto pipeline = ggml_metal_library_get_pipeline_rwkv(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_rwkv(lib, op);
 
-    int ida = 0;
+    पूर्णांक ida = 0;
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), ida++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), ida++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[2]), ida++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[3]), ida++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[4]), ida++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[5]), ida++);
-    if (op->op == GGML_OP_RWKV_WKV7) {
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[6]), ida++);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), ida++);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[1]), ida++);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[2]), ida++);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[3]), ida++);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[4]), ida++);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[5]), ida++);
+    अगर (op->op == GGML_OP_RWKV_WKV7) {
+        ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[6]), ida++);
     }
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         ida++);
-    ggml_metal_encoder_set_bytes   (enc, (void *) &B, sizeof(B), ida++);
-    ggml_metal_encoder_set_bytes   (enc, (void *) &T, sizeof(T), ida++);
-    ggml_metal_encoder_set_bytes   (enc, (void *) &C, sizeof(C), ida++);
-    ggml_metal_encoder_set_bytes   (enc, (void *) &H, sizeof(H), ida++);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         ida++);
+    ggml_metal_encoder_set_bytes   (enc, (व्योम *) &B, माप(B), ida++);
+    ggml_metal_encoder_set_bytes   (enc, (व्योम *) &T, माप(T), ida++);
+    ggml_metal_encoder_set_bytes   (enc, (व्योम *) &C, माप(C), ida++);
+    ggml_metal_encoder_set_bytes   (enc, (व्योम *) &H, माप(H), ida++);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, B * H, 1, 1, C/H, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_gated_delta_net(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_gated_delta_net(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    const bool use_fusion = ctx->use_fusion();
-    const int  debug_fusion = ggml_metal_fusion_info_debug(ctx->finfo);
+    स्थिर bool use_fusion = ctx->use_fusion();
+    स्थिर पूर्णांक  debug_fusion = ggml_metal_fusion_info_debug(ctx->finfo);
 
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
     GGML_TENSOR_LOCALS(uint64_t, nb0, op->src[0], nb);
@@ -1941,34 +1941,34 @@ int ggml_metal_op_gated_delta_net(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    auto pipeline = ggml_metal_library_get_pipeline_gated_delta_net(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_gated_delta_net(lib, op);
 
     // when fused with the trailing cache cpy, the snapshots are written straight into the
     // recurrent cache and the cpy is skipped (see GGML_METAL_FUSION_GDN_CACHE)
-    ggml_metal_buffer_id bid_out = ggml_metal_get_buffer_id(op);
+    ggml_metal_बफर_id bid_out = ggml_metal_get_बफर_id(op);
     uint64_t nb_out = 0;
-    int n_fuse = 1;
+    पूर्णांक n_fuse = 1;
 
-    if (use_fusion) {
-        int n = 1;
-        const ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n);
+    अगर (use_fusion) {
+        पूर्णांक n = 1;
+        स्थिर ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n);
 
-        if (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_GDN_CACHE) {
-            const ggml_tensor * dst_cache = ctx->node(idx + 1)->src[1]; // cache view
+        अगर (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_GDN_CACHE) {
+            स्थिर ggml_tensor * dst_cache = ctx->गाँठ(idx + 1)->src[1]; // cache view
 
-            bid_out = ggml_metal_get_buffer_id(dst_cache);
-            nb_out  = dst_cache->nb[2]/sizeof(float);
+            bid_out = ggml_metal_get_बफर_id(dst_cache);
+            nb_out  = dst_cache->nb[2]/माप(भग्न);
             n_fuse = 2;
 
-            ctx->count_fusions(fusion);
+            ctx->गिनती_fusions(fusion);
 
-            if (debug_fusion > 1) {
+            अगर (debug_fusion > 1) {
                 GGML_LOG_DEBUG("%s: fuse: GATED_DELTA_NET + CPY\n", __func__);
             }
         }
     }
 
-    int ida = 0;
+    पूर्णांक ida = 0;
 
     ggml_metal_kargs_gated_delta_net args = {
         /*.ne00 =*/ ne00,
@@ -1995,9 +1995,9 @@ int ggml_metal_op_gated_delta_net(ggml_metal_op_t ctx, int idx) {
         /*.nb21 =*/ nb21,
         /*.nb22 =*/ nb22,
         /*.nb23 =*/ nb23,
-        /*.ns02 =*/ (int32_t) (nb02/sizeof(float)),
-        /*.ns12 =*/ (int32_t) (nb12/sizeof(float)),
-        /*.ns22 =*/ (int32_t) (nb22/sizeof(float)),
+        /*.ns02 =*/ (int32_t) (nb02/माप(भग्न)),
+        /*.ns12 =*/ (int32_t) (nb12/माप(भग्न)),
+        /*.ns22 =*/ (int32_t) (nb22/माप(भग्न)),
         /*.ne0  =*/ ne0,
         /*.ne1  =*/ ne1,
         /*.ne2  =*/ ne2,
@@ -2010,25 +2010,25 @@ int ggml_metal_op_gated_delta_net(ggml_metal_op_t ctx, int idx) {
     };
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args),                  ida++); // args
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), ida++); // q
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), ida++); // k
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[2]), ida++); // v
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[3]), ida++); // gate
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[4]), ida++); // beta
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[5]), ida++); // state
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         ida++); // dst (attn)
-    ggml_metal_encoder_set_buffer  (enc, bid_out,                              ida++); // state_out
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args),                  ida++); // args
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), ida++); // q
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[1]), ida++); // k
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[2]), ida++); // v
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[3]), ida++); // gate
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[4]), ida++); // beta
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[5]), ida++); // state
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         ida++); // dst (attn)
+    ggml_metal_encoder_set_बफर  (enc, bid_out,                              ida++); // state_out
 
-    const int nsg = pipeline.nsg;
+    स्थिर पूर्णांक nsg = pipeline.nsg;
 
     ggml_metal_encoder_dispatch_threadgroups(enc, op->src[2]->ne[0]/nsg, op->src[2]->ne[1], op->src[2]->ne[3], 32, nsg, 1);
 
-    return n_fuse;
+    वापस n_fuse;
 }
 
-int ggml_metal_op_solve_tri(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_solve_tri(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -2067,25 +2067,25 @@ int ggml_metal_op_solve_tri(ggml_metal_op_t ctx, int idx) {
         /*.nb3  =*/ nb3,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_solve_tri(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_solve_tri(lib, op);
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[1]), 2);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         3);
 
-    const int nsg = pipeline.nsg;
+    स्थिर पूर्णांक nsg = pipeline.nsg;
 
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, pipeline.smem, 0);
+    ggml_metal_encoder_set_threadgroup_memory_आकार(enc, pipeline.smem, 0);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, (ne10 + nsg - 1)/nsg, ne02, ne03, 32, nsg, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_set(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_set(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -2097,24 +2097,24 @@ int ggml_metal_op_set(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    ggml_metal_buffer_id bid_src0 = ggml_metal_get_buffer_id(op->src[0]);
-    ggml_metal_buffer_id bid_src1 = ggml_metal_get_buffer_id(op->src[1]);
-    ggml_metal_buffer_id bid_dst  = ggml_metal_get_buffer_id(op);
+    ggml_metal_बफर_id bid_src0 = ggml_metal_get_बफर_id(op->src[0]);
+    ggml_metal_बफर_id bid_src1 = ggml_metal_get_बफर_id(op->src[1]);
+    ggml_metal_बफर_id bid_dst  = ggml_metal_get_बफर_id(op);
 
-    const size_t pnb1 = ((const int32_t *) op->op_params)[0];
-    const size_t pnb2 = ((const int32_t *) op->op_params)[1];
-    const size_t pnb3 = ((const int32_t *) op->op_params)[2];
-    const size_t offs = ((const int32_t *) op->op_params)[3];
+    स्थिर माप_प्रकार pnb1 = ((स्थिर int32_t *) op->op_params)[0];
+    स्थिर माप_प्रकार pnb2 = ((स्थिर int32_t *) op->op_params)[1];
+    स्थिर माप_प्रकार pnb3 = ((स्थिर int32_t *) op->op_params)[2];
+    स्थिर माप_प्रकार offs = ((स्थिर int32_t *) op->op_params)[3];
 
-    const bool inplace = (bool) ((const int32_t *) op->op_params)[4];
+    स्थिर bool inplace = (bool) ((स्थिर int32_t *) op->op_params)[4];
 
-    if (!inplace) {
+    अगर (!inplace) {
         // run a separate kernel to cpy src->dst
         // not sure how to avoid this
         // TODO: make a simpler cpy_bytes kernel
 
         //const id<MTLComputePipelineState> pipeline = ctx->pipelines[GGML_METAL_PIPELINE_TYPE_CPY_F32_F32].obj;
-        auto pipeline = ggml_metal_library_get_pipeline_cpy(lib, op->src[0]->type, op->type);
+        स्वतः pipeline = ggml_metal_library_get_pipeline_cpy(lib, op->src[0]->type, op->type);
 
         ggml_metal_kargs_cpy args = {
             /*.nk0  =*/ ne00,
@@ -2137,46 +2137,46 @@ int ggml_metal_op_set(ggml_metal_op_t ctx, int idx) {
         };
 
         ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
-        ggml_metal_encoder_set_buffer  (enc, bid_dst,  2);
+        ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+        ggml_metal_encoder_set_बफर  (enc, bid_src0, 1);
+        ggml_metal_encoder_set_बफर  (enc, bid_dst,  2);
 
-        const int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne00);
+        स्थिर पूर्णांक nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne00);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
 
         ggml_metal_op_concurrency_reset(ctx);
     }
 
-    auto pipeline = ggml_metal_library_get_pipeline_cpy(lib, op->src[1]->type, op->type);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_cpy(lib, op->src[1]->type, op->type);
 
-    GGML_ASSERT(ne10 % ggml_blck_size(op->src[1]->type) == 0);
+    GGML_ASSERT(ne10 % ggml_blck_आकार(op->src[1]->type) == 0);
 
     int64_t nk0 = ne10;
-    if (ggml_is_quantized(op->src[1]->type)) {
+    अगर (ggml_is_quantized(op->src[1]->type)) {
         nk0 = ne10/16;
-    } else if (ggml_is_quantized(op->type)) {
-        nk0 = ne10/ggml_blck_size(op->type);
+    } अन्यथा अगर (ggml_is_quantized(op->type)) {
+        nk0 = ne10/ggml_blck_आकार(op->type);
     }
 
-    int nth = std::min<int>(nk0*ne11, 256);
+    पूर्णांक nth = std::min<पूर्णांक>(nk0*ne11, 256);
 
     // when rows are small, we can batch them together in a single threadgroup
-    int nrptg = 1;
+    पूर्णांक nrptg = 1;
 
     // TODO: relax this constraint in the future
-    if (ggml_blck_size(op->src[1]->type) == 1 && ggml_blck_size(op->type) == 1) {
-        if (nth > nk0) {
+    अगर (ggml_blck_आकार(op->src[1]->type) == 1 && ggml_blck_आकार(op->type) == 1) {
+        अगर (nth > nk0) {
             nrptg = (nth + nk0 - 1)/nk0;
             nth   = nk0;
 
-            if (nrptg*nth > 256) {
+            अगर (nrptg*nth > 256) {
                 nrptg--;
             }
         }
     }
 
-    nth = std::min<int>(nth, nk0);
+    nth = std::min<पूर्णांक>(nth, nk0);
 
     ggml_metal_kargs_cpy args = {
         /*.nk0  =*/ nk0,
@@ -2192,28 +2192,28 @@ int ggml_metal_op_set(ggml_metal_op_t ctx, int idx) {
         /*.ne1  =*/ ne11,
         /*.ne2  =*/ ne12,
         /*.ne3  =*/ ne13,
-        /*.nb0  =*/ ggml_element_size(op),
+        /*.nb0  =*/ ggml_element_आकार(op),
         /*.nb1  =*/ pnb1,
         /*.nb2  =*/ pnb2,
         /*.nb3  =*/ pnb3,
     };
 
-    const int nw0 = nrptg == 1 ? (nk0 + nth - 1)/nth : 1;
+    स्थिर पूर्णांक nw0 = nrptg == 1 ? (nk0 + nth - 1)/nth : 1;
 
     bid_dst.offs += offs;
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, bid_src1, 1);
-    ggml_metal_encoder_set_buffer  (enc, bid_dst,  2);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, bid_src1, 1);
+    ggml_metal_encoder_set_बफर  (enc, bid_dst,  2);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, nw0*(ne11 + nrptg - 1)/nrptg, ne12, ne13, nth, nrptg, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_cpy(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_cpy(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -2223,35 +2223,35 @@ int ggml_metal_op_cpy(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    auto pipeline = ggml_metal_library_get_pipeline_cpy(lib, op->src[0]->type, op->type);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_cpy(lib, op->src[0]->type, op->type);
 
-    GGML_ASSERT(ne00 % ggml_blck_size(op->src[0]->type) == 0);
+    GGML_ASSERT(ne00 % ggml_blck_आकार(op->src[0]->type) == 0);
 
     int64_t nk0 = ne00;
-    if (ggml_is_quantized(op->src[0]->type)) {
+    अगर (ggml_is_quantized(op->src[0]->type)) {
         nk0 = ne00/16;
-    } else if (ggml_is_quantized(op->type)) {
-        nk0 = ne00/ggml_blck_size(op->type);
+    } अन्यथा अगर (ggml_is_quantized(op->type)) {
+        nk0 = ne00/ggml_blck_आकार(op->type);
     }
 
-    int nth = std::min<int>(nk0*ne01, 256);
+    पूर्णांक nth = std::min<पूर्णांक>(nk0*ne01, 256);
 
     // when rows are small, we can batch them together in a single threadgroup
-    int nrptg = 1;
+    पूर्णांक nrptg = 1;
 
     // TODO: relax this constraint in the future
-    if (ggml_blck_size(op->src[0]->type) == 1 && ggml_blck_size(op->type) == 1) {
-        if (nth > nk0) {
+    अगर (ggml_blck_आकार(op->src[0]->type) == 1 && ggml_blck_आकार(op->type) == 1) {
+        अगर (nth > nk0) {
             nrptg = (nth + nk0 - 1)/nk0;
             nth   = nk0;
 
-            if (nrptg*nth > 256) {
+            अगर (nrptg*nth > 256) {
                 nrptg--;
             }
         }
     }
 
-    nth = std::min<int>(nth, nk0);
+    nth = std::min<पूर्णांक>(nth, nk0);
 
     ggml_metal_kargs_cpy args = {
         /*.nk0  =*/ nk0,
@@ -2273,20 +2273,20 @@ int ggml_metal_op_cpy(ggml_metal_op_t ctx, int idx) {
         /*.nb3  =*/ nb3,
     };
 
-    const int nw0 = nrptg == 1 ? (nk0 + nth - 1)/nth : 1;
+    स्थिर पूर्णांक nw0 = nrptg == 1 ? (nk0 + nth - 1)/nth : 1;
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         2);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, nw0*(ne01 + nrptg - 1)/nrptg, ne02, ne03, nth, nrptg, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_pool_1d(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_pool_1d(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -2296,17 +2296,17 @@ int ggml_metal_op_pool_1d(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    const int32_t * opts = op->op_params;
+    स्थिर int32_t * opts = op->op_params;
     ggml_op_pool op_pool = (ggml_op_pool) opts[0];
 
-    const int32_t k0 = opts[1];
-    const int32_t s0 = opts[2];
-    const int32_t p0 = opts[3];
+    स्थिर int32_t k0 = opts[1];
+    स्थिर int32_t s0 = opts[2];
+    स्थिर int32_t p0 = opts[3];
 
-    const int64_t IW = op->src[0]->ne[0];
-    const int64_t OW = op->ne[0];
+    स्थिर int64_t IW = op->src[0]->ne[0];
+    स्थिर int64_t OW = op->ne[0];
 
-    const int64_t np = ggml_nelements(op);
+    स्थिर int64_t np = ggml_nelements(op);
 
     ggml_metal_kargs_pool_1d args_pool_1d = {
         /* .k0 = */  k0,
@@ -2317,70 +2317,70 @@ int ggml_metal_op_pool_1d(ggml_metal_op_t ctx, int idx) {
         /* .np = */  np
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_pool_1d(lib, op, op_pool);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_pool_1d(lib, op, op_pool);
 
-    const int nth = std::min(256, std::max(1, k0));
-    const int ntg = (int) np;
+    स्थिर पूर्णांक nth = std::min(256, std::max(1, k0));
+    स्थिर पूर्णांक ntg = (पूर्णांक) np;
 
-    const size_t smem = op_pool == GGML_OP_POOL_AVG ?
-        2*32*sizeof(float) :
-        32*sizeof(float);
+    स्थिर माप_प्रकार smem = op_pool == GGML_OP_POOL_AVG ?
+        2*32*माप(भग्न) :
+        32*माप(भग्न);
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args_pool_1d, sizeof(args_pool_1d),  0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+    ggml_metal_encoder_set_bytes   (enc, &args_pool_1d, माप(args_pool_1d),  0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         2);
+    ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem, 0);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ntg, 1, 1, nth, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_fwht(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_fwht(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
     ggml_tensor * src1 = op->src[1];
 
-    const int64_t n = src1->ne[0];
-    const int64_t nrows = ggml_nrows(src1);
+    स्थिर int64_t n = src1->ne[0];
+    स्थिर int64_t nrows = ggml_nrows(src1);
 
     ggml_metal_kargs_fwht args = {
         /*.nrows = */ (int32_t) nrows,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_fwht(lib, n, src1->type);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_fwht(lib, n, src1->type);
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes(enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(src1), 1);
-    ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op), 2);
+    ggml_metal_encoder_set_bytes(enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(src1), 1);
+    ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(op), 2);
 
-    const int th_max = ggml_metal_pipeline_max_theads_per_threadgroup(pipeline);
-    const int simd_size = 32;
+    स्थिर पूर्णांक th_max = ggml_metal_pipeline_max_theads_per_threadgroup(pipeline);
+    स्थिर पूर्णांक simd_आकार = 32;
 
-    if (n >= GGML_METAL_FWHT_TG_MIN_N) {
+    अगर (n >= GGML_METAL_FWHT_TG_MIN_N) {
         GGML_ASSERT(th_max >= GGML_METAL_FWHT_TG_NT);
         ggml_metal_encoder_dispatch_threadgroups(enc, nrows, 1, 1, GGML_METAL_FWHT_TG_NT, 1, 1);
 
-        return 1;
+        वापस 1;
     }
 
-    int sg_per_tg = 2;
-    sg_per_tg = std::min(sg_per_tg, th_max/simd_size);
+    पूर्णांक sg_per_tg = 2;
+    sg_per_tg = std::min(sg_per_tg, th_max/simd_आकार);
     sg_per_tg = std::max(sg_per_tg, 1);
 
-    const int64_t n_tg = (nrows + sg_per_tg - 1) / sg_per_tg;
+    स्थिर int64_t n_tg = (nrows + sg_per_tg - 1) / sg_per_tg;
     ggml_metal_encoder_dispatch_threadgroups(enc, n_tg, 1, 1, 32*sg_per_tg, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_pool_2d(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_pool_2d(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -2390,25 +2390,25 @@ int ggml_metal_op_pool_2d(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    const int32_t * opts = op->op_params;
+    स्थिर int32_t * opts = op->op_params;
     ggml_op_pool op_pool = (ggml_op_pool) opts[0];
 
-    const int32_t k0 = opts[1];
-    const int32_t k1 = opts[2];
-    const int32_t s0 = opts[3];
-    const int32_t s1 = opts[4];
-    const int32_t p0 = opts[5];
-    const int32_t p1 = opts[6];
+    स्थिर int32_t k0 = opts[1];
+    स्थिर int32_t k1 = opts[2];
+    स्थिर int32_t s0 = opts[3];
+    स्थिर int32_t s1 = opts[4];
+    स्थिर int32_t p0 = opts[5];
+    स्थिर int32_t p1 = opts[6];
 
-    const int64_t IH = op->src[0]->ne[1];
-    const int64_t IW = op->src[0]->ne[0];
+    स्थिर int64_t IH = op->src[0]->ne[1];
+    स्थिर int64_t IW = op->src[0]->ne[0];
 
-    const int64_t N  = op->ne[3];
-    const int64_t OC = op->ne[2];
-    const int64_t OH = op->ne[1];
-    const int64_t OW = op->ne[0];
+    स्थिर int64_t N  = op->ne[3];
+    स्थिर int64_t OC = op->ne[2];
+    स्थिर int64_t OH = op->ne[1];
+    स्थिर int64_t OW = op->ne[0];
 
-    const int64_t np = N * OC * OH * OW;
+    स्थिर int64_t np = N * OC * OH * OW;
 
     ggml_metal_kargs_pool_2d args_pool_2d = {
         /* .k0 = */ k0,
@@ -2424,44 +2424,44 @@ int ggml_metal_op_pool_2d(ggml_metal_op_t ctx, int idx) {
         /* .np = */ np
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_pool_2d(lib, op, op_pool);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_pool_2d(lib, op, op_pool);
 
-    const int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), (int) np);
-    const int ntg = (np + nth - 1) / nth;
+    स्थिर पूर्णांक nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), (पूर्णांक) np);
+    स्थिर पूर्णांक ntg = (np + nth - 1) / nth;
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args_pool_2d, sizeof(args_pool_2d), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_set_bytes   (enc, &args_pool_2d, माप(args_pool_2d), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         2);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ntg, 1, 1, nth, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
 // the number of nodes from idx on that the fusion table fuses as pattern id into one dispatch, 1 if it fuses none
-static int ggml_metal_op_try_fusion(ggml_metal_op_t ctx, int idx, ggml_metal_fusion_id id) {
-    if (!ctx->use_fusion()) {
-        return 1;
+अटल पूर्णांक ggml_metal_op_try_fusion(ggml_metal_op_t ctx, पूर्णांक idx, ggml_metal_fusion_id id) {
+    अगर (!ctx->use_fusion()) {
+        वापस 1;
     }
 
-    int n = 1;
-    const ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n);
-    if (fusion == nullptr || ggml_metal_fusion_get_id(fusion) != id) {
-        return 1;
+    पूर्णांक n = 1;
+    स्थिर ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n);
+    अगर (fusion == nullptr || ggml_metal_fusion_get_id(fusion) != id) {
+        वापस 1;
     }
 
-    ctx->count_fusions(fusion);
+    ctx->गिनती_fusions(fusion);
 
-    if (ggml_metal_fusion_info_debug(ctx->finfo) > 1) {
-        GGML_LOG_DEBUG("%s: fuse: %s to %s, %d nodes\n", __func__, ggml_op_name(ctx->node(idx)->op), ggml_op_name(ctx->node(idx + n - 1)->op), n);
+    अगर (ggml_metal_fusion_info_debug(ctx->finfo) > 1) {
+        GGML_LOG_DEBUG("%s: fuse: %s to %s, %d nodes\n", __func__, ggml_op_name(ctx->गाँठ(idx)->op), ggml_op_name(ctx->गाँठ(idx + n - 1)->op), n);
     }
 
-    return n;
+    वापस n;
 }
 
-static int ggml_metal_op_mul_mat_mma(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+अटल पूर्णांक ggml_metal_op_mul_mat_mma(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -2473,19 +2473,19 @@ static int ggml_metal_op_mul_mat_mma(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
 
     // the MMA store adds the residual when the table fuses the ADD after this mat-mul
-    const int  n_fuse   = ggml_metal_op_try_fusion(ctx, idx, GGML_METAL_FUSION_MUL_MAT_ADD);
-    const bool fuse_add = n_fuse > 1;
+    स्थिर पूर्णांक  n_fuse   = ggml_metal_op_try_fusion(ctx, idx, GGML_METAL_FUSION_MUL_MAT_ADD);
+    स्थिर bool fuse_add = n_fuse > 1;
 
-    const ggml_tensor * dst = op;
-    const ggml_tensor * res = dst;
+    स्थिर ggml_tensor * dst = op;
+    स्थिर ggml_tensor * res = dst;
 
-    if (fuse_add) {
-        dst = ctx->node(idx + n_fuse - 1);
+    अगर (fuse_add) {
+        dst = ctx->गाँठ(idx + n_fuse - 1);
         // the residual is the other operand of the ADD, by identity: it can itself be a MUL_MAT output
         res = dst->src[0] == op ? dst->src[1] : dst->src[0];
     }
 
-    auto pipeline = ggml_metal_library_get_pipeline_mul_mv_mma_auto(lib, op, fuse_add);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_mul_mv_mma_auto(lib, op, fuse_add);
 
     ggml_metal_kargs_mul_mv_ext args = {
         /*.ne00  =*/ ne00,
@@ -2509,25 +2509,25 @@ static int ggml_metal_op_mul_mat_mma(ggml_metal_op_t ctx, int idx) {
     };
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(dst),        3);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(res),        4);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[1]), 2);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(dst),        3);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(res),        4);
 
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, pipeline.smem, 0);
+    ggml_metal_encoder_set_threadgroup_memory_आकार(enc, pipeline.smem, 0);
 
-    const int rows0 = pipeline.nr0;
-    const int rows1 = pipeline.nr1;
+    स्थिर पूर्णांक rows0 = pipeline.nr0;
+    स्थिर पूर्णांक rows1 = pipeline.nr1;
 
     ggml_metal_encoder_dispatch_threadgroups(enc, (ne01 + rows0 - 1)/rows0, (ne11 + rows1 - 1)/rows1, ne12*ne13, 32, pipeline.nsg, 1);
 
-    return n_fuse;
+    वापस n_fuse;
 }
 
 // the generic mat-vec kernel, or its 2-row Q4_0 variant if nc
-static int ggml_metal_op_mul_mat_mv(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+अटल पूर्णांक ggml_metal_op_mul_mat_mv(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -2538,16 +2538,16 @@ static int ggml_metal_op_mul_mat_mv(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS(uint64_t, nb1, op->src[1], nb);
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
 
-    const int16_t r2 = ne12/ne02;
-    const int16_t r3 = ne13/ne03;
+    स्थिर int16_t r2 = ne12/ne02;
+    स्थिर int16_t r3 = ne13/ne03;
 
-    auto pipeline = ggml_metal_library_get_pipeline_mul_mv(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_mul_mv(lib, op);
 
-    const int nr0 = pipeline.nr0;
-    const int nr1 = pipeline.nr1;
-    const int nsg = pipeline.nsg;
+    स्थिर पूर्णांक nr0 = pipeline.nr0;
+    स्थिर पूर्णांक nr1 = pipeline.nr1;
+    स्थिर पूर्णांक nsg = pipeline.nsg;
 
-    const size_t smem = pipeline.smem;
+    स्थिर माप_प्रकार smem = pipeline.smem;
 
     ggml_metal_kargs_mul_mv args = {
         /*.ne00 =*/ ne00,
@@ -2572,39 +2572,39 @@ static int ggml_metal_op_mul_mat_mv(ggml_metal_op_t ctx, int idx) {
     };
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[1]), 2);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         3);
 
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+    ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem, 0);
 
-    if (op->src[0]->type == GGML_TYPE_F32 ||
+    अगर (op->src[0]->type == GGML_TYPE_F32 ||
         op->src[0]->type == GGML_TYPE_F16 ||
         op->src[0]->type == GGML_TYPE_BF16 ||
         op->src[0]->type == GGML_TYPE_Q8_0) {
         ggml_metal_encoder_dispatch_threadgroups(enc, ((ne01 + nr0 - 1)/(nr0)), ((ne11 + nr1 - 1)/nr1), ne12*ne13, 32, nsg, 1);
-    } else {
+    } अन्यथा {
         ggml_metal_encoder_dispatch_threadgroups(enc, ((ne01 + nr0*nsg - 1)/(nr0*nsg)), ((ne11 + nr1 - 1)/nr1), ne12*ne13, 32, nsg, 1);
     }
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_mul_mat(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_mul_mat(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    const ggml_metal_device_props * props_dev = ggml_metal_device_get_props(ctx->dev);
+    स्थिर ggml_metal_device_props * props_dev = ggml_metal_device_get_props(ctx->dev);
 
-    if (ggml_metal_op_mul_mat_use_fwht(op, props_dev->max_theadgroup_memory_size)) {
-        return ggml_metal_op_fwht(ctx, idx);
+    अगर (ggml_metal_op_mul_mat_use_fwht(op, props_dev->max_theadgroup_memory_आकार)) {
+        वापस ggml_metal_op_fwht(ctx, idx);
     }
 
-    if (props_dev->has_simdgroup_mm && ggml_metal_op_mul_mat_use_mma(op)) {
-        return ggml_metal_op_mul_mat_mma(ctx, idx);
+    अगर (props_dev->has_simdgroup_mm && ggml_metal_op_mul_mat_use_mma(op)) {
+        वापस ggml_metal_op_mul_mat_mma(ctx, idx);
     }
 
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
@@ -2619,12 +2619,12 @@ int ggml_metal_op_mul_mat(ggml_metal_op_t ctx, int idx) {
     GGML_ASSERT(ne12 % ne02 == 0);
     GGML_ASSERT(ne13 % ne03 == 0);
 
-    const int16_t r2 = ne12/ne02;
-    const int16_t r3 = ne13/ne03;
+    स्थिर int16_t r2 = ne12/ne02;
+    स्थिर int16_t r3 = ne13/ne03;
 
     // first try to use small-batch mat-mv kernels
     // these should be efficient for BS [2, ~8]
-    if (op->src[1]->type == GGML_TYPE_F32 && (ne00%128 == 0) &&
+    अगर (op->src[1]->type == GGML_TYPE_F32 && (ne00%128 == 0) &&
         (
          (
           (
@@ -2661,40 +2661,40 @@ int ggml_metal_op_mul_mat(ggml_metal_op_t ctx, int idx) {
         //       my current hypothesis is that the work grid is not evenly divisible for different nsg
         //       values and there can be some tail effects when nsg is high. need to confirm this
         //
-        const int nsg    = 2;                 // num simdgroups per threadgroup
+        स्थिर पूर्णांक nsg    = 2;                 // num simdgroups per threadgroup
 
         // num threads along row per simdgroup
         int16_t nxpsg = 0;
-        if (ne00 % 256 == 0 && ne11 < 3) {
+        अगर (ne00 % 256 == 0 && ne11 < 3) {
             nxpsg = 16;
-        } else if (ne00 % 128 == 0) {
+        } अन्यथा अगर (ne00 % 128 == 0) {
             nxpsg = 8;
-        } else {
+        } अन्यथा {
             nxpsg = 4;
         }
 
-        const int16_t nypsg  = 32/nxpsg;          // num threads along col per simdgroup (i.e. a simdgroup processes that many src0 rows at a time)
-        const int16_t r0ptg  = nypsg*nsg;         // num src0 rows per threadgroup
+        स्थिर int16_t nypsg  = 32/nxpsg;          // num threads along col per simdgroup (i.e. a simdgroup processes that many src0 rows at a time)
+        स्थिर int16_t r0ptg  = nypsg*nsg;         // num src0 rows per threadgroup
               int16_t r1ptg  = 4;                 // num src1 rows per threadgroup
 
         // note: not sure how optimal are those across all different hardware. there might be something cleverer
-        switch (ne11) {
-            case 2:
-                r1ptg = 2; break;
-            case 3:
-            case 6:
-                r1ptg = 3; break;
-            case 4:
-            case 7:
-            case 8:
-                r1ptg = 4; break;
-            case 5:
-                r1ptg = 5; break;
-            default:
+        चयन (ne11) {
+            हाल 2:
+                r1ptg = 2; अवरोध;
+            हाल 3:
+            हाल 6:
+                r1ptg = 3; अवरोध;
+            हाल 4:
+            हाल 7:
+            हाल 8:
+                r1ptg = 4; अवरोध;
+            हाल 5:
+                r1ptg = 5; अवरोध;
+            शेष:
                 GGML_ABORT("unsupported ne11");
         };
 
-        auto pipeline = ggml_metal_library_get_pipeline_mul_mv_ext(lib, op, nsg, nxpsg, r1ptg);
+        स्वतः pipeline = ggml_metal_library_get_pipeline_mul_mv_ext(lib, op, nsg, nxpsg, r1ptg);
 
         ggml_metal_kargs_mul_mv_ext args = {
             /*.ne00  =*/ ne00,
@@ -2718,13 +2718,13 @@ int ggml_metal_op_mul_mat(ggml_metal_op_t ctx, int idx) {
         };
 
         ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
+        ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+        ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+        ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[1]), 2);
+        ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         3);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, ((ne01 + r0ptg - 1)/r0ptg), ((ne11 + r1ptg - 1)/r1ptg), ne12*ne13, 32, nsg, 1);
-    } else if (ggml_metal_op_mul_mat_use_mm(op, props_dev->has_simdgroup_mm)) {
+    } अन्यथा अगर (ggml_metal_op_mul_mat_use_mm(op, props_dev->has_simdgroup_mm)) {
         //GGML_LOG_INFO("matrix: ne00 = %6d, ne01 = %6d, ne02 = %6d, ne11 = %6d, ne12 = %6d\n", ne00, ne01, ne02, ne11, ne12);
 
         // some Metal matrix data types require aligned pointers
@@ -2736,7 +2736,7 @@ int ggml_metal_op_mul_mat(ggml_metal_op_t ctx, int idx) {
         //    default: break;
         //}
 
-        auto pipeline = ggml_metal_library_get_pipeline_mul_mm(lib, op);
+        स्वतः pipeline = ggml_metal_library_get_pipeline_mul_mm(lib, op);
 
         ggml_metal_kargs_mul_mm args = {
             /*.ne00 =*/ ne00,
@@ -2756,78 +2756,78 @@ int ggml_metal_op_mul_mat(ggml_metal_op_t ctx, int idx) {
         };
 
         ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
+        ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+        ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+        ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[1]), 2);
+        ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         3);
 
-        const size_t smem = pipeline.smem;
+        स्थिर माप_प्रकार smem = pipeline.smem;
 
-        ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+        ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem, 0);
 
-        const int nr0 = pipeline.nr0;
-        const int nr1 = pipeline.nr1;
-        const int nsg = pipeline.nsg;
+        स्थिर पूर्णांक nr0 = pipeline.nr0;
+        स्थिर पूर्णांक nr1 = pipeline.nr1;
+        स्थिर पूर्णांक nsg = pipeline.nsg;
 
         ggml_metal_encoder_dispatch_threadgroups(enc, ((ne11 + nr1 - 1) / nr1), ((ne01 + nr0 - 1) / nr0), ne12 * ne13, 32, nsg, 1);
-    } else {
-        return ggml_metal_op_mul_mat_mv(ctx, idx);
+    } अन्यथा {
+        वापस ggml_metal_op_mul_mat_mv(ctx, idx);
     }
 
-    return 1;
+    वापस 1;
 }
 
 // upper bound on the number of entry tiles emitted by kernel_mul_mm_id_map0: the full tiles
 // over all entries plus at most one partial tile per expert
-static int64_t ggml_metal_op_mul_mat_id_max_tiles(const ggml_tensor * op) {
-    const int64_t ne02 = op->src[0]->ne[2]; // n_expert
-    const int64_t ne20 = op->src[2]->ne[0]; // n_expert_used
-    const int64_t ne21 = op->src[2]->ne[1]; // n_token
+अटल int64_t ggml_metal_op_mul_mat_id_max_tiles(स्थिर ggml_tensor * op) {
+    स्थिर int64_t ne02 = op->src[0]->ne[2]; // n_expert
+    स्थिर int64_t ne20 = op->src[2]->ne[0]; // n_expert_used
+    स्थिर int64_t ne21 = op->src[2]->ne[1]; // n_token
 
-    const int64_t n_rows = ne20*ne21;
-    const int64_t tiles  = (n_rows + 31)/32 + (ne02 < n_rows ? ne02 : n_rows) - 1;
+    स्थिर int64_t n_rows = ne20*ne21;
+    स्थिर int64_t tiles  = (n_rows + 31)/32 + (ne02 < n_rows ? ne02 : n_rows) - 1;
 
-    return n_rows < tiles ? n_rows : tiles;
+    वापस n_rows < tiles ? n_rows : tiles;
 }
 
-size_t ggml_metal_op_mul_mat_id_extra_tpe(const ggml_tensor * op) {
-    assert(op->op == GGML_OP_MUL_MAT_ID);
+माप_प्रकार ggml_metal_op_mul_mat_id_extra_tpe(स्थिर ggml_tensor * op) {
+    निश्चित(op->op == GGML_OP_MUL_MAT_ID);
 
     // row map of kernel_mul_mm_id: total tile count + one
     // (expert, first entry, valid rows) descriptor per tile
-    const int64_t max_tiles = ggml_metal_op_mul_mat_id_max_tiles(op);
+    स्थिर int64_t max_tiles = ggml_metal_op_mul_mat_id_max_tiles(op);
 
-    return ggml_type_size(GGML_TYPE_I32)*(1 + 3*max_tiles);
+    वापस ggml_type_आकार(GGML_TYPE_I32)*(1 + 3*max_tiles);
 }
 
-size_t ggml_metal_op_mul_mat_id_extra_ids(const ggml_tensor * op) {
-    assert(op->op == GGML_OP_MUL_MAT_ID);
+माप_प्रकार ggml_metal_op_mul_mat_id_extra_ids(स्थिर ggml_tensor * op) {
+    निश्चित(op->op == GGML_OP_MUL_MAT_ID);
 
-    const int64_t ne02 = op->src[0]->ne[2]; // n_expert
-    const int64_t ne20 = op->src[2]->ne[0]; // n_expert_used
-    const int64_t ne21 = op->src[2]->ne[1]; // n_token
+    स्थिर int64_t ne02 = op->src[0]->ne[2]; // n_expert
+    स्थिर int64_t ne20 = op->src[2]->ne[0]; // n_expert_used
+    स्थिर int64_t ne21 = op->src[2]->ne[1]; // n_token
 
     // one entry per (expert used, token) pair of ids plus one padding slot per expert
     // (see kernel_mul_mm_id_map0)
-    return ggml_type_size(GGML_TYPE_I32)*(ne20*ne21 + ne02);
+    वापस ggml_type_आकार(GGML_TYPE_I32)*(ne20*ne21 + ne02);
 }
 
-size_t ggml_metal_op_mul_mat_id_extra_amax(const ggml_tensor * op) {
-    assert(op->op == GGML_OP_MUL_MAT_ID);
+माप_प्रकार ggml_metal_op_mul_mat_id_extra_amax(स्थिर ggml_tensor * op) {
+    निश्चित(op->op == GGML_OP_MUL_MAT_ID);
 
     GGML_UNUSED(op);
 
     // 2 scaling factors (8 bytes) + N_MM_NPART_AMAX per-threadgroup scales for stage-1
-    return 8 + N_MM_NPART_AMAX*sizeof(float);
+    वापस 8 + N_MM_NPART_AMAX*माप(भग्न);
 }
 
-int ggml_metal_op_mul_mat_id(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_mul_mat_id(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    const ggml_metal_device_props * props_dev = ggml_metal_device_get_props(ctx->dev);
+    स्थिर ggml_metal_device_props * props_dev = ggml_metal_device_get_props(ctx->dev);
 
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
     GGML_TENSOR_LOCALS(uint64_t, nb0, op->src[0], nb);
@@ -2847,15 +2847,15 @@ int ggml_metal_op_mul_mat_id(ggml_metal_op_t ctx, int idx) {
     GGML_ASSERT(ne03 == 1);
     GGML_ASSERT(ne13 == 1);
 
-    ggml_metal_buffer_id bid_src0 = ggml_metal_get_buffer_id(op->src[0]);
-    ggml_metal_buffer_id bid_src1 = ggml_metal_get_buffer_id(op->src[1]);
-    ggml_metal_buffer_id bid_src2 = ggml_metal_get_buffer_id(op->src[2]);
-    ggml_metal_buffer_id bid_dst  = ggml_metal_get_buffer_id(op);
+    ggml_metal_बफर_id bid_src0 = ggml_metal_get_बफर_id(op->src[0]);
+    ggml_metal_बफर_id bid_src1 = ggml_metal_get_बफर_id(op->src[1]);
+    ggml_metal_बफर_id bid_src2 = ggml_metal_get_बफर_id(op->src[2]);
+    ggml_metal_बफर_id bid_dst  = ggml_metal_get_बफर_id(op);
 
-    const uint32_t r2 = 1;
-    const uint32_t r3 = 1;
+    स्थिर uint32_t r2 = 1;
+    स्थिर uint32_t r3 = 1;
 
-    if (ggml_metal_op_mul_mat_id_use_mm(op, props_dev->has_simdgroup_mm)) {
+    अगर (ggml_metal_op_mul_mat_id_use_mm(op, props_dev->has_simdgroup_mm)) {
         // some Metal matrix data types require aligned pointers
         // ref: https://developer.apple.com/metal/Metal-Shading-Language-Specification.pdf (Table 2.5)
         //switch (op->src[0]->type) {
@@ -2866,21 +2866,21 @@ int ggml_metal_op_mul_mat_id(ggml_metal_op_t ctx, int idx) {
         //}
 
         // extra buffers for intermediate id mapping
-        ggml_metal_buffer_id bid_tpe = bid_dst;
+        ggml_metal_बफर_id bid_tpe = bid_dst;
         bid_tpe.offs += ggml_nbytes(op);
 
-        ggml_metal_buffer_id bid_ids = bid_tpe;
+        ggml_metal_बफर_id bid_ids = bid_tpe;
         bid_ids.offs += ggml_metal_op_mul_mat_id_extra_tpe(op);
 
-        ggml_metal_buffer_id bid_amax = bid_ids;
+        ggml_metal_बफर_id bid_amax = bid_ids;
         bid_amax.offs += ggml_metal_op_mul_mat_id_extra_ids(op);
 
         // src1 prec [TAG_GGML_PREC]
-        const bool use_amax = ggml_get_op_params_i32(op, 3) == GGML_PREC_F32;
+        स्थिर bool use_amax = ggml_get_op_params_i32(op, 3) == GGML_PREC_F32;
 
         // src1 rescale factors, computed before the matmul
         // ref: https://github.com/ggml-org/llama.cpp/pull/26223
-        if (use_amax) {
+        अगर (use_amax) {
             ggml_metal_kargs_mul_mm_id_amax args = {
                 /*.ne00 =*/ ne10,
                 /*.ne01 =*/ ne11,
@@ -2889,18 +2889,18 @@ int ggml_metal_op_mul_mat_id(ggml_metal_op_t ctx, int idx) {
                 /*.nb02 =*/ nb12,
             };
 
-            auto pipeline = ggml_metal_library_get_pipeline_mul_mm_id_amax_part(lib);
+            स्वतः pipeline = ggml_metal_library_get_pipeline_mul_mm_id_amax_part(lib);
 
-            const size_t smem = pipeline.smem;
+            स्थिर माप_प्रकार smem = pipeline.smem;
 
-            GGML_ASSERT(smem <= props_dev->max_theadgroup_memory_size);
+            GGML_ASSERT(smem <= props_dev->max_theadgroup_memory_आकार);
 
             ggml_metal_encoder_set_pipeline(enc, pipeline);
-            ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-            ggml_metal_encoder_set_buffer  (enc, bid_src1, 1);
-            ggml_metal_encoder_set_buffer  (enc, bid_amax, 2);
+            ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+            ggml_metal_encoder_set_बफर  (enc, bid_src1, 1);
+            ggml_metal_encoder_set_बफर  (enc, bid_amax, 2);
 
-            ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+            ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem, 0);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, N_MM_NPART_AMAX, 1, 1, 256, 1, 1);
         }
@@ -2916,32 +2916,32 @@ int ggml_metal_op_mul_mat_id(ggml_metal_op_t ctx, int idx) {
                 nb21,
             };
 
-            auto pipeline = ggml_metal_library_get_pipeline_mul_mm_id_map0(lib, ne02, ne20);
+            स्वतः pipeline = ggml_metal_library_get_pipeline_mul_mm_id_map0(lib, ne02, ne20);
 
-            const size_t smem = pipeline.smem;
+            स्थिर माप_प्रकार smem = pipeline.smem;
 
             GGML_ASSERT(ne02 <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
 
-            GGML_ASSERT(smem <= props_dev->max_theadgroup_memory_size);
+            GGML_ASSERT(smem <= props_dev->max_theadgroup_memory_आकार);
 
             ggml_metal_encoder_set_pipeline(enc, pipeline);
-            ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-            ggml_metal_encoder_set_buffer  (enc, bid_src2, 1);
-            ggml_metal_encoder_set_buffer  (enc, bid_tpe,  2);
-            ggml_metal_encoder_set_buffer  (enc, bid_ids,  3);
+            ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+            ggml_metal_encoder_set_बफर  (enc, bid_src2, 1);
+            ggml_metal_encoder_set_बफर  (enc, bid_tpe,  2);
+            ggml_metal_encoder_set_बफर  (enc, bid_ids,  3);
 
-            ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+            ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem, 0);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, 1, 1, 1, ne02, 1, 1);
         }
 
         ggml_metal_op_concurrency_reset(ctx);
 
-        if (use_amax) {
-            auto pipeline = ggml_metal_library_get_pipeline_mul_mm_id_amax(lib);
+        अगर (use_amax) {
+            स्वतः pipeline = ggml_metal_library_get_pipeline_mul_mm_id_amax(lib);
 
             ggml_metal_encoder_set_pipeline(enc, pipeline);
-            ggml_metal_encoder_set_buffer  (enc, bid_amax, 0);
+            ggml_metal_encoder_set_बफर  (enc, bid_amax, 0);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, 1, 1, 1, 32, 1, 1);
 
@@ -2950,7 +2950,7 @@ int ggml_metal_op_mul_mat_id(ggml_metal_op_t ctx, int idx) {
         }
 
         {
-            auto pipeline = ggml_metal_library_get_pipeline_mul_mm_id(lib, op);
+            स्वतः pipeline = ggml_metal_library_get_pipeline_mul_mm_id(lib, op);
 
             ggml_metal_kargs_mul_mm_id args = {
                 /*.ne00  =*/ ne00,
@@ -2971,32 +2971,32 @@ int ggml_metal_op_mul_mat_id(ggml_metal_op_t ctx, int idx) {
             };
 
             ggml_metal_encoder_set_pipeline(enc, pipeline);
-            ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-            ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
-            ggml_metal_encoder_set_buffer  (enc, bid_src1, 2);
-            ggml_metal_encoder_set_buffer  (enc, bid_tpe,  3);
-            ggml_metal_encoder_set_buffer  (enc, bid_ids,  4);
-            ggml_metal_encoder_set_buffer  (enc, bid_dst,  5);
-            ggml_metal_encoder_set_buffer  (enc, bid_amax, 6);
+            ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+            ggml_metal_encoder_set_बफर  (enc, bid_src0, 1);
+            ggml_metal_encoder_set_बफर  (enc, bid_src1, 2);
+            ggml_metal_encoder_set_बफर  (enc, bid_tpe,  3);
+            ggml_metal_encoder_set_बफर  (enc, bid_ids,  4);
+            ggml_metal_encoder_set_बफर  (enc, bid_dst,  5);
+            ggml_metal_encoder_set_बफर  (enc, bid_amax, 6);
 
-            const size_t smem = pipeline.smem;
+            स्थिर माप_प्रकार smem = pipeline.smem;
 
-            GGML_ASSERT(smem <= props_dev->max_theadgroup_memory_size);
+            GGML_ASSERT(smem <= props_dev->max_theadgroup_memory_आकार);
 
-            ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+            ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem, 0);
 
-            const int max_tiles = (int) ggml_metal_op_mul_mat_id_max_tiles(op);
+            स्थिर पूर्णांक max_tiles = (पूर्णांक) ggml_metal_op_mul_mat_id_max_tiles(op);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, max_tiles, (ne01 + 63)/64, 1, 128, 1, 1);
         }
-    } else {
-        auto pipeline = ggml_metal_library_get_pipeline_mul_mv_id(lib, op);
+    } अन्यथा {
+        स्वतः pipeline = ggml_metal_library_get_pipeline_mul_mv_id(lib, op);
 
-        const int nr0 = pipeline.nr0;
-        const int nr1 = pipeline.nr1;
-        const int nsg = pipeline.nsg;
+        स्थिर पूर्णांक nr0 = pipeline.nr0;
+        स्थिर पूर्णांक nr1 = pipeline.nr1;
+        स्थिर पूर्णांक nsg = pipeline.nsg;
 
-        const size_t smem = pipeline.smem;
+        स्थिर माप_प्रकार smem = pipeline.smem;
 
         ggml_metal_kargs_mul_mv_id args = {
             /*.nei0 =*/ ne20,
@@ -3021,37 +3021,37 @@ int ggml_metal_op_mul_mat_id(ggml_metal_op_t ctx, int idx) {
             /*.nr0  =*/ nr0,
         };
 
-        if (ggml_is_quantized(op->src[0]->type)) {
+        अगर (ggml_is_quantized(op->src[0]->type)) {
             GGML_ASSERT(ne00 >= nsg*nr0);
         }
 
         ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes(enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer(enc, bid_src0, 1);
-        ggml_metal_encoder_set_buffer(enc, bid_src1, 2);
-        ggml_metal_encoder_set_buffer(enc, bid_dst,  3);
-        ggml_metal_encoder_set_buffer(enc, bid_src2, 4);
+        ggml_metal_encoder_set_bytes(enc, &args, माप(args), 0);
+        ggml_metal_encoder_set_बफर(enc, bid_src0, 1);
+        ggml_metal_encoder_set_बफर(enc, bid_src1, 2);
+        ggml_metal_encoder_set_बफर(enc, bid_dst,  3);
+        ggml_metal_encoder_set_बफर(enc, bid_src2, 4);
 
-        const int64_t _ne1 = 1;
-        const int64_t ne123 = ne20*ne21;
+        स्थिर int64_t _ne1 = 1;
+        स्थिर int64_t ne123 = ne20*ne21;
 
-        ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+        ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem, 0);
 
-        if (op->src[0]->type == GGML_TYPE_F32 ||
+        अगर (op->src[0]->type == GGML_TYPE_F32 ||
             op->src[0]->type == GGML_TYPE_F16 ||
             op->src[0]->type == GGML_TYPE_BF16 ||
             op->src[0]->type == GGML_TYPE_Q8_0) {
             ggml_metal_encoder_dispatch_threadgroups(enc, (ne01 + nr0 - 1)/(nr0), (_ne1 + nr1 - 1)/nr1, ne123, 32, nsg, 1);
-        } else {
+        } अन्यथा {
             ggml_metal_encoder_dispatch_threadgroups(enc, (ne01 + nr0*nsg - 1)/(nr0*nsg), (_ne1 + nr1 - 1)/nr1, ne123, 32, nsg, 1);
         }
     }
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_add_id(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_add_id(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -3080,127 +3080,127 @@ int ggml_metal_op_add_id(ggml_metal_op_t ctx, int idx) {
         /*.nb21 =*/ nb21,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_base(lib, GGML_OP_ADD_ID);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_base(lib, GGML_OP_ADD_ID);
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[2]), 3);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         4);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[1]), 2);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[2]), 3);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         4);
 
-    const int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne00);
+    स्थिर पूर्णांक nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne00);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, 1, nth, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-bool ggml_metal_op_flash_attn_ext_use_vec(const ggml_tensor * op) {
-    assert(op->op == GGML_OP_FLASH_ATTN_EXT);
+bool ggml_metal_op_flash_attn_ext_use_vec(स्थिर ggml_tensor * op) {
+    निश्चित(op->op == GGML_OP_FLASH_ATTN_EXT);
 
-    const int64_t ne00 = op->src[0]->ne[0]; // head size
-    const int64_t ne01 = op->src[0]->ne[1]; // batch size
+    स्थिर int64_t ne00 = op->src[0]->ne[0]; // head size
+    स्थिर int64_t ne01 = op->src[0]->ne[1]; // batch size
 
     // use vec kernel if the batch size is small and if the head size is supported
-    return (ne01 < 20) && (ne00 % 32 == 0);
+    वापस (ne01 < 20) && (ne00 % 32 == 0);
 }
 
 // ref: https://github.com/ggml-org/llama.cpp/pull/27390
 // dequantize the quantized KV cache to F16 before running the F16 flash attention kernels
-static bool ggml_metal_op_flash_attn_ext_use_kv_f16(const ggml_tensor * op) {
-    assert(op->op == GGML_OP_FLASH_ATTN_EXT);
+अटल bool ggml_metal_op_flash_attn_ext_use_kv_f16(स्थिर ggml_tensor * op) {
+    निश्चित(op->op == GGML_OP_FLASH_ATTN_EXT);
 
     // depending on compute/bandwidth ratio, dequant to f16 kv is not always beneficial
     // ref: https://github.com/ggml-org/llama.cpp/pull/27390#issuecomment-5355152767
     // TODO: tune per device
     // large heads need the upfront dequant to fit the non-vec threadgroup memory
-    if (op->src[0]->ne[1] < 32 &&
+    अगर (op->src[0]->ne[1] < 32 &&
         (op->src[0]->ne[0] < 512 || ggml_metal_op_flash_attn_ext_use_vec(op))) {
-        return false;
+        वापस false;
     }
 
-    switch (op->src[1]->type) {
-        case GGML_TYPE_Q4_0:
-        case GGML_TYPE_Q4_1:
-        case GGML_TYPE_Q5_0:
-        case GGML_TYPE_Q5_1:
-        case GGML_TYPE_Q8_0:
-            return true;
-        default:
-            return false;
+    चयन (op->src[1]->type) {
+        हाल GGML_TYPE_Q4_0:
+        हाल GGML_TYPE_Q4_1:
+        हाल GGML_TYPE_Q5_0:
+        हाल GGML_TYPE_Q5_1:
+        हाल GGML_TYPE_Q8_0:
+            वापस true;
+        शेष:
+            वापस false;
     }
 }
 
-static bool ggml_metal_op_flash_attn_ext_use_tensor(const ggml_tensor * op, bool has_tensor) {
-    assert(op->op == GGML_OP_FLASH_ATTN_EXT);
+अटल bool ggml_metal_op_flash_attn_ext_use_tensor(स्थिर ggml_tensor * op, bool has_tensor) {
+    निश्चित(op->op == GGML_OP_FLASH_ATTN_EXT);
 
-    if (!has_tensor || ggml_metal_op_flash_attn_ext_use_vec(op)) {
-        return false;
+    अगर (!has_tensor || ggml_metal_op_flash_attn_ext_use_vec(op)) {
+        वापस false;
     }
 
-    const int64_t ne01 = op->src[0]->ne[1];
-    const int64_t ne02 = op->src[0]->ne[2];
-    const int64_t ne03 = op->src[0]->ne[3];
+    स्थिर int64_t ne01 = op->src[0]->ne[1];
+    स्थिर int64_t ne02 = op->src[0]->ne[2];
+    स्थिर int64_t ne03 = op->src[0]->ne[3];
 
-    const int64_t dk = op->src[1]->ne[0];
-    const int64_t dv = op->src[2]->ne[0];
+    स्थिर int64_t dk = op->src[1]->ne[0];
+    स्थिर int64_t dv = op->src[2]->ne[0];
 
-    const bool dk_dv_ok = (dk == 64  && dv == 64)  ||
+    स्थिर bool dk_dv_ok = (dk == 64  && dv == 64)  ||
                           (dk == 128 && dv == 128) ||
                           (dk == 192 && dv == 128) ||
                           (dk == 256 && dv == 256) ||
                           (dk == 512 && dv == 512) ||
                           (dk == 576 && dv == 512);
 
-    if (!dk_dv_ok) {
-        return false;
+    अगर (!dk_dv_ok) {
+        वापस false;
     }
 
     // large heads use fewer queries per threadgroup, so that the queries fit in threadgroup memory
-    const int64_t nqptg = dk >= 512 ? OP_FLASH_ATTN_EXT_TENSOR_NQPSG_LARGE : OP_FLASH_ATTN_EXT_TENSOR_NQPSG;
+    स्थिर int64_t nqptg = dk >= 512 ? OP_FLASH_ATTN_EXT_TENSOR_NQPSG_LARGE : OP_FLASH_ATTN_EXT_TENSOR_NQPSG;
 
     // few heads and small batches do not fill the GPU - the half8x8 kernel is faster there
     // TODO: tune per device
-    if (((ne01 + nqptg - 1)/nqptg)*ne02*ne03*dk < 8192) {
-        return false;
+    अगर (((ne01 + nqptg - 1)/nqptg)*ne02*ne03*dk < 8192) {
+        वापस false;
     }
 
-    if (op->src[1]->type != GGML_TYPE_F16 && op->src[1]->type != GGML_TYPE_BF16 && !ggml_metal_op_flash_attn_ext_use_kv_f16(op)) {
-        return false;
+    अगर (op->src[1]->type != GGML_TYPE_F16 && op->src[1]->type != GGML_TYPE_BF16 && !ggml_metal_op_flash_attn_ext_use_kv_f16(op)) {
+        वापस false;
     }
 
-    return op->src[1]->ne[1] % OP_FLASH_ATTN_EXT_TENSOR_NCPSG == 0;
+    वापस op->src[1]->ne[1] % OP_FLASH_ATTN_EXT_TENSOR_NCPSG == 0;
 }
 
 // returns the n_kv_max hint if the sparse path is available for this op, or 0 otherwise
 // the mask (src[3]) remains the single source of truth: finite entries are the valid KV positions,
 // n_kv_max is only an upper bound on their number per mask row, used to size the index lists
-static int ggml_metal_op_flash_attn_ext_n_kv_max_sparse(const ggml_tensor * op) {
-    assert(op->op == GGML_OP_FLASH_ATTN_EXT);
+अटल पूर्णांक ggml_metal_op_flash_attn_ext_n_kv_max_sparse(स्थिर ggml_tensor * op) {
+    निश्चित(op->op == GGML_OP_FLASH_ATTN_EXT);
 
     int32_t n_kv_max = 0;
-    memcpy(&n_kv_max, ((const int32_t *) op->op_params) + 4, sizeof(n_kv_max));
+    स_नकल(&n_kv_max, ((स्थिर int32_t *) op->op_params) + 4, माप(n_kv_max));
 
-    if (n_kv_max <= 0) {
-        return 0;
+    अगर (n_kv_max <= 0) {
+        वापस 0;
     }
 
     // the sparse indices are gathered from the mask
-    if (!op->src[3]) {
-        return 0;
+    अगर (!op->src[3]) {
+        वापस 0;
     }
 
     // bound the size of the index lists
-    if (n_kv_max > 4096) {
-        return 0;
+    अगर (n_kv_max > 4096) {
+        वापस 0;
     }
 
     // vec kernel instantiations exist for these (type, dk, dv) combinations only
-    const int64_t dk = op->src[1]->ne[0];
-    const int64_t dv = op->src[2]->ne[0];
+    स्थिर int64_t dk = op->src[1]->ne[0];
+    स्थिर int64_t dv = op->src[2]->ne[0];
 
-    const bool dk_dv_ok = (dk == 32  && dv == 32)  ||
+    स्थिर bool dk_dv_ok = (dk == 32  && dv == 32)  ||
                           (dk == 64  && dv == 64)  ||
                           (dk == 96  && dv == 96)  ||
                           (dk == 96  && dv == 64)  ||
@@ -3213,50 +3213,50 @@ static int ggml_metal_op_flash_attn_ext_n_kv_max_sparse(const ggml_tensor * op) 
                           (dk == 512 && dv == 512) ||
                           (dk == 576 && dv == 512);
 
-    if (!dk_dv_ok) {
-        return 0;
+    अगर (!dk_dv_ok) {
+        वापस 0;
     }
 
-    switch (op->src[1]->type) {
-        case GGML_TYPE_F16:
-        case GGML_TYPE_BF16:
-        case GGML_TYPE_F32:
-        case GGML_TYPE_Q4_0:
-        case GGML_TYPE_Q4_1:
-        case GGML_TYPE_Q5_0:
-        case GGML_TYPE_Q5_1:
-        case GGML_TYPE_Q8_0:
-            break;
-        default:
-            return 0;
+    चयन (op->src[1]->type) {
+        हाल GGML_TYPE_F16:
+        हाल GGML_TYPE_BF16:
+        हाल GGML_TYPE_F32:
+        हाल GGML_TYPE_Q4_0:
+        हाल GGML_TYPE_Q4_1:
+        हाल GGML_TYPE_Q5_0:
+        हाल GGML_TYPE_Q5_1:
+        हाल GGML_TYPE_Q8_0:
+            अवरोध;
+        शेष:
+            वापस 0;
     }
 
-    return n_kv_max;
+    वापस n_kv_max;
 }
 
 // in some models (e.g. MLA-based), V is a view of K (the first ne20 elements of each K row);
 // the dequantized V is then a view of the dequantized K and does not need its own dequant or scratch
 // - ref: https://github.com/ggml-org/llama.cpp/pull/13435
-static bool ggml_metal_op_flash_attn_ext_v_is_view_of_k(const ggml_tensor * op) {
-    assert(op->op == GGML_OP_FLASH_ATTN_EXT);
+अटल bool ggml_metal_op_flash_attn_ext_v_is_view_of_k(स्थिर ggml_tensor * op) {
+    निश्चित(op->op == GGML_OP_FLASH_ATTN_EXT);
 
-    const ggml_tensor * K = op->src[1];
-    const ggml_tensor * V = op->src[2];
+    स्थिर ggml_tensor * K = op->src[1];
+    स्थिर ggml_tensor * V = op->src[2];
 
-    return V->view_src && (V->view_src == K || (V->view_src == K->view_src && V->view_offs == K->view_offs));
+    वापस V->view_src && (V->view_src == K || (V->view_src == K->view_src && V->view_offs == K->view_offs));
 }
 
 // size of the F16 dequantized K tensor; the dequantized V tensor follows it in the same scratch buffer
-static size_t ggml_metal_op_flash_attn_ext_kv_f16_k_size(const ggml_tensor * op) {
-    assert(op->op == GGML_OP_FLASH_ATTN_EXT);
+अटल माप_प्रकार ggml_metal_op_flash_attn_ext_kv_f16_k_आकार(स्थिर ggml_tensor * op) {
+    निश्चित(op->op == GGML_OP_FLASH_ATTN_EXT);
 
     GGML_TENSOR_LOCALS( int32_t, ne1, op->src[1], ne);
 
-    return GGML_PAD(sizeof(ggml_fp16_t)*(size_t) ne10*ne11*ne12*ne13, 16);
+    वापस GGML_PAD(माप(ggml_fp16_t)*(माप_प्रकार) ne10*ne11*ne12*ne13, 16);
 }
 
-size_t ggml_metal_op_flash_attn_ext_extra_pad(const ggml_tensor * op) {
-    assert(op->op == GGML_OP_FLASH_ATTN_EXT);
+माप_प्रकार ggml_metal_op_flash_attn_ext_extra_pad(स्थिर ggml_tensor * op) {
+    निश्चित(op->op == GGML_OP_FLASH_ATTN_EXT);
 
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
     GGML_TENSOR_LOCALS(uint64_t, nb0, op->src[0], nb);
@@ -3267,54 +3267,54 @@ size_t ggml_metal_op_flash_attn_ext_extra_pad(const ggml_tensor * op) {
     GGML_TENSOR_LOCALS( int32_t, ne3, op->src[3], ne);
     GGML_TENSOR_LOCALS(uint64_t, nb3, op->src[3], nb);
 
-    size_t res = 0;
+    माप_प्रकार res = 0;
 
-    const bool has_mask = op->src[3] != nullptr;
-    const bool use_kv_f16 = ggml_metal_op_flash_attn_ext_use_kv_f16(op);
+    स्थिर bool has_mask = op->src[3] != nullptr;
+    स्थिर bool use_kv_f16 = ggml_metal_op_flash_attn_ext_use_kv_f16(op);
 
     // when the KV is dequantized to F16, the pad kernel copies the tail chunk from the F16 scratch buffer
     // note: when V is a view of K, the dequantized V is read from the dequantized K with K's row stride
-    const bool v_is_view_of_k = use_kv_f16 && ggml_metal_op_flash_attn_ext_v_is_view_of_k(op);
+    स्थिर bool v_is_view_of_k = use_kv_f16 && ggml_metal_op_flash_attn_ext_v_is_view_of_k(op);
     uint64_t nb11_pad = nb11;
     uint64_t nb21_pad = nb21;
 
-    if (use_kv_f16) {
-        nb11_pad = sizeof(ggml_fp16_t)*ne10;
-        nb21_pad = sizeof(ggml_fp16_t)*(v_is_view_of_k ? ne10 : ne20);
+    अगर (use_kv_f16) {
+        nb11_pad = माप(ggml_fp16_t)*ne10;
+        nb21_pad = माप(ggml_fp16_t)*(v_is_view_of_k ? ne10 : ne20);
     }
 
     // note: the non-vec kernel requires more extra memory, so always reserve for it
     GGML_ASSERT(OP_FLASH_ATTN_EXT_NCPSG >= OP_FLASH_ATTN_EXT_VEC_NCPSG);
 
     //if (ggml_metal_op_flash_attn_ext_use_vec(op)) {
-    if (false) {
+    अगर (false) {
         // note: always reserve the padding space to avoid graph reallocations
         //const bool has_kvpad = ne11 % OP_FLASH_ATTN_EXT_VEC_NCPSG != 0;
-        const bool has_kvpad = true;
+        स्थिर bool has_kvpad = true;
 
-        if (has_kvpad) {
+        अगर (has_kvpad) {
             res += OP_FLASH_ATTN_EXT_VEC_NCPSG*(
                 nb11_pad*ne12*ne13 +
                 nb21_pad*ne22*ne23 +
-                (has_mask ? ggml_type_size(GGML_TYPE_F16)*ne31*ne32*ne33 : 0));
+                (has_mask ? ggml_type_आकार(GGML_TYPE_F16)*ne31*ne32*ne33 : 0));
         }
-    } else {
+    } अन्यथा {
         //const bool has_kvpad = ne11 % OP_FLASH_ATTN_EXT_NCPSG != 0;
-        const bool has_kvpad = true;
+        स्थिर bool has_kvpad = true;
 
-        if (has_kvpad) {
+        अगर (has_kvpad) {
             res += OP_FLASH_ATTN_EXT_NCPSG*(
                 nb11_pad*ne12*ne13 +
                 nb21_pad*ne22*ne23 +
-                (has_mask ? ggml_type_size(GGML_TYPE_F16)*ne31*ne32*ne33 : 0));
+                (has_mask ? ggml_type_आकार(GGML_TYPE_F16)*ne31*ne32*ne33 : 0));
         }
     }
 
-    return res;
+    वापस res;
 }
 
-size_t ggml_metal_op_flash_attn_ext_extra_blk(const ggml_tensor * op) {
-    assert(op->op == GGML_OP_FLASH_ATTN_EXT);
+माप_प्रकार ggml_metal_op_flash_attn_ext_extra_blk(स्थिर ggml_tensor * op) {
+    निश्चित(op->op == GGML_OP_FLASH_ATTN_EXT);
 
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
   //GGML_TENSOR_LOCALS(uint64_t, nb0, op->src[0], nb);
@@ -3325,15 +3325,15 @@ size_t ggml_metal_op_flash_attn_ext_extra_blk(const ggml_tensor * op) {
     GGML_TENSOR_LOCALS( int32_t, ne3, op->src[3], ne);
     GGML_TENSOR_LOCALS(uint64_t, nb3, op->src[3], nb);
 
-    size_t res = 0;
+    माप_प्रकार res = 0;
 
-    const bool has_mask = op->src[3] != nullptr;
+    स्थिर bool has_mask = op->src[3] != nullptr;
 
-    if (!has_mask) {
-        return res;
+    अगर (!has_mask) {
+        वापस res;
     }
 
-    const bool is_vec = ggml_metal_op_flash_attn_ext_use_vec(op);
+    स्थिर bool is_vec = ggml_metal_op_flash_attn_ext_use_vec(op);
 
     // this optimization is not useful for the vector kernels
     // note: always reserve the blk buffer to avoid graph reallocations
@@ -3341,19 +3341,19 @@ size_t ggml_metal_op_flash_attn_ext_extra_blk(const ggml_tensor * op) {
     //    return res;
     //}
 
-    const int nqptg = is_vec ? OP_FLASH_ATTN_EXT_VEC_NQPSG : OP_FLASH_ATTN_EXT_NQPSG;
-    const int ncpsg = is_vec ? OP_FLASH_ATTN_EXT_VEC_NCPSG : OP_FLASH_ATTN_EXT_NCPSG;
+    स्थिर पूर्णांक nqptg = is_vec ? OP_FLASH_ATTN_EXT_VEC_NQPSG : OP_FLASH_ATTN_EXT_NQPSG;
+    स्थिर पूर्णांक ncpsg = is_vec ? OP_FLASH_ATTN_EXT_VEC_NCPSG : OP_FLASH_ATTN_EXT_NCPSG;
 
-    const int64_t ne1 = (ne01 + nqptg - 1)/nqptg;
-    const int64_t ne0 = (ne30 + ncpsg - 1)/ncpsg;
+    स्थिर int64_t ne1 = (ne01 + nqptg - 1)/nqptg;
+    स्थिर int64_t ne0 = (ne30 + ncpsg - 1)/ncpsg;
 
-    res += GGML_PAD(ggml_type_size(GGML_TYPE_I8)*ne0*ne1*ne32*ne33, 32);
+    res += GGML_PAD(ggml_type_आकार(GGML_TYPE_I8)*ne0*ne1*ne32*ne33, 32);
 
-    return res;
+    वापस res;
 }
 
-size_t ggml_metal_op_flash_attn_ext_extra_tmp(const ggml_tensor * op) {
-    assert(op->op == GGML_OP_FLASH_ATTN_EXT);
+माप_प्रकार ggml_metal_op_flash_attn_ext_extra_tmp(स्थिर ggml_tensor * op) {
+    निश्चित(op->op == GGML_OP_FLASH_ATTN_EXT);
 
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
     GGML_TENSOR_LOCALS(uint64_t, nb0, op->src[0], nb);
@@ -3364,25 +3364,25 @@ size_t ggml_metal_op_flash_attn_ext_extra_tmp(const ggml_tensor * op) {
   //GGML_TENSOR_LOCALS( int32_t, ne3, op->src[3], ne);
   //GGML_TENSOR_LOCALS(uint64_t, nb3, op->src[3], nb);
 
-    size_t res = 0;
+    माप_प्रकार res = 0;
 
     // note: always reserve the temp buffer to avoid graph reallocations
     //if (ggml_metal_op_flash_attn_ext_use_vec(op)) {
-    if (true) {
-        const int64_t nwg = 32;
-        const int64_t ne01_max = std::min(ne01, 32);
+    अगर (true) {
+        स्थिर int64_t nwg = 32;
+        स्थिर int64_t ne01_max = std::min(ne01, 32);
 
         // temp buffer for writing the results from each workgroup
         // - ne20: the size of the Value head
         // -  + 2: the S and M values for each intermediate result
-        res += ggml_type_size(GGML_TYPE_F32)*(ne01_max*ne02*ne03*nwg*(ne20 + 2));
+        res += ggml_type_आकार(GGML_TYPE_F32)*(ne01_max*ne02*ne03*nwg*(ne20 + 2));
     }
 
-    return res;
+    वापस res;
 }
 
-size_t ggml_metal_op_flash_attn_ext_extra_kv_f16(const ggml_tensor * op) {
-    assert(op->op == GGML_OP_FLASH_ATTN_EXT);
+माप_प्रकार ggml_metal_op_flash_attn_ext_extra_kv_f16(स्थिर ggml_tensor * op) {
+    निश्चित(op->op == GGML_OP_FLASH_ATTN_EXT);
 
     // note: always reserve the temp buffer to avoid graph reallocations
     //if (!ggml_metal_op_flash_attn_ext_use_kv_f16(op)) {
@@ -3391,44 +3391,44 @@ size_t ggml_metal_op_flash_attn_ext_extra_kv_f16(const ggml_tensor * op) {
 
     GGML_TENSOR_LOCALS( int32_t, ne2, op->src[2], ne);
 
-    const size_t k_size = ggml_metal_op_flash_attn_ext_kv_f16_k_size(op);
+    स्थिर माप_प्रकार k_आकार = ggml_metal_op_flash_attn_ext_kv_f16_k_आकार(op);
 
     // when V is a view of K, the dequantized V is a view of the dequantized K
-    const bool v_is_view_of_k = ggml_metal_op_flash_attn_ext_v_is_view_of_k(op);
-    if (v_is_view_of_k) {
-        return k_size;
+    स्थिर bool v_is_view_of_k = ggml_metal_op_flash_attn_ext_v_is_view_of_k(op);
+    अगर (v_is_view_of_k) {
+        वापस k_आकार;
     }
 
-    const size_t v_size = GGML_PAD(sizeof(ggml_fp16_t)*(size_t) ne20*ne21*ne22*ne23, 16);
+    स्थिर माप_प्रकार v_आकार = GGML_PAD(माप(ggml_fp16_t)*(माप_प्रकार) ne20*ne21*ne22*ne23, 16);
 
-    return k_size + v_size;
+    वापस k_आकार + v_आकार;
 }
 
 // size of the sparse index lists: one list of KV indices per mask row,
 // padded with -1 up to a multiple of OP_FLASH_ATTN_EXT_VEC_NCPSG
-size_t ggml_metal_op_flash_attn_ext_extra_idx(const ggml_tensor * op) {
-    assert(op->op == GGML_OP_FLASH_ATTN_EXT);
+माप_प्रकार ggml_metal_op_flash_attn_ext_extra_idx(स्थिर ggml_tensor * op) {
+    निश्चित(op->op == GGML_OP_FLASH_ATTN_EXT);
 
     GGML_TENSOR_LOCALS( int32_t, ne3, op->src[3], ne);
 
-    const int n_kv_max = ggml_metal_op_flash_attn_ext_n_kv_max_sparse(op);
+    स्थिर पूर्णांक n_kv_max = ggml_metal_op_flash_attn_ext_n_kv_max_sparse(op);
 
-    if (n_kv_max <= 0) {
-        return 0;
+    अगर (n_kv_max <= 0) {
+        वापस 0;
     }
 
-    const int n_kv_max_padded = GGML_PAD(n_kv_max, OP_FLASH_ATTN_EXT_VEC_NCPSG);
+    स्थिर पूर्णांक n_kv_max_padded = GGML_PAD(n_kv_max, OP_FLASH_ATTN_EXT_VEC_NCPSG);
 
-    return GGML_PAD(sizeof(int32_t)*(size_t) n_kv_max_padded*ne31*ne32*ne33, 16);
+    वापस GGML_PAD(माप(int32_t)*(माप_प्रकार) n_kv_max_padded*ne31*ne32*ne33, 16);
 }
 
-int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    const ggml_metal_device_props * props_dev = ggml_metal_device_get_props(ctx->dev);
+    स्थिर ggml_metal_device_props * props_dev = ggml_metal_device_get_props(ctx->dev);
 
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
     GGML_TENSOR_LOCALS(uint64_t, nb0, op->src[0], nb);
@@ -3454,64 +3454,64 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
     GGML_ASSERT(!op->src[3] || op->src[3]->ne[1] >= op->src[0]->ne[1] &&
             "the Flash-Attention Metal kernel requires the mask to be at least n_queries big");
 
-    float scale;
-    float max_bias;
-    float logit_softcap;
+    भग्न scale;
+    भग्न max_bias;
+    भग्न logit_softcap;
 
-    memcpy(&scale,         ((const int32_t *) op->op_params) + 0, sizeof(scale));
-    memcpy(&max_bias,      ((const int32_t *) op->op_params) + 1, sizeof(max_bias));
-    memcpy(&logit_softcap, ((const int32_t *) op->op_params) + 2, sizeof(logit_softcap));
+    स_नकल(&scale,         ((स्थिर int32_t *) op->op_params) + 0, माप(scale));
+    स_नकल(&max_bias,      ((स्थिर int32_t *) op->op_params) + 1, माप(max_bias));
+    स_नकल(&logit_softcap, ((स्थिर int32_t *) op->op_params) + 2, माप(logit_softcap));
 
-    if (logit_softcap != 0.0f) {
+    अगर (logit_softcap != 0.0f) {
         scale /= logit_softcap;
     }
 
-    const bool has_mask  = op->src[3] != NULL;
-    const bool has_sinks = op->src[4] != NULL;
-    const bool has_bias  = max_bias != 0.0f;
-    const bool has_scap  = logit_softcap != 0.0f;
+    स्थिर bool has_mask  = op->src[3] != शून्य;
+    स्थिर bool has_sinks = op->src[4] != शून्य;
+    स्थिर bool has_bias  = max_bias != 0.0f;
+    स्थिर bool has_scap  = logit_softcap != 0.0f;
 
-    const uint32_t n_head      = op->src[0]->ne[2];
-    const  int32_t n_head_log2 = 1u << (uint32_t) floorf(log2f((float) n_head));
+    स्थिर uint32_t n_शीर्ष      = op->src[0]->ne[2];
+    स्थिर  int32_t n_शीर्ष_log2 = 1u << (uint32_t) floorf(log2f((भग्न) n_शीर्ष));
 
-    const float m0 = powf(2.0f, -(max_bias       ) / n_head_log2);
-    const float m1 = powf(2.0f, -(max_bias / 2.0f) / n_head_log2);
+    स्थिर भग्न m0 = powf(2.0f, -(max_bias       ) / n_शीर्ष_log2);
+    स्थिर भग्न m1 = powf(2.0f, -(max_bias / 2.0f) / n_शीर्ष_log2);
 
     GGML_ASSERT(ne01 < 65536);
 
-    ggml_metal_buffer_id bid_src0 = ggml_metal_get_buffer_id(op->src[0]);
-    ggml_metal_buffer_id bid_src1 = ggml_metal_get_buffer_id(op->src[1]);
-    ggml_metal_buffer_id bid_src2 = ggml_metal_get_buffer_id(op->src[2]);
-    ggml_metal_buffer_id bid_src3 = has_mask  ? ggml_metal_get_buffer_id(op->src[3]) : bid_src0;
-    ggml_metal_buffer_id bid_src4 = has_sinks ? ggml_metal_get_buffer_id(op->src[4]) : bid_src0;
+    ggml_metal_बफर_id bid_src0 = ggml_metal_get_बफर_id(op->src[0]);
+    ggml_metal_बफर_id bid_src1 = ggml_metal_get_बफर_id(op->src[1]);
+    ggml_metal_बफर_id bid_src2 = ggml_metal_get_बफर_id(op->src[2]);
+    ggml_metal_बफर_id bid_src3 = has_mask  ? ggml_metal_get_बफर_id(op->src[3]) : bid_src0;
+    ggml_metal_बफर_id bid_src4 = has_sinks ? ggml_metal_get_बफर_id(op->src[4]) : bid_src0;
 
-    ggml_metal_buffer_id bid_dst = ggml_metal_get_buffer_id(op);
+    ggml_metal_बफर_id bid_dst = ggml_metal_get_बफर_id(op);
 
-    ggml_metal_buffer_id bid_pad = bid_dst;
+    ggml_metal_बफर_id bid_pad = bid_dst;
     bid_pad.offs += ggml_nbytes(op);
 
-    ggml_metal_buffer_id bid_blk = bid_pad;
+    ggml_metal_बफर_id bid_blk = bid_pad;
     bid_blk.offs += ggml_metal_op_flash_attn_ext_extra_pad(op);
 
-    ggml_metal_buffer_id bid_tmp = bid_blk;
+    ggml_metal_बफर_id bid_tmp = bid_blk;
     bid_tmp.offs += ggml_metal_op_flash_attn_ext_extra_blk(op);
 
-    ggml_metal_buffer_id bid_kv_f16 = bid_tmp;
+    ggml_metal_बफर_id bid_kv_f16 = bid_tmp;
     bid_kv_f16.offs += ggml_metal_op_flash_attn_ext_extra_tmp(op);
 
     // sparse path: gather the finite mask entries into index lists and run the vec kernels over them
-    const int n_kv_max_sparse = ggml_metal_op_flash_attn_ext_n_kv_max_sparse(op);
-    const bool use_sparse = n_kv_max_sparse > 0;
-    const int n_kv_max_padded = use_sparse ? GGML_PAD(n_kv_max_sparse, OP_FLASH_ATTN_EXT_VEC_NCPSG) : 0;
+    स्थिर पूर्णांक n_kv_max_sparse = ggml_metal_op_flash_attn_ext_n_kv_max_sparse(op);
+    स्थिर bool use_sparse = n_kv_max_sparse > 0;
+    स्थिर पूर्णांक n_kv_max_padded = use_sparse ? GGML_PAD(n_kv_max_sparse, OP_FLASH_ATTN_EXT_VEC_NCPSG) : 0;
 
     // the vec kernels dequantize the KV inline; no need for the F16 dequant pass in the sparse path
-    const bool use_kv_f16 = !use_sparse && ggml_metal_op_flash_attn_ext_use_kv_f16(op);
+    स्थिर bool use_kv_f16 = !use_sparse && ggml_metal_op_flash_attn_ext_use_kv_f16(op);
 
-    ggml_metal_buffer_id bid_idx = bid_kv_f16;
+    ggml_metal_बफर_id bid_idx = bid_kv_f16;
     bid_idx.offs += ggml_metal_op_flash_attn_ext_extra_kv_f16(op);
 
-    ggml_metal_buffer_id bid_k = bid_src1;
-    ggml_metal_buffer_id bid_v = bid_src2;
+    ggml_metal_बफर_id bid_k = bid_src1;
+    ggml_metal_बफर_id bid_v = bid_src2;
 
     uint64_t nb10_attn = nb10;
     uint64_t nb11_attn = nb11;
@@ -3522,20 +3522,20 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
     uint64_t nb22_attn = nb22;
     uint64_t nb23_attn = nb23;
 
-    if (use_kv_f16) {
-        assert(ggml_metal_op_flash_attn_ext_extra_kv_f16(op) != 0);
+    अगर (use_kv_f16) {
+        निश्चित(ggml_metal_op_flash_attn_ext_extra_kv_f16(op) != 0);
 
-        const bool v_is_view_of_k = ggml_metal_op_flash_attn_ext_v_is_view_of_k(op);
+        स्थिर bool v_is_view_of_k = ggml_metal_op_flash_attn_ext_v_is_view_of_k(op);
 
-        const int64_t nblocks1_64 = (ne10/ggml_blck_size(op->src[1]->type))*(int64_t) ne11*ne12*ne13;
+        स्थिर int64_t nblocks1_64 = (ne10/ggml_blck_आकार(op->src[1]->type))*(int64_t) ne11*ne12*ne13;
         GGML_ASSERT(nblocks1_64 <= INT32_MAX);
-        const int32_t nblocks1 = nblocks1_64;
+        स्थिर int32_t nblocks1 = nblocks1_64;
 
-        ggml_metal_buffer_id bid_v_f16 = bid_kv_f16;
-        bid_v_f16.offs += ggml_metal_op_flash_attn_ext_kv_f16_k_size(op);
+        ggml_metal_बफर_id bid_v_f16 = bid_kv_f16;
+        bid_v_f16.offs += ggml_metal_op_flash_attn_ext_kv_f16_k_आकार(op);
 
-        auto pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_kv_f16(lib, op);
-        const int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline0), 256);
+        स्वतः pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_kv_f16(lib, op);
+        स्थिर पूर्णांक nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline0), 256);
 
         // K
         ggml_metal_kargs_flash_attn_ext_kv_f16 args_k = {
@@ -3551,17 +3551,17 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
         };
 
         ggml_metal_encoder_set_pipeline(enc, pipeline0);
-        ggml_metal_encoder_set_bytes   (enc, &args_k, sizeof(args_k), 0);
-        ggml_metal_encoder_set_buffer  (enc, bid_src1,        1);
-        ggml_metal_encoder_set_buffer  (enc, bid_kv_f16, 2);
+        ggml_metal_encoder_set_bytes   (enc, &args_k, माप(args_k), 0);
+        ggml_metal_encoder_set_बफर  (enc, bid_src1,        1);
+        ggml_metal_encoder_set_बफर  (enc, bid_kv_f16, 2);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, (nblocks1 + nth - 1)/nth, 1, 1, nth, 1, 1);
 
         // V (skip when V is a view of K: the dequantized V is a view of the dequantized K)
-        if (!v_is_view_of_k) {
-            const int64_t nblocks2_64 = (ne20/ggml_blck_size(op->src[2]->type))*(int64_t) ne21*ne22*ne23;
+        अगर (!v_is_view_of_k) {
+            स्थिर int64_t nblocks2_64 = (ne20/ggml_blck_आकार(op->src[2]->type))*(int64_t) ne21*ne22*ne23;
             GGML_ASSERT(nblocks2_64 <= INT32_MAX);
-            const int32_t nblocks2 = nblocks2_64;
+            स्थिर int32_t nblocks2 = nblocks2_64;
 
             ggml_metal_kargs_flash_attn_ext_kv_f16 args_v = {
                 /*.ne0    =*/ ne20,
@@ -3576,9 +3576,9 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
             };
 
             ggml_metal_encoder_set_pipeline(enc, pipeline0);
-            ggml_metal_encoder_set_bytes   (enc, &args_v, sizeof(args_v), 0);
-            ggml_metal_encoder_set_buffer  (enc, bid_src2,        1);
-            ggml_metal_encoder_set_buffer  (enc, bid_v_f16,       2);
+            ggml_metal_encoder_set_bytes   (enc, &args_v, माप(args_v), 0);
+            ggml_metal_encoder_set_बफर  (enc, bid_src2,        1);
+            ggml_metal_encoder_set_बफर  (enc, bid_v_f16,       2);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, (nblocks2 + nth - 1)/nth, 1, 1, nth, 1, 1);
         }
@@ -3590,34 +3590,34 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
         bid_v = v_is_view_of_k ? bid_k : bid_v_f16;
 
         // contiguous F16 layout of the dequantized K
-        nb10_attn = sizeof(ggml_fp16_t);
+        nb10_attn = माप(ggml_fp16_t);
         nb11_attn = nb10_attn*ne10;
         nb12_attn = nb11_attn*ne11;
         nb13_attn = nb12_attn*ne12;
 
         // if V is a view of K, the dequantized V is read from the dequantized K with K's strides
-        if (v_is_view_of_k) {
+        अगर (v_is_view_of_k) {
             nb20_attn = nb10_attn;
             nb21_attn = nb11_attn;
             nb22_attn = nb12_attn;
             nb23_attn = nb13_attn;
-        } else {
+        } अन्यथा {
             // contiguous F16 layout of the dequantized V
-            nb20_attn = sizeof(ggml_fp16_t);
+            nb20_attn = माप(ggml_fp16_t);
             nb21_attn = nb20_attn*ne20;
             nb22_attn = nb21_attn*ne21;
             nb23_attn = nb22_attn*ne22;
         }
     }
 
-    if (!use_sparse && ggml_metal_op_flash_attn_ext_use_tensor(op, props_dev->has_tensor)) {
+    अगर (!use_sparse && ggml_metal_op_flash_attn_ext_use_tensor(op, props_dev->has_tensor)) {
         // tensor API kernel
-        const int nqptg = ne00 >= 512 ? OP_FLASH_ATTN_EXT_TENSOR_NQPSG_LARGE : OP_FLASH_ATTN_EXT_TENSOR_NQPSG; // queries per threadgroup
-        const int ncpsg = OP_FLASH_ATTN_EXT_TENSOR_NCPSG; // cache values per threadgroup
-        const int nsg   = OP_FLASH_ATTN_EXT_TENSOR_NSG;
+        स्थिर पूर्णांक nqptg = ne00 >= 512 ? OP_FLASH_ATTN_EXT_TENSOR_NQPSG_LARGE : OP_FLASH_ATTN_EXT_TENSOR_NQPSG; // queries per threadgroup
+        स्थिर पूर्णांक ncpsg = OP_FLASH_ATTN_EXT_TENSOR_NCPSG; // cache values per threadgroup
+        स्थिर पूर्णांक nsg   = OP_FLASH_ATTN_EXT_TENSOR_NSG;
 
-        if (has_mask) {
-            assert(ggml_metal_op_flash_attn_ext_extra_blk(op) != 0);
+        अगर (has_mask) {
+            निश्चित(ggml_metal_op_flash_attn_ext_extra_blk(op) != 0);
 
             ggml_metal_kargs_flash_attn_ext_blk args0 = {
                 /*.ne01 =*/ ne01,
@@ -3630,23 +3630,23 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
                 /*.nb33 =*/ nb33,
             };
 
-            auto pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_blk(lib, op, nqptg, ncpsg);
+            स्वतः pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_blk(lib, op, nqptg, ncpsg);
 
             ggml_metal_encoder_set_pipeline(enc, pipeline0);
-            ggml_metal_encoder_set_bytes   (enc, &args0, sizeof(args0), 0);
-            ggml_metal_encoder_set_buffer  (enc, bid_src3, 1);
-            ggml_metal_encoder_set_buffer  (enc, bid_blk,  2);
+            ggml_metal_encoder_set_bytes   (enc, &args0, माप(args0), 0);
+            ggml_metal_encoder_set_बफर  (enc, bid_src3, 1);
+            ggml_metal_encoder_set_बफर  (enc, bid_blk,  2);
 
-            const int32_t nblk1 = ((ne01 + nqptg - 1)/nqptg);
-            const int32_t nblk0 = ((ne30 + ncpsg - 1)/ncpsg);
+            स्थिर int32_t nblk1 = ((ne01 + nqptg - 1)/nqptg);
+            स्थिर int32_t nblk0 = ((ne30 + ncpsg - 1)/ncpsg);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, nblk0, nblk1, ne32*ne33, 32, 1, 1);
 
             ggml_metal_op_concurrency_reset(ctx);
         }
 
-        const int32_t ns10 = nb11_attn/nb10_attn;
-        const int32_t ns20 = nb21_attn/nb20_attn;
+        स्थिर int32_t ns10 = nb11_attn/nb10_attn;
+        स्थिर int32_t ns20 = nb21_attn/nb20_attn;
 
         ggml_metal_kargs_flash_attn_ext args = {
             /*.ne01          =*/ ne01,
@@ -3679,35 +3679,35 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
             /*.max_bias      =*/ max_bias,
             /*.m0            =*/ m0,
             /*.m1            =*/ m1,
-            /*.n_head_log2   =*/ n_head_log2,
+            /*.n_head_log2   =*/ n_शीर्ष_log2,
             /*.logit_softcap =*/ logit_softcap,
         };
 
         // shared memory layout: queries (16-bit), scores (float), probabilities (16-bit), row scale (float), rescale flag (int)
-        const size_t smem = GGML_PAD(nqptg*ne00*sizeof(ggml_fp16_t) + nqptg*ncpsg*(sizeof(float) + sizeof(ggml_fp16_t)) + nqptg*sizeof(float) + sizeof(int32_t), 16);
+        स्थिर माप_प्रकार smem = GGML_PAD(nqptg*ne00*माप(ggml_fp16_t) + nqptg*ncpsg*(माप(भग्न) + माप(ggml_fp16_t)) + nqptg*माप(भग्न) + माप(int32_t), 16);
 
-        auto pipeline = ggml_metal_library_get_pipeline_flash_attn_ext_tensor(lib, op, has_mask, has_sinks, has_bias, has_scap);
+        स्वतः pipeline = ggml_metal_library_get_pipeline_flash_attn_ext_tensor(lib, op, has_mask, has_sinks, has_bias, has_scap);
 
         GGML_ASSERT(nsg*32 <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
-        GGML_ASSERT(smem <= props_dev->max_theadgroup_memory_size);
+        GGML_ASSERT(smem <= props_dev->max_theadgroup_memory_आकार);
 
         ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
-        ggml_metal_encoder_set_buffer  (enc, bid_k,    2);
-        ggml_metal_encoder_set_buffer  (enc, bid_v,    3);
-        ggml_metal_encoder_set_buffer  (enc, bid_src3, 4);
-        ggml_metal_encoder_set_buffer  (enc, bid_src4, 5);
-        ggml_metal_encoder_set_buffer  (enc, bid_blk,  6);
-        ggml_metal_encoder_set_buffer  (enc, bid_dst,  7);
+        ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+        ggml_metal_encoder_set_बफर  (enc, bid_src0, 1);
+        ggml_metal_encoder_set_बफर  (enc, bid_k,    2);
+        ggml_metal_encoder_set_बफर  (enc, bid_v,    3);
+        ggml_metal_encoder_set_बफर  (enc, bid_src3, 4);
+        ggml_metal_encoder_set_बफर  (enc, bid_src4, 5);
+        ggml_metal_encoder_set_बफर  (enc, bid_blk,  6);
+        ggml_metal_encoder_set_बफर  (enc, bid_dst,  7);
 
-        ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+        ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem, 0);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, (ne01 + nqptg - 1)/nqptg, ne02, ne03, 32, nsg, 1);
-    } else if (!use_sparse && !ggml_metal_op_flash_attn_ext_use_vec(op)) {
+    } अन्यथा अगर (!use_sparse && !ggml_metal_op_flash_attn_ext_use_vec(op)) {
         // half8x8 kernel
-        const int nqptg = OP_FLASH_ATTN_EXT_NQPSG; // queries per threadgroup
-        const int ncpsg = OP_FLASH_ATTN_EXT_NCPSG; // cache values per simdgroup
+        स्थिर पूर्णांक nqptg = OP_FLASH_ATTN_EXT_NQPSG; // queries per threadgroup
+        स्थिर पूर्णांक ncpsg = OP_FLASH_ATTN_EXT_NCPSG; // cache values per simdgroup
 
         GGML_ASSERT(nqptg <= 32);
         GGML_ASSERT(nqptg  % 8  == 0);
@@ -3715,10 +3715,10 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
 
         bool need_sync = false;
 
-        const bool has_kvpad = ne11 % ncpsg != 0;
+        स्थिर bool has_kvpad = ne11 % ncpsg != 0;
 
-        if (has_kvpad) {
-            assert(ggml_metal_op_flash_attn_ext_extra_pad(op) != 0);
+        अगर (has_kvpad) {
+            निश्चित(ggml_metal_op_flash_attn_ext_extra_pad(op) != 0);
 
             ggml_metal_kargs_flash_attn_ext_pad args0 = {
                 /*.ne11    =*/ne11,
@@ -3738,25 +3738,25 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
                 /*.nb33    =*/nb33,
             };
 
-            auto pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_pad(lib, op, has_mask, ncpsg);
+            स्वतः pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_pad(lib, op, has_mask, ncpsg);
 
             ggml_metal_encoder_set_pipeline(enc, pipeline0);
-            ggml_metal_encoder_set_bytes   (enc, &args0, sizeof(args0), 0);
-            ggml_metal_encoder_set_buffer  (enc, bid_k,    1);
-            ggml_metal_encoder_set_buffer  (enc, bid_v,    2);
-            ggml_metal_encoder_set_buffer  (enc, bid_src3, 3);
-            ggml_metal_encoder_set_buffer  (enc, bid_pad,  4);
+            ggml_metal_encoder_set_bytes   (enc, &args0, माप(args0), 0);
+            ggml_metal_encoder_set_बफर  (enc, bid_k,    1);
+            ggml_metal_encoder_set_बफर  (enc, bid_v,    2);
+            ggml_metal_encoder_set_बफर  (enc, bid_src3, 3);
+            ggml_metal_encoder_set_बफर  (enc, bid_pad,  4);
 
-            assert(ne12 == ne22);
-            assert(ne13 == ne23);
+            निश्चित(ne12 == ne22);
+            निश्चित(ne13 == ne23);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, ncpsg, std::max(ne12, ne32), std::max(ne13, ne33), 32, 1, 1);
 
             need_sync = true;
         }
 
-        if (has_mask) {
-            assert(ggml_metal_op_flash_attn_ext_extra_blk(op) != 0);
+        अगर (has_mask) {
+            निश्चित(ggml_metal_op_flash_attn_ext_extra_blk(op) != 0);
 
             ggml_metal_kargs_flash_attn_ext_blk args0 = {
                 /*.ne01 =*/ ne01,
@@ -3769,44 +3769,44 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
                 /*.nb33 =*/ nb33,
             };
 
-            auto pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_blk(lib, op, nqptg, ncpsg);
+            स्वतः pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_blk(lib, op, nqptg, ncpsg);
 
             ggml_metal_encoder_set_pipeline(enc, pipeline0);
-            ggml_metal_encoder_set_bytes   (enc, &args0, sizeof(args0), 0);
-            ggml_metal_encoder_set_buffer  (enc, bid_src3, 1);
-            ggml_metal_encoder_set_buffer  (enc, bid_blk,  2);
+            ggml_metal_encoder_set_bytes   (enc, &args0, माप(args0), 0);
+            ggml_metal_encoder_set_बफर  (enc, bid_src3, 1);
+            ggml_metal_encoder_set_बफर  (enc, bid_blk,  2);
 
-            const int32_t nblk1 = ((ne01 + nqptg - 1)/nqptg);
-            const int32_t nblk0 = ((ne30 + ncpsg - 1)/ncpsg);
+            स्थिर int32_t nblk1 = ((ne01 + nqptg - 1)/nqptg);
+            स्थिर int32_t nblk0 = ((ne30 + ncpsg - 1)/ncpsg);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, nblk0, nblk1, ne32*ne33, 32, 1, 1);
 
             need_sync = true;
         }
 
-        if (need_sync) {
+        अगर (need_sync) {
             ggml_metal_op_concurrency_reset(ctx);
         }
 
-        const int is_q = !use_kv_f16 && ggml_is_quantized(op->src[1]->type) ? 1 : 0;
+        स्थिर पूर्णांक is_q = !use_kv_f16 && ggml_is_quantized(op->src[1]->type) ? 1 : 0;
 
         // shared memory layout (halfs unless noted):
         //   queries/attn/result: Q*(DK + 2*PAD2(DV,64) + 4*C)
         //   quantized KV scratch: 16*32*NSG (only when is_q)
-        const int64_t dv_pad = GGML_PAD(ne20, 64);
+        स्थिर int64_t dv_pad = GGML_PAD(ne20, 64);
 
-        auto fa_smem = [&](int32_t nsg) -> size_t {
-            const size_t smem_half = nqptg*(ne00 + 2*dv_pad + 4*ncpsg) + is_q*(16*32*nsg);
-            return GGML_PAD(smem_half*sizeof(ggml_fp16_t), 16);
+        स्वतः fa_smem = [&](int32_t nsg) -> माप_प्रकार {
+            स्थिर माप_प्रकार smem_half = nqptg*(ne00 + 2*dv_pad + 4*ncpsg) + is_q*(16*32*nsg);
+            वापस GGML_PAD(smem_half*माप(ggml_fp16_t), 16);
         };
 
         // simdgroups per threadgroup (a.k.a. warps)
         int32_t nsg = ne00 >= 512 ? 8 : 4;
 
-        const size_t smem = fa_smem(nsg);
+        स्थिर माप_प्रकार smem = fa_smem(nsg);
 
-        const int32_t ns10 = nb11_attn/nb10_attn;
-        const int32_t ns20 = nb21_attn/nb20_attn;
+        स्थिर int32_t ns10 = nb11_attn/nb10_attn;
+        स्थिर int32_t ns20 = nb21_attn/nb20_attn;
 
         ggml_metal_kargs_flash_attn_ext args = {
             /*.ne01          =*/ ne01,
@@ -3839,43 +3839,43 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
             /*.max_bias      =*/ max_bias,
             /*.m0            =*/ m0,
             /*.m1            =*/ m1,
-            /*.n_head_log2   =*/ n_head_log2,
+            /*.n_head_log2   =*/ n_शीर्ष_log2,
             /*.logit_softcap =*/ logit_softcap,
         };
 
-        auto pipeline = ggml_metal_library_get_pipeline_flash_attn_ext(lib, op, has_mask, has_sinks, has_bias, has_scap, has_kvpad, nsg, use_kv_f16, ns10, ns20);
+        स्वतः pipeline = ggml_metal_library_get_pipeline_flash_attn_ext(lib, op, has_mask, has_sinks, has_bias, has_scap, has_kvpad, nsg, use_kv_f16, ns10, ns20);
 
         ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
-        ggml_metal_encoder_set_buffer  (enc, bid_k,    2);
-        ggml_metal_encoder_set_buffer  (enc, bid_v,    3);
-        ggml_metal_encoder_set_buffer  (enc, bid_src3, 4);
-        ggml_metal_encoder_set_buffer  (enc, bid_src4, 5);
-        ggml_metal_encoder_set_buffer  (enc, bid_pad,  6);
-        ggml_metal_encoder_set_buffer  (enc, bid_blk,  7);
-        ggml_metal_encoder_set_buffer  (enc, bid_dst,  8);
+        ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+        ggml_metal_encoder_set_बफर  (enc, bid_src0, 1);
+        ggml_metal_encoder_set_बफर  (enc, bid_k,    2);
+        ggml_metal_encoder_set_बफर  (enc, bid_v,    3);
+        ggml_metal_encoder_set_बफर  (enc, bid_src3, 4);
+        ggml_metal_encoder_set_बफर  (enc, bid_src4, 5);
+        ggml_metal_encoder_set_बफर  (enc, bid_pad,  6);
+        ggml_metal_encoder_set_बफर  (enc, bid_blk,  7);
+        ggml_metal_encoder_set_बफर  (enc, bid_dst,  8);
 
-        GGML_ASSERT(smem <= props_dev->max_theadgroup_memory_size);
+        GGML_ASSERT(smem <= props_dev->max_theadgroup_memory_आकार);
 
-        ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+        ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem, 0);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, (ne01 + nqptg - 1)/nqptg, ne02, ne03, 32, nsg, 1);
-    } else {
+    } अन्यथा {
         // half4x4 kernel
         // sparse: the index lists are per query row, so a threadgroup can share KV with Q == 1 only
-        auto cfg = use_sparse
-                ? ggml_metal_tuning::fa_vec_baseline_cfg((int) ne00, (int) ne20)
+        स्वतः cfg = use_sparse
+                ? ggml_metal_tuning::fa_vec_baseline_cfg((पूर्णांक) ne00, (पूर्णांक) ne20)
                 : ggml_metal_tuning::fa_vec_pick(
                           props_dev->gpu_family,
-                          (int) op->src[1]->type,
-                          (int) ne00, (int) ne20,   // dk, dv (ne00 == dk for FA)
+                          (पूर्णांक) op->src[1]->type,
+                          (पूर्णांक) ne00, (पूर्णांक) ne20,   // dk, dv (ne00 == dk for FA)
                           ne11, ne01);
 
-        int nqptg = cfg.Q; // queries per threadgroup
+        पूर्णांक nqptg = cfg.Q; // queries per threadgroup
 
-        const int ncpsg = OP_FLASH_ATTN_EXT_VEC_NCPSG; // cache values per simdgroup !! sync with kernel template arguments !!
-        const int nhptg = 1;                           // heads per threadgroup
+        स्थिर पूर्णांक ncpsg = OP_FLASH_ATTN_EXT_VEC_NCPSG; // cache values per simdgroup !! sync with kernel template arguments !!
+        स्थिर पूर्णांक nhptg = 1;                           // heads per threadgroup
 
         GGML_ASSERT(nqptg <= 32);
         GGML_ASSERT(nqptg == 1 || nqptg == 2 || nqptg == 4);  // only instantiated Q values
@@ -3883,10 +3883,10 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
 
         bool need_sync = false;
 
-        const bool has_kvpad = !use_sparse && ne11 % ncpsg != 0;
+        स्थिर bool has_kvpad = !use_sparse && ne11 % ncpsg != 0;
 
-        if (use_sparse) {
-            assert(ggml_metal_op_flash_attn_ext_extra_idx(op) != 0);
+        अगर (use_sparse) {
+            निश्चित(ggml_metal_op_flash_attn_ext_extra_idx(op) != 0);
 
             GGML_ASSERT(ne30 == ne11);
 
@@ -3902,14 +3902,14 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
                 /*.n_kv_max_padded   =*/ n_kv_max_padded,
             };
 
-            auto pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_vec_idx(lib, op);
+            स्वतः pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_vec_idx(lib, op);
 
             ggml_metal_encoder_set_pipeline(enc, pipeline0);
-            ggml_metal_encoder_set_bytes   (enc, &args0, sizeof(args0), 0);
-            ggml_metal_encoder_set_buffer  (enc, bid_src3, 1);
-            ggml_metal_encoder_set_buffer  (enc, bid_idx,  2);
+            ggml_metal_encoder_set_bytes   (enc, &args0, माप(args0), 0);
+            ggml_metal_encoder_set_बफर  (enc, bid_src3, 1);
+            ggml_metal_encoder_set_बफर  (enc, bid_idx,  2);
 
-            int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline0), 256);
+            पूर्णांक nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline0), 256);
             nth = std::max(32, (nth/32)*32);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, ne31, ne32, ne33, nth, 1, 1);
@@ -3917,8 +3917,8 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
             need_sync = true;
         }
 
-        if (has_kvpad) {
-            assert(ggml_metal_op_flash_attn_ext_extra_pad(op) != 0);
+        अगर (has_kvpad) {
+            निश्चित(ggml_metal_op_flash_attn_ext_extra_pad(op) != 0);
 
             ggml_metal_kargs_flash_attn_ext_pad args0 = {
                 /*.ne11    =*/ne11,
@@ -3938,24 +3938,24 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
                 /*.nb33    =*/nb33,
             };
 
-            auto pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_pad(lib, op, has_mask, ncpsg);
+            स्वतः pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_pad(lib, op, has_mask, ncpsg);
 
             ggml_metal_encoder_set_pipeline(enc, pipeline0);
-            ggml_metal_encoder_set_bytes   (enc, &args0, sizeof(args0), 0);
-            ggml_metal_encoder_set_buffer  (enc, bid_k,    1);
-            ggml_metal_encoder_set_buffer  (enc, bid_v,    2);
-            ggml_metal_encoder_set_buffer  (enc, bid_src3, 3);
-            ggml_metal_encoder_set_buffer  (enc, bid_pad,  4);
+            ggml_metal_encoder_set_bytes   (enc, &args0, माप(args0), 0);
+            ggml_metal_encoder_set_बफर  (enc, bid_k,    1);
+            ggml_metal_encoder_set_बफर  (enc, bid_v,    2);
+            ggml_metal_encoder_set_बफर  (enc, bid_src3, 3);
+            ggml_metal_encoder_set_बफर  (enc, bid_pad,  4);
 
-            assert(ne12 == ne22);
-            assert(ne13 == ne23);
+            निश्चित(ne12 == ne22);
+            निश्चित(ne13 == ne23);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, ncpsg, std::max(ne12, ne32), std::max(ne13, ne33), 32, 1, 1);
 
             need_sync = true;
         }
 
-        if (need_sync) {
+        अगर (need_sync) {
             ggml_metal_op_concurrency_reset(ctx);
         }
 
@@ -3967,12 +3967,12 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
         //   attn + mask:  NSG*4*Q*C
         //   results:      2*NSG*Q*PAD2(ne20, 128)
         //   sparse idx:   NSG*C ints (only when use_sparse)
-        const int64_t dk_pad = GGML_PAD(ne00, 128);
-        const int64_t dv_pad = GGML_PAD(ne20, 128);
+        स्थिर int64_t dk_pad = GGML_PAD(ne00, 128);
+        स्थिर int64_t dv_pad = GGML_PAD(ne20, 128);
 
-        auto fa_vec_smem = [&](int64_t nsg, int32_t nqptg) -> size_t {
-            const size_t smem_half = (size_t) (dk_pad + 4*ncpsg + 2*dv_pad)*nqptg*nsg;
-            return GGML_PAD(smem_half*sizeof(ggml_fp16_t) + (use_sparse ? (size_t) nsg*ncpsg*sizeof(int) : 0), 16);
+        स्वतः fa_vec_smem = [&](int64_t nsg, int32_t nqptg) -> माप_प्रकार {
+            स्थिर माप_प्रकार smem_half = (माप_प्रकार) (dk_pad + 4*ncpsg + 2*dv_pad)*nqptg*nsg;
+            वापस GGML_PAD(smem_half*माप(ggml_fp16_t) + (use_sparse ? (माप_प्रकार) nsg*ncpsg*माप(पूर्णांक) : 0), 16);
         };
 
         int64_t nsg = 1;
@@ -3980,42 +3980,42 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
         // workgroups
         // each workgroup handles nsg*nkpsg cache values
         int32_t nwg = 1;
-        if (use_sparse) {
-            if (ne01 > 32) {
+        अगर (use_sparse) {
+            अगर (ne01 > 32) {
                 // large sparse batch
                 nwg = 1;
                 nsg = 1;
-                if (n_kv_max_padded == 640) {
+                अगर (n_kv_max_padded == 640) {
                     nsg = 4; // 640 % (4*32) == 0
-                } else {
-                    while (2*nwg*nsg*ncpsg < n_kv_max_padded && nsg < 4) {
+                } अन्यथा {
+                    जबतक (2*nwg*nsg*ncpsg < n_kv_max_padded && nsg < 4) {
                         nsg *= 2;
                     }
                 }
-            } else {
+            } अन्यथा {
                 // small sparse batch
                 nwg = 32;
                 nsg = 1;
-                while (2*nwg*nsg*ncpsg < n_kv_max_padded && nsg < 4) {
+                जबतक (2*nwg*nsg*ncpsg < n_kv_max_padded && nsg < 4) {
                     nsg *= 2;
                 }
             }
-        } else {
+        } अन्यथा {
             nwg = 32;
             nsg = 1;
-            while (2*nwg*nsg*ncpsg < ne11 && nsg < 4) {
+            जबतक (2*nwg*nsg*ncpsg < ne11 && nsg < 4) {
                 nsg *= 2;
             }
         }
 
         // fall back to baseline (Q=1) if the tuned config exceeds threadgroup memory
-        if (fa_vec_smem(nsg, nqptg) > props_dev->max_theadgroup_memory_size) {
-            cfg   = ggml_metal_tuning::fa_vec_baseline_cfg((int) ne00, (int) ne20);
+        अगर (fa_vec_smem(nsg, nqptg) > props_dev->max_theadgroup_memory_आकार) {
+            cfg   = ggml_metal_tuning::fa_vec_baseline_cfg((पूर्णांक) ne00, (पूर्णांक) ne20);
             nqptg = cfg.Q;  // = 1
         }
 
-        const int32_t ns10 = nb11_attn/nb10_attn;
-        const int32_t ns20 = nb21_attn/nb20_attn;
+        स्थिर int32_t ns10 = nb11_attn/nb10_attn;
+        स्थिर int32_t ns20 = nb21_attn/nb20_attn;
 
         ggml_metal_kargs_flash_attn_ext_vec args = {
             /*.ne01          =*/ ne01,
@@ -4048,48 +4048,48 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
             /*.max_bias      =*/ max_bias,
             /*.m0            =*/ m0,
             /*.m1            =*/ m1,
-            /*.n_head_log2   =*/ n_head_log2,
+            /*.n_head_log2   =*/ n_शीर्ष_log2,
             /*.logit_softcap =*/ logit_softcap,
             /*.n_kv_max_padded =*/ n_kv_max_padded,
         };
 
-        auto pipeline = ggml_metal_library_get_pipeline_flash_attn_ext_vec(lib, op, has_mask, has_sinks, has_bias, has_scap, has_kvpad, use_sparse, nqptg, cfg.NE, nsg, nwg, use_kv_f16, ns10, ns20);
+        स्वतः pipeline = ggml_metal_library_get_pipeline_flash_attn_ext_vec(lib, op, has_mask, has_sinks, has_bias, has_scap, has_kvpad, use_sparse, nqptg, cfg.NE, nsg, nwg, use_kv_f16, ns10, ns20);
 
         GGML_ASSERT(nsg*32 <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
 
         ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
-        ggml_metal_encoder_set_buffer  (enc, bid_k,    2);
-        ggml_metal_encoder_set_buffer  (enc, bid_v,    3);
-        ggml_metal_encoder_set_buffer  (enc, bid_src3, 4);
-        ggml_metal_encoder_set_buffer  (enc, bid_src4, 5);
-        ggml_metal_encoder_set_buffer  (enc, use_sparse ? bid_idx : bid_src0, 8);
+        ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+        ggml_metal_encoder_set_बफर  (enc, bid_src0, 1);
+        ggml_metal_encoder_set_बफर  (enc, bid_k,    2);
+        ggml_metal_encoder_set_बफर  (enc, bid_v,    3);
+        ggml_metal_encoder_set_बफर  (enc, bid_src3, 4);
+        ggml_metal_encoder_set_बफर  (enc, bid_src4, 5);
+        ggml_metal_encoder_set_बफर  (enc, use_sparse ? bid_idx : bid_src0, 8);
 
-        const size_t smem = fa_vec_smem(nsg, nqptg);
+        स्थिर माप_प्रकार smem = fa_vec_smem(nsg, nqptg);
 
-        GGML_ASSERT(smem <= props_dev->max_theadgroup_memory_size);
+        GGML_ASSERT(smem <= props_dev->max_theadgroup_memory_आकार);
 
-        if (nwg == 1) {
+        अगर (nwg == 1) {
             // using 1 workgroup -> write the result directly into dst
-            ggml_metal_encoder_set_buffer(enc, bid_pad, 6);
-            ggml_metal_encoder_set_buffer(enc, bid_dst, 7);
+            ggml_metal_encoder_set_बफर(enc, bid_pad, 6);
+            ggml_metal_encoder_set_बफर(enc, bid_dst, 7);
 
-            ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+            ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem, 0);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, (ne01 + nqptg - 1)/nqptg, (ne02 + nhptg - 1)/nhptg, ne03*nwg, 32, nsg, 1);
-        } else {
+        } अन्यथा {
             // sanity checks
-            assert(ggml_metal_op_flash_attn_ext_extra_tmp(op) != 0);
+            निश्चित(ggml_metal_op_flash_attn_ext_extra_tmp(op) != 0);
 
             GGML_ASSERT(ne01*ne02*ne03 == ne1*ne2*ne3);
             GGML_ASSERT((uint64_t)ne1*ne2*ne3 <= (1u << 31));
 
             // write the results from each workgroup into a temp buffer
-            ggml_metal_encoder_set_buffer(enc, bid_pad, 6);
-            ggml_metal_encoder_set_buffer(enc, bid_tmp, 7);
+            ggml_metal_encoder_set_बफर(enc, bid_pad, 6);
+            ggml_metal_encoder_set_बफर(enc, bid_tmp, 7);
 
-            ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+            ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem, 0);
             ggml_metal_encoder_dispatch_threadgroups(enc, (ne01 + nqptg - 1)/nqptg, (ne02 + nhptg - 1)/nhptg, ne03*nwg, 32, nsg, 1);
 
             // sync the 2 kernels
@@ -4097,57 +4097,57 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
 
             // reduce the results from the workgroups
             {
-                const int32_t nrows = ne1*ne2*ne3;
+                स्थिर int32_t nrows = ne1*ne2*ne3;
 
                 ggml_metal_kargs_flash_attn_ext_vec_reduce args0 = {
                     nrows,
                 };
 
-                auto pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_vec_reduce(lib, op, ne20, nwg);
+                स्वतः pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_vec_reduce(lib, op, ne20, nwg);
 
                 ggml_metal_encoder_set_pipeline(enc, pipeline0);
-                ggml_metal_encoder_set_bytes   (enc, &args0, sizeof(args0), 0);
-                ggml_metal_encoder_set_buffer  (enc, bid_tmp, 1);
-                ggml_metal_encoder_set_buffer  (enc, bid_dst, 2);
+                ggml_metal_encoder_set_bytes   (enc, &args0, माप(args0), 0);
+                ggml_metal_encoder_set_बफर  (enc, bid_tmp, 1);
+                ggml_metal_encoder_set_बफर  (enc, bid_dst, 2);
 
                 ggml_metal_encoder_dispatch_threadgroups(enc, nrows, 1, 1, 32*nwg, 1, 1);
             }
         }
     }
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_bin(ggml_metal_op_t ctx, int idx) {
-    int n_fuse = 1;
-    const ggml_metal_fusion * fusion = nullptr;
+पूर्णांक ggml_metal_op_bin(ggml_metal_op_t ctx, पूर्णांक idx) {
+    पूर्णांक n_fuse = 1;
+    स्थिर ggml_metal_fusion * fusion = nullptr;
 
-    const bool use_fusion = ctx->use_fusion();
+    स्थिर bool use_fusion = ctx->use_fusion();
 
-    if (use_fusion) {
-        int n = 1;
+    अगर (use_fusion) {
+        पूर्णांक n = 1;
         fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n);
         n_fuse = n;
 
         // snake activation autofuse: mul -> sin -> sqr -> mul -> add
-        if (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_SNAKE) {
-            ctx->count_fusions(fusion);
-            return ggml_metal_op_snake_fused(ctx, idx);
+        अगर (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_SNAKE) {
+            ctx->गिनती_fusions(fusion);
+            वापस ggml_metal_op_snake_fused(ctx, idx);
         }
 
         // MoE output reduction: experts * weights -> weighted sum
-        if (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_MOE_REDUCE) {
-            ctx->count_fusions(fusion);
-            return ggml_metal_op_moe_reduce(ctx, idx);
+        अगर (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_MOE_REDUCE) {
+            ctx->गिनती_fusions(fusion);
+            वापस ggml_metal_op_moe_reduce(ctx, idx);
         }
     }
 
-    ggml_tensor * op = ctx->node(idx);
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    const int debug_fusion = ggml_metal_fusion_info_debug(ctx->finfo);
+    स्थिर पूर्णांक debug_fusion = ggml_metal_fusion_info_debug(ctx->finfo);
 
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
     GGML_TENSOR_LOCALS(uint64_t, nb0, op->src[0], nb);
@@ -4159,9 +4159,9 @@ int ggml_metal_op_bin(ggml_metal_op_t ctx, int idx) {
     GGML_ASSERT(ggml_is_contiguous_rows(op->src[0]));
     GGML_ASSERT(ggml_is_contiguous_rows(op->src[1]));
 
-    ggml_metal_buffer_id bid_src0 = ggml_metal_get_buffer_id(op->src[0]);
-    ggml_metal_buffer_id bid_src1 = ggml_metal_get_buffer_id(op->src[1]);
-    ggml_metal_buffer_id bid_dst  = ggml_metal_get_buffer_id(op);
+    ggml_metal_बफर_id bid_src0 = ggml_metal_get_बफर_id(op->src[0]);
+    ggml_metal_बफर_id bid_src1 = ggml_metal_get_बफर_id(op->src[1]);
+    ggml_metal_बफर_id bid_dst  = ggml_metal_get_बफर_id(op);
 
     ggml_metal_kargs_bin args = {
         /*.ne00 =*/ ne00,
@@ -4196,15 +4196,15 @@ int ggml_metal_op_bin(ggml_metal_op_t ctx, int idx) {
     // c[1] = add(c[0], b[1])
     // c[2] = add(c[1], b[2])
     // ...
-    if (use_fusion && fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_ADD_CHAIN) {
+    अगर (use_fusion && fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_ADD_CHAIN) {
         // the offsets of the fused addends are relative to the start of the src1 buffer
-        for (int i = 1; i < n_fuse; i++) {
-            args.o1[i] = ggml_metal_get_buffer_id(ctx->node(idx + i)->src[1]).offs;
+        क्रम (पूर्णांक i = 1; i < n_fuse; i++) {
+            args.o1[i] = ggml_metal_get_बफर_id(ctx->गाँठ(idx + i)->src[1]).offs;
         }
 
-        ctx->count_fusions(fusion);
+        ctx->गिनती_fusions(fusion);
 
-        if (debug_fusion > 1) {
+        अगर (debug_fusion > 1) {
             GGML_LOG_DEBUG("%s: fuse: ADD x %d\n", __func__, n_fuse);
         }
     }
@@ -4212,83 +4212,83 @@ int ggml_metal_op_bin(ggml_metal_op_t ctx, int idx) {
     // the offsets of src1 and all fused buffers are relative to the start of the src1 buffer
     bid_src1.offs = 0;
 
-    struct ggml_metal_pipeline_with_params pipeline;
+    काष्ठा ggml_metal_pipeline_with_params pipeline;
 
     pipeline = ggml_metal_library_get_pipeline_bin(lib, op, n_fuse);
 
-    if (n_fuse > 1) {
-        bid_dst = ggml_metal_get_buffer_id(ctx->node(idx + n_fuse - 1));
+    अगर (n_fuse > 1) {
+        bid_dst = ggml_metal_get_बफर_id(ctx->गाँठ(idx + n_fuse - 1));
 
-        for (int i = 1; i < n_fuse; ++i) {
-            if (!ggml_metal_op_concurrency_check(ctx, ctx->node(idx + i))) {
+        क्रम (पूर्णांक i = 1; i < n_fuse; ++i) {
+            अगर (!ggml_metal_op_concurrency_check(ctx, ctx->गाँठ(idx + i))) {
                 ggml_metal_op_concurrency_reset(ctx);
 
-                break;
+                अवरोध;
             }
         }
     }
 
-    if (pipeline.c4) {
+    अगर (pipeline.c4) {
         args.ne00 = ne00/4;
         args.ne10 = ne10/4;
         args.ne0  = ne0/4;
     }
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
-    ggml_metal_encoder_set_buffer  (enc, bid_src1, 2);
-    ggml_metal_encoder_set_buffer  (enc, bid_dst,  3);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, bid_src0, 1);
+    ggml_metal_encoder_set_बफर  (enc, bid_src1, 2);
+    ggml_metal_encoder_set_बफर  (enc, bid_dst,  3);
 
-    if (pipeline.cnt) {
+    अगर (pipeline.cnt) {
         ggml_metal_encoder_dispatch_threadgroups(enc, args.ne0, ggml_nrows(op), 1, 1, 1, 1);
-    } else {
-        const int nth_max = MIN(256, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
+    } अन्यथा {
+        स्थिर पूर्णांक nth_max = MIN(256, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
 
-        int nth = 1;
+        पूर्णांक nth = 1;
 
-        while (2*nth < args.ne0 && nth < nth_max) {
+        जबतक (2*nth < args.ne0 && nth < nth_max) {
             nth *= 2;
         }
 
         ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
     }
 
-    return n_fuse;
+    वापस n_fuse;
 }
 
-int ggml_metal_op_silu_back(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_silu_back(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    auto pipeline = ggml_metal_library_get_pipeline_silu_back(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_silu_back(lib, op);
 
-    const int64_t ne = ggml_nelements(op);
+    स्थिर int64_t ne = ggml_nelements(op);
 
     ggml_metal_kargs_silu_back args = {
         /*.ne =*/ ne,
     };
 
-    int arg_idx{0};
+    पूर्णांक arg_idx{0};
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), arg_idx++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), arg_idx++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), arg_idx++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op), arg_idx++);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), arg_idx++);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), arg_idx++);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[1]), arg_idx++);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op), arg_idx++);
 
-    const int nth = std::min<int64_t>(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne);
-    const int64_t n = (ne + nth - 1) / nth;
+    स्थिर पूर्णांक nth = std::min<int64_t>(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne);
+    स्थिर int64_t n = (ne + nth - 1) / nth;
 
     ggml_metal_encoder_dispatch_threadgroups(enc, n, 1, 1, nth, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_l2_norm(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_l2_norm(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -4300,11 +4300,11 @@ int ggml_metal_op_l2_norm(ggml_metal_op_t ctx, int idx) {
 
     GGML_ASSERT(ggml_is_contiguous_rows(op->src[0]));
 
-    ggml_metal_buffer_id bid_src0 = ggml_metal_get_buffer_id(op->src[0]);
-    ggml_metal_buffer_id bid_dst  = ggml_metal_get_buffer_id(op);
+    ggml_metal_बफर_id bid_src0 = ggml_metal_get_बफर_id(op->src[0]);
+    ggml_metal_बफर_id bid_dst  = ggml_metal_get_बफर_id(op);
 
-    float eps;
-    memcpy(&eps, op->op_params, sizeof(float));
+    भग्न eps;
+    स_नकल(&eps, op->op_params, माप(भग्न));
 
     ggml_metal_kargs_l2_norm args = {
         /*.ne00  =*/ ne00,
@@ -4326,37 +4326,37 @@ int ggml_metal_op_l2_norm(ggml_metal_op_t ctx, int idx) {
         /*.eps   =*/ eps,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_l2_norm(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_l2_norm(lib, op);
 
-    if (pipeline.c4) {
+    अगर (pipeline.c4) {
         args.ne00 = ne00/4;
         args.ne0  = ne0/4;
     }
 
-    int nth = 32; // SIMD width
+    पूर्णांक nth = 32; // SIMD width
 
-    while (nth < ne00 && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+    जबतक (nth < ne00 && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
         nth *= 2;
     }
 
     nth = std::min(nth, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
 
-    const size_t smem = pipeline.smem;
+    स्थिर माप_प्रकार smem = pipeline.smem;
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
-    ggml_metal_encoder_set_buffer  (enc, bid_dst,  2);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, bid_src0, 1);
+    ggml_metal_encoder_set_बफर  (enc, bid_dst,  2);
 
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+    ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem, 0);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_group_norm(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_group_norm(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -4366,10 +4366,10 @@ int ggml_metal_op_group_norm(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    const int32_t ngrp = ((const int32_t *) op->op_params)[0];
+    स्थिर int32_t ngrp = ((स्थिर int32_t *) op->op_params)[0];
 
-    float eps;
-    memcpy(&eps, op->op_params + 1, sizeof(float));
+    भग्न eps;
+    स_नकल(&eps, op->op_params + 1, माप(भग्न));
 
     ggml_metal_kargs_group_norm args = {
         /*.ne00 =*/ ne00,
@@ -4382,9 +4382,9 @@ int ggml_metal_op_group_norm(ggml_metal_op_t ctx, int idx) {
         /*.eps  =*/ eps,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_group_norm(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_group_norm(lib, op);
 
-    int nth = 32; // SIMD width
+    पूर्णांक nth = 32; // SIMD width
     //while (nth < ne00/4 && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
     //    nth *= 2;
     //}
@@ -4392,40 +4392,40 @@ int ggml_metal_op_group_norm(ggml_metal_op_t ctx, int idx) {
     //nth = std::min(nth, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
     //nth = std::min(nth, ne00/4);
 
-    const size_t smem = pipeline.smem;
+    स्थिर माप_प्रकार smem = pipeline.smem;
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         2);
 
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+    ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem, 0);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ngrp, 1, 1, nth, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_norm(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_norm(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    const bool use_fusion = ctx->use_fusion();
+    स्थिर bool use_fusion = ctx->use_fusion();
 
-    const int debug_fusion = ggml_metal_fusion_info_debug(ctx->finfo);
+    स्थिर पूर्णांक debug_fusion = ggml_metal_fusion_info_debug(ctx->finfo);
 
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
     GGML_TENSOR_LOCALS(uint64_t, nb0, op->src[0], nb);
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    float eps;
-    memcpy(&eps, op->op_params, sizeof(float));
+    भग्न eps;
+    स_नकल(&eps, op->op_params, माप(भग्न));
 
-    ggml_metal_buffer_id bid_src0 = ggml_metal_get_buffer_id(op->src[0]);
-    ggml_metal_buffer_id bid_dst  = ggml_metal_get_buffer_id(op);
+    ggml_metal_बफर_id bid_src0 = ggml_metal_get_बफर_id(op->src[0]);
+    ggml_metal_बफर_id bid_dst  = ggml_metal_get_बफर_id(op);
 
     ggml_metal_kargs_norm args = {
         /*.ne00   =*/ ne00,
@@ -4443,27 +4443,27 @@ int ggml_metal_op_norm(ggml_metal_op_t ctx, int idx) {
         /*.scale =*/ 1.0f,
     };
 
-    int n_fuse = 1;
+    पूर्णांक n_fuse = 1;
     bool fused_norm_scale = false;
 
-    ggml_metal_buffer_id bid_fuse[2] = { bid_src0, bid_src0 };
+    ggml_metal_बफर_id bid_fuse[2] = { bid_src0, bid_src0 };
 
     // d[0] = norm(a)
     // d[1] = mul(d[0], b) or scale(d[0])
     // d[2] = add(d[1], c)
-    if (use_fusion) {
-        int n = 1;
-        const ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n);
+    अगर (use_fusion) {
+        पूर्णांक n = 1;
+        स्थिर ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n);
 
-        if (fusion && (ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_NORM_MUL || ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_NORM_MUL_ADD)) {
+        अगर (fusion && (ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_NORM_MUL || ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_NORM_MUL_ADD)) {
             n_fuse = n;
 
-            ctx->count_fusions(fusion);
+            ctx->गिनती_fusions(fusion);
 
-            for (int i = 1; i < n_fuse; i++) {
-                const ggml_tensor * fn = ctx->node(idx + i);
+            क्रम (पूर्णांक i = 1; i < n_fuse; i++) {
+                स्थिर ggml_tensor * fn = ctx->गाँठ(idx + i);
 
-                bid_fuse[i - 1] = ggml_metal_get_buffer_id(fn->src[1]);
+                bid_fuse[i - 1] = ggml_metal_get_बफर_id(fn->src[1]);
 
                 args.nef1[i] = fn->src[1]->ne[1];
                 args.nef2[i] = fn->src[1]->ne[2];
@@ -4474,74 +4474,74 @@ int ggml_metal_op_norm(ggml_metal_op_t ctx, int idx) {
                 args.nbf3[i] = fn->src[1]->nb[3];
             }
 
-            if (debug_fusion > 1) {
-                if (n_fuse == 2) {
+            अगर (debug_fusion > 1) {
+                अगर (n_fuse == 2) {
                     GGML_LOG_DEBUG("%s: fuse: %s + MUL\n", __func__, ggml_op_name(op->op));
                 }
-                if (n_fuse == 3) {
+                अगर (n_fuse == 3) {
                     GGML_LOG_DEBUG("%s: fuse: %s + MUL + ADD\n", __func__, ggml_op_name(op->op));
                 }
             }
         }
 
-        if (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_NORM_SCALE) {
+        अगर (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_NORM_SCALE) {
             n_fuse = n;
             fused_norm_scale = true;
 
-            ctx->count_fusions(fusion);
+            ctx->गिनती_fusions(fusion);
 
-            const ggml_tensor * scale_node = ctx->node(idx + 1);
-            args.scale = ggml_get_op_params_f32(scale_node, 0);
+            स्थिर ggml_tensor * scale_गाँठ = ctx->गाँठ(idx + 1);
+            args.scale = ggml_get_op_params_f32(scale_गाँठ, 0);
 
-            if (debug_fusion > 1) {
+            अगर (debug_fusion > 1) {
                 GGML_LOG_DEBUG("%s: fuse: %s + SCALE\n", __func__, ggml_op_name(op->op));
             }
         }
     }
 
-    if (n_fuse > 1) {
-        bid_dst = ggml_metal_get_buffer_id(ctx->node(idx + n_fuse - 1));
+    अगर (n_fuse > 1) {
+        bid_dst = ggml_metal_get_बफर_id(ctx->गाँठ(idx + n_fuse - 1));
 
-        for (int i = 1; i < n_fuse; ++i) {
-            if (!ggml_metal_op_concurrency_check(ctx, ctx->node(idx + i))) {
+        क्रम (पूर्णांक i = 1; i < n_fuse; ++i) {
+            अगर (!ggml_metal_op_concurrency_check(ctx, ctx->गाँठ(idx + i))) {
                 ggml_metal_op_concurrency_reset(ctx);
 
-                break;
+                अवरोध;
             }
         }
     }
 
-    auto pipeline = fused_norm_scale ?
+    स्वतः pipeline = fused_norm_scale ?
         ggml_metal_library_get_pipeline_norm_scale(lib, op) :
         ggml_metal_library_get_pipeline_norm(lib, op, n_fuse);
 
-    int nth = 32; // SIMD width
+    पूर्णांक nth = 32; // SIMD width
 
-    while (nth < args.ne00_t && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+    जबतक (nth < args.ne00_t && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
         nth *= 2;
     }
 
     nth = std::min(nth, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
     nth = std::min(nth, (args.ne00_t + 31)/32*32);
 
-    const size_t smem = pipeline.smem;
+    स्थिर माप_प्रकार smem = pipeline.smem;
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, bid_src0,    1);
-    ggml_metal_encoder_set_buffer  (enc, bid_fuse[0], 2);
-    ggml_metal_encoder_set_buffer  (enc, bid_fuse[1], 3);
-    ggml_metal_encoder_set_buffer  (enc, bid_dst,     4);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, bid_src0,    1);
+    ggml_metal_encoder_set_बफर  (enc, bid_fuse[0], 2);
+    ggml_metal_encoder_set_बफर  (enc, bid_fuse[1], 3);
+    ggml_metal_encoder_set_बफर  (enc, bid_dst,     4);
 
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+    ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem, 0);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
 
-    return n_fuse;
+    वापस n_fuse;
 }
 
-int ggml_metal_op_rope(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_rope(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -4557,38 +4557,38 @@ int ggml_metal_op_rope(ggml_metal_op_t ctx, int idx) {
     GGML_ASSERT(ne10 % ne02 == 0);
     GGML_ASSERT(ne10 >= ne02);
 
-    const int nth = std::min(1024, ne00);
+    स्थिर पूर्णांक nth = std::min(1024, ne00);
 
-    const int n_past     = ((const int32_t *) op->op_params)[0];
-    const int n_dims     = ((const int32_t *) op->op_params)[1];
+    स्थिर पूर्णांक n_past     = ((स्थिर int32_t *) op->op_params)[0];
+    स्थिर पूर्णांक n_dims     = ((स्थिर int32_t *) op->op_params)[1];
   //const int mode       = ((const int32_t *) op->op_params)[2];
     // skip 3, n_ctx, used in GLM RoPE, unimplemented in metal
-    const int n_ctx_orig = ((const int32_t *) op->op_params)[4];
+    स्थिर पूर्णांक n_ctx_orig = ((स्थिर int32_t *) op->op_params)[4];
 
-    float freq_base;
-    float freq_scale;
-    float ext_factor;
-    float attn_factor;
-    float beta_fast;
-    float beta_slow;
+    भग्न freq_base;
+    भग्न freq_scale;
+    भग्न ext_factor;
+    भग्न attn_factor;
+    भग्न beta_fast;
+    भग्न beta_slow;
 
-    memcpy(&freq_base,   (const int32_t *) op->op_params +  5, sizeof(float));
-    memcpy(&freq_scale,  (const int32_t *) op->op_params +  6, sizeof(float));
-    memcpy(&ext_factor,  (const int32_t *) op->op_params +  7, sizeof(float));
-    memcpy(&attn_factor, (const int32_t *) op->op_params +  8, sizeof(float));
-    memcpy(&beta_fast,   (const int32_t *) op->op_params +  9, sizeof(float));
-    memcpy(&beta_slow,   (const int32_t *) op->op_params + 10, sizeof(float));
+    स_नकल(&freq_base,   (स्थिर int32_t *) op->op_params +  5, माप(भग्न));
+    स_नकल(&freq_scale,  (स्थिर int32_t *) op->op_params +  6, माप(भग्न));
+    स_नकल(&ext_factor,  (स्थिर int32_t *) op->op_params +  7, माप(भग्न));
+    स_नकल(&attn_factor, (स्थिर int32_t *) op->op_params +  8, माप(भग्न));
+    स_नकल(&beta_fast,   (स्थिर int32_t *) op->op_params +  9, माप(भग्न));
+    स_नकल(&beta_slow,   (स्थिर int32_t *) op->op_params + 10, माप(भग्न));
 
     // mrope
-    const int sect_0 = ((const int32_t *) op->op_params)[11];
-    const int sect_1 = ((const int32_t *) op->op_params)[12];
-    const int sect_2 = ((const int32_t *) op->op_params)[13];
-    const int sect_3 = ((const int32_t *) op->op_params)[14];
+    स्थिर पूर्णांक sect_0 = ((स्थिर int32_t *) op->op_params)[11];
+    स्थिर पूर्णांक sect_1 = ((स्थिर int32_t *) op->op_params)[12];
+    स्थिर पूर्णांक sect_2 = ((स्थिर int32_t *) op->op_params)[13];
+    स्थिर पूर्णांक sect_3 = ((स्थिर int32_t *) op->op_params)[14];
 
-    const int n_offs = ((const int32_t *) op->op_params)[15];
+    स्थिर पूर्णांक n_offs = ((स्थिर int32_t *) op->op_params)[15];
 
     // when dst aliases src0, the channels outside the rotated window already hold the correct data
-    const bool inplace = op->data == op->src[0]->data;
+    स्थिर bool inplace = op->तथ्य == op->src[0]->तथ्य;
 
     ggml_metal_kargs_rope args = {
         /*.ne00        =*/ ne00,
@@ -4625,26 +4625,26 @@ int ggml_metal_op_rope(ggml_metal_op_t ctx, int idx) {
         /* inplace     =*/ inplace,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_rope(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_rope(lib, op);
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    if (op->src[2]) {
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[2]), 3);
-    } else {
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 3);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[1]), 2);
+    अगर (op->src[2]) {
+        ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[2]), 3);
+    } अन्यथा {
+        ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 3);
     }
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         4);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         4);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_im2col(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_im2col(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -4654,30 +4654,30 @@ int ggml_metal_op_im2col(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    const int32_t s0 = ((const int32_t *)(op->op_params))[0];
-    const int32_t s1 = ((const int32_t *)(op->op_params))[1];
-    const int32_t p0 = ((const int32_t *)(op->op_params))[2];
-    const int32_t p1 = ((const int32_t *)(op->op_params))[3];
-    const int32_t d0 = ((const int32_t *)(op->op_params))[4];
-    const int32_t d1 = ((const int32_t *)(op->op_params))[5];
+    स्थिर int32_t s0 = ((स्थिर int32_t *)(op->op_params))[0];
+    स्थिर int32_t s1 = ((स्थिर int32_t *)(op->op_params))[1];
+    स्थिर int32_t p0 = ((स्थिर int32_t *)(op->op_params))[2];
+    स्थिर int32_t p1 = ((स्थिर int32_t *)(op->op_params))[3];
+    स्थिर int32_t d0 = ((स्थिर int32_t *)(op->op_params))[4];
+    स्थिर int32_t d1 = ((स्थिर int32_t *)(op->op_params))[5];
 
-    const bool is_2D = ((const int32_t *)(op->op_params))[6] == 1;
+    स्थिर bool is_2D = ((स्थिर int32_t *)(op->op_params))[6] == 1;
 
-    const int32_t N  = op->src[1]->ne[is_2D ? 3 : 2];
-    const int32_t IC = op->src[1]->ne[is_2D ? 2 : 1];
-    const int32_t IH = is_2D ? op->src[1]->ne[1] : 1;
-    const int32_t IW =         op->src[1]->ne[0];
+    स्थिर int32_t N  = op->src[1]->ne[is_2D ? 3 : 2];
+    स्थिर int32_t IC = op->src[1]->ne[is_2D ? 2 : 1];
+    स्थिर int32_t IH = is_2D ? op->src[1]->ne[1] : 1;
+    स्थिर int32_t IW =         op->src[1]->ne[0];
 
-    const int32_t KH = is_2D ? op->src[0]->ne[1] : 1;
-    const int32_t KW =         op->src[0]->ne[0];
+    स्थिर int32_t KH = is_2D ? op->src[0]->ne[1] : 1;
+    स्थिर int32_t KW =         op->src[0]->ne[0];
 
-    const int32_t OH = is_2D ? op->ne[2] : 1;
-    const int32_t OW =         op->ne[1];
+    स्थिर int32_t OH = is_2D ? op->ne[2] : 1;
+    स्थिर int32_t OW =         op->ne[1];
 
-    const int32_t CHW = IC * KH * KW;
+    स्थिर int32_t CHW = IC * KH * KW;
 
-    const uint64_t ofs0 = op->src[1]->nb[is_2D ? 3 : 2] / 4;
-    const uint64_t ofs1 = op->src[1]->nb[is_2D ? 2 : 1] / 4;
+    स्थिर uint64_t ofs0 = op->src[1]->nb[is_2D ? 3 : 2] / 4;
+    स्थिर uint64_t ofs1 = op->src[1]->nb[is_2D ? 2 : 1] / 4;
 
     ggml_metal_kargs_im2col args = {
         /*.ofs0 =*/ ofs0,
@@ -4697,34 +4697,34 @@ int ggml_metal_op_im2col(ggml_metal_op_t ctx, int idx) {
         /*.KHW  =*/ KH * KW,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_im2col(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_im2col(lib, op);
 
-    if (KH*KW <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
-        const uint64_t ntptg0 = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)/(KH*KW), N);
+    अगर (KH*KW <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+        स्थिर uint64_t ntptg0 = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)/(KH*KW), N);
 
         ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 1);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+        ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+        ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[1]), 1);
+        ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         2);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, IC, OH, OW, ntptg0, KH, KW);
-    } else {
-        const uint64_t n_threads = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), N);
-        const int64_t  quotient  = N / n_threads + (N % n_threads > 0 ? 1 : 0);
+    } अन्यथा {
+        स्थिर uint64_t n_threads = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), N);
+        स्थिर int64_t  quotient  = N / n_threads + (N % n_threads > 0 ? 1 : 0);
 
         ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 1);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+        ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+        ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[1]), 1);
+        ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         2);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, quotient * CHW, OH, OW, n_threads, 1, 1);
     }
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_conv_2d(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_conv_2d(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -4741,12 +4741,12 @@ int ggml_metal_op_conv_2d(ggml_metal_op_t ctx, int idx) {
     GGML_ASSERT(op->type == GGML_TYPE_F32);
     GGML_ASSERT(op->src[0]->type == GGML_TYPE_F16 || op->src[0]->type == GGML_TYPE_F32);
 
-    const int32_t s0 = ((const int32_t *) op->op_params)[0];
-    const int32_t s1 = ((const int32_t *) op->op_params)[1];
-    const int32_t p0 = ((const int32_t *) op->op_params)[2];
-    const int32_t p1 = ((const int32_t *) op->op_params)[3];
-    const int32_t d0 = ((const int32_t *) op->op_params)[4];
-    const int32_t d1 = ((const int32_t *) op->op_params)[5];
+    स्थिर int32_t s0 = ((स्थिर int32_t *) op->op_params)[0];
+    स्थिर int32_t s1 = ((स्थिर int32_t *) op->op_params)[1];
+    स्थिर int32_t p0 = ((स्थिर int32_t *) op->op_params)[2];
+    स्थिर int32_t p1 = ((स्थिर int32_t *) op->op_params)[3];
+    स्थिर int32_t d0 = ((स्थिर int32_t *) op->op_params)[4];
+    स्थिर int32_t d1 = ((स्थिर int32_t *) op->op_params)[5];
 
     ggml_metal_kargs_conv_2d args = {
         /*.nb00 =*/ nb00,
@@ -4778,31 +4778,31 @@ int ggml_metal_op_conv_2d(ggml_metal_op_t ctx, int idx) {
         /*.d1   =*/ d1,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_conv_2d(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_conv_2d(lib, op);
 
-    int nth = ggml_metal_pipeline_max_theads_per_threadgroup(pipeline);
+    पूर्णांक nth = ggml_metal_pipeline_max_theads_per_threadgroup(pipeline);
     nth = std::min(nth, 256);
     nth = std::max(nth, 1);
 
-    const uint64_t n_out = ggml_nelements(op);
+    स्थिर uint64_t n_out = ggml_nelements(op);
 
     uint64_t tg = (n_out + nth - 1)/nth;
     tg = std::max<uint64_t>(tg, 1);
-    tg = std::min<uint64_t>(tg, (uint64_t) std::numeric_limits<int>::max());
+    tg = std::min<uint64_t>(tg, (uint64_t) std::numeric_limits<पूर्णांक>::max());
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[1]), 2);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         3);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, tg, 1, 1, nth, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_conv_2d_dw(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_conv_2d_dw(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -4818,12 +4818,12 @@ int ggml_metal_op_conv_2d_dw(ggml_metal_op_t ctx, int idx) {
     GGML_ASSERT(op->type == GGML_TYPE_F32);
     GGML_ASSERT(op->src[0]->type == GGML_TYPE_F16 || op->src[0]->type == GGML_TYPE_F32);
 
-    const int32_t s0 = ((const int32_t *) op->op_params)[0];
-    const int32_t s1 = ((const int32_t *) op->op_params)[1];
-    const int32_t p0 = ((const int32_t *) op->op_params)[2];
-    const int32_t p1 = ((const int32_t *) op->op_params)[3];
-    const int32_t d0 = ((const int32_t *) op->op_params)[4];
-    const int32_t d1 = ((const int32_t *) op->op_params)[5];
+    स्थिर int32_t s0 = ((स्थिर int32_t *) op->op_params)[0];
+    स्थिर int32_t s1 = ((स्थिर int32_t *) op->op_params)[1];
+    स्थिर int32_t p0 = ((स्थिर int32_t *) op->op_params)[2];
+    स्थिर int32_t p1 = ((स्थिर int32_t *) op->op_params)[3];
+    स्थिर int32_t d0 = ((स्थिर int32_t *) op->op_params)[4];
+    स्थिर int32_t d1 = ((स्थिर int32_t *) op->op_params)[5];
 
     ggml_metal_kargs_conv_2d_dw args = {
         /*.nb00 =*/ nb00,
@@ -4853,36 +4853,36 @@ int ggml_metal_op_conv_2d_dw(ggml_metal_op_t ctx, int idx) {
         /*.d1   =*/ d1,
     };
 
-    const bool use_tiled = (nb12 < nb10);
+    स्थिर bool use_tiled = (nb12 < nb10);
 
-    auto pipeline = ggml_metal_library_get_pipeline_conv_2d_dw(lib, op, use_tiled);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_conv_2d_dw(lib, op, use_tiled);
 
-    int nth = ggml_metal_pipeline_max_theads_per_threadgroup(pipeline);
+    पूर्णांक nth = ggml_metal_pipeline_max_theads_per_threadgroup(pipeline);
     nth = std::min(nth, 256);
     nth = std::max(nth, 1);
 
-    const int32_t OW = ne0;
-    const int32_t OH = ne1;
-    const int32_t C  = ne12;
-    const int32_t N  = ne13;
+    स्थिर int32_t OW = ne0;
+    स्थिर int32_t OH = ne1;
+    स्थिर int32_t C  = ne12;
+    स्थिर int32_t N  = ne13;
 
-    const int tg_x = use_tiled ? (C + nth - 1) / nth : (OW + nth - 1) / nth;
-    const int tg_y = OH;
-    const int tg_z = use_tiled ? OW * N : C * N;
+    स्थिर पूर्णांक tg_x = use_tiled ? (C + nth - 1) / nth : (OW + nth - 1) / nth;
+    स्थिर पूर्णांक tg_y = OH;
+    स्थिर पूर्णांक tg_z = use_tiled ? OW * N : C * N;
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[1]), 2);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         3);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, tg_x, tg_y, tg_z, nth, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_conv_3d(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_conv_3d(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -4893,18 +4893,18 @@ int ggml_metal_op_conv_3d(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
     // 2. Extract hyperparams from op_params
-    const int32_t s0 = ((const int32_t *)(op->op_params))[0];
-    const int32_t s1 = ((const int32_t *)(op->op_params))[1];
-    const int32_t s2 = ((const int32_t *)(op->op_params))[2];
-    const int32_t p0 = ((const int32_t *)(op->op_params))[3];
-    const int32_t p1 = ((const int32_t *)(op->op_params))[4];
-    const int32_t p2 = ((const int32_t *)(op->op_params))[5];
-    const int32_t d0 = ((const int32_t *)(op->op_params))[6];
-    const int32_t d1 = ((const int32_t *)(op->op_params))[7];
-    const int32_t d2 = ((const int32_t *)(op->op_params))[8];
-    const int32_t IC = ((const int32_t *)(op->op_params))[9];
-    const int32_t N  = ((const int32_t *)(op->op_params))[10];
-    const int32_t OC = ((const int32_t *)(op->op_params))[11];
+    स्थिर int32_t s0 = ((स्थिर int32_t *)(op->op_params))[0];
+    स्थिर int32_t s1 = ((स्थिर int32_t *)(op->op_params))[1];
+    स्थिर int32_t s2 = ((स्थिर int32_t *)(op->op_params))[2];
+    स्थिर int32_t p0 = ((स्थिर int32_t *)(op->op_params))[3];
+    स्थिर int32_t p1 = ((स्थिर int32_t *)(op->op_params))[4];
+    स्थिर int32_t p2 = ((स्थिर int32_t *)(op->op_params))[5];
+    स्थिर int32_t d0 = ((स्थिर int32_t *)(op->op_params))[6];
+    स्थिर int32_t d1 = ((स्थिर int32_t *)(op->op_params))[7];
+    स्थिर int32_t d2 = ((स्थिर int32_t *)(op->op_params))[8];
+    स्थिर int32_t IC = ((स्थिर int32_t *)(op->op_params))[9];
+    स्थिर int32_t N  = ((स्थिर int32_t *)(op->op_params))[10];
+    स्थिर int32_t OC = ((स्थिर int32_t *)(op->op_params))[11];
 
     // 3. Build the parameter struct using the macro-generated variables
     ggml_metal_kargs_conv_3d args = {
@@ -4927,33 +4927,33 @@ int ggml_metal_op_conv_3d(ggml_metal_op_t ctx, int idx) {
     };
 
     // 4. Fetch the JIT pipeline
-    auto pipeline = ggml_metal_library_get_pipeline_conv_3d(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_conv_3d(lib, op);
 
     // 5. Grid mapping
-    int nth0 = 32; // Standard SIMD width for Apple Silicon
-    int nth1 = 1;
-    int nth2 = 1;
+    पूर्णांक nth0 = 32; // Standard SIMD width for Apple Silicon
+    पूर्णांक nth1 = 1;
+    पूर्णांक nth2 = 1;
 
     int64_t spatial_volume = args.OW * args.OH * args.OD;
 
-    int ntg0 = (spatial_volume + nth0 - 1) / nth0;
-    int ntg1 = args.OC;
-    int ntg2 = args.N;
+    पूर्णांक ntg0 = (spatial_volume + nth0 - 1) / nth0;
+    पूर्णांक ntg1 = args.OC;
+    पूर्णांक ntg2 = args.N;
 
     // 6. Bind and Dispatch via the ggml C wrapper
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[1]), 2);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         3);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ntg0, ntg1, ntg2, nth0, nth1, nth2);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_conv_transpose_1d(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_conv_transpose_1d(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -4965,15 +4965,15 @@ int ggml_metal_op_conv_transpose_1d(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    const int32_t s0 = ((const int32_t *)(op->op_params))[0];
+    स्थिर int32_t s0 = ((स्थिर int32_t *)(op->op_params))[0];
 
-    const int32_t IC = op->src[1]->ne[1];
-    const int32_t IL = op->src[1]->ne[0];
+    स्थिर int32_t IC = op->src[1]->ne[1];
+    स्थिर int32_t IL = op->src[1]->ne[0];
 
-    const int32_t K  = op->src[0]->ne[0];
+    स्थिर int32_t K  = op->src[0]->ne[0];
 
-    const int32_t OL = op->ne[0];
-    const int32_t OC = op->ne[1];
+    स्थिर int32_t OL = op->ne[0];
+    स्थिर int32_t OC = op->ne[1];
 
     ggml_metal_kargs_conv_transpose_1d args = {
         /*.IC  =*/ IC,
@@ -4984,33 +4984,33 @@ int ggml_metal_op_conv_transpose_1d(ggml_metal_op_t ctx, int idx) {
         /*.nb1 =*/ nb1,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_conv_transpose_1d(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_conv_transpose_1d(lib, op);
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[1]), 2);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         3);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, OL, OC, 1, 1, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_col2im_1d(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_col2im_1d(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    const int32_t s0 = ((const int32_t *)(op->op_params))[0];
-    const int32_t OC = ((const int32_t *)(op->op_params))[1];
-    const int32_t p0 = ((const int32_t *)(op->op_params))[2];
+    स्थिर int32_t s0 = ((स्थिर int32_t *)(op->op_params))[0];
+    स्थिर int32_t OC = ((स्थिर int32_t *)(op->op_params))[1];
+    स्थिर int32_t p0 = ((स्थिर int32_t *)(op->op_params))[2];
 
-    const int32_t K_OC  = (int32_t) op->src[0]->ne[0];
-    const int32_t T_in  = (int32_t) op->src[0]->ne[1];
-    const int32_t K     = K_OC / OC;
-    const int32_t T_out = (int32_t) op->ne[0];
+    स्थिर int32_t K_OC  = (int32_t) op->src[0]->ne[0];
+    स्थिर int32_t T_in  = (int32_t) op->src[0]->ne[1];
+    स्थिर int32_t K     = K_OC / OC;
+    स्थिर int32_t T_out = (int32_t) op->ne[0];
 
     ggml_metal_kargs_col2im_1d args = {
         /*.T_in  =*/ T_in,
@@ -5022,51 +5022,51 @@ int ggml_metal_op_col2im_1d(ggml_metal_op_t ctx, int idx) {
         /*.p0    =*/ p0,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_col2im_1d(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_col2im_1d(lib, op);
 
-    const int total = T_out * OC;
-    const int nth   = 256;
-    const int ntg   = (total + nth - 1) / nth;
+    स्थिर पूर्णांक योग = T_out * OC;
+    स्थिर पूर्णांक nth   = 256;
+    स्थिर पूर्णांक ntg   = (योग + nth - 1) / nth;
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         2);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ntg, 1, 1, nth, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
 // Dispatch the fused snake kernel from the matched mul -> sin -> sqr -> mul -> add chain.
 // idx points at the leading mul. The caller has validated the chain.
-int ggml_metal_op_snake_fused(ggml_metal_op_t ctx, int idx) {
+पूर्णांक ggml_metal_op_snake_fused(ggml_metal_op_t ctx, पूर्णांक idx) {
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    const ggml_tensor * mul0 = ctx->node(idx + 0);
-    const ggml_tensor * sqr  = ctx->node(idx + 2);
-    const ggml_tensor * mul1 = ctx->node(idx + 3);
-    ggml_tensor *       add  = ctx->node(idx + 4);
+    स्थिर ggml_tensor * mul0 = ctx->गाँठ(idx + 0);
+    स्थिर ggml_tensor * sqr  = ctx->गाँठ(idx + 2);
+    स्थिर ggml_tensor * mul1 = ctx->गाँठ(idx + 3);
+    ggml_tensor *       add  = ctx->गाँठ(idx + 4);
 
-    const ggml_tensor * x = ggml_are_same_shape(mul0, mul0->src[0]) ? mul0->src[0] : mul0->src[1];
-    const ggml_tensor * a = (x == mul0->src[0]) ? mul0->src[1] : mul0->src[0];
-    const ggml_tensor * inv_b = (mul1->src[0] == sqr) ? mul1->src[1] : mul1->src[0];
+    स्थिर ggml_tensor * x = ggml_are_same_shape(mul0, mul0->src[0]) ? mul0->src[0] : mul0->src[1];
+    स्थिर ggml_tensor * a = (x == mul0->src[0]) ? mul0->src[1] : mul0->src[0];
+    स्थिर ggml_tensor * inv_b = (mul1->src[0] == sqr) ? mul1->src[1] : mul1->src[0];
 
-    const int T     = (int) x->ne[0];
-    const int C     = (int) x->ne[1];
-    const int total = T * C;
+    स्थिर पूर्णांक T     = (पूर्णांक) x->ne[0];
+    स्थिर पूर्णांक C     = (पूर्णांक) x->ne[1];
+    स्थिर पूर्णांक योग = T * C;
 
     // the encode loop pre-checked the leading mul only, check the rest of the chain
-    for (int i = 1; i < 5; ++i) {
-        if (!ggml_metal_op_concurrency_check(ctx, ctx->node(idx + i))) {
+    क्रम (पूर्णांक i = 1; i < 5; ++i) {
+        अगर (!ggml_metal_op_concurrency_check(ctx, ctx->गाँठ(idx + i))) {
             ggml_metal_op_concurrency_reset(ctx);
 
-            break;
+            अवरोध;
         }
     }
 
-    auto pipeline = ggml_metal_library_get_pipeline_snake(lib, x->type);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_snake(lib, x->type);
 
     ggml_metal_kargs_snake args = {
         /*.T =*/ T,
@@ -5074,21 +5074,21 @@ int ggml_metal_op_snake_fused(ggml_metal_op_t ctx, int idx) {
     };
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(x),     1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(a),     2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(inv_b), 3);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(add),   4);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(x),     1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(a),     2);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(inv_b), 3);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(add),   4);
 
-    const int nth = 256;
-    const int ntg = (total + nth - 1) / nth;
+    स्थिर पूर्णांक nth = 256;
+    स्थिर पूर्णांक ntg = (योग + nth - 1) / nth;
     ggml_metal_encoder_dispatch_threadgroups(enc, ntg, 1, 1, nth, 1, 1);
 
-    return 5;
+    वापस 5;
 }
 
-int ggml_metal_op_conv_transpose_2d(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_conv_transpose_2d(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -5100,19 +5100,19 @@ int ggml_metal_op_conv_transpose_2d(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    const int32_t s0 = ((const int32_t *)(op->op_params))[0];
+    स्थिर int32_t s0 = ((स्थिर int32_t *)(op->op_params))[0];
 
-    const int32_t IC = op->src[1]->ne[2];
-    const int32_t IH = op->src[1]->ne[1];
-    const int32_t IW = op->src[1]->ne[0];
+    स्थिर int32_t IC = op->src[1]->ne[2];
+    स्थिर int32_t IH = op->src[1]->ne[1];
+    स्थिर int32_t IW = op->src[1]->ne[0];
 
-    const int32_t KH = op->src[0]->ne[1];
-    const int32_t KW = op->src[0]->ne[0];
+    स्थिर int32_t KH = op->src[0]->ne[1];
+    स्थिर int32_t KW = op->src[0]->ne[0];
 
-    const int32_t OW = op->ne[0];
-    const int32_t OH = op->ne[1];
-    const int32_t OC = op->ne[2];
-    const int32_t N  = op->src[1]->ne[3];
+    स्थिर int32_t OW = op->ne[0];
+    स्थिर int32_t OH = op->ne[1];
+    स्थिर int32_t OC = op->ne[2];
+    स्थिर int32_t N  = op->src[1]->ne[3];
 
     ggml_metal_kargs_conv_transpose_2d args = {
         /*.IC  =*/ IC,
@@ -5128,25 +5128,25 @@ int ggml_metal_op_conv_transpose_2d(ggml_metal_op_t ctx, int idx) {
         /*.nb3 =*/ nb3,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_conv_transpose_2d(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_conv_transpose_2d(lib, op);
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[1]), 2);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         3);
 
     // Metal requires buffer size to be multiple of 16 bytes
-    const size_t smem = GGML_PAD(KW * KH * sizeof(float), 16);
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+    स्थिर माप_प्रकार smem = GGML_PAD(KW * KH * माप(भग्न), 16);
+    ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem, 0);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, OW, OH, OC * N, KW, KH, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_upscale(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_upscale(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -5156,19 +5156,19 @@ int ggml_metal_op_upscale(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    float sf0 = (float)ne0/op->src[0]->ne[0];
-    float sf1 = (float)ne1/op->src[0]->ne[1];
-    float sf2 = (float)ne2/op->src[0]->ne[2];
-    float sf3 = (float)ne3/op->src[0]->ne[3];
+    भग्न sf0 = (भग्न)ne0/op->src[0]->ne[0];
+    भग्न sf1 = (भग्न)ne1/op->src[0]->ne[1];
+    भग्न sf2 = (भग्न)ne2/op->src[0]->ne[2];
+    भग्न sf3 = (भग्न)ne3/op->src[0]->ne[3];
 
-    const int32_t mode_flags = ggml_get_op_params_i32(op, 0);
+    स्थिर int32_t mode_flags = ggml_get_op_params_i32(op, 0);
 
-    float poffs = 0.5f;
+    भग्न poffs = 0.5f;
 
-    if (mode_flags & GGML_SCALE_FLAG_ALIGN_CORNERS) {
+    अगर (mode_flags & GGML_SCALE_FLAG_ALIGN_CORNERS) {
         poffs = 0.0f;
-        sf0 = ne0 > 1 && ne00 > 1 ? (float)(ne0 - 1) / (ne00 - 1) : sf0;
-        sf1 = ne1 > 1 && ne01 > 1 ? (float)(ne1 - 1) / (ne01 - 1) : sf1;
+        sf0 = ne0 > 1 && ne00 > 1 ? (भग्न)(ne0 - 1) / (ne00 - 1) : sf0;
+        sf1 = ne1 > 1 && ne01 > 1 ? (भग्न)(ne1 - 1) / (ne01 - 1) : sf1;
     }
 
     ggml_metal_kargs_upscale args = {
@@ -5195,22 +5195,22 @@ int ggml_metal_op_upscale(ggml_metal_op_t ctx, int idx) {
         /*.poffs =*/ poffs,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_upscale(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_upscale(lib, op);
 
-    const int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne0);
+    स्थिर पूर्णांक nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne0);
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         2);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne1, ne2, ne3, nth, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_roll(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_roll(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -5220,10 +5220,10 @@ int ggml_metal_op_roll(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    const int32_t s0 = ggml_get_op_params_i32(op, 0);
-    const int32_t s1 = ggml_get_op_params_i32(op, 1);
-    const int32_t s2 = ggml_get_op_params_i32(op, 2);
-    const int32_t s3 = ggml_get_op_params_i32(op, 3);
+    स्थिर int32_t s0 = ggml_get_op_params_i32(op, 0);
+    स्थिर int32_t s1 = ggml_get_op_params_i32(op, 1);
+    स्थिर int32_t s2 = ggml_get_op_params_i32(op, 2);
+    स्थिर int32_t s3 = ggml_get_op_params_i32(op, 3);
 
     ggml_metal_kargs_roll args = {
         /*.ne00 =*/ ne00,
@@ -5248,22 +5248,22 @@ int ggml_metal_op_roll(ggml_metal_op_t ctx, int idx) {
         /*.s3   =*/ s3
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_roll(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_roll(lib, op);
 
-    const int nth = std::min(1024, ne0);
+    स्थिर पूर्णांक nth = std::min(1024, ne0);
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         2);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne1, ne2, ne3, nth, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_pad(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_pad(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -5296,24 +5296,24 @@ int ggml_metal_op_pad(ggml_metal_op_t ctx, int idx) {
         /*.lp3  =*/ ggml_get_op_params_i32(op, 6),
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_pad(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_pad(lib, op);
 
-    const int nth_max = MIN(64, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
-    const int nth = MIN(args.ne0, nth_max);
-    const int nk0 = (args.ne0 + 1024 - 1)/1024; // note: 1024 is hardcoded in the kernel!
+    स्थिर पूर्णांक nth_max = MIN(64, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
+    स्थिर पूर्णांक nth = MIN(args.ne0, nth_max);
+    स्थिर पूर्णांक nk0 = (args.ne0 + 1024 - 1)/1024; // note: 1024 is hardcoded in the kernel!
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         2);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, nk0*ne1, ne2, ne3, nth, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_pad_reflect_1d(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_pad_reflect_1d(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -5340,26 +5340,26 @@ int ggml_metal_op_pad_reflect_1d(ggml_metal_op_t ctx, int idx) {
         /*.nb1  =*/ nb1,
         /*.nb2  =*/ nb2,
         /*.nb3  =*/ nb3,
-        /*.p0 =*/ ((const int32_t *)(op->op_params))[0],
-        /*.p1 =*/ ((const int32_t *)(op->op_params))[1]
+        /*.p0 =*/ ((स्थिर int32_t *)(op->op_params))[0],
+        /*.p1 =*/ ((स्थिर int32_t *)(op->op_params))[1]
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_pad_reflect_1d(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_pad_reflect_1d(lib, op);
 
-    const int nth = std::min(1024, ne0);
+    स्थिर पूर्णांक nth = std::min(1024, ne0);
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         2);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne1, ne2, ne3, nth, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_arange(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_arange(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -5367,11 +5367,11 @@ int ggml_metal_op_arange(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    float start;
-    float step;
+    भग्न start;
+    भग्न step;
 
-    memcpy(&start, ((const int32_t *) op->op_params) + 0, sizeof(float));
-    memcpy(&step,  ((const int32_t *) op->op_params) + 2, sizeof(float));
+    स_नकल(&start, ((स्थिर int32_t *) op->op_params) + 0, माप(भग्न));
+    स_नकल(&step,  ((स्थिर int32_t *) op->op_params) + 2, माप(भग्न));
 
     ggml_metal_kargs_arange args = {
         /*.ne0   =*/ ne0,
@@ -5379,21 +5379,21 @@ int ggml_metal_op_arange(ggml_metal_op_t ctx, int idx) {
         /*.step  =*/ step
     };
 
-    const int nth = std::min(1024, ne0);
+    स्थिर पूर्णांक nth = std::min(1024, ne0);
 
-    auto pipeline = ggml_metal_library_get_pipeline_arange(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_arange(lib, op);
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op), 1);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op), 1);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, 1, 1, 1, nth, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_timestep_embedding(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_timestep_embedding(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -5403,8 +5403,8 @@ int ggml_metal_op_timestep_embedding(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    const int dim        = op->op_params[0];
-    const int max_period = op->op_params[1];
+    स्थिर पूर्णांक dim        = op->op_params[0];
+    स्थिर पूर्णांक max_period = op->op_params[1];
 
     ggml_metal_kargs_timestep_embedding args = {
         /*.nb1 =*/ nb1,
@@ -5412,41 +5412,41 @@ int ggml_metal_op_timestep_embedding(ggml_metal_op_t ctx, int idx) {
         /*.max_period =*/ max_period,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_timestep_embedding(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_timestep_embedding(lib, op);
 
-    const int nth = std::max(1, std::min(1024, dim/2));
+    स्थिर पूर्णांक nth = std::max(1, std::min(1024, dim/2));
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         2);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne00, 1, 1, nth, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-size_t ggml_metal_op_argmax_extra(const ggml_tensor * op) {
-    assert(op->op == GGML_OP_ARGMAX);
+माप_प्रकार ggml_metal_op_argmax_extra(स्थिर ggml_tensor * op) {
+    निश्चित(op->op == GGML_OP_ARGMAX);
 
-    const int64_t ne00 = op->src[0]->ne[0];
-    const int64_t ne01 = op->src[0]->ne[1];
+    स्थिर int64_t ne00 = op->src[0]->ne[0];
+    स्थिर int64_t ne01 = op->src[0]->ne[1];
 
-    int npart = 1;
-    if (ne00 > N_ARGMAX_CHUNK) {
-        npart = (int) std::min<int64_t>(N_ARGMAX_NPART_MAX, (ne00 + N_ARGMAX_CHUNK - 1)/N_ARGMAX_CHUNK);
+    पूर्णांक npart = 1;
+    अगर (ne00 > N_ARGMAX_CHUNK) {
+        npart = (पूर्णांक) std::min<int64_t>(N_ARGMAX_NPART_MAX, (ne00 + N_ARGMAX_CHUNK - 1)/N_ARGMAX_CHUNK);
     }
 
-    if (npart == 1) {
-        return 0;
+    अगर (npart == 1) {
+        वापस 0;
     }
 
     // partial max + partial argmax for every row
-    return (sizeof(float) + sizeof(int32_t)) * npart * ne01;
+    वापस (माप(भग्न) + माप(int32_t)) * npart * ne01;
 }
 
-int ggml_metal_op_argmax(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_argmax(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -5456,11 +5456,11 @@ int ggml_metal_op_argmax(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    const int64_t nrows = ggml_nrows(op->src[0]);
+    स्थिर int64_t nrows = ggml_nrows(op->src[0]);
 
-    int npart = 1;
-    if (ne00 > N_ARGMAX_CHUNK) {
-        npart = (int) std::min<int64_t>(N_ARGMAX_NPART_MAX, (ne00 + N_ARGMAX_CHUNK - 1)/N_ARGMAX_CHUNK);
+    पूर्णांक npart = 1;
+    अगर (ne00 > N_ARGMAX_CHUNK) {
+        npart = (पूर्णांक) std::min<int64_t>(N_ARGMAX_NPART_MAX, (ne00 + N_ARGMAX_CHUNK - 1)/N_ARGMAX_CHUNK);
     }
 
     ggml_metal_kargs_argmax args = {
@@ -5470,61 +5470,61 @@ int ggml_metal_op_argmax(ggml_metal_op_t ctx, int idx) {
         /*.ne01  = */ ne01,
     };
 
-    const size_t smem = 32*(sizeof(float) + sizeof(int32_t));
+    स्थिर माप_प्रकार smem = 32*(माप(भग्न) + माप(int32_t));
 
-    if (npart > 1) {
-        auto pipeline_part = ggml_metal_library_get_pipeline_argmax_part(lib);
-        auto pipeline_final = ggml_metal_library_get_pipeline_argmax_final(lib);
+    अगर (npart > 1) {
+        स्वतः pipeline_part = ggml_metal_library_get_pipeline_argmax_part(lib);
+        स्वतः pipeline_final = ggml_metal_library_get_pipeline_argmax_final(lib);
 
-        ggml_metal_buffer_id bid_dst = ggml_metal_get_buffer_id(op);
-        ggml_metal_buffer_id bid_tmp = bid_dst;
+        ggml_metal_बफर_id bid_dst = ggml_metal_get_बफर_id(op);
+        ggml_metal_बफर_id bid_tmp = bid_dst;
         bid_tmp.offs += ggml_nbytes(op);
 
         ggml_metal_encoder_set_pipeline(enc, pipeline_part);
-        ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-        ggml_metal_encoder_set_buffer  (enc, bid_tmp, 2);
-        ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+        ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+        ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+        ggml_metal_encoder_set_बफर  (enc, bid_tmp, 2);
+        ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem, 0);
         ggml_metal_encoder_dispatch_threadgroups(enc, npart, nrows, 1, 256, 1, 1);
 
         ggml_metal_op_concurrency_reset(ctx);
 
-        int nth = 32; // SIMD width
-        while (nth < npart && nth < 256) {
+        पूर्णांक nth = 32; // SIMD width
+        जबतक (nth < npart && nth < 256) {
             nth *= 2;
         }
 
         ggml_metal_encoder_set_pipeline(enc, pipeline_final);
-        ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer  (enc, bid_tmp, 1);
-        ggml_metal_encoder_set_buffer  (enc, bid_dst, 2);
-        ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+        ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+        ggml_metal_encoder_set_बफर  (enc, bid_tmp, 1);
+        ggml_metal_encoder_set_बफर  (enc, bid_dst, 2);
+        ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem, 0);
         ggml_metal_encoder_dispatch_threadgroups(enc, nrows, 1, 1, nth, 1, 1);
 
-        return 1;
+        वापस 1;
     }
 
-    auto pipeline = ggml_metal_library_get_pipeline_argmax(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_argmax(lib, op);
 
-    int nth = 32; // SIMD width
-    while (nth < ne00 && nth*ne01*ne02*ne03 < 256) {
+    पूर्णांक nth = 32; // SIMD width
+    जबतक (nth < ne00 && nth*ne01*ne02*ne03 < 256) {
         nth *= 2;
     }
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         2);
 
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+    ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem, 0);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, nrows, 1, 1, nth, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_argsort(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_argsort(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -5536,27 +5536,27 @@ int ggml_metal_op_argsort(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    auto pipeline = ggml_metal_library_get_pipeline_argsort(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_argsort(lib, op);
 
     // bitonic sort requires the number of elements to be power of 2
-    int nth = 1;
-    while (nth < ne00 && 2*nth <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+    पूर्णांक nth = 1;
+    जबतक (nth < ne00 && 2*nth <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
         nth *= 2;
     }
 
-    const int npr = (ne00 + nth - 1)/nth;
+    स्थिर पूर्णांक npr = (ne00 + nth - 1)/nth;
 
     // Metal kernels require the buffer size to be multiple of 16 bytes
     // https://developer.apple.com/documentation/metal/mtlcomputecommandencoder/1443142-setthreadgroupmemorylength
-    const size_t smem = GGML_PAD(nth*sizeof(int32_t), 16);
+    स्थिर माप_प्रकार smem = GGML_PAD(nth*माप(int32_t), 16);
 
-    ggml_metal_buffer_id bid_src0 = ggml_metal_get_buffer_id(op->src[0]);
-    ggml_metal_buffer_id bid_dst  = ggml_metal_get_buffer_id(op);
+    ggml_metal_बफर_id bid_src0 = ggml_metal_get_बफर_id(op->src[0]);
+    ggml_metal_बफर_id bid_dst  = ggml_metal_get_बफर_id(op);
 
-    ggml_metal_buffer_id bid_tmp = bid_dst;
+    ggml_metal_बफर_id bid_tmp = bid_dst;
     bid_tmp.offs += ggml_nbytes(op);
 
-    if ((int) ceil(std::log(npr) / std::log(2)) % 2 == 1) {
+    अगर ((पूर्णांक) उच्चमान(std::log(npr) / std::log(2)) % 2 == 1) {
         std::swap(bid_dst, bid_tmp);
     }
 
@@ -5577,19 +5577,19 @@ int ggml_metal_op_argsort(ggml_metal_op_t ctx, int idx) {
     };
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
-    ggml_metal_encoder_set_buffer  (enc, bid_dst,  2);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, bid_src0, 1);
+    ggml_metal_encoder_set_बफर  (enc, bid_dst,  2);
 
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+    ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem, 0);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, npr*ne01, ne02, ne03, nth, 1, 1);
 
-    auto pipeline_merge = ggml_metal_library_get_pipeline_argsort_merge(lib, op);
+    स्वतः pipeline_merge = ggml_metal_library_get_pipeline_argsort_merge(lib, op);
 
-    int len = nth;
+    पूर्णांक len = nth;
 
-    while (len < ne00) {
+    जबतक (len < ne00) {
         ggml_metal_op_concurrency_reset(ctx);
 
         ggml_metal_kargs_argsort_merge args_merge = {
@@ -5610,15 +5610,15 @@ int ggml_metal_op_argsort(ggml_metal_op_t ctx, int idx) {
         };
 
         // merges per row
-        const int nm = (ne00 + 2*len - 1) / (2*len);
+        स्थिर पूर्णांक nm = (ne00 + 2*len - 1) / (2*len);
 
-        const int nth = std::min(512, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline_merge));
+        स्थिर पूर्णांक nth = std::min(512, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline_merge));
 
         ggml_metal_encoder_set_pipeline(enc, pipeline_merge);
-        ggml_metal_encoder_set_bytes   (enc, &args_merge, sizeof(args_merge), 0);
-        ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
-        ggml_metal_encoder_set_buffer  (enc, bid_dst,  2);
-        ggml_metal_encoder_set_buffer  (enc, bid_tmp,  3);
+        ggml_metal_encoder_set_bytes   (enc, &args_merge, माप(args_merge), 0);
+        ggml_metal_encoder_set_बफर  (enc, bid_src0, 1);
+        ggml_metal_encoder_set_बफर  (enc, bid_dst,  2);
+        ggml_metal_encoder_set_बफर  (enc, bid_tmp,  3);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, nm*ne01, ne02, ne03, nth, 1, 1);
 
@@ -5627,13 +5627,13 @@ int ggml_metal_op_argsort(ggml_metal_op_t ctx, int idx) {
         len <<= 1;
     }
 
-    return 1;
+    वापस 1;
 }
 
 // bitonic-sort + merge fallback: efficient when k is small and there are few rows,
 // where the single-workgroup-per-row radix-select cannot reach enough parallelism
-static void ggml_metal_op_top_k_bitonic(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+अटल व्योम ggml_metal_op_शीर्ष_k_bitonic(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -5645,30 +5645,30 @@ static void ggml_metal_op_top_k_bitonic(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    auto pipeline = ggml_metal_library_get_pipeline_top_k(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_शीर्ष_k(lib, op);
 
     // bitonic sort requires the number of elements to be power of 2
-    int nth = 1;
-    while (nth < ne00 && 2*nth <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+    पूर्णांक nth = 1;
+    जबतक (nth < ne00 && 2*nth <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
         nth *= 2;
     }
 
     // blocks per row
-    const int npr = (ne00 + nth - 1)/nth;
+    स्थिर पूर्णांक npr = (ne00 + nth - 1)/nth;
 
-    const size_t smem = GGML_PAD(nth*sizeof(int32_t), 16);
+    स्थिर माप_प्रकार smem = GGML_PAD(nth*माप(int32_t), 16);
 
-    ggml_metal_buffer_id bid_src0 = ggml_metal_get_buffer_id(op->src[0]);
-    ggml_metal_buffer_id bid_dst  = ggml_metal_get_buffer_id(op);
+    ggml_metal_बफर_id bid_src0 = ggml_metal_get_बफर_id(op->src[0]);
+    ggml_metal_बफर_id bid_dst  = ggml_metal_get_बफर_id(op);
 
-    ggml_metal_buffer_id bid_tmp = bid_dst;
-    bid_tmp.offs += sizeof(int32_t)*ggml_nelements(op->src[0]);
+    ggml_metal_बफर_id bid_tmp = bid_dst;
+    bid_tmp.offs += माप(int32_t)*ggml_nelements(op->src[0]);
 
-    if ((int) ceil(std::log(npr) / std::log(2)) % 2 == 1) {
+    अगर ((पूर्णांक) उच्चमान(std::log(npr) / std::log(2)) % 2 == 1) {
         std::swap(bid_dst, bid_tmp);
     }
 
-    const int top_k = ne0;
+    स्थिर पूर्णांक शीर्ष_k = ne0;
 
     ggml_metal_kargs_argsort args = {
         /*.ne00  =*/ ne00,
@@ -5683,33 +5683,33 @@ static void ggml_metal_op_top_k_bitonic(ggml_metal_op_t ctx, int idx) {
         /*.ne1   =*/ ne1,
         /*.ne2   =*/ ne2,
         /*.ne3   =*/ ne3,
-        /*.top_k =*/ std::min(nth, top_k), // for each block, keep just the top_k indices
+        /*.top_k =*/ std::min(nth, शीर्ष_k), // for each block, keep just the top_k indices
     };
 
-    if (npr > 1) {
-        args.ne0 = (npr - 1)*args.top_k + std::min(ne00 - (npr - 1)*nth, args.top_k);
+    अगर (npr > 1) {
+        args.ne0 = (npr - 1)*args.शीर्ष_k + std::min(ne00 - (npr - 1)*nth, args.शीर्ष_k);
     }
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
-    ggml_metal_encoder_set_buffer  (enc, bid_dst,  2);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, bid_src0, 1);
+    ggml_metal_encoder_set_बफर  (enc, bid_dst,  2);
 
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+    ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem, 0);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, npr*ne01, ne02, ne03, nth, 1, 1);
 
-    auto pipeline_merge = ggml_metal_library_get_pipeline_top_k_merge(lib, op);
+    स्वतः pipeline_merge = ggml_metal_library_get_pipeline_शीर्ष_k_merge(lib, op);
 
-    int len = args.top_k;
+    पूर्णांक len = args.शीर्ष_k;
 
-    while (len < args.ne0) {
+    जबतक (len < args.ne0) {
         ggml_metal_op_concurrency_reset(ctx);
 
         // merges per row
-        const int nm = (args.ne0 + 2*len - 1) / (2*len);
+        स्थिर पूर्णांक nm = (args.ne0 + 2*len - 1) / (2*len);
 
-        const int nth = std::min(512, std::min(len, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline_merge)));
+        स्थिर पूर्णांक nth = std::min(512, std::min(len, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline_merge)));
 
         ggml_metal_kargs_argsort_merge args_merge = {
             /*.ne00  =*/ ne00,
@@ -5724,15 +5724,15 @@ static void ggml_metal_op_top_k_bitonic(ggml_metal_op_t ctx, int idx) {
             /*.ne1   =*/ ne1,
             /*.ne2   =*/ ne2,
             /*.ne3   =*/ ne3,
-            /*.top_k =*/ nm == 1 ? top_k : args.ne0, // the final merge outputs top_k elements
+            /*.top_k =*/ nm == 1 ? शीर्ष_k : args.ne0, // the final merge outputs top_k elements
             /*.len   =*/ len,
         };
 
         ggml_metal_encoder_set_pipeline(enc, pipeline_merge);
-        ggml_metal_encoder_set_bytes   (enc, &args_merge, sizeof(args_merge), 0);
-        ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
-        ggml_metal_encoder_set_buffer  (enc, bid_dst,  2);
-        ggml_metal_encoder_set_buffer  (enc, bid_tmp,  3);
+        ggml_metal_encoder_set_bytes   (enc, &args_merge, माप(args_merge), 0);
+        ggml_metal_encoder_set_बफर  (enc, bid_src0, 1);
+        ggml_metal_encoder_set_बफर  (enc, bid_dst,  2);
+        ggml_metal_encoder_set_बफर  (enc, bid_tmp,  3);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, nm*ne01, ne02, ne03, nth, 1, 1);
 
@@ -5745,8 +5745,8 @@ static void ggml_metal_op_top_k_bitonic(ggml_metal_op_t ctx, int idx) {
 // radix-select: one workgroup per row. Maps each float to an order-preserving unsigned
 // key, finds the k-th largest via 4 radix-8 histogram passes, then compacts the top-k
 // indices. Fast for large k and/or many rows.
-static void ggml_metal_op_top_k_radix(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+अटल व्योम ggml_metal_op_शीर्ष_k_radix(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -5756,12 +5756,12 @@ static void ggml_metal_op_top_k_radix(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
     GGML_TENSOR_LOCALS(uint64_t, nb0, op->src[0], nb);
 
-    auto pipeline = ggml_metal_library_get_pipeline_top_k_radix(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_शीर्ष_k_radix(lib, op);
 
     // one workgroup per row; radix-select the k-th largest value
-    const int nth = std::min(1024, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
+    स्थिर पूर्णांक nth = std::min(1024, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
 
-    ggml_metal_kargs_top_k args = {
+    ggml_metal_kargs_शीर्ष_k args = {
         /*.ne00  =*/ ne00,
         /*.ne01  =*/ ne01,
         /*.ne02  =*/ ne02,
@@ -5773,57 +5773,57 @@ static void ggml_metal_op_top_k_radix(ggml_metal_op_t ctx, int idx) {
     };
 
     // shared memory: 256-entry histogram + bucket/above scalars + output counter
-    const size_t smem_histo  = GGML_PAD(256*sizeof(uint32_t), 16);
-    const size_t smem_bucket = GGML_PAD(    sizeof(uint32_t), 16);
-    const size_t smem_above  = GGML_PAD(    sizeof(uint32_t), 16);
-    const size_t smem_out    = GGML_PAD(    sizeof(uint32_t), 16);
+    स्थिर माप_प्रकार smem_histo  = GGML_PAD(256*माप(uint32_t), 16);
+    स्थिर माप_प्रकार smem_bucket = GGML_PAD(    माप(uint32_t), 16);
+    स्थिर माप_प्रकार smem_above  = GGML_PAD(    माप(uint32_t), 16);
+    स्थिर माप_प्रकार smem_out    = GGML_PAD(    माप(uint32_t), 16);
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         2);
 
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem_histo,  0);
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem_bucket, 1);
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem_above,  2);
-    ggml_metal_encoder_set_threadgroup_memory_size(enc, smem_out,    3);
+    ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem_histo,  0);
+    ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem_bucket, 1);
+    ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem_above,  2);
+    ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem_out,    3);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
 }
 
-int ggml_metal_op_topk_moe(ggml_metal_op_t ctx, int idx) {
+पूर्णांक ggml_metal_op_topk_moe(ggml_metal_op_t ctx, पूर्णांक idx) {
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    int n_fuse = 1;
-    const ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n_fuse);
-    if (!fusion || ggml_metal_fusion_get_id(fusion) != GGML_METAL_FUSION_TOPK_MOE) {
-        return 1;
+    पूर्णांक n_fuse = 1;
+    स्थिर ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n_fuse);
+    अगर (!fusion || ggml_metal_fusion_get_id(fusion) != GGML_METAL_FUSION_TOPK_MOE) {
+        वापस 1;
     }
 
-    ggml_tensor * softmax  = ctx->node(idx);
+    ggml_tensor * softmax  = ctx->गाँठ(idx);
     ggml_tensor * logits   = softmax->src[0];
-    ggml_tensor * get_rows = ctx->node(idx + 2);
+    ggml_tensor * get_rows = ctx->गाँठ(idx + 2);
     ggml_tensor * ids      = get_rows->src[1];
-    ggml_tensor * weights  = ctx->node(idx + n_fuse - 1);
+    ggml_tensor * weights  = ctx->गाँठ(idx + n_fuse - 1);
 
-    const int64_t n_expert      = logits->ne[0];
-    const int64_t n_tokens      = logits->ne[1];
-    const int64_t n_expert_used = ids->ne[0];
+    स्थिर int64_t n_expert      = logits->ne[0];
+    स्थिर int64_t n_tokens      = logits->ne[1];
+    स्थिर int64_t n_expert_used = ids->ne[0];
 
-    const bool with_norm  = n_fuse >= 6;
-    const bool with_scale = n_fuse == 4 || n_fuse == 7;
+    स्थिर bool with_norm  = n_fuse >= 6;
+    स्थिर bool with_scale = n_fuse == 4 || n_fuse == 7;
 
-    float clamp = -INFINITY;
-    if (with_norm) {
-        ggml_tensor * clamp_node = ctx->node(idx + 4);
-        clamp = ggml_get_op_params_f32(clamp_node, 0);
+    भग्न clamp = -अनन्त;
+    अगर (with_norm) {
+        ggml_tensor * clamp_गाँठ = ctx->गाँठ(idx + 4);
+        clamp = ggml_get_op_params_f32(clamp_गाँठ, 0);
     }
 
-    float scale = 1.0f;
-    if (with_scale) {
-        ggml_tensor * scale_node = ctx->node(idx + n_fuse - 1);
-        scale = ggml_get_op_params_f32(scale_node, 0);
+    भग्न scale = 1.0f;
+    अगर (with_scale) {
+        ggml_tensor * scale_गाँठ = ctx->गाँठ(idx + n_fuse - 1);
+        scale = ggml_get_op_params_f32(scale_गाँठ, 0);
     }
 
     ggml_metal_kargs_topk_moe args = {
@@ -5834,90 +5834,90 @@ int ggml_metal_op_topk_moe(ggml_metal_op_t ctx, int idx) {
         /*.scale =*/ scale,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_topk_moe(lib, (int32_t) n_expert, (int32_t) n_expert_used, with_norm);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_topk_moe(lib, (int32_t) n_expert, (int32_t) n_expert_used, with_norm);
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(logits),  1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(weights), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(ids),     3);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(logits),  1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(weights), 2);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(ids),     3);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, (uint32_t) n_tokens, 1, 1, 32, 1, 1);
 
-    ctx->count_fusions(fusion);
+    ctx->गिनती_fusions(fusion);
 
-    if (ggml_metal_fusion_info_debug(ctx->finfo) > 1) {
+    अगर (ggml_metal_fusion_info_debug(ctx->finfo) > 1) {
         GGML_LOG_DEBUG("%s: fuse: SOFT_MAX + ARGSORT + GET_ROWS\n", __func__);
     }
 
-    return n_fuse;
+    वापस n_fuse;
 }
 
-int ggml_metal_op_moe_reduce(ggml_metal_op_t ctx, int idx) {
+पूर्णांक ggml_metal_op_moe_reduce(ggml_metal_op_t ctx, पूर्णांक idx) {
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    int n_fuse = 1;
-    const ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n_fuse);
-    if (!fusion || ggml_metal_fusion_get_id(fusion) != GGML_METAL_FUSION_MOE_REDUCE) {
-        return 1;
+    पूर्णांक n_fuse = 1;
+    स्थिर ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n_fuse);
+    अगर (!fusion || ggml_metal_fusion_get_id(fusion) != GGML_METAL_FUSION_MOE_REDUCE) {
+        वापस 1;
     }
 
-    ggml_tensor * mul     = ctx->node(idx);
+    ggml_tensor * mul     = ctx->गाँठ(idx);
     ggml_tensor * experts = mul->src[0];
     ggml_tensor * weights = mul->src[1];
-    ggml_tensor * dst     = ctx->node(idx + n_fuse - 1);
+    ggml_tensor * dst     = ctx->गाँठ(idx + n_fuse - 1);
 
     ggml_metal_kargs_moe_reduce args = {
         /*.ne00 =*/ (int32_t) experts->ne[0],
         /*.ne02 =*/ (int32_t) experts->ne[2],
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_moe_reduce(lib, (int32_t) experts->ne[1]);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_moe_reduce(lib, (int32_t) experts->ne[1]);
 
-    const int nth = std::min(256, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
-    const int n_col_tiles = (args.ne00 + nth - 1) / nth;
+    स्थिर पूर्णांक nth = std::min(256, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
+    स्थिर पूर्णांक n_col_tiles = (args.ne00 + nth - 1) / nth;
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(experts), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(weights), 2);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(dst),     3);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(experts), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(weights), 2);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(dst),     3);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, (uint32_t) args.ne02, (uint32_t) n_col_tiles, 1, nth, 1, 1);
 
-    ctx->count_fusions(fusion);
+    ctx->गिनती_fusions(fusion);
 
-    if (ggml_metal_fusion_info_debug(ctx->finfo) > 1) {
+    अगर (ggml_metal_fusion_info_debug(ctx->finfo) > 1) {
         GGML_LOG_DEBUG("%s: fuse: MOE_REDUCE\n", __func__);
     }
 
-    return n_fuse;
+    वापस n_fuse;
 }
 
-int ggml_metal_op_top_k(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_शीर्ष_k(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     // radix-select has a fixed single-workgroup-per-row cost (~50-60us) that is only
     // amortized for long rows, many rows, or a large k; otherwise the bitonic path wins
-    const int ncols = op->src[0]->ne[0];
-    const int k     = op->ne[0];
-    const int nrows = ggml_nrows(op->src[0]);
+    स्थिर पूर्णांक ncols = op->src[0]->ne[0];
+    स्थिर पूर्णांक k     = op->ne[0];
+    स्थिर पूर्णांक nrows = ggml_nrows(op->src[0]);
 
-    const bool use_radix =
+    स्थिर bool use_radix =
         ncols > 2048 && (k > 64 || (nrows > 4 && ncols >= 8192));
 
-    if (use_radix) {
-        ggml_metal_op_top_k_radix(ctx, idx);
-    } else {
-        ggml_metal_op_top_k_bitonic(ctx, idx);
+    अगर (use_radix) {
+        ggml_metal_op_शीर्ष_k_radix(ctx, idx);
+    } अन्यथा {
+        ggml_metal_op_शीर्ष_k_bitonic(ctx, idx);
     }
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_tri(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_tri(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -5946,11 +5946,11 @@ int ggml_metal_op_tri(ggml_metal_op_t ctx, int idx) {
         /*.nb3   =*/ nb3,
     };
 
-    auto pipeline = ggml_metal_library_get_pipeline_tri(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_tri(lib, op);
 
-    int nth = 32; // SIMD width
+    पूर्णांक nth = 32; // SIMD width
 
-    while (nth < ne00 && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+    जबतक (nth < ne00 && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
         nth *= 2;
     }
 
@@ -5958,17 +5958,17 @@ int ggml_metal_op_tri(ggml_metal_op_t ctx, int idx) {
     nth = std::min(nth, ne00);
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), 0);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op),         2);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_opt_step_adamw(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_opt_step_adamw(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -5978,33 +5978,33 @@ int ggml_metal_op_opt_step_adamw(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    auto pipeline = ggml_metal_library_get_pipeline_opt_step_adamw(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_opt_step_adamw(lib, op);
 
-    const int64_t np = ggml_nelements(op->src[0]);
+    स्थिर int64_t np = ggml_nelements(op->src[0]);
     ggml_metal_kargs_opt_step_adamw args = {
         /*.np =*/ np,
     };
 
-    int ida = 0;
+    पूर्णांक ida = 0;
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), ida++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), ida++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), ida++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[2]), ida++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[3]), ida++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[4]), ida++);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), ida++);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), ida++);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[1]), ida++);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[2]), ida++);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[3]), ida++);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[4]), ida++);
 
-    const int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne0);
-    const int64_t n = (np + nth - 1) / nth;
+    स्थिर पूर्णांक nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne0);
+    स्थिर int64_t n = (np + nth - 1) / nth;
 
     ggml_metal_encoder_dispatch_threadgroups(enc, n, 1, 1, nth, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_opt_step_sgd(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_opt_step_sgd(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -6014,31 +6014,31 @@ int ggml_metal_op_opt_step_sgd(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    auto pipeline = ggml_metal_library_get_pipeline_opt_step_sgd(lib, op);
+    स्वतः pipeline = ggml_metal_library_get_pipeline_opt_step_sgd(lib, op);
 
-    const int64_t np = ggml_nelements(op->src[0]);
+    स्थिर int64_t np = ggml_nelements(op->src[0]);
     ggml_metal_kargs_opt_step_sgd args = {
         /*.np =*/ np,
     };
 
-    int ida = 0;
+    पूर्णांक ida = 0;
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
-    ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), ida++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), ida++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), ida++);
-    ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[2]), ida++);
+    ggml_metal_encoder_set_bytes   (enc, &args, माप(args), ida++);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[0]), ida++);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[1]), ida++);
+    ggml_metal_encoder_set_बफर  (enc, ggml_metal_get_बफर_id(op->src[2]), ida++);
 
-    const int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne0);
-    const int64_t n = (np + nth - 1) / nth;
+    स्थिर पूर्णांक nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne0);
+    स्थिर int64_t n = (np + nth - 1) / nth;
 
     ggml_metal_encoder_dispatch_threadgroups(enc, n, 1, 1, nth, 1, 1);
 
-    return 1;
+    वापस 1;
 }
 
-int ggml_metal_op_count_equal(ggml_metal_op_t ctx, int idx) {
-    ggml_tensor * op = ctx->node(idx);
+पूर्णांक ggml_metal_op_गिनती_equal(ggml_metal_op_t ctx, पूर्णांक idx) {
+    ggml_tensor * op = ctx->गाँठ(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
@@ -6050,11 +6050,11 @@ int ggml_metal_op_count_equal(ggml_metal_op_t ctx, int idx) {
     {
         ggml_metal_kargs_memset args = { /*.val =*/ 0 };
 
-        auto pipeline = ggml_metal_library_get_pipeline_memset(lib, op);
+        स्वतः pipeline = ggml_metal_library_get_pipeline_memset(lib, op);
 
         ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes(enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op), 1);
+        ggml_metal_encoder_set_bytes(enc, &args, माप(args), 0);
+        ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(op), 1);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, 1, 1, 1, 1, 1, 1);
     }
@@ -6062,7 +6062,7 @@ int ggml_metal_op_count_equal(ggml_metal_op_t ctx, int idx) {
     ggml_metal_op_concurrency_reset(ctx);
 
     {
-        ggml_metal_kargs_count_equal args = {
+        ggml_metal_kargs_गिनती_equal args = {
             /*.ne00 =*/ ne00,
             /*.ne01 =*/ ne01,
             /*.ne02 =*/ ne02,
@@ -6077,23 +6077,23 @@ int ggml_metal_op_count_equal(ggml_metal_op_t ctx, int idx) {
             /*.nb13 =*/ nb13,
         };
 
-        auto pipeline = ggml_metal_library_get_pipeline_count_equal(lib, op);
+        स्वतः pipeline = ggml_metal_library_get_pipeline_गिनती_equal(lib, op);
 
-        const size_t smem = pipeline.smem;
+        स्थिर माप_प्रकार smem = pipeline.smem;
 
-        const int nth = 32*pipeline.nsg;
+        स्थिर पूर्णांक nth = 32*pipeline.nsg;
 
         GGML_ASSERT(nth <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
 
         ggml_metal_encoder_set_pipeline(enc, pipeline);
-        ggml_metal_encoder_set_bytes(enc, &args, sizeof(args), 0);
-        ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-        ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-        ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op), 3);
+        ggml_metal_encoder_set_bytes(enc, &args, माप(args), 0);
+        ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(op->src[0]), 1);
+        ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(op->src[1]), 2);
+        ggml_metal_encoder_set_बफर(enc, ggml_metal_get_बफर_id(op), 3);
 
-        ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
+        ggml_metal_encoder_set_threadgroup_memory_आकार(enc, smem, 0);
         ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
     }
 
-    return 1;
+    वापस 1;
 }

@@ -1,38 +1,38 @@
-#ifndef HTP_WORK_QUEUE_H
-#define HTP_WORK_QUEUE_H
+#अगर_अघोषित HTP_WORK_QUEUE_H
+#घोषणा HTP_WORK_QUEUE_H
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <stddef.h>
+#समावेश <stdbool.h>
+#समावेश <stdint.h>
+#समावेश <stddef.h>
 
-typedef void (*work_queue_func_t)(unsigned int n, unsigned int i, void *);
+प्रकार व्योम (*work_queue_func_t)(अचिन्हित पूर्णांक n, अचिन्हित पूर्णांक i, व्योम *);
 
-struct work_queue_s;
-typedef struct work_queue_s * work_queue_t;
+काष्ठा work_queue_s;
+प्रकार काष्ठा work_queue_s * work_queue_t;
 
-#define WORK_QUEUE_MAX_N_THREADS      10
+#घोषणा WORK_QUEUE_MAX_N_THREADS      10
 
-size_t       work_queue_sizeof(uint32_t n_threads, uint32_t capacity, uint32_t stack_size);
-size_t       work_queue_alignof(void);
-work_queue_t work_queue_init(void * ptr, uint32_t n_threads, uint32_t capacity, uint32_t stack_size);
-void         work_queue_free(work_queue_t q);
+माप_प्रकार       work_queue_sizeof(uint32_t n_threads, uint32_t capacity, uint32_t ढेर_आकार);
+माप_प्रकार       work_queue_alignof(व्योम);
+work_queue_t work_queue_init(व्योम * ptr, uint32_t n_threads, uint32_t capacity, uint32_t ढेर_आकार);
+व्योम         work_queue_free(work_queue_t q);
 
-void work_queue_wakeup(work_queue_t q);
-void work_queue_suspend(work_queue_t q);
+व्योम work_queue_wakeup(work_queue_t q);
+व्योम work_queue_suspend(work_queue_t q);
 
-bool work_queue_run_async(work_queue_t q, work_queue_func_t func, void * data, unsigned int n);
+bool work_queue_run_async(work_queue_t q, work_queue_func_t func, व्योम * तथ्य, अचिन्हित पूर्णांक n);
 
-static inline bool work_queue_run(work_queue_t q, work_queue_func_t func, void * data, unsigned int n) {
-    if (n <= 1) {
-        func(n, 0, data);
-        return true;
+अटल अंतरभूत bool work_queue_run(work_queue_t q, work_queue_func_t func, व्योम * तथ्य, अचिन्हित पूर्णांक n) {
+    अगर (n <= 1) {
+        func(n, 0, तथ्य);
+        वापस true;
     }
-    return work_queue_run_async(q, func, data, n);
+    वापस work_queue_run_async(q, func, तथ्य, n);
 }
 
 // Legacy compatibility
-typedef work_queue_func_t     worker_callback_t;
-#define worker_pool_run_func  work_queue_run
-#define worker_pool           work_queue
+प्रकार work_queue_func_t     worker_callback_t;
+#घोषणा worker_pool_run_func  work_queue_run
+#घोषणा worker_pool           work_queue
 
-#endif  // #ifndef HTP_WORK_QUEUE_H
+#पूर्ण_अगर  // #ifndef HTP_WORK_QUEUE_H

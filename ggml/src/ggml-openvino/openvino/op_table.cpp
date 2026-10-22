@@ -1,29 +1,29 @@
-#include "op_table.h"
+#समावेश "op_table.h"
 
-#include "utils.h"
+#समावेश "utils.h"
 
-#include <openvino/op/abs.hpp>
-#include <openvino/op/add.hpp>
-#include <openvino/op/ceiling.hpp>
-#include <openvino/op/cos.hpp>
-#include <openvino/op/divide.hpp>
-#include <openvino/op/exp.hpp>
-#include <openvino/op/floor.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/gelu.hpp>
-#include <openvino/op/hswish.hpp>
-#include <openvino/op/log.hpp>
-#include <openvino/op/matmul.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/negative.hpp>
-#include <openvino/op/relu.hpp>
-#include <openvino/op/sigmoid.hpp>
-#include <openvino/op/sign.hpp>
-#include <openvino/op/sin.hpp>
-#include <openvino/op/softplus.hpp>
-#include <openvino/op/subtract.hpp>
-#include <openvino/op/swish.hpp>
-#include <openvino/op/tanh.hpp>
+#समावेश <openvino/op/abs.hpp>
+#समावेश <openvino/op/add.hpp>
+#समावेश <openvino/op/ceiling.hpp>
+#समावेश <openvino/op/cos.hpp>
+#समावेश <openvino/op/divide.hpp>
+#समावेश <openvino/op/exp.hpp>
+#समावेश <openvino/op/floor.hpp>
+#समावेश <openvino/op/gather.hpp>
+#समावेश <openvino/op/gelu.hpp>
+#समावेश <openvino/op/hswish.hpp>
+#समावेश <openvino/op/log.hpp>
+#समावेश <openvino/op/matmul.hpp>
+#समावेश <openvino/op/multiply.hpp>
+#समावेश <openvino/op/negative.hpp>
+#समावेश <openvino/op/relu.hpp>
+#समावेश <openvino/op/sigmoid.hpp>
+#समावेश <openvino/op/sign.hpp>
+#समावेश <openvino/op/sin.hpp>
+#समावेश <openvino/op/softplus.hpp>
+#समावेश <openvino/op/subtract.hpp>
+#समावेश <openvino/op/swish.hpp>
+#समावेश <openvino/op/tanh.hpp>
 
 namespace ov {
 namespace frontend {
@@ -31,7 +31,7 @@ namespace ggml {
 
 std::unordered_map<std::string, CreatorFunction> get_supported_ops() {
     using namespace ov::op;
-    return {
+    वापस {
         {"GGML_OP_ADD",             op::translate_add                              },
         {"GGML_OP_ADD1",            op::translate_1to1_match_2_inputs<v1::Add>     },
         {"GGML_OP_ADD_ID",          op::translate_add_id                           },
@@ -51,7 +51,7 @@ std::unordered_map<std::string, CreatorFunction> get_supported_ops() {
         {"GGML_OP_RMS_NORM",        op::translate_rms_norm                         },
         {"GGML_OP_NORM",            op::translate_norm                             },
         {"GGML_OP_L2_NORM",         op::translate_l2_norm                          },
-        {"GGML_OP_SUM_ROWS",        op::translate_sum_rows                         },
+        {"GGML_OP_SUM_ROWS",        op::translate_योग_rows                         },
         {"GGML_OP_ROPE",            op::translate_rope                             },
         {"GGML_OP_SCALE",           op::translate_scale                            },
         {"GGML_OP_SQR",             op::translate_sqr                              },
@@ -60,31 +60,31 @@ std::unordered_map<std::string, CreatorFunction> get_supported_ops() {
         {"GGML_OP_ARGSORT",         op::translate_argsort                          },
         {"GGML_OP_SUB",             op::translate_1to1_match_2_inputs<v1::Subtract>},
         {"GGML_OP_TRANSPOSE",       op::translate_transpose                        },
-        {"GGML_OP_SIN",             op::translate_1to1_match_1_input<v0::Sin>      },
-        {"GGML_OP_COS",             op::translate_1to1_match_1_input<v0::Cos>      },
-        {"GGML_OP_LOG",             op::translate_1to1_match_1_input<v0::Log>      },
+        {"GGML_OP_SIN",             op::translate_1to1_match_1_निवेश<v0::Sin>      },
+        {"GGML_OP_COS",             op::translate_1to1_match_1_निवेश<v0::Cos>      },
+        {"GGML_OP_LOG",             op::translate_1to1_match_1_निवेश<v0::Log>      },
         {"GGML_OP_MEAN",            op::translate_mean                             },
-        {"GGML_OP_SUM",             op::translate_sum                              },
+        {"GGML_OP_SUM",             op::translate_योग                              },
         {"GGML_UNARY_OP_GELU",      op::translate_unary_gelu                       },
         {"GGML_UNARY_OP_GELU_ERF",  op::translate_unary_gelu_erf                   },
         {"GGML_UNARY_OP_GELU_QUICK", op::translate_unary_gelu_quick                },
         {"GGML_UNARY_OP_ELU",       op::translate_unary_elu                        },
-        {"GGML_UNARY_OP_HARDSWISH", op::translate_1to1_match_1_input<v4::HSwish>   },
+        {"GGML_UNARY_OP_HARDSWISH", op::translate_1to1_match_1_निवेश<v4::HSwish>   },
         {"GGML_UNARY_OP_HARDSIGMOID", op::translate_unary_hardsigmoid              },
         {"GGML_UNARY_OP_STEP",      op::translate_unary_step                       },
-        {"GGML_UNARY_OP_ABS",       op::translate_1to1_match_1_input<v0::Abs>      },
-        {"GGML_UNARY_OP_SGN",       op::translate_1to1_match_1_input<v0::Sign>     },
-        {"GGML_UNARY_OP_FLOOR",     op::translate_1to1_match_1_input<v0::Floor>    },
-        {"GGML_UNARY_OP_CEIL",      op::translate_1to1_match_1_input<v0::Ceiling>  },
+        {"GGML_UNARY_OP_ABS",       op::translate_1to1_match_1_निवेश<v0::Abs>      },
+        {"GGML_UNARY_OP_SGN",       op::translate_1to1_match_1_निवेश<v0::Sign>     },
+        {"GGML_UNARY_OP_FLOOR",     op::translate_1to1_match_1_निवेश<v0::Floor>    },
+        {"GGML_UNARY_OP_CEIL",      op::translate_1to1_match_1_निवेश<v0::Ceiling>  },
         {"GGML_UNARY_OP_ROUND",     op::translate_unary_round                      },
         {"GGML_UNARY_OP_EXPM1",     op::translate_unary_expm1                      },
-        {"GGML_UNARY_OP_SIGMOID",   op::translate_1to1_match_1_input<v0::Sigmoid>  },
-        {"GGML_UNARY_OP_SILU",      op::translate_1to1_match_1_input<v4::Swish>    },
+        {"GGML_UNARY_OP_SIGMOID",   op::translate_1to1_match_1_निवेश<v0::Sigmoid>  },
+        {"GGML_UNARY_OP_SILU",      op::translate_1to1_match_1_निवेश<v4::Swish>    },
         {"GGML_UNARY_OP_SOFTPLUS",  op::translate_unary_softplus                   },
-        {"GGML_UNARY_OP_TANH",      op::translate_1to1_match_1_input<v0::Tanh>     },
-        {"GGML_UNARY_OP_EXP",       op::translate_1to1_match_1_input<v0::Exp>      },
-        {"GGML_UNARY_OP_NEG",       op::translate_1to1_match_1_input<v0::Negative> },
-        {"GGML_UNARY_OP_RELU",      op::translate_1to1_match_1_input<v0::Relu>     },
+        {"GGML_UNARY_OP_TANH",      op::translate_1to1_match_1_निवेश<v0::Tanh>     },
+        {"GGML_UNARY_OP_EXP",       op::translate_1to1_match_1_निवेश<v0::Exp>      },
+        {"GGML_UNARY_OP_NEG",       op::translate_1to1_match_1_निवेश<v0::Negative> },
+        {"GGML_UNARY_OP_RELU",      op::translate_1to1_match_1_निवेश<v0::Relu>     },
         {"GGML_OP_VIEW",            op::translate_view                             },
         {"GGML_GLU_OP_SWIGLU",      op::translate_glu_swiglu                       },
         {"GGML_GLU_OP_SWIGLU_OAI",  op::translate_glu_swiglu_oai                   },

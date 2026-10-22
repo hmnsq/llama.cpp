@@ -1,199 +1,199 @@
-#ifndef HTP_TENSOR_H
-#define HTP_TENSOR_H
+#अगर_अघोषित HTP_TENSOR_H
+#घोषणा HTP_TENSOR_H
 
-#include <stdint.h>
-#include <stdbool.h>
-#include "htp-ops.h"
-#include "hex-bitmap.h"
-#include "hex-common.h"
-#include "hex-fastdiv.h"
+#समावेश <stdint.h>
+#समावेश <stdbool.h>
+#समावेश "htp-ops.h"
+#समावेश "hex-bitmap.h"
+#समावेश "hex-common.h"
+#समावेश "hex-fastdiv.h"
 
-#define HTP_TENSOR_MDEV_LINE_SIZE   128
+#घोषणा HTP_TENSOR_MDEV_पंक्ति_आकार   128
 
 // Currently HMX requires 32x32 tile formats (do not change)
-#define HTP_TENSOR_TILE_N_COLS      32
-#define HTP_TENSOR_TILE_N_ROWS      32
+#घोषणा HTP_TENSOR_TILE_N_COLS      32
+#घोषणा HTP_TENSOR_TILE_N_ROWS      32
 
-#define HTP_TENSOR_TILE_SIZE_F16    2048
-#define HTP_TENSOR_TILE_SIZE_Q4_0   576
-#define HTP_TENSOR_TILE_SIZE_Q4_1   640
-#define HTP_TENSOR_TILE_SIZE_Q8_0   1088
-#define HTP_TENSOR_TILE_SIZE_IQ4_NL 576
-#define HTP_TENSOR_TILE_SIZE_MXFP4  544
-#define HTP_TENSOR_TILE_SIZE_Q4_K   640
-#define HTP_TENSOR_TILE_SIZE_Q5_K   768
-#define HTP_TENSOR_TILE_SIZE_Q6_K   896
-#define HTP_TENSOR_TILE_SIZE_Q3_K   512
-#define HTP_TENSOR_TILE_SIZE_Q2_K   336
-#define HTP_TENSOR_TILE_K_Q1_0      128
-#define HTP_TENSOR_TILE_SIZE_Q1_0   576
-#define HTP_TENSOR_TILE_K_Q2_0      64
-#define HTP_TENSOR_TILE_SIZE_Q2_0   576
+#घोषणा HTP_TENSOR_TILE_आकार_F16    2048
+#घोषणा HTP_TENSOR_TILE_आकार_Q4_0   576
+#घोषणा HTP_TENSOR_TILE_आकार_Q4_1   640
+#घोषणा HTP_TENSOR_TILE_आकार_Q8_0   1088
+#घोषणा HTP_TENSOR_TILE_आकार_IQ4_NL 576
+#घोषणा HTP_TENSOR_TILE_आकार_MXFP4  544
+#घोषणा HTP_TENSOR_TILE_आकार_Q4_K   640
+#घोषणा HTP_TENSOR_TILE_आकार_Q5_K   768
+#घोषणा HTP_TENSOR_TILE_आकार_Q6_K   896
+#घोषणा HTP_TENSOR_TILE_आकार_Q3_K   512
+#घोषणा HTP_TENSOR_TILE_आकार_Q2_K   336
+#घोषणा HTP_TENSOR_TILE_K_Q1_0      128
+#घोषणा HTP_TENSOR_TILE_आकार_Q1_0   576
+#घोषणा HTP_TENSOR_TILE_K_Q2_0      64
+#घोषणा HTP_TENSOR_TILE_आकार_Q2_0   576
 
 // Tiled weight tensor layouts (Q4_0, Q8_0, IQ4_NL, MXFP4, Q1_0, Q2_0, K-quants):
 // See docs/backend/snapdragon/developer.md ("Tiled Weight Formats").
 
-struct htp_tensor_mdev_range {
+काष्ठा htp_tensor_mdev_range {
     uint32_t start;
-    uint32_t count;
+    uint32_t गिनती;
 };
 
-static inline bool htp_tensor_is_extended(const struct htp_tensor * t) {
-    return t && (t->data >> 32) != 0;
+अटल अंतरभूत bool htp_tensor_is_extended(स्थिर काष्ठा htp_tensor * t) {
+    वापस t && (t->तथ्य >> 32) != 0;
 }
 
-static inline bool htp_tensor_is_contiguous(const struct htp_tensor * t, uint32_t type_size) {
-    uint32_t next_nb = type_size;
-    if (t->ne[0] != 1 && t->nb[0] != next_nb) {
-        return false;
+अटल अंतरभूत bool htp_tensor_is_contiguous(स्थिर काष्ठा htp_tensor * t, uint32_t type_आकार) {
+    uint32_t अग्र_nb = type_आकार;
+    अगर (t->ne[0] != 1 && t->nb[0] != अग्र_nb) {
+        वापस false;
     }
-    next_nb *= t->ne[0];
-    for (int i = 1; i < HTP_OP_MAX_DIMS; i++) {
-        if (t->ne[i] != 1 && t->nb[i] != next_nb) {
-            return false;
+    अग्र_nb *= t->ne[0];
+    क्रम (पूर्णांक i = 1; i < HTP_OP_MAX_DIMS; i++) {
+        अगर (t->ne[i] != 1 && t->nb[i] != अग्र_nb) {
+            वापस false;
         }
-        next_nb *= t->ne[i];
+        अग्र_nb *= t->ne[i];
     }
-    return true;
+    वापस true;
 }
 
-static inline bool htp_tensor_is_permuted(const struct htp_tensor * t) {
-    return t->nb[0] > t->nb[1] || t->nb[1] > t->nb[2] || t->nb[2] > t->nb[3];
+अटल अंतरभूत bool htp_tensor_is_permuted(स्थिर काष्ठा htp_tensor * t) {
+    वापस t->nb[0] > t->nb[1] || t->nb[1] > t->nb[2] || t->nb[2] > t->nb[3];
 }
 
-static inline bool htp_tensor_mdev_data_aligned(const struct htp_tensor * t) {
-    return ((uintptr_t) t->data & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0;
+अटल अंतरभूत bool htp_tensor_mdev_तथ्य_aligned(स्थिर काष्ठा htp_tensor * t) {
+    वापस ((uintptr_t) t->तथ्य & (HTP_TENSOR_MDEV_पंक्ति_आकार - 1)) == 0;
 }
 
-static inline bool htp_tensor_can_row_partition(const struct htp_tensor * t, uint32_t elem_size) {
-    if (!htp_tensor_mdev_data_aligned(t)) {
-        return false;
+अटल अंतरभूत bool htp_tensor_can_row_partition(स्थिर काष्ठा htp_tensor * t, uint32_t elem_आकार) {
+    अगर (!htp_tensor_mdev_तथ्य_aligned(t)) {
+        वापस false;
     }
-    if (t->ne[0] != 1 && t->nb[0] != elem_size) {
-        return false;
+    अगर (t->ne[0] != 1 && t->nb[0] != elem_आकार) {
+        वापस false;
     }
-    if (htp_tensor_is_permuted(t)) {
-        return false;
+    अगर (htp_tensor_is_permuted(t)) {
+        वापस false;
     }
-    if (t->ne[1] > 1 && (t->nb[1] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) != 0) return false;
-    if (t->ne[2] > 1 && (t->nb[2] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) != 0) return false;
-    if (t->ne[3] > 1 && (t->nb[3] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) != 0) return false;
-    return true;
+    अगर (t->ne[1] > 1 && (t->nb[1] & (HTP_TENSOR_MDEV_पंक्ति_आकार - 1)) != 0) वापस false;
+    अगर (t->ne[2] > 1 && (t->nb[2] & (HTP_TENSOR_MDEV_पंक्ति_आकार - 1)) != 0) वापस false;
+    अगर (t->ne[3] > 1 && (t->nb[3] & (HTP_TENSOR_MDEV_पंक्ति_आकार - 1)) != 0) वापस false;
+    वापस true;
 }
 
-static inline bool htp_tensor_mdev_rows_per_chunk(const struct htp_tensor * t, uint32_t elem_size, uint32_t row_size, uint32_t * rows_per_chunk) {
+अटल अंतरभूत bool htp_tensor_mdev_rows_per_chunk(स्थिर काष्ठा htp_tensor * t, uint32_t elem_आकार, uint32_t row_आकार, uint32_t * rows_per_chunk) {
     *rows_per_chunk = 0;
 
-    if (!htp_tensor_mdev_data_aligned(t)) {
-        return false;
+    अगर (!htp_tensor_mdev_तथ्य_aligned(t)) {
+        वापस false;
     }
-    if (t->ne[0] != 1 && t->nb[0] != elem_size) {
-        return false;
+    अगर (t->ne[0] != 1 && t->nb[0] != elem_आकार) {
+        वापस false;
     }
-    if (htp_tensor_is_permuted(t)) {
-        return false;
+    अगर (htp_tensor_is_permuted(t)) {
+        वापस false;
     }
-    if (t->ne[1] > 1 && (t->nb[1] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0 &&
-        (t->ne[2] <= 1 || (t->nb[2] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0) &&
-        (t->ne[3] <= 1 || (t->nb[3] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0)) {
+    अगर (t->ne[1] > 1 && (t->nb[1] & (HTP_TENSOR_MDEV_पंक्ति_आकार - 1)) == 0 &&
+        (t->ne[2] <= 1 || (t->nb[2] & (HTP_TENSOR_MDEV_पंक्ति_आकार - 1)) == 0) &&
+        (t->ne[3] <= 1 || (t->nb[3] & (HTP_TENSOR_MDEV_पंक्ति_आकार - 1)) == 0)) {
         *rows_per_chunk = 1;
-        return true;
+        वापस true;
     }
-    if (t->nb[1] == row_size &&
+    अगर (t->nb[1] == row_आकार &&
         (t->ne[2] <= 1 || t->nb[2] == t->nb[1] * t->ne[1]) &&
         (t->ne[3] <= 1 || t->nb[3] == t->nb[2] * t->ne[2])) {
-        *rows_per_chunk = (row_size > 0) ? (HTP_TENSOR_MDEV_LINE_SIZE / hex_gcd_u32(row_size, HTP_TENSOR_MDEV_LINE_SIZE)) : 1;
-        return true;
+        *rows_per_chunk = (row_आकार > 0) ? (HTP_TENSOR_MDEV_पंक्ति_आकार / hex_gcd_u32(row_आकार, HTP_TENSOR_MDEV_पंक्ति_आकार)) : 1;
+        वापस true;
     }
-    return false;
+    वापस false;
 }
 
-static inline struct htp_tensor_mdev_range htp_tensor_mdev_partition(uint32_t total_units, uint32_t units_per_chunk, uint32_t mdev_idx, uint32_t mdev_count, const struct fastdiv_values * mdev_count_div) {
-    struct htp_tensor_mdev_range range = { 0, total_units };
+अटल अंतरभूत काष्ठा htp_tensor_mdev_range htp_tensor_mdev_partition(uint32_t योग_units, uint32_t units_per_chunk, uint32_t mdev_idx, uint32_t mdev_गिनती, स्थिर काष्ठा fastdiv_मूल्यावली * mdev_गिनती_div) {
+    काष्ठा htp_tensor_mdev_range range = { 0, योग_units };
 
-    if (mdev_count <= 1) {
-        return range;
+    अगर (mdev_गिनती <= 1) {
+        वापस range;
     }
 
-    if (units_per_chunk == 0) {
-        range.start = (mdev_idx == 0) ? 0 : total_units;
-        range.count = (mdev_idx == 0) ? total_units : 0;
-        return range;
+    अगर (units_per_chunk == 0) {
+        range.start = (mdev_idx == 0) ? 0 : योग_units;
+        range.गिनती = (mdev_idx == 0) ? योग_units : 0;
+        वापस range;
     }
 
-    const uint32_t total_chunks = total_units / units_per_chunk;
-    if (total_chunks < mdev_count) {
-        range.start = (mdev_idx == 0) ? 0 : total_units;
-        range.count = (mdev_idx == 0) ? total_units : 0;
-        return range;
+    स्थिर uint32_t योग_chunks = योग_units / units_per_chunk;
+    अगर (योग_chunks < mdev_गिनती) {
+        range.start = (mdev_idx == 0) ? 0 : योग_units;
+        range.गिनती = (mdev_idx == 0) ? योग_units : 0;
+        वापस range;
     }
 
-    const uint32_t chunks_per_mdev = fastdiv(total_chunks + mdev_count - 1, mdev_count_div);
-    range.start = MIN(mdev_idx * chunks_per_mdev * units_per_chunk, total_units);
-    if (mdev_idx == mdev_count - 1) {
-        range.count = total_units - range.start;
-    } else {
-        range.count = MIN(chunks_per_mdev * units_per_chunk, total_units - range.start);
+    स्थिर uint32_t chunks_per_mdev = fastdiv(योग_chunks + mdev_गिनती - 1, mdev_गिनती_div);
+    range.start = MIN(mdev_idx * chunks_per_mdev * units_per_chunk, योग_units);
+    अगर (mdev_idx == mdev_गिनती - 1) {
+        range.गिनती = योग_units - range.start;
+    } अन्यथा {
+        range.गिनती = MIN(chunks_per_mdev * units_per_chunk, योग_units - range.start);
     }
-    return range;
+    वापस range;
 }
 
-static inline uint32_t htp_tensor_get_tile_size(int type) {
-    switch (type) {
-        case HTP_TYPE_Q4_0:   return HTP_TENSOR_TILE_SIZE_Q4_0;
-        case HTP_TYPE_IQ4_NL: return HTP_TENSOR_TILE_SIZE_IQ4_NL;
-        case HTP_TYPE_Q4_1:   return HTP_TENSOR_TILE_SIZE_Q4_1;
-        case HTP_TYPE_Q4_K:   return HTP_TENSOR_TILE_SIZE_Q4_K;
-        case HTP_TYPE_Q8_0:   return HTP_TENSOR_TILE_SIZE_Q8_0;
-        case HTP_TYPE_Q5_K:   return HTP_TENSOR_TILE_SIZE_Q5_K;
-        case HTP_TYPE_Q6_K:   return HTP_TENSOR_TILE_SIZE_Q6_K;
-        case HTP_TYPE_Q3_K:   return HTP_TENSOR_TILE_SIZE_Q3_K;
-        case HTP_TYPE_Q2_K:   return HTP_TENSOR_TILE_SIZE_Q2_K;
-        case HTP_TYPE_Q1_0:   return HTP_TENSOR_TILE_SIZE_Q1_0;
-        case HTP_TYPE_Q2_0:   return HTP_TENSOR_TILE_SIZE_Q2_0;
-        case HTP_TYPE_MXFP4:  return HTP_TENSOR_TILE_SIZE_MXFP4;
-        case HTP_TYPE_F16:    return HTP_TENSOR_TILE_SIZE_F16;
-        default:              return 0;
-    }
-}
-
-static inline uint32_t htp_tensor_get_tile_k(int type) {
-    switch (type) {
-        case HTP_TYPE_Q1_0: return HTP_TENSOR_TILE_K_Q1_0;
-        case HTP_TYPE_Q2_0: return HTP_TENSOR_TILE_K_Q2_0;
-        default:            return 32;
+अटल अंतरभूत uint32_t htp_tensor_get_tile_आकार(पूर्णांक type) {
+    चयन (type) {
+        हाल HTP_TYPE_Q4_0:   वापस HTP_TENSOR_TILE_आकार_Q4_0;
+        हाल HTP_TYPE_IQ4_NL: वापस HTP_TENSOR_TILE_आकार_IQ4_NL;
+        हाल HTP_TYPE_Q4_1:   वापस HTP_TENSOR_TILE_आकार_Q4_1;
+        हाल HTP_TYPE_Q4_K:   वापस HTP_TENSOR_TILE_आकार_Q4_K;
+        हाल HTP_TYPE_Q8_0:   वापस HTP_TENSOR_TILE_आकार_Q8_0;
+        हाल HTP_TYPE_Q5_K:   वापस HTP_TENSOR_TILE_आकार_Q5_K;
+        हाल HTP_TYPE_Q6_K:   वापस HTP_TENSOR_TILE_आकार_Q6_K;
+        हाल HTP_TYPE_Q3_K:   वापस HTP_TENSOR_TILE_आकार_Q3_K;
+        हाल HTP_TYPE_Q2_K:   वापस HTP_TENSOR_TILE_आकार_Q2_K;
+        हाल HTP_TYPE_Q1_0:   वापस HTP_TENSOR_TILE_आकार_Q1_0;
+        हाल HTP_TYPE_Q2_0:   वापस HTP_TENSOR_TILE_आकार_Q2_0;
+        हाल HTP_TYPE_MXFP4:  वापस HTP_TENSOR_TILE_आकार_MXFP4;
+        हाल HTP_TYPE_F16:    वापस HTP_TENSOR_TILE_आकार_F16;
+        शेष:              वापस 0;
     }
 }
 
-static inline uint32_t htp_tensor_get_tile_padded_size(int type) {
-    return (htp_tensor_get_tile_size(type) + 127u) & ~127u;
-}
-
-static inline bool htp_tensor_is_tiled(const struct htp_tensor * t) {
-    return t && (t->flags & HTP_TENSOR_TILED) != 0;
-}
-
-static inline uint32_t htp_tensor_get_row_size(int type, uint32_t ne00) {
-    switch (type) {
-        case HTP_TYPE_F32:    return ne00 * 4;
-        case HTP_TYPE_F16:
-        case HTP_TYPE_BF16:   return ne00 * 2;
-        case HTP_TYPE_Q8_0:   return (ne00 / 32) * 34;
-        case HTP_TYPE_Q4_0:
-        case HTP_TYPE_IQ4_NL: return (ne00 / 32) * 18;
-        case HTP_TYPE_Q4_1:   return (ne00 / 32) * 20;
-        case HTP_TYPE_MXFP4:  return (ne00 / 32) * 17;
-        case HTP_TYPE_Q2_K:   return (ne00 / 256) * 84;
-        case HTP_TYPE_Q2_0:   return (ne00 / 64) * 18;
-        case HTP_TYPE_Q3_K:   return (ne00 / 256) * 110;
-        case HTP_TYPE_Q4_K:   return (ne00 / 256) * 144;
-        case HTP_TYPE_Q5_K:   return (ne00 / 256) * 176;
-        case HTP_TYPE_Q6_K:   return (ne00 / 256) * 210;
-        case HTP_TYPE_Q1_0:   return (ne00 / HTP_TENSOR_TILE_K_Q1_0) * 18;
-        case HTP_TYPE_I32:    return ne00 * 4;
-        case HTP_TYPE_I64:    return ne00 * 8;
-        default:              return 0;
+अटल अंतरभूत uint32_t htp_tensor_get_tile_k(पूर्णांक type) {
+    चयन (type) {
+        हाल HTP_TYPE_Q1_0: वापस HTP_TENSOR_TILE_K_Q1_0;
+        हाल HTP_TYPE_Q2_0: वापस HTP_TENSOR_TILE_K_Q2_0;
+        शेष:            वापस 32;
     }
 }
 
-#endif // HTP_TENSOR_H
+अटल अंतरभूत uint32_t htp_tensor_get_tile_padded_आकार(पूर्णांक type) {
+    वापस (htp_tensor_get_tile_आकार(type) + 127u) & ~127u;
+}
+
+अटल अंतरभूत bool htp_tensor_is_tiled(स्थिर काष्ठा htp_tensor * t) {
+    वापस t && (t->flags & HTP_TENSOR_TILED) != 0;
+}
+
+अटल अंतरभूत uint32_t htp_tensor_get_row_आकार(पूर्णांक type, uint32_t ne00) {
+    चयन (type) {
+        हाल HTP_TYPE_F32:    वापस ne00 * 4;
+        हाल HTP_TYPE_F16:
+        हाल HTP_TYPE_BF16:   वापस ne00 * 2;
+        हाल HTP_TYPE_Q8_0:   वापस (ne00 / 32) * 34;
+        हाल HTP_TYPE_Q4_0:
+        हाल HTP_TYPE_IQ4_NL: वापस (ne00 / 32) * 18;
+        हाल HTP_TYPE_Q4_1:   वापस (ne00 / 32) * 20;
+        हाल HTP_TYPE_MXFP4:  वापस (ne00 / 32) * 17;
+        हाल HTP_TYPE_Q2_K:   वापस (ne00 / 256) * 84;
+        हाल HTP_TYPE_Q2_0:   वापस (ne00 / 64) * 18;
+        हाल HTP_TYPE_Q3_K:   वापस (ne00 / 256) * 110;
+        हाल HTP_TYPE_Q4_K:   वापस (ne00 / 256) * 144;
+        हाल HTP_TYPE_Q5_K:   वापस (ne00 / 256) * 176;
+        हाल HTP_TYPE_Q6_K:   वापस (ne00 / 256) * 210;
+        हाल HTP_TYPE_Q1_0:   वापस (ne00 / HTP_TENSOR_TILE_K_Q1_0) * 18;
+        हाल HTP_TYPE_I32:    वापस ne00 * 4;
+        हाल HTP_TYPE_I64:    वापस ne00 * 8;
+        शेष:              वापस 0;
+    }
+}
+
+#पूर्ण_अगर // HTP_TENSOR_H

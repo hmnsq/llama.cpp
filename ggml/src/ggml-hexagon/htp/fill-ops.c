@@ -1,146 +1,146 @@
-#pragma clang diagnostic ignored "-Wunused-variable"
-#pragma clang diagnostic ignored "-Wunused-function"
-#pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#आशय clang diagnostic ignored "-Wunused-variable"
+#आशय clang diagnostic ignored "-Wunused-function"
+#आशय clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <string.h>
+#समावेश <HAP_farf.h>
+#समावेश <string.h>
 
-#include "hex-common.h"
-#include "hex-profile.h"
+#समावेश "hex-common.h"
+#समावेश "hex-profile.h"
 
-#include "hvx-copy.h"
-#include "hvx-utils.h"
+#समावेश "hvx-copy.h"
+#समावेश "hvx-utils.h"
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-tensor.h"
+#घोषणा GGML_COMMON_DECL_C
+#समावेश "ggml-common.h"
+#समावेश "htp-ctx.h"
+#समावेश "htp-ops.h"
+#समावेश "htp-tensor.h"
 
 // ggml op_params layout for FILL:
 //   op_params[0] (as float) - the scalar fill value
 
-#define fill_preamble                          \
-    const struct htp_tensor * dst = octx->dst; \
+#घोषणा fill_preamble                          \
+    स्थिर काष्ठा htp_tensor * dst = octx->dst; \
                                                \
-    const uint32_t ne0 = dst->ne[0];           \
-    const uint32_t ne1 = dst->ne[1];           \
-    const uint32_t ne2 = dst->ne[2];           \
-    const uint32_t ne3 = dst->ne[3];           \
+    स्थिर uint32_t ne0 = dst->ne[0];           \
+    स्थिर uint32_t ne1 = dst->ne[1];           \
+    स्थिर uint32_t ne2 = dst->ne[2];           \
+    स्थिर uint32_t ne3 = dst->ne[3];           \
                                                \
-    const uint32_t nb1 = dst->nb[1];           \
-    const uint32_t nb2 = dst->nb[2];           \
-    const uint32_t nb3 = dst->nb[3];           \
+    स्थिर uint32_t nb1 = dst->nb[1];           \
+    स्थिर uint32_t nb2 = dst->nb[2];           \
+    स्थिर uint32_t nb3 = dst->nb[3];           \
                                                \
-    const uint32_t nr = ne1 * ne2 * ne3;
+    स्थिर uint32_t nr = ne1 * ne2 * ne3;
 
-struct htp_fill_context {
-    struct htp_ops_context * octx;
+काष्ठा htp_fill_context {
+    काष्ठा htp_ops_context * octx;
     uint32_t nrows_per_thread;
-    uint32_t total_rows;  // ne1 * ne2 * ne3
+    uint32_t योग_rows;  // ne1 * ne2 * ne3
     uint32_t row_start;
     bool     opt_path;
     HVX_Vector splat_vec;
-    uint32_t   elem_size;
+    uint32_t   elem_आकार;
 };
 
-static void fill_thread(unsigned int nth, unsigned int ith, void * data) {
-    const struct htp_fill_context * fctx = (const struct htp_fill_context *) data;
-    struct htp_ops_context        * octx = fctx->octx;
+अटल व्योम fill_thread(अचिन्हित पूर्णांक nth, अचिन्हित पूर्णांक ith, व्योम * तथ्य) {
+    स्थिर काष्ठा htp_fill_context * fctx = (स्थिर काष्ठा htp_fill_context *) तथ्य;
+    काष्ठा htp_ops_context        * octx = fctx->octx;
     fill_preamble;
 
     // Parallelise over the flat row index spanning ne1*ne2*ne3
-    const uint32_t ir0 = fctx->row_start + fctx->nrows_per_thread * ith;
-    const uint32_t ir1 = MIN(ir0 + fctx->nrows_per_thread, fctx->row_start + fctx->total_rows);
+    स्थिर uint32_t ir0 = fctx->row_start + fctx->nrows_per_thread * ith;
+    स्थिर uint32_t ir1 = MIN(ir0 + fctx->nrows_per_thread, fctx->row_start + fctx->योग_rows);
 
-    if (ir0 >= ir1) {
-        return;
+    अगर (ir0 >= ir1) {
+        वापस;
     }
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    काष्ठा htp_thread_trace * tr = &octx->ctx->trace[ith];
     htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir0);
 
-    if (fctx->opt_path) {
+    अगर (fctx->opt_path) {
         // Opt path: tensor is fully contiguous, treat as flat array
-        const uint32_t elem_start = ir0 * ne0;
-        const uint32_t elem_end = ir1 * ne0;
-        uint8_t * dst_ptr = (uint8_t *) dst->data + elem_start * fctx->elem_size;
-        hvx_splat_u(dst_ptr, fctx->splat_vec, elem_end - elem_start, fctx->elem_size);
-    } else {
+        स्थिर uint32_t elem_start = ir0 * ne0;
+        स्थिर uint32_t elem_end = ir1 * ne0;
+        uint8_t * dst_ptr = (uint8_t *) dst->तथ्य + elem_start * fctx->elem_आकार;
+        hvx_splat_u(dst_ptr, fctx->splat_vec, elem_end - elem_start, fctx->elem_आकार);
+    } अन्यथा {
         // Non-contiguous path: must respect strides
-        for (uint32_t ir = ir0; ir < ir1; ++ir) {
-            const uint32_t i1 = ir % ne1;
-            const uint32_t i2 = (ir / ne1) % ne2;
-            const uint32_t i3 = ir / (ne1 * ne2);
-            uint8_t * dst_ptr = (uint8_t *) dst->data + i1*nb1 + i2*nb2 + i3*nb3;
-            hvx_splat_u(dst_ptr, fctx->splat_vec, ne0, fctx->elem_size);
+        क्रम (uint32_t ir = ir0; ir < ir1; ++ir) {
+            स्थिर uint32_t i1 = ir % ne1;
+            स्थिर uint32_t i2 = (ir / ne1) % ne2;
+            स्थिर uint32_t i3 = ir / (ne1 * ne2);
+            uint8_t * dst_ptr = (uint8_t *) dst->तथ्य + i1*nb1 + i2*nb2 + i3*nb3;
+            hvx_splat_u(dst_ptr, fctx->splat_vec, ne0, fctx->elem_आकार);
         }
     }
 
     htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir1);
-    FARF(HIGH, "fill %u/%u: rows %u:%u\n", ith, nth, ir0, ir1);
+    FARF(ऊपरी_2, "fill %u/%u: rows %u:%u\n", ith, nth, ir0, ir1);
 }
 
-int op_fill(struct htp_ops_context * octx) {
+पूर्णांक op_fill(काष्ठा htp_ops_context * octx) {
     fill_preamble;
 
-    if (dst->type != HTP_TYPE_F32 && dst->type != HTP_TYPE_F16) {
-        return HTP_STATUS_NO_SUPPORT;
+    अगर (dst->type != HTP_TYPE_F32 && dst->type != HTP_TYPE_F16) {
+        वापस HTP_STATUS_NO_SUPPORT;
     }
 
-    if (htp_tensor_is_extended(dst)) {
-        return HTP_STATUS_NO_SUPPORT;
+    अगर (htp_tensor_is_extended(dst)) {
+        वापस HTP_STATUS_NO_SUPPORT;
     }
 
     uint32_t row_start = 0;
     uint32_t nrows     = nr;
 
-    if (octx->ctx->mdev.count > 1) {
-        const uint32_t row_size = nb1;
-        const uint32_t rows_per_chunk = (row_size > 0) ? (HEX_L2_LINE_SIZE / hex_gcd_u32(row_size, HEX_L2_LINE_SIZE)) : 1;
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(nr, htp_tensor_mdev_data_aligned(dst) ? rows_per_chunk : 0, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
+    अगर (octx->ctx->mdev.गिनती > 1) {
+        स्थिर uint32_t row_आकार = nb1;
+        स्थिर uint32_t rows_per_chunk = (row_आकार > 0) ? (HEX_L2_पंक्ति_आकार / hex_gcd_u32(row_आकार, HEX_L2_पंक्ति_आकार)) : 1;
+        स्थिर काष्ठा htp_tensor_mdev_range range = htp_tensor_mdev_partition(nr, htp_tensor_mdev_तथ्य_aligned(dst) ? rows_per_chunk : 0, octx->ctx->mdev.idx, octx->ctx->mdev.गिनती, &octx->ctx->mdev.गिनती_div);
         row_start = range.start;
-        nrows     = range.count;
+        nrows     = range.गिनती;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    अगर (nrows == 0) {
+        वापस HTP_STATUS_OK;
     }
 
     // nr = ne1*ne2*ne3 (flat row count across all outer dims); parallelise over it.
-    const uint32_t n_threads = octx->n_threads;
+    स्थिर uint32_t n_threads = octx->n_threads;
 
     // Optimize if fully contiguous: skip stride arithmetic, treat as flat array
-    const bool opt_path = (nb2 == nb1 * ne1) && (nb3 == nb2 * ne2);
+    स्थिर bool opt_path = (nb2 == nb1 * ne1) && (nb3 == nb2 * ne2);
 
-    FARF(HIGH, "fill: (%ux%ux%ux%u) type=%u opt=%d\n",
-         dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3], dst->type, (int) opt_path);
+    FARF(ऊपरी_2, "fill: (%ux%ux%ux%u) type=%u opt=%d\n",
+         dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3], dst->type, (पूर्णांक) opt_path);
 
-    float val_f32 = 0.f;
-    memcpy(&val_f32, &octx->op_params[0], sizeof(float));
+    भग्न val_f32 = 0.f;
+    स_नकल(&val_f32, &octx->op_params[0], माप(भग्न));
 
-    struct htp_fill_context fctx = {
+    काष्ठा htp_fill_context fctx = {
         .octx             = octx,
         .nrows_per_thread = fastdiv(nrows + n_threads - 1, &octx->n_threads_div),
-        .total_rows       = nrows,
+        .योग_rows       = nrows,
         .row_start        = row_start,
         .opt_path         = opt_path,
     };
 
-    switch (dst->type) {
-    case HTP_TYPE_F32:
+    चयन (dst->type) {
+    हाल HTP_TYPE_F32:
         fctx.splat_vec = hvx_vec_splat_f32(val_f32);
-        fctx.elem_size = sizeof(float);
-        break;
-    case HTP_TYPE_F16:
+        fctx.elem_आकार = माप(भग्न);
+        अवरोध;
+    हाल HTP_TYPE_F16:
         fctx.splat_vec = hvx_vec_splat_f16((_Float16) val_f32);
-        fctx.elem_size = sizeof(_Float16);
-        break;
-    default:
-        return HTP_STATUS_NO_SUPPORT;
+        fctx.elem_आकार = माप(_Float16);
+        अवरोध;
+    शेष:
+        वापस HTP_STATUS_NO_SUPPORT;
     }
 
     work_queue_run(octx->ctx->work_queue, fill_thread, &fctx, n_threads);
 
-    return HTP_STATUS_OK;
+    वापस HTP_STATUS_OK;
 }

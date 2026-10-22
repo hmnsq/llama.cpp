@@ -1,69 +1,69 @@
-#ifndef GGML_SYCL_BINBCAST_HPP
-#define GGML_SYCL_BINBCAST_HPP
-#include "common.hpp"
+#अगर_अघोषित GGML_SYCL_BINBCAST_HPP
+#घोषणा GGML_SYCL_BINBCAST_HPP
+#समावेश "common.hpp"
 
 
-static __dpct_inline__ float op_repeat(const float a, const float b) {
-    return b;
+अटल __dpct_inline__ भग्न op_repeat(स्थिर भग्न a, स्थिर भग्न b) {
+    वापस b;
     GGML_UNUSED(a);
 }
 
-static __dpct_inline__ float op_add(const float a, const float b) {
-    return a + b;
+अटल __dpct_inline__ भग्न op_add(स्थिर भग्न a, स्थिर भग्न b) {
+    वापस a + b;
 }
 
-static __dpct_inline__ float op_sub(const float a, const float b) {
-    return a - b;
+अटल __dpct_inline__ भग्न op_sub(स्थिर भग्न a, स्थिर भग्न b) {
+    वापस a - b;
 }
 
-static __dpct_inline__ float op_mul(const float a, const float b) {
-    return a * b;
+अटल __dpct_inline__ भग्न op_mul(स्थिर भग्न a, स्थिर भग्न b) {
+    वापस a * b;
 }
 
-static __dpct_inline__ float op_div(const float a, const float b) {
-    return a / b;
+अटल __dpct_inline__ भग्न op_div(स्थिर भग्न a, स्थिर भग्न b) {
+    वापस a / b;
 }
 
-void ggml_sycl_add(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+व्योम ggml_sycl_add(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-void ggml_sycl_sub(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+व्योम ggml_sycl_sub(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-void ggml_sycl_mul(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+व्योम ggml_sycl_mul(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-void ggml_sycl_div(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+व्योम ggml_sycl_div(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-void ggml_sycl_repeat(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+व्योम ggml_sycl_repeat(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-void ggml_sycl_op_add_add_fused(ggml_backend_sycl_context & ctx, ggml_tensor * add0, ggml_tensor * add1);
+व्योम ggml_sycl_op_add_add_fused(ggml_backend_sycl_context & ctx, ggml_tensor * add0, ggml_tensor * add1);
 
 // Type combinations the standalone SYCL add() kernel can run. Fused ADD+ADD
 // uses the same set; anything else falls back to two add() launches.
-inline bool ggml_sycl_add_kernel_supports(enum ggml_type src0, enum ggml_type src1, enum ggml_type dst) {
-    if (src0 == GGML_TYPE_F32 && src1 == GGML_TYPE_F32 && dst == GGML_TYPE_F32) {
-        return true;
+अंतरभूत bool ggml_sycl_add_kernel_supports(क्रमागत ggml_type src0, क्रमागत ggml_type src1, क्रमागत ggml_type dst) {
+    अगर (src0 == GGML_TYPE_F32 && src1 == GGML_TYPE_F32 && dst == GGML_TYPE_F32) {
+        वापस true;
     }
-    if (src0 == GGML_TYPE_F16 && src1 == GGML_TYPE_F16 && dst == GGML_TYPE_F16) {
-        return true;
+    अगर (src0 == GGML_TYPE_F16 && src1 == GGML_TYPE_F16 && dst == GGML_TYPE_F16) {
+        वापस true;
     }
-    if (src0 == GGML_TYPE_F16 && src1 == GGML_TYPE_F32 && dst == GGML_TYPE_F16) {
-        return true;
+    अगर (src0 == GGML_TYPE_F16 && src1 == GGML_TYPE_F32 && dst == GGML_TYPE_F16) {
+        वापस true;
     }
-    if (src0 == GGML_TYPE_I32 && src1 == GGML_TYPE_I32 && dst == GGML_TYPE_I32) {
-        return true;
+    अगर (src0 == GGML_TYPE_I32 && src1 == GGML_TYPE_I32 && dst == GGML_TYPE_I32) {
+        वापस true;
     }
-    if (src0 == GGML_TYPE_I16 && src1 == GGML_TYPE_I16 && dst == GGML_TYPE_I16) {
-        return true;
+    अगर (src0 == GGML_TYPE_I16 && src1 == GGML_TYPE_I16 && dst == GGML_TYPE_I16) {
+        वापस true;
     }
-#ifdef GGML_SYCL_HAS_BF16
-    if (src0 == GGML_TYPE_BF16 && src1 == GGML_TYPE_BF16 && dst == GGML_TYPE_BF16) {
-        return true;
+#अगर_घोषित GGML_SYCL_HAS_BF16
+    अगर (src0 == GGML_TYPE_BF16 && src1 == GGML_TYPE_BF16 && dst == GGML_TYPE_BF16) {
+        वापस true;
     }
-    if (src0 == GGML_TYPE_BF16 && src1 == GGML_TYPE_F32 && dst == GGML_TYPE_BF16) {
-        return true;
+    अगर (src0 == GGML_TYPE_BF16 && src1 == GGML_TYPE_F32 && dst == GGML_TYPE_BF16) {
+        वापस true;
     }
-#endif
-    return false;
+#पूर्ण_अगर
+    वापस false;
 }
 
-#endif //GGML_SYCL_BINBCAST_HPP
+#पूर्ण_अगर //GGML_SYCL_BINBCAST_HPP
 

@@ -1,23 +1,23 @@
-#pragma once
+#आशय once
 
-#include "virtgpu-utils.h"
+#समावेश "virtgpu-utils.h"
 
-#include <sys/mman.h>
+#समावेश <sys/mman.h>
 
-#include <atomic>
-#include <cassert>
-#include <cstddef>
-#include <cstdint>
+#समावेश <atomic>
+#समावेश <cassert>
+#समावेश <cstddef>
+#समावेश <cstdint>
 
-struct virtgpu;
+काष्ठा virtgpu;
 
-struct virtgpu_shmem {
+काष्ठा virtgpu_shmem {
     uint32_t res_id;
-    size_t   mmap_size;
-    void *   mmap_ptr;
+    माप_प्रकार   mmap_आकार;
+    व्योम *   mmap_ptr;
 
     uint32_t gem_handle;
 };
 
-int  virtgpu_shmem_create(virtgpu * gpu, size_t size, virtgpu_shmem * shmem);
-void virtgpu_shmem_destroy(virtgpu * gpu, virtgpu_shmem * shmem);
+पूर्णांक  virtgpu_shmem_create(virtgpu * gpu, माप_प्रकार आकार, virtgpu_shmem * shmem);
+व्योम virtgpu_shmem_destroy(virtgpu * gpu, virtgpu_shmem * shmem);

@@ -1,248 +1,248 @@
-#pragma clang diagnostic ignored "-Wunused-variable"
-#pragma clang diagnostic ignored "-Wunused-function"
-#pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#आशय clang diagnostic ignored "-Wunused-variable"
+#आशय clang diagnostic ignored "-Wunused-function"
+#आशय clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
+#समावेश <HAP_farf.h>
+#समावेश <HAP_perf.h>
 
-#include <string.h>
-#include <math.h>
+#समावेश <string.h>
+#समावेश <math.h>
 
-#include "dma-queue.h"
-#include "hvx-utils.h"
+#समावेश "dma-queue.h"
+#समावेश "hvx-utils.h"
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "hex-common.h"
-#include "hex-profile.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-tensor.h"
+#घोषणा GGML_COMMON_DECL_C
+#समावेश "ggml-common.h"
+#समावेश "hex-common.h"
+#समावेश "hex-profile.h"
+#समावेश "htp-ctx.h"
+#समावेश "htp-ops.h"
+#समावेश "htp-tensor.h"
 
-#define sum_rows_preamble                         \
-    const struct htp_tensor *src0 = octx->src[0]; \
-    const struct htp_tensor *dst  = octx->dst;    \
+#घोषणा योग_rows_preamble                         \
+    स्थिर काष्ठा htp_tensor *src0 = octx->src[0]; \
+    स्थिर काष्ठा htp_tensor *dst  = octx->dst;    \
                                                   \
-    const uint32_t ne00 = src0->ne[0];            \
-    const uint32_t ne01 = src0->ne[1];            \
-    const uint32_t ne02 = src0->ne[2];            \
-    const uint32_t ne03 = src0->ne[3];            \
+    स्थिर uint32_t ne00 = src0->ne[0];            \
+    स्थिर uint32_t ne01 = src0->ne[1];            \
+    स्थिर uint32_t ne02 = src0->ne[2];            \
+    स्थिर uint32_t ne03 = src0->ne[3];            \
                                                   \
-    const uint32_t nb00 = src0->nb[0];            \
-    const uint32_t nb01 = src0->nb[1];            \
-    const uint32_t nb02 = src0->nb[2];            \
-    const uint32_t nb03 = src0->nb[3];            \
+    स्थिर uint32_t nb00 = src0->nb[0];            \
+    स्थिर uint32_t nb01 = src0->nb[1];            \
+    स्थिर uint32_t nb02 = src0->nb[2];            \
+    स्थिर uint32_t nb03 = src0->nb[3];            \
                                                   \
-    const uint32_t  ne0 = dst->ne[0];             \
-    const uint32_t  ne1 = dst->ne[1];             \
-    const uint32_t  ne2 = dst->ne[2];             \
-    const uint32_t  ne3 = dst->ne[3];             \
+    स्थिर uint32_t  ne0 = dst->ne[0];             \
+    स्थिर uint32_t  ne1 = dst->ne[1];             \
+    स्थिर uint32_t  ne2 = dst->ne[2];             \
+    स्थिर uint32_t  ne3 = dst->ne[3];             \
                                                   \
-    const uint32_t  nb0 = dst->nb[0];             \
-    const uint32_t  nb1 = dst->nb[1];             \
-    const uint32_t  nb2 = dst->nb[2];             \
-    const uint32_t  nb3 = dst->nb[3];             \
+    स्थिर uint32_t  nb0 = dst->nb[0];             \
+    स्थिर uint32_t  nb1 = dst->nb[1];             \
+    स्थिर uint32_t  nb2 = dst->nb[2];             \
+    स्थिर uint32_t  nb3 = dst->nb[3];             \
 
-struct sum_rows_context {
-    struct htp_ops_context * octx;
-    const uint8_t * src_data;
-    uint8_t       * dst_data;
+काष्ठा योग_rows_context {
+    काष्ठा htp_ops_context * octx;
+    स्थिर uint8_t * src_तथ्य;
+    uint8_t       * dst_तथ्य;
     uint32_t        ne00;
-    size_t          src_stride;
-    size_t          dst_stride;
+    माप_प्रकार          src_stride;
+    माप_प्रकार          dst_stride;
     uint32_t        rows_per_thread;
-    uint32_t        total_rows;
+    uint32_t        योग_rows;
     bool            opt_path;
 };
 
-static void sum_rows_thread_f32(unsigned int nth, unsigned int ith, void *data) {
-    const struct sum_rows_context * smctx = (const struct sum_rows_context *) data;
+अटल व्योम योग_rows_thread_f32(अचिन्हित पूर्णांक nth, अचिन्हित पूर्णांक ith, व्योम *तथ्य) {
+    स्थिर काष्ठा योग_rows_context * smctx = (स्थिर काष्ठा योग_rows_context *) तथ्य;
 
-    const uint32_t rows_per_thread = smctx->rows_per_thread;
-    const uint32_t total_rows      = smctx->total_rows;
+    स्थिर uint32_t rows_per_thread = smctx->rows_per_thread;
+    स्थिर uint32_t योग_rows      = smctx->योग_rows;
 
-    const uint32_t start_row = rows_per_thread * ith;
-    const uint32_t end_row   = MIN(start_row + rows_per_thread, total_rows);
+    स्थिर uint32_t start_row = rows_per_thread * ith;
+    स्थिर uint32_t end_row   = MIN(start_row + rows_per_thread, योग_rows);
 
-    if (start_row >= end_row) {
-        return;
+    अगर (start_row >= end_row) {
+        वापस;
     }
 
-    const size_t   src_stride = smctx->src_stride;
-    const size_t   dst_stride = smctx->dst_stride;
-    const uint32_t ne00       = smctx->ne00;
-    const bool     opt_path   = smctx->opt_path;
+    स्थिर माप_प्रकार   src_stride = smctx->src_stride;
+    स्थिर माप_प्रकार   dst_stride = smctx->dst_stride;
+    स्थिर uint32_t ne00       = smctx->ne00;
+    स्थिर bool     opt_path   = smctx->opt_path;
 
-    const float * restrict src_th = (const float *) (smctx->src_data + (start_row * src_stride));
-    float       * restrict dst_th = (float *)       (smctx->dst_data + (start_row * dst_stride));
+    स्थिर भग्न * restrict src_th = (स्थिर भग्न *) (smctx->src_तथ्य + (start_row * src_stride));
+    भग्न       * restrict dst_th = (भग्न *)       (smctx->dst_तथ्य + (start_row * dst_stride));
 
     // Calculate actual number of rows for this thread
-    const uint32_t n_rows = end_row - start_row;
+    स्थिर uint32_t n_rows = end_row - start_row;
 
-    struct htp_thread_trace * tr = &smctx->octx->ctx->trace[ith];
+    काष्ठा htp_thread_trace * tr = &smctx->octx->ctx->trace[ith];
     htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) start_row);
 
-    for (uint32_t ir = 0; ir < n_rows; ir++) {
-        const float * restrict src_local = (const float *) ((const uint8_t *) src_th + ir * src_stride);
-        float       * restrict dst_local = (float *)       ((uint8_t *)       dst_th + ir * dst_stride);
+    क्रम (uint32_t ir = 0; ir < n_rows; ir++) {
+        स्थिर भग्न * restrict src_local = (स्थिर भग्न *) ((स्थिर uint8_t *) src_th + ir * src_stride);
+        भग्न       * restrict dst_local = (भग्न *)       ((uint8_t *)       dst_th + ir * dst_stride);
 
-        if (ir + 1 < n_rows) {
-            hex_l2fetch((const uint8_t *) src_local + src_stride, src_stride, src_stride, 1);
+        अगर (ir + 1 < n_rows) {
+            hex_l2fetch((स्थिर uint8_t *) src_local + src_stride, src_stride, src_stride, 1);
         }
 
-        if (opt_path) {
-            *dst_local = hvx_reduce_sum_f32_a((const uint8_t *) src_local, ne00);
-        } else {
-            *dst_local = hvx_reduce_sum_f32((const uint8_t *) src_local, ne00);
+        अगर (opt_path) {
+            *dst_local = hvx_reduce_योग_f32_a((स्थिर uint8_t *) src_local, ne00);
+        } अन्यथा {
+            *dst_local = hvx_reduce_योग_f32((स्थिर uint8_t *) src_local, ne00);
         }
     }
 
     htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) start_row);
 }
 
-int op_sum_rows(struct htp_ops_context * octx) {
-    sum_rows_preamble;
+पूर्णांक op_योग_rows(काष्ठा htp_ops_context * octx) {
+    योग_rows_preamble;
 
-    if (octx->src[0]->type != HTP_TYPE_F32) {
-        return HTP_STATUS_NO_SUPPORT;
+    अगर (octx->src[0]->type != HTP_TYPE_F32) {
+        वापस HTP_STATUS_NO_SUPPORT;
     }
 
-    if (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst)) {
-        return HTP_STATUS_NO_SUPPORT;
+    अगर (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst)) {
+        वापस HTP_STATUS_NO_SUPPORT;
     }
 
-    const uint32_t src0_nrows      = ne01 * ne02 * ne03;
-    const size_t dst_data_row_size = dst->ne[0] * sizeof(float);
+    स्थिर uint32_t src0_nrows      = ne01 * ne02 * ne03;
+    स्थिर माप_प्रकार dst_तथ्य_row_आकार = dst->ne[0] * माप(भग्न);
 
     uint32_t row_start = 0;
     uint32_t nrows     = src0_nrows;
 
-    if (octx->ctx->mdev.count > 1) {
+    अगर (octx->ctx->mdev.गिनती > 1) {
         uint32_t rows_per_chunk = 0;
-        htp_tensor_mdev_rows_per_chunk(dst, sizeof(float), (uint32_t) dst_data_row_size, &rows_per_chunk);
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(src0_nrows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
+        htp_tensor_mdev_rows_per_chunk(dst, माप(भग्न), (uint32_t) dst_तथ्य_row_आकार, &rows_per_chunk);
+        स्थिर काष्ठा htp_tensor_mdev_range range = htp_tensor_mdev_partition(src0_nrows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.गिनती, &octx->ctx->mdev.गिनती_div);
         row_start = range.start;
-        nrows     = range.count;
+        nrows     = range.गिनती;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    अगर (nrows == 0) {
+        वापस HTP_STATUS_OK;
     }
 
-    const uint32_t n_threads = octx->n_threads;
-    const uint32_t rows_per_thread = fastdiv(nrows + n_threads - 1, &octx->n_threads_div);
+    स्थिर uint32_t n_threads = octx->n_threads;
+    स्थिर uint32_t rows_per_thread = fastdiv(nrows + n_threads - 1, &octx->n_threads_div);
 
     bool opt_path = false;
-    if ((0 == hex_is_aligned((void *) src0->data, VLEN)) && !(nb01 & (VLEN - 1))) {
+    अगर ((0 == hex_is_aligned((व्योम *) src0->तथ्य, VLEN)) && !(nb01 & (VLEN - 1))) {
         opt_path = true;
     }
 
-    struct sum_rows_context smctx = {
+    काष्ठा योग_rows_context smctx = {
         .octx            = octx,
-        .src_data        = (const uint8_t *) src0->data + row_start * nb01,
-        .dst_data        = (uint8_t *) dst->data + row_start * nb1,
+        .src_तथ्य        = (स्थिर uint8_t *) src0->तथ्य + row_start * nb01,
+        .dst_तथ्य        = (uint8_t *) dst->तथ्य + row_start * nb1,
         .ne00            = ne00,
         .src_stride      = nb01,
         .dst_stride      = nb1,
         .rows_per_thread = rows_per_thread,
-        .total_rows      = nrows,
+        .योग_rows      = nrows,
         .opt_path        = opt_path,
     };
 
-    work_queue_run(octx->ctx->work_queue, sum_rows_thread_f32, &smctx, n_threads);
+    work_queue_run(octx->ctx->work_queue, योग_rows_thread_f32, &smctx, n_threads);
 
-    return HTP_STATUS_OK;
+    वापस HTP_STATUS_OK;
 }
 
-struct sum_context {
-    struct htp_ops_context * octx;
-    const float            * src_data;
-    float                    partial_sums[HTP_MAX_NTHREADS];
-    uint32_t                 total_elems;
+काष्ठा योग_context {
+    काष्ठा htp_ops_context * octx;
+    स्थिर भग्न            * src_तथ्य;
+    भग्न                    partial_sums[HTP_MAX_NTHREADS];
+    uint32_t                 योग_elems;
     uint32_t                 elems_per_thread;
 };
 
-static void sum_thread_f32(unsigned int nth, unsigned int ith, void * data) {
-    struct sum_context * sctx = (struct sum_context *) data;
-    const uint32_t start = sctx->elems_per_thread * ith;
-    const uint32_t end   = MIN(start + sctx->elems_per_thread, sctx->total_elems);
+अटल व्योम योग_thread_f32(अचिन्हित पूर्णांक nth, अचिन्हित पूर्णांक ith, व्योम * तथ्य) {
+    काष्ठा योग_context * sctx = (काष्ठा योग_context *) तथ्य;
+    स्थिर uint32_t start = sctx->elems_per_thread * ith;
+    स्थिर uint32_t end   = MIN(start + sctx->elems_per_thread, sctx->योग_elems);
 
-    if (start >= end) {
+    अगर (start >= end) {
         sctx->partial_sums[ith] = 0.0f;
-        return;
+        वापस;
     }
 
-    const uint32_t n = end - start;
-    const float * src = sctx->src_data + start;
+    स्थिर uint32_t n = end - start;
+    स्थिर भग्न * src = sctx->src_तथ्य + start;
 
-    struct htp_thread_trace * tr = &sctx->octx->ctx->trace[ith];
+    काष्ठा htp_thread_trace * tr = &sctx->octx->ctx->trace[ith];
     htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) start);
 
-    hex_l2fetch_block((const void *) src, n * sizeof(float));
+    hex_l2fetch_block((स्थिर व्योम *) src, n * माप(भग्न));
 
-    sctx->partial_sums[ith] = hvx_reduce_sum_f32((const uint8_t *) src, n);
+    sctx->partial_sums[ith] = hvx_reduce_योग_f32((स्थिर uint8_t *) src, n);
 
     htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) start);
 }
 
-int op_sum(struct htp_ops_context * octx) {
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * dst  = octx->dst;
+पूर्णांक op_योग(काष्ठा htp_ops_context * octx) {
+    स्थिर काष्ठा htp_tensor * src0 = octx->src[0];
+    स्थिर काष्ठा htp_tensor * dst  = octx->dst;
 
-    if (src0->type != HTP_TYPE_F32) {
-        return HTP_STATUS_NO_SUPPORT;
+    अगर (src0->type != HTP_TYPE_F32) {
+        वापस HTP_STATUS_NO_SUPPORT;
     }
 
-    if (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst)) {
-        return HTP_STATUS_NO_SUPPORT;
+    अगर (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst)) {
+        वापस HTP_STATUS_NO_SUPPORT;
     }
 
-    if (octx->ctx->mdev.count > 1 && octx->ctx->mdev.idx > 0) {
-        return HTP_STATUS_OK;
+    अगर (octx->ctx->mdev.गिनती > 1 && octx->ctx->mdev.idx > 0) {
+        वापस HTP_STATUS_OK;
     }
 
-    const uint32_t total_elems = (uint32_t) (src0->ne[0] * src0->ne[1] * src0->ne[2] * src0->ne[3]);
-    if (total_elems == 0) {
-        ((float *) dst->data)[0] = 0.0f;
-        return HTP_STATUS_OK;
+    स्थिर uint32_t योग_elems = (uint32_t) (src0->ne[0] * src0->ne[1] * src0->ne[2] * src0->ne[3]);
+    अगर (योग_elems == 0) {
+        ((भग्न *) dst->तथ्य)[0] = 0.0f;
+        वापस HTP_STATUS_OK;
     }
 
-    const uint32_t n_threads = (total_elems >= 1024) ? MIN(octx->n_threads, HTP_MAX_NTHREADS) : 1;
-    const uint32_t raw_chunk = (total_elems + n_threads - 1) / n_threads;
-    const uint32_t elems_per_thread = hex_round_up(raw_chunk, 32);
+    स्थिर uint32_t n_threads = (योग_elems >= 1024) ? MIN(octx->n_threads, HTP_MAX_NTHREADS) : 1;
+    स्थिर uint32_t raw_chunk = (योग_elems + n_threads - 1) / n_threads;
+    स्थिर uint32_t elems_per_thread = hex_round_up(raw_chunk, 32);
 
-    struct sum_context sctx = {
+    काष्ठा योग_context sctx = {
         .octx             = octx,
-        .src_data         = (const float *) src0->data,
-        .total_elems      = total_elems,
+        .src_तथ्य         = (स्थिर भग्न *) src0->तथ्य,
+        .योग_elems      = योग_elems,
         .elems_per_thread = elems_per_thread,
     };
 
-    work_queue_run(octx->ctx->work_queue, sum_thread_f32, &sctx, n_threads);
+    work_queue_run(octx->ctx->work_queue, योग_thread_f32, &sctx, n_threads);
 
-    float sum = 0.0f;
-    for (uint32_t i = 0; i < n_threads; i++) {
-        sum += sctx.partial_sums[i];
+    भग्न योग_2 = 0.0f;
+    क्रम (uint32_t i = 0; i < n_threads; i++) {
+        योग_2 += sctx.partial_sums[i];
     }
-    ((float *) dst->data)[0] = sum;
+    ((भग्न *) dst->तथ्य)[0] = योग_2;
 
-    return HTP_STATUS_OK;
+    वापस HTP_STATUS_OK;
 }
 
-static inline void argmax_slice_f32(
-    const float * restrict src,
+अटल अंतरभूत व्योम argmax_slice_f32(
+    स्थिर भग्न * restrict src,
     uint32_t n,
     uint32_t offset,
-    float * out_val,
+    भग्न * out_val,
     int32_t * out_idx
 ) {
     hvx_argmax_f32(src, n, offset, out_val, out_idx);
 }
 
-struct argmax_context {
-    struct htp_ops_context * octx;
-    const float            * src_data;
-    int32_t                * dst_data;
+काष्ठा argmax_context {
+    काष्ठा htp_ops_context * octx;
+    स्थिर भग्न            * src_तथ्य;
+    int32_t                * dst_तथ्य;
     uint32_t                 ne00;
     uint32_t                 src_stride;
     uint32_t                 dst_stride;
@@ -251,30 +251,30 @@ struct argmax_context {
     uint32_t                 rows_per_thread;
     uint32_t                 elems_per_thread;
 
-    float                    partial_max[HTP_MAX_NTHREADS];
+    भग्न                    partial_max[HTP_MAX_NTHREADS];
     int32_t                  partial_idx[HTP_MAX_NTHREADS];
 };
 
-static void argmax_thread_single_row(unsigned int nth, unsigned int ith, void * data) {
-    struct argmax_context * actx = (struct argmax_context *) data;
-    const uint32_t start = actx->elems_per_thread * ith;
-    const uint32_t end   = MIN(start + actx->elems_per_thread, actx->ne00);
+अटल व्योम argmax_thread_single_row(अचिन्हित पूर्णांक nth, अचिन्हित पूर्णांक ith, व्योम * तथ्य) {
+    काष्ठा argmax_context * actx = (काष्ठा argmax_context *) तथ्य;
+    स्थिर uint32_t start = actx->elems_per_thread * ith;
+    स्थिर uint32_t end   = MIN(start + actx->elems_per_thread, actx->ne00);
 
-    if (start >= end) {
-        actx->partial_max[ith] = -INFINITY;
+    अगर (start >= end) {
+        actx->partial_max[ith] = -अनन्त;
         actx->partial_idx[ith] = 0;
-        return;
+        वापस;
     }
 
-    const uint32_t n = end - start;
-    const float * src = actx->src_data + start;
+    स्थिर uint32_t n = end - start;
+    स्थिर भग्न * src = actx->src_तथ्य + start;
 
-    struct htp_thread_trace * tr = &actx->octx->ctx->trace[ith];
+    काष्ठा htp_thread_trace * tr = &actx->octx->ctx->trace[ith];
     htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) start);
 
-    hex_l2fetch_block((const void *) src, n * sizeof(float));
+    hex_l2fetch_block((स्थिर व्योम *) src, n * माप(भग्न));
 
-    float max_val;
+    भग्न max_val;
     int32_t max_idx;
     argmax_slice_f32(src, n, start, &max_val, &max_idx);
 
@@ -284,25 +284,25 @@ static void argmax_thread_single_row(unsigned int nth, unsigned int ith, void * 
     htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) start);
 }
 
-static void argmax_thread_multi_row(unsigned int nth, unsigned int ith, void * data) {
-    struct argmax_context * actx = (struct argmax_context *) data;
-    const uint32_t r0 = actx->row_start + actx->rows_per_thread * ith;
-    const uint32_t r1 = MIN(r0 + actx->rows_per_thread, actx->row_start + actx->nrows);
+अटल व्योम argmax_thread_multi_row(अचिन्हित पूर्णांक nth, अचिन्हित पूर्णांक ith, व्योम * तथ्य) {
+    काष्ठा argmax_context * actx = (काष्ठा argmax_context *) तथ्य;
+    स्थिर uint32_t r0 = actx->row_start + actx->rows_per_thread * ith;
+    स्थिर uint32_t r1 = MIN(r0 + actx->rows_per_thread, actx->row_start + actx->nrows);
 
-    if (r0 >= r1) {
-        return;
+    अगर (r0 >= r1) {
+        वापस;
     }
 
-    struct htp_thread_trace * tr = &actx->octx->ctx->trace[ith];
+    काष्ठा htp_thread_trace * tr = &actx->octx->ctx->trace[ith];
     htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) r0);
 
-    for (uint32_t r = r0; r < r1; r++) {
-        const float * src_row = (const float *) ((const uint8_t *) actx->src_data + r * actx->src_stride);
-        int32_t * dst_val     = (int32_t *) ((uint8_t *) actx->dst_data + r * actx->dst_stride);
+    क्रम (uint32_t r = r0; r < r1; r++) {
+        स्थिर भग्न * src_row = (स्थिर भग्न *) ((स्थिर uint8_t *) actx->src_तथ्य + r * actx->src_stride);
+        int32_t * dst_val     = (int32_t *) ((uint8_t *) actx->dst_तथ्य + r * actx->dst_stride);
 
-        hex_l2fetch_block((const void *) src_row, actx->ne00 * sizeof(float));
+        hex_l2fetch_block((स्थिर व्योम *) src_row, actx->ne00 * माप(भग्न));
 
-        float max_val;
+        भग्न max_val;
         int32_t max_idx;
         argmax_slice_f32(src_row, actx->ne00, 0, &max_val, &max_idx);
 
@@ -312,46 +312,46 @@ static void argmax_thread_multi_row(unsigned int nth, unsigned int ith, void * d
     htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) r0);
 }
 
-int op_argmax(struct htp_ops_context * octx) {
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * dst  = octx->dst;
+पूर्णांक op_argmax(काष्ठा htp_ops_context * octx) {
+    स्थिर काष्ठा htp_tensor * src0 = octx->src[0];
+    स्थिर काष्ठा htp_tensor * dst  = octx->dst;
 
-    if (src0->type != HTP_TYPE_F32 || dst->type != HTP_TYPE_I32) {
-        return HTP_STATUS_NO_SUPPORT;
+    अगर (src0->type != HTP_TYPE_F32 || dst->type != HTP_TYPE_I32) {
+        वापस HTP_STATUS_NO_SUPPORT;
     }
 
-    if (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst)) {
-        return HTP_STATUS_NO_SUPPORT;
+    अगर (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst)) {
+        वापस HTP_STATUS_NO_SUPPORT;
     }
 
-    const uint32_t ne00 = src0->ne[0];
-    const uint32_t src0_nrows = src0->ne[1] * src0->ne[2] * src0->ne[3];
+    स्थिर uint32_t ne00 = src0->ne[0];
+    स्थिर uint32_t src0_nrows = src0->ne[1] * src0->ne[2] * src0->ne[3];
 
-    if (ne00 == 0 || src0_nrows == 0) {
-        return HTP_STATUS_OK;
+    अगर (ne00 == 0 || src0_nrows == 0) {
+        वापस HTP_STATUS_OK;
     }
 
-    if (src0_nrows == 1) {
-        if (octx->ctx->mdev.count > 1 && octx->ctx->mdev.idx > 0) {
-            return HTP_STATUS_OK;
+    अगर (src0_nrows == 1) {
+        अगर (octx->ctx->mdev.गिनती > 1 && octx->ctx->mdev.idx > 0) {
+            वापस HTP_STATUS_OK;
         }
 
-        if (ne00 == 1) {
-            ((int32_t *) dst->data)[0] = 0;
-            return HTP_STATUS_OK;
+        अगर (ne00 == 1) {
+            ((int32_t *) dst->तथ्य)[0] = 0;
+            वापस HTP_STATUS_OK;
         }
 
-        const uint32_t n_threads = (ne00 >= 1024) ? MIN(octx->n_threads, HTP_MAX_NTHREADS) : 1;
-        const uint32_t raw_chunk = (ne00 + n_threads - 1) / n_threads;
-        const uint32_t elems_per_thread = hex_round_up(raw_chunk, 32);
+        स्थिर uint32_t n_threads = (ne00 >= 1024) ? MIN(octx->n_threads, HTP_MAX_NTHREADS) : 1;
+        स्थिर uint32_t raw_chunk = (ne00 + n_threads - 1) / n_threads;
+        स्थिर uint32_t elems_per_thread = hex_round_up(raw_chunk, 32);
 
-        struct argmax_context actx = {
+        काष्ठा argmax_context actx = {
             .octx             = octx,
-            .src_data         = (const float *) src0->data,
-            .dst_data         = (int32_t *) dst->data,
+            .src_तथ्य         = (स्थिर भग्न *) src0->तथ्य,
+            .dst_तथ्य         = (int32_t *) dst->तथ्य,
             .ne00             = ne00,
-            .src_stride       = src0->nb[1] > 0 ? (uint32_t) src0->nb[1] : (uint32_t) (ne00 * sizeof(float)),
-            .dst_stride       = dst->nb[0] > 0 ? (uint32_t) dst->nb[0] : (uint32_t) sizeof(int32_t),
+            .src_stride       = src0->nb[1] > 0 ? (uint32_t) src0->nb[1] : (uint32_t) (ne00 * माप(भग्न)),
+            .dst_stride       = dst->nb[0] > 0 ? (uint32_t) dst->nb[0] : (uint32_t) माप(int32_t),
             .row_start        = 0,
             .nrows            = 1,
             .rows_per_thread  = 1,
@@ -360,45 +360,45 @@ int op_argmax(struct htp_ops_context * octx) {
 
         work_queue_run(octx->ctx->work_queue, argmax_thread_single_row, &actx, n_threads);
 
-        float best_val = actx.partial_max[0];
+        भग्न best_val = actx.partial_max[0];
         int32_t best_idx = actx.partial_idx[0];
-        for (uint32_t i = 1; i < n_threads; i++) {
-            if (actx.partial_max[i] > best_val) {
+        क्रम (uint32_t i = 1; i < n_threads; i++) {
+            अगर (actx.partial_max[i] > best_val) {
                 best_val = actx.partial_max[i];
                 best_idx = actx.partial_idx[i];
             }
         }
-        ((int32_t *) dst->data)[0] = best_idx;
-        return HTP_STATUS_OK;
+        ((int32_t *) dst->तथ्य)[0] = best_idx;
+        वापस HTP_STATUS_OK;
     }
 
     uint32_t row_start = 0;
     uint32_t nrows     = src0_nrows;
 
-    if (octx->ctx->mdev.count > 1) {
-        const bool can_split = htp_tensor_mdev_data_aligned(dst) &&
-                               htp_tensor_is_contiguous(dst, sizeof(int32_t));
-        const uint32_t elems_per_chunk = can_split ? 32 : 0;
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(
-            src0_nrows, elems_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
+    अगर (octx->ctx->mdev.गिनती > 1) {
+        स्थिर bool can_split = htp_tensor_mdev_तथ्य_aligned(dst) &&
+                               htp_tensor_is_contiguous(dst, माप(int32_t));
+        स्थिर uint32_t elems_per_chunk = can_split ? 32 : 0;
+        स्थिर काष्ठा htp_tensor_mdev_range range = htp_tensor_mdev_partition(
+            src0_nrows, elems_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.गिनती, &octx->ctx->mdev.गिनती_div);
         row_start = range.start;
-        nrows     = range.count;
+        nrows     = range.गिनती;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    अगर (nrows == 0) {
+        वापस HTP_STATUS_OK;
     }
 
-    const uint32_t n_threads = MIN(octx->n_threads, nrows);
-    const uint32_t rows_per_thread = (nrows + n_threads - 1) / n_threads;
+    स्थिर uint32_t n_threads = MIN(octx->n_threads, nrows);
+    स्थिर uint32_t rows_per_thread = (nrows + n_threads - 1) / n_threads;
 
-    struct argmax_context actx = {
+    काष्ठा argmax_context actx = {
         .octx             = octx,
-        .src_data         = (const float *) src0->data,
-        .dst_data         = (int32_t *) dst->data,
+        .src_तथ्य         = (स्थिर भग्न *) src0->तथ्य,
+        .dst_तथ्य         = (int32_t *) dst->तथ्य,
         .ne00             = ne00,
-        .src_stride       = src0->nb[1] > 0 ? (uint32_t) src0->nb[1] : (uint32_t) (ne00 * sizeof(float)),
-        .dst_stride       = dst->nb[0] > 0 ? (uint32_t) dst->nb[0] : (uint32_t) sizeof(int32_t),
+        .src_stride       = src0->nb[1] > 0 ? (uint32_t) src0->nb[1] : (uint32_t) (ne00 * माप(भग्न)),
+        .dst_stride       = dst->nb[0] > 0 ? (uint32_t) dst->nb[0] : (uint32_t) माप(int32_t),
         .row_start        = row_start,
         .nrows            = nrows,
         .rows_per_thread  = rows_per_thread,
@@ -406,5 +406,5 @@ int op_argmax(struct htp_ops_context * octx) {
     };
 
     work_queue_run(octx->ctx->work_queue, argmax_thread_multi_row, &actx, n_threads);
-    return HTP_STATUS_OK;
+    वापस HTP_STATUS_OK;
 }

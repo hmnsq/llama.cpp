@@ -1,74 +1,74 @@
-#pragma once
+#आशय once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#अगर_घोषित __cplusplus
+बाह्य "C" {
+#पूर्ण_अगर
 
-#ifdef _WIN32
+#अगर_घोषित _WIN32
 #    pragma clang diagnostic ignored "-Wignored-attributes"
-#endif
+#पूर्ण_अगर
 
-#include <AEEStdErr.h>
-#include <rpcmem.h>
-#include <remote.h>
-#include <dspqueue.h>
+#समावेश <AEEStdErr.h>
+#समावेश <rpcmem.h>
+#समावेश <remote.h>
+#समावेश <dspqueue.h>
 
-#if defined(_WIN32) && !defined(__MINGW32__)
+#अगर defined(_WIN32) && !defined(__MINGW32__)
 #    ifdef GGML_BACKEND_BUILD
-#        define HTPDRV_API __declspec(dllexport) extern
-#    else
-#        define HTPDRV_API __declspec(dllimport) extern
+#        define HTPDRV_API __declspec(dllexport) बाह्य
+#    अन्यथा
+#        define HTPDRV_API __declspec(dllimport) बाह्य
 #    endif
-#else
-#    define HTPDRV_API __attribute__ ((visibility ("default"))) extern
-#endif
+#अन्यथा
+#    define HTPDRV_API __attribute__ ((visibility ("default"))) बाह्य
+#पूर्ण_अगर
 
 /* Offset to differentiate HLOS and Hexagon error codes.
    Stores the value of AEE_EOFFSET for Hexagon. */
-#ifndef DSP_OFFSET
+#अगर_अघोषित DSP_OFFSET
 #    define DSP_OFFSET 0x80000400
-#endif
+#पूर्ण_अगर
 
 /* Errno for connection reset by peer. */
-#ifndef ECONNRESET
+#अगर_अघोषित ECONNRESET
 #    ifdef __hexagon__
 #        define ECONNRESET 104
 #    endif
-#endif
+#पूर्ण_अगर
 
 /* Abstraction of different OS specific sleep APIs.
    SLEEP accepts input in seconds. */
-#ifndef SLEEP
+#अगर_अघोषित SLEEP
 #    ifdef __hexagon__
 #        define SLEEP(x)                      \
             { /* Do nothing for simulator. */ \
             }
-#    else
+#    अन्यथा
 #        ifdef _WIN32
 #            define SLEEP(x) Sleep(1000 * x) /* Sleep accepts input in milliseconds. */
-#        else
+#        अन्यथा
 #            define SLEEP(x) sleep(x)        /* sleep accepts input in seconds. */
 #        endif
 #    endif
-#endif
+#पूर्ण_अगर
 
 /* Include windows specific header files. */
-#ifdef _WIN32
+#अगर_घोषित _WIN32
 #    include <windows.h>
 #    include <sysinfoapi.h>
 #    define _CRT_SECURE_NO_WARNINGS         1
 #    define _WINSOCK_DEPRECATED_NO_WARNINGS 1
-#endif
+#पूर्ण_अगर
 
 /* Includes and defines for all HLOS except windows */
-#if !defined(__hexagon__) && !defined(_WIN32)
+#अगर !defined(__hexagon__) && !defined(_WIN32)
 #    include "unistd.h"
 
 #    include <sys/time.h>
-#endif
+#पूर्ण_अगर
 
 /* Includes and defines for Hexagon and all HLOS except Windows. */
-#if !defined(_WIN32)
+#अगर !defined(_WIN32)
 /* Weak reference to remote symbol for compilation. */
 #    pragma weak remote_session_control
 #    pragma weak remote_handle_control
@@ -76,24 +76,24 @@ extern "C" {
 #    pragma weak fastrpc_mmap
 #    pragma weak fastrpc_munmap
 #    pragma weak rpcmem_alloc2
-#endif
+#पूर्ण_अगर
 
-#if !defined(_WIN32)
+#अगर !defined(_WIN32)
 #    pragma weak remote_system_request
-#endif
+#पूर्ण_अगर
 
-#ifdef _WIN32
+#अगर_घोषित _WIN32
 #     define DSPQUEUE_TIMEOUT DSPQUEUE_TIMEOUT_NONE
-#else
+#अन्यथा
 #     define DSPQUEUE_TIMEOUT 1000000
-#endif
+#पूर्ण_अगर
 
 /**
  * htpdrv_init API: driver interface entry point
  *
  * @return      Return AEE error codes as defined in Hexagon SDK.
  */
-HTPDRV_API int htpdrv_init(void);
+HTPDRV_API पूर्णांक htpdrv_init(व्योम);
 
 /**
  * htpdrv_get_domain API: get domain struct from domain value.
@@ -103,7 +103,7 @@ HTPDRV_API int htpdrv_init(void);
  *             returns NULL.
  *
  */
-HTPDRV_API domain * htpdrv_get_domain(int domain_id);
+HTPDRV_API domain * htpdrv_get_domain(पूर्णांक domain_id);
 
 /**
  * htpdrv_get_arch API: query the Hexagon processor architecture version information
@@ -114,10 +114,10 @@ HTPDRV_API domain * htpdrv_get_domain(int domain_id);
  *              non-zero if error, return value points to the error.
  *
  */
-HTPDRV_API int htpdrv_get_arch(int domain, int * arch);
+HTPDRV_API पूर्णांक htpdrv_get_arch(पूर्णांक domain, पूर्णांक * arch);
 
-HTPDRV_API int remote_system_request(system_req_payload * req);
+HTPDRV_API पूर्णांक remote_system_request(system_req_payload * req);
 
-#ifdef __cplusplus
+#अगर_घोषित __cplusplus
 }
-#endif
+#पूर्ण_अगर

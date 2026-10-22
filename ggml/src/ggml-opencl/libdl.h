@@ -1,31 +1,31 @@
-#pragma once
+#आशय once
 
-#ifdef _WIN32
+#अगर_घोषित _WIN32
 #   define WIN32_LEAN_AND_MEAN
 #   ifndef NOMINMAX
 #       define NOMINMAX
 #   endif
 #   include <windows.h>
 #   include <winevt.h>
-#else
+#अन्यथा
 #    include <dlfcn.h>
 #    include <unistd.h>
-#endif
-#include <filesystem>
+#पूर्ण_अगर
+#समावेश <filesystem>
 
 namespace fs = std::filesystem;
 
-#ifdef _WIN32
+#अगर_घोषित _WIN32
 
 using dl_handle = std::remove_pointer_t<HMODULE>;
 
-struct dl_handle_deleter {
-    void operator()(HMODULE handle) {
+काष्ठा dl_handle_deleter {
+    व्योम चालक()(HMODULE handle) {
         FreeLibrary(handle);
     }
 };
 
-static inline dl_handle * dl_load_library(const fs::path & path) {
+अटल अंतरभूत dl_handle * dl_load_library(स्थिर fs::path & path) {
     // suppress error dialogs for missing DLLs
     DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
     SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
@@ -34,46 +34,46 @@ static inline dl_handle * dl_load_library(const fs::path & path) {
 
     SetErrorMode(old_mode);
 
-    return handle;
+    वापस handle;
 }
 
-static inline void * dl_get_sym(dl_handle * handle, const char * name) {
+अटल अंतरभूत व्योम * dl_get_sym(dl_handle * handle, स्थिर अक्षर * name) {
     DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
     SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
 
-    void * p = (void *) GetProcAddress(handle, name);
+    व्योम * p = (व्योम *) GetProcAddress(handle, name);
 
     SetErrorMode(old_mode);
 
-    return p;
+    वापस p;
 }
 
-static inline const char * dl_error() {
-    return "";
+अटल अंतरभूत स्थिर अक्षर * dl_error() {
+    वापस "";
 }
 
-#else
+#अन्यथा
 
-using dl_handle = void;
+using dl_handle = व्योम;
 
-struct dl_handle_deleter {
-    void operator()(void * handle) {
+काष्ठा dl_handle_deleter {
+    व्योम चालक()(व्योम * handle) {
         dlclose(handle);
     }
 };
 
-static inline dl_handle * dl_load_library(const fs::path & path) {
+अटल अंतरभूत dl_handle * dl_load_library(स्थिर fs::path & path) {
     dl_handle * handle = dlopen(path.string().c_str(), RTLD_NOW | RTLD_LOCAL);
-    return handle;
+    वापस handle;
 }
 
-static inline void * dl_get_sym(dl_handle * handle, const char * name) {
-    return dlsym(handle, name);
+अटल अंतरभूत व्योम * dl_get_sym(dl_handle * handle, स्थिर अक्षर * name) {
+    वापस dlsym(handle, name);
 }
 
-static inline const char * dl_error() {
-    const char *rslt = dlerror();
-    return rslt != nullptr ? rslt : "";
+अटल अंतरभूत स्थिर अक्षर * dl_error() {
+    स्थिर अक्षर *rslt = dlerror();
+    वापस rslt != nullptr ? rslt : "";
 }
 
-#endif
+#पूर्ण_अगर

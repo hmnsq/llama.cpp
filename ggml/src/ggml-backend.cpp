@@ -1,664 +1,664 @@
 // Note: porting this file to C++ is a work in progress
 
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#ifndef NOMINMAX
+#अगर_घोषित _WIN32
+#घोषणा WIN32_LEAN_AND_MEAN
+#अगर_अघोषित NOMINMAX
 #   define NOMINMAX
-#endif
-#include <windows.h>
-#endif
+#पूर्ण_अगर
+#समावेश <windows.h>
+#पूर्ण_अगर
 
-#include "ggml-backend.h"
-#include "ggml-backend-impl.h"
-#include "ggml-alloc.h"
-#include "ggml-impl.h"
+#समावेश "ggml-backend.h"
+#समावेश "ggml-backend-impl.h"
+#समावेश "ggml-alloc.h"
+#समावेश "ggml-impl.h"
 
-#include <assert.h>
-#include <limits.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <algorithm>
-#include <unordered_map>
-#include <vector>
+#समावेश <assert.h>
+#समावेश <limits.h>
+#समावेश <stdarg.h>
+#समावेश <stdio.h>
+#समावेश <stdlib.h>
+#समावेश <string.h>
+#समावेश <algorithm>
+#समावेश <unordered_map>
+#समावेश <vector>
 
-#ifdef __APPLE__
-#include <sys/types.h>
-#include <sys/sysctl.h>
-#endif
+#अगर_घोषित __APPLE__
+#समावेश <sys/types.h>
+#समावेश <sys/sysctl.h>
+#पूर्ण_अगर
 
 
 // backend buffer type
 
-const char * ggml_backend_buft_name(ggml_backend_buffer_type_t buft) {
+स्थिर अक्षर * ggml_backend_buft_name(ggml_backend_बफर_type_t buft) {
     GGML_ASSERT(buft);
-    return buft->iface.get_name(buft);
+    वापस buft->iface.get_name(buft);
 }
 
-ggml_backend_buffer_t ggml_backend_buft_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
+ggml_backend_बफर_t ggml_backend_buft_alloc_बफर(ggml_backend_बफर_type_t buft, माप_प्रकार size) {
     GGML_ASSERT(buft);
-    if (size == 0) {
+    अगर (size == 0) {
         // return a dummy buffer for zero-sized allocations
-        return ggml_backend_buffer_init(buft, {}, NULL, 0);
+        वापस ggml_backend_बफर_init(buft, {}, शून्य, 0);
     }
-    return buft->iface.alloc_buffer(buft, size);
+    वापस buft->iface.alloc_बफर(buft, size);
 }
 
 // shared planning logic for allocating a list of tensors into one or more buffers of the given type
-struct ggml_backend_buft_alloc_buffer_n_plan_item {
-    size_t size;  // total bytes for this buffer
-    int    first; // first tensor index (inclusive)
-    int    last;  // last tensor index (exclusive)
+काष्ठा ggml_backend_buft_alloc_बफर_n_plan_item {
+    माप_प्रकार size;  // total bytes for this buffer
+    पूर्णांक    first; // first tensor index (inclusive)
+    पूर्णांक    last;  // last tensor index (exclusive)
 };
 
-using ggml_backend_buft_alloc_buffer_n_plan_t = std::vector<ggml_backend_buft_alloc_buffer_n_plan_item>;
+using ggml_backend_buft_alloc_बफर_n_plan_t = std::vector<ggml_backend_buft_alloc_बफर_n_plan_item>;
 
-static ggml_backend_buft_alloc_buffer_n_plan_t ggml_backend_buft_alloc_buffer_n_plan(
-        ggml_backend_buffer_type_t buft, struct ggml_tensor ** tensors, int n_tensors) {
-    ggml_backend_buft_alloc_buffer_n_plan_t plan;
+अटल ggml_backend_buft_alloc_बफर_n_plan_t ggml_backend_buft_alloc_बफर_n_plan(
+        ggml_backend_बफर_type_t buft, काष्ठा ggml_tensor ** tensors, पूर्णांक n_tensors) {
+    ggml_backend_buft_alloc_बफर_n_plan_t plan;
 
-    const size_t alignment = ggml_backend_buft_get_alignment(buft);
-    const size_t max_size  = ggml_backend_buft_get_max_size(buft);
+    स्थिर माप_प्रकार alignment = ggml_backend_buft_get_alignment(buft);
+    स्थिर माप_प्रकार max_size  = ggml_backend_buft_get_max_आकार(buft);
 
-    size_t cur_buf_size = 0;
-    int    first        = 0;
+    माप_प्रकार cur_buf_आकार = 0;
+    पूर्णांक    first        = 0;
 
-    for (int i = 0; i < n_tensors; i++) {
-        size_t this_size = 0;
-        struct ggml_tensor * t = tensors[i];
-        if (t->data == NULL && t->view_src == NULL) {
-            this_size = GGML_PAD(ggml_backend_buft_get_alloc_size(buft, t), alignment);
+    क्रम (पूर्णांक i = 0; i < n_tensors; i++) {
+        माप_प्रकार this_आकार = 0;
+        काष्ठा ggml_tensor * t = tensors[i];
+        अगर (t->तथ्य == शून्य && t->view_src == शून्य) {
+            this_आकार = GGML_PAD(ggml_backend_buft_get_alloc_आकार(buft, t), alignment);
         }
 
         // flush the current buffer if adding this tensor would exceed max_size
-        if (cur_buf_size > 0 && (cur_buf_size + this_size) > max_size) {
-            plan.push_back({ cur_buf_size, first, i });
-            cur_buf_size = this_size;
+        अगर (cur_buf_आकार > 0 && (cur_buf_आकार + this_आकार) > max_size) {
+            plan.push_back({ cur_buf_आकार, first, i });
+            cur_buf_आकार = this_आकार;
             first        = i;
-        } else {
-            cur_buf_size += this_size;
+        } अन्यथा {
+            cur_buf_आकार += this_आकार;
         }
     }
 
-    if (cur_buf_size > 0) {
-        plan.push_back({ cur_buf_size, first, n_tensors });
+    अगर (cur_buf_आकार > 0) {
+        plan.push_back({ cur_buf_आकार, first, n_tensors });
     }
 
-    return plan;
+    वापस plan;
 }
 
 // default implementation of alloc_buffer_n
 // allocates tensors from a list into one or more buffers of the given type
-static ggml_backend_buffer_t ggml_backend_buft_alloc_buffer_n_default(ggml_backend_buffer_type_t buft, struct ggml_tensor ** tensors, int n_tensors) {
-    const ggml_backend_buft_alloc_buffer_n_plan_t plan = ggml_backend_buft_alloc_buffer_n_plan(buft, tensors, n_tensors);
+अटल ggml_backend_बफर_t ggml_backend_buft_alloc_बफर_n_default(ggml_backend_बफर_type_t buft, काष्ठा ggml_tensor ** tensors, पूर्णांक n_tensors) {
+    स्थिर ggml_backend_buft_alloc_बफर_n_plan_t plan = ggml_backend_buft_alloc_बफर_n_plan(buft, tensors, n_tensors);
 
-    std::vector<ggml_backend_buffer_t> buffers;
+    std::vector<ggml_backend_बफर_t> buffers;
     buffers.reserve(plan.size());
 
-    for (const ggml_backend_buft_alloc_buffer_n_plan_item & item : plan) {
-        ggml_backend_buffer_t buffer = ggml_backend_buft_alloc_buffer(buft, item.size);
-        if (buffer == NULL) {
+    क्रम (स्थिर ggml_backend_buft_alloc_बफर_n_plan_item & item : plan) {
+        ggml_backend_बफर_t बफर = ggml_backend_buft_alloc_बफर(buft, item.size);
+        अगर (बफर == शून्य) {
             GGML_LOG_ERROR("%s: failed to allocate %s buffer of size %zu\n", __func__, ggml_backend_buft_name(buft), item.size);
-            for (ggml_backend_buffer_t b : buffers) {
-                ggml_backend_buffer_free(b);
+            क्रम (ggml_backend_बफर_t b : buffers) {
+                ggml_backend_बफर_free(b);
             }
-            return NULL;
+            वापस शून्य;
         }
 
-        struct ggml_tallocr tallocr = ggml_tallocr_new(buffer);
+        काष्ठा ggml_tallocr tallocr = ggml_tallocr_new(बफर);
 
         // allocate tensors in the current buffer
-        struct ggml_tensor * t_failed = NULL;
-        for (int j = item.first; j < item.last; j++) {
-            struct ggml_tensor * t = tensors[j];
-            if (t->data == NULL) {
-                if (t->view_src == NULL) {
-                    if (ggml_tallocr_alloc(&tallocr, t) != GGML_STATUS_SUCCESS) {
+        काष्ठा ggml_tensor * t_failed = शून्य;
+        क्रम (पूर्णांक j = item.first; j < item.last; j++) {
+            काष्ठा ggml_tensor * t = tensors[j];
+            अगर (t->तथ्य == शून्य) {
+                अगर (t->view_src == शून्य) {
+                    अगर (ggml_tallocr_alloc(&tallocr, t) != GGML_STATUS_SUCCESS) {
                         t_failed = t;
-                        break;
+                        अवरोध;
                     }
-                } else if (t->buffer == NULL) {
-                    if (ggml_backend_view_init(t) != GGML_STATUS_SUCCESS) {
+                } अन्यथा अगर (t->बफर == शून्य) {
+                    अगर (ggml_backend_view_init(t) != GGML_STATUS_SUCCESS) {
                         t_failed = t;
-                        break;
+                        अवरोध;
                     }
                 }
-            } else {
-                if (t->view_src != NULL && t->buffer == NULL) {
+            } अन्यथा {
+                अगर (t->view_src != शून्य && t->बफर == शून्य) {
                     // view of a pre-allocated tensor
-                    if (ggml_backend_view_init(t) != GGML_STATUS_SUCCESS) {
+                    अगर (ggml_backend_view_init(t) != GGML_STATUS_SUCCESS) {
                         t_failed = t;
-                        break;
+                        अवरोध;
                     }
                 }
             }
         }
-        if (t_failed != NULL) {
+        अगर (t_failed != शून्य) {
             GGML_LOG_ERROR("%s: failed to initialize tensor %s\n", __func__, t_failed->name);
-            for (ggml_backend_buffer_t b : buffers) {
-                ggml_backend_buffer_free(b);
+            क्रम (ggml_backend_बफर_t b : buffers) {
+                ggml_backend_बफर_free(b);
             }
-            ggml_backend_buffer_free(buffer);
-            return NULL;
+            ggml_backend_बफर_free(बफर);
+            वापस शून्य;
         }
 
-        buffers.push_back(buffer);
+        buffers.push_back(बफर);
     }
 
-    if (buffers.empty()) {
-        return NULL;
+    अगर (buffers.empty()) {
+        वापस शून्य;
     }
 
-    if (buffers.size() == 1) {
-        return buffers[0];
+    अगर (buffers.size() == 1) {
+        वापस buffers[0];
     }
 
-    return ggml_backend_multi_buffer_alloc_buffer(buffers.data(), buffers.size());
+    वापस ggml_backend_multi_बफर_alloc_बफर(buffers.तथ्य(), buffers.size());
 }
 
 // default implementation of get_alloc_size_n
 // returns the total size that alloc_buffer_n_default would allocate for the given tensors
-static size_t ggml_backend_buft_get_alloc_size_n_default(ggml_backend_buffer_type_t buft, struct ggml_tensor ** tensors, int n_tensors) {
-    const ggml_backend_buft_alloc_buffer_n_plan_t plan = ggml_backend_buft_alloc_buffer_n_plan(buft, tensors, n_tensors);
+अटल माप_प्रकार ggml_backend_buft_get_alloc_आकार_n_default(ggml_backend_बफर_type_t buft, काष्ठा ggml_tensor ** tensors, पूर्णांक n_tensors) {
+    स्थिर ggml_backend_buft_alloc_बफर_n_plan_t plan = ggml_backend_buft_alloc_बफर_n_plan(buft, tensors, n_tensors);
 
-    size_t total = 0;
-    for (const ggml_backend_buft_alloc_buffer_n_plan_item & item : plan) {
-        total += item.size;
+    माप_प्रकार योग = 0;
+    क्रम (स्थिर ggml_backend_buft_alloc_बफर_n_plan_item & item : plan) {
+        योग += item.size;
     }
-    return total;
+    वापस योग;
 }
 
-ggml_backend_buffer_t ggml_backend_buft_alloc_buffer_n(ggml_backend_buffer_type_t buft, struct ggml_tensor ** tensors, int n_tensors) {
+ggml_backend_बफर_t ggml_backend_buft_alloc_बफर_n(ggml_backend_बफर_type_t buft, काष्ठा ggml_tensor ** tensors, पूर्णांक n_tensors) {
     GGML_ASSERT(buft);
-    if (buft->iface.alloc_buffer_n) {
-        return buft->iface.alloc_buffer_n(buft, tensors, n_tensors);
+    अगर (buft->iface.alloc_बफर_n) {
+        वापस buft->iface.alloc_बफर_n(buft, tensors, n_tensors);
     }
-    return ggml_backend_buft_alloc_buffer_n_default(buft, tensors, n_tensors);
+    वापस ggml_backend_buft_alloc_बफर_n_default(buft, tensors, n_tensors);
 }
 
-size_t ggml_backend_buft_get_alignment(ggml_backend_buffer_type_t buft) {
+माप_प्रकार ggml_backend_buft_get_alignment(ggml_backend_बफर_type_t buft) {
     GGML_ASSERT(buft);
-    return buft->iface.get_alignment(buft);
+    वापस buft->iface.get_alignment(buft);
 }
 
-size_t ggml_backend_buft_get_max_size(ggml_backend_buffer_type_t buft) {
+माप_प्रकार ggml_backend_buft_get_max_आकार(ggml_backend_बफर_type_t buft) {
     GGML_ASSERT(buft);
     // get_max_size is optional, defaults to SIZE_MAX
-    if (buft->iface.get_max_size) {
-        return buft->iface.get_max_size(buft);
+    अगर (buft->iface.get_max_आकार) {
+        वापस buft->iface.get_max_आकार(buft);
     }
-    return SIZE_MAX;
+    वापस SIZE_MAX;
 }
 
-size_t ggml_backend_buft_get_alloc_size(ggml_backend_buffer_type_t buft, const struct ggml_tensor * tensor) {
+माप_प्रकार ggml_backend_buft_get_alloc_आकार(ggml_backend_बफर_type_t buft, स्थिर काष्ठा ggml_tensor * tensor) {
     GGML_ASSERT(buft);
     // get_alloc_size is optional, defaults to ggml_nbytes
-    if (buft->iface.get_alloc_size) {
-        size_t size = buft->iface.get_alloc_size(buft, tensor);
-        assert(size >= ggml_nbytes(tensor));
+    अगर (buft->iface.get_alloc_आकार) {
+        माप_प्रकार size = buft->iface.get_alloc_आकार(buft, tensor);
+        निश्चित(size >= ggml_nbytes(tensor));
 
         // [TAG_ALLOC_SIZE_EXPAND]
         // if you hit this assert, update ggml_backend_op_alloc_size_may_expand() accordingly
         GGML_ASSERT(size <= ggml_nbytes(tensor) ||
                     ggml_op_is_empty(tensor->op) ||
                     ggml_is_quantized(tensor->type) || // [TAG_ALLOC_SIZE_EXPAND]
-                    ggml_op_alloc_size_may_expand(tensor->op));
+                    ggml_op_alloc_आकार_may_expand(tensor->op));
 
-        return size;
+        वापस size;
     }
-    return ggml_nbytes(tensor);
+    वापस ggml_nbytes(tensor);
 }
 
-size_t ggml_backend_buft_get_alloc_size_n(ggml_backend_buffer_type_t buft, struct ggml_tensor ** tensors, int n_tensors) {
+माप_प्रकार ggml_backend_buft_get_alloc_आकार_n(ggml_backend_बफर_type_t buft, काष्ठा ggml_tensor ** tensors, पूर्णांक n_tensors) {
     GGML_ASSERT(buft);
-    if (buft->iface.get_alloc_size_n) {
-        return buft->iface.get_alloc_size_n(buft, tensors, n_tensors);
+    अगर (buft->iface.get_alloc_आकार_n) {
+        वापस buft->iface.get_alloc_आकार_n(buft, tensors, n_tensors);
     }
-    return ggml_backend_buft_get_alloc_size_n_default(buft, tensors, n_tensors);
+    वापस ggml_backend_buft_get_alloc_आकार_n_default(buft, tensors, n_tensors);
 }
 
-bool ggml_backend_buft_is_host(ggml_backend_buffer_type_t buft) {
+bool ggml_backend_buft_is_host(ggml_backend_बफर_type_t buft) {
     GGML_ASSERT(buft);
-    if (buft->iface.is_host) {
-        return buft->iface.is_host(buft);
+    अगर (buft->iface.is_host) {
+        वापस buft->iface.is_host(buft);
     }
-    return false;
+    वापस false;
 }
 
-ggml_backend_dev_t ggml_backend_buft_get_device(ggml_backend_buffer_type_t buft) {
+ggml_backend_dev_t ggml_backend_buft_get_device(ggml_backend_बफर_type_t buft) {
     GGML_ASSERT(buft);
-    return buft->device;
+    वापस buft->device;
 }
 
 // backend buffer
 
-ggml_backend_buffer_t ggml_backend_buffer_init(
-               ggml_backend_buffer_type_t buft,
-        struct ggml_backend_buffer_i      iface,
-               void *                     context,
-               size_t                     size) {
-    ggml_backend_buffer_t buffer = new ggml_backend_buffer {
+ggml_backend_बफर_t ggml_backend_बफर_init(
+               ggml_backend_बफर_type_t buft,
+        काष्ठा ggml_backend_बफर_i      iface,
+               व्योम *                     context,
+               माप_प्रकार                     size) {
+    ggml_backend_बफर_t बफर = नया ggml_backend_बफर {
         /* .interface = */ iface,
         /* .buft      = */ buft,
         /* .context   = */ context,
         /* .size      = */ size,
-        /* .usage     = */ GGML_BACKEND_BUFFER_USAGE_ANY
+        /* .usage     = */ GGML_BACKEND_बफर_USAGE_ANY
     };
 
-    return buffer;
+    वापस बफर;
 }
 
-const char * ggml_backend_buffer_name(ggml_backend_buffer_t buffer) {
-    return ggml_backend_buft_name(ggml_backend_buffer_get_type(buffer));
+स्थिर अक्षर * ggml_backend_बफर_name(ggml_backend_बफर_t बफर) {
+    वापस ggml_backend_buft_name(ggml_backend_बफर_get_type(बफर));
 }
 
-void ggml_backend_buffer_free(ggml_backend_buffer_t buffer) {
-    if (buffer == NULL) {
-        return;
+व्योम ggml_backend_बफर_free(ggml_backend_बफर_t बफर) {
+    अगर (बफर == शून्य) {
+        वापस;
     }
 
-    if (buffer->iface.free_buffer != NULL) {
-        buffer->iface.free_buffer(buffer);
+    अगर (बफर->iface.free_बफर != शून्य) {
+        बफर->iface.free_बफर(बफर);
     }
-    delete buffer;
+    मिटाओ बफर;
 }
 
-size_t ggml_backend_buffer_get_size(ggml_backend_buffer_t buffer) {
-    GGML_ASSERT(buffer);
-    return buffer->size;
+माप_प्रकार ggml_backend_बफर_get_आकार(ggml_backend_बफर_t बफर) {
+    GGML_ASSERT(बफर);
+    वापस बफर->size;
 }
 
-void * ggml_backend_buffer_get_base(ggml_backend_buffer_t buffer) {
-    GGML_ASSERT(buffer);
+व्योम * ggml_backend_बफर_get_base(ggml_backend_बफर_t बफर) {
+    GGML_ASSERT(बफर);
     // get_base is optional if the buffer is zero-sized
-    if (!ggml_backend_buffer_is_meta(buffer) && buffer->size == 0) {
-        return NULL;
+    अगर (!ggml_backend_बफर_is_meta(बफर) && बफर->size == 0) {
+        वापस शून्य;
     }
 
     // FIXME JG: a multi_buffer has a non-zero size, according to the above comment get_base is not optional,
     //     I don't know whether the above comment is correct
-    if (!buffer->iface.get_base) {
-        return NULL;
+    अगर (!बफर->iface.get_base) {
+        वापस शून्य;
     }
 
-    void * base = buffer->iface.get_base(buffer);
+    व्योम * base = बफर->iface.get_base(बफर);
 
-    GGML_ASSERT(base != NULL && "backend buffer base cannot be NULL");
+    GGML_ASSERT(base != शून्य && "backend buffer base cannot be NULL");
 
-    return base;
+    वापस base;
 }
 
-enum ggml_status ggml_backend_buffer_init_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor) {
-    GGML_ASSERT(buffer);
+क्रमागत ggml_status ggml_backend_बफर_init_tensor(ggml_backend_बफर_t बफर, काष्ठा ggml_tensor * tensor) {
+    GGML_ASSERT(बफर);
     // init_tensor is optional
-    if (buffer->iface.init_tensor) {
-        return buffer->iface.init_tensor(buffer, tensor);
+    अगर (बफर->iface.init_tensor) {
+        वापस बफर->iface.init_tensor(बफर, tensor);
     }
-    return GGML_STATUS_SUCCESS;
+    वापस GGML_STATUS_SUCCESS;
 }
 
-void ggml_backend_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value) {
-    GGML_ASSERT(buffer);
+व्योम ggml_backend_बफर_clear(ggml_backend_बफर_t बफर, uint8_t value) {
+    GGML_ASSERT(बफर);
     // clear is optional if the buffer is zero-sized
-    if (buffer->size == 0) {
-        return;
+    अगर (बफर->size == 0) {
+        वापस;
     }
 
-    buffer->iface.clear(buffer, value);
+    बफर->iface.सफा(बफर, value);
 }
 
-size_t ggml_backend_buffer_get_alignment(ggml_backend_buffer_t buffer) {
-    return ggml_backend_buft_get_alignment(ggml_backend_buffer_get_type(buffer));
+माप_प्रकार ggml_backend_बफर_get_alignment(ggml_backend_बफर_t बफर) {
+    वापस ggml_backend_buft_get_alignment(ggml_backend_बफर_get_type(बफर));
 }
 
-size_t ggml_backend_buffer_get_max_size(ggml_backend_buffer_t buffer) {
-    return ggml_backend_buft_get_max_size(ggml_backend_buffer_get_type(buffer));
+माप_प्रकार ggml_backend_बफर_get_max_आकार(ggml_backend_बफर_t बफर) {
+    वापस ggml_backend_buft_get_max_आकार(ggml_backend_बफर_get_type(बफर));
 }
 
-size_t ggml_backend_buffer_get_alloc_size(ggml_backend_buffer_t buffer, const struct ggml_tensor * tensor) {
-    return ggml_backend_buft_get_alloc_size(ggml_backend_buffer_get_type(buffer), tensor);
+माप_प्रकार ggml_backend_बफर_get_alloc_आकार(ggml_backend_बफर_t बफर, स्थिर काष्ठा ggml_tensor * tensor) {
+    वापस ggml_backend_buft_get_alloc_आकार(ggml_backend_बफर_get_type(बफर), tensor);
 }
 
-bool ggml_backend_buffer_is_host(ggml_backend_buffer_t buffer) {
-    return ggml_backend_buft_is_host(ggml_backend_buffer_get_type(buffer));
+bool ggml_backend_बफर_is_host(ggml_backend_बफर_t बफर) {
+    वापस ggml_backend_buft_is_host(ggml_backend_बफर_get_type(बफर));
 }
 
-void ggml_backend_buffer_set_usage(ggml_backend_buffer_t buffer, enum ggml_backend_buffer_usage usage) {
-    GGML_ASSERT(buffer);
-    buffer->usage = usage;
+व्योम ggml_backend_बफर_set_usage(ggml_backend_बफर_t बफर, क्रमागत ggml_backend_बफर_usage usage) {
+    GGML_ASSERT(बफर);
+    बफर->usage = usage;
 
     // FIXME: add a generic callback to the buffer interface
-    if (ggml_backend_buffer_is_multi_buffer(buffer)) {
-        ggml_backend_multi_buffer_set_usage(buffer, usage);
-    } else if (ggml_backend_buffer_is_meta(buffer)) {
-        ggml_backend_meta_buffer_set_usage(buffer, usage);
+    अगर (ggml_backend_बफर_is_multi_बफर(बफर)) {
+        ggml_backend_multi_बफर_set_usage(बफर, usage);
+    } अन्यथा अगर (ggml_backend_बफर_is_meta(बफर)) {
+        ggml_backend_meta_बफर_set_usage(बफर, usage);
     }
 }
 
-enum ggml_backend_buffer_usage ggml_backend_buffer_get_usage(ggml_backend_buffer_t buffer) {
-    GGML_ASSERT(buffer);
-    return buffer->usage;
+क्रमागत ggml_backend_बफर_usage ggml_backend_बफर_get_usage(ggml_backend_बफर_t बफर) {
+    GGML_ASSERT(बफर);
+    वापस बफर->usage;
 }
 
-ggml_backend_buffer_type_t ggml_backend_buffer_get_type(ggml_backend_buffer_t buffer) {
-    GGML_ASSERT(buffer);
-    return buffer->buft;
+ggml_backend_बफर_type_t ggml_backend_बफर_get_type(ggml_backend_बफर_t बफर) {
+    GGML_ASSERT(बफर);
+    वापस बफर->buft;
 }
 
-void ggml_backend_buffer_reset(ggml_backend_buffer_t buffer) {
-    GGML_ASSERT(buffer);
-    if (buffer->iface.reset) {
-        buffer->iface.reset(buffer);
+व्योम ggml_backend_बफर_reset(ggml_backend_बफर_t बफर) {
+    GGML_ASSERT(बफर);
+    अगर (बफर->iface.reset) {
+        बफर->iface.reset(बफर);
     }
 }
 
-bool ggml_backend_buffer_copy_tensor(const struct ggml_tensor * src, struct ggml_tensor * dst) {
-    ggml_backend_buffer_t dst_buf = dst->view_src ? dst->view_src->buffer : dst->buffer;
-    if (dst_buf->iface.cpy_tensor) {
-        return dst_buf->iface.cpy_tensor(dst_buf, src, dst);
+bool ggml_backend_बफर_copy_tensor(स्थिर काष्ठा ggml_tensor * src, काष्ठा ggml_tensor * dst) {
+    ggml_backend_बफर_t dst_buf = dst->view_src ? dst->view_src->बफर : dst->बफर;
+    अगर (dst_buf->iface.cpy_tensor) {
+        वापस dst_buf->iface.cpy_tensor(dst_buf, src, dst);
     }
-    return false;
+    वापस false;
 }
 
 // backend
 
 ggml_guid_t ggml_backend_guid(ggml_backend_t backend) {
-    if (backend == NULL) {
-        return NULL;
+    अगर (backend == शून्य) {
+        वापस शून्य;
     }
-    return backend->guid;
+    वापस backend->guid;
 }
 
-const char * ggml_backend_name(ggml_backend_t backend) {
-    if (backend == NULL) {
-        return "NULL";
+स्थिर अक्षर * ggml_backend_name(ggml_backend_t backend) {
+    अगर (backend == शून्य) {
+        वापस "NULL";
     }
-    return backend->iface.get_name(backend);
+    वापस backend->iface.get_name(backend);
 }
 
-void ggml_backend_free(ggml_backend_t backend) {
-    if (backend == NULL) {
-        return;
+व्योम ggml_backend_free(ggml_backend_t backend) {
+    अगर (backend == शून्य) {
+        वापस;
     }
 
-    backend->iface.free(backend);
+    backend->iface.मुक्त(backend);
 }
 
-ggml_backend_buffer_type_t ggml_backend_get_default_buffer_type(ggml_backend_t backend) {
+ggml_backend_बफर_type_t ggml_backend_get_default_बफर_type(ggml_backend_t backend) {
     GGML_ASSERT(backend);
-    return ggml_backend_dev_buffer_type(backend->device);
+    वापस ggml_backend_dev_बफर_type(backend->device);
 }
 
-ggml_backend_buffer_t ggml_backend_alloc_buffer(ggml_backend_t backend, size_t size) {
-    return ggml_backend_buft_alloc_buffer(ggml_backend_get_default_buffer_type(backend), size);
+ggml_backend_बफर_t ggml_backend_alloc_बफर(ggml_backend_t backend, माप_प्रकार size) {
+    वापस ggml_backend_buft_alloc_बफर(ggml_backend_get_default_बफर_type(backend), size);
 }
 
-size_t ggml_backend_get_alignment(ggml_backend_t backend) {
-    return ggml_backend_buft_get_alignment(ggml_backend_get_default_buffer_type(backend));
+माप_प्रकार ggml_backend_get_alignment(ggml_backend_t backend) {
+    वापस ggml_backend_buft_get_alignment(ggml_backend_get_default_बफर_type(backend));
 }
 
-size_t ggml_backend_get_max_size(ggml_backend_t backend) {
-    return ggml_backend_buft_get_max_size(ggml_backend_get_default_buffer_type(backend));
+माप_प्रकार ggml_backend_get_max_आकार(ggml_backend_t backend) {
+    वापस ggml_backend_buft_get_max_आकार(ggml_backend_get_default_बफर_type(backend));
 }
 
-void ggml_backend_tensor_set_async(ggml_backend_t backend, struct ggml_tensor * tensor, const void * data, size_t offset, size_t size) {
+व्योम ggml_backend_tensor_set_async(ggml_backend_t backend, काष्ठा ggml_tensor * tensor, स्थिर व्योम * तथ्य, माप_प्रकार offset, माप_प्रकार size) {
     GGML_ASSERT(backend);
     GGML_ASSERT(tensor);
-    GGML_ASSERT(tensor->data != NULL && "tensor not allocated");
+    GGML_ASSERT(tensor->तथ्य != शून्य && "tensor not allocated");
     GGML_ASSERT(offset + size <= ggml_nbytes(tensor) && "tensor write out of bounds");
 
-    if (backend->iface.set_tensor_async == NULL) {
+    अगर (backend->iface.set_tensor_async == शून्य) {
         ggml_backend_synchronize(backend);
-        ggml_backend_tensor_set(tensor, data, offset, size);
-    } else {
-        backend->iface.set_tensor_async(backend, tensor, data, offset, size);
+        ggml_backend_tensor_set(tensor, तथ्य, offset, size);
+    } अन्यथा {
+        backend->iface.set_tensor_async(backend, tensor, तथ्य, offset, size);
     }
 }
 
-void ggml_backend_tensor_get_async(ggml_backend_t backend, const struct ggml_tensor * tensor, void * data, size_t offset, size_t size) {
+व्योम ggml_backend_tensor_get_async(ggml_backend_t backend, स्थिर काष्ठा ggml_tensor * tensor, व्योम * तथ्य, माप_प्रकार offset, माप_प्रकार size) {
     GGML_ASSERT(backend);
     GGML_ASSERT(tensor);
-    GGML_ASSERT(tensor->data != NULL && "tensor not allocated");
+    GGML_ASSERT(tensor->तथ्य != शून्य && "tensor not allocated");
     GGML_ASSERT(offset + size <= ggml_nbytes(tensor) && "tensor read out of bounds");
 
-    if (backend->iface.get_tensor_async == NULL) {
+    अगर (backend->iface.get_tensor_async == शून्य) {
         ggml_backend_synchronize(backend);
-        ggml_backend_tensor_get(tensor, data, offset, size);
-    } else {
-        backend->iface.get_tensor_async(backend, tensor, data, offset, size);
+        ggml_backend_tensor_get(tensor, तथ्य, offset, size);
+    } अन्यथा {
+        backend->iface.get_tensor_async(backend, tensor, तथ्य, offset, size);
     }
 }
 
-void ggml_backend_tensor_set_2d_async(ggml_backend_t backend, struct ggml_tensor * tensor, const void * data, size_t offset, size_t size,
-            size_t n_copies, size_t stride_tensor, size_t stride_data) {
+व्योम ggml_backend_tensor_set_2d_async(ggml_backend_t backend, काष्ठा ggml_tensor * tensor, स्थिर व्योम * तथ्य, माप_प्रकार offset, माप_प्रकार size,
+            माप_प्रकार n_copies, माप_प्रकार stride_tensor, माप_प्रकार stride_तथ्य) {
     GGML_ASSERT(backend);
     GGML_ASSERT(tensor);
-    GGML_ASSERT(tensor->data != NULL && "tensor not allocated");
+    GGML_ASSERT(tensor->तथ्य != शून्य && "tensor not allocated");
 
-    if (n_copies <= 1 || backend->iface.set_tensor_2d_async == NULL) {
-        for (size_t i = 0; i < n_copies; i++) {
-            ggml_backend_tensor_set_async(backend, tensor, (const char *) data + i*stride_data, offset + i*stride_tensor, size);
+    अगर (n_copies <= 1 || backend->iface.set_tensor_2d_async == शून्य) {
+        क्रम (माप_प्रकार i = 0; i < n_copies; i++) {
+            ggml_backend_tensor_set_async(backend, tensor, (स्थिर अक्षर *) तथ्य + i*stride_तथ्य, offset + i*stride_tensor, size);
         }
-        return;
+        वापस;
     }
-    if (size == 0) {
-        return;
+    अगर (size == 0) {
+        वापस;
     }
 
-    GGML_ASSERT(tensor->data != NULL && "tensor not allocated");
+    GGML_ASSERT(tensor->तथ्य != शून्य && "tensor not allocated");
     GGML_ASSERT(offset + (n_copies-1)*stride_tensor + size <= ggml_nbytes(tensor) && "tensor write out of bounds");
-    backend->iface.set_tensor_2d_async(backend, tensor, data, offset, size, n_copies, stride_tensor, stride_data);
+    backend->iface.set_tensor_2d_async(backend, tensor, तथ्य, offset, size, n_copies, stride_tensor, stride_तथ्य);
 }
 
-void ggml_backend_tensor_get_2d_async(ggml_backend_t backend, const struct ggml_tensor * tensor, void * data, size_t offset, size_t size,
-            size_t n_copies, size_t stride_tensor, size_t stride_data) {
+व्योम ggml_backend_tensor_get_2d_async(ggml_backend_t backend, स्थिर काष्ठा ggml_tensor * tensor, व्योम * तथ्य, माप_प्रकार offset, माप_प्रकार size,
+            माप_प्रकार n_copies, माप_प्रकार stride_tensor, माप_प्रकार stride_तथ्य) {
     GGML_ASSERT(backend);
     GGML_ASSERT(tensor);
-    GGML_ASSERT(tensor->data != NULL && "tensor not allocated");
+    GGML_ASSERT(tensor->तथ्य != शून्य && "tensor not allocated");
 
-    if (n_copies <= 1 || backend->iface.get_tensor_2d_async == NULL) {
-        for (size_t i = 0; i < n_copies; i++) {
-            ggml_backend_tensor_get_async(backend, tensor, (char *) data + i*stride_data, offset + i*stride_tensor, size);
+    अगर (n_copies <= 1 || backend->iface.get_tensor_2d_async == शून्य) {
+        क्रम (माप_प्रकार i = 0; i < n_copies; i++) {
+            ggml_backend_tensor_get_async(backend, tensor, (अक्षर *) तथ्य + i*stride_तथ्य, offset + i*stride_tensor, size);
         }
-        return;
+        वापस;
     }
-    if (size == 0) {
-        return;
+    अगर (size == 0) {
+        वापस;
     }
 
-    GGML_ASSERT(tensor->data != NULL && "tensor not allocated");
+    GGML_ASSERT(tensor->तथ्य != शून्य && "tensor not allocated");
     GGML_ASSERT(offset + (n_copies-1)*stride_tensor + size <= ggml_nbytes(tensor) && "tensor read out of bounds");
-    backend->iface.get_tensor_2d_async(backend, tensor, data, offset, size, n_copies, stride_tensor, stride_data);
+    backend->iface.get_tensor_2d_async(backend, tensor, तथ्य, offset, size, n_copies, stride_tensor, stride_तथ्य);
 }
 
-void ggml_backend_tensor_set(struct ggml_tensor * tensor, const void * data, size_t offset, size_t size) {
+व्योम ggml_backend_tensor_set(काष्ठा ggml_tensor * tensor, स्थिर व्योम * तथ्य, माप_प्रकार offset, माप_प्रकार size) {
     GGML_ASSERT(tensor);
-    ggml_backend_buffer_t buf = tensor->view_src ? tensor->view_src->buffer : tensor->buffer;
-    GGML_ASSERT(buf != NULL && "tensor buffer not set");
+    ggml_backend_बफर_t buf = tensor->view_src ? tensor->view_src->बफर : tensor->बफर;
+    GGML_ASSERT(buf != शून्य && "tensor buffer not set");
 
-    if (size == 0) {
-        return;
+    अगर (size == 0) {
+        वापस;
     }
 
-    GGML_ASSERT(tensor->data != NULL && "tensor not allocated");
+    GGML_ASSERT(tensor->तथ्य != शून्य && "tensor not allocated");
     GGML_ASSERT(offset + size <= ggml_nbytes(tensor) && "tensor write out of bounds");
 
-    buf->iface.set_tensor(buf, tensor, data, offset, size);
+    buf->iface.set_tensor(buf, tensor, तथ्य, offset, size);
 }
 
-void ggml_backend_tensor_get(const struct ggml_tensor * tensor, void * data, size_t offset, size_t size) {
+व्योम ggml_backend_tensor_get(स्थिर काष्ठा ggml_tensor * tensor, व्योम * तथ्य, माप_प्रकार offset, माप_प्रकार size) {
     GGML_ASSERT(tensor);
-    ggml_backend_buffer_t buf = tensor->view_src ? tensor->view_src->buffer : tensor->buffer;
-    GGML_ASSERT(buf != NULL && "tensor buffer not set");
+    ggml_backend_बफर_t buf = tensor->view_src ? tensor->view_src->बफर : tensor->बफर;
+    GGML_ASSERT(buf != शून्य && "tensor buffer not set");
 
-    if (size == 0) {
-        return;
+    अगर (size == 0) {
+        वापस;
     }
 
-    GGML_ASSERT(tensor->data != NULL && "tensor not allocated");
+    GGML_ASSERT(tensor->तथ्य != शून्य && "tensor not allocated");
     GGML_ASSERT(offset + size <= ggml_nbytes(tensor) && "tensor read out of bounds");
 
-    buf->iface.get_tensor(buf, tensor, data, offset, size);
+    buf->iface.get_tensor(buf, tensor, तथ्य, offset, size);
 }
 
-void ggml_backend_tensor_set_2d(struct ggml_tensor * tensor, const void * data, size_t offset, size_t size,
-            size_t n_copies, size_t stride_tensor, size_t stride_data) {
+व्योम ggml_backend_tensor_set_2d(काष्ठा ggml_tensor * tensor, स्थिर व्योम * तथ्य, माप_प्रकार offset, माप_प्रकार size,
+            माप_प्रकार n_copies, माप_प्रकार stride_tensor, माप_प्रकार stride_तथ्य) {
     GGML_ASSERT(tensor);
-    ggml_backend_buffer_t buf = tensor->view_src ? tensor->view_src->buffer : tensor->buffer;
-    GGML_ASSERT(buf != NULL && "tensor buffer not set");
+    ggml_backend_बफर_t buf = tensor->view_src ? tensor->view_src->बफर : tensor->बफर;
+    GGML_ASSERT(buf != शून्य && "tensor buffer not set");
 
-    if (n_copies <= 1 || buf->iface.set_tensor_2d == NULL) {
-        for (size_t i = 0; i < n_copies; i++) {
-            ggml_backend_tensor_set(tensor, (const char *) data + i*stride_data, offset + i*stride_tensor, size);
+    अगर (n_copies <= 1 || buf->iface.set_tensor_2d == शून्य) {
+        क्रम (माप_प्रकार i = 0; i < n_copies; i++) {
+            ggml_backend_tensor_set(tensor, (स्थिर अक्षर *) तथ्य + i*stride_तथ्य, offset + i*stride_tensor, size);
         }
-        return;
+        वापस;
     }
-    if (size == 0) {
-        return;
+    अगर (size == 0) {
+        वापस;
     }
 
-    GGML_ASSERT(tensor->data != NULL && "tensor not allocated");
+    GGML_ASSERT(tensor->तथ्य != शून्य && "tensor not allocated");
     GGML_ASSERT(offset + (n_copies-1)*stride_tensor + size <= ggml_nbytes(tensor) && "tensor write out of bounds");
 
-    buf->iface.set_tensor_2d(buf, tensor, data, offset, size, n_copies, stride_tensor, stride_data);
+    buf->iface.set_tensor_2d(buf, tensor, तथ्य, offset, size, n_copies, stride_tensor, stride_तथ्य);
 }
 
-void ggml_backend_tensor_get_2d(const struct ggml_tensor * tensor, void * data, size_t offset, size_t size,
-            size_t n_copies, size_t stride_tensor, size_t stride_data) {
+व्योम ggml_backend_tensor_get_2d(स्थिर काष्ठा ggml_tensor * tensor, व्योम * तथ्य, माप_प्रकार offset, माप_प्रकार size,
+            माप_प्रकार n_copies, माप_प्रकार stride_tensor, माप_प्रकार stride_तथ्य) {
     GGML_ASSERT(tensor);
-    ggml_backend_buffer_t buf = tensor->view_src ? tensor->view_src->buffer : tensor->buffer;
-    GGML_ASSERT(buf != NULL && "tensor buffer not set");
+    ggml_backend_बफर_t buf = tensor->view_src ? tensor->view_src->बफर : tensor->बफर;
+    GGML_ASSERT(buf != शून्य && "tensor buffer not set");
 
-    if (n_copies <= 1 || buf->iface.get_tensor_2d == NULL) {
-        for (size_t i = 0; i < n_copies; i++) {
-            ggml_backend_tensor_get(tensor, (char *) data + i*stride_data, offset + i*stride_tensor, size);
+    अगर (n_copies <= 1 || buf->iface.get_tensor_2d == शून्य) {
+        क्रम (माप_प्रकार i = 0; i < n_copies; i++) {
+            ggml_backend_tensor_get(tensor, (अक्षर *) तथ्य + i*stride_तथ्य, offset + i*stride_tensor, size);
         }
-        return;
+        वापस;
     }
-    if (size == 0) {
-        return;
+    अगर (size == 0) {
+        वापस;
     }
 
-    GGML_ASSERT(tensor->data != NULL && "tensor not allocated");
+    GGML_ASSERT(tensor->तथ्य != शून्य && "tensor not allocated");
     GGML_ASSERT(offset + (n_copies-1)*stride_tensor + size <= ggml_nbytes(tensor) && "tensor read out of bounds");
 
-    buf->iface.get_tensor_2d(buf, tensor, data, offset, size, n_copies, stride_tensor, stride_data);
+    buf->iface.get_tensor_2d(buf, tensor, तथ्य, offset, size, n_copies, stride_tensor, stride_तथ्य);
 }
 
-void ggml_backend_tensor_memset(struct ggml_tensor * tensor, uint8_t value, size_t offset, size_t size) {
+व्योम ggml_backend_tensor_memset(काष्ठा ggml_tensor * tensor, uint8_t value, माप_प्रकार offset, माप_प्रकार size) {
     GGML_ASSERT(tensor);
-    ggml_backend_buffer_t buf = tensor->view_src ? tensor->view_src->buffer : tensor->buffer;
+    ggml_backend_बफर_t buf = tensor->view_src ? tensor->view_src->बफर : tensor->बफर;
 
-    if (size == 0) {
-        return;
+    अगर (size == 0) {
+        वापस;
     }
 
-    GGML_ASSERT(buf != NULL && "tensor buffer not set");
-    GGML_ASSERT(tensor->data != NULL && "tensor not allocated");
+    GGML_ASSERT(buf != शून्य && "tensor buffer not set");
+    GGML_ASSERT(tensor->तथ्य != शून्य && "tensor not allocated");
     GGML_ASSERT(offset + size <= ggml_nbytes(tensor) && "tensor write out of bounds");
-    GGML_ASSERT(buf->iface.memset_tensor != NULL && "memset not implemented by backend buffer");
+    GGML_ASSERT(buf->iface.memset_tensor != शून्य && "memset not implemented by backend buffer");
 
     buf->iface.memset_tensor(buf, tensor, value, offset, size);
 }
 
-void ggml_backend_synchronize(ggml_backend_t backend) {
+व्योम ggml_backend_synchronize(ggml_backend_t backend) {
     GGML_ASSERT(backend);
-    if (backend->iface.synchronize == NULL) {
-        return;
+    अगर (backend->iface.synchronize == शून्य) {
+        वापस;
     }
 
     backend->iface.synchronize(backend);
 }
 
-ggml_backend_graph_plan_t ggml_backend_graph_plan_create(ggml_backend_t backend, struct ggml_cgraph * cgraph) {
+ggml_backend_graph_plan_t ggml_backend_graph_plan_create(ggml_backend_t backend, काष्ठा ggml_cgraph * cgraph) {
     GGML_ASSERT(backend);
-    GGML_ASSERT(backend->iface.graph_plan_create != NULL);
+    GGML_ASSERT(backend->iface.graph_plan_create != शून्य);
 
-    return backend->iface.graph_plan_create(backend, cgraph);
+    वापस backend->iface.graph_plan_create(backend, cgraph);
 }
 
-void ggml_backend_graph_plan_free(ggml_backend_t backend, ggml_backend_graph_plan_t plan) {
+व्योम ggml_backend_graph_plan_free(ggml_backend_t backend, ggml_backend_graph_plan_t plan) {
     GGML_ASSERT(backend);
-    GGML_ASSERT(backend->iface.graph_plan_free != NULL);
+    GGML_ASSERT(backend->iface.graph_plan_free != शून्य);
 
     backend->iface.graph_plan_free(backend, plan);
 }
 
-enum ggml_status ggml_backend_graph_plan_compute(ggml_backend_t backend, ggml_backend_graph_plan_t plan) {
+क्रमागत ggml_status ggml_backend_graph_plan_compute(ggml_backend_t backend, ggml_backend_graph_plan_t plan) {
     GGML_ASSERT(backend);
-    GGML_ASSERT(backend->iface.graph_plan_compute != NULL);
+    GGML_ASSERT(backend->iface.graph_plan_compute != शून्य);
 
-    return backend->iface.graph_plan_compute(backend, plan);
+    वापस backend->iface.graph_plan_compute(backend, plan);
 }
 
-enum ggml_status ggml_backend_graph_compute(ggml_backend_t backend, struct ggml_cgraph * cgraph) {
-    enum ggml_status err = ggml_backend_graph_compute_async(backend, cgraph);
+क्रमागत ggml_status ggml_backend_graph_compute(ggml_backend_t backend, काष्ठा ggml_cgraph * cgraph) {
+    क्रमागत ggml_status err = ggml_backend_graph_compute_async(backend, cgraph);
     ggml_backend_synchronize(backend);
-    return err;
+    वापस err;
 }
 
-enum ggml_status ggml_backend_graph_compute_async(ggml_backend_t backend, struct ggml_cgraph * cgraph) {
+क्रमागत ggml_status ggml_backend_graph_compute_async(ggml_backend_t backend, काष्ठा ggml_cgraph * cgraph) {
     GGML_ASSERT(backend);
-    return backend->iface.graph_compute(backend, cgraph);
+    वापस backend->iface.graph_compute(backend, cgraph);
 }
 
-bool ggml_backend_supports_op(ggml_backend_t backend, const struct ggml_tensor * op) {
+bool ggml_backend_supports_op(ggml_backend_t backend, स्थिर काष्ठा ggml_tensor * op) {
     GGML_ASSERT(backend);
-    return ggml_backend_dev_supports_op(backend->device, op);
+    वापस ggml_backend_dev_supports_op(backend->device, op);
 }
 
-bool ggml_backend_supports_buft(ggml_backend_t backend, ggml_backend_buffer_type_t buft) {
+bool ggml_backend_supports_buft(ggml_backend_t backend, ggml_backend_बफर_type_t buft) {
     GGML_ASSERT(backend);
-    return ggml_backend_dev_supports_buft(backend->device, buft);
+    वापस ggml_backend_dev_supports_buft(backend->device, buft);
 }
 
-bool ggml_backend_offload_op(ggml_backend_t backend, const struct ggml_tensor * op) {
+bool ggml_backend_offload_op(ggml_backend_t backend, स्थिर काष्ठा ggml_tensor * op) {
     GGML_ASSERT(backend);
-    return ggml_backend_dev_offload_op(backend->device, op);
+    वापस ggml_backend_dev_offload_op(backend->device, op);
 }
 
 ggml_backend_dev_t ggml_backend_get_device(ggml_backend_t backend) {
     GGML_ASSERT(backend);
-    return backend->device;
+    वापस backend->device;
 }
 
 // backend copy
 
-void ggml_backend_tensor_copy(const struct ggml_tensor * src, struct ggml_tensor * dst) {
+व्योम ggml_backend_tensor_copy(स्थिर काष्ठा ggml_tensor * src, काष्ठा ggml_tensor * dst) {
     GGML_ASSERT(ggml_are_same_layout(src, dst) && "cannot copy tensors with different layouts");
 
-    if (src == dst) {
-        return;
+    अगर (src == dst) {
+        वापस;
     }
 
-    if (ggml_backend_buffer_is_host(src->buffer)) {
-        ggml_backend_tensor_set(dst, src->data, 0, ggml_nbytes(src));
-    } else if (ggml_backend_buffer_is_host(dst->buffer)) {
-        ggml_backend_tensor_get(src, dst->data, 0, ggml_nbytes(src));
-    } else if (!ggml_backend_buffer_copy_tensor(src, dst)) {
-#ifndef NDEBUG
-        GGML_LOG_DEBUG("%s: warning: slow copy from %s to %s\n", __func__, ggml_backend_buffer_name(src->buffer), ggml_backend_buffer_name(dst->buffer));
-#endif // NDEBUG
-        size_t nbytes = ggml_nbytes(src);
-        void * data = malloc(nbytes);
-        ggml_backend_tensor_get(src, data, 0, nbytes);
-        ggml_backend_tensor_set(dst, data, 0, nbytes);
-        free(data);
+    अगर (ggml_backend_बफर_is_host(src->बफर)) {
+        ggml_backend_tensor_set(dst, src->तथ्य, 0, ggml_nbytes(src));
+    } अन्यथा अगर (ggml_backend_बफर_is_host(dst->बफर)) {
+        ggml_backend_tensor_get(src, dst->तथ्य, 0, ggml_nbytes(src));
+    } अन्यथा अगर (!ggml_backend_बफर_copy_tensor(src, dst)) {
+#अगर_अघोषित न_संशोधन
+        GGML_LOG_DEBUG("%s: warning: slow copy from %s to %s\n", __func__, ggml_backend_बफर_name(src->बफर), ggml_backend_बफर_name(dst->बफर));
+#पूर्ण_अगर // NDEBUG
+        माप_प्रकार nbytes = ggml_nbytes(src);
+        व्योम * तथ्य = दो_स्मृति(nbytes);
+        ggml_backend_tensor_get(src, तथ्य, 0, nbytes);
+        ggml_backend_tensor_set(dst, तथ्य, 0, nbytes);
+        मुक्त(तथ्य);
     }
 }
 
-void ggml_backend_tensor_copy_async(ggml_backend_t backend_src, ggml_backend_t backend_dst, const struct ggml_tensor * src, struct ggml_tensor * dst) {
+व्योम ggml_backend_tensor_copy_async(ggml_backend_t backend_src, ggml_backend_t backend_dst, स्थिर काष्ठा ggml_tensor * src, काष्ठा ggml_tensor * dst) {
     GGML_ASSERT(ggml_are_same_layout(src, dst) && "cannot copy tensors with different layouts");
 
-    if (src == dst) {
-        return;
+    अगर (src == dst) {
+        वापस;
     }
 
     GGML_ASSERT(backend_dst);
-    if (backend_dst->iface.cpy_tensor_async != NULL) {
-        if (backend_dst->iface.cpy_tensor_async(backend_src, backend_dst, src, dst)) {
-            return;
+    अगर (backend_dst->iface.cpy_tensor_async != शून्य) {
+        अगर (backend_dst->iface.cpy_tensor_async(backend_src, backend_dst, src, dst)) {
+            वापस;
         }
     }
 
@@ -673,350 +673,350 @@ void ggml_backend_tensor_copy_async(ggml_backend_t backend_src, ggml_backend_t b
 
 ggml_backend_event_t ggml_backend_event_new(ggml_backend_dev_t device) {
     // null device is allowed for the transition period to the device interface
-    if (device == NULL || device->iface.event_new == NULL) {
-        return NULL;
+    अगर (device == शून्य || device->iface.event_new == शून्य) {
+        वापस शून्य;
     }
-    return device->iface.event_new(device);
+    वापस device->iface.event_new(device);
 }
 
-void ggml_backend_event_free(ggml_backend_event_t event) {
-    if (event == NULL) {
-        return;
+व्योम ggml_backend_event_free(ggml_backend_event_t event) {
+    अगर (event == शून्य) {
+        वापस;
     }
     event->device->iface.event_free(event->device, event);
 }
 
-void ggml_backend_event_record(ggml_backend_event_t event, ggml_backend_t backend) {
+व्योम ggml_backend_event_record(ggml_backend_event_t event, ggml_backend_t backend) {
     GGML_ASSERT(backend);
-    GGML_ASSERT(backend->iface.event_record != NULL);
+    GGML_ASSERT(backend->iface.event_record != शून्य);
 
     backend->iface.event_record(backend, event);
 }
 
-void ggml_backend_event_synchronize(ggml_backend_event_t event) {
+व्योम ggml_backend_event_synchronize(ggml_backend_event_t event) {
     GGML_ASSERT(event);
     GGML_ASSERT(event->device->iface.event_synchronize);
 
     event->device->iface.event_synchronize(event->device, event);
 }
 
-void ggml_backend_event_wait(ggml_backend_t backend, ggml_backend_event_t event) {
+व्योम ggml_backend_event_wait(ggml_backend_t backend, ggml_backend_event_t event) {
     GGML_ASSERT(backend);
-    GGML_ASSERT(backend->iface.event_wait != NULL);
+    GGML_ASSERT(backend->iface.event_wait != शून्य);
 
     backend->iface.event_wait(backend, event);
 }
 
-static void ggml_backend_graph_optimize(ggml_backend_t backend, struct ggml_cgraph * cgraph, struct ggml_backend_graph_optimize_params * params) {
+अटल व्योम ggml_backend_graph_optimize(ggml_backend_t backend, काष्ठा ggml_cgraph * cgraph, काष्ठा ggml_backend_graph_optimize_params * params) {
     GGML_ASSERT(backend);
-    if (backend->iface.graph_optimize != NULL) {
+    अगर (backend->iface.graph_optimize != शून्य) {
         backend->iface.graph_optimize(backend, cgraph, params);
     }
 }
 
 // Backend device
 
-const char * ggml_backend_dev_name(ggml_backend_dev_t device) {
+स्थिर अक्षर * ggml_backend_dev_name(ggml_backend_dev_t device) {
     GGML_ASSERT(device);
-    return device->iface.get_name(device);
+    वापस device->iface.get_name(device);
 }
 
-const char * ggml_backend_dev_description(ggml_backend_dev_t device) {
+स्थिर अक्षर * ggml_backend_dev_description(ggml_backend_dev_t device) {
     GGML_ASSERT(device);
-    return device->iface.get_description(device);
+    वापस device->iface.get_description(device);
 }
 
-void ggml_backend_dev_memory(ggml_backend_dev_t device, size_t * free, size_t * total) {
+व्योम ggml_backend_dev_memory(ggml_backend_dev_t device, माप_प्रकार * मुक्त, माप_प्रकार * योग) {
     GGML_ASSERT(device);
-    device->iface.get_memory(device, free, total);
+    device->iface.get_memory(device, मुक्त, योग);
 }
 
-enum ggml_backend_dev_type ggml_backend_dev_type(ggml_backend_dev_t device) {
+क्रमागत ggml_backend_dev_type ggml_backend_dev_type(ggml_backend_dev_t device) {
     GGML_ASSERT(device);
-    return device->iface.get_type(device);
+    वापस device->iface.get_type(device);
 }
 
-void ggml_backend_dev_get_props(ggml_backend_dev_t device, struct ggml_backend_dev_props * props) {
+व्योम ggml_backend_dev_get_props(ggml_backend_dev_t device, काष्ठा ggml_backend_dev_props * props) {
     GGML_ASSERT(device);
-    memset(props, 0, sizeof(*props));
+    स_रखो(props, 0, माप(*props));
     device->iface.get_props(device, props);
 }
 
 ggml_backend_reg_t ggml_backend_dev_backend_reg(ggml_backend_dev_t device) {
     GGML_ASSERT(device);
-    return device->reg;
+    वापस device->reg;
 }
 
-ggml_backend_t ggml_backend_dev_init(ggml_backend_dev_t device, const char * params) {
+ggml_backend_t ggml_backend_dev_init(ggml_backend_dev_t device, स्थिर अक्षर * params) {
     GGML_ASSERT(device);
-    return device->iface.init_backend(device, params);
+    वापस device->iface.init_backend(device, params);
 }
 
-ggml_backend_buffer_type_t ggml_backend_dev_buffer_type(ggml_backend_dev_t device) {
+ggml_backend_बफर_type_t ggml_backend_dev_बफर_type(ggml_backend_dev_t device) {
     GGML_ASSERT(device);
-    return device->iface.get_buffer_type(device);
+    वापस device->iface.get_बफर_type(device);
 }
 
-ggml_backend_buffer_type_t ggml_backend_dev_host_buffer_type(ggml_backend_dev_t device) {
+ggml_backend_बफर_type_t ggml_backend_dev_host_बफर_type(ggml_backend_dev_t device) {
     GGML_ASSERT(device);
-    if (device->iface.get_host_buffer_type == NULL) {
-        return NULL;
+    अगर (device->iface.get_host_बफर_type == शून्य) {
+        वापस शून्य;
     }
 
-    return device->iface.get_host_buffer_type(device);
+    वापस device->iface.get_host_बफर_type(device);
 }
 
-ggml_backend_buffer_t ggml_backend_dev_buffer_from_host_ptr(ggml_backend_dev_t device, void * ptr, size_t size, size_t max_tensor_size) {
+ggml_backend_बफर_t ggml_backend_dev_बफर_from_host_ptr(ggml_backend_dev_t device, व्योम * ptr, माप_प्रकार size, माप_प्रकार max_tensor_आकार) {
     GGML_ASSERT(device);
-    return device->iface.buffer_from_host_ptr(device, ptr, size, max_tensor_size);
+    वापस device->iface.बफर_from_host_ptr(device, ptr, size, max_tensor_आकार);
 }
 
-bool ggml_backend_dev_supports_op(ggml_backend_dev_t device, const struct ggml_tensor * op) {
+bool ggml_backend_dev_supports_op(ggml_backend_dev_t device, स्थिर काष्ठा ggml_tensor * op) {
     GGML_ASSERT(device);
-    return device->iface.supports_op(device, op);
+    वापस device->iface.supports_op(device, op);
 }
 
-bool ggml_backend_dev_supports_buft(ggml_backend_dev_t device, ggml_backend_buffer_type_t buft) {
+bool ggml_backend_dev_supports_buft(ggml_backend_dev_t device, ggml_backend_बफर_type_t buft) {
     GGML_ASSERT(device);
-    return device->iface.supports_buft(device, buft);
+    वापस device->iface.supports_buft(device, buft);
 }
 
-bool ggml_backend_dev_offload_op(ggml_backend_dev_t device, const struct ggml_tensor * op) {
+bool ggml_backend_dev_offload_op(ggml_backend_dev_t device, स्थिर काष्ठा ggml_tensor * op) {
     GGML_ASSERT(device);
-    if (device->iface.offload_op != NULL) {
-        return device->iface.offload_op(device, op);
+    अगर (device->iface.offload_op != शून्य) {
+        वापस device->iface.offload_op(device, op);
     }
 
-    return false;
+    वापस false;
 }
 
 // Backend (reg)
 
-const char * ggml_backend_reg_name(ggml_backend_reg_t reg) {
+स्थिर अक्षर * ggml_backend_reg_name(ggml_backend_reg_t reg) {
     GGML_ASSERT(reg);
-    return reg->iface.get_name(reg);
+    वापस reg->iface.get_name(reg);
 }
 
-size_t ggml_backend_reg_dev_count(ggml_backend_reg_t reg) {
+माप_प्रकार ggml_backend_reg_dev_गिनती(ggml_backend_reg_t reg) {
     GGML_ASSERT(reg);
-    return reg->iface.get_device_count(reg);
+    वापस reg->iface.get_device_गिनती(reg);
 }
 
-ggml_backend_dev_t ggml_backend_reg_dev_get(ggml_backend_reg_t reg, size_t index) {
+ggml_backend_dev_t ggml_backend_reg_dev_get(ggml_backend_reg_t reg, माप_प्रकार सूचकांक) {
     GGML_ASSERT(reg);
-    return reg->iface.get_device(reg, index);
+    वापस reg->iface.get_device(reg, सूचकांक);
 }
 
-void * ggml_backend_reg_get_proc_address(ggml_backend_reg_t reg, const char * name) {
+व्योम * ggml_backend_reg_get_proc_address(ggml_backend_reg_t reg, स्थिर अक्षर * name) {
     GGML_ASSERT(reg);
-    if (!reg->iface.get_proc_address) {
-        return NULL;
+    अगर (!reg->iface.get_proc_address) {
+        वापस शून्य;
     }
-    return reg->iface.get_proc_address(reg, name);
+    वापस reg->iface.get_proc_address(reg, name);
 }
 
 // multi-buffer buffer
 
-struct ggml_backend_multi_buffer_context {
-    ggml_backend_buffer_t * buffers;
-    size_t n_buffers;
+काष्ठा ggml_backend_multi_बफर_context {
+    ggml_backend_बफर_t * buffers;
+    माप_प्रकार n_buffers;
 };
 
-static void ggml_backend_multi_buffer_free_buffer(ggml_backend_buffer_t buffer) {
-    GGML_ASSERT(buffer);
-    ggml_backend_multi_buffer_context * ctx = (ggml_backend_multi_buffer_context *) buffer->context;
-    for (size_t i = 0; i < ctx->n_buffers; i++) {
-        ggml_backend_buffer_free(ctx->buffers[i]);
+अटल व्योम ggml_backend_multi_बफर_free_बफर(ggml_backend_बफर_t बफर) {
+    GGML_ASSERT(बफर);
+    ggml_backend_multi_बफर_context * ctx = (ggml_backend_multi_बफर_context *) बफर->context;
+    क्रम (माप_प्रकार i = 0; i < ctx->n_buffers; i++) {
+        ggml_backend_बफर_free(ctx->buffers[i]);
     }
 
-    free(ctx->buffers);
-    free(ctx);
+    मुक्त(ctx->buffers);
+    मुक्त(ctx);
 }
 
-static void ggml_backend_multi_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value) {
-    GGML_ASSERT(buffer);
-    ggml_backend_multi_buffer_context * ctx = (ggml_backend_multi_buffer_context *) buffer->context;
-    for (size_t i = 0; i < ctx->n_buffers; i++) {
-        ggml_backend_buffer_clear(ctx->buffers[i], value);
+अटल व्योम ggml_backend_multi_बफर_clear(ggml_backend_बफर_t बफर, uint8_t value) {
+    GGML_ASSERT(बफर);
+    ggml_backend_multi_बफर_context * ctx = (ggml_backend_multi_बफर_context *) बफर->context;
+    क्रम (माप_प्रकार i = 0; i < ctx->n_buffers; i++) {
+        ggml_backend_बफर_clear(ctx->buffers[i], value);
     }
 }
 
-static const struct ggml_backend_buffer_i ggml_backend_multi_buffer_i = {
-    /* .free_buffer     = */ ggml_backend_multi_buffer_free_buffer,
-    /* .get_base        = */ NULL,
-    /* .init_tensor     = */ NULL,
-    /* .memset_tensor   = */ NULL,
-    /* .set_tensor      = */ NULL,
-    /* .get_tensor      = */ NULL,
-    /* .set_tensor_2d   = */ NULL,
-    /* .get_tensor_2d   = */ NULL,
-    /* .cpy_tensor      = */ NULL,
-    /* .clear           = */ ggml_backend_multi_buffer_clear,
-    /* .reset           = */ NULL,
+अटल स्थिर काष्ठा ggml_backend_बफर_i ggml_backend_multi_बफर_i = {
+    /* .free_buffer     = */ ggml_backend_multi_बफर_free_बफर,
+    /* .get_base        = */ शून्य,
+    /* .init_tensor     = */ शून्य,
+    /* .memset_tensor   = */ शून्य,
+    /* .set_tensor      = */ शून्य,
+    /* .get_tensor      = */ शून्य,
+    /* .set_tensor_2d   = */ शून्य,
+    /* .get_tensor_2d   = */ शून्य,
+    /* .cpy_tensor      = */ शून्य,
+    /* .clear           = */ ggml_backend_multi_बफर_clear,
+    /* .reset           = */ शून्य,
 };
 
-ggml_backend_buffer_t ggml_backend_multi_buffer_alloc_buffer(ggml_backend_buffer_t * buffers, size_t n_buffers) {
-    ggml_backend_multi_buffer_context * ctx = (ggml_backend_multi_buffer_context *) malloc(sizeof(struct ggml_backend_multi_buffer_context));
+ggml_backend_बफर_t ggml_backend_multi_बफर_alloc_बफर(ggml_backend_बफर_t * buffers, माप_प्रकार n_buffers) {
+    ggml_backend_multi_बफर_context * ctx = (ggml_backend_multi_बफर_context *) दो_स्मृति(माप(काष्ठा ggml_backend_multi_बफर_context));
     ctx->n_buffers = n_buffers;
-    ctx->buffers = (ggml_backend_buffer_t *) malloc(n_buffers * sizeof(ggml_backend_buffer_t));
+    ctx->buffers = (ggml_backend_बफर_t *) दो_स्मृति(n_buffers * माप(ggml_backend_बफर_t));
 
-    GGML_ASSERT(ctx->buffers != NULL);
+    GGML_ASSERT(ctx->buffers != शून्य);
 
-    size_t total_size = 0;
-    for (size_t i = 0; i < n_buffers; i++) {
+    माप_प्रकार योग_आकार = 0;
+    क्रम (माप_प्रकार i = 0; i < n_buffers; i++) {
         ctx->buffers[i] = buffers[i];
-        total_size += ggml_backend_buffer_get_size(buffers[i]);
+        योग_आकार += ggml_backend_बफर_get_आकार(buffers[i]);
     }
 
-    return ggml_backend_buffer_init(buffers[0]->buft, ggml_backend_multi_buffer_i, ctx, total_size);
+    वापस ggml_backend_बफर_init(buffers[0]->buft, ggml_backend_multi_बफर_i, ctx, योग_आकार);
 }
 
-bool ggml_backend_buffer_is_multi_buffer(ggml_backend_buffer_t buffer) {
-    GGML_ASSERT(buffer);
-    return buffer->iface.free_buffer == ggml_backend_multi_buffer_free_buffer;
+bool ggml_backend_बफर_is_multi_बफर(ggml_backend_बफर_t बफर) {
+    GGML_ASSERT(बफर);
+    वापस बफर->iface.free_बफर == ggml_backend_multi_बफर_free_बफर;
 }
 
-void ggml_backend_multi_buffer_set_usage(ggml_backend_buffer_t buffer, enum ggml_backend_buffer_usage usage) {
-    GGML_ASSERT(buffer);
-    GGML_ASSERT(ggml_backend_buffer_is_multi_buffer(buffer));
-    ggml_backend_multi_buffer_context * ctx = (ggml_backend_multi_buffer_context *) buffer->context;
-    for (size_t i = 0; i < ctx->n_buffers; i++) {
-        ggml_backend_buffer_set_usage(ctx->buffers[i], usage);
+व्योम ggml_backend_multi_बफर_set_usage(ggml_backend_बफर_t बफर, क्रमागत ggml_backend_बफर_usage usage) {
+    GGML_ASSERT(बफर);
+    GGML_ASSERT(ggml_backend_बफर_is_multi_बफर(बफर));
+    ggml_backend_multi_बफर_context * ctx = (ggml_backend_multi_बफर_context *) बफर->context;
+    क्रम (माप_प्रकार i = 0; i < ctx->n_buffers; i++) {
+        ggml_backend_बफर_set_usage(ctx->buffers[i], usage);
     }
 }
 
 // creates a copy of the tensor with the same memory layout
-static struct ggml_tensor * ggml_dup_tensor_layout(struct ggml_context * ctx, const struct ggml_tensor * tensor) {
-    struct ggml_tensor * dup = ggml_dup_tensor(ctx, tensor);
-    for (int i = 0; i < GGML_MAX_DIMS; i++) {
+अटल काष्ठा ggml_tensor * ggml_dup_tensor_layout(काष्ठा ggml_context * ctx, स्थिर काष्ठा ggml_tensor * tensor) {
+    काष्ठा ggml_tensor * dup = ggml_dup_tensor(ctx, tensor);
+    क्रम (पूर्णांक i = 0; i < GGML_MAX_DIMS; i++) {
         dup->nb[i] = tensor->nb[i];
     }
-    return dup;
+    वापस dup;
 }
 
-static bool ggml_is_view_op(enum ggml_op op) {
-    return op == GGML_OP_VIEW || op == GGML_OP_RESHAPE || op == GGML_OP_PERMUTE || op == GGML_OP_TRANSPOSE;
+अटल bool ggml_is_view_op(क्रमागत ggml_op op) {
+    वापस op == GGML_OP_VIEW || op == GGML_OP_RESHAPE || op == GGML_OP_PERMUTE || op == GGML_OP_TRANSPOSE;
 }
 
 // scheduler
 
-#ifndef GGML_SCHED_MAX_BACKENDS
-#define GGML_SCHED_MAX_BACKENDS 16
-#endif
+#अगर_अघोषित GGML_SCHED_MAX_BACKENDS
+#घोषणा GGML_SCHED_MAX_BACKENDS 16
+#पूर्ण_अगर
 
-#ifndef GGML_SCHED_MAX_SPLIT_INPUTS
-#define GGML_SCHED_MAX_SPLIT_INPUTS 30
-#endif
+#अगर_अघोषित GGML_SCHED_MAX_SPLIT_INPUTS
+#घोषणा GGML_SCHED_MAX_SPLIT_INPUTS 30
+#पूर्ण_अगर
 
-#ifndef GGML_SCHED_MAX_COPIES
-#define GGML_SCHED_MAX_COPIES 4
-#endif
+#अगर_अघोषित GGML_SCHED_MAX_COPIES
+#घोषणा GGML_SCHED_MAX_COPIES 4
+#पूर्ण_अगर
 
-struct ggml_backend_sched_split {
-    int backend_id;
-    int i_start;
-    int i_end;
-    struct ggml_tensor ** inputs;
-    int n_inputs;
-    int inputs_capacity;
+काष्ठा ggml_backend_sched_split {
+    पूर्णांक backend_id;
+    पूर्णांक i_start;
+    पूर्णांक i_end;
+    काष्ठा ggml_tensor ** inputs;
+    पूर्णांक n_inputs;
+    पूर्णांक inputs_capacity;
     // graph view of this split
-    struct ggml_cgraph graph;
+    काष्ठा ggml_cgraph graph;
 };
 
-struct ggml_backend_sched {
+काष्ठा ggml_backend_sched {
     bool is_reset; // true if the scheduler has been reset since the last graph split
     bool is_alloc;
 
-    int n_backends;
+    पूर्णांक n_backends;
 
     ggml_backend_t backends[GGML_SCHED_MAX_BACKENDS];
-    ggml_backend_buffer_type_t bufts[GGML_SCHED_MAX_BACKENDS];
+    ggml_backend_बफर_type_t bufts[GGML_SCHED_MAX_BACKENDS];
     ggml_gallocr_t galloc;
 
     // hash map of the nodes in the graph
-    struct ggml_hash_set  hash_set;
-    int                 * hv_tensor_backend_ids; // [hash_set.size]
-    struct ggml_tensor ** hv_tensor_copies;      // [hash_set.size][n_backends][n_copies]
+    काष्ठा ggml_hash_set  hash_set;
+    पूर्णांक                 * hv_tensor_backend_ids; // [hash_set.size]
+    काष्ठा ggml_tensor ** hv_tensor_copies;      // [hash_set.size][n_backends][n_copies]
 
-    int * node_backend_ids; // [graph_size]
-    int * leaf_backend_ids; // [graph_size]
+    पूर्णांक * गाँठ_backend_ids; // [graph_size]
+    पूर्णांक * leaf_backend_ids; // [graph_size]
 
-    int * prev_node_backend_ids; // [graph_size]
-    int * prev_leaf_backend_ids; // [graph_size]
+    पूर्णांक * पूर्व_गाँठ_backend_ids; // [graph_size]
+    पूर्णांक * पूर्व_leaf_backend_ids; // [graph_size]
 
     // copy of the graph with modified inputs
-    struct ggml_cgraph graph;
+    काष्ठा ggml_cgraph graph;
 
     // graph splits
-    struct ggml_backend_sched_split * splits;
-    int n_splits;
-    int splits_capacity;
+    काष्ठा ggml_backend_sched_split * splits;
+    पूर्णांक n_splits;
+    पूर्णांक splits_capacity;
 
     // pipeline parallelism support
-    int n_copies;
-    int cur_copy;
-    int next_copy;
+    पूर्णांक n_copies;
+    पूर्णांक cur_copy;
+    पूर्णांक अग्र_copy;
     ggml_backend_event_t events[GGML_SCHED_MAX_BACKENDS][GGML_SCHED_MAX_COPIES];
-    struct ggml_tensor ** graph_inputs;
-    int n_graph_inputs;
-    int graph_inputs_capacity;
+    काष्ठा ggml_tensor ** graph_inputs;
+    पूर्णांक n_graph_inputs;
+    पूर्णांक graph_inputs_capacity;
 
-    struct ggml_context * ctx;
+    काष्ठा ggml_context * ctx;
 
     ggml_backend_sched_eval_callback callback_eval;
-    void * callback_eval_user_data;
+    व्योम * callback_eval_user_तथ्य;
 
     ggml_backend_sched_copy_callback callback_copy;
-    void * callback_copy_user_data;
+    व्योम * callback_copy_user_तथ्य;
 
     ggml_backend_sched_realloc_callback callback_realloc;
-    void * callback_realloc_user_data;
+    व्योम * callback_realloc_user_तथ्य;
 
-    char * context_buffer;
-    size_t context_buffer_size;
+    अक्षर * context_बफर;
+    माप_प्रकार context_बफर_आकार;
 
     bool op_offload;
 
-    int debug;
+    पूर्णांक debug;
 
     // graph size of the current and the previous scheduling, used by the realloc callback and for debugging
     // graph reallocations [GGML_SCHED_DEBUG_REALLOC]
     // ref: https://github.com/ggml-org/llama.cpp/pull/17617
-    int graph_size;
-    int prev_graph_size;
+    पूर्णांक graph_आकार;
+    पूर्णांक पूर्व_graph_आकार;
 
-    int debug_realloc;
+    पूर्णांक debug_realloc;
 };
 
-#define hash_id(tensor) ggml_hash_find_or_insert(&sched->hash_set, tensor)
-#define tensor_backend_id(tensor) sched->hv_tensor_backend_ids[hash_id(tensor)]
-#define tensor_id_copy(id, backend_id, copy_id) sched->hv_tensor_copies[(id) * sched->n_backends * sched->n_copies + (backend_id) * sched->n_copies + (copy_id)]
-#define tensor_copy(tensor, backend_id, copy_id) tensor_id_copy(hash_id(tensor), backend_id, copy_id)
+#घोषणा hash_id(tensor) ggml_hash_find_or_जोड़ो(&sched->hash_set, tensor)
+#घोषणा tensor_backend_id(tensor) sched->hv_tensor_backend_ids[hash_id(tensor)]
+#घोषणा tensor_id_copy(id, backend_id, copy_id) sched->hv_tensor_copies[(id) * sched->n_backends * sched->n_copies + (backend_id) * sched->n_copies + (copy_id)]
+#घोषणा tensor_copy(tensor, backend_id, copy_id) tensor_id_copy(hash_id(tensor), backend_id, copy_id)
 
-static void ggml_backend_sched_split_inputs_grow(struct ggml_backend_sched_split * split) {
-    int new_cap = GGML_SCHED_MAX_SPLIT_INPUTS;
-    if (split->inputs_capacity > 0) {
+अटल व्योम ggml_backend_sched_split_inputs_grow(काष्ठा ggml_backend_sched_split * split) {
+    पूर्णांक new_cap = GGML_SCHED_MAX_SPLIT_INPUTS;
+    अगर (split->inputs_capacity > 0) {
         new_cap = 2*split->inputs_capacity;
         GGML_LOG_DEBUG("%s: increasing split inputs capacity from %d to %d\n", __func__, split->inputs_capacity, new_cap);
     }
-    auto * pnew = (struct ggml_tensor **) realloc((void *) split->inputs, new_cap * sizeof(struct ggml_tensor *));
-    if (pnew == NULL) {
-        GGML_LOG_ERROR("%s: failed to allocate %zu bytes\n", __func__, new_cap * sizeof(struct ggml_tensor *));
+    स्वतः * pnew = (काष्ठा ggml_tensor **) पुनः_स्मृति((व्योम *) split->inputs, new_cap * माप(काष्ठा ggml_tensor *));
+    अगर (pnew == शून्य) {
+        GGML_LOG_ERROR("%s: failed to allocate %zu bytes\n", __func__, new_cap * माप(काष्ठा ggml_tensor *));
         GGML_ABORT("failed to grow split inputs container");
     }
     split->inputs = pnew;
     split->inputs_capacity = new_cap;
 }
 
-static void ggml_backend_sched_graph_inputs_grow(ggml_backend_sched_t sched) {
-    int new_cap = GGML_SCHED_MAX_SPLIT_INPUTS;
-    if (sched->graph_inputs_capacity > 0) {
+अटल व्योम ggml_backend_sched_graph_inputs_grow(ggml_backend_sched_t sched) {
+    पूर्णांक new_cap = GGML_SCHED_MAX_SPLIT_INPUTS;
+    अगर (sched->graph_inputs_capacity > 0) {
         new_cap = 2*sched->graph_inputs_capacity;
         GGML_LOG_DEBUG("%s: increasing graph inputs capacity from %d to %d\n", __func__, sched->graph_inputs_capacity, new_cap);
     }
-    auto * pnew = (struct ggml_tensor **) realloc((void *) sched->graph_inputs, new_cap * sizeof(struct ggml_tensor *));
-    if (pnew == NULL) {
-        GGML_LOG_ERROR("%s: failed to allocate %zu bytes\n", __func__, new_cap * sizeof(struct ggml_tensor *));
+    स्वतः * pnew = (काष्ठा ggml_tensor **) पुनः_स्मृति((व्योम *) sched->graph_inputs, new_cap * माप(काष्ठा ggml_tensor *));
+    अगर (pnew == शून्य) {
+        GGML_LOG_ERROR("%s: failed to allocate %zu bytes\n", __func__, new_cap * माप(काष्ठा ggml_tensor *));
         GGML_ABORT("failed to grow graph inputs container");
     }
     sched->graph_inputs = pnew;
@@ -1024,76 +1024,76 @@ static void ggml_backend_sched_graph_inputs_grow(ggml_backend_sched_t sched) {
 }
 
 // returns the priority of the backend, lower id is higher priority
-static int ggml_backend_sched_backend_id(ggml_backend_sched_t sched, ggml_backend_t backend) {
-    for (int i = 0; i < sched->n_backends; i++) {
-        if (sched->backends[i] == backend) {
-            return i;
+अटल पूर्णांक ggml_backend_sched_backend_id(ggml_backend_sched_t sched, ggml_backend_t backend) {
+    क्रम (पूर्णांक i = 0; i < sched->n_backends; i++) {
+        अगर (sched->backends[i] == backend) {
+            वापस i;
         }
     }
-    return -1;
+    वापस -1;
 }
 
-static int ggml_backend_sched_backend_from_buffer(ggml_backend_sched_t sched, const struct ggml_tensor * tensor, const struct ggml_tensor * op) {
-    ggml_backend_buffer_t buffer = tensor->view_src ? tensor->view_src->buffer : tensor->buffer;
-    if (buffer == NULL) {
-        return -1;
+अटल पूर्णांक ggml_backend_sched_backend_from_बफर(ggml_backend_sched_t sched, स्थिर काष्ठा ggml_tensor * tensor, स्थिर काष्ठा ggml_tensor * op) {
+    ggml_backend_बफर_t बफर = tensor->view_src ? tensor->view_src->बफर : tensor->बफर;
+    अगर (बफर == शून्य) {
+        वापस -1;
     }
 
     // find highest prio backend that supports the buffer type and the op
-    for (int i = 0; i < sched->n_backends; i++) {
-        if (ggml_backend_supports_buft(sched->backends[i], buffer->buft) &&
+    क्रम (पूर्णांक i = 0; i < sched->n_backends; i++) {
+        अगर (ggml_backend_supports_buft(sched->backends[i], बफर->buft) &&
             ggml_backend_supports_op(sched->backends[i], op)) {
-            return i;
+            वापस i;
         }
     }
 
-#ifndef NDEBUG
+#अगर_अघोषित न_संशोधन
     GGML_LOG_DEBUG("%s: warning: no backend supports op %s with a weight with buffer type %s used in tensor %s, the weight will need to be copied\n",
-        __func__, ggml_op_desc(tensor), ggml_backend_buffer_name(buffer), tensor->name);
-#endif
+        __func__, ggml_op_desc(tensor), ggml_backend_बफर_name(बफर), tensor->name);
+#पूर्ण_अगर
 
-    return -1;
+    वापस -1;
 }
 
-#if 0
-#define GGML_SCHED_MAX_SPLITS_DEBUG 4096
-static char causes[GGML_DEFAULT_GRAPH_SIZE*16 + GGML_SCHED_MAX_SPLITS_DEBUG*GGML_SCHED_MAX_SPLIT_INPUTS][128]; // debug only
-#define SET_CAUSE(node, ...) sprintf(causes[hash_id(node)], __VA_ARGS__)
-#define GET_CAUSE(node) causes[hash_id(node)]
-#else
-#define SET_CAUSE(node, ...)
-#define GET_CAUSE(node) ""
-#endif
+#अगर 0
+#घोषणा GGML_SCHED_MAX_SPLITS_DEBUG 4096
+अटल अक्षर causes[GGML_DEFAULT_GRAPH_आकार*16 + GGML_SCHED_MAX_SPLITS_DEBUG*GGML_SCHED_MAX_SPLIT_INPUTS][128]; // debug only
+#घोषणा SET_CAUSE(गाँठ, ...) प्र_लिखो(causes[hash_id(गाँठ)], __VA_ARGS__)
+#घोषणा GET_CAUSE(गाँठ) causes[hash_id(गाँठ)]
+#अन्यथा
+#घोषणा SET_CAUSE(गाँठ, ...)
+#घोषणा GET_CAUSE(गाँठ) ""
+#पूर्ण_अगर
 
 // returns the backend that should be used for the node based on the current locations
-static int ggml_backend_sched_backend_id_from_cur(ggml_backend_sched_t sched, struct ggml_tensor * tensor) {
+अटल पूर्णांक ggml_backend_sched_backend_id_from_cur(ggml_backend_sched_t sched, काष्ठा ggml_tensor * tensor) {
     // assign pre-allocated nodes to their backend
-    int cur_backend_id = ggml_backend_sched_backend_from_buffer(sched, tensor, tensor);
-    if (cur_backend_id != -1) {
+    पूर्णांक cur_backend_id = ggml_backend_sched_backend_from_बफर(sched, tensor, tensor);
+    अगर (cur_backend_id != -1) {
         SET_CAUSE(tensor, "1.dst");
-        return cur_backend_id;
+        वापस cur_backend_id;
     }
 
     // view_src
-    if (tensor->view_src != NULL) {
-        cur_backend_id = ggml_backend_sched_backend_from_buffer(sched, tensor->view_src, tensor);
-        if (cur_backend_id != -1) {
+    अगर (tensor->view_src != शून्य) {
+        cur_backend_id = ggml_backend_sched_backend_from_बफर(sched, tensor->view_src, tensor);
+        अगर (cur_backend_id != -1) {
             SET_CAUSE(tensor, "1.vsrc");
-            return cur_backend_id;
+            वापस cur_backend_id;
         }
     }
 
-    if (tensor->buffer || (tensor->view_src && tensor->view_src->buffer)) {
+    अगर (tensor->बफर || (tensor->view_src && tensor->view_src->बफर)) {
         // since the tensor is pre-allocated, it cannot be moved to another backend
-        ggml_backend_buffer_t buffer = tensor->view_src ? tensor->view_src->buffer : tensor->buffer;
-        GGML_ABORT("pre-allocated tensor (%s) in a buffer (%s) that cannot run the operation (%s)", tensor->name, ggml_backend_buffer_name(buffer), ggml_op_name(tensor->op));
+        ggml_backend_बफर_t बफर = tensor->view_src ? tensor->view_src->बफर : tensor->बफर;
+        GGML_ABORT("pre-allocated tensor (%s) in a buffer (%s) that cannot run the operation (%s)", tensor->name, ggml_backend_बफर_name(बफर), ggml_op_name(tensor->op));
     }
 
     // graph input
-    if (tensor->flags & GGML_TENSOR_FLAG_INPUT) {
+    अगर (tensor->flags & GGML_TENSOR_FLAG_निवेश) {
         cur_backend_id = sched->n_backends - 1; // last backend (assumed CPU)
         SET_CAUSE(tensor, "1.inp");
-        return cur_backend_id;
+        वापस cur_backend_id;
     }
 
     // operations with weights are preferably run on the same backend as the weights
@@ -1106,166 +1106,166 @@ static int ggml_backend_sched_backend_id_from_cur(ggml_backend_sched_t sched, st
     // skip FLASH_ATTN_EXT since the sinks tensor is too small to choose a based based on it
     allow = allow && tensor->op != GGML_OP_FLASH_ATTN_EXT;
 
-    if (allow) {
-        for (int i = 0; i < GGML_MAX_SRC; i++) {
-            const struct ggml_tensor * src = tensor->src[i];
-            if (src == NULL) {
-                continue;
+    अगर (allow) {
+        क्रम (पूर्णांक i = 0; i < GGML_MAX_SRC; i++) {
+            स्थिर काष्ठा ggml_tensor * src = tensor->src[i];
+            अगर (src == शून्य) {
+                जारी;
             }
-            if (src->buffer != NULL && src->buffer->usage == GGML_BACKEND_BUFFER_USAGE_WEIGHTS) {
-                int src_backend_id = ggml_backend_sched_backend_from_buffer(sched, src, tensor);
+            अगर (src->बफर != शून्य && src->बफर->usage == GGML_BACKEND_बफर_USAGE_WEIGHTS) {
+                पूर्णांक src_backend_id = ggml_backend_sched_backend_from_बफर(sched, src, tensor);
                 // check if a backend with higher prio wants to offload the op
-                if (sched->op_offload && src_backend_id == sched->n_backends - 1 && ggml_backend_buffer_is_host(src->buffer)) {
-                    for (int b = 0; b < src_backend_id; b++) {
-                        if (ggml_backend_supports_op(sched->backends[b], tensor) && ggml_backend_offload_op(sched->backends[b], tensor)) {
+                अगर (sched->op_offload && src_backend_id == sched->n_backends - 1 && ggml_backend_बफर_is_host(src->बफर)) {
+                    क्रम (पूर्णांक b = 0; b < src_backend_id; b++) {
+                        अगर (ggml_backend_supports_op(sched->backends[b], tensor) && ggml_backend_offload_op(sched->backends[b], tensor)) {
                             SET_CAUSE(tensor, "1.off");
-                            return b;
+                            वापस b;
                         }
                     }
                 }
                 SET_CAUSE(tensor, "1.wgt%d", i);
-                return src_backend_id;
+                वापस src_backend_id;
             }
         }
     }
 
-    return -1;
+    वापस -1;
 }
 
-static char * fmt_size(size_t size) {
-    static char buffer[128];
-    if (size >= 1024*1024) {
-        snprintf(buffer, sizeof(buffer), "%zuM", size/1024/1024);
-    } else {
-        snprintf(buffer, sizeof(buffer), "%zuK", size/1024);
+अटल अक्षर * fmt_आकार(माप_प्रकार size) {
+    अटल अक्षर बफर[128];
+    अगर (size >= 1024*1024) {
+        snprintf(बफर, माप(बफर), "%zuM", size/1024/1024);
+    } अन्यथा {
+        snprintf(बफर, माप(बफर), "%zuK", size/1024);
     }
-    return buffer;
+    वापस बफर;
 }
 
-static void ggml_backend_sched_print_assignments(ggml_backend_sched_t sched, struct ggml_cgraph * graph) {
-    int cur_split = 0;
-    for (int i = 0; i < graph->n_nodes; i++) {
-        if (cur_split < sched->n_splits && i == sched->splits[cur_split].i_start) {
+अटल व्योम ggml_backend_sched_print_assignments(ggml_backend_sched_t sched, काष्ठा ggml_cgraph * graph) {
+    पूर्णांक cur_split = 0;
+    क्रम (पूर्णांक i = 0; i < graph->n_nodes; i++) {
+        अगर (cur_split < sched->n_splits && i == sched->splits[cur_split].i_start) {
             ggml_backend_t split_backend = sched->backends[sched->splits[cur_split].backend_id];
             GGML_LOG_DEBUG("\n## SPLIT #%d: %s # %d inputs", cur_split, ggml_backend_name(split_backend),
                 sched->splits[cur_split].n_inputs);
-            for (int j = 0; j < sched->splits[cur_split].n_inputs; j++) {
-                if (j == 0) {
+            क्रम (पूर्णांक j = 0; j < sched->splits[cur_split].n_inputs; j++) {
+                अगर (j == 0) {
                     GGML_LOG_DEBUG(": ");
                 }
                 GGML_LOG_DEBUG("[%s (%5.5s)] ", sched->splits[cur_split].inputs[j]->name,
-                    fmt_size(ggml_nbytes(sched->splits[cur_split].inputs[j])));
+                    fmt_आकार(ggml_nbytes(sched->splits[cur_split].inputs[j])));
             }
             GGML_LOG_DEBUG("\n");
             cur_split++;
         }
-        struct ggml_tensor * node = graph->nodes[i];
-        if (ggml_is_view_op(node->op)) {
-            continue;
+        काष्ठा ggml_tensor * गाँठ = graph->nodes[i];
+        अगर (ggml_is_view_op(गाँठ->op)) {
+            जारी;
         }
-        if (sched->debug > 1) {
-            ggml_backend_t tensor_backend = ggml_backend_sched_get_tensor_backend(sched, node);
-            GGML_LOG_DEBUG("node #%3d (%10.10s): %20.20s (%5.5s) [%5.5s %8.8s] use=%d,c=%d:", i, ggml_op_desc(node), node->name,
-                fmt_size(ggml_nbytes(node)), tensor_backend ? ggml_backend_name(tensor_backend) : "NULL", GET_CAUSE(node),
-                graph->use_counts[ggml_hash_find(&graph->visited_hash_set, node)], node->flags & GGML_TENSOR_FLAG_COMPUTE ? 1 : 0);
-            for (int j = 0; j < GGML_MAX_SRC; j++) {
-                struct ggml_tensor * src = node->src[j];
-                if (src == NULL) {
-                    continue;
+        अगर (sched->debug > 1) {
+            ggml_backend_t tensor_backend = ggml_backend_sched_get_tensor_backend(sched, गाँठ);
+            GGML_LOG_DEBUG("node #%3d (%10.10s): %20.20s (%5.5s) [%5.5s %8.8s] use=%d,c=%d:", i, ggml_op_desc(गाँठ), गाँठ->name,
+                fmt_आकार(ggml_nbytes(गाँठ)), tensor_backend ? ggml_backend_name(tensor_backend) : "NULL", GET_CAUSE(गाँठ),
+                graph->use_counts[ggml_hash_find(&graph->visited_hash_set, गाँठ)], गाँठ->flags & GGML_TENSOR_FLAG_COMPUTE ? 1 : 0);
+            क्रम (पूर्णांक j = 0; j < GGML_MAX_SRC; j++) {
+                काष्ठा ggml_tensor * src = गाँठ->src[j];
+                अगर (src == शून्य) {
+                    जारी;
                 }
                 ggml_backend_t src_backend = ggml_backend_sched_get_tensor_backend(sched, src);
                 GGML_LOG_DEBUG(" %20.20s (%5.5s) [%5.5s %8.8s]", src->name,
-                    fmt_size(ggml_nbytes(src)), src_backend ? ggml_backend_name(src_backend) : "NULL", GET_CAUSE(src));
+                    fmt_आकार(ggml_nbytes(src)), src_backend ? ggml_backend_name(src_backend) : "NULL", GET_CAUSE(src));
             }
             GGML_LOG_DEBUG("\n");
         }
     }
 }
 
-static bool ggml_backend_sched_buffer_supported(ggml_backend_sched_t sched, struct ggml_tensor * t, int backend_id) {
-    ggml_backend_buffer_t buf = t->view_src ? t->view_src->buffer : t->buffer;
-    ggml_backend_buffer_type_t buft = NULL;
+अटल bool ggml_backend_sched_बफर_supported(ggml_backend_sched_t sched, काष्ठा ggml_tensor * t, पूर्णांक backend_id) {
+    ggml_backend_बफर_t buf = t->view_src ? t->view_src->बफर : t->बफर;
+    ggml_backend_बफर_type_t buft = शून्य;
 
-    if (buf) {
+    अगर (buf) {
         // the tensor is already allocated
         buft = buf->buft;
-    } else {
+    } अन्यथा {
         // see if the tensor already has a backend assigned, and use the buffer type of that backend
-        int tensor_backend_id = tensor_backend_id(t);
-        if (tensor_backend_id == -1 && t->view_src) {
+        पूर्णांक tensor_backend_id = tensor_backend_id(t);
+        अगर (tensor_backend_id == -1 && t->view_src) {
             tensor_backend_id = tensor_backend_id(t->view_src);
         }
-        if (tensor_backend_id != -1) {
+        अगर (tensor_backend_id != -1) {
             buft = sched->bufts[tensor_backend_id];
         }
     }
 
-    return buft != NULL && ggml_backend_supports_buft(sched->backends[backend_id], buft);
+    वापस buft != शून्य && ggml_backend_supports_buft(sched->backends[backend_id], buft);
 }
 
-static void ggml_backend_sched_set_if_supported(ggml_backend_sched_t sched, struct ggml_tensor * node, int cur_backend_id, int * node_backend_id) {
-    if (ggml_backend_supports_op(sched->backends[cur_backend_id], node)) {
-        *node_backend_id = cur_backend_id;
-        SET_CAUSE(node, "2.sup");
+अटल व्योम ggml_backend_sched_set_if_supported(ggml_backend_sched_t sched, काष्ठा ggml_tensor * गाँठ, पूर्णांक cur_backend_id, पूर्णांक * गाँठ_backend_id) {
+    अगर (ggml_backend_supports_op(sched->backends[cur_backend_id], गाँठ)) {
+        *गाँठ_backend_id = cur_backend_id;
+        SET_CAUSE(गाँठ, "2.sup");
     }
 }
 
 // assigns backends to ops and splits the graph into subgraphs that can be computed on the same backend
-void ggml_backend_sched_split_graph(ggml_backend_sched_t sched, struct ggml_cgraph * graph) {
+व्योम ggml_backend_sched_split_graph(ggml_backend_sched_t sched, काष्ठा ggml_cgraph * graph) {
     // reset splits
     sched->n_splits = 0;
     sched->n_graph_inputs = 0;
     sched->is_reset = false;
 
-    struct ggml_init_params params = {
-        /* .mem_size =   */ sched->context_buffer_size,
-        /* .mem_buffer = */ sched->context_buffer,
+    काष्ठा ggml_init_params params = {
+        /* .mem_size =   */ sched->context_बफर_आकार,
+        /* .mem_buffer = */ sched->context_बफर,
         /* .no_alloc =   */ true
     };
 
     ggml_free(sched->ctx);
 
     sched->ctx = ggml_init(params);
-    if (sched->ctx == NULL) {
+    अगर (sched->ctx == शून्य) {
         GGML_ABORT("%s: failed to initialize context\n", __func__);
     }
 
-    graph->uid = ggml_graph_next_uid();
+    graph->uid = ggml_graph_अग्र_uid();
 
     // pass 1: assign backends to ops with pre-allocated inputs
-    for (int i = 0; i < graph->n_leafs; i++) {
-        struct ggml_tensor * leaf = graph->leafs[i];
-        int * leaf_backend_id = &tensor_backend_id(leaf);
+    क्रम (पूर्णांक i = 0; i < graph->n_leafs; i++) {
+        काष्ठा ggml_tensor * leaf = graph->leafs[i];
+        पूर्णांक * leaf_backend_id = &tensor_backend_id(leaf);
         // do not overwrite user assignments
-        if (*leaf_backend_id == -1) {
+        अगर (*leaf_backend_id == -1) {
             *leaf_backend_id = ggml_backend_sched_backend_id_from_cur(sched, leaf);
         }
     }
 
-    for (int i = 0; i < graph->n_nodes; i++) {
-        struct ggml_tensor * node = graph->nodes[i];
-        int * node_backend_id = &tensor_backend_id(node);
+    क्रम (पूर्णांक i = 0; i < graph->n_nodes; i++) {
+        काष्ठा ggml_tensor * गाँठ = graph->nodes[i];
+        पूर्णांक * गाँठ_backend_id = &tensor_backend_id(गाँठ);
         // do not overwrite user assignments
-        if (*node_backend_id == -1) {
-            *node_backend_id = ggml_backend_sched_backend_id_from_cur(sched, node);
+        अगर (*गाँठ_backend_id == -1) {
+            *गाँठ_backend_id = ggml_backend_sched_backend_id_from_cur(sched, गाँठ);
 
-#if 0
+#अगर 0
             // src
-            if (node->op == GGML_OP_NONE) {
-                continue;
+            अगर (गाँठ->op == GGML_OP_NONE) {
+                जारी;
             }
 
-            for (int j = 0; j < GGML_MAX_SRC; j++) {
-                struct ggml_tensor * src = node->src[j];
-                if (src == NULL) {
-                    continue;
+            क्रम (पूर्णांक j = 0; j < GGML_MAX_SRC; j++) {
+                काष्ठा ggml_tensor * src = गाँठ->src[j];
+                अगर (src == शून्य) {
+                    जारी;
                 }
-                int * src_backend_id = &tensor_backend_id(src);
-                if (*src_backend_id == -1) {
+                पूर्णांक * src_backend_id = &tensor_backend_id(src);
+                अगर (*src_backend_id == -1) {
                     *src_backend_id = ggml_backend_sched_backend_id_from_cur(sched, src);
                 }
             }
-#endif
+#पूर्ण_अगर
         }
     }
 
@@ -1276,75 +1276,75 @@ void ggml_backend_sched_split_graph(ggml_backend_sched_t sched, struct ggml_cgra
     // ops unsupported by the backend being expanded will be left unassigned so that they can be assigned later when the locations of its inputs are known
     // expand gpu down
     {
-        int cur_backend_id = -1;
-        for (int i = 0; i < graph->n_nodes; i++) {
-            struct ggml_tensor * node = graph->nodes[i];
-            if (ggml_is_view_op(node->op)) {
-                continue;
+        पूर्णांक cur_backend_id = -1;
+        क्रम (पूर्णांक i = 0; i < graph->n_nodes; i++) {
+            काष्ठा ggml_tensor * गाँठ = graph->nodes[i];
+            अगर (ggml_is_view_op(गाँठ->op)) {
+                जारी;
             }
-            int * node_backend_id = &tensor_backend_id(node);
-            if (*node_backend_id != -1) {
-                if (*node_backend_id == sched->n_backends - 1) {
+            पूर्णांक * गाँठ_backend_id = &tensor_backend_id(गाँठ);
+            अगर (*गाँठ_backend_id != -1) {
+                अगर (*गाँठ_backend_id == sched->n_backends - 1) {
                     // skip cpu (lowest prio backend)
                     cur_backend_id = -1;
-                } else {
-                    cur_backend_id = *node_backend_id;
+                } अन्यथा {
+                    cur_backend_id = *गाँठ_backend_id;
                 }
-            } else if (cur_backend_id != -1) {
-                ggml_backend_sched_set_if_supported(sched, node, cur_backend_id, node_backend_id);
+            } अन्यथा अगर (cur_backend_id != -1) {
+                ggml_backend_sched_set_if_supported(sched, गाँठ, cur_backend_id, गाँठ_backend_id);
             }
         }
     }
     // expand gpu up
     {
-        int cur_backend_id = -1;
-        for (int i = graph->n_nodes - 1; i >= 0; i--) {
-            struct ggml_tensor * node = graph->nodes[i];
-            if (ggml_is_view_op(node->op)) {
-                continue;
+        पूर्णांक cur_backend_id = -1;
+        क्रम (पूर्णांक i = graph->n_nodes - 1; i >= 0; i--) {
+            काष्ठा ggml_tensor * गाँठ = graph->nodes[i];
+            अगर (ggml_is_view_op(गाँठ->op)) {
+                जारी;
             }
-            int * node_backend_id = &tensor_backend_id(node);
-            if (*node_backend_id != -1) {
-                if (*node_backend_id == sched->n_backends - 1) {
+            पूर्णांक * गाँठ_backend_id = &tensor_backend_id(गाँठ);
+            अगर (*गाँठ_backend_id != -1) {
+                अगर (*गाँठ_backend_id == sched->n_backends - 1) {
                     // skip cpu (lowest prio backend)
                     cur_backend_id = -1;
-                } else {
-                    cur_backend_id = *node_backend_id;
+                } अन्यथा {
+                    cur_backend_id = *गाँठ_backend_id;
                 }
-            } else if (cur_backend_id != -1) {
-                ggml_backend_sched_set_if_supported(sched, node, cur_backend_id, node_backend_id);
+            } अन्यथा अगर (cur_backend_id != -1) {
+                ggml_backend_sched_set_if_supported(sched, गाँठ, cur_backend_id, गाँठ_backend_id);
             }
         }
     }
     // expand rest down
     {
-        int cur_backend_id = -1;
-        for (int i = 0; i < graph->n_nodes; i++) {
-            struct ggml_tensor * node = graph->nodes[i];
-            if (ggml_is_view_op(node->op)) {
-                continue;
+        पूर्णांक cur_backend_id = -1;
+        क्रम (पूर्णांक i = 0; i < graph->n_nodes; i++) {
+            काष्ठा ggml_tensor * गाँठ = graph->nodes[i];
+            अगर (ggml_is_view_op(गाँठ->op)) {
+                जारी;
             }
-            int * node_backend_id = &tensor_backend_id(node);
-            if (*node_backend_id != -1) {
-                cur_backend_id = *node_backend_id;
-            } else if (cur_backend_id != -1) {
-                ggml_backend_sched_set_if_supported(sched, node, cur_backend_id, node_backend_id);
+            पूर्णांक * गाँठ_backend_id = &tensor_backend_id(गाँठ);
+            अगर (*गाँठ_backend_id != -1) {
+                cur_backend_id = *गाँठ_backend_id;
+            } अन्यथा अगर (cur_backend_id != -1) {
+                ggml_backend_sched_set_if_supported(sched, गाँठ, cur_backend_id, गाँठ_backend_id);
             }
         }
     }
     // expand rest up
     {
-        int cur_backend_id = -1;
-        for (int i = graph->n_nodes - 1; i >= 0; i--) {
-            struct ggml_tensor * node = graph->nodes[i];
-            if (ggml_is_view_op(node->op)) {
-                continue;
+        पूर्णांक cur_backend_id = -1;
+        क्रम (पूर्णांक i = graph->n_nodes - 1; i >= 0; i--) {
+            काष्ठा ggml_tensor * गाँठ = graph->nodes[i];
+            अगर (ggml_is_view_op(गाँठ->op)) {
+                जारी;
             }
-            int * node_backend_id = &tensor_backend_id(node);
-            if (*node_backend_id != -1) {
-                cur_backend_id = *node_backend_id;
-            } else if (cur_backend_id != -1) {
-                ggml_backend_sched_set_if_supported(sched, node, cur_backend_id, node_backend_id);
+            पूर्णांक * गाँठ_backend_id = &tensor_backend_id(गाँठ);
+            अगर (*गाँठ_backend_id != -1) {
+                cur_backend_id = *गाँठ_backend_id;
+            } अन्यथा अगर (cur_backend_id != -1) {
+                ggml_backend_sched_set_if_supported(sched, गाँठ, cur_backend_id, गाँठ_backend_id);
             }
         }
     }
@@ -1357,53 +1357,53 @@ void ggml_backend_sched_split_graph(ggml_backend_sched_t sched, struct ggml_cgra
     // this is not uncommon since multiple backends can use host memory, with the same buffer type (eg. BLAS and CPU)
     // additionally, set remaining unassigned nodes to the backend with the most supported inputs
     // only nodes that could not be assigned during expansion due to the backend not supporting the op should be unassigned at this point
-    for (int i = 0; i < graph->n_nodes; i++) {
-        struct ggml_tensor * node = graph->nodes[i];
-        if (ggml_is_view_op(node->op)) {
-            continue;
+    क्रम (पूर्णांक i = 0; i < graph->n_nodes; i++) {
+        काष्ठा ggml_tensor * गाँठ = graph->nodes[i];
+        अगर (ggml_is_view_op(गाँठ->op)) {
+            जारी;
         }
-        int * node_backend_id = &tensor_backend_id(node);
-        if (*node_backend_id == -1) {
+        पूर्णांक * गाँठ_backend_id = &tensor_backend_id(गाँठ);
+        अगर (*गाँठ_backend_id == -1) {
             // unassigned node: find the backend with the most supported inputs
-            int n_supported_best = -1;
-            for (int b = 0; b < sched->n_backends; b++) {
-                if (ggml_backend_supports_op(sched->backends[b], node)) {
-                    int n_supported = 0;
-                    for (int j = 0; j < GGML_MAX_SRC; j++) {
-                        struct ggml_tensor * src = node->src[j];
-                        if (src == NULL) {
-                            continue;
+            पूर्णांक n_supported_best = -1;
+            क्रम (पूर्णांक b = 0; b < sched->n_backends; b++) {
+                अगर (ggml_backend_supports_op(sched->backends[b], गाँठ)) {
+                    पूर्णांक n_supported = 0;
+                    क्रम (पूर्णांक j = 0; j < GGML_MAX_SRC; j++) {
+                        काष्ठा ggml_tensor * src = गाँठ->src[j];
+                        अगर (src == शून्य) {
+                            जारी;
                         }
-                        if ((tensor_backend_id(src) != -1 || tensor_backend_id(src->view_src) != -1) && ggml_backend_sched_buffer_supported(sched, src, b)) {
+                        अगर ((tensor_backend_id(src) != -1 || tensor_backend_id(src->view_src) != -1) && ggml_backend_sched_बफर_supported(sched, src, b)) {
                             n_supported++;
                         }
                     }
-                    if (n_supported > n_supported_best) {
+                    अगर (n_supported > n_supported_best) {
                         n_supported_best = n_supported;
-                        *node_backend_id = b;
-                        SET_CAUSE(node, "3.best");
+                        *गाँठ_backend_id = b;
+                        SET_CAUSE(गाँठ, "3.best");
                     }
                 }
             }
-        } else {
+        } अन्यथा {
             // assigned node: upgrade to higher prio backend if possible
-            for (int b = 0; b < *node_backend_id; b++) {
-                if (sched->bufts[b] == sched->bufts[*node_backend_id] && ggml_backend_supports_op(sched->backends[b], node)) {
+            क्रम (पूर्णांक b = 0; b < *गाँठ_backend_id; b++) {
+                अगर (sched->bufts[b] == sched->bufts[*गाँठ_backend_id] && ggml_backend_supports_op(sched->backends[b], गाँठ)) {
                     bool supported = true;
-                    for (int j = 0; j < GGML_MAX_SRC; j++) {
-                        struct ggml_tensor * src = node->src[j];
-                        if (src == NULL) {
-                            continue;
+                    क्रम (पूर्णांक j = 0; j < GGML_MAX_SRC; j++) {
+                        काष्ठा ggml_tensor * src = गाँठ->src[j];
+                        अगर (src == शून्य) {
+                            जारी;
                         }
-                        if (!ggml_backend_sched_buffer_supported(sched, src, b)) {
+                        अगर (!ggml_backend_sched_बफर_supported(sched, src, b)) {
                             supported = false;
-                            break;
+                            अवरोध;
                         }
                     }
-                    if (supported) {
-                        *node_backend_id = b;
-                        SET_CAUSE(node, "3.upg");
-                        break;
+                    अगर (supported) {
+                        *गाँठ_backend_id = b;
+                        SET_CAUSE(गाँठ, "3.upg");
+                        अवरोध;
                     }
                 }
             }
@@ -1411,136 +1411,136 @@ void ggml_backend_sched_split_graph(ggml_backend_sched_t sched, struct ggml_cgra
     }
 
     // pass 4: assign backends to remaining src from dst and view_src
-    for (int i = 0; i < graph->n_nodes; i++) {
-        struct ggml_tensor * node = graph->nodes[i];
-        int * cur_backend_id = &tensor_backend_id(node);
-        if (node->view_src != NULL && *cur_backend_id == -1) {
-            *cur_backend_id = tensor_backend_id(node->view_src);
-            SET_CAUSE(node, "4.vsrc");
+    क्रम (पूर्णांक i = 0; i < graph->n_nodes; i++) {
+        काष्ठा ggml_tensor * गाँठ = graph->nodes[i];
+        पूर्णांक * cur_backend_id = &tensor_backend_id(गाँठ);
+        अगर (गाँठ->view_src != शून्य && *cur_backend_id == -1) {
+            *cur_backend_id = tensor_backend_id(गाँठ->view_src);
+            SET_CAUSE(गाँठ, "4.vsrc");
         }
-        for (int j = 0; j < GGML_MAX_SRC; j++) {
-            struct ggml_tensor * src = node->src[j];
-            if (src == NULL) {
-                continue;
+        क्रम (पूर्णांक j = 0; j < GGML_MAX_SRC; j++) {
+            काष्ठा ggml_tensor * src = गाँठ->src[j];
+            अगर (src == शून्य) {
+                जारी;
             }
-            int * src_backend_id = &tensor_backend_id(src);
-            if (*src_backend_id == -1) {
-                if (src->view_src != NULL) {
+            पूर्णांक * src_backend_id = &tensor_backend_id(src);
+            अगर (*src_backend_id == -1) {
+                अगर (src->view_src != शून्य) {
                     // views are always on the same backend as the source
                     *src_backend_id = tensor_backend_id(src->view_src);
                     SET_CAUSE(src, "4.vsrc");
-                } else {
+                } अन्यथा {
                     *src_backend_id = *cur_backend_id;
                     SET_CAUSE(src, "4.cur");
                 }
             }
         }
         // if the node is still unassigned, assign it to the first backend that supports it
-        for (int b = 0; b < sched->n_backends && *cur_backend_id == -1; b++) {
-            ggml_backend_sched_set_if_supported(sched, node, b, cur_backend_id);
+        क्रम (पूर्णांक b = 0; b < sched->n_backends && *cur_backend_id == -1; b++) {
+            ggml_backend_sched_set_if_supported(sched, गाँठ, b, cur_backend_id);
         }
         GGML_ASSERT(*cur_backend_id != -1);
     }
 
     // pass 5: split graph, find tensors that need to be copied
     {
-        int i_split = 0;
-        struct ggml_backend_sched_split * split = &sched->splits[0];
+        पूर्णांक i_split = 0;
+        काष्ठा ggml_backend_sched_split * split = &sched->splits[0];
         // find the backend of the first split, skipping view ops
-        int i = 0;
-        for (; i < graph->n_nodes; i++) {
-            struct ggml_tensor * node = graph->nodes[i];
-            if (!ggml_is_view_op(node->op)) {
-                split->backend_id = tensor_backend_id(node);
-                break;
+        पूर्णांक i = 0;
+        क्रम (; i < graph->n_nodes; i++) {
+            काष्ठा ggml_tensor * गाँठ = graph->nodes[i];
+            अगर (!ggml_is_view_op(गाँठ->op)) {
+                split->backend_id = tensor_backend_id(गाँठ);
+                अवरोध;
             }
         }
         split->i_start = 0;
         split->n_inputs = 0;
-        int cur_backend_id = split->backend_id;
-        for (; i < graph->n_nodes; i++) {
-            struct ggml_tensor * node = graph->nodes[i];
+        पूर्णांक cur_backend_id = split->backend_id;
+        क्रम (; i < graph->n_nodes; i++) {
+            काष्ठा ggml_tensor * गाँठ = graph->nodes[i];
 
-            if (ggml_is_view_op(node->op)) {
-                continue;
+            अगर (ggml_is_view_op(गाँठ->op)) {
+                जारी;
             }
 
-            const int node_backend_id = tensor_backend_id(node);
+            स्थिर पूर्णांक गाँठ_backend_id = tensor_backend_id(गाँठ);
 
-            GGML_ASSERT(node_backend_id != -1); // all nodes should be assigned by now, this can happen if there is no CPU fallback
+            GGML_ASSERT(गाँठ_backend_id != -1); // all nodes should be assigned by now, this can happen if there is no CPU fallback
 
             // check if we should start a new split based on the sources of the current node
             bool need_new_split = false;
-            if (node_backend_id == cur_backend_id && split->n_inputs > 0) {
-                for (int j = 0; j < GGML_MAX_SRC; j++) {
-                    struct ggml_tensor * src = node->src[j];
-                    if (src == NULL) {
-                        continue;
+            अगर (गाँठ_backend_id == cur_backend_id && split->n_inputs > 0) {
+                क्रम (पूर्णांक j = 0; j < GGML_MAX_SRC; j++) {
+                    काष्ठा ggml_tensor * src = गाँठ->src[j];
+                    अगर (src == शून्य) {
+                        जारी;
                     }
                     // check if a weight is on a different and incompatible backend
                     // by starting a new split, the memory of the previously offloaded weights can be reused
-                    if (src->buffer != NULL && src->buffer->usage == GGML_BACKEND_BUFFER_USAGE_WEIGHTS) {
-                        int src_backend_id = tensor_backend_id(src);
-                        if (src_backend_id != cur_backend_id && !ggml_backend_sched_buffer_supported(sched, src, cur_backend_id)) {
+                    अगर (src->बफर != शून्य && src->बफर->usage == GGML_BACKEND_बफर_USAGE_WEIGHTS) {
+                        पूर्णांक src_backend_id = tensor_backend_id(src);
+                        अगर (src_backend_id != cur_backend_id && !ggml_backend_sched_बफर_supported(sched, src, cur_backend_id)) {
                             need_new_split = true;
-                            break;
+                            अवरोध;
                         }
                     }
                 }
             }
 
-            if (node_backend_id != cur_backend_id || need_new_split) {
+            अगर (गाँठ_backend_id != cur_backend_id || need_new_split) {
                 split->i_end = i;
                 i_split++;
-                if (i_split >= sched->splits_capacity) {
-                    int old_cap = sched->splits_capacity;
+                अगर (i_split >= sched->splits_capacity) {
+                    पूर्णांक old_cap = sched->splits_capacity;
                     sched->splits_capacity *= 2;
                     sched->splits = (ggml_backend_sched_split *)
-                        realloc(sched->splits, sched->splits_capacity * sizeof(struct ggml_backend_sched_split));
-                    GGML_ASSERT(sched->splits != NULL);
-                    for (int k = old_cap; k < sched->splits_capacity; k++) {
-                        memset(&sched->splits[k], 0, sizeof(struct ggml_backend_sched_split));
+                        पुनः_स्मृति(sched->splits, sched->splits_capacity * माप(काष्ठा ggml_backend_sched_split));
+                    GGML_ASSERT(sched->splits != शून्य);
+                    क्रम (पूर्णांक k = old_cap; k < sched->splits_capacity; k++) {
+                        स_रखो(&sched->splits[k], 0, माप(काष्ठा ggml_backend_sched_split));
                     }
                 }
                 split = &sched->splits[i_split];
-                split->backend_id = node_backend_id;
+                split->backend_id = गाँठ_backend_id;
                 split->i_start = i;
                 split->n_inputs = 0;
-                cur_backend_id = node_backend_id;
+                cur_backend_id = गाँठ_backend_id;
             }
 
             // find inputs that are not on the same backend
-            for (int j = 0; j < GGML_MAX_SRC; j++) {
-                struct ggml_tensor * src = node->src[j];
-                if (src == NULL) {
-                    continue;
+            क्रम (पूर्णांक j = 0; j < GGML_MAX_SRC; j++) {
+                काष्ठा ggml_tensor * src = गाँठ->src[j];
+                अगर (src == शून्य) {
+                    जारी;
                 }
 
-                size_t src_id = hash_id(src);
-                const int src_backend_id = sched->hv_tensor_backend_ids[src_id];
+                माप_प्रकार src_id = hash_id(src);
+                स्थिर पूर्णांक src_backend_id = sched->hv_tensor_backend_ids[src_id];
                 GGML_ASSERT(src_backend_id != -1); // all inputs should be assigned by now
 
-                if (src_backend_id != cur_backend_id && !ggml_backend_sched_buffer_supported(sched, src, cur_backend_id)) {
+                अगर (src_backend_id != cur_backend_id && !ggml_backend_sched_बफर_supported(sched, src, cur_backend_id)) {
                     // create a copy of the input in the split's backend
-                    if (tensor_id_copy(src_id, cur_backend_id, 0) == NULL) {
+                    अगर (tensor_id_copy(src_id, cur_backend_id, 0) == शून्य) {
                         ggml_backend_t backend = sched->backends[cur_backend_id];
-                        for (int c = 0; c < sched->n_copies; c++) {
-                            struct ggml_tensor * tensor_copy = ggml_dup_tensor_layout(sched->ctx, src);
+                        क्रम (पूर्णांक c = 0; c < sched->n_copies; c++) {
+                            काष्ठा ggml_tensor * tensor_copy = ggml_dup_tensor_layout(sched->ctx, src);
                             ggml_format_name(tensor_copy, "%s#%s#%d", ggml_backend_name(backend), src->name, c);
-                            if (sched->n_copies > 1) {
-                                ggml_set_input(tensor_copy);
+                            अगर (sched->n_copies > 1) {
+                                ggml_set_निवेश(tensor_copy);
                                 ggml_set_output(tensor_copy); // prevent ggml-alloc from overwriting the tensor
                             }
                             tensor_id_copy(src_id, cur_backend_id, c) = tensor_copy;
                             SET_CAUSE(tensor_copy, "4.cpy");
                         }
-                        int n_inputs = split->n_inputs++;
-                        if (n_inputs >= split->inputs_capacity) {
+                        पूर्णांक n_inputs = split->n_inputs++;
+                        अगर (n_inputs >= split->inputs_capacity) {
                             ggml_backend_sched_split_inputs_grow(split);
                         }
                         split->inputs[n_inputs] = src;
                     }
-                    node->src[j] = tensor_id_copy(src_id, cur_backend_id, sched->cur_copy);
+                    गाँठ->src[j] = tensor_id_copy(src_id, cur_backend_id, sched->cur_copy);
                 }
             }
         }
@@ -1548,7 +1548,7 @@ void ggml_backend_sched_split_graph(ggml_backend_sched_t sched, struct ggml_cgra
         sched->n_splits = i_split + 1;
     }
 
-    if (sched->debug) {
+    अगर (sched->debug) {
         ggml_backend_sched_print_assignments(sched, graph);
     }
 
@@ -1556,36 +1556,36 @@ void ggml_backend_sched_split_graph(ggml_backend_sched_t sched, struct ggml_cgra
     //         this includes inputs not consumed by any node (e.g. the embeddings input of a text-only batch) so that
     //         the graph composition does not depend on which inputs are used, which would otherwise cause graph
     //         reallocations when switching between different types of batches [GGML_SCHED_DEBUG_REALLOC]
-    if (sched->n_copies > 1) {
-        for (int i = 0; i < graph->n_leafs; i++) {
-            struct ggml_tensor * leaf = graph->leafs[i];
-            if ((leaf->flags & GGML_TENSOR_FLAG_INPUT) == 0) {
-                continue;
+    अगर (sched->n_copies > 1) {
+        क्रम (पूर्णांक i = 0; i < graph->n_leafs; i++) {
+            काष्ठा ggml_tensor * leaf = graph->leafs[i];
+            अगर ((leaf->flags & GGML_TENSOR_FLAG_निवेश) == 0) {
+                जारी;
             }
 
-            const size_t leaf_id = hash_id(leaf);
-            const int leaf_backend_id = tensor_backend_id(leaf);
+            स्थिर माप_प्रकार leaf_id = hash_id(leaf);
+            स्थिर पूर्णांक leaf_backend_id = tensor_backend_id(leaf);
             GGML_ASSERT(leaf_backend_id != -1); // all leafs should be assigned by now
 
-            if (tensor_id_copy(leaf_id, leaf_backend_id, 0) == NULL) {
+            अगर (tensor_id_copy(leaf_id, leaf_backend_id, 0) == शून्य) {
                 ggml_backend_t backend = sched->backends[leaf_backend_id];
-                for (int c = 0; c < sched->n_copies; c++) {
-                    struct ggml_tensor * tensor_copy;
-                    if (c == sched->cur_copy) {
+                क्रम (पूर्णांक c = 0; c < sched->n_copies; c++) {
+                    काष्ठा ggml_tensor * tensor_copy;
+                    अगर (c == sched->cur_copy) {
                         tensor_copy = leaf; // use the original tensor as the current copy
-                    } else {
+                    } अन्यथा {
                         tensor_copy = ggml_dup_tensor_layout(sched->ctx, leaf);
                         ggml_format_name(tensor_copy, "%s#%s#%d", ggml_backend_name(backend), leaf->name, c);
                     }
-                    ggml_set_input(tensor_copy);
+                    ggml_set_निवेश(tensor_copy);
                     ggml_set_output(tensor_copy); // prevent ggml-alloc from overwriting the tensor
                     tensor_id_copy(leaf_id, leaf_backend_id, c) = tensor_copy;
                     SET_CAUSE(tensor_copy, "6.cpy");
                 }
             }
 
-            int n_graph_inputs = sched->n_graph_inputs++;
-            if (n_graph_inputs >= sched->graph_inputs_capacity) {
+            पूर्णांक n_graph_inputs = sched->n_graph_inputs++;
+            अगर (n_graph_inputs >= sched->graph_inputs_capacity) {
                 ggml_backend_sched_graph_inputs_grow(sched);
             }
             sched->graph_inputs[n_graph_inputs] = leaf;
@@ -1594,13 +1594,13 @@ void ggml_backend_sched_split_graph(ggml_backend_sched_t sched, struct ggml_cgra
 
     // swap node_backend_ids and leaf _backend_ids with prevs
     {
-        int * tmp = sched->node_backend_ids;
-        sched->node_backend_ids = sched->prev_node_backend_ids;
-        sched->prev_node_backend_ids = tmp;
+        पूर्णांक * tmp = sched->गाँठ_backend_ids;
+        sched->गाँठ_backend_ids = sched->पूर्व_गाँठ_backend_ids;
+        sched->पूर्व_गाँठ_backend_ids = tmp;
 
         tmp = sched->leaf_backend_ids;
-        sched->leaf_backend_ids = sched->prev_leaf_backend_ids;
-        sched->prev_leaf_backend_ids = tmp;
+        sched->leaf_backend_ids = sched->पूर्व_leaf_backend_ids;
+        sched->पूर्व_leaf_backend_ids = tmp;
     }
 
     // optimize the split graphs and collect the allocation dependencies added by the backends
@@ -1608,96 +1608,96 @@ void ggml_backend_sched_split_graph(ggml_backend_sched_t sched, struct ggml_cgra
     // TODO: this may create many small allocations in the scheduler, restructure to use a flat array
     std::unordered_map<ggml_tensor *, std::vector<ggml_tensor *>> alloc_deps;
 
-    struct ggml_backend_graph_optimize_params opt_params = {
-        /* .add_alloc_dep = */ [](void * user_data, ggml_tensor * tensor, ggml_tensor * until) {
-            auto & deps = *(std::unordered_map<ggml_tensor *, std::vector<ggml_tensor *>> *) user_data;
+    काष्ठा ggml_backend_graph_optimize_params opt_params = {
+        /* .add_alloc_dep = */ [](व्योम * user_तथ्य, ggml_tensor * tensor, ggml_tensor * until) {
+            स्वतः & deps = *(std::unordered_map<ggml_tensor *, std::vector<ggml_tensor *>> *) user_तथ्य;
             std::vector<ggml_tensor *> & keep = deps[until];
-            if (std::find(keep.begin(), keep.end(), tensor) == keep.end()) {
+            अगर (std::find(keep.begin(), keep.end(), tensor) == keep.end()) {
                 keep.push_back(tensor);
             }
         },
         /* .user_data     = */ &alloc_deps,
     };
 
-    for (int i = 0; i < sched->n_splits; i++) {
-        struct ggml_backend_sched_split * split = &sched->splits[i];
+    क्रम (पूर्णांक i = 0; i < sched->n_splits; i++) {
+        काष्ठा ggml_backend_sched_split * split = &sched->splits[i];
         split->graph = ggml_graph_view(graph, split->i_start, split->i_end);
 
         ggml_backend_graph_optimize(sched->backends[split->backend_id], &split->graph, &opt_params);
     }
 
     // each dep is added to graph_copy as a GGML_OP_NONE node with the kept tensors as srcs
-    int n_dep_nodes = 0;
-    for (const auto & it : alloc_deps) {
+    पूर्णांक n_dep_nodes = 0;
+    क्रम (स्थिर स्वतः & it : alloc_deps) {
         n_dep_nodes += (it.second.size() + GGML_MAX_SRC - 1) / GGML_MAX_SRC;
     }
 
-    int total_inputs = sched->n_graph_inputs;
-    for (int i = 0; i < sched->n_splits; i++) {
-        total_inputs += sched->splits[i].n_inputs;
+    पूर्णांक योग_inputs = sched->n_graph_inputs;
+    क्रम (पूर्णांक i = 0; i < sched->n_splits; i++) {
+        योग_inputs += sched->splits[i].n_inputs;
     }
-    int graph_size = std::max(graph->n_nodes, graph->n_leafs) + total_inputs * 2 * sched->n_copies + n_dep_nodes;
+    पूर्णांक graph_आकार = std::max(graph->n_nodes, graph->n_leafs) + योग_inputs * 2 * sched->n_copies + n_dep_nodes;
 
     // remember the actual graph_size for performing reallocation checks later
-    sched->prev_graph_size = sched->graph_size;
-    sched->graph_size = graph_size;
+    sched->पूर्व_graph_आकार = sched->graph_आकार;
+    sched->graph_आकार = graph_आकार;
 
-    if (sched->graph.size < graph_size) {
-        sched->graph.size = graph_size;
-        sched->graph.nodes = (ggml_tensor **) realloc(sched->graph.nodes, graph_size * sizeof(struct ggml_tensor *));
-        sched->graph.leafs = (ggml_tensor **) realloc(sched->graph.leafs, graph_size * sizeof(struct ggml_tensor *));
-        GGML_ASSERT(sched->graph.nodes != NULL);
-        GGML_ASSERT(sched->graph.leafs != NULL);
+    अगर (sched->graph.size < graph_आकार) {
+        sched->graph.size = graph_आकार;
+        sched->graph.nodes = (ggml_tensor **) पुनः_स्मृति(sched->graph.nodes, graph_आकार * माप(काष्ठा ggml_tensor *));
+        sched->graph.leafs = (ggml_tensor **) पुनः_स्मृति(sched->graph.leafs, graph_आकार * माप(काष्ठा ggml_tensor *));
+        GGML_ASSERT(sched->graph.nodes != शून्य);
+        GGML_ASSERT(sched->graph.leafs != शून्य);
     }
     sched->graph.n_nodes = 0;
     sched->graph.n_leafs = 0;
 
-    struct ggml_cgraph * graph_copy = &sched->graph;
+    काष्ठा ggml_cgraph * graph_copy = &sched->graph;
 
-    int n_dep_nodes_added = 0;
+    पूर्णांक n_dep_nodes_added = 0;
 
-    for (int i = 0; i < sched->n_splits; i++) {
-        struct ggml_backend_sched_split * split = &sched->splits[i];
+    क्रम (पूर्णांक i = 0; i < sched->n_splits; i++) {
+        काष्ठा ggml_backend_sched_split * split = &sched->splits[i];
 
         // add inputs to the graph copy so that they are allocated by ggml-alloc at the start of the split
-        for (int j = 0; j < split->n_inputs; j++) {
-            assert(graph_copy->size > (graph_copy->n_nodes + 1));
+        क्रम (पूर्णांक j = 0; j < split->n_inputs; j++) {
+            निश्चित(graph_copy->size > (graph_copy->n_nodes + 1));
 
-            struct ggml_tensor * input = split->inputs[j];
-            const size_t input_id = hash_id(input);
-            struct ggml_tensor * input_cpy = tensor_id_copy(input_id, split->backend_id, sched->cur_copy);
+            काष्ठा ggml_tensor * निवेश = split->inputs[j];
+            स्थिर माप_प्रकार निवेश_id = hash_id(निवेश);
+            काष्ठा ggml_tensor * निवेश_cpy = tensor_id_copy(निवेश_id, split->backend_id, sched->cur_copy);
 
             // add a dependency to the input source so that it is not freed before the copy is done
-            struct ggml_tensor * input_dep = ggml_view_tensor(sched->ctx, input);
-            input_dep->src[0] = input;
-            sched->node_backend_ids[graph_copy->n_nodes] = sched->hv_tensor_backend_ids[input_id];
-            graph_copy->nodes[graph_copy->n_nodes++] = input_dep;
+            काष्ठा ggml_tensor * निवेश_dep = ggml_view_tensor(sched->ctx, निवेश);
+            निवेश_dep->src[0] = निवेश;
+            sched->गाँठ_backend_ids[graph_copy->n_nodes] = sched->hv_tensor_backend_ids[निवेश_id];
+            graph_copy->nodes[graph_copy->n_nodes++] = निवेश_dep;
 
             // add a dependency to the input copy so that it is allocated at the start of the split
-            sched->node_backend_ids[graph_copy->n_nodes] = split->backend_id;
-            graph_copy->nodes[graph_copy->n_nodes++] = input_cpy;
+            sched->गाँठ_backend_ids[graph_copy->n_nodes] = split->backend_id;
+            graph_copy->nodes[graph_copy->n_nodes++] = निवेश_cpy;
         }
 
-        for (int j = split->i_start; j < split->i_end; j++) {
-            assert(graph_copy->size > graph_copy->n_nodes);
-            sched->node_backend_ids[graph_copy->n_nodes] = tensor_backend_id(graph->nodes[j]);
+        क्रम (पूर्णांक j = split->i_start; j < split->i_end; j++) {
+            निश्चित(graph_copy->size > graph_copy->n_nodes);
+            sched->गाँठ_backend_ids[graph_copy->n_nodes] = tensor_backend_id(graph->nodes[j]);
             graph_copy->nodes[graph_copy->n_nodes++] = graph->nodes[j];
 
-            if (alloc_deps.empty()) {
-                continue;
+            अगर (alloc_deps.empty()) {
+                जारी;
             }
 
             // add a dependency node so that the kept tensors are not freed before this node is computed
-            auto it = alloc_deps.find(graph->nodes[j]);
-            if (it != alloc_deps.end()) {
-                const std::vector<ggml_tensor *> & keep = it->second;
-                for (size_t k = 0; k < keep.size(); k += GGML_MAX_SRC) {
-                    struct ggml_tensor * dep = ggml_view_tensor(sched->ctx, keep[k]);
-                    for (size_t s = 0; s < GGML_MAX_SRC && k + s < keep.size(); s++) {
+            स्वतः it = alloc_deps.find(graph->nodes[j]);
+            अगर (it != alloc_deps.end()) {
+                स्थिर std::vector<ggml_tensor *> & keep = it->second;
+                क्रम (माप_प्रकार k = 0; k < keep.size(); k += GGML_MAX_SRC) {
+                    काष्ठा ggml_tensor * dep = ggml_view_tensor(sched->ctx, keep[k]);
+                    क्रम (माप_प्रकार s = 0; s < GGML_MAX_SRC && k + s < keep.size(); s++) {
                         dep->src[s] = keep[k + s];
                     }
-                    assert(graph_copy->size > graph_copy->n_nodes);
-                    sched->node_backend_ids[graph_copy->n_nodes] = split->backend_id;
+                    निश्चित(graph_copy->size > graph_copy->n_nodes);
+                    sched->गाँठ_backend_ids[graph_copy->n_nodes] = split->backend_id;
                     graph_copy->nodes[graph_copy->n_nodes++] = dep;
                     n_dep_nodes_added++;
                 }
@@ -1708,227 +1708,227 @@ void ggml_backend_sched_split_graph(ggml_backend_sched_t sched, struct ggml_cgra
     // a mismatch means a backend added a dep with an `until` tensor that is not a node of the optimized graph
     GGML_ASSERT(n_dep_nodes_added == n_dep_nodes);
 
-    if (sched->n_copies > 1) {
+    अगर (sched->n_copies > 1) {
         // add input copies as leafs so that they are allocated first
-        for (int i = 0; i < sched->n_graph_inputs; i++) {
-            struct ggml_tensor * input = sched->graph_inputs[i];
-            size_t id = hash_id(input);
-            int backend_id = tensor_backend_id(input);
-            for (int c = 0; c < sched->n_copies; c++) {
-                struct ggml_tensor * input_cpy = tensor_id_copy(id, backend_id, c);
+        क्रम (पूर्णांक i = 0; i < sched->n_graph_inputs; i++) {
+            काष्ठा ggml_tensor * निवेश = sched->graph_inputs[i];
+            माप_प्रकार id = hash_id(निवेश);
+            पूर्णांक backend_id = tensor_backend_id(निवेश);
+            क्रम (पूर्णांक c = 0; c < sched->n_copies; c++) {
+                काष्ठा ggml_tensor * निवेश_cpy = tensor_id_copy(id, backend_id, c);
                 sched->leaf_backend_ids[graph_copy->n_leafs] = backend_id;
-                assert(graph_copy->size > graph_copy->n_leafs);
-                graph_copy->leafs[graph_copy->n_leafs++] = input_cpy;
+                निश्चित(graph_copy->size > graph_copy->n_leafs);
+                graph_copy->leafs[graph_copy->n_leafs++] = निवेश_cpy;
             }
         }
 
-        for (int i = 0; i < sched->n_splits; i++) {
-            struct ggml_backend_sched_split * split = &sched->splits[i];
-            int backend_id = split->backend_id;
-            for (int j = 0; j < split->n_inputs; j++) {
-                struct ggml_tensor * input = split->inputs[j];
-                size_t id = hash_id(input);
-                for (int c = 0; c < sched->n_copies; c++) {
-                    struct ggml_tensor * input_cpy = tensor_id_copy(id, backend_id, c);
+        क्रम (पूर्णांक i = 0; i < sched->n_splits; i++) {
+            काष्ठा ggml_backend_sched_split * split = &sched->splits[i];
+            पूर्णांक backend_id = split->backend_id;
+            क्रम (पूर्णांक j = 0; j < split->n_inputs; j++) {
+                काष्ठा ggml_tensor * निवेश = split->inputs[j];
+                माप_प्रकार id = hash_id(निवेश);
+                क्रम (पूर्णांक c = 0; c < sched->n_copies; c++) {
+                    काष्ठा ggml_tensor * निवेश_cpy = tensor_id_copy(id, backend_id, c);
                     sched->leaf_backend_ids[graph_copy->n_leafs] = backend_id;
-                    assert(graph_copy->size > graph_copy->n_leafs);
-                    graph_copy->leafs[graph_copy->n_leafs++] = input_cpy;
+                    निश्चित(graph_copy->size > graph_copy->n_leafs);
+                    graph_copy->leafs[graph_copy->n_leafs++] = निवेश_cpy;
                 }
             }
         }
     }
 
     // add leafs from the original graph
-    for (int i = 0; i < graph->n_leafs; i++) {
-        struct ggml_tensor * leaf = graph->leafs[i];
+    क्रम (पूर्णांक i = 0; i < graph->n_leafs; i++) {
+        काष्ठा ggml_tensor * leaf = graph->leafs[i];
         sched->leaf_backend_ids[graph_copy->n_leafs] = tensor_backend_id(leaf);
-        assert(graph_copy->size > graph_copy->n_leafs);
+        निश्चित(graph_copy->size > graph_copy->n_leafs);
         graph_copy->leafs[graph_copy->n_leafs++] = leaf;
     }
 
     // set ids for all splits
-    for (int i = 0; i < sched->n_splits; ++i) {
-        sched->splits[i].graph.uid = ggml_graph_next_uid();
+    क्रम (पूर्णांक i = 0; i < sched->n_splits; ++i) {
+        sched->splits[i].graph.uid = ggml_graph_अग्र_uid();
     }
 }
 
-static bool ggml_backend_sched_alloc_splits(ggml_backend_sched_t sched) {
+अटल bool ggml_backend_sched_alloc_splits(ggml_backend_sched_t sched) {
     bool backend_ids_changed = false;
-    for (int i = 0; i < sched->graph.n_nodes; i++) {
-        if (sched->node_backend_ids[i] != sched->prev_node_backend_ids[i] &&
-            sched->bufts[sched->node_backend_ids[i]] != sched->bufts[sched->prev_node_backend_ids[i]]) {
+    क्रम (पूर्णांक i = 0; i < sched->graph.n_nodes; i++) {
+        अगर (sched->गाँठ_backend_ids[i] != sched->पूर्व_गाँठ_backend_ids[i] &&
+            sched->bufts[sched->गाँठ_backend_ids[i]] != sched->bufts[sched->पूर्व_गाँठ_backend_ids[i]]) {
             backend_ids_changed = true;
-            break;
+            अवरोध;
         }
     }
-    if (!backend_ids_changed) {
-        for (int i = 0; i < sched->graph.n_leafs; i++) {
-            if (sched->leaf_backend_ids[i] != sched->prev_leaf_backend_ids[i] &&
-                sched->bufts[sched->leaf_backend_ids[i]] != sched->bufts[sched->prev_leaf_backend_ids[i]]) {
+    अगर (!backend_ids_changed) {
+        क्रम (पूर्णांक i = 0; i < sched->graph.n_leafs; i++) {
+            अगर (sched->leaf_backend_ids[i] != sched->पूर्व_leaf_backend_ids[i] &&
+                sched->bufts[sched->leaf_backend_ids[i]] != sched->bufts[sched->पूर्व_leaf_backend_ids[i]]) {
                 backend_ids_changed = true;
-                break;
+                अवरोध;
             }
         }
     }
 
     // allocate graph
-    if (backend_ids_changed || !ggml_gallocr_alloc_graph(sched->galloc, &sched->graph)) {
-#ifndef NDEBUG
+    अगर (backend_ids_changed || !ggml_gallocr_alloc_graph(sched->galloc, &sched->graph)) {
+#अगर_अघोषित न_संशोधन
         GGML_LOG_DEBUG("%s: failed to allocate graph, reserving (backend_ids_changed = %d)\n", __func__, backend_ids_changed);
-#endif
+#पूर्ण_अगर
 
         // a reallocation with an unchanged graph size means that the previous reservation was not sufficient
-        const bool graph_size_changed = sched->prev_graph_size != sched->graph_size;
+        स्थिर bool graph_आकार_changed = sched->पूर्व_graph_आकार != sched->graph_आकार;
 
-        if (sched->callback_realloc != NULL) {
-            sched->callback_realloc(sched, &sched->graph, backend_ids_changed, graph_size_changed, sched->callback_realloc_user_data);
+        अगर (sched->callback_realloc != शून्य) {
+            sched->callback_realloc(sched, &sched->graph, backend_ids_changed, graph_आकार_changed, sched->callback_realloc_user_तथ्य);
         }
 
-        if (sched->debug_realloc > 0) {
+        अगर (sched->debug_realloc > 0) {
             // we are interested only in situations where the graph was reallocated even though its size remained the same [GGML_SCHED_DEBUG_REALLOC]
             // example: https://github.com/ggml-org/llama.cpp/pull/17143
-            const bool unexpected = !backend_ids_changed && !graph_size_changed;
+            स्थिर bool unexpected = !backend_ids_changed && !graph_आकार_changed;
 
-            if (unexpected || sched->debug_realloc > 1) {
+            अगर (unexpected || sched->debug_realloc > 1) {
                 GGML_ABORT("%s: unexpected graph reallocation (graph size = %d, nodes = %d, leafs = %d), debug_realloc = %d\n", __func__,
-                        sched->graph_size, sched->graph.n_nodes, sched->graph.n_leafs, sched->debug_realloc);
+                        sched->graph_आकार, sched->graph.n_nodes, sched->graph.n_leafs, sched->debug_realloc);
             }
         }
 
         // the re-allocation may cause the split inputs to be moved to a different address
         // synchronize without ggml_backend_sched_synchronize to avoid changing cur_copy
-        for (int i = 0; i < sched->n_backends; i++) {
+        क्रम (पूर्णांक i = 0; i < sched->n_backends; i++) {
             ggml_backend_synchronize(sched->backends[i]);
         }
 
-        if (!ggml_gallocr_reserve_n(sched->galloc, &sched->graph, sched->node_backend_ids, sched->leaf_backend_ids)) {
+        अगर (!ggml_gallocr_reserve_n(sched->galloc, &sched->graph, sched->गाँठ_backend_ids, sched->leaf_backend_ids)) {
             GGML_LOG_ERROR("%s: failed to reserve graph buffers\n", __func__);
-            return false;
+            वापस false;
         }
-        if (!ggml_gallocr_alloc_graph(sched->galloc, &sched->graph)) {
+        अगर (!ggml_gallocr_alloc_graph(sched->galloc, &sched->graph)) {
             GGML_LOG_ERROR("%s: failed to allocate graph\n", __func__);
-            return false;
+            वापस false;
         }
     }
 
-    return true;
+    वापस true;
 }
 
-static bool ggml_backend_sched_is_host_weight(const struct ggml_tensor * t) {
-    return t->buffer != NULL &&
-        ggml_backend_buffer_get_usage(t->buffer) == GGML_BACKEND_BUFFER_USAGE_WEIGHTS &&
-        ggml_backend_buffer_is_host(t->buffer);
+अटल bool ggml_backend_sched_is_host_weight(स्थिर काष्ठा ggml_tensor * t) {
+    वापस t->बफर != शून्य &&
+        ggml_backend_बफर_get_usage(t->बफर) == GGML_BACKEND_बफर_USAGE_WEIGHTS &&
+        ggml_backend_बफर_is_host(t->बफर);
 }
 
-static void ggml_backend_sched_copy_input(ggml_backend_sched_t sched, struct ggml_backend_sched_split * split, struct ggml_tensor * input) {
-    const int split_backend_id = split->backend_id;
+अटल व्योम ggml_backend_sched_copy_निवेश(ggml_backend_sched_t sched, काष्ठा ggml_backend_sched_split * split, काष्ठा ggml_tensor * निवेश) {
+    स्थिर पूर्णांक split_backend_id = split->backend_id;
     ggml_backend_t split_backend = sched->backends[split_backend_id];
-    ggml_backend_t input_backend = ggml_backend_sched_get_tensor_backend(sched, input);
-    struct ggml_tensor * input_cpy = tensor_copy(input, split_backend_id, sched->cur_copy);
+    ggml_backend_t निवेश_backend = ggml_backend_sched_get_tensor_backend(sched, निवेश);
+    काष्ठा ggml_tensor * निवेश_cpy = tensor_copy(निवेश, split_backend_id, sched->cur_copy);
 
-    if (input->flags & GGML_TENSOR_FLAG_INPUT) {
+    अगर (निवेश->flags & GGML_TENSOR_FLAG_निवेश) {
         // inputs from the user must be copied immediately to prevent the user overwriting the data before the copy is done
-        if (sched->events[split_backend_id][sched->cur_copy] != NULL) {
+        अगर (sched->events[split_backend_id][sched->cur_copy] != शून्य) {
             ggml_backend_event_synchronize(sched->events[split_backend_id][sched->cur_copy]);
-        } else {
+        } अन्यथा {
             ggml_backend_synchronize(split_backend);
         }
-        ggml_backend_tensor_copy(input, input_cpy);
-        return;
+        ggml_backend_tensor_copy(निवेश, निवेश_cpy);
+        वापस;
     }
 
     // wait for the split backend to finish using the input before overwriting it
-    if (sched->events[split_backend_id][sched->cur_copy] != NULL) {
+    अगर (sched->events[split_backend_id][sched->cur_copy] != शून्य) {
         ggml_backend_event_wait(split_backend, sched->events[split_backend_id][sched->cur_copy]);
-    } else {
+    } अन्यथा {
         ggml_backend_synchronize(split_backend);
     }
 
-    if (sched->callback_copy != NULL && ggml_backend_sched_is_host_weight(input) &&
-        sched->callback_copy(split_backend, input, input_cpy, &split->graph, sched->callback_copy_user_data)) {
-        return;
+    अगर (sched->callback_copy != शून्य && ggml_backend_sched_is_host_weight(निवेश) &&
+        sched->callback_copy(split_backend, निवेश, निवेश_cpy, &split->graph, sched->callback_copy_user_तथ्य)) {
+        वापस;
     }
 
     // try async copy, but if not possible, we can still use a sync copy without synchronizing the dst backend, since we handle the synchronization here with multiple copies and events
     // TODO: add public function to facilitate this, since applications do not have direct access to the backend interface
-    if (!split_backend->iface.cpy_tensor_async || !split_backend->iface.cpy_tensor_async(input_backend, split_backend, input, input_cpy)) {
-        ggml_backend_synchronize(input_backend);
-        if (sched->events[split_backend_id][sched->cur_copy] != NULL) {
+    अगर (!split_backend->iface.cpy_tensor_async || !split_backend->iface.cpy_tensor_async(निवेश_backend, split_backend, निवेश, निवेश_cpy)) {
+        ggml_backend_synchronize(निवेश_backend);
+        अगर (sched->events[split_backend_id][sched->cur_copy] != शून्य) {
             ggml_backend_event_synchronize(sched->events[split_backend_id][sched->cur_copy]);
-        } else {
+        } अन्यथा {
             ggml_backend_synchronize(split_backend);
         }
-        ggml_backend_tensor_copy(input, input_cpy);
+        ggml_backend_tensor_copy(निवेश, निवेश_cpy);
     }
 }
 
-static enum ggml_status ggml_backend_sched_compute_splits(ggml_backend_sched_t sched) {
+अटल क्रमागत ggml_status ggml_backend_sched_compute_splits(ggml_backend_sched_t sched) {
     GGML_ASSERT(sched);
-    struct ggml_backend_sched_split * splits = sched->splits;
+    काष्ठा ggml_backend_sched_split * splits = sched->splits;
 
-    int prev_backend_id = -1;
+    पूर्णांक पूर्व_backend_id = -1;
 
-    for (int split_id = 0; split_id < sched->n_splits; split_id++) {
-        struct ggml_backend_sched_split * split = &splits[split_id];
-        int split_backend_id = split->backend_id;
+    क्रम (पूर्णांक split_id = 0; split_id < sched->n_splits; split_id++) {
+        काष्ठा ggml_backend_sched_split * split = &splits[split_id];
+        पूर्णांक split_backend_id = split->backend_id;
         ggml_backend_t split_backend = sched->backends[split_backend_id];
 
         // ensure the previous split's async work has completed before we start
         // this split, the allocator may have reused buffer regions across splits
-        if (split->n_inputs == 0 && prev_backend_id >= 0 && prev_backend_id != split_backend_id) {
-            if (sched->events[prev_backend_id][sched->cur_copy] != NULL) {
-                ggml_backend_event_synchronize(sched->events[prev_backend_id][sched->cur_copy]);
-            } else {
-                ggml_backend_synchronize(sched->backends[prev_backend_id]);
+        अगर (split->n_inputs == 0 && पूर्व_backend_id >= 0 && पूर्व_backend_id != split_backend_id) {
+            अगर (sched->events[पूर्व_backend_id][sched->cur_copy] != शून्य) {
+                ggml_backend_event_synchronize(sched->events[पूर्व_backend_id][sched->cur_copy]);
+            } अन्यथा {
+                ggml_backend_synchronize(sched->backends[पूर्व_backend_id]);
             }
         }
 
         // copy the input tensors to the split backend
         // the weights in host memory are copied last, so that the copy callback can read the other inputs of the split
-        for (int input_id = 0; input_id < split->n_inputs; input_id++) {
-            if (!ggml_backend_sched_is_host_weight(split->inputs[input_id])) {
-                ggml_backend_sched_copy_input(sched, split, split->inputs[input_id]);
+        क्रम (पूर्णांक निवेश_id = 0; निवेश_id < split->n_inputs; निवेश_id++) {
+            अगर (!ggml_backend_sched_is_host_weight(split->inputs[निवेश_id])) {
+                ggml_backend_sched_copy_निवेश(sched, split, split->inputs[निवेश_id]);
             }
         }
-        for (int input_id = 0; input_id < split->n_inputs; input_id++) {
-            if (ggml_backend_sched_is_host_weight(split->inputs[input_id])) {
-                ggml_backend_sched_copy_input(sched, split, split->inputs[input_id]);
+        क्रम (पूर्णांक निवेश_id = 0; निवेश_id < split->n_inputs; निवेश_id++) {
+            अगर (ggml_backend_sched_is_host_weight(split->inputs[निवेश_id])) {
+                ggml_backend_sched_copy_निवेश(sched, split, split->inputs[निवेश_id]);
             }
         }
 
-        if (!sched->callback_eval) {
-            enum ggml_status ec = ggml_backend_graph_compute_async(split_backend, &split->graph);
-            if (ec != GGML_STATUS_SUCCESS) {
-                return ec;
+        अगर (!sched->callback_eval) {
+            क्रमागत ggml_status ec = ggml_backend_graph_compute_async(split_backend, &split->graph);
+            अगर (ec != GGML_STATUS_SUCCESS) {
+                वापस ec;
             }
-        } else {
+        } अन्यथा {
             // similar to ggml_backend_compare_graph_backend
-            for (int j0 = 0; j0 < split->graph.n_nodes; j0++) {
-                struct ggml_tensor * t = split->graph.nodes[j0];
+            क्रम (पूर्णांक j0 = 0; j0 < split->graph.n_nodes; j0++) {
+                काष्ठा ggml_tensor * t = split->graph.nodes[j0];
 
                 // check if the user needs data from this node
-                bool need = sched->callback_eval(t, true, sched->callback_eval_user_data);
+                bool need = sched->callback_eval(t, true, sched->callback_eval_user_तथ्य);
 
-                int j1 = j0;
+                पूर्णांक j1 = j0;
 
                 // determine the range [j0, j1] of nodes that can be computed together
-                while (!need && j1 < split->graph.n_nodes - 1) {
+                जबतक (!need && j1 < split->graph.n_nodes - 1) {
                     t = split->graph.nodes[++j1];
-                    need = sched->callback_eval(t, true, sched->callback_eval_user_data);
+                    need = sched->callback_eval(t, true, sched->callback_eval_user_तथ्य);
                 }
 
-                struct ggml_cgraph gv = ggml_graph_view(&split->graph, j0, j1 + 1);
+                काष्ठा ggml_cgraph gv = ggml_graph_view(&split->graph, j0, j1 + 1);
 
-                enum ggml_status ec = ggml_backend_graph_compute_async(split_backend, &gv);
-                if (ec != GGML_STATUS_SUCCESS) {
-                    return ec;
+                क्रमागत ggml_status ec = ggml_backend_graph_compute_async(split_backend, &gv);
+                अगर (ec != GGML_STATUS_SUCCESS) {
+                    वापस ec;
                 }
 
                 // TODO: pass backend to the callback, then the user can decide if they want to synchronize
                 ggml_backend_synchronize(split_backend);
 
-                if (need && !sched->callback_eval(t, false, sched->callback_eval_user_data)) {
-                    break;
+                अगर (need && !sched->callback_eval(t, false, sched->callback_eval_user_तथ्य)) {
+                    अवरोध;
                 }
 
                 j0 = j1;
@@ -1936,75 +1936,75 @@ static enum ggml_status ggml_backend_sched_compute_splits(ggml_backend_sched_t s
         }
 
         // record the event of this split
-        if (sched->events[split_backend_id][sched->cur_copy] != NULL) {
+        अगर (sched->events[split_backend_id][sched->cur_copy] != शून्य) {
             ggml_backend_event_record(sched->events[split_backend_id][sched->cur_copy], split_backend);
         }
 
-        prev_backend_id = split_backend_id;
+        पूर्व_backend_id = split_backend_id;
     }
 
-    return GGML_STATUS_SUCCESS;
+    वापस GGML_STATUS_SUCCESS;
 }
 
 ggml_backend_sched_t ggml_backend_sched_new(
         ggml_backend_t * backends,
-        ggml_backend_buffer_type_t * bufts,
-        int n_backends,
-        size_t graph_size,
+        ggml_backend_बफर_type_t * bufts,
+        पूर्णांक n_backends,
+        माप_प्रकार graph_आकार,
         bool parallel,
         bool op_offload) {
     GGML_ASSERT(n_backends > 0);
     GGML_ASSERT(n_backends <= GGML_SCHED_MAX_BACKENDS);
     GGML_ASSERT(ggml_backend_dev_type(ggml_backend_get_device(backends[n_backends - 1])) == GGML_BACKEND_DEVICE_TYPE_CPU);
 
-    struct ggml_backend_sched * sched = (ggml_backend_sched *) calloc(1, sizeof(struct ggml_backend_sched));
+    काष्ठा ggml_backend_sched * sched = (ggml_backend_sched *) सुस्मृति(1, माप(काष्ठा ggml_backend_sched));
 
-    const char * GGML_SCHED_DEBUG = getenv("GGML_SCHED_DEBUG");
-    sched->debug = GGML_SCHED_DEBUG ? atoi(GGML_SCHED_DEBUG) : 0;
+    स्थिर अक्षर * GGML_SCHED_DEBUG = दो_पर्या("GGML_SCHED_DEBUG");
+    sched->debug = GGML_SCHED_DEBUG ? म_से_प(GGML_SCHED_DEBUG) : 0;
 
     sched->debug_realloc = 0;
-#ifdef GGML_SCHED_NO_REALLOC
+#अगर_घोषित GGML_SCHED_NO_REALLOC
     sched->debug_realloc = 1;
-#endif
-    const char * GGML_SCHED_DEBUG_REALLOC = getenv("GGML_SCHED_DEBUG_REALLOC");
-    sched->debug_realloc = GGML_SCHED_DEBUG_REALLOC ? atoi(GGML_SCHED_DEBUG_REALLOC) : sched->debug_realloc;
+#पूर्ण_अगर
+    स्थिर अक्षर * GGML_SCHED_DEBUG_REALLOC = दो_पर्या("GGML_SCHED_DEBUG_REALLOC");
+    sched->debug_realloc = GGML_SCHED_DEBUG_REALLOC ? म_से_प(GGML_SCHED_DEBUG_REALLOC) : sched->debug_realloc;
 
     sched->n_backends = n_backends;
     sched->n_copies = parallel ? GGML_SCHED_MAX_COPIES : 1;
 
     // initialize hash table
     // FIXME: needs to be size*2 to account for leafs (do it in graph_split instead)
-    sched->hash_set    = ggml_hash_set_new(graph_size);
-    sched->hv_tensor_backend_ids = (int *) malloc(sched->hash_set.size * sizeof(sched->hv_tensor_backend_ids[0]));
-    sched->hv_tensor_copies      = (ggml_tensor **) malloc(sched->hash_set.size * sched->n_backends * sched->n_copies * sizeof(struct ggml_tensor *));
+    sched->hash_set    = ggml_hash_set_new(graph_आकार);
+    sched->hv_tensor_backend_ids = (पूर्णांक *) दो_स्मृति(sched->hash_set.size * माप(sched->hv_tensor_backend_ids[0]));
+    sched->hv_tensor_copies      = (ggml_tensor **) दो_स्मृति(sched->hash_set.size * sched->n_backends * sched->n_copies * माप(काष्ठा ggml_tensor *));
 
-    const size_t ggml_sched_max_splits = graph_size; // at most there is one split for each node in the graph
-    const size_t nodes_size = graph_size + ggml_sched_max_splits*GGML_SCHED_MAX_SPLIT_INPUTS*2;
-    sched->node_backend_ids = (int *) calloc(nodes_size, sizeof(sched->node_backend_ids[0]));
-    sched->leaf_backend_ids = (int *) calloc(nodes_size, sizeof(sched->leaf_backend_ids[0]));
-    sched->prev_node_backend_ids = (int *) calloc(nodes_size, sizeof(sched->prev_node_backend_ids[0]));
-    sched->prev_leaf_backend_ids = (int *) calloc(nodes_size, sizeof(sched->prev_leaf_backend_ids[0]));
+    स्थिर माप_प्रकार ggml_sched_max_splits = graph_आकार; // at most there is one split for each node in the graph
+    स्थिर माप_प्रकार nodes_आकार = graph_आकार + ggml_sched_max_splits*GGML_SCHED_MAX_SPLIT_INPUTS*2;
+    sched->गाँठ_backend_ids = (पूर्णांक *) सुस्मृति(nodes_आकार, माप(sched->गाँठ_backend_ids[0]));
+    sched->leaf_backend_ids = (पूर्णांक *) सुस्मृति(nodes_आकार, माप(sched->leaf_backend_ids[0]));
+    sched->पूर्व_गाँठ_backend_ids = (पूर्णांक *) सुस्मृति(nodes_आकार, माप(sched->पूर्व_गाँठ_backend_ids[0]));
+    sched->पूर्व_leaf_backend_ids = (पूर्णांक *) सुस्मृति(nodes_आकार, माप(sched->पूर्व_leaf_backend_ids[0]));
 
-    sched->graph_size      = 0;
-    sched->prev_graph_size = 0;
+    sched->graph_आकार      = 0;
+    sched->पूर्व_graph_आकार = 0;
 
-    sched->context_buffer_size = ggml_sched_max_splits*GGML_SCHED_MAX_SPLIT_INPUTS*2*sizeof(struct ggml_tensor) + ggml_graph_overhead_custom(graph_size, false);
-    sched->context_buffer = (char *) malloc(sched->context_buffer_size);
+    sched->context_बफर_आकार = ggml_sched_max_splits*GGML_SCHED_MAX_SPLIT_INPUTS*2*माप(काष्ठा ggml_tensor) + ggml_graph_overhead_custom(graph_आकार, false);
+    sched->context_बफर = (अक्षर *) दो_स्मृति(sched->context_बफर_आकार);
 
-    const int initial_splits_capacity = 16;
-    sched->splits = (ggml_backend_sched_split *) calloc(initial_splits_capacity, sizeof(sched->splits[0]));
+    स्थिर पूर्णांक initial_splits_capacity = 16;
+    sched->splits = (ggml_backend_sched_split *) सुस्मृति(initial_splits_capacity, माप(sched->splits[0]));
     sched->splits_capacity = initial_splits_capacity;
 
     sched->graph_inputs_capacity = GGML_SCHED_MAX_SPLIT_INPUTS;
-    sched->graph_inputs = (struct ggml_tensor **) calloc(sched->graph_inputs_capacity, sizeof(struct ggml_tensor *));
+    sched->graph_inputs = (काष्ठा ggml_tensor **) सुस्मृति(sched->graph_inputs_capacity, माप(काष्ठा ggml_tensor *));
 
-    for (int b = 0; b < n_backends; b++) {
+    क्रम (पूर्णांक b = 0; b < n_backends; b++) {
         sched->backends[b] = backends[b];
-        sched->bufts[b] = bufts ? bufts[b] : ggml_backend_get_default_buffer_type(backends[b]);
+        sched->bufts[b] = bufts ? bufts[b] : ggml_backend_get_default_बफर_type(backends[b]);
         GGML_ASSERT(ggml_backend_supports_buft(backends[b], sched->bufts[b]));
 
-        if (sched->n_copies > 1) {
-            for (int c = 0; c < sched->n_copies; c++) {
+        अगर (sched->n_copies > 1) {
+            क्रम (पूर्णांक c = 0; c < sched->n_copies; c++) {
                 sched->events[b][c] = ggml_backend_event_new(backends[b]->device);
             }
         }
@@ -2015,53 +2015,53 @@ ggml_backend_sched_t ggml_backend_sched_new(
 
     ggml_backend_sched_reset(sched);
 
-    return sched;
+    वापस sched;
 }
 
-void ggml_backend_sched_free(ggml_backend_sched_t sched) {
-    if (sched == NULL) {
-        return;
+व्योम ggml_backend_sched_free(ggml_backend_sched_t sched) {
+    अगर (sched == शून्य) {
+        वापस;
     }
-    for (int b = 0; b < sched->n_backends; b++) {
-        for (int c = 0; c < sched->n_copies; c++) {
+    क्रम (पूर्णांक b = 0; b < sched->n_backends; b++) {
+        क्रम (पूर्णांक c = 0; c < sched->n_copies; c++) {
             ggml_backend_event_free(sched->events[b][c]);
         }
     }
     ggml_gallocr_free(sched->galloc);
     ggml_free(sched->ctx);
     ggml_hash_set_free(&sched->hash_set);
-    for (int i = 0; i < sched->splits_capacity; i++) {
-        free(sched->splits[i].inputs);
+    क्रम (पूर्णांक i = 0; i < sched->splits_capacity; i++) {
+        मुक्त(sched->splits[i].inputs);
     }
-    free(sched->splits);
-    free(sched->graph_inputs);
-    free(sched->hv_tensor_backend_ids);
-    free(sched->hv_tensor_copies);
-    free(sched->node_backend_ids);
-    free(sched->leaf_backend_ids);
-    free(sched->prev_node_backend_ids);
-    free(sched->prev_leaf_backend_ids);
-    free(sched->context_buffer);
-    free(sched->graph.nodes);
-    free(sched->graph.leafs);
-    free(sched);
+    मुक्त(sched->splits);
+    मुक्त(sched->graph_inputs);
+    मुक्त(sched->hv_tensor_backend_ids);
+    मुक्त(sched->hv_tensor_copies);
+    मुक्त(sched->गाँठ_backend_ids);
+    मुक्त(sched->leaf_backend_ids);
+    मुक्त(sched->पूर्व_गाँठ_backend_ids);
+    मुक्त(sched->पूर्व_leaf_backend_ids);
+    मुक्त(sched->context_बफर);
+    मुक्त(sched->graph.nodes);
+    मुक्त(sched->graph.leafs);
+    मुक्त(sched);
 }
 
-void ggml_backend_sched_reset(ggml_backend_sched_t sched) {
+व्योम ggml_backend_sched_reset(ggml_backend_sched_t sched) {
     GGML_ASSERT(sched);
     // reset state for the next run
-    if (!sched->is_reset) {
+    अगर (!sched->is_reset) {
         ggml_hash_set_reset(&sched->hash_set);
-        memset(sched->hv_tensor_backend_ids, -1, sched->hash_set.size * sizeof(sched->hv_tensor_backend_ids[0]));
-        memset(sched->hv_tensor_copies,       0, sched->hash_set.size * sched->n_backends * sched->n_copies * sizeof(struct ggml_tensor *));
+        स_रखो(sched->hv_tensor_backend_ids, -1, sched->hash_set.size * माप(sched->hv_tensor_backend_ids[0]));
+        स_रखो(sched->hv_tensor_copies,       0, sched->hash_set.size * sched->n_backends * sched->n_copies * माप(काष्ठा ggml_tensor *));
         sched->is_reset = true;
     }
     sched->is_alloc = false;
 }
 
-void ggml_backend_sched_reserve_size(ggml_backend_sched_t sched, struct ggml_cgraph * measure_graph, size_t * sizes) {
+व्योम ggml_backend_sched_reserve_आकार(ggml_backend_sched_t sched, काष्ठा ggml_cgraph * measure_graph, माप_प्रकार * sizes) {
     GGML_ASSERT(sched);
-    GGML_ASSERT((int)sched->hash_set.size >= measure_graph->n_nodes + measure_graph->n_leafs);
+    GGML_ASSERT((पूर्णांक)sched->hash_set.size >= measure_graph->n_nodes + measure_graph->n_leafs);
     GGML_ASSERT(sizes);
 
     ggml_backend_sched_reset(sched);
@@ -2070,562 +2070,562 @@ void ggml_backend_sched_reserve_size(ggml_backend_sched_t sched, struct ggml_cgr
 
     ggml_backend_sched_split_graph(sched, measure_graph);
 
-    ggml_gallocr_reserve_n_size(sched->galloc, &sched->graph, sched->node_backend_ids, sched->leaf_backend_ids, sizes);
+    ggml_gallocr_reserve_n_आकार(sched->galloc, &sched->graph, sched->गाँठ_backend_ids, sched->leaf_backend_ids, sizes);
 }
 
-bool ggml_backend_sched_reserve(ggml_backend_sched_t sched, struct ggml_cgraph * measure_graph) {
+bool ggml_backend_sched_reserve(ggml_backend_sched_t sched, काष्ठा ggml_cgraph * measure_graph) {
     GGML_ASSERT(sched);
-    GGML_ASSERT((int)sched->hash_set.size >= measure_graph->n_nodes + measure_graph->n_leafs);
+    GGML_ASSERT((पूर्णांक)sched->hash_set.size >= measure_graph->n_nodes + measure_graph->n_leafs);
 
     ggml_backend_sched_synchronize(sched);
 
     ggml_backend_sched_split_graph(sched, measure_graph);
 
-    if (!ggml_gallocr_reserve_n(sched->galloc, &sched->graph, sched->node_backend_ids, sched->leaf_backend_ids)) {
-        return false;
+    अगर (!ggml_gallocr_reserve_n(sched->galloc, &sched->graph, sched->गाँठ_backend_ids, sched->leaf_backend_ids)) {
+        वापस false;
     }
 
     ggml_backend_sched_reset(sched);
 
-    return true;
+    वापस true;
 }
 
-bool ggml_backend_sched_alloc_graph(ggml_backend_sched_t sched, struct ggml_cgraph * graph) {
+bool ggml_backend_sched_alloc_graph(ggml_backend_sched_t sched, काष्ठा ggml_cgraph * graph) {
     GGML_ASSERT(sched);
-    GGML_ASSERT((int)sched->hash_set.size >= graph->n_nodes + graph->n_leafs);
+    GGML_ASSERT((पूर्णांक)sched->hash_set.size >= graph->n_nodes + graph->n_leafs);
     GGML_ASSERT(!sched->is_alloc);
 
-    sched->cur_copy = sched->next_copy;
-    sched->next_copy = (sched->next_copy + 1) % sched->n_copies;
+    sched->cur_copy = sched->अग्र_copy;
+    sched->अग्र_copy = (sched->अग्र_copy + 1) % sched->n_copies;
 
     ggml_backend_sched_split_graph(sched, graph);
 
-    if (!ggml_backend_sched_alloc_splits(sched)) {
-        return false;
+    अगर (!ggml_backend_sched_alloc_splits(sched)) {
+        वापस false;
     }
 
     sched->is_alloc = true;
 
-    return true;
+    वापस true;
 }
 
-enum ggml_status ggml_backend_sched_graph_compute(ggml_backend_sched_t sched, struct ggml_cgraph * graph) {
-    enum ggml_status err = ggml_backend_sched_graph_compute_async(sched, graph);
+क्रमागत ggml_status ggml_backend_sched_graph_compute(ggml_backend_sched_t sched, काष्ठा ggml_cgraph * graph) {
+    क्रमागत ggml_status err = ggml_backend_sched_graph_compute_async(sched, graph);
     ggml_backend_sched_synchronize(sched);
-    return err;
+    वापस err;
 }
 
-enum ggml_status ggml_backend_sched_graph_compute_async(ggml_backend_sched_t sched, struct ggml_cgraph * graph) {
+क्रमागत ggml_status ggml_backend_sched_graph_compute_async(ggml_backend_sched_t sched, काष्ठा ggml_cgraph * graph) {
     GGML_ASSERT(sched);
-    if (!sched->is_reset && !sched->is_alloc) {
+    अगर (!sched->is_reset && !sched->is_alloc) {
         ggml_backend_sched_reset(sched);
     }
 
-    if (!sched->is_alloc) {
-        if (!ggml_backend_sched_alloc_graph(sched, graph)) {
-            return GGML_STATUS_ALLOC_FAILED;
+    अगर (!sched->is_alloc) {
+        अगर (!ggml_backend_sched_alloc_graph(sched, graph)) {
+            वापस GGML_STATUS_ALLOC_FAILED;
         }
     }
 
-    return ggml_backend_sched_compute_splits(sched);
+    वापस ggml_backend_sched_compute_splits(sched);
 }
 
-void ggml_backend_sched_synchronize(ggml_backend_sched_t sched) {
+व्योम ggml_backend_sched_synchronize(ggml_backend_sched_t sched) {
     GGML_ASSERT(sched);
-    for (int i = 0; i < sched->n_backends; i++) {
+    क्रम (पूर्णांक i = 0; i < sched->n_backends; i++) {
         ggml_backend_synchronize(sched->backends[i]);
     }
-    if (!sched->is_alloc) {
+    अगर (!sched->is_alloc) {
         // if the graph is not already allocated, always use copy 0 after a synchronization
         // this ensures that during generation the same copy is used every time,
         // which avoids changes in the graph that could cause CUDA or other graphs to be disabled
-        sched->next_copy = 0;
+        sched->अग्र_copy = 0;
     }
 }
 
-void ggml_backend_sched_set_eval_callback(ggml_backend_sched_t sched, ggml_backend_sched_eval_callback callback, void * user_data) {
+व्योम ggml_backend_sched_set_eval_callback(ggml_backend_sched_t sched, ggml_backend_sched_eval_callback callback, व्योम * user_तथ्य) {
     GGML_ASSERT(sched);
     sched->callback_eval = callback;
-    sched->callback_eval_user_data = user_data;
+    sched->callback_eval_user_तथ्य = user_तथ्य;
 }
 
-void ggml_backend_sched_set_copy_callback(ggml_backend_sched_t sched, ggml_backend_sched_copy_callback callback, void * user_data) {
+व्योम ggml_backend_sched_set_copy_callback(ggml_backend_sched_t sched, ggml_backend_sched_copy_callback callback, व्योम * user_तथ्य) {
     GGML_ASSERT(sched);
     sched->callback_copy = callback;
-    sched->callback_copy_user_data = user_data;
+    sched->callback_copy_user_तथ्य = user_तथ्य;
 }
 
-void ggml_backend_sched_set_realloc_callback(ggml_backend_sched_t sched, ggml_backend_sched_realloc_callback callback, void * user_data) {
+व्योम ggml_backend_sched_set_realloc_callback(ggml_backend_sched_t sched, ggml_backend_sched_realloc_callback callback, व्योम * user_तथ्य) {
     GGML_ASSERT(sched);
     sched->callback_realloc = callback;
-    sched->callback_realloc_user_data = user_data;
+    sched->callback_realloc_user_तथ्य = user_तथ्य;
 }
 
-int ggml_backend_sched_get_n_splits(ggml_backend_sched_t sched) {
+पूर्णांक ggml_backend_sched_get_n_splits(ggml_backend_sched_t sched) {
     GGML_ASSERT(sched);
-    return sched->n_splits;
+    वापस sched->n_splits;
 }
 
-int ggml_backend_sched_get_n_copies(ggml_backend_sched_t sched) {
+पूर्णांक ggml_backend_sched_get_n_copies(ggml_backend_sched_t sched) {
     GGML_ASSERT(sched);
-    return sched->n_copies;
+    वापस sched->n_copies;
 }
 
-int ggml_backend_sched_get_n_backends(ggml_backend_sched_t sched) {
+पूर्णांक ggml_backend_sched_get_n_backends(ggml_backend_sched_t sched) {
     GGML_ASSERT(sched);
-    return sched->n_backends;
+    वापस sched->n_backends;
 }
 
-ggml_backend_t ggml_backend_sched_get_backend(ggml_backend_sched_t sched, int i) {
+ggml_backend_t ggml_backend_sched_get_backend(ggml_backend_sched_t sched, पूर्णांक i) {
     GGML_ASSERT(sched);
     GGML_ASSERT(i >= 0 && i < sched->n_backends);
-    return sched->backends[i];
+    वापस sched->backends[i];
 }
 
-ggml_backend_buffer_type_t ggml_backend_sched_get_buffer_type(ggml_backend_sched_t sched, ggml_backend_t backend) {
+ggml_backend_बफर_type_t ggml_backend_sched_get_बफर_type(ggml_backend_sched_t sched, ggml_backend_t backend) {
     GGML_ASSERT(sched);
-    int backend_index = ggml_backend_sched_backend_id(sched, backend);
-    GGML_ASSERT(backend_index >= 0 && backend_index < sched->n_backends);
+    पूर्णांक backend_सूचकांक = ggml_backend_sched_backend_id(sched, backend);
+    GGML_ASSERT(backend_सूचकांक >= 0 && backend_सूचकांक < sched->n_backends);
 
-    return sched->bufts[backend_index];
+    वापस sched->bufts[backend_सूचकांक];
 }
 
-size_t ggml_backend_sched_get_buffer_size(ggml_backend_sched_t sched, ggml_backend_t backend) {
+माप_प्रकार ggml_backend_sched_get_बफर_आकार(ggml_backend_sched_t sched, ggml_backend_t backend) {
     GGML_ASSERT(sched);
-    int backend_index = ggml_backend_sched_backend_id(sched, backend);
-    GGML_ASSERT(backend_index >= 0 && backend_index < sched->n_backends);
+    पूर्णांक backend_सूचकांक = ggml_backend_sched_backend_id(sched, backend);
+    GGML_ASSERT(backend_सूचकांक >= 0 && backend_सूचकांक < sched->n_backends);
 
-    return ggml_gallocr_get_buffer_size(sched->galloc, backend_index);
+    वापस ggml_gallocr_get_बफर_आकार(sched->galloc, backend_सूचकांक);
 }
 
-void ggml_backend_sched_set_tensor_backend(ggml_backend_sched_t sched, struct ggml_tensor * node, ggml_backend_t backend) {
+व्योम ggml_backend_sched_set_tensor_backend(ggml_backend_sched_t sched, काष्ठा ggml_tensor * गाँठ, ggml_backend_t backend) {
     GGML_ASSERT(sched);
-    int backend_index = ggml_backend_sched_backend_id(sched, backend);
-    GGML_ASSERT(backend_index >= 0 && backend_index < sched->n_backends);
-    tensor_backend_id(node) = backend_index;
-    SET_CAUSE(node, "usr");
+    पूर्णांक backend_सूचकांक = ggml_backend_sched_backend_id(sched, backend);
+    GGML_ASSERT(backend_सूचकांक >= 0 && backend_सूचकांक < sched->n_backends);
+    tensor_backend_id(गाँठ) = backend_सूचकांक;
+    SET_CAUSE(गाँठ, "usr");
     sched->is_reset = false;
 }
 
-ggml_backend_t ggml_backend_sched_get_tensor_backend(ggml_backend_sched_t sched, struct ggml_tensor * node) {
+ggml_backend_t ggml_backend_sched_get_tensor_backend(ggml_backend_sched_t sched, काष्ठा ggml_tensor * गाँठ) {
     GGML_ASSERT(sched);
-    int backend_index = tensor_backend_id(node);
-    if (backend_index == -1) {
-        return NULL;
+    पूर्णांक backend_सूचकांक = tensor_backend_id(गाँठ);
+    अगर (backend_सूचकांक == -1) {
+        वापस शून्य;
     }
-    return sched->backends[backend_index];
+    वापस sched->backends[backend_सूचकांक];
 }
 
 // utils
 
-bool ggml_op_alloc_size_may_expand(enum ggml_op op) {
-    switch (op) {
-        case GGML_OP_FLASH_ATTN_EXT:
-        case GGML_OP_MUL_MAT:
-        case GGML_OP_MUL_MAT_ID:
-        case GGML_OP_CUMSUM:
-        case GGML_OP_ARGSORT:
-        case GGML_OP_TOP_K:
-        case GGML_OP_ARGMAX:
-            return true;
-        default:
-            return false;
+bool ggml_op_alloc_आकार_may_expand(क्रमागत ggml_op op) {
+    चयन (op) {
+        हाल GGML_OP_FLASH_ATTN_EXT:
+        हाल GGML_OP_MUL_MAT:
+        हाल GGML_OP_MUL_MAT_ID:
+        हाल GGML_OP_CUMSUM:
+        हाल GGML_OP_ARGSORT:
+        हाल GGML_OP_शीर्ष_K:
+        हाल GGML_OP_ARGMAX:
+            वापस true;
+        शेष:
+            वापस false;
     }
 }
 
-enum ggml_status ggml_backend_view_init(struct ggml_tensor * tensor) {
+क्रमागत ggml_status ggml_backend_view_init(काष्ठा ggml_tensor * tensor) {
     GGML_ASSERT(tensor);
-    GGML_ASSERT(tensor->buffer == NULL);
-    GGML_ASSERT(tensor->view_src != NULL);
-    GGML_ASSERT(tensor->view_src->buffer != NULL);
-    GGML_ASSERT(tensor->view_src->data != NULL);
+    GGML_ASSERT(tensor->बफर == शून्य);
+    GGML_ASSERT(tensor->view_src != शून्य);
+    GGML_ASSERT(tensor->view_src->बफर != शून्य);
+    GGML_ASSERT(tensor->view_src->तथ्य != शून्य);
 
-    tensor->buffer = tensor->view_src->buffer;
-    tensor->data = (char *)tensor->view_src->data + tensor->view_offs;
-    return ggml_backend_buffer_init_tensor(tensor->buffer, tensor);
+    tensor->बफर = tensor->view_src->बफर;
+    tensor->तथ्य = (अक्षर *)tensor->view_src->तथ्य + tensor->view_offs;
+    वापस ggml_backend_बफर_init_tensor(tensor->बफर, tensor);
 }
 
-enum ggml_status ggml_backend_tensor_alloc(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor, void * addr) {
+क्रमागत ggml_status ggml_backend_tensor_alloc(ggml_backend_बफर_t बफर, काष्ठा ggml_tensor * tensor, व्योम * addr) {
     GGML_ASSERT(tensor);
-    GGML_ASSERT(tensor->buffer == NULL);
-    GGML_ASSERT(tensor->data == NULL);
-    GGML_ASSERT(tensor->view_src == NULL);
-    GGML_ASSERT(addr >= ggml_backend_buffer_get_base(buffer));
-    GGML_ASSERT(ggml_backend_buffer_is_meta(buffer) ||
-        (char *) addr + ggml_backend_buffer_get_alloc_size(buffer, tensor) <=
-        (char *) ggml_backend_buffer_get_base(buffer) + ggml_backend_buffer_get_size(buffer));
+    GGML_ASSERT(tensor->बफर == शून्य);
+    GGML_ASSERT(tensor->तथ्य == शून्य);
+    GGML_ASSERT(tensor->view_src == शून्य);
+    GGML_ASSERT(addr >= ggml_backend_बफर_get_base(बफर));
+    GGML_ASSERT(ggml_backend_बफर_is_meta(बफर) ||
+        (अक्षर *) addr + ggml_backend_बफर_get_alloc_आकार(बफर, tensor) <=
+        (अक्षर *) ggml_backend_बफर_get_base(बफर) + ggml_backend_बफर_get_आकार(बफर));
 
-    tensor->buffer = buffer;
-    tensor->data = addr;
-    return ggml_backend_buffer_init_tensor(buffer, tensor);
+    tensor->बफर = बफर;
+    tensor->तथ्य = addr;
+    वापस ggml_backend_बफर_init_tensor(बफर, tensor);
 }
 
-static struct ggml_tensor * graph_copy_dup_tensor(struct ggml_hash_set hash_set, struct ggml_tensor ** node_copies,
-    struct ggml_context * ctx_allocated, struct ggml_context * ctx_unallocated, struct ggml_tensor * src) {
+अटल काष्ठा ggml_tensor * graph_copy_dup_tensor(काष्ठा ggml_hash_set hash_set, काष्ठा ggml_tensor ** गाँठ_copies,
+    काष्ठा ggml_context * ctx_allocated, काष्ठा ggml_context * ctx_unallocated, काष्ठा ggml_tensor * src) {
 
-    GGML_ASSERT(src != NULL);
-    GGML_ASSERT(src->data && "graph must be allocated");
+    GGML_ASSERT(src != शून्य);
+    GGML_ASSERT(src->तथ्य && "graph must be allocated");
 
-    size_t id = ggml_hash_insert(&hash_set, src);
-    if (id == GGML_HASHSET_ALREADY_EXISTS) {
-        return node_copies[ggml_hash_find(&hash_set, src)];
+    माप_प्रकार id = ggml_hash_जोड़ो(&hash_set, src);
+    अगर (id == GGML_HASHSET_ALREADY_EXISTS) {
+        वापस गाँठ_copies[ggml_hash_find(&hash_set, src)];
     }
 
-    struct ggml_tensor * dst = ggml_dup_tensor_layout(src->data && !src->view_src ? ctx_allocated : ctx_unallocated, src);
-    if (src->view_src != NULL) {
-        dst->view_src = graph_copy_dup_tensor(hash_set, node_copies, ctx_allocated, ctx_unallocated, src->view_src);
+    काष्ठा ggml_tensor * dst = ggml_dup_tensor_layout(src->तथ्य && !src->view_src ? ctx_allocated : ctx_unallocated, src);
+    अगर (src->view_src != शून्य) {
+        dst->view_src = graph_copy_dup_tensor(hash_set, गाँठ_copies, ctx_allocated, ctx_unallocated, src->view_src);
         dst->view_offs = src->view_offs;
     }
     dst->op = src->op;
     dst->flags = src->flags;
-    memcpy(dst->op_params, src->op_params, sizeof(dst->op_params));
+    स_नकल(dst->op_params, src->op_params, माप(dst->op_params));
     ggml_set_name(dst, src->name);
 
     // copy src
-    for (int i = 0; i < GGML_MAX_SRC; i++) {
-        struct ggml_tensor * s = src->src[i];
-        if (s == NULL) {
-            continue;
+    क्रम (पूर्णांक i = 0; i < GGML_MAX_SRC; i++) {
+        काष्ठा ggml_tensor * s = src->src[i];
+        अगर (s == शून्य) {
+            जारी;
         }
-        dst->src[i] = graph_copy_dup_tensor(hash_set, node_copies, ctx_allocated, ctx_unallocated, s);
+        dst->src[i] = graph_copy_dup_tensor(hash_set, गाँठ_copies, ctx_allocated, ctx_unallocated, s);
     }
 
-    node_copies[id] = dst;
-    return dst;
+    गाँठ_copies[id] = dst;
+    वापस dst;
 }
 
-static void graph_copy_init_tensor(struct ggml_hash_set * hash_set, struct ggml_tensor ** node_copies, bool * node_init, struct ggml_tensor * src) {
-    size_t id = ggml_hash_find(hash_set, src);
-    if (node_init[id]) {
-        return;
+अटल व्योम graph_copy_init_tensor(काष्ठा ggml_hash_set * hash_set, काष्ठा ggml_tensor ** गाँठ_copies, bool * गाँठ_init, काष्ठा ggml_tensor * src) {
+    माप_प्रकार id = ggml_hash_find(hash_set, src);
+    अगर (गाँठ_init[id]) {
+        वापस;
     }
-    node_init[id] = true;
+    गाँठ_init[id] = true;
 
-    struct ggml_tensor * dst = node_copies[id];
-    if (dst->view_src != NULL) {
-        graph_copy_init_tensor(hash_set, node_copies, node_init, src->view_src);
-        enum ggml_status status = ggml_backend_view_init(dst);
+    काष्ठा ggml_tensor * dst = गाँठ_copies[id];
+    अगर (dst->view_src != शून्य) {
+        graph_copy_init_tensor(hash_set, गाँठ_copies, गाँठ_init, src->view_src);
+        क्रमागत ggml_status status = ggml_backend_view_init(dst);
         GGML_ASSERT(status == GGML_STATUS_SUCCESS);
     }
-    else {
+    अन्यथा {
         ggml_backend_tensor_copy(src, dst);
     }
 
     // init src
-    for (int i = 0; i < GGML_MAX_SRC; i++) {
-        struct ggml_tensor * s = src->src[i];
-        if (s == NULL) {
-            continue;
+    क्रम (पूर्णांक i = 0; i < GGML_MAX_SRC; i++) {
+        काष्ठा ggml_tensor * s = src->src[i];
+        अगर (s == शून्य) {
+            जारी;
         }
-        graph_copy_init_tensor(hash_set, node_copies, node_init, s);
+        graph_copy_init_tensor(hash_set, गाँठ_copies, गाँठ_init, s);
     }
 }
 
-struct ggml_backend_graph_copy ggml_backend_graph_copy(ggml_backend_t backend, struct ggml_cgraph * graph) {
+काष्ठा ggml_backend_graph_copy ggml_backend_graph_copy(ggml_backend_t backend, काष्ठा ggml_cgraph * graph) {
     GGML_ASSERT(graph);
-    struct ggml_hash_set hash_set = ggml_hash_set_new(graph->visited_hash_set.size);
-    struct ggml_tensor ** node_copies = (ggml_tensor **) calloc(hash_set.size, sizeof(node_copies[0])); // NOLINT
-    bool * node_init = (bool *) calloc(hash_set.size, sizeof(node_init[0]));
+    काष्ठा ggml_hash_set hash_set = ggml_hash_set_new(graph->visited_hash_set.size);
+    काष्ठा ggml_tensor ** गाँठ_copies = (ggml_tensor **) सुस्मृति(hash_set.size, माप(गाँठ_copies[0])); // NOLINT
+    bool * गाँठ_init = (bool *) सुस्मृति(hash_set.size, माप(गाँठ_init[0]));
 
-    struct ggml_init_params params = {
+    काष्ठा ggml_init_params params = {
         /* .mem_size   = */ ggml_tensor_overhead()*hash_set.size + ggml_graph_overhead_custom(graph->size, false),
-        /* .mem_buffer = */ NULL,
+        /* .mem_buffer = */ शून्य,
         /* .no_alloc   = */ true
     };
 
-    struct ggml_context * ctx_allocated = ggml_init(params);
-    struct ggml_context * ctx_unallocated = ggml_init(params);
+    काष्ठा ggml_context * ctx_allocated = ggml_init(params);
+    काष्ठा ggml_context * ctx_unallocated = ggml_init(params);
 
-    if (ctx_allocated == NULL || ctx_unallocated == NULL) {
+    अगर (ctx_allocated == शून्य || ctx_unallocated == शून्य) {
         GGML_LOG_ERROR("%s: failed to allocate context for graph copy\n", __func__);
         ggml_hash_set_free(&hash_set);
-        free(node_copies);
-        free(node_init);
+        मुक्त(गाँठ_copies);
+        मुक्त(गाँठ_init);
         ggml_free(ctx_allocated);
         ggml_free(ctx_unallocated);
-        return {
-            /* .buffer           = */ NULL,
-            /* .ctx_allocated    = */ NULL,
-            /* .ctx_unallocated  = */ NULL,
-            /* .graph            = */ NULL,
+        वापस {
+            /* .buffer           = */ शून्य,
+            /* .ctx_allocated    = */ शून्य,
+            /* .ctx_unallocated  = */ शून्य,
+            /* .graph            = */ शून्य,
         };
     }
 
     // dup nodes
-    for (int i = 0; i < graph->n_nodes; i++) {
-        struct ggml_tensor * node = graph->nodes[i];
-        graph_copy_dup_tensor(hash_set, node_copies, ctx_allocated, ctx_unallocated, node);
+    क्रम (पूर्णांक i = 0; i < graph->n_nodes; i++) {
+        काष्ठा ggml_tensor * गाँठ = graph->nodes[i];
+        graph_copy_dup_tensor(hash_set, गाँठ_copies, ctx_allocated, ctx_unallocated, गाँठ);
     }
 
     // allocate nodes
-    ggml_backend_buffer_t buffer = ggml_backend_alloc_ctx_tensors(ctx_allocated, backend);
-    if (buffer == NULL) {
+    ggml_backend_बफर_t बफर = ggml_backend_alloc_ctx_tensors(ctx_allocated, backend);
+    अगर (बफर == शून्य) {
         GGML_LOG_ERROR("%s: failed to allocate buffer for graph copy\n", __func__);
         ggml_hash_set_free(&hash_set);
-        free(node_copies);
-        free(node_init);
+        मुक्त(गाँठ_copies);
+        मुक्त(गाँठ_init);
         ggml_free(ctx_allocated);
         ggml_free(ctx_unallocated);
-        return {
-            /* .buffer           = */ NULL,
-            /* .ctx_allocated    = */ NULL,
-            /* .ctx_unallocated  = */ NULL,
-            /* .graph            = */ NULL,
+        वापस {
+            /* .buffer           = */ शून्य,
+            /* .ctx_allocated    = */ शून्य,
+            /* .ctx_unallocated  = */ शून्य,
+            /* .graph            = */ शून्य,
         };
     }
 
     //printf("copy buffer size: %zu MB\n", ggml_backend_buffer_get_size(buffer) / 1024 / 1024);
 
     // copy data and init views
-    for (int i = 0; i < graph->n_nodes; i++) {
-        struct ggml_tensor * node = graph->nodes[i];
-        graph_copy_init_tensor(&hash_set, node_copies, node_init, node);
+    क्रम (पूर्णांक i = 0; i < graph->n_nodes; i++) {
+        काष्ठा ggml_tensor * गाँठ = graph->nodes[i];
+        graph_copy_init_tensor(&hash_set, गाँठ_copies, गाँठ_init, गाँठ);
     }
 
     // build graph copy
-    struct ggml_cgraph * graph_copy = ggml_new_graph_custom(ctx_allocated, graph->size, false);
-    for (int i = 0; i < graph->n_nodes; i++) {
-        struct ggml_tensor * node = graph->nodes[i];
-        struct ggml_tensor * node_copy = node_copies[ggml_hash_find(&hash_set, node)];
-        graph_copy->nodes[i] = node_copy;
+    काष्ठा ggml_cgraph * graph_copy = ggml_new_graph_custom(ctx_allocated, graph->size, false);
+    क्रम (पूर्णांक i = 0; i < graph->n_nodes; i++) {
+        काष्ठा ggml_tensor * गाँठ = graph->nodes[i];
+        काष्ठा ggml_tensor * गाँठ_copy = गाँठ_copies[ggml_hash_find(&hash_set, गाँठ)];
+        graph_copy->nodes[i] = गाँठ_copy;
     }
     graph_copy->n_nodes = graph->n_nodes;
 
     ggml_hash_set_free(&hash_set);
-    free(node_copies);
-    free(node_init);
+    मुक्त(गाँठ_copies);
+    मुक्त(गाँठ_init);
 
-    return {
-        /* .buffer           = */ buffer,
+    वापस {
+        /* .buffer           = */ बफर,
         /* .ctx_allocated    = */ ctx_allocated,
         /* .ctx_unallocated  = */ ctx_unallocated,
         /* .graph            = */ graph_copy,
     };
 }
 
-void ggml_backend_graph_copy_free(struct ggml_backend_graph_copy copy) {
-    ggml_backend_buffer_free(copy.buffer);
+व्योम ggml_backend_graph_copy_free(काष्ठा ggml_backend_graph_copy copy) {
+    ggml_backend_बफर_free(copy.बफर);
     ggml_free(copy.ctx_allocated);
     ggml_free(copy.ctx_unallocated);
 }
 
-bool ggml_backend_compare_graph_backend(ggml_backend_t backend1, ggml_backend_t backend2, struct ggml_cgraph * graph, ggml_backend_eval_callback callback, void * user_data, struct ggml_tensor const * const * test_nodes, size_t num_test_nodes) {
-    struct ggml_backend_graph_copy copy = ggml_backend_graph_copy(backend2, graph);
-    if (copy.buffer == NULL) {
-        return false;
+bool ggml_backend_compare_graph_backend(ggml_backend_t backend1, ggml_backend_t backend2, काष्ठा ggml_cgraph * graph, ggml_backend_eval_callback callback, व्योम * user_तथ्य, काष्ठा ggml_tensor स्थिर * स्थिर * test_nodes, माप_प्रकार अंक_test_nodes) {
+    काष्ठा ggml_backend_graph_copy copy = ggml_backend_graph_copy(backend2, graph);
+    अगर (copy.बफर == शून्य) {
+        वापस false;
     }
 
-    struct ggml_cgraph * g1 = graph;
-    struct ggml_cgraph * g2 = copy.graph;
+    काष्ठा ggml_cgraph * g1 = graph;
+    काष्ठा ggml_cgraph * g2 = copy.graph;
 
-    assert(g1->n_nodes == g2->n_nodes);
+    निश्चित(g1->n_nodes == g2->n_nodes);
 
-    if (num_test_nodes != 0) {
+    अगर (अंक_test_nodes != 0) {
         GGML_ASSERT(test_nodes);
         // Compute the whole graph and only test the output for specific tensors
         ggml_backend_graph_compute(backend1, g1);
         ggml_backend_graph_compute(backend2, g2);
 
         bool verified = false;
-        for (int i = 0; i < g1->n_nodes; i++) {
-            for (size_t j = 0; j < num_test_nodes; ++j) {
-                if (g1->nodes[i] == test_nodes[j]) {
-                    callback(i, g1->nodes[i], g2->nodes[i], user_data);
+        क्रम (पूर्णांक i = 0; i < g1->n_nodes; i++) {
+            क्रम (माप_प्रकार j = 0; j < अंक_test_nodes; ++j) {
+                अगर (g1->nodes[i] == test_nodes[j]) {
+                    callback(i, g1->nodes[i], g2->nodes[i], user_तथ्य);
                     verified = true;
                 }
             }
         }
         GGML_ASSERT(verified);
-    } else {
-        for (int i = 0; i < g1->n_nodes; i++) {
-            struct ggml_tensor * t1 = g1->nodes[i];
-            struct ggml_tensor * t2 = g2->nodes[i];
+    } अन्यथा {
+        क्रम (पूर्णांक i = 0; i < g1->n_nodes; i++) {
+            काष्ठा ggml_tensor * t1 = g1->nodes[i];
+            काष्ठा ggml_tensor * t2 = g2->nodes[i];
 
-            assert(t1->op == t2->op && ggml_are_same_layout(t1, t2));
+            निश्चित(t1->op == t2->op && ggml_are_same_layout(t1, t2));
 
-            struct ggml_cgraph g1v = ggml_graph_view(g1, i, i + 1);
-            struct ggml_cgraph g2v = ggml_graph_view(g2, i, i + 1);
+            काष्ठा ggml_cgraph g1v = ggml_graph_view(g1, i, i + 1);
+            काष्ठा ggml_cgraph g2v = ggml_graph_view(g2, i, i + 1);
 
             ggml_backend_graph_compute(backend1, &g1v);
             ggml_backend_graph_compute(backend2, &g2v);
 
-            if (ggml_is_view_op(t1->op)) {
-                continue;
+            अगर (ggml_is_view_op(t1->op)) {
+                जारी;
             }
 
             // compare results, calculate rms etc
-            if (!callback(i, t1, t2, user_data)) {
-                break;
+            अगर (!callback(i, t1, t2, user_तथ्य)) {
+                अवरोध;
             }
         }
     }
     ggml_backend_graph_copy_free(copy);
 
-    return true;
+    वापस true;
 }
 
 // CPU backend - buffer
 
-static void * ggml_backend_cpu_buffer_get_base(ggml_backend_buffer_t buffer) {
-    GGML_ASSERT(buffer);
-    uintptr_t data = (uintptr_t)buffer->context;
+अटल व्योम * ggml_backend_cpu_बफर_get_base(ggml_backend_बफर_t बफर) {
+    GGML_ASSERT(बफर);
+    uintptr_t तथ्य = (uintptr_t)बफर->context;
 
     // align the buffer
-    if (data % TENSOR_ALIGNMENT != 0) {
-        data = GGML_PAD(data, TENSOR_ALIGNMENT);
+    अगर (तथ्य % TENSOR_ALIGNMENT != 0) {
+        तथ्य = GGML_PAD(तथ्य, TENSOR_ALIGNMENT);
     }
 
-    return (void *)data;
+    वापस (व्योम *)तथ्य;
 }
 
-static void ggml_backend_cpu_buffer_free_buffer(ggml_backend_buffer_t buffer) {
-    GGML_ASSERT(buffer);
-    ggml_aligned_free(buffer->context, buffer->size);
+अटल व्योम ggml_backend_cpu_बफर_free_बफर(ggml_backend_बफर_t बफर) {
+    GGML_ASSERT(बफर);
+    ggml_aligned_free(बफर->context, बफर->size);
 }
 
-static void ggml_backend_cpu_buffer_memset_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor, uint8_t value, size_t offset, size_t size) {
+अटल व्योम ggml_backend_cpu_बफर_memset_tensor(ggml_backend_बफर_t बफर, काष्ठा ggml_tensor * tensor, uint8_t value, माप_प्रकार offset, माप_प्रकार size) {
     GGML_ASSERT(tensor);
-    memset((char *)tensor->data + offset, value, size);
+    स_रखो((अक्षर *)tensor->तथ्य + offset, value, size);
 
-    GGML_UNUSED(buffer);
+    GGML_UNUSED(बफर);
 }
 
-static void ggml_backend_cpu_buffer_set_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor, const void * data, size_t offset, size_t size) {
+अटल व्योम ggml_backend_cpu_बफर_set_tensor(ggml_backend_बफर_t बफर, काष्ठा ggml_tensor * tensor, स्थिर व्योम * तथ्य, माप_प्रकार offset, माप_प्रकार size) {
     GGML_ASSERT(tensor);
-    memcpy((char *)tensor->data + offset, data, size);
+    स_नकल((अक्षर *)tensor->तथ्य + offset, तथ्य, size);
 
-    GGML_UNUSED(buffer);
+    GGML_UNUSED(बफर);
 }
 
-static void ggml_backend_cpu_buffer_get_tensor(ggml_backend_buffer_t buffer, const struct ggml_tensor * tensor, void * data, size_t offset, size_t size) {
+अटल व्योम ggml_backend_cpu_बफर_get_tensor(ggml_backend_बफर_t बफर, स्थिर काष्ठा ggml_tensor * tensor, व्योम * तथ्य, माप_प्रकार offset, माप_प्रकार size) {
     GGML_ASSERT(tensor);
-    memcpy(data, (const char *)tensor->data + offset, size);
+    स_नकल(तथ्य, (स्थिर अक्षर *)tensor->तथ्य + offset, size);
 
-    GGML_UNUSED(buffer);
+    GGML_UNUSED(बफर);
 }
 
-static bool ggml_backend_cpu_buffer_cpy_tensor(ggml_backend_buffer_t buffer, const struct ggml_tensor * src, struct ggml_tensor * dst) {
+अटल bool ggml_backend_cpu_बफर_cpy_tensor(ggml_backend_बफर_t बफर, स्थिर काष्ठा ggml_tensor * src, काष्ठा ggml_tensor * dst) {
     GGML_ASSERT(src);
-    if (ggml_backend_buffer_is_host(src->buffer)) {
-        memcpy(dst->data, src->data, ggml_nbytes(src));
-        return true;
+    अगर (ggml_backend_बफर_is_host(src->बफर)) {
+        स_नकल(dst->तथ्य, src->तथ्य, ggml_nbytes(src));
+        वापस true;
     }
-    return false;
+    वापस false;
 
-    GGML_UNUSED(buffer);
+    GGML_UNUSED(बफर);
 }
 
-static void ggml_backend_cpu_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value) {
-    GGML_ASSERT(buffer);
-    memset(buffer->context, value, buffer->size);
+अटल व्योम ggml_backend_cpu_बफर_clear(ggml_backend_बफर_t बफर, uint8_t value) {
+    GGML_ASSERT(बफर);
+    स_रखो(बफर->context, value, बफर->size);
 }
 
-static const struct ggml_backend_buffer_i ggml_backend_cpu_buffer_i = {
-    /* .free_buffer     = */ ggml_backend_cpu_buffer_free_buffer,
-    /* .get_base        = */ ggml_backend_cpu_buffer_get_base,
-    /* .init_tensor     = */ NULL, // no initialization required
-    /* .memset_tensor   = */ ggml_backend_cpu_buffer_memset_tensor,
-    /* .set_tensor      = */ ggml_backend_cpu_buffer_set_tensor,
-    /* .get_tensor      = */ ggml_backend_cpu_buffer_get_tensor,
-    /* .set_tensor_2d   = */ NULL,
-    /* .get_tensor_2d   = */ NULL,
-    /* .cpy_tensor      = */ ggml_backend_cpu_buffer_cpy_tensor,
-    /* .clear           = */ ggml_backend_cpu_buffer_clear,
-    /* .reset           = */ NULL,
+अटल स्थिर काष्ठा ggml_backend_बफर_i ggml_backend_cpu_बफर_i = {
+    /* .free_buffer     = */ ggml_backend_cpu_बफर_free_बफर,
+    /* .get_base        = */ ggml_backend_cpu_बफर_get_base,
+    /* .init_tensor     = */ शून्य, // no initialization required
+    /* .memset_tensor   = */ ggml_backend_cpu_बफर_memset_tensor,
+    /* .set_tensor      = */ ggml_backend_cpu_बफर_set_tensor,
+    /* .get_tensor      = */ ggml_backend_cpu_बफर_get_tensor,
+    /* .set_tensor_2d   = */ शून्य,
+    /* .get_tensor_2d   = */ शून्य,
+    /* .cpy_tensor      = */ ggml_backend_cpu_बफर_cpy_tensor,
+    /* .clear           = */ ggml_backend_cpu_बफर_clear,
+    /* .reset           = */ शून्य,
 };
 
-static const struct ggml_backend_buffer_i ggml_backend_cpu_buffer_from_ptr_i = {
-    /* .free_buffer     = */ NULL, // ptr is not owned by the buffer, so it does not need to be freed
-    /* .get_base        = */ ggml_backend_cpu_buffer_get_base,
-    /* .init_tensor     = */ NULL, // no initialization required
-    /* .memset_tensor   = */ ggml_backend_cpu_buffer_memset_tensor,
-    /* .set_tensor      = */ ggml_backend_cpu_buffer_set_tensor,
-    /* .get_tensor      = */ ggml_backend_cpu_buffer_get_tensor,
-    /* .set_tensor_2d   = */ NULL,
-    /* .get_tensor_2d   = */ NULL,
-    /* .cpy_tensor      = */ ggml_backend_cpu_buffer_cpy_tensor,
-    /* .clear           = */ ggml_backend_cpu_buffer_clear,
-    /* .reset           = */ NULL,
+अटल स्थिर काष्ठा ggml_backend_बफर_i ggml_backend_cpu_बफर_from_ptr_i = {
+    /* .free_buffer     = */ शून्य, // ptr is not owned by the buffer, so it does not need to be freed
+    /* .get_base        = */ ggml_backend_cpu_बफर_get_base,
+    /* .init_tensor     = */ शून्य, // no initialization required
+    /* .memset_tensor   = */ ggml_backend_cpu_बफर_memset_tensor,
+    /* .set_tensor      = */ ggml_backend_cpu_बफर_set_tensor,
+    /* .get_tensor      = */ ggml_backend_cpu_बफर_get_tensor,
+    /* .set_tensor_2d   = */ शून्य,
+    /* .get_tensor_2d   = */ शून्य,
+    /* .cpy_tensor      = */ ggml_backend_cpu_बफर_cpy_tensor,
+    /* .clear           = */ ggml_backend_cpu_बफर_clear,
+    /* .reset           = */ शून्य,
 };
 
 // CPU backend buffer type
 
 // this buffer type is defined here to make it available to all backends
 
-static const char * ggml_backend_cpu_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
-    return "CPU";
+अटल स्थिर अक्षर * ggml_backend_cpu_बफर_type_get_name(ggml_backend_बफर_type_t buft) {
+    वापस "CPU";
 
     GGML_UNUSED(buft);
 }
 
-static ggml_backend_buffer_t ggml_backend_cpu_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
-    void * data = ggml_aligned_malloc(size);
+अटल ggml_backend_बफर_t ggml_backend_cpu_बफर_type_alloc_बफर(ggml_backend_बफर_type_t buft, माप_प्रकार size) {
+    व्योम * तथ्य = ggml_aligned_malloc(size);
 
-    if (data == NULL) {
+    अगर (तथ्य == शून्य) {
         GGML_LOG_ERROR("%s: failed to allocate buffer of size %zu\n", __func__, size);
-        return NULL;
+        वापस शून्य;
     }
 
-    return ggml_backend_buffer_init(buft, ggml_backend_cpu_buffer_i, data, size);
+    वापस ggml_backend_बफर_init(buft, ggml_backend_cpu_बफर_i, तथ्य, size);
 }
 
-static size_t ggml_backend_cpu_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    return TENSOR_ALIGNMENT;
+अटल माप_प्रकार ggml_backend_cpu_बफर_type_get_alignment(ggml_backend_बफर_type_t buft) {
+    वापस TENSOR_ALIGNMENT;
 
     GGML_UNUSED(buft);
 }
 
-static bool ggml_backend_cpu_buffer_type_is_host(ggml_backend_buffer_type_t buft) {
-    return true;
+अटल bool ggml_backend_cpu_बफर_type_is_host(ggml_backend_बफर_type_t buft) {
+    वापस true;
 
     GGML_UNUSED(buft);
 }
 
-ggml_backend_buffer_type_t ggml_backend_cpu_buffer_type(void) {
-    static struct ggml_backend_buffer_type ggml_backend_cpu_buffer_type = {
+ggml_backend_बफर_type_t ggml_backend_cpu_बफर_type(व्योम) {
+    अटल काष्ठा ggml_backend_बफर_type ggml_backend_cpu_बफर_type = {
         /* .iface   = */ {
-            /* .get_name            = */ ggml_backend_cpu_buffer_type_get_name,
-            /* .alloc_buffer        = */ ggml_backend_cpu_buffer_type_alloc_buffer,
-            /* .alloc_buffer_n      = */ NULL,
-            /* .get_alignment       = */ ggml_backend_cpu_buffer_type_get_alignment,
-            /* .get_max_size        = */ NULL, // defaults to SIZE_MAX
-            /* .get_alloc_size      = */ NULL, // defaults to ggml_nbytes
-            /* .get_alloc_size_n    = */ NULL,
-            /* .is_host             = */ ggml_backend_cpu_buffer_type_is_host,
+            /* .get_name            = */ ggml_backend_cpu_बफर_type_get_name,
+            /* .alloc_buffer        = */ ggml_backend_cpu_बफर_type_alloc_बफर,
+            /* .alloc_buffer_n      = */ शून्य,
+            /* .get_alignment       = */ ggml_backend_cpu_बफर_type_get_alignment,
+            /* .get_max_size        = */ शून्य, // defaults to SIZE_MAX
+            /* .get_alloc_size      = */ शून्य, // defaults to ggml_nbytes
+            /* .get_alloc_size_n    = */ शून्य,
+            /* .is_host             = */ ggml_backend_cpu_बफर_type_is_host,
         },
-        /* .device  = */ NULL, // FIXME ggml_backend_reg_dev_get(ggml_backend_cpu_reg(), 0),
-        /* .context = */ NULL,
+        /* .device  = */ शून्य, // FIXME ggml_backend_reg_dev_get(ggml_backend_cpu_reg(), 0),
+        /* .context = */ शून्य,
     };
 
-    return &ggml_backend_cpu_buffer_type;
+    वापस &ggml_backend_cpu_बफर_type;
 }
 
-static const char * ggml_backend_cpu_buffer_from_ptr_type_get_name(ggml_backend_buffer_type_t buft) {
-    return "CPU_Mapped";
+अटल स्थिर अक्षर * ggml_backend_cpu_बफर_from_ptr_type_get_name(ggml_backend_बफर_type_t buft) {
+    वापस "CPU_Mapped";
 
     GGML_UNUSED(buft);
 }
 
-static ggml_backend_buffer_type_t ggml_backend_cpu_buffer_from_ptr_type(void) {
-    static struct ggml_backend_buffer_type ggml_backend_cpu_buffer_type = {
+अटल ggml_backend_बफर_type_t ggml_backend_cpu_बफर_from_ptr_type(व्योम) {
+    अटल काष्ठा ggml_backend_बफर_type ggml_backend_cpu_बफर_type = {
         /* .iface   = */ {
-            /* .get_name            = */ ggml_backend_cpu_buffer_from_ptr_type_get_name,
-            /* .alloc_buffer        = */ ggml_backend_cpu_buffer_type_alloc_buffer,
-            /* .alloc_buffer_n      = */ NULL,
-            /* .get_alignment       = */ ggml_backend_cpu_buffer_type_get_alignment,
-            /* .get_max_size        = */ NULL, // defaults to SIZE_MAX
-            /* .get_alloc_size      = */ NULL, // defaults to ggml_nbytes
-            /* .get_alloc_size_n    = */ NULL,
-            /* .is_host             = */ ggml_backend_cpu_buffer_type_is_host,
+            /* .get_name            = */ ggml_backend_cpu_बफर_from_ptr_type_get_name,
+            /* .alloc_buffer        = */ ggml_backend_cpu_बफर_type_alloc_बफर,
+            /* .alloc_buffer_n      = */ शून्य,
+            /* .get_alignment       = */ ggml_backend_cpu_बफर_type_get_alignment,
+            /* .get_max_size        = */ शून्य, // defaults to SIZE_MAX
+            /* .get_alloc_size      = */ शून्य, // defaults to ggml_nbytes
+            /* .get_alloc_size_n    = */ शून्य,
+            /* .is_host             = */ ggml_backend_cpu_बफर_type_is_host,
         },
-        /* .device  = */ NULL, // FIXME ggml_backend_reg_dev_get(ggml_backend_cpu_reg(), 0),
-        /* .context = */ NULL,
+        /* .device  = */ शून्य, // FIXME ggml_backend_reg_dev_get(ggml_backend_cpu_reg(), 0),
+        /* .context = */ शून्य,
     };
 
-    return &ggml_backend_cpu_buffer_type;
+    वापस &ggml_backend_cpu_बफर_type;
 }
 
-ggml_backend_buffer_t ggml_backend_cpu_buffer_from_ptr(void * ptr, size_t size) {
+ggml_backend_बफर_t ggml_backend_cpu_बफर_from_ptr(व्योम * ptr, माप_प्रकार size) {
     GGML_ASSERT((uintptr_t)ptr % TENSOR_ALIGNMENT == 0 && "buffer pointer must be aligned");
-    return ggml_backend_buffer_init(ggml_backend_cpu_buffer_from_ptr_type(), ggml_backend_cpu_buffer_from_ptr_i, ptr, size);
+    वापस ggml_backend_बफर_init(ggml_backend_cpu_बफर_from_ptr_type(), ggml_backend_cpu_बफर_from_ptr_i, ptr, size);
 }

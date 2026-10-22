@@ -1,12 +1,12 @@
-#ifndef GGML_ZDNN_MMQ_HPP
-#define GGML_ZDNN_MMQ_HPP
+#अगर_अघोषित GGML_ZDNN_MMQ_HPP
+#घोषणा GGML_ZDNN_MMQ_HPP
 
-#include "common.hpp"
+#समावेश "common.hpp"
 
-void ggml_zdnn_mul_mat_q(
+व्योम ggml_zdnn_mul_mat_q(
           ggml_backend_zdnn_context * ctx,
-    const               ggml_tensor * src0,
-    const               ggml_tensor * src1,
+    स्थिर               ggml_tensor * src0,
+    स्थिर               ggml_tensor * src1,
                         ggml_tensor * dst);
 
-#endif  // GGML_ZDNN_MMQ_HPP
+#पूर्ण_अगर  // GGML_ZDNN_MMQ_HPP

@@ -1,50 +1,50 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#समावेश "../node_context.h"
+#समावेश "../op_table.h"
+#समावेश "../utils.h"
 
-#include <openvino/op/avg_pool.hpp>
-#include <openvino/op/max_pool.hpp>
-#include <openvino/op/convert.hpp>
+#समावेश <openvino/op/avg_pool.hpp>
+#समावेश <openvino/op/max_pool.hpp>
+#समावेश <openvino/op/convert.hpp>
 
 namespace ov {
 namespace frontend {
 namespace ggml {
 namespace op {
 
-OutputVector translate_pool_2d(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
-    const int32_t * params = context.get_output_op_params();
+OutputVector translate_pool_2d(स्थिर गाँठ_Context & context) {
+    अंक_inputs_check(context, 1, 1);
+    स्थिर int32_t * params = context.get_output_op_params();
 
-    const int k0 = params[1];
-    const int k1 = params[2];
-    const int s0 = params[3];
-    const int s1 = params[4];
-    const int p0 = params[5];
-    const int p1 = params[6];
+    स्थिर पूर्णांक k0 = params[1];
+    स्थिर पूर्णांक k1 = params[2];
+    स्थिर पूर्णांक s0 = params[3];
+    स्थिर पूर्णांक s1 = params[4];
+    स्थिर पूर्णांक p0 = params[5];
+    स्थिर पूर्णांक p1 = params[6];
 
-    const int op_case = context.get_op_case();
-    ov::Output<Node> input = context.get_input(0);
-    ov::Strides strides{static_cast<size_t>(s1), static_cast<size_t>(s0)};
-    ov::Shape pads_begin{static_cast<size_t>(p1), static_cast<size_t>(p0)};
-    ov::Shape pads_end{static_cast<size_t>(p1), static_cast<size_t>(p0)};
-    ov::Shape kernel{static_cast<size_t>(k1), static_cast<size_t>(k0)};
+    स्थिर पूर्णांक op_case = context.get_op_case();
+    ov::Output<Node> निवेश = context.get_निवेश(0);
+    ov::Strides strides{static_cast<माप_प्रकार>(s1), static_cast<माप_प्रकार>(s0)};
+    ov::Shape pads_begin{static_cast<माप_प्रकार>(p1), static_cast<माप_प्रकार>(p0)};
+    ov::Shape pads_end{static_cast<माप_प्रकार>(p1), static_cast<माप_प्रकार>(p0)};
+    ov::Shape kernel{static_cast<माप_प्रकार>(k1), static_cast<माप_प्रकार>(k0)};
     ov::Output<Node> res;
 
-    switch (op_case) {
-    case 1:  // GGML_OP_POOL_MAX
+    चयन (op_case) {
+    हाल 1:  // GGML_OP_POOL_MAX
     {
-        res = std::make_shared<ov::op::v1::MaxPool>(input, strides, pads_begin, pads_end, kernel);
-        break;
+        res = std::make_shared<ov::op::v1::MaxPool>(निवेश, strides, pads_begin, pads_end, kernel);
+        अवरोध;
     }
-    case 2:  // GGML_OP_POOL_AVG
+    हाल 2:  // GGML_OP_POOL_AVG
     {
-        res = std::make_shared<ov::op::v1::AvgPool>(input, strides, pads_begin, pads_end, kernel, false);
-        break;
+        res = std::make_shared<ov::op::v1::AvgPool>(निवेश, strides, pads_begin, pads_end, kernel, false);
+        अवरोध;
     }
-    default:
-        break;
+    शेष:
+        अवरोध;
     }
-    return rename_outputs_with_suffix({res}, context.get_name());
+    वापस rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op
