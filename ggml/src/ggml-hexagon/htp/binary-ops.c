@@ -2,41 +2,41 @@
 #pragma clang diagnostic ignored "-Wunused-function"
 #pragma clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
+#अन्तर्भाव <HAP_farf.h>
+#अन्तर्भाव <HAP_perf.h>
 
-#include <math.h>
-#include <string.h>
+#अन्तर्भाव <math.h>
+#अन्तर्भाव <string.h>
 
-#include "dma-queue.h"
-#include "hvx-utils.h"
+#अन्तर्भाव "dma-queue.h"
+#अन्तर्भाव "hvx-utils.h"
 
 #define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "hex-common.h"
-#include "hex-profile.h"
-#include "binary-ops.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-tensor.h"
+#अन्तर्भाव "ggml-common.h"
+#अन्तर्भाव "hex-common.h"
+#अन्तर्भाव "hex-profile.h"
+#अन्तर्भाव "binary-ops.h"
+#अन्तर्भाव "htp-ctx.h"
+#अन्तर्भाव "htp-ops.h"
+#अन्तर्भाव "htp-tensor.h"
 
 #ifndef MIN
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif
 
 // Context for binary operations
-struct htp_binary_context {
-    struct htp_ops_context * octx;
-    struct htp_binary_vtcm_layout vtcm_layout;
+संरचना htp_द्विमान_context {
+    संरचना htp_ops_context * octx;
+    संरचना htp_द्विमान_vtcm_layout vtcm_layout;
     uint8_t * vtcm_base;
 
-    struct fastdiv_values src0_dim1_div; // ne01
-    struct fastdiv_values src0_dim2_div; // ne02
-    struct fastdiv_values src0_dim12_div;// ne03
+    संरचना fastdiv_मूल्ये src0_dim1_div; // ne01
+    संरचना fastdiv_मूल्ये src0_dim2_div; // ne02
+    संरचना fastdiv_मूल्ये src0_dim12_div;// ne03
 
-    struct fastdiv_values src1_dim1_div; // ne11
-    struct fastdiv_values src1_dim2_div; // ne12
-    struct fastdiv_values src1_dim3_div; // ne13
+    संरचना fastdiv_मूल्ये src1_dim1_div; // ne11
+    संरचना fastdiv_मूल्ये src1_dim2_div; // ne12
+    संरचना fastdiv_मूल्ये src1_dim3_div; // ne13
 
     uint32_t block_max;
     uint32_t nrows_per_thread;
@@ -50,99 +50,99 @@ struct htp_binary_context {
     bool split_at_ne01;
     bool split_at_ne02;
 
-    void * compute;
+    शून्य * compute;
 };
 
-#define htp_binary_preamble                        \
-    const struct htp_tensor * src0 = octx->src[0]; \
-    const struct htp_tensor * src1 = octx->src[1]; \
-    const struct htp_tensor * dst  = octx->dst;    \
+#define htp_द्विमान_preamble                        \
+    ध्रुव संरचना htp_tensor * src0 = octx->src[0]; \
+    ध्रुव संरचना htp_tensor * src1 = octx->src[1]; \
+    ध्रुव संरचना htp_tensor * dst  = octx->dst;    \
                                                    \
-    const uint32_t ne00 = src0->ne[0];             \
-    const uint32_t ne01 = src0->ne[1];             \
-    const uint32_t ne02 = src0->ne[2];             \
-    const uint32_t ne03 = src0->ne[3];             \
+    ध्रुव uint32_t ne00 = src0->ne[0];             \
+    ध्रुव uint32_t ne01 = src0->ne[1];             \
+    ध्रुव uint32_t ne02 = src0->ne[2];             \
+    ध्रुव uint32_t ne03 = src0->ne[3];             \
                                                    \
-    const uint32_t ne10 = src1->ne[0];             \
-    const uint32_t ne11 = src1->ne[1];             \
-    const uint32_t ne12 = src1->ne[2];             \
-    const uint32_t ne13 = src1->ne[3];             \
+    ध्रुव uint32_t ne10 = src1->ne[0];             \
+    ध्रुव uint32_t ne11 = src1->ne[1];             \
+    ध्रुव uint32_t ne12 = src1->ne[2];             \
+    ध्रुव uint32_t ne13 = src1->ne[3];             \
                                                    \
-    const uint32_t nb01 = src0->nb[1];             \
-    const uint32_t nb02 = src0->nb[2];             \
-    const uint32_t nb03 = src0->nb[3];             \
+    ध्रुव uint32_t nb01 = src0->nb[1];             \
+    ध्रुव uint32_t nb02 = src0->nb[2];             \
+    ध्रुव uint32_t nb03 = src0->nb[3];             \
                                                    \
-    const uint32_t nb11 = src1->nb[1];             \
-    const uint32_t nb12 = src1->nb[2];             \
-    const uint32_t nb13 = src1->nb[3];             \
+    ध्रुव uint32_t nb11 = src1->nb[1];             \
+    ध्रुव uint32_t nb12 = src1->nb[2];             \
+    ध्रुव uint32_t nb13 = src1->nb[3];             \
                                                    \
-    const uint32_t nb1 = dst->nb[1];               \
-    const uint32_t nb2 = dst->nb[2];               \
-    const uint32_t nb3 = dst->nb[3];
+    ध्रुव uint32_t nb1 = dst->nb[1];               \
+    ध्रुव uint32_t nb2 = dst->nb[2];               \
+    ध्रुव uint32_t nb3 = dst->nb[3];
 
-static inline uint32_t calc_block_size(struct htp_binary_context * bctx, uint32_t ir, uint32_t end_row, uint32_t ne01, uint32_t ne02) {
+स्थिर अन्तःस्थ uint32_t calc_block_size(संरचना htp_द्विमान_context * bctx, uint32_t ir, uint32_t end_row, uint32_t ne01, uint32_t ne02) {
     uint32_t i03, i02, i01, rem;
     i03 = fastdiv(ir, &bctx->src0_dim12_div);
     rem = ir - i03 * (ne02 * ne01);
     i02 = fastdiv(rem, &bctx->src0_dim1_div);
     i01 = rem - i02 * ne01;
 
-    uint32_t rows_left = end_row - ir;
-    uint32_t block_limit = rows_left;
+    uint32_t rows_डावा = end_row - ir;
+    uint32_t block_limit = rows_डावा;
 
-    if (bctx->split_at_ne01) {
+    यदि (bctx->split_at_ne01) {
         block_limit = MIN(block_limit, ne01 - i01);
     }
-    if (bctx->split_at_ne02) {
+    यदि (bctx->split_at_ne02) {
          uint32_t rows_in_plane = (ne02 * ne01) - rem;
          block_limit = MIN(block_limit, rows_in_plane);
     }
 
-    return MIN(bctx->block_max, block_limit);
+    प्रत्यागम MIN(bctx->block_max, block_limit);
 }
 
 // Out-of-line compute micro-kernels
 
-typedef void (*compute_scalar_t)(
-    uint8_t * dst, const uint8_t * src0, const void * s1_table,
+प्रकारनिर्देश शून्य (*compute_scalar_t)(
+    uint8_t * dst, ध्रुव uint8_t * src0, ध्रुव शून्य * s1_table,
     uint32_t cur_i11, uint32_t ne11, uint32_t n_rows,
     size_t dst_stride, size_t src0_stride, uint32_t ne00);
 
 #define DEFINE_COMPUTE_SCALAR(NAME, TYPE, HVX_STMT)             \
-static void compute_scalar_##NAME(                              \
-    uint8_t * dst, const uint8_t * src0, const void * s1_table, \
+स्थिर शून्य compute_scalar_##NAME(                              \
+    uint8_t * dst, ध्रुव uint8_t * src0, ध्रुव शून्य * s1_table, \
     uint32_t cur_i11, uint32_t ne11, uint32_t n_rows,           \
     size_t dst_stride, size_t src0_stride, uint32_t ne00) {     \
-    const TYPE * table = (const TYPE *) s1_table;               \
-    for (uint32_t r = 0; r < n_rows; r++) {                     \
+    ध्रुव TYPE * table = (ध्रुव TYPE *) s1_table;               \
+    प्रति (uint32_t r = 0; r < n_rows; r++) {                     \
         uint8_t * r_dst = dst + r * dst_stride;                 \
-        const uint8_t * r_src0 = src0 + r * src0_stride;        \
+        ध्रुव uint8_t * r_src0 = src0 + r * src0_stride;        \
         TYPE val = table[cur_i11];                              \
         HVX_STMT;                                               \
-        if (ne11 > 1 && ++cur_i11 == ne11) {                    \
+        यदि (ne11 > 1 && ++cur_i11 == ne11) {                    \
             cur_i11 = 0;                                        \
         }                                                       \
     }                                                           \
 }
 
-DEFINE_COMPUTE_SCALAR(add_f32, float,    hvx_add_scalar_f32_aa(r_dst, r_src0, val, ne00))
+DEFINE_COMPUTE_SCALAR(add_f32, भिन्न,    hvx_add_scalar_f32_aa(r_dst, r_src0, val, ne00))
 DEFINE_COMPUTE_SCALAR(add_f16, _Float16, hvx_add_scalar_f16_aa(r_dst, r_src0, val, ne00))
-DEFINE_COMPUTE_SCALAR(sub_f32, float,    hvx_sub_scalar_f32_aa(r_dst, r_src0, val, ne00))
+DEFINE_COMPUTE_SCALAR(sub_f32, भिन्न,    hvx_sub_scalar_f32_aa(r_dst, r_src0, val, ne00))
 DEFINE_COMPUTE_SCALAR(sub_f16, _Float16, hvx_sub_scalar_f16_aa(r_dst, r_src0, val, ne00))
-DEFINE_COMPUTE_SCALAR(mul_f32, float,    hvx_mul_scalar_f32_aa(r_dst, r_src0, val, ne00))
+DEFINE_COMPUTE_SCALAR(mul_f32, भिन्न,    hvx_mul_scalar_f32_aa(r_dst, r_src0, val, ne00))
 DEFINE_COMPUTE_SCALAR(mul_f16, _Float16, hvx_mul_scalar_f16_aa(r_dst, r_src0, val, ne00))
-DEFINE_COMPUTE_SCALAR(div_f32, float,    hvx_mul_scalar_f32_aa(r_dst, r_src0, 1.0f / (val), ne00))
+DEFINE_COMPUTE_SCALAR(div_f32, भिन्न,    hvx_mul_scalar_f32_aa(r_dst, r_src0, 1.0f / (val), ne00))
 DEFINE_COMPUTE_SCALAR(div_f16, _Float16, hvx_div_scalar_f16_aa(r_dst, r_src0, val, ne00))
 
-typedef void (*compute_same_shape_t)(
-    uint8_t * dst, const uint8_t * src0, const uint8_t * src1,
+प्रकारनिर्देश शून्य (*compute_same_shape_t)(
+    uint8_t * dst, ध्रुव uint8_t * src0, ध्रुव uint8_t * src1,
     uint32_t n_rows, size_t dst_stride, size_t src0_stride, size_t src1_stride, uint32_t ne00);
 
 #define DEFINE_COMPUTE_SAME_SHAPE(NAME, HVX_FN)                                                  \
-static void compute_same_shape_##NAME(                                                           \
-    uint8_t * dst, const uint8_t * src0, const uint8_t * src1,                                   \
+स्थिर शून्य compute_same_shape_##NAME(                                                           \
+    uint8_t * dst, ध्रुव uint8_t * src0, ध्रुव uint8_t * src1,                                   \
     uint32_t n_rows, size_t dst_stride, size_t src0_stride, size_t src1_stride, uint32_t ne00) { \
-    for (uint32_t r = 0; r < n_rows; r++) {                                                      \
+    प्रति (uint32_t r = 0; r < n_rows; r++) {                                                      \
         HVX_FN(dst + r * dst_stride, src0 + r * src0_stride, src1 + r * src1_stride, ne00);      \
     }                                                                                            \
 }
@@ -156,15 +156,15 @@ DEFINE_COMPUTE_SAME_SHAPE(mul_f16, hvx_mul_f16_aaa)
 DEFINE_COMPUTE_SAME_SHAPE(div_f32, hvx_div_f32_aaa)
 DEFINE_COMPUTE_SAME_SHAPE(div_f16, hvx_div_f16_aaa)
 
-typedef void (*compute_row_bcast_t)(
-    uint8_t * dst, const uint8_t * src0, const uint8_t * src1,
+प्रकारनिर्देश शून्य (*compute_row_bcast_t)(
+    uint8_t * dst, ध्रुव uint8_t * src0, ध्रुव uint8_t * src1,
     uint32_t n_rows, size_t dst_stride, size_t src0_stride, uint32_t ne00);
 
 #define DEFINE_COMPUTE_ROW_BCAST(NAME, HVX_FN)                                               \
-static void compute_row_bcast_##NAME(                                                        \
-    uint8_t * dst, const uint8_t * src0, const uint8_t * src1,                               \
+स्थिर शून्य compute_row_bcast_##NAME(                                                        \
+    uint8_t * dst, ध्रुव uint8_t * src0, ध्रुव uint8_t * src1,                               \
     uint32_t n_rows, size_t dst_stride, size_t src0_stride, uint32_t ne00) {                 \
-    for (uint32_t r = 0; r < n_rows; r++) {                                                  \
+    प्रति (uint32_t r = 0; r < n_rows; r++) {                                                  \
         HVX_FN(dst + r * dst_stride, src0 + r * src0_stride, src1, ne00);                    \
     }                                                                                        \
 }
@@ -178,19 +178,19 @@ DEFINE_COMPUTE_ROW_BCAST(mul_f16, hvx_mul_f16_aaa)
 DEFINE_COMPUTE_ROW_BCAST(div_f32, hvx_div_f32_aaa)
 DEFINE_COMPUTE_ROW_BCAST(div_f16, hvx_div_f16_aaa)
 
-typedef void (*compute_complex_t)(
-    uint8_t * dst, const uint8_t * src0, const uint8_t * src1_plane,
-    uint32_t i01, uint32_t ne11, const struct fastdiv_values * div11, uint32_t src1_stride,
+प्रकारनिर्देश शून्य (*compute_complex_t)(
+    uint8_t * dst, ध्रुव uint8_t * src0, ध्रुव uint8_t * src1_plane,
+    uint32_t i01, uint32_t ne11, ध्रुव संरचना fastdiv_मूल्ये * div11, uint32_t src1_stride,
     uint32_t n_rows, size_t dst_stride, size_t src0_stride, uint32_t ne00);
 
 #define DEFINE_COMPUTE_COMPLEX(NAME, HVX_FN)                                                 \
-static void compute_complex_##NAME(                                                          \
-    uint8_t * dst, const uint8_t * src0, const uint8_t * src1_plane,                         \
-    uint32_t i01, uint32_t ne11, const struct fastdiv_values * div11, uint32_t src1_stride,  \
+स्थिर शून्य compute_complex_##NAME(                                                          \
+    uint8_t * dst, ध्रुव uint8_t * src0, ध्रुव uint8_t * src1_plane,                         \
+    uint32_t i01, uint32_t ne11, ध्रुव संरचना fastdiv_मूल्ये * div11, uint32_t src1_stride,  \
     uint32_t n_rows, size_t dst_stride, size_t src0_stride, uint32_t ne00) {                 \
-    for (uint32_t r = 0; r < n_rows; r++) {                                                  \
+    प्रति (uint32_t r = 0; r < n_rows; r++) {                                                  \
         uint32_t i11 = fastmodulo(i01 + r, ne11, div11);                                     \
-        const uint8_t * r_src1 = src1_plane + i11 * src1_stride;                             \
+        ध्रुव uint8_t * r_src1 = src1_plane + i11 * src1_stride;                             \
         HVX_FN(dst + r * dst_stride, src0 + r * src0_stride, r_src1, ne00);                  \
     }                                                                                        \
 }
@@ -204,90 +204,90 @@ DEFINE_COMPUTE_COMPLEX(mul_f16, hvx_mul_f16_aau)
 DEFINE_COMPUTE_COMPLEX(div_f32, hvx_div_f32_aau)
 DEFINE_COMPUTE_COMPLEX(div_f16, hvx_div_f16_aau)
 
-typedef void (*compute_repeat_t)(
-    uint8_t * dst, const uint8_t * src0, const uint8_t * src1_plane,
-    uint32_t i01, uint32_t ne11, const struct fastdiv_values * div11, uint32_t src1_stride,
+प्रकारनिर्देश शून्य (*compute_repeat_t)(
+    uint8_t * dst, ध्रुव uint8_t * src0, ध्रुव uint8_t * src1_plane,
+    uint32_t i01, uint32_t ne11, ध्रुव संरचना fastdiv_मूल्ये * div11, uint32_t src1_stride,
     uint32_t n_rows, size_t dst_stride, size_t src0_stride, uint32_t ne00, uint32_t ne10);
 
 #define DEFINE_COMPUTE_REPEAT(NAME, TYPE, HVX_FN)                                            \
-static void compute_repeat_##NAME(                                                           \
-    uint8_t * dst, const uint8_t * src0, const uint8_t * src1_plane,                         \
-    uint32_t i01, uint32_t ne11, const struct fastdiv_values * div11, uint32_t src1_stride,  \
+स्थिर शून्य compute_repeat_##NAME(                                                           \
+    uint8_t * dst, ध्रुव uint8_t * src0, ध्रुव uint8_t * src1_plane,                         \
+    uint32_t i01, uint32_t ne11, ध्रुव संरचना fastdiv_मूल्ये * div11, uint32_t src1_stride,  \
     uint32_t n_rows, size_t dst_stride, size_t src0_stride, uint32_t ne00, uint32_t ne10) {  \
-    for (uint32_t r = 0; r < n_rows; r++) {                                                  \
+    प्रति (uint32_t r = 0; r < n_rows; r++) {                                                  \
         uint32_t i11 = fastmodulo(i01 + r, ne11, div11);                                     \
-        const uint8_t * r_src1_row = src1_plane + i11 * src1_stride;                         \
+        ध्रुव uint8_t * r_src1_row = src1_plane + i11 * src1_stride;                         \
         uint8_t * r_dst = dst + r * dst_stride;                                              \
-        const uint8_t * r_src0 = src0 + r * src0_stride;                                     \
-        for (uint32_t c = 0; c < ne00; c += ne10) {                                          \
+        ध्रुव uint8_t * r_src0 = src0 + r * src0_stride;                                     \
+        प्रति (uint32_t c = 0; c < ne00; c += ne10) {                                          \
             uint32_t len = MIN(ne10, ne00 - c);                                              \
-            HVX_FN(r_dst + c * sizeof(TYPE), r_src0 + c * sizeof(TYPE), r_src1_row, len);    \
+            HVX_FN(r_dst + c * परिमाण(TYPE), r_src0 + c * परिमाण(TYPE), r_src1_row, len);    \
         }                                                                                    \
     }                                                                                        \
 }
 
-DEFINE_COMPUTE_REPEAT(add_f32, float,    hvx_add_f32_uuu)
+DEFINE_COMPUTE_REPEAT(add_f32, भिन्न,    hvx_add_f32_uuu)
 DEFINE_COMPUTE_REPEAT(add_f16, _Float16, hvx_add_f16_uuu)
-DEFINE_COMPUTE_REPEAT(sub_f32, float,    hvx_sub_f32_uuu)
+DEFINE_COMPUTE_REPEAT(sub_f32, भिन्न,    hvx_sub_f32_uuu)
 DEFINE_COMPUTE_REPEAT(sub_f16, _Float16, hvx_sub_f16_uuu)
-DEFINE_COMPUTE_REPEAT(mul_f32, float,    hvx_mul_f32_uuu)
+DEFINE_COMPUTE_REPEAT(mul_f32, भिन्न,    hvx_mul_f32_uuu)
 DEFINE_COMPUTE_REPEAT(mul_f16, _Float16, hvx_mul_f16_uuu)
-DEFINE_COMPUTE_REPEAT(div_f32, float,    hvx_div_f32_uuu)
+DEFINE_COMPUTE_REPEAT(div_f32, भिन्न,    hvx_div_f32_uuu)
 DEFINE_COMPUTE_REPEAT(div_f16, _Float16, hvx_div_f16_uuu)
 
-typedef void (*compute_add_id_t)(
-    uint8_t * dst, const uint8_t * src0, const uint8_t * src1_data, const int32_t * src2_ids,
+प्रकारनिर्देश शून्य (*compute_add_id_t)(
+    uint8_t * dst, ध्रुव uint8_t * src0, ध्रुव uint8_t * src1_data, ध्रुव int32_t * src2_ids,
     uint32_t i01, uint32_t i02, uint32_t ne01, uint32_t src1_stride,
     uint32_t n_rows, size_t dst_stride, size_t src0_stride, uint32_t ne00);
 
-static void compute_add_id_f32(
-    uint8_t * dst, const uint8_t * src0, const uint8_t * src1_data, const int32_t * src2_ids,
+स्थिर शून्य compute_add_id_f32(
+    uint8_t * dst, ध्रुव uint8_t * src0, ध्रुव uint8_t * src1_data, ध्रुव int32_t * src2_ids,
     uint32_t i01, uint32_t i02, uint32_t ne01, uint32_t src1_stride,
     uint32_t n_rows, size_t dst_stride, size_t src0_stride, uint32_t ne00) {
-    for (uint32_t r = 0; r < n_rows; r++) {
+    प्रति (uint32_t r = 0; r < n_rows; r++) {
         uint32_t r_i01 = i01 + r;
-        const int32_t idx = src2_ids[i02 * ne01 + r_i01];
-        if (idx < 0) {
-            memcpy(dst + r * dst_stride, src0 + r * src0_stride, ne00 * sizeof(float));
-            continue;
+        ध्रुव int32_t idx = src2_ids[i02 * ne01 + r_i01];
+        यदि (idx < 0) {
+            memcpy(dst + r * dst_stride, src0 + r * src0_stride, ne00 * परिमाण(भिन्न));
+            अनुवर्त;
         }
-        const uint8_t * r_src1 = src1_data + idx * src1_stride;
-        const uint8_t * r_src0 = src0 + r * src0_stride;
+        ध्रुव uint8_t * r_src1 = src1_data + idx * src1_stride;
+        ध्रुव uint8_t * r_src0 = src0 + r * src0_stride;
         uint8_t * r_dst = dst + r * dst_stride;
         hvx_add_f32_aaa(r_dst, r_src0, r_src1, ne00);
     }
 }
 
 // 1. Scalar src1 in VTCM via DMA (ne10 == 1)
-static void binary_thread_scalar(unsigned int nth, unsigned int ith, void * data) {
-    struct htp_binary_context * bctx = (struct htp_binary_context *) data;
-    struct htp_ops_context * octx = bctx->octx;
-    htp_binary_preamble;
+स्थिर शून्य द्विमान_thread_scalar(unsigned पूर्णाङ्क nth, unsigned पूर्णाङ्क ith, शून्य * data) {
+    संरचना htp_द्विमान_context * bctx = (संरचना htp_द्विमान_context *) data;
+    संरचना htp_ops_context * octx = bctx->octx;
+    htp_द्विमान_preamble;
 
-    const uint32_t elem_size = (src0->type == HTP_TYPE_F32) ? sizeof(float) : sizeof(_Float16);
-    const size_t plane_stride = (size_t) ne12 * ne11 * elem_size;
-    const size_t row_stride   = (size_t) ne11 * elem_size;
+    ध्रुव uint32_t elem_size = (src0->type == HTP_TYPE_F32) ? परिमाण(भिन्न) : परिमाण(_Float16);
+    ध्रुव size_t plane_stride = (size_t) ne12 * ne11 * elem_size;
+    ध्रुव size_t row_stride   = (size_t) ne11 * elem_size;
 
-    const uint32_t row_size_bytes = bctx->row_size_bytes;
-    const uint32_t start_row = bctx->row_start + bctx->nrows_per_thread * ith;
-    const uint32_t end_row   = MIN(start_row + bctx->nrows_per_thread, bctx->row_start + bctx->total_rows);
-    if (start_row >= end_row) return;
+    ध्रुव uint32_t row_size_bytes = bctx->row_size_bytes;
+    ध्रुव uint32_t start_row = bctx->row_start + bctx->nrows_per_thread * ith;
+    ध्रुव uint32_t end_row   = MIN(start_row + bctx->nrows_per_thread, bctx->row_start + bctx->total_rows);
+    यदि (start_row >= end_row) प्रत्यागम;
 
-    FARF(HIGH, "binary-scalar: %d/%d (%u:%u) row-size %u (%u)",
+    FARF(वरचा_2, "binary-scalar: %d/%d (%u:%u) row-size %u (%u)",
          ith, nth, start_row, end_row, nb01, bctx->dst_row_size_aligned);
 
-    const struct htp_binary_vtcm_layout * layout = &bctx->vtcm_layout;
+    ध्रुव संरचना htp_द्विमान_vtcm_layout * layout = &bctx->vtcm_layout;
     uint8_t * src0_spad_base = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_base, layout->off_src0) + (ith * layout->src0_bytes_per_thread);
     uint8_t * dst_spad_base  = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_base, layout->off_dst)  + (ith * layout->dst_bytes_per_thread);
     size_t src0_spad_half    = layout->src0_spad_half_size;
     size_t dst_spad_half     = layout->dst_spad_half_size;
-    const void * s1_table    = VTCM_LAYOUT_PTR(const void, bctx->vtcm_base, layout->off_src1);
+    ध्रुव शून्य * s1_table    = VTCM_LAYOUT_PTR(ध्रुव शून्य, bctx->vtcm_base, layout->off_src1);
 
     dma_queue * dma_q = octx->ctx->dma[ith];
     uint32_t ir_prefetch = start_row;
-    int spad_idx = 0;
+    पूर्णाङ्क spad_idx = 0;
 
-    for (int k = 0; k < 2 && ir_prefetch < end_row; k++) {
+    प्रति (पूर्णाङ्क k = 0; k < 2 && ir_prefetch < end_row; k++) {
         uint32_t current_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
         uint32_t i03, i02, i01, rem;
         i03 = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
@@ -301,21 +301,21 @@ static void binary_thread_scalar(unsigned int nth, unsigned int ith, void * data
         uint8_t * s0_spad = src0_spad_base + spad_idx * src0_spad_half;
         uint8_t * d_spad  = dst_spad_base  + spad_idx * dst_spad_half;
 
-        dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, 0);
-        dma_queue_push(dma_q, dma_make_data(s0_spad, src0_curr), bctx->src0_row_size_aligned, nb01, row_size_bytes,
+        dma_queue_ढकला(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, 0);
+        dma_queue_ढकला(dma_q, dma_make_data(s0_spad, src0_curr), bctx->src0_row_size_aligned, nb01, row_size_bytes,
                                                              current_block_size);
         ir_prefetch += current_block_size;
         spad_idx ^= 1;
     }
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    संरचना htp_thread_trace * tr = &octx->ctx->trace[ith];
     compute_scalar_t compute = (compute_scalar_t) bctx->compute;
 
-    for (uint32_t ir = start_row; ir < end_row; ) {
+    प्रति (uint32_t ir = start_row; ir < end_row; ) {
         uint32_t current_block_size = calc_block_size(bctx, ir, end_row, ne01, ne02);
 
-        uint8_t * d_spad  = (uint8_t *) dma_queue_pop(dma_q).src;
-        uint8_t * s0_spad = (uint8_t *) dma_queue_pop(dma_q).dst;
+        uint8_t * d_spad  = (uint8_t *) dma_queue_काढा(dma_q).src;
+        uint8_t * s0_spad = (uint8_t *) dma_queue_काढा(dma_q).dst;
 
         uint32_t i03, i02, i01, rem;
         i03 = fastdiv(ir, &bctx->src0_dim12_div);
@@ -326,7 +326,7 @@ static void binary_thread_scalar(unsigned int nth, unsigned int ith, void * data
         uint32_t i13 = fastmodulo(i03, ne13, &bctx->src1_dim3_div);
         uint32_t i12 = fastmodulo(i02, ne12, &bctx->src1_dim2_div);
         uint32_t i11 = fastmodulo(i01, ne11, &bctx->src1_dim1_div);
-        const uint8_t * scalar_table = (const uint8_t *) s1_table +
+        ध्रुव uint8_t * scalar_table = (ध्रुव uint8_t *) s1_table +
             i13 * plane_stride + i12 * row_stride;
 
         htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
@@ -335,10 +335,10 @@ static void binary_thread_scalar(unsigned int nth, unsigned int ith, void * data
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
 
         dma_addr_t dst_curr = dst->data + i03 * nb3 + i02 * nb2 + i01 * nb1;
-        dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes,
+        dma_queue_ढकला(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes,
                                                                 current_block_size);
 
-        if (ir_prefetch < end_row) {
+        यदि (ir_prefetch < end_row) {
             uint32_t next_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
             uint32_t p03, p02, p01, prem;
             p03 = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
@@ -346,7 +346,7 @@ static void binary_thread_scalar(unsigned int nth, unsigned int ith, void * data
             p02 = fastdiv(prem, &bctx->src0_dim1_div);
             p01 = prem - p02 * ne01;
             dma_addr_t s0_next = src0->data + p03 * nb03 + p02 * nb02 + p01 * nb01;
-            dma_queue_push(dma_q, dma_make_data(s0_spad, s0_next), bctx->src0_row_size_aligned, nb01, row_size_bytes,
+            dma_queue_ढकला(dma_q, dma_make_data(s0_spad, s0_next), bctx->src0_row_size_aligned, nb01, row_size_bytes,
                                                                next_block_size);
             ir_prefetch += next_block_size;
         }
@@ -357,20 +357,20 @@ static void binary_thread_scalar(unsigned int nth, unsigned int ith, void * data
 }
 
 // 2. Vector Same Shape (ne1x == ne0x) or Simple Broadcast
-static void binary_thread_vector_same_shape(unsigned int nth, unsigned int ith, void * data) {
-    struct htp_binary_context * bctx = (struct htp_binary_context *) data;
-    struct htp_ops_context * octx = bctx->octx;
-    htp_binary_preamble;
+स्थिर शून्य द्विमान_thread_vector_same_shape(unsigned पूर्णाङ्क nth, unsigned पूर्णाङ्क ith, शून्य * data) {
+    संरचना htp_द्विमान_context * bctx = (संरचना htp_द्विमान_context *) data;
+    संरचना htp_ops_context * octx = bctx->octx;
+    htp_द्विमान_preamble;
 
-    const uint32_t row_size_bytes = bctx->row_size_bytes;
-    const uint32_t start_row = bctx->row_start + bctx->nrows_per_thread * ith;
-    const uint32_t end_row   = MIN(start_row + bctx->nrows_per_thread, bctx->row_start + bctx->total_rows);
-    if (start_row >= end_row) return;
+    ध्रुव uint32_t row_size_bytes = bctx->row_size_bytes;
+    ध्रुव uint32_t start_row = bctx->row_start + bctx->nrows_per_thread * ith;
+    ध्रुव uint32_t end_row   = MIN(start_row + bctx->nrows_per_thread, bctx->row_start + bctx->total_rows);
+    यदि (start_row >= end_row) प्रत्यागम;
 
-    FARF(HIGH, "binary-same-shape: %d/%d (%u:%u) row-size %u (%u)",
+    FARF(वरचा_2, "binary-same-shape: %d/%d (%u:%u) row-size %u (%u)",
          ith, nth, start_row, end_row, nb01, bctx->dst_row_size_aligned);
 
-    const struct htp_binary_vtcm_layout * layout = &bctx->vtcm_layout;
+    ध्रुव संरचना htp_द्विमान_vtcm_layout * layout = &bctx->vtcm_layout;
     uint8_t * src0_spad_base = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_base, layout->off_src0) + (ith * layout->src0_bytes_per_thread);
     uint8_t * src1_spad_base = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_base, layout->off_src1) + (ith * layout->src1_bytes_per_thread);
     uint8_t * dst_spad_base  = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_base, layout->off_dst)  + (ith * layout->dst_bytes_per_thread);
@@ -381,9 +381,9 @@ static void binary_thread_vector_same_shape(unsigned int nth, unsigned int ith, 
 
     dma_queue * dma_q = octx->ctx->dma[ith];
     uint32_t ir_prefetch = start_row;
-    int spad_idx = 0;
+    पूर्णाङ्क spad_idx = 0;
 
-    for (int k = 0; k < 2 && ir_prefetch < end_row; k++) {
+    प्रति (पूर्णाङ्क k = 0; k < 2 && ir_prefetch < end_row; k++) {
         uint32_t current_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
         uint32_t i03, i02, i01, rem;
         i03 = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
@@ -403,21 +403,21 @@ static void binary_thread_vector_same_shape(unsigned int nth, unsigned int ith, 
         uint8_t * s1_spad = src1_spad_base + spad_idx * src1_spad_half;
         uint8_t * d_spad  = dst_spad_base  + spad_idx * dst_spad_half;
 
-        dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, 0);
-        dma_queue_push(dma_q, dma_make_data(s0_spad, src0_curr), bctx->src0_row_size_aligned, nb01, row_size_bytes, current_block_size);
-        dma_queue_push(dma_q, dma_make_data(s1_spad, src1_curr), bctx->src1_row_size_aligned, nb11, row_size_bytes, current_block_size);
+        dma_queue_ढकला(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, 0);
+        dma_queue_ढकला(dma_q, dma_make_data(s0_spad, src0_curr), bctx->src0_row_size_aligned, nb01, row_size_bytes, current_block_size);
+        dma_queue_ढकला(dma_q, dma_make_data(s1_spad, src1_curr), bctx->src1_row_size_aligned, nb11, row_size_bytes, current_block_size);
         ir_prefetch += current_block_size;
         spad_idx ^= 1;
     }
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    संरचना htp_thread_trace * tr = &octx->ctx->trace[ith];
     compute_same_shape_t compute = (compute_same_shape_t) bctx->compute;
 
-    for (uint32_t ir = start_row; ir < end_row; ) {
+    प्रति (uint32_t ir = start_row; ir < end_row; ) {
         uint32_t current_block_size = calc_block_size(bctx, ir, end_row, ne01, ne02);
-        uint8_t * d_spad  = (uint8_t *) dma_queue_pop(dma_q).src;
-        uint8_t * s0_spad = (uint8_t *) dma_queue_pop(dma_q).dst;
-        uint8_t * s1_spad = (uint8_t *) dma_queue_pop(dma_q).dst;
+        uint8_t * d_spad  = (uint8_t *) dma_queue_काढा(dma_q).src;
+        uint8_t * s0_spad = (uint8_t *) dma_queue_काढा(dma_q).dst;
+        uint8_t * s1_spad = (uint8_t *) dma_queue_काढा(dma_q).dst;
 
         htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
         compute(d_spad, s0_spad, s1_spad, current_block_size,
@@ -430,9 +430,9 @@ static void binary_thread_vector_same_shape(unsigned int nth, unsigned int ith, 
         i02 = fastdiv(rem, &bctx->src0_dim1_div);
         i01 = rem - i02 * ne01;
         dma_addr_t dst_curr = dst->data + i03 * nb3 + i02 * nb2 + i01 * nb1;
-        dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, current_block_size);
+        dma_queue_ढकला(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, current_block_size);
 
-        if (ir_prefetch < end_row) {
+        यदि (ir_prefetch < end_row) {
             uint32_t next_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
             uint32_t p03, p02, p01, prem;
             p03 = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
@@ -447,8 +447,8 @@ static void binary_thread_vector_same_shape(unsigned int nth, unsigned int ith, 
             dma_addr_t s0_next = src0->data + p03 * nb03 + p02 * nb02 + p01 * nb01;
             dma_addr_t s1_next = src1->data + p13 * nb13 + p12 * nb12 + p11 * nb11;
 
-            dma_queue_push(dma_q, dma_make_data(s0_spad, s0_next), bctx->src0_row_size_aligned, nb01, row_size_bytes, next_block_size);
-            dma_queue_push(dma_q, dma_make_data(s1_spad, s1_next), bctx->src1_row_size_aligned, nb11, row_size_bytes, next_block_size);
+            dma_queue_ढकला(dma_q, dma_make_data(s0_spad, s0_next), bctx->src0_row_size_aligned, nb01, row_size_bytes, next_block_size);
+            dma_queue_ढकला(dma_q, dma_make_data(s1_spad, s1_next), bctx->src1_row_size_aligned, nb11, row_size_bytes, next_block_size);
 
             ir_prefetch += next_block_size;
         }
@@ -459,20 +459,20 @@ static void binary_thread_vector_same_shape(unsigned int nth, unsigned int ith, 
 }
 
 // 3. Row Broadcast (ne11 == 1, ne12 == 1, single row src1)
-static void binary_thread_vector_row_broadcast(unsigned int nth, unsigned int ith, void * data) {
-    struct htp_binary_context * bctx = (struct htp_binary_context *) data;
-    struct htp_ops_context * octx = bctx->octx;
-    htp_binary_preamble;
+स्थिर शून्य द्विमान_thread_vector_row_broadcast(unsigned पूर्णाङ्क nth, unsigned पूर्णाङ्क ith, शून्य * data) {
+    संरचना htp_द्विमान_context * bctx = (संरचना htp_द्विमान_context *) data;
+    संरचना htp_ops_context * octx = bctx->octx;
+    htp_द्विमान_preamble;
 
-    const uint32_t row_size_bytes = bctx->row_size_bytes;
-    const uint32_t start_row  = bctx->row_start + bctx->nrows_per_thread * ith;
-    const uint32_t end_row    = MIN(start_row + bctx->nrows_per_thread, bctx->row_start + bctx->total_rows);
-    if (start_row >= end_row) return;
+    ध्रुव uint32_t row_size_bytes = bctx->row_size_bytes;
+    ध्रुव uint32_t start_row  = bctx->row_start + bctx->nrows_per_thread * ith;
+    ध्रुव uint32_t end_row    = MIN(start_row + bctx->nrows_per_thread, bctx->row_start + bctx->total_rows);
+    यदि (start_row >= end_row) प्रत्यागम;
 
-    FARF(HIGH, "binary-row-bcast: %d/%d (%u:%u) row-size %u (%u)",
+    FARF(वरचा_2, "binary-row-bcast: %d/%d (%u:%u) row-size %u (%u)",
          ith, nth, start_row, end_row, nb01, bctx->dst_row_size_aligned);
 
-    const struct htp_binary_vtcm_layout * layout = &bctx->vtcm_layout;
+    ध्रुव संरचना htp_द्विमान_vtcm_layout * layout = &bctx->vtcm_layout;
     uint8_t * src0_spad_base = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_base, layout->off_src0) + (ith * layout->src0_bytes_per_thread);
     uint8_t * dst_spad_base  = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_base, layout->off_dst)  + (ith * layout->dst_bytes_per_thread);
 
@@ -481,11 +481,11 @@ static void binary_thread_vector_row_broadcast(unsigned int nth, unsigned int it
 
     dma_queue * dma_q = octx->ctx->dma[ith];
     uint32_t ir_prefetch = start_row;
-    int spad_idx = 0;
+    पूर्णाङ्क spad_idx = 0;
 
-    void * s1_ptr = VTCM_LAYOUT_PTR(void, bctx->vtcm_base, layout->off_src1);
+    शून्य * s1_ptr = VTCM_LAYOUT_PTR(शून्य, bctx->vtcm_base, layout->off_src1);
 
-    for (int k = 0; k < 2 && ir_prefetch < end_row; k++) {
+    प्रति (पूर्णाङ्क k = 0; k < 2 && ir_prefetch < end_row; k++) {
         uint32_t current_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
         uint32_t i03 = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
         uint32_t rem = ir_prefetch - i03 * (ne02 * ne01);
@@ -498,22 +498,22 @@ static void binary_thread_vector_row_broadcast(unsigned int nth, unsigned int it
         uint8_t * s0_spad = src0_spad_base + spad_idx * src0_spad_half;
         uint8_t * d_spad  = dst_spad_base  + spad_idx * dst_spad_half;
 
-        dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, 0);
-        dma_queue_push(dma_q, dma_make_data(s0_spad, src0_curr), bctx->src0_row_size_aligned, nb01, row_size_bytes, current_block_size);
+        dma_queue_ढकला(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, 0);
+        dma_queue_ढकला(dma_q, dma_make_data(s0_spad, src0_curr), bctx->src0_row_size_aligned, nb01, row_size_bytes, current_block_size);
         ir_prefetch += current_block_size;
         spad_idx ^= 1;
     }
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    संरचना htp_thread_trace * tr = &octx->ctx->trace[ith];
     compute_row_bcast_t compute = (compute_row_bcast_t) bctx->compute;
 
-    for (uint32_t ir = start_row; ir < end_row; ) {
+    प्रति (uint32_t ir = start_row; ir < end_row; ) {
         uint32_t current_block_size = calc_block_size(bctx, ir, end_row, ne01, ne02);
-        uint8_t * d_spad  = (uint8_t *) dma_queue_pop(dma_q).src;
-        uint8_t * s0_spad = (uint8_t *) dma_queue_pop(dma_q).dst;
+        uint8_t * d_spad  = (uint8_t *) dma_queue_काढा(dma_q).src;
+        uint8_t * s0_spad = (uint8_t *) dma_queue_काढा(dma_q).dst;
 
         htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
-        compute(d_spad, s0_spad, (const uint8_t *)s1_ptr, current_block_size,
+        compute(d_spad, s0_spad, (ध्रुव uint8_t *)s1_ptr, current_block_size,
                 bctx->dst_row_size_aligned, bctx->src0_row_size_aligned, ne00);
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
 
@@ -522,9 +522,9 @@ static void binary_thread_vector_row_broadcast(unsigned int nth, unsigned int it
         uint32_t i02 = fastdiv(rem, &bctx->src0_dim1_div);
         uint32_t i01 = rem - i02 * ne01;
         dma_addr_t dst_curr = dst->data + i03 * nb3 + i02 * nb2 + i01 * nb1;
-        dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, current_block_size);
+        dma_queue_ढकला(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, current_block_size);
 
-        if (ir_prefetch < end_row) {
+        यदि (ir_prefetch < end_row) {
             uint32_t next_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
             uint32_t p03, p02, p01, prem;
             p03  = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
@@ -532,7 +532,7 @@ static void binary_thread_vector_row_broadcast(unsigned int nth, unsigned int it
             p02  = fastdiv(prem, &bctx->src0_dim1_div);
             p01  = prem - p02 * ne01;
             dma_addr_t s0_next = src0->data + p03 * nb03 + p02 * nb02 + p01 * nb01;
-            dma_queue_push(dma_q, dma_make_data(s0_spad, s0_next), bctx->src0_row_size_aligned, nb01, row_size_bytes, next_block_size);
+            dma_queue_ढकला(dma_q, dma_make_data(s0_spad, s0_next), bctx->src0_row_size_aligned, nb01, row_size_bytes, next_block_size);
             ir_prefetch += next_block_size;
         }
         ir += current_block_size;
@@ -542,36 +542,36 @@ static void binary_thread_vector_row_broadcast(unsigned int nth, unsigned int it
 }
 
 // 4. Vector Complex (ne10 == ne00, complex broadcast)
-static void binary_thread_vector_complex(unsigned int nth, unsigned int ith, void * data) {
-    struct htp_binary_context * bctx = (struct htp_binary_context *) data;
-    struct htp_ops_context * octx = bctx->octx;
-    htp_binary_preamble;
+स्थिर शून्य द्विमान_thread_vector_complex(unsigned पूर्णाङ्क nth, unsigned पूर्णाङ्क ith, शून्य * data) {
+    संरचना htp_द्विमान_context * bctx = (संरचना htp_द्विमान_context *) data;
+    संरचना htp_ops_context * octx = bctx->octx;
+    htp_द्विमान_preamble;
 
-    const uint32_t row_size_bytes = bctx->row_size_bytes;
-    const uint32_t start_row  = bctx->row_start + bctx->nrows_per_thread * ith;
-    const uint32_t end_row    = MIN(start_row + bctx->nrows_per_thread, bctx->row_start + bctx->total_rows);
-    if (start_row >= end_row) return;
+    ध्रुव uint32_t row_size_bytes = bctx->row_size_bytes;
+    ध्रुव uint32_t start_row  = bctx->row_start + bctx->nrows_per_thread * ith;
+    ध्रुव uint32_t end_row    = MIN(start_row + bctx->nrows_per_thread, bctx->row_start + bctx->total_rows);
+    यदि (start_row >= end_row) प्रत्यागम;
 
-    FARF(HIGH, "binary-complex: %d/%d (%u:%u) row-size %u (%u)",
+    FARF(वरचा_2, "binary-complex: %d/%d (%u:%u) row-size %u (%u)",
          ith, nth, start_row, end_row, nb01, bctx->dst_row_size_aligned);
 
-    const struct htp_binary_vtcm_layout * layout = &bctx->vtcm_layout;
+    ध्रुव संरचना htp_द्विमान_vtcm_layout * layout = &bctx->vtcm_layout;
     uint8_t * src0_spad_base = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_base, layout->off_src0) + (ith * layout->src0_bytes_per_thread);
     uint8_t * dst_spad_base  = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_base, layout->off_dst)  + (ith * layout->dst_bytes_per_thread);
     size_t src0_spad_half    = layout->src0_spad_half_size;
     size_t dst_spad_half     = layout->dst_spad_half_size;
-    const uint8_t * vtcm_src1 = VTCM_LAYOUT_PTR(const uint8_t, bctx->vtcm_base, layout->off_src1);
+    ध्रुव uint8_t * vtcm_src1 = VTCM_LAYOUT_PTR(ध्रुव uint8_t, bctx->vtcm_base, layout->off_src1);
 
-    const uint32_t elem_size = (src0->type == HTP_TYPE_F32) ? sizeof(float) : sizeof(_Float16);
-    const size_t vtcm_row_stride   = (size_t) ne10 * elem_size;
-    const size_t vtcm_plane_stride = (size_t) ne11 * vtcm_row_stride;
-    const size_t vtcm_vol_stride   = (size_t) ne12 * vtcm_plane_stride;
+    ध्रुव uint32_t elem_size = (src0->type == HTP_TYPE_F32) ? परिमाण(भिन्न) : परिमाण(_Float16);
+    ध्रुव size_t vtcm_row_stride   = (size_t) ne10 * elem_size;
+    ध्रुव size_t vtcm_plane_stride = (size_t) ne11 * vtcm_row_stride;
+    ध्रुव size_t vtcm_vol_stride   = (size_t) ne12 * vtcm_plane_stride;
 
     dma_queue * dma_q = octx->ctx->dma[ith];
     uint32_t ir_prefetch = start_row;
-    int spad_idx = 0;
+    पूर्णाङ्क spad_idx = 0;
 
-    for (int k = 0; k < 2 && ir_prefetch < end_row; k++) {
+    प्रति (पूर्णाङ्क k = 0; k < 2 && ir_prefetch < end_row; k++) {
         uint32_t current_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
         uint32_t i03 = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
         uint32_t rem = ir_prefetch - i03 * (ne02 * ne01);
@@ -584,19 +584,19 @@ static void binary_thread_vector_complex(unsigned int nth, unsigned int ith, voi
         uint8_t * s0_spad = src0_spad_base + spad_idx * src0_spad_half;
         uint8_t * d_spad  = dst_spad_base  + spad_idx * dst_spad_half;
 
-        dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, 0);
-        dma_queue_push(dma_q, dma_make_data(s0_spad, src0_curr), bctx->src0_row_size_aligned, nb01, row_size_bytes, current_block_size);
+        dma_queue_ढकला(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, 0);
+        dma_queue_ढकला(dma_q, dma_make_data(s0_spad, src0_curr), bctx->src0_row_size_aligned, nb01, row_size_bytes, current_block_size);
         ir_prefetch += current_block_size;
         spad_idx ^= 1;
     }
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    संरचना htp_thread_trace * tr = &octx->ctx->trace[ith];
     compute_complex_t compute = (compute_complex_t) bctx->compute;
 
-    for (uint32_t ir = start_row; ir < end_row; ) {
+    प्रति (uint32_t ir = start_row; ir < end_row; ) {
         uint32_t current_block_size = calc_block_size(bctx, ir, end_row, ne01, ne02);
-        uint8_t * d_spad = (uint8_t *) dma_queue_pop(dma_q).src;
-        uint8_t * s0_spad = (uint8_t *) dma_queue_pop(dma_q).dst;
+        uint8_t * d_spad = (uint8_t *) dma_queue_काढा(dma_q).src;
+        uint8_t * s0_spad = (uint8_t *) dma_queue_काढा(dma_q).dst;
 
         uint32_t i03 = fastdiv(ir, &bctx->src0_dim12_div);
         uint32_t rem = ir - i03 * (ne02 * ne01);
@@ -605,7 +605,7 @@ static void binary_thread_vector_complex(unsigned int nth, unsigned int ith, voi
 
         uint32_t i13 = fastmodulo(i03, ne13, &bctx->src1_dim3_div);
         uint32_t i12 = fastmodulo(i02, ne12, &bctx->src1_dim2_div);
-        const uint8_t * src1_plane = vtcm_src1 + i13 * vtcm_vol_stride + i12 * vtcm_plane_stride;
+        ध्रुव uint8_t * src1_plane = vtcm_src1 + i13 * vtcm_vol_stride + i12 * vtcm_plane_stride;
 
         htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
         compute(d_spad, s0_spad, src1_plane, i01, ne11, &bctx->src1_dim1_div, vtcm_row_stride,
@@ -613,9 +613,9 @@ static void binary_thread_vector_complex(unsigned int nth, unsigned int ith, voi
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
 
         dma_addr_t dst_curr = dst->data + i03 * nb3 + i02 * nb2 + i01 * nb1;
-        dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, current_block_size);
+        dma_queue_ढकला(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, current_block_size);
 
-        if (ir_prefetch < end_row) {
+        यदि (ir_prefetch < end_row) {
             uint32_t next_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
             uint32_t p03, p02, p01, prem;
             p03  = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
@@ -623,7 +623,7 @@ static void binary_thread_vector_complex(unsigned int nth, unsigned int ith, voi
             p02  = fastdiv(prem, &bctx->src0_dim1_div);
             p01  = prem - p02 * ne01;
             dma_addr_t s0_next = src0->data + p03 * nb03 + p02 * nb02 + p01 * nb01;
-            dma_queue_push(dma_q, dma_make_data(s0_spad, s0_next), bctx->src0_row_size_aligned, nb01, row_size_bytes, next_block_size);
+            dma_queue_ढकला(dma_q, dma_make_data(s0_spad, s0_next), bctx->src0_row_size_aligned, nb01, row_size_bytes, next_block_size);
             ir_prefetch += next_block_size;
         }
         ir += current_block_size;
@@ -633,36 +633,36 @@ static void binary_thread_vector_complex(unsigned int nth, unsigned int ith, voi
 }
 
 // 5. Element Repeat (ne10 != ne00)
-static void binary_thread_element_repeat(unsigned int nth, unsigned int ith, void * data) {
-    struct htp_binary_context * bctx = (struct htp_binary_context *) data;
-    struct htp_ops_context * octx = bctx->octx;
-    htp_binary_preamble;
+स्थिर शून्य द्विमान_thread_element_repeat(unsigned पूर्णाङ्क nth, unsigned पूर्णाङ्क ith, शून्य * data) {
+    संरचना htp_द्विमान_context * bctx = (संरचना htp_द्विमान_context *) data;
+    संरचना htp_ops_context * octx = bctx->octx;
+    htp_द्विमान_preamble;
 
-    const uint32_t row_size_bytes = bctx->row_size_bytes;
-    const uint32_t start_row  = bctx->row_start + bctx->nrows_per_thread * ith;
-    const uint32_t end_row    = MIN(start_row + bctx->nrows_per_thread, bctx->row_start + bctx->total_rows);
-    if (start_row >= end_row) return;
+    ध्रुव uint32_t row_size_bytes = bctx->row_size_bytes;
+    ध्रुव uint32_t start_row  = bctx->row_start + bctx->nrows_per_thread * ith;
+    ध्रुव uint32_t end_row    = MIN(start_row + bctx->nrows_per_thread, bctx->row_start + bctx->total_rows);
+    यदि (start_row >= end_row) प्रत्यागम;
 
-    const struct htp_binary_vtcm_layout * layout = &bctx->vtcm_layout;
+    ध्रुव संरचना htp_द्विमान_vtcm_layout * layout = &bctx->vtcm_layout;
     uint8_t * src0_spad_base = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_base, layout->off_src0) + (ith * layout->src0_bytes_per_thread);
     uint8_t * dst_spad_base  = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_base, layout->off_dst)  + (ith * layout->dst_bytes_per_thread);
     size_t src0_spad_half    = layout->src0_spad_half_size;
     size_t dst_spad_half     = layout->dst_spad_half_size;
-    const uint8_t * vtcm_src1 = VTCM_LAYOUT_PTR(const uint8_t, bctx->vtcm_base, layout->off_src1);
+    ध्रुव uint8_t * vtcm_src1 = VTCM_LAYOUT_PTR(ध्रुव uint8_t, bctx->vtcm_base, layout->off_src1);
 
-    const uint32_t elem_size = (src0->type == HTP_TYPE_F32) ? sizeof(float) : sizeof(_Float16);
-    const size_t vtcm_row_stride   = (size_t) ne10 * elem_size;
-    const size_t vtcm_plane_stride = (size_t) ne11 * vtcm_row_stride;
-    const size_t vtcm_vol_stride   = (size_t) ne12 * vtcm_plane_stride;
+    ध्रुव uint32_t elem_size = (src0->type == HTP_TYPE_F32) ? परिमाण(भिन्न) : परिमाण(_Float16);
+    ध्रुव size_t vtcm_row_stride   = (size_t) ne10 * elem_size;
+    ध्रुव size_t vtcm_plane_stride = (size_t) ne11 * vtcm_row_stride;
+    ध्रुव size_t vtcm_vol_stride   = (size_t) ne12 * vtcm_plane_stride;
 
-    FARF(HIGH, "binary-repeat: %d/%d (%u:%u) row-size %u (%u)",
+    FARF(वरचा_2, "binary-repeat: %d/%d (%u:%u) row-size %u (%u)",
          ith, nth, start_row, end_row, nb01, bctx->dst_row_size_aligned);
 
     dma_queue * dma_q = octx->ctx->dma[ith];
     uint32_t ir_prefetch = start_row;
-    int spad_idx = 0;
+    पूर्णाङ्क spad_idx = 0;
 
-    for (int k = 0; k < 2 && ir_prefetch < end_row; k++) {
+    प्रति (पूर्णाङ्क k = 0; k < 2 && ir_prefetch < end_row; k++) {
         uint32_t current_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
         uint32_t i03 = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
         uint32_t rem = ir_prefetch - i03 * (ne02 * ne01);
@@ -675,19 +675,19 @@ static void binary_thread_element_repeat(unsigned int nth, unsigned int ith, voi
         uint8_t * s0_spad = src0_spad_base + spad_idx * src0_spad_half;
         uint8_t * d_spad  = dst_spad_base  + spad_idx * dst_spad_half;
 
-        dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, 0);
-        dma_queue_push(dma_q, dma_make_data(s0_spad, src0_curr), bctx->src0_row_size_aligned, nb01, row_size_bytes, current_block_size);
+        dma_queue_ढकला(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, 0);
+        dma_queue_ढकला(dma_q, dma_make_data(s0_spad, src0_curr), bctx->src0_row_size_aligned, nb01, row_size_bytes, current_block_size);
         ir_prefetch += current_block_size;
         spad_idx ^= 1;
     }
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    संरचना htp_thread_trace * tr = &octx->ctx->trace[ith];
     compute_repeat_t compute = (compute_repeat_t) bctx->compute;
 
-    for (uint32_t ir = start_row; ir < end_row; ) {
+    प्रति (uint32_t ir = start_row; ir < end_row; ) {
         uint32_t current_block_size = calc_block_size(bctx, ir, end_row, ne01, ne02);
-        uint8_t * d_spad  = (uint8_t *) dma_queue_pop(dma_q).src;
-        uint8_t * s0_spad = (uint8_t *) dma_queue_pop(dma_q).dst;
+        uint8_t * d_spad  = (uint8_t *) dma_queue_काढा(dma_q).src;
+        uint8_t * s0_spad = (uint8_t *) dma_queue_काढा(dma_q).dst;
 
         uint32_t i03 = fastdiv(ir, &bctx->src0_dim12_div);
         uint32_t rem = ir - i03 * (ne02 * ne01);
@@ -696,7 +696,7 @@ static void binary_thread_element_repeat(unsigned int nth, unsigned int ith, voi
 
         uint32_t i13 = fastmodulo(i03, ne13, &bctx->src1_dim3_div);
         uint32_t i12 = fastmodulo(i02, ne12, &bctx->src1_dim2_div);
-        const uint8_t * src1_plane = vtcm_src1 + i13 * vtcm_vol_stride + i12 * vtcm_plane_stride;
+        ध्रुव uint8_t * src1_plane = vtcm_src1 + i13 * vtcm_vol_stride + i12 * vtcm_plane_stride;
 
         htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
         compute(d_spad, s0_spad, src1_plane, i01, ne11, &bctx->src1_dim1_div, vtcm_row_stride,
@@ -704,9 +704,9 @@ static void binary_thread_element_repeat(unsigned int nth, unsigned int ith, voi
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
 
         dma_addr_t dst_curr = dst->data + i03 * nb3 + i02 * nb2 + i01 * nb1;
-        dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, current_block_size);
+        dma_queue_ढकला(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, current_block_size);
 
-        if (ir_prefetch < end_row) {
+        यदि (ir_prefetch < end_row) {
             uint32_t next_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
             uint32_t p03, p02, p01, prem;
             p03  = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
@@ -714,7 +714,7 @@ static void binary_thread_element_repeat(unsigned int nth, unsigned int ith, voi
             p02  = fastdiv(prem, &bctx->src0_dim1_div);
             p01  = prem - p02 * ne01;
             dma_addr_t s0_next = src0->data + p03 * nb03 + p02 * nb02 + p01 * nb01;
-            dma_queue_push(dma_q, dma_make_data(s0_spad, s0_next), bctx->src0_row_size_aligned, nb01, row_size_bytes, next_block_size);
+            dma_queue_ढकला(dma_q, dma_make_data(s0_spad, s0_next), bctx->src0_row_size_aligned, nb01, row_size_bytes, next_block_size);
             ir_prefetch += next_block_size;
         }
         ir += current_block_size;
@@ -724,46 +724,46 @@ static void binary_thread_element_repeat(unsigned int nth, unsigned int ith, voi
 }
 
 // 6. ADD_ID (src1 gathered via src2 indices)
-static void binary_thread_add_id_f32(unsigned int nth, unsigned int ith, void * data) {
-    struct htp_binary_context * bctx = (struct htp_binary_context *) data;
-    struct htp_ops_context * octx = bctx->octx;
+स्थिर शून्य द्विमान_thread_add_id_f32(unsigned पूर्णाङ्क nth, unsigned पूर्णाङ्क ith, शून्य * data) {
+    संरचना htp_द्विमान_context * bctx = (संरचना htp_द्विमान_context *) data;
+    संरचना htp_ops_context * octx = bctx->octx;
 
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * src1 = octx->src[1];
-    const struct htp_tensor * dst  = octx->dst;
+    ध्रुव संरचना htp_tensor * src0 = octx->src[0];
+    ध्रुव संरचना htp_tensor * src1 = octx->src[1];
+    ध्रुव संरचना htp_tensor * dst  = octx->dst;
 
-    const uint32_t ne00 = src0->ne[0];
-    const uint32_t ne01 = src0->ne[1];
-    const uint32_t ne02 = src0->ne[2];
-    const uint32_t ne03 = src0->ne[3];
+    ध्रुव uint32_t ne00 = src0->ne[0];
+    ध्रुव uint32_t ne01 = src0->ne[1];
+    ध्रुव uint32_t ne02 = src0->ne[2];
+    ध्रुव uint32_t ne03 = src0->ne[3];
 
-    const uint32_t nb01 = src0->nb[1];
-    const uint32_t nb02 = src0->nb[2];
-    const uint32_t nb03 = src0->nb[3];
-    const uint32_t src1_stride = bctx->src1_row_size_aligned;
+    ध्रुव uint32_t nb01 = src0->nb[1];
+    ध्रुव uint32_t nb02 = src0->nb[2];
+    ध्रुव uint32_t nb03 = src0->nb[3];
+    ध्रुव uint32_t src1_stride = bctx->src1_row_size_aligned;
 
-    const uint32_t nb1 = dst->nb[1];
-    const uint32_t nb2 = dst->nb[2];
-    const uint32_t nb3 = dst->nb[3];
+    ध्रुव uint32_t nb1 = dst->nb[1];
+    ध्रुव uint32_t nb2 = dst->nb[2];
+    ध्रुव uint32_t nb3 = dst->nb[3];
 
-    const uint32_t row_size_bytes = bctx->row_size_bytes;
-    const uint32_t start_row = bctx->row_start + bctx->nrows_per_thread * ith;
-    const uint32_t end_row   = MIN(start_row + bctx->nrows_per_thread, bctx->row_start + bctx->total_rows);
-    if (start_row >= end_row) return;
+    ध्रुव uint32_t row_size_bytes = bctx->row_size_bytes;
+    ध्रुव uint32_t start_row = bctx->row_start + bctx->nrows_per_thread * ith;
+    ध्रुव uint32_t end_row   = MIN(start_row + bctx->nrows_per_thread, bctx->row_start + bctx->total_rows);
+    यदि (start_row >= end_row) प्रत्यागम;
 
-    const struct htp_binary_vtcm_layout * layout = &bctx->vtcm_layout;
+    ध्रुव संरचना htp_द्विमान_vtcm_layout * layout = &bctx->vtcm_layout;
     uint8_t * src0_spad_base = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_base, layout->off_src0) + (ith * layout->src0_bytes_per_thread);
     uint8_t * dst_spad_base  = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_base, layout->off_dst)  + (ith * layout->dst_bytes_per_thread);
-    const uint8_t * vtcm_src1 = VTCM_LAYOUT_PTR(const uint8_t, bctx->vtcm_base, layout->off_src1);
-    const int32_t * vtcm_src2 = VTCM_LAYOUT_PTR(const int32_t, bctx->vtcm_base, layout->off_src2);
+    ध्रुव uint8_t * vtcm_src1 = VTCM_LAYOUT_PTR(ध्रुव uint8_t, bctx->vtcm_base, layout->off_src1);
+    ध्रुव int32_t * vtcm_src2 = VTCM_LAYOUT_PTR(ध्रुव int32_t, bctx->vtcm_base, layout->off_src2);
     size_t src0_spad_half    = layout->src0_spad_half_size;
     size_t dst_spad_half     = layout->dst_spad_half_size;
 
     dma_queue * dma_q = octx->ctx->dma[ith];
     uint32_t ir_prefetch = start_row;
-    int spad_idx = 0;
+    पूर्णाङ्क spad_idx = 0;
 
-    for (int k = 0; k < 2 && ir_prefetch < end_row; k++) {
+    प्रति (पूर्णाङ्क k = 0; k < 2 && ir_prefetch < end_row; k++) {
         uint32_t current_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
         uint32_t i03 = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
         uint32_t rem = ir_prefetch - i03 * (ne02 * ne01);
@@ -776,18 +776,18 @@ static void binary_thread_add_id_f32(unsigned int nth, unsigned int ith, void * 
         uint8_t * s0_spad = src0_spad_base + spad_idx * src0_spad_half;
         uint8_t * d_spad  = dst_spad_base  + spad_idx * dst_spad_half;
 
-        dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, 0);
-        dma_queue_push(dma_q, dma_make_data(s0_spad, src0_curr), bctx->src0_row_size_aligned, nb01, row_size_bytes, current_block_size);
+        dma_queue_ढकला(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, 0);
+        dma_queue_ढकला(dma_q, dma_make_data(s0_spad, src0_curr), bctx->src0_row_size_aligned, nb01, row_size_bytes, current_block_size);
         ir_prefetch += current_block_size;
         spad_idx ^= 1;
     }
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    संरचना htp_thread_trace * tr = &octx->ctx->trace[ith];
 
-    for (uint32_t ir = start_row; ir < end_row; ) {
+    प्रति (uint32_t ir = start_row; ir < end_row; ) {
         uint32_t current_block_size = calc_block_size(bctx, ir, end_row, ne01, ne02);
-        uint8_t * d_spad = (uint8_t *) dma_queue_pop(dma_q).src;
-        uint8_t * s0_spad = (uint8_t *) dma_queue_pop(dma_q).dst;
+        uint8_t * d_spad = (uint8_t *) dma_queue_काढा(dma_q).src;
+        uint8_t * s0_spad = (uint8_t *) dma_queue_काढा(dma_q).dst;
 
         uint32_t i03 = fastdiv(ir, &bctx->src0_dim12_div);
         uint32_t rem = ir - i03 * (ne02 * ne01);
@@ -802,9 +802,9 @@ static void binary_thread_add_id_f32(unsigned int nth, unsigned int ith, void * 
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
 
         dma_addr_t dst_curr = dst->data + i03 * nb3 + i02 * nb2 + i01 * nb1;
-        dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, current_block_size);
+        dma_queue_ढकला(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, current_block_size);
 
-        if (ir_prefetch < end_row) {
+        यदि (ir_prefetch < end_row) {
              uint32_t next_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
              uint32_t p03, p02, p01, prem;
              p03  = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
@@ -812,7 +812,7 @@ static void binary_thread_add_id_f32(unsigned int nth, unsigned int ith, void * 
              p02  = fastdiv(prem, &bctx->src0_dim1_div);
              p01  = prem - p02 * ne01;
              dma_addr_t s0_next = src0->data + p03 * nb03 + p02 * nb02 + p01 * nb01;
-             dma_queue_push(dma_q, dma_make_data(s0_spad, s0_next), bctx->src0_row_size_aligned, nb01, row_size_bytes, next_block_size);
+             dma_queue_ढकला(dma_q, dma_make_data(s0_spad, s0_next), bctx->src0_row_size_aligned, nb01, row_size_bytes, next_block_size);
              ir_prefetch += next_block_size;
         }
         ir += current_block_size;
@@ -821,38 +821,38 @@ static void binary_thread_add_id_f32(unsigned int nth, unsigned int ith, void * 
     dma_queue_flush(dma_q);
 }
 
-static inline void hvx_div_scalar_f32(uint8_t * restrict dst, const uint8_t * restrict src, const float val, const uint32_t num_elems) {
-    hvx_mul_scalar_f32(dst, src, 1.0f / val, num_elems);
+स्थिर अन्तःस्थ शून्य hvx_div_scalar_f32(uint8_t * restrict dst, ध्रुव uint8_t * restrict src, ध्रुव भिन्न val, ध्रुव uint32_t अंक_elems) {
+    hvx_mul_scalar_f32(dst, src, 1.0f / val, अंक_elems);
 }
 
-static inline void hvx_div_scalar_f16(uint8_t * restrict dst, const uint8_t * restrict src, const _Float16 val, const uint32_t num_elems) {
-    hvx_div_scalar_f16_aa(dst, src, val, num_elems);
+स्थिर अन्तःस्थ शून्य hvx_div_scalar_f16(uint8_t * restrict dst, ध्रुव uint8_t * restrict src, ध्रुव _Float16 val, ध्रुव uint32_t अंक_elems) {
+    hvx_div_scalar_f16_aa(dst, src, val, अंक_elems);
 }
 
-typedef void (*compute_binary_chunked_t)(
+प्रकारनिर्देश शून्य (*compute_द्विमान_chunked_t)(
     uint8_t * restrict dst,
-    const uint8_t * restrict src0,
-    const uint8_t * restrict src1,
-    const uint32_t num_elems
+    ध्रुव uint8_t * restrict src0,
+    ध्रुव uint8_t * restrict src1,
+    ध्रुव uint32_t अंक_elems
 );
 
-typedef void (*compute_binary_scalar_chunked_f32_t)(
+प्रकारनिर्देश शून्य (*compute_द्विमान_scalar_chunked_f32_t)(
     uint8_t * restrict dst,
-    const uint8_t * restrict src0,
-    const float val,
-    const uint32_t num_elems
+    ध्रुव uint8_t * restrict src0,
+    ध्रुव भिन्न val,
+    ध्रुव uint32_t अंक_elems
 );
 
-typedef void (*compute_binary_scalar_chunked_f16_t)(
+प्रकारनिर्देश शून्य (*compute_द्विमान_scalar_chunked_f16_t)(
     uint8_t * restrict dst,
-    const uint8_t * restrict src0,
-    const _Float16 val,
-    const uint32_t num_elems
+    ध्रुव uint8_t * restrict src0,
+    ध्रुव _Float16 val,
+    ध्रुव uint32_t अंक_elems
 );
 
-struct binary_chunked_context {
-    struct htp_ops_context * octx;
-    struct htp_binary_vtcm_layout vtcm_layout;
+संरचना द्विमान_chunked_context {
+    संरचना htp_ops_context * octx;
+    संरचना htp_द्विमान_vtcm_layout vtcm_layout;
     uint8_t *                vtcm_base;
     uint32_t                 elem_start;
     uint32_t                 nelem;
@@ -860,49 +860,49 @@ struct binary_chunked_context {
     uint32_t                 chunks_per_thread;
     uint32_t                 total_chunks;
     bool                     is_scalar;
-    float                    scalar_f32;
+    भिन्न                    scalar_f32;
     _Float16                 scalar_f16;
-    compute_binary_chunked_t compute;
-    compute_binary_scalar_chunked_f32_t compute_scalar_f32;
-    compute_binary_scalar_chunked_f16_t compute_scalar_f16;
+    compute_द्विमान_chunked_t compute;
+    compute_द्विमान_scalar_chunked_f32_t compute_scalar_f32;
+    compute_द्विमान_scalar_chunked_f16_t compute_scalar_f16;
 };
 
-static void binary_thread_chunked(unsigned int nth, unsigned int ith, void * data) {
-    (void) nth;
-    struct binary_chunked_context * ctx = (struct binary_chunked_context *) data;
-    struct htp_ops_context * octx = ctx->octx;
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * src1 = octx->src[1];
-    const struct htp_tensor * dst  = octx->dst;
+स्थिर शून्य द्विमान_thread_chunked(unsigned पूर्णाङ्क nth, unsigned पूर्णाङ्क ith, शून्य * data) {
+    (शून्य) nth;
+    संरचना द्विमान_chunked_context * ctx = (संरचना द्विमान_chunked_context *) data;
+    संरचना htp_ops_context * octx = ctx->octx;
+    ध्रुव संरचना htp_tensor * src0 = octx->src[0];
+    ध्रुव संरचना htp_tensor * src1 = octx->src[1];
+    ध्रुव संरचना htp_tensor * dst  = octx->dst;
 
-    const uint32_t start_chunk = ctx->chunks_per_thread * ith;
-    const uint32_t end_chunk   = MIN(start_chunk + ctx->chunks_per_thread, ctx->total_chunks);
-    if (start_chunk >= end_chunk) {
-        return;
+    ध्रुव uint32_t start_chunk = ctx->chunks_per_thread * ith;
+    ध्रुव uint32_t end_chunk   = MIN(start_chunk + ctx->chunks_per_thread, ctx->total_chunks);
+    यदि (start_chunk >= end_chunk) {
+        प्रत्यागम;
     }
 
-    const uint32_t src0_type   = src0->type;
-    const size_t   elem_size   = (src0_type == HTP_TYPE_F32) ? sizeof(float) : sizeof(_Float16);
-    const uint32_t chunk_size  = ctx->chunk_size;
-    const size_t   chunk_bytes = ctx->vtcm_layout.src0_spad_half_size;
+    ध्रुव uint32_t src0_type   = src0->type;
+    ध्रुव size_t   elem_size   = (src0_type == HTP_TYPE_F32) ? परिमाण(भिन्न) : परिमाण(_Float16);
+    ध्रुव uint32_t chunk_size  = ctx->chunk_size;
+    ध्रुव size_t   chunk_bytes = ctx->vtcm_layout.src0_spad_half_size;
 
-    FARF(HIGH, "binary-chunked: %d/%d (%u:%u) chunks %u elems %u",
+    FARF(वरचा_2, "binary-chunked: %d/%d (%u:%u) chunks %u elems %u",
          ith, nth, start_chunk, end_chunk, ctx->total_chunks, ctx->nelem);
 
-    const struct htp_binary_vtcm_layout * layout = &ctx->vtcm_layout;
+    ध्रुव संरचना htp_द्विमान_vtcm_layout * layout = &ctx->vtcm_layout;
     uint8_t * src0_spad_base = VTCM_LAYOUT_PTR(uint8_t, ctx->vtcm_base, layout->off_src0) + (ith * layout->src0_bytes_per_thread);
-    uint8_t * src1_spad_base = ctx->is_scalar ? NULL : (VTCM_LAYOUT_PTR(uint8_t, ctx->vtcm_base, layout->off_src1) + (ith * layout->src1_bytes_per_thread));
+    uint8_t * src1_spad_base = ctx->is_scalar ? रिक्त : (VTCM_LAYOUT_PTR(uint8_t, ctx->vtcm_base, layout->off_src1) + (ith * layout->src1_bytes_per_thread));
     uint8_t * dst_spad_base  = VTCM_LAYOUT_PTR(uint8_t, ctx->vtcm_base, layout->off_dst)  + (ith * layout->dst_bytes_per_thread);
 
     dma_queue * dma_q = octx->ctx->dma[ith];
     uint32_t prefetch_chunk = start_chunk;
-    int spad_idx = 0;
+    पूर्णाङ्क spad_idx = 0;
 
-    for (int k = 0; k < 2 && prefetch_chunk < end_chunk; k++) {
-        const uint32_t c_start   = ctx->elem_start + prefetch_chunk * chunk_size;
-        const uint32_t c_end     = MIN(c_start + chunk_size, ctx->elem_start + ctx->nelem);
-        const uint32_t cur_elems = c_end - c_start;
-        const uint32_t cur_bytes = cur_elems * elem_size;
+    प्रति (पूर्णाङ्क k = 0; k < 2 && prefetch_chunk < end_chunk; k++) {
+        ध्रुव uint32_t c_start   = ctx->elem_start + prefetch_chunk * chunk_size;
+        ध्रुव uint32_t c_end     = MIN(c_start + chunk_size, ctx->elem_start + ctx->nelem);
+        ध्रुव uint32_t cur_elems = c_end - c_start;
+        ध्रुव uint32_t cur_bytes = cur_elems * elem_size;
 
         dma_addr_t s0_curr = src0->data + (size_t) c_start * elem_size;
         dma_addr_t d_curr  = dst->data  + (size_t) c_start * elem_size;
@@ -910,56 +910,56 @@ static void binary_thread_chunked(unsigned int nth, unsigned int ith, void * dat
         uint8_t * s0_spad = src0_spad_base + spad_idx * chunk_bytes;
         uint8_t * d_spad  = dst_spad_base  + spad_idx * chunk_bytes;
 
-        dma_queue_push(dma_q, dma_make_data(d_curr, d_spad), chunk_bytes, chunk_bytes, cur_bytes, 0);
-        dma_queue_push(dma_q, dma_make_data(s0_spad, s0_curr), chunk_bytes, chunk_bytes, cur_bytes, 1);
-        if (!ctx->is_scalar) {
+        dma_queue_ढकला(dma_q, dma_make_data(d_curr, d_spad), chunk_bytes, chunk_bytes, cur_bytes, 0);
+        dma_queue_ढकला(dma_q, dma_make_data(s0_spad, s0_curr), chunk_bytes, chunk_bytes, cur_bytes, 1);
+        यदि (!ctx->is_scalar) {
             dma_addr_t s1_curr = src1->data + (size_t) c_start * elem_size;
             uint8_t * s1_spad = src1_spad_base + spad_idx * chunk_bytes;
-            dma_queue_push(dma_q, dma_make_data(s1_spad, s1_curr), chunk_bytes, chunk_bytes, cur_bytes, 1);
+            dma_queue_ढकला(dma_q, dma_make_data(s1_spad, s1_curr), chunk_bytes, chunk_bytes, cur_bytes, 1);
         }
 
         prefetch_chunk++;
         spad_idx ^= 1;
     }
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    संरचना htp_thread_trace * tr = &octx->ctx->trace[ith];
 
-    for (uint32_t c = start_chunk; c < end_chunk; c++) {
-        const uint32_t c_start   = ctx->elem_start + c * chunk_size;
-        const uint32_t c_end     = MIN(c_start + chunk_size, ctx->elem_start + ctx->nelem);
-        const uint32_t cur_elems = c_end - c_start;
-        const uint32_t cur_bytes = cur_elems * elem_size;
+    प्रति (uint32_t c = start_chunk; c < end_chunk; c++) {
+        ध्रुव uint32_t c_start   = ctx->elem_start + c * chunk_size;
+        ध्रुव uint32_t c_end     = MIN(c_start + chunk_size, ctx->elem_start + ctx->nelem);
+        ध्रुव uint32_t cur_elems = c_end - c_start;
+        ध्रुव uint32_t cur_bytes = cur_elems * elem_size;
 
-        uint8_t * d_spad  = (uint8_t *) dma_queue_pop(dma_q).src;
-        uint8_t * s0_spad = (uint8_t *) dma_queue_pop(dma_q).dst;
-        uint8_t * s1_spad = ctx->is_scalar ? NULL : (uint8_t *) dma_queue_pop(dma_q).dst;
+        uint8_t * d_spad  = (uint8_t *) dma_queue_काढा(dma_q).src;
+        uint8_t * s0_spad = (uint8_t *) dma_queue_काढा(dma_q).dst;
+        uint8_t * s1_spad = ctx->is_scalar ? रिक्त : (uint8_t *) dma_queue_काढा(dma_q).dst;
 
         htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) c);
-        if (ctx->is_scalar) {
-            if (src0_type == HTP_TYPE_F32) {
+        यदि (ctx->is_scalar) {
+            यदि (src0_type == HTP_TYPE_F32) {
                 ctx->compute_scalar_f32(d_spad, s0_spad, ctx->scalar_f32, cur_elems);
-            } else {
+            } अन्यथा {
                 ctx->compute_scalar_f16(d_spad, s0_spad, ctx->scalar_f16, cur_elems);
             }
-        } else {
+        } अन्यथा {
             ctx->compute(d_spad, s0_spad, s1_spad, cur_elems);
         }
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) c);
 
         dma_addr_t dst_curr = dst->data + (size_t) c_start * elem_size;
-        dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), chunk_bytes, chunk_bytes, cur_bytes, 1);
+        dma_queue_ढकला(dma_q, dma_make_data(dst_curr, d_spad), chunk_bytes, chunk_bytes, cur_bytes, 1);
 
-        if (prefetch_chunk < end_chunk) {
-            const uint32_t pc_start  = ctx->elem_start + prefetch_chunk * chunk_size;
-            const uint32_t pc_end    = MIN(pc_start + chunk_size, ctx->elem_start + ctx->nelem);
-            const uint32_t p_elems   = pc_end - pc_start;
-            const uint32_t p_bytes   = p_elems * elem_size;
+        यदि (prefetch_chunk < end_chunk) {
+            ध्रुव uint32_t pc_start  = ctx->elem_start + prefetch_chunk * chunk_size;
+            ध्रुव uint32_t pc_end    = MIN(pc_start + chunk_size, ctx->elem_start + ctx->nelem);
+            ध्रुव uint32_t p_elems   = pc_end - pc_start;
+            ध्रुव uint32_t p_bytes   = p_elems * elem_size;
 
             dma_addr_t s0_next = src0->data + (size_t) pc_start * elem_size;
-            dma_queue_push(dma_q, dma_make_data(s0_spad, s0_next), chunk_bytes, chunk_bytes, p_bytes, 1);
-            if (!ctx->is_scalar) {
+            dma_queue_ढकला(dma_q, dma_make_data(s0_spad, s0_next), chunk_bytes, chunk_bytes, p_bytes, 1);
+            यदि (!ctx->is_scalar) {
                 dma_addr_t s1_next = src1->data + (size_t) pc_start * elem_size;
-                dma_queue_push(dma_q, dma_make_data(s1_spad, s1_next), chunk_bytes, chunk_bytes, p_bytes, 1);
+                dma_queue_ढकला(dma_q, dma_make_data(s1_spad, s1_next), chunk_bytes, chunk_bytes, p_bytes, 1);
             }
 
             prefetch_chunk++;
@@ -969,130 +969,130 @@ static void binary_thread_chunked(unsigned int nth, unsigned int ith, void * dat
     dma_queue_flush(dma_q);
 }
 
-static int execute_op_binary(struct htp_ops_context * octx) {
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * src1 = octx->src[1];
-    const struct htp_tensor * dst  = octx->dst;
-    const struct htp_binary_kernel_params * kparams = (const struct htp_binary_kernel_params *) octx->kernel_params;
+स्थिर पूर्णाङ्क execute_op_द्विमान(संरचना htp_ops_context * octx) {
+    ध्रुव संरचना htp_tensor * src0 = octx->src[0];
+    ध्रुव संरचना htp_tensor * src1 = octx->src[1];
+    ध्रुव संरचना htp_tensor * dst  = octx->dst;
+    ध्रुव संरचना htp_द्विमान_kernel_params * kparams = (ध्रुव संरचना htp_द्विमान_kernel_params *) octx->kernel_params;
 
-    const uint32_t src0_nrows = src0->ne[1] * src0->ne[2] * src0->ne[3];
+    ध्रुव uint32_t src0_nrows = src0->ne[1] * src0->ne[2] * src0->ne[3];
 
     // Use packed row sizes for VTCM allocation and alignment
-    const uint32_t src0_type = octx->src[0]->type;
-    const size_t elem_size = (src0_type == HTP_TYPE_F32) ? sizeof(float) : sizeof(_Float16);
-    const size_t src0_row_size = src0->ne[0] * elem_size;
-    const size_t src1_row_size = src1->ne[0] * elem_size;
-    const size_t dst_row_size  = dst->ne[0]  * elem_size;
+    ध्रुव uint32_t src0_type = octx->src[0]->type;
+    ध्रुव size_t elem_size = (src0_type == HTP_TYPE_F32) ? परिमाण(भिन्न) : परिमाण(_Float16);
+    ध्रुव size_t src0_row_size = src0->ne[0] * elem_size;
+    ध्रुव size_t src1_row_size = src1->ne[0] * elem_size;
+    ध्रुव size_t dst_row_size  = dst->ne[0]  * elem_size;
 
-    if (kparams->kernel_type == HTP_BINARY_KERNEL_CHUNKED) {
-        const bool is_scalar = kparams->is_scalar || (src1->ne[0] == 1 && src1->ne[1] == 1 && src1->ne[2] == 1 && src1->ne[3] == 1);
+    यदि (kparams->kernel_type == HTP_द्विमान_KERNEL_CHUNKED) {
+        ध्रुव bool is_scalar = kparams->is_scalar || (src1->ne[0] == 1 && src1->ne[1] == 1 && src1->ne[2] == 1 && src1->ne[3] == 1);
 
-        compute_binary_chunked_t compute = NULL;
-        compute_binary_scalar_chunked_f32_t compute_scalar_f32 = NULL;
-        compute_binary_scalar_chunked_f16_t compute_scalar_f16 = NULL;
+        compute_द्विमान_chunked_t compute = रिक्त;
+        compute_द्विमान_scalar_chunked_f32_t compute_scalar_f32 = रिक्त;
+        compute_द्विमान_scalar_chunked_f16_t compute_scalar_f16 = रिक्त;
 
-        if (is_scalar) {
-            if (src0_type == HTP_TYPE_F32) {
-                switch (octx->op) {
-                    case HTP_OP_ADD: compute_scalar_f32 = hvx_add_scalar_f32; break;
-                    case HTP_OP_SUB: compute_scalar_f32 = hvx_sub_scalar_f32; break;
-                    case HTP_OP_MUL: compute_scalar_f32 = hvx_mul_scalar_f32; break;
-                    case HTP_OP_DIV: compute_scalar_f32 = hvx_div_scalar_f32; break;
-                    default: break;
+        यदि (is_scalar) {
+            यदि (src0_type == HTP_TYPE_F32) {
+                विकल्प (octx->op) {
+                    पक्ष HTP_OP_ADD: compute_scalar_f32 = hvx_add_scalar_f32; भङ्ग;
+                    पक्ष HTP_OP_SUB: compute_scalar_f32 = hvx_sub_scalar_f32; भङ्ग;
+                    पक्ष HTP_OP_MUL: compute_scalar_f32 = hvx_mul_scalar_f32; भङ्ग;
+                    पक्ष HTP_OP_DIV: compute_scalar_f32 = hvx_div_scalar_f32; भङ्ग;
+                    स्वभाव: भङ्ग;
                 }
-            } else if (src0_type == HTP_TYPE_F16) {
-                switch (octx->op) {
-                    case HTP_OP_ADD: compute_scalar_f16 = hvx_add_scalar_f16; break;
-                    case HTP_OP_SUB: compute_scalar_f16 = hvx_sub_scalar_f16; break;
-                    case HTP_OP_MUL: compute_scalar_f16 = hvx_mul_scalar_f16; break;
-                    case HTP_OP_DIV: compute_scalar_f16 = hvx_div_scalar_f16; break;
-                    default: break;
+            } अन्यथा यदि (src0_type == HTP_TYPE_F16) {
+                विकल्प (octx->op) {
+                    पक्ष HTP_OP_ADD: compute_scalar_f16 = hvx_add_scalar_f16; भङ्ग;
+                    पक्ष HTP_OP_SUB: compute_scalar_f16 = hvx_sub_scalar_f16; भङ्ग;
+                    पक्ष HTP_OP_MUL: compute_scalar_f16 = hvx_mul_scalar_f16; भङ्ग;
+                    पक्ष HTP_OP_DIV: compute_scalar_f16 = hvx_div_scalar_f16; भङ्ग;
+                    स्वभाव: भङ्ग;
                 }
             }
-            if (!compute_scalar_f32 && !compute_scalar_f16) {
-                return HTP_STATUS_NO_SUPPORT;
+            यदि (!compute_scalar_f32 && !compute_scalar_f16) {
+                प्रत्यागम HTP_STATUS_NO_SUPPORT;
             }
-        } else {
-            if (src0_type == HTP_TYPE_F32) {
-                switch (octx->op) {
-                    case HTP_OP_ADD: compute = hvx_add_f32; break;
-                    case HTP_OP_SUB: compute = hvx_sub_f32; break;
-                    case HTP_OP_MUL: compute = hvx_mul_f32; break;
-                    case HTP_OP_DIV: compute = hvx_div_f32; break;
-                    default: break;
+        } अन्यथा {
+            यदि (src0_type == HTP_TYPE_F32) {
+                विकल्प (octx->op) {
+                    पक्ष HTP_OP_ADD: compute = hvx_add_f32; भङ्ग;
+                    पक्ष HTP_OP_SUB: compute = hvx_sub_f32; भङ्ग;
+                    पक्ष HTP_OP_MUL: compute = hvx_mul_f32; भङ्ग;
+                    पक्ष HTP_OP_DIV: compute = hvx_div_f32; भङ्ग;
+                    स्वभाव: भङ्ग;
                 }
-            } else if (src0_type == HTP_TYPE_F16) {
-                switch (octx->op) {
-                    case HTP_OP_ADD: compute = hvx_add_f16; break;
-                    case HTP_OP_SUB: compute = hvx_sub_f16; break;
-                    case HTP_OP_MUL: compute = hvx_mul_f16; break;
-                    case HTP_OP_DIV: compute = hvx_div_f16; break;
-                    default: break;
+            } अन्यथा यदि (src0_type == HTP_TYPE_F16) {
+                विकल्प (octx->op) {
+                    पक्ष HTP_OP_ADD: compute = hvx_add_f16; भङ्ग;
+                    पक्ष HTP_OP_SUB: compute = hvx_sub_f16; भङ्ग;
+                    पक्ष HTP_OP_MUL: compute = hvx_mul_f16; भङ्ग;
+                    पक्ष HTP_OP_DIV: compute = hvx_div_f16; भङ्ग;
+                    स्वभाव: भङ्ग;
                 }
             }
-            if (!compute) {
-                return HTP_STATUS_NO_SUPPORT;
+            यदि (!compute) {
+                प्रत्यागम HTP_STATUS_NO_SUPPORT;
             }
         }
 
-        const uint32_t total_elems = (uint32_t) (src0->ne[0] * src0->ne[1] * src0->ne[2] * src0->ne[3]);
-        if (total_elems == 0) {
-            return HTP_STATUS_OK;
+        ध्रुव uint32_t total_elems = (uint32_t) (src0->ne[0] * src0->ne[1] * src0->ne[2] * src0->ne[3]);
+        यदि (total_elems == 0) {
+            प्रत्यागम HTP_STATUS_OK;
         }
 
         uint32_t elem_start = 0;
         uint32_t nelem      = total_elems;
-        const uint32_t elems_per_line = (src0_type == HTP_TYPE_F32) ? 32 : 64;
+        ध्रुव uint32_t elems_per_ओळ = (src0_type == HTP_TYPE_F32) ? 32 : 64;
 
-        if (octx->ctx->mdev.count > 1) {
-            const bool can_split = htp_tensor_mdev_data_aligned(dst) &&
+        यदि (octx->ctx->mdev.मोजणी > 1) {
+            ध्रुव bool can_split = htp_tensor_mdev_data_aligned(dst) &&
                                    htp_tensor_mdev_data_aligned(src0) &&
                                    (is_scalar || htp_tensor_mdev_data_aligned(src1)) &&
                                    htp_tensor_is_contiguous(dst, elem_size) &&
                                    htp_tensor_is_contiguous(src0, elem_size) &&
                                    (is_scalar || htp_tensor_is_contiguous(src1, elem_size));
-            const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(
-                total_elems, can_split ? elems_per_line : 0,
-                octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
+            ध्रुव संरचना htp_tensor_mdev_range range = htp_tensor_mdev_partition(
+                total_elems, can_split ? elems_per_ओळ : 0,
+                octx->ctx->mdev.idx, octx->ctx->mdev.मोजणी, &octx->ctx->mdev.मोजणी_div);
             elem_start = range.start;
-            nelem      = range.count;
+            nelem      = range.मोजणी;
         }
 
-        if (nelem == 0) {
-            return HTP_STATUS_OK;
+        यदि (nelem == 0) {
+            प्रत्यागम HTP_STATUS_OK;
         }
 
-        if (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
-            return HTP_STATUS_INVAL_PARAMS;
+        यदि (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
+            प्रत्यागम HTP_STATUS_INVAL_PARAMS;
         }
 
-        struct htp_binary_vtcm_layout vtcm_layout;
-        htp_binary_vtcm_layout_build(&vtcm_layout, kparams, octx->ctx->vtcm_size);
-        if (vtcm_layout.total_bytes == 0 || vtcm_layout.total_bytes > octx->ctx->vtcm_size) {
-            return HTP_STATUS_VTCM_TOO_SMALL;
+        संरचना htp_द्विमान_vtcm_layout vtcm_layout;
+        htp_द्विमान_vtcm_layout_build(&vtcm_layout, kparams, octx->ctx->vtcm_size);
+        यदि (vtcm_layout.total_bytes == 0 || vtcm_layout.total_bytes > octx->ctx->vtcm_size) {
+            प्रत्यागम HTP_STATUS_VTCM_TOO_SMALL;
         }
 
-        const uint32_t chunk_size = kparams->chunk_size > 0 ? kparams->chunk_size : (32768 / elem_size);
-        const uint32_t total_chunks = (nelem + chunk_size - 1) / chunk_size;
-        const uint32_t n_threads = (total_chunks >= 2) ? MIN(octx->n_threads, total_chunks) : 1;
-        const uint32_t chunks_per_thread = (total_chunks + n_threads - 1) / n_threads;
+        ध्रुव uint32_t chunk_size = kparams->chunk_size > 0 ? kparams->chunk_size : (32768 / elem_size);
+        ध्रुव uint32_t total_chunks = (nelem + chunk_size - 1) / chunk_size;
+        ध्रुव uint32_t n_threads = (total_chunks >= 2) ? MIN(octx->n_threads, total_chunks) : 1;
+        ध्रुव uint32_t chunks_per_thread = (total_chunks + n_threads - 1) / n_threads;
 
-        float scalar_f32 = 0.0f;
+        भिन्न scalar_f32 = 0.0f;
         _Float16 scalar_f16 = 0;
-        if (is_scalar) {
+        यदि (is_scalar) {
             uint8_t * vtcm_src1 = VTCM_LAYOUT_PTR(uint8_t, octx->ctx->vtcm_base, vtcm_layout.off_src1);
             dma_queue * dma_q = octx->ctx->dma[0];
-            dma_queue_push(dma_q, dma_make_data(vtcm_src1, src1->data), 128, 0, elem_size, 1);
-            dma_queue_pop(dma_q);
+            dma_queue_ढकला(dma_q, dma_make_data(vtcm_src1, src1->data), 128, 0, elem_size, 1);
+            dma_queue_काढा(dma_q);
 
-            if (src0_type == HTP_TYPE_F32) {
-                scalar_f32 = ((const float *) vtcm_src1)[0];
-            } else {
-                scalar_f16 = ((const _Float16 *) vtcm_src1)[0];
+            यदि (src0_type == HTP_TYPE_F32) {
+                scalar_f32 = ((ध्रुव भिन्न *) vtcm_src1)[0];
+            } अन्यथा {
+                scalar_f16 = ((ध्रुव _Float16 *) vtcm_src1)[0];
             }
         }
 
-        struct binary_chunked_context cctx = {
+        संरचना द्विमान_chunked_context cctx = {
             .octx                = octx,
             .vtcm_layout         = vtcm_layout,
             .vtcm_base           = (uint8_t *) octx->ctx->vtcm_base,
@@ -1109,77 +1109,77 @@ static int execute_op_binary(struct htp_ops_context * octx) {
             .compute_scalar_f16  = compute_scalar_f16,
         };
 
-        work_queue_run(octx->ctx->work_queue, binary_thread_chunked, &cctx, n_threads);
-        return HTP_STATUS_OK;
+        work_queue_run(octx->ctx->work_queue, द्विमान_thread_chunked, &cctx, n_threads);
+        प्रत्यागम HTP_STATUS_OK;
     }
 
     uint32_t row_start = 0;
     uint32_t nrows     = src0_nrows;
 
-    if (octx->ctx->mdev.count > 1) {
+    यदि (octx->ctx->mdev.मोजणी > 1) {
         uint32_t rows_per_chunk = 0;
         htp_tensor_mdev_rows_per_chunk(dst, (uint32_t) elem_size, (uint32_t) dst_row_size, &rows_per_chunk);
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(src0_nrows, rows_per_chunk,
-                                                       octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
+        ध्रुव संरचना htp_tensor_mdev_range range = htp_tensor_mdev_partition(src0_nrows, rows_per_chunk,
+                                                       octx->ctx->mdev.idx, octx->ctx->mdev.मोजणी, &octx->ctx->mdev.मोजणी_div);
         row_start = range.start;
-        nrows     = range.count;
+        nrows     = range.मोजणी;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    यदि (nrows == 0) {
+        प्रत्यागम HTP_STATUS_OK;
     }
 
-    if (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
-        return HTP_STATUS_INVAL_PARAMS;
+    यदि (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
+        प्रत्यागम HTP_STATUS_INVAL_PARAMS;
     }
 
-    const uint32_t n_threads = octx->n_threads;
-    const size_t src0_row_size_aligned = kparams->src0_row_size_aligned;
-    const size_t src1_row_size_aligned = kparams->src1_row_size_aligned;
-    const size_t dst_row_size_aligned  = kparams->dst_row_size_aligned;
+    ध्रुव uint32_t n_threads = octx->n_threads;
+    ध्रुव size_t src0_row_size_aligned = kparams->src0_row_size_aligned;
+    ध्रुव size_t src1_row_size_aligned = kparams->src1_row_size_aligned;
+    ध्रुव size_t dst_row_size_aligned  = kparams->dst_row_size_aligned;
 
-    struct htp_binary_context bctx;
+    संरचना htp_द्विमान_context bctx;
     bctx.vtcm_base = (uint8_t *) octx->ctx->vtcm_base;
-    htp_binary_vtcm_layout_build(&bctx.vtcm_layout, kparams, octx->ctx->vtcm_size);
+    htp_द्विमान_vtcm_layout_build(&bctx.vtcm_layout, kparams, octx->ctx->vtcm_size);
 
-    if (bctx.vtcm_layout.rows_per_buffer == 0 || bctx.vtcm_layout.total_bytes > octx->ctx->vtcm_size) {
-        return HTP_STATUS_VTCM_TOO_SMALL;
+    यदि (bctx.vtcm_layout.rows_per_buffer == 0 || bctx.vtcm_layout.total_bytes > octx->ctx->vtcm_size) {
+        प्रत्यागम HTP_STATUS_VTCM_TOO_SMALL;
     }
 
     dma_queue * dma_q = octx->ctx->dma[0];
     uint8_t * vtcm_src1 = VTCM_LAYOUT_PTR(uint8_t, bctx.vtcm_base, bctx.vtcm_layout.off_src1);
-    if (kparams->kernel_type == HTP_BINARY_KERNEL_ROW_BCAST) {
-        dma_queue_push(dma_q, dma_make_data(vtcm_src1, src1->data), bctx.vtcm_layout.src1_size, 0, src1->ne[0] * elem_size, 1);
-    } else if (kparams->kernel_type == HTP_BINARY_KERNEL_SCALAR ||
-               kparams->kernel_type == HTP_BINARY_KERNEL_REPEAT ||
-               kparams->kernel_type == HTP_BINARY_KERNEL_COMPLEX) {
-        if (!kparams->src1_strided) {
-            const size_t src1_bytes = (size_t) src1->ne[0] * src1->ne[1] * src1->ne[2] * src1->ne[3] * elem_size;
-            dma_queue_push(dma_q, dma_make_data(vtcm_src1, src1->data), bctx.vtcm_layout.src1_size, 0, src1_bytes, 1);
-        } else {
-            const uint32_t ne11 = src1->ne[1];
-            const uint32_t ne12 = src1->ne[2];
-            const uint32_t ne13 = src1->ne[3];
-            const size_t row_bytes = src1->ne[0] * elem_size;
-            for (uint32_t i13 = 0; i13 < ne13; i13++) {
-                for (uint32_t i12 = 0; i12 < ne12; i12++) {
+    यदि (kparams->kernel_type == HTP_द्विमान_KERNEL_ROW_BCAST) {
+        dma_queue_ढकला(dma_q, dma_make_data(vtcm_src1, src1->data), bctx.vtcm_layout.src1_size, 0, src1->ne[0] * elem_size, 1);
+    } अन्यथा यदि (kparams->kernel_type == HTP_द्विमान_KERNEL_SCALAR ||
+               kparams->kernel_type == HTP_द्विमान_KERNEL_REPEAT ||
+               kparams->kernel_type == HTP_द्विमान_KERNEL_COMPLEX) {
+        यदि (!kparams->src1_strided) {
+            ध्रुव size_t src1_bytes = (size_t) src1->ne[0] * src1->ne[1] * src1->ne[2] * src1->ne[3] * elem_size;
+            dma_queue_ढकला(dma_q, dma_make_data(vtcm_src1, src1->data), bctx.vtcm_layout.src1_size, 0, src1_bytes, 1);
+        } अन्यथा {
+            ध्रुव uint32_t ne11 = src1->ne[1];
+            ध्रुव uint32_t ne12 = src1->ne[2];
+            ध्रुव uint32_t ne13 = src1->ne[3];
+            ध्रुव size_t row_bytes = src1->ne[0] * elem_size;
+            प्रति (uint32_t i13 = 0; i13 < ne13; i13++) {
+                प्रति (uint32_t i12 = 0; i12 < ne12; i12++) {
                     dma_addr_t src_addr = src1->data + i13 * src1->nb[3] + i12 * src1->nb[2];
                     uint8_t * dst_ptr = vtcm_src1 + (i13 * ne12 * ne11 + i12 * ne11) * row_bytes;
-                    while (!dma_queue_push(dma_q, dma_make_data(dst_ptr, src_addr),
+                    यावत् (!dma_queue_ढकला(dma_q, dma_make_data(dst_ptr, src_addr),
                                            row_bytes, src1->nb[1], row_bytes, ne11)) {
-                        dma_queue_pop(dma_q);
+                        dma_queue_काढा(dma_q);
                     }
                 }
             }
         }
-    } else if (kparams->kernel_type == HTP_BINARY_KERNEL_ADD_ID) {
-        const struct htp_tensor * src2 = octx->src[2];
+    } अन्यथा यदि (kparams->kernel_type == HTP_द्विमान_KERNEL_ADD_ID) {
+        ध्रुव संरचना htp_tensor * src2 = octx->src[2];
         uint8_t * vtcm_src2 = VTCM_LAYOUT_PTR(uint8_t, bctx.vtcm_base, bctx.vtcm_layout.off_src2);
-        dma_queue_push(dma_q, dma_make_data(vtcm_src1, src1->data),
+        dma_queue_ढकला(dma_q, dma_make_data(vtcm_src1, src1->data),
                        kparams->src1_row_size_aligned, src1->nb[1],
                        src1->ne[0] * elem_size, src1->ne[1]);
-        const size_t src2_row_bytes = src2->ne[0] * sizeof(int32_t);
-        dma_queue_push(dma_q, dma_make_data(vtcm_src2, src2->data),
+        ध्रुव size_t src2_row_bytes = src2->ne[0] * परिमाण(int32_t);
+        dma_queue_ढकला(dma_q, dma_make_data(vtcm_src2, src2->data),
                        src2_row_bytes, src2->nb[1],
                        src2_row_bytes, src2->ne[1]);
     }
@@ -1194,154 +1194,154 @@ static int execute_op_binary(struct htp_ops_context * octx) {
     bctx.dst_row_size_aligned  = dst_row_size_aligned;
     bctx.row_size_bytes        = src0_row_size;
 
-    bctx.src0_dim1_div  = init_fastdiv_values(src0->ne[1]);
-    bctx.src0_dim2_div  = init_fastdiv_values(src0->ne[2]);
-    bctx.src0_dim12_div = init_fastdiv_values(src0->ne[1] * src0->ne[2]);
+    bctx.src0_dim1_div  = init_fastdiv_मूल्ये(src0->ne[1]);
+    bctx.src0_dim2_div  = init_fastdiv_मूल्ये(src0->ne[2]);
+    bctx.src0_dim12_div = init_fastdiv_मूल्ये(src0->ne[1] * src0->ne[2]);
 
-    bctx.src1_dim1_div  = init_fastdiv_values(src1->ne[1]);
-    bctx.src1_dim2_div  = init_fastdiv_values(src1->ne[2]);
-    bctx.src1_dim3_div  = init_fastdiv_values(src1->ne[3]);
+    bctx.src1_dim1_div  = init_fastdiv_मूल्ये(src1->ne[1]);
+    bctx.src1_dim2_div  = init_fastdiv_मूल्ये(src1->ne[2]);
+    bctx.src1_dim3_div  = init_fastdiv_मूल्ये(src1->ne[3]);
 
     bctx.split_at_ne01  = kparams->split_at_ne01;
     bctx.split_at_ne02  = kparams->split_at_ne02;
 
-    worker_callback_t worker_func = NULL;
-    void * compute_func = NULL;
+    worker_callback_t worker_func = रिक्त;
+    शून्य * compute_func = रिक्त;
 
-    switch (kparams->kernel_type) {
-        case HTP_BINARY_KERNEL_SAME_SHAPE:
-            worker_func = binary_thread_vector_same_shape;
-            if (src0_type == HTP_TYPE_F32) {
-                switch (octx->op) {
-                    case HTP_OP_ADD: compute_func = compute_same_shape_add_f32; break;
-                    case HTP_OP_SUB: compute_func = compute_same_shape_sub_f32; break;
-                    case HTP_OP_MUL: compute_func = compute_same_shape_mul_f32; break;
-                    case HTP_OP_DIV: compute_func = compute_same_shape_div_f32; break;
-                    default: break;
+    विकल्प (kparams->kernel_type) {
+        पक्ष HTP_द्विमान_KERNEL_SAME_SHAPE:
+            worker_func = द्विमान_thread_vector_same_shape;
+            यदि (src0_type == HTP_TYPE_F32) {
+                विकल्प (octx->op) {
+                    पक्ष HTP_OP_ADD: compute_func = compute_same_shape_add_f32; भङ्ग;
+                    पक्ष HTP_OP_SUB: compute_func = compute_same_shape_sub_f32; भङ्ग;
+                    पक्ष HTP_OP_MUL: compute_func = compute_same_shape_mul_f32; भङ्ग;
+                    पक्ष HTP_OP_DIV: compute_func = compute_same_shape_div_f32; भङ्ग;
+                    स्वभाव: भङ्ग;
                 }
-            } else if (src0_type == HTP_TYPE_F16) {
-                switch (octx->op) {
-                    case HTP_OP_ADD: compute_func = compute_same_shape_add_f16; break;
-                    case HTP_OP_SUB: compute_func = compute_same_shape_sub_f16; break;
-                    case HTP_OP_MUL: compute_func = compute_same_shape_mul_f16; break;
-                    case HTP_OP_DIV: compute_func = compute_same_shape_div_f16; break;
-                    default: break;
-                }
-            }
-            break;
-        case HTP_BINARY_KERNEL_ROW_BCAST:
-            worker_func = binary_thread_vector_row_broadcast;
-            if (src0_type == HTP_TYPE_F32) {
-                switch (octx->op) {
-                    case HTP_OP_ADD: compute_func = compute_row_bcast_add_f32; break;
-                    case HTP_OP_SUB: compute_func = compute_row_bcast_sub_f32; break;
-                    case HTP_OP_MUL: compute_func = compute_row_bcast_mul_f32; break;
-                    case HTP_OP_DIV: compute_func = compute_row_bcast_div_f32; break;
-                    default: break;
-                }
-            } else if (src0_type == HTP_TYPE_F16) {
-                switch (octx->op) {
-                    case HTP_OP_ADD: compute_func = compute_row_bcast_add_f16; break;
-                    case HTP_OP_SUB: compute_func = compute_row_bcast_sub_f16; break;
-                    case HTP_OP_MUL: compute_func = compute_row_bcast_mul_f16; break;
-                    case HTP_OP_DIV: compute_func = compute_row_bcast_div_f16; break;
-                    default: break;
+            } अन्यथा यदि (src0_type == HTP_TYPE_F16) {
+                विकल्प (octx->op) {
+                    पक्ष HTP_OP_ADD: compute_func = compute_same_shape_add_f16; भङ्ग;
+                    पक्ष HTP_OP_SUB: compute_func = compute_same_shape_sub_f16; भङ्ग;
+                    पक्ष HTP_OP_MUL: compute_func = compute_same_shape_mul_f16; भङ्ग;
+                    पक्ष HTP_OP_DIV: compute_func = compute_same_shape_div_f16; भङ्ग;
+                    स्वभाव: भङ्ग;
                 }
             }
-            break;
-        case HTP_BINARY_KERNEL_SCALAR:
-            worker_func = binary_thread_scalar;
-            if (src0_type == HTP_TYPE_F32) {
-                switch (octx->op) {
-                    case HTP_OP_ADD: compute_func = compute_scalar_add_f32; break;
-                    case HTP_OP_SUB: compute_func = compute_scalar_sub_f32; break;
-                    case HTP_OP_MUL: compute_func = compute_scalar_mul_f32; break;
-                    case HTP_OP_DIV: compute_func = compute_scalar_div_f32; break;
-                    default: break;
+            भङ्ग;
+        पक्ष HTP_द्विमान_KERNEL_ROW_BCAST:
+            worker_func = द्विमान_thread_vector_row_broadcast;
+            यदि (src0_type == HTP_TYPE_F32) {
+                विकल्प (octx->op) {
+                    पक्ष HTP_OP_ADD: compute_func = compute_row_bcast_add_f32; भङ्ग;
+                    पक्ष HTP_OP_SUB: compute_func = compute_row_bcast_sub_f32; भङ्ग;
+                    पक्ष HTP_OP_MUL: compute_func = compute_row_bcast_mul_f32; भङ्ग;
+                    पक्ष HTP_OP_DIV: compute_func = compute_row_bcast_div_f32; भङ्ग;
+                    स्वभाव: भङ्ग;
                 }
-            } else if (src0_type == HTP_TYPE_F16) {
-                switch (octx->op) {
-                    case HTP_OP_ADD: compute_func = compute_scalar_add_f16; break;
-                    case HTP_OP_SUB: compute_func = compute_scalar_sub_f16; break;
-                    case HTP_OP_MUL: compute_func = compute_scalar_mul_f16; break;
-                    case HTP_OP_DIV: compute_func = compute_scalar_div_f16; break;
-                    default: break;
-                }
-            }
-            break;
-        case HTP_BINARY_KERNEL_COMPLEX:
-            worker_func = binary_thread_vector_complex;
-            if (src0_type == HTP_TYPE_F32) {
-                switch (octx->op) {
-                    case HTP_OP_ADD: compute_func = compute_complex_add_f32; break;
-                    case HTP_OP_SUB: compute_func = compute_complex_sub_f32; break;
-                    case HTP_OP_MUL: compute_func = compute_complex_mul_f32; break;
-                    case HTP_OP_DIV: compute_func = compute_complex_div_f32; break;
-                    default: break;
-                }
-            } else if (src0_type == HTP_TYPE_F16) {
-                switch (octx->op) {
-                    case HTP_OP_ADD: compute_func = compute_complex_add_f16; break;
-                    case HTP_OP_SUB: compute_func = compute_complex_sub_f16; break;
-                    case HTP_OP_MUL: compute_func = compute_complex_mul_f16; break;
-                    case HTP_OP_DIV: compute_func = compute_complex_div_f16; break;
-                    default: break;
+            } अन्यथा यदि (src0_type == HTP_TYPE_F16) {
+                विकल्प (octx->op) {
+                    पक्ष HTP_OP_ADD: compute_func = compute_row_bcast_add_f16; भङ्ग;
+                    पक्ष HTP_OP_SUB: compute_func = compute_row_bcast_sub_f16; भङ्ग;
+                    पक्ष HTP_OP_MUL: compute_func = compute_row_bcast_mul_f16; भङ्ग;
+                    पक्ष HTP_OP_DIV: compute_func = compute_row_bcast_div_f16; भङ्ग;
+                    स्वभाव: भङ्ग;
                 }
             }
-            break;
-        case HTP_BINARY_KERNEL_REPEAT:
-            worker_func = binary_thread_element_repeat;
-            if (src0_type == HTP_TYPE_F32) {
-                switch (octx->op) {
-                    case HTP_OP_ADD: compute_func = compute_repeat_add_f32; break;
-                    case HTP_OP_SUB: compute_func = compute_repeat_sub_f32; break;
-                    case HTP_OP_MUL: compute_func = compute_repeat_mul_f32; break;
-                    case HTP_OP_DIV: compute_func = compute_repeat_div_f32; break;
-                    default: break;
+            भङ्ग;
+        पक्ष HTP_द्विमान_KERNEL_SCALAR:
+            worker_func = द्विमान_thread_scalar;
+            यदि (src0_type == HTP_TYPE_F32) {
+                विकल्प (octx->op) {
+                    पक्ष HTP_OP_ADD: compute_func = compute_scalar_add_f32; भङ्ग;
+                    पक्ष HTP_OP_SUB: compute_func = compute_scalar_sub_f32; भङ्ग;
+                    पक्ष HTP_OP_MUL: compute_func = compute_scalar_mul_f32; भङ्ग;
+                    पक्ष HTP_OP_DIV: compute_func = compute_scalar_div_f32; भङ्ग;
+                    स्वभाव: भङ्ग;
                 }
-            } else if (src0_type == HTP_TYPE_F16) {
-                switch (octx->op) {
-                    case HTP_OP_ADD: compute_func = compute_repeat_add_f16; break;
-                    case HTP_OP_SUB: compute_func = compute_repeat_sub_f16; break;
-                    case HTP_OP_MUL: compute_func = compute_repeat_mul_f16; break;
-                    case HTP_OP_DIV: compute_func = compute_repeat_div_f16; break;
-                    default: break;
+            } अन्यथा यदि (src0_type == HTP_TYPE_F16) {
+                विकल्प (octx->op) {
+                    पक्ष HTP_OP_ADD: compute_func = compute_scalar_add_f16; भङ्ग;
+                    पक्ष HTP_OP_SUB: compute_func = compute_scalar_sub_f16; भङ्ग;
+                    पक्ष HTP_OP_MUL: compute_func = compute_scalar_mul_f16; भङ्ग;
+                    पक्ष HTP_OP_DIV: compute_func = compute_scalar_div_f16; भङ्ग;
+                    स्वभाव: भङ्ग;
                 }
             }
-            break;
-        case HTP_BINARY_KERNEL_ADD_ID:
-            if (octx->op == HTP_OP_ADD_ID && src0_type == HTP_TYPE_F32) {
-                worker_func = binary_thread_add_id_f32;
-                compute_func = (void *) compute_add_id_f32;
+            भङ्ग;
+        पक्ष HTP_द्विमान_KERNEL_COMPLEX:
+            worker_func = द्विमान_thread_vector_complex;
+            यदि (src0_type == HTP_TYPE_F32) {
+                विकल्प (octx->op) {
+                    पक्ष HTP_OP_ADD: compute_func = compute_complex_add_f32; भङ्ग;
+                    पक्ष HTP_OP_SUB: compute_func = compute_complex_sub_f32; भङ्ग;
+                    पक्ष HTP_OP_MUL: compute_func = compute_complex_mul_f32; भङ्ग;
+                    पक्ष HTP_OP_DIV: compute_func = compute_complex_div_f32; भङ्ग;
+                    स्वभाव: भङ्ग;
+                }
+            } अन्यथा यदि (src0_type == HTP_TYPE_F16) {
+                विकल्प (octx->op) {
+                    पक्ष HTP_OP_ADD: compute_func = compute_complex_add_f16; भङ्ग;
+                    पक्ष HTP_OP_SUB: compute_func = compute_complex_sub_f16; भङ्ग;
+                    पक्ष HTP_OP_MUL: compute_func = compute_complex_mul_f16; भङ्ग;
+                    पक्ष HTP_OP_DIV: compute_func = compute_complex_div_f16; भङ्ग;
+                    स्वभाव: भङ्ग;
+                }
             }
-            break;
-        default: break;
+            भङ्ग;
+        पक्ष HTP_द्विमान_KERNEL_REPEAT:
+            worker_func = द्विमान_thread_element_repeat;
+            यदि (src0_type == HTP_TYPE_F32) {
+                विकल्प (octx->op) {
+                    पक्ष HTP_OP_ADD: compute_func = compute_repeat_add_f32; भङ्ग;
+                    पक्ष HTP_OP_SUB: compute_func = compute_repeat_sub_f32; भङ्ग;
+                    पक्ष HTP_OP_MUL: compute_func = compute_repeat_mul_f32; भङ्ग;
+                    पक्ष HTP_OP_DIV: compute_func = compute_repeat_div_f32; भङ्ग;
+                    स्वभाव: भङ्ग;
+                }
+            } अन्यथा यदि (src0_type == HTP_TYPE_F16) {
+                विकल्प (octx->op) {
+                    पक्ष HTP_OP_ADD: compute_func = compute_repeat_add_f16; भङ्ग;
+                    पक्ष HTP_OP_SUB: compute_func = compute_repeat_sub_f16; भङ्ग;
+                    पक्ष HTP_OP_MUL: compute_func = compute_repeat_mul_f16; भङ्ग;
+                    पक्ष HTP_OP_DIV: compute_func = compute_repeat_div_f16; भङ्ग;
+                    स्वभाव: भङ्ग;
+                }
+            }
+            भङ्ग;
+        पक्ष HTP_द्विमान_KERNEL_ADD_ID:
+            यदि (octx->op == HTP_OP_ADD_ID && src0_type == HTP_TYPE_F32) {
+                worker_func = द्विमान_thread_add_id_f32;
+                compute_func = (शून्य *) compute_add_id_f32;
+            }
+            भङ्ग;
+        स्वभाव: भङ्ग;
     }
 
-    if (!worker_func || !compute_func) {
-        return HTP_STATUS_NO_SUPPORT;
+    यदि (!worker_func || !compute_func) {
+        प्रत्यागम HTP_STATUS_NO_SUPPORT;
     }
 
     bctx.compute = compute_func;
 
-    if (kparams->kernel_type == HTP_BINARY_KERNEL_ROW_BCAST ||
-        kparams->kernel_type == HTP_BINARY_KERNEL_SCALAR ||
-        kparams->kernel_type == HTP_BINARY_KERNEL_REPEAT ||
-        kparams->kernel_type == HTP_BINARY_KERNEL_COMPLEX ||
-        kparams->kernel_type == HTP_BINARY_KERNEL_ADD_ID) {
+    यदि (kparams->kernel_type == HTP_द्विमान_KERNEL_ROW_BCAST ||
+        kparams->kernel_type == HTP_द्विमान_KERNEL_SCALAR ||
+        kparams->kernel_type == HTP_द्विमान_KERNEL_REPEAT ||
+        kparams->kernel_type == HTP_द्विमान_KERNEL_COMPLEX ||
+        kparams->kernel_type == HTP_द्विमान_KERNEL_ADD_ID) {
         dma_queue_flush(dma_q);
     }
 
     work_queue_run(octx->ctx->work_queue, worker_func, &bctx, n_threads);
 
-    return HTP_STATUS_OK;
+    प्रत्यागम HTP_STATUS_OK;
 }
 
-int op_binary(struct htp_ops_context * octx) {
-    const uint32_t src0_type = octx->src[0]->type;
-    if ((src0_type == HTP_TYPE_F32) || (src0_type == HTP_TYPE_F16)) {
-        return execute_op_binary(octx);
+पूर्णाङ्क op_द्विमान(संरचना htp_ops_context * octx) {
+    ध्रुव uint32_t src0_type = octx->src[0]->type;
+    यदि ((src0_type == HTP_TYPE_F32) || (src0_type == HTP_TYPE_F16)) {
+        प्रत्यागम execute_op_द्विमान(octx);
     }
 
-    return HTP_STATUS_NO_SUPPORT;
+    प्रत्यागम HTP_STATUS_NO_SUPPORT;
 }

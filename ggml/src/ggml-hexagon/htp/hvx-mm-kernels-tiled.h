@@ -4,23 +4,23 @@
 // q8_1_s16 (Q2_K, sums16): one fp16 d (vector 8) for the 256 k super-block starting at x_sb, and vector 9 holds the
 // integer sums of k 0..15 (low halfword) and k 16..31 (high halfword) in every word
 __attribute__((always_inline))
-static inline void quantize_block_f32_q8_1_tiled_impl(float * restrict x, uint8_t * restrict y_block, const bool sums16,
-                                                      const float * restrict x_sb) {
-    assert((unsigned long) x % 128 == 0);
-    assert((unsigned long) y_block % 128 == 0);
+स्थिर अन्तःस्थ शून्य quantize_block_f32_q8_1_tiled_impl(भिन्न * restrict x, uint8_t * restrict y_block, ध्रुव bool sums16,
+                                                      ध्रुव भिन्न * restrict x_sb) {
+    प्रतिज्ञा((unsigned long) x % 128 == 0);
+    प्रतिज्ञा((unsigned long) y_block % 128 == 0);
 
     HVX_Vector * vx = (HVX_Vector *) x;
     HVX_Vector zero = Q6_V_vzero();
 
     HVX_Vector vmax0_sf, vmax1_sf, vmax2_sf, vmax3_sf;
-    if (sums16) {
-        const HVX_Vector * vsb = (const HVX_Vector *) x_sb;
+    यदि (sums16) {
+        ध्रुव HVX_Vector * vsb = (ध्रुव HVX_Vector *) x_sb;
         HVX_Vector vm = hvx_vec_abs_f32(vsb[0]);
-        for (int i = 1; i < 8; i++) {
+        प्रति (पूर्णाङ्क i = 1; i < 8; i++) {
             vm = Q6_Vsf_vmax_VsfVsf(vm, hvx_vec_abs_f32(vsb[i]));
         }
         vmax0_sf = vmax1_sf = vmax2_sf = vmax3_sf = hvx_vec_reduce_max_f32(vm);
-    } else {
+    } अन्यथा {
         vmax0_sf = hvx_vec_reduce_max_f32(hvx_vec_abs_f32(vx[0]));
         vmax1_sf = hvx_vec_reduce_max_f32(hvx_vec_abs_f32(vx[1]));
         vmax2_sf = hvx_vec_reduce_max_f32(hvx_vec_abs_f32(vx[2]));
@@ -55,16 +55,16 @@ static inline void quantize_block_f32_q8_1_tiled_impl(float * restrict x, uint8_
     HVX_Vector vx23_i16 = hvx_vec_i16_from_hf_rnd_sat(vx23_hf);
     HVX_Vector vx_i8    = Q6_Vb_vpack_VhVh_sat(vx23_i16, vx01_i16);
 
-    const HVX_Vector ones = Q6_Vb_vsplat_R(1);
+    ध्रुव HVX_Vector ones = Q6_Vb_vsplat_R(1);
     HVX_Vector v_sums = Q6_Vw_vrmpy_VbVb(vx_i8, ones);
     v_sums = Q6_Vw_vadd_VwVw(v_sums, Q6_V_vror_VR(v_sums, 4));
     v_sums = Q6_Vw_vadd_VwVw(v_sums, Q6_V_vror_VR(v_sums, 8));
-    if (!sums16) {
+    यदि (!sums16) {
         v_sums = Q6_Vw_vadd_VwVw(v_sums, Q6_V_vror_VR(v_sums, 16));
     }
     // word 8b: sum of block b (sums16: k 0..15, and word 8b + 4: k 16..31)
 
-    const HVX_Vector v_inv127 = hvx_vec_splat_f32(1.0f / 127.0f);
+    ध्रुव HVX_Vector v_inv127 = hvx_vec_splat_f32(1.0f / 127.0f);
     HVX_Vector vd0_sf = hvx_vec_mul_f32_f32(vmax0_sf, v_inv127);
     HVX_Vector vd1_sf = hvx_vec_mul_f32_f32(vmax1_sf, v_inv127);
     HVX_Vector vd2_sf = hvx_vec_mul_f32_f32(vmax2_sf, v_inv127);
@@ -80,12 +80,12 @@ static inline void quantize_block_f32_q8_1_tiled_impl(float * restrict x, uint8_
     HVX_Vector voff23_hf = hvx_vec_f32_to_f16(voff2_sf, voff3_sf);
 
     int32_t __attribute__((aligned(128))) ws[32];
-    if (sums16) {
+    यदि (sums16) {
         // |sum of 16 int8| <= 2032 fits a halfword
         *(HVX_Vector *) ws = v_sums;
     }
 
-    static const uint8_t __attribute__((aligned(128))) repl[128] = {
+    स्थिर ध्रुव uint8_t __attribute__((aligned(128))) repl[128] = {
         0x00, 0x00, 0x00, 0x00, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
         0x10, 0x10, 0x10, 0x10, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
         0x20, 0x20, 0x20, 0x20, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
@@ -95,10 +95,10 @@ static inline void quantize_block_f32_q8_1_tiled_impl(float * restrict x, uint8_
         0x20, 0x20, 0x20, 0x20, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
         0x10, 0x10, 0x10, 0x10, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
     };
-    HVX_Vector v_repl_ctrl = * (const HVX_Vector *) repl;
+    HVX_Vector v_repl_ctrl = * (ध्रुव HVX_Vector *) repl;
 
     #pragma unroll
-    for (int b = 0; b < 4; b++) {
+    प्रति (पूर्णाङ्क b = 0; b < 4; b++) {
         HVX_Vector v_act = Q6_V_vror_VR(vx_i8, b * 32);
         HVX_Vector vd_b   = (b < 2) ? vd01_hf   : vd23_hf;
         HVX_Vector voff_b = (b < 2) ? voff01_hf : voff23_hf;
@@ -130,17 +130,17 @@ static inline void quantize_block_f32_q8_1_tiled_impl(float * restrict x, uint8_
     }
 }
 
-static inline void quantize_block_f32_q8_1_tiled(float * restrict x, uint8_t * restrict y_block) {
-    quantize_block_f32_q8_1_tiled_impl(x, y_block, false, NULL);
+स्थिर अन्तःस्थ शून्य quantize_block_f32_q8_1_tiled(भिन्न * restrict x, uint8_t * restrict y_block) {
+    quantize_block_f32_q8_1_tiled_impl(x, y_block, false, रिक्त);
 }
 
-static inline void quantize_block_f32_q8_1_s16_tiled(float * restrict x, uint8_t * restrict y_block, const float * restrict x_sb) {
+स्थिर अन्तःस्थ शून्य quantize_block_f32_q8_1_s16_tiled(भिन्न * restrict x, uint8_t * restrict y_block, ध्रुव भिन्न * restrict x_sb) {
     quantize_block_f32_q8_1_tiled_impl(x, y_block, true, x_sb);
 }
 
-static inline void quantize_block_f32_q8_0_tiled(float * restrict x, uint8_t * restrict y_block) {
-    assert((unsigned long) x % 128 == 0);
-    assert((unsigned long) y_block % 128 == 0);
+स्थिर अन्तःस्थ शून्य quantize_block_f32_q8_0_tiled(भिन्न * restrict x, uint8_t * restrict y_block) {
+    प्रतिज्ञा((unsigned long) x % 128 == 0);
+    प्रतिज्ञा((unsigned long) y_block % 128 == 0);
 
     HVX_Vector * vx = (HVX_Vector *) x;
     HVX_Vector zero   = Q6_V_vzero();
@@ -183,7 +183,7 @@ static inline void quantize_block_f32_q8_0_tiled(float * restrict x, uint8_t * r
     HVX_VectorPair vp01 = Q6_W_vshuff_VVR(vd01_hf, vd01_hf, -64);
     HVX_VectorPair vp23 = Q6_W_vshuff_VVR(vd23_hf, vd23_hf, -64);
 
-    static const uint8_t __attribute__((aligned(128))) repl[128] = {
+    स्थिर ध्रुव uint8_t __attribute__((aligned(128))) repl[128] = {
         0x00, 0x00, 0x00, 0x00, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
         0x10, 0x10, 0x10, 0x10, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
         0x20, 0x20, 0x20, 0x20, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
@@ -193,19 +193,19 @@ static inline void quantize_block_f32_q8_0_tiled(float * restrict x, uint8_t * r
         0x20, 0x20, 0x20, 0x20, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
         0x10, 0x10, 0x10, 0x10, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
     };
-    HVX_Vector v_repl_ctrl = * (const HVX_Vector *) repl;
+    HVX_Vector v_repl_ctrl = * (ध्रुव HVX_Vector *) repl;
 
     #pragma unroll
-    for (int b = 0; b < 4; b++) {
+    प्रति (पूर्णाङ्क b = 0; b < 4; b++) {
         HVX_Vector v_act = Q6_V_vror_VR(vx_i8, b * 32);
         HVX_Vector r_scale;
-        if (b == 0) {
+        यदि (b == 0) {
             r_scale = Q6_V_lo_W(vp01);
-        } else if (b == 1) {
+        } अन्यथा यदि (b == 1) {
             r_scale = Q6_V_hi_W(vp01);
-        } else if (b == 2) {
+        } अन्यथा यदि (b == 2) {
             r_scale = Q6_V_lo_W(vp23);
-        } else {
+        } अन्यथा {
             r_scale = Q6_V_hi_W(vp23);
         }
 
@@ -231,41 +231,41 @@ static inline void quantize_block_f32_q8_0_tiled(float * restrict x, uint8_t * r
     }
 }
 
-static void quantize_row_f32_q8_0_tiled(float * restrict x, uint8_t * restrict y, uint32_t k) {
-    assert(k % 32 == 0);
-    const uint32_t qk = QK_Q8_0_TILED;
-    const uint32_t nb = (k + qk - 1) / qk;
+स्थिर शून्य quantize_row_f32_q8_0_tiled(भिन्न * restrict x, uint8_t * restrict y, uint32_t k) {
+    प्रतिज्ञा(k % 32 == 0);
+    ध्रुव uint32_t qk = QK_Q8_0_TILED;
+    ध्रुव uint32_t nb = (k + qk - 1) / qk;
 
-    for (uint32_t i = 0; i < nb; i++) {
+    प्रति (uint32_t i = 0; i < nb; i++) {
         uint8_t * restrict y_block = y + i * 4 * 1152;
         quantize_block_f32_q8_0_tiled(x + i * qk, y_block);
     }
 }
 
-static void quantize_row_f32_q8_1_tiled(float * restrict x, uint8_t * restrict y, uint32_t k) {
-    assert(k % 32 == 0);
-    const uint32_t qk = QK_Q8_0_TILED;
-    const uint32_t nb = (k + qk - 1) / qk;
+स्थिर शून्य quantize_row_f32_q8_1_tiled(भिन्न * restrict x, uint8_t * restrict y, uint32_t k) {
+    प्रतिज्ञा(k % 32 == 0);
+    ध्रुव uint32_t qk = QK_Q8_0_TILED;
+    ध्रुव uint32_t nb = (k + qk - 1) / qk;
 
-    for (uint32_t i = 0; i < nb; i++) {
+    प्रति (uint32_t i = 0; i < nb; i++) {
         uint8_t * restrict y_block = y + i * 4 * 1280;
         quantize_block_f32_q8_1_tiled(x + i * qk, y_block);
     }
 }
 
-static void quantize_row_f32_q8_1_s16_tiled(float * restrict x, uint8_t * restrict y, uint32_t k) {
-    assert(k % 32 == 0);
-    const uint32_t qk = QK_Q8_0_TILED;
-    const uint32_t nb = (k + qk - 1) / qk;
+स्थिर शून्य quantize_row_f32_q8_1_s16_tiled(भिन्न * restrict x, uint8_t * restrict y, uint32_t k) {
+    प्रतिज्ञा(k % 32 == 0);
+    ध्रुव uint32_t qk = QK_Q8_0_TILED;
+    ध्रुव uint32_t nb = (k + qk - 1) / qk;
 
-    for (uint32_t i = 0; i < nb; i++) {
+    प्रति (uint32_t i = 0; i < nb; i++) {
         uint8_t * restrict y_block = y + i * 4 * 1280;
         quantize_block_f32_q8_1_s16_tiled(x + i * qk, y_block, x + (i & ~1u) * qk);  // k % 256 == 0 for Q2_K
     }
 }
 
-static inline void quantize_half_f16_tiled_splat(HVX_Vector v_src, HVX_Vector * restrict dst) {
-    static const uint8_t __attribute__((aligned(128))) repl[128] = {
+स्थिर अन्तःस्थ शून्य quantize_half_f16_tiled_splat(HVX_Vector v_src, HVX_Vector * restrict dst) {
+    स्थिर ध्रुव uint8_t __attribute__((aligned(128))) repl[128] = {
         0x00, 0x00, 0x00, 0x00, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
         0x10, 0x10, 0x10, 0x10, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
         0x20, 0x20, 0x20, 0x20, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
@@ -275,19 +275,19 @@ static inline void quantize_half_f16_tiled_splat(HVX_Vector v_src, HVX_Vector * 
         0x20, 0x20, 0x20, 0x20, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
         0x10, 0x10, 0x10, 0x10, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
     };
-    HVX_Vector v_repl_ctrl = *(const HVX_Vector *) repl;
+    HVX_Vector v_repl_ctrl = *(ध्रुव HVX_Vector *) repl;
 
     #pragma unroll(4)
-    for (int cp = 0; cp < 32; cp++) {
+    प्रति (पूर्णाङ्क cp = 0; cp < 32; cp++) {
         dst[cp] = Q6_V_vdelta_VV(cp == 0 ? v_src : Q6_V_vror_VR(v_src, cp * 4), v_repl_ctrl);
     }
 }
 
-static inline void quantize_block_f32_f16_tiled(const float * restrict x, uint8_t * restrict y_block) {
-    assert((unsigned long) x % 128 == 0);
-    assert((unsigned long) y_block % 128 == 0);
+स्थिर अन्तःस्थ शून्य quantize_block_f32_f16_tiled(ध्रुव भिन्न * restrict x, uint8_t * restrict y_block) {
+    प्रतिज्ञा((unsigned long) x % 128 == 0);
+    प्रतिज्ञा((unsigned long) y_block % 128 == 0);
 
-    const HVX_Vector * vx = (const HVX_Vector *) x;
+    ध्रुव HVX_Vector * vx = (ध्रुव HVX_Vector *) x;
     HVX_Vector * restrict dst = (HVX_Vector *) y_block;
 
     HVX_Vector vx01_hf = hvx_vec_f32_to_f16(vx[0], vx[1]);
@@ -297,34 +297,34 @@ static inline void quantize_block_f32_f16_tiled(const float * restrict x, uint8_
     quantize_half_f16_tiled_splat(vx23_hf, dst + 32);
 }
 
-static inline void quantize_block_f16_f16_tiled(const __fp16 * restrict x, uint8_t * restrict y_block) {
-    assert((unsigned long) x % 128 == 0);
-    assert((unsigned long) y_block % 128 == 0);
+स्थिर अन्तःस्थ शून्य quantize_block_f16_f16_tiled(ध्रुव __fp16 * restrict x, uint8_t * restrict y_block) {
+    प्रतिज्ञा((unsigned long) x % 128 == 0);
+    प्रतिज्ञा((unsigned long) y_block % 128 == 0);
 
-    const HVX_Vector * vx = (const HVX_Vector *) x;
+    ध्रुव HVX_Vector * vx = (ध्रुव HVX_Vector *) x;
     HVX_Vector * restrict dst = (HVX_Vector *) y_block;
 
     quantize_half_f16_tiled_splat(vx[0], dst);
     quantize_half_f16_tiled_splat(vx[1], dst + 32);
 }
 
-static void quantize_row_f32_f16_tiled(const float * restrict x, uint8_t * restrict y, uint32_t k) {
-    assert(k % 32 == 0);
-    const uint32_t qk = QK_Q8_0_TILED;
-    const uint32_t nb = (k + qk - 1) / qk;
+स्थिर शून्य quantize_row_f32_f16_tiled(ध्रुव भिन्न * restrict x, uint8_t * restrict y, uint32_t k) {
+    प्रतिज्ञा(k % 32 == 0);
+    ध्रुव uint32_t qk = QK_Q8_0_TILED;
+    ध्रुव uint32_t nb = (k + qk - 1) / qk;
 
-    for (uint32_t i = 0; i < nb; i++) {
+    प्रति (uint32_t i = 0; i < nb; i++) {
         uint8_t * restrict y_block = y + i * 4 * 2048;
         quantize_block_f32_f16_tiled(x + i * qk, y_block);
     }
 }
 
-static void quantize_row_f16_f16_tiled(const __fp16 * restrict x, uint8_t * restrict y, uint32_t k) {
-    assert(k % 32 == 0);
-    const uint32_t qk = QK_Q8_0_TILED;
-    const uint32_t nb = (k + qk - 1) / qk;
+स्थिर शून्य quantize_row_f16_f16_tiled(ध्रुव __fp16 * restrict x, uint8_t * restrict y, uint32_t k) {
+    प्रतिज्ञा(k % 32 == 0);
+    ध्रुव uint32_t qk = QK_Q8_0_TILED;
+    ध्रुव uint32_t nb = (k + qk - 1) / qk;
 
-    for (uint32_t i = 0; i < nb; i++) {
+    प्रति (uint32_t i = 0; i < nb; i++) {
         uint8_t * restrict y_block = y + i * 4 * 2048;
         quantize_block_f16_f16_tiled(x + i * qk, y_block);
     }
@@ -332,32 +332,32 @@ static void quantize_row_f16_f16_tiled(const __fp16 * restrict x, uint8_t * rest
 
 // Dot kernels & helpers that consume tiled activations
 
-static inline HVX_Vector hvx_vec_mul_f16_f16_to_f32_lower32(HVX_Vector v1, HVX_Vector v2) {
-#if __HVX_ARCH__ >= 79
+स्थिर अन्तःस्थ HVX_Vector hvx_vec_mul_f16_f16_to_f32_lower32(HVX_Vector v1, HVX_Vector v2) {
+#यदि __HVX_ARCH__ >= 79
     HVX_VectorPair p = Q6_Wsf_vmpy_VhfVhf(v1, v2);
-    return Q6_V_lo_W(Q6_W_vshuff_VVR(Q6_V_hi_W(p), Q6_V_lo_W(p), -4));
-#else
+    प्रत्यागम Q6_V_lo_W(Q6_W_vshuff_VVR(Q6_V_hi_W(p), Q6_V_lo_W(p), -4));
+#अन्यथा
     HVX_VectorPair p = Q6_Wqf32_vmpy_VhfVhf(v1, v2);
     HVX_Vector hi = Q6_Vsf_equals_Vqf32(Q6_V_hi_W(p));
     HVX_Vector lo = Q6_Vsf_equals_Vqf32(Q6_V_lo_W(p));
-    return Q6_V_lo_W(Q6_W_vshuff_VVR(hi, lo, -4));
+    प्रत्यागम Q6_V_lo_W(Q6_W_vshuff_VVR(hi, lo, -4));
 #endif
 }
 
 // both halves of hvx_vec_mul_f16_f16_to_f32_lower32: lo = products of lanes 0..31, hi = lanes 32..63
-static inline HVX_VectorPair hvx_vec_mul_f16_f16_to_f32_pair(HVX_Vector v1, HVX_Vector v2) {
-#if __HVX_ARCH__ >= 79
+स्थिर अन्तःस्थ HVX_VectorPair hvx_vec_mul_f16_f16_to_f32_pair(HVX_Vector v1, HVX_Vector v2) {
+#यदि __HVX_ARCH__ >= 79
     HVX_VectorPair p = Q6_Wsf_vmpy_VhfVhf(v1, v2);
-    return Q6_W_vshuff_VVR(Q6_V_hi_W(p), Q6_V_lo_W(p), -4);
-#else
+    प्रत्यागम Q6_W_vshuff_VVR(Q6_V_hi_W(p), Q6_V_lo_W(p), -4);
+#अन्यथा
     HVX_VectorPair p = Q6_Wqf32_vmpy_VhfVhf(v1, v2);
     HVX_Vector hi = Q6_Vsf_equals_Vqf32(Q6_V_hi_W(p));
     HVX_Vector lo = Q6_Vsf_equals_Vqf32(Q6_V_lo_W(p));
-    return Q6_W_vshuff_VVR(hi, lo, -4);
+    प्रत्यागम Q6_W_vshuff_VVR(hi, lo, -4);
 #endif
 }
 
-static inline HVX_Vector unpack_and_interleave_4bit(HVX_Vector v_a, HVX_Vector v_b, HVX_Vector mask_h4) {
+स्थिर अन्तःस्थ HVX_Vector unpack_and_interleave_4bit(HVX_Vector v_a, HVX_Vector v_b, HVX_Vector mask_h4) {
     HVX_Vector v_W0 = Q6_V_vand_VV(v_a, mask_h4);
     HVX_Vector v_W1 = Q6_Vub_vlsr_VubR(v_a, 4);
     HVX_Vector v_W2 = Q6_V_vand_VV(v_b, mask_h4);
@@ -366,10 +366,10 @@ static inline HVX_Vector unpack_and_interleave_4bit(HVX_Vector v_a, HVX_Vector v
     HVX_VectorPair v01_pair = Q6_W_vshuff_VVR(v_W1, v_W0, -1);
     HVX_VectorPair v23_pair = Q6_W_vshuff_VVR(v_W3, v_W2, -1);
     HVX_VectorPair v0123_pair = Q6_W_vshuff_VVR(Q6_V_lo_W(v23_pair), Q6_V_lo_W(v01_pair), -2);
-    return Q6_V_lo_W(v0123_pair);
+    प्रत्यागम Q6_V_lo_W(v0123_pair);
 }
 
-static inline HVX_VectorPair unpack_and_interleave_4bit_x2(HVX_Vector v_src, HVX_Vector mask_h4) {
+स्थिर अन्तःस्थ HVX_VectorPair unpack_and_interleave_4bit_x2(HVX_Vector v_src, HVX_Vector mask_h4) {
     HVX_Vector v_lo = Q6_V_vand_VV(v_src, mask_h4);
     HVX_Vector v_hi = Q6_Vub_vlsr_VubR(v_src, 4);
     HVX_VectorPair v01_pair = Q6_W_vshuff_VVR(v_hi, v_lo, -1);
@@ -382,22 +382,22 @@ static inline HVX_VectorPair unpack_and_interleave_4bit_x2(HVX_Vector v_src, HVX
     HVX_Vector v67_lo = Q6_V_valign_VVR(v01_lo, v01_hi, 64);
     HVX_Vector v_W1 = Q6_V_lo_W(Q6_W_vshuff_VVR(v67_lo, v01_hi, -2));
 
-    return Q6_W_vcombine_VV(v_W1, v_W0);
+    प्रत्यागम Q6_W_vcombine_VV(v_W1, v_W0);
 }
 
-static inline HVX_Vector unpack_q1_0_group(
+स्थिर अन्तःस्थ HVX_Vector unpack_q1_0_group(
     HVX_Vector v_plane,
-    int g,
+    पूर्णाङ्क g,
     HVX_Vector v_neg_one,
     HVX_Vector v_pos_one
 ) {
     HVX_VectorPred q = Q6_Q_vand_VR(v_plane, 0x01010101u << g);
-    return Q6_V_vmux_QVV(q, v_pos_one, v_neg_one);
+    प्रत्यागम Q6_V_vmux_QVV(q, v_pos_one, v_neg_one);
 }
 
-static inline HVX_Vector accum_q1_0_32x1(
+स्थिर अन्तःस्थ HVX_Vector accum_q1_0_32x1(
     HVX_Vector v_plane,
-    const HVX_Vector * restrict v_act,
+    ध्रुव HVX_Vector * restrict v_act,
     HVX_Vector v_neg_one,
     HVX_Vector v_pos_one
 ) {
@@ -405,19 +405,19 @@ static inline HVX_Vector accum_q1_0_32x1(
     HVX_Vector v_sum_hi = Q6_V_vzero();
 
     #pragma unroll
-    for (int g = 0; g < 4; g++) {
+    प्रति (पूर्णाङ्क g = 0; g < 4; g++) {
         HVX_Vector v_W_lo = unpack_q1_0_group(v_plane, g,     v_neg_one, v_pos_one);
         HVX_Vector v_W_hi = unpack_q1_0_group(v_plane, g + 4, v_neg_one, v_pos_one);
         v_sum_lo = Q6_Vw_vrmpyacc_VwVbVb(v_sum_lo, v_W_lo, v_act[g]);
         v_sum_hi = Q6_Vw_vrmpyacc_VwVbVb(v_sum_hi, v_W_hi, v_act[g + 4]);
     }
 
-    return Q6_Vw_vadd_VwVw(v_sum_lo, v_sum_hi);
+    प्रत्यागम Q6_Vw_vadd_VwVw(v_sum_lo, v_sum_hi);
 }
 
-static inline HVX_Vector accum_4bit_32x1(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act,
+स्थिर अन्तःस्थ HVX_Vector accum_4bit_32x1(
+    ध्रुव HVX_Vector * restrict vptr,
+    ध्रुव HVX_Vector * restrict v_act,
     HVX_Vector i8
 ) {
     HVX_Vector v_sum0 = Q6_V_vzero();
@@ -425,7 +425,7 @@ static inline HVX_Vector accum_4bit_32x1(
     HVX_Vector mask_h4 = Q6_Vb_vsplat_R(0x0F);
 
     #pragma unroll
-    for (int i = 0; i < 4; i++) {
+    प्रति (पूर्णाङ्क i = 0; i < 4; i++) {
         HVX_VectorPair v_W_pair = unpack_and_interleave_4bit_x2(vptr[i], mask_h4);
         HVX_Vector v_W0 = Q6_Vb_vsub_VbVb(Q6_V_lo_W(v_W_pair), i8);
         HVX_Vector v_W1 = Q6_Vb_vsub_VbVb(Q6_V_hi_W(v_W_pair), i8);
@@ -433,12 +433,12 @@ static inline HVX_Vector accum_4bit_32x1(
         v_sum1 = Q6_Vw_vrmpyacc_VwVbVb(v_sum1, v_W1, v_act[i * 2 + 1]);
     }
 
-    return Q6_Vw_vadd_VwVw(v_sum0, v_sum1);
+    प्रत्यागम Q6_Vw_vadd_VwVw(v_sum0, v_sum1);
 }
 
-static inline HVX_Vector accum_4bit_32x1_lut(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act,
+स्थिर अन्तःस्थ HVX_Vector accum_4bit_32x1_lut(
+    ध्रुव HVX_Vector * restrict vptr,
+    ध्रुव HVX_Vector * restrict v_act,
     HVX_Vector mask_h4,
     HVX_Vector lut
 ) {
@@ -446,7 +446,7 @@ static inline HVX_Vector accum_4bit_32x1_lut(
     HVX_Vector v_sum1 = Q6_V_vzero();
 
     #pragma unroll
-    for (int i = 0; i < 4; i++) {
+    प्रति (पूर्णाङ्क i = 0; i < 4; i++) {
         HVX_VectorPair v_W_pair = unpack_and_interleave_4bit_x2(vptr[i], mask_h4);
         HVX_Vector v_W0 = Q6_Vb_vlut32_VbVbI(Q6_V_lo_W(v_W_pair), lut, 0);
         HVX_Vector v_W1 = Q6_Vb_vlut32_VbVbI(Q6_V_hi_W(v_W_pair), lut, 0);
@@ -454,13 +454,13 @@ static inline HVX_Vector accum_4bit_32x1_lut(
         v_sum1 = Q6_Vw_vrmpyacc_VwVbVb(v_sum1, v_W1, v_act[i * 2 + 1]);
     }
 
-    return Q6_Vw_vadd_VwVw(v_sum0, v_sum1);
+    प्रत्यागम Q6_Vw_vadd_VwVw(v_sum0, v_sum1);
 }
 
-static inline HVX_VectorPair accum_q1_0_32x2(
+स्थिर अन्तःस्थ HVX_VectorPair accum_q1_0_32x2(
     HVX_Vector v_plane,
-    const HVX_Vector * restrict v_act0,
-    const HVX_Vector * restrict v_act1,
+    ध्रुव HVX_Vector * restrict v_act0,
+    ध्रुव HVX_Vector * restrict v_act1,
     HVX_Vector v_neg_one,
     HVX_Vector v_pos_one
 ) {
@@ -470,7 +470,7 @@ static inline HVX_VectorPair accum_q1_0_32x2(
     HVX_Vector v_sum1_hi = Q6_V_vzero();
 
     #pragma unroll
-    for (int g = 0; g < 4; g++) {
+    प्रति (पूर्णाङ्क g = 0; g < 4; g++) {
         HVX_Vector v_W_lo = unpack_q1_0_group(v_plane, g,     v_neg_one, v_pos_one);
         HVX_Vector v_W_hi = unpack_q1_0_group(v_plane, g + 4, v_neg_one, v_pos_one);
         v_sum0_lo = Q6_Vw_vrmpyacc_VwVbVb(v_sum0_lo, v_W_lo, v_act0[g]);
@@ -479,15 +479,15 @@ static inline HVX_VectorPair accum_q1_0_32x2(
         v_sum1_hi = Q6_Vw_vrmpyacc_VwVbVb(v_sum1_hi, v_W_hi, v_act1[g + 4]);
     }
 
-    return Q6_W_vcombine_VV(
+    प्रत्यागम Q6_W_vcombine_VV(
         Q6_Vw_vadd_VwVw(v_sum1_lo, v_sum1_hi),
         Q6_Vw_vadd_VwVw(v_sum0_lo, v_sum0_hi));
 }
 
-static inline HVX_VectorPair accum_4bit_32x2(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act0,
-    const HVX_Vector * restrict v_act1,
+स्थिर अन्तःस्थ HVX_VectorPair accum_4bit_32x2(
+    ध्रुव HVX_Vector * restrict vptr,
+    ध्रुव HVX_Vector * restrict v_act0,
+    ध्रुव HVX_Vector * restrict v_act1,
     HVX_Vector i8
 ) {
     HVX_Vector v_sum0 = Q6_V_vzero();
@@ -495,7 +495,7 @@ static inline HVX_VectorPair accum_4bit_32x2(
     HVX_Vector mask_h4 = Q6_Vb_vsplat_R(0x0F);
 
     #pragma unroll
-    for (int i = 0; i < 4; i++) {
+    प्रति (पूर्णाङ्क i = 0; i < 4; i++) {
         HVX_VectorPair v_W_pair = unpack_and_interleave_4bit_x2(vptr[i], mask_h4);
         HVX_Vector v_W0 = Q6_Vb_vsub_VbVb(Q6_V_lo_W(v_W_pair), i8);
         HVX_Vector v_W1 = Q6_Vb_vsub_VbVb(Q6_V_hi_W(v_W_pair), i8);
@@ -507,13 +507,13 @@ static inline HVX_VectorPair accum_4bit_32x2(
         v_sum1 = Q6_Vw_vrmpyacc_VwVbVb(v_sum1, v_W1, v_act1[i * 2 + 1]);
     }
 
-    return Q6_W_vcombine_VV(v_sum1, v_sum0);
+    प्रत्यागम Q6_W_vcombine_VV(v_sum1, v_sum0);
 }
 
-static inline HVX_VectorPair accum_4bit_32x2_lut(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act0,
-    const HVX_Vector * restrict v_act1,
+स्थिर अन्तःस्थ HVX_VectorPair accum_4bit_32x2_lut(
+    ध्रुव HVX_Vector * restrict vptr,
+    ध्रुव HVX_Vector * restrict v_act0,
+    ध्रुव HVX_Vector * restrict v_act1,
     HVX_Vector mask_h4,
     HVX_Vector lut
 ) {
@@ -521,7 +521,7 @@ static inline HVX_VectorPair accum_4bit_32x2_lut(
     HVX_Vector v_sum1 = Q6_V_vzero();
 
     #pragma unroll
-    for (int i = 0; i < 4; i++) {
+    प्रति (पूर्णाङ्क i = 0; i < 4; i++) {
         HVX_VectorPair v_W_pair = unpack_and_interleave_4bit_x2(vptr[i], mask_h4);
         HVX_Vector v_W0 = Q6_Vb_vlut32_VbVbI(Q6_V_lo_W(v_W_pair), lut, 0);
         HVX_Vector v_W1 = Q6_Vb_vlut32_VbVbI(Q6_V_hi_W(v_W_pair), lut, 0);
@@ -533,48 +533,48 @@ static inline HVX_VectorPair accum_4bit_32x2_lut(
         v_sum1 = Q6_Vw_vrmpyacc_VwVbVb(v_sum1, v_W1, v_act1[i * 2 + 1]);
     }
 
-    return Q6_W_vcombine_VV(v_sum1, v_sum0);
+    प्रत्यागम Q6_W_vcombine_VV(v_sum1, v_sum0);
 }
 
-static inline HVX_Vector accum_q8_0_32x1(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act
+स्थिर अन्तःस्थ HVX_Vector accum_q8_0_32x1(
+    ध्रुव HVX_Vector * restrict vptr,
+    ध्रुव HVX_Vector * restrict v_act
 ) {
     HVX_Vector v_sum = Q6_V_vzero();
     #pragma unroll
-    for (int g = 0; g < 8; g++) {
+    प्रति (पूर्णाङ्क g = 0; g < 8; g++) {
         HVX_Vector v_rot = Q6_V_vror_VR(vptr[g], 64);
         HVX_Vector v_W = Q6_V_lo_W(Q6_W_vshuff_VVR(v_rot, vptr[g], -2));
         v_sum = Q6_Vw_vrmpyacc_VwVbVb(v_sum, v_W, v_act[g]);
     }
-    return v_sum;
+    प्रत्यागम v_sum;
 }
 
-static inline HVX_VectorPair accum_q8_0_32x2(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act0,
-    const HVX_Vector * restrict v_act1
+स्थिर अन्तःस्थ HVX_VectorPair accum_q8_0_32x2(
+    ध्रुव HVX_Vector * restrict vptr,
+    ध्रुव HVX_Vector * restrict v_act0,
+    ध्रुव HVX_Vector * restrict v_act1
 ) {
     HVX_Vector v_sum0 = Q6_V_vzero();
     HVX_Vector v_sum1 = Q6_V_vzero();
     #pragma unroll
-    for (int g = 0; g < 8; g++) {
+    प्रति (पूर्णाङ्क g = 0; g < 8; g++) {
         HVX_Vector v_rot = Q6_V_vror_VR(vptr[g], 64);
         HVX_Vector v_W = Q6_V_lo_W(Q6_W_vshuff_VVR(v_rot, vptr[g], -2));
         v_sum0 = Q6_Vw_vrmpyacc_VwVbVb(v_sum0, v_W, v_act0[g]);
         v_sum1 = Q6_Vw_vrmpyacc_VwVbVb(v_sum1, v_W, v_act1[g]);
     }
-    return Q6_W_vcombine_VV(v_sum1, v_sum0);
+    प्रत्यागम Q6_W_vcombine_VV(v_sum1, v_sum0);
 }
 
 // Q5_K: OR 0x10 into every lane of v whose flag j is set in the plane (see HTP_TENSOR_TILE_SIZE_Q5_K)
-static inline HVX_Vector hvx_q5k_or_hibit(HVX_Vector v, HVX_Vector v_plane, int j) {
+स्थिर अन्तःस्थ HVX_Vector hvx_q5k_or_hibit(HVX_Vector v, HVX_Vector v_plane, पूर्णाङ्क j) {
     HVX_VectorPred q = Q6_Q_vand_VR(v_plane, 0x01010101u << j);
-    return Q6_V_vandor_VQR(v, q, 0x10101010);
+    प्रत्यागम Q6_V_vandor_VQR(v, q, 0x10101010);
 }
 
 // 5-bit variant: the high bit comes from the plane, see hvx_q5k_or_hibit
-static inline HVX_VectorPair unpack_and_interleave_5bit_x2(HVX_Vector v_src, HVX_Vector v_plane, int i, HVX_Vector mask_h4) {
+स्थिर अन्तःस्थ HVX_VectorPair unpack_and_interleave_5bit_x2(HVX_Vector v_src, HVX_Vector v_plane, पूर्णाङ्क i, HVX_Vector mask_h4) {
     HVX_Vector v_lo = hvx_q5k_or_hibit(Q6_V_vand_VV(v_src, mask_h4), v_plane, 2 * i);
     HVX_Vector v_hi = hvx_q5k_or_hibit(Q6_Vub_vlsr_VubR(v_src, 4), v_plane, 2 * i + 1);
     HVX_VectorPair v01_pair = Q6_W_vshuff_VVR(v_hi, v_lo, -1);
@@ -587,12 +587,12 @@ static inline HVX_VectorPair unpack_and_interleave_5bit_x2(HVX_Vector v_src, HVX
     HVX_Vector v67_lo = Q6_V_valign_VVR(v01_lo, v01_hi, 64);
     HVX_Vector v_W1 = Q6_V_lo_W(Q6_W_vshuff_VVR(v67_lo, v01_hi, -2));
 
-    return Q6_W_vcombine_VV(v_W1, v_W0);
+    प्रत्यागम Q6_W_vcombine_VV(v_W1, v_W0);
 }
 
-static inline HVX_Vector accum_5bit_32x1(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act,
+स्थिर अन्तःस्थ HVX_Vector accum_5bit_32x1(
+    ध्रुव HVX_Vector * restrict vptr,
+    ध्रुव HVX_Vector * restrict v_act,
     HVX_Vector i8
 ) {
     HVX_Vector v_sum0 = Q6_V_vzero();
@@ -601,7 +601,7 @@ static inline HVX_Vector accum_5bit_32x1(
     HVX_Vector v_plane = vptr[5];
 
     #pragma unroll
-    for (int i = 0; i < 4; i++) {
+    प्रति (पूर्णाङ्क i = 0; i < 4; i++) {
         HVX_VectorPair v_W_pair = unpack_and_interleave_5bit_x2(vptr[i], v_plane, i, mask_h4);
         HVX_Vector v_W0 = Q6_Vb_vsub_VbVb(Q6_V_lo_W(v_W_pair), i8);
         HVX_Vector v_W1 = Q6_Vb_vsub_VbVb(Q6_V_hi_W(v_W_pair), i8);
@@ -609,13 +609,13 @@ static inline HVX_Vector accum_5bit_32x1(
         v_sum1 = Q6_Vw_vrmpyacc_VwVbVb(v_sum1, v_W1, v_act[i * 2 + 1]);
     }
 
-    return Q6_Vw_vadd_VwVw(v_sum0, v_sum1);
+    प्रत्यागम Q6_Vw_vadd_VwVw(v_sum0, v_sum1);
 }
 
-static inline HVX_VectorPair accum_5bit_32x2(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act0,
-    const HVX_Vector * restrict v_act1,
+स्थिर अन्तःस्थ HVX_VectorPair accum_5bit_32x2(
+    ध्रुव HVX_Vector * restrict vptr,
+    ध्रुव HVX_Vector * restrict v_act0,
+    ध्रुव HVX_Vector * restrict v_act1,
     HVX_Vector i8
 ) {
     HVX_Vector v_sum0 = Q6_V_vzero();
@@ -624,7 +624,7 @@ static inline HVX_VectorPair accum_5bit_32x2(
     HVX_Vector v_plane = vptr[5];
 
     #pragma unroll
-    for (int i = 0; i < 4; i++) {
+    प्रति (पूर्णाङ्क i = 0; i < 4; i++) {
         HVX_VectorPair v_W_pair = unpack_and_interleave_5bit_x2(vptr[i], v_plane, i, mask_h4);
         HVX_Vector v_W0 = Q6_Vb_vsub_VbVb(Q6_V_lo_W(v_W_pair), i8);
         HVX_Vector v_W1 = Q6_Vb_vsub_VbVb(Q6_V_hi_W(v_W_pair), i8);
@@ -636,21 +636,21 @@ static inline HVX_VectorPair accum_5bit_32x2(
         v_sum1 = Q6_Vw_vrmpyacc_VwVbVb(v_sum1, v_W1, v_act1[i * 2 + 1]);
     }
 
-    return Q6_W_vcombine_VV(v_sum1, v_sum0);
+    प्रत्यागम Q6_W_vcombine_VV(v_sum1, v_sum0);
 }
 
 // Q6_K weights are stored unsigned (0..63), see HTP_TENSOR_TILE_SIZE_Q6_K. Unpack k-group g of a tile to signed bytes (q - 32)
-static inline HVX_Vector unpack_q6_k_group(const HVX_Vector * restrict vptr, int g, HVX_Vector mask_0f, HVX_Vector mask_03, HVX_Vector i32) {
+स्थिर अन्तःस्थ HVX_Vector unpack_q6_k_group(ध्रुव HVX_Vector * restrict vptr, पूर्णाङ्क g, HVX_Vector mask_0f, HVX_Vector mask_03, HVX_Vector i32) {
     HVX_Vector v_lo = (g & 1) ? Q6_Vub_vlsr_VubR(vptr[g >> 1], 4) : Q6_V_vand_VV(vptr[g >> 1], mask_0f);
     HVX_Vector v_hi = (g & 3) ? Q6_Vub_vlsr_VubR(vptr[4 + (g >> 2)], 2 * (g & 3)) : vptr[4 + (g >> 2)];
     HVX_Vector v_q  = Q6_V_vor_VV(v_lo, Q6_Vw_vasl_VwR(Q6_V_vand_VV(v_hi, mask_03), 4));
-    return Q6_Vb_vsub_VbVb(v_q, i32);
+    प्रत्यागम Q6_Vb_vsub_VbVb(v_q, i32);
 }
 
 // k 0..15 and k 16..31 of a Q6_K tile have different scales: lo half of the pair sums k 0..15, hi half sums k 16..31
-static inline HVX_VectorPair accum_q6_k_32x1(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act,
+स्थिर अन्तःस्थ HVX_VectorPair accum_q6_k_32x1(
+    ध्रुव HVX_Vector * restrict vptr,
+    ध्रुव HVX_Vector * restrict v_act,
     HVX_Vector i32
 ) {
     HVX_Vector v_sum_lo = Q6_V_vzero();
@@ -659,20 +659,20 @@ static inline HVX_VectorPair accum_q6_k_32x1(
     HVX_Vector mask_03 = Q6_Vb_vsplat_R(0x03);
 
     #pragma unroll
-    for (int g = 0; g < 4; g++) {
+    प्रति (पूर्णाङ्क g = 0; g < 4; g++) {
         HVX_Vector v_W_lo = unpack_q6_k_group(vptr, g,     mask_0f, mask_03, i32);
         HVX_Vector v_W_hi = unpack_q6_k_group(vptr, g + 4, mask_0f, mask_03, i32);
         v_sum_lo = Q6_Vw_vrmpyacc_VwVbVb(v_sum_lo, v_W_lo, v_act[g]);
         v_sum_hi = Q6_Vw_vrmpyacc_VwVbVb(v_sum_hi, v_W_hi, v_act[g + 4]);
     }
 
-    return Q6_W_vcombine_VV(v_sum_hi, v_sum_lo);
+    प्रत्यागम Q6_W_vcombine_VV(v_sum_hi, v_sum_lo);
 }
 
-static inline void accum_q6_k_32x2(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act0,
-    const HVX_Vector * restrict v_act1,
+स्थिर अन्तःस्थ शून्य accum_q6_k_32x2(
+    ध्रुव HVX_Vector * restrict vptr,
+    ध्रुव HVX_Vector * restrict v_act0,
+    ध्रुव HVX_Vector * restrict v_act1,
     HVX_Vector i32,
     HVX_VectorPair * v_sums0,
     HVX_VectorPair * v_sums1
@@ -685,7 +685,7 @@ static inline void accum_q6_k_32x2(
     HVX_Vector mask_03 = Q6_Vb_vsplat_R(0x03);
 
     #pragma unroll
-    for (int g = 0; g < 4; g++) {
+    प्रति (पूर्णाङ्क g = 0; g < 4; g++) {
         HVX_Vector v_W_lo = unpack_q6_k_group(vptr, g,     mask_0f, mask_03, i32);
         HVX_Vector v_W_hi = unpack_q6_k_group(vptr, g + 4, mask_0f, mask_03, i32);
         v_sum0_lo = Q6_Vw_vrmpyacc_VwVbVb(v_sum0_lo, v_W_lo, v_act0[g]);
@@ -699,55 +699,55 @@ static inline void accum_q6_k_32x2(
 }
 
 // scale the two half sums with the per-row tile scales (v_scale_w = vptr[6]) and the activation scale
-static inline HVX_Vector scale_q6_k_32x1(HVX_VectorPair v_sums, HVX_Vector v_scale_w, HVX_Vector v_scale_a) {
+स्थिर अन्तःस्थ HVX_Vector scale_q6_k_32x1(HVX_VectorPair v_sums, HVX_Vector v_scale_w, HVX_Vector v_scale_a) {
     HVX_VectorPair v_scale = hvx_vec_mul_f16_f16_to_f32_pair(v_scale_w, v_scale_a);
     HVX_Vector v_lo = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_lo_W(v_sums)), Q6_V_lo_W(v_scale));
     HVX_Vector v_hi = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_hi_W(v_sums)), Q6_V_hi_W(v_scale));
-    return hvx_vec_add_f32_f32(v_lo, v_hi);
+    प्रत्यागम hvx_vec_add_f32_f32(v_lo, v_hi);
 }
 
 // Q3_K / Q2_K: low 2 bits of k-group g, see HTP_TENSOR_TILE_SIZE_Q3_K
-static inline HVX_Vector unpack_q3_k_low2(const HVX_Vector * restrict vptr, int g, HVX_Vector mask_03) {
+स्थिर अन्तःस्थ HVX_Vector unpack_q3_k_low2(ध्रुव HVX_Vector * restrict vptr, पूर्णाङ्क g, HVX_Vector mask_03) {
     HVX_Vector v = vptr[g >> 2];
-    if ((g & 3) == 3) {
-        return Q6_Vub_vlsr_VubR(v, 6);
+    यदि ((g & 3) == 3) {
+        प्रत्यागम Q6_Vub_vlsr_VubR(v, 6);
     }
-    if (g & 3) {
+    यदि (g & 3) {
         v = Q6_Vub_vlsr_VubR(v, 2 * (g & 3));
     }
-    return Q6_V_vand_VV(v, mask_03);
+    प्रत्यागम Q6_V_vand_VV(v, mask_03);
 }
 
 // Q3_K k-group g as signed bytes: low2 | 0xFC (= low2 - 4) where bit g of vector 2 is set
-static inline HVX_Vector unpack_q3_k_group(const HVX_Vector * restrict vptr, int g, HVX_Vector mask_03) {
+स्थिर अन्तःस्थ HVX_Vector unpack_q3_k_group(ध्रुव HVX_Vector * restrict vptr, पूर्णाङ्क g, HVX_Vector mask_03) {
     HVX_VectorPred q_neg = Q6_Q_vand_VR(vptr[2], 0x01010101u << g);
-    return Q6_V_vandor_VQR(unpack_q3_k_low2(vptr, g, mask_03), q_neg, 0xFCFCFCFC);
+    प्रत्यागम Q6_V_vandor_VQR(unpack_q3_k_low2(vptr, g, mask_03), q_neg, 0xFCFCFCFC);
 }
 
 // same half split as accum_q6_k_32x1
-static inline HVX_VectorPair accum_q3_k_32x1(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act
+स्थिर अन्तःस्थ HVX_VectorPair accum_q3_k_32x1(
+    ध्रुव HVX_Vector * restrict vptr,
+    ध्रुव HVX_Vector * restrict v_act
 ) {
     HVX_Vector v_sum_lo = Q6_V_vzero();
     HVX_Vector v_sum_hi = Q6_V_vzero();
     HVX_Vector mask_03  = Q6_Vb_vsplat_R(0x03);
 
     #pragma unroll
-    for (int g = 0; g < 4; g++) {
+    प्रति (पूर्णाङ्क g = 0; g < 4; g++) {
         HVX_Vector v_W_lo = unpack_q3_k_group(vptr, g,     mask_03);
         HVX_Vector v_W_hi = unpack_q3_k_group(vptr, g + 4, mask_03);
         v_sum_lo = Q6_Vw_vrmpyacc_VwVbVb(v_sum_lo, v_W_lo, v_act[g]);
         v_sum_hi = Q6_Vw_vrmpyacc_VwVbVb(v_sum_hi, v_W_hi, v_act[g + 4]);
     }
 
-    return Q6_W_vcombine_VV(v_sum_hi, v_sum_lo);
+    प्रत्यागम Q6_W_vcombine_VV(v_sum_hi, v_sum_lo);
 }
 
-static inline void accum_q3_k_32x2(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act0,
-    const HVX_Vector * restrict v_act1,
+स्थिर अन्तःस्थ शून्य accum_q3_k_32x2(
+    ध्रुव HVX_Vector * restrict vptr,
+    ध्रुव HVX_Vector * restrict v_act0,
+    ध्रुव HVX_Vector * restrict v_act1,
     HVX_VectorPair * v_sums0,
     HVX_VectorPair * v_sums1
 ) {
@@ -758,7 +758,7 @@ static inline void accum_q3_k_32x2(
     HVX_Vector mask_03   = Q6_Vb_vsplat_R(0x03);
 
     #pragma unroll
-    for (int g = 0; g < 4; g++) {
+    प्रति (पूर्णाङ्क g = 0; g < 4; g++) {
         HVX_Vector v_W_lo = unpack_q3_k_group(vptr, g,     mask_03);
         HVX_Vector v_W_hi = unpack_q3_k_group(vptr, g + 4, mask_03);
         v_sum0_lo = Q6_Vw_vrmpyacc_VwVbVb(v_sum0_lo, v_W_lo, v_act0[g]);
@@ -772,29 +772,29 @@ static inline void accum_q3_k_32x2(
 }
 
 // Q2_K: the Q3_K dot products without the -4 flags, scales and mins are applied in q2_k_int_accum
-static inline HVX_VectorPair accum_q2_k_32x1(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act
+स्थिर अन्तःस्थ HVX_VectorPair accum_q2_k_32x1(
+    ध्रुव HVX_Vector * restrict vptr,
+    ध्रुव HVX_Vector * restrict v_act
 ) {
     HVX_Vector v_sum_lo = Q6_V_vzero();
     HVX_Vector v_sum_hi = Q6_V_vzero();
     HVX_Vector mask_03  = Q6_Vb_vsplat_R(0x03);
 
     #pragma unroll
-    for (int g = 0; g < 4; g++) {
+    प्रति (पूर्णाङ्क g = 0; g < 4; g++) {
         HVX_Vector v_W_lo = unpack_q3_k_low2(vptr, g,     mask_03);
         HVX_Vector v_W_hi = unpack_q3_k_low2(vptr, g + 4, mask_03);
         v_sum_lo = Q6_Vw_vrmpyacc_VwVbVb(v_sum_lo, v_W_lo, v_act[g]);
         v_sum_hi = Q6_Vw_vrmpyacc_VwVbVb(v_sum_hi, v_W_hi, v_act[g + 4]);
     }
 
-    return Q6_W_vcombine_VV(v_sum_hi, v_sum_lo);
+    प्रत्यागम Q6_W_vcombine_VV(v_sum_hi, v_sum_lo);
 }
 
-static inline void accum_q2_k_32x2(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act0,
-    const HVX_Vector * restrict v_act1,
+स्थिर अन्तःस्थ शून्य accum_q2_k_32x2(
+    ध्रुव HVX_Vector * restrict vptr,
+    ध्रुव HVX_Vector * restrict v_act0,
+    ध्रुव HVX_Vector * restrict v_act1,
     HVX_VectorPair * v_sums0,
     HVX_VectorPair * v_sums1
 ) {
@@ -805,7 +805,7 @@ static inline void accum_q2_k_32x2(
     HVX_Vector mask_03   = Q6_Vb_vsplat_R(0x03);
 
     #pragma unroll
-    for (int g = 0; g < 4; g++) {
+    प्रति (पूर्णाङ्क g = 0; g < 4; g++) {
         HVX_Vector v_W_lo = unpack_q3_k_low2(vptr, g,     mask_03);
         HVX_Vector v_W_hi = unpack_q3_k_low2(vptr, g + 4, mask_03);
         v_sum0_lo = Q6_Vw_vrmpyacc_VwVbVb(v_sum0_lo, v_W_lo, v_act0[g]);
@@ -819,29 +819,29 @@ static inline void accum_q2_k_32x2(
 }
 
 // Q2_0: unsigned codes 0..3; the -1 offset is applied via the Q8_1 block sum (v_act[9])
-static inline HVX_Vector accum_q2_0_32x1(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act
+स्थिर अन्तःस्थ HVX_Vector accum_q2_0_32x1(
+    ध्रुव HVX_Vector * restrict vptr,
+    ध्रुव HVX_Vector * restrict v_act
 ) {
     HVX_Vector v_sum_lo = Q6_V_vzero();
     HVX_Vector v_sum_hi = Q6_V_vzero();
     HVX_Vector mask_03  = Q6_Vb_vsplat_R(0x03);
 
     #pragma unroll
-    for (int g = 0; g < 4; g++) {
+    प्रति (पूर्णाङ्क g = 0; g < 4; g++) {
         HVX_Vector v_W_lo = unpack_q3_k_low2(vptr, g,     mask_03);
         HVX_Vector v_W_hi = unpack_q3_k_low2(vptr, g + 4, mask_03);
         v_sum_lo = Q6_Vw_vrmpyacc_VwVubVb(v_sum_lo, v_W_lo, v_act[g]);
         v_sum_hi = Q6_Vw_vrmpyacc_VwVubVb(v_sum_hi, v_W_hi, v_act[g + 4]);
     }
 
-    return Q6_Vw_vadd_VwVw(v_sum_lo, v_sum_hi);
+    प्रत्यागम Q6_Vw_vadd_VwVw(v_sum_lo, v_sum_hi);
 }
 
-static inline void accum_q2_0_32x2(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act0,
-    const HVX_Vector * restrict v_act1,
+स्थिर अन्तःस्थ शून्य accum_q2_0_32x2(
+    ध्रुव HVX_Vector * restrict vptr,
+    ध्रुव HVX_Vector * restrict v_act0,
+    ध्रुव HVX_Vector * restrict v_act1,
     HVX_Vector * v_sum0,
     HVX_Vector * v_sum1
 ) {
@@ -852,7 +852,7 @@ static inline void accum_q2_0_32x2(
     HVX_Vector mask_03   = Q6_Vb_vsplat_R(0x03);
 
     #pragma unroll
-    for (int g = 0; g < 4; g++) {
+    प्रति (पूर्णाङ्क g = 0; g < 4; g++) {
         HVX_Vector v_W_lo = unpack_q3_k_low2(vptr, g,     mask_03);
         HVX_Vector v_W_hi = unpack_q3_k_low2(vptr, g + 4, mask_03);
         v_sum0_lo = Q6_Vw_vrmpyacc_VwVubVb(v_sum0_lo, v_W_lo, v_act0[g]);
@@ -866,11 +866,11 @@ static inline void accum_q2_0_32x2(
 }
 
 // Q2_K: fp16 d (*v_d) and -dmin (*v_m) of the 32 rows of a super-block (8 tiles, VTCM stride 384), each in both vector halves
-static inline void q2_k_load_dmin(const uint8_t * restrict sb, HVX_Vector * restrict v_d, HVX_Vector * restrict v_m) {
+स्थिर अन्तःस्थ शून्य q2_k_load_dmin(ध्रुव uint8_t * restrict sb, HVX_Vector * restrict v_d, HVX_Vector * restrict v_m) {
     HVX_Vector v_dd = Q6_V_vzero();  // lanes 0..31: d, lanes 32..63: -dmin
 
     #pragma unroll
-    for (int j = 0; j < 8; j++) {
+    प्रति (पूर्णाङ्क j = 0; j < 8; j++) {
         HVX_Vector v = hvx_vmem(sb + j * 384 + 256);  // the slice is at bytes 64..79
         v_dd = Q6_V_vmux_QVV(Q6_Q_vsetq_R(16 * j), v_dd, Q6_V_vror_VR(v, (64 - 16 * j) & 127));
     }
@@ -882,7 +882,7 @@ static inline void q2_k_load_dmin(const uint8_t * restrict sb, HVX_Vector * rest
 }
 
 // Q2_K: fp16 D = d * scale and M = -dmin * min of a tile from its scale bytes, in the lanes of the Q6_K scales
-static inline void q2_k_unpack_scales(const uint8_t * restrict tile, HVX_Vector v_d, HVX_Vector v_m,
+स्थिर अन्तःस्थ शून्य q2_k_unpack_scales(ध्रुव uint8_t * restrict tile, HVX_Vector v_d, HVX_Vector v_m,
                                       HVX_Vector * restrict v_D, HVX_Vector * restrict v_M) {
     HVX_Vector v_sc = hvx_vmem(tile + 256);
     HVX_Vector v_l  = Q6_V_lo_W(Q6_Wuh_vunpack_Vub(Q6_V_vand_VV(v_sc, Q6_Vb_vsplat_R(0x0F))));
@@ -893,7 +893,7 @@ static inline void q2_k_unpack_scales(const uint8_t * restrict tile, HVX_Vector 
 }
 
 // Q2_K scale and min nibbles of a tile as halfword pairs: word r = sub-block 1 << 16 | sub-block 0 of row r
-static inline void q2_k_scale_pairs(const uint8_t * restrict tile, HVX_Vector * restrict v_sc2, HVX_Vector * restrict v_mn2) {
+स्थिर अन्तःस्थ शून्य q2_k_scale_pairs(ध्रुव uint8_t * restrict tile, HVX_Vector * restrict v_sc2, HVX_Vector * restrict v_mn2) {
     HVX_Vector v_h = Q6_Vh_vshuff_Vh(Q6_V_lo_W(Q6_Wuh_vunpack_Vub(hvx_vmem(tile + 256))));
     *v_sc2 = Q6_V_vand_VV(v_h, Q6_Vh_vsplat_R(0x000F));
     *v_mn2 = Q6_Vuh_vlsr_VuhR(v_h, 4);
@@ -901,7 +901,7 @@ static inline void q2_k_scale_pairs(const uint8_t * restrict tile, HVX_Vector * 
 
 // Q2_K with q8_1_s16 activations, one tile: isum += scale * (q . a), msum += min * sum(a), per row, in int32.
 // |sum of 16 q * a| <= 3 * 128 * 16 fits a halfword, so both sub-blocks go through one vdmpy (no saturation)
-static inline void q2_k_int_accum(HVX_VectorPair v_sums, HVX_Vector v_sc2, HVX_Vector v_mn2, HVX_Vector v_bsum,
+स्थिर अन्तःस्थ शून्य q2_k_int_accum(HVX_VectorPair v_sums, HVX_Vector v_sc2, HVX_Vector v_mn2, HVX_Vector v_bsum,
                                   HVX_Vector * restrict v_isum, HVX_Vector * restrict v_msum) {
     HVX_Vector v_s2 = Q6_Vh_vshuffe_VhVh(Q6_V_hi_W(v_sums), Q6_V_lo_W(v_sums));
     *v_isum = Q6_Vw_vadd_VwVw(*v_isum, Q6_Vw_vdmpy_VhVh_sat(v_s2, v_sc2));
@@ -909,31 +909,31 @@ static inline void q2_k_int_accum(HVX_VectorPair v_sums, HVX_Vector v_sc2, HVX_V
 }
 
 // Q2_K super-block result: d_a * (d * isum - dmin * msum), with v_d / v_m the fp16 d / -dmin of q2_k_load_dmin
-static inline HVX_Vector q2_k_int_scale(HVX_Vector v_isum, HVX_Vector v_msum, HVX_Vector v_d, HVX_Vector v_m, HVX_Vector v_act8) {
+स्थिर अन्तःस्थ HVX_Vector q2_k_int_scale(HVX_Vector v_isum, HVX_Vector v_msum, HVX_Vector v_d, HVX_Vector v_m, HVX_Vector v_act8) {
     HVX_Vector v_d32  = Q6_V_lo_W(hvx_vec_f16_to_f32(v_d));
     HVX_Vector v_m32  = Q6_V_lo_W(hvx_vec_f16_to_f32(v_m));
     HVX_Vector v_da32 = Q6_V_lo_W(hvx_vec_f16_to_f32(v_act8));
     HVX_Vector v_t = hvx_vec_add_f32_f32(hvx_vec_mul_f32_f32(v_d32, Q6_Vsf_equals_Vw(v_isum)),
                                          hvx_vec_mul_f32_f32(v_m32, Q6_Vsf_equals_Vw(v_msum)));
-    return hvx_vec_mul_f32_f32(v_t, v_da32);
+    प्रत्यागम hvx_vec_mul_f32_f32(v_t, v_da32);
 }
 
-static void tiled_vec_dot_q1_0_32x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy, uint32_t valid_rows, const float * restrict sz) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y_q = vy;
+स्थिर शून्य tiled_vec_dot_q1_0_32x1(ध्रुव uint32_t n, भिन्न * restrict s, ध्रुव शून्य * restrict vx, ध्रुव शून्य * restrict vy, uint32_t valid_rows, ध्रुव भिन्न * restrict sz) {
+    ध्रुव uint8_t * restrict tile_ptr = vx;
+    ध्रुव uint8_t * restrict y_q = vy;
 
     HVX_Vector v_sum_qf  = Q6_V_vzero();
     HVX_Vector v_neg_one = Q6_Vb_vsplat_R(-1);
     HVX_Vector v_pos_one = Q6_Vb_vsplat_R(1);
 
-    const uint32_t n_k_tiles = n / HTP_TENSOR_TILE_K_Q1_0;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * htp_tensor_get_tile_padded_size(HTP_TYPE_Q1_0));
+    ध्रुव uint32_t n_k_tiles = n / HTP_TENSOR_TILE_K_Q1_0;
+    प्रति (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        ध्रुव HVX_Vector * restrict vptr = (ध्रुव HVX_Vector *) (tile_ptr + kt * htp_tensor_get_tile_padded_size(HTP_TYPE_Q1_0));
         HVX_Vector v_tile_qf = Q6_V_vzero();
 
         #pragma unroll
-        for (int quarter = 0; quarter < 4; quarter++) {
-            const HVX_Vector * restrict v_act = (const HVX_Vector *) (y_q + (4 * kt + quarter) * HTP_MM_ACT_TILE_SIZE_Q8_0);
+        प्रति (पूर्णाङ्क quarter = 0; quarter < 4; quarter++) {
+            ध्रुव HVX_Vector * restrict v_act = (ध्रुव HVX_Vector *) (y_q + (4 * kt + quarter) * HTP_MM_ACT_TILE_SIZE_Q8_0);
             HVX_Vector v_sum_sf = Q6_Vsf_equals_Vw(accum_q1_0_32x1(vptr[quarter], v_act, v_neg_one, v_pos_one));
             HVX_Vector v_da_sf  = Q6_V_lo_W(hvx_vec_f16_to_f32_shuff(v_act[8]));
             HVX_Vector v_q_qf   = Q6_Vqf32_vmpy_VsfVsf(v_sum_sf, v_da_sf);
@@ -945,33 +945,33 @@ static void tiled_vec_dot_q1_0_32x1(const uint32_t n, float * restrict s, const 
     }
 
     HVX_Vector v_sum_float = Q6_Vsf_equals_Vqf32(v_sum_qf);
-    if (sz) {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
-    } else {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), v_sum_float);
+    यदि (sz) {
+        hvx_vec_store_u(s, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
+    } अन्यथा {
+        hvx_vec_store_u(s, valid_rows * परिमाण(भिन्न), v_sum_float);
     }
 }
 
-static void tiled_vec_dot_q1_0_32x2(const uint32_t n, float * restrict s0, float * restrict s1, const void * restrict vx, const void * restrict vy0, const void * restrict vy1, uint32_t valid_rows, const float * restrict sz0, const float * restrict sz1) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y0_q = vy0;
-    const uint8_t * restrict y1_q = vy1;
+स्थिर शून्य tiled_vec_dot_q1_0_32x2(ध्रुव uint32_t n, भिन्न * restrict s0, भिन्न * restrict s1, ध्रुव शून्य * restrict vx, ध्रुव शून्य * restrict vy0, ध्रुव शून्य * restrict vy1, uint32_t valid_rows, ध्रुव भिन्न * restrict sz0, ध्रुव भिन्न * restrict sz1) {
+    ध्रुव uint8_t * restrict tile_ptr = vx;
+    ध्रुव uint8_t * restrict y0_q = vy0;
+    ध्रुव uint8_t * restrict y1_q = vy1;
 
     HVX_Vector v_sum_qf_c0 = Q6_V_vzero();
     HVX_Vector v_sum_qf_c1 = Q6_V_vzero();
     HVX_Vector v_neg_one   = Q6_Vb_vsplat_R(-1);
     HVX_Vector v_pos_one   = Q6_Vb_vsplat_R(1);
 
-    const uint32_t n_k_tiles = n / HTP_TENSOR_TILE_K_Q1_0;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * htp_tensor_get_tile_padded_size(HTP_TYPE_Q1_0));
+    ध्रुव uint32_t n_k_tiles = n / HTP_TENSOR_TILE_K_Q1_0;
+    प्रति (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        ध्रुव HVX_Vector * restrict vptr = (ध्रुव HVX_Vector *) (tile_ptr + kt * htp_tensor_get_tile_padded_size(HTP_TYPE_Q1_0));
         HVX_Vector v_tile_qf_c0 = Q6_V_vzero();
         HVX_Vector v_tile_qf_c1 = Q6_V_vzero();
 
-        for (int quarter = 0; quarter < 4; quarter++) {
-            const uint32_t act_tile = 4 * kt + quarter;
-            const HVX_Vector * restrict v_act0 = (const HVX_Vector *) (y0_q + act_tile * HTP_MM_ACT_TILE_SIZE_Q8_0);
-            const HVX_Vector * restrict v_act1 = (const HVX_Vector *) (y1_q + act_tile * HTP_MM_ACT_TILE_SIZE_Q8_0);
+        प्रति (पूर्णाङ्क quarter = 0; quarter < 4; quarter++) {
+            ध्रुव uint32_t act_tile = 4 * kt + quarter;
+            ध्रुव HVX_Vector * restrict v_act0 = (ध्रुव HVX_Vector *) (y0_q + act_tile * HTP_MM_ACT_TILE_SIZE_Q8_0);
+            ध्रुव HVX_Vector * restrict v_act1 = (ध्रुव HVX_Vector *) (y1_q + act_tile * HTP_MM_ACT_TILE_SIZE_Q8_0);
             HVX_VectorPair v_sums = accum_q1_0_32x2(vptr[quarter], v_act0, v_act1, v_neg_one, v_pos_one);
             HVX_Vector v_sum_sf_c0 = Q6_Vsf_equals_Vw(Q6_V_lo_W(v_sums));
             HVX_Vector v_sum_sf_c1 = Q6_Vsf_equals_Vw(Q6_V_hi_W(v_sums));
@@ -989,29 +989,29 @@ static void tiled_vec_dot_q1_0_32x2(const uint32_t n, float * restrict s0, float
 
     HVX_Vector v_sum_float_c0 = Q6_Vsf_equals_Vqf32(v_sum_qf_c0);
     HVX_Vector v_sum_float_c1 = Q6_Vsf_equals_Vqf32(v_sum_qf_c1);
-    if (sz0) {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
-    } else {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), v_sum_float_c0);
+    यदि (sz0) {
+        hvx_vec_store_u(s0, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
+    } अन्यथा {
+        hvx_vec_store_u(s0, valid_rows * परिमाण(भिन्न), v_sum_float_c0);
     }
-    if (sz1) {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
-    } else {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), v_sum_float_c1);
+    यदि (sz1) {
+        hvx_vec_store_u(s1, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
+    } अन्यथा {
+        hvx_vec_store_u(s1, valid_rows * परिमाण(भिन्न), v_sum_float_c1);
     }
 }
 
-static void tiled_vec_dot_q4_0_32x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy, uint32_t valid_rows, const float * restrict sz) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y_q = vy;
+स्थिर शून्य tiled_vec_dot_q4_0_32x1(ध्रुव uint32_t n, भिन्न * restrict s, ध्रुव शून्य * restrict vx, ध्रुव शून्य * restrict vy, uint32_t valid_rows, ध्रुव भिन्न * restrict sz) {
+    ध्रुव uint8_t * restrict tile_ptr = vx;
+    ध्रुव uint8_t * restrict y_q = vy;
 
     HVX_Vector v_sum_float = Q6_V_vzero();
     HVX_Vector i8 = Q6_Vb_vsplat_R(8);
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 640);
-        const HVX_Vector * restrict v_act = (const HVX_Vector *) (y_q + kt * 1152);
+    प्रति (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        ध्रुव HVX_Vector * restrict vptr = (ध्रुव HVX_Vector *) (tile_ptr + kt * 640);
+        ध्रुव HVX_Vector * restrict v_act = (ध्रुव HVX_Vector *) (y_q + kt * 1152);
 
         HVX_Vector v_sum = accum_4bit_32x1(vptr, v_act, i8);
         HVX_Vector v_sum_sf = Q6_Vsf_equals_Vw(v_sum);
@@ -1024,27 +1024,27 @@ static void tiled_vec_dot_q4_0_32x1(const uint32_t n, float * restrict s, const 
         v_sum_float = hvx_vec_add_f32_f32(v_sum_float, v_sum_scaled);
     }
 
-    if (sz) {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
-    } else {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), v_sum_float);
+    यदि (sz) {
+        hvx_vec_store_u(s, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
+    } अन्यथा {
+        hvx_vec_store_u(s, valid_rows * परिमाण(भिन्न), v_sum_float);
     }
 }
 
-static void tiled_vec_dot_q4_0_32x2(const uint32_t n, float * restrict s0, float * restrict s1, const void * restrict vx, const void * restrict vy0, const void * restrict vy1, uint32_t valid_rows, const float * restrict sz0, const float * restrict sz1) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y0_q = vy0;
-    const uint8_t * restrict y1_q = vy1;
+स्थिर शून्य tiled_vec_dot_q4_0_32x2(ध्रुव uint32_t n, भिन्न * restrict s0, भिन्न * restrict s1, ध्रुव शून्य * restrict vx, ध्रुव शून्य * restrict vy0, ध्रुव शून्य * restrict vy1, uint32_t valid_rows, ध्रुव भिन्न * restrict sz0, ध्रुव भिन्न * restrict sz1) {
+    ध्रुव uint8_t * restrict tile_ptr = vx;
+    ध्रुव uint8_t * restrict y0_q = vy0;
+    ध्रुव uint8_t * restrict y1_q = vy1;
 
     HVX_Vector v_sum_float_c0 = Q6_V_vzero();
     HVX_Vector v_sum_float_c1 = Q6_V_vzero();
     HVX_Vector i8 = Q6_Vb_vsplat_R(8);
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 640);
-        const HVX_Vector * restrict v_act0 = (const HVX_Vector *) (y0_q + kt * 1152);
-        const HVX_Vector * restrict v_act1 = (const HVX_Vector *) (y1_q + kt * 1152);
+    प्रति (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        ध्रुव HVX_Vector * restrict vptr = (ध्रुव HVX_Vector *) (tile_ptr + kt * 640);
+        ध्रुव HVX_Vector * restrict v_act0 = (ध्रुव HVX_Vector *) (y0_q + kt * 1152);
+        ध्रुव HVX_Vector * restrict v_act1 = (ध्रुव HVX_Vector *) (y1_q + kt * 1152);
 
         HVX_VectorPair v_sums = accum_4bit_32x2(vptr, v_act0, v_act1, i8);
         HVX_Vector v_sum_c0 = Q6_V_lo_W(v_sums);
@@ -1067,28 +1067,28 @@ static void tiled_vec_dot_q4_0_32x2(const uint32_t n, float * restrict s0, float
         v_sum_float_c1 = hvx_vec_add_f32_f32(v_sum_float_c1, v_sum_scaled_c1);
     }
 
-    if (sz0) {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
-    } else {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), v_sum_float_c0);
+    यदि (sz0) {
+        hvx_vec_store_u(s0, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
+    } अन्यथा {
+        hvx_vec_store_u(s0, valid_rows * परिमाण(भिन्न), v_sum_float_c0);
     }
-    if (sz1) {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
-    } else {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), v_sum_float_c1);
+    यदि (sz1) {
+        hvx_vec_store_u(s1, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
+    } अन्यथा {
+        hvx_vec_store_u(s1, valid_rows * परिमाण(भिन्न), v_sum_float_c1);
     }
 }
 
-static void tiled_vec_dot_q4_1_32x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy, uint32_t valid_rows, const float * restrict sz) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y_q = vy;
+स्थिर शून्य tiled_vec_dot_q4_1_32x1(ध्रुव uint32_t n, भिन्न * restrict s, ध्रुव शून्य * restrict vx, ध्रुव शून्य * restrict vy, uint32_t valid_rows, ध्रुव भिन्न * restrict sz) {
+    ध्रुव uint8_t * restrict tile_ptr = vx;
+    ध्रुव uint8_t * restrict y_q = vy;
 
     HVX_Vector v_sum_float = Q6_V_vzero();
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 640);
-        const HVX_Vector * restrict v_act = (const HVX_Vector *) (y_q + kt * 1280);
+    प्रति (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        ध्रुव HVX_Vector * restrict vptr = (ध्रुव HVX_Vector *) (tile_ptr + kt * 640);
+        ध्रुव HVX_Vector * restrict v_act = (ध्रुव HVX_Vector *) (y_q + kt * 1280);
 
         HVX_Vector v_sum = accum_4bit_32x1(vptr, v_act, Q6_V_vzero());
         HVX_Vector v_sum_sf = Q6_Vsf_equals_Vw(v_sum);
@@ -1110,26 +1110,26 @@ static void tiled_vec_dot_q4_1_32x1(const uint32_t n, float * restrict s, const 
         v_sum_float = hvx_vec_add_f32_f32(v_sum_float, v_sum_scaled);
     }
 
-    if (sz) {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
-    } else {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), v_sum_float);
+    यदि (sz) {
+        hvx_vec_store_u(s, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
+    } अन्यथा {
+        hvx_vec_store_u(s, valid_rows * परिमाण(भिन्न), v_sum_float);
     }
 }
 
-static void tiled_vec_dot_q4_1_32x2(const uint32_t n, float * restrict s0, float * restrict s1, const void * restrict vx, const void * restrict vy0, const void * restrict vy1, uint32_t valid_rows, const float * restrict sz0, const float * restrict sz1) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y0_q = vy0;
-    const uint8_t * restrict y1_q = vy1;
+स्थिर शून्य tiled_vec_dot_q4_1_32x2(ध्रुव uint32_t n, भिन्न * restrict s0, भिन्न * restrict s1, ध्रुव शून्य * restrict vx, ध्रुव शून्य * restrict vy0, ध्रुव शून्य * restrict vy1, uint32_t valid_rows, ध्रुव भिन्न * restrict sz0, ध्रुव भिन्न * restrict sz1) {
+    ध्रुव uint8_t * restrict tile_ptr = vx;
+    ध्रुव uint8_t * restrict y0_q = vy0;
+    ध्रुव uint8_t * restrict y1_q = vy1;
 
     HVX_Vector v_sum_float_c0 = Q6_V_vzero();
     HVX_Vector v_sum_float_c1 = Q6_V_vzero();
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 640);
-        const HVX_Vector * restrict v_act0 = (const HVX_Vector *) (y0_q + kt * 1280);
-        const HVX_Vector * restrict v_act1 = (const HVX_Vector *) (y1_q + kt * 1280);
+    प्रति (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        ध्रुव HVX_Vector * restrict vptr = (ध्रुव HVX_Vector *) (tile_ptr + kt * 640);
+        ध्रुव HVX_Vector * restrict v_act0 = (ध्रुव HVX_Vector *) (y0_q + kt * 1280);
+        ध्रुव HVX_Vector * restrict v_act1 = (ध्रुव HVX_Vector *) (y1_q + kt * 1280);
 
         HVX_VectorPair v_sums = accum_4bit_32x2(vptr, v_act0, v_act1, Q6_V_vzero());
         HVX_Vector v_sum_c0 = Q6_V_lo_W(v_sums);
@@ -1163,28 +1163,28 @@ static void tiled_vec_dot_q4_1_32x2(const uint32_t n, float * restrict s0, float
         v_sum_float_c1 = hvx_vec_add_f32_f32(v_sum_float_c1, v_sum_scaled_c1);
     }
 
-    if (sz0) {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
-    } else {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), v_sum_float_c0);
+    यदि (sz0) {
+        hvx_vec_store_u(s0, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
+    } अन्यथा {
+        hvx_vec_store_u(s0, valid_rows * परिमाण(भिन्न), v_sum_float_c0);
     }
-    if (sz1) {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
-    } else {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), v_sum_float_c1);
+    यदि (sz1) {
+        hvx_vec_store_u(s1, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
+    } अन्यथा {
+        hvx_vec_store_u(s1, valid_rows * परिमाण(भिन्न), v_sum_float_c1);
     }
 }
 
-static void tiled_vec_dot_q8_0_32x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy, uint32_t valid_rows, const float * restrict sz) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y_q = vy;
+स्थिर शून्य tiled_vec_dot_q8_0_32x1(ध्रुव uint32_t n, भिन्न * restrict s, ध्रुव शून्य * restrict vx, ध्रुव शून्य * restrict vy, uint32_t valid_rows, ध्रुव भिन्न * restrict sz) {
+    ध्रुव uint8_t * restrict tile_ptr = vx;
+    ध्रुव uint8_t * restrict y_q = vy;
 
     HVX_Vector v_sum_float = Q6_V_vzero();
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 1152);
-        const HVX_Vector * restrict v_act = (const HVX_Vector *) (y_q + kt * 1152);
+    प्रति (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        ध्रुव HVX_Vector * restrict vptr = (ध्रुव HVX_Vector *) (tile_ptr + kt * 1152);
+        ध्रुव HVX_Vector * restrict v_act = (ध्रुव HVX_Vector *) (y_q + kt * 1152);
 
         HVX_Vector v_sum = accum_q8_0_32x1(vptr, v_act);
         HVX_Vector v_sum_sf = Q6_Vsf_equals_Vw(v_sum);
@@ -1197,26 +1197,26 @@ static void tiled_vec_dot_q8_0_32x1(const uint32_t n, float * restrict s, const 
         v_sum_float = hvx_vec_add_f32_f32(v_sum_float, v_sum_scaled);
     }
 
-    if (sz) {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
-    } else {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), v_sum_float);
+    यदि (sz) {
+        hvx_vec_store_u(s, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
+    } अन्यथा {
+        hvx_vec_store_u(s, valid_rows * परिमाण(भिन्न), v_sum_float);
     }
 }
 
-static void tiled_vec_dot_q8_0_32x2(const uint32_t n, float * restrict s0, float * restrict s1, const void * restrict vx, const void * restrict vy0, const void * restrict vy1, uint32_t valid_rows, const float * restrict sz0, const float * restrict sz1) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y0_q = vy0;
-    const uint8_t * restrict y1_q = vy1;
+स्थिर शून्य tiled_vec_dot_q8_0_32x2(ध्रुव uint32_t n, भिन्न * restrict s0, भिन्न * restrict s1, ध्रुव शून्य * restrict vx, ध्रुव शून्य * restrict vy0, ध्रुव शून्य * restrict vy1, uint32_t valid_rows, ध्रुव भिन्न * restrict sz0, ध्रुव भिन्न * restrict sz1) {
+    ध्रुव uint8_t * restrict tile_ptr = vx;
+    ध्रुव uint8_t * restrict y0_q = vy0;
+    ध्रुव uint8_t * restrict y1_q = vy1;
 
     HVX_Vector v_sum_float_c0 = Q6_V_vzero();
     HVX_Vector v_sum_float_c1 = Q6_V_vzero();
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 1152);
-        const HVX_Vector * restrict v_act0 = (const HVX_Vector *) (y0_q + kt * 1152);
-        const HVX_Vector * restrict v_act1 = (const HVX_Vector *) (y1_q + kt * 1152);
+    प्रति (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        ध्रुव HVX_Vector * restrict vptr = (ध्रुव HVX_Vector *) (tile_ptr + kt * 1152);
+        ध्रुव HVX_Vector * restrict v_act0 = (ध्रुव HVX_Vector *) (y0_q + kt * 1152);
+        ध्रुव HVX_Vector * restrict v_act1 = (ध्रुव HVX_Vector *) (y1_q + kt * 1152);
 
         HVX_VectorPair v_sums = accum_q8_0_32x2(vptr, v_act0, v_act1);
         HVX_Vector v_sum_c0 = Q6_V_lo_W(v_sums);
@@ -1239,28 +1239,28 @@ static void tiled_vec_dot_q8_0_32x2(const uint32_t n, float * restrict s0, float
         v_sum_float_c1 = hvx_vec_add_f32_f32(v_sum_float_c1, v_sum_scaled_c1);
     }
 
-    if (sz0) {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
-    } else {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), v_sum_float_c0);
+    यदि (sz0) {
+        hvx_vec_store_u(s0, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
+    } अन्यथा {
+        hvx_vec_store_u(s0, valid_rows * परिमाण(भिन्न), v_sum_float_c0);
     }
-    if (sz1) {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
-    } else {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), v_sum_float_c1);
+    यदि (sz1) {
+        hvx_vec_store_u(s1, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
+    } अन्यथा {
+        hvx_vec_store_u(s1, valid_rows * परिमाण(भिन्न), v_sum_float_c1);
     }
 }
 
-static void tiled_vec_dot_q5_k_32x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy, uint32_t valid_rows, const float * restrict sz) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y_q = vy;
+स्थिर शून्य tiled_vec_dot_q5_k_32x1(ध्रुव uint32_t n, भिन्न * restrict s, ध्रुव शून्य * restrict vx, ध्रुव शून्य * restrict vy, uint32_t valid_rows, ध्रुव भिन्न * restrict sz) {
+    ध्रुव uint8_t * restrict tile_ptr = vx;
+    ध्रुव uint8_t * restrict y_q = vy;
 
     HVX_Vector v_sum_float = Q6_V_vzero();
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 768);
-        const HVX_Vector * restrict v_act = (const HVX_Vector *) (y_q + kt * 1280);
+    प्रति (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        ध्रुव HVX_Vector * restrict vptr = (ध्रुव HVX_Vector *) (tile_ptr + kt * 768);
+        ध्रुव HVX_Vector * restrict v_act = (ध्रुव HVX_Vector *) (y_q + kt * 1280);
 
         HVX_Vector v_sum = accum_5bit_32x1(vptr, v_act, Q6_V_vzero());
         HVX_Vector v_sum_sf = Q6_Vsf_equals_Vw(v_sum);
@@ -1282,26 +1282,26 @@ static void tiled_vec_dot_q5_k_32x1(const uint32_t n, float * restrict s, const 
         v_sum_float = hvx_vec_add_f32_f32(v_sum_float, v_sum_scaled);
     }
 
-    if (sz) {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
-    } else {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), v_sum_float);
+    यदि (sz) {
+        hvx_vec_store_u(s, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
+    } अन्यथा {
+        hvx_vec_store_u(s, valid_rows * परिमाण(भिन्न), v_sum_float);
     }
 }
 
-static void tiled_vec_dot_q5_k_32x2(const uint32_t n, float * restrict s0, float * restrict s1, const void * restrict vx, const void * restrict vy0, const void * restrict vy1, uint32_t valid_rows, const float * restrict sz0, const float * restrict sz1) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y0_q = vy0;
-    const uint8_t * restrict y1_q = vy1;
+स्थिर शून्य tiled_vec_dot_q5_k_32x2(ध्रुव uint32_t n, भिन्न * restrict s0, भिन्न * restrict s1, ध्रुव शून्य * restrict vx, ध्रुव शून्य * restrict vy0, ध्रुव शून्य * restrict vy1, uint32_t valid_rows, ध्रुव भिन्न * restrict sz0, ध्रुव भिन्न * restrict sz1) {
+    ध्रुव uint8_t * restrict tile_ptr = vx;
+    ध्रुव uint8_t * restrict y0_q = vy0;
+    ध्रुव uint8_t * restrict y1_q = vy1;
 
     HVX_Vector v_sum_float_c0 = Q6_V_vzero();
     HVX_Vector v_sum_float_c1 = Q6_V_vzero();
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 768);
-        const HVX_Vector * restrict v_act0 = (const HVX_Vector *) (y0_q + kt * 1280);
-        const HVX_Vector * restrict v_act1 = (const HVX_Vector *) (y1_q + kt * 1280);
+    प्रति (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        ध्रुव HVX_Vector * restrict vptr = (ध्रुव HVX_Vector *) (tile_ptr + kt * 768);
+        ध्रुव HVX_Vector * restrict v_act0 = (ध्रुव HVX_Vector *) (y0_q + kt * 1280);
+        ध्रुव HVX_Vector * restrict v_act1 = (ध्रुव HVX_Vector *) (y1_q + kt * 1280);
 
         HVX_VectorPair v_sums = accum_5bit_32x2(vptr, v_act0, v_act1, Q6_V_vzero());
         HVX_Vector v_sum_c0 = Q6_V_lo_W(v_sums);
@@ -1335,55 +1335,55 @@ static void tiled_vec_dot_q5_k_32x2(const uint32_t n, float * restrict s0, float
         v_sum_float_c1 = hvx_vec_add_f32_f32(v_sum_float_c1, v_sum_scaled_c1);
     }
 
-    if (sz0) {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
-    } else {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), v_sum_float_c0);
+    यदि (sz0) {
+        hvx_vec_store_u(s0, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
+    } अन्यथा {
+        hvx_vec_store_u(s0, valid_rows * परिमाण(भिन्न), v_sum_float_c0);
     }
-    if (sz1) {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
-    } else {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), v_sum_float_c1);
+    यदि (sz1) {
+        hvx_vec_store_u(s1, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
+    } अन्यथा {
+        hvx_vec_store_u(s1, valid_rows * परिमाण(भिन्न), v_sum_float_c1);
     }
 }
 
-static void tiled_vec_dot_q6_k_32x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy, uint32_t valid_rows, const float * restrict sz) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y_q = vy;
+स्थिर शून्य tiled_vec_dot_q6_k_32x1(ध्रुव uint32_t n, भिन्न * restrict s, ध्रुव शून्य * restrict vx, ध्रुव शून्य * restrict vy, uint32_t valid_rows, ध्रुव भिन्न * restrict sz) {
+    ध्रुव uint8_t * restrict tile_ptr = vx;
+    ध्रुव uint8_t * restrict y_q = vy;
 
     HVX_Vector v_sum_float = Q6_V_vzero();
     HVX_Vector i32 = Q6_Vb_vsplat_R(32);
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 896);
-        const HVX_Vector * restrict v_act = (const HVX_Vector *) (y_q + kt * 1152);
+    प्रति (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        ध्रुव HVX_Vector * restrict vptr = (ध्रुव HVX_Vector *) (tile_ptr + kt * 896);
+        ध्रुव HVX_Vector * restrict v_act = (ध्रुव HVX_Vector *) (y_q + kt * 1152);
 
         HVX_VectorPair v_sums = accum_q6_k_32x1(vptr, v_act, i32);
         v_sum_float = hvx_vec_add_f32_f32(v_sum_float, scale_q6_k_32x1(v_sums, vptr[6], v_act[8]));
     }
 
-    if (sz) {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
-    } else {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), v_sum_float);
+    यदि (sz) {
+        hvx_vec_store_u(s, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
+    } अन्यथा {
+        hvx_vec_store_u(s, valid_rows * परिमाण(भिन्न), v_sum_float);
     }
 }
 
-static void tiled_vec_dot_q6_k_32x2(const uint32_t n, float * restrict s0, float * restrict s1, const void * restrict vx, const void * restrict vy0, const void * restrict vy1, uint32_t valid_rows, const float * restrict sz0, const float * restrict sz1) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y0_q = vy0;
-    const uint8_t * restrict y1_q = vy1;
+स्थिर शून्य tiled_vec_dot_q6_k_32x2(ध्रुव uint32_t n, भिन्न * restrict s0, भिन्न * restrict s1, ध्रुव शून्य * restrict vx, ध्रुव शून्य * restrict vy0, ध्रुव शून्य * restrict vy1, uint32_t valid_rows, ध्रुव भिन्न * restrict sz0, ध्रुव भिन्न * restrict sz1) {
+    ध्रुव uint8_t * restrict tile_ptr = vx;
+    ध्रुव uint8_t * restrict y0_q = vy0;
+    ध्रुव uint8_t * restrict y1_q = vy1;
 
     HVX_Vector v_sum_float_c0 = Q6_V_vzero();
     HVX_Vector v_sum_float_c1 = Q6_V_vzero();
     HVX_Vector i32 = Q6_Vb_vsplat_R(32);
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 896);
-        const HVX_Vector * restrict v_act0 = (const HVX_Vector *) (y0_q + kt * 1152);
-        const HVX_Vector * restrict v_act1 = (const HVX_Vector *) (y1_q + kt * 1152);
+    प्रति (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        ध्रुव HVX_Vector * restrict vptr = (ध्रुव HVX_Vector *) (tile_ptr + kt * 896);
+        ध्रुव HVX_Vector * restrict v_act0 = (ध्रुव HVX_Vector *) (y0_q + kt * 1152);
+        ध्रुव HVX_Vector * restrict v_act1 = (ध्रुव HVX_Vector *) (y1_q + kt * 1152);
 
         HVX_VectorPair v_sums0, v_sums1;
         accum_q6_k_32x2(vptr, v_act0, v_act1, i32, &v_sums0, &v_sums1);
@@ -1392,53 +1392,53 @@ static void tiled_vec_dot_q6_k_32x2(const uint32_t n, float * restrict s0, float
         v_sum_float_c1 = hvx_vec_add_f32_f32(v_sum_float_c1, scale_q6_k_32x1(v_sums1, vptr[6], v_act1[8]));
     }
 
-    if (sz0) {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
-    } else {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), v_sum_float_c0);
+    यदि (sz0) {
+        hvx_vec_store_u(s0, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
+    } अन्यथा {
+        hvx_vec_store_u(s0, valid_rows * परिमाण(भिन्न), v_sum_float_c0);
     }
-    if (sz1) {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
-    } else {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), v_sum_float_c1);
+    यदि (sz1) {
+        hvx_vec_store_u(s1, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
+    } अन्यथा {
+        hvx_vec_store_u(s1, valid_rows * परिमाण(भिन्न), v_sum_float_c1);
     }
 }
 
-static void tiled_vec_dot_q3_k_32x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy, uint32_t valid_rows, const float * restrict sz) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y_q = vy;
+स्थिर शून्य tiled_vec_dot_q3_k_32x1(ध्रुव uint32_t n, भिन्न * restrict s, ध्रुव शून्य * restrict vx, ध्रुव शून्य * restrict vy, uint32_t valid_rows, ध्रुव भिन्न * restrict sz) {
+    ध्रुव uint8_t * restrict tile_ptr = vx;
+    ध्रुव uint8_t * restrict y_q = vy;
 
     HVX_Vector v_sum_float = Q6_V_vzero();
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 512);
-        const HVX_Vector * restrict v_act = (const HVX_Vector *) (y_q + kt * 1152);
+    प्रति (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        ध्रुव HVX_Vector * restrict vptr = (ध्रुव HVX_Vector *) (tile_ptr + kt * 512);
+        ध्रुव HVX_Vector * restrict v_act = (ध्रुव HVX_Vector *) (y_q + kt * 1152);
 
         HVX_VectorPair v_sums = accum_q3_k_32x1(vptr, v_act);
         v_sum_float = hvx_vec_add_f32_f32(v_sum_float, scale_q6_k_32x1(v_sums, vptr[3], v_act[8]));
     }
 
-    if (sz) {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
-    } else {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), v_sum_float);
+    यदि (sz) {
+        hvx_vec_store_u(s, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
+    } अन्यथा {
+        hvx_vec_store_u(s, valid_rows * परिमाण(भिन्न), v_sum_float);
     }
 }
 
-static void tiled_vec_dot_q3_k_32x2(const uint32_t n, float * restrict s0, float * restrict s1, const void * restrict vx, const void * restrict vy0, const void * restrict vy1, uint32_t valid_rows, const float * restrict sz0, const float * restrict sz1) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y0_q = vy0;
-    const uint8_t * restrict y1_q = vy1;
+स्थिर शून्य tiled_vec_dot_q3_k_32x2(ध्रुव uint32_t n, भिन्न * restrict s0, भिन्न * restrict s1, ध्रुव शून्य * restrict vx, ध्रुव शून्य * restrict vy0, ध्रुव शून्य * restrict vy1, uint32_t valid_rows, ध्रुव भिन्न * restrict sz0, ध्रुव भिन्न * restrict sz1) {
+    ध्रुव uint8_t * restrict tile_ptr = vx;
+    ध्रुव uint8_t * restrict y0_q = vy0;
+    ध्रुव uint8_t * restrict y1_q = vy1;
 
     HVX_Vector v_sum_float_c0 = Q6_V_vzero();
     HVX_Vector v_sum_float_c1 = Q6_V_vzero();
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 512);
-        const HVX_Vector * restrict v_act0 = (const HVX_Vector *) (y0_q + kt * 1152);
-        const HVX_Vector * restrict v_act1 = (const HVX_Vector *) (y1_q + kt * 1152);
+    प्रति (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        ध्रुव HVX_Vector * restrict vptr = (ध्रुव HVX_Vector *) (tile_ptr + kt * 512);
+        ध्रुव HVX_Vector * restrict v_act0 = (ध्रुव HVX_Vector *) (y0_q + kt * 1152);
+        ध्रुव HVX_Vector * restrict v_act1 = (ध्रुव HVX_Vector *) (y1_q + kt * 1152);
 
         HVX_VectorPair v_sums0, v_sums1;
         accum_q3_k_32x2(vptr, v_act0, v_act1, &v_sums0, &v_sums1);
@@ -1447,60 +1447,60 @@ static void tiled_vec_dot_q3_k_32x2(const uint32_t n, float * restrict s0, float
         v_sum_float_c1 = hvx_vec_add_f32_f32(v_sum_float_c1, scale_q6_k_32x1(v_sums1, vptr[3], v_act1[8]));
     }
 
-    if (sz0) {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
-    } else {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), v_sum_float_c0);
+    यदि (sz0) {
+        hvx_vec_store_u(s0, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
+    } अन्यथा {
+        hvx_vec_store_u(s0, valid_rows * परिमाण(भिन्न), v_sum_float_c0);
     }
-    if (sz1) {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
-    } else {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), v_sum_float_c1);
+    यदि (sz1) {
+        hvx_vec_store_u(s1, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
+    } अन्यथा {
+        hvx_vec_store_u(s1, valid_rows * परिमाण(भिन्न), v_sum_float_c1);
     }
 }
 
-static void tiled_vec_dot_q2_k_32x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy, uint32_t valid_rows, const float * restrict sz) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y_q = vy;
+स्थिर शून्य tiled_vec_dot_q2_k_32x1(ध्रुव uint32_t n, भिन्न * restrict s, ध्रुव शून्य * restrict vx, ध्रुव शून्य * restrict vy, uint32_t valid_rows, ध्रुव भिन्न * restrict sz) {
+    ध्रुव uint8_t * restrict tile_ptr = vx;
+    ध्रुव uint8_t * restrict y_q = vy;
 
     HVX_Vector v_sum_float = Q6_V_vzero();
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kb = 0; kb < n_k_tiles; kb += 8) {
+    प्रति (uint32_t kb = 0; kb < n_k_tiles; kb += 8) {
         HVX_Vector v_d, v_m;
         q2_k_load_dmin(tile_ptr + kb * 384, &v_d, &v_m);
 
         HVX_Vector v_isum = Q6_V_vzero();
         HVX_Vector v_msum = Q6_V_vzero();
-        for (uint32_t kt = kb; kt < kb + 8; kt++) {
-            const uint8_t * restrict tile = tile_ptr + kt * 384;
-            const HVX_Vector * restrict v_act = (const HVX_Vector *) (y_q + kt * 1280);
+        प्रति (uint32_t kt = kb; kt < kb + 8; kt++) {
+            ध्रुव uint8_t * restrict tile = tile_ptr + kt * 384;
+            ध्रुव HVX_Vector * restrict v_act = (ध्रुव HVX_Vector *) (y_q + kt * 1280);
 
             HVX_Vector v_sc2, v_mn2;
             q2_k_scale_pairs(tile, &v_sc2, &v_mn2);
-            q2_k_int_accum(accum_q2_k_32x1((const HVX_Vector *) tile, v_act), v_sc2, v_mn2, v_act[9], &v_isum, &v_msum);
+            q2_k_int_accum(accum_q2_k_32x1((ध्रुव HVX_Vector *) tile, v_act), v_sc2, v_mn2, v_act[9], &v_isum, &v_msum);
         }
-        const HVX_Vector * restrict v_act_sb = (const HVX_Vector *) (y_q + kb * 1280);
+        ध्रुव HVX_Vector * restrict v_act_sb = (ध्रुव HVX_Vector *) (y_q + kb * 1280);
         v_sum_float = hvx_vec_add_f32_f32(v_sum_float, q2_k_int_scale(v_isum, v_msum, v_d, v_m, v_act_sb[8]));
     }
 
-    if (sz) {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
-    } else {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), v_sum_float);
+    यदि (sz) {
+        hvx_vec_store_u(s, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
+    } अन्यथा {
+        hvx_vec_store_u(s, valid_rows * परिमाण(भिन्न), v_sum_float);
     }
 }
 
-static void tiled_vec_dot_q2_k_32x2(const uint32_t n, float * restrict s0, float * restrict s1, const void * restrict vx, const void * restrict vy0, const void * restrict vy1, uint32_t valid_rows, const float * restrict sz0, const float * restrict sz1) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y0_q = vy0;
-    const uint8_t * restrict y1_q = vy1;
+स्थिर शून्य tiled_vec_dot_q2_k_32x2(ध्रुव uint32_t n, भिन्न * restrict s0, भिन्न * restrict s1, ध्रुव शून्य * restrict vx, ध्रुव शून्य * restrict vy0, ध्रुव शून्य * restrict vy1, uint32_t valid_rows, ध्रुव भिन्न * restrict sz0, ध्रुव भिन्न * restrict sz1) {
+    ध्रुव uint8_t * restrict tile_ptr = vx;
+    ध्रुव uint8_t * restrict y0_q = vy0;
+    ध्रुव uint8_t * restrict y1_q = vy1;
 
     HVX_Vector v_sum_float_c0 = Q6_V_vzero();
     HVX_Vector v_sum_float_c1 = Q6_V_vzero();
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kb = 0; kb < n_k_tiles; kb += 8) {
+    प्रति (uint32_t kb = 0; kb < n_k_tiles; kb += 8) {
         HVX_Vector v_d, v_m;
         q2_k_load_dmin(tile_ptr + kb * 384, &v_d, &v_m);
 
@@ -1508,53 +1508,53 @@ static void tiled_vec_dot_q2_k_32x2(const uint32_t n, float * restrict s0, float
         HVX_Vector v_msum0 = Q6_V_vzero();
         HVX_Vector v_isum1 = Q6_V_vzero();
         HVX_Vector v_msum1 = Q6_V_vzero();
-        for (uint32_t kt = kb; kt < kb + 8; kt++) {
-            const uint8_t * restrict tile = tile_ptr + kt * 384;
-            const HVX_Vector * restrict v_act0 = (const HVX_Vector *) (y0_q + kt * 1280);
-            const HVX_Vector * restrict v_act1 = (const HVX_Vector *) (y1_q + kt * 1280);
+        प्रति (uint32_t kt = kb; kt < kb + 8; kt++) {
+            ध्रुव uint8_t * restrict tile = tile_ptr + kt * 384;
+            ध्रुव HVX_Vector * restrict v_act0 = (ध्रुव HVX_Vector *) (y0_q + kt * 1280);
+            ध्रुव HVX_Vector * restrict v_act1 = (ध्रुव HVX_Vector *) (y1_q + kt * 1280);
 
             HVX_Vector v_sc2, v_mn2;
             q2_k_scale_pairs(tile, &v_sc2, &v_mn2);
 
             HVX_VectorPair v_sums0, v_sums1;
-            accum_q2_k_32x2((const HVX_Vector *) tile, v_act0, v_act1, &v_sums0, &v_sums1);
+            accum_q2_k_32x2((ध्रुव HVX_Vector *) tile, v_act0, v_act1, &v_sums0, &v_sums1);
             q2_k_int_accum(v_sums0, v_sc2, v_mn2, v_act0[9], &v_isum0, &v_msum0);
             q2_k_int_accum(v_sums1, v_sc2, v_mn2, v_act1[9], &v_isum1, &v_msum1);
         }
-        const HVX_Vector * restrict v_act0_sb = (const HVX_Vector *) (y0_q + kb * 1280);
-        const HVX_Vector * restrict v_act1_sb = (const HVX_Vector *) (y1_q + kb * 1280);
+        ध्रुव HVX_Vector * restrict v_act0_sb = (ध्रुव HVX_Vector *) (y0_q + kb * 1280);
+        ध्रुव HVX_Vector * restrict v_act1_sb = (ध्रुव HVX_Vector *) (y1_q + kb * 1280);
         v_sum_float_c0 = hvx_vec_add_f32_f32(v_sum_float_c0, q2_k_int_scale(v_isum0, v_msum0, v_d, v_m, v_act0_sb[8]));
         v_sum_float_c1 = hvx_vec_add_f32_f32(v_sum_float_c1, q2_k_int_scale(v_isum1, v_msum1, v_d, v_m, v_act1_sb[8]));
     }
 
-    if (sz0) {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
-    } else {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), v_sum_float_c0);
+    यदि (sz0) {
+        hvx_vec_store_u(s0, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
+    } अन्यथा {
+        hvx_vec_store_u(s0, valid_rows * परिमाण(भिन्न), v_sum_float_c0);
     }
-    if (sz1) {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
-    } else {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), v_sum_float_c1);
+    यदि (sz1) {
+        hvx_vec_store_u(s1, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
+    } अन्यथा {
+        hvx_vec_store_u(s1, valid_rows * परिमाण(भिन्न), v_sum_float_c1);
     }
 }
 
 // One Q2_0 weight tile covers 64 k: act tiles 2 * kt and 2 * kt + 1, each 32 k wide (Q8_1)
-static void tiled_vec_dot_q2_0_32x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy, uint32_t valid_rows, const float * restrict sz) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y_q = vy;
+स्थिर शून्य tiled_vec_dot_q2_0_32x1(ध्रुव uint32_t n, भिन्न * restrict s, ध्रुव शून्य * restrict vx, ध्रुव शून्य * restrict vy, uint32_t valid_rows, ध्रुव भिन्न * restrict sz) {
+    ध्रुव uint8_t * restrict tile_ptr = vx;
+    ध्रुव uint8_t * restrict y_q = vy;
 
     HVX_Vector v_sum_float = Q6_V_vzero();
     HVX_Vector v_one_f16   = hvx_vec_splat_f16(1.0);
 
     uint32_t n_weight_tiles = n / HTP_MM_WEIGHT_TILE_K_Q2_0;
-    for (uint32_t kt = 0; kt < n_weight_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * HTP_MM_WEIGHT_ALIGNED_TILE_SIZE_Q2_0);
+    प्रति (uint32_t kt = 0; kt < n_weight_tiles; kt++) {
+        ध्रुव HVX_Vector * restrict vptr = (ध्रुव HVX_Vector *) (tile_ptr + kt * HTP_MM_WEIGHT_ALIGNED_TILE_SIZE_Q2_0);
         HVX_Vector v_tile_qf = Q6_V_vzero();
 
         #pragma unroll
-        for (int half = 0; half < 2; half++) {
-            const HVX_Vector * restrict v_act = (const HVX_Vector *) (y_q + (2 * kt + half) * HTP_MM_ACT_TILE_SIZE_Q8_1);
+        प्रति (पूर्णाङ्क half = 0; half < 2; half++) {
+            ध्रुव HVX_Vector * restrict v_act = (ध्रुव HVX_Vector *) (y_q + (2 * kt + half) * HTP_MM_ACT_TILE_SIZE_Q8_1);
 
             HVX_Vector v_sum_sf = Q6_Vsf_equals_Vw(accum_q2_0_32x1(vptr + 2 * half, v_act));
             HVX_Vector v_da_sf  = Q6_V_lo_W(hvx_vec_f16_to_f32_shuff(v_act[8]));
@@ -1567,32 +1567,32 @@ static void tiled_vec_dot_q2_0_32x1(const uint32_t n, float * restrict s, const 
         v_sum_float = hvx_vec_add_f32_f32(v_sum_float, hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vqf32(v_tile_qf), v_dw_sf));
     }
 
-    if (sz) {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
-    } else {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), v_sum_float);
+    यदि (sz) {
+        hvx_vec_store_u(s, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
+    } अन्यथा {
+        hvx_vec_store_u(s, valid_rows * परिमाण(भिन्न), v_sum_float);
     }
 }
 
-static void tiled_vec_dot_q2_0_32x2(const uint32_t n, float * restrict s0, float * restrict s1, const void * restrict vx, const void * restrict vy0, const void * restrict vy1, uint32_t valid_rows, const float * restrict sz0, const float * restrict sz1) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y0_q = vy0;
-    const uint8_t * restrict y1_q = vy1;
+स्थिर शून्य tiled_vec_dot_q2_0_32x2(ध्रुव uint32_t n, भिन्न * restrict s0, भिन्न * restrict s1, ध्रुव शून्य * restrict vx, ध्रुव शून्य * restrict vy0, ध्रुव शून्य * restrict vy1, uint32_t valid_rows, ध्रुव भिन्न * restrict sz0, ध्रुव भिन्न * restrict sz1) {
+    ध्रुव uint8_t * restrict tile_ptr = vx;
+    ध्रुव uint8_t * restrict y0_q = vy0;
+    ध्रुव uint8_t * restrict y1_q = vy1;
 
     HVX_Vector v_sum_float_c0 = Q6_V_vzero();
     HVX_Vector v_sum_float_c1 = Q6_V_vzero();
     HVX_Vector v_one_f16      = hvx_vec_splat_f16(1.0);
 
     uint32_t n_weight_tiles = n / HTP_MM_WEIGHT_TILE_K_Q2_0;
-    for (uint32_t kt = 0; kt < n_weight_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * HTP_MM_WEIGHT_ALIGNED_TILE_SIZE_Q2_0);
+    प्रति (uint32_t kt = 0; kt < n_weight_tiles; kt++) {
+        ध्रुव HVX_Vector * restrict vptr = (ध्रुव HVX_Vector *) (tile_ptr + kt * HTP_MM_WEIGHT_ALIGNED_TILE_SIZE_Q2_0);
         HVX_Vector v_tile_qf_c0 = Q6_V_vzero();
         HVX_Vector v_tile_qf_c1 = Q6_V_vzero();
 
         #pragma unroll
-        for (int half = 0; half < 2; half++) {
-            const HVX_Vector * restrict v_act0 = (const HVX_Vector *) (y0_q + (2 * kt + half) * HTP_MM_ACT_TILE_SIZE_Q8_1);
-            const HVX_Vector * restrict v_act1 = (const HVX_Vector *) (y1_q + (2 * kt + half) * HTP_MM_ACT_TILE_SIZE_Q8_1);
+        प्रति (पूर्णाङ्क half = 0; half < 2; half++) {
+            ध्रुव HVX_Vector * restrict v_act0 = (ध्रुव HVX_Vector *) (y0_q + (2 * kt + half) * HTP_MM_ACT_TILE_SIZE_Q8_1);
+            ध्रुव HVX_Vector * restrict v_act1 = (ध्रुव HVX_Vector *) (y1_q + (2 * kt + half) * HTP_MM_ACT_TILE_SIZE_Q8_1);
 
             HVX_Vector v_sum_c0, v_sum_c1;
             accum_q2_0_32x2(vptr + 2 * half, v_act0, v_act1, &v_sum_c0, &v_sum_c1);
@@ -1614,30 +1614,30 @@ static void tiled_vec_dot_q2_0_32x2(const uint32_t n, float * restrict s0, float
         v_sum_float_c1 = hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vqf32(v_tile_qf_c1), v_dw_sf));
     }
 
-    if (sz0) {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
-    } else {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), v_sum_float_c0);
+    यदि (sz0) {
+        hvx_vec_store_u(s0, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
+    } अन्यथा {
+        hvx_vec_store_u(s0, valid_rows * परिमाण(भिन्न), v_sum_float_c0);
     }
-    if (sz1) {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
-    } else {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), v_sum_float_c1);
+    यदि (sz1) {
+        hvx_vec_store_u(s1, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
+    } अन्यथा {
+        hvx_vec_store_u(s1, valid_rows * परिमाण(भिन्न), v_sum_float_c1);
     }
 }
 
-static void tiled_vec_dot_iq4nl_32x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy, uint32_t valid_rows, const float * restrict sz) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y_q = vy;
+स्थिर शून्य tiled_vec_dot_iq4nl_32x1(ध्रुव uint32_t n, भिन्न * restrict s, ध्रुव शून्य * restrict vx, ध्रुव शून्य * restrict vy, uint32_t valid_rows, ध्रुव भिन्न * restrict sz) {
+    ध्रुव uint8_t * restrict tile_ptr = vx;
+    ध्रुव uint8_t * restrict y_q = vy;
 
     HVX_Vector v_sum_float = Q6_V_vzero();
     HVX_Vector mask_h4 = Q6_Vb_vsplat_R(0x0F);
-    HVX_Vector lut = *(const HVX_Vector *) kvalues_iq4nl_lut;
+    HVX_Vector lut = *(ध्रुव HVX_Vector *) kvalues_iq4nl_lut;
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 640);
-        const HVX_Vector * restrict v_act = (const HVX_Vector *) (y_q + kt * 1152);
+    प्रति (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        ध्रुव HVX_Vector * restrict vptr = (ध्रुव HVX_Vector *) (tile_ptr + kt * 640);
+        ध्रुव HVX_Vector * restrict v_act = (ध्रुव HVX_Vector *) (y_q + kt * 1152);
 
         HVX_Vector v_sum = accum_4bit_32x1_lut(vptr, v_act, mask_h4, lut);
         HVX_Vector v_sum_sf = Q6_Vsf_equals_Vw(v_sum);
@@ -1650,28 +1650,28 @@ static void tiled_vec_dot_iq4nl_32x1(const uint32_t n, float * restrict s, const
         v_sum_float = hvx_vec_add_f32_f32(v_sum_float, v_sum_scaled);
     }
 
-    if (sz) {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
-    } else {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), v_sum_float);
+    यदि (sz) {
+        hvx_vec_store_u(s, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
+    } अन्यथा {
+        hvx_vec_store_u(s, valid_rows * परिमाण(भिन्न), v_sum_float);
     }
 }
 
-static void tiled_vec_dot_iq4nl_32x2(const uint32_t n, float * restrict s0, float * restrict s1, const void * restrict vx, const void * restrict vy0, const void * restrict vy1, uint32_t valid_rows, const float * restrict sz0, const float * restrict sz1) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y0_q = vy0;
-    const uint8_t * restrict y1_q = vy1;
+स्थिर शून्य tiled_vec_dot_iq4nl_32x2(ध्रुव uint32_t n, भिन्न * restrict s0, भिन्न * restrict s1, ध्रुव शून्य * restrict vx, ध्रुव शून्य * restrict vy0, ध्रुव शून्य * restrict vy1, uint32_t valid_rows, ध्रुव भिन्न * restrict sz0, ध्रुव भिन्न * restrict sz1) {
+    ध्रुव uint8_t * restrict tile_ptr = vx;
+    ध्रुव uint8_t * restrict y0_q = vy0;
+    ध्रुव uint8_t * restrict y1_q = vy1;
 
     HVX_Vector v_sum_float_c0 = Q6_V_vzero();
     HVX_Vector v_sum_float_c1 = Q6_V_vzero();
     HVX_Vector mask_h4 = Q6_Vb_vsplat_R(0x0F);
-    HVX_Vector lut = *(const HVX_Vector *) kvalues_iq4nl_lut;
+    HVX_Vector lut = *(ध्रुव HVX_Vector *) kvalues_iq4nl_lut;
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 640);
-        const HVX_Vector * restrict v_act0 = (const HVX_Vector *) (y0_q + kt * 1152);
-        const HVX_Vector * restrict v_act1 = (const HVX_Vector *) (y1_q + kt * 1152);
+    प्रति (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        ध्रुव HVX_Vector * restrict vptr = (ध्रुव HVX_Vector *) (tile_ptr + kt * 640);
+        ध्रुव HVX_Vector * restrict v_act0 = (ध्रुव HVX_Vector *) (y0_q + kt * 1152);
+        ध्रुव HVX_Vector * restrict v_act1 = (ध्रुव HVX_Vector *) (y1_q + kt * 1152);
 
         HVX_VectorPair v_sums = accum_4bit_32x2_lut(vptr, v_act0, v_act1, mask_h4, lut);
         HVX_Vector v_sum_c0 = Q6_V_lo_W(v_sums);
@@ -1694,32 +1694,32 @@ static void tiled_vec_dot_iq4nl_32x2(const uint32_t n, float * restrict s0, floa
         v_sum_float_c1 = hvx_vec_add_f32_f32(v_sum_float_c1, v_sum_scaled_c1);
     }
 
-    if (sz0) {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
-    } else {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), v_sum_float_c0);
+    यदि (sz0) {
+        hvx_vec_store_u(s0, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
+    } अन्यथा {
+        hvx_vec_store_u(s0, valid_rows * परिमाण(भिन्न), v_sum_float_c0);
     }
-    if (sz1) {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
-    } else {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), v_sum_float_c1);
+    यदि (sz1) {
+        hvx_vec_store_u(s1, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
+    } अन्यथा {
+        hvx_vec_store_u(s1, valid_rows * परिमाण(भिन्न), v_sum_float_c1);
     }
 }
 
-static void tiled_vec_dot_mxfp4_32x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy, uint32_t valid_rows, const float * restrict sz) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y_q = vy;
+स्थिर शून्य tiled_vec_dot_mxfp4_32x1(ध्रुव uint32_t n, भिन्न * restrict s, ध्रुव शून्य * restrict vx, ध्रुव शून्य * restrict vy, uint32_t valid_rows, ध्रुव भिन्न * restrict sz) {
+    ध्रुव uint8_t * restrict tile_ptr = vx;
+    ध्रुव uint8_t * restrict y_q = vy;
 
     HVX_Vector v_sum_float = Q6_V_vzero();
     HVX_Vector mask_h4 = Q6_Vb_vsplat_R(0x0F);
-    HVX_Vector lut = *(const HVX_Vector *) kvalues_mxfp4_lut;
-    HVX_Vector expand = *(const HVX_Vector *) expand_x32_e8m0;
+    HVX_Vector lut = *(ध्रुव HVX_Vector *) kvalues_mxfp4_lut;
+    HVX_Vector expand = *(ध्रुव HVX_Vector *) expand_x32_e8m0;
     HVX_Vector e8m0_mask = Q6_V_vsplat_R(0x000000ff);
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 640);
-        const HVX_Vector * restrict v_act = (const HVX_Vector *) (y_q + kt * 1152);
+    प्रति (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        ध्रुव HVX_Vector * restrict vptr = (ध्रुव HVX_Vector *) (tile_ptr + kt * 640);
+        ध्रुव HVX_Vector * restrict v_act = (ध्रुव HVX_Vector *) (y_q + kt * 1152);
 
         HVX_Vector v_sum = accum_4bit_32x1_lut(vptr, v_act, mask_h4, lut);
         HVX_Vector v_sum_sf = Q6_Vsf_equals_Vw(v_sum);
@@ -1741,30 +1741,30 @@ static void tiled_vec_dot_mxfp4_32x1(const uint32_t n, float * restrict s, const
 
     v_sum_float = hvx_vec_mul_f32_f32(v_sum_float, hvx_vec_splat_f32(0.5f));
 
-    if (sz) {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
-    } else {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), v_sum_float);
+    यदि (sz) {
+        hvx_vec_store_u(s, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
+    } अन्यथा {
+        hvx_vec_store_u(s, valid_rows * परिमाण(भिन्न), v_sum_float);
     }
 }
 
-static void tiled_vec_dot_mxfp4_32x2(const uint32_t n, float * restrict s0, float * restrict s1, const void * restrict vx, const void * restrict vy0, const void * restrict vy1, uint32_t valid_rows, const float * restrict sz0, const float * restrict sz1) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y0_q = vy0;
-    const uint8_t * restrict y1_q = vy1;
+स्थिर शून्य tiled_vec_dot_mxfp4_32x2(ध्रुव uint32_t n, भिन्न * restrict s0, भिन्न * restrict s1, ध्रुव शून्य * restrict vx, ध्रुव शून्य * restrict vy0, ध्रुव शून्य * restrict vy1, uint32_t valid_rows, ध्रुव भिन्न * restrict sz0, ध्रुव भिन्न * restrict sz1) {
+    ध्रुव uint8_t * restrict tile_ptr = vx;
+    ध्रुव uint8_t * restrict y0_q = vy0;
+    ध्रुव uint8_t * restrict y1_q = vy1;
 
     HVX_Vector v_sum_float_c0 = Q6_V_vzero();
     HVX_Vector v_sum_float_c1 = Q6_V_vzero();
     HVX_Vector mask_h4 = Q6_Vb_vsplat_R(0x0F);
-    HVX_Vector lut = *(const HVX_Vector *) kvalues_mxfp4_lut;
-    HVX_Vector expand = *(const HVX_Vector *) expand_x32_e8m0;
+    HVX_Vector lut = *(ध्रुव HVX_Vector *) kvalues_mxfp4_lut;
+    HVX_Vector expand = *(ध्रुव HVX_Vector *) expand_x32_e8m0;
     HVX_Vector e8m0_mask = Q6_V_vsplat_R(0x000000ff);
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 640);
-        const HVX_Vector * restrict v_act0 = (const HVX_Vector *) (y0_q + kt * 1152);
-        const HVX_Vector * restrict v_act1 = (const HVX_Vector *) (y1_q + kt * 1152);
+    प्रति (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        ध्रुव HVX_Vector * restrict vptr = (ध्रुव HVX_Vector *) (tile_ptr + kt * 640);
+        ध्रुव HVX_Vector * restrict v_act0 = (ध्रुव HVX_Vector *) (y0_q + kt * 1152);
+        ध्रुव HVX_Vector * restrict v_act1 = (ध्रुव HVX_Vector *) (y1_q + kt * 1152);
 
         HVX_VectorPair v_sums = accum_4bit_32x2_lut(vptr, v_act0, v_act1, mask_h4, lut);
         HVX_Vector v_sum_c0 = Q6_V_lo_W(v_sums);
@@ -1800,50 +1800,50 @@ static void tiled_vec_dot_mxfp4_32x2(const uint32_t n, float * restrict s0, floa
     v_sum_float_c0 = hvx_vec_mul_f32_f32(v_sum_float_c0, hvx_vec_splat_f32(0.5f));
     v_sum_float_c1 = hvx_vec_mul_f32_f32(v_sum_float_c1, hvx_vec_splat_f32(0.5f));
 
-    if (sz0) {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
-    } else {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), v_sum_float_c0);
+    यदि (sz0) {
+        hvx_vec_store_u(s0, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
+    } अन्यथा {
+        hvx_vec_store_u(s0, valid_rows * परिमाण(भिन्न), v_sum_float_c0);
     }
-    if (sz1) {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
-    } else {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), v_sum_float_c1);
+    यदि (sz1) {
+        hvx_vec_store_u(s1, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
+    } अन्यथा {
+        hvx_vec_store_u(s1, valid_rows * परिमाण(भिन्न), v_sum_float_c1);
     }
 }
 
-static void tiled_vec_dot_f16_32x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy, uint32_t valid_rows, const float * restrict sz) {
-    const HVX_Vector * restrict vptr  = (const HVX_Vector *) vx;
-    const HVX_Vector * restrict v_act = (const HVX_Vector *) vy;
-    const uint32_t n_vecs = ((n + 31) / 32) * 16;
+स्थिर शून्य tiled_vec_dot_f16_32x1(ध्रुव uint32_t n, भिन्न * restrict s, ध्रुव शून्य * restrict vx, ध्रुव शून्य * restrict vy, uint32_t valid_rows, ध्रुव भिन्न * restrict sz) {
+    ध्रुव HVX_Vector * restrict vptr  = (ध्रुव HVX_Vector *) vx;
+    ध्रुव HVX_Vector * restrict v_act = (ध्रुव HVX_Vector *) vy;
+    ध्रुव uint32_t n_vecs = ((n + 31) / 32) * 16;
 
     HVX_VectorPair acc = Q6_W_vzero();
 
     #pragma unroll(4)
-    for (uint32_t i = 0; i < n_vecs; i++) {
+    प्रति (uint32_t i = 0; i < n_vecs; i++) {
         acc = hvx_vec_mpyacc_f32_f16(acc, vptr[i], v_act[i]);
     }
 
     HVX_Vector v_sum = hvx_vec_add_f32_f32(Q6_V_lo_W(acc), Q6_V_hi_W(acc));
 
-    if (sz) {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum, hvx_vmemu(sz)));
-    } else {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), v_sum);
+    यदि (sz) {
+        hvx_vec_store_u(s, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum, hvx_vmemu(sz)));
+    } अन्यथा {
+        hvx_vec_store_u(s, valid_rows * परिमाण(भिन्न), v_sum);
     }
 }
 
-static void tiled_vec_dot_f16_32x2(const uint32_t n, float * restrict s0, float * restrict s1, const void * restrict vx, const void * restrict vy0, const void * restrict vy1, uint32_t valid_rows, const float * restrict sz0, const float * restrict sz1) {
-    const HVX_Vector * restrict vptr   = (const HVX_Vector *) vx;
-    const HVX_Vector * restrict v_act0 = (const HVX_Vector *) vy0;
-    const HVX_Vector * restrict v_act1 = (const HVX_Vector *) vy1;
-    const uint32_t n_vecs = ((n + 31) / 32) * 16;
+स्थिर शून्य tiled_vec_dot_f16_32x2(ध्रुव uint32_t n, भिन्न * restrict s0, भिन्न * restrict s1, ध्रुव शून्य * restrict vx, ध्रुव शून्य * restrict vy0, ध्रुव शून्य * restrict vy1, uint32_t valid_rows, ध्रुव भिन्न * restrict sz0, ध्रुव भिन्न * restrict sz1) {
+    ध्रुव HVX_Vector * restrict vptr   = (ध्रुव HVX_Vector *) vx;
+    ध्रुव HVX_Vector * restrict v_act0 = (ध्रुव HVX_Vector *) vy0;
+    ध्रुव HVX_Vector * restrict v_act1 = (ध्रुव HVX_Vector *) vy1;
+    ध्रुव uint32_t n_vecs = ((n + 31) / 32) * 16;
 
     HVX_VectorPair acc0 = Q6_W_vzero();
     HVX_VectorPair acc1 = Q6_W_vzero();
 
     #pragma unroll(4)
-    for (uint32_t i = 0; i < n_vecs; i++) {
+    प्रति (uint32_t i = 0; i < n_vecs; i++) {
         HVX_Vector v_w = vptr[i];
         acc0 = hvx_vec_mpyacc_f32_f16(acc0, v_w, v_act0[i]);
         acc1 = hvx_vec_mpyacc_f32_f16(acc1, v_w, v_act1[i]);
@@ -1852,21 +1852,21 @@ static void tiled_vec_dot_f16_32x2(const uint32_t n, float * restrict s0, float 
     HVX_Vector v_sum0 = hvx_vec_add_f32_f32(Q6_V_lo_W(acc0), Q6_V_hi_W(acc0));
     HVX_Vector v_sum1 = hvx_vec_add_f32_f32(Q6_V_lo_W(acc1), Q6_V_hi_W(acc1));
 
-    if (sz0) {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum0, hvx_vmemu(sz0)));
-    } else {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), v_sum0);
+    यदि (sz0) {
+        hvx_vec_store_u(s0, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum0, hvx_vmemu(sz0)));
+    } अन्यथा {
+        hvx_vec_store_u(s0, valid_rows * परिमाण(भिन्न), v_sum0);
     }
-    if (sz1) {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum1, hvx_vmemu(sz1)));
-    } else {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), v_sum1);
+    यदि (sz1) {
+        hvx_vec_store_u(s1, valid_rows * परिमाण(भिन्न), hvx_vec_add_f32_f32(v_sum1, hvx_vmemu(sz1)));
+    } अन्यथा {
+        hvx_vec_store_u(s1, valid_rows * परिमाण(भिन्न), v_sum1);
     }
 }
 
 
-static inline void quantize_f32_q8_0_tiled_kernel(
-    const uint8_t * restrict src_data,
+स्थिर अन्तःस्थ शून्य quantize_f32_q8_0_tiled_kernel(
+    ध्रुव uint8_t * restrict src_data,
     uint8_t * restrict dst_data,
     uint8_t * restrict tmp_data,
     uint32_t ne0,
@@ -1874,16 +1874,16 @@ static inline void quantize_f32_q8_0_tiled_kernel(
     size_t src_row_size,
     size_t dst_row_size
 ) {
-    (void) tmp_data;
-    for (uint32_t i = 0; i < nrows; ++i) {
-        quantize_row_f32_q8_0_tiled((float *) src_data, dst_data, ne0);
+    (शून्य) tmp_data;
+    प्रति (uint32_t i = 0; i < nrows; ++i) {
+        quantize_row_f32_q8_0_tiled((भिन्न *) src_data, dst_data, ne0);
         dst_data += dst_row_size;
         src_data += src_row_size;
     }
 }
 
-static inline void quantize_f32_q8_1_tiled_kernel(
-    const uint8_t * restrict src_data,
+स्थिर अन्तःस्थ शून्य quantize_f32_q8_1_tiled_kernel(
+    ध्रुव uint8_t * restrict src_data,
     uint8_t * restrict dst_data,
     uint8_t * restrict tmp_data,
     uint32_t ne0,
@@ -1891,16 +1891,16 @@ static inline void quantize_f32_q8_1_tiled_kernel(
     size_t src_row_size,
     size_t dst_row_size
 ) {
-    (void) tmp_data;
-    for (uint32_t i = 0; i < nrows; ++i) {
-        quantize_row_f32_q8_1_tiled((float *) src_data, dst_data, ne0);
+    (शून्य) tmp_data;
+    प्रति (uint32_t i = 0; i < nrows; ++i) {
+        quantize_row_f32_q8_1_tiled((भिन्न *) src_data, dst_data, ne0);
         dst_data += dst_row_size;
         src_data += src_row_size;
     }
 }
 
-static inline void quantize_f32_q8_1_s16_tiled_kernel(
-    const uint8_t * restrict src_data,
+स्थिर अन्तःस्थ शून्य quantize_f32_q8_1_s16_tiled_kernel(
+    ध्रुव uint8_t * restrict src_data,
     uint8_t * restrict dst_data,
     uint8_t * restrict tmp_data,
     uint32_t ne0,
@@ -1908,16 +1908,16 @@ static inline void quantize_f32_q8_1_s16_tiled_kernel(
     size_t src_row_size,
     size_t dst_row_size
 ) {
-    (void) tmp_data;
-    for (uint32_t i = 0; i < nrows; ++i) {
-        quantize_row_f32_q8_1_s16_tiled((float *) src_data, dst_data, ne0);
+    (शून्य) tmp_data;
+    प्रति (uint32_t i = 0; i < nrows; ++i) {
+        quantize_row_f32_q8_1_s16_tiled((भिन्न *) src_data, dst_data, ne0);
         dst_data += dst_row_size;
         src_data += src_row_size;
     }
 }
 
-static inline void quantize_f32_f16_tiled_kernel(
-    const uint8_t * restrict src_data,
+स्थिर अन्तःस्थ शून्य quantize_f32_f16_tiled_kernel(
+    ध्रुव uint8_t * restrict src_data,
     uint8_t * restrict dst_data,
     uint8_t * restrict tmp_data,
     uint32_t ne0,
@@ -1925,16 +1925,16 @@ static inline void quantize_f32_f16_tiled_kernel(
     size_t src_row_size,
     size_t dst_row_size
 ) {
-    (void) tmp_data;
-    for (uint32_t i = 0; i < nrows; ++i) {
-        quantize_row_f32_f16_tiled((const float *) src_data, dst_data, ne0);
+    (शून्य) tmp_data;
+    प्रति (uint32_t i = 0; i < nrows; ++i) {
+        quantize_row_f32_f16_tiled((ध्रुव भिन्न *) src_data, dst_data, ne0);
         dst_data += dst_row_size;
         src_data += src_row_size;
     }
 }
 
-static inline void quantize_f16_f16_tiled_kernel(
-    const uint8_t * restrict src_data,
+स्थिर अन्तःस्थ शून्य quantize_f16_f16_tiled_kernel(
+    ध्रुव uint8_t * restrict src_data,
     uint8_t * restrict dst_data,
     uint8_t * restrict tmp_data,
     uint32_t ne0,
@@ -1942,16 +1942,16 @@ static inline void quantize_f16_f16_tiled_kernel(
     size_t src_row_size,
     size_t dst_row_size
 ) {
-    (void) tmp_data;
-    for (uint32_t i = 0; i < nrows; ++i) {
-        quantize_row_f16_f16_tiled((const __fp16 *) src_data, dst_data, ne0);
+    (शून्य) tmp_data;
+    प्रति (uint32_t i = 0; i < nrows; ++i) {
+        quantize_row_f16_f16_tiled((ध्रुव __fp16 *) src_data, dst_data, ne0);
         dst_data += dst_row_size;
         src_data += src_row_size;
     }
 }
 
-static inline void quantize_f32_q8_0_tiled_block_kernel(
-    const float * restrict src,
+स्थिर अन्तःस्थ शून्य quantize_f32_q8_0_tiled_block_kernel(
+    ध्रुव भिन्न * restrict src,
     uint8_t * restrict dst,
     uint8_t * restrict tmp_data,
     uint32_t ne0,
@@ -1962,26 +1962,26 @@ static inline void quantize_f32_q8_0_tiled_block_kernel(
     uint32_t r,
     uint32_t c
 ) {
-    (void) tmp_data;
-    const uint32_t qk = QK_Q8_0_TILED;
-    const uint32_t nb = (ne0 + qk - 1) / qk;
+    (शून्य) tmp_data;
+    ध्रुव uint32_t qk = QK_Q8_0_TILED;
+    ध्रुव uint32_t nb = (ne0 + qk - 1) / qk;
 
-    for (uint32_t ib = ib_first; ib < ib_last; ++ib) {
-        const float * restrict src_ptr = (const float *) ((const uint8_t *) src + r * src_row_size + c * qk * sizeof(float));
+    प्रति (uint32_t ib = ib_first; ib < ib_last; ++ib) {
+        ध्रुव भिन्न * restrict src_ptr = (ध्रुव भिन्न *) ((ध्रुव uint8_t *) src + r * src_row_size + c * qk * परिमाण(भिन्न));
         uint8_t * restrict dst_ptr = dst + r * dst_row_size + c * 4 * 1152;
 
-        quantize_block_f32_q8_0_tiled((float *) src_ptr, dst_ptr);
+        quantize_block_f32_q8_0_tiled((भिन्न *) src_ptr, dst_ptr);
 
         c++;
-        if (c == nb) {
+        यदि (c == nb) {
             c = 0;
             r++;
         }
     }
 }
 
-static inline void quantize_f32_q8_1_tiled_block_kernel(
-    const float * restrict src,
+स्थिर अन्तःस्थ शून्य quantize_f32_q8_1_tiled_block_kernel(
+    ध्रुव भिन्न * restrict src,
     uint8_t * restrict dst,
     uint8_t * restrict tmp_data,
     uint32_t ne0,
@@ -1992,26 +1992,26 @@ static inline void quantize_f32_q8_1_tiled_block_kernel(
     uint32_t r,
     uint32_t c
 ) {
-    (void) tmp_data;
-    const uint32_t qk = QK_Q8_0_TILED;
-    const uint32_t nb = (ne0 + qk - 1) / qk;
+    (शून्य) tmp_data;
+    ध्रुव uint32_t qk = QK_Q8_0_TILED;
+    ध्रुव uint32_t nb = (ne0 + qk - 1) / qk;
 
-    for (uint32_t ib = ib_first; ib < ib_last; ++ib) {
-        const float * restrict src_ptr = (const float *) ((const uint8_t *) src + r * src_row_size + c * qk * sizeof(float));
+    प्रति (uint32_t ib = ib_first; ib < ib_last; ++ib) {
+        ध्रुव भिन्न * restrict src_ptr = (ध्रुव भिन्न *) ((ध्रुव uint8_t *) src + r * src_row_size + c * qk * परिमाण(भिन्न));
         uint8_t * restrict dst_ptr = dst + r * dst_row_size + c * 4 * 1280;
 
-        quantize_block_f32_q8_1_tiled((float *) src_ptr, dst_ptr);
+        quantize_block_f32_q8_1_tiled((भिन्न *) src_ptr, dst_ptr);
 
         c++;
-        if (c == nb) {
+        यदि (c == nb) {
             c = 0;
             r++;
         }
     }
 }
 
-static inline void quantize_f32_q8_1_s16_tiled_block_kernel(
-    const float * restrict src,
+स्थिर अन्तःस्थ शून्य quantize_f32_q8_1_s16_tiled_block_kernel(
+    ध्रुव भिन्न * restrict src,
     uint8_t * restrict dst,
     uint8_t * restrict tmp_data,
     uint32_t ne0,
@@ -2022,26 +2022,26 @@ static inline void quantize_f32_q8_1_s16_tiled_block_kernel(
     uint32_t r,
     uint32_t c
 ) {
-    (void) tmp_data;
-    const uint32_t qk = QK_Q8_0_TILED;
-    const uint32_t nb = (ne0 + qk - 1) / qk;
+    (शून्य) tmp_data;
+    ध्रुव uint32_t qk = QK_Q8_0_TILED;
+    ध्रुव uint32_t nb = (ne0 + qk - 1) / qk;
 
-    for (uint32_t ib = ib_first; ib < ib_last; ++ib) {
-        const float * restrict src_ptr = (const float *) ((const uint8_t *) src + r * src_row_size + c * qk * sizeof(float));
+    प्रति (uint32_t ib = ib_first; ib < ib_last; ++ib) {
+        ध्रुव भिन्न * restrict src_ptr = (ध्रुव भिन्न *) ((ध्रुव uint8_t *) src + r * src_row_size + c * qk * परिमाण(भिन्न));
         uint8_t * restrict dst_ptr = dst + r * dst_row_size + c * 4 * 1280;
 
-        quantize_block_f32_q8_1_s16_tiled((float *) src_ptr, dst_ptr, src_ptr - (c & 1) * qk);  // super-block of 256 k
+        quantize_block_f32_q8_1_s16_tiled((भिन्न *) src_ptr, dst_ptr, src_ptr - (c & 1) * qk);  // super-block of 256 k
 
         c++;
-        if (c == nb) {
+        यदि (c == nb) {
             c = 0;
             r++;
         }
     }
 }
 
-static inline void quantize_f32_f16_tiled_block_kernel(
-    const float * restrict src,
+स्थिर अन्तःस्थ शून्य quantize_f32_f16_tiled_block_kernel(
+    ध्रुव भिन्न * restrict src,
     uint8_t * restrict dst,
     uint8_t * restrict tmp_data,
     uint32_t ne0,
@@ -2052,26 +2052,26 @@ static inline void quantize_f32_f16_tiled_block_kernel(
     uint32_t r,
     uint32_t c
 ) {
-    (void) tmp_data;
-    const uint32_t qk = QK_Q8_0_TILED;
-    const uint32_t nb = (ne0 + qk - 1) / qk;
+    (शून्य) tmp_data;
+    ध्रुव uint32_t qk = QK_Q8_0_TILED;
+    ध्रुव uint32_t nb = (ne0 + qk - 1) / qk;
 
-    for (uint32_t ib = ib_first; ib < ib_last; ++ib) {
-        const float * restrict src_ptr = (const float *) ((const uint8_t *) src + r * src_row_size + c * qk * sizeof(float));
+    प्रति (uint32_t ib = ib_first; ib < ib_last; ++ib) {
+        ध्रुव भिन्न * restrict src_ptr = (ध्रुव भिन्न *) ((ध्रुव uint8_t *) src + r * src_row_size + c * qk * परिमाण(भिन्न));
         uint8_t * restrict dst_ptr = dst + r * dst_row_size + c * 4 * 2048;
 
         quantize_block_f32_f16_tiled(src_ptr, dst_ptr);
 
         c++;
-        if (c == nb) {
+        यदि (c == nb) {
             c = 0;
             r++;
         }
     }
 }
 
-static inline void quantize_f16_f16_tiled_block_kernel(
-    const __fp16 * restrict src,
+स्थिर अन्तःस्थ शून्य quantize_f16_f16_tiled_block_kernel(
+    ध्रुव __fp16 * restrict src,
     uint8_t * restrict dst,
     uint8_t * restrict tmp_data,
     uint32_t ne0,
@@ -2082,18 +2082,18 @@ static inline void quantize_f16_f16_tiled_block_kernel(
     uint32_t r,
     uint32_t c
 ) {
-    (void) tmp_data;
-    const uint32_t qk = QK_Q8_0_TILED;
-    const uint32_t nb = (ne0 + qk - 1) / qk;
+    (शून्य) tmp_data;
+    ध्रुव uint32_t qk = QK_Q8_0_TILED;
+    ध्रुव uint32_t nb = (ne0 + qk - 1) / qk;
 
-    for (uint32_t ib = ib_first; ib < ib_last; ++ib) {
-        const __fp16 * restrict src_ptr = (const __fp16 *) ((const uint8_t *) src + r * src_row_size + c * qk * sizeof(__fp16));
+    प्रति (uint32_t ib = ib_first; ib < ib_last; ++ib) {
+        ध्रुव __fp16 * restrict src_ptr = (ध्रुव __fp16 *) ((ध्रुव uint8_t *) src + r * src_row_size + c * qk * परिमाण(__fp16));
         uint8_t * restrict dst_ptr = dst + r * dst_row_size + c * 4 * 2048;
 
         quantize_block_f16_f16_tiled(src_ptr, dst_ptr);
 
         c++;
-        if (c == nb) {
+        यदि (c == nb) {
             c = 0;
             r++;
         }

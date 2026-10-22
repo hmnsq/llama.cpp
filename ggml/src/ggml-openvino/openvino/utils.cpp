@@ -1,221 +1,221 @@
-#include "utils.h"
+#अन्तर्भाव "utils.h"
 
-#include <cmath>
-#include <cstddef>
-#include <ctime>
-#include <memory>
-#include <openvino/op/add.hpp>
-#include <openvino/op/clamp.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/cos.hpp>
-#include <openvino/op/divide.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/maximum.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/shape_of.hpp>
-#include <openvino/op/sin.hpp>
-#include <openvino/op/slice.hpp>
-#include <openvino/op/split.hpp>
-#include <openvino/op/squeeze.hpp>
-#include <openvino/op/subtract.hpp>
-#include <openvino/op/transpose.hpp>
-#include <string>
+#अन्तर्भाव <cmath>
+#अन्तर्भाव <cstddef>
+#अन्तर्भाव <ctime>
+#अन्तर्भाव <memory>
+#अन्तर्भाव <openvino/op/add.hpp>
+#अन्तर्भाव <openvino/op/clamp.hpp>
+#अन्तर्भाव <openvino/op/convert.hpp>
+#अन्तर्भाव <openvino/op/cos.hpp>
+#अन्तर्भाव <openvino/op/divide.hpp>
+#अन्तर्भाव <openvino/op/gather.hpp>
+#अन्तर्भाव <openvino/op/maximum.hpp>
+#अन्तर्भाव <openvino/op/multiply.hpp>
+#अन्तर्भाव <openvino/op/reshape.hpp>
+#अन्तर्भाव <openvino/op/shape_of.hpp>
+#अन्तर्भाव <openvino/op/sin.hpp>
+#अन्तर्भाव <openvino/op/slice.hpp>
+#अन्तर्भाव <openvino/op/split.hpp>
+#अन्तर्भाव <openvino/op/squeeze.hpp>
+#अन्तर्भाव <openvino/op/subtract.hpp>
+#अन्तर्भाव <openvino/op/transpose.hpp>
+#अन्तर्भाव <string>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
+नामाकाश ov {
+नामाकाश frontend {
+नामाकाश ggml {
 
-void num_inputs_check(const NodeContext & context, size_t min_inputs, size_t max_inputs) {
-    auto input_size = context.get_input_size();
-    FRONT_END_OP_CONVERSION_CHECK(input_size >= min_inputs, "Got less inputs than expected");
-    FRONT_END_OP_CONVERSION_CHECK(input_size <= max_inputs, "Got more inputs than expected");
+शून्य अंक_inputs_check(ध्रुव गाठ_Context & context, size_t min_inputs, size_t max_inputs) {
+    auto आदान_size = context.get_आदान_size();
+    FRONT_END_OP_CONVERSION_CHECK(आदान_size >= min_inputs, "Got less inputs than expected");
+    FRONT_END_OP_CONVERSION_CHECK(आदान_size <= max_inputs, "Got more inputs than expected");
 }
 
-int non_cont_dim(std::vector<size_t> ne, std::vector<size_t> nb) {
-    int dim = nb.size() - 1;
+पूर्णाङ्क non_cont_dim(std::vector<size_t> ne, std::vector<size_t> nb) {
+    पूर्णाङ्क dim = nb.size() - 1;
     size_t bytes = nb[dim];
-    for (int i = dim; i > 0; i--) {
+    प्रति (पूर्णाङ्क i = dim; i > 0; i--) {
         bytes *= ne[i];
-        if (bytes != nb[i - 1]) {
-            return i;
+        यदि (bytes != nb[i - 1]) {
+            प्रत्यागम i;
         }
     }
-    return 0;
+    प्रत्यागम 0;
 }
 
-std::shared_ptr<ov::Node> get_dimensions(const std::shared_ptr<ov::op::v3::ShapeOf> & shape,
-                                         const std::vector<int> & dims) {
-    using namespace ov::op;
-    const auto zero = v0::Constant::create(ov::element::i32, ov::Shape{}, {0});
-    const auto dims_const = v0::Constant::create(ov::element::i32, ov::Shape{dims.size()}, dims);
-    return std::make_shared<v8::Gather>(shape, dims_const, zero);
+std::shared_ptr<ov::Node> get_dimensions(ध्रुव std::shared_ptr<ov::op::v3::ShapeOf> & shape,
+                                         ध्रुव std::vector<पूर्णाङ्क> & dims) {
+    using नामाकाश ov::op;
+    ध्रुव auto zero = v0::Constant::create(ov::element::i32, ov::Shape{}, {0});
+    ध्रुव auto dims_const = v0::Constant::create(ov::element::i32, ov::Shape{dims.size()}, dims);
+    प्रत्यागम std::make_shared<v8::Gather>(shape, dims_const, zero);
 }
 
-std::shared_ptr<ov::Node> get_dimensions(const std::shared_ptr<ov::Node> & node, const std::vector<int> & dims) {
-    return get_dimensions(std::make_shared<ov::op::v3::ShapeOf>(node), dims);
+std::shared_ptr<ov::Node> get_dimensions(ध्रुव std::shared_ptr<ov::Node> & गाठ, ध्रुव std::vector<पूर्णाङ्क> & dims) {
+    प्रत्यागम get_dimensions(std::make_shared<ov::op::v3::ShapeOf>(गाठ), dims);
 }
 
-OutputVector rename_outputs_with_suffix(const OutputVector & outputs, const std::string & suffix) {
-    for (const auto & output : outputs) {
-        auto node = output.get_node_shared_ptr();
-        std::string name = node->get_friendly_name();
+OutputVector rename_outputs_with_suffix(ध्रुव OutputVector & outputs, ध्रुव std::string & suffix) {
+    प्रति (ध्रुव auto & output : outputs) {
+        auto गाठ = output.get_गाठ_shared_ptr();
+        std::string name = गाठ->get_friendly_name();
         name += "_";
         name += suffix;
-        node->set_friendly_name(name);
+        गाठ->set_friendly_name(name);
         // Uncomment to dump every node's inferred shape (used to hunt down dynamic dims on NPU).
         // std::cout << name << "  " << output.get_partial_shape() << std::endl;
     }
-    return outputs;
+    प्रत्यागम outputs;
 }
 
-namespace {
-ov::Output<ov::Node> rope_yarn_ramp_mix(int num_elements, const float corr_dims[2], float ext_factor) {
-    std::vector<float> dim_ids_vec(num_elements);
+नामाकाश {
+ov::Output<ov::Node> rope_yarn_ramp_mix(पूर्णाङ्क अंक_elements, ध्रुव भिन्न corr_dims[2], भिन्न ext_factor) {
+    std::vector<भिन्न> dim_ids_vec(अंक_elements);
     std::iota(dim_ids_vec.begin(), dim_ids_vec.end(), 0.0f);
-    auto dim_ids = ov::op::v0::Constant::create(ov::element::f32, Shape{1, 1, 1, (size_t) num_elements}, dim_ids_vec);
-    auto corr_low = ov::op::v0::Constant::create(ov::element::f32, Shape{1, 1, 1, 1}, {corr_dims[0]});
-    auto corr_high = ov::op::v0::Constant::create(ov::element::f32, Shape{1, 1, 1, 1}, {corr_dims[1]});
+    auto dim_ids = ov::op::v0::Constant::create(ov::element::f32, Shape{1, 1, 1, (size_t) अंक_elements}, dim_ids_vec);
+    auto corr_खालचा = ov::op::v0::Constant::create(ov::element::f32, Shape{1, 1, 1, 1}, {corr_dims[0]});
+    auto corr_वरचा = ov::op::v0::Constant::create(ov::element::f32, Shape{1, 1, 1, 1}, {corr_dims[1]});
     auto denom = std::make_shared<ov::op::v1::Maximum>(
-        std::make_shared<ov::op::v1::Subtract>(corr_high, corr_low),
+        std::make_shared<ov::op::v1::Subtract>(corr_वरचा, corr_खालचा),
         ov::op::v0::Constant::create(ov::element::f32, Shape{1, 1, 1, 1}, {0.001f}));
     auto ramp_y =
-        std::make_shared<ov::op::v1::Divide>(std::make_shared<ov::op::v1::Subtract>(dim_ids, corr_low), denom);
+        std::make_shared<ov::op::v1::Divide>(std::make_shared<ov::op::v1::Subtract>(dim_ids, corr_खालचा), denom);
     auto ramp_clamped = std::make_shared<ov::op::v0::Clamp>(ramp_y, 0.0f, 1.0f);
     // rope_yarn_ramp returns (1 - clamp(y)), so invert before scaling
     auto one = ov::op::v0::Constant::create(ov::element::f32, Shape{1, 1, 1, 1}, {1.0f});
     auto ramp_inverted = std::make_shared<ov::op::v1::Subtract>(one, ramp_clamped);
-    auto ext_factor_node = ov::op::v0::Constant::create(ov::element::f32, Shape{}, {ext_factor});
-    auto ramp_mix = std::make_shared<ov::op::v1::Multiply>(ramp_inverted, ext_factor_node);
-    return ramp_mix;
+    auto ext_factor_गाठ = ov::op::v0::Constant::create(ov::element::f32, Shape{}, {ext_factor});
+    auto ramp_mix = std::make_shared<ov::op::v1::Multiply>(ramp_inverted, ext_factor_गाठ);
+    प्रत्यागम ramp_mix;
 }
 
-float ggml_rope_yarn_corr_dim(int n_dims, int n_ctx_orig, float n_rot, float base) {
+भिन्न ggml_rope_yarn_corr_dim(पूर्णाङ्क n_dims, पूर्णाङ्क n_ctx_orig, भिन्न n_rot, भिन्न base) {
 #ifndef M_PI
 #    define M_PI 3.14159265358979323846
 #endif
-    return n_dims * logf(n_ctx_orig / (n_rot * 2 * (float) M_PI)) / (2 * logf(base));
+    प्रत्यागम n_dims * logf(n_ctx_orig / (n_rot * 2 * (भिन्न) M_PI)) / (2 * logf(base));
 }
 
-void ggml_rope_yarn_corr_dims(int n_dims,
-                              int n_ctx_orig,
-                              float freq_base,
-                              float beta_fast,
-                              float beta_slow,
-                              float dims[2]) {
-    float start = floorf(ggml_rope_yarn_corr_dim(n_dims, n_ctx_orig, beta_fast, freq_base));
-    float end = ceilf(ggml_rope_yarn_corr_dim(n_dims, n_ctx_orig, beta_slow, freq_base));
+शून्य ggml_rope_yarn_corr_dims(पूर्णाङ्क n_dims,
+                              पूर्णाङ्क n_ctx_orig,
+                              भिन्न freq_base,
+                              भिन्न beta_fast,
+                              भिन्न beta_slow,
+                              भिन्न dims[2]) {
+    भिन्न start = floorf(ggml_rope_yarn_corr_dim(n_dims, n_ctx_orig, beta_fast, freq_base));
+    भिन्न end = ceilf(ggml_rope_yarn_corr_dim(n_dims, n_ctx_orig, beta_slow, freq_base));
     dims[0] = std::max(0.0f, start);
-    dims[1] = std::min(static_cast<float>(n_dims - 1), end);
+    dims[1] = std::min(static_cast<भिन्न>(n_dims - 1), end);
 }
 }  // namespace
 
 std::pair<ov::Output<Node>, ov::Output<Node>> make_sin_cos(int32_t * rope_params,
                                                            std::shared_ptr<ov::Node> inp_pos,
                                                            std::shared_ptr<ov::Node> rope_freqs_weight,
-                                                           int mode,
-                                                           bool stateful,
+                                                           पूर्णाङ्क mode,
+                                                           तार्किक stateful,
                                                            int64_t head_dim) {
-    constexpr int TYPE_IMROPE = 2;
-    constexpr int TYPE_VISION = 3;
-    constexpr int TYPE_MROPE = 4;
+    constexpr पूर्णाङ्क TYPE_IMROPE = 2;
+    constexpr पूर्णाङ्क TYPE_VISION = 3;
+    constexpr पूर्णाङ्क TYPE_MROPE = 4;
 
-    const bool is_imrope = (mode == TYPE_IMROPE);
-    const bool is_vision = (mode == TYPE_VISION);
-    const bool is_mrope = (mode == TYPE_MROPE);
-    const bool is_multi = is_imrope || is_vision || is_mrope;
+    ध्रुव तार्किक is_imrope = (mode == TYPE_IMROPE);
+    ध्रुव तार्किक is_vision = (mode == TYPE_VISION);
+    ध्रुव तार्किक is_mrope = (mode == TYPE_MROPE);
+    ध्रुव तार्किक is_multi = is_imrope || is_vision || is_mrope;
 
-    if (stateful) {
+    यदि (stateful) {
         inp_pos =
             std::make_shared<ov::op::v0::Squeeze>(inp_pos, ov::op::v0::Constant::create(ov::element::i64, {1}, {0}));
         inp_pos = std::make_shared<ov::op::v0::Convert>(inp_pos, ov::element::f32);
         auto pos_perm =
             std::make_shared<ov::op::v0::Constant>(ov::element::i64, ov::Shape{3}, std::vector<int64_t>{2, 1, 0});
         inp_pos = std::make_shared<ov::op::v1::Transpose>(inp_pos, pos_perm);
-    } else if (is_multi) {
+    } अन्यथा यदि (is_multi) {
         inp_pos = std::make_shared<ov::op::v0::Convert>(inp_pos, ov::element::f32);
         auto pos_shape = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{5}, {0, 0, 0, 4, -1});
-        inp_pos = std::make_shared<ov::op::v1::Reshape>(inp_pos, pos_shape, true);
+        inp_pos = std::make_shared<ov::op::v1::Reshape>(inp_pos, pos_shape, सत्य);
         auto pos_transpose_shape =
             std::make_shared<ov::op::v0::Constant>(ov::element::i64, ov::Shape{5}, std::vector<int64_t>{0, 1, 2, 4, 3});
         inp_pos = std::make_shared<ov::op::v1::Transpose>(inp_pos, pos_transpose_shape);
-    } else {
+    } अन्यथा {
         inp_pos = std::make_shared<ov::op::v0::Convert>(inp_pos, ov::element::f32);
         auto pos_perm =
             std::make_shared<ov::op::v0::Constant>(ov::element::i64, ov::Shape{4}, std::vector<int64_t>{0, 3, 1, 2});
         inp_pos = std::make_shared<ov::op::v1::Transpose>(inp_pos, pos_perm);
     }
 
-    float freq_base;
-    float freq_scale;
-    float ext_factor;
-    float attn_factor;
-    float beta_fast;
-    float beta_slow;
-    const int n_dims = rope_params[1];
-    const size_t n_dims_half = n_dims >> 1;
-    const int n_ctx_orig = rope_params[4];
-    memcpy(&freq_base, rope_params + 5, sizeof(float));
-    memcpy(&freq_scale, rope_params + 6, sizeof(float));
-    memcpy(&ext_factor, rope_params + 7, sizeof(float));
-    memcpy(&attn_factor, rope_params + 8, sizeof(float));
-    memcpy(&beta_fast, rope_params + 9, sizeof(float));
-    memcpy(&beta_slow, rope_params + 10, sizeof(float));
+    भिन्न freq_base;
+    भिन्न freq_scale;
+    भिन्न ext_factor;
+    भिन्न attn_factor;
+    भिन्न beta_fast;
+    भिन्न beta_slow;
+    ध्रुव पूर्णाङ्क n_dims = rope_params[1];
+    ध्रुव size_t n_dims_half = n_dims >> 1;
+    ध्रुव पूर्णाङ्क n_ctx_orig = rope_params[4];
+    memcpy(&freq_base, rope_params + 5, परिमाण(भिन्न));
+    memcpy(&freq_scale, rope_params + 6, परिमाण(भिन्न));
+    memcpy(&ext_factor, rope_params + 7, परिमाण(भिन्न));
+    memcpy(&attn_factor, rope_params + 8, परिमाण(भिन्न));
+    memcpy(&beta_fast, rope_params + 9, परिमाण(भिन्न));
+    memcpy(&beta_slow, rope_params + 10, परिमाण(भिन्न));
 
-    const float theta_scale = powf(freq_base, -2.0f / n_dims);
+    ध्रुव भिन्न theta_scale = powf(freq_base, -2.0f / n_dims);
 
     Output<Node> theta;
-    float mscale = attn_factor;
-    if (is_multi) {
-        const size_t num_pairs = is_vision ? (n_dims > 0 ? (size_t) n_dims : (size_t) (head_dim / 2)) : n_dims_half;
-        int sections[4];
-        memcpy(sections, rope_params + 11, sizeof(int) * 4);
-        int sect_dims = sections[0] + sections[1] + sections[2] + sections[3];
-        if (sect_dims <= 0) {
-            sect_dims = num_pairs;
+    भिन्न mscale = attn_factor;
+    यदि (is_multi) {
+        ध्रुव size_t अंक_pairs = is_vision ? (n_dims > 0 ? (size_t) n_dims : (size_t) (head_dim / 2)) : n_dims_half;
+        पूर्णाङ्क sections[4];
+        memcpy(sections, rope_params + 11, परिमाण(पूर्णाङ्क) * 4);
+        पूर्णाङ्क sect_dims = sections[0] + sections[1] + sections[2] + sections[3];
+        यदि (sect_dims <= 0) {
+            sect_dims = अंक_pairs;
         }
-        int sec_w = sections[0] + sections[1];
-        int sec_e = sec_w + sections[2];
-        std::vector<int64_t> gather_indices(num_pairs);
-        std::vector<float> factor(num_pairs);
-        for (size_t j = 0; j < num_pairs; j++) {
-            int sector = j % sect_dims;
-            int plane = 0;
-            if (is_imrope) {
-                if (sector % 3 == 1 && sector < 3 * sections[1]) {
+        पूर्णाङ्क sec_w = sections[0] + sections[1];
+        पूर्णाङ्क sec_e = sec_w + sections[2];
+        std::vector<int64_t> gather_indices(अंक_pairs);
+        std::vector<भिन्न> factor(अंक_pairs);
+        प्रति (size_t j = 0; j < अंक_pairs; j++) {
+            पूर्णाङ्क sector = j % sect_dims;
+            पूर्णाङ्क plane = 0;
+            यदि (is_imrope) {
+                यदि (sector % 3 == 1 && sector < 3 * sections[1]) {
                     plane = 1;
-                } else if (sector % 3 == 2 && sector < 3 * sections[2]) {
+                } अन्यथा यदि (sector % 3 == 2 && sector < 3 * sections[2]) {
                     plane = 2;
-                } else if (sector % 3 == 0 && sector < 3 * sections[0]) {
+                } अन्यथा यदि (sector % 3 == 0 && sector < 3 * sections[0]) {
                     plane = 0;
-                } else {
+                } अन्यथा {
                     plane = 3;
                 }
                 factor[j] = std::pow(theta_scale, j);
-            } else if (is_vision) {
-                int p_idx = 0;
-                if (sector < sections[0]) {
+            } अन्यथा यदि (is_vision) {
+                पूर्णाङ्क p_idx = 0;
+                यदि (sector < sections[0]) {
                     plane = 0;
                     p_idx = sector;
-                } else if (sector < sections[0] + sections[1]) {
+                } अन्यथा यदि (sector < sections[0] + sections[1]) {
                     plane = 1;
                     p_idx = sector - sections[0];
-                } else if (sector < sec_w + sections[2]) {
+                } अन्यथा यदि (sector < sec_w + sections[2]) {
                     plane = 2;
                     p_idx = sector - sec_w;
-                } else {
+                } अन्यथा {
                     plane = 3;
                     p_idx = sector - sec_e;
                 }
                 factor[j] = std::pow(theta_scale, p_idx);
-            } else {
-                if (sector >= sections[0] && sector < sec_w) {
+            } अन्यथा {
+                यदि (sector >= sections[0] && sector < sec_w) {
                     plane = 1;
-                } else if (sector >= sec_w && sector < sec_e) {
+                } अन्यथा यदि (sector >= sec_w && sector < sec_e) {
                     plane = 2;
-                } else if (sector >= sec_e) {
+                } अन्यथा यदि (sector >= sec_e) {
                     plane = 3;
-                } else {
+                } अन्यथा {
                     plane = 0;
                 }
                 factor[j] = std::pow(theta_scale, j);
@@ -223,33 +223,33 @@ std::pair<ov::Output<Node>, ov::Output<Node>> make_sin_cos(int32_t * rope_params
             gather_indices[j] = plane;
         }
         auto gather_indices_const =
-            std::make_shared<ov::op::v0::Constant>(ov::element::i64, ov::Shape{num_pairs}, gather_indices);
+            std::make_shared<ov::op::v0::Constant>(ov::element::i64, ov::Shape{अंक_pairs}, gather_indices);
         auto gather_axis = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{}, {4});
         inp_pos = std::make_shared<ov::op::v8::Gather>(inp_pos, gather_indices_const, gather_axis);
-        Output<Node> factor_node =
-            std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{num_pairs}, factor);
-        if (rope_freqs_weight) {
+        Output<Node> factor_गाठ =
+            std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{अंक_pairs}, factor);
+        यदि (rope_freqs_weight) {
             Output<Node> rope_factors = std::make_shared<ov::op::v8::Slice>(
                 rope_freqs_weight,
                 ov::op::v0::Constant::create(ov::element::i64, {1}, {0}),
-                ov::op::v0::Constant::create(ov::element::i64, {1}, {(int64_t) num_pairs}),
+                ov::op::v0::Constant::create(ov::element::i64, {1}, {(int64_t) अंक_pairs}),
                 ov::op::v0::Constant::create(ov::element::i64, {1}, {1}),
                 ov::op::v0::Constant::create(ov::element::i64, {1}, {rope_freqs_weight->get_output_partial_shape(0).rank().get_length() - 1}));
             rope_factors = std::make_shared<ov::op::v1::Reshape>(
                 rope_factors,
-                ov::op::v0::Constant::create(ov::element::i64, {1}, {(int64_t) num_pairs}),
-                false);
-            factor_node = std::make_shared<ov::op::v1::Divide>(factor_node, rope_factors);
+                ov::op::v0::Constant::create(ov::element::i64, {1}, {(int64_t) अंक_pairs}),
+                असत्य);
+            factor_गाठ = std::make_shared<ov::op::v1::Divide>(factor_गाठ, rope_factors);
         }
-        auto theta_extrap = std::make_shared<ov::op::v1::Multiply>(inp_pos, factor_node);
+        auto theta_extrap = std::make_shared<ov::op::v1::Multiply>(inp_pos, factor_गाठ);
         auto theta_interp = std::make_shared<ov::op::v1::Multiply>(
             theta_extrap, ov::op::v0::Constant::create(ov::element::f32, {1}, {freq_scale}));
-        if (ext_factor == 0.0f) {
+        यदि (ext_factor == 0.0f) {
             theta = theta_interp;
-        } else {
-            float corr_dims[2];
+        } अन्यथा {
+            भिन्न corr_dims[2];
             ggml_rope_yarn_corr_dims(n_dims, n_ctx_orig, freq_base, beta_fast, beta_slow, corr_dims);
-            auto ramp_mix = rope_yarn_ramp_mix(num_pairs, corr_dims, ext_factor);
+            auto ramp_mix = rope_yarn_ramp_mix(अंक_pairs, corr_dims, ext_factor);
             Output<Node> one = ov::op::v0::Constant::create(ov::element::f32, Shape{1, 1, 1, 1}, {1.0f});
             auto one_minus_ramp = std::make_shared<ov::op::v1::Subtract>(one, ramp_mix);
             theta = std::make_shared<ov::op::v1::Add>(
@@ -257,39 +257,39 @@ std::pair<ov::Output<Node>, ov::Output<Node>> make_sin_cos(int32_t * rope_params
                 std::make_shared<ov::op::v1::Multiply>(theta_extrap, ramp_mix));
             mscale *= (1.0f + 0.1f * std::log(1.0f / freq_scale));
         }
-    } else {
-        std::vector<float> factor(n_dims_half);
+    } अन्यथा {
+        std::vector<भिन्न> factor(n_dims_half);
         Output<Node> freq_factors;
-        float corr_dims[2];
+        भिन्न corr_dims[2];
         ggml_rope_yarn_corr_dims(n_dims, n_ctx_orig, freq_base, beta_fast, beta_slow, corr_dims);
         factor[0] = 1.0f;
-        for (size_t i = 1; i < factor.size(); i++) {
+        प्रति (size_t i = 1; i < factor.size(); i++) {
             factor[i] = theta_scale * factor[i - 1];
         }
-        if (stateful) {
+        यदि (stateful) {
             freq_factors =
                 std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{1, 1, factor.size()}, factor);
-        } else {
+        } अन्यथा {
             freq_factors =
                 std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{1, 1, 1, factor.size()}, factor);
         }
-        if (rope_freqs_weight) {
+        यदि (rope_freqs_weight) {
             Output<Node> rope_factors = std::make_shared<ov::op::v8::Slice>(
                 rope_freqs_weight,
                 ov::op::v0::Constant::create(ov::element::i64, {1}, {0}),
                 ov::op::v0::Constant::create(ov::element::i64, {1}, {(int64_t) n_dims_half}),
                 ov::op::v0::Constant::create(ov::element::i64, {1}, {1}),
                 ov::op::v0::Constant::create(ov::element::i64, {1}, {rope_freqs_weight->get_output_partial_shape(0).rank().get_length() - 1}));
-            if (stateful) {
+            यदि (stateful) {
                 rope_factors = std::make_shared<ov::op::v1::Reshape>(
                     rope_factors,
                     ov::op::v0::Constant::create(ov::element::i64, {3}, {(int64_t) 1, (int64_t) 1, (int64_t) n_dims_half}),
-                    false);
-            } else {
+                    असत्य);
+            } अन्यथा {
                 rope_factors = std::make_shared<ov::op::v1::Reshape>(
                     rope_factors,
                     ov::op::v0::Constant::create(ov::element::i64, {4}, {(int64_t) 1, (int64_t) 1, (int64_t) 1, (int64_t) n_dims_half}),
-                    false);
+                    असत्य);
             }
             freq_factors = std::make_shared<ov::op::v1::Divide>(freq_factors, rope_factors);
         }
@@ -298,14 +298,14 @@ std::pair<ov::Output<Node>, ov::Output<Node>> make_sin_cos(int32_t * rope_params
         auto theta_interp = std::make_shared<ov::op::v1::Multiply>(
             theta_extrap, ov::op::v0::Constant::create(ov::element::f32, {1}, {freq_scale}));
 
-        if (ext_factor == 0.0f) {
+        यदि (ext_factor == 0.0f) {
             theta = theta_interp;
-        } else {
+        } अन्यथा {
             auto ramp_mix = rope_yarn_ramp_mix(n_dims_half, corr_dims, ext_factor);
             Output<Node> one;
-            if (stateful) {
+            यदि (stateful) {
                 one = ov::op::v0::Constant::create(ov::element::f32, Shape{1, 1, 1}, {1.0f});
-            } else {
+            } अन्यथा {
                 one = ov::op::v0::Constant::create(ov::element::f32, Shape{1, 1, 1, 1}, {1.0f});
             }
             auto one_minus_ramp = std::make_shared<ov::op::v1::Subtract>(one, ramp_mix);
@@ -320,28 +320,28 @@ std::pair<ov::Output<Node>, ov::Output<Node>> make_sin_cos(int32_t * rope_params
     Output<Node> cos_theta = std::make_shared<ov::op::v0::Cos>(theta);
     Output<Node> sin_theta = std::make_shared<ov::op::v0::Sin>(theta);
 
-    if (mscale != 1.0f) {
-        auto mscale_node = ov::op::v0::Constant::create(ov::element::f32, Shape{}, {mscale});
+    यदि (mscale != 1.0f) {
+        auto mscale_गाठ = ov::op::v0::Constant::create(ov::element::f32, Shape{}, {mscale});
 
-        cos_theta = std::make_shared<ov::op::v1::Multiply>(cos_theta, mscale_node);
-        sin_theta = std::make_shared<ov::op::v1::Multiply>(sin_theta, mscale_node);
+        cos_theta = std::make_shared<ov::op::v1::Multiply>(cos_theta, mscale_गाठ);
+        sin_theta = std::make_shared<ov::op::v1::Multiply>(sin_theta, mscale_गाठ);
     }
 
-    return std::make_pair(sin_theta, cos_theta);
+    प्रत्यागम std::make_pair(sin_theta, cos_theta);
 }
 
-ov::Output<ov::Node> process_view_input(const NodeContext & context, int input_index, int slice_len, int axis) {
+ov::Output<ov::Node> process_view_आदान(ध्रुव गाठ_Context & context, पूर्णाङ्क आदान_index, पूर्णाङ्क slice_len, पूर्णाङ्क axis) {
     // Only works for VIEW operations that does a non-strided slice with optinal reshape on the slice result.
     // The function only does the slice part, the reshape (if any) should be handled by the caller.
     // Default axis is -1, which means slicing the last dimension.
     // If the VIEW reshapes the result, `slice_len` should be provided
-    auto input = context.get_input(input_index);
-    auto * op_params = (size_t *) context.get_input_op_params(input_index);
-    auto src_stride = context.get_input_stride(input_index);
+    auto आदान = context.get_आदान(आदान_index);
+    auto * op_params = (size_t *) context.get_आदान_op_params(आदान_index);
+    auto src_stride = context.get_आदान_stride(आदान_index);
 
     int64_t slice_start = op_params[0] / src_stride[3];
-    if (slice_len == 0) {
-        slice_len = context.get_input_shape(input_index)[3].get_length();
+    यदि (slice_len == 0) {
+        slice_len = context.get_आदान_shape(आदान_index)[3].get_length();
     }
     int64_t slice_end = slice_start + slice_len;
 
@@ -349,23 +349,23 @@ ov::Output<ov::Node> process_view_input(const NodeContext & context, int input_i
     auto end = ov::op::v0::Constant::create(ov::element::i64, {1}, {slice_end});
     auto stride = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
     ov::Output<ov::Node> axes;
-    if (axis == -1) {
+    यदि (axis == -1) {
         axes = ov::op::v0::Constant::create(ov::element::i64, {1}, {context.is_stateful() ? 2 : 3});
-    } else {
+    } अन्यथा {
         axes = ov::op::v0::Constant::create(ov::element::i64, {1}, {axis});
     }
-    auto sliced = std::make_shared<ov::op::v8::Slice>(input, begin, end, stride, axes);
-    return sliced;
+    auto sliced = std::make_shared<ov::op::v8::Slice>(आदान, begin, end, stride, axes);
+    प्रत्यागम sliced;
 }
 
-ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int input_index) {
-    auto input = context.get_input(input_index);
+ov::Output<ov::Node> process_view_आदान_new(ध्रुव गाठ_Context & context, पूर्णाङ्क आदान_index) {
+    auto आदान = context.get_आदान(आदान_index);
 
     // Check if this input has view inputs
-    size_t view_input_size = context.get_view_input_size(input_index);
-    if (view_input_size == 0) {
+    size_t view_आदान_size = context.get_view_आदान_size(आदान_index);
+    यदि (view_आदान_size == 0) {
         // No view inputs, return the input as is
-        return input;
+        प्रत्यागम आदान;
     }
 
     // If translate_view already resolved this VIEW (produced a Slice), the input
@@ -396,34 +396,34 @@ ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int inp
     // resolved view is one rank lower. Compare the common trailing dims and require the
     // leading expected dims we skip to be 1. Without this the rank test below never matches on
     // the stateful path and every already-resolved MoE expert-plane view is re-sliced.
-    auto expected_ov_shape = context.get_view_input_ov_shape(input_index, 0);
-    auto actual_shape = input.get_partial_shape();
-    if (expected_ov_shape.rank().is_static() && actual_shape.rank().is_static() &&
+    auto expected_ov_shape = context.get_view_आदान_ov_shape(आदान_index, 0);
+    auto actual_shape = आदान.get_partial_shape();
+    यदि (expected_ov_shape.rank().is_static() && actual_shape.rank().is_static() &&
         expected_ov_shape.rank().get_length() >= actual_shape.rank().get_length()) {
-        const int64_t n_actual = actual_shape.rank().get_length();
-        const int64_t shift = expected_ov_shape.rank().get_length() - n_actual;
-        bool shapes_match = true;
-        for (int64_t i = 0; i < shift; ++i) {
-            if (!expected_ov_shape[i].is_static() || expected_ov_shape[i].get_length() != 1) {
-                shapes_match = false;
-                break;
+        ध्रुव int64_t n_actual = actual_shape.rank().get_length();
+        ध्रुव int64_t shift = expected_ov_shape.rank().get_length() - n_actual;
+        तार्किक shapes_match = सत्य;
+        प्रति (int64_t i = 0; i < shift; ++i) {
+            यदि (!expected_ov_shape[i].is_static() || expected_ov_shape[i].get_length() != 1) {
+                shapes_match = असत्य;
+                भङ्ग;
             }
         }
-        for (int64_t i = 0; i < n_actual && shapes_match; ++i) {
-            const auto & exp = expected_ov_shape[i + shift];
-            const bool both_dynamic = exp.is_dynamic() && actual_shape[i].is_dynamic();
-            const bool both_static_equal =
+        प्रति (int64_t i = 0; i < n_actual && shapes_match; ++i) {
+            ध्रुव auto & exp = expected_ov_shape[i + shift];
+            ध्रुव तार्किक both_dynamic = exp.is_dynamic() && actual_shape[i].is_dynamic();
+            ध्रुव तार्किक both_static_equal =
                 exp.is_static() && actual_shape[i].is_static() && exp == actual_shape[i];
             // expected dynamic, actual static: the resolved view already carries the
             // concrete size for this fragment; reuse it rather than re-materializing.
-            const bool expected_dyn_actual_static = exp.is_dynamic() && actual_shape[i].is_static();
-            if (!both_dynamic && !both_static_equal && !expected_dyn_actual_static) {
-                shapes_match = false;
-                break;
+            ध्रुव तार्किक expected_dyn_actual_static = exp.is_dynamic() && actual_shape[i].is_static();
+            यदि (!both_dynamic && !both_static_equal && !expected_dyn_actual_static) {
+                shapes_match = असत्य;
+                भङ्ग;
             }
         }
-        if (shapes_match) {
-            return input;
+        यदि (shapes_match) {
+            प्रत्यागम आदान;
         }
     }
 
@@ -431,62 +431,62 @@ ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int inp
     // This ensures NPUW's FOLD doesn't parametrize per-layer slice indices (which
     // would introduce dynamic shapes). A shared Split node sits outside the repeated
     // subgraph boundary; each layer receives one of its output ports.
-    if (context.is_static() && view_input_size == 1) {
-        auto view_stride_v = context.get_view_input_stride(input_index, 0);
-        auto view_src_stride_v = context.get_view_input_src_stride(input_index, 0);
-        auto view_ggml_shape = context.get_view_input_ggml_shape(input_index, 0);
-        auto view_src_ggml_shape = context.get_view_input_src_ggml_shape(input_index, 0);
-        auto view_offset = context.get_view_input_offset(input_index, 0);
-        auto view_src_offset = context.get_view_input_src_offset(input_index, 0);
+    यदि (context.is_static() && view_आदान_size == 1) {
+        auto view_stride_v = context.get_view_आदान_stride(आदान_index, 0);
+        auto view_src_stride_v = context.get_view_आदान_src_stride(आदान_index, 0);
+        auto view_ggml_shape = context.get_view_आदान_ggml_shape(आदान_index, 0);
+        auto view_src_ggml_shape = context.get_view_आदान_src_ggml_shape(आदान_index, 0);
+        auto view_offset = context.get_view_आदान_offset(आदान_index, 0);
+        auto view_src_offset = context.get_view_आदान_src_offset(आदान_index, 0);
 
         size_t ndims = view_ggml_shape.size();
-        std::vector<int> diff_dims;
-        if (view_src_ggml_shape.size() == ndims) {
-            for (size_t i = 0; i < ndims; ++i) {
-                if (view_ggml_shape[i] != view_src_ggml_shape[i]) {
-                    diff_dims.push_back(static_cast<int>(i));
+        std::vector<पूर्णाङ्क> diff_dims;
+        यदि (view_src_ggml_shape.size() == ndims) {
+            प्रति (size_t i = 0; i < ndims; ++i) {
+                यदि (view_ggml_shape[i] != view_src_ggml_shape[i]) {
+                    diff_dims.push_back(static_cast<पूर्णाङ्क>(i));
                 }
             }
         }
 
-        if (diff_dims.size() == 1) {
-            int split_dim = diff_dims[0];
-            int64_t num_splits = static_cast<int64_t>(view_src_ggml_shape[split_dim]);
+        यदि (diff_dims.size() == 1) {
+            पूर्णाङ्क split_dim = diff_dims[0];
+            int64_t अंक_splits = static_cast<int64_t>(view_src_ggml_shape[split_dim]);
             int64_t chunk_size = static_cast<int64_t>(view_ggml_shape[split_dim]);
 
             // Only apply when slicing exactly 1 element from a multi-element dimension
-            if (chunk_size == 1 && num_splits > 1) {
+            यदि (chunk_size == 1 && अंक_splits > 1) {
                 // Check suffix strides match (dimensions after split_dim)
-                bool suffix_ok = view_stride_v.size() == view_src_stride_v.size();
-                if (suffix_ok) {
-                    for (size_t i = static_cast<size_t>(split_dim) + 1; i < ndims; ++i) {
-                        if (view_stride_v[i] != view_src_stride_v[i]) {
-                            suffix_ok = false;
-                            break;
+                तार्किक suffix_ok = view_stride_v.size() == view_src_stride_v.size();
+                यदि (suffix_ok) {
+                    प्रति (size_t i = static_cast<size_t>(split_dim) + 1; i < ndims; ++i) {
+                        यदि (view_stride_v[i] != view_src_stride_v[i]) {
+                            suffix_ok = असत्य;
+                            भङ्ग;
                         }
                     }
                 }
 
-                if (suffix_ok && view_src_stride_v[split_dim] > 0) {
+                यदि (suffix_ok && view_src_stride_v[split_dim] > 0) {
                     size_t relative_offset = view_offset >= view_src_offset ? view_offset - view_src_offset : 0;
                     int64_t split_index = static_cast<int64_t>(relative_offset / view_src_stride_v[split_dim]);
 
-                    if (split_index >= 0 && split_index < num_splits) {
-                        auto src_node = input.get_node_shared_ptr();
-                        std::string rt_key = "split_dim_" + std::to_string(split_dim);
-                        auto & rt_info = src_node->get_rt_info();
+                    यदि (split_index >= 0 && split_index < अंक_splits) {
+                        auto src_गाठ = आदान.get_गाठ_shared_ptr();
+                        std::string rt_किल्ली = "split_dim_" + std::to_string(split_dim);
+                        auto & rt_info = src_गाठ->get_rt_info();
 
-                        if (rt_info.find(rt_key) == rt_info.end()) {
+                        यदि (rt_info.find(rt_किल्ली) == rt_info.end()) {
                             auto axis_const =
                                 ov::op::v0::Constant::create(ov::element::i64, {}, {static_cast<int64_t>(split_dim)});
-                            auto split_node =
-                                std::make_shared<ov::op::v1::Split>(input, axis_const, static_cast<size_t>(num_splits));
-                            split_node->set_friendly_name(src_node->get_friendly_name() + "_split");
-                            rt_info[rt_key] = split_node;
+                            auto split_गाठ =
+                                std::make_shared<ov::op::v1::Split>(आदान, axis_const, static_cast<size_t>(अंक_splits));
+                            split_गाठ->set_friendly_name(src_गाठ->get_friendly_name() + "_split");
+                            rt_info[rt_किल्ली] = split_गाठ;
                         }
 
-                        auto split_node = rt_info[rt_key].as<std::shared_ptr<ov::op::v1::Split>>();
-                        return split_node->output(static_cast<size_t>(split_index));
+                        auto split_गाठ = rt_info[rt_किल्ली].as<std::shared_ptr<ov::op::v1::Split>>();
+                        प्रत्यागम split_गाठ->output(static_cast<size_t>(split_index));
                     }
                 }
             }
@@ -495,171 +495,171 @@ ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int inp
 
     // Lambda function to process a single view operation
     auto process_single_view =
-        [](ov::Output<ov::Node> current, size_t view_offset, const std::vector<size_t> & view_stride,
-           const ov::Shape & view_ggml_shape, const ov::PartialShape & view_ov_shape, const std::string & view_name,
-           size_t view_src_offset, const std::vector<size_t> & view_src_stride, const ov::Shape & view_src_ggml_shape,
-           const ov::PartialShape & view_src_ov_shape, const std::string & view_src_name) -> ov::Output<ov::Node> {
+        [](ov::Output<ov::Node> current, size_t view_offset, ध्रुव std::vector<size_t> & view_stride,
+           ध्रुव ov::Shape & view_ggml_shape, ध्रुव ov::PartialShape & view_ov_shape, ध्रुव std::string & view_name,
+           size_t view_src_offset, ध्रुव std::vector<size_t> & view_src_stride, ध्रुव ov::Shape & view_src_ggml_shape,
+           ध्रुव ov::PartialShape & view_src_ov_shape, ध्रुव std::string & view_src_name) -> ov::Output<ov::Node> {
         // Stateful execution drops a leading size-1 axis, so `current` can be one rank lower
         // than the ggml shape metadata (view_stride/view_ggml_shape, always GGML_MAX_DIMS
         // entries) assumes. Shift any axis index built from that metadata down by the
         // difference before using it as an OV Slice axis.
-        const auto current_rank = current.get_partial_shape().rank();
-        const int axis_shift = current_rank.is_static() ?
-                                    static_cast<int>(view_stride.size()) - static_cast<int>(current_rank.get_length()) :
+        ध्रुव auto current_rank = current.get_partial_shape().rank();
+        ध्रुव पूर्णाङ्क axis_shift = current_rank.is_static() ?
+                                    static_cast<पूर्णाङ्क>(view_stride.size()) - static_cast<पूर्णाङ्क>(current_rank.get_length()) :
                                     0;
 
-        auto build_reshape_pattern = [](const ov::PartialShape & target_ov_shape,
-                                        const ov::Shape & target_ggml_shape) -> std::vector<int64_t> {
-            const size_t ndims = target_ggml_shape.size();
+        auto build_reshape_pattern = [](ध्रुव ov::PartialShape & target_ov_shape,
+                                        ध्रुव ov::Shape & target_ggml_shape) -> std::vector<int64_t> {
+            ध्रुव size_t ndims = target_ggml_shape.size();
             std::vector<int64_t> reshape_pattern(ndims);
             size_t dynamic_dims = 0;
 
-            if (target_ov_shape.rank().is_static() &&
+            यदि (target_ov_shape.rank().is_static() &&
                 target_ov_shape.rank().get_length() == static_cast<int64_t>(ndims)) {
-                for (size_t i = 0; i < ndims; ++i) {
-                    if (target_ov_shape[i].is_static()) {
+                प्रति (size_t i = 0; i < ndims; ++i) {
+                    यदि (target_ov_shape[i].is_static()) {
                         reshape_pattern[i] = target_ov_shape[i].get_length();
-                    } else {
+                    } अन्यथा {
                         reshape_pattern[i] = -1;
                         ++dynamic_dims;
                     }
                 }
-            } else {
+            } अन्यथा {
                 dynamic_dims = 2;
             }
 
-            if (dynamic_dims > 1) {
-                for (size_t i = 0; i < ndims; ++i) {
+            यदि (dynamic_dims > 1) {
+                प्रति (size_t i = 0; i < ndims; ++i) {
                     reshape_pattern[i] = static_cast<int64_t>(target_ggml_shape[i]);
                 }
             }
 
-            return reshape_pattern;
+            प्रत्यागम reshape_pattern;
         };
 
-        auto build_prefix_tail_reshape_pattern = [](const ov::PartialShape & target_ov_shape,
-                                                    const ov::Shape & target_ggml_shape, size_t prefix_dims,
+        auto build_prefix_tail_reshape_pattern = [](ध्रुव ov::PartialShape & target_ov_shape,
+                                                    ध्रुव ov::Shape & target_ggml_shape, size_t prefix_dims,
                                                     int64_t tail_dim) -> std::vector<int64_t> {
             std::vector<int64_t> reshape_pattern(prefix_dims + 1);
             size_t dynamic_dims = 0;
 
-            if (target_ov_shape.rank().is_static() &&
+            यदि (target_ov_shape.rank().is_static() &&
                 target_ov_shape.rank().get_length() == static_cast<int64_t>(target_ggml_shape.size())) {
-                for (size_t i = 0; i < prefix_dims; ++i) {
-                    if (target_ov_shape[i].is_static()) {
+                प्रति (size_t i = 0; i < prefix_dims; ++i) {
+                    यदि (target_ov_shape[i].is_static()) {
                         reshape_pattern[i] = target_ov_shape[i].get_length();
-                    } else {
+                    } अन्यथा {
                         reshape_pattern[i] = -1;
                         ++dynamic_dims;
                     }
                 }
-            } else {
+            } अन्यथा {
                 dynamic_dims = 2;
             }
 
-            if (dynamic_dims > 1) {
-                for (size_t i = 0; i < prefix_dims; ++i) {
+            यदि (dynamic_dims > 1) {
+                प्रति (size_t i = 0; i < prefix_dims; ++i) {
                     reshape_pattern[i] = static_cast<int64_t>(target_ggml_shape[i]);
                 }
             }
 
             reshape_pattern[prefix_dims] = tail_dim;
-            return reshape_pattern;
+            प्रत्यागम reshape_pattern;
         };
 
-        bool same_stride = view_stride.size() == view_src_stride.size();
-        if (same_stride) {
-            for (size_t i = 0; i < view_stride.size(); ++i) {
-                if (view_stride[i] != view_src_stride[i]) {
-                    same_stride = false;
-                    break;
+        तार्किक same_stride = view_stride.size() == view_src_stride.size();
+        यदि (same_stride) {
+            प्रति (size_t i = 0; i < view_stride.size(); ++i) {
+                यदि (view_stride[i] != view_src_stride[i]) {
+                    same_stride = असत्य;
+                    भङ्ग;
                 }
             }
         }
 
-        bool same_ggml_shape = view_ggml_shape.size() == view_src_ggml_shape.size();
-        if (same_ggml_shape) {
-            for (size_t i = 0; i < view_ggml_shape.size(); ++i) {
-                if (view_ggml_shape[i] != view_src_ggml_shape[i]) {
-                    same_ggml_shape = false;
-                    break;
+        तार्किक same_ggml_shape = view_ggml_shape.size() == view_src_ggml_shape.size();
+        यदि (same_ggml_shape) {
+            प्रति (size_t i = 0; i < view_ggml_shape.size(); ++i) {
+                यदि (view_ggml_shape[i] != view_src_ggml_shape[i]) {
+                    same_ggml_shape = असत्य;
+                    भङ्ग;
                 }
             }
         }
 
-        if (same_stride && same_ggml_shape) {
-            return current;
+        यदि (same_stride && same_ggml_shape) {
+            प्रत्यागम current;
         }
 
-        if (same_stride) {
-            const size_t relative_offset = view_offset >= view_src_offset ? view_offset - view_src_offset : 0;
-            const size_t ndims = view_stride.size();
+        यदि (same_stride) {
+            ध्रुव size_t relative_offset = view_offset >= view_src_offset ? view_offset - view_src_offset : 0;
+            ध्रुव size_t ndims = view_stride.size();
 
-            std::vector<int> diff_dims;
-            if (view_ggml_shape.size() == ndims && view_src_ggml_shape.size() == ndims) {
-                for (size_t i = 0; i < ndims; ++i) {
-                    if (view_ggml_shape[i] != view_src_ggml_shape[i]) {
-                        diff_dims.push_back(static_cast<int>(i));
+            std::vector<पूर्णाङ्क> diff_dims;
+            यदि (view_ggml_shape.size() == ndims && view_src_ggml_shape.size() == ndims) {
+                प्रति (size_t i = 0; i < ndims; ++i) {
+                    यदि (view_ggml_shape[i] != view_src_ggml_shape[i]) {
+                        diff_dims.push_back(static_cast<पूर्णाङ्क>(i));
                     }
                 }
             }
 
-            if (diff_dims.size() == 1) {
-                const int slice_dim = diff_dims[0];
-                const int64_t dim_size = static_cast<int64_t>(view_src_ggml_shape[slice_dim]);
+            यदि (diff_dims.size() == 1) {
+                ध्रुव पूर्णाङ्क slice_dim = diff_dims[0];
+                ध्रुव int64_t dim_size = static_cast<int64_t>(view_src_ggml_shape[slice_dim]);
 
-                if (view_stride[slice_dim] > 0 && relative_offset % view_stride[slice_dim] == 0) {
-                    const int64_t begin_val = static_cast<int64_t>((relative_offset / view_stride[slice_dim]) %
+                यदि (view_stride[slice_dim] > 0 && relative_offset % view_stride[slice_dim] == 0) {
+                    ध्रुव int64_t begin_val = static_cast<int64_t>((relative_offset / view_stride[slice_dim]) %
                                                                    static_cast<size_t>(dim_size));
-                    const int64_t end_val = begin_val + static_cast<int64_t>(view_ggml_shape[slice_dim]);
+                    ध्रुव int64_t end_val = begin_val + static_cast<int64_t>(view_ggml_shape[slice_dim]);
 
-                    if (begin_val >= 0 && end_val <= dim_size) {
+                    यदि (begin_val >= 0 && end_val <= dim_size) {
                         auto sliced = std::make_shared<ov::op::v8::Slice>(
                             current, ov::op::v0::Constant::create(ov::element::i64, {1}, {begin_val}),
                             ov::op::v0::Constant::create(ov::element::i64, {1}, {end_val}),
                             ov::op::v0::Constant::create(ov::element::i64, {1}, {1}),
                             ov::op::v0::Constant::create(ov::element::i64, {1}, {slice_dim - axis_shift}));
 
-                        if (view_ov_shape.is_static()) {
+                        यदि (view_ov_shape.is_static()) {
                             auto reshaped = std::make_shared<ov::op::v1::Reshape>(
                                 sliced,
                                 ov::op::v0::Constant::create(ov::element::i64, {ndims}, view_ov_shape.to_shape()),
-                                false);
+                                असत्य);
                             reshaped->set_friendly_name(view_name);
-                            return reshaped;
+                            प्रत्यागम reshaped;
                         }
 
                         sliced->set_friendly_name(view_name);
-                        return sliced;
+                        प्रत्यागम sliced;
                     }
                 }
 
                 int64_t tail_src_elems = 1;
                 int64_t tail_dst_elems = 1;
-                for (size_t i = slice_dim; i < ndims; ++i) {
+                प्रति (size_t i = slice_dim; i < ndims; ++i) {
                     tail_src_elems *= static_cast<int64_t>(view_src_ggml_shape[i]);
                     tail_dst_elems *= static_cast<int64_t>(view_ggml_shape[i]);
                 }
 
-                const size_t elem_stride = view_stride[ndims - 1];
+                ध्रुव size_t elem_stride = view_stride[ndims - 1];
                 int64_t tail_begin = 0;
-                if (elem_stride > 0) {
+                यदि (elem_stride > 0) {
                     tail_begin =
                         static_cast<int64_t>((relative_offset / elem_stride) % static_cast<size_t>(tail_src_elems));
                 }
-                const int64_t tail_end = tail_begin + tail_dst_elems;
+                ध्रुव int64_t tail_end = tail_begin + tail_dst_elems;
 
-                if (tail_begin >= 0 && tail_end <= tail_src_elems) {
+                यदि (tail_begin >= 0 && tail_end <= tail_src_elems) {
                     std::vector<int64_t> flat_shape;
                     flat_shape.reserve(slice_dim);
-                    for (int i = 0; i < slice_dim; ++i) {
+                    प्रति (पूर्णाङ्क i = 0; i < slice_dim; ++i) {
                         flat_shape.push_back(static_cast<int64_t>(view_src_ggml_shape[i]));
                     }
                     flat_shape.push_back(tail_src_elems);
-                    const size_t flat_ndims = flat_shape.size();
+                    ध्रुव size_t flat_ndims = flat_shape.size();
 
                     auto flat = std::make_shared<ov::op::v1::Reshape>(
-                        current, ov::op::v0::Constant::create(ov::element::i64, {flat_ndims}, flat_shape), false);
+                        current, ov::op::v0::Constant::create(ov::element::i64, {flat_ndims}, flat_shape), असत्य);
 
                     auto sliced = std::make_shared<ov::op::v8::Slice>(
                         flat, ov::op::v0::Constant::create(ov::element::i64, {1}, {tail_begin}),
@@ -667,16 +667,16 @@ ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int inp
                         ov::op::v0::Constant::create(ov::element::i64, {1}, {1}),
                         ov::op::v0::Constant::create(ov::element::i64, {1}, {slice_dim}));
 
-                    if (view_ov_shape.is_static()) {
+                    यदि (view_ov_shape.is_static()) {
                         auto reshaped = std::make_shared<ov::op::v1::Reshape>(
                             sliced, ov::op::v0::Constant::create(ov::element::i64, {ndims}, view_ov_shape.to_shape()),
-                            false);
+                            असत्य);
                         reshaped->set_friendly_name(view_name);
-                        return reshaped;
+                        प्रत्यागम reshaped;
                     }
 
                     sliced->set_friendly_name(view_name);
-                    return sliced;
+                    प्रत्यागम sliced;
                 }
             }
 
@@ -686,26 +686,26 @@ ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int inp
             std::vector<int64_t> axes(ndims, 0);
 
             size_t remaining_offset = relative_offset;
-            for (size_t i = 0; i < ndims; ++i) {
+            प्रति (size_t i = 0; i < ndims; ++i) {
                 axes[i] = static_cast<int64_t>(i);
-                if (view_stride[i] > 0) {
+                यदि (view_stride[i] > 0) {
                     begin[i] = static_cast<int64_t>(remaining_offset / view_stride[i]);
                     remaining_offset %= view_stride[i];
                 }
                 end[i] = begin[i] + static_cast<int64_t>(view_ggml_shape[i]);
             }
 
-            bool in_bounds = view_src_ggml_shape.size() == ndims && view_ggml_shape.size() == ndims;
-            if (in_bounds) {
-                for (size_t i = 0; i < ndims; ++i) {
-                    if (end[i] > static_cast<int64_t>(view_src_ggml_shape[i])) {
-                        in_bounds = false;
-                        break;
+            तार्किक in_bounds = view_src_ggml_shape.size() == ndims && view_ggml_shape.size() == ndims;
+            यदि (in_bounds) {
+                प्रति (size_t i = 0; i < ndims; ++i) {
+                    यदि (end[i] > static_cast<int64_t>(view_src_ggml_shape[i])) {
+                        in_bounds = असत्य;
+                        भङ्ग;
                     }
                 }
             }
 
-            if (in_bounds && remaining_offset == 0) {
+            यदि (in_bounds && remaining_offset == 0) {
                 auto sliced = std::make_shared<ov::op::v8::Slice>(
                     current, ov::op::v0::Constant::create(ov::element::i64, {ndims}, begin),
                     ov::op::v0::Constant::create(ov::element::i64, {ndims}, end),
@@ -713,47 +713,47 @@ ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int inp
                     ov::op::v0::Constant::create(ov::element::i64, {ndims}, axes));
 
                 sliced->set_friendly_name(view_name);
-                return sliced;
+                प्रत्यागम sliced;
             }
-        } else {
-            bool same_rank = view_stride.size() == view_src_stride.size() &&
+        } अन्यथा {
+            तार्किक same_rank = view_stride.size() == view_src_stride.size() &&
                              view_ggml_shape.size() == view_src_ggml_shape.size() &&
                              view_stride.size() == view_ggml_shape.size();
-            const size_t relative_offset = view_offset >= view_src_offset ? view_offset - view_src_offset : 0;
+            ध्रुव size_t relative_offset = view_offset >= view_src_offset ? view_offset - view_src_offset : 0;
 
-            if (same_rank) {
-                const size_t ndims = view_ggml_shape.size();
-                std::vector<int> diff_dims;
-                for (size_t i = 0; i < ndims; ++i) {
-                    if (view_ggml_shape[i] != view_src_ggml_shape[i]) {
-                        diff_dims.push_back(static_cast<int>(i));
+            यदि (same_rank) {
+                ध्रुव size_t ndims = view_ggml_shape.size();
+                std::vector<पूर्णाङ्क> diff_dims;
+                प्रति (size_t i = 0; i < ndims; ++i) {
+                    यदि (view_ggml_shape[i] != view_src_ggml_shape[i]) {
+                        diff_dims.push_back(static_cast<पूर्णाङ्क>(i));
                     }
                 }
 
-                if (diff_dims.size() == 1) {
-                    const size_t slice_dim = static_cast<size_t>(diff_dims[0]);
-                    bool suffix_stride_match = true;
-                    for (size_t i = slice_dim + 1; i < ndims; ++i) {
-                        if (view_stride[i] != view_src_stride[i]) {
-                            suffix_stride_match = false;
-                            break;
+                यदि (diff_dims.size() == 1) {
+                    ध्रुव size_t slice_dim = static_cast<size_t>(diff_dims[0]);
+                    तार्किक suffix_stride_match = सत्य;
+                    प्रति (size_t i = slice_dim + 1; i < ndims; ++i) {
+                        यदि (view_stride[i] != view_src_stride[i]) {
+                            suffix_stride_match = असत्य;
+                            भङ्ग;
                         }
                     }
 
-                    if (suffix_stride_match && view_src_stride[slice_dim] > 0 &&
+                    यदि (suffix_stride_match && view_src_stride[slice_dim] > 0 &&
                         relative_offset % view_src_stride[slice_dim] == 0) {
-                        const int64_t begin_val = static_cast<int64_t>(relative_offset / view_src_stride[slice_dim]);
-                        const int64_t end_val = begin_val + static_cast<int64_t>(view_ggml_shape[slice_dim]);
-                        const int64_t dim_size = static_cast<int64_t>(view_src_ggml_shape[slice_dim]);
+                        ध्रुव int64_t begin_val = static_cast<int64_t>(relative_offset / view_src_stride[slice_dim]);
+                        ध्रुव int64_t end_val = begin_val + static_cast<int64_t>(view_ggml_shape[slice_dim]);
+                        ध्रुव int64_t dim_size = static_cast<int64_t>(view_src_ggml_shape[slice_dim]);
 
-                        if (begin_val >= 0 && end_val <= dim_size) {
+                        यदि (begin_val >= 0 && end_val <= dim_size) {
                             auto sliced = std::make_shared<ov::op::v8::Slice>(
                                 current, ov::op::v0::Constant::create(ov::element::i64, {1}, {begin_val}),
                                 ov::op::v0::Constant::create(ov::element::i64, {1}, {end_val}),
                                 ov::op::v0::Constant::create(ov::element::i64, {1}, {1}),
                                 ov::op::v0::Constant::create(ov::element::i64, {1}, {static_cast<int64_t>(slice_dim)}));
                             sliced->set_friendly_name(view_name);
-                            return sliced;
+                            प्रत्यागम sliced;
                         }
                     }
                 }
@@ -761,72 +761,72 @@ ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int inp
 
             size_t view_elems = 1;
             size_t src_elems = 1;
-            if (same_rank) {
-                for (size_t i = 0; i < view_ggml_shape.size(); ++i) {
+            यदि (same_rank) {
+                प्रति (size_t i = 0; i < view_ggml_shape.size(); ++i) {
                     view_elems *= view_ggml_shape[i];
                     src_elems *= view_src_ggml_shape[i];
                 }
             }
 
-            bool same_num_elements = same_rank && view_elems == src_elems;
+            तार्किक same_अंक_elements = same_rank && view_elems == src_elems;
 
-            if (same_rank && relative_offset == 0 && same_num_elements) {
+            यदि (same_rank && relative_offset == 0 && same_अंक_elements) {
                 auto reshape_pattern = build_reshape_pattern(view_ov_shape, view_ggml_shape);
 
                 auto reshaped = std::make_shared<ov::op::v1::Reshape>(
                     current, ov::op::v0::Constant::create(ov::element::i64, {reshape_pattern.size()}, reshape_pattern),
-                    false);
+                    असत्य);
                 reshaped->set_friendly_name(view_name);
-                return reshaped;
+                प्रत्यागम reshaped;
             }
 
-            if (same_rank) {
-                const size_t ndims = view_ggml_shape.size();
+            यदि (same_rank) {
+                ध्रुव size_t ndims = view_ggml_shape.size();
 
                 // Match views that can be expressed as a regular strided slice over the
                 // already reconstructed source tensor, e.g. offset on one axis plus step > 1
                 // on another axis.
-                bool is_regular_slice = view_src_ggml_shape.size() == ndims;
+                तार्किक is_regular_slice = view_src_ggml_shape.size() == ndims;
                 std::vector<int64_t> begin(ndims, 0);
                 std::vector<int64_t> end(ndims, 0);
                 std::vector<int64_t> step(ndims, 1);
                 std::vector<int64_t> axes(ndims, 0);
                 size_t remaining_offset = relative_offset;
 
-                if (is_regular_slice) {
-                    for (size_t i = 0; i < ndims; ++i) {
+                यदि (is_regular_slice) {
+                    प्रति (size_t i = 0; i < ndims; ++i) {
                         axes[i] = static_cast<int64_t>(i);
 
-                        if (view_src_stride[i] == 0 || view_stride[i] == 0 ||
+                        यदि (view_src_stride[i] == 0 || view_stride[i] == 0 ||
                             view_stride[i] % view_src_stride[i] != 0) {
-                            is_regular_slice = false;
-                            break;
+                            is_regular_slice = असत्य;
+                            भङ्ग;
                         }
 
                         step[i] = static_cast<int64_t>(view_stride[i] / view_src_stride[i]);
-                        if (step[i] <= 0) {
-                            is_regular_slice = false;
-                            break;
+                        यदि (step[i] <= 0) {
+                            is_regular_slice = असत्य;
+                            भङ्ग;
                         }
 
                         begin[i] = static_cast<int64_t>(remaining_offset / view_src_stride[i]);
                         remaining_offset %= view_src_stride[i];
 
-                        if (view_ggml_shape[i] == 0) {
+                        यदि (view_ggml_shape[i] == 0) {
                             end[i] = begin[i];
-                            continue;
+                            अनुवर्त;
                         }
 
                         end[i] = begin[i] + step[i] * static_cast<int64_t>(view_ggml_shape[i] - 1) + 1;
 
-                        if (begin[i] < 0 || end[i] > static_cast<int64_t>(view_src_ggml_shape[i])) {
-                            is_regular_slice = false;
-                            break;
+                        यदि (begin[i] < 0 || end[i] > static_cast<int64_t>(view_src_ggml_shape[i])) {
+                            is_regular_slice = असत्य;
+                            भङ्ग;
                         }
                     }
                 }
 
-                if (is_regular_slice && remaining_offset == 0) {
+                यदि (is_regular_slice && remaining_offset == 0) {
                     auto sliced = std::make_shared<ov::op::v8::Slice>(
                         current, ov::op::v0::Constant::create(ov::element::i64, {ndims}, begin),
                         ov::op::v0::Constant::create(ov::element::i64, {ndims}, end),
@@ -834,38 +834,38 @@ ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int inp
                         ov::op::v0::Constant::create(ov::element::i64, {ndims}, axes));
 
                     sliced->set_friendly_name(view_name);
-                    return sliced;
+                    प्रत्यागम sliced;
                 }
 
-                const size_t elem_stride = view_src_stride.back();
-                const bool aligned_offset = elem_stride > 0 && relative_offset % elem_stride == 0;
+                ध्रुव size_t elem_stride = view_src_stride.back();
+                ध्रुव तार्किक aligned_offset = elem_stride > 0 && relative_offset % elem_stride == 0;
 
-                if (aligned_offset) {
+                यदि (aligned_offset) {
                     size_t suffix_start = 0;
                     size_t expected_stride = elem_stride;
-                    for (int i = static_cast<int>(ndims) - 1; i >= 0; --i) {
-                        if (view_stride[i] != expected_stride) {
+                    प्रति (पूर्णाङ्क i = static_cast<पूर्णाङ्क>(ndims) - 1; i >= 0; --i) {
+                        यदि (view_stride[i] != expected_stride) {
                             suffix_start = static_cast<size_t>(i + 1);
-                            break;
+                            भङ्ग;
                         }
                         expected_stride *= view_ggml_shape[i];
                     }
 
                     size_t prefix_elems = 1;
                     size_t suffix_elems = 1;
-                    for (size_t i = 0; i < suffix_start; ++i) {
+                    प्रति (size_t i = 0; i < suffix_start; ++i) {
                         prefix_elems *= view_ggml_shape[i];
                     }
-                    for (size_t i = suffix_start; i < ndims; ++i) {
+                    प्रति (size_t i = suffix_start; i < ndims; ++i) {
                         suffix_elems *= view_ggml_shape[i];
                     }
 
-                    if (prefix_elems > 0 && src_elems % prefix_elems == 0) {
-                        const size_t src_tail_elems = src_elems / prefix_elems;
-                        const int64_t tail_begin = static_cast<int64_t>(relative_offset / elem_stride);
-                        const int64_t tail_end = tail_begin + static_cast<int64_t>(suffix_elems);
+                    यदि (prefix_elems > 0 && src_elems % prefix_elems == 0) {
+                        ध्रुव size_t src_tail_elems = src_elems / prefix_elems;
+                        ध्रुव int64_t tail_begin = static_cast<int64_t>(relative_offset / elem_stride);
+                        ध्रुव int64_t tail_end = tail_begin + static_cast<int64_t>(suffix_elems);
 
-                        if (tail_begin >= 0 && tail_end <= static_cast<int64_t>(src_tail_elems)) {
+                        यदि (tail_begin >= 0 && tail_end <= static_cast<int64_t>(src_tail_elems)) {
                             auto prefix_tail_pattern = build_prefix_tail_reshape_pattern(
                                 view_ov_shape, view_ggml_shape, suffix_start, static_cast<int64_t>(src_tail_elems));
 
@@ -873,10 +873,10 @@ ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int inp
                                 current,
                                 ov::op::v0::Constant::create(ov::element::i64, {prefix_tail_pattern.size()},
                                                              prefix_tail_pattern),
-                                false);
+                                असत्य);
 
                             ov::Output<ov::Node> selected = prefix_tail;
-                            if (tail_begin != 0 || tail_end != static_cast<int64_t>(src_tail_elems)) {
+                            यदि (tail_begin != 0 || tail_end != static_cast<int64_t>(src_tail_elems)) {
                                 selected = std::make_shared<ov::op::v8::Slice>(
                                     prefix_tail, ov::op::v0::Constant::create(ov::element::i64, {1}, {tail_begin}),
                                     ov::op::v0::Constant::create(ov::element::i64, {1}, {tail_end}),
@@ -890,22 +890,22 @@ ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int inp
                                 selected,
                                 ov::op::v0::Constant::create(ov::element::i64, {reshape_pattern.size()},
                                                              reshape_pattern),
-                                false);
+                                असत्य);
                             reshaped->set_friendly_name(view_name);
-                            return reshaped;
+                            प्रत्यागम reshaped;
                         }
                     }
                 }
             }
 
-            return current;
+            प्रत्यागम current;
         }
 
-        (void) view_name;
-        (void) view_src_ov_shape;
-        (void) view_src_name;
+        (शून्य) view_name;
+        (शून्य) view_src_ov_shape;
+        (शून्य) view_src_name;
 
-        return current;
+        प्रत्यागम current;
     };
 
     // Special case: ggml collapses VIEW-of-VIEW chains so that `view_offs` is always an
@@ -922,38 +922,38 @@ ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int inp
     // re-slice directly from the untouched root using the innermost view's absolute
     // offset against the ROOT's own shape/stride instead of chaining through src[0].
     {
-        auto innermost_offset = context.get_view_input_offset(input_index, 0);
-        auto innermost_src_offset = context.get_view_input_src_offset(input_index, 0);
-        auto innermost_shape = context.get_view_input_ggml_shape(input_index, 0);
-        auto innermost_src_shape = context.get_view_input_src_ggml_shape(input_index, 0);
-        if (innermost_offset != innermost_src_offset && innermost_shape == innermost_src_shape) {
-            size_t root_view_idx = view_input_size - 1;
-            auto root_ggml_shape = context.get_view_input_src_ggml_shape(input_index, root_view_idx);
-            auto root_stride = context.get_view_input_src_stride(input_index, root_view_idx);
-            auto root_offset = context.get_view_input_src_offset(input_index, root_view_idx);
-            auto root_ov_shape = context.get_view_input_src_ov_shape(input_index, root_view_idx);
-            auto root_name = context.get_view_input_src_name(input_index, root_view_idx);
-            auto innermost_stride = context.get_view_input_stride(input_index, 0);
-            auto innermost_ov_shape = context.get_view_input_ov_shape(input_index, 0);
-            auto innermost_name = context.get_view_input_name(input_index, 0);
+        auto innermost_offset = context.get_view_आदान_offset(आदान_index, 0);
+        auto innermost_src_offset = context.get_view_आदान_src_offset(आदान_index, 0);
+        auto innermost_shape = context.get_view_आदान_ggml_shape(आदान_index, 0);
+        auto innermost_src_shape = context.get_view_आदान_src_ggml_shape(आदान_index, 0);
+        यदि (innermost_offset != innermost_src_offset && innermost_shape == innermost_src_shape) {
+            size_t मूळ_view_idx = view_आदान_size - 1;
+            auto मूळ_ggml_shape = context.get_view_आदान_src_ggml_shape(आदान_index, मूळ_view_idx);
+            auto मूळ_stride = context.get_view_आदान_src_stride(आदान_index, मूळ_view_idx);
+            auto मूळ_offset = context.get_view_आदान_src_offset(आदान_index, मूळ_view_idx);
+            auto मूळ_ov_shape = context.get_view_आदान_src_ov_shape(आदान_index, मूळ_view_idx);
+            auto मूळ_name = context.get_view_आदान_src_name(आदान_index, मूळ_view_idx);
+            auto innermost_stride = context.get_view_आदान_stride(आदान_index, 0);
+            auto innermost_ov_shape = context.get_view_आदान_ov_shape(आदान_index, 0);
+            auto innermost_name = context.get_view_आदान_name(आदान_index, 0);
 
-            return process_single_view(input, innermost_offset, innermost_stride, innermost_shape, innermost_ov_shape,
-                                       innermost_name, root_offset, root_stride, root_ggml_shape, root_ov_shape,
-                                       root_name);
+            प्रत्यागम process_single_view(आदान, innermost_offset, innermost_stride, innermost_shape, innermost_ov_shape,
+                                       innermost_name, मूळ_offset, मूळ_stride, मूळ_ggml_shape, मूळ_ov_shape,
+                                       मूळ_name);
         }
     }
 
     // Process views from the base tensor (last) to the current view (first)
     // Start with the base tensor
-    ov::Output<ov::Node> current = input;
+    ov::Output<ov::Node> current = आदान;
 
     // Process each view in reverse order (from base to current)
-    for (int view_idx = view_input_size - 1; view_idx >= 0; view_idx--) {
-        auto view_offset = context.get_view_input_offset(input_index, view_idx);
-        auto view_stride = context.get_view_input_stride(input_index, view_idx);
-        auto view_ggml_shape = context.get_view_input_ggml_shape(input_index, view_idx);
-        auto view_ov_shape = context.get_view_input_ov_shape(input_index, view_idx);
-        auto view_name = context.get_view_input_name(input_index, view_idx);
+    प्रति (पूर्णाङ्क view_idx = view_आदान_size - 1; view_idx >= 0; view_idx--) {
+        auto view_offset = context.get_view_आदान_offset(आदान_index, view_idx);
+        auto view_stride = context.get_view_आदान_stride(आदान_index, view_idx);
+        auto view_ggml_shape = context.get_view_आदान_ggml_shape(आदान_index, view_idx);
+        auto view_ov_shape = context.get_view_आदान_ov_shape(आदान_index, view_idx);
+        auto view_name = context.get_view_आदान_name(आदान_index, view_idx);
 
         // print view info
         // std::cout << "View " << view_idx << ": name = " << view_name << ", offset = " << view_offset << ", stride = ["
@@ -961,11 +961,11 @@ ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int inp
         //       << "], ggml shape = [" << view_ggml_shape[0] << "," << view_ggml_shape[1] << ","
         //       << view_ggml_shape[2] << "," << view_ggml_shape[3] << "], ov shape = " << view_ov_shape << std::endl;
 
-        auto view_src_offset = context.get_view_input_src_offset(input_index, view_idx);
-        auto view_src_stride = context.get_view_input_src_stride(input_index, view_idx);
-        auto view_src_ggml_shape = context.get_view_input_src_ggml_shape(input_index, view_idx);
-        auto view_src_ov_shape = context.get_view_input_src_ov_shape(input_index, view_idx);
-        auto view_src_name = context.get_view_input_src_name(input_index, view_idx);
+        auto view_src_offset = context.get_view_आदान_src_offset(आदान_index, view_idx);
+        auto view_src_stride = context.get_view_आदान_src_stride(आदान_index, view_idx);
+        auto view_src_ggml_shape = context.get_view_आदान_src_ggml_shape(आदान_index, view_idx);
+        auto view_src_ov_shape = context.get_view_आदान_src_ov_shape(आदान_index, view_idx);
+        auto view_src_name = context.get_view_आदान_src_name(आदान_index, view_idx);
         // print source view info
         // std::cout << "View " << view_idx << ": source name = " << view_src_name
         //           << ", source offset = " << view_src_offset << ", source stride = [" << view_src_stride[0] << ","
@@ -979,7 +979,7 @@ ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int inp
                                       view_src_name);
     }
 
-    return current;
+    प्रत्यागम current;
 }
 
 }  // namespace ggml

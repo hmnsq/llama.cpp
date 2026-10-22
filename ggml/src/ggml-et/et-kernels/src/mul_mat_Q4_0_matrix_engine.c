@@ -1,17 +1,17 @@
-#include "ggml_tensor.h"
-#include "math_fp.h"
-#include "platform.h"
-#include "quants.h"
-#include "tensor.h"
+#अन्तर्भाव "ggml_tensor.h"
+#अन्तर्भाव "math_fp.h"
+#अन्तर्भाव "platform.h"
+#अन्तर्भाव "quants.h"
+#अन्तर्भाव "tensor.h"
 
-#include <etsoc/common/utils.h>
-#include <stdint.h>
+#अन्तर्भाव <etsoc/common/utils.h>
+#अन्तर्भाव <stdint.h>
 
 // Q4_0 x F32 -> F32 MUL_MAT on the tensor (matrix) engine, TensorFMA32.
 // Hart 1: dequantize Q4_0 weights to FP32 into double-buffered L2 SCP.
 // Hart 0: tensor engine compute (FMA, reduce, store).
 
-#define NUM_COMPUTE_SHIRES 32
+#define अंक_COMPUTE_SHIRES 32
 #define MINIONS_PER_SHIRE  32
 
 #define TILE_M  16
@@ -28,26 +28,26 @@
 // L2 SCP layout per minion (double-buffered dequant panel + sync counters).
 // panel = BLOCK_K k-lines x TILE_M m (FP32) = 32 * 64 = 2048 bytes, in TenB
 // [k][m] order: panel[k*TILE_M + m].
-#define SCP_PANEL_SIZE   (BLOCK_K * TILE_M * (uint64_t) sizeof(float))  // 2048
+#define SCP_PANEL_SIZE   (BLOCK_K * TILE_M * (uint64_t) परिमाण(भिन्न))  // 2048
 #define SCP_READY_OFF    (2 * SCP_PANEL_SIZE)                           // 4096
 #define SCP_CONSUMED_OFF (SCP_READY_OFF + 64)                           // 4160
 #define SCP_PER_MINION   (SCP_CONSUMED_OFF + 64)                        // 4224
 
 // Signal a counter value to the other hart via L2 SCP.
-static inline void __attribute__((always_inline)) scp_signal(volatile uint32_t * flag, uint32_t value) {
-    *flag = value;
+स्थिर अन्तःस्थ शून्य __attribute__((always_inline)) scp_signal(चञ्चल uint32_t * flag, uint32_t मूल्य) {
+    *flag = मूल्य;
     FENCE;
-    evict_to_l2((const void *) flag, 1, 64);
+    evict_to_l2((ध्रुव शून्य *) flag, 1, 64);
     WAIT_CACHEOPS;
 }
 
 // Wait for a counter in L2 SCP to reach the expected value.
-static inline void __attribute__((always_inline)) scp_wait(volatile uint32_t * flag, uint32_t expected) {
-    while (1) {
-        evict_to_l2((const void *) flag, 1, 64);
+स्थिर अन्तःस्थ शून्य __attribute__((always_inline)) scp_wait(चञ्चल uint32_t * flag, uint32_t expected) {
+    यावत् (1) {
+        evict_to_l2((ध्रुव शून्य *) flag, 1, 64);
         WAIT_CACHEOPS;
-        if (*flag >= expected) {
-            return;
+        यदि (*flag >= expected) {
+            प्रत्यागम;
         }
     }
 }
@@ -62,20 +62,20 @@ static inline void __attribute__((always_inline)) scp_wait(volatile uint32_t * f
 // the low/high nibbles to FP32 (nibble-8), scale by the block's fp16 d, and
 // fscw.ps-scatter the 8 values down 8 panel lines (stride 64B) at column m.
 // 4 groups of 8 cover the 32 k-values (low 0..15, high 16..31).
-static inline void __attribute__((always_inline)) dequant_q4_0_panel(float *      panel,
-                                                                     const char * src0_batch,
+स्थिर अन्तःस्थ शून्य __attribute__((always_inline)) dequant_q4_0_panel(भिन्न *      panel,
+                                                                     ध्रुव वर्ण * src0_batch,
                                                                      int64_t      mb,
                                                                      int64_t      kb_block,
                                                                      int64_t      nb1_0) {
-    static const int32_t __attribute__((aligned(32))) scatter_idx[8] = {
+    स्थिर ध्रुव int32_t __attribute__((aligned(32))) scatter_idx[8] = {
         0, 64, 128, 192, 256, 320, 384, 448  // byte offsets: 8 lines apart
     };
-    static const int32_t __attribute__((aligned(32))) gather_idx[8] = {
+    स्थिर ध्रुव int32_t __attribute__((aligned(32))) gather_idx[8] = {
         0, 1, 2, 3, 4, 5, 6, 7  // 8 consecutive bytes
     };
 
     unsigned long old_mask;
-    __asm__ volatile(
+    __asm__ चञ्चल(
         "mova.x.m  %[ms]            \n\t"
         "mov.m.x   m0, x0, 0xFF     \n\t"  // all 8 lanes active
         "flw.ps    f1, (%[sidx])    \n\t"  // f1 = scatter offsets
@@ -84,14 +84,14 @@ static inline void __attribute__((always_inline)) dequant_q4_0_panel(float *    
         : [sidx] "r"(scatter_idx), [gidx] "r"(gather_idx)
         : "f1", "f2");
 
-    char * pbase = (char *) panel;
-    for (int j = 0; j < TILE_M; ++j) {
-        const block_q4_0 * blk       = (const block_q4_0 *) (src0_batch + (mb + j) * nb1_0) + kb_block;
+    वर्ण * pbase = (वर्ण *) panel;
+    प्रति (पूर्णाङ्क j = 0; j < TILE_M; ++j) {
+        ध्रुव block_q4_0 * blk       = (ध्रुव block_q4_0 *) (src0_batch + (mb + j) * nb1_0) + kb_block;
         uint32_t           scale_raw = (uint32_t) blk->d;
-        const uint8_t *    qs        = blk->qs;
-        char *             col       = pbase + j * 4;  // column m=j of the panel
+        ध्रुव uint8_t *    qs        = blk->qs;
+        वर्ण *             col       = pbase + j * 4;  // column m=j of the panel
 
-        __asm__ volatile(
+        __asm__ चञ्चल(
             "fbcx.ps     f3, %[sb]      \n\t"  // broadcast fp16 scale bits
             "fcvt.ps.f16 f3, f3         \n\t"  // -> d in all 8 lanes (fp32)
 
@@ -126,111 +126,111 @@ static inline void __attribute__((always_inline)) dequant_q4_0_panel(float *    
             : "f3", "f4", "f5", "f6", "memory");
     }
 
-    __asm__ volatile("mova.m.x %0" ::"r"(old_mask));
+    __asm__ चञ्चल("mova.m.x %0" ::"r"(old_mask));
 }
 
-int entry_point(struct ggml_et_binary_params * params, void * env) {
-    (void) env;
+पूर्णाङ्क entry_point(संरचना ggml_et_द्विमान_params * params, शून्य * env) {
+    (शून्य) env;
 
     uint64_t hart_id  = get_hart_id();
     uint64_t shire_id = get_shire_id();
 
-    if (shire_id >= NUM_COMPUTE_SHIRES) {
-        return 0;
+    यदि (shire_id >= अंक_COMPUTE_SHIRES) {
+        प्रत्यागम 0;
     }
 
-    const int is_hart1     = hart_id & 1;
+    ध्रुव पूर्णाङ्क is_hart1     = hart_id & 1;
     uint64_t  local_minion = (hart_id >> 1) & 0x1F;
 
     // Dimensions (both harts need these for tile assignment)
-    const int64_t K = params->src0.ne[0];
-    const int64_t M = params->src0.ne[1];
-    const int64_t N = params->src1.ne[1];
+    ध्रुव int64_t K = params->src0.ne[0];
+    ध्रुव int64_t M = params->src0.ne[1];
+    ध्रुव int64_t N = params->src1.ne[1];
 
-    if ((M % TILE_M) != 0) {
-        return 0;
+    यदि ((M % TILE_M) != 0) {
+        प्रत्यागम 0;
     }
-    if ((K % BLOCK_K) != 0) {
-        return 0;
+    यदि ((K % BLOCK_K) != 0) {
+        प्रत्यागम 0;
     }
 
-    const int64_t ne2_0 = params->src0.ne[2], ne3_0 = params->src0.ne[3];
-    const int64_t ne2_1 = params->src1.ne[2], ne3_1 = params->src1.ne[3];
+    ध्रुव int64_t ne2_0 = params->src0.ne[2], ne3_0 = params->src0.ne[3];
+    ध्रुव int64_t ne2_1 = params->src1.ne[2], ne3_1 = params->src1.ne[3];
 
-    const int64_t nb1_0 = params->src0.nb[1];
-    const int64_t nb2_0 = params->src0.nb[2], nb3_0 = params->src0.nb[3];
+    ध्रुव int64_t nb1_0 = params->src0.nb[1];
+    ध्रुव int64_t nb2_0 = params->src0.nb[2], nb3_0 = params->src0.nb[3];
 
-    const int64_t nb1_1 = params->src1.nb[1];
-    const int64_t nb2_1 = params->src1.nb[2], nb3_1 = params->src1.nb[3];
+    ध्रुव int64_t nb1_1 = params->src1.nb[1];
+    ध्रुव int64_t nb2_1 = params->src1.nb[2], nb3_1 = params->src1.nb[3];
 
-    const int64_t nb1_d = params->dst.nb[1];
-    const int64_t nb2_d = params->dst.nb[2], nb3_d = params->dst.nb[3];
+    ध्रुव int64_t nb1_d = params->dst.nb[1];
+    ध्रुव int64_t nb2_d = params->dst.nb[2], nb3_d = params->dst.nb[3];
 
-    const char * src0_base = (const char *) params->src0.data;
-    const char * src1_base = (const char *) params->src1.data;
-    char *       dst_base  = (char *) params->dst.data;
+    ध्रुव वर्ण * src0_base = (ध्रुव वर्ण *) params->src0.data;
+    ध्रुव वर्ण * src1_base = (ध्रुव वर्ण *) params->src1.data;
+    वर्ण *       dst_base  = (वर्ण *) params->dst.data;
 
-    const int64_t m_tiles     = M / TILE_M;
-    const int64_t n_tiles     = (N + TILE_N - 1) / TILE_N;
-    const int64_t batch_count = ne2_1 * ne3_1;
-    const int64_t base_tiles  = m_tiles * n_tiles * batch_count;
+    ध्रुव int64_t m_tiles     = M / TILE_M;
+    ध्रुव int64_t n_tiles     = (N + TILE_N - 1) / TILE_N;
+    ध्रुव int64_t batch_मोजणी = ne2_1 * ne3_1;
+    ध्रुव int64_t base_tiles  = m_tiles * n_tiles * batch_मोजणी;
 
-    const int64_t r2 = ne2_1 / ne2_0;
-    const int64_t r3 = ne3_1 / ne3_0;
+    ध्रुव int64_t r2 = ne2_1 / ne2_0;
+    ध्रुव int64_t r3 = ne3_1 / ne3_0;
 
-    const int64_t k_steps = K / BLOCK_K;  // number of Q4_0 blocks
+    ध्रुव int64_t k_steps = K / BLOCK_K;  // number of Q4_0 blocks
 
     // Force a single K-split.
-    const int64_t k_splits = 1;
+    ध्रुव int64_t k_splits = 1;
 
-    const int64_t tiles_per_shire = MINIONS_PER_SHIRE / k_splits;
-    const int64_t k_split         = local_minion % k_splits;
-    const int64_t local_tile_idx  = local_minion / k_splits;
-    const int64_t tiles_stride    = (int64_t) NUM_COMPUTE_SHIRES * tiles_per_shire;
+    ध्रुव int64_t tiles_per_shire = MINIONS_PER_SHIRE / k_splits;
+    ध्रुव int64_t k_split         = local_minion % k_splits;
+    ध्रुव int64_t local_tile_idx  = local_minion / k_splits;
+    ध्रुव int64_t tiles_stride    = (int64_t) अंक_COMPUTE_SHIRES * tiles_per_shire;
 
-    const int64_t k_steps_per_split = k_steps / k_splits;
-    const int64_t kb_start          = k_split * k_steps_per_split;   // first block
-    const int64_t kb_end            = kb_start + k_steps_per_split;  // one past last
+    ध्रुव int64_t k_steps_per_split = k_steps / k_splits;
+    ध्रुव int64_t kb_start          = k_split * k_steps_per_split;   // first block
+    ध्रुव int64_t kb_end            = kb_start + k_steps_per_split;  // one past last
 
     // L2 SCP pointers for this minion's double-buffered panels + sync.
     uint64_t scp_base     = local_minion * SCP_PER_MINION;
-    float *  scp_panel[2] = {
-        (float *) et_shire_l2scp_local(scp_base),
-        (float *) et_shire_l2scp_local(scp_base + SCP_PANEL_SIZE),
+    भिन्न *  scp_panel[2] = {
+        (भिन्न *) et_shire_l2scp_local(scp_base),
+        (भिन्न *) et_shire_l2scp_local(scp_base + SCP_PANEL_SIZE),
     };
-    volatile uint32_t * ready_ctr    = (volatile uint32_t *) et_shire_l2scp_local(scp_base + SCP_READY_OFF);
-    volatile uint32_t * consumed_ctr = (volatile uint32_t *) et_shire_l2scp_local(scp_base + SCP_CONSUMED_OFF);
+    चञ्चल uint32_t * ready_ctr    = (चञ्चल uint32_t *) et_shire_l2scp_local(scp_base + SCP_READY_OFF);
+    चञ्चल uint32_t * consumed_ctr = (चञ्चल uint32_t *) et_shire_l2scp_local(scp_base + SCP_CONSUMED_OFF);
 
     // ================================================================
     // Hart 1: Q4_0 weight dequant producer
     // ================================================================
-    if (is_hart1) {
+    यदि (is_hart1) {
         scp_signal(ready_ctr, 0);
         scp_signal(consumed_ctr, 0);
 
         uint32_t chunk_id = 0;
 
-        for (int64_t tile = (int64_t) shire_id + local_tile_idx * NUM_COMPUTE_SHIRES; tile < base_tiles;
+        प्रति (int64_t tile = (int64_t) shire_id + local_tile_idx * अंक_COMPUTE_SHIRES; tile < base_tiles;
              tile += tiles_stride) {
-            const int64_t tiles_per_batch = m_tiles * n_tiles;
-            const int64_t batch_idx       = tile / tiles_per_batch;
-            const int64_t tile_in_batch   = tile % tiles_per_batch;
+            ध्रुव int64_t tiles_per_batch = m_tiles * n_tiles;
+            ध्रुव int64_t batch_idx       = tile / tiles_per_batch;
+            ध्रुव int64_t tile_in_batch   = tile % tiles_per_batch;
 
-            const int64_t mb_idx = tile_in_batch % m_tiles;
+            ध्रुव int64_t mb_idx = tile_in_batch % m_tiles;
 
-            const int64_t i3   = batch_idx / ne2_1;
-            const int64_t i2   = batch_idx % ne2_1;
-            const int64_t i2_0 = i2 / r2;
-            const int64_t i3_0 = i3 / r3;
+            ध्रुव int64_t i3   = batch_idx / ne2_1;
+            ध्रुव int64_t i2   = batch_idx % ne2_1;
+            ध्रुव int64_t i2_0 = i2 / r2;
+            ध्रुव int64_t i3_0 = i3 / r3;
 
-            const char *  src0_batch = src0_base + i3_0 * nb3_0 + i2_0 * nb2_0;
-            const int64_t mb         = mb_idx * TILE_M;
+            ध्रुव वर्ण *  src0_batch = src0_base + i3_0 * nb3_0 + i2_0 * nb2_0;
+            ध्रुव int64_t mb         = mb_idx * TILE_M;
 
-            for (int64_t kb = kb_start; kb < kb_end; ++kb) {
-                int buf = chunk_id & 1;
+            प्रति (int64_t kb = kb_start; kb < kb_end; ++kb) {
+                पूर्णाङ्क buf = chunk_id & 1;
 
                 // Back-pressure: wait for hart 0 to finish with this buffer.
-                if (chunk_id >= 2) {
+                यदि (chunk_id >= 2) {
                     scp_wait(consumed_ctr, chunk_id - 1);
                 }
 
@@ -246,77 +246,77 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
         }
 
         FENCE;
-        return 0;
+        प्रत्यागम 0;
     }
 
     // ================================================================
     // Hart 0: tensor engine compute
     // ================================================================
     uint64_t       my_minion_id      = get_minion_id();
-    const uint64_t group_base_global = my_minion_id - k_split;
+    ध्रुव uint64_t group_base_global = my_minion_id - k_split;
 
     setup_cache_scp();
-#if CACHEOP_MAX > 0 || REP_RATE > 0
+#यदि CACHEOP_MAX > 0 || REP_RATE > 0
     ucache_control(1, REP_RATE, CACHEOP_MAX);
 #endif
     CLEAR_TENSOR_ERROR;
 
-    evict_to_l2((const void *) ready_ctr, 1, 64);
+    evict_to_l2((ध्रुव शून्य *) ready_ctr, 1, 64);
     WAIT_CACHEOPS;
-    evict_to_l2((const void *) consumed_ctr, 1, 64);
+    evict_to_l2((ध्रुव शून्य *) consumed_ctr, 1, 64);
     WAIT_CACHEOPS;
 
     uint32_t chunk_id = 0;
 
-    for (int64_t tile = (int64_t) shire_id + local_tile_idx * NUM_COMPUTE_SHIRES; tile < base_tiles;
+    प्रति (int64_t tile = (int64_t) shire_id + local_tile_idx * अंक_COMPUTE_SHIRES; tile < base_tiles;
          tile += tiles_stride) {
-        const int64_t tiles_per_batch = m_tiles * n_tiles;
-        const int64_t batch_idx       = tile / tiles_per_batch;
-        const int64_t tile_in_batch   = tile % tiles_per_batch;
+        ध्रुव int64_t tiles_per_batch = m_tiles * n_tiles;
+        ध्रुव int64_t batch_idx       = tile / tiles_per_batch;
+        ध्रुव int64_t tile_in_batch   = tile % tiles_per_batch;
 
-        const int64_t nb_idx = tile_in_batch / m_tiles;
-        const int64_t mb_idx = tile_in_batch % m_tiles;
+        ध्रुव int64_t nb_idx = tile_in_batch / m_tiles;
+        ध्रुव int64_t mb_idx = tile_in_batch % m_tiles;
 
-        const int64_t i3 = batch_idx / ne2_1;
-        const int64_t i2 = batch_idx % ne2_1;
+        ध्रुव int64_t i3 = batch_idx / ne2_1;
+        ध्रुव int64_t i2 = batch_idx % ne2_1;
 
-        const char * src1_batch = src1_base + i3 * nb3_1 + i2 * nb2_1;
-        char *       dst_batch  = dst_base + i3 * nb3_d + i2 * nb2_d;
+        ध्रुव वर्ण * src1_batch = src1_base + i3 * nb3_1 + i2 * nb2_1;
+        वर्ण *       dst_batch  = dst_base + i3 * nb3_d + i2 * nb2_d;
 
-        const int64_t mb    = mb_idx * TILE_M;
-        const int64_t nb    = nb_idx * TILE_N;
-        const int64_t n_cur = (nb + TILE_N <= N) ? TILE_N : (N - nb);
+        ध्रुव int64_t mb    = mb_idx * TILE_M;
+        ध्रुव int64_t nb    = nb_idx * TILE_N;
+        ध्रुव int64_t n_cur = (nb + TILE_N <= N) ? TILE_N : (N - nb);
 
         // Partial-N tiles run TensorFMA32 with a_num_rows = n_cur-1.
         // Errata Type D workaround for n_cur == 4 (AROWS==3): pad A to AROWS==4.
-        const int64_t arows_fma = (n_cur == 4) ? 4 : (n_cur - 1);
+        ध्रुव int64_t arows_fma = (n_cur == 4) ? 4 : (n_cur - 1);
 
-        if (n_cur == 4) {
+        यदि (n_cur == 4) {
             // Zero the padded 5th A row (line A_L1_START+4) once; the per-pass A
             // load only writes lines A_L1_START..+3, so this persists.
-            static const float __attribute__((aligned(64))) zero_line[16] = { 0 };
-            tensor_load(false, false, A_L1_START + 4, TENSOR_LOAD_PLAIN, 0, (uint64_t) zero_line, 0,
+            स्थिर ध्रुव भिन्न __attribute__((aligned(64))) zero_ओळ[16] = { 0 };
+            tensor_load(false, false, A_L1_START + 4, TENSOR_LOAD_PLAIN, 0, (uint64_t) zero_ओळ, 0,
                         0,  // 1 line
                         64, 0);
             tensor_wait(TENSOR_LOAD_WAIT_0);
         }
 
-        int first = 1;  // first_pass=1 only for the very first FMA of the tile
+        पूर्णाङ्क first = 1;  // first_pass=1 only for the very first FMA of the tile
 
-        for (int64_t kb = kb_start; kb < kb_end; ++kb) {
-            int buf = chunk_id & 1;
+        प्रति (int64_t kb = kb_start; kb < kb_end; ++kb) {
+            पूर्णाङ्क buf = chunk_id & 1;
 
             // Wait for hart 1 to finish dequantizing this block.
             chunk_id++;
             scp_wait(ready_ctr, chunk_id);
 
             // Two FMA passes over the 32-wide block (16 K-cols each).
-            for (int half = 0; half < 2; ++half) {
-                const int64_t k_elem = kb * BLOCK_K + half * FMA_K;
+            प्रति (पूर्णाङ्क half = 0; half < 2; ++half) {
+                ध्रुव int64_t k_elem = kb * BLOCK_K + half * FMA_K;
 
                 // Load A (activations) for this 16-K sub-tile, PLAIN.
                 tensor_load(false, false, A_L1_START, TENSOR_LOAD_PLAIN, 0,
-                            (uint64_t) (src1_batch + nb * nb1_1 + k_elem * (int64_t) sizeof(float)), 0, n_cur - 1,
+                            (uint64_t) (src1_batch + nb * nb1_1 + k_elem * (int64_t) परिमाण(भिन्न)), 0, n_cur - 1,
                             (uint64_t) nb1_1, 0);
 
                 // Load B (dequantized weights) half from L2 SCP panel, PLAIN.
@@ -341,28 +341,28 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
         }
 
         // K-split ring reduce.
-        if (k_splits > 1) {
-            const uint64_t num_regs = (uint64_t) n_cur * 2;
+        यदि (k_splits > 1) {
+            ध्रुव uint64_t अंक_regs = (uint64_t) n_cur * 2;
 
-            if (k_split > 0) {
-                tensor_reduce_recv(0, TENSOR_REDUCE_OP_FADD, num_regs, group_base_global + k_split - 1);
+            यदि (k_split > 0) {
+                tensor_reduce_recv(0, TENSOR_REDUCE_OP_FADD, अंक_regs, group_base_global + k_split - 1);
                 tensor_wait(TENSOR_REDUCE_WAIT);
             }
 
-            if (k_split < k_splits - 1) {
-                tensor_reduce_send(0, num_regs, group_base_global + k_split + 1);
+            यदि (k_split < k_splits - 1) {
+                tensor_reduce_send(0, अंक_regs, group_base_global + k_split + 1);
                 tensor_wait(TENSOR_REDUCE_WAIT);
             }
         }
 
         // Store FP32 result tile (only the last k-split owns the final sum).
-        if (k_split == k_splits - 1) {
-            tensor_store(0, 0, 3, n_cur - 1, (uint64_t) (dst_batch + nb * nb1_d + mb * (int64_t) sizeof(float)), 0,
+        यदि (k_split == k_splits - 1) {
+            tensor_store(0, 0, 3, n_cur - 1, (uint64_t) (dst_batch + nb * nb1_d + mb * (int64_t) परिमाण(भिन्न)), 0,
                          (uint64_t) nb1_d);
             tensor_wait(TENSOR_STORE_WAIT);
         }
     }
 
     FENCE;
-    return 0;
+    प्रत्यागम 0;
 }

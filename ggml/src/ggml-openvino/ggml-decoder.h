@@ -1,83 +1,83 @@
 #pragma once
 
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
-#include "ggml.h"
-#include "openvino/decoder.h"
+#अन्तर्भाव "ggml-backend-impl.h"
+#अन्तर्भाव "ggml-backend.h"
+#अन्तर्भाव "ggml.h"
+#अन्तर्भाव "openvino/decoder.h"
 
-#include <cstdint>
-#include <cstring>
-#include <map>
-#include <memory>
-#include <openvino/core/partial_shape.hpp>
-#include <optional>
-#include <set>
-#include <string>
-#include <vector>
+#अन्तर्भाव <cstdint>
+#अन्तर्भाव <cstring>
+#अन्तर्भाव <map>
+#अन्तर्भाव <memory>
+#अन्तर्भाव <openvino/core/partial_shape.hpp>
+#अन्तर्भाव <optional>
+#अन्तर्भाव <set>
+#अन्तर्भाव <string>
+#अन्तर्भाव <vector>
 
-struct ModelParams {
-    int ctx = -1;
-    int ctx_per_seq = -1;
-    int ctx_per_seq_swa = -1;
-    int n_seq = 1;
-    int n_heads_kv = -1;
+संरचना ModelParams {
+    पूर्णाङ्क ctx = -1;
+    पूर्णाङ्क ctx_per_seq = -1;
+    पूर्णाङ्क ctx_per_seq_swa = -1;
+    पूर्णाङ्क n_seq = 1;
+    पूर्णाङ्क n_heads_kv = -1;
     // Per-layer KV head count. gemma-4 12B interleaves 8 x 256 sliding layers with 1 x 512
     // full-attention layers, so no single scalar describes every layer. Keyed by layer, not by
     // layer TYPE, because the SWA classification depends on the context size (extents tie at a
     // small -c) while the head count does not.
-    std::map<int, int> n_heads_kv_per_layer;
-    int head_size = -1;
-    int state_size = -1;  // for SSM molels, eg qwen35
+    std::map<पूर्णाङ्क, पूर्णाङ्क> n_heads_kv_per_layer;
+    पूर्णाङ्क head_size = -1;
+    पूर्णाङ्क state_size = -1;  // for SSM molels, eg qwen35
     int32_t rope_params[16] = {};
-    int n_rs_slots = -1;
+    पूर्णाङ्क n_rs_slots = -1;
     bool has_rs_rollback = false;
     bool mixed_rope_params = false;
     bool is_cacheless_attn = false;
-    std::vector<int> swa_layers;
+    std::vector<पूर्णाङ्क> swa_layers;
     // The sliding-window mask tensor, identified in compute_llm_params() by grouping attention
     // layers on the mask they consume. Only used to tell the two masks apart when naming OV
     // parameters -- both carry the same tensor name. Null when the graph has a single mask.
-    const ggml_tensor * swa_mask = nullptr;
+    ध्रुव ggml_tensor * swa_mask = nullptr;
 
     std::vector<std::string> kv_names;
     size_t kv_buffer_ctx_id = 0;
 
-    bool same_rope_params(const ModelParams & other) const {
-        return mixed_rope_params == other.mixed_rope_params &&
-               memcmp(rope_params, other.rope_params, sizeof(int32_t) * 16) == 0;
+    bool same_rope_params(ध्रुव ModelParams & other) ध्रुव {
+        प्रत्यागम mixed_rope_params == other.mixed_rope_params &&
+               memcmp(rope_params, other.rope_params, परिमाण(int32_t) * 16) == 0;
     }
 
-    bool can_reuse_dynamically(const ModelParams & other) const {
-        return same_rope_params(other) && n_rs_slots == other.n_rs_slots &&
+    bool can_reuse_dynamically(ध्रुव ModelParams & other) ध्रुव {
+        प्रत्यागम same_rope_params(other) && n_rs_slots == other.n_rs_slots &&
                has_rs_rollback == other.has_rs_rollback;
     }
 
-    bool can_reuse_statically(const ModelParams & other) const {
-        return same_rope_params(other) && ctx == other.ctx && n_rs_slots == other.n_rs_slots &&
+    bool can_reuse_statically(ध्रुव ModelParams & other) ध्रुव {
+        प्रत्यागम same_rope_params(other) && ctx == other.ctx && n_rs_slots == other.n_rs_slots &&
                has_rs_rollback == other.has_rs_rollback;
     }
 
-    bool kv_buffer_changed(const ModelParams & other) const { return kv_buffer_ctx_id != other.kv_buffer_ctx_id; }
+    bool kv_buffer_changed(ध्रुव ModelParams & other) ध्रुव { प्रत्यागम kv_buffer_ctx_id != other.kv_buffer_ctx_id; }
 };
 
-struct ComputeParams {
-    int n_seq_active = 1;
-    int seq_active_start = 0;
-    int attention_size = -1;
-    int attention_size_swa = -1;
-    int attention_size_static = -1;  // encoder/cross-attn KV fill level (whisper)
+संरचना ComputeParams {
+    पूर्णाङ्क n_seq_active = 1;
+    पूर्णाङ्क seq_active_start = 0;
+    पूर्णाङ्क attention_size = -1;
+    पूर्णाङ्क attention_size_swa = -1;
+    पूर्णाङ्क attention_size_static = -1;  // encoder/cross-attn KV fill level (whisper)
     // Sliding window width, read back from the band of ggml's own SWA mask. ggml never passes
     // n_swa down to a backend, but fill_mask() bakes it into the mask contents, so the widest
     // unmasked row recovers it. Shorter than n_swa while the sequence is still short, which is
     // harmless: every causal pair is inside the window then anyway.
-    int swa_window = -1;
-    int input_len = -1;
-    int token_len_per_seq = -1;
-    int past_kv_len = -1;
-    int output_len = 1;
+    पूर्णाङ्क swa_window = -1;
+    पूर्णाङ्क आदान_len = -1;
+    पूर्णाङ्क token_len_per_seq = -1;
+    पूर्णाङ्क past_kv_len = -1;
+    पूर्णाङ्क output_len = 1;
 
-    int cache_rs_reset_idx = -1;
-    int cache_rs_reset_len = -1;
+    पूर्णाङ्क cache_rs_reset_idx = -1;
+    पूर्णाङ्क cache_rs_reset_len = -1;
     // SSM/DeltaNet models otionally clear cache_r and cache_s of certain slots in the cgraph
     // 3: [ 18432,     4,     1,     1] RESHAPE              cache_r_l0 (reshaped)
     //    [ 18432,     4,     1,     1]            0: NONE        cache_r_l0
@@ -86,7 +86,7 @@ struct ComputeParams {
     // 5: [ 18432,     1,     1,     1] SCALE                cache_r_l0 (reshaped) (view) (view)
     //    [ 18432,     1,     1,     1]            0: VIEW        cache_r_l0 (reshaped) (view)
 
-    int s_copy_active_slot_len = -1;
+    पूर्णाङ्क s_copy_active_slot_len = -1;
     // SSM/DeltaNet models otionally reorder slots of state cache, to make the active slots contiguous
     // leaf_5 is the inp->s_copy in llama-graph.cpp, eg if there are 8 slots in total and slot 3 and 7
     // are active in the current batch, leaf_5 will be [3, 7, 5, 6, 4]
@@ -106,9 +106,9 @@ struct ComputeParams {
     //      [ 18432,     0,     1,     1]            0: GET_ROWS    node_9
     //      [ 18432,     0,     1,     1]            1: VIEW        cache_r_l0 (view)
 
-    struct RsWriteback {
-        int slot_begin = 0;  // first cache slot written by the CPY
-        int src_begin = -1;  // first source column copied by a conv-state CPY
+    संरचना RsWriteback {
+        पूर्णाङ्क slot_begin = 0;  // first cache slot written by the CPY
+        पूर्णाङ्क src_begin = -1;  // first source column copied by a conv-state CPY
     };
 
     std::map<std::string, RsWriteback> rs_writebacks;
@@ -120,340 +120,340 @@ struct ComputeParams {
 };
 
 // defined below; declared here because GgmlOvDecoder uses it inline
-std::optional<int> extract_layer_from_name(const std::string & name);
+std::optional<पूर्णाङ्क> extract_layer_from_name(ध्रुव std::string & name);
 
 // detects the MoE expert-plane-sum ADD chain (see definition); used by supports_op too
-bool is_moe_expert_sum_add(const ggml_tensor * node);
+bool is_moe_expert_sum_add(ध्रुव ggml_tensor * गाठ);
 
-class GgmlOvDecoder : public ov::frontend::ggml::GgmlDecoder {
-public:
-    static std::string get_tensor_name(const ggml_cgraph * cgraph, const ggml_tensor * tensor);
-    struct NodeInfo {
-        ggml_tensor * node;
-        std::string node_name;
-        std::string node_op_type;
-        std::map<std::string, ggml_tensor *> node_inputs;
-        std::map<std::string, std::vector<std::pair<std::string, ggml_tensor *>>> node_inputs_views;
-        std::vector<std::string> node_inputs_names;
-        int node_op_case = 0;
-        void * data_addr;
+class GgmlOvDecoder : सार्वजनिक ov::frontend::ggml::GgmlDecoder {
+सार्वजनिक:
+    स्थिर std::string get_tensor_name(ध्रुव ggml_cgraph * cgraph, ध्रुव ggml_tensor * tensor);
+    संरचना गाठ_Info {
+        ggml_tensor * गाठ;
+        std::string गाठ_name;
+        std::string गाठ_op_type;
+        std::map<std::string, ggml_tensor *> गाठ_inputs;
+        std::map<std::string, std::vector<std::pair<std::string, ggml_tensor *>>> गाठ_inputs_views;
+        std::vector<std::string> गाठ_inputs_names;
+        पूर्णाङ्क गाठ_op_case = 0;
+        शून्य * data_addr;
     };
 
     // Graph decoder
     GgmlOvDecoder(ggml_cgraph * cgraph,
                   ModelParams & model_params,
                   ComputeParams & compute_params,
-                  std::map<std::string, std::shared_ptr<ov::Node>> & model_weights,
+                  std::map<std::string, std::shared_ptr<ov::गाठ_2>> & model_weights,
                   bool is_static,
                   bool is_stateful = false,
                   bool model_is_splitted = false,
                   bool is_prefill = false,
-                  int prefill_chunk_size = 256);
+                  पूर्णाङ्क prefill_chunk_size = 256);
 
     // Naive graph decoder
-    GgmlOvDecoder(ggml_cgraph * cgraph, std::map<std::string, std::shared_ptr<ov::Node>> & model_weights);
+    GgmlOvDecoder(ggml_cgraph * cgraph, std::map<std::string, std::shared_ptr<ov::गाठ_2>> & model_weights);
 
-    virtual ov::Any get_attribute(const std::string & name) const override {
-        return nullptr;
+    आभास ov::Any get_attribute(ध्रुव std::string & name) ध्रुव override {
+        प्रत्यागम nullptr;
         GGML_UNUSED(name);
     }
 
-    virtual ov::PartialShape get_input_shape(int node_idx, const std::string & name) const override;
+    आभास ov::PartialShape get_आदान_shape(पूर्णाङ्क गाठ_idx, ध्रुव std::string & name) ध्रुव override;
 
-    virtual std::vector<size_t> get_input_stride(int node_idx, const std::string & name) const override;
+    आभास std::vector<size_t> get_आदान_stride(पूर्णाङ्क गाठ_idx, ध्रुव std::string & name) ध्रुव override;
 
-    virtual size_t get_view_input_size(int node_idx, const std::string & name) const override;
+    आभास size_t get_view_आदान_size(पूर्णाङ्क गाठ_idx, ध्रुव std::string & name) ध्रुव override;
 
-    virtual size_t get_view_input_offset(int node_idx, const std::string & name, size_t view_index) const override;
+    आभास size_t get_view_आदान_offset(पूर्णाङ्क गाठ_idx, ध्रुव std::string & name, size_t view_index) ध्रुव override;
 
-    virtual size_t get_view_input_src_offset(int node_idx, const std::string & name, size_t view_index) const override;
+    आभास size_t get_view_आदान_src_offset(पूर्णाङ्क गाठ_idx, ध्रुव std::string & name, size_t view_index) ध्रुव override;
 
-    virtual std::vector<size_t> get_view_input_stride(int node_idx,
-                                                      const std::string & name,
-                                                      size_t view_index) const override;
+    आभास std::vector<size_t> get_view_आदान_stride(पूर्णाङ्क गाठ_idx,
+                                                      ध्रुव std::string & name,
+                                                      size_t view_index) ध्रुव override;
 
-    virtual std::vector<size_t> get_view_input_src_stride(int node_idx,
-                                                          const std::string & name,
-                                                          size_t view_index) const override;
+    आभास std::vector<size_t> get_view_आदान_src_stride(पूर्णाङ्क गाठ_idx,
+                                                          ध्रुव std::string & name,
+                                                          size_t view_index) ध्रुव override;
 
-    virtual ov::Shape get_view_input_ggml_shape(int node_idx,
-                                                const std::string & name,
-                                                size_t view_index) const override;
+    आभास ov::Shape get_view_आदान_ggml_shape(पूर्णाङ्क गाठ_idx,
+                                                ध्रुव std::string & name,
+                                                size_t view_index) ध्रुव override;
 
-    virtual ov::Shape get_view_input_src_ggml_shape(int node_idx,
-                                                    const std::string & name,
-                                                    size_t view_index) const override;
+    आभास ov::Shape get_view_आदान_src_ggml_shape(पूर्णाङ्क गाठ_idx,
+                                                    ध्रुव std::string & name,
+                                                    size_t view_index) ध्रुव override;
 
-    virtual ov::PartialShape get_view_input_ov_shape(int node_idx,
-                                                     const std::string & name,
-                                                     size_t view_index) const override;
+    आभास ov::PartialShape get_view_आदान_ov_shape(पूर्णाङ्क गाठ_idx,
+                                                     ध्रुव std::string & name,
+                                                     size_t view_index) ध्रुव override;
 
-    virtual ov::PartialShape get_view_input_src_ov_shape(int node_idx,
-                                                         const std::string & name,
-                                                         size_t view_index) const override;
+    आभास ov::PartialShape get_view_आदान_src_ov_shape(पूर्णाङ्क गाठ_idx,
+                                                         ध्रुव std::string & name,
+                                                         size_t view_index) ध्रुव override;
 
-    virtual std::string get_view_input_name(int node_idx, const std::string & name, size_t view_index) const override;
+    आभास std::string get_view_आदान_name(पूर्णाङ्क गाठ_idx, ध्रुव std::string & name, size_t view_index) ध्रुव override;
 
-    virtual std::string get_view_input_src_name(int node_idx,
-                                                const std::string & name,
-                                                size_t view_index) const override;
+    आभास std::string get_view_आदान_src_name(पूर्णाङ्क गाठ_idx,
+                                                ध्रुव std::string & name,
+                                                size_t view_index) ध्रुव override;
 
-    virtual ov::element::Type get_input_type(int node_idx, const std::string & name) const override;
+    आभास ov::element::Type get_आदान_type(पूर्णाङ्क गाठ_idx, ध्रुव std::string & name) ध्रुव override;
 
-    virtual size_t get_input_size() const override;
+    आभास size_t get_आदान_size() ध्रुव override;
 
-    virtual size_t get_input_size(int node_idx) const override;
+    आभास size_t get_आदान_size(पूर्णाङ्क गाठ_idx) ध्रुव override;
 
-    virtual void get_input_node(size_t input_port_idx,
+    आभास शून्य get_आदान_गाठ(size_t आदान_port_idx,
                                 std::string & producer_name,
                                 std::string & producer_output_port_name,
-                                size_t & producer_output_port_index) const override {
-        GGML_UNUSED(input_port_idx);
+                                size_t & producer_output_port_index) ध्रुव override {
+        GGML_UNUSED(आदान_port_idx);
         GGML_UNUSED(producer_name);
         GGML_UNUSED(producer_output_port_name);
         GGML_UNUSED(producer_output_port_index);
     }
 
-    virtual std::vector<std::string> get_input_names(int node_idx) const override;
+    आभास std::vector<std::string> get_आदान_names(पूर्णाङ्क गाठ_idx) ध्रुव override;
 
-    virtual ov::PartialShape get_output_shape(int node_idx) const override;
+    आभास ov::PartialShape get_output_shape(पूर्णाङ्क गाठ_idx) ध्रुव override;
 
-    virtual ov::element::Type get_output_type(int node_idx) const override;
+    आभास ov::element::Type get_output_type(पूर्णाङ्क गाठ_idx) ध्रुव override;
 
-    virtual std::vector<size_t> get_output_stride(int node_idx) const override;
+    आभास std::vector<size_t> get_output_stride(पूर्णाङ्क गाठ_idx) ध्रुव override;
 
-    virtual int32_t * get_input_op_params(int node_idx, const std::string & name) const override;
+    आभास int32_t * get_आदान_op_params(पूर्णाङ्क गाठ_idx, ध्रुव std::string & name) ध्रुव override;
 
-    virtual int32_t * get_output_op_params(int node_idx) const override;
+    आभास int32_t * get_output_op_params(पूर्णाङ्क गाठ_idx) ध्रुव override;
 
-    virtual size_t get_output_op_offset(int node_idx) const override;
+    आभास size_t get_output_op_offset(पूर्णाङ्क गाठ_idx) ध्रुव override;
 
-    virtual std::vector<std::string> get_output_names(int node_idx) const override;
+    आभास std::vector<std::string> get_output_names(पूर्णाङ्क गाठ_idx) ध्रुव override;
 
-    virtual std::string get_inplace_op_src(int node_idx) const override;
+    आभास std::string get_inplace_op_src(पूर्णाङ्क गाठ_idx) ध्रुव override;
 
-    virtual bool is_view_like_alias_of(int node_idx, const std::string & view_src_name) const override;
+    आभास bool is_view_like_alias_of(पूर्णाङ्क गाठ_idx, ध्रुव std::string & view_src_name) ध्रुव override;
 
-    virtual const std::string & get_op_type() const override;
+    आभास ध्रुव std::string & get_op_type() ध्रुव override;
 
-    virtual const std::string & get_op_type(int node_idx) const override;
+    आभास ध्रुव std::string & get_op_type(पूर्णाङ्क गाठ_idx) ध्रुव override;
 
-    virtual const std::string & get_op_name() const override;
+    आभास ध्रुव std::string & get_op_name() ध्रुव override;
 
-    virtual const std::string & get_op_name(int node_idx) const override;
+    आभास ध्रुव std::string & get_op_name(पूर्णाङ्क गाठ_idx) ध्रुव override;
 
-    virtual int32_t get_op_dynamic_dim(int node_idx) const override;
+    आभास int32_t get_op_dynamic_dim(पूर्णाङ्क गाठ_idx) ध्रुव override;
 
-    virtual void visit_subgraph(
-        std::function<void(std::shared_ptr<GgmlDecoder>, int node_idx)> node_visitor) const override;
+    आभास शून्य visit_subgraph(
+        std::function<शून्य(std::shared_ptr<GgmlDecoder>, पूर्णाङ्क गाठ_idx)> गाठ_visitor) ध्रुव override;
 
-    ggml_tensor * get_input_ggml_tensor(const std::string & name) const { return m_inputs.at(name); }
+    ggml_tensor * get_आदान_ggml_tensor(ध्रुव std::string & name) ध्रुव { प्रत्यागम m_inputs.at(name); }
 
-    virtual int get_op_case(int node_idx) const override { return m_node_info_list[node_idx].node_op_case; }
+    आभास पूर्णाङ्क get_op_case(पूर्णाङ्क गाठ_idx) ध्रुव override { प्रत्यागम m_गाठ_info_list[गाठ_idx].गाठ_op_case; }
 
-    virtual const std::map<std::string, ov::frontend::ggml::ModelInputInfo> & get_model_inputs() const override {
-        return m_model_inputs;
+    आभास ध्रुव std::map<std::string, ov::frontend::ggml::Model_आदान_Info> & get_model_inputs() ध्रुव override {
+        प्रत्यागम m_model_inputs;
     }
 
-    virtual const std::map<std::string, ov::frontend::ggml::ModelExtraInputInfo> & get_model_extra_inputs() const override {
-        return m_model_extra_inputs;
+    आभास ध्रुव std::map<std::string, ov::frontend::ggml::Model_Extra_आदान_Info> & get_model_extra_inputs() ध्रुव override {
+        प्रत्यागम m_model_extra_inputs;
     }
 
-    virtual const std::map<std::string, std::shared_ptr<ov::Node>> & get_model_weights() const override {
-        return m_model_weights;
+    आभास ध्रुव std::map<std::string, std::shared_ptr<ov::गाठ_2>> & get_model_weights() ध्रुव override {
+        प्रत्यागम m_model_weights;
     }
 
-    virtual std::set<std::string> get_model_output_names() const override { return m_model_output_names; }
+    आभास std::set<std::string> get_model_output_names() ध्रुव override { प्रत्यागम m_model_output_names; }
 
-    const std::map<std::string, ggml_tensor *> & get_model_outputs() const { return m_model_outputs; }
+    ध्रुव std::map<std::string, ggml_tensor *> & get_model_outputs() ध्रुव { प्रत्यागम m_model_outputs; }
 
-    virtual int get_ctx_size() const { return m_model_params.ctx; }
+    आभास पूर्णाङ्क get_ctx_size() ध्रुव { प्रत्यागम m_model_params.ctx; }
 
-    virtual int get_ctx_per_seq() const { return m_model_params.ctx_per_seq; }
+    आभास पूर्णाङ्क get_ctx_per_seq() ध्रुव { प्रत्यागम m_model_params.ctx_per_seq; }
 
-    virtual int get_ctx_per_seq_swa() const { return m_model_params.ctx_per_seq_swa; }
+    आभास पूर्णाङ्क get_ctx_per_seq_swa() ध्रुव { प्रत्यागम m_model_params.ctx_per_seq_swa; }
 
-    virtual int get_n_seq() const { return m_model_params.n_seq; }
+    आभास पूर्णाङ्क get_n_seq() ध्रुव { प्रत्यागम m_model_params.n_seq; }
 
-    virtual int is_swa_layer(int layer) const override {
-        return std::find(m_model_params.swa_layers.begin(), m_model_params.swa_layers.end(), layer) !=
+    आभास पूर्णाङ्क is_swa_layer(पूर्णाङ्क layer) ध्रुव override {
+        प्रत्यागम std::find(m_model_params.swa_layers.begin(), m_model_params.swa_layers.end(), layer) !=
                m_model_params.swa_layers.end();
     }
 
     // KV head count for one layer. Sliding and full layers can differ (gemma-4 12B), so callers
     // that reinterpret a KV buffer must use this and not the model-level n_heads_kv.
-    int get_n_heads_kv_for_layer(int layer) const {
+    पूर्णाङ्क get_n_heads_kv_for_layer(पूर्णाङ्क layer) ध्रुव {
         auto it = m_model_params.n_heads_kv_per_layer.find(layer);
-        return it != m_model_params.n_heads_kv_per_layer.end() ? it->second : m_model_params.n_heads_kv;
+        प्रत्यागम it != m_model_params.n_heads_kv_per_layer.end() ? it->second : m_model_params.n_heads_kv;
     }
 
     // Same, for a KV cache tensor: its layer comes from the leaf name (cache_k_l<N>).
-    int get_n_heads_kv_for_tensor(const ggml_tensor * kv_tensor) const {
-        if (auto layer = extract_layer_from_name(std::string(kv_tensor->name)); layer.has_value()) {
-            return get_n_heads_kv_for_layer(layer.value());
+    पूर्णाङ्क get_n_heads_kv_for_tensor(ध्रुव ggml_tensor * kv_tensor) ध्रुव {
+        यदि (auto layer = extract_layer_from_name(std::string(kv_tensor->name)); layer.has_मूल्य()) {
+            प्रत्यागम get_n_heads_kv_for_layer(layer.मूल्य());
         }
-        return m_model_params.n_heads_kv;
+        प्रत्यागम m_model_params.n_heads_kv;
     }
 
-    int get_past_kv_len() const { return m_compute_params.past_kv_len; }
+    पूर्णाङ्क get_past_kv_len() ध्रुव { प्रत्यागम m_compute_params.past_kv_len; }
 
-    int get_input_len() const { return m_compute_params.input_len; }
+    पूर्णाङ्क get_आदान_len() ध्रुव { प्रत्यागम m_compute_params.आदान_len; }
 
-    virtual int32_t * get_rope_params() const override { return const_cast<int32_t *>(m_model_params.rope_params); }
+    आभास int32_t * get_rope_params() ध्रुव override { प्रत्यागम const_cast<int32_t *>(m_model_params.rope_params); }
 
-    virtual bool has_mixed_rope_params() const override { return m_model_params.mixed_rope_params; }
+    आभास bool has_mixed_rope_params() ध्रुव override { प्रत्यागम m_model_params.mixed_rope_params; }
 
-    virtual int get_ssm_state_size() const override { return m_model_params.state_size; }
+    आभास पूर्णाङ्क get_ssm_state_size() ध्रुव override { प्रत्यागम m_model_params.state_size; }
 
-    virtual std::map<std::string, std::string> get_kv_param_res_names() const override;
+    आभास std::map<std::string, std::string> get_kv_param_res_names() ध्रुव override;
 
-    virtual bool is_static() const override { return m_is_static; }
+    आभास bool is_static() ध्रुव override { प्रत्यागम m_is_static; }
 
-    virtual bool is_stateful() const override { return m_is_stateful; }
+    आभास bool is_stateful() ध्रुव override { प्रत्यागम m_is_stateful; }
 
-    int get_static_n_tokens() const { return m_is_prefill ? m_prefill_chunk_size : 1; }
+    पूर्णाङ्क get_static_n_tokens() ध्रुव { प्रत्यागम m_is_prefill ? m_prefill_chunk_size : 1; }
 
-    virtual bool is_splited_model() const override { return m_model_is_splitted; }
+    आभास bool is_splited_model() ध्रुव override { प्रत्यागम m_model_is_splitted; }
 
-    ov::PartialShape get_graph_input_shape(const ggml_tensor * op,
-                                           const ggml_tensor * input,
-                                           int dynamic_dim_index = -1) const;
+    ov::PartialShape get_graph_आदान_shape(ध्रुव ggml_tensor * op,
+                                           ध्रुव ggml_tensor * आदान,
+                                           पूर्णाङ्क dynamic_dim_index = -1) ध्रुव;
 
-    static void dump_cgraph(const ggml_cgraph * cgraph, std::string & filename);
+    स्थिर शून्य dump_cgraph(ध्रुव ggml_cgraph * cgraph, std::string & filename);
 
-    static std::shared_ptr<ov::Node> create_weight_node(ggml_tensor * tensor, bool naive = false);
+    स्थिर std::shared_ptr<ov::गाठ_2> create_weight_गाठ(ggml_tensor * tensor, bool naive = false);
 
-    static std::map<std::string, std::shared_ptr<ov::Node>> create_weight_nodes(ggml_cgraph * cgraph,
+    स्थिर std::map<std::string, std::shared_ptr<ov::गाठ_2>> create_weight_nodes(ggml_cgraph * cgraph,
                                                                                 bool naive = false);
 
     // Collect just the set of weight-tensor names referenced by the graph, without
     // building (or requantizing) any OV weight nodes. Used by topology checks like
     // is_model_splitted that only need name membership.
-    static std::set<std::string> collect_weight_names(ggml_cgraph * cgraph);
+    स्थिर std::set<std::string> collect_weight_names(ggml_cgraph * cgraph);
 
-    const ggml_tensor * get_tensor_used_op(const ggml_tensor * tensor) const;
+    ध्रुव ggml_tensor * get_tensor_used_op(ध्रुव ggml_tensor * tensor) ध्रुव;
 
-    const ggml_tensor * get_tensor_from_name(const std::string & name) const;
+    ध्रुव ggml_tensor * get_tensor_from_name(ध्रुव std::string & name) ध्रुव;
 
-    void clear_model_weights() { m_model_weights.clear(); }
+    शून्य clear_model_weights() { m_model_weights.clear(); }
 
-    static std::pair<ModelParams, ComputeParams> compute_llm_params(ggml_cgraph * cgraph, bool is_static);
+    स्थिर std::pair<ModelParams, ComputeParams> compute_llm_params(ggml_cgraph * cgraph, bool is_static);
 
-    ModelParams get_model_params() const { return m_model_params; }
+    ModelParams get_model_params() ध्रुव { प्रत्यागम m_model_params; }
 
-    ComputeParams get_compute_params() const { return m_compute_params; }
+    ComputeParams get_compute_params() ध्रुव { प्रत्यागम m_compute_params; }
 
-    void set_model_params(const ModelParams & model_params) { m_model_params = model_params; }
+    शून्य set_model_params(ध्रुव ModelParams & model_params) { m_model_params = model_params; }
 
-    void set_compute_params(const ComputeParams & compute_params) { m_compute_params = compute_params; }
+    शून्य set_compute_params(ध्रुव ComputeParams & compute_params) { m_compute_params = compute_params; }
 
     bool m_is_static = false;
     bool m_is_stateful = false;
     bool m_is_prefill = false;
     bool m_naive = false;
-    int m_prefill_chunk_size = 0;
+    पूर्णाङ्क m_prefill_chunk_size = 0;
     bool m_model_is_splitted = false;  // label the cgraph is splited or not
 
-    static ov::Shape get_shape(const ggml_tensor * tensor);
-    static std::vector<size_t> get_stride(const ggml_tensor * tensor);
-    static ov::element::Type get_ov_type(const ggml_tensor * tensor);
-    static std::string compute_op_type(const ggml_tensor * node);
-    void add_extra_inputs();
+    स्थिर ov::Shape get_shape(ध्रुव ggml_tensor * tensor);
+    स्थिर std::vector<size_t> get_stride(ध्रुव ggml_tensor * tensor);
+    स्थिर ov::element::Type get_ov_type(ध्रुव ggml_tensor * tensor);
+    स्थिर std::string compute_op_type(ध्रुव ggml_tensor * गाठ);
+    शून्य add_extra_inputs();
 
-    void update_io(ggml_cgraph * cgraph);
-    bool is_bound_to(const ggml_cgraph * cgraph) const;
+    शून्य update_io(ggml_cgraph * cgraph);
+    bool is_bound_to(ध्रुव ggml_cgraph * cgraph) ध्रुव;
 
-    static bool is_inp_tok(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return op->op == GGML_OP_GET_ROWS && tensor == op->src[1] && op->src[0]->op == GGML_OP_NONE;
+    स्थिर bool is_inp_tok(ध्रुव ggml_tensor * tensor, ध्रुव ggml_tensor * op) {
+        प्रत्यागम op->op == GGML_OP_GET_ROWS && tensor == op->src[1] && op->src[0]->op == GGML_OP_NONE;
     }
 
-    static bool is_inp_pos(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return op->op == GGML_OP_ROPE && tensor == op->src[1];
+    स्थिर bool is_inp_pos(ध्रुव ggml_tensor * tensor, ध्रुव ggml_tensor * op) {
+        प्रत्यागम op->op == GGML_OP_ROPE && tensor == op->src[1];
     }
 
     // IMROPE and VISION pack 4 stacked position planes (t/h/w/e) into inp_pos, each of length
     // n_tokens; other modes carry a single position per token.
-    static int get_inp_pos_n_planes(const ggml_tensor * op) {
-        const int mode = op->op_params[2];
-        return (mode == GGML_ROPE_TYPE_IMROPE || mode == GGML_ROPE_TYPE_VISION || (mode & GGML_ROPE_TYPE_MROPE)) ? 4 : 1;
+    स्थिर पूर्णाङ्क get_inp_pos_n_planes(ध्रुव ggml_tensor * op) {
+        ध्रुव पूर्णाङ्क mode = op->op_params[2];
+        प्रत्यागम (mode == GGML_ROPE_TYPE_IMROPE || mode == GGML_ROPE_TYPE_VISION || (mode & GGML_ROPE_TYPE_MROPE)) ? 4 : 1;
     }
 
-    static bool is_inp_emb(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return tensor->op == GGML_OP_GET_ROWS && op->op == GGML_OP_RMS_NORM;
+    स्थिर bool is_inp_emb(ध्रुव ggml_tensor * tensor, ध्रुव ggml_tensor * op) {
+        प्रत्यागम tensor->op == GGML_OP_GET_ROWS && op->op == GGML_OP_RMS_NORM;
     }
 
-    static bool is_inp_mask(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return op->op == GGML_OP_CPY || (op->op == GGML_OP_FLASH_ATTN_EXT && tensor == op->src[3]) ||
+    स्थिर bool is_inp_mask(ध्रुव ggml_tensor * tensor, ध्रुव ggml_tensor * op) {
+        प्रत्यागम op->op == GGML_OP_CPY || (op->op == GGML_OP_FLASH_ATTN_EXT && tensor == op->src[3]) ||
                (op->op == GGML_OP_SOFT_MAX && tensor == op->src[1]);
     }
 
-    static bool is_inp_mean(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return op->op == GGML_OP_MUL_MAT && tensor == op->src[1] && tensor->op == GGML_OP_NONE &&
-               (tensor->flags & GGML_TENSOR_FLAG_INPUT) && tensor->type == GGML_TYPE_F32 &&
+    स्थिर bool is_inp_mean(ध्रुव ggml_tensor * tensor, ध्रुव ggml_tensor * op) {
+        प्रत्यागम op->op == GGML_OP_MUL_MAT && tensor == op->src[1] && tensor->op == GGML_OP_NONE &&
+               (tensor->flags & GGML_TENSOR_FLAG_आदान) && tensor->type == GGML_TYPE_F32 &&
                op->src[0] != nullptr && op->src[0]->op != GGML_OP_NONE;
     }
 
     // per-token embedding scale [1, n_tokens] (inp->scale_rows in llama-graph.cpp)
-    static bool is_inp_scale_rows(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return op->op == GGML_OP_MUL && tensor == op->src[1] && strcmp(tensor->name, "inp_scale_rows") == 0;
+    स्थिर bool is_inp_scale_rows(ध्रुव ggml_tensor * tensor, ध्रुव ggml_tensor * op) {
+        प्रत्यागम op->op == GGML_OP_MUL && tensor == op->src[1] && strcmp(tensor->name, "inp_scale_rows") == 0;
     }
 
-    static bool is_rope_freqs_weight(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return op->op == GGML_OP_ROPE && tensor == op->src[2];
+    स्थिर bool is_rope_freqs_weight(ध्रुव ggml_tensor * tensor, ध्रुव ggml_tensor * op) {
+        प्रत्यागम op->op == GGML_OP_ROPE && tensor == op->src[2];
     }
 
-    inline static bool is_recurrent_cache(const ggml_tensor * tensor) {
-        return tensor != nullptr && (strncmp(tensor->name, "cache_r_l", strlen("cache_r_l")) == 0 ||
+    अन्तःस्थ स्थिर bool is_recurrent_cache(ध्रुव ggml_tensor * tensor) {
+        प्रत्यागम tensor != nullptr && (strncmp(tensor->name, "cache_r_l", strlen("cache_r_l")) == 0 ||
                                      strncmp(tensor->name, "cache_s_l", strlen("cache_s_l")) == 0 ||
                                      strncmp(tensor->name, "cache_ple_r_l", strlen("cache_ple_r_l")) == 0);
     }
 
-    inline static bool is_cache(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return is_recurrent_cache(tensor) || is_kvcache(tensor, op);
+    अन्तःस्थ स्थिर bool is_cache(ध्रुव ggml_tensor * tensor, ध्रुव ggml_tensor * op) {
+        प्रत्यागम is_recurrent_cache(tensor) || is_kvcache(tensor, op);
     }
 
-    inline static bool is_kvcache(const ggml_tensor * tensor, const ggml_tensor * op) {
-        if (tensor == nullptr || is_recurrent_cache(tensor)) {
-            return false;
+    अन्तःस्थ स्थिर bool is_kvcache(ध्रुव ggml_tensor * tensor, ध्रुव ggml_tensor * op) {
+        यदि (tensor == nullptr || is_recurrent_cache(tensor)) {
+            प्रत्यागम false;
         }
-        return (tensor->buffer != nullptr && tensor->buffer->usage == GGML_BACKEND_BUFFER_USAGE_ANY) ||
+        प्रत्यागम (tensor->buffer != nullptr && tensor->buffer->usage == GGML_BACKEND_BUFFER_USAGE_ANY) ||
                (op != nullptr && op->op == GGML_OP_SET_ROWS && op->src[2] == tensor);
     }
 
-    inline static bool is_conv_state_writeback(const ggml_tensor * node) {
-        return node->op == GGML_OP_CPY && node->view_src != nullptr && is_recurrent_cache(node->view_src) &&
-               node->src[0] != nullptr && node->src[0]->op == GGML_OP_VIEW && node->src[0]->src[0] != nullptr &&
-               node->src[0]->src[0]->op == GGML_OP_CONCAT && node->src[1] != nullptr &&
-               node->src[1]->op == GGML_OP_VIEW && node->src[1]->view_src == node->view_src;
+    अन्तःस्थ स्थिर bool is_conv_state_writeback(ध्रुव ggml_tensor * गाठ) {
+        प्रत्यागम गाठ->op == GGML_OP_CPY && गाठ->view_src != nullptr && is_recurrent_cache(गाठ->view_src) &&
+               गाठ->src[0] != nullptr && गाठ->src[0]->op == GGML_OP_VIEW && गाठ->src[0]->src[0] != nullptr &&
+               गाठ->src[0]->src[0]->op == GGML_OP_CONCAT && गाठ->src[1] != nullptr &&
+               गाठ->src[1]->op == GGML_OP_VIEW && गाठ->src[1]->view_src == गाठ->view_src;
     }
 
-    static bool is_kv_idx(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return op->op == GGML_OP_SET_ROWS && op->src[1] == tensor;
+    स्थिर bool is_kv_idx(ध्रुव ggml_tensor * tensor, ध्रुव ggml_tensor * op) {
+        प्रत्यागम op->op == GGML_OP_SET_ROWS && op->src[1] == tensor;
     }
 
-    bool is_swa_mask(const ggml_tensor * tensor) const {
-        return m_model_params.swa_mask != nullptr && tensor == m_model_params.swa_mask;
+    bool is_swa_mask(ध्रुव ggml_tensor * tensor) ध्रुव {
+        प्रत्यागम m_model_params.swa_mask != nullptr && tensor == m_model_params.swa_mask;
     }
 
-    static bool is_output_idx(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return op->op == GGML_OP_GET_ROWS && tensor == op->src[1] && op->src[0]->op != GGML_OP_NONE &&
+    स्थिर bool is_output_idx(ध्रुव ggml_tensor * tensor, ध्रुव ggml_tensor * op) {
+        प्रत्यागम op->op == GGML_OP_GET_ROWS && tensor == op->src[1] && op->src[0]->op != GGML_OP_NONE &&
                op->src[1]->op == GGML_OP_NONE;
     }
 
     // the state permutation index input used in SSM/DeltaNet models (inp->s_copy in llama-graph.cpp)
-    static bool is_inp_s_copy(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return op->op == GGML_OP_GET_ROWS && tensor == op->src[1] &&
+    स्थिर bool is_inp_s_copy(ध्रुव ggml_tensor * tensor, ध्रुव ggml_tensor * op) {
+        प्रत्यागम op->op == GGML_OP_GET_ROWS && tensor == op->src[1] &&
                op->src[0]->buffer->usage == GGML_BACKEND_BUFFER_USAGE_ANY;
     }
 
-    std::string get_graph_input_ov_name(const ggml_tensor * tensor, const ggml_tensor * op) const {
-        if (is_inp_pos(tensor, op)) {
-            return "inp_pos";
+    std::string get_graph_आदान_ov_name(ध्रुव ggml_tensor * tensor, ध्रुव ggml_tensor * op) ध्रुव {
+        यदि (is_inp_pos(tensor, op)) {
+            प्रत्यागम "inp_pos";
         }
-        if (is_inp_emb(tensor, op)) {
-            return "embd";
+        यदि (is_inp_emb(tensor, op)) {
+            प्रत्यागम "embd";
         }
-        if (is_inp_mask(tensor, op)) {
+        यदि (is_inp_mask(tensor, op)) {
             // Give the two attention masks distinct OV parameter names.
             //
             // An interleaved-SWA model builds one full-attention mask and one sliding-window mask,
@@ -465,43 +465,43 @@ public:
             //
             // When no SWA layer was found there is only one mask in play, so the plain name is
             // correct and no _swa parameter is created.
-            if (m_model_params.swa_layers.empty()) {
-                return "self_kq_mask";
+            यदि (m_model_params.swa_layers.empty()) {
+                प्रत्यागम "self_kq_mask";
             }
-            return is_swa_mask(tensor) ? "self_kq_mask_swa" : "self_kq_mask";
+            प्रत्यागम is_swa_mask(tensor) ? "self_kq_mask_swa" : "self_kq_mask";
         }
-        return tensor->name;
+        प्रत्यागम tensor->name;
     }
 
-private:
-    void set_input_output();
-    int compute_op_case(const ggml_tensor * node) const;
-    bool node_is_used_as_src(const int node_idx);
-    void compute_model_inputs();
-    void compute_model_outputs();
+गुप्त:
+    शून्य set_आदान_output();
+    पूर्णाङ्क compute_op_case(ध्रुव ggml_tensor * गाठ) ध्रुव;
+    bool गाठ_is_used_as_src(ध्रुव पूर्णाङ्क गाठ_idx);
+    शून्य compute_model_inputs();
+    शून्य compute_model_outputs();
 
     // True if tensor is the inp->s_copy index leaf gathered by a recurrent state cache GET_ROWS
     // (possibly through a VIEW), so it gets a dynamic [1,1,1,-1] graph-input shape.
-    bool is_s_copy_leaf(const ggml_tensor * tensor) const;
+    bool is_s_copy_leaf(ध्रुव ggml_tensor * tensor) ध्रुव;
 
     // Infer and propagate dynamic-dimension indices for all tensors in the GGML graph.
-    void compute_node_dynamic_dims();
+    शून्य compute_गाठ_dynamic_dims();
 
-    void validate_cgraph() const;
+    शून्य validate_cgraph() ध्रुव;
 
     ggml_cgraph * m_cgraph = nullptr;
     std::map<std::string, ggml_tensor *> m_inputs;
 
-    std::map<std::string, ov::frontend::ggml::ModelInputInfo> m_model_inputs;
-    std::map<std::string, ov::frontend::ggml::ModelExtraInputInfo> m_model_extra_inputs;
-    std::map<std::string, std::shared_ptr<ov::Node>> m_model_weights;
+    std::map<std::string, ov::frontend::ggml::Model_आदान_Info> m_model_inputs;
+    std::map<std::string, ov::frontend::ggml::Model_Extra_आदान_Info> m_model_extra_inputs;
+    std::map<std::string, std::shared_ptr<ov::गाठ_2>> m_model_weights;
     std::map<std::string, ggml_tensor *> m_model_outputs;
     std::set<std::string> m_model_output_names;
-    std::vector<NodeInfo> m_node_info_list;
-    std::map<ggml_tensor *, int> m_node_dynamic_dims;
+    std::vector<गाठ_Info> m_गाठ_info_list;
+    std::map<ggml_tensor *, पूर्णाङ्क> m_गाठ_dynamic_dims;
 
     ModelParams m_model_params;
     ComputeParams m_compute_params;
 };
 
-void print_tensor_address_map(const ggml_cgraph * cgraph);
+शून्य print_tensor_address_map(ध्रुव ggml_cgraph * cgraph);

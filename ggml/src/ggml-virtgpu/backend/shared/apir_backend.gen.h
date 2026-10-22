@@ -1,8 +1,8 @@
-typedef enum ApirBackendCommandType {
+प्रकारनिर्देश गणना ApirBackendCommandType {
 
     /* device */
-    APIR_COMMAND_TYPE_DEVICE_GET_DEVICE_COUNT = 0,
-    APIR_COMMAND_TYPE_DEVICE_GET_COUNT        = 1,
+    APIR_COMMAND_TYPE_DEVICE_GET_DEVICE_मोजणी = 0,
+    APIR_COMMAND_TYPE_DEVICE_GET_मोजणी        = 1,
     APIR_COMMAND_TYPE_DEVICE_GET_NAME         = 2,
     APIR_COMMAND_TYPE_DEVICE_GET_DESCRIPTION  = 3,
     APIR_COMMAND_TYPE_DEVICE_GET_TYPE         = 4,
@@ -32,63 +32,63 @@ typedef enum ApirBackendCommandType {
     APIR_COMMAND_TYPE_BACKEND_GRAPH_COMPUTE = 22,
 
     // last command_type index + 1
-    APIR_BACKEND_DISPATCH_TABLE_COUNT = 23,
+    APIR_BACKEND_DISPATCH_TABLE_मोजणी = 23,
 } ApirBackendCommandType;
 
-static inline const char * apir_dispatch_command_name(ApirBackendCommandType type) {
-    switch (type) {
+स्थिर अन्तःस्थ ध्रुव वर्ण * apir_dispatch_command_name(ApirBackendCommandType type) {
+    विकल्प (type) {
         /* device */
-        case APIR_COMMAND_TYPE_DEVICE_GET_DEVICE_COUNT:
-            return "device_get_device_count";
-        case APIR_COMMAND_TYPE_DEVICE_GET_COUNT:
-            return "device_get_count";
-        case APIR_COMMAND_TYPE_DEVICE_GET_NAME:
-            return "device_get_name";
-        case APIR_COMMAND_TYPE_DEVICE_GET_DESCRIPTION:
-            return "device_get_description";
-        case APIR_COMMAND_TYPE_DEVICE_GET_TYPE:
-            return "device_get_type";
-        case APIR_COMMAND_TYPE_DEVICE_GET_MEMORY:
-            return "device_get_memory";
-        case APIR_COMMAND_TYPE_DEVICE_SUPPORTS_OP:
-            return "device_supports_op";
-        case APIR_COMMAND_TYPE_DEVICE_GET_BUFFER_TYPE:
-            return "device_get_buffer_type";
-        case APIR_COMMAND_TYPE_DEVICE_GET_PROPS:
-            return "device_get_props";
-        case APIR_COMMAND_TYPE_DEVICE_BUFFER_FROM_PTR:
-            return "device_buffer_from_ptr";
+        पक्ष APIR_COMMAND_TYPE_DEVICE_GET_DEVICE_मोजणी:
+            प्रत्यागम "device_get_device_count";
+        पक्ष APIR_COMMAND_TYPE_DEVICE_GET_मोजणी:
+            प्रत्यागम "device_get_count";
+        पक्ष APIR_COMMAND_TYPE_DEVICE_GET_NAME:
+            प्रत्यागम "device_get_name";
+        पक्ष APIR_COMMAND_TYPE_DEVICE_GET_DESCRIPTION:
+            प्रत्यागम "device_get_description";
+        पक्ष APIR_COMMAND_TYPE_DEVICE_GET_TYPE:
+            प्रत्यागम "device_get_type";
+        पक्ष APIR_COMMAND_TYPE_DEVICE_GET_MEMORY:
+            प्रत्यागम "device_get_memory";
+        पक्ष APIR_COMMAND_TYPE_DEVICE_SUPPORTS_OP:
+            प्रत्यागम "device_supports_op";
+        पक्ष APIR_COMMAND_TYPE_DEVICE_GET_BUFFER_TYPE:
+            प्रत्यागम "device_get_buffer_type";
+        पक्ष APIR_COMMAND_TYPE_DEVICE_GET_PROPS:
+            प्रत्यागम "device_get_props";
+        पक्ष APIR_COMMAND_TYPE_DEVICE_BUFFER_FROM_PTR:
+            प्रत्यागम "device_buffer_from_ptr";
         /* buffer-type */
-        case APIR_COMMAND_TYPE_BUFFER_TYPE_GET_NAME:
-            return "buffer_type_get_name";
-        case APIR_COMMAND_TYPE_BUFFER_TYPE_GET_ALIGNMENT:
-            return "buffer_type_get_alignment";
-        case APIR_COMMAND_TYPE_BUFFER_TYPE_GET_MAX_SIZE:
-            return "buffer_type_get_max_size";
-        case APIR_COMMAND_TYPE_BUFFER_TYPE_IS_HOST:
-            return "buffer_type_is_host";
-        case APIR_COMMAND_TYPE_BUFFER_TYPE_ALLOC_BUFFER:
-            return "buffer_type_alloc_buffer";
-        case APIR_COMMAND_TYPE_BUFFER_TYPE_GET_ALLOC_SIZE:
-            return "buffer_type_get_alloc_size";
+        पक्ष APIR_COMMAND_TYPE_BUFFER_TYPE_GET_NAME:
+            प्रत्यागम "buffer_type_get_name";
+        पक्ष APIR_COMMAND_TYPE_BUFFER_TYPE_GET_ALIGNMENT:
+            प्रत्यागम "buffer_type_get_alignment";
+        पक्ष APIR_COMMAND_TYPE_BUFFER_TYPE_GET_MAX_SIZE:
+            प्रत्यागम "buffer_type_get_max_size";
+        पक्ष APIR_COMMAND_TYPE_BUFFER_TYPE_IS_HOST:
+            प्रत्यागम "buffer_type_is_host";
+        पक्ष APIR_COMMAND_TYPE_BUFFER_TYPE_ALLOC_BUFFER:
+            प्रत्यागम "buffer_type_alloc_buffer";
+        पक्ष APIR_COMMAND_TYPE_BUFFER_TYPE_GET_ALLOC_SIZE:
+            प्रत्यागम "buffer_type_get_alloc_size";
         /* buffer */
-        case APIR_COMMAND_TYPE_BUFFER_GET_BASE:
-            return "buffer_get_base";
-        case APIR_COMMAND_TYPE_BUFFER_SET_TENSOR:
-            return "buffer_set_tensor";
-        case APIR_COMMAND_TYPE_BUFFER_GET_TENSOR:
-            return "buffer_get_tensor";
-        case APIR_COMMAND_TYPE_BUFFER_CPY_TENSOR:
-            return "buffer_cpy_tensor";
-        case APIR_COMMAND_TYPE_BUFFER_CLEAR:
-            return "buffer_clear";
-        case APIR_COMMAND_TYPE_BUFFER_FREE_BUFFER:
-            return "buffer_free_buffer";
+        पक्ष APIR_COMMAND_TYPE_BUFFER_GET_BASE:
+            प्रत्यागम "buffer_get_base";
+        पक्ष APIR_COMMAND_TYPE_BUFFER_SET_TENSOR:
+            प्रत्यागम "buffer_set_tensor";
+        पक्ष APIR_COMMAND_TYPE_BUFFER_GET_TENSOR:
+            प्रत्यागम "buffer_get_tensor";
+        पक्ष APIR_COMMAND_TYPE_BUFFER_CPY_TENSOR:
+            प्रत्यागम "buffer_cpy_tensor";
+        पक्ष APIR_COMMAND_TYPE_BUFFER_CLEAR:
+            प्रत्यागम "buffer_clear";
+        पक्ष APIR_COMMAND_TYPE_BUFFER_FREE_BUFFER:
+            प्रत्यागम "buffer_free_buffer";
         /* backend */
-        case APIR_COMMAND_TYPE_BACKEND_GRAPH_COMPUTE:
-            return "backend_graph_compute";
+        पक्ष APIR_COMMAND_TYPE_BACKEND_GRAPH_COMPUTE:
+            प्रत्यागम "backend_graph_compute";
 
-        default:
-            return "unknown";
+        स्वभाव:
+            प्रत्यागम "unknown";
     }
 }

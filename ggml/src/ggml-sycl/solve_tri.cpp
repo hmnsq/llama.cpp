@@ -1,103 +1,103 @@
-#include "solve_tri.hpp"
-#include "common.hpp"
-#include <oneapi/mkl/blas.hpp>
+#अन्तर्भाव "solve_tri.hpp"
+#अन्तर्भाव "common.hpp"
+#अन्तर्भाव <oneapi/mkl/blas.hpp>
 
-template <int n_template, int k_template>
-static void solve_tri_f32_fast(const float * __restrict__ A,
-                               const float * __restrict__ B,
-                               float * __restrict__ X,
-                               const int64_t ne02, [[maybe_unused]] const int64_t ne03,
-                               const int64_t nb02, const int64_t nb03,
-                               const int64_t nb12, const int64_t nb13,
-                               const int64_t nb2,  const int64_t nb3,
-                               const int n_arg, const int k_arg,
-                               const sycl::nd_item<2> & item, float * sA) {
+template <पूर्णाङ्क n_template, पूर्णाङ्क k_template>
+स्थिर शून्य solve_tri_f32_fast(ध्रुव भिन्न * __restrict__ A,
+                               ध्रुव भिन्न * __restrict__ B,
+                               भिन्न * __restrict__ X,
+                               ध्रुव int64_t ne02, [[maybe_unused]] ध्रुव int64_t ne03,
+                               ध्रुव int64_t nb02, ध्रुव int64_t nb03,
+                               ध्रुव int64_t nb12, ध्रुव int64_t nb13,
+                               ध्रुव int64_t nb2,  ध्रुव int64_t nb3,
+                               ध्रुव पूर्णाङ्क n_arg, ध्रुव पूर्णाङ्क k_arg,
+                               ध्रुव sycl::nd_item<2> & item, भिन्न * sA) {
 
-    const int n = n_template == 0 ? n_arg : n_template;
-    const int k = k_template == 0 ? k_arg : k_template;
+    ध्रुव पूर्णाङ्क n = n_template == 0 ? n_arg : n_template;
+    ध्रुव पूर्णाङ्क k = k_template == 0 ? k_arg : k_template;
 
-    const int batch_idx = item.get_group(1);
-    const int lane      = item.get_local_id(1) % WARP_SIZE;
-    const int col_idx   = item.get_local_id(0);
+    ध्रुव पूर्णाङ्क batch_idx = item.get_group(1);
+    ध्रुव पूर्णाङ्क lane      = item.get_local_id(1) % WARP_SIZE;
+    ध्रुव पूर्णाङ्क col_idx   = item.get_local_id(0);
 
-    if (col_idx >= k) {
-        return;
+    यदि (col_idx >= k) {
+        प्रत्यागम;
     }
 
-    const int64_t i03 = batch_idx / ne02;
-    const int64_t i02 = batch_idx % ne02;
+    ध्रुव int64_t i03 = batch_idx / ne02;
+    ध्रुव int64_t i02 = batch_idx % ne02;
 
-    const float * A_batch = (const float *) ((const char *) A + i02 * nb02 + i03 * nb03);
-    const float * B_batch = (const float *) ((const char *) B + i02 * nb12 + i03 * nb13);
-    float *       X_batch = (float *)       ((char *)       X + i02 * nb2  + i03 * nb3);
+    ध्रुव भिन्न * A_batch = (ध्रुव भिन्न *) ((ध्रुव वर्ण *) A + i02 * nb02 + i03 * nb03);
+    ध्रुव भिन्न * B_batch = (ध्रुव भिन्न *) ((ध्रुव वर्ण *) B + i02 * nb12 + i03 * nb13);
+    भिन्न *       X_batch = (भिन्न *)       ((वर्ण *)       X + i02 * nb2  + i03 * nb3);
 
-    const int offset = item.get_local_id(1) + item.get_local_id(0) * item.get_local_range(1);
+    ध्रुव पूर्णाङ्क offset = item.get_local_id(1) + item.get_local_id(0) * item.get_local_range(1);
 
 #pragma unroll
-    for (int i = 0; i < n * n; i += k * WARP_SIZE) {
-        const int i0 = i + offset;
-        if (i0 < n * n) {
+    प्रति (पूर्णाङ्क i = 0; i < n * n; i += k * WARP_SIZE) {
+        ध्रुव पूर्णाङ्क i0 = i + offset;
+        यदि (i0 < n * n) {
             sA[i0] = A_batch[i0];
         }
     }
 
     item.barrier(sycl::access::fence_space::local_space);
 
-    float x_low  = (lane < n) ? B_batch[lane * k + col_idx] : 0.0f;
-    float x_high = (WARP_SIZE + lane < n) ? B_batch[(WARP_SIZE + lane) * k + col_idx] : 0.0f;
+    भिन्न x_खालचा  = (lane < n) ? B_batch[lane * k + col_idx] : 0.0f;
+    भिन्न x_वरचा = (WARP_SIZE + lane < n) ? B_batch[(WARP_SIZE + lane) * k + col_idx] : 0.0f;
 
-    const int half      = WARP_SIZE;
-    const int nrows_low = (n < half) ? n : half;
+    ध्रुव पूर्णाङ्क half      = WARP_SIZE;
+    ध्रुव पूर्णाङ्क nrows_खालचा = (n < half) ? n : half;
 
 #pragma unroll
-    for (int row = 0; row < nrows_low; ++row) {
-        float sum = 0.0f;
-        if (lane < row) {
-            sum += sA[row * n + lane] * x_low;
+    प्रति (पूर्णाङ्क row = 0; row < nrows_खालचा; ++row) {
+        भिन्न sum = 0.0f;
+        यदि (lane < row) {
+            sum += sA[row * n + lane] * x_खालचा;
         }
         sum = warp_reduce_sum<WARP_SIZE>(sum);
-        if (lane == row) {
-            x_low = (x_low - sum) / sA[row * n + row];
+        यदि (lane == row) {
+            x_खालचा = (x_खालचा - sum) / sA[row * n + row];
         }
     }
 
 #pragma unroll
-    for (int row = half; row < n; ++row) {
-        float     sum = sA[row * n + lane] * x_low;
-        const int j   = half + lane;
-        if (j < row) {
-            sum += sA[row * n + j] * x_high;
+    प्रति (पूर्णाङ्क row = half; row < n; ++row) {
+        भिन्न     sum = sA[row * n + lane] * x_खालचा;
+        ध्रुव पूर्णाङ्क j   = half + lane;
+        यदि (j < row) {
+            sum += sA[row * n + j] * x_वरचा;
         }
         sum = warp_reduce_sum<WARP_SIZE>(sum);
-        if (lane == row - half) {
-            x_high = (x_high - sum) / sA[row * n + row];
+        यदि (lane == row - half) {
+            x_वरचा = (x_वरचा - sum) / sA[row * n + row];
         }
     }
 
 #pragma unroll
-    for (int rr = 0; rr < 2; ++rr) {
-        const int row = rr * WARP_SIZE + lane;
-        if (row < n) {
-            const float val            = (row < half) ? x_low : x_high;
+    प्रति (पूर्णाङ्क rr = 0; rr < 2; ++rr) {
+        ध्रुव पूर्णाङ्क row = rr * WARP_SIZE + lane;
+        यदि (row < n) {
+            ध्रुव भिन्न val            = (row < half) ? x_खालचा : x_वरचा;
             X_batch[row * k + col_idx] = val;
         }
     }
 }
 
-static void solve_tri_f32_mkl(dpct::queue_ptr stream,
-                               const float * A, float * X,
-                               int n, int k,
+स्थिर शून्य solve_tri_f32_mkl(dpct::queue_ptr stream,
+                               ध्रुव भिन्न * A, भिन्न * X,
+                               पूर्णाङ्क n, पूर्णाङ्क k,
                                int64_t ne02, [[maybe_unused]] int64_t ne03,
                                int64_t nb02, [[maybe_unused]] int64_t nb03,
                                int64_t nb2,  [[maybe_unused]] int64_t nb3) {
-    const float alpha = 1.0f;
-    const int64_t total_batches = ne02 * ne03;
-    if (total_batches == 0) {
-        return;
+    ध्रुव भिन्न alpha = 1.0f;
+    ध्रुव int64_t total_batches = ne02 * ne03;
+    यदि (total_batches == 0) {
+        प्रत्यागम;
     }
 
-    const int64_t stride_a = nb02 / sizeof(float);
-    const int64_t stride_x = nb2 / sizeof(float);
+    ध्रुव int64_t stride_a = nb02 / परिमाण(भिन्न);
+    ध्रुव int64_t stride_x = nb2 / परिमाण(भिन्न);
 
     oneapi::mkl::blas::trsm_batch(
         *stream,
@@ -111,9 +111,9 @@ static void solve_tri_f32_mkl(dpct::queue_ptr stream,
         total_batches);
 }
 
-inline void ggml_sycl_op_solve_tri(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+अन्तःस्थ शून्य ggml_sycl_op_solve_tri(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ध्रुव ggml_tensor * src0 = dst->src[0];
+    ध्रुव ggml_tensor * src1 = dst->src[1];
 
     GGML_ASSERT(ggml_is_contiguous(src0));
     GGML_ASSERT(ggml_is_contiguous(src1));
@@ -122,37 +122,37 @@ inline void ggml_sycl_op_solve_tri(ggml_backend_sycl_context & ctx, ggml_tensor 
     dpct::queue_ptr stream = ctx.stream();
     SYCL_CHECK(ggml_sycl_set_device(ctx.device));
 
-    const int n    = src0->ne[0];
-    const int k    = src1->ne[0];
-    const int64_t ne02 = src0->ne[2];
-    const int64_t ne03 = src0->ne[3];
+    ध्रुव पूर्णाङ्क n    = src0->ne[0];
+    ध्रुव पूर्णाङ्क k    = src1->ne[0];
+    ध्रुव int64_t ne02 = src0->ne[2];
+    ध्रुव int64_t ne03 = src0->ne[3];
 
     GGML_ASSERT(n <= SYCL_SOLVE_TRI_MAX_N && k <= SYCL_SOLVE_TRI_MAX_K);
 
-    const float * A_d = static_cast<const float *>(src0->data);
-    const float * B_d = static_cast<const float *>(src1->data);
-    float * X_d       = static_cast<float *>(dst->data);
+    ध्रुव भिन्न * A_d = static_cast<ध्रुव भिन्न *>(src0->data);
+    ध्रुव भिन्न * B_d = static_cast<ध्रुव भिन्न *>(src1->data);
+    भिन्न * X_d       = static_cast<भिन्न *>(dst->data);
 
-    if (X_d != B_d) {
-        const int64_t total_elements = (int64_t)n * k * ne02 * ne03;
-        stream->memcpy(X_d, B_d, total_elements * sizeof(float));
+    यदि (X_d != B_d) {
+        ध्रुव int64_t total_elements = (int64_t)n * k * ne02 * ne03;
+        stream->memcpy(X_d, B_d, total_elements * परिमाण(भिन्न));
     }
 
-    const int64_t nb02 = src0->nb[2];
-    const int64_t nb03 = src0->nb[3];
-    const int64_t nb12 = src1->nb[2];
-    const int64_t nb13 = src1->nb[3];
-    const int64_t nb2  = dst->nb[2];
-    const int64_t nb3  = dst->nb[3];
+    ध्रुव int64_t nb02 = src0->nb[2];
+    ध्रुव int64_t nb03 = src0->nb[3];
+    ध्रुव int64_t nb12 = src1->nb[2];
+    ध्रुव int64_t nb13 = src1->nb[3];
+    ध्रुव int64_t nb2  = dst->nb[2];
+    ध्रुव int64_t nb3  = dst->nb[3];
 
-    const int64_t total_batches = ne02 * ne03;
+    ध्रुव int64_t total_batches = ne02 * ne03;
 
-    if (n <= 2 * WARP_SIZE && k <= 32) {
-        const int smem_size = 2 * WARP_SIZE * 2 * WARP_SIZE;
-        const sycl::range<2> grid(1, total_batches);
-        const sycl::range<2> block(k, WARP_SIZE);
+    यदि (n <= 2 * WARP_SIZE && k <= 32) {
+        ध्रुव पूर्णाङ्क smem_size = 2 * WARP_SIZE * 2 * WARP_SIZE;
+        ध्रुव sycl::range<2> grid(1, total_batches);
+        ध्रुव sycl::range<2> block(k, WARP_SIZE);
         stream->submit([&](sycl::handler & cgh) {
-            sycl::local_accessor<float, 1> smem_acc(sycl::range<1>(smem_size), cgh);
+            sycl::local_accessor<भिन्न, 1> smem_acc(sycl::range<1>(smem_size), cgh);
             cgh.parallel_for(
                 sycl::nd_range<2>(grid * block, block),
                 [=](sycl::nd_item<2> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -161,12 +161,12 @@ inline void ggml_sycl_op_solve_tri(ggml_backend_sycl_context & ctx, ggml_tensor 
                                               n, k, item, get_pointer(smem_acc));
                 });
         });
-    } else {
+    } अन्यथा {
         solve_tri_f32_mkl(stream, A_d, X_d, n, k, ne02, ne03, nb02, nb03, nb2, nb3);
     }
 }
 
-void ggml_sycl_solve_tri(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+शून्य ggml_sycl_solve_tri(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
     ggml_sycl_op_solve_tri(ctx, dst);
 }

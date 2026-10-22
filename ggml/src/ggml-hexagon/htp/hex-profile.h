@@ -1,31 +1,31 @@
 #ifndef HEX_PROFILE_H
 #define HEX_PROFILE_H
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <qurt.h>
+#अन्तर्भाव <stdbool.h>
+#अन्तर्भाव <stdint.h>
+#अन्तर्भाव <qurt.h>
 
-#include "hex-utils.h"
-#include "htp-ops.h"
+#अन्तर्भाव "hex-utils.h"
+#अन्तर्भाव "htp-ops.h"
 
 #define HTP_TRACE_EVT_START 0
 #define HTP_TRACE_EVT_STOP  1
 
-#ifndef HEX_NUM_PMU_COUNTERS
-#define HEX_NUM_PMU_COUNTERS 8
+#ifndef HEX_अंक_PMU_COUNTERS
+#define HEX_अंक_PMU_COUNTERS 8
 #endif
 
-static inline void hex_get_pmu(uint32_t counters[]) {
-#if __HVX_ARCH__ >= 79
-    asm volatile("%0 = upmucnt0" : "=r"(counters[0]));
-    asm volatile("%0 = upmucnt1" : "=r"(counters[1]));
-    asm volatile("%0 = upmucnt2" : "=r"(counters[2]));
-    asm volatile("%0 = upmucnt3" : "=r"(counters[3]));
-    asm volatile("%0 = upmucnt4" : "=r"(counters[4]));
-    asm volatile("%0 = upmucnt5" : "=r"(counters[5]));
-    asm volatile("%0 = upmucnt6" : "=r"(counters[6]));
-    asm volatile("%0 = upmucnt7" : "=r"(counters[7]));
-#else
+स्थिर अन्तःस्थ शून्य hex_get_pmu(uint32_t counters[]) {
+#यदि __HVX_ARCH__ >= 79
+    asm चञ्चल("%0 = upmucnt0" : "=r"(counters[0]));
+    asm चञ्चल("%0 = upmucnt1" : "=r"(counters[1]));
+    asm चञ्चल("%0 = upmucnt2" : "=r"(counters[2]));
+    asm चञ्चल("%0 = upmucnt3" : "=r"(counters[3]));
+    asm चञ्चल("%0 = upmucnt4" : "=r"(counters[4]));
+    asm चञ्चल("%0 = upmucnt5" : "=r"(counters[5]));
+    asm चञ्चल("%0 = upmucnt6" : "=r"(counters[6]));
+    asm चञ्चल("%0 = upmucnt7" : "=r"(counters[7]));
+#अन्यथा
     counters[0] = qurt_pmu_get(QURT_PMUCNT0);
     counters[1] = qurt_pmu_get(QURT_PMUCNT1);
     counters[2] = qurt_pmu_get(QURT_PMUCNT2);
@@ -37,27 +37,27 @@ static inline void hex_get_pmu(uint32_t counters[]) {
 #endif
 }
 
-struct htp_thread_trace {
-    uint32_t count;
+संरचना htp_thread_trace {
+    uint32_t मोजणी;
     uint32_t max_events;
-    struct htp_trace_desc * events;
+    संरचना htp_trace_desc * events;
 };
 
-static inline void htp_trace_event(struct htp_thread_trace * tr, uint16_t id, uint16_t info, uint32_t type) {
-    if (tr->count < tr->max_events) {
-        uint32_t i = tr->count;
+स्थिर अन्तःस्थ शून्य htp_trace_event(संरचना htp_thread_trace * tr, uint16_t id, uint16_t info, uint32_t type) {
+    यदि (tr->मोजणी < tr->max_events) {
+        uint32_t i = tr->मोजणी;
         tr->events[i].id     = id;
         tr->events[i].info   = info | (type == HTP_TRACE_EVT_STOP ? 0x8000 : 0);
         tr->events[i].cycles = (uint32_t) hex_get_cycles();
-        tr->count++;
+        tr->मोजणी++;
     }
 }
 
-static inline void htp_trace_event_start(struct htp_thread_trace * tr, uint16_t id, uint16_t info) {
+स्थिर अन्तःस्थ शून्य htp_trace_event_start(संरचना htp_thread_trace * tr, uint16_t id, uint16_t info) {
     htp_trace_event(tr, id, info, HTP_TRACE_EVT_START);
 }
 
-static inline void htp_trace_event_stop(struct htp_thread_trace * tr, uint16_t id, uint16_t info) {
+स्थिर अन्तःस्थ शून्य htp_trace_event_stop(संरचना htp_thread_trace * tr, uint16_t id, uint16_t info) {
     htp_trace_event(tr, id, info, HTP_TRACE_EVT_STOP);
 }
 
