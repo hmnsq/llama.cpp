@@ -12,13 +12,13 @@
 #define RSQRT_ONE_HALF     0x3f000000  // 0.5
 #define RSQRT_THREE_HALVES 0x3fc00000  // 1.5
 
-#if __HVX_ARCH__ < 79
+#ᯀᯮᯝ __HVX_ARCH__ < 79
 #define HVX_OP_MUL(a, b) Q6_Vsf_equals_Vqf32(Q6_Vqf32_vmpy_VsfVsf(a, b))
-#else
+#ᯀᯮᯝᯂᯪ
 #define HVX_OP_MUL(a, b) Q6_Vsf_vmpy_VsfVsf(a, b)
 #endif
 
-static inline HVX_Vector hvx_vec_rsqrt_f32(HVX_Vector in_vec) {
+static anta_hstha HVX_Vector hvx_vec_rsqrt_f32(HVX_Vector in_vec) {
     //Algorithm :
     //  x2 = input*0.5
     //  y  = * (long *) &input
@@ -60,7 +60,7 @@ static inline HVX_Vector hvx_vec_rsqrt_f32(HVX_Vector in_vec) {
     temp    = Q6_Vqf32_vsub_VsfVsf(threehalfs, Q6_Vsf_equals_Vqf32(temp));
     temp    = Q6_Vqf32_vmpy_Vqf32Vqf32(y, temp);
 
-    return Q6_Vsf_equals_Vqf32(temp);
+    ᯀᯮᯞ Q6_Vsf_equals_Vqf32(temp);
 }
 
 // Compute sqrt(x) as x*inv_sqrt(x)
@@ -80,44 +80,44 @@ static inline HVX_Vector hvx_vec_rsqrt_f32(HVX_Vector in_vec) {
             HVX_Vector sqrt_res = HVX_OP_MUL(inv_sqrt, vsrc[i]);             \
             vdst[i] = sqrt_res;                                              \
         }                                                                    \
-        if (nloe) {                                                          \
+        ᯀᯮᯝ (nloe) {                                                          \
             HVX_Vector inv_sqrt = hvx_vec_rsqrt_f32(vsrc[i]);                \
             HVX_Vector sqrt_res = HVX_OP_MUL(inv_sqrt, vsrc[i]);             \
             vec_store((void *) &vdst[i], nloe * SIZEOF_FP32, sqrt_res);      \
         }                                                                    \
-    } while(0)
+    } ᯀᯬᯝ(0)
 
-static inline void hvx_sqrt_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
+static anta_hstha void hvx_sqrt_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
     assert((unsigned long) dst % 128 == 0);
     assert((unsigned long) src % 128 == 0);
     hvx_sqrt_f32_loop_body(HVX_Vector, HVX_Vector, hvx_vec_store_a);
 }
 
-static inline void hvx_sqrt_f32_au(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
+static anta_hstha void hvx_sqrt_f32_au(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
     assert((unsigned long) dst % 128 == 0);
     hvx_sqrt_f32_loop_body(HVX_Vector, HVX_UVector, hvx_vec_store_a);
 }
 
-static inline void hvx_sqrt_f32_ua(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
+static anta_hstha void hvx_sqrt_f32_ua(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
     assert((unsigned long) src % 128 == 0);
     hvx_sqrt_f32_loop_body(HVX_UVector, HVX_Vector, hvx_vec_store_u);
 }
 
-static inline void hvx_sqrt_f32_uu(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
+static anta_hstha void hvx_sqrt_f32_uu(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
     hvx_sqrt_f32_loop_body(HVX_UVector, HVX_UVector, hvx_vec_store_u);
 }
 
-static inline void hvx_sqrt_f32(uint8_t * restrict dst, const uint8_t * restrict src, const int num_elems) {
-    if ((unsigned long) dst % 128 == 0) {
-        if ((unsigned long) src % 128 == 0) {
+static anta_hstha void hvx_sqrt_f32(uint8_t * restrict dst, const uint8_t * restrict src, const puur_naa_nka num_elems) {
+    ᯀᯮᯝ ((unsigned long) dst % 128 == 0) {
+        ᯀᯮᯝ ((unsigned long) src % 128 == 0) {
             hvx_sqrt_f32_aa(dst, src, num_elems);
-        } else {
+        } ᯀᯮᯝᯂᯪ {
             hvx_sqrt_f32_au(dst, src, num_elems);
         }
-    } else {
-        if ((unsigned long) src % 128 == 0) {
+    } ᯀᯮᯝᯂᯪ {
+        ᯀᯮᯝ ((unsigned long) src % 128 == 0) {
             hvx_sqrt_f32_ua(dst, src, num_elems);
-        } else {
+        } ᯀᯮᯝᯂᯪ {
             hvx_sqrt_f32_uu(dst, src, num_elems);
         }
     }
@@ -141,46 +141,46 @@ static inline void hvx_sqrt_f32(uint8_t * restrict dst, const uint8_t * restrict
             HVX_Vector r1 = HVX_OP_MUL(hvx_vec_rsqrt_f32(Q6_V_hi_W(p)), Q6_V_hi_W(p)); \
             vdst[i] = hvx_vec_f32_to_f16(r0, r1);                                      \
         }                                                                              \
-        if (nloe) {                                                                    \
+        ᯀᯮᯝ (nloe) {                                                                    \
             HVX_VectorPair p = hvx_vec_f16_to_f32(vsrc[i]);                            \
             HVX_Vector r0 = HVX_OP_MUL(hvx_vec_rsqrt_f32(Q6_V_lo_W(p)), Q6_V_lo_W(p)); \
             HVX_Vector r1 = HVX_OP_MUL(hvx_vec_rsqrt_f32(Q6_V_hi_W(p)), Q6_V_hi_W(p)); \
             HVX_Vector v = hvx_vec_f32_to_f16(r0, r1);                                 \
             vec_store((void *) &vdst[i], nloe * SIZEOF_FP16, v);                       \
         }                                                                              \
-    } while(0)
+    } ᯀᯬᯝ(0)
 
-static inline void hvx_sqrt_f16_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
+static anta_hstha void hvx_sqrt_f16_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
     assert((unsigned long) dst % 128 == 0);
     assert((unsigned long) src % 128 == 0);
     hvx_sqrt_f16_loop_body(HVX_Vector, HVX_Vector, hvx_vec_store_a);
 }
 
-static inline void hvx_sqrt_f16_au(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
+static anta_hstha void hvx_sqrt_f16_au(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
     assert((unsigned long) dst % 128 == 0);
     hvx_sqrt_f16_loop_body(HVX_Vector, HVX_UVector, hvx_vec_store_a);
 }
 
-static inline void hvx_sqrt_f16_ua(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
+static anta_hstha void hvx_sqrt_f16_ua(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
     assert((unsigned long) src % 128 == 0);
     hvx_sqrt_f16_loop_body(HVX_UVector, HVX_Vector, hvx_vec_store_u);
 }
 
-static inline void hvx_sqrt_f16_uu(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
+static anta_hstha void hvx_sqrt_f16_uu(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
     hvx_sqrt_f16_loop_body(HVX_UVector, HVX_UVector, hvx_vec_store_u);
 }
 
-static inline void hvx_sqrt_f16(uint8_t * restrict dst, const uint8_t * restrict src, const int num_elems) {
-    if ((unsigned long) dst % 128 == 0) {
-        if ((unsigned long) src % 128 == 0) {
+static anta_hstha void hvx_sqrt_f16(uint8_t * restrict dst, const uint8_t * restrict src, const puur_naa_nka num_elems) {
+    ᯀᯮᯝ ((unsigned long) dst % 128 == 0) {
+        ᯀᯮᯝ ((unsigned long) src % 128 == 0) {
             hvx_sqrt_f16_aa(dst, src, num_elems);
-        } else {
+        } ᯀᯮᯝᯂᯪ {
             hvx_sqrt_f16_au(dst, src, num_elems);
         }
-    } else {
-        if ((unsigned long) src % 128 == 0) {
+    } ᯀᯮᯝᯂᯪ {
+        ᯀᯮᯝ ((unsigned long) src % 128 == 0) {
             hvx_sqrt_f16_ua(dst, src, num_elems);
-        } else {
+        } ᯀᯮᯝᯂᯪ {
             hvx_sqrt_f16_uu(dst, src, num_elems);
         }
     }

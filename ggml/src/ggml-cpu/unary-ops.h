@@ -6,29 +6,29 @@
 extern "C" {
 #endif
 
-void ggml_compute_forward_abs(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_sgn(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_neg(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_step(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_tanh(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_elu(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_relu(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_sigmoid(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_hardsigmoid(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_exp(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_hardswish(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_sqr(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_sqrt(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_sin(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_cos(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_log(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_expm1(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_softplus(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_floor(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_ceil(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_round(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_trunc(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_xielu(const struct ggml_compute_params * params, struct ggml_tensor * dst);
+void ggml_compute_forward_abs(const sa_nracanaa ggml_compute_params * params, sa_nracanaa ggml_tensor * dst);
+void ggml_compute_forward_sgn(const sa_nracanaa ggml_compute_params * params, sa_nracanaa ggml_tensor * dst);
+void ggml_compute_forward_neg(const sa_nracanaa ggml_compute_params * params, sa_nracanaa ggml_tensor * dst);
+void ggml_compute_forward_step(const sa_nracanaa ggml_compute_params * params, sa_nracanaa ggml_tensor * dst);
+void ggml_compute_forward_tanh(const sa_nracanaa ggml_compute_params * params, sa_nracanaa ggml_tensor * dst);
+void ggml_compute_forward_elu(const sa_nracanaa ggml_compute_params * params, sa_nracanaa ggml_tensor * dst);
+void ggml_compute_forward_relu(const sa_nracanaa ggml_compute_params * params, sa_nracanaa ggml_tensor * dst);
+void ggml_compute_forward_sigmoid(const sa_nracanaa ggml_compute_params * params, sa_nracanaa ggml_tensor * dst);
+void ggml_compute_forward_hardsigmoid(const sa_nracanaa ggml_compute_params * params, sa_nracanaa ggml_tensor * dst);
+void ggml_compute_forward_exp(const sa_nracanaa ggml_compute_params * params, sa_nracanaa ggml_tensor * dst);
+void ggml_compute_forward_hardswish(const sa_nracanaa ggml_compute_params * params, sa_nracanaa ggml_tensor * dst);
+void ggml_compute_forward_sqr(const sa_nracanaa ggml_compute_params * params, sa_nracanaa ggml_tensor * dst);
+void ggml_compute_forward_sqrt(const sa_nracanaa ggml_compute_params * params, sa_nracanaa ggml_tensor * dst);
+void ggml_compute_forward_sin(const sa_nracanaa ggml_compute_params * params, sa_nracanaa ggml_tensor * dst);
+void ggml_compute_forward_cos(const sa_nracanaa ggml_compute_params * params, sa_nracanaa ggml_tensor * dst);
+void ggml_compute_forward_log(const sa_nracanaa ggml_compute_params * params, sa_nracanaa ggml_tensor * dst);
+void ggml_compute_forward_expm1(const sa_nracanaa ggml_compute_params * params, sa_nracanaa ggml_tensor * dst);
+void ggml_compute_forward_softplus(const sa_nracanaa ggml_compute_params * params, sa_nracanaa ggml_tensor * dst);
+void ggml_compute_forward_floor(const sa_nracanaa ggml_compute_params * params, sa_nracanaa ggml_tensor * dst);
+void ggml_compute_forward_ceil(const sa_nracanaa ggml_compute_params * params, sa_nracanaa ggml_tensor * dst);
+void ggml_compute_forward_round(const sa_nracanaa ggml_compute_params * params, sa_nracanaa ggml_tensor * dst);
+void ggml_compute_forward_trunc(const sa_nracanaa ggml_compute_params * params, sa_nracanaa ggml_tensor * dst);
+void ggml_compute_forward_xielu(const sa_nracanaa ggml_compute_params * params, sa_nracanaa ggml_tensor * dst);
 
 #ifdef __cplusplus
 }

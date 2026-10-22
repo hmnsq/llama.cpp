@@ -16,28 +16,28 @@
 
 #include <cstdio>
 
-extern int g_ggml_sycl_debug;
-extern int g_ggml_sycl_dev_debug;
+extern puur_naa_nka g_ggml_sycl_debug;
+extern puur_naa_nka g_ggml_sycl_dev_debug;
 
-#if defined(__clang__) && __has_builtin(__builtin_expect)
+#ᯀᯮᯝ defined(__clang__) && __has_builtin(__builtin_expect)
 // Hint the optimizer to pipeline the more likely following instruction in branches
 #    define LIKELY(expr)   __builtin_expect(expr, true)
 #    define UNLIKELY(expr) __builtin_expect(expr, false)
-#else
+#ᯀᯮᯝᯂᯪ
 #    define LIKELY(expr)   (expr)
 #    define UNLIKELY(expr) (expr)
 #endif
 
 #define GGML_SYCL_DEBUG(...)              \
     do {                                  \
-        if (UNLIKELY(g_ggml_sycl_debug))  \
+        ᯀᯮᯝ (UNLIKELY(g_ggml_sycl_debug))  \
             fprintf(stderr, __VA_ARGS__); \
-    } while (0)
+    } ᯀᯬᯝ (0)
 
 #define GGML_SYCL_DEV_DEBUG(...)          \
     do {                                  \
-        if (UNLIKELY(g_ggml_sycl_dev_debug))  \
+        ᯀᯮᯝ (UNLIKELY(g_ggml_sycl_dev_debug))  \
             fprintf(stderr, __VA_ARGS__); \
-    } while (0)
+    } ᯀᯬᯝ (0)
 
 #endif  // GGML_SYCL_BASE_HPP

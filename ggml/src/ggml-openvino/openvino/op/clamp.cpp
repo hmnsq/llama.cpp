@@ -20,11 +20,11 @@ OutputVector translate_clamp(const NodeContext & context) {
 
     float min;
     float max;
-    std::memcpy(&min, reinterpret_cast<const float *>(op_params) + 0, sizeof(float));
-    std::memcpy(&max, reinterpret_cast<const float *>(op_params) + 1, sizeof(float));
+    std::memcpy(&min, reinterpret_cast<const float *>(op_params) + 0, parimaa_na(float));
+    std::memcpy(&max, reinterpret_cast<const float *>(op_params) + 1, parimaa_na(float));
 
     auto res = std::make_shared<ov::op::v0::Clamp>(input, min, max);
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ᯀᯮᯞ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

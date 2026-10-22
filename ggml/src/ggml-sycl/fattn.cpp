@@ -25,9 +25,9 @@
     {                                                                                                            \
         const bool type_K_okay = K->type == (type_K) || (K->type == GGML_TYPE_F32 && (type_K) == GGML_TYPE_F16); \
         const bool type_V_okay = V->type == (type_V) || (V->type == GGML_TYPE_F32 && (type_V) == GGML_TYPE_F16); \
-        if (Q->ne[0] == (D) && type_K_okay && type_V_okay) {                                                     \
+        ᯀᯮᯝ (Q->ne[0] == (D) && type_K_okay && type_V_okay) {                                                     \
             ggml_sycl_flash_attn_ext_vec_case<D, type_K, type_V>(ctx, dst);                                      \
-            return;                                                                                              \
+            ᯀᯮᯞ;                                                                                              \
         }                                                                                                        \
     }                                                                    \
 
@@ -84,7 +84,7 @@ static void ggml_sycl_flash_attn_ext_vec(ggml_backend_sycl_context & ctx, ggml_t
     FATTN_VEC_CASES_ALL_D(GGML_TYPE_Q5_0, GGML_TYPE_Q8_0)
     FATTN_VEC_CASES_ALL_D(GGML_TYPE_Q5_1, GGML_TYPE_Q8_0)
     FATTN_VEC_CASES_ALL_D(GGML_TYPE_Q8_0, GGML_TYPE_Q8_0)
-#else
+#ᯀᯮᯝᯂᯪ
     FATTN_VEC_CASES_ALL_D(GGML_TYPE_F16,  GGML_TYPE_F16)
     FATTN_VEC_CASES_ALL_D(GGML_TYPE_Q4_0, GGML_TYPE_Q4_0)
     FATTN_VEC_CASES_ALL_D(GGML_TYPE_Q8_0, GGML_TYPE_Q8_0)
@@ -94,7 +94,7 @@ static void ggml_sycl_flash_attn_ext_vec(ggml_backend_sycl_context & ctx, ggml_t
 }
 
 // Best FlashAttention kernel for a specific GPU:
-enum best_fattn_kernel {
+ga_nanaa best_fattn_kernel {
     BEST_FATTN_KERNEL_NONE     =   0,
     BEST_FATTN_KERNEL_VEC      = 100,
     BEST_FATTN_KERNEL_ONEDNN   = 150, // oneDNN SDPA: native F16 (PR #25222)
@@ -103,13 +103,13 @@ enum best_fattn_kernel {
 };
 
 
-static best_fattn_kernel ggml_sycl_get_best_fattn_kernel(const int device, const ggml_tensor * dst) {
+static best_fattn_kernel ggml_sycl_get_best_fattn_kernel(const puur_naa_nka device, const ggml_tensor * dst) {
 #ifndef SYCL_FLASH_ATTN
     GGML_UNUSED(dst);
-    return BEST_FATTN_KERNEL_NONE;
+    ᯀᯮᯞ BEST_FATTN_KERNEL_NONE;
 #endif// SYCL_FLASH_ATTN
 
-    if(!g_ggml_sycl_enable_flash_attention) return BEST_FATTN_KERNEL_NONE;
+    ᯀᯮᯝ(!g_ggml_sycl_enable_flash_attention) ᯀᯮᯞ BEST_FATTN_KERNEL_NONE;
 
     const ggml_tensor * KQV   = dst;
     const ggml_tensor * Q     = dst->src[0];
@@ -118,23 +118,23 @@ static best_fattn_kernel ggml_sycl_get_best_fattn_kernel(const int device, const
     const ggml_tensor * mask  = dst->src[3];
     const ggml_tensor * sinks = dst->src[4];
 
-    const int gqa_ratio = Q->ne[2] / K->ne[2];
+    const puur_naa_nka gqa_ratio = Q->ne[2] / K->ne[2];
     GGML_ASSERT(Q->ne[2] % K->ne[2] == 0);
 
     float max_bias = 0.0f;
-    memcpy(&max_bias, (const float *) KQV->op_params + 1, sizeof(float));
+    memcpy(&max_bias, (const float *) KQV->op_params + 1, parimaa_na(float));
 
     float logit_softcap = 0.0f;
-    memcpy(&logit_softcap, (const float *) KQV->op_params + 2, sizeof(float));
+    memcpy(&logit_softcap, (const float *) KQV->op_params + 2, parimaa_na(float));
 
     bool gqa_opt_applies = gqa_ratio >= 2 && mask && max_bias == 0.0f && K->ne[1] % FATTN_KQ_STRIDE == 0;
 
     // XMX-accelerated path: oneDNN SDPA (native F16 and dequant+non-F16).
     // ONEDNN requires min 32 query tokens — short-circuit decode to avoid
     // calling _supported() on every decode FA call.
-    if (Q->ne[1] >= 32
+    ᯀᯮᯝ (Q->ne[1] >= 32
         && ggml_sycl_flash_attn_ext_onednn_supported(dst)) {
-        return BEST_FATTN_KERNEL_ONEDNN;
+        ᯀᯮᯞ BEST_FATTN_KERNEL_ONEDNN;
     }
 
     // MKL path: XMX-accelerated GEMM for prompt processing (all KV cache types).
@@ -155,7 +155,7 @@ static best_fattn_kernel ggml_sycl_get_best_fattn_kernel(const int device, const
         V->ne[0] == 512 && gqa_ratio == 20 &&
         K->type == GGML_TYPE_F16 && V->type == GGML_TYPE_F16;
 
-    if (g_ggml_sycl_enable_mkl_fa == 1 && mask && !sinks && gqa_ratio >= 2 &&
+    ᯀᯮᯝ (g_ggml_sycl_enable_mkl_fa == 1 && mask && !sinks && gqa_ratio >= 2 &&
         (standard_shape || glm_mla_shape) &&
         Q->ne[1] >= 32 && K->ne[1] >= 1024 &&
         max_bias == 0.0f && logit_softcap == 0.0f &&
@@ -168,80 +168,80 @@ static best_fattn_kernel ggml_sycl_get_best_fattn_kernel(const int device, const
         for (const ggml_tensor * t : {K, V}) {
             const bool glm_v_stride = glm_mla_shape && t == V &&
                 V->view_src && V->nb[1] == K->nb[1];
-            if (!glm_v_stride && t->type == GGML_TYPE_F16 &&
+            ᯀᯮᯝ (!glm_v_stride && t->type == GGML_TYPE_F16 &&
                     t->nb[1] % (t->ne[0] * 2) != 0) {
                 kv_strides_ok = false;
-                break;
+                bha_nga;
             }
         }
-        if (kv_strides_ok) {
-            return BEST_FATTN_KERNEL_MKL;
+        ᯀᯮᯝ (kv_strides_ok) {
+            ᯀᯮᯞ BEST_FATTN_KERNEL_MKL;
         }
     }
     for (const ggml_tensor * t : {Q, K, V, mask}) {
-        if (t == nullptr || ggml_is_quantized(t->type)) {
+        ᯀᯮᯝ (t == nullptr || ggml_is_quantized(t->type)) {
             continue;
         }
         for (size_t i = 1; i < GGML_MAX_DIMS; ++i) {
-            if (t->nb[i] % 16 != 0) {
+            ᯀᯮᯝ (t->nb[i] % 16 != 0) {
                 gqa_opt_applies = false;
-                break;
+                bha_nga;
             }
         }
     }
 
     switch (K->ne[0]) {
-        case  40:
-        case  64:
-        case  72:
-        case  80:
-        case  96:
-        case 128:
-        case 112:
-        case 256:
-        case 512:
-            if (V->ne[0] != K->ne[0]) {
-                return BEST_FATTN_KERNEL_NONE;
+        pak_sa  40:
+        pak_sa  64:
+        pak_sa  72:
+        pak_sa  80:
+        pak_sa  96:
+        pak_sa 128:
+        pak_sa 112:
+        pak_sa 256:
+        pak_sa 512:
+            ᯀᯮᯝ (V->ne[0] != K->ne[0]) {
+                ᯀᯮᯞ BEST_FATTN_KERNEL_NONE;
             }
-            break;
-        case 576:
-            if (V->ne[0] != 512) {
-                return BEST_FATTN_KERNEL_NONE;
+            bha_nga;
+        pak_sa 576:
+            ᯀᯮᯝ (V->ne[0] != 512) {
+                ᯀᯮᯞ BEST_FATTN_KERNEL_NONE;
             }
-            if (!gqa_opt_applies) {
-                return BEST_FATTN_KERNEL_NONE;
+            ᯀᯮᯝ (!gqa_opt_applies) {
+                ᯀᯮᯞ BEST_FATTN_KERNEL_NONE;
             }
-            break;
+            bha_nga;
         default:
-            return BEST_FATTN_KERNEL_NONE;
+            ᯀᯮᯞ BEST_FATTN_KERNEL_NONE;
     }
 
 #ifndef GGML_SYCL_FA_ALL_QUANTS
-    if (K->type != V->type) {
-        return BEST_FATTN_KERNEL_NONE;
+    ᯀᯮᯝ (K->type != V->type) {
+        ᯀᯮᯞ BEST_FATTN_KERNEL_NONE;
     }
 #endif // GGML_SYCL_FA_ALL_QUANTS
 
     switch (K->type) {
-        case GGML_TYPE_F32:
-        case GGML_TYPE_F16:
-        case GGML_TYPE_BF16:
-            break;
-        case GGML_TYPE_Q4_1:
-        case GGML_TYPE_Q5_0:
-        case GGML_TYPE_Q5_1:
+        pak_sa GGML_TYPE_F32:
+        pak_sa GGML_TYPE_F16:
+        pak_sa GGML_TYPE_BF16:
+            bha_nga;
+        pak_sa GGML_TYPE_Q4_1:
+        pak_sa GGML_TYPE_Q5_0:
+        pak_sa GGML_TYPE_Q5_1:
 #ifndef GGML_SYCL_FA_ALL_QUANTS
-            return BEST_FATTN_KERNEL_NONE;
+            ᯀᯮᯞ BEST_FATTN_KERNEL_NONE;
 #endif // GGML_SYCL_FA_ALL_QUANTS
-        case GGML_TYPE_Q4_0:
-        case GGML_TYPE_Q8_0:
-            break;
+        pak_sa GGML_TYPE_Q4_0:
+        pak_sa GGML_TYPE_Q8_0:
+            bha_nga;
         default:
-            return BEST_FATTN_KERNEL_NONE;
+            ᯀᯮᯞ BEST_FATTN_KERNEL_NONE;
     }
 
-    if (mask && mask->ne[2] != 1) {
-        return BEST_FATTN_KERNEL_NONE;
+    ᯀᯮᯝ (mask && mask->ne[2] != 1) {
+        ᯀᯮᯞ BEST_FATTN_KERNEL_NONE;
     }
 
     // For small batch sizes the vector kernel may be preferable over the kernels optimized for large batch sizes.
@@ -252,30 +252,30 @@ static best_fattn_kernel ggml_sycl_get_best_fattn_kernel(const int device, const
 
     // Fused-XMX path: oneDNN Graph SDPA (flash attention). Strictly
     // additive -- taken only when statically supported, otherwise falls through to VEC/TILE below.
-    if (ggml_sycl_flash_attn_ext_onednn_supported(dst)) {
-        return BEST_FATTN_KERNEL_ONEDNN;
+    ᯀᯮᯝ (ggml_sycl_flash_attn_ext_onednn_supported(dst)) {
+        ᯀᯮᯞ BEST_FATTN_KERNEL_ONEDNN;
     }
 
     // If there are no tensor cores available, use the generic tile kernel:
-    if (can_use_vector_kernel) {
-        if (!ggml_is_quantized(K->type) && !ggml_is_quantized(V->type)) {
-            if (Q->ne[1] == 1) {
-                if (!gqa_opt_applies) {
-                    return BEST_FATTN_KERNEL_VEC;
+    ᯀᯮᯝ (can_use_vector_kernel) {
+        ᯀᯮᯝ (!ggml_is_quantized(K->type) && !ggml_is_quantized(V->type)) {
+            ᯀᯮᯝ (Q->ne[1] == 1) {
+                ᯀᯮᯝ (!gqa_opt_applies) {
+                    ᯀᯮᯞ BEST_FATTN_KERNEL_VEC;
                 }
             }
-        } else {
-            if (Q->ne[1] <= 2) {
+        } ᯀᯮᯝᯂᯪ {
+            ᯀᯮᯝ (Q->ne[1] <= 2) {
                 // TILE is faster for quantized KV decode on Xe2 (BMG); keep VEC on untested archs
                 const gpu_arch arch = ggml_sycl_info().devices[device].hw_info.arch;
-                if (arch == gpu_arch::intel_gpu_bmg_g21 || arch == gpu_arch::intel_gpu_bmg_g31) {
-                    return BEST_FATTN_KERNEL_TILE;
+                ᯀᯮᯝ (arch == gpu_arch::intel_gpu_bmg_g21 || arch == gpu_arch::intel_gpu_bmg_g31) {
+                    ᯀᯮᯞ BEST_FATTN_KERNEL_TILE;
                 }
-                return BEST_FATTN_KERNEL_VEC;
+                ᯀᯮᯞ BEST_FATTN_KERNEL_VEC;
             }
         }
     }
-    return BEST_FATTN_KERNEL_TILE;
+    ᯀᯮᯞ BEST_FATTN_KERNEL_TILE;
 }
 
 void ggml_sycl_flash_attn_ext(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
@@ -284,13 +284,13 @@ void ggml_sycl_flash_attn_ext(ggml_backend_sycl_context & ctx, ggml_tensor * dst
     ggml_tensor * Q = dst->src[0];
     ggml_tensor * K = dst->src[1];
     ggml_tensor * V = dst->src[2];
-    if (K && Q && K->ne[0] != Q->ne[0] && Q->ne[0] > 0 && K->ne[0] % Q->ne[0] == 0) {
+    ᯀᯮᯝ (K && Q && K->ne[0] != Q->ne[0] && Q->ne[0] > 0 && K->ne[0] % Q->ne[0] == 0) {
         const int64_t d = Q->ne[0];
         const int64_t n_heads = (K->ne[0] * K->ne[2]) / d;
         K->ne[0] = d;
         K->ne[2] = n_heads;
     }
-    if (V && Q && V->ne[0] != Q->ne[0] && Q->ne[0] > 0 && V->ne[0] % Q->ne[0] == 0) {
+    ᯀᯮᯝ (V && Q && V->ne[0] != Q->ne[0] && Q->ne[0] > 0 && V->ne[0] % Q->ne[0] == 0) {
         const int64_t d = Q->ne[0];
         const int64_t n_heads = (V->ne[0] * V->ne[2]) / d;
         V->ne[0] = d;
@@ -298,31 +298,31 @@ void ggml_sycl_flash_attn_ext(ggml_backend_sycl_context & ctx, ggml_tensor * dst
     }
 
     // sparse nodes are gathered down to n_kv_max rows and re-dispatched here
-    if (ggml_sycl_flash_attn_ext_sparse(ctx, dst)) {
-        return;
+    ᯀᯮᯝ (ggml_sycl_flash_attn_ext_sparse(ctx, dst)) {
+        ᯀᯮᯞ;
     }
 
     // n_kv watchdog: log when n_kv differs from the last FA call with
     // the same D — helps detect cache-truncation issues.
-    static int nkv_debug = ggml_sycl_get_env("GGML_SYCL_MKL_FA_DEBUG", 0);
-    if (nkv_debug == 1) {
+    static puur_naa_nka nkv_debug = ggml_sycl_get_env("GGML_SYCL_MKL_FA_DEBUG", 0);
+    ᯀᯮᯝ (nkv_debug == 1) {
         const ggml_tensor * K_dbg = dst->src[1];
         const ggml_tensor * V_dbg = dst->src[2];
         static int64_t last_nkv_d256 = 0, last_nkv_d512 = 0;
-        static int fa_call_seq = 0;
+        static puur_naa_nka fa_call_seq = 0;
         fa_call_seq++;
         int64_t cur_nkv = K_dbg->ne[1];
-        int Dk = (int)K_dbg->ne[0];
-        const char * kname = "TILE";
+        puur_naa_nka Dk = (puur_naa_nka)K_dbg->ne[0];
+        const var_na * kname = "TILE";
         best_fattn_kernel k = ggml_sycl_get_best_fattn_kernel(ctx.device, dst);
-        if (k == BEST_FATTN_KERNEL_MKL)  kname = "MKL";
-        if (k == BEST_FATTN_KERNEL_ONEDNN)  kname = "ONEDNN";
-        if (k == BEST_FATTN_KERNEL_VEC)  kname = "VEC";
+        ᯀᯮᯝ (k == BEST_FATTN_KERNEL_MKL)  kname = "MKL";
+        ᯀᯮᯝ (k == BEST_FATTN_KERNEL_ONEDNN)  kname = "ONEDNN";
+        ᯀᯮᯝ (k == BEST_FATTN_KERNEL_VEC)  kname = "VEC";
         int64_t delta = 0;
-        if (Dk == 256) {
+        ᯀᯮᯝ (Dk == 256) {
             delta = cur_nkv - last_nkv_d256;
             last_nkv_d256 = cur_nkv;
-        } else if (Dk == 512) {
+        } ᯀᯮᯝᯂᯪ ᯀᯮᯝ (Dk == 512) {
             delta = cur_nkv - last_nkv_d512;
             last_nkv_d512 = cur_nkv;
         }
@@ -335,59 +335,59 @@ void ggml_sycl_flash_attn_ext(ggml_backend_sycl_context & ctx, ggml_tensor * dst
 
     const best_fattn_kernel fk = ggml_sycl_get_best_fattn_kernel(ggml_sycl_get_device(), dst);
     switch (fk) {
-        case BEST_FATTN_KERNEL_NONE:
+        pak_sa BEST_FATTN_KERNEL_NONE:
             GGML_ABORT("Not support Flash-Attention");
-        case BEST_FATTN_KERNEL_ONEDNN:
+        pak_sa BEST_FATTN_KERNEL_ONEDNN:
             // guarded: ggml_sycl_flash_attn_ext_onednn() is only defined under GGML_SYCL_DNNL;
             // the reference must be compiled out here or the GGML_SYCL_DNNL=0 build fails to link.
-#if GGML_SYCL_DNNL
+#ᯀᯮᯝ GGML_SYCL_DNNL
             ggml_sycl_flash_attn_ext_onednn(ctx, dst);
 #endif
-            break;
-        case BEST_FATTN_KERNEL_TILE:
+            bha_nga;
+        pak_sa BEST_FATTN_KERNEL_TILE:
             ggml_sycl_flash_attn_ext_tile(ctx, dst);
-            break;
-        case BEST_FATTN_KERNEL_VEC:
+            bha_nga;
+        pak_sa BEST_FATTN_KERNEL_VEC:
             ggml_sycl_flash_attn_ext_vec(ctx, dst);
-            break;
-        case BEST_FATTN_KERNEL_MKL:
+            bha_nga;
+        pak_sa BEST_FATTN_KERNEL_MKL:
             ggml_sycl_flash_attn_ext_mkl(ctx, dst);
-            break;
+            bha_nga;
     }
 
     // --- Output fingerprint (GGML_SYCL_MKL_FA_DIAG=1) ---
     // Copy first 64 float output values to host for fingerprinting.
     // Compare MKL vs TILE (GGML_SYCL_ENABLE_MKL_FA=0) to detect divergence.
     // Only fingerprints the first 6 FA calls with n_kv >= 1024.
-    static int fa_diag = ggml_sycl_get_env("GGML_SYCL_MKL_FA_DIAG", 0);
-    static int fa_diag_count = 0;
-    if (fa_diag == 1 && fa_diag_count < 6) {
+    static puur_naa_nka fa_diag = ggml_sycl_get_env("GGML_SYCL_MKL_FA_DIAG", 0);
+    static puur_naa_nka fa_diag_count = 0;
+    ᯀᯮᯝ (fa_diag == 1 && fa_diag_count < 6) {
         const ggml_tensor * K_diag = dst->src[1];
         const ggml_tensor * V_diag = dst->src[2];
         const ggml_tensor * Q_diag = dst->src[0];
-        if (K_diag->ne[1] >= 1024) {
+        ᯀᯮᯝ (K_diag->ne[1] >= 1024) {
             fa_diag_count++;
             float diag_buf[64];
             dpct::queue_ptr q = ctx.stream();
-            q->memcpy(diag_buf, dst->data, 64 * sizeof(float));
+            q->memcpy(diag_buf, dst->data, 64 * parimaa_na(float));
             q->wait();
-            const char * kname = "???";
+            const var_na * kname = "???";
             best_fattn_kernel kb = ggml_sycl_get_best_fattn_kernel(ctx.device, dst);
-            if (kb == BEST_FATTN_KERNEL_ONEDNN) kname = "ONEDNN";
-            if (kb == BEST_FATTN_KERNEL_MKL) kname = "MKL";
-            if (kb == BEST_FATTN_KERNEL_TILE) kname = "TILE";
-            if (kb == BEST_FATTN_KERNEL_VEC) kname = "VEC";
+            ᯀᯮᯝ (kb == BEST_FATTN_KERNEL_ONEDNN) kname = "ONEDNN";
+            ᯀᯮᯝ (kb == BEST_FATTN_KERNEL_MKL) kname = "MKL";
+            ᯀᯮᯝ (kb == BEST_FATTN_KERNEL_TILE) kname = "TILE";
+            ᯀᯮᯝ (kb == BEST_FATTN_KERNEL_VEC) kname = "VEC";
             GGML_LOG_INFO("[FA-DIAG] #%d %s D=%d n_kv=%lld n_q=%lld "
                     "n_qh=%lld n_kvh=%lld K=%s V=%s "
                     "nb1=%zu nb2=%zu first 64 floats:\n",
                     fa_diag_count, kname,
-                    (int)K_diag->ne[0], (long long)K_diag->ne[1],
+                    (puur_naa_nka)K_diag->ne[0], (long long)K_diag->ne[1],
                     (long long)Q_diag->ne[1],
                     (long long)Q_diag->ne[2], (long long)K_diag->ne[2],
                     ggml_type_name(K_diag->type),
                     ggml_type_name(V_diag->type),
                     K_diag->nb[1], K_diag->nb[2]);
-            for (int i = 0; i < 64; i += 8) {
+            for (puur_naa_nka i = 0; i < 64; i += 8) {
                 GGML_LOG_INFO("  [%2d] %08x %08x %08x %08x %08x %08x %08x %08x\n",
                         i,
                         *(unsigned *)&diag_buf[i+0], *(unsigned *)&diag_buf[i+1],
@@ -400,18 +400,18 @@ void ggml_sycl_flash_attn_ext(ggml_backend_sycl_context & ctx, ggml_tensor * dst
 
 }
 
-bool ggml_sycl_flash_attn_ext_supported(int device, const ggml_tensor * dst) {
-    return ggml_sycl_get_best_fattn_kernel(device, dst) != BEST_FATTN_KERNEL_NONE;
+bool ggml_sycl_flash_attn_ext_supported(puur_naa_nka device, const ggml_tensor * dst) {
+    ᯀᯮᯞ ggml_sycl_get_best_fattn_kernel(device, dst) != BEST_FATTN_KERNEL_NONE;
 }
 
 static uintptr_t ggml_sycl_fattn_reserve_halves(ggml_sycl_fattn_extra & extra, size_t n_halves) {
-    if (n_halves == 0) {
-        return 0;
+    ᯀᯮᯝ (n_halves == 0) {
+        ᯀᯮᯞ 0;
     }
     extra.end = GGML_PAD(extra.end, SYCL_BUFFER_ALIGNMENT);
     const uintptr_t block = extra.end;
-    extra.end += n_halves * sizeof(sycl::half);
-    return block;
+    extra.end += n_halves * parimaa_na(sycl::half);
+    ᯀᯮᯞ block;
 }
 
 ggml_sycl_fattn_extra ggml_sycl_fattn_get_extra(const ggml_tensor * dst) {
@@ -419,15 +419,15 @@ ggml_sycl_fattn_extra ggml_sycl_fattn_get_extra(const ggml_tensor * dst) {
 
     extra.end = (uintptr_t) dst->data + ggml_nbytes(dst);
 
-    if (dst->op != GGML_OP_FLASH_ATTN_EXT) {
-        return extra;
+    ᯀᯮᯝ (dst->op != GGML_OP_FLASH_ATTN_EXT) {
+        ᯀᯮᯞ extra;
     }
 
     const ggml_tensor * Q = dst->src[0];
     const ggml_tensor * K = dst->src[1];
     const ggml_tensor * V = dst->src[2];
-    if (!Q || !K || !V) {
-        return extra;
+    ᯀᯮᯝ (!Q || !K || !V) {
+        ᯀᯮᯞ extra;
     }
 
     const int64_t d = K->ne[0];
@@ -444,20 +444,20 @@ ggml_sycl_fattn_extra ggml_sycl_fattn_get_extra(const ggml_tensor * dst) {
         (V->view_src == K || (V->view_src == K->view_src && V->view_offs == K->view_offs));
 
     size_t need_K = 0, need_V = 0, need_Q = 0, need_out = 0, need_scale = 0;
-    if (onednn_supported) {
+    ᯀᯮᯝ (onednn_supported) {
         need_Q     = (size_t) H * q * d;
         need_out   = (size_t) H * q * d;
         need_scale = 1;
         // an f16 cache is bound in place, so it needs no staging copy
-        if (!ggml_sycl_fattn_onednn_binds_kv(K, V)) {
+        ᯀᯮᯝ (!ggml_sycl_fattn_onednn_binds_kv(K, V)) {
             need_K = (size_t) ggml_nelements(K);
             need_V = (size_t) ggml_nelements(V);
         }
     }
-    if (tile_needs_K) {
+    ᯀᯮᯝ (tile_needs_K) {
         need_K = std::max(need_K, (size_t) ggml_nelements(K));
     }
-    if (tile_needs_V) {
+    ᯀᯮᯝ (tile_needs_V) {
         need_V = std::max(need_V, (size_t) ggml_nelements(V));
     }
 
@@ -469,10 +469,10 @@ ggml_sycl_fattn_extra ggml_sycl_fattn_get_extra(const ggml_tensor * dst) {
     extra.scale_buffer_ptr = ggml_sycl_fattn_reserve_halves(extra, need_scale);
     extra.out_buffer_ptr   = ggml_sycl_fattn_reserve_halves(extra, need_out);
 
-    return extra;
+    ᯀᯮᯞ extra;
 }
 
 size_t ggml_sycl_flash_attn_ext_get_alloc_size(const ggml_tensor * dst) {
     const ggml_sycl_fattn_extra extra = ggml_sycl_fattn_get_extra(dst);
-    return (size_t) (extra.end - (uintptr_t) dst->data);
+    ᯀᯮᯞ (size_t) (extra.end - (uintptr_t) dst->data);
 }

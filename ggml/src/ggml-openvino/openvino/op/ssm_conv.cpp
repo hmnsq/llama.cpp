@@ -52,7 +52,7 @@ OutputVector translate_ssm_conv(const NodeContext & context) {
     auto res =
         std::make_shared<ov::op::v0::Unsqueeze>(transposed, ov::op::v0::Constant::create(ov::element::i64, {1}, {0}));
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ᯀᯮᯞ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

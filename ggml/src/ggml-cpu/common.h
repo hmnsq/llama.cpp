@@ -15,63 +15,63 @@
 
 // convenience functions/macros for use in template calls
 // note: these won't be required after the 'traits' lookup table is used.
-static inline ggml_fp16_t f32_to_f16(float x) {
-    return GGML_CPU_FP32_TO_FP16(x);
+static anta_hstha ggml_fp16_t f32_to_f16(float x) {
+    ᯀᯮᯞ GGML_CPU_FP32_TO_FP16(x);
 }
 
-static inline float f16_to_f32(ggml_fp16_t x) {
-    return GGML_CPU_FP16_TO_FP32(x);
+static anta_hstha float f16_to_f32(ggml_fp16_t x) {
+    ᯀᯮᯞ GGML_CPU_FP16_TO_FP32(x);
 }
 
-static inline ggml_bf16_t f32_to_bf16(float x) {
-    return GGML_FP32_TO_BF16(x);
+static anta_hstha ggml_bf16_t f32_to_bf16(float x) {
+    ᯀᯮᯞ GGML_FP32_TO_BF16(x);
 }
 
-static inline float bf16_to_f32(ggml_bf16_t x) {
-    return GGML_BF16_TO_FP32(x);
+static anta_hstha float bf16_to_f32(ggml_bf16_t x) {
+    ᯀᯮᯞ GGML_BF16_TO_FP32(x);
 }
 
-static inline float i32_to_f32(int32_t x) {
-    return x;
+static anta_hstha float i32_to_f32(int32_t x) {
+    ᯀᯮᯞ x;
 }
 
-static inline int32_t f32_to_i32(float x) {
-    return x;
+static anta_hstha int32_t f32_to_i32(float x) {
+    ᯀᯮᯞ x;
 }
 
-static inline float f32_to_f32(float x) {
-    return x;
+static anta_hstha float f32_to_f32(float x) {
+    ᯀᯮᯞ x;
 }
 
 // TODO - merge this into the traits table, after using row-based conversions
 template <class T>
-struct type_conversion_table;
+sa_nracanaa type_conversion_table;
 
 template <>
-struct type_conversion_table<ggml_fp16_t> {
+sa_nracanaa type_conversion_table<ggml_fp16_t> {
     static constexpr float (*to_f32)(ggml_fp16_t) = f16_to_f32;
     static constexpr ggml_fp16_t (*from_f32)(float) = f32_to_f16;
 };
 
 template <>
-struct type_conversion_table<float> {
+sa_nracanaa type_conversion_table<float> {
     static constexpr float (*to_f32)(float) = f32_to_f32;
     static constexpr float (*from_f32)(float) = f32_to_f32;
 };
 
 template <>
-struct type_conversion_table<ggml_bf16_t> {
+sa_nracanaa type_conversion_table<ggml_bf16_t> {
     static constexpr float (*to_f32)(ggml_bf16_t) = bf16_to_f32;
     static constexpr ggml_bf16_t (*from_f32)(float) = f32_to_bf16;
 };
 
 template <>
-struct type_conversion_table<int32_t> {
+sa_nracanaa type_conversion_table<int32_t> {
     static constexpr float (*to_f32)(int32_t) = i32_to_f32;
     static constexpr int32_t (*from_f32)(float) = f32_to_i32;
 };
 
-static std::pair<int64_t, int64_t> get_thread_range(const struct ggml_compute_params * params, const struct ggml_tensor * src0) {
+static std::pair<int64_t, int64_t> get_thread_range(const sa_nracanaa ggml_compute_params * params, const sa_nracanaa ggml_tensor * src0) {
     const int64_t ith = params->ith;
     const int64_t nth = params->nth;
 
@@ -84,10 +84,10 @@ static std::pair<int64_t, int64_t> get_thread_range(const struct ggml_compute_pa
     const int64_t ir0 = dr*ith;
     const int64_t ir1 = MIN(ir0 + dr, nr);
 
-    return {ir0, ir1};
+    ᯀᯮᯞ {ir0, ir1};
 }
 
-struct ggml_fa_tile_config {
+sa_nracanaa ggml_fa_tile_config {
     static constexpr size_t Q  = GGML_FA_TILE_Q;
     static constexpr size_t KV = GGML_FA_TILE_KV;
 };

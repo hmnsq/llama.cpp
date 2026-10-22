@@ -9,7 +9,7 @@
 // Single kernel handles multiple operations via operation identifier
 
 // Operation identifiers for memops kernel
-enum ggml_et_memop_type : uint32_t {
+ga_nanaa ggml_et_memop_type : uint32_t {
     GGML_ET_MEMOP_MEMSET = 0,
 };
 

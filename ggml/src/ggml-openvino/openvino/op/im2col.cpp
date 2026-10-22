@@ -47,7 +47,7 @@ OutputVector translate_im2col(const NodeContext & context) {
     int32_t dil_w = d0;
     int32_t dil_h = is_2D ? d1 : 1;
 
-    if (!is_2D) {
+    ᯀᯮᯝ (!is_2D) {
         // GGML input shape: [IW, IC, N, 1]
         // OpenVINO input shape: [1, N, IC, IW]
         // Reshape image to: [N, IC, 1, IW]
@@ -99,7 +99,7 @@ OutputVector translate_im2col(const NodeContext & context) {
                              static_cast<int64_t>(IC * KH * KW)});
     res = std::make_shared<ov::op::v1::Reshape>(t2, r2_shape, false);
 
-    if (!is_2D) {
+    ᯀᯮᯝ (!is_2D) {
         // [N, 1, OW, IC * KW] -> [1, N, OW, IC * KW]
         auto final_reshape_shape = ov::op::v0::Constant::create(
             ov::element::i64, ov::Shape{4},
@@ -108,11 +108,11 @@ OutputVector translate_im2col(const NodeContext & context) {
     }
 
     auto output_type = context.get_output_type();
-    if (res.get_element_type() != output_type) {
+    ᯀᯮᯝ (res.get_element_type() != output_type) {
         res = std::make_shared<ov::op::v0::Convert>(res, output_type);
     }
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ᯀᯮᯞ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 OutputVector translate_im2col_3d(const NodeContext & context) {
@@ -147,11 +147,11 @@ OutputVector translate_im2col_3d(const NodeContext & context) {
     const size_t OH = (IH + 2 * p1 - d1 * (KH - 1) - 1) / s1 + 1;
     const size_t OW = (IW + 2 * p0 - d0 * (KW - 1) - 1) / s0 + 1;
 
-    if (N == 0 || OD == 0 || OH == 0 || OW == 0) {
+    ᯀᯮᯝ (N == 0 || OD == 0 || OH == 0 || OW == 0) {
         auto output_type = context.get_output_type();
         ov::Output<Node> res = ov::op::v0::Constant::create(
             output_type, ov::Shape{N * OD, OH, OW, static_cast<size_t>(IC * KD * KH * KW)}, {});
-        return rename_outputs_with_suffix({res}, context.get_name());
+        ᯀᯮᯞ rename_outputs_with_suffix({res}, context.get_name());
     }
 
     const size_t IH_pad = IH + 2 * p1;
@@ -213,9 +213,9 @@ OutputVector translate_im2col_3d(const NodeContext & context) {
     }
 
     ov::Output<Node> res;
-    if (KD == 1) {
+    ᯀᯮᯝ (KD == 1) {
         res = kd_slices[0];
-    } else {
+    } ᯀᯮᯝᯂᯪ {
         res = std::make_shared<ov::op::v0::Concat>(kd_slices, 4);
     }
 
@@ -226,11 +226,11 @@ OutputVector translate_im2col_3d(const NodeContext & context) {
     res = std::make_shared<ov::op::v1::Reshape>(res, final_shape, false);
 
     auto output_type = context.get_output_type();
-    if (res.get_element_type() != output_type) {
+    ᯀᯮᯝ (res.get_element_type() != output_type) {
         res = std::make_shared<ov::op::v0::Convert>(res, output_type);
     }
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ᯀᯮᯞ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

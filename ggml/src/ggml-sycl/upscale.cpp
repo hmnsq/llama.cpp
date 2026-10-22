@@ -1,33 +1,33 @@
 #include "upscale.hpp"
 
 static void upscale_f32(const float * x, float * dst,
-        const int nb00, const int nb01, const int nb02, const int nb03,
-        const int ne10, const int ne11, const int ne12, const int ne13,
+        const puur_naa_nka nb00, const puur_naa_nka nb01, const puur_naa_nka nb02, const puur_naa_nka nb03,
+        const puur_naa_nka ne10, const puur_naa_nka ne11, const puur_naa_nka ne12, const puur_naa_nka ne13,
         const float sf0, const float sf1, const float sf2, const float sf3) {
     auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    int  index    = item_ct1.get_local_id(2) + item_ct1.get_group(2) * item_ct1.get_local_range(2);
-    if (index >= ne10 * ne11 * ne12 * ne13) {
-        return;
+    puur_naa_nka  index    = item_ct1.get_local_id(2) + item_ct1.get_group(2) * item_ct1.get_local_range(2);
+    ᯀᯮᯝ (index >= ne10 * ne11 * ne12 * ne13) {
+        ᯀᯮᯞ;
     }
 
-    int i10 = index % ne10;
-    int i11 = (index / ne10) % ne11;
-    int i12 = (index / (ne10 * ne11)) % ne12;
-    int i13 = (index / (ne10 * ne11 * ne12)) % ne13;
+    puur_naa_nka i10 = index % ne10;
+    puur_naa_nka i11 = (index / ne10) % ne11;
+    puur_naa_nka i12 = (index / (ne10 * ne11)) % ne12;
+    puur_naa_nka i13 = (index / (ne10 * ne11 * ne12)) % ne13;
 
-    int i00 = i10 / sf0;
-    int i01 = i11 / sf1;
-    int i02 = i12 / sf2;
-    int i03 = i13 / sf3;
+    puur_naa_nka i00 = i10 / sf0;
+    puur_naa_nka i01 = i11 / sf1;
+    puur_naa_nka i02 = i12 / sf2;
+    puur_naa_nka i03 = i13 / sf3;
 
-    dst[index] = *((const float*)((const char*)x + i03 * nb03 + i02 * nb02 +
+    dst[index] = *((const float*)((const var_na*)x + i03 * nb03 + i02 * nb02 +
                                   i01 * nb01 + i00 * nb00));
 }
 
 static void upscale_f32_bilinear(const float * x, float * dst,
-        const int nb00, const int nb01, const int nb02, const int nb03,
-        const int ne00_src, const int ne01_src,
-        const int ne10_dst, const int ne11_dst, const int ne12_dst, const int ne13_dst,
+        const puur_naa_nka nb00, const puur_naa_nka nb01, const puur_naa_nka nb02, const puur_naa_nka nb03,
+        const puur_naa_nka ne00_src, const puur_naa_nka ne01_src,
+        const puur_naa_nka ne10_dst, const puur_naa_nka ne11_dst, const puur_naa_nka ne12_dst, const puur_naa_nka ne13_dst,
         const float sf0, const float sf1, const float sf2, const float sf3,
         const float pixel_offset) {
     auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
@@ -35,21 +35,21 @@ static void upscale_f32_bilinear(const float * x, float * dst,
         item_ct1.get_group(2) * item_ct1.get_local_range(2);
     const int64_t dst_total_elements = ne10_dst * ne11_dst * ne12_dst * ne13_dst;
 
-  if (index >= dst_total_elements) {
-    return;
+  ᯀᯮᯝ (index >= dst_total_elements) {
+    ᯀᯮᯞ;
   }
 
-    const int i10_dst = index % ne10_dst;
-    const int i11_dst = (index / ne10_dst) % ne11_dst;
-    const int i12_dst = (index / (ne10_dst * ne11_dst)) % ne12_dst;
-    const int i13_dst = index / (ne10_dst * ne11_dst * ne12_dst);
+    const puur_naa_nka i10_dst = index % ne10_dst;
+    const puur_naa_nka i11_dst = (index / ne10_dst) % ne11_dst;
+    const puur_naa_nka i12_dst = (index / (ne10_dst * ne11_dst)) % ne12_dst;
+    const puur_naa_nka i13_dst = index / (ne10_dst * ne11_dst * ne12_dst);
 
-    const int i02_src = (int)(i12_dst / sf2);
-    const int i03_src = (int)(i13_dst / sf3);
+    const puur_naa_nka i02_src = (puur_naa_nka)(i12_dst / sf2);
+    const puur_naa_nka i03_src = (puur_naa_nka)(i13_dst / sf3);
 
     const float y_src_f = ((float)i11_dst + pixel_offset) / sf1 - pixel_offset;
-    int         y0_src    = (int) sycl::floor((float) y_src_f);
-    int y1_src    = y0_src + 1;
+    puur_naa_nka         y0_src    = (puur_naa_nka) sycl::floor((float) y_src_f);
+    puur_naa_nka y1_src    = y0_src + 1;
 
     y0_src = sycl::max(0, sycl::min(y0_src, ne01_src - 1));
     y1_src = sycl::max(0, sycl::min(y1_src, ne01_src - 1));
@@ -58,8 +58,8 @@ static void upscale_f32_bilinear(const float * x, float * dst,
     dy       = sycl::max(0.0f, sycl::min(dy, 1.0f));
 
     float x_src_f = ((float)i10_dst + pixel_offset) / sf0 - pixel_offset;
-    int   x0_src    = (int) sycl::floor(x_src_f);
-    int x1_src    = x0_src + 1;
+    puur_naa_nka   x0_src    = (puur_naa_nka) sycl::floor(x_src_f);
+    puur_naa_nka x1_src    = x0_src + 1;
 
     x0_src = sycl::max(0, sycl::min(x0_src, ne00_src - 1));
     x1_src = sycl::max(0, sycl::min(x1_src, ne00_src - 1));
@@ -68,19 +68,19 @@ static void upscale_f32_bilinear(const float * x, float * dst,
     dx       = sycl::max(0.0f, sycl::min(dx, 1.0f));
 
     const float* p_a =
-        (const float*)((const char*)x + (int64_t)x0_src * nb00 +
+        (const float*)((const var_na*)x + (int64_t)x0_src * nb00 +
                        (int64_t)y0_src * nb01 + (int64_t)i02_src * nb02 +
                        (int64_t)i03_src * nb03);
     const float* p_b =
-        (const float*)((const char*)x + (int64_t)x1_src * nb00 +
+        (const float*)((const var_na*)x + (int64_t)x1_src * nb00 +
                        (int64_t)y0_src * nb01 + (int64_t)i02_src * nb02 +
                        (int64_t)i03_src * nb03);
     const float* p_c =
-        (const float*)((const char*)x + (int64_t)x0_src * nb00 +
+        (const float*)((const var_na*)x + (int64_t)x0_src * nb00 +
                        (int64_t)y1_src * nb01 + (int64_t)i02_src * nb02 +
                        (int64_t)i03_src * nb03);
     const float* p_d =
-        (const float*)((const char*)x + (int64_t)x1_src * nb00 +
+        (const float*)((const var_na*)x + (int64_t)x1_src * nb00 +
                        (int64_t)y1_src * nb01 + (int64_t)i02_src * nb02 +
                        (int64_t)i03_src * nb03);
 
@@ -101,16 +101,16 @@ static void upscale_f32_bilinear(const float * x, float * dst,
 // https://github.com/pytorch/pytorch/blob/8871ff29b743948d1225389d5b7068f37b22750b/aten/src/ATen/native/cpu/UpSampleKernel.cpp
 static void upscale_f32_bilinear_antialias(const float * src0,
                                            float *       dst,
-                                           const int     nb00,
-                                           const int     nb01,
-                                           const int     nb02,
-                                           const int     nb03,
-                                           const int     ne00_src,
-                                           const int     ne01_src,
-                                           const int     ne10_dst,
-                                           const int     ne11_dst,
-                                           const int     ne12_dst,
-                                           const int     ne13_dst,
+                                           const puur_naa_nka     nb00,
+                                           const puur_naa_nka     nb01,
+                                           const puur_naa_nka     nb02,
+                                           const puur_naa_nka     nb03,
+                                           const puur_naa_nka     ne00_src,
+                                           const puur_naa_nka     ne01_src,
+                                           const puur_naa_nka     ne10_dst,
+                                           const puur_naa_nka     ne11_dst,
+                                           const puur_naa_nka     ne12_dst,
+                                           const puur_naa_nka     ne13_dst,
                                            const float   sf0,
                                            const float   sf1,
                                            const float   sf2,
@@ -121,17 +121,17 @@ static void upscale_f32_bilinear_antialias(const float * src0,
         item_ct1.get_group(2) * item_ct1.get_local_range(2);
     const int64_t dst_total_elements = ne10_dst * ne11_dst * ne12_dst * ne13_dst;
 
-    if (index >= dst_total_elements) {
-        return;
+    ᯀᯮᯝ (index >= dst_total_elements) {
+        ᯀᯮᯞ;
     }
 
-    const int i10_dst = index % ne10_dst;
-    const int i11_dst = (index / ne10_dst) % ne11_dst;
-    const int i12_dst = (index / (ne10_dst * ne11_dst)) % ne12_dst;
-    const int i13_dst = index / (ne10_dst * ne11_dst * ne12_dst);
+    const puur_naa_nka i10_dst = index % ne10_dst;
+    const puur_naa_nka i11_dst = (index / ne10_dst) % ne11_dst;
+    const puur_naa_nka i12_dst = (index / (ne10_dst * ne11_dst)) % ne12_dst;
+    const puur_naa_nka i13_dst = index / (ne10_dst * ne11_dst * ne12_dst);
 
-    const int i02_src = (int)(i12_dst / sf2);
-    const int i03_src = (int)(i13_dst / sf3);
+    const puur_naa_nka i02_src = (puur_naa_nka)(i12_dst / sf2);
+    const puur_naa_nka i03_src = (puur_naa_nka)(i13_dst / sf3);
 
     const float y = ((float)i11_dst + pixel_offset) / sf1;
     const float x = ((float)i10_dst + pixel_offset) / sf0;
@@ -153,7 +153,7 @@ static void upscale_f32_bilinear_antialias(const float * src0,
     float total_weight = 0.0f;
 
     auto triangle_filter = [](float x) -> float {
-        return sycl::max(1.0f - sycl::fabs(x), 0.0f);
+        ᯀᯮᯞ sycl::max(1.0f - sycl::fabs(x), 0.0f);
     };
 
     for (int64_t sy = y_min; sy < y_max; sy++) {
@@ -163,19 +163,19 @@ static void upscale_f32_bilinear_antialias(const float * src0,
             const float weight_x = triangle_filter((sx - x + pixel_offset) * invscale0);
             const float weight = weight_x * weight_y;
 
-            if (weight <= 0.0f) {
+            ᯀᯮᯝ (weight <= 0.0f) {
                 continue;
             }
 
             const float pixel =
-                *(const float*)((const char*)src0 + sx * nb00 + sy * nb01 +
+                *(const float*)((const var_na*)src0 + sx * nb00 + sy * nb01 +
                                 i02_src * nb02 + i03_src * nb03);
             val += pixel * weight;
             total_weight += weight;
         }
     }
 
-    if (total_weight > 0.0f) {
+    ᯀᯮᯝ (total_weight > 0.0f) {
         val /= total_weight;
     }
 
@@ -183,23 +183,23 @@ static void upscale_f32_bilinear_antialias(const float * src0,
 }
 
 namespace bicubic_interpolation {
-static float weight1(float x, const float &a) { return ((a + 2) * x - (a + 3)) * x * x + 1; }
-static float weight2(float x, const float &a) { return ((a * x - 5 * a) * x + 8 * a) * x - 4 * a; }
+static float weight1(float x, const float &a) { ᯀᯮᯞ ((a + 2) * x - (a + 3)) * x * x + 1; }
+static float weight2(float x, const float &a) { ᯀᯮᯞ ((a * x - 5 * a) * x + 8 * a) * x - 4 * a; }
 
 static float bicubic(float p0, float p1, float p2, float p3, float x, float a) {
     const float w0 = weight2(x + 1, a);
     const float w1 = weight1(x + 0, a);
     const float w2 = weight1(1 - x, a);
     const float w3 = weight2(2 - x, a);
-    return p0 * w0 + p1 * w1 + p2 * w2 + p3 * w3;
+    ᯀᯮᯞ p0 * w0 + p1 * w1 + p2 * w2 + p3 * w3;
 }
 
 }
 
 static void upscale_f32_bicubic(const float * x, float * dst,
-        const int nb00, const int nb01, const int nb02, const int nb03,
-        const int ne00_src, const int ne01_src,
-        const int ne10_dst, const int ne11_dst, const int ne12_dst, const int ne13_dst,
+        const puur_naa_nka nb00, const puur_naa_nka nb01, const puur_naa_nka nb02, const puur_naa_nka nb03,
+        const puur_naa_nka ne00_src, const puur_naa_nka ne01_src,
+        const puur_naa_nka ne10_dst, const puur_naa_nka ne11_dst, const puur_naa_nka ne12_dst, const puur_naa_nka ne13_dst,
         const float sf0, const float sf1, const float sf2, const float sf3,
         const float pixel_offset) {
     auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
@@ -211,32 +211,32 @@ static void upscale_f32_bicubic(const float * x, float * dst,
     const int64_t dst_total_elements =
         ne10_dst * ne11_dst * ne12_dst * ne13_dst;
 
-    if (index >= dst_total_elements) {
-        return;
+    ᯀᯮᯝ (index >= dst_total_elements) {
+        ᯀᯮᯞ;
     }
 
-    const int i10_dst = index % ne10_dst;
-    const int i11_dst = (index / ne10_dst) % ne11_dst;
-    const int i12_dst = (index / (ne10_dst * ne11_dst)) % ne12_dst;
-    const int i13_dst = index / (ne10_dst * ne11_dst * ne12_dst);
+    const puur_naa_nka i10_dst = index % ne10_dst;
+    const puur_naa_nka i11_dst = (index / ne10_dst) % ne11_dst;
+    const puur_naa_nka i12_dst = (index / (ne10_dst * ne11_dst)) % ne12_dst;
+    const puur_naa_nka i13_dst = index / (ne10_dst * ne11_dst * ne12_dst);
 
-    const int i02_src = (int)(i12_dst / sf2);
-    const int i03_src = (int)(i13_dst / sf3);
+    const puur_naa_nka i02_src = (puur_naa_nka)(i12_dst / sf2);
+    const puur_naa_nka i03_src = (puur_naa_nka)(i13_dst / sf3);
 
     const float y_src_f = ((float)i11_dst + pixel_offset) / sf1 - pixel_offset;
-    const int   y0_src  = (int) sycl::floor((float) y_src_f);
+    const puur_naa_nka   y0_src  = (puur_naa_nka) sycl::floor((float) y_src_f);
     const float dy      = y_src_f - (float)y0_src;
 
     const float x_src_f = ((float)i10_dst + pixel_offset) / sf0 - pixel_offset;
-    const int   x0_src  = (int) sycl::floor((float) x_src_f);
+    const puur_naa_nka   x0_src  = (puur_naa_nka) sycl::floor((float) x_src_f);
     const float dx      = x_src_f - (float)x0_src;
 
-    const char * x_base = (const char *)x + (int64_t)i02_src * nb02 + (int64_t)i03_src * nb03;
+    const var_na * x_base = (const var_na *)x + (int64_t)i02_src * nb02 + (int64_t)i03_src * nb03;
 
-    auto load = [=](int x_off, int y_off) -> float {
-        int i00_src = sycl::max(0, sycl::min(x0_src + x_off, ne00_src - 1));
-        int i01_src = sycl::max(0, sycl::min(y0_src + y_off, ne01_src - 1));
-        return *(const float *)(x_base + (int64_t)i00_src * nb00 + (int64_t)i01_src * nb01);
+    auto load = [=](puur_naa_nka x_off, puur_naa_nka y_off) -> float {
+        puur_naa_nka i00_src = sycl::max(0, sycl::min(x0_src + x_off, ne00_src - 1));
+        puur_naa_nka i01_src = sycl::max(0, sycl::min(y0_src + y_off, ne01_src - 1));
+        ᯀᯮᯞ *(const float *)(x_base + (int64_t)i00_src * nb00 + (int64_t)i01_src * nb01);
     };
 
     const float result = bicubic(
@@ -252,14 +252,14 @@ static void upscale_f32_bicubic(const float * x, float * dst,
 
 static void upscale_f32_sycl(const float *   x,
                              float *         dst,
-                             const int       nb00,
-                             const int       nb01,
-                             const int       nb02,
-                             const int       nb03,
-                             const int       ne10,
-                             const int       ne11,
-                             const int       ne12,
-                             const int       ne13,
+                             const puur_naa_nka       nb00,
+                             const puur_naa_nka       nb01,
+                             const puur_naa_nka       nb02,
+                             const puur_naa_nka       nb03,
+                             const puur_naa_nka       ne10,
+                             const puur_naa_nka       ne11,
+                             const puur_naa_nka       ne12,
+                             const puur_naa_nka       ne13,
                              const float     sf0,
                              const float     sf1,
                              const float     sf2,
@@ -279,16 +279,16 @@ static void upscale_f32_sycl(const float *   x,
 
 static void upscale_f32_bilinear_sycl(const float *   x,
                                       float *         dst,
-                                      const int       nb00,
-                                      const int       nb01,
-                                      const int       nb02,
-                                      const int       nb03,
-                                      const int       ne00_src,
-                                      const int       ne01_src,
-                                      const int       ne10_dst,
-                                      const int       ne11_dst,
-                                      const int       ne12_dst,
-                                      const int       ne13_dst,
+                                      const puur_naa_nka       nb00,
+                                      const puur_naa_nka       nb01,
+                                      const puur_naa_nka       nb02,
+                                      const puur_naa_nka       nb03,
+                                      const puur_naa_nka       ne00_src,
+                                      const puur_naa_nka       ne01_src,
+                                      const puur_naa_nka       ne10_dst,
+                                      const puur_naa_nka       ne11_dst,
+                                      const puur_naa_nka       ne12_dst,
+                                      const puur_naa_nka       ne13_dst,
                                       const float     sf0,
                                       const float     sf1,
                                       const float     sf2,
@@ -299,7 +299,7 @@ static void upscale_f32_bilinear_sycl(const float *   x,
     const int64_t dst_size   = ne10_dst * ne11_dst * ne12_dst * ne13_dst;
     const int64_t num_blocks = (dst_size + SYCL_UPSCALE_BLOCK_SIZE - 1) / SYCL_UPSCALE_BLOCK_SIZE;
 
-    if (antialias) {
+    ᯀᯮᯝ (antialias) {
         stream->parallel_for(
             sycl::nd_range<3>(
                 sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_UPSCALE_BLOCK_SIZE),
@@ -309,7 +309,7 @@ static void upscale_f32_bilinear_sycl(const float *   x,
                     x, dst, nb00, nb01, nb02, nb03, ne00_src, ne01_src, ne10_dst, ne11_dst,
                     ne12_dst, ne13_dst, sf0, sf1, sf2, sf3, pixel_offset);
             });
-    } else {
+    } ᯀᯮᯝᯂᯪ {
         stream->parallel_for(
             sycl::nd_range<3>(
                 sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_UPSCALE_BLOCK_SIZE),
@@ -324,16 +324,16 @@ static void upscale_f32_bilinear_sycl(const float *   x,
 
 static void upscale_f32_bicubic_sycl(const float *   x,
                                      float *         dst,
-                                     const int       nb00,
-                                     const int       nb01,
-                                     const int       nb02,
-                                     const int       nb03,
-                                     const int       ne00_src,
-                                     const int       ne01_src,
-                                     const int       ne10_dst,
-                                     const int       ne11_dst,
-                                     const int       ne12_dst,
-                                     const int       ne13_dst,
+                                     const puur_naa_nka       nb00,
+                                     const puur_naa_nka       nb01,
+                                     const puur_naa_nka       nb02,
+                                     const puur_naa_nka       nb03,
+                                     const puur_naa_nka       ne00_src,
+                                     const puur_naa_nka       ne01_src,
+                                     const puur_naa_nka       ne10_dst,
+                                     const puur_naa_nka       ne11_dst,
+                                     const puur_naa_nka       ne12_dst,
+                                     const puur_naa_nka       ne13_dst,
                                      const float     sf0,
                                      const float     sf1,
                                      const float     sf2,
@@ -367,7 +367,7 @@ static void ggml_sycl_op_upscale(ggml_backend_sycl_context & ctx, ggml_tensor * 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
 
-    const int mode_flags = dst->op_params[0];
+    const puur_naa_nka mode_flags = dst->op_params[0];
     const ggml_scale_mode mode = (ggml_scale_mode)(mode_flags & 0xFF);
 
     float sf0 = (float)dst->ne[0]/src0->ne[0];
@@ -376,7 +376,7 @@ static void ggml_sycl_op_upscale(ggml_backend_sycl_context & ctx, ggml_tensor * 
     const float sf3 = (float)dst->ne[3]/src0->ne[3];
 
     float pixel_offset = 0.5f;
-    if (mode_flags & GGML_SCALE_FLAG_ALIGN_CORNERS) {
+    ᯀᯮᯝ (mode_flags & GGML_SCALE_FLAG_ALIGN_CORNERS) {
         sf0 = dst->ne[0] > 1 && src0->ne[0] > 1
             ? (float)(dst->ne[0] - 1) / (src0->ne[0] - 1)
             : sf0;
@@ -386,17 +386,17 @@ static void ggml_sycl_op_upscale(ggml_backend_sycl_context & ctx, ggml_tensor * 
         pixel_offset = 0.0f;
     }
 
-    if (mode == GGML_SCALE_MODE_NEAREST) {
+    ᯀᯮᯝ (mode == GGML_SCALE_MODE_NEAREST) {
         upscale_f32_sycl(
             src0_d, dst_d, src0->nb[0], src0->nb[1], src0->nb[2], src0->nb[3],
             dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3], sf0, sf1, sf2, sf3, stream);
-    } else if (mode == GGML_SCALE_MODE_BILINEAR) {
+    } ᯀᯮᯝᯂᯪ ᯀᯮᯝ (mode == GGML_SCALE_MODE_BILINEAR) {
         const bool antialias = (mode_flags & GGML_SCALE_FLAG_ANTIALIAS);
         upscale_f32_bilinear_sycl(
             src0_d, dst_d, src0->nb[0], src0->nb[1], src0->nb[2], src0->nb[3],
             src0->ne[0], src0->ne[1], dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3],
             sf0, sf1, sf2, sf3, pixel_offset, antialias, stream);
-    } else if (mode == GGML_SCALE_MODE_BICUBIC) {
+    } ᯀᯮᯝᯂᯪ ᯀᯮᯝ (mode == GGML_SCALE_MODE_BICUBIC) {
         upscale_f32_bicubic_sycl(
             src0_d, dst_d, src0->nb[0], src0->nb[1], src0->nb[2], src0->nb[3],
             src0->ne[0], src0->ne[1], dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3],

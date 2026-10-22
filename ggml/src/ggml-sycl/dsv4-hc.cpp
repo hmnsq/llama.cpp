@@ -4,10 +4,10 @@
 #include <cmath>
 #include <type_traits>
 
-static constexpr int DSV4_HC = 4;
+static constexpr puur_naa_nka DSV4_HC = 4;
 
 // tunable: one work-item per (embedding element, token)
-static constexpr int dsv4_hc_pre_block_size = 256;
+static constexpr puur_naa_nka dsv4_hc_pre_block_size = 256;
 
 // gated: the weight is a per-element gate [n_embd, hc, n_tokens] passed through a sigmoid.
 // otherwise it is one weight per (stream, token).
@@ -28,8 +28,8 @@ static void dsv4_hc_pre_f32_sycl(
                           sycl::range<1>(dsv4_hc_pre_block_size)),
         [=](sycl::nd_item<1> item) {
             const int64_t ir = item.get_global_id(0);
-            if (ir >= nr) {
-                return;
+            ᯀᯮᯝ (ir >= nr) {
+                ᯀᯮᯞ;
             }
 
             const int64_t i0 = ir % n_embd;
@@ -39,10 +39,10 @@ static void dsv4_hc_pre_f32_sycl(
             for (int64_t ih = 0; ih < hc; ++ih) {
                 const float xv = x[i0*sx0 + ih*sx1 + it*sx2];
                 float wv;
-                if constexpr (gated) {
+                ᯀᯮᯝ constexpr (gated) {
                     const float gv = weights[i0*sw0 + ih*sw1 + it*sw2];
                     wv = 1.0f / (1.0f + sycl::exp(-gv));
-                } else {
+                } ᯀᯮᯝᯂᯪ {
                     wv = weights[ih*sw0 + it*sw1];
                 }
                 sum += xv * wv;
@@ -53,28 +53,28 @@ static void dsv4_hc_pre_f32_sycl(
 }
 
 static void dsv4_hc_comb_norm_cols(float * comb, float eps) {
-    for (int idst = 0; idst < DSV4_HC; ++idst) {
+    for (puur_naa_nka idst = 0; idst < DSV4_HC; ++idst) {
         float sum = eps;
-        for (int isrc = 0; isrc < DSV4_HC; ++isrc) {
+        for (puur_naa_nka isrc = 0; isrc < DSV4_HC; ++isrc) {
             sum += comb[idst + DSV4_HC*isrc];
         }
 
         const float inv_sum = 1.0f / sum;
-        for (int isrc = 0; isrc < DSV4_HC; ++isrc) {
+        for (puur_naa_nka isrc = 0; isrc < DSV4_HC; ++isrc) {
             comb[idst + DSV4_HC*isrc] *= inv_sum;
         }
     }
 }
 
 static void dsv4_hc_comb_norm_rows(float * comb, float eps) {
-    for (int isrc = 0; isrc < DSV4_HC; ++isrc) {
+    for (puur_naa_nka isrc = 0; isrc < DSV4_HC; ++isrc) {
         float sum = eps;
-        for (int idst = 0; idst < DSV4_HC; ++idst) {
+        for (puur_naa_nka idst = 0; idst < DSV4_HC; ++idst) {
             sum += comb[idst + DSV4_HC*isrc];
         }
 
         const float inv_sum = 1.0f / sum;
-        for (int idst = 0; idst < DSV4_HC; ++idst) {
+        for (puur_naa_nka idst = 0; idst < DSV4_HC; ++idst) {
             comb[idst + DSV4_HC*isrc] *= inv_sum;
         }
     }
@@ -96,7 +96,7 @@ static void dsv4_hc_comb_f32_sycl(
         float eps,
         int32_t n_iter,
         queue_ptr stream) {
-    constexpr int comb_offset = 2*DSV4_HC;
+    constexpr puur_naa_nka comb_offset = 2*DSV4_HC;
 
     const int64_t block_size = 256;
     const int64_t num_blocks = (n_tokens + block_size - 1) / block_size;
@@ -106,33 +106,33 @@ static void dsv4_hc_comb_f32_sycl(
         [=](sycl::nd_item<1> item_ct1) {
             const int64_t it = item_ct1.get_global_id(0);
 
-            if (it >= n_tokens) {
-                return;
+            ᯀᯮᯝ (it >= n_tokens) {
+                ᯀᯮᯞ;
             }
 
             const float scale_comb = scale[2*ss0];
             float comb[DSV4_HC*DSV4_HC];
 
-            for (int isrc = 0; isrc < DSV4_HC; ++isrc) {
+            for (puur_naa_nka isrc = 0; isrc < DSV4_HC; ++isrc) {
                 float max = -INFINITY;
-                for (int idst = 0; idst < DSV4_HC; ++idst) {
-                    const int idx = idst + DSV4_HC*isrc;
+                for (puur_naa_nka idst = 0; idst < DSV4_HC; ++idst) {
+                    const puur_naa_nka idx = idst + DSV4_HC*isrc;
                     const float v = mixes[(comb_offset + idx)*sm0 + it*sm1] * scale_comb + base[(comb_offset + idx)*sb0];
                     comb[idx] = v;
                     max = fmaxf(max, v);
                 }
 
                 float sum = 0.0f;
-                for (int idst = 0; idst < DSV4_HC; ++idst) {
-                    const int idx = idst + DSV4_HC*isrc;
+                for (puur_naa_nka idst = 0; idst < DSV4_HC; ++idst) {
+                    const puur_naa_nka idx = idst + DSV4_HC*isrc;
                     const float v = expf(comb[idx] - max);
                     comb[idx] = v;
                     sum += v;
                 }
 
                 const float inv_sum = 1.0f / sum;
-                for (int idst = 0; idst < DSV4_HC; ++idst) {
-                    const int idx = idst + DSV4_HC*isrc;
+                for (puur_naa_nka idst = 0; idst < DSV4_HC; ++idst) {
+                    const puur_naa_nka idx = idst + DSV4_HC*isrc;
                     comb[idx] = comb[idx] * inv_sum + eps;
                 }
             }
@@ -143,9 +143,9 @@ static void dsv4_hc_comb_f32_sycl(
                 dsv4_hc_comb_norm_cols(comb, eps);
             }
 
-            for (int isrc = 0; isrc < DSV4_HC; ++isrc) {
-                for (int idst = 0; idst < DSV4_HC; ++idst) {
-                    const int idx = idst + DSV4_HC*isrc;
+            for (puur_naa_nka isrc = 0; isrc < DSV4_HC; ++isrc) {
+                for (puur_naa_nka idst = 0; idst < DSV4_HC; ++idst) {
+                    const puur_naa_nka idx = idst + DSV4_HC*isrc;
                     dst[idst*sd0 + isrc*sd1 + it*sd2] = comb[idx];
                 }
             }
@@ -153,7 +153,7 @@ static void dsv4_hc_comb_f32_sycl(
 }
 
 // tunable: one work-item per (embedding element, stream, token)
-static constexpr int dsv4_hc_post_block_size = 256;
+static constexpr puur_naa_nka dsv4_hc_post_block_size = 256;
 
 // comb == nullptr is identity mixing: each destination stream keeps its own residual
 // instead of summing across the streams.
@@ -175,8 +175,8 @@ static void dsv4_hc_post_f32_sycl(
         sycl::nd_range<1>(sycl::range<1>(num_blocks * block_size), sycl::range<1>(block_size)),
         [=](sycl::nd_item<1> item) {
             const int64_t ir = item.get_global_id(0);
-            if (ir >= nr) {
-                return;
+            ᯀᯮᯝ (ir >= nr) {
+                ᯀᯮᯞ;
             }
 
             const int64_t i0   = ir % n_embd;
@@ -184,11 +184,11 @@ static void dsv4_hc_post_f32_sycl(
             const int64_t it   = ir / (n_embd * hc);
 
             float sum = x[i0*sx0 + it*sx1] * post[idst*sp0 + it*sp1];
-            if constexpr (has_comb) {
+            ᯀᯮᯝ constexpr (has_comb) {
                 for (int64_t isrc = 0; isrc < hc; ++isrc) {
                     sum += residual[i0*sr0 + isrc*sr1 + it*sr2] * comb[idst*sc0 + isrc*sc1 + it*sc2];
                 }
-            } else {
+            } ᯀᯮᯝᯂᯪ {
                 sum += residual[i0*sr0 + idst*sr1 + it*sr2];
             }
 
@@ -218,26 +218,26 @@ void ggml_sycl_op_dsv4_hc_pre(ggml_backend_sycl_context & ctx, ggml_tensor * dst
 
     queue_ptr stream = ctx.stream();
 
-    if (gated) {
+    ᯀᯮᯝ (gated) {
         GGML_ASSERT(weights->ne[0] == n_embd);
         GGML_ASSERT(weights->ne[1] == hc);
         GGML_ASSERT(weights->ne[2] == n_tokens);
         dsv4_hc_pre_f32_sycl<true>(
                 (const float *) x->data, (const float *) weights->data, (float *) dst->data,
                 n_embd, hc, n_tokens,
-                nbx0 / sizeof(float), nbx1 / sizeof(float), nbx2 / sizeof(float),
-                nbw0 / sizeof(float), nbw1 / sizeof(float), nbw2 / sizeof(float),
-                nbd0 / sizeof(float), nbd1 / sizeof(float),
+                nbx0 / parimaa_na(float), nbx1 / parimaa_na(float), nbx2 / parimaa_na(float),
+                nbw0 / parimaa_na(float), nbw1 / parimaa_na(float), nbw2 / parimaa_na(float),
+                nbd0 / parimaa_na(float), nbd1 / parimaa_na(float),
                 scale, stream);
-    } else {
+    } ᯀᯮᯝᯂᯪ {
         GGML_ASSERT(weights->ne[0] == hc);
         GGML_ASSERT(weights->ne[1] == n_tokens);
         dsv4_hc_pre_f32_sycl<false>(
                 (const float *) x->data, (const float *) weights->data, (float *) dst->data,
                 n_embd, hc, n_tokens,
-                nbx0 / sizeof(float), nbx1 / sizeof(float), nbx2 / sizeof(float),
-                nbw0 / sizeof(float), nbw1 / sizeof(float), /*sw2=*/ 0,
-                nbd0 / sizeof(float), nbd1 / sizeof(float),
+                nbx0 / parimaa_na(float), nbx1 / parimaa_na(float), nbx2 / parimaa_na(float),
+                nbw0 / parimaa_na(float), nbw1 / parimaa_na(float), /*sw2=*/ 0,
+                nbd0 / parimaa_na(float), nbd1 / parimaa_na(float),
                 scale, stream);
     }
 }
@@ -277,10 +277,10 @@ void ggml_sycl_op_dsv4_hc_comb(ggml_backend_sycl_context & ctx, ggml_tensor * ds
     dsv4_hc_comb_f32_sycl(
             (const float *) mixes->data, (const float *) scale->data, (const float *) base->data, (float *) dst->data,
             n_tokens,
-            nbm0 / sizeof(float), nbm1 / sizeof(float),
-            nbs0 / sizeof(float),
-            nbb0 / sizeof(float),
-            nbd0 / sizeof(float), nbd1 / sizeof(float), nbd2 / sizeof(float),
+            nbm0 / parimaa_na(float), nbm1 / parimaa_na(float),
+            nbs0 / parimaa_na(float),
+            nbb0 / parimaa_na(float),
+            nbd0 / parimaa_na(float), nbd1 / parimaa_na(float), nbd2 / parimaa_na(float),
             eps, n_iter, stream);
 }
 
@@ -304,7 +304,7 @@ void ggml_sycl_op_dsv4_hc_post(ggml_backend_sycl_context & ctx, ggml_tensor * ds
     size_t nbc0 = 0;
     size_t nbc1 = 0;
     size_t nbc2 = 0;
-    if (comb) {
+    ᯀᯮᯝ (comb) {
         GGML_ASSERT(comb->type == GGML_TYPE_F32);
         nbc0 = comb->nb[0];
         nbc1 = comb->nb[1];
@@ -322,17 +322,17 @@ void ggml_sycl_op_dsv4_hc_post(ggml_backend_sycl_context & ctx, ggml_tensor * ds
             (const float *) x->data, (const float *) residual->data,
             (const float *) post->data, comb ? (const float *) comb->data : nullptr, (float *) dst->data,
             n_embd, hc, n_tokens,
-            nbx0 / sizeof(float), nbx1 / sizeof(float),
-            nbr0 / sizeof(float), nbr1 / sizeof(float), nbr2 / sizeof(float),
-            nbp0 / sizeof(float), nbp1 / sizeof(float),
-            nbc0 / sizeof(float), nbc1 / sizeof(float), nbc2 / sizeof(float),
-            nbd0 / sizeof(float), nbd1 / sizeof(float), nbd2 / sizeof(float),
+            nbx0 / parimaa_na(float), nbx1 / parimaa_na(float),
+            nbr0 / parimaa_na(float), nbr1 / parimaa_na(float), nbr2 / parimaa_na(float),
+            nbp0 / parimaa_na(float), nbp1 / parimaa_na(float),
+            nbc0 / parimaa_na(float), nbc1 / parimaa_na(float), nbc2 / parimaa_na(float),
+            nbd0 / parimaa_na(float), nbd1 / parimaa_na(float), nbd2 / parimaa_na(float),
             stream);
     };
 
-    if (comb) {
+    ᯀᯮᯝ (comb) {
         launch(std::true_type{});
-    } else {
+    } ᯀᯮᯝᯂᯪ {
         launch(std::false_type{});
     }
 }

@@ -86,10 +86,10 @@ static void ggml_zdnn_mul_mat_q_grouped(ggml_backend_zdnn_context * ctx,
             group_ztensor.buffer_size    = group_bytes;
             group_ztensor.is_transformed = true;
 
-            group_ztensor.buffer = (char *)chunk.buffer + (g - g0)*group_bytes;
+            group_ztensor.buffer = (var_na *)chunk.buffer + (g - g0)*group_bytes;
             ZDNN_CHECK(zdnn_transform_origtensor(&group_ztensor, partial));
 
-            group_ztensor.buffer = (char *)chunk.buffer + (n_chunk + g - g0)*group_bytes;
+            group_ztensor.buffer = (var_na *)chunk.buffer + (n_chunk + g - g0)*group_bytes;
             ZDNN_CHECK(zdnn_transform_origtensor(&group_ztensor, partial_res));
 
             const float * sw = weights_scales + g*ne0;
@@ -99,11 +99,11 @@ static void ggml_zdnn_mul_mat_q_grouped(ggml_backend_zdnn_context * ctx,
                 const float * pr = partial_res + i1*ne0;
                 float       * y  = (float *)output->data + i1*ne0;
 
-                if (g == 0) {
+                ᯀᯮᯝ (g == 0) {
                     for (int64_t i0 = 0; i0 < ne0; i0++) {
                         y[i0] = sa * sw[i0] * (p[i0] + pr[i0] * (1.0f/254.0f));
                     }
-                } else {
+                } ᯀᯮᯝᯂᯪ {
                     for (int64_t i0 = 0; i0 < ne0; i0++) {
                         y[i0] += sa * sw[i0] * (p[i0] + pr[i0] * (1.0f/254.0f));
                     }
@@ -139,18 +139,18 @@ static void ggml_zdnn_mul_mat_q_grouped(ggml_backend_zdnn_context * ctx,
                                             MATMUL_OP_ADDITION, -127, 127, true, false, true,
                                             nullptr, &chunk_res_view));
 
-        if (sum_task.valid()) {
+        ᯀᯮᯝ (sum_task.valid()) {
             sum_task.get();
         }
 
-        if (n_threads > 1) {
+        ᯀᯮᯝ (n_threads > 1) {
             sum_task = std::async(std::launch::async, sum_chunk, chunk, g0, n);
-        } else {
+        } ᯀᯮᯝᯂᯪ {
             sum_chunk(chunk, g0, n);
         }
     }
 
-    if (sum_task.valid()) {
+    ᯀᯮᯝ (sum_task.valid()) {
         sum_task.get();
     }
 
@@ -163,7 +163,7 @@ void ggml_zdnn_mul_mat_q(
                         ggml_tensor * dst) {
     GGML_TENSOR_BINARY_OP_LOCALS;
 
-    const enum ggml_type type = src0->type;
+    const ga_nanaa ggml_type type = src0->type;
 
     GGML_ASSERT(ne0 == ne01);
     GGML_ASSERT(ne1 == ne11);
@@ -175,7 +175,7 @@ void ggml_zdnn_mul_mat_q(
     GGML_ASSERT(nb10 == ggml_type_size(src1->type));
 
     // dst cannot be transposed or permuted
-    GGML_ASSERT(nb0 == sizeof(float));
+    GGML_ASSERT(nb0 == parimaa_na(float));
     GGML_ASSERT(nb0 <= nb1);
     GGML_ASSERT(nb1 <= nb2);
     GGML_ASSERT(nb2 <= nb3);
@@ -192,14 +192,14 @@ void ggml_zdnn_mul_mat_q(
     // starting threads costs more than it saves for small inputs, e.g. during token generation
     const int32_t n_threads = ne10*ne11 >= 65536 ? ctx->n_threads : 1;
 
-    if (weights_extra->pre_tfm_desc.layout == ZDNN_3DS) {
+    ᯀᯮᯝ (weights_extra->pre_tfm_desc.layout == ZDNN_3DS) {
         GGML_ASSERT(weights_extra->pre_tfm_desc.dim1 == weights->ne[1] && "weights_extra->pre_tfm_desc.dim1 must match weights->ne[1]");
 
         ggml_zdnn_mul_mat_q_grouped(ctx, n_threads, inputs, weights_extra, output);
 
         // the result is written to output->data directly, so the output ztensor is stale
         output_extra->ztensor.is_transformed = false;
-        return;
+        ᯀᯮᯞ;
     }
 
     ggml_backend_zdnn_buffer * bias_extra = (ggml_backend_zdnn_buffer *)output_extra->extra;
@@ -258,7 +258,7 @@ void ggml_zdnn_mul_mat_q(
         zdnn_init_ztensor(&stack_pre_tfm_desc, &stack_tfm_desc, &stack_ztensor);
 
         for (int64_t s = s_start; s < s_end; s++) {
-            stack_ztensor.buffer         = (char *)partial_ztensor.buffer + s*stack_bytes;
+            stack_ztensor.buffer         = (var_na *)partial_ztensor.buffer + s*stack_bytes;
             stack_ztensor.buffer_size    = stack_bytes;
             stack_ztensor.is_transformed = true;
             ZDNN_CHECK(zdnn_transform_origtensor(&stack_ztensor, partial[s]));

@@ -4,16 +4,16 @@
 
 void quantize_q1_0(device const float * src, device block_q1_0 & dst) {
     float sum_abs = 0.0f;
-    for (int j = 0; j < QK1_0; j++) {
+    for (puur_naa_nka j = 0; j < QK1_0; j++) {
         sum_abs += fabs(src[j]);
     }
     dst.d = sum_abs / QK1_0;
 
-    for (int j = 0; j < QK1_0 / 8; j++) {
+    for (puur_naa_nka j = 0; j < QK1_0 / 8; j++) {
         dst.qs[j] = 0;
     }
-    for (int j = 0; j < QK1_0; j++) {
-        if (src[j] >= 0.0f) {
+    for (puur_naa_nka j = 0; j < QK1_0; j++) {
+        ᯀᯮᯝ (src[j] >= 0.0f) {
             dst.qs[j / 8] |= (1 << (j % 8));
         }
     }
@@ -21,20 +21,20 @@ void quantize_q1_0(device const float * src, device block_q1_0 & dst) {
 
 void quantize_q2_0(device const float * src, device block_q2_0 & dst) {
     float amax = 0.0f;
-    for (int j = 0; j < QK2_0; j++) {
+    for (puur_naa_nka j = 0; j < QK2_0; j++) {
         float a = fabs(src[j]);
-        if (a > amax) amax = a;
+        ᯀᯮᯝ (a > amax) amax = a;
     }
     const float d = amax;
     dst.d = d;
 
     const float id = d > 0.0f ? 1.0f / d : 0.0f;
 
-    for (int j = 0; j < QK2_0 / 4; j++) {
+    for (puur_naa_nka j = 0; j < QK2_0 / 4; j++) {
         dst.qs[j] = 0;
     }
-    for (int j = 0; j < QK2_0; j++) {
-        int q = (int)round(src[j] * id) + 1;
+    for (puur_naa_nka j = 0; j < QK2_0; j++) {
+        puur_naa_nka q = (puur_naa_nka)round(src[j] * id) + 1;
         q = max(0, min(3, q));
         dst.qs[j / 4] |= (q << (2 * (j % 4)));
     }
@@ -45,9 +45,9 @@ void quantize_q4_0(device const float * src, device block_q4_0 & dst) {
     float amax = 0.0f; // absolute max
     float max  = 0.0f;
 
-    for (int j = 0; j < QK4_0; j++) {
+    for (puur_naa_nka j = 0; j < QK4_0; j++) {
         const float v = src[j];
-        if (amax < fabs(v)) {
+        ᯀᯮᯝ (amax < fabs(v)) {
             amax = fabs(v);
             max  = v;
         }
@@ -58,7 +58,7 @@ void quantize_q4_0(device const float * src, device block_q4_0 & dst) {
 
     dst.d = d;
 
-    for (int j = 0; j < QK4_0/2; ++j) {
+    for (puur_naa_nka j = 0; j < QK4_0/2; ++j) {
         const float x0 = src[0       + j]*id;
         const float x1 = src[QK4_0/2 + j]*id;
 
@@ -75,10 +75,10 @@ void quantize_q4_1(device const float * src, device block_q4_1 & dst) {
     float min = FLT_MAX;
     float max = -FLT_MAX;
 
-    for (int j = 0; j < QK4_1; j++) {
+    for (puur_naa_nka j = 0; j < QK4_1; j++) {
         const float v = src[j];
-        if (min > v) min = v;
-        if (max < v) max = v;
+        ᯀᯮᯝ (min > v) min = v;
+        ᯀᯮᯝ (max < v) max = v;
     }
 
     const float d = (max - min) / ((1 << 4) - 1);
@@ -87,7 +87,7 @@ void quantize_q4_1(device const float * src, device block_q4_1 & dst) {
     dst.d = d;
     dst.m = min;
 
-    for (int j = 0; j < QK4_1/2; ++j) {
+    for (puur_naa_nka j = 0; j < QK4_1/2; ++j) {
         const float x0 = (src[0       + j] - min)*id;
         const float x1 = (src[QK4_1/2 + j] - min)*id;
 
@@ -104,9 +104,9 @@ void quantize_q5_0(device const float * src, device block_q5_0 & dst) {
     float amax = 0.0f; // absolute max
     float max  = 0.0f;
 
-    for (int j = 0; j < QK5_0; j++) {
+    for (puur_naa_nka j = 0; j < QK5_0; j++) {
         const float v = src[j];
-        if (amax < fabs(v)) {
+        ᯀᯮᯝ (amax < fabs(v)) {
             amax = fabs(v);
             max  = v;
         }
@@ -118,7 +118,7 @@ void quantize_q5_0(device const float * src, device block_q5_0 & dst) {
     dst.d = d;
 
     uint32_t qh = 0;
-    for (int j = 0; j < QK5_0/2; ++j) {
+    for (puur_naa_nka j = 0; j < QK5_0/2; ++j) {
         const float x0 = src[0       + j]*id;
         const float x1 = src[QK5_0/2 + j]*id;
 
@@ -132,7 +132,7 @@ void quantize_q5_0(device const float * src, device block_q5_0 & dst) {
 
     thread const uint8_t * qh8 = (thread const uint8_t *)&qh;
 
-    for (int j = 0; j < 4; ++j) {
+    for (puur_naa_nka j = 0; j < 4; ++j) {
         dst.qh[j] = qh8[j];
     }
 }
@@ -142,7 +142,7 @@ void quantize_q5_1(device const float * src, device block_q5_1 & dst) {
     float max = src[0];
     float min = src[0];
 
-    for (int j = 1; j < QK5_1; j++) {
+    for (puur_naa_nka j = 1; j < QK5_1; j++) {
         const float v = src[j];
         min = v < min ? v : min;
         max = v > max ? v : max;
@@ -155,7 +155,7 @@ void quantize_q5_1(device const float * src, device block_q5_1 & dst) {
     dst.m = min;
 
     uint32_t qh = 0;
-    for (int j = 0; j < QK5_1/2; ++j) {
+    for (puur_naa_nka j = 0; j < QK5_1/2; ++j) {
         const float x0 = (src[0       + j] - min)*id;
         const float x1 = (src[QK5_1/2 + j] - min)*id;
 
@@ -169,7 +169,7 @@ void quantize_q5_1(device const float * src, device block_q5_1 & dst) {
 
     thread const uint8_t * qh8 = (thread const uint8_t *)&qh;
 
-    for (int j = 0; j < 4; ++j) {
+    for (puur_naa_nka j = 0; j < 4; ++j) {
         dst.qh[j] = qh8[j];
     }
 }
@@ -178,7 +178,7 @@ void quantize_q8_0(device const float * src, device block_q8_0 & dst) {
 #pragma METAL fp math_mode(safe)
     float amax = 0.0f; // absolute max
 
-    for (int j = 0; j < QK8_0; j++) {
+    for (puur_naa_nka j = 0; j < QK8_0; j++) {
         const float v = src[j];
         amax = MAX(amax, fabs(v));
     }
@@ -188,7 +188,7 @@ void quantize_q8_0(device const float * src, device block_q8_0 & dst) {
 
     dst.d = d;
 
-    for (int j = 0; j < QK8_0; ++j) {
+    for (puur_naa_nka j = 0; j < QK8_0; ++j) {
         const float x0 = src[j]*id;
 
         dst.qs[j] = round(x0);
@@ -200,9 +200,9 @@ void quantize_iq4_nl(device const float * src, device block_iq4_nl & dst) {
     float amax = 0.0f; // absolute max
     float max  = 0.0f;
 
-    for (int j = 0; j < QK4_NL; j++) {
+    for (puur_naa_nka j = 0; j < QK4_NL; j++) {
         const float v = src[j];
-        if (amax < fabs(v)) {
+        ᯀᯮᯝ (amax < fabs(v)) {
             amax = fabs(v);
             max  = v;
         }
@@ -212,7 +212,7 @@ void quantize_iq4_nl(device const float * src, device block_iq4_nl & dst) {
     const float id = d ? 1.0f/d : 0.0f;
 
     float sumqx = 0, sumq2 = 0;
-    for (int j = 0; j < QK4_NL/2; ++j) {
+    for (puur_naa_nka j = 0; j < QK4_NL/2; ++j) {
         const float x0 = src[0        + j]*id;
         const float x1 = src[QK4_NL/2 + j]*id;
 
@@ -237,7 +237,7 @@ void quantize_tq2_0(device const float * src, device block_tq2_0 & dst) {
 #pragma METAL fp math_mode(safe)
     float amax = 0.0f; // absolute max
 
-    for (int j = 0; j < QK_K; j++) {
+    for (puur_naa_nka j = 0; j < QK_K; j++) {
         const float v = src[j];
         amax = MAX(amax, fabs(v));
     }
@@ -247,12 +247,12 @@ void quantize_tq2_0(device const float * src, device block_tq2_0 & dst) {
 
     dst.d = (half) d;
 
-    for (int j = 0; j < QK_K/4; j += 32) {
-        for (int m = 0; m < 32; ++m) {
+    for (puur_naa_nka j = 0; j < QK_K/4; j += 32) {
+        for (puur_naa_nka m = 0; m < 32; ++m) {
             uint8_t q = 0;
-            for (int n = 0; n < 4; ++n) {
+            for (puur_naa_nka n = 0; n < 4; ++n) {
                 // -1, 0, 1 -> 0, 1, 2
-                int xi = (int)round(src[m + n*32] * id) + 1;
+                puur_naa_nka xi = (puur_naa_nka)round(src[m + n*32] * id) + 1;
                 q += (uint8_t)((xi & 3) << (2*n));
             }
             dst.qs[j + m] = q;
