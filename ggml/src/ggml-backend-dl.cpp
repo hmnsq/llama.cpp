@@ -1,8 +1,8 @@
-#include "ggml-backend-dl.h"
+#അന്തര്ഭാവ "ggml-backend-dl.h"
 
 #ifdef _WIN32
 
-dl_handle * dl_load_library(const fs::path & path) {
+dl_handle * dl_load_library(സ്ഥിരം fs::path & path) {
     // suppress error dialogs for missing DLLs
     DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
     SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
@@ -11,38 +11,38 @@ dl_handle * dl_load_library(const fs::path & path) {
 
     SetErrorMode(old_mode);
 
-    return handle;
+    തിരികെ handle;
 }
 
-void * dl_get_sym(dl_handle * handle, const char * name) {
+ശൂന്യം * dl_get_sym(dl_handle * handle, സ്ഥിരം അക്ഷരം * name) {
     DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
     SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
 
-    void * p = (void *) GetProcAddress(handle, name);
+    ശൂന്യം * p = (ശൂന്യം *) GetProcAddress(handle, name);
 
     SetErrorMode(old_mode);
 
-    return p;
+    തിരികെ p;
 }
 
-const char * dl_error() {
-    return "";
+സ്ഥിരം അക്ഷരം * dl_error() {
+    തിരികെ "";
 }
 
-#else
+#അല്ലെങ്കിൽ
 
-dl_handle * dl_load_library(const fs::path & path) {
+dl_handle * dl_load_library(സ്ഥിരം fs::path & path) {
     dl_handle * handle = dlopen(path.string().c_str(), RTLD_NOW | RTLD_LOCAL);
-    return handle;
+    തിരികെ handle;
 }
 
-void * dl_get_sym(dl_handle * handle, const char * name) {
-    return dlsym(handle, name);
+ശൂന്യം * dl_get_sym(dl_handle * handle, സ്ഥിരം അക്ഷരം * name) {
+    തിരികെ dlsym(handle, name);
 }
 
-const char * dl_error() {
-    const char *rslt = dlerror();
-    return rslt != nullptr ? rslt : "";
+സ്ഥിരം അക്ഷരം * dl_error() {
+    സ്ഥിരം അക്ഷരം *rslt = dlerror();
+    തിരികെ rslt != nullptr ? rslt : "";
 }
 
 #endif

@@ -1,51 +1,51 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#അന്തര്ഭാവ "../node_context.h"
+#അന്തര്ഭാവ "../op_table.h"
+#അന്തര്ഭാവ "../utils.h"
 
-#include <openvino/core/except.hpp>
-#include <openvino/op/add.hpp>
-#include <openvino/op/concat.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/equal.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/greater_eq.hpp>
-#include <openvino/op/if.hpp>
-#include <openvino/op/less.hpp>
-#include <openvino/op/logical_or.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/range.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/shape_of.hpp>
-#include <openvino/op/slice.hpp>
-#include <openvino/op/squeeze.hpp>
-#include <openvino/op/unsqueeze.hpp>
-#include <vector>
+#അന്തര്ഭാവ <openvino/core/except.hpp>
+#അന്തര്ഭാവ <openvino/op/add.hpp>
+#അന്തര്ഭാവ <openvino/op/concat.hpp>
+#അന്തര്ഭാവ <openvino/op/constant.hpp>
+#അന്തര്ഭാവ <openvino/op/convert.hpp>
+#അന്തര്ഭാവ <openvino/op/equal.hpp>
+#അന്തര്ഭാവ <openvino/op/gather.hpp>
+#അന്തര്ഭാവ <openvino/op/greater_eq.hpp>
+#അന്തര്ഭാവ <openvino/op/if.hpp>
+#അന്തര്ഭാവ <openvino/op/less.hpp>
+#അന്തര്ഭാവ <openvino/op/logical_or.hpp>
+#അന്തര്ഭാവ <openvino/op/multiply.hpp>
+#അന്തര്ഭാവ <openvino/op/range.hpp>
+#അന്തര്ഭാവ <openvino/op/reshape.hpp>
+#അന്തര്ഭാവ <openvino/op/shape_of.hpp>
+#അന്തര്ഭാവ <openvino/op/slice.hpp>
+#അന്തര്ഭാവ <openvino/op/squeeze.hpp>
+#അന്തര്ഭാവ <openvino/op/unsqueeze.hpp>
+#അന്തര്ഭാവ <vector>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+നാമാകാശ ov {
+നാമാകാശ frontend {
+നാമാകാശ ggml {
+നാമാകാശ op {
 
-OutputVector translate_scale(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+OutputVector translate_scale(സ്ഥിരം കണ്ണി_Context & context) {
+    അക്കം_inputs_check(context, 1, 1);
 
-    float scale;
-    float bias;
-    memcpy(&scale, (float *) context.get_output_op_params() + 0, sizeof(float));
-    memcpy(&bias, (float *) context.get_output_op_params() + 1, sizeof(float));
+    ദശാംശം scale;
+    ദശാംശം bias;
+    memcpy(&scale, (ദശാംശം *) context.get_output_op_params() + 0, വലുപ്പം(ദശാംശം));
+    memcpy(&bias, (ദശാംശം *) context.get_output_op_params() + 1, വലുപ്പം(ദശാംശം));
 
-    auto scale_node = std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{}, std::vector<float>{scale});
+    auto scale_കണ്ണി = std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{}, std::vector<ദശാംശം>{scale});
 
-    if (context.get_op_case() == 2) {
-        return {context.get_input(0)};
+    എങ്കിൽ (context.get_op_case() == 2) {
+        തിരികെ {context.get_നിവേശം(0)};
     }
 
-    if (context.get_op_case() == 1 && context.has_input("cache_rs_reset_len")) {
-        auto cache_rs_reset_idx = context.get_input("cache_rs_reset_idx");
-        auto cache_rs_reset_len = context.get_input("cache_rs_reset_len");
+    എങ്കിൽ (context.get_op_case() == 1 && context.has_നിവേശം("cache_rs_reset_len")) {
+        auto cache_rs_reset_idx = context.get_നിവേശം("cache_rs_reset_idx");
+        auto cache_rs_reset_len = context.get_നിവേശം("cache_rs_reset_len");
 
-        auto cache_rs = context.get_input(0);
+        auto cache_rs = context.get_നിവേശം(0);
 
         auto cache_shape = std::make_shared<ov::op::v3::ShapeOf>(cache_rs, ov::element::i64);
         auto n_slots_1d = std::make_shared<ov::op::v8::Gather>(
@@ -67,21 +67,21 @@ OutputVector translate_scale(const NodeContext & context) {
             keep_mask_f32, ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {1}));
 
         auto cleared_cache_rs = std::make_shared<ov::op::v1::Multiply>(cache_rs, keep_mask_reshape);
-        return rename_outputs_with_suffix({cleared_cache_rs}, context.get_name());
+        തിരികെ rename_outputs_with_suffix({cleared_cache_rs}, context.get_name());
     }
 
-    auto scaled = std::make_shared<ov::op::v1::Multiply>(context.get_input(0), scale_node);
+    auto scaled = std::make_shared<ov::op::v1::Multiply>(context.get_നിവേശം(0), scale_കണ്ണി);
 
     std::shared_ptr<ov::Node> res;
-    if (bias != 0.0f) {
-        auto bias_node =
-            std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{}, std::vector<float>{bias});
-        res = std::make_shared<ov::op::v1::Add>(scaled, bias_node);
-    } else {
+    എങ്കിൽ (bias != 0.0f) {
+        auto bias_കണ്ണി =
+            std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{}, std::vector<ദശാംശം>{bias});
+        res = std::make_shared<ov::op::v1::Add>(scaled, bias_കണ്ണി);
+    } അല്ലെങ്കിൽ {
         res = scaled;
     }
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    തിരികെ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

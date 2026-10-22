@@ -1,8 +1,8 @@
-typedef enum ApirBackendCommandType {
+തരനിർവചനം എണ്ണൽ ApirBackendCommandType {
 
     /* device */
-    APIR_COMMAND_TYPE_DEVICE_GET_DEVICE_COUNT = 0,
-    APIR_COMMAND_TYPE_DEVICE_GET_COUNT        = 1,
+    APIR_COMMAND_TYPE_DEVICE_GET_DEVICE_എണ്ണം = 0,
+    APIR_COMMAND_TYPE_DEVICE_GET_എണ്ണം        = 1,
     APIR_COMMAND_TYPE_DEVICE_GET_NAME         = 2,
     APIR_COMMAND_TYPE_DEVICE_GET_DESCRIPTION  = 3,
     APIR_COMMAND_TYPE_DEVICE_GET_TYPE         = 4,
@@ -32,63 +32,63 @@ typedef enum ApirBackendCommandType {
     APIR_COMMAND_TYPE_BACKEND_GRAPH_COMPUTE = 22,
 
     // last command_type index + 1
-    APIR_BACKEND_DISPATCH_TABLE_COUNT = 23,
+    APIR_BACKEND_DISPATCH_TABLE_എണ്ണം = 23,
 } ApirBackendCommandType;
 
-static inline const char * apir_dispatch_command_name(ApirBackendCommandType type) {
-    switch (type) {
+സ്ഥിതം വരിയിൽ സ്ഥിരം അക്ഷരം * apir_dispatch_command_name(ApirBackendCommandType type) {
+    തിരഞ്ഞെടുപ്പ് (type) {
         /* device */
-        case APIR_COMMAND_TYPE_DEVICE_GET_DEVICE_COUNT:
-            return "device_get_device_count";
-        case APIR_COMMAND_TYPE_DEVICE_GET_COUNT:
-            return "device_get_count";
-        case APIR_COMMAND_TYPE_DEVICE_GET_NAME:
-            return "device_get_name";
-        case APIR_COMMAND_TYPE_DEVICE_GET_DESCRIPTION:
-            return "device_get_description";
-        case APIR_COMMAND_TYPE_DEVICE_GET_TYPE:
-            return "device_get_type";
-        case APIR_COMMAND_TYPE_DEVICE_GET_MEMORY:
-            return "device_get_memory";
-        case APIR_COMMAND_TYPE_DEVICE_SUPPORTS_OP:
-            return "device_supports_op";
-        case APIR_COMMAND_TYPE_DEVICE_GET_BUFFER_TYPE:
-            return "device_get_buffer_type";
-        case APIR_COMMAND_TYPE_DEVICE_GET_PROPS:
-            return "device_get_props";
-        case APIR_COMMAND_TYPE_DEVICE_BUFFER_FROM_PTR:
-            return "device_buffer_from_ptr";
+        അവസ്ഥ APIR_COMMAND_TYPE_DEVICE_GET_DEVICE_എണ്ണം:
+            തിരികെ "device_get_device_count";
+        അവസ്ഥ APIR_COMMAND_TYPE_DEVICE_GET_എണ്ണം:
+            തിരികെ "device_get_count";
+        അവസ്ഥ APIR_COMMAND_TYPE_DEVICE_GET_NAME:
+            തിരികെ "device_get_name";
+        അവസ്ഥ APIR_COMMAND_TYPE_DEVICE_GET_DESCRIPTION:
+            തിരികെ "device_get_description";
+        അവസ്ഥ APIR_COMMAND_TYPE_DEVICE_GET_TYPE:
+            തിരികെ "device_get_type";
+        അവസ്ഥ APIR_COMMAND_TYPE_DEVICE_GET_MEMORY:
+            തിരികെ "device_get_memory";
+        അവസ്ഥ APIR_COMMAND_TYPE_DEVICE_SUPPORTS_OP:
+            തിരികെ "device_supports_op";
+        അവസ്ഥ APIR_COMMAND_TYPE_DEVICE_GET_BUFFER_TYPE:
+            തിരികെ "device_get_buffer_type";
+        അവസ്ഥ APIR_COMMAND_TYPE_DEVICE_GET_PROPS:
+            തിരികെ "device_get_props";
+        അവസ്ഥ APIR_COMMAND_TYPE_DEVICE_BUFFER_FROM_PTR:
+            തിരികെ "device_buffer_from_ptr";
         /* buffer-type */
-        case APIR_COMMAND_TYPE_BUFFER_TYPE_GET_NAME:
-            return "buffer_type_get_name";
-        case APIR_COMMAND_TYPE_BUFFER_TYPE_GET_ALIGNMENT:
-            return "buffer_type_get_alignment";
-        case APIR_COMMAND_TYPE_BUFFER_TYPE_GET_MAX_SIZE:
-            return "buffer_type_get_max_size";
-        case APIR_COMMAND_TYPE_BUFFER_TYPE_IS_HOST:
-            return "buffer_type_is_host";
-        case APIR_COMMAND_TYPE_BUFFER_TYPE_ALLOC_BUFFER:
-            return "buffer_type_alloc_buffer";
-        case APIR_COMMAND_TYPE_BUFFER_TYPE_GET_ALLOC_SIZE:
-            return "buffer_type_get_alloc_size";
+        അവസ്ഥ APIR_COMMAND_TYPE_BUFFER_TYPE_GET_NAME:
+            തിരികെ "buffer_type_get_name";
+        അവസ്ഥ APIR_COMMAND_TYPE_BUFFER_TYPE_GET_ALIGNMENT:
+            തിരികെ "buffer_type_get_alignment";
+        അവസ്ഥ APIR_COMMAND_TYPE_BUFFER_TYPE_GET_MAX_SIZE:
+            തിരികെ "buffer_type_get_max_size";
+        അവസ്ഥ APIR_COMMAND_TYPE_BUFFER_TYPE_IS_HOST:
+            തിരികെ "buffer_type_is_host";
+        അവസ്ഥ APIR_COMMAND_TYPE_BUFFER_TYPE_ALLOC_BUFFER:
+            തിരികെ "buffer_type_alloc_buffer";
+        അവസ്ഥ APIR_COMMAND_TYPE_BUFFER_TYPE_GET_ALLOC_SIZE:
+            തിരികെ "buffer_type_get_alloc_size";
         /* buffer */
-        case APIR_COMMAND_TYPE_BUFFER_GET_BASE:
-            return "buffer_get_base";
-        case APIR_COMMAND_TYPE_BUFFER_SET_TENSOR:
-            return "buffer_set_tensor";
-        case APIR_COMMAND_TYPE_BUFFER_GET_TENSOR:
-            return "buffer_get_tensor";
-        case APIR_COMMAND_TYPE_BUFFER_CPY_TENSOR:
-            return "buffer_cpy_tensor";
-        case APIR_COMMAND_TYPE_BUFFER_CLEAR:
-            return "buffer_clear";
-        case APIR_COMMAND_TYPE_BUFFER_FREE_BUFFER:
-            return "buffer_free_buffer";
+        അവസ്ഥ APIR_COMMAND_TYPE_BUFFER_GET_BASE:
+            തിരികെ "buffer_get_base";
+        അവസ്ഥ APIR_COMMAND_TYPE_BUFFER_SET_TENSOR:
+            തിരികെ "buffer_set_tensor";
+        അവസ്ഥ APIR_COMMAND_TYPE_BUFFER_GET_TENSOR:
+            തിരികെ "buffer_get_tensor";
+        അവസ്ഥ APIR_COMMAND_TYPE_BUFFER_CPY_TENSOR:
+            തിരികെ "buffer_cpy_tensor";
+        അവസ്ഥ APIR_COMMAND_TYPE_BUFFER_CLEAR:
+            തിരികെ "buffer_clear";
+        അവസ്ഥ APIR_COMMAND_TYPE_BUFFER_FREE_BUFFER:
+            തിരികെ "buffer_free_buffer";
         /* backend */
-        case APIR_COMMAND_TYPE_BACKEND_GRAPH_COMPUTE:
-            return "backend_graph_compute";
+        അവസ്ഥ APIR_COMMAND_TYPE_BACKEND_GRAPH_COMPUTE:
+            തിരികെ "backend_graph_compute";
 
-        default:
-            return "unknown";
+        സ്ഥിരസ്ഥിതി:
+            തിരികെ "unknown";
     }
 }

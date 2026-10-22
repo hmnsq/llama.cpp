@@ -1,27 +1,27 @@
 #pragma once
 
 // clang-format off
-#include <cstdint>
-#include <cstddef>
+#അന്തര്ഭാവ <cstdint>
+#അന്തര്ഭാവ <cstddef>
 
-#include <ggml-backend.h>
+#അന്തര്ഭാവ <ggml-backend.h>
 
-#include "backend-convert.h"
-#include "backend-virgl-apir.h"
-#include "shared/apir_backend.h"
-#include "shared/apir_cs.h"
-#include "shared/apir_cs_ggml.h"
+#അന്തര്ഭാവ "backend-convert.h"
+#അന്തര്ഭാവ "backend-virgl-apir.h"
+#അന്തര്ഭാവ "shared/apir_backend.h"
+#അന്തര്ഭാവ "shared/apir_cs.h"
+#അന്തര്ഭാവ "shared/apir_cs_ggml.h"
 // clang-format on
 
 #define GGML_VIRTGPU_BCK "ggml-virtgpu-backend: "
 
-struct virgl_apir_context {
+ഘടന virgl_apir_context {
     uint32_t               ctx_id;
     virgl_apir_callbacks * iface;
 };
 
-typedef uint32_t (*backend_dispatch_t)(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx);
+തരനിർവചനം uint32_t (*backend_dispatch_t)(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx);
 
-#include "backend-dispatched.gen.h"
+#അന്തര്ഭാവ "backend-dispatched.gen.h"
 
-uint32_t backend_dispatch_initialize(void * ggml_backend_reg_fct_p);
+uint32_t backend_dispatch_initialize(ശൂന്യം * ggml_backend_reg_fct_p);

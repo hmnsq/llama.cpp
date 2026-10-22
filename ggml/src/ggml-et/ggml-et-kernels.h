@@ -1,10 +1,10 @@
 #pragma once
 
-#include "ggml-et-common.h"
+#അന്തര്ഭാവ "ggml-et-common.h"
 
-#include <string>
-#include <utility>
-#include <vector>
+#അന്തര്ഭാവ <string>
+#അന്തര്ഭാവ <utility>
+#അന്തര്ഭാവ <vector>
 
 #define ET_TRACE_BUFFER_SIZE (1024 * 1024 * 8UL)
 
@@ -17,7 +17,7 @@
 // - Returns false if kernel cannot be loaded from either source
 //
 // Kernel is loaded using the device's default stream
-bool ggml_et_load_kernel(ggml_backend_et_device_context * dev_ctx, const std::string & kernel_name);
+bool ggml_et_load_kernel(ggml_backend_et_device_context * dev_ctx, സ്ഥിരം std::string & kernel_name);
 
 // Launch kernel with parameters on device's default stream
 // Performs lazy loading: automatically loads kernel if not already loaded
@@ -25,24 +25,24 @@ bool ggml_et_load_kernel(ggml_backend_et_device_context * dev_ctx, const std::st
 // Returns true on success, false on failure
 // Execution is synchronous - waits for completion
 bool ggml_et_launch_kernel(ggml_backend_et_device_context * dev_ctx,
-                           const std::string &              kernel_name,
-                           void *                           params,
+                           സ്ഥിരം std::string &              kernel_name,
+                           ശൂന്യം *                           params,
                            size_t                           params_size,
                            uint64_t                         shire_mask       = 0xFFFFFFFF,
                            bool                             enable_print     = false,
                            bool                             sync_error_check = false);
 
-void ggml_et_uberkernel_begin_graph(ggml_backend_et_uberkernel_context * uk_ctx);
+ശൂന്യം ggml_et_uberkernel_begin_graph(ggml_backend_et_uberkernel_context * uk_ctx);
 bool ggml_et_uberkernel_end_graph(ggml_backend_et_device_context * dev_ctx);
-void ggml_et_uberkernel_abort_graph(ggml_backend_et_uberkernel_context * uk_ctx);
-bool ggml_et_uberkernel_failed(const ggml_backend_et_uberkernel_context * uk_ctx);
+ശൂന്യം ggml_et_uberkernel_abort_graph(ggml_backend_et_uberkernel_context * uk_ctx);
+bool ggml_et_uberkernel_failed(സ്ഥിരം ggml_backend_et_uberkernel_context * uk_ctx);
 
 // Unload kernel from device and free resources
 // Safe to call even if kernel not loaded
-void ggml_et_unload_kernel(ggml_backend_et_device_context * dev_ctx, const std::string & kernel_name);
+ശൂന്യം ggml_et_unload_kernel(ggml_backend_et_device_context * dev_ctx, സ്ഥിരം std::string & kernel_name);
 
 // Unload all kernels from device context
 // Called during device cleanup
-void ggml_et_unload_all_kernels(ggml_backend_et_device_context * dev_ctx);
+ശൂന്യം ggml_et_unload_all_kernels(ggml_backend_et_device_context * dev_ctx);
 
 std::vector<std::pair<std::string, rt::KernelId>> ggml_et_get_loaded_kernels(ggml_backend_et_device_context * dev_ctx);

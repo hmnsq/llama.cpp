@@ -1,21 +1,21 @@
 #ifndef HTP_SOFTMAX_OPS_H
 #define HTP_SOFTMAX_OPS_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
-#include <math.h>
-#include "hex-fastdiv.h"
-#include "hex-common.h"
+#അന്തര്ഭാവ <stdint.h>
+#അന്തര്ഭാവ <stddef.h>
+#അന്തര്ഭാവ <stdbool.h>
+#അന്തര്ഭാവ <math.h>
+#അന്തര്ഭാവ "hex-fastdiv.h"
+#അന്തര്ഭാവ "hex-common.h"
 
-enum htp_softmax_kernel_id {
+എണ്ണൽ htp_softmax_kernel_id {
     HTP_SOFTMAX_KERNEL_NOMASK = 0,
     HTP_SOFTMAX_KERNEL_MASK_F32,
     HTP_SOFTMAX_KERNEL_MASK_F16,
-    HTP_SOFTMAX_KERNEL_COUNT,
+    HTP_SOFTMAX_KERNEL_എണ്ണം,
 };
 
-struct htp_softmax_kernel_params {
+ഘടന htp_softmax_kernel_params {
     uint32_t n_threads;
     uint32_t src0_nrows;
     uint32_t src0_nrows_per_thread;
@@ -39,24 +39,24 @@ struct htp_softmax_kernel_params {
     uint32_t use_f16;
     uint32_t kernel_id;
 
-    float    scale;
-    float    max_bias;
-    float    m0;
-    float    m1;
+    ദശാംശം    scale;
+    ദശാംശം    max_bias;
+    ദശാംശം    m0;
+    ദശാംശം    m1;
 
-    struct fastdiv_values div_ne01;
-    struct fastdiv_values div_ne02;
-    struct fastdiv_values div_ne12;
-    struct fastdiv_values div_ne13;
+    ഘടന fastdiv_മൂല്യങ്ങൾ div_ne01;
+    ഘടന fastdiv_മൂല്യങ്ങൾ div_ne02;
+    ഘടന fastdiv_മൂല്യങ്ങൾ div_ne12;
+    ഘടന fastdiv_മൂല്യങ്ങൾ div_ne13;
 };
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_softmax_kernel_params) <= 128, "htp_softmax_kernel_params is too large for kernel_params blob");
-#else
-_Static_assert(sizeof(struct htp_softmax_kernel_params) <= 128, "htp_softmax_kernel_params is too large for kernel_params blob");
+#എങ്കിൽ defined(__cplusplus)
+static_assert(വലുപ്പം(ഘടന htp_softmax_kernel_params) <= 128, "htp_softmax_kernel_params is too large for kernel_params blob");
+#അല്ലെങ്കിൽ
+_Static_assert(വലുപ്പം(ഘടന htp_softmax_kernel_params) <= 128, "htp_softmax_kernel_params is too large for kernel_params blob");
 #endif
 
-struct htp_softmax_vtcm_layout {
+ഘടന htp_softmax_vtcm_layout {
     size_t total_bytes;
     size_t off_src0;
     size_t off_dst;
@@ -71,16 +71,16 @@ struct htp_softmax_vtcm_layout {
     size_t src1_spad_half_size;
 };
 
-static inline void htp_softmax_vtcm_layout_build(
-    struct htp_softmax_vtcm_layout * layout,
+സ്ഥിതം വരിയിൽ ശൂന്യം htp_softmax_vtcm_layout_build(
+    ഘടന htp_softmax_vtcm_layout * layout,
     uint32_t ne00,
     uint32_t ne10,
     bool use_src1,
     bool use_f16,
     uint32_t n_threads
 ) {
-    size_t src0_row_size = ne00 * sizeof(float);
-    size_t dst_row_size  = ne00 * sizeof(float);
+    size_t src0_row_size = ne00 * വലുപ്പം(ദശാംശം);
+    size_t dst_row_size  = ne00 * വലുപ്പം(ദശാംശം);
     size_t src1_row_size = use_src1 ? (ne10 * (use_f16 ? 2 : 4)) : 0;
 
     size_t src0_row_size_aligned = hex_round_up(src0_row_size, 128);

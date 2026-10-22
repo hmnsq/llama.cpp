@@ -1,10 +1,10 @@
 #pragma once
 
-#include "decoder.h"
+#അന്തര്ഭാവ "decoder.h"
 
-#include <cstdint>
-#include <openvino/frontend/node_context.hpp>
-#include <string>
+#അന്തര്ഭാവ <cstdint>
+#അന്തര്ഭാവ <openvino/frontend/node_context.hpp>
+#അന്തര്ഭാവ <string>
 
 namespace ov {
 namespace frontend {
@@ -12,168 +12,168 @@ namespace ggml {
 
 class TranslateSession;
 
-typedef std::map<std::string, Output<Node>> TensorMap;
+തരനിർവചനം std::map<std::string, Output<കണ്ണി_2>> TensorMap;
 
-class NodeContext : public frontend::NodeContext {
-public:
-    NodeContext(const std::shared_ptr<GgmlDecoder> & decoder,
+class കണ്ണി_Context : പൊതു frontend::കണ്ണി_Context {
+പൊതു:
+    കണ്ണി_Context(സ്ഥിരം std::shared_ptr<GgmlDecoder> & decoder,
                 std::shared_ptr<TensorMap> & tensor_map,
-                int node_idx,
+                പൂർണ്ണസംഖ്യ കണ്ണി_idx,
                 TranslateSession * translate_session = nullptr) :
-        ov::frontend::NodeContext(decoder->get_op_type(node_idx)),
+        ov::frontend::കണ്ണി_Context(decoder->get_op_type(കണ്ണി_idx)),
         m_decoder(decoder),
         m_tensor_map(tensor_map),
-        m_node_idx(node_idx),
+        m_കണ്ണി_idx(കണ്ണി_idx),
         m_translate_session(translate_session) {
-        m_input_names = decoder->get_input_names(m_node_idx);
-        m_output_names = decoder->get_output_names(m_node_idx);
+        m_നിവേശം_names = decoder->get_നിവേശം_names(m_കണ്ണി_idx);
+        m_output_names = decoder->get_output_names(m_കണ്ണി_idx);
     }
 
-    TranslateSession * get_translate_session() const { return m_translate_session; }
+    TranslateSession * get_translate_session() സ്ഥിരം { തിരികെ m_translate_session; }
 
-    const std::vector<std::string> & get_input_names() const { return m_input_names; }
+    സ്ഥിരം std::vector<std::string> & get_നിവേശം_names() സ്ഥിരം { തിരികെ m_നിവേശം_names; }
 
-    const std::vector<std::string> & get_output_names() const { return m_output_names; }
+    സ്ഥിരം std::vector<std::string> & get_output_names() സ്ഥിരം { തിരികെ m_output_names; }
 
-    size_t get_input_size() const override { return m_decoder->get_input_size(m_node_idx); }
+    size_t get_നിവേശം_size() സ്ഥിരം override { തിരികെ m_decoder->get_നിവേശം_size(m_കണ്ണി_idx); }
 
-    ov::element::Type get_input_type(size_t index) const {
-        return m_decoder->get_input_type(m_node_idx, m_input_names[index]);
+    ov::element::Type get_നിവേശം_type(size_t index) സ്ഥിരം {
+        തിരികെ m_decoder->get_നിവേശം_type(m_കണ്ണി_idx, m_നിവേശം_names[index]);
     }
 
-    PartialShape get_input_shape(size_t input_index) const {
-        return m_decoder->get_input_shape(m_node_idx, m_input_names[input_index]);
+    PartialShape get_നിവേശം_shape(size_t നിവേശം_index) സ്ഥിരം {
+        തിരികെ m_decoder->get_നിവേശം_shape(m_കണ്ണി_idx, m_നിവേശം_names[നിവേശം_index]);
     }
 
-    std::vector<size_t> get_input_stride(size_t index) const {
-        return m_decoder->get_input_stride(m_node_idx, m_input_names[index]);
+    std::vector<size_t> get_നിവേശം_stride(size_t index) സ്ഥിരം {
+        തിരികെ m_decoder->get_നിവേശം_stride(m_കണ്ണി_idx, m_നിവേശം_names[index]);
     }
 
-    std::string get_output_name() const { return m_output_names[0]; }
+    std::string get_output_name() സ്ഥിരം { തിരികെ m_output_names[0]; }
 
-    PartialShape get_output_shape() const { return m_decoder->get_output_shape(m_node_idx); }
+    PartialShape get_output_shape() സ്ഥിരം { തിരികെ m_decoder->get_output_shape(m_കണ്ണി_idx); }
 
-    int32_t * get_input_op_params(size_t index) const {
-        return m_decoder->get_input_op_params(m_node_idx, m_input_names[index]);
+    int32_t * get_നിവേശം_op_params(size_t index) സ്ഥിരം {
+        തിരികെ m_decoder->get_നിവേശം_op_params(m_കണ്ണി_idx, m_നിവേശം_names[index]);
     }
 
-    size_t get_view_input_size(size_t index) const {
-        return m_decoder->get_view_input_size(m_node_idx, m_input_names[index]);
+    size_t get_view_നിവേശം_size(size_t index) സ്ഥിരം {
+        തിരികെ m_decoder->get_view_നിവേശം_size(m_കണ്ണി_idx, m_നിവേശം_names[index]);
     }
 
-    size_t get_view_input_offset(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_offset(m_node_idx, m_input_names[index], view_index);
+    size_t get_view_നിവേശം_offset(size_t index, size_t view_index) സ്ഥിരം {
+        തിരികെ m_decoder->get_view_നിവേശം_offset(m_കണ്ണി_idx, m_നിവേശം_names[index], view_index);
     }
 
-    size_t get_view_input_src_offset(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_src_offset(m_node_idx, m_input_names[index], view_index);
+    size_t get_view_നിവേശം_src_offset(size_t index, size_t view_index) സ്ഥിരം {
+        തിരികെ m_decoder->get_view_നിവേശം_src_offset(m_കണ്ണി_idx, m_നിവേശം_names[index], view_index);
     }
 
-    std::vector<size_t> get_view_input_stride(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_stride(m_node_idx, m_input_names[index], view_index);
+    std::vector<size_t> get_view_നിവേശം_stride(size_t index, size_t view_index) സ്ഥിരം {
+        തിരികെ m_decoder->get_view_നിവേശം_stride(m_കണ്ണി_idx, m_നിവേശം_names[index], view_index);
     }
 
-    std::vector<size_t> get_view_input_src_stride(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_src_stride(m_node_idx, m_input_names[index], view_index);
+    std::vector<size_t> get_view_നിവേശം_src_stride(size_t index, size_t view_index) സ്ഥിരം {
+        തിരികെ m_decoder->get_view_നിവേശം_src_stride(m_കണ്ണി_idx, m_നിവേശം_names[index], view_index);
     }
 
-    ov::Shape get_view_input_ggml_shape(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_ggml_shape(m_node_idx, m_input_names[index], view_index);
+    ov::Shape get_view_നിവേശം_ggml_shape(size_t index, size_t view_index) സ്ഥിരം {
+        തിരികെ m_decoder->get_view_നിവേശം_ggml_shape(m_കണ്ണി_idx, m_നിവേശം_names[index], view_index);
     }
 
-    ov::Shape get_view_input_src_ggml_shape(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_src_ggml_shape(m_node_idx, m_input_names[index], view_index);
+    ov::Shape get_view_നിവേശം_src_ggml_shape(size_t index, size_t view_index) സ്ഥിരം {
+        തിരികെ m_decoder->get_view_നിവേശം_src_ggml_shape(m_കണ്ണി_idx, m_നിവേശം_names[index], view_index);
     }
 
-    ov::PartialShape get_view_input_ov_shape(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_ov_shape(m_node_idx, m_input_names[index], view_index);
+    ov::PartialShape get_view_നിവേശം_ov_shape(size_t index, size_t view_index) സ്ഥിരം {
+        തിരികെ m_decoder->get_view_നിവേശം_ov_shape(m_കണ്ണി_idx, m_നിവേശം_names[index], view_index);
     }
 
-    ov::PartialShape get_view_input_src_ov_shape(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_src_ov_shape(m_node_idx, m_input_names[index], view_index);
+    ov::PartialShape get_view_നിവേശം_src_ov_shape(size_t index, size_t view_index) സ്ഥിരം {
+        തിരികെ m_decoder->get_view_നിവേശം_src_ov_shape(m_കണ്ണി_idx, m_നിവേശം_names[index], view_index);
     }
 
-    std::string get_view_input_name(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_name(m_node_idx, m_input_names[index], view_index);
+    std::string get_view_നിവേശം_name(size_t index, size_t view_index) സ്ഥിരം {
+        തിരികെ m_decoder->get_view_നിവേശം_name(m_കണ്ണി_idx, m_നിവേശം_names[index], view_index);
     }
 
-    std::string get_view_input_src_name(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_src_name(m_node_idx, m_input_names[index], view_index);
+    std::string get_view_നിവേശം_src_name(size_t index, size_t view_index) സ്ഥിരം {
+        തിരികെ m_decoder->get_view_നിവേശം_src_name(m_കണ്ണി_idx, m_നിവേശം_names[index], view_index);
     }
 
-    int32_t get_op_dynamic_dim() const { return m_decoder->get_op_dynamic_dim(m_node_idx); }
+    int32_t get_op_dynamic_dim() സ്ഥിരം { തിരികെ m_decoder->get_op_dynamic_dim(m_കണ്ണി_idx); }
 
-    int32_t * get_output_op_params() const { return m_decoder->get_output_op_params(m_node_idx); }
+    int32_t * get_output_op_params() സ്ഥിരം { തിരികെ m_decoder->get_output_op_params(m_കണ്ണി_idx); }
 
-    size_t get_output_op_offset() const { return m_decoder->get_output_op_offset(m_node_idx); }
+    size_t get_output_op_offset() സ്ഥിരം { തിരികെ m_decoder->get_output_op_offset(m_കണ്ണി_idx); }
 
-    ov::element::Type get_output_type() const { return m_decoder->get_output_type(m_node_idx); }
+    ov::element::Type get_output_type() സ്ഥിരം { തിരികെ m_decoder->get_output_type(m_കണ്ണി_idx); }
 
-    std::vector<size_t> get_output_stride() const { return m_decoder->get_output_stride(m_node_idx); }
+    std::vector<size_t> get_output_stride() സ്ഥിരം { തിരികെ m_decoder->get_output_stride(m_കണ്ണി_idx); }
 
-    Output<Node> get_input(int idx) const override {
+    Output<കണ്ണി_2> get_നിവേശം(പൂർണ്ണസംഖ്യ idx) സ്ഥിരം override {
         // Check if this input is a VIEW
-        size_t view_input_size = m_decoder->get_view_input_size(m_node_idx, m_input_names[idx]);
-        if (view_input_size > 0) {
+        size_t view_നിവേശം_size = m_decoder->get_view_നിവേശം_size(m_കണ്ണി_idx, m_നിവേശം_names[idx]);
+        എങ്കിൽ (view_നിവേശം_size > 0) {
             // This is a VIEW input, get the base tensor name (last element in the chain)
             std::string base_name =
-                m_decoder->get_view_input_src_name(m_node_idx, m_input_names[idx], view_input_size - 1);
+                m_decoder->get_view_നിവേശം_src_name(m_കണ്ണി_idx, m_നിവേശം_names[idx], view_നിവേശം_size - 1);
             // Check if the VIEW has been resolved (translate_view produced a Slice)
-            auto view_it = m_tensor_map->find(m_input_names[idx]);
-            if (!base_name.empty() && view_it != m_tensor_map->end()) {
+            auto view_it = m_tensor_map->find(m_നിവേശം_names[idx]);
+            എങ്കിൽ (!base_name.empty() && view_it != m_tensor_map->end()) {
                 auto base_it = m_tensor_map->find(base_name);
                 // A multi-output translator can publish a VIEW directly without materializing
                 // its packed parent (GatedDeltaNet attention/state). In that case the VIEW is the
                 // authoritative value. The node comparison retains the existing resolved-VIEW path.
-                if (base_it == m_tensor_map->end() ||
-                    view_it->second.get_node_shared_ptr() != base_it->second.get_node_shared_ptr()) {
-                    return view_it->second;
+                എങ്കിൽ (base_it == m_tensor_map->end() ||
+                    view_it->second.get_കണ്ണി_shared_ptr() != base_it->second.get_കണ്ണി_shared_ptr()) {
+                    തിരികെ view_it->second;
                 }
-                return base_it->second;
+                തിരികെ base_it->second;
             }
-            if (!base_name.empty()) {
-                return m_tensor_map->at(base_name);
+            എങ്കിൽ (!base_name.empty()) {
+                തിരികെ m_tensor_map->at(base_name);
             }
         }
         // Not a VIEW or failed to get base name, use the original logic
-        return m_tensor_map->at(m_input_names[idx]);
+        തിരികെ m_tensor_map->at(m_നിവേശം_names[idx]);
     }
 
-    Output<Node> get_input(const std::string & name) const override {
-        if (m_tensor_map->find(name) == m_tensor_map->end()) {
+    Output<കണ്ണി_2> get_നിവേശം(സ്ഥിരം std::string & name) സ്ഥിരം override {
+        എങ്കിൽ (m_tensor_map->find(name) == m_tensor_map->end()) {
             throw std::runtime_error("'" + name + "' not found in tensor map.");
         }
-        return m_tensor_map->at(name);
+        തിരികെ m_tensor_map->at(name);
     }
 
-    bool has_input(const std::string & name) const { return m_tensor_map->find(name) != m_tensor_map->end(); }
+    bool has_നിവേശം(സ്ഥിരം std::string & name) സ്ഥിരം { തിരികെ m_tensor_map->find(name) != m_tensor_map->end(); }
 
-    void put_shared(const std::string & name, const Output<Node> & value) const {
-        m_tensor_map->insert({name, value});
+    ശൂന്യം put_shared(സ്ഥിരം std::string & name, സ്ഥിരം Output<കണ്ണി_2> & മൂല്യം) സ്ഥിരം {
+        m_tensor_map->തിരുകുക({name, മൂല്യം});
     }
 
-    const std::string & get_name() const override { return m_decoder->get_op_name(m_node_idx); }
+    സ്ഥിരം std::string & get_name() സ്ഥിരം override { തിരികെ m_decoder->get_op_name(m_കണ്ണി_idx); }
 
-    ov::Any get_attribute_as_any(const std::string & name) const override { return m_decoder->get_attribute(name); }
+    ov::Any get_attribute_as_any(സ്ഥിരം std::string & name) സ്ഥിരം override { തിരികെ m_decoder->get_attribute(name); }
 
-    int get_op_case() const { return m_decoder->get_op_case(m_node_idx); }
+    പൂർണ്ണസംഖ്യ get_op_case() സ്ഥിരം { തിരികെ m_decoder->get_op_case(m_കണ്ണി_idx); }
 
-    bool is_static() const { return m_decoder->is_static(); }
+    bool is_static() സ്ഥിരം { തിരികെ m_decoder->is_static(); }
 
-    bool is_stateful() const { return m_decoder->is_stateful(); }
+    bool is_stateful() സ്ഥിരം { തിരികെ m_decoder->is_stateful(); }
 
-    int get_ssm_state_size() const { return m_decoder->get_ssm_state_size(); }
+    പൂർണ്ണസംഖ്യ get_ssm_state_size() സ്ഥിരം { തിരികെ m_decoder->get_ssm_state_size(); }
 
-private:
+സ്വകാര്യ:
     std::shared_ptr<GgmlDecoder> m_decoder;
     std::shared_ptr<TensorMap> & m_tensor_map;
-    int m_node_idx;
+    പൂർണ്ണസംഖ്യ m_കണ്ണി_idx;
     TranslateSession * m_translate_session;
-    std::vector<std::string> m_input_names;
+    std::vector<std::string> m_നിവേശം_names;
     std::vector<std::string> m_output_names;
 };
 
-using CreatorFunction = std::function<ov::OutputVector(const ov::frontend::ggml::NodeContext &)>;
+using CreatorFunction = std::function<ov::OutputVector(സ്ഥിരം ov::frontend::ggml::കണ്ണി_Context &)>;
 
 }  // namespace ggml
 }  // namespace frontend

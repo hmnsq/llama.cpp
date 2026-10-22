@@ -1,24 +1,24 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#അന്തര്ഭാവ "../node_context.h"
+#അന്തര്ഭാവ "../op_table.h"
+#അന്തര്ഭാവ "../utils.h"
 
-#include <memory>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/reduce_mean.hpp>
+#അന്തര്ഭാവ <memory>
+#അന്തര്ഭാവ <openvino/op/constant.hpp>
+#അന്തര്ഭാവ <openvino/op/reduce_mean.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+നാമാകാശ ov {
+നാമാകാശ frontend {
+നാമാകാശ ggml {
+നാമാകാശ op {
 
-OutputVector translate_mean(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+OutputVector translate_mean(സ്ഥിരം കണ്ണി_Context & context) {
+    അക്കം_inputs_check(context, 1, 1);
 
-    auto input = process_view_input_new(context, 0);
+    auto നിവേശം = process_view_നിവേശം_new(context, 0);
     auto axis = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {-1});
-    auto res = std::make_shared<ov::op::v1::ReduceMean>(input, axis, true);
+    auto res = std::make_shared<ov::op::v1::ReduceMean>(നിവേശം, axis, സത്യം);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    തിരികെ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include "ggml.h"
+#അന്തര്ഭാവ "ggml.h"
 
-enum cpu_feature {
+എണ്ണൽ cpu_feature {
     CPU_FEATURE_NONE    = 0,
     CPU_FEATURE_DOTPROD = 1,
     CPU_FEATURE_I8MM    = 2,
@@ -17,21 +17,21 @@ enum cpu_feature {
     CPU_FEATURE_SVEI8MM = 64
 };
 
-inline cpu_feature& operator|=(cpu_feature& lhs, cpu_feature rhs) {
+വരിയിൽ cpu_feature& operator|=(cpu_feature& lhs, cpu_feature rhs) {
     lhs = static_cast<cpu_feature>(lhs | rhs);
-    return lhs;
+    തിരികെ lhs;
 }
-inline cpu_feature operator|(cpu_feature lhs, cpu_feature rhs) {
-    return static_cast<cpu_feature>(static_cast<int>(lhs) | static_cast<int>(rhs));
+വരിയിൽ cpu_feature operator|(cpu_feature lhs, cpu_feature rhs) {
+    തിരികെ static_cast<cpu_feature>(static_cast<പൂർണ്ണസംഖ്യ>(lhs) | static_cast<പൂർണ്ണസംഖ്യ>(rhs));
 }
 
-struct kernel_info {
-    size_t (*get_m_step)(void);
-    size_t (*get_n_step)(void);
-    size_t (*get_mr)(void);
-    size_t (*get_nr)(void);
-    size_t (*get_kr)(void);
-    size_t (*get_sr)(void);
+ഘടന kernel_info {
+    size_t (*get_m_step)(ശൂന്യം);
+    size_t (*get_n_step)(ശൂന്യം);
+    size_t (*get_mr)(ശൂന്യം);
+    size_t (*get_nr)(ശൂന്യം);
+    size_t (*get_kr)(ശൂന്യം);
+    size_t (*get_sr)(ശൂന്യം);
 
     size_t (*get_dst_offset)(size_t m_idx, size_t n_idx, size_t stride);
 
@@ -39,39 +39,39 @@ struct kernel_info {
 
     size_t (*get_rhs_packed_offset_ex)(size_t n_idx, size_t k, size_t bl);
 
-    void (*run_kernel_ex)(
+    ശൂന്യം (*run_kernel_ex)(
         size_t m, size_t n, size_t k, size_t bl,
-        const void* lhs_packed, const void* rhs_packed,
-        void* dst, size_t dst_stride_row, size_t dst_stride_col,
-        float clamp_min, float clamp_max);
+        സ്ഥിരം ശൂന്യം* lhs_packed, സ്ഥിരം ശൂന്യം* rhs_packed,
+        ശൂന്യം* dst, size_t dst_stride_row, size_t dst_stride_col,
+        ദശാംശം clamp_min, ദശാംശം clamp_max);
 };
 
-struct lhs_packing_info {
+ഘടന lhs_packing_info {
     size_t (*get_offset)(size_t m_idx, size_t lhs_stride);
 
     size_t (*get_packed_offset_ex)(size_t m_idx, size_t k, size_t bl, size_t mr, size_t kr, size_t sr);
 
     size_t (*packed_size_ex)(size_t m, size_t k, size_t bl, size_t mr, size_t kr, size_t sr);
 
-    void (*pack_func_ex)(size_t m, size_t k, size_t bl, size_t mr, size_t kr, size_t sr,
-        size_t m_idx_start, const void * lhs, size_t lhs_stride, void * lhs_packed);
+    ശൂന്യം (*pack_func_ex)(size_t m, size_t k, size_t bl, size_t mr, size_t kr, size_t sr,
+        size_t m_idx_start, സ്ഥിരം ശൂന്യം * lhs, size_t lhs_stride, ശൂന്യം * lhs_packed);
 };
 
-enum rhs_repack_mode {
+എണ്ണൽ rhs_repack_mode {
     RHS_REPACK_PER_KERNEL,
     RHS_REPACK_SINGLE_ONLY,
 };
 
-struct rhs_packing_info {
+ഘടന rhs_packing_info {
     size_t (*packed_size_ex)(size_t n, size_t k, size_t nr, size_t kr, size_t bl);
 
-    void (*pack_func_ex)(size_t num_groups, size_t n, size_t k, size_t nr, size_t kr, size_t sr, size_t bl,
-        size_t rhs_stride, const void * rhs, const void * bias, const void * scale, void * rhs_packed, size_t extra_bytes, const void * params);
+    ശൂന്യം (*pack_func_ex)(size_t അക്കം_groups, size_t n, size_t k, size_t nr, size_t kr, size_t sr, size_t bl,
+        size_t rhs_stride, സ്ഥിരം ശൂന്യം * rhs, സ്ഥിരം ശൂന്യം * bias, സ്ഥിരം ശൂന്യം * scale, ശൂന്യം * rhs_packed, size_t extra_bytes, സ്ഥിരം ശൂന്യം * params);
 
     rhs_repack_mode repack_mode = RHS_REPACK_PER_KERNEL;
 };
 
-struct ggml_kleidiai_kernels {
+ഘടന ggml_kleidiai_kernels {
     kernel_info      gemm;
     lhs_packing_info gemm_lhs_info;
 
@@ -86,7 +86,7 @@ struct ggml_kleidiai_kernels {
     ggml_type op_type;
 };
 
-ggml_kleidiai_kernels * ggml_kleidiai_select_kernels(cpu_feature cpu_features, const ggml_tensor * tensor);
+ggml_kleidiai_kernels * ggml_kleidiai_select_kernels(cpu_feature cpu_features, സ്ഥിരം ggml_tensor * tensor);
 ggml_kleidiai_kernels * ggml_kleidiai_select_kernels_q4_0(cpu_feature features);
 ggml_kleidiai_kernels * ggml_kleidiai_select_kernels_q4_k(cpu_feature features);
 ggml_kleidiai_kernels * ggml_kleidiai_select_kernels_q8_0(cpu_feature features);

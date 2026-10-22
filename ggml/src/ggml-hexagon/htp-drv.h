@@ -1,26 +1,26 @@
 #pragma once
 
 #ifdef __cplusplus
-extern "C" {
+ബാഹ്യ "C" {
 #endif
 
 #ifdef _WIN32
 #    pragma clang diagnostic ignored "-Wignored-attributes"
 #endif
 
-#include <AEEStdErr.h>
-#include <rpcmem.h>
-#include <remote.h>
-#include <dspqueue.h>
+#അന്തര്ഭാവ <AEEStdErr.h>
+#അന്തര്ഭാവ <rpcmem.h>
+#അന്തര്ഭാവ <remote.h>
+#അന്തര്ഭാവ <dspqueue.h>
 
-#if defined(_WIN32) && !defined(__MINGW32__)
+#എങ്കിൽ defined(_WIN32) && !defined(__MINGW32__)
 #    ifdef GGML_BACKEND_BUILD
-#        define HTPDRV_API __declspec(dllexport) extern
-#    else
-#        define HTPDRV_API __declspec(dllimport) extern
+#        define HTPDRV_API __declspec(dllexport) ബാഹ്യ
+#    അല്ലെങ്കിൽ
+#        define HTPDRV_API __declspec(dllimport) ബാഹ്യ
 #    endif
-#else
-#    define HTPDRV_API __attribute__ ((visibility ("default"))) extern
+#അല്ലെങ്കിൽ
+#    define HTPDRV_API __attribute__ ((visibility ("default"))) ബാഹ്യ
 #endif
 
 /* Offset to differentiate HLOS and Hexagon error codes.
@@ -43,10 +43,10 @@ extern "C" {
 #        define SLEEP(x)                      \
             { /* Do nothing for simulator. */ \
             }
-#    else
+#    അല്ലെങ്കിൽ
 #        ifdef _WIN32
 #            define SLEEP(x) Sleep(1000 * x) /* Sleep accepts input in milliseconds. */
-#        else
+#        അല്ലെങ്കിൽ
 #            define SLEEP(x) sleep(x)        /* sleep accepts input in seconds. */
 #        endif
 #    endif
@@ -61,14 +61,14 @@ extern "C" {
 #endif
 
 /* Includes and defines for all HLOS except windows */
-#if !defined(__hexagon__) && !defined(_WIN32)
+#എങ്കിൽ !defined(__hexagon__) && !defined(_WIN32)
 #    include "unistd.h"
 
 #    include <sys/time.h>
 #endif
 
 /* Includes and defines for Hexagon and all HLOS except Windows. */
-#if !defined(_WIN32)
+#എങ്കിൽ !defined(_WIN32)
 /* Weak reference to remote symbol for compilation. */
 #    pragma weak remote_session_control
 #    pragma weak remote_handle_control
@@ -78,13 +78,13 @@ extern "C" {
 #    pragma weak rpcmem_alloc2
 #endif
 
-#if !defined(_WIN32)
+#എങ്കിൽ !defined(_WIN32)
 #    pragma weak remote_system_request
 #endif
 
 #ifdef _WIN32
 #     define DSPQUEUE_TIMEOUT DSPQUEUE_TIMEOUT_NONE
-#else
+#അല്ലെങ്കിൽ
 #     define DSPQUEUE_TIMEOUT 1000000
 #endif
 
@@ -93,7 +93,7 @@ extern "C" {
  *
  * @return      Return AEE error codes as defined in Hexagon SDK.
  */
-HTPDRV_API int htpdrv_init(void);
+HTPDRV_API പൂർണ്ണസംഖ്യ htpdrv_init(ശൂന്യം);
 
 /**
  * htpdrv_get_domain API: get domain struct from domain value.
@@ -103,7 +103,7 @@ HTPDRV_API int htpdrv_init(void);
  *             returns NULL.
  *
  */
-HTPDRV_API domain * htpdrv_get_domain(int domain_id);
+HTPDRV_API domain * htpdrv_get_domain(പൂർണ്ണസംഖ്യ domain_id);
 
 /**
  * htpdrv_get_arch API: query the Hexagon processor architecture version information
@@ -114,9 +114,9 @@ HTPDRV_API domain * htpdrv_get_domain(int domain_id);
  *              non-zero if error, return value points to the error.
  *
  */
-HTPDRV_API int htpdrv_get_arch(int domain, int * arch);
+HTPDRV_API പൂർണ്ണസംഖ്യ htpdrv_get_arch(പൂർണ്ണസംഖ്യ domain, പൂർണ്ണസംഖ്യ * arch);
 
-HTPDRV_API int remote_system_request(system_req_payload * req);
+HTPDRV_API പൂർണ്ണസംഖ്യ remote_system_request(system_req_payload * req);
 
 #ifdef __cplusplus
 }

@@ -13,77 +13,77 @@
 
 #pragma once
 
-#include <optional>
+#അന്തര്ഭാവ <optional>
 
-#include "openvino/core/type/element_type.hpp"
-#include "openvino/op/op.hpp"
+#അന്തര്ഭാവ "openvino/core/type/element_type.hpp"
+#അന്തര്ഭാവ "openvino/op/op.hpp"
 
-namespace ov::op::internal {
+നാമാകാശ ov::op::internal {
 
-class OPENVINO_API MOE : public ov::op::Op {
-public:
+വർഗ്ഗം OPENVINO_API MOE : പൊതു ov::op::Op {
+പൊതു:
     OPENVINO_OP("MOE")
 
-    MOE() = default;
+    MOE() = സ്ഥിരസ്ഥിതി;
 
-    MOE(const OutputVector & args) : Op(args) {}
+    MOE(സ്ഥിരം OutputVector & args) : Op(args) {}
 
-    enum class Expert_type { GEMM2_BIAS_SWIGLU_CLAMP, GEMM3_SWIGLU };
+    എണ്ണൽ വർഗ്ഗം Expert_type { GEMM2_BIAS_SWIGLU_CLAMP, GEMM3_SWIGLU };
 
-    enum class Activation_type { SWIGLU, GEGLU_TANH, GEGLU_ERF };
+    എണ്ണൽ വർഗ്ഗം Activation_type { SWIGLU, GEGLU_TANH, GEGLU_ERF };
 
-    struct Config {
+    ഘടന Config {
         Expert_type expert_type{ Expert_type::GEMM2_BIAS_SWIGLU_CLAMP };
-        float expert_alpha{ 0.0f };
-        float expert_beta{ 1.0f };
+        ദശാംശം expert_alpha{ 0.0f };
+        ദശാംശം expert_beta{ 1.0f };
         size_t gate_idx{ 0 };
         Activation_type activation_type{ Activation_type::SWIGLU };
     };
 
-    MOE(const OutputVector & args, const Config & config);
+    MOE(സ്ഥിരം OutputVector & args, സ്ഥിരം Config & config);
 
-    const Config & get_config() const;
-    void set_config(const Config & config);
+    സ്ഥിരം Config & get_config() സ്ഥിരം;
+    ശൂന്യം set_config(സ്ഥിരം Config & config);
 
-    bool visit_attributes(AttributeVisitor & visitor) override;
-    void validate_and_infer_types() override;
-    std::shared_ptr<Node> clone_with_new_inputs(const OutputVector & new_args) const override;
+    തർക്കം visit_attributes(AttributeVisitor & visitor) override;
+    ശൂന്യം validate_and_infer_types() override;
+    std::shared_ptr<Node> clone_with_new_inputs(സ്ഥിരം OutputVector & new_args) സ്ഥിരം override;
 
-private:
+സ്വകാര്യ:
     Config m_config;
 };
 
-class OPENVINO_API MOECompressed : public MOE {
-public:
+വർഗ്ഗം OPENVINO_API MOECompressed : പൊതു MOE {
+പൊതു:
     OPENVINO_OP("MOECompressed", "", ov::op::internal::MOE)
 
-    MOECompressed() = default;
+    MOECompressed() = സ്ഥിരസ്ഥിതി;
 
-    struct Config : public MOE::Config {
+    ഘടന Config : പൊതു MOE::Config {
         size_t hidden_size = 0;
         size_t inter_size = 0;
-        size_t num_expert = 0;
-        size_t num_shared_expert = 0;
-        size_t top_k = 0;
+        size_t അക്കം_expert = 0;
+        size_t അക്കം_shared_expert = 0;
+        size_t മുകൾ_k = 0;
         // numeric_limits<size_t>::max() means per_channel compression (single group)
         size_t group_size = 0;
-        bool has_batch_dim = false;
-        bool has_zp = false;
+        തർക്കം has_batch_dim = അസത്യം;
+        തർക്കം has_zp = അസത്യം;
         ov::element::Type out_type = ov::element::dynamic;
-        std::optional<float> scale_factor;
+        std::optional<ദശാംശം> scale_factor;
     };
 
-    MOECompressed(const OutputVector & args, const Config & config);
+    MOECompressed(സ്ഥിരം OutputVector & args, സ്ഥിരം Config & config);
 
-    const Config & get_config() const { return m_config; }
+    സ്ഥിരം Config & get_config() സ്ഥിരം { തിരികെ m_config; }
 
-    void set_scale_factor(float scale_factor) { m_config.scale_factor = scale_factor; }
+    ശൂന്യം set_scale_factor(ദശാംശം scale_factor) { m_config.scale_factor = scale_factor; }
 
-    bool visit_attributes(AttributeVisitor & visitor) override;
-    void validate_and_infer_types() override;
-    std::shared_ptr<Node> clone_with_new_inputs(const OutputVector & new_args) const override;
+    തർക്കം visit_attributes(AttributeVisitor & visitor) override;
+    ശൂന്യം validate_and_infer_types() override;
+    std::shared_ptr<Node> clone_with_new_inputs(സ്ഥിരം OutputVector & new_args) സ്ഥിരം override;
 
-protected:
+സംരക്ഷിത:
     Config m_config;
 };
 

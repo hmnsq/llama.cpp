@@ -52,13 +52,13 @@
 //   boundaries up-front by zero-padding the input in L2SCP.
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "platform.h"
-#include "tensor.h"
+#അന്തര്ഭാവ "ggml_tensor.h"
+#അന്തര്ഭാവ "platform.h"
+#അന്തര്ഭാവ "tensor.h"
 
-#include <etsoc/common/utils.h>
-#include <stdbool.h>
-#include <stdint.h>
+#അന്തര്ഭാവ <etsoc/common/utils.h>
+#അന്തര്ഭാവ <stdbool.h>
+#അന്തര്ഭാവ <stdint.h>
 
 #define TILE               16 /* matrix engine native tile in M, K, N */
 /* L1 SCP layout: A double-buffered, B single-buffered. Per the SDK doc
@@ -88,69 +88,69 @@
    shire-local — no NoC fanout. */
 #define LOCAL_FILTER_CAP (1024 * 1024)                      /* 1 MB / shire ceiling */
 
-#define SLAB_BYTES ((uint64_t) TILE * TILE * sizeof(float)) /* 1024 */
-#define SLAB_LINES ((SLAB_BYTES + 63) / 64)                 /* 16   */
+#define SLAB_BYTES ((uint64_t) TILE * TILE * വലുപ്പം(ദശാംശം)) /* 1024 */
+#define SLAB_വരികൾ ((SLAB_BYTES + 63) / 64)                 /* 16   */
 
 /* Upper bound on the number of distinct mt values a single shire may pack.
    This keeps the mt list stack-resident. Shapes that need more should fall
    back until the filter-slice bookkeeping is made dynamic. */
 #define MAX_MY_MT (N_MIN_PER_SHIRE * MAX_TILES_PER_HART)
 
-typedef struct {
-    int mt;
-    int mt_idx;
-    int oh;
-    int ow_base;
+തരനിർവചനം ഘടന {
+    പൂർണ്ണസംഖ്യ mt;
+    പൂർണ്ണസംഖ്യ mt_idx;
+    പൂർണ്ണസംഖ്യ oh;
+    പൂർണ്ണസംഖ്യ ow_base;
 } conv_tile_t;
 
-static inline int ceil_div_i32(int x, int y) {
-    return (x + y - 1) / y;
+സ്ഥിതം വരിയിൽ പൂർണ്ണസംഖ്യ ceil_div_i32(പൂർണ്ണസംഖ്യ x, പൂർണ്ണസംഖ്യ y) {
+    തിരികെ (x + y - 1) / y;
 }
 
-static inline int round_up_tile_i32(int x) {
-    return (x + TILE - 1) & ~(TILE - 1);
+സ്ഥിതം വരിയിൽ പൂർണ്ണസംഖ്യ round_up_tile_i32(പൂർണ്ണസംഖ്യ x) {
+    തിരികെ (x + TILE - 1) & ~(TILE - 1);
 }
 
-static inline int min_i32(int a, int b) {
-    return a < b ? a : b;
+സ്ഥിതം വരിയിൽ പൂർണ്ണസംഖ്യ min_i32(പൂർണ്ണസംഖ്യ a, പൂർണ്ണസംഖ്യ b) {
+    തിരികെ a < b ? a : b;
 }
 
-static inline uint64_t min_u64(uint64_t a, uint64_t b) {
-    return a < b ? a : b;
+സ്ഥിതം വരിയിൽ uint64_t min_u64(uint64_t a, uint64_t b) {
+    തിരികെ a < b ? a : b;
 }
 
 /* ===== Vector helpers for hart-1 pack ============================
    Both assume dst (and src for copy) are 32-byte aligned; n is in floats.
    The 8-element tail is handled scalar. f30/f31 are scratch — clobbered
    per-call via the asm clobber list. */
-static inline void vec_zero_aligned(float * dst, int n) {
-    int       i  = 0;
-    const int n8 = n & ~7;
-    for (; i < n8; i += 8) {
-        __asm__ volatile(
+സ്ഥിതം വരിയിൽ ശൂന്യം vec_zero_aligned(ദശാംശം * dst, പൂർണ്ണസംഖ്യ n) {
+    പൂർണ്ണസംഖ്യ       i  = 0;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ n8 = n & ~7;
+    വേണ്ടി (; i < n8; i += 8) {
+        __asm__ അസ്ഥിര(
             "fsub.ps f31, f31, f31\n"
             "fsw.ps  f31, %[d]\n"
-            : [d] "=m"(*(float (*)[8]) & dst[i])
+            : [d] "=m"(*(ദശാംശം (*)[8]) & dst[i])
             :
             : "f31");
     }
-    for (; i < n; ++i) {
+    വേണ്ടി (; i < n; ++i) {
         dst[i] = 0.0f;
     }
 }
 
-static inline void vec_copy_aligned(float * dst, const float * src, int n) {
-    int       i  = 0;
-    const int n8 = n & ~7;
-    for (; i < n8; i += 8) {
-        __asm__ volatile(
+സ്ഥിതം വരിയിൽ ശൂന്യം vec_copy_aligned(ദശാംശം * dst, സ്ഥിരം ദശാംശം * src, പൂർണ്ണസംഖ്യ n) {
+    പൂർണ്ണസംഖ്യ       i  = 0;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ n8 = n & ~7;
+    വേണ്ടി (; i < n8; i += 8) {
+        __asm__ അസ്ഥിര(
             "flw.ps f30, %[s]\n"
             "fsw.ps f30, %[d]\n"
-            : [d] "=m"(*(float (*)[8]) & dst[i])
-            : [s] "m"(*(const float (*)[8]) & src[i])
+            : [d] "=m"(*(ദശാംശം (*)[8]) & dst[i])
+            : [s] "m"(*(സ്ഥിരം ദശാംശം (*)[8]) & src[i])
             : "f30");
     }
-    for (; i < n; ++i) {
+    വേണ്ടി (; i < n; ++i) {
         dst[i] = src[i];
     }
 }
@@ -161,11 +161,11 @@ static inline void vec_copy_aligned(float * dst, const float * src, int n) {
    tensor_store-ing TILE rows × 64 bytes, and restore via 32 flw.ps after
    forcing L1D to refetch from the L2SCP backing (tensor_store bypasses L1D
    so the backing is always current). See feedback_tenc_save_restore.md. */
-static inline void tenc_restore_from_scratch(uint64_t scr) {
+സ്ഥിതം വരിയിൽ ശൂന്യം tenc_restore_from_scratch(uint64_t scr) {
     FENCE;
-    evict_to_l2((const void *) scr, TILE, 64);
+    evict_to_l2((സ്ഥിരം ശൂന്യം *) scr, TILE, 64);
     WAIT_CACHEOPS;
-    __asm__ volatile(
+    __asm__ അസ്ഥിര(
         "flw.ps f0,    0(%0)\n"
         "flw.ps f1,   32(%0)\n"
         "flw.ps f2,   64(%0)\n"
@@ -210,130 +210,130 @@ static inline void tenc_restore_from_scratch(uint64_t scr) {
    pin (Kw shifted, padded copies of input rows) into local L2 SCP. The
    filter is not touched in this struct; it is packed into the per-shire
    local slice before the per-chunk loop begins. */
-typedef struct {
-    const float * in_base;  /* DRAM input base [Cin][H][W]         */
-    int           Kw;
-    int           chunk_KT; /* number of K_TILES (=16-wide) per chunk */
-    int           H, W, Hp, Wp_a;
-    int           pad_h, pad_w, s0;
-    int           minion;          /* this hart's minion id (0..31) */
+തരനിർവചനം ഘടന {
+    സ്ഥിരം ദശാംശം * in_base;  /* DRAM input base [Cin][H][W]         */
+    പൂർണ്ണസംഖ്യ           Kw;
+    പൂർണ്ണസംഖ്യ           chunk_KT; /* number of K_TILES (=16-wide) per chunk */
+    പൂർണ്ണസംഖ്യ           H, W, Hp, Wp_a;
+    പൂർണ്ണസംഖ്യ           pad_h, pad_w, s0;
+    പൂർണ്ണസംഖ്യ           minion;          /* this hart's minion id (0..31) */
     uint64_t      pin_copy_floats; /* per-_s pin plane size in floats */
     uint64_t      l2_pad_in_buf[MAX_DBL_BUFS];
     uint64_t      pin_chunk_bytes; /* one chunk pin buffer's total size */
 } pin_ctx_t;
 
-static inline int find_mt_idx(const int * my_mt, int n_my_mt, int mt) {
-    for (int j = 0; j < n_my_mt; ++j) {
-        if (my_mt[j] == mt) {
-            return j;
+സ്ഥിതം വരിയിൽ പൂർണ്ണസംഖ്യ find_mt_idx(സ്ഥിരം പൂർണ്ണസംഖ്യ * my_mt, പൂർണ്ണസംഖ്യ n_my_mt, പൂർണ്ണസംഖ്യ mt) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ j = 0; j < n_my_mt; ++j) {
+        എങ്കിൽ (my_mt[j] == mt) {
+            തിരികെ j;
         }
     }
-    return 0;
+    തിരികെ 0;
 }
 
-static inline conv_tile_t decode_tile(int t, int M_TILES, int w_tiles, const int * my_mt, int n_my_mt) {
+സ്ഥിതം വരിയിൽ conv_tile_t decode_tile(പൂർണ്ണസംഖ്യ t, പൂർണ്ണസംഖ്യ M_TILES, പൂർണ്ണസംഖ്യ w_tiles, സ്ഥിരം പൂർണ്ണസംഖ്യ * my_mt, പൂർണ്ണസംഖ്യ n_my_mt) {
     conv_tile_t tile;
     tile.mt = t % M_TILES;
     t /= M_TILES;
-    const int wt = t % w_tiles;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ wt = t % w_tiles;
     t /= w_tiles;
     tile.oh      = t;
     tile.ow_base = wt * TILE;
     tile.mt_idx  = find_mt_idx(my_mt, n_my_mt, tile.mt);
-    return tile;
+    തിരികെ tile;
 }
 
-static inline uint64_t
-filter_slab_addr(uint64_t l2_filter, int Kw, int K_TILES, int n_my_mt, int mt_idx, int kh, int kw, int kt_global) {
-    return l2_filter + (uint64_t) ((((kh * Kw + kw) * n_my_mt + mt_idx) * K_TILES + kt_global)) * SLAB_BYTES;
+സ്ഥിതം വരിയിൽ uint64_t
+filter_slab_addr(uint64_t l2_filter, പൂർണ്ണസംഖ്യ Kw, പൂർണ്ണസംഖ്യ K_TILES, പൂർണ്ണസംഖ്യ n_my_mt, പൂർണ്ണസംഖ്യ mt_idx, പൂർണ്ണസംഖ്യ kh, പൂർണ്ണസംഖ്യ kw, പൂർണ്ണസംഖ്യ kt_global) {
+    തിരികെ l2_filter + (uint64_t) ((((kh * Kw + kw) * n_my_mt + mt_idx) * K_TILES + kt_global)) * SLAB_BYTES;
 }
 
-static inline uint64_t pin_tile_addr(uint64_t l2_pad_in,
+സ്ഥിതം വരിയിൽ uint64_t pin_tile_addr(uint64_t l2_pad_in,
                                      uint64_t pin_copy_bytes,
-                                     int      ktc,
-                                     int      kw,
-                                     int      Hp,
-                                     int      Wp_a,
-                                     int      oh,
-                                     int      ow_base,
-                                     int      s1,
-                                     int      kh) {
-    const int ir_pad = oh * s1 + kh;
-    return l2_pad_in + (uint64_t) kw * pin_copy_bytes +
-           (((uint64_t) (ktc * TILE) * Hp + ir_pad) * Wp_a + ow_base) * sizeof(float);
+                                     പൂർണ്ണസംഖ്യ      ktc,
+                                     പൂർണ്ണസംഖ്യ      kw,
+                                     പൂർണ്ണസംഖ്യ      Hp,
+                                     പൂർണ്ണസംഖ്യ      Wp_a,
+                                     പൂർണ്ണസംഖ്യ      oh,
+                                     പൂർണ്ണസംഖ്യ      ow_base,
+                                     പൂർണ്ണസംഖ്യ      s1,
+                                     പൂർണ്ണസംഖ്യ      kh) {
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir_pad = oh * s1 + kh;
+    തിരികെ l2_pad_in + (uint64_t) kw * pin_copy_bytes +
+           (((uint64_t) (ktc * TILE) * Hp + ir_pad) * Wp_a + ow_base) * വലുപ്പം(ദശാംശം);
 }
 
-static inline char * output_tile_addr(char *              out_base,
-                                      const conv_tile_t * tile,
+സ്ഥിതം വരിയിൽ അക്ഷരം * output_tile_addr(അക്ഷരം *              out_base,
+                                      സ്ഥിരം conv_tile_t * tile,
                                       uint64_t            out_chan_stride,
                                       uint64_t            out_row_stride) {
-    return out_base + (size_t) (tile->mt * TILE) * out_chan_stride + (size_t) tile->oh * out_row_stride +
-           (size_t) tile->ow_base * sizeof(float);
+    തിരികെ out_base + (size_t) (tile->mt * TILE) * out_chan_stride + (size_t) tile->oh * out_row_stride +
+           (size_t) tile->ow_base * വലുപ്പം(ദശാംശം);
 }
 
-static inline void flush_range_to_l2(const void * addr, uint64_t n_bytes) {
-    const uint64_t total_lines = (n_bytes + 63) / 64;
-    const char *   fl_addr     = (const char *) addr;
-    for (uint64_t done = 0; done < total_lines;) {
-        const uint64_t batch = min_u64(total_lines - done, 16);
-        flush_to_l2((const void *) (fl_addr + done * 64), batch, 64);
+സ്ഥിതം വരിയിൽ ശൂന്യം flush_range_to_l2(സ്ഥിരം ശൂന്യം * addr, uint64_t n_bytes) {
+    സ്ഥിരം uint64_t total_വരികൾ = (n_bytes + 63) / 64;
+    സ്ഥിരം അക്ഷരം *   fl_addr     = (സ്ഥിരം അക്ഷരം *) addr;
+    വേണ്ടി (uint64_t done = 0; done < total_വരികൾ;) {
+        സ്ഥിരം uint64_t batch = min_u64(total_വരികൾ - done, 16);
+        flush_to_l2((സ്ഥിരം ശൂന്യം *) (fl_addr + done * 64), batch, 64);
         done += batch;
     }
 }
 
-static inline void evict_range_past_l2(const void * addr, uint64_t n_bytes) {
-    const uint64_t total_lines = (n_bytes + 63) / 64;
-    const char *   fl_addr     = (const char *) addr;
-    for (uint64_t done = 0; done < total_lines;) {
-        const uint64_t batch = min_u64(total_lines - done, 16);
-        evict_past_l2((const void *) (fl_addr + done * 64), batch, 64);
+സ്ഥിതം വരിയിൽ ശൂന്യം evict_range_past_l2(സ്ഥിരം ശൂന്യം * addr, uint64_t n_bytes) {
+    സ്ഥിരം uint64_t total_വരികൾ = (n_bytes + 63) / 64;
+    സ്ഥിരം അക്ഷരം *   fl_addr     = (സ്ഥിരം അക്ഷരം *) addr;
+    വേണ്ടി (uint64_t done = 0; done < total_വരികൾ;) {
+        സ്ഥിരം uint64_t batch = min_u64(total_വരികൾ - done, 16);
+        evict_past_l2((സ്ഥിരം ശൂന്യം *) (fl_addr + done * 64), batch, 64);
         done += batch;
     }
 }
 
 /* One matrix-engine tile for one Cin chunk. This is the main optimization
    surface: A is double-buffered, B is single-buffered due to L1 SCP space. */
-static inline void compute_tile_chunk(uint64_t            l2_filter,
+സ്ഥിതം വരിയിൽ ശൂന്യം compute_tile_chunk(uint64_t            l2_filter,
                                       uint64_t            l2_pad_in,
                                       uint64_t            pin_copy_bytes,
-                                      int                 Kh,
-                                      int                 Kw,
-                                      int                 K_TILES,
-                                      int                 chunk_KT,
-                                      int                 kt_base,
-                                      int                 n_my_mt,
-                                      int                 Hp,
-                                      int                 Wp_a,
-                                      int                 s1,
+                                      പൂർണ്ണസംഖ്യ                 Kh,
+                                      പൂർണ്ണസംഖ്യ                 Kw,
+                                      പൂർണ്ണസംഖ്യ                 K_TILES,
+                                      പൂർണ്ണസംഖ്യ                 chunk_KT,
+                                      പൂർണ്ണസംഖ്യ                 kt_base,
+                                      പൂർണ്ണസംഖ്യ                 n_my_mt,
+                                      പൂർണ്ണസംഖ്യ                 Hp,
+                                      പൂർണ്ണസംഖ്യ                 Wp_a,
+                                      പൂർണ്ണസംഖ്യ                 s1,
                                       uint64_t            a_row_stride,
                                       uint64_t            b_row_stride,
-                                      const conv_tile_t * tile,
+                                      സ്ഥിരം conv_tile_t * tile,
                                       bool                first_fma_clears_tenc) {
-    const int      n_iters   = Kh * Kw * chunk_KT;
-    const uint64_t A_BUFS[2] = { LSCP_A_0, LSCP_A_1 };
+    സ്ഥിരം പൂർണ്ണസംഖ്യ      n_iters   = Kh * Kw * chunk_KT;
+    സ്ഥിരം uint64_t A_BUFS[2] = { LSCP_A_0, LSCP_A_1 };
 
-    const uint64_t a_addr0 = filter_slab_addr(l2_filter, Kw, K_TILES, n_my_mt, tile->mt_idx, 0, 0, kt_base);
+    സ്ഥിരം uint64_t a_addr0 = filter_slab_addr(l2_filter, Kw, K_TILES, n_my_mt, tile->mt_idx, 0, 0, kt_base);
     tensor_load(false, false, A_BUFS[0], 0, 0, a_addr0, 0, (uint64_t) (TILE - 1), a_row_stride, 0);
 
-    for (int iter = 0; iter < n_iters; ++iter) {
-        const int ktc = iter % chunk_KT;
-        const int rem = iter / chunk_KT;
-        const int kw  = rem % Kw;
-        const int kh  = rem / Kw;
+    വേണ്ടി (പൂർണ്ണസംഖ്യ iter = 0; iter < n_iters; ++iter) {
+        സ്ഥിരം പൂർണ്ണസംഖ്യ ktc = iter % chunk_KT;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ rem = iter / chunk_KT;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ kw  = rem % Kw;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ kh  = rem / Kw;
 
-        const uint64_t b_addr =
+        സ്ഥിരം uint64_t b_addr =
             pin_tile_addr(l2_pad_in, pin_copy_bytes, ktc, kw, Hp, Wp_a, tile->oh, tile->ow_base, s1, kh);
         tensor_load(false, false, LSCP_B, 0, 0, b_addr, 0, (uint64_t) (TILE - 1), b_row_stride, 1);
 
         tensor_wait(TENSOR_LOAD_WAIT_0);
         tensor_wait(TENSOR_LOAD_WAIT_1);
 
-        if (iter + 1 < n_iters) {
-            const int      ktc_n = (iter + 1) % chunk_KT;
-            const int      rem_n = (iter + 1) / chunk_KT;
-            const int      kw_n  = rem_n % Kw;
-            const int      kh_n  = rem_n / Kw;
-            const uint64_t a_addr_n =
+        എങ്കിൽ (iter + 1 < n_iters) {
+            സ്ഥിരം പൂർണ്ണസംഖ്യ      ktc_n = (iter + 1) % chunk_KT;
+            സ്ഥിരം പൂർണ്ണസംഖ്യ      rem_n = (iter + 1) / chunk_KT;
+            സ്ഥിരം പൂർണ്ണസംഖ്യ      kw_n  = rem_n % Kw;
+            സ്ഥിരം പൂർണ്ണസംഖ്യ      kh_n  = rem_n / Kw;
+            സ്ഥിരം uint64_t a_addr_n =
                 filter_slab_addr(l2_filter, Kw, K_TILES, n_my_mt, tile->mt_idx, kh_n, kw_n, kt_base + ktc_n);
             tensor_load(false, false, A_BUFS[(iter + 1) & 1], 0, 0, a_addr_n, 0, (uint64_t) (TILE - 1), a_row_stride,
                         0);
@@ -353,38 +353,38 @@ static inline void compute_tile_chunk(uint64_t            l2_filter,
    This deliberately favors local inner-loop reads over global filter fanout.
    Depending on tile shape, two shires may pack the same mt value; keep that
    tradeoff visible when experimenting with shared-filter layouts. */
-static void pack_filter_local_mt(const float * flt_base,
-                                 int           Kh,
-                                 int           Kw,
-                                 int           Cin,
-                                 int           K_TILES,
-                                 const int *   my_mt,
-                                 int           n_my_mt,
-                                 int           minion,
+സ്ഥിതം ശൂന്യം pack_filter_local_mt(സ്ഥിരം ദശാംശം * flt_base,
+                                 പൂർണ്ണസംഖ്യ           Kh,
+                                 പൂർണ്ണസംഖ്യ           Kw,
+                                 പൂർണ്ണസംഖ്യ           Cin,
+                                 പൂർണ്ണസംഖ്യ           K_TILES,
+                                 സ്ഥിരം പൂർണ്ണസംഖ്യ *   my_mt,
+                                 പൂർണ്ണസംഖ്യ           n_my_mt,
+                                 പൂർണ്ണസംഖ്യ           minion,
                                  uint64_t      l2_filter_base) {
-    const int    n_slabs = Kh * Kw * n_my_mt * K_TILES;
-    const size_t kstep   = (size_t) Kh * Kw; /* Cin stride in floats */
+    സ്ഥിരം പൂർണ്ണസംഖ്യ    n_slabs = Kh * Kw * n_my_mt * K_TILES;
+    സ്ഥിരം size_t kstep   = (size_t) Kh * Kw; /* Cin stride in floats */
 
-    for (int slab = minion; slab < n_slabs; slab += N_MIN_PER_SHIRE) {
-        int       t  = slab;
-        const int kt = t % K_TILES;
+    വേണ്ടി (പൂർണ്ണസംഖ്യ slab = minion; slab < n_slabs; slab += N_MIN_PER_SHIRE) {
+        പൂർണ്ണസംഖ്യ       t  = slab;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ kt = t % K_TILES;
         t /= K_TILES;
-        const int mt_idx = t % n_my_mt;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ mt_idx = t % n_my_mt;
         t /= n_my_mt;
-        const int kw = t % Kw;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ kw = t % Kw;
         t /= Kw;
-        const int kh = t;
-        const int mt = my_mt[mt_idx];
+        സ്ഥിരം പൂർണ്ണസംഖ്യ kh = t;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ mt = my_mt[mt_idx];
 
-        const uint64_t slab_offset = (uint64_t) slab * SLAB_BYTES;
-        float *        cell        = (float *) (l2_filter_base + slab_offset);
+        സ്ഥിരം uint64_t slab_offset = (uint64_t) slab * SLAB_BYTES;
+        ദശാംശം *        cell        = (ദശാംശം *) (l2_filter_base + slab_offset);
 
-        for (int oc_in = 0; oc_in < TILE; ++oc_in) {
-            const int     oc  = mt * TILE + oc_in;
-            const float * src = flt_base + (((size_t) oc * Cin + (size_t) kt * TILE) * Kh + kh) * Kw + kw;
-            float *       row = cell + (size_t) oc_in * TILE;
-            float         scratch[TILE] __attribute__((aligned(32)));
-            for (int ic_in = 0; ic_in < TILE; ++ic_in) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ oc_in = 0; oc_in < TILE; ++oc_in) {
+            സ്ഥിരം പൂർണ്ണസംഖ്യ     oc  = mt * TILE + oc_in;
+            സ്ഥിരം ദശാംശം * src = flt_base + (((size_t) oc * Cin + (size_t) kt * TILE) * Kh + kh) * Kw + kw;
+            ദശാംശം *       row = cell + (size_t) oc_in * TILE;
+            ദശാംശം         scratch[TILE] __attribute__((aligned(32)));
+            വേണ്ടി (പൂർണ്ണസംഖ്യ ic_in = 0; ic_in < TILE; ++ic_in) {
                 scratch[ic_in] = src[(size_t) ic_in * kstep];
             }
             vec_copy_aligned(row, scratch, TILE);
@@ -393,9 +393,9 @@ static void pack_filter_local_mt(const float * flt_base,
 
     /* Flush this hart's dirty L1D lines for the slabs it wrote. */
     FENCE;
-    for (int slab = minion; slab < n_slabs; slab += N_MIN_PER_SHIRE) {
-        const uint64_t slab_offset = (uint64_t) slab * SLAB_BYTES;
-        flush_to_l2((const void *) (l2_filter_base + slab_offset), SLAB_LINES, 64);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ slab = minion; slab < n_slabs; slab += N_MIN_PER_SHIRE) {
+        സ്ഥിരം uint64_t slab_offset = (uint64_t) slab * SLAB_BYTES;
+        flush_to_l2((സ്ഥിരം ശൂന്യം *) (l2_filter_base + slab_offset), SLAB_വരികൾ, 64);
     }
     WAIT_CACHEOPS;
 }
@@ -404,65 +404,65 @@ static void pack_filter_local_mt(const float * flt_base,
    buf_idx side of local L2SCP. Work distributed across the 32 hart-1's in
    the shire by `plane % 32 == minion`. The final flush_to_l2 forces L1D
    write-back so hart-0's tensor_load sees the freshly written bytes. */
-static void pack_pin_chunk(const pin_ctx_t * ctx, int chunk_id, int buf_idx) {
-    const int kt_base  = chunk_id * ctx->chunk_KT;
-    const int Kw       = ctx->Kw;
-    const int chunk_KT = ctx->chunk_KT;
-    const int H = ctx->H, W = ctx->W, Hp = ctx->Hp, Wp_a = ctx->Wp_a;
-    const int pad_h = ctx->pad_h, pad_w = ctx->pad_w, s0 = ctx->s0;
-    const int minion = ctx->minion;
+സ്ഥിതം ശൂന്യം pack_pin_chunk(സ്ഥിരം pin_ctx_t * ctx, പൂർണ്ണസംഖ്യ chunk_id, പൂർണ്ണസംഖ്യ buf_idx) {
+    സ്ഥിരം പൂർണ്ണസംഖ്യ kt_base  = chunk_id * ctx->chunk_KT;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ Kw       = ctx->Kw;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ chunk_KT = ctx->chunk_KT;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ H = ctx->H, W = ctx->W, Hp = ctx->Hp, Wp_a = ctx->Wp_a;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ pad_h = ctx->pad_h, pad_w = ctx->pad_w, s0 = ctx->s0;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ minion = ctx->minion;
 
     /* Pin pack: Kw shifted, padded copies of input rows. Bounds [vlo, vhi)
        hoisted outside the row loop so the inner loop is three regions
        (zero-prefix | bulk-copy | zero-suffix) with no per-element predicate. */
-    float *   pin0         = (float *) ctx->l2_pad_in_buf[buf_idx];
-    const int chunk_Cin    = chunk_KT * TILE;
-    const int n_pin_planes = Kw * chunk_Cin;
-    for (int p = minion; p < n_pin_planes; p += N_MIN_PER_SHIRE) {
-        const int s     = p / chunk_Cin;
-        const int icc   = p % chunk_Cin;
-        const int ic    = kt_base * TILE + icc;
-        float *   pin_s = pin0 + (size_t) s * ctx->pin_copy_floats;
+    ദശാംശം *   pin0         = (ദശാംശം *) ctx->l2_pad_in_buf[buf_idx];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ chunk_Cin    = chunk_KT * TILE;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ n_pin_planes = Kw * chunk_Cin;
+    വേണ്ടി (പൂർണ്ണസംഖ്യ p = minion; p < n_pin_planes; p += N_MIN_PER_SHIRE) {
+        സ്ഥിരം പൂർണ്ണസംഖ്യ s     = p / chunk_Cin;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ icc   = p % chunk_Cin;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ ic    = kt_base * TILE + icc;
+        ദശാംശം *   pin_s = pin0 + (size_t) s * ctx->pin_copy_floats;
 
-        const int offset = s - pad_w;
-        int       vlo    = 0;
-        while (vlo < Wp_a && (s0 * vlo + offset) < 0) {
+        സ്ഥിരം പൂർണ്ണസംഖ്യ offset = s - pad_w;
+        പൂർണ്ണസംഖ്യ       vlo    = 0;
+        ആകുമ്പോൾ (vlo < Wp_a && (s0 * vlo + offset) < 0) {
             vlo++;
         }
-        int vhi = Wp_a;
-        while (vhi > vlo && (s0 * (vhi - 1) + offset) >= W) {
+        പൂർണ്ണസംഖ്യ vhi = Wp_a;
+        ആകുമ്പോൾ (vhi > vlo && (s0 * (vhi - 1) + offset) >= W) {
             vhi--;
         }
-        const bool aligned = (s0 == 1) && ((vlo & 7) == 0) && (((vlo + offset) & 7) == 0);
+        സ്ഥിരം bool aligned = (s0 == 1) && ((vlo & 7) == 0) && (((vlo + offset) & 7) == 0);
 
-        for (int r = 0; r < Hp; ++r) {
-            float *   row    = pin_s + ((size_t) icc * Hp + r) * Wp_a;
-            const int real_h = r - pad_h;
-            if (real_h < 0 || real_h >= H) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ r = 0; r < Hp; ++r) {
+            ദശാംശം *   row    = pin_s + ((size_t) icc * Hp + r) * Wp_a;
+            സ്ഥിരം പൂർണ്ണസംഖ്യ real_h = r - pad_h;
+            എങ്കിൽ (real_h < 0 || real_h >= H) {
                 vec_zero_aligned(row, Wp_a);
-                continue;
+                തുടരുക;
             }
-            const float * src_row = ctx->in_base + ((size_t) ic * H + real_h) * W;
+            സ്ഥിരം ദശാംശം * src_row = ctx->in_base + ((size_t) ic * H + real_h) * W;
 
-            for (int cc = 0; cc < vlo; ++cc) {
+            വേണ്ടി (പൂർണ്ണസംഖ്യ cc = 0; cc < vlo; ++cc) {
                 row[cc] = 0.0f;
             }
 
-            if (aligned) {
+            എങ്കിൽ (aligned) {
                 vec_copy_aligned(row + vlo, src_row + vlo + offset, vhi - vlo);
-            } else if (s0 == 1) {
-                const float * csrc = src_row + vlo + offset;
-                const int     n    = vhi - vlo;
-                for (int cc = 0; cc < n; ++cc) {
+            } അല്ലെങ്കിൽ എങ്കിൽ (s0 == 1) {
+                സ്ഥിരം ദശാംശം * csrc = src_row + vlo + offset;
+                സ്ഥിരം പൂർണ്ണസംഖ്യ     n    = vhi - vlo;
+                വേണ്ടി (പൂർണ്ണസംഖ്യ cc = 0; cc < n; ++cc) {
                     row[vlo + cc] = csrc[cc];
                 }
-            } else {
-                for (int cc = vlo; cc < vhi; ++cc) {
+            } അല്ലെങ്കിൽ {
+                വേണ്ടി (പൂർണ്ണസംഖ്യ cc = vlo; cc < vhi; ++cc) {
                     row[cc] = src_row[s0 * cc + offset];
                 }
             }
 
-            for (int cc = vhi; cc < Wp_a; ++cc) {
+            വേണ്ടി (പൂർണ്ണസംഖ്യ cc = vhi; cc < Wp_a; ++cc) {
                 row[cc] = 0.0f;
             }
         }
@@ -470,80 +470,80 @@ static void pack_pin_chunk(const pin_ctx_t * ctx, int chunk_id, int buf_idx) {
 
     /* Flush this buffer's L1D-dirty lines down to L2SCP backing. */
     FENCE;
-    flush_range_to_l2((const void *) ctx->l2_pad_in_buf[buf_idx], ctx->pin_chunk_bytes);
+    flush_range_to_l2((സ്ഥിരം ശൂന്യം *) ctx->l2_pad_in_buf[buf_idx], ctx->pin_chunk_bytes);
     WAIT_CACHEOPS;
 }
 
-int entry_point(struct ggml_et_binary_params * params, void * env) {
-    (void) env;
+പൂർണ്ണസംഖ്യ entry_point(ഘടന ggml_et_ദ്വിമാന_params * params, ശൂന്യം * env) {
+    (ശൂന്യം) env;
 
-    const int shire   = get_shire_id();
-    const int hart_id = get_hart_id();
-    const int minion  = (hart_id >> 1) & 0x1F;
-    const int hart1   = hart_id & 1;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ shire   = get_shire_id();
+    സ്ഥിരം പൂർണ്ണസംഖ്യ hart_id = get_hart_id();
+    സ്ഥിരം പൂർണ്ണസംഖ്യ minion  = (hart_id >> 1) & 0x1F;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ hart1   = hart_id & 1;
 
-    const struct ggml_tensor * flt = &params->src0; /* [Kw,Kh,Cin,Cout] */
-    const struct ggml_tensor * in  = &params->src1; /* [W, H, Cin,N=1 ] */
-    struct ggml_tensor *       out = &params->dst;  /* [W, H, Cout,N=1] */
+    സ്ഥിരം ഘടന ggml_tensor * flt = &params->src0; /* [Kw,Kh,Cin,Cout] */
+    സ്ഥിരം ഘടന ggml_tensor * in  = &params->src1; /* [W, H, Cin,N=1 ] */
+    ഘടന ggml_tensor *       out = &params->dst;  /* [W, H, Cout,N=1] */
 
-    const int Kw   = (int) flt->ne[0];
-    const int Kh   = (int) flt->ne[1];
-    const int Cin  = (int) flt->ne[2];
-    const int Cout = (int) flt->ne[3];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ Kw   = (പൂർണ്ണസംഖ്യ) flt->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ Kh   = (പൂർണ്ണസംഖ്യ) flt->ne[1];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ Cin  = (പൂർണ്ണസംഖ്യ) flt->ne[2];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ Cout = (പൂർണ്ണസംഖ്യ) flt->ne[3];
 
-    const int W  = (int) in->ne[0];
-    const int H  = (int) in->ne[1];
-    const int OW = (int) out->ne[0];
-    const int OH = (int) out->ne[1];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ W  = (പൂർണ്ണസംഖ്യ) in->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ H  = (പൂർണ്ണസംഖ്യ) in->ne[1];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ OW = (പൂർണ്ണസംഖ്യ) out->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ OH = (പൂർണ്ണസംഖ്യ) out->ne[1];
 
     /* op_params layout (set by ggml_conv_2d):
          [0]=s0  [1]=s1  [2]=p0  [3]=p1  [4]=d0  [5]=d1   */
-    const int s0    = out->op_params[0];
-    const int s1    = out->op_params[1];
-    const int pad_w = out->op_params[2];
-    const int pad_h = out->op_params[3];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ s0    = out->op_params[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ s1    = out->op_params[1];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ pad_w = out->op_params[2];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ pad_h = out->op_params[3];
 
-    if (Cin <= 0 || Cout <= 0) {
-        return -1;
+    എങ്കിൽ (Cin <= 0 || Cout <= 0) {
+        തിരികെ -1;
     }
-    if (Cin % TILE != 0 || Cout % TILE != 0) {
-        return -1;
+    എങ്കിൽ (Cin % TILE != 0 || Cout % TILE != 0) {
+        തിരികെ -1;
     }
-    if (W <= 0 || H <= 0) {
-        return -1;
+    എങ്കിൽ (W <= 0 || H <= 0) {
+        തിരികെ -1;
     }
-    if (s0 <= 0 || s1 <= 0) {
-        return -1;
+    എങ്കിൽ (s0 <= 0 || s1 <= 0) {
+        തിരികെ -1;
     }
-    if (in->ne[2] != Cin || in->ne[3] != 1) {
-        return -1;
+    എങ്കിൽ (in->ne[2] != Cin || in->ne[3] != 1) {
+        തിരികെ -1;
     }
-    if (out->ne[2] != Cout || out->ne[3] != 1) {
-        return -1;
+    എങ്കിൽ (out->ne[2] != Cout || out->ne[3] != 1) {
+        തിരികെ -1;
     }
-    if (!flt->data || !in->data || !out->data) {
-        return -1;
+    എങ്കിൽ (!flt->data || !in->data || !out->data) {
+        തിരികെ -1;
     }
 
-    const int K_TILES = Cin / TILE;
-    const int M_TILES = Cout / TILE;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ K_TILES = Cin / TILE;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ M_TILES = Cout / TILE;
 
-    const int  Hp         = H + 2 * pad_h;
-    const int  Wp_a       = round_up_tile_i32(OW);
-    const int  OW_pad     = Wp_a;
-    const bool need_stage = (OW % TILE != 0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ  Hp         = H + 2 * pad_h;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ  Wp_a       = round_up_tile_i32(OW);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ  OW_pad     = Wp_a;
+    സ്ഥിരം bool need_stage = (OW % TILE != 0);
 
     /* ===================== Tile assignment & active-shire selection =====
        Computed up front because the per-shire mt set (and thus filter
        region size) depends on n_active_shires. */
-    const int w_tiles         = ceil_div_i32(OW, TILE);
-    const int total_tiles     = OH * w_tiles * M_TILES;
-    const int n_active_shires = need_stage ? 1 : min_i32(total_tiles, N_SHIRES);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ w_tiles         = ceil_div_i32(OW, TILE);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ total_tiles     = OH * w_tiles * M_TILES;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ n_active_shires = need_stage ? 1 : min_i32(total_tiles, N_SHIRES);
 
     /* Inactive shires exit immediately. No global barrier — pack and
        barriers are now per-shire, so unused shires don't need to vote. */
-    if (shire >= n_active_shires) {
-        return 0;
+    എങ്കിൽ (shire >= n_active_shires) {
+        തിരികെ 0;
     }
 
     /* ===================== Determine this shire's mt set ================
@@ -555,107 +555,107 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
        (t % M_TILES) for all t this shire owns. Enumerate all shire-owned
        tiles, not just the first MAX_TILES_PER_HART slots; the one-chunk
        path can process more tiles serially. */
-    int my_mt[MAX_MY_MT];
-    int n_my_mt = 0;
-    for (int t = shire; t < total_tiles; t += n_active_shires) {
-        const int mt    = t % M_TILES;
+    പൂർണ്ണസംഖ്യ my_mt[MAX_MY_MT];
+    പൂർണ്ണസംഖ്യ n_my_mt = 0;
+    വേണ്ടി (പൂർണ്ണസംഖ്യ t = shire; t < total_tiles; t += n_active_shires) {
+        സ്ഥിരം പൂർണ്ണസംഖ്യ mt    = t % M_TILES;
         bool      found = false;
-        for (int j = 0; j < n_my_mt; ++j) {
-            if (my_mt[j] == mt) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ j = 0; j < n_my_mt; ++j) {
+            എങ്കിൽ (my_mt[j] == mt) {
                 found = true;
-                break;
+                നിർത്തുക;
             }
         }
-        if (!found) {
-            if (n_my_mt >= MAX_MY_MT) {
-                return -1;
+        എങ്കിൽ (!found) {
+            എങ്കിൽ (n_my_mt >= MAX_MY_MT) {
+                തിരികെ -1;
             }
             my_mt[n_my_mt++] = mt;
         }
     }
-    if (n_my_mt == 0) {
-        return 0; /* no tiles for this shire */
+    എങ്കിൽ (n_my_mt == 0) {
+        തിരികെ 0; /* no tiles for this shire */
     }
 
-    const uint64_t filter_local_bytes = (uint64_t) Kh * Kw * n_my_mt * K_TILES * SLAB_BYTES;
-    if (filter_local_bytes > LOCAL_FILTER_CAP) {
-        return -1;
+    സ്ഥിരം uint64_t filter_local_bytes = (uint64_t) Kh * Kw * n_my_mt * K_TILES * SLAB_BYTES;
+    എങ്കിൽ (filter_local_bytes > LOCAL_FILTER_CAP) {
+        തിരികെ -1;
     }
 
     /* ===================== L2 SCP local layout =========================
        filter (this shire's mt slice) | pin_buf[0] | pin_buf[1]?
                                       | output_stage? | scratch (streaming) */
-    const uint64_t l2_base   = (uint64_t) et_shire_l2scp_local(0);
-    const uint64_t l2_filter = l2_base;
+    സ്ഥിരം uint64_t l2_base   = (uint64_t) et_shire_l2scp_local(0);
+    സ്ഥിരം uint64_t l2_filter = l2_base;
 
     /* Sizing for pin: budget = LOCAL_BUDGET - filter - output_stage.    */
-    const int64_t output_stage_bytes_full = need_stage ? (int64_t) Cout * OH * OW_pad * (int64_t) sizeof(float) : 0;
-    const int64_t budget_for_chunks = (int64_t) LOCAL_BUDGET - (int64_t) filter_local_bytes - output_stage_bytes_full;
-    if (budget_for_chunks <= 0) {
-        return -1;
+    സ്ഥിരം int64_t output_stage_bytes_full = need_stage ? (int64_t) Cout * OH * OW_pad * (int64_t) വലുപ്പം(ദശാംശം) : 0;
+    സ്ഥിരം int64_t budget_for_chunks = (int64_t) LOCAL_BUDGET - (int64_t) filter_local_bytes - output_stage_bytes_full;
+    എങ്കിൽ (budget_for_chunks <= 0) {
+        തിരികെ -1;
     }
-    const int64_t per_KT_pin_bytes = (int64_t) Kw * TILE * Hp * Wp_a * (int64_t) sizeof(float);
+    സ്ഥിരം int64_t per_KT_pin_bytes = (int64_t) Kw * TILE * Hp * Wp_a * (int64_t) വലുപ്പം(ദശാംശം);
 
-    int chunk_KT;
-    int n_buffers;
-    if ((int64_t) K_TILES * per_KT_pin_bytes <= budget_for_chunks) {
+    പൂർണ്ണസംഖ്യ chunk_KT;
+    പൂർണ്ണസംഖ്യ n_buffers;
+    എങ്കിൽ ((int64_t) K_TILES * per_KT_pin_bytes <= budget_for_chunks) {
         chunk_KT  = K_TILES;
         n_buffers = 1;
-    } else {
+    } അല്ലെങ്കിൽ {
         chunk_KT = K_TILES;
-        while (chunk_KT > 1 && 2 * (int64_t) chunk_KT * per_KT_pin_bytes > budget_for_chunks) {
+        ആകുമ്പോൾ (chunk_KT > 1 && 2 * (int64_t) chunk_KT * per_KT_pin_bytes > budget_for_chunks) {
             chunk_KT--;
         }
-        while (chunk_KT > 1 && K_TILES % chunk_KT != 0) {
+        ആകുമ്പോൾ (chunk_KT > 1 && K_TILES % chunk_KT != 0) {
             chunk_KT--;
         }
         n_buffers = (chunk_KT < K_TILES) ? 2 : 1;
-        if (chunk_KT < 1) {
-            return -1;
+        എങ്കിൽ (chunk_KT < 1) {
+            തിരികെ -1;
         }
     }
-    const int n_chunks = K_TILES / chunk_KT;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ n_chunks = K_TILES / chunk_KT;
 
     /* Streaming keeps partial sums in MAX_TILES_PER_HART scratch slots per
        hart. The one-chunk path does not need scratch and can stream a longer
        tile list serially, but multi-chunk shapes must fit this fixed slot
        count until scratch scheduling is made more general. */
-    const int shire_tile_capacity = shire + MAX_TILES_PER_HART * n_active_shires * N_MIN_PER_SHIRE;
-    if (n_chunks > 1 && shire_tile_capacity < total_tiles) {
-        return -1;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ shire_tile_capacity = shire + MAX_TILES_PER_HART * n_active_shires * N_MIN_PER_SHIRE;
+    എങ്കിൽ (n_chunks > 1 && shire_tile_capacity < total_tiles) {
+        തിരികെ -1;
     }
 
-    const uint64_t pin_copy_floats = (uint64_t) chunk_KT * TILE * Hp * Wp_a;
-    const uint64_t pin_copy_bytes  = pin_copy_floats * sizeof(float);
-    const uint64_t pin_chunk_bytes = (uint64_t) Kw * pin_copy_bytes;
+    സ്ഥിരം uint64_t pin_copy_floats = (uint64_t) chunk_KT * TILE * Hp * Wp_a;
+    സ്ഥിരം uint64_t pin_copy_bytes  = pin_copy_floats * വലുപ്പം(ദശാംശം);
+    സ്ഥിരം uint64_t pin_chunk_bytes = (uint64_t) Kw * pin_copy_bytes;
 
-    const uint64_t l2_pin_base              = l2_filter + filter_local_bytes;
-    const uint64_t l2_pin_buf[MAX_DBL_BUFS] = {
+    സ്ഥിരം uint64_t l2_pin_base              = l2_filter + filter_local_bytes;
+    സ്ഥിരം uint64_t l2_pin_buf[MAX_DBL_BUFS] = {
         l2_pin_base,
         l2_pin_base + pin_chunk_bytes,
     };
 
-    const uint64_t l2_output_stage = need_stage ? l2_pin_base + (uint64_t) n_buffers * pin_chunk_bytes : 0;
+    സ്ഥിരം uint64_t l2_output_stage = need_stage ? l2_pin_base + (uint64_t) n_buffers * pin_chunk_bytes : 0;
 
-    const uint64_t scratch_per_hart = (uint64_t) MAX_TILES_PER_HART * (uint64_t) TILE * TILE * sizeof(float);
-    const uint64_t l2_scratch_base  = need_stage ? l2_output_stage + (uint64_t) output_stage_bytes_full :
+    സ്ഥിരം uint64_t scratch_per_hart = (uint64_t) MAX_TILES_PER_HART * (uint64_t) TILE * TILE * വലുപ്പം(ദശാംശം);
+    സ്ഥിരം uint64_t l2_scratch_base  = need_stage ? l2_output_stage + (uint64_t) output_stage_bytes_full :
                                                    l2_pin_base + (uint64_t) n_buffers * pin_chunk_bytes;
 
     /* ===================== PHASE 1: Filter pack (per-shire mt slice) ====
        Hart-1's pack only this shire's mt slabs into local L2 SCP. The
        SHIRE barrier below ensures the filter is in L2 SCP backing before
        hart-0's first tensor_load. */
-    if (hart1) {
-        pack_filter_local_mt((const float *) flt->data, Kh, Kw, Cin, K_TILES, my_mt, n_my_mt, minion, l2_filter);
+    എങ്കിൽ (hart1) {
+        pack_filter_local_mt((സ്ഥിരം ദശാംശം *) flt->data, Kh, Kw, Cin, K_TILES, my_mt, n_my_mt, minion, l2_filter);
     }
 
     /* ===================== Hart 1: pin packer (per chunk) ==============
        Double-buffered prefetch: pack chunk 0 synchronously, then per chunk c
        signal "buf c ready", pack chunk c+1 into the alternate buffer
        (overlaps hart-0's compute on c), signal "buf c done". */
-    if (hart1) {
-        const pin_ctx_t ctx = {
-            .in_base         = (const float *) in->data,
+    എങ്കിൽ (hart1) {
+        സ്ഥിരം pin_ctx_t ctx = {
+            .in_base         = (സ്ഥിരം ദശാംശം *) in->data,
             .Kw              = Kw,
             .chunk_KT        = chunk_KT,
             .H               = H,
@@ -673,18 +673,18 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
 
         pack_pin_chunk(&ctx, 0, 0); /* prologue */
 
-        for (int c = 0; c < n_chunks; ++c) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ c = 0; c < n_chunks; ++c) {
             et_barrier(ET_BARRIER_SHIRE); /* signal "buf c ready" */
-            if (n_buffers > 1 && c + 1 < n_chunks) {
+            എങ്കിൽ (n_buffers > 1 && c + 1 < n_chunks) {
                 pack_pin_chunk(&ctx, c + 1, (c + 1) & 1);
             }
             et_barrier(ET_BARRIER_SHIRE); /* wait "buf c done" */
         }
 
-        if (need_stage) {
+        എങ്കിൽ (need_stage) {
             et_barrier(ET_BARRIER_SHIRE);
         }
-        return 0;
+        തിരികെ 0;
     }
 
     /* ===================== Hart 0: matrix engine ======================
@@ -698,76 +698,76 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     setup_cache_scp();
     CLEAR_TENSOR_ERROR;
 
-    char * const   out_base        = need_stage ? (char *) l2_output_stage : (char *) out->data;
-    const int      compute_OW      = need_stage ? OW_pad : OW;
-    const uint64_t out_chan_stride = (uint64_t) OH * (uint64_t) compute_OW * sizeof(float);
-    const uint64_t out_row_stride  = (uint64_t) compute_OW * sizeof(float);
+    അക്ഷരം * സ്ഥിരം   out_base        = need_stage ? (അക്ഷരം *) l2_output_stage : (അക്ഷരം *) out->data;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ      compute_OW      = need_stage ? OW_pad : OW;
+    സ്ഥിരം uint64_t out_chan_stride = (uint64_t) OH * (uint64_t) compute_OW * വലുപ്പം(ദശാംശം);
+    സ്ഥിരം uint64_t out_row_stride  = (uint64_t) compute_OW * വലുപ്പം(ദശാംശം);
 
-    const uint64_t a_row_stride = (uint64_t) TILE * sizeof(float); /* 64 */
-    const uint64_t b_row_stride = (uint64_t) Hp * (uint64_t) Wp_a * sizeof(float);
+    സ്ഥിരം uint64_t a_row_stride = (uint64_t) TILE * വലുപ്പം(ദശാംശം); /* 64 */
+    സ്ഥിരം uint64_t b_row_stride = (uint64_t) Hp * (uint64_t) Wp_a * വലുപ്പം(ദശാംശം);
 
     /* Tile assignment: shire-strided so small workloads spread across
        shires before stacking minions in one shire. */
-    const int t_start  = shire + minion * n_active_shires;
-    const int t_stride = n_active_shires * N_MIN_PER_SHIRE;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ t_start  = shire + minion * n_active_shires;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ t_stride = n_active_shires * N_MIN_PER_SHIRE;
 
-    if (n_chunks == 1) {
+    എങ്കിൽ (n_chunks == 1) {
         et_barrier(ET_BARRIER_SHIRE); /* wait for the (only) pin chunk */
 
-        const uint64_t l2_pad_in = l2_pin_buf[0];
-        for (int t = t_start; t < total_tiles; t += t_stride) {
-            const conv_tile_t tile = decode_tile(t, M_TILES, w_tiles, my_mt, n_my_mt);
+        സ്ഥിരം uint64_t l2_pad_in = l2_pin_buf[0];
+        വേണ്ടി (പൂർണ്ണസംഖ്യ t = t_start; t < total_tiles; t += t_stride) {
+            സ്ഥിരം conv_tile_t tile = decode_tile(t, M_TILES, w_tiles, my_mt, n_my_mt);
             compute_tile_chunk(l2_filter, l2_pad_in, pin_copy_bytes, Kh, Kw, K_TILES, chunk_KT, 0, n_my_mt, Hp, Wp_a,
                                s1, a_row_stride, b_row_stride, &tile, /*first_fma_clears_tenc=*/true);
 
-            char * dst_addr = output_tile_addr(out_base, &tile, out_chan_stride, out_row_stride);
+            അക്ഷരം * dst_addr = output_tile_addr(out_base, &tile, out_chan_stride, out_row_stride);
             tensor_store(0, 0, 3, (uint64_t) (TILE - 1), (uint64_t) dst_addr, 0, out_chan_stride);
             tensor_wait(TENSOR_STORE_WAIT);
         }
 
         et_barrier(ET_BARRIER_SHIRE); /* matches hart-1's second barrier */
 
-    } else {
+    } അല്ലെങ്കിൽ {
         /* Streaming path: each hart owns up to MAX_TILES_PER_HART tiles. */
-        int my_tiles[MAX_TILES_PER_HART];
-        int n_my_tiles = 0;
-        for (int slot = 0; slot < MAX_TILES_PER_HART; ++slot) {
-            const int t = t_start + slot * t_stride;
-            if (t < total_tiles) {
+        പൂർണ്ണസംഖ്യ my_tiles[MAX_TILES_PER_HART];
+        പൂർണ്ണസംഖ്യ n_my_tiles = 0;
+        വേണ്ടി (പൂർണ്ണസംഖ്യ slot = 0; slot < MAX_TILES_PER_HART; ++slot) {
+            സ്ഥിരം പൂർണ്ണസംഖ്യ t = t_start + slot * t_stride;
+            എങ്കിൽ (t < total_tiles) {
                 my_tiles[n_my_tiles++] = t;
             }
         }
 
         conv_tile_t tiles[MAX_TILES_PER_HART];
-        for (int k = 0; k < n_my_tiles; ++k) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < n_my_tiles; ++k) {
             tiles[k] = decode_tile(my_tiles[k], M_TILES, w_tiles, my_mt, n_my_mt);
         }
 
-        const uint64_t my_scratch_base = l2_scratch_base + (uint64_t) minion * scratch_per_hart;
+        സ്ഥിരം uint64_t my_scratch_base = l2_scratch_base + (uint64_t) minion * scratch_per_hart;
 
-        for (int c = 0; c < n_chunks; ++c) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ c = 0; c < n_chunks; ++c) {
             et_barrier(ET_BARRIER_SHIRE); /* pin chunk c packed */
 
-            const int      buf       = c & 1;
-            const uint64_t l2_pad_in = l2_pin_buf[buf];
-            const int      kt_base   = c * chunk_KT;
+            സ്ഥിരം പൂർണ്ണസംഖ്യ      buf       = c & 1;
+            സ്ഥിരം uint64_t l2_pad_in = l2_pin_buf[buf];
+            സ്ഥിരം പൂർണ്ണസംഖ്യ      kt_base   = c * chunk_KT;
 
-            for (int k = 0; k < n_my_tiles; ++k) {
-                const conv_tile_t * tile = &tiles[k];
-                const uint64_t      scr  = my_scratch_base + (uint64_t) k * (TILE * TILE * sizeof(float));
+            വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < n_my_tiles; ++k) {
+                സ്ഥിരം conv_tile_t * tile = &tiles[k];
+                സ്ഥിരം uint64_t      scr  = my_scratch_base + (uint64_t) k * (TILE * TILE * വലുപ്പം(ദശാംശം));
 
-                const bool first_pass_chunk = (c == 0);
-                if (!first_pass_chunk) {
+                സ്ഥിരം bool first_pass_chunk = (c == 0);
+                എങ്കിൽ (!first_pass_chunk) {
                     tenc_restore_from_scratch(scr);
                 }
 
                 compute_tile_chunk(l2_filter, l2_pad_in, pin_copy_bytes, Kh, Kw, K_TILES, chunk_KT, kt_base, n_my_mt,
                                    Hp, Wp_a, s1, a_row_stride, b_row_stride, tile, first_pass_chunk);
 
-                if (c == n_chunks - 1) {
-                    char * dst_addr = output_tile_addr(out_base, tile, out_chan_stride, out_row_stride);
+                എങ്കിൽ (c == n_chunks - 1) {
+                    അക്ഷരം * dst_addr = output_tile_addr(out_base, tile, out_chan_stride, out_row_stride);
                     tensor_store(0, 0, 3, (uint64_t) (TILE - 1), (uint64_t) dst_addr, 0, out_chan_stride);
-                } else {
+                } അല്ലെങ്കിൽ {
                     tensor_store(0, 0, 3, (uint64_t) (TILE - 1), (uint64_t) scr, 0, 64);
                 }
                 tensor_wait(TENSOR_STORE_WAIT);
@@ -781,27 +781,27 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
 
     /* ----------------------- DRAM emit phase ---------------------------
        Only relevant when we staged into L2SCP because OW % 16 != 0. */
-    if (need_stage) {
+    എങ്കിൽ (need_stage) {
         et_barrier(ET_BARRIER_SHIRE);
 
-        if (minion == 0) {
-            const float * stage = (const float *) l2_output_stage;
-            float *       dram  = (float *) out->data;
-            for (int oc = 0; oc < Cout; ++oc) {
-                for (int oh2 = 0; oh2 < OH; ++oh2) {
-                    const float * src = stage + ((size_t) oc * OH + oh2) * OW_pad;
-                    float *       dst = dram + ((size_t) oc * OH + oh2) * OW;
-                    for (int ow2 = 0; ow2 < OW; ++ow2) {
+        എങ്കിൽ (minion == 0) {
+            സ്ഥിരം ദശാംശം * stage = (സ്ഥിരം ദശാംശം *) l2_output_stage;
+            ദശാംശം *       dram  = (ദശാംശം *) out->data;
+            വേണ്ടി (പൂർണ്ണസംഖ്യ oc = 0; oc < Cout; ++oc) {
+                വേണ്ടി (പൂർണ്ണസംഖ്യ oh2 = 0; oh2 < OH; ++oh2) {
+                    സ്ഥിരം ദശാംശം * src = stage + ((size_t) oc * OH + oh2) * OW_pad;
+                    ദശാംശം *       dst = dram + ((size_t) oc * OH + oh2) * OW;
+                    വേണ്ടി (പൂർണ്ണസംഖ്യ ow2 = 0; ow2 < OW; ++ow2) {
                         dst[ow2] = src[ow2];
                     }
                 }
             }
             FENCE;
-            const uint64_t total_bytes = (uint64_t) Cout * OH * OW * sizeof(float);
-            evict_range_past_l2((const void *) dram, total_bytes);
+            സ്ഥിരം uint64_t total_bytes = (uint64_t) Cout * OH * OW * വലുപ്പം(ദശാംശം);
+            evict_range_past_l2((സ്ഥിരം ശൂന്യം *) dram, total_bytes);
             WAIT_CACHEOPS;
         }
     }
 
-    return 0;
+    തിരികെ 0;
 }

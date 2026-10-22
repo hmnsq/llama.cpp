@@ -7,13 +7,13 @@
 // in ggml-opencl.cpp where the ggml logging macros are already in scope.
 
 // Per-(dk, dv) FA config; shared by dispatch and supports_op.
-struct ggml_opencl_fa_dim {
-    int dk; int dv; int bm; int bn; int n_split; int nkv_split_threshold;
+ഘടന ggml_opencl_fa_dim {
+    പൂർണ്ണസംഖ്യ dk; പൂർണ്ണസംഖ്യ dv; പൂർണ്ണസംഖ്യ bm; പൂർണ്ണസംഖ്യ bn; പൂർണ്ണസംഖ്യ n_split; പൂർണ്ണസംഖ്യ nkv_split_threshold;
 };
 
 // Split variant fires when n_kv >= threshold (threshold=0 -> always split).
 // Default tuning covers Adreno 7xx/8xx mobile and X1-series laptop GPUs.
-static const ggml_opencl_fa_dim g_fa_dims_adreno_default[] = {
+സ്ഥിതം സ്ഥിരം ggml_opencl_fa_dim g_fa_dims_adreno_default[] = {
     { 40,  40, 64, 32, 1, 0}, { 64,  64, 64, 32, 2, 64},
     { 80,  80, 64, 32, 2, 64}, { 96,  96, 64, 32, 2, 64},
     {112, 112, 64, 32, 2, 64}, {128, 128, 64, 32, 2, 64},
@@ -23,58 +23,58 @@ static const ggml_opencl_fa_dim g_fa_dims_adreno_default[] = {
     {512, 512,  8, 16, 64, 0},
 };
 
-struct ggml_opencl_fa_dim_table {
-    const ggml_opencl_fa_dim * data;
-    size_t                     count;
+ഘടന ggml_opencl_fa_dim_table {
+    സ്ഥിരം ggml_opencl_fa_dim * data;
+    size_t                     എണ്ണം;
 
-    const ggml_opencl_fa_dim * begin() const { return data; }
-    const ggml_opencl_fa_dim * end()   const { return data + count; }
+    സ്ഥിരം ggml_opencl_fa_dim * begin() സ്ഥിരം { തിരികെ data; }
+    സ്ഥിരം ggml_opencl_fa_dim * end()   സ്ഥിരം { തിരികെ data + എണ്ണം; }
 };
 
 // Mutable copy of the active table; GGML_OPENCL_FA_TUNE patches entries here
 // at backend init without touching the const source table.
-static ggml_opencl_fa_dim g_fa_dims_runtime[
-    sizeof(g_fa_dims_adreno_default) / sizeof(g_fa_dims_adreno_default[0])];
+സ്ഥിതം ggml_opencl_fa_dim g_fa_dims_runtime[
+    വലുപ്പം(g_fa_dims_adreno_default) / വലുപ്പം(g_fa_dims_adreno_default[0])];
 
-static ggml_opencl_fa_dim_table g_opencl_fa_dims = {
+സ്ഥിതം ggml_opencl_fa_dim_table g_opencl_fa_dims = {
     g_fa_dims_adreno_default,
-    sizeof(g_fa_dims_adreno_default) / sizeof(g_fa_dims_adreno_default[0]),
+    വലുപ്പം(g_fa_dims_adreno_default) / വലുപ്പം(g_fa_dims_adreno_default[0]),
 };
 
 // GGML_OPENCL_FA_TUNE=dk:dv:bm:bn:nsplit:thr[,…] — patches matching entries
 // in the active table at backend init, before the first FA kernel compiles.
 // Unmatched (dk,dv) pairs are warned and ignored.
-static void ggml_opencl_fa_apply_env_overrides() {
-    const char * e = std::getenv("GGML_OPENCL_FA_TUNE");
-    if (!e || !e[0]) {
-        return;
+സ്ഥിതം ശൂന്യം ggml_opencl_fa_apply_env_overrides() {
+    സ്ഥിരം അക്ഷരം * e = std::getenv("GGML_OPENCL_FA_TUNE");
+    എങ്കിൽ (!e || !e[0]) {
+        തിരികെ;
     }
 
     std::string s = e;
     size_t pos = 0;
-    while (pos < s.size()) {
+    ആകുമ്പോൾ (pos < s.size()) {
         size_t comma = s.find(',', pos);
         std::string entry = s.substr(pos, comma == std::string::npos ? std::string::npos : comma - pos);
-        int dk, dv, bm, bn, nsplit, thr;
-        if (std::sscanf(entry.c_str(), "%d:%d:%d:%d:%d:%d", &dk, &dv, &bm, &bn, &nsplit, &thr) == 6) {
+        പൂർണ്ണസംഖ്യ dk, dv, bm, bn, nsplit, thr;
+        എങ്കിൽ (std::sscanf(entry.c_str(), "%d:%d:%d:%d:%d:%d", &dk, &dv, &bm, &bn, &nsplit, &thr) == 6) {
             bool patched = false;
-            for (size_t i = 0; i < g_opencl_fa_dims.count; ++i) {
+            വേണ്ടി (size_t i = 0; i < g_opencl_fa_dims.എണ്ണം; ++i) {
                 ggml_opencl_fa_dim & d = g_fa_dims_runtime[i];
-                if (d.dk == dk && d.dv == dv) {
+                എങ്കിൽ (d.dk == dk && d.dv == dv) {
                     d.bm = bm; d.bn = bn; d.n_split = nsplit; d.nkv_split_threshold = thr;
                     GGML_LOG_INFO("ggml_opencl: FA tune override DK=%d DV=%d -> bm=%d bn=%d n_split=%d thr=%d\n",
                                   dk, dv, bm, bn, nsplit, thr);
                     patched = true;
-                    break;
+                    നിർത്തുക;
                 }
             }
-            if (!patched) {
+            എങ്കിൽ (!patched) {
                 GGML_LOG_WARN("ggml_opencl: FA tune override DK=%d DV=%d ignored (no matching dim)\n", dk, dv);
             }
-        } else {
+        } അല്ലെങ്കിൽ {
             GGML_LOG_WARN("ggml_opencl: FA tune override entry malformed: '%s'\n", entry.c_str());
         }
-        if (comma == std::string::npos) break;
+        എങ്കിൽ (comma == std::string::npos) നിർത്തുക;
         pos = comma + 1;
     }
 }
@@ -82,11 +82,11 @@ static void ggml_opencl_fa_apply_env_overrides() {
 // Copy the default table into the mutable runtime buffer and apply any
 // GGML_OPENCL_FA_TUNE overrides. A per-generation table can be added here
 // once it has been tuned on hardware.
-static void ggml_cl_init_fa_dims_table() {
-    const size_t count = sizeof(g_fa_dims_adreno_default) / sizeof(g_fa_dims_adreno_default[0]);
-    for (size_t i = 0; i < count; ++i) {
+സ്ഥിതം ശൂന്യം ggml_cl_init_fa_dims_table() {
+    സ്ഥിരം size_t എണ്ണം = വലുപ്പം(g_fa_dims_adreno_default) / വലുപ്പം(g_fa_dims_adreno_default[0]);
+    വേണ്ടി (size_t i = 0; i < എണ്ണം; ++i) {
         g_fa_dims_runtime[i] = g_fa_dims_adreno_default[i];
     }
-    g_opencl_fa_dims = { g_fa_dims_runtime, count };
+    g_opencl_fa_dims = { g_fa_dims_runtime, എണ്ണം };
     ggml_opencl_fa_apply_env_overrides();
 }

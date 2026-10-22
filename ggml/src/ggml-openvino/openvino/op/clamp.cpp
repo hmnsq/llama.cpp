@@ -1,30 +1,30 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#അന്തര്ഭാവ "../node_context.h"
+#അന്തര്ഭാവ "../op_table.h"
+#അന്തര്ഭാവ "../utils.h"
 
-#include <cstring>
-#include <openvino/op/clamp.hpp>
+#അന്തര്ഭാവ <cstring>
+#അന്തര്ഭാവ <openvino/op/clamp.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+നാമാകാശ ov {
+നാമാകാശ frontend {
+നാമാകാശ ggml {
+നാമാകാശ op {
 
-OutputVector translate_clamp(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+OutputVector translate_clamp(സ്ഥിരം കണ്ണി_Context & context) {
+    അക്കം_inputs_check(context, 1, 1);
 
-    auto input = process_view_input_new(context, 0);
+    auto നിവേശം = process_view_നിവേശം_new(context, 0);
 
-    const int32_t * op_params = context.get_output_op_params();
+    സ്ഥിരം int32_t * op_params = context.get_output_op_params();
     FRONT_END_CHECK_IMPLEMENTED(op_params != nullptr, "CLAMP requires output op params");
 
-    float min;
-    float max;
-    std::memcpy(&min, reinterpret_cast<const float *>(op_params) + 0, sizeof(float));
-    std::memcpy(&max, reinterpret_cast<const float *>(op_params) + 1, sizeof(float));
+    ദശാംശം min;
+    ദശാംശം max;
+    std::memcpy(&min, reinterpret_cast<സ്ഥിരം ദശാംശം *>(op_params) + 0, വലുപ്പം(ദശാംശം));
+    std::memcpy(&max, reinterpret_cast<സ്ഥിരം ദശാംശം *>(op_params) + 1, വലുപ്പം(ദശാംശം));
 
-    auto res = std::make_shared<ov::op::v0::Clamp>(input, min, max);
-    return rename_outputs_with_suffix({res}, context.get_name());
+    auto res = std::make_shared<ov::op::v0::Clamp>(നിവേശം, min, max);
+    തിരികെ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

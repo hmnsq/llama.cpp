@@ -1,152 +1,152 @@
-#include "virtgpu-utils.h"
+#അന്തര്ഭാവ "virtgpu-utils.h"
 
-#include <malloc.h>
-#include <stdlib.h>
+#അന്തര്ഭാവ <malloc.h>
+#അന്തര്ഭാവ <stdlib.h>
 
-#include <cstring>
+#അന്തര്ഭാവ <cstring>
 
-#define NODE_ALLOC_ALIGN 64
-#define NODE_PTR_MASK    (~((uintptr_t) NODE_ALLOC_ALIGN - 1))
-#define NODE_LEVEL_MASK  ((uintptr_t) NODE_ALLOC_ALIGN - 1)
-#define NULL_NODE        0
+#define കണ്ണി_ALLOC_ALIGN 64
+#define കണ്ണി_PTR_MASK    (~((uintptr_t) കണ്ണി_ALLOC_ALIGN - 1))
+#define കണ്ണി_LEVEL_MASK  ((uintptr_t) കണ്ണി_ALLOC_ALIGN - 1)
+#define NULL_കണ്ണി        0
 
 #define os_malloc_aligned(_size, _align) _aligned_malloc(_size, _align)
-#define os_free_aligned(_ptr)            free(_ptr)
+#define os_free_aligned(_ptr)            സ്വതന്ത്രം(_ptr)
 #define p_atomic_cmpxchg(v, old, _new)   __sync_val_compare_and_swap((v), (old), (_new))
 
-static inline uint64_t util_logbase2_64(uint64_t n) {
-#if defined(HAVE___BUILTIN_CLZLL)
-    return ((sizeof(uint64_t) * 8 - 1) - __builtin_clzll(n | 1));
-#else
+സ്ഥിതം വരിയിൽ uint64_t util_logbase2_64(uint64_t n) {
+#എങ്കിൽ defined(HAVE___BUILTIN_CLZLL)
+    തിരികെ ((വലുപ്പം(uint64_t) * 8 - 1) - __builtin_clzll(n | 1));
+#അല്ലെങ്കിൽ
     uint64_t pos = 0ull;
-    if (n >= 1ull << 32) {
+    എങ്കിൽ (n >= 1ull << 32) {
         n >>= 32;
         pos += 32;
     }
-    if (n >= 1ull << 16) {
+    എങ്കിൽ (n >= 1ull << 16) {
         n >>= 16;
         pos += 16;
     }
-    if (n >= 1ull << 8) {
+    എങ്കിൽ (n >= 1ull << 8) {
         n >>= 8;
         pos += 8;
     }
-    if (n >= 1ull << 4) {
+    എങ്കിൽ (n >= 1ull << 4) {
         n >>= 4;
         pos += 4;
     }
-    if (n >= 1ull << 2) {
+    എങ്കിൽ (n >= 1ull << 2) {
         n >>= 2;
         pos += 2;
     }
-    if (n >= 1ull << 1) {
+    എങ്കിൽ (n >= 1ull << 1) {
         pos += 1;
     }
-    return pos;
+    തിരികെ pos;
 #endif
 }
 
-void util_sparse_array_init(util_sparse_array * arr, size_t elem_size, size_t node_size) {
-    memset(arr, 0, sizeof(*arr));
+ശൂന്യം util_sparse_array_init(util_sparse_array * arr, size_t elem_size, size_t കണ്ണി_size) {
+    memset(arr, 0, വലുപ്പം(*arr));
     arr->elem_size      = elem_size;
-    arr->node_size_log2 = util_logbase2_64(node_size);
-    assert(node_size >= 2 && node_size == (1ull << arr->node_size_log2));
+    arr->കണ്ണി_size_log2 = util_logbase2_64(കണ്ണി_size);
+    പ്രതിജ്ഞാ(കണ്ണി_size >= 2 && കണ്ണി_size == (1ull << arr->കണ്ണി_size_log2));
 }
 
-static inline void * os_malloc_aligned(size_t size, size_t alignment) {
-    void * ptr;
-    alignment = (alignment + sizeof(void *) - 1) & ~(sizeof(void *) - 1);
-    if (posix_memalign(&ptr, alignment, size) != 0) {
-        return NULL;
+സ്ഥിതം വരിയിൽ ശൂന്യം * os_malloc_aligned(size_t size, size_t alignment) {
+    ശൂന്യം * ptr;
+    alignment = (alignment + വലുപ്പം(ശൂന്യം *) - 1) & ~(വലുപ്പം(ശൂന്യം *) - 1);
+    എങ്കിൽ (posix_memalign(&ptr, alignment, size) != 0) {
+        തിരികെ ശൂന്യ;
     }
-    return ptr;
+    തിരികെ ptr;
 }
 
-static inline void * _util_sparse_array_node_data(uintptr_t handle) {
-    return (void *) (handle & NODE_PTR_MASK);
+സ്ഥിതം വരിയിൽ ശൂന്യം * util_sparse_array_കണ്ണി_data(uintptr_t handle) {
+    തിരികെ (ശൂന്യം *) (handle & കണ്ണി_PTR_MASK);
 }
 
-static inline unsigned _util_sparse_array_node_level(uintptr_t handle) {
-    return handle & NODE_LEVEL_MASK;
+സ്ഥിതം വരിയിൽ unsigned util_sparse_array_കണ്ണി_level(uintptr_t handle) {
+    തിരികെ handle & കണ്ണി_LEVEL_MASK;
 }
 
-static inline void _util_sparse_array_node_finish(util_sparse_array * arr, uintptr_t node) {
-    if (_util_sparse_array_node_level(node) > 0) {
-        uintptr_t * children  = (uintptr_t *) _util_sparse_array_node_data(node);
-        size_t      node_size = 1ull << arr->node_size_log2;
-        for (size_t i = 0; i < node_size; i++) {
-            if (children[i]) {
-                _util_sparse_array_node_finish(arr, children[i]);
+സ്ഥിതം വരിയിൽ ശൂന്യം util_sparse_array_കണ്ണി_finish(util_sparse_array * arr, uintptr_t കണ്ണി) {
+    എങ്കിൽ (util_sparse_array_കണ്ണി_level(കണ്ണി) > 0) {
+        uintptr_t * children  = (uintptr_t *) util_sparse_array_കണ്ണി_data(കണ്ണി);
+        size_t      കണ്ണി_size = 1ull << arr->കണ്ണി_size_log2;
+        വേണ്ടി (size_t i = 0; i < കണ്ണി_size; i++) {
+            എങ്കിൽ (children[i]) {
+                util_sparse_array_കണ്ണി_finish(arr, children[i]);
             }
         }
     }
 
-    os_free_aligned(_util_sparse_array_node_data(node));
+    os_free_aligned(util_sparse_array_കണ്ണി_data(കണ്ണി));
 }
 
-static inline uintptr_t _util_sparse_array_node(void * data, unsigned level) {
-    assert(data != NULL);
-    assert(((uintptr_t) data & NODE_LEVEL_MASK) == 0);
-    assert((level & NODE_PTR_MASK) == 0);
-    return (uintptr_t) data | level;
+സ്ഥിതം വരിയിൽ uintptr_t util_sparse_array_കണ്ണി(ശൂന്യം * data, unsigned level) {
+    പ്രതിജ്ഞാ(data != ശൂന്യ);
+    പ്രതിജ്ഞാ(((uintptr_t) data & കണ്ണി_LEVEL_MASK) == 0);
+    പ്രതിജ്ഞാ((level & കണ്ണി_PTR_MASK) == 0);
+    തിരികെ (uintptr_t) data | level;
 }
 
-inline uintptr_t _util_sparse_array_node_alloc(util_sparse_array * arr, unsigned level) {
+വരിയിൽ uintptr_t util_sparse_array_കണ്ണി_alloc(util_sparse_array * arr, unsigned level) {
     size_t size;
-    if (level == 0) {
-        size = arr->elem_size << arr->node_size_log2;
-    } else {
-        size = sizeof(uintptr_t) << arr->node_size_log2;
+    എങ്കിൽ (level == 0) {
+        size = arr->elem_size << arr->കണ്ണി_size_log2;
+    } അല്ലെങ്കിൽ {
+        size = വലുപ്പം(uintptr_t) << arr->കണ്ണി_size_log2;
     }
 
-    void * data = os_malloc_aligned(size, NODE_ALLOC_ALIGN);
+    ശൂന്യം * data = os_malloc_aligned(size, കണ്ണി_ALLOC_ALIGN);
     memset(data, 0, size);
 
-    return _util_sparse_array_node(data, level);
+    തിരികെ util_sparse_array_കണ്ണി(data, level);
 }
 
-static inline uintptr_t _util_sparse_array_set_or_free_node(uintptr_t * node_ptr, uintptr_t cmp_node, uintptr_t node) {
-    uintptr_t prev_node = p_atomic_cmpxchg(node_ptr, cmp_node, node);
+സ്ഥിതം വരിയിൽ uintptr_t util_sparse_array_set_or_free_കണ്ണി(uintptr_t * കണ്ണി_ptr, uintptr_t cmp_കണ്ണി, uintptr_t കണ്ണി) {
+    uintptr_t prev_കണ്ണി = p_atomic_cmpxchg(കണ്ണി_ptr, cmp_കണ്ണി, കണ്ണി);
 
-    if (prev_node != cmp_node) {
+    എങ്കിൽ (prev_കണ്ണി != cmp_കണ്ണി) {
         /* We lost the race.  Free this one and return the one that was already
        * allocated.
        */
-        os_free_aligned(_util_sparse_array_node_data(node));
-        return prev_node;
-    } else {
-        return node;
+        os_free_aligned(util_sparse_array_കണ്ണി_data(കണ്ണി));
+        തിരികെ prev_കണ്ണി;
+    } അല്ലെങ്കിൽ {
+        തിരികെ കണ്ണി;
     }
 }
 
-void * util_sparse_array_get(util_sparse_array * arr, uint64_t idx) {
-    const unsigned node_size_log2 = arr->node_size_log2;
-    uintptr_t      root           = p_atomic_read(&arr->root);
-    if (unlikely(!root)) {
-        unsigned root_level = 0;
-        uint64_t idx_iter   = idx >> node_size_log2;
-        while (idx_iter) {
-            idx_iter >>= node_size_log2;
-            root_level++;
+ശൂന്യം * util_sparse_array_get(util_sparse_array * arr, uint64_t idx) {
+    സ്ഥിരം unsigned കണ്ണി_size_log2 = arr->കണ്ണി_size_log2;
+    uintptr_t      വേര്           = p_atomic_read(&arr->വേര്);
+    എങ്കിൽ (unlikely(!വേര്)) {
+        unsigned വേര്_level = 0;
+        uint64_t idx_iter   = idx >> കണ്ണി_size_log2;
+        ആകുമ്പോൾ (idx_iter) {
+            idx_iter >>= കണ്ണി_size_log2;
+            വേര്_level++;
         }
-        uintptr_t new_root = _util_sparse_array_node_alloc(arr, root_level);
-        root               = _util_sparse_array_set_or_free_node(&arr->root, NULL_NODE, new_root);
+        uintptr_t new_വേര് = util_sparse_array_കണ്ണി_alloc(arr, വേര്_level);
+        വേര്               = util_sparse_array_set_or_free_കണ്ണി(&arr->വേര്, NULL_കണ്ണി, new_വേര്);
     }
 
-    while (1) {
-        unsigned root_level = _util_sparse_array_node_level(root);
-        uint64_t root_idx   = idx >> (root_level * node_size_log2);
-        if (likely(root_idx < (1ull << node_size_log2))) {
-            break;
+    ആകുമ്പോൾ (1) {
+        unsigned വേര്_level = util_sparse_array_കണ്ണി_level(വേര്);
+        uint64_t വേര്_idx   = idx >> (വേര്_level * കണ്ണി_size_log2);
+        എങ്കിൽ (likely(വേര്_idx < (1ull << കണ്ണി_size_log2))) {
+            നിർത്തുക;
         }
 
         /* In this case, we have a root but its level is low enough that the
        * requested index is out-of-bounds.
        */
-        uintptr_t new_root = _util_sparse_array_node_alloc(arr, root_level + 1);
+        uintptr_t new_വേര് = util_sparse_array_കണ്ണി_alloc(arr, വേര്_level + 1);
 
-        uintptr_t * new_root_children = (uintptr_t *) _util_sparse_array_node_data(new_root);
-        new_root_children[0]          = root;
+        uintptr_t * new_വേര്_children = (uintptr_t *) util_sparse_array_കണ്ണി_data(new_വേര്);
+        new_വേര്_children[0]          = വേര്;
 
         /* We only add one at a time instead of the whole tree because it's
        * easier to ensure correctness of both the tree building and the
@@ -154,26 +154,26 @@ void * util_sparse_array_get(util_sparse_array * arr, uint64_t idx) {
        * worry about trying to free multiple things without freeing the old
        * things.
        */
-        root = _util_sparse_array_set_or_free_node(&arr->root, root, new_root);
+        വേര് = util_sparse_array_set_or_free_കണ്ണി(&arr->വേര്, വേര്, new_വേര്);
     }
 
-    void *   node_data  = _util_sparse_array_node_data(root);
-    unsigned node_level = _util_sparse_array_node_level(root);
-    while (node_level > 0) {
-        uint64_t child_idx = (idx >> (node_level * node_size_log2)) & ((1ull << node_size_log2) - 1);
+    ശൂന്യം *   കണ്ണി_data  = util_sparse_array_കണ്ണി_data(വേര്);
+    unsigned കണ്ണി_level = util_sparse_array_കണ്ണി_level(വേര്);
+    ആകുമ്പോൾ (കണ്ണി_level > 0) {
+        uint64_t child_idx = (idx >> (കണ്ണി_level * കണ്ണി_size_log2)) & ((1ull << കണ്ണി_size_log2) - 1);
 
-        uintptr_t * children = (uintptr_t *) node_data;
+        uintptr_t * children = (uintptr_t *) കണ്ണി_data;
         uintptr_t   child    = p_atomic_read(&children[child_idx]);
 
-        if (unlikely(!child)) {
-            child = _util_sparse_array_node_alloc(arr, node_level - 1);
-            child = _util_sparse_array_set_or_free_node(&children[child_idx], NULL_NODE, child);
+        എങ്കിൽ (unlikely(!child)) {
+            child = util_sparse_array_കണ്ണി_alloc(arr, കണ്ണി_level - 1);
+            child = util_sparse_array_set_or_free_കണ്ണി(&children[child_idx], NULL_കണ്ണി, child);
         }
 
-        node_data  = _util_sparse_array_node_data(child);
-        node_level = _util_sparse_array_node_level(child);
+        കണ്ണി_data  = util_sparse_array_കണ്ണി_data(child);
+        കണ്ണി_level = util_sparse_array_കണ്ണി_level(child);
     }
 
-    uint64_t elem_idx = idx & ((1ull << node_size_log2) - 1);
-    return (void *) ((char *) node_data + (elem_idx * arr->elem_size));
+    uint64_t elem_idx = idx & ((1ull << കണ്ണി_size_log2) - 1);
+    തിരികെ (ശൂന്യം *) ((അക്ഷരം *) കണ്ണി_data + (elem_idx * arr->elem_size));
 }

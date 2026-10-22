@@ -24,43 +24,43 @@
 // - Dimension 3: input.ne[3] % mask.ne[3] == 0 (modulo broadcasting)
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "math_fp.h"
-#include "platform.h"
+#അന്തര്ഭാവ "ggml_tensor.h"
+#അന്തര്ഭാവ "math_fp.h"
+#അന്തര്ഭാവ "platform.h"
 
-#include <assert.h>
-#include <math.h>
-#include <stdbool.h>
-#include <stdint.h>
+#അന്തര്ഭാവ <assert.h>
+#അന്തര്ഭാവ <math.h>
+#അന്തര്ഭാവ <stdbool.h>
+#അന്തര്ഭാവ <stdint.h>
 
 // Softmax kernel parameters structure (from ggml-et-ops.h)
-struct ggml_et_softmax_params {
-    struct ggml_tensor src0;      // F32 input tensor
-    struct ggml_tensor src1;      // F32 mask tensor (optional, may be zeroed if not used)
-    struct ggml_tensor src2;      // F32 sinks tensor (optional, may be zeroed if not used)
-    struct ggml_tensor dst;       // F32 output tensor
-    float              scale;     // Scale factor (temperature scaling)
-    float              max_bias;  // Max bias for ALiBi (0.0f if not used)
+ഘടന ggml_et_softmax_params {
+    ഘടന ggml_tensor src0;      // F32 input tensor
+    ഘടന ggml_tensor src1;      // F32 mask tensor (optional, may be zeroed if not used)
+    ഘടന ggml_tensor src2;      // F32 sinks tensor (optional, may be zeroed if not used)
+    ഘടന ggml_tensor dst;       // F32 output tensor
+    ദശാംശം              scale;     // Scale factor (temperature scaling)
+    ദശാംശം              max_bias;  // Max bias for ALiBi (0.0f if not used)
 };
 
 #define LOG2E_F 1.4426950408889634f
 
-typedef struct {
-    float    max_val;
-    float    sum_val;
+തരനിർവചനം ഘടന {
+    ദശാംശം    max_val;
+    ദശാംശം    sum_val;
     uint32_t valid_mask;
 } softmax_params_t;
 
-static inline bool softmax_lane_is_valid(float x) {
-    return (x == x) && (x != -INFINITY) && (x != INFINITY);
+സ്ഥിതം വരിയിൽ bool softmax_lane_is_valid(ദശാംശം x) {
+    തിരികെ (x == x) && (x != -INFINITY) && (x != INFINITY);
 }
 
-static inline softmax_params_t softmax_params_empty(void) {
+സ്ഥിതം വരിയിൽ softmax_params_t softmax_params_empty(ശൂന്യം) {
     softmax_params_t p;
     p.max_val    = -INFINITY;
     p.sum_val    = 0.0f;
     p.valid_mask = 0;
-    return p;
+    തിരികെ p;
 }
 
 // chunk_transform_ps_8_branchless_mask
@@ -71,17 +71,17 @@ static inline softmax_params_t softmax_params_empty(void) {
 //
 // Implemented branchlessly so masked and unmasked paths share the same
 // instruction stream. Used by pass1 and pass2 vector loops.
-static inline void chunk_transform_ps_8_branchless_mask(float *       tmp8,
-                                                        const float * src,
-                                                        const float * mask,
-                                                        float         scale,
-                                                        float         slope) {
+സ്ഥിതം വരിയിൽ ശൂന്യം chunk_transform_ps_8_branchless_mask(ദശാംശം *       tmp8,
+                                                        സ്ഥിരം ദശാംശം * src,
+                                                        സ്ഥിരം ദശാംശം * mask,
+                                                        ദശാംശം         scale,
+                                                        ദശാംശം         slope) {
     unsigned long       ms;
-    const float         zero         = 0.0f;
-    const unsigned long mask_load_m0 = (mask != NULL) ? 0xFFul : 0x00ul;
-    const float *       mp           = (mask != NULL) ? mask : &zero;
+    സ്ഥിരം ദശാംശം         zero         = 0.0f;
+    സ്ഥിരം unsigned long mask_load_m0 = (mask != ശൂന്യ) ? 0xFFul : 0x00ul;
+    സ്ഥിരം ദശാംശം *       mp           = (mask != ശൂന്യ) ? mask : &zero;
 
-    __asm__ volatile(
+    __asm__ അസ്ഥിര(
         "mova.x.m  %[ms]                \n\t"
 
         "mov.m.x   m0, x0, 0xFF         \n\t"
@@ -112,18 +112,18 @@ static inline void chunk_transform_ps_8_branchless_mask(float *       tmp8,
 // Same as chunk_transform_ps_8_branchless_mask but gates loads, compute,
 // and stores with a caller-supplied m0 mask so that only `count` elements
 // (1-7) are touched.  Used for the last sub-8 chunk of a non-aligned row.
-static inline void chunk_transform_ps_8_tail(float *       tmp8,
-                                             const float * src,
-                                             const float * mask,
-                                             float         scale,
-                                             float         slope,
+സ്ഥിതം വരിയിൽ ശൂന്യം chunk_transform_ps_8_tail(ദശാംശം *       tmp8,
+                                             സ്ഥിരം ദശാംശം * src,
+                                             സ്ഥിരം ദശാംശം * mask,
+                                             ദശാംശം         scale,
+                                             ദശാംശം         slope,
                                              unsigned long tail_m0) {
     unsigned long       ms;
-    const float         zero         = 0.0f;
-    const unsigned long mask_load_m0 = (mask != NULL) ? tail_m0 : 0x00ul;
-    const float *       mp           = (mask != NULL) ? mask : &zero;
+    സ്ഥിരം ദശാംശം         zero         = 0.0f;
+    സ്ഥിരം unsigned long mask_load_m0 = (mask != ശൂന്യ) ? tail_m0 : 0x00ul;
+    സ്ഥിരം ദശാംശം *       mp           = (mask != ശൂന്യ) ? mask : &zero;
 
-    __asm__ volatile(
+    __asm__ അസ്ഥിര(
         "mova.x.m  %[ms]                \n\t"
 
         // Broadcast constants with all lanes enabled
@@ -168,26 +168,26 @@ static inline void chunk_transform_ps_8_tail(float *       tmp8,
 //
 // These partial results can be merged with softmax_params_merge() to obtain
 // the result for the full row.
-static inline softmax_params_t softmax_pass1_range(const float * src,
-                                                   const float * mask,
-                                                   int           begin,
-                                                   int           end,
-                                                   float         scale,
-                                                   float         slope) {
-    __attribute__((aligned(32))) float lane_max[8];
-    __attribute__((aligned(32))) float lane_sum[8];
-    __attribute__((aligned(32))) float tmp[8];
+സ്ഥിതം വരിയിൽ softmax_params_t softmax_pass1_range(സ്ഥിരം ദശാംശം * src,
+                                                   സ്ഥിരം ദശാംശം * mask,
+                                                   പൂർണ്ണസംഖ്യ           begin,
+                                                   പൂർണ്ണസംഖ്യ           end,
+                                                   ദശാംശം         scale,
+                                                   ദശാംശം         slope) {
+    __attribute__((aligned(32))) ദശാംശം lane_max[8];
+    __attribute__((aligned(32))) ദശാംശം lane_sum[8];
+    __attribute__((aligned(32))) ദശാംശം tmp[8];
 
     uint8_t valid_mask = 0;
 
-    const float one_f   = 1.0f;
-    const float zero_f  = 0.0f;
-    const float neg_inf = -INFINITY;
-    const float log2e   = LOG2E_F;
+    സ്ഥിരം ദശാംശം one_f   = 1.0f;
+    സ്ഥിരം ദശാംശം zero_f  = 0.0f;
+    സ്ഥിരം ദശാംശം neg_inf = -INFINITY;
+    സ്ഥിരം ദശാംശം log2e   = LOG2E_F;
 
     unsigned long ms;
 
-    __asm__ volatile(
+    __asm__ അസ്ഥിര(
         "mova.x.m  %[ms]                \n\t"
         "mov.m.x   m0, x0, 0xFF         \n\t"
         "fbc.ps    f20, 0(%[p_ninf])    \n\t"
@@ -198,25 +198,25 @@ static inline softmax_params_t softmax_pass1_range(const float * src,
         : [p_ninf] "r"(&neg_inf), [p_zero] "r"(&zero_f), [p_one] "r"(&one_f), [p_log2e] "r"(&log2e)
         : "f20", "f21", "f22", "f23");
 
-    const int aligned_end = begin + ((end - begin) & ~7);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ aligned_end = begin + ((end - begin) & ~7);
 
     // Process full 8-element chunks
-    int i = begin;
-    for (; i < aligned_end; i += 8) {
-        chunk_transform_ps_8_branchless_mask(tmp, src + i, mask ? (mask + i) : NULL, scale, slope);
+    പൂർണ്ണസംഖ്യ i = begin;
+    വേണ്ടി (; i < aligned_end; i += 8) {
+        chunk_transform_ps_8_branchless_mask(tmp, src + i, mask ? (mask + i) : ശൂന്യ, scale, slope);
 
         uint8_t cur_mask = 0;
-        for (int j = 0; j < 8; ++j) {
-            if (softmax_lane_is_valid(tmp[j])) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ j = 0; j < 8; ++j) {
+            എങ്കിൽ (softmax_lane_is_valid(tmp[j])) {
                 cur_mask |= (uint8_t) (1u << j);
             }
         }
 
-        const uint8_t init_mask = (uint8_t) (cur_mask & ~valid_mask);
-        const uint8_t upd_mask  = (uint8_t) (cur_mask & valid_mask);
+        സ്ഥിരം uint8_t init_mask = (uint8_t) (cur_mask & ~valid_mask);
+        സ്ഥിരം uint8_t upd_mask  = (uint8_t) (cur_mask & valid_mask);
 
-        if (init_mask || upd_mask) {
-            __asm__ volatile(
+        എങ്കിൽ (init_mask || upd_mask) {
+            __asm__ അസ്ഥിര(
                 "flw.ps    f0, 0(%[p_tmp])       \n\t"
 
                 "mov.m.x   m0, %[initm], 0       \n\t"
@@ -248,28 +248,28 @@ static inline softmax_params_t softmax_pass1_range(const float * src,
     }
 
     // Tail chunk: m0-gated load/compute/store for remaining 1-7 elements
-    if (i < end) {
-        const unsigned long tail_m0 = (1ul << (end - i)) - 1;
+    എങ്കിൽ (i < end) {
+        സ്ഥിരം unsigned long tail_m0 = (1ul << (end - i)) - 1;
 
         // Fill tmp with NaN so invalid lanes fail softmax_lane_is_valid
-        for (int j = 0; j < 8; j++) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ j = 0; j < 8; j++) {
             tmp[j] = __builtin_nanf("");
         }
 
-        chunk_transform_ps_8_tail(tmp, src + i, mask ? (mask + i) : NULL, scale, slope, tail_m0);
+        chunk_transform_ps_8_tail(tmp, src + i, mask ? (mask + i) : ശൂന്യ, scale, slope, tail_m0);
 
         uint8_t cur_mask = 0;
-        for (int j = 0; j < 8; ++j) {
-            if (softmax_lane_is_valid(tmp[j])) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ j = 0; j < 8; ++j) {
+            എങ്കിൽ (softmax_lane_is_valid(tmp[j])) {
                 cur_mask |= (uint8_t) (1u << j);
             }
         }
 
-        const uint8_t init_mask = (uint8_t) (cur_mask & ~valid_mask);
-        const uint8_t upd_mask  = (uint8_t) (cur_mask & valid_mask);
+        സ്ഥിരം uint8_t init_mask = (uint8_t) (cur_mask & ~valid_mask);
+        സ്ഥിരം uint8_t upd_mask  = (uint8_t) (cur_mask & valid_mask);
 
-        if (init_mask || upd_mask) {
-            __asm__ volatile(
+        എങ്കിൽ (init_mask || upd_mask) {
+            __asm__ അസ്ഥിര(
                 "flw.ps    f0, 0(%[p_tmp])       \n\t"
 
                 "mov.m.x   m0, %[initm], 0       \n\t"
@@ -300,7 +300,7 @@ static inline softmax_params_t softmax_pass1_range(const float * src,
         }
     }
 
-    __asm__ volatile(
+    __asm__ അസ്ഥിര(
         "mov.m.x   m0, x0, 0xFF         \n\t"
         "fsw.ps    f20, 0(%[p_lmax])    \n\t"
         "fsw.ps    f21, 0(%[p_lsum])    \n\t"
@@ -312,21 +312,21 @@ static inline softmax_params_t softmax_pass1_range(const float * src,
     softmax_params_t out = softmax_params_empty();
     out.valid_mask       = valid_mask;
 
-    for (int k = 0; k < 8; ++k) {
-        if (valid_mask & (1u << k)) {
-            if (out.valid_mask == (1u << k) || out.max_val == -INFINITY || lane_max[k] > out.max_val) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < 8; ++k) {
+        എങ്കിൽ (valid_mask & (1u << k)) {
+            എങ്കിൽ (out.valid_mask == (1u << k) || out.max_val == -INFINITY || lane_max[k] > out.max_val) {
                 out.max_val = lane_max[k];
             }
         }
     }
 
-    if (out.max_val != -INFINITY) {
+    എങ്കിൽ (out.max_val != -INFINITY) {
         // Compute lane correction factors via fexp.ps to stay consistent
         // with the fexp.ps used inside the online softmax loop above.
         // corr[k] = exp2((lane_max[k] - out.max_val) * LOG2E) = exp(lane_max[k] - out.max_val)
-        const float                        neg_max_l2 = -out.max_val * LOG2E_F;
-        __attribute__((aligned(32))) float corr[8];
-        __asm__ volatile(
+        സ്ഥിരം ദശാംശം                        neg_max_l2 = -out.max_val * LOG2E_F;
+        __attribute__((aligned(32))) ദശാംശം corr[8];
+        __asm__ അസ്ഥിര(
             "mova.x.m  %[ms]              \n\t"
             "mov.m.x   m0, x0, 0xFF       \n\t"
             "fbc.ps    f0, 0(%[p_nml2])   \n\t"
@@ -339,14 +339,14 @@ static inline softmax_params_t softmax_pass1_range(const float * src,
             :
             : [p_nml2] "r"(&neg_max_l2), [p_l2e] "r"(&log2e), [p_lmax] "r"(lane_max), [p_corr] "r"(corr), [ms] "r"(ms)
             : "f0", "f1", "f2", "memory");
-        for (int k = 0; k < 8; ++k) {
-            if (valid_mask & (1u << k)) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < 8; ++k) {
+            എങ്കിൽ (valid_mask & (1u << k)) {
                 out.sum_val += lane_sum[k] * corr[k];
             }
         }
     }
 
-    return out;
+    തിരികെ out;
 }
 
 // Pass 2 (normalize) over [begin, end).
@@ -355,22 +355,22 @@ static inline softmax_params_t softmax_pass1_range(const float * src,
 //
 // Uses fexp.ps for the numerator; the denominator (params.sum_val) must
 // already be fully computed by the caller (pass1 + any sink merge).
-static inline void softmax_pass2_range(float *          dst,
-                                       const float *    src,
-                                       const float *    mask,
-                                       int              begin,
-                                       int              end,
-                                       float            scale,
-                                       float            slope,
+സ്ഥിതം വരിയിൽ ശൂന്യം softmax_pass2_range(ദശാംശം *          dst,
+                                       സ്ഥിരം ദശാംശം *    src,
+                                       സ്ഥിരം ദശാംശം *    mask,
+                                       പൂർണ്ണസംഖ്യ              begin,
+                                       പൂർണ്ണസംഖ്യ              end,
+                                       ദശാംശം            scale,
+                                       ദശാംശം            slope,
                                        softmax_params_t params) {
-    const float s2      = scale * LOG2E_F;
-    const float sl2     = slope * LOG2E_F;
-    const float neg_ml2 = -params.max_val * LOG2E_F;
-    const float inv_sum = et_fdiv(1.0f, params.sum_val);
+    സ്ഥിരം ദശാംശം s2      = scale * LOG2E_F;
+    സ്ഥിരം ദശാംശം sl2     = slope * LOG2E_F;
+    സ്ഥിരം ദശാംശം neg_ml2 = -params.max_val * LOG2E_F;
+    സ്ഥിരം ദശാംശം inv_sum = et_fdiv(1.0f, params.sum_val);
 
     unsigned long ms;
 
-    __asm__ volatile(
+    __asm__ അസ്ഥിര(
         "mova.x.m  %[ms]                \n\t"
         "mov.m.x   m0, x0, 0xFF         \n\t"
         "fbc.ps    f10, 0(%[p_s2])      \n\t"
@@ -380,13 +380,13 @@ static inline void softmax_pass2_range(float *          dst,
         : [p_s2] "r"(&s2), [p_nml2] "r"(&neg_ml2), [p_inv] "r"(&inv_sum)
         : "f10", "f12", "f13");
 
-    const int aligned_end = begin + ((end - begin) & ~7);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ aligned_end = begin + ((end - begin) & ~7);
 
-    if (mask != NULL) {
-        __asm__ volatile("fbc.ps    f11, 0(%[p_sl2]) \n\t" : : [p_sl2] "r"(&sl2) : "f11");
+    എങ്കിൽ (mask != ശൂന്യ) {
+        __asm__ അസ്ഥിര("fbc.ps    f11, 0(%[p_sl2]) \n\t" : : [p_sl2] "r"(&sl2) : "f11");
 
-        for (int c = begin; c < aligned_end; c += 8) {
-            __asm__ volatile(
+        വേണ്ടി (പൂർണ്ണസംഖ്യ c = begin; c < aligned_end; c += 8) {
+            __asm__ അസ്ഥിര(
                 "flw.ps    f0, 0(%[sp])           \n\t"
                 "flw.ps    f1, 0(%[mp])           \n\t"
                 "fmadd.ps  f0, f0, f10, f12       \n\t"
@@ -400,9 +400,9 @@ static inline void softmax_pass2_range(float *          dst,
         }
 
         // Tail chunk with m0 gating
-        if (aligned_end < end) {
-            const unsigned long tail_m0 = (1ul << (end - aligned_end)) - 1;
-            __asm__ volatile(
+        എങ്കിൽ (aligned_end < end) {
+            സ്ഥിരം unsigned long tail_m0 = (1ul << (end - aligned_end)) - 1;
+            __asm__ അസ്ഥിര(
                 "mov.m.x   m0, %[tm], 0              \n\t"
                 "flw.ps    f0, 0(%[sp])           \n\t"
                 "flw.ps    f1, 0(%[mp])           \n\t"
@@ -417,9 +417,9 @@ static inline void softmax_pass2_range(float *          dst,
                   [tm] "r"(tail_m0)
                 : "f0", "f1", "memory");
         }
-    } else {
-        for (int c = begin; c < aligned_end; c += 8) {
-            __asm__ volatile(
+    } അല്ലെങ്കിൽ {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ c = begin; c < aligned_end; c += 8) {
+            __asm__ അസ്ഥിര(
                 "flw.ps    f0, 0(%[sp])           \n\t"
                 "fmadd.ps  f0, f0, f10, f12       \n\t"
                 "fexp.ps   f0, f0                 \n\t"
@@ -431,9 +431,9 @@ static inline void softmax_pass2_range(float *          dst,
         }
 
         // Tail chunk with m0 gating
-        if (aligned_end < end) {
-            const unsigned long tail_m0 = (1ul << (end - aligned_end)) - 1;
-            __asm__ volatile(
+        എങ്കിൽ (aligned_end < end) {
+            സ്ഥിരം unsigned long tail_m0 = (1ul << (end - aligned_end)) - 1;
+            __asm__ അസ്ഥിര(
                 "mov.m.x   m0, %[tm], 0              \n\t"
                 "flw.ps    f0, 0(%[sp])           \n\t"
                 "fmadd.ps  f0, f0, f10, f12       \n\t"
@@ -447,115 +447,115 @@ static inline void softmax_pass2_range(float *          dst,
         }
     }
 
-    __asm__ volatile("mova.m.x  %[ms] \n\t" ::[ms] "r"(ms));
+    __asm__ അസ്ഥിര("mova.m.x  %[ms] \n\t" ::[ms] "r"(ms));
 }
 
 // Single-core row path.
 // pass1_range and pass2_range handle non-8-aligned cols internally via
 // m0-gated tail chunks, so this function just passes cols directly.
-static inline void compute_softmax_row(float *       dst,
-                                       const float * src,
-                                       const float * mask,
-                                       int           cols,
-                                       float         scale,
-                                       float         slope,
-                                       float         sink_value,
+സ്ഥിതം വരിയിൽ ശൂന്യം compute_softmax_row(ദശാംശം *       dst,
+                                       സ്ഥിരം ദശാംശം * src,
+                                       സ്ഥിരം ദശാംശം * mask,
+                                       പൂർണ്ണസംഖ്യ           cols,
+                                       ദശാംശം         scale,
+                                       ദശാംശം         slope,
+                                       ദശാംശം         sink_മൂല്യം,
                                        bool          use_sinks) {
     softmax_params_t params = softmax_pass1_range(src, mask, 0, cols, scale, slope);
 
-    if (use_sinks) {
+    എങ്കിൽ (use_sinks) {
         // For sinks, use fully scalar et_expf to match the reference CPU
         // backend's expf precision.  Sink tests use small arrays (ne<=32)
         // so the scalar path has negligible performance impact.
-        float max_val = params.max_val;
-        if (sink_value > max_val) {
-            max_val = sink_value;
+        ദശാംശം max_val = params.max_val;
+        എങ്കിൽ (sink_മൂല്യം > max_val) {
+            max_val = sink_മൂല്യം;
         }
 
         // Compute sum = Σ exp(x'[i] - max) + exp(sink - max)  (scalar)
-        float sum = 0.0f;
-        for (int i = 0; i < cols; ++i) {
-            float x = src[i] * scale;
-            if (mask != NULL) {
+        ദശാംശം sum = 0.0f;
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < cols; ++i) {
+            ദശാംശം x = src[i] * scale;
+            എങ്കിൽ (mask != ശൂന്യ) {
                 x += mask[i] * slope;
             }
             sum += et_expf(x - max_val);
         }
-        sum += et_expf(sink_value - max_val);
+        sum += et_expf(sink_മൂല്യം - max_val);
 
         // Normalize: dst[i] = exp(x'[i] - max) / sum  (scalar)
-        float inv_sum = et_fdiv(1.0f, sum);
-        for (int i = 0; i < cols; ++i) {
-            float x = src[i] * scale;
-            if (mask != NULL) {
+        ദശാംശം inv_sum = et_fdiv(1.0f, sum);
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < cols; ++i) {
+            ദശാംശം x = src[i] * scale;
+            എങ്കിൽ (mask != ശൂന്യ) {
                 x += mask[i] * slope;
             }
             dst[i] = et_expf(x - max_val) * inv_sum;
         }
-    } else {
-        if (!params.valid_mask) {
-            return;
+    } അല്ലെങ്കിൽ {
+        എങ്കിൽ (!params.valid_mask) {
+            തിരികെ;
         }
         softmax_pass2_range(dst, src, mask, 0, cols, scale, slope, params);
     }
 }
 
 // Main entry point for Softmax kernel
-int entry_point(struct ggml_et_softmax_params * params, void * env) {
+പൂർണ്ണസംഖ്യ entry_point(ഘടന ggml_et_softmax_params * params, ശൂന്യം * env) {
     // Cast env to proper type
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
     // Validate environment pointer
-    if (!kernel_env) {
-        return -1;
+    എങ്കിൽ (!kernel_env) {
+        തിരികെ -1;
     }
 
     // Get thread info using shire mask from environment
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    പൂർണ്ണസംഖ്യ thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    പൂർണ്ണസംഖ്യ അക്കം_threads = get_അക്കം_threads(kernel_env->shire_mask);
 
     // Return early if this hart is not active
-    if (thread_id < 0) {
-        return 0;
+    എങ്കിൽ (thread_id < 0) {
+        തിരികെ 0;
     }
 
     // Basic safety check on params
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;  // Invalid pointer
+    എങ്കിൽ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        തിരികെ -1;  // Invalid pointer
     }
 
     // Extract tensor references
-    struct ggml_tensor * src0     = &params->src0;     // Input tensor
-    struct ggml_tensor * src1     = &params->src1;     // Mask tensor (optional)
-    struct ggml_tensor * src2     = &params->src2;     // Sinks tensor (optional)
-    struct ggml_tensor * dst      = &params->dst;      // Output tensor
-    float                scale    = params->scale;     // Scale factor
-    float                max_bias = params->max_bias;  // ALiBi max bias
+    ഘടന ggml_tensor * src0     = &params->src0;     // Input tensor
+    ഘടന ggml_tensor * src1     = &params->src1;     // Mask tensor (optional)
+    ഘടന ggml_tensor * src2     = &params->src2;     // Sinks tensor (optional)
+    ഘടന ggml_tensor * dst      = &params->dst;      // Output tensor
+    ദശാംശം                scale    = params->scale;     // Scale factor
+    ദശാംശം                max_bias = params->max_bias;  // ALiBi max bias
 
     // Validate tensor types (F32 only)
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;  // Unsupported type combination
+    എങ്കിൽ (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        തിരികെ -1;  // Unsupported type combination
     }
 
     // Check if mask is used and validate type
-    bool use_mask = (src1->data != NULL && (src1->type == GGML_TYPE_F32 || src1->type == GGML_TYPE_F16));
+    bool use_mask = (src1->data != ശൂന്യ && (src1->type == GGML_TYPE_F32 || src1->type == GGML_TYPE_F16));
 
-    bool use_sinks = (src2->data != NULL && src2->type == GGML_TYPE_F32);
+    bool use_sinks = (src2->data != ശൂന്യ && src2->type == GGML_TYPE_F32);
 
-    float * src0_data  = (float *) src0->data;
-    float * dst_data   = (float *) dst->data;
-    float * mask_data  = use_mask ? (float *) src1->data : NULL;
-    float * sinks_data = use_sinks ? (float *) src2->data : NULL;
+    ദശാംശം * src0_data  = (ദശാംശം *) src0->data;
+    ദശാംശം * dst_data   = (ദശാംശം *) dst->data;
+    ദശാംശം * mask_data  = use_mask ? (ദശാംശം *) src1->data : ശൂന്യ;
+    ദശാംശം * sinks_data = use_sinks ? (ദശാംശം *) src2->data : ശൂന്യ;
 
-    if (!src0_data || !dst_data) {
-        return -1;  // Null data pointer
+    എങ്കിൽ (!src0_data || !dst_data) {
+        തിരികെ -1;  // Null data pointer
     }
 
 
-    const int64_t ne00 = src0->ne[0];  // Sequence length (columns)
-    const int64_t ne01 = src0->ne[1];  // Number of rows
-    const int64_t ne02 = src0->ne[2];  // Batch/head dimension
-    const int64_t ne03 = src0->ne[3];  // Outer batch dimension
+    സ്ഥിരം int64_t ne00 = src0->ne[0];  // Sequence length (columns)
+    സ്ഥിരം int64_t ne01 = src0->ne[1];  // Number of rows
+    സ്ഥിരം int64_t ne02 = src0->ne[2];  // Batch/head dimension
+    സ്ഥിരം int64_t ne03 = src0->ne[3];  // Outer batch dimension
 
     // Fast path: softmax of a single element is always 1.0
     // (exp(x) / exp(x) == 1 for any x, regardless of scale/mask/bias)
@@ -564,62 +564,62 @@ int entry_point(struct ggml_et_softmax_params * params, void * env) {
     // Each output element is 4 bytes.  A cache line is 64 bytes = 16 floats.
     // L1 is not coherent across harts, so each thread must own whole cache
     // lines to avoid cross-hart conflicts.
-    if (ne00 == 1) {
-        const int64_t total_elems  = ne01 * ne02 * ne03;
-        const int64_t elems_per_cl = ET_CACHE_LINE_SIZE_BYTES / (int64_t) sizeof(float);  // 16
-        const int64_t total_cls    = (total_elems + elems_per_cl - 1) / elems_per_cl;
+    എങ്കിൽ (ne00 == 1) {
+        സ്ഥിരം int64_t total_elems  = ne01 * ne02 * ne03;
+        സ്ഥിരം int64_t elems_per_cl = ET_CACHE_വരി_SIZE_BYTES / (int64_t) വലുപ്പം(ദശാംശം);  // 16
+        സ്ഥിരം int64_t total_cls    = (total_elems + elems_per_cl - 1) / elems_per_cl;
 
-        for (int64_t cl = thread_id; cl < total_cls; cl += num_threads) {
-            const int64_t start = cl * elems_per_cl;
+        വേണ്ടി (int64_t cl = thread_id; cl < total_cls; cl += അക്കം_threads) {
+            സ്ഥിരം int64_t start = cl * elems_per_cl;
             int64_t       end   = start + elems_per_cl;
-            if (end > total_elems) {
+            എങ്കിൽ (end > total_elems) {
                 end = total_elems;
             }
-            for (int64_t idx = start; idx < end; idx++) {
+            വേണ്ടി (int64_t idx = start; idx < end; idx++) {
                 dst_data[idx] = 1.0f;
             }
         }
-        return 0;
+        തിരികെ 0;
     }
 
-    const int64_t ne10 = use_mask ? src1->ne[0] : 0;  // Mask sequence length
-    const int64_t ne11 = use_mask ? src1->ne[1] : 0;  // Mask rows
-    const int64_t ne12 = use_mask ? src1->ne[2] : 0;  // Mask batch/head dimension
-    const int64_t ne13 = use_mask ? src1->ne[3] : 0;  // Mask outer batch dimension
+    സ്ഥിരം int64_t ne10 = use_mask ? src1->ne[0] : 0;  // Mask sequence length
+    സ്ഥിരം int64_t ne11 = use_mask ? src1->ne[1] : 0;  // Mask rows
+    സ്ഥിരം int64_t ne12 = use_mask ? src1->ne[2] : 0;  // Mask batch/head dimension
+    സ്ഥിരം int64_t ne13 = use_mask ? src1->ne[3] : 0;  // Mask outer batch dimension
 
-    if (use_mask) {
+    എങ്കിൽ (use_mask) {
         // - Dimension 0: mask must equal input exactly
         // - Dimension 1: mask must be >= input (allows larger pre-allocated masks)
         // - Dimension 2: input must be divisible by mask (modulo broadcasting)
         // - Dimension 3: input must be divisible by mask (modulo broadcasting)
-        if (ne10 != ne00 ||                    // Dimension 0: exact match required
+        എങ്കിൽ (ne10 != ne00 ||                    // Dimension 0: exact match required
             ne11 < ne01 ||                     // Dimension 1: mask >= input
             (ne12 > 0 && ne02 % ne12 != 0) ||  // Dimension 2: input % mask == 0
             (ne13 > 0 && ne03 % ne13 != 0)) {  // Dimension 3: input % mask == 0
-            return -1;                         // Incompatible dimensions for ggml softmax broadcasting
+            തിരികെ -1;                         // Incompatible dimensions for ggml softmax broadcasting
         }
     }
 
     // ALiBi slope calculation - compute per attention head
-    const uint32_t n_head      = (uint32_t) ne02;
+    സ്ഥിരം uint32_t n_head      = (uint32_t) ne02;
     uint32_t       n_head_log2 = 0;
-    float          m0          = 1.0f;
-    float          m1          = 1.0f;
+    ദശാംശം          m0          = 1.0f;
+    ദശാംശം          m1          = 1.0f;
 
-    if (max_bias > 0.0f) {
+    എങ്കിൽ (max_bias > 0.0f) {
         // This is equivalent to: 1 << floor(log2(n_head))
         n_head_log2 = 1;
-        while (n_head_log2 < n_head) {
+        ആകുമ്പോൾ (n_head_log2 < n_head) {
             n_head_log2 <<= 1;
         }
-        if (n_head_log2 > n_head) {
+        എങ്കിൽ (n_head_log2 > n_head) {
             n_head_log2 >>= 1;
         }
 
         // Compute base slopes for ALiBi
         // m0 = 2^(-max_bias / n_head_log2)
         // m1 = 2^(-max_bias / (2 * n_head_log2))
-        float inv_n_head_log2 = et_fdiv(1.0f, (float) n_head_log2);
+        ദശാംശം inv_n_head_log2 = et_fdiv(1.0f, (ദശാംശം) n_head_log2);
         m0                    = et_expf(-max_bias * 0.69314718f * inv_n_head_log2);  // 0.69314718 = ln(2)
         m1                    = et_expf(-max_bias * 0.69314718f * inv_n_head_log2 * 0.5f);
     }
@@ -633,66 +633,66 @@ int entry_point(struct ggml_et_softmax_params * params, void * env) {
     // lines, preventing cross-hart L1 coherency issues.  When rows ARE
     // cache-line aligned, rows_per_wg == 1 and this degenerates to the
     // original stride-by-num_threads distribution.
-    const int64_t rows_per_i03 = ne02 * ne01;
-    const int64_t total_rows   = ne03 * rows_per_i03;
-    const int64_t rows_per_wg  = et_rows_per_cacheline_group(ne00, sizeof(float));
-    const int64_t total_wgs    = (total_rows + rows_per_wg - 1) / rows_per_wg;
+    സ്ഥിരം int64_t rows_per_i03 = ne02 * ne01;
+    സ്ഥിരം int64_t total_rows   = ne03 * rows_per_i03;
+    സ്ഥിരം int64_t rows_per_wg  = et_rows_per_cacheline_group(ne00, വലുപ്പം(ദശാംശം));
+    സ്ഥിരം int64_t total_wgs    = (total_rows + rows_per_wg - 1) / rows_per_wg;
 
-    for (int64_t wg = thread_id; wg < total_wgs; wg += num_threads) {
-        const int64_t row_start = wg * rows_per_wg;
+    വേണ്ടി (int64_t wg = thread_id; wg < total_wgs; wg += അക്കം_threads) {
+        സ്ഥിരം int64_t row_start = wg * rows_per_wg;
         int64_t       row_end   = row_start + rows_per_wg;
-        if (row_end > total_rows) {
+        എങ്കിൽ (row_end > total_rows) {
             row_end = total_rows;
         }
 
-        for (int64_t row = row_start; row < row_end; row++) {
-            const int64_t i03 = row / rows_per_i03;
-            const int64_t rem = row % rows_per_i03;
-            const int64_t i02 = rem / ne01;
-            const int64_t i01 = rem % ne01;
+        വേണ്ടി (int64_t row = row_start; row < row_end; row++) {
+            സ്ഥിരം int64_t i03 = row / rows_per_i03;
+            സ്ഥിരം int64_t rem = row % rows_per_i03;
+            സ്ഥിരം int64_t i02 = rem / ne01;
+            സ്ഥിരം int64_t i01 = rem % ne01;
 
             // Calculate ALiBi slope for this attention head
-            float slope = 1.0f;
-            if (max_bias > 0.0f) {
-                const uint32_t h = (uint32_t) i02;  // head index
-                if (h < n_head_log2) {
+            ദശാംശം slope = 1.0f;
+            എങ്കിൽ (max_bias > 0.0f) {
+                സ്ഥിരം uint32_t h = (uint32_t) i02;  // head index
+                എങ്കിൽ (h < n_head_log2) {
                     slope = m0;
-                    for (uint32_t i = 0; i < h; i++) {
+                    വേണ്ടി (uint32_t i = 0; i < h; i++) {
                         slope *= m0;
                     }
-                } else {
-                    const uint32_t exp = 2 * (h - n_head_log2) + 1;
+                } അല്ലെങ്കിൽ {
+                    സ്ഥിരം uint32_t exp = 2 * (h - n_head_log2) + 1;
                     slope              = m1;
-                    for (uint32_t i = 1; i < exp; i++) {
+                    വേണ്ടി (uint32_t i = 1; i < exp; i++) {
                         slope *= m1;
                     }
                 }
             }
 
-            float sink_value = 0.0f;
-            if (use_sinks && sinks_data) {
-                sink_value = sinks_data[i02];
+            ദശാംശം sink_മൂല്യം = 0.0f;
+            എങ്കിൽ (use_sinks && sinks_data) {
+                sink_മൂല്യം = sinks_data[i02];
             }
 
-            const int64_t src_offset = i03 * ne02 * ne01 * ne00 + i02 * ne01 * ne00 + i01 * ne00;
+            സ്ഥിരം int64_t src_offset = i03 * ne02 * ne01 * ne00 + i02 * ne01 * ne00 + i01 * ne00;
 
-            const float * src_row  = src0_data + src_offset;
-            float *       dst_row  = dst_data + src_offset;
-            const float * mask_row = NULL;
+            സ്ഥിരം ദശാംശം * src_row  = src0_data + src_offset;
+            ദശാംശം *       dst_row  = dst_data + src_offset;
+            സ്ഥിരം ദശാംശം * mask_row = ശൂന്യ;
 
-            if (use_mask && mask_data) {
-                const int64_t mask_i03 = (ne13 > 0) ? i03 % ne13 : 0;
-                const int64_t mask_i02 = (ne12 > 0) ? i02 % ne12 : 0;
-                const int64_t mask_i01 = i01;
+            എങ്കിൽ (use_mask && mask_data) {
+                സ്ഥിരം int64_t mask_i03 = (ne13 > 0) ? i03 % ne13 : 0;
+                സ്ഥിരം int64_t mask_i02 = (ne12 > 0) ? i02 % ne12 : 0;
+                സ്ഥിരം int64_t mask_i01 = i01;
 
-                const int64_t mask_offset = mask_i03 * ne12 * ne11 * ne10 + mask_i02 * ne11 * ne10 + mask_i01 * ne10;
+                സ്ഥിരം int64_t mask_offset = mask_i03 * ne12 * ne11 * ne10 + mask_i02 * ne11 * ne10 + mask_i01 * ne10;
 
                 mask_row = mask_data + mask_offset;
             }
 
-            compute_softmax_row(dst_row, src_row, mask_row, (int) ne00, scale, slope, sink_value, use_sinks);
+            compute_softmax_row(dst_row, src_row, mask_row, (പൂർണ്ണസംഖ്യ) ne00, scale, slope, sink_മൂല്യം, use_sinks);
         }
     }
 
-    return 0;  // Success
+    തിരികെ 0;  // Success
 }

@@ -13,153 +13,153 @@
 //   Small   (16 % ne0 == 0): cache-line distributed, scalar per-element.
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "platform.h"
+#അന്തര്ഭാവ "ggml_tensor.h"
+#അന്തര്ഭാവ "platform.h"
 
-#include <stdint.h>
+#അന്തര്ഭാവ <stdint.h>
 
-struct ggml_et_pad_params {
-    struct ggml_tensor src0;
-    struct ggml_tensor dst;
+ഘടന ggml_et_pad_params {
+    ഘടന ggml_tensor src0;
+    ഘടന ggml_tensor dst;
     int32_t            lp[4];
     int32_t            rp[4];
 };
 
 // Vectorized copy with scalar tail
-static inline void vec_copy_f32(float * dst, const float * src, int32_t n) {
+സ്ഥിതം വരിയിൽ ശൂന്യം vec_copy_f32(ദശാംശം * dst, സ്ഥിരം ദശാംശം * src, int32_t n) {
     int32_t       i       = 0;
-    const int32_t vec_end = (n / 8) * 8;
-    for (; i < vec_end; i += 8) {
-        __asm__ volatile(
+    സ്ഥിരം int32_t vec_end = (n / 8) * 8;
+    വേണ്ടി (; i < vec_end; i += 8) {
+        __asm__ അസ്ഥിര(
             "flw.ps f10, %[s]\n"
             "fsw.ps f10, %[d]\n"
-            : [d] "=m"(*(float (*)[8]) & dst[i])
-            : [s] "m"(*(const float (*)[8]) & src[i])
+            : [d] "=m"(*(ദശാംശം (*)[8]) & dst[i])
+            : [s] "m"(*(സ്ഥിരം ദശാംശം (*)[8]) & src[i])
             : "f10");
     }
-    for (; i < n; i++) {
+    വേണ്ടി (; i < n; i++) {
         dst[i] = src[i];
     }
 }
 
-int entry_point(struct ggml_et_pad_params * params, void * env) {
+പൂർണ്ണസംഖ്യ entry_point(ഘടന ggml_et_pad_params * params, ശൂന്യം * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    എങ്കിൽ (!kernel_env) {
+        തിരികെ -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    പൂർണ്ണസംഖ്യ thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    പൂർണ്ണസംഖ്യ അക്കം_threads = get_അക്കം_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    എങ്കിൽ (thread_id < 0) {
+        തിരികെ 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    എങ്കിൽ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        തിരികെ -1;
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * dst  = &params->dst;
+    ഘടന ggml_tensor * src0 = &params->src0;
+    ഘടന ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    എങ്കിൽ (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        തിരികെ -1;
     }
 
-    const float * src0_data = (const float *) src0->data;
-    float *       dst_data  = (float *) dst->data;
+    സ്ഥിരം ദശാംശം * src0_data = (സ്ഥിരം ദശാംശം *) src0->data;
+    ദശാംശം *       dst_data  = (ദശാംശം *) dst->data;
 
-    if (!src0_data || !dst_data) {
-        return -1;
+    എങ്കിൽ (!src0_data || !dst_data) {
+        തിരികെ -1;
     }
 
     // Dst dimensions
-    const int64_t ne0 = dst->ne[0];
-    const int64_t ne1 = dst->ne[1];
-    const int64_t ne2 = dst->ne[2];
-    const int64_t ne3 = dst->ne[3];
+    സ്ഥിരം int64_t ne0 = dst->ne[0];
+    സ്ഥിരം int64_t ne1 = dst->ne[1];
+    സ്ഥിരം int64_t ne2 = dst->ne[2];
+    സ്ഥിരം int64_t ne3 = dst->ne[3];
 
     // Src strides (byte offsets)
-    const int64_t nb1_src = src0->nb[1];
-    const int64_t nb2_src = src0->nb[2];
-    const int64_t nb3_src = src0->nb[3];
+    സ്ഥിരം int64_t nb1_src = src0->nb[1];
+    സ്ഥിരം int64_t nb2_src = src0->nb[2];
+    സ്ഥിരം int64_t nb3_src = src0->nb[3];
 
     // Padding values
-    const int32_t lp1 = params->lp[1];
-    const int32_t rp1 = params->rp[1];
-    const int32_t lp2 = params->lp[2];
-    const int32_t rp2 = params->rp[2];
-    const int32_t lp3 = params->lp[3];
-    const int32_t rp3 = params->rp[3];
+    സ്ഥിരം int32_t lp1 = params->lp[1];
+    സ്ഥിരം int32_t rp1 = params->rp[1];
+    സ്ഥിരം int32_t lp2 = params->lp[2];
+    സ്ഥിരം int32_t rp2 = params->rp[2];
+    സ്ഥിരം int32_t lp3 = params->lp[3];
+    സ്ഥിരം int32_t rp3 = params->rp[3];
 
-    const int64_t total_rows     = ne1 * ne2 * ne3;
-    const int64_t total_elements = ne0 * total_rows;
+    സ്ഥിരം int64_t total_rows     = ne1 * ne2 * ne3;
+    സ്ഥിരം int64_t total_elements = ne0 * total_rows;
 
-    if (total_elements == 0) {
-        return 0;
+    എങ്കിൽ (total_elements == 0) {
+        തിരികെ 0;
     }
 
     // Broadcast 0.0f to SIMD register for vectorized zero-fill
-    float zero = 0.0f;
-    __asm__ volatile("fbc.ps f12, %[v]\n" : : [v] "m"(zero) : "f12");
+    ദശാംശം zero = 0.0f;
+    __asm__ അസ്ഥിര("fbc.ps f12, %[v]\n" : : [v] "m"(zero) : "f12");
 
     // Aligned: ne0 % 16 == 0 -> row-based distribution, vectorized
-    if (ne0 % 16 == 0) {
-        for (int64_t row = thread_id; row < total_rows; row += num_threads) {
-            const int64_t i3 = row / (ne1 * ne2);
-            const int64_t i2 = (row / ne1) % ne2;
-            const int64_t i1 = row % ne1;
+    എങ്കിൽ (ne0 % 16 == 0) {
+        വേണ്ടി (int64_t row = thread_id; row < total_rows; row += അക്കം_threads) {
+            സ്ഥിരം int64_t i3 = row / (ne1 * ne2);
+            സ്ഥിരം int64_t i2 = (row / ne1) % ne2;
+            സ്ഥിരം int64_t i1 = row % ne1;
 
-            float * dst_row = dst_data + row * ne0;
+            ദശാംശം * dst_row = dst_data + row * ne0;
 
-            if (i1 >= lp1 && i1 < ne1 - rp1 && i2 >= lp2 && i2 < ne2 - rp2 && i3 >= lp3 && i3 < ne3 - rp3) {
-                const float * src_row = (const float *) ((const char *) src0_data + (i1 - lp1) * nb1_src +
+            എങ്കിൽ (i1 >= lp1 && i1 < ne1 - rp1 && i2 >= lp2 && i2 < ne2 - rp2 && i3 >= lp3 && i3 < ne3 - rp3) {
+                സ്ഥിരം ദശാംശം * src_row = (സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *) src0_data + (i1 - lp1) * nb1_src +
                                                          (i2 - lp2) * nb2_src + (i3 - lp3) * nb3_src);
                 vec_copy_f32(dst_row, src_row, (int32_t) ne0);
-            } else {
+            } അല്ലെങ്കിൽ {
                 int64_t       i       = 0;
-                const int64_t vec_end = (ne0 / 8) * 8;
-                for (; i < vec_end; i += 8) {
-                    __asm__ volatile("fsw.ps f12, %[d]\n" : [d] "=m"(*(float (*)[8]) & dst_row[i])::"f12");
+                സ്ഥിരം int64_t vec_end = (ne0 / 8) * 8;
+                വേണ്ടി (; i < vec_end; i += 8) {
+                    __asm__ അസ്ഥിര("fsw.ps f12, %[d]\n" : [d] "=m"(*(ദശാംശം (*)[8]) & dst_row[i])::"f12");
                 }
             }
         }
-        return 0;
+        തിരികെ 0;
     }
 
     // Small-ne0 path: 16 % ne0 == 0 -> cache-line distributed, scalar
-    const int64_t elems_per_cl = 16;
-    const int64_t total_cl     = (total_elements + elems_per_cl - 1) / elems_per_cl;
+    സ്ഥിരം int64_t elems_per_cl = 16;
+    സ്ഥിരം int64_t total_cl     = (total_elements + elems_per_cl - 1) / elems_per_cl;
 
-    const int64_t ne1_data_end = ne1 - rp1;
-    const int64_t ne2_data_end = ne2 - rp2;
-    const int64_t ne3_data_end = ne3 - rp3;
+    സ്ഥിരം int64_t ne1_data_end = ne1 - rp1;
+    സ്ഥിരം int64_t ne2_data_end = ne2 - rp2;
+    സ്ഥിരം int64_t ne3_data_end = ne3 - rp3;
 
-    for (int64_t cl = thread_id; cl < total_cl; cl += num_threads) {
-        const int64_t elem_start = cl * elems_per_cl;
+    വേണ്ടി (int64_t cl = thread_id; cl < total_cl; cl += അക്കം_threads) {
+        സ്ഥിരം int64_t elem_start = cl * elems_per_cl;
         int64_t       elem_end   = elem_start + elems_per_cl;
-        if (elem_end > total_elements) {
+        എങ്കിൽ (elem_end > total_elements) {
             elem_end = total_elements;
         }
 
-        for (int64_t idx = elem_start; idx < elem_end; idx++) {
-            const int64_t i0   = idx % ne0;
-            const int64_t rem  = idx / ne0;
-            const int64_t i1   = rem % ne1;
-            const int64_t rem2 = rem / ne1;
-            const int64_t i2   = rem2 % ne2;
-            const int64_t i3   = rem2 / ne2;
+        വേണ്ടി (int64_t idx = elem_start; idx < elem_end; idx++) {
+            സ്ഥിരം int64_t i0   = idx % ne0;
+            സ്ഥിരം int64_t rem  = idx / ne0;
+            സ്ഥിരം int64_t i1   = rem % ne1;
+            സ്ഥിരം int64_t rem2 = rem / ne1;
+            സ്ഥിരം int64_t i2   = rem2 % ne2;
+            സ്ഥിരം int64_t i3   = rem2 / ne2;
 
-            if (i1 >= lp1 && i1 < ne1_data_end && i2 >= lp2 && i2 < ne2_data_end && i3 >= lp3 && i3 < ne3_data_end) {
-                const float * sp = (const float *) ((const char *) src0_data + i0 * 4 + (i1 - lp1) * nb1_src +
+            എങ്കിൽ (i1 >= lp1 && i1 < ne1_data_end && i2 >= lp2 && i2 < ne2_data_end && i3 >= lp3 && i3 < ne3_data_end) {
+                സ്ഥിരം ദശാംശം * sp = (സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *) src0_data + i0 * 4 + (i1 - lp1) * nb1_src +
                                                     (i2 - lp2) * nb2_src + (i3 - lp3) * nb3_src);
                 dst_data[idx]    = *sp;
-            } else {
+            } അല്ലെങ്കിൽ {
                 dst_data[idx] = 0.0f;
             }
         }
     }
 
-    return 0;
+    തിരികെ 0;
 }

@@ -1,21 +1,21 @@
-#include "convert.hpp"
-#include "dequantize.hpp"
-#include "presets.hpp"
+#അന്തര്ഭാവ "convert.hpp"
+#അന്തര്ഭാവ "dequantize.hpp"
+#അന്തര്ഭാവ "presets.hpp"
 
-template <int qk, int qr, dequantize_kernel_t dequantize_kernel, typename dst_t>
-static void dequantize_block(const void * __restrict__ vx, dst_t * __restrict__ y, const int64_t k,
-                             const sycl::nd_item<3> &item_ct1) {
-    const int64_t i = 2 * (item_ct1.get_local_range(2) * item_ct1.get_group(2) +
+template <പൂർണ്ണസംഖ്യ qk, പൂർണ്ണസംഖ്യ qr, dequantize_kernel_t dequantize_kernel, typename dst_t>
+സ്ഥിതം ശൂന്യം dequantize_block(സ്ഥിരം ശൂന്യം * __restrict__ vx, dst_t * __restrict__ y, സ്ഥിരം int64_t k,
+                             സ്ഥിരം sycl::nd_item<3> &item_ct1) {
+    സ്ഥിരം int64_t i = 2 * (item_ct1.get_local_range(2) * item_ct1.get_group(2) +
                        item_ct1.get_local_id(2));
 
-    if (i >= k) {
-        return;
+    എങ്കിൽ (i >= k) {
+        തിരികെ;
     }
 
-    const int64_t ib = i/qk; // block index
-    const int64_t iqs = (i%qk)/qr; // quant index
-    const int64_t iybs = i - i%qk; // y block start index
-    const int64_t y_offset = qr == 1 ? 1 : qk/2;
+    സ്ഥിരം int64_t ib = i/qk; // block index
+    സ്ഥിരം int64_t iqs = (i%qk)/qr; // quant index
+    സ്ഥിരം int64_t iybs = i - i%qk; // y block start index
+    സ്ഥിരം int64_t y_offset = qr == 1 ? 1 : qk/2;
 
     // dequantize
     dfloat2 v;
@@ -25,17 +25,17 @@ static void dequantize_block(const void * __restrict__ vx, dst_t * __restrict__ 
     y[iybs + iqs + y_offset] = v.y();
 }
 
-template <int qk, int qr, dequantize_kernel_t dequantize_kernel, typename dst_t>
-static void dequantize_block_sycl(const void *__restrict__ vx,
-                                  dst_t *__restrict__ y, const int64_t k,
+template <പൂർണ്ണസംഖ്യ qk, പൂർണ്ണസംഖ്യ qr, dequantize_kernel_t dequantize_kernel, typename dst_t>
+സ്ഥിതം ശൂന്യം dequantize_block_sycl(സ്ഥിരം ശൂന്യം *__restrict__ vx,
+                                  dst_t *__restrict__ y, സ്ഥിരം int64_t k,
                                   dpct::queue_ptr stream) {
-    const int64_t num_blocks = (k + 2*SYCL_DEQUANTIZE_BLOCK_SIZE - 1) / (2*SYCL_DEQUANTIZE_BLOCK_SIZE);
+    സ്ഥിരം int64_t അക്കം_blocks = (k + 2*SYCL_DEQUANTIZE_BLOCK_SIZE - 1) / (2*SYCL_DEQUANTIZE_BLOCK_SIZE);
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
         stream->parallel_for(
             sycl::nd_range<3>(
-                sycl::range<3>(1, 1, num_blocks) *
+                sycl::range<3>(1, 1, അക്കം_blocks) *
                     sycl::range<3>(1, 1, SYCL_DEQUANTIZE_BLOCK_SIZE),
                 sycl::range<3>(1, 1, SYCL_DEQUANTIZE_BLOCK_SIZE)),
             [=](sycl::nd_item<3> item_ct1) {
@@ -45,10 +45,10 @@ static void dequantize_block_sycl(const void *__restrict__ vx,
 }
 
 template <typename dst_t>
-static void dequantize_row_q2_K_sycl(const void *vx, dst_t *y, const int64_t k,
+സ്ഥിതം ശൂന്യം dequantize_row_q2_K_sycl(സ്ഥിരം ശൂന്യം *vx, dst_t *y, സ്ഥിരം int64_t k,
                                      dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
-#if QK_K == 256
+    സ്ഥിരം int64_t nb = k / QK_K;
+#എങ്കിൽ QK_K == 256
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -60,7 +60,7 @@ static void dequantize_row_q2_K_sycl(const void *vx, dst_t *y, const int64_t k,
                                  dequantize_block_q2_K(vx, y, item_ct1);
                              });
     }
-#else
+#അല്ലെങ്കിൽ
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -77,9 +77,9 @@ static void dequantize_row_q2_K_sycl(const void *vx, dst_t *y, const int64_t k,
 }
 
 template <typename dst_t>
-static void dequantize_row_q2_K_sycl_reorder(const void *vx, dst_t *y, const int64_t k,
+സ്ഥിതം ശൂന്യം dequantize_row_q2_K_sycl_reorder(സ്ഥിരം ശൂന്യം *vx, dst_t *y, സ്ഥിരം int64_t k,
                                              dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+    സ്ഥിരം int64_t nb = k / QK_K;
 
     dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
     stream->parallel_for(
@@ -90,10 +90,10 @@ static void dequantize_row_q2_K_sycl_reorder(const void *vx, dst_t *y, const int
 }
 
 template <typename dst_t>
-static void dequantize_row_q3_K_sycl(const void *vx, dst_t *y, const int64_t k,
+സ്ഥിതം ശൂന്യം dequantize_row_q3_K_sycl(സ്ഥിരം ശൂന്യം *vx, dst_t *y, സ്ഥിരം int64_t k,
                                      dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
-#if QK_K == 256
+    സ്ഥിരം int64_t nb = k / QK_K;
+#എങ്കിൽ QK_K == 256
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -105,7 +105,7 @@ static void dequantize_row_q3_K_sycl(const void *vx, dst_t *y, const int64_t k,
                                  dequantize_block_q3_K(vx, y, item_ct1);
                              });
     }
-#else
+#അല്ലെങ്കിൽ
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -121,9 +121,9 @@ static void dequantize_row_q3_K_sycl(const void *vx, dst_t *y, const int64_t k,
 }
 
 template <typename dst_t>
-static void dequantize_row_q3_K_sycl_reorder(const void *vx, dst_t *y, const int64_t k,
+സ്ഥിതം ശൂന്യം dequantize_row_q3_K_sycl_reorder(സ്ഥിരം ശൂന്യം *vx, dst_t *y, സ്ഥിരം int64_t k,
                                              dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+    സ്ഥിരം int64_t nb = k / QK_K;
 
     dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
     stream->parallel_for(
@@ -134,10 +134,10 @@ static void dequantize_row_q3_K_sycl_reorder(const void *vx, dst_t *y, const int
 }
 
 template <typename dst_t>
-static void dequantize_row_q4_0_sycl(const void *vx, dst_t *y, const int64_t k,
+സ്ഥിതം ശൂന്യം dequantize_row_q4_0_sycl(സ്ഥിരം ശൂന്യം *vx, dst_t *y, സ്ഥിരം int64_t k,
                                      dpct::queue_ptr stream) {
-    const int64_t nb32 = k / 32;
-    const int64_t nb = (k + 255) / 256;
+    സ്ഥിരം int64_t nb32 = k / 32;
+    സ്ഥിരം int64_t nb = (k + 255) / 256;
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -152,16 +152,16 @@ static void dequantize_row_q4_0_sycl(const void *vx, dst_t *y, const int64_t k,
 }
 
 template <typename dst_t>
-static void dequantize_row_q4_0_sycl_reorder(const void *vx, dst_t *y, const int64_t k,
+സ്ഥിതം ശൂന്യം dequantize_row_q4_0_sycl_reorder(സ്ഥിരം ശൂന്യം *vx, dst_t *y, സ്ഥിരം int64_t k,
                                      dpct::queue_ptr stream) {
 
     dpct::has_capability_or_fail(stream->get_device(),
                                     {sycl::aspect::fp16});
 
     GGML_ASSERT(k % QK4_0 == 0);
-    const int64_t n_groups = ceil_div(k / 2, SYCL_DEQUANTIZE_BLOCK_SIZE);
+    സ്ഥിരം int64_t n_groups = ceil_div(k / 2, SYCL_DEQUANTIZE_BLOCK_SIZE);
     // decrease global range when it exceeds the max int; the kernel loops to cover the rest
-    const int64_t wg_size  = downsample_sycl_global_range(n_groups, SYCL_DEQUANTIZE_BLOCK_SIZE);
+    സ്ഥിരം int64_t wg_size  = downsample_sycl_global_range(n_groups, SYCL_DEQUANTIZE_BLOCK_SIZE);
     stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, n_groups) *
         sycl::range<3>(1, 1, wg_size),
         sycl::range<3>(1, 1, wg_size)),
@@ -171,7 +171,7 @@ static void dequantize_row_q4_0_sycl_reorder(const void *vx, dst_t *y, const int
 }
 
 template <typename dst_t>
-static void dequantize_row_q8_0_sycl_reorder(const void *vx, dst_t *y, const int64_t k,
+സ്ഥിതം ശൂന്യം dequantize_row_q8_0_sycl_reorder(സ്ഥിരം ശൂന്യം *vx, dst_t *y, സ്ഥിരം int64_t k,
                                      dpct::queue_ptr stream) {
 
     dpct::has_capability_or_fail(stream->get_device(),
@@ -187,10 +187,10 @@ static void dequantize_row_q8_0_sycl_reorder(const void *vx, dst_t *y, const int
 }
 
 template <typename dst_t>
-static void dequantize_row_q4_1_sycl(const void *vx, dst_t *y, const int64_t k,
+സ്ഥിതം ശൂന്യം dequantize_row_q4_1_sycl(സ്ഥിരം ശൂന്യം *vx, dst_t *y, സ്ഥിരം int64_t k,
                                      dpct::queue_ptr stream) {
-    const int64_t nb32 = k / 32;
-    const int64_t nb = (k + 255) / 256;
+    സ്ഥിരം int64_t nb32 = k / 32;
+    സ്ഥിരം int64_t nb = (k + 255) / 256;
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -206,9 +206,9 @@ static void dequantize_row_q4_1_sycl(const void *vx, dst_t *y, const int64_t k,
 
 
 template <typename dst_t>
-static void dequantize_row_q4_K_sycl(const void *vx, dst_t *y, const int64_t k,
+സ്ഥിതം ശൂന്യം dequantize_row_q4_K_sycl(സ്ഥിരം ശൂന്യം *vx, dst_t *y, സ്ഥിരം int64_t k,
                                      dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+    സ്ഥിരം int64_t nb = k / QK_K;
     dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
     stream->parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t) nb * SYCL_DEQK_WI_PER_BLOCK),
                                            sycl::range<1>((size_t) SYCL_DEQK_WI_PER_BLOCK)),
@@ -216,10 +216,10 @@ static void dequantize_row_q4_K_sycl(const void *vx, dst_t *y, const int64_t k,
 }
 
 template <typename dst_t>
-static void dequantize_row_q4_K_sycl_reorder(const void * vx, dst_t * y, const int64_t k, dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
-    const size_t  local_size  = 32;
-    const size_t  global_size = nb * local_size;
+സ്ഥിതം ശൂന്യം dequantize_row_q4_K_sycl_reorder(സ്ഥിരം ശൂന്യം * vx, dst_t * y, സ്ഥിരം int64_t k, dpct::queue_ptr stream) {
+    സ്ഥിരം int64_t nb = k / QK_K;
+    സ്ഥിരം size_t  local_size  = 32;
+    സ്ഥിരം size_t  global_size = nb * local_size;
 
     dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
 
@@ -234,9 +234,9 @@ static void dequantize_row_q4_K_sycl_reorder(const void * vx, dst_t * y, const i
 }
 
 template <typename dst_t>
-static void dequantize_row_q5_K_sycl(const void *vx, dst_t *y, const int64_t k,
+സ്ഥിതം ശൂന്യം dequantize_row_q5_K_sycl(സ്ഥിരം ശൂന്യം *vx, dst_t *y, സ്ഥിരം int64_t k,
                                      dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+    സ്ഥിരം int64_t nb = k / QK_K;
     dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
     stream->parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t) nb * SYCL_DEQK_WI_PER_BLOCK),
                                            sycl::range<1>((size_t) SYCL_DEQK_WI_PER_BLOCK)),
@@ -244,8 +244,8 @@ static void dequantize_row_q5_K_sycl(const void *vx, dst_t *y, const int64_t k,
 }
 
 template <typename dst_t>
-static void dequantize_row_q5_K_sycl_reorder(const void * vx, dst_t * y, const int64_t k, dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+സ്ഥിതം ശൂന്യം dequantize_row_q5_K_sycl_reorder(സ്ഥിരം ശൂന്യം * vx, dst_t * y, സ്ഥിരം int64_t k, dpct::queue_ptr stream) {
+    സ്ഥിരം int64_t nb = k / QK_K;
 
     dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
 
@@ -261,10 +261,10 @@ static void dequantize_row_q5_K_sycl_reorder(const void * vx, dst_t * y, const i
 }
 
 template <typename dst_t>
-static void dequantize_row_q6_K_sycl(const void *vx, dst_t *y, const int64_t k,
+സ്ഥിതം ശൂന്യം dequantize_row_q6_K_sycl(സ്ഥിരം ശൂന്യം *vx, dst_t *y, സ്ഥിരം int64_t k,
                                      dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
-#if QK_K == 256
+    സ്ഥിരം int64_t nb = k / QK_K;
+#എങ്കിൽ QK_K == 256
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -276,7 +276,7 @@ static void dequantize_row_q6_K_sycl(const void *vx, dst_t *y, const int64_t k,
                                  dequantize_block_q6_K(vx, y, item_ct1);
                              });
     }
-#else
+#അല്ലെങ്കിൽ
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -293,8 +293,8 @@ static void dequantize_row_q6_K_sycl(const void *vx, dst_t *y, const int64_t k,
 }
 
 template <typename dst_t>
-static void dequantize_row_q6_K_sycl_reorder(const void * vx, dst_t * y, const int64_t k, dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+സ്ഥിതം ശൂന്യം dequantize_row_q6_K_sycl_reorder(സ്ഥിരം ശൂന്യം * vx, dst_t * y, സ്ഥിരം int64_t k, dpct::queue_ptr stream) {
+    സ്ഥിരം int64_t nb = k / QK_K;
 
     dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
 
@@ -304,9 +304,9 @@ static void dequantize_row_q6_K_sycl_reorder(const void * vx, dst_t * y, const i
 }
 
 template <typename dst_t>
-static void dequantize_row_iq1_s_sycl(const void *vx, dst_t *y, const int64_t k,
+സ്ഥിതം ശൂന്യം dequantize_row_iq1_s_sycl(സ്ഥിരം ശൂന്യം *vx, dst_t *y, സ്ഥിരം int64_t k,
                                         dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+    സ്ഥിരം int64_t nb = k / QK_K;
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -325,9 +325,9 @@ static void dequantize_row_iq1_s_sycl(const void *vx, dst_t *y, const int64_t k,
 }
 
 template <typename dst_t>
-static void dequantize_row_iq1_m_sycl(const void *vx, dst_t *y, const int64_t k,
+സ്ഥിതം ശൂന്യം dequantize_row_iq1_m_sycl(സ്ഥിരം ശൂന്യം *vx, dst_t *y, സ്ഥിരം int64_t k,
                                         dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+    സ്ഥിരം int64_t nb = k / QK_K;
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -346,9 +346,9 @@ static void dequantize_row_iq1_m_sycl(const void *vx, dst_t *y, const int64_t k,
 }
 
 template <typename dst_t>
-static void dequantize_row_iq2_xxs_sycl(const void *vx, dst_t *y, const int64_t k,
+സ്ഥിതം ശൂന്യം dequantize_row_iq2_xxs_sycl(സ്ഥിരം ശൂന്യം *vx, dst_t *y, സ്ഥിരം int64_t k,
                                         dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+    സ്ഥിരം int64_t nb = k / QK_K;
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -367,9 +367,9 @@ static void dequantize_row_iq2_xxs_sycl(const void *vx, dst_t *y, const int64_t 
 }
 
 template <typename dst_t>
-static void dequantize_row_iq2_xs_sycl(const void *vx, dst_t *y, const int64_t k,
+സ്ഥിതം ശൂന്യം dequantize_row_iq2_xs_sycl(സ്ഥിരം ശൂന്യം *vx, dst_t *y, സ്ഥിരം int64_t k,
                                        dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+    സ്ഥിരം int64_t nb = k / QK_K;
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -388,9 +388,9 @@ static void dequantize_row_iq2_xs_sycl(const void *vx, dst_t *y, const int64_t k
 }
 
 template <typename dst_t>
-static void dequantize_row_iq2_s_sycl(const void *vx, dst_t *y, const int64_t k,
+സ്ഥിതം ശൂന്യം dequantize_row_iq2_s_sycl(സ്ഥിരം ശൂന്യം *vx, dst_t *y, സ്ഥിരം int64_t k,
                                       dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+    സ്ഥിരം int64_t nb = k / QK_K;
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -408,9 +408,9 @@ static void dequantize_row_iq2_s_sycl(const void *vx, dst_t *y, const int64_t k,
 
 
 template <typename dst_t>
-static void dequantize_row_iq3_xxs_sycl(const void *vx, dst_t *y, const int64_t k,
+സ്ഥിതം ശൂന്യം dequantize_row_iq3_xxs_sycl(സ്ഥിരം ശൂന്യം *vx, dst_t *y, സ്ഥിരം int64_t k,
                                         dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+    സ്ഥിരം int64_t nb = k / QK_K;
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -429,9 +429,9 @@ static void dequantize_row_iq3_xxs_sycl(const void *vx, dst_t *y, const int64_t 
 }
 
 template <typename dst_t>
-static void dequantize_row_iq3_xxs_sycl_reorder(const void * vx, dst_t * y, const int64_t k,
+സ്ഥിതം ശൂന്യം dequantize_row_iq3_xxs_sycl_reorder(സ്ഥിരം ശൂന്യം * vx, dst_t * y, സ്ഥിരം int64_t k,
                                                 dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+    സ്ഥിരം int64_t nb = k / QK_K;
     dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
     stream->parallel_for(
         sycl::nd_range<3>(sycl::range<3>(1, 1, nb) * sycl::range<3>(1, 1, 32), sycl::range<3>(1, 1, 32)),
@@ -443,9 +443,9 @@ static void dequantize_row_iq3_xxs_sycl_reorder(const void * vx, dst_t * y, cons
 }
 
 template <typename dst_t>
-static void dequantize_row_iq3_s_sycl(const void *vx, dst_t *y, const int64_t k,
+സ്ഥിതം ശൂന്യം dequantize_row_iq3_s_sycl(സ്ഥിരം ശൂന്യം *vx, dst_t *y, സ്ഥിരം int64_t k,
                                         dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+    സ്ഥിരം int64_t nb = k / QK_K;
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -463,9 +463,9 @@ static void dequantize_row_iq3_s_sycl(const void *vx, dst_t *y, const int64_t k,
 }
 
 template <typename dst_t>
-static void dequantize_row_iq3_s_sycl_reorder(const void * vx, dst_t * y, const int64_t k,
+സ്ഥിതം ശൂന്യം dequantize_row_iq3_s_sycl_reorder(സ്ഥിരം ശൂന്യം * vx, dst_t * y, സ്ഥിരം int64_t k,
                                               dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+    സ്ഥിരം int64_t nb = k / QK_K;
     dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
     stream->parallel_for(
         sycl::nd_range<3>(sycl::range<3>(1, 1, nb) * sycl::range<3>(1, 1, 32), sycl::range<3>(1, 1, 32)),
@@ -476,12 +476,12 @@ static void dequantize_row_iq3_s_sycl_reorder(const void * vx, dst_t * y, const 
 }
 
 template <typename dst_t>
-static void dequantize_row_iq4_xs_sycl(const void *vx, dst_t *y, const int64_t k,
+സ്ഥിതം ശൂന്യം dequantize_row_iq4_xs_sycl(സ്ഥിരം ശൂന്യം *vx, dst_t *y, സ്ഥിരം int64_t k,
                                        dpct::queue_ptr stream) {
-    const int64_t nb = (k + QK_K - 1) / QK_K;
-#if QK_K == 64
+    സ്ഥിരം int64_t nb = (k + QK_K - 1) / QK_K;
+#എങ്കിൽ QK_K == 64
     dequantize_row_iq4_nl_sycl(vx, y, k, stream);
-#else
+#അല്ലെങ്കിൽ
       {
             dpct::has_capability_or_fail(stream->get_device(),
                                          {sycl::aspect::fp16});
@@ -500,9 +500,9 @@ static void dequantize_row_iq4_xs_sycl(const void *vx, dst_t *y, const int64_t k
 }
 
 template <typename dst_t>
-static void dequantize_row_iq4_nl_sycl(const void *vx, dst_t *y, const int64_t k,
+സ്ഥിതം ശൂന്യം dequantize_row_iq4_nl_sycl(സ്ഥിരം ശൂന്യം *vx, dst_t *y, സ്ഥിരം int64_t k,
                                        dpct::queue_ptr stream) {
-    const int64_t nb = (k + QK_K - 1) / QK_K;
+    സ്ഥിരം int64_t nb = (k + QK_K - 1) / QK_K;
       {
             dpct::has_capability_or_fail(stream->get_device(),
                                          {sycl::aspect::fp16});
@@ -520,8 +520,8 @@ static void dequantize_row_iq4_nl_sycl(const void *vx, dst_t *y, const int64_t k
 }
 
 template <typename dst_t>
-static void dequantize_row_mxfp4_sycl(const void * vx, dst_t * y, const int64_t k, dpct::queue_ptr stream) {
-    const int nb = (k + QK_K - 1) / QK_K;
+സ്ഥിതം ശൂന്യം dequantize_row_mxfp4_sycl(സ്ഥിരം ശൂന്യം * vx, dst_t * y, സ്ഥിരം int64_t k, dpct::queue_ptr stream) {
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nb = (k + QK_K - 1) / QK_K;
     stream->parallel_for(
         sycl::nd_range<3>(sycl::range<3>(1, 1, nb) * sycl::range<3>(1, 1, 32), sycl::range<3>(1, 1, 32)),
         [=](sycl::nd_item<3> item_ct1) {
@@ -530,9 +530,9 @@ static void dequantize_row_mxfp4_sycl(const void * vx, dst_t * y, const int64_t 
 }
 
 template <typename dst_t>
-static void dequantize_row_mxfp4_sycl_reorder(const void * vx, dst_t * y, const int64_t k, dpct::queue_ptr stream) {
+സ്ഥിതം ശൂന്യം dequantize_row_mxfp4_sycl_reorder(സ്ഥിരം ശൂന്യം * vx, dst_t * y, സ്ഥിരം int64_t k, dpct::queue_ptr stream) {
     GGML_ASSERT(k % QK_MXFP4 == 0);
-    const int n_warp = (k / QK_MXFP4 + WARP_SIZE - 1) / WARP_SIZE;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ n_warp = (k / QK_MXFP4 + WARP_SIZE - 1) / WARP_SIZE;
     stream->parallel_for(
         sycl::nd_range<3>(sycl::range<3>(1, 1, n_warp) * sycl::range<3>(1, 1, WARP_SIZE),
                           sycl::range<3>(1, 1, WARP_SIZE)),
@@ -542,9 +542,9 @@ static void dequantize_row_mxfp4_sycl_reorder(const void * vx, dst_t * y, const 
 }
 
 template <typename dst_t>
-static void dequantize_row_nvfp4_sycl(const void * vx, dst_t * y, const int64_t k, dpct::queue_ptr stream) {
+സ്ഥിതം ശൂന്യം dequantize_row_nvfp4_sycl(സ്ഥിരം ശൂന്യം * vx, dst_t * y, സ്ഥിരം int64_t k, dpct::queue_ptr stream) {
     GGML_ASSERT(k % QK_NVFP4 == 0);
-    const int nb = k / QK_NVFP4;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nb = k / QK_NVFP4;
     stream->parallel_for(
         sycl::nd_range<3>(sycl::range<3>(1, 1, nb) * sycl::range<3>(1, 1, 32), sycl::range<3>(1, 1, 32)),
         [=](sycl::nd_item<3> /*item_ct1*/) {
@@ -553,57 +553,57 @@ static void dequantize_row_nvfp4_sycl(const void * vx, dst_t * y, const int64_t 
 }
 
 
-template <int qk, int qr, dequantize_kernel_t dequantize_kernel, typename dst_t>
-static void dequantize_block_nc(const void * __restrict__ vx, dst_t * __restrict__ y,
-        const int64_t ne00, const int64_t ne01, const int64_t ne02,
-        const int64_t s01, const int64_t s02, const int64_t s03) {
+template <പൂർണ്ണസംഖ്യ qk, പൂർണ്ണസംഖ്യ qr, dequantize_kernel_t dequantize_kernel, typename dst_t>
+സ്ഥിതം ശൂന്യം dequantize_block_nc(സ്ഥിരം ശൂന്യം * __restrict__ vx, dst_t * __restrict__ y,
+        സ്ഥിരം int64_t ne00, സ്ഥിരം int64_t ne01, സ്ഥിരം int64_t ne02,
+        സ്ഥിരം int64_t s01, സ്ഥിരം int64_t s02, സ്ഥിരം int64_t s03) {
     auto          item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const int64_t i00 = 2 * (int64_t(item_ct1.get_local_range(2)) * item_ct1.get_group(2) + item_ct1.get_local_id(2));
+    സ്ഥിരം int64_t i00 = 2 * (int64_t(item_ct1.get_local_range(2)) * item_ct1.get_group(2) + item_ct1.get_local_id(2));
 
-    if (i00 >= ne00) {
-        return;
+    എങ്കിൽ (i00 >= ne00) {
+        തിരികെ;
     }
 
-    const int64_t i01 = item_ct1.get_group(1);
-    const int64_t i02 = item_ct1.get_group(0) % ne02;
-    const int64_t i03 = item_ct1.get_group(0) / ne02;
+    സ്ഥിരം int64_t i01 = item_ct1.get_group(1);
+    സ്ഥിരം int64_t i02 = item_ct1.get_group(0) % ne02;
+    സ്ഥിരം int64_t i03 = item_ct1.get_group(0) / ne02;
 
-    const int64_t ibx0 = i03*s03 + i02*s02 + i01*s01;
+    സ്ഥിരം int64_t ibx0 = i03*s03 + i02*s02 + i01*s01;
 
-    const int64_t ib = ibx0 + i00/qk; // block index
-    const int64_t iqs = (i00%qk)/qr; // quant index
-    const int64_t iybs = i00 - i00%qk; // y block start index
-    const int64_t y_offset = qr == 1 ? 1 : qk/2;
+    സ്ഥിരം int64_t ib = ibx0 + i00/qk; // block index
+    സ്ഥിരം int64_t iqs = (i00%qk)/qr; // quant index
+    സ്ഥിരം int64_t iybs = i00 - i00%qk; // y block start index
+    സ്ഥിരം int64_t y_offset = qr == 1 ? 1 : qk/2;
 
     // dequantize
     #ifdef GGML_SYCL_F16
         sycl::half2 v;
-    #else
+    #അല്ലെങ്കിൽ
         sycl::float2 v;
     #endif
 
     dequantize_kernel(vx, ib, iqs, v);
 
-    const int64_t iy0 = ((i03*ne02 + i02)*ne01 + i01)*ne00 + iybs + iqs;
+    സ്ഥിരം int64_t iy0 = ((i03*ne02 + i02)*ne01 + i01)*ne00 + iybs + iqs;
     y[iy0 + 0]        = ggml_sycl_cast<dst_t>(v.x());
     y[iy0 + y_offset] = ggml_sycl_cast<dst_t>(v.y());
 }
 
 
-template <int qk, int qr, dequantize_kernel_t dequantize_kernel, typename dst_t>
-static void dequantize_block_nc_sycl(const void *    vx,
+template <പൂർണ്ണസംഖ്യ qk, പൂർണ്ണസംഖ്യ qr, dequantize_kernel_t dequantize_kernel, typename dst_t>
+സ്ഥിതം ശൂന്യം dequantize_block_nc_sycl(സ്ഥിരം ശൂന്യം *    vx,
                                   dst_t *         y,
-                                  const int64_t   ne00,
-                                  const int64_t   ne01,
-                                  const int64_t   ne02,
-                                  const int64_t   ne03,
-                                  const int64_t   s01,
-                                  const int64_t   s02,
-                                  const int64_t   s03,
+                                  സ്ഥിരം int64_t   ne00,
+                                  സ്ഥിരം int64_t   ne01,
+                                  സ്ഥിരം int64_t   ne02,
+                                  സ്ഥിരം int64_t   ne03,
+                                  സ്ഥിരം int64_t   s01,
+                                  സ്ഥിരം int64_t   s02,
+                                  സ്ഥിരം int64_t   s03,
                                   dpct::queue_ptr stream) {
-    const dpct::dim3 num_blocks((ne00 + 2 * SYCL_DEQUANTIZE_BLOCK_SIZE - 1) / (2 * SYCL_DEQUANTIZE_BLOCK_SIZE), ne01,
+    സ്ഥിരം dpct::dim3 അക്കം_blocks((ne00 + 2 * SYCL_DEQUANTIZE_BLOCK_SIZE - 1) / (2 * SYCL_DEQUANTIZE_BLOCK_SIZE), ne01,
                                 ne02 * ne03);
-    stream->parallel_for(sycl::nd_range<3>(num_blocks * sycl::range<3>(1, 1, SYCL_DEQUANTIZE_BLOCK_SIZE),
+    stream->parallel_for(sycl::nd_range<3>(അക്കം_blocks * sycl::range<3>(1, 1, SYCL_DEQUANTIZE_BLOCK_SIZE),
                                            sycl::range<3>(1, 1, SYCL_DEQUANTIZE_BLOCK_SIZE)),
                          [=](sycl::nd_item<3> item_ct1) {
                              GGML_UNUSED(item_ct1);
@@ -611,32 +611,32 @@ static void dequantize_block_nc_sycl(const void *    vx,
                          });
 }
 template <typename src_t, typename dst_t>
-static void convert_unary_nc(const void * __restrict__ vx, dst_t * __restrict__ y, const int64_t ne00, const int64_t ne01,
-                          const int64_t ne02, const int64_t s01, const int64_t s02, const int64_t s03,
-                          const sycl::nd_item<3> & item_ct1) {
+സ്ഥിതം ശൂന്യം convert_unary_nc(സ്ഥിരം ശൂന്യം * __restrict__ vx, dst_t * __restrict__ y, സ്ഥിരം int64_t ne00, സ്ഥിരം int64_t ne01,
+                          സ്ഥിരം int64_t ne02, സ്ഥിരം int64_t s01, സ്ഥിരം int64_t s02, സ്ഥിരം int64_t s03,
+                          സ്ഥിരം sycl::nd_item<3> & item_ct1) {
 
-    const int64_t work_group_size = item_ct1.get_local_range(2);
-    const int64_t global_id       = item_ct1.get_local_id(2) + work_group_size * item_ct1.get_group(2);
+    സ്ഥിരം int64_t work_group_size = item_ct1.get_local_range(2);
+    സ്ഥിരം int64_t global_id       = item_ct1.get_local_id(2) + work_group_size * item_ct1.get_group(2);
 
-    const int64_t i01 = item_ct1.get_group(1);
-    const int64_t i02 = item_ct1.get_group(0) % ne02;
-    const int64_t i03 = item_ct1.get_group(0) / ne02;
+    സ്ഥിരം int64_t i01 = item_ct1.get_group(1);
+    സ്ഥിരം int64_t i02 = item_ct1.get_group(0) % ne02;
+    സ്ഥിരം int64_t i03 = item_ct1.get_group(0) / ne02;
 
     // make each work-item deal with more elements since sycl global range can not exceed max int
-    const src_t * x = static_cast<const src_t *>(vx);
-    const int64_t ix = i03 * s03 + i02 * s02 + i01 * s01;
-    const int64_t iy = ((i03 * ne02 + i02) * ne01 + i01) * ne00;
+    സ്ഥിരം src_t * x = static_cast<സ്ഥിരം src_t *>(vx);
+    സ്ഥിരം int64_t ix = i03 * s03 + i02 * s02 + i01 * s01;
+    സ്ഥിരം int64_t iy = ((i03 * ne02 + i02) * ne01 + i01) * ne00;
 
 #pragma unroll
-    for (int64_t i00 = global_id; i00 < ne00; i00 += work_group_size * item_ct1.get_group_range(2)) {
+    വേണ്ടി (int64_t i00 = global_id; i00 < ne00; i00 += work_group_size * item_ct1.get_group_range(2)) {
         y[iy + i00] = static_cast<dst_t>(x[ix + i00]);
     }
 }
 
 template <typename src_t, typename dst_t>
-static void convert_unary_nc_sycl(const void * __restrict__ vx, dst_t * __restrict__ y,
-                                  const int64_t ne00, const int64_t ne01, const int64_t ne02, const int64_t ne03,
-                                  const int64_t s01, const int64_t s02, const int64_t s03, dpct::queue_ptr queue) {
+സ്ഥിതം ശൂന്യം convert_unary_nc_sycl(സ്ഥിരം ശൂന്യം * __restrict__ vx, dst_t * __restrict__ y,
+                                  സ്ഥിരം int64_t ne00, സ്ഥിരം int64_t ne01, സ്ഥിരം int64_t ne02, സ്ഥിരം int64_t ne03,
+                                  സ്ഥിരം int64_t s01, സ്ഥിരം int64_t s02, സ്ഥിരം int64_t s03, dpct::queue_ptr queue) {
     dpct::has_capability_or_fail(queue->get_device(), { sycl::aspect::fp16 });
 
     sycl::range<3> global_size(ne02 * ne03, ne01, ceil_div(ne00, SYCL_DEQUANTIZE_BLOCK_SIZE));
@@ -652,175 +652,175 @@ static void convert_unary_nc_sycl(const void * __restrict__ vx, dst_t * __restri
 }
 
 template <typename src_t, typename dst_t>
-static void convert_unary_sycl(const void * vx, dst_t * y, const int64_t k, dpct::queue_ptr queue) {
+സ്ഥിതം ശൂന്യം convert_unary_sycl(സ്ഥിരം ശൂന്യം * vx, dst_t * y, സ്ഥിരം int64_t k, dpct::queue_ptr queue) {
     convert_unary_nc_sycl<src_t>(vx, y, k, 1, 1, 1, k, k, k, queue);
 }
 
 
-static bool is_reordered_src0(const ggml_tensor * dst) {
-    return dst->src[0]->extra &&
+സ്ഥിതം തർക്കം is_reordered_src0(സ്ഥിരം ggml_tensor * dst) {
+    തിരികെ dst->src[0]->extra &&
            ((ggml_tensor_extra_gpu *) dst->src[0]->extra)->optimized_feature.reorder;
 }
 
 template <typename dst_t>
-static to_t_sycl_t<dst_t> ggml_get_dequant_sycl(ggml_type type, ggml_tensor * dst) {
-    switch (type) {
-        case GGML_TYPE_Q1_0:
-            return dequantize_block_sycl<QK1_0, QR1_0, dequantize_q1_0, dst_t>;
-        case GGML_TYPE_Q2_0:
-            return dequantize_block_sycl<QK2_0, QR2_0, dequantize_q2_0, dst_t>;
-        case GGML_TYPE_Q4_0:
-            if (is_reordered_src0(dst)) {
-                return dequantize_row_q4_0_sycl_reorder;
-            } else if constexpr (std::is_same_v<dst_t, float>) {
-                return dequantize_row_q4_0_sycl;
-            } else {
-                return dequantize_block_sycl<QK4_0, QR4_0, dequantize_q4_0, dst_t>;
+സ്ഥിതം to_t_sycl_t<dst_t> ggml_get_dequant_sycl(ggml_type type, ggml_tensor * dst) {
+    തിരഞ്ഞെടുപ്പ് (type) {
+        അവസ്ഥ GGML_TYPE_Q1_0:
+            തിരികെ dequantize_block_sycl<QK1_0, QR1_0, dequantize_q1_0, dst_t>;
+        അവസ്ഥ GGML_TYPE_Q2_0:
+            തിരികെ dequantize_block_sycl<QK2_0, QR2_0, dequantize_q2_0, dst_t>;
+        അവസ്ഥ GGML_TYPE_Q4_0:
+            എങ്കിൽ (is_reordered_src0(dst)) {
+                തിരികെ dequantize_row_q4_0_sycl_reorder;
+            } അല്ലെങ്കിൽ എങ്കിൽ constexpr (std::is_same_v<dst_t, ദശാംശം>) {
+                തിരികെ dequantize_row_q4_0_sycl;
+            } അല്ലെങ്കിൽ {
+                തിരികെ dequantize_block_sycl<QK4_0, QR4_0, dequantize_q4_0, dst_t>;
             }
-        case GGML_TYPE_Q4_1:
-            if constexpr (std::is_same_v<dst_t, float>) {
-                return dequantize_row_q4_1_sycl;
-            } else {
-                return dequantize_block_sycl<QK4_1, QR4_1, dequantize_q4_1, dst_t>;
+        അവസ്ഥ GGML_TYPE_Q4_1:
+            എങ്കിൽ constexpr (std::is_same_v<dst_t, ദശാംശം>) {
+                തിരികെ dequantize_row_q4_1_sycl;
+            } അല്ലെങ്കിൽ {
+                തിരികെ dequantize_block_sycl<QK4_1, QR4_1, dequantize_q4_1, dst_t>;
             }
-        case GGML_TYPE_Q5_0:
-            return dequantize_block_sycl<QK5_0, QR5_0, dequantize_q5_0, dst_t>;
-        case GGML_TYPE_Q5_1:
-            return dequantize_block_sycl<QK5_1, QR5_1, dequantize_q5_1, dst_t>;
-        case GGML_TYPE_Q8_0:
-            if (is_reordered_src0(dst)) {
-                return dequantize_row_q8_0_sycl_reorder;
-            } else {
-                return dequantize_block_sycl<QK8_0, QR8_0, dequantize_q8_0, dst_t>;
+        അവസ്ഥ GGML_TYPE_Q5_0:
+            തിരികെ dequantize_block_sycl<QK5_0, QR5_0, dequantize_q5_0, dst_t>;
+        അവസ്ഥ GGML_TYPE_Q5_1:
+            തിരികെ dequantize_block_sycl<QK5_1, QR5_1, dequantize_q5_1, dst_t>;
+        അവസ്ഥ GGML_TYPE_Q8_0:
+            എങ്കിൽ (is_reordered_src0(dst)) {
+                തിരികെ dequantize_row_q8_0_sycl_reorder;
+            } അല്ലെങ്കിൽ {
+                തിരികെ dequantize_block_sycl<QK8_0, QR8_0, dequantize_q8_0, dst_t>;
             }
-        case GGML_TYPE_Q2_K:
-            if (is_reordered_src0(dst)) {
-                return dequantize_row_q2_K_sycl_reorder;
-            } else {
-                return dequantize_row_q2_K_sycl;
+        അവസ്ഥ GGML_TYPE_Q2_K:
+            എങ്കിൽ (is_reordered_src0(dst)) {
+                തിരികെ dequantize_row_q2_K_sycl_reorder;
+            } അല്ലെങ്കിൽ {
+                തിരികെ dequantize_row_q2_K_sycl;
             }
-        case GGML_TYPE_Q3_K:
-            if (is_reordered_src0(dst)) {
-                return dequantize_row_q3_K_sycl_reorder;
-            } else {
-                return dequantize_row_q3_K_sycl;
+        അവസ്ഥ GGML_TYPE_Q3_K:
+            എങ്കിൽ (is_reordered_src0(dst)) {
+                തിരികെ dequantize_row_q3_K_sycl_reorder;
+            } അല്ലെങ്കിൽ {
+                തിരികെ dequantize_row_q3_K_sycl;
             }
-        case GGML_TYPE_Q4_K:
-            if (is_reordered_src0(dst)) {
-                return dequantize_row_q4_K_sycl_reorder;
-            } else {
-                return dequantize_row_q4_K_sycl;
+        അവസ്ഥ GGML_TYPE_Q4_K:
+            എങ്കിൽ (is_reordered_src0(dst)) {
+                തിരികെ dequantize_row_q4_K_sycl_reorder;
+            } അല്ലെങ്കിൽ {
+                തിരികെ dequantize_row_q4_K_sycl;
             }
-        case GGML_TYPE_Q5_K:
-            if (is_reordered_src0(dst)) {
-                return dequantize_row_q5_K_sycl_reorder;
-            } else {
-                return dequantize_row_q5_K_sycl;
+        അവസ്ഥ GGML_TYPE_Q5_K:
+            എങ്കിൽ (is_reordered_src0(dst)) {
+                തിരികെ dequantize_row_q5_K_sycl_reorder;
+            } അല്ലെങ്കിൽ {
+                തിരികെ dequantize_row_q5_K_sycl;
             }
-        case GGML_TYPE_Q6_K:
-            if (is_reordered_src0(dst)) {
-                return dequantize_row_q6_K_sycl_reorder;
-            } else {
-                return dequantize_row_q6_K_sycl;
+        അവസ്ഥ GGML_TYPE_Q6_K:
+            എങ്കിൽ (is_reordered_src0(dst)) {
+                തിരികെ dequantize_row_q6_K_sycl_reorder;
+            } അല്ലെങ്കിൽ {
+                തിരികെ dequantize_row_q6_K_sycl;
             }
-        case GGML_TYPE_IQ1_S:
-            return dequantize_row_iq1_s_sycl;
-        case GGML_TYPE_IQ1_M:
-            return dequantize_row_iq1_m_sycl;
-        case GGML_TYPE_IQ2_XXS:
-            return dequantize_row_iq2_xxs_sycl;
-        case GGML_TYPE_IQ2_XS:
-            return dequantize_row_iq2_xs_sycl;
-        case GGML_TYPE_IQ2_S:
-            return dequantize_row_iq2_s_sycl;
-        case GGML_TYPE_IQ3_XXS:
-            if (is_reordered_src0(dst)) {
-                return dequantize_row_iq3_xxs_sycl_reorder;
-            } else {
-                return dequantize_row_iq3_xxs_sycl;
+        അവസ്ഥ GGML_TYPE_IQ1_S:
+            തിരികെ dequantize_row_iq1_s_sycl;
+        അവസ്ഥ GGML_TYPE_IQ1_M:
+            തിരികെ dequantize_row_iq1_m_sycl;
+        അവസ്ഥ GGML_TYPE_IQ2_XXS:
+            തിരികെ dequantize_row_iq2_xxs_sycl;
+        അവസ്ഥ GGML_TYPE_IQ2_XS:
+            തിരികെ dequantize_row_iq2_xs_sycl;
+        അവസ്ഥ GGML_TYPE_IQ2_S:
+            തിരികെ dequantize_row_iq2_s_sycl;
+        അവസ്ഥ GGML_TYPE_IQ3_XXS:
+            എങ്കിൽ (is_reordered_src0(dst)) {
+                തിരികെ dequantize_row_iq3_xxs_sycl_reorder;
+            } അല്ലെങ്കിൽ {
+                തിരികെ dequantize_row_iq3_xxs_sycl;
             }
-        case GGML_TYPE_IQ3_S:
-            if (is_reordered_src0(dst)) {
-                return dequantize_row_iq3_s_sycl_reorder;
-            } else {
-                return dequantize_row_iq3_s_sycl;
+        അവസ്ഥ GGML_TYPE_IQ3_S:
+            എങ്കിൽ (is_reordered_src0(dst)) {
+                തിരികെ dequantize_row_iq3_s_sycl_reorder;
+            } അല്ലെങ്കിൽ {
+                തിരികെ dequantize_row_iq3_s_sycl;
             }
-        case GGML_TYPE_IQ4_XS:
-            return dequantize_row_iq4_xs_sycl;
-        case GGML_TYPE_IQ4_NL:
-            return dequantize_row_iq4_nl_sycl;
-        case GGML_TYPE_MXFP4:
-            if (is_reordered_src0(dst)) {
-                return dequantize_row_mxfp4_sycl_reorder;
+        അവസ്ഥ GGML_TYPE_IQ4_XS:
+            തിരികെ dequantize_row_iq4_xs_sycl;
+        അവസ്ഥ GGML_TYPE_IQ4_NL:
+            തിരികെ dequantize_row_iq4_nl_sycl;
+        അവസ്ഥ GGML_TYPE_MXFP4:
+            എങ്കിൽ (is_reordered_src0(dst)) {
+                തിരികെ dequantize_row_mxfp4_sycl_reorder;
             }
-            return dequantize_row_mxfp4_sycl;
-        case GGML_TYPE_NVFP4:
-            return dequantize_row_nvfp4_sycl;
-        case GGML_TYPE_F32:
-            if constexpr (std::is_same_v<dst_t, sycl::half>) {
-                return convert_unary_sycl<float>;
+            തിരികെ dequantize_row_mxfp4_sycl;
+        അവസ്ഥ GGML_TYPE_NVFP4:
+            തിരികെ dequantize_row_nvfp4_sycl;
+        അവസ്ഥ GGML_TYPE_F32:
+            എങ്കിൽ constexpr (std::is_same_v<dst_t, sycl::half>) {
+                തിരികെ convert_unary_sycl<ദശാംശം>;
             }
-            break;
-        case GGML_TYPE_F16:
-            if constexpr (std::is_same_v<dst_t, float>) {
-                return convert_unary_sycl<sycl::half>;
+            നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F16:
+            എങ്കിൽ constexpr (std::is_same_v<dst_t, ദശാംശം>) {
+                തിരികെ convert_unary_sycl<sycl::half>;
             }
-            break;
+            നിർത്തുക;
 #ifdef GGML_SYCL_HAS_BF16
-        case GGML_TYPE_BF16:
-            return convert_unary_sycl<sycl::ext::oneapi::bfloat16>;
+        അവസ്ഥ GGML_TYPE_BF16:
+            തിരികെ convert_unary_sycl<sycl::ext::oneapi::bfloat16>;
 #endif
-        default:
-            break;
+        സ്ഥിരസ്ഥിതി:
+            നിർത്തുക;
     }
     GGML_ABORT("fatal error: unsupport data type=%s\n", ggml_type_name(type));
 }
 
 to_fp16_sycl_t ggml_get_to_fp16_sycl(ggml_type type, ggml_tensor * dst) {
-    return ggml_get_dequant_sycl<sycl::half>(type, dst);
+    തിരികെ ggml_get_dequant_sycl<sycl::half>(type, dst);
 }
 
 to_fp32_sycl_t ggml_get_to_fp32_sycl(ggml_type type, ggml_tensor *dst) {
-    return ggml_get_dequant_sycl<float>(type, dst);
+    തിരികെ ggml_get_dequant_sycl<ദശാംശം>(type, dst);
 }
 
 
 #ifdef GGML_SYCL_HAS_BF16
 to_bf16_sycl_t ggml_get_to_bf16_sycl(ggml_type type, ggml_tensor * /*dst*/) {
-    switch (type) {
-        case GGML_TYPE_F32:
-            return convert_unary_sycl<float>;
-        case GGML_TYPE_F16:
-            return convert_unary_sycl<sycl::half>;
-        case GGML_TYPE_BF16:
-            return convert_unary_sycl<sycl::ext::oneapi::bfloat16>;
-        default:
+    തിരഞ്ഞെടുപ്പ് (type) {
+        അവസ്ഥ GGML_TYPE_F32:
+            തിരികെ convert_unary_sycl<ദശാംശം>;
+        അവസ്ഥ GGML_TYPE_F16:
+            തിരികെ convert_unary_sycl<sycl::half>;
+        അവസ്ഥ GGML_TYPE_BF16:
+            തിരികെ convert_unary_sycl<sycl::ext::oneapi::bfloat16>;
+        സ്ഥിരസ്ഥിതി:
             GGML_ABORT("fatal error: unsupport data type=%s\n", ggml_type_name(type));
     }
 }
 #endif
 
 to_fp16_nc_sycl_t ggml_get_to_fp16_nc_sycl(ggml_type type) {
-    switch (type) {
-        case GGML_TYPE_F32:
-            return convert_unary_nc_sycl<float>;
+    തിരഞ്ഞെടുപ്പ് (type) {
+        അവസ്ഥ GGML_TYPE_F32:
+            തിരികെ convert_unary_nc_sycl<ദശാംശം>;
 #ifdef GGML_SYCL_HAS_BF16
-        case GGML_TYPE_BF16:
-            return convert_unary_nc_sycl<sycl::ext::oneapi::bfloat16>;
+        അവസ്ഥ GGML_TYPE_BF16:
+            തിരികെ convert_unary_nc_sycl<sycl::ext::oneapi::bfloat16>;
 #endif
-        case GGML_TYPE_Q1_0:
-            return dequantize_block_nc_sycl<QK1_0, QR1_0, dequantize_q1_0>;
-        case GGML_TYPE_Q4_0:
-            return dequantize_block_nc_sycl<QK4_0, QR4_0, dequantize_q4_0>;
-        case GGML_TYPE_Q4_1:
-            return dequantize_block_nc_sycl<QK4_1, QR4_1, dequantize_q4_1>;
-        case GGML_TYPE_Q5_0:
-            return dequantize_block_nc_sycl<QK5_0, QR5_0, dequantize_q5_0>;
-        case GGML_TYPE_Q5_1:
-            return dequantize_block_nc_sycl<QK5_1, QR5_1, dequantize_q5_1>;
-        case GGML_TYPE_Q8_0:
-            return dequantize_block_nc_sycl<QK8_0, QR8_0, dequantize_q8_0>;
-        default:
-            return nullptr;
+        അവസ്ഥ GGML_TYPE_Q1_0:
+            തിരികെ dequantize_block_nc_sycl<QK1_0, QR1_0, dequantize_q1_0>;
+        അവസ്ഥ GGML_TYPE_Q4_0:
+            തിരികെ dequantize_block_nc_sycl<QK4_0, QR4_0, dequantize_q4_0>;
+        അവസ്ഥ GGML_TYPE_Q4_1:
+            തിരികെ dequantize_block_nc_sycl<QK4_1, QR4_1, dequantize_q4_1>;
+        അവസ്ഥ GGML_TYPE_Q5_0:
+            തിരികെ dequantize_block_nc_sycl<QK5_0, QR5_0, dequantize_q5_0>;
+        അവസ്ഥ GGML_TYPE_Q5_1:
+            തിരികെ dequantize_block_nc_sycl<QK5_1, QR5_1, dequantize_q5_1>;
+        അവസ്ഥ GGML_TYPE_Q8_0:
+            തിരികെ dequantize_block_nc_sycl<QK8_0, QR8_0, dequantize_q8_0>;
+        സ്ഥിരസ്ഥിതി:
+            തിരികെ nullptr;
     }
 }

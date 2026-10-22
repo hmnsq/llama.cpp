@@ -1,43 +1,43 @@
 #pragma once
 
-#include "ggml-backend-impl.h"
-#include "ggml-et-uberkernel-common.h"
+#അന്തര്ഭാവ "ggml-backend-impl.h"
+#അന്തര്ഭാവ "ggml-et-uberkernel-common.h"
 
-#include <device-layer/IDeviceLayer.h>
-#include <runtime/IProfiler.h>
-#include <runtime/IRuntime.h>
+#അന്തര്ഭാവ <device-layer/IDeviceLayer.h>
+#അന്തര്ഭാവ <runtime/IProfiler.h>
+#അന്തര്ഭാവ <runtime/IRuntime.h>
 
-#include <cstdint>
-#include <fstream>
-#include <string>
-#include <unordered_map>
-#include <vector>
+#അന്തര്ഭാവ <cstdint>
+#അന്തര്ഭാവ <fstream>
+#അന്തര്ഭാവ <string>
+#അന്തര്ഭാവ <unordered_map>
+#അന്തര്ഭാവ <vector>
 
 std::shared_ptr<rt::IRuntime> ggml_et_runtime();
 
-struct ggml_backend_et_buffer_type_context {
-    int         devidx;
+ഘടന ggml_backend_et_buffer_type_context {
+    പൂർണ്ണസംഖ്യ         devidx;
     std::string name;
 };
 
-struct ggml_backend_et_buffer_context {
-    int          devidx;
-    void *       data;  // Device memory pointer
+ഘടന ggml_backend_et_buffer_context {
+    പൂർണ്ണസംഖ്യ          devidx;
+    ശൂന്യം *       data;  // Device memory pointer
     size_t       size;
     rt::DeviceId rtid;
 };
 
-struct ggml_backend_et_context {
-    int devidx;
+ഘടന ggml_backend_et_context {
+    പൂർണ്ണസംഖ്യ devidx;
 };
 
-struct ggml_backend_et_device_context;
+ഘടന ggml_backend_et_device_context;
 
 // One slot in the uberkernel ring. The host vectors back the H2D copy and
 // must outlive the upload; the device buffers feed the kernel that consumes
 // them. pending_event lets us know when both have drained so the slot can
 // be recycled.
-struct ggml_backend_et_uberkernel_slot {
+ഘടന ggml_backend_et_uberkernel_slot {
     std::vector<ggml_et_uberkernel_inst> insts;
     std::vector<std::byte>               params_blob;
 
@@ -50,20 +50,20 @@ struct ggml_backend_et_uberkernel_slot {
     bool        has_pending = false;
 };
 
-struct ggml_backend_et_uberkernel_context {
+ഘടന ggml_backend_et_uberkernel_context {
     bool     failed     = false;
     uint64_t shire_mask = 0;
 
     // Ring of slots. We accumulate into slots[current_slot]; on segment
     // commit we fire the H2D + launch and rotate to the next slot,
     // waiting on its previous launch only if it hasn't drained yet.
-    static constexpr size_t         SLOT_COUNT = 4;
-    ggml_backend_et_uberkernel_slot slots[SLOT_COUNT];
+    സ്ഥിതം constexpr size_t         SLOT_എണ്ണം = 4;
+    ggml_backend_et_uberkernel_slot slots[SLOT_എണ്ണം];
     size_t                          current_slot = 0;
 };
 
-struct ggml_backend_et_device_context {
-    int                        devidx;
+ഘടന ggml_backend_et_device_context {
+    പൂർണ്ണസംഖ്യ                        devidx;
     rt::DeviceId               rtid;
     std::string                name;
     std::string                desc;
@@ -81,6 +81,6 @@ struct ggml_backend_et_device_context {
     ggml_backend_et_uberkernel_context uberkernel;
 };
 
-struct ggml_backend_et_reg_ctx {
+ഘടന ggml_backend_et_reg_ctx {
     std::vector<ggml_backend_dev_t> devices;
 };

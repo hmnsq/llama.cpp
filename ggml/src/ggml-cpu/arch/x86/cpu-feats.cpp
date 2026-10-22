@@ -1,107 +1,107 @@
-#include "ggml-backend-impl.h"
+#അന്തര്ഭാവ "ggml-backend-impl.h"
 
-#if defined(__x86_64__) || (defined(_MSC_VER) && defined(_M_AMD64))
+#എങ്കിൽ defined(__x86_64__) || (defined(_MSC_VER) && defined(_M_AMD64))
 
 #ifdef _MSC_VER
-#include <intrin.h>
+#അന്തര്ഭാവ <intrin.h>
 #endif
 
-#include <cstring>
-#include <vector>
-#include <bitset>
-#include <array>
-#include <string>
+#അന്തര്ഭാവ <cstring>
+#അന്തര്ഭാവ <vector>
+#അന്തര്ഭാവ <bitset>
+#അന്തര്ഭാവ <array>
+#അന്തര്ഭാവ <string>
 
 // ref: https://cdrdv2-public.intel.com/782156/325383-sdm-vol-2abcd.pdf
-struct cpuid_x86 {
-    bool SSE3(void) { return f_1_ecx[0]; }
-    bool PCLMULQDQ(void) { return f_1_ecx[1]; }
-    bool MONITOR(void) { return f_1_ecx[3]; }
-    bool SSSE3(void) { return f_1_ecx[9]; }
-    bool FMA(void) { return f_1_ecx[12]; }
-    bool CMPXCHG16B(void) { return f_1_ecx[13]; }
-    bool SSE41(void) { return f_1_ecx[19]; }
-    bool SSE42(void) { return f_1_ecx[20]; }
-    bool MOVBE(void) { return f_1_ecx[22]; }
-    bool POPCNT(void) { return f_1_ecx[23]; }
-    bool AES(void) { return f_1_ecx[25]; }
-    bool XSAVE(void) { return f_1_ecx[26]; }
-    bool OSXSAVE(void) { return f_1_ecx[27]; }
-    bool AVX(void) { return f_1_ecx[28]; }
-    bool F16C(void) { return f_1_ecx[29]; }
-    bool RDRAND(void) { return f_1_ecx[30]; }
+ഘടന cpuid_x86 {
+    തർക്കം SSE3(ശൂന്യം) { തിരികെ f_1_ecx[0]; }
+    തർക്കം PCLMULQDQ(ശൂന്യം) { തിരികെ f_1_ecx[1]; }
+    തർക്കം MONITOR(ശൂന്യം) { തിരികെ f_1_ecx[3]; }
+    തർക്കം SSSE3(ശൂന്യം) { തിരികെ f_1_ecx[9]; }
+    തർക്കം FMA(ശൂന്യം) { തിരികെ f_1_ecx[12]; }
+    തർക്കം CMPXCHG16B(ശൂന്യം) { തിരികെ f_1_ecx[13]; }
+    തർക്കം SSE41(ശൂന്യം) { തിരികെ f_1_ecx[19]; }
+    തർക്കം SSE42(ശൂന്യം) { തിരികെ f_1_ecx[20]; }
+    തർക്കം MOVBE(ശൂന്യം) { തിരികെ f_1_ecx[22]; }
+    തർക്കം POPCNT(ശൂന്യം) { തിരികെ f_1_ecx[23]; }
+    തർക്കം AES(ശൂന്യം) { തിരികെ f_1_ecx[25]; }
+    തർക്കം XSAVE(ശൂന്യം) { തിരികെ f_1_ecx[26]; }
+    തർക്കം OSXSAVE(ശൂന്യം) { തിരികെ f_1_ecx[27]; }
+    തർക്കം AVX(ശൂന്യം) { തിരികെ f_1_ecx[28]; }
+    തർക്കം F16C(ശൂന്യം) { തിരികെ f_1_ecx[29]; }
+    തർക്കം RDRAND(ശൂന്യം) { തിരികെ f_1_ecx[30]; }
 
-    bool MSR(void) { return f_1_edx[5]; }
-    bool CX8(void) { return f_1_edx[8]; }
-    bool SEP(void) { return f_1_edx[11]; }
-    bool CMOV(void) { return f_1_edx[15]; }
-    bool CLFSH(void) { return f_1_edx[19]; }
-    bool MMX(void) { return f_1_edx[23]; }
-    bool FXSR(void) { return f_1_edx[24]; }
-    bool SSE(void) { return f_1_edx[25]; }
-    bool SSE2(void) { return f_1_edx[26]; }
+    തർക്കം MSR(ശൂന്യം) { തിരികെ f_1_edx[5]; }
+    തർക്കം CX8(ശൂന്യം) { തിരികെ f_1_edx[8]; }
+    തർക്കം SEP(ശൂന്യം) { തിരികെ f_1_edx[11]; }
+    തർക്കം CMOV(ശൂന്യം) { തിരികെ f_1_edx[15]; }
+    തർക്കം CLFSH(ശൂന്യം) { തിരികെ f_1_edx[19]; }
+    തർക്കം MMX(ശൂന്യം) { തിരികെ f_1_edx[23]; }
+    തർക്കം FXSR(ശൂന്യം) { തിരികെ f_1_edx[24]; }
+    തർക്കം SSE(ശൂന്യം) { തിരികെ f_1_edx[25]; }
+    തർക്കം SSE2(ശൂന്യം) { തിരികെ f_1_edx[26]; }
 
-    bool FSGSBASE(void) { return f_7_ebx[0]; }
-    bool BMI1(void) { return f_7_ebx[3]; }
-    bool HLE(void) { return is_intel && f_7_ebx[4]; }
-    bool AVX2(void) { return f_7_ebx[5]; }
-    bool BMI2(void) { return f_7_ebx[8]; }
-    bool ERMS(void) { return f_7_ebx[9]; }
-    bool INVPCID(void) { return f_7_ebx[10]; }
-    bool RTM(void) { return is_intel && f_7_ebx[11]; }
-    bool AVX512F(void) { return f_7_ebx[16]; }
-    bool AVX512DQ(void) { return f_7_ebx[17]; }
-    bool RDSEED(void) { return f_7_ebx[18]; }
-    bool ADX(void) { return f_7_ebx[19]; }
-    bool AVX512PF(void) { return f_7_ebx[26]; }
-    bool AVX512ER(void) { return f_7_ebx[27]; }
-    bool AVX512CD(void) { return f_7_ebx[28]; }
-    bool AVX512BW(void) { return f_7_ebx[30]; }
-    bool AVX512VL(void) { return f_7_ebx[31]; }
+    തർക്കം FSGSBASE(ശൂന്യം) { തിരികെ f_7_ebx[0]; }
+    തർക്കം BMI1(ശൂന്യം) { തിരികെ f_7_ebx[3]; }
+    തർക്കം HLE(ശൂന്യം) { തിരികെ is_intel && f_7_ebx[4]; }
+    തർക്കം AVX2(ശൂന്യം) { തിരികെ f_7_ebx[5]; }
+    തർക്കം BMI2(ശൂന്യം) { തിരികെ f_7_ebx[8]; }
+    തർക്കം ERMS(ശൂന്യം) { തിരികെ f_7_ebx[9]; }
+    തർക്കം INVPCID(ശൂന്യം) { തിരികെ f_7_ebx[10]; }
+    തർക്കം RTM(ശൂന്യം) { തിരികെ is_intel && f_7_ebx[11]; }
+    തർക്കം AVX512F(ശൂന്യം) { തിരികെ f_7_ebx[16]; }
+    തർക്കം AVX512DQ(ശൂന്യം) { തിരികെ f_7_ebx[17]; }
+    തർക്കം RDSEED(ശൂന്യം) { തിരികെ f_7_ebx[18]; }
+    തർക്കം ADX(ശൂന്യം) { തിരികെ f_7_ebx[19]; }
+    തർക്കം AVX512PF(ശൂന്യം) { തിരികെ f_7_ebx[26]; }
+    തർക്കം AVX512ER(ശൂന്യം) { തിരികെ f_7_ebx[27]; }
+    തർക്കം AVX512CD(ശൂന്യം) { തിരികെ f_7_ebx[28]; }
+    തർക്കം AVX512BW(ശൂന്യം) { തിരികെ f_7_ebx[30]; }
+    തർക്കം AVX512VL(ശൂന്യം) { തിരികെ f_7_ebx[31]; }
 
-    bool SHA(void) { return f_7_ebx[29]; }
+    തർക്കം SHA(ശൂന്യം) { തിരികെ f_7_ebx[29]; }
 
-    bool PREFETCHWT1(void) { return f_7_ecx[0]; }
+    തർക്കം PREFETCHWT1(ശൂന്യം) { തിരികെ f_7_ecx[0]; }
 
-    bool LAHF(void) { return f_81_ecx[0]; }
-    bool LZCNT(void) { return is_intel && f_81_ecx[5]; }
-    bool ABM(void) { return is_amd && f_81_ecx[5]; }
-    bool SSE4a(void) { return is_amd && f_81_ecx[6]; }
-    bool XOP(void) { return is_amd && f_81_ecx[11]; }
-    bool TBM(void) { return is_amd && f_81_ecx[21]; }
+    തർക്കം LAHF(ശൂന്യം) { തിരികെ f_81_ecx[0]; }
+    തർക്കം LZCNT(ശൂന്യം) { തിരികെ is_intel && f_81_ecx[5]; }
+    തർക്കം ABM(ശൂന്യം) { തിരികെ is_amd && f_81_ecx[5]; }
+    തർക്കം SSE4a(ശൂന്യം) { തിരികെ is_amd && f_81_ecx[6]; }
+    തർക്കം XOP(ശൂന്യം) { തിരികെ is_amd && f_81_ecx[11]; }
+    തർക്കം TBM(ശൂന്യം) { തിരികെ is_amd && f_81_ecx[21]; }
 
-    bool SYSCALL(void) { return is_intel && f_81_edx[11]; }
-    bool MMXEXT(void) { return is_amd && f_81_edx[22]; }
-    bool RDTSCP(void) { return is_intel && f_81_edx[27]; }
-    bool _3DNOWEXT(void) { return is_amd && f_81_edx[30]; }
-    bool _3DNOW(void) { return is_amd && f_81_edx[31]; }
+    തർക്കം SYSCALL(ശൂന്യം) { തിരികെ is_intel && f_81_edx[11]; }
+    തർക്കം MMXEXT(ശൂന്യം) { തിരികെ is_amd && f_81_edx[22]; }
+    തർക്കം RDTSCP(ശൂന്യം) { തിരികെ is_intel && f_81_edx[27]; }
+    തർക്കം _3DNOWEXT(ശൂന്യം) { തിരികെ is_amd && f_81_edx[30]; }
+    തർക്കം _3DNOW(ശൂന്യം) { തിരികെ is_amd && f_81_edx[31]; }
 
-    bool AVX512_VBMI(void) { return f_7_ecx[1]; }
-    bool AVX512_VNNI(void) { return f_7_ecx[11]; }
-    bool AVX512_FP16(void) { return f_7_edx[23]; }
-    bool AVX512_BF16(void) { return f_7_1_eax[5]; }
-    bool AVX_VNNI(void) { return f_7_1_eax[4]; }
+    തർക്കം AVX512_VBMI(ശൂന്യം) { തിരികെ f_7_ecx[1]; }
+    തർക്കം AVX512_VNNI(ശൂന്യം) { തിരികെ f_7_ecx[11]; }
+    തർക്കം AVX512_FP16(ശൂന്യം) { തിരികെ f_7_edx[23]; }
+    തർക്കം AVX512_BF16(ശൂന്യം) { തിരികെ f_7_1_eax[5]; }
+    തർക്കം AVX_VNNI(ശൂന്യം) { തിരികെ f_7_1_eax[4]; }
 
-    bool AMX_TILE(void) { return f_7_edx[24]; }
-    bool AMX_INT8(void) { return f_7_edx[25]; }
-    bool AMX_FP16(void) { return f_7_1_eax[21]; }
-    bool AMX_BF16(void) { return f_7_edx[22]; }
+    തർക്കം AMX_TILE(ശൂന്യം) { തിരികെ f_7_edx[24]; }
+    തർക്കം AMX_INT8(ശൂന്യം) { തിരികെ f_7_edx[25]; }
+    തർക്കം AMX_FP16(ശൂന്യം) { തിരികെ f_7_1_eax[21]; }
+    തർക്കം AMX_BF16(ശൂന്യം) { തിരികെ f_7_edx[22]; }
 
 #ifdef _MSC_VER
-    static void cpuid(int cpu_info[4], int eax) {
+    സ്ഥിതം ശൂന്യം cpuid(പൂർണ്ണസംഖ്യ cpu_info[4], പൂർണ്ണസംഖ്യ eax) {
         __cpuid(cpu_info, eax);
     }
-    static void cpuidex(int cpu_info[4], int eax, int ecx) {
+    സ്ഥിതം ശൂന്യം cpuidex(പൂർണ്ണസംഖ്യ cpu_info[4], പൂർണ്ണസംഖ്യ eax, പൂർണ്ണസംഖ്യ ecx) {
         __cpuidex(cpu_info, eax, ecx);
     }
-#else
-    static void cpuid(int cpu_info[4], int eax) {
+#അല്ലെങ്കിൽ
+    സ്ഥിതം ശൂന്യം cpuid(പൂർണ്ണസംഖ്യ cpu_info[4], പൂർണ്ണസംഖ്യ eax) {
         __asm__ __volatile__(
             "cpuid"
             : "=a"(cpu_info[0]), "=b"(cpu_info[1]), "=c"(cpu_info[2]), "=d"(cpu_info[3])
             : "a"(eax), "c"(0));
     }
-    static void cpuidex(int cpu_info[4], int eax, int ecx) {
+    സ്ഥിതം ശൂന്യം cpuidex(പൂർണ്ണസംഖ്യ cpu_info[4], പൂർണ്ണസംഖ്യ eax, പൂർണ്ണസംഖ്യ ecx) {
         __asm__ __volatile__(
             "cpuid"
             : "=a"(cpu_info[0]), "=b"(cpu_info[1]), "=c"(cpu_info[2]), "=d"(cpu_info[3])
@@ -110,39 +110,39 @@ struct cpuid_x86 {
 #endif
 
     cpuid_x86() {
-        std::array<int, 4> cpui;
-        std::vector<std::array<int, 4>> data;
+        std::array<പൂർണ്ണസംഖ്യ, 4> cpui;
+        std::vector<std::array<പൂർണ്ണസംഖ്യ, 4>> data;
 
         // calling __cpuid with 0x0 as the function_id argument
         // gets the number of the highest valid function ID.
         cpuid(cpui.data(), 0);
-        int n_ids = cpui[0];
+        പൂർണ്ണസംഖ്യ n_ids = cpui[0];
 
-        for (int i = 0; i <= n_ids; ++i) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i <= n_ids; ++i) {
             cpuidex(cpui.data(), i, 0);
             data.push_back(cpui);
         }
 
         // capture vendor string
-        char vendor[0x20] = {};
-        *reinterpret_cast<int *>(vendor)     = data[0][1];
-        *reinterpret_cast<int *>(vendor + 4) = data[0][3];
-        *reinterpret_cast<int *>(vendor + 8) = data[0][2];
-        this->vendor = vendor;
-        if (this->vendor == "GenuineIntel") {
-            is_intel = true;
-        } else if (this->vendor == "AuthenticAMD") {
-            is_amd = true;
+        അക്ഷരം vendor[0x20] = {};
+        *reinterpret_cast<പൂർണ്ണസംഖ്യ *>(vendor)     = data[0][1];
+        *reinterpret_cast<പൂർണ്ണസംഖ്യ *>(vendor + 4) = data[0][3];
+        *reinterpret_cast<പൂർണ്ണസംഖ്യ *>(vendor + 8) = data[0][2];
+        ഇത്->vendor = vendor;
+        എങ്കിൽ (ഇത്->vendor == "GenuineIntel") {
+            is_intel = സത്യം;
+        } അല്ലെങ്കിൽ എങ്കിൽ (ഇത്->vendor == "AuthenticAMD") {
+            is_amd = സത്യം;
         }
 
         // load bitset with flags for function 0x00000001
-        if (n_ids >= 1) {
+        എങ്കിൽ (n_ids >= 1) {
             f_1_ecx = data[1][2];
             f_1_edx = data[1][3];
         }
 
         // load bitset with flags for function 0x00000007
-        if (n_ids >= 7) {
+        എങ്കിൽ (n_ids >= 7) {
             f_7_ebx = data[7][1];
             f_7_ecx = data[7][2];
             f_7_edx = data[7][3];
@@ -153,32 +153,32 @@ struct cpuid_x86 {
         // calling __cpuid with 0x80000000 as the function_id argument
         // gets the number of the highest valid extended ID.
         cpuid(cpui.data(), 0x80000000);
-        unsigned int n_ex_ids = cpui[0];
+        unsigned പൂർണ്ണസംഖ്യ n_ex_ids = cpui[0];
 
-        std::vector<std::array<int, 4>> ext_data;
-        for (unsigned int i = 0x80000000; i <= n_ex_ids; ++i) {
+        std::vector<std::array<പൂർണ്ണസംഖ്യ, 4>> ext_data;
+        വേണ്ടി (unsigned പൂർണ്ണസംഖ്യ i = 0x80000000; i <= n_ex_ids; ++i) {
             cpuidex(cpui.data(), i, 0);
             ext_data.push_back(cpui);
         }
 
         // load bitset with flags for function 0x80000001
-        if (n_ex_ids >= 0x80000001) {
+        എങ്കിൽ (n_ex_ids >= 0x80000001) {
             f_81_ecx = ext_data[1][2];
             f_81_edx = ext_data[1][3];
         }
 
         // interpret CPU brand string if reported
-        char brand[0x40] = {};
-        if (n_ex_ids >= 0x80000004) {
-            std::memcpy(brand, ext_data[2].data(), sizeof(cpui));
-            std::memcpy(brand + 16, ext_data[3].data(), sizeof(cpui));
-            std::memcpy(brand + 32, ext_data[4].data(), sizeof(cpui));
-            this->brand = brand;
+        അക്ഷരം brand[0x40] = {};
+        എങ്കിൽ (n_ex_ids >= 0x80000004) {
+            std::memcpy(brand, ext_data[2].data(), വലുപ്പം(cpui));
+            std::memcpy(brand + 16, ext_data[3].data(), വലുപ്പം(cpui));
+            std::memcpy(brand + 32, ext_data[4].data(), വലുപ്പം(cpui));
+            ഇത്->brand = brand;
         }
     }
 
-    bool is_intel = false;
-    bool is_amd = false;
+    തർക്കം is_intel = അസത്യം;
+    തർക്കം is_amd = അസത്യം;
     std::string vendor;
     std::string brand;
     std::bitset<32> f_1_ecx;
@@ -191,8 +191,8 @@ struct cpuid_x86 {
     std::bitset<32> f_81_edx;
 };
 
-#if 0
-void test_x86_is() {
+#എങ്കിൽ 0
+ശൂന്യം test_x86_is() {
     cpuid_x86 is;
     printf("CPU Vendor: %s\n", is.vendor.c_str());
     printf("Brand: %s\n", is.brand.c_str());
@@ -260,66 +260,66 @@ void test_x86_is() {
 }
 #endif
 
-static int ggml_backend_cpu_x86_score() {
+സ്ഥിതം പൂർണ്ണസംഖ്യ ggml_backend_cpu_x86_score() {
     // FIXME: this does not check for OS support
 
-    int score = 1;
+    പൂർണ്ണസംഖ്യ score = 1;
     cpuid_x86 is;
 
 #ifdef GGML_FMA
-    if (!is.FMA()) { return 0; }
+    എങ്കിൽ (!is.FMA()) { തിരികെ 0; }
     score += 1;
 #endif
 #ifdef GGML_F16C
-    if (!is.F16C()) { return 0; }
+    എങ്കിൽ (!is.F16C()) { തിരികെ 0; }
     score += 1<<1;
 #endif
 #ifdef GGML_SSE42
-    if (!is.SSE42()) { return 0; }
+    എങ്കിൽ (!is.SSE42()) { തിരികെ 0; }
     score += 1<<2;
 #endif
 #ifdef GGML_BMI2
-    if (!is.BMI2()) { return 0; }
+    എങ്കിൽ (!is.BMI2()) { തിരികെ 0; }
     score += 1<<3;
 #endif
 #ifdef GGML_AVX
-    if (!is.AVX()) { return 0; }
+    എങ്കിൽ (!is.AVX()) { തിരികെ 0; }
     score += 1<<4;
 #endif
 #ifdef GGML_AVX2
-    if (!is.AVX2()) { return 0; }
+    എങ്കിൽ (!is.AVX2()) { തിരികെ 0; }
     score += 1<<5;
 #endif
 #ifdef GGML_AVX_VNNI
-    if (!is.AVX_VNNI()) { return 0; }
+    എങ്കിൽ (!is.AVX_VNNI()) { തിരികെ 0; }
     score += 1<<6;
 #endif
 #ifdef GGML_AVX512
-    if (!is.AVX512F()) { return 0; }
-    if (!is.AVX512CD()) { return 0; }
-    if (!is.AVX512VL()) { return 0; }
-    if (!is.AVX512DQ()) { return 0; }
-    if (!is.AVX512BW()) { return 0; }
+    എങ്കിൽ (!is.AVX512F()) { തിരികെ 0; }
+    എങ്കിൽ (!is.AVX512CD()) { തിരികെ 0; }
+    എങ്കിൽ (!is.AVX512VL()) { തിരികെ 0; }
+    എങ്കിൽ (!is.AVX512DQ()) { തിരികെ 0; }
+    എങ്കിൽ (!is.AVX512BW()) { തിരികെ 0; }
     score += 1<<7;
 #endif
 #ifdef GGML_AVX512_VBMI
-    if (!is.AVX512_VBMI()) { return 0; }
+    എങ്കിൽ (!is.AVX512_VBMI()) { തിരികെ 0; }
     score += 1<<8;
 #endif
 #ifdef GGML_AVX512_BF16
-    if (!is.AVX512_BF16()) { return 0; }
+    എങ്കിൽ (!is.AVX512_BF16()) { തിരികെ 0; }
     score += 1<<9;
 #endif
 #ifdef GGML_AVX512_VNNI
-    if (!is.AVX512_VNNI()) { return 0; }
+    എങ്കിൽ (!is.AVX512_VNNI()) { തിരികെ 0; }
     score += 1<<10;
 #endif
 #ifdef GGML_AMX_INT8
-    if (!is.AMX_INT8()) { return 0; }
+    എങ്കിൽ (!is.AMX_INT8()) { തിരികെ 0; }
     score += 1<<11;
 #endif
 
-    return score;
+    തിരികെ score;
 }
 
 GGML_BACKEND_DL_SCORE_IMPL(ggml_backend_cpu_x86_score)

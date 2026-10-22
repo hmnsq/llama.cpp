@@ -1,122 +1,122 @@
-#include "ops.h"
+#അന്തര്ഭാവ "ops.h"
 
-#include "ggml-cpu.h"
-#include "ggml-impl.h"
-#include "binary-ops.h"
-#include "simd-gemm.h"
-#include "ggml.h"
-#include "unary-ops.h"
-#include "vec.h"
+#അന്തര്ഭാവ "ggml-cpu.h"
+#അന്തര്ഭാവ "ggml-impl.h"
+#അന്തര്ഭാവ "binary-ops.h"
+#അന്തര്ഭാവ "simd-gemm.h"
+#അന്തര്ഭാവ "ggml.h"
+#അന്തര്ഭാവ "unary-ops.h"
+#അന്തര്ഭാവ "vec.h"
 
-#include <algorithm>
-#include <cfloat>
-#include <cmath>
+#അന്തര്ഭാവ <algorithm>
+#അന്തര്ഭാവ <cfloat>
+#അന്തര്ഭാവ <cmath>
 
 // ggml_compute_forward_dup
 
-static void ggml_compute_forward_dup_same_cont(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_dup_same_cont(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
     GGML_ASSERT(ggml_nelements(dst) == ggml_nelements(src0));
     GGML_ASSERT(ggml_is_contiguous(dst) && ggml_is_contiguous(src0));
     GGML_ASSERT(src0->type == dst->type);
 
-    const size_t nb0 = ggml_type_size(src0->type);
+    സ്ഥിരം size_t nb0 = ggml_type_size(src0->type);
 
-    const int ith = params->ith; // thread index
-    const int nth = params->nth; // number of threads
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith; // thread index
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth; // number of threads
 
     // parallelize by blocks
-    const int nk = ggml_nelements(src0)/ggml_blck_size(src0->type);
-    const int dr = (nk + nth - 1) / nth;
-    const int k0 = dr * ith;
-    const int k1 = MIN(k0 + dr, nk);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nk = ggml_nelements(src0)/ggml_blck_size(src0->type);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nk + nth - 1) / nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ k0 = dr * ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ k1 = MIN(k0 + dr, nk);
 
-    if (k0 < k1) {
+    എങ്കിൽ (k0 < k1) {
         memcpy(
-            ((char *)  dst->data + k0*nb0),
-            ((char *) src0->data + k0*nb0),
+            ((അക്ഷരം *)  dst->data + k0*nb0),
+            ((അക്ഷരം *) src0->data + k0*nb0),
             (k1 - k0) * nb0);
     }
 }
 
 template<typename src_t, typename dst_t>
-static void ggml_compute_forward_dup_flt(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_dup_flt(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
     GGML_ASSERT(ggml_nelements(dst) == ggml_nelements(src0));
     GGML_ASSERT(!ggml_is_quantized(src0->type) && !ggml_is_quantized(dst->type));
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
-    const int ith = params->ith; // thread index
-    const int nth = params->nth; // number of threads
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith; // thread index
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth; // number of threads
 
     // parallelize by rows
-    const int nr = ne01;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ne01;
     // number of rows per thread
-    const int dr = (nr + nth - 1) / nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1) / nth;
     // row range for this thread
-    const int ir0 = dr * ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr * ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
     // case: type & row size equal
-    if (src0->type == dst->type &&
+    എങ്കിൽ (src0->type == dst->type &&
         ne00 == ne0 &&
         nb00 == ggml_type_size(src0->type) && nb0 == ggml_type_size(dst->type)) {
         // copy by rows
-        const size_t rs = ne00*nb00;
-        for (int64_t i03 = 0; i03 < ne03; i03++) {
-            for (int64_t i02 = 0; i02 < ne02; i02++) {
-                for (int64_t i01 = ir0; i01 < ir1; i01++) {
+        സ്ഥിരം size_t rs = ne00*nb00;
+        വേണ്ടി (int64_t i03 = 0; i03 < ne03; i03++) {
+            വേണ്ടി (int64_t i02 = 0; i02 < ne02; i02++) {
+                വേണ്ടി (int64_t i01 = ir0; i01 < ir1; i01++) {
                     memcpy(
-                        ((char *)  dst->data + i01*nb1  + i02*nb2  + i03*nb3),
-                        ((char *) src0->data + i01*nb01 + i02*nb02 + i03*nb03),
+                        ((അക്ഷരം *)  dst->data + i01*nb1  + i02*nb2  + i03*nb3),
+                        ((അക്ഷരം *) src0->data + i01*nb01 + i02*nb02 + i03*nb03),
                         rs);
                 }
             }
         }
-        return;
+        തിരികെ;
     }
 
     // case: dst tensor is contiguous
-    if (ggml_is_contiguous(dst)) {
-        if (nb00 == sizeof(src_t)) {
-            if constexpr (std::is_same_v<dst_t, src_t>) {
+    എങ്കിൽ (ggml_is_contiguous(dst)) {
+        എങ്കിൽ (nb00 == വലുപ്പം(src_t)) {
+            എങ്കിൽ constexpr (std::is_same_v<dst_t, src_t>) {
                 // same type
                 size_t id = 0;
-                const size_t rs = ne00 * nb00;
-                char * dst_ptr = (char *) dst->data;
+                സ്ഥിരം size_t rs = ne00 * nb00;
+                അക്ഷരം * dst_ptr = (അക്ഷരം *) dst->data;
 
-                for (int i03 = 0; i03 < ne03; i03++) {
-                    for (int i02 = 0; i02 < ne02; i02++) {
+                വേണ്ടി (പൂർണ്ണസംഖ്യ i03 = 0; i03 < ne03; i03++) {
+                    വേണ്ടി (പൂർണ്ണസംഖ്യ i02 = 0; i02 < ne02; i02++) {
                         id += rs * ir0;
-                        for (int i01 = ir0; i01 < ir1; i01++) {
-                            const char * src0_ptr = (char *) src0->data + i01*nb01 + i02*nb02 + i03*nb03;
+                        വേണ്ടി (പൂർണ്ണസംഖ്യ i01 = ir0; i01 < ir1; i01++) {
+                            സ്ഥിരം അക്ഷരം * src0_ptr = (അക്ഷരം *) src0->data + i01*nb01 + i02*nb02 + i03*nb03;
                             memcpy(dst_ptr + id, src0_ptr, rs);
                             id += rs;
                         }
                         id += rs * (ne01 - ir1);
                     }
                 }
-            } else {
+            } അല്ലെങ്കിൽ {
                 // casting between non-quantized types
                 size_t id = 0;
                 dst_t * dst_ptr = (dst_t *) dst->data;
 
-                for (int i03 = 0; i03 < ne03; i03++) {
-                    for (int i02 = 0; i02 < ne02; i02++) {
+                വേണ്ടി (പൂർണ്ണസംഖ്യ i03 = 0; i03 < ne03; i03++) {
+                    വേണ്ടി (പൂർണ്ണസംഖ്യ i02 = 0; i02 < ne02; i02++) {
                         id += ne00 * ir0;
-                        for (int i01 = ir0; i01 < ir1; i01++) {
-                            const src_t * src0_ptr = (src_t *) ((char *) src0->data + i01*nb01 + i02*nb02 + i03*nb03);
-                            for (int i00 = 0; i00 < ne00; i00++) {
-                                float tmp = type_conversion_table<src_t>::to_f32(src0_ptr[i00]);
+                        വേണ്ടി (പൂർണ്ണസംഖ്യ i01 = ir0; i01 < ir1; i01++) {
+                            സ്ഥിരം src_t * src0_ptr = (src_t *) ((അക്ഷരം *) src0->data + i01*nb01 + i02*nb02 + i03*nb03);
+                            വേണ്ടി (പൂർണ്ണസംഖ്യ i00 = 0; i00 < ne00; i00++) {
+                                ദശാംശം tmp = type_conversion_table<src_t>::to_f32(src0_ptr[i00]);
                                 dst_ptr[id] = type_conversion_table<dst_t>::from_f32(tmp);
                                 id++;
                             }
@@ -125,20 +125,20 @@ static void ggml_compute_forward_dup_flt(
                     }
                 }
             }
-        } else {
+        } അല്ലെങ്കിൽ {
             //printf("%s: this is not optimal - fix me\n", __func__);
 
             size_t id = 0;
             dst_t * dst_ptr = (dst_t *) dst->data;
 
-            for (int i03 = 0; i03 < ne03; i03++) {
-                for (int i02 = 0; i02 < ne02; i02++) {
+            വേണ്ടി (പൂർണ്ണസംഖ്യ i03 = 0; i03 < ne03; i03++) {
+                വേണ്ടി (പൂർണ്ണസംഖ്യ i02 = 0; i02 < ne02; i02++) {
                     id += ne00 * ir0;
-                    for (int i01 = ir0; i01 < ir1; i01++) {
-                        for (int i00 = 0; i00 < ne00; i00++) {
-                            const src_t * src0_ptr = (src_t *) ((char *) src0->data + i00*nb00 + i01*nb01 + i02*nb02 + i03*nb03);
+                    വേണ്ടി (പൂർണ്ണസംഖ്യ i01 = ir0; i01 < ir1; i01++) {
+                        വേണ്ടി (പൂർണ്ണസംഖ്യ i00 = 0; i00 < ne00; i00++) {
+                            സ്ഥിരം src_t * src0_ptr = (src_t *) ((അക്ഷരം *) src0->data + i00*nb00 + i01*nb01 + i02*nb02 + i03*nb03);
 
-                            float tmp = type_conversion_table<src_t>::to_f32(*src0_ptr);
+                            ദശാംശം tmp = type_conversion_table<src_t>::to_f32(*src0_ptr);
                             dst_ptr[id] = type_conversion_table<dst_t>::from_f32(tmp);
                             id++;
                         }
@@ -147,7 +147,7 @@ static void ggml_compute_forward_dup_flt(
                 }
             }
         }
-        return;
+        തിരികെ;
     }
 
     // dst counters
@@ -156,36 +156,36 @@ static void ggml_compute_forward_dup_flt(
     int64_t i12 = 0;
     int64_t i13 = 0;
 
-    if constexpr (std::is_same_v<dst_t, src_t>) {
-        for (int64_t i03 = 0; i03 < ne03; i03++) {
-            for (int64_t i02 = 0; i02 < ne02; i02++) {
+    എങ്കിൽ constexpr (std::is_same_v<dst_t, src_t>) {
+        വേണ്ടി (int64_t i03 = 0; i03 < ne03; i03++) {
+            വേണ്ടി (int64_t i02 = 0; i02 < ne02; i02++) {
                 i10 += ne00 * ir0;
-                while (i10 >= ne0) {
+                ആകുമ്പോൾ (i10 >= ne0) {
                     i10 -= ne0;
-                    if (++i11 == ne1) {
+                    എങ്കിൽ (++i11 == ne1) {
                         i11 = 0;
-                        if (++i12 == ne2) {
+                        എങ്കിൽ (++i12 == ne2) {
                             i12 = 0;
-                            if (++i13 == ne3) {
+                            എങ്കിൽ (++i13 == ne3) {
                                 i13 = 0;
                             }
                         }
                     }
                 }
-                for (int64_t i01 = ir0; i01 < ir1; i01++) {
-                    for (int64_t i00 = 0; i00 < ne00; i00++) {
-                        const char * src0_ptr = ((char *) src0->data + i00*nb00 + i01*nb01 + i02*nb02 + i03*nb03);
-                              char * dst_ptr  = ((char *)  dst->data + i10*nb0  + i11*nb1  + i12*nb2  + i13*nb3);
+                വേണ്ടി (int64_t i01 = ir0; i01 < ir1; i01++) {
+                    വേണ്ടി (int64_t i00 = 0; i00 < ne00; i00++) {
+                        സ്ഥിരം അക്ഷരം * src0_ptr = ((അക്ഷരം *) src0->data + i00*nb00 + i01*nb01 + i02*nb02 + i03*nb03);
+                              അക്ഷരം * dst_ptr  = ((അക്ഷരം *)  dst->data + i10*nb0  + i11*nb1  + i12*nb2  + i13*nb3);
 
-                        memcpy(dst_ptr, src0_ptr, sizeof(dst_t));
+                        memcpy(dst_ptr, src0_ptr, വലുപ്പം(dst_t));
 
-                        if (++i10 == ne00) {
+                        എങ്കിൽ (++i10 == ne00) {
                             i10 = 0;
-                            if (++i11 == ne01) {
+                            എങ്കിൽ (++i11 == ne01) {
                                 i11 = 0;
-                                if (++i12 == ne02) {
+                                എങ്കിൽ (++i12 == ne02) {
                                     i12 = 0;
-                                    if (++i13 == ne03) {
+                                    എങ്കിൽ (++i13 == ne03) {
                                         i13 = 0;
                                     }
                                 }
@@ -194,13 +194,13 @@ static void ggml_compute_forward_dup_flt(
                     }
                 }
                 i10 += ne00 * (ne01 - ir1);
-                while (i10 >= ne0) {
+                ആകുമ്പോൾ (i10 >= ne0) {
                     i10 -= ne0;
-                    if (++i11 == ne1) {
+                    എങ്കിൽ (++i11 == ne1) {
                         i11 = 0;
-                        if (++i12 == ne2) {
+                        എങ്കിൽ (++i12 == ne2) {
                             i12 = 0;
-                            if (++i13 == ne3) {
+                            എങ്കിൽ (++i13 == ne3) {
                                 i13 = 0;
                             }
                         }
@@ -209,37 +209,37 @@ static void ggml_compute_forward_dup_flt(
             }
         }
 
-    } else {
-        for (int64_t i03 = 0; i03 < ne03; i03++) {
-            for (int64_t i02 = 0; i02 < ne02; i02++) {
+    } അല്ലെങ്കിൽ {
+        വേണ്ടി (int64_t i03 = 0; i03 < ne03; i03++) {
+            വേണ്ടി (int64_t i02 = 0; i02 < ne02; i02++) {
                 i10 += ne00 * ir0;
-                while (i10 >= ne0) {
+                ആകുമ്പോൾ (i10 >= ne0) {
                     i10 -= ne0;
-                    if (++i11 == ne1) {
+                    എങ്കിൽ (++i11 == ne1) {
                         i11 = 0;
-                        if (++i12 == ne2) {
+                        എങ്കിൽ (++i12 == ne2) {
                             i12 = 0;
-                            if (++i13 == ne3) {
+                            എങ്കിൽ (++i13 == ne3) {
                                 i13 = 0;
                             }
                         }
                     }
                 }
-                for (int64_t i01 = ir0; i01 < ir1; i01++) {
-                    for (int64_t i00 = 0; i00 < ne00; i00++) {
-                        const char * src0_ptr = ((char *) src0->data + i00*nb00 + i01*nb01 + i02*nb02 + i03*nb03);
-                              char * dst_ptr  = ((char *)  dst->data + i10*nb0  + i11*nb1  + i12*nb2  + i13*nb3);
+                വേണ്ടി (int64_t i01 = ir0; i01 < ir1; i01++) {
+                    വേണ്ടി (int64_t i00 = 0; i00 < ne00; i00++) {
+                        സ്ഥിരം അക്ഷരം * src0_ptr = ((അക്ഷരം *) src0->data + i00*nb00 + i01*nb01 + i02*nb02 + i03*nb03);
+                              അക്ഷരം * dst_ptr  = ((അക്ഷരം *)  dst->data + i10*nb0  + i11*nb1  + i12*nb2  + i13*nb3);
 
-                        float tmp = type_conversion_table<src_t>::to_f32(*(const src_t *) src0_ptr);
+                        ദശാംശം tmp = type_conversion_table<src_t>::to_f32(*(സ്ഥിരം src_t *) src0_ptr);
                         *(dst_t *) dst_ptr = type_conversion_table<dst_t>::from_f32(tmp);
 
-                        if (++i10 == ne0) {
+                        എങ്കിൽ (++i10 == ne0) {
                             i10 = 0;
-                            if (++i11 == ne1) {
+                            എങ്കിൽ (++i11 == ne1) {
                                 i11 = 0;
-                                if (++i12 == ne2) {
+                                എങ്കിൽ (++i12 == ne2) {
                                     i12 = 0;
-                                    if (++i13 == ne3) {
+                                    എങ്കിൽ (++i13 == ne3) {
                                         i13 = 0;
                                     }
                                 }
@@ -248,13 +248,13 @@ static void ggml_compute_forward_dup_flt(
                     }
                 }
                 i10 += ne00 * (ne01 - ir1);
-                while (i10 >= ne0) {
+                ആകുമ്പോൾ (i10 >= ne0) {
                     i10 -= ne0;
-                    if (++i11 == ne1) {
+                    എങ്കിൽ (++i11 == ne1) {
                         i11 = 0;
-                        if (++i12 == ne2) {
+                        എങ്കിൽ (++i12 == ne2) {
                             i12 = 0;
-                            if (++i13 == ne3) {
+                            എങ്കിൽ (++i13 == ne3) {
                                 i13 = 0;
                             }
                         }
@@ -267,46 +267,46 @@ static void ggml_compute_forward_dup_flt(
 
 
 template<typename src_t>
-static void ggml_compute_forward_dup_to_q(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_dup_to_q(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
     GGML_ASSERT(ggml_nelements(dst) == ggml_nelements(src0));
     GGML_ASSERT(!ggml_is_quantized(src0->type));
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
-    const int ith = params->ith; // thread index
-    const int nth = params->nth; // number of threads
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith; // thread index
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth; // number of threads
 
     // parallelize by rows
-    const int nr = ne01;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ne01;
     // number of rows per thread
-    const int dr = (nr + nth - 1) / nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1) / nth;
     // row range for this thread
-    const int ir0 = dr * ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr * ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    if (ggml_is_contiguous(dst) &&
-            nb00 == sizeof(src_t) &&
+    എങ്കിൽ (ggml_is_contiguous(dst) &&
+            nb00 == വലുപ്പം(src_t) &&
             ggml_get_type_traits_cpu(dst->type)->from_float) {
         // casting non-quantized types --> intermediate f32 --> quantized
-        ggml_from_float_t const quantize_row_q = ggml_get_type_traits_cpu(dst->type)->from_float;
-        float * src0_f32 = (float *) params->wdata + (ne00 + CACHE_LINE_SIZE_F32) * ith;
+        ggml_from_float_t സ്ഥിരം quantize_row_q = ggml_get_type_traits_cpu(dst->type)->from_float;
+        ദശാംശം * src0_f32 = (ദശാംശം *) params->wdata + (ne00 + CACHE_വരി_SIZE_F32) * ith;
 
         size_t id = 0;
         size_t rs = nb0 * (ne00 / ggml_blck_size(dst->type));
-        char * dst_ptr = (char *) dst->data;
+        അക്ഷരം * dst_ptr = (അക്ഷരം *) dst->data;
 
-        for (int i03 = 0; i03 < ne03; i03++) {
-            for (int i02 = 0; i02 < ne02; i02++) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i03 = 0; i03 < ne03; i03++) {
+            വേണ്ടി (പൂർണ്ണസംഖ്യ i02 = 0; i02 < ne02; i02++) {
                 id += rs * ir0;
-                for (int i01 = ir0; i01 < ir1; i01++) {
-                    const src_t * src0_ptr = (src_t *) ((char *) src0->data + i01*nb01 + i02*nb02 + i03*nb03);
+                വേണ്ടി (പൂർണ്ണസംഖ്യ i01 = ir0; i01 < ir1; i01++) {
+                    സ്ഥിരം src_t * src0_ptr = (src_t *) ((അക്ഷരം *) src0->data + i01*nb01 + i02*nb02 + i03*nb03);
 
-                    for (int i00 = 0; i00 < ne00; i00++) {
+                    വേണ്ടി (പൂർണ്ണസംഖ്യ i00 = 0; i00 < ne00; i00++) {
                         src0_f32[i00] = type_conversion_table<src_t>::to_f32(src0_ptr[i00]);
                     }
 
@@ -316,86 +316,86 @@ static void ggml_compute_forward_dup_to_q(
                 id += rs * (ne01 - ir1);
             }
         }
-    } else {
+    } അല്ലെങ്കിൽ {
         // printf("%s %s\n", ggml_type_name(src0->type), ggml_type_name(dst->type));
         GGML_ABORT("not implemented");
     }
 }
 
 // A simplified version of ggml_compute_forward_dup that doesn't do float upcasting, and just plain old memcpy.
-static void ggml_compute_forward_dup_bytes(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_dup_bytes(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
     GGML_ASSERT(ggml_nelements(dst) == ggml_nelements(src0));
     GGML_ASSERT(src0->type == dst->type);
 
     GGML_TENSOR_UNARY_OP_LOCALS;
 
-    if (ggml_is_contiguous(src0) && ggml_is_contiguous(dst)) {
+    എങ്കിൽ (ggml_is_contiguous(src0) && ggml_is_contiguous(dst)) {
         ggml_compute_forward_dup_same_cont(params, dst);
-        return;
+        തിരികെ;
     }
 
-    const size_t type_size = ggml_type_size(src0->type);
+    സ്ഥിരം size_t type_size = ggml_type_size(src0->type);
 
-    const int ith = params->ith; // thread index
-    const int nth = params->nth; // number of threads
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith; // thread index
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth; // number of threads
 
     // parallelize by rows
-    const int nr = ne01;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ne01;
     // number of rows per thread
-    const int dr = (nr + nth - 1) / nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1) / nth;
     // row range for this thread
-    const int ir0 = dr * ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr * ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    if (src0->type == dst->type &&
+    എങ്കിൽ (src0->type == dst->type &&
         ggml_are_same_shape(src0, dst) &&
         nb00 == type_size && nb0 == type_size) {
         // copy by rows
-        const size_t rs = ggml_row_size(src0->type, ne00);
-        for (int64_t i03 = 0; i03 < ne03; i03++) {
-            for (int64_t i02 = 0; i02 < ne02; i02++) {
-                for (int64_t i01 = ir0; i01 < ir1; i01++) {
+        സ്ഥിരം size_t rs = ggml_row_size(src0->type, ne00);
+        വേണ്ടി (int64_t i03 = 0; i03 < ne03; i03++) {
+            വേണ്ടി (int64_t i02 = 0; i02 < ne02; i02++) {
+                വേണ്ടി (int64_t i01 = ir0; i01 < ir1; i01++) {
                     memcpy(
-                        ((char *)  dst->data + i01*nb1  + i02*nb2  + i03*nb3),
-                        ((char *) src0->data + i01*nb01 + i02*nb02 + i03*nb03),
+                        ((അക്ഷരം *)  dst->data + i01*nb1  + i02*nb2  + i03*nb3),
+                        ((അക്ഷരം *) src0->data + i01*nb01 + i02*nb02 + i03*nb03),
                         rs);
                 }
             }
         }
-        return;
+        തിരികെ;
     }
 
-    if (ggml_is_contiguous(dst)) {
+    എങ്കിൽ (ggml_is_contiguous(dst)) {
         size_t id = 0;
-        char * dst_ptr = (char *) dst->data;
-        const size_t rs = ne00 * type_size;
+        അക്ഷരം * dst_ptr = (അക്ഷരം *) dst->data;
+        സ്ഥിരം size_t rs = ne00 * type_size;
 
-        if (nb00 == type_size) {
+        എങ്കിൽ (nb00 == type_size) {
             // src0 is contiguous on first dimension, copy by rows
-            for (int64_t i03 = 0; i03 < ne03; i03++) {
-                for (int64_t i02 = 0; i02 < ne02; i02++) {
+            വേണ്ടി (int64_t i03 = 0; i03 < ne03; i03++) {
+                വേണ്ടി (int64_t i02 = 0; i02 < ne02; i02++) {
                     id += rs * ir0;
-                    for (int64_t i01 = ir0; i01 < ir1; i01++) {
-                        const char * src0_ptr = (char *) src0->data + i01*nb01 + i02*nb02 + i03*nb03;
+                    വേണ്ടി (int64_t i01 = ir0; i01 < ir1; i01++) {
+                        സ്ഥിരം അക്ഷരം * src0_ptr = (അക്ഷരം *) src0->data + i01*nb01 + i02*nb02 + i03*nb03;
                         memcpy(dst_ptr + id, src0_ptr, rs);
                         id += rs;
                     }
                     id += rs * (ne01 - ir1);
                 }
             }
-        } else {
+        } അല്ലെങ്കിൽ {
             //printf("%s: this is not optimal - fix me\n", __func__);
 
-            for (int64_t i03 = 0; i03 < ne03; i03++) {
-                for (int64_t i02 = 0; i02 < ne02; i02++) {
+            വേണ്ടി (int64_t i03 = 0; i03 < ne03; i03++) {
+                വേണ്ടി (int64_t i02 = 0; i02 < ne02; i02++) {
                     id += rs * ir0;
-                    for (int64_t i01 = ir0; i01 < ir1; i01++) {
-                        for (int64_t i00 = 0; i00 < ne00; i00++) {
-                            const char * src0_ptr = (char *) src0->data + i00*nb00 + i01*nb01 + i02*nb02 + i03*nb03;
+                    വേണ്ടി (int64_t i01 = ir0; i01 < ir1; i01++) {
+                        വേണ്ടി (int64_t i00 = 0; i00 < ne00; i00++) {
+                            സ്ഥിരം അക്ഷരം * src0_ptr = (അക്ഷരം *) src0->data + i00*nb00 + i01*nb01 + i02*nb02 + i03*nb03;
                             memcpy(dst_ptr + id, src0_ptr, type_size);
 
                             id += type_size;
@@ -406,7 +406,7 @@ static void ggml_compute_forward_dup_bytes(
             }
         }
 
-        return;
+        തിരികെ;
     }
 
     // dst counters
@@ -416,38 +416,38 @@ static void ggml_compute_forward_dup_bytes(
     int64_t i13 = 0;
 
     // number of blocks in a row
-    const int64_t nk00 = ne00 / ggml_blck_size(src0->type);
-    const int64_t nk0  = ne0  / ggml_blck_size(dst->type);
+    സ്ഥിരം int64_t nk00 = ne00 / ggml_blck_size(src0->type);
+    സ്ഥിരം int64_t nk0  = ne0  / ggml_blck_size(dst->type);
 
-    for (int64_t i03 = 0; i03 < ne03; i03++) {
-        for (int64_t i02 = 0; i02 < ne02; i02++) {
+    വേണ്ടി (int64_t i03 = 0; i03 < ne03; i03++) {
+        വേണ്ടി (int64_t i02 = 0; i02 < ne02; i02++) {
             k10 += nk00 * ir0;
-            while (k10 >= nk0) {
+            ആകുമ്പോൾ (k10 >= nk0) {
                 k10 -= nk0;
-                if (++i11 == ne1) {
+                എങ്കിൽ (++i11 == ne1) {
                     i11 = 0;
-                    if (++i12 == ne2) {
+                    എങ്കിൽ (++i12 == ne2) {
                         i12 = 0;
-                        if (++i13 == ne3) {
+                        എങ്കിൽ (++i13 == ne3) {
                             i13 = 0;
                         }
                     }
                 }
             }
-            for (int64_t i01 = ir0; i01 < ir1; i01++) {
-                for (int64_t k00 = 0; k00 < nk00; k00++) {
-                    const char * src0_ptr = ((char *) src0->data + k00*nb00 + i01*nb01 + i02*nb02 + i03*nb03);
-                          char * dst_ptr  = ((char *)  dst->data + k10*nb0  + i11*nb1  + i12*nb2  + i13*nb3);
+            വേണ്ടി (int64_t i01 = ir0; i01 < ir1; i01++) {
+                വേണ്ടി (int64_t k00 = 0; k00 < nk00; k00++) {
+                    സ്ഥിരം അക്ഷരം * src0_ptr = ((അക്ഷരം *) src0->data + k00*nb00 + i01*nb01 + i02*nb02 + i03*nb03);
+                          അക്ഷരം * dst_ptr  = ((അക്ഷരം *)  dst->data + k10*nb0  + i11*nb1  + i12*nb2  + i13*nb3);
 
                     memcpy(dst_ptr, src0_ptr, type_size);
 
-                    if (++k10 == nk0) {
+                    എങ്കിൽ (++k10 == nk0) {
                         k10 = 0;
-                        if (++i11 == ne1) {
+                        എങ്കിൽ (++i11 == ne1) {
                             i11 = 0;
-                            if (++i12 == ne2) {
+                            എങ്കിൽ (++i12 == ne2) {
                                 i12 = 0;
-                                if (++i13 == ne3) {
+                                എങ്കിൽ (++i13 == ne3) {
                                     i13 = 0;
                                 }
                             }
@@ -456,13 +456,13 @@ static void ggml_compute_forward_dup_bytes(
                 }
             }
             k10 += nk00 * (ne01 - ir1);
-            while (k10 >= nk0) {
+            ആകുമ്പോൾ (k10 >= nk0) {
                 k10 -= nk0;
-                if (++i11 == ne1) {
+                എങ്കിൽ (++i11 == ne1) {
                     i11 = 0;
-                    if (++i12 == ne2) {
+                    എങ്കിൽ (++i12 == ne2) {
                         i12 = 0;
-                        if (++i13 == ne3) {
+                        എങ്കിൽ (++i13 == ne3) {
                             i13 = 0;
                         }
                     }
@@ -472,101 +472,101 @@ static void ggml_compute_forward_dup_bytes(
     }
 }
 
-static void ggml_compute_forward_dup_from_q(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_dup_from_q(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS
 
-    const ggml_type type = src0->type;
-    ggml_to_float_t const dequantize_row_q = ggml_get_type_traits(type)->to_float;
+    സ്ഥിരം ggml_type type = src0->type;
+    ggml_to_float_t സ്ഥിരം dequantize_row_q = ggml_get_type_traits(type)->to_float;
 
     size_t qk = ggml_blck_size(type);
-    const int64_t nr = ggml_nelements(src1) / qk;
+    സ്ഥിരം int64_t nr = ggml_nelements(src1) / qk;
 
     // destination must be contiguous in the first dimension
     GGML_ASSERT(nb10 == ggml_type_size(dst->type));
     // must either have first dimension large enough to hold a row, or fully contiguous
     GGML_ASSERT((ne10 % qk) == 0 || ggml_is_contiguous(dst));
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int64_t ir = ir0; ir < ir1; ++ir) {
+    വേണ്ടി (int64_t ir = ir0; ir < ir1; ++ir) {
 
         uint32_t i = ir * qk;
 
-        const int64_t i03 = i/(ne00 * ne01 * ne02);
-        const int64_t i02 = (i - i03*ne00*ne01*ne02 )/ (ne00*ne01);
-        const int64_t i01 = (i - i03*ne00*ne01*ne02  -  i02*ne01*ne00) / ne00;
-        const int64_t i00 = i - i03*ne00*ne01*ne02 - i02*ne01*ne00 - i01*ne00;
-        const int64_t x_offset = (i00/qk)*nb00 + i01*nb01 + i02*nb02 + i03 * nb03;
+        സ്ഥിരം int64_t i03 = i/(ne00 * ne01 * ne02);
+        സ്ഥിരം int64_t i02 = (i - i03*ne00*ne01*ne02 )/ (ne00*ne01);
+        സ്ഥിരം int64_t i01 = (i - i03*ne00*ne01*ne02  -  i02*ne01*ne00) / ne00;
+        സ്ഥിരം int64_t i00 = i - i03*ne00*ne01*ne02 - i02*ne01*ne00 - i01*ne00;
+        സ്ഥിരം int64_t x_offset = (i00/qk)*nb00 + i01*nb01 + i02*nb02 + i03 * nb03;
 
-        const int64_t i13 = i/(ne10 * ne11 * ne12);
-        const int64_t i12 = (i - i13*ne10*ne11*ne12) / (ne10*ne11);
-        const int64_t i11 = (i - i13*ne10*ne11*ne12 - i12*ne10*ne11) / ne10;
-        const int64_t i10 = i - i13*ne10*ne11*ne12 - i12*ne10*ne11 - i11*ne10;
-        const int64_t dst_offset = i10*nb10 + i11*nb11 + i12*nb12 + i13*nb13;
+        സ്ഥിരം int64_t i13 = i/(ne10 * ne11 * ne12);
+        സ്ഥിരം int64_t i12 = (i - i13*ne10*ne11*ne12) / (ne10*ne11);
+        സ്ഥിരം int64_t i11 = (i - i13*ne10*ne11*ne12 - i12*ne10*ne11) / ne10;
+        സ്ഥിരം int64_t i10 = i - i13*ne10*ne11*ne12 - i12*ne10*ne11 - i11*ne10;
+        സ്ഥിരം int64_t dst_offset = i10*nb10 + i11*nb11 + i12*nb12 + i13*nb13;
 
         dequantize_row_q(
-                (const void *) ((char *) src0->data + x_offset),
-                     (float *) ((char *)  dst->data + dst_offset), qk);
+                (സ്ഥിരം ശൂന്യം *) ((അക്ഷരം *) src0->data + x_offset),
+                     (ദശാംശം *) ((അക്ഷരം *)  dst->data + dst_offset), qk);
     }
 }
 
-void ggml_compute_forward_dup(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_dup(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    if (src0->type == dst->type) {
+    എങ്കിൽ (src0->type == dst->type) {
         ggml_compute_forward_dup_bytes(params, dst);
-        return;
+        തിരികെ;
     }
 
-    switch (src0->type) {
-        case GGML_TYPE_F16:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F16:
             {
-                /**/ if (dst->type == GGML_TYPE_F16)  ggml_compute_forward_dup_flt<ggml_fp16_t, ggml_fp16_t>(params, dst);
-                else if (dst->type == GGML_TYPE_BF16) ggml_compute_forward_dup_flt<ggml_fp16_t, ggml_bf16_t>(params, dst);
-                else if (dst->type == GGML_TYPE_F32)  ggml_compute_forward_dup_flt<ggml_fp16_t, float      >(params, dst);
-                else ggml_compute_forward_dup_to_q<ggml_fp16_t>(params, dst);
-            } break;
-        case GGML_TYPE_BF16:
+                /**/ എങ്കിൽ (dst->type == GGML_TYPE_F16)  ggml_compute_forward_dup_flt<ggml_fp16_t, ggml_fp16_t>(params, dst);
+                അല്ലെങ്കിൽ എങ്കിൽ (dst->type == GGML_TYPE_BF16) ggml_compute_forward_dup_flt<ggml_fp16_t, ggml_bf16_t>(params, dst);
+                അല്ലെങ്കിൽ എങ്കിൽ (dst->type == GGML_TYPE_F32)  ggml_compute_forward_dup_flt<ggml_fp16_t, ദശാംശം      >(params, dst);
+                അല്ലെങ്കിൽ ggml_compute_forward_dup_to_q<ggml_fp16_t>(params, dst);
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_BF16:
             {
-                /**/ if (dst->type == GGML_TYPE_F16)  ggml_compute_forward_dup_flt<ggml_bf16_t, ggml_fp16_t>(params, dst);
-                else if (dst->type == GGML_TYPE_BF16) ggml_compute_forward_dup_flt<ggml_bf16_t, ggml_bf16_t>(params, dst);
-                else if (dst->type == GGML_TYPE_F32)  ggml_compute_forward_dup_flt<ggml_bf16_t, float      >(params, dst);
-                else ggml_compute_forward_dup_to_q<ggml_bf16_t>(params, dst);
-            } break;
-        case GGML_TYPE_F32:
+                /**/ എങ്കിൽ (dst->type == GGML_TYPE_F16)  ggml_compute_forward_dup_flt<ggml_bf16_t, ggml_fp16_t>(params, dst);
+                അല്ലെങ്കിൽ എങ്കിൽ (dst->type == GGML_TYPE_BF16) ggml_compute_forward_dup_flt<ggml_bf16_t, ggml_bf16_t>(params, dst);
+                അല്ലെങ്കിൽ എങ്കിൽ (dst->type == GGML_TYPE_F32)  ggml_compute_forward_dup_flt<ggml_bf16_t, ദശാംശം      >(params, dst);
+                അല്ലെങ്കിൽ ggml_compute_forward_dup_to_q<ggml_bf16_t>(params, dst);
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F32:
             {
-                /**/ if (dst->type == GGML_TYPE_F16)  ggml_compute_forward_dup_flt<float, ggml_fp16_t>(params, dst);
-                else if (dst->type == GGML_TYPE_BF16) ggml_compute_forward_dup_flt<float, ggml_bf16_t>(params, dst);
-                else if (dst->type == GGML_TYPE_F32)  ggml_compute_forward_dup_flt<float, float      >(params, dst);
-                else if (dst->type == GGML_TYPE_I32)  ggml_compute_forward_dup_flt<float, int32_t    >(params, dst);
-                else ggml_compute_forward_dup_to_q<float>(params, dst);
-            } break;
-        case GGML_TYPE_I32:
+                /**/ എങ്കിൽ (dst->type == GGML_TYPE_F16)  ggml_compute_forward_dup_flt<ദശാംശം, ggml_fp16_t>(params, dst);
+                അല്ലെങ്കിൽ എങ്കിൽ (dst->type == GGML_TYPE_BF16) ggml_compute_forward_dup_flt<ദശാംശം, ggml_bf16_t>(params, dst);
+                അല്ലെങ്കിൽ എങ്കിൽ (dst->type == GGML_TYPE_F32)  ggml_compute_forward_dup_flt<ദശാംശം, ദശാംശം      >(params, dst);
+                അല്ലെങ്കിൽ എങ്കിൽ (dst->type == GGML_TYPE_I32)  ggml_compute_forward_dup_flt<ദശാംശം, int32_t    >(params, dst);
+                അല്ലെങ്കിൽ ggml_compute_forward_dup_to_q<ദശാംശം>(params, dst);
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_I32:
             {
-                if (dst->type == GGML_TYPE_F32) ggml_compute_forward_dup_flt<int32_t, float>(params, dst);
-                else GGML_ABORT("not implemented");
-            } break;
-        default:
+                എങ്കിൽ (dst->type == GGML_TYPE_F32) ggml_compute_forward_dup_flt<int32_t, ദശാംശം>(params, dst);
+                അല്ലെങ്കിൽ GGML_ABORT("not implemented");
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
-                if (ggml_is_quantized(src0->type) && dst->type == GGML_TYPE_F32) {
+                എങ്കിൽ (ggml_is_quantized(src0->type) && dst->type == GGML_TYPE_F32) {
                     ggml_compute_forward_dup_from_q(params, dst);
-                    break;
+                    നിർത്തുക;
                 }
                 GGML_ABORT("fatal error");
             }
@@ -575,30 +575,30 @@ void ggml_compute_forward_dup(
 
 // ggml_compute_forward_add
 
-static void ggml_compute_forward_add_q_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_add_q_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
     GGML_ASSERT(ggml_are_same_shape(src0, src1) && ggml_are_same_shape(src0, dst));
 
-    const int nr  = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr  = ggml_nrows(src0);
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const ggml_type type = src0->type;
-    const ggml_type dtype = dst->type;
-    ggml_to_float_t const dequantize_row_q = ggml_get_type_traits(type)->to_float;
-    ggml_from_float_t const quantize_row_q = ggml_get_type_traits_cpu(dtype)->from_float;
+    സ്ഥിരം ggml_type type = src0->type;
+    സ്ഥിരം ggml_type dtype = dst->type;
+    ggml_to_float_t സ്ഥിരം dequantize_row_q = ggml_get_type_traits(type)->to_float;
+    ggml_from_float_t സ്ഥിരം quantize_row_q = ggml_get_type_traits_cpu(dtype)->from_float;
 
     // we don't support permuted src0 or src1
     GGML_ASSERT(nb00 == ggml_type_size(type));
-    GGML_ASSERT(nb10 == sizeof(float));
+    GGML_ASSERT(nb10 == വലുപ്പം(ദശാംശം));
 
     // dst cannot be transposed or permuted
     GGML_ASSERT(nb0 <= nb1);
@@ -609,90 +609,90 @@ static void ggml_compute_forward_add_q_f32(
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    float * wdata = (float *) params->wdata + (ne00 + CACHE_LINE_SIZE_F32) * ith;
+    ദശാംശം * wdata = (ദശാംശം *) params->wdata + (ne00 + CACHE_വരി_SIZE_F32) * ith;
 
-    for (int ir = ir0; ir < ir1; ++ir) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ ir = ir0; ir < ir1; ++ir) {
         // src0 indices
-        const int i03 = ir/(ne02*ne01);
-        const int i02 = (ir - i03*ne02*ne01)/ne01;
-        const int i01 = (ir - i03*ne02*ne01 - i02*ne01);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i03 = ir/(ne02*ne01);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i02 = (ir - i03*ne02*ne01)/ne01;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i01 = (ir - i03*ne02*ne01 - i02*ne01);
 
         // src1 and dst are same shape as src0 => same indices
-        const int i13 = i03;
-        const int i12 = i02;
-        const int i11 = i01;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i13 = i03;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i12 = i02;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i11 = i01;
 
-        const int i3 = i03;
-        const int i2 = i02;
-        const int i1 = i01;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i3 = i03;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i2 = i02;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i1 = i01;
 
-        void  * src0_row = (void *) ((char *) src0->data + (i01*nb01 + i02*nb02 + i03*nb03));
-        float * src1_row = (float *)((char *) src1->data + (i11*nb11 + i12*nb12 + i13*nb13));
-        void  * dst_row  = (void *) ((char *)  dst->data + ( i1*nb1  +  i2*nb2  +  i3*nb3));
+        ശൂന്യം  * src0_row = (ശൂന്യം *) ((അക്ഷരം *) src0->data + (i01*nb01 + i02*nb02 + i03*nb03));
+        ദശാംശം * src1_row = (ദശാംശം *)((അക്ഷരം *) src1->data + (i11*nb11 + i12*nb12 + i13*nb13));
+        ശൂന്യം  * dst_row  = (ശൂന്യം *) ((അക്ഷരം *)  dst->data + ( i1*nb1  +  i2*nb2  +  i3*nb3));
 
-        assert(ne00 % 32 == 0);
+        പ്രതിജ്ഞാ(ne00 % 32 == 0);
 
         // unquantize row from src0 to temp buffer
         dequantize_row_q(src0_row, wdata, ne00);
         // add src1
         ggml_vec_acc_f32(ne00, wdata, src1_row);
         // quantize row to dst
-        if (quantize_row_q != NULL) {
+        എങ്കിൽ (quantize_row_q != ശൂന്യ) {
             quantize_row_q(wdata, dst_row, ne00);
-        } else {
+        } അല്ലെങ്കിൽ {
             memcpy(dst_row, wdata, ne0*nb0);
         }
     }
 }
 
-void ggml_compute_forward_add(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_add(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
-        case GGML_TYPE_F16:
-        case GGML_TYPE_BF16:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
+        അവസ്ഥ GGML_TYPE_F16:
+        അവസ്ഥ GGML_TYPE_BF16:
             {
                 ggml_compute_forward_add_non_quantized(params, dst);
-            } break;
-        case GGML_TYPE_Q1_0:
-        case GGML_TYPE_Q2_0:
-        case GGML_TYPE_Q4_0:
-        case GGML_TYPE_Q4_1:
-        case GGML_TYPE_Q5_0:
-        case GGML_TYPE_Q5_1:
-        case GGML_TYPE_Q8_0:
-        case GGML_TYPE_MXFP4:
-        case GGML_TYPE_NVFP4:
-        case GGML_TYPE_Q2_K:
-        case GGML_TYPE_Q3_K:
-        case GGML_TYPE_Q4_K:
-        case GGML_TYPE_Q5_K:
-        case GGML_TYPE_Q6_K:
-        case GGML_TYPE_TQ1_0:
-        case GGML_TYPE_TQ2_0:
-        case GGML_TYPE_IQ2_XXS:
-        case GGML_TYPE_IQ2_XS:
-        case GGML_TYPE_IQ3_XXS:
-        case GGML_TYPE_IQ1_S:
-        case GGML_TYPE_IQ1_M:
-        case GGML_TYPE_IQ4_NL:
-        case GGML_TYPE_IQ4_XS:
-        case GGML_TYPE_IQ3_S:
-        case GGML_TYPE_IQ2_S:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_Q1_0:
+        അവസ്ഥ GGML_TYPE_Q2_0:
+        അവസ്ഥ GGML_TYPE_Q4_0:
+        അവസ്ഥ GGML_TYPE_Q4_1:
+        അവസ്ഥ GGML_TYPE_Q5_0:
+        അവസ്ഥ GGML_TYPE_Q5_1:
+        അവസ്ഥ GGML_TYPE_Q8_0:
+        അവസ്ഥ GGML_TYPE_MXFP4:
+        അവസ്ഥ GGML_TYPE_NVFP4:
+        അവസ്ഥ GGML_TYPE_Q2_K:
+        അവസ്ഥ GGML_TYPE_Q3_K:
+        അവസ്ഥ GGML_TYPE_Q4_K:
+        അവസ്ഥ GGML_TYPE_Q5_K:
+        അവസ്ഥ GGML_TYPE_Q6_K:
+        അവസ്ഥ GGML_TYPE_TQ1_0:
+        അവസ്ഥ GGML_TYPE_TQ2_0:
+        അവസ്ഥ GGML_TYPE_IQ2_XXS:
+        അവസ്ഥ GGML_TYPE_IQ2_XS:
+        അവസ്ഥ GGML_TYPE_IQ3_XXS:
+        അവസ്ഥ GGML_TYPE_IQ1_S:
+        അവസ്ഥ GGML_TYPE_IQ1_M:
+        അവസ്ഥ GGML_TYPE_IQ4_NL:
+        അവസ്ഥ GGML_TYPE_IQ4_XS:
+        അവസ്ഥ GGML_TYPE_IQ3_S:
+        അവസ്ഥ GGML_TYPE_IQ2_S:
             {
                 ggml_compute_forward_add_q_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -701,69 +701,69 @@ void ggml_compute_forward_add(
 
 // ggml_compute_forward_add_id
 
-static void ggml_compute_forward_add_id_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_add_id_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
-    const ggml_tensor * src2 = dst->src[2];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src2 = dst->src[2];
 
     GGML_ASSERT(dst->type  == GGML_TYPE_F32);
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
     GGML_ASSERT(src2->type == GGML_TYPE_I32);
 
-    GGML_ASSERT(src0->nb[0] == sizeof(float));
-    GGML_ASSERT(src1->nb[0] == sizeof(float));
+    GGML_ASSERT(src0->nb[0] == വലുപ്പം(ദശാംശം));
+    GGML_ASSERT(src1->nb[0] == വലുപ്പം(ദശാംശം));
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nr  = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr  = ggml_nrows(src0);
 
     GGML_TENSOR_TERNARY_OP_LOCALS
 
-    GGML_ASSERT( nb0 == sizeof(float));
-    GGML_ASSERT(nb10 == sizeof(float));
+    GGML_ASSERT( nb0 == വലുപ്പം(ദശാംശം));
+    GGML_ASSERT(nb10 == വലുപ്പം(ദശാംശം));
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int ir = ir0; ir < ir1; ++ir) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ ir = ir0; ir < ir1; ++ir) {
         // src0 indices
-        const int i3 = ir/(ne2*ne1);
-        const int i2 = (ir - i3*ne2*ne1)/ne1;
-        const int i1 = (ir - i3*ne2*ne1 - i2*ne1);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i3 = ir/(ne2*ne1);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i2 = (ir - i3*ne2*ne1)/ne1;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i1 = (ir - i3*ne2*ne1 - i2*ne1);
 
         // src1 indices
-        const int i11 = *(int32_t *) ((char *) src2->data + i1*nb20 + i2*nb21);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i11 = *(int32_t *) ((അക്ഷരം *) src2->data + i1*nb20 + i2*nb21);
 
         GGML_ASSERT(i11 >= 0 && i11 < ne11);
 
         ggml_vec_add_f32(ne0,
-                (float *) ((char *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1 ),
-                (float *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01),
-                (float *) ((char *) src1->data + i11*nb11));
+                (ദശാംശം *) ((അക്ഷരം *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1 ),
+                (ദശാംശം *) ((അക്ഷരം *) src0->data + i3*nb03 + i2*nb02 + i1*nb01),
+                (ദശാംശം *) ((അക്ഷരം *) src1->data + i11*nb11));
     }
 }
 
-void ggml_compute_forward_add_id(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_add_id(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_add_id_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("unsupported type for ggml_compute_forward_add_id: %s", ggml_type_name(src0->type));
             }
@@ -772,73 +772,73 @@ void ggml_compute_forward_add_id(
 
 // ggml_compute_forward_add1
 
-static void ggml_compute_forward_add1_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_add1_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
     GGML_ASSERT(ggml_are_same_shape(src0, dst));
     GGML_ASSERT(ggml_is_scalar(src1));
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nr  = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr  = ggml_nrows(src0);
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
-    GGML_ASSERT( nb0 == sizeof(float));
-    GGML_ASSERT(nb00 == sizeof(float));
+    GGML_ASSERT( nb0 == വലുപ്പം(ദശാംശം));
+    GGML_ASSERT(nb00 == വലുപ്പം(ദശാംശം));
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int ir = ir0; ir < ir1; ++ir) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ ir = ir0; ir < ir1; ++ir) {
         // src0 and dst are same shape => same indices
-        const int i3 = ir/(ne2*ne1);
-        const int i2 = (ir - i3*ne2*ne1)/ne1;
-        const int i1 = (ir - i3*ne2*ne1 - i2*ne1);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i3 = ir/(ne2*ne1);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i2 = (ir - i3*ne2*ne1)/ne1;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i1 = (ir - i3*ne2*ne1 - i2*ne1);
 
 #ifdef GGML_USE_ACCELERATE
         GGML_UNUSED(ggml_vec_add1_f32);
 
         vDSP_vadd(
-                (float *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01), 1,
-                (float *) ((char *) src1->data), 0,
-                (float *) ((char *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1 ), 1,
+                (ദശാംശം *) ((അക്ഷരം *) src0->data + i3*nb03 + i2*nb02 + i1*nb01), 1,
+                (ദശാംശം *) ((അക്ഷരം *) src1->data), 0,
+                (ദശാംശം *) ((അക്ഷരം *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1 ), 1,
                 ne0);
-#else
+#അല്ലെങ്കിൽ
         ggml_vec_add1_f32(ne0,
-                (float *) ((char *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1 ),
-                (float *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01),
-               *(float *) src1->data);
+                (ദശാംശം *) ((അക്ഷരം *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1 ),
+                (ദശാംശം *) ((അക്ഷരം *) src0->data + i3*nb03 + i2*nb02 + i1*nb01),
+               *(ദശാംശം *) src1->data);
 #endif
     }
 }
 
-static void ggml_compute_forward_add1_f16_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_add1_f16_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
     GGML_ASSERT(ggml_are_same_shape(src0, dst));
     GGML_ASSERT(ggml_is_scalar(src1));
 
     // scalar to add
-    const float v = *(float *) src1->data;
+    സ്ഥിരം ദശാംശം v = *(ദശാംശം *) src1->data;
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nr  = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr  = ggml_nrows(src0);
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
@@ -846,47 +846,47 @@ static void ggml_compute_forward_add1_f16_f32(
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
     GGML_ASSERT(dst->type  == GGML_TYPE_F16);
 
-    GGML_ASSERT( nb0 == sizeof(ggml_fp16_t));
-    GGML_ASSERT(nb00 == sizeof(ggml_fp16_t));
+    GGML_ASSERT( nb0 == വലുപ്പം(ggml_fp16_t));
+    GGML_ASSERT(nb00 == വലുപ്പം(ggml_fp16_t));
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int ir = ir0; ir < ir1; ++ir) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ ir = ir0; ir < ir1; ++ir) {
         // src0 and dst are same shape => same indices
-        const int i3 = ir/(ne2*ne1);
-        const int i2 = (ir - i3*ne2*ne1)/ne1;
-        const int i1 = (ir - i3*ne2*ne1 - i2*ne1);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i3 = ir/(ne2*ne1);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i2 = (ir - i3*ne2*ne1)/ne1;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i1 = (ir - i3*ne2*ne1 - i2*ne1);
 
-        ggml_fp16_t * dst_ptr  = (ggml_fp16_t *) ((char *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1 );
-        ggml_fp16_t * src0_ptr = (ggml_fp16_t *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01);
-        for (int i = 0; i < ne0; i++) {
+        ggml_fp16_t * dst_ptr  = (ggml_fp16_t *) ((അക്ഷരം *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1 );
+        ggml_fp16_t * src0_ptr = (ggml_fp16_t *) ((അക്ഷരം *) src0->data + i3*nb03 + i2*nb02 + i1*nb01);
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < ne0; i++) {
             dst_ptr[i] = GGML_CPU_FP32_TO_FP16(GGML_CPU_FP16_TO_FP32(src0_ptr[i]) + v);
         }
     }
 }
 
-static void ggml_compute_forward_add1_f16_f16(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_add1_f16_f16(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
     GGML_ASSERT(ggml_are_same_shape(src0, dst));
     GGML_ASSERT(ggml_is_scalar(src1));
 
     // scalar to add
-    const float v = GGML_CPU_FP16_TO_FP32(*(ggml_fp16_t *) src1->data);
+    സ്ഥിരം ദശാംശം v = GGML_CPU_FP16_TO_FP32(*(ggml_fp16_t *) src1->data);
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nr  = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr  = ggml_nrows(src0);
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
@@ -894,53 +894,53 @@ static void ggml_compute_forward_add1_f16_f16(
     GGML_ASSERT(src1->type == GGML_TYPE_F16);
     GGML_ASSERT(dst->type  == GGML_TYPE_F16);
 
-    GGML_ASSERT( nb0 == sizeof(ggml_fp16_t));
-    GGML_ASSERT(nb00 == sizeof(ggml_fp16_t));
+    GGML_ASSERT( nb0 == വലുപ്പം(ggml_fp16_t));
+    GGML_ASSERT(nb00 == വലുപ്പം(ggml_fp16_t));
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int ir = ir0; ir < ir1; ++ir) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ ir = ir0; ir < ir1; ++ir) {
         // src0 and dst are same shape => same indices
-        const int i3 = ir/(ne2*ne1);
-        const int i2 = (ir - i3*ne2*ne1)/ne1;
-        const int i1 = (ir - i3*ne2*ne1 - i2*ne1);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i3 = ir/(ne2*ne1);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i2 = (ir - i3*ne2*ne1)/ne1;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i1 = (ir - i3*ne2*ne1 - i2*ne1);
 
-        ggml_fp16_t * dst_ptr  = (ggml_fp16_t *) ((char *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1 );
-        ggml_fp16_t * src0_ptr = (ggml_fp16_t *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01);
-        for (int i = 0; i < ne0; i++) {
+        ggml_fp16_t * dst_ptr  = (ggml_fp16_t *) ((അക്ഷരം *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1 );
+        ggml_fp16_t * src0_ptr = (ggml_fp16_t *) ((അക്ഷരം *) src0->data + i3*nb03 + i2*nb02 + i1*nb01);
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < ne0; i++) {
             dst_ptr[i] = GGML_CPU_FP32_TO_FP16(GGML_CPU_FP16_TO_FP32(src0_ptr[i]) + v);
         }
     }
 }
 
-static void ggml_compute_forward_add1_q_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_add1_q_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
     GGML_ASSERT(ggml_are_same_shape(src0, dst));
     GGML_ASSERT(ggml_is_scalar(src1));
 
     // scalar to add
-    const float v = *(float *) src1->data;
+    സ്ഥിരം ദശാംശം v = *(ദശാംശം *) src1->data;
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nr  = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr  = ggml_nrows(src0);
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
-    const ggml_type type = src0->type;
-    ggml_to_float_t const dequantize_row_q = ggml_get_type_traits(type)->to_float;
-    ggml_from_float_t const quantize_row_q = ggml_get_type_traits_cpu(type)->from_float;
+    സ്ഥിരം ggml_type type = src0->type;
+    ggml_to_float_t സ്ഥിരം dequantize_row_q = ggml_get_type_traits(type)->to_float;
+    ggml_from_float_t സ്ഥിരം quantize_row_q = ggml_get_type_traits_cpu(type)->from_float;
 
     // we don't support permuted src0
     GGML_ASSERT(nb00 == ggml_type_size(type));
@@ -955,24 +955,24 @@ static void ggml_compute_forward_add1_q_f32(
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    float * wdata = (float *) params->wdata + (ne0 + CACHE_LINE_SIZE_F32) * ith;
+    ദശാംശം * wdata = (ദശാംശം *) params->wdata + (ne0 + CACHE_വരി_SIZE_F32) * ith;
 
-    for (int ir = ir0; ir < ir1; ++ir) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ ir = ir0; ir < ir1; ++ir) {
         // src0 and dst are same shape => same indices
-        const int i3 = ir/(ne2*ne1);
-        const int i2 = (ir - i3*ne2*ne1)/ne1;
-        const int i1 = (ir - i3*ne2*ne1 - i2*ne1);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i3 = ir/(ne2*ne1);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i2 = (ir - i3*ne2*ne1)/ne1;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i1 = (ir - i3*ne2*ne1 - i2*ne1);
 
-        void  * src0_row = (void *) ((char *) src0->data + (i1*nb01 + i2*nb02 + i3*nb03));
-        void  * dst_row  = (void *) ((char *)  dst->data + (i1*nb1  + i2*nb2  + i3*nb0 ));
+        ശൂന്യം  * src0_row = (ശൂന്യം *) ((അക്ഷരം *) src0->data + (i1*nb01 + i2*nb02 + i3*nb03));
+        ശൂന്യം  * dst_row  = (ശൂന്യം *) ((അക്ഷരം *)  dst->data + (i1*nb1  + i2*nb2  + i3*nb0 ));
 
-        assert(ne0 % 32 == 0);
+        പ്രതിജ്ഞാ(ne0 % 32 == 0);
 
         // unquantize row from src0 to temp buffer
         dequantize_row_q(src0_row, wdata, ne0);
@@ -983,23 +983,23 @@ static void ggml_compute_forward_add1_q_f32(
     }
 }
 
-static void ggml_compute_forward_add1_bf16_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_add1_bf16_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
     GGML_ASSERT(ggml_are_same_shape(src0, dst));
     GGML_ASSERT(ggml_is_scalar(src1));
 
     // scalar to add
-    const float v = *(float *) src1->data;
+    സ്ഥിരം ദശാംശം v = *(ദശാംശം *) src1->data;
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nr  = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr  = ggml_nrows(src0);
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
@@ -1007,47 +1007,47 @@ static void ggml_compute_forward_add1_bf16_f32(
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
     GGML_ASSERT(dst->type  == GGML_TYPE_BF16);
 
-    GGML_ASSERT( nb0 == sizeof(ggml_bf16_t));
-    GGML_ASSERT(nb00 == sizeof(ggml_bf16_t));
+    GGML_ASSERT( nb0 == വലുപ്പം(ggml_bf16_t));
+    GGML_ASSERT(nb00 == വലുപ്പം(ggml_bf16_t));
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int ir = ir0; ir < ir1; ++ir) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ ir = ir0; ir < ir1; ++ir) {
         // src0 and dst are same shape => same indices
-        const int i3 = ir/(ne2*ne1);
-        const int i2 = (ir - i3*ne2*ne1)/ne1;
-        const int i1 = (ir - i3*ne2*ne1 - i2*ne1);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i3 = ir/(ne2*ne1);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i2 = (ir - i3*ne2*ne1)/ne1;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i1 = (ir - i3*ne2*ne1 - i2*ne1);
 
-        ggml_bf16_t * dst_ptr  = (ggml_bf16_t *) ((char *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1 );
-        ggml_bf16_t * src0_ptr = (ggml_bf16_t *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01);
-        for (int i = 0; i < ne0; i++) {
+        ggml_bf16_t * dst_ptr  = (ggml_bf16_t *) ((അക്ഷരം *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1 );
+        ggml_bf16_t * src0_ptr = (ggml_bf16_t *) ((അക്ഷരം *) src0->data + i3*nb03 + i2*nb02 + i1*nb01);
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < ne0; i++) {
             dst_ptr[i] = GGML_FP32_TO_BF16(GGML_BF16_TO_FP32(src0_ptr[i]) + v);
         }
     }
 }
 
-static void ggml_compute_forward_add1_bf16_bf16(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_add1_bf16_bf16(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
     GGML_ASSERT(ggml_are_same_shape(src0, dst));
     GGML_ASSERT(ggml_is_scalar(src1));
 
     // scalar to add
-    const float v = GGML_BF16_TO_FP32(*(ggml_bf16_t *) src1->data);
+    സ്ഥിരം ദശാംശം v = GGML_BF16_TO_FP32(*(ggml_bf16_t *) src1->data);
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nr  = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr  = ggml_nrows(src0);
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
@@ -1055,96 +1055,96 @@ static void ggml_compute_forward_add1_bf16_bf16(
     GGML_ASSERT(src1->type == GGML_TYPE_BF16);
     GGML_ASSERT(dst->type  == GGML_TYPE_BF16);
 
-    GGML_ASSERT( nb0 == sizeof(ggml_bf16_t));
-    GGML_ASSERT(nb00 == sizeof(ggml_bf16_t));
+    GGML_ASSERT( nb0 == വലുപ്പം(ggml_bf16_t));
+    GGML_ASSERT(nb00 == വലുപ്പം(ggml_bf16_t));
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int ir = ir0; ir < ir1; ++ir) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ ir = ir0; ir < ir1; ++ir) {
         // src0 and dst are same shape => same indices
-        const int i3 = ir/(ne2*ne1);
-        const int i2 = (ir - i3*ne2*ne1)/ne1;
-        const int i1 = (ir - i3*ne2*ne1 - i2*ne1);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i3 = ir/(ne2*ne1);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i2 = (ir - i3*ne2*ne1)/ne1;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i1 = (ir - i3*ne2*ne1 - i2*ne1);
 
-        ggml_bf16_t * dst_ptr  = (ggml_bf16_t *) ((char *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1 );
-        ggml_bf16_t * src0_ptr = (ggml_bf16_t *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01);
-        for (int i = 0; i < ne0; i++) {
+        ggml_bf16_t * dst_ptr  = (ggml_bf16_t *) ((അക്ഷരം *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1 );
+        ggml_bf16_t * src0_ptr = (ggml_bf16_t *) ((അക്ഷരം *) src0->data + i3*nb03 + i2*nb02 + i1*nb01);
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < ne0; i++) {
             dst_ptr[i] = GGML_FP32_TO_BF16(GGML_BF16_TO_FP32(src0_ptr[i]) + v);
         }
     }
 }
 
-void ggml_compute_forward_add1(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_add1(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_add1_f32(params, dst);
-            } break;
-        case GGML_TYPE_F16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F16:
             {
-                if (src1->type == GGML_TYPE_F16) {
+                എങ്കിൽ (src1->type == GGML_TYPE_F16) {
                     ggml_compute_forward_add1_f16_f16(params, dst);
                 }
-                else if (src1->type == GGML_TYPE_F32) {
+                അല്ലെങ്കിൽ എങ്കിൽ (src1->type == GGML_TYPE_F32) {
                     ggml_compute_forward_add1_f16_f32(params, dst);
                 }
-                else {
+                അല്ലെങ്കിൽ {
                     GGML_ABORT("fatal error");
                 }
-            } break;
-        case GGML_TYPE_BF16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_BF16:
             {
-                if (src1->type == GGML_TYPE_BF16) {
+                എങ്കിൽ (src1->type == GGML_TYPE_BF16) {
                     ggml_compute_forward_add1_bf16_bf16(params, dst);
                 }
-                else if (src1->type == GGML_TYPE_F32) {
+                അല്ലെങ്കിൽ എങ്കിൽ (src1->type == GGML_TYPE_F32) {
                     ggml_compute_forward_add1_bf16_f32(params, dst);
                 }
-                else {
+                അല്ലെങ്കിൽ {
                     GGML_ABORT("fatal error");
                 }
-            } break;
-        case GGML_TYPE_Q1_0:
-        case GGML_TYPE_Q2_0:
-        case GGML_TYPE_Q4_0:
-        case GGML_TYPE_Q4_1:
-        case GGML_TYPE_Q5_0:
-        case GGML_TYPE_Q5_1:
-        case GGML_TYPE_Q8_0:
-        case GGML_TYPE_Q8_1:
-        case GGML_TYPE_MXFP4:
-        case GGML_TYPE_NVFP4:
-        case GGML_TYPE_Q2_K:
-        case GGML_TYPE_Q3_K:
-        case GGML_TYPE_Q4_K:
-        case GGML_TYPE_Q5_K:
-        case GGML_TYPE_Q6_K:
-        case GGML_TYPE_TQ1_0:
-        case GGML_TYPE_TQ2_0:
-        case GGML_TYPE_IQ2_XXS:
-        case GGML_TYPE_IQ2_XS:
-        case GGML_TYPE_IQ3_XXS:
-        case GGML_TYPE_IQ1_S:
-        case GGML_TYPE_IQ1_M:
-        case GGML_TYPE_IQ4_NL:
-        case GGML_TYPE_IQ4_XS:
-        case GGML_TYPE_IQ3_S:
-        case GGML_TYPE_IQ2_S:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_Q1_0:
+        അവസ്ഥ GGML_TYPE_Q2_0:
+        അവസ്ഥ GGML_TYPE_Q4_0:
+        അവസ്ഥ GGML_TYPE_Q4_1:
+        അവസ്ഥ GGML_TYPE_Q5_0:
+        അവസ്ഥ GGML_TYPE_Q5_1:
+        അവസ്ഥ GGML_TYPE_Q8_0:
+        അവസ്ഥ GGML_TYPE_Q8_1:
+        അവസ്ഥ GGML_TYPE_MXFP4:
+        അവസ്ഥ GGML_TYPE_NVFP4:
+        അവസ്ഥ GGML_TYPE_Q2_K:
+        അവസ്ഥ GGML_TYPE_Q3_K:
+        അവസ്ഥ GGML_TYPE_Q4_K:
+        അവസ്ഥ GGML_TYPE_Q5_K:
+        അവസ്ഥ GGML_TYPE_Q6_K:
+        അവസ്ഥ GGML_TYPE_TQ1_0:
+        അവസ്ഥ GGML_TYPE_TQ2_0:
+        അവസ്ഥ GGML_TYPE_IQ2_XXS:
+        അവസ്ഥ GGML_TYPE_IQ2_XS:
+        അവസ്ഥ GGML_TYPE_IQ3_XXS:
+        അവസ്ഥ GGML_TYPE_IQ1_S:
+        അവസ്ഥ GGML_TYPE_IQ1_M:
+        അവസ്ഥ GGML_TYPE_IQ4_NL:
+        അവസ്ഥ GGML_TYPE_IQ4_XS:
+        അവസ്ഥ GGML_TYPE_IQ3_S:
+        അവസ്ഥ GGML_TYPE_IQ2_S:
             {
                 ggml_compute_forward_add1_q_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -1153,12 +1153,12 @@ void ggml_compute_forward_add1(
 
 // ggml_compute_forward_acc
 
-static void ggml_compute_forward_acc_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_acc_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
     GGML_ASSERT(ggml_are_same_shape(src0, dst));
     GGML_ASSERT(ggml_is_contiguous(dst) && ggml_is_contiguous(src0));
@@ -1169,110 +1169,110 @@ static void ggml_compute_forward_acc_f32(
     size_t nb2     = ((int32_t *) dst->op_params)[1];
     size_t nb3     = ((int32_t *) dst->op_params)[2];
     size_t offset  = ((int32_t *) dst->op_params)[3];
-    bool   inplace = (bool) ((int32_t *) dst->op_params)[4];
+    തർക്കം   inplace = (തർക്കം) ((int32_t *) dst->op_params)[4];
 
-    if (!inplace) {
-        if (params->ith == 0) {
+    എങ്കിൽ (!inplace) {
+        എങ്കിൽ (params->ith == 0) {
             // memcpy needs to be synchronized across threads to avoid race conditions.
             // => do it in INIT phase
             memcpy(
-                ((char *)  dst->data),
-                ((char *) src0->data),
+                ((അക്ഷരം *)  dst->data),
+                ((അക്ഷരം *) src0->data),
                 ggml_nbytes(dst));
         }
         ggml_barrier(params->threadpool);
     }
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nr = ggml_nrows(src1);
-    const int nc = src1->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src1);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src1->ne[0];
 
     GGML_TENSOR_LOCALS(int64_t, ne1, src1, ne)
     GGML_TENSOR_LOCALS(size_t,  nb1, src1, nb)
 
     // src0 and dst as viewed during acc
-    const size_t nb0 = ggml_element_size(src0);
+    സ്ഥിരം size_t nb0 = ggml_element_size(src0);
 
-    const size_t nb00 = nb0;
-    const size_t nb01 = nb1;
-    const size_t nb02 = nb2;
-    const size_t nb03 = nb3;
+    സ്ഥിരം size_t nb00 = nb0;
+    സ്ഥിരം size_t nb01 = nb1;
+    സ്ഥിരം size_t nb02 = nb2;
+    സ്ഥിരം size_t nb03 = nb3;
 
     GGML_ASSERT(offset + (ne10 == 0 ? 0 : ne10-1)*nb0  + (ne11 == 0 ? 0 : ne11-1)*nb1  + (ne12 == 0 ? 0 : ne12-1)*nb2  + (ne13 == 0 ? 0 : ne13-1)*nb3  < ggml_nbytes(dst));
     GGML_ASSERT(offset + (ne10 == 0 ? 0 : ne10-1)*nb00 + (ne11 == 0 ? 0 : ne11-1)*nb01 + (ne12 == 0 ? 0 : ne12-1)*nb02 + (ne13 == 0 ? 0 : ne13-1)*nb03 < ggml_nbytes(src0));
 
-    GGML_ASSERT(nb10 == sizeof(float));
+    GGML_ASSERT(nb10 == വലുപ്പം(ദശാംശം));
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int ir = ir0; ir < ir1; ++ir) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ ir = ir0; ir < ir1; ++ir) {
         // src0 and dst are viewed with shape of src1 and offset
         // => same indices
-        const int i3 = ir/(ne12*ne11);
-        const int i2 = (ir - i3*ne12*ne11)/ne11;
-        const int i1 = (ir - i3*ne12*ne11 - i2*ne11);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i3 = ir/(ne12*ne11);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i2 = (ir - i3*ne12*ne11)/ne11;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i1 = (ir - i3*ne12*ne11 - i2*ne11);
 
 #ifdef GGML_USE_ACCELERATE
         vDSP_vadd(
-                (float *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01 + offset), 1,
-                (float *) ((char *) src1->data + i3*nb13 + i2*nb12 + i1*nb11), 1,
-                (float *) ((char *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1  + offset), 1, nc);
-#else
+                (ദശാംശം *) ((അക്ഷരം *) src0->data + i3*nb03 + i2*nb02 + i1*nb01 + offset), 1,
+                (ദശാംശം *) ((അക്ഷരം *) src1->data + i3*nb13 + i2*nb12 + i1*nb11), 1,
+                (ദശാംശം *) ((അക്ഷരം *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1  + offset), 1, nc);
+#അല്ലെങ്കിൽ
         ggml_vec_add_f32(nc,
-                (float *) ((char *)  dst->data + i3*nb3  + i2*nb2  + i1*nb1  + offset),
-                (float *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01 + offset),
-                (float *) ((char *) src1->data + i3*nb13 + i2*nb12 + i1*nb11));
+                (ദശാംശം *) ((അക്ഷരം *)  dst->data + i3*nb3  + i2*nb2  + i1*nb1  + offset),
+                (ദശാംശം *) ((അക്ഷരം *) src0->data + i3*nb03 + i2*nb02 + i1*nb01 + offset),
+                (ദശാംശം *) ((അക്ഷരം *) src1->data + i3*nb13 + i2*nb12 + i1*nb11));
 #endif
     }
 }
 
-void ggml_compute_forward_acc(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_acc(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_acc_f32(params, dst);
-            } break;
-        case GGML_TYPE_F16:
-        case GGML_TYPE_BF16:
-        case GGML_TYPE_Q1_0:
-        case GGML_TYPE_Q2_0:
-        case GGML_TYPE_Q4_0:
-        case GGML_TYPE_Q4_1:
-        case GGML_TYPE_Q5_0:
-        case GGML_TYPE_Q5_1:
-        case GGML_TYPE_Q8_0:
-        case GGML_TYPE_Q8_1:
-        case GGML_TYPE_MXFP4:
-        case GGML_TYPE_NVFP4:
-        case GGML_TYPE_Q2_K:
-        case GGML_TYPE_Q3_K:
-        case GGML_TYPE_Q4_K:
-        case GGML_TYPE_Q5_K:
-        case GGML_TYPE_Q6_K:
-        case GGML_TYPE_TQ1_0:
-        case GGML_TYPE_TQ2_0:
-        case GGML_TYPE_IQ2_XXS:
-        case GGML_TYPE_IQ2_XS:
-        case GGML_TYPE_IQ3_XXS:
-        case GGML_TYPE_IQ1_S:
-        case GGML_TYPE_IQ1_M:
-        case GGML_TYPE_IQ4_NL:
-        case GGML_TYPE_IQ4_XS:
-        case GGML_TYPE_IQ3_S:
-        case GGML_TYPE_IQ2_S:
-        default:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F16:
+        അവസ്ഥ GGML_TYPE_BF16:
+        അവസ്ഥ GGML_TYPE_Q1_0:
+        അവസ്ഥ GGML_TYPE_Q2_0:
+        അവസ്ഥ GGML_TYPE_Q4_0:
+        അവസ്ഥ GGML_TYPE_Q4_1:
+        അവസ്ഥ GGML_TYPE_Q5_0:
+        അവസ്ഥ GGML_TYPE_Q5_1:
+        അവസ്ഥ GGML_TYPE_Q8_0:
+        അവസ്ഥ GGML_TYPE_Q8_1:
+        അവസ്ഥ GGML_TYPE_MXFP4:
+        അവസ്ഥ GGML_TYPE_NVFP4:
+        അവസ്ഥ GGML_TYPE_Q2_K:
+        അവസ്ഥ GGML_TYPE_Q3_K:
+        അവസ്ഥ GGML_TYPE_Q4_K:
+        അവസ്ഥ GGML_TYPE_Q5_K:
+        അവസ്ഥ GGML_TYPE_Q6_K:
+        അവസ്ഥ GGML_TYPE_TQ1_0:
+        അവസ്ഥ GGML_TYPE_TQ2_0:
+        അവസ്ഥ GGML_TYPE_IQ2_XXS:
+        അവസ്ഥ GGML_TYPE_IQ2_XS:
+        അവസ്ഥ GGML_TYPE_IQ3_XXS:
+        അവസ്ഥ GGML_TYPE_IQ1_S:
+        അവസ്ഥ GGML_TYPE_IQ1_M:
+        അവസ്ഥ GGML_TYPE_IQ4_NL:
+        അവസ്ഥ GGML_TYPE_IQ4_XS:
+        അവസ്ഥ GGML_TYPE_IQ3_S:
+        അവസ്ഥ GGML_TYPE_IQ2_S:
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -1281,77 +1281,77 @@ void ggml_compute_forward_acc(
 
 // ggml_compute_forward_sum
 
-static void ggml_compute_forward_sum_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_sum_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    if (params->ith != 0) {
-        return;
+    എങ്കിൽ (params->ith != 0) {
+        തിരികെ;
     }
 
-    assert(ggml_is_scalar(dst));
+    പ്രതിജ്ഞാ(ggml_is_scalar(dst));
 
     GGML_TENSOR_LOCALS(int64_t, ne0, src0, ne)
     GGML_TENSOR_LOCALS(size_t,  nb0, src0, nb)
 
     ggml_float sum = 0;
 
-    if (nb00 == sizeof(float)) {
+    എങ്കിൽ (nb00 == വലുപ്പം(ദശാംശം)) {
         ggml_float row_sum = 0;
-        for (int64_t i03 = 0; i03 < ne03; i03++) {
-            for (int64_t i02 = 0; i02 < ne02; i02++) {
-                for (int64_t i01 = 0; i01 < ne01; i01++) {
+        വേണ്ടി (int64_t i03 = 0; i03 < ne03; i03++) {
+            വേണ്ടി (int64_t i02 = 0; i02 < ne02; i02++) {
+                വേണ്ടി (int64_t i01 = 0; i01 < ne01; i01++) {
                     ggml_vec_sum_f32_ggf(ne00,
                             &row_sum,
-                            (float *) ((char *) src0->data + i01*nb01 + i02*nb02 + i03*nb03));
+                            (ദശാംശം *) ((അക്ഷരം *) src0->data + i01*nb01 + i02*nb02 + i03*nb03));
                     sum += row_sum;
                 }
             }
         }
-    } else {
-        for (int64_t i03 = 0; i03 < ne03; i03++) {
-            for (int64_t i02 = 0; i02 < ne02; i02++) {
-                for (int64_t i01 = 0; i01 < ne01; i01++) {
-                    const char * row = (const char *) src0->data + i01*nb01 + i02*nb02 + i03*nb03;
-                    for (int64_t i00 = 0; i00 < ne00; i00++) {
-                        sum += (ggml_float) *(const float *) (row + i00*nb00);
+    } അല്ലെങ്കിൽ {
+        വേണ്ടി (int64_t i03 = 0; i03 < ne03; i03++) {
+            വേണ്ടി (int64_t i02 = 0; i02 < ne02; i02++) {
+                വേണ്ടി (int64_t i01 = 0; i01 < ne01; i01++) {
+                    സ്ഥിരം അക്ഷരം * row = (സ്ഥിരം അക്ഷരം *) src0->data + i01*nb01 + i02*nb02 + i03*nb03;
+                    വേണ്ടി (int64_t i00 = 0; i00 < ne00; i00++) {
+                        sum += (ggml_float) *(സ്ഥിരം ദശാംശം *) (row + i00*nb00);
                     }
                 }
             }
         }
     }
 
-    ((float *) dst->data)[0] = sum;
+    ((ദശാംശം *) dst->data)[0] = sum;
 }
 
-static void ggml_compute_forward_sum_f16(
-    const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_sum_f16(
+    സ്ഥിരം ggml_compute_params * params,
           ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    if (params->ith != 0) {
-        return;
+    എങ്കിൽ (params->ith != 0) {
+        തിരികെ;
     }
 
-    assert(ggml_is_scalar(dst));
+    പ്രതിജ്ഞാ(ggml_is_scalar(dst));
 
-    assert(src0->nb[0] == sizeof(ggml_fp16_t));
+    പ്രതിജ്ഞാ(src0->nb[0] == വലുപ്പം(ggml_fp16_t));
 
     GGML_TENSOR_LOCALS(int64_t, ne0, src0, ne)
     GGML_TENSOR_LOCALS(size_t,  nb0, src0, nb)
 
-    float sum = 0;
-    float row_sum = 0;
+    ദശാംശം sum = 0;
+    ദശാംശം row_sum = 0;
 
-    for (int64_t i03 = 0; i03 < ne03; i03++) {
-        for (int64_t i02 = 0; i02 < ne02; i02++) {
-            for (int64_t i01 = 0; i01 < ne01; i01++) {
+    വേണ്ടി (int64_t i03 = 0; i03 < ne03; i03++) {
+        വേണ്ടി (int64_t i02 = 0; i02 < ne02; i02++) {
+            വേണ്ടി (int64_t i01 = 0; i01 < ne01; i01++) {
                 ggml_vec_sum_f16_ggf(ne00,
                     &row_sum,
-                    (ggml_fp16_t *) ((char *) src0->data + i01 * nb01 + i02 * nb02 + i03 * nb03));
+                    (ggml_fp16_t *) ((അക്ഷരം *) src0->data + i01 * nb01 + i02 * nb02 + i03 * nb03));
                 sum += row_sum;
             }
         }
@@ -1359,32 +1359,32 @@ static void ggml_compute_forward_sum_f16(
     ((ggml_fp16_t *) dst->data)[0] = GGML_CPU_FP32_TO_FP16(sum);
 }
 
-static void ggml_compute_forward_sum_bf16(
-    const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_sum_bf16(
+    സ്ഥിരം ggml_compute_params * params,
           ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    if (params->ith != 0) {
-        return;
+    എങ്കിൽ (params->ith != 0) {
+        തിരികെ;
     }
 
-    assert(ggml_is_scalar(dst));
+    പ്രതിജ്ഞാ(ggml_is_scalar(dst));
 
-    assert(src0->nb[0] == sizeof(ggml_bf16_t));
+    പ്രതിജ്ഞാ(src0->nb[0] == വലുപ്പം(ggml_bf16_t));
 
     GGML_TENSOR_LOCALS(int64_t, ne0, src0, ne)
     GGML_TENSOR_LOCALS(size_t,  nb0, src0, nb)
 
-    float sum = 0;
-    float row_sum = 0;
+    ദശാംശം sum = 0;
+    ദശാംശം row_sum = 0;
 
-    for (int64_t i03 = 0; i03 < ne03; i03++) {
-        for (int64_t i02 = 0; i02 < ne02; i02++) {
-            for (int64_t i01 = 0; i01 < ne01; i01++) {
+    വേണ്ടി (int64_t i03 = 0; i03 < ne03; i03++) {
+        വേണ്ടി (int64_t i02 = 0; i02 < ne02; i02++) {
+            വേണ്ടി (int64_t i01 = 0; i01 < ne01; i01++) {
                 ggml_vec_sum_bf16_ggf(ne00,
                     &row_sum,
-                    (ggml_bf16_t *) ((char *) src0->data + i01 * nb01 + i02 * nb02 + i03 * nb03));
+                    (ggml_bf16_t *) ((അക്ഷരം *) src0->data + i01 * nb01 + i02 * nb02 + i03 * nb03));
                 sum += row_sum;
             }
         }
@@ -1392,26 +1392,26 @@ static void ggml_compute_forward_sum_bf16(
     ((ggml_bf16_t *) dst->data)[0] = GGML_FP32_TO_BF16(sum);
 }
 
-void ggml_compute_forward_sum(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_sum(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_sum_f32(params, dst);
-            } break;
-        case GGML_TYPE_F16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F16:
             {
                 ggml_compute_forward_sum_f16(params, dst);
-            } break;
-        case GGML_TYPE_BF16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_BF16:
             {
                 ggml_compute_forward_sum_bf16(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -1420,14 +1420,14 @@ void ggml_compute_forward_sum(
 
 // ggml_compute_forward_cumsum
 
-static void ggml_compute_forward_cumsum_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_cumsum_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    GGML_ASSERT(src0->nb[0] == sizeof(float));
-    GGML_ASSERT(dst->nb[0] == sizeof(float));
+    GGML_ASSERT(src0->nb[0] == വലുപ്പം(ദശാംശം));
+    GGML_ASSERT(dst->nb[0] == വലുപ്പം(ദശാംശം));
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
@@ -1436,32 +1436,32 @@ static void ggml_compute_forward_cumsum_f32(
     GGML_ASSERT(ne2 == ne02);
     GGML_ASSERT(ne3 == ne03);
 
-    const auto [ir0, ir1] = get_thread_range(params, src0);
+    സ്ഥിരം auto [ir0, ir1] = get_thread_range(params, src0);
 
-    for (int64_t ir = ir0; ir < ir1; ++ir) {
-        const int64_t i03 = ir/(ne02*ne01);
-        const int64_t i02 = (ir - i03*ne02*ne01)/ne01;
-        const int64_t i01 = (ir - i03*ne02*ne01 - i02*ne01);
+    വേണ്ടി (int64_t ir = ir0; ir < ir1; ++ir) {
+        സ്ഥിരം int64_t i03 = ir/(ne02*ne01);
+        സ്ഥിരം int64_t i02 = (ir - i03*ne02*ne01)/ne01;
+        സ്ഥിരം int64_t i01 = (ir - i03*ne02*ne01 - i02*ne01);
 
-        float * src_row = (float *) ((char *) src0->data + i01*nb01 + i02*nb02 + i03*nb03);
-        float * dst_row = (float *) ((char *) dst->data  + i01*nb1  + i02*nb2  + i03*nb3);
+        ദശാംശം * src_row = (ദശാംശം *) ((അക്ഷരം *) src0->data + i01*nb01 + i02*nb02 + i03*nb03);
+        ദശാംശം * dst_row = (ദശാംശം *) ((അക്ഷരം *) dst->data  + i01*nb1  + i02*nb2  + i03*nb3);
 
         ggml_vec_cumsum_f32(ne00, dst_row, src_row);
     }
 }
 
-void ggml_compute_forward_cumsum(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_cumsum(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_cumsum_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -1470,18 +1470,18 @@ void ggml_compute_forward_cumsum(
 
 // ggml_compute_forward_sum_rows
 
-static void ggml_compute_forward_sum_rows_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_sum_rows_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    if (params->ith != 0) {
-        return;
+    എങ്കിൽ (params->ith != 0) {
+        തിരികെ;
     }
 
-    GGML_ASSERT(src0->nb[0] == sizeof(float));
-    GGML_ASSERT(dst->nb[0] == sizeof(float));
+    GGML_ASSERT(src0->nb[0] == വലുപ്പം(ദശാംശം));
+    GGML_ASSERT(dst->nb[0] == വലുപ്പം(ദശാംശം));
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
@@ -1490,12 +1490,12 @@ static void ggml_compute_forward_sum_rows_f32(
     GGML_ASSERT(ne2 == ne02);
     GGML_ASSERT(ne3 == ne03);
 
-    for (int64_t i3 = 0; i3 < ne03; i3++) {
-        for (int64_t i2 = 0; i2 < ne02; i2++) {
-            for (int64_t i1 = 0; i1 < ne01; i1++) {
-                float * src_row = (float *) ((char *) src0->data + i1*nb01 + i2*nb02 + i3*nb03);
-                float * dst_row = (float *) ((char *) dst->data  + i1*nb1  + i2*nb2  + i3*nb3);
-                float row_sum = 0;
+    വേണ്ടി (int64_t i3 = 0; i3 < ne03; i3++) {
+        വേണ്ടി (int64_t i2 = 0; i2 < ne02; i2++) {
+            വേണ്ടി (int64_t i1 = 0; i1 < ne01; i1++) {
+                ദശാംശം * src_row = (ദശാംശം *) ((അക്ഷരം *) src0->data + i1*nb01 + i2*nb02 + i3*nb03);
+                ദശാംശം * dst_row = (ദശാംശം *) ((അക്ഷരം *) dst->data  + i1*nb1  + i2*nb2  + i3*nb3);
+                ദശാംശം row_sum = 0;
                 ggml_vec_sum_f32(ne00, &row_sum, src_row);
                 dst_row[0] = row_sum;
             }
@@ -1503,18 +1503,18 @@ static void ggml_compute_forward_sum_rows_f32(
     }
 }
 
-void ggml_compute_forward_sum_rows(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_sum_rows(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_sum_rows_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -1523,55 +1523,55 @@ void ggml_compute_forward_sum_rows(
 
 // ggml_compute_forward_mean
 
-static void ggml_compute_forward_mean_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_mean_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    if (params->ith != 0) {
-        return;
+    എങ്കിൽ (params->ith != 0) {
+        തിരികെ;
     }
 
-    assert(src0->nb[0] == sizeof(float));
+    പ്രതിജ്ഞാ(src0->nb[0] == വലുപ്പം(ദശാംശം));
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
-    assert(ne0 == 1);
-    assert(ne1 == ne01);
-    assert(ne2 == ne02);
-    assert(ne3 == ne03);
+    പ്രതിജ്ഞാ(ne0 == 1);
+    പ്രതിജ്ഞാ(ne1 == ne01);
+    പ്രതിജ്ഞാ(ne2 == ne02);
+    പ്രതിജ്ഞാ(ne3 == ne03);
 
     GGML_UNUSED(ne0);
     GGML_UNUSED(ne1);
     GGML_UNUSED(ne2);
     GGML_UNUSED(ne3);
 
-    for (int64_t i03 = 0; i03 < ne03; i03++) {
-        for (int64_t i02 = 0; i02 < ne02; i02++) {
-            for (int64_t i01 = 0; i01 < ne01; i01++) {
+    വേണ്ടി (int64_t i03 = 0; i03 < ne03; i03++) {
+        വേണ്ടി (int64_t i02 = 0; i02 < ne02; i02++) {
+            വേണ്ടി (int64_t i01 = 0; i01 < ne01; i01++) {
                 ggml_vec_sum_f32(ne00,
-                        (float *) ((char *)  dst->data + i01*nb1  + i02*nb2  + i03*nb3),
-                        (float *) ((char *) src0->data + i01*nb01 + i02*nb02 + i03*nb03));
+                        (ദശാംശം *) ((അക്ഷരം *)  dst->data + i01*nb1  + i02*nb2  + i03*nb3),
+                        (ദശാംശം *) ((അക്ഷരം *) src0->data + i01*nb01 + i02*nb02 + i03*nb03));
 
-                *(float *) ((char *) dst->data + i01*nb1 + i02*nb2 + i03*nb3) /= (float) ne00;
+                *(ദശാംശം *) ((അക്ഷരം *) dst->data + i01*nb1 + i02*nb2 + i03*nb3) /= (ദശാംശം) ne00;
             }
         }
     }
 }
 
-void ggml_compute_forward_mean(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_mean(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_mean_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -1580,46 +1580,46 @@ void ggml_compute_forward_mean(
 
 // ggml_compute_forward_argmax
 
-static void ggml_compute_forward_argmax_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_argmax_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    if (params->ith != 0) {
-        return;
+    എങ്കിൽ (params->ith != 0) {
+        തിരികെ;
     }
 
-    assert(src0->nb[0] == sizeof(float));
-    assert(dst->nb[0] == sizeof(float));
+    പ്രതിജ്ഞാ(src0->nb[0] == വലുപ്പം(ദശാംശം));
+    പ്രതിജ്ഞാ(dst->nb[0] == വലുപ്പം(ദശാംശം));
 
-    const int64_t ne00 = src0->ne[0];
-    const int64_t ne01 = src0->ne[1];
+    സ്ഥിരം int64_t ne00 = src0->ne[0];
+    സ്ഥിരം int64_t ne01 = src0->ne[1];
 
-    const size_t nb01 = src0->nb[1];
-    const size_t nb0 = dst->nb[0];
+    സ്ഥിരം size_t nb01 = src0->nb[1];
+    സ്ഥിരം size_t nb0 = dst->nb[0];
 
-    for (int64_t i1 = 0; i1 < ne01; i1++) {
-        float * src = (float *) ((char *) src0->data + i1*nb01);
-        int32_t * dst_ = (int32_t *) ((char *)  dst->data + i1*nb0);
-        int v = 0;
+    വേണ്ടി (int64_t i1 = 0; i1 < ne01; i1++) {
+        ദശാംശം * src = (ദശാംശം *) ((അക്ഷരം *) src0->data + i1*nb01);
+        int32_t * dst_ = (int32_t *) ((അക്ഷരം *)  dst->data + i1*nb0);
+        പൂർണ്ണസംഖ്യ v = 0;
         ggml_vec_argmax_f32(ne00, &v, src);
         dst_[0] = v;
     }
 }
 
-void ggml_compute_forward_argmax(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_argmax(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_argmax_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -1628,14 +1628,14 @@ void ggml_compute_forward_argmax(
 
 // ggml_compute_forward_count_equal
 
-static void ggml_compute_forward_count_equal_i32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_എണ്ണം_equal_i32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS;
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS;
 
     GGML_ASSERT(src0->type == GGML_TYPE_I32);
     GGML_ASSERT(src1->type == GGML_TYPE_I32);
@@ -1643,63 +1643,63 @@ static void ggml_compute_forward_count_equal_i32(
     GGML_ASSERT(ggml_is_scalar(dst));
     GGML_ASSERT(dst->type == GGML_TYPE_I64);
 
-    const int64_t nr = ggml_nrows(src0);
+    സ്ഥിരം int64_t nr = ggml_nrows(src0);
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
     int64_t * sums = (int64_t *) params->wdata;
     int64_t sum_thread = 0;
 
     // rows per thread
-    const int64_t dr = (nr + nth - 1)/nth;
+    സ്ഥിരം int64_t dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int64_t ir0 = dr*ith;
-    const int64_t ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം int64_t ir0 = dr*ith;
+    സ്ഥിരം int64_t ir1 = MIN(ir0 + dr, nr);
 
-    for (int64_t ir = ir0; ir < ir1; ++ir) {
-        const int64_t i03 =  ir                        / (ne02*ne01);
-        const int64_t i02 = (ir - i03*ne03)            /       ne01;
-        const int64_t i01 =  ir - i03*ne03 - i02*ne02;
+    വേണ്ടി (int64_t ir = ir0; ir < ir1; ++ir) {
+        സ്ഥിരം int64_t i03 =  ir                        / (ne02*ne01);
+        സ്ഥിരം int64_t i02 = (ir - i03*ne03)            /       ne01;
+        സ്ഥിരം int64_t i01 =  ir - i03*ne03 - i02*ne02;
 
-        const char * data0 = (const char *) src0->data + i03*nb03 + i02*nb02 + i01*nb01;
-        const char * data1 = (const char *) src1->data + i03*nb13 + i02*nb12 + i01*nb11;
+        സ്ഥിരം അക്ഷരം * data0 = (സ്ഥിരം അക്ഷരം *) src0->data + i03*nb03 + i02*nb02 + i01*nb01;
+        സ്ഥിരം അക്ഷരം * data1 = (സ്ഥിരം അക്ഷരം *) src1->data + i03*nb13 + i02*nb12 + i01*nb11;
 
-        for (int64_t i00 = 0; i00 < ne00; ++i00) {
-            const int32_t val0 = *((const int32_t *) (data0 + i00*nb00));
-            const int32_t val1 = *((const int32_t *) (data1 + i00*nb10));
+        വേണ്ടി (int64_t i00 = 0; i00 < ne00; ++i00) {
+            സ്ഥിരം int32_t val0 = *((സ്ഥിരം int32_t *) (data0 + i00*nb00));
+            സ്ഥിരം int32_t val1 = *((സ്ഥിരം int32_t *) (data1 + i00*nb10));
 
             sum_thread += val0 == val1;
         }
     }
-    if (ith != 0) {
+    എങ്കിൽ (ith != 0) {
         sums[ith] = sum_thread;
     }
     ggml_barrier(params->threadpool);
 
-    if (ith != 0) {
-        return;
+    എങ്കിൽ (ith != 0) {
+        തിരികെ;
     }
 
-    for (int ith_other = 1; ith_other < nth; ++ith_other) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ ith_other = 1; ith_other < nth; ++ith_other) {
         sum_thread += sums[ith_other];
     }
     *((int64_t *) dst->data) = sum_thread;
 }
 
-void ggml_compute_forward_count_equal(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_എണ്ണം_equal(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_I32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_I32:
             {
-                ggml_compute_forward_count_equal_i32(params, dst);
-            } break;
-        default:
+                ggml_compute_forward_എണ്ണം_equal_i32(params, dst);
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -1708,14 +1708,14 @@ void ggml_compute_forward_count_equal(
 
 // ggml_compute_forward_repeat
 
-static void ggml_compute_forward_repeat_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_repeat_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    if (params->ith != 0) {
-        return;
+    എങ്കിൽ (params->ith != 0) {
+        തിരികെ;
     }
 
     GGML_ASSERT(ggml_can_repeat(src0, dst));
@@ -1723,26 +1723,26 @@ static void ggml_compute_forward_repeat_f32(
     GGML_TENSOR_UNARY_OP_LOCALS
 
     // guaranteed to be an integer due to the check in ggml_can_repeat
-    const int nr0 = (int)(ne0/ne00);
-    const int nr1 = (int)(ne1/ne01);
-    const int nr2 = (int)(ne2/ne02);
-    const int nr3 = (int)(ne3/ne03);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr0 = (പൂർണ്ണസംഖ്യ)(ne0/ne00);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr1 = (പൂർണ്ണസംഖ്യ)(ne1/ne01);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr2 = (പൂർണ്ണസംഖ്യ)(ne2/ne02);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr3 = (പൂർണ്ണസംഖ്യ)(ne3/ne03);
 
     // TODO: support for transposed / permuted tensors
-    GGML_ASSERT(nb0  == sizeof(float));
-    GGML_ASSERT(nb00 == sizeof(float));
+    GGML_ASSERT(nb0  == വലുപ്പം(ദശാംശം));
+    GGML_ASSERT(nb00 == വലുപ്പം(ദശാംശം));
 
     // TODO: maybe this is not optimal?
-    for                         (int i3 = 0; i3 < nr3;  i3++) {
-        for                     (int k3 = 0; k3 < ne03; k3++) {
-            for                 (int i2 = 0; i2 < nr2;  i2++) {
-                for             (int k2 = 0; k2 < ne02; k2++) {
-                    for         (int i1 = 0; i1 < nr1;  i1++) {
-                        for     (int k1 = 0; k1 < ne01; k1++) {
-                            for (int i0 = 0; i0 < nr0;  i0++) {
+    വേണ്ടി                         (പൂർണ്ണസംഖ്യ i3 = 0; i3 < nr3;  i3++) {
+        വേണ്ടി                     (പൂർണ്ണസംഖ്യ k3 = 0; k3 < ne03; k3++) {
+            വേണ്ടി                 (പൂർണ്ണസംഖ്യ i2 = 0; i2 < nr2;  i2++) {
+                വേണ്ടി             (പൂർണ്ണസംഖ്യ k2 = 0; k2 < ne02; k2++) {
+                    വേണ്ടി         (പൂർണ്ണസംഖ്യ i1 = 0; i1 < nr1;  i1++) {
+                        വേണ്ടി     (പൂർണ്ണസംഖ്യ k1 = 0; k1 < ne01; k1++) {
+                            വേണ്ടി (പൂർണ്ണസംഖ്യ i0 = 0; i0 < nr0;  i0++) {
                                 ggml_vec_cpy_f32(ne00,
-                                        (float *) ((char *)  dst->data + (i3*ne03 + k3)*nb3  + (i2*ne02 + k2)*nb2  + (i1*ne01 + k1)*nb1  + (i0*ne00)*nb0),
-                                        (float *) ((char *) src0->data + (          k3)*nb03 + (          k2)*nb02 + (          k1)*nb01));
+                                        (ദശാംശം *) ((അക്ഷരം *)  dst->data + (i3*ne03 + k3)*nb3  + (i2*ne02 + k2)*nb2  + (i1*ne01 + k1)*nb1  + (i0*ne00)*nb0),
+                                        (ദശാംശം *) ((അക്ഷരം *) src0->data + (          k3)*nb03 + (          k2)*nb02 + (          k1)*nb01));
                             }
                         }
                     }
@@ -1752,14 +1752,14 @@ static void ggml_compute_forward_repeat_f32(
     }
 }
 
-static void ggml_compute_forward_repeat_f16(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_repeat_f16(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    if (params->ith != 0) {
-        return;
+    എങ്കിൽ (params->ith != 0) {
+        തിരികെ;
     }
 
     GGML_ASSERT(ggml_can_repeat(src0, dst));
@@ -1767,27 +1767,27 @@ static void ggml_compute_forward_repeat_f16(
     GGML_TENSOR_UNARY_OP_LOCALS
 
     // guaranteed to be an integer due to the check in ggml_can_repeat
-    const int nr0 = (int)(ne0/ne00);
-    const int nr1 = (int)(ne1/ne01);
-    const int nr2 = (int)(ne2/ne02);
-    const int nr3 = (int)(ne3/ne03);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr0 = (പൂർണ്ണസംഖ്യ)(ne0/ne00);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr1 = (പൂർണ്ണസംഖ്യ)(ne1/ne01);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr2 = (പൂർണ്ണസംഖ്യ)(ne2/ne02);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr3 = (പൂർണ്ണസംഖ്യ)(ne3/ne03);
 
     // TODO: support for transposed / permuted tensors
-    GGML_ASSERT(nb0  == sizeof(ggml_fp16_t));
-    GGML_ASSERT(nb00 == sizeof(ggml_fp16_t));
+    GGML_ASSERT(nb0  == വലുപ്പം(ggml_fp16_t));
+    GGML_ASSERT(nb00 == വലുപ്പം(ggml_fp16_t));
 
     // TODO: maybe this is not optimal?
-    for                         (int i3 = 0; i3 < nr3;  i3++) {
-        for                     (int k3 = 0; k3 < ne03; k3++) {
-            for                 (int i2 = 0; i2 < nr2;  i2++) {
-                for             (int k2 = 0; k2 < ne02; k2++) {
-                    for         (int i1 = 0; i1 < nr1;  i1++) {
-                        for     (int k1 = 0; k1 < ne01; k1++) {
-                            for (int i0 = 0; i0 < nr0;  i0++) {
-                                ggml_fp16_t * y = (ggml_fp16_t *) ((char *)  dst->data + (i3*ne03 + k3)*nb3  + (i2*ne02 + k2)*nb2  + (i1*ne01 + k1)*nb1  + (i0*ne00)*nb0);
-                                ggml_fp16_t * x = (ggml_fp16_t *) ((char *) src0->data + (          k3)*nb03 + (          k2)*nb02 + (          k1)*nb01);
+    വേണ്ടി                         (പൂർണ്ണസംഖ്യ i3 = 0; i3 < nr3;  i3++) {
+        വേണ്ടി                     (പൂർണ്ണസംഖ്യ k3 = 0; k3 < ne03; k3++) {
+            വേണ്ടി                 (പൂർണ്ണസംഖ്യ i2 = 0; i2 < nr2;  i2++) {
+                വേണ്ടി             (പൂർണ്ണസംഖ്യ k2 = 0; k2 < ne02; k2++) {
+                    വേണ്ടി         (പൂർണ്ണസംഖ്യ i1 = 0; i1 < nr1;  i1++) {
+                        വേണ്ടി     (പൂർണ്ണസംഖ്യ k1 = 0; k1 < ne01; k1++) {
+                            വേണ്ടി (പൂർണ്ണസംഖ്യ i0 = 0; i0 < nr0;  i0++) {
+                                ggml_fp16_t * y = (ggml_fp16_t *) ((അക്ഷരം *)  dst->data + (i3*ne03 + k3)*nb3  + (i2*ne02 + k2)*nb2  + (i1*ne01 + k1)*nb1  + (i0*ne00)*nb0);
+                                ggml_fp16_t * x = (ggml_fp16_t *) ((അക്ഷരം *) src0->data + (          k3)*nb03 + (          k2)*nb02 + (          k1)*nb01);
                                 // ggml_vec_cpy_f16(ne00, y, x)
-                                for (int i = 0; i < ne00; ++i) {
+                                വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < ne00; ++i) {
                                     y[i]  = x[i];
                                 }
                             }
@@ -1799,31 +1799,31 @@ static void ggml_compute_forward_repeat_f16(
     }
 }
 
-void ggml_compute_forward_repeat(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_repeat(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F16:
-        case GGML_TYPE_BF16:
-        case GGML_TYPE_I16:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F16:
+        അവസ്ഥ GGML_TYPE_BF16:
+        അവസ്ഥ GGML_TYPE_I16:
             {
                 ggml_compute_forward_repeat_f16(params, dst);
-            } break;
-        case GGML_TYPE_F32:
-        case GGML_TYPE_I32:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F32:
+        അവസ്ഥ GGML_TYPE_I32:
             {
                 ggml_compute_forward_repeat_f32(params, dst);
-            } break;
+            } നിർത്തുക;
         // TODO: templateify the implementation and support for I64
         //       ref https://github.com/ggml-org/llama.cpp/pull/14274#discussion_r2169492225
         //case GGML_TYPE_I64:
         //    {
         //        ggml_compute_forward_repeat_i64(params, dst);
         //    } break;
-        default:
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -1832,14 +1832,14 @@ void ggml_compute_forward_repeat(
 
 // ggml_compute_forward_repeat_back
 
-static void ggml_compute_forward_repeat_back_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_repeat_back_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    if (params->ith != 0) {
-        return;
+    എങ്കിൽ (params->ith != 0) {
+        തിരികെ;
     }
 
     GGML_ASSERT(ggml_can_repeat(dst, src0));
@@ -1847,23 +1847,23 @@ static void ggml_compute_forward_repeat_back_f32(
     GGML_TENSOR_UNARY_OP_LOCALS
 
     // guaranteed to be an integer due to the check in ggml_can_repeat
-    const int nr0 = (int)(ne00/ne0);
-    const int nr1 = (int)(ne01/ne1);
-    const int nr2 = (int)(ne02/ne2);
-    const int nr3 = (int)(ne03/ne3);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr0 = (പൂർണ്ണസംഖ്യ)(ne00/ne0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr1 = (പൂർണ്ണസംഖ്യ)(ne01/ne1);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr2 = (പൂർണ്ണസംഖ്യ)(ne02/ne2);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr3 = (പൂർണ്ണസംഖ്യ)(ne03/ne3);
 
     // TODO: support for transposed / permuted tensors
-    GGML_ASSERT(nb0  == sizeof(float));
-    GGML_ASSERT(nb00 == sizeof(float));
+    GGML_ASSERT(nb0  == വലുപ്പം(ദശാംശം));
+    GGML_ASSERT(nb00 == വലുപ്പം(ദശാംശം));
 
-    if (ggml_is_contiguous(dst)) {
-        ggml_vec_set_f32(ne0*ne1*ne2*ne3, (float *)dst->data, 0);
-    } else {
-        for         (int k3 = 0; k3 < ne3; k3++) {
-            for     (int k2 = 0; k2 < ne2; k2++) {
-                for (int k1 = 0; k1 < ne1; k1++) {
+    എങ്കിൽ (ggml_is_contiguous(dst)) {
+        ggml_vec_set_f32(ne0*ne1*ne2*ne3, (ദശാംശം *)dst->data, 0);
+    } അല്ലെങ്കിൽ {
+        വേണ്ടി         (പൂർണ്ണസംഖ്യ k3 = 0; k3 < ne3; k3++) {
+            വേണ്ടി     (പൂർണ്ണസംഖ്യ k2 = 0; k2 < ne2; k2++) {
+                വേണ്ടി (പൂർണ്ണസംഖ്യ k1 = 0; k1 < ne1; k1++) {
                     ggml_vec_set_f32(ne0,
-                        (float *) ((char *) dst->data + k1*nb1 + k2*nb2 + k3*nb3),
+                        (ദശാംശം *) ((അക്ഷരം *) dst->data + k1*nb1 + k2*nb2 + k3*nb3),
                         0);
                 }
             }
@@ -1871,16 +1871,16 @@ static void ggml_compute_forward_repeat_back_f32(
     }
 
     // TODO: maybe this is not optimal?
-    for                         (int i3 = 0; i3 < nr3; i3++) {
-        for                     (int k3 = 0; k3 < ne3; k3++) {
-            for                 (int i2 = 0; i2 < nr2; i2++) {
-                for             (int k2 = 0; k2 < ne2; k2++) {
-                    for         (int i1 = 0; i1 < nr1; i1++) {
-                        for     (int k1 = 0; k1 < ne1; k1++) {
-                            for (int i0 = 0; i0 < nr0; i0++) {
+    വേണ്ടി                         (പൂർണ്ണസംഖ്യ i3 = 0; i3 < nr3; i3++) {
+        വേണ്ടി                     (പൂർണ്ണസംഖ്യ k3 = 0; k3 < ne3; k3++) {
+            വേണ്ടി                 (പൂർണ്ണസംഖ്യ i2 = 0; i2 < nr2; i2++) {
+                വേണ്ടി             (പൂർണ്ണസംഖ്യ k2 = 0; k2 < ne2; k2++) {
+                    വേണ്ടി         (പൂർണ്ണസംഖ്യ i1 = 0; i1 < nr1; i1++) {
+                        വേണ്ടി     (പൂർണ്ണസംഖ്യ k1 = 0; k1 < ne1; k1++) {
+                            വേണ്ടി (പൂർണ്ണസംഖ്യ i0 = 0; i0 < nr0; i0++) {
                                 ggml_vec_acc_f32(ne0,
-                                        (float *) ((char *)  dst->data + (         k3)*nb3  + (         k2)*nb2  + (         k1)*nb1),
-                                        (float *) ((char *) src0->data + (i3*ne3 + k3)*nb03 + (i2*ne2 + k2)*nb02 + (i1*ne1 + k1)*nb01 + (i0*ne0)*nb00));
+                                        (ദശാംശം *) ((അക്ഷരം *)  dst->data + (         k3)*nb3  + (         k2)*nb2  + (         k1)*nb1),
+                                        (ദശാംശം *) ((അക്ഷരം *) src0->data + (i3*ne3 + k3)*nb03 + (i2*ne2 + k2)*nb02 + (i1*ne1 + k1)*nb01 + (i0*ne0)*nb00));
                             }
                         }
                     }
@@ -1890,18 +1890,18 @@ static void ggml_compute_forward_repeat_back_f32(
     }
 }
 
-void ggml_compute_forward_repeat_back(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_repeat_back(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_repeat_back_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -1909,19 +1909,19 @@ void ggml_compute_forward_repeat_back(
 }
 
 // ggml_compute_forward_concat
-static void ggml_compute_forward_concat_any(
-    const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_concat_any(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS
 
-    const int32_t dim = ggml_get_op_params_i32(dst, 0);
+    സ്ഥിരം int32_t dim = ggml_get_op_params_i32(dst, 0);
 
     GGML_ASSERT(dim >= 0 && dim < 4);
     GGML_ASSERT(ggml_is_contiguous_rows(src0));
@@ -1929,73 +1929,73 @@ static void ggml_compute_forward_concat_any(
 
     int64_t o[4] = {0, 0, 0, 0};
 
-    if (dim == 0) {
+    എങ്കിൽ (dim == 0) {
         GGML_ASSERT(src0->ne[0] % ggml_blck_size(src0->type) == 0);
         GGML_ASSERT(src1->ne[0] % ggml_blck_size(src1->type) == 0);
 
         o[dim] = src0->ne[dim]/ggml_blck_size(src0->type);
-    } else {
+    } അല്ലെങ്കിൽ {
         o[dim] = src0->ne[dim];
     }
 
     // Region 1: copy rows from src0
-    for (int i3 = 0; i3 < ne03; i3++) {
-        for (int i2 = ith; i2 < ne02; i2 += nth) {
-            for (int i1 = 0; i1 < ne01; i1++) {
-                const char * x = (const char *) src0->data + i1*nb01 + i2*nb02 + i3*nb03;
-                      char * y = (      char *) dst->data  + i1*nb1  + i2*nb2  + i3*nb3;
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i3 = 0; i3 < ne03; i3++) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i2 = ith; i2 < ne02; i2 += nth) {
+            വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = 0; i1 < ne01; i1++) {
+                സ്ഥിരം അക്ഷരം * x = (സ്ഥിരം അക്ഷരം *) src0->data + i1*nb01 + i2*nb02 + i3*nb03;
+                      അക്ഷരം * y = (      അക്ഷരം *) dst->data  + i1*nb1  + i2*nb2  + i3*nb3;
                 memcpy(y, x, ggml_row_size(src0->type, ne00));
             }
         }
     }
 
     // Region 2: copy rows from src1, offset into dst by o[]
-    for (int i3 = 0; i3 < ne13; i3++) {
-        for (int i2 = ith; i2 < ne12; i2 += nth) {
-            for (int i1 = 0; i1 < ne11; i1++) {
-                const char * x = (const char *) src1->data + i1*nb11         + i2*nb12         + i3*nb13;
-                      char * y = (      char *)  dst->data + (i1 + o[1])*nb1 + (i2 + o[2])*nb2 + (i3 + o[3])*nb3 + o[0]*nb0;
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i3 = 0; i3 < ne13; i3++) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i2 = ith; i2 < ne12; i2 += nth) {
+            വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = 0; i1 < ne11; i1++) {
+                സ്ഥിരം അക്ഷരം * x = (സ്ഥിരം അക്ഷരം *) src1->data + i1*nb11         + i2*nb12         + i3*nb13;
+                      അക്ഷരം * y = (      അക്ഷരം *)  dst->data + (i1 + o[1])*nb1 + (i2 + o[2])*nb2 + (i3 + o[3])*nb3 + o[0]*nb0;
                 memcpy(y, x, ggml_row_size(src1->type, ne10));
             }
         }
     }
 }
 
-static void ggml_compute_forward_concat_i8(
-    const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_concat_i8(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
-    GGML_ASSERT(ggml_type_size(src0->type) == sizeof(int8_t));
+    GGML_ASSERT(ggml_type_size(src0->type) == വലുപ്പം(int8_t));
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS
 
-    const int32_t dim = ggml_get_op_params_i32(dst, 0);
+    സ്ഥിരം int32_t dim = ggml_get_op_params_i32(dst, 0);
 
     GGML_ASSERT(dim >= 0 && dim < 4);
 
     int64_t o[4] = {0, 0, 0, 0};
     o[dim] = src0->ne[dim];
 
-    const int8_t * x;
+    സ്ഥിരം int8_t * x;
 
     // TODO: smarter multi-theading
-    for (int i3 = 0; i3 < ne3; i3++) {
-        for (int i2 = ith; i2 < ne2; i2 += nth) {
-            for (int i1 = 0; i1 < ne1; i1++) {
-                for (int i0 = 0; i0 < ne0; i0++) {
-                    if (i0 < ne00 && i1 < ne01 && i2 < ne02 && i3 < ne03) {
-                        x = (const int8_t *) ((const char *)src0->data + (i0       )*nb00 + (i1       )*nb01 + (i2       )*nb02 + (i3       )*nb03);
-                    } else {
-                        x = (const int8_t *) ((const char *)src1->data + (i0 - o[0])*nb10 + (i1 - o[1])*nb11 + (i2 - o[2])*nb12 + (i3 - o[3])*nb13);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i3 = 0; i3 < ne3; i3++) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i2 = ith; i2 < ne2; i2 += nth) {
+            വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = 0; i1 < ne1; i1++) {
+                വേണ്ടി (പൂർണ്ണസംഖ്യ i0 = 0; i0 < ne0; i0++) {
+                    എങ്കിൽ (i0 < ne00 && i1 < ne01 && i2 < ne02 && i3 < ne03) {
+                        x = (സ്ഥിരം int8_t *) ((സ്ഥിരം അക്ഷരം *)src0->data + (i0       )*nb00 + (i1       )*nb01 + (i2       )*nb02 + (i3       )*nb03);
+                    } അല്ലെങ്കിൽ {
+                        x = (സ്ഥിരം int8_t *) ((സ്ഥിരം അക്ഷരം *)src1->data + (i0 - o[0])*nb10 + (i1 - o[1])*nb11 + (i2 - o[2])*nb12 + (i3 - o[3])*nb13);
                     }
 
-                    int8_t * y = (int8_t *)((char *)dst->data + i0*nb0 + i1*nb1 + i2*nb2 + i3*nb3);
+                    int8_t * y = (int8_t *)((അക്ഷരം *)dst->data + i0*nb0 + i1*nb1 + i2*nb2 + i3*nb3);
 
                     *y = *x;
                 }
@@ -2004,41 +2004,41 @@ static void ggml_compute_forward_concat_i8(
     }
 }
 
-static void ggml_compute_forward_concat_f16(
-    const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_concat_f16(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
-    GGML_ASSERT(ggml_type_size(src0->type) == sizeof(ggml_fp16_t));
+    GGML_ASSERT(ggml_type_size(src0->type) == വലുപ്പം(ggml_fp16_t));
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS
 
-    const int32_t dim = ggml_get_op_params_i32(dst, 0);
+    സ്ഥിരം int32_t dim = ggml_get_op_params_i32(dst, 0);
 
     GGML_ASSERT(dim >= 0 && dim < 4);
 
     int64_t o[4] = {0, 0, 0, 0};
     o[dim] = src0->ne[dim];
 
-    const ggml_fp16_t * x;
+    സ്ഥിരം ggml_fp16_t * x;
 
     // TODO: smarter multi-theading
-    for (int i3 = 0; i3 < ne3; i3++) {
-        for (int i2 = ith; i2 < ne2; i2 += nth) {
-            for (int i1 = 0; i1 < ne1; i1++) {
-                for (int i0 = 0; i0 < ne0; i0++) {
-                    if (i0 < ne00 && i1 < ne01 && i2 < ne02 && i3 < ne03) {
-                        x = (const ggml_fp16_t *) ((const char *)src0->data + (i0       )*nb00 + (i1       )*nb01 + (i2       )*nb02 + (i3       )*nb03);
-                    } else {
-                        x = (const ggml_fp16_t *) ((const char *)src1->data + (i0 - o[0])*nb10 + (i1 - o[1])*nb11 + (i2 - o[2])*nb12 + (i3 - o[3])*nb13);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i3 = 0; i3 < ne3; i3++) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i2 = ith; i2 < ne2; i2 += nth) {
+            വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = 0; i1 < ne1; i1++) {
+                വേണ്ടി (പൂർണ്ണസംഖ്യ i0 = 0; i0 < ne0; i0++) {
+                    എങ്കിൽ (i0 < ne00 && i1 < ne01 && i2 < ne02 && i3 < ne03) {
+                        x = (സ്ഥിരം ggml_fp16_t *) ((സ്ഥിരം അക്ഷരം *)src0->data + (i0       )*nb00 + (i1       )*nb01 + (i2       )*nb02 + (i3       )*nb03);
+                    } അല്ലെങ്കിൽ {
+                        x = (സ്ഥിരം ggml_fp16_t *) ((സ്ഥിരം അക്ഷരം *)src1->data + (i0 - o[0])*nb10 + (i1 - o[1])*nb11 + (i2 - o[2])*nb12 + (i3 - o[3])*nb13);
                     }
 
-                    ggml_fp16_t * y = (ggml_fp16_t *)((char *)dst->data + i0*nb0 + i1*nb1 + i2*nb2 + i3*nb3);
+                    ggml_fp16_t * y = (ggml_fp16_t *)((അക്ഷരം *)dst->data + i0*nb0 + i1*nb1 + i2*nb2 + i3*nb3);
 
                     *y = *x;
                 }
@@ -2047,41 +2047,41 @@ static void ggml_compute_forward_concat_f16(
     }
 }
 
-static void ggml_compute_forward_concat_f32(
-    const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_concat_f32(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
-    GGML_ASSERT(ggml_type_size(src0->type) == sizeof(float));
+    GGML_ASSERT(ggml_type_size(src0->type) == വലുപ്പം(ദശാംശം));
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS
 
-    const int32_t dim = ggml_get_op_params_i32(dst, 0);
+    സ്ഥിരം int32_t dim = ggml_get_op_params_i32(dst, 0);
 
     GGML_ASSERT(dim >= 0 && dim < 4);
 
     int64_t o[4] = {0, 0, 0, 0};
     o[dim] = src0->ne[dim];
 
-    const float * x;
+    സ്ഥിരം ദശാംശം * x;
 
     // TODO: smarter multi-theading
-    for (int i3 = 0; i3 < ne3; i3++) {
-        for (int i2 = ith; i2 < ne2; i2 += nth) {
-            for (int i1 = 0; i1 < ne1; i1++) {
-                for (int i0 = 0; i0 < ne0; i0++) {
-                    if (i0 < ne00 && i1 < ne01 && i2 < ne02 && i3 < ne03) {
-                        x = (const float *) ((const char *)src0->data + (i0       )*nb00 + (i1       )*nb01 + (i2       )*nb02 + (i3       )*nb03);
-                    } else {
-                        x = (const float *) ((const char *)src1->data + (i0 - o[0])*nb10 + (i1 - o[1])*nb11 + (i2 - o[2])*nb12 + (i3 - o[3])*nb13);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i3 = 0; i3 < ne3; i3++) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i2 = ith; i2 < ne2; i2 += nth) {
+            വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = 0; i1 < ne1; i1++) {
+                വേണ്ടി (പൂർണ്ണസംഖ്യ i0 = 0; i0 < ne0; i0++) {
+                    എങ്കിൽ (i0 < ne00 && i1 < ne01 && i2 < ne02 && i3 < ne03) {
+                        x = (സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *)src0->data + (i0       )*nb00 + (i1       )*nb01 + (i2       )*nb02 + (i3       )*nb03);
+                    } അല്ലെങ്കിൽ {
+                        x = (സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *)src1->data + (i0 - o[0])*nb10 + (i1 - o[1])*nb11 + (i2 - o[2])*nb12 + (i3 - o[3])*nb13);
                     }
 
-                    float * y = (float *)((char *)dst->data + i0*nb0 + i1*nb1 + i2*nb2 + i3*nb3);
+                    ദശാംശം * y = (ദശാംശം *)((അക്ഷരം *)dst->data + i0*nb0 + i1*nb1 + i2*nb2 + i3*nb3);
 
                     *y = *x;
                 }
@@ -2090,29 +2090,29 @@ static void ggml_compute_forward_concat_f32(
     }
 }
 
-void ggml_compute_forward_concat(
-    const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_concat(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F16:
-        case GGML_TYPE_BF16:
-        case GGML_TYPE_I16:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F16:
+        അവസ്ഥ GGML_TYPE_BF16:
+        അവസ്ഥ GGML_TYPE_I16:
             {
                 ggml_compute_forward_concat_f16(params, dst);
-            } break;
-        case GGML_TYPE_I8:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_I8:
             {
                 ggml_compute_forward_concat_i8(params, dst);
-            } break;
-        case GGML_TYPE_F32:
-        case GGML_TYPE_I32:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F32:
+        അവസ്ഥ GGML_TYPE_I32:
             {
                 ggml_compute_forward_concat_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 ggml_compute_forward_concat_any(params, dst);
             }
@@ -2120,168 +2120,168 @@ void ggml_compute_forward_concat(
 }
 
 // row loop shared by the BF16 unary ops
-template <void (*vec_op)(const int, ggml_bf16_t *, const ggml_bf16_t *)>
-static void ggml_compute_forward_unary_bf16_rows(
-        const ggml_compute_params * params,
+template <ശൂന്യം (*vec_op)(സ്ഥിരം പൂർണ്ണസംഖ്യ, ggml_bf16_t *, സ്ഥിരം ggml_bf16_t *)>
+സ്ഥിതം ശൂന്യം ggml_compute_forward_unary_bf16_rows(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    assert(ggml_is_contiguous_rows(src0));
-    assert(ggml_are_same_shape(src0, dst));
+    പ്രതിജ്ഞാ(ggml_is_contiguous_rows(src0));
+    പ്രതിജ്ഞാ(ggml_are_same_shape(src0, dst));
 
     GGML_TENSOR_LOCALS(int64_t, ne0, src0, ne)
     GGML_TENSOR_LOCALS(size_t,  nb0, src0, nb)
     GGML_TENSOR_LOCALS(int64_t, ne,  dst,  ne)
     GGML_TENSOR_LOCALS(size_t,  nb,  dst,  nb)
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src0->ne[0];
-    const int nr = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src0->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src0);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int ir = ir0; ir < ir1; ++ir) {
-        const int i3 = ir/(ne02*ne01);
-        const int i2 = (ir - i3*ne02*ne01)/ne01;
-        const int i1 = (ir - i3*ne02*ne01 - i2*ne01);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ ir = ir0; ir < ir1; ++ir) {
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i3 = ir/(ne02*ne01);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i2 = (ir - i3*ne02*ne01)/ne01;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i1 = (ir - i3*ne02*ne01 - i2*ne01);
 
         vec_op(nc,
-                (ggml_bf16_t *) ((char *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1),
-                (ggml_bf16_t *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01));
+                (ggml_bf16_t *) ((അക്ഷരം *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1),
+                (ggml_bf16_t *) ((അക്ഷരം *) src0->data + i3*nb03 + i2*nb02 + i1*nb01));
     }
 }
 
 // ggml_compute_forward_gelu
 
-static void ggml_compute_forward_gelu_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_gelu_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    assert(ggml_is_contiguous_rows(src0));
-    assert(ggml_are_same_shape(src0, dst));
+    പ്രതിജ്ഞാ(ggml_is_contiguous_rows(src0));
+    പ്രതിജ്ഞാ(ggml_are_same_shape(src0, dst));
 
     GGML_TENSOR_LOCALS(int64_t, ne0, src0, ne)
     GGML_TENSOR_LOCALS(size_t,  nb0, src0, nb)
     GGML_TENSOR_LOCALS(int64_t, ne,  dst,  ne)
     GGML_TENSOR_LOCALS(size_t,  nb,  dst,  nb)
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src0->ne[0];
-    const int nr = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src0->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src0);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int ir = ir0; ir < ir1; ++ir) {
-        const int i3 = ir/(ne02*ne01);
-        const int i2 = (ir - i3*ne02*ne01)/ne01;
-        const int i1 = (ir - i3*ne02*ne01 - i2*ne01);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ ir = ir0; ir < ir1; ++ir) {
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i3 = ir/(ne02*ne01);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i2 = (ir - i3*ne02*ne01)/ne01;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i1 = (ir - i3*ne02*ne01 - i2*ne01);
 
         ggml_vec_gelu_f32(nc,
-                (float *) ((char *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1),
-                (float *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01));
+                (ദശാംശം *) ((അക്ഷരം *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1),
+                (ദശാംശം *) ((അക്ഷരം *) src0->data + i3*nb03 + i2*nb02 + i1*nb01));
 
 #ifndef NDEBUG
-        for (int k = 0; k < nc; k++) {
-            const float x = ((float *) ((char *) dst->data + i3*nb3 + i2*nb2 + i1*(dst->nb[1])))[k];
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
+            സ്ഥിരം ദശാംശം x = ((ദശാംശം *) ((അക്ഷരം *) dst->data + i3*nb3 + i2*nb2 + i1*(dst->nb[1])))[k];
             GGML_UNUSED(x);
-            assert(!isnan(x));
-            assert(!isinf(x));
+            പ്രതിജ്ഞാ(!isnan(x));
+            പ്രതിജ്ഞാ(!isinf(x));
         }
 #endif // NDEBUG
     }
 }
 
-static void ggml_compute_forward_gelu_f16(
-    const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_gelu_f16(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    assert(ggml_is_contiguous_rows(src0));
-    assert(ggml_are_same_shape(src0, dst));
+    പ്രതിജ്ഞാ(ggml_is_contiguous_rows(src0));
+    പ്രതിജ്ഞാ(ggml_are_same_shape(src0, dst));
 
     GGML_TENSOR_LOCALS(int64_t, ne0, src0, ne)
     GGML_TENSOR_LOCALS(size_t,  nb0, src0, nb)
     GGML_TENSOR_LOCALS(int64_t, ne,  dst,  ne)
     GGML_TENSOR_LOCALS(size_t,  nb,  dst,  nb)
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src0->ne[0];
-    const int nr = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src0->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src0);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int ir = ir0; ir < ir1; ++ir) {
-        const int i3 = ir/(ne02*ne01);
-        const int i2 = (ir - i3*ne02*ne01)/ne01;
-        const int i1 = (ir - i3*ne02*ne01 - i2*ne01);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ ir = ir0; ir < ir1; ++ir) {
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i3 = ir/(ne02*ne01);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i2 = (ir - i3*ne02*ne01)/ne01;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i1 = (ir - i3*ne02*ne01 - i2*ne01);
 
         ggml_vec_gelu_f16(nc,
-                (ggml_fp16_t *) ((char *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1),
-                (ggml_fp16_t *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01));
+                (ggml_fp16_t *) ((അക്ഷരം *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1),
+                (ggml_fp16_t *) ((അക്ഷരം *) src0->data + i3*nb03 + i2*nb02 + i1*nb01));
 
 #ifndef NDEBUG
-        for (int k = 0; k < nc; k++) {
-            const ggml_fp16_t x = ((ggml_fp16_t *) ((char *) dst->data + i3*nb3 + i2*nb2 + i1*( dst->nb[1])))[k];
-            const float v = GGML_CPU_FP16_TO_FP32(x);
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
+            സ്ഥിരം ggml_fp16_t x = ((ggml_fp16_t *) ((അക്ഷരം *) dst->data + i3*nb3 + i2*nb2 + i1*( dst->nb[1])))[k];
+            സ്ഥിരം ദശാംശം v = GGML_CPU_FP16_TO_FP32(x);
             GGML_UNUSED(v);
-            assert(!isnan(v));
-            assert(!isinf(v));
+            പ്രതിജ്ഞാ(!isnan(v));
+            പ്രതിജ്ഞാ(!isinf(v));
         }
 #endif // NDEBUG
     }
 }
 
-static void ggml_compute_forward_gelu_bf16(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_gelu_bf16(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
     ggml_compute_forward_unary_bf16_rows<ggml_vec_gelu_bf16>(params, dst);
 }
 
-static void ggml_compute_forward_gelu(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_gelu(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_gelu_f32(params, dst);
-            } break;
-        case GGML_TYPE_F16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F16:
             {
                 ggml_compute_forward_gelu_f16(params, dst);
-            } break;
-        case GGML_TYPE_BF16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_BF16:
             {
                 ggml_compute_forward_gelu_bf16(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -2290,57 +2290,57 @@ static void ggml_compute_forward_gelu(
 
 // ggml_compute_fill
 
-static void ggml_compute_forward_fill_f32(const ggml_compute_params * params, ggml_tensor * dst) {
-    const float c = ggml_get_op_params_f32(dst, 0);
+സ്ഥിതം ശൂന്യം ggml_compute_forward_fill_f32(സ്ഥിരം ggml_compute_params * params, ggml_tensor * dst) {
+    സ്ഥിരം ദശാംശം c = ggml_get_op_params_f32(dst, 0);
 
     GGML_TENSOR_LOCALS(int64_t, ne, dst, ne);
     GGML_TENSOR_LOCALS(size_t,  nb, dst, nb);
 
-    const auto [ir0, ir1] = get_thread_range(params, dst);
+    സ്ഥിരം auto [ir0, ir1] = get_thread_range(params, dst);
 
-    for (int64_t ir = ir0; ir < ir1; ++ir) {
-        const int64_t i03 = ir/(ne2*ne1);
-        const int64_t i02 = (ir - i03*ne2*ne1)/ne1;
-        const int64_t i01 = (ir - i03*ne2*ne1 - i02*ne1);
+    വേണ്ടി (int64_t ir = ir0; ir < ir1; ++ir) {
+        സ്ഥിരം int64_t i03 = ir/(ne2*ne1);
+        സ്ഥിരം int64_t i02 = (ir - i03*ne2*ne1)/ne1;
+        സ്ഥിരം int64_t i01 = (ir - i03*ne2*ne1 - i02*ne1);
 
-        float * dst_ptr  = (float *) ((char *) dst->data + i03*nb3 + i02*nb2 + i01*nb1);
+        ദശാംശം * dst_ptr  = (ദശാംശം *) ((അക്ഷരം *) dst->data + i03*nb3 + i02*nb2 + i01*nb1);
 
         ggml_vec_set_f32(ne0, dst_ptr, c);
     }
 }
 
-static void ggml_compute_forward_fill_f16(const ggml_compute_params * params, ggml_tensor * dst) {
-    const ggml_fp16_t c = GGML_CPU_FP32_TO_FP16(ggml_get_op_params_f32(dst, 0));
+സ്ഥിതം ശൂന്യം ggml_compute_forward_fill_f16(സ്ഥിരം ggml_compute_params * params, ggml_tensor * dst) {
+    സ്ഥിരം ggml_fp16_t c = GGML_CPU_FP32_TO_FP16(ggml_get_op_params_f32(dst, 0));
 
     GGML_TENSOR_LOCALS(int64_t, ne, dst, ne);
     GGML_TENSOR_LOCALS(size_t,  nb, dst, nb);
 
-    const auto [ir0, ir1] = get_thread_range(params, dst);
+    സ്ഥിരം auto [ir0, ir1] = get_thread_range(params, dst);
 
-    for (int64_t ir = ir0; ir < ir1; ++ir) {
-        const int64_t i03 = ir/(ne2*ne1);
-        const int64_t i02 = (ir - i03*ne2*ne1)/ne1;
-        const int64_t i01 = (ir - i03*ne2*ne1 - i02*ne1);
+    വേണ്ടി (int64_t ir = ir0; ir < ir1; ++ir) {
+        സ്ഥിരം int64_t i03 = ir/(ne2*ne1);
+        സ്ഥിരം int64_t i02 = (ir - i03*ne2*ne1)/ne1;
+        സ്ഥിരം int64_t i01 = (ir - i03*ne2*ne1 - i02*ne1);
 
-        ggml_fp16_t * dst_ptr  = (ggml_fp16_t *) ((char *) dst->data + i03*nb3 + i02*nb2 + i01*nb1);
+        ggml_fp16_t * dst_ptr  = (ggml_fp16_t *) ((അക്ഷരം *) dst->data + i03*nb3 + i02*nb2 + i01*nb1);
 
         ggml_vec_set_f16(ne0, dst_ptr, c);
     }
 }
 
-void ggml_compute_forward_fill(const ggml_compute_params * params, ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0];
+ശൂന്യം ggml_compute_forward_fill(സ്ഥിരം ggml_compute_params * params, ggml_tensor * dst) {
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_fill_f32(params, dst);
-            } break;
-        case GGML_TYPE_F16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F16:
             {
                 ggml_compute_forward_fill_f16(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("unsupported type for ggml_compute_forward_fill: %s", ggml_type_name(src0->type));
             }
@@ -2349,50 +2349,50 @@ void ggml_compute_forward_fill(const ggml_compute_params * params, ggml_tensor *
 
 // ggml_compute_tri
 
-static void ggml_compute_forward_tri_f32(const ggml_compute_params * params, ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0];
+സ്ഥിതം ശൂന്യം ggml_compute_forward_tri_f32(സ്ഥിരം ggml_compute_params * params, ggml_tensor * dst) {
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    const ggml_tri_type ttype = (ggml_tri_type) ggml_get_op_params_i32(dst, 0);
+    സ്ഥിരം ggml_tri_type ttype = (ggml_tri_type) ggml_get_op_params_i32(dst, 0);
 
     GGML_ASSERT(ggml_is_contiguous(src0));
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
-    const auto [ir0, ir1] = get_thread_range(params, src0);
+    സ്ഥിരം auto [ir0, ir1] = get_thread_range(params, src0);
 
-    bool (*bipred)(int, int);
+    തർക്കം (*bipred)(പൂർണ്ണസംഖ്യ, പൂർണ്ണസംഖ്യ);
 
-    switch (ttype) {
-        case GGML_TRI_TYPE_LOWER:      bipred = [](int i, int r) { return i <  r; }; break;
-        case GGML_TRI_TYPE_LOWER_DIAG: bipred = [](int i, int r) { return i <= r; }; break;
-        case GGML_TRI_TYPE_UPPER:      bipred = [](int i, int r) { return i >  r; }; break;
-        case GGML_TRI_TYPE_UPPER_DIAG: bipred = [](int i, int r) { return i >= r; }; break;
-        default: GGML_ABORT("invalid tri type");
+    തിരഞ്ഞെടുപ്പ് (ttype) {
+        അവസ്ഥ GGML_TRI_TYPE_LOWER:      bipred = [](പൂർണ്ണസംഖ്യ i, പൂർണ്ണസംഖ്യ r) { തിരികെ i <  r; }; നിർത്തുക;
+        അവസ്ഥ GGML_TRI_TYPE_LOWER_DIAG: bipred = [](പൂർണ്ണസംഖ്യ i, പൂർണ്ണസംഖ്യ r) { തിരികെ i <= r; }; നിർത്തുക;
+        അവസ്ഥ GGML_TRI_TYPE_UPPER:      bipred = [](പൂർണ്ണസംഖ്യ i, പൂർണ്ണസംഖ്യ r) { തിരികെ i >  r; }; നിർത്തുക;
+        അവസ്ഥ GGML_TRI_TYPE_UPPER_DIAG: bipred = [](പൂർണ്ണസംഖ്യ i, പൂർണ്ണസംഖ്യ r) { തിരികെ i >= r; }; നിർത്തുക;
+        സ്ഥിരസ്ഥിതി: GGML_ABORT("invalid tri type");
     }
 
-    for (int64_t ir = ir0; ir < ir1; ++ir) {
-        const int64_t i03 = ir/(ne02*ne01);
-        const int64_t i02 = (ir - i03*ne02*ne01)/ne01;
-        const int64_t i01 = (ir - i03*ne02*ne01 - i02*ne01);
+    വേണ്ടി (int64_t ir = ir0; ir < ir1; ++ir) {
+        സ്ഥിരം int64_t i03 = ir/(ne02*ne01);
+        സ്ഥിരം int64_t i02 = (ir - i03*ne02*ne01)/ne01;
+        സ്ഥിരം int64_t i01 = (ir - i03*ne02*ne01 - i02*ne01);
 
-        const float * src_ptr = (const float  *) ((const char *) src0->data + i03*nb03 + i02*nb02 + i01*nb01);
-              float * dst_ptr = (      float  *) ((      char *) dst->data  + i03*nb3  + i02*nb2  + i01*nb1);
+        സ്ഥിരം ദശാംശം * src_ptr = (സ്ഥിരം ദശാംശം  *) ((സ്ഥിരം അക്ഷരം *) src0->data + i03*nb03 + i02*nb02 + i01*nb01);
+              ദശാംശം * dst_ptr = (      ദശാംശം  *) ((      അക്ഷരം *) dst->data  + i03*nb3  + i02*nb2  + i01*nb1);
 
-        for (int i0 = 0; i0 < ne0; ++i0) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i0 = 0; i0 < ne0; ++i0) {
             dst_ptr[i0] = bipred(i0, i01) ? src_ptr[i0] : 0.0f;
         }
     }
 }
 
-void ggml_compute_forward_tri(const ggml_compute_params * params, ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0];
+ശൂന്യം ggml_compute_forward_tri(സ്ഥിരം ggml_compute_params * params, ggml_tensor * dst) {
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_tri_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -2401,127 +2401,127 @@ void ggml_compute_forward_tri(const ggml_compute_params * params, ggml_tensor * 
 
 // ggml_compute_forward_gelu_erf
 
-static void ggml_compute_forward_gelu_erf_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_gelu_erf_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    assert(ggml_is_contiguous_rows(src0));
-    assert(ggml_are_same_shape(src0, dst));
+    പ്രതിജ്ഞാ(ggml_is_contiguous_rows(src0));
+    പ്രതിജ്ഞാ(ggml_are_same_shape(src0, dst));
 
     GGML_TENSOR_LOCALS(int64_t, ne0, src0, ne)
     GGML_TENSOR_LOCALS(size_t,  nb0, src0, nb)
     GGML_TENSOR_LOCALS(int64_t, ne,  dst,  ne)
     GGML_TENSOR_LOCALS(size_t,  nb,  dst,  nb)
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src0->ne[0];
-    const int nr = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src0->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src0);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int ir = ir0; ir < ir1; ++ir) {
-        const int i3 = ir/(ne02*ne01);
-        const int i2 = (ir - i3*ne02*ne01)/ne01;
-        const int i1 = (ir - i3*ne02*ne01 - i2*ne01);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ ir = ir0; ir < ir1; ++ir) {
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i3 = ir/(ne02*ne01);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i2 = (ir - i3*ne02*ne01)/ne01;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i1 = (ir - i3*ne02*ne01 - i2*ne01);
 
         ggml_vec_gelu_erf_f32(nc,
-                (float *) ((char *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1),
-                (float *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01));
+                (ദശാംശം *) ((അക്ഷരം *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1),
+                (ദശാംശം *) ((അക്ഷരം *) src0->data + i3*nb03 + i2*nb02 + i1*nb01));
 
 #ifndef NDEBUG
-        for (int k = 0; k < nc; k++) {
-            const float x = ((float *) ((char *) dst->data + i3*nb3 + i2*nb2 + i1*(dst->nb[1])))[k];
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
+            സ്ഥിരം ദശാംശം x = ((ദശാംശം *) ((അക്ഷരം *) dst->data + i3*nb3 + i2*nb2 + i1*(dst->nb[1])))[k];
             GGML_UNUSED(x);
-            assert(!isnan(x));
-            assert(!isinf(x));
+            പ്രതിജ്ഞാ(!isnan(x));
+            പ്രതിജ്ഞാ(!isinf(x));
         }
 #endif // NDEBUG
     }
 }
 
-static void ggml_compute_forward_gelu_erf_f16(
-    const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_gelu_erf_f16(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    assert(ggml_is_contiguous_rows(src0));
-    assert(ggml_are_same_shape(src0, dst));
+    പ്രതിജ്ഞാ(ggml_is_contiguous_rows(src0));
+    പ്രതിജ്ഞാ(ggml_are_same_shape(src0, dst));
 
     GGML_TENSOR_LOCALS(int64_t, ne0, src0, ne)
     GGML_TENSOR_LOCALS(size_t,  nb0, src0, nb)
     GGML_TENSOR_LOCALS(int64_t, ne,  dst,  ne)
     GGML_TENSOR_LOCALS(size_t,  nb,  dst,  nb)
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src0->ne[0];
-    const int nr = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src0->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src0);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int ir = ir0; ir < ir1; ++ir) {
-        const int i3 = ir/(ne02*ne01);
-        const int i2 = (ir - i3*ne02*ne01)/ne01;
-        const int i1 = (ir - i3*ne02*ne01 - i2*ne01);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ ir = ir0; ir < ir1; ++ir) {
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i3 = ir/(ne02*ne01);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i2 = (ir - i3*ne02*ne01)/ne01;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i1 = (ir - i3*ne02*ne01 - i2*ne01);
 
         ggml_vec_gelu_erf_f16(nc,
-                (ggml_fp16_t *) ((char *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1),
-                (ggml_fp16_t *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01));
+                (ggml_fp16_t *) ((അക്ഷരം *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1),
+                (ggml_fp16_t *) ((അക്ഷരം *) src0->data + i3*nb03 + i2*nb02 + i1*nb01));
 
 #ifndef NDEBUG
-        for (int k = 0; k < nc; k++) {
-            const ggml_fp16_t x = ((ggml_fp16_t *) ((char *) dst->data + i3*nb3 + i2*nb2 + i1*( dst->nb[1])))[k];
-            const float v = GGML_CPU_FP16_TO_FP32(x);
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
+            സ്ഥിരം ggml_fp16_t x = ((ggml_fp16_t *) ((അക്ഷരം *) dst->data + i3*nb3 + i2*nb2 + i1*( dst->nb[1])))[k];
+            സ്ഥിരം ദശാംശം v = GGML_CPU_FP16_TO_FP32(x);
             GGML_UNUSED(v);
-            assert(!isnan(v));
-            assert(!isinf(v));
+            പ്രതിജ്ഞാ(!isnan(v));
+            പ്രതിജ്ഞാ(!isinf(v));
         }
 #endif // NDEBUG
     }
 }
 
-static void ggml_compute_forward_gelu_erf_bf16(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_gelu_erf_bf16(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
     ggml_compute_forward_unary_bf16_rows<ggml_vec_gelu_erf_bf16>(params, dst);
 }
 
-static void ggml_compute_forward_gelu_erf(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_gelu_erf(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_gelu_erf_f32(params, dst);
-            } break;
-        case GGML_TYPE_F16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F16:
             {
                 ggml_compute_forward_gelu_erf_f16(params, dst);
-            } break;
-        case GGML_TYPE_BF16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_BF16:
             {
                 ggml_compute_forward_gelu_erf_bf16(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -2530,127 +2530,127 @@ static void ggml_compute_forward_gelu_erf(
 
 // ggml_compute_forward_gelu_quick
 
-static void ggml_compute_forward_gelu_quick_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_gelu_quick_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    assert(ggml_is_contiguous_rows(src0));
-    assert(ggml_are_same_shape(src0, dst));
+    പ്രതിജ്ഞാ(ggml_is_contiguous_rows(src0));
+    പ്രതിജ്ഞാ(ggml_are_same_shape(src0, dst));
 
     GGML_TENSOR_LOCALS(int64_t, ne0, src0, ne)
     GGML_TENSOR_LOCALS(size_t,  nb0, src0, nb)
     GGML_TENSOR_LOCALS(int64_t, ne,  dst,  ne)
     GGML_TENSOR_LOCALS(size_t,  nb,  dst,  nb)
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src0->ne[0];
-    const int nr = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src0->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src0);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int ir = ir0; ir < ir1; ++ir) {
-        const int i3 = ir/(ne02*ne01);
-        const int i2 = (ir - i3*ne02*ne01)/ne01;
-        const int i1 = (ir - i3*ne02*ne01 - i2*ne01);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ ir = ir0; ir < ir1; ++ir) {
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i3 = ir/(ne02*ne01);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i2 = (ir - i3*ne02*ne01)/ne01;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i1 = (ir - i3*ne02*ne01 - i2*ne01);
 
         ggml_vec_gelu_quick_f32(nc,
-                (float *) ((char *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1),
-                (float *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01));
+                (ദശാംശം *) ((അക്ഷരം *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1),
+                (ദശാംശം *) ((അക്ഷരം *) src0->data + i3*nb03 + i2*nb02 + i1*nb01));
 
 #ifndef NDEBUG
-        for (int k = 0; k < nc; k++) {
-            const float x = ((float *) ((char *) dst->data + i3*nb3 + i2*nb2 + i1*(dst->nb[1])))[k];
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
+            സ്ഥിരം ദശാംശം x = ((ദശാംശം *) ((അക്ഷരം *) dst->data + i3*nb3 + i2*nb2 + i1*(dst->nb[1])))[k];
             GGML_UNUSED(x);
-            assert(!isnan(x));
-            assert(!isinf(x));
+            പ്രതിജ്ഞാ(!isnan(x));
+            പ്രതിജ്ഞാ(!isinf(x));
         }
 #endif // NDEBUG
     }
 }
 
-static void ggml_compute_forward_gelu_quick_f16(
-    const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_gelu_quick_f16(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    assert(ggml_is_contiguous_rows(src0));
-    assert(ggml_are_same_shape(src0, dst));
+    പ്രതിജ്ഞാ(ggml_is_contiguous_rows(src0));
+    പ്രതിജ്ഞാ(ggml_are_same_shape(src0, dst));
 
     GGML_TENSOR_LOCALS(int64_t, ne0, src0, ne)
     GGML_TENSOR_LOCALS(size_t,  nb0, src0, nb)
     GGML_TENSOR_LOCALS(int64_t, ne,  dst,  ne)
     GGML_TENSOR_LOCALS(size_t,  nb,  dst,  nb)
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src0->ne[0];
-    const int nr = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src0->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src0);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int ir = ir0; ir < ir1; ++ir) {
-        const int i3 = ir/(ne02*ne01);
-        const int i2 = (ir - i3*ne02*ne01)/ne01;
-        const int i1 = (ir - i3*ne02*ne01 - i2*ne01);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ ir = ir0; ir < ir1; ++ir) {
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i3 = ir/(ne02*ne01);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i2 = (ir - i3*ne02*ne01)/ne01;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i1 = (ir - i3*ne02*ne01 - i2*ne01);
 
         ggml_vec_gelu_quick_f16(nc,
-                (ggml_fp16_t *) ((char *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1),
-                (ggml_fp16_t *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01));
+                (ggml_fp16_t *) ((അക്ഷരം *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1),
+                (ggml_fp16_t *) ((അക്ഷരം *) src0->data + i3*nb03 + i2*nb02 + i1*nb01));
 
 #ifndef NDEBUG
-        for (int k = 0; k < nc; k++) {
-            const ggml_fp16_t x = ((ggml_fp16_t *) ((char *) dst->data + i3*nb3 + i2*nb2 + i1*( dst->nb[1])))[k];
-            const float v = GGML_CPU_FP16_TO_FP32(x);
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
+            സ്ഥിരം ggml_fp16_t x = ((ggml_fp16_t *) ((അക്ഷരം *) dst->data + i3*nb3 + i2*nb2 + i1*( dst->nb[1])))[k];
+            സ്ഥിരം ദശാംശം v = GGML_CPU_FP16_TO_FP32(x);
             GGML_UNUSED(v);
-            assert(!isnan(v));
-            assert(!isinf(v));
+            പ്രതിജ്ഞാ(!isnan(v));
+            പ്രതിജ്ഞാ(!isinf(v));
         }
 #endif // NDEBUG
     }
 }
 
-static void ggml_compute_forward_gelu_quick_bf16(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_gelu_quick_bf16(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
     ggml_compute_forward_unary_bf16_rows<ggml_vec_gelu_quick_bf16>(params, dst);
 }
 
-static void ggml_compute_forward_gelu_quick(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_gelu_quick(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_gelu_quick_f32(params, dst);
-            } break;
-        case GGML_TYPE_F16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F16:
             {
                 ggml_compute_forward_gelu_quick_f16(params, dst);
-            } break;
-        case GGML_TYPE_BF16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_BF16:
             {
                 ggml_compute_forward_gelu_quick_bf16(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -2659,127 +2659,127 @@ static void ggml_compute_forward_gelu_quick(
 
 // ggml_compute_forward_silu
 
-static void ggml_compute_forward_silu_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_silu_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    assert(ggml_is_contiguous_rows(src0));
-    assert(ggml_are_same_shape(src0, dst));
+    പ്രതിജ്ഞാ(ggml_is_contiguous_rows(src0));
+    പ്രതിജ്ഞാ(ggml_are_same_shape(src0, dst));
 
     GGML_TENSOR_LOCALS(int64_t, ne0, src0, ne)
     GGML_TENSOR_LOCALS(size_t,  nb0, src0, nb)
     GGML_TENSOR_LOCALS(int64_t, ne,  dst,  ne)
     GGML_TENSOR_LOCALS(size_t,  nb,  dst,  nb)
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src0->ne[0];
-    const int nr = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src0->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src0);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int ir = ir0; ir < ir1; ++ir) {
-        const int i3 = ir/(ne02*ne01);
-        const int i2 = (ir - i3*ne02*ne01)/ne01;
-        const int i1 = (ir - i3*ne02*ne01 - i2*ne01);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ ir = ir0; ir < ir1; ++ir) {
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i3 = ir/(ne02*ne01);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i2 = (ir - i3*ne02*ne01)/ne01;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i1 = (ir - i3*ne02*ne01 - i2*ne01);
 
         ggml_vec_silu_f32(nc,
-                (float *) ((char *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1),
-                (float *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01));
+                (ദശാംശം *) ((അക്ഷരം *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1),
+                (ദശാംശം *) ((അക്ഷരം *) src0->data + i3*nb03 + i2*nb02 + i1*nb01));
 
 #ifndef NDEBUG
-        for (int k = 0; k < nc; k++) {
-            const float x = ((float *) ((char *) dst->data + i3*nb3 + i2*nb2 + i1*(dst->nb[1])))[k];
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
+            സ്ഥിരം ദശാംശം x = ((ദശാംശം *) ((അക്ഷരം *) dst->data + i3*nb3 + i2*nb2 + i1*(dst->nb[1])))[k];
             GGML_UNUSED(x);
-            assert(!isnan(x));
-            assert(!isinf(x));
+            പ്രതിജ്ഞാ(!isnan(x));
+            പ്രതിജ്ഞാ(!isinf(x));
         }
 #endif // NDEBUG
     }
 }
 
-static void ggml_compute_forward_silu_f16(
-    const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_silu_f16(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    assert(ggml_is_contiguous_rows(src0));
-    assert(ggml_are_same_shape(src0, dst));
+    പ്രതിജ്ഞാ(ggml_is_contiguous_rows(src0));
+    പ്രതിജ്ഞാ(ggml_are_same_shape(src0, dst));
 
     GGML_TENSOR_LOCALS(int64_t, ne0, src0, ne)
     GGML_TENSOR_LOCALS(size_t,  nb0, src0, nb)
     GGML_TENSOR_LOCALS(int64_t, ne,  dst,  ne)
     GGML_TENSOR_LOCALS(size_t,  nb,  dst,  nb)
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src0->ne[0];
-    const int nr = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src0->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src0);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int ir = ir0; ir < ir1; ++ir) {
-        const int i3 = ir/(ne02*ne01);
-        const int i2 = (ir - i3*ne02*ne01)/ne01;
-        const int i1 = (ir - i3*ne02*ne01 - i2*ne01);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ ir = ir0; ir < ir1; ++ir) {
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i3 = ir/(ne02*ne01);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i2 = (ir - i3*ne02*ne01)/ne01;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i1 = (ir - i3*ne02*ne01 - i2*ne01);
 
         ggml_vec_silu_f16(nc,
-                (ggml_fp16_t *) ((char *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1),
-                (ggml_fp16_t *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01));
+                (ggml_fp16_t *) ((അക്ഷരം *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1),
+                (ggml_fp16_t *) ((അക്ഷരം *) src0->data + i3*nb03 + i2*nb02 + i1*nb01));
 
 #ifndef NDEBUG
-        for (int k = 0; k < nc; k++) {
-            const ggml_fp16_t x = ((ggml_fp16_t *) ((char *) dst->data + i3*nb3 + i2*nb2 + i1*( dst->nb[1])))[k];
-            const float v = GGML_CPU_FP16_TO_FP32(x);
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
+            സ്ഥിരം ggml_fp16_t x = ((ggml_fp16_t *) ((അക്ഷരം *) dst->data + i3*nb3 + i2*nb2 + i1*( dst->nb[1])))[k];
+            സ്ഥിരം ദശാംശം v = GGML_CPU_FP16_TO_FP32(x);
             GGML_UNUSED(v);
-            assert(!isnan(v));
-            assert(!isinf(v));
+            പ്രതിജ്ഞാ(!isnan(v));
+            പ്രതിജ്ഞാ(!isinf(v));
         }
 #endif // NDEBUG
     }
 }
 
-static void ggml_compute_forward_silu_bf16(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_silu_bf16(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
     ggml_compute_forward_unary_bf16_rows<ggml_vec_silu_bf16>(params, dst);
 }
 
-static void ggml_compute_forward_silu(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_silu(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_silu_f32(params, dst);
-            } break;
-        case GGML_TYPE_F16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F16:
             {
                 ggml_compute_forward_silu_f16(params, dst);
-            } break;
-        case GGML_TYPE_BF16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_BF16:
             {
                 ggml_compute_forward_silu_bf16(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -2787,82 +2787,82 @@ static void ggml_compute_forward_silu(
 }
 // ggml_compute_forward_leaky_relu
 
-static void ggml_compute_forward_leaky_relu_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_leaky_relu_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    if (params->ith != 0) {
-        return;
+    എങ്കിൽ (params->ith != 0) {
+        തിരികെ;
     }
 
-    assert(ggml_is_contiguous_1(src0));
-    assert(ggml_is_contiguous_1(dst));
-    assert(ggml_are_same_shape(src0, dst));
+    പ്രതിജ്ഞാ(ggml_is_contiguous_1(src0));
+    പ്രതിജ്ഞാ(ggml_is_contiguous_1(dst));
+    പ്രതിജ്ഞാ(ggml_are_same_shape(src0, dst));
 
-    const int n  = ggml_nrows(src0);
-    const int nc = src0->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ n  = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src0->ne[0];
 
-    float negative_slope;
-    memcpy(&negative_slope, dst->op_params, sizeof(float));
+    ദശാംശം negative_slope;
+    memcpy(&negative_slope, dst->op_params, വലുപ്പം(ദശാംശം));
 
-    assert(dst->nb[0]  == sizeof(float));
-    assert(src0->nb[0] == sizeof(float));
+    പ്രതിജ്ഞാ(dst->nb[0]  == വലുപ്പം(ദശാംശം));
+    പ്രതിജ്ഞാ(src0->nb[0] == വലുപ്പം(ദശാംശം));
 
-    for (int i = 0; i < n; i++) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < n; i++) {
         ggml_vec_leaky_relu_f32(nc,
-                (float *) ((char *) dst->data  + i*( dst->nb[1])),
-                (float *) ((char *) src0->data + i*(src0->nb[1])), negative_slope);
+                (ദശാംശം *) ((അക്ഷരം *) dst->data  + i*( dst->nb[1])),
+                (ദശാംശം *) ((അക്ഷരം *) src0->data + i*(src0->nb[1])), negative_slope);
     }
 }
 
-static void ggml_compute_forward_leaky_relu_f16(
-    const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_leaky_relu_f16(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    if (params->ith != 0) {
-        return;
+    എങ്കിൽ (params->ith != 0) {
+        തിരികെ;
     }
 
-    assert(ggml_is_contiguous_1(src0));
-    assert(ggml_is_contiguous_1(dst));
-    assert(ggml_are_same_shape(src0, dst));
+    പ്രതിജ്ഞാ(ggml_is_contiguous_1(src0));
+    പ്രതിജ്ഞാ(ggml_is_contiguous_1(dst));
+    പ്രതിജ്ഞാ(ggml_are_same_shape(src0, dst));
 
-    const int n  = ggml_nrows(src0);
-    const int nc = src0->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ n  = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src0->ne[0];
 
-    float negative_slope;
-    memcpy(&negative_slope, dst->op_params, sizeof(float));
+    ദശാംശം negative_slope;
+    memcpy(&negative_slope, dst->op_params, വലുപ്പം(ദശാംശം));
 
-    assert(dst->nb[0]  == sizeof(ggml_fp16_t));
-    assert(src0->nb[0] == sizeof(ggml_fp16_t));
+    പ്രതിജ്ഞാ(dst->nb[0]  == വലുപ്പം(ggml_fp16_t));
+    പ്രതിജ്ഞാ(src0->nb[0] == വലുപ്പം(ggml_fp16_t));
 
-    for (int i = 0; i < n; i++) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < n; i++) {
         ggml_vec_leaky_relu_f16(nc,
-                (ggml_fp16_t *) ((char *) dst->data  + i*( dst->nb[1])),
-                (ggml_fp16_t *) ((char *) src0->data + i*(src0->nb[1])), negative_slope);
+                (ggml_fp16_t *) ((അക്ഷരം *) dst->data  + i*( dst->nb[1])),
+                (ggml_fp16_t *) ((അക്ഷരം *) src0->data + i*(src0->nb[1])), negative_slope);
     }
 }
 
-void ggml_compute_forward_leaky_relu(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_leaky_relu(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_leaky_relu_f32(params, dst);
-            } break;
-        case GGML_TYPE_F16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F16:
             {
                 ggml_compute_forward_leaky_relu_f16(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -2871,109 +2871,109 @@ void ggml_compute_forward_leaky_relu(
 
 // ggml_compute_forward_silu_back
 
-static void ggml_compute_forward_silu_back_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_silu_back_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * grad = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * grad = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
-    assert(ggml_is_contiguous_1(grad));
-    assert(ggml_is_contiguous_1(src1));
-    assert(ggml_is_contiguous_1(dst));
-    assert(ggml_are_same_shape(src1, dst));
-    assert(ggml_are_same_shape(src1, grad));
+    പ്രതിജ്ഞാ(ggml_is_contiguous_1(grad));
+    പ്രതിജ്ഞാ(ggml_is_contiguous_1(src1));
+    പ്രതിജ്ഞാ(ggml_is_contiguous_1(dst));
+    പ്രതിജ്ഞാ(ggml_are_same_shape(src1, dst));
+    പ്രതിജ്ഞാ(ggml_are_same_shape(src1, grad));
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src1->ne[0];
-    const int nr = ggml_nrows(src1);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src1->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src1);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int i1 = ir0; i1 < ir1; i1++) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = ir0; i1 < ir1; i1++) {
         ggml_vec_silu_backward_f32(nc,
-                (float *) ((char *) dst->data  + i1*( dst->nb[1])),
-                (float *) ((char *) src1->data + i1*(src1->nb[1])),
-                (float *) ((char *) grad->data + i1*(grad->nb[1])));
+                (ദശാംശം *) ((അക്ഷരം *) dst->data  + i1*( dst->nb[1])),
+                (ദശാംശം *) ((അക്ഷരം *) src1->data + i1*(src1->nb[1])),
+                (ദശാംശം *) ((അക്ഷരം *) grad->data + i1*(grad->nb[1])));
 
 #ifndef NDEBUG
-        for (int k = 0; k < nc; k++) {
-            const float x = ((float *) ((char *) dst->data + i1*( dst->nb[1])))[k];
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
+            സ്ഥിരം ദശാംശം x = ((ദശാംശം *) ((അക്ഷരം *) dst->data + i1*( dst->nb[1])))[k];
             GGML_UNUSED(x);
-            assert(!isnan(x));
-            assert(!isinf(x));
+            പ്രതിജ്ഞാ(!isnan(x));
+            പ്രതിജ്ഞാ(!isinf(x));
         }
 #endif // NDEBUG
     }
 }
 
-static void ggml_compute_forward_silu_back_f16(
-    const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_silu_back_f16(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * grad = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * grad = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
-    assert(ggml_is_contiguous_1(grad));
-    assert(ggml_is_contiguous_1(src1));
-    assert(ggml_is_contiguous_1(dst));
-    assert(ggml_are_same_shape(src1, dst));
-    assert(ggml_are_same_shape(src1, grad));
+    പ്രതിജ്ഞാ(ggml_is_contiguous_1(grad));
+    പ്രതിജ്ഞാ(ggml_is_contiguous_1(src1));
+    പ്രതിജ്ഞാ(ggml_is_contiguous_1(dst));
+    പ്രതിജ്ഞാ(ggml_are_same_shape(src1, dst));
+    പ്രതിജ്ഞാ(ggml_are_same_shape(src1, grad));
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src1->ne[0];
-    const int nr = ggml_nrows(src1);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src1->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src1);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int i1 = ir0; i1 < ir1; i1++) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = ir0; i1 < ir1; i1++) {
         ggml_vec_silu_backward_f16(nc,
-                (ggml_fp16_t *) ((char *) dst->data  + i1*( dst->nb[1])),
-                (ggml_fp16_t *) ((char *) src1->data + i1*(src1->nb[1])),
-                (ggml_fp16_t *) ((char *) grad->data + i1*(grad->nb[1])));
+                (ggml_fp16_t *) ((അക്ഷരം *) dst->data  + i1*( dst->nb[1])),
+                (ggml_fp16_t *) ((അക്ഷരം *) src1->data + i1*(src1->nb[1])),
+                (ggml_fp16_t *) ((അക്ഷരം *) grad->data + i1*(grad->nb[1])));
 
 #ifndef NDEBUG
-        for (int k = 0; k < nc; k++) {
-            const float x = ((ggml_fp16_t *) ((char *) dst->data + i1*( dst->nb[1])))[k];
-            const float v = GGML_CPU_FP16_TO_FP32(x);
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
+            സ്ഥിരം ദശാംശം x = ((ggml_fp16_t *) ((അക്ഷരം *) dst->data + i1*( dst->nb[1])))[k];
+            സ്ഥിരം ദശാംശം v = GGML_CPU_FP16_TO_FP32(x);
             GGML_UNUSED(v);
-            assert(!isnan(v));
-            assert(!isinf(v));
+            പ്രതിജ്ഞാ(!isnan(v));
+            പ്രതിജ്ഞാ(!isinf(v));
         }
 #endif // NDEBUG
     }
 }
 
-void ggml_compute_forward_silu_back(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_silu_back(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_silu_back_f32(params, dst);
-            } break;
-        case GGML_TYPE_F16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F16:
             {
                 ggml_compute_forward_silu_back_f16(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -2983,50 +2983,50 @@ void ggml_compute_forward_silu_back(
 // ggml_compute_forward_reglu
 
 // row loop shared by the BF16 GLU ops
-template <void (*vec_op)(const int, ggml_bf16_t *, const ggml_bf16_t *, const ggml_bf16_t *)>
-static void ggml_compute_forward_glu_bf16_rows(
-        const ggml_compute_params * params,
+template <ശൂന്യം (*vec_op)(സ്ഥിരം പൂർണ്ണസംഖ്യ, ggml_bf16_t *, സ്ഥിരം ggml_bf16_t *, സ്ഥിരം ggml_bf16_t *)>
+സ്ഥിതം ശൂന്യം ggml_compute_forward_glu_bf16_rows(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
-    char * src0_d = (char *) src0->data;
-    char * src1_d = (char *) (src1 ? src1->data : src0->data);
-    const size_t src0_o = src0->nb[1];
-    const size_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
+    അക്ഷരം * src0_d = (അക്ഷരം *) src0->data;
+    അക്ഷരം * src1_d = (അക്ഷരം *) (src1 ? src1->data : src0->data);
+    സ്ഥിരം size_t src0_o = src0->nb[1];
+    സ്ഥിരം size_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
 
     GGML_ASSERT(ggml_is_contiguous_1(src0));
     GGML_ASSERT(ggml_is_contiguous_1(dst));
 
-    if (src1) {
+    എങ്കിൽ (src1) {
         GGML_ASSERT(ggml_is_contiguous_1(src1));
         GGML_ASSERT(src0->type == src1->type);
     }
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
-    const int nr = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src0);
 
     GGML_ASSERT(dst->ne[0] == nc);
     GGML_ASSERT(ggml_nrows(dst) == nr);
 
-    const int32_t swapped = ggml_get_op_params_i32(dst, 1);
+    സ്ഥിരം int32_t swapped = ggml_get_op_params_i32(dst, 1);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int i1 = ir0; i1 < ir1; i1++) {
-        const ggml_bf16_t * src0_p = (const ggml_bf16_t *) (src0_d + i1*src0_o);
-        const ggml_bf16_t * src1_p = (const ggml_bf16_t *) (src1_d + i1*src1_o);
-        ggml_bf16_t       * dst_p  = (ggml_bf16_t *) ((char *) dst->data + i1*(dst->nb[1]));
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = ir0; i1 < ir1; i1++) {
+        സ്ഥിരം ggml_bf16_t * src0_p = (സ്ഥിരം ggml_bf16_t *) (src0_d + i1*src0_o);
+        സ്ഥിരം ggml_bf16_t * src1_p = (സ്ഥിരം ggml_bf16_t *) (src1_d + i1*src1_o);
+        ggml_bf16_t       * dst_p  = (ggml_bf16_t *) ((അക്ഷരം *) dst->data + i1*(dst->nb[1]));
 
-        if (!src1) {
+        എങ്കിൽ (!src1) {
             src0_p += swapped ? nc : 0;
             src1_p += swapped ? 0 : nc;
         }
@@ -3035,151 +3035,151 @@ static void ggml_compute_forward_glu_bf16_rows(
     }
 }
 
-static void ggml_compute_forward_reglu_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_reglu_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
-    char * src0_d = (char *) src0->data;
-    char * src1_d = (char *) (src1 ? src1->data : src0->data);
-    const size_t src0_o = src0->nb[1];
-    const size_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
+    അക്ഷരം * src0_d = (അക്ഷരം *) src0->data;
+    അക്ഷരം * src1_d = (അക്ഷരം *) (src1 ? src1->data : src0->data);
+    സ്ഥിരം size_t src0_o = src0->nb[1];
+    സ്ഥിരം size_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
 
     GGML_ASSERT(ggml_is_contiguous_1(src0));
     GGML_ASSERT(ggml_is_contiguous_1(dst));
 
-    if (src1) {
+    എങ്കിൽ (src1) {
         GGML_ASSERT(ggml_is_contiguous_1(src1));
         GGML_ASSERT(src0->type == src1->type);
     }
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
-    const int nr = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src0);
 
     GGML_ASSERT(dst->ne[0] == nc);
     GGML_ASSERT(ggml_nrows(dst) == nr);
 
-    const int32_t swapped = ggml_get_op_params_i32(dst, 1);
+    സ്ഥിരം int32_t swapped = ggml_get_op_params_i32(dst, 1);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int i1 = ir0; i1 < ir1; i1++) {
-        float * src0_p = (float *) (src0_d + i1*src0_o);
-        float * src1_p = (float *) (src1_d + i1*src1_o);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = ir0; i1 < ir1; i1++) {
+        ദശാംശം * src0_p = (ദശാംശം *) (src0_d + i1*src0_o);
+        ദശാംശം * src1_p = (ദശാംശം *) (src1_d + i1*src1_o);
 
-        if (!src1) {
+        എങ്കിൽ (!src1) {
             src0_p += swapped ? nc : 0;
             src1_p += swapped ? 0 : nc;
         }
 
-        ggml_vec_reglu_f32(nc, (float *) ((char *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
+        ggml_vec_reglu_f32(nc, (ദശാംശം *) ((അക്ഷരം *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
 
 #ifndef NDEBUG
-        for (int k = 0; k < nc; k++) {
-            const float x = ((float *) ((char *) dst->data + i1*( dst->nb[1])))[k];
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
+            സ്ഥിരം ദശാംശം x = ((ദശാംശം *) ((അക്ഷരം *) dst->data + i1*( dst->nb[1])))[k];
             GGML_UNUSED(x);
-            assert(!isnan(x));
-            assert(!isinf(x));
+            പ്രതിജ്ഞാ(!isnan(x));
+            പ്രതിജ്ഞാ(!isinf(x));
         }
 #endif // NDEBUG
     }
 }
 
-static void ggml_compute_forward_reglu_f16(
-    const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_reglu_f16(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
-    char * src0_d = (char *) src0->data;
-    char * src1_d = (char *) (src1 ? src1->data : src0->data);
-    const size_t src0_o = src0->nb[1];
-    const size_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
+    അക്ഷരം * src0_d = (അക്ഷരം *) src0->data;
+    അക്ഷരം * src1_d = (അക്ഷരം *) (src1 ? src1->data : src0->data);
+    സ്ഥിരം size_t src0_o = src0->nb[1];
+    സ്ഥിരം size_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
 
     GGML_ASSERT(ggml_is_contiguous_1(src0));
     GGML_ASSERT(ggml_is_contiguous_1(dst));
 
-    if (src1) {
+    എങ്കിൽ (src1) {
         GGML_ASSERT(ggml_is_contiguous_1(src1));
         GGML_ASSERT(src0->type == src1->type);
     }
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
-    const int nr = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src0);
 
     GGML_ASSERT(dst->ne[0] == nc);
     GGML_ASSERT(ggml_nrows(dst) == nr);
 
-    const int32_t swapped = ggml_get_op_params_i32(dst, 1);
+    സ്ഥിരം int32_t swapped = ggml_get_op_params_i32(dst, 1);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int i1 = ir0; i1 < ir1; i1++) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = ir0; i1 < ir1; i1++) {
         ggml_fp16_t * src0_p = (ggml_fp16_t *) (src0_d + i1*src0_o);
         ggml_fp16_t * src1_p = (ggml_fp16_t *) (src1_d + i1*src1_o);
 
-        if (!src1) {
+        എങ്കിൽ (!src1) {
             src0_p += swapped ? nc : 0;
             src1_p += swapped ? 0 : nc;
         }
 
-        ggml_vec_reglu_f16(nc, (ggml_fp16_t *) ((char *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
+        ggml_vec_reglu_f16(nc, (ggml_fp16_t *) ((അക്ഷരം *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
 
 #ifndef NDEBUG
-        for (int k = 0; k < nc; k++) {
-            const ggml_fp16_t x = ((ggml_fp16_t *) ((char *) dst->data + i1*( dst->nb[1])))[k];
-            const float v = GGML_FP16_TO_FP32(x);
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
+            സ്ഥിരം ggml_fp16_t x = ((ggml_fp16_t *) ((അക്ഷരം *) dst->data + i1*( dst->nb[1])))[k];
+            സ്ഥിരം ദശാംശം v = GGML_FP16_TO_FP32(x);
             GGML_UNUSED(v);
-            assert(!isnan(v));
-            assert(!isinf(v));
+            പ്രതിജ്ഞാ(!isnan(v));
+            പ്രതിജ്ഞാ(!isinf(v));
         }
 #endif // NDEBUG
     }
 }
 
-static void ggml_compute_forward_reglu_bf16(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_reglu_bf16(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
     ggml_compute_forward_glu_bf16_rows<ggml_vec_reglu_bf16>(params, dst);
 }
 
-static void ggml_compute_forward_reglu(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_reglu(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_reglu_f32(params, dst);
-            } break;
-        case GGML_TYPE_F16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F16:
             {
                 ggml_compute_forward_reglu_f16(params, dst);
-            } break;
-        case GGML_TYPE_BF16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_BF16:
             {
                 ggml_compute_forward_reglu_bf16(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -3188,151 +3188,151 @@ static void ggml_compute_forward_reglu(
 
 // ggml_compute_forward_geglu
 
-static void ggml_compute_forward_geglu_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_geglu_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
-    char * src0_d = (char *) src0->data;
-    char * src1_d = (char *) (src1 ? src1->data : src0->data);
-    const size_t src0_o = src0->nb[1];
-    const size_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
+    അക്ഷരം * src0_d = (അക്ഷരം *) src0->data;
+    അക്ഷരം * src1_d = (അക്ഷരം *) (src1 ? src1->data : src0->data);
+    സ്ഥിരം size_t src0_o = src0->nb[1];
+    സ്ഥിരം size_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
 
     GGML_ASSERT(ggml_is_contiguous_1(src0));
     GGML_ASSERT(ggml_is_contiguous_1(dst));
 
-    if (src1) {
+    എങ്കിൽ (src1) {
         GGML_ASSERT(ggml_is_contiguous_1(src1));
         GGML_ASSERT(src0->type == src1->type);
     }
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
-    const int nr = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src0);
 
     GGML_ASSERT(dst->ne[0] == nc);
     GGML_ASSERT(ggml_nrows(dst) == nr);
 
-    const int32_t swapped = ggml_get_op_params_i32(dst, 1);
+    സ്ഥിരം int32_t swapped = ggml_get_op_params_i32(dst, 1);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int i1 = ir0; i1 < ir1; i1++) {
-        float * src0_p = (float *) (src0_d + i1*src0_o);
-        float * src1_p = (float *) (src1_d + i1*src1_o);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = ir0; i1 < ir1; i1++) {
+        ദശാംശം * src0_p = (ദശാംശം *) (src0_d + i1*src0_o);
+        ദശാംശം * src1_p = (ദശാംശം *) (src1_d + i1*src1_o);
 
-        if (!src1) {
+        എങ്കിൽ (!src1) {
             src0_p += swapped ? nc : 0;
             src1_p += swapped ? 0 : nc;
         }
 
-        ggml_vec_geglu_f32(nc, (float *) ((char *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
+        ggml_vec_geglu_f32(nc, (ദശാംശം *) ((അക്ഷരം *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
 
 #ifndef NDEBUG
-        for (int k = 0; k < nc; k++) {
-            const float x = ((float *) ((char *) dst->data + i1*( dst->nb[1])))[k];
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
+            സ്ഥിരം ദശാംശം x = ((ദശാംശം *) ((അക്ഷരം *) dst->data + i1*( dst->nb[1])))[k];
             GGML_UNUSED(x);
-            assert(!isnan(x));
-            assert(!isinf(x));
+            പ്രതിജ്ഞാ(!isnan(x));
+            പ്രതിജ്ഞാ(!isinf(x));
         }
 #endif // NDEBUG
     }
 }
 
-static void ggml_compute_forward_geglu_f16(
-    const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_geglu_f16(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
-    char * src0_d = (char *) src0->data;
-    char * src1_d = (char *) (src1 ? src1->data : src0->data);
-    const size_t src0_o = src0->nb[1];
-    const size_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
+    അക്ഷരം * src0_d = (അക്ഷരം *) src0->data;
+    അക്ഷരം * src1_d = (അക്ഷരം *) (src1 ? src1->data : src0->data);
+    സ്ഥിരം size_t src0_o = src0->nb[1];
+    സ്ഥിരം size_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
 
     GGML_ASSERT(ggml_is_contiguous_1(src0));
     GGML_ASSERT(ggml_is_contiguous_1(dst));
 
-    if (src1) {
+    എങ്കിൽ (src1) {
         GGML_ASSERT(ggml_is_contiguous_1(src1));
         GGML_ASSERT(src0->type == src1->type);
     }
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
-    const int nr = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src0);
 
     GGML_ASSERT(dst->ne[0] == nc);
     GGML_ASSERT(ggml_nrows(dst) == nr);
 
-    const int32_t swapped = ggml_get_op_params_i32(dst, 1);
+    സ്ഥിരം int32_t swapped = ggml_get_op_params_i32(dst, 1);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int i1 = ir0; i1 < ir1; i1++) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = ir0; i1 < ir1; i1++) {
         ggml_fp16_t * src0_p = (ggml_fp16_t *) (src0_d + i1*src0_o);
         ggml_fp16_t * src1_p = (ggml_fp16_t *) (src1_d + i1*src1_o);
 
-        if (!src1) {
+        എങ്കിൽ (!src1) {
             src0_p += swapped ? nc : 0;
             src1_p += swapped ? 0 : nc;
         }
 
-        ggml_vec_geglu_f16(nc, (ggml_fp16_t *) ((char *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
+        ggml_vec_geglu_f16(nc, (ggml_fp16_t *) ((അക്ഷരം *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
 
 #ifndef NDEBUG
-        for (int k = 0; k < nc; k++) {
-            const ggml_fp16_t x = ((ggml_fp16_t *) ((char *) dst->data + i1*( dst->nb[1])))[k];
-            const float v = GGML_FP16_TO_FP32(x);
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
+            സ്ഥിരം ggml_fp16_t x = ((ggml_fp16_t *) ((അക്ഷരം *) dst->data + i1*( dst->nb[1])))[k];
+            സ്ഥിരം ദശാംശം v = GGML_FP16_TO_FP32(x);
             GGML_UNUSED(v);
-            assert(!isnan(v));
-            assert(!isinf(v));
+            പ്രതിജ്ഞാ(!isnan(v));
+            പ്രതിജ്ഞാ(!isinf(v));
         }
 #endif // NDEBUG
     }
 }
 
-static void ggml_compute_forward_geglu_bf16(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_geglu_bf16(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
     ggml_compute_forward_glu_bf16_rows<ggml_vec_geglu_bf16>(params, dst);
 }
 
-static void ggml_compute_forward_geglu(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_geglu(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_geglu_f32(params, dst);
-            } break;
-        case GGML_TYPE_F16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F16:
             {
                 ggml_compute_forward_geglu_f16(params, dst);
-            } break;
-        case GGML_TYPE_BF16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_BF16:
             {
                 ggml_compute_forward_geglu_bf16(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -3341,151 +3341,151 @@ static void ggml_compute_forward_geglu(
 
 // ggml_compute_forward_swiglu
 
-static void ggml_compute_forward_swiglu_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_swiglu_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
-    char * src0_d = (char *) src0->data;
-    char * src1_d = (char *) (src1 ? src1->data : src0->data);
-    const size_t src0_o = src0->nb[1];
-    const size_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
+    അക്ഷരം * src0_d = (അക്ഷരം *) src0->data;
+    അക്ഷരം * src1_d = (അക്ഷരം *) (src1 ? src1->data : src0->data);
+    സ്ഥിരം size_t src0_o = src0->nb[1];
+    സ്ഥിരം size_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
 
     GGML_ASSERT(ggml_is_contiguous_1(src0));
     GGML_ASSERT(ggml_is_contiguous_1(dst));
 
-    if (src1) {
+    എങ്കിൽ (src1) {
         GGML_ASSERT(ggml_is_contiguous_1(src1));
         GGML_ASSERT(src0->type == src1->type);
     }
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
-    const int nr = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src0);
 
     GGML_ASSERT(dst->ne[0] == nc);
     GGML_ASSERT(ggml_nrows(dst) == nr);
 
-    const int32_t swapped = ggml_get_op_params_i32(dst, 1);
+    സ്ഥിരം int32_t swapped = ggml_get_op_params_i32(dst, 1);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int i1 = ir0; i1 < ir1; i1++) {
-        float * src0_p = (float *) (src0_d + i1*src0_o);
-        float * src1_p = (float *) (src1_d + i1*src1_o);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = ir0; i1 < ir1; i1++) {
+        ദശാംശം * src0_p = (ദശാംശം *) (src0_d + i1*src0_o);
+        ദശാംശം * src1_p = (ദശാംശം *) (src1_d + i1*src1_o);
 
-        if (!src1) {
+        എങ്കിൽ (!src1) {
             src0_p += swapped ? nc : 0;
             src1_p += swapped ? 0 : nc;
         }
 
-        ggml_vec_swiglu_f32(nc, (float *) ((char *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
+        ggml_vec_swiglu_f32(nc, (ദശാംശം *) ((അക്ഷരം *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
 
 #ifndef NDEBUG
-        for (int k = 0; k < nc; k++) {
-            const float x = ((float *) ((char *) dst->data + i1*( dst->nb[1])))[k];
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
+            സ്ഥിരം ദശാംശം x = ((ദശാംശം *) ((അക്ഷരം *) dst->data + i1*( dst->nb[1])))[k];
             GGML_UNUSED(x);
-            assert(!isnan(x));
-            assert(!isinf(x));
+            പ്രതിജ്ഞാ(!isnan(x));
+            പ്രതിജ്ഞാ(!isinf(x));
         }
 #endif // NDEBUG
     }
 }
 
-static void ggml_compute_forward_swiglu_f16(
-    const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_swiglu_f16(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
-    char * src0_d = (char *) src0->data;
-    char * src1_d = (char *) (src1 ? src1->data : src0->data);
-    const size_t src0_o = src0->nb[1];
-    const size_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
+    അക്ഷരം * src0_d = (അക്ഷരം *) src0->data;
+    അക്ഷരം * src1_d = (അക്ഷരം *) (src1 ? src1->data : src0->data);
+    സ്ഥിരം size_t src0_o = src0->nb[1];
+    സ്ഥിരം size_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
 
     GGML_ASSERT(ggml_is_contiguous_1(src0));
     GGML_ASSERT(ggml_is_contiguous_1(dst));
 
-    if (src1) {
+    എങ്കിൽ (src1) {
         GGML_ASSERT(ggml_is_contiguous_1(src1));
         GGML_ASSERT(src0->type == src1->type);
     }
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
-    const int nr = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src0);
 
     GGML_ASSERT(dst->ne[0] == nc);
     GGML_ASSERT(ggml_nrows(dst) == nr);
 
-    const int32_t swapped = ggml_get_op_params_i32(dst, 1);
+    സ്ഥിരം int32_t swapped = ggml_get_op_params_i32(dst, 1);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int i1 = ir0; i1 < ir1; i1++) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = ir0; i1 < ir1; i1++) {
         ggml_fp16_t * src0_p = (ggml_fp16_t *) (src0_d + i1*src0_o);
         ggml_fp16_t * src1_p = (ggml_fp16_t *) (src1_d + i1*src1_o);
 
-        if (!src1) {
+        എങ്കിൽ (!src1) {
             src0_p += swapped ? nc : 0;
             src1_p += swapped ? 0 : nc;
         }
 
-        ggml_vec_swiglu_f16(nc, (ggml_fp16_t *) ((char *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
+        ggml_vec_swiglu_f16(nc, (ggml_fp16_t *) ((അക്ഷരം *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
 
 #ifndef NDEBUG
-        for (int k = 0; k < nc; k++) {
-            const ggml_fp16_t x = ((ggml_fp16_t *) ((char *) dst->data + i1*( dst->nb[1])))[k];
-            const float v = GGML_FP16_TO_FP32(x);
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
+            സ്ഥിരം ggml_fp16_t x = ((ggml_fp16_t *) ((അക്ഷരം *) dst->data + i1*( dst->nb[1])))[k];
+            സ്ഥിരം ദശാംശം v = GGML_FP16_TO_FP32(x);
             GGML_UNUSED(v);
-            assert(!isnan(v));
-            assert(!isinf(v));
+            പ്രതിജ്ഞാ(!isnan(v));
+            പ്രതിജ്ഞാ(!isinf(v));
         }
 #endif // NDEBUG
     }
 }
 
-static void ggml_compute_forward_swiglu_bf16(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_swiglu_bf16(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
     ggml_compute_forward_glu_bf16_rows<ggml_vec_swiglu_bf16>(params, dst);
 }
 
-static void ggml_compute_forward_swiglu(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_swiglu(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_swiglu_f32(params, dst);
-            } break;
-        case GGML_TYPE_F16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F16:
             {
                 ggml_compute_forward_swiglu_f16(params, dst);
-            } break;
-        case GGML_TYPE_BF16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_BF16:
             {
                 ggml_compute_forward_swiglu_bf16(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -3494,156 +3494,156 @@ static void ggml_compute_forward_swiglu(
 
 // ggml_compute_forward_swiglu_oai
 
-static void ggml_compute_forward_swiglu_oai_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_swiglu_oai_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
-    char * src0_d = (char *) src0->data;
-    char * src1_d = (char *) (src1 ? src1->data : src0->data);
-    const size_t src0_o = src0->nb[1];
-    const size_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
+    അക്ഷരം * src0_d = (അക്ഷരം *) src0->data;
+    അക്ഷരം * src1_d = (അക്ഷരം *) (src1 ? src1->data : src0->data);
+    സ്ഥിരം size_t src0_o = src0->nb[1];
+    സ്ഥിരം size_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
 
     GGML_ASSERT(ggml_is_contiguous_1(src0));
     GGML_ASSERT(ggml_is_contiguous_1(dst));
 
-    if (src1) {
+    എങ്കിൽ (src1) {
         GGML_ASSERT(ggml_is_contiguous_1(src1));
         GGML_ASSERT(src0->type == src1->type);
     }
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
-    const int nr = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src0);
 
     GGML_ASSERT(dst->ne[0] == nc);
     GGML_ASSERT(ggml_nrows(dst) == nr);
 
-    const int32_t swapped = ggml_get_op_params_i32(dst, 1);
-    const float alpha = ggml_get_op_params_f32(dst, 2);
-    const float limit = ggml_get_op_params_f32(dst, 3);
+    സ്ഥിരം int32_t swapped = ggml_get_op_params_i32(dst, 1);
+    സ്ഥിരം ദശാംശം alpha = ggml_get_op_params_f32(dst, 2);
+    സ്ഥിരം ദശാംശം limit = ggml_get_op_params_f32(dst, 3);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int i1 = ir0; i1 < ir1; i1++) {
-        float * src0_p = (float *) (src0_d + i1*src0_o);
-        float * src1_p = (float *) (src1_d + i1*src1_o);
-        float * dst_p  = (float *) ((char *) dst->data + i1*(dst->nb[1]));
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = ir0; i1 < ir1; i1++) {
+        ദശാംശം * src0_p = (ദശാംശം *) (src0_d + i1*src0_o);
+        ദശാംശം * src1_p = (ദശാംശം *) (src1_d + i1*src1_o);
+        ദശാംശം * dst_p  = (ദശാംശം *) ((അക്ഷരം *) dst->data + i1*(dst->nb[1]));
 
-        if (!src1) {
+        എങ്കിൽ (!src1) {
             src0_p += swapped ? nc : 0;
             src1_p += swapped ? 0 : nc;
         }
 
-        for (int k = 0; k < nc; k++) {
-            const float x = std::min(src0_p[k], limit);
-            const float y = std::clamp(src1_p[k], -limit, limit);
-            const float out_glu = x / (1.f + expf(alpha * (-x)));
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
+            സ്ഥിരം ദശാംശം x = std::min(src0_p[k], limit);
+            സ്ഥിരം ദശാംശം y = std::clamp(src1_p[k], -limit, limit);
+            സ്ഥിരം ദശാംശം out_glu = x / (1.f + expf(alpha * (-x)));
             dst_p[k] = out_glu * (y + 1.f);
         }
 
 #ifndef NDEBUG
-        for (int k = 0; k < nc; k++) {
-            const float x = dst_p[k];
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
+            സ്ഥിരം ദശാംശം x = dst_p[k];
             GGML_UNUSED(x);
-            assert(!isnan(x));
-            assert(!isinf(x));
+            പ്രതിജ്ഞാ(!isnan(x));
+            പ്രതിജ്ഞാ(!isinf(x));
         }
 #endif // NDEBUG
     }
 }
 
-static void ggml_compute_forward_swiglu_oai_f16(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_swiglu_oai_f16(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
-    char * src0_d = (char *) src0->data;
-    char * src1_d = (char *) (src1 ? src1->data : src0->data);
-    const size_t src0_o = src0->nb[1];
-    const size_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
+    അക്ഷരം * src0_d = (അക്ഷരം *) src0->data;
+    അക്ഷരം * src1_d = (അക്ഷരം *) (src1 ? src1->data : src0->data);
+    സ്ഥിരം size_t src0_o = src0->nb[1];
+    സ്ഥിരം size_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
 
     GGML_ASSERT(ggml_is_contiguous_1(src0));
     GGML_ASSERT(ggml_is_contiguous_1(dst));
 
-    if (src1) {
+    എങ്കിൽ (src1) {
         GGML_ASSERT(ggml_is_contiguous_1(src1));
         GGML_ASSERT(src0->type == src1->type);
     }
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
-    const int nr = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src0);
 
     GGML_ASSERT(dst->ne[0] == nc);
     GGML_ASSERT(ggml_nrows(dst) == nr);
 
-    const int32_t swapped = ggml_get_op_params_i32(dst, 1);
-    const float alpha = ggml_get_op_params_f32(dst, 2);
-    const float limit = ggml_get_op_params_f32(dst, 3);
+    സ്ഥിരം int32_t swapped = ggml_get_op_params_i32(dst, 1);
+    സ്ഥിരം ദശാംശം alpha = ggml_get_op_params_f32(dst, 2);
+    സ്ഥിരം ദശാംശം limit = ggml_get_op_params_f32(dst, 3);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int i1 = ir0; i1 < ir1; i1++) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = ir0; i1 < ir1; i1++) {
         ggml_fp16_t * src0_p = (ggml_fp16_t *) (src0_d + i1*src0_o);
         ggml_fp16_t * src1_p = (ggml_fp16_t *) (src1_d + i1*src1_o);
-        ggml_fp16_t * dst_p  = (ggml_fp16_t *) ((char *) dst->data + i1*(dst->nb[1]));
+        ggml_fp16_t * dst_p  = (ggml_fp16_t *) ((അക്ഷരം *) dst->data + i1*(dst->nb[1]));
 
-        if (!src1) {
+        എങ്കിൽ (!src1) {
             src0_p += swapped ? nc : 0;
             src1_p += swapped ? 0 : nc;
         }
 
-        for (int k = 0; k < nc; k++) {
-            const float x = std::min(GGML_CPU_FP16_TO_FP32(src0_p[k]), limit);
-            const float y = std::clamp(GGML_CPU_FP16_TO_FP32(src1_p[k]), -limit, limit);
-            const float out_glu = x / (1.f + expf(alpha * (-x)));
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
+            സ്ഥിരം ദശാംശം x = std::min(GGML_CPU_FP16_TO_FP32(src0_p[k]), limit);
+            സ്ഥിരം ദശാംശം y = std::clamp(GGML_CPU_FP16_TO_FP32(src1_p[k]), -limit, limit);
+            സ്ഥിരം ദശാംശം out_glu = x / (1.f + expf(alpha * (-x)));
             dst_p[k] = GGML_CPU_FP32_TO_FP16(out_glu * (y + 1.f));
         }
 
 #ifndef NDEBUG
-        for (int k = 0; k < nc; k++) {
-            const float x = GGML_CPU_FP16_TO_FP32(dst_p[k]);
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
+            സ്ഥിരം ദശാംശം x = GGML_CPU_FP16_TO_FP32(dst_p[k]);
             GGML_UNUSED(x);
-            assert(!isnan(x));
-            assert(!isinf(x));
+            പ്രതിജ്ഞാ(!isnan(x));
+            പ്രതിജ്ഞാ(!isinf(x));
         }
 #endif // NDEBUG
     }
 }
 
-static void ggml_compute_forward_swiglu_oai(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_swiglu_oai(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_swiglu_oai_f32(params, dst);
-            } break;
-        case GGML_TYPE_F16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F16:
             {
                 ggml_compute_forward_swiglu_oai_f16(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -3652,284 +3652,284 @@ static void ggml_compute_forward_swiglu_oai(
 
 // ggml_compute_forward_swiglu_clamp
 
-static void ggml_compute_forward_swiglu_clamp_f32(const ggml_compute_params * params, ggml_tensor * dst) {
-    const ggml_tensor * src0   = dst->src[0];
-    const ggml_tensor * src1   = dst->src[1];
-    char *              src0_d = (char *) src0->data;
-    char *              src1_d = (char *) (src1 ? src1->data : src0->data);
-    const size_t        src0_o = src0->nb[1];
-    const size_t        src1_o = src1 ? src1->nb[1] : src0->nb[1];
+സ്ഥിതം ശൂന്യം ggml_compute_forward_swiglu_clamp_f32(സ്ഥിരം ggml_compute_params * params, ggml_tensor * dst) {
+    സ്ഥിരം ggml_tensor * src0   = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1   = dst->src[1];
+    അക്ഷരം *              src0_d = (അക്ഷരം *) src0->data;
+    അക്ഷരം *              src1_d = (അക്ഷരം *) (src1 ? src1->data : src0->data);
+    സ്ഥിരം size_t        src0_o = src0->nb[1];
+    സ്ഥിരം size_t        src1_o = src1 ? src1->nb[1] : src0->nb[1];
 
     GGML_ASSERT(ggml_is_contiguous_1(src0));
     GGML_ASSERT(ggml_is_contiguous_1(dst));
 
-    if (src1) {
+    എങ്കിൽ (src1) {
         GGML_ASSERT(ggml_is_contiguous_1(src1));
         GGML_ASSERT(src0->type == src1->type);
     }
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
-    const int nr = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src0);
 
     GGML_ASSERT(dst->ne[0] == nc);
     GGML_ASSERT(ggml_nrows(dst) == nr);
 
-    const int32_t swapped = ggml_get_op_params_i32(dst, 1);
-    const float   limit   = ggml_get_op_params_f32(dst, 3);
+    സ്ഥിരം int32_t swapped = ggml_get_op_params_i32(dst, 1);
+    സ്ഥിരം ദശാംശം   limit   = ggml_get_op_params_f32(dst, 3);
 
-    const int dr  = (nr + nth - 1) / nth;
-    const int ir0 = dr * ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr  = (nr + nth - 1) / nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr * ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int i1 = ir0; i1 < ir1; i1++) {
-        float * src0_p = (float *) (src0_d + i1 * src0_o);
-        float * src1_p = (float *) (src1_d + i1 * src1_o);
-        float * dst_p  = (float *) ((char *) dst->data + i1 * (dst->nb[1]));
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = ir0; i1 < ir1; i1++) {
+        ദശാംശം * src0_p = (ദശാംശം *) (src0_d + i1 * src0_o);
+        ദശാംശം * src1_p = (ദശാംശം *) (src1_d + i1 * src1_o);
+        ദശാംശം * dst_p  = (ദശാംശം *) ((അക്ഷരം *) dst->data + i1 * (dst->nb[1]));
 
-        if (!src1) {
+        എങ്കിൽ (!src1) {
             src0_p += swapped ? nc : 0;
             src1_p += swapped ? 0 : nc;
         }
 
-        for (int k = 0; k < nc; k++) {
-            const float gate = std::min(src0_p[k], limit);
-            const float up   = std::clamp(src1_p[k], -limit, limit);
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
+            സ്ഥിരം ദശാംശം gate = std::min(src0_p[k], limit);
+            സ്ഥിരം ദശാംശം up   = std::clamp(src1_p[k], -limit, limit);
             dst_p[k]         = gate / (1.f + expf(-gate)) * up;
         }
 
 #ifndef NDEBUG
-        for (int k = 0; k < nc; k++) {
-            const float x = dst_p[k];
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
+            സ്ഥിരം ദശാംശം x = dst_p[k];
             GGML_UNUSED(x);
-            assert(!isnan(x));
-            assert(!isinf(x));
+            പ്രതിജ്ഞാ(!isnan(x));
+            പ്രതിജ്ഞാ(!isinf(x));
         }
 #endif  // NDEBUG
     }
 }
 
-static void ggml_compute_forward_swiglu_clamp_f16(const ggml_compute_params * params, ggml_tensor * dst) {
-    const ggml_tensor * src0   = dst->src[0];
-    const ggml_tensor * src1   = dst->src[1];
-    char *              src0_d = (char *) src0->data;
-    char *              src1_d = (char *) (src1 ? src1->data : src0->data);
-    const size_t        src0_o = src0->nb[1];
-    const size_t        src1_o = src1 ? src1->nb[1] : src0->nb[1];
+സ്ഥിതം ശൂന്യം ggml_compute_forward_swiglu_clamp_f16(സ്ഥിരം ggml_compute_params * params, ggml_tensor * dst) {
+    സ്ഥിരം ggml_tensor * src0   = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1   = dst->src[1];
+    അക്ഷരം *              src0_d = (അക്ഷരം *) src0->data;
+    അക്ഷരം *              src1_d = (അക്ഷരം *) (src1 ? src1->data : src0->data);
+    സ്ഥിരം size_t        src0_o = src0->nb[1];
+    സ്ഥിരം size_t        src1_o = src1 ? src1->nb[1] : src0->nb[1];
 
     GGML_ASSERT(ggml_is_contiguous_1(src0));
     GGML_ASSERT(ggml_is_contiguous_1(dst));
 
-    if (src1) {
+    എങ്കിൽ (src1) {
         GGML_ASSERT(ggml_is_contiguous_1(src1));
         GGML_ASSERT(src0->type == src1->type);
     }
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
-    const int nr = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src0);
 
     GGML_ASSERT(dst->ne[0] == nc);
     GGML_ASSERT(ggml_nrows(dst) == nr);
 
-    const int32_t swapped = ggml_get_op_params_i32(dst, 1);
-    const float   limit   = ggml_get_op_params_f32(dst, 3);
+    സ്ഥിരം int32_t swapped = ggml_get_op_params_i32(dst, 1);
+    സ്ഥിരം ദശാംശം   limit   = ggml_get_op_params_f32(dst, 3);
 
-    const int dr  = (nr + nth - 1) / nth;
-    const int ir0 = dr * ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr  = (nr + nth - 1) / nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr * ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int i1 = ir0; i1 < ir1; i1++) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = ir0; i1 < ir1; i1++) {
         ggml_fp16_t * src0_p = (ggml_fp16_t *) (src0_d + i1 * src0_o);
         ggml_fp16_t * src1_p = (ggml_fp16_t *) (src1_d + i1 * src1_o);
-        ggml_fp16_t * dst_p  = (ggml_fp16_t *) ((char *) dst->data + i1 * (dst->nb[1]));
+        ggml_fp16_t * dst_p  = (ggml_fp16_t *) ((അക്ഷരം *) dst->data + i1 * (dst->nb[1]));
 
-        if (!src1) {
+        എങ്കിൽ (!src1) {
             src0_p += swapped ? nc : 0;
             src1_p += swapped ? 0 : nc;
         }
 
-        for (int k = 0; k < nc; k++) {
-            const float gate = std::min(GGML_FP16_TO_FP32(src0_p[k]), limit);
-            const float up   = std::clamp(GGML_FP16_TO_FP32(src1_p[k]), -limit, limit);
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
+            സ്ഥിരം ദശാംശം gate = std::min(GGML_FP16_TO_FP32(src0_p[k]), limit);
+            സ്ഥിരം ദശാംശം up   = std::clamp(GGML_FP16_TO_FP32(src1_p[k]), -limit, limit);
             dst_p[k]         = GGML_FP32_TO_FP16(gate / (1.f + expf(-gate)) * up);
         }
 
 #ifndef NDEBUG
-        for (int k = 0; k < nc; k++) {
-            const float x = GGML_FP16_TO_FP32(dst_p[k]);
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
+            സ്ഥിരം ദശാംശം x = GGML_FP16_TO_FP32(dst_p[k]);
             GGML_UNUSED(x);
-            assert(!isnan(x));
-            assert(!isinf(x));
+            പ്രതിജ്ഞാ(!isnan(x));
+            പ്രതിജ്ഞാ(!isinf(x));
         }
 #endif  // NDEBUG
     }
 }
 
-static void ggml_compute_forward_swiglu_clamp(const ggml_compute_params * params, ggml_tensor * dst) {
-    switch (dst->src[0]->type) {
-        case GGML_TYPE_F32:
+സ്ഥിതം ശൂന്യം ggml_compute_forward_swiglu_clamp(സ്ഥിരം ggml_compute_params * params, ggml_tensor * dst) {
+    തിരഞ്ഞെടുപ്പ് (dst->src[0]->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             ggml_compute_forward_swiglu_clamp_f32(params, dst);
-            break;
-        case GGML_TYPE_F16:
+            നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F16:
             ggml_compute_forward_swiglu_clamp_f16(params, dst);
-            break;
-        default:
+            നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             GGML_ABORT("fatal error");
     }
 }
 
 // ggml_compute_forward_geglu_erf
 
-static void ggml_compute_forward_geglu_erf_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_geglu_erf_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
-    char * src0_d = (char *) src0->data;
-    char * src1_d = (char *) (src1 ? src1->data : src0->data);
-    const size_t src0_o = src0->nb[1];
-    const size_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
+    അക്ഷരം * src0_d = (അക്ഷരം *) src0->data;
+    അക്ഷരം * src1_d = (അക്ഷരം *) (src1 ? src1->data : src0->data);
+    സ്ഥിരം size_t src0_o = src0->nb[1];
+    സ്ഥിരം size_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
 
     GGML_ASSERT(ggml_is_contiguous_1(src0));
     GGML_ASSERT(ggml_is_contiguous_1(dst));
 
-    if (src1) {
+    എങ്കിൽ (src1) {
         GGML_ASSERT(ggml_is_contiguous_1(src1));
         GGML_ASSERT(src0->type == src1->type);
     }
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
-    const int nr = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src0);
 
     GGML_ASSERT(dst->ne[0] == nc);
     GGML_ASSERT(ggml_nrows(dst) == nr);
 
-    const int32_t swapped = ggml_get_op_params_i32(dst, 1);
+    സ്ഥിരം int32_t swapped = ggml_get_op_params_i32(dst, 1);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int i1 = ir0; i1 < ir1; i1++) {
-        float * src0_p = (float *) (src0_d + i1*src0_o);
-        float * src1_p = (float *) (src1_d + i1*src1_o);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = ir0; i1 < ir1; i1++) {
+        ദശാംശം * src0_p = (ദശാംശം *) (src0_d + i1*src0_o);
+        ദശാംശം * src1_p = (ദശാംശം *) (src1_d + i1*src1_o);
 
-        if (!src1) {
+        എങ്കിൽ (!src1) {
             src0_p += swapped ? nc : 0;
             src1_p += swapped ? 0 : nc;
         }
 
-        ggml_vec_geglu_erf_f32(nc, (float *) ((char *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
+        ggml_vec_geglu_erf_f32(nc, (ദശാംശം *) ((അക്ഷരം *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
 
 #ifndef NDEBUG
-        for (int k = 0; k < nc; k++) {
-            const float x = ((float *) ((char *) dst->data + i1*( dst->nb[1])))[k];
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
+            സ്ഥിരം ദശാംശം x = ((ദശാംശം *) ((അക്ഷരം *) dst->data + i1*( dst->nb[1])))[k];
             GGML_UNUSED(x);
-            assert(!isnan(x));
-            assert(!isinf(x));
+            പ്രതിജ്ഞാ(!isnan(x));
+            പ്രതിജ്ഞാ(!isinf(x));
         }
 #endif // NDEBUG
     }
 }
 
-static void ggml_compute_forward_geglu_erf_f16(
-    const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_geglu_erf_f16(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
-    char * src0_d = (char *) src0->data;
-    char * src1_d = (char *) (src1 ? src1->data : src0->data);
-    const size_t src0_o = src0->nb[1];
-    const size_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
+    അക്ഷരം * src0_d = (അക്ഷരം *) src0->data;
+    അക്ഷരം * src1_d = (അക്ഷരം *) (src1 ? src1->data : src0->data);
+    സ്ഥിരം size_t src0_o = src0->nb[1];
+    സ്ഥിരം size_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
 
     GGML_ASSERT(ggml_is_contiguous_1(src0));
     GGML_ASSERT(ggml_is_contiguous_1(dst));
 
-    if (src1) {
+    എങ്കിൽ (src1) {
         GGML_ASSERT(ggml_is_contiguous_1(src1));
         GGML_ASSERT(src0->type == src1->type);
     }
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
-    const int nr = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src0);
 
     GGML_ASSERT(dst->ne[0] == nc);
     GGML_ASSERT(ggml_nrows(dst) == nr);
 
-    const int32_t swapped = ggml_get_op_params_i32(dst, 1);
+    സ്ഥിരം int32_t swapped = ggml_get_op_params_i32(dst, 1);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int i1 = ir0; i1 < ir1; i1++) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = ir0; i1 < ir1; i1++) {
         ggml_fp16_t * src0_p = (ggml_fp16_t *) (src0_d + i1*src0_o);
         ggml_fp16_t * src1_p = (ggml_fp16_t *) (src1_d + i1*src1_o);
 
-        if (!src1) {
+        എങ്കിൽ (!src1) {
             src0_p += swapped ? nc : 0;
             src1_p += swapped ? 0 : nc;
         }
 
-        ggml_vec_geglu_erf_f16(nc, (ggml_fp16_t *) ((char *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
+        ggml_vec_geglu_erf_f16(nc, (ggml_fp16_t *) ((അക്ഷരം *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
 
 #ifndef NDEBUG
-        for (int k = 0; k < nc; k++) {
-            const ggml_fp16_t x = ((ggml_fp16_t *) ((char *) dst->data + i1*( dst->nb[1])))[k];
-            const float v = GGML_FP16_TO_FP32(x);
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
+            സ്ഥിരം ggml_fp16_t x = ((ggml_fp16_t *) ((അക്ഷരം *) dst->data + i1*( dst->nb[1])))[k];
+            സ്ഥിരം ദശാംശം v = GGML_FP16_TO_FP32(x);
             GGML_UNUSED(v);
-            assert(!isnan(v));
-            assert(!isinf(v));
+            പ്രതിജ്ഞാ(!isnan(v));
+            പ്രതിജ്ഞാ(!isinf(v));
         }
 #endif // NDEBUG
     }
 }
 
-static void ggml_compute_forward_geglu_erf_bf16(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_geglu_erf_bf16(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
     ggml_compute_forward_glu_bf16_rows<ggml_vec_geglu_erf_bf16>(params, dst);
 }
 
-static void ggml_compute_forward_geglu_erf(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_geglu_erf(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_geglu_erf_f32(params, dst);
-            } break;
-        case GGML_TYPE_F16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F16:
             {
                 ggml_compute_forward_geglu_erf_f16(params, dst);
-            } break;
-        case GGML_TYPE_BF16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_BF16:
             {
                 ggml_compute_forward_geglu_erf_bf16(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -3938,151 +3938,151 @@ static void ggml_compute_forward_geglu_erf(
 
 // ggml_compute_forward_geglu_quick
 
-static void ggml_compute_forward_geglu_quick_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_geglu_quick_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
-    char * src0_d = (char *) src0->data;
-    char * src1_d = (char *) (src1 ? src1->data : src0->data);
-    const size_t src0_o = src0->nb[1];
-    const size_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
+    അക്ഷരം * src0_d = (അക്ഷരം *) src0->data;
+    അക്ഷരം * src1_d = (അക്ഷരം *) (src1 ? src1->data : src0->data);
+    സ്ഥിരം size_t src0_o = src0->nb[1];
+    സ്ഥിരം size_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
 
     GGML_ASSERT(ggml_is_contiguous_1(src0));
     GGML_ASSERT(ggml_is_contiguous_1(dst));
 
-    if (src1) {
+    എങ്കിൽ (src1) {
         GGML_ASSERT(ggml_is_contiguous_1(src1));
         GGML_ASSERT(src0->type == src1->type);
     }
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
-    const int nr = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src0);
 
     GGML_ASSERT(dst->ne[0] == nc);
     GGML_ASSERT(ggml_nrows(dst) == nr);
 
-    const int32_t swapped = ggml_get_op_params_i32(dst, 1);
+    സ്ഥിരം int32_t swapped = ggml_get_op_params_i32(dst, 1);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int i1 = ir0; i1 < ir1; i1++) {
-        float * src0_p = (float *) (src0_d + i1*src0_o);
-        float * src1_p = (float *) (src1_d + i1*src1_o);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = ir0; i1 < ir1; i1++) {
+        ദശാംശം * src0_p = (ദശാംശം *) (src0_d + i1*src0_o);
+        ദശാംശം * src1_p = (ദശാംശം *) (src1_d + i1*src1_o);
 
-        if (!src1) {
+        എങ്കിൽ (!src1) {
             src0_p += swapped ? nc : 0;
             src1_p += swapped ? 0 : nc;
         }
 
-        ggml_vec_geglu_quick_f32(nc, (float *) ((char *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
+        ggml_vec_geglu_quick_f32(nc, (ദശാംശം *) ((അക്ഷരം *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
 
 #ifndef NDEBUG
-        for (int k = 0; k < nc; k++) {
-            const float x = ((float *) ((char *) dst->data + i1*( dst->nb[1])))[k];
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
+            സ്ഥിരം ദശാംശം x = ((ദശാംശം *) ((അക്ഷരം *) dst->data + i1*( dst->nb[1])))[k];
             GGML_UNUSED(x);
-            assert(!isnan(x));
-            assert(!isinf(x));
+            പ്രതിജ്ഞാ(!isnan(x));
+            പ്രതിജ്ഞാ(!isinf(x));
         }
 #endif // NDEBUG
     }
 }
 
-static void ggml_compute_forward_geglu_quick_f16(
-    const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_geglu_quick_f16(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
-    char * src0_d = (char *) src0->data;
-    char * src1_d = (char *) (src1 ? src1->data : src0->data);
-    const size_t src0_o = src0->nb[1];
-    const size_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
+    അക്ഷരം * src0_d = (അക്ഷരം *) src0->data;
+    അക്ഷരം * src1_d = (അക്ഷരം *) (src1 ? src1->data : src0->data);
+    സ്ഥിരം size_t src0_o = src0->nb[1];
+    സ്ഥിരം size_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
 
     GGML_ASSERT(ggml_is_contiguous_1(src0));
     GGML_ASSERT(ggml_is_contiguous_1(dst));
 
-    if (src1) {
+    എങ്കിൽ (src1) {
         GGML_ASSERT(ggml_is_contiguous_1(src1));
         GGML_ASSERT(src0->type == src1->type);
     }
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
-    const int nr = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src0);
 
     GGML_ASSERT(dst->ne[0] == nc);
     GGML_ASSERT(ggml_nrows(dst) == nr);
 
-    const int32_t swapped = ggml_get_op_params_i32(dst, 1);
+    സ്ഥിരം int32_t swapped = ggml_get_op_params_i32(dst, 1);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int i1 = ir0; i1 < ir1; i1++) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = ir0; i1 < ir1; i1++) {
         ggml_fp16_t * src0_p = (ggml_fp16_t *) (src0_d + i1*src0_o);
         ggml_fp16_t * src1_p = (ggml_fp16_t *) (src1_d + i1*src1_o);
 
-        if (!src1) {
+        എങ്കിൽ (!src1) {
             src0_p += swapped ? nc : 0;
             src1_p += swapped ? 0 : nc;
         }
 
-        ggml_vec_geglu_quick_f16(nc, (ggml_fp16_t *) ((char *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
+        ggml_vec_geglu_quick_f16(nc, (ggml_fp16_t *) ((അക്ഷരം *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
 
 #ifndef NDEBUG
-        for (int k = 0; k < nc; k++) {
-            const ggml_fp16_t x = ((ggml_fp16_t *) ((char *) dst->data + i1*( dst->nb[1])))[k];
-            const float v = GGML_FP16_TO_FP32(x);
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
+            സ്ഥിരം ggml_fp16_t x = ((ggml_fp16_t *) ((അക്ഷരം *) dst->data + i1*( dst->nb[1])))[k];
+            സ്ഥിരം ദശാംശം v = GGML_FP16_TO_FP32(x);
             GGML_UNUSED(v);
-            assert(!isnan(v));
-            assert(!isinf(v));
+            പ്രതിജ്ഞാ(!isnan(v));
+            പ്രതിജ്ഞാ(!isinf(v));
         }
 #endif // NDEBUG
     }
 }
 
-static void ggml_compute_forward_geglu_quick_bf16(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_geglu_quick_bf16(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
     ggml_compute_forward_glu_bf16_rows<ggml_vec_geglu_quick_bf16>(params, dst);
 }
 
-static void ggml_compute_forward_geglu_quick(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_geglu_quick(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_geglu_quick_f32(params, dst);
-            } break;
-        case GGML_TYPE_F16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F16:
             {
                 ggml_compute_forward_geglu_quick_f16(params, dst);
-            } break;
-        case GGML_TYPE_BF16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_BF16:
             {
                 ggml_compute_forward_geglu_quick_bf16(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -4091,68 +4091,68 @@ static void ggml_compute_forward_geglu_quick(
 
 // ggml_compute_forward_norm
 
-static void ggml_compute_forward_norm_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_norm_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
     GGML_ASSERT(ggml_are_same_shape(src0, dst));
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
-    float eps;
-    memcpy(&eps, dst->op_params, sizeof(float));
+    ദശാംശം eps;
+    memcpy(&eps, dst->op_params, വലുപ്പം(ദശാംശം));
 
     GGML_ASSERT(eps >= 0.0f);
 
-    for (int64_t i03 = 0; i03 < ne03; i03++) {
-        for (int64_t i02 = 0; i02 < ne02; i02++) {
-            for (int64_t i01 = ith; i01 < ne01; i01 += nth) {
-                const char * x = (const char *) src0->data + i01*nb01 + i02*nb02 + i03*nb03;
-                char * y = (char *) dst->data + i01*nb1 + i02*nb2 + i03*nb3;
+    വേണ്ടി (int64_t i03 = 0; i03 < ne03; i03++) {
+        വേണ്ടി (int64_t i02 = 0; i02 < ne02; i02++) {
+            വേണ്ടി (int64_t i01 = ith; i01 < ne01; i01 += nth) {
+                സ്ഥിരം അക്ഷരം * x = (സ്ഥിരം അക്ഷരം *) src0->data + i01*nb01 + i02*nb02 + i03*nb03;
+                അക്ഷരം * y = (അക്ഷരം *) dst->data + i01*nb1 + i02*nb2 + i03*nb3;
 
-                if (nb00 == sizeof(float) && nb0 == sizeof(float)) {
-                    const float * xf = (const float *) x;
+                എങ്കിൽ (nb00 == വലുപ്പം(ദശാംശം) && nb0 == വലുപ്പം(ദശാംശം)) {
+                    സ്ഥിരം ദശാംശം * xf = (സ്ഥിരം ദശാംശം *) x;
 
-                    float sum = 0.0;
+                    ദശാംശം sum = 0.0;
                     ggml_vec_sum_f32(ne00, &sum, xf);
-                    float mean = sum/ne00;
+                    ദശാംശം mean = sum/ne00;
 
-                    float * yf = (float *) y;
-                    float variance = 0;
+                    ദശാംശം * yf = (ദശാംശം *) y;
+                    ദശാംശം variance = 0;
 
 #ifdef GGML_USE_ACCELERATE
                     mean = -mean;
                     vDSP_vsadd(xf, 1, &mean, yf, 1, ne00);
                     vDSP_measqv(yf, 1, &variance, ne00);
-#else
+#അല്ലെങ്കിൽ
                     variance = ggml_vec_cvar_f32(ne00, yf, xf, mean);
 #endif //GGML_USE_ACCELERATE
 
-                    const float scale = 1.0f/sqrtf(variance + eps);
+                    സ്ഥിരം ദശാംശം scale = 1.0f/sqrtf(variance + eps);
                     ggml_vec_scale_f32(ne00, yf, scale);
-                } else {
-                    float sum = 0.0;
-                    for (int64_t i00 = 0; i00 < ne00; i00++) {
-                        sum += *(const float *) (x + i00*nb00);
+                } അല്ലെങ്കിൽ {
+                    ദശാംശം sum = 0.0;
+                    വേണ്ടി (int64_t i00 = 0; i00 < ne00; i00++) {
+                        sum += *(സ്ഥിരം ദശാംശം *) (x + i00*nb00);
                     }
-                    const float mean = sum/ne00;
+                    സ്ഥിരം ദശാംശം mean = sum/ne00;
 
-                    float variance = 0.0f;
-                    for (int64_t i00 = 0; i00 < ne00; i00++) {
-                        const float v = *(const float *) (x + i00*nb00) - mean;
-                        *(float *) (y + i00*nb0) = v;
+                    ദശാംശം variance = 0.0f;
+                    വേണ്ടി (int64_t i00 = 0; i00 < ne00; i00++) {
+                        സ്ഥിരം ദശാംശം v = *(സ്ഥിരം ദശാംശം *) (x + i00*nb00) - mean;
+                        *(ദശാംശം *) (y + i00*nb0) = v;
                         variance += v * v;
                     }
                     variance /= ne00;
 
-                    const float scale = 1.0f/sqrtf(variance + eps);
-                    for (int64_t i00 = 0; i00 < ne00; i00++) {
-                        *(float *) (y + i00*nb0) *= scale;
+                    സ്ഥിരം ദശാംശം scale = 1.0f/sqrtf(variance + eps);
+                    വേണ്ടി (int64_t i00 = 0; i00 < ne00; i00++) {
+                        *(ദശാംശം *) (y + i00*nb0) *= scale;
                     }
                 }
             }
@@ -4160,18 +4160,18 @@ static void ggml_compute_forward_norm_f32(
     }
 }
 
-void ggml_compute_forward_norm(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_norm(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_norm_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -4182,70 +4182,70 @@ void ggml_compute_forward_norm(
 
 // fusion kinds that can be combined with the rms_norm computation in a single pass.
 // extend this enum when adding new fused variants (e.g. FUSE_ADD, FUSE_MUL_ADD, ...).
-enum ggml_rms_norm_fuse_op {
+എണ്ണൽ ggml_rms_norm_fuse_op {
     GGML_RMS_NORM_FUSE_OP_NONE,
     GGML_RMS_NORM_FUSE_OP_MUL,
 };
 
 template <ggml_rms_norm_fuse_op FUSE_OP>
-static void ggml_compute_forward_rms_norm_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_rms_norm_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst_rms_norm,
         ggml_tensor * dst_fused = nullptr) {
 
-    const ggml_tensor * src0 = dst_rms_norm->src[0];
-    const ggml_tensor * src1 = nullptr;
+    സ്ഥിരം ggml_tensor * src0 = dst_rms_norm->src[0];
+    സ്ഥിരം ggml_tensor * src1 = nullptr;
     ggml_tensor       * dst  = dst_rms_norm;
 
-    if constexpr (FUSE_OP == GGML_RMS_NORM_FUSE_OP_MUL) {
+    എങ്കിൽ constexpr (FUSE_OP == GGML_RMS_NORM_FUSE_OP_MUL) {
         src1 = (dst_fused->src[0] == dst_rms_norm) ? dst_fused->src[1] : dst_fused->src[0];
         dst  = dst_fused;
     }
 
     GGML_ASSERT(ggml_are_same_shape(src0, dst));
 
-    GGML_ASSERT(src0->nb[0] == sizeof(float));
+    GGML_ASSERT(src0->nb[0] == വലുപ്പം(ദശാംശം));
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS
 
-    float eps;
-    memcpy(&eps, dst_rms_norm->op_params, sizeof(float));
+    ദശാംശം eps;
+    memcpy(&eps, dst_rms_norm->op_params, വലുപ്പം(ദശാംശം));
     GGML_ASSERT(eps >= 0.0f);
 
     // TODO: optimize
-    for (int64_t i03 = 0; i03 < ne03; i03++) {
-        for (int64_t i02 = 0; i02 < ne02; i02++) {
-            for (int64_t i01 = ith; i01 < ne01; i01 += nth) {
-                const float * x = (float *) ((char *) src0->data + i01*nb01 + i02*nb02 + i03*nb03);
+    വേണ്ടി (int64_t i03 = 0; i03 < ne03; i03++) {
+        വേണ്ടി (int64_t i02 = 0; i02 < ne02; i02++) {
+            വേണ്ടി (int64_t i01 = ith; i01 < ne01; i01 += nth) {
+                സ്ഥിരം ദശാംശം * x = (ദശാംശം *) ((അക്ഷരം *) src0->data + i01*nb01 + i02*nb02 + i03*nb03);
 
                 ggml_float sum = 0.0;
                 // worth switching to explicit SIMD?
-                for (int64_t i00 = 0; i00 < ne00; i00++) {
+                വേണ്ടി (int64_t i00 = 0; i00 < ne00; i00++) {
                     sum += (ggml_float)(x[i00] * x[i00]);
                 }
 
-                const float mean  = sum/ne00;
-                const float scale = 1.0f/sqrtf(mean + eps);
+                സ്ഥിരം ദശാംശം mean  = sum/ne00;
+                സ്ഥിരം ദശാംശം scale = 1.0f/sqrtf(mean + eps);
 
                 // if you hit this, likely you got an inf somewhere earlier
-                assert(scale > 0.0f);
+                പ്രതിജ്ഞാ(scale > 0.0f);
 
-                float * y = (float *) ((char *) dst->data + i01*nb1 + i02*nb2 + i03*nb3);
+                ദശാംശം * y = (ദശാംശം *) ((അക്ഷരം *) dst->data + i01*nb1 + i02*nb2 + i03*nb3);
 
-                if constexpr (FUSE_OP == GGML_RMS_NORM_FUSE_OP_MUL) {
-                    const int64_t i11 = i01 % ne11;
-                    const int64_t i12 = i02 % ne12;
-                    const int64_t i13 = i03 % ne13;
-                    const float * w = (float *) ((char *) src1->data + i11*nb11 + i12*nb12 + i13*nb13);
+                എങ്കിൽ constexpr (FUSE_OP == GGML_RMS_NORM_FUSE_OP_MUL) {
+                    സ്ഥിരം int64_t i11 = i01 % ne11;
+                    സ്ഥിരം int64_t i12 = i02 % ne12;
+                    സ്ഥിരം int64_t i13 = i03 % ne13;
+                    സ്ഥിരം ദശാംശം * w = (ദശാംശം *) ((അക്ഷരം *) src1->data + i11*nb11 + i12*nb12 + i13*nb13);
 
-                    for (int64_t i00 = 0; i00 < ne00; i00++) {
+                    വേണ്ടി (int64_t i00 = 0; i00 < ne00; i00++) {
                         y[i00] = x[i00] * scale * w[i00];
                     }
-                } else {
-                    memcpy(y, x, ne00 * sizeof(float));
+                } അല്ലെങ്കിൽ {
+                    memcpy(y, x, ne00 * വലുപ്പം(ദശാംശം));
                     ggml_vec_scale_f32(ne00, y, scale);
                 }
             }
@@ -4253,18 +4253,18 @@ static void ggml_compute_forward_rms_norm_f32(
     }
 }
 
-void ggml_compute_forward_rms_norm(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_rms_norm(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_rms_norm_f32<GGML_RMS_NORM_FUSE_OP_NONE>(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -4273,76 +4273,76 @@ void ggml_compute_forward_rms_norm(
 
 // Fused RMS_NORM + MUL: computes dst = rms_norm(src0) * src1 in a single pass.
 // This avoids materializing the intermediate rms_norm result in memory.
-void ggml_compute_forward_rms_norm_mul_fused(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_rms_norm_mul_fused(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst_rms_norm,
         ggml_tensor * dst_mul) {
 
     GGML_ASSERT(dst_mul != nullptr);
     GGML_ASSERT(dst_mul->src[0] == dst_rms_norm || dst_mul->src[1] == dst_rms_norm);
 
-    const ggml_tensor * src0 = dst_rms_norm->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst_rms_norm->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_rms_norm_f32<GGML_RMS_NORM_FUSE_OP_MUL>(params, dst_rms_norm, dst_mul);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
     }
 }
 
-static void ggml_compute_forward_rms_norm_back_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_rms_norm_back_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0]; // gradients from forward pass output
-    const ggml_tensor * src1 = dst->src[1]; // src1 from forward pass
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0]; // gradients from forward pass output
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1]; // src1 from forward pass
 
     GGML_ASSERT(ggml_are_same_shape(src0, dst) && ggml_are_same_shape(src0, src1));
 
-    GGML_ASSERT(src0->nb[0] == sizeof(float));
-    GGML_ASSERT(src1->nb[0] == sizeof(float));
+    GGML_ASSERT(src0->nb[0] == വലുപ്പം(ദശാംശം));
+    GGML_ASSERT(src1->nb[0] == വലുപ്പം(ദശാംശം));
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS
 
-    float eps;
-    memcpy(&eps, dst->op_params, sizeof(float));
+    ദശാംശം eps;
+    memcpy(&eps, dst->op_params, വലുപ്പം(ദശാംശം));
 
     // TODO: optimize
-    for (int64_t i03 = 0; i03 < ne03; i03++) {
-        for (int64_t i02 = 0; i02 < ne02; i02++) {
-            for (int64_t i01 = ith; i01 < ne01; i01 += nth) {
+    വേണ്ടി (int64_t i03 = 0; i03 < ne03; i03++) {
+        വേണ്ടി (int64_t i02 = 0; i02 < ne02; i02++) {
+            വേണ്ടി (int64_t i01 = ith; i01 < ne01; i01 += nth) {
                 // src1 is same shape as src0 => same indices
-                const int64_t i11 = i01;
-                const int64_t i12 = i02;
-                const int64_t i13 = i03;
+                സ്ഥിരം int64_t i11 = i01;
+                സ്ഥിരം int64_t i12 = i02;
+                സ്ഥിരം int64_t i13 = i03;
 
-                const float * dz = (float *) ((char *) src0->data + i01*nb01 + i02*nb02 + i03*nb03);
-                const float * x  = (float *) ((char *) src1->data + i11*nb11 + i12*nb12 + i13*nb13);
+                സ്ഥിരം ദശാംശം * dz = (ദശാംശം *) ((അക്ഷരം *) src0->data + i01*nb01 + i02*nb02 + i03*nb03);
+                സ്ഥിരം ദശാംശം * x  = (ദശാംശം *) ((അക്ഷരം *) src1->data + i11*nb11 + i12*nb12 + i13*nb13);
 
                 ggml_float sum_xx  = 0.0;
                 ggml_float sum_xdz = 0.0;
 
-                for (int64_t i00 = 0; i00 < ne00; i00++) {
+                വേണ്ടി (int64_t i00 = 0; i00 < ne00; i00++) {
                     sum_xx  += (ggml_float)(x[i00] * x[i00]);
                     sum_xdz += (ggml_float)(x[i00] * dz[i00]);
                 }
 
                 //const float mean     = (float)(sum_xx)/ne00;
-                const float mean_eps = (float)(sum_xx)/ne00 + eps;
-                const float sum_eps  = (float)(sum_xx) + eps*ne00;
+                സ്ഥിരം ദശാംശം mean_eps = (ദശാംശം)(sum_xx)/ne00 + eps;
+                സ്ഥിരം ദശാംശം sum_eps  = (ദശാംശം)(sum_xx) + eps*ne00;
                 //const float mean_xdz = (float)(sum_xdz)/ne00;
                 // we could cache rms from forward pass to improve performance.
                 // to do this implement ggml_rms and compose ggml_rms_norm using ggml_rms.
                 //const float rms      = sqrtf(mean_eps);
-                const float rrms     = 1.0f / sqrtf(mean_eps);
+                സ്ഥിരം ദശാംശം rrms     = 1.0f / sqrtf(mean_eps);
                 //const float scale    = -rrms/(ne00 * mean_eps); // -1/(n*rms**3)
 
                 {
@@ -4439,12 +4439,12 @@ static void ggml_compute_forward_rms_norm_back_f32(
                 // dx := scale(dx,-mean_xdz/mean_eps)
                 // dx := add(dx, dz)
                 // dx := scale(dx, rrms)
-                float * dx = (float *) ((char *) dst->data + i01*nb1 + i02*nb2 + i03*nb3);
+                ദശാംശം * dx = (ദശാംശം *) ((അക്ഷരം *) dst->data + i01*nb1 + i02*nb2 + i03*nb3);
 
                 // dx[i00] = (dz + x*(-sum_xdz/sum_eps)) * rrms
                 // note: https://github.com/ggml-org/ggml/issues/1491
-                const float scale_x = (float) (-sum_xdz) / sum_eps;
-                for (int64_t i00 = 0; i00 < ne00; i00++) {
+                സ്ഥിരം ദശാംശം scale_x = (ദശാംശം) (-sum_xdz) / sum_eps;
+                വേണ്ടി (int64_t i00 = 0; i00 < ne00; i00++) {
                     dx[i00] = (dz[i00] + x[i00] * scale_x) * rrms;
                 }
             }
@@ -4452,18 +4452,18 @@ static void ggml_compute_forward_rms_norm_back_f32(
     }
 }
 
-void ggml_compute_forward_rms_norm_back(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_rms_norm_back(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_rms_norm_back_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -4472,74 +4472,74 @@ void ggml_compute_forward_rms_norm_back(
 
 // ggml_compute_forward_group_norm
 
-static void ggml_compute_forward_group_norm_f32(
-    const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_group_norm_f32(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
     GGML_ASSERT(ggml_are_same_shape(src0, dst));
 
-    GGML_ASSERT(src0->nb[0] == sizeof(float));
+    GGML_ASSERT(src0->nb[0] == വലുപ്പം(ദശാംശം));
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
     // TODO: optimize
 
-    float eps;
-    memcpy(&eps, dst->op_params + 1, sizeof(float));
+    ദശാംശം eps;
+    memcpy(&eps, dst->op_params + 1, വലുപ്പം(ദശാംശം));
 
-    int n_channels = src0->ne[2];
-    int n_groups = dst->op_params[0];
-    int n_channels_per_group = (n_channels + n_groups - 1) / n_groups;
-    for (int i = ith; i < n_groups; i += nth) {
-        int start = i * n_channels_per_group;
-        int end = start + n_channels_per_group;
-        if (end > n_channels) {
+    പൂർണ്ണസംഖ്യ n_channels = src0->ne[2];
+    പൂർണ്ണസംഖ്യ n_groups = dst->op_params[0];
+    പൂർണ്ണസംഖ്യ n_channels_per_group = (n_channels + n_groups - 1) / n_groups;
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = ith; i < n_groups; i += nth) {
+        പൂർണ്ണസംഖ്യ start = i * n_channels_per_group;
+        പൂർണ്ണസംഖ്യ end = start + n_channels_per_group;
+        എങ്കിൽ (end > n_channels) {
             end = n_channels;
         }
-        int step = end - start;
+        പൂർണ്ണസംഖ്യ step = end - start;
 
-        for (int64_t i03 = 0; i03 < ne03; i03++) {
+        വേണ്ടി (int64_t i03 = 0; i03 < ne03; i03++) {
             ggml_float sum = 0.0;
-            for (int64_t i02 = start; i02 < end; i02++) {
-                for (int64_t i01 = 0; i01 < ne01; i01++) {
-                    const float * x = (float *)((char *) src0->data + i01 * nb01 + i02 * nb02 + i03 * nb03);
+            വേണ്ടി (int64_t i02 = start; i02 < end; i02++) {
+                വേണ്ടി (int64_t i01 = 0; i01 < ne01; i01++) {
+                    സ്ഥിരം ദശാംശം * x = (ദശാംശം *)((അക്ഷരം *) src0->data + i01 * nb01 + i02 * nb02 + i03 * nb03);
 
                     ggml_float sumr = 0.0;
-                    for (int64_t i00 = 0; i00 < ne00; i00++) {
+                    വേണ്ടി (int64_t i00 = 0; i00 < ne00; i00++) {
                         sumr += (ggml_float)x[i00];
                     }
                     sum += sumr;
                 }
             }
-            const float mean = sum / (ne00 * ne01 * step);
+            സ്ഥിരം ദശാംശം mean = sum / (ne00 * ne01 * step);
 
             ggml_float sum2 = 0.0;
-            for (int64_t i02 = start; i02 < end; i02++) {
-                for (int64_t i01 = 0; i01 < ne01; i01++) {
-                    const float * x = (float *)((char *) src0->data + i01 * nb01 + i02 * nb02 + i03 * nb03);
+            വേണ്ടി (int64_t i02 = start; i02 < end; i02++) {
+                വേണ്ടി (int64_t i01 = 0; i01 < ne01; i01++) {
+                    സ്ഥിരം ദശാംശം * x = (ദശാംശം *)((അക്ഷരം *) src0->data + i01 * nb01 + i02 * nb02 + i03 * nb03);
 
-                    float * y = (float *)((char *) dst->data + i01 * nb1 + i02 * nb2 + i03 * nb3);
+                    ദശാംശം * y = (ദശാംശം *)((അക്ഷരം *) dst->data + i01 * nb1 + i02 * nb2 + i03 * nb3);
 
                     ggml_float sumr = 0.0;
-                    for (int64_t i00 = 0; i00 < ne00; i00++) {
-                        float v = x[i00] - mean;
+                    വേണ്ടി (int64_t i00 = 0; i00 < ne00; i00++) {
+                        ദശാംശം v = x[i00] - mean;
                         y[i00] = v;
                         sumr += (ggml_float)(v * v);
                     }
                     sum2 += sumr;
                 }
             }
-            const float variance = sum2 / (ne00 * ne01 * step);
-            const float scale = 1.0f / sqrtf(variance + eps);
+            സ്ഥിരം ദശാംശം variance = sum2 / (ne00 * ne01 * step);
+            സ്ഥിരം ദശാംശം scale = 1.0f / sqrtf(variance + eps);
 
-            for (int64_t i02 = start; i02 < end; i02++) {
-                for (int64_t i01 = 0; i01 < ne01; i01++) {
-                    float * y = (float *)((char *) dst->data + i01 * nb1 + i02 * nb2 + i03 * nb3);
+            വേണ്ടി (int64_t i02 = start; i02 < end; i02++) {
+                വേണ്ടി (int64_t i01 = 0; i01 < ne01; i01++) {
+                    ദശാംശം * y = (ദശാംശം *)((അക്ഷരം *) dst->data + i01 * nb1 + i02 * nb2 + i03 * nb3);
                     ggml_vec_scale_f32(ne00, y, scale);
                 }
             }
@@ -4547,18 +4547,18 @@ static void ggml_compute_forward_group_norm_f32(
     }
 }
 
-void ggml_compute_forward_group_norm(
-    const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_group_norm(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_group_norm_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -4567,47 +4567,47 @@ void ggml_compute_forward_group_norm(
 
 // ggml_compute_forward_l2_norm
 
-static void ggml_compute_forward_l2_norm_f32(
-    const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_l2_norm_f32(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
     GGML_ASSERT(ggml_are_same_shape(src0, dst));
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
-    float eps;
-    memcpy(&eps, dst->op_params, sizeof(float));
+    ദശാംശം eps;
+    memcpy(&eps, dst->op_params, വലുപ്പം(ദശാംശം));
 
     GGML_ASSERT(eps >= 0.0f);
 
     // TODO: optimize
-    for (int64_t i03 = 0; i03 < ne03; i03++) {
-        for (int64_t i02 = 0; i02 < ne02; i02++) {
-            for (int64_t i01 = ith; i01 < ne01; i01 += nth) {
-                const char * x = (const char *) src0->data + i01*nb01 + i02*nb02 + i03*nb03;
+    വേണ്ടി (int64_t i03 = 0; i03 < ne03; i03++) {
+        വേണ്ടി (int64_t i02 = 0; i02 < ne02; i02++) {
+            വേണ്ടി (int64_t i01 = ith; i01 < ne01; i01 += nth) {
+                സ്ഥിരം അക്ഷരം * x = (സ്ഥിരം അക്ഷരം *) src0->data + i01*nb01 + i02*nb02 + i03*nb03;
 
                 ggml_float sum = 0.0;
-                for (int64_t i00 = 0; i00 < ne00; i00++) {
-                    const float xi = *(const float *) (x + i00*nb00);
+                വേണ്ടി (int64_t i00 = 0; i00 < ne00; i00++) {
+                    സ്ഥിരം ദശാംശം xi = *(സ്ഥിരം ദശാംശം *) (x + i00*nb00);
                     sum += (ggml_float)(xi * xi);
                 }
 
-                const float scale = 1.0f/fmaxf(sqrtf(sum), eps);
+                സ്ഥിരം ദശാംശം scale = 1.0f/fmaxf(sqrtf(sum), eps);
 
-                char * y = (char *) dst->data + i01*nb1 + i02*nb2 + i03*nb3;
+                അക്ഷരം * y = (അക്ഷരം *) dst->data + i01*nb1 + i02*nb2 + i03*nb3;
 
-                if (nb00 == sizeof(float) && nb0 == sizeof(float)) {
-                    memcpy(y, x, ne00 * sizeof(float));
-                    ggml_vec_scale_f32(ne00, (float *) y, scale);
-                } else {
-                    for (int64_t i00 = 0; i00 < ne00; i00++) {
-                        const float xi = *(const float *) (x + i00*nb00);
-                        *(float *) (y + i00*nb0) = xi * scale;
+                എങ്കിൽ (nb00 == വലുപ്പം(ദശാംശം) && nb0 == വലുപ്പം(ദശാംശം)) {
+                    memcpy(y, x, ne00 * വലുപ്പം(ദശാംശം));
+                    ggml_vec_scale_f32(ne00, (ദശാംശം *) y, scale);
+                } അല്ലെങ്കിൽ {
+                    വേണ്ടി (int64_t i00 = 0; i00 < ne00; i00++) {
+                        സ്ഥിരം ദശാംശം xi = *(സ്ഥിരം ദശാംശം *) (x + i00*nb00);
+                        *(ദശാംശം *) (y + i00*nb0) = xi * scale;
                     }
                 }
             }
@@ -4615,18 +4615,18 @@ static void ggml_compute_forward_l2_norm_f32(
     }
 }
 
-void ggml_compute_forward_l2_norm(
-    const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_l2_norm(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_l2_norm_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -4635,21 +4635,21 @@ void ggml_compute_forward_l2_norm(
 
 // ggml_compute_forward_out_prod
 
-static void ggml_compute_forward_out_prod_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_out_prod_f32(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS
 
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
     GGML_ASSERT(ne0 == ne00);
     GGML_ASSERT(ne1 == ne10);
@@ -4660,10 +4660,10 @@ static void ggml_compute_forward_out_prod_f32(
     GGML_ASSERT(ne3 % ne03 == 0);
 
     // we don't support permuted src0 or src1
-    GGML_ASSERT(nb00 == sizeof(float));
+    GGML_ASSERT(nb00 == വലുപ്പം(ദശാംശം));
 
     // dst cannot be transposed or permuted
-    GGML_ASSERT(nb0 == sizeof(float));
+    GGML_ASSERT(nb0 == വലുപ്പം(ദശാംശം));
     // GGML_ASSERT(nb0 <= nb1);
     // GGML_ASSERT(nb1 <= nb2);
     // GGML_ASSERT(nb2 <= nb3);
@@ -4671,8 +4671,8 @@ static void ggml_compute_forward_out_prod_f32(
     // nb01 >= nb00 - src0 is not transposed
     //   compute by src0 rows
 
-    if (ith == 0) {
-        ggml_vec_set_f32(ne0*ne1*ne2*ne3, (float *)dst->data, 0);
+    എങ്കിൽ (ith == 0) {
+        ggml_vec_set_f32(ne0*ne1*ne2*ne3, (ദശാംശം *)dst->data, 0);
     }
     ggml_barrier(params->threadpool);
 
@@ -4686,67 +4686,67 @@ static void ggml_compute_forward_out_prod_f32(
     // parallelize by last three dimensions
 
     // total rows in dst
-    const int64_t nr = ne1*ne2*ne3;
+    സ്ഥിരം int64_t nr = ne1*ne2*ne3;
 
     // rows per thread
-    const int64_t dr = (nr + nth - 1)/nth;
+    സ്ഥിരം int64_t dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int64_t ir0 = dr*ith;
-    const int64_t ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം int64_t ir0 = dr*ith;
+    സ്ഥിരം int64_t ir1 = MIN(ir0 + dr, nr);
 
     // block-tiling attempt
-    const int64_t blck_0 = MAX(GGML_VEC_MAD_UNROLL, 32);
-    const int64_t blck_1 = 16;
+    സ്ഥിരം int64_t blck_0 = MAX(GGML_VEC_MAD_UNROLL, 32);
+    സ്ഥിരം int64_t blck_1 = 16;
 
     // dps == dst per src0, used for group query attention
-    const int64_t dps2 = ne2 / ne02;
-    const int64_t dps3 = ne3 / ne03;
+    സ്ഥിരം int64_t dps2 = ne2 / ne02;
+    സ്ഥിരം int64_t dps3 = ne3 / ne03;
 
-    for (int64_t bir = ir0; bir < ir1; bir += blck_1) {
-        const int64_t bir1 = MIN(bir + blck_1, ir1);
-        for (int64_t bi01 = 0; bi01 < ne01; bi01 += blck_0) {
-            const int64_t bne01 = MIN(bi01 + blck_0, ne01);
-            for (int64_t ir = bir; ir < bir1; ++ir) {
+    വേണ്ടി (int64_t bir = ir0; bir < ir1; bir += blck_1) {
+        സ്ഥിരം int64_t bir1 = MIN(bir + blck_1, ir1);
+        വേണ്ടി (int64_t bi01 = 0; bi01 < ne01; bi01 += blck_0) {
+            സ്ഥിരം int64_t bne01 = MIN(bi01 + blck_0, ne01);
+            വേണ്ടി (int64_t ir = bir; ir < bir1; ++ir) {
                 // dst indices
-                const int64_t i3 = ir/(ne2*ne1);
-                const int64_t i2 = (ir - i3*ne2*ne1)/ne1;
-                const int64_t i1 = (ir - i3*ne2*ne1 - i2*ne1);
+                സ്ഥിരം int64_t i3 = ir/(ne2*ne1);
+                സ്ഥിരം int64_t i2 = (ir - i3*ne2*ne1)/ne1;
+                സ്ഥിരം int64_t i1 = (ir - i3*ne2*ne1 - i2*ne1);
 
-                const int64_t i02 = i2 / dps2;
-                const int64_t i03 = i3 / dps3;
+                സ്ഥിരം int64_t i02 = i2 / dps2;
+                സ്ഥിരം int64_t i03 = i3 / dps3;
 
                 //const int64_t i10 = i1;
-                const int64_t i12 = i2;
-                const int64_t i13 = i3;
+                സ്ഥിരം int64_t i12 = i2;
+                സ്ഥിരം int64_t i13 = i3;
 
-#if GGML_VEC_MAD_UNROLL > 2
-                const int64_t bne01_unroll = bne01 - (bne01 % GGML_VEC_MAD_UNROLL);
-                for (int64_t i01 = bi01; i01 < bne01_unroll; i01 += GGML_VEC_MAD_UNROLL) {
-                    const int64_t i11 = i01;
+#എങ്കിൽ GGML_VEC_MAD_UNROLL > 2
+                സ്ഥിരം int64_t bne01_unroll = bne01 - (bne01 % GGML_VEC_MAD_UNROLL);
+                വേണ്ടി (int64_t i01 = bi01; i01 < bne01_unroll; i01 += GGML_VEC_MAD_UNROLL) {
+                    സ്ഥിരം int64_t i11 = i01;
 
-                    float * s0 = (float *) ((char *) src0->data + (          i01*nb01 + i02*nb02 + i03*nb03));
-                    float * s1 = (float *) ((char *) src1->data + (i1*nb10 + i11*nb11 + i12*nb12 + i13*nb13));
-                    float * d  = (float *) ((char *)  dst->data + (          i1*nb1   + i2*nb2   + i3*nb3));
+                    ദശാംശം * s0 = (ദശാംശം *) ((അക്ഷരം *) src0->data + (          i01*nb01 + i02*nb02 + i03*nb03));
+                    ദശാംശം * s1 = (ദശാംശം *) ((അക്ഷരം *) src1->data + (i1*nb10 + i11*nb11 + i12*nb12 + i13*nb13));
+                    ദശാംശം * d  = (ദശാംശം *) ((അക്ഷരം *)  dst->data + (          i1*nb1   + i2*nb2   + i3*nb3));
 
                     ggml_vec_mad_f32_unroll(ne0, nb01, nb11, d, s0, s1);
                 }
-                for (int64_t i01 = bne01_unroll; i01 < bne01; ++i01) {
-                    const int64_t i11 = i01;
+                വേണ്ടി (int64_t i01 = bne01_unroll; i01 < bne01; ++i01) {
+                    സ്ഥിരം int64_t i11 = i01;
 
-                    float * s0 = (float *) ((char *) src0->data + (          i01*nb01 + i02*nb02 + i03*nb03));
-                    float * s1 = (float *) ((char *) src1->data + (i1*nb10 + i11*nb11 + i12*nb12 + i13*nb13));
-                    float * d  = (float *) ((char *)  dst->data + (          i1*nb1   + i2*nb2   + i3*nb3));
+                    ദശാംശം * s0 = (ദശാംശം *) ((അക്ഷരം *) src0->data + (          i01*nb01 + i02*nb02 + i03*nb03));
+                    ദശാംശം * s1 = (ദശാംശം *) ((അക്ഷരം *) src1->data + (i1*nb10 + i11*nb11 + i12*nb12 + i13*nb13));
+                    ദശാംശം * d  = (ദശാംശം *) ((അക്ഷരം *)  dst->data + (          i1*nb1   + i2*nb2   + i3*nb3));
 
                     ggml_vec_mad_f32(ne0, d, s0, *s1);
                 }
-#else
-                for (int64_t i01 = bi01; i01 < bne01; ++i01) {
-                    const int64_t i11 = i01;
+#അല്ലെങ്കിൽ
+                വേണ്ടി (int64_t i01 = bi01; i01 < bne01; ++i01) {
+                    സ്ഥിരം int64_t i11 = i01;
 
-                    float * s0 = (float *) ((char *) src0->data + (          i01*nb01 + i02*nb02 + i03*nb03));
-                    float * s1 = (float *) ((char *) src1->data + (i1*nb10 + i11*nb11 + i12*nb12 + i13*nb13));
-                    float * d  = (float *) ((char *)  dst->data + (          i1*nb1 + i2*nb2 + i3*nb3));
+                    ദശാംശം * s0 = (ദശാംശം *) ((അക്ഷരം *) src0->data + (          i01*nb01 + i02*nb02 + i03*nb03));
+                    ദശാംശം * s1 = (ദശാംശം *) ((അക്ഷരം *) src1->data + (i1*nb10 + i11*nb11 + i12*nb12 + i13*nb13));
+                    ദശാംശം * d  = (ദശാംശം *) ((അക്ഷരം *)  dst->data + (          i1*nb1 + i2*nb2 + i3*nb3));
 
                     ggml_vec_mad_f32(ne0, d, s0, *s1);
                 }
@@ -4756,20 +4756,20 @@ static void ggml_compute_forward_out_prod_f32(
     }
 }
 
-static void ggml_compute_forward_out_prod_q_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_out_prod_q_f32(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS;
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS;
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const ggml_type type = src0->type;
-    ggml_to_float_t const dequantize_row_q = ggml_get_type_traits(type)->to_float;
+    സ്ഥിരം ggml_type type = src0->type;
+    ggml_to_float_t സ്ഥിരം dequantize_row_q = ggml_get_type_traits(type)->to_float;
 
     GGML_ASSERT(ne02 == ne12);
     GGML_ASSERT(ne03 == ne13);
@@ -4780,7 +4780,7 @@ static void ggml_compute_forward_out_prod_q_f32(
     GGML_ASSERT(nb00 == ggml_type_size(type));
 
     // dst dim0 cannot be transposed or permuted
-    GGML_ASSERT(nb0 == sizeof(float));
+    GGML_ASSERT(nb0 == വലുപ്പം(ദശാംശം));
     // GGML_ASSERT(nb0 <= nb1);
     // GGML_ASSERT(nb1 <= nb2);
     // GGML_ASSERT(nb2 <= nb3);
@@ -4793,22 +4793,22 @@ static void ggml_compute_forward_out_prod_q_f32(
     // nb01 >= nb00 - src0 is not transposed
     //   compute by src0 rows
 
-    if (ith == 0) {
-        ggml_vec_set_f32(ne0*ne1*ne2*ne3, (float *)dst->data, 0);
+    എങ്കിൽ (ith == 0) {
+        ggml_vec_set_f32(ne0*ne1*ne2*ne3, (ദശാംശം *)dst->data, 0);
     }
     ggml_barrier(params->threadpool);
 
     // parallelize by last three dimensions
 
     // total rows in dst
-    const int64_t nr = ne1*ne2*ne3;
+    സ്ഥിരം int64_t nr = ne1*ne2*ne3;
 
     // rows per thread
-    const int64_t dr = (nr + nth - 1)/nth;
+    സ്ഥിരം int64_t dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int64_t ir0 = dr*ith;
-    const int64_t ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം int64_t ir0 = dr*ith;
+    സ്ഥിരം int64_t ir1 = MIN(ir0 + dr, nr);
 
     // dst[:,:,:,:] = 0
     // for i2,i3:
@@ -4817,27 +4817,27 @@ static void ggml_compute_forward_out_prod_q_f32(
     //       for i0:
     //         dst[i0,i1,i2,i3] += src0[i0,i01,i2,i3] * src1[i1,i01,i2,i3]
 
-    float * wdata = (float *) params->wdata + (ne0 + CACHE_LINE_SIZE_F32) * ith;
+    ദശാംശം * wdata = (ദശാംശം *) params->wdata + (ne0 + CACHE_വരി_SIZE_F32) * ith;
 
-    for (int64_t ir = ir0; ir < ir1; ++ir) {
+    വേണ്ടി (int64_t ir = ir0; ir < ir1; ++ir) {
         // dst indices
-        const int64_t i3 = ir/(ne2*ne1);
-        const int64_t i2 = (ir - i3*ne2*ne1)/ne1;
-        const int64_t i1 = (ir - i3*ne2*ne1 - i2*ne1);
+        സ്ഥിരം int64_t i3 = ir/(ne2*ne1);
+        സ്ഥിരം int64_t i2 = (ir - i3*ne2*ne1)/ne1;
+        സ്ഥിരം int64_t i1 = (ir - i3*ne2*ne1 - i2*ne1);
 
-        const int64_t i02 = i2;
-        const int64_t i03 = i3;
+        സ്ഥിരം int64_t i02 = i2;
+        സ്ഥിരം int64_t i03 = i3;
 
         //const int64_t i10 = i1;
-        const int64_t i12 = i2;
-        const int64_t i13 = i3;
+        സ്ഥിരം int64_t i12 = i2;
+        സ്ഥിരം int64_t i13 = i3;
 
-        for (int64_t i01 = 0; i01 < ne01; ++i01) {
-            const int64_t i11 = i01;
+        വേണ്ടി (int64_t i01 = 0; i01 < ne01; ++i01) {
+            സ്ഥിരം int64_t i11 = i01;
 
-            float * s0 = (float *) ((char *) src0->data + (          i01*nb01 + i02*nb02 + i03*nb03));
-            float * s1 = (float *) ((char *) src1->data + (i1*nb10 + i11*nb11 + i12*nb12 + i13*nb13));
-            float * d  = (float *) ((char *)  dst->data + (          i1*nb1 + i2*nb2 + i3*nb3));
+            ദശാംശം * s0 = (ദശാംശം *) ((അക്ഷരം *) src0->data + (          i01*nb01 + i02*nb02 + i03*nb03));
+            ദശാംശം * s1 = (ദശാംശം *) ((അക്ഷരം *) src1->data + (i1*nb10 + i11*nb11 + i12*nb12 + i13*nb13));
+            ദശാംശം * d  = (ദശാംശം *) ((അക്ഷരം *)  dst->data + (          i1*nb1 + i2*nb2 + i3*nb3));
 
             dequantize_row_q(s0, wdata, ne0);
             ggml_vec_mad_f32(ne0, d, wdata, *s1);
@@ -4845,17 +4845,17 @@ static void ggml_compute_forward_out_prod_q_f32(
     }
 }
 
-static void ggml_compute_forward_out_prod_f16_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_out_prod_f16_f32(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS;
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS;
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
     GGML_ASSERT(src0->type == GGML_TYPE_F16);
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
@@ -4866,93 +4866,93 @@ static void ggml_compute_forward_out_prod_f16_f32(
     GGML_ASSERT(ne2  == ne12);
     GGML_ASSERT(ne3  == ne13);
 
-    GGML_ASSERT(nb00 == sizeof(ggml_fp16_t));
-    GGML_ASSERT(nb0  == sizeof(float));
+    GGML_ASSERT(nb00 == വലുപ്പം(ggml_fp16_t));
+    GGML_ASSERT(nb0  == വലുപ്പം(ദശാംശം));
 
     GGML_ASSERT(ne0 == ne00);
     GGML_ASSERT(ne1 == ne10);
     GGML_ASSERT(ne2 == ne02);
     GGML_ASSERT(ne3 == ne03);
 
-    if (ith == 0) {
-        ggml_vec_set_f32(ne0*ne1*ne2*ne3, (float *)dst->data, 0);
+    എങ്കിൽ (ith == 0) {
+        ggml_vec_set_f32(ne0*ne1*ne2*ne3, (ദശാംശം *)dst->data, 0);
     }
     ggml_barrier(params->threadpool);
 
-    const int64_t nr = ne1*ne2*ne3;
-    const int64_t dr = (nr + nth - 1)/nth;
-    const int64_t ir0 = dr*ith;
-    const int64_t ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം int64_t nr = ne1*ne2*ne3;
+    സ്ഥിരം int64_t dr = (nr + nth - 1)/nth;
+    സ്ഥിരം int64_t ir0 = dr*ith;
+    സ്ഥിരം int64_t ir1 = MIN(ir0 + dr, nr);
 
-    float * wdata = (float *) params->wdata + (ne0 + CACHE_LINE_SIZE_F32) * ith;
+    ദശാംശം * wdata = (ദശാംശം *) params->wdata + (ne0 + CACHE_വരി_SIZE_F32) * ith;
 
-    for (int64_t ir = ir0; ir < ir1; ++ir) {
-        const int64_t i3 = ir/(ne2*ne1);
-        const int64_t i2 = (ir - i3*ne2*ne1)/ne1;
-        const int64_t i1 = (ir - i3*ne2*ne1 - i2*ne1);
+    വേണ്ടി (int64_t ir = ir0; ir < ir1; ++ir) {
+        സ്ഥിരം int64_t i3 = ir/(ne2*ne1);
+        സ്ഥിരം int64_t i2 = (ir - i3*ne2*ne1)/ne1;
+        സ്ഥിരം int64_t i1 = (ir - i3*ne2*ne1 - i2*ne1);
 
-        const int64_t i02 = i2;
-        const int64_t i03 = i3;
+        സ്ഥിരം int64_t i02 = i2;
+        സ്ഥിരം int64_t i03 = i3;
 
-        const int64_t i12 = i2;
-        const int64_t i13 = i3;
+        സ്ഥിരം int64_t i12 = i2;
+        സ്ഥിരം int64_t i13 = i3;
 
-        float * d = (float *) ((char *) dst->data + (i1*nb1 + i2*nb2 + i3*nb3));
+        ദശാംശം * d = (ദശാംശം *) ((അക്ഷരം *) dst->data + (i1*nb1 + i2*nb2 + i3*nb3));
 
-        for (int64_t i01 = 0; i01 < ne01; ++i01) {
-            const int64_t i11 = i01;
-            ggml_fp16_t * s0 = (ggml_fp16_t *) ((char *) src0->data + (i01*nb01 + i02*nb02 + i03*nb03));
-            float * s1 = (float *) ((char *) src1->data + (i1*nb10 + i11*nb11 + i12*nb12 + i13*nb13));
+        വേണ്ടി (int64_t i01 = 0; i01 < ne01; ++i01) {
+            സ്ഥിരം int64_t i11 = i01;
+            ggml_fp16_t * s0 = (ggml_fp16_t *) ((അക്ഷരം *) src0->data + (i01*nb01 + i02*nb02 + i03*nb03));
+            ദശാംശം * s1 = (ദശാംശം *) ((അക്ഷരം *) src1->data + (i1*nb10 + i11*nb11 + i12*nb12 + i13*nb13));
             ggml_fp16_to_fp32_row(s0, wdata, ne0);
             ggml_vec_mad_f32(ne0, d, wdata, *s1);
         }
     }
 }
 
-void ggml_compute_forward_out_prod(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_out_prod(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_Q1_0:
-        case GGML_TYPE_Q2_0:
-        case GGML_TYPE_Q4_0:
-        case GGML_TYPE_Q4_1:
-        case GGML_TYPE_Q5_0:
-        case GGML_TYPE_Q5_1:
-        case GGML_TYPE_Q8_0:
-        case GGML_TYPE_MXFP4:
-        case GGML_TYPE_NVFP4:
-        case GGML_TYPE_Q2_K:
-        case GGML_TYPE_Q3_K:
-        case GGML_TYPE_Q4_K:
-        case GGML_TYPE_Q5_K:
-        case GGML_TYPE_Q6_K:
-        case GGML_TYPE_TQ1_0:
-        case GGML_TYPE_TQ2_0:
-        case GGML_TYPE_IQ2_XXS:
-        case GGML_TYPE_IQ2_XS:
-        case GGML_TYPE_IQ3_XXS:
-        case GGML_TYPE_IQ1_S:
-        case GGML_TYPE_IQ1_M:
-        case GGML_TYPE_IQ4_NL:
-        case GGML_TYPE_IQ4_XS:
-        case GGML_TYPE_IQ3_S:
-        case GGML_TYPE_IQ2_S:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_Q1_0:
+        അവസ്ഥ GGML_TYPE_Q2_0:
+        അവസ്ഥ GGML_TYPE_Q4_0:
+        അവസ്ഥ GGML_TYPE_Q4_1:
+        അവസ്ഥ GGML_TYPE_Q5_0:
+        അവസ്ഥ GGML_TYPE_Q5_1:
+        അവസ്ഥ GGML_TYPE_Q8_0:
+        അവസ്ഥ GGML_TYPE_MXFP4:
+        അവസ്ഥ GGML_TYPE_NVFP4:
+        അവസ്ഥ GGML_TYPE_Q2_K:
+        അവസ്ഥ GGML_TYPE_Q3_K:
+        അവസ്ഥ GGML_TYPE_Q4_K:
+        അവസ്ഥ GGML_TYPE_Q5_K:
+        അവസ്ഥ GGML_TYPE_Q6_K:
+        അവസ്ഥ GGML_TYPE_TQ1_0:
+        അവസ്ഥ GGML_TYPE_TQ2_0:
+        അവസ്ഥ GGML_TYPE_IQ2_XXS:
+        അവസ്ഥ GGML_TYPE_IQ2_XS:
+        അവസ്ഥ GGML_TYPE_IQ3_XXS:
+        അവസ്ഥ GGML_TYPE_IQ1_S:
+        അവസ്ഥ GGML_TYPE_IQ1_M:
+        അവസ്ഥ GGML_TYPE_IQ4_NL:
+        അവസ്ഥ GGML_TYPE_IQ4_XS:
+        അവസ്ഥ GGML_TYPE_IQ3_S:
+        അവസ്ഥ GGML_TYPE_IQ2_S:
             {
                 ggml_compute_forward_out_prod_q_f32(params, dst);
-            } break;
-        case GGML_TYPE_F16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F16:
             {
                 ggml_compute_forward_out_prod_f16_f32(params, dst);
-            } break;
-        case GGML_TYPE_F32:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_out_prod_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -4961,112 +4961,112 @@ void ggml_compute_forward_out_prod(
 
 // ggml_compute_forward_scale
 
-static void ggml_compute_forward_scale_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_scale_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
     GGML_ASSERT(ggml_is_contiguous(src0));
     GGML_ASSERT(ggml_is_contiguous(dst));
     GGML_ASSERT(ggml_are_same_shape(src0, dst));
 
-    float s; // scale factor
-    float b; // bias
+    ദശാംശം s; // scale factor
+    ദശാംശം b; // bias
 
-    memcpy(&s, (float *) dst->op_params + 0, sizeof(float));
-    memcpy(&b, (float *) dst->op_params + 1, sizeof(float));
+    memcpy(&s, (ദശാംശം *) dst->op_params + 0, വലുപ്പം(ദശാംശം));
+    memcpy(&b, (ദശാംശം *) dst->op_params + 1, വലുപ്പം(ദശാംശം));
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src0->ne[0];
-    const int nr = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src0->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src0);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    const size_t nb01 = src0->nb[1];
+    സ്ഥിരം size_t nb01 = src0->nb[1];
 
-    const size_t nb1 = dst->nb[1];
+    സ്ഥിരം size_t nb1 = dst->nb[1];
 
-    if (b == 0.0f) {
-        for (int i1 = ir0; i1 < ir1; i1++) {
-            if (dst->data != src0->data) {
+    എങ്കിൽ (b == 0.0f) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = ir0; i1 < ir1; i1++) {
+            എങ്കിൽ (dst->data != src0->data) {
                 // src0 is same shape as dst => same indices
                 // TODO: add x parameter to ggml_vec_scale_f32 and remove this memcpy
-                memcpy((char *)dst->data + i1*nb1, (char *)src0->data + i1*nb01, nc * sizeof(float));
+                memcpy((അക്ഷരം *)dst->data + i1*nb1, (അക്ഷരം *)src0->data + i1*nb01, nc * വലുപ്പം(ദശാംശം));
             }
-            ggml_vec_scale_f32(nc, (float *) ((char *) dst->data + i1*nb1), s);
+            ggml_vec_scale_f32(nc, (ദശാംശം *) ((അക്ഷരം *) dst->data + i1*nb1), s);
         }
-    } else {
-        for (int i1 = ir0; i1 < ir1; i1++) {
+    } അല്ലെങ്കിൽ {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = ir0; i1 < ir1; i1++) {
             ggml_vec_mad1_f32(nc,
-                (float *) ((char *) dst->data  + i1*nb1),
-                (float *) ((char *) src0->data + i1*nb1),
+                (ദശാംശം *) ((അക്ഷരം *) dst->data  + i1*nb1),
+                (ദശാംശം *) ((അക്ഷരം *) src0->data + i1*nb1),
                 s, b);
         }
     }
 }
 
-static void ggml_compute_forward_scale_bf16(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_scale_bf16(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
     GGML_ASSERT(ggml_is_contiguous(src0));
     GGML_ASSERT(ggml_is_contiguous(dst));
     GGML_ASSERT(ggml_are_same_shape(src0, dst));
 
-    float s; // scale factor
-    float b; // bias
+    ദശാംശം s; // scale factor
+    ദശാംശം b; // bias
 
-    memcpy(&s, (float *) dst->op_params + 0, sizeof(float));
-    memcpy(&b, (float *) dst->op_params + 1, sizeof(float));
+    memcpy(&s, (ദശാംശം *) dst->op_params + 0, വലുപ്പം(ദശാംശം));
+    memcpy(&b, (ദശാംശം *) dst->op_params + 1, വലുപ്പം(ദശാംശം));
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src0->ne[0];
-    const int nr = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src0->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src0);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int i1 = ir0; i1 < ir1; i1++) {
-        const ggml_bf16_t * x = (const ggml_bf16_t *) ((const char *) src0->data + i1*src0->nb[1]);
-        ggml_bf16_t       * y = (ggml_bf16_t *)       ((char *)       dst->data  + i1*dst->nb[1]);
-        for (int k = 0; k < nc; k++) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = ir0; i1 < ir1; i1++) {
+        സ്ഥിരം ggml_bf16_t * x = (സ്ഥിരം ggml_bf16_t *) ((സ്ഥിരം അക്ഷരം *) src0->data + i1*src0->nb[1]);
+        ggml_bf16_t       * y = (ggml_bf16_t *)       ((അക്ഷരം *)       dst->data  + i1*dst->nb[1]);
+        വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nc; k++) {
             y[k] = GGML_FP32_TO_BF16(s*GGML_BF16_TO_FP32(x[k]) + b);
         }
     }
 }
 
-void ggml_compute_forward_scale(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_scale(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_scale_f32(params, dst);
-            } break;
-        case GGML_TYPE_BF16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_BF16:
             {
                 ggml_compute_forward_scale_bf16(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -5075,12 +5075,12 @@ void ggml_compute_forward_scale(
 
 // ggml_compute_forward_set
 
-static void ggml_compute_forward_set_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_set_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
     GGML_ASSERT(ggml_are_same_shape(src0, dst));
     GGML_ASSERT(ggml_is_contiguous(dst) && ggml_is_contiguous(src0));
@@ -5091,67 +5091,67 @@ static void ggml_compute_forward_set_f32(
     size_t nb2     = ((int32_t *) dst->op_params)[1];
     size_t nb3     = ((int32_t *) dst->op_params)[2];
     size_t offset  = ((int32_t *) dst->op_params)[3];
-    bool   inplace = (bool) ((int32_t *) dst->op_params)[4];
+    തർക്കം   inplace = (തർക്കം) ((int32_t *) dst->op_params)[4];
 
-    if (!inplace) {
-        if (params->ith == 0) {
+    എങ്കിൽ (!inplace) {
+        എങ്കിൽ (params->ith == 0) {
             // memcpy needs to be synchronized across threads to avoid race conditions.
             // => do it in INIT phase
             memcpy(
-                ((char *)  dst->data),
-                ((char *) src0->data),
+                ((അക്ഷരം *)  dst->data),
+                ((അക്ഷരം *) src0->data),
                 ggml_nbytes(dst));
         }
         ggml_barrier(params->threadpool);
     }
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nr = ggml_nrows(src1);
-    const int nc = src1->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src1);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src1->ne[0];
 
     GGML_TENSOR_LOCALS(int64_t, ne1, src1, ne)
     GGML_TENSOR_LOCALS(size_t,  nb1, src1, nb)
 
     // src0 and dst as viewed during set
-    const size_t nb0 = ggml_element_size(src0);
+    സ്ഥിരം size_t nb0 = ggml_element_size(src0);
 
-    const int im0 = (ne10 == 0 ? 0 : ne10-1);
-    const int im1 = (ne11 == 0 ? 0 : ne11-1);
-    const int im2 = (ne12 == 0 ? 0 : ne12-1);
-    const int im3 = (ne13 == 0 ? 0 : ne13-1);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ im0 = (ne10 == 0 ? 0 : ne10-1);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ im1 = (ne11 == 0 ? 0 : ne11-1);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ im2 = (ne12 == 0 ? 0 : ne12-1);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ im3 = (ne13 == 0 ? 0 : ne13-1);
 
     GGML_ASSERT(offset + im0*nb0  + im1*nb1  + im2*nb2  + im3*nb3  <= ggml_nbytes(dst));
 
-    GGML_ASSERT(nb10 == sizeof(float));
+    GGML_ASSERT(nb10 == വലുപ്പം(ദശാംശം));
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int ir = ir0; ir < ir1; ++ir) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ ir = ir0; ir < ir1; ++ir) {
         // src0 and dst are viewed with shape of src1 and offset
         // => same indices
-        const int i3 = ir/(ne12*ne11);
-        const int i2 = (ir - i3*ne12*ne11)/ne11;
-        const int i1 = (ir - i3*ne12*ne11 - i2*ne11);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i3 = ir/(ne12*ne11);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i2 = (ir - i3*ne12*ne11)/ne11;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i1 = (ir - i3*ne12*ne11 - i2*ne11);
 
         ggml_vec_cpy_f32(nc,
-                (float *) ((char *)  dst->data + i3*nb3  + i2*nb2  + i1*nb1  + offset),
-                (float *) ((char *) src1->data + i3*nb13 + i2*nb12 + i1*nb11));
+                (ദശാംശം *) ((അക്ഷരം *)  dst->data + i3*nb3  + i2*nb2  + i1*nb1  + offset),
+                (ദശാംശം *) ((അക്ഷരം *) src1->data + i3*nb13 + i2*nb12 + i1*nb11));
     }
 }
 
-static void ggml_compute_forward_set_i32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_set_i32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
     GGML_ASSERT(ggml_are_same_shape(src0, dst));
     GGML_ASSERT(ggml_is_contiguous(dst) && ggml_is_contiguous(src0));
@@ -5162,105 +5162,105 @@ static void ggml_compute_forward_set_i32(
     size_t nb2     = ((int32_t *) dst->op_params)[1];
     size_t nb3     = ((int32_t *) dst->op_params)[2];
     size_t offset  = ((int32_t *) dst->op_params)[3];
-    bool   inplace = (bool) ((int32_t *) dst->op_params)[4];
+    തർക്കം   inplace = (തർക്കം) ((int32_t *) dst->op_params)[4];
 
-    if (!inplace) {
-        if (params->ith == 0) {
+    എങ്കിൽ (!inplace) {
+        എങ്കിൽ (params->ith == 0) {
             // memcpy needs to be synchronized across threads to avoid race conditions.
             // => do it in INIT phase
             memcpy(
-                ((char *)  dst->data),
-                ((char *) src0->data),
+                ((അക്ഷരം *)  dst->data),
+                ((അക്ഷരം *) src0->data),
                 ggml_nbytes(dst));
         }
         ggml_barrier(params->threadpool);
     }
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nr = ggml_nrows(src1);
-    const int nc = src1->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src1);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src1->ne[0];
 
     GGML_TENSOR_LOCALS(int64_t, ne1, src1, ne)
     GGML_TENSOR_LOCALS(size_t,  nb1, src1, nb)
 
     // src0 and dst as viewed during set
-    const size_t nb0 = ggml_element_size(src0);
+    സ്ഥിരം size_t nb0 = ggml_element_size(src0);
 
-    const int im0 = (ne10 == 0 ? 0 : ne10-1);
-    const int im1 = (ne11 == 0 ? 0 : ne11-1);
-    const int im2 = (ne12 == 0 ? 0 : ne12-1);
-    const int im3 = (ne13 == 0 ? 0 : ne13-1);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ im0 = (ne10 == 0 ? 0 : ne10-1);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ im1 = (ne11 == 0 ? 0 : ne11-1);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ im2 = (ne12 == 0 ? 0 : ne12-1);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ im3 = (ne13 == 0 ? 0 : ne13-1);
 
     GGML_ASSERT(offset + im0*nb0  + im1*nb1  + im2*nb2  + im3*nb3  <= ggml_nbytes(dst));
 
-    GGML_ASSERT(nb10 == sizeof(int32_t));
+    GGML_ASSERT(nb10 == വലുപ്പം(int32_t));
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int ir = ir0; ir < ir1; ++ir) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ ir = ir0; ir < ir1; ++ir) {
         // src0 and dst are viewed with shape of src1 and offset
         // => same indices
-        const int i3 = ir/(ne12*ne11);
-        const int i2 = (ir - i3*ne12*ne11)/ne11;
-        const int i1 = (ir - i3*ne12*ne11 - i2*ne11);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i3 = ir/(ne12*ne11);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i2 = (ir - i3*ne12*ne11)/ne11;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i1 = (ir - i3*ne12*ne11 - i2*ne11);
 
         ggml_vec_cpy_i32(nc,
-                (int32_t *) ((char *)  dst->data + i3*nb3  + i2*nb2  + i1*nb1  + offset),
-                (int32_t *) ((char *) src1->data + i3*nb13 + i2*nb12 + i1*nb11));
+                (int32_t *) ((അക്ഷരം *)  dst->data + i3*nb3  + i2*nb2  + i1*nb1  + offset),
+                (int32_t *) ((അക്ഷരം *) src1->data + i3*nb13 + i2*nb12 + i1*nb11));
     }
 }
 
-void ggml_compute_forward_set(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_set(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_set_f32(params, dst);
-            } break;
-        case GGML_TYPE_I32:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_I32:
             {
                 ggml_compute_forward_set_i32(params, dst);
-            } break;
-        case GGML_TYPE_F16:
-        case GGML_TYPE_BF16:
-        case GGML_TYPE_Q1_0:
-        case GGML_TYPE_Q2_0:
-        case GGML_TYPE_Q4_0:
-        case GGML_TYPE_Q4_1:
-        case GGML_TYPE_Q5_0:
-        case GGML_TYPE_Q5_1:
-        case GGML_TYPE_Q8_0:
-        case GGML_TYPE_Q8_1:
-        case GGML_TYPE_MXFP4:
-        case GGML_TYPE_NVFP4:
-        case GGML_TYPE_Q2_K:
-        case GGML_TYPE_Q3_K:
-        case GGML_TYPE_Q4_K:
-        case GGML_TYPE_Q5_K:
-        case GGML_TYPE_Q6_K:
-        case GGML_TYPE_TQ1_0:
-        case GGML_TYPE_TQ2_0:
-        case GGML_TYPE_IQ2_XXS:
-        case GGML_TYPE_IQ2_XS:
-        case GGML_TYPE_IQ3_XXS:
-        case GGML_TYPE_IQ1_S:
-        case GGML_TYPE_IQ1_M:
-        case GGML_TYPE_IQ4_NL:
-        case GGML_TYPE_IQ4_XS:
-        case GGML_TYPE_IQ3_S:
-        case GGML_TYPE_IQ2_S:
-        default:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F16:
+        അവസ്ഥ GGML_TYPE_BF16:
+        അവസ്ഥ GGML_TYPE_Q1_0:
+        അവസ്ഥ GGML_TYPE_Q2_0:
+        അവസ്ഥ GGML_TYPE_Q4_0:
+        അവസ്ഥ GGML_TYPE_Q4_1:
+        അവസ്ഥ GGML_TYPE_Q5_0:
+        അവസ്ഥ GGML_TYPE_Q5_1:
+        അവസ്ഥ GGML_TYPE_Q8_0:
+        അവസ്ഥ GGML_TYPE_Q8_1:
+        അവസ്ഥ GGML_TYPE_MXFP4:
+        അവസ്ഥ GGML_TYPE_NVFP4:
+        അവസ്ഥ GGML_TYPE_Q2_K:
+        അവസ്ഥ GGML_TYPE_Q3_K:
+        അവസ്ഥ GGML_TYPE_Q4_K:
+        അവസ്ഥ GGML_TYPE_Q5_K:
+        അവസ്ഥ GGML_TYPE_Q6_K:
+        അവസ്ഥ GGML_TYPE_TQ1_0:
+        അവസ്ഥ GGML_TYPE_TQ2_0:
+        അവസ്ഥ GGML_TYPE_IQ2_XXS:
+        അവസ്ഥ GGML_TYPE_IQ2_XS:
+        അവസ്ഥ GGML_TYPE_IQ3_XXS:
+        അവസ്ഥ GGML_TYPE_IQ1_S:
+        അവസ്ഥ GGML_TYPE_IQ1_M:
+        അവസ്ഥ GGML_TYPE_IQ4_NL:
+        അവസ്ഥ GGML_TYPE_IQ4_XS:
+        അവസ്ഥ GGML_TYPE_IQ3_S:
+        അവസ്ഥ GGML_TYPE_IQ2_S:
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -5269,239 +5269,239 @@ void ggml_compute_forward_set(
 
 // ggml_compute_forward_cpy
 
-void ggml_compute_forward_cpy(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_cpy(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
     ggml_compute_forward_dup(params, dst);
 }
 
 // ggml_compute_forward_cont
 
-void ggml_compute_forward_cont(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_cont(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
     ggml_compute_forward_dup(params, dst);
 }
 
 // ggml_compute_forward_get_rows
 
-static void ggml_compute_forward_get_rows_q(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_get_rows_q(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS
 
-    const int64_t nc = ne00;
-    const int64_t nr = ggml_nelements(src1);
+    സ്ഥിരം int64_t nc = ne00;
+    സ്ഥിരം int64_t nr = ggml_nelements(src1);
 
-    const ggml_type type = src0->type;
-    ggml_to_float_t const dequantize_row_q = ggml_get_type_traits(type)->to_float;
+    സ്ഥിരം ggml_type type = src0->type;
+    ggml_to_float_t സ്ഥിരം dequantize_row_q = ggml_get_type_traits(type)->to_float;
 
-    assert(ne0  == nc);
-    assert(ne02 == ne11);
-    assert(nb00 == ggml_type_size(type));
-    assert(ggml_nrows(dst) == nr);
+    പ്രതിജ്ഞാ(ne0  == nc);
+    പ്രതിജ്ഞാ(ne02 == ne11);
+    പ്രതിജ്ഞാ(nb00 == ggml_type_size(type));
+    പ്രതിജ്ഞാ(ggml_nrows(dst) == nr);
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int64_t i = ir0; i < ir1; ++i) {
-        const int64_t i12 = i/(ne11*ne10);
-        const int64_t i11 = (i - i12*ne11*ne10)/ne10;
-        const int64_t i10 = (i - i12*ne11*ne10 - i11*ne10);
-        const int64_t i01 = *(int32_t *) ((char *) src1->data + i10*nb10 + i11*nb11 + i12*nb12);
+    വേണ്ടി (int64_t i = ir0; i < ir1; ++i) {
+        സ്ഥിരം int64_t i12 = i/(ne11*ne10);
+        സ്ഥിരം int64_t i11 = (i - i12*ne11*ne10)/ne10;
+        സ്ഥിരം int64_t i10 = (i - i12*ne11*ne10 - i11*ne10);
+        സ്ഥിരം int64_t i01 = *(int32_t *) ((അക്ഷരം *) src1->data + i10*nb10 + i11*nb11 + i12*nb12);
 
         GGML_ASSERT(i01 >= 0 && i01 < ne01);
 
         dequantize_row_q(
-                (const void *) ((char *) src0->data + i01*nb01 + i11*nb02 + i12*nb03),
-                     (float *) ((char *)  dst->data + i10*nb1  + i11*nb2  + i12*nb3), nc);
+                (സ്ഥിരം ശൂന്യം *) ((അക്ഷരം *) src0->data + i01*nb01 + i11*nb02 + i12*nb03),
+                     (ദശാംശം *) ((അക്ഷരം *)  dst->data + i10*nb1  + i11*nb2  + i12*nb3), nc);
     }
 }
 
-static void ggml_compute_forward_get_rows_f16(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_get_rows_f16(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS
 
-    const int64_t nc = ne00;
-    const int64_t nr = ggml_nelements(src1);
+    സ്ഥിരം int64_t nc = ne00;
+    സ്ഥിരം int64_t nr = ggml_nelements(src1);
 
-    assert(ne0  == nc);
-    assert(ne02 == ne11);
-    assert(nb00 == sizeof(ggml_fp16_t));
-    assert(ggml_nrows(dst) == nr);
+    പ്രതിജ്ഞാ(ne0  == nc);
+    പ്രതിജ്ഞാ(ne02 == ne11);
+    പ്രതിജ്ഞാ(nb00 == വലുപ്പം(ggml_fp16_t));
+    പ്രതിജ്ഞാ(ggml_nrows(dst) == nr);
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int64_t i = ir0; i < ir1; ++i) {
-        const int64_t i12 = i/(ne11*ne10);
-        const int64_t i11 = (i - i12*ne11*ne10)/ne10;
-        const int64_t i10 = (i - i12*ne11*ne10 - i11*ne10);
-        const int64_t i01 = *(int32_t *) ((char *) src1->data + i10*nb10 + i11*nb11 + i12*nb12);
+    വേണ്ടി (int64_t i = ir0; i < ir1; ++i) {
+        സ്ഥിരം int64_t i12 = i/(ne11*ne10);
+        സ്ഥിരം int64_t i11 = (i - i12*ne11*ne10)/ne10;
+        സ്ഥിരം int64_t i10 = (i - i12*ne11*ne10 - i11*ne10);
+        സ്ഥിരം int64_t i01 = *(int32_t *) ((അക്ഷരം *) src1->data + i10*nb10 + i11*nb11 + i12*nb12);
 
         GGML_ASSERT(i01 >= 0 && i01 < ne01);
 
         ggml_cpu_fp16_to_fp32(
-            (const ggml_fp16_t*) ((char *) src0->data + i01*nb01 + i11*nb02 + i12*nb03),
-                       (float *) ((char *)  dst->data + i10*nb1  + i11*nb2  + i12*nb3), nc);
+            (സ്ഥിരം ggml_fp16_t*) ((അക്ഷരം *) src0->data + i01*nb01 + i11*nb02 + i12*nb03),
+                       (ദശാംശം *) ((അക്ഷരം *)  dst->data + i10*nb1  + i11*nb2  + i12*nb3), nc);
     }
 }
 
-static void ggml_compute_forward_get_rows_bf16(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_get_rows_bf16(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS
 
-    const int64_t nc = ne00;
-    const int64_t nr = ggml_nelements(src1);
+    സ്ഥിരം int64_t nc = ne00;
+    സ്ഥിരം int64_t nr = ggml_nelements(src1);
 
-    assert(ne0  == nc);
-    assert(ne02 == ne11);
-    assert(nb00 == sizeof(ggml_bf16_t));
-    assert(ggml_nrows(dst) == nr);
+    പ്രതിജ്ഞാ(ne0  == nc);
+    പ്രതിജ്ഞാ(ne02 == ne11);
+    പ്രതിജ്ഞാ(nb00 == വലുപ്പം(ggml_bf16_t));
+    പ്രതിജ്ഞാ(ggml_nrows(dst) == nr);
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int64_t i = ir0; i < ir1; ++i) {
-        const int64_t i12 = i/(ne11*ne10);
-        const int64_t i11 = (i - i12*ne11*ne10)/ne10;
-        const int64_t i10 = (i - i12*ne11*ne10 - i11*ne10);
-        const int64_t i01 = *(int32_t *) ((char *) src1->data + i10*nb10 + i11*nb11 + i12*nb12);
+    വേണ്ടി (int64_t i = ir0; i < ir1; ++i) {
+        സ്ഥിരം int64_t i12 = i/(ne11*ne10);
+        സ്ഥിരം int64_t i11 = (i - i12*ne11*ne10)/ne10;
+        സ്ഥിരം int64_t i10 = (i - i12*ne11*ne10 - i11*ne10);
+        സ്ഥിരം int64_t i01 = *(int32_t *) ((അക്ഷരം *) src1->data + i10*nb10 + i11*nb11 + i12*nb12);
 
         GGML_ASSERT(i01 >= 0 && i01 < ne01);
 
         ggml_cpu_bf16_to_fp32(
-            (const ggml_bf16_t *) ((char *) src0->data + i01*nb01 + i11*nb02 + i12*nb03),
-                        (float *) ((char *)  dst->data + i10*nb1  + i11*nb2  + i12*nb3), nc);
+            (സ്ഥിരം ggml_bf16_t *) ((അക്ഷരം *) src0->data + i01*nb01 + i11*nb02 + i12*nb03),
+                        (ദശാംശം *) ((അക്ഷരം *)  dst->data + i10*nb1  + i11*nb2  + i12*nb3), nc);
     }
 }
 
-static void ggml_compute_forward_get_rows_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_get_rows_f32(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS
 
-    const int64_t nc = ne00;
-    const int64_t nr = ggml_nelements(src1);
+    സ്ഥിരം int64_t nc = ne00;
+    സ്ഥിരം int64_t nr = ggml_nelements(src1);
 
-    assert(ne0  == nc);
-    assert(ne02 == ne11);
-    assert(nb00 == sizeof(float));
-    assert(ggml_nrows(dst) == nr);
+    പ്രതിജ്ഞാ(ne0  == nc);
+    പ്രതിജ്ഞാ(ne02 == ne11);
+    പ്രതിജ്ഞാ(nb00 == വലുപ്പം(ദശാംശം));
+    പ്രതിജ്ഞാ(ggml_nrows(dst) == nr);
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int64_t i = ir0; i < ir1; ++i) {
-        const int64_t i12 = i/(ne11*ne10);
-        const int64_t i11 = (i - i12*ne11*ne10)/ne10;
-        const int64_t i10 = (i - i12*ne11*ne10 - i11*ne10);
-        const int64_t i01 = *(int32_t *) ((char *) src1->data + i10*nb10 + i11*nb11 + i12*nb12);
+    വേണ്ടി (int64_t i = ir0; i < ir1; ++i) {
+        സ്ഥിരം int64_t i12 = i/(ne11*ne10);
+        സ്ഥിരം int64_t i11 = (i - i12*ne11*ne10)/ne10;
+        സ്ഥിരം int64_t i10 = (i - i12*ne11*ne10 - i11*ne10);
+        സ്ഥിരം int64_t i01 = *(int32_t *) ((അക്ഷരം *) src1->data + i10*nb10 + i11*nb11 + i12*nb12);
 
         GGML_ASSERT(i01 >= 0 && i01 < ne01);
 
         ggml_vec_cpy_f32(nc,
-                (float *) ((char *)  dst->data + i10*nb1  + i11*nb2  + i12*nb3),
-                (float *) ((char *) src0->data + i01*nb01 + i11*nb02 + i12*nb03));
+                (ദശാംശം *) ((അക്ഷരം *)  dst->data + i10*nb1  + i11*nb2  + i12*nb3),
+                (ദശാംശം *) ((അക്ഷരം *) src0->data + i01*nb01 + i11*nb02 + i12*nb03));
     }
 }
 
-void ggml_compute_forward_get_rows(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_get_rows(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_Q1_0:
-        case GGML_TYPE_Q2_0:
-        case GGML_TYPE_Q4_0:
-        case GGML_TYPE_Q4_1:
-        case GGML_TYPE_Q5_0:
-        case GGML_TYPE_Q5_1:
-        case GGML_TYPE_Q8_0:
-        case GGML_TYPE_Q8_1:
-        case GGML_TYPE_MXFP4:
-        case GGML_TYPE_NVFP4:
-        case GGML_TYPE_Q2_K:
-        case GGML_TYPE_Q3_K:
-        case GGML_TYPE_Q4_K:
-        case GGML_TYPE_Q5_K:
-        case GGML_TYPE_Q6_K:
-        case GGML_TYPE_TQ1_0:
-        case GGML_TYPE_TQ2_0:
-        case GGML_TYPE_IQ2_XXS:
-        case GGML_TYPE_IQ2_XS:
-        case GGML_TYPE_IQ3_XXS:
-        case GGML_TYPE_IQ1_S:
-        case GGML_TYPE_IQ1_M:
-        case GGML_TYPE_IQ4_NL:
-        case GGML_TYPE_IQ4_XS:
-        case GGML_TYPE_IQ3_S:
-        case GGML_TYPE_IQ2_S:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_Q1_0:
+        അവസ്ഥ GGML_TYPE_Q2_0:
+        അവസ്ഥ GGML_TYPE_Q4_0:
+        അവസ്ഥ GGML_TYPE_Q4_1:
+        അവസ്ഥ GGML_TYPE_Q5_0:
+        അവസ്ഥ GGML_TYPE_Q5_1:
+        അവസ്ഥ GGML_TYPE_Q8_0:
+        അവസ്ഥ GGML_TYPE_Q8_1:
+        അവസ്ഥ GGML_TYPE_MXFP4:
+        അവസ്ഥ GGML_TYPE_NVFP4:
+        അവസ്ഥ GGML_TYPE_Q2_K:
+        അവസ്ഥ GGML_TYPE_Q3_K:
+        അവസ്ഥ GGML_TYPE_Q4_K:
+        അവസ്ഥ GGML_TYPE_Q5_K:
+        അവസ്ഥ GGML_TYPE_Q6_K:
+        അവസ്ഥ GGML_TYPE_TQ1_0:
+        അവസ്ഥ GGML_TYPE_TQ2_0:
+        അവസ്ഥ GGML_TYPE_IQ2_XXS:
+        അവസ്ഥ GGML_TYPE_IQ2_XS:
+        അവസ്ഥ GGML_TYPE_IQ3_XXS:
+        അവസ്ഥ GGML_TYPE_IQ1_S:
+        അവസ്ഥ GGML_TYPE_IQ1_M:
+        അവസ്ഥ GGML_TYPE_IQ4_NL:
+        അവസ്ഥ GGML_TYPE_IQ4_XS:
+        അവസ്ഥ GGML_TYPE_IQ3_S:
+        അവസ്ഥ GGML_TYPE_IQ2_S:
             {
                 ggml_compute_forward_get_rows_q(params, dst);
-            } break;
-        case GGML_TYPE_F16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F16:
             {
                 ggml_compute_forward_get_rows_f16(params, dst);
-            } break;
-        case GGML_TYPE_BF16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_BF16:
             {
                 ggml_compute_forward_get_rows_bf16(params, dst);
-            } break;
-        case GGML_TYPE_F32:
-        case GGML_TYPE_I32:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F32:
+        അവസ്ഥ GGML_TYPE_I32:
             {
                 ggml_compute_forward_get_rows_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -5527,69 +5527,69 @@ void ggml_compute_forward_get_rows(
 }
 
 template<typename src_t, typename idx_t>
-static void ggml_compute_forward_set_rows_impl(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_set_rows_impl(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS
 
-    const int64_t nc = ne00;
-    const int64_t nr = ne01;
+    സ്ഥിരം int64_t nc = ne00;
+    സ്ഥിരം int64_t nr = ne01;
 
-    assert(ne0  == nc);
-    assert(ne2  == ne02);
-    assert(ne3  == ne03);
+    പ്രതിജ്ഞാ(ne0  == nc);
+    പ്രതിജ്ഞാ(ne2  == ne02);
+    പ്രതിജ്ഞാ(ne3  == ne03);
     GGML_ASSERT(src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_F16);
-    assert(ne02 % ne11 == 0);
-    assert(ne03 % ne12 == 0);
+    പ്രതിജ്ഞാ(ne02 % ne11 == 0);
+    പ്രതിജ്ഞാ(ne03 % ne12 == 0);
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
     // rows per thread
-    const int64_t dr = (nr + nth - 1)/nth;
+    സ്ഥിരം int64_t dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int64_t ir0 = dr*ith;
-    const int64_t ir1 = std::min(ir0 + dr, nr);
+    സ്ഥിരം int64_t ir0 = dr*ith;
+    സ്ഥിരം int64_t ir1 = std::min(ir0 + dr, nr);
 
-    const size_t rs = ggml_row_size(src0->type, nc);
+    സ്ഥിരം size_t rs = ggml_row_size(src0->type, nc);
 
-    ggml_from_float_t const from_float = ggml_get_type_traits_cpu(dst->type)->from_float;
+    ggml_from_float_t സ്ഥിരം from_float = ggml_get_type_traits_cpu(dst->type)->from_float;
 
-    for (int64_t i03 = 0; i03 < ne03; ++i03) {
-        for (int64_t i02 = 0; i02 < ne02; ++i02) {
-            for (int64_t i = ir0; i < ir1; ++i) {
-                const int64_t i12 = i03%ne12;
-                const int64_t i11 = i02%ne11;
-                const int64_t i10 = i;
+    വേണ്ടി (int64_t i03 = 0; i03 < ne03; ++i03) {
+        വേണ്ടി (int64_t i02 = 0; i02 < ne02; ++i02) {
+            വേണ്ടി (int64_t i = ir0; i < ir1; ++i) {
+                സ്ഥിരം int64_t i12 = i03%ne12;
+                സ്ഥിരം int64_t i11 = i02%ne11;
+                സ്ഥിരം int64_t i10 = i;
 
-                const int64_t i1 = *(idx_t *) ((char *) src1->data + i10*nb10 + i11*nb11 + i12*nb12);
+                സ്ഥിരം int64_t i1 = *(idx_t *) ((അക്ഷരം *) src1->data + i10*nb10 + i11*nb11 + i12*nb12);
 
                 GGML_ASSERT(i1 >= 0 && i1 < ne1);
 
-                if constexpr (std::is_same_v<src_t, float>) {
+                എങ്കിൽ constexpr (std::is_same_v<src_t, ദശാംശം>) {
                     from_float(
-                            (const float *) ((char *) src0->data +  i*nb01 + i02*nb02 + i03*nb03),
-                                            ((char *)  dst->data + i1*nb1  + i02*nb2  + i03*nb3), nc);
-                } else if constexpr (std::is_same_v<src_t, ggml_fp16_t>) {
-                    if (dst->type == GGML_TYPE_F16) {
+                            (സ്ഥിരം ദശാംശം *) ((അക്ഷരം *) src0->data +  i*nb01 + i02*nb02 + i03*nb03),
+                                            ((അക്ഷരം *)  dst->data + i1*nb1  + i02*nb2  + i03*nb3), nc);
+                } അല്ലെങ്കിൽ എങ്കിൽ constexpr (std::is_same_v<src_t, ggml_fp16_t>) {
+                    എങ്കിൽ (dst->type == GGML_TYPE_F16) {
                         memcpy(
-                                            ((char *)  dst->data + i1*nb1  + i02*nb2  + i03*nb3),
-                                            ((char *) src0->data +  i*nb01 + i02*nb02 + i03*nb03),
+                                            ((അക്ഷരം *)  dst->data + i1*nb1  + i02*nb2  + i03*nb3),
+                                            ((അക്ഷരം *) src0->data +  i*nb01 + i02*nb02 + i03*nb03),
                                             rs);
-                    } else {
-                        float * wdata = (float *) params->wdata + (nc + CACHE_LINE_SIZE_F32) * ith;
+                    } അല്ലെങ്കിൽ {
+                        ദശാംശം * wdata = (ദശാംശം *) params->wdata + (nc + CACHE_വരി_SIZE_F32) * ith;
                         ggml_fp16_to_fp32_row(
-                                (const ggml_fp16_t *) ((char *) src0->data + i*nb01 + i02*nb02 + i03*nb03),
+                                (സ്ഥിരം ggml_fp16_t *) ((അക്ഷരം *) src0->data + i*nb01 + i02*nb02 + i03*nb03),
                                 wdata, nc);
                         from_float(wdata,
-                                ((char *) dst->data + i1*nb1 + i02*nb2 + i03*nb3), nc);
+                                ((അക്ഷരം *) dst->data + i1*nb1 + i02*nb2 + i03*nb3), nc);
                     }
-                } else {
+                } അല്ലെങ്കിൽ {
                     GGML_ABORT("src0->type = %d (%s) not supported", src0->type, ggml_type_name(src0->type));
                 }
             }
@@ -5597,35 +5597,35 @@ static void ggml_compute_forward_set_rows_impl(
     }
 }
 
-void ggml_compute_forward_set_rows(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_set_rows(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
-                if (src1->type == GGML_TYPE_I64) {
-                    ggml_compute_forward_set_rows_impl<float, int64_t>(params, dst);
-                } else if (src1->type == GGML_TYPE_I32) {
-                    ggml_compute_forward_set_rows_impl<float, int32_t>(params, dst);
-                } else {
+                എങ്കിൽ (src1->type == GGML_TYPE_I64) {
+                    ggml_compute_forward_set_rows_impl<ദശാംശം, int64_t>(params, dst);
+                } അല്ലെങ്കിൽ എങ്കിൽ (src1->type == GGML_TYPE_I32) {
+                    ggml_compute_forward_set_rows_impl<ദശാംശം, int32_t>(params, dst);
+                } അല്ലെങ്കിൽ {
                     GGML_ABORT("src1->type = %d (%s) not supported", src1->type, ggml_type_name(src1->type));
                 }
-            } break;
-        case GGML_TYPE_F16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F16:
             {
-                if (src1->type == GGML_TYPE_I64) {
+                എങ്കിൽ (src1->type == GGML_TYPE_I64) {
                     ggml_compute_forward_set_rows_impl<ggml_fp16_t, int64_t>(params, dst);
-                } else if (src1->type == GGML_TYPE_I32) {
+                } അല്ലെങ്കിൽ എങ്കിൽ (src1->type == GGML_TYPE_I32) {
                     ggml_compute_forward_set_rows_impl<ggml_fp16_t, int32_t>(params, dst);
-                } else {
+                } അല്ലെങ്കിൽ {
                     GGML_ABORT("src1->type = %d (%s) not supported", src1->type, ggml_type_name(src1->type));
                 }
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("src0->type = %d (%s) not supported", src0->type, ggml_type_name(src0->type));
             }
@@ -5634,15 +5634,15 @@ void ggml_compute_forward_set_rows(
 
 // ggml_compute_forward_get_rows_back
 
-static void ggml_compute_forward_get_rows_back_f32_f16(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_get_rows_back_f32_f16(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
-    if (params->ith != 0) {
-        return;
+    എങ്കിൽ (params->ith != 0) {
+        തിരികെ;
     }
 
     GGML_ASSERT(ggml_is_contiguous(dst));
@@ -5651,33 +5651,33 @@ static void ggml_compute_forward_get_rows_back_f32_f16(
 
     memset(dst->data, 0, ggml_nbytes(dst));
 
-    const int nc = src0->ne[0];
-    const int nr = ggml_nelements(src1);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src0->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nelements(src1);
 
     GGML_ASSERT( dst->ne[0] == nc);
-    GGML_ASSERT(src0->nb[0] == sizeof(ggml_fp16_t));
+    GGML_ASSERT(src0->nb[0] == വലുപ്പം(ggml_fp16_t));
 
-    for (int i = 0; i < nr; ++i) {
-        const int r = ((int32_t *) src1->data)[i];
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < nr; ++i) {
+        സ്ഥിരം പൂർണ്ണസംഖ്യ r = ((int32_t *) src1->data)[i];
 
         GGML_ASSERT(r >= 0 && r < dst->ne[1]);
 
-        for (int j = 0; j < nc; ++j) {
-            ggml_fp16_t v = ((ggml_fp16_t *) ((char *) src0->data + i*src0->nb[1]))[j];
-            ((float *) ((char *) dst->data + r*dst->nb[1]))[j] += GGML_CPU_FP16_TO_FP32(v);
+        വേണ്ടി (പൂർണ്ണസംഖ്യ j = 0; j < nc; ++j) {
+            ggml_fp16_t v = ((ggml_fp16_t *) ((അക്ഷരം *) src0->data + i*src0->nb[1]))[j];
+            ((ദശാംശം *) ((അക്ഷരം *) dst->data + r*dst->nb[1]))[j] += GGML_CPU_FP16_TO_FP32(v);
         }
     }
 }
 
-static void ggml_compute_forward_get_rows_back_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_get_rows_back_f32(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
-    if (params->ith != 0) {
-        return;
+    എങ്കിൽ (params->ith != 0) {
+        തിരികെ;
     }
 
     GGML_ASSERT(ggml_is_contiguous(dst));
@@ -5686,40 +5686,40 @@ static void ggml_compute_forward_get_rows_back_f32(
 
     memset(dst->data, 0, ggml_nbytes(dst));
 
-    const int nc = src0->ne[0];
-    const int nr = ggml_nelements(src1);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src0->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nelements(src1);
 
     GGML_ASSERT( dst->ne[0] == nc);
-    GGML_ASSERT(src0->nb[0] == sizeof(float));
+    GGML_ASSERT(src0->nb[0] == വലുപ്പം(ദശാംശം));
 
-    for (int i = 0; i < nr; ++i) {
-        const int r = ((int32_t *) src1->data)[i];
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < nr; ++i) {
+        സ്ഥിരം പൂർണ്ണസംഖ്യ r = ((int32_t *) src1->data)[i];
 
         GGML_ASSERT(r >= 0 && r < dst->ne[1]);
 
         ggml_vec_add_f32(nc,
-                (float *) ((char *)  dst->data + r*dst->nb[1]),
-                (float *) ((char *)  dst->data + r*dst->nb[1]),
-                (float *) ((char *) src0->data + i*src0->nb[1]));
+                (ദശാംശം *) ((അക്ഷരം *)  dst->data + r*dst->nb[1]),
+                (ദശാംശം *) ((അക്ഷരം *)  dst->data + r*dst->nb[1]),
+                (ദശാംശം *) ((അക്ഷരം *) src0->data + i*src0->nb[1]));
     }
 }
 
-void ggml_compute_forward_get_rows_back(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_get_rows_back(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F16:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F16:
             {
                 ggml_compute_forward_get_rows_back_f32_f16(params, dst);
-            } break;
-        case GGML_TYPE_F32:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_get_rows_back_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -5746,14 +5746,14 @@ void ggml_compute_forward_get_rows_back(
 
 // ggml_compute_forward_diag
 
-static void ggml_compute_forward_diag_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_diag_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    if (params->ith != 0) {
-        return;
+    എങ്കിൽ (params->ith != 0) {
+        തിരികെ;
     }
 
     // TODO: handle transposed/permuted matrices
@@ -5766,19 +5766,19 @@ static void ggml_compute_forward_diag_f32(
     GGML_ASSERT(ne02 == ne2);
     GGML_ASSERT(ne03 == ne3);
 
-    GGML_ASSERT(nb00 == sizeof(float));
-    GGML_ASSERT(nb0  == sizeof(float));
+    GGML_ASSERT(nb00 == വലുപ്പം(ദശാംശം));
+    GGML_ASSERT(nb0  == വലുപ്പം(ദശാംശം));
 
-    for (int i3 = 0; i3 < ne3; i3++) {
-        for (int i2 = 0; i2 < ne2; i2++) {
-            for (int i1 = 0; i1 < ne1; i1++) {
-                float * d = (float *)((char *)  dst->data + i3*nb3  + i2*nb2 + i1*nb1);
-                float * s = (float *)((char *) src0->data + i3*nb03 + i2*nb02);
-                for (int i0 = 0; i0 < i1; i0++) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i3 = 0; i3 < ne3; i3++) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i2 = 0; i2 < ne2; i2++) {
+            വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = 0; i1 < ne1; i1++) {
+                ദശാംശം * d = (ദശാംശം *)((അക്ഷരം *)  dst->data + i3*nb3  + i2*nb2 + i1*nb1);
+                ദശാംശം * s = (ദശാംശം *)((അക്ഷരം *) src0->data + i3*nb03 + i2*nb02);
+                വേണ്ടി (പൂർണ്ണസംഖ്യ i0 = 0; i0 < i1; i0++) {
                     d[i0] = 0;
                 }
                 d[i1] = s[i1];
-                for (int i0 = i1+1; i0 < ne0; i0++) {
+                വേണ്ടി (പൂർണ്ണസംഖ്യ i0 = i1+1; i0 < ne0; i0++) {
                     d[i0] = 0;
                 }
             }
@@ -5786,18 +5786,18 @@ static void ggml_compute_forward_diag_f32(
     }
 }
 
-void ggml_compute_forward_diag(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_diag(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_diag_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -5806,30 +5806,30 @@ void ggml_compute_forward_diag(
 
 // ggml_compute_forward_diag_mask_inf
 
-static void ggml_compute_forward_diag_mask_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_diag_mask_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst,
-        const float value) {
+        സ്ഥിരം ദശാംശം value) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int  n_past  = ((int32_t *) dst->op_params)[0];
-    const bool inplace = src0->data == dst->data;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ  n_past  = ((int32_t *) dst->op_params)[0];
+    സ്ഥിരം തർക്കം inplace = src0->data == dst->data;
 
     GGML_ASSERT(n_past >= 0);
 
-    if (!inplace) {
-        if (ith == 0) {
+    എങ്കിൽ (!inplace) {
+        എങ്കിൽ (ith == 0) {
             // memcpy needs to be synchronized across threads to avoid race conditions.
             // => do it in INIT phase
             GGML_ASSERT(ggml_nelements(dst) == ggml_nelements(src0));
             GGML_ASSERT(ggml_is_contiguous(dst) && ggml_is_contiguous(src0));
             memcpy(
-                ((char *)  dst->data),
-                ((char *) src0->data),
+                ((അക്ഷരം *)  dst->data),
+                ((അക്ഷരം *) src0->data),
                 ggml_nbytes(dst));
         }
         ggml_barrier(params->threadpool);
@@ -5837,55 +5837,55 @@ static void ggml_compute_forward_diag_mask_f32(
 
     // TODO: handle transposed/permuted matrices
 
-    const int n  = ggml_nrows(src0);
-    const int nc = src0->ne[0];
-    const int nr = src0->ne[1];
-    const int nz = n/nr;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ n  = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src0->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = src0->ne[1];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nz = n/nr;
 
-    GGML_ASSERT( dst->nb[0] == sizeof(float));
-    GGML_ASSERT(src0->nb[0] == sizeof(float));
+    GGML_ASSERT( dst->nb[0] == വലുപ്പം(ദശാംശം));
+    GGML_ASSERT(src0->nb[0] == വലുപ്പം(ദശാംശം));
 
-    for (int k = 0; k < nz; k++) {
-        for (int j = ith; j < nr; j += nth) {
-            for (int i = n_past; i < nc; i++) {
-                if (i > n_past + j) {
-                    *(float *)((char *) dst->data + k*dst->nb[2] + j*dst->nb[1] + i*dst->nb[0]) = value;
+    വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < nz; k++) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ j = ith; j < nr; j += nth) {
+            വേണ്ടി (പൂർണ്ണസംഖ്യ i = n_past; i < nc; i++) {
+                എങ്കിൽ (i > n_past + j) {
+                    *(ദശാംശം *)((അക്ഷരം *) dst->data + k*dst->nb[2] + j*dst->nb[1] + i*dst->nb[0]) = value;
                 }
             }
         }
     }
 }
 
-void ggml_compute_forward_diag_mask_inf(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_diag_mask_inf(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_diag_mask_f32(params, dst, -INFINITY);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
     }
 }
 
-void ggml_compute_forward_diag_mask_zero(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_diag_mask_zero(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_diag_mask_f32(params, dst, 0);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -5894,101 +5894,101 @@ void ggml_compute_forward_diag_mask_zero(
 
 // ggml_compute_forward_soft_max
 
-static void ggml_compute_forward_soft_max_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_soft_max_f32(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
-    const ggml_tensor * src2 = dst->src[2];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src2 = dst->src[2];
 
-    assert(ggml_is_contiguous(dst));
-    assert(ggml_are_same_shape(src0, dst));
+    പ്രതിജ്ഞാ(ggml_is_contiguous(dst));
+    പ്രതിജ്ഞാ(ggml_are_same_shape(src0, dst));
 
-    float scale    = 1.0f;
-    float max_bias = 0.0f;
+    ദശാംശം scale    = 1.0f;
+    ദശാംശം max_bias = 0.0f;
 
-    memcpy(&scale,    (float *) dst->op_params + 0, sizeof(float));
-    memcpy(&max_bias, (float *) dst->op_params + 1, sizeof(float));
+    memcpy(&scale,    (ദശാംശം *) dst->op_params + 0, വലുപ്പം(ദശാംശം));
+    memcpy(&max_bias, (ദശാംശം *) dst->op_params + 1, വലുപ്പം(ദശാംശം));
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
-    const int64_t nb11 = src1 ? src1->nb[1] : 1;
-    const int64_t nb12 = src1 ? src1->nb[2] : 1;
-    const int64_t nb13 = src1 ? src1->nb[3] : 1;
+    സ്ഥിരം int64_t nb11 = src1 ? src1->nb[1] : 1;
+    സ്ഥിരം int64_t nb12 = src1 ? src1->nb[2] : 1;
+    സ്ഥിരം int64_t nb13 = src1 ? src1->nb[3] : 1;
 
-    const int64_t ne12 = src1 ? src1->ne[2] : 1;
-    const int64_t ne13 = src1 ? src1->ne[3] : 1;
+    സ്ഥിരം int64_t ne12 = src1 ? src1->ne[2] : 1;
+    സ്ഥിരം int64_t ne13 = src1 ? src1->ne[3] : 1;
 
     // TODO: is this supposed to be ceil instead of floor?
     //       https://huggingface.co/mosaicml/mpt-7b/blob/main/attention.py#L370
-    const uint32_t n_head      = ne02;
-    const uint32_t n_head_log2 = 1u << (uint32_t) floor(log2(n_head));
+    സ്ഥിരം uint32_t n_head      = ne02;
+    സ്ഥിരം uint32_t n_head_log2 = 1u << (uint32_t) floor(log2(n_head));
 
-    const float m0 = powf(2.0f, -(max_bias       ) / n_head_log2);
-    const float m1 = powf(2.0f, -(max_bias / 2.0f) / n_head_log2);
+    സ്ഥിരം ദശാംശം m0 = powf(2.0f, -(max_bias       ) / n_head_log2);
+    സ്ഥിരം ദശാംശം m1 = powf(2.0f, -(max_bias / 2.0f) / n_head_log2);
 
-    float * wp = (float *) params->wdata + (ne00 + CACHE_LINE_SIZE_F32) * ith;
+    ദശാംശം * wp = (ദശാംശം *) params->wdata + (ne00 + CACHE_വരി_SIZE_F32) * ith;
 
-    const bool use_f16 = (src1 && src1->type == GGML_TYPE_F16);
+    സ്ഥിരം തർക്കം use_f16 = (src1 && src1->type == GGML_TYPE_F16);
 
     // sinks
-    const float * sk = src2 ? (float *)((char *) src2->data) : nullptr;
+    സ്ഥിരം ദശാംശം * sk = src2 ? (ദശാംശം *)((അക്ഷരം *) src2->data) : nullptr;
 
-    for (int64_t i03 = 0; i03 < ne03; i03++) {
-        for (int64_t i02 = 0; i02 < ne02; i02++) {
-            for (int64_t i01 = ith; i01 < ne01; i01 += nth) {
-                const int64_t i11 = i01;
-                const int64_t i12 = i02%ne12;
-                const int64_t i13 = i03%ne13;
+    വേണ്ടി (int64_t i03 = 0; i03 < ne03; i03++) {
+        വേണ്ടി (int64_t i02 = 0; i02 < ne02; i02++) {
+            വേണ്ടി (int64_t i01 = ith; i01 < ne01; i01 += nth) {
+                സ്ഥിരം int64_t i11 = i01;
+                സ്ഥിരം int64_t i12 = i02%ne12;
+                സ്ഥിരം int64_t i13 = i03%ne13;
 
                 // ALiBi
-                const uint32_t h = i02; // head
-                const float slope = (max_bias > 0.0f) ? h < n_head_log2 ? powf(m0, h + 1) : powf(m1, 2*(h - n_head_log2) + 1) : 1.0f;
+                സ്ഥിരം uint32_t h = i02; // head
+                സ്ഥിരം ദശാംശം slope = (max_bias > 0.0f) ? h < n_head_log2 ? powf(m0, h + 1) : powf(m1, 2*(h - n_head_log2) + 1) : 1.0f;
 
-                float * sp = (float *)((char *) src0->data + i01*nb01 + i02*nb02 + i03*nb03);
-                float * dp = (float *)((char *)  dst->data + i01*nb1  + i02*nb2  + i03*nb3);
+                ദശാംശം * sp = (ദശാംശം *)((അക്ഷരം *) src0->data + i01*nb01 + i02*nb02 + i03*nb03);
+                ദശാംശം * dp = (ദശാംശം *)((അക്ഷരം *)  dst->data + i01*nb1  + i02*nb2  + i03*nb3);
 
                 // broadcast the mask across rows
-                ggml_fp16_t * mp_f16 = src1 ? (ggml_fp16_t *)((char *) src1->data + i11*nb11 + i12*nb12 + i13*nb13) : NULL;
-                float       * mp_f32 = src1 ? (float       *)((char *) src1->data + i11*nb11 + i12*nb12 + i13*nb13) : NULL;
+                ggml_fp16_t * mp_f16 = src1 ? (ggml_fp16_t *)((അക്ഷരം *) src1->data + i11*nb11 + i12*nb12 + i13*nb13) : ശൂന്യ;
+                ദശാംശം       * mp_f32 = src1 ? (ദശാംശം       *)((അക്ഷരം *) src1->data + i11*nb11 + i12*nb12 + i13*nb13) : ശൂന്യ;
 
                 ggml_vec_cpy_f32  (ne00, wp, sp);
                 ggml_vec_scale_f32(ne00, wp, scale);
-                if (mp_f32) {
-                    if (use_f16) {
-                        for (int i = 0; i < ne00; ++i) {
+                എങ്കിൽ (mp_f32) {
+                    എങ്കിൽ (use_f16) {
+                        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < ne00; ++i) {
                             wp[i] += slope*GGML_CPU_FP16_TO_FP32(mp_f16[i]);
                         }
-                    } else {
-                        for (int i = 0; i < ne00; ++i) {
+                    } അല്ലെങ്കിൽ {
+                        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < ne00; ++i) {
                             wp[i] += slope*mp_f32[i];
                         }
                     }
                 }
 
 #ifndef NDEBUG
-                for (int i = 0; i < ne00; ++i) {
+                വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < ne00; ++i) {
                     //printf("p[%d] = %f\n", i, p[i]);
-                    assert(!isnan(wp[i]));
+                    പ്രതിജ്ഞാ(!isnan(wp[i]));
                 }
 #endif // NDEBUG
 
-                float max = -INFINITY;
+                ദശാംശം max = -INFINITY;
                 ggml_vec_max_f32(ne00, &max, wp);
 
                 // if we have sinks, make a correction as if they were included in the softmax
-                if (sk) {
+                എങ്കിൽ (sk) {
                     max = MAX(max, sk[i02]);
                 }
 
                 ggml_float sum = ggml_vec_soft_max_f32(ne00, dp, wp, max);
-                assert(sum > 0.0);
+                പ്രതിജ്ഞാ(sum > 0.0);
 
-                if (sk) {
+                എങ്കിൽ (sk) {
                     sum += (ggml_float) expf(sk[i02] - max);
                 }
 
@@ -5996,9 +5996,9 @@ static void ggml_compute_forward_soft_max_f32(
                 ggml_vec_scale_f32(ne00, dp, sum);
 
 #ifndef NDEBUG
-                for (int i = 0; i < ne00; ++i) {
-                    assert(!isnan(dp[i]));
-                    assert(!isinf(dp[i]));
+                വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < ne00; ++i) {
+                    പ്രതിജ്ഞാ(!isnan(dp[i]));
+                    പ്രതിജ്ഞാ(!isinf(dp[i]));
                 }
 #endif // NDEBUG
             }
@@ -6006,18 +6006,18 @@ static void ggml_compute_forward_soft_max_f32(
     }
 }
 
-void ggml_compute_forward_soft_max(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_soft_max(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_soft_max_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -6027,12 +6027,12 @@ void ggml_compute_forward_soft_max(
 
 // ggml_compute_forward_soft_max_ext_back
 
-static void ggml_compute_forward_soft_max_ext_back_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_soft_max_ext_back_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
     GGML_ASSERT(ggml_is_contiguous(src0));
     GGML_ASSERT(ggml_is_contiguous(src1));
@@ -6040,39 +6040,39 @@ static void ggml_compute_forward_soft_max_ext_back_f32(
     GGML_ASSERT(ggml_are_same_shape(src0, dst));
     GGML_ASSERT(ggml_are_same_shape(src1, dst));
 
-    float scale    = 1.0f;
-    float max_bias = 0.0f;
+    ദശാംശം scale    = 1.0f;
+    ദശാംശം max_bias = 0.0f;
 
-    memcpy(&scale,    (const float *) dst->op_params + 0, sizeof(float));
-    memcpy(&max_bias, (const float *) dst->op_params + 1, sizeof(float));
+    memcpy(&scale,    (സ്ഥിരം ദശാംശം *) dst->op_params + 0, വലുപ്പം(ദശാംശം));
+    memcpy(&max_bias, (സ്ഥിരം ദശാംശം *) dst->op_params + 1, വലുപ്പം(ദശാംശം));
 
     GGML_ASSERT(max_bias == 0.0f);
 
     // TODO: handle transposed/permuted matrices
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc = src0->ne[0];
-    const int nr = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src0->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src0);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int i1 = ir0; i1 < ir1; i1++) {
-        float *dy = (float *)((char *) src0->data + i1*src0->nb[1]);
-        float *y  = (float *)((char *) src1->data + i1*src1->nb[1]);
-        float *dx = (float *)((char *) dst->data  + i1*dst->nb[1]);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = ir0; i1 < ir1; i1++) {
+        ദശാംശം *dy = (ദശാംശം *)((അക്ഷരം *) src0->data + i1*src0->nb[1]);
+        ദശാംശം *y  = (ദശാംശം *)((അക്ഷരം *) src1->data + i1*src1->nb[1]);
+        ദശാംശം *dx = (ദശാംശം *)((അക്ഷരം *) dst->data  + i1*dst->nb[1]);
 
 #ifndef NDEBUG
-        for (int i = 0; i < nc; ++i) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < nc; ++i) {
             //printf("p[%d] = %f\n", i, p[i]);
-            assert(!isnan(dy[i]));
-            assert(!isnan(y[i]));
+            പ്രതിജ്ഞാ(!isnan(dy[i]));
+            പ്രതിജ്ഞാ(!isnan(y[i]));
         }
 #endif // NDEBUG
         // Jii = yi - yi*yi
@@ -6095,33 +6095,33 @@ static void ggml_compute_forward_soft_max_ext_back_f32(
         // dx := dx * y
 
         // linear runtime, no additional memory
-        float dot_y_dy = 0;
+        ദശാംശം dot_y_dy = 0;
         ggml_vec_dot_f32(nc, &dot_y_dy, 0, y, 0, dy, 0, 1);
-        for (int i = 0; i < nc; i++) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < nc; i++) {
             dx[i] = scale * (dy[i] - dot_y_dy) * y[i];
         }
 
 #ifndef NDEBUG
-        for (int i = 0; i < nc; ++i) {
-            assert(!isnan(dx[i]));
-            assert(!isinf(dx[i]));
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < nc; ++i) {
+            പ്രതിജ്ഞാ(!isnan(dx[i]));
+            പ്രതിജ്ഞാ(!isinf(dx[i]));
         }
 #endif // NDEBUG
     }
 }
 
-void ggml_compute_forward_soft_max_ext_back(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_soft_max_ext_back(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_soft_max_ext_back_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -6130,128 +6130,128 @@ void ggml_compute_forward_soft_max_ext_back(
 
 // ggml_compute_forward_clamp
 
-static void ggml_compute_forward_clamp_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_clamp_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    float min;
-    float max;
-    memcpy(&min, (float *) dst->op_params + 0, sizeof(float));
-    memcpy(&max, (float *) dst->op_params + 1, sizeof(float));
+    ദശാംശം min;
+    ദശാംശം max;
+    memcpy(&min, (ദശാംശം *) dst->op_params + 0, വലുപ്പം(ദശാംശം));
+    memcpy(&max, (ദശാംശം *) dst->op_params + 1, വലുപ്പം(ദശാംശം));
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int n  = ggml_nrows(src0);
-    const int nc = src0->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ n  = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src0->ne[0];
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
-    GGML_ASSERT( nb0 == sizeof(float));
-    GGML_ASSERT(nb00 == sizeof(float));
+    GGML_ASSERT( nb0 == വലുപ്പം(ദശാംശം));
+    GGML_ASSERT(nb00 == വലുപ്പം(ദശാംശം));
 
-    for (int j = ith; j < n; j += nth) {
-        const int64_t i1 = j % ne01;
-        const int64_t i2 = (j / ne01) % ne02;
-        const int64_t i3 = j / (ne01*ne02);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ j = ith; j < n; j += nth) {
+        സ്ഥിരം int64_t i1 = j % ne01;
+        സ്ഥിരം int64_t i2 = (j / ne01) % ne02;
+        സ്ഥിരം int64_t i3 = j / (ne01*ne02);
 
-        float * dst_ptr  = (float *) ((char *)  dst->data + i1*nb1  + i2*nb2  + i3*nb3);
-        float * src0_ptr = (float *) ((char *) src0->data + i1*nb01 + i2*nb02 + i3*nb03);
+        ദശാംശം * dst_ptr  = (ദശാംശം *) ((അക്ഷരം *)  dst->data + i1*nb1  + i2*nb2  + i3*nb3);
+        ദശാംശം * src0_ptr = (ദശാംശം *) ((അക്ഷരം *) src0->data + i1*nb01 + i2*nb02 + i3*nb03);
 
-        for (int i = 0; i < nc; i++) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < nc; i++) {
             dst_ptr[i] = MAX(MIN(src0_ptr[i], max), min);
         }
     }
 }
 
-static void ggml_compute_forward_clamp_f16(
-    const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_clamp_f16(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    float min;
-    float max;
-    memcpy(&min, (float *) dst->op_params + 0, sizeof(float));
-    memcpy(&max, (float *) dst->op_params + 1, sizeof(float));
+    ദശാംശം min;
+    ദശാംശം max;
+    memcpy(&min, (ദശാംശം *) dst->op_params + 0, വലുപ്പം(ദശാംശം));
+    memcpy(&max, (ദശാംശം *) dst->op_params + 1, വലുപ്പം(ദശാംശം));
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int n  = ggml_nrows(src0);
-    const int nc = src0->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ n  = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc = src0->ne[0];
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
-    GGML_ASSERT( nb0 == sizeof(ggml_fp16_t));
-    GGML_ASSERT(nb00 == sizeof(ggml_fp16_t));
+    GGML_ASSERT( nb0 == വലുപ്പം(ggml_fp16_t));
+    GGML_ASSERT(nb00 == വലുപ്പം(ggml_fp16_t));
 
-    for (int j = ith; j < n; j += nth) {
-        const int64_t i1 = j % ne01;
-        const int64_t i2 = (j / ne01) % ne02;
-        const int64_t i3 = j / (ne01*ne02);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ j = ith; j < n; j += nth) {
+        സ്ഥിരം int64_t i1 = j % ne01;
+        സ്ഥിരം int64_t i2 = (j / ne01) % ne02;
+        സ്ഥിരം int64_t i3 = j / (ne01*ne02);
 
-        ggml_fp16_t * dst_ptr  = (ggml_fp16_t *) ((char *)  dst->data + i1*nb1  + i2*nb2  + i3*nb3);
-        ggml_fp16_t * src0_ptr = (ggml_fp16_t *) ((char *) src0->data + i1*nb01 + i2*nb02 + i3*nb03);
+        ggml_fp16_t * dst_ptr  = (ggml_fp16_t *) ((അക്ഷരം *)  dst->data + i1*nb1  + i2*nb2  + i3*nb3);
+        ggml_fp16_t * src0_ptr = (ggml_fp16_t *) ((അക്ഷരം *) src0->data + i1*nb01 + i2*nb02 + i3*nb03);
 
-        for (int i = 0; i < nc; i++) {
-            float v = GGML_CPU_FP16_TO_FP32(src0_ptr[i]);
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < nc; i++) {
+            ദശാംശം v = GGML_CPU_FP16_TO_FP32(src0_ptr[i]);
             dst_ptr[i] = GGML_CPU_FP32_TO_FP16(MAX(MIN(v, max), min));
         }
     }
 }
 
-void ggml_compute_forward_clamp(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_clamp(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_clamp_f32(params, dst);
-            } break;
-        case GGML_TYPE_F16:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F16:
             {
                 ggml_compute_forward_clamp_f16(params, dst);
-            } break;
-        case GGML_TYPE_BF16:
-        case GGML_TYPE_Q1_0:
-        case GGML_TYPE_Q2_0:
-        case GGML_TYPE_Q4_0:
-        case GGML_TYPE_Q4_1:
-        case GGML_TYPE_Q5_0:
-        case GGML_TYPE_Q5_1:
-        case GGML_TYPE_Q8_0:
-        case GGML_TYPE_Q8_1:
-        case GGML_TYPE_MXFP4:
-        case GGML_TYPE_NVFP4:
-        case GGML_TYPE_Q2_K:
-        case GGML_TYPE_Q3_K:
-        case GGML_TYPE_Q4_K:
-        case GGML_TYPE_Q5_K:
-        case GGML_TYPE_Q6_K:
-        case GGML_TYPE_TQ1_0:
-        case GGML_TYPE_TQ2_0:
-        case GGML_TYPE_IQ2_XXS:
-        case GGML_TYPE_IQ2_XS:
-        case GGML_TYPE_IQ3_XXS:
-        case GGML_TYPE_IQ1_S:
-        case GGML_TYPE_IQ1_M:
-        case GGML_TYPE_IQ4_NL:
-        case GGML_TYPE_IQ4_XS:
-        case GGML_TYPE_IQ3_S:
-        case GGML_TYPE_IQ2_S:
-        case GGML_TYPE_Q8_K:
-        case GGML_TYPE_I8:
-        case GGML_TYPE_I16:
-        case GGML_TYPE_I32:
-        case GGML_TYPE_I64:
-        case GGML_TYPE_F64:
-        case GGML_TYPE_COUNT:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_BF16:
+        അവസ്ഥ GGML_TYPE_Q1_0:
+        അവസ്ഥ GGML_TYPE_Q2_0:
+        അവസ്ഥ GGML_TYPE_Q4_0:
+        അവസ്ഥ GGML_TYPE_Q4_1:
+        അവസ്ഥ GGML_TYPE_Q5_0:
+        അവസ്ഥ GGML_TYPE_Q5_1:
+        അവസ്ഥ GGML_TYPE_Q8_0:
+        അവസ്ഥ GGML_TYPE_Q8_1:
+        അവസ്ഥ GGML_TYPE_MXFP4:
+        അവസ്ഥ GGML_TYPE_NVFP4:
+        അവസ്ഥ GGML_TYPE_Q2_K:
+        അവസ്ഥ GGML_TYPE_Q3_K:
+        അവസ്ഥ GGML_TYPE_Q4_K:
+        അവസ്ഥ GGML_TYPE_Q5_K:
+        അവസ്ഥ GGML_TYPE_Q6_K:
+        അവസ്ഥ GGML_TYPE_TQ1_0:
+        അവസ്ഥ GGML_TYPE_TQ2_0:
+        അവസ്ഥ GGML_TYPE_IQ2_XXS:
+        അവസ്ഥ GGML_TYPE_IQ2_XS:
+        അവസ്ഥ GGML_TYPE_IQ3_XXS:
+        അവസ്ഥ GGML_TYPE_IQ1_S:
+        അവസ്ഥ GGML_TYPE_IQ1_M:
+        അവസ്ഥ GGML_TYPE_IQ4_NL:
+        അവസ്ഥ GGML_TYPE_IQ4_XS:
+        അവസ്ഥ GGML_TYPE_IQ3_S:
+        അവസ്ഥ GGML_TYPE_IQ2_S:
+        അവസ്ഥ GGML_TYPE_Q8_K:
+        അവസ്ഥ GGML_TYPE_I8:
+        അവസ്ഥ GGML_TYPE_I16:
+        അവസ്ഥ GGML_TYPE_I32:
+        അവസ്ഥ GGML_TYPE_I64:
+        അവസ്ഥ GGML_TYPE_F64:
+        അവസ്ഥ GGML_TYPE_എണ്ണം:
             {
                 GGML_ABORT("fatal error");
             }
@@ -6260,21 +6260,21 @@ void ggml_compute_forward_clamp(
 
 // ggml_compute_forward_rope
 
-static float rope_yarn_ramp(const float low, const float high, const int i0) {
-    const float y = (i0 / 2 - low) / MAX(0.001f, high - low);
-    return 1 - MIN(1, MAX(0, y));
+സ്ഥിതം ദശാംശം rope_yarn_ramp(സ്ഥിരം ദശാംശം താഴെയുള്ള, സ്ഥിരം ദശാംശം മുകളിലെ, സ്ഥിരം പൂർണ്ണസംഖ്യ i0) {
+    സ്ഥിരം ദശാംശം y = (i0 / 2 - താഴെയുള്ള) / MAX(0.001f, മുകളിലെ - താഴെയുള്ള);
+    തിരികെ 1 - MIN(1, MAX(0, y));
 }
 
 // YaRN algorithm based on LlamaYaRNScaledRotaryEmbedding.py from https://github.com/jquesnelle/yarn
 // MIT licensed. Copyright (c) 2023 Jeffrey Quesnelle and Bowen Peng.
-static void rope_yarn(
-    float theta_extrap, float freq_scale, float corr_dims[2], int64_t i0, float ext_factor, float mscale,
-    float * cos_theta, float * sin_theta) {
+സ്ഥിതം ശൂന്യം rope_yarn(
+    ദശാംശം theta_extrap, ദശാംശം freq_scale, ദശാംശം corr_dims[2], int64_t i0, ദശാംശം ext_factor, ദശാംശം mscale,
+    ദശാംശം * cos_theta, ദശാംശം * sin_theta) {
     // Get n-d rotational scaling corrected for extrapolation
-    float theta_interp = freq_scale * theta_extrap;
-    float theta = theta_interp;
-    if (ext_factor != 0.0f) {
-        float ramp_mix = rope_yarn_ramp(corr_dims[0], corr_dims[1], i0) * ext_factor;
+    ദശാംശം theta_interp = freq_scale * theta_extrap;
+    ദശാംശം theta = theta_interp;
+    എങ്കിൽ (ext_factor != 0.0f) {
+        ദശാംശം ramp_mix = rope_yarn_ramp(corr_dims[0], corr_dims[1], i0) * ext_factor;
         theta = theta_interp * (1 - ramp_mix) + theta_extrap * ramp_mix;
 
         // Get n-d magnitude scaling corrected for interpolation
@@ -6284,13 +6284,13 @@ static void rope_yarn(
     *sin_theta = sinf(theta) * mscale;
 }
 
-static void ggml_rope_cache_init(
-     float theta_base, float freq_scale, const float * freq_factors, float corr_dims[2], int64_t ne0, float ext_factor, float mscale,
-     float * cache, float sin_sign, float theta_scale) {
+സ്ഥിതം ശൂന്യം ggml_rope_cache_init(
+     ദശാംശം theta_base, ദശാംശം freq_scale, സ്ഥിരം ദശാംശം * freq_factors, ദശാംശം corr_dims[2], int64_t ne0, ദശാംശം ext_factor, ദശാംശം mscale,
+     ദശാംശം * cache, ദശാംശം sin_sign, ദശാംശം theta_scale) {
     // ref: https://github.com/jquesnelle/yarn/blob/master/scaled_rope/LlamaYaRNScaledRotaryEmbedding.py
-    float theta = theta_base;
-    for (int64_t i0 = 0; i0 < ne0; i0 += 2) {
-        const float ff = freq_factors ? freq_factors[i0/2] : 1.0f;
+    ദശാംശം theta = theta_base;
+    വേണ്ടി (int64_t i0 = 0; i0 < ne0; i0 += 2) {
+        സ്ഥിരം ദശാംശം ff = freq_factors ? freq_factors[i0/2] : 1.0f;
         rope_yarn(
             theta/ff, freq_scale, corr_dims, i0, ext_factor, mscale, &cache[i0 + 0], &cache[i0 + 1]
         );
@@ -6300,60 +6300,60 @@ static void ggml_rope_cache_init(
     }
 }
 
-static void ggml_mrope_cache_init(
-     float theta_base_t, float theta_base_h, float theta_base_w, float theta_base_e, int sections[4], bool is_imrope, bool indep_sects,
-     float freq_scale, const float * freq_factors, float corr_dims[2], int64_t ne0, float ext_factor, float mscale,
-     float * cache, float sin_sign, float theta_scale) {
+സ്ഥിതം ശൂന്യം ggml_mrope_cache_init(
+     ദശാംശം theta_base_t, ദശാംശം theta_base_h, ദശാംശം theta_base_w, ദശാംശം theta_base_e, പൂർണ്ണസംഖ്യ sections[4], തർക്കം is_imrope, തർക്കം indep_sects,
+     ദശാംശം freq_scale, സ്ഥിരം ദശാംശം * freq_factors, ദശാംശം corr_dims[2], int64_t ne0, ദശാംശം ext_factor, ദശാംശം mscale,
+     ദശാംശം * cache, ദശാംശം sin_sign, ദശാംശം theta_scale) {
     // ref: https://github.com/jquesnelle/yarn/blob/master/scaled_rope/LlamaYaRNScaledRotaryEmbedding.py
-    float theta_t = theta_base_t;
-    float theta_h = theta_base_h;
-    float theta_w = theta_base_w;
-    float theta_e = theta_base_e;  // extra position id for vision encoder
-    int sect_dims = sections[0] + sections[1] + sections[2] + sections[3];
-    int sec_w = sections[1] + sections[0];
-    int sec_e = sections[2] + sec_w;
+    ദശാംശം theta_t = theta_base_t;
+    ദശാംശം theta_h = theta_base_h;
+    ദശാംശം theta_w = theta_base_w;
+    ദശാംശം theta_e = theta_base_e;  // extra position id for vision encoder
+    പൂർണ്ണസംഖ്യ sect_dims = sections[0] + sections[1] + sections[2] + sections[3];
+    പൂർണ്ണസംഖ്യ sec_w = sections[1] + sections[0];
+    പൂർണ്ണസംഖ്യ sec_e = sections[2] + sec_w;
     GGML_ASSERT(sect_dims <= ne0);
 
-    for (int64_t i0 = 0; i0 < ne0; i0 += 2) {
-        const float ff = freq_factors ? freq_factors[i0/2] : 1.0f;
+    വേണ്ടി (int64_t i0 = 0; i0 < ne0; i0 += 2) {
+        സ്ഥിരം ദശാംശം ff = freq_factors ? freq_factors[i0/2] : 1.0f;
 
-        int sector = (i0 / 2) % sect_dims;
-        if (indep_sects) {
+        പൂർണ്ണസംഖ്യ sector = (i0 / 2) % sect_dims;
+        എങ്കിൽ (indep_sects) {
             // compute theta independently for each dim sections
             // (i.e. reset corresponding theta when `i0` go from one section to another)
-            if (sector == 0) {
+            എങ്കിൽ (sector == 0) {
                 theta_t = theta_base_t;
             }
-            else if (sector == sections[0]) {
+            അല്ലെങ്കിൽ എങ്കിൽ (sector == sections[0]) {
                 theta_h = theta_base_h;;
             }
-            else if (sector == sec_w) {
+            അല്ലെങ്കിൽ എങ്കിൽ (sector == sec_w) {
                 theta_w = theta_base_w;
             }
-            else if (sector == sec_e) {
+            അല്ലെങ്കിൽ എങ്കിൽ (sector == sec_e) {
                 theta_e = theta_base_e;
             }
         }
 
-        float theta = theta_t;
-        if (is_imrope) { // qwen3vl apply interleaved mrope
-            if (sector % 3 == 1 && sector < 3 * sections[1]) {
+        ദശാംശം theta = theta_t;
+        എങ്കിൽ (is_imrope) { // qwen3vl apply interleaved mrope
+            എങ്കിൽ (sector % 3 == 1 && sector < 3 * sections[1]) {
                 theta = theta_h;
-            } else if (sector % 3 == 2 && sector < 3 * sections[2]) {
+            } അല്ലെങ്കിൽ എങ്കിൽ (sector % 3 == 2 && sector < 3 * sections[2]) {
                 theta = theta_w;
-            } else if (sector % 3 == 0 && sector < 3 * sections[0]) {
+            } അല്ലെങ്കിൽ എങ്കിൽ (sector % 3 == 0 && sector < 3 * sections[0]) {
                 theta = theta_t;
-            } else {
+            } അല്ലെങ്കിൽ {
                 theta = theta_e;
             }
-        } else {
-            if (sector >= sections[0] && sector < sec_w) {
+        } അല്ലെങ്കിൽ {
+            എങ്കിൽ (sector >= sections[0] && sector < sec_w) {
                 theta = theta_h;
             }
-            else if (sector >= sec_w && sector < sec_w + sections[2]) {
+            അല്ലെങ്കിൽ എങ്കിൽ (sector >= sec_w && sector < sec_w + sections[2]) {
                 theta = theta_w;
             }
-            else if (sector >= sec_w + sections[2]) {
+            അല്ലെങ്കിൽ എങ്കിൽ (sector >= sec_w + sections[2]) {
                 theta = theta_e;
             }
         }
@@ -6372,18 +6372,18 @@ static void ggml_mrope_cache_init(
 
 
 template<typename T>
-static void rotate_pairs(const int64_t n, const int64_t n_offset, const float * cache, const T * src_data, T * dst_data, const int scale = 2) {
-  for (int64_t i0 = 0; i0 < n; i0 += 2) {
-    const int64_t ic = i0/scale; // hack for GGML_ROPE_TYPE_NORMAL, where we need ic = i0; for all other cases, ic = i0/2
+സ്ഥിതം ശൂന്യം rotate_pairs(സ്ഥിരം int64_t n, സ്ഥിരം int64_t n_offset, സ്ഥിരം ദശാംശം * cache, സ്ഥിരം T * src_data, T * dst_data, സ്ഥിരം പൂർണ്ണസംഖ്യ scale = 2) {
+  വേണ്ടി (int64_t i0 = 0; i0 < n; i0 += 2) {
+    സ്ഥിരം int64_t ic = i0/scale; // hack for GGML_ROPE_TYPE_NORMAL, where we need ic = i0; for all other cases, ic = i0/2
 
-    const float cos_theta = cache[i0 + 0];
-    const float sin_theta = cache[i0 + 1];
+    സ്ഥിരം ദശാംശം cos_theta = cache[i0 + 0];
+    സ്ഥിരം ദശാംശം sin_theta = cache[i0 + 1];
 
-    const T * const src = src_data + ic;
+    സ്ഥിരം T * സ്ഥിരം src = src_data + ic;
     T * dst             = dst_data + ic;
 
-    const float x0 = type_conversion_table<T>::to_f32(src[0]);
-    const float x1 = type_conversion_table<T>::to_f32(src[n_offset]);
+    സ്ഥിരം ദശാംശം x0 = type_conversion_table<T>::to_f32(src[0]);
+    സ്ഥിരം ദശാംശം x1 = type_conversion_table<T>::to_f32(src[n_offset]);
 
     dst[0]        = type_conversion_table<T>::from_f32(x0*cos_theta - x1*sin_theta);
     dst[n_offset] = type_conversion_table<T>::from_f32(x0*sin_theta + x1*cos_theta);
@@ -6391,36 +6391,36 @@ static void rotate_pairs(const int64_t n, const int64_t n_offset, const float * 
 }
 
 template<typename T> //float or ggml_fp16_t
-static void ggml_compute_forward_rope_flt(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_rope_flt(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst,
-        const bool forward) {
+        സ്ഥിരം തർക്കം forward) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
-    const ggml_tensor * src2 = dst->src[2];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src2 = dst->src[2];
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_F16);
     GGML_ASSERT(src1->type == GGML_TYPE_I32);
 
-    float freq_base, freq_scale, ext_factor, attn_factor, beta_fast, beta_slow;
-    int sections[4];
+    ദശാംശം freq_base, freq_scale, ext_factor, attn_factor, beta_fast, beta_slow;
+    പൂർണ്ണസംഖ്യ sections[4];
 
     //const int n_past     = ((int32_t *) dst->op_params)[0];
-    const int n_dims     = ((int32_t *) dst->op_params)[1];
-    const int mode       = ((int32_t *) dst->op_params)[2];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ n_dims     = ((int32_t *) dst->op_params)[1];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ mode       = ((int32_t *) dst->op_params)[2];
     //const int n_ctx      = ((int32_t *) dst->op_params)[3];
-    const int n_ctx_orig = ((int32_t *) dst->op_params)[4];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ n_ctx_orig = ((int32_t *) dst->op_params)[4];
 
-    memcpy(&freq_base,   (int32_t *) dst->op_params +  5, sizeof(float));
-    memcpy(&freq_scale,  (int32_t *) dst->op_params +  6, sizeof(float));
-    memcpy(&ext_factor,  (int32_t *) dst->op_params +  7, sizeof(float));
-    memcpy(&attn_factor, (int32_t *) dst->op_params +  8, sizeof(float));
-    memcpy(&beta_fast,   (int32_t *) dst->op_params +  9, sizeof(float));
-    memcpy(&beta_slow,   (int32_t *) dst->op_params + 10, sizeof(float));
-    memcpy(&sections,    (int32_t *) dst->op_params + 11, sizeof(int)*4);
+    memcpy(&freq_base,   (int32_t *) dst->op_params +  5, വലുപ്പം(ദശാംശം));
+    memcpy(&freq_scale,  (int32_t *) dst->op_params +  6, വലുപ്പം(ദശാംശം));
+    memcpy(&ext_factor,  (int32_t *) dst->op_params +  7, വലുപ്പം(ദശാംശം));
+    memcpy(&attn_factor, (int32_t *) dst->op_params +  8, വലുപ്പം(ദശാംശം));
+    memcpy(&beta_fast,   (int32_t *) dst->op_params +  9, വലുപ്പം(ദശാംശം));
+    memcpy(&beta_slow,   (int32_t *) dst->op_params + 10, വലുപ്പം(ദശാംശം));
+    memcpy(&sections,    (int32_t *) dst->op_params + 11, വലുപ്പം(പൂർണ്ണസംഖ്യ)*4);
 
-    const int n_offs = ((int32_t *) dst->op_params)[15];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ n_offs = ((int32_t *) dst->op_params)[15];
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
@@ -6428,12 +6428,12 @@ static void ggml_compute_forward_rope_flt(
     //printf("n_past = %d, ne2 = %d\n", n_past, ne2);
 
     GGML_ASSERT(nb0 == nb00);
-    GGML_ASSERT(nb0 == sizeof(T));
+    GGML_ASSERT(nb0 == വലുപ്പം(T));
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nr = ggml_nrows(dst);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(dst);
 
     GGML_ASSERT(n_dims <= ne0);
     GGML_ASSERT(n_dims % 2 == 0);
@@ -6443,66 +6443,66 @@ static void ggml_compute_forward_rope_flt(
     GGML_ASSERT(n_offs + n_dims <= ne0);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
     // row index used to determine which thread to use
-    int ir = 0;
+    പൂർണ്ണസംഖ്യ ir = 0;
 
-    const float theta_scale = powf(freq_base, -2.0f/n_dims);
+    സ്ഥിരം ദശാംശം theta_scale = powf(freq_base, -2.0f/n_dims);
 
-    float corr_dims[2];
+    ദശാംശം corr_dims[2];
     ggml_rope_yarn_corr_dims(n_dims, n_ctx_orig, freq_base, beta_fast, beta_slow, corr_dims);
 
-    const bool is_imrope = mode == GGML_ROPE_TYPE_IMROPE; // qwen3vl apply interleaved mrope
-    const bool mrope_used = mode & GGML_ROPE_TYPE_MROPE;  // ggml_rope_multi, note: also true for vision (24 & 8 == true) and for imrope
-    const bool is_vision = mode == GGML_ROPE_TYPE_VISION;
+    സ്ഥിരം തർക്കം is_imrope = mode == GGML_ROPE_TYPE_IMROPE; // qwen3vl apply interleaved mrope
+    സ്ഥിരം തർക്കം mrope_used = mode & GGML_ROPE_TYPE_MROPE;  // ggml_rope_multi, note: also true for vision (24 & 8 == true) and for imrope
+    സ്ഥിരം തർക്കം is_vision = mode == GGML_ROPE_TYPE_VISION;
 
-    if (mrope_used) {
+    എങ്കിൽ (mrope_used) {
         GGML_ASSERT(sections[0] > 0 || sections[1] > 0 || sections[2] > 0);
     }
 
-    if (is_vision) {
+    എങ്കിൽ (is_vision) {
         GGML_ASSERT(n_dims == ne0/2);
         GGML_ASSERT(n_offs == 0);
     }
 
-    const float * freq_factors = NULL;
-    if (src2 != NULL) {
+    സ്ഥിരം ദശാംശം * freq_factors = ശൂന്യ;
+    എങ്കിൽ (src2 != ശൂന്യ) {
         GGML_ASSERT(src2->type == GGML_TYPE_F32);
         GGML_ASSERT(src2->ne[0] >= n_dims / 2);
-        freq_factors = (const float *) src2->data;
+        freq_factors = (സ്ഥിരം ദശാംശം *) src2->data;
     }
 
     // backward process uses inverse rotation by cos and sin.
     // cos and sin build a rotation matrix, where the inverse is the transpose.
     // this essentially just switches the sign of sin.
-    const float sin_sign = forward ? 1.0f : -1.0f;
+    സ്ഥിരം ദശാംശം sin_sign = forward ? 1.0f : -1.0f;
 
-    const int32_t * pos = (const int32_t *) src1->data;
+    സ്ഥിരം int32_t * pos = (സ്ഥിരം int32_t *) src1->data;
 
     int64_t last_i2 = -1;
 
-    for (int64_t i3 = 0; i3 < ne3; i3++) { // batch
-        for (int64_t i2 = 0; i2 < ne2; i2++) { // seq-len
-            for (int64_t i1 = 0; i1 < ne1; i1++) { // attn-heads
-                if (ir++ < ir0) continue; // skip rows mapped to other threads
-                if (ir   > ir1) break;
+    വേണ്ടി (int64_t i3 = 0; i3 < ne3; i3++) { // batch
+        വേണ്ടി (int64_t i2 = 0; i2 < ne2; i2++) { // seq-len
+            വേണ്ടി (int64_t i1 = 0; i1 < ne1; i1++) { // attn-heads
+                എങ്കിൽ (ir++ < ir0) തുടരുക; // skip rows mapped to other threads
+                എങ്കിൽ (ir   > ir1) നിർത്തുക;
 
-                float * cache = (float *) params->wdata + (ne0 + CACHE_LINE_SIZE_F32)*ith;
-                if (last_i2 != i2) {
-                    if (!mrope_used) {
-                        const int64_t p = pos[i2];
+                ദശാംശം * cache = (ദശാംശം *) params->wdata + (ne0 + CACHE_വരി_SIZE_F32)*ith;
+                എങ്കിൽ (last_i2 != i2) {
+                    എങ്കിൽ (!mrope_used) {
+                        സ്ഥിരം int64_t p = pos[i2];
                         ggml_rope_cache_init(p, freq_scale, freq_factors, corr_dims, ne0, ext_factor, attn_factor, cache, sin_sign, theta_scale);
                     }
-                    else {
-                        const int64_t p_t = pos[i2];
-                        const int64_t p_h = pos[i2 + ne2];
-                        const int64_t p_w = pos[i2 + ne2 * 2];
-                        const int64_t p_e = pos[i2 + ne2 * 3];
+                    അല്ലെങ്കിൽ {
+                        സ്ഥിരം int64_t p_t = pos[i2];
+                        സ്ഥിരം int64_t p_h = pos[i2 + ne2];
+                        സ്ഥിരം int64_t p_w = pos[i2 + ne2 * 2];
+                        സ്ഥിരം int64_t p_e = pos[i2 + ne2 * 3];
                         ggml_mrope_cache_init(
                             p_t, p_h, p_w, p_e, sections, is_imrope, is_vision,
                             freq_scale, freq_factors, corr_dims, ne0, ext_factor, attn_factor, cache, sin_sign, theta_scale);
@@ -6511,34 +6511,34 @@ static void ggml_compute_forward_rope_flt(
                     last_i2 = i2;
                 }
 
-                T * src = (T *)((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01);
-                T * dst_data  = (T *)((char *)  dst->data + i3*nb3  + i2*nb2  + i1*nb1);
+                T * src = (T *)((അക്ഷരം *) src0->data + i3*nb03 + i2*nb02 + i1*nb01);
+                T * dst_data  = (T *)((അക്ഷരം *)  dst->data + i3*nb3  + i2*nb2  + i1*nb1);
 
-                switch (mode) {
-                    case GGML_ROPE_TYPE_NORMAL:
+                തിരഞ്ഞെടുപ്പ് (mode) {
+                    അവസ്ഥ GGML_ROPE_TYPE_NORMAL:
                         rotate_pairs<T>(n_dims, 1, cache, src + n_offs, dst_data + n_offs, 1);
-                        break;
-                    case GGML_ROPE_TYPE_NEOX:
-                    case GGML_ROPE_TYPE_MROPE:
-                    case GGML_ROPE_TYPE_IMROPE:
+                        നിർത്തുക;
+                    അവസ്ഥ GGML_ROPE_TYPE_NEOX:
+                    അവസ്ഥ GGML_ROPE_TYPE_MROPE:
+                    അവസ്ഥ GGML_ROPE_TYPE_IMROPE:
                         rotate_pairs<T>(n_dims, n_dims/2, cache, src + n_offs, dst_data + n_offs);
-                        break;
-                    case GGML_ROPE_TYPE_VISION:
+                        നിർത്തുക;
+                    അവസ്ഥ GGML_ROPE_TYPE_VISION:
                         rotate_pairs<T>(ne0, n_dims, cache, src, dst_data);
-                        break;
-                    default:
+                        നിർത്തുക;
+                    സ്ഥിരസ്ഥിതി:
                         GGML_ABORT("rope type not supported");
                 }
 
-                if (!is_vision) {
+                എങ്കിൽ (!is_vision) {
                     // fill the remain channels with data from src tensor
-                    for (int64_t i0 = 0; i0 < ne0; i0 += 2) {
-                        if (i0 == n_offs) {
+                    വേണ്ടി (int64_t i0 = 0; i0 < ne0; i0 += 2) {
+                        എങ്കിൽ (i0 == n_offs) {
                             i0 += n_dims - 2; // skip the rotated channels
-                            continue;
+                            തുടരുക;
                         }
-                        const T * const src = (T *)((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01 + i0*nb00);
-                        T * dst_data  = (T *)((char *)  dst->data + i3*nb3  + i2*nb2  + i1*nb1  + i0*nb0);
+                        സ്ഥിരം T * സ്ഥിരം src = (T *)((അക്ഷരം *) src0->data + i3*nb03 + i2*nb02 + i1*nb01 + i0*nb00);
+                        T * dst_data  = (T *)((അക്ഷരം *)  dst->data + i3*nb3  + i2*nb2  + i1*nb1  + i0*nb0);
 
                         dst_data[0] = src[0];
                         dst_data[1] = src[1];
@@ -6549,22 +6549,22 @@ static void ggml_compute_forward_rope_flt(
     }
 }
 
-void ggml_compute_forward_rope(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_rope(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F16:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F16:
             {
-                ggml_compute_forward_rope_flt<ggml_fp16_t>(params, dst, true);
-            } break;
-        case GGML_TYPE_F32:
+                ggml_compute_forward_rope_flt<ggml_fp16_t>(params, dst, സത്യം);
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F32:
             {
-                ggml_compute_forward_rope_flt<float>(params, dst, true);
-            } break;
-        default:
+                ggml_compute_forward_rope_flt<ദശാംശം>(params, dst, സത്യം);
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -6573,22 +6573,22 @@ void ggml_compute_forward_rope(
 
 // ggml_compute_forward_rope_back
 
-void ggml_compute_forward_rope_back(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_rope_back(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F16:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F16:
             {
-                ggml_compute_forward_rope_flt<ggml_fp16_t>(params, dst, false);
-            } break;
-        case GGML_TYPE_F32:
+                ggml_compute_forward_rope_flt<ggml_fp16_t>(params, dst, അസത്യം);
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F32:
             {
-                ggml_compute_forward_rope_flt<float>(params, dst, false);
-            } break;
-        default:
+                ggml_compute_forward_rope_flt<ദശാംശം>(params, dst, അസത്യം);
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -6597,39 +6597,39 @@ void ggml_compute_forward_rope_back(
 
 // ggml_compute_forward_conv_transpose_1d
 
-static void ggml_compute_forward_conv_transpose_1d_f16_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_conv_transpose_1d_f16_f32(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
     GGML_ASSERT(src0->type == GGML_TYPE_F16);
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nk = ne00*ne01*ne02;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nk = ne00*ne01*ne02;
 
-    GGML_ASSERT(nb00 == sizeof(ggml_fp16_t));
-    GGML_ASSERT(nb10 == sizeof(float));
+    GGML_ASSERT(nb00 == വലുപ്പം(ggml_fp16_t));
+    GGML_ASSERT(nb10 == വലുപ്പം(ദശാംശം));
 
-    if (ith == 0) {
+    എങ്കിൽ (ith == 0) {
         memset(params->wdata, 0, params->wsize);
 
         // permute kernel data (src0) from (K x Cout x Cin) to (Cin x K x Cout)
         {
-            ggml_fp16_t * const wdata = (ggml_fp16_t *) params->wdata + 0;
+            ggml_fp16_t * സ്ഥിരം wdata = (ggml_fp16_t *) params->wdata + 0;
 
-            for (int64_t i02 = 0; i02 < ne02; i02++) {
-                for (int64_t i01 = 0; i01 < ne01; i01++) {
-                    const ggml_fp16_t * const src = (ggml_fp16_t *)((char *) src0->data + i02*nb02 + i01*nb01);
+            വേണ്ടി (int64_t i02 = 0; i02 < ne02; i02++) {
+                വേണ്ടി (int64_t i01 = 0; i01 < ne01; i01++) {
+                    സ്ഥിരം ggml_fp16_t * സ്ഥിരം src = (ggml_fp16_t *)((അക്ഷരം *) src0->data + i02*nb02 + i01*nb01);
                     ggml_fp16_t * dst_data = wdata + i01*ne00*ne02;
-                    for (int64_t i00 = 0; i00 < ne00; i00++) {
+                    വേണ്ടി (int64_t i00 = 0; i00 < ne00; i00++) {
                         dst_data[i00*ne02 + i02] = src[i00];
                     }
                 }
@@ -6638,12 +6638,12 @@ static void ggml_compute_forward_conv_transpose_1d_f16_f32(
 
         // permute source data (src1) from (L x Cin) to (Cin x L)
         {
-            ggml_fp16_t * const wdata = (ggml_fp16_t *) params->wdata + nk;
+            ggml_fp16_t * സ്ഥിരം wdata = (ggml_fp16_t *) params->wdata + nk;
             ggml_fp16_t * dst_data = wdata;
 
-            for (int64_t i11 = 0; i11 < ne11; i11++) {
-                const float * const src = (float *)((char *) src1->data + i11*nb11);
-                for (int64_t i10 = 0; i10 < ne10; i10++) {
+            വേണ്ടി (int64_t i11 = 0; i11 < ne11; i11++) {
+                സ്ഥിരം ദശാംശം * സ്ഥിരം src = (ദശാംശം *)((അക്ഷരം *) src1->data + i11*nb11);
+                വേണ്ടി (int64_t i10 = 0; i10 < ne10; i10++) {
                     dst_data[i10*ne11 + i11] = GGML_CPU_FP32_TO_FP16(src[i10]);
                 }
             }
@@ -6654,28 +6654,28 @@ static void ggml_compute_forward_conv_transpose_1d_f16_f32(
     }
     ggml_barrier(params->threadpool);
 
-    const int32_t s0 = ((const int32_t*)(dst->op_params))[0];
+    സ്ഥിരം int32_t s0 = ((സ്ഥിരം int32_t*)(dst->op_params))[0];
 
     // total rows in dst
-    const int nr = ne1;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ne1;
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    ggml_fp16_t * const wdata     = (ggml_fp16_t *) params->wdata + 0;
-    ggml_fp16_t * const wdata_src = wdata + nk;
+    ggml_fp16_t * സ്ഥിരം wdata     = (ggml_fp16_t *) params->wdata + 0;
+    ggml_fp16_t * സ്ഥിരം wdata_src = wdata + nk;
 
-    for (int i1 = ir0; i1 < ir1; i1++) {
-        float * dst_data = (float *)((char *) dst->data + i1*nb1);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = ir0; i1 < ir1; i1++) {
+        ദശാംശം * dst_data = (ദശാംശം *)((അക്ഷരം *) dst->data + i1*nb1);
         ggml_fp16_t * wdata_kernel = wdata + i1*ne02*ne00;
-        for (int i10 = 0; i10 < ne10; i10++) {
-            const int i1n = i10*ne11;
-            for (int i00 = 0; i00 < ne00; i00++) {
-                float v = 0;
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i10 = 0; i10 < ne10; i10++) {
+            സ്ഥിരം പൂർണ്ണസംഖ്യ i1n = i10*ne11;
+            വേണ്ടി (പൂർണ്ണസംഖ്യ i00 = 0; i00 < ne00; i00++) {
+                ദശാംശം v = 0;
                 ggml_vec_dot_f16(ne02, &v, 0,
                         (ggml_fp16_t *)    wdata_src + i1n, 0,
                         (ggml_fp16_t *) wdata_kernel + i00*ne02, 0, 1);
@@ -6685,39 +6685,39 @@ static void ggml_compute_forward_conv_transpose_1d_f16_f32(
     }
 }
 
-static void ggml_compute_forward_conv_transpose_1d_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_conv_transpose_1d_f32(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nk = ne00*ne01*ne02;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nk = ne00*ne01*ne02;
 
-    GGML_ASSERT(nb00 == sizeof(float));
-    GGML_ASSERT(nb10 == sizeof(float));
+    GGML_ASSERT(nb00 == വലുപ്പം(ദശാംശം));
+    GGML_ASSERT(nb10 == വലുപ്പം(ദശാംശം));
 
-    if (ith == 0) {
+    എങ്കിൽ (ith == 0) {
         memset(params->wdata, 0, params->wsize);
 
         // prepare kernel data (src0) from (K x Cout x Cin) to (Cin x K x Cout)
         {
-            float * const wdata = (float *) params->wdata + 0;
+            ദശാംശം * സ്ഥിരം wdata = (ദശാംശം *) params->wdata + 0;
 
-            for (int64_t i02 = 0; i02 < ne02; i02++) {
-                for (int64_t i01 = 0; i01 < ne01; i01++) {
-                    const float * const src = (float *)((char *) src0->data + i02*nb02 + i01*nb01);
-                    float * dst_data = wdata + i01*ne00*ne02;
-                    for (int64_t i00 = 0; i00 < ne00; i00++) {
+            വേണ്ടി (int64_t i02 = 0; i02 < ne02; i02++) {
+                വേണ്ടി (int64_t i01 = 0; i01 < ne01; i01++) {
+                    സ്ഥിരം ദശാംശം * സ്ഥിരം src = (ദശാംശം *)((അക്ഷരം *) src0->data + i02*nb02 + i01*nb01);
+                    ദശാംശം * dst_data = wdata + i01*ne00*ne02;
+                    വേണ്ടി (int64_t i00 = 0; i00 < ne00; i00++) {
                         dst_data[i00*ne02 + i02] = src[i00];
                     }
                 }
@@ -6726,12 +6726,12 @@ static void ggml_compute_forward_conv_transpose_1d_f32(
 
         // prepare source data (src1)
         {
-            float * const wdata = (float *) params->wdata + nk;
-            float * dst_data = wdata;
+            ദശാംശം * സ്ഥിരം wdata = (ദശാംശം *) params->wdata + nk;
+            ദശാംശം * dst_data = wdata;
 
-            for (int64_t i11 = 0; i11 < ne11; i11++) {
-                const float * const src = (float *)((char *) src1->data + i11*nb11);
-                for (int64_t i10 = 0; i10 < ne10; i10++) {
+            വേണ്ടി (int64_t i11 = 0; i11 < ne11; i11++) {
+                സ്ഥിരം ദശാംശം * സ്ഥിരം src = (ദശാംശം *)((അക്ഷരം *) src1->data + i11*nb11);
+                വേണ്ടി (int64_t i10 = 0; i10 < ne10; i10++) {
                     dst_data[i10*ne11 + i11] = src[i10];
                 }
             }
@@ -6742,28 +6742,28 @@ static void ggml_compute_forward_conv_transpose_1d_f32(
     }
     ggml_barrier(params->threadpool);
 
-    const int32_t s0 = ((const int32_t*)(dst->op_params))[0];
+    സ്ഥിരം int32_t s0 = ((സ്ഥിരം int32_t*)(dst->op_params))[0];
 
     // total rows in dst
-    const int nr = ne1;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ne1;
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    float * const wdata     = (float *) params->wdata + 0;
-    float * const wdata_src = wdata + nk;
+    ദശാംശം * സ്ഥിരം wdata     = (ദശാംശം *) params->wdata + 0;
+    ദശാംശം * സ്ഥിരം wdata_src = wdata + nk;
 
-    for (int i1 = ir0; i1 < ir1; i1++) {
-        float * dst_data = (float *)((char *) dst->data + i1*nb1);
-        float * wdata_kernel = wdata + i1*ne02*ne00;
-        for (int i10 = 0; i10 < ne10; i10++) {
-            const int i1n = i10*ne11;
-            for (int i00 = 0; i00 < ne00; i00++) {
-                float v = 0;
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = ir0; i1 < ir1; i1++) {
+        ദശാംശം * dst_data = (ദശാംശം *)((അക്ഷരം *) dst->data + i1*nb1);
+        ദശാംശം * wdata_kernel = wdata + i1*ne02*ne00;
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i10 = 0; i10 < ne10; i10++) {
+            സ്ഥിരം പൂർണ്ണസംഖ്യ i1n = i10*ne11;
+            വേണ്ടി (പൂർണ്ണസംഖ്യ i00 = 0; i00 < ne00; i00++) {
+                ദശാംശം v = 0;
                 ggml_vec_dot_f32(ne02, &v, 0,
                         wdata_src + i1n, 0,
                         wdata_kernel + i00*ne02, 0, 1);
@@ -6773,22 +6773,22 @@ static void ggml_compute_forward_conv_transpose_1d_f32(
     }
 }
 
-void ggml_compute_forward_conv_transpose_1d(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_conv_transpose_1d(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F16:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F16:
             {
                 ggml_compute_forward_conv_transpose_1d_f16_f32(params, dst);
-            } break;
-        case GGML_TYPE_F32:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_conv_transpose_1d_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -6799,66 +6799,66 @@ void ggml_compute_forward_conv_transpose_1d(
 // src0: kernel [OC, IC, KH, KW]
 // src1: image [N, IC, IH, IW]
 // dst:  result [N, OH, OW, IC*KH*KW]
-static void ggml_compute_forward_im2col_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_im2col_f32(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
 
-    GGML_TENSOR_BINARY_OP_LOCALS;
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS;
 
-    const int32_t s0 = ((const int32_t *)(dst->op_params))[0];
-    const int32_t s1 = ((const int32_t *)(dst->op_params))[1];
-    const int32_t p0 = ((const int32_t *)(dst->op_params))[2];
-    const int32_t p1 = ((const int32_t *)(dst->op_params))[3];
-    const int32_t d0 = ((const int32_t *)(dst->op_params))[4];
-    const int32_t d1 = ((const int32_t *)(dst->op_params))[5];
-    const bool is_2D = ((const int32_t *)(dst->op_params))[6] == 1;
+    സ്ഥിരം int32_t s0 = ((സ്ഥിരം int32_t *)(dst->op_params))[0];
+    സ്ഥിരം int32_t s1 = ((സ്ഥിരം int32_t *)(dst->op_params))[1];
+    സ്ഥിരം int32_t p0 = ((സ്ഥിരം int32_t *)(dst->op_params))[2];
+    സ്ഥിരം int32_t p1 = ((സ്ഥിരം int32_t *)(dst->op_params))[3];
+    സ്ഥിരം int32_t d0 = ((സ്ഥിരം int32_t *)(dst->op_params))[4];
+    സ്ഥിരം int32_t d1 = ((സ്ഥിരം int32_t *)(dst->op_params))[5];
+    സ്ഥിരം തർക്കം is_2D = ((സ്ഥിരം int32_t *)(dst->op_params))[6] == 1;
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int64_t N  = is_2D ? ne13 : ne12;
-    const int64_t IC = is_2D ? ne12 : ne11;
-    const int64_t IH = is_2D ? ne11 : 1;
-    const int64_t IW = ne10;
+    സ്ഥിരം int64_t N  = is_2D ? ne13 : ne12;
+    സ്ഥിരം int64_t IC = is_2D ? ne12 : ne11;
+    സ്ഥിരം int64_t IH = is_2D ? ne11 : 1;
+    സ്ഥിരം int64_t IW = ne10;
 
-    const int64_t KH = is_2D ? ne01 : 1;
-    const int64_t KW = ne00;
+    സ്ഥിരം int64_t KH = is_2D ? ne01 : 1;
+    സ്ഥിരം int64_t KW = ne00;
 
-    const int64_t OH = is_2D ? ne2 : 1;
-    const int64_t OW = ne1;
+    സ്ഥിരം int64_t OH = is_2D ? ne2 : 1;
+    സ്ഥിരം int64_t OW = ne1;
 
-    int ofs0 = is_2D ? nb13 : nb12;
-    int ofs1 = is_2D ? nb12 : nb11;
+    പൂർണ്ണസംഖ്യ ofs0 = is_2D ? nb13 : nb12;
+    പൂർണ്ണസംഖ്യ ofs1 = is_2D ? nb12 : nb11;
 
-    GGML_ASSERT(nb10 == sizeof(float));
+    GGML_ASSERT(nb10 == വലുപ്പം(ദശാംശം));
 
     // im2col: [N, IC, IH, IW] => [N, OH, OW, IC*KH*KW]
     {
-        float * const wdata = (float *) dst->data;
+        ദശാംശം * സ്ഥിരം wdata = (ദശാംശം *) dst->data;
 
-        for (int64_t in = 0; in < N; in++) {
-            for (int64_t ioh = 0; ioh < OH; ioh++) { // 1
-                for (int64_t iow = 0; iow < OW; iow++) {
-                    for (int64_t iic = ith; iic < IC; iic += nth) {
+        വേണ്ടി (int64_t in = 0; in < N; in++) {
+            വേണ്ടി (int64_t ioh = 0; ioh < OH; ioh++) { // 1
+                വേണ്ടി (int64_t iow = 0; iow < OW; iow++) {
+                    വേണ്ടി (int64_t iic = ith; iic < IC; iic += nth) {
 
                         // micro kernel
-                        float * dst_data = wdata + (in*OH*OW + ioh*OW + iow)*(IC*KH*KW); // [IC, KH, KW]
-                        const float * const src_data = (float *)((char *) src1->data + in*ofs0 + iic*ofs1); // [IH, IW]
+                        ദശാംശം * dst_data = wdata + (in*OH*OW + ioh*OW + iow)*(IC*KH*KW); // [IC, KH, KW]
+                        സ്ഥിരം ദശാംശം * സ്ഥിരം src_data = (ദശാംശം *)((അക്ഷരം *) src1->data + in*ofs0 + iic*ofs1); // [IH, IW]
 
-                        for (int64_t ikh = 0; ikh < KH; ikh++) {  // 1
-                            for (int64_t ikw = 0; ikw < KW; ikw++) {
-                                const int64_t iiw = iow*s0 + ikw*d0 - p0;
-                                const int64_t iih = ioh*s1 + ikh*d1 - p1;
+                        വേണ്ടി (int64_t ikh = 0; ikh < KH; ikh++) {  // 1
+                            വേണ്ടി (int64_t ikw = 0; ikw < KW; ikw++) {
+                                സ്ഥിരം int64_t iiw = iow*s0 + ikw*d0 - p0;
+                                സ്ഥിരം int64_t iih = ioh*s1 + ikh*d1 - p1;
 
-                                if (iih < 0 || iih >= IH || iiw < 0 || iiw >= IW) {
+                                എങ്കിൽ (iih < 0 || iih >= IH || iiw < 0 || iiw >= IW) {
                                     dst_data[iic*(KH*KW) + ikh*KW + ikw] = 0;
-                                } else {
+                                } അല്ലെങ്കിൽ {
                                     dst_data[iic*(KH*KW) + ikh*KW + ikw] = (src_data[iih*IW + iiw]);
                                 }
                             }
@@ -6875,74 +6875,74 @@ static void ggml_compute_forward_im2col_f32(
 // src0: kernel [OC, IC, KH, KW]
 // src1: image [N, IC, IH, IW]
 // dst:  result [N, OH, OW, IC*KH*KW]
-static void ggml_compute_forward_im2col_f16(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_im2col_f16(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
     GGML_ASSERT(src1->type == GGML_TYPE_F16 || src1->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F16);
 
-    GGML_TENSOR_BINARY_OP_LOCALS;
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS;
 
-    const int32_t s0 = ((const int32_t *)(dst->op_params))[0];
-    const int32_t s1 = ((const int32_t *)(dst->op_params))[1];
-    const int32_t p0 = ((const int32_t *)(dst->op_params))[2];
-    const int32_t p1 = ((const int32_t *)(dst->op_params))[3];
-    const int32_t d0 = ((const int32_t *)(dst->op_params))[4];
-    const int32_t d1 = ((const int32_t *)(dst->op_params))[5];
-    const bool is_2D = ((const int32_t *)(dst->op_params))[6] == 1;
+    സ്ഥിരം int32_t s0 = ((സ്ഥിരം int32_t *)(dst->op_params))[0];
+    സ്ഥിരം int32_t s1 = ((സ്ഥിരം int32_t *)(dst->op_params))[1];
+    സ്ഥിരം int32_t p0 = ((സ്ഥിരം int32_t *)(dst->op_params))[2];
+    സ്ഥിരം int32_t p1 = ((സ്ഥിരം int32_t *)(dst->op_params))[3];
+    സ്ഥിരം int32_t d0 = ((സ്ഥിരം int32_t *)(dst->op_params))[4];
+    സ്ഥിരം int32_t d1 = ((സ്ഥിരം int32_t *)(dst->op_params))[5];
+    സ്ഥിരം തർക്കം is_2D = ((സ്ഥിരം int32_t *)(dst->op_params))[6] == 1;
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int64_t N  = is_2D ? ne13 : ne12;
-    const int64_t IC = is_2D ? ne12 : ne11;
-    const int64_t IH = is_2D ? ne11 : 1;
-    const int64_t IW = ne10;
+    സ്ഥിരം int64_t N  = is_2D ? ne13 : ne12;
+    സ്ഥിരം int64_t IC = is_2D ? ne12 : ne11;
+    സ്ഥിരം int64_t IH = is_2D ? ne11 : 1;
+    സ്ഥിരം int64_t IW = ne10;
 
-    const int64_t KH = is_2D ? ne01 : 1;
-    const int64_t KW = ne00;
+    സ്ഥിരം int64_t KH = is_2D ? ne01 : 1;
+    സ്ഥിരം int64_t KW = ne00;
 
-    const int64_t OH = is_2D ? ne2 : 1;
-    const int64_t OW = ne1;
+    സ്ഥിരം int64_t OH = is_2D ? ne2 : 1;
+    സ്ഥിരം int64_t OW = ne1;
 
-    int ofs0 = is_2D ? nb13 : nb12;
-    int ofs1 = is_2D ? nb12 : nb11;
+    പൂർണ്ണസംഖ്യ ofs0 = is_2D ? nb13 : nb12;
+    പൂർണ്ണസംഖ്യ ofs1 = is_2D ? nb12 : nb11;
 
     GGML_ASSERT(nb10 == ggml_type_size(src1->type));
 
     // im2col: [N, IC, IH, IW] => [N, OH, OW, IC*KH*KW]
     {
-        ggml_fp16_t * const wdata = (ggml_fp16_t *) dst->data;
+        ggml_fp16_t * സ്ഥിരം wdata = (ggml_fp16_t *) dst->data;
 
-        for (int64_t in = 0; in < N; in++) {
-            for (int64_t ioh = 0; ioh < OH; ioh++) { // 1
-                for (int64_t iow = 0; iow < OW; iow++) {
-                    for (int64_t iic = ith; iic < IC; iic += nth) {
+        വേണ്ടി (int64_t in = 0; in < N; in++) {
+            വേണ്ടി (int64_t ioh = 0; ioh < OH; ioh++) { // 1
+                വേണ്ടി (int64_t iow = 0; iow < OW; iow++) {
+                    വേണ്ടി (int64_t iic = ith; iic < IC; iic += nth) {
 
                         // micro kernel
                         ggml_fp16_t * dst_data = wdata + (in*OH*OW + ioh*OW + iow)*(IC*KH*KW); // [IC, KH, KW]
-                        const float * const src_data_f32 = src1->type == GGML_TYPE_F32
-                            ? (const float *)((const char *) src1->data + in*ofs0 + iic*ofs1)
+                        സ്ഥിരം ദശാംശം * സ്ഥിരം src_data_f32 = src1->type == GGML_TYPE_F32
+                            ? (സ്ഥിരം ദശാംശം *)((സ്ഥിരം അക്ഷരം *) src1->data + in*ofs0 + iic*ofs1)
                             : nullptr; // [IH, IW]
-                        const ggml_fp16_t * const src_data_f16 = src1->type == GGML_TYPE_F16
-                            ? (const ggml_fp16_t *)((const char *) src1->data + in*ofs0 + iic*ofs1)
+                        സ്ഥിരം ggml_fp16_t * സ്ഥിരം src_data_f16 = src1->type == GGML_TYPE_F16
+                            ? (സ്ഥിരം ggml_fp16_t *)((സ്ഥിരം അക്ഷരം *) src1->data + in*ofs0 + iic*ofs1)
                             : nullptr; // [IH, IW]
 
-                        for (int64_t ikh = 0; ikh < KH; ikh++) {  // 1
-                            for (int64_t ikw = 0; ikw < KW; ikw++) {
-                                const int64_t iiw = iow*s0 + ikw*d0 - p0;
-                                const int64_t iih = ioh*s1 + ikh*d1 - p1;
+                        വേണ്ടി (int64_t ikh = 0; ikh < KH; ikh++) {  // 1
+                            വേണ്ടി (int64_t ikw = 0; ikw < KW; ikw++) {
+                                സ്ഥിരം int64_t iiw = iow*s0 + ikw*d0 - p0;
+                                സ്ഥിരം int64_t iih = ioh*s1 + ikh*d1 - p1;
 
-                                if (iih < 0 || iih >= IH || iiw < 0 || iiw >= IW) {
+                                എങ്കിൽ (iih < 0 || iih >= IH || iiw < 0 || iiw >= IW) {
                                     dst_data[iic*(KH*KW) + ikh*KW + ikw] = 0;
-                                } else {
-                                    if (src_data_f32 != nullptr) {
+                                } അല്ലെങ്കിൽ {
+                                    എങ്കിൽ (src_data_f32 != nullptr) {
                                         dst_data[iic*(KH*KW) + ikh*KW + ikw] = GGML_CPU_FP32_TO_FP16(src_data_f32[iih*IW + iiw]);
-                                    } else {
+                                    } അല്ലെങ്കിൽ {
                                         dst_data[iic*(KH*KW) + ikh*KW + ikw] = src_data_f16[iih*IW + iiw];
                                     }
                                 }
@@ -6955,19 +6955,19 @@ static void ggml_compute_forward_im2col_f16(
     }
 }
 
-void ggml_compute_forward_im2col(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_im2col(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
-    switch (dst->type) {
-        case GGML_TYPE_F16:
+    തിരഞ്ഞെടുപ്പ് (dst->type) {
+        അവസ്ഥ GGML_TYPE_F16:
             {
                 ggml_compute_forward_im2col_f16(params, dst);
-            } break;
-        case GGML_TYPE_F32:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_im2col_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -6976,91 +6976,91 @@ void ggml_compute_forward_im2col(
 
 // ggml_compute_forward_im2col_back_f32
 
-void ggml_compute_forward_im2col_back_f32(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_im2col_back_f32(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0]; // gradients of forward pass output
-    const ggml_tensor * src1 = dst->src[1]; // convolution kernel
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0]; // gradients of forward pass output
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1]; // convolution kernel
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT(src1->type == GGML_TYPE_F32 || src1->type == GGML_TYPE_F16);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
 
-    GGML_TENSOR_BINARY_OP_LOCALS;
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS;
 
-    const int32_t s0 = ((const int32_t *)(dst->op_params))[0];
-    const int32_t s1 = ((const int32_t *)(dst->op_params))[1];
-    const int32_t p0 = ((const int32_t *)(dst->op_params))[2];
-    const int32_t p1 = ((const int32_t *)(dst->op_params))[3];
-    const int32_t d0 = ((const int32_t *)(dst->op_params))[4];
-    const int32_t d1 = ((const int32_t *)(dst->op_params))[5];
-    const bool is_2D = ((const int32_t *)(dst->op_params))[6] == 1;
+    സ്ഥിരം int32_t s0 = ((സ്ഥിരം int32_t *)(dst->op_params))[0];
+    സ്ഥിരം int32_t s1 = ((സ്ഥിരം int32_t *)(dst->op_params))[1];
+    സ്ഥിരം int32_t p0 = ((സ്ഥിരം int32_t *)(dst->op_params))[2];
+    സ്ഥിരം int32_t p1 = ((സ്ഥിരം int32_t *)(dst->op_params))[3];
+    സ്ഥിരം int32_t d0 = ((സ്ഥിരം int32_t *)(dst->op_params))[4];
+    സ്ഥിരം int32_t d1 = ((സ്ഥിരം int32_t *)(dst->op_params))[5];
+    സ്ഥിരം തർക്കം is_2D = ((സ്ഥിരം int32_t *)(dst->op_params))[6] == 1;
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int64_t N  = is_2D ? ne3 : ne2;
-    const int64_t IC = is_2D ? ne2 : ne1;
-    const int64_t IH = is_2D ? ne1 : 1;
-    const int64_t IW = ne0;
+    സ്ഥിരം int64_t N  = is_2D ? ne3 : ne2;
+    സ്ഥിരം int64_t IC = is_2D ? ne2 : ne1;
+    സ്ഥിരം int64_t IH = is_2D ? ne1 : 1;
+    സ്ഥിരം int64_t IW = ne0;
 
-    const int64_t KH = is_2D ? ne11 : 1;
-    const int64_t KW = ne10;
+    സ്ഥിരം int64_t KH = is_2D ? ne11 : 1;
+    സ്ഥിരം int64_t KW = ne10;
 
-    const int64_t OH = is_2D ? ne02 : 1;
-    const int64_t OW = ne01;
+    സ്ഥിരം int64_t OH = is_2D ? ne02 : 1;
+    സ്ഥിരം int64_t OW = ne01;
 
-    int ofs0 = is_2D ? nb3 : nb2;
-    int ofs1 = is_2D ? nb2 : nb1;
+    പൂർണ്ണസംഖ്യ ofs0 = is_2D ? nb3 : nb2;
+    പൂർണ്ണസംഖ്യ ofs1 = is_2D ? nb2 : nb1;
 
-    GGML_ASSERT(nb0  == sizeof(float));
+    GGML_ASSERT(nb0  == വലുപ്പം(ദശാംശം));
 
     // im2col: [N, IC, IH, IW] => [N, OH, OW, IC*KH*KW]
     {
-        float * const wdata = (float *) dst->data;
+        ദശാംശം * സ്ഥിരം wdata = (ദശാംശം *) dst->data;
 
-        for (int64_t in = 0; in < N; in++) {
-            for (int64_t iic = ith; iic < IC; iic += nth) {
-                for (int64_t iih = 0; iih < IH; iih++) {
-                    for (int64_t iiw = 0; iiw < IW; iiw++) {
+        വേണ്ടി (int64_t in = 0; in < N; in++) {
+            വേണ്ടി (int64_t iic = ith; iic < IC; iic += nth) {
+                വേണ്ടി (int64_t iih = 0; iih < IH; iih++) {
+                    വേണ്ടി (int64_t iiw = 0; iiw < IW; iiw++) {
 
                         // micro kernel
-                        float grad = 0.0f;
-                        for (int64_t ikh = 0; ikh < KH; ikh++) {
-                            for (int64_t ikw = 0; ikw < KW; ikw++) {
+                        ദശാംശം grad = 0.0f;
+                        വേണ്ടി (int64_t ikh = 0; ikh < KH; ikh++) {
+                            വേണ്ടി (int64_t ikw = 0; ikw < KW; ikw++) {
                                 // For s0 > 1 some values were skipped over in the forward pass.
                                 // These values have tmpw % s0 != 0 and need to be skipped in the backwards pass as well.
-                                const int64_t tmpw = (iiw + p0 - ikw*d0);
-                                if (tmpw % s0 != 0) {
-                                    continue;
+                                സ്ഥിരം int64_t tmpw = (iiw + p0 - ikw*d0);
+                                എങ്കിൽ (tmpw % s0 != 0) {
+                                    തുടരുക;
                                 }
-                                const int64_t iow = tmpw / s0;
+                                സ്ഥിരം int64_t iow = tmpw / s0;
 
                                 // Equivalent logic as above except for s1.
                                 int64_t ioh;
-                                if (is_2D) {
-                                    const int64_t tmph = iih + p1 - ikh*d1;
+                                എങ്കിൽ (is_2D) {
+                                    സ്ഥിരം int64_t tmph = iih + p1 - ikh*d1;
 
-                                    if (tmph % s1 != 0) {
-                                        continue;
+                                    എങ്കിൽ (tmph % s1 != 0) {
+                                        തുടരുക;
                                     }
 
                                     ioh = tmph / s1;
-                                } else {
+                                } അല്ലെങ്കിൽ {
                                     ioh = 0;
                                 }
 
-                                if (iow < 0 || iow >= OW || ioh < 0 || ioh >= OH) {
-                                    continue;
+                                എങ്കിൽ (iow < 0 || iow >= OW || ioh < 0 || ioh >= OH) {
+                                    തുടരുക;
                                 }
 
-                                const float * const grad_in = (const float *) src0->data
+                                സ്ഥിരം ദശാംശം * സ്ഥിരം grad_in = (സ്ഥിരം ദശാംശം *) src0->data
                                     + (in*OH*OW + ioh*OW + iow)*(IC*KH*KW); // [IC, KH, KW]
                                 grad += grad_in[iic*(KH*KW) + ikh*KW + ikw];
                             }
                         }
-                        float * dst_data = (float *)((char *) wdata + (in*ofs0 + iic*ofs1)); // [IH, IW]
+                        ദശാംശം * dst_data = (ദശാംശം *)((അക്ഷരം *) wdata + (in*ofs0 + iic*ofs1)); // [IH, IW]
                         dst_data[iih*IW + iiw] = grad;
                     }
                 }
@@ -7074,79 +7074,79 @@ void ggml_compute_forward_im2col_back_f32(
 // src0: kernel [OC*IC, KD, KH, KW]
 // src1: image [N*IC, ID, IH, IW]
 // dst:  result [N*OD, OH, OW, IC * KD * KH * KW]
-static void ggml_compute_forward_im2col_3d_f16(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_im2col_3d_f16(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F16);
 
-    GGML_TENSOR_BINARY_OP_LOCALS;
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS;
 
-    const int32_t s0 = ((const int32_t *)(dst->op_params))[0];
-    const int32_t s1 = ((const int32_t *)(dst->op_params))[1];
-    const int32_t s2 = ((const int32_t *)(dst->op_params))[2];
-    const int32_t p0 = ((const int32_t *)(dst->op_params))[3];
-    const int32_t p1 = ((const int32_t *)(dst->op_params))[4];
-    const int32_t p2 = ((const int32_t *)(dst->op_params))[5];
-    const int32_t d0 = ((const int32_t *)(dst->op_params))[6];
-    const int32_t d1 = ((const int32_t *)(dst->op_params))[7];
-    const int32_t d2 = ((const int32_t *)(dst->op_params))[8];
-    const int32_t IC = ((const int32_t *)(dst->op_params))[9];
+    സ്ഥിരം int32_t s0 = ((സ്ഥിരം int32_t *)(dst->op_params))[0];
+    സ്ഥിരം int32_t s1 = ((സ്ഥിരം int32_t *)(dst->op_params))[1];
+    സ്ഥിരം int32_t s2 = ((സ്ഥിരം int32_t *)(dst->op_params))[2];
+    സ്ഥിരം int32_t p0 = ((സ്ഥിരം int32_t *)(dst->op_params))[3];
+    സ്ഥിരം int32_t p1 = ((സ്ഥിരം int32_t *)(dst->op_params))[4];
+    സ്ഥിരം int32_t p2 = ((സ്ഥിരം int32_t *)(dst->op_params))[5];
+    സ്ഥിരം int32_t d0 = ((സ്ഥിരം int32_t *)(dst->op_params))[6];
+    സ്ഥിരം int32_t d1 = ((സ്ഥിരം int32_t *)(dst->op_params))[7];
+    സ്ഥിരം int32_t d2 = ((സ്ഥിരം int32_t *)(dst->op_params))[8];
+    സ്ഥിരം int32_t IC = ((സ്ഥിരം int32_t *)(dst->op_params))[9];
 
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int64_t N  = ne13 / IC;
-    const int64_t ID = ne12;
-    const int64_t IH = ne11;
-    const int64_t IW = ne10;
+    സ്ഥിരം int64_t N  = ne13 / IC;
+    സ്ഥിരം int64_t ID = ne12;
+    സ്ഥിരം int64_t IH = ne11;
+    സ്ഥിരം int64_t IW = ne10;
 
-    const int64_t OC = ne03 / IC;
+    സ്ഥിരം int64_t OC = ne03 / IC;
     GGML_UNUSED(OC);
-    const int64_t KD = ne02;
-    const int64_t KH = ne01;
-    const int64_t KW = ne00;
+    സ്ഥിരം int64_t KD = ne02;
+    സ്ഥിരം int64_t KH = ne01;
+    സ്ഥിരം int64_t KW = ne00;
 
-    const int64_t OD = ne3 / N;
-    const int64_t OH = ne2;
-    const int64_t OW = ne1;
-    const int64_t OH_OW = OH*OW;
-    const int64_t KD_KH_KW = KD*KH*KW;
-    const int64_t KH_KW = KH*KW;
-    const int64_t IC_KD_KH_KW = IC*KD*KH*KW;
+    സ്ഥിരം int64_t OD = ne3 / N;
+    സ്ഥിരം int64_t OH = ne2;
+    സ്ഥിരം int64_t OW = ne1;
+    സ്ഥിരം int64_t OH_OW = OH*OW;
+    സ്ഥിരം int64_t KD_KH_KW = KD*KH*KW;
+    സ്ഥിരം int64_t KH_KW = KH*KW;
+    സ്ഥിരം int64_t IC_KD_KH_KW = IC*KD*KH*KW;
 
-    GGML_ASSERT(nb10 == sizeof(float));
+    GGML_ASSERT(nb10 == വലുപ്പം(ദശാംശം));
 
     // im2col: [N*IC, ID, IH, IW] => [N*OD, OH, OW, IC * KD * KH * KW]
     {
-        ggml_fp16_t * const wdata = (ggml_fp16_t *) dst->data;
+        ggml_fp16_t * സ്ഥിരം wdata = (ggml_fp16_t *) dst->data;
 
-        for (int64_t in = 0; in < N; in++) {
-            for (int64_t iod = 0; iod < OD; iod++) {
-                for (int64_t ioh = 0; ioh < OH; ioh++) {
-                    for (int64_t iow = 0; iow < OW; iow++) {
-                        for (int64_t iic = ith; iic < IC; iic += nth) {
+        വേണ്ടി (int64_t in = 0; in < N; in++) {
+            വേണ്ടി (int64_t iod = 0; iod < OD; iod++) {
+                വേണ്ടി (int64_t ioh = 0; ioh < OH; ioh++) {
+                    വേണ്ടി (int64_t iow = 0; iow < OW; iow++) {
+                        വേണ്ടി (int64_t iic = ith; iic < IC; iic += nth) {
 
                             // micro kernel
                             ggml_fp16_t * dst_data = wdata + (in*OD*OH_OW + iod*OH_OW + ioh*OW + iow)*IC_KD_KH_KW; // [IC, KD, KH, KW]
-                            const float * const src_data = (const float *) ((const char *)src1->data + (in*IC + iic)*nb13); // [ID, IH, IW]
+                            സ്ഥിരം ദശാംശം * സ്ഥിരം src_data = (സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *)src1->data + (in*IC + iic)*nb13); // [ID, IH, IW]
 
-                            for (int64_t ikd = 0; ikd < KD; ikd++) {
-                                for (int64_t ikh = 0; ikh < KH; ikh++) {
-                                    for (int64_t ikw = 0; ikw < KW; ikw++) {
-                                        const int64_t iiw = iow*s0 + ikw*d0 - p0;
-                                        const int64_t iih = ioh*s1 + ikh*d1 - p1;
-                                        const int64_t iid = iod*s2 + ikd*d2 - p2;
+                            വേണ്ടി (int64_t ikd = 0; ikd < KD; ikd++) {
+                                വേണ്ടി (int64_t ikh = 0; ikh < KH; ikh++) {
+                                    വേണ്ടി (int64_t ikw = 0; ikw < KW; ikw++) {
+                                        സ്ഥിരം int64_t iiw = iow*s0 + ikw*d0 - p0;
+                                        സ്ഥിരം int64_t iih = ioh*s1 + ikh*d1 - p1;
+                                        സ്ഥിരം int64_t iid = iod*s2 + ikd*d2 - p2;
 
-                                        if (iid < 0 || iid >= ID || iih < 0 || iih >= IH || iiw < 0 || iiw >= IW) {
+                                        എങ്കിൽ (iid < 0 || iid >= ID || iih < 0 || iih >= IH || iiw < 0 || iiw >= IW) {
                                             dst_data[iic*KD_KH_KW + ikd * KH_KW + ikh*KW + ikw] = 0;
-                                        } else {
-                                            const float * const s = (const float *) ((const char *)src_data + iid*nb12 + iih*nb11 + iiw*nb10); // [ID, IH, IW]
+                                        } അല്ലെങ്കിൽ {
+                                            സ്ഥിരം ദശാംശം * സ്ഥിരം s = (സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *)src_data + iid*nb12 + iih*nb11 + iiw*nb10); // [ID, IH, IW]
                                             dst_data[iic*KD_KH_KW + ikd * KH_KW + ikh*KW + ikw] = GGML_CPU_FP32_TO_FP16(*s);
                                         }
                                     }
@@ -7164,80 +7164,80 @@ static void ggml_compute_forward_im2col_3d_f16(
 // src0: kernel [OC*IC, KD, KH, KW]
 // src1: image [N*IC, ID, IH, IW]
 // dst:  result [N*OD, OH, OW, IC * KD * KH * KW]
-static void ggml_compute_forward_im2col_3d_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_im2col_3d_f32(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
 
-    GGML_TENSOR_BINARY_OP_LOCALS;
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS;
 
-    const int32_t s0 = ((const int32_t *)(dst->op_params))[0];
-    const int32_t s1 = ((const int32_t *)(dst->op_params))[1];
-    const int32_t s2 = ((const int32_t *)(dst->op_params))[2];
-    const int32_t p0 = ((const int32_t *)(dst->op_params))[3];
-    const int32_t p1 = ((const int32_t *)(dst->op_params))[4];
-    const int32_t p2 = ((const int32_t *)(dst->op_params))[5];
-    const int32_t d0 = ((const int32_t *)(dst->op_params))[6];
-    const int32_t d1 = ((const int32_t *)(dst->op_params))[7];
-    const int32_t d2 = ((const int32_t *)(dst->op_params))[8];
-    const int32_t IC = ((const int32_t *)(dst->op_params))[9];
+    സ്ഥിരം int32_t s0 = ((സ്ഥിരം int32_t *)(dst->op_params))[0];
+    സ്ഥിരം int32_t s1 = ((സ്ഥിരം int32_t *)(dst->op_params))[1];
+    സ്ഥിരം int32_t s2 = ((സ്ഥിരം int32_t *)(dst->op_params))[2];
+    സ്ഥിരം int32_t p0 = ((സ്ഥിരം int32_t *)(dst->op_params))[3];
+    സ്ഥിരം int32_t p1 = ((സ്ഥിരം int32_t *)(dst->op_params))[4];
+    സ്ഥിരം int32_t p2 = ((സ്ഥിരം int32_t *)(dst->op_params))[5];
+    സ്ഥിരം int32_t d0 = ((സ്ഥിരം int32_t *)(dst->op_params))[6];
+    സ്ഥിരം int32_t d1 = ((സ്ഥിരം int32_t *)(dst->op_params))[7];
+    സ്ഥിരം int32_t d2 = ((സ്ഥിരം int32_t *)(dst->op_params))[8];
+    സ്ഥിരം int32_t IC = ((സ്ഥിരം int32_t *)(dst->op_params))[9];
 
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int64_t N  = ne13 / IC;
-    const int64_t ID = ne12;
-    const int64_t IH = ne11;
-    const int64_t IW = ne10;
+    സ്ഥിരം int64_t N  = ne13 / IC;
+    സ്ഥിരം int64_t ID = ne12;
+    സ്ഥിരം int64_t IH = ne11;
+    സ്ഥിരം int64_t IW = ne10;
 
-    const int64_t OC = ne03 / IC;
+    സ്ഥിരം int64_t OC = ne03 / IC;
     GGML_UNUSED(OC);
-    const int64_t KD = ne02;
-    const int64_t KH = ne01;
-    const int64_t KW = ne00;
+    സ്ഥിരം int64_t KD = ne02;
+    സ്ഥിരം int64_t KH = ne01;
+    സ്ഥിരം int64_t KW = ne00;
 
-    const int64_t OD = ne3 / N;
-    const int64_t OH = ne2;
-    const int64_t OW = ne1;
+    സ്ഥിരം int64_t OD = ne3 / N;
+    സ്ഥിരം int64_t OH = ne2;
+    സ്ഥിരം int64_t OW = ne1;
 
-    const int64_t OH_OW = OH*OW;
-    const int64_t KD_KH_KW = KD*KH*KW;
-    const int64_t KH_KW = KH*KW;
-    const int64_t IC_KD_KH_KW = IC*KD*KH*KW;
+    സ്ഥിരം int64_t OH_OW = OH*OW;
+    സ്ഥിരം int64_t KD_KH_KW = KD*KH*KW;
+    സ്ഥിരം int64_t KH_KW = KH*KW;
+    സ്ഥിരം int64_t IC_KD_KH_KW = IC*KD*KH*KW;
 
-    GGML_ASSERT(nb10 == sizeof(float));
+    GGML_ASSERT(nb10 == വലുപ്പം(ദശാംശം));
 
     // im2col: [N*IC, ID, IH, IW] => [N*OD, OH, OW, IC * KD * KH * KW]
     {
-        float * const wdata = (float *) dst->data;
+        ദശാംശം * സ്ഥിരം wdata = (ദശാംശം *) dst->data;
 
-        for (int64_t in = 0; in < N; in++) {
-            for (int64_t iod = 0; iod < OD; iod++) {
-                for (int64_t ioh = 0; ioh < OH; ioh++) {
-                    for (int64_t iow = 0; iow < OW; iow++) {
-                        for (int64_t iic = ith; iic < IC; iic += nth) {
+        വേണ്ടി (int64_t in = 0; in < N; in++) {
+            വേണ്ടി (int64_t iod = 0; iod < OD; iod++) {
+                വേണ്ടി (int64_t ioh = 0; ioh < OH; ioh++) {
+                    വേണ്ടി (int64_t iow = 0; iow < OW; iow++) {
+                        വേണ്ടി (int64_t iic = ith; iic < IC; iic += nth) {
 
                             // micro kernel
-                            float * dst_data = wdata + (in*OD*OH_OW + iod*OH_OW + ioh*OW + iow)*IC_KD_KH_KW; // [IC, KD, KH, KW]
-                            const float * const src_data = (const float *) ((const char *)src1->data + (in*IC + iic)*nb13); // [ID, IH, IW]
+                            ദശാംശം * dst_data = wdata + (in*OD*OH_OW + iod*OH_OW + ioh*OW + iow)*IC_KD_KH_KW; // [IC, KD, KH, KW]
+                            സ്ഥിരം ദശാംശം * സ്ഥിരം src_data = (സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *)src1->data + (in*IC + iic)*nb13); // [ID, IH, IW]
 
-                            for (int64_t ikd = 0; ikd < KD; ikd++) {
-                                for (int64_t ikh = 0; ikh < KH; ikh++) {
-                                    for (int64_t ikw = 0; ikw < KW; ikw++) {
-                                        const int64_t iiw = iow*s0 + ikw*d0 - p0;
-                                        const int64_t iih = ioh*s1 + ikh*d1 - p1;
-                                        const int64_t iid = iod*s2 + ikd*d2 - p2;
+                            വേണ്ടി (int64_t ikd = 0; ikd < KD; ikd++) {
+                                വേണ്ടി (int64_t ikh = 0; ikh < KH; ikh++) {
+                                    വേണ്ടി (int64_t ikw = 0; ikw < KW; ikw++) {
+                                        സ്ഥിരം int64_t iiw = iow*s0 + ikw*d0 - p0;
+                                        സ്ഥിരം int64_t iih = ioh*s1 + ikh*d1 - p1;
+                                        സ്ഥിരം int64_t iid = iod*s2 + ikd*d2 - p2;
 
-                                        if (iid < 0 || iid >= ID || iih < 0 || iih >= IH || iiw < 0 || iiw >= IW || iid < 0 || iid >= ID) {
+                                        എങ്കിൽ (iid < 0 || iid >= ID || iih < 0 || iih >= IH || iiw < 0 || iiw >= IW || iid < 0 || iid >= ID) {
                                             dst_data[iic*KD_KH_KW + ikd * KH_KW + ikh*KW + ikw] = 0;
-                                        } else {
-                                            const float * const s = (const float *) ((const char *)src_data + iid*nb12 + iih*nb11 + iiw*nb10); // [ID, IH, IW]
+                                        } അല്ലെങ്കിൽ {
+                                            സ്ഥിരം ദശാംശം * സ്ഥിരം s = (സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *)src_data + iid*nb12 + iih*nb11 + iiw*nb10); // [ID, IH, IW]
                                             dst_data[iic*KD_KH_KW + ikd * KH_KW + ikh*KW + ikw] = *s;
                                         }
                                     }
@@ -7252,29 +7252,29 @@ static void ggml_compute_forward_im2col_3d_f32(
 }
 
 
-void ggml_compute_forward_im2col_3d(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_im2col_3d(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
-    switch (dst->type) {
-        case GGML_TYPE_F16:
+    തിരഞ്ഞെടുപ്പ് (dst->type) {
+        അവസ്ഥ GGML_TYPE_F16:
             {
                 ggml_compute_forward_im2col_3d_f16(params, dst);
-            } break;
-        case GGML_TYPE_F32:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_im2col_3d_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
     }
 }
 
-static void ggml_call_mul_mat(ggml_type type, const ggml_compute_params * params, int64_t m, int64_t n, int64_t k,
-                              void * a, void * b, float * c) {
-    const ggml_type_traits * traits = ggml_get_type_traits(type);
-    struct ggml_tensor src1 = {};
+സ്ഥിതം ശൂന്യം ggml_call_mul_mat(ggml_type type, സ്ഥിരം ggml_compute_params * params, int64_t m, int64_t n, int64_t k,
+                              ശൂന്യം * a, ശൂന്യം * b, ദശാംശം * c) {
+    സ്ഥിരം ggml_type_traits * traits = ggml_get_type_traits(type);
+    ഘടന ggml_tensor src1 = {};
     src1.type  = type;
     src1.ne[0] = k;
     src1.ne[1] = m;
@@ -7286,7 +7286,7 @@ static void ggml_call_mul_mat(ggml_type type, const ggml_compute_params * params
     src1.nb[3] = src1.nb[2];
     src1.data  = a;
 
-    struct ggml_tensor src0 = {};
+    ഘടന ggml_tensor src0 = {};
     src0.type  = type;
     src0.ne[0] = k;
     src0.ne[1] = n;
@@ -7298,13 +7298,13 @@ static void ggml_call_mul_mat(ggml_type type, const ggml_compute_params * params
     src0.nb[3] = src0.nb[2];
     src0.data  = b;
 
-    struct ggml_tensor dst = {};
+    ഘടന ggml_tensor dst = {};
     dst.ne[0] = n;
     dst.ne[1] = m;
     dst.ne[2] = 1;
     dst.ne[3] = 1;
-    dst.nb[0] = sizeof(float);
-    dst.nb[1] = n * sizeof(float);
+    dst.nb[0] = വലുപ്പം(ദശാംശം);
+    dst.nb[1] = n * വലുപ്പം(ദശാംശം);
     dst.nb[2] = dst.nb[1];
     dst.nb[3] = dst.nb[2];
     dst.data  = c;
@@ -7314,8 +7314,8 @@ static void ggml_call_mul_mat(ggml_type type, const ggml_compute_params * params
     ggml_compute_forward_mul_mat(params, &dst);
 }
 
-static inline int64_t ggml_wrap_around(int64_t coord, int64_t size) {
-    return (coord  + size) % size; // adding size avoids negative number weirdness
+സ്ഥിതം വരിയിൽ int64_t ggml_wrap_around(int64_t coord, int64_t size) {
+    തിരികെ (coord  + size) % size; // adding size avoids negative number weirdness
 }
 
 // ggml_compute_forward_col2im_1d
@@ -7326,49 +7326,49 @@ static inline int64_t ggml_wrap_around(int64_t coord, int64_t size) {
 // Supports F32, F16, BF16 input/output (same type), F32 accumulator.
 
 template <typename elem_t>
-static void ggml_compute_forward_col2im_1d_impl(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_col2im_1d_impl(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src = dst->src[0];  // [K*OC, T_in]
+    സ്ഥിരം ggml_tensor * src = dst->src[0];  // [K*OC, T_in]
 
     GGML_ASSERT(ggml_is_contiguous(src));
     GGML_ASSERT(ggml_is_contiguous(dst));
 
-    const int32_t s0 = ((const int32_t *)(dst->op_params))[0];
-    const int32_t OC = ((const int32_t *)(dst->op_params))[1];
-    const int32_t p0 = ((const int32_t *)(dst->op_params))[2];
+    സ്ഥിരം int32_t s0 = ((സ്ഥിരം int32_t *)(dst->op_params))[0];
+    സ്ഥിരം int32_t OC = ((സ്ഥിരം int32_t *)(dst->op_params))[1];
+    സ്ഥിരം int32_t p0 = ((സ്ഥിരം int32_t *)(dst->op_params))[2];
 
-    const int64_t K_OC = src->ne[0];
-    const int64_t T_in = src->ne[1];
-    const int64_t K    = K_OC / OC;
-    const int64_t T_out = dst->ne[0];
+    സ്ഥിരം int64_t K_OC = src->ne[0];
+    സ്ഥിരം int64_t T_in = src->ne[1];
+    സ്ഥിരം int64_t K    = K_OC / OC;
+    സ്ഥിരം int64_t T_out = dst->ne[0];
 
-    const elem_t * col_data = (const elem_t *) src->data;
+    സ്ഥിരം elem_t * col_data = (സ്ഥിരം elem_t *) src->data;
     elem_t       * dst_data = (elem_t *) dst->data;
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
     // Parallelize over the time axis: the split stays balanced whatever OC is,
     // down to OC = 1 for mono audio, and threads read disjoint column bands
-    const int64_t dr = (T_out + nth - 1) / nth;
-    const int64_t it0 = dr * ith;
-    const int64_t it1 = it0 + dr < T_out ? it0 + dr : T_out;
+    സ്ഥിരം int64_t dr = (T_out + nth - 1) / nth;
+    സ്ഥിരം int64_t it0 = dr * ith;
+    സ്ഥിരം int64_t it1 = it0 + dr < T_out ? it0 + dr : T_out;
 
-    for (int64_t oc = 0; oc < OC; oc++) {
-        for (int64_t t_out = it0; t_out < it1; t_out++) {
-            const int64_t t_abs = t_out + p0;  // absolute position in uncropped signal
+    വേണ്ടി (int64_t oc = 0; oc < OC; oc++) {
+        വേണ്ടി (int64_t t_out = it0; t_out < it1; t_out++) {
+            സ്ഥിരം int64_t t_abs = t_out + p0;  // absolute position in uncropped signal
             // Gather: find all (t_in, k) where t_in * s + k == t_abs, 0 <= k < K
             int64_t t_in_min = (t_abs - K + 1 + s0 - 1) / s0;  // ceil((t_abs-K+1)/s)
-            if (t_in_min < 0) t_in_min = 0;
+            എങ്കിൽ (t_in_min < 0) t_in_min = 0;
             int64_t t_in_max = t_abs / s0;
-            if (t_in_max >= T_in) t_in_max = T_in - 1;
+            എങ്കിൽ (t_in_max >= T_in) t_in_max = T_in - 1;
 
-            float sum = 0.0f;
-            for (int64_t t_in = t_in_min; t_in <= t_in_max; t_in++) {
+            ദശാംശം sum = 0.0f;
+            വേണ്ടി (int64_t t_in = t_in_min; t_in <= t_in_max; t_in++) {
                 int64_t k = t_abs - t_in * s0;
-                if (k >= 0 && k < K) {
+                എങ്കിൽ (k >= 0 && k < K) {
                     // col layout: [K*OC, T_in], element (oc*K+k, t_in)
                     sum += type_conversion_table<elem_t>::to_f32(col_data[(oc * K + k) + t_in * K_OC]);
                 }
@@ -7379,23 +7379,23 @@ static void ggml_compute_forward_col2im_1d_impl(
     }
 }
 
-void ggml_compute_forward_col2im_1d(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_col2im_1d(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
-    switch (dst->src[0]->type) {
-        case GGML_TYPE_F32:  ggml_compute_forward_col2im_1d_impl<float>      (params, dst); break;
-        case GGML_TYPE_F16:  ggml_compute_forward_col2im_1d_impl<ggml_fp16_t>(params, dst); break;
-        case GGML_TYPE_BF16: ggml_compute_forward_col2im_1d_impl<ggml_bf16_t>(params, dst); break;
-        default: GGML_ABORT("col2im_1d: unsupported type %d", dst->src[0]->type);
+    തിരഞ്ഞെടുപ്പ് (dst->src[0]->type) {
+        അവസ്ഥ GGML_TYPE_F32:  ggml_compute_forward_col2im_1d_impl<ദശാംശം>      (params, dst); നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F16:  ggml_compute_forward_col2im_1d_impl<ggml_fp16_t>(params, dst); നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_BF16: ggml_compute_forward_col2im_1d_impl<ggml_bf16_t>(params, dst); നിർത്തുക;
+        സ്ഥിരസ്ഥിതി: GGML_ABORT("col2im_1d: unsupported type %d", dst->src[0]->type);
     }
 }
 
 // ggml_compute_forward_conv_2d
 
 
-static void ggml_compute_forward_conv_2d_impl(const ggml_compute_params * params,
-                                              const ggml_tensor *         kernel,  // [KW, KH, IC, OC]
-                                              const ggml_tensor *         src,     // [W, H, C, N]
+സ്ഥിതം ശൂന്യം ggml_compute_forward_conv_2d_impl(സ്ഥിരം ggml_compute_params * params,
+                                              സ്ഥിരം ggml_tensor *         kernel,  // [KW, KH, IC, OC]
+                                              സ്ഥിരം ggml_tensor *         src,     // [W, H, C, N]
                                               ggml_tensor *               dst,     // [OW, OH, OC, N]
                                               ggml_type                   kernel_type) {
 
@@ -7403,82 +7403,82 @@ static void ggml_compute_forward_conv_2d_impl(const ggml_compute_params * params
     GGML_ASSERT(kernel_type == GGML_TYPE_F16 || kernel_type == GGML_TYPE_F32);
     GGML_ASSERT(kernel->type == kernel_type);
 
-    const ggml_type_traits * traits = ggml_get_type_traits(kernel_type);
+    സ്ഥിരം ggml_type_traits * traits = ggml_get_type_traits(kernel_type);
 
-    const int32_t stride_x   = dst->op_params[0];
-    const int32_t stride_y   = dst->op_params[1];
-    const int32_t pad_x      = dst->op_params[2];
-    const int32_t pad_y      = dst->op_params[3];
-    const int32_t dilation_x = dst->op_params[4];
-    const int32_t dilation_y = dst->op_params[5];
+    സ്ഥിരം int32_t stride_x   = dst->op_params[0];
+    സ്ഥിരം int32_t stride_y   = dst->op_params[1];
+    സ്ഥിരം int32_t pad_x      = dst->op_params[2];
+    സ്ഥിരം int32_t pad_y      = dst->op_params[3];
+    സ്ഥിരം int32_t dilation_x = dst->op_params[4];
+    സ്ഥിരം int32_t dilation_y = dst->op_params[5];
 
-    const int64_t c_in  = src->ne[2];
-    const int64_t c_out = kernel->ne[3];
+    സ്ഥിരം int64_t c_in  = src->ne[2];
+    സ്ഥിരം int64_t c_out = kernel->ne[3];
     GGML_ASSERT(c_in == kernel->ne[2]);
 
-    const int64_t src_w = src->ne[0];
-    const int64_t src_h = src->ne[1];
-    const int64_t knl_w = kernel->ne[0];
-    const int64_t knl_h = kernel->ne[1];
-    const int64_t dst_w = dst->ne[0];
-    const int64_t dst_h = dst->ne[1];
+    സ്ഥിരം int64_t src_w = src->ne[0];
+    സ്ഥിരം int64_t src_h = src->ne[1];
+    സ്ഥിരം int64_t knl_w = kernel->ne[0];
+    സ്ഥിരം int64_t knl_h = kernel->ne[1];
+    സ്ഥിരം int64_t dst_w = dst->ne[0];
+    സ്ഥിരം int64_t dst_h = dst->ne[1];
 
-    const float * src_data = (float *) src->data;
-    void  * knl_data       = kernel->data;
-    float * dst_data       = (float *) dst->data;
+    സ്ഥിരം ദശാംശം * src_data = (ദശാംശം *) src->data;
+    ശൂന്യം  * knl_data       = kernel->data;
+    ദശാംശം * dst_data       = (ദശാംശം *) dst->data;
 
-    const int64_t knl_n           = knl_w * knl_h * c_in;
-    const int64_t patch_total     = dst->ne[3] * dst_w * dst_h;
+    സ്ഥിരം int64_t knl_n           = knl_w * knl_h * c_in;
+    സ്ഥിരം int64_t patch_total     = dst->ne[3] * dst_w * dst_h;
 
-    const int64_t space_per_patch   = knl_n * traits->type_size + c_out * sizeof(float);
-    const int64_t batch_size        = params->wsize / space_per_patch;
-    const int64_t patches_per_batch = batch_size > 8 ? (batch_size / 8) * 8 : batch_size;
-    const int64_t batch_n           = (patch_total + patches_per_batch - 1) / patches_per_batch;
+    സ്ഥിരം int64_t space_per_patch   = knl_n * traits->type_size + c_out * വലുപ്പം(ദശാംശം);
+    സ്ഥിരം int64_t batch_size        = params->wsize / space_per_patch;
+    സ്ഥിരം int64_t patches_per_batch = batch_size > 8 ? (batch_size / 8) * 8 : batch_size;
+    സ്ഥിരം int64_t batch_n           = (patch_total + patches_per_batch - 1) / patches_per_batch;
 
     GGML_ASSERT(patches_per_batch > 0 && batch_size >= 1);
 
-    void * tmp = params->wdata;
+    ശൂന്യം * tmp = params->wdata;
 
-    for (int64_t batch_i = 0; batch_i < batch_n; ++batch_i) {
+    വേണ്ടി (int64_t batch_i = 0; batch_i < batch_n; ++batch_i) {
 
-        const int64_t patch_start_batch = batch_i * patches_per_batch;
-        const int64_t patch_end_batch   = std::min(patch_start_batch + patches_per_batch,
+        സ്ഥിരം int64_t patch_start_batch = batch_i * patches_per_batch;
+        സ്ഥിരം int64_t patch_end_batch   = std::min(patch_start_batch + patches_per_batch,
                                               patch_total);
-        const int64_t patch_n           = patch_end_batch - patch_start_batch;
+        സ്ഥിരം int64_t patch_n           = patch_end_batch - patch_start_batch;
 
-        const int64_t patch_per_thread  = (patch_n + params->nth - 1) / params->nth;
-        const int64_t patch_start       = patch_start_batch + params->ith * patch_per_thread;
-        const int64_t patch_end         = std::min(patch_start + patch_per_thread, patch_end_batch);
+        സ്ഥിരം int64_t patch_per_thread  = (patch_n + params->nth - 1) / params->nth;
+        സ്ഥിരം int64_t patch_start       = patch_start_batch + params->ith * patch_per_thread;
+        സ്ഥിരം int64_t patch_end         = std::min(patch_start + patch_per_thread, patch_end_batch);
 
         //im2col for a patch
-        for (int64_t p = patch_start; p < patch_end; ++p) {
-            const int64_t  batch_n     =  p / (dst_w * dst_h);
-            const int64_t  src_x       = (p / dst_w) % dst_h;
-            const int64_t  src_y       =  p % dst_w;
+        വേണ്ടി (int64_t p = patch_start; p < patch_end; ++p) {
+            സ്ഥിരം int64_t  batch_n     =  p / (dst_w * dst_h);
+            സ്ഥിരം int64_t  src_x       = (p / dst_w) % dst_h;
+            സ്ഥിരം int64_t  src_y       =  p % dst_w;
 
-            const float * src_base = (const float *)((const char *)src_data + batch_n * src->nb[3]);
-            char *        dst_row  = (char *) tmp + (p % patches_per_batch) * knl_n * traits->type_size;
+            സ്ഥിരം ദശാംശം * src_base = (സ്ഥിരം ദശാംശം *)((സ്ഥിരം അക്ഷരം *)src_data + batch_n * src->nb[3]);
+            അക്ഷരം *        dst_row  = (അക്ഷരം *) tmp + (p % patches_per_batch) * knl_n * traits->type_size;
 
-            for (int64_t ic = 0; ic < c_in; ++ic) {
-                for (int64_t ky = 0; ky < knl_h; ++ky) {
-                    for (int64_t kx = 0; kx < knl_w; ++kx) {
-                        const int64_t sy = src_x * stride_y + ky * dilation_y - pad_y;
-                        const int64_t sx = src_y * stride_x + kx * dilation_x - pad_x;
+            വേണ്ടി (int64_t ic = 0; ic < c_in; ++ic) {
+                വേണ്ടി (int64_t ky = 0; ky < knl_h; ++ky) {
+                    വേണ്ടി (int64_t kx = 0; kx < knl_w; ++kx) {
+                        സ്ഥിരം int64_t sy = src_x * stride_y + ky * dilation_y - pad_y;
+                        സ്ഥിരം int64_t sx = src_y * stride_x + kx * dilation_x - pad_x;
 
                         int64_t dst_idx = ic * (knl_h * knl_w) + ky * knl_w + kx;
 
-                        float src_val;
-                        if (sy < 0 || sy >= src_h || sx < 0 || sx >= src_w) {
+                        ദശാംശം src_val;
+                        എങ്കിൽ (sy < 0 || sy >= src_h || sx < 0 || sx >= src_w) {
                             src_val = 0.0f;
-                        } else {
-                            const float * src_ptr = (const float *)((const char *)src_base + sx * src->nb[0] + sy * src->nb[1] + ic * src->nb[2]);
+                        } അല്ലെങ്കിൽ {
+                            സ്ഥിരം ദശാംശം * src_ptr = (സ്ഥിരം ദശാംശം *)((സ്ഥിരം അക്ഷരം *)src_base + sx * src->nb[0] + sy * src->nb[1] + ic * src->nb[2]);
                             src_val               = *src_ptr;
                         }
 
-                        char * element_ptr = dst_row + dst_idx * traits->type_size;
-                        if (kernel_type == GGML_TYPE_F32) {
-                            *(float *) element_ptr = src_val;
-                        } else if (kernel_type == GGML_TYPE_F16) {
+                        അക്ഷരം * element_ptr = dst_row + dst_idx * traits->type_size;
+                        എങ്കിൽ (kernel_type == GGML_TYPE_F32) {
+                            *(ദശാംശം *) element_ptr = src_val;
+                        } അല്ലെങ്കിൽ എങ്കിൽ (kernel_type == GGML_TYPE_F16) {
                             *(ggml_fp16_t *) element_ptr = GGML_CPU_FP32_TO_FP16(src_val);
                         }
                     }
@@ -7488,9 +7488,9 @@ static void ggml_compute_forward_conv_2d_impl(const ggml_compute_params * params
 
         ggml_barrier(params->threadpool);
 
-        float * gemm_output = (float *) ((char *) tmp + patches_per_batch * knl_n * traits->type_size);
+        ദശാംശം * gemm_output = (ദശാംശം *) ((അക്ഷരം *) tmp + patches_per_batch * knl_n * traits->type_size);
 
-        GGML_ASSERT(gemm_output + patch_n * c_out <= (float*)tmp + params->wsize);
+        GGML_ASSERT(gemm_output + patch_n * c_out <= (ദശാംശം*)tmp + params->wsize);
 
         // GEMM: patches[patch_n, knl_n] × kernel[knl_n, c_out] = output[patch_n, c_out]
         ggml_call_mul_mat(kernel_type, params, patch_n, c_out, knl_n, tmp, knl_data, gemm_output);
@@ -7499,40 +7499,40 @@ static void ggml_compute_forward_conv_2d_impl(const ggml_compute_params * params
 
 
         //permute back [OC, N, OH, OW] to [N, OC, OH, OW]
-        const int64_t permute_per_thread = (patch_n + params->nth - 1) / params->nth;
-        const int64_t permute_start = params->ith * permute_per_thread;
-        const int64_t permute_end = std::min(permute_start + permute_per_thread, patch_n);
+        സ്ഥിരം int64_t permute_per_thread = (patch_n + params->nth - 1) / params->nth;
+        സ്ഥിരം int64_t permute_start = params->ith * permute_per_thread;
+        സ്ഥിരം int64_t permute_end = std::min(permute_start + permute_per_thread, patch_n);
 
-        for (int64_t i = permute_start; i < permute_end; ++i) {
-            const int64_t p       = patch_start_batch + i;
-            const int64_t batch_n = p / (dst_w * dst_h);
-            const int64_t dst_y   = (p / dst_w) % dst_h;
-            const int64_t dst_x   = p % dst_w;
+        വേണ്ടി (int64_t i = permute_start; i < permute_end; ++i) {
+            സ്ഥിരം int64_t p       = patch_start_batch + i;
+            സ്ഥിരം int64_t batch_n = p / (dst_w * dst_h);
+            സ്ഥിരം int64_t dst_y   = (p / dst_w) % dst_h;
+            സ്ഥിരം int64_t dst_x   = p % dst_w;
 
-            for (int64_t oc = 0; oc < c_out; ++oc) {
-                const float value = gemm_output[i * c_out + oc];
-                float * dst_ptr = (float *)((char *)dst_data + dst_x * dst->nb[0] + dst_y * dst->nb[1] + oc * dst->nb[2] + batch_n * dst->nb[3]);
+            വേണ്ടി (int64_t oc = 0; oc < c_out; ++oc) {
+                സ്ഥിരം ദശാംശം value = gemm_output[i * c_out + oc];
+                ദശാംശം * dst_ptr = (ദശാംശം *)((അക്ഷരം *)dst_data + dst_x * dst->nb[0] + dst_y * dst->nb[1] + oc * dst->nb[2] + batch_n * dst->nb[3]);
                 *dst_ptr = value;
             }
         }
     }
 }
 
-void ggml_compute_forward_conv_2d(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_conv_2d(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
     ggml_compute_forward_conv_2d_impl(params, src0, src1, dst, src0->type);
 }
 
 // ggml_compute_forward_conv_3d
 
-static void ggml_compute_forward_conv_3d_impl(const ggml_compute_params * params,
-                                              const ggml_tensor *         kernel,
-                                              const ggml_tensor *         src,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_conv_3d_impl(സ്ഥിരം ggml_compute_params * params,
+                                              സ്ഥിരം ggml_tensor *         kernel,
+                                              സ്ഥിരം ggml_tensor *         src,
                                               ggml_tensor *               dst,
                                               ggml_type                   kernel_type) {
 
@@ -7540,90 +7540,90 @@ static void ggml_compute_forward_conv_3d_impl(const ggml_compute_params * params
     GGML_ASSERT(kernel_type == GGML_TYPE_F16 || kernel_type == GGML_TYPE_F32);
     GGML_ASSERT(kernel->type == kernel_type);
 
-    const ggml_type_traits * traits = ggml_get_type_traits(kernel_type);
+    സ്ഥിരം ggml_type_traits * traits = ggml_get_type_traits(kernel_type);
 
-    const int32_t s0 = dst->op_params[0];
-    const int32_t s1 = dst->op_params[1];
-    const int32_t s2 = dst->op_params[2];
-    const int32_t p0 = dst->op_params[3];
-    const int32_t p1 = dst->op_params[4];
-    const int32_t p2 = dst->op_params[5];
-    const int32_t d0 = dst->op_params[6];
-    const int32_t d1 = dst->op_params[7];
-    const int32_t d2 = dst->op_params[8];
-    const int32_t c  = dst->op_params[9];
-    const int32_t n  = dst->op_params[10];
-    const int32_t oc = dst->op_params[11];
+    സ്ഥിരം int32_t s0 = dst->op_params[0];
+    സ്ഥിരം int32_t s1 = dst->op_params[1];
+    സ്ഥിരം int32_t s2 = dst->op_params[2];
+    സ്ഥിരം int32_t p0 = dst->op_params[3];
+    സ്ഥിരം int32_t p1 = dst->op_params[4];
+    സ്ഥിരം int32_t p2 = dst->op_params[5];
+    സ്ഥിരം int32_t d0 = dst->op_params[6];
+    സ്ഥിരം int32_t d1 = dst->op_params[7];
+    സ്ഥിരം int32_t d2 = dst->op_params[8];
+    സ്ഥിരം int32_t c  = dst->op_params[9];
+    സ്ഥിരം int32_t n  = dst->op_params[10];
+    സ്ഥിരം int32_t oc = dst->op_params[11];
 
-    const int64_t src_w = src->ne[0];
-    const int64_t src_h = src->ne[1];
-    const int64_t src_d = src->ne[2];
-    const int64_t knl_w = kernel->ne[0];
-    const int64_t knl_h = kernel->ne[1];
-    const int64_t knl_d = kernel->ne[2];
-    const int64_t dst_w = dst->ne[0];
-    const int64_t dst_h = dst->ne[1];
-    const int64_t dst_d = dst->ne[2];
+    സ്ഥിരം int64_t src_w = src->ne[0];
+    സ്ഥിരം int64_t src_h = src->ne[1];
+    സ്ഥിരം int64_t src_d = src->ne[2];
+    സ്ഥിരം int64_t knl_w = kernel->ne[0];
+    സ്ഥിരം int64_t knl_h = kernel->ne[1];
+    സ്ഥിരം int64_t knl_d = kernel->ne[2];
+    സ്ഥിരം int64_t dst_w = dst->ne[0];
+    സ്ഥിരം int64_t dst_h = dst->ne[1];
+    സ്ഥിരം int64_t dst_d = dst->ne[2];
 
-    const float * src_data = (float *) src->data;
-    void  * knl_data       = kernel->data;
-    float * dst_data       = (float *) dst->data;
+    സ്ഥിരം ദശാംശം * src_data = (ദശാംശം *) src->data;
+    ശൂന്യം  * knl_data       = kernel->data;
+    ദശാംശം * dst_data       = (ദശാംശം *) dst->data;
 
-    const int64_t knl_n_per_channel = knl_w * knl_h * knl_d;
-    const int64_t knl_n_total       = knl_n_per_channel * c;
-    const int64_t patch_total       = n * dst_w * dst_h * dst_d;
+    സ്ഥിരം int64_t knl_n_per_channel = knl_w * knl_h * knl_d;
+    സ്ഥിരം int64_t knl_n_total       = knl_n_per_channel * c;
+    സ്ഥിരം int64_t patch_total       = n * dst_w * dst_h * dst_d;
 
-    const int64_t space_per_patch   = knl_n_total * traits->type_size + oc * sizeof(float);
-    const int64_t batch_size        = params->wsize / space_per_patch;
-    const int64_t patches_per_batch = batch_size > 8 ? (batch_size / 8) * 8 : batch_size;
-    const int64_t batch_n           = (patch_total + patches_per_batch - 1) / patches_per_batch;
+    സ്ഥിരം int64_t space_per_patch   = knl_n_total * traits->type_size + oc * വലുപ്പം(ദശാംശം);
+    സ്ഥിരം int64_t batch_size        = params->wsize / space_per_patch;
+    സ്ഥിരം int64_t patches_per_batch = batch_size > 8 ? (batch_size / 8) * 8 : batch_size;
+    സ്ഥിരം int64_t batch_n           = (patch_total + patches_per_batch - 1) / patches_per_batch;
 
     GGML_ASSERT(patches_per_batch > 0 && batch_size >= 1);
 
-    void * tmp = params->wdata;
+    ശൂന്യം * tmp = params->wdata;
 
-    for (int64_t batch_i = 0; batch_i < batch_n; ++batch_i) {
-        const int64_t patch_start_batch = batch_i * patches_per_batch;
-        const int64_t patch_end_batch   = std::min(patch_start_batch + patches_per_batch, patch_total);
-        const int64_t patch_n_in_batch  = patch_end_batch - patch_start_batch;
+    വേണ്ടി (int64_t batch_i = 0; batch_i < batch_n; ++batch_i) {
+        സ്ഥിരം int64_t patch_start_batch = batch_i * patches_per_batch;
+        സ്ഥിരം int64_t patch_end_batch   = std::min(patch_start_batch + patches_per_batch, patch_total);
+        സ്ഥിരം int64_t patch_n_in_batch  = patch_end_batch - patch_start_batch;
 
-        const int64_t patch_per_thread  = (patch_n_in_batch + params->nth - 1) / params->nth;
-        const int64_t patch_start       = patch_start_batch + params->ith * patch_per_thread;
-        const int64_t patch_end         = std::min(patch_start + patch_per_thread, patch_end_batch);
+        സ്ഥിരം int64_t patch_per_thread  = (patch_n_in_batch + params->nth - 1) / params->nth;
+        സ്ഥിരം int64_t patch_start       = patch_start_batch + params->ith * patch_per_thread;
+        സ്ഥിരം int64_t patch_end         = std::min(patch_start + patch_per_thread, patch_end_batch);
 
-        for (int64_t p = patch_start; p < patch_end; ++p) {
-            const int64_t p_in_batch = p % (dst_w * dst_h * dst_d);
-            const int64_t p_in_depth = p_in_batch % (dst_w * dst_h);
-            const int64_t batch_idx  = p / (dst_w * dst_h * dst_d);
-            const int64_t dst_z      = p_in_batch / (dst_w * dst_h);
-            const int64_t dst_y      = p_in_depth / dst_w;
-            const int64_t dst_x      = p_in_depth % dst_w;
+        വേണ്ടി (int64_t p = patch_start; p < patch_end; ++p) {
+            സ്ഥിരം int64_t p_in_batch = p % (dst_w * dst_h * dst_d);
+            സ്ഥിരം int64_t p_in_depth = p_in_batch % (dst_w * dst_h);
+            സ്ഥിരം int64_t batch_idx  = p / (dst_w * dst_h * dst_d);
+            സ്ഥിരം int64_t dst_z      = p_in_batch / (dst_w * dst_h);
+            സ്ഥിരം int64_t dst_y      = p_in_depth / dst_w;
+            സ്ഥിരം int64_t dst_x      = p_in_depth % dst_w;
 
-            char * dst_row = (char *) tmp + (p % patches_per_batch) * knl_n_total * traits->type_size;
+            അക്ഷരം * dst_row = (അക്ഷരം *) tmp + (p % patches_per_batch) * knl_n_total * traits->type_size;
 
-            for (int64_t ic = 0; ic < c; ++ic) {
-                for (int64_t kz = 0; kz < knl_d; ++kz) {
-                    for (int64_t ky = 0; ky < knl_h; ++ky) {
-                        for (int64_t kx = 0; kx < knl_w; ++kx) {
-                            const int64_t sz = dst_z * s2 + kz * d2 - p2;
-                            const int64_t sy = dst_y * s1 + ky * d1 - p1;
-                            const int64_t sx = dst_x * s0 + kx * d0 - p0;
+            വേണ്ടി (int64_t ic = 0; ic < c; ++ic) {
+                വേണ്ടി (int64_t kz = 0; kz < knl_d; ++kz) {
+                    വേണ്ടി (int64_t ky = 0; ky < knl_h; ++ky) {
+                        വേണ്ടി (int64_t kx = 0; kx < knl_w; ++kx) {
+                            സ്ഥിരം int64_t sz = dst_z * s2 + kz * d2 - p2;
+                            സ്ഥിരം int64_t sy = dst_y * s1 + ky * d1 - p1;
+                            സ്ഥിരം int64_t sx = dst_x * s0 + kx * d0 - p0;
 
                             int64_t dst_idx = ic * knl_n_per_channel + kz * (knl_h * knl_w) + ky * knl_w + kx;
 
-                            float src_val;
-                            if (sz < 0 || sz >= src_d || sy < 0 || sy >= src_h || sx < 0 || sx >= src_w) {
+                            ദശാംശം src_val;
+                            എങ്കിൽ (sz < 0 || sz >= src_d || sy < 0 || sy >= src_h || sx < 0 || sx >= src_w) {
                                 src_val = 0.0f;
-                            } else {
-                                const int64_t cn_idx = batch_idx * c + ic;
-                                const float * src_ptr = (const float *)((const char *)src_data + sx*src->nb[0] + sy*src->nb[1] + sz*src->nb[2] + cn_idx*src->nb[3]);
+                            } അല്ലെങ്കിൽ {
+                                സ്ഥിരം int64_t cn_idx = batch_idx * c + ic;
+                                സ്ഥിരം ദശാംശം * src_ptr = (സ്ഥിരം ദശാംശം *)((സ്ഥിരം അക്ഷരം *)src_data + sx*src->nb[0] + sy*src->nb[1] + sz*src->nb[2] + cn_idx*src->nb[3]);
                                 src_val = *src_ptr;
                             }
 
-                            char * element_ptr = dst_row + dst_idx * traits->type_size;
-                            if (kernel_type == GGML_TYPE_F32) {
-                                *(float *)element_ptr = src_val;
-                            } else if (kernel_type == GGML_TYPE_F16) {
+                            അക്ഷരം * element_ptr = dst_row + dst_idx * traits->type_size;
+                            എങ്കിൽ (kernel_type == GGML_TYPE_F32) {
+                                *(ദശാംശം *)element_ptr = src_val;
+                            } അല്ലെങ്കിൽ എങ്കിൽ (kernel_type == GGML_TYPE_F16) {
                                 *(ggml_fp16_t *)element_ptr = GGML_CPU_FP32_TO_FP16(src_val);
                             }
                         }
@@ -7634,77 +7634,77 @@ static void ggml_compute_forward_conv_3d_impl(const ggml_compute_params * params
 
         ggml_barrier(params->threadpool);
 
-        float * gemm_output = (float *) ((char *) tmp + patches_per_batch * knl_n_total * traits->type_size);
+        ദശാംശം * gemm_output = (ദശാംശം *) ((അക്ഷരം *) tmp + patches_per_batch * knl_n_total * traits->type_size);
         ggml_call_mul_mat(kernel_type, params, patch_n_in_batch, oc, knl_n_total, tmp, knl_data, gemm_output);
 
         ggml_barrier(params->threadpool);
 
-        const int64_t permute_per_thread = (patch_n_in_batch + params->nth - 1) / params->nth;
-        const int64_t permute_start = params->ith * permute_per_thread;
-        const int64_t permute_end = std::min(permute_start + permute_per_thread, patch_n_in_batch);
+        സ്ഥിരം int64_t permute_per_thread = (patch_n_in_batch + params->nth - 1) / params->nth;
+        സ്ഥിരം int64_t permute_start = params->ith * permute_per_thread;
+        സ്ഥിരം int64_t permute_end = std::min(permute_start + permute_per_thread, patch_n_in_batch);
 
-        for (int64_t i = permute_start; i < permute_end; ++i) {
-            const int64_t p = patch_start_batch + i;
-            const int64_t p_in_batch = p % (dst_w * dst_h * dst_d);
-            const int64_t p_in_depth = p_in_batch % (dst_w * dst_h);
-            const int64_t batch_idx  = p / (dst_w * dst_h * dst_d);
-            const int64_t dst_z      = p_in_batch / (dst_w * dst_h);
-            const int64_t dst_y      = p_in_depth / dst_w;
-            const int64_t dst_x      = p_in_depth % dst_w;
+        വേണ്ടി (int64_t i = permute_start; i < permute_end; ++i) {
+            സ്ഥിരം int64_t p = patch_start_batch + i;
+            സ്ഥിരം int64_t p_in_batch = p % (dst_w * dst_h * dst_d);
+            സ്ഥിരം int64_t p_in_depth = p_in_batch % (dst_w * dst_h);
+            സ്ഥിരം int64_t batch_idx  = p / (dst_w * dst_h * dst_d);
+            സ്ഥിരം int64_t dst_z      = p_in_batch / (dst_w * dst_h);
+            സ്ഥിരം int64_t dst_y      = p_in_depth / dst_w;
+            സ്ഥിരം int64_t dst_x      = p_in_depth % dst_w;
 
-            for (int64_t ioc = 0; ioc < oc; ++ioc) {
-                const float value = gemm_output[i * oc + ioc];
-                const int64_t ocn_idx = batch_idx * oc + ioc;
-                float * dst_ptr = (float *)((char *)dst_data + dst_x*dst->nb[0] + dst_y*dst->nb[1] + dst_z*dst->nb[2] + ocn_idx*dst->nb[3]);
+            വേണ്ടി (int64_t ioc = 0; ioc < oc; ++ioc) {
+                സ്ഥിരം ദശാംശം value = gemm_output[i * oc + ioc];
+                സ്ഥിരം int64_t ocn_idx = batch_idx * oc + ioc;
+                ദശാംശം * dst_ptr = (ദശാംശം *)((അക്ഷരം *)dst_data + dst_x*dst->nb[0] + dst_y*dst->nb[1] + dst_z*dst->nb[2] + ocn_idx*dst->nb[3]);
                 *dst_ptr = value;
             }
         }
     }
 }
 
-void ggml_compute_forward_conv_3d(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_conv_3d(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
     ggml_compute_forward_conv_3d_impl(params, src0, src1, dst, src0->type);
 }
 
 template <typename kernel_t>
-static void ggml_compute_forward_conv_transpose_2d_impl(
-    const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_conv_transpose_2d_impl(
+    സ്ഥിരം ggml_compute_params * params,
           ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
     GGML_ASSERT(src0->type == GGML_TYPE_F16 || src0->type == GGML_TYPE_F32);
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nk = ne00*ne01*ne02*ne03;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nk = ne00*ne01*ne02*ne03;
 
     GGML_ASSERT(nb00 == ggml_type_size(src0->type));
-    GGML_ASSERT(nb10 == sizeof(float));
+    GGML_ASSERT(nb10 == വലുപ്പം(ദശാംശം));
 
-    if (ith == 0) {
+    എങ്കിൽ (ith == 0) {
         memset(params->wdata, 0, params->wsize);
 
         // permute kernel data (src0) from (Kw x Kh x Cout x Cin) to (Cin x Kw x Kh x Cout)
         {
-            kernel_t * const wdata = (kernel_t *) params->wdata + 0;
+            kernel_t * സ്ഥിരം wdata = (kernel_t *) params->wdata + 0;
 
-            for (int64_t i03 = 0; i03 < ne03; i03++) {
-                for (int64_t i02 = 0; i02 < ne02; i02++) {
-                    const kernel_t * const src = (kernel_t *)((char *) src0->data + i03*nb03 + i02*nb02);
+            വേണ്ടി (int64_t i03 = 0; i03 < ne03; i03++) {
+                വേണ്ടി (int64_t i02 = 0; i02 < ne02; i02++) {
+                    സ്ഥിരം kernel_t * സ്ഥിരം src = (kernel_t *)((അക്ഷരം *) src0->data + i03*nb03 + i02*nb02);
                     kernel_t * dst_data = wdata + i02*ne01*ne00*ne03;
-                    for (int64_t i01 = 0; i01 < ne01; i01++) {
-                        for (int64_t i00 = 0; i00 < ne00; i00++) {
+                    വേണ്ടി (int64_t i01 = 0; i01 < ne01; i01++) {
+                        വേണ്ടി (int64_t i00 = 0; i00 < ne00; i00++) {
                             dst_data[i01*ne00*ne03 + i00*ne03 + i03] = src[i01 * ne00 + i00];
                         }
                     }
@@ -7714,17 +7714,17 @@ static void ggml_compute_forward_conv_transpose_2d_impl(
 
         // permute source data (src1) from (Sw x Sh x Cin) to (Cin x Sw x Sh), for all batches
         {
-            kernel_t * const wdata = (kernel_t *) params->wdata + nk;
-            for (int i13 = 0; i13 < ne13; i13++) {
-                kernel_t * const wdata_b = wdata + i13*ne10*ne11*ne12;
-                for (int i12 = 0; i12 < ne12; i12++) {
-                    for (int i11 = 0; i11 < ne11; i11++) {
-                        const float * const src = (float *)((char *) src1->data + i13*nb13 + i12*nb12 + i11*nb11);
+            kernel_t * സ്ഥിരം wdata = (kernel_t *) params->wdata + nk;
+            വേണ്ടി (പൂർണ്ണസംഖ്യ i13 = 0; i13 < ne13; i13++) {
+                kernel_t * സ്ഥിരം wdata_b = wdata + i13*ne10*ne11*ne12;
+                വേണ്ടി (പൂർണ്ണസംഖ്യ i12 = 0; i12 < ne12; i12++) {
+                    വേണ്ടി (പൂർണ്ണസംഖ്യ i11 = 0; i11 < ne11; i11++) {
+                        സ്ഥിരം ദശാംശം * സ്ഥിരം src = (ദശാംശം *)((അക്ഷരം *) src1->data + i13*nb13 + i12*nb12 + i11*nb11);
                         kernel_t * dst_data = wdata_b + i11*ne10*ne12;
-                        for (int i10 = 0; i10 < ne10; i10++) {
-                            if constexpr (std::is_same_v<kernel_t, ggml_fp16_t>) {
+                        വേണ്ടി (പൂർണ്ണസംഖ്യ i10 = 0; i10 < ne10; i10++) {
+                            എങ്കിൽ constexpr (std::is_same_v<kernel_t, ggml_fp16_t>) {
                                 dst_data[i10*ne12 + i12] = GGML_CPU_FP32_TO_FP16(src[i10]);
-                            } else {
+                            } അല്ലെങ്കിൽ {
                                 dst_data[i10*ne12 + i12] = src[i10];
                             }
                         }
@@ -7737,37 +7737,37 @@ static void ggml_compute_forward_conv_transpose_2d_impl(
     }
     ggml_barrier(params->threadpool);
 
-    const int32_t stride = ggml_get_op_params_i32(dst, 0);
+    സ്ഥിരം int32_t stride = ggml_get_op_params_i32(dst, 0);
 
     // total patches in dst
-    const int np = ne2;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ np = ne2;
 
     // patches per thread
-    const int dp = (np + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dp = (np + nth - 1)/nth;
 
     // patch range for this thread
-    const int ip0 = dp*ith;
-    const int ip1 = MIN(ip0 + dp, np);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ip0 = dp*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ip1 = MIN(ip0 + dp, np);
 
-    kernel_t * const wdata = (kernel_t *) params->wdata + 0;
-    kernel_t * const wdata_src = wdata + nk;
+    kernel_t * സ്ഥിരം wdata = (kernel_t *) params->wdata + 0;
+    kernel_t * സ്ഥിരം wdata_src = wdata + nk;
 
-    for (int i2 = ip0; i2 < ip1; i2++) { // Cout
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i2 = ip0; i2 < ip1; i2++) { // Cout
         kernel_t * wdata_kernel = wdata + i2*ne01*ne00*ne03;
-        for (int i3 = 0; i3 < ne3; i3++) { // batch
-            float * dst_data = (float *)((char *) dst->data + i3*nb3 + i2*nb2);
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i3 = 0; i3 < ne3; i3++) { // batch
+            ദശാംശം * dst_data = (ദശാംശം *)((അക്ഷരം *) dst->data + i3*nb3 + i2*nb2);
             kernel_t * wdata_src_b = wdata_src + i3*ne10*ne11*ne12;
-            for (int i11 = 0; i11 < ne11; i11++) {
-                for (int i10 = 0; i10 < ne10; i10++) {
-                    const int i1n = i11*ne10*ne12 + i10*ne12;
-                    for (int i01 = 0; i01 < ne01; i01++) {
-                        for (int i00 = 0; i00 < ne00; i00++) {
-                            float v = 0;
-                            if constexpr (std::is_same_v<kernel_t, ggml_fp16_t>) {
+            വേണ്ടി (പൂർണ്ണസംഖ്യ i11 = 0; i11 < ne11; i11++) {
+                വേണ്ടി (പൂർണ്ണസംഖ്യ i10 = 0; i10 < ne10; i10++) {
+                    സ്ഥിരം പൂർണ്ണസംഖ്യ i1n = i11*ne10*ne12 + i10*ne12;
+                    വേണ്ടി (പൂർണ്ണസംഖ്യ i01 = 0; i01 < ne01; i01++) {
+                        വേണ്ടി (പൂർണ്ണസംഖ്യ i00 = 0; i00 < ne00; i00++) {
+                            ദശാംശം v = 0;
+                            എങ്കിൽ constexpr (std::is_same_v<kernel_t, ggml_fp16_t>) {
                                 ggml_vec_dot_f16(ne03, &v, 0,
                                         wdata_src_b + i1n, 0,
                                         wdata_kernel + i01*ne00*ne03 + i00*ne03, 0, 1);
-                            } else {
+                            } അല്ലെങ്കിൽ {
                                 ggml_vec_dot_f32(ne03, &v, 0,
                                         wdata_src_b + i1n, 0,
                                         wdata_kernel + i01*ne00*ne03 + i00*ne03, 0, 1);
@@ -7781,22 +7781,22 @@ static void ggml_compute_forward_conv_transpose_2d_impl(
     }
 }
 
-void ggml_compute_forward_conv_transpose_2d(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_conv_transpose_2d(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F16:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F16:
             {
                 ggml_compute_forward_conv_transpose_2d_impl<ggml_fp16_t>(params, dst);
-            } break;
-        case GGML_TYPE_F32:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F32:
             {
-                ggml_compute_forward_conv_transpose_2d_impl<float>(params, dst);
-            } break;
-        default:
+                ggml_compute_forward_conv_transpose_2d_impl<ദശാംശം>(params, dst);
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -7805,7 +7805,7 @@ void ggml_compute_forward_conv_transpose_2d(
 
 // ggml_compute_forward_conv_2d_dw
 
-struct ggml_conv_2d_dw_params {
+ഘടന ggml_conv_2d_dw_params {
     int64_t channels;
     int64_t batch;
     int64_t src_w;
@@ -7814,74 +7814,74 @@ struct ggml_conv_2d_dw_params {
     int64_t dst_h;
     int64_t knl_w;
     int64_t knl_h;
-    int stride_x;
-    int stride_y;
-    int pad_x;
-    int pad_y;
-    int dilation_x;
-    int dilation_y;
+    പൂർണ്ണസംഖ്യ stride_x;
+    പൂർണ്ണസംഖ്യ stride_y;
+    പൂർണ്ണസംഖ്യ pad_x;
+    പൂർണ്ണസംഖ്യ pad_y;
+    പൂർണ്ണസംഖ്യ dilation_x;
+    പൂർണ്ണസംഖ്യ dilation_y;
 };
 
-static inline float ggml_conv_2d_dw_knl_f32(const char * data, int64_t i, ggml_type type) {
-    if (type == GGML_TYPE_F16) {
-        return GGML_FP16_TO_FP32(((const ggml_fp16_t *)data)[i]);
+സ്ഥിതം വരിയിൽ ദശാംശം ggml_conv_2d_dw_knl_f32(സ്ഥിരം അക്ഷരം * data, int64_t i, ggml_type type) {
+    എങ്കിൽ (type == GGML_TYPE_F16) {
+        തിരികെ GGML_FP16_TO_FP32(((സ്ഥിരം ggml_fp16_t *)data)[i]);
     }
-    return ((const float *)data)[i];
+    തിരികെ ((സ്ഥിരം ദശാംശം *)data)[i];
 }
 
-static void ggml_compute_forward_conv_2d_dw_cwhn(
-        const ggml_compute_params * params,
-        const ggml_tensor * src,
-        const ggml_tensor * kernel,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_conv_2d_dw_cwhn(
+        സ്ഥിരം ggml_compute_params * params,
+        സ്ഥിരം ggml_tensor * src,
+        സ്ഥിരം ggml_tensor * kernel,
         ggml_tensor * dst,
-        const ggml_conv_2d_dw_params & p) {
+        സ്ഥിരം ggml_conv_2d_dw_params & p) {
 
-    const int64_t c = p.channels;
-    const char * knl_data = (const char *)kernel->data;
-    const ggml_type knl_type = kernel->type;
+    സ്ഥിരം int64_t c = p.channels;
+    സ്ഥിരം അക്ഷരം * knl_data = (സ്ഥിരം അക്ഷരം *)kernel->data;
+    സ്ഥിരം ggml_type knl_type = kernel->type;
 
-    const int64_t rows_total = p.dst_h * p.batch;
-    const int64_t rows_per_thread = (rows_total + params->nth - 1) / params->nth;
-    const int64_t row_start = params->ith * rows_per_thread;
-    const int64_t row_end = MIN(row_start + rows_per_thread, rows_total);
+    സ്ഥിരം int64_t rows_total = p.dst_h * p.batch;
+    സ്ഥിരം int64_t rows_per_thread = (rows_total + params->nth - 1) / params->nth;
+    സ്ഥിരം int64_t row_start = params->ith * rows_per_thread;
+    സ്ഥിരം int64_t row_end = MIN(row_start + rows_per_thread, rows_total);
 
 #ifdef GGML_SIMD
     int64_t c_pkg_end = 0;
     int64_t pkg_size = GGML_F32_EPR;
-    if (knl_type == GGML_TYPE_F32) {
-    #if defined(__ARM_FEATURE_SVE)
+    എങ്കിൽ (knl_type == GGML_TYPE_F32) {
+    #എങ്കിൽ defined(__ARM_FEATURE_SVE)
         pkg_size = svcntw();
-    #else
+    #അല്ലെങ്കിൽ
         pkg_size = GGML_F32_EPR;
     #endif
         c_pkg_end = (c / pkg_size) * pkg_size;
     }
-#else
-    const int64_t c_pkg_end = 0;
+#അല്ലെങ്കിൽ
+    സ്ഥിരം int64_t c_pkg_end = 0;
 #endif
 
-    for (int64_t row = row_start; row < row_end; ++row) {
-        const int64_t dst_y = row % p.dst_h;
-        const float * src_data = (const float *)src->data + (row / p.dst_h) * p.src_w * p.src_h * c;
-        for (int64_t dst_x = 0; dst_x < p.dst_w; ++dst_x) {
-            float * dst_data = (float *)dst->data + (row * p.dst_w + dst_x) * c;
-            const int64_t src_y_base = dst_y * p.stride_y - p.pad_y;
-            const int64_t src_x_base = dst_x * p.stride_x - p.pad_x;
+    വേണ്ടി (int64_t row = row_start; row < row_end; ++row) {
+        സ്ഥിരം int64_t dst_y = row % p.dst_h;
+        സ്ഥിരം ദശാംശം * src_data = (സ്ഥിരം ദശാംശം *)src->data + (row / p.dst_h) * p.src_w * p.src_h * c;
+        വേണ്ടി (int64_t dst_x = 0; dst_x < p.dst_w; ++dst_x) {
+            ദശാംശം * dst_data = (ദശാംശം *)dst->data + (row * p.dst_w + dst_x) * c;
+            സ്ഥിരം int64_t src_y_base = dst_y * p.stride_y - p.pad_y;
+            സ്ഥിരം int64_t src_x_base = dst_x * p.stride_x - p.pad_x;
 
 #ifdef GGML_SIMD
-            for (int64_t c_i = 0; c_i < c_pkg_end; c_i += pkg_size) {
+            വേണ്ടി (int64_t c_i = 0; c_i < c_pkg_end; c_i += pkg_size) {
                 GGML_F32_VEC sum = GGML_F32_VEC_ZERO;
-                for (int64_t knl_y = 0; knl_y < p.knl_h; ++knl_y) {
-                    const int64_t src_y = src_y_base + knl_y * p.dilation_y;
-                    if (src_y < 0 || src_y >= p.src_h) {
-                        continue;
+                വേണ്ടി (int64_t knl_y = 0; knl_y < p.knl_h; ++knl_y) {
+                    സ്ഥിരം int64_t src_y = src_y_base + knl_y * p.dilation_y;
+                    എങ്കിൽ (src_y < 0 || src_y >= p.src_h) {
+                        തുടരുക;
                     }
-                    for (int64_t knl_x = 0; knl_x < p.knl_w; ++knl_x) {
-                        const int64_t src_x = src_x_base + knl_x * p.dilation_x;
-                        if (src_x < 0 || src_x >= p.src_w) {
-                            continue;
+                    വേണ്ടി (int64_t knl_x = 0; knl_x < p.knl_w; ++knl_x) {
+                        സ്ഥിരം int64_t src_x = src_x_base + knl_x * p.dilation_x;
+                        എങ്കിൽ (src_x < 0 || src_x >= p.src_w) {
+                            തുടരുക;
                         }
-                        const float * kp = (const float *)knl_data + (knl_y * p.knl_w + knl_x) * c + c_i;
+                        സ്ഥിരം ദശാംശം * kp = (സ്ഥിരം ദശാംശം *)knl_data + (knl_y * p.knl_w + knl_x) * c + c_i;
                         GGML_F32_VEC k = GGML_F32_VEC_LOAD(kp);
                         GGML_F32_VEC s = GGML_F32_VEC_LOAD(src_data + (src_y * p.src_w + src_x) * c + c_i);
                         sum = GGML_F32_VEC_FMA(sum, k, s);
@@ -7890,17 +7890,17 @@ static void ggml_compute_forward_conv_2d_dw_cwhn(
                 GGML_F32_VEC_STORE(dst_data + c_i, sum);
             }
 #endif
-            for (int64_t c_i = c_pkg_end; c_i < c; ++c_i) {
-                float sum = 0.0f;
-                for (int64_t knl_y = 0; knl_y < p.knl_h; ++knl_y) {
-                    const int64_t src_y = src_y_base + knl_y * p.dilation_y;
-                    if (src_y < 0 || src_y >= p.src_h) {
-                        continue;
+            വേണ്ടി (int64_t c_i = c_pkg_end; c_i < c; ++c_i) {
+                ദശാംശം sum = 0.0f;
+                വേണ്ടി (int64_t knl_y = 0; knl_y < p.knl_h; ++knl_y) {
+                    സ്ഥിരം int64_t src_y = src_y_base + knl_y * p.dilation_y;
+                    എങ്കിൽ (src_y < 0 || src_y >= p.src_h) {
+                        തുടരുക;
                     }
-                    for (int64_t knl_x = 0; knl_x < p.knl_w; ++knl_x) {
-                        const int64_t src_x = src_x_base + knl_x * p.dilation_x;
-                        if (src_x < 0 || src_x >= p.src_w) {
-                            continue;
+                    വേണ്ടി (int64_t knl_x = 0; knl_x < p.knl_w; ++knl_x) {
+                        സ്ഥിരം int64_t src_x = src_x_base + knl_x * p.dilation_x;
+                        എങ്കിൽ (src_x < 0 || src_x >= p.src_w) {
+                            തുടരുക;
                         }
                         sum += ggml_conv_2d_dw_knl_f32(knl_data, (knl_y * p.knl_w + knl_x) * c + c_i, knl_type)
                              * src_data[(src_y * p.src_w + src_x) * c + c_i];
@@ -7912,38 +7912,38 @@ static void ggml_compute_forward_conv_2d_dw_cwhn(
     }
 }
 
-static void ggml_compute_forward_conv_2d_dw_whcn(
-        const ggml_compute_params * params,
-        const ggml_tensor * src,
-        const ggml_tensor * kernel,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_conv_2d_dw_whcn(
+        സ്ഥിരം ggml_compute_params * params,
+        സ്ഥിരം ggml_tensor * src,
+        സ്ഥിരം ggml_tensor * kernel,
         ggml_tensor * dst,
-        const ggml_conv_2d_dw_params & p) {
+        സ്ഥിരം ggml_conv_2d_dw_params & p) {
 
-    const int64_t n = p.channels * p.batch;
-    const int64_t per_thread = (n + params->nth - 1) / params->nth;
-    const int64_t start = params->ith * per_thread;
-    const int64_t end = MIN(start + per_thread, n);
-    const char * knl_base = (const char *)kernel->data;
-    const ggml_type knl_type = kernel->type;
+    സ്ഥിരം int64_t n = p.channels * p.batch;
+    സ്ഥിരം int64_t per_thread = (n + params->nth - 1) / params->nth;
+    സ്ഥിരം int64_t start = params->ith * per_thread;
+    സ്ഥിരം int64_t end = MIN(start + per_thread, n);
+    സ്ഥിരം അക്ഷരം * knl_base = (സ്ഥിരം അക്ഷരം *)kernel->data;
+    സ്ഥിരം ggml_type knl_type = kernel->type;
 
-    for (int64_t i = start; i < end; ++i) {
-        const int64_t knl_offset = (i % p.channels) * p.knl_w * p.knl_h;
-        const float * src_data = (const float *)src->data + i * p.src_w * p.src_h;
-        float * dst_data = (float *)dst->data + i * p.dst_w * p.dst_h;
+    വേണ്ടി (int64_t i = start; i < end; ++i) {
+        സ്ഥിരം int64_t knl_offset = (i % p.channels) * p.knl_w * p.knl_h;
+        സ്ഥിരം ദശാംശം * src_data = (സ്ഥിരം ദശാംശം *)src->data + i * p.src_w * p.src_h;
+        ദശാംശം * dst_data = (ദശാംശം *)dst->data + i * p.dst_w * p.dst_h;
 
-        for (int64_t dst_y = 0; dst_y < p.dst_h; ++dst_y) {
-            for (int64_t dst_x = 0; dst_x < p.dst_w; ++dst_x) {
+        വേണ്ടി (int64_t dst_y = 0; dst_y < p.dst_h; ++dst_y) {
+            വേണ്ടി (int64_t dst_x = 0; dst_x < p.dst_w; ++dst_x) {
 
-                float sum = 0.0f;
-                for (int64_t knl_y = 0; knl_y < p.knl_h; ++knl_y) {
-                    const int64_t src_y = dst_y * p.stride_y + knl_y * p.dilation_y - p.pad_y;
-                    if (src_y < 0 || src_y >= p.src_h) {
-                        continue;
+                ദശാംശം sum = 0.0f;
+                വേണ്ടി (int64_t knl_y = 0; knl_y < p.knl_h; ++knl_y) {
+                    സ്ഥിരം int64_t src_y = dst_y * p.stride_y + knl_y * p.dilation_y - p.pad_y;
+                    എങ്കിൽ (src_y < 0 || src_y >= p.src_h) {
+                        തുടരുക;
                     }
-                    for (int64_t knl_x = 0; knl_x < p.knl_w; ++knl_x) {
-                        const int64_t src_x = dst_x * p.stride_x + knl_x * p.dilation_x - p.pad_x;
-                        if (src_x < 0 || src_x >= p.src_w) {
-                            continue;
+                    വേണ്ടി (int64_t knl_x = 0; knl_x < p.knl_w; ++knl_x) {
+                        സ്ഥിരം int64_t src_x = dst_x * p.stride_x + knl_x * p.dilation_x - p.pad_x;
+                        എങ്കിൽ (src_x < 0 || src_x >= p.src_w) {
+                            തുടരുക;
                         }
                         sum += ggml_conv_2d_dw_knl_f32(knl_base, knl_offset + knl_y * p.knl_w + knl_x, knl_type)
                              * src_data[src_y * p.src_w + src_x];
@@ -7955,12 +7955,12 @@ static void ggml_compute_forward_conv_2d_dw_whcn(
     }
 }
 
-void ggml_compute_forward_conv_2d_dw(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_conv_2d_dw(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * kernel = dst->src[0];
-    const ggml_tensor * src = dst->src[1];
+    സ്ഥിരം ggml_tensor * kernel = dst->src[0];
+    സ്ഥിരം ggml_tensor * src = dst->src[1];
     ggml_conv_2d_dw_params p;
     p.channels = src->ne[2];
     p.batch = src->ne[3];
@@ -7981,79 +7981,79 @@ void ggml_compute_forward_conv_2d_dw(
     GGML_ASSERT(kernel->ne[3] == p.channels);
     GGML_ASSERT(dst->ne[3] == p.batch);
 
-    if (ggml_is_contiguous(src)) {
+    എങ്കിൽ (ggml_is_contiguous(src)) {
         ggml_compute_forward_conv_2d_dw_whcn(params, src, kernel, dst, p);
-    } else if (ggml_is_contiguous_channels(src)) {
+    } അല്ലെങ്കിൽ എങ്കിൽ (ggml_is_contiguous_channels(src)) {
         GGML_ASSERT(kernel->nb[0] >= kernel->nb[2] && kernel->nb[1] >= kernel->nb[0]);
         ggml_compute_forward_conv_2d_dw_cwhn(params, src, kernel, dst, p);
-    } else {
+    } അല്ലെങ്കിൽ {
         GGML_ABORT("non-contiguous memory layout not supported");
     }
 }
 
 // ggml_compute_forward_pool_1d_ksp
-static void ggml_compute_forward_pool_1d_ksp(
-        const ggml_compute_params * params,
-        const ggml_op_pool op,
-        const int k,
-        const int s,
-        const int p,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_pool_1d_ksp(
+        സ്ഥിരം ggml_compute_params * params,
+        സ്ഥിരം ggml_op_pool op,
+        സ്ഥിരം പൂർണ്ണസംഖ്യ k,
+        സ്ഥിരം പൂർണ്ണസംഖ്യ s,
+        സ്ഥിരം പൂർണ്ണസംഖ്യ p,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src = dst->src[0];
+    സ്ഥിരം ggml_tensor * src = dst->src[0];
 
-    assert(src->type == GGML_TYPE_F32 || src->type == GGML_TYPE_F16);
+    പ്രതിജ്ഞാ(src->type == GGML_TYPE_F32 || src->type == GGML_TYPE_F16);
 
-    if (params->ith != 0) {
-        return;
+    എങ്കിൽ (params->ith != 0) {
+        തിരികെ;
     }
 
-    const int64_t IW = src->ne[0];
-    const int64_t OW = dst->ne[0];
+    സ്ഥിരം int64_t IW = src->ne[0];
+    സ്ഥിരം int64_t OW = dst->ne[0];
 
-    const int64_t nr = ggml_nrows(src);
+    സ്ഥിരം int64_t nr = ggml_nrows(src);
 
-    for (int64_t ir = 0; ir < nr; ++ir) {
-        const char * srow_bytes =            (const char *) src->data + ir * src->nb[1];
-        float      * drow       = (float *) ((      char *) dst->data + ir * dst->nb[1]);
+    വേണ്ടി (int64_t ir = 0; ir < nr; ++ir) {
+        സ്ഥിരം അക്ഷരം * srow_bytes =            (സ്ഥിരം അക്ഷരം *) src->data + ir * src->nb[1];
+        ദശാംശം      * drow       = (ദശാംശം *) ((      അക്ഷരം *) dst->data + ir * dst->nb[1]);
 
-        for (int64_t ow = 0; ow < OW; ++ow) {
-            float res = 0;
-            switch (op) {
-                case GGML_OP_POOL_AVG: res = 0.0f;     break;
-                case GGML_OP_POOL_MAX: res = -FLT_MAX; break;
-                case GGML_OP_POOL_COUNT: GGML_ABORT("fatal error");
+        വേണ്ടി (int64_t ow = 0; ow < OW; ++ow) {
+            ദശാംശം res = 0;
+            തിരഞ്ഞെടുപ്പ് (op) {
+                അവസ്ഥ GGML_OP_POOL_AVG: res = 0.0f;     നിർത്തുക;
+                അവസ്ഥ GGML_OP_POOL_MAX: res = -FLT_MAX; നിർത്തുക;
+                അവസ്ഥ GGML_OP_POOL_എണ്ണം: GGML_ABORT("fatal error");
             }
 
-            int count = 0;
-            const int base = (int) ow * s - p;
+            പൂർണ്ണസംഖ്യ count = 0;
+            സ്ഥിരം പൂർണ്ണസംഖ്യ base = (പൂർണ്ണസംഖ്യ) ow * s - p;
 
-            for (int ki = 0; ki < k; ++ki) {
-                const int j = base + ki;
-                if (j < 0 || j >= (int) IW) {
-                    continue;
+            വേണ്ടി (പൂർണ്ണസംഖ്യ ki = 0; ki < k; ++ki) {
+                സ്ഥിരം പൂർണ്ണസംഖ്യ j = base + ki;
+                എങ്കിൽ (j < 0 || j >= (പൂർണ്ണസംഖ്യ) IW) {
+                    തുടരുക;
                 }
 
-                float v;
-                if (src->type == GGML_TYPE_F32) {
-                    v = ((const float *) srow_bytes)[j];
-                } else {
-                    v = GGML_CPU_FP16_TO_FP32(((const ggml_fp16_t *) srow_bytes)[j]);
+                ദശാംശം v;
+                എങ്കിൽ (src->type == GGML_TYPE_F32) {
+                    v = ((സ്ഥിരം ദശാംശം *) srow_bytes)[j];
+                } അല്ലെങ്കിൽ {
+                    v = GGML_CPU_FP16_TO_FP32(((സ്ഥിരം ggml_fp16_t *) srow_bytes)[j]);
                 }
 
-                switch (op) {
-                    case GGML_OP_POOL_AVG: res += v;                break;
-                    case GGML_OP_POOL_MAX: res =  std::max(v, res); break;
-                    case GGML_OP_POOL_COUNT: GGML_ABORT("fatal error");
+                തിരഞ്ഞെടുപ്പ് (op) {
+                    അവസ്ഥ GGML_OP_POOL_AVG: res += v;                നിർത്തുക;
+                    അവസ്ഥ GGML_OP_POOL_MAX: res =  std::max(v, res); നിർത്തുക;
+                    അവസ്ഥ GGML_OP_POOL_എണ്ണം: GGML_ABORT("fatal error");
                 }
 
                 ++count;
             }
 
-            switch (op) {
-                case GGML_OP_POOL_AVG: res = (count > 0) ? (res / count) : 0.0f; break;
-                case GGML_OP_POOL_MAX:                                           break;
-                case GGML_OP_POOL_COUNT: GGML_ABORT("fatal error");
+            തിരഞ്ഞെടുപ്പ് (op) {
+                അവസ്ഥ GGML_OP_POOL_AVG: res = (count > 0) ? (res / count) : 0.0f; നിർത്തുക;
+                അവസ്ഥ GGML_OP_POOL_MAX:                                           നിർത്തുക;
+                അവസ്ഥ GGML_OP_POOL_എണ്ണം: GGML_ABORT("fatal error");
             }
 
             drow[ow] = res;
@@ -8063,95 +8063,95 @@ static void ggml_compute_forward_pool_1d_ksp(
 
 // ggml_compute_forward_pool_1d
 
-void ggml_compute_forward_pool_1d(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_pool_1d(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
 
-    const int32_t * opts = (const int32_t *)dst->op_params;
+    സ്ഥിരം int32_t * opts = (സ്ഥിരം int32_t *)dst->op_params;
     ggml_op_pool op = static_cast<ggml_op_pool>(opts[0]);
-    const int k0 = opts[1];
-    const int s0 = opts[2];
-    const int p0 = opts[3];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ k0 = opts[1];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ s0 = opts[2];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ p0 = opts[3];
 
     ggml_compute_forward_pool_1d_ksp(params, op, k0, s0, p0, dst);
 }
 
 // ggml_compute_forward_pool_2d
 
-void ggml_compute_forward_pool_2d(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_pool_2d(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src = dst->src[0];
+    സ്ഥിരം ggml_tensor * src = dst->src[0];
 
-    assert(src->type == GGML_TYPE_F32 || src->type == GGML_TYPE_F16);
+    പ്രതിജ്ഞാ(src->type == GGML_TYPE_F32 || src->type == GGML_TYPE_F16);
 
-    if (params->ith != 0) {
-        return;
+    എങ്കിൽ (params->ith != 0) {
+        തിരികെ;
     }
 
-    const int32_t * opts = (const int32_t *)dst->op_params;
+    സ്ഥിരം int32_t * opts = (സ്ഥിരം int32_t *)dst->op_params;
 
     ggml_op_pool op = static_cast<ggml_op_pool>(opts[0]);
-    const int k0 = opts[1];
-    const int k1 = opts[2];
-    const int s0 = opts[3];
-    const int s1 = opts[4];
-    const int p0 = opts[5];
-    const int p1 = opts[6];
-    const char * cdata = (const char*)src->data;
-    const char * const data_end = cdata + ggml_nbytes(src);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ k0 = opts[1];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ k1 = opts[2];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ s0 = opts[3];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ s1 = opts[4];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ p0 = opts[5];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ p1 = opts[6];
+    സ്ഥിരം അക്ഷരം * cdata = (സ്ഥിരം അക്ഷരം*)src->data;
+    സ്ഥിരം അക്ഷരം * സ്ഥിരം data_end = cdata + ggml_nbytes(src);
 
-    const int64_t px = dst->ne[0];
-    const int64_t py = dst->ne[1];
-    const int64_t pa = px * py;
+    സ്ഥിരം int64_t px = dst->ne[0];
+    സ്ഥിരം int64_t py = dst->ne[1];
+    സ്ഥിരം int64_t pa = px * py;
 
-    float * dplane = (float *)dst->data;
+    ദശാംശം * dplane = (ദശാംശം *)dst->data;
 
-    const int ka = k0 * k1;
-    const int offset0 = -p0;
-    const int offset1 = -p1;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ka = k0 * k1;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ offset0 = -p0;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ offset1 = -p1;
 
-    while (cdata < data_end) {
-        for (int oy = 0; oy < py; ++oy) {
-            float * const drow = dplane + oy * px;
-            float * const out  = drow;
+    ആകുമ്പോൾ (cdata < data_end) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ oy = 0; oy < py; ++oy) {
+            ദശാംശം * സ്ഥിരം drow = dplane + oy * px;
+            ദശാംശം * സ്ഥിരം out  = drow;
 
-            for (int ox = 0; ox < px; ++ox) {
-                float res = 0;
-                switch (op) {
-                    case GGML_OP_POOL_AVG: res = 0;        break;
-                    case GGML_OP_POOL_MAX: res = -FLT_MAX; break;
-                    case GGML_OP_POOL_COUNT: GGML_ABORT("fatal error");
+            വേണ്ടി (പൂർണ്ണസംഖ്യ ox = 0; ox < px; ++ox) {
+                ദശാംശം res = 0;
+                തിരഞ്ഞെടുപ്പ് (op) {
+                    അവസ്ഥ GGML_OP_POOL_AVG: res = 0;        നിർത്തുക;
+                    അവസ്ഥ GGML_OP_POOL_MAX: res = -FLT_MAX; നിർത്തുക;
+                    അവസ്ഥ GGML_OP_POOL_എണ്ണം: GGML_ABORT("fatal error");
                 }
 
-                const int ix = offset0 + ox * s0;
-                const int iy = offset1 + oy * s1;
+                സ്ഥിരം പൂർണ്ണസംഖ്യ ix = offset0 + ox * s0;
+                സ്ഥിരം പൂർണ്ണസംഖ്യ iy = offset1 + oy * s1;
 
-                for (int ky = 0; ky < k1; ++ky) {
-                    if (iy + ky < 0 || iy + ky >= src->ne[1]) {
-                        continue;
+                വേണ്ടി (പൂർണ്ണസംഖ്യ ky = 0; ky < k1; ++ky) {
+                    എങ്കിൽ (iy + ky < 0 || iy + ky >= src->ne[1]) {
+                        തുടരുക;
                     }
 
-                    const void * srow = (const void *)(cdata + src->nb[1] * (iy + ky));
-                    for (int kx = 0; kx < k0; ++kx) {
-                        int j = ix + kx;
-                        if (j < 0 || j >= src->ne[0]) {
-                            continue;
+                    സ്ഥിരം ശൂന്യം * srow = (സ്ഥിരം ശൂന്യം *)(cdata + src->nb[1] * (iy + ky));
+                    വേണ്ടി (പൂർണ്ണസംഖ്യ kx = 0; kx < k0; ++kx) {
+                        പൂർണ്ണസംഖ്യ j = ix + kx;
+                        എങ്കിൽ (j < 0 || j >= src->ne[0]) {
+                            തുടരുക;
                         }
 
-                        const float srow_j = (src->type == GGML_TYPE_F32) ? ((const float*)srow)[j] : GGML_CPU_FP16_TO_FP32(((const ggml_fp16_t*)srow)[j]);
-                        switch (op) {
-                            case GGML_OP_POOL_AVG: res += srow_j;                break;
-                            case GGML_OP_POOL_MAX: res =  std::max(srow_j, res); break;
-                            case GGML_OP_POOL_COUNT:               GGML_ABORT("fatal error");
+                        സ്ഥിരം ദശാംശം srow_j = (src->type == GGML_TYPE_F32) ? ((സ്ഥിരം ദശാംശം*)srow)[j] : GGML_CPU_FP16_TO_FP32(((സ്ഥിരം ggml_fp16_t*)srow)[j]);
+                        തിരഞ്ഞെടുപ്പ് (op) {
+                            അവസ്ഥ GGML_OP_POOL_AVG: res += srow_j;                നിർത്തുക;
+                            അവസ്ഥ GGML_OP_POOL_MAX: res =  std::max(srow_j, res); നിർത്തുക;
+                            അവസ്ഥ GGML_OP_POOL_എണ്ണം:               GGML_ABORT("fatal error");
                         }
                     }
                 }
-                switch (op) {
-                    case GGML_OP_POOL_AVG:           res /= ka; break;
-                    case GGML_OP_POOL_MAX:                      break;
-                    case GGML_OP_POOL_COUNT: GGML_ABORT("fatal error");
+                തിരഞ്ഞെടുപ്പ് (op) {
+                    അവസ്ഥ GGML_OP_POOL_AVG:           res /= ka; നിർത്തുക;
+                    അവസ്ഥ GGML_OP_POOL_MAX:                      നിർത്തുക;
+                    അവസ്ഥ GGML_OP_POOL_എണ്ണം: GGML_ABORT("fatal error");
                 }
 
                 out[ox] = res;
@@ -8165,74 +8165,74 @@ void ggml_compute_forward_pool_2d(
 
 // ggml_compute_forward_pool_2d_back
 
-void ggml_compute_forward_pool_2d_back(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_pool_2d_back(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src  = dst->src[0];
-    const ggml_tensor * dstf = dst->src[1]; // forward tensor of dst
+    സ്ഥിരം ggml_tensor * src  = dst->src[0];
+    സ്ഥിരം ggml_tensor * dstf = dst->src[1]; // forward tensor of dst
 
-    assert(dst->type == GGML_TYPE_F32 || dst->type == GGML_TYPE_F16);
+    പ്രതിജ്ഞാ(dst->type == GGML_TYPE_F32 || dst->type == GGML_TYPE_F16);
 
-    if (params->ith != 0) {
-        return;
+    എങ്കിൽ (params->ith != 0) {
+        തിരികെ;
     }
 
-    const int32_t * opts = (const int32_t *)dst->op_params;
+    സ്ഥിരം int32_t * opts = (സ്ഥിരം int32_t *)dst->op_params;
     ggml_op_pool op = static_cast<ggml_op_pool>(opts[0]);
-    const int k0 = opts[1];
-    const int k1 = opts[2];
-    const int s0 = opts[3];
-    const int s1 = opts[4];
-    const int p0 = opts[5];
-    const int p1 = opts[6];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ k0 = opts[1];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ k1 = opts[2];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ s0 = opts[3];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ s1 = opts[4];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ p0 = opts[5];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ p1 = opts[6];
 
-    char       * cdata  = (char       *) dst->data;
-    const char * cdataf = (const char *) dstf->data;
-    const char * const data_end = cdata + ggml_nbytes(dst);
+    അക്ഷരം       * cdata  = (അക്ഷരം       *) dst->data;
+    സ്ഥിരം അക്ഷരം * cdataf = (സ്ഥിരം അക്ഷരം *) dstf->data;
+    സ്ഥിരം അക്ഷരം * സ്ഥിരം data_end = cdata + ggml_nbytes(dst);
 
     GGML_ASSERT(params->ith == 0);
     memset(cdata, 0, ggml_nbytes(dst));
 
-    const int64_t px = src->ne[0];
-    const int64_t py = src->ne[1];
-    const int64_t pa = px * py;
+    സ്ഥിരം int64_t px = src->ne[0];
+    സ്ഥിരം int64_t py = src->ne[1];
+    സ്ഥിരം int64_t pa = px * py;
 
-    const float * splane = (const float *) src->data;
+    സ്ഥിരം ദശാംശം * splane = (സ്ഥിരം ദശാംശം *) src->data;
 
-    const int ka = k0 * k1;
-    const int offset0 = -p0;
-    const int offset1 = -p1;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ka = k0 * k1;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ offset0 = -p0;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ offset1 = -p1;
 
-    while (cdata < data_end) {
-        for (int oy = 0; oy < py; ++oy) {
-            const float * const srow = splane + oy * px;
-            for (int ox = 0; ox < px; ++ox) {
-                const float grad0 = srow[ox];
+    ആകുമ്പോൾ (cdata < data_end) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ oy = 0; oy < py; ++oy) {
+            സ്ഥിരം ദശാംശം * സ്ഥിരം srow = splane + oy * px;
+            വേണ്ടി (പൂർണ്ണസംഖ്യ ox = 0; ox < px; ++ox) {
+                സ്ഥിരം ദശാംശം grad0 = srow[ox];
 
-                const int ix = offset0 + ox * s0;
-                const int iy = offset1 + oy * s1;
+                സ്ഥിരം പൂർണ്ണസംഖ്യ ix = offset0 + ox * s0;
+                സ്ഥിരം പൂർണ്ണസംഖ്യ iy = offset1 + oy * s1;
 
-                if (op == GGML_OP_POOL_MAX) {
-                    float maxval = -FLT_MAX;
-                    int kxmax = -1;
-                    int kymax = -1;
+                എങ്കിൽ (op == GGML_OP_POOL_MAX) {
+                    ദശാംശം maxval = -FLT_MAX;
+                    പൂർണ്ണസംഖ്യ kxmax = -1;
+                    പൂർണ്ണസംഖ്യ kymax = -1;
 
-                    for (int ky = 0; ky < k1; ++ky) {
-                        if (iy + ky < 0 || iy + ky >= dst->ne[1]) {
-                            continue;
+                    വേണ്ടി (പൂർണ്ണസംഖ്യ ky = 0; ky < k1; ++ky) {
+                        എങ്കിൽ (iy + ky < 0 || iy + ky >= dst->ne[1]) {
+                            തുടരുക;
                         }
-                        const void * drowf = (const void *)(cdataf + dst->nb[1] * (iy + ky));
-                        for (int kx = 0; kx < k0; ++kx) {
-                            int j = ix + kx;
-                            if (j < 0 || j >= dst->ne[0]) {
-                                continue;
+                        സ്ഥിരം ശൂന്യം * drowf = (സ്ഥിരം ശൂന്യം *)(cdataf + dst->nb[1] * (iy + ky));
+                        വേണ്ടി (പൂർണ്ണസംഖ്യ kx = 0; kx < k0; ++kx) {
+                            പൂർണ്ണസംഖ്യ j = ix + kx;
+                            എങ്കിൽ (j < 0 || j >= dst->ne[0]) {
+                                തുടരുക;
                             }
 
-                            const float val = dst->type == GGML_TYPE_F32 ?
-                                ((const float *) drowf)[j] : GGML_CPU_FP16_TO_FP32(((const ggml_fp16_t *) drowf)[j]);
-                            if (val <= maxval) {
-                                continue;
+                            സ്ഥിരം ദശാംശം val = dst->type == GGML_TYPE_F32 ?
+                                ((സ്ഥിരം ദശാംശം *) drowf)[j] : GGML_CPU_FP16_TO_FP32(((സ്ഥിരം ggml_fp16_t *) drowf)[j]);
+                            എങ്കിൽ (val <= maxval) {
+                                തുടരുക;
                             }
 
                             maxval = val;
@@ -8241,40 +8241,40 @@ void ggml_compute_forward_pool_2d_back(
                         }
                     }
 
-                    if (kxmax == -1 || kymax == -1) {
-                        continue;
+                    എങ്കിൽ (kxmax == -1 || kymax == -1) {
+                        തുടരുക;
                     }
 
-                    void * drow = (void *)(cdata + dst->nb[1] * (iy + kymax));
-                    const int j = ix + kxmax;
-                    if (dst->type == GGML_TYPE_F32) {
-                        ((float *) drow)[j] += grad0;
-                    } else {
-                        ((ggml_fp16_t *) drow)[j] = GGML_CPU_FP32_TO_FP16(grad0 + GGML_CPU_FP16_TO_FP32(((const ggml_fp16_t *) drow)[j]));
+                    ശൂന്യം * drow = (ശൂന്യം *)(cdata + dst->nb[1] * (iy + kymax));
+                    സ്ഥിരം പൂർണ്ണസംഖ്യ j = ix + kxmax;
+                    എങ്കിൽ (dst->type == GGML_TYPE_F32) {
+                        ((ദശാംശം *) drow)[j] += grad0;
+                    } അല്ലെങ്കിൽ {
+                        ((ggml_fp16_t *) drow)[j] = GGML_CPU_FP32_TO_FP16(grad0 + GGML_CPU_FP16_TO_FP32(((സ്ഥിരം ggml_fp16_t *) drow)[j]));
                     }
-                } else if (op == GGML_OP_POOL_AVG) {
-                    const float grad = grad0 / ka;
+                } അല്ലെങ്കിൽ എങ്കിൽ (op == GGML_OP_POOL_AVG) {
+                    സ്ഥിരം ദശാംശം grad = grad0 / ka;
 
-                    for (int ky = 0; ky < k1; ++ky) {
-                        if (iy + ky < 0 || iy + ky >= dst->ne[1]) {
-                            continue;
+                    വേണ്ടി (പൂർണ്ണസംഖ്യ ky = 0; ky < k1; ++ky) {
+                        എങ്കിൽ (iy + ky < 0 || iy + ky >= dst->ne[1]) {
+                            തുടരുക;
                         }
-                        void * drow = (void *)(cdata + dst->nb[1] * (iy + ky));
-                        for (int kx = 0; kx < k0; ++kx) {
-                            int j = ix + kx;
-                            if (j < 0 || j >= dst->ne[0]) {
-                                continue;
+                        ശൂന്യം * drow = (ശൂന്യം *)(cdata + dst->nb[1] * (iy + ky));
+                        വേണ്ടി (പൂർണ്ണസംഖ്യ kx = 0; kx < k0; ++kx) {
+                            പൂർണ്ണസംഖ്യ j = ix + kx;
+                            എങ്കിൽ (j < 0 || j >= dst->ne[0]) {
+                                തുടരുക;
                             }
 
-                            if (dst->type == GGML_TYPE_F32) {
-                                ((float *) drow)[j] += grad;
-                            } else {
+                            എങ്കിൽ (dst->type == GGML_TYPE_F32) {
+                                ((ദശാംശം *) drow)[j] += grad;
+                            } അല്ലെങ്കിൽ {
                                 ((ggml_fp16_t *) drow)[j] += GGML_CPU_FP32_TO_FP16(grad);
                             }
                         }
                     }
-                } else {
-                    GGML_ASSERT(false);
+                } അല്ലെങ്കിൽ {
+                    GGML_ASSERT(അസത്യം);
                 }
             }
         }
@@ -8287,214 +8287,214 @@ void ggml_compute_forward_pool_2d_back(
 
 // ggml_compute_forward_upscale
 
-static void ggml_compute_forward_upscale_f32(
-    const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_upscale_f32(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
-    float sf0 = (float)ne0/src0->ne[0];
-    float sf1 = (float)ne1/src0->ne[1];
-    float sf2 = (float)ne2/src0->ne[2];
-    float sf3 = (float)ne3/src0->ne[3];
-    float pixel_offset = 0.5f;
+    ദശാംശം sf0 = (ദശാംശം)ne0/src0->ne[0];
+    ദശാംശം sf1 = (ദശാംശം)ne1/src0->ne[1];
+    ദശാംശം sf2 = (ദശാംശം)ne2/src0->ne[2];
+    ദശാംശം sf3 = (ദശാംശം)ne3/src0->ne[3];
+    ദശാംശം pixel_offset = 0.5f;
 
-    const int32_t mode_flags = ggml_get_op_params_i32(dst, 0);
-    const ggml_scale_mode mode = (ggml_scale_mode) (mode_flags & 0xFF);
+    സ്ഥിരം int32_t mode_flags = ggml_get_op_params_i32(dst, 0);
+    സ്ഥിരം ggml_scale_mode mode = (ggml_scale_mode) (mode_flags & 0xFF);
 
-    if (mode_flags & GGML_SCALE_FLAG_ALIGN_CORNERS) {
+    എങ്കിൽ (mode_flags & GGML_SCALE_FLAG_ALIGN_CORNERS) {
         pixel_offset = 0.0f;
-        sf0 = ne0 > 1 && ne00 > 1 ? (float)(ne0 - 1) / (ne00 - 1) : sf0;
-        sf1 = ne1 > 1 && ne01 > 1 ? (float)(ne1 - 1) / (ne01 - 1) : sf1;
+        sf0 = ne0 > 1 && ne00 > 1 ? (ദശാംശം)(ne0 - 1) / (ne00 - 1) : sf0;
+        sf1 = ne1 > 1 && ne01 > 1 ? (ദശാംശം)(ne1 - 1) / (ne01 - 1) : sf1;
     }
 
-    if (mode == GGML_SCALE_MODE_NEAREST) {
-        for (int64_t i3 = 0; i3 < ne3; i3++) {
-            const int64_t i03 = i3 / sf3;
-            for (int64_t i2 = ith; i2 < ne2; i2 += nth) {
-                const int64_t i02 = i2 / sf2;
-                for (int64_t i1 = 0; i1 < ne1; i1++) {
-                    const int64_t i01 = i1 / sf1;
-                    for (int64_t i0 = 0; i0 < ne0; i0++) {
-                        const int64_t i00 = i0 / sf0;
+    എങ്കിൽ (mode == GGML_SCALE_MODE_NEAREST) {
+        വേണ്ടി (int64_t i3 = 0; i3 < ne3; i3++) {
+            സ്ഥിരം int64_t i03 = i3 / sf3;
+            വേണ്ടി (int64_t i2 = ith; i2 < ne2; i2 += nth) {
+                സ്ഥിരം int64_t i02 = i2 / sf2;
+                വേണ്ടി (int64_t i1 = 0; i1 < ne1; i1++) {
+                    സ്ഥിരം int64_t i01 = i1 / sf1;
+                    വേണ്ടി (int64_t i0 = 0; i0 < ne0; i0++) {
+                        സ്ഥിരം int64_t i00 = i0 / sf0;
 
-                        const float * x = (float *)((char *) src0->data + i00*nb00 + i01*nb01 + i02*nb02 + i03*nb03);
-                              float * y = (float *)((char *)  dst->data +  i0*nb0  +  i1*nb1  +  i2*nb2  +  i3*nb3);
+                        സ്ഥിരം ദശാംശം * x = (ദശാംശം *)((അക്ഷരം *) src0->data + i00*nb00 + i01*nb01 + i02*nb02 + i03*nb03);
+                              ദശാംശം * y = (ദശാംശം *)((അക്ഷരം *)  dst->data +  i0*nb0  +  i1*nb1  +  i2*nb2  +  i3*nb3);
 
                         *y = *x;
                     }
                 }
             }
         }
-    } else if (mode == GGML_SCALE_MODE_BILINEAR && (mode_flags & GGML_SCALE_FLAG_ANTIALIAS)) {
+    } അല്ലെങ്കിൽ എങ്കിൽ (mode == GGML_SCALE_MODE_BILINEAR && (mode_flags & GGML_SCALE_FLAG_ANTIALIAS)) {
         // Similar to F.interpolate(..., mode="bilinear", align_corners=False, antialias=True)
         // https://github.com/pytorch/pytorch/blob/8871ff29b743948d1225389d5b7068f37b22750b/aten/src/ATen/native/cpu/UpSampleKernel.cpp
-        auto triangle_filter = [](float x) -> float {
-            return std::max(1.0f - fabsf(x), 0.0f);
+        auto triangle_filter = [](ദശാംശം x) -> ദശാംശം {
+            തിരികെ std::max(1.0f - fabsf(x), 0.0f);
         };
 
         // support and invscale, minimum 1 pixel for bilinear
-        const float support1  = std::max(1.0f, 1.0f / sf1);
-        const float invscale1 = 1.0f / support1;
-        const float support0  = std::max(1.0f, 1.0f / sf0);
-        const float invscale0 = 1.0f / support0;
+        സ്ഥിരം ദശാംശം support1  = std::max(1.0f, 1.0f / sf1);
+        സ്ഥിരം ദശാംശം invscale1 = 1.0f / support1;
+        സ്ഥിരം ദശാംശം support0  = std::max(1.0f, 1.0f / sf0);
+        സ്ഥിരം ദശാംശം invscale0 = 1.0f / support0;
 
-        for (int64_t i3 = 0; i3 < ne3; i3++) {
-            const int64_t i03 = i3 / sf3;
-            for (int64_t i2 = ith; i2 < ne2; i2 += nth) {
-                const int64_t i02 = i2 / sf2;
-                for (int64_t i1 = 0; i1 < ne1; i1++) {
-                    const float y = ((float) i1 + pixel_offset) / sf1;
-                    for (int64_t i0 = 0; i0 < ne0; i0++) {
-                        const float x = ((float) i0 + pixel_offset) / sf0;
+        വേണ്ടി (int64_t i3 = 0; i3 < ne3; i3++) {
+            സ്ഥിരം int64_t i03 = i3 / sf3;
+            വേണ്ടി (int64_t i2 = ith; i2 < ne2; i2 += nth) {
+                സ്ഥിരം int64_t i02 = i2 / sf2;
+                വേണ്ടി (int64_t i1 = 0; i1 < ne1; i1++) {
+                    സ്ഥിരം ദശാംശം y = ((ദശാംശം) i1 + pixel_offset) / sf1;
+                    വേണ്ടി (int64_t i0 = 0; i0 < ne0; i0++) {
+                        സ്ഥിരം ദശാംശം x = ((ദശാംശം) i0 + pixel_offset) / sf0;
 
                         // the range of source pixels that contribute
-                        const int64_t x_min = std::max<int64_t>(x - support0 + pixel_offset, 0);
-                        const int64_t x_max = std::min<int64_t>(x + support0 + pixel_offset, ne00);
-                        const int64_t y_min = std::max<int64_t>(y - support1 + pixel_offset, 0);
-                        const int64_t y_max = std::min<int64_t>(y + support1 + pixel_offset, ne01);
+                        സ്ഥിരം int64_t x_min = std::max<int64_t>(x - support0 + pixel_offset, 0);
+                        സ്ഥിരം int64_t x_max = std::min<int64_t>(x + support0 + pixel_offset, ne00);
+                        സ്ഥിരം int64_t y_min = std::max<int64_t>(y - support1 + pixel_offset, 0);
+                        സ്ഥിരം int64_t y_max = std::min<int64_t>(y + support1 + pixel_offset, ne01);
 
                         // bilinear filter with antialiasing
-                        float val = 0.0f;
-                        float total_weight = 0.0f;
+                        ദശാംശം val = 0.0f;
+                        ദശാംശം total_weight = 0.0f;
 
-                        for (int64_t sy = y_min; sy < y_max; sy++) {
-                            const float weight_y = triangle_filter((sy - y + pixel_offset) * invscale1);
+                        വേണ്ടി (int64_t sy = y_min; sy < y_max; sy++) {
+                            സ്ഥിരം ദശാംശം weight_y = triangle_filter((sy - y + pixel_offset) * invscale1);
 
-                            for (int64_t sx = x_min; sx < x_max; sx++) {
-                                const float weight_x = triangle_filter((sx - x + pixel_offset) * invscale0);
-                                const float weight = weight_x * weight_y;
+                            വേണ്ടി (int64_t sx = x_min; sx < x_max; sx++) {
+                                സ്ഥിരം ദശാംശം weight_x = triangle_filter((sx - x + pixel_offset) * invscale0);
+                                സ്ഥിരം ദശാംശം weight = weight_x * weight_y;
 
-                                if (weight <= 0.0f) {
-                                    continue;
+                                എങ്കിൽ (weight <= 0.0f) {
+                                    തുടരുക;
                                 }
 
-                                const float pixel = *(const float *)((const char *)src0->data + sx*nb00 + sy*nb01 + i02*nb02 + i03*nb03);
+                                സ്ഥിരം ദശാംശം pixel = *(സ്ഥിരം ദശാംശം *)((സ്ഥിരം അക്ഷരം *)src0->data + sx*nb00 + sy*nb01 + i02*nb02 + i03*nb03);
                                 val += pixel * weight;
                                 total_weight += weight;
                             }
                         }
 
-                        if (total_weight > 0.0f) {
+                        എങ്കിൽ (total_weight > 0.0f) {
                             val /= total_weight;
                         }
 
-                        float * dst_ptr = (float *)((char *)dst->data + i0*nb0 + i1*nb1 + i2*nb2 + i3*nb3);
+                        ദശാംശം * dst_ptr = (ദശാംശം *)((അക്ഷരം *)dst->data + i0*nb0 + i1*nb1 + i2*nb2 + i3*nb3);
                         *dst_ptr = val;
                     }
                 }
             }
         }
-    } else if (mode == GGML_SCALE_MODE_BILINEAR) {
-        for (int64_t i3 = 0; i3 < ne3; i3++) {
-            const int64_t i03 = i3 / sf3;
-            for (int64_t i2 = ith; i2 < ne2; i2 += nth) {
-                const int64_t i02 = i2 / sf2;
-                for (int64_t i1 = 0; i1 < ne1; i1++) {
-                    const float y = ((float)i1 + pixel_offset) / sf1 - pixel_offset;
+    } അല്ലെങ്കിൽ എങ്കിൽ (mode == GGML_SCALE_MODE_BILINEAR) {
+        വേണ്ടി (int64_t i3 = 0; i3 < ne3; i3++) {
+            സ്ഥിരം int64_t i03 = i3 / sf3;
+            വേണ്ടി (int64_t i2 = ith; i2 < ne2; i2 += nth) {
+                സ്ഥിരം int64_t i02 = i2 / sf2;
+                വേണ്ടി (int64_t i1 = 0; i1 < ne1; i1++) {
+                    സ്ഥിരം ദശാംശം y = ((ദശാംശം)i1 + pixel_offset) / sf1 - pixel_offset;
                     int64_t y0 = (int64_t)floorf(y);
                     int64_t y1 = y0 + 1;
 
                     y0 = std::max(int64_t(0), std::min(y0, ne01 - 1));
                     y1 = std::max(int64_t(0), std::min(y1, ne01 - 1));
 
-                    float dy = y - (float)y0;
+                    ദശാംശം dy = y - (ദശാംശം)y0;
                     dy = std::max(0.0f, std::min(dy, 1.0f));
 
-                    for (int64_t i0 = 0; i0 < ne0; i0++) {
-                        const float x = ((float)i0 + pixel_offset) / sf0 - pixel_offset;
+                    വേണ്ടി (int64_t i0 = 0; i0 < ne0; i0++) {
+                        സ്ഥിരം ദശാംശം x = ((ദശാംശം)i0 + pixel_offset) / sf0 - pixel_offset;
                         int64_t x0 = (int64_t)floorf(x);
                         int64_t x1 = x0 + 1;
 
                         x0 = std::max(int64_t(0), std::min(x0, ne00 - 1));
                         x1 = std::max(int64_t(0), std::min(x1, ne00 - 1));
 
-                        float dx = x - (float)x0;
+                        ദശാംശം dx = x - (ദശാംശം)x0;
                         dx = std::max(0.0f, std::min(dx, 1.0f));
 
                         // fetch the four surrounding pixel values and interpolate
-                        const float a = *(const float *)((const char *)src0->data + x0*nb00 + y0*nb01 + i02*nb02 + i03*nb03);
-                        const float b = *(const float *)((const char *)src0->data + x1*nb00 + y0*nb01 + i02*nb02 + i03*nb03);
-                        const float c = *(const float *)((const char *)src0->data + x0*nb00 + y1*nb01 + i02*nb02 + i03*nb03);
-                        const float d = *(const float *)((const char *)src0->data + x1*nb00 + y1*nb01 + i02*nb02 + i03*nb03);
+                        സ്ഥിരം ദശാംശം a = *(സ്ഥിരം ദശാംശം *)((സ്ഥിരം അക്ഷരം *)src0->data + x0*nb00 + y0*nb01 + i02*nb02 + i03*nb03);
+                        സ്ഥിരം ദശാംശം b = *(സ്ഥിരം ദശാംശം *)((സ്ഥിരം അക്ഷരം *)src0->data + x1*nb00 + y0*nb01 + i02*nb02 + i03*nb03);
+                        സ്ഥിരം ദശാംശം c = *(സ്ഥിരം ദശാംശം *)((സ്ഥിരം അക്ഷരം *)src0->data + x0*nb00 + y1*nb01 + i02*nb02 + i03*nb03);
+                        സ്ഥിരം ദശാംശം d = *(സ്ഥിരം ദശാംശം *)((സ്ഥിരം അക്ഷരം *)src0->data + x1*nb00 + y1*nb01 + i02*nb02 + i03*nb03);
 
-                        const float val = a*(1 - dx)*(1 - dy) + b*dx*(1 - dy) + c*(1 - dx)*dy + d*dx*dy;
+                        സ്ഥിരം ദശാംശം val = a*(1 - dx)*(1 - dy) + b*dx*(1 - dy) + c*(1 - dx)*dy + d*dx*dy;
 
-                        float * y_dst = (float *)((char *)dst->data + i0*nb0 + i1*nb1 + i2*nb2 + i3*nb3);
+                        ദശാംശം * y_dst = (ദശാംശം *)((അക്ഷരം *)dst->data + i0*nb0 + i1*nb1 + i2*nb2 + i3*nb3);
                         *y_dst = val;
                     }
                 }
             }
         }
-    } else if (mode == GGML_SCALE_MODE_BICUBIC) {
+    } അല്ലെങ്കിൽ എങ്കിൽ (mode == GGML_SCALE_MODE_BICUBIC) {
         // https://en.wikipedia.org/wiki/Bicubic_interpolation#Bicubic_convolution_algorithm
-        const float a = -0.75f; // use alpha = -0.75 (same as PyTorch)
-        auto weight1 = [a](float x) { return ((a + 2) * x - (a + 3)) * x * x + 1; };
-        auto weight2 = [a](float x) { return ((a * x - 5 * a) * x + 8 * a) * x - 4 * a; };
-        auto bicubic = [=](float p0, float p1, float p2, float p3, float x) {
-            const float w0 = weight2(x + 1);
-            const float w1 = weight1(x + 0);
-            const float w2 = weight1(1 - x);
-            const float w3 = weight2(2 - x);
-            return p0*w0 + p1*w1 + p2*w2 + p3*w3;
+        സ്ഥിരം ദശാംശം a = -0.75f; // use alpha = -0.75 (same as PyTorch)
+        auto weight1 = [a](ദശാംശം x) { തിരികെ ((a + 2) * x - (a + 3)) * x * x + 1; };
+        auto weight2 = [a](ദശാംശം x) { തിരികെ ((a * x - 5 * a) * x + 8 * a) * x - 4 * a; };
+        auto bicubic = [=](ദശാംശം p0, ദശാംശം p1, ദശാംശം p2, ദശാംശം p3, ദശാംശം x) {
+            സ്ഥിരം ദശാംശം w0 = weight2(x + 1);
+            സ്ഥിരം ദശാംശം w1 = weight1(x + 0);
+            സ്ഥിരം ദശാംശം w2 = weight1(1 - x);
+            സ്ഥിരം ദശാംശം w3 = weight2(2 - x);
+            തിരികെ p0*w0 + p1*w1 + p2*w2 + p3*w3;
         };
 
-        for (int64_t i3 = 0; i3 < ne3; i3++) {
-            const int64_t i03 = i3 / sf3;
-            for (int64_t i2 = ith; i2 < ne2; i2 += nth) {
-                const int64_t i02 = i2 / sf2;
-                for (int64_t i1 = 0; i1 < ne1; i1++) {
-                    const float y = ((float)i1 + pixel_offset) / sf1 - pixel_offset;
-                    const int64_t y0 = (int64_t)floorf(y);
-                    const float dy = y - (float)y0;
+        വേണ്ടി (int64_t i3 = 0; i3 < ne3; i3++) {
+            സ്ഥിരം int64_t i03 = i3 / sf3;
+            വേണ്ടി (int64_t i2 = ith; i2 < ne2; i2 += nth) {
+                സ്ഥിരം int64_t i02 = i2 / sf2;
+                വേണ്ടി (int64_t i1 = 0; i1 < ne1; i1++) {
+                    സ്ഥിരം ദശാംശം y = ((ദശാംശം)i1 + pixel_offset) / sf1 - pixel_offset;
+                    സ്ഥിരം int64_t y0 = (int64_t)floorf(y);
+                    സ്ഥിരം ദശാംശം dy = y - (ദശാംശം)y0;
 
-                    for (int64_t i0 = 0; i0 < ne0; i0++) {
-                        const float x = ((float)i0 + pixel_offset) / sf0 - pixel_offset;
-                        const int64_t x0 = (int64_t)floorf(x);
-                        const float dx = x - (float)x0;
+                    വേണ്ടി (int64_t i0 = 0; i0 < ne0; i0++) {
+                        സ്ഥിരം ദശാംശം x = ((ദശാംശം)i0 + pixel_offset) / sf0 - pixel_offset;
+                        സ്ഥിരം int64_t x0 = (int64_t)floorf(x);
+                        സ്ഥിരം ദശാംശം dx = x - (ദശാംശം)x0;
 
-                        auto p = [=](int64_t x_off, int64_t y_off) -> float {
+                        auto p = [=](int64_t x_off, int64_t y_off) -> ദശാംശം {
                             int64_t i00 = std::max(int64_t(0), std::min(x0 + x_off, ne00 - 1));
                             int64_t i01 = std::max(int64_t(0), std::min(y0 + y_off, ne01 - 1));
-                            return *(const float *)((const char *)src0->data + i00*nb00 + i01*nb01 + i02*nb02 + i03*nb03);
+                            തിരികെ *(സ്ഥിരം ദശാംശം *)((സ്ഥിരം അക്ഷരം *)src0->data + i00*nb00 + i01*nb01 + i02*nb02 + i03*nb03);
                         };
 
-                        const float val = bicubic(
+                        സ്ഥിരം ദശാംശം val = bicubic(
                             bicubic(p(-1,-1), p(0,-1), p(1,-1), p(2,-1), dx),
                             bicubic(p(-1, 0), p(0, 0), p(1, 0), p(2, 0), dx),
                             bicubic(p(-1, 1), p(0, 1), p(1, 1), p(2, 1), dx),
                             bicubic(p(-1, 2), p(0, 2), p(1, 2), p(2, 2), dx), dy);
 
-                        float * y_dst = (float *)((char *)dst->data + i0*nb0 + i1*nb1 + i2*nb2 + i3*nb3);
+                        ദശാംശം * y_dst = (ദശാംശം *)((അക്ഷരം *)dst->data + i0*nb0 + i1*nb1 + i2*nb2 + i3*nb3);
                         *y_dst = val;
                     }
                 }
             }
         }
-    } else {
+    } അല്ലെങ്കിൽ {
         GGML_ABORT("unsupported upscale mode");
     }
 }
 
-void ggml_compute_forward_upscale(
-    const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_upscale(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_upscale_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -8504,70 +8504,70 @@ void ggml_compute_forward_upscale(
 
 // ggml_compute_forward_pad
 
-template<bool circular_t>
-static void ggml_compute_forward_pad_f32(
-    const ggml_compute_params * params,
+template<തർക്കം circular_t>
+സ്ഥിതം ശൂന്യം ggml_compute_forward_pad_f32(
+    സ്ഥിരം ggml_compute_params * params,
           ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    assert(dst->nb[0] == sizeof(float));
+    പ്രതിജ്ഞാ(dst->nb[0] == വലുപ്പം(ദശാംശം));
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
-    float * dst_ptr = (float *) dst->data;
-    const int32_t lp0 = ggml_get_op_params_i32(dst, 0);
-    const int32_t rp0 = ggml_get_op_params_i32(dst, 1);
-    const int32_t lp1 = ggml_get_op_params_i32(dst, 2);
-    const int32_t rp1 = ggml_get_op_params_i32(dst, 3);
-    const int32_t lp2 = ggml_get_op_params_i32(dst, 4);
-    const int32_t rp2 = ggml_get_op_params_i32(dst, 5);
-    const int32_t lp3 = ggml_get_op_params_i32(dst, 6);
-    const int32_t rp3 = ggml_get_op_params_i32(dst, 7);
+    ദശാംശം * dst_ptr = (ദശാംശം *) dst->data;
+    സ്ഥിരം int32_t lp0 = ggml_get_op_params_i32(dst, 0);
+    സ്ഥിരം int32_t rp0 = ggml_get_op_params_i32(dst, 1);
+    സ്ഥിരം int32_t lp1 = ggml_get_op_params_i32(dst, 2);
+    സ്ഥിരം int32_t rp1 = ggml_get_op_params_i32(dst, 3);
+    സ്ഥിരം int32_t lp2 = ggml_get_op_params_i32(dst, 4);
+    സ്ഥിരം int32_t rp2 = ggml_get_op_params_i32(dst, 5);
+    സ്ഥിരം int32_t lp3 = ggml_get_op_params_i32(dst, 6);
+    സ്ഥിരം int32_t rp3 = ggml_get_op_params_i32(dst, 7);
 
-    const int64_t nrows = ne1 * ne2 * ne3;
-    const bool src_row_contig = src0->nb[0] == sizeof(float);
+    സ്ഥിരം int64_t nrows = ne1 * ne2 * ne3;
+    സ്ഥിരം തർക്കം src_row_contig = src0->nb[0] == വലുപ്പം(ദശാംശം);
 
-    for (int64_t row = ith; row < nrows; row += nth) {
-        const int64_t i1 = row % ne1;
-        const int64_t i2 = (row / ne1) % ne2;
-        const int64_t i3 = row / (ne1 * ne2);
+    വേണ്ടി (int64_t row = ith; row < nrows; row += nth) {
+        സ്ഥിരം int64_t i1 = row % ne1;
+        സ്ഥിരം int64_t i2 = (row / ne1) % ne2;
+        സ്ഥിരം int64_t i3 = row / (ne1 * ne2);
 
-        float * dst_row = dst_ptr + row * ne0;
+        ദശാംശം * dst_row = dst_ptr + row * ne0;
 
-        if constexpr (circular_t) {
+        എങ്കിൽ constexpr (circular_t) {
             // circular padding wraps around on a torus
-            const int64_t src_i1 = ggml_wrap_around(i1 - lp1, ne01);
-            const int64_t src_i2 = ggml_wrap_around(i2 - lp2, ne02);
-            const int64_t src_i3 = ggml_wrap_around(i3 - lp3, ne03);
+            സ്ഥിരം int64_t src_i1 = ggml_wrap_around(i1 - lp1, ne01);
+            സ്ഥിരം int64_t src_i2 = ggml_wrap_around(i2 - lp2, ne02);
+            സ്ഥിരം int64_t src_i3 = ggml_wrap_around(i3 - lp3, ne03);
 
-            for (int64_t i0 = 0; i0 < ne0; ++i0) {
-                const int64_t src_i0 = ggml_wrap_around(i0 - lp0, ne00);
-                dst_row[i0] = *(const float *)((const char *) src0->data + src_i3*nb03 + src_i2*nb02 + src_i1*nb01 + src_i0*nb00);
+            വേണ്ടി (int64_t i0 = 0; i0 < ne0; ++i0) {
+                സ്ഥിരം int64_t src_i0 = ggml_wrap_around(i0 - lp0, ne00);
+                dst_row[i0] = *(സ്ഥിരം ദശാംശം *)((സ്ഥിരം അക്ഷരം *) src0->data + src_i3*nb03 + src_i2*nb02 + src_i1*nb01 + src_i0*nb00);
             }
-        } else {
-            const bool interior = (i1 >= lp1 && i1 < ne1 - rp1)
+        } അല്ലെങ്കിൽ {
+            സ്ഥിരം തർക്കം interior = (i1 >= lp1 && i1 < ne1 - rp1)
                                && (i2 >= lp2 && i2 < ne2 - rp2)
                                && (i3 >= lp3 && i3 < ne3 - rp3);
-            if (!interior) {
-                memset(dst_row, 0, ne0 * sizeof(float));
-                continue;
+            എങ്കിൽ (!interior) {
+                memset(dst_row, 0, ne0 * വലുപ്പം(ദശാംശം));
+                തുടരുക;
             }
 
-            const char * src_row = (const char *) src0->data + (i3 - lp3)*nb03 + (i2 - lp2)*nb02 + (i1 - lp1)*nb01;
+            സ്ഥിരം അക്ഷരം * src_row = (സ്ഥിരം അക്ഷരം *) src0->data + (i3 - lp3)*nb03 + (i2 - lp2)*nb02 + (i1 - lp1)*nb01;
 
-            if (src_row_contig && lp0 >= 0 && rp0 >= 0) {
-                memset(dst_row, 0, lp0 * sizeof(float));
-                memcpy(dst_row + lp0, src_row, ne00 * sizeof(float));
-                memset(dst_row + lp0 + ne00, 0, rp0 * sizeof(float));
-            } else {
-                for (int64_t i0 = 0; i0 < ne0; ++i0) {
-                    if (i0 >= lp0 && i0 < ne0 - rp0) {
-                        dst_row[i0] = *(const float *)(src_row + (i0 - lp0)*nb00);
-                    } else {
+            എങ്കിൽ (src_row_contig && lp0 >= 0 && rp0 >= 0) {
+                memset(dst_row, 0, lp0 * വലുപ്പം(ദശാംശം));
+                memcpy(dst_row + lp0, src_row, ne00 * വലുപ്പം(ദശാംശം));
+                memset(dst_row + lp0 + ne00, 0, rp0 * വലുപ്പം(ദശാംശം));
+            } അല്ലെങ്കിൽ {
+                വേണ്ടി (int64_t i0 = 0; i0 < ne0; ++i0) {
+                    എങ്കിൽ (i0 >= lp0 && i0 < ne0 - rp0) {
+                        dst_row[i0] = *(സ്ഥിരം ദശാംശം *)(src_row + (i0 - lp0)*nb00);
+                    } അല്ലെങ്കിൽ {
                         dst_row[i0] = 0.0f;
                     }
                 }
@@ -8577,21 +8577,21 @@ static void ggml_compute_forward_pad_f32(
 }
 
 
-void ggml_compute_forward_pad(
-    const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_pad(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0];
-    const bool circular = (bool) ggml_get_op_params_i32(dst, 8);
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം തർക്കം circular = (തർക്കം) ggml_get_op_params_i32(dst, 8);
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
-                if (circular) {
-                    ggml_compute_forward_pad_f32<true>(params, dst);
-                } else {
-                    ggml_compute_forward_pad_f32<false>(params, dst);
+                എങ്കിൽ (circular) {
+                    ggml_compute_forward_pad_f32<സത്യം>(params, dst);
+                } അല്ലെങ്കിൽ {
+                    ggml_compute_forward_pad_f32<അസത്യം>(params, dst);
                 }
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -8600,34 +8600,34 @@ void ggml_compute_forward_pad(
 
 // ggml_compute_forward_pad_reflect_1d
 
-void ggml_compute_forward_pad_reflect_1d(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_pad_reflect_1d(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int32_t * opts = (const int32_t *) dst->op_params;
-    const int p0 = opts[0];
-    const int p1 = opts[1];
+    സ്ഥിരം int32_t * opts = (സ്ഥിരം int32_t *) dst->op_params;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ p0 = opts[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ p1 = opts[1];
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
-    for (int64_t i3 = 0; i3 < ne3; i3++) {
-        for (int64_t i2 = 0; i2 < ne2; i2++) {
-            for (int64_t i1 = ith; i1 < ne1; i1 += nth) {
-                float * left  = (float *) ((char *) dst->data + i3*nb3 + i2*nb2 + i1*nb1 +         p0*nb0);
-                float * right = (float *) ((char *) dst->data + i3*nb3 + i2*nb2 + i1*nb1 + (ne0-p1-1)*nb0);
+    വേണ്ടി (int64_t i3 = 0; i3 < ne3; i3++) {
+        വേണ്ടി (int64_t i2 = 0; i2 < ne2; i2++) {
+            വേണ്ടി (int64_t i1 = ith; i1 < ne1; i1 += nth) {
+                ദശാംശം * left  = (ദശാംശം *) ((അക്ഷരം *) dst->data + i3*nb3 + i2*nb2 + i1*nb1 +         p0*nb0);
+                ദശാംശം * right = (ദശാംശം *) ((അക്ഷരം *) dst->data + i3*nb3 + i2*nb2 + i1*nb1 + (ne0-p1-1)*nb0);
 
-                ggml_vec_cpy_f32(ne00, left, (float *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01));
+                ggml_vec_cpy_f32(ne00, left, (ദശാംശം *) ((അക്ഷരം *) src0->data + i3*nb03 + i2*nb02 + i1*nb01));
 
-                for (int i0 = 1; i0 <= p0; i0++) { left[-i0] = left[i0];   }
-                for (int i0 = 1; i0 <= p1; i0++) { right[i0] = right[-i0]; }
+                വേണ്ടി (പൂർണ്ണസംഖ്യ i0 = 1; i0 <= p0; i0++) { left[-i0] = left[i0];   }
+                വേണ്ടി (പൂർണ്ണസംഖ്യ i0 = 1; i0 <= p1; i0++) { right[i0] = right[-i0]; }
             }
         }
     }
@@ -8635,65 +8635,65 @@ void ggml_compute_forward_pad_reflect_1d(
 
 // ggml_compute_forward_roll
 
-static int64_t ggml_wrap_index(int64_t i, int64_t ne) {
-    if (i < 0) {
-        return i + ne;
-    } else if (i >= ne) {
-        return i - ne;
+സ്ഥിതം int64_t ggml_wrap_index(int64_t i, int64_t ne) {
+    എങ്കിൽ (i < 0) {
+        തിരികെ i + ne;
+    } അല്ലെങ്കിൽ എങ്കിൽ (i >= ne) {
+        തിരികെ i - ne;
     }
-    return i;
+    തിരികെ i;
 }
 
-static void ggml_compute_forward_roll_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_roll_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const float * src_data = (const float *) src0->data;
-    float * dst_data = (float *) dst->data;
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ദശാംശം * src_data = (സ്ഥിരം ദശാംശം *) src0->data;
+    ദശാംശം * dst_data = (ദശാംശം *) dst->data;
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
-    const int s0 = ggml_get_op_params_i32(dst, 0);
-    const int s1 = ggml_get_op_params_i32(dst, 1);
-    const int s2 = ggml_get_op_params_i32(dst, 2);
-    const int s3 = ggml_get_op_params_i32(dst, 3);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ s0 = ggml_get_op_params_i32(dst, 0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ s1 = ggml_get_op_params_i32(dst, 1);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ s2 = ggml_get_op_params_i32(dst, 2);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ s3 = ggml_get_op_params_i32(dst, 3);
 
-    const int64_t total = ne1 * ne2 * ne3;
-    const int64_t per_thread = (total + params->nth) / params->nth;
-    const int64_t start = params->ith * per_thread;
-    const int64_t end   = std::min(start + per_thread, total);
+    സ്ഥിരം int64_t total = ne1 * ne2 * ne3;
+    സ്ഥിരം int64_t per_thread = (total + params->nth) / params->nth;
+    സ്ഥിരം int64_t start = params->ith * per_thread;
+    സ്ഥിരം int64_t end   = std::min(start + per_thread, total);
 
-    for (int64_t i = start; i < end; ++i) {
-        const int64_t i1 = i % ne1;
-        const int64_t i2 = (i / ne1) % ne2;
-        const int64_t i3 = i / (ne2 * ne1);
-        float * dst_row = dst_data + (i3*nb3 + i2*nb2 + i1*nb1) / sizeof(float);
+    വേണ്ടി (int64_t i = start; i < end; ++i) {
+        സ്ഥിരം int64_t i1 = i % ne1;
+        സ്ഥിരം int64_t i2 = (i / ne1) % ne2;
+        സ്ഥിരം int64_t i3 = i / (ne2 * ne1);
+        ദശാംശം * dst_row = dst_data + (i3*nb3 + i2*nb2 + i1*nb1) / വലുപ്പം(ദശാംശം);
 
-        const int64_t i01 = ggml_wrap_index(i1 - s1, ne01);
-        const int64_t i02 = ggml_wrap_index(i2 - s2, ne02);
-        const int64_t i03 = ggml_wrap_index(i3 - s3, ne03);
-        const float * src_row = src_data + (i03*nb03 + i02*nb02 + i01*nb01) / sizeof(float);
+        സ്ഥിരം int64_t i01 = ggml_wrap_index(i1 - s1, ne01);
+        സ്ഥിരം int64_t i02 = ggml_wrap_index(i2 - s2, ne02);
+        സ്ഥിരം int64_t i03 = ggml_wrap_index(i3 - s3, ne03);
+        സ്ഥിരം ദശാംശം * src_row = src_data + (i03*nb03 + i02*nb02 + i01*nb01) / വലുപ്പം(ദശാംശം);
 
-        const int64_t s = ggml_wrap_index(-s0, ne00);
-        const int64_t n = ne00 - s;
+        സ്ഥിരം int64_t s = ggml_wrap_index(-s0, ne00);
+        സ്ഥിരം int64_t n = ne00 - s;
         ggml_vec_cpy_f32(n, dst_row,     src_row + s);
         ggml_vec_cpy_f32(s, dst_row + n, src_row);
     }
 }
 
-void ggml_compute_forward_roll(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_roll(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_roll_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -8702,89 +8702,89 @@ void ggml_compute_forward_roll(
 
 // ggml_compute_forward_arange
 
-static void ggml_compute_forward_arange_f32(
-    const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_arange_f32(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    GGML_ASSERT(dst->nb[0] == sizeof(float));
+    GGML_ASSERT(dst->nb[0] == വലുപ്പം(ദശാംശം));
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const float start = ggml_get_op_params_f32(dst, 0);
-    const float stop  = ggml_get_op_params_f32(dst, 1);
-    const float step  = ggml_get_op_params_f32(dst, 2);
+    സ്ഥിരം ദശാംശം start = ggml_get_op_params_f32(dst, 0);
+    സ്ഥിരം ദശാംശം stop  = ggml_get_op_params_f32(dst, 1);
+    സ്ഥിരം ദശാംശം step  = ggml_get_op_params_f32(dst, 2);
 
-    const int64_t steps = (int64_t) ceilf((stop - start) / step);
+    സ്ഥിരം int64_t steps = (int64_t) ceilf((stop - start) / step);
 
     GGML_ASSERT(ggml_nelements(dst) == steps);
 
-    for (int64_t i = ith; i < steps; i+= nth) {
-        float value = start + step * i;
-        ((float *)dst->data)[i] = value;
+    വേണ്ടി (int64_t i = ith; i < steps; i+= nth) {
+        ദശാംശം value = start + step * i;
+        ((ദശാംശം *)dst->data)[i] = value;
     }
 }
 
-void ggml_compute_forward_arange(
-    const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_arange(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
-    switch (dst->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (dst->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_arange_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
     }
 }
 
-static void ggml_compute_forward_timestep_embedding_f32(
-    const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_timestep_embedding_f32(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    GGML_ASSERT(src0->nb[0] == sizeof(float));
+    GGML_ASSERT(src0->nb[0] == വലുപ്പം(ദശാംശം));
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
-    const int dim = ggml_get_op_params_i32(dst, 0);
-    const int max_period = ggml_get_op_params_i32(dst, 1);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dim = ggml_get_op_params_i32(dst, 0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ max_period = ggml_get_op_params_i32(dst, 1);
 
-    int half = dim / 2;
+    പൂർണ്ണസംഖ്യ half = dim / 2;
 
-    for (int64_t i = 0; i < ne00; i++) {
-        float * embed_data = (float *)((char *)  dst->data +  i*nb1);
-        for (int64_t j = ith; j < half; j += nth) {
-            float timestep = ((float *)src0->data)[i];
-            float freq = (float)expf(-logf(max_period) * j / half);
-            float arg = timestep * freq;
+    വേണ്ടി (int64_t i = 0; i < ne00; i++) {
+        ദശാംശം * embed_data = (ദശാംശം *)((അക്ഷരം *)  dst->data +  i*nb1);
+        വേണ്ടി (int64_t j = ith; j < half; j += nth) {
+            ദശാംശം timestep = ((ദശാംശം *)src0->data)[i];
+            ദശാംശം freq = (ദശാംശം)expf(-logf(max_period) * j / half);
+            ദശാംശം arg = timestep * freq;
             embed_data[j] = cosf(arg);
             embed_data[j + half] = sinf(arg);
         }
-        if (dim % 2 != 0 && ith == 0) {
+        എങ്കിൽ (dim % 2 != 0 && ith == 0) {
             embed_data[2 * half] = 0.f;
         }
     }
 }
 
-void ggml_compute_forward_timestep_embedding(
-    const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_timestep_embedding(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_timestep_embedding_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -8793,71 +8793,71 @@ void ggml_compute_forward_timestep_embedding(
 
 // ggml_compute_forward_argsort
 
-template<enum ggml_sort_order order>
-struct cmp_argsort {
-    const float * data;
-    bool operator()(int32_t a, int32_t b) const {
-        if constexpr (order == GGML_SORT_ORDER_ASC) {
-            return data[a] < data[b];
-        } else {
-            return data[a] > data[b];
+template<എണ്ണൽ ggml_sort_order order>
+ഘടന cmp_argsort {
+    സ്ഥിരം ദശാംശം * data;
+    തർക്കം operator()(int32_t a, int32_t b) സ്ഥിരം {
+        എങ്കിൽ constexpr (order == GGML_SORT_ORDER_ASC) {
+            തിരികെ data[a] < data[b];
+        } അല്ലെങ്കിൽ {
+            തിരികെ data[a] > data[b];
         }
     }
 };
 
-static void ggml_compute_forward_argsort_f32(
-    const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_argsort_f32(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
-    GGML_ASSERT(nb0 == sizeof(float));
+    GGML_ASSERT(nb0 == വലുപ്പം(ദശാംശം));
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int64_t nr = ggml_nrows(src0);
+    സ്ഥിരം int64_t nr = ggml_nrows(src0);
 
     ggml_sort_order order = (ggml_sort_order) ggml_get_op_params_i32(dst, 0);
 
-    for (int64_t i = ith; i < nr; i += nth) {
-        const float * src_data = (float *)((char *) src0->data + i*nb01);
+    വേണ്ടി (int64_t i = ith; i < nr; i += nth) {
+        സ്ഥിരം ദശാംശം * src_data = (ദശാംശം *)((അക്ഷരം *) src0->data + i*nb01);
 
-        int32_t * dst_data = (int32_t *)((char *) dst->data + i*nb1);
+        int32_t * dst_data = (int32_t *)((അക്ഷരം *) dst->data + i*nb1);
 
-        for (int64_t j = 0; j < ne0; j++) {
+        വേണ്ടി (int64_t j = 0; j < ne0; j++) {
             dst_data[j] = j;
         }
 
-        switch (order) {
-            case GGML_SORT_ORDER_ASC:
+        തിരഞ്ഞെടുപ്പ് (order) {
+            അവസ്ഥ GGML_SORT_ORDER_ASC:
                 std::sort(dst_data, dst_data + ne0, cmp_argsort<GGML_SORT_ORDER_ASC>{src_data});
-                break;
+                നിർത്തുക;
 
-            case GGML_SORT_ORDER_DESC:
+            അവസ്ഥ GGML_SORT_ORDER_DESC:
                 std::sort(dst_data, dst_data + ne0, cmp_argsort<GGML_SORT_ORDER_DESC>{src_data});
-                break;
+                നിർത്തുക;
 
-            default:
+            സ്ഥിരസ്ഥിതി:
                 GGML_ABORT("invalid sort order");
         }
     }
 }
 
-void ggml_compute_forward_argsort(
-    const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_argsort(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_argsort_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -8866,83 +8866,83 @@ void ggml_compute_forward_argsort(
 
 // ggml_compute_forward_top_k
 
-struct cmp_top_k {
-    const float * data;
-    bool operator()(int32_t a, int32_t b) const {
-        return data[a] > data[b];
+ഘടന cmp_മുകൾ_k {
+    സ്ഥിരം ദശാംശം * data;
+    തർക്കം operator()(int32_t a, int32_t b) സ്ഥിരം {
+        തിരികെ data[a] > data[b];
     }
 };
 
-static void ggml_compute_forward_top_k_f32(
-    const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_മുകൾ_k_f32(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
-    GGML_ASSERT(nb0 == sizeof(float));
+    GGML_ASSERT(nb0 == വലുപ്പം(ദശാംശം));
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int64_t nr = ggml_nrows(src0);
+    സ്ഥിരം int64_t nr = ggml_nrows(src0);
 
-    const int top_k = ne0;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ മുകൾ_k = ne0;
 
-    int32_t * tmp = (int32_t *) params->wdata + (ne00 + CACHE_LINE_SIZE_F32) * ith;
+    int32_t * tmp = (int32_t *) params->wdata + (ne00 + CACHE_വരി_SIZE_F32) * ith;
 
-    for (int64_t i = ith; i < nr; i += nth) {
-        const float * src_data = (float *)((char *) src0->data + i*nb01);
+    വേണ്ടി (int64_t i = ith; i < nr; i += nth) {
+        സ്ഥിരം ദശാംശം * src_data = (ദശാംശം *)((അക്ഷരം *) src0->data + i*nb01);
 
-        for (int64_t j = 0; j < ne00; j++) {
+        വേണ്ടി (int64_t j = 0; j < ne00; j++) {
             tmp[j] = j;
         }
 
-        std::partial_sort(tmp, tmp + top_k, tmp + ne00, cmp_top_k{src_data});
+        std::partial_sort(tmp, tmp + മുകൾ_k, tmp + ne00, cmp_മുകൾ_k{src_data});
 
-        int32_t * dst_data = (int32_t *)((char *) dst->data + i*nb1);
+        int32_t * dst_data = (int32_t *)((അക്ഷരം *) dst->data + i*nb1);
 
-        std::copy(tmp, tmp + top_k, dst_data);
+        std::copy(tmp, tmp + മുകൾ_k, dst_data);
 
         // emphasize that the order is not important
-        if (top_k > 1) {
+        എങ്കിൽ (മുകൾ_k > 1) {
             std::swap(dst_data[0], dst_data[1]);
         }
     }
 }
 
-void ggml_compute_forward_top_k(
-    const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_മുകൾ_k(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
-                ggml_compute_forward_top_k_f32(params, dst);
-            } break;
-        default:
+                ggml_compute_forward_മുകൾ_k_f32(params, dst);
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
     }
 }
 
-static void ggml_compute_forward_flash_attn_ext_f16_one_chunk(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_flash_attn_ext_f16_one_chunk(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst,
-        int ir0, int ir1,
+        പൂർണ്ണസംഖ്യ ir0, പൂർണ്ണസംഖ്യ ir1,
         int64_t ic_start, int64_t ic_end,
-        float * partials, int64_t partial_stride) {
+        ദശാംശം * partials, int64_t partial_stride) {
 
-    const bool write_partials = (partials != nullptr);
-    const ggml_tensor * q     = dst->src[0];
-    const ggml_tensor * k     = dst->src[1];
-    const ggml_tensor * v     = dst->src[2];
-    const ggml_tensor * mask  = dst->src[3];
-    const ggml_tensor * sinks = dst->src[4];
+    സ്ഥിരം തർക്കം write_partials = (partials != nullptr);
+    സ്ഥിരം ggml_tensor * q     = dst->src[0];
+    സ്ഥിരം ggml_tensor * k     = dst->src[1];
+    സ്ഥിരം ggml_tensor * v     = dst->src[2];
+    സ്ഥിരം ggml_tensor * mask  = dst->src[3];
+    സ്ഥിരം ggml_tensor * sinks = dst->src[4];
 
     GGML_TENSOR_LOCALS(int64_t, neq, q,   ne)
     GGML_TENSOR_LOCALS(size_t,  nbq, q,   nb)
@@ -8953,9 +8953,9 @@ static void ggml_compute_forward_flash_attn_ext_f16_one_chunk(
     GGML_TENSOR_LOCALS(int64_t, ne,  dst, ne)
     GGML_TENSOR_LOCALS(size_t,  nb,  dst, nb)
 
-    const int64_t DK = nek0;
-    const int64_t DV = nev0;
-    const int64_t N  = neq1;
+    സ്ഥിരം int64_t DK = nek0;
+    സ്ഥിരം int64_t DV = nev0;
+    സ്ഥിരം int64_t N  = neq1;
 
     GGML_ASSERT(ne0 == DV);
     GGML_ASSERT(ne2 == N);
@@ -8972,211 +8972,211 @@ static void ggml_compute_forward_flash_attn_ext_f16_one_chunk(
     GGML_ASSERT(neq1 == N);
 
     // dst cannot be transposed or permuted
-    GGML_ASSERT(nb0 == sizeof(float));
+    GGML_ASSERT(nb0 == വലുപ്പം(ദശാംശം));
     GGML_ASSERT(nb0 <= nb1);
     GGML_ASSERT(nb1 <= nb2);
     GGML_ASSERT(nb2 <= nb3);
 
     // broadcast factors
-    const int64_t rk2 = neq2/nek2;
-    const int64_t rk3 = neq3/nek3;
+    സ്ഥിരം int64_t rk2 = neq2/nek2;
+    സ്ഥിരം int64_t rk3 = neq3/nek3;
 
-    const int64_t rv2 = neq2/nev2;
-    const int64_t rv3 = neq3/nev3;
+    സ്ഥിരം int64_t rv2 = neq2/nev2;
+    സ്ഥിരം int64_t rv3 = neq3/nev3;
 
     // parallelize by q rows using ggml_vec_dot_f32
 
-    float scale         = 1.0f;
-    float max_bias      = 0.0f;
-    float logit_softcap = 0.0f;
+    ദശാംശം scale         = 1.0f;
+    ദശാംശം max_bias      = 0.0f;
+    ദശാംശം logit_softcap = 0.0f;
 
-    memcpy(&scale,         (float *) dst->op_params + 0, sizeof(float));
-    memcpy(&max_bias,      (float *) dst->op_params + 1, sizeof(float));
-    memcpy(&logit_softcap, (float *) dst->op_params + 2, sizeof(float));
+    memcpy(&scale,         (ദശാംശം *) dst->op_params + 0, വലുപ്പം(ദശാംശം));
+    memcpy(&max_bias,      (ദശാംശം *) dst->op_params + 1, വലുപ്പം(ദശാംശം));
+    memcpy(&logit_softcap, (ദശാംശം *) dst->op_params + 2, വലുപ്പം(ദശാംശം));
 
-    if (logit_softcap != 0) {
+    എങ്കിൽ (logit_softcap != 0) {
         scale /= logit_softcap;
     }
 
-    const uint32_t n_head      = neq2;
-    const uint32_t n_head_log2 = 1u << (uint32_t) floor(log2(n_head));
+    സ്ഥിരം uint32_t n_head      = neq2;
+    സ്ഥിരം uint32_t n_head_log2 = 1u << (uint32_t) floor(log2(n_head));
 
-    const float m0 = powf(2.0f, -(max_bias       ) / n_head_log2);
-    const float m1 = powf(2.0f, -(max_bias / 2.0f) / n_head_log2);
+    സ്ഥിരം ദശാംശം m0 = powf(2.0f, -(max_bias       ) / n_head_log2);
+    സ്ഥിരം ദശാംശം m1 = powf(2.0f, -(max_bias / 2.0f) / n_head_log2);
 
-    ggml_type         const k_vec_dot_type = ggml_get_type_traits_cpu(k->type)->vec_dot_type;
-    ggml_from_float_t const q_to_vec_dot   = ggml_get_type_traits_cpu(k_vec_dot_type)->from_float;
-    ggml_vec_dot_t    const kq_vec_dot     = ggml_get_type_traits_cpu(k->type)->vec_dot;
-    ggml_to_float_t   const v_to_float     = ggml_get_type_traits(v->type)->to_float;
+    ggml_type         സ്ഥിരം k_vec_dot_type = ggml_get_type_traits_cpu(k->type)->vec_dot_type;
+    ggml_from_float_t സ്ഥിരം q_to_vec_dot   = ggml_get_type_traits_cpu(k_vec_dot_type)->from_float;
+    ggml_vec_dot_t    സ്ഥിരം kq_vec_dot     = ggml_get_type_traits_cpu(k->type)->vec_dot;
+    ggml_to_float_t   സ്ഥിരം v_to_float     = ggml_get_type_traits(v->type)->to_float;
 
     GGML_ASSERT((                            q_to_vec_dot) && "fattn: unsupported K-type");
     GGML_ASSERT((v->type == GGML_TYPE_F32 || v_to_float  ) && "fattn: unsupported V-type");
 
-    int ith = params->ith;
+    പൂർണ്ണസംഖ്യ ith = params->ith;
 
-    for (int ir = ir0; ir < ir1; ++ir) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ ir = ir0; ir < ir1; ++ir) {
         // q indices
-        const int iq3 = ir/(neq2*neq1);
-        const int iq2 = (ir - iq3*neq2*neq1)/neq1;
-        const int iq1 = (ir - iq3*neq2*neq1 - iq2*neq1);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ iq3 = ir/(neq2*neq1);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ iq2 = (ir - iq3*neq2*neq1)/neq1;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ iq1 = (ir - iq3*neq2*neq1 - iq2*neq1);
 
-        const uint32_t h = iq2; // head index
-        const float slope = (max_bias > 0.0f) ? h < n_head_log2 ? powf(m0, h + 1) : powf(m1, 2*(h - n_head_log2) + 1) : 1.0f;
+        സ്ഥിരം uint32_t h = iq2; // head index
+        സ്ഥിരം ദശാംശം slope = (max_bias > 0.0f) ? h < n_head_log2 ? powf(m0, h + 1) : powf(m1, 2*(h - n_head_log2) + 1) : 1.0f;
 
-        float S = 0.0f;      // sum
-        float M = -INFINITY; // maximum KQ value
+        ദശാംശം S = 0.0f;      // sum
+        ദശാംശം M = -INFINITY; // maximum KQ value
 
-        float       * VKQ32 = (float       *) params->wdata + ith*(1*DK + 2*DV + CACHE_LINE_SIZE_F32); // FP32 VKQ accumulator
-        float       * V32   =                 (VKQ32 + 1*DV); // (temporary) FP32 V buffer
+        ദശാംശം       * VKQ32 = (ദശാംശം       *) params->wdata + ith*(1*DK + 2*DV + CACHE_വരി_SIZE_F32); // FP32 VKQ accumulator
+        ദശാംശം       * V32   =                 (VKQ32 + 1*DV); // (temporary) FP32 V buffer
         ggml_fp16_t * VKQ16 = (ggml_fp16_t *) (VKQ32 + 1*DV); // (temporary) FP16 VKQ accumulator
         ggml_fp16_t * Q_q   = (ggml_fp16_t *) (VKQ32 + 2*DV); // (temporary) buffer for Q converted to quantized/FP16
 
-        if (v->type == GGML_TYPE_F16) {
-            memset(VKQ16, 0, DV*sizeof(ggml_fp16_t));
-        } else {
-            memset(VKQ32, 0, DV*sizeof(float));
+        എങ്കിൽ (v->type == GGML_TYPE_F16) {
+            memset(VKQ16, 0, DV*വലുപ്പം(ggml_fp16_t));
+        } അല്ലെങ്കിൽ {
+            memset(VKQ32, 0, DV*വലുപ്പം(ദശാംശം));
         }
 
-        const ggml_fp16_t * mp = mask ? (ggml_fp16_t *)((char *) mask->data + iq1*mask->nb[1] + (iq2%mask->ne[2])*mask->nb[2] + (iq3%mask->ne[3])*mask->nb[3]) : NULL;
+        സ്ഥിരം ggml_fp16_t * mp = mask ? (ggml_fp16_t *)((അക്ഷരം *) mask->data + iq1*mask->nb[1] + (iq2%mask->ne[2])*mask->nb[2] + (iq3%mask->ne[3])*mask->nb[3]) : ശൂന്യ;
 
         // k indices
-        const int ik3 = iq3 / rk3;
-        const int ik2 = iq2 / rk2;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ ik3 = iq3 / rk3;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ ik2 = iq2 / rk2;
 
         // v indices
-        const int iv3 = iq3 / rv3;
-        const int iv2 = iq2 / rv2;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ iv3 = iq3 / rv3;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ iv2 = iq2 / rv2;
 
-        const float * pq = (const float *) ((char *) q->data + (iq1*nbq1 + iq2*nbq2 + iq3*nbq3));
+        സ്ഥിരം ദശാംശം * pq = (സ്ഥിരം ദശാംശം *) ((അക്ഷരം *) q->data + (iq1*nbq1 + iq2*nbq2 + iq3*nbq3));
         q_to_vec_dot(pq, Q_q, DK);
 
         // online softmax / attention
         // loop over n_kv and n_head_kv
         // ref: https://arxiv.org/pdf/2112.05682.pdf
 
-        for (int64_t ic = ic_start; ic < ic_end; ++ic) {
-            const float mv = mp ? slope*GGML_CPU_FP16_TO_FP32(mp[ic]) : 0.0f;
-            if (mv == -INFINITY) {
-                continue;
+        വേണ്ടി (int64_t ic = ic_start; ic < ic_end; ++ic) {
+            സ്ഥിരം ദശാംശം mv = mp ? slope*GGML_CPU_FP16_TO_FP32(mp[ic]) : 0.0f;
+            എങ്കിൽ (mv == -INFINITY) {
+                തുടരുക;
             }
 
-            float s; // KQ value
+            ദശാംശം s; // KQ value
 
-            const char * k_data = (const char *) k->data + ( ic*nbk1 + ik2*nbk2 + ik3*nbk3);
+            സ്ഥിരം അക്ഷരം * k_data = (സ്ഥിരം അക്ഷരം *) k->data + ( ic*nbk1 + ik2*nbk2 + ik3*nbk3);
             kq_vec_dot(DK, &s, 0, k_data, 0, Q_q, 0, 1);
 
             s = s*scale; // scale KQ value
 
-            if (logit_softcap != 0.0f) {
+            എങ്കിൽ (logit_softcap != 0.0f) {
                 s = logit_softcap*tanhf(s);
             }
 
             s += mv; // apply mask
 
-            const float Mold = M;
+            സ്ഥിരം ദശാംശം Mold = M;
 
-            float ms = 1.0f; // upon new higher max val, scale VKQ and KQ sum with this value
-            float vs = 1.0f; // post-softmax KQ value, expf(s - M)
+            ദശാംശം ms = 1.0f; // upon new higher max val, scale VKQ and KQ sum with this value
+            ദശാംശം vs = 1.0f; // post-softmax KQ value, expf(s - M)
 
-            const char * v_data = ((const char *) v->data + (ic*nbv1 + iv2*nbv2 + iv3*nbv3));
+            സ്ഥിരം അക്ഷരം * v_data = ((സ്ഥിരം അക്ഷരം *) v->data + (ic*nbv1 + iv2*nbv2 + iv3*nbv3));
 
-            if (v->type == GGML_TYPE_F16) {
-                if (s > M) {
+            എങ്കിൽ (v->type == GGML_TYPE_F16) {
+                എങ്കിൽ (s > M) {
                     // s is new maximum, ms < 1.0f, vs == expf(s - s) == 1.0f
                     M = s;
                     ms = expf(Mold - M);
 
                     // V = V*expf(Mold - M)
                     ggml_vec_scale_f16(DV, VKQ16, ms);
-                } else {
+                } അല്ലെങ്കിൽ {
                     // no new maximum, ms == 1.0f, vs != 1.0f
                     vs = expf(s - M);
                 }
 
                 // V += v*expf(s - M)
-                ggml_vec_mad_f16(DV, VKQ16, (const ggml_fp16_t *) v_data, vs);
-            } else {
-                if (s > M) {
+                ggml_vec_mad_f16(DV, VKQ16, (സ്ഥിരം ggml_fp16_t *) v_data, vs);
+            } അല്ലെങ്കിൽ {
+                എങ്കിൽ (s > M) {
                     // s is new maximum, ms < 1.0f, vs == expf(s - s) == 1.0f
                     M = s;
                     ms = expf(Mold - M);
 
                     // V = V*expf(Mold - M)
                     ggml_vec_scale_f32(DV, VKQ32, ms);
-                } else {
+                } അല്ലെങ്കിൽ {
                     // no new maximum, ms == 1.0f, vs != 1.0f
                     vs = expf(s - M);
                 }
 
                 // V += v*expf(s - M)
-                if (v_to_float) {
+                എങ്കിൽ (v_to_float) {
                     v_to_float(v_data, V32, DV);
                     ggml_vec_mad_f32(DV, VKQ32, V32, vs);
-                } else {
+                } അല്ലെങ്കിൽ {
                     // V is F32
-                    ggml_vec_mad_f32(DV, VKQ32, (const float *) v_data, vs);
+                    ggml_vec_mad_f32(DV, VKQ32, (സ്ഥിരം ദശാംശം *) v_data, vs);
                 }
             }
 
             S = S*ms + vs; // scale and increment sum with partial sum
         }
 
-        if (v->type == GGML_TYPE_F16) {
-            for (int64_t d = 0; d < DV; ++d) {
+        എങ്കിൽ (v->type == GGML_TYPE_F16) {
+            വേണ്ടി (int64_t d = 0; d < DV; ++d) {
                 VKQ32[d] = GGML_CPU_FP16_TO_FP32(VKQ16[d]);
             }
         }
 
         // sinks - apply only on the first kv-chunk
-        if (sinks && ic_start == 0) {
-            const float s = ((float *)((char *) sinks->data))[h];
+        എങ്കിൽ (sinks && ic_start == 0) {
+            സ്ഥിരം ദശാംശം s = ((ദശാംശം *)((അക്ഷരം *) sinks->data))[h];
 
-            float ms = 1.0f;
-            float vs = 1.0f;
+            ദശാംശം ms = 1.0f;
+            ദശാംശം vs = 1.0f;
 
-            if (s > M) {
+            എങ്കിൽ (s > M) {
                 ms = expf(M - s);
                 M = s;
                 ggml_vec_scale_f32(DV, VKQ32, ms);
-            } else {
+            } അല്ലെങ്കിൽ {
                 vs = expf(s - M);
             }
 
             S = S*ms + vs;
         }
 
-        if (write_partials) {
+        എങ്കിൽ (write_partials) {
             // Write M, S, VKQ to partials for later reduction
             // partials layout: [M, S, VKQ[DV]] per query head
-            float * partial = partials + ir * partial_stride;
+            ദശാംശം * partial = partials + ir * partial_stride;
             partial[0] = M;
             partial[1] = S;
-            memcpy(partial + 2, VKQ32, DV * sizeof(float));
-        } else {
+            memcpy(partial + 2, VKQ32, DV * വലുപ്പം(ദശാംശം));
+        } അല്ലെങ്കിൽ {
             // V /= S
-            const float S_inv = S == 0.0f ? 0.0f : 1.0f/S;
+            സ്ഥിരം ദശാംശം S_inv = S == 0.0f ? 0.0f : 1.0f/S;
             ggml_vec_scale_f32(DV, VKQ32, S_inv);
 
             // dst indices
-            const int i1 = iq1;
-            const int i2 = iq2;
-            const int i3 = iq3;
+            സ്ഥിരം പൂർണ്ണസംഖ്യ i1 = iq1;
+            സ്ഥിരം പൂർണ്ണസംഖ്യ i2 = iq2;
+            സ്ഥിരം പൂർണ്ണസംഖ്യ i3 = iq3;
 
             // permute(0, 2, 1, 3)
-            memcpy((char *) dst->data + (i3*ne2*ne1 + i2 + i1*ne1)*nb1, VKQ32, nb1);
+            memcpy((അക്ഷരം *) dst->data + (i3*ne2*ne1 + i2 + i1*ne1)*nb1, VKQ32, nb1);
         }
     }
 }
 
-static void ggml_compute_forward_flash_attn_ext_tiled(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_flash_attn_ext_tiled(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst,
-        int ir0, int ir1) {
-    const ggml_tensor * q     = dst->src[0];
-    const ggml_tensor * k     = dst->src[1];
-    const ggml_tensor * v     = dst->src[2];
-    const ggml_tensor * mask  = dst->src[3];
-    const ggml_tensor * sinks = dst->src[4];
+        പൂർണ്ണസംഖ്യ ir0, പൂർണ്ണസംഖ്യ ir1) {
+    സ്ഥിരം ggml_tensor * q     = dst->src[0];
+    സ്ഥിരം ggml_tensor * k     = dst->src[1];
+    സ്ഥിരം ggml_tensor * v     = dst->src[2];
+    സ്ഥിരം ggml_tensor * mask  = dst->src[3];
+    സ്ഥിരം ggml_tensor * sinks = dst->src[4];
 
     GGML_TENSOR_LOCALS(int64_t, neq, q,   ne)
     GGML_TENSOR_LOCALS(size_t,  nbq, q,   nb)
@@ -9187,9 +9187,9 @@ static void ggml_compute_forward_flash_attn_ext_tiled(
     GGML_TENSOR_LOCALS(int64_t, ne,  dst, ne)
     GGML_TENSOR_LOCALS(size_t,  nb,  dst, nb)
 
-    const int64_t DK = nek0;
-    const int64_t DV = nev0;
-    const int64_t N  = neq1;
+    സ്ഥിരം int64_t DK = nek0;
+    സ്ഥിരം int64_t DV = nev0;
+    സ്ഥിരം int64_t N  = neq1;
 
     GGML_ASSERT(ne0 == DV);
     GGML_ASSERT(ne2 == N);
@@ -9206,66 +9206,66 @@ static void ggml_compute_forward_flash_attn_ext_tiled(
     GGML_ASSERT(neq1 == N);
 
     // dst cannot be transposed or permuted
-    GGML_ASSERT(nb0 == sizeof(float));
+    GGML_ASSERT(nb0 == വലുപ്പം(ദശാംശം));
     GGML_ASSERT(nb0 <= nb1);
     GGML_ASSERT(nb1 <= nb2);
     GGML_ASSERT(nb2 <= nb3);
 
     GGML_ASSERT(k->type == v->type);
-    const ggml_type kv_type = k->type;
+    സ്ഥിരം ggml_type kv_type = k->type;
 
 
     // broadcast factors
-    const int64_t rk2 = neq2/nek2;
-    const int64_t rk3 = neq3/nek3;
+    സ്ഥിരം int64_t rk2 = neq2/nek2;
+    സ്ഥിരം int64_t rk3 = neq3/nek3;
 
-    const int64_t rv2 = neq2/nev2;
-    const int64_t rv3 = neq3/nev3;
+    സ്ഥിരം int64_t rv2 = neq2/nev2;
+    സ്ഥിരം int64_t rv3 = neq3/nev3;
 
-    float scale         = 1.0f;
-    float max_bias      = 0.0f;
-    float logit_softcap = 0.0f;
+    ദശാംശം scale         = 1.0f;
+    ദശാംശം max_bias      = 0.0f;
+    ദശാംശം logit_softcap = 0.0f;
 
-    memcpy(&scale,         (float *) dst->op_params + 0, sizeof(float));
-    memcpy(&max_bias,      (float *) dst->op_params + 1, sizeof(float));
-    memcpy(&logit_softcap, (float *) dst->op_params + 2, sizeof(float));
+    memcpy(&scale,         (ദശാംശം *) dst->op_params + 0, വലുപ്പം(ദശാംശം));
+    memcpy(&max_bias,      (ദശാംശം *) dst->op_params + 1, വലുപ്പം(ദശാംശം));
+    memcpy(&logit_softcap, (ദശാംശം *) dst->op_params + 2, വലുപ്പം(ദശാംശം));
 
-    if (logit_softcap != 0) {
+    എങ്കിൽ (logit_softcap != 0) {
         scale /= logit_softcap;
     }
 
-    const uint32_t n_head      = neq2;
-    const uint32_t n_head_log2 = 1u << (uint32_t) floor(log2(n_head));
+    സ്ഥിരം uint32_t n_head      = neq2;
+    സ്ഥിരം uint32_t n_head_log2 = 1u << (uint32_t) floor(log2(n_head));
 
-    const float m0 = powf(2.0f, -(max_bias       ) / n_head_log2);
-    const float m1 = powf(2.0f, -(max_bias / 2.0f) / n_head_log2);
+    സ്ഥിരം ദശാംശം m0 = powf(2.0f, -(max_bias       ) / n_head_log2);
+    സ്ഥിരം ദശാംശം m1 = powf(2.0f, -(max_bias / 2.0f) / n_head_log2);
 
-    int ith = params->ith;
+    പൂർണ്ണസംഖ്യ ith = params->ith;
 
-    static constexpr int Q_TILE_SZ  = ggml_fa_tile_config::Q;
-    static constexpr int KV_TILE_SZ = ggml_fa_tile_config::KV;
+    സ്ഥിതം constexpr പൂർണ്ണസംഖ്യ Q_TILE_SZ  = ggml_fa_tile_config::Q;
+    സ്ഥിതം constexpr പൂർണ്ണസംഖ്യ KV_TILE_SZ = ggml_fa_tile_config::KV;
 
-    int ir = ir0;
-    while (ir < ir1) {
+    പൂർണ്ണസംഖ്യ ir = ir0;
+    ആകുമ്പോൾ (ir < ir1) {
         // q indices for the start of this tile
-        const int iq3 = ir/(neq2*neq1);
-        const int iq2 = (ir - iq3*neq2*neq1)/neq1;
-        const int iq1 = (ir - iq3*neq2*neq1 - iq2*neq1);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ iq3 = ir/(neq2*neq1);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ iq2 = (ir - iq3*neq2*neq1)/neq1;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ iq1 = (ir - iq3*neq2*neq1 - iq2*neq1);
 
         // Number of valid rows in this tile:
         // - limited by tile size (Q_TILE_SZ)
         // - limited by chunk boundary (ir1 - ir)
         // - limited by head boundary (neq1 - iq1) to avoid crossing into next head
-        const int tile_rows = MIN(Q_TILE_SZ, MIN((int)(ir1 - ir), (int)(neq1 - iq1)));
+        സ്ഥിരം പൂർണ്ണസംഖ്യ tile_rows = MIN(Q_TILE_SZ, MIN((പൂർണ്ണസംഖ്യ)(ir1 - ir), (പൂർണ്ണസംഖ്യ)(neq1 - iq1)));
         GGML_ASSERT(tile_rows > 0);
 
-        const uint32_t h = iq2; // head index
-        const float slope = (max_bias > 0.0f) ? h < n_head_log2 ? powf(m0, h + 1) : powf(m1, 2*(h - n_head_log2) + 1) : 1.0f;
+        സ്ഥിരം uint32_t h = iq2; // head index
+        സ്ഥിരം ദശാംശം slope = (max_bias > 0.0f) ? h < n_head_log2 ? powf(m0, h + 1) : powf(m1, 2*(h - n_head_log2) + 1) : 1.0f;
 
-        float S[Q_TILE_SZ];
-        float M[Q_TILE_SZ];
+        ദശാംശം S[Q_TILE_SZ];
+        ദശാംശം M[Q_TILE_SZ];
 
-        for (int i = 0 ; i < Q_TILE_SZ; ++i) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0 ; i < Q_TILE_SZ; ++i) {
             S[i] = 0.;
             M[i] = -INFINITY;
         }
@@ -9277,121 +9277,121 @@ static void ggml_compute_forward_flash_attn_ext_tiled(
         // VKQ32:  Q_TILE_SZ * DV (FP32 output accumulator)
         // V32:    KV_TILE_SZ * DV (F32 buffer for V tile)
         // K_f32:  KV_TILE_SZ * DK (F32 buffer for K tile — GEMM path)
-        float * base  = (float *) params->wdata + ith*(Q_TILE_SZ*DK + 2*Q_TILE_SZ*KV_TILE_SZ + Q_TILE_SZ*DV + KV_TILE_SZ*DV + KV_TILE_SZ*DK + CACHE_LINE_SIZE_F32);
+        ദശാംശം * base  = (ദശാംശം *) params->wdata + ith*(Q_TILE_SZ*DK + 2*Q_TILE_SZ*KV_TILE_SZ + Q_TILE_SZ*DV + KV_TILE_SZ*DV + KV_TILE_SZ*DK + CACHE_വരി_SIZE_F32);
 
-        void  * Q_q    = base;
-        float * KQ     = (float *)((char *)base + Q_TILE_SZ * DK * sizeof(float));
-        float * mask32 = KQ + Q_TILE_SZ * KV_TILE_SZ;
-        float * VKQ32  = mask32 + Q_TILE_SZ * KV_TILE_SZ;
-        float * V32    = VKQ32 + Q_TILE_SZ * DV;
-        float * K_f32  = V32 + KV_TILE_SZ * DV;
+        ശൂന്യം  * Q_q    = base;
+        ദശാംശം * KQ     = (ദശാംശം *)((അക്ഷരം *)base + Q_TILE_SZ * DK * വലുപ്പം(ദശാംശം));
+        ദശാംശം * mask32 = KQ + Q_TILE_SZ * KV_TILE_SZ;
+        ദശാംശം * VKQ32  = mask32 + Q_TILE_SZ * KV_TILE_SZ;
+        ദശാംശം * V32    = VKQ32 + Q_TILE_SZ * DV;
+        ദശാംശം * K_f32  = V32 + KV_TILE_SZ * DV;
 
-        memset(VKQ32, 0, Q_TILE_SZ * DV * sizeof(float));
-        memset(mask32, 0, Q_TILE_SZ * KV_TILE_SZ * sizeof(float));
+        memset(VKQ32, 0, Q_TILE_SZ * DV * വലുപ്പം(ദശാംശം));
+        memset(mask32, 0, Q_TILE_SZ * KV_TILE_SZ * വലുപ്പം(ദശാംശം));
 
         // k indices
-        const int ik3 = iq3 / rk3;
-        const int ik2 = iq2 / rk2;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ ik3 = iq3 / rk3;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ ik2 = iq2 / rk2;
 
         // v indices
-        const int iv3 = iq3 / rv3;
-        const int iv2 = iq2 / rv2;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ iv3 = iq3 / rv3;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ iv2 = iq2 / rv2;
 
         {
-            float * Q_f32 = (float *)Q_q;
-            for (int tq = 0; tq < tile_rows; tq++) {
-                const float * pq = (const float *) ((char *) q->data + ((iq1 + tq)*nbq1 + iq2*nbq2 + iq3*nbq3));
-                memcpy(Q_f32 + tq * DK, pq, DK * sizeof(float));
+            ദശാംശം * Q_f32 = (ദശാംശം *)Q_q;
+            വേണ്ടി (പൂർണ്ണസംഖ്യ tq = 0; tq < tile_rows; tq++) {
+                സ്ഥിരം ദശാംശം * pq = (സ്ഥിരം ദശാംശം *) ((അക്ഷരം *) q->data + ((iq1 + tq)*nbq1 + iq2*nbq2 + iq3*nbq3));
+                memcpy(Q_f32 + tq * DK, pq, DK * വലുപ്പം(ദശാംശം));
             }
-            for (int tq = tile_rows; tq < Q_TILE_SZ; tq++) {
-                memset(Q_f32 + tq * DK, 0, DK * sizeof(float));
+            വേണ്ടി (പൂർണ്ണസംഖ്യ tq = tile_rows; tq < Q_TILE_SZ; tq++) {
+                memset(Q_f32 + tq * DK, 0, DK * വലുപ്പം(ദശാംശം));
             }
         }
 
-        memset(K_f32, 0, DK * KV_TILE_SZ * sizeof(float));
-        memset(V32,   0, KV_TILE_SZ * DV * sizeof(float));
+        memset(K_f32, 0, DK * KV_TILE_SZ * വലുപ്പം(ദശാംശം));
+        memset(V32,   0, KV_TILE_SZ * DV * വലുപ്പം(ദശാംശം));
 
-        for (int64_t ic = 0; ic < nek1; ic += KV_TILE_SZ) {
-            const int kv_tile = (int)std::min((int64_t)KV_TILE_SZ, nek1 - ic);
+        വേണ്ടി (int64_t ic = 0; ic < nek1; ic += KV_TILE_SZ) {
+            സ്ഥിരം പൂർണ്ണസംഖ്യ kv_tile = (പൂർണ്ണസംഖ്യ)std::min((int64_t)KV_TILE_SZ, nek1 - ic);
 
             // skip the tile entirely if all the masks are -inf
-            if (mask) {
-                bool can_skip = true;
-                for (int tq = 0; tq < tile_rows; tq++) {
-                    const ggml_fp16_t * mp_row = (const ggml_fp16_t *)((const char *) mask->data + (iq1 + tq)*mask->nb[1] + (iq2%mask->ne[2])*mask->nb[2] + (iq3%mask->ne[3])*mask->nb[3]);
-                    for (int tk = 0; tk < kv_tile; tk++) {
+            എങ്കിൽ (mask) {
+                തർക്കം can_skip = സത്യം;
+                വേണ്ടി (പൂർണ്ണസംഖ്യ tq = 0; tq < tile_rows; tq++) {
+                    സ്ഥിരം ggml_fp16_t * mp_row = (സ്ഥിരം ggml_fp16_t *)((സ്ഥിരം അക്ഷരം *) mask->data + (iq1 + tq)*mask->nb[1] + (iq2%mask->ne[2])*mask->nb[2] + (iq3%mask->ne[3])*mask->nb[3]);
+                    വേണ്ടി (പൂർണ്ണസംഖ്യ tk = 0; tk < kv_tile; tk++) {
                         mask32[tq * KV_TILE_SZ + tk] = slope * GGML_CPU_FP16_TO_FP32(mp_row[ic + tk]);
-                        if (mask32[tq * KV_TILE_SZ + tk] != -INFINITY) {
-                            can_skip = false;
+                        എങ്കിൽ (mask32[tq * KV_TILE_SZ + tk] != -INFINITY) {
+                            can_skip = അസത്യം;
                         }
                     }
                     // Pad remaining mask entries with -inf
-                    for (int tk = kv_tile; tk < KV_TILE_SZ; tk++) {
+                    വേണ്ടി (പൂർണ്ണസംഖ്യ tk = kv_tile; tk < KV_TILE_SZ; tk++) {
                         mask32[tq * KV_TILE_SZ + tk] = -INFINITY;
                     }
                 }
 
-                if (can_skip) {
-                    continue;
+                എങ്കിൽ (can_skip) {
+                    തുടരുക;
                 }
             }
 
             // Pack K tile transposed: K_f32[dk][kv] so KV_TILE is contiguous (SIMD dim)
             // Zero-pad the last tile so the GEMM always operates on KV_TILE_SZ columns
-            for (int tk = 0; tk < kv_tile; tk++) {
-                const char * k_data = (const char *)k->data + (ic + tk)*nbk1 + ik2*nbk2 + ik3*nbk3;
-                if (kv_type == GGML_TYPE_F16) {
-                    const ggml_fp16_t * k_f16 = (const ggml_fp16_t *)k_data;
-                    for (int64_t dk = 0; dk < DK; dk++) {
+            വേണ്ടി (പൂർണ്ണസംഖ്യ tk = 0; tk < kv_tile; tk++) {
+                സ്ഥിരം അക്ഷരം * k_data = (സ്ഥിരം അക്ഷരം *)k->data + (ic + tk)*nbk1 + ik2*nbk2 + ik3*nbk3;
+                എങ്കിൽ (kv_type == GGML_TYPE_F16) {
+                    സ്ഥിരം ggml_fp16_t * k_f16 = (സ്ഥിരം ggml_fp16_t *)k_data;
+                    വേണ്ടി (int64_t dk = 0; dk < DK; dk++) {
                         K_f32[dk * KV_TILE_SZ + tk] = GGML_CPU_FP16_TO_FP32(k_f16[dk]);
                     }
-                } else {
-                    const float * k_f32_src = (const float *)k_data;
-                    for (int64_t dk = 0; dk < DK; dk++) {
+                } അല്ലെങ്കിൽ {
+                    സ്ഥിരം ദശാംശം * k_f32_src = (സ്ഥിരം ദശാംശം *)k_data;
+                    വേണ്ടി (int64_t dk = 0; dk < DK; dk++) {
                         K_f32[dk * KV_TILE_SZ + tk] = k_f32_src[dk];
                     }
                 }
             }
-            memset(KQ, 0, Q_TILE_SZ * KV_TILE_SZ * sizeof(float));
-            simd_gemm(KQ, (const float *)Q_q, K_f32, Q_TILE_SZ, DK, KV_TILE_SZ);
+            memset(KQ, 0, Q_TILE_SZ * KV_TILE_SZ * വലുപ്പം(ദശാംശം));
+            simd_gemm(KQ, (സ്ഥിരം ദശാംശം *)Q_q, K_f32, Q_TILE_SZ, DK, KV_TILE_SZ);
             ggml_vec_scale_f32(Q_TILE_SZ * KV_TILE_SZ, KQ, scale);
 
-            if (logit_softcap != 0.0f) {
+            എങ്കിൽ (logit_softcap != 0.0f) {
                 ggml_vec_tanh_f32(Q_TILE_SZ * KV_TILE_SZ, KQ, KQ);
                 ggml_vec_scale_f32(Q_TILE_SZ * KV_TILE_SZ, KQ, logit_softcap);
             }
 
             // Set padded KQ entries to -inf so softmax gives them zero weight
-            if (kv_tile < KV_TILE_SZ) {
-                for (int tq = 0; tq < Q_TILE_SZ; tq++) {
-                    for (int tk = kv_tile; tk < KV_TILE_SZ; tk++) {
+            എങ്കിൽ (kv_tile < KV_TILE_SZ) {
+                വേണ്ടി (പൂർണ്ണസംഖ്യ tq = 0; tq < Q_TILE_SZ; tq++) {
+                    വേണ്ടി (പൂർണ്ണസംഖ്യ tk = kv_tile; tk < KV_TILE_SZ; tk++) {
                         KQ[tq * KV_TILE_SZ + tk] = -INFINITY;
                     }
                 }
             }
 
-            if (mask) {
+            എങ്കിൽ (mask) {
                 ggml_vec_add_f32(tile_rows * KV_TILE_SZ, KQ, KQ, mask32);
             }
 
-            bool skip[Q_TILE_SZ] = {};
+            തർക്കം skip[Q_TILE_SZ] = {};
 
-            for (int tq = 0; tq < Q_TILE_SZ; tq++) {
-                float * kq_row = KQ + tq * KV_TILE_SZ;
+            വേണ്ടി (പൂർണ്ണസംഖ്യ tq = 0; tq < Q_TILE_SZ; tq++) {
+                ദശാംശം * kq_row = KQ + tq * KV_TILE_SZ;
 
-                float tile_max;
+                ദശാംശം tile_max;
                 ggml_vec_max_f32(KV_TILE_SZ, &tile_max, kq_row);
 
-                if (tile_max == -INFINITY) {
-                    skip[tq] = true;
-                    continue;
+                എങ്കിൽ (tile_max == -INFINITY) {
+                    skip[tq] = സത്യം;
+                    തുടരുക;
                 }
 
-                const float Mold = M[tq];
-                const float Mnew = fmaxf(Mold, tile_max);
+                സ്ഥിരം ദശാംശം Mold = M[tq];
+                സ്ഥിരം ദശാംശം Mnew = fmaxf(Mold, tile_max);
 
-                if (Mnew > Mold) {
-                    const float ms = expf(Mold - Mnew);
+                എങ്കിൽ (Mnew > Mold) {
+                    സ്ഥിരം ദശാംശം ms = expf(Mold - Mnew);
                     ggml_vec_scale_f32(DV, VKQ32 + tq * DV, ms);
                     S[tq] *= ms;
                 }
@@ -9403,34 +9403,34 @@ static void ggml_compute_forward_flash_attn_ext_tiled(
 
             // V accumulation: VKQ32 += softmax(KQ) * V
             // Pack V tile to contiguous F32, zero-padded
-            for (int tk = 0; tk < kv_tile; tk++) {
-                const char * v_data = (const char *)v->data + (ic + tk)*nbv1 + iv2*nbv2 + iv3*nbv3;
-                if (kv_type == GGML_TYPE_F16) {
-                    ggml_cpu_fp16_to_fp32((const ggml_fp16_t *)v_data, V32 + tk * DV, DV);
-                } else {
-                    memcpy(V32 + tk * DV, v_data, DV * sizeof(float));
+            വേണ്ടി (പൂർണ്ണസംഖ്യ tk = 0; tk < kv_tile; tk++) {
+                സ്ഥിരം അക്ഷരം * v_data = (സ്ഥിരം അക്ഷരം *)v->data + (ic + tk)*nbv1 + iv2*nbv2 + iv3*nbv3;
+                എങ്കിൽ (kv_type == GGML_TYPE_F16) {
+                    ggml_cpu_fp16_to_fp32((സ്ഥിരം ggml_fp16_t *)v_data, V32 + tk * DV, DV);
+                } അല്ലെങ്കിൽ {
+                    memcpy(V32 + tk * DV, v_data, DV * വലുപ്പം(ദശാംശം));
                 }
             }
-            for (int tq = 0; tq < Q_TILE_SZ; tq++) {
-                if (skip[tq]) {
-                    memset(KQ + tq * KV_TILE_SZ, 0, KV_TILE_SZ * sizeof(float));
+            വേണ്ടി (പൂർണ്ണസംഖ്യ tq = 0; tq < Q_TILE_SZ; tq++) {
+                എങ്കിൽ (skip[tq]) {
+                    memset(KQ + tq * KV_TILE_SZ, 0, KV_TILE_SZ * വലുപ്പം(ദശാംശം));
                 }
             }
             simd_gemm(VKQ32, KQ, V32, Q_TILE_SZ, KV_TILE_SZ, DV);
         }
 
         // sinks (apply only to valid rows in the tile)
-        if (sinks) {
-            const float s = ((float *)((char *) sinks->data))[h];
+        എങ്കിൽ (sinks) {
+            സ്ഥിരം ദശാംശം s = ((ദശാംശം *)((അക്ഷരം *) sinks->data))[h];
 
-            for (int tq = 0; tq < tile_rows; tq++) {
-                float ms = 1.0f;
-                float vs = 1.0f;
+            വേണ്ടി (പൂർണ്ണസംഖ്യ tq = 0; tq < tile_rows; tq++) {
+                ദശാംശം ms = 1.0f;
+                ദശാംശം vs = 1.0f;
 
-                if (s > M[tq]) {
+                എങ്കിൽ (s > M[tq]) {
                     ms = expf(M[tq] - s);
                     ggml_vec_scale_f32(DV, VKQ32 + tq * DV, ms);
-                } else {
+                } അല്ലെങ്കിൽ {
                     vs = expf(s - M[tq]);
                 }
 
@@ -9438,18 +9438,18 @@ static void ggml_compute_forward_flash_attn_ext_tiled(
             }
         }
 
-        for (int tq = 0; tq < tile_rows; tq++) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ tq = 0; tq < tile_rows; tq++) {
             // V /= S
-            const float S_inv = S[tq] == 0.0f ? 0.0f : 1.0f / S[tq];
+            സ്ഥിരം ദശാംശം S_inv = S[tq] == 0.0f ? 0.0f : 1.0f / S[tq];
             ggml_vec_scale_f32(DV, VKQ32 + tq * DV, S_inv);
 
             // dst indices
-            const int i1 = iq1 + tq;
-            const int i2 = iq2;
-            const int i3 = iq3;
+            സ്ഥിരം പൂർണ്ണസംഖ്യ i1 = iq1 + tq;
+            സ്ഥിരം പൂർണ്ണസംഖ്യ i2 = iq2;
+            സ്ഥിരം പൂർണ്ണസംഖ്യ i3 = iq3;
 
             // permute(0, 2, 1, 3)
-            memcpy((char *) dst->data + (i3*ne2*ne1 + i2 + i1*ne1)*nb1, VKQ32 + tq * DV, nb1);
+            memcpy((അക്ഷരം *) dst->data + (i3*ne2*ne1 + i2 + i1*ne1)*nb1, VKQ32 + tq * DV, nb1);
         }
 
         ir += tile_rows;
@@ -9458,60 +9458,60 @@ static void ggml_compute_forward_flash_attn_ext_tiled(
 
 // Reduction function: combines partial results across KV chunks
 // Partials layout in wdata: [n_q_heads][n_chunks][2 + DV]
-static void ggml_flash_attn_ext_reduce_partials(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_flash_attn_ext_reduce_partials(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst,
-        const int64_t n_chunks,
-        const int64_t chunk_size) {
+        സ്ഥിരം int64_t n_chunks,
+        സ്ഥിരം int64_t chunk_size) {
 
-    const ggml_tensor * q = dst->src[0];
-    const ggml_tensor * k = dst->src[1];
-    const ggml_tensor * v = dst->src[2];
+    സ്ഥിരം ggml_tensor * q = dst->src[0];
+    സ്ഥിരം ggml_tensor * k = dst->src[1];
+    സ്ഥിരം ggml_tensor * v = dst->src[2];
 
-    const int64_t DK        = k->ne[0];
-    const int64_t DV        = v->ne[0];
-    const int64_t nek1      = k->ne[1];
-    const int64_t n_q_heads = q->ne[2];
+    സ്ഥിരം int64_t DK        = k->ne[0];
+    സ്ഥിരം int64_t DV        = v->ne[0];
+    സ്ഥിരം int64_t nek1      = k->ne[1];
+    സ്ഥിരം int64_t n_q_heads = q->ne[2];
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int64_t wdata_per_thread = DK + 2*DV + CACHE_LINE_SIZE_F32;
-    float *       thread_wdata     = (float *) params->wdata + ith * wdata_per_thread;
+    സ്ഥിരം int64_t wdata_per_thread = DK + 2*DV + CACHE_വരി_SIZE_F32;
+    ദശാംശം *       thread_wdata     = (ദശാംശം *) params->wdata + ith * wdata_per_thread;
 
-    const int64_t partials_offset  = nth * (DK + 2*DV + CACHE_LINE_SIZE_F32);
-    const int64_t partial_size     = 2 + DV;
-    const float * partials_base    = (const float *) params->wdata + partials_offset;
+    സ്ഥിരം int64_t partials_offset  = nth * (DK + 2*DV + CACHE_വരി_SIZE_F32);
+    സ്ഥിരം int64_t partial_size     = 2 + DV;
+    സ്ഥിരം ദശാംശം * partials_base    = (സ്ഥിരം ദശാംശം *) params->wdata + partials_offset;
 
     // Output layout
-    const int64_t ne1 = dst->ne[1];
-    const int64_t ne2 = dst->ne[2];
-    const size_t  nb1 = dst->nb[1];
+    സ്ഥിരം int64_t ne1 = dst->ne[1];
+    സ്ഥിരം int64_t ne2 = dst->ne[2];
+    സ്ഥിരം size_t  nb1 = dst->nb[1];
 
     // Each thread reduces a subset of query heads
-    for (int64_t q_head = ith; q_head < n_q_heads; q_head += nth) {
-        float   M_final   = -INFINITY;
-        float   S_final   = 0.0f;
-        float * VKQ_final = thread_wdata;
-        memset(VKQ_final, 0, DV * sizeof(float));
+    വേണ്ടി (int64_t q_head = ith; q_head < n_q_heads; q_head += nth) {
+        ദശാംശം   M_final   = -INFINITY;
+        ദശാംശം   S_final   = 0.0f;
+        ദശാംശം * VKQ_final = thread_wdata;
+        memset(VKQ_final, 0, DV * വലുപ്പം(ദശാംശം));
 
         // Combine partials from all chunks
-        for (int64_t chunk_idx = 0; chunk_idx < n_chunks; ++chunk_idx) {
-            const int64_t ic_start = chunk_idx * chunk_size;
-            if (ic_start >= nek1) continue;
+        വേണ്ടി (int64_t chunk_idx = 0; chunk_idx < n_chunks; ++chunk_idx) {
+            സ്ഥിരം int64_t ic_start = chunk_idx * chunk_size;
+            എങ്കിൽ (ic_start >= nek1) തുടരുക;
 
-            const float * partial   = partials_base + (q_head * n_chunks + chunk_idx) * partial_size;
-            const float   M_chunk   = partial[0];
-            const float   S_chunk   = partial[1];
-            const float * VKQ_chunk = partial + 2;
+            സ്ഥിരം ദശാംശം * partial   = partials_base + (q_head * n_chunks + chunk_idx) * partial_size;
+            സ്ഥിരം ദശാംശം   M_chunk   = partial[0];
+            സ്ഥിരം ദശാംശം   S_chunk   = partial[1];
+            സ്ഥിരം ദശാംശം * VKQ_chunk = partial + 2;
 
-            if (S_chunk == 0.0f) continue;
+            എങ്കിൽ (S_chunk == 0.0f) തുടരുക;
 
-            const float M_new     = fmaxf(M_final, M_chunk);
-            const float scale_old = expf(M_final - M_new);
-            const float scale_new = expf(M_chunk - M_new);
+            സ്ഥിരം ദശാംശം M_new     = fmaxf(M_final, M_chunk);
+            സ്ഥിരം ദശാംശം scale_old = expf(M_final - M_new);
+            സ്ഥിരം ദശാംശം scale_new = expf(M_chunk - M_new);
 
-            for (int64_t d = 0; d < DV; ++d) {
+            വേണ്ടി (int64_t d = 0; d < DV; ++d) {
                 VKQ_final[d] = VKQ_final[d] * scale_old + VKQ_chunk[d] * scale_new;
             }
             S_final = S_final * scale_old + S_chunk * scale_new;
@@ -9519,22 +9519,22 @@ static void ggml_flash_attn_ext_reduce_partials(
         }
 
         // Normalize and write to output
-        if (S_final != 0.0f) {
-            const float S_inv = 1.0f / S_final;
+        എങ്കിൽ (S_final != 0.0f) {
+            സ്ഥിരം ദശാംശം S_inv = 1.0f / S_final;
             ggml_vec_scale_f32(DV, VKQ_final, S_inv);
         }
         // iq1=0, iq3=0 for decode
-        memcpy((char *) dst->data + (0*ne2*ne1 + q_head + 0*ne1)*nb1, VKQ_final, nb1);
+        memcpy((അക്ഷരം *) dst->data + (0*ne2*ne1 + q_head + 0*ne1)*nb1, VKQ_final, nb1);
     }
 }
 
-static void ggml_compute_forward_flash_attn_ext_f16(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_flash_attn_ext_f16(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * q     = dst->src[0];
-    const ggml_tensor * k     = dst->src[1];
-    const ggml_tensor * v     = dst->src[2];
+    സ്ഥിരം ggml_tensor * q     = dst->src[0];
+    സ്ഥിരം ggml_tensor * k     = dst->src[1];
+    സ്ഥിരം ggml_tensor * v     = dst->src[2];
 
     GGML_TENSOR_LOCALS(int64_t, neq, q,   ne)
     GGML_TENSOR_LOCALS(size_t,  nbq, q,   nb)
@@ -9545,9 +9545,9 @@ static void ggml_compute_forward_flash_attn_ext_f16(
     GGML_TENSOR_LOCALS(int64_t, ne,  dst, ne)
     GGML_TENSOR_LOCALS(size_t,  nb,  dst, nb)
 
-    const int64_t DK = nek0;
-    const int64_t DV = nev0;
-    const int64_t N  = neq1;
+    സ്ഥിരം int64_t DK = nek0;
+    സ്ഥിരം int64_t DV = nev0;
+    സ്ഥിരം int64_t N  = neq1;
 
 
     GGML_ASSERT(ne0 == DV);
@@ -9565,42 +9565,42 @@ static void ggml_compute_forward_flash_attn_ext_f16(
     GGML_ASSERT(neq1 == N);
 
     // dst cannot be transposed or permuted
-    GGML_ASSERT(nb0 == sizeof(float));
+    GGML_ASSERT(nb0 == വലുപ്പം(ദശാംശം));
     GGML_ASSERT(nb0 <= nb1);
     GGML_ASSERT(nb1 <= nb2);
     GGML_ASSERT(nb2 <= nb3);
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
     // When use_ref is set, force the vec-only reference implementation (no tiling, no KV-chunking)
-    const bool use_ref = params->use_ref;
+    സ്ഥിരം തർക്കം use_ref = params->use_ref;
 
-    const bool kv_is_f32_or_f16 = (k->type == GGML_TYPE_F32 || k->type == GGML_TYPE_F16);
-    const bool use_split_kv_path = !use_ref && (neq1 == 1 && neq3 == 1) && kv_is_f32_or_f16 && (k->type == v->type) && q->type == GGML_TYPE_F32 && nek1 >= 512;
+    സ്ഥിരം തർക്കം kv_is_f32_or_f16 = (k->type == GGML_TYPE_F32 || k->type == GGML_TYPE_F16);
+    സ്ഥിരം തർക്കം use_split_kv_path = !use_ref && (neq1 == 1 && neq3 == 1) && kv_is_f32_or_f16 && (k->type == v->type) && q->type == GGML_TYPE_F32 && nek1 >= 512;
 
-    if (use_split_kv_path) {
-        const int64_t chunk_size = (nek1 + nth - 1) / nth;
+    എങ്കിൽ (use_split_kv_path) {
+        സ്ഥിരം int64_t chunk_size = (nek1 + nth - 1) / nth;
 
         // Partials buffer layout: [q_head][kv_chunk][M, S, VKQ]
-        const int64_t partial_size  = 2 + DV;
-        float *       partials_base = (float *) params->wdata + nth * (DK + 2*DV + CACHE_LINE_SIZE_F32);
+        സ്ഥിരം int64_t partial_size  = 2 + DV;
+        ദശാംശം *       partials_base = (ദശാംശം *) params->wdata + nth * (DK + 2*DV + CACHE_വരി_SIZE_F32);
 
-        const int64_t ic_start = ith * chunk_size;
-        const int64_t ic_end   = std::min(ic_start + chunk_size, nek1);
+        സ്ഥിരം int64_t ic_start = ith * chunk_size;
+        സ്ഥിരം int64_t ic_end   = std::min(ic_start + chunk_size, nek1);
 
-        const int64_t partial_stride = nth * partial_size;
-        float *       chunk_partials = partials_base + ith * partial_size;
+        സ്ഥിരം int64_t partial_stride = nth * partial_size;
+        ദശാംശം *       chunk_partials = partials_base + ith * partial_size;
 
-        if (ic_start < nek1) {
-            for (int64_t q_head = 0; q_head < neq2; q_head++) {
+        എങ്കിൽ (ic_start < nek1) {
+            വേണ്ടി (int64_t q_head = 0; q_head < neq2; q_head++) {
                 ggml_compute_forward_flash_attn_ext_f16_one_chunk(
                     params, dst, q_head, q_head + 1, ic_start, ic_end,
                     chunk_partials, partial_stride);
             }
-        } else {
-            for (int64_t q_head = 0; q_head < neq2; q_head++) {
-                float * q_partials = chunk_partials + q_head * partial_stride;
+        } അല്ലെങ്കിൽ {
+            വേണ്ടി (int64_t q_head = 0; q_head < neq2; q_head++) {
+                ദശാംശം * q_partials = chunk_partials + q_head * partial_stride;
                 q_partials[0] = -INFINITY;  // M
                 q_partials[1] = 0.0f;       // S
             }
@@ -9608,54 +9608,54 @@ static void ggml_compute_forward_flash_attn_ext_f16(
 
         ggml_barrier(params->threadpool);
         ggml_flash_attn_ext_reduce_partials(params, dst, nth, chunk_size);
-    } else {
+    } അല്ലെങ്കിൽ {
 
         // total rows in q
-        const int64_t nr = neq1*neq2*neq3;
+        സ്ഥിരം int64_t nr = neq1*neq2*neq3;
 
         // disable for NUMA
-        const bool disable_chunking = ggml_is_numa();
+        സ്ഥിരം തർക്കം disable_chunking = ggml_is_numa();
 
         // 4x chunks per thread
-        int nth_scaled = nth * 4;
+        പൂർണ്ണസംഖ്യ nth_scaled = nth * 4;
         int64_t chunk_size = (nr + nth_scaled - 1) / nth_scaled;
         int64_t nchunk     = (nr + chunk_size - 1) / chunk_size;
 
-        if (nth == 1 || nchunk < nth || disable_chunking) {
+        എങ്കിൽ (nth == 1 || nchunk < nth || disable_chunking) {
             nchunk = nth;
         }
 
-        if (ith == 0) {
+        എങ്കിൽ (ith == 0) {
             ggml_threadpool_chunk_set(params->threadpool, nth);
         }
 
         ggml_barrier(params->threadpool);
 
-        const int64_t dr = (nr + nchunk - 1) / nchunk;
+        സ്ഥിരം int64_t dr = (nr + nchunk - 1) / nchunk;
 
-        static constexpr int64_t Q_TILE_SZ  = ggml_fa_tile_config::Q;
-        bool use_tiled = !use_ref &&
+        സ്ഥിതം constexpr int64_t Q_TILE_SZ  = ggml_fa_tile_config::Q;
+        തർക്കം use_tiled = !use_ref &&
                                (q->type == GGML_TYPE_F32 &&
                                 kv_is_f32_or_f16 &&
                                 k->type == v->type &&
                                 neq1 >= Q_TILE_SZ);
-#if defined(GGML_SIMD) && !defined(__x86_64__) && !defined(_M_X64)
-#if defined(__ARM_FEATURE_SVE)
-        const int64_t f32_epr = svcntw();
-#else
-        const int64_t f32_epr = GGML_F32_EPR;
+#എങ്കിൽ defined(GGML_SIMD) && !defined(__x86_64__) && !defined(_M_X64)
+#എങ്കിൽ defined(__ARM_FEATURE_SVE)
+        സ്ഥിരം int64_t f32_epr = svcntw();
+#അല്ലെങ്കിൽ
+        സ്ഥിരം int64_t f32_epr = GGML_F32_EPR;
 #endif
         use_tiled &= (DV % f32_epr == 0);
 #endif
-        int current_chunk = ith;
+        പൂർണ്ണസംഖ്യ current_chunk = ith;
 
-        while (current_chunk < nchunk) {
-            const int64_t ir0 = dr * current_chunk;
-            const int64_t ir1 = MIN(ir0 + dr, nr);
+        ആകുമ്പോൾ (current_chunk < nchunk) {
+            സ്ഥിരം int64_t ir0 = dr * current_chunk;
+            സ്ഥിരം int64_t ir1 = MIN(ir0 + dr, nr);
 
-            if (use_tiled) {
+            എങ്കിൽ (use_tiled) {
                 ggml_compute_forward_flash_attn_ext_tiled(params, dst, ir0, ir1);
-            } else {
+            } അല്ലെങ്കിൽ {
                 ggml_compute_forward_flash_attn_ext_f16_one_chunk(params, dst, ir0, ir1, 0, nek1, nullptr, 0);
             }
 
@@ -9664,17 +9664,17 @@ static void ggml_compute_forward_flash_attn_ext_f16(
     }
 }
 
-void ggml_compute_forward_flash_attn_ext(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_flash_attn_ext(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
-    switch (dst->op_params[3]) {
-        case GGML_PREC_DEFAULT:
-        case GGML_PREC_F32:
+    തിരഞ്ഞെടുപ്പ് (dst->op_params[3]) {
+        അവസ്ഥ GGML_PREC_DEFAULT:
+        അവസ്ഥ GGML_PREC_F32:
             {
                 // uses F32 accumulators
                 ggml_compute_forward_flash_attn_ext_f16(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -9683,15 +9683,15 @@ void ggml_compute_forward_flash_attn_ext(
 
 // ggml_compute_forward_flash_attn_back
 
-static void ggml_compute_forward_flash_attn_back_f32(
-        const ggml_compute_params * params,
-        const bool masked,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_flash_attn_back_f32(
+        സ്ഥിരം ggml_compute_params * params,
+        സ്ഥിരം തർക്കം masked,
               ggml_tensor * dst) {
 
-    const ggml_tensor * q = dst->src[0];
-    const ggml_tensor * k = dst->src[1];
-    const ggml_tensor * v = dst->src[2];
-    const ggml_tensor * d = dst->src[3];
+    സ്ഥിരം ggml_tensor * q = dst->src[0];
+    സ്ഥിരം ggml_tensor * k = dst->src[1];
+    സ്ഥിരം ggml_tensor * v = dst->src[2];
+    സ്ഥിരം ggml_tensor * d = dst->src[3];
 
     GGML_TENSOR_LOCALS(int64_t, neq, q,   ne)
     GGML_TENSOR_LOCALS(size_t,  nbq, q,   nb)
@@ -9704,24 +9704,24 @@ static void ggml_compute_forward_flash_attn_back_f32(
     GGML_TENSOR_LOCALS(int64_t, ne,  dst, ne)
     GGML_TENSOR_LOCALS(size_t,  nb,  dst, nb)
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int64_t D = neq0;
-    const int64_t N = neq1;
-    const int64_t P = nek1 - N;
-    const int64_t M = P + N;
+    സ്ഥിരം int64_t D = neq0;
+    സ്ഥിരം int64_t N = neq1;
+    സ്ഥിരം int64_t P = nek1 - N;
+    സ്ഥിരം int64_t M = P + N;
 
-    const int Mup  = ggml_up(M, GGML_SOFT_MAX_UNROLL);
-    const int mxDM = MAX(D, Mup);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ Mup  = ggml_up(M, GGML_SOFT_MAX_UNROLL);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ mxDM = MAX(D, Mup);
 
     // GGML_ASSERT(ne0 == D);
     // GGML_ASSERT(ne1 == N);
     GGML_ASSERT(P >= 0);
 
-    GGML_ASSERT(nbq0 == sizeof(float));
-    GGML_ASSERT(nbk0 == sizeof(float));
-    GGML_ASSERT(nbv0 == sizeof(float));
+    GGML_ASSERT(nbq0 == വലുപ്പം(ദശാംശം));
+    GGML_ASSERT(nbk0 == വലുപ്പം(ദശാംശം));
+    GGML_ASSERT(nbv0 == വലുപ്പം(ദശാംശം));
 
     GGML_ASSERT(neq0 == D);
     GGML_ASSERT(nek0 == D);
@@ -9734,107 +9734,107 @@ static void ggml_compute_forward_flash_attn_back_f32(
     GGML_ASSERT(ned1 == N);
 
     // dst cannot be transposed or permuted
-    GGML_ASSERT(nb0 == sizeof(float));
+    GGML_ASSERT(nb0 == വലുപ്പം(ദശാംശം));
     GGML_ASSERT(nb0 <= nb1);
     GGML_ASSERT(nb1 <= nb2);
     GGML_ASSERT(nb2 <= nb3);
 
-    if (ith == 0) {
+    എങ്കിൽ (ith == 0) {
         memset(dst->data, 0, nb0*ne0*ne1*ne2*ne3);
     }
     ggml_barrier(params->threadpool);
 
-    const int64_t elem_q = ggml_nelements(q);
-    const int64_t elem_k = ggml_nelements(k);
+    സ്ഥിരം int64_t elem_q = ggml_nelements(q);
+    സ്ഥിരം int64_t elem_k = ggml_nelements(k);
 
     ggml_type result_type = dst->type;
     GGML_ASSERT(ggml_blck_size(result_type) == 1);
-    const size_t tsize = ggml_type_size(result_type);
+    സ്ഥിരം size_t tsize = ggml_type_size(result_type);
 
-    const size_t offs_q = 0;
-    const size_t offs_k = offs_q + GGML_PAD(elem_q * tsize, GGML_MEM_ALIGN);
-    const size_t offs_v = offs_k + GGML_PAD(elem_k * tsize, GGML_MEM_ALIGN);
+    സ്ഥിരം size_t offs_q = 0;
+    സ്ഥിരം size_t offs_k = offs_q + GGML_PAD(elem_q * tsize, GGML_MEM_ALIGN);
+    സ്ഥിരം size_t offs_v = offs_k + GGML_PAD(elem_k * tsize, GGML_MEM_ALIGN);
 
-    void * grad_q = (char *) dst->data;
-    void * grad_k = (char *) dst->data + offs_k;
-    void * grad_v = (char *) dst->data + offs_v;
+    ശൂന്യം * grad_q = (അക്ഷരം *) dst->data;
+    ശൂന്യം * grad_k = (അക്ഷരം *) dst->data + offs_k;
+    ശൂന്യം * grad_v = (അക്ഷരം *) dst->data + offs_v;
 
-    const size_t nbgq1 = nb0*neq0;
-    const size_t nbgq2 = nb0*neq0*neq1;
-    const size_t nbgq3 = nb0*neq0*neq1*neq2;
+    സ്ഥിരം size_t nbgq1 = nb0*neq0;
+    സ്ഥിരം size_t nbgq2 = nb0*neq0*neq1;
+    സ്ഥിരം size_t nbgq3 = nb0*neq0*neq1*neq2;
 
-    const size_t nbgk1 = nb0*nek0;
-    const size_t nbgk2 = nb0*nek0*nek1;
-    const size_t nbgk3 = nb0*nek0*nek1*neq2;
+    സ്ഥിരം size_t nbgk1 = nb0*nek0;
+    സ്ഥിരം size_t nbgk2 = nb0*nek0*nek1;
+    സ്ഥിരം size_t nbgk3 = nb0*nek0*nek1*neq2;
 
-    const size_t nbgv1 = nb0*nev0;
-    const size_t nbgv2 = nb0*nev0*nev1;
-    const size_t nbgv3 = nb0*nev0*nev1*neq2;
+    സ്ഥിരം size_t nbgv1 = nb0*nev0;
+    സ്ഥിരം size_t nbgv2 = nb0*nev0*nev1;
+    സ്ഥിരം size_t nbgv3 = nb0*nev0*nev1*neq2;
 
     // parallelize by k rows using ggml_vec_dot_f32
 
     // total rows in k
-    const int nr = nek2*nek3;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = nek2*nek3;
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    const float scale = 1.0f/sqrtf(D);
+    സ്ഥിരം ദശാംശം scale = 1.0f/sqrtf(D);
 
     //printf("P=%d N=%d D=%d ir0=%d ir1=%d scale = %f\n", P, N, D, ir0, ir1, scale);
 
     // how often k2 (and v2) is repeated in q2
-    int nrep = neq2/nek2;
+    പൂർണ്ണസംഖ്യ nrep = neq2/nek2;
 
-    for (int ir = ir0; ir < ir1; ++ir) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ ir = ir0; ir < ir1; ++ir) {
         // q indices
-        const int ik3 = ir/(nek2);
-        const int ik2 = ir - ik3*nek2;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ ik3 = ir/(nek2);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ ik2 = ir - ik3*nek2;
 
-        const int iq3 = ik3;
-        const int id3 = ik3;
-        const int iv3 = ik3;
-        const int iv2 = ik2;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ iq3 = ik3;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ id3 = ik3;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ iv3 = ik3;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ iv2 = ik2;
 
-        for (int irep = 0; irep < nrep; ++irep) {
-            const int iq2 = ik2 + irep*nek2;
-            const int id2 = iq2;
+        വേണ്ടി (പൂർണ്ണസംഖ്യ irep = 0; irep < nrep; ++irep) {
+            സ്ഥിരം പൂർണ്ണസംഖ്യ iq2 = ik2 + irep*nek2;
+            സ്ഥിരം പൂർണ്ണസംഖ്യ id2 = iq2;
 
             // (ik2 + irep*nek2) % nek2 == ik2
-            for (int iq1 = 0; iq1 < neq1; ++iq1) {
-                const int id1 = iq1;
+            വേണ്ടി (പൂർണ്ണസംഖ്യ iq1 = 0; iq1 < neq1; ++iq1) {
+                സ്ഥിരം പൂർണ്ണസംഖ്യ id1 = iq1;
 
                 // not sure about CACHE_LINE_SIZE_F32..
                 // - maybe it must not be multiplied by 2 and excluded from .. in SM 1*(..) offset?
-                float * S  = (float *) params->wdata + ith*2*(mxDM + CACHE_LINE_SIZE_F32) + 0*(mxDM+CACHE_LINE_SIZE_F32);
-                float * SM = (float *) params->wdata + ith*2*(mxDM + CACHE_LINE_SIZE_F32) + 1*(mxDM+CACHE_LINE_SIZE_F32);
+                ദശാംശം * S  = (ദശാംശം *) params->wdata + ith*2*(mxDM + CACHE_വരി_SIZE_F32) + 0*(mxDM+CACHE_വരി_SIZE_F32);
+                ദശാംശം * SM = (ദശാംശം *) params->wdata + ith*2*(mxDM + CACHE_വരി_SIZE_F32) + 1*(mxDM+CACHE_വരി_SIZE_F32);
 
-                for (int i = M; i < Mup; ++i) {
+                വേണ്ടി (പൂർണ്ണസംഖ്യ i = M; i < Mup; ++i) {
                     S[i] = -INFINITY;
                 }
 
-                const int64_t masked_begin = masked ? (P + iq1 + 1) : M;
-                for (int64_t ic = 0; ic < masked_begin; ++ic) {
+                സ്ഥിരം int64_t masked_begin = masked ? (P + iq1 + 1) : M;
+                വേണ്ടി (int64_t ic = 0; ic < masked_begin; ++ic) {
                     // k indices
-                    const int ik1 = ic;
+                    സ്ഥിരം പൂർണ്ണസംഖ്യ ik1 = ic;
 
                     // S indices
-                    const int i1 = ik1;
+                    സ്ഥിരം പൂർണ്ണസംഖ്യ i1 = ik1;
 
                     ggml_vec_dot_f32(neq0,
                             S + i1, 0,
-                            (float *) ((char *) k->data + (ik1*nbk1 + ik2*nbk2 + ik3*nbk3)), 0,
-                            (float *) ((char *) q->data + (iq1*nbq1 + iq2*nbq2 + iq3*nbq3)), 0, 1);
+                            (ദശാംശം *) ((അക്ഷരം *) k->data + (ik1*nbk1 + ik2*nbk2 + ik3*nbk3)), 0,
+                            (ദശാംശം *) ((അക്ഷരം *) q->data + (iq1*nbq1 + iq2*nbq2 + iq3*nbq3)), 0, 1);
                 }
 
                 // scale
                 ggml_vec_scale_f32(masked_begin, S, scale);
 
-                for (int64_t i = masked_begin; i < M; i++) {
+                വേണ്ടി (int64_t i = masked_begin; i < M; i++) {
                     S[i] = -INFINITY;
                 }
 
@@ -9842,7 +9842,7 @@ static void ggml_compute_forward_flash_attn_back_f32(
                 // exclude known -INF S[..] values from max and loop
                 // dont forget to set their SM values to zero
                 {
-                    float max = -INFINITY;
+                    ദശാംശം max = -INFINITY;
                     ggml_vec_max_f32(masked_begin, &max, S);
 
                     ggml_float sum = 0.0;
@@ -9852,12 +9852,12 @@ static void ggml_compute_forward_flash_attn_back_f32(
                         vDSP_vsadd(SM, 1, &max, SM, 1, Mup);
                         vvexpf(SM, SM, &Mup);
                         ggml_vec_sum_f32(Mup, &sum, SM);
-#else
+#അല്ലെങ്കിൽ
                         sum = ggml_vec_soft_max_f32(Mup, SM, S, max);
 #endif
                     }
 
-                    assert(sum > 0.0);
+                    പ്രതിജ്ഞാ(sum > 0.0);
 
                     sum = 1.0/sum;
                     ggml_vec_scale_f32(masked_begin, SM, sum);
@@ -9933,15 +9933,15 @@ static void ggml_compute_forward_flash_attn_back_f32(
                 //   S[:M] += vcur[:M,ic,iv2,iv3] * d[ic,id1,id2,id3]
                 // exclude known future zero S[..] values from operation
                 ggml_vec_set_f32(masked_begin, S, 0);
-                for (int64_t ic = 0; ic < D; ++ic) {
+                വേണ്ടി (int64_t ic = 0; ic < D; ++ic) {
                     ggml_vec_mad_f32(masked_begin,
                             S,
-                             (float *) ((char *) v->data + (          ic*nbv1  + iv2*nbv2 + iv3*nbv3)),
-                            *(float *) ((char *) d->data + (ic*nbd0 + id1*nbd1 + id2*nbd2 + id3*nbd3)));
+                             (ദശാംശം *) ((അക്ഷരം *) v->data + (          ic*nbv1  + iv2*nbv2 + iv3*nbv3)),
+                            *(ദശാംശം *) ((അക്ഷരം *) d->data + (ic*nbd0 + id1*nbd1 + id2*nbd2 + id3*nbd3)));
                 }
 
                 // S = SM * (S - dot(SM, S))
-                float dot_SM_gradSM = 0;
+                ദശാംശം dot_SM_gradSM = 0;
                 ggml_vec_dot_f32 (masked_begin, &dot_SM_gradSM, 0, SM, 0, S, 0, 1);
                 ggml_vec_acc1_f32(M, S, -dot_SM_gradSM);
                 ggml_vec_mul_f32 (masked_begin, S, S, SM);
@@ -9963,10 +9963,10 @@ static void ggml_compute_forward_flash_attn_back_f32(
                 // for ic:
                 //  grad[q][:D,iq1,iq2,iq3] += S[ic] * kcur[:D,ic,ik2,ik3]
                 // exclude known zero S[..] values from loop
-                for (int64_t ic = 0; ic < masked_begin; ++ic) {
+                വേണ്ടി (int64_t ic = 0; ic < masked_begin; ++ic) {
                     ggml_vec_mad_f32(D,
-                            (float *) ((char *) grad_q  + (iq1*nbgq1 + iq2*nbgq2  + iq3*nbgq3)),
-                            (float *) ((char *) k->data + (ic*nbk1   + ik2*nbk2   + ik3*nbk3)),
+                            (ദശാംശം *) ((അക്ഷരം *) grad_q  + (iq1*nbgq1 + iq2*nbgq2  + iq3*nbgq3)),
+                            (ദശാംശം *) ((അക്ഷരം *) k->data + (ic*nbk1   + ik2*nbk2   + ik3*nbk3)),
                             S[ic]);
                 }
 
@@ -9975,10 +9975,10 @@ static void ggml_compute_forward_flash_attn_back_f32(
                 //  grad[k][:D,ic,iq2,iq3] += S.T[0,ic] * qcur[:D,0]
                 //  grad[k][:D,ic,iq2,iq3] += S[ic]     * qcur[:D,0]
                 // exclude known zero S[..] values from loop
-                for (int64_t ic = 0; ic < masked_begin; ++ic) {
+                വേണ്ടി (int64_t ic = 0; ic < masked_begin; ++ic) {
                     ggml_vec_mad_f32(D,
-                            (float *) ((char *) grad_k  + (ic*nbgk1  + ik2*nbgk2  + ik3*nbgk3)),
-                            (float *) ((char *) q->data + (iq1*nbq1  + iq2*nbq2   + iq3*nbq3)),
+                            (ദശാംശം *) ((അക്ഷരം *) grad_k  + (ic*nbgk1  + ik2*nbgk2  + ik3*nbgk3)),
+                            (ദശാംശം *) ((അക്ഷരം *) q->data + (iq1*nbq1  + iq2*nbq2   + iq3*nbq3)),
                             S[ic]);
                 }
 
@@ -9987,30 +9987,30 @@ static void ggml_compute_forward_flash_attn_back_f32(
                 //  grad[v][:M,ic,iv2,iv3] += d[:D,id1,id2,id3].T[0,ic] * SM[:M]
                 //  grad[v][:M,ic,iv2,iv3] += d[ic,id1,id2,id3]         * SM[:M]
                 // exclude known zero SM[..] values from mad
-                for (int64_t ic = 0; ic < D; ++ic) {
+                വേണ്ടി (int64_t ic = 0; ic < D; ++ic) {
                     ggml_vec_mad_f32(masked_begin,
-                            (float *) ((char *) grad_v   + (          ic*nbgv1 + iv2*nbgv2 + iv3*nbgv3)),
+                            (ദശാംശം *) ((അക്ഷരം *) grad_v   + (          ic*nbgv1 + iv2*nbgv2 + iv3*nbgv3)),
                             SM,
-                            *(float *) ((char *) d->data + (ic*nbd0 + id1*nbd1 + id2*nbd2  + id3*nbd3)));
+                            *(ദശാംശം *) ((അക്ഷരം *) d->data + (ic*nbd0 + id1*nbd1 + id2*nbd2  + id3*nbd3)));
                 }
             }
         }
     }
 }
 
-void ggml_compute_forward_flash_attn_back(
-        const ggml_compute_params * params,
-        const bool masked,
+ശൂന്യം ggml_compute_forward_flash_attn_back(
+        സ്ഥിരം ggml_compute_params * params,
+        സ്ഥിരം തർക്കം masked,
         ggml_tensor * dst) {
 
-    const ggml_tensor * q = dst->src[0];
+    സ്ഥിരം ggml_tensor * q = dst->src[0];
 
-    switch (q->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (q->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_flash_attn_back_f32(params, masked, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -10019,51 +10019,51 @@ void ggml_compute_forward_flash_attn_back(
 
 // ggml_compute_forward_ssm_conv
 
-static void ggml_compute_forward_ssm_conv_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_ssm_conv_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0]; // conv_x
-    const ggml_tensor * src1 = dst->src[1]; // conv1d.weight
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0]; // conv_x
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1]; // conv1d.weight
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nc  = src1->ne[0]; // d_conv
-    const int ncs = src0->ne[0]; // d_conv - 1 + n_t
-    const int nr  = src0->ne[1]; // d_inner
-    const int n_t =  dst->ne[1]; // tokens per sequence
-    const int n_s =  dst->ne[2]; // number of sequences in the batch
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nc  = src1->ne[0]; // d_conv
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ncs = src0->ne[0]; // d_conv - 1 + n_t
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr  = src0->ne[1]; // d_inner
+    സ്ഥിരം പൂർണ്ണസംഖ്യ n_t =  dst->ne[1]; // tokens per sequence
+    സ്ഥിരം പൂർണ്ണസംഖ്യ n_s =  dst->ne[2]; // number of sequences in the batch
 
     GGML_ASSERT( dst->ne[0] == nr);
-    GGML_ASSERT(src0->nb[0] == sizeof(float));
-    GGML_ASSERT(src1->nb[0] == sizeof(float));
-    GGML_ASSERT(src0->nb[1] == src0->ne[0]*sizeof(float));
+    GGML_ASSERT(src0->nb[0] == വലുപ്പം(ദശാംശം));
+    GGML_ASSERT(src1->nb[0] == വലുപ്പം(ദശാംശം));
+    GGML_ASSERT(src0->nb[1] == src0->ne[0]*വലുപ്പം(ദശാംശം));
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
-    const int ir  = ir1 - ir0;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir  = ir1 - ir0;
 
-    for (int i3 = 0; i3 < n_s; ++i3) {
-        for (int i2 = 0; i2 < n_t; ++i2) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i3 = 0; i3 < n_s; ++i3) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i2 = 0; i2 < n_t; ++i2) {
             // {d_conv - 1 + n_t, d_inner, n_seqs}
             // sliding window
-            const float * s = (const float *) ((const char *) src0->data + ir0*(src0->nb[1]) + i2*(src0->nb[0]) + i3*(src0->nb[2])); // {d_conv, d_inner, n_s}
-            const float * c = (const float *) ((const char *) src1->data + ir0*(src1->nb[1])); // {d_conv, d_inner}
-            float * x = (float *) ((char *) dst->data + ir0*(dst->nb[0]) + i2*(dst->nb[1]) + i3*(dst->nb[2])); // {d_inner, n_t, n_s}
+            സ്ഥിരം ദശാംശം * s = (സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *) src0->data + ir0*(src0->nb[1]) + i2*(src0->nb[0]) + i3*(src0->nb[2])); // {d_conv, d_inner, n_s}
+            സ്ഥിരം ദശാംശം * c = (സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *) src1->data + ir0*(src1->nb[1])); // {d_conv, d_inner}
+            ദശാംശം * x = (ദശാംശം *) ((അക്ഷരം *) dst->data + ir0*(dst->nb[0]) + i2*(dst->nb[1]) + i3*(dst->nb[2])); // {d_inner, n_t, n_s}
 
             // TODO: transpose the output for smaller strides for big batches?
             // d_inner
-            for (int i1 = 0; i1 < ir; ++i1) {
+            വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = 0; i1 < ir; ++i1) {
                 // rowwise dot product
                 // NOTE: not using ggml_vec_dot_f32, because its sum is in double precision
-                float sumf = 0.0f;
+                ദശാംശം sumf = 0.0f;
 
                 // d_conv
-                for (int i0 = 0; i0 < nc; ++i0) {
+                വേണ്ടി (പൂർണ്ണസംഖ്യ i0 = 0; i0 < nc; ++i0) {
                     sumf += s[i0 + i1*ncs] * c[i0 + i1*nc];
                 }
                 x[i1] = sumf;
@@ -10072,15 +10072,15 @@ static void ggml_compute_forward_ssm_conv_f32(
     }
 }
 
-void ggml_compute_forward_ssm_conv(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_ssm_conv(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
-    switch (dst->src[0]->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (dst->src[0]->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_ssm_conv_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -10089,94 +10089,94 @@ void ggml_compute_forward_ssm_conv(
 
 // ggml_compute_forward_ssm_scan
 
-static void ggml_compute_forward_ssm_scan_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_ssm_scan_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0]; // s  {d_state, dim, n_head, n_seqs+}
-    const ggml_tensor * src1 = dst->src[1]; // x  {dim, n_head, n_seq_tokens, n_seqs}
-    const ggml_tensor * src2 = dst->src[2]; // dt {n_head, n_seq_tokens, n_seqs}
-    const ggml_tensor * src3 = dst->src[3]; // A  {d_state, n_head} or {1, n_head}
-    const ggml_tensor * src4 = dst->src[4]; // B  {d_state, n_group, n_seq_tokens, n_seqs}
-    const ggml_tensor * src5 = dst->src[5]; // C  {d_state, n_group, n_seq_tokens, n_seqs}
-    const ggml_tensor * src6 = dst->src[6]; // ids {n_seqs}
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0]; // s  {d_state, dim, n_head, n_seqs+}
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1]; // x  {dim, n_head, n_seq_tokens, n_seqs}
+    സ്ഥിരം ggml_tensor * src2 = dst->src[2]; // dt {n_head, n_seq_tokens, n_seqs}
+    സ്ഥിരം ggml_tensor * src3 = dst->src[3]; // A  {d_state, n_head} or {1, n_head}
+    സ്ഥിരം ggml_tensor * src4 = dst->src[4]; // B  {d_state, n_group, n_seq_tokens, n_seqs}
+    സ്ഥിരം ggml_tensor * src5 = dst->src[5]; // C  {d_state, n_group, n_seq_tokens, n_seqs}
+    സ്ഥിരം ggml_tensor * src6 = dst->src[6]; // ids {n_seqs}
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int64_t nc = src0->ne[0]; // d_state
-    const int64_t nr = src0->ne[1]; // dim
-    const int64_t nh = src1->ne[1]; // n_head
-    const int64_t ng = src4->ne[1];
-    const int64_t nt = src1->ne[2]; // number of tokens per sequence
-    const int64_t ns = src1->ne[3]; // number of sequences in the batch
-    const int64_t K  = ggml_get_op_params_i32(dst, 0);
+    സ്ഥിരം int64_t nc = src0->ne[0]; // d_state
+    സ്ഥിരം int64_t nr = src0->ne[1]; // dim
+    സ്ഥിരം int64_t nh = src1->ne[1]; // n_head
+    സ്ഥിരം int64_t ng = src4->ne[1];
+    സ്ഥിരം int64_t nt = src1->ne[2]; // number of tokens per sequence
+    സ്ഥിരം int64_t ns = src1->ne[3]; // number of sequences in the batch
+    സ്ഥിരം int64_t K  = ggml_get_op_params_i32(dst, 0);
 
     // can't use ggml_nbytes because src1 is not necessarily contiguous
-    const int64_t s_off = ggml_nelements(src1) * ggml_element_size(src1);
+    സ്ഥിരം int64_t s_off = ggml_nelements(src1) * ggml_element_size(src1);
 
     GGML_ASSERT(K >= 1);
     GGML_ASSERT(ggml_nelements(src1) + K*nc*nr*nh*ns == ggml_nelements(dst));
-    GGML_ASSERT(src0->nb[0] == sizeof(float));
-    GGML_ASSERT(src1->nb[0] == sizeof(float));
-    GGML_ASSERT(src2->nb[0] == sizeof(float));
-    GGML_ASSERT(src3->nb[0] == sizeof(float));
-    GGML_ASSERT(src4->nb[0] == sizeof(float));
-    GGML_ASSERT(src5->nb[0] == sizeof(float));
-    GGML_ASSERT(src6->nb[0] == sizeof(int32_t));
+    GGML_ASSERT(src0->nb[0] == വലുപ്പം(ദശാംശം));
+    GGML_ASSERT(src1->nb[0] == വലുപ്പം(ദശാംശം));
+    GGML_ASSERT(src2->nb[0] == വലുപ്പം(ദശാംശം));
+    GGML_ASSERT(src3->nb[0] == വലുപ്പം(ദശാംശം));
+    GGML_ASSERT(src4->nb[0] == വലുപ്പം(ദശാംശം));
+    GGML_ASSERT(src5->nb[0] == വലുപ്പം(ദശാംശം));
+    GGML_ASSERT(src6->nb[0] == വലുപ്പം(int32_t));
     GGML_ASSERT(nh % ng == 0);
     GGML_ASSERT(src3->ne[0] == 1 || K == 1);
 
     // heads per thread
-    const int dh = (nh + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dh = (nh + nth - 1)/nth;
 
     // head range for this thread
-    const int ih0 = dh*ith;
-    const int ih1 = MIN(ih0 + dh, nh);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ih0 = dh*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ih1 = MIN(ih0 + dh, nh);
 
-    const int32_t * ids = (const int32_t *) src6->data;
+    സ്ഥിരം int32_t * ids = (സ്ഥിരം int32_t *) src6->data;
 
-    for (int i3 = 0; i3 < ns; ++i3) {
-        const float * s0 = (const float *) ((const char *) src0->data + ids[i3]*(src0->nb[3])); // {d_state, dim, nh, ns}
-              float * s  = (      float *) ((      char *) dst->data  + i3*(src0->nb[3]) + s_off); // {d_state, dim, nh, ns}
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i3 = 0; i3 < ns; ++i3) {
+        സ്ഥിരം ദശാംശം * s0 = (സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *) src0->data + ids[i3]*(src0->nb[3])); // {d_state, dim, nh, ns}
+              ദശാംശം * s  = (      ദശാംശം *) ((      അക്ഷരം *) dst->data  + i3*(src0->nb[3]) + s_off); // {d_state, dim, nh, ns}
 
-        for (int i2 = 0; i2 < nt; ++i2) {
-            const float * x  = (const float *) ((const char *) src1->data + i2*(src1->nb[2]) + i3*(src1->nb[3])); // {dim, nh, nt, ns}
-            const float * dt = (const float *) ((const char *) src2->data + i2*(src2->nb[1]) + i3*(src2->nb[2])); // {nh, nt, ns}
-            const float * A  = (const float *) ((const char *) src3->data); // {d_state, nh} or {1, nh}
-            const float * B  = (const float *) ((const char *) src4->data + i2*(src4->nb[2]) + i3*(src4->nb[3])); // {d_state, ng, nt, ns}
-            const float * C  = (const float *) ((const char *) src5->data + i2*(src5->nb[2]) + i3*(src5->nb[3])); // {d_state, ng, nt, ns}
-                  float * y  = (      float *) ((      char *) dst->data + i2*(nh*nr*sizeof(float)) + i3*(nt*nh*nr*sizeof(float))); // {dim, nh, nt, ns}
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i2 = 0; i2 < nt; ++i2) {
+            സ്ഥിരം ദശാംശം * x  = (സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *) src1->data + i2*(src1->nb[2]) + i3*(src1->nb[3])); // {dim, nh, nt, ns}
+            സ്ഥിരം ദശാംശം * dt = (സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *) src2->data + i2*(src2->nb[1]) + i3*(src2->nb[2])); // {nh, nt, ns}
+            സ്ഥിരം ദശാംശം * A  = (സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *) src3->data); // {d_state, nh} or {1, nh}
+            സ്ഥിരം ദശാംശം * B  = (സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *) src4->data + i2*(src4->nb[2]) + i3*(src4->nb[3])); // {d_state, ng, nt, ns}
+            സ്ഥിരം ദശാംശം * C  = (സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *) src5->data + i2*(src5->nb[2]) + i3*(src5->nb[3])); // {d_state, ng, nt, ns}
+                  ദശാംശം * y  = (      ദശാംശം *) ((      അക്ഷരം *) dst->data + i2*(nh*nr*വലുപ്പം(ദശാംശം)) + i3*(nt*nh*nr*വലുപ്പം(ദശാംശം))); // {dim, nh, nt, ns}
 
-            if (src3->ne[0] == 1) {
+            എങ്കിൽ (src3->ne[0] == 1) {
                 // Mamba-2 has a scalar decay factor per head; dA can be outside the state-wise loop
 
                 // n_head
-                for (int h = ih0; h < ih1; ++h) {
+                വേണ്ടി (പൂർണ്ണസംഖ്യ h = ih0; h < ih1; ++h) {
                     // ref: https://github.com/state-spaces/mamba/blob/62db608da60f6fc790b8ed9f4b3225e95ca15fde/mamba_ssm/ops/triton/softplus.py#L16
-                    const float dt_soft_plus = ggml_compute_softplus_f32(dt[h]);
-                    const float dA = expf(dt_soft_plus * A[h]);
-                    const int g = h / (nh / ng); // repeat_interleave
+                    സ്ഥിരം ദശാംശം dt_soft_plus = ggml_compute_softplus_f32(dt[h]);
+                    സ്ഥിരം ദശാംശം dA = expf(dt_soft_plus * A[h]);
+                    സ്ഥിരം പൂർണ്ണസംഖ്യ g = h / (nh / ng); // repeat_interleave
 
                     // dim
-                    for (int i1 = 0; i1 < nr; ++i1) {
-                        const int ii = i1 + h*nr;
-                        const float x_dt = x[ii] * dt_soft_plus;
-                        float sumf = 0.0f;
-#if defined(GGML_SIMD)
-    #if defined(__ARM_FEATURE_SVE)
-                        const int ggml_f32_epr = svcntw();
-                        const int ggml_f32_step = 1 * ggml_f32_epr;
+                    വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = 0; i1 < nr; ++i1) {
+                        സ്ഥിരം പൂർണ്ണസംഖ്യ ii = i1 + h*nr;
+                        സ്ഥിരം ദശാംശം x_dt = x[ii] * dt_soft_plus;
+                        ദശാംശം sumf = 0.0f;
+#എങ്കിൽ defined(GGML_SIMD)
+    #എങ്കിൽ defined(__ARM_FEATURE_SVE)
+                        സ്ഥിരം പൂർണ്ണസംഖ്യ ggml_f32_epr = svcntw();
+                        സ്ഥിരം പൂർണ്ണസംഖ്യ ggml_f32_step = 1 * ggml_f32_epr;
 
-                        const int np = (nc & ~(ggml_f32_step - 1));
+                        സ്ഥിരം പൂർണ്ണസംഖ്യ np = (nc & ~(ggml_f32_step - 1));
 
                         GGML_F32_VEC sum = GGML_F32_VEC_ZERO;
 
                         GGML_F32_VEC adA = GGML_F32_VEC_SET1(dA);
                         GGML_F32_VEC axdt = GGML_F32_VEC_SET1(x_dt);
 
-                        for (int i = 0; i < np; i += ggml_f32_step) {
+                        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < np; i += ggml_f32_step) {
                             // TODO: maybe unroll more?
-                            for (int j = 0; j < 1; j++) {
+                            വേണ്ടി (പൂർണ്ണസംഖ്യ j = 0; j < 1; j++) {
                                 GGML_F32_VEC t0 = GGML_F32_VEC_LOAD(s0 + i + j*ggml_f32_epr + ii*nc);
                                 GGML_F32_VEC t1 = GGML_F32_VEC_LOAD(B + i + j*ggml_f32_epr + g*nc);
                                 GGML_F32_VEC t2 = GGML_F32_VEC_LOAD(C + i + j*ggml_f32_epr + g*nc);
@@ -10193,11 +10193,11 @@ static void ggml_compute_forward_ssm_scan_f32(
                         }
 
                         sumf = GGML_F32xt_REDUCE_ONE(sum);
-    #elif defined(__riscv_v_intrinsic)
+    #അല്ലെങ്കിലെങ്കിൽ defined(__riscv_v_intrinsic)
                         // todo: RVV implementation
-                        const int np = 0;
-    #else
-                        const int np = (nc & ~(GGML_F32_STEP - 1));
+                        സ്ഥിരം പൂർണ്ണസംഖ്യ np = 0;
+    #അല്ലെങ്കിൽ
+                        സ്ഥിരം പൂർണ്ണസംഖ്യ np = (nc & ~(GGML_F32_STEP - 1));
 
                         GGML_F32_VEC sum[GGML_F32_ARR] = { GGML_F32_VEC_ZERO };
 
@@ -10208,8 +10208,8 @@ static void ggml_compute_forward_ssm_scan_f32(
                         GGML_F32_VEC ay[GGML_F32_ARR];
                         GGML_F32_VEC az[GGML_F32_ARR];
 
-                        for (int i = 0; i < np; i += GGML_F32_STEP) {
-                            for (int j = 0; j < GGML_F32_ARR; j++) {
+                        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < np; i += GGML_F32_STEP) {
+                            വേണ്ടി (പൂർണ്ണസംഖ്യ j = 0; j < GGML_F32_ARR; j++) {
                                 ax[j] = GGML_F32_VEC_LOAD(s0 + i + j*GGML_F32_EPR + ii*nc);
                                 ay[j] = GGML_F32_VEC_LOAD(B + i + j*GGML_F32_EPR + g*nc);
                                 az[j] = GGML_F32_VEC_LOAD(C + i + j*GGML_F32_EPR + g*nc);
@@ -10228,15 +10228,15 @@ static void ggml_compute_forward_ssm_scan_f32(
                         // reduce sum0..sum3 to sum0
                         GGML_F32_VEC_REDUCE(sumf, sum);
     #endif
-#else
-                        const int np = 0;
+#അല്ലെങ്കിൽ
+                        സ്ഥിരം പൂർണ്ണസംഖ്യ np = 0;
 #endif
                         // d_state
-                        for (int i0 = np; i0 < nc; ++i0) {
-                            const int i = i0 + ii*nc;
-                            const int ig = i0 + g*nc;
+                        വേണ്ടി (പൂർണ്ണസംഖ്യ i0 = np; i0 < nc; ++i0) {
+                            സ്ഥിരം പൂർണ്ണസംഖ്യ i = i0 + ii*nc;
+                            സ്ഥിരം പൂർണ്ണസംഖ്യ ig = i0 + g*nc;
                             // state = prev_state * dA + dB * x
-                            const float state = (s0[i] * dA) + (B[ig] * x_dt);
+                            സ്ഥിരം ദശാംശം state = (s0[i] * dA) + (B[ig] * x_dt);
                             // y = rowwise_dotprod(state, C)
                             sumf += state * C[ig];
                             s[i] = state;
@@ -10244,27 +10244,27 @@ static void ggml_compute_forward_ssm_scan_f32(
                         y[ii] = sumf;
                     }
                 }
-            } else {
+            } അല്ലെങ്കിൽ {
                 // Mamba-1 has an element-wise decay factor for the states
 
                 // n_head
-                for (int h = ih0; h < ih1; ++h) {
+                വേണ്ടി (പൂർണ്ണസംഖ്യ h = ih0; h < ih1; ++h) {
                     // ref: https://github.com/state-spaces/mamba/blob/62db608da60f6fc790b8ed9f4b3225e95ca15fde/mamba_ssm/ops/triton/softplus.py#L16
-                    const float dt_soft_plus = ggml_compute_softplus_f32(dt[h]);
-                    const int g = h / (nh / ng); // repeat_interleave
+                    സ്ഥിരം ദശാംശം dt_soft_plus = ggml_compute_softplus_f32(dt[h]);
+                    സ്ഥിരം പൂർണ്ണസംഖ്യ g = h / (nh / ng); // repeat_interleave
 
                     // dim
-                    for (int i1 = 0; i1 < nr; ++i1) {
-                        const int ii = i1 + h*nr;
-                        const float x_dt = x[ii] * dt_soft_plus;
-#if defined(__ARM_FEATURE_SVE)
+                    വേണ്ടി (പൂർണ്ണസംഖ്യ i1 = 0; i1 < nr; ++i1) {
+                        സ്ഥിരം പൂർണ്ണസംഖ്യ ii = i1 + h*nr;
+                        സ്ഥിരം ദശാംശം x_dt = x[ii] * dt_soft_plus;
+#എങ്കിൽ defined(__ARM_FEATURE_SVE)
                         svfloat32_t vx_dt = GGML_F32_VEC_SET1(x_dt);
                         svfloat32_t vdt_soft_plus = GGML_F32_VEC_SET1(dt_soft_plus);
                         svfloat32_t r1_vector = GGML_F32_VEC_ZERO;
 
                         // d_state
                         // TODO: what happens when (d_state % svcntw()) != 0?
-                        for (int64_t k = 0; k < nc; k += svcntw()) {
+                        വേണ്ടി (int64_t k = 0; k < nc; k += svcntw()) {
                             svfloat32_t vA = GGML_F32_VEC_LOAD(&A[h*nc + k]);
                             svfloat32_t vB = GGML_F32_VEC_LOAD(&B[k + g*nc]);
                             svfloat32_t vC = GGML_F32_VEC_LOAD(&C[k + g*nc]);
@@ -10280,16 +10280,16 @@ static void ggml_compute_forward_ssm_scan_f32(
                             GGML_F32_VEC_STORE(&s[ii*nc + k], vs0);
                         }
                         y[ii] = GGML_F32xt_REDUCE_ONE(r1_vector);
-#else
-                        float sumf = 0.0f;
+#അല്ലെങ്കിൽ
+                        ദശാംശം sumf = 0.0f;
                         // NOTE: can't really use GGML_SIMD here because d_state is usually 16
                         //       and also because expf is used within the loop.
                         // d_state
-                        for (int i0 = 0; i0 < nc; ++i0) {
-                            const int i = i0 + ii*nc;
-                            const int ig = i0 + g*nc;
+                        വേണ്ടി (പൂർണ്ണസംഖ്യ i0 = 0; i0 < nc; ++i0) {
+                            സ്ഥിരം പൂർണ്ണസംഖ്യ i = i0 + ii*nc;
+                            സ്ഥിരം പൂർണ്ണസംഖ്യ ig = i0 + g*nc;
                             // state = prev_state * dA + dB * x
-                            const float state = (s0[i] * expf(dt_soft_plus * A[i0 + h*nc])) + (B[ig] * x_dt);
+                            സ്ഥിരം ദശാംശം state = (s0[i] * expf(dt_soft_plus * A[i0 + h*nc])) + (B[ig] * x_dt);
                             // y = rowwise_dotprod(state, C)
                             sumf += state * C[ig];
                             s[i] = state;
@@ -10299,11 +10299,11 @@ static void ggml_compute_forward_ssm_scan_f32(
                     }
                 }
             }
-            const int64_t slot = nt - 1 - i2;
-            if (K > 1 && slot > 0 && slot < K) {
-                float * s_snapshot = (float *) ((char *) dst->data + s_off + (slot*ns + i3)*(src0->nb[3]));
-                for (int h = ih0; h < ih1; ++h) {
-                    memcpy((char *) s_snapshot + h*src0->nb[2], (char *) s + h*src0->nb[2], src0->nb[2]);
+            സ്ഥിരം int64_t slot = nt - 1 - i2;
+            എങ്കിൽ (K > 1 && slot > 0 && slot < K) {
+                ദശാംശം * s_snapshot = (ദശാംശം *) ((അക്ഷരം *) dst->data + s_off + (slot*ns + i3)*(src0->nb[3]));
+                വേണ്ടി (പൂർണ്ണസംഖ്യ h = ih0; h < ih1; ++h) {
+                    memcpy((അക്ഷരം *) s_snapshot + h*src0->nb[2], (അക്ഷരം *) s + h*src0->nb[2], src0->nb[2]);
                 }
             }
             // use the output as the source when it's not the first token-wise iteration
@@ -10312,15 +10312,15 @@ static void ggml_compute_forward_ssm_scan_f32(
     }
 }
 
-void ggml_compute_forward_ssm_scan(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_ssm_scan(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
-    switch (dst->src[0]->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (dst->src[0]->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_ssm_scan_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -10329,41 +10329,41 @@ void ggml_compute_forward_ssm_scan(
 
 // ggml_compute_forward_win_part
 
-static void ggml_compute_forward_win_part_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_win_part_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
     GGML_UNUSED(params);
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
     GGML_TENSOR_LOCALS(int64_t, ne0, src0, ne)
     GGML_TENSOR_LOCALS(int64_t, ne,  dst,  ne)
 
-    const int32_t nep0 = ((const int32_t *)(dst->op_params))[0];
-    const int32_t nep1 = ((const int32_t *)(dst->op_params))[1];
-    const int32_t w    = ((const int32_t *)(dst->op_params))[2];
+    സ്ഥിരം int32_t nep0 = ((സ്ഥിരം int32_t *)(dst->op_params))[0];
+    സ്ഥിരം int32_t nep1 = ((സ്ഥിരം int32_t *)(dst->op_params))[1];
+    സ്ഥിരം int32_t w    = ((സ്ഥിരം int32_t *)(dst->op_params))[2];
 
-    assert(ne00 == ne0);
-    assert(ne3  == nep0*nep1);
+    പ്രതിജ്ഞാ(ne00 == ne0);
+    പ്രതിജ്ഞാ(ne3  == nep0*nep1);
 
     // TODO: optimize / multi-thread
-    for (int py = 0; py < nep1; ++py) {
-        for (int px = 0; px < nep0; ++px) {
-            const int64_t i3 = py*nep0 + px;
-            for (int64_t i2 = 0; i2 < ne2; ++i2) {
-                for (int64_t i1 = 0; i1 < ne1; ++i1) {
-                    for (int64_t i0 = 0; i0 < ne0; ++i0) {
-                        const int64_t i02 = py*w + i2;
-                        const int64_t i01 = px*w + i1;
-                        const int64_t i00 = i0;
+    വേണ്ടി (പൂർണ്ണസംഖ്യ py = 0; py < nep1; ++py) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ px = 0; px < nep0; ++px) {
+            സ്ഥിരം int64_t i3 = py*nep0 + px;
+            വേണ്ടി (int64_t i2 = 0; i2 < ne2; ++i2) {
+                വേണ്ടി (int64_t i1 = 0; i1 < ne1; ++i1) {
+                    വേണ്ടി (int64_t i0 = 0; i0 < ne0; ++i0) {
+                        സ്ഥിരം int64_t i02 = py*w + i2;
+                        സ്ഥിരം int64_t i01 = px*w + i1;
+                        സ്ഥിരം int64_t i00 = i0;
 
-                        const int64_t i = i3*ne2*ne1*ne0 + i2*ne1*ne0    + i1*ne0   + i0;
-                        const int64_t j =                  i02*ne01*ne00 + i01*ne00 + i00;
+                        സ്ഥിരം int64_t i = i3*ne2*ne1*ne0 + i2*ne1*ne0    + i1*ne0   + i0;
+                        സ്ഥിരം int64_t j =                  i02*ne01*ne00 + i01*ne00 + i00;
 
-                        if (py*w + i2 >= ne02 || px*w + i1 >= ne01) {
-                            ((float *) dst->data)[i] = 0.0f;
-                        } else {
-                            ((float *) dst->data)[i] = ((float *) src0->data)[j];
+                        എങ്കിൽ (py*w + i2 >= ne02 || px*w + i1 >= ne01) {
+                            ((ദശാംശം *) dst->data)[i] = 0.0f;
+                        } അല്ലെങ്കിൽ {
+                            ((ദശാംശം *) dst->data)[i] = ((ദശാംശം *) src0->data)[j];
                         }
                     }
                 }
@@ -10372,18 +10372,18 @@ static void ggml_compute_forward_win_part_f32(
     }
 }
 
-void ggml_compute_forward_win_part(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_win_part(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_win_part_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -10392,59 +10392,59 @@ void ggml_compute_forward_win_part(
 
 // ggml_compute_forward_win_unpart
 
-static void ggml_compute_forward_win_unpart_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_win_unpart_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
     GGML_UNUSED(params);
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
     GGML_TENSOR_LOCALS(int64_t, ne0, src0, ne)
     GGML_TENSOR_LOCALS(int64_t, ne,  dst,  ne)
 
-    const int32_t w = ((const int32_t *)(dst->op_params))[0];
+    സ്ഥിരം int32_t w = ((സ്ഥിരം int32_t *)(dst->op_params))[0];
 
     // padding
-    const int px = (w - ne1%w)%w;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ px = (w - ne1%w)%w;
     //const int py = (w - ne2%w)%w;
 
-    const int npx = (px + ne1)/w;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ npx = (px + ne1)/w;
     //const int npy = (py + ne2)/w;
 
-    assert(ne0 == ne00);
+    പ്രതിജ്ഞാ(ne0 == ne00);
 
     // TODO: optimize / multi-thread
-    for (int64_t i2 = 0; i2 < ne2; ++i2) {
-        for (int64_t i1 = 0; i1 < ne1; ++i1) {
-            for (int64_t i0 = 0; i0 < ne0; ++i0) {
-                const int ip2 = i2/w;
-                const int ip1 = i1/w;
+    വേണ്ടി (int64_t i2 = 0; i2 < ne2; ++i2) {
+        വേണ്ടി (int64_t i1 = 0; i1 < ne1; ++i1) {
+            വേണ്ടി (int64_t i0 = 0; i0 < ne0; ++i0) {
+                സ്ഥിരം പൂർണ്ണസംഖ്യ ip2 = i2/w;
+                സ്ഥിരം പൂർണ്ണസംഖ്യ ip1 = i1/w;
 
-                const int64_t i02 = i2%w;
-                const int64_t i01 = i1%w;
-                const int64_t i00 = i0;
+                സ്ഥിരം int64_t i02 = i2%w;
+                സ്ഥിരം int64_t i01 = i1%w;
+                സ്ഥിരം int64_t i00 = i0;
 
-                const int64_t i = (ip2*npx + ip1)*ne02*ne01*ne00 + i02*ne01*ne00 + i01*ne00 + i00;
-                const int64_t j =                                  i2*ne1*ne0    + i1*ne0   + i0;
+                സ്ഥിരം int64_t i = (ip2*npx + ip1)*ne02*ne01*ne00 + i02*ne01*ne00 + i01*ne00 + i00;
+                സ്ഥിരം int64_t j =                                  i2*ne1*ne0    + i1*ne0   + i0;
 
-                ((float *) dst->data)[j] = ((float *) src0->data)[i];
+                ((ദശാംശം *) dst->data)[j] = ((ദശാംശം *) src0->data)[i];
             }
         }
     }
 }
 
-void ggml_compute_forward_win_unpart(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_win_unpart(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_win_unpart_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -10453,102 +10453,102 @@ void ggml_compute_forward_win_unpart(
 
 //ggml_compute_forward_unary
 
-void ggml_compute_forward_unary(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_unary(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_unary_op op = ggml_get_unary_op(dst);
+    സ്ഥിരം ggml_unary_op op = ggml_get_unary_op(dst);
 
-    switch (op) {
-        case GGML_UNARY_OP_ABS:
+    തിരഞ്ഞെടുപ്പ് (op) {
+        അവസ്ഥ GGML_UNARY_OP_ABS:
             {
                 ggml_compute_forward_abs(params, dst);
-            } break;
-        case GGML_UNARY_OP_SGN:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_UNARY_OP_SGN:
             {
                 ggml_compute_forward_sgn(params, dst);
-            } break;
-        case GGML_UNARY_OP_NEG:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_UNARY_OP_NEG:
             {
                 ggml_compute_forward_neg(params, dst);
-            } break;
-        case GGML_UNARY_OP_STEP:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_UNARY_OP_STEP:
             {
                 ggml_compute_forward_step(params, dst);
-            } break;
-        case GGML_UNARY_OP_TANH:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_UNARY_OP_TANH:
             {
                 ggml_compute_forward_tanh(params, dst);
-            } break;
-        case GGML_UNARY_OP_ELU:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_UNARY_OP_ELU:
             {
                 ggml_compute_forward_elu(params, dst);
-            } break;
-        case GGML_UNARY_OP_RELU:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_UNARY_OP_RELU:
             {
                 ggml_compute_forward_relu(params, dst);
-            } break;
-        case GGML_UNARY_OP_SIGMOID:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_UNARY_OP_SIGMOID:
             {
                 ggml_compute_forward_sigmoid(params, dst);
-            } break;
-        case GGML_UNARY_OP_GELU:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_UNARY_OP_GELU:
             {
                 ggml_compute_forward_gelu(params, dst);
-            } break;
-        case GGML_UNARY_OP_GELU_ERF:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_UNARY_OP_GELU_ERF:
             {
                 ggml_compute_forward_gelu_erf(params, dst);
-            } break;
-        case GGML_UNARY_OP_GELU_QUICK:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_UNARY_OP_GELU_QUICK:
             {
                 ggml_compute_forward_gelu_quick(params, dst);
-            } break;
-        case GGML_UNARY_OP_SILU:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_UNARY_OP_SILU:
             {
                 ggml_compute_forward_silu(params, dst);
-            } break;
-        case GGML_UNARY_OP_HARDSWISH:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_UNARY_OP_HARDSWISH:
             {
                 ggml_compute_forward_hardswish(params, dst);
-            } break;
-        case GGML_UNARY_OP_HARDSIGMOID:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_UNARY_OP_HARDSIGMOID:
             {
                 ggml_compute_forward_hardsigmoid(params, dst);
-            } break;
-        case GGML_UNARY_OP_EXP:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_UNARY_OP_EXP:
             {
                 ggml_compute_forward_exp(params, dst);
-            } break;
-        case GGML_UNARY_OP_FLOOR:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_UNARY_OP_FLOOR:
             {
                 ggml_compute_forward_floor(params, dst);
-            } break;
-        case GGML_UNARY_OP_CEIL:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_UNARY_OP_CEIL:
             {
                 ggml_compute_forward_ceil(params, dst);
-            } break;
-        case GGML_UNARY_OP_ROUND:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_UNARY_OP_ROUND:
             {
                 ggml_compute_forward_round(params, dst);
-            } break;
-        case GGML_UNARY_OP_TRUNC:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_UNARY_OP_TRUNC:
             {
                 ggml_compute_forward_trunc(params, dst);
-            } break;
-        case GGML_UNARY_OP_XIELU:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_UNARY_OP_XIELU:
             {
                 ggml_compute_forward_xielu(params, dst);
-            } break;
-        case GGML_UNARY_OP_EXPM1:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_UNARY_OP_EXPM1:
             {
                 ggml_compute_forward_expm1(params, dst);
-            } break;
-        case GGML_UNARY_OP_SOFTPLUS:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_UNARY_OP_SOFTPLUS:
             {
                 ggml_compute_forward_softplus(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -10557,42 +10557,42 @@ void ggml_compute_forward_unary(
 
 //ggml_compute_forward_glu
 
-void ggml_compute_forward_glu(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_glu(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_glu_op op = ggml_get_glu_op(dst);
+    സ്ഥിരം ggml_glu_op op = ggml_get_glu_op(dst);
 
-    switch (op) {
-        case GGML_GLU_OP_REGLU:
+    തിരഞ്ഞെടുപ്പ് (op) {
+        അവസ്ഥ GGML_GLU_OP_REGLU:
             {
                 ggml_compute_forward_reglu(params, dst);
-            } break;
-        case GGML_GLU_OP_GEGLU:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_GLU_OP_GEGLU:
             {
                 ggml_compute_forward_geglu(params, dst);
-            } break;
-        case GGML_GLU_OP_SWIGLU:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_GLU_OP_SWIGLU:
             {
                 ggml_compute_forward_swiglu(params, dst);
-            } break;
-        case GGML_GLU_OP_SWIGLU_OAI:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_GLU_OP_SWIGLU_OAI:
             {
                 ggml_compute_forward_swiglu_oai(params, dst);
-            } break;
-        case GGML_GLU_OP_GEGLU_ERF:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_GLU_OP_GEGLU_ERF:
             {
                 ggml_compute_forward_geglu_erf(params, dst);
-            } break;
-        case GGML_GLU_OP_GEGLU_QUICK:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_GLU_OP_GEGLU_QUICK:
             {
                 ggml_compute_forward_geglu_quick(params, dst);
-            } break;
-        case GGML_GLU_OP_SWIGLU_CLAMP:
+            } നിർത്തുക;
+        അവസ്ഥ GGML_GLU_OP_SWIGLU_CLAMP:
             {
                 ggml_compute_forward_swiglu_clamp(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -10601,45 +10601,45 @@ void ggml_compute_forward_glu(
 
 // ggml_compute_forward_get_rel_pos
 
-static void ggml_compute_forward_get_rel_pos_f16(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_get_rel_pos_f16(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
     GGML_UNUSED(params);
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
     // ref: https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/modeling/image_encoder.py#L292-L322
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
-    const int64_t w = ne1;
+    സ്ഥിരം int64_t w = ne1;
 
     ggml_fp16_t * src0_data = (ggml_fp16_t *) src0->data;
     ggml_fp16_t * dst_data  = (ggml_fp16_t *) dst->data;
 
-    for (int64_t i2 = 0; i2 < ne2; ++i2) {
-        for (int64_t i1 = 0; i1 < ne1; ++i1) {
-            const int64_t pos = (w - i1 - 1) + i2;
-            for (int64_t i0 = 0; i0 < ne0; ++i0) {
+    വേണ്ടി (int64_t i2 = 0; i2 < ne2; ++i2) {
+        വേണ്ടി (int64_t i1 = 0; i1 < ne1; ++i1) {
+            സ്ഥിരം int64_t pos = (w - i1 - 1) + i2;
+            വേണ്ടി (int64_t i0 = 0; i0 < ne0; ++i0) {
                 dst_data[i2*ne1*ne0 + i1*ne0 + i0] = src0_data[pos*ne00 + i0];
             }
         }
     }
 }
 
-void ggml_compute_forward_get_rel_pos(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_get_rel_pos(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F16:
-        case GGML_TYPE_BF16:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F16:
+        അവസ്ഥ GGML_TYPE_BF16:
             {
                 ggml_compute_forward_get_rel_pos_f16(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -10648,58 +10648,58 @@ void ggml_compute_forward_get_rel_pos(
 
 // ggml_compute_forward_add_rel_pos
 
-static void ggml_compute_forward_add_rel_pos_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_add_rel_pos_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
-    const ggml_tensor * src2 = dst->src[2];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src2 = dst->src[2];
 
-    const bool inplace = (bool) ((int32_t *) dst->op_params)[0];
-    if (!inplace) {
-        if (params->ith == 0) {
-            memcpy((char *) dst->data, (char *) src0->data, ggml_nbytes(dst));
+    സ്ഥിരം തർക്കം inplace = (തർക്കം) ((int32_t *) dst->op_params)[0];
+    എങ്കിൽ (!inplace) {
+        എങ്കിൽ (params->ith == 0) {
+            memcpy((അക്ഷരം *) dst->data, (അക്ഷരം *) src0->data, ggml_nbytes(dst));
         }
         ggml_barrier(params->threadpool);
     }
     // ref: https://github.com/facebookresearch/segment-anything/blob/main/segment_anything/modeling/image_encoder.py#L357-L359
 
-    float * src1_data = (float *) src1->data;
-    float * src2_data = (float *) src2->data;
-    float * dst_data  = (float *) dst->data;
+    ദശാംശം * src1_data = (ദശാംശം *) src1->data;
+    ദശാംശം * src2_data = (ദശാംശം *) src2->data;
+    ദശാംശം * dst_data  = (ദശാംശം *) dst->data;
 
-    const int64_t ne10 = src1->ne[0];
-    const int64_t ne11 = src1->ne[1];
-    const int64_t ne12 = src1->ne[2];
-    const int64_t ne13 = src1->ne[3];
+    സ്ഥിരം int64_t ne10 = src1->ne[0];
+    സ്ഥിരം int64_t ne11 = src1->ne[1];
+    സ്ഥിരം int64_t ne12 = src1->ne[2];
+    സ്ഥിരം int64_t ne13 = src1->ne[3];
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
     // total patches in dst
-    const int np = ne13;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ np = ne13;
 
     // patches per thread
-    const int dp = (np + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dp = (np + nth - 1)/nth;
 
     // patch range for this thread
-    const int ip0 = dp*ith;
-    const int ip1 = MIN(ip0 + dp, np);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ip0 = dp*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ip1 = MIN(ip0 + dp, np);
 
-    for (int64_t i13 = ip0; i13 < ip1; ++i13) {
-        for (int64_t i12 = 0; i12 < ne12; ++i12) {
-            for (int64_t i11 = 0; i11 < ne11; ++i11) {
-                const int64_t jp1 = i13*ne12*ne11*ne10 + i12*ne11*ne10 + i11*ne10;
-                for (int64_t i10 = 0; i10 < ne10; ++i10) {
-                    const int64_t jp0  = jp1 + i10;
-                    const float src1_e = src1_data[jp0];
-                    const float src2_e = src2_data[jp0];
+    വേണ്ടി (int64_t i13 = ip0; i13 < ip1; ++i13) {
+        വേണ്ടി (int64_t i12 = 0; i12 < ne12; ++i12) {
+            വേണ്ടി (int64_t i11 = 0; i11 < ne11; ++i11) {
+                സ്ഥിരം int64_t jp1 = i13*ne12*ne11*ne10 + i12*ne11*ne10 + i11*ne10;
+                വേണ്ടി (int64_t i10 = 0; i10 < ne10; ++i10) {
+                    സ്ഥിരം int64_t jp0  = jp1 + i10;
+                    സ്ഥിരം ദശാംശം src1_e = src1_data[jp0];
+                    സ്ഥിരം ദശാംശം src2_e = src2_data[jp0];
 
-                    const int64_t jdh = jp0 * ne10;
-                    const int64_t jdw = jdh - (ne10 - 1) * i10;
+                    സ്ഥിരം int64_t jdh = jp0 * ne10;
+                    സ്ഥിരം int64_t jdw = jdh - (ne10 - 1) * i10;
 
-                    for (int64_t j = 0; j < ne10; ++j) {
+                    വേണ്ടി (int64_t j = 0; j < ne10; ++j) {
                         dst_data[jdh + j     ] += src2_e;
                         dst_data[jdw + j*ne10] += src1_e;
                     }
@@ -10709,18 +10709,18 @@ static void ggml_compute_forward_add_rel_pos_f32(
     }
 }
 
-void ggml_compute_forward_add_rel_pos(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_add_rel_pos(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_add_rel_pos_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -10729,30 +10729,30 @@ void ggml_compute_forward_add_rel_pos(
 
 // ggml_compute_forward_rwkv_wkv6
 
-static void ggml_compute_forward_rwkv_wkv6_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_rwkv_wkv6_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
-    const int64_t T = dst->src[1]->ne[2];
-    const int64_t C = dst->ne[0];
-    const int64_t HEADS = dst->src[1]->ne[1];
-    const int64_t n_seqs = dst->src[5]->ne[1];
-    const int64_t head_size = C / HEADS;
+    സ്ഥിരം int64_t T = dst->src[1]->ne[2];
+    സ്ഥിരം int64_t C = dst->ne[0];
+    സ്ഥിരം int64_t HEADS = dst->src[1]->ne[1];
+    സ്ഥിരം int64_t n_seqs = dst->src[5]->ne[1];
+    സ്ഥിരം int64_t head_size = C / HEADS;
 
-    float * dst_data = (float *) dst->data;
-    float * state = ((float *) dst->data) + C * T;
+    ദശാംശം * dst_data = (ദശാംശം *) dst->data;
+    ദശാംശം * state = ((ദശാംശം *) dst->data) + C * T;
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int h_start =  (HEADS * (ith    )) / nth;
-    const int h_end   = ((HEADS * (ith + 1)) / nth < HEADS) ?
+    സ്ഥിരം പൂർണ്ണസംഖ്യ h_start =  (HEADS * (ith    )) / nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ h_end   = ((HEADS * (ith + 1)) / nth < HEADS) ?
                          (HEADS * (ith + 1)) / nth : HEADS;
 
-    float * k =          (float *) dst->src[0]->data;
-    float * v =          (float *) dst->src[1]->data;
-    float * r =          (float *) dst->src[2]->data;
-    float * time_faaaa = (float *) dst->src[3]->data;
-    float * time_decay = (float *) dst->src[4]->data;
+    ദശാംശം * k =          (ദശാംശം *) dst->src[0]->data;
+    ദശാംശം * v =          (ദശാംശം *) dst->src[1]->data;
+    ദശാംശം * r =          (ദശാംശം *) dst->src[2]->data;
+    ദശാംശം * time_faaaa = (ദശാംശം *) dst->src[3]->data;
+    ദശാംശം * time_decay = (ദശാംശം *) dst->src[4]->data;
 
     size_t t_stride = HEADS * head_size; // Same to C
 
@@ -10760,13 +10760,13 @@ static void ggml_compute_forward_rwkv_wkv6_f32(
     GGML_ASSERT(C % HEADS == 0); // C must be divisible by HEADS
     size_t h_stride_2d = head_size * head_size;
 
-    if (ith == 0) {
-        memset(dst_data, 0, T * C * sizeof(float));
+    എങ്കിൽ (ith == 0) {
+        memset(dst_data, 0, T * C * വലുപ്പം(ദശാംശം));
     }
     ggml_barrier(params->threadpool);
 
 
-    #if defined(__AVX__) && !defined(__AVX512F__)
+    #എങ്കിൽ defined(__AVX__) && !defined(__AVX512F__)
         #define GGML_F32X GGML_F32x8
         #define GGML_F32X_SET1 GGML_F32x8_SET1
         #define GGML_F32X_LOAD GGML_F32x8_LOAD
@@ -10774,7 +10774,7 @@ static void ggml_compute_forward_rwkv_wkv6_f32(
         #define GGML_F32X_MUL GGML_F32x8_MUL
         #define GGML_F32X_FMA GGML_F32x8_FMA
         #define WKV_VECTOR_SIZE 8
-    #elif defined(__AVX512F__)
+    #അല്ലെങ്കിലെങ്കിൽ defined(__AVX512F__)
         #define GGML_F32X GGML_F32x16
         #define GGML_F32X_SET1 GGML_F32x16_SET1
         #define GGML_F32X_LOAD GGML_F32x16_LOAD
@@ -10782,7 +10782,7 @@ static void ggml_compute_forward_rwkv_wkv6_f32(
         #define GGML_F32X_MUL GGML_F32x16_MUL
         #define GGML_F32X_FMA GGML_F32x16_FMA
         #define WKV_VECTOR_SIZE 16
-    #elif defined(__ARM_FEATURE_SVE) && defined(__aarch64__)
+    #അല്ലെങ്കിലെങ്കിൽ defined(__ARM_FEATURE_SVE) && defined(__aarch64__)
         #define GGML_F32X GGML_F32xt
         #define GGML_F32X_SET1 GGML_F32xt_SET1
         #define GGML_F32X_LOAD GGML_F32xt_LOAD
@@ -10790,7 +10790,7 @@ static void ggml_compute_forward_rwkv_wkv6_f32(
         #define GGML_F32X_MUL GGML_F32xt_MUL
         #define GGML_F32X_FMA GGML_F32xt_FMA
         #define WKV_VECTOR_SIZE 8
-    #elif defined(__ARM_NEON) && defined(__aarch64__)
+    #അല്ലെങ്കിലെങ്കിൽ defined(__ARM_NEON) && defined(__aarch64__)
         #define GGML_F32X GGML_F32x4
         #define GGML_F32X_SET1 GGML_F32x4_SET1
         #define GGML_F32X_LOAD GGML_F32x4_LOAD
@@ -10801,34 +10801,34 @@ static void ggml_compute_forward_rwkv_wkv6_f32(
     #endif
 
     #ifdef WKV_VECTOR_SIZE
-        int wkv_vector_size;
-        #if defined(__ARM_FEATURE_SVE)
+        പൂർണ്ണസംഖ്യ wkv_vector_size;
+        #എങ്കിൽ defined(__ARM_FEATURE_SVE)
             wkv_vector_size = svcntw();
-        #else
+        #അല്ലെങ്കിൽ
             wkv_vector_size = WKV_VECTOR_SIZE;
         #endif
-        const int64_t vec_count = head_size / wkv_vector_size;
+        സ്ഥിരം int64_t vec_എണ്ണം = head_size / wkv_vector_size;
 
-        for (int64_t t = 0; t < T; t++) {
+        വേണ്ടി (int64_t t = 0; t < T; t++) {
             size_t t_offset = t * t_stride;
             size_t state_offset = head_size * C * (t / (T / n_seqs));
-            float * state_cur = state + state_offset;
-            float * state_prev = t % (T / n_seqs) ? state_cur : (float*)dst->src[5]->data + state_offset;
+            ദശാംശം * state_cur = state + state_offset;
+            ദശാംശം * state_prev = t % (T / n_seqs) ? state_cur : (ദശാംശം*)dst->src[5]->data + state_offset;
 
-            for (int64_t h = h_start; h < h_end; h++) {
+            വേണ്ടി (int64_t h = h_start; h < h_end; h++) {
                 size_t h_offset = h * h_stride;
                 size_t t_h_offset = t_offset + h_offset;
                 size_t h_2d_offset = h * h_stride_2d;
 
-                for (int64_t i = 0; i < head_size; i++) {
+                വേണ്ടി (int64_t i = 0; i < head_size; i++) {
                     size_t t_h_i_offset = t_h_offset + i;
                     size_t h_i_offset = h_offset + i;
                     size_t h_2d_i_offset = h_2d_offset + i * h_stride;
 
-                    float k_val = k[t_h_i_offset];
-                    float r_val = r[t_h_i_offset];
-                    float time_faaaa_val = time_faaaa[h_i_offset];
-                    float time_decay_val = time_decay[t_h_i_offset];
+                    ദശാംശം k_val = k[t_h_i_offset];
+                    ദശാംശം r_val = r[t_h_i_offset];
+                    ദശാംശം time_faaaa_val = time_faaaa[h_i_offset];
+                    ദശാംശം time_decay_val = time_decay[t_h_i_offset];
 
                     // Broadcast scalar values to vectors
                     GGML_F32X k_vec = GGML_F32X_SET1(k_val);
@@ -10836,7 +10836,7 @@ static void ggml_compute_forward_rwkv_wkv6_f32(
                     GGML_F32X time_faaaa_vec = GGML_F32X_SET1(time_faaaa_val);
                     GGML_F32X time_decay_vec = GGML_F32X_SET1(time_decay_val);
 
-                    for (int64_t j = 0; j < vec_count; j++) {
+                    വേണ്ടി (int64_t j = 0; j < vec_എണ്ണം; j++) {
                         size_t base_j = j * wkv_vector_size;
                         size_t t_h_j_offset = t_h_offset + base_j;
                         size_t h_2d_i_j_offset = h_2d_i_offset + base_j;
@@ -10862,13 +10862,13 @@ static void ggml_compute_forward_rwkv_wkv6_f32(
                     }
 
                     // Handle remaining elements, this will not be used.
-                    for (int64_t j = vec_count * wkv_vector_size; j < head_size; j++) {
+                    വേണ്ടി (int64_t j = vec_എണ്ണം * wkv_vector_size; j < head_size; j++) {
                         size_t t_h_j_offset = t_h_offset + j;
                         size_t h_2d_i_j_offset = h_2d_i_offset + j;
-                        float v_val = v[t_h_j_offset];
-                        float kv_val = v_val * k_val;
-                        float prev_state_val = state_prev[h_2d_i_j_offset];
-                        float temp_val = kv_val * time_faaaa_val + prev_state_val;
+                        ദശാംശം v_val = v[t_h_j_offset];
+                        ദശാംശം kv_val = v_val * k_val;
+                        ദശാംശം prev_state_val = state_prev[h_2d_i_j_offset];
+                        ദശാംശം temp_val = kv_val * time_faaaa_val + prev_state_val;
                         dst_data[t_h_j_offset] += temp_val * r_val;
                         state_cur[h_2d_i_j_offset] = prev_state_val * time_decay_val + kv_val;
                     }
@@ -10876,41 +10876,41 @@ static void ggml_compute_forward_rwkv_wkv6_f32(
             }
         }
 
-    #else
+    #അല്ലെങ്കിൽ
         // basically fused operations:
         // dst = r @ (time_faaaa * (k @ v) + state),
         // state = time_decay * state + (k @ v),
         // recursive through each token
-        for (int64_t t = 0; t < T; t++) {
+        വേണ്ടി (int64_t t = 0; t < T; t++) {
             size_t t_offset = t * t_stride;
             size_t state_offset = head_size * C * (t / (T / n_seqs));
-            float * state_cur = state + state_offset;
-            float * state_prev = t % (T / n_seqs) ? state_cur : (float*)dst->src[5]->data + state_offset;
+            ദശാംശം * state_cur = state + state_offset;
+            ദശാംശം * state_prev = t % (T / n_seqs) ? state_cur : (ദശാംശം*)dst->src[5]->data + state_offset;
 
-            for (int64_t h = h_start; h < h_end; h++) {
+            വേണ്ടി (int64_t h = h_start; h < h_end; h++) {
                 size_t h_offset = h * h_stride;
                 size_t t_h_offset = t_offset + h_offset;
                 size_t h_2d_offset = h * h_stride_2d;
 
-                for (int64_t i = 0; i < head_size; i++) {
+                വേണ്ടി (int64_t i = 0; i < head_size; i++) {
                     size_t t_h_i_offset = t_h_offset + i;
                     size_t h_i_offset = h_offset + i;
                     size_t h_2d_i_offset = h_2d_offset + i * h_stride;
 
-                    float k_val = k[t_h_i_offset];
-                    float r_val = r[t_h_i_offset];
-                    float time_faaaa_val = time_faaaa[h_i_offset];
+                    ദശാംശം k_val = k[t_h_i_offset];
+                    ദശാംശം r_val = r[t_h_i_offset];
+                    ദശാംശം time_faaaa_val = time_faaaa[h_i_offset];
                     // RWKV v6: different time_decay for each token.
-                    float time_decay_val = time_decay[t_h_i_offset];
+                    ദശാംശം time_decay_val = time_decay[t_h_i_offset];
 
-                    for (int64_t j = 0; j < head_size; j++) {
+                    വേണ്ടി (int64_t j = 0; j < head_size; j++) {
                         size_t t_h_j_offset = t_h_offset + j;
                         size_t h_2d_i_j_offset = h_2d_i_offset + j;
 
-                        float v_val = v[t_h_j_offset];
-                        float kv_val = v_val * k_val;
-                        float prev_state_val = state_prev[h_2d_i_j_offset];
-                        float temp_val = kv_val * time_faaaa_val + prev_state_val;
+                        ദശാംശം v_val = v[t_h_j_offset];
+                        ദശാംശം kv_val = v_val * k_val;
+                        ദശാംശം prev_state_val = state_prev[h_2d_i_j_offset];
+                        ദശാംശം temp_val = kv_val * time_faaaa_val + prev_state_val;
                         dst_data[t_h_j_offset] += temp_val * r_val;
                         state_cur[h_2d_i_j_offset] = prev_state_val * time_decay_val + kv_val;
                     }
@@ -10921,18 +10921,18 @@ static void ggml_compute_forward_rwkv_wkv6_f32(
 }
 
 
-void ggml_compute_forward_rwkv_wkv6(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_rwkv_wkv6(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_rwkv_wkv6_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -10941,30 +10941,30 @@ void ggml_compute_forward_rwkv_wkv6(
 
 // ggml_compute_forward_gla
 
-static void ggml_compute_forward_gla_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_gla_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
-    const int64_t T = dst->src[1]->ne[2];
-    const int64_t C = dst->ne[0];
-    const int64_t HEADS = dst->src[1]->ne[1];
-    const int64_t n_seqs = dst->src[4]->ne[1];
-    const int64_t head_size = C / HEADS;
-    const float scale = ggml_get_op_params_f32(dst, 0);
+    സ്ഥിരം int64_t T = dst->src[1]->ne[2];
+    സ്ഥിരം int64_t C = dst->ne[0];
+    സ്ഥിരം int64_t HEADS = dst->src[1]->ne[1];
+    സ്ഥിരം int64_t n_seqs = dst->src[4]->ne[1];
+    സ്ഥിരം int64_t head_size = C / HEADS;
+    സ്ഥിരം ദശാംശം scale = ggml_get_op_params_f32(dst, 0);
 
-    float * dst_data = (float *) dst->data;
-    float * state = ((float *) dst->data) + C * T;
+    ദശാംശം * dst_data = (ദശാംശം *) dst->data;
+    ദശാംശം * state = ((ദശാംശം *) dst->data) + C * T;
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int h_start =  (HEADS * (ith    )) / nth;
-    const int h_end   = ((HEADS * (ith + 1)) / nth < HEADS) ?
+    സ്ഥിരം പൂർണ്ണസംഖ്യ h_start =  (HEADS * (ith    )) / nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ h_end   = ((HEADS * (ith + 1)) / nth < HEADS) ?
                          (HEADS * (ith + 1)) / nth : HEADS;
 
-    float * k = (float *) dst->src[0]->data;
-    float * v = (float *) dst->src[1]->data;
-    float * q = (float *) dst->src[2]->data;
-    float * g = (float *) dst->src[3]->data;
+    ദശാംശം * k = (ദശാംശം *) dst->src[0]->data;
+    ദശാംശം * v = (ദശാംശം *) dst->src[1]->data;
+    ദശാംശം * q = (ദശാംശം *) dst->src[2]->data;
+    ദശാംശം * g = (ദശാംശം *) dst->src[3]->data;
 
     size_t t_stride = HEADS * head_size; // Same to C
 
@@ -10972,13 +10972,13 @@ static void ggml_compute_forward_gla_f32(
     GGML_ASSERT(C % HEADS == 0); // C must be divisible by HEADS
     size_t h_stride_2d = head_size * head_size;
 
-    if (ith == 0) {
-        memset(dst_data, 0, T * C * sizeof(float));
+    എങ്കിൽ (ith == 0) {
+        memset(dst_data, 0, T * C * വലുപ്പം(ദശാംശം));
     }
     ggml_barrier(params->threadpool);
 
 
-    #if defined(__AVX__) && !defined(__AVX512F__)
+    #എങ്കിൽ defined(__AVX__) && !defined(__AVX512F__)
         #define GGML_F32X GGML_F32x8
         #define GGML_F32X_SET1 GGML_F32x8_SET1
         #define GGML_F32X_LOAD GGML_F32x8_LOAD
@@ -10986,7 +10986,7 @@ static void ggml_compute_forward_gla_f32(
         #define GGML_F32X_MUL GGML_F32x8_MUL
         #define GGML_F32X_FMA GGML_F32x8_FMA
         #define GLA_VECTOR_SIZE 8
-    #elif defined(__AVX512F__)
+    #അല്ലെങ്കിലെങ്കിൽ defined(__AVX512F__)
         #define GGML_F32X GGML_F32x16
         #define GGML_F32X_SET1 GGML_F32x16_SET1
         #define GGML_F32X_LOAD GGML_F32x16_LOAD
@@ -10994,7 +10994,7 @@ static void ggml_compute_forward_gla_f32(
         #define GGML_F32X_MUL GGML_F32x16_MUL
         #define GGML_F32X_FMA GGML_F32x16_FMA
         #define GLA_VECTOR_SIZE 16
-    #elif defined(__ARM_FEATURE_SVE) && defined(__aarch64__)
+    #അല്ലെങ്കിലെങ്കിൽ defined(__ARM_FEATURE_SVE) && defined(__aarch64__)
         #define GGML_F32X GGML_F32xt
         #define GGML_F32X_SET1 GGML_F32xt_SET1
         #define GGML_F32X_LOAD GGML_F32xt_LOAD
@@ -11002,7 +11002,7 @@ static void ggml_compute_forward_gla_f32(
         #define GGML_F32X_MUL GGML_F32xt_MUL
         #define GGML_F32X_FMA GGML_F32xt_FMA
         #define GLA_VECTOR_SIZE 8
-    #elif defined(__ARM_NEON) && defined(__aarch64__)
+    #അല്ലെങ്കിലെങ്കിൽ defined(__ARM_NEON) && defined(__aarch64__)
         #define GGML_F32X GGML_F32x4
         #define GGML_F32X_SET1 GGML_F32x4_SET1
         #define GGML_F32X_LOAD GGML_F32x4_LOAD
@@ -11013,39 +11013,39 @@ static void ggml_compute_forward_gla_f32(
     #endif
 
     #ifdef GLA_VECTOR_SIZE
-        int gla_vector_size;
-        #if defined(__ARM_FEATURE_SVE)
+        പൂർണ്ണസംഖ്യ gla_vector_size;
+        #എങ്കിൽ defined(__ARM_FEATURE_SVE)
             gla_vector_size = svcntw();
-        #else
+        #അല്ലെങ്കിൽ
             gla_vector_size = GLA_VECTOR_SIZE;
         #endif
-        const int64_t vec_count = head_size / gla_vector_size;
+        സ്ഥിരം int64_t vec_എണ്ണം = head_size / gla_vector_size;
 
-        for (int64_t t = 0; t < T; t++) {
+        വേണ്ടി (int64_t t = 0; t < T; t++) {
             size_t t_offset = t * t_stride;
             size_t state_offset = head_size * C * (t / (T / n_seqs));
-            float * state_cur = state + state_offset;
-            float * state_prev = t % (T / n_seqs) ? state_cur : (float*)dst->src[4]->data + state_offset;
+            ദശാംശം * state_cur = state + state_offset;
+            ദശാംശം * state_prev = t % (T / n_seqs) ? state_cur : (ദശാംശം*)dst->src[4]->data + state_offset;
 
-            for (int64_t h = h_start; h < h_end; h++) {
+            വേണ്ടി (int64_t h = h_start; h < h_end; h++) {
                 size_t h_offset = h * h_stride;
                 size_t t_h_offset = t_offset + h_offset;
                 size_t h_2d_offset = h * h_stride_2d;
 
-                for (int64_t i = 0; i < head_size; i++) {
+                വേണ്ടി (int64_t i = 0; i < head_size; i++) {
                     size_t t_h_i_offset = t_h_offset + i;
                     size_t h_2d_i_offset = h_2d_offset + i * h_stride;
 
-                    float k_val = k[t_h_i_offset];
-                    float q_val = q[t_h_i_offset] * scale;
-                    float g_val = g[t_h_i_offset];
+                    ദശാംശം k_val = k[t_h_i_offset];
+                    ദശാംശം q_val = q[t_h_i_offset] * scale;
+                    ദശാംശം g_val = g[t_h_i_offset];
 
                     // Broadcast scalar values to vectors
                     GGML_F32X k_vec = GGML_F32X_SET1(k_val);
                     GGML_F32X q_vec = GGML_F32X_SET1(q_val);
                     GGML_F32X g_vec = GGML_F32X_SET1(g_val);
 
-                    for (int64_t j = 0; j < vec_count; j++) {
+                    വേണ്ടി (int64_t j = 0; j < vec_എണ്ണം; j++) {
                         size_t base_j = j * gla_vector_size;
                         size_t t_h_j_offset = t_h_offset + base_j;
                         size_t h_2d_i_j_offset = h_2d_i_offset + base_j;
@@ -11070,13 +11070,13 @@ static void ggml_compute_forward_gla_f32(
                     }
 
                     // Handle remaining elements, this will not be used.
-                    for (int64_t j = vec_count * gla_vector_size; j < head_size; j++) {
+                    വേണ്ടി (int64_t j = vec_എണ്ണം * gla_vector_size; j < head_size; j++) {
                         size_t t_h_j_offset = t_h_offset + j;
                         size_t h_2d_i_j_offset = h_2d_i_offset + j;
-                        float v_val = v[t_h_j_offset];
-                        float kv_val = v_val * k_val;
-                        float prev_state_val = state_prev[h_2d_i_j_offset];
-                        float temp_val = kv_val + prev_state_val * g_val;
+                        ദശാംശം v_val = v[t_h_j_offset];
+                        ദശാംശം kv_val = v_val * k_val;
+                        ദശാംശം prev_state_val = state_prev[h_2d_i_j_offset];
+                        ദശാംശം temp_val = kv_val + prev_state_val * g_val;
                         dst_data[t_h_j_offset] += temp_val * q_val;
                         state_cur[h_2d_i_j_offset] = temp_val;
                     }
@@ -11084,34 +11084,34 @@ static void ggml_compute_forward_gla_f32(
             }
         }
 
-    #else
-        for (int64_t t = 0; t < T; t++) {
+    #അല്ലെങ്കിൽ
+        വേണ്ടി (int64_t t = 0; t < T; t++) {
             size_t t_offset = t * t_stride;
             size_t state_offset = head_size * C * (t / (T / n_seqs));
-            float * state_cur = state + state_offset;
-            float * state_prev = t % (T / n_seqs) ? state_cur : (float*)dst->src[4]->data + state_offset;
+            ദശാംശം * state_cur = state + state_offset;
+            ദശാംശം * state_prev = t % (T / n_seqs) ? state_cur : (ദശാംശം*)dst->src[4]->data + state_offset;
 
-            for (int64_t h = h_start; h < h_end; h++) {
+            വേണ്ടി (int64_t h = h_start; h < h_end; h++) {
                 size_t h_offset = h * h_stride;
                 size_t t_h_offset = t_offset + h_offset;
                 size_t h_2d_offset = h * h_stride_2d;
 
-                for (int64_t i = 0; i < head_size; i++) {
+                വേണ്ടി (int64_t i = 0; i < head_size; i++) {
                     size_t t_h_i_offset = t_h_offset + i;
                     size_t h_2d_i_offset = h_2d_offset + i * h_stride;
 
-                    float k_val = k[t_h_i_offset];
-                    float q_val = q[t_h_i_offset] * scale;
-                    float g_val = g[t_h_i_offset];
+                    ദശാംശം k_val = k[t_h_i_offset];
+                    ദശാംശം q_val = q[t_h_i_offset] * scale;
+                    ദശാംശം g_val = g[t_h_i_offset];
 
-                    for (int64_t j = 0; j < head_size; j++) {
+                    വേണ്ടി (int64_t j = 0; j < head_size; j++) {
                         size_t t_h_j_offset = t_h_offset + j;
                         size_t h_2d_i_j_offset = h_2d_i_offset + j;
 
-                        float v_val = v[t_h_j_offset];
-                        float kv_val = v_val * k_val;
-                        float prev_state_val = state_prev[h_2d_i_j_offset];
-                        float temp_val = prev_state_val * g_val + kv_val;
+                        ദശാംശം v_val = v[t_h_j_offset];
+                        ദശാംശം kv_val = v_val * k_val;
+                        ദശാംശം prev_state_val = state_prev[h_2d_i_j_offset];
+                        ദശാംശം temp_val = prev_state_val * g_val + kv_val;
                         dst_data[t_h_j_offset] += temp_val * q_val;
                         state_cur[h_2d_i_j_offset] = temp_val;
                     }
@@ -11122,29 +11122,29 @@ static void ggml_compute_forward_gla_f32(
 }
 
 
-void ggml_compute_forward_gla(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_gla(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_gla_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
     }
 }
 
-static void ggml_compute_forward_solve_tri_f32(const struct ggml_compute_params * params, struct ggml_tensor * dst) {
-    const struct ggml_tensor * src0 = dst->src[0];  // A (lower triangular)
-    const struct ggml_tensor * src1 = dst->src[1];  // B (RHS)
+സ്ഥിതം ശൂന്യം ggml_compute_forward_solve_tri_f32(സ്ഥിരം ഘടന ggml_compute_params * params, ഘടന ggml_tensor * dst) {
+    സ്ഥിരം ഘടന ggml_tensor * src0 = dst->src[0];  // A (lower triangular)
+    സ്ഥിരം ഘടന ggml_tensor * src1 = dst->src[1];  // B (RHS)
 
-    GGML_TENSOR_BINARY_OP_LOCALS;
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS;
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
@@ -11157,62 +11157,62 @@ static void ggml_compute_forward_solve_tri_f32(const struct ggml_compute_params 
     GGML_ASSERT(ne02 == ne12 && ne12 == ne2);
     GGML_ASSERT(ne03 == ne13 && ne13 == ne3);
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int64_t k = ne10;   // number of RHS columns
-    const int64_t n = ne11;   // A is n×n
-    const int64_t nr = ne02 * ne03 * k; // we're parallelizing on columns here, so seq x token x column will be the unit
+    സ്ഥിരം int64_t k = ne10;   // number of RHS columns
+    സ്ഥിരം int64_t n = ne11;   // A is n×n
+    സ്ഥിരം int64_t nr = ne02 * ne03 * k; // we're parallelizing on columns here, so seq x token x column will be the unit
 
     // chunks per thread
-    const int64_t dr = (nr + nth - 1)/nth;
+    സ്ഥിരം int64_t dr = (nr + nth - 1)/nth;
 
     // chunk range for this thread
-    const int64_t ir0 = dr*ith;
-    const int64_t ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം int64_t ir0 = dr*ith;
+    സ്ഥിരം int64_t ir1 = MIN(ir0 + dr, nr);
 
-    const float * A = (const float *) src0->data;  // [n, n, B1, B2]
-    const float * B = (const float *) src1->data;  // [n, k, B1, B2]
-          float * X = (      float *) dst->data;   // [n, k, B1, B2]
+    സ്ഥിരം ദശാംശം * A = (സ്ഥിരം ദശാംശം *) src0->data;  // [n, n, B1, B2]
+    സ്ഥിരം ദശാംശം * B = (സ്ഥിരം ദശാംശം *) src1->data;  // [n, k, B1, B2]
+          ദശാംശം * X = (      ദശാംശം *) dst->data;   // [n, k, B1, B2]
 
-    for (int64_t ir = ir0; ir < ir1; ++ir) {
-        const int64_t i03 = ir/(ne02*k);
-        const int64_t i02 = (ir - i03*ne02*k)/k;
-        const int64_t i01 = (ir - i03*ne02*k - i02*k);
+    വേണ്ടി (int64_t ir = ir0; ir < ir1; ++ir) {
+        സ്ഥിരം int64_t i03 = ir/(ne02*k);
+        സ്ഥിരം int64_t i02 = (ir - i03*ne02*k)/k;
+        സ്ഥിരം int64_t i01 = (ir - i03*ne02*k - i02*k);
 
-        const float * A_batch = A + i02 * nb02 / sizeof(float) + i03 * nb03 / sizeof(float);
-        const float * B_batch = B + i02 * nb12 / sizeof(float) + i03 * nb13 / sizeof(float);
+        സ്ഥിരം ദശാംശം * A_batch = A + i02 * nb02 / വലുപ്പം(ദശാംശം) + i03 * nb03 / വലുപ്പം(ദശാംശം);
+        സ്ഥിരം ദശാംശം * B_batch = B + i02 * nb12 / വലുപ്പം(ദശാംശം) + i03 * nb13 / വലുപ്പം(ദശാംശം);
 
-        float * X_batch = X + i02 * nb2 / sizeof(float) + i03 * nb3 / sizeof(float);
+        ദശാംശം * X_batch = X + i02 * nb2 / വലുപ്പം(ദശാംശം) + i03 * nb3 / വലുപ്പം(ദശാംശം);
 
-        for (int64_t i00 = 0; i00 < n; ++i00) {
-            float sum = 0.0f;
-            for (int64_t t = 0; t < i00; ++t) {
+        വേണ്ടി (int64_t i00 = 0; i00 < n; ++i00) {
+            ദശാംശം sum = 0.0f;
+            വേണ്ടി (int64_t t = 0; t < i00; ++t) {
                 sum += A_batch[i00 * n + t] * X_batch[t * k + i01];
             }
 
-            const float diag = A_batch[i00 * n + i00];
-            assert(diag != 0.0f && "Zero diagonal in triangular matrix");
+            സ്ഥിരം ദശാംശം diag = A_batch[i00 * n + i00];
+            പ്രതിജ്ഞാ(diag != 0.0f && "Zero diagonal in triangular matrix");
 
             X_batch[i00 * k + i01] = (B_batch[i00 * k + i01] - sum) / diag;
         }
     }
 }
 
-void ggml_compute_forward_solve_tri(const struct ggml_compute_params * params, struct ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+ശൂന്യം ggml_compute_forward_solve_tri(സ്ഥിരം ഘടന ggml_compute_params * params, ഘടന ggml_tensor * dst) {
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
-    if (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_F32) {
+    എങ്കിൽ (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_F32) {
         ggml_compute_forward_solve_tri_f32(params, dst);
-    } else {
+    } അല്ലെങ്കിൽ {
         GGML_ABORT("fatal error");
     }
 }
 
 // ggml_compute_forward_gated_delta_net
-static void ggml_compute_forward_gated_delta_net_one_chunk(
-    const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_gated_delta_net_one_chunk(
+    സ്ഥിരം ggml_compute_params * params,
     ggml_tensor * dst,
     int64_t ir0,
     int64_t ir1) {
@@ -11224,10 +11224,10 @@ static void ggml_compute_forward_gated_delta_net_one_chunk(
     ggml_tensor * src_beta  = dst->src[4];
     ggml_tensor * src_state = dst->src[5];
 
-    const int64_t S_v      = src_v->ne[0];
-    const int64_t H        = src_v->ne[1];
-    const int64_t n_tokens = src_v->ne[2];
-    const int64_t n_seqs   = src_v->ne[3];
+    സ്ഥിരം int64_t S_v      = src_v->ne[0];
+    സ്ഥിരം int64_t H        = src_v->ne[1];
+    സ്ഥിരം int64_t n_tokens = src_v->ne[2];
+    സ്ഥിരം int64_t n_seqs   = src_v->ne[3];
 
     GGML_ASSERT(ggml_is_contiguous_rows(src_q));
     GGML_ASSERT(ggml_is_contiguous_rows(src_k));
@@ -11249,115 +11249,115 @@ static void ggml_compute_forward_gated_delta_net_one_chunk(
     GGML_TENSOR_LOCALS(size_t,  nbg, src_g, nb);
     GGML_TENSOR_LOCALS(size_t,  nbb, src_beta, nb);
 
-    const bool kda = (neg0 == S_v);
+    സ്ഥിരം തർക്കം kda = (neg0 == S_v);
 
     // K (snapshot slot count) is an op param; state holds s0 only [S_v, S_v, H, n_seqs].
-    const int64_t K = ggml_get_op_params_i32(dst, 0);
+    സ്ഥിരം int64_t K = ggml_get_op_params_i32(dst, 0);
     GGML_ASSERT(K >= 1);
     // per-seq stride in floats (seq s starts at state + s * seq_stride)
-    const int64_t state_seq_stride = src_state->nb[3] / sizeof(float);
+    സ്ഥിരം int64_t state_seq_stride = src_state->nb[3] / വലുപ്പം(ദശാംശം);
 
-    const int64_t per_thread = S_v + (K > 1 ? S_v * S_v : 0);
-    const int ith = params->ith;
+    സ്ഥിരം int64_t per_thread = S_v + (K > 1 ? S_v * S_v : 0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
 
-    float * delta       = (float *)params->wdata + ith * per_thread + CACHE_LINE_SIZE_F32;
-    float * state_work  = K > 1 ? (delta + S_v) : nullptr;
+    ദശാംശം * delta       = (ദശാംശം *)params->wdata + ith * per_thread + CACHE_വരി_SIZE_F32;
+    ദശാംശം * state_work  = K > 1 ? (delta + S_v) : nullptr;
 
     // output layout: [attn_scores | new_states]
     // attn_scores: S_v * H * n_tokens * n_seqs    floats
     // new_states:  S_v * S_v * H * n_seqs * K     floats  (K snapshot slots; last min(n_tokens, K))
-    const int64_t attn_score_elems    = S_v * H * n_tokens * n_seqs;
-    const int64_t state_size_per_snap = S_v * S_v * H * n_seqs;
-    float * attn_out_base  = (float *)dst->data;
-    float * state_out_base = (float *)dst->data + attn_score_elems;
+    സ്ഥിരം int64_t attn_score_elems    = S_v * H * n_tokens * n_seqs;
+    സ്ഥിരം int64_t state_size_per_snap = S_v * S_v * H * n_seqs;
+    ദശാംശം * attn_out_base  = (ദശാംശം *)dst->data;
+    ദശാംശം * state_out_base = (ദശാംശം *)dst->data + attn_score_elems;
 
     // snapshot slot mapping: slot 0 = most recent state, slot s = s tokens back.
     // When n_tokens < K only slots 0..n_tokens-1 are written; older slots are caller-owned.
 
-    const float * state_in_base = (const float *)src_state->data;
+    സ്ഥിരം ദശാംശം * state_in_base = (സ്ഥിരം ദശാംശം *)src_state->data;
 
   //const int64_t rq1 = nev1 / neq1;
   //const int64_t rk1 = nev1 / nek1;
-    const int64_t rq3 = nev3 / neq3;
-    const int64_t rk3 = nev3 / nek3;
+    സ്ഥിരം int64_t rq3 = nev3 / neq3;
+    സ്ഥിരം int64_t rk3 = nev3 / nek3;
 
-    const float scale = 1.0f / sqrtf((float) S_v);
+    സ്ഥിരം ദശാംശം scale = 1.0f / sqrtf((ദശാംശം) S_v);
 
-    for (int64_t ir = ir0; ir < ir1; ++ir) {
-        const int64_t iv1 = ir % H; // head_index
-        const int64_t iv3 = ir / H; // sequence
+    വേണ്ടി (int64_t ir = ir0; ir < ir1; ++ir) {
+        സ്ഥിരം int64_t iv1 = ir % H; // head_index
+        സ്ഥിരം int64_t iv3 = ir / H; // sequence
 
-        const int64_t iq1 = iv1 % neq1;
-        const int64_t ik1 = iv1 % nek1;
+        സ്ഥിരം int64_t iq1 = iv1 % neq1;
+        സ്ഥിരം int64_t ik1 = iv1 % nek1;
 
-        const int64_t iq3 = iv3 / rq3;
-        const int64_t ik3 = iv3 / rk3;
+        സ്ഥിരം int64_t iq3 = iv3 / rq3;
+        സ്ഥിരം int64_t ik3 = iv3 / rk3;
 
         // For K=1, write directly to the single output slot to avoid an extra memcpy at the end.
         // For K>1, work in scratch and copy out per-token when the slot is in range.
-        float * s_out = (K > 1)
+        ദശാംശം * s_out = (K > 1)
             ? state_work
             : state_out_base + (iv3 * H + iv1) * S_v * S_v;
 
         // copy input state into the working buffer and operate in-place
         // state layout [S_v, S_v, H, n_seqs]: seq iv3 starts at iv3 * state_seq_stride.
-        const float * s_in = state_in_base + iv3 * state_seq_stride + iv1 * S_v * S_v;
-        memcpy(s_out, s_in, S_v * S_v * sizeof(float));
+        സ്ഥിരം ദശാംശം * s_in = state_in_base + iv3 * state_seq_stride + iv1 * S_v * S_v;
+        memcpy(s_out, s_in, S_v * S_v * വലുപ്പം(ദശാംശം));
 
         // attn output pointer for first token of this (head, seq)
-        float * attn_data = attn_out_base + (iv3 * n_tokens * H + iv1) * S_v;
+        ദശാംശം * attn_data = attn_out_base + (iv3 * n_tokens * H + iv1) * S_v;
 
-        for (int64_t t = 0; t < n_tokens; t++) {
-            const float * q_d = (const float *)((const char *)src_q->data + iq3 * nbq3 + t * nbq2 + iq1 * nbq1);
-            const float * k_d = (const float *)((const char *)src_k->data + ik3 * nbk3 + t * nbk2 + ik1 * nbk1);
-            const float * v_d = (const float *)((const char *)src_v->data + iv3 * nbv3 + t * nbv2 + iv1 * nbv1);
+        വേണ്ടി (int64_t t = 0; t < n_tokens; t++) {
+            സ്ഥിരം ദശാംശം * q_d = (സ്ഥിരം ദശാംശം *)((സ്ഥിരം അക്ഷരം *)src_q->data + iq3 * nbq3 + t * nbq2 + iq1 * nbq1);
+            സ്ഥിരം ദശാംശം * k_d = (സ്ഥിരം ദശാംശം *)((സ്ഥിരം അക്ഷരം *)src_k->data + ik3 * nbk3 + t * nbk2 + ik1 * nbk1);
+            സ്ഥിരം ദശാംശം * v_d = (സ്ഥിരം ദശാംശം *)((സ്ഥിരം അക്ഷരം *)src_v->data + iv3 * nbv3 + t * nbv2 + iv1 * nbv1);
 
-            const float beta_val = *(const float *)((const char *)src_beta->data + iv3 * nbb3 + t * nbb2 + iv1 * nbb1);
-            const float * g_d    =  (const float *)((const char *)src_g->data    + iv3 * nbg3 + t * nbg2 + iv1 * nbg1);
+            സ്ഥിരം ദശാംശം beta_val = *(സ്ഥിരം ദശാംശം *)((സ്ഥിരം അക്ഷരം *)src_beta->data + iv3 * nbb3 + t * nbb2 + iv1 * nbb1);
+            സ്ഥിരം ദശാംശം * g_d    =  (സ്ഥിരം ദശാംശം *)((സ്ഥിരം അക്ഷരം *)src_g->data    + iv3 * nbg3 + t * nbg2 + iv1 * nbg1);
 
             // state is stored transposed: s_out[j*S_v + i] = S[i][j]
             // so row j of s_out = column j of S (contiguous access)
 
-            if (kda) {
+            എങ്കിൽ (kda) {
                 // precompute exp(g) into delta scratch (reused below)
-                for (int64_t i = 0; i < S_v; ++i) {
+                വേണ്ടി (int64_t i = 0; i < S_v; ++i) {
                     delta[i] = expf(g_d[i]);
                 }
                 // S[i][:] *= exp(g[i]) => for each row j of M: M[j][i] *= exp(g[i])
-                for (int64_t j = 0; j < S_v; ++j) {
+                വേണ്ടി (int64_t j = 0; j < S_v; ++j) {
                     ggml_vec_mul_f32(S_v, &s_out[j * S_v], &s_out[j * S_v], delta);
                 }
-            } else {
+            } അല്ലെങ്കിൽ {
                 ggml_vec_scale_f32(S_v * S_v, s_out, expf(g_d[0]));
             }
 
             // delta[j] = sum_i S[i][j] * k[i] = dot(row j of M, k)
-            for (int64_t j = 0; j < S_v; ++j) {
-                float sum = 0.0f;
+            വേണ്ടി (int64_t j = 0; j < S_v; ++j) {
+                ദശാംശം sum = 0.0f;
                 ggml_vec_dot_f32(S_v, &sum, 0, &s_out[j * S_v], 0, k_d, 0, 1);
                 delta[j] = (v_d[j] - sum) * beta_val;
             }
 
             // outer product: S[i][j] += k[i] * delta[j] => M[j][i] += delta[j] * k[i]
-            for (int64_t j = 0; j < S_v; ++j) {
+            വേണ്ടി (int64_t j = 0; j < S_v; ++j) {
                 ggml_vec_mad_f32(S_v, &s_out[j * S_v], k_d, delta[j]);
             }
 
             // attn_out[j] = sum_i S[i][j] * q[i] = dot(row j of M, q)
-            for (int64_t j = 0; j < S_v; ++j) {
-                float sum = 0.0f;
+            വേണ്ടി (int64_t j = 0; j < S_v; ++j) {
+                ദശാംശം sum = 0.0f;
                 ggml_vec_dot_f32(S_v, &sum, 0, &s_out[j * S_v], 0, q_d, 0, 1);
                 attn_data[j] = sum * scale;
             }
 
             attn_data += S_v * H; // advance to next token
 
-            if (K > 1) {
-                const int64_t target_slot = n_tokens - 1 - t;
-                if (target_slot >= 0 && target_slot < K) {
-                    float * curr_state_o = state_out_base + target_slot * state_size_per_snap +
+            എങ്കിൽ (K > 1) {
+                സ്ഥിരം int64_t target_slot = n_tokens - 1 - t;
+                എങ്കിൽ (target_slot >= 0 && target_slot < K) {
+                    ദശാംശം * curr_state_o = state_out_base + target_slot * state_size_per_snap +
                                      (iv3 * H + iv1) * S_v * S_v;
-                    memcpy(curr_state_o, s_out, S_v * S_v * sizeof(float));
+                    memcpy(curr_state_o, s_out, S_v * S_v * വലുപ്പം(ദശാംശം));
                 }
             }
         }
@@ -11365,58 +11365,58 @@ static void ggml_compute_forward_gated_delta_net_one_chunk(
 }
 
 
-static void ggml_compute_forward_gated_delta_net_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_gated_delta_net_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
     ggml_tensor * V = dst->src[2];
     int64_t nr = V->ne[1] * V->ne[3];
 
     // disable for NUMA
-    const bool disable_chunking = ggml_is_numa();
+    സ്ഥിരം തർക്കം disable_chunking = ggml_is_numa();
 
-    int nth = params->nth;
-    int ith = params->ith;
+    പൂർണ്ണസംഖ്യ nth = params->nth;
+    പൂർണ്ണസംഖ്യ ith = params->ith;
 
     // 4x chunks per thread
-    int nth_scaled = nth * 4;
+    പൂർണ്ണസംഖ്യ nth_scaled = nth * 4;
     int64_t chunk_size = (nr + nth_scaled - 1) / nth_scaled;
     int64_t nchunk     = (nr + chunk_size - 1) / chunk_size;
 
-    if (nth == 1 || nchunk < nth || disable_chunking) {
+    എങ്കിൽ (nth == 1 || nchunk < nth || disable_chunking) {
       nchunk = nth;
     }
 
-    if (ith == 0) {
+    എങ്കിൽ (ith == 0) {
       ggml_threadpool_chunk_set(params->threadpool, nth);
     }
 
     ggml_barrier(params->threadpool);
 
-    const int64_t dr = (nr + nchunk - 1) / nchunk;
+    സ്ഥിരം int64_t dr = (nr + nchunk - 1) / nchunk;
 
-    int current_chunk = ith;
+    പൂർണ്ണസംഖ്യ current_chunk = ith;
 
-    while (current_chunk < nchunk) {
-        const int64_t ir0 = dr * current_chunk;
-        const int64_t ir1 = MIN(ir0 + dr, nr);
+    ആകുമ്പോൾ (current_chunk < nchunk) {
+        സ്ഥിരം int64_t ir0 = dr * current_chunk;
+        സ്ഥിരം int64_t ir1 = MIN(ir0 + dr, nr);
 
         ggml_compute_forward_gated_delta_net_one_chunk(params, dst, ir0, ir1);
         current_chunk = ggml_threadpool_chunk_add(params->threadpool, 1);
     }
 }
 
-void ggml_compute_forward_gated_delta_net(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_gated_delta_net(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_gated_delta_net_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -11426,44 +11426,44 @@ void ggml_compute_forward_gated_delta_net(
 
 // ggml_compute_forward_dsv4_hc_comb
 
-static void ggml_dsv4_hc_comb_norm_cols(float * comb, float eps) {
+സ്ഥിതം ശൂന്യം ggml_dsv4_hc_comb_norm_cols(ദശാംശം * comb, ദശാംശം eps) {
     constexpr int64_t hc = 4;
 
-    for (int64_t idst = 0; idst < hc; ++idst) {
-        float sum = eps;
-        for (int64_t isrc = 0; isrc < hc; ++isrc) {
+    വേണ്ടി (int64_t idst = 0; idst < hc; ++idst) {
+        ദശാംശം sum = eps;
+        വേണ്ടി (int64_t isrc = 0; isrc < hc; ++isrc) {
             sum += comb[idst + hc*isrc];
         }
 
-        const float inv_sum = 1.0f / sum;
-        for (int64_t isrc = 0; isrc < hc; ++isrc) {
+        സ്ഥിരം ദശാംശം inv_sum = 1.0f / sum;
+        വേണ്ടി (int64_t isrc = 0; isrc < hc; ++isrc) {
             comb[idst + hc*isrc] *= inv_sum;
         }
     }
 }
 
-static void ggml_dsv4_hc_comb_norm_rows(float * comb, float eps) {
+സ്ഥിതം ശൂന്യം ggml_dsv4_hc_comb_norm_rows(ദശാംശം * comb, ദശാംശം eps) {
     constexpr int64_t hc = 4;
 
-    for (int64_t isrc = 0; isrc < hc; ++isrc) {
-        float sum = eps;
-        for (int64_t idst = 0; idst < hc; ++idst) {
+    വേണ്ടി (int64_t isrc = 0; isrc < hc; ++isrc) {
+        ദശാംശം sum = eps;
+        വേണ്ടി (int64_t idst = 0; idst < hc; ++idst) {
             sum += comb[idst + hc*isrc];
         }
 
-        const float inv_sum = 1.0f / sum;
-        for (int64_t idst = 0; idst < hc; ++idst) {
+        സ്ഥിരം ദശാംശം inv_sum = 1.0f / sum;
+        വേണ്ടി (int64_t idst = 0; idst < hc; ++idst) {
             comb[idst + hc*isrc] *= inv_sum;
         }
     }
 }
 
-static void ggml_compute_forward_dsv4_hc_comb_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_dsv4_hc_comb_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
-    const ggml_tensor * mixes = dst->src[0];
-    const ggml_tensor * scale = dst->src[1];
-    const ggml_tensor * base  = dst->src[2];
+    സ്ഥിരം ggml_tensor * mixes = dst->src[0];
+    സ്ഥിരം ggml_tensor * scale = dst->src[1];
+    സ്ഥിരം ggml_tensor * base  = dst->src[2];
 
     GGML_ASSERT(mixes->type == GGML_TYPE_F32);
     GGML_ASSERT(scale->type == GGML_TYPE_F32);
@@ -11474,7 +11474,7 @@ static void ggml_compute_forward_dsv4_hc_comb_f32(
     constexpr int64_t comb_offset = 2*hc;
     constexpr int64_t hc_mix_dim = (2 + hc)*hc;
 
-    const int64_t n_tokens = mixes->ne[1];
+    സ്ഥിരം int64_t n_tokens = mixes->ne[1];
 
     GGML_ASSERT(mixes->ne[0] == hc_mix_dim);
     GGML_ASSERT(dst->ne[0] == hc);
@@ -11488,74 +11488,74 @@ static void ggml_compute_forward_dsv4_hc_comb_f32(
     GGML_TENSOR_LOCALS(size_t, nbb, base,  nb);
     GGML_TENSOR_LOCALS(size_t, nbd, dst,   nb);
 
-    const float eps = ggml_get_op_params_f32(dst, 0);
-    const int32_t n_iter = ggml_get_op_params_i32(dst, 1);
+    സ്ഥിരം ദശാംശം eps = ggml_get_op_params_f32(dst, 0);
+    സ്ഥിരം int32_t n_iter = ggml_get_op_params_i32(dst, 1);
     GGML_ASSERT(n_iter > 0);
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int64_t dr  = (n_tokens + nth - 1) / nth;
-    const int64_t it0 = dr * ith;
-    const int64_t it1 = MIN(it0 + dr, n_tokens);
+    സ്ഥിരം int64_t dr  = (n_tokens + nth - 1) / nth;
+    സ്ഥിരം int64_t it0 = dr * ith;
+    സ്ഥിരം int64_t it1 = MIN(it0 + dr, n_tokens);
 
-    const float scale_comb = *(const float *) ((const char *) scale->data + 2*nbs0);
+    സ്ഥിരം ദശാംശം scale_comb = *(സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *) scale->data + 2*nbs0);
 
-    for (int64_t it = it0; it < it1; ++it) {
-        float comb[hc*hc];
+    വേണ്ടി (int64_t it = it0; it < it1; ++it) {
+        ദശാംശം comb[hc*hc];
 
-        for (int64_t isrc = 0; isrc < hc; ++isrc) {
-            float max = -INFINITY;
-            for (int64_t idst = 0; idst < hc; ++idst) {
-                const int64_t idx = idst + hc*isrc;
-                const float xv = *(const float *) ((const char *) mixes->data + (comb_offset + idx)*nbm0 + it*nbm1);
-                const float bv = *(const float *) ((const char *) base->data  + (comb_offset + idx)*nbb0);
-                const float v = xv * scale_comb + bv;
+        വേണ്ടി (int64_t isrc = 0; isrc < hc; ++isrc) {
+            ദശാംശം max = -INFINITY;
+            വേണ്ടി (int64_t idst = 0; idst < hc; ++idst) {
+                സ്ഥിരം int64_t idx = idst + hc*isrc;
+                സ്ഥിരം ദശാംശം xv = *(സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *) mixes->data + (comb_offset + idx)*nbm0 + it*nbm1);
+                സ്ഥിരം ദശാംശം bv = *(സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *) base->data  + (comb_offset + idx)*nbb0);
+                സ്ഥിരം ദശാംശം v = xv * scale_comb + bv;
                 comb[idx] = v;
                 max = MAX(max, v);
             }
 
-            float sum = 0.0f;
-            for (int64_t idst = 0; idst < hc; ++idst) {
-                const int64_t idx = idst + hc*isrc;
-                const float v = expf(comb[idx] - max);
+            ദശാംശം sum = 0.0f;
+            വേണ്ടി (int64_t idst = 0; idst < hc; ++idst) {
+                സ്ഥിരം int64_t idx = idst + hc*isrc;
+                സ്ഥിരം ദശാംശം v = expf(comb[idx] - max);
                 comb[idx] = v;
                 sum += v;
             }
 
-            const float inv_sum = 1.0f / sum;
-            for (int64_t idst = 0; idst < hc; ++idst) {
-                const int64_t idx = idst + hc*isrc;
+            സ്ഥിരം ദശാംശം inv_sum = 1.0f / sum;
+            വേണ്ടി (int64_t idst = 0; idst < hc; ++idst) {
+                സ്ഥിരം int64_t idx = idst + hc*isrc;
                 comb[idx] = comb[idx] * inv_sum + eps;
             }
         }
 
         ggml_dsv4_hc_comb_norm_cols(comb, eps);
-        for (int32_t i = 1; i < n_iter; ++i) {
+        വേണ്ടി (int32_t i = 1; i < n_iter; ++i) {
             ggml_dsv4_hc_comb_norm_rows(comb, eps);
             ggml_dsv4_hc_comb_norm_cols(comb, eps);
         }
 
-        for (int64_t isrc = 0; isrc < hc; ++isrc) {
-            for (int64_t idst = 0; idst < hc; ++idst) {
-                const int64_t idx = idst + hc*isrc;
-                *(float *) ((char *) dst->data + idst*nbd0 + isrc*nbd1 + it*nbd2) = comb[idx];
+        വേണ്ടി (int64_t isrc = 0; isrc < hc; ++isrc) {
+            വേണ്ടി (int64_t idst = 0; idst < hc; ++idst) {
+                സ്ഥിരം int64_t idx = idst + hc*isrc;
+                *(ദശാംശം *) ((അക്ഷരം *) dst->data + idst*nbd0 + isrc*nbd1 + it*nbd2) = comb[idx];
             }
         }
     }
 }
 
-void ggml_compute_forward_dsv4_hc_comb(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_dsv4_hc_comb(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_dsv4_hc_comb_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -11564,30 +11564,30 @@ void ggml_compute_forward_dsv4_hc_comb(
 
 // ggml_compute_forward_dsv4_hc_pre
 
-static void ggml_compute_forward_dsv4_hc_pre_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_dsv4_hc_pre_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
-    const ggml_tensor * x       = dst->src[0];
-    const ggml_tensor * weights = dst->src[1];
+    സ്ഥിരം ggml_tensor * x       = dst->src[0];
+    സ്ഥിരം ggml_tensor * weights = dst->src[1];
 
     GGML_ASSERT(x->type == GGML_TYPE_F32);
     GGML_ASSERT(weights->type == GGML_TYPE_F32);
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
 
-    const int64_t n_embd   = x->ne[0];
-    const int64_t hc       = x->ne[1];
-    const int64_t n_tokens = x->ne[2];
+    സ്ഥിരം int64_t n_embd   = x->ne[0];
+    സ്ഥിരം int64_t hc       = x->ne[1];
+    സ്ഥിരം int64_t n_tokens = x->ne[2];
 
-    const float scale = ggml_get_op_params_f32(dst, 0);
-    const bool  gated = ggml_get_op_params_i32(dst, 1) != 0;
+    സ്ഥിരം ദശാംശം scale = ggml_get_op_params_f32(dst, 0);
+    സ്ഥിരം തർക്കം  gated = ggml_get_op_params_i32(dst, 1) != 0;
 
     GGML_ASSERT(dst->ne[0] == n_embd);
     GGML_ASSERT(dst->ne[1] == n_tokens);
-    if (gated) {
+    എങ്കിൽ (gated) {
         GGML_ASSERT(weights->ne[0] == n_embd);
         GGML_ASSERT(weights->ne[1] == hc);
         GGML_ASSERT(weights->ne[2] == n_tokens);
-    } else {
+    } അല്ലെങ്കിൽ {
         GGML_ASSERT(weights->ne[0] == hc);
         GGML_ASSERT(weights->ne[1] == n_tokens);
     }
@@ -11596,46 +11596,46 @@ static void ggml_compute_forward_dsv4_hc_pre_f32(
     GGML_TENSOR_LOCALS(size_t, nbw, weights, nb);
     GGML_TENSOR_LOCALS(size_t, nbd, dst,     nb);
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int64_t nr  = n_embd * n_tokens;
-    const int64_t dr  = (nr + nth - 1) / nth;
-    const int64_t ir0 = dr * ith;
-    const int64_t ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം int64_t nr  = n_embd * n_tokens;
+    സ്ഥിരം int64_t dr  = (nr + nth - 1) / nth;
+    സ്ഥിരം int64_t ir0 = dr * ith;
+    സ്ഥിരം int64_t ir1 = MIN(ir0 + dr, nr);
 
-    for (int64_t ir = ir0; ir < ir1; ++ir) {
-        const int64_t i0 = ir % n_embd;
-        const int64_t it = ir / n_embd;
+    വേണ്ടി (int64_t ir = ir0; ir < ir1; ++ir) {
+        സ്ഥിരം int64_t i0 = ir % n_embd;
+        സ്ഥിരം int64_t it = ir / n_embd;
 
-        float sum = 0.0f;
-        for (int64_t ih = 0; ih < hc; ++ih) {
-            const float xv = *(const float *) ((const char *) x->data + i0*nbx0 + ih*nbx1 + it*nbx2);
-            float wv;
-            if (gated) {
-                const float gv = *(const float *) ((const char *) weights->data + i0*nbw0 + ih*nbw1 + it*nbw2);
+        ദശാംശം sum = 0.0f;
+        വേണ്ടി (int64_t ih = 0; ih < hc; ++ih) {
+            സ്ഥിരം ദശാംശം xv = *(സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *) x->data + i0*nbx0 + ih*nbx1 + it*nbx2);
+            ദശാംശം wv;
+            എങ്കിൽ (gated) {
+                സ്ഥിരം ദശാംശം gv = *(സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *) weights->data + i0*nbw0 + ih*nbw1 + it*nbw2);
                 wv = 1.0f / (1.0f + expf(-gv));
-            } else {
-                wv = *(const float *) ((const char *) weights->data + ih*nbw0 + it*nbw1);
+            } അല്ലെങ്കിൽ {
+                wv = *(സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *) weights->data + ih*nbw0 + it*nbw1);
             }
             sum += xv * wv;
         }
 
-        *(float *) ((char *) dst->data + i0*nbd0 + it*nbd1) = scale * sum;
+        *(ദശാംശം *) ((അക്ഷരം *) dst->data + i0*nbd0 + it*nbd1) = scale * sum;
     }
 }
 
-void ggml_compute_forward_dsv4_hc_pre(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_dsv4_hc_pre(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_dsv4_hc_pre_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -11644,22 +11644,22 @@ void ggml_compute_forward_dsv4_hc_pre(
 
 // ggml_compute_forward_dsv4_hc_post
 
-static void ggml_compute_forward_dsv4_hc_post_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_dsv4_hc_post_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
-    const ggml_tensor * x        = dst->src[0];
-    const ggml_tensor * residual = dst->src[1];
-    const ggml_tensor * post     = dst->src[2];
-    const ggml_tensor * comb     = dst->src[3];
+    സ്ഥിരം ggml_tensor * x        = dst->src[0];
+    സ്ഥിരം ggml_tensor * residual = dst->src[1];
+    സ്ഥിരം ggml_tensor * post     = dst->src[2];
+    സ്ഥിരം ggml_tensor * comb     = dst->src[3];
 
     GGML_ASSERT(x->type == GGML_TYPE_F32);
     GGML_ASSERT(residual->type == GGML_TYPE_F32);
     GGML_ASSERT(post->type == GGML_TYPE_F32);
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
 
-    const int64_t n_embd   = x->ne[0];
-    const int64_t n_tokens = x->ne[1];
-    const int64_t hc       = residual->ne[1];
+    സ്ഥിരം int64_t n_embd   = x->ne[0];
+    സ്ഥിരം int64_t n_tokens = x->ne[1];
+    സ്ഥിരം int64_t hc       = residual->ne[1];
 
     GGML_ASSERT(dst->ne[0] == n_embd);
     GGML_ASSERT(dst->ne[1] == hc);
@@ -11673,7 +11673,7 @@ static void ggml_compute_forward_dsv4_hc_post_f32(
     size_t nbc0 = 0;
     size_t nbc1 = 0;
     size_t nbc2 = 0;
-    if (comb) {
+    എങ്കിൽ (comb) {
         GGML_ASSERT(comb->type == GGML_TYPE_F32);
         GGML_ASSERT(comb->ne[0] == hc);
         GGML_ASSERT(comb->ne[1] == hc);
@@ -11688,48 +11688,48 @@ static void ggml_compute_forward_dsv4_hc_post_f32(
     GGML_TENSOR_LOCALS(size_t, nbp, post,     nb);
     GGML_TENSOR_LOCALS(size_t, nbd, dst,      nb);
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int64_t nr  = n_embd * hc * n_tokens;
-    const int64_t dr  = (nr + nth - 1) / nth;
-    const int64_t ir0 = dr * ith;
-    const int64_t ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം int64_t nr  = n_embd * hc * n_tokens;
+    സ്ഥിരം int64_t dr  = (nr + nth - 1) / nth;
+    സ്ഥിരം int64_t ir0 = dr * ith;
+    സ്ഥിരം int64_t ir1 = MIN(ir0 + dr, nr);
 
-    for (int64_t ir = ir0; ir < ir1; ++ir) {
-        const int64_t i0     = ir % n_embd;
-        const int64_t idst   = (ir / n_embd) % hc;
-        const int64_t it     = ir / (n_embd * hc);
+    വേണ്ടി (int64_t ir = ir0; ir < ir1; ++ir) {
+        സ്ഥിരം int64_t i0     = ir % n_embd;
+        സ്ഥിരം int64_t idst   = (ir / n_embd) % hc;
+        സ്ഥിരം int64_t it     = ir / (n_embd * hc);
 
-        const float xv = *(const float *) ((const char *) x->data    + i0*nbx0 + it*nbx1);
-        const float pv = *(const float *) ((const char *) post->data + idst*nbp0 + it*nbp1);
+        സ്ഥിരം ദശാംശം xv = *(സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *) x->data    + i0*nbx0 + it*nbx1);
+        സ്ഥിരം ദശാംശം pv = *(സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *) post->data + idst*nbp0 + it*nbp1);
 
-        float sum = xv * pv;
-        if (comb) {
-            for (int64_t isrc = 0; isrc < hc; ++isrc) {
-                const float rv = *(const float *) ((const char *) residual->data + i0*nbr0 + isrc*nbr1 + it*nbr2);
-                const float cv = *(const float *) ((const char *) comb->data     + idst*nbc0 + isrc*nbc1 + it*nbc2);
+        ദശാംശം sum = xv * pv;
+        എങ്കിൽ (comb) {
+            വേണ്ടി (int64_t isrc = 0; isrc < hc; ++isrc) {
+                സ്ഥിരം ദശാംശം rv = *(സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *) residual->data + i0*nbr0 + isrc*nbr1 + it*nbr2);
+                സ്ഥിരം ദശാംശം cv = *(സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *) comb->data     + idst*nbc0 + isrc*nbc1 + it*nbc2);
                 sum += rv * cv;
             }
-        } else {
-            sum += *(const float *) ((const char *) residual->data + i0*nbr0 + idst*nbr1 + it*nbr2);
+        } അല്ലെങ്കിൽ {
+            sum += *(സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *) residual->data + i0*nbr0 + idst*nbr1 + it*nbr2);
         }
 
-        *(float *) ((char *) dst->data + i0*nbd0 + idst*nbd1 + it*nbd2) = sum;
+        *(ദശാംശം *) ((അക്ഷരം *) dst->data + i0*nbd0 + idst*nbd1 + it*nbd2) = sum;
     }
 }
 
-void ggml_compute_forward_dsv4_hc_post(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_dsv4_hc_post(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_dsv4_hc_post_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -11738,85 +11738,85 @@ void ggml_compute_forward_dsv4_hc_post(
 
 // ggml_compute_forward_top_k_mask
 
-void ggml_compute_forward_top_k_mask(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_മുകൾ_k_mask(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
-    const ggml_tensor * mask   = dst->src[0];
-    const ggml_tensor * top_k  = dst->src[1];
-    const ggml_tensor * score  = dst->src[2];
-    const ggml_tensor * blocks = dst->src[3];
-    const ggml_tensor * extra  = dst->src[4];
+    സ്ഥിരം ggml_tensor * mask   = dst->src[0];
+    സ്ഥിരം ggml_tensor * മുകൾ_k  = dst->src[1];
+    സ്ഥിരം ggml_tensor * score  = dst->src[2];
+    സ്ഥിരം ggml_tensor * blocks = dst->src[3];
+    സ്ഥിരം ggml_tensor * extra  = dst->src[4];
 
     GGML_ASSERT(dst->type == mask->type);
     GGML_ASSERT(dst->nb[0] == ggml_type_size(dst->type));
 
-    const int64_t n_kv    = mask->ne[0];
-    const int64_t ne1     = dst->ne[1];
-    const int64_t ne2     = dst->ne[2];
-    const int64_t n_rows  = ggml_nrows(dst);
-    const int64_t n_top   = top_k->ne[0];
-    const int64_t n_blk   = blocks ? blocks->ne[0] : 1;
-    const int64_t n_pick  = blocks ? blocks->ne[1] : score ? score->ne[0] : n_kv;
-    const int64_t n_extra = extra ? extra->ne[0] : 0;
+    സ്ഥിരം int64_t n_kv    = mask->ne[0];
+    സ്ഥിരം int64_t ne1     = dst->ne[1];
+    സ്ഥിരം int64_t ne2     = dst->ne[2];
+    സ്ഥിരം int64_t n_rows  = ggml_nrows(dst);
+    സ്ഥിരം int64_t n_മുകൾ   = മുകൾ_k->ne[0];
+    സ്ഥിരം int64_t n_blk   = blocks ? blocks->ne[0] : 1;
+    സ്ഥിരം int64_t n_pick  = blocks ? blocks->ne[1] : score ? score->ne[0] : n_kv;
+    സ്ഥിരം int64_t n_extra = extra ? extra->ne[0] : 0;
 
-    const size_t ts = ggml_type_size(dst->type);
+    സ്ഥിരം size_t ts = ggml_type_size(dst->type);
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    for (int64_t ir = ith; ir < n_rows; ir += nth) {
-        const int64_t i1 = ir % ne1;
-        const int64_t i2 = (ir / ne1) % ne2;
-        const int64_t i3 = ir / (ne1*ne2);
+    വേണ്ടി (int64_t ir = ith; ir < n_rows; ir += nth) {
+        സ്ഥിരം int64_t i1 = ir % ne1;
+        സ്ഥിരം int64_t i2 = (ir / ne1) % ne2;
+        സ്ഥിരം int64_t i3 = ir / (ne1*ne2);
 
-        const char * mask_row = (const char *) mask->data
+        സ്ഥിരം അക്ഷരം * mask_row = (സ്ഥിരം അക്ഷരം *) mask->data
             + (i1 % mask->ne[1])*mask->nb[1] + (i2 % mask->ne[2])*mask->nb[2] + (i3 % mask->ne[3])*mask->nb[3];
-        char * dst_row = (char *) dst->data + i1*dst->nb[1] + i2*dst->nb[2] + i3*dst->nb[3];
+        അക്ഷരം * dst_row = (അക്ഷരം *) dst->data + i1*dst->nb[1] + i2*dst->nb[2] + i3*dst->nb[3];
 
-        if (dst->type == GGML_TYPE_F16) {
-            const ggml_fp16_t ninf = GGML_CPU_FP32_TO_FP16(-INFINITY);
-            for (int64_t c = 0; c < n_kv; ++c) {
+        എങ്കിൽ (dst->type == GGML_TYPE_F16) {
+            സ്ഥിരം ggml_fp16_t ninf = GGML_CPU_FP32_TO_FP16(-INFINITY);
+            വേണ്ടി (int64_t c = 0; c < n_kv; ++c) {
                 ((ggml_fp16_t *) dst_row)[c] = ninf;
             }
-        } else {
-            for (int64_t c = 0; c < n_kv; ++c) {
-                ((float *) dst_row)[c] = -INFINITY;
+        } അല്ലെങ്കിൽ {
+            വേണ്ടി (int64_t c = 0; c < n_kv; ++c) {
+                ((ദശാംശം *) dst_row)[c] = -INFINITY;
             }
         }
 
         auto keep = [&](int32_t c) {
-            if (c >= 0 && c < n_kv) {
+            എങ്കിൽ (c >= 0 && c < n_kv) {
                 memcpy(dst_row + c*ts, mask_row + c*ts, ts);
             }
         };
 
-        const char * top_k_row = (const char *) top_k->data + i1*top_k->nb[1] + i2*top_k->nb[2] + i3*top_k->nb[3];
+        സ്ഥിരം അക്ഷരം * മുകൾ_k_row = (സ്ഥിരം അക്ഷരം *) മുകൾ_k->data + i1*മുകൾ_k->nb[1] + i2*മുകൾ_k->nb[2] + i3*മുകൾ_k->nb[3];
 
-        for (int64_t j = 0; j < n_top; ++j) {
-            const int32_t p = *(const int32_t *) (top_k_row + j*top_k->nb[0]);
-            if (p < 0 || p >= n_pick) {
-                continue;
+        വേണ്ടി (int64_t j = 0; j < n_മുകൾ; ++j) {
+            സ്ഥിരം int32_t p = *(സ്ഥിരം int32_t *) (മുകൾ_k_row + j*മുകൾ_k->nb[0]);
+            എങ്കിൽ (p < 0 || p >= n_pick) {
+                തുടരുക;
             }
-            if (score) {
-                const float s = *(const float *) ((const char *) score->data
+            എങ്കിൽ (score) {
+                സ്ഥിരം ദശാംശം s = *(സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *) score->data
                     + p*score->nb[0] + i1*score->nb[1] + i2*score->nb[2] + i3*score->nb[3]);
-                if (!(s > -INFINITY)) {
-                    continue;
+                എങ്കിൽ (!(s > -INFINITY)) {
+                    തുടരുക;
                 }
             }
-            if (!blocks) {
+            എങ്കിൽ (!blocks) {
                 keep(p);
-                continue;
+                തുടരുക;
             }
-            for (int64_t k = 0; k < n_blk; ++k) {
-                keep(*(const int32_t *) ((const char *) blocks->data + k*blocks->nb[0] + p*blocks->nb[1]));
+            വേണ്ടി (int64_t k = 0; k < n_blk; ++k) {
+                keep(*(സ്ഥിരം int32_t *) ((സ്ഥിരം അക്ഷരം *) blocks->data + k*blocks->nb[0] + p*blocks->nb[1]));
             }
         }
 
-        if (extra) {
-            const char * extra_row = (const char *) extra->data + i1*extra->nb[1] + i2*extra->nb[2] + i3*extra->nb[3];
-            for (int64_t j = 0; j < n_extra; ++j) {
-                keep(*(const int32_t *) (extra_row + j*extra->nb[0]));
+        എങ്കിൽ (extra) {
+            സ്ഥിരം അക്ഷരം * extra_row = (സ്ഥിരം അക്ഷരം *) extra->data + i1*extra->nb[1] + i2*extra->nb[2] + i3*extra->nb[3];
+            വേണ്ടി (int64_t j = 0; j < n_extra; ++j) {
+                keep(*(സ്ഥിരം int32_t *) (extra_row + j*extra->nb[0]));
             }
         }
     }
@@ -11824,31 +11824,31 @@ void ggml_compute_forward_top_k_mask(
 
 // ggml_compute_forward_rwkv_wkv7
 
-static void ggml_compute_forward_rwkv_wkv7_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_rwkv_wkv7_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
-    const int64_t T = dst->src[1]->ne[2];
-    const int64_t C = dst->ne[0];
-    const int64_t HEADS = dst->src[1]->ne[1];
-    const int64_t n_seqs = dst->src[6]->ne[1];
-    const int64_t head_size = C / HEADS;
+    സ്ഥിരം int64_t T = dst->src[1]->ne[2];
+    സ്ഥിരം int64_t C = dst->ne[0];
+    സ്ഥിരം int64_t HEADS = dst->src[1]->ne[1];
+    സ്ഥിരം int64_t n_seqs = dst->src[6]->ne[1];
+    സ്ഥിരം int64_t head_size = C / HEADS;
 
-    float * dst_data = (float *) dst->data;
-    float * state = ((float *) dst->data) + C * T;
+    ദശാംശം * dst_data = (ദശാംശം *) dst->data;
+    ദശാംശം * state = ((ദശാംശം *) dst->data) + C * T;
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int h_start =  (HEADS * (ith    )) / nth;
-    const int h_end   = ((HEADS * (ith + 1)) / nth < HEADS) ?
+    സ്ഥിരം പൂർണ്ണസംഖ്യ h_start =  (HEADS * (ith    )) / nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ h_end   = ((HEADS * (ith + 1)) / nth < HEADS) ?
                          (HEADS * (ith + 1)) / nth : HEADS;
 
-    float * r = (float *) dst->src[0]->data;
-    float * w = (float *) dst->src[1]->data;
-    float * k = (float *) dst->src[2]->data;
-    float * v = (float *) dst->src[3]->data;
-    float * a = (float *) dst->src[4]->data;
-    float * b = (float *) dst->src[5]->data;
+    ദശാംശം * r = (ദശാംശം *) dst->src[0]->data;
+    ദശാംശം * w = (ദശാംശം *) dst->src[1]->data;
+    ദശാംശം * k = (ദശാംശം *) dst->src[2]->data;
+    ദശാംശം * v = (ദശാംശം *) dst->src[3]->data;
+    ദശാംശം * a = (ദശാംശം *) dst->src[4]->data;
+    ദശാംശം * b = (ദശാംശം *) dst->src[5]->data;
 
     int64_t t_stride = HEADS * head_size; // Same to C
 
@@ -11856,41 +11856,41 @@ static void ggml_compute_forward_rwkv_wkv7_f32(
     GGML_ASSERT(C % HEADS == 0); // C must be divisible by HEADS
     int64_t h_stride_2d = head_size * head_size;
 
-    #if defined(GGML_SIMD)
-        #if defined(__ARM_FEATURE_SVE) || defined(__riscv_v_intrinsic)
+    #എങ്കിൽ defined(GGML_SIMD)
+        #എങ്കിൽ defined(__ARM_FEATURE_SVE) || defined(__riscv_v_intrinsic)
             // scalar Route to scalar implementation       //TODO: Write SVE code and RVV code
-            for (int64_t t = 0; t < T; t++) {
+            വേണ്ടി (int64_t t = 0; t < T; t++) {
                 int64_t t_offset = t * t_stride;
                 int64_t state_offset = head_size * C * (t / (T / n_seqs));
-                float * state_cur = state + state_offset;
-                float * state_prev = t % (T / n_seqs) ? state_cur : (float*)dst->src[6]->data + state_offset;
+                ദശാംശം * state_cur = state + state_offset;
+                ദശാംശം * state_prev = t % (T / n_seqs) ? state_cur : (ദശാംശം*)dst->src[6]->data + state_offset;
 
-                for (int64_t h = h_start; h < h_end; h++) {
+                വേണ്ടി (int64_t h = h_start; h < h_end; h++) {
                     int64_t h_offset = h * h_stride;
                     int64_t t_h_offset = t_offset + h_offset;
                     int64_t h_2d_offset = h * h_stride_2d;
 
-                    for (int64_t i = 0; i < head_size; i++) {
+                    വേണ്ടി (int64_t i = 0; i < head_size; i++) {
                         int64_t t_h_i_offset = t_h_offset + i;
                         int64_t h_2d_i_offset = h_2d_offset + i * h_stride;
 
-                        float v_val = v[t_h_i_offset];
+                        ദശാംശം v_val = v[t_h_i_offset];
 
-                        float sa = 0, result = 0;
-                        for (int64_t j = 0; j < head_size; j++) {
+                        ദശാംശം sa = 0, result = 0;
+                        വേണ്ടി (int64_t j = 0; j < head_size; j++) {
                             sa += a[t_h_offset + j] * state_prev[h_2d_i_offset + j];
                         }
 
-                        for (int64_t j = 0; j < head_size; j++) {
+                        വേണ്ടി (int64_t j = 0; j < head_size; j++) {
                             int64_t t_h_j_offset = t_h_offset + j;
                             int64_t h_2d_i_j_offset = h_2d_i_offset + j;
 
-                            float r_val = r[t_h_j_offset];
-                            float w_val = w[t_h_j_offset];
-                            float k_val = k[t_h_j_offset];
-                            float b_val = b[t_h_j_offset];
-                            float kv_val = v_val * k_val;
-                            float prev_state_val = state_prev[h_2d_i_j_offset];
+                            ദശാംശം r_val = r[t_h_j_offset];
+                            ദശാംശം w_val = w[t_h_j_offset];
+                            ദശാംശം k_val = k[t_h_j_offset];
+                            ദശാംശം b_val = b[t_h_j_offset];
+                            ദശാംശം kv_val = v_val * k_val;
+                            ദശാംശം prev_state_val = state_prev[h_2d_i_j_offset];
                             state_cur[h_2d_i_j_offset] = prev_state_val * w_val + kv_val + sa * b_val;
                             result += state_cur[h_2d_i_j_offset] * r_val;
                         }
@@ -11898,31 +11898,31 @@ static void ggml_compute_forward_rwkv_wkv7_f32(
                     }
                 }
             }
-        #else
-            for (int64_t t = 0; t < T; t++) {
+        #അല്ലെങ്കിൽ
+            വേണ്ടി (int64_t t = 0; t < T; t++) {
                 int64_t t_offset = t * t_stride;
                 int64_t state_offset = head_size * C * (t / (T / n_seqs));
-                float * state_cur = state + state_offset;
-                float * state_prev = t % (T / n_seqs) ? state_cur : (float*)dst->src[6]->data + state_offset;
+                ദശാംശം * state_cur = state + state_offset;
+                ദശാംശം * state_prev = t % (T / n_seqs) ? state_cur : (ദശാംശം*)dst->src[6]->data + state_offset;
 
-                for (int64_t h = h_start; h < h_end; h++) {
+                വേണ്ടി (int64_t h = h_start; h < h_end; h++) {
                     int64_t h_offset = h * h_stride;
                     int64_t t_h_offset = t_offset + h_offset;
                     int64_t h_2d_offset = h * h_stride_2d;
 
-                    for (int64_t ii = 0; ii < head_size; ii++) {
+                    വേണ്ടി (int64_t ii = 0; ii < head_size; ii++) {
                         int64_t t_h_i_offset = t_h_offset + ii;
                         int64_t h_2d_i_offset = h_2d_offset + ii * h_stride;
 
                         GGML_F32_VEC v_vec = GGML_F32_VEC_SET1(v[t_h_i_offset]);
 
-                        float sa = 0;
+                        ദശാംശം sa = 0;
                         {
                             GGML_F32_VEC sum[GGML_F32_ARR] = { GGML_F32_VEC_ZERO };
                             GGML_F32_VEC ax[GGML_F32_ARR];
                             GGML_F32_VEC ay[GGML_F32_ARR];
-                            for (int64_t j = 0; j < head_size; j += GGML_F32_STEP) {
-                                for (int64_t kk = 0; kk < GGML_F32_ARR; kk++) {
+                            വേണ്ടി (int64_t j = 0; j < head_size; j += GGML_F32_STEP) {
+                                വേണ്ടി (int64_t kk = 0; kk < GGML_F32_ARR; kk++) {
                                     ax[kk] = GGML_F32_VEC_LOAD(&a[t_h_offset + j + kk * GGML_F32_EPR]);
                                     ay[kk] = GGML_F32_VEC_LOAD(&state_prev[h_2d_i_offset + j + kk * GGML_F32_EPR]);
                                     sum[kk] = GGML_F32_VEC_FMA(sum[kk], ax[kk], ay[kk]);
@@ -11935,8 +11935,8 @@ static void ggml_compute_forward_rwkv_wkv7_f32(
 
                         int64_t j = 0;
                         GGML_F32_VEC result_vec[GGML_F32_ARR] = { GGML_F32_VEC_ZERO };
-                        for (; j < head_size; j += GGML_F32_STEP) {
-                            for (int64_t kk = 0; kk < GGML_F32_ARR; kk++) {
+                        വേണ്ടി (; j < head_size; j += GGML_F32_STEP) {
+                            വേണ്ടി (int64_t kk = 0; kk < GGML_F32_ARR; kk++) {
                                 int64_t t_h_j_offset = t_h_offset + j + kk * GGML_F32_EPR;
                                 int64_t h_2d_i_j_offset = h_2d_i_offset + j + kk * GGML_F32_EPR;
 
@@ -11959,17 +11959,17 @@ static void ggml_compute_forward_rwkv_wkv7_f32(
                         GGML_F32_VEC_REDUCE(dst_data[t_h_i_offset], result_vec);
 
                         // There shouldn't be left-overs though.
-                        for (; j < head_size; j++) {
+                        വേണ്ടി (; j < head_size; j++) {
                             int64_t t_h_j_offset = t_h_offset + j;
                             int64_t h_2d_i_j_offset = h_2d_i_offset + j;
 
-                            float r_val = r[t_h_j_offset];
-                            float w_val = w[t_h_j_offset];
-                            float k_val = k[t_h_j_offset];
-                            float b_val = b[t_h_j_offset];
-                            float kv_val = v[t_h_i_offset] * k_val;
+                            ദശാംശം r_val = r[t_h_j_offset];
+                            ദശാംശം w_val = w[t_h_j_offset];
+                            ദശാംശം k_val = k[t_h_j_offset];
+                            ദശാംശം b_val = b[t_h_j_offset];
+                            ദശാംശം kv_val = v[t_h_i_offset] * k_val;
 
-                            float prev_state_val = state_prev[h_2d_i_j_offset];
+                            ദശാംശം prev_state_val = state_prev[h_2d_i_j_offset];
                             state_cur[h_2d_i_j_offset] = prev_state_val * w_val + kv_val + sa * b_val;
                             dst_data[t_h_i_offset] += state_cur[h_2d_i_j_offset] * r_val;
                         }
@@ -11977,39 +11977,39 @@ static void ggml_compute_forward_rwkv_wkv7_f32(
                 }
             }
         #endif
-    #else
-        for (int64_t t = 0; t < T; t++) {
+    #അല്ലെങ്കിൽ
+        വേണ്ടി (int64_t t = 0; t < T; t++) {
             int64_t t_offset = t * t_stride;
             int64_t state_offset = head_size * C * (t / (T / n_seqs));
-            float * state_cur = state + state_offset;
-            float * state_prev = t % (T / n_seqs) ? state_cur : (float*)dst->src[6]->data + state_offset;
+            ദശാംശം * state_cur = state + state_offset;
+            ദശാംശം * state_prev = t % (T / n_seqs) ? state_cur : (ദശാംശം*)dst->src[6]->data + state_offset;
 
-            for (int64_t h = h_start; h < h_end; h++) {
+            വേണ്ടി (int64_t h = h_start; h < h_end; h++) {
                 int64_t h_offset = h * h_stride;
                 int64_t t_h_offset = t_offset + h_offset;
                 int64_t h_2d_offset = h * h_stride_2d;
 
-                for (int64_t i = 0; i < head_size; i++) {
+                വേണ്ടി (int64_t i = 0; i < head_size; i++) {
                     int64_t t_h_i_offset = t_h_offset + i;
                     int64_t h_2d_i_offset = h_2d_offset + i * h_stride;
 
-                    float v_val = v[t_h_i_offset];
+                    ദശാംശം v_val = v[t_h_i_offset];
 
-                    float sa = 0, result = 0;
-                    for (int64_t j = 0; j < head_size; j++) {
+                    ദശാംശം sa = 0, result = 0;
+                    വേണ്ടി (int64_t j = 0; j < head_size; j++) {
                         sa += a[t_h_offset + j] * state_prev[h_2d_i_offset + j];
                     }
 
-                    for (int64_t j = 0; j < head_size; j++) {
+                    വേണ്ടി (int64_t j = 0; j < head_size; j++) {
                         int64_t t_h_j_offset = t_h_offset + j;
                         int64_t h_2d_i_j_offset = h_2d_i_offset + j;
 
-                        float r_val = r[t_h_j_offset];
-                        float w_val = w[t_h_j_offset];
-                        float k_val = k[t_h_j_offset];
-                        float b_val = b[t_h_j_offset];
-                        float kv_val = v_val * k_val;
-                        float prev_state_val = state_prev[h_2d_i_j_offset];
+                        ദശാംശം r_val = r[t_h_j_offset];
+                        ദശാംശം w_val = w[t_h_j_offset];
+                        ദശാംശം k_val = k[t_h_j_offset];
+                        ദശാംശം b_val = b[t_h_j_offset];
+                        ദശാംശം kv_val = v_val * k_val;
+                        ദശാംശം prev_state_val = state_prev[h_2d_i_j_offset];
                         state_cur[h_2d_i_j_offset] = prev_state_val * w_val + kv_val + sa * b_val;
                         result += state_cur[h_2d_i_j_offset] * r_val;
                     }
@@ -12021,18 +12021,18 @@ static void ggml_compute_forward_rwkv_wkv7_f32(
 }
 
 
-void ggml_compute_forward_rwkv_wkv7(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_rwkv_wkv7(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_rwkv_wkv7_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -12041,69 +12041,69 @@ void ggml_compute_forward_rwkv_wkv7(
 
 // ggml_compute_forward_map_custom1
 
-void ggml_compute_forward_map_custom1(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_map_custom1(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
 
-    const ggml_tensor * a = dst->src[0];
+    സ്ഥിരം ggml_tensor * a = dst->src[0];
 
-    struct ggml_map_custom1_op_params p;
-    memcpy(&p, dst->op_params, sizeof(p));
+    ഘടന ggml_map_custom1_op_params p;
+    memcpy(&p, dst->op_params, വലുപ്പം(p));
 
     p.fun(dst, a, params->ith, params->nth, p.userdata);
 }
 
 // ggml_compute_forward_map_custom2
 
-void ggml_compute_forward_map_custom2(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_map_custom2(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
 
-    const ggml_tensor * a = dst->src[0];
-    const ggml_tensor * b = dst->src[1];
+    സ്ഥിരം ggml_tensor * a = dst->src[0];
+    സ്ഥിരം ggml_tensor * b = dst->src[1];
 
-    struct ggml_map_custom2_op_params p;
-    memcpy(&p, dst->op_params, sizeof(p));
+    ഘടന ggml_map_custom2_op_params p;
+    memcpy(&p, dst->op_params, വലുപ്പം(p));
 
     p.fun(dst, a, b, params->ith, params->nth, p.userdata);
 }
 
 // ggml_compute_forward_map_custom3
 
-void ggml_compute_forward_map_custom3(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_map_custom3(
+        സ്ഥിരം ggml_compute_params * params,
               ggml_tensor * dst) {
 
-    const ggml_tensor * a = dst->src[0];
-    const ggml_tensor * b = dst->src[1];
-    const ggml_tensor * c = dst->src[2];
+    സ്ഥിരം ggml_tensor * a = dst->src[0];
+    സ്ഥിരം ggml_tensor * b = dst->src[1];
+    സ്ഥിരം ggml_tensor * c = dst->src[2];
 
-    struct ggml_map_custom3_op_params p;
-    memcpy(&p, dst->op_params, sizeof(p));
+    ഘടന ggml_map_custom3_op_params p;
+    memcpy(&p, dst->op_params, വലുപ്പം(p));
 
     p.fun(dst, a, b, c, params->ith, params->nth, p.userdata);
 }
 
 // ggml_compute_forward_custom
 
-void ggml_compute_forward_custom(
-    const struct ggml_compute_params * params,
-          struct ggml_tensor * dst) {
+ശൂന്യം ggml_compute_forward_custom(
+    സ്ഥിരം ഘടന ggml_compute_params * params,
+          ഘടന ggml_tensor * dst) {
 
-    struct ggml_custom_op_params p;
-    memcpy(&p, dst->op_params, sizeof(p));
+    ഘടന ggml_custom_op_params p;
+    memcpy(&p, dst->op_params, വലുപ്പം(p));
 
     p.fun(dst, params->ith, params->nth, p.userdata);
 }
 
 // ggml_compute_forward_cross_entropy_loss
 
-static void ggml_compute_forward_cross_entropy_loss_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_cross_entropy_loss_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
@@ -12114,78 +12114,78 @@ static void ggml_compute_forward_cross_entropy_loss_f32(
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
 
     // TODO: handle transposed/permuted matrices
-    const int64_t nc = src0->ne[0];
-    const int64_t nr = ggml_nrows(src0);
+    സ്ഥിരം int64_t nc = src0->ne[0];
+    സ്ഥിരം int64_t nr = ggml_nrows(src0);
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    float * sums =  (float *) params->wdata;
-    float * st   = ((float *) params->wdata) + nth + ith*nc;
-    float sum_thread = 0.0f;
+    ദശാംശം * sums =  (ദശാംശം *) params->wdata;
+    ദശാംശം * st   = ((ദശാംശം *) params->wdata) + nth + ith*nc;
+    ദശാംശം sum_thread = 0.0f;
 
-    GGML_ASSERT(params->wsize >= sizeof(float) * (nth + nth * nc));
+    GGML_ASSERT(params->wsize >= വലുപ്പം(ദശാംശം) * (nth + nth * nc));
 
     // rows per thread
-    const int64_t dr = (nr + nth - 1)/nth;
+    സ്ഥിരം int64_t dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int64_t ir0 = dr*ith;
-    const int64_t ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം int64_t ir0 = dr*ith;
+    സ്ഥിരം int64_t ir1 = MIN(ir0 + dr, nr);
 
-    for (int64_t i1 = ir0; i1 < ir1; ++i1) {
-        const float * s0 = (const float *)((const char *) src0->data + i1*src0->nb[1]);
-        const float * s1 = (const float *)((const char *) src1->data + i1*src1->nb[1]);
+    വേണ്ടി (int64_t i1 = ir0; i1 < ir1; ++i1) {
+        സ്ഥിരം ദശാംശം * s0 = (സ്ഥിരം ദശാംശം *)((സ്ഥിരം അക്ഷരം *) src0->data + i1*src0->nb[1]);
+        സ്ഥിരം ദശാംശം * s1 = (സ്ഥിരം ദശാംശം *)((സ്ഥിരം അക്ഷരം *) src1->data + i1*src1->nb[1]);
 
 #ifndef NDEBUG
-        for (int64_t i = 0; i < nc; ++i) {
+        വേണ്ടി (int64_t i = 0; i < nc; ++i) {
             //printf("p[%d] = %f\n", i, p[i]);
-            assert(!isnan(s0[i]));
-            assert(!isnan(s1[i]));
+            പ്രതിജ്ഞാ(!isnan(s0[i]));
+            പ്രതിജ്ഞാ(!isnan(s1[i]));
         }
 #endif // NDEBUG
 
-        float max = -INFINITY;
+        ദശാംശം max = -INFINITY;
         ggml_vec_max_f32(nc, &max, s0);
-        const ggml_float sum_softmax = ggml_vec_log_soft_max_f32(nc, st, s0, max);
-        assert(sum_softmax >= 0.0);
+        സ്ഥിരം ggml_float sum_softmax = ggml_vec_log_soft_max_f32(nc, st, s0, max);
+        പ്രതിജ്ഞാ(sum_softmax >= 0.0);
 
         ggml_vec_add1_f32(nc, st, st, -sum_softmax);
         ggml_vec_mul_f32(nc, st, st, s1);
 
-        float sum_st = 0.0f;
+        ദശാംശം sum_st = 0.0f;
         ggml_vec_sum_f32(nc, &sum_st, st);
         sum_thread += sum_st;
 
 #ifndef NDEBUG
-        for (int64_t i = 0; i < nc; ++i) {
-            assert(!isnan(st[i]));
-            assert(!isinf(st[i]));
+        വേണ്ടി (int64_t i = 0; i < nc; ++i) {
+            പ്രതിജ്ഞാ(!isnan(st[i]));
+            പ്രതിജ്ഞാ(!isinf(st[i]));
         }
 #endif // NDEBUG
     }
     sums[ith] = sum_thread;
     ggml_barrier(params->threadpool);
 
-    if (ith == 0) {
-        float * dp = (float *) dst->data;
+    എങ്കിൽ (ith == 0) {
+        ദശാംശം * dp = (ദശാംശം *) dst->data;
         ggml_vec_sum_f32(nth, dp, sums);
-        dp[0] *= -1.0f / (float) nr;
+        dp[0] *= -1.0f / (ദശാംശം) nr;
     }
 }
 
-void ggml_compute_forward_cross_entropy_loss(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_cross_entropy_loss(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_cross_entropy_loss_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
@@ -12194,13 +12194,13 @@ void ggml_compute_forward_cross_entropy_loss(
 
 // ggml_compute_forward_cross_entropy_loss_back
 
-static void ggml_compute_forward_cross_entropy_loss_back_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_cross_entropy_loss_back_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * grad  = dst->src[0]; // gradient of forward pass output
-    const ggml_tensor * src0f = dst->src[1]; // src0 of forward pass
-    const ggml_tensor * src1f = dst->src[2]; // src1 of forward pass
+    സ്ഥിരം ggml_tensor * grad  = dst->src[0]; // gradient of forward pass output
+    സ്ഥിരം ggml_tensor * src0f = dst->src[1]; // src0 of forward pass
+    സ്ഥിരം ggml_tensor * src1f = dst->src[2]; // src1 of forward pass
 
     GGML_ASSERT(ggml_is_contiguous(dst));
     GGML_ASSERT(ggml_is_contiguous(src0f));
@@ -12208,40 +12208,40 @@ static void ggml_compute_forward_cross_entropy_loss_back_f32(
     GGML_ASSERT(ggml_is_contiguous(grad));
     GGML_ASSERT(ggml_are_same_shape(src0f, src1f) && ggml_are_same_shape(src0f, dst));
 
-    const int64_t ith = params->ith;
-    const int64_t nth = params->nth;
+    സ്ഥിരം int64_t ith = params->ith;
+    സ്ഥിരം int64_t nth = params->nth;
 
     // TODO: handle transposed/permuted matrices
-    const int64_t nc = src0f->ne[0];
-    const int64_t nr = ggml_nrows(src0f);
+    സ്ഥിരം int64_t nc = src0f->ne[0];
+    സ്ഥിരം int64_t nr = ggml_nrows(src0f);
 
     // rows per thread
-    const int64_t dr = (nr + nth - 1)/nth;
+    സ്ഥിരം int64_t dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int64_t ir0 = dr*ith;
-    const int64_t ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം int64_t ir0 = dr*ith;
+    സ്ഥിരം int64_t ir1 = MIN(ir0 + dr, nr);
 
-    const float d_by_nr = ((const float *) grad->data)[0] / (float) nr;
+    സ്ഥിരം ദശാംശം d_by_nr = ((സ്ഥിരം ദശാംശം *) grad->data)[0] / (ദശാംശം) nr;
 
-    for (int64_t i1 = ir0; i1 < ir1; i1++) {
-        float       * ds0 = (float       *)((char       *) dst->data   + i1*dst->nb[1]);
-        const float * s0  = (const float *)((const char *) src0f->data + i1*src0f->nb[1]);
-        const float * s1  = (const float *)((const char *) src1f->data + i1*src1f->nb[1]);
+    വേണ്ടി (int64_t i1 = ir0; i1 < ir1; i1++) {
+        ദശാംശം       * ds0 = (ദശാംശം       *)((അക്ഷരം       *) dst->data   + i1*dst->nb[1]);
+        സ്ഥിരം ദശാംശം * s0  = (സ്ഥിരം ദശാംശം *)((സ്ഥിരം അക്ഷരം *) src0f->data + i1*src0f->nb[1]);
+        സ്ഥിരം ദശാംശം * s1  = (സ്ഥിരം ദശാംശം *)((സ്ഥിരം അക്ഷരം *) src1f->data + i1*src1f->nb[1]);
 
 #ifndef NDEBUG
-        for (int64_t i = 0; i < nc; ++i) {
+        വേണ്ടി (int64_t i = 0; i < nc; ++i) {
             //printf("p[%d] = %f\n", i, p[i]);
-            assert(!isnan(s0[i]));
-            assert(!isnan(s1[i]));
+            പ്രതിജ്ഞാ(!isnan(s0[i]));
+            പ്രതിജ്ഞാ(!isnan(s1[i]));
         }
 #endif // NDEBUG
 
         // soft_max
-        float max = -INFINITY;
+        ദശാംശം max = -INFINITY;
         ggml_vec_max_f32(nc, &max, s0);
-        const ggml_float sum = ggml_vec_soft_max_f32(nc, ds0, s0, max);
-        assert(sum > 0.0);
+        സ്ഥിരം ggml_float sum = ggml_vec_soft_max_f32(nc, ds0, s0, max);
+        പ്രതിജ്ഞാ(sum > 0.0);
         ggml_vec_scale_f32(nc, ds0, 1.0/sum);
 
         // grad(src0f) = (softmax(src0f) - src1f) * grad(cross_entropy_loss(src0f, src1f)) / nr
@@ -12249,90 +12249,90 @@ static void ggml_compute_forward_cross_entropy_loss_back_f32(
         ggml_vec_scale_f32(nc, ds0, d_by_nr);
 
 #ifndef NDEBUG
-        for (int64_t i = 0; i < nc; ++i) {
-            assert(!isnan(ds0[i]));
-            assert(!isinf(ds0[i]));
+        വേണ്ടി (int64_t i = 0; i < nc; ++i) {
+            പ്രതിജ്ഞാ(!isnan(ds0[i]));
+            പ്രതിജ്ഞാ(!isinf(ds0[i]));
         }
 #endif // NDEBUG
     }
 }
 
-void ggml_compute_forward_cross_entropy_loss_back(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_cross_entropy_loss_back(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_cross_entropy_loss_back_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
     }
 }
 
-static void ggml_compute_forward_opt_step_adamw_f32(
-        const ggml_compute_params * params,
+സ്ഥിതം ശൂന്യം ggml_compute_forward_opt_step_adamw_f32(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0         = dst->src[0];
-    const ggml_tensor * src0_grad    = dst->src[1];
-    const ggml_tensor * src0_grad_m  = dst->src[2];
-    const ggml_tensor * src0_grad_v  = dst->src[3];
-    const ggml_tensor * adamw_params = dst->src[4];
+    സ്ഥിരം ggml_tensor * src0         = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0_grad    = dst->src[1];
+    സ്ഥിരം ggml_tensor * src0_grad_m  = dst->src[2];
+    സ്ഥിരം ggml_tensor * src0_grad_v  = dst->src[3];
+    സ്ഥിരം ggml_tensor * adamw_params = dst->src[4];
 
     GGML_ASSERT(ggml_are_same_shape(src0, src0_grad));
     GGML_ASSERT(ggml_are_same_shape(src0, src0_grad_m));
     GGML_ASSERT(ggml_are_same_shape(src0, src0_grad_v));
     GGML_ASSERT(ggml_nelements(adamw_params) == 7);
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nr  = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr  = ggml_nrows(src0);
 
     GGML_TENSOR_UNARY_OP_LOCALS
-    GGML_ASSERT(nb00 == sizeof(float));
+    GGML_ASSERT(nb00 == വലുപ്പം(ദശാംശം));
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    const float * adamw_params_ptr = ggml_get_data_f32(adamw_params);
+    സ്ഥിരം ദശാംശം * adamw_params_ptr = ggml_get_data_f32(adamw_params);
 
-    const float alpha  = adamw_params_ptr[0];
-    const float beta1  = adamw_params_ptr[1];
-    const float beta2  = adamw_params_ptr[2];
-    const float eps    = adamw_params_ptr[3];
-    const float wd     = adamw_params_ptr[4];
-    const float beta1h = adamw_params_ptr[5];
-    const float beta2h = adamw_params_ptr[6];
-    const float keep   = 1.f - alpha * wd;
-    for (int ir = ir0; ir < ir1; ++ir) {
-        const int64_t i03 = ir/(ne02*ne01);
-        const int64_t i02 = (ir - i03*ne02*ne01)/ne01;
-        const int64_t i01 = (ir - i03*ne02*ne01 - i02*ne01);
+    സ്ഥിരം ദശാംശം alpha  = adamw_params_ptr[0];
+    സ്ഥിരം ദശാംശം beta1  = adamw_params_ptr[1];
+    സ്ഥിരം ദശാംശം beta2  = adamw_params_ptr[2];
+    സ്ഥിരം ദശാംശം eps    = adamw_params_ptr[3];
+    സ്ഥിരം ദശാംശം wd     = adamw_params_ptr[4];
+    സ്ഥിരം ദശാംശം beta1h = adamw_params_ptr[5];
+    സ്ഥിരം ദശാംശം beta2h = adamw_params_ptr[6];
+    സ്ഥിരം ദശാംശം keep   = 1.f - alpha * wd;
+    വേണ്ടി (പൂർണ്ണസംഖ്യ ir = ir0; ir < ir1; ++ir) {
+        സ്ഥിരം int64_t i03 = ir/(ne02*ne01);
+        സ്ഥിരം int64_t i02 = (ir - i03*ne02*ne01)/ne01;
+        സ്ഥിരം int64_t i01 = (ir - i03*ne02*ne01 - i02*ne01);
 
-        const size_t offset = i03*nb03 + i02*nb02 + i01*nb01;
+        സ്ഥിരം size_t offset = i03*nb03 + i02*nb02 + i01*nb01;
 
-        float       * w = (float       *) ((char       *) src0->data        + offset); // weight
-        const float * g = (const float *) ((const char *) src0_grad->data   + offset); // grad
-        float       * m = (float       *) ((char       *) src0_grad_m->data + offset);
-        float       * v = (float       *) ((char       *) src0_grad_v->data + offset);
+        ദശാംശം       * w = (ദശാംശം       *) ((അക്ഷരം       *) src0->data        + offset); // weight
+        സ്ഥിരം ദശാംശം * g = (സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *) src0_grad->data   + offset); // grad
+        ദശാംശം       * m = (ദശാംശം       *) ((അക്ഷരം       *) src0_grad_m->data + offset);
+        ദശാംശം       * v = (ദശാംശം       *) ((അക്ഷരം       *) src0_grad_v->data + offset);
 
-        for (int i00 = 0; i00 < ne00; ++i00) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i00 = 0; i00 < ne00; ++i00) {
             m[i00] = m[i00]*beta1 +        g[i00]*(1.0f - beta1);
             v[i00] = v[i00]*beta2 + g[i00]*g[i00]*(1.0f - beta2);
 
-            const float mh =       m[i00]*beta1h;
-            const float vh = sqrtf(v[i00]*beta2h) + eps;
+            സ്ഥിരം ദശാംശം mh =       m[i00]*beta1h;
+            സ്ഥിരം ദശാംശം vh = sqrtf(v[i00]*beta2h) + eps;
 
             // The weight decay is applied independently of the Adam momenta m and v.
             // This is NOT equivalent to l2 regularization that adds w[i00]*w[i00] to the loss.
@@ -12342,146 +12342,146 @@ static void ggml_compute_forward_opt_step_adamw_f32(
     }
 }
 
-void ggml_compute_forward_opt_step_adamw(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_opt_step_adamw(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_opt_step_adamw_f32(params, dst);
-            } break;
-        default:
+            } നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error");
             }
     }
 }
 
-static void ggml_compute_forward_opt_step_sgd_f32(const ggml_compute_params * params, ggml_tensor * dst) {
-    const ggml_tensor * src0       = dst->src[0];
-    const ggml_tensor * src0_grad  = dst->src[1];
-    const ggml_tensor * sgd_params = dst->src[2];
+സ്ഥിതം ശൂന്യം ggml_compute_forward_opt_step_sgd_f32(സ്ഥിരം ggml_compute_params * params, ggml_tensor * dst) {
+    സ്ഥിരം ggml_tensor * src0       = dst->src[0];
+    സ്ഥിരം ggml_tensor * src0_grad  = dst->src[1];
+    സ്ഥിരം ggml_tensor * sgd_params = dst->src[2];
 
     GGML_ASSERT(ggml_are_same_shape(src0, src0_grad));
     GGML_ASSERT(ggml_nelements(sgd_params) == 2);
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int nr = ggml_nrows(src0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr = ggml_nrows(src0);
 
     GGML_TENSOR_UNARY_OP_LOCALS
-    GGML_ASSERT(nb00 == sizeof(float));
+    GGML_ASSERT(nb00 == വലുപ്പം(ദശാംശം));
 
     // rows per thread
-    const int dr = (nr + nth - 1) / nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1) / nth;
 
     // row range for this thread
-    const int ir0 = dr * ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr * ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
     // using adamw param subset we care about - alpha, wd - could have a separate struct
-    const float * sgd_params_ptr   = ggml_get_data_f32(sgd_params);
-    const float   alpha            = sgd_params_ptr[0];
-    const float   keep             = 1.f - alpha * sgd_params_ptr[1];
+    സ്ഥിരം ദശാംശം * sgd_params_ptr   = ggml_get_data_f32(sgd_params);
+    സ്ഥിരം ദശാംശം   alpha            = sgd_params_ptr[0];
+    സ്ഥിരം ദശാംശം   keep             = 1.f - alpha * sgd_params_ptr[1];
 
-    for (int ir = ir0; ir < ir1; ++ir) {
-        const int64_t i03 = ir / (ne02 * ne01);
-        const int64_t i02 = (ir - i03 * ne02 * ne01) / ne01;
-        const int64_t i01 = (ir - i03 * ne02 * ne01 - i02 * ne01);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ ir = ir0; ir < ir1; ++ir) {
+        സ്ഥിരം int64_t i03 = ir / (ne02 * ne01);
+        സ്ഥിരം int64_t i02 = (ir - i03 * ne02 * ne01) / ne01;
+        സ്ഥിരം int64_t i01 = (ir - i03 * ne02 * ne01 - i02 * ne01);
 
-        const size_t offset = i03 * nb03 + i02 * nb02 + i01 * nb01;
+        സ്ഥിരം size_t offset = i03 * nb03 + i02 * nb02 + i01 * nb01;
 
-        float *       w = (float *) ((char *) src0->data + offset);                   // weight
-        const float * g = (const float *) ((const char *) src0_grad->data + offset);  // grad
+        ദശാംശം *       w = (ദശാംശം *) ((അക്ഷരം *) src0->data + offset);                   // weight
+        സ്ഥിരം ദശാംശം * g = (സ്ഥിരം ദശാംശം *) ((സ്ഥിരം അക്ഷരം *) src0_grad->data + offset);  // grad
 
-        for (int i00 = 0; i00 < ne00; ++i00) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i00 = 0; i00 < ne00; ++i00) {
             w[i00] = w[i00] * keep - alpha * g[i00];
         }
     }
 }
 
-void ggml_compute_forward_opt_step_sgd(const ggml_compute_params * params, ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0];
+ശൂന്യം ggml_compute_forward_opt_step_sgd(സ്ഥിരം ggml_compute_params * params, ggml_tensor * dst) {
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src0->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
                 ggml_compute_forward_opt_step_sgd_f32(params, dst);
             }
-            break;
-        default:
+            നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error - sgd is F32 only");
             }
     }
 }
 
-static inline float ggml_fwht_load(const float value) {
-    return value;
+സ്ഥിതം വരിയിൽ ദശാംശം ggml_fwht_load(സ്ഥിരം ദശാംശം value) {
+    തിരികെ value;
 }
 
-static inline float ggml_fwht_load(const ggml_fp16_t value) {
-    return ggml_fp16_to_fp32(value);
+സ്ഥിതം വരിയിൽ ദശാംശം ggml_fwht_load(സ്ഥിരം ggml_fp16_t value) {
+    തിരികെ ggml_fp16_to_fp32(value);
 }
 
 template<typename src_t>
-static void ggml_compute_forward_fwht_impl(const ggml_compute_params * params, ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+സ്ഥിതം ശൂന്യം ggml_compute_forward_fwht_impl(സ്ഥിരം ggml_compute_params * params, ggml_tensor * dst) {
+    സ്ഥിരം ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
-    GGML_ASSERT(src1->type == (std::is_same_v<src_t, float> ? GGML_TYPE_F32 : GGML_TYPE_F16));
+    GGML_ASSERT(src1->type == (std::is_same_v<src_t, ദശാംശം> ? GGML_TYPE_F32 : GGML_TYPE_F16));
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
-    const int64_t n = ne10;
+    സ്ഥിരം int64_t n = ne10;
     GGML_ASSERT((n & (n - 1)) == 0); // must be power of 2
 
-    const int64_t nr = ne11 * ne12 * ne13;
-    const int64_t rows_per_thread = (nr + nth - 1) / nth;
-    const int64_t start_row = ith * rows_per_thread;
-    const int64_t end_row = MIN(start_row + rows_per_thread, nr);
+    സ്ഥിരം int64_t nr = ne11 * ne12 * ne13;
+    സ്ഥിരം int64_t rows_per_thread = (nr + nth - 1) / nth;
+    സ്ഥിരം int64_t start_row = ith * rows_per_thread;
+    സ്ഥിരം int64_t end_row = MIN(start_row + rows_per_thread, nr);
 
-    const float scale = 1.0f / sqrtf((float)n);
+    സ്ഥിരം ദശാംശം scale = 1.0f / sqrtf((ദശാംശം)n);
 
-#if defined(GGML_SIMD)
-    const GGML_F32_VEC v_minus_one = GGML_F32_VEC_SET1(-1.0f);
+#എങ്കിൽ defined(GGML_SIMD)
+    സ്ഥിരം GGML_F32_VEC v_minus_one = GGML_F32_VEC_SET1(-1.0f);
 #endif
 
-    for (int64_t r = start_row; r < end_row; r++) {
-        const int64_t i13 = r / (ne11 * ne12);
-        const int64_t i12 = (r - i13 * ne11 * ne12) / ne11;
-        const int64_t i11 = r - i13 * ne11 * ne12 - i12 * ne11;
+    വേണ്ടി (int64_t r = start_row; r < end_row; r++) {
+        സ്ഥിരം int64_t i13 = r / (ne11 * ne12);
+        സ്ഥിരം int64_t i12 = (r - i13 * ne11 * ne12) / ne11;
+        സ്ഥിരം int64_t i11 = r - i13 * ne11 * ne12 - i12 * ne11;
 
-        const src_t * src_row = (const src_t *) ((const char *) src1->data + i11 * nb11 + i12 * nb12 + i13 * nb13);
-        float * dst_row = (float *) ((char *) dst->data + i11 * nb1 + i12 * nb2 + i13 * nb3);
+        സ്ഥിരം src_t * src_row = (സ്ഥിരം src_t *) ((സ്ഥിരം അക്ഷരം *) src1->data + i11 * nb11 + i12 * nb12 + i13 * nb13);
+        ദശാംശം * dst_row = (ദശാംശം *) ((അക്ഷരം *) dst->data + i11 * nb1 + i12 * nb2 + i13 * nb3);
 
-        for (int64_t j = 0; j < n; j++) {
+        വേണ്ടി (int64_t j = 0; j < n; j++) {
             dst_row[j] = ggml_fwht_load(src_row[j]) * scale;
         }
 
         // Scalar passes
-#if defined(GGML_SIMD)
-#if defined(__ARM_FEATURE_SVE)
-        const int step = svcntw();
-#else
-        const int step = GGML_F32_EPR;
+#എങ്കിൽ defined(GGML_SIMD)
+#എങ്കിൽ defined(__ARM_FEATURE_SVE)
+        സ്ഥിരം പൂർണ്ണസംഖ്യ step = svcntw();
+#അല്ലെങ്കിൽ
+        സ്ഥിരം പൂർണ്ണസംഖ്യ step = GGML_F32_EPR;
 #endif
-#else
-        const int step = n;
+#അല്ലെങ്കിൽ
+        സ്ഥിരം പൂർണ്ണസംഖ്യ step = n;
 #endif
-        for (int64_t len = 1; len < step && len < n; len <<= 1) {
-            for (int64_t i = 0; i < n; i += 2 * len) {
-                for (int64_t j = 0; j < len; j++) {
-                    float u = dst_row[i + j];
-                    float v = dst_row[i + len + j];
+        വേണ്ടി (int64_t len = 1; len < step && len < n; len <<= 1) {
+            വേണ്ടി (int64_t i = 0; i < n; i += 2 * len) {
+                വേണ്ടി (int64_t j = 0; j < len; j++) {
+                    ദശാംശം u = dst_row[i + j];
+                    ദശാംശം v = dst_row[i + len + j];
                     dst_row[i + j] = u + v;
                     dst_row[i + len + j] = u - v;
                 }
@@ -12489,10 +12489,10 @@ static void ggml_compute_forward_fwht_impl(const ggml_compute_params * params, g
         }
 
         // SIMD passes using GGML_F32_VEC_* macros for multi-architecture support
-#if defined(GGML_SIMD)
-        for (int64_t len = step; len < n; len <<= 1) {
-            for (int64_t i = 0; i < n; i += 2 * len) {
-                for (int64_t j = 0; j < len; j += step) {
+#എങ്കിൽ defined(GGML_SIMD)
+        വേണ്ടി (int64_t len = step; len < n; len <<= 1) {
+            വേണ്ടി (int64_t i = 0; i < n; i += 2 * len) {
+                വേണ്ടി (int64_t j = 0; j < len; j += step) {
                     GGML_F32_VEC u = GGML_F32_VEC_LOAD(dst_row + i + j);
                     GGML_F32_VEC v = GGML_F32_VEC_LOAD(dst_row + i + len + j);
 
@@ -12505,21 +12505,21 @@ static void ggml_compute_forward_fwht_impl(const ggml_compute_params * params, g
     }
 }
 
-void ggml_compute_forward_fwht(const ggml_compute_params * params, ggml_tensor * dst) {
-    const ggml_tensor * src1 = dst->src[1];
+ശൂന്യം ggml_compute_forward_fwht(സ്ഥിരം ggml_compute_params * params, ggml_tensor * dst) {
+    സ്ഥിരം ggml_tensor * src1 = dst->src[1];
 
-    switch (src1->type) {
-        case GGML_TYPE_F32:
+    തിരഞ്ഞെടുപ്പ് (src1->type) {
+        അവസ്ഥ GGML_TYPE_F32:
             {
-                ggml_compute_forward_fwht_impl<float>(params, dst);
+                ggml_compute_forward_fwht_impl<ദശാംശം>(params, dst);
             }
-            break;
-        case GGML_TYPE_F16:
+            നിർത്തുക;
+        അവസ്ഥ GGML_TYPE_F16:
             {
                 ggml_compute_forward_fwht_impl<ggml_fp16_t>(params, dst);
             }
-            break;
-        default:
+            നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
             {
                 GGML_ABORT("fatal error - fwht supports F32 and F16 input");
             }
@@ -12528,14 +12528,14 @@ void ggml_compute_forward_fwht(const ggml_compute_params * params, ggml_tensor *
 
 // ggml_compute_forward_lightning_indexer
 
-void ggml_compute_forward_lightning_indexer(
-        const ggml_compute_params * params,
+ശൂന്യം ggml_compute_forward_lightning_indexer(
+        സ്ഥിരം ggml_compute_params * params,
         ggml_tensor * dst) {
 
-    const ggml_tensor * q = dst->src[0];
-    const ggml_tensor * k = dst->src[1];
-    const ggml_tensor * w = dst->src[2]; // weights
-    const ggml_tensor * m = dst->src[3]; // mask
+    സ്ഥിരം ggml_tensor * q = dst->src[0];
+    സ്ഥിരം ggml_tensor * k = dst->src[1];
+    സ്ഥിരം ggml_tensor * w = dst->src[2]; // weights
+    സ്ഥിരം ggml_tensor * m = dst->src[3]; // mask
 
     GGML_ASSERT(dst->type  == GGML_TYPE_F32);
     GGML_ASSERT(   q->type == GGML_TYPE_F32);
@@ -12546,7 +12546,7 @@ void ggml_compute_forward_lightning_indexer(
     GGML_TENSOR_LOCALS(size_t,  nbq,  q, nb)
     GGML_TENSOR_LOCALS(int64_t, nek,  k, ne)
     GGML_TENSOR_LOCALS(size_t,  nbk,  k, nb)
-    GGML_TENSOR_LOCALS(int64_t, new,  w, ne)
+    GGML_TENSOR_LOCALS(int64_t, പുതിയ,  w, ne)
     GGML_TENSOR_LOCALS(size_t,  nbw,  w, nb)
     GGML_TENSOR_LOCALS(int64_t, nem,  m, ne)
     GGML_TENSOR_LOCALS(size_t,  nbm,  m, nb)
@@ -12559,46 +12559,46 @@ void ggml_compute_forward_lightning_indexer(
     GGML_ASSERT(nbw0 == ggml_type_size(  w->type));
     GGML_ASSERT(nbm0 == ggml_type_size(  m->type));
 
-    const int n_embd    = q->ne[0];
-    const int n_head    = q->ne[1];
-    const int n_tokens  = q->ne[2];
-    const int n_stream  = q->ne[3];
-    const int n_kv      = k->ne[2];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ n_embd    = q->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ n_head    = q->ne[1];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ n_tokens  = q->ne[2];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ n_stream  = q->ne[3];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ n_kv      = k->ne[2];
 
-    ggml_to_float_t const k_to_float = ggml_get_type_traits(k->type)->to_float;
+    ggml_to_float_t സ്ഥിരം k_to_float = ggml_get_type_traits(k->type)->to_float;
     GGML_ASSERT((k->type == GGML_TYPE_F32 || k_to_float) && "lightning indexer: unsupported K-type");
 
-    const int nr  = n_kv;
-    const int ith = params->ith;
-    const int nth = params->nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nr  = n_kv;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ith = params->ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nth = params->nth;
 
     // (temporary) buffer for K converted to float
-    float * k_row_f32 = (float *) params->wdata + ith*(1*n_embd + CACHE_LINE_SIZE_F32);
+    ദശാംശം * k_row_f32 = (ദശാംശം *) params->wdata + ith*(1*n_embd + CACHE_വരി_SIZE_F32);
 
     // rows per thread
-    const int dr = (nr + nth - 1)/nth;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int ir0 = dr*ith;
-    const int ir1 = MIN(ir0 + dr, nr);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir0 = dr*ith;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ ir1 = MIN(ir0 + dr, nr);
 
-    for (int s = 0; s < n_stream; ++s) {
-        for (int t = 0; t < n_tokens; ++t) {
-            const float       *   w_row =       (float *) ((char *)   w->data + t*nbw1 +        s*nbw3);
-            const ggml_fp16_t *   m_row = (ggml_fp16_t *) ((char *)   m->data + t*nbm1 + (s%nem3)*nbm3);
-            float             * dst_row =       (float *) ((char *) dst->data + t*nb1  +        s*nb3 );
-            for (int ik = ir0; ik < ir1; ++ik) {
-                char * k_row = (char *) k->data + ik*nbk2 + s*nbk3;
-                if (k_to_float) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ s = 0; s < n_stream; ++s) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ t = 0; t < n_tokens; ++t) {
+            സ്ഥിരം ദശാംശം       *   w_row =       (ദശാംശം *) ((അക്ഷരം *)   w->data + t*nbw1 +        s*nbw3);
+            സ്ഥിരം ggml_fp16_t *   m_row = (ggml_fp16_t *) ((അക്ഷരം *)   m->data + t*nbm1 + (s%nem3)*nbm3);
+            ദശാംശം             * dst_row =       (ദശാംശം *) ((അക്ഷരം *) dst->data + t*nb1  +        s*nb3 );
+            വേണ്ടി (പൂർണ്ണസംഖ്യ ik = ir0; ik < ir1; ++ik) {
+                അക്ഷരം * k_row = (അക്ഷരം *) k->data + ik*nbk2 + s*nbk3;
+                എങ്കിൽ (k_to_float) {
                     k_to_float(k_row, k_row_f32, n_embd);
-                } else {
-                    k_row_f32 = (float *) k_row;
+                } അല്ലെങ്കിൽ {
+                    k_row_f32 = (ദശാംശം *) k_row;
                 }
-                float score = 0.0f;
-                for (int h = 0; h < n_head; ++h) {
+                ദശാംശം score = 0.0f;
+                വേണ്ടി (പൂർണ്ണസംഖ്യ h = 0; h < n_head; ++h) {
                     // dot product of q and k for head h
-                    float qk = 0.0f;
-                    const float * q_row = (float *) ((char *) q->data + h*nbq1 + t*nbq2 + s*nbq3);
+                    ദശാംശം qk = 0.0f;
+                    സ്ഥിരം ദശാംശം * q_row = (ദശാംശം *) ((അക്ഷരം *) q->data + h*nbq1 + t*nbq2 + s*nbq3);
                     ggml_vec_dot_f32(n_embd, &qk, 0, q_row, 0, k_row_f32, 0, 1);
                     // ReLU and weights (prescaled)
                     score += MAX(qk, 0.0f) * w_row[h];

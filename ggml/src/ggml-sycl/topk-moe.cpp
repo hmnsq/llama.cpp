@@ -1,77 +1,77 @@
-#include <cfloat>
-#include <initializer_list>
-#include <vector>
+#അന്തര്ഭാവ <cfloat>
+#അന്തര്ഭാവ <initializer_list>
+#അന്തര്ഭാവ <vector>
 
-#include "ggml.h"
-#include "ggml-impl.h"
-#include "ggml-backend-impl.h"
-#include "topk-moe.hpp"
+#അന്തര്ഭാവ "ggml.h"
+#അന്തര്ഭാവ "ggml-impl.h"
+#അന്തര്ഭാവ "ggml-backend-impl.h"
+#അന്തര്ഭാവ "topk-moe.hpp"
 
 // SYCL port of ggml-cuda/topk-moe.cu. The kernel is a translation of the CUDA no-bias, no-PDL
 // path of topk_moe_cuda; the fusion-detection helpers below are ported near-verbatim from
 // ggml-cuda.cu (pure graph / pointer inspection, backend-agnostic). Bias is not implemented here:
 // if a routing bias is detected, the fusion is declined and the eager path runs unchanged.
 
-struct ggml_sycl_topk_moe_args {
-    bool sigmoid{};
-    bool softmax{};
-    bool delayed_softmax{};
-    bool prob_bias{};
-    bool norm{};
-    bool scale{};
+ഘടന ggml_sycl_topk_moe_args {
+    തർക്കം sigmoid{};
+    തർക്കം softmax{};
+    തർക്കം delayed_softmax{};
+    തർക്കം prob_bias{};
+    തർക്കം norm{};
+    തർക്കം scale{};
 };
 
-struct topk_moe_config {
-    bool use_sigmoid;
-    bool with_norm;
-    bool delayed_softmax;
+ഘടന topk_moe_config {
+    തർക്കം use_sigmoid;
+    തർക്കം with_norm;
+    തർക്കം delayed_softmax;
 };
 
 // warp-local softmax used for both the pre-top-k logits and the post-top-k delayed path
-template <int experts_per_thread, bool use_limit>
-static inline void softmax_warp_inplace(float (&vals)[experts_per_thread], const int limit, const int lane) {
-    float max_val = -INFINITY;
+template <പൂർണ്ണസംഖ്യ experts_per_thread, തർക്കം use_limit>
+സ്ഥിതം വരിയിൽ ശൂന്യം softmax_warp_inplace(ദശാംശം (&vals)[experts_per_thread], സ്ഥിരം പൂർണ്ണസംഖ്യ limit, സ്ഥിരം പൂർണ്ണസംഖ്യ lane) {
+    ദശാംശം max_val = -INFINITY;
 #pragma unroll
-    for (int i = 0; i < experts_per_thread; i++) {
-        const int  idx    = lane + i * WARP_SIZE;
-        const bool active = !use_limit || (idx < limit);
-        if (active) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < experts_per_thread; i++) {
+        സ്ഥിരം പൂർണ്ണസംഖ്യ  idx    = lane + i * WARP_SIZE;
+        സ്ഥിരം തർക്കം active = !use_limit || (idx < limit);
+        എങ്കിൽ (active) {
             max_val = sycl::fmax(max_val, vals[i]);
         }
     }
     max_val = warp_reduce_max<WARP_SIZE>(max_val);
 
-    float sum = 0.f;
+    ദശാംശം sum = 0.f;
 #pragma unroll
-    for (int i = 0; i < experts_per_thread; i++) {
-        const int  idx    = lane + i * WARP_SIZE;
-        const bool active = !use_limit || (idx < limit);
-        if (active) {
-            const float val = sycl::exp(vals[i] - max_val);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < experts_per_thread; i++) {
+        സ്ഥിരം പൂർണ്ണസംഖ്യ  idx    = lane + i * WARP_SIZE;
+        സ്ഥിരം തർക്കം active = !use_limit || (idx < limit);
+        എങ്കിൽ (active) {
+            സ്ഥിരം ദശാംശം val = sycl::exp(vals[i] - max_val);
             vals[i]         = val;
             sum += val;
-        } else {
+        } അല്ലെങ്കിൽ {
             vals[i] = 0.f;
         }
     }
     sum = warp_reduce_sum<WARP_SIZE>(sum);
 
-    const float inv_sum = 1.0f / sum;
+    സ്ഥിരം ദശാംശം inv_sum = 1.0f / sum;
 #pragma unroll
-    for (int i = 0; i < experts_per_thread; i++) {
-        const int idx = lane + i * WARP_SIZE;
-        if (!use_limit || idx < limit) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < experts_per_thread; i++) {
+        സ്ഥിരം പൂർണ്ണസംഖ്യ idx = lane + i * WARP_SIZE;
+        എങ്കിൽ (!use_limit || idx < limit) {
             vals[i] *= inv_sum;
         }
     }
 }
 
-template <int experts_per_thread, bool use_limit>
-static inline void sigmoid_warp_inplace(float (&vals)[experts_per_thread], const int limit, const int lane) {
+template <പൂർണ്ണസംഖ്യ experts_per_thread, തർക്കം use_limit>
+സ്ഥിതം വരിയിൽ ശൂന്യം sigmoid_warp_inplace(ദശാംശം (&vals)[experts_per_thread], സ്ഥിരം പൂർണ്ണസംഖ്യ limit, സ്ഥിരം പൂർണ്ണസംഖ്യ lane) {
 #pragma unroll
-    for (int i = 0; i < experts_per_thread; i++) {
-        const int  idx    = lane + i * WARP_SIZE;
-        const bool active = !use_limit || (idx < limit);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < experts_per_thread; i++) {
+        സ്ഥിരം പൂർണ്ണസംഖ്യ  idx    = lane + i * WARP_SIZE;
+        സ്ഥിരം തർക്കം active = !use_limit || (idx < limit);
         vals[i]           = active ? 1.f / (1.f + sycl::exp(-vals[i])) : -INFINITY;
     }
 }
@@ -86,52 +86,52 @@ static inline void sigmoid_warp_inplace(float (&vals)[experts_per_thread], const
     It is intended as a fusion of the softmax->top-k->get_rows pipeline for MoE models.
     One sub-group handles one row/token, mirroring topk_moe_cuda's one-warp-per-row layout.
 */
-template <int n_experts>
-static void topk_moe_kernel(const float * __restrict__ logits,
-                            float * __restrict__       weights,
+template <പൂർണ്ണസംഖ്യ n_experts>
+സ്ഥിതം ശൂന്യം topk_moe_kernel(സ്ഥിരം ദശാംശം * __restrict__ logits,
+                            ദശാംശം * __restrict__       weights,
                             int32_t * __restrict__     ids,
-                            const int                  n_rows,
-                            const int                  n_expert_used,
-                            const float                clamp_val,
-                            const float                scale_val,
-                            const topk_moe_config       config) {
+                            സ്ഥിരം പൂർണ്ണസംഖ്യ                  n_rows,
+                            സ്ഥിരം പൂർണ്ണസംഖ്യ                  n_expert_used,
+                            സ്ഥിരം ദശാംശം                clamp_val,
+                            സ്ഥിരം ദശാംശം                scale_val,
+                            സ്ഥിരം topk_moe_config       config) {
     auto      item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<1>();
-    const int row       = item_ct1.get_group(0);
-    if (row >= n_rows) {
-        return;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ row       = item_ct1.get_group(0);
+    എങ്കിൽ (row >= n_rows) {
+        തിരികെ;
     }
-    const int lane = item_ct1.get_local_id(0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ lane = item_ct1.get_local_id(0);
 
     logits  += (size_t) n_experts * row;
     weights += (size_t) n_expert_used * row;
     ids     += (size_t) n_experts * row;  // ids row stride is n_experts (matches the argsort tensor)
 
-    constexpr int experts_per_thread = (n_experts > WARP_SIZE) ? n_experts / WARP_SIZE : 1;
+    constexpr പൂർണ്ണസംഖ്യ experts_per_thread = (n_experts > WARP_SIZE) ? n_experts / WARP_SIZE : 1;
 
-    float wt[experts_per_thread];
+    ദശാംശം wt[experts_per_thread];
 #pragma unroll
-    for (int i = 0; i < experts_per_thread; i++) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < experts_per_thread; i++) {
         wt[i] = -INFINITY;
     }
 #pragma unroll
-    for (int i = 0; i < n_experts; i += WARP_SIZE) {
-        const int expert  = i + lane;
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < n_experts; i += WARP_SIZE) {
+        സ്ഥിരം പൂർണ്ണസംഖ്യ expert  = i + lane;
         wt[i / WARP_SIZE] = (n_experts % WARP_SIZE == 0 || expert < n_experts) ? logits[expert] : -INFINITY;
     }
 
-    if (!config.delayed_softmax) {
-        if (config.use_sigmoid) {
-            sigmoid_warp_inplace<experts_per_thread, false>(wt, n_experts, lane);
-        } else {
-            softmax_warp_inplace<experts_per_thread, false>(wt, n_experts, lane);
+    എങ്കിൽ (!config.delayed_softmax) {
+        എങ്കിൽ (config.use_sigmoid) {
+            sigmoid_warp_inplace<experts_per_thread, അസത്യം>(wt, n_experts, lane);
+        } അല്ലെങ്കിൽ {
+            softmax_warp_inplace<experts_per_thread, അസത്യം>(wt, n_experts, lane);
         }
     }
 
     // Sanitize NaN to -FLT_MAX so the iterative argmax produces unique expert IDs. NaN comparisons
     // always return false, which would cause the same expert to be selected repeatedly.
 #pragma unroll
-    for (int i = 0; i < experts_per_thread; i++) {
-        if (sycl::isnan(wt[i])) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < experts_per_thread; i++) {
+        എങ്കിൽ (sycl::isnan(wt[i])) {
             wt[i] = -FLT_MAX;
         }
     }
@@ -140,78 +140,78 @@ static void topk_moe_kernel(const float * __restrict__ logits,
     // argmax reduce over n_expert_used, each time marking the selected expert as -inf to exclude it
     // from the next iteration.
 
-    float wt_sum = 0.f;
-    float output_weights[experts_per_thread];
+    ദശാംശം wt_sum = 0.f;
+    ദശാംശം output_weights[experts_per_thread];
 #pragma unroll
-    for (int i = 0; i < experts_per_thread; i++) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < experts_per_thread; i++) {
         output_weights[i] = 0.f;
     }
 
-    const sycl::sub_group sg = item_ct1.get_sub_group();
+    സ്ഥിരം sycl::sub_group sg = item_ct1.get_sub_group();
 
-    for (int k = 0; k < n_expert_used; k++) {
-        float max_val    = wt[0];
-        int   max_expert = lane;
+    വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < n_expert_used; k++) {
+        ദശാംശം max_val    = wt[0];
+        പൂർണ്ണസംഖ്യ   max_expert = lane;
 #pragma unroll
-        for (int i = 1; i < experts_per_thread; i++) {
-            const int expert = lane + i * WARP_SIZE;
-            if ((n_experts % WARP_SIZE == 0 || expert < n_experts) && wt[i] > max_val) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 1; i < experts_per_thread; i++) {
+            സ്ഥിരം പൂർണ്ണസംഖ്യ expert = lane + i * WARP_SIZE;
+            എങ്കിൽ ((n_experts % WARP_SIZE == 0 || expert < n_experts) && wt[i] > max_val) {
                 max_val    = wt[i];
                 max_expert = expert;
             }
         }
 #pragma unroll
-        for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
-            const float val    = dpct::permute_sub_group_by_xor(sg, max_val, mask);
-            const int   expert = dpct::permute_sub_group_by_xor(sg, max_expert, mask);
-            if (val > max_val || (val == max_val && expert < max_expert)) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
+            സ്ഥിരം ദശാംശം val    = dpct::permute_sub_group_by_xor(sg, max_val, mask);
+            സ്ഥിരം പൂർണ്ണസംഖ്യ   expert = dpct::permute_sub_group_by_xor(sg, max_expert, mask);
+            എങ്കിൽ (val > max_val || (val == max_val && expert < max_expert)) {
                 max_val    = val;
                 max_expert = expert;
             }
         }
 
-        if ((max_expert & (WARP_SIZE - 1)) == lane) {
+        എങ്കിൽ ((max_expert & (WARP_SIZE - 1)) == lane) {
             wt[max_expert / WARP_SIZE] = -INFINITY;
         }
-        if ((k & (WARP_SIZE - 1)) == lane) {
+        എങ്കിൽ ((k & (WARP_SIZE - 1)) == lane) {
             output_weights[k / WARP_SIZE] = max_val;
         }
-        if ((max_expert & (WARP_SIZE - 1)) == lane) {
+        എങ്കിൽ ((max_expert & (WARP_SIZE - 1)) == lane) {
             ids[k] = max_expert;
-            if (config.with_norm) {
+            എങ്കിൽ (config.with_norm) {
                 wt_sum += max_val;
             }
         }
     }
 
-    if (config.with_norm) {
+    എങ്കിൽ (config.with_norm) {
         wt_sum          = warp_reduce_sum<WARP_SIZE>(wt_sum);
         wt_sum          = sycl::fmax(wt_sum, clamp_val);
-        const float inv = 1.0f / wt_sum;
+        സ്ഥിരം ദശാംശം inv = 1.0f / wt_sum;
 #pragma unroll
-        for (int i = 0; i < experts_per_thread; i++) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < experts_per_thread; i++) {
             output_weights[i] *= inv;
         }
     }
 
-    if (config.delayed_softmax) {
-        softmax_warp_inplace<experts_per_thread, true>(output_weights, n_expert_used, lane);
+    എങ്കിൽ (config.delayed_softmax) {
+        softmax_warp_inplace<experts_per_thread, സത്യം>(output_weights, n_expert_used, lane);
     }
 
 #pragma unroll
-    for (int i = 0; i < experts_per_thread; i++) {
-        const int idx = i * WARP_SIZE + lane;
-        if (idx < n_expert_used) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < experts_per_thread; i++) {
+        സ്ഥിരം പൂർണ്ണസംഖ്യ idx = i * WARP_SIZE + lane;
+        എങ്കിൽ (idx < n_expert_used) {
             weights[idx] = output_weights[i] * scale_val;
         }
     }
 }
 
-template <int n_experts>
-static void launch_topk_moe(queue_ptr stream, const float * logits, float * weights, int32_t * ids, int n_rows,
-                            int n_expert_used, float clamp_val, float scale_val, const topk_moe_config & config) {
-    const sycl::range<1> block_dims(WARP_SIZE);
-    const sycl::range<1> block_nums(n_rows);
+template <പൂർണ്ണസംഖ്യ n_experts>
+സ്ഥിതം ശൂന്യം launch_topk_moe(queue_ptr stream, സ്ഥിരം ദശാംശം * logits, ദശാംശം * weights, int32_t * ids, പൂർണ്ണസംഖ്യ n_rows,
+                            പൂർണ്ണസംഖ്യ n_expert_used, ദശാംശം clamp_val, ദശാംശം scale_val, സ്ഥിരം topk_moe_config & config) {
+    സ്ഥിരം sycl::range<1> block_dims(WARP_SIZE);
+    സ്ഥിരം sycl::range<1> block_nums(n_rows);
     stream->parallel_for(sycl::nd_range<1>(block_nums * block_dims, block_dims),
                          [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
                              topk_moe_kernel<n_experts>(logits, weights, ids, n_rows, n_expert_used, clamp_val,
@@ -220,30 +220,30 @@ static void launch_topk_moe(queue_ptr stream, const float * logits, float * weig
                          });
 }
 
-static void ggml_sycl_op_topk_moe(ggml_backend_sycl_context &     ctx,
-                                  const ggml_tensor *             logits,
+സ്ഥിതം ശൂന്യം ggml_sycl_op_topk_moe(ggml_backend_sycl_context &     ctx,
+                                  സ്ഥിരം ggml_tensor *             logits,
                                   ggml_tensor *                   weights,
                                   ggml_tensor *                   ids,
-                                  const ggml_tensor *             clamp,
-                                  const ggml_tensor *             scale,
-                                  const ggml_sycl_topk_moe_args & args) {
+                                  സ്ഥിരം ggml_tensor *             clamp,
+                                  സ്ഥിരം ggml_tensor *             scale,
+                                  സ്ഥിരം ggml_sycl_topk_moe_args & args) {
     GGML_ASSERT(logits->type  == GGML_TYPE_F32);
     GGML_ASSERT(weights->type == GGML_TYPE_F32);
     GGML_ASSERT(ids->type     == GGML_TYPE_I32);
 
-    const int n_experts     = logits->ne[0];
-    const int n_rows        = logits->ne[1];
-    const int n_expert_used = weights->ne[1];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ n_experts     = logits->ne[0];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ n_rows        = logits->ne[1];
+    സ്ഥിരം പൂർണ്ണസംഖ്യ n_expert_used = weights->ne[1];
 
     GGML_ASSERT(ids->nb[1] / ggml_type_size(ids->type) == (size_t) n_experts);
 
-    const float * logits_d  = (const float *) logits->data;
-    float *       weights_d = (float *) weights->data;
+    സ്ഥിരം ദശാംശം * logits_d  = (സ്ഥിരം ദശാംശം *) logits->data;
+    ദശാംശം *       weights_d = (ദശാംശം *) weights->data;
     int32_t *     ids_d     = (int32_t *) ids->data;
 
-    const bool  with_norm = clamp != nullptr;
-    const float clamp_val = clamp ? ggml_get_op_params_f32(clamp, 0) : -INFINITY;
-    const float scale_val = scale ? ggml_get_op_params_f32(scale, 0) : 1.0f;
+    സ്ഥിരം തർക്കം  with_norm = clamp != nullptr;
+    സ്ഥിരം ദശാംശം clamp_val = clamp ? ggml_get_op_params_f32(clamp, 0) : -INFINITY;
+    സ്ഥിരം ദശാംശം scale_val = scale ? ggml_get_op_params_f32(scale, 0) : 1.0f;
 
     topk_moe_config config;
     config.use_sigmoid     = args.sigmoid;
@@ -253,367 +253,367 @@ static void ggml_sycl_op_topk_moe(ggml_backend_sycl_context &     ctx,
     queue_ptr stream = ctx.stream();
     ggml_sycl_set_device(ctx.device);
 
-    switch (n_experts) {
-        case 1:
+    തിരഞ്ഞെടുപ്പ് (n_experts) {
+        അവസ്ഥ 1:
             launch_topk_moe<1>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
                                config);
-            break;
-        case 2:
+            നിർത്തുക;
+        അവസ്ഥ 2:
             launch_topk_moe<2>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
                                config);
-            break;
-        case 4:
+            നിർത്തുക;
+        അവസ്ഥ 4:
             launch_topk_moe<4>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
                                config);
-            break;
-        case 8:
+            നിർത്തുക;
+        അവസ്ഥ 8:
             launch_topk_moe<8>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
                                config);
-            break;
-        case 16:
+            നിർത്തുക;
+        അവസ്ഥ 16:
             launch_topk_moe<16>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
                                 config);
-            break;
-        case 32:
+            നിർത്തുക;
+        അവസ്ഥ 32:
             launch_topk_moe<32>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
                                 config);
-            break;
-        case 64:
+            നിർത്തുക;
+        അവസ്ഥ 64:
             launch_topk_moe<64>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
                                 config);
-            break;
-        case 128:
+            നിർത്തുക;
+        അവസ്ഥ 128:
             launch_topk_moe<128>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
                                  config);
-            break;
-        case 256:
+            നിർത്തുക;
+        അവസ്ഥ 256:
             launch_topk_moe<256>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
                                  config);
-            break;
-        case 512:
+            നിർത്തുക;
+        അവസ്ഥ 512:
             launch_topk_moe<512>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
                                  config);
-            break;
-        default:
-            GGML_ASSERT(false && "fatal error");
+            നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
+            GGML_ASSERT(അസത്യം && "fatal error");
     }
 }
 
-static bool ggml_sycl_should_use_topk_moe(const ggml_tensor * gating_op, const ggml_tensor * weights,
-                                          const ggml_tensor * logits, const ggml_tensor * ids) {
-    const int n_expert = ids->nb[1] / ids->nb[0];
-    if ((n_expert & (n_expert - 1)) != 0 || n_expert > 512) {
-        return false;
+സ്ഥിതം തർക്കം ggml_sycl_should_use_topk_moe(സ്ഥിരം ggml_tensor * gating_op, സ്ഥിരം ggml_tensor * weights,
+                                          സ്ഥിരം ggml_tensor * logits, സ്ഥിരം ggml_tensor * ids) {
+    സ്ഥിരം പൂർണ്ണസംഖ്യ n_expert = ids->nb[1] / ids->nb[0];
+    എങ്കിൽ ((n_expert & (n_expert - 1)) != 0 || n_expert > 512) {
+        തിരികെ അസത്യം;
     }
 
-    if (!ggml_is_contiguous(weights) || !ggml_is_contiguous(logits)) {
-        return false;
+    എങ്കിൽ (!ggml_is_contiguous(weights) || !ggml_is_contiguous(logits)) {
+        തിരികെ അസത്യം;
     }
 
-    if (gating_op->op == GGML_OP_SOFT_MAX) {
-        float scale    = 1.0f;
-        float max_bias = 0.0f;
+    എങ്കിൽ (gating_op->op == GGML_OP_SOFT_MAX) {
+        ദശാംശം scale    = 1.0f;
+        ദശാംശം max_bias = 0.0f;
 
-        memcpy(&scale, (const float *) gating_op->op_params + 0, sizeof(float));
-        memcpy(&max_bias, (const float *) gating_op->op_params + 1, sizeof(float));
+        memcpy(&scale, (സ്ഥിരം ദശാംശം *) gating_op->op_params + 0, വലുപ്പം(ദശാംശം));
+        memcpy(&max_bias, (സ്ഥിരം ദശാംശം *) gating_op->op_params + 1, വലുപ്പം(ദശാംശം));
 
-        if (!ggml_is_contiguous(gating_op->src[0])) {
-            return false;
+        എങ്കിൽ (!ggml_is_contiguous(gating_op->src[0])) {
+            തിരികെ അസത്യം;
         }
-        if (scale != 1.0f || max_bias != 0.0f) {
-            return false;
+        എങ്കിൽ (scale != 1.0f || max_bias != 0.0f) {
+            തിരികെ അസത്യം;
         }
         // don't fuse when masks or sinks are present
-        if (gating_op->src[1] || gating_op->src[2]) {
-            return false;
+        എങ്കിൽ (gating_op->src[1] || gating_op->src[2]) {
+            തിരികെ അസത്യം;
         }
-    } else if (gating_op->op == GGML_OP_UNARY) {
-        if (ggml_get_unary_op(gating_op) != GGML_UNARY_OP_SIGMOID) {
-            return false;
+    } അല്ലെങ്കിൽ എങ്കിൽ (gating_op->op == GGML_OP_UNARY) {
+        എങ്കിൽ (ggml_get_unary_op(gating_op) != GGML_UNARY_OP_SIGMOID) {
+            തിരികെ അസത്യം;
         }
     }
 
-    return true;
+    തിരികെ സത്യം;
 }
 
 // ported from ggml_cuda_topk_moe_fusion - pure graph inspection, backend-agnostic
-static bool ggml_sycl_topk_moe_fusion(const ggml_cgraph * cgraph, int node_idx, ggml_sycl_topk_moe_args & args) {
+സ്ഥിതം തർക്കം ggml_sycl_topk_moe_fusion(സ്ഥിരം ggml_cgraph * cgraph, പൂർണ്ണസംഖ്യ കണ്ണി_idx, ggml_sycl_topk_moe_args & args) {
     args = ggml_sycl_topk_moe_args{};
 
-    const int      n_nodes = cgraph->n_nodes;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ      n_nodes = cgraph->n_nodes;
     ggml_tensor ** nodes   = cgraph->nodes;
 
-    if (nodes[node_idx]->op == GGML_OP_SOFT_MAX) {
-        args.softmax = true;
+    എങ്കിൽ (nodes[കണ്ണി_idx]->op == GGML_OP_SOFT_MAX) {
+        args.softmax = സത്യം;
     }
 
-    if (nodes[node_idx]->op == GGML_OP_UNARY) {
-        if (ggml_get_unary_op(nodes[node_idx]) != GGML_UNARY_OP_SIGMOID) {
-            return false;
+    എങ്കിൽ (nodes[കണ്ണി_idx]->op == GGML_OP_UNARY) {
+        എങ്കിൽ (ggml_get_unary_op(nodes[കണ്ണി_idx]) != GGML_UNARY_OP_SIGMOID) {
+            തിരികെ അസത്യം;
         }
-        args.sigmoid = true;
+        args.sigmoid = സത്യം;
     }
 
-    if (nodes[node_idx]->op == GGML_OP_ARGSORT) {
-        args.delayed_softmax = true;
+    എങ്കിൽ (nodes[കണ്ണി_idx]->op == GGML_OP_ARGSORT) {
+        args.delayed_softmax = സത്യം;
     }
 
-    node_idx++;
+    കണ്ണി_idx++;
 
-    if (args.sigmoid || args.softmax) {
+    എങ്കിൽ (args.sigmoid || args.softmax) {
         // SOFTMAX -> RESHAPE
-        if (node_idx >= n_nodes || nodes[node_idx]->op != GGML_OP_RESHAPE ||
-            nodes[node_idx]->src[0] != nodes[node_idx - 1]) {
-            return false;
+        എങ്കിൽ (കണ്ണി_idx >= n_nodes || nodes[കണ്ണി_idx]->op != GGML_OP_RESHAPE ||
+            nodes[കണ്ണി_idx]->src[0] != nodes[കണ്ണി_idx - 1]) {
+            തിരികെ അസത്യം;
         }
-        ggml_tensor * probs_reshaped = nodes[node_idx];
-        node_idx++;
+        ggml_tensor * probs_reshaped = nodes[കണ്ണി_idx];
+        കണ്ണി_idx++;
 
-        if (node_idx >= n_nodes) {
-            return false;
+        എങ്കിൽ (കണ്ണി_idx >= n_nodes) {
+            തിരികെ അസത്യം;
         }
 
         // src of bias add is the unreshaped probs (-2 instead of -1)
-        if (nodes[node_idx]->op == GGML_OP_ADD && nodes[node_idx]->src[0] == nodes[node_idx - 2]) {
-            args.prob_bias = true;
-            node_idx++;
+        എങ്കിൽ (nodes[കണ്ണി_idx]->op == GGML_OP_ADD && nodes[കണ്ണി_idx]->src[0] == nodes[കണ്ണി_idx - 2]) {
+            args.prob_bias = സത്യം;
+            കണ്ണി_idx++;
         }
         // RESHAPE/ADD -> ARGSORT
-        if (node_idx >= n_nodes || nodes[node_idx]->op != GGML_OP_ARGSORT) {
-            return false;
+        എങ്കിൽ (കണ്ണി_idx >= n_nodes || nodes[കണ്ണി_idx]->op != GGML_OP_ARGSORT) {
+            തിരികെ അസത്യം;
         }
 
-        if (args.prob_bias && nodes[node_idx]->src[0] != nodes[node_idx - 1]) {
-            return false;
-        } else if (!args.prob_bias && nodes[node_idx]->src[0] != nodes[node_idx - 2]) {
-            return false;
+        എങ്കിൽ (args.prob_bias && nodes[കണ്ണി_idx]->src[0] != nodes[കണ്ണി_idx - 1]) {
+            തിരികെ അസത്യം;
+        } അല്ലെങ്കിൽ എങ്കിൽ (!args.prob_bias && nodes[കണ്ണി_idx]->src[0] != nodes[കണ്ണി_idx - 2]) {
+            തിരികെ അസത്യം;
         }
 
-        node_idx++;
+        കണ്ണി_idx++;
 
         // ARGSORT -> VIEW
-        if (node_idx >= n_nodes || nodes[node_idx]->op != GGML_OP_VIEW ||
-            nodes[node_idx]->src[0] != nodes[node_idx - 1]) {
-            return false;
+        എങ്കിൽ (കണ്ണി_idx >= n_nodes || nodes[കണ്ണി_idx]->op != GGML_OP_VIEW ||
+            nodes[കണ്ണി_idx]->src[0] != nodes[കണ്ണി_idx - 1]) {
+            തിരികെ അസത്യം;
         }
-        node_idx++;
+        കണ്ണി_idx++;
 
-        if (node_idx >= n_nodes || nodes[node_idx]->op != GGML_OP_GET_ROWS) {
-            return false;
+        എങ്കിൽ (കണ്ണി_idx >= n_nodes || nodes[കണ്ണി_idx]->op != GGML_OP_GET_ROWS) {
+            തിരികെ അസത്യം;
         }
 
         // GET_ROWS
-        if (nodes[node_idx]->src[0] != probs_reshaped || nodes[node_idx]->src[1] != nodes[node_idx - 1]) {
-            return false;
+        എങ്കിൽ (nodes[കണ്ണി_idx]->src[0] != probs_reshaped || nodes[കണ്ണി_idx]->src[1] != nodes[കണ്ണി_idx - 1]) {
+            തിരികെ അസത്യം;
         }
-        node_idx++;
-    } else if (args.delayed_softmax) {
-        if (node_idx - 2 < 0) {
-            return false;
+        കണ്ണി_idx++;
+    } അല്ലെങ്കിൽ എങ്കിൽ (args.delayed_softmax) {
+        എങ്കിൽ (കണ്ണി_idx - 2 < 0) {
+            തിരികെ അസത്യം;
         }
-        ggml_tensor * probs_reshaped = nodes[node_idx - 2];
+        ggml_tensor * probs_reshaped = nodes[കണ്ണി_idx - 2];
 
         // VIEW -> ARGSORT
-        if (node_idx >= n_nodes || nodes[node_idx]->op != GGML_OP_VIEW ||
-            nodes[node_idx]->src[0] != nodes[node_idx - 1]) {
-            return false;
+        എങ്കിൽ (കണ്ണി_idx >= n_nodes || nodes[കണ്ണി_idx]->op != GGML_OP_VIEW ||
+            nodes[കണ്ണി_idx]->src[0] != nodes[കണ്ണി_idx - 1]) {
+            തിരികെ അസത്യം;
         }
-        node_idx++;
+        കണ്ണി_idx++;
 
         // GET_ROWS
-        if (node_idx >= n_nodes || nodes[node_idx]->src[1] != nodes[node_idx - 1] ||
-            nodes[node_idx]->src[0] != probs_reshaped) {
-            return false;
+        എങ്കിൽ (കണ്ണി_idx >= n_nodes || nodes[കണ്ണി_idx]->src[1] != nodes[കണ്ണി_idx - 1] ||
+            nodes[കണ്ണി_idx]->src[0] != probs_reshaped) {
+            തിരികെ അസത്യം;
         }
-        node_idx++;
+        കണ്ണി_idx++;
 
-        static const std::vector<ggml_op> remaining_ops = { GGML_OP_RESHAPE, GGML_OP_SOFT_MAX, GGML_OP_RESHAPE };
+        സ്ഥിതം സ്ഥിരം std::vector<ggml_op> remaining_ops = { GGML_OP_RESHAPE, GGML_OP_SOFT_MAX, GGML_OP_RESHAPE };
 
-        for (const ggml_op op : remaining_ops) {
-            if (node_idx >= n_nodes || nodes[node_idx]->op != op || nodes[node_idx]->src[0] != nodes[node_idx - 1]) {
-                return false;
+        വേണ്ടി (സ്ഥിരം ggml_op op : remaining_ops) {
+            എങ്കിൽ (കണ്ണി_idx >= n_nodes || nodes[കണ്ണി_idx]->op != op || nodes[കണ്ണി_idx]->src[0] != nodes[കണ്ണി_idx - 1]) {
+                തിരികെ അസത്യം;
             }
-            node_idx++;
+            കണ്ണി_idx++;
         }
     }
 
     // at this point we can check for norm + scale; everything is now at least valid up to the norm
-    if (node_idx >= n_nodes) {
-        return true;
+    എങ്കിൽ (കണ്ണി_idx >= n_nodes) {
+        തിരികെ സത്യം;
     }
 
-    if (nodes[node_idx]->op == GGML_OP_RESHAPE) {
+    എങ്കിൽ (nodes[കണ്ണി_idx]->op == GGML_OP_RESHAPE) {
         // check RESHAPE -> SUM_ROWS -> CLAMP -> DIV -> RESHAPE
-        static const std::vector<ggml_op> norm_ops = { GGML_OP_RESHAPE, GGML_OP_SUM_ROWS, GGML_OP_CLAMP };
+        സ്ഥിതം സ്ഥിരം std::vector<ggml_op> norm_ops = { GGML_OP_RESHAPE, GGML_OP_SUM_ROWS, GGML_OP_CLAMP };
 
-        args.norm = true;
-        for (const ggml_op op : norm_ops) {
-            if (nodes[node_idx]->op == op && nodes[node_idx]->src[0] == nodes[node_idx - 1]) {
-                node_idx++;
-            } else {
-                args.norm = false;
-                return true;
+        args.norm = സത്യം;
+        വേണ്ടി (സ്ഥിരം ggml_op op : norm_ops) {
+            എങ്കിൽ (nodes[കണ്ണി_idx]->op == op && nodes[കണ്ണി_idx]->src[0] == nodes[കണ്ണി_idx - 1]) {
+                കണ്ണി_idx++;
+            } അല്ലെങ്കിൽ {
+                args.norm = അസത്യം;
+                തിരികെ സത്യം;
             }
         }
 
         // DIV <- CLAMP, RESHAPE
-        if (nodes[node_idx]->op != GGML_OP_DIV || nodes[node_idx]->src[1] != nodes[node_idx - 1] ||
-            nodes[node_idx]->src[0] != nodes[node_idx - 3]) {
-            args.norm = false;
-            return true;
+        എങ്കിൽ (nodes[കണ്ണി_idx]->op != GGML_OP_DIV || nodes[കണ്ണി_idx]->src[1] != nodes[കണ്ണി_idx - 1] ||
+            nodes[കണ്ണി_idx]->src[0] != nodes[കണ്ണി_idx - 3]) {
+            args.norm = അസത്യം;
+            തിരികെ സത്യം;
         }
-        node_idx++;
+        കണ്ണി_idx++;
 
-        if (nodes[node_idx]->op != GGML_OP_RESHAPE || nodes[node_idx]->src[0] != nodes[node_idx - 1]) {
-            args.norm = false;
-            return true;
+        എങ്കിൽ (nodes[കണ്ണി_idx]->op != GGML_OP_RESHAPE || nodes[കണ്ണി_idx]->src[0] != nodes[കണ്ണി_idx - 1]) {
+            args.norm = അസത്യം;
+            തിരികെ സത്യം;
         }
-        node_idx++;
+        കണ്ണി_idx++;
     }
 
-    if (nodes[node_idx]->op == GGML_OP_SCALE && nodes[node_idx]->src[0] == nodes[node_idx - 1]) {
-        args.scale = true;
+    എങ്കിൽ (nodes[കണ്ണി_idx]->op == GGML_OP_SCALE && nodes[കണ്ണി_idx]->src[0] == nodes[കണ്ണി_idx - 1]) {
+        args.scale = സത്യം;
     }
 
-    return true;
+    തിരികെ സത്യം;
 }
 
 // returns whether the write (out) nodes overwrite the read nodes in operation
 // ported from ggml_cuda_check_fusion_memory_ranges - pure pointer/range inspection
-static bool ggml_sycl_check_fusion_memory_ranges(const ggml_cgraph * cgraph, const int node_idx,
-                                                 const int node_count, const int * out_nodes, const int out_count,
-                                                 const bool is_topk_moe = false) {
-    auto nodes_overlap = [&](const ggml_tensor * a, const ggml_tensor * b) {
-        const int64_t a_start = (int64_t) a->data;
-        const int64_t a_end   = a_start + ggml_backend_buft_get_alloc_size(a->buffer->buft, a);
+സ്ഥിതം തർക്കം ggml_sycl_check_fusion_memory_ranges(സ്ഥിരം ggml_cgraph * cgraph, സ്ഥിരം പൂർണ്ണസംഖ്യ കണ്ണി_idx,
+                                                 സ്ഥിരം പൂർണ്ണസംഖ്യ കണ്ണി_എണ്ണം, സ്ഥിരം പൂർണ്ണസംഖ്യ * out_nodes, സ്ഥിരം പൂർണ്ണസംഖ്യ out_എണ്ണം,
+                                                 സ്ഥിരം തർക്കം is_topk_moe = അസത്യം) {
+    auto nodes_overlap = [&](സ്ഥിരം ggml_tensor * a, സ്ഥിരം ggml_tensor * b) {
+        സ്ഥിരം int64_t a_start = (int64_t) a->data;
+        സ്ഥിരം int64_t a_end   = a_start + ggml_backend_buft_get_alloc_size(a->buffer->buft, a);
 
-        const int64_t b_start = (int64_t) b->data;
-        const int64_t b_end   = b_start + ggml_backend_buft_get_alloc_size(b->buffer->buft, b);
+        സ്ഥിരം int64_t b_start = (int64_t) b->data;
+        സ്ഥിരം int64_t b_end   = b_start + ggml_backend_buft_get_alloc_size(b->buffer->buft, b);
 
-        if ((b_start <= a_start && a_start < b_end) || (a_start <= b_start && b_start < a_end)) {
-            return true;
+        എങ്കിൽ ((b_start <= a_start && a_start < b_end) || (a_start <= b_start && b_start < a_end)) {
+            തിരികെ സത്യം;
         }
 
-        return false;
+        തിരികെ അസത്യം;
     };
 
-    bool is_ok = true;
+    തർക്കം is_ok = സത്യം;
     // exception for topk-moe, as each row is read entirely before writing
-    if (ggml_nrows(cgraph->nodes[node_idx]) == 1 && is_topk_moe) {
-        return true;
+    എങ്കിൽ (ggml_nrows(cgraph->nodes[കണ്ണി_idx]) == 1 && is_topk_moe) {
+        തിരികെ സത്യം;
     }
 
-    for (int i = 0; i < out_count; ++i) {
-        const ggml_tensor * dst = cgraph->nodes[out_nodes[i]];
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < out_എണ്ണം; ++i) {
+        സ്ഥിരം ggml_tensor * dst = cgraph->nodes[out_nodes[i]];
 
-        for (int j = node_idx; j < node_idx + node_count; ++j) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ j = കണ്ണി_idx; j < കണ്ണി_idx + കണ്ണി_എണ്ണം; ++j) {
             // loop over all srcs of all nodes in the fusion. If the src overlaps the destination and
             // the src is not an intermediate node that's being elided, then disable fusion.
-            for (int src_idx = 0; src_idx < GGML_MAX_SRC; ++src_idx) {
-                const ggml_tensor * src = cgraph->nodes[j]->src[src_idx];
+            വേണ്ടി (പൂർണ്ണസംഖ്യ src_idx = 0; src_idx < GGML_MAX_SRC; ++src_idx) {
+                സ്ഥിരം ggml_tensor * src = cgraph->nodes[j]->src[src_idx];
 
-                if (!src || src->op == GGML_OP_NONE) {
-                    continue;
+                എങ്കിൽ (!src || src->op == GGML_OP_NONE) {
+                    തുടരുക;
                 }
 
-                if (nodes_overlap(dst, src)) {
-                    bool found = false;
+                എങ്കിൽ (nodes_overlap(dst, src)) {
+                    തർക്കം found = അസത്യം;
 
-                    for (int k = node_idx; k < j; ++k) {
-                        if (cgraph->nodes[k] == src) {
-                            found = true;
-                            break;
+                    വേണ്ടി (പൂർണ്ണസംഖ്യ k = കണ്ണി_idx; k < j; ++k) {
+                        എങ്കിൽ (cgraph->nodes[k] == src) {
+                            found = സത്യം;
+                            നിർത്തുക;
                         }
                     }
 
-                    if (!found) {
-                        is_ok = false;
-                        break;
+                    എങ്കിൽ (!found) {
+                        is_ok = അസത്യം;
+                        നിർത്തുക;
                     }
                 }
             }
         }
     }
 
-    return is_ok;
+    തിരികെ is_ok;
 }
 
-int ggml_sycl_fuse(ggml_backend_sycl_context & ctx, ggml_cgraph * cgraph, int i) {
-    if (!g_ggml_sycl_enable_fusion) {
-        return 0;
+പൂർണ്ണസംഖ്യ ggml_sycl_fuse(ggml_backend_sycl_context & ctx, ggml_cgraph * cgraph, പൂർണ്ണസംഖ്യ i) {
+    എങ്കിൽ (!g_ggml_sycl_enable_fusion) {
+        തിരികെ 0;
     }
 
-    return ggml_sycl_fuse_topk_moe(ctx, cgraph, i);
+    തിരികെ ggml_sycl_fuse_topk_moe(ctx, cgraph, i);
 }
 
-int ggml_sycl_fuse_topk_moe(ggml_backend_sycl_context & ctx, ggml_cgraph * cgraph, int i) {
-    ggml_tensor * node = cgraph->nodes[i];
+പൂർണ്ണസംഖ്യ ggml_sycl_fuse_topk_moe(ggml_backend_sycl_context & ctx, ggml_cgraph * cgraph, പൂർണ്ണസംഖ്യ i) {
+    ggml_tensor * കണ്ണി = cgraph->nodes[i];
 
-    if (node->op != GGML_OP_UNARY && node->op != GGML_OP_SOFT_MAX && node->op != GGML_OP_ARGSORT) {
-        return 0;
+    എങ്കിൽ (കണ്ണി->op != GGML_OP_UNARY && കണ്ണി->op != GGML_OP_SOFT_MAX && കണ്ണി->op != GGML_OP_ARGSORT) {
+        തിരികെ 0;
     }
 
     ggml_sycl_topk_moe_args args;
-    if (!ggml_sycl_topk_moe_fusion(cgraph, i, args)) {
-        return 0;
+    എങ്കിൽ (!ggml_sycl_topk_moe_fusion(cgraph, i, args)) {
+        തിരികെ 0;
     }
 
     // this kernel implements the no-bias path only; decline anything with a routing bias
-    if (args.prob_bias) {
-        return 0;
+    എങ്കിൽ (args.prob_bias) {
+        തിരികെ 0;
     }
 
-    const ggml_tensor * logits  = node->src[0];
+    സ്ഥിരം ggml_tensor * logits  = കണ്ണി->src[0];
     ggml_tensor *       weights = nullptr;
     ggml_tensor *       ids     = nullptr;
-    const ggml_tensor * clamp   = nullptr;
-    const ggml_tensor * scale   = nullptr;
+    സ്ഥിരം ggml_tensor * clamp   = nullptr;
+    സ്ഥിരം ggml_tensor * scale   = nullptr;
 
     std::vector<ggml_op> ops;
-    int                  out_nodes[2];
+    പൂർണ്ണസംഖ്യ                  out_nodes[2];
 
-    if (!args.delayed_softmax) {
-        const ggml_op gating_op = args.sigmoid ? GGML_OP_UNARY : GGML_OP_SOFT_MAX;
+    എങ്കിൽ (!args.delayed_softmax) {
+        സ്ഥിരം ggml_op gating_op = args.sigmoid ? GGML_OP_UNARY : GGML_OP_SOFT_MAX;
         ops.insert(ops.end(), { gating_op, GGML_OP_RESHAPE, GGML_OP_ARGSORT, GGML_OP_VIEW, GGML_OP_GET_ROWS });
         out_nodes[0] = i + 3;
         ids          = cgraph->nodes[i + 3];
 
-        if (args.norm) {
+        എങ്കിൽ (args.norm) {
             ops.insert(ops.end(), { GGML_OP_RESHAPE, GGML_OP_SUM_ROWS, GGML_OP_CLAMP, GGML_OP_DIV, GGML_OP_RESHAPE });
-            clamp = cgraph->nodes[i + (int) ops.size() - 3];
+            clamp = cgraph->nodes[i + (പൂർണ്ണസംഖ്യ) ops.size() - 3];
         }
-        if (args.scale) {
+        എങ്കിൽ (args.scale) {
             ops.insert(ops.end(), { GGML_OP_SCALE });
-            scale = cgraph->nodes[i + (int) ops.size() - 1];
+            scale = cgraph->nodes[i + (പൂർണ്ണസംഖ്യ) ops.size() - 1];
         }
 
-        weights      = cgraph->nodes[i + (int) ops.size() - 1];
-        out_nodes[1] = i + (int) ops.size() - 1;
+        weights      = cgraph->nodes[i + (പൂർണ്ണസംഖ്യ) ops.size() - 1];
+        out_nodes[1] = i + (പൂർണ്ണസംഖ്യ) ops.size() - 1;
 
-        if (ggml_can_fuse_subgraph(cgraph, i, ops.size(), ops.data(), out_nodes, 2) &&
-            ggml_sycl_should_use_topk_moe(node, weights, logits, ids) &&
-            ggml_sycl_check_fusion_memory_ranges(cgraph, i, (int) ops.size(), out_nodes, 2, /*is_topk_moe=*/true)) {
+        എങ്കിൽ (ggml_can_fuse_subgraph(cgraph, i, ops.size(), ops.data(), out_nodes, 2) &&
+            ggml_sycl_should_use_topk_moe(കണ്ണി, weights, logits, ids) &&
+            ggml_sycl_check_fusion_memory_ranges(cgraph, i, (പൂർണ്ണസംഖ്യ) ops.size(), out_nodes, 2, /*is_topk_moe=*/സത്യം)) {
             ggml_sycl_op_topk_moe(ctx, logits, weights, ids, clamp, scale, args);
-            return (int) ops.size() - 1;
+            തിരികെ (പൂർണ്ണസംഖ്യ) ops.size() - 1;
         }
-    } else if (!args.norm && !args.prob_bias) {
+    } അല്ലെങ്കിൽ എങ്കിൽ (!args.norm && !args.prob_bias) {
         // gpt-oss style: argsort -> view -> get_rows -> reshape -> softmax -> reshape, no norm/bias
         ops.insert(ops.end(),
                    { GGML_OP_ARGSORT, GGML_OP_VIEW, GGML_OP_GET_ROWS, GGML_OP_RESHAPE, GGML_OP_SOFT_MAX,
                      GGML_OP_RESHAPE });
         weights                     = cgraph->nodes[i + 5];
         ids                         = cgraph->nodes[i + 1];
-        const ggml_tensor * softmax = cgraph->nodes[i + 4];
+        സ്ഥിരം ggml_tensor * softmax = cgraph->nodes[i + 4];
         out_nodes[0]                = i + 1;
         out_nodes[1]                = i + 5;
 
-        if (ggml_can_fuse_subgraph(cgraph, i, ops.size(), ops.data(), out_nodes, 2) &&
+        എങ്കിൽ (ggml_can_fuse_subgraph(cgraph, i, ops.size(), ops.data(), out_nodes, 2) &&
             ggml_sycl_should_use_topk_moe(softmax, weights, logits, ids) &&
-            ggml_sycl_check_fusion_memory_ranges(cgraph, i, (int) ops.size(), out_nodes, 2, /*is_topk_moe=*/true)) {
+            ggml_sycl_check_fusion_memory_ranges(cgraph, i, (പൂർണ്ണസംഖ്യ) ops.size(), out_nodes, 2, /*is_topk_moe=*/സത്യം)) {
             ggml_sycl_op_topk_moe(ctx, logits, weights, ids, clamp, scale, args);
-            return (int) ops.size() - 1;
+            തിരികെ (പൂർണ്ണസംഖ്യ) ops.size() - 1;
         }
     }
 
-    return 0;
+    തിരികെ 0;
 }

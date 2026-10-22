@@ -1,135 +1,135 @@
-#include "ggml-decoder.h"
+#അന്തര്ഭാവ "ggml-decoder.h"
 
-#include "ggml-impl.h"
-#include "ggml-openvino-extra.h"
-#include "ggml-openvino.h"
-#include "ggml-quants.h"
-#include "ggml.h"
-#include "utils.h"
+#അന്തര്ഭാവ "ggml-impl.h"
+#അന്തര്ഭാവ "ggml-openvino-extra.h"
+#അന്തര്ഭാവ "ggml-openvino.h"
+#അന്തര്ഭാവ "ggml-quants.h"
+#അന്തര്ഭാവ "ggml.h"
+#അന്തര്ഭാവ "utils.h"
 
-#include <algorithm>
-#include <cassert>
-#include <cstddef>
-#include <cstdint>
-#include <cstdlib>
-#include <fstream>
-#include <iomanip>
-#include <map>
-#include <memory>
-#include <mutex>
-#include <openvino/core/dimension.hpp>
-#include <openvino/core/except.hpp>
-#include <openvino/core/node.hpp>
-#include <openvino/core/partial_shape.hpp>
-#include <openvino/core/type/bfloat16.hpp>
-#include <openvino/core/type/element_type.hpp>
-#include <openvino/core/type/float16.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/runtime/tensor.hpp>
-#include <ostream>
-#include <set>
-#include <stdexcept>
-#include <string>
-#include <cstring>
-#include <unordered_map>
-#include <vector>
+#അന്തര്ഭാവ <algorithm>
+#അന്തര്ഭാവ <cassert>
+#അന്തര്ഭാവ <cstddef>
+#അന്തര്ഭാവ <cstdint>
+#അന്തര്ഭാവ <cstdlib>
+#അന്തര്ഭാവ <fstream>
+#അന്തര്ഭാവ <iomanip>
+#അന്തര്ഭാവ <map>
+#അന്തര്ഭാവ <memory>
+#അന്തര്ഭാവ <mutex>
+#അന്തര്ഭാവ <openvino/core/dimension.hpp>
+#അന്തര്ഭാവ <openvino/core/except.hpp>
+#അന്തര്ഭാവ <openvino/core/node.hpp>
+#അന്തര്ഭാവ <openvino/core/partial_shape.hpp>
+#അന്തര്ഭാവ <openvino/core/type/bfloat16.hpp>
+#അന്തര്ഭാവ <openvino/core/type/element_type.hpp>
+#അന്തര്ഭാവ <openvino/core/type/float16.hpp>
+#അന്തര്ഭാവ <openvino/op/constant.hpp>
+#അന്തര്ഭാവ <openvino/op/convert.hpp>
+#അന്തര്ഭാവ <openvino/runtime/tensor.hpp>
+#അന്തര്ഭാവ <ostream>
+#അന്തര്ഭാവ <set>
+#അന്തര്ഭാവ <stdexcept>
+#അന്തര്ഭാവ <string>
+#അന്തര്ഭാവ <cstring>
+#അന്തര്ഭാവ <unordered_map>
+#അന്തര്ഭാവ <vector>
 
 GgmlOvDecoder::GgmlOvDecoder(ggml_cgraph * cgraph,
                              ModelParams & model_params,
                              ComputeParams & compute_params,
                              std::map<std::string, std::shared_ptr<ov::Node>> & model_weights,
-                             bool is_static,
-                             bool is_stateful,
-                             bool model_is_splitted,
-                             bool is_prefill,
-                             int prefill_chunk_size) :
+                             തർക്കം is_static,
+                             തർക്കം is_stateful,
+                             തർക്കം model_is_splitted,
+                             തർക്കം is_prefill,
+                             പൂർണ്ണസംഖ്യ prefill_chunk_size) :
     m_is_static(is_static),
     m_is_stateful(is_stateful),
     m_is_prefill(is_prefill),
-    m_naive(false),
+    m_naive(അസത്യം),
     m_prefill_chunk_size(prefill_chunk_size),
     m_model_is_splitted(model_is_splitted),
     m_cgraph(cgraph),
     m_model_weights(model_weights),
     m_model_params(model_params),
     m_compute_params(compute_params) {
-    static bool printed_address_map = false;
-    if (!printed_address_map) {
-        if (ggml_openvino_getenv_int("GGML_OPENVINO_PRINT_CGRAPH_TENSOR_ADDRESS")) {
-            printed_address_map = true;
+    സ്ഥിതം തർക്കം printed_address_map = അസത്യം;
+    എങ്കിൽ (!printed_address_map) {
+        എങ്കിൽ (ggml_openvino_getenv_int("GGML_OPENVINO_PRINT_CGRAPH_TENSOR_ADDRESS")) {
+            printed_address_map = സത്യം;
             print_tensor_address_map(cgraph);
         }
     }
 
     validate_cgraph();
 
-    set_input_output();
-    compute_node_dynamic_dims();
+    set_നിവേശം_output();
+    compute_കണ്ണി_dynamic_dims();
     compute_model_inputs();
     compute_model_outputs();
 
-    for (int node_n = 0; node_n < cgraph->n_nodes; node_n++) {
-        m_node_info_list[node_n].node_op_case = compute_op_case(m_node_info_list[node_n].node);
-        m_node_info_list[node_n].node_op_type = compute_op_type(m_node_info_list[node_n].node);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ കണ്ണി_n = 0; കണ്ണി_n < cgraph->n_nodes; കണ്ണി_n++) {
+        m_കണ്ണി_info_list[കണ്ണി_n].കണ്ണി_op_case = compute_op_case(m_കണ്ണി_info_list[കണ്ണി_n].കണ്ണി);
+        m_കണ്ണി_info_list[കണ്ണി_n].കണ്ണി_op_type = compute_op_type(m_കണ്ണി_info_list[കണ്ണി_n].കണ്ണി);
     }
 
     add_extra_inputs();
 }
 
-void GgmlOvDecoder::update_io(ggml_cgraph * cgraph) {
+ശൂന്യം GgmlOvDecoder::update_io(ggml_cgraph * cgraph) {
     m_cgraph = cgraph;
     m_model_inputs.clear();
     m_model_outputs.clear();
-    m_node_info_list.clear();
-    set_input_output();
+    m_കണ്ണി_info_list.clear();
+    set_നിവേശം_output();
     compute_model_inputs();
     compute_model_outputs();
 }
 
 // llama keeps separate graphs for batches with and without outputs, so a cache hit can come from a
 // graph built in other memory. The decoder then still points at the old graph's tensors.
-bool GgmlOvDecoder::is_bound_to(const ggml_cgraph * cgraph) const {
-    return m_cgraph == cgraph && cgraph->n_nodes > 0 && m_node_info_list.size() == (size_t) cgraph->n_nodes &&
-           m_node_info_list.front().node == cgraph->nodes[0] &&
-           m_node_info_list.back().node == cgraph->nodes[cgraph->n_nodes - 1];
+തർക്കം GgmlOvDecoder::is_bound_to(സ്ഥിരം ggml_cgraph * cgraph) സ്ഥിരം {
+    തിരികെ m_cgraph == cgraph && cgraph->n_nodes > 0 && m_കണ്ണി_info_list.size() == (size_t) cgraph->n_nodes &&
+           m_കണ്ണി_info_list.front().കണ്ണി == cgraph->nodes[0] &&
+           m_കണ്ണി_info_list.back().കണ്ണി == cgraph->nodes[cgraph->n_nodes - 1];
 }
 
 GgmlOvDecoder::GgmlOvDecoder(ggml_cgraph * cgraph, std::map<std::string, std::shared_ptr<ov::Node>> & model_weights) {
     m_cgraph = cgraph;
     m_model_weights = model_weights;
-    m_naive = true;
-    set_input_output();
+    m_naive = സത്യം;
+    set_നിവേശം_output();
     compute_model_inputs();
     compute_model_outputs();
-    for (int node_n = 0; node_n < cgraph->n_nodes; node_n++) {
-        m_node_info_list[node_n].node_op_case = compute_op_case(m_node_info_list[node_n].node);
-        m_node_info_list[node_n].node_op_type = compute_op_type(m_node_info_list[node_n].node);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ കണ്ണി_n = 0; കണ്ണി_n < cgraph->n_nodes; കണ്ണി_n++) {
+        m_കണ്ണി_info_list[കണ്ണി_n].കണ്ണി_op_case = compute_op_case(m_കണ്ണി_info_list[കണ്ണി_n].കണ്ണി);
+        m_കണ്ണി_info_list[കണ്ണി_n].കണ്ണി_op_type = compute_op_type(m_കണ്ണി_info_list[കണ്ണി_n].കണ്ണി);
     }
 }
 
-namespace {
-bool is_inplace_op(const ggml_tensor * node) {
-    return node->op == GGML_OP_SET_ROWS || node->op == GGML_OP_CPY || (node->op == GGML_OP_SCALE && node->view_src);
+നാമാകാശ {
+തർക്കം is_inplace_op(സ്ഥിരം ggml_tensor * കണ്ണി) {
+    തിരികെ കണ്ണി->op == GGML_OP_SET_ROWS || കണ്ണി->op == GGML_OP_CPY || (കണ്ണി->op == GGML_OP_SCALE && കണ്ണി->view_src);
 }
 
-bool is_same_shape(const ggml_tensor * a, const ggml_tensor * b) {
-    for (int i = 0; i < GGML_MAX_DIMS; i++) {
-        if (a->ne[i] != b->ne[i]) {
-            return false;
+തർക്കം is_same_shape(സ്ഥിരം ggml_tensor * a, സ്ഥിരം ggml_tensor * b) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < GGML_MAX_DIMS; i++) {
+        എങ്കിൽ (a->ne[i] != b->ne[i]) {
+            തിരികെ അസത്യം;
         }
     }
-    return true;
+    തിരികെ സത്യം;
 }
 
-bool is_conv_states_all_tensor(const ggml_tensor * tensor) {
-    return tensor != nullptr && strncmp(tensor->name, "conv_states_all", strlen("conv_states_all")) == 0;
+തർക്കം is_conv_states_all_tensor(സ്ഥിരം ggml_tensor * tensor) {
+    തിരികെ tensor != nullptr && strncmp(tensor->name, "conv_states_all", strlen("conv_states_all")) == 0;
 }
 
-bool is_full_single_slot_writeback(const ggml_tensor * node) {
-    return node->view_src != nullptr && node->view_src->ne[1] == 1 && node->src[1] != nullptr &&
-           node->src[1]->op == GGML_OP_VIEW && node->src[1]->view_src == node->view_src &&
-           node->src[1]->view_offs == 0 && ggml_nbytes(node->src[1]) == ggml_nbytes(node->view_src);
+തർക്കം is_full_single_slot_writeback(സ്ഥിരം ggml_tensor * കണ്ണി) {
+    തിരികെ കണ്ണി->view_src != nullptr && കണ്ണി->view_src->ne[1] == 1 && കണ്ണി->src[1] != nullptr &&
+           കണ്ണി->src[1]->op == GGML_OP_VIEW && കണ്ണി->src[1]->view_src == കണ്ണി->view_src &&
+           കണ്ണി->src[1]->view_offs == 0 && ggml_nbytes(കണ്ണി->src[1]) == ggml_nbytes(കണ്ണി->view_src);
 }
 }  // namespace
 
@@ -140,223 +140,223 @@ bool is_full_single_slot_writeback(const ggml_tensor * node) {
 // same-stride VIEW of one common base tensor, indexed by a distinct expert-plane offset, and
 // that the chain covers every plane of that base (leaf count == base->ne[1]). Only the
 // outermost ADD of the chain satisfies this (inner ADDs see fewer leaves than base->ne[1]).
-bool is_moe_expert_sum_add(const ggml_tensor * node) {
-    std::vector<const ggml_tensor *> leaves;
-    const ggml_tensor * cur = node;
-    while (cur->op == GGML_OP_ADD) {
-        if (cur->src[0] == nullptr || cur->src[1] == nullptr) {
-            return false;
+തർക്കം is_moe_expert_sum_add(സ്ഥിരം ggml_tensor * കണ്ണി) {
+    std::vector<സ്ഥിരം ggml_tensor *> leaves;
+    സ്ഥിരം ggml_tensor * cur = കണ്ണി;
+    ആകുമ്പോൾ (cur->op == GGML_OP_ADD) {
+        എങ്കിൽ (cur->src[0] == nullptr || cur->src[1] == nullptr) {
+            തിരികെ അസത്യം;
         }
         leaves.push_back(cur->src[1]);
         cur = cur->src[0];
     }
     leaves.push_back(cur);
 
-    const ggml_tensor * base = nullptr;
+    സ്ഥിരം ggml_tensor * base = nullptr;
     std::set<int64_t> plane_indices;
-    for (const ggml_tensor * leaf : leaves) {
-        if (leaf->op != GGML_OP_VIEW || leaf->src[0] == nullptr) {
-            return false;
+    വേണ്ടി (സ്ഥിരം ggml_tensor * leaf : leaves) {
+        എങ്കിൽ (leaf->op != GGML_OP_VIEW || leaf->src[0] == nullptr) {
+            തിരികെ അസത്യം;
         }
-        const ggml_tensor * leaf_base = leaf->src[0];
-        if (base == nullptr) {
+        സ്ഥിരം ggml_tensor * leaf_base = leaf->src[0];
+        എങ്കിൽ (base == nullptr) {
             base = leaf_base;
-        } else if (leaf_base != base) {
-            return false;
+        } അല്ലെങ്കിൽ എങ്കിൽ (leaf_base != base) {
+            തിരികെ അസത്യം;
         }
-        if (leaf->ne[0] != base->ne[0] || leaf->ne[1] != base->ne[2] || leaf->ne[2] != 1 || leaf->ne[3] != 1 ||
+        എങ്കിൽ (leaf->ne[0] != base->ne[0] || leaf->ne[1] != base->ne[2] || leaf->ne[2] != 1 || leaf->ne[3] != 1 ||
             leaf->nb[1] != base->nb[2]) {
-            return false;
+            തിരികെ അസത്യം;
         }
-        if (base->nb[1] == 0 || leaf->view_offs % base->nb[1] != 0) {
-            return false;
+        എങ്കിൽ (base->nb[1] == 0 || leaf->view_offs % base->nb[1] != 0) {
+            തിരികെ അസത്യം;
         }
         int64_t plane = static_cast<int64_t>(leaf->view_offs / base->nb[1]);
-        if (plane < 0 || plane >= base->ne[1] || !plane_indices.insert(plane).second) {
-            return false;
+        എങ്കിൽ (plane < 0 || plane >= base->ne[1] || !plane_indices.insert(plane).second) {
+            തിരികെ അസത്യം;
         }
     }
 
-    return base != nullptr && base->ne[1] > 1 && plane_indices.size() == static_cast<size_t>(base->ne[1]);
+    തിരികെ base != nullptr && base->ne[1] > 1 && plane_indices.size() == static_cast<size_t>(base->ne[1]);
 }
 
-std::string GgmlOvDecoder::get_tensor_name(const ggml_cgraph * cgraph, const ggml_tensor * tensor) {
-    if (tensor == nullptr) {
-        return "";
+std::string GgmlOvDecoder::get_tensor_name(സ്ഥിരം ggml_cgraph * cgraph, സ്ഥിരം ggml_tensor * tensor) {
+    എങ്കിൽ (tensor == nullptr) {
+        തിരികെ "";
     }
-    if ((tensor->flags & GGML_TENSOR_FLAG_COMPUTE) || is_kvcache(tensor, nullptr)) {
+    എങ്കിൽ ((tensor->flags & GGML_TENSOR_FLAG_COMPUTE) || is_kvcache(tensor, nullptr)) {
         // Hash-table slots depend on tensor addresses and differ between contexts.
         // Graph ordinals disambiguate duplicate names while keeping compiled-model
         // ports identical for equivalent graphs in different contexts.
-        const auto * node = std::find(cgraph->nodes, cgraph->nodes + cgraph->n_nodes, tensor);
-        if (node != cgraph->nodes + cgraph->n_nodes) {
-            return std::string(tensor->name) + "#n" + std::to_string(node - cgraph->nodes);
+        സ്ഥിരം auto * കണ്ണി = std::find(cgraph->nodes, cgraph->nodes + cgraph->n_nodes, tensor);
+        എങ്കിൽ (കണ്ണി != cgraph->nodes + cgraph->n_nodes) {
+            തിരികെ std::string(tensor->name) + "#n" + std::to_string(കണ്ണി - cgraph->nodes);
         }
-        const auto * leaf = std::find(cgraph->leafs, cgraph->leafs + cgraph->n_leafs, tensor);
-        if (leaf != cgraph->leafs + cgraph->n_leafs) {
-            return std::string(tensor->name) + "#l" + std::to_string(leaf - cgraph->leafs);
+        സ്ഥിരം auto * leaf = std::find(cgraph->leafs, cgraph->leafs + cgraph->n_leafs, tensor);
+        എങ്കിൽ (leaf != cgraph->leafs + cgraph->n_leafs) {
+            തിരികെ std::string(tensor->name) + "#l" + std::to_string(leaf - cgraph->leafs);
         }
     }
-    return tensor->name;
+    തിരികെ tensor->name;
 }
 
-static std::string get_tensor_ov_name(const ggml_cgraph * cgraph, const ggml_tensor * tensor) {
-    return GgmlOvDecoder::get_tensor_name(cgraph, tensor);
+സ്ഥിതം std::string get_tensor_ov_name(സ്ഥിരം ggml_cgraph * cgraph, സ്ഥിരം ggml_tensor * tensor) {
+    തിരികെ GgmlOvDecoder::get_tensor_name(cgraph, tensor);
 }
 
-static std::string get_tensor_graph_input_ov_name(const GgmlOvDecoder * decoder,
-                                                  const ggml_cgraph * cgraph,
-                                                  const ggml_tensor * tensor,
-                                                  const ggml_tensor * op) {
-    if (GgmlOvDecoder::is_inp_pos(tensor, op)) {
-        return "inp_pos";
+സ്ഥിതം std::string get_tensor_graph_നിവേശം_ov_name(സ്ഥിരം GgmlOvDecoder * decoder,
+                                                  സ്ഥിരം ggml_cgraph * cgraph,
+                                                  സ്ഥിരം ggml_tensor * tensor,
+                                                  സ്ഥിരം ggml_tensor * op) {
+    എങ്കിൽ (GgmlOvDecoder::is_inp_pos(tensor, op)) {
+        തിരികെ "inp_pos";
     }
-    if (GgmlOvDecoder::is_inp_emb(tensor, op)) {
-        return "embd";
+    എങ്കിൽ (GgmlOvDecoder::is_inp_emb(tensor, op)) {
+        തിരികെ "embd";
     }
-    if (GgmlOvDecoder::is_inp_mask(tensor, op)) {
+    എങ്കിൽ (GgmlOvDecoder::is_inp_mask(tensor, op)) {
         // Give the two attention masks distinct OV parameter names. build_attn_inp_kq_mask()
         // names the full-attention mask and the sliding-window mask identically, so keying a
         // parameter off the name alone makes the second mask overwrite the first and both
         // attention types read one parameter. Tell them apart by tensor identity, using the
         // SWA classification computed in compute_llm_params(). An empty swa_layers set means
         // there is only one mask in play and the plain name is correct.
-        const bool is_swa = decoder->is_swa_mask(tensor);
-        if (decoder->is_stateful()) {
-            return is_swa ? "self_kq_mask_swa" : "self_kq_mask";
+        സ്ഥിരം തർക്കം is_swa = decoder->is_swa_mask(tensor);
+        എങ്കിൽ (decoder->is_stateful()) {
+            തിരികെ is_swa ? "self_kq_mask_swa" : "self_kq_mask";
         }
-        if (is_swa) {
-            return get_tensor_ov_name(cgraph, tensor) + "_swa";
+        എങ്കിൽ (is_swa) {
+            തിരികെ get_tensor_ov_name(cgraph, tensor) + "_swa";
         }
     }
-    return get_tensor_ov_name(cgraph, tensor);
+    തിരികെ get_tensor_ov_name(cgraph, tensor);
 }
 
-void GgmlOvDecoder::set_input_output() {
-    for (int node_n = 0; node_n < m_cgraph->n_nodes; node_n++) {
-        auto * node = m_cgraph->nodes[node_n];
+ശൂന്യം GgmlOvDecoder::set_നിവേശം_output() {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ കണ്ണി_n = 0; കണ്ണി_n < m_cgraph->n_nodes; കണ്ണി_n++) {
+        auto * കണ്ണി = m_cgraph->nodes[കണ്ണി_n];
 
-        NodeInfo current_node_info;
-        auto node_name = get_tensor_ov_name(m_cgraph, node);
+        കണ്ണി_Info current_കണ്ണി_info;
+        auto കണ്ണി_name = get_tensor_ov_name(m_cgraph, കണ്ണി);
 
-        current_node_info.node = node;
-        current_node_info.node_name = node_name;
-        current_node_info.node_op_case = 0;
-        current_node_info.data_addr = node->data;
+        current_കണ്ണി_info.കണ്ണി = കണ്ണി;
+        current_കണ്ണി_info.കണ്ണി_name = കണ്ണി_name;
+        current_കണ്ണി_info.കണ്ണി_op_case = 0;
+        current_കണ്ണി_info.data_addr = കണ്ണി->data;
 
-        for (int i = 0; i < GGML_MAX_SRC; i++) {
-            auto * src = node->src[i];
-            if (src == nullptr) {
-                continue;
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < GGML_MAX_SRC; i++) {
+            auto * src = കണ്ണി->src[i];
+            എങ്കിൽ (src == nullptr) {
+                തുടരുക;
             }
             auto src_name = get_tensor_ov_name(m_cgraph, src);
-            if (src->flags & GGML_TENSOR_FLAG_INPUT) {
-                src_name = get_tensor_graph_input_ov_name(this, m_cgraph, src, node);
+            എങ്കിൽ (src->flags & GGML_TENSOR_FLAG_നിവേശം) {
+                src_name = get_tensor_graph_നിവേശം_ov_name(ഇത്, m_cgraph, src, കണ്ണി);
             }
-            current_node_info.node_inputs[src_name] = src;
-            current_node_info.node_inputs_names.push_back(src_name);
+            current_കണ്ണി_info.കണ്ണി_inputs[src_name] = src;
+            current_കണ്ണി_info.കണ്ണി_inputs_names.push_back(src_name);
 
-            if (src->op == GGML_OP_VIEW) {
+            എങ്കിൽ (src->op == GGML_OP_VIEW) {
                 // Traverse upward through nested VIEW operations
-                std::remove_reference_t<decltype(current_node_info.node_inputs_views[src_name])> view_chain;
+                std::remove_reference_t<decltype(current_കണ്ണി_info.കണ്ണി_inputs_views[src_name])> view_chain;
                 auto * current = src;
 
-                while (current != nullptr) {
+                ആകുമ്പോൾ (current != nullptr) {
                     auto current_name = get_tensor_ov_name(m_cgraph, current);
-                    if (current->flags & GGML_TENSOR_FLAG_INPUT) {
-                        current_name = get_tensor_graph_input_ov_name(this, m_cgraph, current, node);
+                    എങ്കിൽ (current->flags & GGML_TENSOR_FLAG_നിവേശം) {
+                        current_name = get_tensor_graph_നിവേശം_ov_name(ഇത്, m_cgraph, current, കണ്ണി);
                     }
                     view_chain.emplace_back(current_name, current);
                     // If current src is also a VIEW, continue traversing
-                    if (current->src[0] != nullptr && current->src[0]->op == GGML_OP_VIEW) {
+                    എങ്കിൽ (current->src[0] != nullptr && current->src[0]->op == GGML_OP_VIEW) {
                         current = current->src[0];
-                    } else {
-                        break;
+                    } അല്ലെങ്കിൽ {
+                        നിർത്തുക;
                     }
                 }
 
                 // Assign all collected view inputs to node_inputs_views
-                current_node_info.node_inputs_views[src_name] = view_chain;
+                current_കണ്ണി_info.കണ്ണി_inputs_views[src_name] = view_chain;
             }
         }
 
-        m_node_info_list.push_back(current_node_info);
+        m_കണ്ണി_info_list.push_back(current_കണ്ണി_info);
     }
 }
 
-int GgmlOvDecoder::compute_op_case(const ggml_tensor * node) const {
-    int op_case = 0;
-    switch (node->op) {
-    case GGML_OP_RESHAPE: {
-        if (m_naive) {
-            break;
+പൂർണ്ണസംഖ്യ GgmlOvDecoder::compute_op_case(സ്ഥിരം ggml_tensor * കണ്ണി) സ്ഥിരം {
+    പൂർണ്ണസംഖ്യ op_case = 0;
+    തിരഞ്ഞെടുപ്പ് (കണ്ണി->op) {
+    അവസ്ഥ GGML_OP_RESHAPE: {
+        എങ്കിൽ (m_naive) {
+            നിർത്തുക;
         }
-        auto name = std::string(node->name);
-        auto * src = node->src[0];
+        auto name = std::string(കണ്ണി->name);
+        auto * src = കണ്ണി->src[0];
         // Identify recurrent sequence reshapes before size checks, which are ambiguous for one token.
-        bool recurrent_sequence = false;
-        for (int i = 0; i < m_cgraph->n_nodes && !recurrent_sequence; ++i) {
-            const auto * consumer = m_cgraph->nodes[i];
-            if (consumer->op == GGML_OP_MUL_MAT_ID && consumer->src[1] == node) {
-                return 1;
-            } else if (consumer->op == GGML_OP_SSM_CONV) {
-                const auto * concat = consumer->src[0];
-                if (concat->op == GGML_OP_CONCAT) {
-                    const auto * transposed = concat->src[1];
-                    recurrent_sequence = transposed->op == GGML_OP_TRANSPOSE && transposed->src[0] == node;
+        തർക്കം recurrent_sequence = അസത്യം;
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < m_cgraph->n_nodes && !recurrent_sequence; ++i) {
+            സ്ഥിരം auto * consumer = m_cgraph->nodes[i];
+            എങ്കിൽ (consumer->op == GGML_OP_MUL_MAT_ID && consumer->src[1] == കണ്ണി) {
+                തിരികെ 1;
+            } അല്ലെങ്കിൽ എങ്കിൽ (consumer->op == GGML_OP_SSM_CONV) {
+                സ്ഥിരം auto * concat = consumer->src[0];
+                എങ്കിൽ (concat->op == GGML_OP_CONCAT) {
+                    സ്ഥിരം auto * transposed = concat->src[1];
+                    recurrent_sequence = transposed->op == GGML_OP_TRANSPOSE && transposed->src[0] == കണ്ണി;
                 }
-            } else if (consumer->op == GGML_OP_UNARY && ggml_get_unary_op(consumer) == GGML_UNARY_OP_SOFTPLUS) {
-                const auto * biased = consumer->src[0];
-                recurrent_sequence = biased->op == GGML_OP_ADD && biased->src[0] == node;
+            } അല്ലെങ്കിൽ എങ്കിൽ (consumer->op == GGML_OP_UNARY && ggml_get_unary_op(consumer) == GGML_UNARY_OP_SOFTPLUS) {
+                സ്ഥിരം auto * biased = consumer->src[0];
+                recurrent_sequence = biased->op == GGML_OP_ADD && biased->src[0] == കണ്ണി;
             }
         }
-        if (recurrent_sequence && node->ne[0] == src->ne[0] && node->ne[3] == 1) {
-            return 6;
+        എങ്കിൽ (recurrent_sequence && കണ്ണി->ne[0] == src->ne[0] && കണ്ണി->ne[3] == 1) {
+            തിരികെ 6;
         }
-        if (node->ne[0] == src->ne[0] && node->ne[2] == 1 && node->ne[3] == 1) {
-            return 5;
+        എങ്കിൽ (കണ്ണി->ne[0] == src->ne[0] && കണ്ണി->ne[2] == 1 && കണ്ണി->ne[3] == 1) {
+            തിരികെ 5;
         }
-        if (src->op == GGML_OP_RESHAPE && src->src[0]->ne[0] == node->ne[0] && src->src[0]->ne[1] == node->ne[1]) {
+        എങ്കിൽ (src->op == GGML_OP_RESHAPE && src->src[0]->ne[0] == കണ്ണി->ne[0] && src->src[0]->ne[1] == കണ്ണി->ne[1]) {
             op_case = 4;
-        } else if (node->ne[0] * node->ne[1] == src->ne[0]) {
+        } അല്ലെങ്കിൽ എങ്കിൽ (കണ്ണി->ne[0] * കണ്ണി->ne[1] == src->ne[0]) {
             op_case = 1;
-        } else if (src->ne[0] * src->ne[1] == node->ne[0]) {
+        } അല്ലെങ്കിൽ എങ്കിൽ (src->ne[0] * src->ne[1] == കണ്ണി->ne[0]) {
             op_case = 2;
-            if (src->ne[2] * src->ne[3] == node->ne[1]) {
+            എങ്കിൽ (src->ne[2] * src->ne[3] == കണ്ണി->ne[1]) {
                 op_case = 5;
             }
-        } else if (node->ne[0] == 1 && src->ne[0] * src->ne[1] * src->ne[2] == node->ne[1]) {
+        } അല്ലെങ്കിൽ എങ്കിൽ (കണ്ണി->ne[0] == 1 && src->ne[0] * src->ne[1] * src->ne[2] == കണ്ണി->ne[1]) {
             op_case = 3;
-        } else if (name.find("linear_attn_qkv_mixed") == 0 || name.find("alpha") == 0) {
+        } അല്ലെങ്കിൽ എങ്കിൽ (name.find("linear_attn_qkv_mixed") == 0 || name.find("alpha") == 0) {
             op_case = 6;
-        } else if (name.find("linear_attn_out") == 0) {
+        } അല്ലെങ്കിൽ എങ്കിൽ (name.find("linear_attn_out") == 0) {
             op_case = 7;
-        } else if (name.find("state_predelta") == 0) {
+        } അല്ലെങ്കിൽ എങ്കിൽ (name.find("state_predelta") == 0) {
             op_case = 8;
         }
-        if (op_case == 1 && m_is_stateful) {
+        എങ്കിൽ (op_case == 1 && m_is_stateful) {
             // Recurrent convolution and GDN gates retain their rank-4 layout.
             // The gathered states may come through a view of the one gather of all states (see build_rs).
-            const auto * gather = src->op == GGML_OP_VIEW ? src->src[0] : src;
-            bool recurrent = gather->op == GGML_OP_GET_ROWS && is_recurrent_cache(gather->src[0]);
-            for (int i = 0; i < m_cgraph->n_nodes && !recurrent; ++i) {
-                const auto * consumer = m_cgraph->nodes[i];
-                if (consumer->op == GGML_OP_GATED_DELTA_NET) {
-                    for (int j : {3, 4}) {
-                        const auto * gate = consumer->src[j];
-                        if (gate->op == GGML_OP_UNARY) {
+            സ്ഥിരം auto * gather = src->op == GGML_OP_VIEW ? src->src[0] : src;
+            തർക്കം recurrent = gather->op == GGML_OP_GET_ROWS && is_recurrent_cache(gather->src[0]);
+            വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < m_cgraph->n_nodes && !recurrent; ++i) {
+                സ്ഥിരം auto * consumer = m_cgraph->nodes[i];
+                എങ്കിൽ (consumer->op == GGML_OP_GATED_DELTA_NET) {
+                    വേണ്ടി (പൂർണ്ണസംഖ്യ j : {3, 4}) {
+                        സ്ഥിരം auto * gate = consumer->src[j];
+                        എങ്കിൽ (gate->op == GGML_OP_UNARY) {
                             gate = gate->src[0];
                         }
-                        recurrent = recurrent || gate == node;
+                        recurrent = recurrent || gate == കണ്ണി;
                     }
-                } else if (consumer->op == GGML_OP_MUL) {
-                    for (int j = 0; j < 2; ++j) {
-                        const auto * gate = consumer->src[j];
-                        const auto * norm = consumer->src[1 - j];
-                        if (gate->op != GGML_OP_UNARY || gate->src[0] != node) {
-                            continue;
+                } അല്ലെങ്കിൽ എങ്കിൽ (consumer->op == GGML_OP_MUL) {
+                    വേണ്ടി (പൂർണ്ണസംഖ്യ j = 0; j < 2; ++j) {
+                        സ്ഥിരം auto * gate = consumer->src[j];
+                        സ്ഥിരം auto * norm = consumer->src[1 - j];
+                        എങ്കിൽ (gate->op != GGML_OP_UNARY || gate->src[0] != കണ്ണി) {
+                            തുടരുക;
                         }
-                        if (norm->op == GGML_OP_MUL) {
+                        എങ്കിൽ (norm->op == GGML_OP_MUL) {
                             norm = norm->src[0];
                         }
                         recurrent = recurrent || (norm->op == GGML_OP_RMS_NORM && norm->src[0]->op == GGML_OP_VIEW &&
@@ -364,106 +364,106 @@ int GgmlOvDecoder::compute_op_case(const ggml_tensor * node) const {
                     }
                 }
             }
-            if (recurrent) {
+            എങ്കിൽ (recurrent) {
                 op_case = 9;
             }
         }
-        break;
+        നിർത്തുക;
     }
-    case GGML_OP_PERMUTE: {
-        if (node->src[0]->op != GGML_OP_VIEW) {
+    അവസ്ഥ GGML_OP_PERMUTE: {
+        എങ്കിൽ (കണ്ണി->src[0]->op != GGML_OP_VIEW) {
             op_case = 1;
-        } else if (node->src[0]->src[0]->op == GGML_OP_NONE) {
+        } അല്ലെങ്കിൽ എങ്കിൽ (കണ്ണി->src[0]->src[0]->op == GGML_OP_NONE) {
             // kv cache tensor
-            std::string src_name(node->view_src->name);
-            int layer = extract_layer_from_name(src_name).value();
-            if (ggml_is_contiguous(node->src[0])) {
+            std::string src_name(കണ്ണി->view_src->name);
+            പൂർണ്ണസംഖ്യ layer = extract_layer_from_name(src_name).value();
+            എങ്കിൽ (ggml_is_contiguous(കണ്ണി->src[0])) {
                 // -  19: [    64,     8,   256,     1] VIEW            cache_k_l0 (view)             [ 2,   128,  1024, 1048576]
                 //         [   512,  1024,     1,     1]      0: NONE     cache_k_l0                    [ 2,  1024, 1048576, 1048576]
                 // -  20: [    64,   256,     8,     1] PERMUTE         cache_k_l0 (view) (permuted)  [ 2,  1024,   128, 1048576]
                 //         [    64,     8,   256,     1]      0: VIEW     cache_k_l0 (view)             [ 2,   128,  1024, 1048576]
-                if (!is_swa_layer(layer)) {
+                എങ്കിൽ (!is_swa_layer(layer)) {
                     op_case = 3;
-                } else {
+                } അല്ലെങ്കിൽ {
                     op_case = 4;
                 }
-            } else {
+            } അല്ലെങ്കിൽ {
                 // special case of cache v when `-fa off`
                 // -  17: [   256,     8,    64,     1] VIEW            cache_v_l0 (view)             [ 2, 131072,  2048, 1048576]
                 //         [   512,  1024,     1,     1]      0: NONE     cache_v_l0                   [ 2,  1024, 1048576, 1048576]
                 // -  18: [   256,    64,     8,     1] PERMUTE         cache_v_l0 (view) (permuted)  [ 2,  2048, 131072, 1048576]
                 //         [   256,     8,    64,     1]      0: VIEW     cache_v_l0 (view)            [ 2, 131072,  2048, 1048576]
-                if (!is_swa_layer(layer)) {
+                എങ്കിൽ (!is_swa_layer(layer)) {
                     op_case = 5;
-                } else {
+                } അല്ലെങ്കിൽ {
                     op_case = 6;
                 }
             }
-        } else {
+        } അല്ലെങ്കിൽ {
             // rope'ed query tensor
             op_case = 2;
         }
-        break;
+        നിർത്തുക;
     }
-    case GGML_OP_MUL_MAT: {
-        if (node->src[1]->op == GGML_OP_SOFT_MAX) {
+    അവസ്ഥ GGML_OP_MUL_MAT: {
+        എങ്കിൽ (കണ്ണി->src[1]->op == GGML_OP_SOFT_MAX) {
             // In the case of `-fa off`, softmax is used, v_trans=true, the dynamic dim is ne[0] for cache_v
             op_case = 2;
         }
-        break;
+        നിർത്തുക;
     }
-    case GGML_OP_GET_ROWS: {
+    അവസ്ഥ GGML_OP_GET_ROWS: {
         // GET_ROWS gathering recurrent state cache rows via the inp->s_copy index list:
         // src[0] is a reshape of cache_r/cache_s, src[1] is a view of the s_copy leaf, or the leaf itself
         // when one gather covers all states (see build_rs).
         // op_case 1/2: active/extra rows of a multi-slot cache
         // op_case 3/4: active/extra rows of a single-slot cache
-        if (node->src[0]->op == GGML_OP_RESHAPE && node->src[0]->src[0] != nullptr &&
-            is_recurrent_cache(node->src[0]->src[0])) {
-            const bool single_slot = node->src[0]->src[0]->ne[1] == 1;
-            if (node->src[1]->op == GGML_OP_VIEW) {
-                op_case = (node->src[1]->view_offs == 0 ? 1 : 2) + (single_slot ? 2 : 0);
-            } else if (single_slot) {
+        എങ്കിൽ (കണ്ണി->src[0]->op == GGML_OP_RESHAPE && കണ്ണി->src[0]->src[0] != nullptr &&
+            is_recurrent_cache(കണ്ണി->src[0]->src[0])) {
+            സ്ഥിരം തർക്കം single_slot = കണ്ണി->src[0]->src[0]->ne[1] == 1;
+            എങ്കിൽ (കണ്ണി->src[1]->op == GGML_OP_VIEW) {
+                op_case = (കണ്ണി->src[1]->view_offs == 0 ? 1 : 2) + (single_slot ? 2 : 0);
+            } അല്ലെങ്കിൽ എങ്കിൽ (single_slot) {
                 // a single-slot cache holds exactly the one state the gather selects
                 op_case = 3;
             }
         }
-        break;
+        നിർത്തുക;
     }
-    case GGML_OP_ROPE: {
-        const int mode = node->op_params[2];
-        switch (mode) {
-        case GGML_ROPE_TYPE_NEOX: {
+    അവസ്ഥ GGML_OP_ROPE: {
+        സ്ഥിരം പൂർണ്ണസംഖ്യ mode = കണ്ണി->op_params[2];
+        തിരഞ്ഞെടുപ്പ് (mode) {
+        അവസ്ഥ GGML_ROPE_TYPE_NEOX: {
             op_case = 1;
-            break;
+            നിർത്തുക;
         }
-        case GGML_ROPE_TYPE_IMROPE: {
+        അവസ്ഥ GGML_ROPE_TYPE_IMROPE: {
             op_case = 2;
-            break;
+            നിർത്തുക;
         }
-        case GGML_ROPE_TYPE_VISION: {
+        അവസ്ഥ GGML_ROPE_TYPE_VISION: {
             op_case = 3;
-            break;
+            നിർത്തുക;
         }
-        case GGML_ROPE_TYPE_MROPE: {
+        അവസ്ഥ GGML_ROPE_TYPE_MROPE: {
             op_case = 4;
-            break;
+            നിർത്തുക;
         }
-        default:
+        സ്ഥിരസ്ഥിതി:
             op_case = 0;
-            break;
+            നിർത്തുക;
         }
-        break;
+        നിർത്തുക;
     }
-    case GGML_OP_VIEW: {
-        if (!m_model_params.has_rs_rollback && node->src[0] != nullptr &&
-            node->src[0]->op == GGML_OP_GATED_DELTA_NET) {
+    അവസ്ഥ GGML_OP_VIEW: {
+        എങ്കിൽ (!m_model_params.has_rs_rollback && കണ്ണി->src[0] != nullptr &&
+            കണ്ണി->src[0]->op == GGML_OP_GATED_DELTA_NET) {
             // The GDN translator publishes native attention/state outputs under these VIEW names.
             op_case = 2;
-            break;
+            നിർത്തുക;
         }
-        if (m_is_static && node->src[0] != nullptr &&
-            (node->src[0]->op == GGML_OP_GATED_DELTA_NET || node->src[0]->op == GGML_OP_CONCAT)) {
+        എങ്കിൽ (m_is_static && കണ്ണി->src[0] != nullptr &&
+            (കണ്ണി->src[0]->op == GGML_OP_GATED_DELTA_NET || കണ്ണി->src[0]->op == GGML_OP_CONCAT)) {
             // VIEW slicing a GATED_DELTA_NET combined [attn|state] output, or the conv_input
             // CONCAT. The consuming CPY/RMS_NORM op recovers the true window at runtime via
             // ssm_state_size / the fixed conv kernel width, so this VIEW must stay an identity
@@ -472,207 +472,207 @@ int GgmlOvDecoder::compute_op_case(const ggml_tensor * node) const {
             // cgraph's token count, which is wrong once the compiled static model runs with a
             // different token count (prefill chunk size or 1).
             op_case = 1;
-            break;
+            നിർത്തുക;
         }
-        if (node->src[0]->op == GGML_OP_VIEW) {
-            auto * src = node->src[0];
-            if (ggml_nelements(node) != ggml_nelements(src)) {
+        എങ്കിൽ (കണ്ണി->src[0]->op == GGML_OP_VIEW) {
+            auto * src = കണ്ണി->src[0];
+            എങ്കിൽ (ggml_nelements(കണ്ണി) != ggml_nelements(src)) {
                 // throw std::runtime_error("Unsupported VIEW case");
             }
             op_case = 0;
-            if (m_model_is_splitted && m_model_inputs.find(get_tensor_ov_name(m_cgraph, src)) != m_model_inputs.end()) {
+            എങ്കിൽ (m_model_is_splitted && m_model_inputs.find(get_tensor_ov_name(m_cgraph, src)) != m_model_inputs.end()) {
                 op_case = 0;
             }
         }
         {
-            auto * src = node->src[0];
-            if (ggml_nelements(node) != ggml_nelements(src)) {
+            auto * src = കണ്ണി->src[0];
+            എങ്കിൽ (ggml_nelements(കണ്ണി) != ggml_nelements(src)) {
                 // Case 4: select one slice on src dim1 (via view offset), keep src dim2 as output dim1.
                 // Typical pattern:
                 //   src: ne=[N, M, K, 1], nb=[b0, b1, b2, b3]
                 //   dst: ne=[N, K, 1, 1], nb=[b0, b2, b3, b3]
-                if (node->ne[0] == src->ne[0] && node->ne[1] == src->ne[2] && node->ne[2] == 1 &&
-                    node->nb[0] == src->nb[0] && node->nb[1] == src->nb[2] && src->ne[1] > 1) {
+                എങ്കിൽ (കണ്ണി->ne[0] == src->ne[0] && കണ്ണി->ne[1] == src->ne[2] && കണ്ണി->ne[2] == 1 &&
+                    കണ്ണി->nb[0] == src->nb[0] && കണ്ണി->nb[1] == src->nb[2] && src->ne[1] > 1) {
                     op_case = 0;
-                    break;
+                    നിർത്തുക;
                 }
 
                 // General case 3: shape differs from source (one or more dims) and is handled as VIEW slicing.
-                int diff_count = 0;
-                for (int i = 0; i < GGML_MAX_DIMS; i++) {
-                    if (node->ne[i] != src->ne[i]) {
-                        diff_count++;
+                പൂർണ്ണസംഖ്യ diff_എണ്ണം = 0;
+                വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < GGML_MAX_DIMS; i++) {
+                    എങ്കിൽ (കണ്ണി->ne[i] != src->ne[i]) {
+                        diff_എണ്ണം++;
                     }
                     // if node ne[i] > src ne[i], case = 0
-                    if (node->ne[i] > src->ne[i]) {
-                        return 0;
+                    എങ്കിൽ (കണ്ണി->ne[i] > src->ne[i]) {
+                        തിരികെ 0;
                     }
                 }
-                if (diff_count >= 1) {
+                എങ്കിൽ (diff_എണ്ണം >= 1) {
                     op_case = 0;
                 }
             }
         }
-        break;
+        നിർത്തുക;
     }
-    case GGML_OP_RMS_NORM: {
-        if (node->src[0]->op == GGML_OP_VIEW) {
-            if (is_same_shape(node->src[0]->src[0], node->src[0])) {
+    അവസ്ഥ GGML_OP_RMS_NORM: {
+        എങ്കിൽ (കണ്ണി->src[0]->op == GGML_OP_VIEW) {
+            എങ്കിൽ (is_same_shape(കണ്ണി->src[0]->src[0], കണ്ണി->src[0])) {
                 op_case = 1;
-            } else if (!m_model_params.has_rs_rollback &&
-                       node->src[0]->src[0]->op == GGML_OP_GATED_DELTA_NET) {
+            } അല്ലെങ്കിൽ എങ്കിൽ (!m_model_params.has_rs_rollback &&
+                       കണ്ണി->src[0]->src[0]->op == GGML_OP_GATED_DELTA_NET) {
                 // GDN attention is routed directly to this VIEW by get_output_names().
                 op_case = 3;
-            } else if (node->src[0]->src[0]->op == GGML_OP_GATED_DELTA_NET) {
+            } അല്ലെങ്കിൽ എങ്കിൽ (കണ്ണി->src[0]->src[0]->op == GGML_OP_GATED_DELTA_NET) {
                 op_case = 2;
             }
         }
-        break;
+        നിർത്തുക;
     }
-    case GGML_OP_POOL_2D: {
-        const ggml_op_pool pool_mode = static_cast<ggml_op_pool>(node->op_params[0]);
-        switch (pool_mode) {
-        case GGML_OP_POOL_MAX: {
+    അവസ്ഥ GGML_OP_POOL_2D: {
+        സ്ഥിരം ggml_op_pool pool_mode = static_cast<ggml_op_pool>(കണ്ണി->op_params[0]);
+        തിരഞ്ഞെടുപ്പ് (pool_mode) {
+        അവസ്ഥ GGML_OP_POOL_MAX: {
             op_case = 1;
-            break;
+            നിർത്തുക;
         }
-        case GGML_OP_POOL_AVG: {
+        അവസ്ഥ GGML_OP_POOL_AVG: {
             op_case = 2;
-            break;
+            നിർത്തുക;
         }
-        default:
+        സ്ഥിരസ്ഥിതി:
             op_case = 0;
-            break;
+            നിർത്തുക;
         }
-        break;
+        നിർത്തുക;
     }
-    case GGML_OP_UPSCALE: {
-        const int32_t mode_flags = node->op_params[0];
-        const ggml_scale_mode scale_mode = static_cast<ggml_scale_mode>(mode_flags & 0xFF);
-        switch (scale_mode) {
-        case GGML_SCALE_MODE_NEAREST: {
+    അവസ്ഥ GGML_OP_UPSCALE: {
+        സ്ഥിരം int32_t mode_flags = കണ്ണി->op_params[0];
+        സ്ഥിരം ggml_scale_mode scale_mode = static_cast<ggml_scale_mode>(mode_flags & 0xFF);
+        തിരഞ്ഞെടുപ്പ് (scale_mode) {
+        അവസ്ഥ GGML_SCALE_MODE_NEAREST: {
             op_case = 1;
-            break;
+            നിർത്തുക;
         }
-        case GGML_SCALE_MODE_BILINEAR: {
+        അവസ്ഥ GGML_SCALE_MODE_BILINEAR: {
             op_case = 2;
-            break;
+            നിർത്തുക;
         }
-        case GGML_SCALE_MODE_BICUBIC: {
+        അവസ്ഥ GGML_SCALE_MODE_BICUBIC: {
             op_case = 3;
-            break;
+            നിർത്തുക;
         }
-        default:
+        സ്ഥിരസ്ഥിതി:
             op_case = 0;
-            break;
+            നിർത്തുക;
         }
-        break;
+        നിർത്തുക;
     }
-    case GGML_OP_CPY: {
-        if (node->src[0]->op == GGML_OP_VIEW) {
-            if (node->src[0]->src[0]->op == GGML_OP_GATED_DELTA_NET) {
-                if (!m_model_params.has_rs_rollback) {
+    അവസ്ഥ GGML_OP_CPY: {
+        എങ്കിൽ (കണ്ണി->src[0]->op == GGML_OP_VIEW) {
+            എങ്കിൽ (കണ്ണി->src[0]->src[0]->op == GGML_OP_GATED_DELTA_NET) {
+                എങ്കിൽ (!m_model_params.has_rs_rollback) {
                     // op_case 7 replaces a single-slot cache; op_case 10 writes native GDN state
                     // into an active range of a larger non-rollback cache.
-                    op_case = is_full_single_slot_writeback(node) ? 7 : 10;
-                } else {
+                    op_case = is_full_single_slot_writeback(കണ്ണി) ? 7 : 10;
+                } അല്ലെങ്കിൽ {
                     op_case = 1;
                 }
-            } else if (GgmlOvDecoder::is_conv_state_writeback(node)) {
-                op_case = is_full_single_slot_writeback(node) ? 8 : 2;
-                break;
-            } else if (is_conv_states_all_tensor(node->view_src) && node->src[1] != nullptr &&
-                       node->src[1]->op == GGML_OP_VIEW && node->src[1]->view_src == node->view_src) {
+            } അല്ലെങ്കിൽ എങ്കിൽ (GgmlOvDecoder::is_conv_state_writeback(കണ്ണി)) {
+                op_case = is_full_single_slot_writeback(കണ്ണി) ? 8 : 2;
+                നിർത്തുക;
+            } അല്ലെങ്കിൽ എങ്കിൽ (is_conv_states_all_tensor(കണ്ണി->view_src) && കണ്ണി->src[1] != nullptr &&
+                       കണ്ണി->src[1]->op == GGML_OP_VIEW && കണ്ണി->src[1]->view_src == കണ്ണി->view_src) {
                 op_case = 4;
-                break;
-            } else if (node->src[0]->src[0]->op == GGML_OP_GET_ROWS && node->src[1] != nullptr &&
-                       node->src[1]->op == GGML_OP_VIEW && node->src[1]->view_src != nullptr &&
-                       is_recurrent_cache(node->src[1]->view_src) && node->src[1]->view_src->ne[1] == 1) {
+                നിർത്തുക;
+            } അല്ലെങ്കിൽ എങ്കിൽ (കണ്ണി->src[0]->src[0]->op == GGML_OP_GET_ROWS && കണ്ണി->src[1] != nullptr &&
+                       കണ്ണി->src[1]->op == GGML_OP_VIEW && കണ്ണി->src[1]->view_src != nullptr &&
+                       is_recurrent_cache(കണ്ണി->src[1]->view_src) && കണ്ണി->src[1]->view_src->ne[1] == 1) {
                 // defrag remainder writeback of a single-slot cache, taken from a view of the one gather of
                 // all states (see build_rs)
                 op_case = 9;
             }
-        } else if (node->src[0]->op == GGML_OP_GET_ROWS && node->src[1] != nullptr &&
-                   node->src[1]->op == GGML_OP_VIEW && node->src[1]->view_src != nullptr &&
-                   is_recurrent_cache(node->src[1]->view_src)) {
+        } അല്ലെങ്കിൽ എങ്കിൽ (കണ്ണി->src[0]->op == GGML_OP_GET_ROWS && കണ്ണി->src[1] != nullptr &&
+                   കണ്ണി->src[1]->op == GGML_OP_VIEW && കണ്ണി->src[1]->view_src != nullptr &&
+                   is_recurrent_cache(കണ്ണി->src[1]->view_src)) {
             // s_copy defrag remainder writeback: gathered extra state rows copied back into the cache
-            op_case = node->src[1]->view_src->ne[1] == 1 ? 9 : 3;
-        } else if (node->src[1] != nullptr && node->src[1]->op == GGML_OP_VIEW && node->src[1]->view_src != nullptr) {
+            op_case = കണ്ണി->src[1]->view_src->ne[1] == 1 ? 9 : 3;
+        } അല്ലെങ്കിൽ എങ്കിൽ (കണ്ണി->src[1] != nullptr && കണ്ണി->src[1]->op == GGML_OP_VIEW && കണ്ണി->src[1]->view_src != nullptr) {
             // op_case 5: KV write for decoder self-attention (dynamic write offset)
             // op_case 6: KV write for encoder self-attn or cross-attn (static offset)
-            const ggml_tensor * kv_buf = node->src[1]->view_src;
-            if (kv_buf->ne[1] == 1 && kv_buf->ne[2] == 1 && kv_buf->ne[3] == 1) {
+            സ്ഥിരം ggml_tensor * kv_buf = കണ്ണി->src[1]->view_src;
+            എങ്കിൽ (kv_buf->ne[1] == 1 && kv_buf->ne[2] == 1 && kv_buf->ne[3] == 1) {
                 op_case = 6;
                 // Forward-scan the graph for a FLASH_ATTN_EXT that reads from
                 // the same buffer. Having a mask (src[3] != nullptr) implies
                 // decoder self-attention and the write offset is dynamic.
-                for (int i = 0; i < m_cgraph->n_nodes; i++) {
-                    const ggml_tensor * n = m_cgraph->nodes[i];
-                    if (n->op != GGML_OP_FLASH_ATTN_EXT) {
-                        continue;
+                വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < m_cgraph->n_nodes; i++) {
+                    സ്ഥിരം ggml_tensor * n = m_cgraph->nodes[i];
+                    എങ്കിൽ (n->op != GGML_OP_FLASH_ATTN_EXT) {
+                        തുടരുക;
                     }
                     // K (src[1]) and V (src[2]) are 3-D views whose view_src is
                     // the flat KV buffer we are writing to.
-                    if ((n->src[1] != nullptr && n->src[1]->view_src == kv_buf) ||
+                    എങ്കിൽ ((n->src[1] != nullptr && n->src[1]->view_src == kv_buf) ||
                         (n->src[2] != nullptr && n->src[2]->view_src == kv_buf)) {
-                        if (n->src[3] != nullptr) {
+                        എങ്കിൽ (n->src[3] != nullptr) {
                             op_case = 5;  // decoder self-attention: mask present
                         }
-                        break;
+                        നിർത്തുക;
                     }
                 }
             }
         }
-        break;
+        നിർത്തുക;
     }
-    case GGML_OP_ADD: {
-        if (is_moe_expert_sum_add(node)) {
+    അവസ്ഥ GGML_OP_ADD: {
+        എങ്കിൽ (is_moe_expert_sum_add(കണ്ണി)) {
             // Outermost ADD of a MoE expert-plane sum chain: translated as a single
             // ReduceSum over the base tensor instead of N-1 chained Adds over N Slices.
             op_case = 1;
         }
-        break;
+        നിർത്തുക;
     }
-    case GGML_OP_SCALE: {
-        if (node->view_src && node->buffer->usage == GGML_BACKEND_BUFFER_USAGE_ANY) {
-            op_case = node->view_src->ne[1] == 1 ? 2 : 1;
+    അവസ്ഥ GGML_OP_SCALE: {
+        എങ്കിൽ (കണ്ണി->view_src && കണ്ണി->buffer->usage == GGML_BACKEND_BUFFER_USAGE_ANY) {
+            op_case = കണ്ണി->view_src->ne[1] == 1 ? 2 : 1;
         }
-        break;
+        നിർത്തുക;
     }
-    case GGML_OP_L2_NORM: {
-        if (std::string(node->name).find("predelta") != std::string::npos) {
+    അവസ്ഥ GGML_OP_L2_NORM: {
+        എങ്കിൽ (std::string(കണ്ണി->name).find("predelta") != std::string::npos) {
             op_case = 1;
         }
-        break;
+        നിർത്തുക;
     }
-    case GGML_OP_FLASH_ATTN_EXT: {
-        if (node->src[1] != nullptr && node->src[1]->op == GGML_OP_VIEW && node->src[1]->view_src != nullptr) {
-            const ggml_tensor * kv_buf = node->src[1]->view_src;
-            if (kv_buf->ne[1] == 1 && kv_buf->ne[2] == 1 && kv_buf->ne[3] == 1) {
-                op_case = (node->src[3] != nullptr) ? 1 : 2;
+    അവസ്ഥ GGML_OP_FLASH_ATTN_EXT: {
+        എങ്കിൽ (കണ്ണി->src[1] != nullptr && കണ്ണി->src[1]->op == GGML_OP_VIEW && കണ്ണി->src[1]->view_src != nullptr) {
+            സ്ഥിരം ggml_tensor * kv_buf = കണ്ണി->src[1]->view_src;
+            എങ്കിൽ (kv_buf->ne[1] == 1 && kv_buf->ne[2] == 1 && kv_buf->ne[3] == 1) {
+                op_case = (കണ്ണി->src[3] != nullptr) ? 1 : 2;
             }
         }
-        break;
+        നിർത്തുക;
     }
-    default:
-        break;
+    സ്ഥിരസ്ഥിതി:
+        നിർത്തുക;
     }
-    return op_case;
+    തിരികെ op_case;
 }
 
-std::optional<int> extract_layer_from_name(const std::string & name) {
+std::optional<പൂർണ്ണസംഖ്യ> extract_layer_from_name(സ്ഥിരം std::string & name) {
     size_t pos1 = name.find("_l");
-    if (pos1 == std::string::npos) {
-        return std::nullopt;
+    എങ്കിൽ (pos1 == std::string::npos) {
+        തിരികെ std::nullopt;
     }
     pos1 += 2;
     size_t pos2 = name.find(' ', pos1);
-    if (pos2 == std::string::npos) {
+    എങ്കിൽ (pos2 == std::string::npos) {
         pos2 = name.length();
     }
     std::string layer_str = name.substr(pos1, pos2 - pos1);
-    int layer = std::stoi(layer_str);
-    return layer;
+    പൂർണ്ണസംഖ്യ layer = std::stoi(layer_str);
+    തിരികെ layer;
 }
 
 // Recover the sliding window width from ggml's own SWA mask. llama.cpp never passes n_swa to a
@@ -681,110 +681,110 @@ std::optional<int> extract_layer_from_name(const std::string & name) {
 // looking for a contiguous band is what makes this work on the KV-cache mask, where columns are
 // physical cache cells in arbitrary order, not positions.
 // Assumes LLAMA_SWA_TYPE_STANDARD, the only type the caller reconstructs.
-static int get_swa_window_from_mask(const ggml_tensor * mask) {
-    if (mask->data == nullptr || !ggml_backend_buffer_is_host(mask->buffer)) {
-        return -1;
+സ്ഥിതം പൂർണ്ണസംഖ്യ get_swa_window_from_mask(സ്ഥിരം ggml_tensor * mask) {
+    എങ്കിൽ (mask->data == nullptr || !ggml_backend_buffer_is_host(mask->buffer)) {
+        തിരികെ -1;
     }
-    if (mask->type != GGML_TYPE_F16 && mask->type != GGML_TYPE_F32) {
-        return -1;
+    എങ്കിൽ (mask->type != GGML_TYPE_F16 && mask->type != GGML_TYPE_F32) {
+        തിരികെ -1;
     }
 
-    const int64_t n_kv = mask->ne[0];
-    const int64_t n_tokens = mask->ne[1];
+    സ്ഥിരം int64_t n_kv = mask->ne[0];
+    സ്ഥിരം int64_t n_tokens = mask->ne[1];
     int64_t window = 0;
 
-    for (int64_t r = 0; r < n_tokens; r++) {
+    വേണ്ടി (int64_t r = 0; r < n_tokens; r++) {
         int64_t kept = 0;
-        for (int64_t c = 0; c < n_kv; c++) {
-            const size_t i = (size_t) r * n_kv + c;
-            const float v = mask->type == GGML_TYPE_F16 ? ggml_fp16_to_fp32(((const ggml_fp16_t *) mask->data)[i]) :
-                                                          ((const float *) mask->data)[i];
-            if (v > -INFINITY) {
+        വേണ്ടി (int64_t c = 0; c < n_kv; c++) {
+            സ്ഥിരം size_t i = (size_t) r * n_kv + c;
+            സ്ഥിരം ദശാംശം v = mask->type == GGML_TYPE_F16 ? ggml_fp16_to_fp32(((സ്ഥിരം ggml_fp16_t *) mask->data)[i]) :
+                                                          ((സ്ഥിരം ദശാംശം *) mask->data)[i];
+            എങ്കിൽ (v > -INFINITY) {
                 kept++;
             }
         }
         window = std::max(window, kept);
     }
 
-    return window > 0 ? (int) window : -1;
+    തിരികെ window > 0 ? (പൂർണ്ണസംഖ്യ) window : -1;
 }
 
-std::pair<ModelParams, ComputeParams> GgmlOvDecoder::compute_llm_params(ggml_cgraph * cgraph, bool is_static) {
+std::pair<ModelParams, ComputeParams> GgmlOvDecoder::compute_llm_params(ggml_cgraph * cgraph, തർക്കം is_static) {
     ModelParams model_params;
     ComputeParams compute_params;
-    auto get_attention_pattern_case = [](const ggml_tensor * node) -> int {
-        if (node == nullptr) {
-            return -1;
+    auto get_attention_pattern_case = [](സ്ഥിരം ggml_tensor * കണ്ണി) -> പൂർണ്ണസംഖ്യ {
+        എങ്കിൽ (കണ്ണി == nullptr) {
+            തിരികെ -1;
         }
 
-        switch (node->op) {
-        case GGML_OP_FLASH_ATTN_EXT:
-            if (node->src[0] == nullptr || node->src[1] == nullptr) {
-                return -1;
+        തിരഞ്ഞെടുപ്പ് (കണ്ണി->op) {
+        അവസ്ഥ GGML_OP_FLASH_ATTN_EXT:
+            എങ്കിൽ (കണ്ണി->src[0] == nullptr || കണ്ണി->src[1] == nullptr) {
+                തിരികെ -1;
             }
-            switch (node->src[1]->op) {
-            case GGML_OP_PERMUTE:
+            തിരഞ്ഞെടുപ്പ് (കണ്ണി->src[1]->op) {
+            അവസ്ഥ GGML_OP_PERMUTE:
                 // case 0: src[1] is PERMUTE of a cache VIEW, mask required
-                if (node->src[3] != nullptr && node->src[1]->src[0] != nullptr &&
-                    node->src[1]->src[0]->op == GGML_OP_VIEW) {
-                    return 0;
+                എങ്കിൽ (കണ്ണി->src[3] != nullptr && കണ്ണി->src[1]->src[0] != nullptr &&
+                    കണ്ണി->src[1]->src[0]->op == GGML_OP_VIEW) {
+                    തിരികെ 0;
                 }
-                break;
-            case GGML_OP_CPY:
+                നിർത്തുക;
+            അവസ്ഥ GGML_OP_CPY:
                 // case 1: src[1] is CPY of a PERMUTE(VIEW), mask required
-                if (node->src[3] != nullptr && node->src[1]->src[0] != nullptr &&
-                    node->src[1]->src[0]->op == GGML_OP_PERMUTE && node->src[1]->src[0]->src[0] != nullptr &&
-                    node->src[1]->src[0]->src[0]->op == GGML_OP_VIEW) {
-                    return 1;
+                എങ്കിൽ (കണ്ണി->src[3] != nullptr && കണ്ണി->src[1]->src[0] != nullptr &&
+                    കണ്ണി->src[1]->src[0]->op == GGML_OP_PERMUTE && കണ്ണി->src[1]->src[0]->src[0] != nullptr &&
+                    കണ്ണി->src[1]->src[0]->src[0]->op == GGML_OP_VIEW) {
+                    തിരികെ 1;
                 }
-                break;
-            case GGML_OP_VIEW:
+                നിർത്തുക;
+            അവസ്ഥ GGML_OP_VIEW:
                 // cases 4/5/6: whisper - K is a direct non-contiguous VIEW_3D of a KV cache
-                if (node->src[1]->view_src != nullptr) {
-                    if (node->src[3] != nullptr) {
-                        return 4;  // decoder self-attention
+                എങ്കിൽ (കണ്ണി->src[1]->view_src != nullptr) {
+                    എങ്കിൽ (കണ്ണി->src[3] != nullptr) {
+                        തിരികെ 4;  // decoder self-attention
                     }
-                    return 5;      // cross-attention or encoder self-attention
+                    തിരികെ 5;      // cross-attention or encoder self-attention
                 }
-                break;
-            default:
-                break;
+                നിർത്തുക;
+            സ്ഥിരസ്ഥിതി:
+                നിർത്തുക;
             }
-            break;
-        case GGML_OP_SOFT_MAX:
+            നിർത്തുക;
+        അവസ്ഥ GGML_OP_SOFT_MAX:
             // case 2: node op is SOFT_MAX, src 0 not null & op is MUL_MAT & the src 0 of MUL_MAT is PERMUTE & the permuted tensor src is the view of cache k
-            if (node->src[0] != nullptr && node->src[1] != nullptr && node->src[0]->op == GGML_OP_MUL_MAT &&
-                node->src[0]->src[0] != nullptr && node->src[0]->src[1] != nullptr &&
-                node->src[0]->src[0]->op == GGML_OP_PERMUTE && node->src[0]->src[0]->src[0] != nullptr &&
-                node->src[0]->src[0]->src[0]->op == GGML_OP_VIEW) {
-                return 2;
+            എങ്കിൽ (കണ്ണി->src[0] != nullptr && കണ്ണി->src[1] != nullptr && കണ്ണി->src[0]->op == GGML_OP_MUL_MAT &&
+                കണ്ണി->src[0]->src[0] != nullptr && കണ്ണി->src[0]->src[1] != nullptr &&
+                കണ്ണി->src[0]->src[0]->op == GGML_OP_PERMUTE && കണ്ണി->src[0]->src[0]->src[0] != nullptr &&
+                കണ്ണി->src[0]->src[0]->src[0]->op == GGML_OP_VIEW) {
+                തിരികെ 2;
             }
             // case 3: node op is SOFT_MAX, src 0 not null & op is ADD & the src 0 of ADD is MUL_MAT & the src 0 of MUL_MAT is PERMUTE
-            if (node->src[0]->op == GGML_OP_ADD && node->src[0]->src[0] != nullptr &&
-                node->src[0]->src[0]->op == GGML_OP_MUL_MAT && node->src[0]->src[0]->src[0] != nullptr &&
-                node->src[0]->src[0]->src[0]->op == GGML_OP_PERMUTE) {
-                return 3;
+            എങ്കിൽ (കണ്ണി->src[0]->op == GGML_OP_ADD && കണ്ണി->src[0]->src[0] != nullptr &&
+                കണ്ണി->src[0]->src[0]->op == GGML_OP_MUL_MAT && കണ്ണി->src[0]->src[0]->src[0] != nullptr &&
+                കണ്ണി->src[0]->src[0]->src[0]->op == GGML_OP_PERMUTE) {
+                തിരികെ 3;
             }
-            break;
-        default:
-            break;
+            നിർത്തുക;
+        സ്ഥിരസ്ഥിതി:
+            നിർത്തുക;
         }
 
-        return -1;
+        തിരികെ -1;
     };
 
     // Resolve the attention mask an attention node consumes, mirroring the src layout that
     // get_attention_pattern_case() classifies. Used by the SWA pre-pass below.
-    auto get_attention_op_mask = [&get_attention_pattern_case](const ggml_tensor * node) -> const ggml_tensor * {
-        switch (get_attention_pattern_case(node)) {
-        case 0:
-        case 1:
-            return node->src[3];
-        case 2:
-        case 3:
-            return node->src[1];
-        default:
-            return nullptr;
+    auto get_attention_op_mask = [&get_attention_pattern_case](സ്ഥിരം ggml_tensor * കണ്ണി) -> സ്ഥിരം ggml_tensor * {
+        തിരഞ്ഞെടുപ്പ് (get_attention_pattern_case(കണ്ണി)) {
+        അവസ്ഥ 0:
+        അവസ്ഥ 1:
+            തിരികെ കണ്ണി->src[3];
+        അവസ്ഥ 2:
+        അവസ്ഥ 3:
+            തിരികെ കണ്ണി->src[1];
+        സ്ഥിരസ്ഥിതി:
+            തിരികെ nullptr;
         }
     };
 
@@ -813,49 +813,49 @@ std::pair<ModelParams, ComputeParams> GgmlOvDecoder::compute_llm_params(ggml_cgr
     // two agree while the context is shorter than the window, then diverge, and the mask add fails
     // shape inference ("Failed to broadcast-merge input shapes") partway into a long prompt.
     {
-        std::map<int, int64_t> layer_extent;                      // layer -> leaf cache_k cell count
-        std::map<int, const ggml_tensor *> layer_mask;            // layer -> mask it consumes
+        std::map<പൂർണ്ണസംഖ്യ, int64_t> layer_extent;                      // layer -> leaf cache_k cell count
+        std::map<പൂർണ്ണസംഖ്യ, സ്ഥിരം ggml_tensor *> layer_mask;            // layer -> mask it consumes
         int64_t max_extent = 0;
 
-        for (int i = 0; i < cgraph->n_nodes; i++) {
-            const ggml_tensor * mask = get_attention_op_mask(cgraph->nodes[i]);
-            if (mask == nullptr) {
-                continue;
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < cgraph->n_nodes; i++) {
+            സ്ഥിരം ggml_tensor * mask = get_attention_op_mask(cgraph->nodes[i]);
+            എങ്കിൽ (mask == nullptr) {
+                തുടരുക;
             }
-            const ggml_tensor * cache_k_permute = nullptr;
-            switch (get_attention_pattern_case(cgraph->nodes[i])) {
-            case 0:  cache_k_permute = cgraph->nodes[i]->src[1];                     break;
-            case 1:  cache_k_permute = cgraph->nodes[i]->src[1]->src[0];             break;
-            case 2:  cache_k_permute = cgraph->nodes[i]->src[0]->src[0];             break;
-            default: cache_k_permute = cgraph->nodes[i]->src[0]->src[0]->src[0];     break;
+            സ്ഥിരം ggml_tensor * cache_k_permute = nullptr;
+            തിരഞ്ഞെടുപ്പ് (get_attention_pattern_case(cgraph->nodes[i])) {
+            അവസ്ഥ 0:  cache_k_permute = cgraph->nodes[i]->src[1];                     നിർത്തുക;
+            അവസ്ഥ 1:  cache_k_permute = cgraph->nodes[i]->src[1]->src[0];             നിർത്തുക;
+            അവസ്ഥ 2:  cache_k_permute = cgraph->nodes[i]->src[0]->src[0];             നിർത്തുക;
+            സ്ഥിരസ്ഥിതി: cache_k_permute = cgraph->nodes[i]->src[0]->src[0]->src[0];     നിർത്തുക;
             }
-            const ggml_tensor * cache_k_view = cache_k_permute->src[0];
-            if (cache_k_view->op != GGML_OP_VIEW) {
-                continue;
+            സ്ഥിരം ggml_tensor * cache_k_view = cache_k_permute->src[0];
+            എങ്കിൽ (cache_k_view->op != GGML_OP_VIEW) {
+                തുടരുക;
             }
-            const ggml_tensor * leaf = cache_k_view->src[0];
+            സ്ഥിരം ggml_tensor * leaf = cache_k_view->src[0];
             auto layer = extract_layer_from_name(leaf->name);
-            if (!layer.has_value()) {
-                continue;
+            എങ്കിൽ (!layer.has_value()) {
+                തുടരുക;
             }
             layer_extent[layer.value()] = leaf->ne[1];
             layer_mask[layer.value()] = mask;
             max_extent = std::max(max_extent, leaf->ne[1]);
         }
 
-        for (const auto & [layer, extent] : layer_extent) {
-            if (extent < max_extent) {
+        വേണ്ടി (സ്ഥിരം auto & [layer, extent] : layer_extent) {
+            എങ്കിൽ (extent < max_extent) {
                 model_params.swa_layers.push_back(layer);
-                if (model_params.swa_mask == nullptr) {
+                എങ്കിൽ (model_params.swa_mask == nullptr) {
                     model_params.swa_mask = layer_mask[layer];
                 }
             }
         }
         std::sort(model_params.swa_layers.begin(), model_params.swa_layers.end());
 
-        if (ggml_openvino_getenv_int("GGML_OPENVINO_LOG_SWA_LAYERS")) {
+        എങ്കിൽ (ggml_openvino_getenv_int("GGML_OPENVINO_LOG_SWA_LAYERS")) {
             std::string per_layer;
-            for (const auto & [layer, extent] : layer_extent) {
+            വേണ്ടി (സ്ഥിരം auto & [layer, extent] : layer_extent) {
                 per_layer += " " + std::to_string(layer) + ":" + std::to_string(extent) +
                              (extent < max_extent ? "(swa)" : "");
             }
@@ -864,72 +864,72 @@ std::pair<ModelParams, ComputeParams> GgmlOvDecoder::compute_llm_params(ggml_cgr
         }
     }
 
-    bool rope_seen = false;
-    for (int i = 0; i < cgraph->n_nodes; i++) {
-        ggml_tensor * node = cgraph->nodes[i];
-        const int attention_pattern_case = get_attention_pattern_case(node);
-        if (attention_pattern_case != -1) {
+    തർക്കം rope_seen = അസത്യം;
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < cgraph->n_nodes; i++) {
+        ggml_tensor * കണ്ണി = cgraph->nodes[i];
+        സ്ഥിരം പൂർണ്ണസംഖ്യ attention_pattern_case = get_attention_pattern_case(കണ്ണി);
+        എങ്കിൽ (attention_pattern_case != -1) {
             ggml_tensor * cache_k_permute = nullptr;
             ggml_tensor * mask = nullptr;
 
-            switch (attention_pattern_case) {
-            case 0:
-                cache_k_permute = node->src[1];
-                mask = node->src[3];
-                break;
-            case 1:
-                cache_k_permute = node->src[1]->src[0];
-                mask = node->src[3];
-                break;
-            case 2:
-                cache_k_permute = node->src[0]->src[0];
-                mask = node->src[1];
-                break;
-            case 3:
-                cache_k_permute = node->src[0]->src[0]->src[0];
-                mask = node->src[1];
-                break;
-            case 4:
-            case 5: {
+            തിരഞ്ഞെടുപ്പ് (attention_pattern_case) {
+            അവസ്ഥ 0:
+                cache_k_permute = കണ്ണി->src[1];
+                mask = കണ്ണി->src[3];
+                നിർത്തുക;
+            അവസ്ഥ 1:
+                cache_k_permute = കണ്ണി->src[1]->src[0];
+                mask = കണ്ണി->src[3];
+                നിർത്തുക;
+            അവസ്ഥ 2:
+                cache_k_permute = കണ്ണി->src[0]->src[0];
+                mask = കണ്ണി->src[1];
+                നിർത്തുക;
+            അവസ്ഥ 3:
+                cache_k_permute = കണ്ണി->src[0]->src[0]->src[0];
+                mask = കണ്ണി->src[1];
+                നിർത്തുക;
+            അവസ്ഥ 4:
+            അവസ്ഥ 5: {
                 // whisper: K is a direct VIEW_3D of the KV buffer, no PERMUTE node
-                auto * cache_k_view = node->src[1];  // VIEW_3D of kv_self.k or kv_cross.k`
-                compute_params.token_len_per_seq = node->src[0]->ne[1];
-                if (attention_pattern_case == 4) {
+                auto * cache_k_view = കണ്ണി->src[1];  // VIEW_3D of kv_self.k or kv_cross.k`
+                compute_params.token_len_per_seq = കണ്ണി->src[0]->ne[1];
+                എങ്കിൽ (attention_pattern_case == 4) {
                     compute_params.attention_size = cache_k_view->ne[1];
-                } else {
+                } അല്ലെങ്കിൽ {
                     compute_params.attention_size_static = cache_k_view->ne[1];
                 }
-                continue;
+                തുടരുക;
             }
-            default:
-                break;
+            സ്ഥിരസ്ഥിതി:
+                നിർത്തുക;
             }
 
-            assert(cache_k_permute != nullptr);
+            പ്രതിജ്ഞാ(cache_k_permute != nullptr);
 
             model_params.head_size = cache_k_permute->ne[0];
             model_params.n_heads_kv = cache_k_permute->ne[2];
-            compute_params.input_len = node->src[0]->ne[1];
-            compute_params.token_len_per_seq = node->src[0]->ne[1];
+            compute_params.നിവേശം_len = കണ്ണി->src[0]->ne[1];
+            compute_params.token_len_per_seq = കണ്ണി->src[0]->ne[1];
 
             auto * cache_k_view = cache_k_permute->src[0];
-            if (cache_k_view->op != GGML_OP_VIEW || mask == nullptr) {
-                continue;
+            എങ്കിൽ (cache_k_view->op != GGML_OP_VIEW || mask == nullptr) {
+                തുടരുക;
             }
 
             ggml_tensor * cache_k = cache_k_view->src[0];
-            int layer = extract_layer_from_name(cache_k->name).value();
+            പൂർണ്ണസംഖ്യ layer = extract_layer_from_name(cache_k->name).value();
 
             // Classified by the pre-pass above, which groups layers by mask tensor identity. The
             // mask NAME cannot be used: build_attn_inp_kq_mask() gives both masks the same name.
-            const bool layer_is_swa = std::find(model_params.swa_layers.begin(), model_params.swa_layers.end(),
+            സ്ഥിരം തർക്കം layer_is_swa = std::find(model_params.swa_layers.begin(), model_params.swa_layers.end(),
                                                 layer) != model_params.swa_layers.end();
 
             model_params.kv_buffer_ctx_id = ggml_backend_openvino_buffer_get_ctx_id(cache_k->buffer);
             model_params.n_heads_kv_per_layer[layer] = cache_k_permute->ne[2];
-            if (layer_is_swa) {
+            എങ്കിൽ (layer_is_swa) {
                 model_params.ctx_per_seq_swa = cache_k->ne[1];
-            } else {
+            } അല്ലെങ്കിൽ {
                 model_params.ctx_per_seq = cache_k->ne[1];
                 model_params.n_seq = cache_k->ne[2];
             }
@@ -937,209 +937,209 @@ std::pair<ModelParams, ComputeParams> GgmlOvDecoder::compute_llm_params(ggml_cgr
             compute_params.n_seq_active = mask->ne[3];
             auto seq_size = cache_k->ne[0] * cache_k->ne[1] * ggml_type_size(cache_k->type);
             size_t offset;
-            memcpy(&offset, cache_k_view->op_params, sizeof(size_t));
+            memcpy(&offset, cache_k_view->op_params, വലുപ്പം(size_t));
             compute_params.seq_active_start = offset / seq_size;
 
-            if (layer_is_swa) {
+            എങ്കിൽ (layer_is_swa) {
                 compute_params.attention_size_swa = mask->ne[0];
                 compute_params.swa_window = get_swa_window_from_mask(mask);
-            } else {
+            } അല്ലെങ്കിൽ {
                 compute_params.attention_size = mask->ne[0];
             }
-            if (is_static) {
+            എങ്കിൽ (is_static) {
                 compute_params.attention_size = model_params.ctx_per_seq;
                 compute_params.attention_size_swa = model_params.ctx_per_seq_swa;
                 compute_params.token_len_per_seq = 1;
             }
         }
 
-        if (node->op == GGML_OP_MUL_MAT && node->src[0]->op == GGML_OP_PERMUTE &&
-            node->src[0]->src[0]->op == GGML_OP_VIEW && is_kvcache(node->src[0]->view_src, node->view_src)) {
-            if (node->src[1]->op == GGML_OP_PERMUTE && node->src[1]->src[0]->op == GGML_OP_VIEW &&
-                node->src[1]->src[0]->src[0]->op == GGML_OP_ROPE) {
-                compute_params.attention_size = node->ne[0];
+        എങ്കിൽ (കണ്ണി->op == GGML_OP_MUL_MAT && കണ്ണി->src[0]->op == GGML_OP_PERMUTE &&
+            കണ്ണി->src[0]->src[0]->op == GGML_OP_VIEW && is_kvcache(കണ്ണി->src[0]->view_src, കണ്ണി->view_src)) {
+            എങ്കിൽ (കണ്ണി->src[1]->op == GGML_OP_PERMUTE && കണ്ണി->src[1]->src[0]->op == GGML_OP_VIEW &&
+                കണ്ണി->src[1]->src[0]->src[0]->op == GGML_OP_ROPE) {
+                compute_params.attention_size = കണ്ണി->ne[0];
             }
         }
 
         // if the node op is TRANSPOSE and its input is PERMUTE and the source of the PERMUTE is VIEW, then get the attention size with the TRANSPOSE node ne[0] (in case no GGML_OP_FLASH_ATTN_EXT)
-        if (node->op == GGML_OP_TRANSPOSE && node->src[0]->op == GGML_OP_PERMUTE &&
-            node->src[0]->src[0]->op == GGML_OP_VIEW) {
-            compute_params.attention_size = node->ne[0];
-            if (is_static) {
+        എങ്കിൽ (കണ്ണി->op == GGML_OP_TRANSPOSE && കണ്ണി->src[0]->op == GGML_OP_PERMUTE &&
+            കണ്ണി->src[0]->src[0]->op == GGML_OP_VIEW) {
+            compute_params.attention_size = കണ്ണി->ne[0];
+            എങ്കിൽ (is_static) {
                 compute_params.attention_size = model_params.ctx_per_seq;
             }
         }
-        if (node->op == GGML_OP_ROPE) {
-            if (compute_params.token_len_per_seq == -1 && node->src[1] != nullptr) {
-                compute_params.token_len_per_seq = ggml_nelements(node->src[1]);
+        എങ്കിൽ (കണ്ണി->op == GGML_OP_ROPE) {
+            എങ്കിൽ (compute_params.token_len_per_seq == -1 && കണ്ണി->src[1] != nullptr) {
+                compute_params.token_len_per_seq = ggml_nelements(കണ്ണി->src[1]);
             }
 
             // When multiple ROPE ops in the graph disagree on op_params (e.g. gemma4's
             // mixed SWA/non-SWA layers with different n_dims or freq_base), we cannot
             // share a single precomputed rope_sin/rope_cos. Track divergence so the
             // translator falls back to per-op make_sin_cos in that case.
-            static_assert(sizeof(model_params.rope_params) == sizeof(int32_t) * 16, "rope_params size");
-            if (!rope_seen) {
-                memcpy(model_params.rope_params, node->op_params, sizeof(int32_t) * 16);
-                rope_seen = true;
-            } else if (memcmp(model_params.rope_params, node->op_params, sizeof(int32_t) * 16) != 0) {
-                model_params.mixed_rope_params = true;
+            static_assert(വലുപ്പം(model_params.rope_params) == വലുപ്പം(int32_t) * 16, "rope_params size");
+            എങ്കിൽ (!rope_seen) {
+                memcpy(model_params.rope_params, കണ്ണി->op_params, വലുപ്പം(int32_t) * 16);
+                rope_seen = സത്യം;
+            } അല്ലെങ്കിൽ എങ്കിൽ (memcmp(model_params.rope_params, കണ്ണി->op_params, വലുപ്പം(int32_t) * 16) != 0) {
+                model_params.mixed_rope_params = സത്യം;
             }
         }
-        if (node->op == GGML_OP_GATED_DELTA_NET) {
-            model_params.state_size = node->src[0]->ne[0];
+        എങ്കിൽ (കണ്ണി->op == GGML_OP_GATED_DELTA_NET) {
+            model_params.state_size = കണ്ണി->src[0]->ne[0];
         }
-        if (node->op == GGML_OP_SCALE && node->view_src != nullptr && is_recurrent_cache(node->view_src)) {
-            if (model_params.n_rs_slots == -1) {
-                model_params.n_rs_slots = node->view_src->ne[1];
-            } else {
-                GGML_ASSERT(model_params.n_rs_slots == node->view_src->ne[1]);
+        എങ്കിൽ (കണ്ണി->op == GGML_OP_SCALE && കണ്ണി->view_src != nullptr && is_recurrent_cache(കണ്ണി->view_src)) {
+            എങ്കിൽ (model_params.n_rs_slots == -1) {
+                model_params.n_rs_slots = കണ്ണി->view_src->ne[1];
+            } അല്ലെങ്കിൽ {
+                GGML_ASSERT(model_params.n_rs_slots == കണ്ണി->view_src->ne[1]);
             }
-            compute_params.cache_rs_reset_len = ggml_nelements(node) / node->view_src->ne[0];
-            compute_params.cache_rs_reset_idx = node->src[0]->view_offs / node->view_src->ne[0];
+            compute_params.cache_rs_reset_len = ggml_nelements(കണ്ണി) / കണ്ണി->view_src->ne[0];
+            compute_params.cache_rs_reset_idx = കണ്ണി->src[0]->view_offs / കണ്ണി->view_src->ne[0];
         }
         // Capture the destination slot block of every recurrent state cache writeback, plus the
         // source window needed by conv state and packed GDN rollback writes. The active sequences
         // occupy a contiguous slot block [begin, begin + n_seqs) of the cache; these offsets move
         // with the batch, so they are fed to the cached model as runtime inputs.
-        if (node->op == GGML_OP_CPY && node->view_src != nullptr && is_recurrent_cache(node->view_src) &&
-            node->src[1] != nullptr && node->src[1]->op == GGML_OP_VIEW && node->src[1]->view_src == node->view_src) {
-            const bool is_conv = is_conv_state_writeback(node);
-            const bool is_gdn = node->src[0]->op == GGML_OP_VIEW && node->src[0]->src[0] != nullptr &&
-                                node->src[0]->src[0]->op == GGML_OP_GATED_DELTA_NET;
-            const bool is_extra = node->src[0]->op == GGML_OP_GET_ROWS;
-            const bool is_gdn_rollback = is_gdn && is_same_shape(node->src[0], node->src[1]);
+        എങ്കിൽ (കണ്ണി->op == GGML_OP_CPY && കണ്ണി->view_src != nullptr && is_recurrent_cache(കണ്ണി->view_src) &&
+            കണ്ണി->src[1] != nullptr && കണ്ണി->src[1]->op == GGML_OP_VIEW && കണ്ണി->src[1]->view_src == കണ്ണി->view_src) {
+            സ്ഥിരം തർക്കം is_conv = is_conv_state_writeback(കണ്ണി);
+            സ്ഥിരം തർക്കം is_gdn = കണ്ണി->src[0]->op == GGML_OP_VIEW && കണ്ണി->src[0]->src[0] != nullptr &&
+                                കണ്ണി->src[0]->src[0]->op == GGML_OP_GATED_DELTA_NET;
+            സ്ഥിരം തർക്കം is_extra = കണ്ണി->src[0]->op == GGML_OP_GET_ROWS;
+            സ്ഥിരം തർക്കം is_gdn_rollback = is_gdn && is_same_shape(കണ്ണി->src[0], കണ്ണി->src[1]);
 
-            const ggml_tensor * dest_view = node->src[1];
-            const ggml_tensor * cache = node->view_src;
-            const size_t row_bytes = cache->ne[0] * ggml_type_size(cache->type);
-            if (is_gdn_rollback) {
+            സ്ഥിരം ggml_tensor * dest_view = കണ്ണി->src[1];
+            സ്ഥിരം ggml_tensor * cache = കണ്ണി->view_src;
+            സ്ഥിരം size_t row_bytes = cache->ne[0] * ggml_type_size(cache->type);
+            എങ്കിൽ (is_gdn_rollback) {
                 // Rollback GDN exposes an already-flattened [state, seq, snapshot] VIEW and copies
                 // it to an identically-shaped cache VIEW. Non-rollback copies native 4-D state
                 // [value, key, head, seq] into flattened cache rows, so the shapes differ. This
                 // signature is local to the CPY and still works when fallback splits the graph.
-                model_params.has_rs_rollback = true;
+                model_params.has_rs_rollback = സത്യം;
             }
-            if (row_bytes > 0 && (is_conv || is_gdn || is_extra) && !is_full_single_slot_writeback(node)) {
+            എങ്കിൽ (row_bytes > 0 && (is_conv || is_gdn || is_extra) && !is_full_single_slot_writeback(കണ്ണി)) {
                 ComputeParams::RsWriteback writeback;
-                writeback.slot_begin = (int) (dest_view->view_offs / row_bytes);
-                if (is_conv) {
-                    writeback.src_begin = (int) (node->src[0]->view_offs / node->src[0]->view_src->nb[0]);
-                } else if (is_gdn_rollback) {
-                    writeback.src_begin = (int) (node->src[0]->view_offs / node->src[0]->view_src->nb[1]);
+                writeback.slot_begin = (പൂർണ്ണസംഖ്യ) (dest_view->view_offs / row_bytes);
+                എങ്കിൽ (is_conv) {
+                    writeback.src_begin = (പൂർണ്ണസംഖ്യ) (കണ്ണി->src[0]->view_offs / കണ്ണി->src[0]->view_src->nb[0]);
+                } അല്ലെങ്കിൽ എങ്കിൽ (is_gdn_rollback) {
+                    writeback.src_begin = (പൂർണ്ണസംഖ്യ) (കണ്ണി->src[0]->view_offs / കണ്ണി->src[0]->view_src->nb[1]);
                 }
-                compute_params.rs_writebacks[get_tensor_ov_name(cgraph, node)] = writeback;
+                compute_params.rs_writebacks[get_tensor_ov_name(cgraph, കണ്ണി)] = writeback;
             }
-            if ((is_conv || is_gdn) && !is_full_single_slot_writeback(node)) {
-                compute_params.s_copy_active_slot_len = (int) dest_view->ne[1];
+            എങ്കിൽ ((is_conv || is_gdn) && !is_full_single_slot_writeback(കണ്ണി)) {
+                compute_params.s_copy_active_slot_len = (പൂർണ്ണസംഖ്യ) dest_view->ne[1];
             }
         }
     }
-    if (model_params.n_heads_kv == -1) {
-        for (int i = 0; i < cgraph->n_nodes; i++) {
-            const auto * node = cgraph->nodes[i];
-            const ggml_tensor * mask = nullptr;
-            if (node->op == GGML_OP_SOFT_MAX) {
-                mask = node->src[1];
-            } else if (node->op == GGML_OP_FLASH_ATTN_EXT) {
-                mask = node->src[3];
-            } else {
-                continue;
+    എങ്കിൽ (model_params.n_heads_kv == -1) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < cgraph->n_nodes; i++) {
+            സ്ഥിരം auto * കണ്ണി = cgraph->nodes[i];
+            സ്ഥിരം ggml_tensor * mask = nullptr;
+            എങ്കിൽ (കണ്ണി->op == GGML_OP_SOFT_MAX) {
+                mask = കണ്ണി->src[1];
+            } അല്ലെങ്കിൽ എങ്കിൽ (കണ്ണി->op == GGML_OP_FLASH_ATTN_EXT) {
+                mask = കണ്ണി->src[3];
+            } അല്ലെങ്കിൽ {
+                തുടരുക;
             }
-            if (mask == nullptr || mask->op != GGML_OP_NONE || !(mask->flags & GGML_TENSOR_FLAG_INPUT) ||
-                node->src[0] == nullptr) {
-                continue;
+            എങ്കിൽ (mask == nullptr || mask->op != GGML_OP_NONE || !(mask->flags & GGML_TENSOR_FLAG_നിവേശം) ||
+                കണ്ണി->src[0] == nullptr) {
+                തുടരുക;
             }
-            model_params.is_cacheless_attn = true;
+            model_params.is_cacheless_attn = സത്യം;
             model_params.n_seq = 1;
             model_params.ctx_per_seq = mask->ne[0];
-            compute_params.input_len = node->src[0]->ne[1];
-            compute_params.token_len_per_seq = compute_params.input_len;
-            break;
+            compute_params.നിവേശം_len = കണ്ണി->src[0]->ne[1];
+            compute_params.token_len_per_seq = compute_params.നിവേശം_len;
+            നിർത്തുക;
         }
     }
 
     auto * output_tensor = cgraph->nodes[cgraph->n_nodes - 1];
     compute_params.output_len = output_tensor->ne[1];
-    if (model_params.is_cacheless_attn) {
-        for (int i = 0; i < cgraph->n_nodes; i++) {
-            const auto * node = cgraph->nodes[i];
-            if (node->op == GGML_OP_GET_ROWS && is_output_idx(node->src[1], node)) {
-                compute_params.output_len = node->src[1]->ne[0];
-                break;
+    എങ്കിൽ (model_params.is_cacheless_attn) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < cgraph->n_nodes; i++) {
+            സ്ഥിരം auto * കണ്ണി = cgraph->nodes[i];
+            എങ്കിൽ (കണ്ണി->op == GGML_OP_GET_ROWS && is_output_idx(കണ്ണി->src[1], കണ്ണി)) {
+                compute_params.output_len = കണ്ണി->src[1]->ne[0];
+                നിർത്തുക;
             }
         }
     }
     // for NPU, output_len is always 1 except for llama-perplexity
-    if (is_static && compute_params.output_len == 0) {
+    എങ്കിൽ (is_static && compute_params.output_len == 0) {
         compute_params.output_len = 1;
     }
     model_params.ctx = model_params.ctx_per_seq * model_params.n_seq;
-    return {model_params, compute_params};
+    തിരികെ {model_params, compute_params};
 }
 
-void GgmlOvDecoder::validate_cgraph() const {
-    if (m_model_params.n_seq > 1 && m_is_static == true) {
-        throw std::runtime_error("n_seq > 1 is not supported on NPU. Try setting -np 1.");
+ശൂന്യം GgmlOvDecoder::validate_cgraph() സ്ഥിരം {
+    എങ്കിൽ (m_model_params.n_seq > 1 && m_is_static == സത്യം) {
+        എറിയുക std::runtime_error("n_seq > 1 is not supported on NPU. Try setting -np 1.");
     }
 }
 
-ov::PartialShape GgmlOvDecoder::get_graph_input_shape(const ggml_tensor * op,
-                                                      const ggml_tensor * input,
-                                                      int dynamic_dim_index) const {
-    if (m_naive) {
-        return input != nullptr ? ov::PartialShape{get_shape(input)} : ov::PartialShape{get_shape(op)};
+ov::PartialShape GgmlOvDecoder::get_graph_നിവേശം_shape(സ്ഥിരം ggml_tensor * op,
+                                                      സ്ഥിരം ggml_tensor * നിവേശം,
+                                                      പൂർണ്ണസംഖ്യ dynamic_dim_index) സ്ഥിരം {
+    എങ്കിൽ (m_naive) {
+        തിരികെ നിവേശം != nullptr ? ov::PartialShape{get_shape(നിവേശം)} : ov::PartialShape{get_shape(op)};
     }
-    ov::PartialShape input_shape;
+    ov::PartialShape നിവേശം_shape;
 
-    if (is_inp_tok(input, op) || is_inp_pos(input, op)) {
+    എങ്കിൽ (is_inp_tok(നിവേശം, op) || is_inp_pos(നിവേശം, op)) {
         // tokens or positions
-        int len = m_is_static ? (m_is_prefill ? m_prefill_chunk_size : 1) : -1;
-        if (m_is_static && is_inp_pos(input, op)) {
+        പൂർണ്ണസംഖ്യ len = m_is_static ? (m_is_prefill ? m_prefill_chunk_size : 1) : -1;
+        എങ്കിൽ (m_is_static && is_inp_pos(നിവേശം, op)) {
             // IMROPE stacks n_planes (t/h/w/e) position planes back to back
             len *= get_inp_pos_n_planes(op);
         }
-        input_shape = ov::PartialShape{1, 1, 1, len};
+        നിവേശം_shape = ov::PartialShape{1, 1, 1, len};
 
-    } else if (is_output_idx(input, op)) {
+    } അല്ലെങ്കിൽ എങ്കിൽ (is_output_idx(നിവേശം, op)) {
         // output index
-        input_shape = ov::PartialShape{1, 1, 1, m_is_static ? m_compute_params.output_len : -1};
+        നിവേശം_shape = ov::PartialShape{1, 1, 1, m_is_static ? m_compute_params.output_len : -1};
 
-    } else if (is_inp_mean(input, op)) {
-        input_shape = m_is_static ? ov::PartialShape{1, 1, input->ne[1], m_prefill_chunk_size} :
+    } അല്ലെങ്കിൽ എങ്കിൽ (is_inp_mean(നിവേശം, op)) {
+        നിവേശം_shape = m_is_static ? ov::PartialShape{1, 1, നിവേശം->ne[1], m_prefill_chunk_size} :
                                     ov::PartialShape{1, 1, -1, -1};
 
-    } else if (is_inp_scale_rows(input, op)) {
-        input_shape = ov::PartialShape{1, 1, m_is_static ? (m_is_prefill ? m_prefill_chunk_size : 1) : -1, 1};
+    } അല്ലെങ്കിൽ എങ്കിൽ (is_inp_scale_rows(നിവേശം, op)) {
+        നിവേശം_shape = ov::PartialShape{1, 1, m_is_static ? (m_is_prefill ? m_prefill_chunk_size : 1) : -1, 1};
 
-    } else if (is_inp_mask(input, op)) {
+    } അല്ലെങ്കിൽ എങ്കിൽ (is_inp_mask(നിവേശം, op)) {
         // mask
-        if (m_is_static) {
-            input_shape = ov::PartialShape{1, 1, m_is_prefill ? m_prefill_chunk_size : 1, m_model_params.ctx};
-        } else if (m_is_stateful) {
-            input_shape = ov::PartialShape{1, 1, -1, -1};
-        } else {
-            input_shape = ov::PartialShape{-1, 1, -1, -1};
+        എങ്കിൽ (m_is_static) {
+            നിവേശം_shape = ov::PartialShape{1, 1, m_is_prefill ? m_prefill_chunk_size : 1, m_model_params.ctx};
+        } അല്ലെങ്കിൽ എങ്കിൽ (m_is_stateful) {
+            നിവേശം_shape = ov::PartialShape{1, 1, -1, -1};
+        } അല്ലെങ്കിൽ {
+            നിവേശം_shape = ov::PartialShape{-1, 1, -1, -1};
         }
 
-    } else if (is_recurrent_cache(input)) {
-        input_shape = ov::PartialShape{get_shape(input)};
-        if (!m_is_static && !m_is_stateful && input->ne[1] > 1) {
-            input_shape[2] = -1;
+    } അല്ലെങ്കിൽ എങ്കിൽ (is_recurrent_cache(നിവേശം)) {
+        നിവേശം_shape = ov::PartialShape{get_shape(നിവേശം)};
+        എങ്കിൽ (!m_is_static && !m_is_stateful && നിവേശം->ne[1] > 1) {
+            നിവേശം_shape[2] = -1;
         }
 
-    } else if (is_kvcache(input, op)) {
+    } അല്ലെങ്കിൽ എങ്കിൽ (is_kvcache(നിവേശം, op)) {
         // kvcache
-        input_shape = ov::PartialShape{get_shape(input)};
+        നിവേശം_shape = ov::PartialShape{get_shape(നിവേശം)};
         // Whisper.cpp uses a fixed size 1D KV buffer [N, 1, 1, 1] (GGML) or [1, 1, 1, N] (OV).
         // the token fill level is handled by token_len_per_seq + dynamic mask input.
         // skip dynamic dim and stateful reshape for this layout.
-        const bool is_flat_kv = (input->ne[1] == 1 && input->ne[2] == 1 && input->ne[3] == 1);
-        if (!m_is_static && !is_flat_kv) {
+        സ്ഥിരം തർക്കം is_flat_kv = (നിവേശം->ne[1] == 1 && നിവേശം->ne[2] == 1 && നിവേശം->ne[3] == 1);
+        എങ്കിൽ (!m_is_static && !is_flat_kv) {
             // do not fix ctx size to make llama-bench work across test params
-            input_shape[2] = -1;
+            നിവേശം_shape[2] = -1;
         }
-        if (is_stateful() && !is_flat_kv) {
+        എങ്കിൽ (is_stateful() && !is_flat_kv) {
             // Convert stateless KV cache layout [1, 1, seq, n_heads_kv * head_size]
             // to stateful layout [1, seq, n_heads_kv, head_size].
             // NOTE: Gemma4 uses per-layer-type KV shapes, so no single scalar describes every
@@ -1148,295 +1148,295 @@ ov::PartialShape GgmlOvDecoder::get_graph_input_shape(const ggml_tensor * op,
             // own layer type and derive the head size from its own combined dim, so both layer
             // types get the correct split. Using the model-level count split 12B's sliding
             // states as 1 x 2048 and decoded garbage.
-            assert(input_shape.size() == 4 && input_shape[0] == 1 && input_shape[1] == 1 &&
-                   input_shape[2].is_dynamic() && input_shape[3].is_static());
-            const int n_heads_kv = get_n_heads_kv_for_tensor(input);
-            assert(n_heads_kv > 0 && input_shape[3].get_length() % n_heads_kv == 0);
-            const int64_t combined_dim = input_shape[3].get_length();  // n_heads_kv * head_size
-            const int64_t head_size = combined_dim / n_heads_kv;
-            input_shape = {input_shape[0], ov::Dimension::dynamic(), n_heads_kv, head_size};
+            പ്രതിജ്ഞാ(നിവേശം_shape.size() == 4 && നിവേശം_shape[0] == 1 && നിവേശം_shape[1] == 1 &&
+                   നിവേശം_shape[2].is_dynamic() && നിവേശം_shape[3].is_static());
+            സ്ഥിരം പൂർണ്ണസംഖ്യ n_heads_kv = get_n_heads_kv_for_tensor(നിവേശം);
+            പ്രതിജ്ഞാ(n_heads_kv > 0 && നിവേശം_shape[3].get_length() % n_heads_kv == 0);
+            സ്ഥിരം int64_t combined_dim = നിവേശം_shape[3].get_length();  // n_heads_kv * head_size
+            സ്ഥിരം int64_t head_size = combined_dim / n_heads_kv;
+            നിവേശം_shape = {നിവേശം_shape[0], ov::Dimension::dynamic(), n_heads_kv, head_size};
         }
 
-    } else if (is_kv_idx(input, op)) {
+    } അല്ലെങ്കിൽ എങ്കിൽ (is_kv_idx(നിവേശം, op)) {
         // kv update index
-        int len = m_is_static ? (m_is_prefill ? m_prefill_chunk_size : 1) : -1;
-        input_shape = ov::PartialShape{1, 1, 1, len};
+        പൂർണ്ണസംഖ്യ len = m_is_static ? (m_is_prefill ? m_prefill_chunk_size : 1) : -1;
+        നിവേശം_shape = ov::PartialShape{1, 1, 1, len};
 
-    } else if (is_inp_s_copy(input, op) || is_s_copy_leaf(input)) {
+    } അല്ലെങ്കിൽ എങ്കിൽ (is_inp_s_copy(നിവേശം, op) || is_s_copy_leaf(നിവേശം)) {
         // On NPU the total slot count (n_seq_max) is fixed at translation time, so the s_copy
         // index list has a static length; on CPU/GPU it may change across compiles (defrag).
-        input_shape = m_is_static ? ov::PartialShape{get_shape(input)} : ov::PartialShape{1, 1, 1, -1};
+        നിവേശം_shape = m_is_static ? ov::PartialShape{get_shape(നിവേശം)} : ov::PartialShape{1, 1, 1, -1};
 
-    } else {
-        input_shape = ov::PartialShape{get_shape(input)};
+    } അല്ലെങ്കിൽ {
+        നിവേശം_shape = ov::PartialShape{get_shape(നിവേശം)};
     }
-    if (dynamic_dim_index != -1 && m_model_is_splitted) {
-        input_shape[3 - dynamic_dim_index] = -1;
+    എങ്കിൽ (dynamic_dim_index != -1 && m_model_is_splitted) {
+        നിവേശം_shape[3 - dynamic_dim_index] = -1;
     }
-    if (op->op == GGML_OP_SOFT_MAX && op->src[1] != nullptr && op->src[1]->op == GGML_OP_NONE &&
-        op->src[1]->flags & GGML_TENSOR_FLAG_INPUT && op->src[1] == input) {
+    എങ്കിൽ (op->op == GGML_OP_SOFT_MAX && op->src[1] != nullptr && op->src[1]->op == GGML_OP_NONE &&
+        op->src[1]->flags & GGML_TENSOR_FLAG_നിവേശം && op->src[1] == നിവേശം) {
         // for softmax input mask, the shape is [1, 1, seq_active, seq_active], where seq_active is determined by the input active sequence length instead of the kv cache sequence length
-        if (m_is_static) {
-            const int64_t seq_active = m_is_prefill ? m_prefill_chunk_size : 1;
-            input_shape[2] = seq_active;
-            input_shape[3] = seq_active;
-        } else {
-            input_shape[2] = -1;
-            input_shape[3] = -1;
+        എങ്കിൽ (m_is_static) {
+            സ്ഥിരം int64_t seq_active = m_is_prefill ? m_prefill_chunk_size : 1;
+            നിവേശം_shape[2] = seq_active;
+            നിവേശം_shape[3] = seq_active;
+        } അല്ലെങ്കിൽ {
+            നിവേശം_shape[2] = -1;
+            നിവേശം_shape[3] = -1;
         }
     }
-    return input_shape;
+    തിരികെ നിവേശം_shape;
 }
 
-bool GgmlOvDecoder::is_s_copy_leaf(const ggml_tensor * tensor) const {
-    if (tensor == nullptr || tensor->op != GGML_OP_NONE || m_cgraph == nullptr) {
-        return false;
+തർക്കം GgmlOvDecoder::is_s_copy_leaf(സ്ഥിരം ggml_tensor * tensor) സ്ഥിരം {
+    എങ്കിൽ (tensor == nullptr || tensor->op != GGML_OP_NONE || m_cgraph == nullptr) {
+        തിരികെ അസത്യം;
     }
-    for (int i = 0; i < m_cgraph->n_nodes; i++) {
-        const ggml_tensor * node = m_cgraph->nodes[i];
-        if (node->op != GGML_OP_GET_ROWS || node->src[0] == nullptr || node->src[1] == nullptr) {
-            continue;
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < m_cgraph->n_nodes; i++) {
+        സ്ഥിരം ggml_tensor * കണ്ണി = m_cgraph->nodes[i];
+        എങ്കിൽ (കണ്ണി->op != GGML_OP_GET_ROWS || കണ്ണി->src[0] == nullptr || കണ്ണി->src[1] == nullptr) {
+            തുടരുക;
         }
         // The index list may reach the s_copy leaf through one or more VIEWs.
-        const ggml_tensor * idx = node->src[1];
-        while (idx != nullptr && idx->op == GGML_OP_VIEW) {
+        സ്ഥിരം ggml_tensor * idx = കണ്ണി->src[1];
+        ആകുമ്പോൾ (idx != nullptr && idx->op == GGML_OP_VIEW) {
             idx = idx->src[0];
         }
-        if (idx != tensor) {
-            continue;
+        എങ്കിൽ (idx != tensor) {
+            തുടരുക;
         }
         // The gathered data must be a recurrent state cache (cache_r/cache_s).
-        const ggml_tensor * data = node->src[0];
-        while (data != nullptr && (data->op == GGML_OP_VIEW || data->op == GGML_OP_RESHAPE)) {
+        സ്ഥിരം ggml_tensor * data = കണ്ണി->src[0];
+        ആകുമ്പോൾ (data != nullptr && (data->op == GGML_OP_VIEW || data->op == GGML_OP_RESHAPE)) {
             data = data->src[0];
         }
-        if (data != nullptr && is_recurrent_cache(data)) {
-            return true;
+        എങ്കിൽ (data != nullptr && is_recurrent_cache(data)) {
+            തിരികെ സത്യം;
         }
     }
-    return false;
+    തിരികെ അസത്യം;
 }
 
-void GgmlOvDecoder::add_extra_inputs() {
+ശൂന്യം GgmlOvDecoder::add_extra_inputs() {
     // Extra inputs:
     // 1. `attention_size`, used in FLASH_ATTN where the shape of the matmul's are 256 aligned,
     //     see llama_kv_cache_unified::get_n_kv and llama_kv_cache_unified::get_padding.
     // 2. `n_seq_active` and `seq_active_start`, used in FLASH_ATTN_EXT to indicate the active sequences in the batch
 
-    auto create_1d_input = [this](const std::string & name, int64_t value, bool force_parameter = false) {
+    auto create_1d_നിവേശം = [ഇത്](സ്ഥിരം std::string & name, int64_t value, തർക്കം force_parameter = അസത്യം) {
         m_model_extra_inputs[name] = {ov::element::i64, ov::Shape{1}, value, force_parameter || !m_is_static};
     };
 
-    if (m_compute_params.attention_size != -1) {
-        create_1d_input("attention_size", m_compute_params.attention_size);
+    എങ്കിൽ (m_compute_params.attention_size != -1) {
+        create_1d_നിവേശം("attention_size", m_compute_params.attention_size);
     }
-    if (m_compute_params.attention_size_static != -1) {
-        create_1d_input("attention_size_static", m_compute_params.attention_size_static);
+    എങ്കിൽ (m_compute_params.attention_size_static != -1) {
+        create_1d_നിവേശം("attention_size_static", m_compute_params.attention_size_static);
     }
-    if (m_compute_params.attention_size_swa != -1) {
-        create_1d_input("attention_size_swa", m_compute_params.attention_size_swa);
+    എങ്കിൽ (m_compute_params.attention_size_swa != -1) {
+        create_1d_നിവേശം("attention_size_swa", m_compute_params.attention_size_swa);
     }
     // only the stateful SWA mask consumes this
-    if (is_stateful() && m_compute_params.swa_window != -1) {
-        create_1d_input("swa_window", m_compute_params.swa_window);
+    എങ്കിൽ (is_stateful() && m_compute_params.swa_window != -1) {
+        create_1d_നിവേശം("swa_window", m_compute_params.swa_window);
     }
-    create_1d_input("n_seq_active", m_compute_params.n_seq_active);
-    create_1d_input("seq_active_start", m_compute_params.seq_active_start);
-    create_1d_input("seq_active_end", m_compute_params.seq_active_start + m_compute_params.n_seq_active);
-    if (m_compute_params.token_len_per_seq != -1) {
-        create_1d_input("token_len_per_seq", m_compute_params.token_len_per_seq);
+    create_1d_നിവേശം("n_seq_active", m_compute_params.n_seq_active);
+    create_1d_നിവേശം("seq_active_start", m_compute_params.seq_active_start);
+    create_1d_നിവേശം("seq_active_end", m_compute_params.seq_active_start + m_compute_params.n_seq_active);
+    എങ്കിൽ (m_compute_params.token_len_per_seq != -1) {
+        create_1d_നിവേശം("token_len_per_seq", m_compute_params.token_len_per_seq);
     }
     // create_1d_input("token_len", m_compute_params.token_len_per_seq * m_compute_params.n_seq_active);
 
-    if (m_compute_params.cache_rs_reset_idx != -1 && m_model_params.n_rs_slots != 1) {
+    എങ്കിൽ (m_compute_params.cache_rs_reset_idx != -1 && m_model_params.n_rs_slots != 1) {
         // Whether/which cache slot to reset varies per compute call (e.g. a new sequence starting
         // vs. continued decoding). can_reuse_statically() does not invalidate the cached static
         // model on ComputeParams changes, so these must stay runtime Parameters even when static
         // (scale.cpp op_case 1 only uses them in value comparisons, never as Slice bounds, so this
         // does not reintroduce dynamic shapes).
-        create_1d_input("cache_rs_reset_idx", m_compute_params.cache_rs_reset_idx, /*force_parameter=*/true);
-        create_1d_input("cache_rs_reset_len", m_compute_params.cache_rs_reset_len, /*force_parameter=*/true);
+        create_1d_നിവേശം("cache_rs_reset_idx", m_compute_params.cache_rs_reset_idx, /*force_parameter=*/സത്യം);
+        create_1d_നിവേശം("cache_rs_reset_len", m_compute_params.cache_rs_reset_len, /*force_parameter=*/സത്യം);
     }
 
-    if (m_compute_params.s_copy_active_slot_len != -1) {
-        create_1d_input("s_copy_active_slot_len", m_compute_params.s_copy_active_slot_len);
-        if (m_is_static) {
+    എങ്കിൽ (m_compute_params.s_copy_active_slot_len != -1) {
+        create_1d_നിവേശം("s_copy_active_slot_len", m_compute_params.s_copy_active_slot_len);
+        എങ്കിൽ (m_is_static) {
             // Number of real tokens in the current prefill chunk. The last chunk is padded with
             // fabricated token ids; attention masks them out, but the recurrent (GDN/conv) path
             // would otherwise fold them into cache_r/cache_s permanently. Varies per chunk, so it
             // must stay a runtime Parameter; it is only compared against a Range or used as Gather
             // indices, so it does not make any shape dynamic.
-            create_1d_input("chunk_valid_len", get_static_n_tokens(), /*force_parameter=*/true);
+            create_1d_നിവേശം("chunk_valid_len", get_static_n_tokens(), /*force_parameter=*/സത്യം);
         }
     }
 
-    for (const auto & [node_name, writeback] : m_compute_params.rs_writebacks) {
-        create_1d_input("rs_slot_begin_" + node_name, writeback.slot_begin);
-        if (!m_is_static && writeback.src_begin >= 0) {
-            create_1d_input("rs_src_begin_" + node_name, writeback.src_begin);
+    വേണ്ടി (സ്ഥിരം auto & [കണ്ണി_name, writeback] : m_compute_params.rs_writebacks) {
+        create_1d_നിവേശം("rs_slot_begin_" + കണ്ണി_name, writeback.slot_begin);
+        എങ്കിൽ (!m_is_static && writeback.src_begin >= 0) {
+            create_1d_നിവേശം("rs_src_begin_" + കണ്ണി_name, writeback.src_begin);
         }
     }
 }
 
-bool GgmlOvDecoder::node_is_used_as_src(const int node_idx) {
-    ggml_tensor * node = m_cgraph->nodes[node_idx];
-    for (int i = node_idx; i < m_cgraph->n_nodes; i++) {
-        ggml_tensor * other_node = m_cgraph->nodes[i];
-        for (int j = 0; j < GGML_MAX_SRC; j++) {
-            if (other_node->src[j] == node) {
-                return true;
+തർക്കം GgmlOvDecoder::കണ്ണി_is_used_as_src(സ്ഥിരം പൂർണ്ണസംഖ്യ കണ്ണി_idx) {
+    ggml_tensor * കണ്ണി = m_cgraph->nodes[കണ്ണി_idx];
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = കണ്ണി_idx; i < m_cgraph->n_nodes; i++) {
+        ggml_tensor * other_കണ്ണി = m_cgraph->nodes[i];
+        വേണ്ടി (പൂർണ്ണസംഖ്യ j = 0; j < GGML_MAX_SRC; j++) {
+            എങ്കിൽ (other_കണ്ണി->src[j] == കണ്ണി) {
+                തിരികെ സത്യം;
             }
         }
     }
-    return false;
+    തിരികെ അസത്യം;
 }
 
-void GgmlOvDecoder::compute_model_inputs() {
+ശൂന്യം GgmlOvDecoder::compute_model_inputs() {
     m_model_inputs.clear();
     m_inputs.clear();
-    for (int i = 0; i < m_cgraph->n_nodes; i++) {
-        ggml_tensor * node = m_cgraph->nodes[i];
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < m_cgraph->n_nodes; i++) {
+        ggml_tensor * കണ്ണി = m_cgraph->nodes[i];
         // the node op is NONE means this node maybe as input of later nodes, we should add it to model inputs for this node.
-        if (node->op == GGML_OP_NONE && node_is_used_as_src(i)) {
-            std::string node_name = get_tensor_ov_name(m_cgraph, node);
-            if (m_model_weights.find(node_name) == m_model_weights.end()) {
-                m_inputs[node_name] = node;
-                m_model_inputs[node_name] = {get_ov_type(node),
-                                             get_graph_input_shape(node, nullptr, m_node_dynamic_dims[node])};
+        എങ്കിൽ (കണ്ണി->op == GGML_OP_NONE && കണ്ണി_is_used_as_src(i)) {
+            std::string കണ്ണി_name = get_tensor_ov_name(m_cgraph, കണ്ണി);
+            എങ്കിൽ (m_model_weights.find(കണ്ണി_name) == m_model_weights.end()) {
+                m_inputs[കണ്ണി_name] = കണ്ണി;
+                m_model_inputs[കണ്ണി_name] = {get_ov_type(കണ്ണി),
+                                             get_graph_നിവേശം_shape(കണ്ണി, nullptr, m_കണ്ണി_dynamic_dims[കണ്ണി])};
             }
-            continue;
+            തുടരുക;
         }
-        for (int i = 0; i < GGML_MAX_SRC; i++) {
-            auto * src = node->src[i];
-            if (src == nullptr) {
-                continue;
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < GGML_MAX_SRC; i++) {
+            auto * src = കണ്ണി->src[i];
+            എങ്കിൽ (src == nullptr) {
+                തുടരുക;
             }
             std::string src_name = get_tensor_ov_name(m_cgraph, src);
-            if (src->flags & GGML_TENSOR_FLAG_INPUT) {
-                src_name = get_tensor_graph_input_ov_name(this, m_cgraph, src, node);
+            എങ്കിൽ (src->flags & GGML_TENSOR_FLAG_നിവേശം) {
+                src_name = get_tensor_graph_നിവേശം_ov_name(ഇത്, m_cgraph, src, കണ്ണി);
             }
-            if (m_model_weights.find(src_name) != m_model_weights.end()) {
-                continue;
+            എങ്കിൽ (m_model_weights.find(src_name) != m_model_weights.end()) {
+                തുടരുക;
             }
             // A view over a weight is served by the base tensor's Constant, never by a Parameter.
-            if (src->view_src != nullptr &&
+            എങ്കിൽ (src->view_src != nullptr &&
                 m_model_weights.find(get_tensor_ov_name(m_cgraph, src->view_src)) != m_model_weights.end()) {
-                continue;
+                തുടരുക;
             }
 
-            bool is_intermediate_node = false;
-            for (const auto & node_info : m_node_info_list) {
-                if (node_info.node == src) {
-                    is_intermediate_node = true;
-                    break;
+            തർക്കം is_intermediate_കണ്ണി = അസത്യം;
+            വേണ്ടി (സ്ഥിരം auto & കണ്ണി_info : m_കണ്ണി_info_list) {
+                എങ്കിൽ (കണ്ണി_info.കണ്ണി == src) {
+                    is_intermediate_കണ്ണി = സത്യം;
+                    നിർത്തുക;
                 }
             }
-            if (is_intermediate_node) {
-                continue;
+            എങ്കിൽ (is_intermediate_കണ്ണി) {
+                തുടരുക;
             }
-            if (m_model_inputs.find(src_name) != m_model_inputs.end()) {
-                continue;
+            എങ്കിൽ (m_model_inputs.find(src_name) != m_model_inputs.end()) {
+                തുടരുക;
             }
 
             m_inputs[src_name] = src;
 
             ggml_backend_buffer * buffer = src->buffer;
             // GGML_BACKEND_BUFFER_USAGE_ANY are kv caches
-            if (buffer->usage == GGML_BACKEND_BUFFER_USAGE_ANY) {
-                if (auto it = std::find(m_model_params.kv_names.begin(), m_model_params.kv_names.end(), src_name);
+            എങ്കിൽ (buffer->usage == GGML_BACKEND_BUFFER_USAGE_ANY) {
+                എങ്കിൽ (auto it = std::find(m_model_params.kv_names.begin(), m_model_params.kv_names.end(), src_name);
                     it == m_model_params.kv_names.end()) {
                     m_model_params.kv_names.push_back(src_name);
                 }
             }
             // Resolve nested VIEW nodes by following src[0] until the first non-VIEW tensor.
-            while (src->op == GGML_OP_VIEW && src->src[0] != nullptr) {
+            ആകുമ്പോൾ (src->op == GGML_OP_VIEW && src->src[0] != nullptr) {
                 src = src->src[0];
                 src_name = get_tensor_ov_name(m_cgraph, src);
             }
             m_inputs[src_name] = src;
             m_model_inputs[src_name] = {get_ov_type(src),
-                                        get_graph_input_shape(node, src, m_node_dynamic_dims[src])};
+                                        get_graph_നിവേശം_shape(കണ്ണി, src, m_കണ്ണി_dynamic_dims[src])};
         }
     }
 }
 
-void GgmlOvDecoder::compute_model_outputs() {
+ശൂന്യം GgmlOvDecoder::compute_model_outputs() {
     m_model_outputs.clear();
     m_model_output_names.clear();
-    for (int node_n = 0; node_n < m_cgraph->n_nodes; node_n++) {
-        auto * cur_node = m_cgraph->nodes[node_n];
+    വേണ്ടി (പൂർണ്ണസംഖ്യ കണ്ണി_n = 0; കണ്ണി_n < m_cgraph->n_nodes; കണ്ണി_n++) {
+        auto * cur_കണ്ണി = m_cgraph->nodes[കണ്ണി_n];
         // if the node op is NONE means this node is not used at all, we can skip it directly without adding to model outputs.
-        if (cur_node->op == GGML_OP_NONE || cur_node->op == GGML_OP_VIEW || cur_node->op == GGML_OP_RESHAPE) {
-            continue;
+        എങ്കിൽ (cur_കണ്ണി->op == GGML_OP_NONE || cur_കണ്ണി->op == GGML_OP_VIEW || cur_കണ്ണി->op == GGML_OP_RESHAPE) {
+            തുടരുക;
         }
-        if (::is_inplace_op(cur_node) && ggml_nbytes(cur_node) == 0) {
-            continue;
+        എങ്കിൽ (::is_inplace_op(cur_കണ്ണി) && ggml_nbytes(cur_കണ്ണി) == 0) {
+            തുടരുക;
         }
-        auto cur_node_use_count = m_cgraph->use_counts[ggml_hash_find(&m_cgraph->visited_hash_set, cur_node)];
-        if (cur_node_use_count == 0) {
+        auto cur_കണ്ണി_use_എണ്ണം = m_cgraph->use_counts[ggml_hash_find(&m_cgraph->visited_hash_set, cur_കണ്ണി)];
+        എങ്കിൽ (cur_കണ്ണി_use_എണ്ണം == 0) {
             // The output of in-place ops is the view_src tensor, which is updated in place. We should use the view_src name as the output name to make sure it can be correctly matched with the later ops that use the view_src.
-            if (cur_node != nullptr && ::is_inplace_op(cur_node) && ggml_nbytes(cur_node) > 0) {
-                cur_node = cur_node->view_src;
+            എങ്കിൽ (cur_കണ്ണി != nullptr && ::is_inplace_op(cur_കണ്ണി) && ggml_nbytes(cur_കണ്ണി) > 0) {
+                cur_കണ്ണി = cur_കണ്ണി->view_src;
             }
-        } else {
-            int input_use_count = 0;
-            for (int i = 0; i < m_cgraph->n_nodes; i++) {
-                ggml_tensor * node = m_cgraph->nodes[i];
-                for (int j = 0; j < GGML_MAX_SRC; j++) {
-                    if (node->src[j] != NULL && node->src[j] == cur_node) {
-                        input_use_count++;
+        } അല്ലെങ്കിൽ {
+            പൂർണ്ണസംഖ്യ നിവേശം_use_എണ്ണം = 0;
+            വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < m_cgraph->n_nodes; i++) {
+                ggml_tensor * കണ്ണി = m_cgraph->nodes[i];
+                വേണ്ടി (പൂർണ്ണസംഖ്യ j = 0; j < GGML_MAX_SRC; j++) {
+                    എങ്കിൽ (കണ്ണി->src[j] != ശൂന്യ && കണ്ണി->src[j] == cur_കണ്ണി) {
+                        നിവേശം_use_എണ്ണം++;
                     }
                 }
             }
-            if (input_use_count == cur_node_use_count) {
-                cur_node = nullptr;
+            എങ്കിൽ (നിവേശം_use_എണ്ണം == cur_കണ്ണി_use_എണ്ണം) {
+                cur_കണ്ണി = nullptr;
             }
         }
-        if (cur_node != nullptr) {
-            std::string cur_node_name = get_tensor_ov_name(m_cgraph, cur_node);
-            m_model_outputs[cur_node_name] = cur_node;
-            m_model_output_names.insert(cur_node_name);
+        എങ്കിൽ (cur_കണ്ണി != nullptr) {
+            std::string cur_കണ്ണി_name = get_tensor_ov_name(m_cgraph, cur_കണ്ണി);
+            m_model_outputs[cur_കണ്ണി_name] = cur_കണ്ണി;
+            m_model_output_names.insert(cur_കണ്ണി_name);
         }
     }
 }
 
-const ggml_tensor * GgmlOvDecoder::get_tensor_used_op(const ggml_tensor * tensor) const {
-    if (tensor == nullptr) {
-        return nullptr;
+സ്ഥിരം ggml_tensor * GgmlOvDecoder::get_tensor_used_op(സ്ഥിരം ggml_tensor * tensor) സ്ഥിരം {
+    എങ്കിൽ (tensor == nullptr) {
+        തിരികെ nullptr;
     }
-    for (int i = 0; i < m_cgraph->n_nodes; i++) {
-        const auto * node = m_cgraph->nodes[i];
-        for (int j = 0; j < GGML_MAX_SRC; j++) {
-            if (node->src[j] == tensor) {
-                return node;
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < m_cgraph->n_nodes; i++) {
+        സ്ഥിരം auto * കണ്ണി = m_cgraph->nodes[i];
+        വേണ്ടി (പൂർണ്ണസംഖ്യ j = 0; j < GGML_MAX_SRC; j++) {
+            എങ്കിൽ (കണ്ണി->src[j] == tensor) {
+                തിരികെ കണ്ണി;
             }
         }
     }
-    return nullptr;
+    തിരികെ nullptr;
 }
 
-const ggml_tensor * GgmlOvDecoder::get_tensor_from_name(const std::string & name) const {
-    for (int i = 0; i < m_cgraph->n_nodes; i++) {
-        const auto * node = m_cgraph->nodes[i];
-        for (int j = 0; j < GGML_MAX_SRC; j++) {
-            const auto * src = node->src[j];
-            if (src == nullptr) {
-                break;
+സ്ഥിരം ggml_tensor * GgmlOvDecoder::get_tensor_from_name(സ്ഥിരം std::string & name) സ്ഥിരം {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < m_cgraph->n_nodes; i++) {
+        സ്ഥിരം auto * കണ്ണി = m_cgraph->nodes[i];
+        വേണ്ടി (പൂർണ്ണസംഖ്യ j = 0; j < GGML_MAX_SRC; j++) {
+            സ്ഥിരം auto * src = കണ്ണി->src[j];
+            എങ്കിൽ (src == nullptr) {
+                നിർത്തുക;
             }
-            if (get_tensor_ov_name(m_cgraph, src) == name) {
-                return src;
+            എങ്കിൽ (get_tensor_ov_name(m_cgraph, src) == name) {
+                തിരികെ src;
             }
         }
     }
-    return nullptr;
+    തിരികെ nullptr;
 }
 
-std::map<std::string, std::string> GgmlOvDecoder::get_kv_param_res_names() const {
+std::map<std::string, std::string> GgmlOvDecoder::get_kv_param_res_names() സ്ഥിരം {
     std::map<std::string, std::string> kv_param_res_names;
-    for (const auto & name : m_model_params.kv_names) {
+    വേണ്ടി (സ്ഥിരം auto & name : m_model_params.kv_names) {
         kv_param_res_names[name] = name;
     }
-    return kv_param_res_names;
+    തിരികെ kv_param_res_names;
 }
 
 // MUL_MAT_ID's src[0] is the [k, m, n_expert] expert-weight tensor. It is always a constant per-expert
@@ -1445,40 +1445,40 @@ std::map<std::string, std::string> GgmlOvDecoder::get_kv_param_res_names() const
 // flag, unlike real inference). Without this, non-quantized (F16/F32/BF16) expert weights would fall
 // through the check below as "not a weight", get decoded as a Parameter/activation instead of a
 // Constant, and crash GatherMatmul's "only constant weights are supported" check.
-static bool is_mul_mat_id_expert_weight(const ggml_tensor * node, int src_index) {
-    return node->op == GGML_OP_MUL_MAT_ID && src_index == 0;
+സ്ഥിതം തർക്കം is_mul_mat_id_expert_weight(സ്ഥിരം ggml_tensor * കണ്ണി, പൂർണ്ണസംഖ്യ src_index) {
+    തിരികെ കണ്ണി->op == GGML_OP_MUL_MAT_ID && src_index == 0;
 }
 
-std::map<std::string, std::shared_ptr<ov::Node>> GgmlOvDecoder::create_weight_nodes(ggml_cgraph * cgraph, bool naive) {
+std::map<std::string, std::shared_ptr<ov::Node>> GgmlOvDecoder::create_weight_nodes(ggml_cgraph * cgraph, തർക്കം naive) {
     std::map<std::string, std::shared_ptr<ov::Node>> model_weights;
     auto * nodes = cgraph->nodes;
     auto n_nodes = cgraph->n_nodes;
-    for (int node_i = 0; node_i < n_nodes; node_i++) {
-        auto * node = nodes[node_i];
-        for (int i = 0; i < GGML_MAX_SRC; i++) {
-            auto * src = node->src[i];
-            if (src == nullptr) {
-                continue;
+    വേണ്ടി (പൂർണ്ണസംഖ്യ കണ്ണി_i = 0; കണ്ണി_i < n_nodes; കണ്ണി_i++) {
+        auto * കണ്ണി = nodes[കണ്ണി_i];
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < GGML_MAX_SRC; i++) {
+            auto * src = കണ്ണി->src[i];
+            എങ്കിൽ (src == nullptr) {
+                തുടരുക;
             }
 
             // A view over a weight is served by the base tensor's Constant.
             ggml_tensor * base = src->view_src ? src->view_src : src;
             std::string src_name = get_tensor_ov_name(cgraph, base);
-            if (is_rope_freqs_weight(base, node)) {
+            എങ്കിൽ (is_rope_freqs_weight(base, കണ്ണി)) {
                 src_name = "rope_freqs.weight";
             }
             ggml_backend_buffer * buffer = base->buffer;
-            if (buffer->usage == GGML_BACKEND_BUFFER_USAGE_WEIGHTS || ggml_is_quantized(base->type) ||
-                is_mul_mat_id_expert_weight(node, i)) {
-                if (model_weights.find(src_name) == model_weights.end()) {
-                    auto weight_node = create_weight_node(base, naive);
-                    weight_node->set_friendly_name(src_name);
-                    model_weights[src_name] = weight_node;
+            എങ്കിൽ (buffer->usage == GGML_BACKEND_BUFFER_USAGE_WEIGHTS || ggml_is_quantized(base->type) ||
+                is_mul_mat_id_expert_weight(കണ്ണി, i)) {
+                എങ്കിൽ (model_weights.find(src_name) == model_weights.end()) {
+                    auto weight_കണ്ണി = create_weight_കണ്ണി(base, naive);
+                    weight_കണ്ണി->set_friendly_name(src_name);
+                    model_weights[src_name] = weight_കണ്ണി;
                 }
             }
         }
     }
-    return model_weights;
+    തിരികെ model_weights;
 }
 
 // Process-lifetime cache for weight nodes built from NON-OpenVINO buffers (e.g. the
@@ -1488,58 +1488,58 @@ std::map<std::string, std::shared_ptr<ov::Node>> GgmlOvDecoder::create_weight_no
 // F32 dequant each time. Keyed by tensor->data, which is stable for the process and
 // uniquely identifies the immutable weight bytes. OV-buffer weights keep using the
 // per-tensor extra cache and never reach here.
-static std::mutex g_nonov_weight_cache_mutex;
-static std::unordered_map<const void *, std::shared_ptr<ov::Node>> g_nonov_weight_cache;
+സ്ഥിതം std::mutex g_nonov_weight_cache_mutex;
+സ്ഥിതം std::unordered_map<സ്ഥിരം ശൂന്യം *, std::shared_ptr<ov::Node>> g_nonov_weight_cache;
 
 std::set<std::string> GgmlOvDecoder::collect_weight_names(ggml_cgraph * cgraph) {
     // Mirrors the name-selection logic of create_weight_nodes() but builds no nodes,
     // so topology checks don't trigger weight extraction/requantization.
     std::set<std::string> names;
-    for (int node_i = 0; node_i < cgraph->n_nodes; node_i++) {
-        auto * node = cgraph->nodes[node_i];
-        for (int i = 0; i < GGML_MAX_SRC; i++) {
-            auto * src = node->src[i];
-            if (src == nullptr) {
-                continue;
+    വേണ്ടി (പൂർണ്ണസംഖ്യ കണ്ണി_i = 0; കണ്ണി_i < cgraph->n_nodes; കണ്ണി_i++) {
+        auto * കണ്ണി = cgraph->nodes[കണ്ണി_i];
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < GGML_MAX_SRC; i++) {
+            auto * src = കണ്ണി->src[i];
+            എങ്കിൽ (src == nullptr) {
+                തുടരുക;
             }
-            const ggml_tensor * base = src->view_src ? src->view_src : src;
+            സ്ഥിരം ggml_tensor * base = src->view_src ? src->view_src : src;
             std::string src_name(base->name);
-            if (is_rope_freqs_weight(base, node)) {
+            എങ്കിൽ (is_rope_freqs_weight(base, കണ്ണി)) {
                 src_name = "rope_freqs.weight";
             }
             ggml_backend_buffer * buffer = base->buffer;
-            if (buffer->usage == GGML_BACKEND_BUFFER_USAGE_WEIGHTS || ggml_is_quantized(base->type)) {
+            എങ്കിൽ (buffer->usage == GGML_BACKEND_BUFFER_USAGE_WEIGHTS || ggml_is_quantized(base->type)) {
                 names.insert(src_name);
             }
         }
     }
-    return names;
+    തിരികെ names;
 }
 
-std::shared_ptr<ov::Node> GgmlOvDecoder::create_weight_node(ggml_tensor * tensor, bool naive) {
-    const bool is_ov_buffer = ggml_backend_buffer_is_openvino(tensor->buffer);
+std::shared_ptr<ov::Node> GgmlOvDecoder::create_weight_കണ്ണി(ggml_tensor * tensor, തർക്കം naive) {
+    സ്ഥിരം തർക്കം is_ov_buffer = ggml_backend_buffer_is_openvino(tensor->buffer);
 
     // Check if we have a pre-built constant from the OpenVINO backend buffer
     // This is set during ggml_backend_openvino_buffer_set_tensor
-    if (tensor->extra) {
+    എങ്കിൽ (tensor->extra) {
         OPENVINO_ASSERT(is_ov_buffer, "Unsupported weight tensor: " + std::string(tensor->name) +
                                           " Possibly this is a cpu backend repacked quantized weights");
         // Cast to our extra base type and check the type
         auto * extra_base = static_cast<ggml_openvino_extra_base *>(tensor->extra);
 
-        if (extra_base->type == ggml_openvino_extra_base::Type::WEIGHT) {
+        എങ്കിൽ (extra_base->type == ggml_openvino_extra_base::Type::WEIGHT) {
             // F16/F32/BF16 weight with shared-memory constant
             auto * weight_extra = static_cast<ggml_openvino_weight_extra *>(tensor->extra);
-            if (weight_extra->weight_node) {
+            എങ്കിൽ (weight_extra->weight_കണ്ണി) {
                 // GGML_LOG_DEBUG("%s: using pre-built weight node for %s\n", __func__, tensor->name);
-                return weight_extra->weight_node;
+                തിരികെ weight_extra->weight_കണ്ണി;
             }
-        } else if (extra_base->type == ggml_openvino_extra_base::Type::QUANTIZED_WEIGHT) {
+        } അല്ലെങ്കിൽ എങ്കിൽ (extra_base->type == ggml_openvino_extra_base::Type::QUANTIZED_WEIGHT) {
             // Quantized weight with pre-extracted data
             auto * quant_extra = static_cast<ggml_openvino_quantized_weight_extra *>(tensor->extra);
-            if (quant_extra->weight_node) {
+            എങ്കിൽ (quant_extra->weight_കണ്ണി) {
                 // GGML_LOG_DEBUG("%s: using pre-extracted quantized weight node for %s\n", __func__, tensor->name);
-                return quant_extra->weight_node;
+                തിരികെ quant_extra->weight_കണ്ണി;
             }
         }
     }
@@ -1548,11 +1548,11 @@ std::shared_ptr<ov::Node> GgmlOvDecoder::create_weight_node(ggml_tensor * tensor
     // Keep the full reversed 4D shape when materializing non-quantized constants,
     // otherwise the expert dimension is collapsed and later Gather/MatMul logic
     // only sees a single expert slice.
-    if (!ggml_is_quantized(tensor->type) && (tensor->ne[2] > 1 || tensor->ne[3] > 1)) {
+    എങ്കിൽ (!ggml_is_quantized(tensor->type) && (tensor->ne[2] > 1 || tensor->ne[3] > 1)) {
         auto weight_tensor = ov::Tensor(get_ov_type(tensor), get_shape(tensor), tensor->data);
-        auto weight_node = std::make_shared<ov::op::v0::Constant>(weight_tensor);
-        weight_node->set_friendly_name(tensor->name);
-        return weight_node;
+        auto weight_കണ്ണി = std::make_shared<ov::op::v0::Constant>(weight_tensor);
+        weight_കണ്ണി->set_friendly_name(tensor->name);
+        തിരികെ weight_കണ്ണി;
     }
 
     // Non-OV-buffer weights (CPU/mmap, e.g. the GET_ROWS token_embd copy) have no buffer
@@ -1560,13 +1560,13 @@ std::shared_ptr<ov::Node> GgmlOvDecoder::create_weight_node(ggml_tensor * tensor
     // pointer to avoid re-extracting on every recompile. Opt-in via
     // GGML_OPENVINO_REDUCE_COMPILE_MEM or GGML_OPENVINO_MEMORY_OPTIMIZE. Skip
     // for `naive` (test/naive path) since use_bias changes the produced node.
-    const bool cacheable_nonov = ggml_openvino_reduce_compile_mem_enabled() && !is_ov_buffer &&
+    സ്ഥിരം തർക്കം cacheable_nonov = ggml_openvino_reduce_compile_mem_enabled() && !is_ov_buffer &&
                                  !naive && tensor->data != nullptr;
-    if (cacheable_nonov) {
+    എങ്കിൽ (cacheable_nonov) {
         std::lock_guard<std::mutex> lock(g_nonov_weight_cache_mutex);
         auto it = g_nonov_weight_cache.find(tensor->data);
-        if (it != g_nonov_weight_cache.end()) {
-            return it->second;
+        എങ്കിൽ (it != g_nonov_weight_cache.end()) {
+            തിരികെ it->second;
         }
     }
 
@@ -1576,18 +1576,18 @@ std::shared_ptr<ov::Node> GgmlOvDecoder::create_weight_node(ggml_tensor * tensor
     // 3. test-backend-ops. buffers in test-backend-ops does not set USAGE_WEIGHT so backend_buffer_set_tensor will not create weight node
 
     // GGML_LOG_DEBUG("%s: creating new weight node for %s\n", __func__, tensor->name);
-    static const std::set<ggml_type> weight_types = {GGML_TYPE_F32,  GGML_TYPE_F16,  GGML_TYPE_BF16, GGML_TYPE_Q8_0,
+    സ്ഥിതം സ്ഥിരം std::set<ggml_type> weight_types = {GGML_TYPE_F32,  GGML_TYPE_F16,  GGML_TYPE_BF16, GGML_TYPE_Q8_0,
                                                      GGML_TYPE_Q4_0, GGML_TYPE_Q4_1, GGML_TYPE_Q5_1, GGML_TYPE_Q4_K,
                                                      GGML_TYPE_Q5_K, GGML_TYPE_Q6_K, GGML_TYPE_MXFP4};
-    if (weight_types.find(tensor->type) == weight_types.end()) {
-        throw std::runtime_error("Unexpected weight tensor type: " + std::string(tensor->name) + " with type " +
+    എങ്കിൽ (weight_types.find(tensor->type) == weight_types.end()) {
+        എറിയുക std::runtime_error("Unexpected weight tensor type: " + std::string(tensor->name) + " with type " +
                                  ggml_type_name(tensor->type));
     }
 
     OvWeight ov_weight;
-    if (ggml_is_quantized(tensor->type)) {
+    എങ്കിൽ (ggml_is_quantized(tensor->type)) {
         auto use_bias = naive;
-        if (is_ov_buffer) {
+        എങ്കിൽ (is_ov_buffer) {
             // For quantized weights, copy raw data to a temp buffer first because
             // process_weight_tensor reads from data and writes extracted results
             // (weights/scales/zp) to output_base_ptr — they would overlap if both
@@ -1596,43 +1596,43 @@ std::shared_ptr<ov::Node> GgmlOvDecoder::create_weight_node(ggml_tensor * tensor
             std::vector<uint8_t> tmp(raw_size);
             memcpy(tmp.data(), tensor->data, raw_size);
             ov_weight = process_weight_tensor(tensor, tmp.data(), tensor->data, use_bias);
-        } else {
+        } അല്ലെങ്കിൽ {
             ov_weight = process_weight_tensor(tensor, tensor->data, nullptr, use_bias);
         }
-    } else {
+    } അല്ലെങ്കിൽ {
         // For non-quantized weights (F16/F32/BF16), data is already in tensor->data.
         // process_weight_tensor will create an ov::Tensor wrapping tensor->data directly.
         ov_weight = process_weight_tensor(tensor, tensor->data, tensor->data);
     }
 
-    ov_weight.weight_node->set_friendly_name(tensor->name);
-    if (!is_ov_buffer) {
-        if (cacheable_nonov) {
+    ov_weight.weight_കണ്ണി->set_friendly_name(tensor->name);
+    എങ്കിൽ (!is_ov_buffer) {
+        എങ്കിൽ (cacheable_nonov) {
             std::lock_guard<std::mutex> lock(g_nonov_weight_cache_mutex);
             // Another thread may have inserted concurrently; keep the first.
-            auto [it, inserted] = g_nonov_weight_cache.emplace(tensor->data, ov_weight.weight_node);
-            return it->second;
+            auto [it, inserted] = g_nonov_weight_cache.emplace(tensor->data, ov_weight.weight_കണ്ണി);
+            തിരികെ it->second;
         }
-        return ov_weight.weight_node;
+        തിരികെ ov_weight.weight_കണ്ണി;
     }
 
     ggml_openvino_extra_base * extra;
-    if (ov_weight.is_quantized()) {
-        extra = new ggml_openvino_quantized_weight_extra(std::move(ov_weight.weights), std::move(ov_weight.scales),
-                                                         std::move(ov_weight.zp), ov_weight.weight_node);
-    } else {
-        extra = new ggml_openvino_weight_extra(std::move(ov_weight.weights), ov_weight.weight_node);
+    എങ്കിൽ (ov_weight.is_quantized()) {
+        extra = പുതിയ ggml_openvino_quantized_weight_extra(std::move(ov_weight.weights), std::move(ov_weight.scales),
+                                                         std::move(ov_weight.zp), ov_weight.weight_കണ്ണി);
+    } അല്ലെങ്കിൽ {
+        extra = പുതിയ ggml_openvino_weight_extra(std::move(ov_weight.weights), ov_weight.weight_കണ്ണി);
     }
     ggml_openvino_buffer_register_extra(tensor, extra);
 
-    return ov_weight.weight_node;
+    തിരികെ ov_weight.weight_കണ്ണി;
 }
 
-void GgmlOvDecoder::dump_cgraph(const ggml_cgraph * cgraph, std::string & filename) {
+ശൂന്യം GgmlOvDecoder::dump_cgraph(സ്ഥിരം ggml_cgraph * cgraph, std::string & filename) {
     std::ofstream file(filename);
-    if (!file.is_open()) {
+    എങ്കിൽ (!file.is_open()) {
         std::cerr << "Failed to open file" << '\n';
-        return;
+        തിരികെ;
     }
 
     file << "=== GRAPH ===\n";
@@ -1647,37 +1647,37 @@ void GgmlOvDecoder::dump_cgraph(const ggml_cgraph * cgraph, std::string & filena
                 << std::setw(62) << "stride"
                 << std::setw(20) << "buffer_type"
                 << "\n";
-    for (int i = 0; i < cgraph->n_nodes; i++) {
-        ggml_tensor * node = cgraph->nodes[i];
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < cgraph->n_nodes; i++) {
+        ggml_tensor * കണ്ണി = cgraph->nodes[i];
 
         // Get buffer type name
-        const char * buf_name = "none";
-        ggml_backend_buffer_t buf = node->view_src ? node->view_src->buffer : node->buffer;
-        if (buf) {
+        സ്ഥിരം അക്ഷരം * buf_name = "none";
+        ggml_backend_buffer_t buf = കണ്ണി->view_src ? കണ്ണി->view_src->buffer : കണ്ണി->buffer;
+        എങ്കിൽ (buf) {
             buf_name = ggml_backend_buffer_name(buf);
         }
 
         file << " - " << std::setw(3) << i << ": [ "
-             << std::setw(5) << node->ne[0] << ", "
-             << std::setw(5) << node->ne[1] << ", "
-             << std::setw(5) << node->ne[2] << ", "
-             << std::setw(5) << node->ne[3] << "] "
-             << std::left << std::setw(20) << ggml_op_name(node->op) << std::right << " "
-             << std::left << std::setw(45) << node->name << std::right
+             << std::setw(5) << കണ്ണി->ne[0] << ", "
+             << std::setw(5) << കണ്ണി->ne[1] << ", "
+             << std::setw(5) << കണ്ണി->ne[2] << ", "
+             << std::setw(5) << കണ്ണി->ne[3] << "] "
+             << std::left << std::setw(20) << ggml_op_name(കണ്ണി->op) << std::right << " "
+             << std::left << std::setw(45) << കണ്ണി->name << std::right
              << std::setw(2) << "[ "
-             << std::setw(0) << node->nb[0] << ", "
-             << std::setw(5) << node->nb[1] << ", "
-             << std::setw(5) << node->nb[2] << ", "
-             << std::setw(5) << node->nb[3] << "] "
+             << std::setw(0) << കണ്ണി->nb[0] << ", "
+             << std::setw(5) << കണ്ണി->nb[1] << ", "
+             << std::setw(5) << കണ്ണി->nb[2] << ", "
+             << std::setw(5) << കണ്ണി->nb[3] << "] "
              << std::right << std::setw(15) << buf_name << std::right
              << "\n";
 
-        for (int i = 0; i < GGML_MAX_SRC; i++) {
-            if (auto* src = node->src[i]) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < GGML_MAX_SRC; i++) {
+            എങ്കിൽ (auto* src = കണ്ണി->src[i]) {
                 // Get buffer type name for source
-                const char * src_buf_name = "none";
+                സ്ഥിരം അക്ഷരം * src_buf_name = "none";
                 ggml_backend_buffer_t src_buf = src->view_src ? src->view_src->buffer : src->buffer;
-                if (src_buf) {
+                എങ്കിൽ (src_buf) {
                     src_buf_name = ggml_backend_buffer_name(src_buf);
                 }
 
@@ -1701,21 +1701,21 @@ void GgmlOvDecoder::dump_cgraph(const ggml_cgraph * cgraph, std::string & filena
     }
 
     file << "n_leafs = " << cgraph->n_leafs << "\n";
-    for (int i = 0; i < cgraph->n_leafs; i++) {
-        ggml_tensor * node = cgraph->leafs[i];
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < cgraph->n_leafs; i++) {
+        ggml_tensor * കണ്ണി = cgraph->leafs[i];
 
         // Get buffer type name for leaf
-        const char * leaf_buf_name = "none";
-        ggml_backend_buffer_t leaf_buf = node->view_src ? node->view_src->buffer : node->buffer;
-        if (leaf_buf) {
+        സ്ഥിരം അക്ഷരം * leaf_buf_name = "none";
+        ggml_backend_buffer_t leaf_buf = കണ്ണി->view_src ? കണ്ണി->view_src->buffer : കണ്ണി->buffer;
+        എങ്കിൽ (leaf_buf) {
             leaf_buf_name = ggml_backend_buffer_name(leaf_buf);
         }
 
         file << " - " << std::setw(3) << i << ": [ "
-             << std::setw(5) << node->ne[0] << ", "
-             << std::setw(5) << node->ne[1] << "] "
-             << std::setw(8) << ggml_op_name(node->op) << " "
-             << std::setw(16) << ggml_get_name(node)
+             << std::setw(5) << കണ്ണി->ne[0] << ", "
+             << std::setw(5) << കണ്ണി->ne[1] << "] "
+             << std::setw(8) << ggml_op_name(കണ്ണി->op) << " "
+             << std::setw(16) << ggml_get_name(കണ്ണി)
              << std::setw(20) << leaf_buf_name << "\n";
     }
     // clang-format on
@@ -1724,426 +1724,426 @@ void GgmlOvDecoder::dump_cgraph(const ggml_cgraph * cgraph, std::string & filena
     file.close();
 }
 
-void print_tensor_address_map(const ggml_cgraph * cgraph) {
-    std::map<void *, std::vector<std::string>> address_map;
-    for (int node_n = 0; node_n < cgraph->n_nodes; node_n++) {
-        auto * node = cgraph->nodes[node_n];
-        if (node->data) {
-            auto it = address_map.find(node->data);
-            if (it == address_map.end()) {
-                address_map[node->data] = std::vector<std::string>();
+ശൂന്യം print_tensor_address_map(സ്ഥിരം ggml_cgraph * cgraph) {
+    std::map<ശൂന്യം *, std::vector<std::string>> address_map;
+    വേണ്ടി (പൂർണ്ണസംഖ്യ കണ്ണി_n = 0; കണ്ണി_n < cgraph->n_nodes; കണ്ണി_n++) {
+        auto * കണ്ണി = cgraph->nodes[കണ്ണി_n];
+        എങ്കിൽ (കണ്ണി->data) {
+            auto it = address_map.find(കണ്ണി->data);
+            എങ്കിൽ (it == address_map.end()) {
+                address_map[കണ്ണി->data] = std::vector<std::string>();
             }
-            address_map[node->data].push_back(node->name);
+            address_map[കണ്ണി->data].push_back(കണ്ണി->name);
         }
     }
-    for (const auto & pair : address_map) {
+    വേണ്ടി (സ്ഥിരം auto & pair : address_map) {
         std::cout << "Address: " << pair.first << '\n';
-        for (const auto & name : pair.second) {
+        വേണ്ടി (സ്ഥിരം auto & name : pair.second) {
             std::cout << name << " ; ";
         }
         std::cout << "\n\n";
     }
 }
 
-ov::Shape GgmlOvDecoder::get_shape(const ggml_tensor * tensor) {
+ov::Shape GgmlOvDecoder::get_shape(സ്ഥിരം ggml_tensor * tensor) {
     std::vector<size_t> shape;
-    for (int i = GGML_MAX_DIMS - 1; i >= 0; --i) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = GGML_MAX_DIMS - 1; i >= 0; --i) {
         shape.push_back(static_cast<size_t>(tensor->ne[i]));
     }
-    return shape;
+    തിരികെ shape;
 }
 
-std::vector<size_t> GgmlOvDecoder::get_stride(const ggml_tensor * tensor) {
+std::vector<size_t> GgmlOvDecoder::get_stride(സ്ഥിരം ggml_tensor * tensor) {
     std::vector<size_t> stride;
-    for (int i = GGML_MAX_DIMS - 1; i >= 0; --i) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = GGML_MAX_DIMS - 1; i >= 0; --i) {
         stride.push_back(static_cast<size_t>(tensor->nb[i]));
     }
-    return stride;
+    തിരികെ stride;
 }
 
-ov::element::Type GgmlOvDecoder::get_ov_type(const ggml_tensor * tensor) {
-    switch (tensor->type) {
-    case GGML_TYPE_F64:
-        return ov::element::f64;
-    case GGML_TYPE_F32:
-        return ov::element::f32;
-    case GGML_TYPE_F16:
-        return ov::element::f16;
-    case GGML_TYPE_BF16:
-        return ov::element::bf16;
-    case GGML_TYPE_I8:
-        return ov::element::i8;
-    case GGML_TYPE_I16:
-        return ov::element::i16;
-    case GGML_TYPE_I32:
-        return ov::element::i32;
-    case GGML_TYPE_I64:
-        return ov::element::i64;
-    default:
-        return ov::element::dynamic;
+ov::element::Type GgmlOvDecoder::get_ov_type(സ്ഥിരം ggml_tensor * tensor) {
+    തിരഞ്ഞെടുപ്പ് (tensor->type) {
+    അവസ്ഥ GGML_TYPE_F64:
+        തിരികെ ov::element::f64;
+    അവസ്ഥ GGML_TYPE_F32:
+        തിരികെ ov::element::f32;
+    അവസ്ഥ GGML_TYPE_F16:
+        തിരികെ ov::element::f16;
+    അവസ്ഥ GGML_TYPE_BF16:
+        തിരികെ ov::element::bf16;
+    അവസ്ഥ GGML_TYPE_I8:
+        തിരികെ ov::element::i8;
+    അവസ്ഥ GGML_TYPE_I16:
+        തിരികെ ov::element::i16;
+    അവസ്ഥ GGML_TYPE_I32:
+        തിരികെ ov::element::i32;
+    അവസ്ഥ GGML_TYPE_I64:
+        തിരികെ ov::element::i64;
+    സ്ഥിരസ്ഥിതി:
+        തിരികെ ov::element::dynamic;
     }
 }
 
-ov::PartialShape GgmlOvDecoder::get_input_shape(int node_idx, const std::string & name) const {
-    return ov::PartialShape(get_shape(m_node_info_list[node_idx].node_inputs.at(name)));
+ov::PartialShape GgmlOvDecoder::get_നിവേശം_shape(പൂർണ്ണസംഖ്യ കണ്ണി_idx, സ്ഥിരം std::string & name) സ്ഥിരം {
+    തിരികെ ov::PartialShape(get_shape(m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_inputs.at(name)));
 }
 
-std::vector<size_t> GgmlOvDecoder::get_input_stride(int node_idx, const std::string & name) const {
-    return get_stride(m_node_info_list[node_idx].node_inputs.at(name));
+std::vector<size_t> GgmlOvDecoder::get_നിവേശം_stride(പൂർണ്ണസംഖ്യ കണ്ണി_idx, സ്ഥിരം std::string & name) സ്ഥിരം {
+    തിരികെ get_stride(m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_inputs.at(name));
 }
 
-size_t GgmlOvDecoder::get_view_input_size(int node_idx, const std::string & name) const {
-    auto it = m_node_info_list[node_idx].node_inputs_views.find(name);
-    if (it != m_node_info_list[node_idx].node_inputs_views.end()) {
-        return it->second.size();
+size_t GgmlOvDecoder::get_view_നിവേശം_size(പൂർണ്ണസംഖ്യ കണ്ണി_idx, സ്ഥിരം std::string & name) സ്ഥിരം {
+    auto it = m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_inputs_views.find(name);
+    എങ്കിൽ (it != m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_inputs_views.end()) {
+        തിരികെ it->second.size();
     }
-    return 0;
+    തിരികെ 0;
 }
 
-size_t GgmlOvDecoder::get_view_input_offset(int node_idx, const std::string & name, size_t view_index) const {
-    auto it = m_node_info_list[node_idx].node_inputs_views.find(name);
-    if (it != m_node_info_list[node_idx].node_inputs_views.end()) {
-        if (view_index < it->second.size()) {
-            return it->second[view_index].second->view_offs;
+size_t GgmlOvDecoder::get_view_നിവേശം_offset(പൂർണ്ണസംഖ്യ കണ്ണി_idx, സ്ഥിരം std::string & name, size_t view_index) സ്ഥിരം {
+    auto it = m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_inputs_views.find(name);
+    എങ്കിൽ (it != m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_inputs_views.end()) {
+        എങ്കിൽ (view_index < it->second.size()) {
+            തിരികെ it->second[view_index].second->view_offs;
         }
     }
-    return 0;
+    തിരികെ 0;
 }
 
-size_t GgmlOvDecoder::get_view_input_src_offset(int node_idx, const std::string & name, size_t view_index) const {
-    auto it = m_node_info_list[node_idx].node_inputs_views.find(name);
-    if (it != m_node_info_list[node_idx].node_inputs_views.end()) {
-        if (view_index < it->second.size()) {
+size_t GgmlOvDecoder::get_view_നിവേശം_src_offset(പൂർണ്ണസംഖ്യ കണ്ണി_idx, സ്ഥിരം std::string & name, size_t view_index) സ്ഥിരം {
+    auto it = m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_inputs_views.find(name);
+    എങ്കിൽ (it != m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_inputs_views.end()) {
+        എങ്കിൽ (view_index < it->second.size()) {
             auto * view_tensor = it->second[view_index].second;
-            if (view_tensor && view_tensor->src[0]) {
-                return view_tensor->src[0]->view_offs;
+            എങ്കിൽ (view_tensor && view_tensor->src[0]) {
+                തിരികെ view_tensor->src[0]->view_offs;
             }
         }
     }
-    return 0;
+    തിരികെ 0;
 }
 
-std::vector<size_t> GgmlOvDecoder::get_view_input_stride(int node_idx,
-                                                         const std::string & name,
-                                                         size_t view_index) const {
-    auto it = m_node_info_list[node_idx].node_inputs_views.find(name);
-    if (it != m_node_info_list[node_idx].node_inputs_views.end()) {
-        if (view_index < it->second.size()) {
-            return get_stride(it->second[view_index].second);
+std::vector<size_t> GgmlOvDecoder::get_view_നിവേശം_stride(പൂർണ്ണസംഖ്യ കണ്ണി_idx,
+                                                         സ്ഥിരം std::string & name,
+                                                         size_t view_index) സ്ഥിരം {
+    auto it = m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_inputs_views.find(name);
+    എങ്കിൽ (it != m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_inputs_views.end()) {
+        എങ്കിൽ (view_index < it->second.size()) {
+            തിരികെ get_stride(it->second[view_index].second);
         }
     }
-    return {};
+    തിരികെ {};
 }
 
-std::vector<size_t> GgmlOvDecoder::get_view_input_src_stride(int node_idx,
-                                                             const std::string & name,
-                                                             size_t view_index) const {
-    auto it = m_node_info_list[node_idx].node_inputs_views.find(name);
-    if (it != m_node_info_list[node_idx].node_inputs_views.end()) {
-        if (view_index < it->second.size()) {
+std::vector<size_t> GgmlOvDecoder::get_view_നിവേശം_src_stride(പൂർണ്ണസംഖ്യ കണ്ണി_idx,
+                                                             സ്ഥിരം std::string & name,
+                                                             size_t view_index) സ്ഥിരം {
+    auto it = m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_inputs_views.find(name);
+    എങ്കിൽ (it != m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_inputs_views.end()) {
+        എങ്കിൽ (view_index < it->second.size()) {
             auto * view_tensor = it->second[view_index].second;
-            if (view_tensor && view_tensor->src[0]) {
-                return get_stride(view_tensor->src[0]);
+            എങ്കിൽ (view_tensor && view_tensor->src[0]) {
+                തിരികെ get_stride(view_tensor->src[0]);
             }
         }
     }
-    return {};
+    തിരികെ {};
 }
 
-ov::Shape GgmlOvDecoder::get_view_input_ggml_shape(int node_idx, const std::string & name, size_t view_index) const {
-    auto it = m_node_info_list[node_idx].node_inputs_views.find(name);
-    if (it != m_node_info_list[node_idx].node_inputs_views.end()) {
-        if (view_index < it->second.size()) {
-            return get_shape(it->second[view_index].second);
+ov::Shape GgmlOvDecoder::get_view_നിവേശം_ggml_shape(പൂർണ്ണസംഖ്യ കണ്ണി_idx, സ്ഥിരം std::string & name, size_t view_index) സ്ഥിരം {
+    auto it = m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_inputs_views.find(name);
+    എങ്കിൽ (it != m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_inputs_views.end()) {
+        എങ്കിൽ (view_index < it->second.size()) {
+            തിരികെ get_shape(it->second[view_index].second);
         }
     }
-    return {};
+    തിരികെ {};
 }
 
-ov::Shape GgmlOvDecoder::get_view_input_src_ggml_shape(int node_idx,
-                                                       const std::string & name,
-                                                       size_t view_index) const {
-    auto it = m_node_info_list[node_idx].node_inputs_views.find(name);
-    if (it != m_node_info_list[node_idx].node_inputs_views.end()) {
-        if (view_index < it->second.size()) {
+ov::Shape GgmlOvDecoder::get_view_നിവേശം_src_ggml_shape(പൂർണ്ണസംഖ്യ കണ്ണി_idx,
+                                                       സ്ഥിരം std::string & name,
+                                                       size_t view_index) സ്ഥിരം {
+    auto it = m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_inputs_views.find(name);
+    എങ്കിൽ (it != m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_inputs_views.end()) {
+        എങ്കിൽ (view_index < it->second.size()) {
             auto * view_tensor = it->second[view_index].second;
-            if (view_tensor && view_tensor->src[0]) {
-                return get_shape(view_tensor->src[0]);
+            എങ്കിൽ (view_tensor && view_tensor->src[0]) {
+                തിരികെ get_shape(view_tensor->src[0]);
             }
         }
     }
-    return {};
+    തിരികെ {};
 }
 
-ov::PartialShape GgmlOvDecoder::get_view_input_ov_shape(int node_idx,
-                                                        const std::string & name,
-                                                        size_t view_index) const {
-    auto it = m_node_info_list[node_idx].node_inputs_views.find(name);
-    if (it != m_node_info_list[node_idx].node_inputs_views.end()) {
-        if (view_index < it->second.size()) {
+ov::PartialShape GgmlOvDecoder::get_view_നിവേശം_ov_shape(പൂർണ്ണസംഖ്യ കണ്ണി_idx,
+                                                        സ്ഥിരം std::string & name,
+                                                        size_t view_index) സ്ഥിരം {
+    auto it = m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_inputs_views.find(name);
+    എങ്കിൽ (it != m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_inputs_views.end()) {
+        എങ്കിൽ (view_index < it->second.size()) {
             auto * tensor = it->second[view_index].second;
             ov::PartialShape shape = ov::PartialShape{get_shape(tensor)};
 
             // Check if this tensor has a dynamic dimension
-            auto dynamic_it = m_node_dynamic_dims.find(tensor);
-            if (dynamic_it != m_node_dynamic_dims.end() && dynamic_it->second != -1) {
-                int dynamic_dim_index = dynamic_it->second;
+            auto dynamic_it = m_കണ്ണി_dynamic_dims.find(tensor);
+            എങ്കിൽ (dynamic_it != m_കണ്ണി_dynamic_dims.end() && dynamic_it->second != -1) {
+                പൂർണ്ണസംഖ്യ dynamic_dim_index = dynamic_it->second;
                 // GGML uses reverse indexing, so convert to OpenVINO indexing
                 shape[3 - dynamic_dim_index] = m_is_static ? get_static_n_tokens() : -1;
             }
 
-            return shape;
+            തിരികെ shape;
         }
     }
-    return {};
+    തിരികെ {};
 }
 
-ov::PartialShape GgmlOvDecoder::get_view_input_src_ov_shape(int node_idx,
-                                                            const std::string & name,
-                                                            size_t view_index) const {
-    auto it = m_node_info_list[node_idx].node_inputs_views.find(name);
-    if (it != m_node_info_list[node_idx].node_inputs_views.end()) {
-        if (view_index < it->second.size()) {
+ov::PartialShape GgmlOvDecoder::get_view_നിവേശം_src_ov_shape(പൂർണ്ണസംഖ്യ കണ്ണി_idx,
+                                                            സ്ഥിരം std::string & name,
+                                                            size_t view_index) സ്ഥിരം {
+    auto it = m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_inputs_views.find(name);
+    എങ്കിൽ (it != m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_inputs_views.end()) {
+        എങ്കിൽ (view_index < it->second.size()) {
             auto * view_tensor = it->second[view_index].second;
-            if (view_tensor && view_tensor->src[0]) {
+            എങ്കിൽ (view_tensor && view_tensor->src[0]) {
                 auto * src_tensor = view_tensor->src[0];
                 ov::PartialShape shape = ov::PartialShape{get_shape(src_tensor)};
 
                 // Check if this tensor has a dynamic dimension
-                auto dynamic_it = m_node_dynamic_dims.find(src_tensor);
-                if (dynamic_it != m_node_dynamic_dims.end() && dynamic_it->second != -1) {
-                    int dynamic_dim_index = dynamic_it->second;
+                auto dynamic_it = m_കണ്ണി_dynamic_dims.find(src_tensor);
+                എങ്കിൽ (dynamic_it != m_കണ്ണി_dynamic_dims.end() && dynamic_it->second != -1) {
+                    പൂർണ്ണസംഖ്യ dynamic_dim_index = dynamic_it->second;
                     // GGML uses reverse indexing, so convert to OpenVINO indexing
                     shape[3 - dynamic_dim_index] = m_is_static ? get_static_n_tokens() : -1;
                 }
 
-                return shape;
+                തിരികെ shape;
             }
         }
     }
-    return {};
+    തിരികെ {};
 }
 
-std::string GgmlOvDecoder::get_view_input_name(int node_idx, const std::string & name, size_t view_index) const {
-    auto it = m_node_info_list[node_idx].node_inputs_views.find(name);
-    if (it != m_node_info_list[node_idx].node_inputs_views.end()) {
-        if (view_index < it->second.size()) {
-            return it->second[view_index].first;
+std::string GgmlOvDecoder::get_view_നിവേശം_name(പൂർണ്ണസംഖ്യ കണ്ണി_idx, സ്ഥിരം std::string & name, size_t view_index) സ്ഥിരം {
+    auto it = m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_inputs_views.find(name);
+    എങ്കിൽ (it != m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_inputs_views.end()) {
+        എങ്കിൽ (view_index < it->second.size()) {
+            തിരികെ it->second[view_index].first;
         }
     }
-    return "";
+    തിരികെ "";
 }
 
-std::string GgmlOvDecoder::get_view_input_src_name(int node_idx, const std::string & name, size_t view_index) const {
-    auto it = m_node_info_list[node_idx].node_inputs_views.find(name);
-    if (it != m_node_info_list[node_idx].node_inputs_views.end()) {
-        if (view_index < it->second.size()) {
+std::string GgmlOvDecoder::get_view_നിവേശം_src_name(പൂർണ്ണസംഖ്യ കണ്ണി_idx, സ്ഥിരം std::string & name, size_t view_index) സ്ഥിരം {
+    auto it = m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_inputs_views.find(name);
+    എങ്കിൽ (it != m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_inputs_views.end()) {
+        എങ്കിൽ (view_index < it->second.size()) {
             auto * view_tensor = it->second[view_index].second;
-            if (view_tensor && view_tensor->src[0]) {
-                return get_tensor_ov_name(m_cgraph, view_tensor->src[0]);
+            എങ്കിൽ (view_tensor && view_tensor->src[0]) {
+                തിരികെ get_tensor_ov_name(m_cgraph, view_tensor->src[0]);
             }
         }
     }
-    return "";
+    തിരികെ "";
 }
 
-ov::element::Type GgmlOvDecoder::get_input_type(int node_idx, const std::string & name) const {
-    return get_ov_type(m_node_info_list[node_idx].node_inputs.at(name));
+ov::element::Type GgmlOvDecoder::get_നിവേശം_type(പൂർണ്ണസംഖ്യ കണ്ണി_idx, സ്ഥിരം std::string & name) സ്ഥിരം {
+    തിരികെ get_ov_type(m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_inputs.at(name));
 }
 
-size_t GgmlOvDecoder::get_input_size() const {
-    return m_model_inputs.size();
+size_t GgmlOvDecoder::get_നിവേശം_size() സ്ഥിരം {
+    തിരികെ m_model_inputs.size();
 }
 
-size_t GgmlOvDecoder::get_input_size(int node_idx) const {
-    return m_node_info_list[node_idx].node_inputs_names.size();
+size_t GgmlOvDecoder::get_നിവേശം_size(പൂർണ്ണസംഖ്യ കണ്ണി_idx) സ്ഥിരം {
+    തിരികെ m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_inputs_names.size();
 }
 
-std::vector<std::string> GgmlOvDecoder::get_input_names(int node_idx) const {
-    return m_node_info_list[node_idx].node_inputs_names;
+std::vector<std::string> GgmlOvDecoder::get_നിവേശം_names(പൂർണ്ണസംഖ്യ കണ്ണി_idx) സ്ഥിരം {
+    തിരികെ m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_inputs_names;
 }
 
-ov::PartialShape GgmlOvDecoder::get_output_shape(int node_idx) const {
-    auto * ggml_tensor = m_node_info_list[node_idx].node;
-    return ov::PartialShape(get_shape(ggml_tensor));
+ov::PartialShape GgmlOvDecoder::get_output_shape(പൂർണ്ണസംഖ്യ കണ്ണി_idx) സ്ഥിരം {
+    auto * ggml_tensor = m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി;
+    തിരികെ ov::PartialShape(get_shape(ggml_tensor));
 }
 
-ov::element::Type GgmlOvDecoder::get_output_type(const int node_idx) const {
-    return get_ov_type(m_node_info_list[node_idx].node);
+ov::element::Type GgmlOvDecoder::get_output_type(സ്ഥിരം പൂർണ്ണസംഖ്യ കണ്ണി_idx) സ്ഥിരം {
+    തിരികെ get_ov_type(m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി);
 }
 
-std::vector<size_t> GgmlOvDecoder::get_output_stride(int node_idx) const {
-    auto * ggml_tensor = m_node_info_list[node_idx].node;
-    return get_stride(ggml_tensor);
+std::vector<size_t> GgmlOvDecoder::get_output_stride(പൂർണ്ണസംഖ്യ കണ്ണി_idx) സ്ഥിരം {
+    auto * ggml_tensor = m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി;
+    തിരികെ get_stride(ggml_tensor);
 }
 
-std::vector<std::string> GgmlOvDecoder::get_output_names(int node_idx) const {
-    auto * node = m_node_info_list[node_idx].node;
-    if (node->op == GGML_OP_GATED_DELTA_NET && !m_model_params.has_rs_rollback) {
+std::vector<std::string> GgmlOvDecoder::get_output_names(പൂർണ്ണസംഖ്യ കണ്ണി_idx) സ്ഥിരം {
+    auto * കണ്ണി = m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി;
+    എങ്കിൽ (കണ്ണി->op == GGML_OP_GATED_DELTA_NET && !m_model_params.has_rs_rollback) {
         std::string attn_name;
         std::string state_name;
-        for (int i = node_idx + 1; i < m_cgraph->n_nodes; i++) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = കണ്ണി_idx + 1; i < m_cgraph->n_nodes; i++) {
             auto * consumer = m_cgraph->nodes[i];
-            if (consumer->op != GGML_OP_VIEW || consumer->src[0] != node) {
-                continue;
+            എങ്കിൽ (consumer->op != GGML_OP_VIEW || consumer->src[0] != കണ്ണി) {
+                തുടരുക;
             }
             // GGML packs [attention | state]. The attention VIEW starts at offset 0 and the
             // state VIEW starts after the token-dependent attention segment.
             auto & name = consumer->view_offs == 0 ? attn_name : state_name;
-            if (!name.empty()) {
-                return {m_node_info_list[node_idx].node_name};
+            എങ്കിൽ (!name.empty()) {
+                തിരികെ {m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_name};
             }
             name = get_tensor_ov_name(m_cgraph, consumer);
         }
-        if (!attn_name.empty() && !state_name.empty()) {
-            return {attn_name, state_name};
+        എങ്കിൽ (!attn_name.empty() && !state_name.empty()) {
+            തിരികെ {attn_name, state_name};
         }
     }
-    return {m_node_info_list[node_idx].node_name};
+    തിരികെ {m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_name};
 }
 
-std::string GgmlOvDecoder::get_inplace_op_src(int node_idx) const {
-    auto * node = m_node_info_list[node_idx].node;
-    if (!::is_inplace_op(node) || node->view_src == nullptr || ggml_nbytes(node) == 0) {
-        return "";
+std::string GgmlOvDecoder::get_inplace_op_src(പൂർണ്ണസംഖ്യ കണ്ണി_idx) സ്ഥിരം {
+    auto * കണ്ണി = m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി;
+    എങ്കിൽ (!::is_inplace_op(കണ്ണി) || കണ്ണി->view_src == nullptr || ggml_nbytes(കണ്ണി) == 0) {
+        തിരികെ "";
     }
-    const int op_case = m_node_info_list[node_idx].node_op_case;
-    if (node->op == GGML_OP_CPY && (op_case == 1 || op_case == 2 || op_case == 3) &&
+    സ്ഥിരം പൂർണ്ണസംഖ്യ op_case = m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_op_case;
+    എങ്കിൽ (കണ്ണി->op == GGML_OP_CPY && (op_case == 1 || op_case == 2 || op_case == 3) &&
         m_compute_params.s_copy_active_slot_len == -1) {
-        return "";
+        തിരികെ "";
     }
-    return get_tensor_ov_name(m_cgraph, node->view_src);
+    തിരികെ get_tensor_ov_name(m_cgraph, കണ്ണി->view_src);
 }
 
-bool GgmlOvDecoder::is_view_like_alias_of(int node_idx, const std::string & view_src_name) const {
-    auto * node = m_node_info_list[node_idx].node;
-    if (node->view_src == nullptr || get_tensor_ov_name(m_cgraph, node->view_src) != view_src_name) {
-        return false;
+തർക്കം GgmlOvDecoder::is_view_like_alias_of(പൂർണ്ണസംഖ്യ കണ്ണി_idx, സ്ഥിരം std::string & view_src_name) സ്ഥിരം {
+    auto * കണ്ണി = m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി;
+    എങ്കിൽ (കണ്ണി->view_src == nullptr || get_tensor_ov_name(m_cgraph, കണ്ണി->view_src) != view_src_name) {
+        തിരികെ അസത്യം;
     }
-    return node->op == GGML_OP_RESHAPE || node->op == GGML_OP_VIEW;
+    തിരികെ കണ്ണി->op == GGML_OP_RESHAPE || കണ്ണി->op == GGML_OP_VIEW;
 }
 
-const std::string & GgmlOvDecoder::get_op_name() const {
-    static const std::string unknown_name = "UNKNOWN_OP_NAME";
-    return unknown_name;
+സ്ഥിരം std::string & GgmlOvDecoder::get_op_name() സ്ഥിരം {
+    സ്ഥിതം സ്ഥിരം std::string unknown_name = "UNKNOWN_OP_NAME";
+    തിരികെ unknown_name;
 }
 
-int32_t GgmlOvDecoder::get_op_dynamic_dim(int node_idx) const {
-    auto it = m_node_dynamic_dims.find(m_node_info_list[node_idx].node);
-    if (it == m_node_dynamic_dims.end()) {
-        return -1;
+int32_t GgmlOvDecoder::get_op_dynamic_dim(പൂർണ്ണസംഖ്യ കണ്ണി_idx) സ്ഥിരം {
+    auto it = m_കണ്ണി_dynamic_dims.find(m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി);
+    എങ്കിൽ (it == m_കണ്ണി_dynamic_dims.end()) {
+        തിരികെ -1;
     }
-    return it->second;
+    തിരികെ it->second;
 }
 
-const std::string & GgmlOvDecoder::get_op_name(int node_idx) const {
-    return m_node_info_list[node_idx].node_name;
+സ്ഥിരം std::string & GgmlOvDecoder::get_op_name(പൂർണ്ണസംഖ്യ കണ്ണി_idx) സ്ഥിരം {
+    തിരികെ m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_name;
 }
 
-int32_t * GgmlOvDecoder::get_input_op_params(int node_idx, const std::string & name) const {
-    return m_node_info_list[node_idx].node_inputs.at(name)->op_params;
+int32_t * GgmlOvDecoder::get_നിവേശം_op_params(പൂർണ്ണസംഖ്യ കണ്ണി_idx, സ്ഥിരം std::string & name) സ്ഥിരം {
+    തിരികെ m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_inputs.at(name)->op_params;
 }
 
-int32_t * GgmlOvDecoder::get_output_op_params(int node_idx) const {
-    return m_node_info_list[node_idx].node->op_params;
+int32_t * GgmlOvDecoder::get_output_op_params(പൂർണ്ണസംഖ്യ കണ്ണി_idx) സ്ഥിരം {
+    തിരികെ m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി->op_params;
 }
 
-size_t GgmlOvDecoder::get_output_op_offset(int node_idx) const {
-    return m_node_info_list[node_idx].node->view_offs;
+size_t GgmlOvDecoder::get_output_op_offset(പൂർണ്ണസംഖ്യ കണ്ണി_idx) സ്ഥിരം {
+    തിരികെ m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി->view_offs;
 }
 
-void GgmlOvDecoder::visit_subgraph(std::function<void(std::shared_ptr<GgmlDecoder>, int node_idx)> node_visitor) const {
-    for (int node_idx = 0; node_idx < m_cgraph->n_nodes; node_idx++) {
-        if (m_cgraph->nodes[node_idx]->op == GGML_OP_NONE) {
-            continue;
+ശൂന്യം GgmlOvDecoder::visit_subgraph(std::function<ശൂന്യം(std::shared_ptr<GgmlDecoder>, പൂർണ്ണസംഖ്യ കണ്ണി_idx)> കണ്ണി_visitor) സ്ഥിരം {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ കണ്ണി_idx = 0; കണ്ണി_idx < m_cgraph->n_nodes; കണ്ണി_idx++) {
+        എങ്കിൽ (m_cgraph->nodes[കണ്ണി_idx]->op == GGML_OP_NONE) {
+            തുടരുക;
         }
-        node_visitor(std::make_shared<GgmlOvDecoder>(*this), node_idx);
+        കണ്ണി_visitor(std::make_shared<GgmlOvDecoder>(*ഇത്), കണ്ണി_idx);
     }
 }
 
-std::string GgmlOvDecoder::compute_op_type(const ggml_tensor * node) {
-    switch (node->op) {
-    case GGML_OP_UNARY:
-        return std::string("GGML_UNARY_OP_") + ggml_unary_op_name(ggml_get_unary_op(node));
-    case GGML_OP_GLU:
-        return std::string("GGML_GLU_OP_") + ggml_glu_op_name(ggml_get_glu_op(node));
-    default:
-        return std::string("GGML_OP_") + ggml_op_name(node->op);
+std::string GgmlOvDecoder::compute_op_type(സ്ഥിരം ggml_tensor * കണ്ണി) {
+    തിരഞ്ഞെടുപ്പ് (കണ്ണി->op) {
+    അവസ്ഥ GGML_OP_UNARY:
+        തിരികെ std::string("GGML_UNARY_OP_") + ggml_unary_op_name(ggml_get_unary_op(കണ്ണി));
+    അവസ്ഥ GGML_OP_GLU:
+        തിരികെ std::string("GGML_GLU_OP_") + ggml_glu_op_name(ggml_get_glu_op(കണ്ണി));
+    സ്ഥിരസ്ഥിതി:
+        തിരികെ std::string("GGML_OP_") + ggml_op_name(കണ്ണി->op);
     }
 }
 
-const std::string & GgmlOvDecoder::get_op_type(int node_idx) const {
-    return m_node_info_list[node_idx].node_op_type;
+സ്ഥിരം std::string & GgmlOvDecoder::get_op_type(പൂർണ്ണസംഖ്യ കണ്ണി_idx) സ്ഥിരം {
+    തിരികെ m_കണ്ണി_info_list[കണ്ണി_idx].കണ്ണി_op_type;
 }
 
-const std::string & GgmlOvDecoder::get_op_type() const {
-    static const std::string unknown_op = "UNKNOWN_GGML_OP";
-    return unknown_op;
+സ്ഥിരം std::string & GgmlOvDecoder::get_op_type() സ്ഥിരം {
+    സ്ഥിതം സ്ഥിരം std::string unknown_op = "UNKNOWN_GGML_OP";
+    തിരികെ unknown_op;
 }
 
-void GgmlOvDecoder::compute_node_dynamic_dims() {
-    auto visit_node = [&](auto && self, ggml_tensor * node) -> void {
-        if (!node) {
-            return;
-        }
-
-        if (node->op == GGML_OP_CPY) {
-            m_node_dynamic_dims[node] = -1;
+ശൂന്യം GgmlOvDecoder::compute_കണ്ണി_dynamic_dims() {
+    auto visit_കണ്ണി = [&](auto && self, ggml_tensor * കണ്ണി) -> ശൂന്യം {
+        എങ്കിൽ (!കണ്ണി) {
+            തിരികെ;
         }
 
-        if (m_node_dynamic_dims.count(node)) {
-            return;
+        എങ്കിൽ (കണ്ണി->op == GGML_OP_CPY) {
+            m_കണ്ണി_dynamic_dims[കണ്ണി] = -1;
         }
-        for (int i = 0; i < GGML_MAX_SRC; i++) {
-            ggml_tensor * src = node->src[i];
-            if (src == nullptr) {
-                continue;
+
+        എങ്കിൽ (m_കണ്ണി_dynamic_dims.count(കണ്ണി)) {
+            തിരികെ;
+        }
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < GGML_MAX_SRC; i++) {
+            ggml_tensor * src = കണ്ണി->src[i];
+            എങ്കിൽ (src == nullptr) {
+                തുടരുക;
             }
-            struct ggml_tensor * root_src = nullptr;
+            ഘടന ggml_tensor * വേര്_src = nullptr;
             // if (src->org_src) {
             //     root_src = src->org_src;
             // }
-            if (root_src) {
-                if (is_inp_tok(root_src, node) || is_inp_pos(root_src, node) || is_output_idx(root_src, node)) {
-                    m_node_dynamic_dims[root_src] = 0;
-                    m_node_dynamic_dims[src] = m_node_dynamic_dims[root_src];
-                    continue;
+            എങ്കിൽ (വേര്_src) {
+                എങ്കിൽ (is_inp_tok(വേര്_src, കണ്ണി) || is_inp_pos(വേര്_src, കണ്ണി) || is_output_idx(വേര്_src, കണ്ണി)) {
+                    m_കണ്ണി_dynamic_dims[വേര്_src] = 0;
+                    m_കണ്ണി_dynamic_dims[src] = m_കണ്ണി_dynamic_dims[വേര്_src];
+                    തുടരുക;
                 }
-                self(self, root_src);
-                m_node_dynamic_dims[src] = m_node_dynamic_dims[root_src];
-            } else {
-                if (is_inp_tok(src, node) || is_inp_pos(src, node) || is_output_idx(src, node)) {
-                    m_node_dynamic_dims[src] = 0;
-                    continue;
+                self(self, വേര്_src);
+                m_കണ്ണി_dynamic_dims[src] = m_കണ്ണി_dynamic_dims[വേര്_src];
+            } അല്ലെങ്കിൽ {
+                എങ്കിൽ (is_inp_tok(src, കണ്ണി) || is_inp_pos(src, കണ്ണി) || is_output_idx(src, കണ്ണി)) {
+                    m_കണ്ണി_dynamic_dims[src] = 0;
+                    തുടരുക;
                 }
-                if (is_inp_scale_rows(src, node)) {
-                    m_node_dynamic_dims[src] = 1;
-                    continue;
+                എങ്കിൽ (is_inp_scale_rows(src, കണ്ണി)) {
+                    m_കണ്ണി_dynamic_dims[src] = 1;
+                    തുടരുക;
                 }
-                if (node->op == GGML_OP_VIEW && src->op == GGML_OP_NONE && !is_stateful() && !m_model_is_splitted) {
-                    m_node_dynamic_dims[src] = 1;
-                    continue;
+                എങ്കിൽ (കണ്ണി->op == GGML_OP_VIEW && src->op == GGML_OP_NONE && !is_stateful() && !m_model_is_splitted) {
+                    m_കണ്ണി_dynamic_dims[src] = 1;
+                    തുടരുക;
                 }
                 self(self, src);
             }
         }
-        switch (node->op) {
-        case GGML_OP_NONE:
-            m_node_dynamic_dims[node] = -1;
-            break;
-        case GGML_OP_GET_ROWS:
-            m_node_dynamic_dims[node] = -1;
-            if (m_node_dynamic_dims[node->src[1]] != -1) {
-                auto dynamic_dim_idx = m_node_dynamic_dims[node->src[1]];
-                if (dynamic_dim_idx == 0) {
-                    m_node_dynamic_dims[node] = 1;
-                } else {
-                    auto dynamic_dim_stride = node->src[1]->nb[dynamic_dim_idx] / ggml_type_size(node->src[1]->type) *
-                                              ggml_type_size(node->src[0]->type);
-                    for (int i = 0; i < GGML_MAX_DIMS; i++) {
-                        if (dynamic_dim_stride == node->src[0]->nb[i]) {
-                            m_node_dynamic_dims[node] = i;
-                            break;
+        തിരഞ്ഞെടുപ്പ് (കണ്ണി->op) {
+        അവസ്ഥ GGML_OP_NONE:
+            m_കണ്ണി_dynamic_dims[കണ്ണി] = -1;
+            നിർത്തുക;
+        അവസ്ഥ GGML_OP_GET_ROWS:
+            m_കണ്ണി_dynamic_dims[കണ്ണി] = -1;
+            എങ്കിൽ (m_കണ്ണി_dynamic_dims[കണ്ണി->src[1]] != -1) {
+                auto dynamic_dim_idx = m_കണ്ണി_dynamic_dims[കണ്ണി->src[1]];
+                എങ്കിൽ (dynamic_dim_idx == 0) {
+                    m_കണ്ണി_dynamic_dims[കണ്ണി] = 1;
+                } അല്ലെങ്കിൽ {
+                    auto dynamic_dim_stride = കണ്ണി->src[1]->nb[dynamic_dim_idx] / ggml_type_size(കണ്ണി->src[1]->type) *
+                                              ggml_type_size(കണ്ണി->src[0]->type);
+                    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < GGML_MAX_DIMS; i++) {
+                        എങ്കിൽ (dynamic_dim_stride == കണ്ണി->src[0]->nb[i]) {
+                            m_കണ്ണി_dynamic_dims[കണ്ണി] = i;
+                            നിർത്തുക;
                         }
                     }
                 }
@@ -2151,69 +2151,69 @@ void GgmlOvDecoder::compute_node_dynamic_dims() {
                 //                 "Dynamic dim value mismatch for node: " + std::string(node->name) +
                 //                     " and its src[1]: " + std::string(node->src[1]->name));
             }
-            break;
-        case GGML_OP_MUL:
-        case GGML_OP_MUL_MAT:
-            m_node_dynamic_dims[node] = -1;
-            if (m_node_dynamic_dims[node->src[0]] != -1) {
-                m_node_dynamic_dims[node] = m_node_dynamic_dims[node->src[0]];
+            നിർത്തുക;
+        അവസ്ഥ GGML_OP_MUL:
+        അവസ്ഥ GGML_OP_MUL_MAT:
+            m_കണ്ണി_dynamic_dims[കണ്ണി] = -1;
+            എങ്കിൽ (m_കണ്ണി_dynamic_dims[കണ്ണി->src[0]] != -1) {
+                m_കണ്ണി_dynamic_dims[കണ്ണി] = m_കണ്ണി_dynamic_dims[കണ്ണി->src[0]];
             }
-            if (m_node_dynamic_dims[node->src[1]] != -1) {
-                m_node_dynamic_dims[node] = m_node_dynamic_dims[node->src[1]];
+            എങ്കിൽ (m_കണ്ണി_dynamic_dims[കണ്ണി->src[1]] != -1) {
+                m_കണ്ണി_dynamic_dims[കണ്ണി] = m_കണ്ണി_dynamic_dims[കണ്ണി->src[1]];
             }
-            break;
-        case GGML_OP_PERMUTE:
-            m_node_dynamic_dims[node] = -1;
-            if (m_node_dynamic_dims[node->src[0]] != -1) {
-                auto dynamic_dim_idx = m_node_dynamic_dims[node->src[0]];
+            നിർത്തുക;
+        അവസ്ഥ GGML_OP_PERMUTE:
+            m_കണ്ണി_dynamic_dims[കണ്ണി] = -1;
+            എങ്കിൽ (m_കണ്ണി_dynamic_dims[കണ്ണി->src[0]] != -1) {
+                auto dynamic_dim_idx = m_കണ്ണി_dynamic_dims[കണ്ണി->src[0]];
                 // auto dynamic_dim_value = node->src[0]->ne[dynamic_dim_idx];
-                for (int i = 0; i < GGML_MAX_DIMS; i++) {
-                    if (node->op_params[i] == dynamic_dim_idx) {
-                        m_node_dynamic_dims[node] = i;
-                        break;
+                വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < GGML_MAX_DIMS; i++) {
+                    എങ്കിൽ (കണ്ണി->op_params[i] == dynamic_dim_idx) {
+                        m_കണ്ണി_dynamic_dims[കണ്ണി] = i;
+                        നിർത്തുക;
                     }
                 }
                 // OPENVINO_ASSERT(dynamic_dim_value == node->ne[m_node_dynamic_dims[node]],
                 //                 "Dynamic dim value mismatch for node: " + std::string(node->name) +
                 //                     " and its src[0]: " + std::string(node->src[0]->name));
             }
-            break;
-        case GGML_OP_VIEW: {
+            നിർത്തുക;
+        അവസ്ഥ GGML_OP_VIEW: {
             // Use stride-based matching: the stride of a VIEW dimension directly
             // encodes which source dimension it indexes into, so it uniquely
             // identifies the dynamic dim even when two dims share the same size.
-            m_node_dynamic_dims[node] = -1;
-            if (m_node_dynamic_dims[node->src[0]] != -1) {
-                if (node->src[0]->op == GGML_OP_NONE) {
-                    m_node_dynamic_dims[node] = m_node_dynamic_dims[node->src[0]];
-                    break;
+            m_കണ്ണി_dynamic_dims[കണ്ണി] = -1;
+            എങ്കിൽ (m_കണ്ണി_dynamic_dims[കണ്ണി->src[0]] != -1) {
+                എങ്കിൽ (കണ്ണി->src[0]->op == GGML_OP_NONE) {
+                    m_കണ്ണി_dynamic_dims[കണ്ണി] = m_കണ്ണി_dynamic_dims[കണ്ണി->src[0]];
+                    നിർത്തുക;
                 }
-                auto dynamic_dim_idx = m_node_dynamic_dims[node->src[0]];
-                auto dynamic_dim_value = node->src[0]->ne[dynamic_dim_idx];
+                auto dynamic_dim_idx = m_കണ്ണി_dynamic_dims[കണ്ണി->src[0]];
+                auto dynamic_dim_മൂല്യം = കണ്ണി->src[0]->ne[dynamic_dim_idx];
                 auto dynamic_dim_stride =
-                    node->src[0]->nb[dynamic_dim_idx] / ggml_type_size(node->src[0]->type) * ggml_type_size(node->type);
-                for (int i = 0; i < GGML_MAX_DIMS; i++) {
-                    if (node->nb[i] == dynamic_dim_stride) {
-                        m_node_dynamic_dims[node] = i;
-                        break;
+                    കണ്ണി->src[0]->nb[dynamic_dim_idx] / ggml_type_size(കണ്ണി->src[0]->type) * ggml_type_size(കണ്ണി->type);
+                വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < GGML_MAX_DIMS; i++) {
+                    എങ്കിൽ (കണ്ണി->nb[i] == dynamic_dim_stride) {
+                        m_കണ്ണി_dynamic_dims[കണ്ണി] = i;
+                        നിർത്തുക;
                     }
                 }
-                if (m_node_dynamic_dims[node] != -1 && dynamic_dim_value != node->ne[m_node_dynamic_dims[node]]) {
-                    m_node_dynamic_dims[node] = -1;
+                എങ്കിൽ (m_കണ്ണി_dynamic_dims[കണ്ണി] != -1 && dynamic_dim_മൂല്യം != കണ്ണി->ne[m_കണ്ണി_dynamic_dims[കണ്ണി]]) {
+                    m_കണ്ണി_dynamic_dims[കണ്ണി] = -1;
                     // an empty view, e.g. the extra states of a single-slot recurrent cache, always mismatches
-                    if (ggml_nelements(node) > 0) {
+                    എങ്കിൽ (ggml_nelements(കണ്ണി) > 0) {
                         GGML_LOG_WARN("ggml-openvino: dynamic dim value mismatch for VIEW node '%s', src[0]: '%s'\n",
-                                      node->name, node->src[0]->name);
+                                      കണ്ണി->name, കണ്ണി->src[0]->name);
                     }
                 }
             }
-            break;
+            നിർത്തുക;
         }
-        case GGML_OP_TRANSPOSE:
-        case GGML_OP_RESHAPE: {
-            if (is_same_shape(node->src[0], node)) {
-                m_node_dynamic_dims[node] = m_node_dynamic_dims[node->src[0]];
-                break;
+        അവസ്ഥ GGML_OP_TRANSPOSE:
+        അവസ്ഥ GGML_OP_RESHAPE: {
+            എങ്കിൽ (is_same_shape(കണ്ണി->src[0], കണ്ണി)) {
+                m_കണ്ണി_dynamic_dims[കണ്ണി] = m_കണ്ണി_dynamic_dims[കണ്ണി->src[0]];
+                നിർത്തുക;
             }
             // RESHAPE requires src[0] to be contiguous, so both src and result
             // have standard compact strides: nb[i] = type_size * prod(ne[0..i-1]).
@@ -2221,23 +2221,23 @@ void GgmlOvDecoder::compute_node_dynamic_dims() {
             // dimension whose flat-memory boundary aligns with the source dynamic
             // boundary. This is unambiguous (result strides are strictly monotone)
             // and handles merged-lower-dim cases that ne-value matching misses.
-            m_node_dynamic_dims[node] = -1;
-            if (m_node_dynamic_dims[node->src[0]] != -1) {
-                auto dynamic_dim_idx = m_node_dynamic_dims[node->src[0]];
-                auto dynamic_dim_stride = node->src[0]->nb[dynamic_dim_idx];
-                for (int i = 0; i < GGML_MAX_DIMS; i++) {
-                    if (node->nb[i] == dynamic_dim_stride && node->ne[i] == node->src[0]->ne[dynamic_dim_idx]) {
-                        m_node_dynamic_dims[node] = i;
-                        break;
+            m_കണ്ണി_dynamic_dims[കണ്ണി] = -1;
+            എങ്കിൽ (m_കണ്ണി_dynamic_dims[കണ്ണി->src[0]] != -1) {
+                auto dynamic_dim_idx = m_കണ്ണി_dynamic_dims[കണ്ണി->src[0]];
+                auto dynamic_dim_stride = കണ്ണി->src[0]->nb[dynamic_dim_idx];
+                വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < GGML_MAX_DIMS; i++) {
+                    എങ്കിൽ (കണ്ണി->nb[i] == dynamic_dim_stride && കണ്ണി->ne[i] == കണ്ണി->src[0]->ne[dynamic_dim_idx]) {
+                        m_കണ്ണി_dynamic_dims[കണ്ണി] = i;
+                        നിർത്തുക;
                     }
                 }
-                if (m_node_dynamic_dims[node] == -1) {
-                    GGML_LOG_WARN("ggml-openvino: cannot determine dynamic dim for RESHAPE node '%s'\n", node->name);
+                എങ്കിൽ (m_കണ്ണി_dynamic_dims[കണ്ണി] == -1) {
+                    GGML_LOG_WARN("ggml-openvino: cannot determine dynamic dim for RESHAPE node '%s'\n", കണ്ണി->name);
                 }
             }
-            break;
+            നിർത്തുക;
         }
-        case GGML_OP_FLASH_ATTN_EXT: {
+        അവസ്ഥ GGML_OP_FLASH_ATTN_EXT: {
             // Output shape is hard-coded in ggml_flash_attn_ext as:
             //   ne = { v->ne[0], q->ne[2], q->ne[1], q->ne[3] }
             // i.e. output dim 0 <- v dim 0 (head_size, static)
@@ -2250,210 +2250,210 @@ void GgmlOvDecoder::compute_node_dynamic_dims() {
             //   q dim 2 -> output dim 1
             //   q dim 3 -> output dim 3
             //   q dim 0 -> output dim 0  (head_size axis, unlikely to be dynamic)
-            constexpr int q_to_out[GGML_MAX_DIMS] = {0, 2, 1, 3};
-            m_node_dynamic_dims[node] = -1;
-            if (m_node_dynamic_dims[node->src[0]] != -1) {
-                auto q_dynamic_dim = m_node_dynamic_dims[node->src[0]];
-                m_node_dynamic_dims[node] = q_to_out[q_dynamic_dim];
+            constexpr പൂർണ്ണസംഖ്യ q_to_out[GGML_MAX_DIMS] = {0, 2, 1, 3};
+            m_കണ്ണി_dynamic_dims[കണ്ണി] = -1;
+            എങ്കിൽ (m_കണ്ണി_dynamic_dims[കണ്ണി->src[0]] != -1) {
+                auto q_dynamic_dim = m_കണ്ണി_dynamic_dims[കണ്ണി->src[0]];
+                m_കണ്ണി_dynamic_dims[കണ്ണി] = q_to_out[q_dynamic_dim];
             }
-            break;
+            നിർത്തുക;
         }
-        case GGML_OP_CONT:
-            m_node_dynamic_dims[node] = -1;
-            if (m_node_dynamic_dims[node->src[0]] != -1) {
-                auto dynamic_dim_idx = m_node_dynamic_dims[node->src[0]];
-                if (ggml_are_same_shape(node, node->src[0])) {
-                    m_node_dynamic_dims[node] = dynamic_dim_idx;
-                } else {
+        അവസ്ഥ GGML_OP_CONT:
+            m_കണ്ണി_dynamic_dims[കണ്ണി] = -1;
+            എങ്കിൽ (m_കണ്ണി_dynamic_dims[കണ്ണി->src[0]] != -1) {
+                auto dynamic_dim_idx = m_കണ്ണി_dynamic_dims[കണ്ണി->src[0]];
+                എങ്കിൽ (ggml_are_same_shape(കണ്ണി, കണ്ണി->src[0])) {
+                    m_കണ്ണി_dynamic_dims[കണ്ണി] = dynamic_dim_idx;
+                } അല്ലെങ്കിൽ {
                     size_t src_logical_nb[GGML_MAX_DIMS];
-                    src_logical_nb[0] = ggml_type_size(node->src[0]->type);
-                    src_logical_nb[1] = src_logical_nb[0] * (node->src[0]->ne[0] / ggml_blck_size(node->src[0]->type));
-                    for (int i = 2; i < GGML_MAX_DIMS; i++) {
-                        src_logical_nb[i] = src_logical_nb[i - 1] * node->src[0]->ne[i - 1];
+                    src_logical_nb[0] = ggml_type_size(കണ്ണി->src[0]->type);
+                    src_logical_nb[1] = src_logical_nb[0] * (കണ്ണി->src[0]->ne[0] / ggml_blck_size(കണ്ണി->src[0]->type));
+                    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 2; i < GGML_MAX_DIMS; i++) {
+                        src_logical_nb[i] = src_logical_nb[i - 1] * കണ്ണി->src[0]->ne[i - 1];
                     }
 
-                    auto dynamic_dim_stride = src_logical_nb[dynamic_dim_idx] / ggml_type_size(node->src[0]->type) *
-                                              ggml_type_size(node->type);
-                    int matched_dim_count = 0;
-                    int first_matched_dim = -1;
-                    for (int i = 0; i < GGML_MAX_DIMS; i++) {
-                        if (node->nb[i] == dynamic_dim_stride && node->ne[i] == node->src[0]->ne[dynamic_dim_idx]) {
-                            if (first_matched_dim == -1) {
+                    auto dynamic_dim_stride = src_logical_nb[dynamic_dim_idx] / ggml_type_size(കണ്ണി->src[0]->type) *
+                                              ggml_type_size(കണ്ണി->type);
+                    പൂർണ്ണസംഖ്യ matched_dim_എണ്ണം = 0;
+                    പൂർണ്ണസംഖ്യ first_matched_dim = -1;
+                    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < GGML_MAX_DIMS; i++) {
+                        എങ്കിൽ (കണ്ണി->nb[i] == dynamic_dim_stride && കണ്ണി->ne[i] == കണ്ണി->src[0]->ne[dynamic_dim_idx]) {
+                            എങ്കിൽ (first_matched_dim == -1) {
                                 first_matched_dim = i;
                             }
-                            m_node_dynamic_dims[node] = i;
-                            matched_dim_count++;
+                            m_കണ്ണി_dynamic_dims[കണ്ണി] = i;
+                            matched_dim_എണ്ണം++;
                         }
                     }
-                    if (matched_dim_count > 1 && node->src[0]->ne[dynamic_dim_idx] == 1) {
+                    എങ്കിൽ (matched_dim_എണ്ണം > 1 && കണ്ണി->src[0]->ne[dynamic_dim_idx] == 1) {
                         // Single-token capture: every trailing dim is size 1 with the same stride, so
                         // the match is ambiguous. The lowest index is the real axis; the rest are
                         // ggml's size-1 padding. Bailing out here would bake the captured token count
                         // into the static prefill model, which then runs with a different one.
-                        m_node_dynamic_dims[node] = first_matched_dim;
-                    } else if (matched_dim_count != 1) {
-                        m_node_dynamic_dims[node] = -1;
+                        m_കണ്ണി_dynamic_dims[കണ്ണി] = first_matched_dim;
+                    } അല്ലെങ്കിൽ എങ്കിൽ (matched_dim_എണ്ണം != 1) {
+                        m_കണ്ണി_dynamic_dims[കണ്ണി] = -1;
                         GGML_LOG_WARN("ggml-openvino: cannot determine dynamic dim for CONT node '%s', src[0]: '%s'\n",
-                                      node->name, node->src[0]->name);
+                                      കണ്ണി->name, കണ്ണി->src[0]->name);
                     }
                 }
             }
-            break;
-        case GGML_OP_CONCAT:
-            for (int i = 0; i < GGML_MAX_DIMS; i++) {
-                if (node->src[0]->ne[i] != node->ne[i]) {
-                    m_node_dynamic_dims[node] = i;
-                    break;
+            നിർത്തുക;
+        അവസ്ഥ GGML_OP_CONCAT:
+            വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < GGML_MAX_DIMS; i++) {
+                എങ്കിൽ (കണ്ണി->src[0]->ne[i] != കണ്ണി->ne[i]) {
+                    m_കണ്ണി_dynamic_dims[കണ്ണി] = i;
+                    നിർത്തുക;
                 }
             }
-            break;
-        case GGML_OP_SSM_CONV:
-        case GGML_OP_GATED_DELTA_NET:
-            m_node_dynamic_dims[node] = 1;
-            break;
-        case GGML_OP_RMS_NORM:
-        case GGML_OP_L2_NORM:
-        case GGML_OP_NORM:
-        case GGML_OP_ADD:
-        case GGML_OP_SUB:
-        case GGML_OP_GLU:
-        case GGML_OP_ROPE:
-        case GGML_OP_SCALE:
-        case GGML_OP_SOFT_MAX:
-        case GGML_OP_ARGSORT:
-        case GGML_OP_ADD_ID:
-        case GGML_OP_UNARY:
-        case GGML_OP_CUMSUM:
-        case GGML_OP_FILL:
-        case GGML_OP_SET:
-        case GGML_OP_DIAG:
-        case GGML_OP_TRI:
-        case GGML_OP_REPEAT:
-        case GGML_OP_DUP:
+            നിർത്തുക;
+        അവസ്ഥ GGML_OP_SSM_CONV:
+        അവസ്ഥ GGML_OP_GATED_DELTA_NET:
+            m_കണ്ണി_dynamic_dims[കണ്ണി] = 1;
+            നിർത്തുക;
+        അവസ്ഥ GGML_OP_RMS_NORM:
+        അവസ്ഥ GGML_OP_L2_NORM:
+        അവസ്ഥ GGML_OP_NORM:
+        അവസ്ഥ GGML_OP_ADD:
+        അവസ്ഥ GGML_OP_SUB:
+        അവസ്ഥ GGML_OP_GLU:
+        അവസ്ഥ GGML_OP_ROPE:
+        അവസ്ഥ GGML_OP_SCALE:
+        അവസ്ഥ GGML_OP_SOFT_MAX:
+        അവസ്ഥ GGML_OP_ARGSORT:
+        അവസ്ഥ GGML_OP_ADD_ID:
+        അവസ്ഥ GGML_OP_UNARY:
+        അവസ്ഥ GGML_OP_CUMSUM:
+        അവസ്ഥ GGML_OP_FILL:
+        അവസ്ഥ GGML_OP_SET:
+        അവസ്ഥ GGML_OP_DIAG:
+        അവസ്ഥ GGML_OP_TRI:
+        അവസ്ഥ GGML_OP_REPEAT:
+        അവസ്ഥ GGML_OP_DUP:
         // Shape-preserving elementwise ops: the dynamic dim is unchanged from src[0].
         // DIV/CLAMP are used in the MoE routing-weight normalization
         // (sum_rows -> clamp -> div). If they are left untracked here the dynamic
         // (token) dim is lost there, the captured prefill token count gets baked into
         // the downstream reshapes, and every decoder layer after layer 0 turns static
         // (which then triggers the GPU in-place-concat KV-cache corruption).
-        case GGML_OP_DIV:
-        case GGML_OP_CLAMP:
-        case GGML_OP_PAD:
-        case GGML_OP_UPSCALE:
-        case GGML_OP_SIN:
-        case GGML_OP_COS:
-        case GGML_OP_LOG:
-        case GGML_OP_ROLL:
-            m_node_dynamic_dims[node] = m_node_dynamic_dims[node->src[0]];
-            break;
-        case GGML_OP_SUM_ROWS:
+        അവസ്ഥ GGML_OP_DIV:
+        അവസ്ഥ GGML_OP_CLAMP:
+        അവസ്ഥ GGML_OP_PAD:
+        അവസ്ഥ GGML_OP_UPSCALE:
+        അവസ്ഥ GGML_OP_SIN:
+        അവസ്ഥ GGML_OP_COS:
+        അവസ്ഥ GGML_OP_LOG:
+        അവസ്ഥ GGML_OP_ROLL:
+            m_കണ്ണി_dynamic_dims[കണ്ണി] = m_കണ്ണി_dynamic_dims[കണ്ണി->src[0]];
+            നിർത്തുക;
+        അവസ്ഥ GGML_OP_SUM_ROWS:
             // SUM_ROWS reduces ggml axis 0 to size 1 and preserves all other axes, so the
             // dynamic dim is preserved unless it was axis 0 (then it is summed away).
-            m_node_dynamic_dims[node] =
-                (m_node_dynamic_dims[node->src[0]] == 0) ? -1 : m_node_dynamic_dims[node->src[0]];
-            break;
-        case GGML_OP_MUL_MAT_ID:
-        case GGML_OP_SOLVE_TRI:
-            m_node_dynamic_dims[node] = m_node_dynamic_dims[node->src[1]];
-            break;
-        case GGML_OP_CPY:
-        case GGML_OP_SET_ROWS:
-        case GGML_OP_SUM:
-        case GGML_OP_MEAN:
-            m_node_dynamic_dims[node] = -1;
-            break;
-        case GGML_OP_IM2COL: {
-            m_node_dynamic_dims[node] = -1;
-            if (m_node_dynamic_dims[node->src[1]] != -1) {
-                const bool is_2D = node->op_params[6] == 1;
-                const int src_dyn = m_node_dynamic_dims[node->src[1]];
-                if (is_2D) {
-                    if (src_dyn == 0) {
-                        m_node_dynamic_dims[node] = 1;  // IW -> OW
-                    } else if (src_dyn == 1) {
-                        m_node_dynamic_dims[node] = 2;  // IH -> OH
-                    } else if (src_dyn == 3) {
-                        m_node_dynamic_dims[node] = 3;  // N  -> N
+            m_കണ്ണി_dynamic_dims[കണ്ണി] =
+                (m_കണ്ണി_dynamic_dims[കണ്ണി->src[0]] == 0) ? -1 : m_കണ്ണി_dynamic_dims[കണ്ണി->src[0]];
+            നിർത്തുക;
+        അവസ്ഥ GGML_OP_MUL_MAT_ID:
+        അവസ്ഥ GGML_OP_SOLVE_TRI:
+            m_കണ്ണി_dynamic_dims[കണ്ണി] = m_കണ്ണി_dynamic_dims[കണ്ണി->src[1]];
+            നിർത്തുക;
+        അവസ്ഥ GGML_OP_CPY:
+        അവസ്ഥ GGML_OP_SET_ROWS:
+        അവസ്ഥ GGML_OP_SUM:
+        അവസ്ഥ GGML_OP_MEAN:
+            m_കണ്ണി_dynamic_dims[കണ്ണി] = -1;
+            നിർത്തുക;
+        അവസ്ഥ GGML_OP_IM2COL: {
+            m_കണ്ണി_dynamic_dims[കണ്ണി] = -1;
+            എങ്കിൽ (m_കണ്ണി_dynamic_dims[കണ്ണി->src[1]] != -1) {
+                സ്ഥിരം തർക്കം is_2D = കണ്ണി->op_params[6] == 1;
+                സ്ഥിരം പൂർണ്ണസംഖ്യ src_dyn = m_കണ്ണി_dynamic_dims[കണ്ണി->src[1]];
+                എങ്കിൽ (is_2D) {
+                    എങ്കിൽ (src_dyn == 0) {
+                        m_കണ്ണി_dynamic_dims[കണ്ണി] = 1;  // IW -> OW
+                    } അല്ലെങ്കിൽ എങ്കിൽ (src_dyn == 1) {
+                        m_കണ്ണി_dynamic_dims[കണ്ണി] = 2;  // IH -> OH
+                    } അല്ലെങ്കിൽ എങ്കിൽ (src_dyn == 3) {
+                        m_കണ്ണി_dynamic_dims[കണ്ണി] = 3;  // N  -> N
                     }
-                } else {
-                    if (src_dyn == 0) {
-                        m_node_dynamic_dims[node] = 1;  // IW -> OW
-                    } else if (src_dyn == 2) {
-                        m_node_dynamic_dims[node] = 2;  // N  -> N  (1D: b->ne[2] is the batch/channel dim)
+                } അല്ലെങ്കിൽ {
+                    എങ്കിൽ (src_dyn == 0) {
+                        m_കണ്ണി_dynamic_dims[കണ്ണി] = 1;  // IW -> OW
+                    } അല്ലെങ്കിൽ എങ്കിൽ (src_dyn == 2) {
+                        m_കണ്ണി_dynamic_dims[കണ്ണി] = 2;  // N  -> N  (1D: b->ne[2] is the batch/channel dim)
                     }
                 }
-                if (m_node_dynamic_dims[node] != -1) {
-                    OPENVINO_ASSERT(node->src[1]->ne[src_dyn] == node->ne[m_node_dynamic_dims[node]],
-                                    "Dynamic dim value mismatch for IM2COL node: " + std::string(node->name) +
-                                        " and its src[1]: " + std::string(node->src[1]->name));
+                എങ്കിൽ (m_കണ്ണി_dynamic_dims[കണ്ണി] != -1) {
+                    OPENVINO_ASSERT(കണ്ണി->src[1]->ne[src_dyn] == കണ്ണി->ne[m_കണ്ണി_dynamic_dims[കണ്ണി]],
+                                    "Dynamic dim value mismatch for IM2COL node: " + std::string(കണ്ണി->name) +
+                                        " and its src[1]: " + std::string(കണ്ണി->src[1]->name));
                 }
             }
-            break;
+            നിർത്തുക;
         }
-        case GGML_OP_IM2COL_3D: {
-            m_node_dynamic_dims[node] = -1;
-            if (m_node_dynamic_dims[node->src[1]] != -1) {
-                const int src_dyn = m_node_dynamic_dims[node->src[1]];
-                if (src_dyn == 0) {
-                    m_node_dynamic_dims[node] = 1;  // IW -> OW
-                } else if (src_dyn == 1) {
-                    m_node_dynamic_dims[node] = 2;  // IH -> OH
-                } else if (src_dyn == 3) {
-                    m_node_dynamic_dims[node] = 3;  // N  -> N
+        അവസ്ഥ GGML_OP_IM2COL_3D: {
+            m_കണ്ണി_dynamic_dims[കണ്ണി] = -1;
+            എങ്കിൽ (m_കണ്ണി_dynamic_dims[കണ്ണി->src[1]] != -1) {
+                സ്ഥിരം പൂർണ്ണസംഖ്യ src_dyn = m_കണ്ണി_dynamic_dims[കണ്ണി->src[1]];
+                എങ്കിൽ (src_dyn == 0) {
+                    m_കണ്ണി_dynamic_dims[കണ്ണി] = 1;  // IW -> OW
+                } അല്ലെങ്കിൽ എങ്കിൽ (src_dyn == 1) {
+                    m_കണ്ണി_dynamic_dims[കണ്ണി] = 2;  // IH -> OH
+                } അല്ലെങ്കിൽ എങ്കിൽ (src_dyn == 3) {
+                    m_കണ്ണി_dynamic_dims[കണ്ണി] = 3;  // N  -> N
                 }
-                if (m_node_dynamic_dims[node] != -1) {
-                    OPENVINO_ASSERT(node->src[1]->ne[src_dyn] == node->ne[m_node_dynamic_dims[node]],
-                                    "Dynamic dim value mismatch for IM2COL_3D node: " + std::string(node->name) +
-                                        " and its src[1]: " + std::string(node->src[1]->name));
+                എങ്കിൽ (m_കണ്ണി_dynamic_dims[കണ്ണി] != -1) {
+                    OPENVINO_ASSERT(കണ്ണി->src[1]->ne[src_dyn] == കണ്ണി->ne[m_കണ്ണി_dynamic_dims[കണ്ണി]],
+                                    "Dynamic dim value mismatch for IM2COL_3D node: " + std::string(കണ്ണി->name) +
+                                        " and its src[1]: " + std::string(കണ്ണി->src[1]->name));
                 }
             }
-            break;
+            നിർത്തുക;
         }
-        default:
+        സ്ഥിരസ്ഥിതി:
             GGML_LOG_DEBUG("ggml-openvino: compute_node_dynamic_dims: unhandled op %s for node '%s'\n",
-                           ggml_op_name(node->op), node->name);
-            break;
+                           ggml_op_name(കണ്ണി->op), കണ്ണി->name);
+            നിർത്തുക;
         }
     };
 
-    for (int i = 0; i < m_cgraph->n_nodes; i++) {
-        ggml_tensor * node = m_cgraph->nodes[i];
-        visit_node(visit_node, node);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < m_cgraph->n_nodes; i++) {
+        ggml_tensor * കണ്ണി = m_cgraph->nodes[i];
+        visit_കണ്ണി(visit_കണ്ണി, കണ്ണി);
     }
 
     // print the nodes in m_cgraph name & shape with the dynamic dim (the dynamic dim is the dimension with -1 in m_node_dynamic_dims) for debugging
-    if (0) {
-        for (int i = 0; i < m_cgraph->n_nodes; i++) {
-            ggml_tensor * node = m_cgraph->nodes[i];
-            int dynamic_dim = m_node_dynamic_dims[node];
-            std::cout << "[" << i << "] " << "node_name: " << node->name << " op: " << ggml_op_name(node->op)
+    എങ്കിൽ (0) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < m_cgraph->n_nodes; i++) {
+            ggml_tensor * കണ്ണി = m_cgraph->nodes[i];
+            പൂർണ്ണസംഖ്യ dynamic_dim = m_കണ്ണി_dynamic_dims[കണ്ണി];
+            std::cout << "[" << i << "] " << "node_name: " << കണ്ണി->name << " op: " << ggml_op_name(കണ്ണി->op)
                       << " shape: [";
-            for (int j = 0; j < 4; j++) {
-                if (j == dynamic_dim) {
+            വേണ്ടി (പൂർണ്ണസംഖ്യ j = 0; j < 4; j++) {
+                എങ്കിൽ (j == dynamic_dim) {
                     std::cout << "*";
-                } else {
-                    std::cout << node->ne[j];
+                } അല്ലെങ്കിൽ {
+                    std::cout << കണ്ണി->ne[j];
                 }
-                if (j < 3) {
+                എങ്കിൽ (j < 3) {
                     std::cout << ", ";
                 }
             }
             std::cout << "]" << '\n';
             // print the src name & shape with the dynamic dim for debugging
-            for (int j = 0; j < GGML_MAX_SRC; j++) {
-                ggml_tensor * src = node->src[j];
-                if (src == nullptr) {
-                    continue;
+            വേണ്ടി (പൂർണ്ണസംഖ്യ j = 0; j < GGML_MAX_SRC; j++) {
+                ggml_tensor * src = കണ്ണി->src[j];
+                എങ്കിൽ (src == nullptr) {
+                    തുടരുക;
                 }
-                int src_dynamic_dim = m_node_dynamic_dims[src];
+                പൂർണ്ണസംഖ്യ src_dynamic_dim = m_കണ്ണി_dynamic_dims[src];
                 std::cout << "    [" << j << "] src_name: " << src->name << " [";
-                for (int k = 0; k < 4; k++) {
-                    if (k == src_dynamic_dim) {
+                വേണ്ടി (പൂർണ്ണസംഖ്യ k = 0; k < 4; k++) {
+                    എങ്കിൽ (k == src_dynamic_dim) {
                         std::cout << "*";
-                    } else {
+                    } അല്ലെങ്കിൽ {
                         std::cout << src->ne[k];
                     }
-                    if (k < 3) {
+                    എങ്കിൽ (k < 3) {
                         std::cout << ", ";
                     }
                 }

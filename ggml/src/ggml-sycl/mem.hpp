@@ -1,16 +1,16 @@
 #ifndef GGML_SYCL_MEM_HPP
 #define GGML_SYCL_MEM_HPP
 
-#include <sycl/sycl.hpp>
+#അന്തര്ഭാവ <sycl/sycl.hpp>
 
-enum MemoryAPIType {
+എണ്ണൽ MemoryAPIType {
     MEMORY_API_TYPE_LEVEL_ZERO = 0,
     MEMORY_API_TYPE_SYCL = 1,
 };
 
-const char* mem_api_int2str(int mem_api);
+സ്ഥിരം അക്ഷരം* mem_api_int2str(പൂർണ്ണസംഖ്യ mem_api);
 
-bool get_memory_size(sycl::device dev, size_t & free_bytes, size_t & total_bytes,
+തർക്കം get_memory_size(sycl::device dev, size_t & free_bytes, size_t & total_bytes,
     MemoryAPIType api_type);
 
 #endif  // GGML_SYCL_MEM_HPP

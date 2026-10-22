@@ -1,7 +1,7 @@
 #pragma once
 
-#include <sycl/sycl.hpp>
-#include "dpct/helper.hpp"
-#include "common.hpp"
+#അന്തര്ഭാവ <sycl/sycl.hpp>
+#അന്തര്ഭാവ "dpct/helper.hpp"
+#അന്തര്ഭാവ "common.hpp"
 
-void ggml_sycl_upscale(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+ശൂന്യം ggml_sycl_upscale(ggml_backend_sycl_context & ctx, ggml_tensor * dst);

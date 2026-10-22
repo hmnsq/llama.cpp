@@ -13,12 +13,12 @@
 #ifndef GGML_SYCL_ROPE_HPP
 #define GGML_SYCL_ROPE_HPP
 
-#include "common.hpp"
+#അന്തര്ഭാവ "common.hpp"
 
-void ggml_sycl_rope(ggml_backend_sycl_context & ctx, ggml_tensor *dst);
+ശൂന്യം ggml_sycl_rope(ggml_backend_sycl_context & ctx, ggml_tensor *dst);
 
-void ggml_sycl_rope_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+ശൂന്യം ggml_sycl_rope_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-void ggml_sycl_rope_fused(ggml_backend_sycl_context & ctx, ggml_tensor * dst, ggml_tensor * set_rows);
+ശൂന്യം ggml_sycl_rope_fused(ggml_backend_sycl_context & ctx, ggml_tensor * dst, ggml_tensor * set_rows);
 
 #endif // GGML_SYCL_ROPE_HPP

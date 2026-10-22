@@ -1,14 +1,14 @@
 #ifndef HTP_POOL_OPS_H
 #define HTP_POOL_OPS_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
-#include <string.h>
+#അന്തര്ഭാവ <stdint.h>
+#അന്തര്ഭാവ <stddef.h>
+#അന്തര്ഭാവ <stdbool.h>
+#അന്തര്ഭാവ <string.h>
 
-#include "hex-common.h"
+#അന്തര്ഭാവ "hex-common.h"
 
-struct htp_pool_2d_kernel_params {
+ഘടന htp_pool_2d_kernel_params {
     uint32_t src_x;
     uint32_t src_y;
     uint32_t dst_x;
@@ -30,19 +30,19 @@ struct htp_pool_2d_kernel_params {
     uint32_t narrow_path;
     uint32_t global_path;
     uint32_t block_path;
-    uint32_t avg_divide_count;
+    uint32_t avg_divide_എണ്ണം;
     uint32_t ox_lo;
     uint32_t ox_hi;
-    float    inv_kernel_area;
+    ദശാംശം    inv_kernel_area;
 };
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_pool_2d_kernel_params) <= 128, "htp_pool_2d_kernel_params is too large");
-#else
-_Static_assert(sizeof(struct htp_pool_2d_kernel_params) <= 128, "htp_pool_2d_kernel_params is too large");
+#എങ്കിൽ defined(__cplusplus)
+static_assert(വലുപ്പം(ഘടന htp_pool_2d_kernel_params) <= 128, "htp_pool_2d_kernel_params is too large");
+#അല്ലെങ്കിൽ
+_Static_assert(വലുപ്പം(ഘടന htp_pool_2d_kernel_params) <= 128, "htp_pool_2d_kernel_params is too large");
 #endif
 
-struct htp_pool_vtcm_layout {
+ഘടന htp_pool_vtcm_layout {
     size_t   total_bytes;
     size_t   off_src;
     size_t   off_dst;
@@ -52,8 +52,8 @@ struct htp_pool_vtcm_layout {
     size_t   dst_spad_half_size;
 };
 
-static inline bool htp_pool_solve_layout(
-    struct htp_pool_vtcm_layout * layout,
+സ്ഥിതം വരിയിൽ bool htp_pool_solve_layout(
+    ഘടന htp_pool_vtcm_layout * layout,
     uint32_t src_x,
     uint32_t src_y,
     uint32_t dst_x,
@@ -62,14 +62,14 @@ static inline bool htp_pool_solve_layout(
     size_t   vtcm_budget
 ) {
     // Full-plane double buffering (256 bytes guard space for vector loads)
-    const size_t src_plane_bytes   = (size_t) src_x * src_y * sizeof(float);
-    const size_t dst_plane_bytes   = (size_t) dst_x * dst_y * sizeof(float);
-    const size_t src_plane_aligned = hex_round_up((uint32_t) src_plane_bytes + 256, 128);
-    const size_t dst_plane_aligned = hex_round_up((uint32_t) dst_plane_bytes, 128);
+    സ്ഥിരം size_t src_plane_bytes   = (size_t) src_x * src_y * വലുപ്പം(ദശാംശം);
+    സ്ഥിരം size_t dst_plane_bytes   = (size_t) dst_x * dst_y * വലുപ്പം(ദശാംശം);
+    സ്ഥിരം size_t src_plane_aligned = hex_round_up((uint32_t) src_plane_bytes + 256, 128);
+    സ്ഥിരം size_t dst_plane_aligned = hex_round_up((uint32_t) dst_plane_bytes, 128);
 
-    const size_t spad_per_thread = 2 * (src_plane_aligned + dst_plane_aligned);
-    if (spad_per_thread * n_threads > vtcm_budget) {
-        return false;
+    സ്ഥിരം size_t spad_per_thread = 2 * (src_plane_aligned + dst_plane_aligned);
+    എങ്കിൽ (spad_per_thread * n_threads > vtcm_budget) {
+        തിരികെ false;
     }
 
     layout->src_spad_half_size   = src_plane_aligned;
@@ -79,7 +79,7 @@ static inline bool htp_pool_solve_layout(
     layout->off_src              = 0;
     layout->off_dst              = layout->src_bytes_per_thread * n_threads;
     layout->total_bytes          = layout->off_dst + layout->dst_bytes_per_thread * n_threads;
-    return true;
+    തിരികെ true;
 }
 
 #endif // HTP_POOL_OPS_H

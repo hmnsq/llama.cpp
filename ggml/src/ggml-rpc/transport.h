@@ -1,20 +1,20 @@
 #pragma once
 
-#include <cstddef>
-#include <cstdint>
-#include <memory>
+#അന്തര്ഭാവ <cstddef>
+#അന്തര്ഭാവ <cstdint>
+#അന്തര്ഭാവ <memory>
 
-struct socket_t;
-typedef std::shared_ptr<socket_t> socket_ptr;
+ഘടന socket_t;
+തരനിർവചനം std::shared_ptr<socket_t> socket_ptr;
 
-static constexpr size_t MAX_CHUNK_SIZE = 1024ull * 1024ull * 1024ull; // 1 GiB
-static constexpr size_t RPC_CONN_CAPS_SIZE = 24;
+സ്ഥിതം constexpr size_t MAX_CHUNK_SIZE = 1024ull * 1024ull * 1024ull; // 1 GiB
+സ്ഥിതം constexpr size_t RPC_CONN_CAPS_SIZE = 24;
 
-struct socket_t {
+ഘടന socket_t {
     ~socket_t();
 
-    bool send_data(const void * data, size_t size);
-    bool recv_data(void * data, size_t size);
+    bool send_data(സ്ഥിരം ശൂന്യം * data, size_t size);
+    bool recv_data(ശൂന്യം * data, size_t size);
     // Must be called at every message boundary: the RDMA transport coalesces
     // writes into fixed-size frames and posts the trailing partial frame only
     // here. No-op on TCP.
@@ -22,18 +22,18 @@ struct socket_t {
 
     socket_ptr accept();
 
-    void get_caps(uint8_t * local_caps);
-    void update_caps(const uint8_t * remote_caps);
-    const char * transport_name() const;
+    ശൂന്യം get_caps(uint8_t * local_caps);
+    ശൂന്യം update_caps(സ്ഥിരം uint8_t * remote_caps);
+    സ്ഥിരം അക്ഷരം * transport_name() സ്ഥിരം;
 
-    static socket_ptr create_server(const char * host, int port);
-    static socket_ptr connect(const char * host, int port);
+    സ്ഥിതം socket_ptr create_server(സ്ഥിരം അക്ഷരം * host, പൂർണ്ണസംഖ്യ port);
+    സ്ഥിതം socket_ptr connect(സ്ഥിരം അക്ഷരം * host, പൂർണ്ണസംഖ്യ port);
 
-private:
-    struct impl;
+സ്വകാര്യ:
+    ഘടന impl;
     explicit socket_t(std::unique_ptr<impl> p);
     std::unique_ptr<impl> pimpl;
 };
 
 bool rpc_transport_init();
-void rpc_transport_shutdown();
+ശൂന്യം rpc_transport_shutdown();

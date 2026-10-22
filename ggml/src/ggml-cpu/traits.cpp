@@ -1,36 +1,36 @@
-#include "traits.h"
+#അന്തര്ഭാവ "traits.h"
 
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
+#അന്തര്ഭാവ "ggml-backend-impl.h"
+#അന്തര്ഭാവ "ggml-backend.h"
 
-namespace ggml::cpu {
+നാമാകാശ ggml::cpu {
 tensor_traits::~tensor_traits() {}
 
 extra_buffer_type::~extra_buffer_type() {}
 }  // namespace ggml::cpu
 
-bool ggml_cpu_extra_compute_forward(struct ggml_compute_params * params, struct ggml_tensor * op) {
-    for (auto extra : ggml_backend_cpu_get_extra_buffer_types()) {
-        if (extra && extra->context) {
+തർക്കം ggml_cpu_extra_compute_forward(ഘടന ggml_compute_params * params, ഘടന ggml_tensor * op) {
+    വേണ്ടി (auto extra : ggml_backend_cpu_get_extra_buffer_types()) {
+        എങ്കിൽ (extra && extra->context) {
             auto buf_extra     = (ggml::cpu::extra_buffer_type *) extra->context;
             auto tensor_traits = buf_extra->get_tensor_traits(op);
-            if (tensor_traits && tensor_traits->compute_forward(params, op)) {
-                return true;
+            എങ്കിൽ (tensor_traits && tensor_traits->compute_forward(params, op)) {
+                തിരികെ സത്യം;
             }
         }
     }
-    return false;
+    തിരികെ അസത്യം;
 }
 
-bool ggml_cpu_extra_work_size(int n_threads, const struct ggml_tensor * op, size_t * size) {
-    for (auto extra : ggml_backend_cpu_get_extra_buffer_types()) {
-        if (extra && extra->context) {
+തർക്കം ggml_cpu_extra_work_size(പൂർണ്ണസംഖ്യ n_threads, സ്ഥിരം ഘടന ggml_tensor * op, size_t * size) {
+    വേണ്ടി (auto extra : ggml_backend_cpu_get_extra_buffer_types()) {
+        എങ്കിൽ (extra && extra->context) {
             auto buf_extra     = (ggml::cpu::extra_buffer_type *) extra->context;
             auto tensor_traits = buf_extra->get_tensor_traits(op);
-            if (tensor_traits && tensor_traits->work_size(n_threads, op, *size)) {
-                return true;
+            എങ്കിൽ (tensor_traits && tensor_traits->work_size(n_threads, op, *size)) {
+                തിരികെ സത്യം;
             }
         }
     }
-    return false;
+    തിരികെ അസത്യം;
 }

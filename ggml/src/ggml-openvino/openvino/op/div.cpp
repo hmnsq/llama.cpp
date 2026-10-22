@@ -1,135 +1,135 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
-#include "ggml.h"
+#അന്തര്ഭാവ "../node_context.h"
+#അന്തര്ഭാവ "../op_table.h"
+#അന്തര്ഭാവ "../utils.h"
+#അന്തര്ഭാവ "ggml.h"
 
-#include <memory>
-#include <openvino/core/type.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/divide.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/shape_of.hpp>
-#include <openvino/op/sigmoid.hpp>
-#include <openvino/op/swish.hpp>
-#include <openvino/op/tile.hpp>
-#include <openvino/op/util/precision_sensitive_attribute.hpp>
-#include <vector>
+#അന്തര്ഭാവ <memory>
+#അന്തര്ഭാവ <openvino/core/type.hpp>
+#അന്തര്ഭാവ <openvino/op/constant.hpp>
+#അന്തര്ഭാവ <openvino/op/convert.hpp>
+#അന്തര്ഭാവ <openvino/op/divide.hpp>
+#അന്തര്ഭാവ <openvino/op/multiply.hpp>
+#അന്തര്ഭാവ <openvino/op/shape_of.hpp>
+#അന്തര്ഭാവ <openvino/op/sigmoid.hpp>
+#അന്തര്ഭാവ <openvino/op/swish.hpp>
+#അന്തര്ഭാവ <openvino/op/tile.hpp>
+#അന്തര്ഭാവ <openvino/op/util/precision_sensitive_attribute.hpp>
+#അന്തര്ഭാവ <vector>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+നാമാകാശ ov {
+നാമാകാശ frontend {
+നാമാകാശ ggml {
+നാമാകാശ op {
 
-namespace {
+നാമാകാശ {
 
-bool is_silu_div_pattern(const ov::Output<ov::Node> & numerator,
-                         const ov::Output<ov::Node> & denominator,
-                         const NodeContext & context) {
-    if (context.get_input_size() != 2) {
-        return false;
+തർക്കം is_silu_div_pattern(സ്ഥിരം ov::Output<ov::Node> & numerator,
+                         സ്ഥിരം ov::Output<ov::Node> & denominator,
+                         സ്ഥിരം കണ്ണി_Context & context) {
+    എങ്കിൽ (context.get_നിവേശം_size() != 2) {
+        തിരികെ അസത്യം;
     }
 
-    const auto * unary_op = reinterpret_cast<const ggml_unary_op *>(context.get_input_op_params(0));
-    if (unary_op == nullptr || *unary_op != GGML_UNARY_OP_SILU) {
-        return false;
+    സ്ഥിരം auto * unary_op = reinterpret_cast<സ്ഥിരം ggml_unary_op *>(context.get_നിവേശം_op_params(0));
+    എങ്കിൽ (unary_op == nullptr || *unary_op != GGML_UNARY_OP_SILU) {
+        തിരികെ അസത്യം;
     }
 
-    const auto denom_node = denominator.get_node_shared_ptr();
+    സ്ഥിരം auto denom_കണ്ണി = denominator.get_കണ്ണി_shared_ptr();
 
-    if (auto swish = ov::as_type_ptr<ov::op::v4::Swish>(numerator.get_node_shared_ptr())) {
-        return swish->input_value(0).get_node_shared_ptr() == denom_node;
+    എങ്കിൽ (auto swish = ov::as_type_ptr<ov::op::v4::Swish>(numerator.get_കണ്ണി_shared_ptr())) {
+        തിരികെ swish->നിവേശം_മൂല്യം(0).get_കണ്ണി_shared_ptr() == denom_കണ്ണി;
     }
-    return false;
+    തിരികെ അസത്യം;
 }
 
-ov::Output<ov::Node> repeat_input_to_match(const NodeContext & context,
-                                           const ov::Output<ov::Node> & input,
-                                           const ov::Output<ov::Node> & target,
-                                           size_t input_index) {
-    const auto input_shape = context.get_input_shape(input_index);
-    const auto target_shape = context.get_input_shape(0);
+ov::Output<ov::Node> repeat_നിവേശം_to_match(സ്ഥിരം കണ്ണി_Context & context,
+                                           സ്ഥിരം ov::Output<ov::Node> & നിവേശം,
+                                           സ്ഥിരം ov::Output<ov::Node> & target,
+                                           size_t നിവേശം_index) {
+    സ്ഥിരം auto നിവേശം_shape = context.get_നിവേശം_shape(നിവേശം_index);
+    സ്ഥിരം auto target_shape = context.get_നിവേശം_shape(0);
 
-    if (input_shape == target_shape) {
-        return input;
+    എങ്കിൽ (നിവേശം_shape == target_shape) {
+        തിരികെ നിവേശം;
     }
 
-    if (input_shape.rank().is_static() && target_shape.rank().is_static()) {
-        const auto rank = static_cast<size_t>(input_shape.rank().get_length());
+    എങ്കിൽ (നിവേശം_shape.rank().is_static() && target_shape.rank().is_static()) {
+        സ്ഥിരം auto rank = static_cast<size_t>(നിവേശം_shape.rank().get_length());
         std::vector<int64_t> repeats(rank, 1);
-        bool needs_repeat = false;
+        തർക്കം needs_repeat = അസത്യം;
 
-        for (size_t axis = 0; axis < rank; ++axis) {
-            FRONT_END_OP_CONVERSION_CHECK(input_shape[axis].is_static() && target_shape[axis].is_static(),
+        വേണ്ടി (size_t axis = 0; axis < rank; ++axis) {
+            FRONT_END_OP_CONVERSION_CHECK(നിവേശം_shape[axis].is_static() && target_shape[axis].is_static(),
                                           "DIV repeat requires static dimensions on both inputs");
 
-            const int64_t input_dim = input_shape[axis].get_length();
-            const int64_t target_dim = target_shape[axis].get_length();
+            സ്ഥിരം int64_t നിവേശം_dim = നിവേശം_shape[axis].get_length();
+            സ്ഥിരം int64_t target_dim = target_shape[axis].get_length();
 
-            FRONT_END_OP_CONVERSION_CHECK(input_dim > 0 && target_dim > 0 && target_dim % input_dim == 0,
-                                          "DIV input shape ", input_shape, " cannot repeat to match ", target_shape);
+            FRONT_END_OP_CONVERSION_CHECK(നിവേശം_dim > 0 && target_dim > 0 && target_dim % നിവേശം_dim == 0,
+                                          "DIV input shape ", നിവേശം_shape, " cannot repeat to match ", target_shape);
 
-            repeats[axis] = target_dim / input_dim;
+            repeats[axis] = target_dim / നിവേശം_dim;
             needs_repeat = needs_repeat || repeats[axis] != 1;
         }
 
-        if (!needs_repeat) {
-            return input;
+        എങ്കിൽ (!needs_repeat) {
+            തിരികെ നിവേശം;
         }
 
-        auto repeats_node = ov::op::v0::Constant::create(ov::element::i64, {repeats.size()}, repeats);
-        return std::make_shared<ov::op::v0::Tile>(input, repeats_node);
+        auto repeats_കണ്ണി = ov::op::v0::Constant::create(ov::element::i64, {repeats.size()}, repeats);
+        തിരികെ std::make_shared<ov::op::v0::Tile>(നിവേശം, repeats_കണ്ണി);
     }
 
-    auto input_shape_node = std::make_shared<ov::op::v3::ShapeOf>(input, ov::element::i64);
-    auto target_shape_node = std::make_shared<ov::op::v3::ShapeOf>(target, ov::element::i64);
-    auto repeats_node = std::make_shared<ov::op::v1::Divide>(target_shape_node, input_shape_node);
-    return std::make_shared<ov::op::v0::Tile>(input, repeats_node);
+    auto നിവേശം_shape_കണ്ണി = std::make_shared<ov::op::v3::ShapeOf>(നിവേശം, ov::element::i64);
+    auto target_shape_കണ്ണി = std::make_shared<ov::op::v3::ShapeOf>(target, ov::element::i64);
+    auto repeats_കണ്ണി = std::make_shared<ov::op::v1::Divide>(target_shape_കണ്ണി, നിവേശം_shape_കണ്ണി);
+    തിരികെ std::make_shared<ov::op::v0::Tile>(നിവേശം, repeats_കണ്ണി);
 }
 
 }  // namespace
 
-OutputVector translate_div(const NodeContext & context) {
-    num_inputs_check(context, 2, 2);
+OutputVector translate_div(സ്ഥിരം കണ്ണി_Context & context) {
+    അക്കം_inputs_check(context, 2, 2);
 
-    auto input_0 = process_view_input_new(context, 0);
-    auto input_1 = process_view_input_new(context, 1);
+    auto നിവേശം_0 = process_view_നിവേശം_new(context, 0);
+    auto നിവേശം_1 = process_view_നിവേശം_new(context, 1);
 
-    if (is_silu_div_pattern(input_0, input_1, context)) {
-        ov::Output<ov::Node> res = std::make_shared<ov::op::v0::Sigmoid>(input_1);
-        if (res.get_element_type() != context.get_output_type()) {
+    എങ്കിൽ (is_silu_div_pattern(നിവേശം_0, നിവേശം_1, context)) {
+        ov::Output<ov::Node> res = std::make_shared<ov::op::v0::Sigmoid>(നിവേശം_1);
+        എങ്കിൽ (res.get_element_type() != context.get_output_type()) {
             res = std::make_shared<ov::op::v0::Convert>(res, context.get_output_type());
         }
-        return rename_outputs_with_suffix({res}, context.get_name());
+        തിരികെ rename_outputs_with_suffix({res}, context.get_name());
     }
 
-    input_1 = repeat_input_to_match(context, input_1, input_0, 1);
+    നിവേശം_1 = repeat_നിവേശം_to_match(context, നിവേശം_1, നിവേശം_0, 1);
 
-    const auto output_type = context.get_output_type();
-    const bool use_f32_compute = input_0.get_element_type() != ov::element::f32 ||
-                                 input_1.get_element_type() != ov::element::f32 || output_type != ov::element::f32;
+    സ്ഥിരം auto output_type = context.get_output_type();
+    സ്ഥിരം തർക്കം use_f32_compute = നിവേശം_0.get_element_type() != ov::element::f32 ||
+                                 നിവേശം_1.get_element_type() != ov::element::f32 || output_type != ov::element::f32;
 
-    if (use_f32_compute) {
-        input_0 = std::make_shared<ov::op::v0::Convert>(input_0, ov::element::f32);
-        input_1 = std::make_shared<ov::op::v0::Convert>(input_1, ov::element::f32);
+    എങ്കിൽ (use_f32_compute) {
+        നിവേശം_0 = std::make_shared<ov::op::v0::Convert>(നിവേശം_0, ov::element::f32);
+        നിവേശം_1 = std::make_shared<ov::op::v0::Convert>(നിവേശം_1, ov::element::f32);
     }
 
-    ov::Output<ov::Node> res = std::make_shared<ov::op::v1::Divide>(input_0, input_1);
-    if (use_f32_compute) {
+    ov::Output<ov::Node> res = std::make_shared<ov::op::v1::Divide>(നിവേശം_0, നിവേശം_1);
+    എങ്കിൽ (use_f32_compute) {
         // Keep the reciprocal/divide path in FP32. Without this hint, the GPU
         // plugin can still compress the subgraph back to FP16 and overflow on
         // small shexp gate values (e.g. silu(x) / x in qwen2moe).
-        ov::mark_as_precision_sensitive(res.get_node_shared_ptr()->input(0));
-        ov::mark_as_precision_sensitive(res.get_node_shared_ptr()->input(1));
+        ov::mark_as_precision_sensitive(res.get_കണ്ണി_shared_ptr()->നിവേശം(0));
+        ov::mark_as_precision_sensitive(res.get_കണ്ണി_shared_ptr()->നിവേശം(1));
     }
-    if (res.get_element_type() != output_type) {
+    എങ്കിൽ (res.get_element_type() != output_type) {
         auto output_convert = std::make_shared<ov::op::v0::Convert>(res, output_type);
-        if (use_f32_compute) {
-            ov::mark_as_precision_sensitive(output_convert->input(0));
+        എങ്കിൽ (use_f32_compute) {
+            ov::mark_as_precision_sensitive(output_convert->നിവേശം(0));
         }
         res = output_convert;
     }
-    return rename_outputs_with_suffix({res}, context.get_name());
+    തിരികെ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

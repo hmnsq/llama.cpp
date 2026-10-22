@@ -1,12 +1,12 @@
-#include <sycl/sycl.hpp>
-#include "common.hpp"
-#include "add-id.hpp"
+#അന്തര്ഭാവ <sycl/sycl.hpp>
+#അന്തര്ഭാവ "common.hpp"
+#അന്തര്ഭാവ "add-id.hpp"
 
-static void add_id_kernel(
-    const float* src0,
-    const float* src1,
-    const int32_t* src2,
-    float* dst,
+സ്ഥിതം ശൂന്യം add_id_kernel(
+    സ്ഥിരം ദശാംശം* src0,
+    സ്ഥിരം ദശാംശം* src1,
+    സ്ഥിരം int32_t* src2,
+    ദശാംശം* dst,
     int64_t ne0,
     int64_t ne1,
     size_t nb01,
@@ -14,30 +14,30 @@ static void add_id_kernel(
     size_t nb11,
     size_t nb21,
     sycl::nd_item<3> item_ct1) {
-  const int64_t i1 = item_ct1.get_group(2);
-  const int64_t i2 = item_ct1.get_group(1);
+  സ്ഥിരം int64_t i1 = item_ct1.get_group(2);
+  സ്ഥിരം int64_t i2 = item_ct1.get_group(1);
 
-  const int i11 =
-      *(const int32_t*)((const char*)src2 + i1 * sizeof(int32_t) + i2 * nb21);
+  സ്ഥിരം പൂർണ്ണസംഖ്യ i11 =
+      *(സ്ഥിരം int32_t*)((സ്ഥിരം അക്ഷരം*)src2 + i1 * വലുപ്പം(int32_t) + i2 * nb21);
 
-  const size_t nb1 = ne0 * sizeof(float);
-  const size_t nb2 = ne1 * nb1;
+  സ്ഥിരം size_t nb1 = ne0 * വലുപ്പം(ദശാംശം);
+  സ്ഥിരം size_t nb2 = ne1 * nb1;
 
-  float* dst_row = (float*)((char*)dst + i1 * nb1 + i2 * nb2);
-  const float* src0_row =
-      (const float*)((const char*)src0 + i1 * nb01 + i2 * nb02);
-  const float* src1_row = (const float*)((const char*)src1 + i11 * nb11);
+  ദശാംശം* dst_row = (ദശാംശം*)((അക്ഷരം*)dst + i1 * nb1 + i2 * nb2);
+  സ്ഥിരം ദശാംശം* src0_row =
+      (സ്ഥിരം ദശാംശം*)((സ്ഥിരം അക്ഷരം*)src0 + i1 * nb01 + i2 * nb02);
+  സ്ഥിരം ദശാംശം* src1_row = (സ്ഥിരം ദശാംശം*)((സ്ഥിരം അക്ഷരം*)src1 + i11 * nb11);
 
-  for (int64_t i0 = item_ct1.get_local_id(2); i0 < ne0;
+  വേണ്ടി (int64_t i0 = item_ct1.get_local_id(2); i0 < ne0;
        i0 += item_ct1.get_local_range(2)) {
     dst_row[i0] = src0_row[i0] + src1_row[i0];
   }
 }
 
-void ggml_sycl_add_id(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
-  const ggml_tensor* src0 = dst->src[0];
-  const ggml_tensor* src1 = dst->src[1];
-  const ggml_tensor* src2 = dst->src[2];
+ശൂന്യം ggml_sycl_add_id(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
+  സ്ഥിരം ggml_tensor* src0 = dst->src[0];
+  സ്ഥിരം ggml_tensor* src1 = dst->src[1];
+  സ്ഥിരം ggml_tensor* src2 = dst->src[2];
 
   GGML_TENSOR_TERNARY_OP_LOCALS
 
@@ -46,19 +46,19 @@ void ggml_sycl_add_id(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
   GGML_ASSERT(src1->type == GGML_TYPE_F32);
   GGML_ASSERT(src2->type == GGML_TYPE_I32);
 
-  GGML_ASSERT(nb00 == sizeof(float));
-  GGML_ASSERT(nb10 == sizeof(float));
-  GGML_ASSERT(nb20 == sizeof(int32_t));
+  GGML_ASSERT(nb00 == വലുപ്പം(ദശാംശം));
+  GGML_ASSERT(nb10 == വലുപ്പം(ദശാംശം));
+  GGML_ASSERT(nb20 == വലുപ്പം(int32_t));
 
-  const float* src0_d = (const float*)src0->data;
-  const float* src1_d = (const float*)src1->data;
-  const int32_t* src2_d = (const int32_t*)src2->data;
-  float* dst_d = (float*)dst->data;
+  സ്ഥിരം ദശാംശം* src0_d = (സ്ഥിരം ദശാംശം*)src0->data;
+  സ്ഥിരം ദശാംശം* src1_d = (സ്ഥിരം ദശാംശം*)src1->data;
+  സ്ഥിരം int32_t* src2_d = (സ്ഥിരം int32_t*)src2->data;
+  ദശാംശം* dst_d = (ദശാംശം*)dst->data;
 
-  const unsigned int max_work_group_size = ggml_sycl_info().max_work_group_sizes[ctx.device];
+  സ്ഥിരം unsigned പൂർണ്ണസംഖ്യ max_work_group_size = ggml_sycl_info().max_work_group_sizes[ctx.device];
   GGML_ASSERT(max_work_group_size % (WARP_SIZE * WARP_SIZE) == 0);
 
-  int threads = std::min((unsigned int)ne00, max_work_group_size);  // cols
+  പൂർണ്ണസംഖ്യ threads = std::min((unsigned പൂർണ്ണസംഖ്യ)ne00, max_work_group_size);  // cols
 
   ctx.stream()->parallel_for(
       sycl::nd_range<3>(

@@ -1,40 +1,40 @@
-#include "ggml.h"
-#include "ggml-impl.h"
-#include "ggml-blas.h"
-#include "ggml-backend-impl.h"
+#അന്തര്ഭാവ "ggml.h"
+#അന്തര്ഭാവ "ggml-impl.h"
+#അന്തര്ഭാവ "ggml-blas.h"
+#അന്തര്ഭാവ "ggml-backend-impl.h"
 
-#include <future>
-#include <vector>
-#include <cstring>
+#അന്തര്ഭാവ <future>
+#അന്തര്ഭാവ <vector>
+#അന്തര്ഭാവ <cstring>
 
-#if defined(GGML_BLAS_USE_ACCELERATE)
+#എങ്കിൽ defined(GGML_BLAS_USE_ACCELERATE)
 #   include <Accelerate/Accelerate.h>
-#elif defined(GGML_BLAS_USE_MKL)
+#അല്ലെങ്കിലെങ്കിൽ defined(GGML_BLAS_USE_MKL)
 #   include <mkl.h>
-#elif defined(GGML_BLAS_USE_BLIS)
+#അല്ലെങ്കിലെങ്കിൽ defined(GGML_BLAS_USE_BLIS)
 #   include <blis.h>
-#elif defined(GGML_BLAS_USE_NVPL)
+#അല്ലെങ്കിലെങ്കിൽ defined(GGML_BLAS_USE_NVPL)
 #   include <nvpl_blas.h>
-#else
+#അല്ലെങ്കിൽ
 #   include <cblas.h>
 #endif
 
-struct ggml_backend_blas_context {
-    int n_threads = GGML_DEFAULT_N_THREADS;
-    std::unique_ptr<char[]> work_data;
+ഘടന ggml_backend_blas_context {
+    പൂർണ്ണസംഖ്യ n_threads = GGML_DEFAULT_N_THREADS;
+    std::unique_ptr<അക്ഷരം[]> work_data;
     size_t work_size = 0;
 #ifndef GGML_USE_OPENMP
-    std::vector<std::future<void>> tasks;
+    std::vector<std::future<ശൂന്യം>> tasks;
 #endif
 };
 
-static void ggml_backend_blas_mul_mat(ggml_backend_blas_context * ctx, struct ggml_tensor * dst) {
-    const struct ggml_tensor * src0 = dst->src[0];
-    const struct ggml_tensor * src1 = dst->src[1];
+സ്ഥിതം ശൂന്യം ggml_backend_blas_mul_mat(ggml_backend_blas_context * ctx, ഘടന ggml_tensor * dst) {
+    സ്ഥിരം ഘടന ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ഘടന ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS
 
-    const enum ggml_type type = src0->type;
+    സ്ഥിരം എണ്ണൽ ggml_type type = src0->type;
 
     GGML_ASSERT(ne0 == ne01);
     GGML_ASSERT(ne1 == ne11);
@@ -46,61 +46,61 @@ static void ggml_backend_blas_mul_mat(ggml_backend_blas_context * ctx, struct gg
     GGML_ASSERT(nb10 == ggml_type_size(src1->type));
 
     // dst cannot be transposed or permuted
-    GGML_ASSERT(nb0 == sizeof(float));
+    GGML_ASSERT(nb0 == വലുപ്പം(ദശാംശം));
     GGML_ASSERT(nb0 <= nb1);
     GGML_ASSERT(nb1 <= nb2);
     GGML_ASSERT(nb2 <= nb3);
 
     // broadcast factors
-    const int64_t r2 = ne12/ne02;
-    const int64_t r3 = ne13/ne03;
+    സ്ഥിരം int64_t r2 = ne12/ne02;
+    സ്ഥിരം int64_t r3 = ne13/ne03;
 
-    const int64_t ne_plane      = ne01*ne00;
-    const size_t  desired_wsize = type == GGML_TYPE_F32 ? 0 : ne03*ne02*ne_plane*sizeof(float);
+    സ്ഥിരം int64_t ne_plane      = ne01*ne00;
+    സ്ഥിരം size_t  desired_wsize = type == GGML_TYPE_F32 ? 0 : ne03*ne02*ne_plane*വലുപ്പം(ദശാംശം);
 
-    if (ctx->work_size < desired_wsize) {
-        ctx->work_data.reset(new char[desired_wsize]);
+    എങ്കിൽ (ctx->work_size < desired_wsize) {
+        ctx->work_data.reset(പുതിയ അക്ഷരം[desired_wsize]);
         ctx->work_size = desired_wsize;
     }
-    void * wdata = ctx->work_data.get();
+    ശൂന്യം * wdata = ctx->work_data.get();
 
     // convert src0 to float
-    if (type != GGML_TYPE_F32) {
-        const auto * type_traits = ggml_get_type_traits(type);
-        ggml_to_float_t const to_float = type_traits->to_float;
+    എങ്കിൽ (type != GGML_TYPE_F32) {
+        സ്ഥിരം auto * type_traits = ggml_get_type_traits(type);
+        ggml_to_float_t സ്ഥിരം to_float = type_traits->to_float;
 
-        for (int64_t i03 = 0; i03 < ne03; i03++) {
-            for (int64_t i02 = 0; i02 < ne02; i02++) {
-                const void  *       x      = (char *)  src0->data + i02*nb02          + i03*nb03;
-                      float * const wplane = (float *) wdata      + i02*ne_plane      + i03*ne02*ne_plane;
+        വേണ്ടി (int64_t i03 = 0; i03 < ne03; i03++) {
+            വേണ്ടി (int64_t i02 = 0; i02 < ne02; i02++) {
+                സ്ഥിരം ശൂന്യം  *       x      = (അക്ഷരം *)  src0->data + i02*nb02          + i03*nb03;
+                      ദശാംശം * സ്ഥിരം wplane = (ദശാംശം *) wdata      + i02*ne_plane      + i03*ne02*ne_plane;
 
-                const int min_cols_per_thread = 4096;
-                const int min_rows_per_thread = std::max((int)(min_cols_per_thread/ne00), 1);
-                const int n_threads = std::max(std::min(ctx->n_threads, (int)(ne01/min_rows_per_thread)), 1);
+                സ്ഥിരം പൂർണ്ണസംഖ്യ min_cols_per_thread = 4096;
+                സ്ഥിരം പൂർണ്ണസംഖ്യ min_rows_per_thread = std::max((പൂർണ്ണസംഖ്യ)(min_cols_per_thread/ne00), 1);
+                സ്ഥിരം പൂർണ്ണസംഖ്യ n_threads = std::max(std::min(ctx->n_threads, (പൂർണ്ണസംഖ്യ)(ne01/min_rows_per_thread)), 1);
 
 #ifdef GGML_USE_OPENMP
-                #pragma omp parallel for num_threads(n_threads)
-                for (int64_t i01 = 0; i01 < ne01; i01++) {
-                    to_float((const char *) x + i01*nb01, wplane + i01*ne00, ne00);
+                #pragma omp parallel വേണ്ടി അക്കം_threads(n_threads)
+                വേണ്ടി (int64_t i01 = 0; i01 < ne01; i01++) {
+                    to_float((സ്ഥിരം അക്ഷരം *) x + i01*nb01, wplane + i01*ne00, ne00);
                 }
-#else
-                for (int i = 1; i < n_threads; i++) {
-                    const int64_t start =       i*ne01/n_threads;
-                    const int64_t end   = (i + 1)*ne01/n_threads;
-                    if (start < end) {
+#അല്ലെങ്കിൽ
+                വേണ്ടി (പൂർണ്ണസംഖ്യ i = 1; i < n_threads; i++) {
+                    സ്ഥിരം int64_t start =       i*ne01/n_threads;
+                    സ്ഥിരം int64_t end   = (i + 1)*ne01/n_threads;
+                    എങ്കിൽ (start < end) {
                         ctx->tasks.push_back(std::async(std::launch::async, [=]() {
-                            for (int64_t i01 = start; i01 < end; i01++) {
-                                to_float((const char *) x + i01*nb01, wplane + i01*ne00, ne00);
+                            വേണ്ടി (int64_t i01 = start; i01 < end; i01++) {
+                                to_float((സ്ഥിരം അക്ഷരം *) x + i01*nb01, wplane + i01*ne00, ne00);
                             }
                         }));
                     }
                 }
                 {
                     // reuse the current thread for the first task
-                    const int64_t start = 0;
-                    const int64_t end   = ne01/n_threads;
-                    for (int64_t i01 = start; i01 < end; i01++) {
-                        to_float((const char *) x + i01*nb01, wplane + i01*ne00, ne00);
+                    സ്ഥിരം int64_t start = 0;
+                    സ്ഥിരം int64_t end   = ne01/n_threads;
+                    വേണ്ടി (int64_t i01 = start; i01 < end; i01++) {
+                        to_float((സ്ഥിരം അക്ഷരം *) x + i01*nb01, wplane + i01*ne00, ne00);
                     }
                 }
 #endif
@@ -109,34 +109,34 @@ static void ggml_backend_blas_mul_mat(ggml_backend_blas_context * ctx, struct gg
 
 #ifndef GGML_USE_OPENMP
         // wait for all tasks to finish
-        for (auto & task : ctx->tasks) {
+        വേണ്ടി (auto & task : ctx->tasks) {
             task.get();
         }
         ctx->tasks.clear();
 #endif
     }
 
-#if defined(GGML_BLAS_USE_OPENBLAS)
-    openblas_set_num_threads(ctx->n_threads);
-#elif defined(GGML_BLAS_USE_BLIS)
-    bli_thread_set_num_threads(ctx->n_threads);
-#elif defined(GGML_BLAS_USE_NVPL)
-    nvpl_blas_set_num_threads(ctx->n_threads);
-#elif defined(GGML_BLAS_USE_MKL)
-    mkl_set_num_threads(ctx->n_threads);
+#എങ്കിൽ defined(GGML_BLAS_USE_OPENBLAS)
+    openblas_set_അക്കം_threads(ctx->n_threads);
+#അല്ലെങ്കിലെങ്കിൽ defined(GGML_BLAS_USE_BLIS)
+    bli_thread_set_അക്കം_threads(ctx->n_threads);
+#അല്ലെങ്കിലെങ്കിൽ defined(GGML_BLAS_USE_NVPL)
+    nvpl_blas_set_അക്കം_threads(ctx->n_threads);
+#അല്ലെങ്കിലെങ്കിൽ defined(GGML_BLAS_USE_MKL)
+    mkl_set_അക്കം_threads(ctx->n_threads);
 #endif
 
-    for (int64_t i13 = 0; i13 < ne13; i13++) {
-        for (int64_t i12 = 0; i12 < ne12; i12++) {
-            const int64_t i03 = i13/r3;
-            const int64_t i02 = i12/r2;
+    വേണ്ടി (int64_t i13 = 0; i13 < ne13; i13++) {
+        വേണ്ടി (int64_t i12 = 0; i12 < ne12; i12++) {
+            സ്ഥിരം int64_t i03 = i13/r3;
+            സ്ഥിരം int64_t i02 = i12/r2;
 
-            const float * x = (float *) ((char *) src0->data + i02*nb02 + i03*nb03);
-            const float * y = (float *) ((char *) src1->data + i12*nb12 + i13*nb13);
-                  float * d = (float *) ((char *)  dst->data + i12*nb2  + i13*nb3);
+            സ്ഥിരം ദശാംശം * x = (ദശാംശം *) ((അക്ഷരം *) src0->data + i02*nb02 + i03*nb03);
+            സ്ഥിരം ദശാംശം * y = (ദശാംശം *) ((അക്ഷരം *) src1->data + i12*nb12 + i13*nb13);
+                  ദശാംശം * d = (ദശാംശം *) ((അക്ഷരം *)  dst->data + i12*nb2  + i13*nb3);
 
-            if (type != GGML_TYPE_F32) {
-                x = (float *) wdata + i02*ne_plane + i03*ne02*ne_plane;
+            എങ്കിൽ (type != GGML_TYPE_F32) {
+                x = (ദശാംശം *) wdata + i02*ne_plane + i03*ne02*ne_plane;
             }
 
             cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
@@ -148,11 +148,11 @@ static void ggml_backend_blas_mul_mat(ggml_backend_blas_context * ctx, struct gg
     }
 }
 
-static void ggml_backend_blas_out_prod(ggml_backend_blas_context * ctx, struct ggml_tensor * dst) {
-    const struct ggml_tensor * src0 = dst->src[0];
-    const struct ggml_tensor * src1 = dst->src[1];
+സ്ഥിതം ശൂന്യം ggml_backend_blas_out_prod(ggml_backend_blas_context * ctx, ഘടന ggml_tensor * dst) {
+    സ്ഥിരം ഘടന ggml_tensor * src0 = dst->src[0];
+    സ്ഥിരം ഘടന ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS
 
     GGML_ASSERT(ne0  == ne00);
     GGML_ASSERT(ne1  == ne10);
@@ -162,10 +162,10 @@ static void ggml_backend_blas_out_prod(ggml_backend_blas_context * ctx, struct g
     GGML_ASSERT(ne03 == ne13);
 
     // we don't support permuted src0 or src1
-    GGML_ASSERT(nb00 == sizeof(float));
+    GGML_ASSERT(nb00 == വലുപ്പം(ദശാംശം));
 
     // dst cannot be transposed or permuted
-    GGML_ASSERT(nb0 == sizeof(float));
+    GGML_ASSERT(nb0 == വലുപ്പം(ദശാംശം));
     // GGML_ASSERT(nb0 <= nb1);
     // GGML_ASSERT(nb1 <= nb2);
     // GGML_ASSERT(nb2 <= nb3);
@@ -185,24 +185,24 @@ static void ggml_backend_blas_out_prod(ggml_backend_blas_context * ctx, struct g
     // src1->data already contains a transposed version, so sgemm mustn't
     // transpose it further.
 
-    int n = src0->ne[0];
-    int k = src0->ne[1];
-    int m = src1->ne[0];
+    പൂർണ്ണസംഖ്യ n = src0->ne[0];
+    പൂർണ്ണസംഖ്യ k = src0->ne[1];
+    പൂർണ്ണസംഖ്യ m = src1->ne[0];
 
     CBLAS_TRANSPOSE transposeA;
-    int lda;
+    പൂർണ്ണസംഖ്യ lda;
 
-    if (!ggml_is_transposed(src1)) {
+    എങ്കിൽ (!ggml_is_transposed(src1)) {
         transposeA = CblasTrans;
         lda = m;
-    } else {
+    } അല്ലെങ്കിൽ {
         transposeA = CblasNoTrans;
         lda = k;
     }
 
-    float * a = (float *) ((char *) src1->data);
-    float * b = (float *) ((char *) src0->data);
-    float * c = (float *) ((char *) dst->data);
+    ദശാംശം * a = (ദശാംശം *) ((അക്ഷരം *) src1->data);
+    ദശാംശം * b = (ദശാംശം *) ((അക്ഷരം *) src0->data);
+    ദശാംശം * c = (ദശാംശം *) ((അക്ഷരം *) dst->data);
 
     cblas_sgemm(CblasRowMajor, transposeA, CblasNoTrans, m, n, k, 1.0, a, lda, b, n, 0.0, c, n);
 
@@ -211,106 +211,106 @@ static void ggml_backend_blas_out_prod(ggml_backend_blas_context * ctx, struct g
 
 // backend interface
 
-static const char * ggml_backend_blas_get_name(ggml_backend_t backend) {
-    return "BLAS";
+സ്ഥിതം സ്ഥിരം അക്ഷരം * ggml_backend_blas_get_name(ggml_backend_t backend) {
+    തിരികെ "BLAS";
 
     GGML_UNUSED(backend);
 }
 
-static void ggml_backend_blas_free(ggml_backend_t backend) {
+സ്ഥിതം ശൂന്യം ggml_backend_blas_free(ggml_backend_t backend) {
     ggml_backend_blas_context * ctx = (ggml_backend_blas_context *)backend->context;
     delete ctx;
     delete backend;
 }
 
-static enum ggml_status ggml_backend_blas_graph_compute(ggml_backend_t backend, struct ggml_cgraph * cgraph) {
+സ്ഥിതം എണ്ണൽ ggml_status ggml_backend_blas_graph_compute(ggml_backend_t backend, ഘടന ggml_cgraph * cgraph) {
     ggml_backend_blas_context * ctx = (ggml_backend_blas_context *)backend->context;
 
-    for (int i = 0; i < cgraph->n_nodes; i++) {
-        struct ggml_tensor * node = cgraph->nodes[i];
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < cgraph->n_nodes; i++) {
+        ഘടന ggml_tensor * കണ്ണി = cgraph->nodes[i];
 
-        if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
-            continue;
+        എങ്കിൽ ((കണ്ണി->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+            തുടരുക;
         }
 
-        switch (node->op) {
-            case GGML_OP_MUL_MAT:
-                ggml_backend_blas_mul_mat(ctx, node);
-                break;
+        തിരഞ്ഞെടുപ്പ് (കണ്ണി->op) {
+            അവസ്ഥ GGML_OP_MUL_MAT:
+                ggml_backend_blas_mul_mat(ctx, കണ്ണി);
+                നിർത്തുക;
 
-            case GGML_OP_OUT_PROD:
-                ggml_backend_blas_out_prod(ctx, node);
-                break;
+            അവസ്ഥ GGML_OP_OUT_PROD:
+                ggml_backend_blas_out_prod(ctx, കണ്ണി);
+                നിർത്തുക;
 
-            case GGML_OP_NONE:
-            case GGML_OP_RESHAPE:
-            case GGML_OP_VIEW:
-            case GGML_OP_PERMUTE:
-            case GGML_OP_TRANSPOSE:
-                break;
+            അവസ്ഥ GGML_OP_NONE:
+            അവസ്ഥ GGML_OP_RESHAPE:
+            അവസ്ഥ GGML_OP_VIEW:
+            അവസ്ഥ GGML_OP_PERMUTE:
+            അവസ്ഥ GGML_OP_TRANSPOSE:
+                നിർത്തുക;
 
-            default:
-                GGML_ABORT("%s: unsupported op %s\n", __func__, ggml_op_desc(node));
+            സ്ഥിരസ്ഥിതി:
+                GGML_ABORT("%s: unsupported op %s\n", __func__, ggml_op_desc(കണ്ണി));
         }
     }
 
-    return GGML_STATUS_SUCCESS;
+    തിരികെ GGML_STATUS_SUCCESS;
 
     GGML_UNUSED(backend);
 }
 
-static struct ggml_backend_i blas_backend_i = {
+സ്ഥിതം ഘടന ggml_backend_i blas_backend_i = {
     /* .get_name                = */ ggml_backend_blas_get_name,
     /* .free                    = */ ggml_backend_blas_free,
-    /* .set_tensor_async        = */ NULL,
-    /* .get_tensor_async        = */ NULL,
-    /* .set_tensor_2d_async     = */ NULL,
-    /* .get_tensor_2d_async     = */ NULL,
-    /* .cpy_tensor_async        = */ NULL,
-    /* .synchronize             = */ NULL,
-    /* .graph_plan_create       = */ NULL,
-    /* .graph_plan_free         = */ NULL,
-    /* .graph_plan_update       = */ NULL,
-    /* .graph_plan_compute      = */ NULL,
+    /* .set_tensor_async        = */ ശൂന്യ,
+    /* .get_tensor_async        = */ ശൂന്യ,
+    /* .set_tensor_2d_async     = */ ശൂന്യ,
+    /* .get_tensor_2d_async     = */ ശൂന്യ,
+    /* .cpy_tensor_async        = */ ശൂന്യ,
+    /* .synchronize             = */ ശൂന്യ,
+    /* .graph_plan_create       = */ ശൂന്യ,
+    /* .graph_plan_free         = */ ശൂന്യ,
+    /* .graph_plan_update       = */ ശൂന്യ,
+    /* .graph_plan_compute      = */ ശൂന്യ,
     /* .graph_compute           = */ ggml_backend_blas_graph_compute,
-    /* .event_record            = */ NULL,
-    /* .event_wait              = */ NULL,
-    /* .graph_optimize          = */ NULL,
+    /* .event_record            = */ ശൂന്യ,
+    /* .event_wait              = */ ശൂന്യ,
+    /* .graph_optimize          = */ ശൂന്യ,
 };
 
-static ggml_guid_t ggml_backend_blas_guid(void) {
-    static ggml_guid guid = { 0x12, 0xa8, 0xae, 0xf4, 0xc0, 0x1e, 0x61, 0x97, 0x8f, 0xeb, 0x33, 0x04, 0xa1, 0x33, 0x51, 0x2d };
-    return &guid;
+സ്ഥിതം ggml_guid_t ggml_backend_blas_guid(ശൂന്യം) {
+    സ്ഥിതം ggml_guid guid = { 0x12, 0xa8, 0xae, 0xf4, 0xc0, 0x1e, 0x61, 0x97, 0x8f, 0xeb, 0x33, 0x04, 0xa1, 0x33, 0x51, 0x2d };
+    തിരികെ &guid;
 }
 
-ggml_backend_t ggml_backend_blas_init(void) {
-    ggml_backend_blas_context * ctx = new ggml_backend_blas_context;
+ggml_backend_t ggml_backend_blas_init(ശൂന്യം) {
+    ggml_backend_blas_context * ctx = പുതിയ ggml_backend_blas_context;
 
-    ggml_backend_t backend = new ggml_backend {
+    ggml_backend_t backend = പുതിയ ggml_backend {
         /* .guid    = */ ggml_backend_blas_guid(),
         /* .iface   = */ blas_backend_i,
         /* .device  = */ ggml_backend_reg_dev_get(ggml_backend_blas_reg(), 0),
         /* .context = */ ctx,
     };
 
-#if defined(GGML_BLAS_USE_OPENBLAS) && defined(GGML_USE_OPENMP)
-    if (openblas_get_parallel() != OPENBLAS_OPENMP) {
+#എങ്കിൽ defined(GGML_BLAS_USE_OPENBLAS) && defined(GGML_USE_OPENMP)
+    എങ്കിൽ (openblas_get_parallel() != OPENBLAS_OPENMP) {
         GGML_LOG_DEBUG("%s: warning: ggml is using OpenMP, but OpenBLAS was compiled without OpenMP support\n", __func__);
     }
 #endif
 
-#if defined(BLIS_ENABLE_CBLAS) && defined(GGML_USE_OPENMP) && !defined(BLIS_ENABLE_OPENMP)
+#എങ്കിൽ defined(BLIS_ENABLE_CBLAS) && defined(GGML_USE_OPENMP) && !defined(BLIS_ENABLE_OPENMP)
     GGML_LOG_DEBUG("%s: warning: ggml is using OpenMP, but BLIS was compiled without OpenMP support\n", __func__);
 #endif
 
-    return backend;
+    തിരികെ backend;
 }
 
-bool ggml_backend_is_blas(ggml_backend_t backend) {
-    return backend != NULL && ggml_guid_matches(backend->guid, ggml_backend_blas_guid());
+തർക്കം ggml_backend_is_blas(ggml_backend_t backend) {
+    തിരികെ backend != ശൂന്യ && ggml_guid_matches(backend->guid, ggml_backend_blas_guid());
 }
 
-void ggml_backend_blas_set_n_threads(ggml_backend_t backend_blas, int n_threads) {
+ശൂന്യം ggml_backend_blas_set_n_threads(ggml_backend_t backend_blas, പൂർണ്ണസംഖ്യ n_threads) {
     GGML_ASSERT(ggml_backend_is_blas(backend_blas));
 
     ggml_backend_blas_context * ctx = (ggml_backend_blas_context *)backend_blas->context;
@@ -319,143 +319,143 @@ void ggml_backend_blas_set_n_threads(ggml_backend_t backend_blas, int n_threads)
 
 // device interface
 
-static const char * ggml_backend_blas_device_get_name(ggml_backend_dev_t dev) {
-    return "BLAS";
+സ്ഥിതം സ്ഥിരം അക്ഷരം * ggml_backend_blas_device_get_name(ggml_backend_dev_t dev) {
+    തിരികെ "BLAS";
 
     GGML_UNUSED(dev);
 }
 
-static const char * ggml_backend_blas_device_get_description(ggml_backend_dev_t dev) {
-    #if defined(GGML_BLAS_USE_ACCELERATE)
-        return "Accelerate";
-    #elif defined(GGML_BLAS_USE_MKL)
-        return "MKL";
-    #elif defined(GGML_BLAS_USE_AOCL)
-        return "AOCL-BLAS";
-    #elif defined(GGML_BLAS_USE_BLIS)
-        return "BLIS";
-    #elif defined(GGML_BLAS_USE_NVPL)
-        return "NVPL";
-    #elif defined(GGML_BLAS_USE_OPENBLAS)
-        return "OpenBLAS";
-    #else
-        return "BLAS";
+സ്ഥിതം സ്ഥിരം അക്ഷരം * ggml_backend_blas_device_get_description(ggml_backend_dev_t dev) {
+    #എങ്കിൽ defined(GGML_BLAS_USE_ACCELERATE)
+        തിരികെ "Accelerate";
+    #അല്ലെങ്കിലെങ്കിൽ defined(GGML_BLAS_USE_MKL)
+        തിരികെ "MKL";
+    #അല്ലെങ്കിലെങ്കിൽ defined(GGML_BLAS_USE_AOCL)
+        തിരികെ "AOCL-BLAS";
+    #അല്ലെങ്കിലെങ്കിൽ defined(GGML_BLAS_USE_BLIS)
+        തിരികെ "BLIS";
+    #അല്ലെങ്കിലെങ്കിൽ defined(GGML_BLAS_USE_NVPL)
+        തിരികെ "NVPL";
+    #അല്ലെങ്കിലെങ്കിൽ defined(GGML_BLAS_USE_OPENBLAS)
+        തിരികെ "OpenBLAS";
+    #അല്ലെങ്കിൽ
+        തിരികെ "BLAS";
     #endif
 
     GGML_UNUSED(dev);
 }
 
-static void ggml_backend_blas_device_get_memory(ggml_backend_dev_t dev, size_t * free, size_t * total) {
+സ്ഥിതം ശൂന്യം ggml_backend_blas_device_get_memory(ggml_backend_dev_t dev, size_t * സ്വതന്ത്രം, size_t * total) {
     // no memory to report
-    *free  = 0;
+    *സ്വതന്ത്രം  = 0;
     *total = 0;
 
     GGML_UNUSED(dev);
 }
 
-static enum ggml_backend_dev_type ggml_backend_blas_device_get_type(ggml_backend_dev_t dev) {
-    return GGML_BACKEND_DEVICE_TYPE_ACCEL;
+സ്ഥിതം എണ്ണൽ ggml_backend_dev_type ggml_backend_blas_device_get_type(ggml_backend_dev_t dev) {
+    തിരികെ GGML_BACKEND_DEVICE_TYPE_ACCEL;
 
     GGML_UNUSED(dev);
 }
 
-static void ggml_backend_blas_device_get_props(ggml_backend_dev_t dev, struct ggml_backend_dev_props * props) {
+സ്ഥിതം ശൂന്യം ggml_backend_blas_device_get_props(ggml_backend_dev_t dev, ഘടന ggml_backend_dev_props * props) {
     props->name        = ggml_backend_blas_device_get_name(dev);
     props->description = ggml_backend_blas_device_get_description(dev);
     props->type        = ggml_backend_blas_device_get_type(dev);
     ggml_backend_blas_device_get_memory(dev, &props->memory_free, &props->memory_total);
     props->caps = {
-        /* .async                 = */ false,
-        /* .host_buffer           = */ false,
-        /* .buffer_from_host_ptr  = */ true,
-        /* .events                = */ false,
-        /* .mmap_support          = */ true,
+        /* .async                 = */ അസത്യം,
+        /* .host_buffer           = */ അസത്യം,
+        /* .buffer_from_host_ptr  = */ സത്യം,
+        /* .events                = */ അസത്യം,
+        /* .mmap_support          = */ സത്യം,
     };
 }
 
-static ggml_backend_t ggml_backend_blas_device_init_backend(ggml_backend_dev_t dev, const char * params) {
-    return ggml_backend_blas_init();
+സ്ഥിതം ggml_backend_t ggml_backend_blas_device_init_backend(ggml_backend_dev_t dev, സ്ഥിരം അക്ഷരം * params) {
+    തിരികെ ggml_backend_blas_init();
 
     GGML_UNUSED(dev);
     GGML_UNUSED(params);
 }
 
-static ggml_backend_buffer_type_t ggml_backend_blas_device_get_buffer_type(ggml_backend_dev_t dev) {
-    return ggml_backend_cpu_buffer_type();
+സ്ഥിതം ggml_backend_buffer_type_t ggml_backend_blas_device_get_buffer_type(ggml_backend_dev_t dev) {
+    തിരികെ ggml_backend_cpu_buffer_type();
 
     GGML_UNUSED(dev);
 }
 
-static ggml_backend_buffer_t ggml_backend_blas_device_buffer_from_host_ptr(ggml_backend_dev_t dev, void * ptr, size_t size, size_t max_tensor_size) {
-    return ggml_backend_cpu_buffer_from_ptr(ptr, size);
+സ്ഥിതം ggml_backend_buffer_t ggml_backend_blas_device_buffer_from_host_ptr(ggml_backend_dev_t dev, ശൂന്യം * ptr, size_t size, size_t max_tensor_size) {
+    തിരികെ ggml_backend_cpu_buffer_from_ptr(ptr, size);
 
     GGML_UNUSED(dev);
     GGML_UNUSED(max_tensor_size);
 }
 
-static bool ggml_backend_blas_device_supports_op(ggml_backend_dev_t dev, const struct ggml_tensor * op) {
-    const struct ggml_tensor * src0 = op->src[0];
-    const struct ggml_tensor * src1 = op->src[1];
+സ്ഥിതം തർക്കം ggml_backend_blas_device_supports_op(ggml_backend_dev_t dev, സ്ഥിരം ഘടന ggml_tensor * op) {
+    സ്ഥിരം ഘടന ggml_tensor * src0 = op->src[0];
+    സ്ഥിരം ഘടന ggml_tensor * src1 = op->src[1];
 
-    switch (op->op) {
-        case GGML_OP_NONE:
-        case GGML_OP_RESHAPE:
-        case GGML_OP_VIEW:
-        case GGML_OP_PERMUTE:
-        case GGML_OP_TRANSPOSE:
-            return true;
+    തിരഞ്ഞെടുപ്പ് (op->op) {
+        അവസ്ഥ GGML_OP_NONE:
+        അവസ്ഥ GGML_OP_RESHAPE:
+        അവസ്ഥ GGML_OP_VIEW:
+        അവസ്ഥ GGML_OP_PERMUTE:
+        അവസ്ഥ GGML_OP_TRANSPOSE:
+            തിരികെ സത്യം;
 
-        case GGML_OP_MUL_MAT:
+        അവസ്ഥ GGML_OP_MUL_MAT:
         {
             // BLAS usually is only faster for large matrices
-            const struct ggml_tensor * src0 = op->src[0];
-            const struct ggml_tensor * src1 = op->src[1];
+            സ്ഥിരം ഘടന ggml_tensor * src0 = op->src[0];
+            സ്ഥിരം ഘടന ggml_tensor * src1 = op->src[1];
 
-            const int64_t ne10 = src1->ne[0];
+            സ്ഥിരം int64_t ne10 = src1->ne[0];
 
-            const int64_t ne0 = op->ne[0];
-            const int64_t ne1 = op->ne[1];
+            സ്ഥിരം int64_t ne0 = op->ne[0];
+            സ്ഥിരം int64_t ne1 = op->ne[1];
 
             // TODO: find the optimal value
-            const int64_t min_batch = 32;
+            സ്ഥിരം int64_t min_batch = 32;
 
             // default back to CPU fast path
             // see: https://github.com/ggml-org/llama.cpp/issues/25565
-            if (ggml_get_op_params_i32(op, 1) == GGML_HINT_SRC0_IS_HADAMARD) {
-                return false;
+            എങ്കിൽ (ggml_get_op_params_i32(op, 1) == GGML_HINT_SRC0_IS_HADAMARD) {
+                തിരികെ അസത്യം;
             }
 
-            return ggml_is_contiguous(src0) &&
+            തിരികെ ggml_is_contiguous(src0) &&
                    ggml_is_contiguous(src1) &&
                    src1->type == GGML_TYPE_F32 &&
                    (ne0 >= min_batch && ne1 >= min_batch && ne10 >= min_batch) &&
-                   (src0->type == GGML_TYPE_F32 || ggml_get_type_traits(src0->type)->to_float != NULL);
+                   (src0->type == GGML_TYPE_F32 || ggml_get_type_traits(src0->type)->to_float != ശൂന്യ);
         }
 
-        case GGML_OP_OUT_PROD:
-            return op->src[0]->type == GGML_TYPE_F32 &&
+        അവസ്ഥ GGML_OP_OUT_PROD:
+            തിരികെ op->src[0]->type == GGML_TYPE_F32 &&
                    op->src[1]->type == GGML_TYPE_F32 &&
                    ggml_is_matrix(src0) &&
                    ggml_is_matrix(src1) &&
                    ggml_is_contiguous(src0) &&
                    (ggml_is_contiguous(src1) || ggml_is_transposed(src1)) &&
-                   (src0->type == GGML_TYPE_F32 || ggml_get_type_traits(src0->type)->to_float != NULL);
+                   (src0->type == GGML_TYPE_F32 || ggml_get_type_traits(src0->type)->to_float != ശൂന്യ);
 
-        default:
-            return false;
+        സ്ഥിരസ്ഥിതി:
+            തിരികെ അസത്യം;
 
     }
 
     GGML_UNUSED(dev);
 }
 
-static bool ggml_backend_blas_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
-    return ggml_backend_buft_is_host(buft);
+സ്ഥിതം തർക്കം ggml_backend_blas_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
+    തിരികെ ggml_backend_buft_is_host(buft);
 
     GGML_UNUSED(dev);
 }
 
-static const struct ggml_backend_device_i ggml_backend_blas_device_i = {
+സ്ഥിതം സ്ഥിരം ഘടന ggml_backend_device_i ggml_backend_blas_device_i = {
     /* .get_name             = */ ggml_backend_blas_device_get_name,
     /* .get_description      = */ ggml_backend_blas_device_get_description,
     /* .get_memory           = */ ggml_backend_blas_device_get_memory,
@@ -463,70 +463,70 @@ static const struct ggml_backend_device_i ggml_backend_blas_device_i = {
     /* .get_props            = */ ggml_backend_blas_device_get_props,
     /* .init_backend         = */ ggml_backend_blas_device_init_backend,
     /* .get_buffer_type      = */ ggml_backend_blas_device_get_buffer_type,
-    /* .get_host_buffer_type = */ NULL,
+    /* .get_host_buffer_type = */ ശൂന്യ,
     /* .buffer_from_host_ptr = */ ggml_backend_blas_device_buffer_from_host_ptr,
     /* .supports_op          = */ ggml_backend_blas_device_supports_op,
     /* .supports_buft        = */ ggml_backend_blas_device_supports_buft,
-    /* .offload_op           = */ NULL,
-    /* .event_new            = */ NULL,
-    /* .event_free           = */ NULL,
-    /* .event_synchronize    = */ NULL,
+    /* .offload_op           = */ ശൂന്യ,
+    /* .event_new            = */ ശൂന്യ,
+    /* .event_free           = */ ശൂന്യ,
+    /* .event_synchronize    = */ ശൂന്യ,
 };
 
 // backend reg interface
 
-static const char * ggml_backend_blas_reg_get_name(ggml_backend_reg_t reg) {
-    return "BLAS";
+സ്ഥിതം സ്ഥിരം അക്ഷരം * ggml_backend_blas_reg_get_name(ggml_backend_reg_t reg) {
+    തിരികെ "BLAS";
 
     GGML_UNUSED(reg);
 }
 
-static size_t ggml_backend_blas_reg_get_device_count(ggml_backend_reg_t reg) {
-    return 1;
+സ്ഥിതം size_t ggml_backend_blas_reg_get_device_എണ്ണം(ggml_backend_reg_t reg) {
+    തിരികെ 1;
 
     GGML_UNUSED(reg);
 }
 
-static ggml_backend_dev_t ggml_backend_blas_reg_get_device(ggml_backend_reg_t reg, size_t index) {
+സ്ഥിതം ggml_backend_dev_t ggml_backend_blas_reg_get_device(ggml_backend_reg_t reg, size_t index) {
     GGML_ASSERT(index == 0);
 
-    static ggml_backend_device ggml_backend_blas_device = {
+    സ്ഥിതം ggml_backend_device ggml_backend_blas_device = {
         /* .iface   = */ ggml_backend_blas_device_i,
         /* .reg     = */ reg,
         /* .context = */ nullptr,
     };
 
-    return &ggml_backend_blas_device;
+    തിരികെ &ggml_backend_blas_device;
 
     GGML_UNUSED(reg);
     GGML_UNUSED(index);
 }
 
-static void * ggml_backend_blas_get_proc_address(ggml_backend_reg_t reg, const char * name) {
-    if (std::strcmp(name, "ggml_backend_set_n_threads") == 0) {
-        return (void *)ggml_backend_blas_set_n_threads;
+സ്ഥിതം ശൂന്യം * ggml_backend_blas_get_proc_address(ggml_backend_reg_t reg, സ്ഥിരം അക്ഷരം * name) {
+    എങ്കിൽ (std::strcmp(name, "ggml_backend_set_n_threads") == 0) {
+        തിരികെ (ശൂന്യം *)ggml_backend_blas_set_n_threads;
     }
-    return NULL;
+    തിരികെ ശൂന്യ;
 
     GGML_UNUSED(reg);
     GGML_UNUSED(name);
 }
 
-static const struct ggml_backend_reg_i ggml_backend_blas_reg_i = {
+സ്ഥിതം സ്ഥിരം ഘടന ggml_backend_reg_i ggml_backend_blas_reg_i = {
     /* .get_name         = */ ggml_backend_blas_reg_get_name,
-    /* .get_device_count = */ ggml_backend_blas_reg_get_device_count,
+    /* .get_device_count = */ ggml_backend_blas_reg_get_device_എണ്ണം,
     /* .get_device       = */ ggml_backend_blas_reg_get_device,
     /* .get_proc_address = */ ggml_backend_blas_get_proc_address,
 };
 
-ggml_backend_reg_t ggml_backend_blas_reg(void) {
-    static struct ggml_backend_reg ggml_backend_blas_reg = {
+ggml_backend_reg_t ggml_backend_blas_reg(ശൂന്യം) {
+    സ്ഥിതം ഘടന ggml_backend_reg ggml_backend_blas_reg = {
         /* .api_version = */ GGML_BACKEND_API_VERSION,
         /* .iface       = */ ggml_backend_blas_reg_i,
-        /* .context     = */ NULL,
+        /* .context     = */ ശൂന്യ,
     };
 
-    return &ggml_backend_blas_reg;
+    തിരികെ &ggml_backend_blas_reg;
 }
 
 GGML_BACKEND_DL_IMPL(ggml_backend_blas_reg)

@@ -1,8 +1,8 @@
-#include "topk-radix.hpp"
+#അന്തര്ഭാവ "topk-radix.hpp"
 
-#include "common.hpp"
+#അന്തര്ഭാവ "common.hpp"
 
-#include <algorithm>
+#അന്തര്ഭാവ <algorithm>
 
 // Large-k top-k by radix select on an order-preserving unsigned key.
 //
@@ -22,73 +22,73 @@
 // reference op provides (it swaps its first two outputs to say so) and what
 // test-backend-ops compares.
 
-static constexpr int SYCL_TOP_K_RADIX_BITS       = 8;
-static constexpr int SYCL_TOP_K_RADIX_BUCKETS    = 1 << SYCL_TOP_K_RADIX_BITS;
+സ്ഥിതം constexpr പൂർണ്ണസംഖ്യ SYCL_മുകൾ_K_RADIX_BITS       = 8;
+സ്ഥിതം constexpr പൂർണ്ണസംഖ്യ SYCL_മുകൾ_K_RADIX_BUCKETS    = 1 << SYCL_മുകൾ_K_RADIX_BITS;
 // Private histogram copies, interleaved per bucket so neighbouring lanes hit
 // neighbouring banks. Lanes of one instruction spread over the copies, which is what
 // bounds the atomic serialisation on tie-heavy rows.
-static constexpr int SYCL_TOP_K_RADIX_HIST_COPIES = 8;
-static constexpr int SYCL_TOP_K_RADIX_HIST_SIZE   = SYCL_TOP_K_RADIX_BUCKETS * SYCL_TOP_K_RADIX_HIST_COPIES;
+സ്ഥിതം constexpr പൂർണ്ണസംഖ്യ SYCL_മുകൾ_K_RADIX_HIST_COPIES = 8;
+സ്ഥിതം constexpr പൂർണ്ണസംഖ്യ SYCL_മുകൾ_K_RADIX_HIST_SIZE   = SYCL_മുകൾ_K_RADIX_BUCKETS * SYCL_മുകൾ_K_RADIX_HIST_COPIES;
 // Past the histogram: pivot digit, pivot bucket count, remaining need, then the two
 // emit counters.
-static constexpr int SYCL_TOP_K_RADIX_SLM_WORDS   = SYCL_TOP_K_RADIX_HIST_SIZE + 5;
+സ്ഥിതം constexpr പൂർണ്ണസംഖ്യ SYCL_മുകൾ_K_RADIX_SLM_വാക്കുകൾ   = SYCL_മുകൾ_K_RADIX_HIST_SIZE + 5;
 
 // Larger float <=> larger key. The reference comparator is a plain float '>', under which
 // -0.0 and +0.0 tie, so -0.0 is folded onto +0.0 first. NaN has no defined order in the
 // reference (its comparator is not a strict weak order on NaN); here a positive NaN keys
 // above +inf and a negative NaN below -inf, which at least makes the result deterministic.
-static inline uint32_t top_k_radix_key(float f) {
+സ്ഥിതം വരിയിൽ uint32_t മുകൾ_k_radix_താക്കോൽ(ദശാംശം f) {
     uint32_t u = sycl::bit_cast<uint32_t>(f);
-    if (u == 0x80000000u) {
+    എങ്കിൽ (u == 0x80000000u) {
         u = 0u;
     }
-    return (u & 0x80000000u) ? ~u : (u | 0x80000000u);
+    തിരികെ (u & 0x80000000u) ? ~u : (u | 0x80000000u);
 }
 
-static void top_k_radix_select_f32(
-    const float *   src,
+സ്ഥിതം ശൂന്യം മുകൾ_k_radix_select_f32(
+    സ്ഥിരം ദശാംശം *   src,
     int32_t *       dst_idx,
-    const int       ncols,
-    const int       k,
+    സ്ഥിരം പൂർണ്ണസംഖ്യ       ncols,
+    സ്ഥിരം പൂർണ്ണസംഖ്യ       k,
     uint32_t *      slm,
-    const sycl::nd_item<1> & item_ct1
+    സ്ഥിരം sycl::nd_item<1> & item_ct1
 ) {
     using local_atomic = sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed,
                                           sycl::memory_scope::work_group,
                                           sycl::access::address_space::local_space>;
 
-    const int tid        = item_ct1.get_local_id(0);
-    const int block_size = item_ct1.get_local_range(0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ tid        = item_ct1.get_local_id(0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ block_size = item_ct1.get_local_range(0);
 
     uint32_t * hist     = slm;
-    uint32_t * s_digit  = slm + SYCL_TOP_K_RADIX_HIST_SIZE;
-    uint32_t * s_bucket = slm + SYCL_TOP_K_RADIX_HIST_SIZE + 1;
-    uint32_t * s_need   = slm + SYCL_TOP_K_RADIX_HIST_SIZE + 2;
-    uint32_t * s_cnt_gt = slm + SYCL_TOP_K_RADIX_HIST_SIZE + 3;
-    uint32_t * s_cnt_eq = slm + SYCL_TOP_K_RADIX_HIST_SIZE + 4;
+    uint32_t * s_digit  = slm + SYCL_മുകൾ_K_RADIX_HIST_SIZE;
+    uint32_t * s_bucket = slm + SYCL_മുകൾ_K_RADIX_HIST_SIZE + 1;
+    uint32_t * s_need   = slm + SYCL_മുകൾ_K_RADIX_HIST_SIZE + 2;
+    uint32_t * s_cnt_gt = slm + SYCL_മുകൾ_K_RADIX_HIST_SIZE + 3;
+    uint32_t * s_cnt_eq = slm + SYCL_മുകൾ_K_RADIX_HIST_SIZE + 4;
 
-    if (tid == 0) {
+    എങ്കിൽ (tid == 0) {
         *s_cnt_gt = 0;
         *s_cnt_eq = 0;
     }
 
-    const int copy = tid & (SYCL_TOP_K_RADIX_HIST_COPIES - 1);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ copy = tid & (SYCL_മുകൾ_K_RADIX_HIST_COPIES - 1);
 
     uint32_t prefix = 0;   // digits fixed so far, in place
     uint32_t mask   = 0;   // which bits of prefix are fixed
     uint32_t need   = (uint32_t) k;
 
-    for (int shift = 32 - SYCL_TOP_K_RADIX_BITS; shift >= 0; shift -= SYCL_TOP_K_RADIX_BITS) {
-        for (int i = tid; i < SYCL_TOP_K_RADIX_HIST_SIZE; i += block_size) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ shift = 32 - SYCL_മുകൾ_K_RADIX_BITS; shift >= 0; shift -= SYCL_മുകൾ_K_RADIX_BITS) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = tid; i < SYCL_മുകൾ_K_RADIX_HIST_SIZE; i += block_size) {
             hist[i] = 0;
         }
         item_ct1.barrier(sycl::access::fence_space::local_space);
 
-        for (int col = tid; col < ncols; col += block_size) {
-            const uint32_t key = top_k_radix_key(src[col]);
-            if ((key & mask) == prefix) {
-                const uint32_t bucket = (key >> shift) & (SYCL_TOP_K_RADIX_BUCKETS - 1);
-                local_atomic(hist[bucket * SYCL_TOP_K_RADIX_HIST_COPIES + copy]).fetch_add(1u);
+        വേണ്ടി (പൂർണ്ണസംഖ്യ col = tid; col < ncols; col += block_size) {
+            സ്ഥിരം uint32_t താക്കോൽ = മുകൾ_k_radix_താക്കോൽ(src[col]);
+            എങ്കിൽ ((താക്കോൽ & mask) == prefix) {
+                സ്ഥിരം uint32_t bucket = (താക്കോൽ >> shift) & (SYCL_മുകൾ_K_RADIX_BUCKETS - 1);
+                local_atomic(hist[bucket * SYCL_മുകൾ_K_RADIX_HIST_COPIES + copy]).fetch_add(1u);
             }
         }
         item_ct1.barrier(sycl::access::fence_space::local_space);
@@ -97,31 +97,31 @@ static void top_k_radix_select_f32(
         // bucket downward. The pivot is the unique bucket whose cumulative count first
         // reaches need; the previous cumulative count is what the higher buckets contribute.
         uint32_t cnt = 0;
-        if (tid < SYCL_TOP_K_RADIX_BUCKETS) {
-            const uint32_t * h = hist + (SYCL_TOP_K_RADIX_BUCKETS - 1 - tid) * SYCL_TOP_K_RADIX_HIST_COPIES;
-            for (int c = 0; c < SYCL_TOP_K_RADIX_HIST_COPIES; c++) {
+        എങ്കിൽ (tid < SYCL_മുകൾ_K_RADIX_BUCKETS) {
+            സ്ഥിരം uint32_t * h = hist + (SYCL_മുകൾ_K_RADIX_BUCKETS - 1 - tid) * SYCL_മുകൾ_K_RADIX_HIST_COPIES;
+            വേണ്ടി (പൂർണ്ണസംഖ്യ c = 0; c < SYCL_മുകൾ_K_RADIX_HIST_COPIES; c++) {
                 cnt += h[c];
             }
         }
-        const uint32_t incl = sycl::inclusive_scan_over_group(item_ct1.get_group(), cnt, sycl::plus<uint32_t>());
+        സ്ഥിരം uint32_t incl = sycl::inclusive_scan_over_group(item_ct1.get_group(), cnt, sycl::plus<uint32_t>());
 
-        if (tid < SYCL_TOP_K_RADIX_BUCKETS && incl >= need && incl - cnt < need) {
-            *s_digit = (uint32_t) (SYCL_TOP_K_RADIX_BUCKETS - 1 - tid);
+        എങ്കിൽ (tid < SYCL_മുകൾ_K_RADIX_BUCKETS && incl >= need && incl - cnt < need) {
+            *s_digit = (uint32_t) (SYCL_മുകൾ_K_RADIX_BUCKETS - 1 - tid);
             *s_bucket = cnt;
             *s_need   = need - (incl - cnt);
         }
         item_ct1.barrier(sycl::access::fence_space::local_space);
 
-        const uint32_t digit      = *s_digit;
-        const uint32_t bucket_cnt = *s_bucket;
+        സ്ഥിരം uint32_t digit      = *s_digit;
+        സ്ഥിരം uint32_t bucket_cnt = *s_bucket;
         need   = *s_need;
         prefix |= digit << shift;
-        mask   |= (uint32_t) (SYCL_TOP_K_RADIX_BUCKETS - 1) << shift;
+        mask   |= (uint32_t) (SYCL_മുകൾ_K_RADIX_BUCKETS - 1) << shift;
 
         // Every candidate in the pivot bucket is wanted: the remaining digits cannot
         // change the answer, and the masked emit below is exact as it stands.
-        if (bucket_cnt == need) {
-            break;
+        എങ്കിൽ (bucket_cnt == need) {
+            നിർത്തുക;
         }
         // The next pass rewrites hist and s_*; the reads above must land first.
         item_ct1.barrier(sycl::access::fence_space::local_space);
@@ -131,29 +131,29 @@ static void top_k_radix_select_f32(
 
     // Exactly k - need columns have (key & mask) > prefix; the first need of the pivot-equal
     // columns fill the tail. Both counters live in SLM since the whole row is this group.
-    const uint32_t base_eq = (uint32_t) k - need;
+    സ്ഥിരം uint32_t base_eq = (uint32_t) k - need;
 
-    for (int col = tid; col < ncols; col += block_size) {
-        const uint32_t kp = top_k_radix_key(src[col]) & mask;
-        if (kp > prefix) {
-            const uint32_t pos = local_atomic(*s_cnt_gt).fetch_add(1u);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ col = tid; col < ncols; col += block_size) {
+        സ്ഥിരം uint32_t kp = മുകൾ_k_radix_താക്കോൽ(src[col]) & mask;
+        എങ്കിൽ (kp > prefix) {
+            സ്ഥിരം uint32_t pos = local_atomic(*s_cnt_gt).fetch_add(1u);
             dst_idx[pos] = col;
-        } else if (kp == prefix) {
-            const uint32_t pos = local_atomic(*s_cnt_eq).fetch_add(1u);
-            if (pos < need) {
+        } അല്ലെങ്കിൽ എങ്കിൽ (kp == prefix) {
+            സ്ഥിരം uint32_t pos = local_atomic(*s_cnt_eq).fetch_add(1u);
+            എങ്കിൽ (pos < need) {
                 dst_idx[base_eq + pos] = col;
             }
         }
     }
 }
 
-static void top_k_radix_f32_sycl(
+സ്ഥിതം ശൂന്യം മുകൾ_k_radix_f32_sycl(
     ggml_backend_sycl_context & ctx,
-    const float * src,
+    സ്ഥിരം ദശാംശം * src,
     int32_t * dst_indices,
-    const int64_t ncols,
-    const int64_t nrows,
-    const int k,
+    സ്ഥിരം int64_t ncols,
+    സ്ഥിരം int64_t nrows,
+    സ്ഥിരം പൂർണ്ണസംഖ്യ k,
     dpct::queue_ptr main_stream
 ) {
     GGML_ASSERT(ncols <= INT32_MAX);
@@ -161,23 +161,23 @@ static void top_k_radix_f32_sycl(
     // One group per row; every pass is a strided sweep of the row, so lanes in flight is the
     // only lever, and the device's own limit is the answer -- there is nothing here that
     // wants a smaller group. Must still cover the 256 buckets for the scan step.
-    const int block_size = ggml_sycl_info().max_work_group_sizes[ctx.device];
-    GGML_ASSERT(block_size >= SYCL_TOP_K_RADIX_BUCKETS);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ block_size = ggml_sycl_info().max_work_group_sizes[ctx.device];
+    GGML_ASSERT(block_size >= SYCL_മുകൾ_K_RADIX_BUCKETS);
 
-    const sycl::range<1> block_dims(block_size);
-    const sycl::range<1> grid_dims(nrows);
+    സ്ഥിരം sycl::range<1> block_dims(block_size);
+    സ്ഥിരം sycl::range<1> grid_dims(nrows);
 
     main_stream->submit([&](sycl::handler &cgh) {
-        sycl::local_accessor<uint32_t, 1> slm(sycl::range<1>(SYCL_TOP_K_RADIX_SLM_WORDS), cgh);
+        sycl::local_accessor<uint32_t, 1> slm(sycl::range<1>(SYCL_മുകൾ_K_RADIX_SLM_വാക്കുകൾ), cgh);
 
         cgh.parallel_for(
             sycl::nd_range<1>(grid_dims * block_dims, block_dims),
             [=](sycl::nd_item<1> item_ct1) {
-                const int row = item_ct1.get_group(0);
+                സ്ഥിരം പൂർണ്ണസംഖ്യ row = item_ct1.get_group(0);
 
-                top_k_radix_select_f32(
+                മുകൾ_k_radix_select_f32(
                     src + (int64_t) row * ncols, dst_indices + (int64_t) row * k,
-                    (int) ncols, k,
+                    (പൂർണ്ണസംഖ്യ) ncols, k,
                     slm.get_multi_ptr<sycl::access::decorated::no>().get(),
                     item_ct1);
             });
@@ -202,13 +202,13 @@ static void top_k_radix_f32_sycl(
 // count of columns above that longer prefix grows by exactly as much as `need` shrinks.
 // The emit below therefore stays exact whatever pass the answer settled on.
 
-static constexpr int SYCL_TOP_K_RADIX_ROW_DONE   = SYCL_TOP_K_RADIX_BUCKETS + 0;
-static constexpr int SYCL_TOP_K_RADIX_ROW_PREFIX = SYCL_TOP_K_RADIX_BUCKETS + 1;
-static constexpr int SYCL_TOP_K_RADIX_ROW_MASK   = SYCL_TOP_K_RADIX_BUCKETS + 2;
-static constexpr int SYCL_TOP_K_RADIX_ROW_NEED   = SYCL_TOP_K_RADIX_BUCKETS + 3;
-static constexpr int SYCL_TOP_K_RADIX_ROW_CNT_GT = SYCL_TOP_K_RADIX_BUCKETS + 4;
-static constexpr int SYCL_TOP_K_RADIX_ROW_CNT_EQ = SYCL_TOP_K_RADIX_BUCKETS + 5;
-static constexpr int SYCL_TOP_K_RADIX_ROW_WORDS  = SYCL_TOP_K_RADIX_BUCKETS + 6;
+സ്ഥിതം constexpr പൂർണ്ണസംഖ്യ SYCL_മുകൾ_K_RADIX_ROW_DONE   = SYCL_മുകൾ_K_RADIX_BUCKETS + 0;
+സ്ഥിതം constexpr പൂർണ്ണസംഖ്യ SYCL_മുകൾ_K_RADIX_ROW_PREFIX = SYCL_മുകൾ_K_RADIX_BUCKETS + 1;
+സ്ഥിതം constexpr പൂർണ്ണസംഖ്യ SYCL_മുകൾ_K_RADIX_ROW_MASK   = SYCL_മുകൾ_K_RADIX_BUCKETS + 2;
+സ്ഥിതം constexpr പൂർണ്ണസംഖ്യ SYCL_മുകൾ_K_RADIX_ROW_NEED   = SYCL_മുകൾ_K_RADIX_BUCKETS + 3;
+സ്ഥിതം constexpr പൂർണ്ണസംഖ്യ SYCL_മുകൾ_K_RADIX_ROW_CNT_GT = SYCL_മുകൾ_K_RADIX_BUCKETS + 4;
+സ്ഥിതം constexpr പൂർണ്ണസംഖ്യ SYCL_മുകൾ_K_RADIX_ROW_CNT_EQ = SYCL_മുകൾ_K_RADIX_BUCKETS + 5;
+സ്ഥിതം constexpr പൂർണ്ണസംഖ്യ SYCL_മുകൾ_K_RADIX_ROW_വാക്കുകൾ  = SYCL_മുകൾ_K_RADIX_BUCKETS + 6;
 
 // How wide the split goes is a property of the device, not of the model: enough groups to
 // cover the cores, and no more. Past that the extra groups add histogram traffic without
@@ -220,97 +220,97 @@ static constexpr int SYCL_TOP_K_RADIX_ROW_WORDS  = SYCL_TOP_K_RADIX_BUCKETS + 6;
 // group per core to two and only falls off at three, so a factor of two covers the device
 // on Xe2 and lands in the flat region on Xe-HPG. It is the one number here that a correct
 // core count would remove; it was tuned on Xe2 and has not been measured on Xe-HPG.
-static constexpr int SYCL_TOP_K_RADIX_GROUPS_PER_NSM = 2;
+സ്ഥിതം constexpr പൂർണ്ണസംഖ്യ SYCL_മുകൾ_K_RADIX_GROUPS_PER_NSM = 2;
 // Splitting trades one kernel for five. Below the width at which the single-group kernel
 // runs longer than those four extra launches, it wins on its own; measured break-even on
 // this device sits just under 64K columns.
-static constexpr int SYCL_TOP_K_RADIX_MIN_SPLIT_COLS = 65536;
+സ്ഥിതം constexpr പൂർണ്ണസംഖ്യ SYCL_മുകൾ_K_RADIX_MIN_SPLIT_COLS = 65536;
 // A partition thinner than this cannot keep a group's sweep busy.
-static constexpr int SYCL_TOP_K_RADIX_MIN_PART_COLS  = 4096;
+സ്ഥിതം constexpr പൂർണ്ണസംഖ്യ SYCL_മുകൾ_K_RADIX_MIN_PART_COLS  = 4096;
 
-static int top_k_radix_split_groups(const int device, const int64_t ncols, const int64_t nrows) {
-    const int64_t target = (int64_t) SYCL_TOP_K_RADIX_GROUPS_PER_NSM * ggml_sycl_info().devices[device].nsm;
+സ്ഥിതം പൂർണ്ണസംഖ്യ മുകൾ_k_radix_split_groups(സ്ഥിരം പൂർണ്ണസംഖ്യ device, സ്ഥിരം int64_t ncols, സ്ഥിരം int64_t nrows) {
+    സ്ഥിരം int64_t target = (int64_t) SYCL_മുകൾ_K_RADIX_GROUPS_PER_NSM * ggml_sycl_info().devices[device].nsm;
 
     // One group per row already, so a graph with rows enough to cover the device gains
     // nothing from splitting and would only pay the extra launches.
-    if (ncols < SYCL_TOP_K_RADIX_MIN_SPLIT_COLS || nrows >= target) {
-        return 1;
+    എങ്കിൽ (ncols < SYCL_മുകൾ_K_RADIX_MIN_SPLIT_COLS || nrows >= target) {
+        തിരികെ 1;
     }
 
-    const int64_t by_rows = target / nrows;   // floor: never overshoot a row that is nearly covered
-    const int64_t by_cols = ncols / SYCL_TOP_K_RADIX_MIN_PART_COLS;
+    സ്ഥിരം int64_t by_rows = target / nrows;   // floor: never overshoot a row that is nearly covered
+    സ്ഥിരം int64_t by_cols = ncols / SYCL_മുകൾ_K_RADIX_MIN_PART_COLS;
 
-    return (int) std::max<int64_t>(1, std::min(by_rows, by_cols));
+    തിരികെ (പൂർണ്ണസംഖ്യ) std::max<int64_t>(1, std::min(by_rows, by_cols));
 }
 
-using top_k_radix_gatomic = sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed,
+using മുകൾ_k_radix_gatomic = sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed,
                                              sycl::memory_scope::device,
                                              sycl::access::address_space::global_space>;
 
-static void top_k_radix_split_pass_f32(
-    const float *   src,
+സ്ഥിതം ശൂന്യം മുകൾ_k_radix_split_pass_f32(
+    സ്ഥിരം ദശാംശം *   src,
     uint32_t *      state,
-    const int       ncols,
-    const int       k,
-    const int       shift,
-    const bool      first,
-    const int       part,
-    const int       nparts,
+    സ്ഥിരം പൂർണ്ണസംഖ്യ       ncols,
+    സ്ഥിരം പൂർണ്ണസംഖ്യ       k,
+    സ്ഥിരം പൂർണ്ണസംഖ്യ       shift,
+    സ്ഥിരം തർക്കം      first,
+    സ്ഥിരം പൂർണ്ണസംഖ്യ       part,
+    സ്ഥിരം പൂർണ്ണസംഖ്യ       nparts,
     uint32_t *      slm,
-    const sycl::nd_item<1> & item_ct1
+    സ്ഥിരം sycl::nd_item<1> & item_ct1
 ) {
     using local_atomic = sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed,
                                           sycl::memory_scope::work_group,
                                           sycl::access::address_space::local_space>;
 
-    const int tid        = item_ct1.get_local_id(0);
-    const int block_size = item_ct1.get_local_range(0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ tid        = item_ct1.get_local_id(0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ block_size = item_ct1.get_local_range(0);
 
     uint32_t * hist   = slm;
-    uint32_t * s_last = slm + SYCL_TOP_K_RADIX_HIST_SIZE;
-    uint32_t * s_row  = slm + SYCL_TOP_K_RADIX_HIST_SIZE + 1;   // prefix, mask, need
+    uint32_t * s_last = slm + SYCL_മുകൾ_K_RADIX_HIST_SIZE;
+    uint32_t * s_row  = slm + SYCL_മുകൾ_K_RADIX_HIST_SIZE + 1;   // prefix, mask, need
 
     // The previous launch is the barrier that publishes these, so a plain load is enough.
     // One lane reads them and the group takes them from SLM: a device-scope atomic load
     // is uncached here, and having every work-item issue three of them off the same
     // address costs more than the whole sweep below.
-    if (tid == 0) {
-        s_row[0] = first ? 0u : state[SYCL_TOP_K_RADIX_ROW_PREFIX];
-        s_row[1] = first ? 0u : state[SYCL_TOP_K_RADIX_ROW_MASK];
-        s_row[2] = first ? (uint32_t) k : state[SYCL_TOP_K_RADIX_ROW_NEED];
+    എങ്കിൽ (tid == 0) {
+        s_row[0] = first ? 0u : state[SYCL_മുകൾ_K_RADIX_ROW_PREFIX];
+        s_row[1] = first ? 0u : state[SYCL_മുകൾ_K_RADIX_ROW_MASK];
+        s_row[2] = first ? (uint32_t) k : state[SYCL_മുകൾ_K_RADIX_ROW_NEED];
     }
 
-    for (int i = tid; i < SYCL_TOP_K_RADIX_HIST_SIZE; i += block_size) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = tid; i < SYCL_മുകൾ_K_RADIX_HIST_SIZE; i += block_size) {
         hist[i] = 0;
     }
     item_ct1.barrier(sycl::access::fence_space::local_space);
 
-    const uint32_t prefix = s_row[0];
-    const uint32_t mask   = s_row[1];
-    const uint32_t need   = s_row[2];
+    സ്ഥിരം uint32_t prefix = s_row[0];
+    സ്ഥിരം uint32_t mask   = s_row[1];
+    സ്ഥിരം uint32_t need   = s_row[2];
 
-    const int copy  = tid & (SYCL_TOP_K_RADIX_HIST_COPIES - 1);
-    const int chunk = (ncols + nparts - 1) / nparts;
-    const int col0  = part * chunk;
-    const int col1  = std::min(ncols, col0 + chunk);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ copy  = tid & (SYCL_മുകൾ_K_RADIX_HIST_COPIES - 1);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ chunk = (ncols + nparts - 1) / nparts;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ col0  = part * chunk;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ col1  = std::min(ncols, col0 + chunk);
 
-    for (int col = col0 + tid; col < col1; col += block_size) {
-        const uint32_t key = top_k_radix_key(src[col]);
-        if ((key & mask) == prefix) {
-            const uint32_t bucket = (key >> shift) & (SYCL_TOP_K_RADIX_BUCKETS - 1);
-            local_atomic(hist[bucket * SYCL_TOP_K_RADIX_HIST_COPIES + copy]).fetch_add(1u);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ col = col0 + tid; col < col1; col += block_size) {
+        സ്ഥിരം uint32_t താക്കോൽ = മുകൾ_k_radix_താക്കോൽ(src[col]);
+        എങ്കിൽ ((താക്കോൽ & mask) == prefix) {
+            സ്ഥിരം uint32_t bucket = (താക്കോൽ >> shift) & (SYCL_മുകൾ_K_RADIX_BUCKETS - 1);
+            local_atomic(hist[bucket * SYCL_മുകൾ_K_RADIX_HIST_COPIES + copy]).fetch_add(1u);
         }
     }
     item_ct1.barrier(sycl::access::fence_space::local_space);
 
     // One global atomic per bucket per group, not per element.
-    for (int b = tid; b < SYCL_TOP_K_RADIX_BUCKETS; b += block_size) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ b = tid; b < SYCL_മുകൾ_K_RADIX_BUCKETS; b += block_size) {
         uint32_t sum = 0;
-        for (int c = 0; c < SYCL_TOP_K_RADIX_HIST_COPIES; c++) {
-            sum += hist[b * SYCL_TOP_K_RADIX_HIST_COPIES + c];
+        വേണ്ടി (പൂർണ്ണസംഖ്യ c = 0; c < SYCL_മുകൾ_K_RADIX_HIST_COPIES; c++) {
+            sum += hist[b * SYCL_മുകൾ_K_RADIX_HIST_COPIES + c];
         }
-        if (sum) {
-            top_k_radix_gatomic(state[b]).fetch_add(sum);
+        എങ്കിൽ (sum) {
+            മുകൾ_k_radix_gatomic(state[b]).fetch_add(sum);
         }
     }
 
@@ -318,61 +318,61 @@ static void top_k_radix_split_pass_f32(
     // The group-wide barrier flushes the atomics above; only the claiming lane needs the
     // release, so the device-scope fence is paid once per group rather than per work-item.
     item_ct1.barrier(sycl::access::fence_space::global_and_local);
-    if (tid == 0) {
+    എങ്കിൽ (tid == 0) {
         sycl::atomic_fence(sycl::memory_order::release, sycl::memory_scope::device);
         sycl::atomic_ref<uint32_t, sycl::memory_order::acq_rel, sycl::memory_scope::device,
-                         sycl::access::address_space::global_space> done(state[SYCL_TOP_K_RADIX_ROW_DONE]);
+                         sycl::access::address_space::global_space> done(state[SYCL_മുകൾ_K_RADIX_ROW_DONE]);
         *s_last = (done.fetch_add(1u) == (uint32_t) (nparts - 1)) ? 1u : 0u;
     }
     item_ct1.barrier(sycl::access::fence_space::local_space);
 
-    if (*s_last == 0u) {
-        return;
+    എങ്കിൽ (*s_last == 0u) {
+        തിരികെ;
     }
     sycl::atomic_fence(sycl::memory_order::acquire, sycl::memory_scope::device);
 
     // Lane t takes bucket 255 - t, so an inclusive scan counts down from the top bucket.
     uint32_t cnt = 0;
-    if (tid < SYCL_TOP_K_RADIX_BUCKETS) {
-        cnt = top_k_radix_gatomic(state[SYCL_TOP_K_RADIX_BUCKETS - 1 - tid]).load();
+    എങ്കിൽ (tid < SYCL_മുകൾ_K_RADIX_BUCKETS) {
+        cnt = മുകൾ_k_radix_gatomic(state[SYCL_മുകൾ_K_RADIX_BUCKETS - 1 - tid]).load();
     }
-    const uint32_t incl = sycl::inclusive_scan_over_group(item_ct1.get_group(), cnt, sycl::plus<uint32_t>());
+    സ്ഥിരം uint32_t incl = sycl::inclusive_scan_over_group(item_ct1.get_group(), cnt, sycl::plus<uint32_t>());
 
-    if (tid < SYCL_TOP_K_RADIX_BUCKETS && incl >= need && incl - cnt < need) {
-        const uint32_t digit = (uint32_t) (SYCL_TOP_K_RADIX_BUCKETS - 1 - tid);
-        top_k_radix_gatomic(state[SYCL_TOP_K_RADIX_ROW_PREFIX]).store(prefix | (digit << shift));
-        top_k_radix_gatomic(state[SYCL_TOP_K_RADIX_ROW_MASK]).store(
-            mask | ((uint32_t) (SYCL_TOP_K_RADIX_BUCKETS - 1) << shift));
-        top_k_radix_gatomic(state[SYCL_TOP_K_RADIX_ROW_NEED]).store(need - (incl - cnt));
+    എങ്കിൽ (tid < SYCL_മുകൾ_K_RADIX_BUCKETS && incl >= need && incl - cnt < need) {
+        സ്ഥിരം uint32_t digit = (uint32_t) (SYCL_മുകൾ_K_RADIX_BUCKETS - 1 - tid);
+        മുകൾ_k_radix_gatomic(state[SYCL_മുകൾ_K_RADIX_ROW_PREFIX]).store(prefix | (digit << shift));
+        മുകൾ_k_radix_gatomic(state[SYCL_മുകൾ_K_RADIX_ROW_MASK]).store(
+            mask | ((uint32_t) (SYCL_മുകൾ_K_RADIX_BUCKETS - 1) << shift));
+        മുകൾ_k_radix_gatomic(state[SYCL_മുകൾ_K_RADIX_ROW_NEED]).store(need - (incl - cnt));
     }
     item_ct1.barrier(sycl::access::fence_space::local_space);
 
     // Clear for the next pass; the next launch is the barrier that orders this.
-    for (int b = tid; b < SYCL_TOP_K_RADIX_BUCKETS; b += block_size) {
-        top_k_radix_gatomic(state[b]).store(0u);
+    വേണ്ടി (പൂർണ്ണസംഖ്യ b = tid; b < SYCL_മുകൾ_K_RADIX_BUCKETS; b += block_size) {
+        മുകൾ_k_radix_gatomic(state[b]).store(0u);
     }
-    if (tid == 0) {
-        top_k_radix_gatomic(state[SYCL_TOP_K_RADIX_ROW_DONE]).store(0u);
+    എങ്കിൽ (tid == 0) {
+        മുകൾ_k_radix_gatomic(state[SYCL_മുകൾ_K_RADIX_ROW_DONE]).store(0u);
     }
 }
 
-static void top_k_radix_split_emit_f32(
-    const float *   src,
+സ്ഥിതം ശൂന്യം മുകൾ_k_radix_split_emit_f32(
+    സ്ഥിരം ദശാംശം *   src,
     int32_t *       dst_idx,
     uint32_t *      state,
-    const int       ncols,
-    const int       k,
-    const int       part,
-    const int       nparts,
+    സ്ഥിരം പൂർണ്ണസംഖ്യ       ncols,
+    സ്ഥിരം പൂർണ്ണസംഖ്യ       k,
+    സ്ഥിരം പൂർണ്ണസംഖ്യ       part,
+    സ്ഥിരം പൂർണ്ണസംഖ്യ       nparts,
     uint32_t *      slm,
-    const sycl::nd_item<1> & item_ct1
+    സ്ഥിരം sycl::nd_item<1> & item_ct1
 ) {
     using local_atomic = sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed,
                                           sycl::memory_scope::work_group,
                                           sycl::access::address_space::local_space>;
 
-    const int tid        = item_ct1.get_local_id(0);
-    const int block_size = item_ct1.get_local_range(0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ tid        = item_ct1.get_local_id(0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ block_size = item_ct1.get_local_range(0);
 
     uint32_t * s_gt      = slm;
     uint32_t * s_eq      = slm + 1;
@@ -381,111 +381,111 @@ static void top_k_radix_split_emit_f32(
 
     uint32_t * s_row = slm + 4;   // prefix, mask, need
 
-    if (tid == 0) {
+    എങ്കിൽ (tid == 0) {
         *s_gt = 0;
         *s_eq = 0;
-        s_row[0] = state[SYCL_TOP_K_RADIX_ROW_PREFIX];
-        s_row[1] = state[SYCL_TOP_K_RADIX_ROW_MASK];
-        s_row[2] = state[SYCL_TOP_K_RADIX_ROW_NEED];
+        s_row[0] = state[SYCL_മുകൾ_K_RADIX_ROW_PREFIX];
+        s_row[1] = state[SYCL_മുകൾ_K_RADIX_ROW_MASK];
+        s_row[2] = state[SYCL_മുകൾ_K_RADIX_ROW_NEED];
     }
     item_ct1.barrier(sycl::access::fence_space::local_space);
 
-    const uint32_t prefix = s_row[0];
-    const uint32_t mask   = s_row[1];
-    const uint32_t need   = s_row[2];
+    സ്ഥിരം uint32_t prefix = s_row[0];
+    സ്ഥിരം uint32_t mask   = s_row[1];
+    സ്ഥിരം uint32_t need   = s_row[2];
 
     // Exactly k - need columns beat the pivot; the first need pivot-equal ones fill the tail.
-    const uint32_t base_eq = (uint32_t) k - need;
+    സ്ഥിരം uint32_t base_eq = (uint32_t) k - need;
 
-    const int chunk = (ncols + nparts - 1) / nparts;
-    const int col0  = part * chunk;
-    const int col1  = std::min(ncols, col0 + chunk);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ chunk = (ncols + nparts - 1) / nparts;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ col0  = part * chunk;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ col1  = std::min(ncols, col0 + chunk);
 
     // Counting first and reserving one range per group keeps the row's two counters out of
     // the inner loop: a per-element global atomic on a single address serialises the whole
     // emit, and at k in the thousands that alone outweighs every read the kernel does.
-    for (int col = col0 + tid; col < col1; col += block_size) {
-        const uint32_t kp = top_k_radix_key(src[col]) & mask;
-        if (kp > prefix) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ col = col0 + tid; col < col1; col += block_size) {
+        സ്ഥിരം uint32_t kp = മുകൾ_k_radix_താക്കോൽ(src[col]) & mask;
+        എങ്കിൽ (kp > prefix) {
             local_atomic(*s_gt).fetch_add(1u);
-        } else if (kp == prefix) {
+        } അല്ലെങ്കിൽ എങ്കിൽ (kp == prefix) {
             local_atomic(*s_eq).fetch_add(1u);
         }
     }
     item_ct1.barrier(sycl::access::fence_space::local_space);
 
-    if (tid == 0) {
-        const uint32_t n_gt = *s_gt;
-        const uint32_t n_eq = *s_eq;
-        *s_base_gt = n_gt ? top_k_radix_gatomic(state[SYCL_TOP_K_RADIX_ROW_CNT_GT]).fetch_add(n_gt) : 0u;
-        *s_base_eq = n_eq ? top_k_radix_gatomic(state[SYCL_TOP_K_RADIX_ROW_CNT_EQ]).fetch_add(n_eq) : 0u;
+    എങ്കിൽ (tid == 0) {
+        സ്ഥിരം uint32_t n_gt = *s_gt;
+        സ്ഥിരം uint32_t n_eq = *s_eq;
+        *s_base_gt = n_gt ? മുകൾ_k_radix_gatomic(state[SYCL_മുകൾ_K_RADIX_ROW_CNT_GT]).fetch_add(n_gt) : 0u;
+        *s_base_eq = n_eq ? മുകൾ_k_radix_gatomic(state[SYCL_മുകൾ_K_RADIX_ROW_CNT_EQ]).fetch_add(n_eq) : 0u;
         *s_gt = 0;
         *s_eq = 0;
     }
     item_ct1.barrier(sycl::access::fence_space::local_space);
 
-    const uint32_t base_gt_g = *s_base_gt;
-    const uint32_t base_eq_g = *s_base_eq;
+    സ്ഥിരം uint32_t base_gt_g = *s_base_gt;
+    സ്ഥിരം uint32_t base_eq_g = *s_base_eq;
 
-    for (int col = col0 + tid; col < col1; col += block_size) {
-        const uint32_t kp = top_k_radix_key(src[col]) & mask;
-        if (kp > prefix) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ col = col0 + tid; col < col1; col += block_size) {
+        സ്ഥിരം uint32_t kp = മുകൾ_k_radix_താക്കോൽ(src[col]) & mask;
+        എങ്കിൽ (kp > prefix) {
             dst_idx[base_gt_g + local_atomic(*s_gt).fetch_add(1u)] = col;
-        } else if (kp == prefix) {
-            const uint32_t pos = base_eq_g + local_atomic(*s_eq).fetch_add(1u);
-            if (pos < need) {
+        } അല്ലെങ്കിൽ എങ്കിൽ (kp == prefix) {
+            സ്ഥിരം uint32_t pos = base_eq_g + local_atomic(*s_eq).fetch_add(1u);
+            എങ്കിൽ (pos < need) {
                 dst_idx[base_eq + pos] = col;
             }
         }
     }
 }
 
-static void top_k_radix_split_f32_sycl(
+സ്ഥിതം ശൂന്യം മുകൾ_k_radix_split_f32_sycl(
     ggml_backend_sycl_context & ctx,
-    const float * src,
+    സ്ഥിരം ദശാംശം * src,
     int32_t * dst_indices,
-    const int64_t ncols,
-    const int64_t nrows,
-    const int k,
-    const int nparts,
+    സ്ഥിരം int64_t ncols,
+    സ്ഥിരം int64_t nrows,
+    സ്ഥിരം പൂർണ്ണസംഖ്യ k,
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nparts,
     dpct::queue_ptr main_stream
 ) {
     GGML_ASSERT(ncols <= INT32_MAX);
     GGML_ASSERT(nparts > 1);
 
-    const int block_size = ggml_sycl_info().max_work_group_sizes[ctx.device];
-    GGML_ASSERT(block_size >= SYCL_TOP_K_RADIX_BUCKETS);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ block_size = ggml_sycl_info().max_work_group_sizes[ctx.device];
+    GGML_ASSERT(block_size >= SYCL_മുകൾ_K_RADIX_BUCKETS);
 
-    const size_t state_words = (size_t) nrows * SYCL_TOP_K_RADIX_ROW_WORDS;
-    ggml_sycl_pool_alloc<uint32_t> state_alloc(ctx.pool(), state_words);
+    സ്ഥിരം size_t state_വാക്കുകൾ = (size_t) nrows * SYCL_മുകൾ_K_RADIX_ROW_വാക്കുകൾ;
+    ggml_sycl_pool_alloc<uint32_t> state_alloc(ctx.pool(), state_വാക്കുകൾ);
     uint32_t * state = state_alloc.get();
 
     // Zero histogram, done counter and both emit counters. prefix/mask/need are seeded by
     // the first pass, which ignores the stored values.
     // The queue is in-order, so the passes below are already ordered after this fill.
-    SYCL_CHECK(CHECK_TRY_ERROR(main_stream->memset(state, 0, state_words * sizeof(uint32_t))));
+    SYCL_CHECK(CHECK_TRY_ERROR(main_stream->memset(state, 0, state_വാക്കുകൾ * വലുപ്പം(uint32_t))));
 
-    const sycl::range<1> block_dims(block_size);
-    const sycl::range<1> grid_dims(nrows * nparts);
+    സ്ഥിരം sycl::range<1> block_dims(block_size);
+    സ്ഥിരം sycl::range<1> grid_dims(nrows * nparts);
 
-    bool first = true;
-    for (int shift = 32 - SYCL_TOP_K_RADIX_BITS; shift >= 0; shift -= SYCL_TOP_K_RADIX_BITS) {
-        const bool is_first = first;
-        first = false;
+    തർക്കം first = സത്യം;
+    വേണ്ടി (പൂർണ്ണസംഖ്യ shift = 32 - SYCL_മുകൾ_K_RADIX_BITS; shift >= 0; shift -= SYCL_മുകൾ_K_RADIX_BITS) {
+        സ്ഥിരം തർക്കം is_first = first;
+        first = അസത്യം;
         main_stream->submit([&](sycl::handler &cgh) {
-            sycl::local_accessor<uint32_t, 1> slm(sycl::range<1>(SYCL_TOP_K_RADIX_HIST_SIZE + 4), cgh);
+            sycl::local_accessor<uint32_t, 1> slm(sycl::range<1>(SYCL_മുകൾ_K_RADIX_HIST_SIZE + 4), cgh);
 
             cgh.parallel_for(
                 sycl::nd_range<1>(grid_dims * block_dims, block_dims),
                 [=](sycl::nd_item<1> item_ct1) {
-                    const int g    = item_ct1.get_group(0);
-                    const int row  = g / nparts;
-                    const int part = g % nparts;
+                    സ്ഥിരം പൂർണ്ണസംഖ്യ g    = item_ct1.get_group(0);
+                    സ്ഥിരം പൂർണ്ണസംഖ്യ row  = g / nparts;
+                    സ്ഥിരം പൂർണ്ണസംഖ്യ part = g % nparts;
 
-                    top_k_radix_split_pass_f32(
+                    മുകൾ_k_radix_split_pass_f32(
                         src + (int64_t) row * ncols,
-                        state + (int64_t) row * SYCL_TOP_K_RADIX_ROW_WORDS,
-                        (int) ncols, k, shift, is_first, part, nparts,
+                        state + (int64_t) row * SYCL_മുകൾ_K_RADIX_ROW_വാക്കുകൾ,
+                        (പൂർണ്ണസംഖ്യ) ncols, k, shift, is_first, part, nparts,
                         slm.get_multi_ptr<sycl::access::decorated::no>().get(),
                         item_ct1);
                 });
@@ -498,34 +498,34 @@ static void top_k_radix_split_f32_sycl(
         cgh.parallel_for(
             sycl::nd_range<1>(grid_dims * block_dims, block_dims),
             [=](sycl::nd_item<1> item_ct1) {
-                const int g    = item_ct1.get_group(0);
-                const int row  = g / nparts;
-                const int part = g % nparts;
+                സ്ഥിരം പൂർണ്ണസംഖ്യ g    = item_ct1.get_group(0);
+                സ്ഥിരം പൂർണ്ണസംഖ്യ row  = g / nparts;
+                സ്ഥിരം പൂർണ്ണസംഖ്യ part = g % nparts;
 
-                top_k_radix_split_emit_f32(
+                മുകൾ_k_radix_split_emit_f32(
                     src + (int64_t) row * ncols,
                     dst_indices + (int64_t) row * k,
-                    state + (int64_t) row * SYCL_TOP_K_RADIX_ROW_WORDS,
-                    (int) ncols, k, part, nparts,
+                    state + (int64_t) row * SYCL_മുകൾ_K_RADIX_ROW_വാക്കുകൾ,
+                    (പൂർണ്ണസംഖ്യ) ncols, k, part, nparts,
                     slm.get_multi_ptr<sycl::access::decorated::no>().get(),
                     item_ct1);
             });
     });
 }
 
-void ggml_sycl_top_k_radix(
+ശൂന്യം ggml_sycl_മുകൾ_k_radix(
     ggml_backend_sycl_context & ctx,
-    const float *   src,
+    സ്ഥിരം ദശാംശം *   src,
     int32_t *       dst_indices,
-    const int64_t   ncols,
-    const int64_t   nrows,
-    const int       k,
+    സ്ഥിരം int64_t   ncols,
+    സ്ഥിരം int64_t   nrows,
+    സ്ഥിരം പൂർണ്ണസംഖ്യ       k,
     dpct::queue_ptr main_stream
 ) {
-    const int nparts = top_k_radix_split_groups(ctx.device, ncols, nrows);
-    if (nparts > 1) {
-        top_k_radix_split_f32_sycl(ctx, src, dst_indices, ncols, nrows, k, nparts, main_stream);
-    } else {
-        top_k_radix_f32_sycl(ctx, src, dst_indices, ncols, nrows, k, main_stream);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ nparts = മുകൾ_k_radix_split_groups(ctx.device, ncols, nrows);
+    എങ്കിൽ (nparts > 1) {
+        മുകൾ_k_radix_split_f32_sycl(ctx, src, dst_indices, ncols, nrows, k, nparts, main_stream);
+    } അല്ലെങ്കിൽ {
+        മുകൾ_k_radix_f32_sycl(ctx, src, dst_indices, ncols, nrows, k, main_stream);
     }
 }

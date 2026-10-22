@@ -13,8 +13,8 @@
 #ifndef GGML_SYCL_TSEMBD_HPP
 #define GGML_SYCL_TSEMBD_HPP
 
-#include "common.hpp"
+#അന്തര്ഭാവ "common.hpp"
 
-void ggml_sycl_op_timestep_embedding(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+ശൂന്യം ggml_sycl_op_timestep_embedding(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
 #endif // GGML_SYCL_TSEMBD_HPP

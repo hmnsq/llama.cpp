@@ -13,21 +13,21 @@
 #ifndef GGML_SYCL_MMQ_HPP
 #define GGML_SYCL_MMQ_HPP
 
-#include "common.hpp"
+#അന്തര്ഭാവ "common.hpp"
 
-void ggml_sycl_op_mul_mat_q(
+ശൂന്യം ggml_sycl_op_mul_mat_q(
     ggml_backend_sycl_context & ctx,
-    const ggml_tensor* src0,
-    const ggml_tensor* src1,
+    സ്ഥിരം ggml_tensor* src0,
+    സ്ഥിരം ggml_tensor* src1,
     ggml_tensor* dst,
-    const char* src0_dd_i,
-    const float* src1_ddf_i,
-    const char* src1_ddq_i,
-    float* dst_dd_i,
-    const int64_t row_low,
-    const int64_t row_high,
-    const int64_t src1_ncols,
-    const int64_t src1_padded_row_size,
-    const dpct::queue_ptr& stream);
+    സ്ഥിരം അക്ഷരം* src0_dd_i,
+    സ്ഥിരം ദശാംശം* src1_ddf_i,
+    സ്ഥിരം അക്ഷരം* src1_ddq_i,
+    ദശാംശം* dst_dd_i,
+    സ്ഥിരം int64_t row_താഴെയുള്ള,
+    സ്ഥിരം int64_t row_മുകളിലെ,
+    സ്ഥിരം int64_t src1_ncols,
+    സ്ഥിരം int64_t src1_padded_row_size,
+    സ്ഥിരം dpct::queue_ptr& stream);
 
 #endif // GGML_SYCL_MMQ_HPP

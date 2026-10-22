@@ -1,36 +1,36 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
-#include "ggml-openvino/ggml-openvino-extra.h"
+#അന്തര്ഭാവ "../node_context.h"
+#അന്തര്ഭാവ "../op_table.h"
+#അന്തര്ഭാവ "../utils.h"
+#അന്തര്ഭാവ "ggml-openvino/ggml-openvino-extra.h"
 
-#include <cstddef>
-#include <cstdint>
-#include <memory>
-#include <openvino/op/add.hpp>
-#include <openvino/op/broadcast.hpp>
-#include <openvino/op/concat.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/matmul.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/scaled_dot_product_attention.hpp>
-#include <openvino/op/slice.hpp>
-#include <openvino/op/softmax.hpp>
-#include <openvino/op/transpose.hpp>
-#include <openvino/op/unsqueeze.hpp>
-#include <string>
+#അന്തര്ഭാവ <cstddef>
+#അന്തര്ഭാവ <cstdint>
+#അന്തര്ഭാവ <memory>
+#അന്തര്ഭാവ <openvino/op/add.hpp>
+#അന്തര്ഭാവ <openvino/op/broadcast.hpp>
+#അന്തര്ഭാവ <openvino/op/concat.hpp>
+#അന്തര്ഭാവ <openvino/op/constant.hpp>
+#അന്തര്ഭാവ <openvino/op/convert.hpp>
+#അന്തര്ഭാവ <openvino/op/matmul.hpp>
+#അന്തര്ഭാവ <openvino/op/multiply.hpp>
+#അന്തര്ഭാവ <openvino/op/reshape.hpp>
+#അന്തര്ഭാവ <openvino/op/scaled_dot_product_attention.hpp>
+#അന്തര്ഭാവ <openvino/op/slice.hpp>
+#അന്തര്ഭാവ <openvino/op/softmax.hpp>
+#അന്തര്ഭാവ <openvino/op/transpose.hpp>
+#അന്തര്ഭാവ <openvino/op/unsqueeze.hpp>
+#അന്തര്ഭാവ <string>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
-static ov::Output<ov::Node> reshape_flat_kv(const ov::Output<ov::Node> & kv_flat,
+നാമാകാശ ov {
+നാമാകാശ frontend {
+നാമാകാശ ggml {
+നാമാകാശ op {
+സ്ഥിതം ov::Output<ov::Node> reshape_flat_kv(സ്ഥിരം ov::Output<ov::Node> & kv_flat,
                                             size_t view_offset_bytes,
                                             size_t nb1_bytes,
                                             int64_t n_head,
                                             int64_t head_size,
-                                            const ov::Output<ov::Node> & attention_size) {
+                                            സ്ഥിരം ov::Output<ov::Node> & attention_size) {
     int64_t n_state = n_head * head_size;
     int64_t layer_start_elem = (int64_t) (view_offset_bytes / (nb1_bytes / n_state));
     // Dynamic slice: [layer_start_elem, layer_start_elem + n_kv * n_state)
@@ -52,58 +52,58 @@ static ov::Output<ov::Node> reshape_flat_kv(const ov::Output<ov::Node> & kv_flat
     // reshape: {n_kv*n_state} -> {1, n_kv, n_head, head_size}
     auto new_shape =
         std::make_shared<ov::op::v0::Concat>(ov::OutputVector{one_c, attention_size, n_head_c, head_size_c}, 0);
-    auto reshaped = std::make_shared<ov::op::v1::Reshape>(sliced, new_shape, false);
+    auto reshaped = std::make_shared<ov::op::v1::Reshape>(sliced, new_shape, അസത്യം);
     // transpose: {1, n_kv, n_head, head_size} -> {1, n_head, n_kv, head_size}
     auto perm = ov::op::v0::Constant::create(ov::element::i64, {4}, {0, 2, 1, 3});
     auto ret = std::make_shared<ov::op::v1::Transpose>(reshaped, perm);
-    return ret;
+    തിരികെ ret;
 }
 
-OutputVector translate_flash_attn_ext(const NodeContext & context) {
-    num_inputs_check(context, 3, 4);
-    const bool has_mask = context.get_input_size() == 4;
-    auto q_f32 = context.get_input(0);
-    auto k = context.get_input(1);
-    auto v = context.get_input(2);
-    const int op_case = context.get_op_case();
+OutputVector translate_flash_attn_ext(സ്ഥിരം കണ്ണി_Context & context) {
+    അക്കം_inputs_check(context, 3, 4);
+    സ്ഥിരം തർക്കം has_mask = context.get_നിവേശം_size() == 4;
+    auto q_f32 = context.get_നിവേശം(0);
+    auto k = context.get_നിവേശം(1);
+    auto v = context.get_നിവേശം(2);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ op_case = context.get_op_case();
 
-    if (op_case == 1 || op_case == 2) {
-        int64_t n_state_head = (int64_t) context.get_view_input_ggml_shape(1, 0)[3];
-        int64_t n_head = (int64_t) context.get_view_input_ggml_shape(1, 0)[1];
-        size_t nb1 = context.get_view_input_stride(1, 0)[2];
-        size_t offset = context.get_view_input_offset(1, 0);
+    എങ്കിൽ (op_case == 1 || op_case == 2) {
+        int64_t n_state_head = (int64_t) context.get_view_നിവേശം_ggml_shape(1, 0)[3];
+        int64_t n_head = (int64_t) context.get_view_നിവേശം_ggml_shape(1, 0)[1];
+        size_t nb1 = context.get_view_നിവേശം_stride(1, 0)[2];
+        size_t offset = context.get_view_നിവേശം_offset(1, 0);
         ov::Output<ov::Node> attention_size;
-        if (op_case == 1) {
-            attention_size = context.get_input("attention_size");
-        } else {
-            attention_size = context.get_input("attention_size_static");
+        എങ്കിൽ (op_case == 1) {
+            attention_size = context.get_നിവേശം("attention_size");
+        } അല്ലെങ്കിൽ {
+            attention_size = context.get_നിവേശം("attention_size_static");
         }
         k = reshape_flat_kv(k, offset, nb1, n_head, n_state_head, attention_size);
         v = reshape_flat_kv(v, offset, nb1, n_head, n_state_head, attention_size);
     }
 
-    float * params = reinterpret_cast<float *>(context.get_output_op_params());
-    float scale = params[0];
+    ദശാംശം * params = reinterpret_cast<ദശാംശം *>(context.get_output_op_params());
+    ദശാംശം scale = params[0];
     // float max_bias      = params[1];
     // float logit_softcap = params[2];
 
     auto q = std::make_shared<ov::op::v0::Convert>(q_f32, ov::element::f16);
-    auto scale_node = std::make_shared<ov::op::v0::Constant>(ov::element::f16, ov::Shape{}, std::vector<float>{scale});
+    auto scale_കണ്ണി = std::make_shared<ov::op::v0::Constant>(ov::element::f16, ov::Shape{}, std::vector<ദശാംശം>{scale});
 
     ov::Output<ov::Node> res;
 
     // For stateful
     ov::Output<ov::Node> mask;
-    if (has_mask) {
-        mask = context.get_input(3);
+    എങ്കിൽ (has_mask) {
+        mask = context.get_നിവേശം(3);
         std::string mask_name = "KQ_mask_sliced";
-        if (context.get_input_names()[3].find("swa") != std::string::npos) {
+        എങ്കിൽ (context.get_നിവേശം_names()[3].find("swa") != std::string::npos) {
             mask_name = "KQ_mask_swa_sliced";
         }
-        if (context.has_input(mask_name)) {
-            mask = context.get_input(mask_name);
+        എങ്കിൽ (context.has_നിവേശം(mask_name)) {
+            mask = context.get_നിവേശം(mask_name);
         }
-        if (mask.get_element_type() != ov::element::f16) {
+        എങ്കിൽ (mask.get_element_type() != ov::element::f16) {
             mask = std::make_shared<ov::op::v0::Convert>(mask, ov::element::f16);
         }
     }
@@ -111,27 +111,27 @@ OutputVector translate_flash_attn_ext(const NodeContext & context) {
     //auto tile_kv = [&](int64_t num_heads, int64_t num_heads_kv, int64_t head_size, ov::Output<Node> kv) {
     //    int64_t factor = num_heads / num_heads_kv;
     //    if (factor > 1 && num_heads_kv > 1) {
-    auto q_shape = context.get_input_shape(0).to_shape();
-    auto k_shape = context.get_input_shape(1).to_shape();
-    const int64_t num_heads = q_shape[1];
-    const int64_t num_heads_kv = k_shape[1];
-    const int64_t head_size = q_shape[3];
-    const int64_t factor = num_heads / num_heads_kv;
+    auto q_shape = context.get_നിവേശം_shape(0).to_shape();
+    auto k_shape = context.get_നിവേശം_shape(1).to_shape();
+    സ്ഥിരം int64_t അക്കം_heads = q_shape[1];
+    സ്ഥിരം int64_t അക്കം_heads_kv = k_shape[1];
+    സ്ഥിരം int64_t head_size = q_shape[3];
+    സ്ഥിരം int64_t factor = അക്കം_heads / അക്കം_heads_kv;
 
     // Manual GQA attention: enabled by default on GPU in stateless mode.
     // Set GGML_OPENVINO_MANUAL_GQA_ATTN to a positive value (e.g. 1) to force-enable,
     // or to 0 to force-disable. Unset falls back to the device-based default.
-    static const bool manual_gqa_enabled = []() {
-        const char * env = ggml_openvino_getenv_str("GGML_OPENVINO_MANUAL_GQA_ATTN");
-        if (env != nullptr) {
-            return ggml_openvino_getenv_int("GGML_OPENVINO_MANUAL_GQA_ATTN") > 0;
+    സ്ഥിതം സ്ഥിരം തർക്കം manual_gqa_enabled = []() {
+        സ്ഥിരം അക്ഷരം * env = ggml_openvino_getenv_str("GGML_OPENVINO_MANUAL_GQA_ATTN");
+        എങ്കിൽ (env != nullptr) {
+            തിരികെ ggml_openvino_getenv_int("GGML_OPENVINO_MANUAL_GQA_ATTN") > 0;
         }
-        return ggml_openvino_is_gpu();
+        തിരികെ ggml_openvino_is_gpu();
     }();
-    const bool use_manual_gqa_attention =
-        manual_gqa_enabled && factor > 1 && num_heads_kv > 1 && !context.is_stateful();
+    സ്ഥിരം തർക്കം use_manual_gqa_attention =
+        manual_gqa_enabled && factor > 1 && അക്കം_heads_kv > 1 && !context.is_stateful();
 
-    if (use_manual_gqa_attention) {
+    എങ്കിൽ (use_manual_gqa_attention) {
         // Q, K, V arrive as [B, n_heads(_kv), S, head_size], where B is the active
         // batch (n_seq_active) and may be > 1 (llama-perplexity, llama-server -np > 1)
         // or dynamic. Reshape to
@@ -142,30 +142,30 @@ OutputVector translate_flash_attn_ext(const NodeContext & context) {
         // so this is correct for B == 1, B > 1, and dynamic B alike. Only the head
         // dims and head_size are baked in as literals; the sequence dim stays -1.
         auto k_5d_shape = ov::op::v0::Constant::create(ov::element::i64, {5},
-                                                       std::vector<int64_t>{0, num_heads_kv, 1, -1, head_size});
+                                                       std::vector<int64_t>{0, അക്കം_heads_kv, 1, -1, head_size});
         auto v_5d_shape = ov::op::v0::Constant::create(ov::element::i64, {5},
-                                                       std::vector<int64_t>{0, num_heads_kv, 1, -1, head_size});
+                                                       std::vector<int64_t>{0, അക്കം_heads_kv, 1, -1, head_size});
         auto q_5d_shape = ov::op::v0::Constant::create(ov::element::i64, {5},
-                                                       std::vector<int64_t>{0, num_heads_kv, factor, -1, head_size});
+                                                       std::vector<int64_t>{0, അക്കം_heads_kv, factor, -1, head_size});
 
-        auto k_r = std::make_shared<ov::op::v1::Reshape>(k, k_5d_shape, true);
-        auto v_r = std::make_shared<ov::op::v1::Reshape>(v, v_5d_shape, true);
-        auto q_r = std::make_shared<ov::op::v1::Reshape>(q, q_5d_shape, true);
+        auto k_r = std::make_shared<ov::op::v1::Reshape>(k, k_5d_shape, സത്യം);
+        auto v_r = std::make_shared<ov::op::v1::Reshape>(v, v_5d_shape, സത്യം);
+        auto q_r = std::make_shared<ov::op::v1::Reshape>(q, q_5d_shape, സത്യം);
 
         // QK^T → [B, num_heads_kv, factor, S_q, S_k]
-        auto qk = std::make_shared<ov::op::v0::MatMul>(q_r, k_r, /*tA=*/false, /*tB=*/true);
-        auto qk_scaled = std::make_shared<ov::op::v1::Multiply>(qk, scale_node);
+        auto qk = std::make_shared<ov::op::v0::MatMul>(q_r, k_r, /*tA=*/അസത്യം, /*tB=*/സത്യം);
+        auto qk_scaled = std::make_shared<ov::op::v1::Multiply>(qk, scale_കണ്ണി);
 
         // Mask arrives as [B, 1, S_q, S_k]. Unsqueeze a factor axis at position 2 to
         // get [B, 1, 1, S_q, S_k], which NUMPY-broadcasts cleanly against the
         // [B, num_heads_kv, factor, S_q, S_k] scores: B==B, then 1→num_heads_kv and
         // 1→factor on the head dims.
         ov::Output<ov::Node> qk_masked;
-        if (has_mask) {
+        എങ്കിൽ (has_mask) {
             auto mask_unsq1 =
                 std::make_shared<ov::op::v0::Unsqueeze>(mask, ov::op::v0::Constant::create(ov::element::i64, {1}, {2}));
             qk_masked = std::make_shared<ov::op::v1::Add>(qk_scaled, mask_unsq1);
-        } else {
+        } അല്ലെങ്കിൽ {
             qk_masked = qk_scaled;
         }
 
@@ -177,15 +177,15 @@ OutputVector translate_flash_attn_ext(const NodeContext & context) {
         // Reshape back to [B, num_heads, S_q, head_size] (combine num_heads_kv * factor).
         // Leading 0 + special_zero=true copies B at runtime.
         auto out_4d_shape =
-            ov::op::v0::Constant::create(ov::element::i64, {4}, std::vector<int64_t>{0, num_heads, -1, head_size});
-        auto out_4d = std::make_shared<ov::op::v1::Reshape>(attn, out_4d_shape, true);
+            ov::op::v0::Constant::create(ov::element::i64, {4}, std::vector<int64_t>{0, അക്കം_heads, -1, head_size});
+        auto out_4d = std::make_shared<ov::op::v1::Reshape>(attn, out_4d_shape, സത്യം);
 
         // The standard SDPA path's downstream is Transpose(0,2,1,3) → Convert(f32).
         // Replicate it here so callers see the same output layout/dtype.
         res = std::make_shared<ov::op::v1::Transpose>(
             out_4d, ov::op::v0::Constant::create(ov::element::i64, {4}, {0, 2, 1, 3}));
         res = std::make_shared<ov::op::v0::Convert>(res, ov::element::f32);
-        return rename_outputs_with_suffix({res}, context.get_name());
+        തിരികെ rename_outputs_with_suffix({res}, context.get_name());
     }
 
     // Default path: explicit Broadcast → SDPA. Kept as the fallback because
@@ -193,7 +193,7 @@ OutputVector translate_flash_attn_ext(const NodeContext & context) {
     // tiles via DPAS), and (b) the manual path above is still being validated.
     auto tile_kv = [&](int64_t n_heads, int64_t n_heads_kv, int64_t hs, ov::Output<Node> kv) {
         int64_t f = n_heads / n_heads_kv;
-        if (f > 1 && n_heads_kv > 1) {
+        എങ്കിൽ (f > 1 && n_heads_kv > 1) {
             ov::Output<ov::Node> kv_broadcast_shape;
             ov::Output<ov::Node> kv_unsqueezed;
             ov::Output<ov::Node> new_kv_shape;
@@ -210,30 +210,30 @@ OutputVector translate_flash_attn_ext(const NodeContext & context) {
 
             kv = std::make_shared<ov::op::v3::Broadcast>(kv_unsqueezed, kv_broadcast_shape,
                                                          ov::op::BroadcastType::BIDIRECTIONAL);
-            kv = std::make_shared<ov::op::v1::Reshape>(kv, new_kv_shape, true);
+            kv = std::make_shared<ov::op::v1::Reshape>(kv, new_kv_shape, സത്യം);
         }
-        return kv;
+        തിരികെ kv;
     };
 
     //auto q_shape = context.get_input_shape(0).to_shape();
     //auto k_shape = context.get_input_shape(1).to_shape();
     //k = tile_kv(q_shape[1], k_shape[1], q_shape[3], k);
     //v = tile_kv(q_shape[1], k_shape[1], q_shape[3], v);
-    k = tile_kv(num_heads, num_heads_kv, head_size, k);
-    v = tile_kv(num_heads, num_heads_kv, head_size, v);
+    k = tile_kv(അക്കം_heads, അക്കം_heads_kv, head_size, k);
+    v = tile_kv(അക്കം_heads, അക്കം_heads_kv, head_size, v);
 
-    constexpr auto causal = false;
-    if (has_mask) {
-        auto sdpa = std::make_shared<ov::op::v13::ScaledDotProductAttention>(q, k, v, mask, scale_node, causal);
+    constexpr auto causal = അസത്യം;
+    എങ്കിൽ (has_mask) {
+        auto sdpa = std::make_shared<ov::op::v13::ScaledDotProductAttention>(q, k, v, mask, scale_കണ്ണി, causal);
         res = std::make_shared<ov::op::v1::Transpose>(
             sdpa, ov::op::v0::Constant::create(ov::element::i64, {4}, {0, 2, 1, 3}));
-    } else {
-        auto sdpa = std::make_shared<ov::op::v13::ScaledDotProductAttention>(q, k, v, scale_node, causal);
+    } അല്ലെങ്കിൽ {
+        auto sdpa = std::make_shared<ov::op::v13::ScaledDotProductAttention>(q, k, v, scale_കണ്ണി, causal);
         res = std::make_shared<ov::op::v1::Transpose>(
             sdpa, ov::op::v0::Constant::create(ov::element::i64, {4}, {0, 2, 1, 3}));
     }
     res = std::make_shared<ov::op::v0::Convert>(res, ov::element::f32);
-    return rename_outputs_with_suffix({res}, context.get_name());
+    തിരികെ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

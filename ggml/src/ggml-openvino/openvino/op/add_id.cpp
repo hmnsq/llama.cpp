@@ -1,73 +1,73 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#അന്തര്ഭാവ "../node_context.h"
+#അന്തര്ഭാവ "../op_table.h"
+#അന്തര്ഭാവ "../utils.h"
 
-#include <memory>
-#include <openvino/core/node.hpp>
-#include <openvino/core/node_output.hpp>
-#include <openvino/op/add.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/shape_of.hpp>
+#അന്തര്ഭാവ <memory>
+#അന്തര്ഭാവ <openvino/core/node.hpp>
+#അന്തര്ഭാവ <openvino/core/node_output.hpp>
+#അന്തര്ഭാവ <openvino/op/add.hpp>
+#അന്തര്ഭാവ <openvino/op/constant.hpp>
+#അന്തര്ഭാവ <openvino/op/convert.hpp>
+#അന്തര്ഭാവ <openvino/op/gather.hpp>
+#അന്തര്ഭാവ <openvino/op/reshape.hpp>
+#അന്തര്ഭാവ <openvino/op/shape_of.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+നാമാകാശ ov {
+നാമാകാശ frontend {
+നാമാകാശ ggml {
+നാമാകാശ op {
 
-static ov::Output<ov::Node> reshape_add_id_input_to_2d(const ov::Output<ov::Node> & input,
-                                                       const ov::PartialShape & input_shape,
-                                                       const std::vector<int> & dims) {
-    const auto & actual_shape = input.get_partial_shape();
-    if (actual_shape.rank().is_static() && actual_shape.rank().get_length() == 2) {
-        return input;
+സ്ഥിതം ov::Output<ov::Node> reshape_add_id_നിവേശം_to_2d(സ്ഥിരം ov::Output<ov::Node> & നിവേശം,
+                                                       സ്ഥിരം ov::PartialShape & നിവേശം_shape,
+                                                       സ്ഥിരം std::vector<പൂർണ്ണസംഖ്യ> & dims) {
+    സ്ഥിരം auto & actual_shape = നിവേശം.get_partial_shape();
+    എങ്കിൽ (actual_shape.rank().is_static() && actual_shape.rank().get_length() == 2) {
+        തിരികെ നിവേശം;
     }
 
-    if (input_shape.rank().is_static() && input_shape.rank().get_length() == 2) {
-        return input;
+    എങ്കിൽ (നിവേശം_shape.rank().is_static() && നിവേശം_shape.rank().get_length() == 2) {
+        തിരികെ നിവേശം;
     }
 
-    auto shape = std::make_shared<ov::op::v3::ShapeOf>(input, ov::element::i64);
-    return std::make_shared<ov::op::v1::Reshape>(input, get_dimensions(shape, dims), false);
+    auto shape = std::make_shared<ov::op::v3::ShapeOf>(നിവേശം, ov::element::i64);
+    തിരികെ std::make_shared<ov::op::v1::Reshape>(നിവേശം, get_dimensions(shape, dims), അസത്യം);
 }
 
-OutputVector translate_add_id(const NodeContext & context) {
-    num_inputs_check(context, 3, 3);
+OutputVector translate_add_id(സ്ഥിരം കണ്ണി_Context & context) {
+    അക്കം_inputs_check(context, 3, 3);
 
-    auto input = process_view_input_new(context, 0);
-    auto bias = process_view_input_new(context, 1);
-    auto ids = process_view_input_new(context, 2);
+    auto നിവേശം = process_view_നിവേശം_new(context, 0);
+    auto bias = process_view_നിവേശം_new(context, 1);
+    auto ids = process_view_നിവേശം_new(context, 2);
 
     // OpenVINO uses reversed GGML dimensions:
     //   input: [1, n_token, n_used, n_embd]
     //   bias:  [1, 1, n_expert, n_embd]
     //   ids:   [1, 1, n_token, n_used]
     // Model bias constants may already be stored as [n_expert, n_embd].
-    bias = reshape_add_id_input_to_2d(bias, context.get_input_shape(1), {2, 3});
-    ids = reshape_add_id_input_to_2d(ids, context.get_input_shape(2), {2, 3});
+    bias = reshape_add_id_നിവേശം_to_2d(bias, context.get_നിവേശം_shape(1), {2, 3});
+    ids = reshape_add_id_നിവേശം_to_2d(ids, context.get_നിവേശം_shape(2), {2, 3});
 
-    if (ids.get_element_type() != ov::element::i32 && ids.get_element_type() != ov::element::i64) {
+    എങ്കിൽ (ids.get_element_type() != ov::element::i32 && ids.get_element_type() != ov::element::i64) {
         ids = std::make_shared<ov::op::v0::Convert>(ids, ov::element::i32);
     }
 
     auto gather_axis = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{}, {0});
     ov::Output<ov::Node> selected_bias = std::make_shared<ov::op::v8::Gather>(bias, ids, gather_axis);
     selected_bias = std::make_shared<ov::op::v1::Reshape>(
-        selected_bias, std::make_shared<ov::op::v3::ShapeOf>(input, ov::element::i64), false);
+        selected_bias, std::make_shared<ov::op::v3::ShapeOf>(നിവേശം, ov::element::i64), അസത്യം);
 
-    if (selected_bias.get_element_type() != input.get_element_type()) {
-        selected_bias = std::make_shared<ov::op::v0::Convert>(selected_bias, input.get_element_type());
+    എങ്കിൽ (selected_bias.get_element_type() != നിവേശം.get_element_type()) {
+        selected_bias = std::make_shared<ov::op::v0::Convert>(selected_bias, നിവേശം.get_element_type());
     }
 
-    ov::Output<ov::Node> res = std::make_shared<ov::op::v1::Add>(input, selected_bias);
-    const auto output_type = context.get_output_type();
-    if (res.get_element_type() != output_type) {
+    ov::Output<ov::Node> res = std::make_shared<ov::op::v1::Add>(നിവേശം, selected_bias);
+    സ്ഥിരം auto output_type = context.get_output_type();
+    എങ്കിൽ (res.get_element_type() != output_type) {
         res = std::make_shared<ov::op::v0::Convert>(res, output_type);
     }
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    തിരികെ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

@@ -1,109 +1,109 @@
-#include "binbcast.hpp"
+#അന്തര്ഭാവ "binbcast.hpp"
 
-#include <algorithm>
-#include <cstddef>
-#include <cstdint>
-#include <sycl/sycl.hpp>
+#അന്തര്ഭാവ <algorithm>
+#അന്തര്ഭാവ <cstddef>
+#അന്തര്ഭാവ <cstdint>
+#അന്തര്ഭാവ <sycl/sycl.hpp>
 
-#include "ggml.h"
+#അന്തര്ഭാവ "ggml.h"
 
-template<float (*bin_op)(const float, const float), typename src0_t, typename src1_t, typename dst_t>
-static void k_bin_bcast(const src0_t * src0, const src1_t * src1, dst_t * dst,
-        int ne0, int ne1, int ne2, int ne3,
-        int ne10, int ne11, int ne12, int ne13,
-        /*int s0, */ int s1,  int s2,  int s3,
-        int s00, int s01, int s02, int s03,
-        int s10, int s11, int s12, int s13,
-        const sycl::nd_item<3> &item_ct1) {
-    const int i0s = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
+template<ദശാംശം (*bin_op)(സ്ഥിരം ദശാംശം, സ്ഥിരം ദശാംശം), typename src0_t, typename src1_t, typename dst_t>
+സ്ഥിതം ശൂന്യം k_bin_bcast(സ്ഥിരം src0_t * src0, സ്ഥിരം src1_t * src1, dst_t * dst,
+        പൂർണ്ണസംഖ്യ ne0, പൂർണ്ണസംഖ്യ ne1, പൂർണ്ണസംഖ്യ ne2, പൂർണ്ണസംഖ്യ ne3,
+        പൂർണ്ണസംഖ്യ ne10, പൂർണ്ണസംഖ്യ ne11, പൂർണ്ണസംഖ്യ ne12, പൂർണ്ണസംഖ്യ ne13,
+        /*int s0, */ പൂർണ്ണസംഖ്യ s1,  പൂർണ്ണസംഖ്യ s2,  പൂർണ്ണസംഖ്യ s3,
+        പൂർണ്ണസംഖ്യ s00, പൂർണ്ണസംഖ്യ s01, പൂർണ്ണസംഖ്യ s02, പൂർണ്ണസംഖ്യ s03,
+        പൂർണ്ണസംഖ്യ s10, പൂർണ്ണസംഖ്യ s11, പൂർണ്ണസംഖ്യ s12, പൂർണ്ണസംഖ്യ s13,
+        സ്ഥിരം sycl::nd_item<3> &item_ct1) {
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i0s = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
                     item_ct1.get_local_id(2);
-    const int i1 = (item_ct1.get_local_range(1) * item_ct1.get_group(1) +
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i1 = (item_ct1.get_local_range(1) * item_ct1.get_group(1) +
                     item_ct1.get_local_id(1));
-    const int i2 = (item_ct1.get_local_range(0) * item_ct1.get_group(0) +
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i2 = (item_ct1.get_local_range(0) * item_ct1.get_group(0) +
                     item_ct1.get_local_id(0)) /
                    ne3;
-    const int i3 = (item_ct1.get_local_range(0) * item_ct1.get_group(0) +
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i3 = (item_ct1.get_local_range(0) * item_ct1.get_group(0) +
                     item_ct1.get_local_id(0)) %
                    ne3;
 
-    if (i0s >= ne0 || i1 >= ne1 || i2 >= ne2 || i3 >= ne3) {
-        return;
+    എങ്കിൽ (i0s >= ne0 || i1 >= ne1 || i2 >= ne2 || i3 >= ne3) {
+        തിരികെ;
     }
 
-    const int i11 = i1 % ne11;
-    const int i12 = i2 % ne12;
-    const int i13 = i3 % ne13;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i11 = i1 % ne11;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i12 = i2 % ne12;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i13 = i3 % ne13;
 
-    const size_t i_src0 =  i3*s03 +  i2*s02 +  i1*s01;
-    const size_t i_src1 = i13*s13 + i12*s12 + i11*s11;
-    const size_t i_dst  =  i3*s3  +  i2*s2  +  i1*s1;
+    സ്ഥിരം size_t i_src0 =  i3*s03 +  i2*s02 +  i1*s01;
+    സ്ഥിരം size_t i_src1 = i13*s13 + i12*s12 + i11*s11;
+    സ്ഥിരം size_t i_dst  =  i3*s3  +  i2*s2  +  i1*s1;
 
-    const src0_t * src0_row = src0 + i_src0;
-    const src1_t * src1_row = src1 + i_src1;
+    സ്ഥിരം src0_t * src0_row = src0 + i_src0;
+    സ്ഥിരം src1_t * src1_row = src1 + i_src1;
     dst_t * dst_row = dst + i_dst;
 
-    for (int i0 = i0s; i0 < ne0;
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i0 = i0s; i0 < ne0;
          i0 += item_ct1.get_local_range(2) * item_ct1.get_group_range(2)) {
-        const int i10 = i0 % ne10;
-        dst_row[i0] = (dst_t)bin_op(src0 ? (float)src0_row[i0*s00] : 0.0f, (float)src1_row[i10*s10]);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ i10 = i0 % ne10;
+        dst_row[i0] = (dst_t)bin_op(src0 ? (ദശാംശം)src0_row[i0*s00] : 0.0f, (ദശാംശം)src1_row[i10*s10]);
     }
 }
 
-template<float (*bin_op)(const float, const float), typename src0_t, typename src1_t, typename dst_t>
-static void k_bin_bcast_unravel(const src0_t * src0, const src1_t * src1, dst_t * dst,
-        int ne0, int ne1, int ne2, int ne3,
-        int ne10, int ne11, int ne12, int ne13,
-        /*int s0, */ int s1,  int s2,  int s3,
-        int s00, int s01, int s02, int s03,
-        int s10, int s11, int s12, int s13,
-        const sycl::nd_item<3> &item_ct1) {
+template<ദശാംശം (*bin_op)(സ്ഥിരം ദശാംശം, സ്ഥിരം ദശാംശം), typename src0_t, typename src1_t, typename dst_t>
+സ്ഥിതം ശൂന്യം k_bin_bcast_unravel(സ്ഥിരം src0_t * src0, സ്ഥിരം src1_t * src1, dst_t * dst,
+        പൂർണ്ണസംഖ്യ ne0, പൂർണ്ണസംഖ്യ ne1, പൂർണ്ണസംഖ്യ ne2, പൂർണ്ണസംഖ്യ ne3,
+        പൂർണ്ണസംഖ്യ ne10, പൂർണ്ണസംഖ്യ ne11, പൂർണ്ണസംഖ്യ ne12, പൂർണ്ണസംഖ്യ ne13,
+        /*int s0, */ പൂർണ്ണസംഖ്യ s1,  പൂർണ്ണസംഖ്യ s2,  പൂർണ്ണസംഖ്യ s3,
+        പൂർണ്ണസംഖ്യ s00, പൂർണ്ണസംഖ്യ s01, പൂർണ്ണസംഖ്യ s02, പൂർണ്ണസംഖ്യ s03,
+        പൂർണ്ണസംഖ്യ s10, പൂർണ്ണസംഖ്യ s11, പൂർണ്ണസംഖ്യ s12, പൂർണ്ണസംഖ്യ s13,
+        സ്ഥിരം sycl::nd_item<3> &item_ct1) {
 
-    const int i = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
                   item_ct1.get_local_id(2);
 
-    const int i3 = i/(ne2*ne1*ne0);
-    const int i2 = (i/(ne1*ne0)) % ne2;
-    const int i1 = (i/ne0) % ne1;
-    const int i0 = i % ne0;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i3 = i/(ne2*ne1*ne0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i2 = (i/(ne1*ne0)) % ne2;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i1 = (i/ne0) % ne1;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i0 = i % ne0;
 
-    if (i0 >= ne0 || i1 >= ne1 || i2 >= ne2 || i3 >= ne3) {
-        return;
+    എങ്കിൽ (i0 >= ne0 || i1 >= ne1 || i2 >= ne2 || i3 >= ne3) {
+        തിരികെ;
     }
 
-    const int i11 = i1 % ne11;
-    const int i12 = i2 % ne12;
-    const int i13 = i3 % ne13;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i11 = i1 % ne11;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i12 = i2 % ne12;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i13 = i3 % ne13;
 
-    const size_t i_src0 =  i3*s03 +  i2*s02 +  i1*s01;
-    const size_t i_src1 = i13*s13 + i12*s12 + i11*s11;
-    const size_t i_dst  =  i3*s3  +  i2*s2  +  i1*s1;
+    സ്ഥിരം size_t i_src0 =  i3*s03 +  i2*s02 +  i1*s01;
+    സ്ഥിരം size_t i_src1 = i13*s13 + i12*s12 + i11*s11;
+    സ്ഥിരം size_t i_dst  =  i3*s3  +  i2*s2  +  i1*s1;
 
-    const src0_t * src0_row = src0 + i_src0;
-    const src1_t * src1_row = src1 + i_src1;
+    സ്ഥിരം src0_t * src0_row = src0 + i_src0;
+    സ്ഥിരം src1_t * src1_row = src1 + i_src1;
     dst_t * dst_row = dst + i_dst;
 
-    const int i10 = i0 % ne10;
-    dst_row[i0] = (dst_t)bin_op(src0 ? (float)src0_row[i0*s00] : 0.0f, (float)src1_row[i10*s10]);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i10 = i0 % ne10;
+    dst_row[i0] = (dst_t)bin_op(src0 ? (ദശാംശം)src0_row[i0*s00] : 0.0f, (ദശാംശം)src1_row[i10*s10]);
 }
 
 
-template<float (*bin_op)(const float, const float)>
-struct bin_bcast_sycl {
+template<ദശാംശം (*bin_op)(സ്ഥിരം ദശാംശം, സ്ഥിരം ദശാംശം)>
+ഘടന bin_bcast_sycl {
     template <typename src0_t, typename src1_t, typename dst_t>
-    void operator()(const src0_t * src0_dd, const src1_t * src1_dd, dst_t * dst_dd, const int64_t ne00,
-                    const int64_t ne01, const int64_t ne02, const int64_t ne03, const int64_t ne10, const int64_t ne11,
-                    const int64_t ne12, const int64_t ne13, const int64_t ne0, const int64_t ne1, const int64_t ne2,
-                    const int64_t ne3, const size_t nb00, const size_t nb01, const size_t nb02, const size_t nb03,
-                    const size_t nb10, const size_t nb11, const size_t nb12, const size_t nb13, const size_t nb0,
-                    const size_t nb1, const size_t nb2, const size_t nb3, const bool src0_is_contiguous,
-                    const bool src1_is_contiguous, const bool src0_is_permuted, const bool src1_is_permuted,
+    ശൂന്യം operator()(സ്ഥിരം src0_t * src0_dd, സ്ഥിരം src1_t * src1_dd, dst_t * dst_dd, സ്ഥിരം int64_t ne00,
+                    സ്ഥിരം int64_t ne01, സ്ഥിരം int64_t ne02, സ്ഥിരം int64_t ne03, സ്ഥിരം int64_t ne10, സ്ഥിരം int64_t ne11,
+                    സ്ഥിരം int64_t ne12, സ്ഥിരം int64_t ne13, സ്ഥിരം int64_t ne0, സ്ഥിരം int64_t ne1, സ്ഥിരം int64_t ne2,
+                    സ്ഥിരം int64_t ne3, സ്ഥിരം size_t nb00, സ്ഥിരം size_t nb01, സ്ഥിരം size_t nb02, സ്ഥിരം size_t nb03,
+                    സ്ഥിരം size_t nb10, സ്ഥിരം size_t nb11, സ്ഥിരം size_t nb12, സ്ഥിരം size_t nb13, സ്ഥിരം size_t nb0,
+                    സ്ഥിരം size_t nb1, സ്ഥിരം size_t nb2, സ്ഥിരം size_t nb3, സ്ഥിരം തർക്കം src0_is_contiguous,
+                    സ്ഥിരം തർക്കം src1_is_contiguous, സ്ഥിരം തർക്കം src0_is_permuted, സ്ഥിരം തർക്കം src1_is_permuted,
                     queue_ptr stream) {
-        int nr0 = ne10 / ne0;
-        int nr1 = ne11/ne1;
-        int nr2 = ne12/ne2;
-        int nr3 = ne13/ne3;
+        പൂർണ്ണസംഖ്യ nr0 = ne10 / ne0;
+        പൂർണ്ണസംഖ്യ nr1 = ne11/ne1;
+        പൂർണ്ണസംഖ്യ nr2 = ne12/ne2;
+        പൂർണ്ണസംഖ്യ nr3 = ne13/ne3;
 
-        int nr[4] = { nr0, nr1, nr2, nr3 };
+        പൂർണ്ണസംഖ്യ nr[4] = { nr0, nr1, nr2, nr3 };
 
         // collapse dimensions until first broadcast dimension
         int64_t cne[] = {ne0, ne1, ne2, ne3};
@@ -125,12 +125,12 @@ struct bin_bcast_sycl {
             cnb[3] *= cne[3];
         };
 
-        if (src0_is_contiguous && src1_is_contiguous && !src0_is_permuted && !src1_is_permuted) {
-            for (int i = 0; i < 4; i++) {
-                if (nr[i] != 1) {
-                    break;
+        എങ്കിൽ (src0_is_contiguous && src1_is_contiguous && !src0_is_permuted && !src1_is_permuted) {
+            വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < 4; i++) {
+                എങ്കിൽ (nr[i] != 1) {
+                    നിർത്തുക;
                 }
-                if (i > 0) {
+                എങ്കിൽ (i > 0) {
                     collapse_nb(cnb, cne);
                     collapse_nb(cnb0, cne0);
                     collapse_nb(cnb1, cne1);
@@ -167,49 +167,49 @@ struct bin_bcast_sycl {
             size_t nb13 = cnb1[3];
 
             // size_t s0 = nb0 / sizeof(dst_t);
-            size_t s1 = nb1 / sizeof(dst_t);
-            size_t s2 = nb2 / sizeof(dst_t);
-            size_t s3 = nb3 / sizeof(dst_t);
+            size_t s1 = nb1 / വലുപ്പം(dst_t);
+            size_t s2 = nb2 / വലുപ്പം(dst_t);
+            size_t s3 = nb3 / വലുപ്പം(dst_t);
 
-            size_t s10 = nb10 / sizeof(src1_t);
-            size_t s11 = nb11 / sizeof(src1_t);
-            size_t s12 = nb12 / sizeof(src1_t);
-            size_t s13 = nb13 / sizeof(src1_t);
+            size_t s10 = nb10 / വലുപ്പം(src1_t);
+            size_t s11 = nb11 / വലുപ്പം(src1_t);
+            size_t s12 = nb12 / വലുപ്പം(src1_t);
+            size_t s13 = nb13 / വലുപ്പം(src1_t);
 
-            size_t s00 = nb00 / sizeof(src0_t);
-            size_t s01 = nb01 / sizeof(src0_t);
-            size_t s02 = nb02 / sizeof(src0_t);
-            size_t s03 = nb03 / sizeof(src0_t);
+            size_t s00 = nb00 / വലുപ്പം(src0_t);
+            size_t s01 = nb01 / വലുപ്പം(src0_t);
+            size_t s02 = nb02 / വലുപ്പം(src0_t);
+            size_t s03 = nb03 / വലുപ്പം(src0_t);
 
             GGML_UNUSED(s00);
 
-            GGML_ASSERT(nb0 % sizeof(dst_t) == 0);
-            GGML_ASSERT(nb1 % sizeof(dst_t) == 0);
-            GGML_ASSERT(nb2 % sizeof(dst_t) == 0);
-            GGML_ASSERT(nb3 % sizeof(dst_t) == 0);
+            GGML_ASSERT(nb0 % വലുപ്പം(dst_t) == 0);
+            GGML_ASSERT(nb1 % വലുപ്പം(dst_t) == 0);
+            GGML_ASSERT(nb2 % വലുപ്പം(dst_t) == 0);
+            GGML_ASSERT(nb3 % വലുപ്പം(dst_t) == 0);
 
-            GGML_ASSERT(nb00 % sizeof(src0_t) == 0);
-            GGML_ASSERT(nb01 % sizeof(src0_t) == 0);
-            GGML_ASSERT(nb02 % sizeof(src0_t) == 0);
-            GGML_ASSERT(nb03 % sizeof(src0_t) == 0);
+            GGML_ASSERT(nb00 % വലുപ്പം(src0_t) == 0);
+            GGML_ASSERT(nb01 % വലുപ്പം(src0_t) == 0);
+            GGML_ASSERT(nb02 % വലുപ്പം(src0_t) == 0);
+            GGML_ASSERT(nb03 % വലുപ്പം(src0_t) == 0);
 
-            GGML_ASSERT(nb10 % sizeof(src1_t) == 0);
-            GGML_ASSERT(nb11 % sizeof(src1_t) == 0);
-            GGML_ASSERT(nb12 % sizeof(src1_t) == 0);
-            GGML_ASSERT(nb13 % sizeof(src1_t) == 0);
+            GGML_ASSERT(nb10 % വലുപ്പം(src1_t) == 0);
+            GGML_ASSERT(nb11 % വലുപ്പം(src1_t) == 0);
+            GGML_ASSERT(nb12 % വലുപ്പം(src1_t) == 0);
+            GGML_ASSERT(nb13 % വലുപ്പം(src1_t) == 0);
 
-            const int block_size = 128;
+            സ്ഥിരം പൂർണ്ണസംഖ്യ block_size = 128;
 
             int64_t hne0 = std::max(ne0/2LL, 1LL);
 
             sycl::range<3> block_dims(1, 1, 1);
-            block_dims[2] = std::min<unsigned int>(hne0, block_size);
-            block_dims[1] = std::min<unsigned int>(
-                ne1, block_size / (unsigned int)block_dims[2]);
+            block_dims[2] = std::min<unsigned പൂർണ്ണസംഖ്യ>(hne0, block_size);
+            block_dims[1] = std::min<unsigned പൂർണ്ണസംഖ്യ>(
+                ne1, block_size / (unsigned പൂർണ്ണസംഖ്യ)block_dims[2]);
             block_dims[0] = std::min(
-                std::min<unsigned int>(
-                    ne2 * ne3, block_size / (unsigned int)block_dims[2] /
-                                   (unsigned int)block_dims[1]),
+                std::min<unsigned പൂർണ്ണസംഖ്യ>(
+                    ne2 * ne3, block_size / (unsigned പൂർണ്ണസംഖ്യ)block_dims[2] /
+                                   (unsigned പൂർണ്ണസംഖ്യ)block_dims[1]),
                 64U);
 
             sycl::range<3> block_nums(
@@ -217,15 +217,15 @@ struct bin_bcast_sycl {
                 (ne1 + block_dims[1] - 1) / block_dims[1],
                 (hne0 + block_dims[2] - 1) / block_dims[2]);
 
-            if (block_nums[0] > 65535) {
+            എങ്കിൽ (block_nums[0] > 65535) {
                 // this is the maximum number of blocks in z direction, fallback to 1D grid kernel
-                int block_num = (ne0*ne1*ne2*ne3 + block_size - 1) / block_size;
+                പൂർണ്ണസംഖ്യ block_അക്കം = (ne0*ne1*ne2*ne3 + block_size - 1) / block_size;
                 {
                     dpct::has_capability_or_fail(stream->get_device(),
                                                  {sycl::aspect::fp16});
 
                     stream->parallel_for(
-                        sycl::nd_range<3>(sycl::range<3>(1, 1, block_num) *
+                        sycl::nd_range<3>(sycl::range<3>(1, 1, block_അക്കം) *
                                               sycl::range<3>(1, 1, block_size),
                                           sycl::range<3>(1, 1, block_size)),
                         [=](sycl::nd_item<3> item_ct1) {
@@ -235,7 +235,7 @@ struct bin_bcast_sycl {
                                 s03, s10, s11, s12, s13, item_ct1);
                         });
                 }
-            } else {
+            } അല്ലെങ്കിൽ {
                 /*
                 DPCT1049:16: The work-group size passed to the SYCL kernel may
                 exceed the limit. To get the device limit, query
@@ -258,208 +258,208 @@ struct bin_bcast_sycl {
     }
 };
 
-template <class op>
-inline void ggml_sycl_op_bin_bcast(ggml_backend_sycl_context & ctx, const ggml_tensor * src0, const ggml_tensor * src1,
+template <വർഗ്ഗം op>
+വരിയിൽ ശൂന്യം ggml_sycl_op_bin_bcast(ggml_backend_sycl_context & ctx, സ്ഥിരം ggml_tensor * src0, സ്ഥിരം ggml_tensor * src1,
                                    ggml_tensor * dst) {
     dpct::queue_ptr main_stream = ctx.stream();
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ദ്വിമാന_OP_LOCALS
 
-    if (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-        op()((const float *) src0->data, (const float *) src1->data, (float *) dst->data, ne00, ne01, ne02, ne03, ne10,
+    എങ്കിൽ (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
+        op()((സ്ഥിരം ദശാംശം *) src0->data, (സ്ഥിരം ദശാംശം *) src1->data, (ദശാംശം *) dst->data, ne00, ne01, ne02, ne03, ne10,
              ne11, ne12, ne13, ne0, ne1, ne2, ne3, nb00, nb01, nb02, nb03, nb10, nb11, nb12, nb13, nb0, nb1, nb2, nb3,
              ggml_is_contiguous(src0), ggml_is_contiguous(src1), ggml_is_permuted(src0), ggml_is_permuted(src1), main_stream);
-    } else if (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F16 && dst->type == GGML_TYPE_F16) {
-        op()((const sycl::half *) src0->data, (const sycl::half *) src1->data, (sycl::half *) dst->data, ne00, ne01,
+    } അല്ലെങ്കിൽ എങ്കിൽ (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F16 && dst->type == GGML_TYPE_F16) {
+        op()((സ്ഥിരം sycl::half *) src0->data, (സ്ഥിരം sycl::half *) src1->data, (sycl::half *) dst->data, ne00, ne01,
              ne02, ne03, ne10, ne11, ne12, ne13, ne0, ne1, ne2, ne3, nb00, nb01, nb02, nb03, nb10, nb11, nb12, nb13,
              nb0, nb1, nb2, nb3, ggml_is_contiguous(src0), ggml_is_contiguous(src1), ggml_is_permuted(src0), ggml_is_permuted(src1),
              main_stream);
-    } else if (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F16) {
-        op()((const sycl::half *) src0->data, (const float *) src1->data, (sycl::half *) dst->data, ne00, ne01, ne02,
+    } അല്ലെങ്കിൽ എങ്കിൽ (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F16) {
+        op()((സ്ഥിരം sycl::half *) src0->data, (സ്ഥിരം ദശാംശം *) src1->data, (sycl::half *) dst->data, ne00, ne01, ne02,
              ne03, ne10, ne11, ne12, ne13, ne0, ne1, ne2, ne3, nb00, nb01, nb02, nb03, nb10, nb11, nb12, nb13, nb0, nb1,
              nb2, nb3, ggml_is_contiguous(src0), ggml_is_contiguous(src1), ggml_is_permuted(src0), ggml_is_permuted(src1),
              main_stream);
-    } else if (src0->type == GGML_TYPE_I32 && src1->type == GGML_TYPE_I32 && dst->type == GGML_TYPE_I32) {
-        op()((const int32_t *) src0->data, (const int32_t *) src1->data, (int32_t *) dst->data, ne00, ne01, ne02, ne03,
+    } അല്ലെങ്കിൽ എങ്കിൽ (src0->type == GGML_TYPE_I32 && src1->type == GGML_TYPE_I32 && dst->type == GGML_TYPE_I32) {
+        op()((സ്ഥിരം int32_t *) src0->data, (സ്ഥിരം int32_t *) src1->data, (int32_t *) dst->data, ne00, ne01, ne02, ne03,
              ne10, ne11, ne12, ne13, ne0, ne1, ne2, ne3, nb00, nb01, nb02, nb03, nb10, nb11, nb12, nb13, nb0, nb1, nb2,
              nb3, ggml_is_contiguous(src0), ggml_is_contiguous(src1), ggml_is_permuted(src0), ggml_is_permuted(src1),
              main_stream);
-    } else if (src0->type == GGML_TYPE_I16 && src1->type == GGML_TYPE_I16 && dst->type == GGML_TYPE_I16) {
-        op()((const int16_t *) src0->data, (const int16_t *) src1->data, (int16_t *) dst->data, ne00, ne01, ne02, ne03,
+    } അല്ലെങ്കിൽ എങ്കിൽ (src0->type == GGML_TYPE_I16 && src1->type == GGML_TYPE_I16 && dst->type == GGML_TYPE_I16) {
+        op()((സ്ഥിരം int16_t *) src0->data, (സ്ഥിരം int16_t *) src1->data, (int16_t *) dst->data, ne00, ne01, ne02, ne03,
              ne10, ne11, ne12, ne13, ne0, ne1, ne2, ne3, nb00, nb01, nb02, nb03, nb10, nb11, nb12, nb13, nb0, nb1, nb2,
              nb3, ggml_is_contiguous(src0), ggml_is_contiguous(src1), ggml_is_permuted(src0), ggml_is_permuted(src1),
              main_stream);
 #ifdef GGML_SYCL_HAS_BF16
-    } else if (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_BF16 && dst->type == GGML_TYPE_BF16) {
-        op()((const sycl::ext::oneapi::bfloat16 *) src0->data, (const sycl::ext::oneapi::bfloat16 *) src1->data,
+    } അല്ലെങ്കിൽ എങ്കിൽ (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_BF16 && dst->type == GGML_TYPE_BF16) {
+        op()((സ്ഥിരം sycl::ext::oneapi::bfloat16 *) src0->data, (സ്ഥിരം sycl::ext::oneapi::bfloat16 *) src1->data,
              (sycl::ext::oneapi::bfloat16 *) dst->data, ne00, ne01, ne02, ne03, ne10, ne11, ne12, ne13, ne0, ne1, ne2,
              ne3, nb00, nb01, nb02, nb03, nb10, nb11, nb12, nb13, nb0, nb1, nb2, nb3, ggml_is_contiguous(src0),
              ggml_is_contiguous(src1), ggml_is_permuted(src0), ggml_is_permuted(src1), main_stream);
-    } else if (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_BF16) {
-        op()((const sycl::ext::oneapi::bfloat16 *) src0->data, (const float *) src1->data,
+    } അല്ലെങ്കിൽ എങ്കിൽ (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_BF16) {
+        op()((സ്ഥിരം sycl::ext::oneapi::bfloat16 *) src0->data, (സ്ഥിരം ദശാംശം *) src1->data,
              (sycl::ext::oneapi::bfloat16 *) dst->data, ne00, ne01, ne02, ne03, ne10, ne11, ne12, ne13, ne0, ne1, ne2,
              ne3, nb00, nb01, nb02, nb03, nb10, nb11, nb12, nb13, nb0, nb1, nb2, nb3, ggml_is_contiguous(src0),
              ggml_is_contiguous(src1), ggml_is_permuted(src0), ggml_is_permuted(src1), main_stream);
 #endif
-    } else {
+    } അല്ലെങ്കിൽ {
         fprintf(stderr, "%s: unsupported types: dst: %s, src0: %s, src1: %s\n", __func__, ggml_type_name(dst->type),
                 ggml_type_name(src0->type), ggml_type_name(src1->type));
         GGML_ABORT("fatal error");
     }
 }
 
-inline void ggml_sycl_op_add(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
+വരിയിൽ ശൂന്യം ggml_sycl_op_add(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
 
     ggml_sycl_op_bin_bcast<bin_bcast_sycl<op_add>>(ctx, dst->src[0], dst->src[1], dst);
 }
 
-inline void ggml_sycl_op_sub(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
+വരിയിൽ ശൂന്യം ggml_sycl_op_sub(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
 
     ggml_sycl_op_bin_bcast<bin_bcast_sycl<op_sub>>(ctx, dst->src[0], dst->src[1], dst);
 }
 
-inline void ggml_sycl_op_mul(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
+വരിയിൽ ശൂന്യം ggml_sycl_op_mul(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
 
     ggml_sycl_op_bin_bcast<bin_bcast_sycl<op_mul>>(ctx, dst->src[0], dst->src[1], dst);
 }
 
-inline void ggml_sycl_op_div(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
+വരിയിൽ ശൂന്യം ggml_sycl_op_div(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
 
     ggml_sycl_op_bin_bcast<bin_bcast_sycl<op_div>>(ctx, dst->src[0], dst->src[1], dst);
 }
 
-inline void ggml_sycl_op_repeat(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
+വരിയിൽ ശൂന്യം ggml_sycl_op_repeat(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
     ggml_sycl_op_bin_bcast<bin_bcast_sycl<op_repeat>>(ctx, dst, dst->src[0], dst);
 }
 
 
-void ggml_sycl_add(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ശൂന്യം ggml_sycl_add(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
     ggml_sycl_op_add(ctx, dst);
 }
 
-void ggml_sycl_sub(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ശൂന്യം ggml_sycl_sub(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
     ggml_sycl_op_sub(ctx, dst);
 }
 
-void ggml_sycl_mul(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ശൂന്യം ggml_sycl_mul(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
     ggml_sycl_op_mul(ctx, dst);
 }
 
-void ggml_sycl_div(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ശൂന്യം ggml_sycl_div(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
     ggml_sycl_op_div(ctx, dst);
 }
 
-void ggml_sycl_repeat(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ശൂന്യം ggml_sycl_repeat(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_repeat(ctx, dst);
 }
 
 // fused ADD+ADD: dst = (src0 + src1) + src2. Same indexing as k_bin_bcast, so mixed
 // types, broadcast, and non-contiguous layouts that add() already handles also fuse.
-template<float (*bin_op)(const float, const float), typename src0_t, typename src1_t, typename src2_t, typename dst_t>
-static void k_bin_bcast3(const src0_t * src0, const src1_t * src1, const src2_t * src2, dst_t * dst,
-        int ne0, int ne1, int ne2, int ne3,
-        int ne10, int ne11, int ne12, int ne13,
-        int ne20, int ne21, int ne22, int ne23,
-        int s1, int s2, int s3,
-        int s00, int s01, int s02, int s03,
-        int s10, int s11, int s12, int s13,
-        int s20, int s21, int s22, int s23,
-        const sycl::nd_item<3> & item_ct1) {
-    const int i0s = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
+template<ദശാംശം (*bin_op)(സ്ഥിരം ദശാംശം, സ്ഥിരം ദശാംശം), typename src0_t, typename src1_t, typename src2_t, typename dst_t>
+സ്ഥിതം ശൂന്യം k_bin_bcast3(സ്ഥിരം src0_t * src0, സ്ഥിരം src1_t * src1, സ്ഥിരം src2_t * src2, dst_t * dst,
+        പൂർണ്ണസംഖ്യ ne0, പൂർണ്ണസംഖ്യ ne1, പൂർണ്ണസംഖ്യ ne2, പൂർണ്ണസംഖ്യ ne3,
+        പൂർണ്ണസംഖ്യ ne10, പൂർണ്ണസംഖ്യ ne11, പൂർണ്ണസംഖ്യ ne12, പൂർണ്ണസംഖ്യ ne13,
+        പൂർണ്ണസംഖ്യ ne20, പൂർണ്ണസംഖ്യ ne21, പൂർണ്ണസംഖ്യ ne22, പൂർണ്ണസംഖ്യ ne23,
+        പൂർണ്ണസംഖ്യ s1, പൂർണ്ണസംഖ്യ s2, പൂർണ്ണസംഖ്യ s3,
+        പൂർണ്ണസംഖ്യ s00, പൂർണ്ണസംഖ്യ s01, പൂർണ്ണസംഖ്യ s02, പൂർണ്ണസംഖ്യ s03,
+        പൂർണ്ണസംഖ്യ s10, പൂർണ്ണസംഖ്യ s11, പൂർണ്ണസംഖ്യ s12, പൂർണ്ണസംഖ്യ s13,
+        പൂർണ്ണസംഖ്യ s20, പൂർണ്ണസംഖ്യ s21, പൂർണ്ണസംഖ്യ s22, പൂർണ്ണസംഖ്യ s23,
+        സ്ഥിരം sycl::nd_item<3> & item_ct1) {
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i0s = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
                     item_ct1.get_local_id(2);
-    const int i1 = (item_ct1.get_local_range(1) * item_ct1.get_group(1) +
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i1 = (item_ct1.get_local_range(1) * item_ct1.get_group(1) +
                     item_ct1.get_local_id(1));
-    const int i2 = (item_ct1.get_local_range(0) * item_ct1.get_group(0) +
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i2 = (item_ct1.get_local_range(0) * item_ct1.get_group(0) +
                     item_ct1.get_local_id(0)) /
                    ne3;
-    const int i3 = (item_ct1.get_local_range(0) * item_ct1.get_group(0) +
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i3 = (item_ct1.get_local_range(0) * item_ct1.get_group(0) +
                     item_ct1.get_local_id(0)) %
                    ne3;
 
-    if (i0s >= ne0 || i1 >= ne1 || i2 >= ne2 || i3 >= ne3) {
-        return;
+    എങ്കിൽ (i0s >= ne0 || i1 >= ne1 || i2 >= ne2 || i3 >= ne3) {
+        തിരികെ;
     }
 
-    const int i11 = i1 % ne11;
-    const int i12 = i2 % ne12;
-    const int i13 = i3 % ne13;
-    const int i21 = i1 % ne21;
-    const int i22 = i2 % ne22;
-    const int i23 = i3 % ne23;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i11 = i1 % ne11;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i12 = i2 % ne12;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i13 = i3 % ne13;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i21 = i1 % ne21;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i22 = i2 % ne22;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i23 = i3 % ne23;
 
-    const size_t i_src0 = i3 * s03 + i2 * s02 + i1 * s01;
-    const size_t i_src1 = i13 * s13 + i12 * s12 + i11 * s11;
-    const size_t i_src2 = i23 * s23 + i22 * s22 + i21 * s21;
-    const size_t i_dst  = i3 * s3 + i2 * s2 + i1 * s1;
+    സ്ഥിരം size_t i_src0 = i3 * s03 + i2 * s02 + i1 * s01;
+    സ്ഥിരം size_t i_src1 = i13 * s13 + i12 * s12 + i11 * s11;
+    സ്ഥിരം size_t i_src2 = i23 * s23 + i22 * s22 + i21 * s21;
+    സ്ഥിരം size_t i_dst  = i3 * s3 + i2 * s2 + i1 * s1;
 
-    const src0_t * src0_row = src0 + i_src0;
-    const src1_t * src1_row = src1 + i_src1;
-    const src2_t * src2_row = src2 + i_src2;
+    സ്ഥിരം src0_t * src0_row = src0 + i_src0;
+    സ്ഥിരം src1_t * src1_row = src1 + i_src1;
+    സ്ഥിരം src2_t * src2_row = src2 + i_src2;
     dst_t *        dst_row  = dst + i_dst;
 
-    for (int i0 = i0s; i0 < ne0;
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i0 = i0s; i0 < ne0;
          i0 += item_ct1.get_local_range(2) * item_ct1.get_group_range(2)) {
-        const int   i10 = i0 % ne10;
-        const int   i20 = i0 % ne20;
-        const float acc = bin_op((float) src0_row[i0 * s00], (float) src1_row[i10 * s10]);
-        dst_row[i0]     = (dst_t) bin_op(acc, (float) src2_row[i20 * s20]);
+        സ്ഥിരം പൂർണ്ണസംഖ്യ   i10 = i0 % ne10;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ   i20 = i0 % ne20;
+        സ്ഥിരം ദശാംശം acc = bin_op((ദശാംശം) src0_row[i0 * s00], (ദശാംശം) src1_row[i10 * s10]);
+        dst_row[i0]     = (dst_t) bin_op(acc, (ദശാംശം) src2_row[i20 * s20]);
     }
 }
 
-template<float (*bin_op)(const float, const float), typename src0_t, typename src1_t, typename src2_t, typename dst_t>
-static void k_bin_bcast3_unravel(const src0_t * src0, const src1_t * src1, const src2_t * src2, dst_t * dst,
-        int ne0, int ne1, int ne2, int ne3,
-        int ne10, int ne11, int ne12, int ne13,
-        int ne20, int ne21, int ne22, int ne23,
-        int s1, int s2, int s3,
-        int s00, int s01, int s02, int s03,
-        int s10, int s11, int s12, int s13,
-        int s20, int s21, int s22, int s23,
-        const sycl::nd_item<3> & item_ct1) {
-    const int i = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
+template<ദശാംശം (*bin_op)(സ്ഥിരം ദശാംശം, സ്ഥിരം ദശാംശം), typename src0_t, typename src1_t, typename src2_t, typename dst_t>
+സ്ഥിതം ശൂന്യം k_bin_bcast3_unravel(സ്ഥിരം src0_t * src0, സ്ഥിരം src1_t * src1, സ്ഥിരം src2_t * src2, dst_t * dst,
+        പൂർണ്ണസംഖ്യ ne0, പൂർണ്ണസംഖ്യ ne1, പൂർണ്ണസംഖ്യ ne2, പൂർണ്ണസംഖ്യ ne3,
+        പൂർണ്ണസംഖ്യ ne10, പൂർണ്ണസംഖ്യ ne11, പൂർണ്ണസംഖ്യ ne12, പൂർണ്ണസംഖ്യ ne13,
+        പൂർണ്ണസംഖ്യ ne20, പൂർണ്ണസംഖ്യ ne21, പൂർണ്ണസംഖ്യ ne22, പൂർണ്ണസംഖ്യ ne23,
+        പൂർണ്ണസംഖ്യ s1, പൂർണ്ണസംഖ്യ s2, പൂർണ്ണസംഖ്യ s3,
+        പൂർണ്ണസംഖ്യ s00, പൂർണ്ണസംഖ്യ s01, പൂർണ്ണസംഖ്യ s02, പൂർണ്ണസംഖ്യ s03,
+        പൂർണ്ണസംഖ്യ s10, പൂർണ്ണസംഖ്യ s11, പൂർണ്ണസംഖ്യ s12, പൂർണ്ണസംഖ്യ s13,
+        പൂർണ്ണസംഖ്യ s20, പൂർണ്ണസംഖ്യ s21, പൂർണ്ണസംഖ്യ s22, പൂർണ്ണസംഖ്യ s23,
+        സ്ഥിരം sycl::nd_item<3> & item_ct1) {
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
                   item_ct1.get_local_id(2);
 
-    const int i3 = i / (ne2 * ne1 * ne0);
-    const int i2 = (i / (ne1 * ne0)) % ne2;
-    const int i1 = (i / ne0) % ne1;
-    const int i0 = i % ne0;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i3 = i / (ne2 * ne1 * ne0);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i2 = (i / (ne1 * ne0)) % ne2;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i1 = (i / ne0) % ne1;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i0 = i % ne0;
 
-    if (i0 >= ne0 || i1 >= ne1 || i2 >= ne2 || i3 >= ne3) {
-        return;
+    എങ്കിൽ (i0 >= ne0 || i1 >= ne1 || i2 >= ne2 || i3 >= ne3) {
+        തിരികെ;
     }
 
-    const int i11 = i1 % ne11;
-    const int i12 = i2 % ne12;
-    const int i13 = i3 % ne13;
-    const int i21 = i1 % ne21;
-    const int i22 = i2 % ne22;
-    const int i23 = i3 % ne23;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i11 = i1 % ne11;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i12 = i2 % ne12;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i13 = i3 % ne13;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i21 = i1 % ne21;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i22 = i2 % ne22;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ i23 = i3 % ne23;
 
-    const size_t i_src0 = i3 * s03 + i2 * s02 + i1 * s01;
-    const size_t i_src1 = i13 * s13 + i12 * s12 + i11 * s11;
-    const size_t i_src2 = i23 * s23 + i22 * s22 + i21 * s21;
-    const size_t i_dst  = i3 * s3 + i2 * s2 + i1 * s1;
+    സ്ഥിരം size_t i_src0 = i3 * s03 + i2 * s02 + i1 * s01;
+    സ്ഥിരം size_t i_src1 = i13 * s13 + i12 * s12 + i11 * s11;
+    സ്ഥിരം size_t i_src2 = i23 * s23 + i22 * s22 + i21 * s21;
+    സ്ഥിരം size_t i_dst  = i3 * s3 + i2 * s2 + i1 * s1;
 
-    const int   i10 = i0 % ne10;
-    const int   i20 = i0 % ne20;
-    const float acc = bin_op((float) src0[i_src0 + i0 * s00], (float) src1[i_src1 + i10 * s10]);
-    dst[i_dst + i0] = (dst_t) bin_op(acc, (float) src2[i_src2 + i20 * s20]);
+    സ്ഥിരം പൂർണ്ണസംഖ്യ   i10 = i0 % ne10;
+    സ്ഥിരം പൂർണ്ണസംഖ്യ   i20 = i0 % ne20;
+    സ്ഥിരം ദശാംശം acc = bin_op((ദശാംശം) src0[i_src0 + i0 * s00], (ദശാംശം) src1[i_src1 + i10 * s10]);
+    dst[i_dst + i0] = (dst_t) bin_op(acc, (ദശാംശം) src2[i_src2 + i20 * s20]);
 }
 
-template<float (*bin_op)(const float, const float), typename src0_t, typename src1_t, typename src2_t, typename dst_t>
-static void launch_bin_bcast3(ggml_backend_sycl_context & ctx, const ggml_tensor * src0, const ggml_tensor * src1,
-                              const ggml_tensor * src2, ggml_tensor * dst) {
+template<ദശാംശം (*bin_op)(സ്ഥിരം ദശാംശം, സ്ഥിരം ദശാംശം), typename src0_t, typename src1_t, typename src2_t, typename dst_t>
+സ്ഥിതം ശൂന്യം launch_bin_bcast3(ggml_backend_sycl_context & ctx, സ്ഥിരം ggml_tensor * src0, സ്ഥിരം ggml_tensor * src1,
+                              സ്ഥിരം ggml_tensor * src2, ggml_tensor * dst) {
     dpct::queue_ptr stream = ctx.stream();
     SYCL_CHECK(ggml_sycl_set_device(ctx.device));
 
     GGML_TENSOR_TERNARY_OP_LOCALS
 
-    int nr1[4] = { (int) (ne10 / ne0), (int) (ne11 / ne1), (int) (ne12 / ne2), (int) (ne13 / ne3) };
-    int nr2[4] = { (int) (ne20 / ne0), (int) (ne21 / ne1), (int) (ne22 / ne2), (int) (ne23 / ne3) };
+    പൂർണ്ണസംഖ്യ nr1[4] = { (പൂർണ്ണസംഖ്യ) (ne10 / ne0), (പൂർണ്ണസംഖ്യ) (ne11 / ne1), (പൂർണ്ണസംഖ്യ) (ne12 / ne2), (പൂർണ്ണസംഖ്യ) (ne13 / ne3) };
+    പൂർണ്ണസംഖ്യ nr2[4] = { (പൂർണ്ണസംഖ്യ) (ne20 / ne0), (പൂർണ്ണസംഖ്യ) (ne21 / ne1), (പൂർണ്ണസംഖ്യ) (ne22 / ne2), (പൂർണ്ണസംഖ്യ) (ne23 / ne3) };
 
     int64_t cne[]  = { ne0, ne1, ne2, ne3 };
     int64_t cne0[] = { ne00, ne01, ne02, ne03 };
@@ -483,14 +483,14 @@ static void launch_bin_bcast3(ggml_backend_sycl_context & ctx, const ggml_tensor
         cnb[3] *= cne[3];
     };
 
-    const bool can_collapse = ggml_is_contiguous(src0) && ggml_is_contiguous(src1) && ggml_is_contiguous(src2) &&
+    സ്ഥിരം തർക്കം can_collapse = ggml_is_contiguous(src0) && ggml_is_contiguous(src1) && ggml_is_contiguous(src2) &&
                               !ggml_is_permuted(src0) && !ggml_is_permuted(src1) && !ggml_is_permuted(src2);
-    if (can_collapse) {
-        for (int i = 0; i < 4; i++) {
-            if (nr1[i] != 1 || nr2[i] != 1) {
-                break;
+    എങ്കിൽ (can_collapse) {
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < 4; i++) {
+            എങ്കിൽ (nr1[i] != 1 || nr2[i] != 1) {
+                നിർത്തുക;
             }
-            if (i > 0) {
+            എങ്കിൽ (i > 0) {
                 collapse_nb(cnb, cne);
                 collapse_nb(cnb0, cne0);
                 collapse_nb(cnb1, cne1);
@@ -519,48 +519,48 @@ static void launch_bin_bcast3(ggml_backend_sycl_context & ctx, const ggml_tensor
         int64_t ne22 = cne2[2];
         int64_t ne23 = cne2[3];
 
-        size_t s1 = cnb[1] / sizeof(dst_t);
-        size_t s2 = cnb[2] / sizeof(dst_t);
-        size_t s3 = cnb[3] / sizeof(dst_t);
+        size_t s1 = cnb[1] / വലുപ്പം(dst_t);
+        size_t s2 = cnb[2] / വലുപ്പം(dst_t);
+        size_t s3 = cnb[3] / വലുപ്പം(dst_t);
 
-        size_t s00 = cnb0[0] / sizeof(src0_t);
-        size_t s01 = cnb0[1] / sizeof(src0_t);
-        size_t s02 = cnb0[2] / sizeof(src0_t);
-        size_t s03 = cnb0[3] / sizeof(src0_t);
+        size_t s00 = cnb0[0] / വലുപ്പം(src0_t);
+        size_t s01 = cnb0[1] / വലുപ്പം(src0_t);
+        size_t s02 = cnb0[2] / വലുപ്പം(src0_t);
+        size_t s03 = cnb0[3] / വലുപ്പം(src0_t);
 
-        size_t s10 = cnb1[0] / sizeof(src1_t);
-        size_t s11 = cnb1[1] / sizeof(src1_t);
-        size_t s12 = cnb1[2] / sizeof(src1_t);
-        size_t s13 = cnb1[3] / sizeof(src1_t);
+        size_t s10 = cnb1[0] / വലുപ്പം(src1_t);
+        size_t s11 = cnb1[1] / വലുപ്പം(src1_t);
+        size_t s12 = cnb1[2] / വലുപ്പം(src1_t);
+        size_t s13 = cnb1[3] / വലുപ്പം(src1_t);
 
-        size_t s20 = cnb2[0] / sizeof(src2_t);
-        size_t s21 = cnb2[1] / sizeof(src2_t);
-        size_t s22 = cnb2[2] / sizeof(src2_t);
-        size_t s23 = cnb2[3] / sizeof(src2_t);
+        size_t s20 = cnb2[0] / വലുപ്പം(src2_t);
+        size_t s21 = cnb2[1] / വലുപ്പം(src2_t);
+        size_t s22 = cnb2[2] / വലുപ്പം(src2_t);
+        size_t s23 = cnb2[3] / വലുപ്പം(src2_t);
 
-        GGML_ASSERT(cnb[0] % sizeof(dst_t) == 0 && cnb[1] % sizeof(dst_t) == 0 && cnb[2] % sizeof(dst_t) == 0 &&
-                    cnb[3] % sizeof(dst_t) == 0);
-        GGML_ASSERT(cnb0[0] % sizeof(src0_t) == 0 && cnb0[1] % sizeof(src0_t) == 0 && cnb0[2] % sizeof(src0_t) == 0 &&
-                    cnb0[3] % sizeof(src0_t) == 0);
-        GGML_ASSERT(cnb1[0] % sizeof(src1_t) == 0 && cnb1[1] % sizeof(src1_t) == 0 && cnb1[2] % sizeof(src1_t) == 0 &&
-                    cnb1[3] % sizeof(src1_t) == 0);
-        GGML_ASSERT(cnb2[0] % sizeof(src2_t) == 0 && cnb2[1] % sizeof(src2_t) == 0 && cnb2[2] % sizeof(src2_t) == 0 &&
-                    cnb2[3] % sizeof(src2_t) == 0);
+        GGML_ASSERT(cnb[0] % വലുപ്പം(dst_t) == 0 && cnb[1] % വലുപ്പം(dst_t) == 0 && cnb[2] % വലുപ്പം(dst_t) == 0 &&
+                    cnb[3] % വലുപ്പം(dst_t) == 0);
+        GGML_ASSERT(cnb0[0] % വലുപ്പം(src0_t) == 0 && cnb0[1] % വലുപ്പം(src0_t) == 0 && cnb0[2] % വലുപ്പം(src0_t) == 0 &&
+                    cnb0[3] % വലുപ്പം(src0_t) == 0);
+        GGML_ASSERT(cnb1[0] % വലുപ്പം(src1_t) == 0 && cnb1[1] % വലുപ്പം(src1_t) == 0 && cnb1[2] % വലുപ്പം(src1_t) == 0 &&
+                    cnb1[3] % വലുപ്പം(src1_t) == 0);
+        GGML_ASSERT(cnb2[0] % വലുപ്പം(src2_t) == 0 && cnb2[1] % വലുപ്പം(src2_t) == 0 && cnb2[2] % വലുപ്പം(src2_t) == 0 &&
+                    cnb2[3] % വലുപ്പം(src2_t) == 0);
 
-        const src0_t * src0_dd = (const src0_t *) src0->data;
-        const src1_t * src1_dd = (const src1_t *) src1->data;
-        const src2_t * src2_dd = (const src2_t *) src2->data;
+        സ്ഥിരം src0_t * src0_dd = (സ്ഥിരം src0_t *) src0->data;
+        സ്ഥിരം src1_t * src1_dd = (സ്ഥിരം src1_t *) src1->data;
+        സ്ഥിരം src2_t * src2_dd = (സ്ഥിരം src2_t *) src2->data;
         dst_t *        dst_dd  = (dst_t *) dst->data;
 
-        const int block_size = 128;
+        സ്ഥിരം പൂർണ്ണസംഖ്യ block_size = 128;
         int64_t   hne0       = std::max(ne0 / 2LL, 1LL);
 
         sycl::range<3> block_dims(1, 1, 1);
-        block_dims[2] = std::min<unsigned int>(hne0, block_size);
-        block_dims[1] = std::min<unsigned int>(ne1, block_size / (unsigned int) block_dims[2]);
-        block_dims[0] = std::min(std::min<unsigned int>(ne2 * ne3,
-                                                        block_size / (unsigned int) block_dims[2] /
-                                                            (unsigned int) block_dims[1]),
+        block_dims[2] = std::min<unsigned പൂർണ്ണസംഖ്യ>(hne0, block_size);
+        block_dims[1] = std::min<unsigned പൂർണ്ണസംഖ്യ>(ne1, block_size / (unsigned പൂർണ്ണസംഖ്യ) block_dims[2]);
+        block_dims[0] = std::min(std::min<unsigned പൂർണ്ണസംഖ്യ>(ne2 * ne3,
+                                                        block_size / (unsigned പൂർണ്ണസംഖ്യ) block_dims[2] /
+                                                            (unsigned പൂർണ്ണസംഖ്യ) block_dims[1]),
                                  64U);
 
         sycl::range<3> block_nums((ne2 * ne3 + block_dims[0] - 1) / block_dims[0],
@@ -569,17 +569,17 @@ static void launch_bin_bcast3(ggml_backend_sycl_context & ctx, const ggml_tensor
 
         dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
 
-        if (block_nums[0] > 65535) {
-            int block_num = (ne0 * ne1 * ne2 * ne3 + block_size - 1) / block_size;
+        എങ്കിൽ (block_nums[0] > 65535) {
+            പൂർണ്ണസംഖ്യ block_അക്കം = (ne0 * ne1 * ne2 * ne3 + block_size - 1) / block_size;
             stream->parallel_for(
-                sycl::nd_range<3>(sycl::range<3>(1, 1, block_num) * sycl::range<3>(1, 1, block_size),
+                sycl::nd_range<3>(sycl::range<3>(1, 1, block_അക്കം) * sycl::range<3>(1, 1, block_size),
                                   sycl::range<3>(1, 1, block_size)),
                 [=](sycl::nd_item<3> item_ct1) {
                     k_bin_bcast3_unravel<bin_op>(src0_dd, src1_dd, src2_dd, dst_dd, ne0, ne1, ne2, ne3, ne10, ne11,
                                                  ne12, ne13, ne20, ne21, ne22, ne23, s1, s2, s3, s00, s01, s02, s03,
                                                  s10, s11, s12, s13, s20, s21, s22, s23, item_ct1);
                 });
-        } else {
+        } അല്ലെങ്കിൽ {
             stream->parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                                  [=](sycl::nd_item<3> item_ct1) {
                                      k_bin_bcast3<bin_op>(src0_dd, src1_dd, src2_dd, dst_dd, ne0, ne1, ne2, ne3, ne10,
@@ -591,56 +591,56 @@ static void launch_bin_bcast3(ggml_backend_sycl_context & ctx, const ggml_tensor
     }
 }
 
-void ggml_sycl_op_add_add_fused(ggml_backend_sycl_context & ctx, ggml_tensor * add0, ggml_tensor * add1) {
-    const ggml_tensor * src0 = add0->src[0];
-    const ggml_tensor * src1 = add0->src[1];
-    const ggml_tensor * src2 = add1->src[1];
+ശൂന്യം ggml_sycl_op_add_add_fused(ggml_backend_sycl_context & ctx, ggml_tensor * add0, ggml_tensor * add1) {
+    സ്ഥിരം ggml_tensor * src0 = add0->src[0];
+    സ്ഥിരം ggml_tensor * src1 = add0->src[1];
+    സ്ഥിരം ggml_tensor * src2 = add1->src[1];
     ggml_tensor *       dst  = add1;
 
     GGML_ASSERT(add1->src[0] == add0);
     GGML_ASSERT(ggml_sycl_add_kernel_supports(src0->type, src1->type, add0->type));
     GGML_ASSERT(ggml_sycl_add_kernel_supports(add0->type, src2->type, dst->type));
 
-    if (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_F32 && src2->type == GGML_TYPE_F32 &&
+    എങ്കിൽ (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_F32 && src2->type == GGML_TYPE_F32 &&
         dst->type == GGML_TYPE_F32) {
-        launch_bin_bcast3<op_add, float, float, float, float>(ctx, src0, src1, src2, dst);
-    } else if (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F16 && src2->type == GGML_TYPE_F16 &&
+        launch_bin_bcast3<op_add, ദശാംശം, ദശാംശം, ദശാംശം, ദശാംശം>(ctx, src0, src1, src2, dst);
+    } അല്ലെങ്കിൽ എങ്കിൽ (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F16 && src2->type == GGML_TYPE_F16 &&
                dst->type == GGML_TYPE_F16) {
         launch_bin_bcast3<op_add, sycl::half, sycl::half, sycl::half, sycl::half>(ctx, src0, src1, src2, dst);
-    } else if (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F32 && src2->type == GGML_TYPE_F32 &&
+    } അല്ലെങ്കിൽ എങ്കിൽ (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F32 && src2->type == GGML_TYPE_F32 &&
                dst->type == GGML_TYPE_F16) {
-        launch_bin_bcast3<op_add, sycl::half, float, float, sycl::half>(ctx, src0, src1, src2, dst);
-    } else if (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F16 && src2->type == GGML_TYPE_F32 &&
+        launch_bin_bcast3<op_add, sycl::half, ദശാംശം, ദശാംശം, sycl::half>(ctx, src0, src1, src2, dst);
+    } അല്ലെങ്കിൽ എങ്കിൽ (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F16 && src2->type == GGML_TYPE_F32 &&
                dst->type == GGML_TYPE_F16) {
-        launch_bin_bcast3<op_add, sycl::half, sycl::half, float, sycl::half>(ctx, src0, src1, src2, dst);
-    } else if (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F32 && src2->type == GGML_TYPE_F16 &&
+        launch_bin_bcast3<op_add, sycl::half, sycl::half, ദശാംശം, sycl::half>(ctx, src0, src1, src2, dst);
+    } അല്ലെങ്കിൽ എങ്കിൽ (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F32 && src2->type == GGML_TYPE_F16 &&
                dst->type == GGML_TYPE_F16) {
-        launch_bin_bcast3<op_add, sycl::half, float, sycl::half, sycl::half>(ctx, src0, src1, src2, dst);
-    } else if (src0->type == GGML_TYPE_I32 && src1->type == GGML_TYPE_I32 && src2->type == GGML_TYPE_I32 &&
+        launch_bin_bcast3<op_add, sycl::half, ദശാംശം, sycl::half, sycl::half>(ctx, src0, src1, src2, dst);
+    } അല്ലെങ്കിൽ എങ്കിൽ (src0->type == GGML_TYPE_I32 && src1->type == GGML_TYPE_I32 && src2->type == GGML_TYPE_I32 &&
                dst->type == GGML_TYPE_I32) {
         launch_bin_bcast3<op_add, int32_t, int32_t, int32_t, int32_t>(ctx, src0, src1, src2, dst);
-    } else if (src0->type == GGML_TYPE_I16 && src1->type == GGML_TYPE_I16 && src2->type == GGML_TYPE_I16 &&
+    } അല്ലെങ്കിൽ എങ്കിൽ (src0->type == GGML_TYPE_I16 && src1->type == GGML_TYPE_I16 && src2->type == GGML_TYPE_I16 &&
                dst->type == GGML_TYPE_I16) {
         launch_bin_bcast3<op_add, int16_t, int16_t, int16_t, int16_t>(ctx, src0, src1, src2, dst);
 #ifdef GGML_SYCL_HAS_BF16
-    } else if (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_BF16 && src2->type == GGML_TYPE_BF16 &&
+    } അല്ലെങ്കിൽ എങ്കിൽ (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_BF16 && src2->type == GGML_TYPE_BF16 &&
                dst->type == GGML_TYPE_BF16) {
         launch_bin_bcast3<op_add, sycl::ext::oneapi::bfloat16, sycl::ext::oneapi::bfloat16,
                           sycl::ext::oneapi::bfloat16, sycl::ext::oneapi::bfloat16>(ctx, src0, src1, src2, dst);
-    } else if (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_F32 && src2->type == GGML_TYPE_F32 &&
+    } അല്ലെങ്കിൽ എങ്കിൽ (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_F32 && src2->type == GGML_TYPE_F32 &&
                dst->type == GGML_TYPE_BF16) {
-        launch_bin_bcast3<op_add, sycl::ext::oneapi::bfloat16, float, float, sycl::ext::oneapi::bfloat16>(
+        launch_bin_bcast3<op_add, sycl::ext::oneapi::bfloat16, ദശാംശം, ദശാംശം, sycl::ext::oneapi::bfloat16>(
             ctx, src0, src1, src2, dst);
-    } else if (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_BF16 && src2->type == GGML_TYPE_F32 &&
+    } അല്ലെങ്കിൽ എങ്കിൽ (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_BF16 && src2->type == GGML_TYPE_F32 &&
                dst->type == GGML_TYPE_BF16) {
-        launch_bin_bcast3<op_add, sycl::ext::oneapi::bfloat16, sycl::ext::oneapi::bfloat16, float,
+        launch_bin_bcast3<op_add, sycl::ext::oneapi::bfloat16, sycl::ext::oneapi::bfloat16, ദശാംശം,
                           sycl::ext::oneapi::bfloat16>(ctx, src0, src1, src2, dst);
-    } else if (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_F32 && src2->type == GGML_TYPE_BF16 &&
+    } അല്ലെങ്കിൽ എങ്കിൽ (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_F32 && src2->type == GGML_TYPE_BF16 &&
                dst->type == GGML_TYPE_BF16) {
-        launch_bin_bcast3<op_add, sycl::ext::oneapi::bfloat16, float, sycl::ext::oneapi::bfloat16,
+        launch_bin_bcast3<op_add, sycl::ext::oneapi::bfloat16, ദശാംശം, sycl::ext::oneapi::bfloat16,
                           sycl::ext::oneapi::bfloat16>(ctx, src0, src1, src2, dst);
 #endif
-    } else {
+    } അല്ലെങ്കിൽ {
         fprintf(stderr, "%s: unsupported types: dst: %s, src0: %s, src1: %s, src2: %s\n", __func__,
                 ggml_type_name(dst->type), ggml_type_name(src0->type), ggml_type_name(src1->type),
                 ggml_type_name(src2->type));

@@ -1,15 +1,15 @@
-#include "input_model.h"
+#അന്തര്ഭാവ "input_model.h"
 
-#include "decoder.h"
+#അന്തര്ഭാവ "decoder.h"
 
-namespace ov {
-namespace frontend {
-namespace ggml {
+നാമാകാശ ov {
+നാമാകാശ frontend {
+നാമാകാശ ggml {
 
-InputModel::InputModel(const std::shared_ptr<GgmlDecoder> & gdecoder) : m_decoder(gdecoder) {}
+നിവേശം_Model::നിവേശം_Model(സ്ഥിരം std::shared_ptr<GgmlDecoder> & gdecoder) : m_decoder(gdecoder) {}
 
-const std::shared_ptr<GgmlDecoder> & InputModel::get_model_decoder() const {
-    return m_decoder;
+സ്ഥിരം std::shared_ptr<GgmlDecoder> & നിവേശം_Model::get_model_decoder() സ്ഥിരം {
+    തിരികെ m_decoder;
 }
 
 }  // namespace ggml

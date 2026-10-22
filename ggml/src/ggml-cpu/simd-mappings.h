@@ -1,25 +1,25 @@
 #pragma once
 
-#include "ggml-cpu-impl.h"
+#അന്തര്ഭാവ "ggml-cpu-impl.h"
 
 #ifdef __ARM_FEATURE_SVE
-#include <arm_sve.h>
+#അന്തര്ഭാവ <arm_sve.h>
 #endif // __ARM_FEATURE_SVE
 
-#if defined(__ARM_NEON) && !defined(__CUDACC__) && !defined(__MUSACC__)
+#എങ്കിൽ defined(__ARM_NEON) && !defined(__CUDACC__) && !defined(__MUSACC__)
 // if YCM cannot find <arm_neon.h>, make a symbolic link to it, for example:
 //
 //   $ ln -sfn /Library/Developer/CommandLineTools/usr/lib/clang/13.1.6/include/arm_neon.h ./src/
 //
-#include <arm_neon.h>
+#അന്തര്ഭാവ <arm_neon.h>
 #endif
 
-#if defined(__riscv_v_intrinsic)
-#include <riscv_vector.h>
+#എങ്കിൽ defined(__riscv_v_intrinsic)
+#അന്തര്ഭാവ <riscv_vector.h>
 #endif
 
 #ifdef __cplusplus
-extern "C" {
+ബാഹ്യ "C" {
 #endif
 
 //
@@ -37,43 +37,43 @@ extern "C" {
 // for old CUDA compilers (<= 11), we use uint16_t: ref https://github.com/ggml-org/llama.cpp/pull/10616
 // for     MUSA compilers        , we use uint16_t: ref https://github.com/ggml-org/llama.cpp/pull/11843
 //
-#if defined(__ARM_NEON) && defined(__ARM_FP16_FORMAT_IEEE) && !(defined(__CUDACC__) && __CUDACC_VER_MAJOR__ <= 11) && !defined(__MUSACC__)
+#എങ്കിൽ defined(__ARM_NEON) && defined(__ARM_FP16_FORMAT_IEEE) && !(defined(__CUDACC__) && __CUDACC_VER_MAJOR__ <= 11) && !defined(__MUSACC__)
     #define GGML_CPU_COMPUTE_FP16_TO_FP32(x) neon_compute_fp16_to_fp32(x)
     #define GGML_CPU_COMPUTE_FP32_TO_FP16(x) neon_compute_fp32_to_fp16(x)
 
     #define GGML_CPU_FP16_TO_FP32(x) GGML_CPU_COMPUTE_FP16_TO_FP32(x)
     #define GGML_CPU_FP32_TO_FP16(x) GGML_CPU_COMPUTE_FP32_TO_FP16(x)
 
-    static inline float neon_compute_fp16_to_fp32(ggml_fp16_t h) {
+    സ്ഥിതം വരിയിൽ ദശാംശം neon_compute_fp16_to_fp32(ggml_fp16_t h) {
         __fp16 tmp;
-        memcpy(&tmp, &h, sizeof(ggml_fp16_t));
-        return (float)tmp;
+        memcpy(&tmp, &h, വലുപ്പം(ggml_fp16_t));
+        തിരികെ (ദശാംശം)tmp;
     }
 
-    static inline ggml_fp16_t neon_compute_fp32_to_fp16(float f) {
+    സ്ഥിതം വരിയിൽ ggml_fp16_t neon_compute_fp32_to_fp16(ദശാംശം f) {
         ggml_fp16_t res;
         __fp16 tmp = f;
-        memcpy(&res, &tmp, sizeof(ggml_fp16_t));
-        return res;
+        memcpy(&res, &tmp, വലുപ്പം(ggml_fp16_t));
+        തിരികെ res;
     }
-#elif defined(__F16C__)
+#അല്ലെങ്കിലെങ്കിൽ defined(__F16C__)
     #ifdef _MSC_VER
         #define GGML_CPU_COMPUTE_FP16_TO_FP32(x) _mm_cvtss_f32(_mm_cvtph_ps(_mm_cvtsi32_si128(x)))
         #define GGML_CPU_COMPUTE_FP32_TO_FP16(x) _mm_extract_epi16(_mm_cvtps_ph(_mm_set_ss(x), 0), 0)
-    #else
+    #അല്ലെങ്കിൽ
         #define GGML_CPU_COMPUTE_FP16_TO_FP32(x) _cvtsh_ss(x)
         #define GGML_CPU_COMPUTE_FP32_TO_FP16(x) _cvtss_sh(x, 0)
     #endif
-#elif defined(__POWER9_VECTOR__)
+#അല്ലെങ്കിലെങ്കിൽ defined(__POWER9_VECTOR__)
     #define GGML_CPU_COMPUTE_FP16_TO_FP32(x) power_compute_fp16_to_fp32(x)
     #define GGML_CPU_COMPUTE_FP32_TO_FP16(x) power_compute_fp32_to_fp16(x)
     /* the inline asm below is about 12% faster than the lookup method */
     #define GGML_CPU_FP16_TO_FP32(x) GGML_CPU_COMPUTE_FP16_TO_FP32(x)
     #define GGML_CPU_FP32_TO_FP16(x) GGML_CPU_COMPUTE_FP32_TO_FP16(x)
 
-    static inline float power_compute_fp16_to_fp32(ggml_fp16_t h) {
-        float f;
-        double d;
+    സ്ഥിതം വരിയിൽ ദശാംശം power_compute_fp16_to_fp32(ggml_fp16_t h) {
+        ദശാംശം f;
+        ഇരട്ട d;
         __asm__(
             "mtfprd %0,%2\n"
             "xscvhpdp %0,%0\n"
@@ -81,11 +81,11 @@ extern "C" {
             /* temp */ "=d"(d),
             /* out */  "=f"(f):
             /* in */   "r"(h));
-        return f;
+        തിരികെ f;
     }
 
-    static inline ggml_fp16_t power_compute_fp32_to_fp16(float f) {
-        double d;
+    സ്ഥിതം വരിയിൽ ggml_fp16_t power_compute_fp32_to_fp16(ദശാംശം f) {
+        ഇരട്ട d;
         ggml_fp16_t r;
         __asm__( /* xscvdphp can work on double or single precision */
             "xscvdphp %0,%2\n"
@@ -93,20 +93,20 @@ extern "C" {
             /* temp */ "=d"(d),
             /* out */  "=r"(r):
             /* in */   "f"(f));
-        return r;
+        തിരികെ r;
     }
-#elif defined(__riscv) && defined(__riscv_zfhmin)
-    static inline float riscv_compute_fp16_to_fp32(ggml_fp16_t h) {
+#അല്ലെങ്കിലെങ്കിൽ defined(__riscv) && defined(__riscv_zfhmin)
+    സ്ഥിതം വരിയിൽ ദശാംശം riscv_compute_fp16_to_fp32(ggml_fp16_t h) {
         _Float16 hf;
-        memcpy(&hf, &h, sizeof(ggml_fp16_t));
-        return hf;
+        memcpy(&hf, &h, വലുപ്പം(ggml_fp16_t));
+        തിരികെ hf;
     }
 
-    static inline ggml_fp16_t riscv_compute_fp32_to_fp16(float f) {
+    സ്ഥിതം വരിയിൽ ggml_fp16_t riscv_compute_fp32_to_fp16(ദശാംശം f) {
         ggml_fp16_t res;
         _Float16 hf = (_Float16)f;
-        memcpy(&res, &hf, sizeof(ggml_fp16_t));
-        return res;
+        memcpy(&res, &hf, വലുപ്പം(ggml_fp16_t));
+        തിരികെ res;
     }
 
     #define GGML_CPU_COMPUTE_FP16_TO_FP32(x) riscv_compute_fp16_to_fp32(x)
@@ -117,34 +117,34 @@ extern "C" {
 
 // precomputed f32 table for f16 (256 KB)
 // defined in ggml-cpu.c, initialized in ggml_cpu_init()
-extern float ggml_table_f32_f16[1 << 16];
+ബാഹ്യ ദശാംശം ggml_table_f32_f16[1 << 16];
 
 // precomputed f32 table for e8m0 half (1 KB)
 // defined in ggml-cpu.c, initialized in ggml_cpu_init()
-extern float ggml_table_f32_e8m0_half[1 << 8];
+ബാഹ്യ ദശാംശം ggml_table_f32_e8m0_half[1 << 8];
 
 // precomputed f32 table for ue4m3 (1 KB)
 // defined in ggml-cpu.c, initialized in ggml_cpu_init()
-extern float ggml_table_f32_ue4m3[1 << 8];
+ബാഹ്യ ദശാംശം ggml_table_f32_ue4m3[1 << 8];
 
 // Use lookup table for E8M0 on x86 (faster than bit manipulation)
-#if defined(__AVX__) || defined(__AVX2__) || defined(__AVX512F__)
+#എങ്കിൽ defined(__AVX__) || defined(__AVX2__) || defined(__AVX512F__)
 #define GGML_CPU_E8M0_TO_FP32_HALF(x) ggml_table_f32_e8m0_half[(uint8_t)(x)]
-#else
+#അല്ലെങ്കിൽ
 #define GGML_CPU_E8M0_TO_FP32_HALF(x) GGML_E8M0_TO_FP32_HALF(x)
 #endif
 
 // Use lookup table for UE4M3 on x86 and ARM (faster than bit manipulation)
-#if defined(__AVX__) || defined(__AVX2__) || defined(__AVX512F__) || defined(__ARM_NEON)
+#എങ്കിൽ defined(__AVX__) || defined(__AVX2__) || defined(__AVX512F__) || defined(__ARM_NEON)
 #define GGML_CPU_UE4M3_TO_FP32(x) ggml_table_f32_ue4m3[(uint8_t)(x)]
-#else
+#അല്ലെങ്കിൽ
 #define GGML_CPU_UE4M3_TO_FP32(x) ggml_ue4m3_to_fp32(x)
 #endif
 
 // Pre AVX512 CPUs (AVX2 with F16C, such as i5-8th gen or i7-4790)
 // do not produce codegen as checks below don't test for __F16C__
 // but this check does.
-#if defined(__F16C__)
+#എങ്കിൽ defined(__F16C__)
 // force FP16 -> FP32 conversion to use LUT instead
 // see: https://github.com/ggml-org/llama.cpp/issues/30342
 //#define GGML_CPU_FP16_TO_FP32(x) GGML_CPU_COMPUTE_FP16_TO_FP32(x)
@@ -152,25 +152,25 @@ extern float ggml_table_f32_ue4m3[1 << 8];
 #endif
 
 // a branch that defines a GGML_CPU_COMPUTE_* macro must also select it, or the fallback takes over silently
-#if defined(GGML_CPU_COMPUTE_FP16_TO_FP32) && !defined(GGML_CPU_FP16_TO_FP32) && !defined(__F16C__) // see: https://github.com/ggml-org/llama.cpp/issues/30342
+#എങ്കിൽ defined(GGML_CPU_COMPUTE_FP16_TO_FP32) && !defined(GGML_CPU_FP16_TO_FP32) && !defined(__F16C__) // see: https://github.com/ggml-org/llama.cpp/issues/30342
 #error "a branch defined GGML_CPU_COMPUTE_FP16_TO_FP32 without selecting it as GGML_CPU_FP16_TO_FP32"
 #endif
-#if defined(GGML_CPU_COMPUTE_FP32_TO_FP16) && !defined(GGML_CPU_FP32_TO_FP16)
+#എങ്കിൽ defined(GGML_CPU_COMPUTE_FP32_TO_FP16) && !defined(GGML_CPU_FP32_TO_FP16)
 #error "a branch defined GGML_CPU_COMPUTE_FP32_TO_FP16 without selecting it as GGML_CPU_FP32_TO_FP16"
 #endif
 
 // fall back to the lookup table / the portable software conversion for whichever direction no branch selected
-#if !defined(GGML_CPU_FP16_TO_FP32)
-inline static float ggml_lookup_fp16_to_fp32(ggml_fp16_t f) {
+#എങ്കിൽ !defined(GGML_CPU_FP16_TO_FP32)
+വരിയിൽ സ്ഥിതം ദശാംശം ggml_lookup_fp16_to_fp32(ggml_fp16_t f) {
     uint16_t s;
-    memcpy(&s, &f, sizeof(uint16_t));
-    return ggml_table_f32_f16[s];
+    memcpy(&s, &f, വലുപ്പം(uint16_t));
+    തിരികെ ggml_table_f32_f16[s];
 }
 
 #define GGML_CPU_FP16_TO_FP32(x) ggml_lookup_fp16_to_fp32(x)
 #endif
 
-#if !defined(GGML_CPU_FP32_TO_FP16)
+#എങ്കിൽ !defined(GGML_CPU_FP32_TO_FP16)
 #define GGML_CPU_FP32_TO_FP16(x) GGML_COMPUTE_FP32_TO_FP16(x)
 #endif
 
@@ -186,7 +186,7 @@ inline static float ggml_lookup_fp16_to_fp32(ggml_fp16_t f) {
 //   number of elements to fit in a single register
 //
 
-#if defined(__ARM_FEATURE_SVE) && defined(__ARM_FEATURE_FMA)
+#എങ്കിൽ defined(__ARM_FEATURE_SVE) && defined(__ARM_FEATURE_FMA)
 
 #define GGML_SIMD
 
@@ -240,7 +240,7 @@ inline static float ggml_lookup_fp16_to_fp32(ggml_fp16_t f) {
 #define GGML_F32Cxt                         svfloat16_t
 #define GGML_F32Cxt_ZERO                    svdup_n_f16(0.0f)
 #define GGML_F32Cxt_SET1(x)                 svdup_n_f16(x)
-#define GGML_F32Cxt_LOAD(p)                 svld1_f16(DEFAULT_PG16, (const __fp16 *)(p))
+#define GGML_F32Cxt_LOAD(p)                 svld1_f16(DEFAULT_PG16, (സ്ഥിരം __fp16 *)(p))
 #define GGML_F32Cxt_STORE(dst_ptr, src_vec) svst1_f16(DEFAULT_PG16, (__fp16 *)(dst_ptr), (src_vec))
 
 #define GGML_F32Cxt_FMA_IMPL(pg, a, b, c)   svmad_f16_x(pg, b, c, a)
@@ -277,36 +277,36 @@ inline static float ggml_lookup_fp16_to_fp32(ggml_fp16_t f) {
 
 // F16 NEON
 
-#if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
+#എങ്കിൽ defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
     #define GGML_F16_STEP 32
     #define GGML_F16_EPR  8
 
     #define GGML_F16x8              float16x8_t
     #define GGML_F16x8_ZERO         vdupq_n_f16(0.0f)
     #define GGML_F16x8_SET1(x)      vdupq_n_f16(x)
-    #define GGML_F16x8_LOAD(x)      vld1q_f16((const __fp16 *)(x))
+    #define GGML_F16x8_LOAD(x)      vld1q_f16((സ്ഥിരം __fp16 *)(x))
     #define GGML_F16x8_STORE        vst1q_f16
     #define GGML_F16x8_FMA(a, b, c) vfmaq_f16(a, b, c)
     #define GGML_F16x8_ADD          vaddq_f16
     #define GGML_F16x8_MUL          vmulq_f16
     #define GGML_F16x8_REDUCE(res, x)                               \
-    do {                                                            \
-        int offset = GGML_F16_ARR >> 1;                             \
-        for (int i = 0; i < offset; ++i) {                          \
+    ചെയ്യുക {                                                            \
+        പൂർണ്ണസംഖ്യ offset = GGML_F16_ARR >> 1;                             \
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                          \
             (x)[i] = vaddq_f16((x)[i], (x)[offset+i]);              \
         }                                                           \
         offset >>= 1;                                               \
-        for (int i = 0; i < offset; ++i) {                          \
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                          \
             (x)[i] = vaddq_f16((x)[i], (x)[offset+i]);              \
         }                                                           \
         offset >>= 1;                                               \
-        for (int i = 0; i < offset; ++i) {                          \
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                          \
             (x)[i] = vaddq_f16((x)[i], (x)[offset+i]);              \
         }                                                           \
-        const float32x4_t t0 = vcvt_f32_f16(vget_low_f16 ((x)[0])); \
-        const float32x4_t t1 = vcvt_f32_f16(vget_high_f16((x)[0])); \
+        സ്ഥിരം float32x4_t t0 = vcvt_f32_f16(vget_താഴെയുള്ള_f16 ((x)[0])); \
+        സ്ഥിരം float32x4_t t1 = vcvt_f32_f16(vget_മുകളിലെ_f16((x)[0])); \
         (res) = (ggml_float) vaddvq_f32(vaddq_f32(t0, t1));         \
-    } while (0)
+    } ആകുമ്പോൾ (0)
 
     #define GGML_F16_VEC                GGML_F16x8
     #define GGML_F16_VEC_ZERO           GGML_F16x8_ZERO
@@ -317,7 +317,7 @@ inline static float ggml_lookup_fp16_to_fp32(ggml_fp16_t f) {
     #define GGML_F16_VEC_ADD            GGML_F16x8_ADD
     #define GGML_F16_VEC_MUL            GGML_F16x8_MUL
     #define GGML_F16_VEC_REDUCE         GGML_F16x8_REDUCE
-#else
+#അല്ലെങ്കിൽ
     // if FP16 vector arithmetic is not supported, we use FP32 instead
     // and take advantage of the vcvt_ functions to convert to/from FP16
 
@@ -327,7 +327,7 @@ inline static float ggml_lookup_fp16_to_fp32(ggml_fp16_t f) {
     #define GGML_F32Cx4              float32x4_t
     #define GGML_F32Cx4_ZERO         vdupq_n_f32(0.0f)
     #define GGML_F32Cx4_SET1(x)      vdupq_n_f32(x)
-    #define GGML_F32Cx4_LOAD(x)      vcvt_f32_f16(vld1_f16((const __fp16 *)(x)))
+    #define GGML_F32Cx4_LOAD(x)      vcvt_f32_f16(vld1_f16((സ്ഥിരം __fp16 *)(x)))
     #define GGML_F32Cx4_STORE(x, y)  vst1_f16(x, vcvt_f16_f32(y))
     #define GGML_F32Cx4_FMA(a, b, c) vfmaq_f32(a, b, c)
     #define GGML_F32Cx4_ADD          vaddq_f32
@@ -345,7 +345,7 @@ inline static float ggml_lookup_fp16_to_fp32(ggml_fp16_t f) {
     #define GGML_F16_VEC_REDUCE         GGML_F32Cx4_REDUCE
 #endif
 
-#elif defined(__ARM_NEON) && defined(__ARM_FEATURE_FMA) && defined(__ARM_FP16_FORMAT_IEEE)
+#അല്ലെങ്കിലെങ്കിൽ defined(__ARM_NEON) && defined(__ARM_FEATURE_FMA) && defined(__ARM_FP16_FORMAT_IEEE)
 
 #define GGML_SIMD
 
@@ -365,16 +365,16 @@ inline static float ggml_lookup_fp16_to_fp32(ggml_fp16_t f) {
 #define GGML_F32x4_REDUCE_ONE(x) vaddvq_f32(x)
 #define GGML_F32x4_REDUCE(res, x)                       \
 {                                                       \
-    int offset = GGML_F32_ARR >> 1;                     \
-    for (int i = 0; i < offset; ++i) {                  \
+    പൂർണ്ണസംഖ്യ offset = GGML_F32_ARR >> 1;                     \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                  \
         (x)[i] = vaddq_f32((x)[i], (x)[offset+i]);      \
     }                                                   \
     offset >>= 1;                                       \
-    for (int i = 0; i < offset; ++i) {                  \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                  \
         (x)[i] = vaddq_f32((x)[i], (x)[offset+i]);      \
     }                                                   \
     offset >>= 1;                                       \
-    for (int i = 0; i < offset; ++i) {                  \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                  \
         (x)[i] = vaddq_f32((x)[i], (x)[offset+i]);      \
     }                                                   \
     (res) = (ggml_float) GGML_F32x4_REDUCE_ONE((x)[0]); \
@@ -392,36 +392,36 @@ inline static float ggml_lookup_fp16_to_fp32(ggml_fp16_t f) {
 
 // F16 NEON
 
-#if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
+#എങ്കിൽ defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
     #define GGML_F16_STEP 32
     #define GGML_F16_EPR  8
 
     #define GGML_F16x8              float16x8_t
     #define GGML_F16x8_ZERO         vdupq_n_f16(0.0f)
     #define GGML_F16x8_SET1(x)      vdupq_n_f16(x)
-    #define GGML_F16x8_LOAD(x)      vld1q_f16((const __fp16 *)(x))
+    #define GGML_F16x8_LOAD(x)      vld1q_f16((സ്ഥിരം __fp16 *)(x))
     #define GGML_F16x8_STORE        vst1q_f16
     #define GGML_F16x8_FMA(a, b, c) vfmaq_f16(a, b, c)
     #define GGML_F16x8_ADD          vaddq_f16
     #define GGML_F16x8_MUL          vmulq_f16
     #define GGML_F16x8_REDUCE(res, x)                               \
-    do {                                                            \
-        int offset = GGML_F16_ARR >> 1;                             \
-        for (int i = 0; i < offset; ++i) {                          \
+    ചെയ്യുക {                                                            \
+        പൂർണ്ണസംഖ്യ offset = GGML_F16_ARR >> 1;                             \
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                          \
             (x)[i] = vaddq_f16((x)[i], (x)[offset+i]);              \
         }                                                           \
         offset >>= 1;                                               \
-        for (int i = 0; i < offset; ++i) {                          \
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                          \
             (x)[i] = vaddq_f16((x)[i], (x)[offset+i]);              \
         }                                                           \
         offset >>= 1;                                               \
-        for (int i = 0; i < offset; ++i) {                          \
+        വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                          \
             (x)[i] = vaddq_f16((x)[i], (x)[offset+i]);              \
         }                                                           \
-        const float32x4_t t0 = vcvt_f32_f16(vget_low_f16 ((x)[0])); \
-        const float32x4_t t1 = vcvt_f32_f16(vget_high_f16((x)[0])); \
+        സ്ഥിരം float32x4_t t0 = vcvt_f32_f16(vget_താഴെയുള്ള_f16 ((x)[0])); \
+        സ്ഥിരം float32x4_t t1 = vcvt_f32_f16(vget_മുകളിലെ_f16((x)[0])); \
         (res) = (ggml_float) vaddvq_f32(vaddq_f32(t0, t1));         \
-    } while (0)
+    } ആകുമ്പോൾ (0)
 
     #define GGML_F16_VEC                GGML_F16x8
     #define GGML_F16_VEC_ZERO           GGML_F16x8_ZERO
@@ -432,7 +432,7 @@ inline static float ggml_lookup_fp16_to_fp32(ggml_fp16_t f) {
     #define GGML_F16_VEC_ADD            GGML_F16x8_ADD
     #define GGML_F16_VEC_MUL            GGML_F16x8_MUL
     #define GGML_F16_VEC_REDUCE         GGML_F16x8_REDUCE
-#else
+#അല്ലെങ്കിൽ
     // if FP16 vector arithmetic is not supported, we use FP32 instead
     // and take advantage of the vcvt_ functions to convert to/from FP16
 
@@ -442,7 +442,7 @@ inline static float ggml_lookup_fp16_to_fp32(ggml_fp16_t f) {
     #define GGML_F32Cx4              float32x4_t
     #define GGML_F32Cx4_ZERO         vdupq_n_f32(0.0f)
     #define GGML_F32Cx4_SET1(x)      vdupq_n_f32(x)
-    #define GGML_F32Cx4_LOAD(x)      vcvt_f32_f16(vld1_f16((const __fp16 *)(x)))
+    #define GGML_F32Cx4_LOAD(x)      vcvt_f32_f16(vld1_f16((സ്ഥിരം __fp16 *)(x)))
     #define GGML_F32Cx4_STORE(x, y)  vst1_f16(x, vcvt_f16_f32(y))
     #define GGML_F32Cx4_FMA(a, b, c) vfmaq_f32(a, b, c)
     #define GGML_F32Cx4_ADD          vaddq_f32
@@ -460,7 +460,7 @@ inline static float ggml_lookup_fp16_to_fp32(ggml_fp16_t f) {
     #define GGML_F16_VEC_REDUCE         GGML_F32Cx4_REDUCE
 #endif
 
-#elif defined(__AVX512F__)
+#അല്ലെങ്കിലെങ്കിൽ defined(__AVX512F__)
 
 #define GGML_SIMD
 
@@ -479,21 +479,21 @@ inline static float ggml_lookup_fp16_to_fp32(ggml_fp16_t f) {
 #define GGML_F32x16_ADD     _mm512_add_ps
 #define GGML_F32x16_MUL     _mm512_mul_ps
 #define GGML_F32x16_REDUCE(res, x)                                    \
-do {                                                                  \
-    int offset = GGML_F32_ARR >> 1;                                   \
-    for (int i = 0; i < offset; ++i) {                                \
+ചെയ്യുക {                                                                  \
+    പൂർണ്ണസംഖ്യ offset = GGML_F32_ARR >> 1;                                   \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                                \
         x[i] = _mm512_add_ps(x[i], x[offset+i]);                      \
     }                                                                 \
     offset >>= 1;                                                     \
-    for (int i = 0; i < offset; ++i) {                                \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                                \
         x[i] = _mm512_add_ps(x[i], x[offset+i]);                      \
     }                                                                 \
     offset >>= 1;                                                     \
-    for (int i = 0; i < offset; ++i) {                                \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                                \
         x[i] = _mm512_add_ps(x[i], x[offset+i]);                      \
     }                                                                 \
     res = (ggml_float) _mm512_reduce_add_ps(x[0]);                    \
-} while (0)
+} ആകുമ്പോൾ (0)
 
 // TODO: is this optimal ?
 
@@ -509,7 +509,7 @@ do {                                                                  \
 
 // F16 AVX512
 
-#if defined(__AVX512FP16__)
+#എങ്കിൽ defined(__AVX512FP16__)
 
 #define GGML_F16_STEP 128
 #define GGML_F16_EPR  32
@@ -523,21 +523,21 @@ do {                                                                  \
 #define GGML_F16x32_ADD          _mm512_add_ph
 #define GGML_F16x32_MUL          _mm512_mul_ph
 #define GGML_F16x32_REDUCE(res, x)                                     \
-do {                                                                   \
-    int offset = GGML_F16_ARR >> 1;                                    \
-    for (int i = 0; i < offset; ++i) {                                 \
+ചെയ്യുക {                                                                   \
+    പൂർണ്ണസംഖ്യ offset = GGML_F16_ARR >> 1;                                    \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                                 \
         x[i] = _mm512_add_ph(x[i], x[offset+i]);                       \
     }                                                                  \
     offset >>= 1;                                                      \
-    for (int i = 0; i < offset; ++i) {                                 \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                                 \
         x[i] = _mm512_add_ph(x[i], x[offset+i]);                       \
     }                                                                  \
     offset >>= 1;                                                      \
-    for (int i = 0; i < offset; ++i) {                                 \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                                 \
         x[i] = _mm512_add_ph(x[i], x[offset+i]);                       \
     }                                                                  \
     res = (ggml_float) _mm512_reduce_add_ph(x[0]);                     \
-} while (0)
+} ആകുമ്പോൾ (0)
 
 #define GGML_F16_VEC                GGML_F16x32
 #define GGML_F16_VEC_ZERO           GGML_F16x32_ZERO
@@ -549,7 +549,7 @@ do {                                                                   \
 #define GGML_F16_VEC_MUL            GGML_F16x32_MUL
 #define GGML_F16_VEC_REDUCE         GGML_F16x32_REDUCE
 
-#else // Fallback FP16 <-> FP32
+#അല്ലെങ്കിൽ // Fallback FP16 <-> FP32
 
 #define GGML_F16_STEP 64
 #define GGML_F16_EPR  16
@@ -560,28 +560,28 @@ do {                                                                   \
 
 // unlike  _mm256_cvt intrinsics that require F16C, _mm512_cvt is defined in AVX512F
 // so F16C guard isn't required
-#define GGML_F32Cx16_LOAD(x)     _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)(x)))
+#define GGML_F32Cx16_LOAD(x)     _mm512_cvtph_ps(_mm256_loadu_si256((സ്ഥിരം __m256i *)(x)))
 #define GGML_F32Cx16_STORE(x, y) _mm256_storeu_si256((__m256i *)(x), _mm512_cvtps_ph(y, 0))
 
 #define GGML_F32Cx16_FMA(a, b, c) _mm512_fmadd_ps(b, c, a)
 #define GGML_F32Cx16_ADD         _mm512_add_ps
 #define GGML_F32Cx16_MUL         _mm512_mul_ps
 #define GGML_F32Cx16_REDUCE(res, x)                               \
-do {                                                              \
-    int offset = GGML_F32_ARR >> 1;                               \
-    for (int i = 0; i < offset; ++i) {                            \
+ചെയ്യുക {                                                              \
+    പൂർണ്ണസംഖ്യ offset = GGML_F32_ARR >> 1;                               \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                            \
         x[i] = _mm512_add_ps(x[i], x[offset+i]);                  \
     }                                                             \
     offset >>= 1;                                                 \
-    for (int i = 0; i < offset; ++i) {                            \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                            \
         x[i] = _mm512_add_ps(x[i], x[offset+i]);                  \
     }                                                             \
     offset >>= 1;                                                 \
-    for (int i = 0; i < offset; ++i) {                            \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                            \
         x[i] = _mm512_add_ps(x[i], x[offset+i]);                  \
     }                                                             \
     res = (ggml_float) _mm512_reduce_add_ps(x[0]);                \
-} while (0)
+} ആകുമ്പോൾ (0)
 
 #define GGML_F16_VEC                GGML_F32Cx16
 #define GGML_F16_VEC_ZERO           GGML_F32Cx16_ZERO
@@ -595,7 +595,7 @@ do {                                                              \
 #define GGML_F16_VEC_REDUCE         GGML_F32Cx16_REDUCE
 
 #endif // __AVX512FP16__
-#elif defined(__AVX__)
+#അല്ലെങ്കിലെങ്കിൽ defined(__AVX__)
 
 #define GGML_SIMD
 
@@ -609,32 +609,32 @@ do {                                                              \
 #define GGML_F32x8_SET1(x) _mm256_set1_ps(x)
 #define GGML_F32x8_LOAD    _mm256_loadu_ps
 #define GGML_F32x8_STORE   _mm256_storeu_ps
-#if defined(__FMA__)
+#എങ്കിൽ defined(__FMA__)
     #define GGML_F32x8_FMA(a, b, c) _mm256_fmadd_ps(b, c, a)
-#else
+#അല്ലെങ്കിൽ
     #define GGML_F32x8_FMA(a, b, c) _mm256_add_ps(_mm256_mul_ps(b, c), a)
 #endif
 #define GGML_F32x8_ADD     _mm256_add_ps
 #define GGML_F32x8_MUL     _mm256_mul_ps
 #define GGML_F32x8_REDUCE(res, x)                                 \
-do {                                                              \
-    int offset = GGML_F32_ARR >> 1;                               \
-    for (int i = 0; i < offset; ++i) {                            \
+ചെയ്യുക {                                                              \
+    പൂർണ്ണസംഖ്യ offset = GGML_F32_ARR >> 1;                               \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                            \
         x[i] = _mm256_add_ps(x[i], x[offset+i]);                  \
     }                                                             \
     offset >>= 1;                                                 \
-    for (int i = 0; i < offset; ++i) {                            \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                            \
         x[i] = _mm256_add_ps(x[i], x[offset+i]);                  \
     }                                                             \
     offset >>= 1;                                                 \
-    for (int i = 0; i < offset; ++i) {                            \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                            \
         x[i] = _mm256_add_ps(x[i], x[offset+i]);                  \
     }                                                             \
-    const __m128 t0 = _mm_add_ps(_mm256_castps256_ps128(x[0]),    \
+    സ്ഥിരം __m128 t0 = _mm_add_ps(_mm256_castps256_ps128(x[0]),    \
                                  _mm256_extractf128_ps(x[0], 1)); \
-    const __m128 t1 = _mm_hadd_ps(t0, t0);                        \
+    സ്ഥിരം __m128 t1 = _mm_hadd_ps(t0, t0);                        \
     res = (ggml_float) _mm_cvtss_f32(_mm_hadd_ps(t1, t1));        \
-} while (0)
+} ആകുമ്പോൾ (0)
 // TODO: is this optimal ?
 
 #define GGML_F32_VEC        GGML_F32x8
@@ -658,26 +658,26 @@ do {                                                              \
 #define GGML_F32Cx8_ZERO        _mm256_setzero_ps()
 #define GGML_F32Cx8_SET1(x)     _mm256_set1_ps(x)
 
-#if defined(__F16C__)
+#എങ്കിൽ defined(__F16C__)
 // the  _mm256_cvt intrinsics require F16C
-#define GGML_F32Cx8_LOAD(x)     _mm256_cvtph_ps(_mm_loadu_si128((const __m128i *)(x)))
+#define GGML_F32Cx8_LOAD(x)     _mm256_cvtph_ps(_mm_loadu_si128((സ്ഥിരം __m128i *)(x)))
 #define GGML_F32Cx8_STORE(x, y) _mm_storeu_si128((__m128i *)(x), _mm256_cvtps_ph(y, 0))
-#else
-static inline __m256 __avx_f32cx8_load(const ggml_fp16_t * x) {
-    float tmp[8];
+#അല്ലെങ്കിൽ
+സ്ഥിതം വരിയിൽ __m256 __avx_f32cx8_load(സ്ഥിരം ggml_fp16_t * x) {
+    ദശാംശം tmp[8];
 
-    for (int i = 0; i < 8; i++) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < 8; i++) {
         tmp[i] = GGML_CPU_FP16_TO_FP32(x[i]);
     }
 
-    return _mm256_loadu_ps(tmp);
+    തിരികെ _mm256_loadu_ps(tmp);
 }
-static inline void __avx_f32cx8_store(ggml_fp16_t *x, __m256 y) {
-    float arr[8];
+സ്ഥിതം വരിയിൽ ശൂന്യം __avx_f32cx8_store(ggml_fp16_t *x, __m256 y) {
+    ദശാംശം arr[8];
 
     _mm256_storeu_ps(arr, y);
 
-    for (int i = 0; i < 8; i++)
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < 8; i++)
         x[i] = GGML_CPU_FP32_TO_FP16(arr[i]);
 }
 #define GGML_F32Cx8_LOAD(x)     __avx_f32cx8_load(x)
@@ -699,7 +699,7 @@ static inline void __avx_f32cx8_store(ggml_fp16_t *x, __m256 y) {
 #define GGML_F16_VEC_MUL            GGML_F32Cx8_MUL
 #define GGML_F16_VEC_REDUCE         GGML_F32Cx8_REDUCE
 
-#elif defined(__POWER9_VECTOR__)
+#അല്ലെങ്കിലെങ്കിൽ defined(__POWER9_VECTOR__)
 
 #define GGML_SIMD
 
@@ -708,7 +708,7 @@ static inline void __avx_f32cx8_store(ggml_fp16_t *x, __m256 y) {
 #define GGML_F32_STEP 32
 #define GGML_F32_EPR  4
 
-#define GGML_F32x4              vector float
+#define GGML_F32x4              vector ദശാംശം
 #define GGML_F32x4_ZERO         {0.0f}
 #define GGML_F32x4_SET1         vec_splats
 #define GGML_F32x4_LOAD(p)      vec_xl(0, p)
@@ -718,16 +718,16 @@ static inline void __avx_f32cx8_store(ggml_fp16_t *x, __m256 y) {
 #define GGML_F32x4_MUL          vec_mul
 #define GGML_F32x4_REDUCE(res, x)              \
 {                                              \
-    int offset = GGML_F32_ARR >> 1;            \
-    for (int i = 0; i < offset; ++i) {         \
+    പൂർണ്ണസംഖ്യ offset = GGML_F32_ARR >> 1;            \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {         \
         x[i] = vec_add(x[i], x[offset+i]);     \
     }                                          \
     offset >>= 1;                              \
-    for (int i = 0; i < offset; ++i) {         \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {         \
         x[i] = vec_add(x[i], x[offset+i]);     \
     }                                          \
     offset >>= 1;                              \
-    for (int i = 0; i < offset; ++i) {         \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {         \
         x[i] = vec_add(x[i], x[offset+i]);     \
     }                                          \
     res = vec_extract(x[0], 0) +               \
@@ -737,7 +737,7 @@ static inline void __avx_f32cx8_store(ggml_fp16_t *x, __m256 y) {
 }
 #define GGML_F32x4_REDUCE_4(res, s0, s1, s2, s3)        \
 {                                                       \
-    vector float v = vec_add(vec_add(s0, s1),           \
+    vector ദശാംശം v = vec_add(vec_add(s0, s1),           \
                              vec_add(s2, s3));          \
     v = vec_add(v, vec_sld(v, v, 8));                   \
     v = vec_add(v, vec_sld(v, v, 4));                   \
@@ -768,13 +768,13 @@ static inline void __avx_f32cx8_store(ggml_fp16_t *x, __m256 y) {
 #define GGML_F16_VEC_LOAD(p, i) (i & 0x1) ?                   \
   vec_extract_fp32_from_shorth(vec_xl(0, p - GGML_F16_EPR)) : \
   vec_extract_fp32_from_shortl(vec_xl(0, p))
-static inline unsigned char ggml_endian_byte(int i) {
+സ്ഥിതം വരിയിൽ unsigned അക്ഷരം ggml_endian_byte(പൂർണ്ണസംഖ്യ i) {
        uint16_t tmp_val = 1;
-       return ((unsigned char *)&tmp_val)[i];
+       തിരികെ ((unsigned അക്ഷരം *)&tmp_val)[i];
 }
 #define GGML_ENDIAN_BYTE(i) ggml_endian_byte(i)
 #define GGML_F16_VEC_STORE(p, r, i)                             \
-  if (i & 0x1)                                                  \
+  എങ്കിൽ (i & 0x1)                                                  \
     vec_xst(vec_pack_to_short_fp32(r[i - GGML_ENDIAN_BYTE(1)],  \
                                    r[i - GGML_ENDIAN_BYTE(0)]), \
             0, p - GGML_F16_EPR)
@@ -785,24 +785,24 @@ static inline unsigned char ggml_endian_byte(int i) {
 
 #define GGML_BF16x8         vector unsigned short
 #define GGML_BF16x8_ZERO    vec_splats((unsigned short)0)
-#define GGML_BF16x8_LOAD(p) vec_xl(0, (const unsigned short *)(p))
+#define GGML_BF16x8_LOAD(p) vec_xl(0, (സ്ഥിരം unsigned short *)(p))
 
 #define GGML_BF16_VEC          GGML_BF16x8
 #define GGML_BF16_VEC_ZERO     GGML_BF16x8_ZERO
 #define GGML_BF16_VEC_LOAD     GGML_BF16x8_LOAD
-#if defined(__LITTLE_ENDIAN__)
-#define GGML_BF16_TO_F32_LO(v) ((vector float) vec_mergel(GGML_BF16_VEC_ZERO, (v)))
-#define GGML_BF16_TO_F32_HI(v) ((vector float) vec_mergeh(GGML_BF16_VEC_ZERO, (v)))
-#else
-#define GGML_BF16_TO_F32_LO(v) ((vector float) vec_mergel((v), GGML_BF16_VEC_ZERO))
-#define GGML_BF16_TO_F32_HI(v) ((vector float) vec_mergeh((v), GGML_BF16_VEC_ZERO))
+#എങ്കിൽ defined(__LITTLE_ENDIAN__)
+#define GGML_BF16_TO_F32_LO(v) ((vector ദശാംശം) vec_mergel(GGML_BF16_VEC_ZERO, (v)))
+#define GGML_BF16_TO_F32_HI(v) ((vector ദശാംശം) vec_mergeh(GGML_BF16_VEC_ZERO, (v)))
+#അല്ലെങ്കിൽ
+#define GGML_BF16_TO_F32_LO(v) ((vector ദശാംശം) vec_mergel((v), GGML_BF16_VEC_ZERO))
+#define GGML_BF16_TO_F32_HI(v) ((vector ദശാംശം) vec_mergeh((v), GGML_BF16_VEC_ZERO))
 #endif
 #define GGML_BF16_FMA_LO(acc, x, y) \
     (acc) = GGML_F32x4_FMA((acc), GGML_BF16_TO_F32_LO(x), GGML_BF16_TO_F32_LO(y))
 #define GGML_BF16_FMA_HI(acc, x, y) \
     (acc) = GGML_F32x4_FMA((acc), GGML_BF16_TO_F32_HI(x), GGML_BF16_TO_F32_HI(y))
 
-#elif defined(__wasm_simd128__)
+#അല്ലെങ്കിലെങ്കിൽ defined(__wasm_simd128__)
 
 #define GGML_SIMD
 
@@ -821,16 +821,16 @@ static inline unsigned char ggml_endian_byte(int i) {
 #define GGML_F32x4_MUL          wasm_f32x4_mul
 #define GGML_F32x4_REDUCE(res, x)                  \
 {                                                  \
-    int offset = GGML_F32_ARR >> 1;                \
-    for (int i = 0; i < offset; ++i) {             \
+    പൂർണ്ണസംഖ്യ offset = GGML_F32_ARR >> 1;                \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {             \
         x[i] = wasm_f32x4_add(x[i], x[offset+i]);  \
     }                                              \
     offset >>= 1;                                  \
-    for (int i = 0; i < offset; ++i) {             \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {             \
         x[i] = wasm_f32x4_add(x[i], x[offset+i]);  \
     }                                              \
     offset >>= 1;                                  \
-    for (int i = 0; i < offset; ++i) {             \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {             \
         x[i] = wasm_f32x4_add(x[i], x[offset+i]);  \
     }                                              \
     res = wasm_f32x4_extract_lane(x[0], 0) +       \
@@ -854,19 +854,19 @@ static inline unsigned char ggml_endian_byte(int i) {
 #define GGML_F16_STEP 16
 #define GGML_F16_EPR  4
 
-inline static v128_t __wasm_f16x4_load(const ggml_fp16_t * p) {
-    float tmp[4];
+വരിയിൽ സ്ഥിതം v128_t __wasm_f16x4_load(സ്ഥിരം ggml_fp16_t * p) {
+    ദശാംശം tmp[4];
 
     tmp[0] = GGML_CPU_FP16_TO_FP32(p[0]);
     tmp[1] = GGML_CPU_FP16_TO_FP32(p[1]);
     tmp[2] = GGML_CPU_FP16_TO_FP32(p[2]);
     tmp[3] = GGML_CPU_FP16_TO_FP32(p[3]);
 
-    return wasm_v128_load(tmp);
+    തിരികെ wasm_v128_load(tmp);
 }
 
-inline static void __wasm_f16x4_store(ggml_fp16_t * p, v128_t x) {
-    float tmp[4];
+വരിയിൽ സ്ഥിതം ശൂന്യം __wasm_f16x4_store(ggml_fp16_t * p, v128_t x) {
+    ദശാംശം tmp[4];
 
     wasm_v128_store(tmp, x);
 
@@ -886,16 +886,16 @@ inline static void __wasm_f16x4_store(ggml_fp16_t * p, v128_t x) {
 #define GGML_F16x4_MUL         wasm_f32x4_mul
 #define GGML_F16x4_REDUCE(res, x)                           \
 {                                                           \
-    int offset = GGML_F16_ARR >> 1;                         \
-    for (int i = 0; i < offset; ++i) {                      \
+    പൂർണ്ണസംഖ്യ offset = GGML_F16_ARR >> 1;                         \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                      \
         x[i] = wasm_f32x4_add(x[i], x[offset+i]);           \
     }                                                       \
     offset >>= 1;                                           \
-    for (int i = 0; i < offset; ++i) {                      \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                      \
         x[i] = wasm_f32x4_add(x[i], x[offset+i]);           \
     }                                                       \
     offset >>= 1;                                           \
-    for (int i = 0; i < offset; ++i) {                      \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                      \
         x[i] = wasm_f32x4_add(x[i], x[offset+i]);           \
     }                                                       \
     res = (ggml_float) (wasm_f32x4_extract_lane(x[0], 0) +  \
@@ -914,7 +914,7 @@ inline static void __wasm_f16x4_store(ggml_fp16_t * p, v128_t x) {
 #define GGML_F16_VEC_MUL            GGML_F16x4_MUL
 #define GGML_F16_VEC_REDUCE         GGML_F16x4_REDUCE
 
-#elif defined(__SSE3__)
+#അല്ലെങ്കിലെങ്കിൽ defined(__SSE3__)
 
 #define GGML_SIMD
 
@@ -928,29 +928,29 @@ inline static void __wasm_f16x4_store(ggml_fp16_t * p, v128_t x) {
 #define GGML_F32x4_SET1(x) _mm_set1_ps(x)
 #define GGML_F32x4_LOAD    _mm_loadu_ps
 #define GGML_F32x4_STORE   _mm_storeu_ps
-#if defined(__FMA__)
+#എങ്കിൽ defined(__FMA__)
     // TODO: Does this work?
     #define GGML_F32x4_FMA(a, b, c) _mm_fmadd_ps(b, c, a)
-#else
+#അല്ലെങ്കിൽ
     #define GGML_F32x4_FMA(a, b, c) _mm_add_ps(_mm_mul_ps(b, c), a)
 #endif
 #define GGML_F32x4_ADD     _mm_add_ps
 #define GGML_F32x4_MUL     _mm_mul_ps
 #define GGML_F32x4_REDUCE(res, x)                                 \
 {                                                                 \
-    int offset = GGML_F32_ARR >> 1;                               \
-    for (int i = 0; i < offset; ++i) {                            \
+    പൂർണ്ണസംഖ്യ offset = GGML_F32_ARR >> 1;                               \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                            \
         x[i] = _mm_add_ps(x[i], x[offset+i]);                     \
     }                                                             \
     offset >>= 1;                                                 \
-    for (int i = 0; i < offset; ++i) {                            \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                            \
         x[i] = _mm_add_ps(x[i], x[offset+i]);                     \
     }                                                             \
     offset >>= 1;                                                 \
-    for (int i = 0; i < offset; ++i) {                            \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                            \
         x[i] = _mm_add_ps(x[i], x[offset+i]);                     \
     }                                                             \
-    const __m128 t0 = _mm_hadd_ps(x[0], x[0]);                    \
+    സ്ഥിരം __m128 t0 = _mm_hadd_ps(x[0], x[0]);                    \
     res = (ggml_float) _mm_cvtss_f32(_mm_hadd_ps(t0, t0));        \
 }
 // TODO: is this optimal ?
@@ -970,19 +970,19 @@ inline static void __wasm_f16x4_store(ggml_fp16_t * p, v128_t x) {
 #define GGML_F16_STEP 32
 #define GGML_F16_EPR  4
 
-static inline __m128 __sse_f16x4_load(const ggml_fp16_t * x) {
-    float tmp[4];
+സ്ഥിതം വരിയിൽ __m128 __sse_f16x4_load(സ്ഥിരം ggml_fp16_t * x) {
+    ദശാംശം tmp[4];
 
     tmp[0] = GGML_CPU_FP16_TO_FP32(x[0]);
     tmp[1] = GGML_CPU_FP16_TO_FP32(x[1]);
     tmp[2] = GGML_CPU_FP16_TO_FP32(x[2]);
     tmp[3] = GGML_CPU_FP16_TO_FP32(x[3]);
 
-    return _mm_loadu_ps(tmp);
+    തിരികെ _mm_loadu_ps(tmp);
 }
 
-static inline void __sse_f16x4_store(ggml_fp16_t * x, __m128 y) {
-    float arr[4];
+സ്ഥിതം വരിയിൽ ശൂന്യം __sse_f16x4_store(ggml_fp16_t * x, __m128 y) {
+    ദശാംശം arr[4];
 
     _mm_storeu_ps(arr, y);
 
@@ -1012,7 +1012,7 @@ static inline void __sse_f16x4_store(ggml_fp16_t * x, __m128 y) {
 #define GGML_F16_VEC_MUL             GGML_F32Cx4_MUL
 #define GGML_F16_VEC_REDUCE          GGML_F32Cx4_REDUCE
 
-#elif defined(__loongarch_asx)
+#അല്ലെങ്കിലെങ്കിൽ defined(__loongarch_asx)
 
 #define GGML_SIMD
 
@@ -1029,22 +1029,22 @@ static inline void __sse_f16x4_store(ggml_fp16_t * x, __m128 y) {
 #define GGML_F32x8_ADD     __lasx_xvfadd_s
 #define GGML_F32x8_MUL     __lasx_xvfmul_s
 #define GGML_F32x8_REDUCE(res, x)                                 \
-do {                                                              \
-    int offset = GGML_F32_ARR >> 1;                               \
-    for (int i = 0; i < offset; ++i) {                            \
+ചെയ്യുക {                                                              \
+    പൂർണ്ണസംഖ്യ offset = GGML_F32_ARR >> 1;                               \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                            \
         x[i] = __lasx_xvfadd_s(x[i], x[offset+i]);                  \
     }                                                             \
     offset >>= 1;                                                 \
-    for (int i = 0; i < offset; ++i) {                            \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                            \
         x[i] = __lasx_xvfadd_s(x[i], x[offset+i]);                  \
     }                                                             \
     offset >>= 1;                                                 \
-    for (int i = 0; i < offset; ++i) {                            \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                            \
         x[i] = __lasx_xvfadd_s(x[i], x[offset+i]);                  \
     }                                                             \
-    float *tmp_p = (float *)&x[0]; \
+    ദശാംശം *tmp_p = (ദശാംശം *)&x[0]; \
     res = tmp_p[0] + tmp_p[1] + tmp_p[2] + tmp_p[3] + tmp_p[4] + tmp_p[5] + tmp_p[6] + tmp_p[7];  \
-} while (0)
+} ആകുമ്പോൾ (0)
 // TODO: is this optimal ?
 
 #define GGML_F32_VEC        GGML_F32x8
@@ -1068,17 +1068,17 @@ do {                                                              \
 #define GGML_F32Cx8_ZERO    (__m256)__lasx_xvldi(0)
 #define GGML_F32Cx8_SET1(x) (__m256)__lasx_xvreplfr2vr_s((x))
 
-static inline __m256 __lasx_f32cx8_load(const ggml_fp16_t * x) {
+സ്ഥിതം വരിയിൽ __m256 __lasx_f32cx8_load(സ്ഥിരം ggml_fp16_t * x) {
     __m256i a;
-    memcpy(&a, x, sizeof(ggml_fp16_t) * 8);
+    memcpy(&a, x, വലുപ്പം(ggml_fp16_t) * 8);
     a = __lasx_xvpermi_d(a, 0 | (1 << 4));
-    return __lasx_xvfcvtl_s_h(a);
+    തിരികെ __lasx_xvfcvtl_s_h(a);
 }
 
-static inline void __lasx_f32cx8_store(ggml_fp16_t * x, __m256 y) {
+സ്ഥിതം വരിയിൽ ശൂന്യം __lasx_f32cx8_store(ggml_fp16_t * x, __m256 y) {
     __m256i a = __lasx_xvfcvt_h_s(y, y);
     a = __lasx_xvpermi_d(a, 0 | (2 << 2));
-    memcpy(x, &a, sizeof(ggml_fp16_t) * 8);
+    memcpy(x, &a, വലുപ്പം(ggml_fp16_t) * 8);
 }
 #define GGML_F32Cx8_LOAD(x)     __lasx_f32cx8_load(x)
 #define GGML_F32Cx8_STORE(x, y) __lasx_f32cx8_store(x, y)
@@ -1098,7 +1098,7 @@ static inline void __lasx_f32cx8_store(ggml_fp16_t * x, __m256 y) {
 #define GGML_F16_VEC_MUL            GGML_F32Cx8_MUL
 #define GGML_F16_VEC_REDUCE         GGML_F32Cx8_REDUCE
 
-#elif defined(__loongarch_sx)
+#അല്ലെങ്കിലെങ്കിൽ defined(__loongarch_sx)
 
 #define GGML_SIMD
 
@@ -1118,16 +1118,16 @@ static inline void __lasx_f32cx8_store(ggml_fp16_t * x, __m256 y) {
 
 #define GGML_F32x4_REDUCE(res, x)                               \
 {                                                               \
-    int offset = GGML_F32_ARR >> 1;                             \
-    for (int i = 0; i < offset; ++i) {                          \
+    പൂർണ്ണസംഖ്യ offset = GGML_F32_ARR >> 1;                             \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                          \
         x[i] = __lsx_vfadd_s(x[i], x[offset+i]);                \
     }                                                           \
     offset >>= 1;                                               \
-    for (int i = 0; i < offset; ++i) {                          \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                          \
         x[i] = __lsx_vfadd_s(x[i], x[offset+i]);                \
     }                                                           \
     offset >>= 1;                                               \
-    for (int i = 0; i < offset; ++i) {                          \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {                          \
         x[i] = __lsx_vfadd_s(x[i], x[offset+i]);                \
     }                                                           \
     __m128i t0 = __lsx_vpickev_w((__m128i)x[0], (__m128i)x[0]); \
@@ -1154,13 +1154,13 @@ static inline void __lasx_f32cx8_store(ggml_fp16_t * x, __m256 y) {
 #define GGML_F16_STEP 32
 #define GGML_F16_EPR  4
 
-static inline __m128 __lsx_f16x4_load(const ggml_fp16_t * x) {
-    return __lsx_vfcvtl_s_h(__lsx_vld((const void *)x, 0));
+സ്ഥിതം വരിയിൽ __m128 __lsx_f16x4_load(സ്ഥിരം ggml_fp16_t * x) {
+    തിരികെ __lsx_vfcvtl_s_h(__lsx_vld((സ്ഥിരം ശൂന്യം *)x, 0));
 }
 
-static inline void __lsx_f16x4_store(ggml_fp16_t * x, __m128 y) {
+സ്ഥിതം വരിയിൽ ശൂന്യം __lsx_f16x4_store(ggml_fp16_t * x, __m128 y) {
     __m128i a = __lsx_vfcvt_h_s(y, y);
-    memcpy(x, &a, sizeof(ggml_fp16_t) * 4);
+    memcpy(x, &a, വലുപ്പം(ggml_fp16_t) * 4);
 }
 
 #define GGML_F32Cx4             __m128
@@ -1183,7 +1183,7 @@ static inline void __lsx_f16x4_store(ggml_fp16_t * x, __m128 y) {
 #define GGML_F16_VEC_MUL             GGML_F32Cx4_MUL
 #define GGML_F16_VEC_REDUCE          GGML_F32Cx4_REDUCE
 
-#elif defined(__VXE__) || defined(__VXE2__)
+#അല്ലെങ്കിലെങ്കിൽ defined(__VXE__) || defined(__VXE2__)
 
 #define GGML_SIMD
 
@@ -1202,16 +1202,16 @@ static inline void __lsx_f16x4_store(ggml_fp16_t * x, __m128 y) {
 #define GGML_F32x4_MUL          vec_mul
 #define GGML_F32x4_REDUCE(res, x)                   \
 {                                                   \
-    int offset = GGML_F32_ARR >> 1;                 \
-    for (int i = 0; i < offset; ++i) {              \
+    പൂർണ്ണസംഖ്യ offset = GGML_F32_ARR >> 1;                 \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {              \
         x[i] = vec_add(x[i], x[offset + i]);        \
     }                                               \
     offset >>= 1;                                   \
-    for (int i = 0; i < offset; ++i) {              \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {              \
         x[i] = vec_add(x[i], x[offset + i]);        \
     }                                               \
     offset >>= 1;                                   \
-    for (int i = 0; i < offset; ++i) {              \
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < offset; ++i) {              \
         x[i] = vec_add(x[i], x[offset + i]);        \
     }                                               \
     float32x4_t tmp = x[0] + vec_reve(x[0]);        \
@@ -1240,40 +1240,40 @@ static inline void __lsx_f16x4_store(ggml_fp16_t * x, __m128 y) {
 #define GGML_F16_STEP GGML_F32_STEP
 #define GGML_F16_EPR  GGML_F32_EPR
 
-static inline uint32x4_t __lzs_f32cx4_to_f16(float32x4_t v_f) {
+സ്ഥിതം വരിയിൽ uint32x4_t __lzs_f32cx4_to_f16(float32x4_t v_f) {
     float32x4_t v_base = vec_mul(vec_mul(vec_abs(v_f), vec_splats(0x1.0p+112f)), vec_splats(0x1.0p-110f));
 
-    const uint32x4_t v_w      = (uint32x4_t)v_f;
-    const uint32x4_t v_shl1_w = vec_add(v_w, v_w);
-    const uint32x4_t v_sign   = vec_and(v_w, vec_splats(UINT32_C(0x80000000)));
-    const uint32x4_t v_bias   = vec_max(vec_and(v_shl1_w, vec_splats(UINT32_C(0xFF000000))), vec_splats(UINT32_C(0x71000000)));
+    സ്ഥിരം uint32x4_t v_w      = (uint32x4_t)v_f;
+    സ്ഥിരം uint32x4_t v_shl1_w = vec_add(v_w, v_w);
+    സ്ഥിരം uint32x4_t v_sign   = vec_and(v_w, vec_splats(UINT32_C(0x80000000)));
+    സ്ഥിരം uint32x4_t v_bias   = vec_max(vec_and(v_shl1_w, vec_splats(UINT32_C(0xFF000000))), vec_splats(UINT32_C(0x71000000)));
 
     v_base = vec_add((float32x4_t)vec_add(vec_sr(v_bias, 1), vec_splats(UINT32_C(0x07800000))), v_base);
 
-    const uint32x4_t v_bits    = (uint32x4_t)v_base;
-    const uint32x4_t v_nonsign = vec_add(vec_and(vec_sr(v_bits, 13), vec_splats(UINT32_C(0x00007C00))),
+    സ്ഥിരം uint32x4_t v_bits    = (uint32x4_t)v_base;
+    സ്ഥിരം uint32x4_t v_nonsign = vec_add(vec_and(vec_sr(v_bits, 13), vec_splats(UINT32_C(0x00007C00))),
                                          vec_and(v_bits, vec_splats(UINT32_C(0x00000FFF))));
-    const uint32x4_t v_is_nan  = (uint32x4_t)vec_cmpgt(v_shl1_w, vec_splats(UINT32_C(0xFF000000)));
+    സ്ഥിരം uint32x4_t v_is_nan  = (uint32x4_t)vec_cmpgt(v_shl1_w, vec_splats(UINT32_C(0xFF000000)));
 
-    return vec_or(vec_sr(v_sign, 16), vec_sel(v_nonsign, vec_splats(UINT32_C(0x7E00)), v_is_nan));
+    തിരികെ vec_or(vec_sr(v_sign, 16), vec_sel(v_nonsign, vec_splats(UINT32_C(0x7E00)), v_is_nan));
 }
 
-static inline float32x4_t __lzs_f16cx4_load(const ggml_fp16_t * x) {
-    float tmp[4];
+സ്ഥിതം വരിയിൽ float32x4_t __lzs_f16cx4_load(സ്ഥിരം ggml_fp16_t * x) {
+    ദശാംശം tmp[4];
 
-    for (int i = 0; i < 4; i++) {
+    വേണ്ടി (പൂർണ്ണസംഖ്യ i = 0; i < 4; i++) {
         tmp[i] = GGML_CPU_FP16_TO_FP32(x[i]);
     }
 
     // note: keep type-cast here to prevent compiler bugs
     // see: https://github.com/ggml-org/llama.cpp/issues/12846
-    return vec_xl(0, (const float *)(tmp));
+    തിരികെ vec_xl(0, (സ്ഥിരം ദശാംശം *)(tmp));
 }
 
-static inline void __lzs_f16cx4_store(ggml_fp16_t * x, float32x4_t v_y) {
-    const uint32x4_t v_h = __lzs_f32cx4_to_f16(v_y);
-    const uint64_t   tmp = ((uint64x2_t)vec_pack(v_h, v_h))[0];
-    memcpy(x, &tmp, sizeof(tmp));
+സ്ഥിതം വരിയിൽ ശൂന്യം __lzs_f16cx4_store(ggml_fp16_t * x, float32x4_t v_y) {
+    സ്ഥിരം uint32x4_t v_h = __lzs_f32cx4_to_f16(v_y);
+    സ്ഥിരം uint64_t   tmp = ((uint64x2_t)vec_pack(v_h, v_h))[0];
+    memcpy(x, &tmp, വലുപ്പം(tmp));
 }
 
 #define GGML_F16_VEC                GGML_F32x4
@@ -1292,7 +1292,7 @@ static inline void __lzs_f16cx4_store(ggml_fp16_t * x, float32x4_t v_y) {
 
 #define GGML_BF16x8         __vector unsigned short
 #define GGML_BF16x8_ZERO    vec_splats((unsigned short)0)
-#define GGML_BF16x8_LOAD(p) vec_xl(0, (const unsigned short *)(p))
+#define GGML_BF16x8_LOAD(p) vec_xl(0, (സ്ഥിരം unsigned short *)(p))
 
 #define GGML_BF16_VEC      GGML_BF16x8
 #define GGML_BF16_VEC_ZERO GGML_BF16x8_ZERO
@@ -1304,7 +1304,7 @@ static inline void __lzs_f16cx4_store(ggml_fp16_t * x, float32x4_t v_y) {
 #define GGML_BF16_FMA_HI(acc, x, y) \
     (acc) = GGML_F32x4_FMA((acc), GGML_BF16_TO_F32_HI(x), GGML_BF16_TO_F32_HI(y))
 
-#elif defined(__riscv_v_intrinsic)
+#അല്ലെങ്കിലെങ്കിൽ defined(__riscv_v_intrinsic)
 
 // compatible with vlen >= 128
 
@@ -1346,18 +1346,18 @@ static inline void __lzs_f16cx4_store(ggml_fp16_t * x, float32x4_t v_y) {
 // GGML_F16_DOT_*
 // like GGML_F16_* but for dot products which need F32 accumulation on AVX512-FP16
 
-#if defined(__AVX512FP16__)
+#എങ്കിൽ defined(__AVX512FP16__)
 
 #define GGML_F16_DOT_STEP           GGML_F32_STEP
 #define GGML_F16_DOT_EPR            GGML_F32_EPR
 #define GGML_F16_DOT_ARR            GGML_F32_ARR
 #define GGML_F16_DOT_VEC            GGML_F32x16
 #define GGML_F16_DOT_VEC_ZERO       GGML_F32x16_ZERO
-#define GGML_F16_DOT_VEC_LOAD(p, i) _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)(p)))
+#define GGML_F16_DOT_VEC_LOAD(p, i) _mm512_cvtph_ps(_mm256_loadu_si256((സ്ഥിരം __m256i *)(p)))
 #define GGML_F16_DOT_VEC_FMA        GGML_F32x16_FMA
 #define GGML_F16_DOT_VEC_REDUCE     GGML_F32x16_REDUCE
 
-#else
+#അല്ലെങ്കിൽ
 
 #define GGML_F16_DOT_STEP           GGML_F16_STEP
 #define GGML_F16_DOT_EPR            GGML_F16_EPR

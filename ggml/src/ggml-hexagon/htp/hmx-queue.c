@@ -1,55 +1,55 @@
 #pragma clang diagnostic ignored "-Wunused-function"
 
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
+#അന്തര്ഭാവ <stdbool.h>
+#അന്തര്ഭാവ <stdlib.h>
+#അന്തര്ഭാവ <string.h>
 
-#include <qurt_thread.h>
-#include <qurt_futex.h>
-#include <qurt_hvx.h>
+#അന്തര്ഭാവ <qurt_thread.h>
+#അന്തര്ഭാവ <qurt_futex.h>
+#അന്തര്ഭാവ <qurt_hvx.h>
 
-#include <HAP_compute_res.h>
+#അന്തര്ഭാവ <HAP_compute_res.h>
 
-#include "hmx-queue.h"
+#അന്തര്ഭാവ "hmx-queue.h"
 
 #define QURT_LOWEST_PRIO (254)
 
-static inline void hmx_lock(hmx_queue_t q)
+സ്ഥിതം വരിയിൽ ശൂന്യം hmx_lock(hmx_queue_t q)
 {
-    if (!q->hmx_locked) {
+    എങ്കിൽ (!q->hmx_locked) {
         HAP_compute_res_hmx_lock(q->hap_rctx);
         q->hmx_locked = true;
     }
 }
 
-static inline void hmx_unlock(hmx_queue_t q)
+സ്ഥിതം വരിയിൽ ശൂന്യം hmx_unlock(hmx_queue_t q)
 {
-    if (q->hmx_locked) {
+    എങ്കിൽ (q->hmx_locked) {
         HAP_compute_res_hmx_unlock(q->hap_rctx);
         q->hmx_locked = false;
     }
 }
 
-static inline void hmx_queue_process(hmx_queue_t q, bool* killed) {
-    unsigned int ir = atomic_load(&q->idx_read);
+സ്ഥിതം വരിയിൽ ശൂന്യം hmx_queue_process(hmx_queue_t q, bool* killed) {
+    unsigned പൂർണ്ണസംഖ്യ ir = atomic_load(&q->idx_read);
 
-    while (ir != atomic_load(&q->idx_write)) {
-        struct hmx_queue_desc *d = &q->desc[ir];
-        if (!d->done) {
-            FARF(HIGH, "hmx-queue-process: ir %u func %p data %p", ir, d->func, d->data);
+    ആകുമ്പോൾ (ir != atomic_load(&q->idx_write)) {
+        ഘടന hmx_queue_desc *d = &q->desc[ir];
+        എങ്കിൽ (!d->done) {
+            FARF(മുകളിലെ_2, "hmx-queue-process: ir %u func %p data %p", ir, d->func, d->data);
 
             uintptr_t sig = (uintptr_t) d->func;
-            switch (sig) {
-                case HMX_QUEUE_NOOP:    /* noop */;     break;
-                case HMX_QUEUE_KILL:    *killed = true; break;
-                case HMX_QUEUE_SUSPEND: hmx_unlock(q);  break;
-                case HMX_QUEUE_WAKEUP:  hmx_lock(q);    break;
-                default:
+            തിരഞ്ഞെടുപ്പ് (sig) {
+                അവസ്ഥ HMX_QUEUE_NOOP:    /* noop */;     നിർത്തുക;
+                അവസ്ഥ HMX_QUEUE_KILL:    *killed = true; നിർത്തുക;
+                അവസ്ഥ HMX_QUEUE_SUSPEND: hmx_unlock(q);  നിർത്തുക;
+                അവസ്ഥ HMX_QUEUE_WAKEUP:  hmx_lock(q);    നിർത്തുക;
+                സ്ഥിരസ്ഥിതി:
                     hmx_lock(q);
                     htp_trace_event_start(q->trace, HTP_TRACE_EVT_HMX_COMP, ir);
                     d->func(d->data);
                     htp_trace_event_stop(q->trace, HTP_TRACE_EVT_HMX_COMP, ir);
-                    break;
+                    നിർത്തുക;
             }
 
             atomic_fetch_add(&d->done, 1);
@@ -60,104 +60,104 @@ static inline void hmx_queue_process(hmx_queue_t q, bool* killed) {
     }
 }
 
-static void hmx_queue_thread(void * arg) {
+സ്ഥിതം ശൂന്യം hmx_queue_thread(ശൂന്യം * arg) {
     hmx_queue_t q = (hmx_queue_t) arg;
 
-    FARF(HIGH, "hmx-queue-thread: started");
+    FARF(മുകളിലെ_2, "hmx-queue-thread: started");
 
     bool killed = false;
 
-    unsigned int poll_cnt  = HMX_QUEUE_POLL_COUNT;
-    unsigned int prev_seqn = 0;
-    while (!killed) {
-        unsigned int seqn = atomic_load(&q->seqn);
-        if (seqn == prev_seqn) {
+    unsigned പൂർണ്ണസംഖ്യ poll_cnt  = HMX_QUEUE_POLL_എണ്ണം;
+    unsigned പൂർണ്ണസംഖ്യ prev_seqn = 0;
+    ആകുമ്പോൾ (!killed) {
+        unsigned പൂർണ്ണസംഖ്യ seqn = atomic_load(&q->seqn);
+        എങ്കിൽ (seqn == prev_seqn) {
             // drop HVX context while spinning
-            if (poll_cnt > 1 && poll_cnt == HMX_QUEUE_POLL_COUNT) {
+            എങ്കിൽ (poll_cnt > 1 && poll_cnt == HMX_QUEUE_POLL_എണ്ണം) {
                 qurt_hvx_unlock();
             }
-            if (--poll_cnt) { hex_pause(); continue; }
-            FARF(HIGH, "hmx-queue-thread: sleeping");
+            എങ്കിൽ (--poll_cnt) { hex_pause(); തുടരുക; }
+            FARF(മുകളിലെ_2, "hmx-queue-thread: sleeping");
             qurt_futex_wait(&q->seqn, prev_seqn);
-            poll_cnt = HMX_QUEUE_POLL_COUNT;
-            continue;
+            poll_cnt = HMX_QUEUE_POLL_എണ്ണം;
+            തുടരുക;
         }
         prev_seqn = seqn;
-        poll_cnt  = HMX_QUEUE_POLL_COUNT;
+        poll_cnt  = HMX_QUEUE_POLL_എണ്ണം;
 
-        FARF(HIGH, "hmx-queue-thread: new work");
+        FARF(മുകളിലെ_2, "hmx-queue-thread: new work");
 
         hmx_queue_process(q, &killed);
     }
 
-    FARF(HIGH, "hmx-queue-thread: stopped");
+    FARF(മുകളിലെ_2, "hmx-queue-thread: stopped");
 }
 
-size_t hmx_queue_sizeof(size_t capacity, uint32_t stack_size) {
+size_t hmx_queue_sizeof(size_t capacity, uint32_t അട്ടി_size) {
     capacity = hex_ceil_pow2(capacity);
-    size_t size_q = hex_align_up(sizeof(struct hmx_queue_s), HEX_L2_LINE_SIZE);
-    size_t size_desc = hex_align_up(capacity * sizeof(struct hmx_queue_desc), HEX_L2_LINE_SIZE);
-    size_t size_stack = stack_size;
-    return size_q + size_desc + size_stack;
+    size_t size_q = hex_align_up(വലുപ്പം(ഘടന hmx_queue_s), HEX_L2_വരി_SIZE);
+    size_t size_desc = hex_align_up(capacity * വലുപ്പം(ഘടന hmx_queue_desc), HEX_L2_വരി_SIZE);
+    size_t size_അട്ടി = അട്ടി_size;
+    തിരികെ size_q + size_desc + size_അട്ടി;
 }
 
-size_t hmx_queue_alignof(void) {
-    return HEX_L2_LINE_SIZE;
+size_t hmx_queue_alignof(ശൂന്യം) {
+    തിരികെ HEX_L2_വരി_SIZE;
 }
 
-hmx_queue_t hmx_queue_init(void * ptr, size_t capacity, uint32_t stack_size, uint32_t hap_rctx, struct htp_thread_trace * trace) {
+hmx_queue_t hmx_queue_init(ശൂന്യം * ptr, size_t capacity, uint32_t അട്ടി_size, uint32_t hap_rctx, ഘടന htp_thread_trace * trace) {
     capacity = hex_ceil_pow2(capacity);
-    size_t size_q = hex_align_up(sizeof(struct hmx_queue_s), HEX_L2_LINE_SIZE);
-    size_t size_desc = hex_align_up(capacity * sizeof(struct hmx_queue_desc), HEX_L2_LINE_SIZE);
+    size_t size_q = hex_align_up(വലുപ്പം(ഘടന hmx_queue_s), HEX_L2_വരി_SIZE);
+    size_t size_desc = hex_align_up(capacity * വലുപ്പം(ഘടന hmx_queue_desc), HEX_L2_വരി_SIZE);
 
     uint8_t * block = (uint8_t *) ptr;
 
     hmx_queue_t q = (hmx_queue_t) block; block += size_q;
-    memset(q, 0, sizeof(struct hmx_queue_s));
+    memset(q, 0, വലുപ്പം(ഘടന hmx_queue_s));
 
     q->capacity = capacity;
     q->idx_mask = capacity - 1;
     q->hap_rctx = hap_rctx;
     q->external_mem = true;
 
-    q->desc = (struct hmx_queue_desc *) block; block += size_desc;
-    memset(q->desc, 0, capacity * sizeof(struct hmx_queue_desc));
+    q->desc = (ഘടന hmx_queue_desc *) block; block += size_desc;
+    memset(q->desc, 0, capacity * വലുപ്പം(ഘടന hmx_queue_desc));
 
-    q->stack = block;
-    memset(q->stack, 0, stack_size);
+    q->അട്ടി = block;
+    memset(q->അട്ടി, 0, അട്ടി_size);
 
     q->trace = trace;
 
     // Match caller thread priority (same pattern as worker-pool.c).
-    int prio = qurt_thread_get_priority(qurt_thread_get_id());
-    if (prio < 1) {
+    പൂർണ്ണസംഖ്യ prio = qurt_thread_get_priority(qurt_thread_get_id());
+    എങ്കിൽ (prio < 1) {
         prio = 1;
     }
-    if (prio > QURT_LOWEST_PRIO) {
+    എങ്കിൽ (prio > QURT_LOWEST_PRIO) {
         prio = QURT_LOWEST_PRIO;
     }
 
     qurt_thread_attr_t attr;
     qurt_thread_attr_init(&attr);
-    qurt_thread_attr_set_stack_addr(&attr, q->stack);
-    qurt_thread_attr_set_stack_size(&attr, stack_size);
+    qurt_thread_attr_set_അട്ടി_addr(&attr, q->അട്ടി);
+    qurt_thread_attr_set_അട്ടി_size(&attr, അട്ടി_size);
     qurt_thread_attr_set_priority(&attr, prio);
     qurt_thread_attr_set_name(&attr, "hmx-queue");
 
-    int err = qurt_thread_create(&q->thread, &attr, hmx_queue_thread, q);
-    if (err) {
+    പൂർണ്ണസംഖ്യ err = qurt_thread_create(&q->thread, &attr, hmx_queue_thread, q);
+    എങ്കിൽ (err) {
         FARF(ERROR, "hmx-worker: thread create failed (%d)", err);
-        return NULL;
+        തിരികെ ശൂന്യ;
     }
 
-    FARF(HIGH, "hmx-queue: capacity %u\n", capacity);
+    FARF(മുകളിലെ_2, "hmx-queue: capacity %u\n", capacity);
 
-    return q;
+    തിരികെ q;
 }
 
-void hmx_queue_free(hmx_queue_t q) {
-    if (!q) {
-        return;
+ശൂന്യം hmx_queue_free(hmx_queue_t q) {
+    എങ്കിൽ (!q) {
+        തിരികെ;
     }
 
     // Tell the worker to exit.
@@ -165,6 +165,6 @@ void hmx_queue_free(hmx_queue_t q) {
     hmx_queue_signal(q, HMX_QUEUE_KILL);
     hmx_queue_flush(q);
 
-    int status;
+    പൂർണ്ണസംഖ്യ status;
     qurt_thread_join(q->thread, &status);
 }

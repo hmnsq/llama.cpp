@@ -1,5 +1,5 @@
 #pragma once
 
-#include "common.hpp"
+#അന്തര്ഭാവ "common.hpp"
 
-void ggml_sycl_cumsum(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+ശൂന്യം ggml_sycl_cumsum(ggml_backend_sycl_context & ctx, ggml_tensor * dst);

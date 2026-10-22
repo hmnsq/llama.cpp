@@ -1,14 +1,14 @@
 #ifndef GGML_ZDNN_QUANTIZE_HPP
 #define GGML_ZDNN_QUANTIZE_HPP
 
-#include "common.hpp"
+#അന്തര്ഭാവ "common.hpp"
 
-void ggml_zdnn_quantize_inputs(int32_t       n_threads,
-                         const ggml_tensor * inputs,
+ശൂന്യം ggml_zdnn_quantize_inputs(int32_t       n_threads,
+                         സ്ഥിരം ggml_tensor * inputs,
                                int64_t       group_size,
-                         const float       * channel_scales,
+                         സ്ഥിരം ദശാംശം       * channel_scales,
                                int8_t      * quants,
                                int8_t      * residuals,
-                               float       * scales);
+                               ദശാംശം       * scales);
 
 #endif  // GGML_ZDNN_QUANTIZE_HPP
