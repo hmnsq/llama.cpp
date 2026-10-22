@@ -18,13 +18,13 @@
         uint32_t i = 0;                                          \
                                                                  \
         hvx_splat_pragma(unroll(unroll_cnt))                     \
-        for (; i < nvec; i++) {                                  \
+        cho (; i < nvec; i++) {                                  \
             vdst[i] = src;                                       \
         }                                                        \
-        if (nloe) {                                              \
+        nếu (nloe) {                                              \
             vec_store((void *) &vdst[i], nloe * elem_size, src); \
         }                                                        \
-    } while(0)
+    } trong_khi(0)
 
 static inline void hvx_splat_a(void * restrict dst, HVX_Vector src, uint32_t n, uint32_t elem_size) {
     assert((unsigned long) dst % 128 == 0);
@@ -79,11 +79,11 @@ static inline void hvx_splat_u8_u(void * restrict dst, uint8_t v, uint32_t n) {
         uint32_t i = 0;                                              \
                                                                      \
         _Pragma("unroll(4)")                                         \
-        for (; i < nvec; i++) { vdst[i] = vsrc[i]; }                 \
-        if (nloe) {                                                  \
+        cho (; i < nvec; i++) { vdst[i] = vsrc[i]; }                 \
+        nếu (nloe) {                                                  \
             vec_store((void *) &vdst[i], nloe * elem_size, vsrc[i]); \
         }                                                            \
-    } while(0)
+    } trong_khi(0)
 
 // Generic copy routines
 static inline void hvx_copy_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n, uint32_t elem_size) {
@@ -161,14 +161,14 @@ static inline void hvx_copy_f32_uu(uint8_t * restrict dst, const uint8_t * restr
         uint32_t i = 0;                                                             \
                                                                                     \
         _Pragma("unroll(4)")                                                        \
-        for (; i < nvec; i++) {                                                     \
+        cho (; i < nvec; i++) {                                                     \
             vdst[i] = hvx_vec_f32_to_f16(vsrc[i*2+0], vsrc[i*2+1]);                 \
         }                                                                           \
-        if (nloe) {                                                                 \
+        nếu (nloe) {                                                                 \
             HVX_Vector v = hvx_vec_f32_to_f16(vsrc[i*2+0], vsrc[i*2+1]);            \
             vec_store((void *) &vdst[i], nloe * elem_size, v);                      \
         }                                                                           \
-    } while(0)
+    } trong_khi(0)
 
 // copy/convert n fp32 elements into n fp16 elements : destination and source are aligned
 static inline void hvx_copy_f16_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
@@ -211,29 +211,29 @@ static inline void hvx_copy_f16_f32_uu(uint8_t * restrict dst, const uint8_t * r
         uint32_t i = 0;                                                             \
                                                                                     \
         _Pragma("unroll(4)")                                                        \
-        for (i = 0; i < nvec; ++i) {                                                \
+        cho (i = 0; i < nvec; ++i) {                                                \
             HVX_VectorPair p = Q6_Wqf32_vmpy_VhfVhf(Q6_Vh_vshuff_Vh(vsrc[i]), one); \
             vdst[i*2]   = Q6_Vsf_equals_Vqf32(Q6_V_lo_W(p));                        \
             vdst[i*2+1] = Q6_Vsf_equals_Vqf32(Q6_V_hi_W(p));                        \
         }                                                                           \
                                                                                     \
-        if (nloe) {                                                                 \
+        nếu (nloe) {                                                                 \
             HVX_VectorPair p = Q6_Wqf32_vmpy_VhfVhf(Q6_Vh_vshuff_Vh(vsrc[i]), one); \
                                                                                     \
             HVX_Vector vd = Q6_V_lo_W(p);                                           \
             i = 2 * i;                                                              \
                                                                                     \
-            if (nloe >= 32) {                                                       \
+            nếu (nloe >= 32) {                                                       \
                 vdst[i] = Q6_Vsf_equals_Vqf32(vd);                                  \
                 nloe -= 32; ++i; vd = Q6_V_hi_W(p);                                 \
             }                                                                       \
                                                                                     \
-            if (nloe) {                                                             \
+            nếu (nloe) {                                                             \
                 vd = Q6_Vsf_equals_Vqf32(vd);                                       \
                 hvx_vec_store_u(&vdst[i], nloe * sizeof(float), vd);                \
             }                                                                       \
         }                                                                           \
-    } while(0)
+    } trong_khi(0)
 
 // copy/convert n fp16 elements into n fp32 elements : destination and source are aligned
 static inline void hvx_copy_f32_f16_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
@@ -273,14 +273,14 @@ static inline void hvx_copy_f32_f16_uu(uint8_t * restrict dst, const uint8_t * r
                                                                   \
         uint32_t i = 0;                                           \
         _Pragma("unroll(4)")                                      \
-        for (; i < nvec; i++) {                                   \
+        cho (; i < nvec; i++) {                                   \
             vdst[i] = Q6_Vw_equals_Vsf(vsrc[i]);                  \
         }                                                         \
-        if (nloe) {                                               \
+        nếu (nloe) {                                               \
             HVX_Vector v = Q6_Vw_equals_Vsf(vsrc[i]);             \
             vec_store((void *) &vdst[i], nloe * elem_size, v);    \
         }                                                         \
-    } while(0)
+    } trong_khi(0)
 
 // copy/convert n fp32 elements into n int32 elements : destination and source are aligned
 static inline void hvx_copy_i32_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
@@ -308,14 +308,14 @@ static inline void hvx_copy_i32_f32_uu(uint8_t * restrict dst, const uint8_t * r
                                                                   \
         uint32_t i = 0;                                           \
         _Pragma("unroll(4)")                                      \
-        for (; i < nvec; i++) {                                   \
+        cho (; i < nvec; i++) {                                   \
             vdst[i] = Q6_Vsf_equals_Vw(vsrc[i]);                  \
         }                                                         \
-        if (nloe) {                                               \
+        nếu (nloe) {                                               \
             HVX_Vector v = Q6_Vsf_equals_Vw(vsrc[i]);             \
             vec_store((void *) &vdst[i], nloe * elem_size, v);    \
         }                                                         \
-    } while(0)
+    } trong_khi(0)
 
 // copy/convert n int32 elements into n fp32 elements : destination and source are aligned
 static inline void hvx_copy_f32_i32_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {

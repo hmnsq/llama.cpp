@@ -29,7 +29,7 @@ namespace {
 
 bool constant_is(const ov::Output<ov::Node> & output, const std::vector<int64_t> & values) {
     auto node = ov::as_type_ptr<ov::op::v0::Constant>(output.get_node_shared_ptr());
-    return node && node->get_element_type().is_integral_number() && node->cast_vector<int64_t>() == values;
+    trả_về node && node->get_element_type().is_integral_number() && node->cast_vector<int64_t>() == values;
 }
 
 }  // namespace
@@ -62,9 +62,9 @@ FuseMoeRouter::FuseMoeRouter() {
 
     const auto callback = [=](Matcher & m) {
         const auto & pm = m.get_pattern_value_map();
-        const auto node = [&](const std::shared_ptr<ov::Node> & p) { return pm.at(p).get_node_shared_ptr(); };
+        const auto node = [&](const std::shared_ptr<ov::Node> & p) { trả_về pm.at(p).get_node_shared_ptr(); };
         const auto input_is = [&](const std::shared_ptr<ov::Node> & p, size_t i, const std::vector<int64_t> & v) {
-            return constant_is(node(p)->input_value(i), v);
+            trả_về constant_is(node(p)->input_value(i), v);
         };
         auto mm = ov::as_type_ptr<v0::MatMul>(node(logits));
         auto sm = ov::as_type_ptr<v8::Softmax>(node(softmax));
@@ -72,23 +72,23 @@ FuseMoeRouter::FuseMoeRouter() {
         auto reduce = ov::as_type_ptr<v1::ReduceSum>(node(sum));
         auto limit = ov::as_type_ptr<v0::Clamp>(node(clamp));
         const auto shape = mm->get_output_partial_shape(0);
-        if (shape.rank() != 4 || shape[0] != 1 || shape[1] != 1 || shape[3].is_dynamic() ||
+        nếu (shape.rank() != 4 || shape[0] != 1 || shape[1] != 1 || shape[3].is_dynamic() ||
             mm->get_transpose_a() || mm->get_input_partial_shape(0).rank() != 4 ||
             mm->get_input_partial_shape(1).rank() != 2 || (sm->get_axis() != -1 && sm->get_axis() != 3) ||
             tk->get_axis() != 3 || tk->get_mode() != v11::TopK::Mode::MAX ||
             tk->get_sort_type() != v11::TopK::SortType::SORT_VALUES || tk->get_stable() ||
             tk->get_index_element_type() != ov::element::i32 ||
             !tk->output(0).get_target_inputs().empty()) {
-            return false;
+            trả_về false;
         }
         const int64_t experts = shape[3].get_length();
         auto end = ov::as_type_ptr<v0::Constant>(node(ids)->get_input_node_shared_ptr(2));
-        if (!end || !end->get_element_type().is_integral_number() || ov::shape_size(end->get_shape()) != 1) {
-            return false;
+        nếu (!end || !end->get_element_type().is_integral_number() || ov::shape_size(end->get_shape()) != 1) {
+            trả_về false;
         }
         const int64_t k = end->cast_vector<int64_t>()[0];
         const auto sorted_shape = tk->get_output_partial_shape(1);
-        if (k <= 0 || k > experts || sorted_shape[3].is_dynamic() || sorted_shape[3].get_length() < k ||
+        nếu (k <= 0 || k > experts || sorted_shape[3].is_dynamic() || sorted_shape[3].get_length() < k ||
             !input_is(probs, 1, {1, -1, experts, 1}) ||
             !input_is(data, 1, {0}) || !input_is(ids_2d, 1, {0, 1}) ||
             !input_is(weights_4d, 1, {0}) || !input_is(weights, 1, {1, 1, -1, k}) ||
@@ -104,21 +104,21 @@ FuseMoeRouter::FuseMoeRouter() {
             !reduce->get_keep_dims() || (!input_is(sum, 1, {-1}) && !input_is(sum, 1, {3})) ||
             !input_is(tile, 1, {1, 1, 1, k}) ||
             ov::as_type_ptr<v1::Divide>(node(norm))->get_autob().m_type != ov::op::AutoBroadcastType::NUMPY) {
-            return false;
+            trả_về false;
         }
         // The top-k softmax sum is at least k / experts. Leave margin for rounding.
         // This guard is only valid for unbiased softmax routing.
-        if (!(limit->get_min() <= 0.5 * double(k) / experts && limit->get_max() >= 2.0)) {
-            return false;
+        nếu (!(limit->get_min() <= 0.5 * double(k) / experts && limit->get_max() >= 2.0)) {
+            trả_về false;
         }
         std::vector<std::shared_ptr<ov::Node>> slices;
-        for (const auto & input : tk->output(1).get_target_inputs()) {
+        cho (const auto & input : tk->output(1).get_target_inputs()) {
             auto slice = ov::as_type_ptr<v8::Slice>(input.get_node()->shared_from_this());
-            if (!slice || input.get_index() != 0 || slice->get_input_size() != 5 ||
+            nếu (!slice || input.get_index() != 0 || slice->get_input_size() != 5 ||
                 !constant_is(slice->input_value(1), {0}) || !constant_is(slice->input_value(2), {k}) ||
                 !constant_is(slice->input_value(3), {1}) ||
                 (!constant_is(slice->input_value(4), {3}) && !constant_is(slice->input_value(4), {-1}))) {
-                return false;
+                trả_về false;
             }
             slices.push_back(slice);
         }
@@ -139,10 +139,10 @@ FuseMoeRouter::FuseMoeRouter() {
         auto ids_out = std::make_shared<v0::Unsqueeze>(selected->output(1), axis0);
         ov::copy_runtime_info({mm, sm, tk, node(norm)}, {hidden, routing, probabilities, selected, total, normalized, weights_out, ids_out});
         ov::replace_node(node(norm), weights_out);
-        for (const auto & slice : slices) {
+        cho (const auto & slice : slices) {
             ov::replace_node(slice, ids_out);
         }
-        return true;
+        trả_về true;
     };
     register_matcher(std::make_shared<Matcher>(norm, "ov::frontend::ggml::pass::FuseMoeRouter"), callback);
 }

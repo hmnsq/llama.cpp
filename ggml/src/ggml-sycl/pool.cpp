@@ -15,30 +15,30 @@
 
 template <typename Ti, typename To>
 static void pool2d_nchw_kernel(
-        const int ih, const int iw, const int oh, const int ow,
-        const int kh, const int kw, const int sh, const int sw,
-        const int ph, const int pw, const int parallel_elements,
+        const số_nguyên ih, const số_nguyên iw, const số_nguyên oh, const số_nguyên ow,
+        const số_nguyên kh, const số_nguyên kw, const số_nguyên sh, const số_nguyên sw,
+        const số_nguyên ph, const số_nguyên pw, const số_nguyên parallel_elements,
         const Ti* src, To* dst, const enum ggml_op_pool op,
         const sycl::nd_item<3> &item_ct1) {
-        int idx = item_ct1.get_local_id(2) +
+        số_nguyên idx = item_ct1.get_local_id(2) +
                   item_ct1.get_group(2) * item_ct1.get_local_range(2);
-        if (idx >= parallel_elements) {
-            return;
+        nếu (idx >= parallel_elements) {
+            trả_về;
         }
 
-        const int I_HW = ih * iw;
-        const int O_HW = oh * ow;
-        const int nc = idx / O_HW;
-        const int cur_oh = idx % O_HW / ow;
-        const int cur_ow = idx % O_HW % ow;
+        const số_nguyên I_HW = ih * iw;
+        const số_nguyên O_HW = oh * ow;
+        const số_nguyên nc = idx / O_HW;
+        const số_nguyên cur_oh = idx % O_HW / ow;
+        const số_nguyên cur_ow = idx % O_HW % ow;
         const Ti* i_ptr = src + nc * I_HW;
         To* o_ptr = dst + nc * O_HW;
-        const int start_h = cur_oh * sh - ph;
-        const int bh = sycl::max(0, start_h);
-        const int eh = sycl::min(ih, start_h + kh);
-        const int start_w = cur_ow * sw - pw;
-        const int bw = sycl::max(0, start_w);
-        const int ew = sycl::min(iw, start_w + kw);
+        const số_nguyên start_h = cur_oh * sh - ph;
+        const số_nguyên bh = sycl::max(0, start_h);
+        const số_nguyên eh = sycl::min(ih, start_h + kh);
+        const số_nguyên start_w = cur_ow * sw - pw;
+        const số_nguyên bw = sycl::max(0, start_w);
+        const số_nguyên ew = sycl::min(iw, start_w + kw);
 
         To res = 0;
 
@@ -50,8 +50,8 @@ static void pool2d_nchw_kernel(
                 break;
         }
 
-        for (int i = bh; i < eh; i += 1) {
-            for (int j = bw; j < ew; j += 1) {
+        cho (số_nguyên i = bh; i < eh; i += 1) {
+            cho (số_nguyên j = bw; j < ew; j += 1) {
                 Ti cur = i_ptr[i * iw + j];
                 switch (op) {
                     case GGML_OP_POOL_AVG: res += (cur / (kh * kw)); break;
@@ -67,24 +67,24 @@ static void pool2d_nchw_kernel(
 
 template <typename Ti, typename To>
 static void pool1d_ncw_kernel(
-        const int iw, const int ow,
-        const int k, const int s,
-        const int p, const int parallel_elements,
+        const số_nguyên iw, const số_nguyên ow,
+        const số_nguyên k, const số_nguyên s,
+        const số_nguyên p, const số_nguyên parallel_elements,
         const Ti * src, To * dst, const enum ggml_op_pool op,
         const sycl::nd_item<3> & item_ct1) {
-    int idx = item_ct1.get_local_id(2) +
+    số_nguyên idx = item_ct1.get_local_id(2) +
               item_ct1.get_group(2) * item_ct1.get_local_range(2);
-    if (idx >= parallel_elements) {
-        return;
+    nếu (idx >= parallel_elements) {
+        trả_về;
     }
 
-    const int nc     = idx / ow;
-    const int cur_ow = idx % ow;
+    const số_nguyên nc     = idx / ow;
+    const số_nguyên cur_ow = idx % ow;
     const Ti * i_ptr = src + nc * iw;
     To *       o_ptr = dst + nc * ow;
-    const int  start = cur_ow * s - p;
-    const int  b     = sycl::max(0, start);
-    const int  e     = sycl::min(iw, start + k);
+    const số_nguyên  start = cur_ow * s - p;
+    const số_nguyên  b     = sycl::max(0, start);
+    const số_nguyên  e     = sycl::min(iw, start + k);
 
     To res = 0;
     switch (op) {
@@ -95,7 +95,7 @@ static void pool1d_ncw_kernel(
             break;
     }
 
-    for (int j = b; j < e; j += 1) {
+    cho (số_nguyên j = b; j < e; j += 1) {
         Ti cur = i_ptr[j];
         switch (op) {
             case GGML_OP_POOL_AVG: res += cur; break;
@@ -106,8 +106,8 @@ static void pool1d_ncw_kernel(
         }
     }
 
-    const int count = e - b;
-    if (op == GGML_OP_POOL_AVG) {
+    const số_nguyên count = e - b;
+    nếu (op == GGML_OP_POOL_AVG) {
         res = (count > 0) ? (res / count) : (To) 0;
     }
     o_ptr[cur_ow] = res;
@@ -123,12 +123,12 @@ void ggml_sycl_op_pool2d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
 
     const int32_t * opts = (const int32_t *)dst->op_params;
     enum ggml_op_pool op = static_cast<ggml_op_pool>(opts[0]);
-    const int k0 = opts[1];
-    const int k1 = opts[2];
-    const int s0 = opts[3];
-    const int s1 = opts[4];
-    const int p0 = opts[5];
-    const int p1 = opts[6];
+    const số_nguyên k0 = opts[1];
+    const số_nguyên k1 = opts[2];
+    const số_nguyên s0 = opts[3];
+    const số_nguyên s1 = opts[4];
+    const số_nguyên p0 = opts[5];
+    const số_nguyên p1 = opts[6];
 
     const int64_t IH = dst->src[0]->ne[1];
     const int64_t IW = dst->src[0]->ne[0];
@@ -138,8 +138,8 @@ void ggml_sycl_op_pool2d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     const int64_t OH = dst->ne[1];
     const int64_t OW = dst->ne[0];
 
-    const int parallel_elements = N * OC * OH * OW;
-    const int num_blocks = (parallel_elements + SYCL_POOL2D_BLOCK_SIZE - 1) / SYCL_POOL2D_BLOCK_SIZE;
+    const số_nguyên parallel_elements = N * OC * OH * OW;
+    const số_nguyên num_blocks = (parallel_elements + SYCL_POOL2D_BLOCK_SIZE - 1) / SYCL_POOL2D_BLOCK_SIZE;
     sycl::range<3> block_nums(1, 1, num_blocks);
     main_stream->parallel_for(
         sycl::nd_range<3>(block_nums *
@@ -162,16 +162,16 @@ void ggml_sycl_op_pool1d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
 
     const int32_t * opts = (const int32_t *)dst->op_params;
     enum ggml_op_pool op = static_cast<ggml_op_pool>(opts[0]);
-    const int k0 = opts[1];
-    const int s0 = opts[2];
-    const int p0 = opts[3];
+    const số_nguyên k0 = opts[1];
+    const số_nguyên s0 = opts[2];
+    const số_nguyên p0 = opts[3];
 
     const int64_t IW = dst->src[0]->ne[0];
     const int64_t OW = dst->ne[0];
     const int64_t NC = dst->ne[3] * dst->ne[2] * dst->ne[1];
 
-    const int parallel_elements = NC * OW;
-    const int num_blocks = (parallel_elements + SYCL_POOL1D_BLOCK_SIZE - 1) / SYCL_POOL1D_BLOCK_SIZE;
+    const số_nguyên parallel_elements = NC * OW;
+    const số_nguyên num_blocks = (parallel_elements + SYCL_POOL1D_BLOCK_SIZE - 1) / SYCL_POOL1D_BLOCK_SIZE;
     sycl::range<3> block_nums(1, 1, num_blocks);
     main_stream->parallel_for(
         sycl::nd_range<3>(block_nums *

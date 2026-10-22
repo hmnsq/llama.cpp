@@ -29,8 +29,8 @@ struct ggml_et_mean_params {
 // path only when `base + i_lo` is 32B-aligned; the tail (and the whole slice
 // when misaligned) is summed with scalar fadd.s.
 static inline float partial_sum_slice(const float * base, int32_t i_lo, int32_t i_hi) {
-    if (i_lo >= i_hi) {
-        return 0.0f;
+    nếu (i_lo >= i_hi) {
+        trả_về 0.0f;
     }
 
     const float * p   = base + i_lo;
@@ -38,11 +38,11 @@ static inline float partial_sum_slice(const float * base, int32_t i_lo, int32_t 
     float         acc = 0.0f;
     int32_t       i   = 0;
 
-    if (n >= 8 && (((uintptr_t) p) & 31) == 0) {
+    nếu (n >= 8 && (((uintptr_t) p) & 31) == 0) {
         float zero = 0.0f;
         __asm__ volatile("fbc.ps f10, %[z]\n" : : [z] "m"(zero) : "f10");
 
-        for (; i + 8 <= n; i += 8) {
+        cho (; i + 8 <= n; i += 8) {
             __asm__ volatile(
                 "flw.ps  f11, %[x]\n"
                 "fadd.ps f10, f10, f11\n"
@@ -64,42 +64,42 @@ static inline float partial_sum_slice(const float * base, int32_t i_lo, int32_t 
         acc = vec_sum;
     }
 
-    for (; i < n; i++) {
+    cho (; i < n; i++) {
         acc += p[i];
     }
-    return acc;
+    trả_về acc;
 }
 
-int entry_point(struct ggml_et_mean_params * params, void * env) {
+số_nguyên entry_point(struct ggml_et_mean_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    nếu (!kernel_env) {
+        trả_về -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    số_nguyên thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    số_nguyên num_threads = get_num_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    nếu (thread_id < 0) {
+        trả_về 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    nếu (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        trả_về -1;
     }
 
     struct ggml_tensor * src0 = &params->src0;
     struct ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    nếu (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        trả_về -1;
     }
 
     float * src0_data = (float *) src0->data;
     float * dst_data  = (float *) dst->data;
 
-    if (!src0_data || !dst_data) {
-        return -1;
+    nếu (!src0_data || !dst_data) {
+        trả_về -1;
     }
 
     const int64_t ne00 = src0->ne[0];
@@ -115,17 +115,17 @@ int entry_point(struct ggml_et_mean_params * params, void * env) {
     const size_t nb2 = dst->nb[2];
     const size_t nb3 = dst->nb[3];
 
-    if (ne00 <= 0) {
-        return 0;
+    nếu (ne00 <= 0) {
+        trả_về 0;
     }
 
     const int32_t total_rows    = (int32_t) (ne01 * ne02 * ne03);
-    const int     shire_threads = SOC_MINIONS_PER_SHIRE * NUM_HARTS_PER_MINION;
+    const số_nguyên     shire_threads = SOC_MINIONS_PER_SHIRE * NUM_HARTS_PER_MINION;
     const float   inv_ne00      = et_fdiv(1.0f, (float) (int32_t) ne00);
 
     // Row-parallel: each thread owns whole rows.
-    if (total_rows >= shire_threads) {
-        for (int64_t ir = thread_id; ir < total_rows; ir += num_threads) {
+    nếu (total_rows >= shire_threads) {
+        cho (int64_t ir = thread_id; ir < total_rows; ir += num_threads) {
             const int64_t i03 = ir / (ne02 * ne01);
             const int64_t i02 = (ir - i03 * ne02 * ne01) / ne01;
             const int64_t i01 = ir - i03 * ne02 * ne01 - i02 * ne01;
@@ -137,17 +137,17 @@ int entry_point(struct ggml_et_mean_params * params, void * env) {
             atomic_store_f32(dst_ptr, row_sum * inv_ne00);
         }
         // Shire co-work
-    } else {
-        int shire_tid       = thread_id % shire_threads;
-        int threads_per_row = shire_threads / total_rows;
-        int my_row          = shire_tid / threads_per_row;
-        int local_tid       = shire_tid % threads_per_row;
-        int group_base      = my_row * threads_per_row;
+    } không_thì {
+        số_nguyên shire_tid       = thread_id % shire_threads;
+        số_nguyên threads_per_row = shire_threads / total_rows;
+        số_nguyên my_row          = shire_tid / threads_per_row;
+        số_nguyên local_tid       = shire_tid % threads_per_row;
+        số_nguyên group_base      = my_row * threads_per_row;
 
-        if (my_row >= total_rows) {
+        nếu (my_row >= total_rows) {
             FENCE;
             et_barrier(ET_BARRIER_SHIRE);
-            return 0;
+            trả_về 0;
         }
 
         int64_t i1 = my_row % ne01;
@@ -162,21 +162,21 @@ int entry_point(struct ggml_et_mean_params * params, void * env) {
         // matters for the vector path inside partial_sum_slice).
         int32_t chunk = ((int32_t) ne00 + threads_per_row - 1) / threads_per_row;
         chunk         = (chunk + 7) & ~7;
-        if (chunk < 8) {
+        nếu (chunk < 8) {
             chunk = 8;
         }
 
         int32_t my_start = local_tid * chunk;
         int32_t my_end   = my_start + chunk;
-        if (my_end > (int32_t) ne00) {
+        nếu (my_end > (int32_t) ne00) {
             my_end = (int32_t) ne00;
         }
-        if (my_start > (int32_t) ne00) {
+        nếu (my_start > (int32_t) ne00) {
             my_start = my_end = (int32_t) ne00;
         }
 
-        int workers = ((int32_t) ne00 + chunk - 1) / chunk;
-        if (workers > threads_per_row) {
+        số_nguyên workers = ((int32_t) ne00 + chunk - 1) / chunk;
+        nếu (workers > threads_per_row) {
             workers = threads_per_row;
         }
 
@@ -197,16 +197,16 @@ int entry_point(struct ggml_et_mean_params * params, void * env) {
 
         et_barrier(ET_BARRIER_SHIRE);
 
-        if (local_tid == 0) {
+        nếu (local_tid == 0) {
             // Reader-side evictions for every contributing peer slot.
-            for (int t = 0; t < workers; t++) {
+            cho (số_nguyên t = 0; t < workers; t++) {
                 volatile float * slot = (volatile float *) et_shire_l2scp_local((uint64_t) (group_base + t) * 64);
                 evict_to_l2((const void *) slot, 1, 64);
             }
             WAIT_CACHEOPS;
 
             float total_sum = 0.0f;
-            for (int t = 0; t < workers; t++) {
+            cho (số_nguyên t = 0; t < workers; t++) {
                 volatile float * slot = (volatile float *) et_shire_l2scp_local((uint64_t) (group_base + t) * 64);
                 total_sum += *slot;
             }
@@ -216,5 +216,5 @@ int entry_point(struct ggml_et_mean_params * params, void * env) {
         __asm__ volatile("mova.m.x %0" ::"r"(saved_mask));
     }
 
-    return 0;
+    trả_về 0;
 }

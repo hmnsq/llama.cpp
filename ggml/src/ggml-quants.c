@@ -25,28 +25,28 @@
 
 #define UNUSED GGML_UNUSED
 
-static inline int best_index_int8(int n, const int8_t * val, float x) {
-    if (x <= val[0]) return 0;
-    if (x >= val[n-1]) return n-1;
-    int ml = 0, mu = n-1;
-    while (mu-ml > 1) {
-        int mav = (ml+mu)/2;
-        if (x < val[mav]) mu = mav; else ml = mav;
+static inline số_nguyên best_index_int8(số_nguyên n, const int8_t * val, float x) {
+    nếu (x <= val[0]) trả_về 0;
+    nếu (x >= val[n-1]) trả_về n-1;
+    số_nguyên ml = 0, mu = n-1;
+    trong_khi (mu-ml > 1) {
+        số_nguyên mav = (ml+mu)/2;
+        nếu (x < val[mav]) mu = mav; không_thì ml = mav;
     }
-    return x - val[mu-1] < val[mu] - x ? mu-1 : mu;
+    trả_về x - val[mu-1] < val[mu] - x ? mu-1 : mu;
 }
 
 // reference implementation for deterministic creation of model files
 void quantize_row_q1_0_ref(const float * GGML_RESTRICT x, block_q1_0 * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK1_0;
+    static const số_nguyên qk = QK1_0;
 
     assert(k % qk == 0);
 
-    const int nb = k / qk;
+    const số_nguyên nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
         float sum_abs = 0.0f;
-        for (int j = 0; j < qk; j++) {
+        cho (số_nguyên j = 0; j < qk; j++) {
             sum_abs += fabsf(x[i*qk + j]);
         }
         const float d = sum_abs / qk;
@@ -54,17 +54,17 @@ void quantize_row_q1_0_ref(const float * GGML_RESTRICT x, block_q1_0 * GGML_REST
         y[i].d = GGML_FP32_TO_FP16(d);
 
         // Clear all bits first
-        for (int j = 0; j < qk / 8; ++j) {
+        cho (số_nguyên j = 0; j < qk / 8; ++j) {
             y[i].qs[j] = 0;
         }
 
         // Just store sign of each weight directly (no normalization)
-        for (int j = 0; j < qk; ++j) {
-            const int bit_index = j;
-            const int byte_index = bit_index / 8;
-            const int bit_offset = bit_index % 8;
+        cho (số_nguyên j = 0; j < qk; ++j) {
+            const số_nguyên bit_index = j;
+            const số_nguyên byte_index = bit_index / 8;
+            const số_nguyên bit_offset = bit_index % 8;
 
-            if (x[i*qk + j] >= 0.0f) {
+            nếu (x[i*qk + j] >= 0.0f) {
                 y[i].qs[byte_index] |= (1 << bit_offset);
             }
         }
@@ -72,18 +72,18 @@ void quantize_row_q1_0_ref(const float * GGML_RESTRICT x, block_q1_0 * GGML_REST
 }
 
 void quantize_row_q2_0_ref(const float * GGML_RESTRICT x, block_q2_0 * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK2_0;
+    static const số_nguyên qk = QK2_0;
 
     assert(k % qk == 0);
 
-    const int nb = k / qk;
+    const số_nguyên nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
         // Compute scale as max absolute value in the block
         float amax = 0.0f;
-        for (int j = 0; j < qk; j++) {
+        cho (số_nguyên j = 0; j < qk; j++) {
             const float a = fabsf(x[i*qk + j]);
-            if (a > amax) amax = a;
+            nếu (a > amax) amax = a;
         }
         const float d = amax;
         const float id = d > 0.0f ? 1.0f / d : 0.0f;
@@ -91,19 +91,19 @@ void quantize_row_q2_0_ref(const float * GGML_RESTRICT x, block_q2_0 * GGML_REST
         y[i].d = GGML_FP32_TO_FP16(d);
 
         // Clear quant bytes
-        for (int j = 0; j < qk / 4; ++j) {
+        cho (số_nguyên j = 0; j < qk / 4; ++j) {
             y[i].qs[j] = 0;
         }
 
         // Encode 2-bit values: round(w/d) clamped to [-1, 2], then add 1
         // 00 (-1) = -scale, 01 (0) = 0, 10 (+1) = +scale, 11 (+2) = 2*scale
-        for (int j = 0; j < qk; ++j) {
+        cho (số_nguyên j = 0; j < qk; ++j) {
             const float w = x[i*qk + j];
-            int q = (int)roundf(w * id) + 1;
-            if (q < 0) q = 0;
-            if (q > 3) q = 3;
-            const int byte_index = j / 4;
-            const int bit_offset = (j % 4) * 2;
+            số_nguyên q = (số_nguyên)roundf(w * id) + 1;
+            nếu (q < 0) q = 0;
+            nếu (q > 3) q = 3;
+            const số_nguyên byte_index = j / 4;
+            const số_nguyên bit_offset = (j % 4) * 2;
             y[i].qs[byte_index] |= ((uint8_t)q << bit_offset);
         }
     }
@@ -111,19 +111,19 @@ void quantize_row_q2_0_ref(const float * GGML_RESTRICT x, block_q2_0 * GGML_REST
 
 // reference implementation for deterministic creation of model files
 void quantize_row_q4_0_ref(const float * GGML_RESTRICT x, block_q4_0 * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK4_0;
+    static const số_nguyên qk = QK4_0;
 
     assert(k % qk == 0);
 
-    const int nb = k / qk;
+    const số_nguyên nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
         float amax = 0.0f; // absolute max
         float max  = 0.0f;
 
-        for (int j = 0; j < qk; j++) {
+        cho (số_nguyên j = 0; j < qk; j++) {
             const float v = x[i*qk + j];
-            if (amax < fabsf(v)) {
+            nếu (amax < fabsf(v)) {
                 amax = fabsf(v);
                 max  = v;
             }
@@ -134,7 +134,7 @@ void quantize_row_q4_0_ref(const float * GGML_RESTRICT x, block_q4_0 * GGML_REST
 
         y[i].d = GGML_FP32_TO_FP16(d);
 
-        for (int j = 0; j < qk/2; ++j) {
+        cho (số_nguyên j = 0; j < qk/2; ++j) {
             const float x0 = x[i*qk + 0    + j]*id;
             const float x1 = x[i*qk + qk/2 + j]*id;
 
@@ -148,21 +148,21 @@ void quantize_row_q4_0_ref(const float * GGML_RESTRICT x, block_q4_0 * GGML_REST
 }
 
 void quantize_row_q4_1_ref(const float * GGML_RESTRICT x, block_q4_1 * GGML_RESTRICT y, int64_t k) {
-    const int qk = QK4_1;
+    const số_nguyên qk = QK4_1;
 
     assert(k % qk == 0);
 
-    const int nb = k / qk;
+    const số_nguyên nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
         float min = FLT_MAX;
         float max = -FLT_MAX;
 
-        for (int j = 0; j < qk; j++) {
+        cho (số_nguyên j = 0; j < qk; j++) {
             const float v = x[i*qk + j];
 
-            if (v < min) min = v;
-            if (v > max) max = v;
+            nếu (v < min) min = v;
+            nếu (v > max) max = v;
         }
 
         const float d  = (max - min) / ((1 << 4) - 1);
@@ -171,7 +171,7 @@ void quantize_row_q4_1_ref(const float * GGML_RESTRICT x, block_q4_1 * GGML_REST
         y[i].d = GGML_FP32_TO_FP16(d);
         y[i].m = GGML_FP32_TO_FP16(min);
 
-        for (int j = 0; j < qk/2; ++j) {
+        cho (số_nguyên j = 0; j < qk/2; ++j) {
             const float x0 = (x[i*qk + 0    + j] - min)*id;
             const float x1 = (x[i*qk + qk/2 + j] - min)*id;
 
@@ -185,19 +185,19 @@ void quantize_row_q4_1_ref(const float * GGML_RESTRICT x, block_q4_1 * GGML_REST
 }
 
 void quantize_row_q5_0_ref(const float * GGML_RESTRICT x, block_q5_0 * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK5_0;
+    static const số_nguyên qk = QK5_0;
 
     assert(k % qk == 0);
 
-    const int nb = k / qk;
+    const số_nguyên nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
         float amax = 0.0f; // absolute max
         float max  = 0.0f;
 
-        for (int j = 0; j < qk; j++) {
+        cho (số_nguyên j = 0; j < qk; j++) {
             const float v = x[i*qk + j];
-            if (amax < fabsf(v)) {
+            nếu (amax < fabsf(v)) {
                 amax = fabsf(v);
                 max  = v;
             }
@@ -210,7 +210,7 @@ void quantize_row_q5_0_ref(const float * GGML_RESTRICT x, block_q5_0 * GGML_REST
 
         uint32_t qh = 0;
 
-        for (int j = 0; j < qk/2; ++j) {
+        cho (số_nguyên j = 0; j < qk/2; ++j) {
             const float x0 = x[i*qk + 0    + j]*id;
             const float x1 = x[i*qk + qk/2 + j]*id;
 
@@ -229,21 +229,21 @@ void quantize_row_q5_0_ref(const float * GGML_RESTRICT x, block_q5_0 * GGML_REST
 }
 
 void quantize_row_q5_1_ref(const float * GGML_RESTRICT x, block_q5_1 * GGML_RESTRICT y, int64_t k) {
-    const int qk = QK5_1;
+    const số_nguyên qk = QK5_1;
 
     assert(k % qk == 0);
 
-    const int nb = k / qk;
+    const số_nguyên nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
         float min = FLT_MAX;
         float max = -FLT_MAX;
 
-        for (int j = 0; j < qk; j++) {
+        cho (số_nguyên j = 0; j < qk; j++) {
             const float v = x[i*qk + j];
 
-            if (v < min) min = v;
-            if (v > max) max = v;
+            nếu (v < min) min = v;
+            nếu (v > max) max = v;
         }
 
         const float d  = (max - min) / ((1 << 5) - 1);
@@ -254,7 +254,7 @@ void quantize_row_q5_1_ref(const float * GGML_RESTRICT x, block_q5_1 * GGML_REST
 
         uint32_t qh = 0;
 
-        for (int j = 0; j < qk/2; ++j) {
+        cho (số_nguyên j = 0; j < qk/2; ++j) {
             const float x0 = (x[i*qk + 0    + j] - min)*id;
             const float x1 = (x[i*qk + qk/2 + j] - min)*id;
 
@@ -275,12 +275,12 @@ void quantize_row_q5_1_ref(const float * GGML_RESTRICT x, block_q5_1 * GGML_REST
 // reference implementation for deterministic creation of model files
 void quantize_row_q8_0_ref(const float * GGML_RESTRICT x, block_q8_0 * GGML_RESTRICT y, int64_t k) {
     assert(k % QK8_0 == 0);
-    const int nb = k / QK8_0;
+    const số_nguyên nb = k / QK8_0;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
         float amax = 0.0f; // absolute max
 
-        for (int j = 0; j < QK8_0; j++) {
+        cho (số_nguyên j = 0; j < QK8_0; j++) {
             const float v = x[i*QK8_0 + j];
             amax = MAX(amax, fabsf(v));
         }
@@ -290,7 +290,7 @@ void quantize_row_q8_0_ref(const float * GGML_RESTRICT x, block_q8_0 * GGML_REST
 
         y[i].d = GGML_FP32_TO_FP16(d);
 
-        for (int j = 0; j < QK8_0; ++j) {
+        cho (số_nguyên j = 0; j < QK8_0; ++j) {
             const float x0 = x[i*QK8_0 + j]*id;
 
             y[i].qs[j] = roundf(x0);
@@ -302,12 +302,12 @@ void quantize_row_q8_0_ref(const float * GGML_RESTRICT x, block_q8_0 * GGML_REST
 void quantize_row_q8_1_ref(const float * GGML_RESTRICT x, block_q8_1 * GGML_RESTRICT y, int64_t k) {
     assert(QK8_1 == 32);
     assert(k % QK8_1 == 0);
-    const int nb = k / QK8_1;
+    const số_nguyên nb = k / QK8_1;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
         float amax = 0.0f; // absolute max
 
-        for (int j = 0; j < QK8_1; j++) {
+        cho (số_nguyên j = 0; j < QK8_1; j++) {
             const float v = x[i*QK8_1 + j];
             amax = MAX(amax, fabsf(v));
         }
@@ -317,9 +317,9 @@ void quantize_row_q8_1_ref(const float * GGML_RESTRICT x, block_q8_1 * GGML_REST
 
         y[i].d = GGML_FP32_TO_FP16(d);
 
-        int sum = 0;
+        số_nguyên sum = 0;
 
-        for (int j = 0; j < QK8_1/2; ++j) {
+        cho (số_nguyên j = 0; j < QK8_1/2; ++j) {
             const float v0 = x[i*QK8_1           + j]*id;
             const float v1 = x[i*QK8_1 + QK8_1/2 + j]*id;
 
@@ -334,33 +334,33 @@ void quantize_row_q8_1_ref(const float * GGML_RESTRICT x, block_q8_1 * GGML_REST
     }
 }
 
-static inline int best_index_mxfp4(float x, float e) {
-    int best_index = 0;
+static inline số_nguyên best_index_mxfp4(float x, float e) {
+    số_nguyên best_index = 0;
     float best_err = fabsf(kvalues_mxfp4[0]*e - x);
-    for (int i = 1; i < 16; i++) {
+    cho (số_nguyên i = 1; i < 16; i++) {
         float err = fabsf(kvalues_mxfp4[i]*e - x);
-        if (err < best_err) {
+        nếu (err < best_err) {
             best_index = i;
             best_err = err;
         }
     }
-    return best_index;
+    trả_về best_index;
 }
 
 void quantize_row_mxfp4_ref(const float * GGML_RESTRICT x, block_mxfp4 * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK_MXFP4;
+    static const số_nguyên qk = QK_MXFP4;
 
     assert(k % qk == 0);
 
-    const int nb = k / qk;
+    const số_nguyên nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
         float amax = 0.0f; // absolute max
 
-        for (int j = 0; j < qk; j++) {
+        cho (số_nguyên j = 0; j < qk; j++) {
             const float v = x[i*qk + j];
 
-            if (amax < fabsf(v)) {
+            nếu (amax < fabsf(v)) {
                 amax = fabsf(v);
             }
         }
@@ -371,7 +371,7 @@ void quantize_row_mxfp4_ref(const float * GGML_RESTRICT x, block_mxfp4 * GGML_RE
 
         y[i].e = e;
 
-        for (int j = 0; j < qk/2; ++j) {
+        cho (số_nguyên j = 0; j < qk/2; ++j) {
             const uint8_t x0 = best_index_mxfp4(x[i*qk + 0    + j], d);
             const uint8_t x1 = best_index_mxfp4(x[i*qk + qk/2 + j], d);
 
@@ -382,21 +382,21 @@ void quantize_row_mxfp4_ref(const float * GGML_RESTRICT x, block_mxfp4 * GGML_RE
 }
 
 void quantize_row_nvfp4_ref(const float * GGML_RESTRICT x, block_nvfp4 * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK_NVFP4;
-    static const int qk_sub = QK_NVFP4_SUB;
-    static const int n_sub = QK_NVFP4 / QK_NVFP4_SUB;
+    static const số_nguyên qk = QK_NVFP4;
+    static const số_nguyên qk_sub = QK_NVFP4_SUB;
+    static const số_nguyên n_sub = QK_NVFP4 / QK_NVFP4_SUB;
 
     assert(k % qk == 0);
 
-    const int nb = k / qk;
+    const số_nguyên nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        for (int s = 0; s < n_sub; s++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
+        cho (số_nguyên s = 0; s < n_sub; s++) {
             const float * xb = x + i*qk + s*qk_sub;
 
             float amax = 0.0f;
-            for (int j = 0; j < qk_sub; j++) {
-                if (amax < fabsf(xb[j])) {
+            cho (số_nguyên j = 0; j < qk_sub; j++) {
+                nếu (amax < fabsf(xb[j])) {
                     amax = fabsf(xb[j]);
                 }
             }
@@ -406,7 +406,7 @@ void quantize_row_nvfp4_ref(const float * GGML_RESTRICT x, block_nvfp4 * GGML_RE
             y[i].d[s] = ue;
             const float d = ggml_ue4m3_to_fp32(ue);
 
-            for (int j = 0; j < qk_sub/2; ++j) {
+            cho (số_nguyên j = 0; j < qk_sub/2; ++j) {
                 const uint8_t x0 = best_index_mxfp4(xb[0        + j], d);
                 const uint8_t x1 = best_index_mxfp4(xb[qk_sub/2 + j], d);
 
@@ -417,19 +417,19 @@ void quantize_row_nvfp4_ref(const float * GGML_RESTRICT x, block_nvfp4 * GGML_RE
 }
 
 void dequantize_row_q1_0(const block_q1_0 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK1_0;
+    static const số_nguyên qk = QK1_0;
 
     assert(k % qk == 0);
 
-    const int nb = k / qk;
+    const số_nguyên nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
         const float d = GGML_FP16_TO_FP32(x[i].d);
         const float neg_d = -d;
 
-        for (int j = 0; j < qk; ++j) {
-            const int byte_index = j / 8;
-            const int bit_offset = j % 8;
+        cho (số_nguyên j = 0; j < qk; ++j) {
+            const số_nguyên byte_index = j / 8;
+            const số_nguyên bit_offset = j % 8;
             const uint8_t bit = (x[i].qs[byte_index] >> bit_offset) & 1;
             y[i*qk + j] = bit ? d : neg_d;
         }
@@ -437,38 +437,38 @@ void dequantize_row_q1_0(const block_q1_0 * GGML_RESTRICT x, float * GGML_RESTRI
 }
 
 void dequantize_row_q2_0(const block_q2_0 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK2_0;
+    static const số_nguyên qk = QK2_0;
 
     assert(k % qk == 0);
 
-    const int nb = k / qk;
+    const số_nguyên nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
         const float d = GGML_FP16_TO_FP32(x[i].d);
 
-        for (int j = 0; j < qk; ++j) {
-            const int byte_index = j / 4;
-            const int bit_offset = (j % 4) * 2;
+        cho (số_nguyên j = 0; j < qk; ++j) {
+            const số_nguyên byte_index = j / 4;
+            const số_nguyên bit_offset = (j % 4) * 2;
             const uint8_t q = (x[i].qs[byte_index] >> bit_offset) & 0x03;
             // 00=-1, 01=0, 10=+1, 11=+2
-            y[i*qk + j] = ((int)q - 1) * d;
+            y[i*qk + j] = ((số_nguyên)q - 1) * d;
         }
     }
 }
 
 void dequantize_row_q4_0(const block_q4_0 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK4_0;
+    static const số_nguyên qk = QK4_0;
 
     assert(k % qk == 0);
 
-    const int nb = k / qk;
+    const số_nguyên nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
         const float d = GGML_FP16_TO_FP32(x[i].d);
 
-        for (int j = 0; j < qk/2; ++j) {
-            const int x0 = (x[i].qs[j] & 0x0F) - 8;
-            const int x1 = (x[i].qs[j] >>   4) - 8;
+        cho (số_nguyên j = 0; j < qk/2; ++j) {
+            const số_nguyên x0 = (x[i].qs[j] & 0x0F) - 8;
+            const số_nguyên x1 = (x[i].qs[j] >>   4) - 8;
 
             y[i*qk + j + 0   ] = x0*d;
             y[i*qk + j + qk/2] = x1*d;
@@ -477,19 +477,19 @@ void dequantize_row_q4_0(const block_q4_0 * GGML_RESTRICT x, float * GGML_RESTRI
 }
 
 void dequantize_row_q4_1(const block_q4_1 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK4_1;
+    static const số_nguyên qk = QK4_1;
 
     assert(k % qk == 0);
 
-    const int nb = k / qk;
+    const số_nguyên nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
         const float d = GGML_FP16_TO_FP32(x[i].d);
         const float m = GGML_FP16_TO_FP32(x[i].m);
 
-        for (int j = 0; j < qk/2; ++j) {
-            const int x0 = (x[i].qs[j] & 0x0F);
-            const int x1 = (x[i].qs[j] >>   4);
+        cho (số_nguyên j = 0; j < qk/2; ++j) {
+            const số_nguyên x0 = (x[i].qs[j] & 0x0F);
+            const số_nguyên x1 = (x[i].qs[j] >>   4);
 
             y[i*qk + j + 0   ] = x0*d + m;
             y[i*qk + j + qk/2] = x1*d + m;
@@ -498,19 +498,19 @@ void dequantize_row_q4_1(const block_q4_1 * GGML_RESTRICT x, float * GGML_RESTRI
 }
 
 void dequantize_row_q5_0(const block_q5_0 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK5_0;
+    static const số_nguyên qk = QK5_0;
 
     assert(k % qk == 0);
 
-    const int nb = k / qk;
+    const số_nguyên nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
         const float d = GGML_FP16_TO_FP32(x[i].d);
 
         uint32_t qh;
         memcpy(&qh, x[i].qh, sizeof(qh));
 
-        for (int j = 0; j < qk/2; ++j) {
+        cho (số_nguyên j = 0; j < qk/2; ++j) {
             const uint8_t xh_0 = ((qh >> (j +  0)) << 4) & 0x10;
             const uint8_t xh_1 = ((qh >> (j + 12))     ) & 0x10;
 
@@ -524,25 +524,25 @@ void dequantize_row_q5_0(const block_q5_0 * GGML_RESTRICT x, float * GGML_RESTRI
 }
 
 void dequantize_row_q5_1(const block_q5_1 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK5_1;
+    static const số_nguyên qk = QK5_1;
 
     assert(k % qk == 0);
 
-    const int nb = k / qk;
+    const số_nguyên nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
         const float d = GGML_FP16_TO_FP32(x[i].d);
         const float m = GGML_FP16_TO_FP32(x[i].m);
 
         uint32_t qh;
         memcpy(&qh, x[i].qh, sizeof(qh));
 
-        for (int j = 0; j < qk/2; ++j) {
+        cho (số_nguyên j = 0; j < qk/2; ++j) {
             const uint8_t xh_0 = ((qh >> (j +  0)) << 4) & 0x10;
             const uint8_t xh_1 = ((qh >> (j + 12))     ) & 0x10;
 
-            const int x0 = (x[i].qs[j] & 0x0F) | xh_0;
-            const int x1 = (x[i].qs[j] >>   4) | xh_1;
+            const số_nguyên x0 = (x[i].qs[j] & 0x0F) | xh_0;
+            const số_nguyên x1 = (x[i].qs[j] >>   4) | xh_1;
 
             y[i*qk + j + 0   ] = x0*d + m;
             y[i*qk + j + qk/2] = x1*d + m;
@@ -551,32 +551,32 @@ void dequantize_row_q5_1(const block_q5_1 * GGML_RESTRICT x, float * GGML_RESTRI
 }
 
 void dequantize_row_q8_0(const block_q8_0 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK8_0;
+    static const số_nguyên qk = QK8_0;
 
     assert(k % qk == 0);
 
-    const int nb = k / qk;
+    const số_nguyên nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
         const float d = GGML_FP16_TO_FP32(x[i].d);
 
-        for (int j = 0; j < qk; ++j) {
+        cho (số_nguyên j = 0; j < qk; ++j) {
             y[i*qk + j] = x[i].qs[j]*d;
         }
     }
 }
 
 void dequantize_row_mxfp4(const block_mxfp4 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK_MXFP4;
+    static const số_nguyên qk = QK_MXFP4;
 
     assert(k % qk == 0);
 
-    const int nb = k / qk;
+    const số_nguyên nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
         const float d = GGML_E8M0_TO_FP32_HALF(x[i].e);
 
-        for (int j = 0; j < qk/2; ++j) {
+        cho (số_nguyên j = 0; j < qk/2; ++j) {
             const int8_t x0 = kvalues_mxfp4[x[i].qs[j] & 0x0F];
             const int8_t x1 = kvalues_mxfp4[x[i].qs[j] >>   4];
 
@@ -587,20 +587,20 @@ void dequantize_row_mxfp4(const block_mxfp4 * GGML_RESTRICT x, float * GGML_REST
 }
 
 void dequantize_row_nvfp4(const block_nvfp4 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK_NVFP4;
-    static const int qk_sub = QK_NVFP4_SUB;
-    static const int n_sub = QK_NVFP4 / QK_NVFP4_SUB;
+    static const số_nguyên qk = QK_NVFP4;
+    static const số_nguyên qk_sub = QK_NVFP4_SUB;
+    static const số_nguyên n_sub = QK_NVFP4 / QK_NVFP4_SUB;
 
     assert(k % qk == 0);
 
-    const int nb = k / qk;
+    const số_nguyên nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        for (int s = 0; s < n_sub; s++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
+        cho (số_nguyên s = 0; s < n_sub; s++) {
             const float d = ggml_ue4m3_to_fp32(x[i].d[s]);
             float * yb = y + i*qk + s*qk_sub;
 
-            for (int j = 0; j < qk_sub/2; ++j) {
+            cho (số_nguyên j = 0; j < qk_sub/2; ++j) {
                 const int8_t v0 = kvalues_mxfp4[x[i].qs[s*(qk_sub/2) + j] & 0x0F];
                 const int8_t v1 = kvalues_mxfp4[x[i].qs[s*(qk_sub/2) + j] >>   4];
 
@@ -618,37 +618,37 @@ void dequantize_row_nvfp4(const block_nvfp4 * GGML_RESTRICT x, float * GGML_REST
 //
 // ===================== Helper functions
 //
-static inline int nearest_int(float fval) {
+static inline số_nguyên nearest_int(float fval) {
     assert(fabsf(fval) <= 4194303.f);
     float val = fval + 12582912.f;
-    int i; memcpy(&i, &val, sizeof(int));
-    return (i & 0x007fffff) - 0x00400000;
+    số_nguyên i; memcpy(&i, &val, sizeof(số_nguyên));
+    trả_về (i & 0x007fffff) - 0x00400000;
 }
 
-static float make_qx_quants(int n, int nmax, const float * GGML_RESTRICT x, int8_t * GGML_RESTRICT L, int rmse_type,
+static float make_qx_quants(số_nguyên n, số_nguyên nmax, const float * GGML_RESTRICT x, int8_t * GGML_RESTRICT L, số_nguyên rmse_type,
         const float * GGML_RESTRICT qw) {
     float max = 0;
     float amax = 0;
-    for (int i = 0; i < n; ++i) {
+    cho (số_nguyên i = 0; i < n; ++i) {
         float ax = fabsf(x[i]);
-        if (ax > amax) { amax = ax; max = x[i]; }
+        nếu (ax > amax) { amax = ax; max = x[i]; }
     }
-    if (amax < GROUP_MAX_EPS) { // all zero
-        for (int i = 0; i < n; ++i) {
+    nếu (amax < GROUP_MAX_EPS) { // all zero
+        cho (số_nguyên i = 0; i < n; ++i) {
             L[i] = 0;
         }
-        return 0.f;
+        trả_về 0.f;
     }
     float iscale = -nmax / max;
-    if (rmse_type == 0) {
-        for (int i = 0; i < n; ++i) {
-            int l = nearest_int(iscale * x[i]);
+    nếu (rmse_type == 0) {
+        cho (số_nguyên i = 0; i < n; ++i) {
+            số_nguyên l = nearest_int(iscale * x[i]);
             L[i] = nmax + MAX(-nmax, MIN(nmax-1, l));
         }
-        return 1/iscale;
+        trả_về 1/iscale;
     }
     bool return_early = false;
-    if (rmse_type < 0) {
+    nếu (rmse_type < 0) {
         rmse_type = -rmse_type;
         return_early = true;
     }
@@ -656,11 +656,11 @@ static float make_qx_quants(int n, int nmax, const float * GGML_RESTRICT x, int8
     float suml2 = 0;
 #ifdef HAVE_BUGGY_APPLE_LINKER
     // use 'volatile' to prevent unroll and work around a bug in Apple ld64 1015.7
-    for (volatile int i = 0; i < n; ++i) {
-#else
-    for (int i = 0; i < n; ++i) {
+    cho (volatile số_nguyên i = 0; i < n; ++i) {
+#không_thì
+    cho (số_nguyên i = 0; i < n; ++i) {
 #endif
-        int l = nearest_int(iscale * x[i]);
+        số_nguyên l = nearest_int(iscale * x[i]);
         l = MAX(-nmax, MIN(nmax-1, l));
         L[i] = l + nmax;
         float w = qw ? qw[i] : rmse_type == 1 ? x[i] * x[i] : rmse_type == 2 ? 1 : rmse_type == 3 ? fabsf(x[i]) : sqrtf(fabsf(x[i]));
@@ -668,114 +668,114 @@ static float make_qx_quants(int n, int nmax, const float * GGML_RESTRICT x, int8
         suml2 += w*l*l;
     }
     float scale = suml2 ? sumlx/suml2 : 0.0f;
-    if (return_early) return suml2 > 0 ? 0.5f*(scale + 1/iscale) : 1/iscale;
+    nếu (return_early) trả_về suml2 > 0 ? 0.5f*(scale + 1/iscale) : 1/iscale;
     float best = scale * sumlx;
-    for (int is = -9; is <= 9; ++is) {
-        if (is == 0) {
+    cho (số_nguyên is = -9; is <= 9; ++is) {
+        nếu (is == 0) {
             continue;
         }
         iscale = -(nmax + 0.1f*is) / max;
         sumlx = suml2 = 0;
-        for (int i = 0; i < n; ++i) {
-            int l = nearest_int(iscale * x[i]);
+        cho (số_nguyên i = 0; i < n; ++i) {
+            số_nguyên l = nearest_int(iscale * x[i]);
             l = MAX(-nmax, MIN(nmax-1, l));
             float w = qw ? qw[i] : rmse_type == 1 ? x[i] * x[i] : rmse_type == 2 ? 1 : rmse_type == 3 ? fabsf(x[i]) : sqrtf(fabsf(x[i]));
             sumlx += w*x[i]*l;
             suml2 += w*l*l;
         }
-        if (suml2 > 0 && sumlx*sumlx > best*suml2) {
-            for (int i = 0; i < n; ++i) {
-                int l = nearest_int(iscale * x[i]);
+        nếu (suml2 > 0 && sumlx*sumlx > best*suml2) {
+            cho (số_nguyên i = 0; i < n; ++i) {
+                số_nguyên l = nearest_int(iscale * x[i]);
                 L[i] = nmax + MAX(-nmax, MIN(nmax-1, l));
             }
             scale = sumlx/suml2; best = scale*sumlx;
         }
     }
-    return scale;
+    trả_về scale;
 }
 
-static float make_q3_quants(int n, int nmax, const float * GGML_RESTRICT x, int8_t * GGML_RESTRICT L, bool do_rmse) {
+static float make_q3_quants(số_nguyên n, số_nguyên nmax, const float * GGML_RESTRICT x, int8_t * GGML_RESTRICT L, bool do_rmse) {
     float max = 0;
     float amax = 0;
-    for (int i = 0; i < n; ++i) {
+    cho (số_nguyên i = 0; i < n; ++i) {
         float ax = fabsf(x[i]);
-        if (ax > amax) { amax = ax; max = x[i]; }
+        nếu (ax > amax) { amax = ax; max = x[i]; }
     }
-    if (amax < GROUP_MAX_EPS) { // all zero
-        for (int i = 0; i < n; ++i) { L[i] = 0; }
-        return 0.f;
+    nếu (amax < GROUP_MAX_EPS) { // all zero
+        cho (số_nguyên i = 0; i < n; ++i) { L[i] = 0; }
+        trả_về 0.f;
     }
     float iscale = -nmax / max;
-    if (do_rmse) {
+    nếu (do_rmse) {
         float sumlx = 0;
         float suml2 = 0;
-        for (int i = 0; i < n; ++i) {
-            int l = nearest_int(iscale * x[i]);
+        cho (số_nguyên i = 0; i < n; ++i) {
+            số_nguyên l = nearest_int(iscale * x[i]);
             l = MAX(-nmax, MIN(nmax-1, l));
             L[i] = l;
             float w = x[i]*x[i];
             sumlx += w*x[i]*l;
             suml2 += w*l*l;
         }
-        for (int itry = 0; itry < 5; ++itry) {
-            int n_changed = 0;
-            for (int i = 0; i < n; ++i) {
+        cho (số_nguyên itry = 0; itry < 5; ++itry) {
+            số_nguyên n_changed = 0;
+            cho (số_nguyên i = 0; i < n; ++i) {
                 float w = x[i]*x[i];
                 float slx = sumlx - w*x[i]*L[i];
-                if (slx > 0) {
+                nếu (slx > 0) {
                     float sl2 = suml2 - w*L[i]*L[i];
-                    int new_l = nearest_int(x[i] * sl2 / slx);
+                    số_nguyên new_l = nearest_int(x[i] * sl2 / slx);
                     new_l = MAX(-nmax, MIN(nmax-1, new_l));
-                    if (new_l != L[i]) {
+                    nếu (new_l != L[i]) {
                         slx += w*x[i]*new_l;
                         sl2 += w*new_l*new_l;
-                        if (sl2 > 0 && slx*slx*suml2 > sumlx*sumlx*sl2) {
+                        nếu (sl2 > 0 && slx*slx*suml2 > sumlx*sumlx*sl2) {
                             L[i] = new_l; sumlx = slx; suml2 = sl2;
                             ++n_changed;
                         }
                     }
                 }
             }
-            if (!n_changed) {
+            nếu (!n_changed) {
                 break;
             }
         }
-        for (int i = 0; i < n; ++i) {
+        cho (số_nguyên i = 0; i < n; ++i) {
             L[i] += nmax;
         }
-        return suml2 > 0.0f ? sumlx / suml2 : 0.0f;
+        trả_về suml2 > 0.0f ? sumlx / suml2 : 0.0f;
     }
-    for (int i = 0; i < n; ++i) {
-        int l = nearest_int(iscale * x[i]);
+    cho (số_nguyên i = 0; i < n; ++i) {
+        số_nguyên l = nearest_int(iscale * x[i]);
         l = MAX(-nmax, MIN(nmax-1, l));
         L[i] = l + nmax;
     }
-    return 1/iscale;
+    trả_về 1/iscale;
 }
 
-static float make_qkx1_quants(int n, int nmax, const float * GGML_RESTRICT x, uint8_t * GGML_RESTRICT L, float * GGML_RESTRICT the_min,
-        int ntry, float alpha) {
+static float make_qkx1_quants(số_nguyên n, số_nguyên nmax, const float * GGML_RESTRICT x, uint8_t * GGML_RESTRICT L, float * GGML_RESTRICT the_min,
+        số_nguyên ntry, float alpha) {
     float min = x[0];
     float max = x[0];
-    for (int i = 1; i < n; ++i) {
-        if (x[i] < min) min = x[i];
-        if (x[i] > max) max = x[i];
+    cho (số_nguyên i = 1; i < n; ++i) {
+        nếu (x[i] < min) min = x[i];
+        nếu (x[i] > max) max = x[i];
     }
-    if (max == min) {
-        for (int i = 0; i < n; ++i) L[i] = 0;
+    nếu (max == min) {
+        cho (số_nguyên i = 0; i < n; ++i) L[i] = 0;
         *the_min = 0;
-        return 0.f;
+        trả_về 0.f;
     }
-    if (min > 0) min = 0;
+    nếu (min > 0) min = 0;
     float iscale = nmax/(max - min);
     float scale = 1/iscale;
-    for (int itry = 0; itry < ntry; ++itry) {
-        float sumlx = 0; int suml2 = 0;
+    cho (số_nguyên itry = 0; itry < ntry; ++itry) {
+        float sumlx = 0; số_nguyên suml2 = 0;
         bool did_change = false;
-        for (int i = 0; i < n; ++i) {
-            int l = nearest_int(iscale*(x[i] - min));
+        cho (số_nguyên i = 0; i < n; ++i) {
+            số_nguyên l = nearest_int(iscale*(x[i] - min));
             l = MAX(0, MIN(nmax, l));
-            if (l != L[i]) {
+            nếu (l != L[i]) {
                 L[i] = l;
                 did_change = true;
             }
@@ -784,63 +784,63 @@ static float make_qkx1_quants(int n, int nmax, const float * GGML_RESTRICT x, ui
         }
         scale = sumlx/suml2;
         float sum = 0;
-        for (int i = 0; i < n; ++i) {
+        cho (số_nguyên i = 0; i < n; ++i) {
             sum += x[i] - scale*L[i];
         }
         min = alpha*min + (1 - alpha)*sum/n;
-        if (min > 0) min = 0;
+        nếu (min > 0) min = 0;
         iscale = 1/scale;
-        if (!did_change) break;
+        nếu (!did_change) break;
     }
     *the_min = -min;
-    return scale;
+    trả_về scale;
 }
 
-static float make_qkx2_quants(int n, int nmax, const float * GGML_RESTRICT x, const float * GGML_RESTRICT weights,
+static float make_qkx2_quants(số_nguyên n, số_nguyên nmax, const float * GGML_RESTRICT x, const float * GGML_RESTRICT weights,
         uint8_t * GGML_RESTRICT L, float * GGML_RESTRICT the_min, uint8_t * GGML_RESTRICT Laux,
-        float rmin, float rdelta, int nstep, bool use_mad) {
+        float rmin, float rdelta, số_nguyên nstep, bool use_mad) {
     float min = x[0];
     float max = x[0];
     float sum_w = weights[0];
     float sum_x = sum_w * x[0];
 #ifdef HAVE_BUGGY_APPLE_LINKER
     // use 'volatile' to prevent unroll and work around a bug in Apple ld64 1015.7
-    for (volatile int i = 1; i < n; ++i) {
-#else
-    for (int i = 1; i < n; ++i) {
+    cho (volatile số_nguyên i = 1; i < n; ++i) {
+#không_thì
+    cho (số_nguyên i = 1; i < n; ++i) {
 #endif
-        if (x[i] < min) min = x[i];
-        if (x[i] > max) max = x[i];
+        nếu (x[i] < min) min = x[i];
+        nếu (x[i] > max) max = x[i];
         float w = weights[i];
         sum_w += w;
         sum_x += w * x[i];
     }
-    if (min > 0) min = 0;
-    if (max == min) {
-        for (int i = 0; i < n; ++i) L[i] = 0;
+    nếu (min > 0) min = 0;
+    nếu (max == min) {
+        cho (số_nguyên i = 0; i < n; ++i) L[i] = 0;
         *the_min = -min;
-        return 0.f;
+        trả_về 0.f;
     }
     float iscale = nmax/(max - min);
     float scale = 1/iscale;
     float best_error = 0;
-    for (int i = 0; i < n; ++i) {
-        int l = nearest_int(iscale*(x[i] - min));
+    cho (số_nguyên i = 0; i < n; ++i) {
+        số_nguyên l = nearest_int(iscale*(x[i] - min));
         L[i] = MAX(0, MIN(nmax, l));
         float diff = scale * L[i] + min - x[i];
         diff = use_mad ? fabsf(diff) : diff * diff;
         float w = weights[i];
         best_error += w * diff;
     }
-    if (nstep < 1) {
+    nếu (nstep < 1) {
         *the_min = -min;
-        return scale;
+        trả_về scale;
     }
-    for (int is = 0; is <= nstep; ++is) {
+    cho (số_nguyên is = 0; is <= nstep; ++is) {
         iscale = (rmin + rdelta*is + nmax)/(max - min);
         float sum_l = 0, sum_l2 = 0, sum_xl = 0;
-        for (int i = 0; i < n; ++i) {
-            int l = nearest_int(iscale*(x[i] - min));
+        cho (số_nguyên i = 0; i < n; ++i) {
+            số_nguyên l = nearest_int(iscale*(x[i] - min));
             l = MAX(0, MIN(nmax, l));
             Laux[i] = l;
             float w = weights[i];
@@ -849,22 +849,22 @@ static float make_qkx2_quants(int n, int nmax, const float * GGML_RESTRICT x, co
             sum_xl += w*l*x[i];
         }
         float D = sum_w * sum_l2 - sum_l * sum_l;
-        if (D > 0) {
+        nếu (D > 0) {
             float this_scale = (sum_w * sum_xl - sum_x * sum_l)/D;
             float this_min   = (sum_l2 * sum_x - sum_l * sum_xl)/D;
-            if (this_min > 0) {
+            nếu (this_min > 0) {
                 this_min = 0;
                 this_scale = sum_xl / sum_l2;
             }
             float cur_error = 0;
-            for (int i = 0; i < n; ++i) {
+            cho (số_nguyên i = 0; i < n; ++i) {
                 float diff = this_scale * Laux[i] + this_min - x[i];
                 diff = use_mad ? fabsf(diff) : diff * diff;
                 float w = weights[i];
                 cur_error += w * diff;
             }
-            if (cur_error < best_error) {
-                for (int i = 0; i < n; ++i) {
+            nếu (cur_error < best_error) {
+                cho (số_nguyên i = 0; i < n; ++i) {
                     L[i] = Laux[i];
                 }
                 best_error = cur_error;
@@ -874,13 +874,13 @@ static float make_qkx2_quants(int n, int nmax, const float * GGML_RESTRICT x, co
         }
     }
     *the_min = -min;
-    return scale;
+    trả_về scale;
 }
 
-static inline void get_scale_min_k4(int j, const uint8_t * GGML_RESTRICT q, uint8_t * GGML_RESTRICT d, uint8_t * GGML_RESTRICT m) {
-    if (j < 4) {
+static inline void get_scale_min_k4(số_nguyên j, const uint8_t * GGML_RESTRICT q, uint8_t * GGML_RESTRICT d, uint8_t * GGML_RESTRICT m) {
+    nếu (j < 4) {
         *d = q[j] & 63; *m = q[j + 4] & 63;
-    } else {
+    } không_thì {
         *d = (q[j+4] & 0xF) | ((q[j-4] >> 6) << 4);
         *m = (q[j+4] >>  4) | ((q[j-0] >> 6) << 4);
     }
@@ -890,7 +890,7 @@ static inline void get_scale_min_k4(int j, const uint8_t * GGML_RESTRICT q, uint
 
 void quantize_row_q2_K_ref(const float * GGML_RESTRICT x, block_q2_K * GGML_RESTRICT y, int64_t k) {
     assert(k % QK_K == 0);
-    const int nb = k / QK_K;
+    const số_nguyên nb = k / QK_K;
 
     uint8_t L[QK_K];
     uint8_t Laux[16];
@@ -900,56 +900,56 @@ void quantize_row_q2_K_ref(const float * GGML_RESTRICT x, block_q2_K * GGML_REST
 
     const float q4scale = 15.f;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
         float max_scale = 0; // as we are deducting the min, scales are always positive
         float max_min = 0;
-        for (int j = 0; j < QK_K/16; ++j) {
-            for (int l = 0; l < 16; ++l) weights[l] = fabsf(x[16*j + l]);
+        cho (số_nguyên j = 0; j < QK_K/16; ++j) {
+            cho (số_nguyên l = 0; l < 16; ++l) weights[l] = fabsf(x[16*j + l]);
             scales[j] = make_qkx2_quants(16, 3, x + 16*j, weights, L + 16*j, &mins[j], Laux, -0.5f, 0.1f, 15, true);
             float scale = scales[j];
-            if (scale > max_scale) {
+            nếu (scale > max_scale) {
                 max_scale = scale;
             }
             float min = mins[j];
-            if (min > max_min) {
+            nếu (min > max_min) {
                 max_min = min;
             }
         }
 
-        if (max_scale > 0) {
+        nếu (max_scale > 0) {
             float iscale = q4scale/max_scale;
-            for (int j = 0; j < QK_K/16; ++j) {
-                int l = nearest_int(iscale*scales[j]);
+            cho (số_nguyên j = 0; j < QK_K/16; ++j) {
+                số_nguyên l = nearest_int(iscale*scales[j]);
                 y[i].scales[j] = l;
             }
             y[i].d = GGML_FP32_TO_FP16(max_scale/q4scale);
-        } else {
-            for (int j = 0; j < QK_K/16; ++j) y[i].scales[j] = 0;
+        } không_thì {
+            cho (số_nguyên j = 0; j < QK_K/16; ++j) y[i].scales[j] = 0;
             y[i].d = GGML_FP32_TO_FP16(0.f);
         }
-        if (max_min > 0) {
+        nếu (max_min > 0) {
             float iscale = q4scale/max_min;
-            for (int j = 0; j < QK_K/16; ++j) {
-                int l = nearest_int(iscale*mins[j]);
+            cho (số_nguyên j = 0; j < QK_K/16; ++j) {
+                số_nguyên l = nearest_int(iscale*mins[j]);
                 y[i].scales[j] |= (l << 4);
             }
             y[i].dmin = GGML_FP32_TO_FP16(max_min/q4scale);
-        } else {
+        } không_thì {
             y[i].dmin = GGML_FP32_TO_FP16(0.f);
         }
-        for (int j = 0; j < QK_K/16; ++j) {
+        cho (số_nguyên j = 0; j < QK_K/16; ++j) {
             const float d = GGML_FP16_TO_FP32(y[i].d) * (y[i].scales[j] & 0xF);
-            if (!d) continue;
+            nếu (!d) continue;
             const float dm = GGML_FP16_TO_FP32(y[i].dmin) * (y[i].scales[j] >> 4);
-            for (int ii = 0; ii < 16; ++ii) {
-                int l = nearest_int((x[16*j + ii] + dm)/d);
+            cho (số_nguyên ii = 0; ii < 16; ++ii) {
+                số_nguyên l = nearest_int((x[16*j + ii] + dm)/d);
                 l = MAX(0, MIN(3, l));
                 L[16*j + ii] = l;
             }
         }
 
-        for (int j = 0; j < QK_K; j += 128) {
-            for (int l = 0; l < 32; ++l) {
+        cho (số_nguyên j = 0; j < QK_K; j += 128) {
+            cho (số_nguyên l = 0; l < 32; ++l) {
                 y[i].qs[j/4 + l] = L[j + l] | (L[j + l + 32] << 2) | (L[j + l + 64] << 4) | (L[j + l + 96] << 6);
             }
         }
@@ -960,28 +960,28 @@ void quantize_row_q2_K_ref(const float * GGML_RESTRICT x, block_q2_K * GGML_REST
 
 void dequantize_row_q2_K(const block_q2_K * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
     assert(k % QK_K == 0);
-    const int nb = k / QK_K;
+    const số_nguyên nb = k / QK_K;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
 
         const float d = GGML_FP16_TO_FP32(x[i].d);
         const float min = GGML_FP16_TO_FP32(x[i].dmin);
 
         const uint8_t * q = x[i].qs;
 
-        int is = 0;
+        số_nguyên is = 0;
         float dl, ml;
-        for (int n = 0; n < QK_K; n += 128) {
-            int shift = 0;
-            for (int j = 0; j < 4; ++j) {
+        cho (số_nguyên n = 0; n < QK_K; n += 128) {
+            số_nguyên shift = 0;
+            cho (số_nguyên j = 0; j < 4; ++j) {
 
                 uint8_t sc = x[i].scales[is++];
                 dl = d * (sc & 0xF); ml = min * (sc >> 4);
-                for (int l = 0; l < 16; ++l) *y++ = dl * ((int8_t)((q[l] >> shift) & 3)) - ml;
+                cho (số_nguyên l = 0; l < 16; ++l) *y++ = dl * ((int8_t)((q[l] >> shift) & 3)) - ml;
 
                 sc = x[i].scales[is++];
                 dl = d * (sc & 0xF); ml = min * (sc >> 4);
-                for (int l = 0; l < 16; ++l) *y++ = dl * ((int8_t)((q[l+16] >> shift) & 3)) - ml;
+                cho (số_nguyên l = 0; l < 16; ++l) *y++ = dl * ((int8_t)((q[l+16] >> shift) & 3)) - ml;
 
                 shift += 2;
             }
@@ -990,55 +990,55 @@ void dequantize_row_q2_K(const block_q2_K * GGML_RESTRICT x, float * GGML_RESTRI
     }
 }
 
-static float make_qkx3_quants(int n, int nmax, const float * GGML_RESTRICT x, const float * GGML_RESTRICT weights,
+static float make_qkx3_quants(số_nguyên n, số_nguyên nmax, const float * GGML_RESTRICT x, const float * GGML_RESTRICT weights,
         uint8_t * GGML_RESTRICT L, float * GGML_RESTRICT the_min, uint8_t * GGML_RESTRICT Laux,
-        float rmin, float rdelta, int nstep, bool use_mad) {
+        float rmin, float rdelta, số_nguyên nstep, bool use_mad) {
     float min = x[0];
     float max = x[0];
     float sum_w = weights ? weights[0] : x[0]*x[0];
     float sum_x = sum_w * x[0];
 #ifdef HAVE_BUGGY_APPLE_LINKER
     // use 'volatile' to prevent unroll and work around a bug in Apple ld64 1015.7
-    for (volatile int i = 1; i < n; ++i) {
-#else
-    for (int i = 1; i < n; ++i) {
+    cho (volatile số_nguyên i = 1; i < n; ++i) {
+#không_thì
+    cho (số_nguyên i = 1; i < n; ++i) {
 #endif
-        if (x[i] < min) min = x[i];
-        if (x[i] > max) max = x[i];
+        nếu (x[i] < min) min = x[i];
+        nếu (x[i] > max) max = x[i];
         float w = weights ? weights[i] : x[i]*x[i];
         sum_w += w;
         sum_x += w * x[i];
     }
-    if (min > 0) {
+    nếu (min > 0) {
         min = 0;
     }
-    if (max <= min) {
+    nếu (max <= min) {
         memset(L, 0, n);
         *the_min = -min;
-        return 0.f;
+        trả_về 0.f;
     }
     float iscale = nmax/(max - min);
     float scale = 1/iscale;
     float best_mad = 0;
-    for (int i = 0; i < n; ++i) {
-        int l = nearest_int(iscale*(x[i] - min));
+    cho (số_nguyên i = 0; i < n; ++i) {
+        số_nguyên l = nearest_int(iscale*(x[i] - min));
         L[i] = MAX(0, MIN(nmax, l));
         float diff = scale * L[i] + min - x[i];
         diff = use_mad ? fabsf(diff) : diff*diff;
         float w = weights ? weights[i] : x[i]*x[i];
         best_mad += w * diff;
     }
-    if (nstep < 1) {
+    nếu (nstep < 1) {
         *the_min = -min;
-        return scale;
+        trả_về scale;
     }
-    for (int is = 0; is <= nstep; ++is) {
+    cho (số_nguyên is = 0; is <= nstep; ++is) {
         iscale = (rmin + rdelta*is + nmax)/(max - min);
         float sum_l = 0, sum_l2 = 0, sum_xl = 0;
-        for (int i = 0; i < n; ++i) {
+        cho (số_nguyên i = 0; i < n; ++i) {
             // min is the best fit so far and can be at or near max, so v can be inf, nan or out of range for nearest_int
             const float v = iscale*(x[i] - min);
-            const int l = v > 0 ? nearest_int(MIN(v, nmax)) : 0;
+            const số_nguyên l = v > 0 ? nearest_int(MIN(v, nmax)) : 0;
             Laux[i] = l;
             float w = weights ? weights[i] : x[i]*x[i];
             sum_l  += w*l;
@@ -1046,22 +1046,22 @@ static float make_qkx3_quants(int n, int nmax, const float * GGML_RESTRICT x, co
             sum_xl += w*l*x[i];
         }
         float D = sum_w * sum_l2 - sum_l * sum_l;
-        if (D > 0) {
+        nếu (D > 0) {
             float this_scale = (sum_w * sum_xl - sum_x * sum_l)/D;
             float this_min   = (sum_l2 * sum_x - sum_l * sum_xl)/D;
-            if (this_min > 0) {
+            nếu (this_min > 0) {
                 this_min = 0;
                 this_scale = sum_xl / sum_l2;
             }
             float mad = 0;
-            for (int i = 0; i < n; ++i) {
+            cho (số_nguyên i = 0; i < n; ++i) {
                 float diff = this_scale * Laux[i] + this_min - x[i];
                 diff = use_mad ? fabsf(diff) : diff*diff;
                 float w = weights ? weights[i] : x[i]*x[i];
                 mad += w * diff;
             }
-            if (mad < best_mad) {
-                for (int i = 0; i < n; ++i) {
+            nếu (mad < best_mad) {
+                cho (số_nguyên i = 0; i < n; ++i) {
                     L[i] = Laux[i];
                 }
                 best_mad = mad;
@@ -1071,86 +1071,86 @@ static float make_qkx3_quants(int n, int nmax, const float * GGML_RESTRICT x, co
         }
     }
     *the_min = -min;
-    return scale;
+    trả_về scale;
 }
 
-static float make_qp_quants(int n, int nmax, const float * GGML_RESTRICT x, uint8_t * GGML_RESTRICT L, const float * quant_weights) {
+static float make_qp_quants(số_nguyên n, số_nguyên nmax, const float * GGML_RESTRICT x, uint8_t * GGML_RESTRICT L, const float * quant_weights) {
     float max = 0;
-    for (int i = 0; i < n; ++i) {
+    cho (số_nguyên i = 0; i < n; ++i) {
         max = MAX(max, x[i]);
     }
-    if (max < GROUP_MAX_EPS) { // all zero
-        for (int i = 0; i < n; ++i) { L[i] = 0; }
-        return 0.f;
+    nếu (max < GROUP_MAX_EPS) { // all zero
+        cho (số_nguyên i = 0; i < n; ++i) { L[i] = 0; }
+        trả_về 0.f;
     }
     float iscale = nmax / max;
-    for (int i = 0; i < n; ++i) {
+    cho (số_nguyên i = 0; i < n; ++i) {
         L[i] = nearest_int(iscale * x[i]);
     }
     float scale = 1/iscale;
     float best_mse = 0;
-    for (int i = 0; i < n; ++i) {
+    cho (số_nguyên i = 0; i < n; ++i) {
         float diff = x[i] - scale*L[i];
         float w = quant_weights[i];
         best_mse += w*diff*diff;
     }
-    for (int is = -4; is <= 4; ++is) {
-        if (is == 0) continue;
+    cho (số_nguyên is = -4; is <= 4; ++is) {
+        nếu (is == 0) continue;
         float iscale_is = (0.1f*is + nmax)/max;
         float scale_is = 1/iscale_is;
         float mse = 0;
-        for (int i = 0; i < n; ++i) {
-            int l = nearest_int(iscale_is*x[i]);
+        cho (số_nguyên i = 0; i < n; ++i) {
+            số_nguyên l = nearest_int(iscale_is*x[i]);
             l = MIN(nmax, l);
             float diff = x[i] - scale_is*l;
             float w = quant_weights[i];
             mse += w*diff*diff;
         }
-        if (mse < best_mse) {
+        nếu (mse < best_mse) {
             best_mse = mse;
             iscale = iscale_is;
         }
     }
     float sumlx = 0;
     float suml2 = 0;
-    for (int i = 0; i < n; ++i) {
-        int l = nearest_int(iscale * x[i]);
+    cho (số_nguyên i = 0; i < n; ++i) {
+        số_nguyên l = nearest_int(iscale * x[i]);
         l = MIN(nmax, l);
         L[i] = l;
         float w = quant_weights[i];
         sumlx += w*x[i]*l;
         suml2 += w*l*l;
     }
-    for (int itry = 0; itry < 5; ++itry) {
-        int n_changed = 0;
-        for (int i = 0; i < n; ++i) {
+    cho (số_nguyên itry = 0; itry < 5; ++itry) {
+        số_nguyên n_changed = 0;
+        cho (số_nguyên i = 0; i < n; ++i) {
             float w = quant_weights[i];
             float slx = sumlx - w*x[i]*L[i];
             float sl2 = suml2 - w*L[i]*L[i];
-            if (slx > 0 && sl2 > 0) {
-                int new_l = nearest_int(x[i] * sl2 / slx);
+            nếu (slx > 0 && sl2 > 0) {
+                số_nguyên new_l = nearest_int(x[i] * sl2 / slx);
                 new_l = MIN(nmax, new_l);
-                if (new_l != L[i]) {
+                nếu (new_l != L[i]) {
                     slx += w*x[i]*new_l;
                     sl2 += w*new_l*new_l;
-                    if (slx*slx*suml2 > sumlx*sumlx*sl2) {
+                    nếu (slx*slx*suml2 > sumlx*sumlx*sl2) {
                         L[i] = new_l; sumlx = slx; suml2 = sl2;
                         ++n_changed;
                     }
                 }
             }
         }
-        if (!n_changed) {
+        nếu (!n_changed) {
             break;
         }
     }
-    return suml2 > 0.0f ? sumlx / suml2 : 0.0f;
+    trả_về suml2 > 0.0f ? sumlx / suml2 : 0.0f;
 }
 
-static void quantize_row_q2_K_impl(const float * GGML_RESTRICT x, block_q2_K * GGML_RESTRICT y, int k, const float * GGML_RESTRICT quant_weights) {
+static void quantize_row_q2_K_impl(const float * GGML_RESTRICT x, block_q2_K * GGML_RESTRICT y, số_nguyên k, const float * GGML_RESTRICT quant_weights) {
     GGML_ASSERT(quant_weights);
     assert(k % QK_K == 0);
-    const int nb = k / QK_K;
+    const số_nguyên nb = k / QK_K;
     const bool requantize = true;
 
     uint8_t L[QK_K];
@@ -1161,15 +1161,15 @@ static void quantize_row_q2_K_impl(const float * GGML_RESTRICT x, block_q2_K * G
     float weight[16];
     uint8_t Ls[QK_K/16], Lm[QK_K/16];
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
         memset(sw, 0, QK_K/16*sizeof(float));
         float sumx2 = 0;
-        for (int j = 0; j < QK_K; ++j) sumx2 += x[j]*x[j];
+        cho (số_nguyên j = 0; j < QK_K; ++j) sumx2 += x[j]*x[j];
         float sigma2 = sumx2/QK_K;
-        for (int j = 0; j < QK_K/16; ++j) {
+        cho (số_nguyên j = 0; j < QK_K/16; ++j) {
             const float * GGML_RESTRICT qw = quant_weights + QK_K * i + 16*j;
-            for (int l = 0; l < 16; ++l) weight[l] = qw[l] * sqrtf(sigma2 + x[16*j + l]*x[16*j + l]);
-            for (int l = 0; l < QK_K/16; ++l) sw[j] += weight[l];
+            cho (số_nguyên l = 0; l < 16; ++l) weight[l] = qw[l] * sqrtf(sigma2 + x[16*j + l]*x[16*j + l]);
+            cho (số_nguyên l = 0; l < QK_K/16; ++l) sw[j] += weight[l];
             scales[j] = make_qkx3_quants(16, 3, x + 16*j, weight, L + 16*j, &mins[j], Laux, -0.9f, 0.05f, 36, false);
         }
 
@@ -1182,25 +1182,25 @@ static void quantize_row_q2_K_impl(const float * GGML_RESTRICT x, block_q2_K * G
         dm        = GGML_FP16_TO_FP32(y[i].d);
         mm        = GGML_FP16_TO_FP32(y[i].dmin);
 
-        for (int j = 0; j < QK_K/16; ++j) {
+        cho (số_nguyên j = 0; j < QK_K/16; ++j) {
             y[i].scales[j] = Ls[j] | (Lm[j] << 4);
         }
 
-        if (requantize) {
-            for (int j = 0; j < QK_K/16; ++j) {
+        nếu (requantize) {
+            cho (số_nguyên j = 0; j < QK_K/16; ++j) {
                 const float d = dm * (y[i].scales[j] & 0xF);
-                if (!d) continue;
+                nếu (!d) continue;
                 const float m = mm * (y[i].scales[j] >> 4);
-                for (int ii = 0; ii < 16; ++ii) {
-                    int l = nearest_int((x[16*j + ii] + m)/d);
+                cho (số_nguyên ii = 0; ii < 16; ++ii) {
+                    số_nguyên l = nearest_int((x[16*j + ii] + m)/d);
                     l = MAX(0, MIN(3, l));
                     L[16*j + ii] = l;
                 }
             }
         }
 
-        for (int j = 0; j < QK_K; j += 128) {
-            for (int l = 0; l < 32; ++l) {
+        cho (số_nguyên j = 0; j < QK_K; j += 128) {
+            cho (số_nguyên l = 0; l < 32; ++l) {
                 y[i].qs[j/4 + l] = L[j + l] | (L[j + l + 32] << 2) | (L[j + l + 64] << 4) | (L[j + l + 96] << 6);
             }
         }
@@ -1211,70 +1211,70 @@ static void quantize_row_q2_K_impl(const float * GGML_RESTRICT x, block_q2_K * G
 
 size_t quantize_q2_K(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
     size_t row_size = ggml_row_size(GGML_TYPE_Q2_K, n_per_row);
-    if (!quant_weights) {
+    nếu (!quant_weights) {
         quantize_row_q2_K_ref(src, dst, (int64_t)nrow*n_per_row);
     }
-    else {
+    không_thì {
         char * qrow = (char *)dst;
-        for (int64_t row = 0; row < nrow; ++row) {
+        cho (int64_t row = 0; row < nrow; ++row) {
             quantize_row_q2_K_impl(src, (block_q2_K*)qrow, n_per_row, quant_weights);
             src += n_per_row;
             qrow += row_size;
         }
     }
-    return nrow * row_size;
+    trả_về nrow * row_size;
 }
 
 //========================= 3-bit (de)-quantization
 
 void quantize_row_q3_K_ref(const float * GGML_RESTRICT x, block_q3_K * GGML_RESTRICT y, int64_t k) {
     assert(k % QK_K == 0);
-    const int nb = k / QK_K;
+    const số_nguyên nb = k / QK_K;
 
     int8_t L[QK_K];
     float scales[QK_K / 16];
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
 
         float max_scale = 0;
         float amax = 0;
-        for (int j = 0; j < QK_K/16; ++j) {
+        cho (số_nguyên j = 0; j < QK_K/16; ++j) {
             scales[j] = make_q3_quants(16, 4, x + 16*j, L + 16*j, true);
             float scale = fabsf(scales[j]);
-            if (scale > amax) {
+            nếu (scale > amax) {
                 amax = scale; max_scale = scales[j];
             }
         }
 
         memset(y[i].scales, 0, 12);
-        if (max_scale) {
+        nếu (max_scale) {
             float iscale = -32.f/max_scale;
-            for (int j = 0; j < QK_K/16; ++j) {
+            cho (số_nguyên j = 0; j < QK_K/16; ++j) {
                 int8_t l = nearest_int(iscale*scales[j]);
                 l = MAX(-32, MIN(31, l)) + 32;
-                if (j < 8) {
+                nếu (j < 8) {
                     y[i].scales[j] = l & 0xF;
-                } else {
+                } không_thì {
                     y[i].scales[j-8] |= ((l & 0xF) << 4);
                 }
                 l >>= 4;
                 y[i].scales[j%4 + 8] |= (l << (2*(j/4)));
             }
             y[i].d = GGML_FP32_TO_FP16(1/iscale);
-        } else {
+        } không_thì {
             y[i].d = GGML_FP32_TO_FP16(0.f);
         }
 
         int8_t sc;
-        for (int j = 0; j < QK_K/16; ++j) {
+        cho (số_nguyên j = 0; j < QK_K/16; ++j) {
             sc = j < 8 ? y[i].scales[j] & 0xF : y[i].scales[j-8] >> 4;
             sc = (sc | (((y[i].scales[8 + j%4] >> (2*(j/4))) & 3) << 4)) - 32;
             float d = GGML_FP16_TO_FP32(y[i].d) * sc;
-            if (!d) {
+            nếu (!d) {
                 continue;
             }
-            for (int ii = 0; ii < 16; ++ii) {
-                int l = nearest_int(x[16*j + ii]/d);
+            cho (số_nguyên ii = 0; ii < 16; ++ii) {
+                số_nguyên l = nearest_int(x[16*j + ii]/d);
                 l = MAX(-4, MIN(3, l));
                 L[16*j + ii] = l + 4;
             }
@@ -1282,19 +1282,19 @@ void quantize_row_q3_K_ref(const float * GGML_RESTRICT x, block_q3_K * GGML_REST
 
         memset(y[i].hmask, 0, QK_K/8);
         // We put the high-bit for the 1st 8 quants into bit 0, the next 8 into bit 1, etc.
-        int m = 0;
+        số_nguyên m = 0;
         uint8_t hm = 1;
-        for (int j = 0; j < QK_K; ++j) {
-            if (L[j] > 3) {
+        cho (số_nguyên j = 0; j < QK_K; ++j) {
+            nếu (L[j] > 3) {
                 y[i].hmask[m] |= hm;
                 L[j] -= 4;
             }
-            if (++m == QK_K/8) {
+            nếu (++m == QK_K/8) {
                 m = 0; hm <<= 1;
             }
         }
-        for (int j = 0; j < QK_K; j += 128) {
-            for (int l = 0; l < 32; ++l) {
+        cho (số_nguyên j = 0; j < QK_K; j += 128) {
+            cho (số_nguyên l = 0; l < 32; ++l) {
                 y[i].qs[j/4 + l] = L[j + l] | (L[j + l + 32] << 2) | (L[j + l + 64] << 4) | (L[j + l + 96] << 6);
             }
         }
@@ -1305,7 +1305,7 @@ void quantize_row_q3_K_ref(const float * GGML_RESTRICT x, block_q3_K * GGML_REST
 
 void dequantize_row_q3_K(const block_q3_K * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
     assert(k % QK_K == 0);
-    const int nb = k / QK_K;
+    const số_nguyên nb = k / QK_K;
 
     const uint32_t kmask1 = 0x03030303;
     const uint32_t kmask2 = 0x0f0f0f0f;
@@ -1313,7 +1313,7 @@ void dequantize_row_q3_K(const block_q3_K * GGML_RESTRICT x, float * GGML_RESTRI
     uint32_t aux[4];
     const int8_t * scales = (const int8_t*)aux;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
 
         const float d_all = GGML_FP16_TO_FP32(x[i].d);
 
@@ -1328,19 +1328,19 @@ void dequantize_row_q3_K(const block_q3_K * GGML_RESTRICT x, float * GGML_RESTRI
         aux[0] = (aux[0] & kmask2) | (((tmp >> 0) & kmask1) << 4);
         aux[1] = (aux[1] & kmask2) | (((tmp >> 2) & kmask1) << 4);
 
-        int is = 0;
+        số_nguyên is = 0;
         float dl;
-        for (int n = 0; n < QK_K; n += 128) {
-            int shift = 0;
-            for (int j = 0; j < 4; ++j) {
+        cho (số_nguyên n = 0; n < QK_K; n += 128) {
+            số_nguyên shift = 0;
+            cho (số_nguyên j = 0; j < 4; ++j) {
 
                 dl = d_all * (scales[is++] - 32);
-                for (int l = 0; l < 16; ++l) {
+                cho (số_nguyên l = 0; l < 16; ++l) {
                     *y++ = dl * ((int8_t)((q[l+ 0] >> shift) & 3) - ((hm[l+ 0] & m) ? 0 : 4));
                 }
 
                 dl = d_all * (scales[is++] - 32);
-                for (int l = 0; l < 16; ++l) {
+                cho (số_nguyên l = 0; l < 16; ++l) {
                     *y++ = dl * ((int8_t)((q[l+16] >> shift) & 3) - ((hm[l+16] & m) ? 0 : 4));
                 }
 
@@ -1355,7 +1355,7 @@ void dequantize_row_q3_K(const block_q3_K * GGML_RESTRICT x, float * GGML_RESTRI
 
 static void quantize_row_q3_K_impl(const float * GGML_RESTRICT x, block_q3_K * GGML_RESTRICT y, int64_t n_per_row, const float * GGML_RESTRICT quant_weights) {
     assert(n_per_row % QK_K == 0);
-    const int nb = n_per_row / QK_K;
+    const số_nguyên nb = n_per_row / QK_K;
 
     int8_t L[QK_K];
     float scales[QK_K / 16];
@@ -1363,21 +1363,21 @@ static void quantize_row_q3_K_impl(const float * GGML_RESTRICT x, block_q3_K * G
     float sw[QK_K / 16];
     int8_t Ls[QK_K / 16];
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
 
         float sumx2 = 0;
-        for (int j = 0; j < QK_K; ++j) sumx2 += x[j]*x[j];
+        cho (số_nguyên j = 0; j < QK_K; ++j) sumx2 += x[j]*x[j];
         float sigma2 = 2*sumx2/QK_K;
 
-        for (int j = 0; j < QK_K/16; ++j) {
-            if (quant_weights) {
+        cho (số_nguyên j = 0; j < QK_K/16; ++j) {
+            nếu (quant_weights) {
                 const float * qw = quant_weights + QK_K * i + 16*j;
-                for (int l = 0; l < 16; ++l) weight[l] = qw[l] * sqrtf(sigma2 + x[16*j+l]*x[16*j+l]);
-            } else {
-                for (int l = 0; l < 16; ++l) weight[l] = x[16*j+l]*x[16*j+l];
+                cho (số_nguyên l = 0; l < 16; ++l) weight[l] = qw[l] * sqrtf(sigma2 + x[16*j+l]*x[16*j+l]);
+            } không_thì {
+                cho (số_nguyên l = 0; l < 16; ++l) weight[l] = x[16*j+l]*x[16*j+l];
             }
             float sumw = 0;
-            for (int l = 0; l < 16; ++l) sumw += weight[l];
+            cho (số_nguyên l = 0; l < 16; ++l) sumw += weight[l];
             sw[j] = sumw;
 
             scales[j] = make_qx_quants(16, 4, x + 16*j, L + 16*j, 1, weight);
@@ -1387,11 +1387,11 @@ static void quantize_row_q3_K_impl(const float * GGML_RESTRICT x, block_q3_K * G
         memset(y[i].scales, 0, 12);
 
         float d_block = make_qx_quants(QK_K/16, 32, scales, Ls, 1, sw);
-        for (int j = 0; j < QK_K/16; ++j) {
-            int l = Ls[j];
-            if (j < 8) {
+        cho (số_nguyên j = 0; j < QK_K/16; ++j) {
+            số_nguyên l = Ls[j];
+            nếu (j < 8) {
                 y[i].scales[j] = l & 0xF;
-            } else {
+            } không_thì {
                 y[i].scales[j-8] |= ((l & 0xF) << 4);
             }
             l >>= 4;
@@ -1400,15 +1400,15 @@ static void quantize_row_q3_K_impl(const float * GGML_RESTRICT x, block_q3_K * G
         y[i].d = GGML_FP32_TO_FP16(d_block);
 
         int8_t sc;
-        for (int j = 0; j < QK_K/16; ++j) {
+        cho (số_nguyên j = 0; j < QK_K/16; ++j) {
             sc = j < 8 ? y[i].scales[j] & 0xF : y[i].scales[j-8] >> 4;
             sc = (sc | (((y[i].scales[8 + j%4] >> (2*(j/4))) & 3) << 4)) - 32;
             float d = GGML_FP16_TO_FP32(y[i].d) * sc;
-            if (!d) {
+            nếu (!d) {
                 continue;
             }
-            for (int ii = 0; ii < 16; ++ii) {
-                int l = nearest_int(x[16*j + ii]/d);
+            cho (số_nguyên ii = 0; ii < 16; ++ii) {
+                số_nguyên l = nearest_int(x[16*j + ii]/d);
                 l = MAX(-4, MIN(3, l));
                 L[16*j + ii] = l + 4;
             }
@@ -1416,19 +1416,19 @@ static void quantize_row_q3_K_impl(const float * GGML_RESTRICT x, block_q3_K * G
 
         memset(y[i].hmask, 0, QK_K/8);
         // We put the high-bit for the 1st 8 quants into bit 0, the next 8 into bit 1, etc.
-        int m = 0;
+        số_nguyên m = 0;
         uint8_t hm = 1;
-        for (int j = 0; j < QK_K; ++j) {
-            if (L[j] > 3) {
+        cho (số_nguyên j = 0; j < QK_K; ++j) {
+            nếu (L[j] > 3) {
                 y[i].hmask[m] |= hm;
                 L[j] -= 4;
             }
-            if (++m == QK_K/8) {
+            nếu (++m == QK_K/8) {
                 m = 0; hm <<= 1;
             }
         }
-        for (int j = 0; j < QK_K; j += 128) {
-            for (int l = 0; l < 32; ++l) {
+        cho (số_nguyên j = 0; j < QK_K; j += 128) {
+            cho (số_nguyên l = 0; l < 32; ++l) {
                 y[i].qs[j/4 + l] = L[j + l] | (L[j + l + 32] << 2) | (L[j + l + 64] << 4) | (L[j + l + 96] << 6);
             }
         }
@@ -1439,25 +1439,25 @@ static void quantize_row_q3_K_impl(const float * GGML_RESTRICT x, block_q3_K * G
 
 size_t quantize_q3_K(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
     size_t row_size = ggml_row_size(GGML_TYPE_Q3_K, n_per_row);
-    if (!quant_weights) {
+    nếu (!quant_weights) {
         quantize_row_q3_K_ref(src, dst, (int64_t)nrow*n_per_row);
     }
-    else {
+    không_thì {
         char * qrow = (char *)dst;
-        for (int64_t row = 0; row < nrow; ++row) {
+        cho (int64_t row = 0; row < nrow; ++row) {
             quantize_row_q3_K_impl(src, (block_q3_K*)qrow, n_per_row, quant_weights);
             src += n_per_row;
             qrow += row_size;
         }
     }
-    return nrow * row_size;
+    trả_về nrow * row_size;
 }
 
 // ====================== 4-bit (de)-quantization
 
 void quantize_row_q4_K_ref(const float * GGML_RESTRICT x, block_q4_K * GGML_RESTRICT y, int64_t k) {
     assert(k % QK_K == 0);
-    const int nb = k / QK_K;
+    const số_nguyên nb = k / QK_K;
 
     uint8_t L[QK_K];
     uint8_t Laux[32];
@@ -1465,37 +1465,37 @@ void quantize_row_q4_K_ref(const float * GGML_RESTRICT x, block_q4_K * GGML_REST
     float mins[QK_K/32];
     float scales[QK_K/32];
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
         float max_scale = 0; // as we are deducting the min, scales are always positive
         float max_min = 0;
-        for (int j = 0; j < QK_K/32; ++j) {
+        cho (số_nguyên j = 0; j < QK_K/32; ++j) {
             //scales[j] = make_qkx1_quants(32, 15, x + 32*j, L + 32*j, &mins[j], 9, 0.5f);
             float sum_x2 = 0;
-            for (int l = 0; l < 32; ++l) sum_x2 += x[32*j + l] * x[32*j + l];
+            cho (số_nguyên l = 0; l < 32; ++l) sum_x2 += x[32*j + l] * x[32*j + l];
             float av_x = sqrtf(sum_x2/32);
-            for (int l = 0; l < 32; ++l) weights[l] = av_x + fabsf(x[32*j + l]);
+            cho (số_nguyên l = 0; l < 32; ++l) weights[l] = av_x + fabsf(x[32*j + l]);
             scales[j] = make_qkx2_quants(32, 15, x + 32*j, weights, L + 32*j, &mins[j], Laux, -1.f, 0.1f, 20, false);
             float scale = scales[j];
-            if (scale > max_scale) {
+            nếu (scale > max_scale) {
                 max_scale = scale;
             }
             float min = mins[j];
-            if (min > max_min) {
+            nếu (min > max_min) {
                 max_min = min;
             }
         }
 
         float inv_scale = max_scale > 0 ? 63.f/max_scale : 0.f;
         float inv_min   = max_min   > 0 ? 63.f/max_min   : 0.f;
-        for (int j = 0; j < QK_K/32; ++j) {
+        cho (số_nguyên j = 0; j < QK_K/32; ++j) {
             uint8_t ls = nearest_int(inv_scale*scales[j]);
             uint8_t lm = nearest_int(inv_min*mins[j]);
             ls = MIN(63, ls);
             lm = MIN(63, lm);
-            if (j < 4) {
+            nếu (j < 4) {
                 y[i].scales[j] = ls;
                 y[i].scales[j+4] = lm;
-            } else {
+            } không_thì {
                 y[i].scales[j+4] = (ls & 0xF) | ((lm & 0xF) << 4);
                 y[i].scales[j-4] |= ((ls >> 4) << 6);
                 y[i].scales[j-0] |= ((lm >> 4) << 6);
@@ -1505,21 +1505,21 @@ void quantize_row_q4_K_ref(const float * GGML_RESTRICT x, block_q4_K * GGML_REST
         y[i].dmin = GGML_FP32_TO_FP16(max_min/63.f);
 
         uint8_t sc, m;
-        for (int j = 0; j < QK_K/32; ++j) {
+        cho (số_nguyên j = 0; j < QK_K/32; ++j) {
             get_scale_min_k4(j, y[i].scales, &sc, &m);
             const float d = GGML_FP16_TO_FP32(y[i].d) * sc;
-            if (!d) continue;
+            nếu (!d) continue;
             const float dm = GGML_FP16_TO_FP32(y[i].dmin) * m;
-            for (int ii = 0; ii < 32; ++ii) {
-                int l = nearest_int((x[32*j + ii] + dm)/d);
+            cho (số_nguyên ii = 0; ii < 32; ++ii) {
+                số_nguyên l = nearest_int((x[32*j + ii] + dm)/d);
                 l = MAX(0, MIN(15, l));
                 L[32*j + ii] = l;
             }
         }
 
         uint8_t * q = y[i].qs;
-        for (int j = 0; j < QK_K; j += 64) {
-            for (int l = 0; l < 32; ++l) q[l] = L[j + l] | (L[j + l + 32] << 4);
+        cho (số_nguyên j = 0; j < QK_K; j += 64) {
+            cho (số_nguyên l = 0; l < 32; ++l) q[l] = L[j + l] | (L[j + l + 32] << 4);
             q += 32;
         }
 
@@ -1529,23 +1529,23 @@ void quantize_row_q4_K_ref(const float * GGML_RESTRICT x, block_q4_K * GGML_REST
 
 void dequantize_row_q4_K(const block_q4_K * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
     assert(k % QK_K == 0);
-    const int nb = k / QK_K;
+    const số_nguyên nb = k / QK_K;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
         const uint8_t * q = x[i].qs;
 
         const float d   = GGML_FP16_TO_FP32(x[i].d);
         const float min = GGML_FP16_TO_FP32(x[i].dmin);
 
-        int is = 0;
+        số_nguyên is = 0;
         uint8_t sc, m;
-        for (int j = 0; j < QK_K; j += 64) {
+        cho (số_nguyên j = 0; j < QK_K; j += 64) {
             get_scale_min_k4(is + 0, x[i].scales, &sc, &m);
             const float d1 = d * sc; const float m1 = min * m;
             get_scale_min_k4(is + 1, x[i].scales, &sc, &m);
             const float d2 = d * sc; const float m2 = min * m;
-            for (int l = 0; l < 32; ++l) *y++ = d1 * (q[l] & 0xF) - m1;
-            for (int l = 0; l < 32; ++l) *y++ = d2 * (q[l]  >> 4) - m2;
+            cho (số_nguyên l = 0; l < 32; ++l) *y++ = d1 * (q[l] & 0xF) - m1;
+            cho (số_nguyên l = 0; l < 32; ++l) *y++ = d2 * (q[l]  >> 4) - m2;
             q += 32; is += 2;
         }
     }
@@ -1564,35 +1564,35 @@ static void quantize_row_q4_K_impl(const float * GGML_RESTRICT x, block_q4_K * G
     float   mins[QK_K/32];
     float   scales[QK_K/32];
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
 
         float sum_x2 = 0;
-        for (int l = 0; l < QK_K; ++l) sum_x2 += x[l] * x[l];
+        cho (số_nguyên l = 0; l < QK_K; ++l) sum_x2 += x[l] * x[l];
         float sigma2 = 2*sum_x2/QK_K;
         float av_x = sqrtf(sigma2);
 
-        for (int j = 0; j < QK_K/32; ++j) {
-            if (quant_weights) {
+        cho (số_nguyên j = 0; j < QK_K/32; ++j) {
+            nếu (quant_weights) {
                 const float * qw = quant_weights + QK_K*i + 32*j;
-                for (int l = 0; l < 32; ++l) weights[l] = qw[l] * sqrtf(sigma2 + x[32*j + l]*x[32*j + l]);
-            } else {
-                for (int l = 0; l < 32; ++l) weights[l] = av_x + fabsf(x[32*j + l]);
+                cho (số_nguyên l = 0; l < 32; ++l) weights[l] = qw[l] * sqrtf(sigma2 + x[32*j + l]*x[32*j + l]);
+            } không_thì {
+                cho (số_nguyên l = 0; l < 32; ++l) weights[l] = av_x + fabsf(x[32*j + l]);
             }
             float sumw = 0;
-            for (int l = 0; l < 32; ++l) sumw += weights[l];
+            cho (số_nguyên l = 0; l < 32; ++l) sumw += weights[l];
             sw[j] = sumw;
             scales[j] = make_qkx3_quants(32, 15, x + 32*j, weights, L + 32*j, &mins[j], Laux, -0.9f, 0.05f, 36, false);
         }
 
         float d_block = make_qp_quants(QK_K/32, 63, scales, Ls, sw);
         float m_block = make_qp_quants(QK_K/32, 63, mins,   Lm, sw);
-        for (int j = 0; j < QK_K/32; ++j) {
+        cho (số_nguyên j = 0; j < QK_K/32; ++j) {
             uint8_t ls = Ls[j];
             uint8_t lm = Lm[j];
-            if (j < 4) {
+            nếu (j < 4) {
                 y[i].scales[j] = ls;
                 y[i].scales[j+4] = lm;
-            } else {
+            } không_thì {
                 y[i].scales[j+4] = (ls & 0xF) | ((lm & 0xF) << 4);
                 y[i].scales[j-4] |= ((ls >> 4) << 6);
                 y[i].scales[j-0] |= ((lm >> 4) << 6);
@@ -1602,20 +1602,20 @@ static void quantize_row_q4_K_impl(const float * GGML_RESTRICT x, block_q4_K * G
         y[i].dmin = GGML_FP32_TO_FP16(m_block);
 
         uint8_t sc, m;
-        for (int j = 0; j < QK_K/32; ++j) {
+        cho (số_nguyên j = 0; j < QK_K/32; ++j) {
             get_scale_min_k4(j, y[i].scales, &sc, &m);
             const float d = GGML_FP16_TO_FP32(y[i].d) * sc;
-            if (!d) continue;
+            nếu (!d) continue;
             const float dm = GGML_FP16_TO_FP32(y[i].dmin) * m;
-            for (int ii = 0; ii < 32; ++ii) {
-                int l = nearest_int((x[32*j + ii] + dm)/d);
+            cho (số_nguyên ii = 0; ii < 32; ++ii) {
+                số_nguyên l = nearest_int((x[32*j + ii] + dm)/d);
                 l = MAX(0, MIN(15, l));
                 L[32*j + ii] = l;
             }
         }
         uint8_t * q = y[i].qs;
-        for (int j = 0; j < QK_K; j += 64) {
-            for (int l = 0; l < 32; ++l) q[l] = L[j + l] | (L[j + l + 32] << 4);
+        cho (số_nguyên j = 0; j < QK_K; j += 64) {
+            cho (số_nguyên l = 0; l < 32; ++l) q[l] = L[j + l] | (L[j + l + 32] << 4);
             q += 32;
         }
 
@@ -1626,18 +1626,18 @@ static void quantize_row_q4_K_impl(const float * GGML_RESTRICT x, block_q4_K * G
 
 size_t quantize_q4_K(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
     size_t row_size = ggml_row_size(GGML_TYPE_Q4_K, n_per_row);
-    if (!quant_weights) {
+    nếu (!quant_weights) {
         quantize_row_q4_K_ref(src, dst, (int64_t)nrow*n_per_row);
     }
-    else {
+    không_thì {
         char * qrow = (char *)dst;
-        for (int64_t row = 0; row < nrow; ++row) {
+        cho (int64_t row = 0; row < nrow; ++row) {
             quantize_row_q4_K_impl(src, (block_q4_K*)qrow, n_per_row, quant_weights);
             src += n_per_row;
             qrow += row_size;
         }
     }
-    return nrow * row_size;
+    trả_về nrow * row_size;
 }
 
 // ====================== 5-bit (de)-quantization
@@ -1652,37 +1652,37 @@ void quantize_row_q5_K_ref(const float * GGML_RESTRICT x, block_q5_K * GGML_REST
     float weights[32];
     uint8_t Laux[32];
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
         float max_scale = 0; // as we are deducting the min, scales are always positive
         float max_min = 0;
-        for (int j = 0; j < QK_K/32; ++j) {
+        cho (số_nguyên j = 0; j < QK_K/32; ++j) {
             //scales[j] = make_qkx1_quants(32, 31, x + 32*j, L + 32*j, &mins[j], 9, 0.5f);
             float sum_x2 = 0;
-            for (int l = 0; l < 32; ++l) sum_x2 += x[32*j + l] * x[32*j + l];
+            cho (số_nguyên l = 0; l < 32; ++l) sum_x2 += x[32*j + l] * x[32*j + l];
             float av_x = sqrtf(sum_x2/32);
-            for (int l = 0; l < 32; ++l) weights[l] = av_x + fabsf(x[32*j + l]);
+            cho (số_nguyên l = 0; l < 32; ++l) weights[l] = av_x + fabsf(x[32*j + l]);
             scales[j] = make_qkx2_quants(32, 31, x + 32*j, weights, L + 32*j, &mins[j], Laux, -0.5f, 0.1f, 15, false);
             float scale = scales[j];
-            if (scale > max_scale) {
+            nếu (scale > max_scale) {
                 max_scale = scale;
             }
             float min = mins[j];
-            if (min > max_min) {
+            nếu (min > max_min) {
                 max_min = min;
             }
         }
 
         float inv_scale = max_scale > 0 ? 63.f/max_scale : 0.f;
         float inv_min   = max_min   > 0 ? 63.f/max_min   : 0.f;
-        for (int j = 0; j < QK_K/32; ++j) {
+        cho (số_nguyên j = 0; j < QK_K/32; ++j) {
             uint8_t ls = nearest_int(inv_scale*scales[j]);
             uint8_t lm = nearest_int(inv_min*mins[j]);
             ls = MIN(63, ls);
             lm = MIN(63, lm);
-            if (j < 4) {
+            nếu (j < 4) {
                 y[i].scales[j] = ls;
                 y[i].scales[j+4] = lm;
-            } else {
+            } không_thì {
                 y[i].scales[j+4] = (ls & 0xF) | ((lm & 0xF) << 4);
                 y[i].scales[j-4] |= ((ls >> 4) << 6);
                 y[i].scales[j-0] |= ((lm >> 4) << 6);
@@ -1692,13 +1692,13 @@ void quantize_row_q5_K_ref(const float * GGML_RESTRICT x, block_q5_K * GGML_REST
         y[i].dmin = GGML_FP32_TO_FP16(max_min/63.f);
 
         uint8_t sc, m;
-        for (int j = 0; j < QK_K/32; ++j) {
+        cho (số_nguyên j = 0; j < QK_K/32; ++j) {
             get_scale_min_k4(j, y[i].scales, &sc, &m);
             const float d = GGML_FP16_TO_FP32(y[i].d) * sc;
-            if (!d) continue;
+            nếu (!d) continue;
             const float dm = GGML_FP16_TO_FP32(y[i].dmin) * m;
-            for (int ii = 0; ii < 32; ++ii) {
-                int l = nearest_int((x[32*j + ii] + dm)/d);
+            cho (số_nguyên ii = 0; ii < 32; ++ii) {
+                số_nguyên l = nearest_int((x[32*j + ii] + dm)/d);
                 l = MAX(0, MIN(31, l));
                 L[32*j + ii] = l;
             }
@@ -1709,14 +1709,14 @@ void quantize_row_q5_K_ref(const float * GGML_RESTRICT x, block_q5_K * GGML_REST
         memset(qh, 0, QK_K/8);
 
         uint8_t m1 = 1, m2 = 2;
-        for (int n = 0; n < QK_K; n += 64) {
-            for (int j = 0; j < 32; ++j) {
-                int l1 = L[n + j];
-                if (l1 > 15) {
+        cho (số_nguyên n = 0; n < QK_K; n += 64) {
+            cho (số_nguyên j = 0; j < 32; ++j) {
+                số_nguyên l1 = L[n + j];
+                nếu (l1 > 15) {
                     l1 -= 16; qh[j] |= m1;
                 }
-                int l2 = L[n + j + 32];
-                if (l2 > 15) {
+                số_nguyên l2 = L[n + j + 32];
+                nếu (l2 > 15) {
                     l2 -= 16; qh[j] |= m2;
                 }
                 ql[j] = l1 | (l2 << 4);
@@ -1733,23 +1733,23 @@ void dequantize_row_q5_K(const block_q5_K * GGML_RESTRICT x, float * GGML_RESTRI
     assert(k % QK_K == 0);
     const int64_t nb = k / QK_K;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
         const uint8_t * ql = x[i].qs;
         const uint8_t * qh = x[i].qh;
 
         const float d = GGML_FP16_TO_FP32(x[i].d);
         const float min = GGML_FP16_TO_FP32(x[i].dmin);
 
-        int is = 0;
+        số_nguyên is = 0;
         uint8_t sc, m;
         uint8_t u1 = 1, u2 = 2;
-        for (int j = 0; j < QK_K; j += 64) {
+        cho (số_nguyên j = 0; j < QK_K; j += 64) {
             get_scale_min_k4(is + 0, x[i].scales, &sc, &m);
             const float d1 = d * sc; const float m1 = min * m;
             get_scale_min_k4(is + 1, x[i].scales, &sc, &m);
             const float d2 = d * sc; const float m2 = min * m;
-            for (int l = 0; l < 32; ++l) *y++ = d1 * ((ql[l] & 0xF) + (qh[l] & u1 ? 16 : 0)) - m1;
-            for (int l = 0; l < 32; ++l) *y++ = d2 * ((ql[l]  >> 4) + (qh[l] & u2 ? 16 : 0)) - m2;
+            cho (số_nguyên l = 0; l < 32; ++l) *y++ = d1 * ((ql[l] & 0xF) + (qh[l] & u1 ? 16 : 0)) - m1;
+            cho (số_nguyên l = 0; l < 32; ++l) *y++ = d2 * ((ql[l]  >> 4) + (qh[l] & u2 ? 16 : 0)) - m2;
             ql += 32; is += 2;
             u1 <<= 2; u2 <<= 2;
         }
@@ -1769,22 +1769,22 @@ static void quantize_row_q5_K_impl(const float * GGML_RESTRICT x, block_q5_K * G
     float   sw[QK_K/32];
     float   weights[32];
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
 
         float sum_x2 = 0;
-        for (int l = 0; l < QK_K; ++l) sum_x2 += x[l] * x[l];
+        cho (số_nguyên l = 0; l < QK_K; ++l) sum_x2 += x[l] * x[l];
         float sigma2 = 2*sum_x2/QK_K;
         float av_x = sqrtf(sigma2);
 
-        for (int j = 0; j < QK_K/32; ++j) {
-            if (quant_weights) {
+        cho (số_nguyên j = 0; j < QK_K/32; ++j) {
+            nếu (quant_weights) {
                 const float * qw = quant_weights + QK_K*i + 32*j;
-                for (int l = 0; l < 32; ++l) weights[l] = qw[l] * sqrtf(sigma2 + x[32*j + l]*x[32*j + l]);
-            } else {
-                for (int l = 0; l < 32; ++l) weights[l] = av_x + fabsf(x[32*j + l]);
+                cho (số_nguyên l = 0; l < 32; ++l) weights[l] = qw[l] * sqrtf(sigma2 + x[32*j + l]*x[32*j + l]);
+            } không_thì {
+                cho (số_nguyên l = 0; l < 32; ++l) weights[l] = av_x + fabsf(x[32*j + l]);
             }
             float sumw = 0;
-            for (int l = 0; l < 32; ++l) sumw += weights[l];
+            cho (số_nguyên l = 0; l < 32; ++l) sumw += weights[l];
             sw[j] = sumw;
 
             scales[j] = make_qkx3_quants(32, 31, x + 32*j, weights, L + 32*j, &mins[j], Laux, -0.9f, 0.05f, 36, false);
@@ -1793,15 +1793,15 @@ static void quantize_row_q5_K_impl(const float * GGML_RESTRICT x, block_q5_K * G
         float d_block = make_qp_quants(QK_K/32, 63, scales, Ls, sw);
         float m_block = make_qp_quants(QK_K/32, 63, mins,   Lm, sw);
 
-        for (int j = 0; j < QK_K/32; ++j) {
+        cho (số_nguyên j = 0; j < QK_K/32; ++j) {
             uint8_t ls = Ls[j];
             uint8_t lm = Lm[j];
             ls = MIN(63, ls);
             lm = MIN(63, lm);
-            if (j < 4) {
+            nếu (j < 4) {
                 y[i].scales[j] = ls;
                 y[i].scales[j+4] = lm;
-            } else {
+            } không_thì {
                 y[i].scales[j+4] = (ls & 0xF) | ((lm & 0xF) << 4);
                 y[i].scales[j-4] |= ((ls >> 4) << 6);
                 y[i].scales[j-0] |= ((lm >> 4) << 6);
@@ -1811,13 +1811,13 @@ static void quantize_row_q5_K_impl(const float * GGML_RESTRICT x, block_q5_K * G
         y[i].dmin = GGML_FP32_TO_FP16(m_block);
 
         uint8_t sc, m;
-        for (int j = 0; j < QK_K/32; ++j) {
+        cho (số_nguyên j = 0; j < QK_K/32; ++j) {
             get_scale_min_k4(j, y[i].scales, &sc, &m);
             const float d = GGML_FP16_TO_FP32(y[i].d) * sc;
-            if (!d) continue;
+            nếu (!d) continue;
             const float dm = GGML_FP16_TO_FP32(y[i].dmin) * m;
-            for (int ii = 0; ii < 32; ++ii) {
-                int l = nearest_int((x[32*j + ii] + dm)/d);
+            cho (số_nguyên ii = 0; ii < 32; ++ii) {
+                số_nguyên l = nearest_int((x[32*j + ii] + dm)/d);
                 l = MAX(0, MIN(31, l));
                 L[32*j + ii] = l;
             }
@@ -1828,14 +1828,14 @@ static void quantize_row_q5_K_impl(const float * GGML_RESTRICT x, block_q5_K * G
         memset(qh, 0, QK_K/8);
 
         uint8_t m1 = 1, m2 = 2;
-        for (int n = 0; n < QK_K; n += 64) {
-            for (int j = 0; j < 32; ++j) {
-                int l1 = L[n + j];
-                if (l1 > 15) {
+        cho (số_nguyên n = 0; n < QK_K; n += 64) {
+            cho (số_nguyên j = 0; j < 32; ++j) {
+                số_nguyên l1 = L[n + j];
+                nếu (l1 > 15) {
                     l1 -= 16; qh[j] |= m1;
                 }
-                int l2 = L[n + j + 32];
-                if (l2 > 15) {
+                số_nguyên l2 = L[n + j + 32];
+                nếu (l2 > 15) {
                     l2 -= 16; qh[j] |= m2;
                 }
                 ql[j] = l1 | (l2 << 4);
@@ -1851,18 +1851,18 @@ static void quantize_row_q5_K_impl(const float * GGML_RESTRICT x, block_q5_K * G
 
 size_t quantize_q5_K(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
     size_t row_size = ggml_row_size(GGML_TYPE_Q5_K, n_per_row);
-    if (!quant_weights) {
+    nếu (!quant_weights) {
         quantize_row_q5_K_ref(src, dst, (int64_t)nrow*n_per_row);
     }
-    else {
+    không_thì {
         char * qrow = (char *)dst;
-        for (int64_t row = 0; row < nrow; ++row) {
+        cho (int64_t row = 0; row < nrow; ++row) {
             quantize_row_q5_K_impl(src, (block_q5_K*)qrow, n_per_row, quant_weights);
             src += n_per_row;
             qrow += row_size;
         }
     }
-    return nrow * row_size;
+    trả_về nrow * row_size;
 }
 
 // ====================== 6-bit (de)-quantization
@@ -1874,25 +1874,25 @@ void quantize_row_q6_K_ref(const float * GGML_RESTRICT x, block_q6_K * GGML_REST
     int8_t L[QK_K];
     float   scales[QK_K/16];
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
 
         float max_scale = 0;
         float max_abs_scale = 0;
 
-        for (int ib = 0; ib < QK_K/16; ++ib) {
+        cho (số_nguyên ib = 0; ib < QK_K/16; ++ib) {
 
             const float scale = make_qx_quants(16, 32, x + 16*ib, L + 16*ib, 1, NULL);
             scales[ib] = scale;
 
             const float abs_scale = fabsf(scale);
-            if (abs_scale > max_abs_scale) {
+            nếu (abs_scale > max_abs_scale) {
                 max_abs_scale = abs_scale;
                 max_scale = scale;
             }
 
         }
 
-        if (max_abs_scale < GROUP_MAX_EPS) {
+        nếu (max_abs_scale < GROUP_MAX_EPS) {
             memset(&y[i], 0, sizeof(block_q6_K));
             y[i].d = GGML_FP32_TO_FP16(0.f);
             x += QK_K;
@@ -1901,17 +1901,17 @@ void quantize_row_q6_K_ref(const float * GGML_RESTRICT x, block_q6_K * GGML_REST
 
         float iscale = -128.f/max_scale;
         y[i].d = GGML_FP32_TO_FP16(1/iscale);
-        for (int ib = 0; ib < QK_K/16; ++ib) {
+        cho (số_nguyên ib = 0; ib < QK_K/16; ++ib) {
             y[i].scales[ib] = MIN(127, nearest_int(iscale*scales[ib]));
         }
 
-        for (int j = 0; j < QK_K/16; ++j) {
+        cho (số_nguyên j = 0; j < QK_K/16; ++j) {
             float d = GGML_FP16_TO_FP32(y[i].d) * y[i].scales[j];
-            if (!d) {
+            nếu (!d) {
                 continue;
             }
-            for (int ii = 0; ii < 16; ++ii) {
-                int l = nearest_int(x[16*j + ii]/d);
+            cho (số_nguyên ii = 0; ii < 16; ++ii) {
+                số_nguyên l = nearest_int(x[16*j + ii]/d);
                 l = MAX(-32, MIN(31, l));
                 L[16*j + ii] = l + 32;
             }
@@ -1919,8 +1919,8 @@ void quantize_row_q6_K_ref(const float * GGML_RESTRICT x, block_q6_K * GGML_REST
 
         uint8_t * GGML_RESTRICT ql = y[i].ql;
         uint8_t * GGML_RESTRICT qh = y[i].qh;
-        for (int j = 0; j < QK_K; j += 128) {
-            for (int l = 0; l < 32; ++l) {
+        cho (số_nguyên j = 0; j < QK_K; j += 128) {
+            cho (số_nguyên l = 0; l < 32; ++l) {
                 const uint8_t q1 = L[j + l +  0] & 0xF;
                 const uint8_t q2 = L[j + l + 32] & 0xF;
                 const uint8_t q3 = L[j + l + 64] & 0xF;
@@ -1941,16 +1941,16 @@ void dequantize_row_q6_K(const block_q6_K * GGML_RESTRICT x, float * GGML_RESTRI
     assert(k % QK_K == 0);
     const int64_t nb = k / QK_K;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
         const float d = GGML_FP16_TO_FP32(x[i].d);
 
         const uint8_t * GGML_RESTRICT ql = x[i].ql;
         const uint8_t * GGML_RESTRICT qh = x[i].qh;
         const int8_t  * GGML_RESTRICT sc = x[i].scales;
 
-        for (int n = 0; n < QK_K; n += 128) {
-            for (int l = 0; l < 32; ++l) {
-                int is = l/16;
+        cho (số_nguyên n = 0; n < QK_K; n += 128) {
+            cho (số_nguyên l = 0; l < 32; ++l) {
+                số_nguyên is = l/16;
                 const int8_t q1 = (int8_t)((ql[l +  0] & 0xF) | (((qh[l] >> 0) & 3) << 4)) - 32;
                 const int8_t q2 = (int8_t)((ql[l + 32] & 0xF) | (((qh[l] >> 2) & 3) << 4)) - 32;
                 const int8_t q3 = (int8_t)((ql[l +  0]  >> 4) | (((qh[l] >> 4) & 3) << 4)) - 32;
@@ -1976,7 +1976,7 @@ static void quantize_row_q6_K_impl(const float * GGML_RESTRICT x, block_q6_K * G
     float   scales[QK_K/16];
     //float   weights[16];
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
 
         //float sum_x2 = 0;
         //for (int j = 0; j < QK_K; ++j) sum_x2 += x[j]*x[j];
@@ -1985,28 +1985,28 @@ static void quantize_row_q6_K_impl(const float * GGML_RESTRICT x, block_q6_K * G
         float max_scale = 0;
         float max_abs_scale = 0;
 
-        for (int ib = 0; ib < QK_K/16; ++ib) {
+        cho (số_nguyên ib = 0; ib < QK_K/16; ++ib) {
 
             float scale;
-            if (quant_weights) {
+            nếu (quant_weights) {
                 const float * qw = quant_weights + QK_K*i + 16*ib;
                 //for (int j = 0; j < 16; ++j) weights[j] = qw[j] * sqrtf(sigma2 + x[16*ib + j]*x[16*ib + j]);
                 //scale = make_qx_quants(16, 32, x + 16*ib, L + 16*ib, 1, weights);
                 scale = make_qx_quants(16, 32, x + 16*ib, L + 16*ib, 1, qw);
-            } else {
+            } không_thì {
                 scale = make_qx_quants(16, 32, x + 16*ib, L + 16*ib, 1, NULL);
             }
             scales[ib] = scale;
 
             const float abs_scale = fabsf(scale);
-            if (abs_scale > max_abs_scale) {
+            nếu (abs_scale > max_abs_scale) {
                 max_abs_scale = abs_scale;
                 max_scale = scale;
             }
 
         }
 
-        if (max_abs_scale < GROUP_MAX_EPS) {
+        nếu (max_abs_scale < GROUP_MAX_EPS) {
             memset(&y[i], 0, sizeof(block_q6_K));
             y[i].d = GGML_FP32_TO_FP16(0.f);
             x += QK_K;
@@ -2015,17 +2015,17 @@ static void quantize_row_q6_K_impl(const float * GGML_RESTRICT x, block_q6_K * G
 
         float iscale = -128.f/max_scale;
         y[i].d = GGML_FP32_TO_FP16(1/iscale);
-        for (int ib = 0; ib < QK_K/16; ++ib) {
+        cho (số_nguyên ib = 0; ib < QK_K/16; ++ib) {
             y[i].scales[ib] = MIN(127, nearest_int(iscale*scales[ib]));
         }
 
-        for (int j = 0; j < QK_K/16; ++j) {
+        cho (số_nguyên j = 0; j < QK_K/16; ++j) {
             float d = GGML_FP16_TO_FP32(y[i].d) * y[i].scales[j];
-            if (!d) {
+            nếu (!d) {
                 continue;
             }
-            for (int ii = 0; ii < 16; ++ii) {
-                int l = nearest_int(x[16*j + ii]/d);
+            cho (số_nguyên ii = 0; ii < 16; ++ii) {
+                số_nguyên l = nearest_int(x[16*j + ii]/d);
                 l = MAX(-32, MIN(31, l));
                 L[16*j + ii] = l + 32;
             }
@@ -2033,8 +2033,8 @@ static void quantize_row_q6_K_impl(const float * GGML_RESTRICT x, block_q6_K * G
 
         uint8_t * GGML_RESTRICT ql = y[i].ql;
         uint8_t * GGML_RESTRICT qh = y[i].qh;
-        for (int j = 0; j < QK_K; j += 128) {
-            for (int l = 0; l < 32; ++l) {
+        cho (số_nguyên j = 0; j < QK_K; j += 128) {
+            cho (số_nguyên l = 0; l < 32; ++l) {
                 const uint8_t q1 = L[j + l +  0] & 0xF;
                 const uint8_t q2 = L[j + l + 32] & 0xF;
                 const uint8_t q3 = L[j + l + 64] & 0xF;
@@ -2054,164 +2054,164 @@ static void quantize_row_q6_K_impl(const float * GGML_RESTRICT x, block_q6_K * G
 
 size_t quantize_q6_K(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
     size_t row_size = ggml_row_size(GGML_TYPE_Q6_K, n_per_row);
-    if (!quant_weights) {
+    nếu (!quant_weights) {
         quantize_row_q6_K_ref(src, dst, (int64_t)nrow*n_per_row);
     }
-    else {
+    không_thì {
         char * qrow = (char *)dst;
-        for (int64_t row = 0; row < nrow; ++row) {
+        cho (int64_t row = 0; row < nrow; ++row) {
             quantize_row_q6_K_impl(src, (block_q6_K*)qrow, n_per_row, quant_weights);
             src += n_per_row;
             qrow += row_size;
         }
     }
-    return nrow * row_size;
+    trả_về nrow * row_size;
 }
 
 static void quantize_row_q4_0_impl(const float * GGML_RESTRICT x, block_q4_0 * GGML_RESTRICT y, int64_t n_per_row, const float * quant_weights) {
     static_assert(QK4_0 == 32, "QK4_0 must be 32");
 
-    if (!quant_weights) {
+    nếu (!quant_weights) {
         quantize_row_q4_0_ref(x, y, n_per_row);
-        return;
+        trả_về;
     }
 
     float weight[QK4_0];
     int8_t L[QK4_0];
 
     float sum_x2 = 0;
-    for (int j = 0; j < n_per_row; ++j) sum_x2 += x[j]*x[j];
+    cho (số_nguyên j = 0; j < n_per_row; ++j) sum_x2 += x[j]*x[j];
     float sigma2 = sum_x2/n_per_row;
 
     const int64_t nb = n_per_row/QK4_0;
-    for (int ib = 0; ib < nb; ++ib) {
+    cho (số_nguyên ib = 0; ib < nb; ++ib) {
         const float * xb = x + QK4_0 * ib;
         const float * qw = quant_weights + QK4_0 * ib;
-        for (int j = 0; j < QK4_0; ++j) weight[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
+        cho (số_nguyên j = 0; j < QK4_0; ++j) weight[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
         float d = make_qx_quants(QK4_0, 8, xb, L, 1, weight);
         y[ib].d = GGML_FP32_TO_FP16(d);
-        for (int j = 0; j < 16; ++j) {
+        cho (số_nguyên j = 0; j < 16; ++j) {
             y[ib].qs[j] = L[j] | (L[j+16] << 4);
         }
     }
 }
 
 size_t quantize_q1_0(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    if (!quant_weights) {
+    nếu (!quant_weights) {
         quantize_row_q1_0_ref(src, dst, (int64_t)nrow*n_per_row);
-        return nrow * ggml_row_size(GGML_TYPE_Q1_0, n_per_row);
+        trả_về nrow * ggml_row_size(GGML_TYPE_Q1_0, n_per_row);
     }
     size_t row_size = ggml_row_size(GGML_TYPE_Q1_0, n_per_row);
     char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
+    cho (int64_t row = 0; row < nrow; ++row) {
         quantize_row_q1_0_ref(src, (block_q1_0*)qrow, n_per_row);
         src += n_per_row;
         qrow += row_size;
     }
-    return nrow * row_size;
+    trả_về nrow * row_size;
 }
 
 size_t quantize_q2_0(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    if (!quant_weights) {
+    nếu (!quant_weights) {
         quantize_row_q2_0_ref(src, dst, (int64_t)nrow*n_per_row);
-        return nrow * ggml_row_size(GGML_TYPE_Q2_0, n_per_row);
+        trả_về nrow * ggml_row_size(GGML_TYPE_Q2_0, n_per_row);
     }
     size_t row_size = ggml_row_size(GGML_TYPE_Q2_0, n_per_row);
     char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
+    cho (int64_t row = 0; row < nrow; ++row) {
         quantize_row_q2_0_ref(src, (block_q2_0*)qrow, n_per_row);
         src += n_per_row;
         qrow += row_size;
     }
-    return nrow * row_size;
+    trả_về nrow * row_size;
 }
 
 size_t quantize_q4_0(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    if (!quant_weights) {
+    nếu (!quant_weights) {
         quantize_row_q4_0_ref(src, dst, (int64_t)nrow*n_per_row);
-        return nrow * ggml_row_size(GGML_TYPE_Q4_0, n_per_row);
+        trả_về nrow * ggml_row_size(GGML_TYPE_Q4_0, n_per_row);
     }
     size_t row_size = ggml_row_size(GGML_TYPE_Q4_0, n_per_row);
     char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
+    cho (int64_t row = 0; row < nrow; ++row) {
         quantize_row_q4_0_impl(src, (block_q4_0*)qrow, n_per_row, quant_weights);
         src += n_per_row;
         qrow += row_size;
     }
-    return nrow * row_size;
+    trả_về nrow * row_size;
 }
 
 static void quantize_row_q4_1_impl(const float * GGML_RESTRICT x, block_q4_1 * GGML_RESTRICT y, int64_t n_per_row, const float * quant_weights) {
     static_assert(QK4_1 == 32, "QK4_1 must be 32");
 
-    if (!quant_weights) {
+    nếu (!quant_weights) {
         quantize_row_q4_1_ref(x, y, n_per_row);
-        return;
+        trả_về;
     }
 
     float weight[QK4_1];
     uint8_t L[QK4_1], Laux[QK4_1];
 
     float sum_x2 = 0;
-    for (int j = 0; j < n_per_row; ++j) sum_x2 += x[j]*x[j];
+    cho (số_nguyên j = 0; j < n_per_row; ++j) sum_x2 += x[j]*x[j];
     float sigma2 = sum_x2/n_per_row;
 
     const int64_t nb = n_per_row/QK4_1;
-    for (int ib = 0; ib < nb; ++ib) {
+    cho (số_nguyên ib = 0; ib < nb; ++ib) {
         const float * xb = x + QK4_1 * ib;
         const float * qw = quant_weights + QK4_1 * ib;
-        for (int j = 0; j < QK4_1; ++j) weight[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
+        cho (số_nguyên j = 0; j < QK4_1; ++j) weight[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
         float min;
         float d = make_qkx3_quants(QK4_1, 15, xb, weight, L, &min, Laux, -0.9f, 0.05f, 36, false);
         y[ib].d = GGML_FP32_TO_FP16(d);
         y[ib].m = GGML_FP32_TO_FP16(-min);
-        for (int j = 0; j < 16; ++j) {
+        cho (số_nguyên j = 0; j < 16; ++j) {
             y[ib].qs[j] = L[j] | (L[j+16] << 4);
         }
     }
 }
 
 size_t quantize_q4_1(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    if (!quant_weights) {
+    nếu (!quant_weights) {
         quantize_row_q4_1_ref(src, dst, (int64_t)nrow*n_per_row);
-        return nrow * ggml_row_size(GGML_TYPE_Q4_1, n_per_row);
+        trả_về nrow * ggml_row_size(GGML_TYPE_Q4_1, n_per_row);
     }
     size_t row_size = ggml_row_size(GGML_TYPE_Q4_1, n_per_row);
     char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
+    cho (int64_t row = 0; row < nrow; ++row) {
         quantize_row_q4_1_impl(src, (block_q4_1*)qrow, n_per_row, quant_weights);
         src += n_per_row;
         qrow += row_size;
     }
-    return nrow * row_size;
+    trả_về nrow * row_size;
 }
 
 static void quantize_row_q5_0_impl(const float * GGML_RESTRICT x, block_q5_0 * GGML_RESTRICT y, int64_t n_per_row, const float * quant_weights) {
     static_assert(QK5_0 == 32, "QK5_0 must be 32");
 
-    if (!quant_weights) {
+    nếu (!quant_weights) {
         quantize_row_q5_0_ref(x, y, n_per_row);
-        return;
+        trả_về;
     }
 
     float weight[QK5_0];
     int8_t L[QK5_0];
 
     float sum_x2 = 0;
-    for (int j = 0; j < n_per_row; ++j) sum_x2 += x[j]*x[j];
+    cho (số_nguyên j = 0; j < n_per_row; ++j) sum_x2 += x[j]*x[j];
     float sigma2 = sum_x2/n_per_row;
 
     const int64_t nb = n_per_row/QK5_0;
-    for (int ib = 0; ib < nb; ++ib) {
+    cho (số_nguyên ib = 0; ib < nb; ++ib) {
         const float * xb = x + QK5_0 * ib;
         const float * qw = quant_weights + QK5_0 * ib;
-        for (int j = 0; j < QK5_0; ++j) weight[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
+        cho (số_nguyên j = 0; j < QK5_0; ++j) weight[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
         float d = make_qx_quants(QK5_0, 16, xb, L, 1, weight);
         y[ib].d = GGML_FP32_TO_FP16(d);
 
         uint32_t qh = 0;
 
-        for (int j = 0; j < 16; ++j) {
+        cho (số_nguyên j = 0; j < 16; ++j) {
             const uint8_t xi0 = L[j];
             const uint8_t xi1 = L[j+16];
             y[ib].qs[j] = (xi0 & 0x0F) | ((xi1 & 0x0F) << 4);
@@ -2226,47 +2226,47 @@ static void quantize_row_q5_0_impl(const float * GGML_RESTRICT x, block_q5_0 * G
 }
 
 size_t quantize_q5_0(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    if (!quant_weights) {
+    nếu (!quant_weights) {
         quantize_row_q5_0_ref(src, dst, (int64_t)nrow*n_per_row);
-        return nrow * ggml_row_size(GGML_TYPE_Q5_0, n_per_row);
+        trả_về nrow * ggml_row_size(GGML_TYPE_Q5_0, n_per_row);
     }
     size_t row_size = ggml_row_size(GGML_TYPE_Q5_0, n_per_row);
     char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
+    cho (int64_t row = 0; row < nrow; ++row) {
         quantize_row_q5_0_impl(src, (block_q5_0*)qrow, n_per_row, quant_weights);
         src += n_per_row;
         qrow += row_size;
     }
-    return nrow * row_size;
+    trả_về nrow * row_size;
 }
 
 static void quantize_row_q5_1_impl(const float * GGML_RESTRICT x, block_q5_1 * GGML_RESTRICT y, int64_t n_per_row, const float * quant_weights) {
     static_assert(QK5_1 == 32, "QK5_1 must be 32");
 
-    if (!quant_weights) {
+    nếu (!quant_weights) {
         quantize_row_q5_1_ref(x, y, n_per_row);
-        return;
+        trả_về;
     }
 
     float weight[QK5_1];
     uint8_t L[QK5_1], Laux[QK5_1];
 
     float sum_x2 = 0;
-    for (int j = 0; j < n_per_row; ++j) sum_x2 += x[j]*x[j];
+    cho (số_nguyên j = 0; j < n_per_row; ++j) sum_x2 += x[j]*x[j];
     float sigma2 = sum_x2/n_per_row;
 
     const int64_t nb = n_per_row/QK5_1;
-    for (int ib = 0; ib < nb; ++ib) {
+    cho (số_nguyên ib = 0; ib < nb; ++ib) {
         const float * xb = x + QK5_1 * ib;
         const float * qw = quant_weights + QK5_1 * ib;
-        for (int j = 0; j < QK5_1; ++j) weight[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
+        cho (số_nguyên j = 0; j < QK5_1; ++j) weight[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
         float min;
         float d = make_qkx3_quants(QK5_1, 31, xb, weight, L, &min, Laux, -0.9f, 0.05f, 36, false);
         y[ib].d = GGML_FP32_TO_FP16(d);
         y[ib].m = GGML_FP32_TO_FP16(-min);
 
         uint32_t qh = 0;
-        for (int j = 0; j < 16; ++j) {
+        cho (số_nguyên j = 0; j < 16; ++j) {
             const uint8_t xi0 = L[j];
             const uint8_t xi1 = L[j+16];
             y[ib].qs[j] = (xi0 & 0x0F) | ((xi1 & 0x0F) << 4);
@@ -2279,37 +2279,37 @@ static void quantize_row_q5_1_impl(const float * GGML_RESTRICT x, block_q5_1 * G
 }
 
 size_t quantize_q5_1(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    if (!quant_weights) {
+    nếu (!quant_weights) {
         quantize_row_q5_1_ref(src, dst, (int64_t)nrow*n_per_row);
-        return nrow * ggml_row_size(GGML_TYPE_Q5_1, n_per_row);
+        trả_về nrow * ggml_row_size(GGML_TYPE_Q5_1, n_per_row);
     }
     size_t row_size = ggml_row_size(GGML_TYPE_Q5_1, n_per_row);
     char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
+    cho (int64_t row = 0; row < nrow; ++row) {
         quantize_row_q5_1_impl(src, (block_q5_1*)qrow, n_per_row, quant_weights);
         src += n_per_row;
         qrow += row_size;
     }
-    return nrow * row_size;
+    trả_về nrow * row_size;
 }
 
 size_t quantize_q8_0(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
     (void)quant_weights; // not used
     const size_t row_size = ggml_row_size(GGML_TYPE_Q8_0, n_per_row);
     quantize_row_q8_0_ref(src, dst, (int64_t)nrow*n_per_row);
-    return nrow * row_size;
+    trả_về nrow * row_size;
 }
 
 size_t quantize_mxfp4(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
     GGML_UNUSED(quant_weights);
     quantize_row_mxfp4_ref(src, dst, (int64_t)nrow*n_per_row);
-    return nrow * ggml_row_size(GGML_TYPE_MXFP4, n_per_row);
+    trả_về nrow * ggml_row_size(GGML_TYPE_MXFP4, n_per_row);
 }
 
 size_t quantize_nvfp4(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
     GGML_UNUSED(quant_weights);
     quantize_row_nvfp4_ref(src, dst, (int64_t)nrow*n_per_row);
-    return nrow * ggml_row_size(GGML_TYPE_NVFP4, n_per_row);
+    trả_về nrow * ggml_row_size(GGML_TYPE_NVFP4, n_per_row);
 }
 
 // ====================== Ternary (de)-quantization (BitNet b1.58 and TriLMs)
@@ -2318,10 +2318,10 @@ void quantize_row_tq1_0_ref(const float * GGML_RESTRICT x, block_tq1_0 * GGML_RE
     assert(k % QK_K == 0);
     const int64_t nb = k / QK_K;
 
-    for (int64_t i = 0; i < nb; i++) {
+    cho (int64_t i = 0; i < nb; i++) {
         float amax = 0.0f; // absolute max
 
-        for (int j = 0; j < QK_K; j++) {
+        cho (số_nguyên j = 0; j < QK_K; j++) {
             const float v = x[j];
             amax = MAX(amax, fabsf(v));
         }
@@ -2332,11 +2332,11 @@ void quantize_row_tq1_0_ref(const float * GGML_RESTRICT x, block_tq1_0 * GGML_RE
         y[i].d = GGML_FP32_TO_FP16(d);
 
         // 5 elements per byte, along 32 bytes
-        for (size_t j = 0; j < sizeof(y->qs) - sizeof(y->qs) % 32; j += 32) {
-            for (size_t m = 0; m < 32; ++m) {
+        cho (size_t j = 0; j < sizeof(y->qs) - sizeof(y->qs) % 32; j += 32) {
+            cho (size_t m = 0; m < 32; ++m) {
                 uint8_t q = 0;
-                for (size_t n = 0; n < 5; ++n) {
-                    int xi = lroundf(x[m + n*32] * id) + 1; // -1, 0, 1 -> 0, 1, 2
+                cho (size_t n = 0; n < 5; ++n) {
+                    số_nguyên xi = lroundf(x[m + n*32] * id) + 1; // -1, 0, 1 -> 0, 1, 2
                     q *= 3;
                     q += xi;
                 }
@@ -2347,11 +2347,11 @@ void quantize_row_tq1_0_ref(const float * GGML_RESTRICT x, block_tq1_0 * GGML_RE
             x += 5*32;
         }
         // along 16 bytes
-        for (size_t j = sizeof(y->qs) - sizeof(y->qs) % 32; j < sizeof(y->qs); j += 16) {
-            for (size_t m = 0; m < 16; ++m) {
+        cho (size_t j = sizeof(y->qs) - sizeof(y->qs) % 32; j < sizeof(y->qs); j += 16) {
+            cho (size_t m = 0; m < 16; ++m) {
                 uint8_t q = 0;
-                for (size_t n = 0; n < 5; ++n) {
-                    int xi = lroundf(x[m + n*16] * id) + 1; // -1, 0, 1 -> 0, 1, 2
+                cho (size_t n = 0; n < 5; ++n) {
+                    số_nguyên xi = lroundf(x[m + n*16] * id) + 1; // -1, 0, 1 -> 0, 1, 2
                     q *= 3;
                     q += xi;
                 }
@@ -2362,11 +2362,11 @@ void quantize_row_tq1_0_ref(const float * GGML_RESTRICT x, block_tq1_0 * GGML_RE
             x += 5*16;
         }
         // 4 elements per byte
-        for (size_t j = 0; j < sizeof(y->qh); ++j) {
+        cho (size_t j = 0; j < sizeof(y->qh); ++j) {
             uint8_t q = 0;
-            for (size_t m = 0; m < 4; ++m) {
+            cho (size_t m = 0; m < 4; ++m) {
                 // -1, 0, 1 -> 0, 1, 2
-                int xi = lroundf(x[j + m*sizeof(y->qh)] * id) + 1;
+                số_nguyên xi = lroundf(x[j + m*sizeof(y->qh)] * id) + 1;
                 q *= 3;
                 q += xi;
             }
@@ -2384,10 +2384,10 @@ void quantize_row_tq2_0_ref(const float * GGML_RESTRICT x, block_tq2_0 * GGML_RE
     assert(k % QK_K == 0);
     const int64_t nb = k / QK_K;
 
-    for (int64_t i = 0; i < nb; i++) {
+    cho (int64_t i = 0; i < nb; i++) {
         float amax = 0.0f; // absolute max
 
-        for (int j = 0; j < QK_K; j++) {
+        cho (số_nguyên j = 0; j < QK_K; j++) {
             const float v = x[j];
             amax = MAX(amax, fabsf(v));
         }
@@ -2397,12 +2397,12 @@ void quantize_row_tq2_0_ref(const float * GGML_RESTRICT x, block_tq2_0 * GGML_RE
 
         y[i].d = GGML_FP32_TO_FP16(d);
 
-        for (size_t j = 0; j < sizeof(y->qs); j += 32) {
-            for (size_t m = 0; m < 32; ++m) {
+        cho (size_t j = 0; j < sizeof(y->qs); j += 32) {
+            cho (size_t m = 0; m < 32; ++m) {
                 uint8_t q = 0;
-                for (size_t n = 0; n < 4; ++n) {
+                cho (size_t n = 0; n < 4; ++n) {
                     // -1, 0, 1 -> 0, 1, 2
-                    int xi = lroundf(x[m + n*32] * id) + 1;
+                    số_nguyên xi = lroundf(x[m + n*32] * id) + 1;
                     q += (xi & 3) << (2*n);
                 }
                 y[i].qs[j + m] = q;
@@ -2416,14 +2416,14 @@ size_t quantize_tq1_0(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst,
     (void)quant_weights; // not used
     const size_t row_size = ggml_row_size(GGML_TYPE_TQ1_0, n_per_row);
     quantize_row_tq1_0_ref(src, dst, (int64_t)nrow*n_per_row);
-    return nrow * row_size;
+    trả_về nrow * row_size;
 }
 
 size_t quantize_tq2_0(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
     (void)quant_weights; // not used
     const size_t row_size = ggml_row_size(GGML_TYPE_TQ2_0, n_per_row);
     quantize_row_tq2_0_ref(src, dst, (int64_t)nrow*n_per_row);
-    return nrow * row_size;
+    trả_về nrow * row_size;
 }
 
 void dequantize_row_tq1_0(const block_tq1_0 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
@@ -2432,22 +2432,22 @@ void dequantize_row_tq1_0(const block_tq1_0 * GGML_RESTRICT x, float * GGML_REST
 
     const uint8_t pow3[6] = {1, 3, 9, 27, 81, 243};
 
-    for (int64_t i = 0; i < nb; ++i) {
+    cho (int64_t i = 0; i < nb; ++i) {
 
         const float d = GGML_FP16_TO_FP32(x[i].d);
 
-        for (size_t j = 0; j < sizeof(x->qs) - sizeof(x->qs) % 32; j += 32) {
-            for (size_t n = 0; n < 5; ++n) {
-                for (size_t m = 0; m < 32; ++m) {
+        cho (size_t j = 0; j < sizeof(x->qs) - sizeof(x->qs) % 32; j += 32) {
+            cho (size_t n = 0; n < 5; ++n) {
+                cho (size_t m = 0; m < 32; ++m) {
                     uint8_t q = x[i].qs[j + m] * pow3[n];
                     int16_t xi = ((uint16_t) q * 3) >> 8;
                     *y++ = (float) (xi - 1) * d;
                 }
             }
         }
-        for (size_t j = sizeof(x->qs) - sizeof(x->qs) % 32; j < sizeof(x->qs); j += 16) {
-            for (size_t n = 0; n < 5; ++n) {
-                for (size_t m = 0; m < 16; ++m) {
+        cho (size_t j = sizeof(x->qs) - sizeof(x->qs) % 32; j < sizeof(x->qs); j += 16) {
+            cho (size_t n = 0; n < 5; ++n) {
+                cho (size_t m = 0; m < 16; ++m) {
                     uint8_t q = x[i].qs[j + m] * pow3[n];
                     int16_t xi = ((uint16_t) q * 3) >> 8;
                     *y++ = (float) (xi - 1) * d;
@@ -2455,8 +2455,8 @@ void dequantize_row_tq1_0(const block_tq1_0 * GGML_RESTRICT x, float * GGML_REST
             }
         }
 
-        for (size_t n = 0; n < 4; ++n) {
-            for (size_t j = 0; j < sizeof(x->qh); ++j) {
+        cho (size_t n = 0; n < 4; ++n) {
+            cho (size_t j = 0; j < sizeof(x->qh); ++j) {
                 uint8_t q = x[i].qh[j] * pow3[n];
                 int16_t xi = ((uint16_t) q * 3) >> 8;
                 *y++ = (float) (xi - 1) * d;
@@ -2469,13 +2469,13 @@ void dequantize_row_tq2_0(const block_tq2_0 * GGML_RESTRICT x, float * GGML_REST
     assert(k % QK_K == 0);
     const int64_t nb = k / QK_K;
 
-    for (int64_t i = 0; i < nb; ++i) {
+    cho (int64_t i = 0; i < nb; ++i) {
 
         const float d = GGML_FP16_TO_FP32(x[i].d);
 
-        for (size_t j = 0; j < sizeof(x->qs); j += 32) {
-            for (size_t l = 0; l < 4; ++l) {
-                for (size_t m = 0; m < 32; ++m) {
+        cho (size_t j = 0; j < sizeof(x->qs); j += 32) {
+            cho (size_t l = 0; l < 4; ++l) {
+                cho (size_t m = 0; m < 32; ++m) {
                     int8_t q = (x[i].qs[j + m] >> (l*2)) & 3;
                     *y++ = (float) (q - 1) * d;
                 }
@@ -2493,17 +2493,17 @@ void dequantize_row_iq2_xxs(const block_iq2_xxs * GGML_RESTRICT x, float * GGML_
     uint32_t aux32[2];
     const uint8_t * aux8 = (const uint8_t *)aux32;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
 
         const float d = GGML_FP16_TO_FP32(x[i].d);
 
-        for (int ib32 = 0; ib32 < QK_K/32; ++ib32) {
+        cho (số_nguyên ib32 = 0; ib32 < QK_K/32; ++ib32) {
             memcpy(aux32, x[i].qs + 4*ib32, 2*sizeof(uint32_t));
             const float db = d * (0.5f + (aux32[1] >> 28)) * 0.25f;
-            for (int l = 0; l < 4; ++l) {
+            cho (số_nguyên l = 0; l < 4; ++l) {
                 const uint8_t * grid = (const uint8_t *)(iq2xxs_grid + aux8[l]);
                 const uint8_t  signs = ksigns_iq2xs[(aux32[1] >> 7*l) & 127];
-                for (int j = 0; j < 8; ++j) {
+                cho (số_nguyên j = 0; j < 8; ++j) {
                     y[j] = db * grid[j] * (signs & kmask_iq2xs[j] ? -1.f : 1.f);
                 }
                 y += 8;
@@ -2520,17 +2520,17 @@ void dequantize_row_iq2_xs(const block_iq2_xs * GGML_RESTRICT x, float * GGML_RE
 
     float db[2];
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
 
         const float d = GGML_FP16_TO_FP32(x[i].d);
 
-        for (int ib32 = 0; ib32 < QK_K/32; ++ib32) {
+        cho (số_nguyên ib32 = 0; ib32 < QK_K/32; ++ib32) {
             db[0] = d * (0.5f + (x[i].scales[ib32] & 0xf)) * 0.25f;
             db[1] = d * (0.5f + (x[i].scales[ib32] >>  4)) * 0.25f;
-            for (int l = 0; l < 4; ++l) {
+            cho (số_nguyên l = 0; l < 4; ++l) {
                 const uint8_t * grid = (const uint8_t *)(iq2xs_grid + (x[i].qs[4*ib32 + l] & 511));
                 const uint8_t  signs = ksigns_iq2xs[x[i].qs[4*ib32 + l] >> 9];
-                for (int j = 0; j < 8; ++j) {
+                cho (số_nguyên j = 0; j < 8; ++j) {
                     y[j] = db[l/2] * grid[j] * (signs & kmask_iq2xs[j] ? -1.f : 1.f);
                 }
                 y += 8;
@@ -2547,20 +2547,20 @@ void dequantize_row_iq2_s(const block_iq2_s * GGML_RESTRICT x, float * GGML_REST
 
     float db[2];
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
 
         const float d = GGML_FP16_TO_FP32(x[i].d);
         const uint8_t * qs = x[i].qs;
         const uint8_t * qh = x[i].qh;
         const uint8_t * signs = qs + QK_K/8;
 
-        for (int ib32 = 0; ib32 < QK_K/32; ++ib32) {
+        cho (số_nguyên ib32 = 0; ib32 < QK_K/32; ++ib32) {
             db[0] = d * (0.5f + (x[i].scales[ib32] & 0xf)) * 0.25f;
             db[1] = d * (0.5f + (x[i].scales[ib32] >>  4)) * 0.25f;
-            for (int l = 0; l < 4; ++l) {
+            cho (số_nguyên l = 0; l < 4; ++l) {
                 const float dl = db[l/2];
                 const uint8_t * grid = (const uint8_t *)(iq2s_grid + (qs[l] | (qh[ib32] << (8-2*l) & 0x300)));
-                for (int j = 0; j < 8; ++j) {
+                cho (số_nguyên j = 0; j < 8; ++j) {
                     y[j] = dl * grid[j] * (signs[l] & kmask_iq2xs[j] ? -1.f : 1.f);
                 }
                 y += 8;
@@ -2579,20 +2579,20 @@ void dequantize_row_iq3_xxs(const block_iq3_xxs * GGML_RESTRICT x, float * GGML_
 
     uint32_t aux32;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
 
         const float d = GGML_FP16_TO_FP32(x[i].d);
         const uint8_t * qs = x[i].qs;
         const uint8_t * scales_and_signs = qs + QK_K/4;
 
-        for (int ib32 = 0; ib32 < QK_K/32; ++ib32) {
+        cho (số_nguyên ib32 = 0; ib32 < QK_K/32; ++ib32) {
             memcpy(&aux32, scales_and_signs + 4*ib32, sizeof(uint32_t));
             const float db = d * (0.5f + (aux32 >> 28)) * 0.5f;
-            for (int l = 0; l < 4; ++l) {
+            cho (số_nguyên l = 0; l < 4; ++l) {
                 const uint8_t  signs = ksigns_iq2xs[(aux32 >> 7*l) & 127];
                 const uint8_t * grid1 = (const uint8_t *)(iq3xxs_grid + qs[2*l+0]);
                 const uint8_t * grid2 = (const uint8_t *)(iq3xxs_grid + qs[2*l+1]);
-                for (int j = 0; j < 4; ++j) {
+                cho (số_nguyên j = 0; j < 4; ++j) {
                     y[j+0] = db * grid1[j] * (signs & kmask_iq2xs[j+0] ? -1.f : 1.f);
                     y[j+4] = db * grid2[j] * (signs & kmask_iq2xs[j+4] ? -1.f : 1.f);
                 }
@@ -2609,20 +2609,20 @@ void dequantize_row_iq3_s(const block_iq3_s * GGML_RESTRICT x, float * GGML_REST
     assert(k % QK_K == 0);
     const int64_t nb = k / QK_K;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
 
         const float d = GGML_FP16_TO_FP32(x[i].d);
         const uint8_t * qs = x[i].qs;
         const uint8_t * qh = x[i].qh;
         const uint8_t * signs = x[i].signs;
 
-        for (int ib32 = 0; ib32 < QK_K/32; ib32 += 2) {
+        cho (số_nguyên ib32 = 0; ib32 < QK_K/32; ib32 += 2) {
             const float db1 = d * (1 + 2*(x[i].scales[ib32/2] & 0xf));
             const float db2 = d * (1 + 2*(x[i].scales[ib32/2] >>  4));
-            for (int l = 0; l < 4; ++l) {
+            cho (số_nguyên l = 0; l < 4; ++l) {
                 const uint8_t * grid1 = (const uint8_t *)(iq3s_grid + (qs[2*l+0] | ((qh[0] << (8-2*l)) & 256)));
                 const uint8_t * grid2 = (const uint8_t *)(iq3s_grid + (qs[2*l+1] | ((qh[0] << (7-2*l)) & 256)));
-                for (int j = 0; j < 4; ++j) {
+                cho (số_nguyên j = 0; j < 4; ++j) {
                     y[j+0] = db1 * grid1[j] * (signs[l] & kmask_iq2xs[j+0] ? -1.f : 1.f);
                     y[j+4] = db1 * grid2[j] * (signs[l] & kmask_iq2xs[j+4] ? -1.f : 1.f);
                 }
@@ -2630,10 +2630,10 @@ void dequantize_row_iq3_s(const block_iq3_s * GGML_RESTRICT x, float * GGML_REST
             }
             qs += 8;
             signs += 4;
-            for (int l = 0; l < 4; ++l) {
+            cho (số_nguyên l = 0; l < 4; ++l) {
                 const uint8_t * grid1 = (const uint8_t *)(iq3s_grid + (qs[2*l+0] | ((qh[1] << (8-2*l)) & 256)));
                 const uint8_t * grid2 = (const uint8_t *)(iq3s_grid + (qs[2*l+1] | ((qh[1] << (7-2*l)) & 256)));
-                for (int j = 0; j < 4; ++j) {
+                cho (số_nguyên j = 0; j < 4; ++j) {
                     y[j+0] = db2 * grid1[j] * (signs[l] & kmask_iq2xs[j+0] ? -1.f : 1.f);
                     y[j+4] = db2 * grid2[j] * (signs[l] & kmask_iq2xs[j+4] ? -1.f : 1.f);
                 }
@@ -2652,18 +2652,18 @@ void dequantize_row_iq1_s(const block_iq1_s * GGML_RESTRICT x, float * GGML_REST
     assert(k % QK_K == 0);
     const int64_t nb = k / QK_K;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
 
         const float d = GGML_FP16_TO_FP32(x[i].d);
         const uint8_t  * qs = x[i].qs;
         const uint16_t * qh = x[i].qh;
 
-        for (int ib = 0; ib < QK_K/32; ++ib) {
+        cho (số_nguyên ib = 0; ib < QK_K/32; ++ib) {
             const float dl = d * (2*((qh[ib] >> 12) & 7) + 1);
             const float delta = qh[ib] & 0x8000 ? -IQ1S_DELTA : IQ1S_DELTA;
-            for (int l = 0; l < 4; ++l) {
+            cho (số_nguyên l = 0; l < 4; ++l) {
                 const int8_t * grid = (const int8_t *)(iq1s_grid + (qs[l] | (((qh[ib] >> 3*l) & 7) << 8)));
-                for (int j = 0; j < 8; ++j) {
+                cho (số_nguyên j = 0; j < 8; ++j) {
                     y[j] = dl * (grid[j] + delta);
                 }
                 y += 8;
@@ -2682,7 +2682,7 @@ void dequantize_row_iq1_m(const block_iq1_m * GGML_RESTRICT x, float * GGML_REST
 
     iq1m_scale_t scale;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
 
         const uint16_t * sc = (const uint16_t *)x[i].scales;
         scale.u16 = (sc[0] >> 12) | ((sc[1] >> 8) & 0x00f0) | ((sc[2] >> 4) & 0x0f00) | (sc[3] & 0xf000);
@@ -2691,7 +2691,7 @@ void dequantize_row_iq1_m(const block_iq1_m * GGML_RESTRICT x, float * GGML_REST
         const uint8_t * qs = x[i].qs;
         const uint8_t * qh = x[i].qh;
 
-        for (int ib = 0; ib < QK_K/32; ++ib) {
+        cho (số_nguyên ib = 0; ib < QK_K/32; ++ib) {
             const float dl1 = d * (2*((sc[ib/2] >> (6*(ib%2)+0)) & 0x7) + 1);
             const float dl2 = d * (2*((sc[ib/2] >> (6*(ib%2)+3)) & 0x7) + 1);
 
@@ -2703,16 +2703,16 @@ void dequantize_row_iq1_m(const block_iq1_m * GGML_RESTRICT x, float * GGML_REST
             delta[1] = qh[0] & 0x80 ? -IQ1S_DELTA : IQ1S_DELTA;
             delta[2] = qh[1] & 0x08 ? -IQ1S_DELTA : IQ1S_DELTA;
             delta[3] = qh[1] & 0x80 ? -IQ1S_DELTA : IQ1S_DELTA;
-            for (int l = 0; l < 2; ++l) {
+            cho (số_nguyên l = 0; l < 2; ++l) {
                 const int8_t * grid = (const int8_t *)(iq1s_grid + idx[l]);
-                for (int j = 0; j < 8; ++j) {
+                cho (số_nguyên j = 0; j < 8; ++j) {
                     y[j] = dl1 * (grid[j] + delta[l]);
                 }
                 y += 8;
             }
-            for (int l = 2; l < 4; ++l) {
+            cho (số_nguyên l = 2; l < 4; ++l) {
                 const int8_t * grid = (const int8_t *)(iq1s_grid + idx[l]);
-                for (int j = 0; j < 8; ++j) {
+                cho (số_nguyên j = 0; j < 8; ++j) {
                     y[j] = dl2 * (grid[j] + delta[l]);
                 }
                 y += 8;
@@ -2727,12 +2727,12 @@ void dequantize_row_iq4_nl(const block_iq4_nl * GGML_RESTRICT x, float * GGML_RE
     assert(k % QK4_NL == 0);
     const int64_t nb = k / QK4_NL;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
 
         const uint8_t * qs = x[i].qs;
 
         const float d = GGML_FP16_TO_FP32(x[i].d);
-        for (int j = 0; j < QK4_NL/2; ++j) {
+        cho (số_nguyên j = 0; j < QK4_NL/2; ++j) {
             y[j+       0] = d * kvalues_iq4nl[qs[j] & 0xf];
             y[j+QK4_NL/2] = d * kvalues_iq4nl[qs[j] >>  4];
         }
@@ -2745,16 +2745,16 @@ void dequantize_row_iq4_xs(const block_iq4_xs * GGML_RESTRICT x, float * GGML_RE
     assert(k % QK_K == 0);
     const int64_t nb = k / QK_K;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
 
         const uint8_t * qs = x[i].qs;
 
         const float d = GGML_FP16_TO_FP32(x[i].d);
 
-        for (int ib = 0; ib < QK_K/32; ++ib) {
-            const int ls = ((x[i].scales_l[ib/2] >> 4*(ib%2)) & 0xf) | (((x[i].scales_h >> 2*ib) & 3) << 4);
+        cho (số_nguyên ib = 0; ib < QK_K/32; ++ib) {
+            const số_nguyên ls = ((x[i].scales_l[ib/2] >> 4*(ib%2)) & 0xf) | (((x[i].scales_h >> 2*ib) & 3) << 4);
             const float dl = d * (ls - 32);
-            for (int j = 0; j < 16; ++j) {
+            cho (số_nguyên j = 0; j < 16; ++j) {
                 y[j+ 0] = dl * kvalues_iq4nl[qs[j] & 0xf];
                 y[j+16] = dl * kvalues_iq4nl[qs[j] >>  4];
             }
@@ -2770,17 +2770,17 @@ void quantize_row_q8_K_ref(const float * GGML_RESTRICT x, block_q8_K * GGML_REST
     assert(k % QK_K == 0);
     const int64_t nb = k / QK_K;
 
-    for (int i = 0; i < nb; i++) {
+    cho (số_nguyên i = 0; i < nb; i++) {
 
         float max = 0;
         float amax = 0;
-        for (int j = 0; j < QK_K; ++j) {
+        cho (số_nguyên j = 0; j < QK_K; ++j) {
             float ax = fabsf(x[j]);
-            if (ax > amax) {
+            nếu (ax > amax) {
                 amax = ax; max = x[j];
             }
         }
-        if (!amax) {
+        nếu (!amax) {
             y[i].d = 0;
             memset(y[i].qs, 0, QK_K);
             x += QK_K;
@@ -2789,13 +2789,13 @@ void quantize_row_q8_K_ref(const float * GGML_RESTRICT x, block_q8_K * GGML_REST
         //const float iscale = -128.f/max;
         // We need this change for IQ2_XXS, else the AVX implementation becomes very awkward
         const float iscale = -127.f/max;
-        for (int j = 0; j < QK_K; ++j) {
-            int v = nearest_int(iscale*x[j]);
+        cho (số_nguyên j = 0; j < QK_K; ++j) {
+            số_nguyên v = nearest_int(iscale*x[j]);
             y[i].qs[j] = MIN(127, v);
         }
-        for (int j = 0; j < QK_K/16; ++j) {
-            int sum = 0;
-            for (int ii = 0; ii < 16; ++ii) {
+        cho (số_nguyên j = 0; j < QK_K/16; ++j) {
+            số_nguyên sum = 0;
+            cho (số_nguyên ii = 0; ii < 16; ++ii) {
                 sum += y[i].qs[j*16 + ii];
             }
             y[i].bsums[j] = sum;
@@ -2809,8 +2809,8 @@ void dequantize_row_q8_K(const block_q8_K * GGML_RESTRICT x, float * GGML_RESTRI
     assert(k % QK_K == 0);
     const int64_t nb = k / QK_K;
 
-    for (int i = 0; i < nb; i++) {
-        for (int j = 0; j < QK_K; ++j) {
+    cho (số_nguyên i = 0; i < nb; i++) {
+        cho (số_nguyên j = 0; j < QK_K; ++j) {
             *y++ = x[i].d * x[i].qs[j];
         }
     }
@@ -2820,7 +2820,7 @@ void dequantize_row_q8_K(const block_q8_K * GGML_RESTRICT x, float * GGML_RESTRI
 
 typedef struct {
     uint64_t * grid;
-    int      * map;
+    số_nguyên      * map;
     uint16_t * neighbours;
 } iq2_entry_t;
 
@@ -2831,31 +2831,31 @@ static iq2_entry_t iq2_data[4] = {
     {NULL, NULL, NULL},
 };
 
-static inline int iq2_data_index(enum ggml_type type) {
+static inline số_nguyên iq2_data_index(enum ggml_type type) {
     GGML_ASSERT(type == GGML_TYPE_IQ2_XXS || type == GGML_TYPE_IQ2_XS || type == GGML_TYPE_IQ1_S || type == GGML_TYPE_IQ1_M || type == GGML_TYPE_IQ2_S);
-    return type == GGML_TYPE_IQ2_XXS ? 0 :
+    trả_về type == GGML_TYPE_IQ2_XXS ? 0 :
            type == GGML_TYPE_IQ2_XS  ? 1 :
            type == GGML_TYPE_IQ1_S || type == GGML_TYPE_IQ1_M ? 2 : 3;
 }
 
-static inline int iq2_grid_size(enum ggml_type type) {
+static inline số_nguyên iq2_grid_size(enum ggml_type type) {
     GGML_ASSERT(type == GGML_TYPE_IQ2_XXS || type == GGML_TYPE_IQ2_XS || type == GGML_TYPE_IQ1_S || type == GGML_TYPE_IQ1_M || type == GGML_TYPE_IQ2_S);
-    return type == GGML_TYPE_IQ2_XXS ? 256 :
+    trả_về type == GGML_TYPE_IQ2_XXS ? 256 :
            type == GGML_TYPE_IQ2_XS  ? 512 :
            type == GGML_TYPE_IQ1_S || type == GGML_TYPE_IQ1_M ? NGRID_IQ1S : 1024;
 }
 
-static int iq2_compare_func(const void * left, const void * right) {
-    const int * l = (const int *)left;
-    const int * r = (const int *)right;
-    return l[0] < r[0] ? -1 : l[0] > r[0] ? 1 : l[1] < r[1] ? -1 : l[1] > r[1] ? 1 : 0;
+static số_nguyên iq2_compare_func(const void * left, const void * right) {
+    const số_nguyên * l = (const số_nguyên *)left;
+    const số_nguyên * r = (const số_nguyên *)right;
+    trả_về l[0] < r[0] ? -1 : l[0] > r[0] ? 1 : l[1] < r[1] ? -1 : l[1] > r[1] ? 1 : 0;
 }
 
 void iq2xs_init_impl(enum ggml_type type) {
-    const int gindex = iq2_data_index(type);
-    const int grid_size = iq2_grid_size(type);
-    if (iq2_data[gindex].grid) {
-        return;
+    const số_nguyên gindex = iq2_data_index(type);
+    const số_nguyên grid_size = iq2_grid_size(type);
+    nếu (iq2_data[gindex].grid) {
+        trả_về;
     }
     static const uint16_t kgrid_2bit_256[256] = {
             0,     2,     5,     8,    10,    17,    20,    32,    34,    40,    42,    65,    68,    80,    88,    97,
@@ -3106,36 +3106,36 @@ void iq2xs_init_impl(enum ggml_type type) {
         42148, 42240, 42265, 42577, 43018, 43048, 43170, 43348, 43398, 43528, 43530, 43552, 43554, 43560, 43656, 43690,
     };
 
-    const int kmap_size = 43692;
+    const số_nguyên kmap_size = 43692;
     //const int nwant = type == GGML_TYPE_IQ1_S ? 3 : 2;
-    const int nwant = type == GGML_TYPE_IQ1_S || type == GGML_TYPE_IQ1_M ? 3 : type == GGML_TYPE_IQ2_S ? 1 : 2;
+    const số_nguyên nwant = type == GGML_TYPE_IQ1_S || type == GGML_TYPE_IQ1_M ? 3 : type == GGML_TYPE_IQ2_S ? 1 : 2;
     const uint16_t * kgrid = type == GGML_TYPE_IQ2_XXS ? kgrid_2bit_256 :
                              type == GGML_TYPE_IQ2_XS  ? kgrid_2bit_512 :
                              type == GGML_TYPE_IQ1_S || type == GGML_TYPE_IQ1_M ? kgrid_1bit_2048 : kgrid_2bit_1024;
     uint64_t * kgrid_q2xs;
-    int      * kmap_q2xs;
+    số_nguyên      * kmap_q2xs;
     uint16_t * kneighbors_q2xs;
 
     //printf("================================================================= %s(grid_size = %d)\n", __func__, grid_size);
     uint64_t * the_grid = (uint64_t *)malloc(grid_size*sizeof(uint64_t));
-    for (int k = 0; k < grid_size; ++k) {
+    cho (số_nguyên k = 0; k < grid_size; ++k) {
         int8_t * pos = (int8_t *)(the_grid + k);
-        for (int i = 0; i < 8; ++i) {
-            int l = (kgrid[k] >> 2*i) & 0x3;
+        cho (số_nguyên i = 0; i < 8; ++i) {
+            số_nguyên l = (kgrid[k] >> 2*i) & 0x3;
             pos[i] = 2*l + 1;
         }
     }
     kgrid_q2xs = the_grid;
     iq2_data[gindex].grid = the_grid;
-    kmap_q2xs = (int *)malloc(kmap_size*sizeof(int));
+    kmap_q2xs = (số_nguyên *)malloc(kmap_size*sizeof(số_nguyên));
     iq2_data[gindex].map = kmap_q2xs;
-    for (int i = 0; i < kmap_size; ++i) kmap_q2xs[i] = -1;
+    cho (số_nguyên i = 0; i < kmap_size; ++i) kmap_q2xs[i] = -1;
     uint64_t aux64;
     uint8_t * aux8 = (uint8_t *)&aux64;
-    for (int i = 0; i < grid_size; ++i) {
+    cho (số_nguyên i = 0; i < grid_size; ++i) {
         aux64 = kgrid_q2xs[i];
         uint16_t index = 0;
-        for (int k=0; k<8; ++k) {
+        cho (số_nguyên k=0; k<8; ++k) {
             uint16_t q = (aux8[k] - 1)/2;
             index |= (q << 2*k);
         }
@@ -3148,43 +3148,43 @@ void iq2xs_init_impl(enum ggml_type type) {
     //      pre-assigned slice of kneighbors_q2xs to write into.
     //   3. Parallel: redo the qsort and write each i's neighbour list at
     //      offsets[i].
-    int * n_per_i = (int *)malloc(kmap_size*sizeof(int));
+    số_nguyên * n_per_i = (số_nguyên *)malloc(kmap_size*sizeof(số_nguyên));
     GGML_ASSERT(n_per_i);
-    int num_neighbors = 0, num_not_in_map = 0;
+    số_nguyên num_neighbors = 0, num_not_in_map = 0;
 #ifdef GGML_USE_OPENMP
     #pragma omp parallel reduction(+:num_neighbors,num_not_in_map)
 #endif
     {
-        int * dist2 = (int *)malloc(2*grid_size*sizeof(int));
+        số_nguyên * dist2 = (số_nguyên *)malloc(2*grid_size*sizeof(số_nguyên));
         GGML_ASSERT(dist2);
         int8_t pos[8];
-        int i;
+        số_nguyên i;
 #ifdef GGML_USE_OPENMP
-        #pragma omp for schedule(dynamic, 64)
+        #pragma omp cho schedule(dynamic, 64)
 #endif
-        for (i = 0; i < kmap_size; ++i) {
-            if (kmap_q2xs[i] >= 0) {
+        cho (i = 0; i < kmap_size; ++i) {
+            nếu (kmap_q2xs[i] >= 0) {
                 n_per_i[i] = 0;
                 continue;
             }
             ++num_not_in_map;
-            for (int k = 0; k < 8; ++k) {
-                int l = (i >> 2*k) & 0x3;
+            cho (số_nguyên k = 0; k < 8; ++k) {
+                số_nguyên l = (i >> 2*k) & 0x3;
                 pos[k] = 2*l + 1;
             }
-            for (int j = 0; j < grid_size; ++j) {
+            cho (số_nguyên j = 0; j < grid_size; ++j) {
                 const int8_t * pg = (const int8_t *)(kgrid_q2xs + j);
-                int d2 = 0;
-                for (int k = 0; k < 8; ++k) d2 += (pg[k] - pos[k])*(pg[k] - pos[k]);
+                số_nguyên d2 = 0;
+                cho (số_nguyên k = 0; k < 8; ++k) d2 += (pg[k] - pos[k])*(pg[k] - pos[k]);
                 dist2[2*j+0] = d2;
                 dist2[2*j+1] = j;
             }
-            qsort(dist2, grid_size, 2*sizeof(int), iq2_compare_func);
-            int n = 0; int d2 = dist2[0];
-            int nhave = 1;
-            for (int j = 0; j < grid_size; ++j) {
-                if (dist2[2*j] > d2) {
-                    if (nhave == nwant) break;
+            qsort(dist2, grid_size, 2*sizeof(số_nguyên), iq2_compare_func);
+            số_nguyên n = 0; số_nguyên d2 = dist2[0];
+            số_nguyên nhave = 1;
+            cho (số_nguyên j = 0; j < grid_size; ++j) {
+                nếu (dist2[2*j] > d2) {
+                    nếu (nhave == nwant) break;
                     d2 = dist2[2*j];
                     ++nhave;
                 }
@@ -3199,11 +3199,11 @@ void iq2xs_init_impl(enum ggml_type type) {
     kneighbors_q2xs = (uint16_t *)malloc((num_neighbors + num_not_in_map)*sizeof(uint16_t));
     iq2_data[gindex].neighbours = kneighbors_q2xs;
 
-    int * offsets = (int *)malloc(kmap_size*sizeof(int));
+    số_nguyên * offsets = (số_nguyên *)malloc(kmap_size*sizeof(số_nguyên));
     GGML_ASSERT(offsets);
-    int counter = 0;
-    for (int i = 0; i < kmap_size; ++i) {
-        if (kmap_q2xs[i] >= 0) {
+    số_nguyên counter = 0;
+    cho (số_nguyên i = 0; i < kmap_size; ++i) {
+        nếu (kmap_q2xs[i] >= 0) {
             offsets[i] = -1;
             continue;
         }
@@ -3215,35 +3215,35 @@ void iq2xs_init_impl(enum ggml_type type) {
     #pragma omp parallel
 #endif
     {
-        int * dist2 = (int *)malloc(2*grid_size*sizeof(int));
+        số_nguyên * dist2 = (số_nguyên *)malloc(2*grid_size*sizeof(số_nguyên));
         GGML_ASSERT(dist2);
         int8_t pos[8];
-        int i;
+        số_nguyên i;
 #ifdef GGML_USE_OPENMP
-        #pragma omp for schedule(dynamic, 64)
+        #pragma omp cho schedule(dynamic, 64)
 #endif
-        for (i = 0; i < kmap_size; ++i) {
-            if (kmap_q2xs[i] >= 0) continue;
-            for (int k = 0; k < 8; ++k) {
-                int l = (i >> 2*k) & 0x3;
+        cho (i = 0; i < kmap_size; ++i) {
+            nếu (kmap_q2xs[i] >= 0) continue;
+            cho (số_nguyên k = 0; k < 8; ++k) {
+                số_nguyên l = (i >> 2*k) & 0x3;
                 pos[k] = 2*l + 1;
             }
-            for (int j = 0; j < grid_size; ++j) {
+            cho (số_nguyên j = 0; j < grid_size; ++j) {
                 const int8_t * pg = (const int8_t *)(kgrid_q2xs + j);
-                int d2 = 0;
-                for (int k = 0; k < 8; ++k) d2 += (pg[k] - pos[k])*(pg[k] - pos[k]);
+                số_nguyên d2 = 0;
+                cho (số_nguyên k = 0; k < 8; ++k) d2 += (pg[k] - pos[k])*(pg[k] - pos[k]);
                 dist2[2*j+0] = d2;
                 dist2[2*j+1] = j;
             }
-            qsort(dist2, grid_size, 2*sizeof(int), iq2_compare_func);
-            int local_counter = offsets[i];
+            qsort(dist2, grid_size, 2*sizeof(số_nguyên), iq2_compare_func);
+            số_nguyên local_counter = offsets[i];
             kmap_q2xs[i] = -(local_counter + 1);
-            int d2 = dist2[0];
+            số_nguyên d2 = dist2[0];
             uint16_t * start = &kneighbors_q2xs[local_counter++];
-            int n = 0, nhave = 1;
-            for (int j = 0; j < grid_size; ++j) {
-                if (dist2[2*j] > d2) {
-                    if (nhave == nwant) break;
+            số_nguyên n = 0, nhave = 1;
+            cho (số_nguyên j = 0; j < grid_size; ++j) {
+                nếu (dist2[2*j] > d2) {
+                    nếu (nhave == nwant) break;
                     d2 = dist2[2*j];
                     ++nhave;
                 }
@@ -3260,44 +3260,44 @@ void iq2xs_init_impl(enum ggml_type type) {
 
 void iq2xs_free_impl(enum ggml_type type) {
     GGML_ASSERT(type == GGML_TYPE_IQ2_XXS || type == GGML_TYPE_IQ2_XS || type == GGML_TYPE_IQ1_S || type == GGML_TYPE_IQ1_M || type == GGML_TYPE_IQ2_S);
-    const int gindex = iq2_data_index(type);
-    if (iq2_data[gindex].grid) {
+    const số_nguyên gindex = iq2_data_index(type);
+    nếu (iq2_data[gindex].grid) {
         free(iq2_data[gindex].grid);       iq2_data[gindex].grid = NULL;
         free(iq2_data[gindex].map);        iq2_data[gindex].map  = NULL;
         free(iq2_data[gindex].neighbours); iq2_data[gindex].neighbours = NULL;
     }
 }
 
-static int iq2_find_best_neighbour(const uint16_t * GGML_RESTRICT neighbours, const uint64_t * GGML_RESTRICT grid,
+static số_nguyên iq2_find_best_neighbour(const uint16_t * GGML_RESTRICT neighbours, const uint64_t * GGML_RESTRICT grid,
         const float * GGML_RESTRICT xval, const float * GGML_RESTRICT weight, float scale, int8_t * GGML_RESTRICT L) {
-    int num_neighbors = neighbours[0];
+    số_nguyên num_neighbors = neighbours[0];
     GGML_ASSERT(num_neighbors > 0);
     float best_d2 = FLT_MAX;
-    int grid_index = -1;
-    for (int j = 1; j <= num_neighbors; ++j) {
+    số_nguyên grid_index = -1;
+    cho (số_nguyên j = 1; j <= num_neighbors; ++j) {
         const int8_t * pg = (const int8_t *)(grid + neighbours[j]);
         float d2 = 0;
-        for (int i = 0; i < 8; ++i) {
+        cho (số_nguyên i = 0; i < 8; ++i) {
             float q = pg[i];
             float diff = scale*q - xval[i];
             d2 += weight[i]*diff*diff;
         }
-        if (d2 < best_d2) {
+        nếu (d2 < best_d2) {
             best_d2 = d2; grid_index = neighbours[j];
         }
     }
     GGML_ASSERT(grid_index >= 0);
     const int8_t * pg = (const int8_t *)(grid + grid_index);
-    for (int i = 0; i < 8; ++i) L[i] = (pg[i] - 1)/2;
-    return grid_index;
+    cho (số_nguyên i = 0; i < 8; ++i) L[i] = (pg[i] - 1)/2;
+    trả_về grid_index;
 }
 
 static void quantize_row_iq2_xxs_impl(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t n, const float * GGML_RESTRICT quant_weights) {
 
-    const int gindex = iq2_data_index(GGML_TYPE_IQ2_XXS);
+    const số_nguyên gindex = iq2_data_index(GGML_TYPE_IQ2_XXS);
 
     const uint64_t * kgrid_q2xs      = iq2_data[gindex].grid;
-    const int      * kmap_q2xs       = iq2_data[gindex].map;
+    const số_nguyên      * kmap_q2xs       = iq2_data[gindex].map;
     const uint16_t * kneighbors_q2xs = iq2_data[gindex].neighbours;
 
     GGML_ASSERT(quant_weights   && "missing quantization weights");
@@ -3306,7 +3306,7 @@ static void quantize_row_iq2_xxs_impl(const float * GGML_RESTRICT x, void * GGML
     GGML_ASSERT(kneighbors_q2xs && "forgot to call ggml_quantize_init()?");
     GGML_ASSERT(n%QK_K == 0);
 
-    const int kMaxQ = 3;
+    const số_nguyên kMaxQ = 3;
 
     const int64_t nbl = n/QK_K;
 
@@ -3321,7 +3321,7 @@ static void quantize_row_iq2_xxs_impl(const float * GGML_RESTRICT x, void * GGML
     uint8_t block_signs[4];
     uint32_t q2[2*(QK_K/32)];
 
-    for (int ibl = 0; ibl < nbl; ++ibl) {
+    cho (số_nguyên ibl = 0; ibl < nbl; ++ibl) {
 
         y[ibl].d = GGML_FP32_TO_FP16(0.f);
         memset(q2, 0, QK_K/4);
@@ -3330,28 +3330,28 @@ static void quantize_row_iq2_xxs_impl(const float * GGML_RESTRICT x, void * GGML
 
         const float * xbl = x + QK_K*ibl;
         float sumx2 = 0;
-        for (int i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
+        cho (số_nguyên i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
         float sigma2 = sumx2/QK_K;
 
-        for (int ib = 0; ib < QK_K/32; ++ib) {
+        cho (số_nguyên ib = 0; ib < QK_K/32; ++ib) {
             const float * xb = xbl + 32*ib;
             const float * qw = quant_weights + QK_K*ibl + 32*ib;
-            for (int i = 0; i < 32; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
-            for (int i = 0; i < 32; ++i) waux[i] = sqrtf(weight[i]);
-            for (int k = 0; k < 4; ++k) {
-                int nflip = 0;
+            cho (số_nguyên i = 0; i < 32; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
+            cho (số_nguyên i = 0; i < 32; ++i) waux[i] = sqrtf(weight[i]);
+            cho (số_nguyên k = 0; k < 4; ++k) {
+                số_nguyên nflip = 0;
                 uint8_t s = 0;
-                for (int i = 0; i < 8; ++i) {
-                    if (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
-                    else {
+                cho (số_nguyên i = 0; i < 8; ++i) {
+                    nếu (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
+                    không_thì {
                         xval[8*k + i] = -xb[8*k + i]; ++nflip; s |= (1 << i);
                     }
                 }
-                if (nflip%2) {
-                    int imin = 0; float min = weight[8*k+imin]*xb[8*k+imin]*xb[8*k+imin];
-                    for (int i = 1; i < 8; ++i) {
+                nếu (nflip%2) {
+                    số_nguyên imin = 0; float min = weight[8*k+imin]*xb[8*k+imin]*xb[8*k+imin];
+                    cho (số_nguyên i = 1; i < 8; ++i) {
                         float ax = weight[8*k+i]*xb[8*k+i]*xb[8*k+i];
-                        if (ax < min) {
+                        nếu (ax < min) {
                             min = ax; imin = i;
                         }
                     }
@@ -3361,87 +3361,87 @@ static void quantize_row_iq2_xxs_impl(const float * GGML_RESTRICT x, void * GGML
                 block_signs[k] = s & 127;
             }
             float max = xval[0];
-            for (int i = 1; i < 32; ++i) max = MAX(max, xval[i]);
-            if (max < GROUP_MAX_EPS) {
+            cho (số_nguyên i = 1; i < 32; ++i) max = MAX(max, xval[i]);
+            nếu (max < GROUP_MAX_EPS) {
                 scales[ib] = 0;
                 memset(L, 0, 32);
                 continue;
             }
             float scale = make_qp_quants(32, kMaxQ+1, xval, (uint8_t*)L, weight);
             float eff_max = scale*kMaxQ;
-            if (eff_max <= 0) {
+            nếu (eff_max <= 0) {
                 scales[ib] = 0;
                 memset(L, 0, 32);
                 continue;
             }
             float best = 0;
-            for (int is = -6; is <= 6; ++is) {
+            cho (số_nguyên is = -6; is <= 6; ++is) {
                 float id = (2*kMaxQ-1+is*0.1f)/eff_max;
                 float this_scale = 1/id;
-                for (int k = 0; k < 4; ++k) {
-                    for (int i = 0; i < 8; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[8*k+i]-1));
+                cho (số_nguyên k = 0; k < 4; ++k) {
+                    cho (số_nguyên i = 0; i < 8; ++i) {
+                        số_nguyên l = nearest_int(0.5f*(id*xval[8*k+i]-1));
                         Laux[8*k+i] = MAX(0, MIN(kMaxQ-1, l));
                     }
                     uint16_t u = 0;
-                    for (int i = 0; i < 8; ++i) u |= (Laux[8*k+i] << 2*i);
-                    int grid_index = kmap_q2xs[u];
-                    if (grid_index < 0) {
+                    cho (số_nguyên i = 0; i < 8; ++i) u |= (Laux[8*k+i] << 2*i);
+                    số_nguyên grid_index = kmap_q2xs[u];
+                    nếu (grid_index < 0) {
                         const uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
                         grid_index = iq2_find_best_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, this_scale, Laux + 8*k);
                     }
                 }
                 float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < 32; ++i) {
+                cho (số_nguyên i = 0; i < 32; ++i) {
                     float w = weight[i];
                     float q = 2*Laux[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0 && sumqx*sumqx > best*sumq2) {
+                nếu (sumq2 > 0 && sumqx*sumqx > best*sumq2) {
                     scale = sumqx/sumq2; best = scale*sumqx;
                     memcpy(L, Laux, 32);
                 }
             }
-            if (scale > 0) {
+            nếu (scale > 0) {
                 float id = 1/scale;
-                for (int k = 0; k < 4; ++k) {
+                cho (số_nguyên k = 0; k < 4; ++k) {
                     uint16_t u = 0;
-                    for (int i = 0; i < 8; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[8*k+i]-1));
+                    cho (số_nguyên i = 0; i < 8; ++i) {
+                        số_nguyên l = nearest_int(0.5f*(id*xval[8*k+i]-1));
                         l = MAX(0, MIN(kMaxQ-1, l));
                         u |= (l << 2*i);
                     }
-                    int grid_index = kmap_q2xs[u];
-                    if (grid_index < 0) {
+                    số_nguyên grid_index = kmap_q2xs[u];
+                    nếu (grid_index < 0) {
                         const uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
                         grid_index = iq2_find_best_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, scale, L + 8*k);
                     }
                     const int8_t * pg = (const int8_t *)(kgrid_q2xs + grid_index);
-                    for (int i = 0; i < 8; ++i) L[8*k+i] = (pg[i] - 1)/2;
+                    cho (số_nguyên i = 0; i < 8; ++i) L[8*k+i] = (pg[i] - 1)/2;
                 }
                 float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < 32; ++i) {
+                cho (số_nguyên i = 0; i < 32; ++i) {
                     float w = weight[i];
                     float q = 2*L[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0) scale = sumqx/sumq2;
+                nếu (sumq2 > 0) scale = sumqx/sumq2;
             }
-            if (scale < 0) {
+            nếu (scale < 0) {
                 // This should never happen, but just in case, flip scale so that it is positive (we use uint's to encode the scale)
                 // and correspondingly flip quant signs.
                 scale = -scale;
-                for (int k = 0; k < 4; ++k) block_signs[k] = (~block_signs[k]) & 127;
+                cho (số_nguyên k = 0; k < 4; ++k) block_signs[k] = (~block_signs[k]) & 127;
             }
-            for (int k = 0; k < 4; ++k) {
+            cho (số_nguyên k = 0; k < 4; ++k) {
                 uint16_t u = 0;
-                for (int i = 0; i < 8; ++i) u |= (L[8*k+i] << 2*i);
-                int grid_index = kmap_q2xs[u];
-                if (grid_index < 0) {
+                cho (số_nguyên i = 0; i < 8; ++i) u |= (L[8*k+i] << 2*i);
+                số_nguyên grid_index = kmap_q2xs[u];
+                nếu (grid_index < 0) {
                     printf("Oops: found point %u not on grid:", u);
-                    for (int i = 0; i < 8; ++i) printf(" %d", L[8*k+i]);
+                    cho (số_nguyên i = 0; i < 8; ++i) printf(" %d", L[8*k+i]);
                     printf("\n");
                     GGML_ABORT("fatal error");
                 }
@@ -3453,7 +3453,7 @@ static void quantize_row_iq2_xxs_impl(const float * GGML_RESTRICT x, void * GGML
             max_scale = MAX(max_scale, scale);
         }
 
-        if (!max_scale) {
+        nếu (!max_scale) {
             memset(y[ibl].qs, 0, QK_K/4);
             continue;
         }
@@ -3461,8 +3461,8 @@ static void quantize_row_iq2_xxs_impl(const float * GGML_RESTRICT x, void * GGML
         float d = max_scale/31;
         y[ibl].d = GGML_FP32_TO_FP16(d);
         float id = 1/d;
-        for (int ib = 0; ib < QK_K/32; ++ib) {
-            int l = nearest_int(0.5f*(id*scales[ib]-1));
+        cho (số_nguyên ib = 0; ib < QK_K/32; ++ib) {
+            số_nguyên l = nearest_int(0.5f*(id*scales[ib]-1));
             l = MAX(0, MIN(15, l));
             q2[2*ib+1] |= ((uint32_t)l << 28);
         }
@@ -3472,10 +3472,10 @@ static void quantize_row_iq2_xxs_impl(const float * GGML_RESTRICT x, void * GGML
 
 static void quantize_row_iq2_xs_impl(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t n, const float * GGML_RESTRICT quant_weights) {
 
-    const int gindex = iq2_data_index(GGML_TYPE_IQ2_XS);
+    const số_nguyên gindex = iq2_data_index(GGML_TYPE_IQ2_XS);
 
     const uint64_t * kgrid_q2xs      = iq2_data[gindex].grid;
-    const int      * kmap_q2xs       = iq2_data[gindex].map;
+    const số_nguyên      * kmap_q2xs       = iq2_data[gindex].map;
     const uint16_t * kneighbors_q2xs = iq2_data[gindex].neighbours;
 
     GGML_ASSERT(quant_weights   && "missing quantization weights");
@@ -3484,7 +3484,7 @@ static void quantize_row_iq2_xs_impl(const float * GGML_RESTRICT x, void * GGML_
     GGML_ASSERT(kneighbors_q2xs && "forgot to call ggml_quantize_init()?");
     GGML_ASSERT(n%QK_K == 0);
 
-    const int kMaxQ = 3;
+    const số_nguyên kMaxQ = 3;
 
     const int64_t nbl = n/QK_K;
 
@@ -3501,7 +3501,7 @@ static void quantize_row_iq2_xs_impl(const float * GGML_RESTRICT x, void * GGML_
     uint8_t block_signs[2];
     uint16_t q2[2*(QK_K/16)];
 
-    for (int ibl = 0; ibl < nbl; ++ibl) {
+    cho (số_nguyên ibl = 0; ibl < nbl; ++ibl) {
 
         y[ibl].d = GGML_FP32_TO_FP16(0.f);
         memset(q2, 0, QK_K/4);
@@ -3511,28 +3511,28 @@ static void quantize_row_iq2_xs_impl(const float * GGML_RESTRICT x, void * GGML_
 
         const float * xbl = x + QK_K*ibl;
         float sumx2 = 0;
-        for (int i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
+        cho (số_nguyên i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
         float sigma2 = sumx2/QK_K;
 
-        for (int ib = 0; ib < QK_K/16; ++ib) {
+        cho (số_nguyên ib = 0; ib < QK_K/16; ++ib) {
             const float * xb = xbl + 16*ib;
             const float * qw = quant_weights + QK_K*ibl + 16*ib;
-            for (int i = 0; i < 16; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
-            for (int i = 0; i < 16; ++i) waux[i] = sqrtf(weight[i]);
-            for (int k = 0; k < 2; ++k) {
-                int nflip = 0;
+            cho (số_nguyên i = 0; i < 16; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
+            cho (số_nguyên i = 0; i < 16; ++i) waux[i] = sqrtf(weight[i]);
+            cho (số_nguyên k = 0; k < 2; ++k) {
+                số_nguyên nflip = 0;
                 uint8_t s = 0;
-                for (int i = 0; i < 8; ++i) {
-                    if (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
-                    else {
+                cho (số_nguyên i = 0; i < 8; ++i) {
+                    nếu (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
+                    không_thì {
                         xval[8*k + i] = -xb[8*k + i]; ++nflip; s |= (1 << i);
                     }
                 }
-                if (nflip%2) {
-                    int imin = 0; float min = weight[8*k+imin]*xb[8*k+imin]*xb[8*k+imin];
-                    for (int i = 1; i < 8; ++i) {
+                nếu (nflip%2) {
+                    số_nguyên imin = 0; float min = weight[8*k+imin]*xb[8*k+imin]*xb[8*k+imin];
+                    cho (số_nguyên i = 1; i < 8; ++i) {
                         float ax = weight[8*k+i]*xb[8*k+i]*xb[8*k+i];
-                        if (ax < min) {
+                        nếu (ax < min) {
                             min = ax; imin = i;
                         }
                     }
@@ -3542,85 +3542,85 @@ static void quantize_row_iq2_xs_impl(const float * GGML_RESTRICT x, void * GGML_
                 block_signs[k] = s & 127;
             }
             float max = xval[0];
-            for (int i = 1; i < 16; ++i) max = MAX(max, xval[i]);
+            cho (số_nguyên i = 1; i < 16; ++i) max = MAX(max, xval[i]);
             memset(L, 0, 16);
-            if (max < GROUP_MAX_EPS) {
+            nếu (max < GROUP_MAX_EPS) {
                 scales[ib] = 0;
                 continue;
             }
             float best = 0;
             float scale = max/(2*kMaxQ-1);
             is_on_grid[0] = is_on_grid[1] = true;
-            for (int is = -9; is <= 9; ++is) {
+            cho (số_nguyên is = -9; is <= 9; ++is) {
                 float id = (2*kMaxQ-1+is*0.1f)/max;
                 float this_scale = 1/id;
-                for (int k = 0; k < 2; ++k) {
-                    for (int i = 0; i < 8; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[8*k+i]-1));
+                cho (số_nguyên k = 0; k < 2; ++k) {
+                    cho (số_nguyên i = 0; i < 8; ++i) {
+                        số_nguyên l = nearest_int(0.5f*(id*xval[8*k+i]-1));
                         Laux[8*k+i] = MAX(0, MIN(kMaxQ-1, l));
                     }
                     uint16_t u = 0;
-                    for (int i = 0; i < 8; ++i) u |= (Laux[8*k+i] << 2*i);
-                    int grid_index = kmap_q2xs[u];
+                    cho (số_nguyên i = 0; i < 8; ++i) u |= (Laux[8*k+i] << 2*i);
+                    số_nguyên grid_index = kmap_q2xs[u];
                     is_on_grid_aux[k] = true;
-                    if (grid_index < 0) {
+                    nếu (grid_index < 0) {
                         is_on_grid_aux[k] = false;
                         const uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
                         grid_index = iq2_find_best_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, this_scale, Laux + 8*k);
                     }
                 }
                 float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < 16; ++i) {
+                cho (số_nguyên i = 0; i < 16; ++i) {
                     float w = weight[i];
                     float q = 2*Laux[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0 && sumqx*sumqx > best*sumq2) {
+                nếu (sumq2 > 0 && sumqx*sumqx > best*sumq2) {
                     scale = sumqx/sumq2; best = scale*sumqx;
-                    for (int i = 0; i < 16; ++i) L[i] = Laux[i];
-                    for (int k = 0; k <  2; ++k) is_on_grid[k] = is_on_grid_aux[k];
+                    cho (số_nguyên i = 0; i < 16; ++i) L[i] = Laux[i];
+                    cho (số_nguyên k = 0; k <  2; ++k) is_on_grid[k] = is_on_grid_aux[k];
                 }
             }
-            int n_not_ongrid = 0;
-            for (int k = 0; k < 2; ++k) if (!is_on_grid[k]) ++n_not_ongrid;
-            if (n_not_ongrid > 0 && scale > 0) {
+            số_nguyên n_not_ongrid = 0;
+            cho (số_nguyên k = 0; k < 2; ++k) nếu (!is_on_grid[k]) ++n_not_ongrid;
+            nếu (n_not_ongrid > 0 && scale > 0) {
                 float id = 1/scale;
-                for (int k = 0; k < 2; ++k) {
-                    if (is_on_grid[k]) continue;
+                cho (số_nguyên k = 0; k < 2; ++k) {
+                    nếu (is_on_grid[k]) continue;
                     uint16_t u = 0;
-                    for (int i = 0; i < 8; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[8*k+i]-1));
+                    cho (số_nguyên i = 0; i < 8; ++i) {
+                        số_nguyên l = nearest_int(0.5f*(id*xval[8*k+i]-1));
                         l = MAX(0, MIN(kMaxQ-1, l));
                         u |= (l << 2*i);
                         L[8*k + i] = l;
                     }
-                    int grid_index = kmap_q2xs[u];
-                    if (grid_index < 0) {
+                    số_nguyên grid_index = kmap_q2xs[u];
+                    nếu (grid_index < 0) {
                         const uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
                         grid_index = iq2_find_best_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, scale, L + 8*k);
                     }
                 }
                 float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < 16; ++i) {
+                cho (số_nguyên i = 0; i < 16; ++i) {
                     float w = weight[i];
                     float q = 2*L[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0) scale = sumqx/sumq2;
+                nếu (sumq2 > 0) scale = sumqx/sumq2;
             }
-            if (scale < 0) {
+            nếu (scale < 0) {
                 scale = -scale;
-                for (int k = 0; k < 2; ++k) block_signs[k] = (~block_signs[k]) & 127;
+                cho (số_nguyên k = 0; k < 2; ++k) block_signs[k] = (~block_signs[k]) & 127;
             }
-            for (int k = 0; k < 2; ++k) {
+            cho (số_nguyên k = 0; k < 2; ++k) {
                 uint16_t u = 0;
-                for (int i = 0; i < 8; ++i) u |= (L[8*k+i] << 2*i);
-                int grid_index = kmap_q2xs[u];
-                if (grid_index < 0) {
+                cho (số_nguyên i = 0; i < 8; ++i) u |= (L[8*k+i] << 2*i);
+                số_nguyên grid_index = kmap_q2xs[u];
+                nếu (grid_index < 0) {
                     printf("Oops: found point %u not on grid:", u);
-                    for (int i = 0; i < 8; ++i) printf(" %d", L[8*k+i]);
+                    cho (số_nguyên i = 0; i < 8; ++i) printf(" %d", L[8*k+i]);
                     printf("\n");
                     GGML_ABORT("fatal error");
                 }
@@ -3631,7 +3631,7 @@ static void quantize_row_iq2_xs_impl(const float * GGML_RESTRICT x, void * GGML_
             max_scale = MAX(max_scale, scale);
         }
 
-        if (!max_scale) {
+        nếu (!max_scale) {
             memset(y[ibl].qs, 0, QK_K/4);
             continue;
         }
@@ -3639,11 +3639,11 @@ static void quantize_row_iq2_xs_impl(const float * GGML_RESTRICT x, void * GGML_
         float d = max_scale/31;
         y[ibl].d = GGML_FP32_TO_FP16(d);
         float id = 1/d;
-        for (int ib = 0; ib < QK_K/16; ++ib) {
-            int l = nearest_int(0.5f*(id*scales[ib]-1));
+        cho (số_nguyên ib = 0; ib < QK_K/16; ++ib) {
+            số_nguyên l = nearest_int(0.5f*(id*scales[ib]-1));
             l = MAX(0, MIN(15, l));
-            if (ib%2 == 0) y[ibl].scales[ib/2] = l;
-            else y[ibl].scales[ib/2] |= (l << 4);
+            nếu (ib%2 == 0) y[ibl].scales[ib/2] = l;
+            không_thì y[ibl].scales[ib/2] |= (l << 4);
         }
         memcpy(y[ibl].qs, q2, QK_K/4);
 
@@ -3654,24 +3654,24 @@ size_t quantize_iq2_xxs(const float * GGML_RESTRICT src, void * GGML_RESTRICT ds
     GGML_ASSERT(n_per_row%QK_K == 0);
     int64_t nblock = n_per_row/QK_K;
     char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
+    cho (int64_t row = 0; row < nrow; ++row) {
         quantize_row_iq2_xxs_impl(src, qrow, n_per_row, quant_weights);
         src += n_per_row;
         qrow += nblock*sizeof(block_iq2_xxs);
     }
-    return nrow * nblock * sizeof(block_iq2_xxs);
+    trả_về nrow * nblock * sizeof(block_iq2_xxs);
 }
 
 size_t quantize_iq2_xs(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
     GGML_ASSERT(n_per_row%QK_K == 0);
     int64_t nblock = n_per_row/QK_K;
     char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
+    cho (int64_t row = 0; row < nrow; ++row) {
         quantize_row_iq2_xs_impl(src, qrow, n_per_row, quant_weights);
         src += n_per_row;
         qrow += nblock*sizeof(block_iq2_xs);
     }
-    return nrow * nblock * sizeof(block_iq2_xs);
+    trả_về nrow * nblock * sizeof(block_iq2_xs);
 }
 
 //
@@ -3680,7 +3680,7 @@ size_t quantize_iq2_xs(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst
 
 typedef struct {
     uint32_t * grid;
-    int      * map;
+    số_nguyên      * map;
     uint16_t * neighbours;
 } iq3_entry_t;
 
@@ -3689,22 +3689,22 @@ static iq3_entry_t iq3_data[2] = {
     {NULL, NULL, NULL},
 };
 
-static inline int iq3_data_index(int grid_size) {
+static inline số_nguyên iq3_data_index(số_nguyên grid_size) {
     (void)grid_size;
     GGML_ASSERT(grid_size == 256 || grid_size == 512);
-    return grid_size == 256 ? 0 : 1;
+    trả_về grid_size == 256 ? 0 : 1;
 }
 
-static int iq3_compare_func(const void * left, const void * right) {
-    const int * l = (const int *)left;
-    const int * r = (const int *)right;
-    return l[0] < r[0] ? -1 : l[0] > r[0] ? 1 : l[1] < r[1] ? -1 : l[1] > r[1] ? 1 : 0;
+static số_nguyên iq3_compare_func(const void * left, const void * right) {
+    const số_nguyên * l = (const số_nguyên *)left;
+    const số_nguyên * r = (const số_nguyên *)right;
+    trả_về l[0] < r[0] ? -1 : l[0] > r[0] ? 1 : l[1] < r[1] ? -1 : l[1] > r[1] ? 1 : 0;
 }
 
-void iq3xs_init_impl(int grid_size) {
-    const int gindex = iq3_data_index(grid_size);
-    if (iq3_data[gindex].grid) {
-        return;
+void iq3xs_init_impl(số_nguyên grid_size) {
+    const số_nguyên gindex = iq3_data_index(grid_size);
+    nếu (iq3_data[gindex].grid) {
+        trả_về;
     }
     static const uint16_t kgrid_256[256] = {
             0,     2,     4,     9,    11,    15,    16,    18,    25,    34,    59,    61,    65,    67,    72,    74,
@@ -3759,76 +3759,76 @@ void iq3xs_init_impl(int grid_size) {
          3736,  3753,  3778,  3802,  3805,  3819,  3841,  3845,  3851,  3856,  3880,  3922,  3938,  3970,  3993,  4032,
     };
 
-    const int kmap_size = 4096;
-    const int nwant = grid_size == 256 ? 2 : 3;
+    const số_nguyên kmap_size = 4096;
+    const số_nguyên nwant = grid_size == 256 ? 2 : 3;
     const uint16_t * kgrid = grid_size == 256 ? kgrid_256 : kgrid_512;
     uint32_t * kgrid_q3xs;
-    int      * kmap_q3xs;
+    số_nguyên      * kmap_q3xs;
     uint16_t * kneighbors_q3xs;
 
     //printf("================================================================= %s(grid_size = %d)\n", __func__, grid_size);
     uint32_t * the_grid = (uint32_t *)malloc(grid_size*sizeof(uint32_t));
-    for (int k = 0; k < grid_size; ++k) {
+    cho (số_nguyên k = 0; k < grid_size; ++k) {
         int8_t * pos = (int8_t *)(the_grid + k);
-        for (int i = 0; i < 4; ++i) {
-            int l = (kgrid[k] >> 3*i) & 0x7;
+        cho (số_nguyên i = 0; i < 4; ++i) {
+            số_nguyên l = (kgrid[k] >> 3*i) & 0x7;
             pos[i] = 2*l + 1;
         }
     }
     kgrid_q3xs = the_grid;
     iq3_data[gindex].grid = the_grid;
-    kmap_q3xs = (int *)malloc(kmap_size*sizeof(int));
+    kmap_q3xs = (số_nguyên *)malloc(kmap_size*sizeof(số_nguyên));
     iq3_data[gindex].map = kmap_q3xs;
-    for (int i = 0; i < kmap_size; ++i) kmap_q3xs[i] = -1;
+    cho (số_nguyên i = 0; i < kmap_size; ++i) kmap_q3xs[i] = -1;
     uint32_t aux32;
     uint8_t * aux8 = (uint8_t *)&aux32;
-    for (int i = 0; i < grid_size; ++i) {
+    cho (số_nguyên i = 0; i < grid_size; ++i) {
         aux32 = kgrid_q3xs[i];
         uint16_t index = 0;
-        for (int k=0; k<4; ++k) {
+        cho (số_nguyên k=0; k<4; ++k) {
             uint16_t q = (aux8[k] - 1)/2;
             index |= (q << 3*k);
         }
         kmap_q3xs[index] = i;
     }
     // See explanation of parallelism in iq2xs_init_impl
-    int * n_per_i = (int *)malloc(kmap_size*sizeof(int));
+    số_nguyên * n_per_i = (số_nguyên *)malloc(kmap_size*sizeof(số_nguyên));
     GGML_ASSERT(n_per_i);
-    int num_neighbors = 0, num_not_in_map = 0;
+    số_nguyên num_neighbors = 0, num_not_in_map = 0;
 #ifdef GGML_USE_OPENMP
     #pragma omp parallel reduction(+:num_neighbors,num_not_in_map)
 #endif
     {
-        int * dist2 = (int *)malloc(2*grid_size*sizeof(int));
+        số_nguyên * dist2 = (số_nguyên *)malloc(2*grid_size*sizeof(số_nguyên));
         GGML_ASSERT(dist2);
         int8_t pos[4];
-        int i;
+        số_nguyên i;
 #ifdef GGML_USE_OPENMP
-        #pragma omp for schedule(dynamic, 64)
+        #pragma omp cho schedule(dynamic, 64)
 #endif
-        for (i = 0; i < kmap_size; ++i) {
-            if (kmap_q3xs[i] >= 0) {
+        cho (i = 0; i < kmap_size; ++i) {
+            nếu (kmap_q3xs[i] >= 0) {
                 n_per_i[i] = 0;
                 continue;
             }
             ++num_not_in_map;
-            for (int k = 0; k < 4; ++k) {
-                int l = (i >> 3*k) & 0x7;
+            cho (số_nguyên k = 0; k < 4; ++k) {
+                số_nguyên l = (i >> 3*k) & 0x7;
                 pos[k] = 2*l + 1;
             }
-            for (int j = 0; j < grid_size; ++j) {
+            cho (số_nguyên j = 0; j < grid_size; ++j) {
                 const int8_t * pg = (const int8_t *)(kgrid_q3xs + j);
-                int d2 = 0;
-                for (int k = 0; k < 4; ++k) d2 += (pg[k] - pos[k])*(pg[k] - pos[k]);
+                số_nguyên d2 = 0;
+                cho (số_nguyên k = 0; k < 4; ++k) d2 += (pg[k] - pos[k])*(pg[k] - pos[k]);
                 dist2[2*j+0] = d2;
                 dist2[2*j+1] = j;
             }
-            qsort(dist2, grid_size, 2*sizeof(int), iq3_compare_func);
-            int n = 0; int d2 = dist2[0];
-            int nhave = 1;
-            for (int j = 0; j < grid_size; ++j) {
-                if (dist2[2*j] > d2) {
-                    if (nhave == nwant) break;
+            qsort(dist2, grid_size, 2*sizeof(số_nguyên), iq3_compare_func);
+            số_nguyên n = 0; số_nguyên d2 = dist2[0];
+            số_nguyên nhave = 1;
+            cho (số_nguyên j = 0; j < grid_size; ++j) {
+                nếu (dist2[2*j] > d2) {
+                    nếu (nhave == nwant) break;
                     d2 = dist2[2*j];
                     ++nhave;
                 }
@@ -3843,11 +3843,11 @@ void iq3xs_init_impl(int grid_size) {
     kneighbors_q3xs = (uint16_t *)malloc((num_neighbors + num_not_in_map)*sizeof(uint16_t));
     iq3_data[gindex].neighbours = kneighbors_q3xs;
 
-    int * offsets = (int *)malloc(kmap_size*sizeof(int));
+    số_nguyên * offsets = (số_nguyên *)malloc(kmap_size*sizeof(số_nguyên));
     GGML_ASSERT(offsets);
-    int counter = 0;
-    for (int i = 0; i < kmap_size; ++i) {
-        if (kmap_q3xs[i] >= 0) {
+    số_nguyên counter = 0;
+    cho (số_nguyên i = 0; i < kmap_size; ++i) {
+        nếu (kmap_q3xs[i] >= 0) {
             offsets[i] = -1;
             continue;
         }
@@ -3859,35 +3859,35 @@ void iq3xs_init_impl(int grid_size) {
     #pragma omp parallel
 #endif
     {
-        int * dist2 = (int *)malloc(2*grid_size*sizeof(int));
+        số_nguyên * dist2 = (số_nguyên *)malloc(2*grid_size*sizeof(số_nguyên));
         GGML_ASSERT(dist2);
         int8_t pos[4];
-        int i;
+        số_nguyên i;
 #ifdef GGML_USE_OPENMP
-        #pragma omp for schedule(dynamic, 64)
+        #pragma omp cho schedule(dynamic, 64)
 #endif
-        for (i = 0; i < kmap_size; ++i) {
-            if (kmap_q3xs[i] >= 0) continue;
-            for (int k = 0; k < 4; ++k) {
-                int l = (i >> 3*k) & 0x7;
+        cho (i = 0; i < kmap_size; ++i) {
+            nếu (kmap_q3xs[i] >= 0) continue;
+            cho (số_nguyên k = 0; k < 4; ++k) {
+                số_nguyên l = (i >> 3*k) & 0x7;
                 pos[k] = 2*l + 1;
             }
-            for (int j = 0; j < grid_size; ++j) {
+            cho (số_nguyên j = 0; j < grid_size; ++j) {
                 const int8_t * pg = (const int8_t *)(kgrid_q3xs + j);
-                int d2 = 0;
-                for (int k = 0; k < 4; ++k) d2 += (pg[k] - pos[k])*(pg[k] - pos[k]);
+                số_nguyên d2 = 0;
+                cho (số_nguyên k = 0; k < 4; ++k) d2 += (pg[k] - pos[k])*(pg[k] - pos[k]);
                 dist2[2*j+0] = d2;
                 dist2[2*j+1] = j;
             }
-            qsort(dist2, grid_size, 2*sizeof(int), iq3_compare_func);
-            int local_counter = offsets[i];
+            qsort(dist2, grid_size, 2*sizeof(số_nguyên), iq3_compare_func);
+            số_nguyên local_counter = offsets[i];
             kmap_q3xs[i] = -(local_counter + 1);
-            int d2 = dist2[0];
+            số_nguyên d2 = dist2[0];
             uint16_t * start = &kneighbors_q3xs[local_counter++];
-            int n = 0, nhave = 1;
-            for (int j = 0; j < grid_size; ++j) {
-                if (dist2[2*j] > d2) {
-                    if (nhave == nwant) break;
+            số_nguyên n = 0, nhave = 1;
+            cho (số_nguyên j = 0; j < grid_size; ++j) {
+                nếu (dist2[2*j] > d2) {
+                    nếu (nhave == nwant) break;
                     d2 = dist2[2*j];
                     ++nhave;
                 }
@@ -3902,47 +3902,47 @@ void iq3xs_init_impl(int grid_size) {
     free(n_per_i);
 }
 
-void iq3xs_free_impl(int grid_size) {
+void iq3xs_free_impl(số_nguyên grid_size) {
     GGML_ASSERT(grid_size == 256 || grid_size == 512);
-    const int gindex = iq3_data_index(grid_size);
-    if (iq3_data[gindex].grid) {
+    const số_nguyên gindex = iq3_data_index(grid_size);
+    nếu (iq3_data[gindex].grid) {
         free(iq3_data[gindex].grid);       iq3_data[gindex].grid = NULL;
         free(iq3_data[gindex].map);        iq3_data[gindex].map  = NULL;
         free(iq3_data[gindex].neighbours); iq3_data[gindex].neighbours = NULL;
     }
 }
 
-static int iq3_find_best_neighbour(const uint16_t * GGML_RESTRICT neighbours, const uint32_t * GGML_RESTRICT grid,
+static số_nguyên iq3_find_best_neighbour(const uint16_t * GGML_RESTRICT neighbours, const uint32_t * GGML_RESTRICT grid,
         const float * GGML_RESTRICT xval, const float * GGML_RESTRICT weight, float scale, int8_t * GGML_RESTRICT L) {
-    int num_neighbors = neighbours[0];
+    số_nguyên num_neighbors = neighbours[0];
     GGML_ASSERT(num_neighbors > 0);
     float best_d2 = FLT_MAX;
-    int grid_index = -1;
-    for (int j = 1; j <= num_neighbors; ++j) {
+    số_nguyên grid_index = -1;
+    cho (số_nguyên j = 1; j <= num_neighbors; ++j) {
         const int8_t * pg = (const int8_t *)(grid + neighbours[j]);
         float d2 = 0;
-        for (int i = 0; i < 4; ++i) {
+        cho (số_nguyên i = 0; i < 4; ++i) {
             float q = pg[i];
             float diff = scale*q - xval[i];
             d2 += weight[i]*diff*diff;
         }
-        if (d2 < best_d2) {
+        nếu (d2 < best_d2) {
             best_d2 = d2; grid_index = neighbours[j];
         }
     }
     GGML_ASSERT(grid_index >= 0);
     const int8_t * pg = (const int8_t *)(grid + grid_index);
-    for (int i = 0; i < 4; ++i) L[i] = (pg[i] - 1)/2;
-    return grid_index;
+    cho (số_nguyên i = 0; i < 4; ++i) L[i] = (pg[i] - 1)/2;
+    trả_về grid_index;
 }
 
-static void quantize_row_iq3_xxs_impl(int grid_size, const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t n,
+static void quantize_row_iq3_xxs_impl(số_nguyên grid_size, const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t n,
         const float * GGML_RESTRICT quant_weights) {
 
-    const int gindex = iq3_data_index(grid_size);
+    const số_nguyên gindex = iq3_data_index(grid_size);
 
     const uint32_t * kgrid_q3xs      = iq3_data[gindex].grid;
-    const int      * kmap_q3xs       = iq3_data[gindex].map;
+    const số_nguyên      * kmap_q3xs       = iq3_data[gindex].map;
     const uint16_t * kneighbors_q3xs = iq3_data[gindex].neighbours;
 
     //GGML_ASSERT(quant_weights   && "missing quantization weights");
@@ -3951,25 +3951,25 @@ static void quantize_row_iq3_xxs_impl(int grid_size, const float * GGML_RESTRICT
     GGML_ASSERT(kneighbors_q3xs && "forgot to call ggml_quantize_init()?");
     GGML_ASSERT(n%QK_K == 0);
 
-    const int kMaxQ = 8;
+    const số_nguyên kMaxQ = 8;
 
     const int64_t nbl = n/QK_K;
 
     ggml_fp16_t * dh;
     uint8_t * qs;
-    int block_size;
-    if (grid_size == 256) {
+    số_nguyên block_size;
+    nếu (grid_size == 256) {
         block_iq3_xxs * y = vy;
         dh = &y->d;
         qs = y->qs;
         block_size = sizeof(block_iq3_xxs);
-    } else {
+    } không_thì {
         block_iq3_s * y = vy;
         dh = &y->d;
         qs = y->qs;
         block_size = sizeof(block_iq3_s);
     }
-    int quant_size = block_size - sizeof(ggml_fp16_t);
+    số_nguyên quant_size = block_size - sizeof(ggml_fp16_t);
 
     float scales[QK_K/32];
     float weight[32];
@@ -3984,7 +3984,7 @@ static void quantize_row_iq3_xxs_impl(int grid_size, const float * GGML_RESTRICT
     uint32_t * scales_and_signs = (uint32_t *)(q3 + QK_K/4);
     uint8_t  * qh = q3 + 3*(QK_K/8);
 
-    for (int ibl = 0; ibl < nbl; ++ibl) {
+    cho (số_nguyên ibl = 0; ibl < nbl; ++ibl) {
 
         dh[0] = GGML_FP32_TO_FP16(0.f);
         memset(q3, 0, 3*QK_K/8+QK_K/32);
@@ -3993,32 +3993,32 @@ static void quantize_row_iq3_xxs_impl(int grid_size, const float * GGML_RESTRICT
 
         const float * xbl = x + QK_K*ibl;
         float sumx2 = 0;
-        for (int i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
+        cho (số_nguyên i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
         float sigma2 = 2*sumx2/QK_K;
 
-        for (int ib = 0; ib < QK_K/32; ++ib) {
+        cho (số_nguyên ib = 0; ib < QK_K/32; ++ib) {
             const float * xb = xbl + 32*ib;
-            if (quant_weights) {
+            nếu (quant_weights) {
                 const float * qw = quant_weights + QK_K*ibl + 32*ib;
-                for (int i = 0; i < 32; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
-            } else {
-                for (int i = 0; i < 32; ++i) weight[i] = xb[i]*xb[i];
+                cho (số_nguyên i = 0; i < 32; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
+            } không_thì {
+                cho (số_nguyên i = 0; i < 32; ++i) weight[i] = xb[i]*xb[i];
             }
-            for (int i = 0; i < 32; ++i) waux[i] = sqrtf(weight[i]);
-            for (int k = 0; k < 4; ++k) {
-                int nflip = 0;
+            cho (số_nguyên i = 0; i < 32; ++i) waux[i] = sqrtf(weight[i]);
+            cho (số_nguyên k = 0; k < 4; ++k) {
+                số_nguyên nflip = 0;
                 uint8_t s = 0;
-                for (int i = 0; i < 8; ++i) {
-                    if (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
-                    else {
+                cho (số_nguyên i = 0; i < 8; ++i) {
+                    nếu (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
+                    không_thì {
                         xval[8*k + i] = -xb[8*k + i]; ++nflip; s |= (1 << i);
                     }
                 }
-                if (nflip%2) {
-                    int imin = 0; float min = weight[8*k+imin]*xb[8*k+imin]*xb[8*k+imin];
-                    for (int i = 1; i < 8; ++i) {
+                nếu (nflip%2) {
+                    số_nguyên imin = 0; float min = weight[8*k+imin]*xb[8*k+imin]*xb[8*k+imin];
+                    cho (số_nguyên i = 1; i < 8; ++i) {
                         float ax = weight[8*k+i]*xb[8*k+i]*xb[8*k+i];
-                        if (ax < min) {
+                        nếu (ax < min) {
                             min = ax; imin = i;
                         }
                     }
@@ -4028,94 +4028,94 @@ static void quantize_row_iq3_xxs_impl(int grid_size, const float * GGML_RESTRICT
                 block_signs[k] = s & 127;
             }
             float max = xval[0];
-            for (int i = 1; i < 32; ++i) max = MAX(max, xval[i]);
+            cho (số_nguyên i = 1; i < 32; ++i) max = MAX(max, xval[i]);
             memset(L, 0, 32);
-            if (max < GROUP_MAX_EPS_IQ3_XXS) {
+            nếu (max < GROUP_MAX_EPS_IQ3_XXS) {
                 scales[ib] = 0;
                 continue;
             }
             float best = 0;
             float scale = max/(2*kMaxQ-1);
-            for (int k = 0; k < 8; ++k) is_on_grid[k] = true;
-            for (int is = -15; is <= 15; ++is) {
+            cho (số_nguyên k = 0; k < 8; ++k) is_on_grid[k] = true;
+            cho (số_nguyên is = -15; is <= 15; ++is) {
                 float id = (2*kMaxQ-1+is*0.2f)/max;
                 float this_scale = 1/id;
-                for (int k = 0; k < 8; ++k) {
-                    for (int i = 0; i < 4; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[4*k+i]-1));
+                cho (số_nguyên k = 0; k < 8; ++k) {
+                    cho (số_nguyên i = 0; i < 4; ++i) {
+                        số_nguyên l = nearest_int(0.5f*(id*xval[4*k+i]-1));
                         Laux[4*k+i] = MAX(0, MIN(kMaxQ-1, l));
                     }
                     uint16_t u = 0;
-                    for (int i = 0; i < 4; ++i) u |= (Laux[4*k+i] << 3*i);
-                    int grid_index = kmap_q3xs[u];
+                    cho (số_nguyên i = 0; i < 4; ++i) u |= (Laux[4*k+i] << 3*i);
+                    số_nguyên grid_index = kmap_q3xs[u];
                     is_on_grid_aux[k] = true;
-                    if (grid_index < 0) {
+                    nếu (grid_index < 0) {
                         is_on_grid_aux[k] = false;
                         const uint16_t * neighbours = kneighbors_q3xs - kmap_q3xs[u] - 1;
                         grid_index = iq3_find_best_neighbour(neighbours, kgrid_q3xs, xval + 4*k, waux + 4*k, this_scale, Laux + 4*k);
                     }
                 }
                 float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < 32; ++i) {
+                cho (số_nguyên i = 0; i < 32; ++i) {
                     float w = weight[i];
                     float q = 2*Laux[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0 && sumqx*sumqx > best*sumq2) {
+                nếu (sumq2 > 0 && sumqx*sumqx > best*sumq2) {
                     scale = sumqx/sumq2; best = scale*sumqx;
-                    for (int i = 0; i < 32; ++i) L[i] = Laux[i];
-                    for (int k = 0; k <  8; ++k) is_on_grid[k] = is_on_grid_aux[k];
+                    cho (số_nguyên i = 0; i < 32; ++i) L[i] = Laux[i];
+                    cho (số_nguyên k = 0; k <  8; ++k) is_on_grid[k] = is_on_grid_aux[k];
                 }
             }
-            int n_not_ongrid = 0;
-            for (int k = 0; k < 8; ++k) if (!is_on_grid[k]) ++n_not_ongrid;
-            if (n_not_ongrid > 0 && scale > 0) {
+            số_nguyên n_not_ongrid = 0;
+            cho (số_nguyên k = 0; k < 8; ++k) nếu (!is_on_grid[k]) ++n_not_ongrid;
+            nếu (n_not_ongrid > 0 && scale > 0) {
                 float id = 1/scale;
-                for (int k = 0; k < 8; ++k) {
-                    if (is_on_grid[k]) continue;
+                cho (số_nguyên k = 0; k < 8; ++k) {
+                    nếu (is_on_grid[k]) continue;
                     uint16_t u = 0;
-                    for (int i = 0; i < 4; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[4*k+i]-1));
+                    cho (số_nguyên i = 0; i < 4; ++i) {
+                        số_nguyên l = nearest_int(0.5f*(id*xval[4*k+i]-1));
                         l = MAX(0, MIN(kMaxQ-1, l));
                         u |= (l << 3*i);
                     }
-                    int grid_index = kmap_q3xs[u];
-                    if (grid_index < 0) {
+                    số_nguyên grid_index = kmap_q3xs[u];
+                    nếu (grid_index < 0) {
                         const uint16_t * neighbours = kneighbors_q3xs - kmap_q3xs[u] - 1;
                         grid_index = iq3_find_best_neighbour(neighbours, kgrid_q3xs, xval + 4*k, waux + 4*k, scale, L + 4*k);
                     }
                     const int8_t * pg = (const int8_t *)(kgrid_q3xs + grid_index);
-                    for (int i = 0; i < 4; ++i) L[4*k+i] = (pg[i] - 1)/2;
+                    cho (số_nguyên i = 0; i < 4; ++i) L[4*k+i] = (pg[i] - 1)/2;
                 }
                 float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < 32; ++i) {
+                cho (số_nguyên i = 0; i < 32; ++i) {
                     float w = weight[i];
                     float q = 2*L[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0) scale = sumqx/sumq2;
+                nếu (sumq2 > 0) scale = sumqx/sumq2;
             }
-            if (scale < 0) {
+            nếu (scale < 0) {
                 // This should never happen, but just in case, flip scale so that it is positive (we use uint's to encode the scale)
                 // and correspondingly flip quant signs.
                 scale = -scale;
-                for (int k = 0; k < 4; ++k) block_signs[k] = (~block_signs[k]) & 127;
+                cho (số_nguyên k = 0; k < 4; ++k) block_signs[k] = (~block_signs[k]) & 127;
             }
-            for (int k = 0; k < 8; ++k) {
+            cho (số_nguyên k = 0; k < 8; ++k) {
                 uint16_t u = 0;
-                for (int i = 0; i < 4; ++i) u |= (L[4*k+i] << 3*i);
-                int grid_index = kmap_q3xs[u];
-                if (grid_index < 0) {
+                cho (số_nguyên i = 0; i < 4; ++i) u |= (L[4*k+i] << 3*i);
+                số_nguyên grid_index = kmap_q3xs[u];
+                nếu (grid_index < 0) {
                     printf("Oops: found point %u not on grid:", u);
-                    for (int i = 0; i < 4; ++i) printf(" %d", L[4*k+i]);
+                    cho (số_nguyên i = 0; i < 4; ++i) printf(" %d", L[4*k+i]);
                     printf("\n");
                     GGML_ABORT("fatal error");
                 }
-                if (grid_size == 256) {
+                nếu (grid_size == 256) {
                     q3[8*ib+k] = grid_index;
-                } else {
+                } không_thì {
                     q3[8*ib+k] = grid_index & 255;
                     qh[ib] |= ((grid_index >> 8) << k);
                 }
@@ -4127,7 +4127,7 @@ static void quantize_row_iq3_xxs_impl(int grid_size, const float * GGML_RESTRICT
             max_scale = MAX(max_scale, scale);
         }
 
-        if (!max_scale) {
+        nếu (!max_scale) {
             memset(qs, 0, quant_size);
             dh += block_size/sizeof(ggml_fp16_t);
             qs += block_size;
@@ -4137,8 +4137,8 @@ static void quantize_row_iq3_xxs_impl(int grid_size, const float * GGML_RESTRICT
         float d = max_scale/31;
         dh[0] = GGML_FP32_TO_FP16(d * 1.0125f);  // small improvement via this fudge factor
         float id = 1/d;
-        for (int ib = 0; ib < QK_K/32; ++ib) {
-            int l = nearest_int(0.5f*(id*scales[ib]-1));
+        cho (số_nguyên ib = 0; ib < QK_K/32; ++ib) {
+            số_nguyên l = nearest_int(0.5f*(id*scales[ib]-1));
             l = MAX(0, MIN(15, l));
             scales_and_signs[ib] |= ((uint32_t)l << 28);
         }
@@ -4154,12 +4154,12 @@ size_t quantize_iq3_xxs(const float * GGML_RESTRICT src, void * GGML_RESTRICT ds
     GGML_ASSERT(n_per_row%QK_K == 0);
     int64_t nblock = n_per_row/QK_K;
     char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
+    cho (int64_t row = 0; row < nrow; ++row) {
         quantize_row_iq3_xxs_impl(256, src, qrow, n_per_row, quant_weights);
         src += n_per_row;
         qrow += nblock*sizeof(block_iq3_xxs);
     }
-    return nrow * nblock * sizeof(block_iq3_xxs);
+    trả_về nrow * nblock * sizeof(block_iq3_xxs);
 }
 
 void quantize_row_iq3_xxs_ref(const float * GGML_RESTRICT x, block_iq3_xxs * GGML_RESTRICT y, int64_t k) {
@@ -4167,7 +4167,7 @@ void quantize_row_iq3_xxs_ref(const float * GGML_RESTRICT x, block_iq3_xxs * GGM
     quantize_row_iq3_xxs_impl(256, x, y, k, NULL);
 }
 
-static void quantize_row_iq3_s_impl(int block_size, const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int n,
+static void quantize_row_iq3_s_impl(số_nguyên block_size, const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, số_nguyên n,
         const float * GGML_RESTRICT quant_weights,
         float   * scales,
         float   * weight,
@@ -4179,10 +4179,10 @@ static void quantize_row_iq3_s_impl(int block_size, const float * GGML_RESTRICT 
         bool    * is_on_grid_aux,
         uint8_t * block_signs) {
 
-    const int gindex = iq3_data_index(512);
+    const số_nguyên gindex = iq3_data_index(512);
 
     const uint32_t * kgrid_q3xs      = iq3_data[gindex].grid;
-    const int      * kmap_q3xs       = iq3_data[gindex].map;
+    const số_nguyên      * kmap_q3xs       = iq3_data[gindex].map;
     const uint16_t * kneighbors_q3xs = iq3_data[gindex].neighbours;
 
     //GGML_ASSERT(quant_weights   && "missing quantization weights");
@@ -4191,16 +4191,16 @@ static void quantize_row_iq3_s_impl(int block_size, const float * GGML_RESTRICT 
     GGML_ASSERT(kneighbors_q3xs && "forgot to call ggml_quantize_init()?");
     GGML_ASSERT(n%QK_K == 0);
 
-    const int kMaxQ = 8;
+    const số_nguyên kMaxQ = 8;
 
     const int64_t nbl = n/QK_K;
 
     block_iq3_s * y = vy;
 
-    const int bs4 = block_size/4;
-    const int bs8 = block_size/8;
+    const số_nguyên bs4 = block_size/4;
+    const số_nguyên bs8 = block_size/8;
 
-    for (int ibl = 0; ibl < nbl; ++ibl) {
+    cho (số_nguyên ibl = 0; ibl < nbl; ++ibl) {
 
         memset(&y[ibl], 0, sizeof(block_iq3_s));
         y[ibl].d = GGML_FP32_TO_FP16(0.f);
@@ -4213,111 +4213,111 @@ static void quantize_row_iq3_s_impl(int block_size, const float * GGML_RESTRICT 
 
         const float * xbl = x + QK_K*ibl;
         float sumx2 = 0;
-        for (int i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
+        cho (số_nguyên i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
         float sigma2 = 2*sumx2/QK_K;
 
-        for (int ib = 0; ib < QK_K/block_size; ++ib) {
+        cho (số_nguyên ib = 0; ib < QK_K/block_size; ++ib) {
             const float * xb = xbl + block_size*ib;
-            if (quant_weights) {
+            nếu (quant_weights) {
                 const float * qw = quant_weights + QK_K*ibl + block_size*ib;
-                for (int i = 0; i < block_size; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
-            } else {
-                for (int i = 0; i < block_size; ++i) weight[i] = xb[i]*xb[i];
+                cho (số_nguyên i = 0; i < block_size; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
+            } không_thì {
+                cho (số_nguyên i = 0; i < block_size; ++i) weight[i] = xb[i]*xb[i];
             }
-            for (int i = 0; i < block_size; ++i) waux[i] = sqrtf(weight[i]);
-            for (int k = 0; k < bs8; ++k) {
+            cho (số_nguyên i = 0; i < block_size; ++i) waux[i] = sqrtf(weight[i]);
+            cho (số_nguyên k = 0; k < bs8; ++k) {
                 uint8_t s = 0;
-                for (int i = 0; i < 8; ++i) {
-                    if (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
-                    else {
+                cho (số_nguyên i = 0; i < 8; ++i) {
+                    nếu (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
+                    không_thì {
                         xval[8*k + i] = -xb[8*k + i]; s |= (1 << i);
                     }
                 }
                 block_signs[k] = s;
             }
             float max = xval[0];
-            for (int i = 1; i < block_size; ++i) max = MAX(max, xval[i]);
+            cho (số_nguyên i = 1; i < block_size; ++i) max = MAX(max, xval[i]);
             memset(L, 0, block_size);
-            if (!max) {
+            nếu (!max) {
                 scales[ib] = 0;
                 continue;
             }
             float best = 0;
             float scale = max/(2*kMaxQ-1);
-            for (int k = 0; k < bs4; ++k) is_on_grid[k] = false;
-            for (int is = -9; is <= 9; ++is) {
+            cho (số_nguyên k = 0; k < bs4; ++k) is_on_grid[k] = false;
+            cho (số_nguyên is = -9; is <= 9; ++is) {
                 float id = (2*kMaxQ-1+is*0.2f)/max;
                 float this_scale = 1/id;
-                for (int k = 0; k < bs4; ++k) {
-                    for (int i = 0; i < 4; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[4*k+i]-1));
+                cho (số_nguyên k = 0; k < bs4; ++k) {
+                    cho (số_nguyên i = 0; i < 4; ++i) {
+                        số_nguyên l = nearest_int(0.5f*(id*xval[4*k+i]-1));
                         Laux[4*k+i] = MAX(0, MIN(kMaxQ-1, l));
                     }
                     uint16_t u = 0;
-                    for (int i = 0; i < 4; ++i) u |= (Laux[4*k+i] << 3*i);
-                    int grid_index = kmap_q3xs[u];
+                    cho (số_nguyên i = 0; i < 4; ++i) u |= (Laux[4*k+i] << 3*i);
+                    số_nguyên grid_index = kmap_q3xs[u];
                     is_on_grid_aux[k] = true;
-                    if (grid_index < 0) {
+                    nếu (grid_index < 0) {
                         is_on_grid_aux[k] = false;
                         const uint16_t * neighbours = kneighbors_q3xs - kmap_q3xs[u] - 1;
                         grid_index = iq3_find_best_neighbour(neighbours, kgrid_q3xs, xval + 4*k, waux + 4*k, this_scale, Laux + 4*k);
                     }
                 }
                 float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < block_size; ++i) {
+                cho (số_nguyên i = 0; i < block_size; ++i) {
                     float w = weight[i];
                     float q = 2*Laux[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0 && sumqx*sumqx > best*sumq2) {
+                nếu (sumq2 > 0 && sumqx*sumqx > best*sumq2) {
                     scale = sumqx/sumq2; best = scale*sumqx;
-                    for (int i = 0; i < block_size; ++i) L[i] = Laux[i];
-                    for (int k = 0; k < bs4; ++k) is_on_grid[k] = is_on_grid_aux[k];
+                    cho (số_nguyên i = 0; i < block_size; ++i) L[i] = Laux[i];
+                    cho (số_nguyên k = 0; k < bs4; ++k) is_on_grid[k] = is_on_grid_aux[k];
                 }
             }
-            int n_not_ongrid = 0;
-            for (int k = 0; k < bs4; ++k) if (!is_on_grid[k]) ++n_not_ongrid;
-            if (n_not_ongrid > 0 && scale > 0) {
+            số_nguyên n_not_ongrid = 0;
+            cho (số_nguyên k = 0; k < bs4; ++k) nếu (!is_on_grid[k]) ++n_not_ongrid;
+            nếu (n_not_ongrid > 0 && scale > 0) {
                 float id = 1/scale;
-                for (int k = 0; k < bs4; ++k) {
+                cho (số_nguyên k = 0; k < bs4; ++k) {
                     //if (is_on_grid[k]) continue;
                     uint16_t u = 0;
-                    for (int i = 0; i < 4; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[4*k+i]-1));
+                    cho (số_nguyên i = 0; i < 4; ++i) {
+                        số_nguyên l = nearest_int(0.5f*(id*xval[4*k+i]-1));
                         l = MAX(0, MIN(kMaxQ-1, l));
                         u |= (l << 3*i);
                     }
-                    int grid_index = kmap_q3xs[u];
-                    if (grid_index < 0) {
+                    số_nguyên grid_index = kmap_q3xs[u];
+                    nếu (grid_index < 0) {
                         const uint16_t * neighbours = kneighbors_q3xs - kmap_q3xs[u] - 1;
                         grid_index = iq3_find_best_neighbour(neighbours, kgrid_q3xs, xval + 4*k, waux + 4*k, scale, L + 4*k);
                     }
                     const int8_t * pg = (const int8_t *)(kgrid_q3xs + grid_index);
-                    for (int i = 0; i < 4; ++i) L[4*k+i] = (pg[i] - 1)/2;
+                    cho (số_nguyên i = 0; i < 4; ++i) L[4*k+i] = (pg[i] - 1)/2;
                 }
                 float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < block_size; ++i) {
+                cho (số_nguyên i = 0; i < block_size; ++i) {
                     float w = weight[i];
                     float q = 2*L[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0) scale = sumqx/sumq2;
+                nếu (sumq2 > 0) scale = sumqx/sumq2;
             }
-            if (scale < 0) {
+            nếu (scale < 0) {
                 // This should never happen, but just in case, flip scale so that it is positive (we use uint's to encode the scale)
                 // and correspondingly flip quant signs.
                 scale = -scale;
-                for (int k = 0; k < bs8; ++k) block_signs[k] = ~block_signs[k];
+                cho (số_nguyên k = 0; k < bs8; ++k) block_signs[k] = ~block_signs[k];
             }
-            for (int k = 0; k < bs4; ++k) {
+            cho (số_nguyên k = 0; k < bs4; ++k) {
                 uint16_t u = 0;
-                for (int i = 0; i < 4; ++i) u |= (L[4*k+i] << 3*i);
-                int grid_index = kmap_q3xs[u];
-                if (grid_index < 0) {
+                cho (số_nguyên i = 0; i < 4; ++i) u |= (L[4*k+i] << 3*i);
+                số_nguyên grid_index = kmap_q3xs[u];
+                nếu (grid_index < 0) {
                     printf("Oops: found point %u not on grid:", u);
-                    for (int i = 0; i < 4; ++i) printf(" %d", L[4*k+i]);
+                    cho (số_nguyên i = 0; i < 4; ++i) printf(" %d", L[4*k+i]);
                     printf("\n");
                     GGML_ABORT("fatal error");
                 }
@@ -4325,24 +4325,24 @@ static void quantize_row_iq3_s_impl(int block_size, const float * GGML_RESTRICT 
                 qh[(ib*bs4+k)/8] |= ((grid_index >> 8) << ((ib*bs4+k)%8));
             }
             qs += bs4;
-            for (int k = 0; k < bs8; ++k) signs[k] = block_signs[k];
+            cho (số_nguyên k = 0; k < bs8; ++k) signs[k] = block_signs[k];
             signs += bs8;
             GGML_ASSERT(scale >= 0);
             scales[ib] = scale;
             max_scale = MAX(max_scale, scale);
         }
 
-        if (!max_scale) {
+        nếu (!max_scale) {
             continue;
         }
 
         float d = max_scale/31;
         y[ibl].d = GGML_FP32_TO_FP16(d * 1.033f);
         float id = 1/d;
-        for (int ib = 0; ib < QK_K/block_size; ib += 2) {
-            int l1 = nearest_int(0.5f*(id*scales[ib+0]-1));
+        cho (số_nguyên ib = 0; ib < QK_K/block_size; ib += 2) {
+            số_nguyên l1 = nearest_int(0.5f*(id*scales[ib+0]-1));
             l1 = MAX(0, MIN(15, l1));
-            int l2 = nearest_int(0.5f*(id*scales[ib+1]-1));
+            số_nguyên l2 = nearest_int(0.5f*(id*scales[ib+1]-1));
             l2 = MAX(0, MIN(15, l2));
             y[ibl].scales[ib/2] = l1 | (l2 << 4);
         }
@@ -4364,13 +4364,13 @@ size_t quantize_iq3_s(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst,
     bool   is_on_grid_aux[IQ3S_BLOCK_SIZE/4];
     uint8_t block_signs[IQ3S_BLOCK_SIZE/8];
     char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
+    cho (int64_t row = 0; row < nrow; ++row) {
         quantize_row_iq3_s_impl(IQ3S_BLOCK_SIZE, src, qrow, n_per_row, quant_weights,
                 scales, weight, xval, L, Laux, waux, is_on_grid, is_on_grid_aux, block_signs);
         src += n_per_row;
         qrow += nblock*sizeof(block_iq3_s);
     }
-    return nrow * nblock * sizeof(block_iq3_s);
+    trả_về nrow * nblock * sizeof(block_iq3_s);
 }
 
 void quantize_row_iq3_s_ref(const float * GGML_RESTRICT x, block_iq3_s * GGML_RESTRICT y, int64_t k) {
@@ -4381,49 +4381,49 @@ void quantize_row_iq3_s_ref(const float * GGML_RESTRICT x, block_iq3_s * GGML_RE
 
 // =================================== 1.5 bpw ===================================================
 
-static int iq1_find_best_neighbour(const uint16_t * GGML_RESTRICT neighbours, const uint64_t * GGML_RESTRICT grid,
-        const float * GGML_RESTRICT xval, const float * GGML_RESTRICT weight, float * scale, int8_t * GGML_RESTRICT L, int ngrid) {
-    int num_neighbors = neighbours[0];
+static số_nguyên iq1_find_best_neighbour(const uint16_t * GGML_RESTRICT neighbours, const uint64_t * GGML_RESTRICT grid,
+        const float * GGML_RESTRICT xval, const float * GGML_RESTRICT weight, float * scale, int8_t * GGML_RESTRICT L, số_nguyên ngrid) {
+    số_nguyên num_neighbors = neighbours[0];
     GGML_ASSERT(num_neighbors > 0);
     float best_score = -FLT_MAX;
-    int grid_index = -1;
-    for (int j = 1; j <= num_neighbors; ++j) {
+    số_nguyên grid_index = -1;
+    cho (số_nguyên j = 1; j <= num_neighbors; ++j) {
         const int8_t * pg = (const int8_t *)(grid + neighbours[j]);
         float sumqx = 0, sumq2 = 0;
-        for (int i = 0; i < 8; ++i) {
+        cho (số_nguyên i = 0; i < 8; ++i) {
             float q = (pg[i] - 3)/2;
             float w = weight[i];
             sumqx += w*q*xval[i];
             sumq2 += w*q*q;
         }
-        if (sumqx > 0 && sumq2 > 0 && sumqx*sumqx > best_score*sumq2) {
+        nếu (sumqx > 0 && sumq2 > 0 && sumqx*sumqx > best_score*sumq2) {
             *scale = sumqx/sumq2; best_score = *scale * sumqx;
             grid_index = neighbours[j];
         }
     }
-    if (grid_index < 0) {
-        for (int i = 0; i < ngrid; ++i) {
+    nếu (grid_index < 0) {
+        cho (số_nguyên i = 0; i < ngrid; ++i) {
             const int8_t * grid_i = (const int8_t *)(grid + i);
             float sumqx = 0, sumq2 = 0;
-            for (int j = 0; j < 8; ++j) {
+            cho (số_nguyên j = 0; j < 8; ++j) {
                 float w = weight[j];
                 float q = (grid_i[j] - 3)/2;
                 sumqx += w*q*xval[j];
                 sumq2 += w*q*q;
             }
-            if (sumqx > 0 && sumq2 > 0 && sumqx*sumqx > best_score*sumq2) {
+            nếu (sumqx > 0 && sumq2 > 0 && sumqx*sumqx > best_score*sumq2) {
                 *scale = sumqx/sumq2; best_score = *scale*sumqx;
                 grid_index = i;
             }
         }
     }
-    if (grid_index < 0) {
+    nếu (grid_index < 0) {
         printf("Oops, did not find grid point\n");
         printf("Have %d neighbours\n", num_neighbors);
-        for (int j = 1; j <= num_neighbors; ++j) {
+        cho (số_nguyên j = 1; j <= num_neighbors; ++j) {
             const int8_t * pg = (const int8_t *)(grid + neighbours[j]);
             float sumqx = 0, sumq2 = 0;
-            for (int i = 0; i < 8; ++i) {
+            cho (số_nguyên i = 0; i < 8; ++i) {
                 float q = (pg[i] - 3)/2;
                 float w = weight[i];
                 sumqx += w*q*xval[i];
@@ -4437,53 +4437,53 @@ static int iq1_find_best_neighbour(const uint16_t * GGML_RESTRICT neighbours, co
     *scale *= 1.05f;  // This is a fudge factor. Don't ask me why it improves the result.
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     const int8_t * pg = (const int8_t *)(grid + grid_index);
-    for (int i = 0; i < 8; ++i) L[i] = (pg[i] - 1)/2;
-    return grid_index;
+    cho (số_nguyên i = 0; i < 8; ++i) L[i] = (pg[i] - 1)/2;
+    trả_về grid_index;
 }
 
-static int iq1_find_best_neighbour2(const uint16_t * GGML_RESTRICT neighbours, const uint64_t * GGML_RESTRICT grid,
-        const float * GGML_RESTRICT xval, const float * GGML_RESTRICT weight, float scale, const float * GGML_RESTRICT xg, int8_t * GGML_RESTRICT L, int ngrid) {
-    int num_neighbors = neighbours[0];
+static số_nguyên iq1_find_best_neighbour2(const uint16_t * GGML_RESTRICT neighbours, const uint64_t * GGML_RESTRICT grid,
+        const float * GGML_RESTRICT xval, const float * GGML_RESTRICT weight, float scale, const float * GGML_RESTRICT xg, int8_t * GGML_RESTRICT L, số_nguyên ngrid) {
+    số_nguyên num_neighbors = neighbours[0];
     GGML_ASSERT(num_neighbors > 0);
     float best_score = FLT_MAX;
-    int grid_index = -1;
-    for (int j = 1; j <= num_neighbors; ++j) {
+    số_nguyên grid_index = -1;
+    cho (số_nguyên j = 1; j <= num_neighbors; ++j) {
         const int8_t * pg = (const int8_t *)(grid + neighbours[j]);
         float d2 = 0;
-        for (int i = 0; i < 8; ++i) {
+        cho (số_nguyên i = 0; i < 8; ++i) {
             float q = xg[(pg[i] - 1)/2];
             float w = weight[i];
             float diff = scale*q - xval[i];
             d2 += w*diff*diff;
         }
-        if (d2 < best_score) {
+        nếu (d2 < best_score) {
             best_score = d2;
             grid_index = neighbours[j];
         }
     }
-    if (grid_index < 0) {
-        for (int i = 0; i < ngrid; ++i) {
+    nếu (grid_index < 0) {
+        cho (số_nguyên i = 0; i < ngrid; ++i) {
             const int8_t * grid_i = (const int8_t *)(grid + i);
             float d2 = 0;
-            for (int j = 0; j < 8; ++j) {
+            cho (số_nguyên j = 0; j < 8; ++j) {
                 float w = weight[j];
                 float q = xg[(grid_i[j] - 1)/2];
                 float diff = scale*q - xval[i];
                 d2 += w*diff*diff;
             }
-            if (d2 < best_score) {
+            nếu (d2 < best_score) {
                 best_score = d2;
                 grid_index = i;
             }
         }
     }
-    if (grid_index < 0) {
+    nếu (grid_index < 0) {
         printf("Oops, did not find grid point\n");
         printf("Have %d neighbours\n", num_neighbors);
-        for (int j = 1; j <= num_neighbors; ++j) {
+        cho (số_nguyên j = 1; j <= num_neighbors; ++j) {
             const int8_t * pg = (const int8_t *)(grid + neighbours[j]);
             float sumqx = 0, sumq2 = 0;
-            for (int i = 0; i < 8; ++i) {
+            cho (số_nguyên i = 0; i < 8; ++i) {
                 float q = xg[(pg[i] - 1)/2];
                 float w = weight[i];
                 sumqx += w*q*xval[i];
@@ -4494,14 +4494,14 @@ static int iq1_find_best_neighbour2(const uint16_t * GGML_RESTRICT neighbours, c
     }
     GGML_ASSERT(grid_index >= 0);
     const int8_t * pg = (const int8_t *)(grid + grid_index);
-    for (int i = 0; i < 8; ++i) L[i] = (pg[i] - 1)/2;
-    return grid_index;
+    cho (số_nguyên i = 0; i < 8; ++i) L[i] = (pg[i] - 1)/2;
+    trả_về grid_index;
 }
 
-static int iq1_sort_helper(const void * left, const void * right) {
+static số_nguyên iq1_sort_helper(const void * left, const void * right) {
     const float * l = left;
     const float * r = right;
-    return *l < *r ? -1 : *l > *r ? 1 : 0;
+    trả_về *l < *r ? -1 : *l > *r ? 1 : 0;
 }
 
 #define IQ1S_BLOCK_SIZE 32
@@ -4516,10 +4516,10 @@ static void quantize_row_iq1_s_impl(const float * GGML_RESTRICT x, void * GGML_R
         uint16_t * index,
         int8_t   * shifts) {
 
-    const int gindex = iq2_data_index(GGML_TYPE_IQ1_S);
+    const số_nguyên gindex = iq2_data_index(GGML_TYPE_IQ1_S);
 
     const uint64_t * kgrid_q2xs      = iq2_data[gindex].grid;
-    const int      * kmap_q2xs       = iq2_data[gindex].map;
+    const số_nguyên      * kmap_q2xs       = iq2_data[gindex].map;
     const uint16_t * kneighbors_q2xs = iq2_data[gindex].neighbours;
 
     GGML_ASSERT(quant_weights   && "missing quantization weights");
@@ -4532,15 +4532,15 @@ static void quantize_row_iq1_s_impl(const float * GGML_RESTRICT x, void * GGML_R
 
     const int64_t nbl = n/QK_K;
 
-    const int block_size = IQ1S_BLOCK_SIZE;
+    const số_nguyên block_size = IQ1S_BLOCK_SIZE;
 
     const float x_p[3] = {-1 + IQ1S_DELTA,  IQ1S_DELTA, 1 + IQ1S_DELTA};
     const float x_m[3] = {-1 - IQ1S_DELTA, -IQ1S_DELTA, 1 - IQ1S_DELTA};
 
 
-    int * idx = (int *)(pairs + 1);
+    số_nguyên * idx = (số_nguyên *)(pairs + 1);
 
-    for (int ibl = 0; ibl < nbl; ++ibl) {
+    cho (số_nguyên ibl = 0; ibl < nbl; ++ibl) {
 
         y[ibl].d = GGML_FP32_TO_FP16(0.f);
         memset(y[ibl].qs, 0, QK_K/8);
@@ -4550,16 +4550,16 @@ static void quantize_row_iq1_s_impl(const float * GGML_RESTRICT x, void * GGML_R
 
         const float * xbl = x + QK_K*ibl;
         float sumx2 = 0;
-        for (int i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
+        cho (số_nguyên i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
         float sigma2 = 2*sumx2/QK_K;
 
-        for (int ib = 0; ib < QK_K/block_size; ++ib) {
+        cho (số_nguyên ib = 0; ib < QK_K/block_size; ++ib) {
             const float * xb = xbl + block_size*ib;
             const float * qw = quant_weights + QK_K*ibl + block_size*ib;
-            for (int i = 0; i < block_size; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
+            cho (số_nguyên i = 0; i < block_size; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
             float max = fabsf(xb[0]);
-            for (int i = 1; i < block_size; ++i) max = MAX(max, fabsf(xb[i]));
-            if (max < GROUP_MAX_EPS_IQ1_S) {
+            cho (số_nguyên i = 1; i < block_size; ++i) max = MAX(max, fabsf(xb[i]));
+            nếu (max < GROUP_MAX_EPS_IQ1_S) {
                 scales[ib] = 0;
                 shifts[ib] = 1;
                 memset(L, 1, block_size);
@@ -4571,57 +4571,57 @@ static void quantize_row_iq1_s_impl(const float * GGML_RESTRICT x, void * GGML_R
             // in ascending order, compute Si = sum[weight[j] xb[j], j = 0...i] and
             // Wi = sum[weight[j], j = 0...i], and use these to quckly get get the optimum scale
             // for each possible and score for each split.
-            for (int j = 0; j < block_size; ++j) {
+            cho (số_nguyên j = 0; j < block_size; ++j) {
                 pairs[2*j] = xb[j];
                 idx[2*j] = j;
             }
             qsort(pairs, block_size, 2*sizeof(float), iq1_sort_helper);
             {
                 sumx[0] = sumw[0] = 0;
-                for (int j = 0; j < block_size; ++j) {
-                    int i = idx[2*j];
+                cho (số_nguyên j = 0; j < block_size; ++j) {
+                    số_nguyên i = idx[2*j];
                     sumx[j+1] = sumx[j] + weight[i]*xb[i];
                     sumw[j+1] = sumw[j] + weight[i];
                 }
             }
             float best_score = -FLT_MAX, scale = max;
-            int besti1 = -1, besti2 = -1, best_shift = 0;
-            for (int i1 = 0; i1 <= block_size; ++i1) {
-                for (int i2 = i1; i2 <= block_size; ++i2) {
+            số_nguyên besti1 = -1, besti2 = -1, best_shift = 0;
+            cho (số_nguyên i1 = 0; i1 <= block_size; ++i1) {
+                cho (số_nguyên i2 = i1; i2 <= block_size; ++i2) {
                     float sumqx = (sumx[i1] - sumx[0])*x_p[0] + (sumx[i2] - sumx[i1])*x_p[1] + (sumx[block_size] - sumx[i2])*x_p[2];
                     float sumq2 = (sumw[i1] - sumw[0])*x_p[0]*x_p[0] + (sumw[i2] - sumw[i1])*x_p[1]*x_p[1] + (sumw[block_size] - sumw[i2])*x_p[2]*x_p[2];
-                    if (sumq2 > 0 && sumqx*sumqx > best_score*sumq2) {
+                    nếu (sumq2 > 0 && sumqx*sumqx > best_score*sumq2) {
                         scale = sumqx/sumq2; best_score = scale*sumqx;
                         besti1 = i1; besti2 = i2; best_shift = 1;
                     }
                     sumqx = (sumx[i1] - sumx[0])*x_m[0] + (sumx[i2] - sumx[i1])*x_m[1] + (sumx[block_size] - sumx[i2])*x_m[2];
                     sumq2 = (sumw[i1] - sumw[0])*x_m[0]*x_m[0] + (sumw[i2] - sumw[i1])*x_m[1]*x_m[1] + (sumw[block_size] - sumw[i2])*x_m[2]*x_m[2];
-                    if (sumq2 > 0 && sumqx*sumqx > best_score*sumq2) {
+                    nếu (sumq2 > 0 && sumqx*sumqx > best_score*sumq2) {
                         scale = sumqx/sumq2; best_score = scale*sumqx;
                         besti1 = i1; besti2 = i2; best_shift = -1;
                     }
                 }
             }
-            if (besti1 < 0 || besti2 < 0 || best_shift == 0) {
+            nếu (besti1 < 0 || besti2 < 0 || best_shift == 0) {
                 scales[ib] = 0;
                 shifts[ib] = 1;
                 memset(L, 1, block_size);
                 continue;
             }
-            for (int j =      0; j < besti1; ++j) L[idx[2*j]] = 0;
-            for (int j = besti1; j < besti2; ++j) L[idx[2*j]] = 1;
-            for (int j = besti2; j < block_size; ++j) L[idx[2*j]] = 2;
-            if (scale < 0) {
-                for (int j = 0; j < block_size; ++j) L[j] = 2 - L[j];
+            cho (số_nguyên j =      0; j < besti1; ++j) L[idx[2*j]] = 0;
+            cho (số_nguyên j = besti1; j < besti2; ++j) L[idx[2*j]] = 1;
+            cho (số_nguyên j = besti2; j < block_size; ++j) L[idx[2*j]] = 2;
+            nếu (scale < 0) {
+                cho (số_nguyên j = 0; j < block_size; ++j) L[j] = 2 - L[j];
                 scale = -scale; best_shift = -best_shift;
             }
             bool all_on_grid = true;
             const float * xx = best_shift == 1 ? x_p : x_m;
-            for (int k = 0; k < block_size/8; ++k) {
+            cho (số_nguyên k = 0; k < block_size/8; ++k) {
                 uint16_t u = 0;
-                for (int j = 0; j < 8; ++j) u |= (L[8*k+j] << 2*j);
-                int grid_index = kmap_q2xs[u];
-                if (grid_index < 0) {
+                cho (số_nguyên j = 0; j < 8; ++j) u |= (L[8*k+j] << 2*j);
+                số_nguyên grid_index = kmap_q2xs[u];
+                nếu (grid_index < 0) {
                     all_on_grid = false;
                     const uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
                     grid_index = iq1_find_best_neighbour2(neighbours, kgrid_q2xs, xb + 8*k, weight + 8*k, scale, xx, L + 8*k, NGRID_IQ1S);
@@ -4629,21 +4629,21 @@ static void quantize_row_iq1_s_impl(const float * GGML_RESTRICT x, void * GGML_R
                 }
                 index[k] = grid_index;
             }
-            if (!all_on_grid) {
+            nếu (!all_on_grid) {
                 float sumqx = 0, sumq2 = 0;
-                for (int k = 0; k < block_size/8; ++k) {
+                cho (số_nguyên k = 0; k < block_size/8; ++k) {
                     const int8_t * pg = (const int8_t *)(kgrid_q2xs + index[k]);
-                    for (int j = 0; j < 8; ++j) {
+                    cho (số_nguyên j = 0; j < 8; ++j) {
                         float w = weight[8*k + j];
                         float q = xx[(pg[j] - 1)/2];
                         sumqx += w*q*xb[8*k+j];
                         sumq2 += w*q*q;
                     }
                 }
-                if (sumqx > 0 && sumq2 > 0) scale = sumqx/sumq2;
+                nếu (sumqx > 0 && sumq2 > 0) scale = sumqx/sumq2;
             }
             uint16_t h = 0;
-            for (int k = 0; k < block_size/8; ++k) {
+            cho (số_nguyên k = 0; k < block_size/8; ++k) {
                 y[ibl].qs[(block_size/8)*ib + k] = index[k] & 255;
                 h |= (index[k] >> 8) << 3*k;
             }
@@ -4654,17 +4654,17 @@ static void quantize_row_iq1_s_impl(const float * GGML_RESTRICT x, void * GGML_R
             max_scale = MAX(max_scale, scale);
         }
 
-        if (!max_scale) {
+        nếu (!max_scale) {
             continue;
         }
 
         float d = max_scale/15;
         y[ibl].d = GGML_FP32_TO_FP16(d*1.125f); // 1.125f is another fudge factor. Don't ask me why it is needed.
         float id = 1/d;
-        for (int ib = 0; ib < QK_K/block_size; ++ib) {
-            int l = nearest_int(0.5f*(id*scales[ib]-1));
+        cho (số_nguyên ib = 0; ib < QK_K/block_size; ++ib) {
+            số_nguyên l = nearest_int(0.5f*(id*scales[ib]-1));
             l = MAX(0, MIN(7, l));
-            if (shifts[ib] == -1) l |= 8;
+            nếu (shifts[ib] == -1) l |= 8;
             y[ibl].qh[ib] |= (l << 12);
         }
     }
@@ -4682,12 +4682,12 @@ size_t quantize_iq1_s(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst,
     int8_t shifts[QK_K/IQ1S_BLOCK_SIZE];
     int64_t nblock = n_per_row/QK_K;
     char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
+    cho (int64_t row = 0; row < nrow; ++row) {
         quantize_row_iq1_s_impl(src, qrow, n_per_row, quant_weights, scales, weight, sumx, sumw, pairs, L, index, shifts);
         src += n_per_row;
         qrow += nblock*sizeof(block_iq1_s);
     }
-    return nrow * nblock * sizeof(block_iq1_s);
+    trả_về nrow * nblock * sizeof(block_iq1_s);
 }
 
 static void quantize_row_iq1_m_impl(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t n, const float * GGML_RESTRICT quant_weights,
@@ -4698,10 +4698,10 @@ static void quantize_row_iq1_m_impl(const float * GGML_RESTRICT x, void * GGML_R
         uint16_t * index,
         int8_t   * shifts) {
 
-    const int gindex = iq2_data_index(GGML_TYPE_IQ1_M);
+    const số_nguyên gindex = iq2_data_index(GGML_TYPE_IQ1_M);
 
     const uint64_t * kgrid_q2xs      = iq2_data[gindex].grid;
-    const int      * kmap_q2xs       = iq2_data[gindex].map;
+    const số_nguyên      * kmap_q2xs       = iq2_data[gindex].map;
     const uint16_t * kneighbors_q2xs = iq2_data[gindex].neighbours;
 
     //GGML_ASSERT(quant_weights   && "missing quantization weights");
@@ -4714,20 +4714,20 @@ static void quantize_row_iq1_m_impl(const float * GGML_RESTRICT x, void * GGML_R
 
     const int64_t nbl = n/QK_K;
 
-    const int block_size = IQ1M_BLOCK_SIZE;
+    const số_nguyên block_size = IQ1M_BLOCK_SIZE;
 
     const float x_p[3] = {-1 + IQ1M_DELTA,  IQ1M_DELTA, 1 + IQ1M_DELTA};
     const float x_m[3] = {-1 - IQ1M_DELTA, -IQ1M_DELTA, 1 - IQ1M_DELTA};
     const uint8_t masks[4] = {0x00, 0x80, 0x08, 0x88};
 
-    int * idx = (int *)(pairs + 1);
+    số_nguyên * idx = (số_nguyên *)(pairs + 1);
 
     float sumqx[4], sumq2[4];
 
     iq1m_scale_t s;
     const float * xx;
 
-    for (int ibl = 0; ibl < nbl; ++ibl) {
+    cho (số_nguyên ibl = 0; ibl < nbl; ++ibl) {
         memset(y[ibl].qs, 0, QK_K/8);
         memset(y[ibl].qh, 0, QK_K/16);
         memset(y[ibl].scales, 0, QK_K/32);
@@ -4736,20 +4736,20 @@ static void quantize_row_iq1_m_impl(const float * GGML_RESTRICT x, void * GGML_R
 
         const float * xbl = x + QK_K*ibl;
         float sumx2 = 0;
-        for (int i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
+        cho (số_nguyên i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
         float sigma2 = 2*sumx2/QK_K;
 
-        for (int ib = 0; ib < QK_K/block_size; ++ib) {
+        cho (số_nguyên ib = 0; ib < QK_K/block_size; ++ib) {
             const float * xb = xbl + block_size*ib;
-            if (quant_weights) {
+            nếu (quant_weights) {
                 const float * qw = quant_weights + QK_K*ibl + block_size*ib;
-                for (int i = 0; i < block_size; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
-            } else {
-                for (int i = 0; i < block_size; ++i) weight[i] = xb[i]*xb[i];
+                cho (số_nguyên i = 0; i < block_size; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
+            } không_thì {
+                cho (số_nguyên i = 0; i < block_size; ++i) weight[i] = xb[i]*xb[i];
             }
             float max = fabsf(xb[0]);
-            for (int i = 1; i < block_size; ++i) max = MAX(max, fabsf(xb[i]));
-            if (max < GROUP_MAX_EPS_IQ1_M) {
+            cho (số_nguyên i = 1; i < block_size; ++i) max = MAX(max, fabsf(xb[i]));
+            nếu (max < GROUP_MAX_EPS_IQ1_M) {
                 scales[ib] = 0;
                 shifts[ib] = 0;
                 memset(L, 1, block_size);
@@ -4761,13 +4761,13 @@ static void quantize_row_iq1_m_impl(const float * GGML_RESTRICT x, void * GGML_R
             // in ascending order, compute Si = sum[weight[j] xb[j], j = 0...i] and
             // Wi = sum[weight[j], j = 0...i], and use these to quckly get get the optimum scale
             // for each possible and score for each split.
-            for (int j = 0; j < block_size; ++j) {
+            cho (số_nguyên j = 0; j < block_size; ++j) {
                 pairs[2*j] = xb[j];
                 idx[2*j] = j;
             }
             qsort(pairs, block_size, 2*sizeof(float), iq1_sort_helper);
             float best_score = -FLT_MAX, scale = max;
-            int besti1 = -1, besti2 = -1, best_k = -1;
+            số_nguyên besti1 = -1, besti2 = -1, best_k = -1;
             // 0: +, +
             // 1: +, -
             // 2: -, +
@@ -4779,9 +4779,9 @@ static void quantize_row_iq1_m_impl(const float * GGML_RESTRICT x, void * GGML_R
                 float pw[2][IQ1M_BLOCK_SIZE+1];
                 px[0][0] = px[1][0] = 0;
                 pw[0][0] = pw[1][0] = 0;
-                for (int j = 0; j < block_size; ++j) {
-                    const int i = idx[2*j];
-                    const int h = i < block_size/2 ? 0 : 1;
+                cho (số_nguyên j = 0; j < block_size; ++j) {
+                    const số_nguyên i = idx[2*j];
+                    const số_nguyên h = i < block_size/2 ? 0 : 1;
                     px[h][j+1]   = px[h][j] + weight[i]*xb[i];
                     px[1-h][j+1] = px[1-h][j];
                     pw[h][j+1]   = pw[h][j] + weight[i];
@@ -4794,10 +4794,10 @@ static void quantize_row_iq1_m_impl(const float * GGML_RESTRICT x, void * GGML_R
                 const float cp2  = x_p[1]*x_p[1] - x_p[2]*x_p[2];
                 const float cm1  = x_m[0]*x_m[0] - x_m[1]*x_m[1];
                 const float cm2  = x_m[1]*x_m[1] - x_m[2]*x_m[2];
-                for (int i1 = 0; i1 <= block_size; ++i1) {
-                    for (int i2 = i1; i2 <= block_size; ++i2) {
+                cho (số_nguyên i1 = 0; i1 <= block_size; ++i1) {
+                    cho (số_nguyên i2 = i1; i2 <= block_size; ++i2) {
                         float qx_p[2], qx_m[2], q2_p[2], q2_m[2];
-                        for (int h = 0; h < 2; ++h) {
+                        cho (số_nguyên h = 0; h < 2; ++h) {
                             const float sx = px[h][i1] + px[h][i2];
                             qx_p[h] = txs[h]*p2 - sx;
                             qx_m[h] = txs[h]*m2 - sx;
@@ -4812,8 +4812,8 @@ static void quantize_row_iq1_m_impl(const float * GGML_RESTRICT x, void * GGML_R
                         sumq2[1] = q2_p[0] + q2_m[1];
                         sumq2[2] = q2_m[0] + q2_p[1];
                         sumq2[3] = q2_m[0] + q2_m[1];
-                        for (int k = 0; k < 4; ++k) {
-                            if (sumq2[k] > 0 && sumqx[k]*sumqx[k] > best_score*sumq2[k]) {
+                        cho (số_nguyên k = 0; k < 4; ++k) {
+                            nếu (sumq2[k] > 0 && sumqx[k]*sumqx[k] > best_score*sumq2[k]) {
                                 scale = sumqx[k]/sumq2[k]; best_score = scale*sumqx[k];
                                 besti1 = i1; besti2 = i2; best_k = k;
                             }
@@ -4821,28 +4821,28 @@ static void quantize_row_iq1_m_impl(const float * GGML_RESTRICT x, void * GGML_R
                     }
                 }
             }
-            if (besti1 < 0 || besti2 < 0 || best_k < 0) {
+            nếu (besti1 < 0 || besti2 < 0 || best_k < 0) {
                 scales[ib] = 0;
                 shifts[ib] = 0;
                 memset(L, 1, block_size);
                 continue;
             }
-            for (int j =      0; j < besti1; ++j) L[idx[2*j]] = 0;
-            for (int j = besti1; j < besti2; ++j) L[idx[2*j]] = 1;
-            for (int j = besti2; j < block_size; ++j) L[idx[2*j]] = 2;
-            if (scale < 0) {
-                for (int j = 0; j < block_size; ++j) L[j] = 2 - L[j];
+            cho (số_nguyên j =      0; j < besti1; ++j) L[idx[2*j]] = 0;
+            cho (số_nguyên j = besti1; j < besti2; ++j) L[idx[2*j]] = 1;
+            cho (số_nguyên j = besti2; j < block_size; ++j) L[idx[2*j]] = 2;
+            nếu (scale < 0) {
+                cho (số_nguyên j = 0; j < block_size; ++j) L[j] = 2 - L[j];
                 scale = -scale;
                 best_k = best_k == 0 ? 3 : best_k == 1 ? 2 : best_k == 2 ? 1 : 0;
             }
             bool all_on_grid = true;
-            for (int k = 0; k < block_size/8; ++k) {
-                if (k == 0) xx = best_k < 2 ? x_p : x_m;
-                else xx = best_k%2 == 0 ? x_p : x_m;
+            cho (số_nguyên k = 0; k < block_size/8; ++k) {
+                nếu (k == 0) xx = best_k < 2 ? x_p : x_m;
+                không_thì xx = best_k%2 == 0 ? x_p : x_m;
                 uint16_t u = 0;
-                for (int j = 0; j < 8; ++j) u |= (L[8*k+j] << 2*j);
-                int grid_index = kmap_q2xs[u];
-                if (grid_index < 0) {
+                cho (số_nguyên j = 0; j < 8; ++j) u |= (L[8*k+j] << 2*j);
+                số_nguyên grid_index = kmap_q2xs[u];
+                nếu (grid_index < 0) {
                     all_on_grid = false;
                     const uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
                     grid_index = iq1_find_best_neighbour2(neighbours, kgrid_q2xs, xb + 8*k, weight + 8*k, scale, xx, L + 8*k, NGRID_IQ1S);
@@ -4850,20 +4850,20 @@ static void quantize_row_iq1_m_impl(const float * GGML_RESTRICT x, void * GGML_R
                 }
                 index[k] = grid_index;
             }
-            if (!all_on_grid) {
+            nếu (!all_on_grid) {
                 float sumqx_f = 0, sumq2_f = 0;
-                for (int k = 0; k < block_size/8; ++k) {
-                    if (k == 0) xx = best_k < 2 ? x_p : x_m;
-                    else xx = best_k%2 == 0 ? x_p : x_m;
+                cho (số_nguyên k = 0; k < block_size/8; ++k) {
+                    nếu (k == 0) xx = best_k < 2 ? x_p : x_m;
+                    không_thì xx = best_k%2 == 0 ? x_p : x_m;
                     const int8_t * pg = (const int8_t *)(kgrid_q2xs + index[k]);
-                    for (int j = 0; j < 8; ++j) {
+                    cho (số_nguyên j = 0; j < 8; ++j) {
                         float w = weight[8*k + j];
                         float q = xx[(pg[j] - 1)/2];
                         sumqx_f += w*q*xb[8*k+j];
                         sumq2_f += w*q*q;
                     }
                 }
-                if (sumqx_f > 0 && sumq2_f > 0) scale = sumqx_f/sumq2_f;
+                nếu (sumqx_f > 0 && sumq2_f > 0) scale = sumqx_f/sumq2_f;
             }
             y[ibl].qs[2*ib + 0] = index[0] & 255;
             y[ibl].qs[2*ib + 1] = index[1] & 255;
@@ -4874,7 +4874,7 @@ static void quantize_row_iq1_m_impl(const float * GGML_RESTRICT x, void * GGML_R
             max_scale = MAX(max_scale, scale);
         }
 
-        if (!max_scale) {
+        nếu (!max_scale) {
             continue;
         }
 
@@ -4882,23 +4882,23 @@ static void quantize_row_iq1_m_impl(const float * GGML_RESTRICT x, void * GGML_R
         float d = max_scale/15;
         float id = 1/d;
         float sumqx_f = 0, sumq2_f = 0;
-        for (int ib = 0; ib < QK_K/block_size; ++ib) {
-            int l = nearest_int(0.5f*(id*scales[ib+0]-1));
+        cho (số_nguyên ib = 0; ib < QK_K/block_size; ++ib) {
+            số_nguyên l = nearest_int(0.5f*(id*scales[ib+0]-1));
             l = MAX(0, MIN(7, l));
             sc[ib/4] |= (l << 3*(ib%4));
             y[ibl].qh[ib] |= masks[shifts[ib]];
             const float * xb = xbl + block_size*ib;
-            if (quant_weights) {
+            nếu (quant_weights) {
                 const float * qw = quant_weights + QK_K*ibl + block_size*ib;
-                for (int i = 0; i < block_size; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
-            } else {
-                for (int i = 0; i < block_size; ++i) weight[i] = xb[i]*xb[i];
+                cho (số_nguyên i = 0; i < block_size; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
+            } không_thì {
+                cho (số_nguyên i = 0; i < block_size; ++i) weight[i] = xb[i]*xb[i];
             }
-            for (int k = 0; k < block_size/8; ++k) {
-                if (k == 0) xx = shifts[ib] < 2 ? x_p : x_m;
-                else xx = shifts[ib]%2 == 0 ? x_p : x_m;
+            cho (số_nguyên k = 0; k < block_size/8; ++k) {
+                nếu (k == 0) xx = shifts[ib] < 2 ? x_p : x_m;
+                không_thì xx = shifts[ib]%2 == 0 ? x_p : x_m;
                 const int8_t * pg = (const int8_t *)(kgrid_q2xs + y[ibl].qs[2*ib+k] + ((y[ibl].qh[ib] << (8 - 4*k)) & 0x700));
-                for (int j = 0; j < 8; ++j) {
+                cho (số_nguyên j = 0; j < 8; ++j) {
                     float w = weight[8*k + j];
                     float q = xx[(pg[j] - 1)/2]*(2*l+1);
                     sumqx_f += w*q*xb[8*k+j];
@@ -4906,7 +4906,7 @@ static void quantize_row_iq1_m_impl(const float * GGML_RESTRICT x, void * GGML_R
                 }
             }
         }
-        if (sumq2_f > 0) d = sumqx_f/sumq2_f;
+        nếu (sumq2_f > 0) d = sumqx_f/sumq2_f;
         s.f16 = GGML_FP32_TO_FP16(d*1.1125f); // 1.1125f is another fudge factor. Don't ask me why it is needed.
         sc[0] |= ((s.u16 & 0x000f) << 12);
         sc[1] |= ((s.u16 & 0x00f0) <<  8);
@@ -4925,57 +4925,57 @@ size_t quantize_iq1_m(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst,
     int8_t shifts[QK_K/IQ1M_BLOCK_SIZE];
     int64_t nblock = n_per_row/QK_K;
     char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
+    cho (int64_t row = 0; row < nrow; ++row) {
         quantize_row_iq1_m_impl(src, qrow, n_per_row, quant_weights, scales, weight, pairs, L, index, shifts);
         src += n_per_row;
         qrow += nblock*sizeof(block_iq1_m);
     }
-    return nrow * nblock * sizeof(block_iq1_m);
+    trả_về nrow * nblock * sizeof(block_iq1_m);
 }
 
 // ============================ 4-bit non-linear quants
 
-static void quantize_row_iq4_nl_impl(const int super_block_size, const int block_size, const float * GGML_RESTRICT x,
+static void quantize_row_iq4_nl_impl(const số_nguyên super_block_size, const số_nguyên block_size, const float * GGML_RESTRICT x,
         ggml_fp16_t * dh, uint8_t * q4, uint16_t * scales_h, uint8_t * scales_l,
         float * scales, float * weight, uint8_t * L,
         const int8_t * values,
         const float * quant_weights,
-        const int ntry) {
+        const số_nguyên ntry) {
 
     float sigma2 = 0;
-    for (int j = 0; j < super_block_size; ++j) sigma2 += x[j]*x[j];
+    cho (số_nguyên j = 0; j < super_block_size; ++j) sigma2 += x[j]*x[j];
     sigma2 *= 2.f/super_block_size;
 
     memset(q4, 0, super_block_size/2);
     dh[0] = GGML_FP32_TO_FP16(0.f);
 
     float max_scale = 0, amax_scale = 0;
-    for (int ib = 0; ib < super_block_size/block_size; ++ib) {
+    cho (số_nguyên ib = 0; ib < super_block_size/block_size; ++ib) {
         const float * xb = x + ib*block_size;
         uint8_t * Lb = L + ib*block_size;
-        if (quant_weights) {
+        nếu (quant_weights) {
             const float * qw = quant_weights + ib*block_size;
-            for (int j = 0; j < block_size; ++j) weight[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
-        } else {
-            for (int j = 0; j < block_size; ++j) weight[j] = xb[j]*xb[j];
+            cho (số_nguyên j = 0; j < block_size; ++j) weight[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
+        } không_thì {
+            cho (số_nguyên j = 0; j < block_size; ++j) weight[j] = xb[j]*xb[j];
         }
         float amax = 0, max = 0;
-        for (int j = 0; j < block_size; ++j) {
+        cho (số_nguyên j = 0; j < block_size; ++j) {
             float ax = fabsf(xb[j]);
-            if (ax > amax) {
+            nếu (ax > amax) {
                 amax = ax; max = xb[j];
             }
         }
-        if (amax < GROUP_MAX_EPS) {
+        nếu (amax < GROUP_MAX_EPS) {
             scales[ib] = 0;
             continue;
         }
         float d = ntry > 0 ? -max/values[0] : max/values[0];
         float id = 1/d;
         float sumqx = 0, sumq2 = 0;
-        for (int j = 0; j < block_size; ++j) {
+        cho (số_nguyên j = 0; j < block_size; ++j) {
             float al = id*xb[j];
-            int l = best_index_int8(16, values, al);
+            số_nguyên l = best_index_int8(16, values, al);
             Lb[j] = l;
             float q = values[l];
             float w = weight[j];
@@ -4984,63 +4984,63 @@ static void quantize_row_iq4_nl_impl(const int super_block_size, const int block
         }
         d = sumq2 > 0 ? sumqx/sumq2 : 0.f;
         float best = d*sumqx;
-        for (int itry = -ntry; itry <= ntry; ++itry) {
+        cho (số_nguyên itry = -ntry; itry <= ntry; ++itry) {
             id = (itry + values[0])/max;
             sumqx = sumq2 = 0;
-            for (int j = 0; j < block_size; ++j) {
+            cho (số_nguyên j = 0; j < block_size; ++j) {
                 float al = id*xb[j];
-                int l = best_index_int8(16, values, al);
+                số_nguyên l = best_index_int8(16, values, al);
                 float q = values[l];
                 float w = weight[j];
                 sumqx += w*q*xb[j];
                 sumq2 += w*q*q;
             }
-            if (sumq2 > 0 && sumqx*sumqx > best*sumq2) {
+            nếu (sumq2 > 0 && sumqx*sumqx > best*sumq2) {
                 d = sumqx/sumq2; best = d * sumqx;
             }
         }
         scales[ib] = d;
         float abs_d = fabsf(d);
-        if (abs_d > amax_scale) {
+        nếu (abs_d > amax_scale) {
             amax_scale = abs_d; max_scale = d;
         }
     }
 
-    if (super_block_size/block_size > 1) {
-        int nb = super_block_size/block_size;
+    nếu (super_block_size/block_size > 1) {
+        số_nguyên nb = super_block_size/block_size;
         memset(scales_h, 0, ((nb+7)/8)*sizeof(uint16_t));
         float d = -max_scale/32;
         dh[0] = GGML_FP32_TO_FP16(d);
         float id = d ? 1/d : 0.f;
-        for (int ib = 0; ib < super_block_size/block_size; ++ib) {
-            int l = nearest_int(id*scales[ib]);
+        cho (số_nguyên ib = 0; ib < super_block_size/block_size; ++ib) {
+            số_nguyên l = nearest_int(id*scales[ib]);
             l = MAX(-32, MIN(31, l));
             float dl = d * l;
             float idl = dl ? 1/dl : 0.f;
             uint8_t * Lb = L + ib*block_size;
             const float * xb = x + ib*block_size;
-            for (int j = 0; j < block_size; ++j) {
+            cho (số_nguyên j = 0; j < block_size; ++j) {
                 Lb[j] = best_index_int8(16, values, idl*xb[j]);
             }
             l += 32;
             uint8_t l_l = l & 0xf;
             uint8_t l_h = l >>  4;
-            if (ib%2 == 0) scales_l[ib/2] = l_l;
-            else scales_l[ib/2] |= (l_l << 4);
+            nếu (ib%2 == 0) scales_l[ib/2] = l_l;
+            không_thì scales_l[ib/2] |= (l_l << 4);
             scales_h[ib/8] |= (l_h << 2*(ib%8));
         }
-    } else {
+    } không_thì {
         dh[0] = GGML_FP32_TO_FP16(scales[0]);
-        if (ntry > 0) {
+        nếu (ntry > 0) {
             float id = scales[0] ? 1/scales[0] : 0;
-            for (int j = 0; j < super_block_size; ++j) {
+            cho (số_nguyên j = 0; j < super_block_size; ++j) {
                 L[j] = best_index_int8(16, values, id*x[j]);
             }
         }
     }
 
-    for (int i = 0; i < super_block_size/32; ++i) {
-        for (int j = 0; j < 16; ++j) {
+    cho (số_nguyên i = 0; i < super_block_size/32; ++i) {
+        cho (số_nguyên j = 0; j < 16; ++j) {
             q4[16*i + j] = L[32*i + j] | (L[32*i + 16 + j] << 4);
         }
     }
@@ -5055,9 +5055,9 @@ size_t quantize_iq4_nl(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst
     uint16_t unused_h;
     uint8_t * unused_l = NULL;
     float scale;
-    for (int64_t row = 0; row < nrow; ++row) {
+    cho (int64_t row = 0; row < nrow; ++row) {
         block_iq4_nl * iq4 = (block_iq4_nl *)qrow;
-        for (int ibl = 0; ibl < nblock; ++ibl) {
+        cho (số_nguyên ibl = 0; ibl < nblock; ++ibl) {
             const float * qw = quant_weights ? quant_weights + QK4_NL*ibl : NULL;
             quantize_row_iq4_nl_impl(QK4_NL, 32, src + QK4_NL*ibl, &iq4[ibl].d, iq4[ibl].qs, &unused_h, unused_l,
                     &scale, weight, L, kvalues_iq4nl, qw, 7);
@@ -5065,7 +5065,7 @@ size_t quantize_iq4_nl(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst
         src += n_per_row;
         qrow += nblock*sizeof(block_iq4_nl);
     }
-    return nrow * nblock * sizeof(block_iq4_nl);
+    trả_về nrow * nblock * sizeof(block_iq4_nl);
 }
 
 //void quantize_row_iq4_nl_ref(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
@@ -5078,7 +5078,7 @@ void quantize_row_iq4_nl_ref(const float * GGML_RESTRICT x, block_iq4_nl * GGML_
     uint8_t * unused_l = NULL;
     float scale;
     block_iq4_nl * iq4 = y;
-    for (int ibl = 0; ibl < nblock; ++ibl) {
+    cho (số_nguyên ibl = 0; ibl < nblock; ++ibl) {
         quantize_row_iq4_nl_impl(QK4_NL, 32, x + QK4_NL*ibl, &iq4[ibl].d, iq4[ibl].qs, &unused_h, unused_l,
                 &scale, weight, L, kvalues_iq4nl, NULL, -1);
     }
@@ -5091,9 +5091,9 @@ size_t quantize_iq4_xs(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst
     uint8_t L[QK_K];
     float weight[32];
     float scales[QK_K/32];
-    for (int64_t row = 0; row < nrow; ++row) {
+    cho (int64_t row = 0; row < nrow; ++row) {
         block_iq4_xs * iq4 = (block_iq4_xs *)qrow;
-        for (int ibl = 0; ibl < nblock; ++ibl) {
+        cho (số_nguyên ibl = 0; ibl < nblock; ++ibl) {
             const float * qw = quant_weights ? quant_weights + QK_K*ibl : NULL;
             quantize_row_iq4_nl_impl(QK_K, 32, src + QK_K*ibl, &iq4[ibl].d, iq4[ibl].qs, &iq4[ibl].scales_h, iq4[ibl].scales_l,
                     scales, weight, L, kvalues_iq4nl, qw, 7);
@@ -5101,7 +5101,7 @@ size_t quantize_iq4_xs(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst
         src += n_per_row;
         qrow += nblock*sizeof(block_iq4_xs);
     }
-    return nrow * nblock * sizeof(block_iq4_xs);
+    trả_về nrow * nblock * sizeof(block_iq4_xs);
 }
 
 void quantize_row_iq4_xs_ref(const float * GGML_RESTRICT x, block_iq4_xs * GGML_RESTRICT y, int64_t k) {
@@ -5113,10 +5113,10 @@ void quantize_row_iq4_xs_ref(const float * GGML_RESTRICT x, block_iq4_xs * GGML_
 
 static void quantize_row_iq2_s_impl(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t n, const float * GGML_RESTRICT quant_weights) {
 
-    const int gindex = iq2_data_index(GGML_TYPE_IQ2_S);
+    const số_nguyên gindex = iq2_data_index(GGML_TYPE_IQ2_S);
 
     const uint64_t * kgrid_q2xs      = iq2_data[gindex].grid;
-    const int      * kmap_q2xs       = iq2_data[gindex].map;
+    const số_nguyên      * kmap_q2xs       = iq2_data[gindex].map;
     const uint16_t * kneighbors_q2xs = iq2_data[gindex].neighbours;
 
     GGML_ASSERT(kmap_q2xs       && "forgot to call ggml_quantize_init()?");
@@ -5124,7 +5124,7 @@ static void quantize_row_iq2_s_impl(const float * GGML_RESTRICT x, void * GGML_R
     GGML_ASSERT(kneighbors_q2xs && "forgot to call ggml_quantize_init()?");
     GGML_ASSERT(n%QK_K == 0);
 
-    const int kMaxQ = 3;
+    const số_nguyên kMaxQ = 3;
 
     const int64_t nbl = n/QK_K;
 
@@ -5140,7 +5140,7 @@ static void quantize_row_iq2_s_impl(const float * GGML_RESTRICT x, void * GGML_R
     bool   is_on_grid_aux[2];
     uint8_t block_signs[2];
 
-    for (int ibl = 0; ibl < nbl; ++ibl) {
+    cho (số_nguyên ibl = 0; ibl < nbl; ++ibl) {
 
         memset(&y[ibl], 0, sizeof(block_iq2_s));
         y[ibl].d = GGML_FP32_TO_FP16(0.f);
@@ -5149,112 +5149,112 @@ static void quantize_row_iq2_s_impl(const float * GGML_RESTRICT x, void * GGML_R
 
         const float * xbl = x + QK_K*ibl;
         float sumx2 = 0;
-        for (int i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
+        cho (số_nguyên i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
         float sigma2 = 2*sumx2/QK_K;
 
-        for (int ib = 0; ib < QK_K/16; ++ib) {
+        cho (số_nguyên ib = 0; ib < QK_K/16; ++ib) {
             const float * xb = xbl + 16*ib;
-            if (quant_weights) {
+            nếu (quant_weights) {
                 const float * qw = quant_weights + QK_K*ibl + 16*ib;
-                for (int i = 0; i < 16; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
-            } else {
-                for (int i = 0; i < 16; ++i) weight[i] = 0.25f*sigma2 + xb[i]*xb[i];
+                cho (số_nguyên i = 0; i < 16; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
+            } không_thì {
+                cho (số_nguyên i = 0; i < 16; ++i) weight[i] = 0.25f*sigma2 + xb[i]*xb[i];
             }
-            for (int i = 0; i < 16; ++i) waux[i] = sqrtf(weight[i]);
-            for (int k = 0; k < 2; ++k) {
+            cho (số_nguyên i = 0; i < 16; ++i) waux[i] = sqrtf(weight[i]);
+            cho (số_nguyên k = 0; k < 2; ++k) {
                 uint8_t s = 0;
-                for (int i = 0; i < 8; ++i) {
-                    if (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
-                    else {
+                cho (số_nguyên i = 0; i < 8; ++i) {
+                    nếu (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
+                    không_thì {
                         xval[8*k + i] = -xb[8*k + i]; s |= (1 << i);
                     }
                 }
                 block_signs[k] = s;
             }
             float max = xval[0];
-            for (int i = 1; i < 16; ++i) max = MAX(max, xval[i]);
+            cho (số_nguyên i = 1; i < 16; ++i) max = MAX(max, xval[i]);
             memset(L, 0, 16);
-            if (max < GROUP_MAX_EPS_IQ2_S) {
+            nếu (max < GROUP_MAX_EPS_IQ2_S) {
                 scales[ib] = 0;
                 continue;
             }
             float best = 0;
             float scale = max/(2*kMaxQ-1);
             is_on_grid[0] = is_on_grid[1] = true;
-            for (int is = -9; is <= 9; ++is) {
+            cho (số_nguyên is = -9; is <= 9; ++is) {
                 float id = (2*kMaxQ-1+is*0.1f)/max;
                 float this_scale = 1/id;
-                for (int k = 0; k < 2; ++k) {
-                    for (int i = 0; i < 8; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[8*k+i]-1));
+                cho (số_nguyên k = 0; k < 2; ++k) {
+                    cho (số_nguyên i = 0; i < 8; ++i) {
+                        số_nguyên l = nearest_int(0.5f*(id*xval[8*k+i]-1));
                         Laux[8*k+i] = MAX(0, MIN(kMaxQ-1, l));
                     }
                     uint16_t u = 0;
-                    for (int i = 0; i < 8; ++i) u |= (Laux[8*k+i] << 2*i);
-                    int grid_index = kmap_q2xs[u];
+                    cho (số_nguyên i = 0; i < 8; ++i) u |= (Laux[8*k+i] << 2*i);
+                    số_nguyên grid_index = kmap_q2xs[u];
                     is_on_grid_aux[k] = true;
-                    if (grid_index < 0) {
+                    nếu (grid_index < 0) {
                         is_on_grid_aux[k] = false;
                         const uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
                         grid_index = iq2_find_best_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, this_scale, Laux + 8*k);
                     }
                 }
                 float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < 16; ++i) {
+                cho (số_nguyên i = 0; i < 16; ++i) {
                     float w = weight[i];
                     float q = 2*Laux[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0 && sumqx*sumqx > best*sumq2) {
+                nếu (sumq2 > 0 && sumqx*sumqx > best*sumq2) {
                     scale = sumqx/sumq2; best = scale*sumqx;
-                    for (int i = 0; i < 16; ++i) L[i] = Laux[i];
-                    for (int k = 0; k <  2; ++k) is_on_grid[k] = is_on_grid_aux[k];
+                    cho (số_nguyên i = 0; i < 16; ++i) L[i] = Laux[i];
+                    cho (số_nguyên k = 0; k <  2; ++k) is_on_grid[k] = is_on_grid_aux[k];
                 }
             }
-            int n_not_ongrid = 0;
-            for (int k = 0; k < 2; ++k) if (!is_on_grid[k]) ++n_not_ongrid;
-            if (n_not_ongrid > 0 && scale > 0) {
+            số_nguyên n_not_ongrid = 0;
+            cho (số_nguyên k = 0; k < 2; ++k) nếu (!is_on_grid[k]) ++n_not_ongrid;
+            nếu (n_not_ongrid > 0 && scale > 0) {
                 float id = 1/scale;
-                for (int k = 0; k < 2; ++k) {
-                    if (is_on_grid[k]) continue;
+                cho (số_nguyên k = 0; k < 2; ++k) {
+                    nếu (is_on_grid[k]) continue;
                     uint16_t u = 0;
-                    for (int i = 0; i < 8; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[8*k+i]-1));
+                    cho (số_nguyên i = 0; i < 8; ++i) {
+                        số_nguyên l = nearest_int(0.5f*(id*xval[8*k+i]-1));
                         l = MAX(0, MIN(kMaxQ-1, l));
                         u |= (l << 2*i);
                         L[8*k + i] = l;
                     }
-                    int grid_index = kmap_q2xs[u];
-                    if (grid_index < 0) {
+                    số_nguyên grid_index = kmap_q2xs[u];
+                    nếu (grid_index < 0) {
                         const uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
                         grid_index = iq2_find_best_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, scale, L + 8*k);
                     }
                 }
                 float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < 16; ++i) {
+                cho (số_nguyên i = 0; i < 16; ++i) {
                     float w = weight[i];
                     float q = 2*L[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0) scale = sumqx/sumq2;
+                nếu (sumq2 > 0) scale = sumqx/sumq2;
             }
-            if (scale < 0) {
+            nếu (scale < 0) {
                 scale = -scale;
-                for (int k = 0; k < 2; ++k) block_signs[k] = ~block_signs[k];
+                cho (số_nguyên k = 0; k < 2; ++k) block_signs[k] = ~block_signs[k];
             }
-            for (int k = 0; k < 2; ++k) {
+            cho (số_nguyên k = 0; k < 2; ++k) {
                 uint16_t u = 0;
-                for (int i = 0; i < 8; ++i) u |= (L[8*k+i] << 2*i);
-                int grid_index = kmap_q2xs[u];
-                if (grid_index < 0) {
+                cho (số_nguyên i = 0; i < 8; ++i) u |= (L[8*k+i] << 2*i);
+                số_nguyên grid_index = kmap_q2xs[u];
+                nếu (grid_index < 0) {
                     printf("Oops: found point %u not on grid:", u);
-                    for (int i = 0; i < 8; ++i) printf(" %d", L[8*k+i]);
+                    cho (số_nguyên i = 0; i < 8; ++i) printf(" %d", L[8*k+i]);
                     printf("\n");
                     GGML_ABORT("fatal error");
                 }
-                const int i8 = 2*ib + k;
+                const số_nguyên i8 = 2*ib + k;
                 y[ibl].qs[i8] = grid_index & 255;
                 y[ibl].qh[i8/4] |= ((grid_index >> 8) << 2*(i8%4));
                 y[ibl].qs[QK_K/8 + i8] = block_signs[k];
@@ -5264,18 +5264,18 @@ static void quantize_row_iq2_s_impl(const float * GGML_RESTRICT x, void * GGML_R
             max_scale = MAX(max_scale, scale);
         }
 
-        if (!max_scale) {
+        nếu (!max_scale) {
             continue;
         }
 
         float d = max_scale/31;
         y[ibl].d = GGML_FP32_TO_FP16(d * 0.9875f);
         float id = 1/d;
-        for (int ib = 0; ib < QK_K/16; ++ib) {
-            int l = nearest_int(0.5f*(id*scales[ib]-1));
+        cho (số_nguyên ib = 0; ib < QK_K/16; ++ib) {
+            số_nguyên l = nearest_int(0.5f*(id*scales[ib]-1));
             l = MAX(0, MIN(15, l));
-            if (ib%2 == 0) y[ibl].scales[ib/2] = l;
-            else y[ibl].scales[ib/2] |= (l << 4);
+            nếu (ib%2 == 0) y[ibl].scales[ib/2] = l;
+            không_thì y[ibl].scales[ib/2] |= (l << 4);
         }
     }
 }
@@ -5284,12 +5284,12 @@ size_t quantize_iq2_s(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst,
     GGML_ASSERT(n_per_row%QK_K == 0);
     int64_t nblock = n_per_row/QK_K;
     char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
+    cho (int64_t row = 0; row < nrow; ++row) {
         quantize_row_iq2_s_impl(src, qrow, n_per_row, quant_weights);
         src += n_per_row;
         qrow += nblock*sizeof(block_iq2_s);
     }
-    return nrow * nblock * sizeof(block_iq2_s);
+    trả_về nrow * nblock * sizeof(block_iq2_s);
 }
 
 void quantize_row_iq2_s_ref(const float * GGML_RESTRICT x, block_iq2_s * GGML_RESTRICT y, int64_t k) {
@@ -5300,93 +5300,93 @@ void quantize_row_iq2_s_ref(const float * GGML_RESTRICT x, block_iq2_s * GGML_RE
 // =============================== data validation
 
 static bool validate_float(float f, size_t i) {
-    if (isinf(f)) {
+    nếu (isinf(f)) {
         fprintf(stderr, "ggml_validate_row_data: found inf value at block %zu\n", i);
-        return false;
+        trả_về false;
     }
 
-    if (isnan(f)) {
+    nếu (isnan(f)) {
         fprintf(stderr, "ggml_validate_row_data: found nan value at block %zu\n", i);
-        return false;
+        trả_về false;
     }
 
-    return true;
+    trả_về true;
 }
 
 static bool isinf_fp16(ggml_fp16_t f) {
-    return (f & 0x7c00) == 0x7c00 && (f & 0x03ff) == 0;
+    trả_về (f & 0x7c00) == 0x7c00 && (f & 0x03ff) == 0;
 }
 
 static bool isnan_fp16(ggml_fp16_t f) {
-    return (f & 0x7c00) == 0x7c00 && (f & 0x03ff) != 0;
+    trả_về (f & 0x7c00) == 0x7c00 && (f & 0x03ff) != 0;
 }
 
 static bool validate_fp16(ggml_fp16_t f, size_t i) {
-    if (isinf_fp16(f)) {
+    nếu (isinf_fp16(f)) {
         fprintf(stderr, "ggml_validate_row_data: found inf value at block %zu\n", i);
-        return false;
+        trả_về false;
     }
 
-    if (isnan_fp16(f)) {
+    nếu (isnan_fp16(f)) {
         fprintf(stderr, "ggml_validate_row_data: found nan value at block %zu\n", i);
-        return false;
+        trả_về false;
     }
 
-    return true;
+    trả_về true;
 }
 
 static bool validate_e_e8m0(uint8_t e, size_t i) {
-    if (e == 0xff) {
+    nếu (e == 0xff) {
         fprintf(stderr, "ggml_validate_row_data: found invalid e value %d at block %zu\n", e, i);
-        return false;
+        trả_về false;
     }
 
-    return true;
+    trả_về true;
 }
 
 #define VALIDATE_ROW_DATA_D_F16_IMPL(type, data, nb) \
     const type * q = (const type *) (data); \
-    for (size_t i = 0; i < (nb); ++i) { \
-        if (!validate_fp16(q[i].d, i)) { \
-            return false; \
+    cho (size_t i = 0; i < (nb); ++i) { \
+        nếu (!validate_fp16(q[i].d, i)) { \
+            trả_về false; \
         } \
     }
 
 #define VALIDATE_ROW_DATA_DM_F16_IMPL(type, data, nb, d, m) \
     const type * q = (const type *) (data); \
-    for (size_t i = 0; i < (nb); ++i) { \
-        if (!validate_fp16(q[i].d, i) || !validate_fp16(q[i].m, i)) { \
-            return false; \
+    cho (size_t i = 0; i < (nb); ++i) { \
+        nếu (!validate_fp16(q[i].d, i) || !validate_fp16(q[i].m, i)) { \
+            trả_về false; \
         } \
     }
 
 #define VALIDATE_ROW_DATA_E_E8M0_IMPL(type, data, nb) \
     const type * q = (const type *) (data); \
-    for (size_t i = 0; i < (nb); ++i) { \
-        if (!validate_e_e8m0(q[i].e, i)) { \
-            return false; \
+    cho (size_t i = 0; i < (nb); ++i) { \
+        nếu (!validate_e_e8m0(q[i].e, i)) { \
+            trả_về false; \
         } \
     }
 
 #define VALIDATE_ROW_DATA_DVEC_F16_IMPL(type, data, nb, nr) \
     const type * q = (const type *) (data); \
-    for (size_t i = 0; i < (nb); ++i) { \
-        for (size_t j = 0; j < (nr); ++j) { \
-            if (!validate_fp16(q[i].d[j], i)) { \
-                return false; \
+    cho (size_t i = 0; i < (nb); ++i) { \
+        cho (size_t j = 0; j < (nr); ++j) { \
+            nếu (!validate_fp16(q[i].d[j], i)) { \
+                trả_về false; \
             } \
         } \
     }
 
 bool ggml_validate_row_data(enum ggml_type type, const void * data, size_t nbytes) {
-    if (type < 0 || type >= GGML_TYPE_COUNT) {
+    nếu (type < 0 || type >= GGML_TYPE_COUNT) {
         fprintf(stderr, "%s: invalid type %d\n", __func__, type);
-        return false;
+        trả_về false;
     }
 
-    if (nbytes % ggml_type_size(type) != 0) {
+    nếu (nbytes % ggml_type_size(type) != 0) {
         fprintf(stderr, "%s: invalid size %zu for type %s (type size = %zu)\n", __func__, nbytes, ggml_type_name(type), ggml_type_size(type));
-        return false;
+        trả_về false;
     }
 
     const size_t nb = nbytes/ggml_type_size(type);
@@ -5394,60 +5394,60 @@ bool ggml_validate_row_data(enum ggml_type type, const void * data, size_t nbyte
     switch (type) {
         case GGML_TYPE_BF16:
             {
-                int nans = 0;
-                int infs = 0;
+                số_nguyên nans = 0;
+                số_nguyên infs = 0;
                 const unsigned short * f = (const unsigned short *) data;
-                for (size_t i = 0; i < nb; ++i) {
+                cho (size_t i = 0; i < nb; ++i) {
                     nans += (f[i] & 0x7fff) > 0x7f80;
                     infs += (f[i] & 0x7fff) == 0x7f80;
                 }
-                if (nans) {
+                nếu (nans) {
                     fprintf(stderr, "%s: found %d NaNs in row of %zu BF16 values\n", __func__, nans, nb);
-                    return false;
+                    trả_về false;
                 }
-                if (infs) {
+                nếu (infs) {
                     fprintf(stderr, "%s: found %d infinities in row of %zu BF16 values\n", __func__, infs, nb);
-                    return false;
+                    trả_về false;
                 }
             } break;
         case GGML_TYPE_F16:
             {
                 const ggml_fp16_t * f = (const ggml_fp16_t *) data;
                 size_t i = 0;
-#if defined(__AVX2__)
-                for (; i + 15 < nb; i += 16) {
+#nếu defined(__AVX2__)
+                cho (; i + 15 < nb; i += 16) {
                     __m256i v = _mm256_loadu_si256((const __m256i *)(f + i));
                     __m256i vexp = _mm256_and_si256(v, _mm256_set1_epi16(0x7c00));
                     __m256i cmp = _mm256_cmpeq_epi16(vexp, _mm256_set1_epi16(0x7c00));
-                    int mask = _mm256_movemask_epi8(cmp);
-                    if (mask) {
-                        for (size_t j = 0; j < 16; ++j) {
-                            if (!validate_fp16(f[i + j], i + j)) {
-                                return false;
+                    số_nguyên mask = _mm256_movemask_epi8(cmp);
+                    nếu (mask) {
+                        cho (size_t j = 0; j < 16; ++j) {
+                            nếu (!validate_fp16(f[i + j], i + j)) {
+                                trả_về false;
                             }
                         }
                         GGML_UNREACHABLE();
                     }
                 }
 #elif defined(__ARM_NEON)
-                for (; i + 7 < nb; i += 8) {
+                cho (; i + 7 < nb; i += 8) {
                     uint16x8_t v = vld1q_u16(f + i);
                     uint16x8_t vexp = vandq_u16(v, vdupq_n_u16(0x7c00));
                     uint16x8_t cmp = vceqq_u16(vexp, vdupq_n_u16(0x7c00));
                     uint64_t mask = vget_lane_u64(vreinterpret_u64_u8(vshrn_n_u16(cmp, 4)), 0);
-                    if (mask) {
-                        for (size_t j = 0; j < 8; ++j) {
-                            if (!validate_fp16(f[i + j], i + j)) {
-                                return false;
+                    nếu (mask) {
+                        cho (size_t j = 0; j < 8; ++j) {
+                            nếu (!validate_fp16(f[i + j], i + j)) {
+                                trả_về false;
                             }
                         }
                         GGML_UNREACHABLE();
                     }
                 }
 #endif
-                for (; i < nb; ++i) {
-                    if (!validate_fp16(f[i], i)) {
-                        return false;
+                cho (; i < nb; ++i) {
+                    nếu (!validate_fp16(f[i], i)) {
+                        trả_về false;
                     }
                 }
             } break;
@@ -5455,49 +5455,49 @@ bool ggml_validate_row_data(enum ggml_type type, const void * data, size_t nbyte
             {
                 const float * f = (const float *) data;
                 size_t i = 0;
-#if defined(__AVX2__)
-                for (; i + 7 < nb; i += 8) {
+#nếu defined(__AVX2__)
+                cho (; i + 7 < nb; i += 8) {
                     __m256i v = _mm256_loadu_si256((const __m256i *)(f + i));
                     __m256i vexp = _mm256_and_si256(v, _mm256_set1_epi32(0x7f800000));
                     __m256i cmp = _mm256_cmpeq_epi32(vexp, _mm256_set1_epi32(0x7f800000));
-                    int mask = _mm256_movemask_epi8(cmp);
-                    if (mask) {
-                        for (size_t j = 0; j < 8; ++j) {
-                            if (!validate_float(f[i + j], i + j)) {
-                                return false;
+                    số_nguyên mask = _mm256_movemask_epi8(cmp);
+                    nếu (mask) {
+                        cho (size_t j = 0; j < 8; ++j) {
+                            nếu (!validate_float(f[i + j], i + j)) {
+                                trả_về false;
                             }
                         }
                         GGML_UNREACHABLE();
                     }
                 }
 #elif defined(__ARM_NEON)
-                for (; i + 3 < nb; i += 4) {
+                cho (; i + 3 < nb; i += 4) {
                     uint32x4_t v = vld1q_u32((const uint32_t *)f + i);
                     uint32x4_t vexp = vandq_u32(v, vdupq_n_u32(0x7f800000));
                     uint32x4_t cmp = vceqq_u32(vexp, vdupq_n_u32(0x7f800000));
                     uint64_t mask = vget_lane_u64(vreinterpret_u64_u16(vshrn_n_u32(cmp, 8)), 0);
-                    if (mask) {
-                        for (size_t j = 0; j < 4; ++j) {
-                            if (!validate_float(f[i + j], i + j)) {
-                                return false;
+                    nếu (mask) {
+                        cho (size_t j = 0; j < 4; ++j) {
+                            nếu (!validate_float(f[i + j], i + j)) {
+                                trả_về false;
                             }
                         }
                         GGML_UNREACHABLE();
                     }
                 }
 #endif
-                for (; i < nb; ++i) {
-                    if (!validate_float(f[i], i)) {
-                        return false;
+                cho (; i < nb; ++i) {
+                    nếu (!validate_float(f[i], i)) {
+                        trả_về false;
                     }
                 }
             } break;
         case GGML_TYPE_F64:
             {
                 const double * f = (const double *) data;
-                for (size_t i = 0; i < nb; ++i) {
-                    if (!validate_float(f[i], i)) {
-                        return false;
+                cho (size_t i = 0; i < nb; ++i) {
+                    nếu (!validate_float(f[i], i)) {
+                        trả_về false;
                     }
                 }
             } break;
@@ -5562,9 +5562,9 @@ bool ggml_validate_row_data(enum ggml_type type, const void * data, size_t nbyte
         case GGML_TYPE_Q8_K:
             {
                 const block_q8_K * q = (const block_q8_K *) data;
-                for (size_t i = 0; i < nb; ++i) {
-                    if (!validate_float(q[i].d, i)) {
-                        return false;
+                cho (size_t i = 0; i < nb; ++i) {
+                    nếu (!validate_float(q[i].d, i)) {
+                        trả_về false;
                     }
                 }
             } break;
@@ -5583,12 +5583,12 @@ bool ggml_validate_row_data(enum ggml_type type, const void * data, size_t nbyte
         case GGML_TYPE_IQ1_M:
             {
                 const block_iq1_m * q = (const block_iq1_m *) data;
-                for (size_t i = 0; i < nb; ++i) {
+                cho (size_t i = 0; i < nb; ++i) {
                     iq1m_scale_t scale;
                     const uint16_t * sc = (const uint16_t *)q[i].scales;
                     scale.u16 = (sc[0] >> 12) | ((sc[1] >> 8) & 0x00f0) | ((sc[2] >> 4) & 0x0f00) | (sc[3] & 0xf000);
-                    if (!validate_fp16(scale.f16, i)) {
-                        return false;
+                    nếu (!validate_fp16(scale.f16, i)) {
+                        trả_về false;
                     }
                 }
             } break;
@@ -5631,9 +5631,9 @@ bool ggml_validate_row_data(enum ggml_type type, const void * data, size_t nbyte
         default:
             {
                 fprintf(stderr, "%s: invalid type %d\n", __func__, type);
-                return false;
+                trả_về false;
             }
     }
 
-    return true;
+    trả_về true;
 }

@@ -37,11 +37,11 @@ OutputVector translate_scale(const NodeContext & context) {
 
     auto scale_node = std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{}, std::vector<float>{scale});
 
-    if (context.get_op_case() == 2) {
-        return {context.get_input(0)};
+    nếu (context.get_op_case() == 2) {
+        trả_về {context.get_input(0)};
     }
 
-    if (context.get_op_case() == 1 && context.has_input("cache_rs_reset_len")) {
+    nếu (context.get_op_case() == 1 && context.has_input("cache_rs_reset_len")) {
         auto cache_rs_reset_idx = context.get_input("cache_rs_reset_idx");
         auto cache_rs_reset_len = context.get_input("cache_rs_reset_len");
 
@@ -67,21 +67,21 @@ OutputVector translate_scale(const NodeContext & context) {
             keep_mask_f32, ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {1}));
 
         auto cleared_cache_rs = std::make_shared<ov::op::v1::Multiply>(cache_rs, keep_mask_reshape);
-        return rename_outputs_with_suffix({cleared_cache_rs}, context.get_name());
+        trả_về rename_outputs_with_suffix({cleared_cache_rs}, context.get_name());
     }
 
     auto scaled = std::make_shared<ov::op::v1::Multiply>(context.get_input(0), scale_node);
 
     std::shared_ptr<ov::Node> res;
-    if (bias != 0.0f) {
+    nếu (bias != 0.0f) {
         auto bias_node =
             std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{}, std::vector<float>{bias});
         res = std::make_shared<ov::op::v1::Add>(scaled, bias_node);
-    } else {
+    } không_thì {
         res = scaled;
     }
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    trả_về rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

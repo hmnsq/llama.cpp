@@ -8,29 +8,29 @@ static __dpct_inline__ void cross_entropy_loss_f32_kernel(
         const float * __restrict__ logits,
         const float * __restrict__ labels,
         float * __restrict__ row_loss,
-        const int nclasses,
-        const int nrows,
+        const số_nguyên nclasses,
+        const số_nguyên nrows,
         float * __restrict__ smem,
         const sycl::nd_item<3> & item) {
 
-    const int row = item.get_group(2);
-    const int tid = item.get_local_id(2);
+    const số_nguyên row = item.get_group(2);
+    const số_nguyên tid = item.get_local_id(2);
 
     logits += (int64_t) row * nclasses;
     labels += (int64_t) row * nclasses;
 
     float max_logit = -INFINITY;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
+    cho (số_nguyên i = tid; i < nclasses; i += WARP_SIZE) {
         const float v = logits[i];
         max_logit = sycl::fmax(max_logit, v);
-        if (has_shared) {
+        nếu (has_shared) {
             smem[i] = v;
         }
     }
     max_logit = warp_reduce_max<WARP_SIZE>(max_logit);
 
     float sum_exp = 0.0f;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
+    cho (số_nguyên i = tid; i < nclasses; i += WARP_SIZE) {
         const float v = has_shared ? smem[i] : logits[i];
         sum_exp += sycl::exp(v - max_logit);
     }
@@ -38,13 +38,13 @@ static __dpct_inline__ void cross_entropy_loss_f32_kernel(
     const float log_sum = sycl::log(sum_exp);
 
     float loss = 0.0f;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
+    cho (số_nguyên i = tid; i < nclasses; i += WARP_SIZE) {
         const float v = has_shared ? smem[i] : logits[i];
         loss += (v - max_logit - log_sum) * labels[i];
     }
     loss = -warp_reduce_sum<WARP_SIZE>(loss) / (float) nrows;
 
-    if (tid == 0) {
+    nếu (tid == 0) {
         row_loss[row] = loss;
     }
 }
@@ -55,35 +55,35 @@ static __dpct_inline__ void cross_entropy_loss_back_f32_kernel(
         const float * __restrict__ logits,
         const float * __restrict__ labels,
         float * __restrict__ dst,
-        const int nclasses,
-        const int nrows,
+        const số_nguyên nclasses,
+        const số_nguyên nrows,
         float * __restrict__ smem,
         const sycl::nd_item<3> & item) {
 
-    const int row = item.get_group(2);
-    const int tid = item.get_local_id(2);
+    const số_nguyên row = item.get_group(2);
+    const số_nguyên tid = item.get_local_id(2);
 
     logits += (int64_t) row * nclasses;
     labels += (int64_t) row * nclasses;
     dst    += (int64_t) row * nclasses;
 
     float max_logit = -INFINITY;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
+    cho (số_nguyên i = tid; i < nclasses; i += WARP_SIZE) {
         const float v = logits[i];
         max_logit = sycl::fmax(max_logit, v);
-        if (has_shared) {
+        nếu (has_shared) {
             smem[i] = v;
         }
     }
     max_logit = warp_reduce_max<WARP_SIZE>(max_logit);
 
     float sum_exp = 0.0f;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
+    cho (số_nguyên i = tid; i < nclasses; i += WARP_SIZE) {
         const float v = sycl::exp((has_shared ? smem[i] : logits[i]) - max_logit);
         sum_exp += v;
-        if (has_shared) {
+        nếu (has_shared) {
             smem[i] = v;
-        } else {
+        } không_thì {
             dst[i] = v;
         }
     }
@@ -91,7 +91,7 @@ static __dpct_inline__ void cross_entropy_loss_back_f32_kernel(
     const float inv_sum = 1.0f / sum_exp;
 
     const float d_by_nrows = grad[0] / (float) nrows;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
+    cho (số_nguyên i = tid; i < nclasses; i += WARP_SIZE) {
         const float sm_num = has_shared ? smem[i] : dst[i];
         dst[i] = (sm_num * inv_sum - labels[i]) * d_by_nrows;
     }
@@ -102,10 +102,10 @@ static void cross_entropy_reduce_rows(
         const float * row_loss,
         float * dst,
         const int64_t nrows) {
-    if (nrows == 1) {
+    nếu (nrows == 1) {
         SYCL_CHECK(CHECK_TRY_ERROR(
             ctx.stream()->memcpy(dst, row_loss, sizeof(float))));
-        return;
+        trả_về;
     }
 
     ggml_sycl_pool_alloc<float> tmp_alloc(ctx.pool(), nrows);
@@ -114,19 +114,19 @@ static void cross_entropy_reduce_rows(
         ctx.stream()->memcpy(tmp, row_loss, nrows * sizeof(float))));
 
     int64_t cur = nrows;
-    while (cur > 1) {
+    trong_khi (cur > 1) {
         const int64_t out = (cur + WARP_SIZE - 1) / WARP_SIZE;
         const sycl::range<3> block(1, 1, WARP_SIZE);
         const sycl::range<3> grid(1, 1, out);
         ctx.stream()->parallel_for(
             sycl::nd_range<3>(grid * block, block),
             [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                const int row = item.get_group(2);
-                const int tid = item.get_local_id(2);
+                const số_nguyên row = item.get_group(2);
+                const số_nguyên tid = item.get_local_id(2);
                 const int64_t i = (int64_t) row * WARP_SIZE + tid;
                 float v = i < cur ? tmp[i] : 0.0f;
                 v = warp_reduce_sum<WARP_SIZE>(v);
-                if (tid == 0) {
+                nếu (tid == 0) {
                     tmp[row] = v;
                 }
             });
@@ -169,7 +169,7 @@ void ggml_sycl_cross_entropy_loss(ggml_backend_sycl_context & ctx, ggml_tensor *
     const size_t nbytes_shared = (size_t) nclasses * sizeof(float);
     const size_t smpbo = ggml_sycl_info().devices[ctx.device].smpbo;
 
-    if (nbytes_shared <= smpbo) {
+    nếu (nbytes_shared <= smpbo) {
         ctx.stream()->submit([&](sycl::handler & cgh) {
             sycl::local_accessor<float, 1> smem(sycl::range<1>(nclasses), cgh);
             cgh.parallel_for(
@@ -177,17 +177,17 @@ void ggml_sycl_cross_entropy_loss(ggml_backend_sycl_context & ctx, ggml_tensor *
                 [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
                     cross_entropy_loss_f32_kernel<true>(
                         logits_d, labels_d, row_loss,
-                        (int) nclasses, (int) nrows,
+                        (số_nguyên) nclasses, (số_nguyên) nrows,
                         get_pointer(smem), item);
                 });
         });
-    } else {
+    } không_thì {
         ctx.stream()->parallel_for(
             sycl::nd_range<3>(grid * block, block),
             [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
                 cross_entropy_loss_f32_kernel<false>(
                     logits_d, labels_d, row_loss,
-                    (int) nclasses, (int) nrows,
+                    (số_nguyên) nclasses, (số_nguyên) nrows,
                     nullptr, item);
             });
     }
@@ -230,7 +230,7 @@ void ggml_sycl_cross_entropy_loss_back(ggml_backend_sycl_context & ctx, ggml_ten
     const size_t nbytes_shared = (size_t) nclasses * sizeof(float);
     const size_t smpbo = ggml_sycl_info().devices[ctx.device].smpbo;
 
-    if (nbytes_shared <= smpbo) {
+    nếu (nbytes_shared <= smpbo) {
         ctx.stream()->submit([&](sycl::handler & cgh) {
             sycl::local_accessor<float, 1> smem(sycl::range<1>(nclasses), cgh);
             cgh.parallel_for(
@@ -238,17 +238,17 @@ void ggml_sycl_cross_entropy_loss_back(ggml_backend_sycl_context & ctx, ggml_ten
                 [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
                     cross_entropy_loss_back_f32_kernel<true>(
                         grad_d, logits_d, labels_d, dst_d,
-                        (int) nclasses, (int) nrows,
+                        (số_nguyên) nclasses, (số_nguyên) nrows,
                         get_pointer(smem), item);
                 });
         });
-    } else {
+    } không_thì {
         ctx.stream()->parallel_for(
             sycl::nd_range<3>(grid * block, block),
             [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
                 cross_entropy_loss_back_f32_kernel<false>(
                     grad_d, logits_d, labels_d, dst_d,
-                    (int) nclasses, (int) nrows,
+                    (số_nguyên) nclasses, (số_nguyên) nrows,
                     nullptr, item);
             });
     }

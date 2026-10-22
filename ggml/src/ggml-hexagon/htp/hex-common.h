@@ -18,45 +18,45 @@
 #endif
 
 static inline uint32_t hex_ceil_pow2(uint32_t x) {
-    if (x <= 1) { return 1; }
-    int p = 2;
+    nếu (x <= 1) { trả_về 1; }
+    số_nguyên p = 2;
     x--;
-    while (x >>= 1) { p <<= 1; }
-    return p;
+    trong_khi (x >>= 1) { p <<= 1; }
+    trả_về p;
 }
 
 static inline size_t hmx_ceil_div(size_t num, size_t den) {
-    return (num + den - 1) / den;
+    trả_về (num + den - 1) / den;
 }
 
 static inline int32_t hex_is_aligned(const void * addr, uint32_t align) {
-    return ((size_t) addr & (align - 1)) == 0;
+    trả_về ((size_t) addr & (align - 1)) == 0;
 }
 
 static inline size_t hex_align_up(size_t v, size_t align) {
-    return hmx_ceil_div(v, align) * align;
+    trả_về hmx_ceil_div(v, align) * align;
 }
 
 static inline size_t hex_align_down(size_t v, size_t align) {
-    return (v / align) * align;
+    trả_về (v / align) * align;
 }
 
 static inline int32_t hex_is_one_chunk(void * addr, uint32_t n, uint32_t chunk_size) {
     uint32_t left_off  = (size_t) addr & (chunk_size - 1);
     uint32_t right_off = left_off + n;
-    return right_off <= chunk_size;
+    trả_về right_off <= chunk_size;
 }
 
 static inline uint32_t hex_round_up(uint32_t n, uint32_t m) {
-    return m * ((n + m - 1) / m);
+    trả_về m * ((n + m - 1) / m);
 }
 
 static inline size_t hex_smin(size_t a, size_t b) {
-    return a < b ? a : b;
+    trả_về a < b ? a : b;
 }
 
 static inline size_t hex_smax(size_t a, size_t b) {
-    return a > b ? a : b;
+    trả_về a > b ? a : b;
 }
 
 static inline void hex_swap_ptr(void ** p1, void ** p2) {
@@ -66,24 +66,24 @@ static inline void hex_swap_ptr(void ** p1, void ** p2) {
 }
 
 static inline bool hex_mul_overflow(size_t a, size_t b, size_t *out) {
-    if (a != 0 && b > SIZE_MAX / a) return true;
+    nếu (a != 0 && b > SIZE_MAX / a) trả_về true;
     *out = a * b;
-    return false;
+    trả_về false;
 }
 
 static inline bool hex_add_overflow(size_t a, size_t b, size_t *out) {
-    if (a > SIZE_MAX - b) return true;
+    nếu (a > SIZE_MAX - b) trả_về true;
     *out = a + b;
-    return false;
+    trả_về false;
 }
 
 static inline uint32_t hex_gcd_u32(uint32_t a, uint32_t b) {
-    while (b != 0) {
+    trong_khi (b != 0) {
         uint32_t t = b;
         b = a % b;
         a = t;
     }
-    return a;
+    trả_về a;
 }
 
 #endif // HEX_COMMON_H

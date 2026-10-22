@@ -31,9 +31,9 @@ struct htp_concat_kernel_params {
     } u;
 };
 
-#if defined(__cplusplus)
+#nếu defined(__cplusplus)
 static_assert(sizeof(struct htp_concat_kernel_params) <= 128, "htp_concat_kernel_params is too large for kernel_params blob");
-#else
+#không_thì
 _Static_assert(sizeof(struct htp_concat_kernel_params) <= 128, "htp_concat_kernel_params is too large for kernel_params blob");
 #endif
 

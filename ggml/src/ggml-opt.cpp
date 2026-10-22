@@ -111,10 +111,10 @@ ggml_opt_dataset_t ggml_opt_dataset_init(
     result->data = ggml_new_tensor_2d(result->ctx, type_data, ne_datapoint, ndata);
     result->nbs_data = ggml_nbytes(result->data) * ndata_shard/ndata;
 
-    if (ne_label > 0) {
+    nếu (ne_label > 0) {
         result->labels = ggml_new_tensor_2d(result->ctx, type_label, ne_label, ndata);
         result->nbs_labels = ggml_nbytes(result->labels) * ndata_shard/ndata;
-    } else {
+    } không_thì {
         result->labels = nullptr;
         result->nbs_labels = 0;
     }
@@ -123,10 +123,10 @@ ggml_opt_dataset_t ggml_opt_dataset_init(
 
     const int64_t nshards = ndata/ndata_shard;
     result->permutation.resize(nshards);
-    for (int64_t i = 0; i < nshards; ++i) {
+    cho (int64_t i = 0; i < nshards; ++i) {
         result->permutation[i] = i;
     }
-    return result;
+    trả_về result;
 }
 
 void ggml_opt_dataset_free(ggml_opt_dataset_t dataset) {
@@ -136,23 +136,23 @@ void ggml_opt_dataset_free(ggml_opt_dataset_t dataset) {
 }
 
 int64_t ggml_opt_dataset_ndata(ggml_opt_dataset_t dataset) {
-    return dataset->ndata;
+    trả_về dataset->ndata;
 }
 
 struct ggml_tensor * ggml_opt_dataset_data(ggml_opt_dataset_t dataset) {
-    return dataset->data;
+    trả_về dataset->data;
 }
 
 struct ggml_tensor * ggml_opt_dataset_labels(ggml_opt_dataset_t dataset) {
-    return dataset->labels;
+    trả_về dataset->labels;
 }
 
 void ggml_opt_dataset_shuffle(ggml_opt_context_t opt_ctx, ggml_opt_dataset_t dataset, int64_t idata) {
     GGML_ASSERT(idata <= dataset->ndata);
 
-    if (idata < 0) {
+    nếu (idata < 0) {
         std::shuffle(dataset->permutation.begin(), dataset->permutation.end(), opt_ctx->rng);
-        return;
+        trả_về;
     }
 
     GGML_ASSERT(idata % dataset->ndata_shard == 0);
@@ -171,20 +171,20 @@ void ggml_opt_dataset_get_batch(ggml_opt_dataset_t dataset, struct ggml_tensor *
     GGML_ASSERT(nb_data_batch % dataset->nbs_data == 0);
     const int64_t shards_per_batch = nb_data_batch / dataset->nbs_data;
 
-    if (labels_batch) {
+    nếu (labels_batch) {
         const size_t nb_labels_batch = ggml_nbytes(labels_batch);
         GGML_ASSERT(nb_labels_batch == shards_per_batch*dataset->nbs_labels);
     }
 
     GGML_ASSERT((ibatch + 1)*shards_per_batch <= int64_t(dataset->permutation.size()));
 
-    for (int64_t ishard_batch = 0; ishard_batch < shards_per_batch; ++ishard_batch) {
+    cho (int64_t ishard_batch = 0; ishard_batch < shards_per_batch; ++ishard_batch) {
         const int64_t ishard = dataset->permutation[ibatch*shards_per_batch + ishard_batch];
 
         const char * ptr_data = (const char *) dataset->data->data + ishard*dataset->nbs_data;
         ggml_backend_tensor_set(data_batch, ptr_data, ishard_batch*dataset->nbs_data, dataset->nbs_data);
 
-        if (!labels_batch) {
+        nếu (!labels_batch) {
             continue;
         }
 
@@ -201,14 +201,14 @@ void ggml_opt_dataset_get_batch_host(ggml_opt_dataset_t dataset, void * data_bat
 
     GGML_ASSERT((ibatch + 1)*shards_per_batch <= int64_t(dataset->permutation.size()));
 
-    for (int64_t ishard_batch = 0; ishard_batch < shards_per_batch; ++ishard_batch) {
+    cho (int64_t ishard_batch = 0; ishard_batch < shards_per_batch; ++ishard_batch) {
         const int64_t ishard = dataset->permutation[ibatch*shards_per_batch + ishard_batch];
 
         const char * ptr_data       = (const char *) dataset->data->data + ishard      *dataset->nbs_data;
         char       * ptr_data_batch = (char       *) data_batch          + ishard_batch*dataset->nbs_data;
         memcpy(ptr_data_batch, ptr_data, dataset->nbs_data);
 
-        if (!labels_batch) {
+        nếu (!labels_batch) {
             continue;
         }
 
@@ -234,18 +234,18 @@ struct ggml_opt_optimizer_params ggml_opt_get_default_optimizer_params(void * us
     result.sgd.alpha   = 1e-3f;
     result.sgd.wd      = 0.0f;
 
-    return result;
+    trả_về result;
 }
 
 
 struct ggml_opt_optimizer_params ggml_opt_get_constant_optimizer_params(void * userdata) {
-    return *((struct ggml_opt_optimizer_params *) userdata);
+    trả_về *((struct ggml_opt_optimizer_params *) userdata);
 }
 
 struct ggml_opt_params ggml_opt_default_params(
         ggml_backend_sched_t      backend_sched,
         enum ggml_opt_loss_type   loss_type) {
-    return {
+    trả_về {
         /*backend_sched   =*/ backend_sched,
         /*ctx_compute     =*/ nullptr,
         /*inputs          =*/ nullptr,
@@ -260,19 +260,19 @@ struct ggml_opt_params ggml_opt_default_params(
 }
 
 static ggml_tensor * map_tensor(std::map<ggml_tensor *, ggml_tensor *> & tensor_map, ggml_context * ctx, ggml_tensor * tensor) {
-    if (!tensor) {
-        return nullptr;
+    nếu (!tensor) {
+        trả_về nullptr;
     }
 
-    if (tensor_map.find(tensor) != tensor_map.end()) {
-        return tensor_map[tensor];
+    nếu (tensor_map.find(tensor) != tensor_map.end()) {
+        trả_về tensor_map[tensor];
     }
 
     ggml_tensor * new_tensor = ggml_dup_tensor(ctx, tensor);
     tensor_map[tensor] = new_tensor;
 
     new_tensor->op = tensor->op;
-    for (int i = 0; i < GGML_MAX_DIMS; i++) {
+    cho (số_nguyên i = 0; i < GGML_MAX_DIMS; i++) {
         new_tensor->nb[i] = tensor->nb[i];
     }
     new_tensor->flags = tensor->flags;
@@ -283,11 +283,11 @@ static ggml_tensor * map_tensor(std::map<ggml_tensor *, ggml_tensor *> & tensor_
     new_tensor->extra = tensor->extra;
     new_tensor->view_offs = tensor->view_offs;
     new_tensor->view_src = map_tensor(tensor_map, ctx, tensor->view_src);
-    for (int i = 0; i < GGML_MAX_SRC; i++) {
+    cho (số_nguyên i = 0; i < GGML_MAX_SRC; i++) {
         new_tensor->src[i] = map_tensor(tensor_map, ctx, tensor->src[i]);
     }
 
-    return new_tensor;
+    trả_về new_tensor;
 }
 
 static ggml_cgraph * dup_graph(ggml_context * ctx, ggml_cgraph * src) {
@@ -295,15 +295,15 @@ static ggml_cgraph * dup_graph(ggml_context * ctx, ggml_cgraph * src) {
 
     ggml_cgraph * dst = ggml_new_graph_custom(ctx, src->size, /*grads =*/ true);
 
-    for (int i = 0; i < src->n_leafs; i++) {
+    cho (số_nguyên i = 0; i < src->n_leafs; i++) {
         ggml_build_forward_expand(dst, map_tensor(tensor_map, ctx, src->leafs[i]));
     }
     GGML_ASSERT(dst->n_leafs == src->n_leafs);
-    for (int i = 0; i < src->n_nodes; i++) {
+    cho (số_nguyên i = 0; i < src->n_nodes; i++) {
         ggml_build_forward_expand(dst, map_tensor(tensor_map, ctx, src->nodes[i]));
     }
     GGML_ASSERT(dst->n_nodes == src->n_nodes);
-    for (int i = 0; i < src->n_nodes; ++i) {
+    cho (số_nguyên i = 0; i < src->n_nodes; ++i) {
         const size_t igrad_src = ggml_hash_find(&src->visited_hash_set, src->nodes[i]);
         const size_t igrad_dst = ggml_hash_find(&dst->visited_hash_set, dst->nodes[i]);
 
@@ -316,7 +316,7 @@ static ggml_cgraph * dup_graph(ggml_context * ctx, ggml_cgraph * src) {
         dst->grad_accs[igrad_dst] = src->grad_accs[igrad_src];
     }
 
-    return dst;
+    trả_về dst;
 }
 
 static void ggml_opt_build(ggml_opt_context_t opt_ctx) {
@@ -334,16 +334,16 @@ static void ggml_opt_build(ggml_opt_context_t opt_ctx) {
     ggml_set_input(opt_ctx->inputs);
     ggml_set_output(opt_ctx->outputs);
 
-    int n_param = 0;
-    for (int i = 0; i < opt_ctx->gf->n_nodes; ++i) {
+    số_nguyên n_param = 0;
+    cho (số_nguyên i = 0; i < opt_ctx->gf->n_nodes; ++i) {
         const struct ggml_tensor * node = opt_ctx->gf->nodes[i];
-        if (node->flags & GGML_TENSOR_FLAG_PARAM) {
+        nếu (node->flags & GGML_TENSOR_FLAG_PARAM) {
             n_param++;
         }
         GGML_ASSERT(!(node->flags & GGML_TENSOR_FLAG_LOSS) && "support for extra loss terms not implemented");
     }
 
-    if (!opt_ctx->ctx_static) {
+    nếu (!opt_ctx->ctx_static) {
         // The static context is used for:
         //   - gradients (1 per loss, 1 tensor per param if using gradient accumulation)
         //   - optimizer momenta (2 tensors per param)
@@ -405,7 +405,7 @@ static void ggml_opt_build(ggml_opt_context_t opt_ctx) {
             ggml_set_name(opt_ctx->labels, "labels");
             opt_ctx->loss = ggml_cross_entropy_loss(ctx_results, opt_ctx->outputs, opt_ctx->labels);
             ggml_set_name(opt_ctx->loss, "loss_cross_entropy");
-            if (opt_ctx->opt_period > 1) {
+            nếu (opt_ctx->opt_period > 1) {
                 opt_ctx->loss = ggml_scale(ctx_results, opt_ctx->loss, 1.0f / opt_ctx->opt_period);
                 ggml_set_name(opt_ctx->loss, "loss_cross_entropy_scaled");
             }
@@ -433,7 +433,7 @@ static void ggml_opt_build(ggml_opt_context_t opt_ctx) {
     ggml_set_loss(opt_ctx->loss);
     ggml_build_forward_expand(opt_ctx->gf, opt_ctx->loss);
 
-    if (opt_ctx->loss_type == GGML_OPT_LOSS_TYPE_CROSS_ENTROPY) {
+    nếu (opt_ctx->loss_type == GGML_OPT_LOSS_TYPE_CROSS_ENTROPY) {
         opt_ctx->pred = ggml_argmax(ctx_results, opt_ctx->outputs);
         ggml_set_name(opt_ctx->pred, "pred");
         ggml_set_output(opt_ctx->pred);
@@ -445,39 +445,39 @@ static void ggml_opt_build(ggml_opt_context_t opt_ctx) {
         ggml_build_forward_expand(opt_ctx->gf, opt_ctx->ncorrect);
     }
 
-    if (opt_ctx->buf_static) {
-        if (opt_ctx->build_type == GGML_OPT_BUILD_TYPE_FORWARD) {
-            return;
+    nếu (opt_ctx->buf_static) {
+        nếu (opt_ctx->build_type == GGML_OPT_BUILD_TYPE_FORWARD) {
+            trả_về;
         }
-    } else if (opt_ctx->build_type_alloc == GGML_OPT_BUILD_TYPE_FORWARD) {
+    } không_thì nếu (opt_ctx->build_type_alloc == GGML_OPT_BUILD_TYPE_FORWARD) {
         opt_ctx->buf_static = ggml_backend_alloc_ctx_tensors(
             opt_ctx->ctx_static, ggml_backend_sched_get_backend(opt_ctx->backend_sched, 0));
-        return;
+        trả_về;
     }
 
-    if (opt_ctx->grad_accs.empty()) {
+    nếu (opt_ctx->grad_accs.empty()) {
         GGML_ASSERT(opt_ctx->build_type_alloc >= GGML_OPT_BUILD_TYPE_GRAD);
 
-        const int n_nodes = opt_ctx->gf->n_nodes;
+        const số_nguyên n_nodes = opt_ctx->gf->n_nodes;
         opt_ctx->grad_accs.resize(n_nodes);
-        for (int i = 0; i < n_nodes; ++i) {
+        cho (số_nguyên i = 0; i < n_nodes; ++i) {
             ggml_tensor * node = opt_ctx->gf->nodes[i];
-            if ((accumulate && (node->flags & GGML_TENSOR_FLAG_PARAM)) || (node->flags & GGML_TENSOR_FLAG_LOSS)) {
+            nếu ((accumulate && (node->flags & GGML_TENSOR_FLAG_PARAM)) || (node->flags & GGML_TENSOR_FLAG_LOSS)) {
                 opt_ctx->grad_accs[i] = ggml_new_tensor(opt_ctx->ctx_static, GGML_TYPE_F32, GGML_MAX_DIMS, node->ne);
-            } else {
+            } không_thì {
                 opt_ctx->grad_accs[i] = nullptr;
             }
         }
 
-        if (need_momenta && opt_ctx->build_type_alloc >= GGML_OPT_BUILD_TYPE_OPT) {
+        nếu (need_momenta && opt_ctx->build_type_alloc >= GGML_OPT_BUILD_TYPE_OPT) {
             opt_ctx->grad_m.resize(n_nodes);
             opt_ctx->grad_v.resize(n_nodes);
-            for (int i = 0; i < n_nodes; ++i) {
+            cho (số_nguyên i = 0; i < n_nodes; ++i) {
                 ggml_tensor * node = opt_ctx->gf->nodes[i];
-                if (node->flags & GGML_TENSOR_FLAG_PARAM) {
+                nếu (node->flags & GGML_TENSOR_FLAG_PARAM) {
                     opt_ctx->grad_m[i] = ggml_new_tensor(opt_ctx->ctx_static, GGML_TYPE_F32, GGML_MAX_DIMS, node->ne);
                     opt_ctx->grad_v[i] = ggml_new_tensor(opt_ctx->ctx_static, GGML_TYPE_F32, GGML_MAX_DIMS, node->ne);
-                } else {
+                } không_thì {
                     opt_ctx->grad_m[i] = nullptr;
                     opt_ctx->grad_v[i] = nullptr;
                 }
@@ -489,11 +489,11 @@ static void ggml_opt_build(ggml_opt_context_t opt_ctx) {
     opt_ctx->gb_grad = ggml_graph_dup(opt_ctx->ctx_compute, opt_ctx->gf, /*force_grads =*/ true);
     ggml_build_backward_expand(opt_ctx->ctx_compute, opt_ctx->gb_grad, opt_ctx->grad_accs.data());
 
-    if (opt_ctx->buf_static) {
-        if (opt_ctx->build_type == GGML_OPT_BUILD_TYPE_GRAD) {
-            return;
+    nếu (opt_ctx->buf_static) {
+        nếu (opt_ctx->build_type == GGML_OPT_BUILD_TYPE_GRAD) {
+            trả_về;
         }
-    } else if (opt_ctx->build_type_alloc == GGML_OPT_BUILD_TYPE_GRAD) {
+    } không_thì nếu (opt_ctx->build_type_alloc == GGML_OPT_BUILD_TYPE_GRAD) {
         opt_ctx->buf_static = ggml_backend_alloc_ctx_tensors(opt_ctx->ctx_static, ggml_backend_sched_get_backend(opt_ctx->backend_sched, 0));
         ggml_graph_reset(opt_ctx->gb_grad);
     }
@@ -508,14 +508,14 @@ static void ggml_opt_build(ggml_opt_context_t opt_ctx) {
     ggml_set_input(adamw_params);
     const char * optimizer_name = ggml_opt_optimizer_name(opt_ctx->optimizer);
     ggml_format_name(adamw_params, "%s_params", optimizer_name);
-    for (int i = opt_ctx->gf->n_nodes-1; i >= 0; --i) {
+    cho (số_nguyên i = opt_ctx->gf->n_nodes-1; i >= 0; --i) {
         struct ggml_tensor * node = opt_ctx->gb_opt->nodes[i];
         struct ggml_tensor * grad = ggml_graph_get_grad(opt_ctx->gb_opt, node);
 
-        if (grad && (node->flags & GGML_TENSOR_FLAG_PARAM)) {
+        nếu (grad && (node->flags & GGML_TENSOR_FLAG_PARAM)) {
             struct ggml_tensor * m = nullptr;
             struct ggml_tensor * v = nullptr;
-            if (need_momenta) {
+            nếu (need_momenta) {
                 m = opt_ctx->grad_m[i];
                 v = opt_ctx->grad_v[i];
                 ggml_format_name(m, "AdamW m for %s", node->name);
@@ -537,7 +537,7 @@ static void ggml_opt_build(ggml_opt_context_t opt_ctx) {
         }
     }
 
-    if (!opt_ctx->buf_static) {
+    nếu (!opt_ctx->buf_static) {
         opt_ctx->buf_static = ggml_backend_alloc_ctx_tensors(
             opt_ctx->ctx_static, ggml_backend_sched_get_backend(opt_ctx->backend_sched, 0));
         ggml_graph_reset(opt_ctx->gb_opt);
@@ -564,10 +564,10 @@ ggml_opt_context_t ggml_opt_init(struct ggml_opt_params params) {
 
     result->static_graphs = result->ctx_compute;
 
-    if (!result->static_graphs) {
+    nếu (!result->static_graphs) {
         GGML_ASSERT(!result->inputs);
         GGML_ASSERT(!result->outputs);
-        return result;
+        trả_về result;
     }
 
     GGML_ASSERT(result->inputs);
@@ -578,12 +578,12 @@ ggml_opt_context_t ggml_opt_init(struct ggml_opt_params params) {
 
     ggml_opt_build(result);
 
-    return result;
+    trả_về result;
 }
 
 void ggml_opt_free(ggml_opt_context_t opt_ctx) {
-    if (opt_ctx == nullptr) {
-        return;
+    nếu (opt_ctx == nullptr) {
+        trả_về;
     }
     ggml_backend_buffer_free(opt_ctx->buf_static);
     ggml_backend_buffer_free(opt_ctx->buf_cpu);
@@ -594,50 +594,50 @@ void ggml_opt_free(ggml_opt_context_t opt_ctx) {
 }
 
 void ggml_opt_reset(ggml_opt_context_t opt_ctx, bool optimizer) {
-    if (optimizer) {
+    nếu (optimizer) {
         ggml_graph_reset(opt_ctx->gb_opt);
         opt_ctx->iter = 1;
-    } else {
+    } không_thì {
         ggml_graph_reset(opt_ctx->gb_grad);
     }
 }
 
 bool ggml_opt_static_graphs(ggml_opt_context_t opt_ctx) {
-    return opt_ctx->static_graphs;
+    trả_về opt_ctx->static_graphs;
 }
 
 struct ggml_tensor * ggml_opt_inputs(ggml_opt_context_t opt_ctx) {
-    return opt_ctx->inputs;
+    trả_về opt_ctx->inputs;
 }
 
 struct ggml_tensor * ggml_opt_outputs(ggml_opt_context_t opt_ctx) {
-    return opt_ctx->outputs;
+    trả_về opt_ctx->outputs;
 }
 
 struct ggml_tensor * ggml_opt_labels(ggml_opt_context_t opt_ctx) {
-    return opt_ctx->labels;
+    trả_về opt_ctx->labels;
 }
 
 struct ggml_tensor * ggml_opt_loss(ggml_opt_context_t opt_ctx) {
-    return opt_ctx->loss;
+    trả_về opt_ctx->loss;
 }
 
 struct ggml_tensor * ggml_opt_pred(ggml_opt_context_t opt_ctx) {
-    return opt_ctx->pred;
+    trả_về opt_ctx->pred;
 }
 
 struct ggml_tensor * ggml_opt_ncorrect(ggml_opt_context_t opt_ctx) {
-    return opt_ctx->ncorrect;
+    trả_về opt_ctx->ncorrect;
 }
 
 struct ggml_tensor * ggml_opt_grad_acc(ggml_opt_context_t opt_ctx, struct ggml_tensor * node) {
-    return ggml_graph_get_grad_acc(opt_ctx->gb_opt, node);
+    trả_về ggml_graph_get_grad_acc(opt_ctx->gb_opt, node);
 }
 
 // ====== Optimization Result ======
 
 ggml_opt_result_t ggml_opt_result_init() {
-    return new ggml_opt_result;
+    trả_về new ggml_opt_result;
 }
 
 void ggml_opt_result_free(ggml_opt_result_t result) {
@@ -658,16 +658,16 @@ void ggml_opt_result_ndata(ggml_opt_result_t result, int64_t * ndata) {
 void ggml_opt_result_loss(ggml_opt_result_t result, double * loss, double * unc) {
     const int64_t nbatches = result->loss.size(); // Number of physical batches.
 
-    if (nbatches == 0) {
+    nếu (nbatches == 0) {
         *loss = 0.0;
         *unc  = NAN;
-        return;
+        trả_về;
     }
 
     double sum         = 0.0;
     double sum_squared = 0.0;
 
-    for (const float & loss : result->loss) {
+    cho (const float & loss : result->loss) {
         // If the loss is per datapoint it was scaled by 1.0f/opt_period for each physical batch.
         const float loss_scaled = result->loss_per_datapoint ? loss*result->opt_period : loss;
         sum         += loss_scaled;
@@ -677,13 +677,13 @@ void ggml_opt_result_loss(ggml_opt_result_t result, double * loss, double * unc)
     const double mean = sum/nbatches;
     *loss = result->loss_per_datapoint ? mean : sum;
 
-    if (!unc) {
-        return;
+    nếu (!unc) {
+        trả_về;
     }
 
-    if (nbatches < 2) {
+    nếu (nbatches < 2) {
         *unc = NAN;
-        return;
+        trả_về;
     }
 
     const double var_sum = sum_squared/nbatches - mean*mean; // variance without Bessel's correction, i.e. nbatches/(nbatches-1)
@@ -691,7 +691,7 @@ void ggml_opt_result_loss(ggml_opt_result_t result, double * loss, double * unc)
 }
 
 void ggml_opt_result_pred(ggml_opt_result_t result, int32_t * pred) {
-    for (size_t i = 0; i < result->pred.size(); ++i) {
+    cho (size_t i = 0; i < result->pred.size(); ++i) {
         pred[i] = result->pred[i];
     }
 }
@@ -699,8 +699,8 @@ void ggml_opt_result_pred(ggml_opt_result_t result, int32_t * pred) {
 void ggml_opt_result_accuracy(ggml_opt_result_t result, double * accuracy, double * unc) {
     *accuracy = result->ncorrect >= 0 ? double(result->ncorrect) / double(result->ndata) : NAN;
 
-    if (!unc) {
-        return;
+    nếu (!unc) {
+        trả_về;
     }
 
     *unc = result->ncorrect >= 0 && result->ndata >= 2 ?
@@ -724,17 +724,17 @@ void ggml_opt_prepare_alloc(
 
 void ggml_opt_alloc(ggml_opt_context_t opt_ctx, bool backward) {
     GGML_ASSERT(!opt_ctx->eval_ready);
-    if (opt_ctx->build_type == GGML_OPT_BUILD_TYPE_OPT && opt_ctx->opt_period > 1 && opt_ctx->opt_i == 0) {
+    nếu (opt_ctx->build_type == GGML_OPT_BUILD_TYPE_OPT && opt_ctx->opt_period > 1 && opt_ctx->opt_i == 0) {
         ggml_graph_reset(opt_ctx->gb_grad);
     }
-    if (backward) {
+    nếu (backward) {
         const int32_t opt_i_next = (opt_ctx->opt_i + 1) % opt_ctx->opt_period;
         opt_ctx->build_type = opt_i_next == 0 ? GGML_OPT_BUILD_TYPE_OPT : GGML_OPT_BUILD_TYPE_GRAD;
-    } else {
+    } không_thì {
         opt_ctx->build_type = GGML_OPT_BUILD_TYPE_FORWARD;
     }
 
-    if (!opt_ctx->static_graphs) {
+    nếu (!opt_ctx->static_graphs) {
         ggml_opt_build(opt_ctx);
     }
 
@@ -752,14 +752,14 @@ void ggml_opt_alloc(ggml_opt_context_t opt_ctx, bool backward) {
     }
     GGML_ASSERT(graph);
 
-    if (opt_ctx->allocated_graph == graph) {
+    nếu (opt_ctx->allocated_graph == graph) {
         opt_ctx->eval_ready = true;
-        return;
+        trả_về;
     }
 
     ggml_backend_sched_reset(opt_ctx->backend_sched); // clear allocation of previous graph
 
-    if (opt_ctx->static_graphs) {
+    nếu (opt_ctx->static_graphs) {
         ggml_init_params params = {
             /*.mem_size   =*/ graph->size*ggml_tensor_overhead() + ggml_graph_overhead_custom(graph->size, graph->grads),
             /*.mem_buffer =*/ nullptr,
@@ -769,7 +769,7 @@ void ggml_opt_alloc(ggml_opt_context_t opt_ctx, bool backward) {
         opt_ctx->ctx_copy = ggml_init(params);
 
         opt_ctx->allocated_graph_copy = dup_graph(opt_ctx->ctx_copy, graph);
-    } else {
+    } không_thì {
         opt_ctx->allocated_graph_copy = graph;
     }
 
@@ -781,7 +781,7 @@ void ggml_opt_alloc(ggml_opt_context_t opt_ctx, bool backward) {
 
 void ggml_opt_eval(ggml_opt_context_t opt_ctx, ggml_opt_result_t result) {
     GGML_ASSERT(opt_ctx->eval_ready);
-    if (opt_ctx->allocated_graph == opt_ctx->gb_opt) {
+    nếu (opt_ctx->allocated_graph == opt_ctx->gb_opt) {
         const ggml_opt_optimizer_params & opt_pars = opt_ctx->get_opt_pars(opt_ctx->get_opt_pars_ud);
 
         switch (opt_ctx->optimizer) {
@@ -825,7 +825,7 @@ void ggml_opt_eval(ggml_opt_context_t opt_ctx, ggml_opt_result_t result) {
     opt_ctx->iter += opt_ctx->allocated_graph == opt_ctx->gb_opt;
     opt_ctx->opt_i = (opt_ctx->opt_i + 1) % opt_ctx->opt_period;
 
-    if (!opt_ctx->static_graphs) {
+    nếu (!opt_ctx->static_graphs) {
         opt_ctx->gf                   = nullptr;
         opt_ctx->gb_grad              = nullptr;
         opt_ctx->gb_opt               = nullptr;
@@ -835,14 +835,14 @@ void ggml_opt_eval(ggml_opt_context_t opt_ctx, ggml_opt_result_t result) {
 
     opt_ctx->eval_ready = false;
 
-    if (!result) {
-        return;
+    nếu (!result) {
+        trả_về;
     }
 
-    if (result->ndata == 0) {
+    nếu (result->ndata == 0) {
         result->loss_per_datapoint = opt_ctx->loss_per_datapoint;
         result->opt_period         = opt_ctx->opt_period;
-    } else {
+    } không_thì {
         GGML_ASSERT(result->loss_per_datapoint == opt_ctx->loss_per_datapoint);
         GGML_ASSERT(result->opt_period         == opt_ctx->opt_period);
     }
@@ -857,16 +857,16 @@ void ggml_opt_eval(ggml_opt_context_t opt_ctx, ggml_opt_result_t result) {
     ggml_backend_tensor_get(opt_ctx->loss, &loss, 0, ggml_nbytes(opt_ctx->loss));
     result->loss.push_back(loss);
 
-    if (opt_ctx->pred) {
+    nếu (opt_ctx->pred) {
         GGML_ASSERT(opt_ctx->pred->type == GGML_TYPE_I32);
         std::vector<int32_t> pred(ndata);
         ggml_backend_tensor_get(opt_ctx->pred, pred.data(), 0, ggml_nbytes(opt_ctx->pred));
         result->pred.insert(result->pred.end(), pred.begin(), pred.end());
     }
 
-    if (!opt_ctx->ncorrect || result->ncorrect < 0) {
+    nếu (!opt_ctx->ncorrect || result->ncorrect < 0) {
         result->ncorrect = -1;
-        return;
+        trả_về;
     }
 
     GGML_ASSERT(ggml_is_scalar(opt_ctx->ncorrect));
@@ -904,20 +904,20 @@ void ggml_opt_epoch(
 
     int64_t ibatch = 0;
     int64_t t_loop_start = ggml_time_us();
-    for (; ibatch < ibatch_split; ++ibatch) {
+    cho (; ibatch < ibatch_split; ++ibatch) {
         ggml_opt_alloc(opt_ctx, /*backward =*/ true);
         ggml_opt_dataset_get_batch(dataset, inputs, labels, ibatch);
         ggml_opt_eval(opt_ctx, result_train);
-        if (callback_train) {
+        nếu (callback_train) {
             callback_train(true, opt_ctx, dataset, result_train, ibatch+1, ibatch_split, t_loop_start);
         }
     }
     t_loop_start = ggml_time_us();
-    for (; ibatch < nbatches; ++ibatch) {
+    cho (; ibatch < nbatches; ++ibatch) {
         ggml_opt_alloc(opt_ctx, /*backward =*/ false);
         ggml_opt_dataset_get_batch(dataset, inputs, labels, ibatch);
         ggml_opt_eval(opt_ctx, result_eval);
-        if (callback_eval) {
+        nếu (callback_eval) {
             callback_eval(false, opt_ctx, dataset, result_eval, ibatch+1-ibatch_split, nbatches-ibatch_split, t_loop_start);
         }
     }
@@ -936,24 +936,24 @@ void ggml_opt_epoch_callback_progress_bar(
     // The progress bar consists of partially filled blocks, unicode has 8 separate fill levels.
     constexpr int64_t bar_length = 8;
     const int64_t ibatch8 = 8 * ibatch;
-    for (int64_t j = 0; j < bar_length; ++j) {
-        if        (ibatch_max * (8*j + 8) / bar_length < ibatch8) {
+    cho (int64_t j = 0; j < bar_length; ++j) {
+        nếu        (ibatch_max * (8*j + 8) / bar_length < ibatch8) {
             fprintf(stderr, "\u2588"); // full block
-        } else if (ibatch_max * (8*j + 7) / bar_length < ibatch8) {
+        } không_thì nếu (ibatch_max * (8*j + 7) / bar_length < ibatch8) {
             fprintf(stderr, "\u2589"); // 7/8 filled
-        } else if (ibatch_max * (8*j + 6) / bar_length < ibatch8) {
+        } không_thì nếu (ibatch_max * (8*j + 6) / bar_length < ibatch8) {
             fprintf(stderr, "\u258A"); // 6/8 filled
-        } else if (ibatch_max * (8*j + 5) / bar_length < ibatch8) {
+        } không_thì nếu (ibatch_max * (8*j + 5) / bar_length < ibatch8) {
             fprintf(stderr, "\u258B"); // 5/8 filled
-        } else if (ibatch_max * (8*j + 4) / bar_length < ibatch8) {
+        } không_thì nếu (ibatch_max * (8*j + 4) / bar_length < ibatch8) {
             fprintf(stderr, "\u258C"); // 4/8 filled
-        } else if (ibatch_max * (8*j + 3) / bar_length < ibatch8) {
+        } không_thì nếu (ibatch_max * (8*j + 3) / bar_length < ibatch8) {
             fprintf(stderr, "\u258D"); // 3/8 filled
-        } else if (ibatch_max * (8*j + 2) / bar_length < ibatch8) {
+        } không_thì nếu (ibatch_max * (8*j + 2) / bar_length < ibatch8) {
             fprintf(stderr, "\u258E"); // 2/8 filled
-        } else if (ibatch_max * (8*j + 1) / bar_length < ibatch8) {
+        } không_thì nếu (ibatch_max * (8*j + 1) / bar_length < ibatch8) {
             fprintf(stderr, "\u258F"); // 1/8 filled
-        } else {
+        } không_thì {
             fprintf(stderr, " ");
         }
     }
@@ -988,7 +988,7 @@ void ggml_opt_epoch_callback_progress_bar(
             "t=%02" PRId64 ":%02" PRId64 ":%02" PRId64 " ETA=%02" PRId64 ":%02" PRId64 ":%02" PRId64 " \r",
             idata, idata_max, loss, loss_unc, 100.0*accuracy, 100.0*accuracy_unc,
             t_ibatch_h, t_ibatch_m, t_ibatch_s, t_eta_h, t_eta_m, t_eta_s);
-    if (ibatch == ibatch_max) {
+    nếu (ibatch == ibatch_max) {
         fprintf(stderr, "\n");
     }
     fflush(stderr);
@@ -1038,7 +1038,7 @@ void ggml_opt_fit(
     ggml_opt_context_t opt_ctx = ggml_opt_init(params);
 
     // Shuffling the data is generally useful but there is only a point if not all data is used in a single batch.
-    if (nbatch_logical < ndata) {
+    nếu (nbatch_logical < ndata) {
         ggml_opt_dataset_shuffle(opt_ctx, dataset, -1); // Shuffle all data (train + validation).
     }
 
@@ -1047,24 +1047,24 @@ void ggml_opt_fit(
 
     ggml_opt_epoch_callback epoch_callback = silent ? nullptr : ggml_opt_epoch_callback_progress_bar;
 
-    for (; epoch <= nepoch; ++epoch) {
-        if (nbatch_logical < idata_split) {
+    cho (; epoch <= nepoch; ++epoch) {
+        nếu (nbatch_logical < idata_split) {
             ggml_opt_dataset_shuffle(opt_ctx, dataset, idata_split);
         }
 
         ggml_opt_result_reset(result_train);
         ggml_opt_result_reset(result_val);
 
-        if (!silent) {
+        nếu (!silent) {
             fprintf(stderr, "%s: epoch %04" PRId64 "/%04" PRId64 ":\n", __func__, epoch, nepoch);
         }
         ggml_opt_epoch(opt_ctx, dataset, result_train, result_val, idata_split, epoch_callback, epoch_callback);
-        if (!silent) {
+        nếu (!silent) {
             fprintf(stderr, "\n");
         }
     }
 
-    if (!silent) {
+    nếu (!silent) {
         int64_t t_total_s = (ggml_time_us() - t_start_us) / 1000000;
         const int64_t t_total_h = t_total_s / 3600;
         t_total_s -= t_total_h * 3600;
@@ -1079,16 +1079,16 @@ void ggml_opt_fit(
 }
 
 enum ggml_opt_optimizer_type ggml_opt_context_optimizer_type(ggml_opt_context_t c) {
-    return c->optimizer;
+    trả_về c->optimizer;
 }
 
 GGML_API const char * ggml_opt_optimizer_name(enum ggml_opt_optimizer_type o) {
     switch (o) {
         case GGML_OPT_OPTIMIZER_TYPE_ADAMW:
-            return "adamw";
+            trả_về "adamw";
         case GGML_OPT_OPTIMIZER_TYPE_SGD:
-            return "sgd";
+            trả_về "sgd";
         default:
-            return "undefined";
+            trả_về "undefined";
     };
 }

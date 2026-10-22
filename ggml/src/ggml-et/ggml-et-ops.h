@@ -18,7 +18,7 @@
                            ",%" PRId64 ",%" PRId64 "]|start_us=%" PRId64 "|end_us=%" PRId64 "\n",                  \
                            op_name, kernel_name, _et_perf_duration, (node)->name, (node)->ne[0], (node)->ne[1],    \
                            (node)->ne[2], (node)->ne[3], _et_perf_start, _et_perf_end);                            \
-        } while (0)
+        } trong_khi (0)
 
 #    define ET_PERF_END_EXT(op_name, kernel_name, node, fmt, ...)                                                  \
         do {                                                                                                       \
@@ -28,20 +28,20 @@
                            ",%" PRId64 ",%" PRId64 "]|start_us=%" PRId64 "|end_us=%" PRId64 "|" fmt "\n",          \
                            op_name, kernel_name, _et_perf_duration, (node)->name, (node)->ne[0], (node)->ne[1],    \
                            (node)->ne[2], (node)->ne[3], _et_perf_start, _et_perf_end, ##__VA_ARGS__);             \
-        } while (0)
-#else
+        } trong_khi (0)
+#không_thì
 
 #    define ET_PERF_START() \
         do {                \
-        } while (0)
+        } trong_khi (0)
 #    define ET_PERF_END_EXT(op_name, kernel_name, node, fmt, ...) \
         do {                                                      \
             (void) (node);                                        \
-        } while (0)
+        } trong_khi (0)
 #    define ET_PERF_END(op_name, kernel_name, node) \
         do {                                        \
             (void) (node);                          \
-        } while (0)
+        } trong_khi (0)
 
 #endif  // ET_PERF_RECORD
 

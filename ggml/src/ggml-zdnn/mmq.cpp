@@ -69,7 +69,7 @@ static void ggml_zdnn_mul_mat_q_grouped(ggml_backend_zdnn_context * ctx,
     zdnn_init_pre_transformed_desc(ZDNN_3DS, FP32, &partial_pre_tfm_desc, 2 * n_chunk, ne11, ne0);
     ZDNN_CHECK(zdnn_generate_quantized_transformed_desc(&partial_pre_tfm_desc, QUANTIZED_DLFLOAT16, &partial_tfm_desc));
     GGML_ASSERT(zdnn_getsize_ztensor(&partial_tfm_desc) == (uint64_t)(2 * n_chunk) * group_bytes);
-    for (int32_t i = 0; i < 2; i++) {
+    cho (int32_t i = 0; i < 2; i++) {
         ggml_zdnn_init_scratch_ztensor(ctx, &partial_pre_tfm_desc, &partial_tfm_desc, &partial_ztensor[i], partial_ztensor_alloc[i]);
     }
 
@@ -82,7 +82,7 @@ static void ggml_zdnn_mul_mat_q_grouped(ggml_backend_zdnn_context * ctx,
         zdnn_ztensor group_ztensor;
         zdnn_init_ztensor(&group_pre_tfm_desc, &group_tfm_desc, &group_ztensor);
 
-        for (int64_t g = g0; g < g0 + n; g++) {
+        cho (int64_t g = g0; g < g0 + n; g++) {
             group_ztensor.buffer_size    = group_bytes;
             group_ztensor.is_transformed = true;
 
@@ -93,18 +93,18 @@ static void ggml_zdnn_mul_mat_q_grouped(ggml_backend_zdnn_context * ctx,
             ZDNN_CHECK(zdnn_transform_origtensor(&group_ztensor, partial_res));
 
             const float * sw = weights_scales + g*ne0;
-            for (int64_t i1 = 0; i1 < ne11; i1++) {
+            cho (int64_t i1 = 0; i1 < ne11; i1++) {
                 const float   sa = inputs_scales[g*ne11 + i1];
                 const float * p  = partial     + i1*ne0;
                 const float * pr = partial_res + i1*ne0;
                 float       * y  = (float *)output->data + i1*ne0;
 
-                if (g == 0) {
-                    for (int64_t i0 = 0; i0 < ne0; i0++) {
+                nếu (g == 0) {
+                    cho (int64_t i0 = 0; i0 < ne0; i0++) {
                         y[i0] = sa * sw[i0] * (p[i0] + pr[i0] * (1.0f/254.0f));
                     }
-                } else {
-                    for (int64_t i0 = 0; i0 < ne0; i0++) {
+                } không_thì {
+                    cho (int64_t i0 = 0; i0 < ne0; i0++) {
                         y[i0] += sa * sw[i0] * (p[i0] + pr[i0] * (1.0f/254.0f));
                     }
                 }
@@ -116,7 +116,7 @@ static void ggml_zdnn_mul_mat_q_grouped(ggml_backend_zdnn_context * ctx,
     zdnn_tensor_desc view_tfm_desc[6];
     std::future<void> sum_task;
 
-    for (int64_t c = 0, g0 = 0; g0 < n_groups; c++, g0 += n_chunk) {
+    cho (int64_t c = 0, g0 = 0; g0 < n_groups; c++, g0 += n_chunk) {
         const int64_t n = std::min(n_chunk, n_groups - g0);
 
         const zdnn_ztensor inputs_view     = ggml_zdnn_stack_view(&view_pre_tfm_desc[0], &view_tfm_desc[0], inputs_ztensor,         2 * n_groups, g0,            n);
@@ -139,18 +139,18 @@ static void ggml_zdnn_mul_mat_q_grouped(ggml_backend_zdnn_context * ctx,
                                             MATMUL_OP_ADDITION, -127, 127, true, false, true,
                                             nullptr, &chunk_res_view));
 
-        if (sum_task.valid()) {
+        nếu (sum_task.valid()) {
             sum_task.get();
         }
 
-        if (n_threads > 1) {
+        nếu (n_threads > 1) {
             sum_task = std::async(std::launch::async, sum_chunk, chunk, g0, n);
-        } else {
+        } không_thì {
             sum_chunk(chunk, g0, n);
         }
     }
 
-    if (sum_task.valid()) {
+    nếu (sum_task.valid()) {
         sum_task.get();
     }
 
@@ -192,14 +192,14 @@ void ggml_zdnn_mul_mat_q(
     // starting threads costs more than it saves for small inputs, e.g. during token generation
     const int32_t n_threads = ne10*ne11 >= 65536 ? ctx->n_threads : 1;
 
-    if (weights_extra->pre_tfm_desc.layout == ZDNN_3DS) {
+    nếu (weights_extra->pre_tfm_desc.layout == ZDNN_3DS) {
         GGML_ASSERT(weights_extra->pre_tfm_desc.dim1 == weights->ne[1] && "weights_extra->pre_tfm_desc.dim1 must match weights->ne[1]");
 
         ggml_zdnn_mul_mat_q_grouped(ctx, n_threads, inputs, weights_extra, output);
 
         // the result is written to output->data directly, so the output ztensor is stale
         output_extra->ztensor.is_transformed = false;
-        return;
+        trả_về;
     }
 
     ggml_backend_zdnn_buffer * bias_extra = (ggml_backend_zdnn_buffer *)output_extra->extra;
@@ -257,7 +257,7 @@ void ggml_zdnn_mul_mat_q(
         zdnn_ztensor stack_ztensor;
         zdnn_init_ztensor(&stack_pre_tfm_desc, &stack_tfm_desc, &stack_ztensor);
 
-        for (int64_t s = s_start; s < s_end; s++) {
+        cho (int64_t s = s_start; s < s_end; s++) {
             stack_ztensor.buffer         = (char *)partial_ztensor.buffer + s*stack_bytes;
             stack_ztensor.buffer_size    = stack_bytes;
             stack_ztensor.is_transformed = true;
@@ -270,11 +270,11 @@ void ggml_zdnn_mul_mat_q(
 
     const float * weights_scales = weights_extra->scales.data();
     ggml_zdnn_parallel_for(n_threads, ne1, [&](int64_t i1_start, int64_t i1_end) {
-        for (int64_t i1 = i1_start; i1 < i1_end; i1++) {
+        cho (int64_t i1 = i1_start; i1 < i1_end; i1++) {
             const float   sa = inputs_scales[i1];
             const float * pr = partial[1] + i1*ne0;
             float       * y  = partial[0] + i1*ne0;
-            for (int64_t i0 = 0; i0 < ne0; i0++) {
+            cho (int64_t i0 = 0; i0 < ne0; i0++) {
                 y[i0] = sa * weights_scales[i0] * (y[i0] + pr[i0] * (1.0f/254.0f));
             }
         }

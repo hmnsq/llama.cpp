@@ -42,25 +42,25 @@ static inline float hsum_f10(void) {
         "fbcx.ps   f5, t0 \n\t"
         "fadd.ps   %[vout], f4, f5, rne \n\t"
         : [vout] "=f"(result)::"t0", "f1", "f2", "f3", "f4", "f5");
-    return result;
+    trả_về result;
 }
 
-int entry_point(struct ggml_et_rwkv_wkv7_params * params, void * env) {
+số_nguyên entry_point(struct ggml_et_rwkv_wkv7_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    nếu (!kernel_env) {
+        trả_về -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    số_nguyên thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    số_nguyên num_threads = get_num_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    nếu (thread_id < 0) {
+        trả_về 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    nếu (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        trả_về -1;
     }
 
     const float * r        = params->r;
@@ -78,8 +78,8 @@ int entry_point(struct ggml_et_rwkv_wkv7_params * params, void * env) {
     const int32_t T      = params->T;
     const int32_t n_seqs = params->n_seqs;
 
-    if (!r || !w || !k || !v || !a || !b || !state_in || !dst_data) {
-        return -1;
+    nếu (!r || !w || !k || !v || !a || !b || !state_in || !dst_data) {
+        trả_về -1;
     }
 
     const int32_t tps       = T / n_seqs;  // tokens per sequence
@@ -106,7 +106,7 @@ int entry_point(struct ggml_et_rwkv_wkv7_params * params, void * env) {
     register float w_h5 __asm__("f29");
     register float w_h6 __asm__("f30");
     register float w_h7 __asm__("f31");
-    const int      wkv7_fast = (S == 64);
+    const số_nguyên      wkv7_fast = (S == 64);
 
     // Tile i by one cache line so each hart's output writes never share a
     // 64-B line with another hart's writes (the chip is non-coherent).
@@ -120,7 +120,7 @@ int entry_point(struct ggml_et_rwkv_wkv7_params * params, void * env) {
     // unit loop so the same hart owns the same state rows across all
     // timesteps — required for the recurrence to read back its own writes
     // without going through L2.
-    for (int32_t u = thread_id; u < total_units; u += num_threads) {
+    cho (int32_t u = thread_id; u < total_units; u += num_threads) {
         const int32_t h       = u / tiles_per_head;
         const int32_t tile    = u % tiles_per_head;
         const int32_t i_start = tile * i_tile;
@@ -129,7 +129,7 @@ int entry_point(struct ggml_et_rwkv_wkv7_params * params, void * env) {
         const int32_t h_off = h * S;      // offset within C for this head
         const int32_t s2d   = h * S * S;  // offset within state for this head
 
-        for (int32_t t = 0; t < T; t++) {
+        cho (int32_t t = 0; t < T; t++) {
             const int32_t seq       = t / tps;
             const int32_t t_in_seq  = t % tps;
             const int32_t seq_state = seq * S * C;  // state offset for this sequence
@@ -137,9 +137,9 @@ int entry_point(struct ggml_et_rwkv_wkv7_params * params, void * env) {
             const float * s_prev;
             float *       s_cur = state_out + seq_state + s2d;
 
-            if (t_in_seq == 0) {
+            nếu (t_in_seq == 0) {
                 s_prev = state_in + seq_state + s2d;
-            } else {
+            } không_thì {
                 s_prev = s_cur;
             }
 
@@ -155,7 +155,7 @@ int entry_point(struct ggml_et_rwkv_wkv7_params * params, void * env) {
             // Hoist w[0..63] into f24-f31 once per (h, t).  These values are
             // invariant across the i loop below, so the inner j-unroll can
             // reference them by register name and skip the per-i reload.
-            if (wkv7_fast) {
+            nếu (wkv7_fast) {
                 __asm__ volatile(
                     "flw.ps f24,   0(%[wp])\n"
                     "flw.ps f25,  32(%[wp])\n"
@@ -169,7 +169,7 @@ int entry_point(struct ggml_et_rwkv_wkv7_params * params, void * env) {
                     : [wp] "r"(w_ptr));
             }
 
-            for (int32_t i = i_start; i < i_end; i++) {
+            cho (int32_t i = i_start; i < i_end; i++) {
                 const float * sp_row = s_prev + i * S;  // state_prev row i
                 float *       sc_row = s_cur + i * S;   // state_cur  row i
 
@@ -180,7 +180,7 @@ int entry_point(struct ggml_et_rwkv_wkv7_params * params, void * env) {
                 float zero = 0.0f;
                 __asm__ volatile("fbc.ps f10, %[z]\n" : : [z] "m"(zero) : "f10");
 
-                for (int32_t j = 0; j < S; j += 8) {
+                cho (int32_t j = 0; j < S; j += 8) {
                     __asm__ volatile(
                         "flw.ps f11, %[a_vec]\n"
                         "flw.ps f12, %[s_vec]\n"
@@ -209,7 +209,7 @@ int entry_point(struct ggml_et_rwkv_wkv7_params * params, void * env) {
                     : [vv] "m"(v_val), [sv] "m"(sa), [z] "m"(zero)
                     : "f10", "f20", "f21");
 
-                if (wkv7_fast) {
+                nếu (wkv7_fast) {
 // Fast path: 8 chunks unrolled, w hoisted to f24-f31.
 // Saves one flw per chunk vs the original loop.
 #define WKV7_PASS2_CHUNK(j_off, w_var)                                                                           \
@@ -239,8 +239,8 @@ int entry_point(struct ggml_et_rwkv_wkv7_params * params, void * env) {
                     WKV7_PASS2_CHUNK(56, w_h7);
 
 #undef WKV7_PASS2_CHUNK
-                } else {
-                    for (int32_t j = 0; j < S; j += 8) {
+                } không_thì {
+                    cho (int32_t j = 0; j < S; j += 8) {
                         __asm__ volatile(
                             "flw.ps f11, %[s_vec]\n"         // state_prev[j..j+7]
                             "flw.ps f12, %[w_vec]\n"         // w[j..j+7]
@@ -268,5 +268,5 @@ int entry_point(struct ggml_et_rwkv_wkv7_params * params, void * env) {
         }
     }
 
-    return 0;
+    trả_về 0;
 }

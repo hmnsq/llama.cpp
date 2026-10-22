@@ -64,38 +64,38 @@ void ggml_metal_fusion_add_alloc_deps(
 // device register with it so the fusion counters are race-free and accumulate across contexts.
 struct ggml_metal_fusion_info; // defined in ggml-metal-fusion.cpp
 
-struct ggml_metal_fusion_info * ggml_metal_fusion_info_init(bool enabled, int debug);
+struct ggml_metal_fusion_info * ggml_metal_fusion_info_init(bool enabled, số_nguyên debug);
 void ggml_metal_fusion_info_free(struct ggml_metal_fusion_info * finfo);
 
 bool ggml_metal_fusion_info_enabled(const struct ggml_metal_fusion_info * finfo);
 bool ggml_metal_fusion_info_stats  (const struct ggml_metal_fusion_info * finfo);
-int  ggml_metal_fusion_info_debug  (const struct ggml_metal_fusion_info * finfo);
+số_nguyên  ggml_metal_fusion_info_debug  (const struct ggml_metal_fusion_info * finfo);
 
-int          ggml_metal_fusion_info_n_fusions(const struct ggml_metal_fusion_info * finfo);
-const char * ggml_metal_fusion_info_label    (const struct ggml_metal_fusion_info * finfo, int idx);
-uint64_t     ggml_metal_fusion_info_count    (const struct ggml_metal_fusion_info * finfo, int idx);
+số_nguyên          ggml_metal_fusion_info_n_fusions(const struct ggml_metal_fusion_info * finfo);
+const char * ggml_metal_fusion_info_label    (const struct ggml_metal_fusion_info * finfo, số_nguyên idx);
+uint64_t     ggml_metal_fusion_info_count    (const struct ggml_metal_fusion_info * finfo, số_nguyên idx);
 
 void ggml_metal_fusion_info_count_fusion(struct ggml_metal_fusion_info * finfo, const struct ggml_metal_fusion * fusion);
 void ggml_metal_fusion_info_set_enabled (struct ggml_metal_fusion_info * finfo, bool enabled);
 
 void ggml_metal_fusion_info_stats_init (      struct ggml_metal_fusion_info * finfo);
 void ggml_metal_fusion_info_stats_reset(      struct ggml_metal_fusion_info * finfo);
-int  ggml_metal_fusion_info_stats_get  (const struct ggml_metal_fusion_info * finfo, const char ** labels, uint64_t * counts, int n);
+số_nguyên  ggml_metal_fusion_info_stats_get  (const struct ggml_metal_fusion_info * finfo, const char ** labels, uint64_t * counts, số_nguyên n);
 void ggml_metal_fusion_info_labels_init(      struct ggml_metal_fusion_info * finfo);
 
 // compute phase: longest fusion starting at idx (a position in node_idxs) that matches in `mode` on a device with
 // props. returns the matching pattern (nullptr if no fusion) and sets *n_out to the number of nodes consumed.
 const ggml_metal_fusion * ggml_metal_fusion_next(
         const struct ggml_cgraph * gf,
-        const int * node_idxs,
-        int n_idxs,
-        int idx,
+        const số_nguyên * node_idxs,
+        số_nguyên n_idxs,
+        số_nguyên idx,
         ggml_metal_fusion_mode mode,
-        int * n_out);
+        số_nguyên * n_out);
 
 // optimize phase: maximum number of nodes starting at idx (a raw sequential graph index) that
 // could be fused on a device with props, chaining patterns back-to-back. returns at least 1.
-int ggml_metal_fusion_max(const struct ggml_cgraph * gf, int idx);
+số_nguyên ggml_metal_fusion_max(const struct ggml_cgraph * gf, số_nguyên idx);
 
 #ifdef __cplusplus
 }

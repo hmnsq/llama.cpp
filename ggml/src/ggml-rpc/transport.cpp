@@ -8,7 +8,7 @@
 #  endif
 #  include <windows.h>
 #  include <winsock2.h>
-#else
+#không_thì
 #  include <arpa/inet.h>
 #  include <sys/socket.h>
 #  include <sys/types.h>
@@ -39,8 +39,8 @@
 #ifdef _WIN32
 typedef SOCKET sockfd_t;
 using ssize_t = __int64;
-#else
-typedef int sockfd_t;
+#không_thì
+typedef số_nguyên sockfd_t;
 #endif
 
 #ifdef GGML_RPC_RDMA
@@ -48,9 +48,9 @@ static constexpr size_t RDMA_GID_SIZE = 16;            // RoCE GID / IB GID is a
 using rdma_gid_t = std::array<uint8_t, RDMA_GID_SIZE>;
 #endif // GGML_RPC_RDMA
 
-#if defined(GGML_RPC_RDMA) && !defined(GGML_RPC_RDMA_APPLE)
+#nếu defined(GGML_RPC_RDMA) && !defined(GGML_RPC_RDMA_APPLE)
 static constexpr size_t RDMA_CHUNK    = 256 * 1024;   // 256 KiB per send/recv (fits default 8 MiB memlock)
-static constexpr int    RDMA_RX_DEPTH = 24;            // pre-posted recv ring: 24 × 256 KiB = 6 MiB
+static constexpr số_nguyên    RDMA_RX_DEPTH = 24;            // pre-posted recv ring: 24 × 256 KiB = 6 MiB
 // keep polling the CQ for this long after the last activity, then sleep until the next completion
 static constexpr auto   RDMA_SPIN_TIME = std::chrono::milliseconds(100);
 
@@ -69,15 +69,15 @@ struct rdma_conn {
 
     void          * rx_buf = nullptr; // RDMA_RX_DEPTH × RDMA_CHUNK contiguous
     struct ibv_mr * rx_mr  = nullptr;
-    int             rx_head = 0;
+    số_nguyên             rx_head = 0;
 
     uint32_t        max_inline = 0;
 
-    uint8_t * rx_slot(int i) const {
-        return static_cast<uint8_t *>(rx_buf) + static_cast<size_t>(i) * RDMA_CHUNK;
+    uint8_t * rx_slot(số_nguyên i) const {
+        trả_về static_cast<uint8_t *>(rx_buf) + static_cast<size_t>(i) * RDMA_CHUNK;
     }
 
-    bool post_rx(int i) {
+    bool post_rx(số_nguyên i) {
         struct ibv_sge sge = {};
         sge.addr   = (uintptr_t)rx_slot(i);
         sge.length = RDMA_CHUNK;
@@ -86,20 +86,20 @@ struct rdma_conn {
         wr.wr_id   = (uint64_t)i;
         wr.sg_list = &sge;
         wr.num_sge = 1;
-        return ibv_post_recv(qp, &wr, &bad) == 0;
+        trả_về ibv_post_recv(qp, &wr, &bad) == 0;
     }
 
     ~rdma_conn() {
-        if (tx_mr) ibv_dereg_mr(tx_mr);
-        if (rx_mr) ibv_dereg_mr(rx_mr);
+        nếu (tx_mr) ibv_dereg_mr(tx_mr);
+        nếu (rx_mr) ibv_dereg_mr(rx_mr);
         free(tx_buf);
         free(rx_buf);
-        if (qp)  ibv_destroy_qp(qp);
-        if (scq) ibv_destroy_cq(scq);
-        if (rcq) ibv_destroy_cq(rcq);
-        if (ch)  ibv_destroy_comp_channel(ch);
-        if (pd)  ibv_dealloc_pd(pd);
-        if (ctx) ibv_close_device(ctx);
+        nếu (qp)  ibv_destroy_qp(qp);
+        nếu (scq) ibv_destroy_cq(scq);
+        nếu (rcq) ibv_destroy_cq(rcq);
+        nếu (ch)  ibv_destroy_comp_channel(ch);
+        nếu (pd)  ibv_dealloc_pd(pd);
+        nếu (ctx) ibv_close_device(ctx);
     }
 };
 
@@ -110,7 +110,7 @@ struct rdma_local_info {
     uint32_t psn     = 0;
     uint8_t  gid[RDMA_GID_SIZE] = {};
     uint8_t  ib_port = 0;
-    int      gid_idx = 0;
+    số_nguyên      gid_idx = 0;
     enum ibv_mtu path_mtu = IBV_MTU_1024;
 };
 
@@ -138,7 +138,7 @@ struct socket_t::impl {
 
 #  ifdef GGML_RPC_RDMA_APPLE
     std::unique_ptr<apple_rdma> rdma;
-#  else
+#  không_thì
     bool rdma_probe();
     bool rdma_send(const void * data, size_t size);
     bool rdma_recv(void * data, size_t size);
@@ -161,9 +161,9 @@ socket_t::impl::~impl() {
 #endif // GGML_RPC_RDMA
     LOG_DBG("[%s] closing socket %d\n", __func__, this->fd);
 #ifdef _WIN32
-    if (fd != INVALID_SOCKET) closesocket(this->fd);
-#else
-    if (fd >= 0) close(this->fd);
+    nếu (fd != INVALID_SOCKET) closesocket(this->fd);
+#không_thì
+    nếu (fd >= 0) close(this->fd);
 #endif
 }
 
@@ -179,35 +179,35 @@ socket_t::impl::~impl() {
 std::optional<rdma_gid_t> socket_t::impl::rdma_build_target_gid() {
     sockaddr_storage addr = {};
     socklen_t addr_len = sizeof(addr);
-    if (getsockname(fd, reinterpret_cast<sockaddr *>(&addr), &addr_len) != 0) {
-        return std::nullopt;
+    nếu (getsockname(fd, reinterpret_cast<sockaddr *>(&addr), &addr_len) != 0) {
+        trả_về std::nullopt;
     }
     rdma_gid_t target = {};
-    if (addr.ss_family == AF_INET) {
+    nếu (addr.ss_family == AF_INET) {
         const auto * a = reinterpret_cast<const sockaddr_in *>(&addr);
         target[10] = 0xff;
         target[11] = 0xff;
         memcpy(&target[12], &a->sin_addr, 4);
-        return target;
+        trả_về target;
     }
-    if (addr.ss_family == AF_INET6) {
+    nếu (addr.ss_family == AF_INET6) {
         const auto * a = reinterpret_cast<const sockaddr_in6 *>(&addr);
         memcpy(target.data(), &a->sin6_addr, RDMA_GID_SIZE);
-        return target;
+        trả_về target;
     }
-    return std::nullopt;
+    trả_về std::nullopt;
 }
 
 #ifndef GGML_RPC_RDMA_APPLE
 
 bool socket_t::impl::tcp_peer_closed() {
-    if (fd < 0) return false;
+    nếu (fd < 0) trả_về false;
 #ifndef _WIN32
     struct pollfd pfd = { fd, POLLIN | POLLRDHUP, 0 };
-    int r = poll(&pfd, 1, 0);
-    return r > 0 && (pfd.revents & (POLLHUP | POLLERR | POLLRDHUP));
-#else
-    return false;
+    số_nguyên r = poll(&pfd, 1, 0);
+    trả_về r > 0 && (pfd.revents & (POLLHUP | POLLERR | POLLRDHUP));
+#không_thì
+    trả_về false;
 #endif
 }
 
@@ -216,64 +216,64 @@ bool socket_t::impl::rdma_probe() {
     const char * gid_env = std::getenv("GGML_RDMA_GID");
 
     auto target_gid = rdma_build_target_gid();
-    if (!target_gid) {
-        return false;
+    nếu (!target_gid) {
+        trả_về false;
     }
 
     const uint8_t ib_port = 1;
-    int num_devs = 0;
+    số_nguyên num_devs = 0;
     ibv_device ** devs = ibv_get_device_list(&num_devs);
-    if (!devs || num_devs == 0) return false;
+    nếu (!devs || num_devs == 0) trả_về false;
 
     ibv_context * ibctx = nullptr;
     const char * matched_dev = nullptr;
-    int gid_idx = gid_env ? atoi(gid_env) : -1;
-    int gid_version = IBV_GID_TYPE_IB;  // 0 = unknown/IB
+    số_nguyên gid_idx = gid_env ? atoi(gid_env) : -1;
+    số_nguyên gid_version = IBV_GID_TYPE_IB;  // 0 = unknown/IB
 
-    for (int d = 0; d < num_devs; d++) {
+    cho (số_nguyên d = 0; d < num_devs; d++) {
         const char * dn = ibv_get_device_name(devs[d]);
-        if (dev_env && strcmp(dev_env, dn) != 0) continue;
+        nếu (dev_env && strcmp(dev_env, dn) != 0) continue;
 
         ibv_context * ctx = ibv_open_device(devs[d]);
-        if (!ctx) continue;
+        nếu (!ctx) continue;
 
         ibv_port_attr pa;
-        if (ibv_query_port(ctx, ib_port, &pa) != 0) { ibv_close_device(ctx); continue; }
+        nếu (ibv_query_port(ctx, ib_port, &pa) != 0) { ibv_close_device(ctx); continue; }
 
-        int found_gid = gid_idx;
-        int found_version = IBV_GID_TYPE_IB;
-        if (found_gid < 0) {
+        số_nguyên found_gid = gid_idx;
+        số_nguyên found_version = IBV_GID_TYPE_IB;
+        nếu (found_gid < 0) {
             // Find a GID on this port whose bytes equal the local TCP address
             // (IPv4 or IPv6). Prefer RoCE v2 (UDP/IP, L3-routable) over v1
             // (raw Ethernet, same-L2 only) so silent hangs on L3-routed paths
             // are avoided. ibv_query_gid_ex returns gid+type in one call.
-            int v2_idx = -1;
-            int v1_idx = -1;
-            for (int i = 0; i < pa.gid_tbl_len; i++) {
+            số_nguyên v2_idx = -1;
+            số_nguyên v1_idx = -1;
+            cho (số_nguyên i = 0; i < pa.gid_tbl_len; i++) {
                 ibv_gid_entry entry = {};
-                if (ibv_query_gid_ex(ctx, ib_port, i, &entry, 0) != 0) continue;
-                if (memcmp(entry.gid.raw, target_gid->data(), RDMA_GID_SIZE) != 0) continue;
-                if (entry.gid_type == IBV_GID_TYPE_ROCE_V2 && v2_idx < 0) {
+                nếu (ibv_query_gid_ex(ctx, ib_port, i, &entry, 0) != 0) continue;
+                nếu (memcmp(entry.gid.raw, target_gid->data(), RDMA_GID_SIZE) != 0) continue;
+                nếu (entry.gid_type == IBV_GID_TYPE_ROCE_V2 && v2_idx < 0) {
                     v2_idx = i;
-                } else if (entry.gid_type == IBV_GID_TYPE_ROCE_V1 && v1_idx < 0) {
+                } không_thì nếu (entry.gid_type == IBV_GID_TYPE_ROCE_V1 && v1_idx < 0) {
                     v1_idx = i;
                 }
             }
-            if (v2_idx >= 0) {
+            nếu (v2_idx >= 0) {
                 found_gid = v2_idx;
                 found_version = IBV_GID_TYPE_ROCE_V2;
-            } else if (v1_idx >= 0) {
+            } không_thì nếu (v1_idx >= 0) {
                 found_gid = v1_idx;
                 found_version = IBV_GID_TYPE_ROCE_V1;
             }
-        } else {
+        } không_thì {
             // Explicit GID index from GGML_RDMA_GID — fetch its type for logging.
             ibv_gid_entry entry = {};
-            if (ibv_query_gid_ex(ctx, ib_port, found_gid, &entry, 0) == 0) {
+            nếu (ibv_query_gid_ex(ctx, ib_port, found_gid, &entry, 0) == 0) {
                 found_version = entry.gid_type;
             }
         }
-        if (found_gid >= 0) {
+        nếu (found_gid >= 0) {
             ibctx = ctx;
             gid_idx = found_gid;
             gid_version = found_version;
@@ -284,7 +284,7 @@ bool socket_t::impl::rdma_probe() {
         ibv_close_device(ctx);
     }
     ibv_free_device_list(devs);
-    if (!ibctx) return false;
+    nếu (!ibctx) trả_về false;
 
     rdma_local.ib_port = ib_port;
     rdma_local.gid_idx = gid_idx;
@@ -293,13 +293,13 @@ bool socket_t::impl::rdma_probe() {
     rdma->ctx = ibctx;
 
     rdma->pd = ibv_alloc_pd(ibctx);
-    if (!rdma->pd) return false;
+    nếu (!rdma->pd) trả_về false;
 
     // without a completion channel rdma_poll() spins all the time, as before
     rdma->ch  = ibv_create_comp_channel(ibctx);
     rdma->scq = ibv_create_cq(ibctx, 16, nullptr, rdma->ch, 0);
     rdma->rcq = ibv_create_cq(ibctx, RDMA_RX_DEPTH + 4, nullptr, rdma->ch, 0);
-    if (!rdma->scq || !rdma->rcq) return false;
+    nếu (!rdma->scq || !rdma->rcq) trả_về false;
 
     ibv_qp_init_attr qia = {};
     qia.send_cq = rdma->scq;
@@ -312,34 +312,34 @@ bool socket_t::impl::rdma_probe() {
     qia.cap.max_inline_data = 256;
 
     rdma->qp = ibv_create_qp(rdma->pd, &qia);
-    if (!rdma->qp) return false;
+    nếu (!rdma->qp) trả_về false;
     rdma->max_inline = qia.cap.max_inline_data;
 
     rdma->tx_buf = aligned_alloc(4096, RDMA_CHUNK);
     rdma->rx_buf = aligned_alloc(4096, static_cast<size_t>(RDMA_RX_DEPTH) * RDMA_CHUNK);
-    if (!rdma->tx_buf || !rdma->rx_buf) return false;
+    nếu (!rdma->tx_buf || !rdma->rx_buf) trả_về false;
 
     rdma->tx_mr = ibv_reg_mr(rdma->pd, rdma->tx_buf, RDMA_CHUNK, IBV_ACCESS_LOCAL_WRITE);
     rdma->rx_mr = ibv_reg_mr(rdma->pd, rdma->rx_buf, static_cast<size_t>(RDMA_RX_DEPTH) * RDMA_CHUNK,
                            IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE);
-    if (!rdma->tx_mr || !rdma->rx_mr) return false;
+    nếu (!rdma->tx_mr || !rdma->rx_mr) trả_về false;
 
     ibv_gid local_gid;
-    if (ibv_query_gid(ibctx, ib_port, gid_idx, &local_gid) != 0) return false;
+    nếu (ibv_query_gid(ibctx, ib_port, gid_idx, &local_gid) != 0) trả_về false;
 
     rdma_local.qpn = rdma->qp->qp_num;
     rdma_local.psn = rdma->qp->qp_num & 0xffffff;
     memcpy(&rdma_local.gid, &local_gid, RDMA_GID_SIZE);
 
     const char * ver_str = "";
-    if (gid_version == IBV_GID_TYPE_ROCE_V2) {
+    nếu (gid_version == IBV_GID_TYPE_ROCE_V2) {
         ver_str = " RoCEv2";
-    } else if (gid_version == IBV_GID_TYPE_ROCE_V1) {
+    } không_thì nếu (gid_version == IBV_GID_TYPE_ROCE_V1) {
         ver_str = " RoCEv1";
     }
     LOG_INFO("RDMA probed: dev=%s gid=%d%s qpn=%u inline=%u\n",
                   matched_dev, gid_idx, ver_str, rdma_local.qpn, rdma->max_inline);
-    return true;
+    trả_về true;
 }
 
 // Phase 2: Given remote QPN/PSN/GID, transition QP: RESET->INIT->pre-post->RTR->RTS.
@@ -352,14 +352,14 @@ bool socket_t::impl::rdma_activate(uint32_t remote_qpn, uint32_t remote_psn, con
         a.port_num        = rdma_local.ib_port;
         a.pkey_index      = 0;
         a.qp_access_flags = IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_LOCAL_WRITE;
-        if (ibv_modify_qp(rdma->qp, &a,
+        nếu (ibv_modify_qp(rdma->qp, &a,
                 IBV_QP_STATE | IBV_QP_PKEY_INDEX | IBV_QP_PORT | IBV_QP_ACCESS_FLAGS) != 0) {
-            return false;
+            trả_về false;
         }
     }
 
-    for (int i = 0; i < RDMA_RX_DEPTH; i++) {
-        if (!rdma->post_rx(i)) return false;
+    cho (số_nguyên i = 0; i < RDMA_RX_DEPTH; i++) {
+        nếu (!rdma->post_rx(i)) trả_về false;
     }
 
     // INIT -> RTR
@@ -377,10 +377,10 @@ bool socket_t::impl::rdma_activate(uint32_t remote_qpn, uint32_t remote_psn, con
         a.ah_attr.grh.sgid_index = rdma_local.gid_idx;
         a.ah_attr.dlid       = 0;
         a.ah_attr.port_num   = rdma_local.ib_port;
-        if (ibv_modify_qp(rdma->qp, &a,
+        nếu (ibv_modify_qp(rdma->qp, &a,
                 IBV_QP_STATE | IBV_QP_AV | IBV_QP_PATH_MTU | IBV_QP_DEST_QPN |
                 IBV_QP_RQ_PSN | IBV_QP_MAX_DEST_RD_ATOMIC | IBV_QP_MIN_RNR_TIMER) != 0) {
-            return false;
+            trả_về false;
         }
     }
 
@@ -393,10 +393,10 @@ bool socket_t::impl::rdma_activate(uint32_t remote_qpn, uint32_t remote_psn, con
         a.rnr_retry    = 7;
         a.sq_psn       = rdma_local.psn;
         a.max_rd_atomic = 1;
-        if (ibv_modify_qp(rdma->qp, &a,
+        nếu (ibv_modify_qp(rdma->qp, &a,
                 IBV_QP_STATE | IBV_QP_TIMEOUT | IBV_QP_RETRY_CNT | IBV_QP_RNR_RETRY |
                 IBV_QP_SQ_PSN | IBV_QP_MAX_QP_RD_ATOMIC) != 0) {
-            return false;
+            trả_về false;
         }
     }
 
@@ -404,7 +404,7 @@ bool socket_t::impl::rdma_activate(uint32_t remote_qpn, uint32_t remote_psn, con
 
     LOG_INFO("RDMA activated: qpn=%u->%u mtu=%d rx_depth=%d\n",
                   rdma_local.qpn, remote_qpn, 128 << rdma_local.path_mtu, RDMA_RX_DEPTH);
-    return true;
+    trả_về true;
 }
 
 // Sleep until the completion channel has an event or the TCP peer closes.
@@ -415,57 +415,57 @@ bool socket_t::impl::rdma_wait_event() {
         { c->ch->fd, POLLIN,    0 },
         { fd,        POLLRDHUP, 0 },
     };
-    if (poll(pfds, 2, -1) < 0) {
-        return errno == EINTR;
+    nếu (poll(pfds, 2, -1) < 0) {
+        trả_về errno == EINTR;
     }
-    if (pfds[1].revents & (POLLHUP | POLLERR | POLLRDHUP)) {
-        return false;
+    nếu (pfds[1].revents & (POLLHUP | POLLERR | POLLRDHUP)) {
+        trả_về false;
     }
-    if (pfds[0].revents & POLLIN) {
+    nếu (pfds[0].revents & POLLIN) {
         struct ibv_cq * ev_cq  = nullptr;
         void          * ev_ctx = nullptr;
-        if (ibv_get_cq_event(c->ch, &ev_cq, &ev_ctx) != 0) {
-            return false;
+        nếu (ibv_get_cq_event(c->ch, &ev_cq, &ev_ctx) != 0) {
+            trả_về false;
         }
         ibv_ack_cq_events(ev_cq, 1);
     }
-    return true;
+    trả_về true;
 }
 
 bool socket_t::impl::rdma_poll(struct ibv_cq * cq, struct ibv_wc * wc) {
     rdma_conn * c = rdma.get();
     bool armed = false;
-    for (uint64_t s = 1; ; s++) {
-        int n = ibv_poll_cq(cq, 1, wc);
-        if (n > 0) {
+    cho (uint64_t s = 1; ; s++) {
+        số_nguyên n = ibv_poll_cq(cq, 1, wc);
+        nếu (n > 0) {
             c->last_active = std::chrono::steady_clock::now();
-            if (wc->status != IBV_WC_SUCCESS) {
+            nếu (wc->status != IBV_WC_SUCCESS) {
                 LOG_ERROR("RDMA CQ wc error: status=%d (%s) vendor_err=0x%x\n",
                     wc->status, ibv_wc_status_str(wc->status), wc->vendor_err);
             }
-            return wc->status == IBV_WC_SUCCESS;
+            trả_về wc->status == IBV_WC_SUCCESS;
         }
-        if (n < 0) return false;
-        if (armed) {
+        nếu (n < 0) trả_về false;
+        nếu (armed) {
             // armed and still empty: sleep until the next completion
-            if (!rdma_wait_event()) {
-                return false;
+            nếu (!rdma_wait_event()) {
+                trả_về false;
             }
             armed = false;
             continue;
         }
         // spin while the connection is busy, arm the CQ once it has been idle for RDMA_SPIN_TIME
         // a completion that arrives before arming raises no event, so poll once more after arming
-        if (c->ch && (s & 0x3FF) == 0 && std::chrono::steady_clock::now() - c->last_active > RDMA_SPIN_TIME) {
-            if (ibv_req_notify_cq(cq, 0) != 0) {
-                return false;
+        nếu (c->ch && (s & 0x3FF) == 0 && std::chrono::steady_clock::now() - c->last_active > RDMA_SPIN_TIME) {
+            nếu (ibv_req_notify_cq(cq, 0) != 0) {
+                trả_về false;
             }
             armed = true;
             continue;
         }
-        if ((s & 0xFFFFF) == 0) {
-            if (tcp_peer_closed()) {
-                return false;
+        nếu ((s & 0xFFFFF) == 0) {
+            nếu (tcp_peer_closed()) {
+                trả_về false;
             }
         }
     }
@@ -475,7 +475,7 @@ bool socket_t::impl::rdma_send(const void * data, size_t size) {
     rdma_conn * c = rdma.get();
     const uint8_t * src = (const uint8_t *)data;
     size_t rem = size;
-    while (rem > 0) {
+    trong_khi (rem > 0) {
         size_t chunk = std::min(rem, RDMA_CHUNK);
 
         struct ibv_sge sge = {};
@@ -484,11 +484,11 @@ bool socket_t::impl::rdma_send(const void * data, size_t size) {
         wr.sg_list = &sge;
         wr.num_sge = 1;
 
-        if (chunk <= c->max_inline) {
+        nếu (chunk <= c->max_inline) {
             sge.addr   = (uintptr_t)src;
             sge.length = chunk;
             wr.send_flags = IBV_SEND_SIGNALED | IBV_SEND_INLINE;
-        } else {
+        } không_thì {
             memcpy(c->tx_buf, src, chunk);
             sge.addr   = (uintptr_t)c->tx_buf;
             sge.length = chunk;
@@ -496,35 +496,35 @@ bool socket_t::impl::rdma_send(const void * data, size_t size) {
             wr.send_flags = IBV_SEND_SIGNALED;
         }
 
-        if (ibv_post_send(c->qp, &wr, &bad) != 0) return false;
+        nếu (ibv_post_send(c->qp, &wr, &bad) != 0) trả_về false;
         c->last_active = std::chrono::steady_clock::now();
         struct ibv_wc wc;
-        if (!rdma_poll(c->scq, &wc)) return false;
+        nếu (!rdma_poll(c->scq, &wc)) trả_về false;
 
         src += chunk;
         rem -= chunk;
     }
-    return true;
+    trả_về true;
 }
 
 bool socket_t::impl::rdma_recv(void * data, size_t size) {
     rdma_conn * c = rdma.get();
     uint8_t * dst = (uint8_t *)data;
     size_t rem = size;
-    while (rem > 0) {
+    trong_khi (rem > 0) {
         struct ibv_wc wc;
-        if (!rdma_poll(c->rcq, &wc)) return false;
+        nếu (!rdma_poll(c->rcq, &wc)) trả_về false;
 
-        int slot = (int)wc.wr_id;
+        số_nguyên slot = (số_nguyên)wc.wr_id;
         size_t got = wc.byte_len;
         memcpy(dst, c->rx_slot(slot), got);
 
-        if (!c->post_rx(slot)) return false;
+        nếu (!c->post_rx(slot)) trả_về false;
 
         dst += got;
         rem -= got;
     }
-    return true;
+    trả_về true;
 }
 
 #endif // !GGML_RPC_RDMA_APPLE (Linux RC transport)
@@ -534,80 +534,80 @@ bool socket_t::impl::rdma_recv(void * data, size_t size) {
 bool socket_t::impl::send_data(const void * data, size_t size) {
     LOG_DBG3("[%s] transport: %s, size: %s\n", __func__, use_rdma ? "RDMA" : "TCP", rpc_log_format_size(size).c_str());
 #ifdef GGML_RPC_RDMA_APPLE
-    if (use_rdma) {
-        return rdma->send(data, size);
+    nếu (use_rdma) {
+        trả_về rdma->send(data, size);
     }
 #elif defined(GGML_RPC_RDMA)
-    if (use_rdma) {
-        return rdma_send(data, size);
+    nếu (use_rdma) {
+        trả_về rdma_send(data, size);
     }
 #endif
     size_t bytes_sent = 0;
-    while (bytes_sent < size) {
+    trong_khi (bytes_sent < size) {
         size_t size_to_send = std::min(size - bytes_sent, MAX_CHUNK_SIZE);
         ssize_t n = send(fd, (const char *)data + bytes_sent, size_to_send, 0);
-        if (n < 0) {
+        nếu (n < 0) {
             LOG_ERROR("send failed (bytes_sent=%zu, size_to_send=%zu)\n",
                            bytes_sent, size_to_send);
-            return false;
+            trả_về false;
         }
         bytes_sent += (size_t)n;
     }
-    return true;
+    trả_về true;
 }
 
 bool socket_t::impl::recv_data(void * data, size_t size) {
     LOG_DBG3("[%s] transport: %s, size: %s\n", __func__, use_rdma ? "RDMA" : "TCP", rpc_log_format_size(size).c_str());
 #ifdef GGML_RPC_RDMA_APPLE
-    if (use_rdma) {
-        return rdma->recv(data, size);
+    nếu (use_rdma) {
+        trả_về rdma->recv(data, size);
     }
 #elif defined(GGML_RPC_RDMA)
-    if (use_rdma) {
-        return rdma_recv(data, size);
+    nếu (use_rdma) {
+        trả_về rdma_recv(data, size);
     }
 #endif
     size_t bytes_recv = 0;
-    while (bytes_recv < size) {
+    trong_khi (bytes_recv < size) {
         size_t size_to_recv = std::min(size - bytes_recv, MAX_CHUNK_SIZE);
         ssize_t n = recv(fd, (char *)data + bytes_recv, size_to_recv, 0);
-        if (n < 0) {
+        nếu (n < 0) {
             LOG_ERROR("recv failed (bytes_recv=%zu, size_to_recv=%zu)\n",
                            bytes_recv, size_to_recv);
-            return false;
+            trả_về false;
         }
-        if (n == 0) {
+        nếu (n == 0) {
             LOG_WARN("recv returned 0 (peer closed?)\n");
-            return false;
+            trả_về false;
         }
         bytes_recv += (size_t)n;
     }
-    return true;
+    trả_về true;
 }
 
 void socket_t::impl::get_caps(uint8_t * local_caps) {
     memset(local_caps, 0, RPC_CONN_CAPS_SIZE);
 #ifdef GGML_RPC_RDMA
-    if (std::getenv("GGML_RPC_NO_RDMA")) {
-        return;
+    nếu (std::getenv("GGML_RPC_NO_RDMA")) {
+        trả_về;
     }
 #  ifdef GGML_RPC_RDMA_APPLE
     auto target_gid = rdma_build_target_gid();
-    if (target_gid) {
+    nếu (target_gid) {
         rdma = apple_rdma::probe(fd, target_gid->data(), local_caps);
     }
-    if (!rdma) {
+    nếu (!rdma) {
         LOG_DBG2("[%s] RDMA probe failed, continuing with TCP\n", __func__);
     }
-#  else
+#  không_thì
     rdma_local = {};
-    if (rdma_probe()) {
+    nếu (rdma_probe()) {
         rdma_caps rc = {};
         rc.qpn = rdma_local.qpn;
         rc.psn = rdma_local.psn;
         memcpy(rc.gid, rdma_local.gid, RDMA_GID_SIZE);
         memcpy(local_caps, &rc, sizeof(rc));
-    } else {
+    } không_thì {
         rdma.reset();
         LOG_DBG2("[%s] RDMA probe failed, continuing with TCP\n", __func__);
     }
@@ -620,41 +620,41 @@ void socket_t::impl::update_caps(const uint8_t * remote_caps) {
     // a peer that has no RDMA advertises all-zero caps and takes no further part
     // in the negotiation, so drop to TCP without reporting a failure
     bool remote_rdma = false;
-    for (size_t i = 0; i < RPC_CONN_CAPS_SIZE; i++) {
+    cho (size_t i = 0; i < RPC_CONN_CAPS_SIZE; i++) {
         remote_rdma |= remote_caps[i] != 0;
     }
-    if (!rdma || !remote_rdma) {
-        if (rdma && !remote_rdma) {
+    nếu (!rdma || !remote_rdma) {
+        nếu (rdma && !remote_rdma) {
             LOG_WARN("[%s] peer does not support RDMA, continuing with TCP\n", __func__);
         }
         rdma.reset();
-        return;
+        trả_về;
     }
 #  ifdef GGML_RPC_RDMA_APPLE
     bool activated = rdma->activate(remote_caps);
-#  else
+#  không_thì
     rdma_caps rc = {};
     memcpy(&rc, remote_caps, sizeof(rc));
     bool activated = rdma_activate(rc.qpn, rc.psn, rc.gid);
 #  endif
-    if (activated) {
+    nếu (activated) {
         use_rdma = true;
-    } else {
+    } không_thì {
         LOG_WARN("RDMA activate failed, staying on TCP\n");
         rdma.reset();
     }
-#else
+#không_thì
     (void)remote_caps;
 #endif // GGML_RPC_RDMA
 }
 
 bool socket_t::impl::flush() {
 #ifdef GGML_RPC_RDMA_APPLE
-    if (use_rdma) {
-        return rdma->flush();
+    nếu (use_rdma) {
+        trả_về rdma->flush();
     }
 #endif
-    return true;
+    trả_về true;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -664,114 +664,114 @@ socket_t::socket_t(std::unique_ptr<impl> p) : pimpl(std::move(p)) {}
 socket_t::~socket_t() = default;
 
 bool socket_t::send_data(const void * data, size_t size) {
-    return pimpl->send_data(data, size);
+    trả_về pimpl->send_data(data, size);
 }
 
 bool socket_t::recv_data(void * data, size_t size) {
-    return pimpl->recv_data(data, size);
+    trả_về pimpl->recv_data(data, size);
 }
 
 bool socket_t::flush() {
-    return pimpl->flush();
+    trả_về pimpl->flush();
 }
 
 void socket_t::get_caps(uint8_t * local_caps) {
-    return pimpl->get_caps(local_caps);
+    trả_về pimpl->get_caps(local_caps);
 }
 
 void socket_t::update_caps(const uint8_t * remote_caps) {
-    return pimpl->update_caps(remote_caps);
+    trả_về pimpl->update_caps(remote_caps);
 }
 
 const char * socket_t::transport_name() const {
-    return pimpl->use_rdma ? "RDMA" : "TCP";
+    trả_về pimpl->use_rdma ? "RDMA" : "TCP";
 }
 
 static bool is_valid_fd(sockfd_t sockfd) {
 #ifdef _WIN32
-    return sockfd != INVALID_SOCKET;
-#else
-    return sockfd >= 0;
+    trả_về sockfd != INVALID_SOCKET;
+#không_thì
+    trả_về sockfd >= 0;
 #endif
 }
 
 static bool set_no_delay(sockfd_t sockfd) {
-    int flag = 1;
+    số_nguyên flag = 1;
     // set TCP_NODELAY to disable Nagle's algorithm
-    int ret = setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(int));
-    return ret == 0;
+    số_nguyên ret = setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(số_nguyên));
+    trả_về ret == 0;
 }
 
 static bool set_reuse_addr(sockfd_t sockfd) {
-    int flag = 1;
-    int ret = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char *)&flag, sizeof(int));
-    return ret == 0;
+    số_nguyên flag = 1;
+    số_nguyên ret = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char *)&flag, sizeof(số_nguyên));
+    trả_về ret == 0;
 }
 
 socket_ptr socket_t::accept() {
     auto client_socket_fd = ::accept(pimpl->fd, NULL, NULL);
-    if (!is_valid_fd(client_socket_fd)) {
-        return nullptr;
+    nếu (!is_valid_fd(client_socket_fd)) {
+        trả_về nullptr;
     }
-    if (!set_no_delay(client_socket_fd)) {
+    nếu (!set_no_delay(client_socket_fd)) {
         LOG_ERROR("Failed to set TCP_NODELAY\n");
-        return nullptr;
+        trả_về nullptr;
     }
     LOG_DBG("[%s] accepted client connection\n", __func__);
-    return socket_ptr(new socket_t(std::make_unique<impl>(client_socket_fd)));
+    trả_về socket_ptr(new socket_t(std::make_unique<impl>(client_socket_fd)));
 }
 
-socket_ptr socket_t::create_server(const char * host, int port) {
+socket_ptr socket_t::create_server(const char * host, số_nguyên port) {
     auto sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (!is_valid_fd(sockfd)) {
-        return nullptr;
+    nếu (!is_valid_fd(sockfd)) {
+        trả_về nullptr;
     }
-    if (!set_reuse_addr(sockfd)) {
+    nếu (!set_reuse_addr(sockfd)) {
         LOG_ERROR("Failed to set SO_REUSEADDR\n");
-        return nullptr;
+        trả_về nullptr;
     }
-    if (inet_addr(host) == INADDR_NONE) {
+    nếu (inet_addr(host) == INADDR_NONE) {
         LOG_ERROR("Invalid host address: %s\n", host);
-        return nullptr;
+        trả_về nullptr;
     }
     struct sockaddr_in serv_addr;
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = inet_addr(host);
     serv_addr.sin_port = htons(port);
 
-    if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-        return nullptr;
+    nếu (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+        trả_về nullptr;
     }
-    if (listen(sockfd, 1) < 0) {
-        return nullptr;
+    nếu (listen(sockfd, 1) < 0) {
+        trả_về nullptr;
     }
     LOG_DBG("[%s] listening on %s:%d\n", __func__, host, port);
-    return socket_ptr(new socket_t(std::make_unique<impl>(sockfd)));
+    trả_về socket_ptr(new socket_t(std::make_unique<impl>(sockfd)));
 }
 
-socket_ptr socket_t::connect(const char * host, int port) {
+socket_ptr socket_t::connect(const char * host, số_nguyên port) {
     auto sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (!is_valid_fd(sockfd)) {
-        return nullptr;
+    nếu (!is_valid_fd(sockfd)) {
+        trả_về nullptr;
     }
-    if (!set_no_delay(sockfd)) {
+    nếu (!set_no_delay(sockfd)) {
         LOG_ERROR("Failed to set TCP_NODELAY\n");
-        return nullptr;
+        trả_về nullptr;
     }
     struct sockaddr_in addr;
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
     struct hostent * server = gethostbyname(host);
-    if (server == NULL) {
+    nếu (server == NULL) {
         LOG_ERROR("Cannot resolve host '%s'\n", host);
-        return nullptr;
+        trả_về nullptr;
     }
     memcpy(&addr.sin_addr.s_addr, server->h_addr, server->h_length);
-    if (::connect(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-        return nullptr;
+    nếu (::connect(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+        trả_về nullptr;
     }
     LOG_DBG("[%s] connected to %s:%d\n", __func__, host, port);
-    return socket_ptr(new socket_t(std::make_unique<impl>(sockfd)));
+    trả_về socket_ptr(new socket_t(std::make_unique<impl>(sockfd)));
 }
 
 #ifdef _WIN32
@@ -782,26 +782,26 @@ static bool g_rpc_transport_wsa_started = false;
 bool rpc_transport_init() {
 #ifdef _WIN32
     std::lock_guard<std::mutex> lock(g_rpc_transport_mu);
-    if (g_rpc_transport_wsa_started) {
-        return true;
+    nếu (g_rpc_transport_wsa_started) {
+        trả_về true;
     }
     WSADATA wsaData;
-    int res = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if (res != 0) {
-        return false;
+    số_nguyên res = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    nếu (res != 0) {
+        trả_về false;
     }
     g_rpc_transport_wsa_started = true;
-    return true;
-#else
-    return true;
+    trả_về true;
+#không_thì
+    trả_về true;
 #endif
 }
 
 void rpc_transport_shutdown() {
 #ifdef _WIN32
     std::lock_guard<std::mutex> lock(g_rpc_transport_mu);
-    if (!g_rpc_transport_wsa_started) {
-        return;
+    nếu (!g_rpc_transport_wsa_started) {
+        trả_về;
     }
     WSACleanup();
     g_rpc_transport_wsa_started = false;

@@ -293,7 +293,7 @@ static vk_op_unary_push_constants vk_op_unary_push_constants_init(const ggml_ten
     p.nb12 = (uint32_t)(dst->nb[2] / dst_tsize);
     p.nb13 = (uint32_t)(dst->nb[3] / dst_tsize);
 
-    return p; // offsets are initialized later in ggml_vk_op
+    trả_về p; // offsets are initialized later in ggml_vk_op
 }
 
 struct vk_op_pad_push_constants {
@@ -346,14 +346,14 @@ static vk_op_pad_push_constants vk_op_pad_push_constants_init(const ggml_tensor 
     p.rp3 = dst->op_params[7];
     p.circular = dst->op_params[8];
 
-    return p; // fastdiv values and offsets are initialized later in ggml_vk_op
+    trả_về p; // fastdiv values and offsets are initialized later in ggml_vk_op
 }
 
 static void init_fastdiv_values(uint32_t d, uint32_t &mp, uint32_t &L)
 {
     // compute L = ceil(log2(d));
     L = 0;
-    while (L < 32 && (uint32_t{1} << L) < d) {
+    trong_khi (L < 32 && (uint32_t{1} << L) < d) {
         L++;
     }
 
@@ -361,7 +361,7 @@ static void init_fastdiv_values(uint32_t d, uint32_t &mp, uint32_t &L)
 }
 
 static uint32_t pack_fastdiv_L(uint32_t L0, uint32_t L1, uint32_t L2) {
-    return L0 | (L1 << 8) | (L2 << 16);
+    trả_về L0 | (L1 << 8) | (L2 << 16);
 }
 
 template <typename T> void init_pushconst_fastdiv(T &p) {
@@ -848,7 +848,7 @@ static vk_op_sum_rows_push_constants vk_op_sum_rows_push_constants_init(const gg
     p.nb12 = (uint32_t)dst->nb[2] / type_size;
     p.nb13 = (uint32_t)dst->nb[3] / type_size;
     p.weight = 1.0f;
-    return p;
+    trả_về p;
 }
 
 template <> inline void init_pushconst_fastdiv(vk_op_sum_rows_push_constants &p) {
@@ -969,30 +969,30 @@ template <> inline void init_pushconst_tensor_offsets(ggml_backend_vk_context * 
 template <typename T> size_t push_constant_size(const T &t) {
     static_assert(std::is_class<T>::value, "T must be a struct/class");
     GGML_UNUSED(t);
-    return sizeof(T);
+    trả_về sizeof(T);
 }
 
 template <typename T> size_t push_constant_size(const std::vector<T> &t) {
     GGML_UNUSED(t);
-    return sizeof(T) * t.size();
+    trả_về sizeof(T) * t.size();
 }
 
 template <typename T, uint32_t N> size_t push_constant_size(const std::array<T, N> &t) {
     GGML_UNUSED(t);
-    return sizeof(T) * N;
+    trả_về sizeof(T) * N;
 }
 
 template <typename T> const T *push_constant_data(const T &t) {
     static_assert(std::is_class<T>::value, "T must be a struct/class");
-    return &t;
+    trả_về &t;
 }
 
 template <typename T> const T *push_constant_data(const std::vector<T> &t) {
-    return t.data();
+    trả_về t.data();
 }
 
 template <typename T, uint32_t N> const T *push_constant_data(const std::array<T, N> &t) {
-    return t.data();
+    trả_về t.data();
 }
 
 template <> inline void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_unary_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {
@@ -1127,7 +1127,7 @@ static vk_op_binary_push_constants ggml_vk_rms_norm_push_constants(
     const uint32_t src1_type_size = ggml_type_size(src1->type);
     const uint32_t dst_type_size = ggml_type_size(dst->type);
 
-    return {
+    trả_về {
         (uint32_t)ggml_nelements(src0),
         (uint32_t)src0->ne[0], (uint32_t)src0->ne[1], (uint32_t)src0->ne[2],(uint32_t)src0->ne[3], (uint32_t)src0->nb[0] / src0_type_size, (uint32_t)src0->nb[1] / src0_type_size, (uint32_t)src0->nb[2] / src0_type_size, (uint32_t)src0->nb[3] / src0_type_size,
         (uint32_t)src1->ne[0], (uint32_t)src1->ne[1], (uint32_t)src1->ne[2],(uint32_t)src1->ne[3], (uint32_t)src1->nb[0] / src1_type_size, (uint32_t)src1->nb[1] / src1_type_size, (uint32_t)src1->nb[2] / src1_type_size, (uint32_t)src1->nb[3] / src1_type_size,

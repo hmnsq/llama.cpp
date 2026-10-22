@@ -7,9 +7,9 @@
 #include <memory>
 #include <type_traits>
 
-#if defined(GGML_USE_OPENMP)
+#nếu defined(GGML_USE_OPENMP)
 #include <omp.h>
-#else
+#không_thì
 #include <thread>
 #endif
 
@@ -30,18 +30,18 @@
 #define TMM7 7
 
 // parallel routines
-template <typename T, typename std::enable_if<std::is_integral<T>::value, int>::type = 0>
-inline T div_up(T x, T y) { return (x + y - 1) / y; }
+template <typename T, typename std::enable_if<std::is_integral<T>::value, số_nguyên>::type = 0>
+inline T div_up(T x, T y) { trả_về (x + y - 1) / y; }
 
 template <typename T>
 inline void balance211(T n, T nth, T ith, T& n_start, T& n_end) {
-#if 0
+#nếu 0
     // onednn partition pattern
     T& n_my = n_end;
-    if (nth <= 1 || n == 0) {
+    nếu (nth <= 1 || n == 0) {
         n_start = 0;
         n_my = n;
-    } else {
+    } không_thì {
         T n1 = div_up(n, nth);
         T n2 = n1 - 1;
         T T1 = n - n2 * nth;
@@ -49,7 +49,7 @@ inline void balance211(T n, T nth, T ith, T& n_start, T& n_end) {
         n_start = ith <= T1 ? ith*n1 : T1 * n1 + (ith - T1) * n2;
     }
     n_end += n_start;
-#else
+#không_thì
     // pytorch aten partition pattern
     T n_my = div_up(n, nth);
     n_start = ith * n_my;
@@ -58,46 +58,46 @@ inline void balance211(T n, T nth, T ith, T& n_start, T& n_end) {
 }
 
 template <typename func_t>
-inline void parallel_for(int n, const func_t & f) {
-    if (n <= 0) {
-        return;
+inline void parallel_for(số_nguyên n, const func_t & f) {
+    nếu (n <= 0) {
+        trả_về;
     }
-#if defined(GGML_USE_OPENMP)
+#nếu defined(GGML_USE_OPENMP)
     #pragma omp parallel
     {
-        int nth = omp_get_num_threads();
-        int ith = omp_get_thread_num();
-        int tbegin, tend;
+        số_nguyên nth = omp_get_num_threads();
+        số_nguyên ith = omp_get_thread_num();
+        số_nguyên tbegin, tend;
         balance211(n, nth, ith, tbegin, tend);
         f(tbegin, tend);
     }
-#else
-    int nth = std::thread::hardware_concurrency();
-    if (nth <= 1) {
+#không_thì
+    số_nguyên nth = std::thread::hardware_concurrency();
+    nếu (nth <= 1) {
         f(0, n);
-        return;
+        trả_về;
     }
-    if (nth > n) {
+    nếu (nth > n) {
         nth = n;
     }
     std::vector<std::thread> threads;
     threads.reserve(nth);
-    for (int ith = 0; ith < nth; ++ith) {
+    cho (số_nguyên ith = 0; ith < nth; ++ith) {
         threads.emplace_back([&f, n, ith, nth] {
-            int tbegin, tend;
+            số_nguyên tbegin, tend;
             balance211(n, nth, ith, tbegin, tend);
             f(tbegin, tend);
         });
     }
-    for (auto & t : threads) {
+    cho (auto & t : threads) {
         t.join();
     }
 #endif
 }
 
 template <typename func_t>
-inline void parallel_for_ggml(const ggml_compute_params * params, int n, const func_t & f) {
-    int tbegin, tend;
+inline void parallel_for_ggml(const ggml_compute_params * params, số_nguyên n, const func_t & f) {
+    số_nguyên tbegin, tend;
     balance211(n, params->nth, params->ith, tbegin, tend);
     f(tbegin, tend);
 }
@@ -105,7 +105,7 @@ inline void parallel_for_ggml(const ggml_compute_params * params, int n, const f
 // quantized types that have AMX support
 inline bool qtype_has_amx_kernels(const enum ggml_type type) {
     // TODO: fix padding for vnni format
-    return (type == GGML_TYPE_Q4_0) ||
+    trả_về (type == GGML_TYPE_Q4_0) ||
         (type == GGML_TYPE_Q4_1) ||
         (type == GGML_TYPE_Q8_0) ||
         (type == GGML_TYPE_Q4_K) ||

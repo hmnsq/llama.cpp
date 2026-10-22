@@ -22,7 +22,7 @@
 
 struct get_rows_context;
 
-typedef uint32_t (*get_rows_read_index_fn_t)(const void * src1, uint32_t idx, int idx_type);
+typedef uint32_t (*get_rows_read_index_fn_t)(const void * src1, uint32_t idx, số_nguyên idx_type);
 typedef void (*get_rows_flat_compute_fn_t)(float * dst_spad, const void * src_spad, uint32_t cur_elems);
 typedef void (*get_rows_tiled_compute_fn_t)(float * dst_spad, const uint8_t * src_spad, uint32_t n_k_tiles, uint32_t tile_stride, uint32_t row);
 
@@ -42,7 +42,7 @@ struct get_rows_context {
     uint32_t tile_stride;
     uint32_t src0_row_size;
     uint32_t dst_row_size;
-    int idx_type;
+    số_nguyên idx_type;
 };
 
 #define get_rows_preamble                      \
@@ -78,24 +78,24 @@ struct get_rows_context {
 static uint32_t get_rows_read_index_ddr(
     const void * src1,
     uint32_t idx,
-    int idx_type
+    số_nguyên idx_type
 ) {
     const uint32_t off = idx * ((idx_type == HTP_TYPE_I64) ? sizeof(int64_t) : sizeof(int32_t));
-    return *(const uint32_t *) ((const uint8_t *) src1 + off);
+    trả_về *(const uint32_t *) ((const uint8_t *) src1 + off);
 }
 
 static __attribute__((noinline)) uint32_t get_rows_read_index_vtcm(
     const void * src1,
     uint32_t idx,
-    int idx_type
+    số_nguyên idx_type
 ) {
     const uint32_t off = idx * ((idx_type == HTP_TYPE_I64) ? sizeof(int64_t) : sizeof(int32_t));
     const HVX_Vector v = hvx_vmem((const uint8_t *) src1 + off); // off & ~127u in HW
     // vextract is normally slow, but here it avoids an HVX->L2 store and L1D miss
-    return (uint32_t) Q6_R_vextract_VR(v, off);
+    trả_về (uint32_t) Q6_R_vextract_VR(v, off);
 }
 
-static void get_rows_thread_sametype(unsigned int nth, unsigned int ith, void * data) {
+static void get_rows_thread_sametype(unsigned số_nguyên nth, unsigned số_nguyên ith, void * data) {
     struct get_rows_context * grctx = (struct get_rows_context *) data;
     struct htp_ops_context * octx = grctx->octx;
     const struct htp_get_rows_kernel_params * kparams = grctx->kparams;
@@ -103,14 +103,14 @@ static void get_rows_thread_sametype(unsigned int nth, unsigned int ith, void * 
 
     const uint32_t dr  = grctx->tasks_per_thread;
     const uint32_t ir0 = grctx->task_start + dr * ith;
-    if (ir0 >= grctx->task_start + grctx->tasks) {
-        return;
+    nếu (ir0 >= grctx->task_start + grctx->tasks) {
+        trả_về;
     }
     const uint32_t ir1 = MIN(ir0 + dr, grctx->task_start + grctx->tasks);
     const uint32_t row_size_bytes = grctx->src0_row_size;
     dma_queue * dma_q = octx->ctx->dma[ith];
 
-    for (uint32_t i = ir0; i < ir1; ++i) {
+    cho (uint32_t i = ir0; i < ir1; ++i) {
         const uint32_t i12 = fastdiv(i, &kparams->div_ne10_ne11);
         const uint32_t rem = i - i12 * ne11 * ne10;
         const uint32_t i11 = fastdiv(rem, &kparams->div_ne10);
@@ -127,7 +127,7 @@ static void get_rows_thread_sametype(unsigned int nth, unsigned int ith, void * 
         const dma_addr_t src0_data = octx->src[0]->data + i01*nb01 + i02*nb02 + i03*nb03;
         const dma_addr_t dst_data  = octx->dst->data    + i10*nb1  + i11*nb2  + i12*nb3;
 
-        while (!dma_queue_push(dma_q, dma_make_data(dst_data, src0_data), nb1, nb01, row_size_bytes, 1)) {
+        trong_khi (!dma_queue_push(dma_q, dma_make_data(dst_data, src0_data), nb1, nb01, row_size_bytes, 1)) {
             dma_queue_pop(dma_q);
         }
     }
@@ -159,7 +159,7 @@ static inline struct get_rows_flat_task get_rows_flat_calc_task(
     task.src0_data = 0;
     task.dst_data  = octx->dst->data + i10*nb1 + i11*nb2 + i12*nb3;
 
-    if (need_src0) {
+    nếu (need_src0) {
         const uint32_t i01 = grctx->read_index(grctx->src1_data, i, grctx->idx_type);
         assert(i01 < ne01);
 
@@ -171,18 +171,18 @@ static inline struct get_rows_flat_task get_rows_flat_calc_task(
         task.src0_data = octx->src[0]->data + i01*nb01 + i02*nb02 + i03*nb03;
     }
 
-    return task;
+    trả_về task;
 }
 
-static void get_rows_thread_flat(unsigned int nth, unsigned int ith, void * data) {
+static void get_rows_thread_flat(unsigned số_nguyên nth, unsigned số_nguyên ith, void * data) {
     struct get_rows_context * grctx = (struct get_rows_context *) data;
     struct htp_ops_context * octx = grctx->octx;
     get_rows_preamble;
 
     const uint32_t dr  = grctx->tasks_per_thread;
     const uint32_t ir0 = grctx->task_start + dr * ith;
-    if (ir0 >= grctx->task_start + grctx->tasks) {
-        return;
+    nếu (ir0 >= grctx->task_start + grctx->tasks) {
+        trả_về;
     }
     const uint32_t ir1 = MIN(ir0 + dr, grctx->task_start + grctx->tasks);
 
@@ -195,7 +195,7 @@ static void get_rows_thread_flat(unsigned int nth, unsigned int ith, void * data
     const uint32_t dst_bytes  = grctx->dst_row_size;
     get_rows_flat_compute_fn_t compute = grctx->compute_flat;
 
-    for (uint32_t step = 0, spad_idx = 0; step < ir1 - ir0 && spad_idx < 2; ++step, spad_idx++) {
+    cho (uint32_t step = 0, spad_idx = 0; step < ir1 - ir0 && spad_idx < 2; ++step, spad_idx++) {
         const uint32_t i = ir0 + step;
         struct get_rows_flat_task task = get_rows_flat_calc_task(octx, grctx, i, true);
 
@@ -208,7 +208,7 @@ static void get_rows_thread_flat(unsigned int nth, unsigned int ith, void * data
                        vtcm_layout->src0_spad_half_size, src0_bytes, src0_bytes, 1);
     }
 
-    for (uint32_t step = 0; step < ir1 - ir0; ++step) {
+    cho (uint32_t step = 0; step < ir1 - ir0; ++step) {
         const uint32_t i = ir0 + step;
         void * dst_spad = (void *) dma_queue_pop(dma_q).src;
         void * src_spad = (void *) dma_queue_pop(dma_q).dst;
@@ -224,7 +224,7 @@ static void get_rows_thread_flat(unsigned int nth, unsigned int ith, void * data
                        dst_bytes, vtcm_layout->dst_spad_half_size, dst_bytes, 1);
 
         const uint32_t next_step = step + 2;
-        if (next_step < ir1 - ir0) {
+        nếu (next_step < ir1 - ir0) {
             const uint32_t pi = ir0 + next_step;
             struct get_rows_flat_task next_task = get_rows_flat_calc_task(octx, grctx, pi, true);
             dma_queue_push(dma_q,
@@ -273,18 +273,18 @@ static inline struct get_rows_tiled_task get_rows_tiled_calc_task(
     task.tile_src_base = matrix + (column_tile * n_k_tiles) * tile_size;
     task.dst_data      = octx->dst->data + i10*nb1 + i11*nb2 + i12*nb3;
     task.row           = row;
-    return task;
+    trả_về task;
 }
 
-static void get_rows_thread_tiled(unsigned int nth, unsigned int ith, void * data) {
+static void get_rows_thread_tiled(unsigned số_nguyên nth, unsigned số_nguyên ith, void * data) {
     struct get_rows_context * grctx = (struct get_rows_context *) data;
     struct htp_ops_context * octx = grctx->octx;
     get_rows_preamble;
 
     const uint32_t dr  = grctx->tasks_per_thread;
     const uint32_t ir0 = grctx->task_start + dr * ith;
-    if (ir0 >= grctx->task_start + grctx->tasks) {
-        return;
+    nếu (ir0 >= grctx->task_start + grctx->tasks) {
+        trả_về;
     }
 
     const uint32_t ir1 = MIN(ir0 + dr, grctx->task_start + grctx->tasks);
@@ -300,7 +300,7 @@ static void get_rows_thread_tiled(unsigned int nth, unsigned int ith, void * dat
     const uint32_t dst_bytes   = grctx->dst_row_size;
     get_rows_tiled_compute_fn_t compute_tiled = grctx->compute_tiled;
 
-    for (uint32_t step = 0, spad_idx = 0; step < ir1 - ir0 && spad_idx < 2; ++step, ++spad_idx) {
+    cho (uint32_t step = 0, spad_idx = 0; step < ir1 - ir0 && spad_idx < 2; ++step, ++spad_idx) {
         const uint32_t i = ir0 + step;
         struct get_rows_tiled_task task = get_rows_tiled_calc_task(octx, grctx, i, n_k_tiles, tile_size);
 
@@ -315,7 +315,7 @@ static void get_rows_thread_tiled(unsigned int nth, unsigned int ith, void * dat
                        tile_stride, tile_size, tile_size, n_k_tiles);
     }
 
-    for (uint32_t step = 0; step < ir1 - ir0; ++step) {
+    cho (uint32_t step = 0; step < ir1 - ir0; ++step) {
         const uint32_t i = ir0 + step;
         float * dst_spad   = (float *) dma_queue_pop(dma_q).src;
         uint8_t * src_spad = (uint8_t *) dma_queue_pop(dma_q).dst;
@@ -332,7 +332,7 @@ static void get_rows_thread_tiled(unsigned int nth, unsigned int ith, void * dat
                        dst_bytes, vtcm_layout->dst_spad_half_size, dst_bytes, 1);
 
         const uint32_t next_step = step + 2;
-        if (next_step < ir1 - ir0) {
+        nếu (next_step < ir1 - ir0) {
             const uint32_t ni = ir0 + next_step;
             struct get_rows_tiled_task next_task = get_rows_tiled_calc_task(octx, grctx, ni, n_k_tiles, tile_size);
             dma_queue_push(dma_q,
@@ -359,10 +359,10 @@ static __attribute__((noinline)) void get_rows_dma_src1(
 
     dma_queue * dma_q = octx->ctx->dma[0];
     uint8_t * cur_dst = vtcm_src1;
-    for (uint32_t i13 = 0; i13 < ne13; ++i13) {
-        for (uint32_t i12 = 0; i12 < ne12; ++i12) {
+    cho (uint32_t i13 = 0; i13 < ne13; ++i13) {
+        cho (uint32_t i12 = 0; i12 < ne12; ++i12) {
             const dma_addr_t src_plane = octx->src[1]->data + i12 * nb12 + i13 * nb13;
-            while (!dma_queue_push(dma_q, dma_make_data(cur_dst, src_plane),
+            trong_khi (!dma_queue_push(dma_q, dma_make_data(cur_dst, src_plane),
                                    ne10 * elem_size, nb11, ne10 * elem_size, ne11)) {
                 dma_queue_pop(dma_q);
             }
@@ -372,27 +372,27 @@ static __attribute__((noinline)) void get_rows_dma_src1(
     dma_queue_flush(dma_q);
 }
 
-int op_get_rows(struct htp_ops_context * octx) {
+số_nguyên op_get_rows(struct htp_ops_context * octx) {
     const struct htp_get_rows_kernel_params * kparams = (const struct htp_get_rows_kernel_params *) octx->kernel_params;
 
     const uint32_t ne00          = octx->src[0]->ne[0];
     const uint32_t src0_row_size = htp_tensor_get_row_size(octx->src[0]->type, ne00);
-    if (src0_row_size == 0) {
-        return HTP_STATUS_NO_SUPPORT;
+    nếu (src0_row_size == 0) {
+        trả_về HTP_STATUS_NO_SUPPORT;
     }
 
-    if (kparams->kernel_type == HTP_GET_ROWS_KERNEL_SAMETYPE) {
-        if (octx->src[0]->type != octx->dst->type) {
-            return HTP_STATUS_NO_SUPPORT;
+    nếu (kparams->kernel_type == HTP_GET_ROWS_KERNEL_SAMETYPE) {
+        nếu (octx->src[0]->type != octx->dst->type) {
+            trả_về HTP_STATUS_NO_SUPPORT;
         }
-    } else {
-        if (octx->dst->type != HTP_TYPE_F32) {
-            return HTP_STATUS_NO_SUPPORT;
+    } không_thì {
+        nếu (octx->dst->type != HTP_TYPE_F32) {
+            trả_về HTP_STATUS_NO_SUPPORT;
         }
     }
 
-    if (octx->src[1]->type != HTP_TYPE_I32 && octx->src[1]->type != HTP_TYPE_I64) {
-        return HTP_STATUS_NO_SUPPORT;
+    nếu (octx->src[1]->type != HTP_TYPE_I32 && octx->src[1]->type != HTP_TYPE_I64) {
+        trả_về HTP_STATUS_NO_SUPPORT;
     }
 
     const struct htp_tensor * dst = octx->dst;
@@ -402,7 +402,7 @@ int op_get_rows(struct htp_ops_context * octx) {
     uint32_t task_start = 0;
     uint32_t tasks      = total_tasks;
 
-    if (octx->ctx->mdev.count > 1) {
+    nếu (octx->ctx->mdev.count > 1) {
         uint32_t tasks_per_chunk = 1;
         htp_tensor_mdev_rows_per_chunk(dst, dst_row_size / dst->ne[0], dst_row_size, &tasks_per_chunk);
         const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_tasks, tasks_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
@@ -410,12 +410,12 @@ int op_get_rows(struct htp_ops_context * octx) {
         tasks      = range.count;
     }
 
-    if (tasks == 0) {
-        return HTP_STATUS_OK;
+    nếu (tasks == 0) {
+        trả_về HTP_STATUS_OK;
     }
 
-    if (!htp_ops_context_set_n_threads(octx, (uint32_t) kparams->n_threads)) {
-        return HTP_STATUS_INVAL_PARAMS;
+    nếu (!htp_ops_context_set_n_threads(octx, (uint32_t) kparams->n_threads)) {
+        trả_về HTP_STATUS_INVAL_PARAMS;
     }
 
     const uint32_t n_threads = octx->n_threads;
@@ -437,10 +437,10 @@ int op_get_rows(struct htp_ops_context * octx) {
 
     htp_get_rows_vtcm_layout_build(&grctx.vtcm_layout, kparams->kernel_type, octx->src[0]->type, ne00, total_tasks, grctx.idx_type, n_threads);
 
-    if (grctx.vtcm_layout.total_bytes > octx->ctx->vtcm_size) {
+    nếu (grctx.vtcm_layout.total_bytes > octx->ctx->vtcm_size) {
         FARF(ERROR, "get-rows: VTCM reservation %zu is too small, needed %zu\n",
              octx->ctx->vtcm_size, grctx.vtcm_layout.total_bytes);
-        return HTP_STATUS_INVAL_PARAMS;
+        trả_về HTP_STATUS_INVAL_PARAMS;
     }
 
     work_queue_func_t q_func = NULL;
@@ -458,7 +458,7 @@ int op_get_rows(struct htp_ops_context * octx) {
                 case HTP_TYPE_Q4_K: grctx.compute_tiled = hvx_dequantize_row_tiled_q4_k_f32; break;
                 case HTP_TYPE_Q5_K: grctx.compute_tiled = hvx_dequantize_row_tiled_q5_k_f32; break;
                 case HTP_TYPE_Q6_K: grctx.compute_tiled = hvx_dequantize_row_tiled_q6_k_f32; break;
-                default:            return HTP_STATUS_NO_SUPPORT;
+                default:            trả_về HTP_STATUS_NO_SUPPORT;
             }
             grctx.tile_size   = htp_tensor_get_tile_size(octx->src[0]->type);
             grctx.tile_stride = htp_tensor_get_tile_padded_size(octx->src[0]->type);
@@ -475,22 +475,22 @@ int op_get_rows(struct htp_ops_context * octx) {
                 case HTP_TYPE_Q4_K: grctx.compute_flat = hvx_dequantize_row_flat_q4_k_f32; break;
                 case HTP_TYPE_Q5_K: grctx.compute_flat = hvx_dequantize_row_flat_q5_k_f32; break;
                 case HTP_TYPE_Q6_K: grctx.compute_flat = hvx_dequantize_row_flat_q6_k_f32; break;
-                default:            return HTP_STATUS_NO_SUPPORT;
+                default:            trả_về HTP_STATUS_NO_SUPPORT;
             }
             q_func = get_rows_thread_flat;
             break;
         default:
-            return HTP_STATUS_NO_SUPPORT;
+            trả_về HTP_STATUS_NO_SUPPORT;
     }
 
     const uint32_t elem_size = (grctx.idx_type == HTP_TYPE_I64) ? sizeof(int64_t) : sizeof(int32_t);
     const size_t src1_bytes  = (size_t) total_tasks * elem_size;
 
-    if (!htp_tensor_is_extended(octx->src[1]) && src1_bytes <= 128 &&
+    nếu (!htp_tensor_is_extended(octx->src[1]) && src1_bytes <= 128 &&
         htp_tensor_is_contiguous(octx->src[1], elem_size)) {
         grctx.src1_data  = (const void *) (uintptr_t) octx->src[1]->data;
         grctx.read_index = get_rows_read_index_ddr;
-    } else {
+    } không_thì {
         uint8_t * vtcm_src1 = VTCM_LAYOUT_PTR(uint8_t, grctx.vtcm_base, grctx.vtcm_layout.off_src1);
         get_rows_dma_src1(octx, vtcm_src1, elem_size);
         grctx.src1_data  = vtcm_src1;
@@ -506,5 +506,5 @@ int op_get_rows(struct htp_ops_context * octx) {
          kparams->kernel_type, n_threads);
 
     work_queue_run(octx->ctx->work_queue, q_func, &grctx, n_threads);
-    return HTP_STATUS_OK;
+    trả_về HTP_STATUS_OK;
 }

@@ -34,7 +34,7 @@ void ggml_sycl_op_out_prod(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
     ggml_sycl_pool_alloc<float> src0_as_f32(ctx.pool());
     int64_t src0_nb02 = nb02;
     int64_t src0_nb03 = nb03;
-    if (src0->type == GGML_TYPE_Q1_0) {
+    nếu (src0->type == GGML_TYPE_Q1_0) {
         scope_op_debug_print scope_dbg_print(__func__, "/to_fp32_sycl", dst, /*num_src=*/2,
                                              " : converting src0 Q1_0 to fp32");
         src0_d = src0_as_f32.alloc(ne00 * ne01 * ne02 * ne03);
@@ -61,8 +61,8 @@ void ggml_sycl_op_out_prod(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
 
     try {
         // OUT_PROD applies independently to each (i2, i3) destination plane.
-        for (int64_t i3 = 0; i3 < ne3; ++i3) {
-            for (int64_t i2 = 0; i2 < ne2; ++i2) {
+        cho (int64_t i3 = 0; i3 < ne3; ++i3) {
+            cho (int64_t i2 = 0; i2 < ne2; ++i2) {
                 const int64_t i03 = i3 / r3;
                 const int64_t i02 = i2 / r2;
 

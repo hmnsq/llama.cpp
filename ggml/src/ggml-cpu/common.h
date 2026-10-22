@@ -16,31 +16,31 @@
 // convenience functions/macros for use in template calls
 // note: these won't be required after the 'traits' lookup table is used.
 static inline ggml_fp16_t f32_to_f16(float x) {
-    return GGML_CPU_FP32_TO_FP16(x);
+    trả_về GGML_CPU_FP32_TO_FP16(x);
 }
 
 static inline float f16_to_f32(ggml_fp16_t x) {
-    return GGML_CPU_FP16_TO_FP32(x);
+    trả_về GGML_CPU_FP16_TO_FP32(x);
 }
 
 static inline ggml_bf16_t f32_to_bf16(float x) {
-    return GGML_FP32_TO_BF16(x);
+    trả_về GGML_FP32_TO_BF16(x);
 }
 
 static inline float bf16_to_f32(ggml_bf16_t x) {
-    return GGML_BF16_TO_FP32(x);
+    trả_về GGML_BF16_TO_FP32(x);
 }
 
 static inline float i32_to_f32(int32_t x) {
-    return x;
+    trả_về x;
 }
 
 static inline int32_t f32_to_i32(float x) {
-    return x;
+    trả_về x;
 }
 
 static inline float f32_to_f32(float x) {
-    return x;
+    trả_về x;
 }
 
 // TODO - merge this into the traits table, after using row-based conversions
@@ -84,7 +84,7 @@ static std::pair<int64_t, int64_t> get_thread_range(const struct ggml_compute_pa
     const int64_t ir0 = dr*ith;
     const int64_t ir1 = MIN(ir0 + dr, nr);
 
-    return {ir0, ir1};
+    trả_về {ir0, ir1};
 }
 
 struct ggml_fa_tile_config {

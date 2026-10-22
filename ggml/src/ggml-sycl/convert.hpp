@@ -38,25 +38,25 @@ to_fp16_nc_sycl_t ggml_get_to_fp16_nc_sycl(ggml_type type);
 
 template<typename dst_t, typename src_t>
  inline dst_t ggml_sycl_cast(src_t x) {
-    if constexpr (std::is_same_v<dst_t, src_t>) {
-        return x;
+    nếu constexpr (std::is_same_v<dst_t, src_t>) {
+        trả_về x;
 #ifdef GGML_SYCL_HAS_BF16
-    } else if constexpr (std::is_same_v<dst_t, sycl::ext::oneapi::bfloat16>) {
-        return sycl::ext::oneapi::bfloat16(float(x));
-    } else if constexpr (std::is_same_v<src_t, sycl::ext::oneapi::bfloat16>) {
-        return static_cast<float>(x);
+    } không_thì nếu constexpr (std::is_same_v<dst_t, sycl::ext::oneapi::bfloat16>) {
+        trả_về sycl::ext::oneapi::bfloat16(float(x));
+    } không_thì nếu constexpr (std::is_same_v<src_t, sycl::ext::oneapi::bfloat16>) {
+        trả_về static_cast<float>(x);
 #endif
-    } else if constexpr (std::is_same_v<src_t, sycl::float2> && std::is_same_v<dst_t, sycl::half2>) {
-        return x.template convert<sycl::half, sycl::rounding_mode::rte>();
+    } không_thì nếu constexpr (std::is_same_v<src_t, sycl::float2> && std::is_same_v<dst_t, sycl::half2>) {
+        trả_về x.template convert<sycl::half, sycl::rounding_mode::rte>();
 #ifdef GGML_SYCL_HAS_BF16
-    } else if constexpr (std::is_same_v<src_t, sycl::float2> &&
+    } không_thì nếu constexpr (std::is_same_v<src_t, sycl::float2> &&
                          std::is_same_v<dst_t, sycl::vec<sycl::ext::oneapi::bfloat16, 2>>) {
-        return {x.x, x.y};
+        trả_về {x.x, x.y};
 #endif
-    } else if constexpr(std::is_same_v<dst_t, int32_t>) {
-        return int32_t(x);
-    } else {
-        return float(x);
+    } không_thì nếu constexpr(std::is_same_v<dst_t, int32_t>) {
+        trả_về int32_t(x);
+    } không_thì {
+        trả_về float(x);
     }
 }
 

@@ -1182,8 +1182,8 @@ typedef struct {
 
 typedef struct {
     uint64_t nb1;
-    int      dim;
-    int      max_period;
+    số_nguyên      dim;
+    số_nguyên      max_period;
 } ggml_metal_kargs_timestep_embedding;
 
 typedef struct {

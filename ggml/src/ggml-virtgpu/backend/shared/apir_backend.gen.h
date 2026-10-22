@@ -39,56 +39,56 @@ static inline const char * apir_dispatch_command_name(ApirBackendCommandType typ
     switch (type) {
         /* device */
         case APIR_COMMAND_TYPE_DEVICE_GET_DEVICE_COUNT:
-            return "device_get_device_count";
+            trả_về "device_get_device_count";
         case APIR_COMMAND_TYPE_DEVICE_GET_COUNT:
-            return "device_get_count";
+            trả_về "device_get_count";
         case APIR_COMMAND_TYPE_DEVICE_GET_NAME:
-            return "device_get_name";
+            trả_về "device_get_name";
         case APIR_COMMAND_TYPE_DEVICE_GET_DESCRIPTION:
-            return "device_get_description";
+            trả_về "device_get_description";
         case APIR_COMMAND_TYPE_DEVICE_GET_TYPE:
-            return "device_get_type";
+            trả_về "device_get_type";
         case APIR_COMMAND_TYPE_DEVICE_GET_MEMORY:
-            return "device_get_memory";
+            trả_về "device_get_memory";
         case APIR_COMMAND_TYPE_DEVICE_SUPPORTS_OP:
-            return "device_supports_op";
+            trả_về "device_supports_op";
         case APIR_COMMAND_TYPE_DEVICE_GET_BUFFER_TYPE:
-            return "device_get_buffer_type";
+            trả_về "device_get_buffer_type";
         case APIR_COMMAND_TYPE_DEVICE_GET_PROPS:
-            return "device_get_props";
+            trả_về "device_get_props";
         case APIR_COMMAND_TYPE_DEVICE_BUFFER_FROM_PTR:
-            return "device_buffer_from_ptr";
+            trả_về "device_buffer_from_ptr";
         /* buffer-type */
         case APIR_COMMAND_TYPE_BUFFER_TYPE_GET_NAME:
-            return "buffer_type_get_name";
+            trả_về "buffer_type_get_name";
         case APIR_COMMAND_TYPE_BUFFER_TYPE_GET_ALIGNMENT:
-            return "buffer_type_get_alignment";
+            trả_về "buffer_type_get_alignment";
         case APIR_COMMAND_TYPE_BUFFER_TYPE_GET_MAX_SIZE:
-            return "buffer_type_get_max_size";
+            trả_về "buffer_type_get_max_size";
         case APIR_COMMAND_TYPE_BUFFER_TYPE_IS_HOST:
-            return "buffer_type_is_host";
+            trả_về "buffer_type_is_host";
         case APIR_COMMAND_TYPE_BUFFER_TYPE_ALLOC_BUFFER:
-            return "buffer_type_alloc_buffer";
+            trả_về "buffer_type_alloc_buffer";
         case APIR_COMMAND_TYPE_BUFFER_TYPE_GET_ALLOC_SIZE:
-            return "buffer_type_get_alloc_size";
+            trả_về "buffer_type_get_alloc_size";
         /* buffer */
         case APIR_COMMAND_TYPE_BUFFER_GET_BASE:
-            return "buffer_get_base";
+            trả_về "buffer_get_base";
         case APIR_COMMAND_TYPE_BUFFER_SET_TENSOR:
-            return "buffer_set_tensor";
+            trả_về "buffer_set_tensor";
         case APIR_COMMAND_TYPE_BUFFER_GET_TENSOR:
-            return "buffer_get_tensor";
+            trả_về "buffer_get_tensor";
         case APIR_COMMAND_TYPE_BUFFER_CPY_TENSOR:
-            return "buffer_cpy_tensor";
+            trả_về "buffer_cpy_tensor";
         case APIR_COMMAND_TYPE_BUFFER_CLEAR:
-            return "buffer_clear";
+            trả_về "buffer_clear";
         case APIR_COMMAND_TYPE_BUFFER_FREE_BUFFER:
-            return "buffer_free_buffer";
+            trả_về "buffer_free_buffer";
         /* backend */
         case APIR_COMMAND_TYPE_BACKEND_GRAPH_COMPUTE:
-            return "backend_graph_compute";
+            trả_về "backend_graph_compute";
 
         default:
-            return "unknown";
+            trả_về "unknown";
     }
 }

@@ -59,7 +59,7 @@ static inline HVX_Vector hvx_vec_log_f32(HVX_Vector x) {
     HVX_Vector ln2 = hvx_vec_splat_f32(0.69314718056f);
     HVX_Vector term_e = hvx_vec_mul_f32_f32(e_float, ln2);
 
-    return hvx_vec_add_f32_f32(term_e, res);
+    trả_về hvx_vec_add_f32_f32(term_e, res);
 }
 
 static inline void hvx_log_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
@@ -77,10 +77,10 @@ static inline void hvx_log_f32_aa(uint8_t * restrict dst, const uint8_t * restri
     uint32_t i = 0;
 
     _Pragma("unroll(4)")
-    for (; i < nvec; i++) {
+    cho (; i < nvec; i++) {
         vdst[i] = hvx_vec_log_f32(vsrc[i]);
     }
-    if (nloe) {
+    nếu (nloe) {
         HVX_Vector v = hvx_vec_log_f32(vsrc[i]);
         hvx_vec_store_a((void *) &vdst[i], nloe * elem_size, v);
     }
@@ -100,13 +100,13 @@ static inline void hvx_log_f16_aa(uint8_t * restrict dst, const uint8_t * restri
     uint32_t i = 0;
 
     _Pragma("unroll(4)")
-    for (; i < nvec; i++) {
+    cho (; i < nvec; i++) {
         HVX_VectorPair p = hvx_vec_f16_to_f32(vsrc[i]);
         HVX_Vector r0 = hvx_vec_log_f32(Q6_V_lo_W(p));
         HVX_Vector r1 = hvx_vec_log_f32(Q6_V_hi_W(p));
         vdst[i] = hvx_vec_f32_to_f16(r0, r1);
     }
-    if (nloe) {
+    nếu (nloe) {
         HVX_VectorPair p = hvx_vec_f16_to_f32(vsrc[i]);
         HVX_Vector r0 = hvx_vec_log_f32(Q6_V_lo_W(p));
         HVX_Vector r1 = hvx_vec_log_f32(Q6_V_hi_W(p));

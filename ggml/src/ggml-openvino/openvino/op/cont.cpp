@@ -18,7 +18,7 @@ OutputVector translate_cont(const NodeContext & context) {
     auto src_shape = context.get_input_shape(0).to_shape();
     auto dst_shape = context.get_output_shape().to_shape();
 
-    if (context.get_op_dynamic_dim() != -1) {
+    nếu (context.get_op_dynamic_dim() != -1) {
         dst_shape[3 - context.get_op_dynamic_dim()] = -1;
     }
 
@@ -28,7 +28,7 @@ OutputVector translate_cont(const NodeContext & context) {
     res = std::make_shared<ov::op::v1::Reshape>(
         input, ov::op::v0::Constant::create(ov::element::i64, {dst_shape.size()}, dst_shape), false);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    trả_về rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

@@ -15,7 +15,7 @@
 
 #include "ggml-sycl.h"
 
-#if GGML_SYCL_DNNL
+#nếu GGML_SYCL_DNNL
 
 #include "dnnl.hpp"
 #include "dnnl_sycl.hpp"
@@ -27,15 +27,15 @@ public:
 
     template<typename T>
     static constexpr dt to_dt() {
-        if constexpr (std::is_same_v<T, float>) return dt::f32;
-        else if constexpr (std::is_same_v<T, sycl::half>) return dt::f16;
+        nếu constexpr (std::is_same_v<T, float>) trả_về dt::f32;
+        không_thì nếu constexpr (std::is_same_v<T, sycl::half>) trả_về dt::f16;
 #ifdef GGML_SYCL_HAS_BF16
-        else if constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) return dt::bf16;
+        không_thì nếu constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) trả_về dt::bf16;
 #endif
-        else static_assert(0);
+        không_thì static_assert(0);
     }
 
-    static void gemm(ggml_backend_sycl_context & ctx, int m, int n, int k,
+    static void gemm(ggml_backend_sycl_context & ctx, số_nguyên m, số_nguyên n, số_nguyên k,
         const void * a, dt at, dnnl_dim_t stra0, dnnl_dim_t stra1, dnnl_dim_t stra2,
         const void * b, dt bt, dnnl_dim_t strb0, dnnl_dim_t strb1, dnnl_dim_t strb2,
         void * c, dt ct, const queue_ptr & q, dnnl_dim_t batches_a, dnnl_dim_t batches_b) {
@@ -73,7 +73,7 @@ public:
 
         auto matmul_prim = dnnl::matmul(matmul_pd);
 
-        std::unordered_map<int, dnnl::memory> matmul_args;
+        std::unordered_map<số_nguyên, dnnl::memory> matmul_args;
         matmul_args.insert({ DNNL_ARG_SRC, a_mem });
         matmul_args.insert({ DNNL_ARG_WEIGHTS, b_mem });
 
@@ -83,7 +83,7 @@ public:
         matmul_prim.execute(stream, matmul_args);
     }
 
-    static void row_gemm(ggml_backend_sycl_context & ctx, int m, int n, int k,
+    static void row_gemm(ggml_backend_sycl_context & ctx, số_nguyên m, số_nguyên n, số_nguyên k,
         const void * a, dt at, const void * b, dt bt, void * c, dt ct, const queue_ptr & q) {
 
         gemm(ctx, m, n, k, a, at, 1, k, k * m, b, bt, 1, k, n * k, c, ct, q, 1, 1);

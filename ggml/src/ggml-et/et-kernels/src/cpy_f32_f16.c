@@ -16,32 +16,32 @@ struct ggml_et_cont_params {
     struct ggml_tensor dst;
 };
 
-int entry_point(struct ggml_et_cont_params * params, void * env) {
+số_nguyên entry_point(struct ggml_et_cont_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env || !params) {
-        return -1;
+    nếu (!kernel_env || !params) {
+        trả_về -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    số_nguyên thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    số_nguyên num_threads = get_num_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    nếu (thread_id < 0) {
+        trả_về 0;
     }
 
     struct ggml_tensor * src0 = &params->src0;
     struct ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F16) {
-        return -1;
+    nếu (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F16) {
+        trả_về -1;
     }
 
     const char * src_data = (const char *) src0->data;
     uint16_t *   dst_data = (uint16_t *) dst->data;
 
-    if (!src_data || !dst_data) {
-        return -1;
+    nếu (!src_data || !dst_data) {
+        trả_về -1;
     }
 
     const int64_t ne00 = src0->ne[0];
@@ -56,8 +56,8 @@ int entry_point(struct ggml_et_cont_params * params, void * env) {
 
     const int64_t total_elements = ne00 * ne01 * ne02 * ne03;
 
-    if (total_elements == 0) {
-        return 0;
+    nếu (total_elements == 0) {
+        trả_về 0;
     }
 
     // Check if src is contiguous F32
@@ -72,28 +72,28 @@ int entry_point(struct ggml_et_cont_params * params, void * env) {
     const int64_t cl_per_thread = (total_cl + num_threads - 1) / num_threads;
     const int64_t cl_start      = thread_id * cl_per_thread;
     int64_t       cl_end        = cl_start + cl_per_thread;
-    if (cl_end > total_cl) {
+    nếu (cl_end > total_cl) {
         cl_end = total_cl;
     }
-    if (cl_start >= total_cl) {
-        return 0;
+    nếu (cl_start >= total_cl) {
+        trả_về 0;
     }
 
     const int64_t es = cl_start * elems_per_cl;
     int64_t       ee = cl_end * elems_per_cl;
-    if (ee > total_elements) {
+    nếu (ee > total_elements) {
         ee = total_elements;
     }
 
-    if (src_contiguous) {
+    nếu (src_contiguous) {
         // Fast path: src is contiguous F32
         const float * src_f32 = (const float *) src_data;
-        for (int64_t i = es; i < ee; ++i) {
+        cho (int64_t i = es; i < ee; ++i) {
             dst_data[i] = fp32_to_fp16(src_f32[i]);
         }
-    } else {
+    } không_thì {
         // General path: stride-aware read
-        for (int64_t idx = es; idx < ee; ++idx) {
+        cho (int64_t idx = es; idx < ee; ++idx) {
             const int64_t i00  = idx % ne00;
             const int64_t rem1 = idx / ne00;
             const int64_t i01  = rem1 % ne01;
@@ -106,5 +106,5 @@ int entry_point(struct ggml_et_cont_params * params, void * env) {
         }
     }
 
-    return 0;
+    trả_về 0;
 }
