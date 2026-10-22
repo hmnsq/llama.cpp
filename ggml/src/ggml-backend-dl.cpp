@@ -1,48 +1,48 @@
-#include "ggml-backend-dl.h"
+#ضمن "ggml-backend-dl.h"
 
-#ifdef _WIN32
+#که_تعریف_شوی _WIN32
 
-dl_handle * dl_load_library(const fs::path & path) {
+dl_handle * dl_بارول_library(ثابت fs::path & path) {
     // suppress error dialogs for missing DLLs
-    DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
-    SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
+    DWORD old_ډېرپېښ = سېټ_Error_ډېرپېښ(SEM_FAILCRITICALERRORS);
+    سېټ_Error_ډېرپېښ(old_ډېرپېښ | SEM_FAILCRITICALERRORS);
 
-    HMODULE handle = LoadLibraryW(path.wstring().c_str());
+    HMODULE handle = بارول_Library_W(path.wstring().c_str());
 
-    SetErrorMode(old_mode);
+    سېټ_Error_ډېرپېښ(old_ډېرپېښ);
 
-    return handle;
+    أرجع handle;
 }
 
-void * dl_get_sym(dl_handle * handle, const char * name) {
-    DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
-    SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
+فراغ * dl_get_sym(dl_handle * handle, ثابت حرف * name) {
+    DWORD old_ډېرپېښ = سېټ_Error_ډېرپېښ(SEM_FAILCRITICALERRORS);
+    سېټ_Error_ډېرپېښ(old_ډېرپېښ | SEM_FAILCRITICALERRORS);
 
-    void * p = (void *) GetProcAddress(handle, name);
+    فراغ * p = (فراغ *) Get_Proc_پته(handle, name);
 
-    SetErrorMode(old_mode);
+    سېټ_Error_ډېرپېښ(old_ډېرپېښ);
 
-    return p;
+    أرجع p;
 }
 
-const char * dl_error() {
-    return "";
+ثابت حرف * dl_error() {
+    أرجع "";
 }
 
-#else
+#وإلا
 
-dl_handle * dl_load_library(const fs::path & path) {
+dl_handle * dl_بارول_library(ثابت fs::path & path) {
     dl_handle * handle = dlopen(path.string().c_str(), RTLD_NOW | RTLD_LOCAL);
-    return handle;
+    أرجع handle;
 }
 
-void * dl_get_sym(dl_handle * handle, const char * name) {
-    return dlsym(handle, name);
+فراغ * dl_get_sym(dl_handle * handle, ثابت حرف * name) {
+    أرجع dlsym(handle, name);
 }
 
-const char * dl_error() {
-    const char *rslt = dlerror();
-    return rslt != nullptr ? rslt : "";
+ثابت حرف * dl_error() {
+    ثابت حرف *rslt = dlerror();
+    أرجع rslt != تش_اشاره ? rslt : "";
 }
 
-#endif
+#د_که_پای

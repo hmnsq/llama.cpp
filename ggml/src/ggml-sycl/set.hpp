@@ -1,5 +1,5 @@
-#pragma once
-#include "backend.hpp"
-#include "ggml.h"
+#لارښوونه once
+#ضمن "backend.hpp"
+#ضمن "ggml.h"
 
-void ggml_sycl_op_set(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+فراغ ggml_sycl_op_سېټ(ggml_backend_sycl_context & ctx, ggml_tensor * dst);

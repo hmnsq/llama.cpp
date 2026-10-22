@@ -1,25 +1,25 @@
-#ifndef HVX_UTILS_H
-#define HVX_UTILS_H
+#که_نه_تعریف_شوی HVX_UTILS_H
+#تعریف_کړه HVX_UTILS_H
 
-#include "hex-utils.h"
+#ضمن "hex-utils.h"
 
-#include "hvx-types.h"
-#include "hvx-copy.h"
-#include "hvx-repl.h"
-#include "hvx-scale.h"
-#include "hvx-exp.h"
-#include "hvx-erf.h"
-#include "hvx-inverse.h"
-#include "hvx-reduce.h"
-#include "hvx-sigmoid.h"
-#include "hvx-sqrt.h"
-#include "hvx-arith.h"
-#include "hvx-div.h"
-#include "hvx-floor.h"
-#include "hvx-sin-cos.h"
-#include "hvx-base.h"
-#include "hvx-pow.h"
-#include "hvx-log.h"
-#include "hvx-norm.h"
+#ضمن "hvx-types.h"
+#ضمن "hvx-copy.h"
+#ضمن "hvx-repl.h"
+#ضمن "hvx-scale.h"
+#ضمن "hvx-exp.h"
+#ضمن "hvx-erf.h"
+#ضمن "hvx-inverse.h"
+#ضمن "hvx-reduce.h"
+#ضمن "hvx-sigmoid.h"
+#ضمن "hvx-sqrt.h"
+#ضمن "hvx-arith.h"
+#ضمن "hvx-div.h"
+#ضمن "hvx-floor.h"
+#ضمن "hvx-sin-cos.h"
+#ضمن "hvx-base.h"
+#ضمن "hvx-pow.h"
+#ضمن "hvx-log.h"
+#ضمن "hvx-norm.h"
 
-#endif /* HVX_UTILS_H */
+#د_که_پای /* HVX_UTILS_H */

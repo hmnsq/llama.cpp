@@ -1,21 +1,21 @@
-#pragma once
+#لارښوونه once
 
-#include "ggml-alloc.h"
+#ضمن "ggml-alloc.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#که_تعریف_شوی __cplusplus
+خارجي "C" {
+#د_که_پای
 
-ggml_backend_buffer_type_t ggml_backend_cpu_riscv64_spacemit_buffer_type(void);
+ggml_backend_بفر_type_t ggml_backend_cpu_riscv64_spacemit_بفر_type(فراغ);
 
-void ggml_backend_cpu_riscv64_spacemit_set_numa_thread_affinity(int thread_n);
+فراغ ggml_backend_cpu_riscv64_spacemit_سېټ_numa_thread_affinity(صحيح thread_n);
 
-void ggml_backend_cpu_riscv64_spacemit_clear_numa_thread_affinity_threaded(int thread_n);
+فراغ ggml_backend_cpu_riscv64_spacemit_clear_numa_thread_affinity_threaded(صحيح thread_n);
 
-void * ggml_backend_cpu_riscv64_spacemit_alloc_shared(size_t size, size_t alignment);
+فراغ * ggml_backend_cpu_riscv64_spacemit_alloc_shared(size_t اندازه, size_t alignment);
 
-void ggml_backend_cpu_riscv64_spacemit_free_shared(void * ptr);
+فراغ ggml_backend_cpu_riscv64_spacemit_free_shared(فراغ * ptr);
 
-#ifdef __cplusplus
+#که_تعریف_شوی __cplusplus
 }
-#endif
+#د_که_پای

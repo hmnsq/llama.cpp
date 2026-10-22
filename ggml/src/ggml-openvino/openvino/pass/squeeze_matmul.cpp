@@ -1,55 +1,55 @@
-#include "squeeze_matmul.h"
+#ضمن "squeeze_matmul.h"
 
-#include <openvino/core/graph_util.hpp>
-#include <openvino/core/rt_info.hpp>
-#include <openvino/core/type.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/matmul.hpp>
-#include <openvino/op/squeeze.hpp>
-#include <openvino/op/unsqueeze.hpp>
-#include <openvino/pass/pattern/op/label.hpp>
-#include <openvino/pass/pattern/op/pattern.hpp>
-#include <openvino/pass/pattern/op/wrap_type.hpp>
+#ضمن <openvino/core/graph_util.hpp>
+#ضمن <openvino/core/rt_info.hpp>
+#ضمن <openvino/core/type.hpp>
+#ضمن <openvino/op/constant.hpp>
+#ضمن <openvino/op/matmul.hpp>
+#ضمن <openvino/op/squeeze.hpp>
+#ضمن <openvino/op/unsqueeze.hpp>
+#ضمن <openvino/pass/pattern/op/label.hpp>
+#ضمن <openvino/pass/pattern/op/pattern.hpp>
+#ضمن <openvino/pass/pattern/op/wrap_type.hpp>
 
-namespace opp = ov::pass::pattern;
+نطاق opp = ov::pass::pattern;
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace pass {
+نطاق ov {
+نطاق frontend {
+نطاق ggml {
+نطاق pass {
 
 // For quantized models, NPUW expects the activation to be 3d in DQ(DynamicQuantization) opt, e.g. DQMatMulGQ2i
 SqueezeMatmul::SqueezeMatmul() {
-    auto m_act = opp::any_input();
-    auto m_wei = opp::any_input();
-    auto m_matmul = opp::wrap_type<ov::op::v0::MatMul>({m_act, m_wei});
+    خپلکاری m_act = opp::any_ننوت();
+    خپلکاری m_wei = opp::any_ننوت();
+    خپلکاری m_matmul = opp::wrap_type<ov::op::v0::MatMul>({m_act, m_wei});
 
-    const auto callback = [=](ov::pass::pattern::Matcher & m) {
-        const auto & pattern_map = m.get_pattern_value_map();
-        auto matmul_node =
-            ov::as_type_ptr<ov::op::v0::MatMul>(pattern_map.at(m_matmul).get_node_shared_ptr());
-        auto act = pattern_map.at(m_act);
-        auto wei = pattern_map.at(m_wei);
-        auto act_shape = act.get_partial_shape();
-        auto wei_shape = wei.get_partial_shape();
-        if (act_shape.rank().is_dynamic() || wei_shape.rank().is_dynamic()) {
-            return false;
+    ثابت خپلکاری callback = [=](ov::pass::pattern::Matcher & m) {
+        ثابت خپلکاری & نمونه_map = m.get_نمونه_ارزښت_map();
+        خپلکاری matmul_غوټه =
+            ov::as_type_ptr<ov::op::v0::MatMul>(نمونه_map.at(m_matmul).get_غوټه_shared_ptr());
+        خپلکاری act = نمونه_map.at(m_act);
+        خپلکاری wei = نمونه_map.at(m_wei);
+        خپلکاری act_shape = act.get_partial_shape();
+        خپلکاری wei_shape = wei.get_partial_shape();
+        إذا (act_shape.rank().is_dynamic() || wei_shape.rank().is_dynamic()) {
+            أرجع خطأ;
         }
-        if (act_shape.rank().get_length() == 4 && wei_shape.rank().get_length() == 2) {
-            auto axis = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {0});
-            auto squeezed_act = std::make_shared<ov::op::v0::Squeeze>(act, axis);
-            auto new_matmul = std::make_shared<ov::op::v0::MatMul>(squeezed_act, wei, matmul_node->get_transpose_a(),
-                                                                   matmul_node->get_transpose_b());
-            auto unsqueezed_output = std::make_shared<ov::op::v0::Unsqueeze>(new_matmul, axis);
-            unsqueezed_output->set_friendly_name(matmul_node->get_friendly_name());
-            ov::copy_runtime_info(matmul_node, {squeezed_act, new_matmul, unsqueezed_output});
-            ov::replace_node(matmul_node, unsqueezed_output);
-            return true;
+        إذا (act_shape.rank().get_اوږدتیا() == 4 && wei_shape.rank().get_اوږدتیا() == 2) {
+            خپلکاری axis = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {0});
+            خپلکاری squeezed_act = std::make_shared<ov::op::v0::Squeeze>(act, axis);
+            خپلکاری new_matmul = std::make_shared<ov::op::v0::MatMul>(squeezed_act, wei, matmul_غوټه->get_transpose_a(),
+                                                                   matmul_غوټه->get_transpose_b());
+            خپلکاری unsqueezed_output = std::make_shared<ov::op::v0::Unsqueeze>(new_matmul, axis);
+            unsqueezed_output->سېټ_friendly_name(matmul_غوټه->get_friendly_name());
+            ov::copy_runtime_info(matmul_غوټه, {squeezed_act, new_matmul, unsqueezed_output});
+            ov::replace_غوټه(matmul_غوټه, unsqueezed_output);
+            أرجع ریښتیا;
         }
-        return false;
+        أرجع خطأ;
     };
 
-    register_matcher(std::make_shared<ov::pass::pattern::Matcher>(m_matmul, "ov::frontend::ggml::pass::SqueezeMatmul"),
+    ثبتوونکی_matcher(std::make_shared<ov::pass::pattern::Matcher>(m_matmul, "ov::frontend::ggml::pass::SqueezeMatmul"),
                      callback);
 }
 

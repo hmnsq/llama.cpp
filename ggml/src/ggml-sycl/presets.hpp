@@ -10,70 +10,70 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#ifndef GGML_SYCL_PRESETS_HPP
-#define GGML_SYCL_PRESETS_HPP
+#که_نه_تعریف_شوی GGML_SYCL_PRESETS_HPP
+#تعریف_کړه GGML_SYCL_PRESETS_HPP
 
-#define GGML_SYCL_MAX_STREAMS       8
-#define GGML_SYCL_MAX_BUFFERS       256
+#تعریف_کړه GGML_SYCL_MAX_STREAMS       8
+#تعریف_کړه GGML_SYCL_MAX_BUFFERS       256
 
-#define WARP_SIZE GGML_SYCL_WARP_SIZE
-#define MATRIX_ROW_PADDING 512 // last row of quant. matrices is a multiple of this to avoid out-of-bounds memory accesses
+#تعریف_کړه WARP_اندازه GGML_SYCL_WARP_اندازه
+#تعریف_کړه ماتریکس_لیکه_PADDING 512 // last row of quant. matrices is a multiple of this to avoid out-of-bounds memory accesses
 
-#define SYCL_COL2IM_1D_BLOCK_SIZE 256
-#define SYCL_TANH_BLOCK_SIZE 256
-#define SYCL_RELU_BLOCK_SIZE 256
-#define SYCL_HARDSIGMOID_BLOCK_SIZE 256
-#define SYCL_HARDSWISH_BLOCK_SIZE 256
-#define SYCL_EXP_BLOCK_SIZE 256
-#define SYCL_NEG_BLOCK_SIZE 256
-#define SYCL_SIGMOID_BLOCK_SIZE 256
-#define SYCL_SQRT_BLOCK_SIZE 256
-#define SYCL_SIN_BLOCK_SIZE 256
-#define SYCL_SQR_BLOCK_SIZE 256
-#define SYCL_SET_BLOCK_SIZE 256
-#define SYCL_CPY_BLOCK_SIZE 32
-#define SYCL_SCALE_BLOCK_SIZE 256
-#define SYCL_CLAMP_BLOCK_SIZE 256
-#define SYCL_ROPE_BLOCK_SIZE 256
-#define SYCL_ALIBI_BLOCK_SIZE 32
-#define SYCL_DIAG_MASK_INF_BLOCK_SIZE 32
-#define SYCL_QUANTIZE_BLOCK_SIZE 256
-#define SYCL_DEQUANTIZE_BLOCK_SIZE 256
-#define SYCL_GET_ROWS_BLOCK_SIZE 256
-#define SYCL_UPSCALE_BLOCK_SIZE 256
-#define SYCL_CONCAT_BLOCK_SIZE 256
-#define SYCL_PAD_BLOCK_SIZE 256
-#define SYCL_ACC_BLOCK_SIZE 256
-#define SYCL_IM2COL_BLOCK_SIZE 256
-#define SYCL_POOL1D_BLOCK_SIZE 256
-#define SYCL_POOL2D_BLOCK_SIZE 256
-#define SYCL_ARGMAX_BLOCK_SIZE 256
-#define SYCL_CONV_TRANPOSE_1D_BLOCK_SIZE 256
-#define SYCL_TIMESTEP_EMBEDDING_BLOCK_SIZE 256
-#define SYCL_ARANGE_BLOCK_SIZE 256
+#تعریف_کړه SYCL_COL2_IM_1_D_بلاک_اندازه 256
+#تعریف_کړه SYCL_TANH_بلاک_اندازه 256
+#تعریف_کړه SYCL_RELU_بلاک_اندازه 256
+#تعریف_کړه SYCL_HARDSIGMOID_بلاک_اندازه 256
+#تعریف_کړه SYCL_HARDSWISH_بلاک_اندازه 256
+#تعریف_کړه SYCL_EXP_بلاک_اندازه 256
+#تعریف_کړه SYCL_NEG_بلاک_اندازه 256
+#تعریف_کړه SYCL_SIGMOID_بلاک_اندازه 256
+#تعریف_کړه SYCL_SQRT_بلاک_اندازه 256
+#تعریف_کړه SYCL_SIN_بلاک_اندازه 256
+#تعریف_کړه SYCL_SQR_بلاک_اندازه 256
+#تعریف_کړه SYCL_سېټ_بلاک_اندازه 256
+#تعریف_کړه SYCL_CPY_بلاک_اندازه 32
+#تعریف_کړه SYCL_SCALE_بلاک_اندازه 256
+#تعریف_کړه SYCL_CLAMP_بلاک_اندازه 256
+#تعریف_کړه SYCL_ROPE_بلاک_اندازه 256
+#تعریف_کړه SYCL_ALIBI_بلاک_اندازه 32
+#تعریف_کړه SYCL_DIAG_ماسک_INF_بلاک_اندازه 32
+#تعریف_کړه SYCL_QUANTIZE_بلاک_اندازه 256
+#تعریف_کړه SYCL_DEQUANTIZE_بلاک_اندازه 256
+#تعریف_کړه SYCL_GET_لیکې_بلاک_اندازه 256
+#تعریف_کړه SYCL_UPSCALE_بلاک_اندازه 256
+#تعریف_کړه SYCL_CONCAT_بلاک_اندازه 256
+#تعریف_کړه SYCL_PAD_بلاک_اندازه 256
+#تعریف_کړه SYCL_ACC_بلاک_اندازه 256
+#تعریف_کړه SYCL_IM2_ستون_بلاک_اندازه 256
+#تعریف_کړه SYCL_POOL1_D_بلاک_اندازه 256
+#تعریف_کړه SYCL_POOL2_D_بلاک_اندازه 256
+#تعریف_کړه SYCL_ARGMAX_بلاک_اندازه 256
+#تعریف_کړه SYCL_CONV_TRANPOSE_1_D_بلاک_اندازه 256
+#تعریف_کړه SYCL_TIMESTEP_EMBEDDING_بلاک_اندازه 256
+#تعریف_کړه SYCL_ARANGE_بلاک_اندازه 256
 
 // dmmv = dequantize_mul_mat_vec
-#ifndef GGML_SYCL_DMMV_X
-#define GGML_SYCL_DMMV_X 32
-#endif
-#ifndef GGML_SYCL_MMV_Y
-#define GGML_SYCL_MMV_Y 1
-#endif
+#که_نه_تعریف_شوی GGML_SYCL_DMMV_X
+#تعریف_کړه GGML_SYCL_DMMV_X 32
+#د_که_پای
+#که_نه_تعریف_شوی GGML_SYCL_MMV_Y
+#تعریف_کړه GGML_SYCL_MMV_Y 1
+#د_که_پای
 
-#ifndef K_QUANTS_PER_ITERATION
-#define K_QUANTS_PER_ITERATION 1
-#else
-static_assert(K_QUANTS_PER_ITERATION == 1 || K_QUANTS_PER_ITERATION == 2, "K_QUANTS_PER_ITERATION must be 1 or 2");
-#endif
+#که_نه_تعریف_شوی K_QUANTS_فی_ITERATION
+#تعریف_کړه K_QUANTS_فی_ITERATION 1
+#وإلا
+static_assert(K_QUANTS_فی_ITERATION == 1 || K_QUANTS_فی_ITERATION == 2, "K_QUANTS_PER_ITERATION must be 1 or 2");
+#د_که_پای
 
-#ifndef GGML_SYCL_PEER_MAX_BATCH_SIZE
-#define GGML_SYCL_PEER_MAX_BATCH_SIZE 128
-#endif // GGML_SYCL_PEER_MAX_BATCH_SIZE
+#که_نه_تعریف_شوی GGML_SYCL_PEER_MAX_BATCH_اندازه
+#تعریف_کړه GGML_SYCL_PEER_MAX_BATCH_اندازه 128
+#د_که_پای // GGML_SYCL_PEER_MAX_BATCH_SIZE
 
-#define MUL_MAT_SRC1_COL_STRIDE 128
+#تعریف_کړه MUL_MAT_SRC1_ستون_STRIDE 128
 
-#define QK_WARP_SIZE 32
-#define WARP_32_SIZE 32
-#define WARP_16_SIZE 16
+#تعریف_کړه QK_WARP_اندازه 32
+#تعریف_کړه WARP_32_اندازه 32
+#تعریف_کړه WARP_16_اندازه 16
 
-#endif // GGML_SYCL_PRESETS_HPP
+#د_که_پای // GGML_SYCL_PRESETS_HPP

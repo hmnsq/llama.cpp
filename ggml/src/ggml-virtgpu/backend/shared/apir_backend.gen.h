@@ -1,94 +1,94 @@
-typedef enum ApirBackendCommandType {
+تعريفنوع تعداد ApirBackendCommandType {
 
     /* device */
-    APIR_COMMAND_TYPE_DEVICE_GET_DEVICE_COUNT = 0,
-    APIR_COMMAND_TYPE_DEVICE_GET_COUNT        = 1,
+    APIR_COMMAND_TYPE_DEVICE_GET_DEVICE_شمېر = 0,
+    APIR_COMMAND_TYPE_DEVICE_GET_شمېر        = 1,
     APIR_COMMAND_TYPE_DEVICE_GET_NAME         = 2,
     APIR_COMMAND_TYPE_DEVICE_GET_DESCRIPTION  = 3,
     APIR_COMMAND_TYPE_DEVICE_GET_TYPE         = 4,
-    APIR_COMMAND_TYPE_DEVICE_GET_MEMORY       = 5,
+    APIR_COMMAND_TYPE_DEVICE_GET_حافظه       = 5,
     APIR_COMMAND_TYPE_DEVICE_SUPPORTS_OP      = 6,
-    APIR_COMMAND_TYPE_DEVICE_GET_BUFFER_TYPE  = 7,
+    APIR_COMMAND_TYPE_DEVICE_GET_بفر_TYPE  = 7,
     APIR_COMMAND_TYPE_DEVICE_GET_PROPS        = 8,
-    APIR_COMMAND_TYPE_DEVICE_BUFFER_FROM_PTR  = 9,
+    APIR_COMMAND_TYPE_DEVICE_بفر_FROM_PTR  = 9,
 
     /* buffer-type */
-    APIR_COMMAND_TYPE_BUFFER_TYPE_GET_NAME       = 10,
-    APIR_COMMAND_TYPE_BUFFER_TYPE_GET_ALIGNMENT  = 11,
-    APIR_COMMAND_TYPE_BUFFER_TYPE_GET_MAX_SIZE   = 12,
-    APIR_COMMAND_TYPE_BUFFER_TYPE_IS_HOST        = 13,
-    APIR_COMMAND_TYPE_BUFFER_TYPE_ALLOC_BUFFER   = 14,
-    APIR_COMMAND_TYPE_BUFFER_TYPE_GET_ALLOC_SIZE = 15,
+    APIR_COMMAND_TYPE_بفر_TYPE_GET_NAME       = 10,
+    APIR_COMMAND_TYPE_بفر_TYPE_GET_ALIGNMENT  = 11,
+    APIR_COMMAND_TYPE_بفر_TYPE_GET_MAX_اندازه   = 12,
+    APIR_COMMAND_TYPE_بفر_TYPE_IS_HOST        = 13,
+    APIR_COMMAND_TYPE_بفر_TYPE_ALLOC_بفر   = 14,
+    APIR_COMMAND_TYPE_بفر_TYPE_GET_ALLOC_اندازه = 15,
 
-    /* buffer */
-    APIR_COMMAND_TYPE_BUFFER_GET_BASE    = 16,
-    APIR_COMMAND_TYPE_BUFFER_SET_TENSOR  = 17,
-    APIR_COMMAND_TYPE_BUFFER_GET_TENSOR  = 18,
-    APIR_COMMAND_TYPE_BUFFER_CPY_TENSOR  = 19,
-    APIR_COMMAND_TYPE_BUFFER_CLEAR       = 20,
-    APIR_COMMAND_TYPE_BUFFER_FREE_BUFFER = 21,
+    /*بفر*/
+    APIR_COMMAND_TYPE_بفر_GET_بنسټ    = 16,
+    APIR_COMMAND_TYPE_بفر_سېټ_TENSOR  = 17,
+    APIR_COMMAND_TYPE_بفر_GET_TENSOR  = 18,
+    APIR_COMMAND_TYPE_بفر_CPY_TENSOR  = 19,
+    APIR_COMMAND_TYPE_بفر_CLEAR       = 20,
+    APIR_COMMAND_TYPE_بفر_FREE_بفر = 21,
 
     /* backend */
-    APIR_COMMAND_TYPE_BACKEND_GRAPH_COMPUTE = 22,
+    APIR_COMMAND_TYPE_BACKEND_ګراف_COMPUTE = 22,
 
     // last command_type index + 1
-    APIR_BACKEND_DISPATCH_TABLE_COUNT = 23,
+    APIR_BACKEND_DISPATCH_جدول_شمېر = 23,
 } ApirBackendCommandType;
 
-static inline const char * apir_dispatch_command_name(ApirBackendCommandType type) {
-    switch (type) {
+ساكن مضمن ثابت حرف * apir_dispatch_command_name(ApirBackendCommandType type) {
+    بدل (type) {
         /* device */
-        case APIR_COMMAND_TYPE_DEVICE_GET_DEVICE_COUNT:
-            return "device_get_device_count";
-        case APIR_COMMAND_TYPE_DEVICE_GET_COUNT:
-            return "device_get_count";
-        case APIR_COMMAND_TYPE_DEVICE_GET_NAME:
-            return "device_get_name";
-        case APIR_COMMAND_TYPE_DEVICE_GET_DESCRIPTION:
-            return "device_get_description";
-        case APIR_COMMAND_TYPE_DEVICE_GET_TYPE:
-            return "device_get_type";
-        case APIR_COMMAND_TYPE_DEVICE_GET_MEMORY:
-            return "device_get_memory";
-        case APIR_COMMAND_TYPE_DEVICE_SUPPORTS_OP:
-            return "device_supports_op";
-        case APIR_COMMAND_TYPE_DEVICE_GET_BUFFER_TYPE:
-            return "device_get_buffer_type";
-        case APIR_COMMAND_TYPE_DEVICE_GET_PROPS:
-            return "device_get_props";
-        case APIR_COMMAND_TYPE_DEVICE_BUFFER_FROM_PTR:
-            return "device_buffer_from_ptr";
+        حالة APIR_COMMAND_TYPE_DEVICE_GET_DEVICE_شمېر:
+            أرجع "device_get_device_count";
+        حالة APIR_COMMAND_TYPE_DEVICE_GET_شمېر:
+            أرجع "device_get_count";
+        حالة APIR_COMMAND_TYPE_DEVICE_GET_NAME:
+            أرجع "device_get_name";
+        حالة APIR_COMMAND_TYPE_DEVICE_GET_DESCRIPTION:
+            أرجع "device_get_description";
+        حالة APIR_COMMAND_TYPE_DEVICE_GET_TYPE:
+            أرجع "device_get_type";
+        حالة APIR_COMMAND_TYPE_DEVICE_GET_حافظه:
+            أرجع "device_get_memory";
+        حالة APIR_COMMAND_TYPE_DEVICE_SUPPORTS_OP:
+            أرجع "device_supports_op";
+        حالة APIR_COMMAND_TYPE_DEVICE_GET_بفر_TYPE:
+            أرجع "device_get_buffer_type";
+        حالة APIR_COMMAND_TYPE_DEVICE_GET_PROPS:
+            أرجع "device_get_props";
+        حالة APIR_COMMAND_TYPE_DEVICE_بفر_FROM_PTR:
+            أرجع "device_buffer_from_ptr";
         /* buffer-type */
-        case APIR_COMMAND_TYPE_BUFFER_TYPE_GET_NAME:
-            return "buffer_type_get_name";
-        case APIR_COMMAND_TYPE_BUFFER_TYPE_GET_ALIGNMENT:
-            return "buffer_type_get_alignment";
-        case APIR_COMMAND_TYPE_BUFFER_TYPE_GET_MAX_SIZE:
-            return "buffer_type_get_max_size";
-        case APIR_COMMAND_TYPE_BUFFER_TYPE_IS_HOST:
-            return "buffer_type_is_host";
-        case APIR_COMMAND_TYPE_BUFFER_TYPE_ALLOC_BUFFER:
-            return "buffer_type_alloc_buffer";
-        case APIR_COMMAND_TYPE_BUFFER_TYPE_GET_ALLOC_SIZE:
-            return "buffer_type_get_alloc_size";
-        /* buffer */
-        case APIR_COMMAND_TYPE_BUFFER_GET_BASE:
-            return "buffer_get_base";
-        case APIR_COMMAND_TYPE_BUFFER_SET_TENSOR:
-            return "buffer_set_tensor";
-        case APIR_COMMAND_TYPE_BUFFER_GET_TENSOR:
-            return "buffer_get_tensor";
-        case APIR_COMMAND_TYPE_BUFFER_CPY_TENSOR:
-            return "buffer_cpy_tensor";
-        case APIR_COMMAND_TYPE_BUFFER_CLEAR:
-            return "buffer_clear";
-        case APIR_COMMAND_TYPE_BUFFER_FREE_BUFFER:
-            return "buffer_free_buffer";
+        حالة APIR_COMMAND_TYPE_بفر_TYPE_GET_NAME:
+            أرجع "buffer_type_get_name";
+        حالة APIR_COMMAND_TYPE_بفر_TYPE_GET_ALIGNMENT:
+            أرجع "buffer_type_get_alignment";
+        حالة APIR_COMMAND_TYPE_بفر_TYPE_GET_MAX_اندازه:
+            أرجع "buffer_type_get_max_size";
+        حالة APIR_COMMAND_TYPE_بفر_TYPE_IS_HOST:
+            أرجع "buffer_type_is_host";
+        حالة APIR_COMMAND_TYPE_بفر_TYPE_ALLOC_بفر:
+            أرجع "buffer_type_alloc_buffer";
+        حالة APIR_COMMAND_TYPE_بفر_TYPE_GET_ALLOC_اندازه:
+            أرجع "buffer_type_get_alloc_size";
+        /*بفر*/
+        حالة APIR_COMMAND_TYPE_بفر_GET_بنسټ:
+            أرجع "buffer_get_base";
+        حالة APIR_COMMAND_TYPE_بفر_سېټ_TENSOR:
+            أرجع "buffer_set_tensor";
+        حالة APIR_COMMAND_TYPE_بفر_GET_TENSOR:
+            أرجع "buffer_get_tensor";
+        حالة APIR_COMMAND_TYPE_بفر_CPY_TENSOR:
+            أرجع "buffer_cpy_tensor";
+        حالة APIR_COMMAND_TYPE_بفر_CLEAR:
+            أرجع "buffer_clear";
+        حالة APIR_COMMAND_TYPE_بفر_FREE_بفر:
+            أرجع "buffer_free_buffer";
         /* backend */
-        case APIR_COMMAND_TYPE_BACKEND_GRAPH_COMPUTE:
-            return "backend_graph_compute";
+        حالة APIR_COMMAND_TYPE_BACKEND_ګراف_COMPUTE:
+            أرجع "backend_graph_compute";
 
-        default:
-            return "unknown";
+        افتراضي:
+            أرجع "unknown";
     }
 }

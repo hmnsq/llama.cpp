@@ -1,458 +1,458 @@
-#include "ggml-vulkan-common.h"
+#ضمن "ggml-vulkan-common.h"
 
-#include <cstdint>
-#include <cstdlib>
-#include <mutex>
-#include <shared_mutex>
+#ضمن <cstdint>
+#ضمن <cstdlib>
+#ضمن <mutex>
+#ضمن <shared_mutex>
 
-static void * portable_aligned_malloc(size_t align, size_t size) {
-#ifdef _WIN32
-    return _aligned_malloc(size, align);
-#else
-    void * ptr = nullptr;
-    if (posix_memalign(&ptr, align, size) != 0) {
-        return nullptr;
+ساكن فراغ * portable_aligned_malloc(size_t align, size_t size) {
+#که_تعریف_شوی _WIN32
+    أرجع _aligned_malloc(size, align);
+#وإلا
+    فراغ * ptr = تش_اشاره;
+    إذا (posix_memalign(&ptr, align, size) != 0) {
+        أرجع تش_اشاره;
     }
-    return ptr;
-#endif
+    أرجع ptr;
+#د_که_پای
 }
 
-static void portable_aligned_free(void * ptr) {
-#ifdef _WIN32
+ساكن فراغ portable_aligned_free(فراغ * ptr) {
+#که_تعریف_شوی _WIN32
     _aligned_free(ptr);
-#else
-    std::free(ptr);
-#endif
+#وإلا
+    std::حرر(ptr);
+#د_که_پای
 }
 
-ggml_backend_buffer_type_i ggml_backend_vk_buffer_type_interface = {
-    /* .get_name            = */ ggml_backend_vk_buffer_type_name,
-    /* .alloc_buffer        = */ ggml_backend_vk_buffer_type_alloc_buffer,
-    /* .alloc_buffer_n      = */ NULL,
-    /* .get_alignment       = */ ggml_backend_vk_buffer_type_get_alignment,
-    /* .get_max_size        = */ ggml_backend_vk_buffer_type_get_max_size,
-    /* .get_alloc_size      = */ ggml_backend_vk_buffer_type_get_alloc_size,
-    /* .get_alloc_size_n    = */ NULL,
-    /* .is_host             = */ NULL,
+ggml_backend_بفر_type_i ggml_backend_vk_بفر_type_interface = {
+    /* .get_name            = */ ggml_backend_vk_بفر_type_name,
+    /* .alloc_buffer        = */ ggml_backend_vk_بفر_type_alloc_بفر,
+    /* .alloc_buffer_n      = */ عدم,
+    /* .get_alignment       = */ ggml_backend_vk_بفر_type_get_alignment,
+    /* .get_max_size        = */ ggml_backend_vk_بفر_type_get_max_اندازه,
+    /* .get_alloc_size      = */ ggml_backend_vk_بفر_type_get_alloc_اندازه,
+    /* .get_alloc_size_n    = */ عدم,
+    /* .is_host             = */ عدم,
 };
 
-static std::vector<uint32_t> ggml_vk_find_memory_properties(const vk::PhysicalDeviceMemoryProperties* mem_props, vk::MemoryRequirements* mem_req, vk::MemoryPropertyFlags flags) {
+ساكن std::vector<uint32_t> ggml_vk_پیدا_کړه_حافظه_properties(ثابت vk::Physical_Device_حافظه_Properties* mem_props, vk::حافظه_Requirements* mem_req, vk::حافظه_Property_Flags flags) {
     std::vector<uint32_t> indices;
 
-    for (uint32_t i = 0; i < mem_props->memoryTypeCount; ++i) {
-        vk::MemoryType memory_type = mem_props->memoryTypes[i];
-        if ((mem_req->memoryTypeBits & ((uint64_t)1 << i)) &&
-            (flags & memory_type.propertyFlags) == flags &&
-            mem_props->memoryHeaps[memory_type.heapIndex].size >= mem_req->size) {
+    لكل (uint32_t i = 0; i < mem_props->حافظه_Type_شمېر; ++i) {
+        vk::حافظه_Type حافظه_type = mem_props->حافظه_Types[i];
+        إذا ((mem_req->حافظه_Type_بټونه & ((uint64_t)1 << i)) &&
+            (flags & حافظه_type.propertyFlags) == flags &&
+            mem_props->حافظه_Heaps[حافظه_type.ډېرۍ_شاخص].size >= mem_req->size) {
             indices.push_back(i);
         }
     }
-    return indices;
+    أرجع indices;
 }
 
-static vk_buffer ggml_vk_create_buffer(vk_device& device, size_t size, const std::initializer_list<vk::MemoryPropertyFlags> & req_flags_list,
-                                       void *import_ptr = nullptr) {
+ساكن vk_بفر ggml_vk_create_بفر(vk_device& device, size_t size, ثابت std::initializer_list<vk::حافظه_Property_Flags> & req_flags_list,
+                                       فراغ *import_ptr = تش_اشاره) {
     VK_LOG_DEBUG("ggml_vk_create_buffer(" << device->name << ", " << size << ", " << to_string(req_flags_list.begin()[0]) << ", " << to_string(req_flags_list.begin()[req_flags_list.size()-1]) << ")");
-    if (size > device->max_buffer_size) {
-        throw vk::OutOfDeviceMemoryError("Requested buffer size exceeds device buffer size limit");
+    إذا (size > device->max_بفر_اندازه) {
+        ارم vk::بهر_د_Device_حافظه_Error("Requested buffer size exceeds device buffer size limit");
     }
 
-    vk_buffer buf = std::make_shared<vk_buffer_struct>();
+    vk_بفر buf = std::make_shared<vk_بفر_struct>();
 
-    if (size == 0) {
+    إذا (size == 0) {
         buf->size = 0;
-        return buf;
+        أرجع buf;
     }
 
-    vk::BufferUsageFlags usage_flags = vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst;
-    vk::MemoryAllocateFlags mem_flags {};
-    if (device->buffer_device_address) {
-        usage_flags |= vk::BufferUsageFlagBits::eShaderDeviceAddress;
-        mem_flags |= vk::MemoryAllocateFlagBits::eDeviceAddress;
+    vk::بفر_Usage_Flags usage_flags = vk::بفر_Usage_Flag_بټونه::e_Storage_بفر | vk::بفر_Usage_Flag_بټونه::eTransferSrc | vk::بفر_Usage_Flag_بټونه::eTransferDst;
+    vk::حافظه_Allocate_Flags mem_flags {};
+    إذا (device->بفر_device_پته) {
+        usage_flags |= vk::بفر_Usage_Flag_بټونه::e_Shader_Device_پته;
+        mem_flags |= vk::حافظه_Allocate_Flag_بټونه::e_Device_پته;
     }
 
-    vk::BufferCreateInfo buffer_create_info{
-        vk::BufferCreateFlags(),
+    vk::بفر_Create_Info بفر_create_info{
+        vk::بفر_Create_Flags(),
         size,
         usage_flags,
-        vk::SharingMode::eExclusive,
+        vk::Sharing_ډېرپېښ::eExclusive,
         0,
-        nullptr,
+        تش_اشاره,
     };
 
-    vk::ExternalMemoryBufferCreateInfo external_memory_bci;
-    if (import_ptr) {
-        external_memory_bci.handleTypes = vk::ExternalMemoryHandleTypeFlagBits::eHostAllocationEXT;
-        buffer_create_info.setPNext(&external_memory_bci);
+    vk::External_حافظه_بفر_Create_Info external_حافظه_bci;
+    إذا (import_ptr) {
+        external_حافظه_bci.handleTypes = vk::External_حافظه_Handle_Type_Flag_بټونه::e_Host_ویش_EXT;
+        بفر_create_info.سېټ_PNext(&external_حافظه_bci);
     }
 
-    buf->buffer = device->device.createBuffer(buffer_create_info);
+    buf->بفر = device->device.create_بفر(بفر_create_info);
 
-    vk::MemoryRequirements mem_req = device->device.getBufferMemoryRequirements(buf->buffer);
+    vk::حافظه_Requirements mem_req = device->device.get_بفر_حافظه_Requirements(buf->بفر);
 
-    vk::PhysicalDeviceMemoryProperties mem_props = device->physical_device.getMemoryProperties();
+    vk::Physical_Device_حافظه_Properties mem_props = device->physical_device.get_حافظه_Properties();
 
-    const vk::MemoryPriorityAllocateInfoEXT mem_priority_info { 1.0f };
+    ثابت vk::حافظه_لومړیتوب_Allocate_Info_EXT mem_لومړیتوب_info { 1.0f };
 
-    vk::MemoryAllocateFlagsInfo mem_flags_info { mem_flags };
+    vk::حافظه_Allocate_Flags_Info mem_flags_info { mem_flags };
 
-    if (device->memory_priority) {
-        mem_flags_info.setPNext(&mem_priority_info);
+    إذا (device->حافظه_لومړیتوب) {
+        mem_flags_info.سېټ_PNext(&mem_لومړیتوب_info);
     }
 
-    if (import_ptr) {
-        vk::MemoryHostPointerPropertiesEXT host_pointer_props;
-        try {
-            host_pointer_props = device->device.getMemoryHostPointerPropertiesEXT(vk::ExternalMemoryHandleTypeFlagBits::eHostAllocationEXT, import_ptr);
-        } catch (vk::SystemError& e) {
+    إذا (import_ptr) {
+        vk::حافظه_Host_اشاره_ګر_Properties_EXT host_اشاره_ګر_props;
+        حاول {
+            host_اشاره_ګر_props = device->device.get_حافظه_Host_اشاره_ګر_Properties_EXT(vk::External_حافظه_Handle_Type_Flag_بټونه::e_Host_ویش_EXT, import_ptr);
+        } امسك (vk::SystemError& e) {
             GGML_LOG_WARN("ggml_vulkan: Failed getMemoryHostPointerPropertiesEXT (%s)\n", e.what());
-            device->device.destroyBuffer(buf->buffer);
-            return {};
+            device->device.destroy_بفر(buf->بفر);
+            أرجع {};
         }
-        vk::PhysicalDeviceMemoryProperties mem_props = device->physical_device.getMemoryProperties();
+        vk::Physical_Device_حافظه_Properties mem_props = device->physical_device.get_حافظه_Properties();
 
-        uint32_t memory_type_idx;
-        vk::MemoryPropertyFlags property_flags = *req_flags_list.begin();
-        for (memory_type_idx = 0; memory_type_idx < 32; ++memory_type_idx) {
-            if (!(host_pointer_props.memoryTypeBits & (1u << memory_type_idx))) {
-                continue;
+        uint32_t حافظه_type_idx;
+        vk::حافظه_Property_Flags property_flags = *req_flags_list.begin();
+        لكل (حافظه_type_idx = 0; حافظه_type_idx < 32; ++حافظه_type_idx) {
+            إذا (!(host_اشاره_ګر_props.حافظه_Type_بټونه & (1u << حافظه_type_idx))) {
+                استمر;
             }
-            if (!(mem_req.memoryTypeBits & (1u << memory_type_idx))) {
-                continue;
+            إذا (!(mem_req.حافظه_Type_بټونه & (1u << حافظه_type_idx))) {
+                استمر;
             }
 
-            vk::MemoryType memory_type = mem_props.memoryTypes[memory_type_idx];
+            vk::حافظه_Type حافظه_type = mem_props.حافظه_Types[حافظه_type_idx];
             // check for visible+coherent+cached. Other flags (e.g. devicelocal) are allowed
-            if ((memory_type.propertyFlags & property_flags) == property_flags) {
-                property_flags = memory_type.propertyFlags;
-                break;
+            إذا ((حافظه_type.propertyFlags & property_flags) == property_flags) {
+                property_flags = حافظه_type.propertyFlags;
+                اكسر;
             }
         }
-        if (memory_type_idx == 32) {
+        إذا (حافظه_type_idx == 32) {
             GGML_LOG_WARN("ggml_vulkan: Memory type for host allocation not found\n");
-            device->device.destroyBuffer(buf->buffer);
-            return {};
+            device->device.destroy_بفر(buf->بفر);
+            أرجع {};
         }
 
-        buf->memory_property_flags = mem_props.memoryTypes[memory_type_idx].propertyFlags;
-        try {
-            vk::ImportMemoryHostPointerInfoEXT import_info;
-            import_info.handleType = vk::ExternalMemoryHandleTypeFlagBits::eHostAllocationEXT;
-            import_info.pHostPointer = import_ptr;
-            import_info.setPNext(&mem_flags_info);
-            buf->device_memory = device->device.allocateMemory({ size, memory_type_idx, &import_info });
-        } catch (const vk::SystemError& e) {
+        buf->حافظه_property_flags = mem_props.حافظه_Types[حافظه_type_idx].propertyFlags;
+        حاول {
+            vk::Import_حافظه_Host_اشاره_ګر_Info_EXT import_info;
+            import_info.handleType = vk::External_حافظه_Handle_Type_Flag_بټونه::e_Host_ویش_EXT;
+            import_info.p_Host_اشاره_ګر = import_ptr;
+            import_info.سېټ_PNext(&mem_flags_info);
+            buf->device_حافظه = device->device.allocate_حافظه({ size, حافظه_type_idx, &import_info });
+        } امسك (ثابت vk::SystemError& e) {
         }
-    } else {
-        for (auto it = req_flags_list.begin(); it != req_flags_list.end(); it++) {
-            const auto & req_flags = *it;
+    } وإلا {
+        لكل (خپلکاری it = req_flags_list.begin(); it != req_flags_list.end(); it++) {
+            ثابت خپلکاری & req_flags = *it;
 
-            const std::vector<uint32_t> memory_type_indices = ggml_vk_find_memory_properties(&mem_props, &mem_req, req_flags);
+            ثابت std::vector<uint32_t> حافظه_type_indices = ggml_vk_پیدا_کړه_حافظه_properties(&mem_props, &mem_req, req_flags);
 
-            if (memory_type_indices.empty()) {
-                continue;
+            إذا (حافظه_type_indices.تشه()) {
+                استمر;
             }
 
-            bool done = false;
+            منطقي بشپړ = خطأ;
 
-            for (auto mtype_it = memory_type_indices.begin(); mtype_it != memory_type_indices.end(); mtype_it++) {
-                try {
-                    buf->device_memory = device->device.allocateMemory({ mem_req.size, *mtype_it, &mem_flags_info });
-                    buf->memory_property_flags = mem_props.memoryTypes[*mtype_it].propertyFlags;
-                    done = true;
-                    break;
-                } catch (const vk::SystemError& e) {
+            لكل (خپلکاری mtype_it = حافظه_type_indices.begin(); mtype_it != حافظه_type_indices.end(); mtype_it++) {
+                حاول {
+                    buf->device_حافظه = device->device.allocate_حافظه({ mem_req.size, *mtype_it, &mem_flags_info });
+                    buf->حافظه_property_flags = mem_props.حافظه_Types[*mtype_it].propertyFlags;
+                    بشپړ = ریښتیا;
+                    اكسر;
+                } امسك (ثابت vk::SystemError& e) {
                     // loop and retry
                     // during last attempt throw the exception
-                    if (it + 1 == req_flags_list.end() && mtype_it + 1 == memory_type_indices.end()) {
-                        device->device.destroyBuffer(buf->buffer);
-                        throw e;
+                    إذا (it + 1 == req_flags_list.end() && mtype_it + 1 == حافظه_type_indices.end()) {
+                        device->device.destroy_بفر(buf->بفر);
+                        ارم e;
                     }
                 }
             }
 
-            if (done) {
-                break;
+            إذا (بشپړ) {
+                اكسر;
             }
         }
     }
 
-    if (!buf->device_memory) {
-        device->device.destroyBuffer(buf->buffer);
-        throw vk::OutOfDeviceMemoryError("No suitable memory type found");
+    إذا (!buf->device_حافظه) {
+        device->device.destroy_بفر(buf->بفر);
+        ارم vk::بهر_د_Device_حافظه_Error("No suitable memory type found");
     }
 
-    buf->ptr = nullptr;
+    buf->ptr = تش_اشاره;
 
-    if (import_ptr) {
+    إذا (import_ptr) {
         buf->ptr = import_ptr;
-    } else {
-        if (buf->memory_property_flags & vk::MemoryPropertyFlagBits::eHostVisible) {
-            buf->ptr = device->device.mapMemory(buf->device_memory, 0, VK_WHOLE_SIZE);
+    } وإلا {
+        إذا (buf->حافظه_property_flags & vk::حافظه_Property_Flag_بټونه::eHostVisible) {
+            buf->ptr = device->device.map_حافظه(buf->device_حافظه, 0, VK_ټولیز_اندازه);
         }
     }
 
-    device->device.bindBufferMemory(buf->buffer, buf->device_memory, 0);
+    device->device.bind_بفر_حافظه(buf->بفر, buf->device_حافظه, 0);
 
     buf->device = device;
     buf->size = size;
 
-    if (device->buffer_device_address) {
-        const vk::BufferDeviceAddressInfo addressInfo(buf->buffer);
-        buf->bda_addr = device->device.getBufferAddress(addressInfo);
+    إذا (device->بفر_device_پته) {
+        ثابت vk::بفر_Device_پته_Info پته_Info(buf->بفر);
+        buf->bda_addr = device->device.get_بفر_پته(پته_Info);
     }
 
-    device->memory_logger->log_allocation(buf, size);
+    device->حافظه_logger->log_ویش(buf, size);
 
-    return buf;
+    أرجع buf;
 }
 
-vk_buffer ggml_vk_create_buffer_check(vk_device& device, size_t size, vk::MemoryPropertyFlags req_flags, vk::MemoryPropertyFlags fallback_flags) {
-    try {
-        return ggml_vk_create_buffer(device, size, {req_flags, fallback_flags});
-    } catch (const vk::SystemError& e) {
-        std::cerr << "ggml_vulkan: Memory allocation of size " << size << " failed." << std::endl;
-        std::cerr << "ggml_vulkan: " << e.what() << std::endl;
-        throw e;
+vk_بفر ggml_vk_create_بفر_check(vk_device& device, size_t size, vk::حافظه_Property_Flags req_flags, vk::حافظه_Property_Flags fallback_flags) {
+    حاول {
+        أرجع ggml_vk_create_بفر(device, size, {req_flags, fallback_flags});
+    } امسك (ثابت vk::SystemError& e) {
+        std::cerr << "ggml_vulkan: Memory allocation of size " << size << " failed." << std::کرښه_پای;
+        std::cerr << "ggml_vulkan: " << e.what() << std::کرښه_پای;
+        ارم e;
     }
 }
 
-vk_buffer ggml_vk_create_buffer_device(vk_device& device, size_t size) {
-    vk_buffer buf;
-    try {
-        if (device->prefer_host_memory) {
-            buf = ggml_vk_create_buffer(device, size, {vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-                                                       vk::MemoryPropertyFlagBits::eDeviceLocal});
-        } else if (device->uma) {
+vk_بفر ggml_vk_create_بفر_device(vk_device& device, size_t size) {
+    vk_بفر buf;
+    حاول {
+        إذا (device->prefer_host_حافظه) {
+            buf = ggml_vk_create_بفر(device, size, {vk::حافظه_Property_Flag_بټونه::eHostVisible | vk::حافظه_Property_Flag_بټونه::eHostCoherent,
+                                                       vk::حافظه_Property_Flag_بټونه::eDeviceLocal});
+        } وإلا إذا (device->uma) {
             // On UMA, prefer host-visible memory so direct tensor borrowing works.
             // If unavailable, fall back to device-local memory.
-            buf = ggml_vk_create_buffer(device, size, {vk::MemoryPropertyFlagBits::eDeviceLocal | vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-                                                       vk::MemoryPropertyFlagBits::eDeviceLocal,
-                                                       vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent});
-        } else if (device->disable_host_visible_vidmem) {
-            if (device->allow_sysmem_fallback) {
-                buf = ggml_vk_create_buffer(device, size, {vk::MemoryPropertyFlagBits::eDeviceLocal,
-                                                           vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent});
-            } else {
-                buf = ggml_vk_create_buffer(device, size, {vk::MemoryPropertyFlagBits::eDeviceLocal});
+            buf = ggml_vk_create_بفر(device, size, {vk::حافظه_Property_Flag_بټونه::eDeviceLocal | vk::حافظه_Property_Flag_بټونه::eHostVisible | vk::حافظه_Property_Flag_بټونه::eHostCoherent,
+                                                       vk::حافظه_Property_Flag_بټونه::eDeviceLocal,
+                                                       vk::حافظه_Property_Flag_بټونه::eHostVisible | vk::حافظه_Property_Flag_بټونه::eHostCoherent});
+        } وإلا إذا (device->disable_host_visible_vidmem) {
+            إذا (device->allow_sysmem_fallback) {
+                buf = ggml_vk_create_بفر(device, size, {vk::حافظه_Property_Flag_بټونه::eDeviceLocal,
+                                                           vk::حافظه_Property_Flag_بټونه::eHostVisible | vk::حافظه_Property_Flag_بټونه::eHostCoherent});
+            } وإلا {
+                buf = ggml_vk_create_بفر(device, size, {vk::حافظه_Property_Flag_بټونه::eDeviceLocal});
             }
-        } else {
+        } وإلا {
             // use rebar if available, otherwise fallback to device only visible memory
-            if (device->allow_sysmem_fallback) {
-                buf = ggml_vk_create_buffer(device, size, {vk::MemoryPropertyFlagBits::eDeviceLocal | vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-                                                           vk::MemoryPropertyFlagBits::eDeviceLocal,
-                                                           vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent});
-            } else {
-                buf = ggml_vk_create_buffer(device, size, {vk::MemoryPropertyFlagBits::eDeviceLocal | vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-                                                           vk::MemoryPropertyFlagBits::eDeviceLocal});
+            إذا (device->allow_sysmem_fallback) {
+                buf = ggml_vk_create_بفر(device, size, {vk::حافظه_Property_Flag_بټونه::eDeviceLocal | vk::حافظه_Property_Flag_بټونه::eHostVisible | vk::حافظه_Property_Flag_بټونه::eHostCoherent,
+                                                           vk::حافظه_Property_Flag_بټونه::eDeviceLocal,
+                                                           vk::حافظه_Property_Flag_بټونه::eHostVisible | vk::حافظه_Property_Flag_بټونه::eHostCoherent});
+            } وإلا {
+                buf = ggml_vk_create_بفر(device, size, {vk::حافظه_Property_Flag_بټونه::eDeviceLocal | vk::حافظه_Property_Flag_بټونه::eHostVisible | vk::حافظه_Property_Flag_بټونه::eHostCoherent,
+                                                           vk::حافظه_Property_Flag_بټونه::eDeviceLocal});
             }
         }
-    } catch (const vk::SystemError& e) {
-        std::cerr << "ggml_vulkan: Device memory allocation of size " << size << " failed." << std::endl;
-        std::cerr << "ggml_vulkan: " << e.what() << std::endl;
-        throw e;
+    } امسك (ثابت vk::SystemError& e) {
+        std::cerr << "ggml_vulkan: Device memory allocation of size " << size << " failed." << std::کرښه_پای;
+        std::cerr << "ggml_vulkan: " << e.what() << std::کرښه_پای;
+        ارم e;
     }
 
-    return buf;
+    أرجع buf;
 }
 
-void ggml_vk_destroy_buffer(vk_buffer& buf) {
-    if (buf == nullptr) {
-        return;
+فراغ ggml_vk_destroy_بفر(vk_بفر& buf) {
+    إذا (buf == تش_اشاره) {
+        أرجع;
     }
 
-    if (buf->device != nullptr) {
-        buf->device->memory_logger->log_deallocation(buf);
+    إذا (buf->device != تش_اشاره) {
+        buf->device->حافظه_logger->log_deallocation(buf);
     }
 
     buf.reset();
 }
 
 // caller must hold host_allocations_mutex
-static size_t ggml_vk_host_allocation_find(const void * ptr) {
-    for (size_t i = 0; i < vk_instance.host_allocations.size(); i++) {
-        const uint8_t * base = (const uint8_t *) vk_instance.host_allocations[i].base;
-        if (ptr >= base && ptr < base + vk_instance.host_allocations[i].size) {
-            return i;
+ساكن size_t ggml_vk_host_ویش_پیدا_کړه(ثابت فراغ * ptr) {
+    لكل (size_t i = 0; i < vk_instance.host_allocations.size(); i++) {
+        ثابت uint8_t * بنسټ = (ثابت uint8_t *) vk_instance.host_allocations[i].بنسټ;
+        إذا (ptr >= بنسټ && ptr < بنسټ + vk_instance.host_allocations[i].size) {
+            أرجع i;
         }
     }
-    return SIZE_MAX;
+    أرجع SIZE_MAX;
 }
 
-void * ggml_vk_host_malloc(size_t size) {
-    VK_LOG_MEMORY("ggml_vk_host_malloc(" << size << ")");
+فراغ * ggml_vk_host_malloc(size_t size) {
+    VK_LOG_حافظه("ggml_vk_host_malloc(" << size << ")");
 
     ggml_vk_instance_init();
 
-    if (vk_instance.multi_device) {
-        const size_t align      = std::max<size_t>(vk_instance.host_import_alignment, TENSOR_ALIGNMENT);
-        const size_t alloc_size = (size + align - 1) / align * align;
+    إذا (vk_instance.multi_device) {
+        ثابت size_t align      = std::max<size_t>(vk_instance.host_import_alignment, TENSOR_ALIGNMENT);
+        ثابت size_t alloc_اندازه = (size + align - 1) / align * align;
 
-        void * ptr = portable_aligned_malloc(align, alloc_size);
-        if (ptr == nullptr) {
-            return nullptr;
+        فراغ * ptr = portable_aligned_malloc(align, alloc_اندازه);
+        إذا (ptr == تش_اشاره) {
+            أرجع تش_اشاره;
         }
-        vk_host_allocation entry;
-        entry.base = ptr;
-        entry.size = alloc_size;
+        vk_host_ویش ثبت;
+        ثبت.بنسټ = ptr;
+        ثبت.size = alloc_اندازه;
 
         std::unique_lock<std::shared_mutex> guard(vk_instance.host_allocations_mutex);
-        vk_instance.host_allocations.push_back(std::move(entry));
-        return ptr;
+        vk_instance.host_allocations.push_back(std::move(ثبت));
+        أرجع ptr;
     }
 
     vk_device dev0 = ggml_vk_get_device(0);
-    vk_buffer buf;
-    try {
-        buf = ggml_vk_create_buffer(dev0, size,
-            {vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostCached,
-             vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent});
-    } catch (vk::SystemError&) {
-        return nullptr;
+    vk_بفر buf;
+    حاول {
+        buf = ggml_vk_create_بفر(dev0, size,
+            {vk::حافظه_Property_Flag_بټونه::eHostVisible | vk::حافظه_Property_Flag_بټونه::eHostCoherent | vk::حافظه_Property_Flag_بټونه::eHostCached,
+             vk::حافظه_Property_Flag_بټونه::eHostVisible | vk::حافظه_Property_Flag_بټونه::eHostCoherent});
+    } امسك (vk::SystemError&) {
+        أرجع تش_اشاره;
     }
 
-    if (!(buf->memory_property_flags & vk::MemoryPropertyFlagBits::eHostVisible)) {
+    إذا (!(buf->حافظه_property_flags & vk::حافظه_Property_Flag_بټونه::eHostVisible)) {
         fprintf(stderr, "WARNING: failed to allocate %.2f MB of pinned memory\n", size / 1024.0 / 1024.0);
-        ggml_vk_destroy_buffer(buf);
-        return nullptr;
+        ggml_vk_destroy_بفر(buf);
+        أرجع تش_اشاره;
     }
 
-    vk_host_allocation entry;
-    entry.base             = buf->ptr;
-    entry.size             = size;
-    entry.views[dev0->idx] = buf;
+    vk_host_ویش ثبت;
+    ثبت.بنسټ             = buf->ptr;
+    ثبت.size             = size;
+    ثبت.views[dev0->idx] = buf;
 
     std::unique_lock<std::shared_mutex> guard(vk_instance.host_allocations_mutex);
-    vk_instance.host_allocations.push_back(std::move(entry));
-    return buf->ptr;
+    vk_instance.host_allocations.push_back(std::move(ثبت));
+    أرجع buf->ptr;
 }
 
-void ggml_vk_host_free(void * ptr) {
-    if (ptr == nullptr) {
-        return;
+فراغ ggml_vk_host_free(فراغ * ptr) {
+    إذا (ptr == تش_اشاره) {
+        أرجع;
     }
-    VK_LOG_MEMORY("ggml_vk_host_free(" << ptr << ")");
+    VK_LOG_حافظه("ggml_vk_host_free(" << ptr << ")");
 
-    vk_host_allocation entry;
+    vk_host_ویش ثبت;
     {
         std::unique_lock<std::shared_mutex> guard(vk_instance.host_allocations_mutex);
-        const size_t index = ggml_vk_host_allocation_find(ptr);
-        if (index == SIZE_MAX) {
+        ثابت size_t شاخص = ggml_vk_host_ویش_پیدا_کړه(ptr);
+        إذا (شاخص == SIZE_MAX) {
             fprintf(stderr, "WARNING: failed to free pinned memory: memory not in map\n");
-            return;
+            أرجع;
         }
-        entry = std::move(vk_instance.host_allocations[index]);
-        vk_instance.host_allocations.erase(vk_instance.host_allocations.begin() + index);
+        ثبت = std::move(vk_instance.host_allocations[شاخص]);
+        vk_instance.host_allocations.erase(vk_instance.host_allocations.begin() + شاخص);
     }
 
-    for (auto & view : entry.views) {
-        ggml_vk_destroy_buffer(view);
+    لكل (خپلکاری & view : ثبت.views) {
+        ggml_vk_destroy_بفر(view);
     }
-    if (vk_instance.multi_device) {
-        portable_aligned_free(entry.base);
+    إذا (vk_instance.multi_device) {
+        portable_aligned_free(ثبت.بنسټ);
     }
 }
 
-void ggml_vk_host_get(const vk_device& device, const void * ptr, vk_buffer& buf, size_t& buf_offset) {
-    buf = nullptr;
-    buf_offset = 0;
+فراغ ggml_vk_host_get(ثابت vk_device& device, ثابت فراغ * ptr, vk_بفر& buf, size_t& buf_دننه_واټن) {
+    buf = تش_اشاره;
+    buf_دننه_واټن = 0;
 
     std::unique_lock<std::shared_mutex> guard(vk_instance.host_allocations_mutex);
 
-    const size_t index = ggml_vk_host_allocation_find(ptr);
-    if (index == SIZE_MAX) {
-        return;
+    ثابت size_t شاخص = ggml_vk_host_ویش_پیدا_کړه(ptr);
+    إذا (شاخص == SIZE_MAX) {
+        أرجع;
     }
-    vk_host_allocation & entry = vk_instance.host_allocations[index];
+    vk_host_ویش & ثبت = vk_instance.host_allocations[شاخص];
 
-    if (entry.views[device->idx] == nullptr) {
-        const uint32_t bit = 1u << device->idx;
-        if (!vk_instance.multi_device || !vk_instance.device_host_buffer_import[device->idx] || (vk_instance.host_import_failed & bit)) {
-            return;
+    إذا (ثبت.views[device->idx] == تش_اشاره) {
+        ثابت uint32_t بټ = 1u << device->idx;
+        إذا (!vk_instance.multi_device || !vk_instance.device_host_بفر_import[device->idx] || (vk_instance.host_import_failed & بټ)) {
+            أرجع;
         }
-        GGML_ASSERT(device->external_memory_host);
+        GGML_ASSERT(device->external_حافظه_host);
         // const only propagates from the const context; the pointee is mutable
-        entry.views[device->idx] = ggml_vk_buffer_from_host_ptr(const_cast<vk_device&>(device), entry.base, entry.size);
-        if (entry.views[device->idx] == nullptr) {
-            vk_instance.host_import_failed |= bit;
+        ثبت.views[device->idx] = ggml_vk_بفر_from_host_ptr(const_cast<vk_device&>(device), ثبت.بنسټ, ثبت.size);
+        إذا (ثبت.views[device->idx] == تش_اشاره) {
+            vk_instance.host_import_failed |= بټ;
             GGML_LOG_WARN("ggml_vulkan: %s: host memory import failed, using staging\n", device->name.c_str());
-            return;
+            أرجع;
         }
     }
 
-    buf = entry.views[device->idx];
-    buf_offset = (const uint8_t *) ptr - (const uint8_t *) entry.base;
+    buf = ثبت.views[device->idx];
+    buf_دننه_واټن = (ثابت uint8_t *) ptr - (ثابت uint8_t *) ثبت.بنسټ;
 }
 
-void ggml_vk_ensure_sync_staging_buffer(vk_device& device, size_t size) {
-    if (device->sync_staging == nullptr || device->sync_staging->size < size) {
-        VK_LOG_MEMORY("ggml_vk_ensure_sync_staging_buffer(" << size << ")");
-        ggml_vk_destroy_buffer(device->sync_staging);
-        device->sync_staging = ggml_vk_create_buffer_check(device, size,
-            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostCached,
-            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+فراغ ggml_vk_ensure_sync_staging_بفر(vk_device& device, size_t size) {
+    إذا (device->sync_staging == تش_اشاره || device->sync_staging->size < size) {
+        VK_LOG_حافظه("ggml_vk_ensure_sync_staging_buffer(" << size << ")");
+        ggml_vk_destroy_بفر(device->sync_staging);
+        device->sync_staging = ggml_vk_create_بفر_check(device, size,
+            vk::حافظه_Property_Flag_بټونه::eHostVisible | vk::حافظه_Property_Flag_بټونه::eHostCoherent | vk::حافظه_Property_Flag_بټونه::eHostCached,
+            vk::حافظه_Property_Flag_بټونه::eHostVisible | vk::حافظه_Property_Flag_بټونه::eHostCoherent);
     }
 }
 
-void ggml_vk_ensure_sync_staging_buffer(ggml_backend_vk_context * ctx, size_t size) {
-    if (ctx->sync_staging == nullptr || ctx->sync_staging->size < size) {
-        VK_LOG_MEMORY("ggml_vk_ensure_sync_staging_buffer(" << size << ")");
-        ggml_vk_destroy_buffer(ctx->sync_staging);
-        ctx->sync_staging = ggml_vk_create_buffer_check(ctx->device, size,
-            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostCached,
-            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+فراغ ggml_vk_ensure_sync_staging_بفر(ggml_backend_vk_context * ctx, size_t size) {
+    إذا (ctx->sync_staging == تش_اشاره || ctx->sync_staging->size < size) {
+        VK_LOG_حافظه("ggml_vk_ensure_sync_staging_buffer(" << size << ")");
+        ggml_vk_destroy_بفر(ctx->sync_staging);
+        ctx->sync_staging = ggml_vk_create_بفر_check(ctx->device, size,
+            vk::حافظه_Property_Flag_بټونه::eHostVisible | vk::حافظه_Property_Flag_بټونه::eHostCoherent | vk::حافظه_Property_Flag_بټونه::eHostCached,
+            vk::حافظه_Property_Flag_بټونه::eHostVisible | vk::حافظه_Property_Flag_بټونه::eHostCoherent);
     }
 }
 
-static void ggml_vk_buffer_write_nc_async(ggml_backend_vk_context * ctx, vk_context& subctx, vk_buffer& dst, size_t offset, const ggml_tensor * tensor, bool sync_staging = false) {
+ساكن فراغ ggml_vk_بفر_write_nc_async(ggml_backend_vk_context * ctx, vk_context& subctx, vk_بفر& dst, size_t دننه_واټن, ثابت ggml_tensor * tensor, منطقي sync_staging = خطأ) {
     VK_LOG_DEBUG("ggml_vk_buffer_write_nc_async(" << tensor << ")");
     GGML_ASSERT(!ggml_is_contiguous(tensor));
     // Buffer is already mapped
-    if(dst->memory_property_flags & vk::MemoryPropertyFlagBits::eHostVisible) {
-        std::cerr << "ggml_vulkan: buffer_write_nc_async dst buffer is host_visible. Use synchronous write." << std::endl;
+    إذا(dst->حافظه_property_flags & vk::حافظه_Property_Flag_بټونه::eHostVisible) {
+        std::cerr << "ggml_vulkan: buffer_write_nc_async dst buffer is host_visible. Use synchronous write." << std::کرښه_پای;
         GGML_ABORT("fatal error");
     }
     // Check if src is pinned memory
-    vk_buffer buf = nullptr;
-    size_t buf_offset = 0;
-    ggml_vk_host_get(ctx->device, tensor->data, buf, buf_offset);
+    vk_بفر buf = تش_اشاره;
+    size_t buf_دننه_واټن = 0;
+    ggml_vk_host_get(ctx->device, tensor->معلومات, buf, buf_دننه_واټن);
 
-    const uint64_t ne0 = tensor->ne[0];
-    const uint64_t ne1 = tensor->ne[1];
-    const uint64_t ne2 = tensor->ne[2];
-    const uint64_t ne3 = tensor->ne[3];
-    const uint64_t nb0 = tensor->nb[0];
-    const uint64_t nb1 = tensor->nb[1];
-    const uint64_t nb2 = tensor->nb[2];
-    const uint64_t nb3 = tensor->nb[3];
-    const ggml_type type = tensor->type;
-    const uint64_t ts = ggml_type_size(type);
-    const uint64_t bs = ggml_blck_size(type);
+    ثابت uint64_t ne0 = tensor->ne[0];
+    ثابت uint64_t ne1 = tensor->ne[1];
+    ثابت uint64_t ne2 = tensor->ne[2];
+    ثابت uint64_t ne3 = tensor->ne[3];
+    ثابت uint64_t nb0 = tensor->nb[0];
+    ثابت uint64_t nb1 = tensor->nb[1];
+    ثابت uint64_t nb2 = tensor->nb[2];
+    ثابت uint64_t nb3 = tensor->nb[3];
+    ثابت ggml_type type = tensor->type;
+    ثابت uint64_t ts = ggml_type_اندازه(type);
+    ثابت uint64_t bs = ggml_blck_اندازه(type);
 
-    const uint64_t dstnb0 = ts;
-    const uint64_t dstnb1 = dstnb0*(ne0/bs);
-    const uint64_t dstnb2 = dstnb1*ne1;
-    const uint64_t dstnb3 = dstnb2*ne2;
+    ثابت uint64_t dstnb0 = ts;
+    ثابت uint64_t dstnb1 = dstnb0*(ne0/bs);
+    ثابت uint64_t dstnb2 = dstnb1*ne1;
+    ثابت uint64_t dstnb3 = dstnb2*ne2;
 
-    const uint64_t ne = ggml_nelements(tensor);
+    ثابت uint64_t ne = ggml_nelements(tensor);
 
-    if (buf != nullptr) {
+    إذا (buf != تش_اشاره) {
         // Memory is pinned, use as staging buffer
-        std::vector<vk::BufferCopy> slices;
+        std::vector<vk::بفر_Copy> slices;
 
-        for (uint64_t i3 = 0; i3 < ne3; i3++) {
-            for (uint64_t i2 = 0; i2 < ne2; i2++) {
+        لكل (uint64_t i3 = 0; i3 < ne3; i3++) {
+            لكل (uint64_t i2 = 0; i2 < ne2; i2++) {
                 // Find longest contiguous slice
-                if (ne1*nb1 == dstnb2) {
-                    slices.push_back({ buf_offset + i3*nb3 + i2*nb2, offset + i3*dstnb3 + i2*dstnb2, dstnb2 });
-                } else {
-                    for (uint64_t i1 = 0; i1 < ne1; i1++) {
-                        if (ne0*nb0/bs == dstnb1) {
-                            slices.push_back({ buf_offset + i3*nb3 + i2*nb2 + i1*nb1, offset + i3*dstnb3 + i2*dstnb2 + i1*dstnb1, dstnb1 });
-                        } else {
-                            const uint64_t s_off = buf_offset + i3*nb3 + i2*nb2 + i1*nb1;
-                            const uint64_t d_off = offset + i3*dstnb3 + i2*dstnb2 + i1*dstnb1;
-                            for (uint64_t i0 = 0; i0 < ne0; i0++) {
+                إذا (ne1*nb1 == dstnb2) {
+                    slices.push_back({ buf_دننه_واټن + i3*nb3 + i2*nb2, دننه_واټن + i3*dstnb3 + i2*dstnb2, dstnb2 });
+                } وإلا {
+                    لكل (uint64_t i1 = 0; i1 < ne1; i1++) {
+                        إذا (ne0*nb0/bs == dstnb1) {
+                            slices.push_back({ buf_دننه_واټن + i3*nb3 + i2*nb2 + i1*nb1, دننه_واټن + i3*dstnb3 + i2*dstnb2 + i1*dstnb1, dstnb1 });
+                        } وإلا {
+                            ثابت uint64_t s_off = buf_دننه_واټن + i3*nb3 + i2*nb2 + i1*nb1;
+                            ثابت uint64_t d_off = دننه_واټن + i3*dstnb3 + i2*dstnb2 + i1*dstnb1;
+                            لكل (uint64_t i0 = 0; i0 < ne0; i0++) {
                                 slices.push_back({ s_off + i0*nb0, d_off + i0*dstnb0, dstnb0 });
                             }
                         }
@@ -462,37 +462,37 @@ static void ggml_vk_buffer_write_nc_async(ggml_backend_vk_context * ctx, vk_cont
         }
 
         ggml_vk_sync_buffers(ctx, subctx);
-        subctx->s->buffer->buf.copyBuffer(buf->buffer, dst->buffer, slices);
-        return;
+        subctx->s->بفر->buf.copy_بفر(buf->بفر, dst->بفر, slices);
+        أرجع;
     }
 
-    if (!sync_staging) {
+    إذا (!sync_staging) {
         GGML_ABORT("Asynchronous write to non-pinned memory not supported");
     }
 
     // Staging buffer required
-    vk_buffer& staging = ctx->device->sync_staging;
-    const uint64_t copy_size = ts*ne/bs;
-    ggml_vk_ensure_sync_staging_buffer(ctx->device, copy_size);
-    VkBufferCopy buf_copy{ 0, offset, copy_size };
+    vk_بفر& staging = ctx->device->sync_staging;
+    ثابت uint64_t copy_اندازه = ts*ne/bs;
+    ggml_vk_ensure_sync_staging_بفر(ctx->device, copy_اندازه);
+    Vk_بفر_Copy buf_copy{ 0, دننه_واټن, copy_اندازه };
 
     ggml_vk_sync_buffers(ctx, subctx);
-    vkCmdCopyBuffer(subctx->s->buffer->buf, (VkBuffer)staging->buffer, (VkBuffer)dst->buffer, 1, &buf_copy);
+    vk_Cmd_Copy_بفر(subctx->s->بفر->buf, (Vk_بفر)staging->بفر, (Vk_بفر)dst->بفر, 1, &buf_copy);
 
-    for (uint64_t i3 = 0; i3 < ne3; i3++) {
-        for (uint64_t i2 = 0; i2 < ne2; i2++) {
+    لكل (uint64_t i3 = 0; i3 < ne3; i3++) {
+        لكل (uint64_t i2 = 0; i2 < ne2; i2++) {
             // Find longest contiguous slice
-            if (ne1*nb1 == dstnb2) {
-                deferred_memcpy((uint8_t *)staging->ptr + i3*dstnb3 + i2*dstnb2, (const uint8_t *) tensor->data + buf_offset + i3*nb3 + i2*nb2, dstnb2, &subctx->in_memcpys);
-            } else {
-                for (uint64_t i1 = 0; i1 < ne1; i1++) {
-                    if (ne0*nb0/bs == dstnb1) {
-                        deferred_memcpy((uint8_t *)staging->ptr + i3*dstnb3 + i2*dstnb2 + i1*dstnb1, (const uint8_t *) tensor->data + buf_offset + i3*nb3 + i2*nb2 + i1*nb1, dstnb1, &subctx->in_memcpys);
-                    } else {
-                        const uint64_t s_off = buf_offset + i3*nb3 + i2*nb2 + i1*nb1;
-                        const uint64_t d_off = i3*dstnb3 + i2*dstnb2 + i1*dstnb1;
-                        for (uint64_t i0 = 0; i0 < ne0; i0++) {
-                            deferred_memcpy((uint8_t *)staging->ptr + d_off + i0*dstnb0, (const uint8_t *) tensor->data + s_off + i0*nb0, dstnb0, &subctx->in_memcpys);
+            إذا (ne1*nb1 == dstnb2) {
+                deferred_memcpy((uint8_t *)staging->ptr + i3*dstnb3 + i2*dstnb2, (ثابت uint8_t *) tensor->معلومات + buf_دننه_واټن + i3*nb3 + i2*nb2, dstnb2, &subctx->دننه_memcpys);
+            } وإلا {
+                لكل (uint64_t i1 = 0; i1 < ne1; i1++) {
+                    إذا (ne0*nb0/bs == dstnb1) {
+                        deferred_memcpy((uint8_t *)staging->ptr + i3*dstnb3 + i2*dstnb2 + i1*dstnb1, (ثابت uint8_t *) tensor->معلومات + buf_دننه_واټن + i3*nb3 + i2*nb2 + i1*nb1, dstnb1, &subctx->دننه_memcpys);
+                    } وإلا {
+                        ثابت uint64_t s_off = buf_دننه_واټن + i3*nb3 + i2*nb2 + i1*nb1;
+                        ثابت uint64_t d_off = i3*dstnb3 + i2*dstnb2 + i1*dstnb1;
+                        لكل (uint64_t i0 = 0; i0 < ne0; i0++) {
+                            deferred_memcpy((uint8_t *)staging->ptr + d_off + i0*dstnb0, (ثابت uint8_t *) tensor->معلومات + s_off + i0*nb0, dstnb0, &subctx->دننه_memcpys);
                         }
                     }
                 }
@@ -501,366 +501,366 @@ static void ggml_vk_buffer_write_nc_async(ggml_backend_vk_context * ctx, vk_cont
     }
 }
 
-bool ggml_vk_buffer_write_2d_async(vk_context subctx, vk_buffer& dst, size_t offset, const void * src, size_t spitch, size_t dpitch, size_t width, size_t height, bool sync_staging) {
-    VK_LOG_DEBUG("ggml_vk_buffer_write_2d_async(" << width << ", " << height << ")");
+منطقي ggml_vk_بفر_write_2d_async(vk_context subctx, vk_بفر& dst, size_t دننه_واټن, ثابت فراغ * src, size_t spitch, size_t dpitch, size_t پلنوالی, size_t لوړوالی, منطقي sync_staging) {
+    VK_LOG_DEBUG("ggml_vk_buffer_write_2d_async(" << پلنوالی << ", " << لوړوالی << ")");
     // Check if src is pinned memory
-    vk_buffer buf = nullptr;
-    size_t buf_offset = 0;
-    ggml_vk_host_get(dst->device, src, buf, buf_offset);
+    vk_بفر buf = تش_اشاره;
+    size_t buf_دننه_واټن = 0;
+    ggml_vk_host_get(dst->device, src, buf, buf_دننه_واټن);
 
-    if (buf != nullptr) {
+    إذا (buf != تش_اشاره) {
         // Memory is pinned, use as staging buffer
-        std::vector<vk::BufferCopy> slices(1);
-        if (width == spitch && width == dpitch) {
+        std::vector<vk::بفر_Copy> slices(1);
+        إذا (پلنوالی == spitch && پلنوالی == dpitch) {
             // Only do single write if stride is equal
-            slices[0].srcOffset = buf_offset;
-            slices[0].dstOffset = offset;
-            slices[0].size = width * height;
-        } else {
-            slices.resize(height);
-            for (size_t i = 0; i < height; i++) {
-                slices[i].srcOffset = buf_offset + i * spitch;
-                slices[i].dstOffset = offset + i * dpitch;
-                slices[i].size = width;
+            slices[0].src_دننه_واټن_2 = buf_دننه_واټن;
+            slices[0].dst_دننه_واټن_2 = دننه_واټن;
+            slices[0].size = پلنوالی * لوړوالی;
+        } وإلا {
+            slices.resize(لوړوالی);
+            لكل (size_t i = 0; i < لوړوالی; i++) {
+                slices[i].src_دننه_واټن_2 = buf_دننه_واټن + i * spitch;
+                slices[i].dst_دننه_واټن_2 = دننه_واټن + i * dpitch;
+                slices[i].size = پلنوالی;
             }
         }
 
-        ggml_vk_sync_buffers(nullptr, subctx);
-        subctx->s->buffer->buf.copyBuffer(buf->buffer, dst->buffer, slices);
-        return true;
+        ggml_vk_sync_buffers(تش_اشاره, subctx);
+        subctx->s->بفر->buf.copy_بفر(buf->بفر, dst->بفر, slices);
+        أرجع ریښتیا;
     }
     VK_LOG_DEBUG("STAGING");
 
-    if (!sync_staging) {
+    إذا (!sync_staging) {
         // copy was not handled caller needs to fall back
-        return false;
+        أرجع خطأ;
     }
 
     // Staging buffer required
-    const size_t staging_size = width * height;
-    ggml_vk_ensure_sync_staging_buffer(dst->device, staging_size);
+    ثابت size_t staging_اندازه = پلنوالی * لوړوالی;
+    ggml_vk_ensure_sync_staging_بفر(dst->device, staging_اندازه);
 
-    vk_buffer& staging_buffer = dst->device->sync_staging;
+    vk_بفر& staging_بفر = dst->device->sync_staging;
 
-    std::vector<vk::BufferCopy> slices(1);
-    if (width == dpitch) {
-        slices[0].srcOffset = 0;
-        slices[0].dstOffset = offset;
-        slices[0].size = staging_size;
-    } else {
-        slices.resize(height);
-        for (size_t i = 0; i < height; i++) {
-            slices[i].srcOffset = i * width;
-            slices[i].dstOffset = offset + i * dpitch;
-            slices[i].size = width;
+    std::vector<vk::بفر_Copy> slices(1);
+    إذا (پلنوالی == dpitch) {
+        slices[0].src_دننه_واټن_2 = 0;
+        slices[0].dst_دننه_واټن_2 = دننه_واټن;
+        slices[0].size = staging_اندازه;
+    } وإلا {
+        slices.resize(لوړوالی);
+        لكل (size_t i = 0; i < لوړوالی; i++) {
+            slices[i].src_دننه_واټن_2 = i * پلنوالی;
+            slices[i].dst_دننه_واټن_2 = دننه_واټن + i * dpitch;
+            slices[i].size = پلنوالی;
         }
     }
 
-    ggml_vk_sync_buffers(nullptr, subctx);
-    subctx->s->buffer->buf.copyBuffer(staging_buffer->buffer, dst->buffer, slices);
+    ggml_vk_sync_buffers(تش_اشاره, subctx);
+    subctx->s->بفر->buf.copy_بفر(staging_بفر->بفر, dst->بفر, slices);
 
-    if (width == spitch) {
-        deferred_memcpy((uint8_t *)staging_buffer->ptr, src, staging_size, &subctx->in_memcpys);
-    } else {
-        for (size_t i = 0; i < height; i++) {
-            deferred_memcpy((uint8_t *)staging_buffer->ptr + i * width, (const uint8_t *) src + i * spitch, width, &subctx->in_memcpys);
+    إذا (پلنوالی == spitch) {
+        deferred_memcpy((uint8_t *)staging_بفر->ptr, src, staging_اندازه, &subctx->دننه_memcpys);
+    } وإلا {
+        لكل (size_t i = 0; i < لوړوالی; i++) {
+            deferred_memcpy((uint8_t *)staging_بفر->ptr + i * پلنوالی, (ثابت uint8_t *) src + i * spitch, پلنوالی, &subctx->دننه_memcpys);
         }
     }
-    return true;
+    أرجع ریښتیا;
 }
 
-bool ggml_vk_buffer_write_async(vk_context subctx, vk_buffer& dst, size_t offset, const void * src, size_t size, bool sync_staging) {
+منطقي ggml_vk_بفر_write_async(vk_context subctx, vk_بفر& dst, size_t دننه_واټن, ثابت فراغ * src, size_t size, منطقي sync_staging) {
     VK_LOG_DEBUG("ggml_vk_buffer_write_async(" << size << ")");
-    return ggml_vk_buffer_write_2d_async(subctx, dst, offset, src, size, size, size, 1, sync_staging);
+    أرجع ggml_vk_بفر_write_2d_async(subctx, dst, دننه_واټن, src, size, size, size, 1, sync_staging);
 }
 
-void ggml_vk_buffer_write_2d(vk_buffer& dst, size_t offset, const void * src, size_t spitch, size_t dpitch, size_t width, size_t height) {
-    VK_LOG_DEBUG("ggml_vk_buffer_write_2d(" << width << ", " << height << ")");
+فراغ ggml_vk_بفر_write_2d(vk_بفر& dst, size_t دننه_واټن, ثابت فراغ * src, size_t spitch, size_t dpitch, size_t پلنوالی, size_t لوړوالی) {
+    VK_LOG_DEBUG("ggml_vk_buffer_write_2d(" << پلنوالی << ", " << لوړوالی << ")");
     // Buffer is already mapped
-    if(dst->memory_property_flags & vk::MemoryPropertyFlagBits::eHostVisible) {
-        GGML_ASSERT(dst->memory_property_flags & vk::MemoryPropertyFlagBits::eHostCoherent);
+    إذا(dst->حافظه_property_flags & vk::حافظه_Property_Flag_بټونه::eHostVisible) {
+        GGML_ASSERT(dst->حافظه_property_flags & vk::حافظه_Property_Flag_بټونه::eHostCoherent);
 
-        if (width == spitch && width == dpitch) {
-            memcpy((uint8_t *)dst->ptr + offset, src, width * height);
-        } else {
-            for (size_t i = 0; i < height; i++) {
-                memcpy((uint8_t *)dst->ptr + offset + i * dpitch, (const uint8_t *) src + i * spitch, width);
+        إذا (پلنوالی == spitch && پلنوالی == dpitch) {
+            حافظه_نقل((uint8_t *)dst->ptr + دننه_واټن, src, پلنوالی * لوړوالی);
+        } وإلا {
+            لكل (size_t i = 0; i < لوړوالی; i++) {
+                حافظه_نقل((uint8_t *)dst->ptr + دننه_واټن + i * dpitch, (ثابت uint8_t *) src + i * spitch, پلنوالی);
             }
         }
-    } else {
+    } وإلا {
         std::lock_guard<std::recursive_mutex> guard(dst->device->mutex);
 
-        vk_context subctx = ggml_vk_create_temporary_context(dst->device->transfer_queue->cmd_pool);
+        vk_context subctx = ggml_vk_create_temporary_context(dst->device->transfer_کتار->cmd_pool);
         ggml_vk_ctx_begin(dst->device, subctx);
-        bool ret = ggml_vk_buffer_write_2d_async(subctx, dst, offset, src, spitch, dpitch, width, height, true);
+        منطقي ret = ggml_vk_بفر_write_2d_async(subctx, dst, دننه_واټن, src, spitch, dpitch, پلنوالی, لوړوالی, ریښتیا);
         GGML_ASSERT(ret);
-        ggml_vk_ctx_end(subctx);
+        ggml_vk_ctx_پای_ټکی(subctx);
 
-        for (auto& cpy : subctx->in_memcpys) {
-            memcpy(cpy.dst, cpy.src, cpy.n);
+        لكل (خپلکاری& cpy : subctx->دننه_memcpys) {
+            حافظه_نقل(cpy.dst, cpy.src, cpy.n);
         }
 
-        for (auto& mset : subctx->memsets) {
+        لكل (خپلکاری& mset : subctx->memsets) {
             memset(mset.dst, mset.val, mset.n);
         }
 
         ggml_vk_submit(subctx, dst->device->fence);
-        VK_CHECK(dst->device->device.waitForFences({ dst->device->fence }, true, UINT64_MAX), "vk_buffer_write_2d waitForFences", dst->device);
+        VK_CHECK(dst->device->device.waitForFences({ dst->device->fence }, ریښتیا, UINT64_MAX), "vk_buffer_write_2d waitForFences", dst->device);
         dst->device->device.resetFences({ dst->device->fence });
-        ggml_vk_queue_command_pools_cleanup(dst->device);
+        ggml_vk_کتار_command_pools_cleanup(dst->device);
     }
 }
 
-void ggml_vk_buffer_write(vk_buffer& dst, size_t offset, const void * src, size_t size) {
+فراغ ggml_vk_بفر_write(vk_بفر& dst, size_t دننه_واټن, ثابت فراغ * src, size_t size) {
     VK_LOG_DEBUG("ggml_vk_buffer_write(" << size << ")");
-    ggml_vk_buffer_write_2d(dst, offset, src, size, size, size, 1);
+    ggml_vk_بفر_write_2d(dst, دننه_واټن, src, size, size, size, 1);
 }
 
-bool ggml_vk_buffer_read_2d_async(vk_context subctx, vk_buffer& src, size_t offset, void * dst, size_t spitch, size_t dpitch, size_t width, size_t height, bool sync_staging) {
-    VK_LOG_DEBUG("ggml_vk_buffer_read_2d_async(offset=" << offset << ", width=" << width << ", height=" << height << ")");
-    GGML_ASSERT(width > 0);
-    GGML_ASSERT(height > 0);
-    GGML_ASSERT(src != nullptr);
+منطقي ggml_vk_بفر_read_2d_async(vk_context subctx, vk_بفر& src, size_t دننه_واټن, فراغ * dst, size_t spitch, size_t dpitch, size_t پلنوالی, size_t لوړوالی, منطقي sync_staging) {
+    VK_LOG_DEBUG("ggml_vk_buffer_read_2d_async(offset=" << دننه_واټن << ", width=" << پلنوالی << ", height=" << لوړوالی << ")");
+    GGML_ASSERT(پلنوالی > 0);
+    GGML_ASSERT(لوړوالی > 0);
+    GGML_ASSERT(src != تش_اشاره);
 
     // TODO: staging_offset is not used
 
     // Check if dst is pinned memory
-    vk_buffer buf = nullptr;
-    size_t buf_offset = 0;
-    ggml_vk_host_get(src->device, dst, buf, buf_offset);
+    vk_بفر buf = تش_اشاره;
+    size_t buf_دننه_واټن = 0;
+    ggml_vk_host_get(src->device, dst, buf, buf_دننه_واټن);
 
-    std::vector<vk::BufferCopy> slices(1);
-    if (width == spitch && width == dpitch) {
+    std::vector<vk::بفر_Copy> slices(1);
+    إذا (پلنوالی == spitch && پلنوالی == dpitch) {
         // Only do single write if stride is equal
-        slices[0].srcOffset = offset;
-        slices[0].dstOffset = buf_offset;
-        slices[0].size = width * height;
-    } else {
-        slices.resize(height);
-        for (size_t i = 0; i < height; i++) {
-            slices[i].srcOffset = offset + i * spitch;
-            slices[i].dstOffset = buf_offset + i * dpitch;
-            slices[i].size = width;
+        slices[0].src_دننه_واټن_2 = دننه_واټن;
+        slices[0].dst_دننه_واټن_2 = buf_دننه_واټن;
+        slices[0].size = پلنوالی * لوړوالی;
+    } وإلا {
+        slices.resize(لوړوالی);
+        لكل (size_t i = 0; i < لوړوالی; i++) {
+            slices[i].src_دننه_واټن_2 = دننه_واټن + i * spitch;
+            slices[i].dst_دننه_واټن_2 = buf_دننه_واټن + i * dpitch;
+            slices[i].size = پلنوالی;
         }
     }
 
-    if (buf != nullptr) {
+    إذا (buf != تش_اشاره) {
         // Memory is pinned, use as staging buffer
-        ggml_vk_sync_buffers(nullptr, subctx);
-        subctx->s->buffer->buf.copyBuffer(src->buffer, buf->buffer, slices);
+        ggml_vk_sync_buffers(تش_اشاره, subctx);
+        subctx->s->بفر->buf.copy_بفر(src->بفر, buf->بفر, slices);
 
-        return true;
+        أرجع ریښتیا;
     }
     VK_LOG_DEBUG("STAGING");
 
-    if (!sync_staging) {
+    إذا (!sync_staging) {
         // copy was not handled caller needs to fall back
-        return false;
+        أرجع خطأ;
     }
 
     // Fall back to staging buffer
-    const size_t staging_size = width * height;
-    ggml_vk_ensure_sync_staging_buffer(src->device, staging_size);
+    ثابت size_t staging_اندازه = پلنوالی * لوړوالی;
+    ggml_vk_ensure_sync_staging_بفر(src->device, staging_اندازه);
 
-    vk_buffer& staging_buffer = src->device->sync_staging;
+    vk_بفر& staging_بفر = src->device->sync_staging;
 
-    std::vector<vk::BufferCopy> staging_slices(1);
-    if (width == spitch) {
-        staging_slices[0].srcOffset = offset;
-        staging_slices[0].dstOffset = 0;
-        staging_slices[0].size = staging_size;
-    } else {
-        staging_slices.resize(height);
-        for (size_t i = 0; i < height; i++) {
-            staging_slices[i].srcOffset = offset + i * spitch;
-            staging_slices[i].dstOffset = i * width;
-            staging_slices[i].size = width;
+    std::vector<vk::بفر_Copy> staging_slices(1);
+    إذا (پلنوالی == spitch) {
+        staging_slices[0].src_دننه_واټن_2 = دننه_واټن;
+        staging_slices[0].dst_دننه_واټن_2 = 0;
+        staging_slices[0].size = staging_اندازه;
+    } وإلا {
+        staging_slices.resize(لوړوالی);
+        لكل (size_t i = 0; i < لوړوالی; i++) {
+            staging_slices[i].src_دننه_واټن_2 = دننه_واټن + i * spitch;
+            staging_slices[i].dst_دننه_واټن_2 = i * پلنوالی;
+            staging_slices[i].size = پلنوالی;
         }
     }
 
-    ggml_vk_sync_buffers(nullptr, subctx);
-    subctx->s->buffer->buf.copyBuffer(src->buffer, staging_buffer->buffer, staging_slices);
+    ggml_vk_sync_buffers(تش_اشاره, subctx);
+    subctx->s->بفر->buf.copy_بفر(src->بفر, staging_بفر->بفر, staging_slices);
 
-    if (width == dpitch) {
-        deferred_memcpy(dst, staging_buffer->ptr, staging_size, &subctx->out_memcpys);
-    } else {
-        for (size_t i = 0; i < height; i++) {
-            deferred_memcpy((uint8_t *) dst + i * dpitch, (const uint8_t *) staging_buffer->ptr + i * width, width, &subctx->out_memcpys);
+    إذا (پلنوالی == dpitch) {
+        deferred_memcpy(dst, staging_بفر->ptr, staging_اندازه, &subctx->بهر_memcpys);
+    } وإلا {
+        لكل (size_t i = 0; i < لوړوالی; i++) {
+            deferred_memcpy((uint8_t *) dst + i * dpitch, (ثابت uint8_t *) staging_بفر->ptr + i * پلنوالی, پلنوالی, &subctx->بهر_memcpys);
         }
     }
-    return true;
+    أرجع ریښتیا;
 }
 
-static bool ggml_vk_buffer_read_async(vk_context subctx, vk_buffer& src, size_t offset, void * dst, size_t size, bool sync_staging = false) {
-    return ggml_vk_buffer_read_2d_async(subctx, src, offset, dst, size, size, size, 1, sync_staging);
+ساكن منطقي ggml_vk_بفر_read_async(vk_context subctx, vk_بفر& src, size_t دننه_واټن, فراغ * dst, size_t size, منطقي sync_staging = خطأ) {
+    أرجع ggml_vk_بفر_read_2d_async(subctx, src, دننه_واټن, dst, size, size, size, 1, sync_staging);
 }
 
-void ggml_vk_buffer_read_2d(vk_buffer& src, size_t offset, void * dst, size_t spitch, size_t dpitch, size_t width, size_t height) {
-    VK_LOG_DEBUG("ggml_vk_buffer_read_2d(" << src->buffer << ", " << offset << ", " << width << ", " << height << ")");
+فراغ ggml_vk_بفر_read_2d(vk_بفر& src, size_t دننه_واټن, فراغ * dst, size_t spitch, size_t dpitch, size_t پلنوالی, size_t لوړوالی) {
+    VK_LOG_DEBUG("ggml_vk_buffer_read_2d(" << src->بفر << ", " << دننه_واټن << ", " << پلنوالی << ", " << لوړوالی << ")");
 
     // If the device is not an UMA device the memory is host-accessible through rebar. While writing
     // through PCIe is sufficient fast reading back data from PCIe is slower than going through
     // the HW device to host copy path.
     // AMD UMA: uncached host-visible memory is write-combined, CPU reads are slow
-    const bool slow_host_read = src->device->vendor_id == VK_VENDOR_ID_AMD &&
-                                !(src->memory_property_flags & vk::MemoryPropertyFlagBits::eHostCached);
-    if(src->memory_property_flags & vk::MemoryPropertyFlagBits::eHostVisible && src->device->uma && !slow_host_read) {
-        GGML_ASSERT(src->memory_property_flags & vk::MemoryPropertyFlagBits::eHostCoherent);
+    ثابت منطقي slow_host_read = src->device->vendor_id == VK_VENDOR_ID_AMD &&
+                                !(src->حافظه_property_flags & vk::حافظه_Property_Flag_بټونه::eHostCached);
+    إذا(src->حافظه_property_flags & vk::حافظه_Property_Flag_بټونه::eHostVisible && src->device->uma && !slow_host_read) {
+        GGML_ASSERT(src->حافظه_property_flags & vk::حافظه_Property_Flag_بټونه::eHostCoherent);
 
         std::lock_guard<std::recursive_mutex> guard(src->device->mutex);
-        vk_context subctx = ggml_vk_create_temporary_context(src->device->compute_queue->cmd_pool);
+        vk_context subctx = ggml_vk_create_temporary_context(src->device->compute_کتار->cmd_pool);
         ggml_vk_ctx_begin(src->device, subctx);
-        subctx->s->buffer->buf.pipelineBarrier(
-            vk::PipelineStageFlagBits::eComputeShader | vk::PipelineStageFlagBits::eTransfer,
-            vk::PipelineStageFlagBits::eHost,
+        subctx->s->بفر->buf.pipelineBarrier(
+            vk::Pipeline_Stage_Flag_بټونه::eComputeShader | vk::Pipeline_Stage_Flag_بټونه::eTransfer,
+            vk::Pipeline_Stage_Flag_بټونه::eHost,
             {},
-            { { vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eTransferWrite,
-                vk::AccessFlagBits::eHostRead } },
+            { { vk::Access_Flag_بټونه::eShaderWrite | vk::Access_Flag_بټونه::eTransferWrite,
+                vk::Access_Flag_بټونه::eHostRead } },
             {}, {});
-        ggml_vk_ctx_end(subctx);
+        ggml_vk_ctx_پای_ټکی(subctx);
         ggml_vk_submit(subctx, src->device->fence);
-        VK_CHECK(src->device->device.waitForFences({ src->device->fence }, true, UINT64_MAX),
+        VK_CHECK(src->device->device.waitForFences({ src->device->fence }, ریښتیا, UINT64_MAX),
                  "vk_buffer_read_2d uma waitForFences", src->device);
         src->device->device.resetFences({ src->device->fence });
-        ggml_vk_queue_command_pools_cleanup(src->device);
+        ggml_vk_کتار_command_pools_cleanup(src->device);
 
-        if (width == spitch && width == dpitch) {
-            memcpy(dst, (const uint8_t *) src->ptr + offset, width * height);
-        } else {
-            for (size_t i = 0; i < height; i++) {
-                memcpy((uint8_t *) dst + i * dpitch, (const uint8_t *) src->ptr + offset + i * spitch, width);
+        إذا (پلنوالی == spitch && پلنوالی == dpitch) {
+            حافظه_نقل(dst, (ثابت uint8_t *) src->ptr + دننه_واټن, پلنوالی * لوړوالی);
+        } وإلا {
+            لكل (size_t i = 0; i < لوړوالی; i++) {
+                حافظه_نقل((uint8_t *) dst + i * dpitch, (ثابت uint8_t *) src->ptr + دننه_واټن + i * spitch, پلنوالی);
             }
         }
-    } else {
+    } وإلا {
         std::lock_guard<std::recursive_mutex> guard(src->device->mutex);
 
-        vk_context subctx = ggml_vk_create_temporary_context(src->device->transfer_queue->cmd_pool);
+        vk_context subctx = ggml_vk_create_temporary_context(src->device->transfer_کتار->cmd_pool);
         ggml_vk_ctx_begin(src->device, subctx);
-        bool ret = ggml_vk_buffer_read_2d_async(subctx, src, offset, dst, spitch, dpitch, width, height, true);
+        منطقي ret = ggml_vk_بفر_read_2d_async(subctx, src, دننه_واټن, dst, spitch, dpitch, پلنوالی, لوړوالی, ریښتیا);
         GGML_ASSERT(ret);
-        ggml_vk_ctx_end(subctx);
+        ggml_vk_ctx_پای_ټکی(subctx);
 
         ggml_vk_submit(subctx, src->device->fence);
-        VK_CHECK(src->device->device.waitForFences({ src->device->fence }, true, UINT64_MAX), "vk_buffer_read_2d waitForFences", src->device);
+        VK_CHECK(src->device->device.waitForFences({ src->device->fence }, ریښتیا, UINT64_MAX), "vk_buffer_read_2d waitForFences", src->device);
         src->device->device.resetFences({ src->device->fence });
-        ggml_vk_queue_command_pools_cleanup(src->device);
+        ggml_vk_کتار_command_pools_cleanup(src->device);
 
-        for (auto& cpy : subctx->out_memcpys) {
-            memcpy(cpy.dst, cpy.src, cpy.n);
+        لكل (خپلکاری& cpy : subctx->بهر_memcpys) {
+            حافظه_نقل(cpy.dst, cpy.src, cpy.n);
         }
     }
 }
 
-void ggml_vk_buffer_read(vk_buffer& src, size_t offset, void * dst, size_t size) {
-    VK_LOG_DEBUG("ggml_vk_buffer_read(" << src->buffer << ", " << offset << ", " << size << ")");
-    ggml_vk_buffer_read_2d(src, offset, dst, size, size, size, 1);
+فراغ ggml_vk_بفر_read(vk_بفر& src, size_t دننه_واټن, فراغ * dst, size_t size) {
+    VK_LOG_DEBUG("ggml_vk_buffer_read(" << src->بفر << ", " << دننه_واټن << ", " << size << ")");
+    ggml_vk_بفر_read_2d(src, دننه_واټن, dst, size, size, size, 1);
 }
 
-void ggml_vk_buffer_copy_async(vk_context& ctx, vk_buffer& dst, size_t dst_offset, vk_buffer& src, size_t src_offset, size_t size) {
+فراغ ggml_vk_بفر_copy_async(vk_context& ctx, vk_بفر& dst, size_t dst_دننه_واټن, vk_بفر& src, size_t src_دننه_واټن, size_t size) {
     VK_LOG_DEBUG("ggml_vk_buffer_copy_async(" << size << ")");
     // Make sure both buffers are on same device
     GGML_ASSERT(src->device == dst->device);
 
-    VkBufferCopy bc{ src_offset, dst_offset, size };
+    Vk_بفر_Copy bc{ src_دننه_واټن, dst_دننه_واټن, size };
 
-    vkCmdCopyBuffer(ctx->s->buffer->buf, (VkBuffer)src->buffer, (VkBuffer)dst->buffer, 1, &bc);
+    vk_Cmd_Copy_بفر(ctx->s->بفر->buf, (Vk_بفر)src->بفر, (Vk_بفر)dst->بفر, 1, &bc);
 }
 
-void ggml_vk_buffer_copy(vk_buffer& dst, size_t dst_offset, vk_buffer& src, size_t src_offset, size_t size) {
-    if (src->device == dst->device) {
+فراغ ggml_vk_بفر_copy(vk_بفر& dst, size_t dst_دننه_واټن, vk_بفر& src, size_t src_دننه_واټن, size_t size) {
+    إذا (src->device == dst->device) {
         std::lock_guard<std::recursive_mutex> guard(src->device->mutex);
         VK_LOG_DEBUG("ggml_vk_buffer_copy(SINGLE_DEVICE, " << size << ")");
         // Copy within the device
-        vk_context subctx = ggml_vk_create_temporary_context(src->device->transfer_queue->cmd_pool);
+        vk_context subctx = ggml_vk_create_temporary_context(src->device->transfer_کتار->cmd_pool);
         ggml_vk_ctx_begin(src->device, subctx);
-        ggml_vk_buffer_copy_async(subctx, dst, dst_offset, src, src_offset, size);
-        ggml_vk_ctx_end(subctx);
+        ggml_vk_بفر_copy_async(subctx, dst, dst_دننه_واټن, src, src_دننه_واټن, size);
+        ggml_vk_ctx_پای_ټکی(subctx);
         ggml_vk_submit(subctx, src->device->fence);
-        VK_CHECK(src->device->device.waitForFences({ src->device->fence }, true, UINT64_MAX), "vk_buffer_copy waitForFences", src->device);
+        VK_CHECK(src->device->device.waitForFences({ src->device->fence }, ریښتیا, UINT64_MAX), "vk_buffer_copy waitForFences", src->device);
         src->device->device.resetFences({ src->device->fence });
-        ggml_vk_queue_command_pools_cleanup(src->device);
-    } else {
+        ggml_vk_کتار_command_pools_cleanup(src->device);
+    } وإلا {
         VK_LOG_DEBUG("ggml_vk_buffer_copy(MULTI_DEVICE, " << size << ")");
         // Copy device to device
-        ggml_vk_ensure_sync_staging_buffer(src->device, size);
+        ggml_vk_ensure_sync_staging_بفر(src->device, size);
 
         // Copy to src staging buffer
-        ggml_vk_buffer_copy(src->device->sync_staging, 0, src, src_offset, size);
+        ggml_vk_بفر_copy(src->device->sync_staging, 0, src, src_دننه_واټن, size);
         // Copy to dst buffer
-        ggml_vk_buffer_write(dst, dst_offset, src->device->sync_staging->ptr, size);
+        ggml_vk_بفر_write(dst, dst_دننه_واټن, src->device->sync_staging->ptr, size);
     }
 }
 
-void ggml_vk_buffer_memset_async(vk_context& ctx, vk_buffer& dst, size_t offset, uint32_t c, size_t size) {
-    VK_LOG_DEBUG("ggml_vk_buffer_memset_async(" << offset << ", " << c << ", " << size << ")");
+فراغ ggml_vk_بفر_memset_async(vk_context& ctx, vk_بفر& dst, size_t دننه_واټن, uint32_t c, size_t size) {
+    VK_LOG_DEBUG("ggml_vk_buffer_memset_async(" << دننه_واټن << ", " << c << ", " << size << ")");
 
-    if (dst->memory_property_flags & vk::MemoryPropertyFlagBits::eHostVisible &&
+    إذا (dst->حافظه_property_flags & vk::حافظه_Property_Flag_بټونه::eHostVisible &&
         dst->device->uma) {
-        deferred_memset((uint8_t*)dst->ptr + offset, c, size, &ctx->memsets);
-        return;
+        deferred_memset((uint8_t*)dst->ptr + دننه_واټن, c, size, &ctx->memsets);
+        أرجع;
     }
 
     // Fall back to GPU fillBuffer for non-UMA or non-host-visible buffers
-    ctx->s->buffer->buf.fillBuffer(dst->buffer, offset, size, c);
+    ctx->s->بفر->buf.fill_بفر(dst->بفر, دننه_واټن, size, c);
 }
 
-void ggml_vk_buffer_memset(vk_buffer& dst, size_t offset, uint32_t c, size_t size) {
-    VK_LOG_DEBUG("ggml_vk_buffer_memset(" << offset << ", " << c << ", " << size << ")");
+فراغ ggml_vk_بفر_memset(vk_بفر& dst, size_t دننه_واټن, uint32_t c, size_t size) {
+    VK_LOG_DEBUG("ggml_vk_buffer_memset(" << دننه_واټن << ", " << c << ", " << size << ")");
 
-    if (dst->memory_property_flags & vk::MemoryPropertyFlagBits::eHostVisible &&
+    إذا (dst->حافظه_property_flags & vk::حافظه_Property_Flag_بټونه::eHostVisible &&
         dst->device->uma) {
-        memset((uint8_t*)dst->ptr + offset, c, size);
-        return;
+        memset((uint8_t*)dst->ptr + دننه_واټن, c, size);
+        أرجع;
     }
 
     std::lock_guard<std::recursive_mutex> guard(dst->device->mutex);
-    vk_context subctx = ggml_vk_create_temporary_context(dst->device->transfer_queue->cmd_pool);
+    vk_context subctx = ggml_vk_create_temporary_context(dst->device->transfer_کتار->cmd_pool);
     ggml_vk_ctx_begin(dst->device, subctx);
-    subctx->s->buffer->buf.fillBuffer(dst->buffer, offset, size, c);
-    ggml_vk_ctx_end(subctx);
+    subctx->s->بفر->buf.fill_بفر(dst->بفر, دننه_واټن, size, c);
+    ggml_vk_ctx_پای_ټکی(subctx);
 
     ggml_vk_submit(subctx, dst->device->fence);
-    VK_CHECK(dst->device->device.waitForFences({ dst->device->fence }, true, UINT64_MAX), "vk_memset waitForFences", dst->device);
+    VK_CHECK(dst->device->device.waitForFences({ dst->device->fence }, ریښتیا, UINT64_MAX), "vk_memset waitForFences", dst->device);
     dst->device->device.resetFences({ dst->device->fence });
-    ggml_vk_queue_command_pools_cleanup(dst->device);
+    ggml_vk_کتار_command_pools_cleanup(dst->device);
 }
 
-ggml_backend_buffer_i ggml_backend_vk_buffer_interface = {
-    /* .free_buffer     = */ ggml_backend_vk_buffer_free_buffer,
-    /* .get_base        = */ ggml_backend_vk_buffer_get_base,
-    /* .init_tensor     = */ ggml_backend_vk_buffer_init_tensor,
-    /* .memset_tensor   = */ ggml_backend_vk_buffer_memset_tensor,
-    /* .set_tensor      = */ ggml_backend_vk_buffer_set_tensor,
-    /* .get_tensor      = */ ggml_backend_vk_buffer_get_tensor,
-    /* .set_tensor_2d   = */ ggml_backend_vk_buffer_set_tensor_2d,
-    /* .get_tensor_2d   = */ ggml_backend_vk_buffer_get_tensor_2d,
-    /* .cpy_tensor      = */ ggml_backend_vk_buffer_cpy_tensor,
-    /* .clear           = */ ggml_backend_vk_buffer_clear,
-    /* .reset           = */ NULL,
+ggml_backend_بفر_i ggml_backend_vk_بفر_interface = {
+    /* .free_buffer     = */ ggml_backend_vk_بفر_free_بفر,
+    /* .get_base        = */ ggml_backend_vk_بفر_get_بنسټ,
+    /* .init_tensor     = */ ggml_backend_vk_بفر_init_tensor,
+    /* .memset_tensor   = */ ggml_backend_vk_بفر_memset_tensor,
+    /* .set_tensor      = */ ggml_backend_vk_بفر_سېټ_tensor,
+    /* .get_tensor      = */ ggml_backend_vk_بفر_get_tensor,
+    /* .set_tensor_2d   = */ ggml_backend_vk_بفر_سېټ_tensor_2d,
+    /* .get_tensor_2d   = */ ggml_backend_vk_بفر_get_tensor_2d,
+    /* .cpy_tensor      = */ ggml_backend_vk_بفر_cpy_tensor,
+    /* .clear           = */ ggml_backend_vk_بفر_clear,
+    /* .reset           = */ عدم,
 };
 
-vk_buffer ggml_vk_buffer_from_host_ptr(vk_device & device, void * ptr, size_t size) {
-    if (!device->external_memory_host) {
-        return {};
+vk_بفر ggml_vk_بفر_from_host_ptr(vk_device & device, فراغ * ptr, size_t size) {
+    إذا (!device->external_حافظه_host) {
+        أرجع {};
     }
 
     uintptr_t uptr = reinterpret_cast<uintptr_t>(ptr);
-    if (uptr & (device->min_imported_host_pointer_alignment - 1)) {
-        return {};
+    إذا (uptr & (device->min_imported_host_اشاره_ګر_alignment - 1)) {
+        أرجع {};
     }
-    if (size & (device->min_imported_host_pointer_alignment - 1)) {
-        return {};
+    إذا (size & (device->min_imported_host_اشاره_ګر_alignment - 1)) {
+        أرجع {};
     }
 
-    const vk::MemoryPropertyFlags property_flags = vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostCached;
+    ثابت vk::حافظه_Property_Flags property_flags = vk::حافظه_Property_Flag_بټونه::eHostVisible | vk::حافظه_Property_Flag_بټونه::eHostCoherent | vk::حافظه_Property_Flag_بټونه::eHostCached;
 
-    vk_buffer buf {};
-    try {
-        buf = ggml_vk_create_buffer(device, size, { property_flags }, ptr);
-    } catch (vk::SystemError& e) {
+    vk_بفر buf {};
+    حاول {
+        buf = ggml_vk_create_بفر(device, size, { property_flags }, ptr);
+    } امسك (vk::SystemError& e) {
         GGML_LOG_WARN("ggml_vulkan: Failed ggml_vk_create_buffer (%s)\n", e.what());
     }
 
-    return buf;
+    أرجع buf;
 }
 

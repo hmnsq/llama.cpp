@@ -13,153 +13,153 @@
 //   Small   (16 % ne0 == 0): cache-line distributed, scalar per-element.
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "platform.h"
+#ضمن "ggml_tensor.h"
+#ضمن "platform.h"
 
-#include <stdint.h>
+#ضمن <stdint.h>
 
-struct ggml_et_pad_params {
-    struct ggml_tensor src0;
-    struct ggml_tensor dst;
+بنية ggml_et_pad_params {
+    بنية ggml_tensor src0;
+    بنية ggml_tensor dst;
     int32_t            lp[4];
     int32_t            rp[4];
 };
 
 // Vectorized copy with scalar tail
-static inline void vec_copy_f32(float * dst, const float * src, int32_t n) {
+ساكن مضمن فراغ vec_copy_f32(عائم * dst, ثابت عائم * src, int32_t n) {
     int32_t       i       = 0;
-    const int32_t vec_end = (n / 8) * 8;
-    for (; i < vec_end; i += 8) {
-        __asm__ volatile(
+    ثابت int32_t vec_پای_ټکی = (n / 8) * 8;
+    لكل (; i < vec_پای_ټکی; i += 8) {
+        __asm__ متطاير(
             "flw.ps f10, %[s]\n"
             "fsw.ps f10, %[d]\n"
-            : [d] "=m"(*(float (*)[8]) & dst[i])
-            : [s] "m"(*(const float (*)[8]) & src[i])
+            : [d] "=m"(*(عائم (*)[8]) & dst[i])
+            : [s] "m"(*(ثابت عائم (*)[8]) & src[i])
             : "f10");
     }
-    for (; i < n; i++) {
+    لكل (; i < n; i++) {
         dst[i] = src[i];
     }
 }
 
-int entry_point(struct ggml_et_pad_params * params, void * env) {
+صحيح ثبت_ټکی(بنية ggml_et_pad_params * params, فراغ * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    إذا (!kernel_env) {
+        أرجع -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    صحيح thread_id   = get_relative_thread_id(kernel_env->shire_ماسک);
+    صحيح عدد_تارونه = get_عدد_تارونه(kernel_env->shire_ماسک);
 
-    if (thread_id < 0) {
-        return 0;
+    إذا (thread_id < 0) {
+        أرجع 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    إذا (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        أرجع -1;
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * dst  = &params->dst;
+    بنية ggml_tensor * src0 = &params->src0;
+    بنية ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    إذا (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        أرجع -1;
     }
 
-    const float * src0_data = (const float *) src0->data;
-    float *       dst_data  = (float *) dst->data;
+    ثابت عائم * src0_معلومات = (ثابت عائم *) src0->معلومات;
+    عائم *       dst_معلومات  = (عائم *) dst->معلومات;
 
-    if (!src0_data || !dst_data) {
-        return -1;
+    إذا (!src0_معلومات || !dst_معلومات) {
+        أرجع -1;
     }
 
     // Dst dimensions
-    const int64_t ne0 = dst->ne[0];
-    const int64_t ne1 = dst->ne[1];
-    const int64_t ne2 = dst->ne[2];
-    const int64_t ne3 = dst->ne[3];
+    ثابت int64_t ne0 = dst->ne[0];
+    ثابت int64_t ne1 = dst->ne[1];
+    ثابت int64_t ne2 = dst->ne[2];
+    ثابت int64_t ne3 = dst->ne[3];
 
     // Src strides (byte offsets)
-    const int64_t nb1_src = src0->nb[1];
-    const int64_t nb2_src = src0->nb[2];
-    const int64_t nb3_src = src0->nb[3];
+    ثابت int64_t nb1_src = src0->nb[1];
+    ثابت int64_t nb2_src = src0->nb[2];
+    ثابت int64_t nb3_src = src0->nb[3];
 
     // Padding values
-    const int32_t lp1 = params->lp[1];
-    const int32_t rp1 = params->rp[1];
-    const int32_t lp2 = params->lp[2];
-    const int32_t rp2 = params->rp[2];
-    const int32_t lp3 = params->lp[3];
-    const int32_t rp3 = params->rp[3];
+    ثابت int32_t lp1 = params->lp[1];
+    ثابت int32_t rp1 = params->rp[1];
+    ثابت int32_t lp2 = params->lp[2];
+    ثابت int32_t rp2 = params->rp[2];
+    ثابت int32_t lp3 = params->lp[3];
+    ثابت int32_t rp3 = params->rp[3];
 
-    const int64_t total_rows     = ne1 * ne2 * ne3;
-    const int64_t total_elements = ne0 * total_rows;
+    ثابت int64_t ټول_لیکې     = ne1 * ne2 * ne3;
+    ثابت int64_t ټول_elements = ne0 * ټول_لیکې;
 
-    if (total_elements == 0) {
-        return 0;
+    إذا (ټول_elements == 0) {
+        أرجع 0;
     }
 
     // Broadcast 0.0f to SIMD register for vectorized zero-fill
-    float zero = 0.0f;
-    __asm__ volatile("fbc.ps f12, %[v]\n" : : [v] "m"(zero) : "f12");
+    عائم zero = 0.0f;
+    __asm__ متطاير("fbc.ps f12, %[v]\n" : : [v] "m"(zero) : "f12");
 
     // Aligned: ne0 % 16 == 0 -> row-based distribution, vectorized
-    if (ne0 % 16 == 0) {
-        for (int64_t row = thread_id; row < total_rows; row += num_threads) {
-            const int64_t i3 = row / (ne1 * ne2);
-            const int64_t i2 = (row / ne1) % ne2;
-            const int64_t i1 = row % ne1;
+    إذا (ne0 % 16 == 0) {
+        لكل (int64_t لیکه = thread_id; لیکه < ټول_لیکې; لیکه += عدد_تارونه) {
+            ثابت int64_t i3 = لیکه / (ne1 * ne2);
+            ثابت int64_t i2 = (لیکه / ne1) % ne2;
+            ثابت int64_t i1 = لیکه % ne1;
 
-            float * dst_row = dst_data + row * ne0;
+            عائم * dst_لیکه = dst_معلومات + لیکه * ne0;
 
-            if (i1 >= lp1 && i1 < ne1 - rp1 && i2 >= lp2 && i2 < ne2 - rp2 && i3 >= lp3 && i3 < ne3 - rp3) {
-                const float * src_row = (const float *) ((const char *) src0_data + (i1 - lp1) * nb1_src +
+            إذا (i1 >= lp1 && i1 < ne1 - rp1 && i2 >= lp2 && i2 < ne2 - rp2 && i3 >= lp3 && i3 < ne3 - rp3) {
+                ثابت عائم * src_لیکه = (ثابت عائم *) ((ثابت حرف *) src0_معلومات + (i1 - lp1) * nb1_src +
                                                          (i2 - lp2) * nb2_src + (i3 - lp3) * nb3_src);
-                vec_copy_f32(dst_row, src_row, (int32_t) ne0);
-            } else {
+                vec_copy_f32(dst_لیکه, src_لیکه, (int32_t) ne0);
+            } وإلا {
                 int64_t       i       = 0;
-                const int64_t vec_end = (ne0 / 8) * 8;
-                for (; i < vec_end; i += 8) {
-                    __asm__ volatile("fsw.ps f12, %[d]\n" : [d] "=m"(*(float (*)[8]) & dst_row[i])::"f12");
+                ثابت int64_t vec_پای_ټکی = (ne0 / 8) * 8;
+                لكل (; i < vec_پای_ټکی; i += 8) {
+                    __asm__ متطاير("fsw.ps f12, %[d]\n" : [d] "=m"(*(عائم (*)[8]) & dst_لیکه[i])::"f12");
                 }
             }
         }
-        return 0;
+        أرجع 0;
     }
 
     // Small-ne0 path: 16 % ne0 == 0 -> cache-line distributed, scalar
-    const int64_t elems_per_cl = 16;
-    const int64_t total_cl     = (total_elements + elems_per_cl - 1) / elems_per_cl;
+    ثابت int64_t elems_فی_cl = 16;
+    ثابت int64_t ټول_cl     = (ټول_elements + elems_فی_cl - 1) / elems_فی_cl;
 
-    const int64_t ne1_data_end = ne1 - rp1;
-    const int64_t ne2_data_end = ne2 - rp2;
-    const int64_t ne3_data_end = ne3 - rp3;
+    ثابت int64_t ne1_معلومات_پای_ټکی = ne1 - rp1;
+    ثابت int64_t ne2_معلومات_پای_ټکی = ne2 - rp2;
+    ثابت int64_t ne3_معلومات_پای_ټکی = ne3 - rp3;
 
-    for (int64_t cl = thread_id; cl < total_cl; cl += num_threads) {
-        const int64_t elem_start = cl * elems_per_cl;
-        int64_t       elem_end   = elem_start + elems_per_cl;
-        if (elem_end > total_elements) {
-            elem_end = total_elements;
+    لكل (int64_t cl = thread_id; cl < ټول_cl; cl += عدد_تارونه) {
+        ثابت int64_t elem_پیل = cl * elems_فی_cl;
+        int64_t       elem_پای_ټکی   = elem_پیل + elems_فی_cl;
+        إذا (elem_پای_ټکی > ټول_elements) {
+            elem_پای_ټکی = ټول_elements;
         }
 
-        for (int64_t idx = elem_start; idx < elem_end; idx++) {
-            const int64_t i0   = idx % ne0;
-            const int64_t rem  = idx / ne0;
-            const int64_t i1   = rem % ne1;
-            const int64_t rem2 = rem / ne1;
-            const int64_t i2   = rem2 % ne2;
-            const int64_t i3   = rem2 / ne2;
+        لكل (int64_t idx = elem_پیل; idx < elem_پای_ټکی; idx++) {
+            ثابت int64_t i0   = idx % ne0;
+            ثابت int64_t rem  = idx / ne0;
+            ثابت int64_t i1   = rem % ne1;
+            ثابت int64_t rem2 = rem / ne1;
+            ثابت int64_t i2   = rem2 % ne2;
+            ثابت int64_t i3   = rem2 / ne2;
 
-            if (i1 >= lp1 && i1 < ne1_data_end && i2 >= lp2 && i2 < ne2_data_end && i3 >= lp3 && i3 < ne3_data_end) {
-                const float * sp = (const float *) ((const char *) src0_data + i0 * 4 + (i1 - lp1) * nb1_src +
+            إذا (i1 >= lp1 && i1 < ne1_معلومات_پای_ټکی && i2 >= lp2 && i2 < ne2_معلومات_پای_ټکی && i3 >= lp3 && i3 < ne3_معلومات_پای_ټکی) {
+                ثابت عائم * sp = (ثابت عائم *) ((ثابت حرف *) src0_معلومات + i0 * 4 + (i1 - lp1) * nb1_src +
                                                     (i2 - lp2) * nb2_src + (i3 - lp3) * nb3_src);
-                dst_data[idx]    = *sp;
-            } else {
-                dst_data[idx] = 0.0f;
+                dst_معلومات[idx]    = *sp;
+            } وإلا {
+                dst_معلومات[idx] = 0.0f;
             }
         }
     }
 
-    return 0;
+    أرجع 0;
 }

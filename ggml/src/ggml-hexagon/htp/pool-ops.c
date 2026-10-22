@@ -1,49 +1,49 @@
-#pragma clang diagnostic ignored "-Wunused-variable"
+#لارښوونه clang diagnostic ignored "-Wunused-variable"
 
-#include <float.h>
-#include <HAP_farf.h>
+#ضمن <float.h>
+#ضمن <HAP_farf.h>
 
-#include "hex-common.h"
-#include "dma-queue.h"
-#include "hex-profile.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-tensor.h"
-#include "hvx-inverse.h"
-#include "hvx-types.h"
-#include "hvx-utils.h"
-#include "pool-ops.h"
+#ضمن "hex-common.h"
+#ضمن "dma-queue.h"
+#ضمن "hex-profile.h"
+#ضمن "htp-ctx.h"
+#ضمن "htp-ops.h"
+#ضمن "htp-tensor.h"
+#ضمن "hvx-inverse.h"
+#ضمن "hvx-types.h"
+#ضمن "hvx-utils.h"
+#ضمن "pool-ops.h"
 
-#define HTP_POOL_MAX 0
-#define HTP_POOL_AVG 1
+#تعریف_کړه HTP_POOL_MAX 0
+#تعریف_کړه HTP_POOL_AVG 1
 
 // Fast path: exact non-overlapping tiling (stride == kernel, no padding), kernel_x in {1,2}.
 // Every window is guaranteed fully in-bounds, so this never needs boundary clamping.
-static void pool_plane_hvx(
-    const float * src, float * dst, const struct htp_pool_2d_kernel_params * p) {
-    const bool is_max = (p->pool_op == HTP_POOL_MAX);
-    const HVX_Vector scale = hvx_vec_splat_f32(p->inv_kernel_area);
-    const HVX_Vector seed  = is_max ? hvx_vec_splat_f32(-FLT_MAX) : Q6_V_vsplat_R(0);
+ساكن فراغ pool_plane_hvx(
+    ثابت عائم * src, عائم * dst, ثابت بنية htp_pool_2d_kernel_params * p) {
+    ثابت bool is_max = (p->pool_op == HTP_POOL_MAX);
+    ثابت HVX_ویکټور scale = hvx_vec_splat_f32(p->inv_kernel_area);
+    ثابت HVX_ویکټور تخم  = is_max ? hvx_vec_splat_f32(-FLT_MAX) : Q6_V_vsplat_R(0);
 
-    for (uint32_t oy = 0; oy < p->dst_y; ++oy) {
-        const uint32_t sy = oy * p->kernel_y;
-        for (uint32_t ox = 0; ox < p->dst_x; ox += VLEN_FP32) {
-            const uint32_t rem = p->dst_x - ox;
-            const uint32_t nbytes = (rem < VLEN_FP32) ? (rem * sizeof(float)) : VLEN;
-            HVX_Vector acc = seed;
-            for (uint32_t ky = 0; ky < p->kernel_y; ++ky) {
-                const float * row = src + (sy + ky) * p->src_x;
-                if (p->kernel_x == 2) {
-                    const HVX_Vector v0 = *(const HVX_UVector *) (row + ox * 2);
-                    const HVX_Vector v1 = *(const HVX_UVector *) (row + ox * 2 + VLEN_FP32);
-                    const HVX_VectorPair deinterleaved = Q6_W_vdeal_VVR(v1, v0, -4);
-                    const HVX_Vector lo = Q6_V_lo_W(deinterleaved);
-                    const HVX_Vector hi = Q6_V_hi_W(deinterleaved);
+    لكل (uint32_t oy = 0; oy < p->dst_y; ++oy) {
+        ثابت uint32_t sy = oy * p->kernel_y;
+        لكل (uint32_t ox = 0; ox < p->dst_x; ox += VLEN_FP32) {
+            ثابت uint32_t rem = p->dst_x - ox;
+            ثابت uint32_t nbytes = (rem < VLEN_FP32) ? (rem * حجم(عائم)) : VLEN;
+            HVX_ویکټور acc = تخم;
+            لكل (uint32_t ky = 0; ky < p->kernel_y; ++ky) {
+                ثابت عائم * لیکه = src + (sy + ky) * p->src_x;
+                إذا (p->kernel_x == 2) {
+                    ثابت HVX_ویکټور v0 = *(ثابت HVX_UVector *) (لیکه + ox * 2);
+                    ثابت HVX_ویکټور v1 = *(ثابت HVX_UVector *) (لیکه + ox * 2 + VLEN_FP32);
+                    ثابت HVX_ویکټور_Pair deinterleaved = Q6_W_vdeal_VVR(v1, v0, -4);
+                    ثابت HVX_ویکټور lo = Q6_V_lo_W(deinterleaved);
+                    ثابت HVX_ویکټور hi = Q6_V_hi_W(deinterleaved);
                     acc = is_max ? Q6_Vsf_vmax_VsfVsf(acc, Q6_Vsf_vmax_VsfVsf(lo, hi))
-                                 : hvx_vec_add_f32_f32(acc, hvx_vec_add_f32_f32(lo, hi));
-                } else if (p->kernel_x == 1) {
-                    const HVX_Vector v = *(const HVX_UVector *) (row + ox);
-                    acc = is_max ? Q6_Vsf_vmax_VsfVsf(acc, v) : hvx_vec_add_f32_f32(acc, v);
+                                 : hvx_vec_جمع_کړه_f32_f32(acc, hvx_vec_جمع_کړه_f32_f32(lo, hi));
+                } وإلا إذا (p->kernel_x == 1) {
+                    ثابت HVX_ویکټور v = *(ثابت HVX_UVector *) (لیکه + ox);
+                    acc = is_max ? Q6_Vsf_vmax_VsfVsf(acc, v) : hvx_vec_جمع_کړه_f32_f32(acc, v);
                 }
             }
             hvx_vec_store_u(dst + oy * p->dst_x + ox, nbytes, is_max ? acc : hvx_vec_mul_f32_f32(acc, scale));
@@ -53,64 +53,64 @@ static void pool_plane_hvx(
 
 // Narrow exact-tiling path. The input is staged in VTCM with one vector of
 // guard space, so full-width loads are safe even when src_x is below 32.
-static void pool_plane_hvx_narrow(
-    const float * src, float * dst, const struct htp_pool_2d_kernel_params * p) {
-    const bool is_max = (p->pool_op == HTP_POOL_MAX);
-    const HVX_Vector scale = hvx_vec_splat_f32(p->inv_kernel_area);
-    const HVX_Vector seed  = is_max ? hvx_vec_splat_f32(-FLT_MAX) : Q6_V_vsplat_R(0);
+ساكن فراغ pool_plane_hvx_narrow(
+    ثابت عائم * src, عائم * dst, ثابت بنية htp_pool_2d_kernel_params * p) {
+    ثابت bool is_max = (p->pool_op == HTP_POOL_MAX);
+    ثابت HVX_ویکټور scale = hvx_vec_splat_f32(p->inv_kernel_area);
+    ثابت HVX_ویکټور تخم  = is_max ? hvx_vec_splat_f32(-FLT_MAX) : Q6_V_vsplat_R(0);
 
-    for (uint32_t oy = 0; oy < p->dst_y; ++oy) {
-        const uint32_t sy = oy * p->kernel_y;
-        HVX_Vector acc = seed;
-        for (uint32_t ky = 0; ky < p->kernel_y; ++ky) {
-            const float * row = src + (sy + ky) * p->src_x;
-            const HVX_Vector v0 = *(const HVX_UVector *) row;
-            HVX_Vector v = v0;
-            if (p->kernel_x == 2) {
+    لكل (uint32_t oy = 0; oy < p->dst_y; ++oy) {
+        ثابت uint32_t sy = oy * p->kernel_y;
+        HVX_ویکټور acc = تخم;
+        لكل (uint32_t ky = 0; ky < p->kernel_y; ++ky) {
+            ثابت عائم * لیکه = src + (sy + ky) * p->src_x;
+            ثابت HVX_ویکټور v0 = *(ثابت HVX_UVector *) لیکه;
+            HVX_ویکټور v = v0;
+            إذا (p->kernel_x == 2) {
                 // The second vector is zero because a narrow row has fewer
                 // than 32 input elements. The low lanes still contain the
                 // complete even/odd pairs needed by the output.
-                const HVX_Vector zero = Q6_V_vsplat_R(0);
-                const HVX_VectorPair deinterleaved = Q6_W_vdeal_VVR(zero, v0, -4);
-                const HVX_Vector even = Q6_V_lo_W(deinterleaved);
-                const HVX_Vector odd  = Q6_V_hi_W(deinterleaved);
+                ثابت HVX_ویکټور zero = Q6_V_vsplat_R(0);
+                ثابت HVX_ویکټور_Pair deinterleaved = Q6_W_vdeal_VVR(zero, v0, -4);
+                ثابت HVX_ویکټور even = Q6_V_lo_W(deinterleaved);
+                ثابت HVX_ویکټور odd  = Q6_V_hi_W(deinterleaved);
                 v = is_max ? Q6_Vsf_vmax_VsfVsf(even, odd)
-                           : hvx_vec_add_f32_f32(even, odd);
+                           : hvx_vec_جمع_کړه_f32_f32(even, odd);
             }
             acc = is_max ? Q6_Vsf_vmax_VsfVsf(acc, v)
-                         : hvx_vec_add_f32_f32(acc, v);
+                         : hvx_vec_جمع_کړه_f32_f32(acc, v);
         }
-        hvx_vec_store_u(dst + oy * p->dst_x, p->dst_x * sizeof(float),
+        hvx_vec_store_u(dst + oy * p->dst_x, p->dst_x * حجم(عائم),
                         is_max ? acc : hvx_vec_mul_f32_f32(acc, scale));
     }
 }
 
-static void pool_plane_global(
-    const float * src, float * dst, const struct htp_pool_2d_kernel_params * p) {
-    const uint32_t n = p->src_x * p->src_y;
-    float val;
-    if (p->pool_op == HTP_POOL_MAX) {
-        val = hvx_reduce_max_f32((const uint8_t *) src, n);
-    } else {
-        val = hvx_reduce_sum_f32((const uint8_t *) src, n) * p->inv_kernel_area;
+ساكن فراغ pool_plane_global(
+    ثابت عائم * src, عائم * dst, ثابت بنية htp_pool_2d_kernel_params * p) {
+    ثابت uint32_t n = p->src_x * p->src_y;
+    عائم val;
+    إذا (p->pool_op == HTP_POOL_MAX) {
+        val = hvx_reduce_max_f32((ثابت uint8_t *) src, n);
+    } وإلا {
+        val = hvx_reduce_مجموعه_f32((ثابت uint8_t *) src, n) * p->inv_kernel_area;
     }
-    hvx_vec_store_u(dst, sizeof(float), hvx_vec_splat_f32(val));
+    hvx_vec_store_u(dst, حجم(عائم), hvx_vec_splat_f32(val));
 }
 
-static void pool_plane_block(
-    const float * src, float * dst, const struct htp_pool_2d_kernel_params * p) {
-    for (uint32_t oy = 0; oy < p->dst_y; ++oy) {
-        const float * row = src + oy * p->src_x;
-        float * dst_row = dst + oy * p->dst_x;
-        for (uint32_t ox = 0; ox < p->dst_x; ++ox) {
-            const uint8_t * block = (const uint8_t *) (row + ox * p->kernel_x);
-            float val;
-            if (p->pool_op == HTP_POOL_MAX) {
-                val = hvx_reduce_max_f32(block, p->kernel_x);
-            } else {
-                val = hvx_reduce_sum_f32(block, p->kernel_x) * p->inv_kernel_area;
+ساكن فراغ pool_plane_بلاک(
+    ثابت عائم * src, عائم * dst, ثابت بنية htp_pool_2d_kernel_params * p) {
+    لكل (uint32_t oy = 0; oy < p->dst_y; ++oy) {
+        ثابت عائم * لیکه = src + oy * p->src_x;
+        عائم * dst_لیکه = dst + oy * p->dst_x;
+        لكل (uint32_t ox = 0; ox < p->dst_x; ++ox) {
+            ثابت uint8_t * بلاک = (ثابت uint8_t *) (لیکه + ox * p->kernel_x);
+            عائم val;
+            إذا (p->pool_op == HTP_POOL_MAX) {
+                val = hvx_reduce_max_f32(بلاک, p->kernel_x);
+            } وإلا {
+                val = hvx_reduce_مجموعه_f32(بلاک, p->kernel_x) * p->inv_kernel_area;
             }
-            hvx_vec_store_u(dst_row + ox, sizeof(float), hvx_vec_splat_f32(val));
+            hvx_vec_store_u(dst_لیکه + ox, حجم(عائم), hvx_vec_splat_f32(val));
         }
     }
 }
@@ -119,281 +119,281 @@ static void pool_plane_block(
 
 // Vertical padding is uniform across a whole output row (iy0 depends only on oy, not ox),
 // so it collapses to one valid-ky range per row instead of a per-element check.
-static inline void pool_row_bounds_y(
-    const struct htp_pool_2d_kernel_params * p, uint32_t oy, int32_t * iy0, uint32_t * ky_lo, uint32_t * ky_hi) {
+ساكن مضمن فراغ pool_لیکه_bounds_y(
+    ثابت بنية htp_pool_2d_kernel_params * p, uint32_t oy, int32_t * iy0, uint32_t * ky_lo, uint32_t * ky_hi) {
     *iy0 = (int32_t) (oy * p->stride_y) - p->pad_y;
-    const int32_t lo = -(*iy0);
-    const int32_t hi = (int32_t) p->src_y - *iy0;
+    ثابت int32_t lo = -(*iy0);
+    ثابت int32_t hi = (int32_t) p->src_y - *iy0;
     *ky_lo = (uint32_t) MAX(0, lo);
     *ky_hi = (uint32_t) MAX(0, MIN((int32_t) p->kernel_y, hi));
 }
 
-static inline void pool_pixel_boundary_vec(
-    const float * src, float * dst_row, const struct htp_pool_2d_kernel_params * p,
+ساكن مضمن فراغ pool_pixel_boundary_vec(
+    ثابت عائم * src, عائم * dst_لیکه, ثابت بنية htp_pool_2d_kernel_params * p,
     uint32_t ox, int32_t iy0, uint32_t ky_lo, uint32_t ky_hi, bool is_max) {
-    const int32_t ix0 = (int32_t) (ox * p->stride_x) - p->pad_x;
-    const int32_t kx_lo = MAX(0, -ix0);
-    const int32_t kx_hi = MIN((int32_t) p->kernel_x, (int32_t) p->src_x - ix0);
+    ثابت int32_t ix0 = (int32_t) (ox * p->stride_x) - p->pad_x;
+    ثابت int32_t kx_lo = MAX(0, -ix0);
+    ثابت int32_t kx_hi = MIN((int32_t) p->kernel_x, (int32_t) p->src_x - ix0);
 
-    if (kx_lo >= kx_hi || ky_lo >= ky_hi) {
-        HVX_Vector empty_val = is_max ? hvx_vec_splat_f32(-FLT_MAX) : Q6_V_vsplat_R(0);
-        hvx_vec_store_u(dst_row + ox, sizeof(float), empty_val);
-        return;
+    إذا (kx_lo >= kx_hi || ky_lo >= ky_hi) {
+        HVX_ویکټور تشه_val = is_max ? hvx_vec_splat_f32(-FLT_MAX) : Q6_V_vsplat_R(0);
+        hvx_vec_store_u(dst_لیکه + ox, حجم(عائم), تشه_val);
+        أرجع;
     }
 
-    const uint32_t valid_kx = (uint32_t) (kx_hi - kx_lo);
-    const HVX_Vector mask_identity = is_max ? hvx_vec_splat_f32(-FLT_MAX) : Q6_V_vsplat_R(0);
+    ثابت uint32_t valid_kx = (uint32_t) (kx_hi - kx_lo);
+    ثابت HVX_ویکټور ماسک_بې_اغېزه_عنصر = is_max ? hvx_vec_splat_f32(-FLT_MAX) : Q6_V_vsplat_R(0);
 
-    HVX_Vector acc = mask_identity;
-    for (uint32_t ky = ky_lo; ky < ky_hi; ++ky) {
-        const float * row = src + (uint32_t) (iy0 + (int32_t) ky) * p->src_x;
-        for (uint32_t k = 0; k < valid_kx; k += VLEN_FP32) {
-            const uint32_t k_rem = valid_kx - k;
-            const uint32_t n = (k_rem < VLEN_FP32) ? k_rem : VLEN_FP32;
-            const HVX_VectorPred q = Q6_Q_vsetq_R(n * sizeof(float));
-            const HVX_Vector raw = *(const HVX_UVector *) (row + ix0 + kx_lo + k);
-            const HVX_Vector v = Q6_V_vmux_QVV(q, raw, mask_identity);
-            acc = is_max ? Q6_Vsf_vmax_VsfVsf(acc, v) : hvx_vec_add_f32_f32(acc, v);
+    HVX_ویکټور acc = ماسک_بې_اغېزه_عنصر;
+    لكل (uint32_t ky = ky_lo; ky < ky_hi; ++ky) {
+        ثابت عائم * لیکه = src + (uint32_t) (iy0 + (int32_t) ky) * p->src_x;
+        لكل (uint32_t k = 0; k < valid_kx; k += VLEN_FP32) {
+            ثابت uint32_t k_rem = valid_kx - k;
+            ثابت uint32_t n = (k_rem < VLEN_FP32) ? k_rem : VLEN_FP32;
+            ثابت HVX_ویکټور_Pred q = Q6_Q_vsetq_R(n * حجم(عائم));
+            ثابت HVX_ویکټور raw = *(ثابت HVX_UVector *) (لیکه + ix0 + kx_lo + k);
+            ثابت HVX_ویکټور v = Q6_V_vmux_QVV(q, raw, ماسک_بې_اغېزه_عنصر);
+            acc = is_max ? Q6_Vsf_vmax_VsfVsf(acc, v) : hvx_vec_جمع_کړه_f32_f32(acc, v);
         }
     }
 
-    HVX_Vector reduced = is_max ? hvx_vec_reduce_max_f32(acc) : hvx_vec_reduce_sum_f32(acc);
-    if (!is_max) {
-        HVX_Vector scale_vec;
-        if (p->avg_divide_count) {
-            const uint32_t count = (ky_hi - ky_lo) * valid_kx;
-            scale_vec = hvx_vec_inverse_f32(hvx_vec_splat_f32((float) count));
-        } else {
+    HVX_ویکټور reduced = is_max ? hvx_vec_reduce_max_f32(acc) : hvx_vec_reduce_مجموعه_f32(acc);
+    إذا (!is_max) {
+        HVX_ویکټور scale_vec;
+        إذا (p->avg_divide_شمېر) {
+            ثابت uint32_t شمېر = (ky_hi - ky_lo) * valid_kx;
+            scale_vec = hvx_vec_inverse_f32(hvx_vec_splat_f32((عائم) شمېر));
+        } وإلا {
             scale_vec = hvx_vec_splat_f32(p->inv_kernel_area);
         }
         reduced = hvx_vec_mul_f32_f32(reduced, scale_vec);
     }
-    hvx_vec_store_u(dst_row + ox, sizeof(float), reduced);
+    hvx_vec_store_u(dst_لیکه + ox, حجم(عائم), reduced);
 }
 
-static inline void pool_row_general_boundary_vec(
-    const float * src, float * dst_row, const struct htp_pool_2d_kernel_params * p,
-    uint32_t ox_start, uint32_t ox_end, int32_t iy0, uint32_t ky_lo, uint32_t ky_hi, bool is_max) {
-    for (uint32_t ox = ox_start; ox < ox_end; ++ox) {
-        pool_pixel_boundary_vec(src, dst_row, p, ox, iy0, ky_lo, ky_hi, is_max);
+ساكن مضمن فراغ pool_لیکه_general_boundary_vec(
+    ثابت عائم * src, عائم * dst_لیکه, ثابت بنية htp_pool_2d_kernel_params * p,
+    uint32_t ox_پیل, uint32_t ox_پای_ټکی, int32_t iy0, uint32_t ky_lo, uint32_t ky_hi, bool is_max) {
+    لكل (uint32_t ox = ox_پیل; ox < ox_پای_ټکی; ++ox) {
+        pool_pixel_boundary_vec(src, dst_لیکه, p, ox, iy0, ky_lo, ky_hi, is_max);
     }
 }
 
 // Vectorized interior loop.
-static inline void pool_row_general_vec(
-    const float * src, float * dst_row, const struct htp_pool_2d_kernel_params * p,
-    uint32_t ox_start, uint32_t ox_end, int32_t iy0, uint32_t ky_lo, uint32_t ky_hi, bool is_max) {
-    if (ox_start >= ox_end) {
-        return;
+ساكن مضمن فراغ pool_لیکه_general_vec(
+    ثابت عائم * src, عائم * dst_لیکه, ثابت بنية htp_pool_2d_kernel_params * p,
+    uint32_t ox_پیل, uint32_t ox_پای_ټکی, int32_t iy0, uint32_t ky_lo, uint32_t ky_hi, bool is_max) {
+    إذا (ox_پیل >= ox_پای_ټکی) {
+        أرجع;
     }
 
-    if (p->stride_x != 1 && p->stride_x != 2) {
-        pool_row_general_boundary_vec(src, dst_row, p, ox_start, ox_end, iy0, ky_lo, ky_hi, is_max);
-        return;
+    إذا (p->stride_x != 1 && p->stride_x != 2) {
+        pool_لیکه_general_boundary_vec(src, dst_لیکه, p, ox_پیل, ox_پای_ټکی, iy0, ky_lo, ky_hi, is_max);
+        أرجع;
     }
 
-    const HVX_Vector scale = hvx_vec_splat_f32(p->inv_kernel_area);
-    const HVX_Vector seed  = is_max ? hvx_vec_splat_f32(-FLT_MAX) : Q6_V_vsplat_R(0);
+    ثابت HVX_ویکټور scale = hvx_vec_splat_f32(p->inv_kernel_area);
+    ثابت HVX_ویکټور تخم  = is_max ? hvx_vec_splat_f32(-FLT_MAX) : Q6_V_vsplat_R(0);
 
-    for (uint32_t ox = ox_start; ox < ox_end; ox += VLEN_FP32) {
-        const uint32_t rem = ox_end - ox;
-        const uint32_t nbytes = (rem < VLEN_FP32) ? (rem * sizeof(float)) : VLEN;
-        const int32_t ix0 = (int32_t) (ox * p->stride_x) - p->pad_x;
-        HVX_Vector acc = seed;
+    لكل (uint32_t ox = ox_پیل; ox < ox_پای_ټکی; ox += VLEN_FP32) {
+        ثابت uint32_t rem = ox_پای_ټکی - ox;
+        ثابت uint32_t nbytes = (rem < VLEN_FP32) ? (rem * حجم(عائم)) : VLEN;
+        ثابت int32_t ix0 = (int32_t) (ox * p->stride_x) - p->pad_x;
+        HVX_ویکټور acc = تخم;
 
-        for (uint32_t ky = ky_lo; ky < ky_hi; ++ky) {
-            const float * row = src + (uint32_t) (iy0 + (int32_t) ky) * p->src_x;
-            if (p->stride_x == 1) {
-                for (uint32_t kx = 0; kx < p->kernel_x; ++kx) {
-                    const HVX_Vector v = *(const HVX_UVector *) (row + ix0 + (int32_t) kx);
-                    acc = is_max ? Q6_Vsf_vmax_VsfVsf(acc, v) : hvx_vec_add_f32_f32(acc, v);
+        لكل (uint32_t ky = ky_lo; ky < ky_hi; ++ky) {
+            ثابت عائم * لیکه = src + (uint32_t) (iy0 + (int32_t) ky) * p->src_x;
+            إذا (p->stride_x == 1) {
+                لكل (uint32_t kx = 0; kx < p->kernel_x; ++kx) {
+                    ثابت HVX_ویکټور v = *(ثابت HVX_UVector *) (لیکه + ix0 + (int32_t) kx);
+                    acc = is_max ? Q6_Vsf_vmax_VsfVsf(acc, v) : hvx_vec_جمع_کړه_f32_f32(acc, v);
                 }
-            } else {
-                for (uint32_t kx = 0; kx < p->kernel_x; kx += 2) {
-                    const HVX_Vector v0 = *(const HVX_UVector *) (row + ix0 + (int32_t) kx);
-                    const HVX_Vector v1 = *(const HVX_UVector *) (row + ix0 + (int32_t) kx + VLEN_FP32);
-                    const HVX_VectorPair deinterleaved = Q6_W_vdeal_VVR(v1, v0, -4);
-                    const HVX_Vector lo = Q6_V_lo_W(deinterleaved);
-                    acc = is_max ? Q6_Vsf_vmax_VsfVsf(acc, lo) : hvx_vec_add_f32_f32(acc, lo);
-                    if (kx + 1 < p->kernel_x) {
-                        const HVX_Vector hi = Q6_V_hi_W(deinterleaved);
-                        acc = is_max ? Q6_Vsf_vmax_VsfVsf(acc, hi) : hvx_vec_add_f32_f32(acc, hi);
+            } وإلا {
+                لكل (uint32_t kx = 0; kx < p->kernel_x; kx += 2) {
+                    ثابت HVX_ویکټور v0 = *(ثابت HVX_UVector *) (لیکه + ix0 + (int32_t) kx);
+                    ثابت HVX_ویکټور v1 = *(ثابت HVX_UVector *) (لیکه + ix0 + (int32_t) kx + VLEN_FP32);
+                    ثابت HVX_ویکټور_Pair deinterleaved = Q6_W_vdeal_VVR(v1, v0, -4);
+                    ثابت HVX_ویکټور lo = Q6_V_lo_W(deinterleaved);
+                    acc = is_max ? Q6_Vsf_vmax_VsfVsf(acc, lo) : hvx_vec_جمع_کړه_f32_f32(acc, lo);
+                    إذا (kx + 1 < p->kernel_x) {
+                        ثابت HVX_ویکټور hi = Q6_V_hi_W(deinterleaved);
+                        acc = is_max ? Q6_Vsf_vmax_VsfVsf(acc, hi) : hvx_vec_جمع_کړه_f32_f32(acc, hi);
                     }
                 }
             }
         }
-        hvx_vec_store_u(dst_row + ox, nbytes, is_max ? acc : hvx_vec_mul_f32_f32(acc, scale));
+        hvx_vec_store_u(dst_لیکه + ox, nbytes, is_max ? acc : hvx_vec_mul_f32_f32(acc, scale));
     }
 }
 
-static void pool_plane_general(
-    const float * src, float * dst, const struct htp_pool_2d_kernel_params * p) {
-    const bool is_max = (p->pool_op == HTP_POOL_MAX);
+ساكن فراغ pool_plane_general(
+    ثابت عائم * src, عائم * dst, ثابت بنية htp_pool_2d_kernel_params * p) {
+    ثابت bool is_max = (p->pool_op == HTP_POOL_MAX);
 
-    for (uint32_t oy = 0; oy < p->dst_y; ++oy) {
+    لكل (uint32_t oy = 0; oy < p->dst_y; ++oy) {
         int32_t iy0;
         uint32_t ky_lo, ky_hi;
-        pool_row_bounds_y(p, oy, &iy0, &ky_lo, &ky_hi);
-        float * dst_row = dst + oy * p->dst_x;
+        pool_لیکه_bounds_y(p, oy, &iy0, &ky_lo, &ky_hi);
+        عائم * dst_لیکه = dst + oy * p->dst_x;
 
-        pool_row_general_boundary_vec(src, dst_row, p, 0, p->ox_lo, iy0, ky_lo, ky_hi, is_max);
-        pool_row_general_vec(src, dst_row, p, p->ox_lo, p->ox_hi, iy0, ky_lo, ky_hi, is_max);
-        pool_row_general_boundary_vec(src, dst_row, p, p->ox_hi, p->dst_x, iy0, ky_lo, ky_hi, is_max);
+        pool_لیکه_general_boundary_vec(src, dst_لیکه, p, 0, p->ox_lo, iy0, ky_lo, ky_hi, is_max);
+        pool_لیکه_general_vec(src, dst_لیکه, p, p->ox_lo, p->ox_hi, iy0, ky_lo, ky_hi, is_max);
+        pool_لیکه_general_boundary_vec(src, dst_لیکه, p, p->ox_hi, p->dst_x, iy0, ky_lo, ky_hi, is_max);
     }
 }
 
-typedef void (*pool_plane_fn_t)(const float * src, float * dst, const struct htp_pool_2d_kernel_params * p);
+تعريفنوع فراغ (*pool_plane_fn_t)(ثابت عائم * src, عائم * dst, ثابت بنية htp_pool_2d_kernel_params * p);
 
-struct pool_2d_context {
-    struct htp_ops_context * octx;
-    const struct htp_pool_2d_kernel_params * kparams;
+بنية pool_2d_context {
+    بنية htp_ops_context * octx;
+    ثابت بنية htp_pool_2d_kernel_params * kparams;
     pool_plane_fn_t pool_plane;
-    uint32_t n_threads;
-    uint32_t plane_start;
-    uint32_t plane_count;
-    uint32_t planes_per_thread;
+    uint32_t n_تارونه;
+    uint32_t plane_پیل;
+    uint32_t plane_شمېر;
+    uint32_t planes_فی_thread;
 };
 
-static void pool_2d_thread(unsigned int nth, unsigned int ith, void * data) {
-    struct pool_2d_context * ctx = (struct pool_2d_context *) data;
-    const struct htp_pool_2d_kernel_params * p = ctx->kparams;
-    const struct htp_tensor * src0 = ctx->octx->src[0];
-    const struct htp_tensor * dst = ctx->octx->dst;
+ساكن فراغ pool_2d_thread(بینښه صحيح nth, بینښه صحيح ith, فراغ * معلومات) {
+    بنية pool_2d_context * ctx = (بنية pool_2d_context *) معلومات;
+    ثابت بنية htp_pool_2d_kernel_params * p = ctx->kparams;
+    ثابت بنية htp_tensor * src0 = ctx->octx->src[0];
+    ثابت بنية htp_tensor * dst = ctx->octx->dst;
     pool_plane_fn_t pool_plane = ctx->pool_plane;
-    const uint32_t planes_per_thread = ctx->planes_per_thread;
-    const uint32_t first = ctx->plane_start + ith * planes_per_thread;
-    const uint32_t last = MIN(first + planes_per_thread, ctx->plane_start + ctx->plane_count);
+    ثابت uint32_t planes_فی_thread = ctx->planes_فی_thread;
+    ثابت uint32_t لومړی = ctx->plane_پیل + ith * planes_فی_thread;
+    ثابت uint32_t وروستی = MIN(لومړی + planes_فی_thread, ctx->plane_پیل + ctx->plane_شمېر);
 
-    if (first >= last) {
-        return;
+    إذا (لومړی >= وروستی) {
+        أرجع;
     }
 
-    struct htp_thread_trace * tr = &ctx->octx->ctx->trace[ith];
-    dma_queue * dma_queue = ctx->octx->ctx->dma[ith];
+    بنية htp_thread_trace * tr = &ctx->octx->ctx->trace[ith];
+    dma_کتار * dma_کتار = ctx->octx->ctx->dma[ith];
 
-    const uint32_t src_spad_half = p->src_plane_bytes_aligned;
-    const uint32_t dst_spad_half = p->dst_plane_bytes_aligned;
-    const uint32_t src_bytes_per_thread = 2 * src_spad_half;
-    const uint32_t dst_bytes_per_thread = 2 * dst_spad_half;
-    const size_t off_dst = (size_t) ctx->n_threads * src_bytes_per_thread;
+    ثابت uint32_t src_spad_half = p->src_plane_بایټونه_aligned;
+    ثابت uint32_t dst_spad_half = p->dst_plane_بایټونه_aligned;
+    ثابت uint32_t src_بایټونه_فی_thread = 2 * src_spad_half;
+    ثابت uint32_t dst_بایټونه_فی_thread = 2 * dst_spad_half;
+    ثابت size_t off_dst = (size_t) ctx->n_تارونه * src_بایټونه_فی_thread;
 
-    uint8_t * vtcm_base = (uint8_t *) ctx->octx->ctx->vtcm_base;
-    uint8_t * src_spad  = vtcm_base + ith * src_bytes_per_thread;
-    uint8_t * dst_spad  = vtcm_base + off_dst + ith * dst_bytes_per_thread;
+    uint8_t * vtcm_بنسټ = (uint8_t *) ctx->octx->ctx->vtcm_بنسټ;
+    uint8_t * src_spad  = vtcm_بنسټ + ith * src_بایټونه_فی_thread;
+    uint8_t * dst_spad  = vtcm_بنسټ + off_dst + ith * dst_بایټونه_فی_thread;
 
-    float * srcb2[2] = { (float *) src_spad, (float *) (src_spad + src_spad_half) };
-    float * dstb2[2] = { (float *) dst_spad, (float *) (dst_spad + dst_spad_half) };
+    عائم * srcb2[2] = { (عائم *) src_spad, (عائم *) (src_spad + src_spad_half) };
+    عائم * dstb2[2] = { (عائم *) dst_spad, (عائم *) (dst_spad + dst_spad_half) };
 
-    const uint32_t total = last - first;
+    ثابت uint32_t ټول = وروستی - لومړی;
 
     // Warm up the pipeline: push up to 2 initial (dummy dst, src) transfer pairs.
-    for (uint32_t i = 0; i < total && i < 2; ++i) {
-        dma_queue_push(dma_queue,
-                       dma_make_data(dst->data, dstb2[i]),
-                       p->dst_plane_bytes, dst_spad_half,
-                       p->dst_plane_bytes, 0);
+    لكل (uint32_t i = 0; i < ټول && i < 2; ++i) {
+        dma_کتار_ټېل(dma_کتار,
+                       dma_make_معلومات(dst->معلومات, dstb2[i]),
+                       p->dst_plane_بایټونه, dst_spad_half,
+                       p->dst_plane_بایټونه, 0);
 
-        const dma_addr_t src_addr = src0->data + (first + i) * p->src_plane_bytes;
-        dma_queue_push(dma_queue,
-                       dma_make_data(srcb2[i], src_addr),
-                       src_spad_half, p->src_plane_bytes,
-                       p->src_plane_bytes, 1);
+        ثابت dma_addr_t src_addr = src0->معلومات + (لومړی + i) * p->src_plane_بایټونه;
+        dma_کتار_ټېل(dma_کتار,
+                       dma_make_معلومات(srcb2[i], src_addr),
+                       src_spad_half, p->src_plane_بایټونه,
+                       p->src_plane_بایټونه, 1);
     }
 
-    for (uint32_t i = 0; i < total; ++i) {
-        const uint32_t plane = first + i;
-        const uint32_t buf   = i & 1u;
-        float * srcb = srcb2[buf];
-        float * dstb = dstb2[buf];
+    لكل (uint32_t i = 0; i < ټول; ++i) {
+        ثابت uint32_t plane = لومړی + i;
+        ثابت uint32_t buf   = i & 1u;
+        عائم * srcb = srcb2[buf];
+        عائم * dstb = dstb2[buf];
 
-        dma_queue_pop(dma_queue); // dst writeback from plane i - 2 (or dummy on iter 0, 1)
-        dma_queue_pop(dma_queue); // input for plane i
+        dma_کتار_راوباسه(dma_کتار); // dst writeback from plane i - 2 (or dummy on iter 0, 1)
+        dma_کتار_راوباسه(dma_کتار); // input for plane i
 
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) plane);
+        htp_trace_event_پیل(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) plane);
         pool_plane(srcb, dstb, p);
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) plane);
 
-        const dma_addr_t dst_addr = dst->data + plane * p->dst_plane_bytes;
-        dma_queue_push(dma_queue,
-                       dma_make_data(dst_addr, dstb),
-                       p->dst_plane_bytes, dst_spad_half,
-                       p->dst_plane_bytes, 1);
+        ثابت dma_addr_t dst_addr = dst->معلومات + plane * p->dst_plane_بایټونه;
+        dma_کتار_ټېل(dma_کتار,
+                       dma_make_معلومات(dst_addr, dstb),
+                       p->dst_plane_بایټونه, dst_spad_half,
+                       p->dst_plane_بایټونه, 1);
 
-        if (i + 2 < total) {
-            const dma_addr_t next_src_addr = src0->data + (plane + 2) * p->src_plane_bytes;
-            dma_queue_push(dma_queue,
-                           dma_make_data(srcb, next_src_addr),
-                           src_spad_half, p->src_plane_bytes,
-                           p->src_plane_bytes, 1);
+        إذا (i + 2 < ټول) {
+            ثابت dma_addr_t بل_src_addr = src0->معلومات + (plane + 2) * p->src_plane_بایټونه;
+            dma_کتار_ټېل(dma_کتار,
+                           dma_make_معلومات(srcb, بل_src_addr),
+                           src_spad_half, p->src_plane_بایټونه,
+                           p->src_plane_بایټونه, 1);
         }
     }
 
-    dma_queue_flush(dma_queue);
+    dma_کتار_flush(dma_کتار);
 
-    FARF(HIGH, "pool2d-f32-dma %d/%d: %ux%ux%ux%u -> %ux%ux%ux%u (%u:%u)\n",
+    FARF(لوړ_2, "pool2d-f32-dma %d/%d: %ux%ux%ux%u -> %ux%ux%ux%u (%u:%u)\n",
          ith, nth, src0->ne[0], src0->ne[1], src0->ne[2], src0->ne[3],
-         dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3], first, last);
-    (void) nth;
+         dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3], لومړی, وروستی);
+    (فراغ) nth;
 }
 
-int op_pool_2d(struct htp_ops_context * octx) {
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * dst = octx->dst;
-    const struct htp_pool_2d_kernel_params * p =
-        (const struct htp_pool_2d_kernel_params *) octx->kernel_params;
+صحيح op_pool_2d(بنية htp_ops_context * octx) {
+    ثابت بنية htp_tensor * src0 = octx->src[0];
+    ثابت بنية htp_tensor * dst = octx->dst;
+    ثابت بنية htp_pool_2d_kernel_params * p =
+        (ثابت بنية htp_pool_2d_kernel_params *) octx->kernel_params;
 
-    if (src0->type != HTP_TYPE_F32 || dst->type != HTP_TYPE_F32 ||
+    إذا (src0->type != HTP_TYPE_F32 || dst->type != HTP_TYPE_F32 ||
         (p->pool_op != HTP_POOL_AVG && p->pool_op != HTP_POOL_MAX)) {
-        return HTP_STATUS_NO_SUPPORT;
+        أرجع HTP_حالت_NO_SUPPORT;
     }
 
-    uint32_t plane_start = 0;
-    uint32_t plane_count = p->planes;
-    if (octx->ctx->mdev.count > 1) {
-        const uint32_t planes_per_chunk = (p->dst_plane_bytes > 0) ? (HEX_L2_LINE_SIZE / hex_gcd_u32(p->dst_plane_bytes, HEX_L2_LINE_SIZE)) : 1;
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(
-            plane_count, htp_tensor_mdev_data_aligned(dst) ? planes_per_chunk : 0,
-            octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
-        plane_start = range.start;
-        plane_count = range.count;
+    uint32_t plane_پیل = 0;
+    uint32_t plane_شمېر = p->planes;
+    إذا (octx->ctx->mdev.شمېر > 1) {
+        ثابت uint32_t planes_فی_chunk = (p->dst_plane_بایټونه > 0) ? (HEX_L2_کرښه_اندازه / hex_لوی_ګډ_وېشونکی_u32(p->dst_plane_بایټونه, HEX_L2_کرښه_اندازه)) : 1;
+        ثابت بنية htp_tensor_mdev_range range = htp_tensor_mdev_برخه_کول(
+            plane_شمېر, htp_tensor_mdev_معلومات_aligned(dst) ? planes_فی_chunk : 0,
+            octx->ctx->mdev.idx, octx->ctx->mdev.شمېر, &octx->ctx->mdev.شمېر_div);
+        plane_پیل = range.پیل;
+        plane_شمېر = range.شمېر;
     }
-    if (plane_count == 0) {
-        return HTP_STATUS_OK;
-    }
-
-    const uint32_t n_threads = MIN(p->n_threads, plane_count);
-    if (!htp_ops_context_set_n_threads(octx, n_threads)) {
-        return HTP_STATUS_INVAL_PARAMS;
+    إذا (plane_شمېر == 0) {
+        أرجع HTP_حالت_OK;
     }
 
-    const uint32_t planes_per_thread = fastdiv(plane_count + n_threads - 1, &octx->n_threads_div);
+    ثابت uint32_t n_تارونه = MIN(p->n_تارونه, plane_شمېر);
+    إذا (!htp_ops_context_سېټ_n_تارونه(octx, n_تارونه)) {
+        أرجع HTP_حالت_INVAL_PARAMS;
+    }
+
+    ثابت uint32_t planes_فی_thread = fastdiv(plane_شمېر + n_تارونه - 1, &octx->n_تارونه_div);
 
     pool_plane_fn_t pool_plane;
-    if (p->global_path) {
+    إذا (p->global_لار) {
         pool_plane = pool_plane_global;
-    } else if (p->block_path) {
-        pool_plane = pool_plane_block;
-    } else if (p->narrow_path) {
+    } وإلا إذا (p->بلاک_لار) {
+        pool_plane = pool_plane_بلاک;
+    } وإلا إذا (p->narrow_لار) {
         pool_plane = pool_plane_hvx_narrow;
-    } else if (p->fast_path) {
+    } وإلا إذا (p->fast_لار) {
         pool_plane = pool_plane_hvx;
-    } else {
+    } وإلا {
         pool_plane = pool_plane_general;
     }
 
-    struct pool_2d_context ctx = {
+    بنية pool_2d_context ctx = {
         .octx = octx,
         .kparams = p,
         .pool_plane = pool_plane,
-        .n_threads = n_threads,
-        .plane_start = plane_start,
-        .plane_count = plane_count,
-        .planes_per_thread = planes_per_thread,
+        .n_تارونه = n_تارونه,
+        .plane_پیل = plane_پیل,
+        .plane_شمېر = plane_شمېر,
+        .planes_فی_thread = planes_فی_thread,
     };
-    work_queue_run(octx->ctx->work_queue, pool_2d_thread, &ctx, n_threads);
-    return HTP_STATUS_OK;
+    work_کتار_پرلپسې(octx->ctx->work_کتار, pool_2d_thread, &ctx, n_تارونه);
+    أرجع HTP_حالت_OK;
 }
 
-int op_pool_1d(struct htp_ops_context * octx) {
-    return op_pool_2d(octx);
+صحيح op_pool_1d(بنية htp_ops_context * octx) {
+    أرجع op_pool_2d(octx);
 }

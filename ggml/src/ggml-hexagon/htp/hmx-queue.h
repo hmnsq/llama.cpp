@@ -1,160 +1,160 @@
-#ifndef HMX_QUEUE_H
-#define HMX_QUEUE_H
+#که_نه_تعریف_شوی HMX_کتار_H
+#تعریف_کړه HMX_کتار_H
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdatomic.h>
+#ضمن <stdbool.h>
+#ضمن <stdint.h>
+#ضمن <stdatomic.h>
 
-#include <hexagon_types.h>
-#include <qurt_thread.h>
-#include <qurt_futex.h>
-#include <HAP_farf.h>
+#ضمن <hexagon_types.h>
+#ضمن <qurt_thread.h>
+#ضمن <qurt_futex.h>
+#ضمن <HAP_farf.h>
 
-#include "hex-utils.h"
-#include "hex-profile.h"
+#ضمن "hex-utils.h"
+#ضمن "hex-profile.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#که_تعریف_شوی __cplusplus
+خارجي "C" {
+#د_که_پای
 
-#if __HVX_ARCH__ > 79
-#define HMX_QUEUE_POLL_COUNT 2000
-#else
-#define HMX_QUEUE_POLL_COUNT 1
-#endif
+#إذا __HVX_ARCH__ > 79
+#تعریف_کړه HMX_کتار_POLL_شمېر 2000
+#وإلا
+#تعریف_کړه HMX_کتار_POLL_شمېر 1
+#د_که_پای
 
-typedef void (*hmx_queue_func)(void *);
+تعريفنوع فراغ (*hmx_کتار_func)(فراغ *);
 
 // Dummy funcs used as signals
-enum hmx_queue_signal {
-    HMX_QUEUE_NOOP = 0, // aka NULL
-    HMX_QUEUE_WAKEUP,
-    HMX_QUEUE_SUSPEND,
-    HMX_QUEUE_KILL
+تعداد hmx_کتار_signal {
+    HMX_کتار_NOOP = 0, // aka NULL
+    HMX_کتار_WAKEUP,
+    HMX_کتار_SUSPEND,
+    HMX_کتار_KILL
 };
 
-struct hmx_queue_desc {
-    hmx_queue_func   func;
-    void *           data;
-    atomic_uint      done;
+بنية hmx_کتار_desc {
+    hmx_کتار_func   func;
+    فراغ *           معلومات;
+    atomic_uint      بشپړ;
 };
 
-struct hmx_queue_s {
-    struct hmx_queue_desc * desc;
+بنية hmx_کتار_s {
+    بنية hmx_کتار_desc * desc;
     atomic_uint      idx_write; // updated by producer (push)
     atomic_uint      idx_read;  // updated by consumer (process)
-    unsigned int     idx_pop;   // updated by producer (pop)
-    uint32_t         idx_mask;
-    uint32_t         capacity;
+    بینښه صحيح     idx_راوباسه;   // updated by producer (pop)
+    uint32_t         idx_ماسک;
+    uint32_t         ظرفیت;
 
     atomic_uint      seqn;      // incremented for all pushes, used with futex
     qurt_thread_t    thread;
-    void *           stack;
+    فراغ *           ډېری;
     uint32_t         hap_rctx;
     bool             hmx_locked;
-    struct htp_thread_trace * trace;
+    بنية htp_thread_trace * trace;
     bool             external_mem; // memory owned externally
 };
 
-typedef struct hmx_queue_s * hmx_queue_t;
+تعريفنوع بنية hmx_کتار_s * hmx_کتار_t;
 
-size_t      hmx_queue_sizeof(size_t capacity, uint32_t stack_size);
-size_t      hmx_queue_alignof(void);
-hmx_queue_t hmx_queue_init(void * ptr, size_t capacity, uint32_t stack_size, uint32_t hap_rctx, struct htp_thread_trace * trace);
-void        hmx_queue_free(hmx_queue_t q);
+size_t      hmx_کتار_sizeof(size_t ظرفیت, uint32_t ډېری_اندازه);
+size_t      hmx_کتار_alignof(فراغ);
+hmx_کتار_t hmx_کتار_init(فراغ * ptr, size_t ظرفیت, uint32_t ډېری_اندازه, uint32_t hap_rctx, بنية htp_thread_trace * trace);
+فراغ        hmx_کتار_free(hmx_کتار_t q);
 
-static inline struct hmx_queue_desc hmx_queue_make_desc(hmx_queue_func func, void * data) {
-    struct hmx_queue_desc d = { func, data };
-    return d;
+ساكن مضمن بنية hmx_کتار_desc hmx_کتار_make_desc(hmx_کتار_func func, فراغ * معلومات) {
+    بنية hmx_کتار_desc d = { func, معلومات };
+    أرجع d;
 }
 
-static inline bool hmx_queue_push(hmx_queue_t q, struct hmx_queue_desc d) {
-    unsigned int ir = atomic_load(&q->idx_read);
-    unsigned int iw = atomic_load(&q->idx_write);
+ساكن مضمن bool hmx_کتار_ټېل(hmx_کتار_t q, بنية hmx_کتار_desc d) {
+    بینښه صحيح ir = atomic_بارول(&q->idx_read);
+    بینښه صحيح iw = atomic_بارول(&q->idx_write);
 
-    if (((iw + 1) & q->idx_mask) == ir) {
-        FARF(HIGH, "hmx-queue-push: queue is full\n");
-        return false;
+    إذا (((iw + 1) & q->idx_ماسک) == ir) {
+        FARF(لوړ_2, "hmx-queue-push: queue is full\n");
+        أرجع false;
     }
 
-    atomic_store(&d.done, 0);
+    atomic_store(&d.بشپړ, 0);
 
-    FARF(HIGH, "hmx-queue-push: iw %u func %p data %p\n", iw, d.func, d.data);
+    FARF(لوړ_2, "hmx-queue-push: iw %u func %p data %p\n", iw, d.func, d.معلومات);
 
     q->desc[iw] = d;
-    atomic_store(&q->idx_write, (iw + 1) & q->idx_mask);
+    atomic_store(&q->idx_write, (iw + 1) & q->idx_ماسک);
     // wake up our thread
-    atomic_fetch_add(&q->seqn, 1);
+    atomic_fetch_جمع_کړه(&q->seqn, 1);
     qurt_futex_wake(&q->seqn, 1);
 
-    return true;
+    أرجع true;
 }
 
-static inline bool hmx_queue_signal(hmx_queue_t q, enum hmx_queue_signal sig) {
-    return hmx_queue_push(q, hmx_queue_make_desc((hmx_queue_func) sig, NULL));
+ساكن مضمن bool hmx_کتار_signal(hmx_کتار_t q, تعداد hmx_کتار_signal sig) {
+    أرجع hmx_کتار_ټېل(q, hmx_کتار_make_desc((hmx_کتار_func) sig, عدم));
 }
 
-static inline bool hmx_queue_empty(hmx_queue_t q) {
-    return q->idx_pop == atomic_load(&q->idx_write);
+ساكن مضمن bool hmx_کتار_تشه(hmx_کتار_t q) {
+    أرجع q->idx_راوباسه == atomic_بارول(&q->idx_write);
 }
 
-static inline uint32_t hmx_queue_depth(hmx_queue_t q) {
-    return (atomic_load(&q->idx_write) - atomic_load(&q->idx_read)) & q->idx_mask;
+ساكن مضمن uint32_t hmx_کتار_ژوروالی(hmx_کتار_t q) {
+    أرجع (atomic_بارول(&q->idx_write) - atomic_بارول(&q->idx_read)) & q->idx_ماسک;
 }
 
-static inline uint32_t hmx_queue_capacity(hmx_queue_t q) {
-    return q->capacity;
+ساكن مضمن uint32_t hmx_کتار_ظرفیت(hmx_کتار_t q) {
+    أرجع q->ظرفیت;
 }
 
-static inline struct hmx_queue_desc hmx_queue_pop_one(hmx_queue_t q) {
-    unsigned int ip = q->idx_pop;
-    unsigned int iw = atomic_load(&q->idx_write);
+ساكن مضمن بنية hmx_کتار_desc hmx_کتار_راوباسه_one(hmx_کتار_t q) {
+    بینښه صحيح ip = q->idx_راوباسه;
+    بینښه صحيح iw = atomic_بارول(&q->idx_write);
 
-    struct hmx_queue_desc rd = { NULL, NULL };
-    if (ip == iw) {
-        return rd;
+    بنية hmx_کتار_desc rd = { عدم, عدم };
+    إذا (ip == iw) {
+        أرجع rd;
     }
 
     // Wait for desc to complete
-    struct hmx_queue_desc * d = &q->desc[ip];
-    while (!atomic_load(&d->done)) {
-        FARF(HIGH, "hmx-queue-pop: waiting for HMX queue : %u\n", ip);
+    بنية hmx_کتار_desc * d = &q->desc[ip];
+    طالما (!atomic_بارول(&d->بشپړ)) {
+        FARF(لوړ_2, "hmx-queue-pop: waiting for HMX queue : %u\n", ip);
         hex_pause();
     }
 
     rd = *d;
-    q->idx_pop = (ip + 1) & q->idx_mask;
+    q->idx_راوباسه = (ip + 1) & q->idx_ماسک;
 
-    FARF(HIGH, "hmx-queue-pop: ip %u func %p data %p\n", ip, rd.func, rd.data);
-    return rd;
+    FARF(لوړ_2, "hmx-queue-pop: ip %u func %p data %p\n", ip, rd.func, rd.معلومات);
+    أرجع rd;
 }
 
-static inline struct hmx_queue_desc hmx_queue_pop(hmx_queue_t q) {
-    while (1) {
-        struct hmx_queue_desc d = hmx_queue_pop_one(q);
+ساكن مضمن بنية hmx_کتار_desc hmx_کتار_راوباسه(hmx_کتار_t q) {
+    طالما (1) {
+        بنية hmx_کتار_desc d = hmx_کتار_راوباسه_one(q);
 
         uint32_t sig = (uint32_t) d.func;
-        if (sig && sig <= HMX_QUEUE_KILL)
-            continue;
+        إذا (sig && sig <= HMX_کتار_KILL)
+            استمر;
 
-        return d;
+        أرجع d;
     }
 }
 
-static inline void hmx_queue_flush(hmx_queue_t q) {
-    while (hmx_queue_pop_one(q).func != NULL) ;
+ساكن مضمن فراغ hmx_کتار_flush(hmx_کتار_t q) {
+    طالما (hmx_کتار_راوباسه_one(q).func != عدم) ;
 }
 
-static inline void hmx_queue_wakeup(hmx_queue_t q) {
-    hmx_queue_signal(q, HMX_QUEUE_WAKEUP);
+ساكن مضمن فراغ hmx_کتار_wakeup(hmx_کتار_t q) {
+    hmx_کتار_signal(q, HMX_کتار_WAKEUP);
 }
 
-static inline void hmx_queue_suspend(hmx_queue_t q) {
-    hmx_queue_signal(q, HMX_QUEUE_SUSPEND);
+ساكن مضمن فراغ hmx_کتار_suspend(hmx_کتار_t q) {
+    hmx_کتار_signal(q, HMX_کتار_SUSPEND);
 }
 
-#ifdef __cplusplus
+#که_تعریف_شوی __cplusplus
 }  // extern "C"
-#endif
+#د_که_پای
 
-#endif /* HMX_QUEUE_H */
+#د_که_پای /* HMX_QUEUE_H */

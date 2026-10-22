@@ -1,171 +1,171 @@
-#include "conv2d.hpp"
-#include "convert.hpp"
+#ضمن "conv2d.hpp"
+#ضمن "convert.hpp"
 
-struct conv2d_params {
-    const int64_t IW, IH;
-    const int64_t OW, OH;
-    const int64_t KW, KH;
-    const int64_t ST_X, ST_Y;
-    const int64_t PD_X, PD_Y;
-    const int64_t DL_X, DL_Y;
-    const int64_t IC, OC;
-    const int64_t B;
-    const int64_t TOTAL;
+بنية conv2d_params {
+    ثابت int64_t IW, IH;
+    ثابت int64_t OW, OH;
+    ثابت int64_t KW, KH;
+    ثابت int64_t ST_X, ST_Y;
+    ثابت int64_t PD_X, PD_Y;
+    ثابت int64_t DL_X, DL_Y;
+    ثابت int64_t IC, OC;
+    ثابت int64_t B;
+    ثابت int64_t ټول_3;
 };
 
-struct conv2d_kernel_bounds {
+بنية conv2d_kernel_bounds {
     int64_t y_min, y_max;
     int64_t x_min, x_max;
 };
 
-static inline int64_t conv2d_max64(int64_t a, int64_t b) {
-    return (a > b) ? a : b;
+ساكن مضمن int64_t conv2d_max64(int64_t a, int64_t b) {
+    أرجع (a > b) ? a : b;
 }
 
-static inline int64_t conv2d_min64(int64_t a, int64_t b) {
-    return (a < b) ? a : b;
+ساكن مضمن int64_t conv2d_min64(int64_t a, int64_t b) {
+    أرجع (a < b) ? a : b;
 }
 
-static inline conv2d_kernel_bounds calculate_kernel_bounds(int64_t out_x, int64_t out_y, const conv2d_params & P) {
+ساكن مضمن conv2d_kernel_bounds calculate_kernel_bounds(int64_t بهر_x, int64_t بهر_y, ثابت conv2d_params & P) {
     conv2d_kernel_bounds bounds;
-    bounds.y_min = conv2d_max64(0, (P.PD_Y - out_y * P.ST_Y + P.DL_Y - 1) / P.DL_Y);
-    bounds.y_max = conv2d_min64(P.KH, (P.IH + P.PD_Y - out_y * P.ST_Y + P.DL_Y - 1) / P.DL_Y);
-    bounds.x_min = conv2d_max64(0, (P.PD_X - out_x * P.ST_X + P.DL_X - 1) / P.DL_X);
-    bounds.x_max = conv2d_min64(P.KW, (P.IW + P.PD_X - out_x * P.ST_X + P.DL_X - 1) / P.DL_X);
-    return bounds;
+    bounds.y_min = conv2d_max64(0, (P.PD_Y - بهر_y * P.ST_Y + P.DL_Y - 1) / P.DL_Y);
+    bounds.y_max = conv2d_min64(P.KH, (P.IH + P.PD_Y - بهر_y * P.ST_Y + P.DL_Y - 1) / P.DL_Y);
+    bounds.x_min = conv2d_max64(0, (P.PD_X - بهر_x * P.ST_X + P.DL_X - 1) / P.DL_X);
+    bounds.x_max = conv2d_min64(P.KW, (P.IW + P.PD_X - بهر_x * P.ST_X + P.DL_X - 1) / P.DL_X);
+    أرجع bounds;
 }
 
-static inline int calculate_input_coord(int64_t out_coord, int64_t kern_coord, int64_t stride,
+ساكن مضمن صحيح calculate_ننوت_coord(int64_t بهر_coord, int64_t kern_coord, int64_t stride,
                                         int64_t dilation, int64_t padding) {
-    return out_coord * stride + kern_coord * dilation - padding;
+    أرجع بهر_coord * stride + kern_coord * dilation - padding;
 }
 
 // whcn layout helpers (matching ggml tensor memory order)
-static inline int64_t whcn_input_index(int64_t n, int64_t c, int64_t y, int64_t x, const conv2d_params & P) {
-    return n * (P.IC * P.IW * P.IH) + c * P.IW * P.IH + y * P.IW + x;
+ساكن مضمن int64_t whcn_ننوت_شاخص(int64_t n, int64_t c, int64_t y, int64_t x, ثابت conv2d_params & P) {
+    أرجع n * (P.IC * P.IW * P.IH) + c * P.IW * P.IH + y * P.IW + x;
 }
 
-static inline int64_t whcn_kernel_index(int64_t c_out, int64_t c_in, int64_t ky, int64_t kx, const conv2d_params & P) {
-    return c_out * (P.IC * P.KH * P.KW) + c_in * (P.KH * P.KW) + ky * P.KW + kx;
+ساكن مضمن int64_t whcn_kernel_شاخص(int64_t c_بهر, int64_t c_دننه, int64_t ky, int64_t kx, ثابت conv2d_params & P) {
+    أرجع c_بهر * (P.IC * P.KH * P.KW) + c_دننه * (P.KH * P.KW) + ky * P.KW + kx;
 }
 
-static inline int64_t whcn_output_index(int64_t n, int64_t c, int64_t y, int64_t x, const conv2d_params & P) {
-    return n * (P.OC * P.OW * P.OH) + c * P.OW * P.OH + y * P.OW + x;
+ساكن مضمن int64_t whcn_output_شاخص(int64_t n, int64_t c, int64_t y, int64_t x, ثابت conv2d_params & P) {
+    أرجع n * (P.OC * P.OW * P.OH) + c * P.OW * P.OH + y * P.OW + x;
 }
 
 // cwhn layout helpers: buffers are [N][H][W][C] input and [KH][KW][IC][OC] kernel
-static inline int64_t cwhn_input_index(int64_t n, int64_t c, int64_t y, int64_t x, const conv2d_params & P) {
-    return ((n * P.IH + y) * P.IW + x) * P.IC + c;
+ساكن مضمن int64_t cwhn_ننوت_شاخص(int64_t n, int64_t c, int64_t y, int64_t x, ثابت conv2d_params & P) {
+    أرجع ((n * P.IH + y) * P.IW + x) * P.IC + c;
 }
 
-static inline int64_t cwhn_kernel_index(int64_t c_out, int64_t c_in, int64_t ky, int64_t kx, const conv2d_params & P) {
-    return ((ky * P.KW + kx) * P.IC + c_in) * P.OC + c_out;
+ساكن مضمن int64_t cwhn_kernel_شاخص(int64_t c_بهر, int64_t c_دننه, int64_t ky, int64_t kx, ثابت conv2d_params & P) {
+    أرجع ((ky * P.KW + kx) * P.IC + c_دننه) * P.OC + c_بهر;
 }
 
-template <typename T, bool CWHN>
-static void conv2d_kernel(const float * input, const T * kernel, float * output,
-                          const conv2d_params P, const sycl::nd_item<3> & item_ct1) {
-    const int64_t global_idx = item_ct1.get_local_id(2) +
-                               item_ct1.get_group(2) * item_ct1.get_local_range(2);
+کينډۍ <ډول_نوم T, منطقي CWHN>
+ساكن فراغ conv2d_kernel(ثابت عائم * ننوت, ثابت T * kernel, عائم * output,
+                          ثابت conv2d_params P, ثابت sycl::nd_توکی<3> & توکی_ct1) {
+    ثابت int64_t global_idx = توکی_ct1.get_local_id(2) +
+                               توکی_ct1.get_ډله(2) * توکی_ct1.get_local_range(2);
 
-    if (global_idx >= P.TOTAL) {
-        return;
+    إذا (global_idx >= P.ټول_3) {
+        أرجع;
     }
 
-    const int64_t out_x  = global_idx % P.OW;
-    const int64_t out_y  = (global_idx / P.OW) % P.OH;
-    const int64_t c_out  = (global_idx / (P.OW * P.OH)) % P.OC;
-    const int64_t n      = global_idx / (P.OW * P.OH * P.OC);
+    ثابت int64_t بهر_x  = global_idx % P.OW;
+    ثابت int64_t بهر_y  = (global_idx / P.OW) % P.OH;
+    ثابت int64_t c_بهر  = (global_idx / (P.OW * P.OH)) % P.OC;
+    ثابت int64_t n      = global_idx / (P.OW * P.OH * P.OC);
 
-    float acc = 0.0f;
+    عائم acc = 0.0f;
 
-    const conv2d_kernel_bounds bounds = calculate_kernel_bounds(out_x, out_y, P);
+    ثابت conv2d_kernel_bounds bounds = calculate_kernel_bounds(بهر_x, بهر_y, P);
 
-    for (int64_t c_in = 0; c_in < P.IC; ++c_in) {
-        for (int64_t ky = bounds.y_min; ky < bounds.y_max; ++ky) {
-            const int64_t in_y = calculate_input_coord(out_y, ky, P.ST_Y, P.DL_Y, P.PD_Y);
-            for (int64_t kx = bounds.x_min; kx < bounds.x_max; ++kx) {
-                const int64_t in_x = calculate_input_coord(out_x, kx, P.ST_X, P.DL_X, P.PD_X);
-                const float input_val  = input[CWHN ? cwhn_input_index(n, c_in, in_y, in_x, P) : whcn_input_index(n, c_in, in_y, in_x, P)];
-                const T     kernel_val = kernel[CWHN ? cwhn_kernel_index(c_out, c_in, ky, kx, P) : whcn_kernel_index(c_out, c_in, ky, kx, P)];
-                acc += input_val * ggml_sycl_cast<float>(kernel_val);
+    لكل (int64_t c_دننه = 0; c_دننه < P.IC; ++c_دننه) {
+        لكل (int64_t ky = bounds.y_min; ky < bounds.y_max; ++ky) {
+            ثابت int64_t دننه_y = calculate_ننوت_coord(بهر_y, ky, P.ST_Y, P.DL_Y, P.PD_Y);
+            لكل (int64_t kx = bounds.x_min; kx < bounds.x_max; ++kx) {
+                ثابت int64_t دننه_x = calculate_ننوت_coord(بهر_x, kx, P.ST_X, P.DL_X, P.PD_X);
+                ثابت عائم ننوت_val  = ننوت[CWHN ? cwhn_ننوت_شاخص(n, c_دننه, دننه_y, دننه_x, P) : whcn_ننوت_شاخص(n, c_دننه, دننه_y, دننه_x, P)];
+                ثابت T     kernel_val = kernel[CWHN ? cwhn_kernel_شاخص(c_بهر, c_دننه, ky, kx, P) : whcn_kernel_شاخص(c_بهر, c_دننه, ky, kx, P)];
+                acc += ننوت_val * ggml_sycl_cast<عائم>(kernel_val);
             }
         }
     }
 
-    output[whcn_output_index(n, c_out, out_y, out_x, P)] = acc;
+    output[whcn_output_شاخص(n, c_بهر, بهر_y, بهر_x, P)] = acc;
 }
 
-template <typename T, bool CWHN>
-static void conv2d_sycl(const float * X_D, const T * K_D, float * Y_D,
-                        const conv2d_params P, const queue_ptr & stream) {
-    const int num_blocks = (P.TOTAL + SYCL_CONV2D_BLOCK_SIZE - 1) / SYCL_CONV2D_BLOCK_SIZE;
-    const sycl::range<3> block_dims(1, 1, SYCL_CONV2D_BLOCK_SIZE);
-    const sycl::range<3> block_nums(1, 1, num_blocks);
-    stream->parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-        [=](sycl::nd_item<3> item_ct1) {
-            conv2d_kernel<T, CWHN>(X_D, K_D, Y_D, P, item_ct1);
+کينډۍ <ډول_نوم T, منطقي CWHN>
+ساكن فراغ conv2d_sycl(ثابت عائم * X_D, ثابت T * K_D, عائم * Y_D,
+                        ثابت conv2d_params P, ثابت کتار_ptr & stream) {
+    ثابت صحيح عدد_بلاکونه = (P.ټول_3 + SYCL_CONV2_D_بلاک_اندازه - 1) / SYCL_CONV2_D_بلاک_اندازه;
+    ثابت sycl::range<3> بلاک_dims(1, 1, SYCL_CONV2_D_بلاک_اندازه);
+    ثابت sycl::range<3> بلاک_nums(1, 1, عدد_بلاکونه);
+    stream->parallel_for(sycl::nd_range<3>(بلاک_nums * بلاک_dims, بلاک_dims),
+        [=](sycl::nd_توکی<3> توکی_ct1) {
+            conv2d_kernel<T, CWHN>(X_D, K_D, Y_D, P, توکی_ct1);
         });
 }
 
-void ggml_sycl_op_conv2d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+فراغ ggml_sycl_op_conv2d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
 
-    const ggml_tensor * kernel = dst->src[0];
-    const ggml_tensor * input  = dst->src[1];
-    const float *       K_D    = (const float *) kernel->data;
-    const float *       X_D    = (const float *) input->data;
-    float *             Y_D    = (float *) dst->data;
+    ثابت ggml_tensor * kernel = dst->src[0];
+    ثابت ggml_tensor * ننوت  = dst->src[1];
+    ثابت عائم *       K_D    = (ثابت عائم *) kernel->معلومات;
+    ثابت عائم *       X_D    = (ثابت عائم *) ننوت->معلومات;
+    عائم *             Y_D    = (عائم *) dst->معلومات;
 
     // WHCN: contiguous [KW,KH,IC,OC] kernel and [W,H,C,N] input
     // CWHN: channel-fastest buffer [N][H][W][C] input and [KH][KW][IC][OC] kernel (OC fastest)
-    const bool whcn = ggml_is_contiguous(kernel) && ggml_is_contiguous(input);
-    const bool cwhn = input->nb[2]  == ggml_type_size(input->type) &&
-                      kernel->nb[3] == ggml_type_size(kernel->type);
+    ثابت منطقي whcn = ggml_is_contiguous(kernel) && ggml_is_contiguous(ننوت);
+    ثابت منطقي cwhn = ننوت->nb[2]  == ggml_type_اندازه(ننوت->type) &&
+                      kernel->nb[3] == ggml_type_اندازه(kernel->type);
     GGML_ASSERT(whcn || cwhn);
-    const bool cwhn_layout = !whcn && cwhn; // prefer whcn when both match (degenerate size-1 dims)
+    ثابت منطقي cwhn_layout = !whcn && cwhn; // prefer whcn when both match (degenerate size-1 dims)
 
     GGML_ASSERT(kernel->type == GGML_TYPE_F16 || kernel->type == GGML_TYPE_F32);
-    GGML_ASSERT(input->type == GGML_TYPE_F32);
+    GGML_ASSERT(ننوت->type == GGML_TYPE_F32);
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
 
     // same number of input channels
-    GGML_ASSERT(input->ne[2] == kernel->ne[2]);
+    GGML_ASSERT(ننوت->ne[2] == kernel->ne[2]);
 
-    const queue_ptr stream = ctx.stream();
+    ثابت کتار_ptr stream = ctx.stream();
 
-    const int32_t * p    = (const int32_t *) dst->op_params;
-    const int       ST_X = p[0];
-    const int       ST_Y = p[1];
-    const int       PD_X = p[2];
-    const int       PD_Y = p[3];
-    const int       DL_X = p[4];
-    const int       DL_Y = p[5];
+    ثابت int32_t * p    = (ثابت int32_t *) dst->op_params;
+    ثابت صحيح       ST_X = p[0];
+    ثابت صحيح       ST_Y = p[1];
+    ثابت صحيح       PD_X = p[2];
+    ثابت صحيح       PD_Y = p[3];
+    ثابت صحيح       DL_X = p[4];
+    ثابت صحيح       DL_Y = p[5];
 
-    const int IW = input->ne[0];
-    const int IH = input->ne[1];
-    const int OW = dst->ne[0];
-    const int OH = dst->ne[1];
-    const int KW = kernel->ne[0];
-    const int KH = kernel->ne[1];
-    const int IC = input->ne[2];
-    const int OC = kernel->ne[3];
-    const int B  = input->ne[3];
+    ثابت صحيح IW = ننوت->ne[0];
+    ثابت صحيح IH = ننوت->ne[1];
+    ثابت صحيح OW = dst->ne[0];
+    ثابت صحيح OH = dst->ne[1];
+    ثابت صحيح KW = kernel->ne[0];
+    ثابت صحيح KH = kernel->ne[1];
+    ثابت صحيح IC = ننوت->ne[2];
+    ثابت صحيح OC = kernel->ne[3];
+    ثابت صحيح B  = ننوت->ne[3];
 
-    const int64_t     total  = (int64_t) B * OC * OH * OW;
-    const conv2d_params params = { IW, IH, OW, OH, KW, KH, ST_X, ST_Y, PD_X, PD_Y, DL_X, DL_Y, IC, OC, B, total };
+    ثابت int64_t     ټول  = (int64_t) B * OC * OH * OW;
+    ثابت conv2d_params params = { IW, IH, OW, OH, KW, KH, ST_X, ST_Y, PD_X, PD_Y, DL_X, DL_Y, IC, OC, B, ټول };
 
-    if (cwhn_layout) {
-        if (kernel->type == GGML_TYPE_F16) {
-            conv2d_sycl<sycl::half, true>(X_D, (const sycl::half *) K_D, Y_D, params, stream);
-        } else {
-            conv2d_sycl<float, true>(X_D, K_D, Y_D, params, stream);
+    إذا (cwhn_layout) {
+        إذا (kernel->type == GGML_TYPE_F16) {
+            conv2d_sycl<sycl::half, ریښتیا>(X_D, (ثابت sycl::half *) K_D, Y_D, params, stream);
+        } وإلا {
+            conv2d_sycl<عائم, ریښتیا>(X_D, K_D, Y_D, params, stream);
         }
-    } else {
-        if (kernel->type == GGML_TYPE_F16) {
-            conv2d_sycl<sycl::half, false>(X_D, (const sycl::half *) K_D, Y_D, params, stream);
-        } else {
-            conv2d_sycl<float, false>(X_D, K_D, Y_D, params, stream);
+    } وإلا {
+        إذا (kernel->type == GGML_TYPE_F16) {
+            conv2d_sycl<sycl::half, خطأ>(X_D, (ثابت sycl::half *) K_D, Y_D, params, stream);
+        } وإلا {
+            conv2d_sycl<عائم, خطأ>(X_D, K_D, Y_D, params, stream);
         }
     }
 }

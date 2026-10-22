@@ -1,86 +1,86 @@
-#pragma once
+#لارښوونه once
 
-#include <atomic>
-#include <cassert>
-#include <cerrno>
-#include <cstdarg>
-#include <cstddef>
-#include <cstdint>
-#include <cstdio>
-#include <cstdlib>
-#include <ctime>
+#ضمن <atomic>
+#ضمن <cassert>
+#ضمن <cerrno>
+#ضمن <cstdarg>
+#ضمن <cstddef>
+#ضمن <cstdint>
+#ضمن <cstdio>
+#ضمن <cstdlib>
+#ضمن <ctime>
 
-#define unlikely(x) __builtin_expect(!!(x), 0)
-#define likely(x)   __builtin_expect(!!(x), 1)
+#تعریف_کړه unlikely(x) __builtin_expect(!!(x), 0)
+#تعریف_کړه likely(x)   __builtin_expect(!!(x), 1)
 
-#ifndef UNUSED
-#    define UNUSED(x) (void) (x)
-#endif
+#که_نه_تعریف_شوی ناکارول_شوی
+#    define ناکارول_شوی(x) (فراغ) (x)
+#د_که_پای
 
 /** Checks is a value is a power of two. Does not handle zero. */
-#define IS_POT(v) (((v) & ((v) - 1)) == 0)
+#تعریف_کړه IS_POT(v) (((v) & ((v) - 1)) == 0)
 
 /** Checks is a value is a power of two. Zero handled. */
-#define IS_POT_NONZERO(v) ((v) != 0 && IS_POT(v))
+#تعریف_کړه IS_POT_NONZERO(v) ((v) != 0 && IS_POT(v))
 
 /** Align a value to a power of two */
-#define ALIGN_POT(x, pot_align) (((x) + (pot_align) - 1) & ~((pot_align) - 1))
+#تعریف_کړه ALIGN_POT(x, pot_align) (((x) + (pot_align) - 1) & ~((pot_align) - 1))
 
-#define p_atomic_read(_v) __atomic_load_n((_v), __ATOMIC_ACQUIRE)
+#تعریف_کړه p_atomic_read(_v) __atomic_load_n((_v), __ATOMIC_ACQUIRE)
 
-static inline bool util_is_power_of_two_nonzero64(uint64_t v) {
-    return IS_POT_NONZERO(v);
+ساكن مضمن bool util_is_power_د_two_nonzero64(uint64_t v) {
+    أرجع IS_POT_NONZERO(v);
 }
 
-static inline uint64_t align64(uint64_t value, uint64_t alignment) {
-    assert(util_is_power_of_two_nonzero64(alignment));
-    return ALIGN_POT(value, alignment);
+ساكن مضمن uint64_t align64(uint64_t ارزښت, uint64_t alignment) {
+    أكد(util_is_power_د_two_nonzero64(alignment));
+    أرجع ALIGN_POT(ارزښت, alignment);
 }
 
-struct list_head {
-    list_head * prev;
-    list_head * next;
+بنية list_سر {
+    list_سر * prev;
+    list_سر * بل;
 };
 
-struct util_sparse_array {
-    size_t   elem_size;
-    unsigned node_size_log2;
+بنية util_sparse_array {
+    size_t   elem_اندازه;
+    بینښه غوټه_اندازه_log2;
 
-    uintptr_t root;
+    uintptr_t ریښه;
 };
 
-void * util_sparse_array_get(util_sparse_array * arr, uint64_t idx);
-void   util_sparse_array_init(util_sparse_array * arr, size_t elem_size, size_t node_size);
+فراغ * util_sparse_array_get(util_sparse_array * arr, uint64_t idx);
+فراغ   util_sparse_array_init(util_sparse_array * arr, size_t elem_اندازه, size_t غوټه_اندازه);
 
-inline void os_time_sleep(int64_t usecs) {
-    timespec time;
-    time.tv_sec  = usecs / 1000000;
-    time.tv_nsec = (usecs % 1000000) * 1000;
-    while (clock_nanosleep(CLOCK_MONOTONIC, 0, &time, &time) == EINTR)
+مضمن فراغ os_وخت_sleep(int64_t usecs) {
+    timespec وخت;
+    وخت.tv_sec  = usecs / 1000000;
+    وخت.tv_nsec = (usecs % 1000000) * 1000;
+    طالما (clock_nanosleep(CLOCK_MONOTONIC, 0, &وخت, &وخت) == EINTR)
         ;
 }
 
-struct timer_data {
-    long long start;
-    long long total;
-    long long count;
+بنية timer_معلومات {
+    اوږد اوږد پیل;
+    اوږد اوږد ټول;
+    اوږد اوږد شمېر;
 };
 
-static inline void start_timer(timer_data * timer) {
+ساكن مضمن فراغ پیل_timer(timer_معلومات * timer) {
     timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    timer->start = (long long) ts.tv_sec * 1000000000LL + ts.tv_nsec;
+    timer->پیل = (اوږد اوږد) ts.tv_sec * 1000000000LL + ts.tv_nsec;
 }
 
 // returns the duration in ns
-static inline long long stop_timer(timer_data * timer) {
+ساكن مضمن اوږد اوږد stop_timer(timer_معلومات * timer) {
     timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    long long timer_end = (long long) ts.tv_sec * 1000000000LL + ts.tv_nsec;
+    اوږد اوږد timer_پای_ټکی = (اوږد اوږد) ts.tv_sec * 1000000000LL + ts.tv_nsec;
 
-    long long duration = (timer_end - timer->start);
-    timer->total += duration;
-    timer->count += 1;
+    اوږد اوږد duration = (timer_پای_ټکی - timer->پیل);
+    timer->ټول += duration;
+    timer->شمېر += 1;
 
-    return duration;
+    أرجع duration;
 }

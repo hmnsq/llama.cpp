@@ -1,114 +1,114 @@
-#include "ggml.h"
-#include "ggml-backend.h"
-#include "ggml-impl.h"
-#include "gguf.h"
+#ضمن "ggml.h"
+#ضمن "ggml-backend.h"
+#ضمن "ggml-impl.h"
+#ضمن "gguf.h"
 
-#include <cinttypes>
-#include <cstddef>
-#include <cstdint>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <cerrno>
-#include <map>
-#include <new>
-#include <stdexcept>
-#include <string>
-#include <unordered_set>
-#include <vector>
+#ضمن <cinttypes>
+#ضمن <cstddef>
+#ضمن <cstdint>
+#ضمن <cstdio>
+#ضمن <cstdlib>
+#ضمن <cstring>
+#ضمن <cerrno>
+#ضمن <map>
+#ضمن <new>
+#ضمن <stdexcept>
+#ضمن <string>
+#ضمن <unordered_set>
+#ضمن <vector>
 
-#define GGUF_MAX_STRING_LENGTH  (1024*1024*1024)
-#define GGUF_MAX_ARRAY_ELEMENTS (1024*1024*1024)
+#تعریف_کړه GGUF_MAX_STRING_اوږدتیا  (1024*1024*1024)
+#تعریف_کړه GGUF_MAX_ARRAY_ELEMENTS (1024*1024*1024)
 
-#ifdef _WIN32
+#که_تعریف_شوی _WIN32
 #    define gguf_ftell _ftelli64
 #    define gguf_fseek _fseeki64
-#else
+#وإلا
 #    define gguf_ftell ftello
 #    define gguf_fseek fseeko
-#endif
+#د_که_پای
 
-template <typename T>
-struct type_to_gguf_type;
+کينډۍ <ډول_نوم T>
+بنية type_منزل_gguf_type;
 
-template <>
-struct type_to_gguf_type<uint8_t> {
-    static constexpr enum gguf_type value = GGUF_TYPE_UINT8;
+کينډۍ <>
+بنية type_منزل_gguf_type<uint8_t> {
+    ساكن constexpr تعداد gguf_type value = GGUF_TYPE_UINT8;
 };
 
-template <>
-struct type_to_gguf_type<int8_t> {
-    static constexpr enum gguf_type value = GGUF_TYPE_INT8;
+کينډۍ <>
+بنية type_منزل_gguf_type<int8_t> {
+    ساكن constexpr تعداد gguf_type value = GGUF_TYPE_INT8;
 };
 
-template <>
-struct type_to_gguf_type<uint16_t> {
-    static constexpr enum gguf_type value = GGUF_TYPE_UINT16;
+کينډۍ <>
+بنية type_منزل_gguf_type<uint16_t> {
+    ساكن constexpr تعداد gguf_type value = GGUF_TYPE_UINT16;
 };
 
-template <>
-struct type_to_gguf_type<int16_t> {
-    static constexpr enum gguf_type value = GGUF_TYPE_INT16;
+کينډۍ <>
+بنية type_منزل_gguf_type<int16_t> {
+    ساكن constexpr تعداد gguf_type value = GGUF_TYPE_INT16;
 };
 
-template <>
-struct type_to_gguf_type<uint32_t> {
-    static constexpr enum gguf_type value = GGUF_TYPE_UINT32;
+کينډۍ <>
+بنية type_منزل_gguf_type<uint32_t> {
+    ساكن constexpr تعداد gguf_type value = GGUF_TYPE_UINT32;
 };
 
-template <>
-struct type_to_gguf_type<int32_t> {
-    static constexpr enum gguf_type value = GGUF_TYPE_INT32;
+کينډۍ <>
+بنية type_منزل_gguf_type<int32_t> {
+    ساكن constexpr تعداد gguf_type value = GGUF_TYPE_INT32;
 };
 
-template <>
-struct type_to_gguf_type<float> {
-    static constexpr enum gguf_type value = GGUF_TYPE_FLOAT32;
+کينډۍ <>
+بنية type_منزل_gguf_type<عائم> {
+    ساكن constexpr تعداد gguf_type value = GGUF_TYPE_FLOAT32;
 };
 
-template <>
-struct type_to_gguf_type<bool> {
-    static constexpr enum gguf_type value = GGUF_TYPE_BOOL;
+کينډۍ <>
+بنية type_منزل_gguf_type<منطقي> {
+    ساكن constexpr تعداد gguf_type value = GGUF_TYPE_BOOL;
 };
 
-template <>
-struct type_to_gguf_type<std::string> {
-    static constexpr enum gguf_type value = GGUF_TYPE_STRING;
+کينډۍ <>
+بنية type_منزل_gguf_type<std::string> {
+    ساكن constexpr تعداد gguf_type value = GGUF_TYPE_STRING;
 };
 
-template <>
-struct type_to_gguf_type<uint64_t> {
-    static constexpr enum gguf_type value = GGUF_TYPE_UINT64;
+کينډۍ <>
+بنية type_منزل_gguf_type<uint64_t> {
+    ساكن constexpr تعداد gguf_type value = GGUF_TYPE_UINT64;
 };
 
-template <>
-struct type_to_gguf_type<int64_t> {
-    static constexpr enum gguf_type value = GGUF_TYPE_INT64;
+کينډۍ <>
+بنية type_منزل_gguf_type<int64_t> {
+    ساكن constexpr تعداد gguf_type value = GGUF_TYPE_INT64;
 };
 
-template <>
-struct type_to_gguf_type<double> {
-    static constexpr enum gguf_type value = GGUF_TYPE_FLOAT64;
+کينډۍ <>
+بنية type_منزل_gguf_type<مزدوج> {
+    ساكن constexpr تعداد gguf_type value = GGUF_TYPE_FLOAT64;
 };
 
-static const std::map<gguf_type, size_t> GGUF_TYPE_SIZE = {
-    {GGUF_TYPE_UINT8,   sizeof(uint8_t)},
-    {GGUF_TYPE_INT8,    sizeof(int8_t)},
-    {GGUF_TYPE_UINT16,  sizeof(uint16_t)},
-    {GGUF_TYPE_INT16,   sizeof(int16_t)},
-    {GGUF_TYPE_UINT32,  sizeof(uint32_t)},
-    {GGUF_TYPE_INT32,   sizeof(int32_t)},
-    {GGUF_TYPE_FLOAT32, sizeof(float)},
-    {GGUF_TYPE_BOOL,    sizeof(int8_t)},
+ساكن ثابت std::map<gguf_type, size_t> GGUF_TYPE_اندازه = {
+    {GGUF_TYPE_UINT8,   حجم(uint8_t)},
+    {GGUF_TYPE_INT8,    حجم(int8_t)},
+    {GGUF_TYPE_UINT16,  حجم(uint16_t)},
+    {GGUF_TYPE_INT16,   حجم(int16_t)},
+    {GGUF_TYPE_UINT32,  حجم(uint32_t)},
+    {GGUF_TYPE_INT32,   حجم(int32_t)},
+    {GGUF_TYPE_FLOAT32, حجم(عائم)},
+    {GGUF_TYPE_BOOL,    حجم(int8_t)},
     {GGUF_TYPE_STRING,  0}, // undefined
     {GGUF_TYPE_ARRAY,   0}, // undefined
-    {GGUF_TYPE_UINT64,  sizeof(uint64_t)},
-    {GGUF_TYPE_INT64,   sizeof(int64_t)},
-    {GGUF_TYPE_FLOAT64, sizeof(double)},
+    {GGUF_TYPE_UINT64,  حجم(uint64_t)},
+    {GGUF_TYPE_INT64,   حجم(int64_t)},
+    {GGUF_TYPE_FLOAT64, حجم(مزدوج)},
 };
-static_assert(GGUF_TYPE_COUNT == 13, "GGUF_TYPE_COUNT != 13");
+static_assert(GGUF_TYPE_شمېر == 13, "GGUF_TYPE_COUNT != 13");
 
-static const std::map<gguf_type, const char *> GGUF_TYPE_NAME = {
+ساكن ثابت std::map<gguf_type, ثابت حرف *> GGUF_TYPE_NAME = {
     {GGUF_TYPE_UINT8,   "u8"},
     {GGUF_TYPE_INT8,    "i8"},
     {GGUF_TYPE_UINT16,  "u16"},
@@ -123,377 +123,377 @@ static const std::map<gguf_type, const char *> GGUF_TYPE_NAME = {
     {GGUF_TYPE_INT64,   "i64"},
     {GGUF_TYPE_FLOAT64, "f64"},
 };
-static_assert(GGUF_TYPE_COUNT == 13, "GGUF_TYPE_COUNT != 13");
+static_assert(GGUF_TYPE_شمېر == 13, "GGUF_TYPE_COUNT != 13");
 
-size_t gguf_type_size(enum gguf_type type) {
-    auto it = GGUF_TYPE_SIZE.find(type);
-    return it == GGUF_TYPE_SIZE.end() ? 0 : it->second;
+size_t gguf_type_اندازه(تعداد gguf_type type) {
+    خپلکاری it = GGUF_TYPE_اندازه.find(type);
+    أرجع it == GGUF_TYPE_اندازه.end() ? 0 : it->second;
 }
 
-struct gguf_kv {
-    std::string key;
+بنية gguf_kv {
+    std::string کلی;
 
-    bool is_array;
-    enum gguf_type type;
+    منطقي is_array;
+    تعداد gguf_type type;
 
-    std::vector<int8_t>      data;
-    std::vector<std::string> data_string;
+    std::vector<int8_t>      معلومات;
+    std::vector<std::string> معلومات_string;
 
-    template <typename T>
-    gguf_kv(const std::string & key, const T value)
-            : key(key), is_array(false), type(type_to_gguf_type<T>::value) {
-        GGML_ASSERT(!key.empty());
-        data.resize(sizeof(T));
-        memcpy(data.data(), &value, sizeof(T));
+    کينډۍ <ډول_نوم T>
+    gguf_kv(ثابت std::string & کلی, ثابت T value)
+            : کلی(کلی), is_array(خطأ), type(type_منزل_gguf_type<T>::value) {
+        GGML_ASSERT(!کلی.تشه());
+        معلومات.resize(حجم(T));
+        حافظه_نقل(معلومات.معلومات(), &value, حجم(T));
     }
 
-    template <typename T>
-    gguf_kv(const std::string & key, const std::vector<T> & value)
-            : key(key), is_array(true), type(type_to_gguf_type<T>::value) {
-        GGML_ASSERT(!key.empty());
-        data.resize(value.size()*sizeof(T));
-        for (size_t i = 0; i < value.size(); ++i) {
-            const T tmp = value[i];
-            memcpy(data.data() + i*sizeof(T), &tmp, sizeof(T));
+    کينډۍ <ډول_نوم T>
+    gguf_kv(ثابت std::string & کلی, ثابت std::vector<T> & value)
+            : کلی(کلی), is_array(ریښتیا), type(type_منزل_gguf_type<T>::value) {
+        GGML_ASSERT(!کلی.تشه());
+        معلومات.resize(value.size()*حجم(T));
+        لكل (size_t i = 0; i < value.size(); ++i) {
+            ثابت T tmp = value[i];
+            حافظه_نقل(معلومات.معلومات() + i*حجم(T), &tmp, حجم(T));
         }
     }
 
-    gguf_kv(const std::string & key, const std::string & value)
-            : key(key), is_array(false), type(GGUF_TYPE_STRING) {
-        GGML_ASSERT(!key.empty());
-        data_string.push_back(value);
+    gguf_kv(ثابت std::string & کلی, ثابت std::string & value)
+            : کلی(کلی), is_array(خطأ), type(GGUF_TYPE_STRING) {
+        GGML_ASSERT(!کلی.تشه());
+        معلومات_string.push_back(value);
     }
 
-    gguf_kv(const std::string & key, const std::vector<std::string> & value)
-            : key(key), is_array(true), type(GGUF_TYPE_STRING) {
-        GGML_ASSERT(!key.empty());
-        data_string = value;
+    gguf_kv(ثابت std::string & کلی, ثابت std::vector<std::string> & value)
+            : کلی(کلی), is_array(ریښتیا), type(GGUF_TYPE_STRING) {
+        GGML_ASSERT(!کلی.تشه());
+        معلومات_string = value;
     }
 
-    const std::string & get_key() const {
-        return key;
+    ثابت std::string & get_کلی() ثابت {
+        أرجع کلی;
     }
 
-    const enum gguf_type & get_type() const {
-        return type;
+    ثابت تعداد gguf_type & get_type() ثابت {
+        أرجع type;
     }
 
-    size_t get_ne() const {
-        if (type == GGUF_TYPE_STRING) {
-            const size_t ne = data_string.size();
+    size_t get_ne() ثابت {
+        إذا (type == GGUF_TYPE_STRING) {
+            ثابت size_t ne = معلومات_string.size();
             GGML_ASSERT(is_array || ne == 1);
-            return ne;
+            أرجع ne;
         }
-        const size_t type_size = gguf_type_size(type);
-        GGML_ASSERT(data.size() % type_size == 0);
-        const size_t ne = data.size() / type_size;
+        ثابت size_t type_اندازه = gguf_type_اندازه(type);
+        GGML_ASSERT(معلومات.size() % type_اندازه == 0);
+        ثابت size_t ne = معلومات.size() / type_اندازه;
         GGML_ASSERT(is_array || ne == 1);
-        return ne;
+        أرجع ne;
     }
 
-    template <typename T>
-    const T & get_val(const size_t i = 0) const {
-        GGML_ASSERT(type_to_gguf_type<T>::value == type);
-        if constexpr (std::is_same<T, std::string>::value) {
-            GGML_ASSERT(data_string.size() >= i+1);
-            return data_string[i];
+    کينډۍ <ډول_نوم T>
+    ثابت T & get_val(ثابت size_t i = 0) ثابت {
+        GGML_ASSERT(type_منزل_gguf_type<T>::value == type);
+        إذا constexpr (std::is_same<T, std::string>::value) {
+            GGML_ASSERT(معلومات_string.size() >= i+1);
+            أرجع معلومات_string[i];
         }
-        const size_t type_size = gguf_type_size(type);
-        GGML_ASSERT(data.size() % type_size == 0);
-        GGML_ASSERT(data.size() >= (i+1)*type_size);
-        return reinterpret_cast<const T *>(data.data())[i];
+        ثابت size_t type_اندازه = gguf_type_اندازه(type);
+        GGML_ASSERT(معلومات.size() % type_اندازه == 0);
+        GGML_ASSERT(معلومات.size() >= (i+1)*type_اندازه);
+        أرجع reinterpret_cast<ثابت T *>(معلومات.معلومات())[i];
     }
 
-    void cast(const enum gguf_type new_type) {
-        const size_t new_type_size = gguf_type_size(new_type);
-        GGML_ASSERT(data.size() % new_type_size == 0);
+    فراغ cast(ثابت تعداد gguf_type new_type) {
+        ثابت size_t new_type_اندازه = gguf_type_اندازه(new_type);
+        GGML_ASSERT(معلومات.size() % new_type_اندازه == 0);
         type = new_type;
     }
 };
 
-struct gguf_tensor_info {
-    struct ggml_tensor t; // for holding the equivalent info
-    uint64_t offset;      // offset from start of `data`, must be a multiple of `ALIGNMENT`
+بنية gguf_tensor_info {
+    بنية ggml_tensor t; // for holding the equivalent info
+    uint64_t دننه_واټن;      // offset from start of `data`, must be a multiple of `ALIGNMENT`
 };
 
-struct gguf_context {
-    uint32_t version = GGUF_VERSION;
+بنية gguf_context {
+    uint32_t نسخه_2 = GGUF_نسخه;
 
-    std::vector<struct gguf_kv> kv;
-    std::vector<struct gguf_tensor_info> info;
+    std::vector<بنية gguf_kv> kv;
+    std::vector<بنية gguf_tensor_info> info;
 
     size_t alignment = GGUF_DEFAULT_ALIGNMENT;
-    size_t offset    = 0; // offset of `data` from beginning of file
+    size_t دننه_واټن    = 0; // offset of `data` from beginning of file
     size_t size      = 0; // size of `data` in bytes
 
-    void * data = nullptr;
+    فراغ * معلومات = تش_اشاره;
 };
 
-struct gguf_reader {
+بنية gguf_reader {
     gguf_reader(
             gguf_reader_callback_t callback,
-            void * userdata,
+            فراغ * userdata,
             size_t max_chunk_read,
-            uint64_t data_offset = 0,
+            uint64_t معلومات_دننه_واټن = 0,
             uint64_t nbytes_remain = 0)
         : callback(callback),
           userdata(userdata),
           max_chunk_read(max_chunk_read),
-          start_offset(data_offset),
-          data_offset(data_offset),
+          پیل_دننه_واټن(معلومات_دننه_واټن),
+          معلومات_دننه_واټن(معلومات_دننه_واټن),
           nbytes_remain(nbytes_remain) {
         GGML_ASSERT(max_chunk_read > 0);
     }
 
     // helper for remaining bytes in a file
-    static uint64_t file_remain(FILE * file) {
-        const int64_t cur = gguf_ftell(file);
-        if (cur < 0) {
-            return 0;
+    ساكن uint64_t file_remain(FILE * file) {
+        ثابت int64_t cur = gguf_ftell(file);
+        إذا (cur < 0) {
+            أرجع 0;
         }
-        if (gguf_fseek(file, 0, SEEK_END) != 0) {
+        إذا (gguf_fseek(file, 0, SEEK_END) != 0) {
             gguf_fseek(file, cur, SEEK_SET);
 
-            return 0;
+            أرجع 0;
         }
-        const int64_t end = gguf_ftell(file);
-        if (end < 0) {
+        ثابت int64_t end = gguf_ftell(file);
+        إذا (end < 0) {
             gguf_fseek(file, cur, SEEK_SET);
 
-            return 0;
+            أرجع 0;
         }
         gguf_fseek(file, cur, SEEK_SET);
-        return static_cast<uint64_t>(end - cur);
+        أرجع static_cast<uint64_t>(end - cur);
     }
 
-    template <typename T>
-    bool read(T & dst) const {
-        const size_t size = sizeof(dst);
-        if (size > nbytes_remain) {
-            return false;
+    کينډۍ <ډول_نوم T>
+    منطقي اقرأ(T & dst) ثابت {
+        ثابت size_t size = حجم(dst);
+        إذا (size > nbytes_remain) {
+            أرجع خطأ;
         }
-        return read_raw(&dst, size) == size;
+        أرجع read_raw(&dst, size) == size;
     }
 
-    template <typename T>
-    bool read(std::vector<T> & dst, const size_t n) const {
-        if (n > GGUF_MAX_ARRAY_ELEMENTS) {
-            return false;
+    کينډۍ <ډول_نوم T>
+    منطقي اقرأ(std::vector<T> & dst, ثابت size_t n) ثابت {
+        إذا (n > GGUF_MAX_ARRAY_ELEMENTS) {
+            أرجع خطأ;
         }
-        if constexpr (std::is_same<T, std::string>::value) {
+        إذا constexpr (std::is_same<T, std::string>::value) {
             // strings are prefixed with their length, so we need to account for that
-            if (n > SIZE_MAX / sizeof(uint64_t)) {
-                return false;
+            إذا (n > SIZE_MAX / حجم(uint64_t)) {
+                أرجع خطأ;
             }
-            if (nbytes_remain < n * sizeof(uint64_t)) {
-                return false;
+            إذا (nbytes_remain < n * حجم(uint64_t)) {
+                أرجع خطأ;
             }
-        } else {
-            if (n > SIZE_MAX / sizeof(T)) {
-                return false;
+        } وإلا {
+            إذا (n > SIZE_MAX / حجم(T)) {
+                أرجع خطأ;
             }
-            if (nbytes_remain < n * sizeof(T)) {
-                return false;
+            إذا (nbytes_remain < n * حجم(T)) {
+                أرجع خطأ;
             }
         }
         dst.resize(n);
-        for (size_t i = 0; i < dst.size(); ++i) {
-            if constexpr (std::is_same<T, bool>::value) {
-                bool tmp;
-                if (!read(tmp)) {
-                    return false;
+        لكل (size_t i = 0; i < dst.size(); ++i) {
+            إذا constexpr (std::is_same<T, منطقي>::value) {
+                منطقي tmp;
+                إذا (!اقرأ(tmp)) {
+                    أرجع خطأ;
                 }
                 dst[i] = tmp;
-            } else {
-                if (!read(dst[i])) {
-                    return false;
+            } وإلا {
+                إذا (!اقرأ(dst[i])) {
+                    أرجع خطأ;
                 }
             }
         }
-        return true;
+        أرجع ریښتیا;
     }
 
-    bool read(bool & dst) const {
+    منطقي اقرأ(منطقي & dst) ثابت {
         int8_t tmp = -1;
-        if (!read(tmp)) {
-            return false;
+        إذا (!اقرأ(tmp)) {
+            أرجع خطأ;
         }
         dst = tmp != 0;
-        return true;
+        أرجع ریښتیا;
     }
 
-    bool read(enum ggml_type & dst) const {
+    منطقي اقرأ(تعداد ggml_type & dst) ثابت {
         int32_t tmp = -1;
-        if (!read(tmp)) {
-            return false;
+        إذا (!اقرأ(tmp)) {
+            أرجع خطأ;
         }
         dst = ggml_type(tmp);
-        return true;
+        أرجع ریښتیا;
     }
 
-    bool read(enum gguf_type & dst) const {
+    منطقي اقرأ(تعداد gguf_type & dst) ثابت {
         int32_t tmp = -1;
-        if (!read(tmp)) {
-            return false;
+        إذا (!اقرأ(tmp)) {
+            أرجع خطأ;
         }
         dst = gguf_type(tmp);
-        return true;
+        أرجع ریښتیا;
     }
 
-    bool read(std::string & dst) const {
+    منطقي اقرأ(std::string & dst) ثابت {
         uint64_t size = 0;
-        if (!read(size)) {
-            return false;
+        إذا (!اقرأ(size)) {
+            أرجع خطأ;
         }
-        if (size > GGUF_MAX_STRING_LENGTH) {
-            GGML_LOG_ERROR("%s: string length %" PRIu64 " exceeds maximum %" PRIu64 "\n", __func__, size, (uint64_t) GGUF_MAX_STRING_LENGTH);
-            return false;
+        إذا (size > GGUF_MAX_STRING_اوږدتیا) {
+            GGML_LOG_ERROR("%s: string length %" PRIu64 " exceeds maximum %" PRIu64 "\n", __func__, size, (uint64_t) GGUF_MAX_STRING_اوږدتیا);
+            أرجع خطأ;
         }
-        if (size > nbytes_remain) {
+        إذا (size > nbytes_remain) {
             GGML_LOG_ERROR("%s: string length %" PRIu64 " exceeds remaining file size %" PRIu64 " bytes\n", __func__, size, nbytes_remain);
-            return false;
+            أرجع خطأ;
         }
         dst.resize(static_cast<size_t>(size));
-        return read_raw(dst.data(), static_cast<size_t>(size)) == size;
+        أرجع read_raw(dst.معلومات(), static_cast<size_t>(size)) == size;
     }
 
-    bool read(void * dst, const size_t size) const {
-        if (size > nbytes_remain) {
-            return false;
+    منطقي اقرأ(فراغ * dst, ثابت size_t size) ثابت {
+        إذا (size > nbytes_remain) {
+            أرجع خطأ;
         }
-        return read_raw(dst, size) == size;
+        أرجع read_raw(dst, size) == size;
     }
 
-    uint64_t tell() const {
-        return data_offset;
+    uint64_t tell() ثابت {
+        أرجع معلومات_دننه_واټن;
     }
 
     // position in the file where the GGUF data starts, alignment is relative to it, not to the file
-    uint64_t start() const {
-        return start_offset;
+    uint64_t start() ثابت {
+        أرجع پیل_دننه_واټن;
     }
 
-    bool seek(uint64_t absolute_offset) const {
-        const uint64_t end_offset = uint64_t(data_offset) + nbytes_remain;
-        if (absolute_offset > end_offset) {
-            return false;
+    منطقي seek(uint64_t absolute_دننه_واټن) ثابت {
+        ثابت uint64_t پای_ټکی_دننه_واټن = uint64_t(معلومات_دننه_واټن) + nbytes_remain;
+        إذا (absolute_دننه_واټن > پای_ټکی_دننه_واټن) {
+            أرجع خطأ;
         }
 
-        data_offset = absolute_offset;
-        nbytes_remain = end_offset - absolute_offset;
+        معلومات_دننه_واټن = absolute_دننه_واټن;
+        nbytes_remain = پای_ټکی_دننه_واټن - absolute_دننه_واټن;
 
-        return true;
+        أرجع ریښتیا;
     }
 
-private:
-    size_t read_raw(void * dst, size_t size) const {
-        if (callback == nullptr || size == 0) {
-            return 0;
+خاص:
+    size_t read_raw(فراغ * dst, size_t size) ثابت {
+        إذا (callback == تش_اشاره || size == 0) {
+            أرجع 0;
         }
 
-        uint8_t * data = static_cast<uint8_t *>(dst);
-        size_t total_nread = 0;
-        bool reached_eof = false;
+        uint8_t * معلومات = static_cast<uint8_t *>(dst);
+        size_t ټول_nread = 0;
+        منطقي reached_eof = خطأ;
 
-        while (total_nread < size) {
-            const size_t chunk_size = std::min(max_chunk_read, size - total_nread);
-            if (data_offset + total_nread < data_offset) {
-                break;
+        طالما (ټول_nread < size) {
+            ثابت size_t chunk_اندازه = std::min(max_chunk_read, size - ټول_nread);
+            إذا (معلومات_دننه_واټن + ټول_nread < معلومات_دننه_واټن) {
+                اكسر;
             }
-            const size_t nread = callback(userdata, static_cast<void *>(data + total_nread), data_offset + total_nread, chunk_size);
-            total_nread += nread;
-            if (nread != chunk_size) {
-                reached_eof = true;
-                break;
+            ثابت size_t nread = callback(userdata, static_cast<فراغ *>(معلومات + ټول_nread), معلومات_دننه_واټن + ټول_nread, chunk_اندازه);
+            ټول_nread += nread;
+            إذا (nread != chunk_اندازه) {
+                reached_eof = ریښتیا;
+                اكسر;
             }
         }
 
-        data_offset += total_nread;
-        GGML_ASSERT(total_nread <= nbytes_remain);
-        nbytes_remain -= total_nread;
+        معلومات_دننه_واټن += ټول_nread;
+        GGML_ASSERT(ټول_nread <= nbytes_remain);
+        nbytes_remain -= ټول_nread;
 
-        if (reached_eof) {
+        إذا (reached_eof) {
             nbytes_remain = 0;
         }
 
-        return total_nread;
+        أرجع ټول_nread;
     }
 
-    gguf_reader_callback_t callback = nullptr;
-    void * userdata = nullptr;
+    gguf_reader_callback_t callback = تش_اشاره;
+    فراغ * userdata = تش_اشاره;
     size_t max_chunk_read = 0;
-    uint64_t start_offset = 0;
-    mutable uint64_t data_offset = 0;
-    mutable uint64_t nbytes_remain = 0;
+    uint64_t پیل_دننه_واټن = 0;
+    بدلیدونکی uint64_t معلومات_دننه_واټن = 0;
+    بدلیدونکی uint64_t nbytes_remain = 0;
 };
 
-struct gguf_context * gguf_init_empty(void) {
-    return new gguf_context;
+بنية gguf_context * gguf_init_تشه(فراغ) {
+    أرجع جديد gguf_context;
 }
 
-template<typename T>
-bool gguf_read_emplace_helper(const struct gguf_reader & gr, std::vector<struct gguf_kv> & kv, const std::string & key, const bool is_array, const size_t n) {
-    if (is_array) {
+کينډۍ<ډول_نوم T>
+منطقي gguf_read_emplace_helper(ثابت بنية gguf_reader & gr, std::vector<بنية gguf_kv> & kv, ثابت std::string & کلی, ثابت منطقي is_array, ثابت size_t n) {
+    إذا (is_array) {
         std::vector<T> value;
-        try {
-            if (!gr.read(value, n)) {
-                return false;
+        حاول {
+            إذا (!gr.اقرأ(value, n)) {
+                أرجع خطأ;
             }
-        } catch (std::length_error &) {
-            GGML_LOG_ERROR("%s: encountered length_error while reading value for key '%s'\n", __func__, key.c_str());
-            return false;
-        } catch (std::bad_alloc &) {
-            GGML_LOG_ERROR("%s: encountered bad_alloc error while reading value for key '%s'\n", __func__, key.c_str());
-            return false;
+        } امسك (std::length_error &) {
+            GGML_LOG_ERROR("%s: encountered length_error while reading value for key '%s'\n", __func__, کلی.c_str());
+            أرجع خطأ;
+        } امسك (std::bad_alloc &) {
+            GGML_LOG_ERROR("%s: encountered bad_alloc error while reading value for key '%s'\n", __func__, کلی.c_str());
+            أرجع خطأ;
         }
-        kv.emplace_back(key, value);
-    } else {
+        kv.emplace_back(کلی, value);
+    } وإلا {
         T value;
-        if (!gr.read(value)) {
-            return false;
+        إذا (!gr.اقرأ(value)) {
+            أرجع خطأ;
         }
-        kv.emplace_back(key, value);
+        kv.emplace_back(کلی, value);
     }
-    return true;
+    أرجع ریښتیا;
 }
 
-static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr, struct gguf_init_params params) {
-    struct gguf_context * ctx = new gguf_context;
+ساكن بنية gguf_context * gguf_init_from_reader(ثابت بنية gguf_reader & gr, بنية gguf_init_params params) {
+    بنية gguf_context * ctx = جديد gguf_context;
 
-    bool ok = true;
+    منطقي ok = ریښتیا;
 
     // file magic
     {
-        std::vector<char> magic;
-        ok = ok && gr.read(magic, 4);
+        std::vector<حرف> magic;
+        ok = ok && gr.اقرأ(magic, 4);
 
-        if (!ok) {
+        إذا (!ok) {
             GGML_LOG_ERROR("%s: failed to read magic\n", __func__);
             gguf_free(ctx);
-            return nullptr;
+            أرجع تش_اشاره;
         }
 
-        for (uint32_t i = 0; i < magic.size(); i++) {
-            if (magic[i] != GGUF_MAGIC[i]) {
-                char c0 = isprint(magic[0]) ? magic[0] : '?';
-                char c1 = isprint(magic[1]) ? magic[1] : '?';
-                char c2 = isprint(magic[2]) ? magic[2] : '?';
-                char c3 = isprint(magic[3]) ? magic[3] : '?';
+        لكل (uint32_t i = 0; i < magic.size(); i++) {
+            إذا (magic[i] != GGUF_MAGIC[i]) {
+                حرف c0 = isprint(magic[0]) ? magic[0] : '?';
+                حرف c1 = isprint(magic[1]) ? magic[1] : '?';
+                حرف c2 = isprint(magic[2]) ? magic[2] : '?';
+                حرف c3 = isprint(magic[3]) ? magic[3] : '?';
                 GGML_LOG_ERROR("%s: invalid magic characters: '%c%c%c%c', expected 'GGUF'\n", __func__, c0, c1, c2, c3);
                 gguf_free(ctx);
-                return nullptr;
+                أرجع تش_اشاره;
             }
         }
     }
 
-    // header
+    //سرلیک
     int64_t n_kv      = 0;
     int64_t n_tensors = 0;
 
-    if (ok && gr.read(ctx->version)) {
-        if (ok && ctx->version == 0) {
-            GGML_LOG_ERROR("%s: bad GGUF version: %" PRIu32 "\n", __func__, ctx->version);
-            ok = false;
+    إذا (ok && gr.اقرأ(ctx->نسخه_2)) {
+        إذا (ok && ctx->نسخه_2 == 0) {
+            GGML_LOG_ERROR("%s: bad GGUF version: %" PRIu32 "\n", __func__, ctx->نسخه_2);
+            ok = خطأ;
         }
 
         /*
@@ -503,1229 +503,1229 @@ static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr
          * the last 4 hexadecimal digits to check if the model is the same
          * endianness as the host system.
         */
-        if (ok && (ctx->version & 0x0000FFFF) == 0x00000000) {
-            GGML_LOG_ERROR("%s: failed to load model: this GGUF file version %" PRIu32 " is extremely large, is there a mismatch between the host and model endianness?\n", __func__, ctx->version);
-            ok = false;
+        إذا (ok && (ctx->نسخه_2 & 0x0000FFFF) == 0x00000000) {
+            GGML_LOG_ERROR("%s: failed to load model: this GGUF file version %" PRIu32 " is extremely large, is there a mismatch between the host and model endianness?\n", __func__, ctx->نسخه_2);
+            ok = خطأ;
         }
 
-        if (ok && ctx->version == 1) {
+        إذا (ok && ctx->نسخه_2 == 1) {
             GGML_LOG_ERROR("%s: GGUFv1 is no longer supported, please use a more up-to-date version\n", __func__);
-            ok = false;
+            ok = خطأ;
         }
-        if (ok && ctx->version > GGUF_VERSION) {
+        إذا (ok && ctx->نسخه_2 > GGUF_نسخه) {
             GGML_LOG_ERROR("%s: this GGUF file is version %" PRIu32 " but this software only supports up to version %d\n",
-                __func__, ctx->version, GGUF_VERSION);
-            ok = false;
+                __func__, ctx->نسخه_2, GGUF_نسخه);
+            ok = خطأ;
         }
-    } else {
-        ok = false;
+    } وإلا {
+        ok = خطأ;
     }
 
-    if (ok && gr.read(n_tensors)) {
-        static_assert(sizeof(size_t) <= 8 && sizeof(gguf_tensor_info) >= 2, "int64_t insufficient for indexing");
-        if (n_tensors < 0 || n_tensors > int64_t(SIZE_MAX/sizeof(gguf_tensor_info))) {
+    إذا (ok && gr.اقرأ(n_tensors)) {
+        static_assert(حجم(size_t) <= 8 && حجم(gguf_tensor_info) >= 2, "int64_t insufficient for indexing");
+        إذا (n_tensors < 0 || n_tensors > int64_t(SIZE_MAX/حجم(gguf_tensor_info))) {
             GGML_LOG_ERROR("%s: number of tensors is %" PRIi64 " but must be in [0, %zu]\n",
-                __func__, n_tensors, SIZE_MAX/sizeof(gguf_tensor_info));
-            ok = false;
+                __func__, n_tensors, SIZE_MAX/حجم(gguf_tensor_info));
+            ok = خطأ;
         }
-    } else {
-        ok = false;
+    } وإلا {
+        ok = خطأ;
     }
 
-    if (ok && gr.read(n_kv)) {
-        static_assert(sizeof(size_t) <= 8 && sizeof(gguf_tensor_info) >= 2, "int64_t insufficient for indexing");
-        if (n_kv < 0 || n_kv > int64_t(SIZE_MAX/sizeof(gguf_kv))) {
+    إذا (ok && gr.اقرأ(n_kv)) {
+        static_assert(حجم(size_t) <= 8 && حجم(gguf_tensor_info) >= 2, "int64_t insufficient for indexing");
+        إذا (n_kv < 0 || n_kv > int64_t(SIZE_MAX/حجم(gguf_kv))) {
             GGML_LOG_ERROR("%s: number of key value pairs is %" PRIi64 " but must be in [0, %zu]\n",
-                    __func__, n_kv, SIZE_MAX/sizeof(gguf_kv));
-            ok = false;
+                    __func__, n_kv, SIZE_MAX/حجم(gguf_kv));
+            ok = خطأ;
         }
-    } else {
-        ok = false;
+    } وإلا {
+        ok = خطأ;
     }
 
-    if (!ok) {
+    إذا (!ok) {
         GGML_LOG_ERROR("%s: failed to read header\n", __func__);
         gguf_free(ctx);
-        return nullptr;
+        أرجع تش_اشاره;
     }
 
     // KV pairs
     {
-        std::unordered_set<std::string> seen_keys;
+        std::unordered_set<std::string> کتل_شوی_کلیګانې;
 
-        for (int64_t i = 0; ok && i < n_kv; ++i) {
-            std::string key;
+        لكل (int64_t i = 0; ok && i < n_kv; ++i) {
+            std::string کلی;
             gguf_type   type     = gguf_type(-1);
-            bool        is_array = false;
+            منطقي        is_array = خطأ;
             uint64_t    n        = 1;
 
-            try {
-                ok = ok && gr.read(key);
-            } catch (std::length_error &) {
+            حاول {
+                ok = ok && gr.اقرأ(کلی);
+            } امسك (std::length_error &) {
                 GGML_LOG_ERROR("%s: encountered length_error while reading key %" PRIi64 "\n", __func__, i);
-                ok = false;
-            } catch (std::bad_alloc &) {
+                ok = خطأ;
+            } امسك (std::bad_alloc &) {
                 GGML_LOG_ERROR("%s: encountered bad_alloc error while reading key %" PRIi64 "\n", __func__, i);
-                ok = false;
+                ok = خطأ;
             }
-            if (ok && key.empty()) {
+            إذا (ok && کلی.تشه()) {
                 GGML_LOG_ERROR("%s: key %" PRIi64 " is empty\n", __func__, i);
-                ok = false;
+                ok = خطأ;
             }
-            if (ok && !seen_keys.insert(key).second) {
-                GGML_LOG_ERROR("%s: duplicate key '%s' for KV pair %" PRIi64 "\n", __func__, key.c_str(), i);
-                ok = false;
+            إذا (ok && !کتل_شوی_کلیګانې.insert(کلی).second) {
+                GGML_LOG_ERROR("%s: duplicate key '%s' for KV pair %" PRIi64 "\n", __func__, کلی.c_str(), i);
+                ok = خطأ;
             }
-            if (!ok) {
-                break;
-            }
-
-            ok = ok && gr.read(type);
-            if (type == GGUF_TYPE_ARRAY) {
-                is_array = true;
-                ok = ok && gr.read(type);
-                ok = ok && gr.read(n);
-            }
-            if (!ok) {
-                break;
+            إذا (!ok) {
+                اكسر;
             }
 
-            switch (type) {
-                case GGUF_TYPE_UINT8:   ok = ok && gguf_read_emplace_helper<uint8_t>    (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_INT8:    ok = ok && gguf_read_emplace_helper<int8_t>     (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_UINT16:  ok = ok && gguf_read_emplace_helper<uint16_t>   (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_INT16:   ok = ok && gguf_read_emplace_helper<int16_t>    (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_UINT32:  ok = ok && gguf_read_emplace_helper<uint32_t>   (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_INT32:   ok = ok && gguf_read_emplace_helper<int32_t>    (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_FLOAT32: ok = ok && gguf_read_emplace_helper<float>      (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_BOOL:    ok = ok && gguf_read_emplace_helper<bool>       (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_STRING:  ok = ok && gguf_read_emplace_helper<std::string>(gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_UINT64:  ok = ok && gguf_read_emplace_helper<uint64_t>   (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_INT64:   ok = ok && gguf_read_emplace_helper<int64_t>    (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_FLOAT64: ok = ok && gguf_read_emplace_helper<double>     (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_ARRAY:
-                default:
+            ok = ok && gr.اقرأ(type);
+            إذا (type == GGUF_TYPE_ARRAY) {
+                is_array = ریښتیا;
+                ok = ok && gr.اقرأ(type);
+                ok = ok && gr.اقرأ(n);
+            }
+            إذا (!ok) {
+                اكسر;
+            }
+
+            بدل (type) {
+                حالة GGUF_TYPE_UINT8:   ok = ok && gguf_read_emplace_helper<uint8_t>    (gr, ctx->kv, کلی, is_array, n); اكسر;
+                حالة GGUF_TYPE_INT8:    ok = ok && gguf_read_emplace_helper<int8_t>     (gr, ctx->kv, کلی, is_array, n); اكسر;
+                حالة GGUF_TYPE_UINT16:  ok = ok && gguf_read_emplace_helper<uint16_t>   (gr, ctx->kv, کلی, is_array, n); اكسر;
+                حالة GGUF_TYPE_INT16:   ok = ok && gguf_read_emplace_helper<int16_t>    (gr, ctx->kv, کلی, is_array, n); اكسر;
+                حالة GGUF_TYPE_UINT32:  ok = ok && gguf_read_emplace_helper<uint32_t>   (gr, ctx->kv, کلی, is_array, n); اكسر;
+                حالة GGUF_TYPE_INT32:   ok = ok && gguf_read_emplace_helper<int32_t>    (gr, ctx->kv, کلی, is_array, n); اكسر;
+                حالة GGUF_TYPE_FLOAT32: ok = ok && gguf_read_emplace_helper<عائم>      (gr, ctx->kv, کلی, is_array, n); اكسر;
+                حالة GGUF_TYPE_BOOL:    ok = ok && gguf_read_emplace_helper<منطقي>       (gr, ctx->kv, کلی, is_array, n); اكسر;
+                حالة GGUF_TYPE_STRING:  ok = ok && gguf_read_emplace_helper<std::string>(gr, ctx->kv, کلی, is_array, n); اكسر;
+                حالة GGUF_TYPE_UINT64:  ok = ok && gguf_read_emplace_helper<uint64_t>   (gr, ctx->kv, کلی, is_array, n); اكسر;
+                حالة GGUF_TYPE_INT64:   ok = ok && gguf_read_emplace_helper<int64_t>    (gr, ctx->kv, کلی, is_array, n); اكسر;
+                حالة GGUF_TYPE_FLOAT64: ok = ok && gguf_read_emplace_helper<مزدوج>     (gr, ctx->kv, کلی, is_array, n); اكسر;
+                حالة GGUF_TYPE_ARRAY:
+                افتراضي:
                     {
-                        GGML_LOG_ERROR("%s: key '%s' has invalid GGUF type %d\n", __func__, key.c_str(), type);
-                        ok = false;
-                    } break;
+                        GGML_LOG_ERROR("%s: key '%s' has invalid GGUF type %d\n", __func__, کلی.c_str(), type);
+                        ok = خطأ;
+                    } اكسر;
             }
         }
 
-        if (!ok) {
+        إذا (!ok) {
             GGML_LOG_ERROR("%s: failed to read key-value pairs\n", __func__);
             gguf_free(ctx);
-            return nullptr;
+            أرجع تش_اشاره;
         }
         GGML_ASSERT(int64_t(ctx->kv.size()) == n_kv);
 
-        const int alignment_idx = gguf_find_key(ctx, GGUF_KEY_GENERAL_ALIGNMENT);
-        if (alignment_idx != -1 && gguf_get_kv_type(ctx, alignment_idx) != GGUF_TYPE_UINT32) {
+        ثابت صحيح alignment_idx = gguf_پیدا_کړه_کلی(ctx, GGUF_کلی_GENERAL_ALIGNMENT);
+        إذا (alignment_idx != -1 && gguf_get_kv_type(ctx, alignment_idx) != GGUF_TYPE_UINT32) {
             GGML_LOG_ERROR("%s: key '%s' must be of type %s but is %s\n",
-                __func__, GGUF_KEY_GENERAL_ALIGNMENT, gguf_type_name(GGUF_TYPE_UINT32),
+                __func__, GGUF_کلی_GENERAL_ALIGNMENT, gguf_type_name(GGUF_TYPE_UINT32),
                 gguf_type_name(gguf_get_kv_type(ctx, alignment_idx)));
             gguf_free(ctx);
-            return nullptr;
+            أرجع تش_اشاره;
         }
         ctx->alignment = alignment_idx == -1 ? GGUF_DEFAULT_ALIGNMENT : gguf_get_val_u32(ctx, alignment_idx);
 
-        if (ctx->alignment == 0 || (ctx->alignment & (ctx->alignment - 1)) != 0) {
+        إذا (ctx->alignment == 0 || (ctx->alignment & (ctx->alignment - 1)) != 0) {
             GGML_LOG_ERROR("%s: alignment %zu is not a power of 2\n", __func__, ctx->alignment);
             gguf_free(ctx);
-            return nullptr;
+            أرجع تش_اشاره;
         }
     }
 
     // read the tensor info
-    std::unordered_set<std::string> seen_tensor_names;
+    std::unordered_set<std::string> کتل_شوی_tensor_نومونه;
 
-    for (int64_t i = 0; ok && i < n_tensors; ++i) {
-        struct gguf_tensor_info info;
+    لكل (int64_t i = 0; ok && i < n_tensors; ++i) {
+        بنية gguf_tensor_info info;
 
         // tensor name
         {
             std::string name;
-            try {
-                ok = ok && gr.read(name);
-            } catch (std::length_error &) {
+            حاول {
+                ok = ok && gr.اقرأ(name);
+            } امسك (std::length_error &) {
                 GGML_LOG_ERROR("%s: encountered length_error while reading tensor name %" PRIi64 "\n", __func__, i);
-                ok = false;
-            } catch (std::bad_alloc &) {
+                ok = خطأ;
+            } امسك (std::bad_alloc &) {
                 GGML_LOG_ERROR("%s: encountered bad_alloc error while reading tensor name %" PRIi64 "\n", __func__, i);
-                ok = false;
+                ok = خطأ;
             }
-            if (name.length() >= GGML_MAX_NAME) {
-                GGML_LOG_ERROR("%s: tensor name %" PRIi64 " is too long: %zu >= %d\n", __func__, i, name.length(), GGML_MAX_NAME);
-                ok = false;
-                break;
+            إذا (name.اوږدتیا() >= GGML_MAX_NAME) {
+                GGML_LOG_ERROR("%s: tensor name %" PRIi64 " is too long: %zu >= %d\n", __func__, i, name.اوږدتیا(), GGML_MAX_NAME);
+                ok = خطأ;
+                اكسر;
             }
-            ggml_set_name(&info.t, name.c_str());
+            ggml_سېټ_name(&info.t, name.c_str());
 
             // make sure there are no duplicate tensor names
-            if (ok && !seen_tensor_names.insert(name).second) {
+            إذا (ok && !کتل_شوی_tensor_نومونه.insert(name).second) {
                 GGML_LOG_ERROR("%s: duplicate tensor name '%s' for tensor %" PRIi64 "\n", __func__, info.t.name, i);
-                ok = false;
-                break;
+                ok = خطأ;
+                اكسر;
             }
         }
-        if (!ok) {
-            break;
+        إذا (!ok) {
+            اكسر;
         }
 
         // tensor shape
         {
             uint32_t n_dims = 0;
-            ok = ok && gr.read(n_dims);
-            if (n_dims > GGML_MAX_DIMS) {
+            ok = ok && gr.اقرأ(n_dims);
+            إذا (n_dims > GGML_MAX_DIMS) {
                 GGML_LOG_ERROR("%s: tensor '%s' has invalid number of dimensions: %" PRIu32 " > %" PRIu32 "\n",
                     __func__, info.t.name, n_dims, GGML_MAX_DIMS);
-                ok = false;
-                break;
+                ok = خطأ;
+                اكسر;
             }
-            for (uint32_t j = 0; ok && j < GGML_MAX_DIMS; ++j) {
+            لكل (uint32_t j = 0; ok && j < GGML_MAX_DIMS; ++j) {
                 info.t.ne[j] = 1;
-                if (j < n_dims) {
-                    ok = ok && gr.read(info.t.ne[j]);
+                إذا (j < n_dims) {
+                    ok = ok && gr.اقرأ(info.t.ne[j]);
                 }
 
                 // check that all ne are non-negative
-                if (info.t.ne[j] < 0) {
+                إذا (info.t.ne[j] < 0) {
                     GGML_LOG_ERROR("%s: tensor '%s' dimension %" PRIu32 " has invalid number of elements: %" PRIi64 " < 0\n",
                         __func__, info.t.name, j, info.t.ne[j]);
-                    ok = false;
-                    break;
+                    ok = خطأ;
+                    اكسر;
                 }
             }
 
             // check that the total number of elements is representable
             // (a zero-element tensor is trivially representable)
-            if (ok) {
+            إذا (ok) {
                 int64_t current_nelements = info.t.ne[0];
-                for (int i = 1; i < GGML_MAX_DIMS; ++i) {
-                    if (info.t.ne[i] > 1) { // 1 or 0 won't cause an overflow
-                        if (INT64_MAX / info.t.ne[i] < current_nelements) {
-                             ok = false;
-                             break;
+                لكل (صحيح i = 1; i < GGML_MAX_DIMS; ++i) {
+                    إذا (info.t.ne[i] > 1) { // 1 or 0 won't cause an overflow
+                        إذا (INT64_MAX / info.t.ne[i] < current_nelements) {
+                             ok = خطأ;
+                             اكسر;
                          }
                      }
                      current_nelements *= info.t.ne[i];
                  }
-                 if (!ok) {
+                 إذا (!ok) {
                      GGML_LOG_ERROR("%s: incorrect shape for a tensor '%s' may cause overflow errors: "
                          "(%" PRIi64 ", %" PRIi64 ", %" PRIi64 ", %" PRIi64 ") is >= INT64_MAX (%" PRIi64 ")\n",
                          __func__, info.t.name, info.t.ne[0], info.t.ne[1], info.t.ne[2], info.t.ne[3], INT64_MAX);
-                     break;
+                     اكسر;
                  }
             }
         }
-        if (!ok) {
-            break;
+        إذا (!ok) {
+            اكسر;
         }
 
         // tensor type
         {
-            ok = ok && gr.read(info.t.type);
+            ok = ok && gr.اقرأ(info.t.type);
 
             // check that tensor type is within defined range
-            if (info.t.type < 0 || info.t.type >= GGML_TYPE_COUNT) {
+            إذا (info.t.type < 0 || info.t.type >= GGML_TYPE_شمېر) {
                 GGML_LOG_ERROR("%s: tensor '%s' has invalid ggml type %d. should be in [0, %d)\n",
-                    __func__, info.t.name, info.t.type, GGML_TYPE_COUNT);
-                ok = false;
-                break;
+                    __func__, info.t.name, info.t.type, GGML_TYPE_شمېر);
+                ok = خطأ;
+                اكسر;
             }
-            const size_t  type_size = ggml_type_size(info.t.type);
-            const int64_t blck_size = ggml_blck_size(info.t.type);
+            ثابت size_t  type_اندازه = ggml_type_اندازه(info.t.type);
+            ثابت int64_t blck_اندازه = ggml_blck_اندازه(info.t.type);
 
             // check that row size is divisible by block size
-            if (blck_size == 0 || info.t.ne[0] % blck_size != 0) {
+            إذا (blck_اندازه == 0 || info.t.ne[0] % blck_اندازه != 0) {
                 GGML_LOG_ERROR("%s: tensor '%s' of type %d (%s) has %" PRId64 " elements per row, "
                     "not a multiple of block size (%" PRId64 ")\n",
-                    __func__, info.t.name, (int) info.t.type, ggml_type_name(info.t.type), info.t.ne[0], blck_size);
-                ok = false;
-                break;
+                    __func__, info.t.name, (صحيح) info.t.type, ggml_type_name(info.t.type), info.t.ne[0], blck_اندازه);
+                ok = خطأ;
+                اكسر;
             }
 
             // check that the size of the tensor in bytes is representable
-            if (ok && uint64_t(ggml_nelements(&info.t)/ggml_blck_size(info.t.type)) > SIZE_MAX/ggml_type_size(info.t.type)) {
+            إذا (ok && uint64_t(ggml_nelements(&info.t)/ggml_blck_اندازه(info.t.type)) > SIZE_MAX/ggml_type_اندازه(info.t.type)) {
                 GGML_LOG_ERROR("%s: tensor '%s' with shape (%" PRIi64 ", %" PRIi64 ", %" PRIi64 ", %" PRIi64 ") has a size in bytes > %zu\n",
                     __func__, info.t.name, info.t.ne[0], info.t.ne[1], info.t.ne[2], info.t.ne[3], SIZE_MAX);
-                ok = false;
-                break;
+                ok = خطأ;
+                اكسر;
             }
 
             // calculate byte offsets given the tensor shape and type
-            info.t.nb[0] = type_size;
-            info.t.nb[1] = info.t.nb[0]*(info.t.ne[0]/blck_size);
-            for (int j = 2; j < GGML_MAX_DIMS; ++j) {
+            info.t.nb[0] = type_اندازه;
+            info.t.nb[1] = info.t.nb[0]*(info.t.ne[0]/blck_اندازه);
+            لكل (صحيح j = 2; j < GGML_MAX_DIMS; ++j) {
                 info.t.nb[j] = info.t.nb[j - 1]*info.t.ne[j - 1];
             }
         }
-        if (!ok) {
-            break;
+        إذا (!ok) {
+            اكسر;
         }
 
         // tensor data offset within buffer
-        ok = ok && gr.read(info.offset);
+        ok = ok && gr.اقرأ(info.دننه_واټن);
 
         ctx->info.push_back(info);
     }
 
-    if (!ok) {
+    إذا (!ok) {
         GGML_LOG_ERROR("%s: failed to read tensor info\n", __func__);
         gguf_free(ctx);
-        return nullptr;
+        أرجع تش_اشاره;
     }
     GGML_ASSERT(int64_t(ctx->info.size()) == n_tensors);
 
     // we require the data section to be aligned, so take into account any padding
-    if (n_tensors > 0 && !gr.seek(gr.start() + GGML_PAD(gr.tell() - gr.start(), ctx->alignment))) {
+    إذا (n_tensors > 0 && !gr.seek(gr.start() + GGML_PAD(gr.tell() - gr.start(), ctx->alignment))) {
         GGML_LOG_ERROR("%s: failed to seek to beginning of data section\n", __func__);
         gguf_free(ctx);
-        return nullptr;
+        أرجع تش_اشاره;
     }
 
     // store the current file offset - this is where the data section starts
-    ctx->offset = gr.tell();
+    ctx->دننه_واټن = gr.tell();
 
     // compute the total size of the data section, taking into account the alignment
     {
         ctx->size = 0;
-        for (size_t i = 0; i < ctx->info.size(); ++i) {
-            const gguf_tensor_info & ti = ctx->info[i];
-            if (ti.offset != ctx->size) {
+        لكل (size_t i = 0; i < ctx->info.size(); ++i) {
+            ثابت gguf_tensor_info & ti = ctx->info[i];
+            إذا (ti.دننه_واټن != ctx->size) {
                 GGML_LOG_ERROR("%s: tensor '%s' has offset %" PRIu64 ", expected %zu\n",
-                    __func__, ti.t.name, ti.offset, ctx->size);
+                    __func__, ti.t.name, ti.دننه_واټن, ctx->size);
                 GGML_LOG_ERROR("%s: failed to read tensor data\n", __func__);
                 gguf_free(ctx);
-                return nullptr;
+                أرجع تش_اشاره;
             }
-            const size_t nbytes = ggml_nbytes(&ti.t);
+            ثابت size_t nbytes = ggml_nbytes(&ti.t);
             // GGML_PAD adds (alignment - 1) to nbytes. when nbytes is near
             // SIZE_MAX this wraps to 0 and makes the check below dead.
-            if (nbytes > SIZE_MAX - (ctx->alignment - 1)) {
+            إذا (nbytes > SIZE_MAX - (ctx->alignment - 1)) {
                 GGML_LOG_ERROR("%s: tensor '%s' size %zu overflows after padding (alignment %zu)\n",
                     __func__, ti.t.name, nbytes, ctx->alignment);
                 gguf_free(ctx);
-                return nullptr;
+                أرجع تش_اشاره;
             }
-            const size_t padded_size = GGML_PAD(nbytes, ctx->alignment);
-            if (SIZE_MAX - ctx->size < padded_size) {
+            ثابت size_t padded_اندازه = GGML_PAD(nbytes, ctx->alignment);
+            إذا (SIZE_MAX - ctx->size < padded_اندازه) {
                 GGML_LOG_ERROR("%s: tensor '%s' size overflow, cannot accumulate size %zu + %zu\n",
-                    __func__, ti.t.name, ctx->size, padded_size);
+                    __func__, ti.t.name, ctx->size, padded_اندازه);
                 gguf_free(ctx);
-                return nullptr;
+                أرجع تش_اشاره;
             }
-            ctx->size += padded_size;
+            ctx->size += padded_اندازه;
         }
     }
 
     // load the tensor data only if requested
-    if (params.ctx != nullptr) {
+    إذا (params.ctx != تش_اشاره) {
         // if the provided gguf_context is no_alloc, then we create "empty" tensors and do not read the binary blob
         // otherwise, we load the binary blob into the created ggml_context as well, and point the "data" members of
         //   the ggml_tensor structs to the appropriate locations in the binary blob
 
         // compute the exact size needed for the new ggml_context
-        size_t mem_size = 0;
-        if (params.no_alloc) {
-            if (n_tensors != 0 && SIZE_MAX / n_tensors < ggml_tensor_overhead()) {
+        size_t mem_اندازه = 0;
+        إذا (params.no_alloc) {
+            إذا (n_tensors != 0 && SIZE_MAX / n_tensors < ggml_tensor_overhead()) {
                 GGML_LOG_ERROR("%s: memory size overflow while allocating ggml context\n", __func__);
                 gguf_free(ctx);
-                return nullptr;
+                أرجع تش_اشاره;
             }
 
-            const size_t overhead = n_tensors * ggml_tensor_overhead();
+            ثابت size_t overhead = n_tensors * ggml_tensor_overhead();
 
-            mem_size = overhead;
-        } else {
-            if ((n_tensors + 1) != 0 && SIZE_MAX / (n_tensors + 1) < ggml_tensor_overhead()) {
+            mem_اندازه = overhead;
+        } وإلا {
+            إذا ((n_tensors + 1) != 0 && SIZE_MAX / (n_tensors + 1) < ggml_tensor_overhead()) {
                 GGML_LOG_ERROR("%s: memory size overflow while allocating ggml context\n", __func__);
                 gguf_free(ctx);
-                return nullptr;
+                أرجع تش_اشاره;
             }
 
-            const size_t overhead = (n_tensors + 1) * ggml_tensor_overhead();
+            ثابت size_t overhead = (n_tensors + 1) * ggml_tensor_overhead();
 
-            if (SIZE_MAX - overhead < ctx->size) {
+            إذا (SIZE_MAX - overhead < ctx->size) {
                 GGML_LOG_ERROR("%s: memory size overflow while allocating ggml context\n", __func__);
                 gguf_free(ctx);
-                return nullptr;
+                أرجع تش_اشاره;
             }
 
-            mem_size = overhead + ctx->size;
+            mem_اندازه = overhead + ctx->size;
         }
 
-        struct ggml_init_params pdata = {
-            /*mem_size   =*/ mem_size,
-            /*mem_buffer =*/ nullptr,
+        بنية ggml_init_params pdata = {
+            /*mem_size   =*/ mem_اندازه,
+            /*mem_buffer =*/ تش_اشاره,
             /*no_alloc   =*/ params.no_alloc,
         };
 
         *params.ctx = ggml_init(pdata);
-        if (*params.ctx == nullptr) {
+        إذا (*params.ctx == تش_اشاره) {
             GGML_LOG_ERROR("%s: failed to initialize ggml context for storing tensors\n", __func__);
             gguf_free(ctx);
-            return nullptr;
+            أرجع تش_اشاره;
         }
 
-        struct ggml_context * ctx_data = *params.ctx;
+        بنية ggml_context * ctx_معلومات = *params.ctx;
 
-        struct ggml_tensor * data = nullptr;
+        بنية ggml_tensor * معلومات = تش_اشاره;
 
-        if (!params.no_alloc) {
-            data = ggml_new_tensor_1d(ctx_data, GGML_TYPE_I8, ctx->size);
+        إذا (!params.no_alloc) {
+            معلومات = ggml_new_tensor_1d(ctx_معلومات, GGML_TYPE_I8, ctx->size);
 
-            ok = ok && data != nullptr;
+            ok = ok && معلومات != تش_اشاره;
 
-            if (ok) {
-                ggml_set_name(data, "GGUF tensor data binary blob");
+            إذا (ok) {
+                ggml_سېټ_name(معلومات, "GGUF tensor data binary blob");
             }
 
             // read the binary blob with the tensor data
-            ok = ok && gr.read(data->data, ctx->size);
+            ok = ok && gr.اقرأ(معلومات->معلومات, ctx->size);
 
-            if (!ok) {
+            إذا (!ok) {
                 GGML_LOG_ERROR("%s: failed to read tensor data binary blob\n", __func__);
-                ggml_free(ctx_data);
-                *params.ctx = nullptr;
+                ggml_free(ctx_معلومات);
+                *params.ctx = تش_اشاره;
                 gguf_free(ctx);
-                return nullptr;
+                أرجع تش_اشاره;
             }
 
-            ctx->data = data->data;
+            ctx->معلومات = معلومات->معلومات;
         }
 
-        ggml_set_no_alloc(ctx_data, true);
+        ggml_سېټ_no_alloc(ctx_معلومات, ریښتیا);
 
         // create the tensors
-        for (size_t i = 0; i < ctx->info.size(); ++i) {
-            const struct gguf_tensor_info & info = ctx->info[i];
+        لكل (size_t i = 0; i < ctx->info.size(); ++i) {
+            ثابت بنية gguf_tensor_info & info = ctx->info[i];
 
-            struct ggml_tensor * cur = ggml_new_tensor(ctx_data, info.t.type, GGML_MAX_DIMS, info.t.ne);
+            بنية ggml_tensor * cur = ggml_new_tensor(ctx_معلومات, info.t.type, GGML_MAX_DIMS, info.t.ne);
 
-            ok = ok && cur != nullptr;
+            ok = ok && cur != تش_اشاره;
 
-            if (!ok) {
-                break;
+            إذا (!ok) {
+                اكسر;
             }
 
-            ggml_set_name(cur, info.t.name);
+            ggml_سېټ_name(cur, info.t.name);
 
             // point the data member to the appropriate location in the binary blob using the tensor info
-            if (!params.no_alloc) {
-                cur->data = (char *) data->data + info.offset;
+            إذا (!params.no_alloc) {
+                cur->معلومات = (حرف *) معلومات->معلومات + info.دننه_واټن;
             }
         }
 
-        if (!ok) {
+        إذا (!ok) {
             GGML_LOG_ERROR("%s: failed to create tensors\n", __func__);
-            ggml_free(ctx_data);
-            *params.ctx = nullptr;
+            ggml_free(ctx_معلومات);
+            *params.ctx = تش_اشاره;
             gguf_free(ctx);
-            return nullptr;
+            أرجع تش_اشاره;
         }
 
-        ggml_set_no_alloc(ctx_data, params.no_alloc);
+        ggml_سېټ_no_alloc(ctx_معلومات, params.no_alloc);
     }
 
-    return ctx;
+    أرجع ctx;
 }
 
-struct gguf_context * gguf_init_from_callback(gguf_reader_callback_t callback, void * userdata, size_t max_chunk_read, uint64_t max_expected_size, struct gguf_init_params params) {
-    if (callback == nullptr) {
-        return nullptr;
+بنية gguf_context * gguf_init_from_callback(gguf_reader_callback_t callback, فراغ * userdata, size_t max_chunk_read, uint64_t max_expected_اندازه, بنية gguf_init_params params) {
+    إذا (callback == تش_اشاره) {
+        أرجع تش_اشاره;
     }
 
-    const struct gguf_reader gr(callback, userdata, max_chunk_read == 0 ? SIZE_MAX : max_chunk_read, 0, max_expected_size);
-    return gguf_init_from_reader(gr, params);
+    ثابت بنية gguf_reader gr(callback, userdata, max_chunk_read == 0 ? SIZE_MAX : max_chunk_read, 0, max_expected_اندازه);
+    أرجع gguf_init_from_reader(gr, params);
 }
 
-struct gguf_file_reader {
+بنية gguf_file_reader {
     FILE * file;
-    uint64_t offset;
+    uint64_t دننه_واټن;
 };
 
-static size_t gguf_file_reader_callback(void * userdata, void * output, uint64_t offset, size_t len) {
+ساكن size_t gguf_file_reader_callback(فراغ * userdata, فراغ * output, uint64_t دننه_واټن, size_t len) {
     GGML_ASSERT(len > 0);
 
     gguf_file_reader & reader = *static_cast<gguf_file_reader *>(userdata);
 
-    if (reader.offset != offset) {
-        if (offset > INT64_MAX || gguf_fseek(reader.file, static_cast<int64_t>(offset), SEEK_SET) != 0) {
-            return 0;
+    إذا (reader.دننه_واټن != دننه_واټن) {
+        إذا (دننه_واټن > INT64_MAX || gguf_fseek(reader.file, static_cast<int64_t>(دننه_واټن), SEEK_SET) != 0) {
+            أرجع 0;
         }
 
-        reader.offset = offset;
+        reader.دننه_واټن = دننه_واټن;
     }
 
-    const size_t nread = fread(static_cast<uint8_t *>(output), 1, len, reader.file);
-    reader.offset += nread;
-    return nread;
+    ثابت size_t nread = fread(static_cast<uint8_t *>(output), 1, len, reader.file);
+    reader.دننه_واټن += nread;
+    أرجع nread;
 }
 
-struct gguf_context * gguf_init_from_file_ptr(FILE * file, struct gguf_init_params params) {
-    if (!file) {
-        return nullptr;
+بنية gguf_context * gguf_init_from_file_ptr(FILE * file, بنية gguf_init_params params) {
+    إذا (!file) {
+        أرجع تش_اشاره;
     }
 
-    const int64_t cur = gguf_ftell(file);
-    if (cur < 0) {
-        return nullptr;
+    ثابت int64_t cur = gguf_ftell(file);
+    إذا (cur < 0) {
+        أرجع تش_اشاره;
     }
 
     gguf_file_reader reader = {
         /*.file   = */ file,
         /*.offset = */ static_cast<uint64_t>(cur),
     };
-    const struct gguf_reader gr(gguf_file_reader_callback, &reader, SIZE_MAX, reader.offset, gguf_reader::file_remain(file));
-    return gguf_init_from_reader(gr, params);
+    ثابت بنية gguf_reader gr(gguf_file_reader_callback, &reader, SIZE_MAX, reader.دننه_واټن, gguf_reader::file_remain(file));
+    أرجع gguf_init_from_reader(gr, params);
 }
 
-struct gguf_buffer_reader {
-    const uint8_t * data;
+بنية gguf_بفر_reader {
+    ثابت uint8_t * معلومات;
     size_t          size;
 };
 
-static size_t gguf_buffer_reader_callback(void * userdata, void * output, uint64_t offset, size_t len) {
+ساكن size_t gguf_بفر_reader_callback(فراغ * userdata, فراغ * output, uint64_t دننه_واټن, size_t len) {
     GGML_ASSERT(len > 0);
 
-    const gguf_buffer_reader & reader = *static_cast<gguf_buffer_reader *>(userdata);
+    ثابت gguf_بفر_reader & reader = *static_cast<gguf_بفر_reader *>(userdata);
 
-    if (offset > reader.size || len > reader.size - offset) {
-        return 0;
+    إذا (دننه_واټن > reader.size || len > reader.size - دننه_واټن) {
+        أرجع 0;
     }
 
-    const size_t data_offset = static_cast<size_t>(offset);
-    const size_t nread = std::min(len, reader.size - data_offset);
-    memcpy(static_cast<uint8_t *>(output), reader.data + data_offset, nread);
-    return nread;
+    ثابت size_t معلومات_دننه_واټن = static_cast<size_t>(دننه_واټن);
+    ثابت size_t nread = std::min(len, reader.size - معلومات_دننه_واټن);
+    حافظه_نقل(static_cast<uint8_t *>(output), reader.معلومات + معلومات_دننه_واټن, nread);
+    أرجع nread;
 }
 
-struct gguf_context * gguf_init_from_buffer(const void * data, size_t size, struct gguf_init_params params) {
-    if (data == nullptr || size == 0) {
-        return nullptr;
+بنية gguf_context * gguf_init_from_بفر(ثابت فراغ * معلومات, size_t size, بنية gguf_init_params params) {
+    إذا (معلومات == تش_اشاره || size == 0) {
+        أرجع تش_اشاره;
     }
 
-    gguf_buffer_reader reader = {
-        /*.data = */ static_cast<const uint8_t *>(data),
+    gguf_بفر_reader reader = {
+        /*.data = */ static_cast<ثابت uint8_t *>(معلومات),
         /*.size = */ size,
     };
-    const struct gguf_reader gr(gguf_buffer_reader_callback, &reader, SIZE_MAX, 0, size);
-    return gguf_init_from_reader(gr, params);
+    ثابت بنية gguf_reader gr(gguf_بفر_reader_callback, &reader, SIZE_MAX, 0, size);
+    أرجع gguf_init_from_reader(gr, params);
 }
 
-struct gguf_context * gguf_init_from_file(const char * fname, struct gguf_init_params params) {
+بنية gguf_context * gguf_init_from_file(ثابت حرف * fname, بنية gguf_init_params params) {
     FILE * file = ggml_fopen(fname, "rb");
 
-    if (!file) {
+    إذا (!file) {
         GGML_LOG_ERROR("%s: failed to open GGUF file '%s' (%s)\n", __func__, fname, strerror(errno));
-        return nullptr;
+        أرجع تش_اشاره;
     }
 
-    struct gguf_context * result = gguf_init_from_file_ptr(file, params);
+    بنية gguf_context * پایله = gguf_init_from_file_ptr(file, params);
     fclose(file);
-    return result;
+    أرجع پایله;
 }
 
-void gguf_free(struct gguf_context * ctx) {
-    if (ctx == nullptr) {
-        return;
+فراغ gguf_free(بنية gguf_context * ctx) {
+    إذا (ctx == تش_اشاره) {
+        أرجع;
     }
-    delete ctx;
+    ړنګول ctx;
 }
 
-const char * gguf_type_name(enum gguf_type type) {
-    auto it = GGUF_TYPE_NAME.find(type);
-    return it == GGUF_TYPE_NAME.end() ? nullptr : it->second;
+ثابت حرف * gguf_type_name(تعداد gguf_type type) {
+    خپلکاری it = GGUF_TYPE_NAME.find(type);
+    أرجع it == GGUF_TYPE_NAME.end() ? تش_اشاره : it->second;
 }
 
-uint32_t gguf_get_version(const struct gguf_context * ctx) {
-    return ctx->version;
+uint32_t gguf_get_نسخه(ثابت بنية gguf_context * ctx) {
+    أرجع ctx->نسخه_2;
 }
 
-size_t gguf_get_alignment(const struct gguf_context * ctx) {
-    return ctx->alignment;
+size_t gguf_get_alignment(ثابت بنية gguf_context * ctx) {
+    أرجع ctx->alignment;
 }
 
-size_t gguf_get_data_offset(const struct gguf_context * ctx) {
-    return ctx->offset;
+size_t gguf_get_معلومات_دننه_واټن(ثابت بنية gguf_context * ctx) {
+    أرجع ctx->دننه_واټن;
 }
 
-int64_t gguf_get_n_kv(const struct gguf_context * ctx) {
-    return ctx->kv.size();
+int64_t gguf_get_n_kv(ثابت بنية gguf_context * ctx) {
+    أرجع ctx->kv.size();
 }
 
-int64_t gguf_find_key(const struct gguf_context * ctx, const char * key) {
+int64_t gguf_پیدا_کړه_کلی(ثابت بنية gguf_context * ctx, ثابت حرف * کلی) {
     // return -1 if key not found
     int64_t keyfound = -1;
 
-    const int64_t n_kv = gguf_get_n_kv(ctx);
+    ثابت int64_t n_kv = gguf_get_n_kv(ctx);
 
-    for (int64_t i = 0; i < n_kv; ++i) {
-        if (strcmp(key, gguf_get_key(ctx, i)) == 0) {
+    لكل (int64_t i = 0; i < n_kv; ++i) {
+        إذا (strcmp(کلی, gguf_get_کلی(ctx, i)) == 0) {
             keyfound = i;
-            break;
+            اكسر;
         }
     }
 
-    return keyfound;
+    أرجع keyfound;
 }
 
-const char * gguf_get_key(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    return ctx->kv[key_id].get_key().c_str();
+ثابت حرف * gguf_get_کلی(ثابت بنية gguf_context * ctx, int64_t کلی_id) {
+    GGML_ASSERT(کلی_id >= 0 && کلی_id < gguf_get_n_kv(ctx));
+    أرجع ctx->kv[کلی_id].get_کلی().c_str();
 }
 
-enum gguf_type gguf_get_kv_type(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    return ctx->kv[key_id].is_array ? GGUF_TYPE_ARRAY : ctx->kv[key_id].get_type();
+تعداد gguf_type gguf_get_kv_type(ثابت بنية gguf_context * ctx, int64_t کلی_id) {
+    GGML_ASSERT(کلی_id >= 0 && کلی_id < gguf_get_n_kv(ctx));
+    أرجع ctx->kv[کلی_id].is_array ? GGUF_TYPE_ARRAY : ctx->kv[کلی_id].get_type();
 }
 
-enum gguf_type gguf_get_arr_type(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].is_array);
-    return ctx->kv[key_id].get_type();
+تعداد gguf_type gguf_get_arr_type(ثابت بنية gguf_context * ctx, int64_t کلی_id) {
+    GGML_ASSERT(کلی_id >= 0 && کلی_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[کلی_id].is_array);
+    أرجع ctx->kv[کلی_id].get_type();
 }
 
-const void * gguf_get_arr_data(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_type() != GGUF_TYPE_STRING);
-    return ctx->kv[key_id].data.data();
+ثابت فراغ * gguf_get_arr_معلومات(ثابت بنية gguf_context * ctx, int64_t کلی_id) {
+    GGML_ASSERT(کلی_id >= 0 && کلی_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[کلی_id].get_type() != GGUF_TYPE_STRING);
+    أرجع ctx->kv[کلی_id].معلومات.معلومات();
 }
 
-const char * gguf_get_arr_str(const struct gguf_context * ctx, int64_t key_id, size_t i) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_type() == GGUF_TYPE_STRING);
-    return ctx->kv[key_id].data_string[i].c_str();
+ثابت حرف * gguf_get_arr_str(ثابت بنية gguf_context * ctx, int64_t کلی_id, size_t i) {
+    GGML_ASSERT(کلی_id >= 0 && کلی_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[کلی_id].get_type() == GGUF_TYPE_STRING);
+    أرجع ctx->kv[کلی_id].معلومات_string[i].c_str();
 }
 
-size_t gguf_get_arr_n(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
+size_t gguf_get_arr_n(ثابت بنية gguf_context * ctx, int64_t کلی_id) {
+    GGML_ASSERT(کلی_id >= 0 && کلی_id < gguf_get_n_kv(ctx));
 
-    if (ctx->kv[key_id].type == GGUF_TYPE_STRING) {
-        return ctx->kv[key_id].data_string.size();
+    إذا (ctx->kv[کلی_id].type == GGUF_TYPE_STRING) {
+        أرجع ctx->kv[کلی_id].معلومات_string.size();
     }
 
-    const size_t type_size = gguf_type_size(ctx->kv[key_id].type);
-    GGML_ASSERT(ctx->kv[key_id].data.size() % type_size == 0);
-    return ctx->kv[key_id].data.size() / type_size;
+    ثابت size_t type_اندازه = gguf_type_اندازه(ctx->kv[کلی_id].type);
+    GGML_ASSERT(ctx->kv[کلی_id].معلومات.size() % type_اندازه == 0);
+    أرجع ctx->kv[کلی_id].معلومات.size() / type_اندازه;
 }
 
-uint8_t gguf_get_val_u8(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<uint8_t>();
+uint8_t gguf_get_val_u8(ثابت بنية gguf_context * ctx, int64_t کلی_id) {
+    GGML_ASSERT(کلی_id >= 0 && کلی_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[کلی_id].get_ne() == 1);
+    أرجع ctx->kv[کلی_id].get_val<uint8_t>();
 }
 
-int8_t gguf_get_val_i8(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<int8_t>();
+int8_t gguf_get_val_i8(ثابت بنية gguf_context * ctx, int64_t کلی_id) {
+    GGML_ASSERT(کلی_id >= 0 && کلی_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[کلی_id].get_ne() == 1);
+    أرجع ctx->kv[کلی_id].get_val<int8_t>();
 }
 
-uint16_t gguf_get_val_u16(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<uint16_t>();
+uint16_t gguf_get_val_u16(ثابت بنية gguf_context * ctx, int64_t کلی_id) {
+    GGML_ASSERT(کلی_id >= 0 && کلی_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[کلی_id].get_ne() == 1);
+    أرجع ctx->kv[کلی_id].get_val<uint16_t>();
 }
 
-int16_t gguf_get_val_i16(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<int16_t>();
+int16_t gguf_get_val_i16(ثابت بنية gguf_context * ctx, int64_t کلی_id) {
+    GGML_ASSERT(کلی_id >= 0 && کلی_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[کلی_id].get_ne() == 1);
+    أرجع ctx->kv[کلی_id].get_val<int16_t>();
 }
 
-uint32_t gguf_get_val_u32(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<uint32_t>();
+uint32_t gguf_get_val_u32(ثابت بنية gguf_context * ctx, int64_t کلی_id) {
+    GGML_ASSERT(کلی_id >= 0 && کلی_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[کلی_id].get_ne() == 1);
+    أرجع ctx->kv[کلی_id].get_val<uint32_t>();
 }
 
-int32_t gguf_get_val_i32(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<int32_t>();
+int32_t gguf_get_val_i32(ثابت بنية gguf_context * ctx, int64_t کلی_id) {
+    GGML_ASSERT(کلی_id >= 0 && کلی_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[کلی_id].get_ne() == 1);
+    أرجع ctx->kv[کلی_id].get_val<int32_t>();
 }
 
-float gguf_get_val_f32(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<float>();
+عائم gguf_get_val_f32(ثابت بنية gguf_context * ctx, int64_t کلی_id) {
+    GGML_ASSERT(کلی_id >= 0 && کلی_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[کلی_id].get_ne() == 1);
+    أرجع ctx->kv[کلی_id].get_val<عائم>();
 }
 
-uint64_t gguf_get_val_u64(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<uint64_t>();
+uint64_t gguf_get_val_u64(ثابت بنية gguf_context * ctx, int64_t کلی_id) {
+    GGML_ASSERT(کلی_id >= 0 && کلی_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[کلی_id].get_ne() == 1);
+    أرجع ctx->kv[کلی_id].get_val<uint64_t>();
 }
 
-int64_t gguf_get_val_i64(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<int64_t>();
+int64_t gguf_get_val_i64(ثابت بنية gguf_context * ctx, int64_t کلی_id) {
+    GGML_ASSERT(کلی_id >= 0 && کلی_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[کلی_id].get_ne() == 1);
+    أرجع ctx->kv[کلی_id].get_val<int64_t>();
 }
 
-double gguf_get_val_f64(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<double>();
+مزدوج gguf_get_val_f64(ثابت بنية gguf_context * ctx, int64_t کلی_id) {
+    GGML_ASSERT(کلی_id >= 0 && کلی_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[کلی_id].get_ne() == 1);
+    أرجع ctx->kv[کلی_id].get_val<مزدوج>();
 }
 
-bool gguf_get_val_bool(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<bool>();
+منطقي gguf_get_val_bool(ثابت بنية gguf_context * ctx, int64_t کلی_id) {
+    GGML_ASSERT(کلی_id >= 0 && کلی_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[کلی_id].get_ne() == 1);
+    أرجع ctx->kv[کلی_id].get_val<منطقي>();
 }
 
-const char * gguf_get_val_str(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<std::string>().c_str();
+ثابت حرف * gguf_get_val_str(ثابت بنية gguf_context * ctx, int64_t کلی_id) {
+    GGML_ASSERT(کلی_id >= 0 && کلی_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[کلی_id].get_ne() == 1);
+    أرجع ctx->kv[کلی_id].get_val<std::string>().c_str();
 }
 
-const void * gguf_get_val_data(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    GGML_ASSERT(ctx->kv[key_id].get_type() != GGUF_TYPE_STRING);
-    return ctx->kv[key_id].data.data();
+ثابت فراغ * gguf_get_val_معلومات(ثابت بنية gguf_context * ctx, int64_t کلی_id) {
+    GGML_ASSERT(کلی_id >= 0 && کلی_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[کلی_id].get_ne() == 1);
+    GGML_ASSERT(ctx->kv[کلی_id].get_type() != GGUF_TYPE_STRING);
+    أرجع ctx->kv[کلی_id].معلومات.معلومات();
 }
 
-int64_t gguf_get_n_tensors(const struct gguf_context * ctx) {
-    return ctx->info.size();
+int64_t gguf_get_n_tensors(ثابت بنية gguf_context * ctx) {
+    أرجع ctx->info.size();
 }
 
-int64_t gguf_find_tensor(const struct gguf_context * ctx, const char * name) {
+int64_t gguf_پیدا_کړه_tensor(ثابت بنية gguf_context * ctx, ثابت حرف * name) {
     // return -1 if tensor not found
     int64_t tensor_id = -1;
 
-    const int64_t n_tensors = gguf_get_n_tensors(ctx);
+    ثابت int64_t n_tensors = gguf_get_n_tensors(ctx);
 
-    for (int64_t i = 0; i < n_tensors; ++i) {
-        if (strcmp(name, gguf_get_tensor_name(ctx, i)) == 0) {
+    لكل (int64_t i = 0; i < n_tensors; ++i) {
+        إذا (strcmp(name, gguf_get_tensor_name(ctx, i)) == 0) {
             tensor_id = i;
-            break;
+            اكسر;
         }
     }
 
-    return tensor_id;
+    أرجع tensor_id;
 }
 
-size_t gguf_get_tensor_offset(const struct gguf_context * ctx, int64_t tensor_id) {
+size_t gguf_get_tensor_دننه_واټن(ثابت بنية gguf_context * ctx, int64_t tensor_id) {
     GGML_ASSERT(tensor_id >= 0 && tensor_id < gguf_get_n_tensors(ctx));
-    return ctx->info[tensor_id].offset;
+    أرجع ctx->info[tensor_id].دننه_واټن;
 }
 
-const char * gguf_get_tensor_name(const struct gguf_context * ctx, int64_t tensor_id) {
+ثابت حرف * gguf_get_tensor_name(ثابت بنية gguf_context * ctx, int64_t tensor_id) {
     GGML_ASSERT(tensor_id >= 0 && tensor_id < gguf_get_n_tensors(ctx));
-    return ctx->info[tensor_id].t.name;
+    أرجع ctx->info[tensor_id].t.name;
 }
 
-const int64_t * gguf_get_tensor_ne(const struct gguf_context * ctx, int64_t tensor_id) {
+ثابت int64_t * gguf_get_tensor_ne(ثابت بنية gguf_context * ctx, int64_t tensor_id) {
     GGML_ASSERT(tensor_id >= 0 && tensor_id < gguf_get_n_tensors(ctx));
-    return ctx->info[tensor_id].t.ne;
+    أرجع ctx->info[tensor_id].t.ne;
 }
 
-enum ggml_type gguf_get_tensor_type(const struct gguf_context * ctx, int64_t tensor_id) {
+تعداد ggml_type gguf_get_tensor_type(ثابت بنية gguf_context * ctx, int64_t tensor_id) {
     GGML_ASSERT(tensor_id >= 0 && tensor_id < gguf_get_n_tensors(ctx));
-    return ctx->info[tensor_id].t.type;
+    أرجع ctx->info[tensor_id].t.type;
 }
 
-size_t gguf_get_tensor_size(const struct gguf_context * ctx, int64_t tensor_id) {
+size_t gguf_get_tensor_اندازه(ثابت بنية gguf_context * ctx, int64_t tensor_id) {
     GGML_ASSERT(tensor_id >= 0 && tensor_id < gguf_get_n_tensors(ctx));
-    return ggml_nbytes(&ctx->info[tensor_id].t);
+    أرجع ggml_nbytes(&ctx->info[tensor_id].t);
 }
 
-int64_t gguf_remove_key(struct gguf_context * ctx, const char * key) {
-    const int64_t key_id = gguf_find_key(ctx, key);
-    if (key_id >= 0) {
-        ctx->kv.erase(ctx->kv.begin() + key_id);
+int64_t gguf_remove_کلی(بنية gguf_context * ctx, ثابت حرف * کلی) {
+    ثابت int64_t کلی_id = gguf_پیدا_کړه_کلی(ctx, کلی);
+    إذا (کلی_id >= 0) {
+        ctx->kv.erase(ctx->kv.begin() + کلی_id);
     }
-    return key_id;
+    أرجع کلی_id;
 }
 
-template<typename T>
-static void gguf_check_reserved_keys(const std::string & key, const T val) {
-    if (key == GGUF_KEY_GENERAL_ALIGNMENT) {
-        if constexpr (std::is_same<T, uint32_t>::value) {
-            GGML_ASSERT(val > 0 && (val & (val - 1)) == 0 && GGUF_KEY_GENERAL_ALIGNMENT " must be power of 2");
-        } else {
-            GGML_UNUSED(val);
-            GGML_ABORT(GGUF_KEY_GENERAL_ALIGNMENT " must be type u32");
+کينډۍ<ډول_نوم T>
+ساكن فراغ gguf_check_reserved_کلیګانې(ثابت std::string & کلی, ثابت T val) {
+    إذا (کلی == GGUF_کلی_GENERAL_ALIGNMENT) {
+        إذا constexpr (std::is_same<T, uint32_t>::value) {
+            GGML_ASSERT(val > 0 && (val & (val - 1)) == 0 && GGUF_کلی_GENERAL_ALIGNMENT " must be power of 2");
+        } وإلا {
+            GGML_ناکارول_شوی(val);
+            GGML_ABORT(GGUF_کلی_GENERAL_ALIGNMENT " must be type u32");
         }
     }
 }
 
-void gguf_set_val_u8(struct gguf_context * ctx, const char * key, uint8_t val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+فراغ gguf_سېټ_val_u8(بنية gguf_context * ctx, ثابت حرف * کلی, uint8_t val) {
+    gguf_check_reserved_کلیګانې(کلی, val);
+    gguf_remove_کلی(ctx, کلی);
+    ctx->kv.emplace_back(کلی, val);
 }
 
-void gguf_set_val_i8(struct gguf_context * ctx, const char * key, int8_t val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+فراغ gguf_سېټ_val_i8(بنية gguf_context * ctx, ثابت حرف * کلی, int8_t val) {
+    gguf_check_reserved_کلیګانې(کلی, val);
+    gguf_remove_کلی(ctx, کلی);
+    ctx->kv.emplace_back(کلی, val);
 }
 
-void gguf_set_val_u16(struct gguf_context * ctx, const char * key, uint16_t val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+فراغ gguf_سېټ_val_u16(بنية gguf_context * ctx, ثابت حرف * کلی, uint16_t val) {
+    gguf_check_reserved_کلیګانې(کلی, val);
+    gguf_remove_کلی(ctx, کلی);
+    ctx->kv.emplace_back(کلی, val);
 }
 
-void gguf_set_val_i16(struct gguf_context * ctx, const char * key, int16_t val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+فراغ gguf_سېټ_val_i16(بنية gguf_context * ctx, ثابت حرف * کلی, int16_t val) {
+    gguf_check_reserved_کلیګانې(کلی, val);
+    gguf_remove_کلی(ctx, کلی);
+    ctx->kv.emplace_back(کلی, val);
 }
 
-void gguf_set_val_u32(struct gguf_context * ctx, const char * key, uint32_t val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+فراغ gguf_سېټ_val_u32(بنية gguf_context * ctx, ثابت حرف * کلی, uint32_t val) {
+    gguf_check_reserved_کلیګانې(کلی, val);
+    gguf_remove_کلی(ctx, کلی);
+    ctx->kv.emplace_back(کلی, val);
 }
 
-void gguf_set_val_i32(struct gguf_context * ctx, const char * key, int32_t val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+فراغ gguf_سېټ_val_i32(بنية gguf_context * ctx, ثابت حرف * کلی, int32_t val) {
+    gguf_check_reserved_کلیګانې(کلی, val);
+    gguf_remove_کلی(ctx, کلی);
+    ctx->kv.emplace_back(کلی, val);
 }
 
-void gguf_set_val_f32(struct gguf_context * ctx, const char * key, float val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+فراغ gguf_سېټ_val_f32(بنية gguf_context * ctx, ثابت حرف * کلی, عائم val) {
+    gguf_check_reserved_کلیګانې(کلی, val);
+    gguf_remove_کلی(ctx, کلی);
+    ctx->kv.emplace_back(کلی, val);
 }
 
-void gguf_set_val_u64(struct gguf_context * ctx, const char * key, uint64_t val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+فراغ gguf_سېټ_val_u64(بنية gguf_context * ctx, ثابت حرف * کلی, uint64_t val) {
+    gguf_check_reserved_کلیګانې(کلی, val);
+    gguf_remove_کلی(ctx, کلی);
+    ctx->kv.emplace_back(کلی, val);
 }
 
-void gguf_set_val_i64(struct gguf_context * ctx, const char * key, int64_t val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+فراغ gguf_سېټ_val_i64(بنية gguf_context * ctx, ثابت حرف * کلی, int64_t val) {
+    gguf_check_reserved_کلیګانې(کلی, val);
+    gguf_remove_کلی(ctx, کلی);
+    ctx->kv.emplace_back(کلی, val);
 }
 
-void gguf_set_val_f64(struct gguf_context * ctx, const char * key, double val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+فراغ gguf_سېټ_val_f64(بنية gguf_context * ctx, ثابت حرف * کلی, مزدوج val) {
+    gguf_check_reserved_کلیګانې(کلی, val);
+    gguf_remove_کلی(ctx, کلی);
+    ctx->kv.emplace_back(کلی, val);
 }
 
-void gguf_set_val_bool(struct gguf_context * ctx, const char * key, bool val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+فراغ gguf_سېټ_val_bool(بنية gguf_context * ctx, ثابت حرف * کلی, منطقي val) {
+    gguf_check_reserved_کلیګانې(کلی, val);
+    gguf_remove_کلی(ctx, کلی);
+    ctx->kv.emplace_back(کلی, val);
 }
 
-void gguf_set_val_str(struct gguf_context * ctx, const char * key, const char * val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, std::string(val));
+فراغ gguf_سېټ_val_str(بنية gguf_context * ctx, ثابت حرف * کلی, ثابت حرف * val) {
+    gguf_check_reserved_کلیګانې(کلی, val);
+    gguf_remove_کلی(ctx, کلی);
+    ctx->kv.emplace_back(کلی, std::string(val));
 }
 
-void gguf_set_arr_data(struct gguf_context * ctx, const char * key, enum gguf_type type, const void * data, size_t n) {
-    gguf_check_reserved_keys(key, data);
-    gguf_remove_key(ctx, key);
+فراغ gguf_سېټ_arr_معلومات(بنية gguf_context * ctx, ثابت حرف * کلی, تعداد gguf_type type, ثابت فراغ * معلومات, size_t n) {
+    gguf_check_reserved_کلیګانې(کلی, معلومات);
+    gguf_remove_کلی(ctx, کلی);
 
-    const size_t nbytes = n*gguf_type_size(type);
+    ثابت size_t nbytes = n*gguf_type_اندازه(type);
     std::vector<int8_t> tmp(nbytes);
-    if (!tmp.empty()) {
-        memcpy(tmp.data(), data, nbytes);
+    إذا (!tmp.تشه()) {
+        حافظه_نقل(tmp.معلومات(), معلومات, nbytes);
     }
-    ctx->kv.emplace_back(key, tmp);
+    ctx->kv.emplace_back(کلی, tmp);
     ctx->kv.back().cast(type);
 }
 
-void gguf_set_arr_str(struct gguf_context * ctx, const char * key, const char ** data, size_t n) {
-    gguf_check_reserved_keys(key, data);
-    gguf_remove_key(ctx, key);
+فراغ gguf_سېټ_arr_str(بنية gguf_context * ctx, ثابت حرف * کلی, ثابت حرف ** معلومات, size_t n) {
+    gguf_check_reserved_کلیګانې(کلی, معلومات);
+    gguf_remove_کلی(ctx, کلی);
 
     std::vector<std::string> tmp(n);
-    for (size_t i = 0; i < n; ++i) {
-        tmp[i] = data[i];
+    لكل (size_t i = 0; i < n; ++i) {
+        tmp[i] = معلومات[i];
     }
-    ctx->kv.emplace_back(key, tmp);
+    ctx->kv.emplace_back(کلی, tmp);
 }
 
 // set or add KV pairs from another context
-void gguf_set_kv(struct gguf_context * ctx, const struct gguf_context * src) {
-    const int64_t n_kv = gguf_get_n_kv(src);
-    for (int64_t i = 0; i < n_kv; ++i) {
-        const struct gguf_kv & kv = src->kv[i];
+فراغ gguf_سېټ_kv(بنية gguf_context * ctx, ثابت بنية gguf_context * src) {
+    ثابت int64_t n_kv = gguf_get_n_kv(src);
+    لكل (int64_t i = 0; i < n_kv; ++i) {
+        ثابت بنية gguf_kv & kv = src->kv[i];
 
-        if (!kv.is_array) {
-            switch (kv.get_type()) {
-                case GGUF_TYPE_UINT8:   gguf_set_val_u8  (ctx, kv.get_key().c_str(), kv.get_val<uint8_t>());             break;
-                case GGUF_TYPE_INT8:    gguf_set_val_i8  (ctx, kv.get_key().c_str(), kv.get_val<int8_t>());              break;
-                case GGUF_TYPE_UINT16:  gguf_set_val_u16 (ctx, kv.get_key().c_str(), kv.get_val<uint16_t>());            break;
-                case GGUF_TYPE_INT16:   gguf_set_val_i16 (ctx, kv.get_key().c_str(), kv.get_val<int16_t>());             break;
-                case GGUF_TYPE_UINT32:  gguf_set_val_u32 (ctx, kv.get_key().c_str(), kv.get_val<uint32_t>());            break;
-                case GGUF_TYPE_INT32:   gguf_set_val_i32 (ctx, kv.get_key().c_str(), kv.get_val<int32_t>());             break;
-                case GGUF_TYPE_FLOAT32: gguf_set_val_f32 (ctx, kv.get_key().c_str(), kv.get_val<float>());               break;
-                case GGUF_TYPE_UINT64:  gguf_set_val_u64 (ctx, kv.get_key().c_str(), kv.get_val<uint64_t>());            break;
-                case GGUF_TYPE_INT64:   gguf_set_val_i64 (ctx, kv.get_key().c_str(), kv.get_val<int64_t>());             break;
-                case GGUF_TYPE_FLOAT64: gguf_set_val_f64 (ctx, kv.get_key().c_str(), kv.get_val<double>());              break;
-                case GGUF_TYPE_BOOL:    gguf_set_val_bool(ctx, kv.get_key().c_str(), kv.get_val<bool>());                break;
-                case GGUF_TYPE_STRING:  gguf_set_val_str (ctx, kv.get_key().c_str(), kv.get_val<std::string>().c_str()); break;
-                case GGUF_TYPE_ARRAY:
-                default: GGML_ABORT("invalid type");
+        إذا (!kv.is_array) {
+            بدل (kv.get_type()) {
+                حالة GGUF_TYPE_UINT8:   gguf_سېټ_val_u8  (ctx, kv.get_کلی().c_str(), kv.get_val<uint8_t>());             اكسر;
+                حالة GGUF_TYPE_INT8:    gguf_سېټ_val_i8  (ctx, kv.get_کلی().c_str(), kv.get_val<int8_t>());              اكسر;
+                حالة GGUF_TYPE_UINT16:  gguf_سېټ_val_u16 (ctx, kv.get_کلی().c_str(), kv.get_val<uint16_t>());            اكسر;
+                حالة GGUF_TYPE_INT16:   gguf_سېټ_val_i16 (ctx, kv.get_کلی().c_str(), kv.get_val<int16_t>());             اكسر;
+                حالة GGUF_TYPE_UINT32:  gguf_سېټ_val_u32 (ctx, kv.get_کلی().c_str(), kv.get_val<uint32_t>());            اكسر;
+                حالة GGUF_TYPE_INT32:   gguf_سېټ_val_i32 (ctx, kv.get_کلی().c_str(), kv.get_val<int32_t>());             اكسر;
+                حالة GGUF_TYPE_FLOAT32: gguf_سېټ_val_f32 (ctx, kv.get_کلی().c_str(), kv.get_val<عائم>());               اكسر;
+                حالة GGUF_TYPE_UINT64:  gguf_سېټ_val_u64 (ctx, kv.get_کلی().c_str(), kv.get_val<uint64_t>());            اكسر;
+                حالة GGUF_TYPE_INT64:   gguf_سېټ_val_i64 (ctx, kv.get_کلی().c_str(), kv.get_val<int64_t>());             اكسر;
+                حالة GGUF_TYPE_FLOAT64: gguf_سېټ_val_f64 (ctx, kv.get_کلی().c_str(), kv.get_val<مزدوج>());              اكسر;
+                حالة GGUF_TYPE_BOOL:    gguf_سېټ_val_bool(ctx, kv.get_کلی().c_str(), kv.get_val<منطقي>());                اكسر;
+                حالة GGUF_TYPE_STRING:  gguf_سېټ_val_str (ctx, kv.get_کلی().c_str(), kv.get_val<std::string>().c_str()); اكسر;
+                حالة GGUF_TYPE_ARRAY:
+                افتراضي: GGML_ABORT("invalid type");
             }
-            continue;
+            استمر;
         }
 
-        const size_t ne = kv.get_ne();
+        ثابت size_t ne = kv.get_ne();
 
-        switch (kv.get_type()) {
-            case GGUF_TYPE_UINT8:
-            case GGUF_TYPE_INT8:
-            case GGUF_TYPE_UINT16:
-            case GGUF_TYPE_INT16:
-            case GGUF_TYPE_UINT32:
-            case GGUF_TYPE_INT32:
-            case GGUF_TYPE_FLOAT32:
-            case GGUF_TYPE_UINT64:
-            case GGUF_TYPE_INT64:
-            case GGUF_TYPE_FLOAT64:
-            case GGUF_TYPE_BOOL: {
-                gguf_set_arr_data(ctx, kv.get_key().c_str(), kv.get_type(), kv.data.data(), ne);
-            } break;
-            case GGUF_TYPE_STRING: {
-                std::vector<const char *> tmp(ne);
-                for (size_t j = 0; j < ne; ++j) {
-                    tmp[j] = kv.data_string[j].c_str();
+        بدل (kv.get_type()) {
+            حالة GGUF_TYPE_UINT8:
+            حالة GGUF_TYPE_INT8:
+            حالة GGUF_TYPE_UINT16:
+            حالة GGUF_TYPE_INT16:
+            حالة GGUF_TYPE_UINT32:
+            حالة GGUF_TYPE_INT32:
+            حالة GGUF_TYPE_FLOAT32:
+            حالة GGUF_TYPE_UINT64:
+            حالة GGUF_TYPE_INT64:
+            حالة GGUF_TYPE_FLOAT64:
+            حالة GGUF_TYPE_BOOL: {
+                gguf_سېټ_arr_معلومات(ctx, kv.get_کلی().c_str(), kv.get_type(), kv.معلومات.معلومات(), ne);
+            } اكسر;
+            حالة GGUF_TYPE_STRING: {
+                std::vector<ثابت حرف *> tmp(ne);
+                لكل (size_t j = 0; j < ne; ++j) {
+                    tmp[j] = kv.معلومات_string[j].c_str();
                 }
-                gguf_set_arr_str(ctx, kv.get_key().c_str(), tmp.data(), ne);
-            } break;
-            case GGUF_TYPE_ARRAY:
-            default: GGML_ABORT("invalid type");
+                gguf_سېټ_arr_str(ctx, kv.get_کلی().c_str(), tmp.معلومات(), ne);
+            } اكسر;
+            حالة GGUF_TYPE_ARRAY:
+            افتراضي: GGML_ABORT("invalid type");
         }
     }
 }
 
-void gguf_add_tensor(
-             struct gguf_context * ctx,
-        const struct ggml_tensor * tensor) {
+فراغ gguf_جمع_کړه_tensor(
+             بنية gguf_context * ctx,
+        ثابت بنية ggml_tensor * tensor) {
     GGML_ASSERT(tensor);
-    if (gguf_find_tensor(ctx, tensor->name) != -1) {
+    إذا (gguf_پیدا_کړه_tensor(ctx, tensor->name) != -1) {
         GGML_ABORT("duplicate tensor name: %s", tensor->name);
     }
 
-    struct gguf_tensor_info ti;
+    بنية gguf_tensor_info ti;
     ti.t = *tensor;
-    ti.offset = ctx->info.empty() ? 0 :
-        ctx->info.back().offset + GGML_PAD(ggml_nbytes(&ctx->info.back().t), ctx->alignment);
+    ti.دننه_واټن = ctx->info.تشه() ? 0 :
+        ctx->info.back().دننه_واټن + GGML_PAD(ggml_nbytes(&ctx->info.back().t), ctx->alignment);
     ctx->info.push_back(ti);
 }
 
-void gguf_set_tensor_type(struct gguf_context * ctx, const char * name, enum ggml_type type) {
-    const int64_t tensor_id = gguf_find_tensor(ctx, name);
-    if (tensor_id < 0) {
+فراغ gguf_سېټ_tensor_type(بنية gguf_context * ctx, ثابت حرف * name, تعداد ggml_type type) {
+    ثابت int64_t tensor_id = gguf_پیدا_کړه_tensor(ctx, name);
+    إذا (tensor_id < 0) {
         GGML_ABORT("tensor not found: %s", name);
     }
-    struct ggml_tensor * tensor = &ctx->info[tensor_id].t;
-    const size_t  type_size = ggml_type_size(type);
-    const int64_t blck_size = ggml_blck_size(type);
+    بنية ggml_tensor * tensor = &ctx->info[tensor_id].t;
+    ثابت size_t  type_اندازه = ggml_type_اندازه(type);
+    ثابت int64_t blck_اندازه = ggml_blck_اندازه(type);
 
     tensor->type = type;
-    GGML_ASSERT(tensor->ne[0] % blck_size == 0 && "tensor row size not divisible by block size of new type");
+    GGML_ASSERT(tensor->ne[0] % blck_اندازه == 0 && "tensor row size not divisible by block size of new type");
 
-    tensor->nb[0] = type_size;
-    tensor->nb[1] = tensor->nb[0]*(tensor->ne[0]/blck_size);
-    for (int i = 2; i < GGML_MAX_DIMS; i++) {
+    tensor->nb[0] = type_اندازه;
+    tensor->nb[1] = tensor->nb[0]*(tensor->ne[0]/blck_اندازه);
+    لكل (صحيح i = 2; i < GGML_MAX_DIMS; i++) {
         tensor->nb[i] = tensor->nb[i - 1]*tensor->ne[i - 1];
     }
 
     // update offsets
-    const int64_t n_tensors = gguf_get_n_tensors(ctx);
-    for (int64_t i = tensor_id + 1; i < n_tensors; ++i) {
-        ctx->info[i].offset = ctx->info[i - 1].offset + GGML_PAD(ggml_nbytes(&ctx->info[i - 1].t), ctx->alignment);
+    ثابت int64_t n_tensors = gguf_get_n_tensors(ctx);
+    لكل (int64_t i = tensor_id + 1; i < n_tensors; ++i) {
+        ctx->info[i].دننه_واټن = ctx->info[i - 1].دننه_واټن + GGML_PAD(ggml_nbytes(&ctx->info[i - 1].t), ctx->alignment);
     }
 }
 
-void gguf_set_tensor_data(struct gguf_context * ctx, const char * name, const void * data) {
-    const int64_t tensor_id = gguf_find_tensor(ctx, name);
-    if (tensor_id < 0) {
+فراغ gguf_سېټ_tensor_معلومات(بنية gguf_context * ctx, ثابت حرف * name, ثابت فراغ * معلومات) {
+    ثابت int64_t tensor_id = gguf_پیدا_کړه_tensor(ctx, name);
+    إذا (tensor_id < 0) {
         GGML_ABORT("tensor not found: %s", name);
     }
 
-    ctx->info[tensor_id].t.data = (void *)(uintptr_t)data; // double cast suppresses warning about casting away const
+    ctx->info[tensor_id].t.معلومات = (فراغ *)(uintptr_t)معلومات; // double cast suppresses warning about casting away const
 }
 
-struct gguf_writer_base {
-    size_t written_bytes {0u};
+بنية gguf_writer_بنسټ {
+    size_t written_بایټونه {0u};
 
-    virtual ~gguf_writer_base(void) = default;
+    مجازي ~gguf_writer_بنسټ(فراغ) = افتراضي;
 
     // we bet on devirtualization
-    virtual void write(int8_t val) = 0;
-    virtual void write(const std::vector<int8_t> & val) = 0;
-    virtual void write_tensor_data(const struct gguf_tensor_info & info, size_t offset_data, size_t alignment) = 0;
+    مجازي فراغ اكتب(int8_t val) = 0;
+    مجازي فراغ اكتب(ثابت std::vector<int8_t> & val) = 0;
+    مجازي فراغ write_tensor_معلومات(ثابت بنية gguf_tensor_info & info, size_t دننه_واټن_معلومات, size_t alignment) = 0;
 
-    template <typename T>
-    void write(const T & val) {
-        for (size_t i = 0; i < sizeof(val); ++i) {
-            write(reinterpret_cast<const int8_t *>(&val)[i]);
+    کينډۍ <ډول_نوم T>
+    فراغ اكتب(ثابت T & val) {
+        لكل (size_t i = 0; i < حجم(val); ++i) {
+            اكتب(reinterpret_cast<ثابت int8_t *>(&val)[i]);
         }
     }
 
-    void write(const bool & val) {
-        const int8_t val8 = val ? 1 : 0;
-        write(val8);
+    فراغ اكتب(ثابت منطقي & val) {
+        ثابت int8_t val8 = val ? 1 : 0;
+        اكتب(val8);
     }
 
-    void write(const std::string & val) {
+    فراغ اكتب(ثابت std::string & val) {
         {
-            const uint64_t n = val.length();
-            write(n);
+            ثابت uint64_t n = val.اوږدتیا();
+            اكتب(n);
         }
-        for (size_t i = 0; i < val.length(); ++i) {
-            write((val.data())[i]);
+        لكل (size_t i = 0; i < val.اوږدتیا(); ++i) {
+            اكتب((val.معلومات())[i]);
         }
     }
 
-    void write(const char * val) {
-        write(std::string(val));
+    فراغ اكتب(ثابت حرف * val) {
+        اكتب(std::string(val));
     }
 
-    void write(const enum ggml_type & val) {
-        write(int32_t(val));
+    فراغ اكتب(ثابت تعداد ggml_type & val) {
+        اكتب(int32_t(val));
     }
 
-    void write(const enum gguf_type & val) {
-        write(int32_t(val));
+    فراغ اكتب(ثابت تعداد gguf_type & val) {
+        اكتب(int32_t(val));
     }
 
-    void write(const struct gguf_kv & kv) {
-        const uint64_t ne = kv.get_ne();
+    فراغ اكتب(ثابت بنية gguf_kv & kv) {
+        ثابت uint64_t ne = kv.get_ne();
 
-        write(kv.get_key());
+        اكتب(kv.get_کلی());
 
-        if (kv.is_array) {
-            write(GGUF_TYPE_ARRAY);
-            write(kv.get_type());
-            write(ne);
-        } else {
-            write(kv.get_type());
+        إذا (kv.is_array) {
+            اكتب(GGUF_TYPE_ARRAY);
+            اكتب(kv.get_type());
+            اكتب(ne);
+        } وإلا {
+            اكتب(kv.get_type());
         }
 
-        switch (kv.get_type()) {
-            case GGUF_TYPE_UINT8:
-            case GGUF_TYPE_INT8:
-            case GGUF_TYPE_UINT16:
-            case GGUF_TYPE_INT16:
-            case GGUF_TYPE_UINT32:
-            case GGUF_TYPE_INT32:
-            case GGUF_TYPE_FLOAT32:
-            case GGUF_TYPE_UINT64:
-            case GGUF_TYPE_INT64:
-            case GGUF_TYPE_FLOAT64: {
-                write(kv.data);
-            } break;
-            case GGUF_TYPE_BOOL: {
-                for (size_t i = 0; i < ne; ++i) {
-                    write(kv.get_val<bool>(i));
+        بدل (kv.get_type()) {
+            حالة GGUF_TYPE_UINT8:
+            حالة GGUF_TYPE_INT8:
+            حالة GGUF_TYPE_UINT16:
+            حالة GGUF_TYPE_INT16:
+            حالة GGUF_TYPE_UINT32:
+            حالة GGUF_TYPE_INT32:
+            حالة GGUF_TYPE_FLOAT32:
+            حالة GGUF_TYPE_UINT64:
+            حالة GGUF_TYPE_INT64:
+            حالة GGUF_TYPE_FLOAT64: {
+                اكتب(kv.معلومات);
+            } اكسر;
+            حالة GGUF_TYPE_BOOL: {
+                لكل (size_t i = 0; i < ne; ++i) {
+                    اكتب(kv.get_val<منطقي>(i));
                 }
-            } break;
-            case GGUF_TYPE_STRING: {
-                for (size_t i = 0; i < ne; ++i) {
-                    write(kv.get_val<std::string>(i));
+            } اكسر;
+            حالة GGUF_TYPE_STRING: {
+                لكل (size_t i = 0; i < ne; ++i) {
+                    اكتب(kv.get_val<std::string>(i));
                 }
-            } break;
-            case GGUF_TYPE_ARRAY:
-            default: GGML_ABORT("invalid type");
+            } اكسر;
+            حالة GGUF_TYPE_ARRAY:
+            افتراضي: GGML_ABORT("invalid type");
         }
     }
 
-    void write_tensor_meta(const struct gguf_tensor_info & info) {
-        write(info.t.name);
+    فراغ write_tensor_meta(ثابت بنية gguf_tensor_info & info) {
+        اكتب(info.t.name);
 
-        const uint32_t n_dims = ggml_n_dims(&info.t);
-        write(n_dims);
+        ثابت uint32_t n_dims = ggml_n_dims(&info.t);
+        اكتب(n_dims);
 
-        for (uint32_t j = 0; j < n_dims; ++j) {
-            write(info.t.ne[j]);
+        لكل (uint32_t j = 0; j < n_dims; ++j) {
+            اكتب(info.t.ne[j]);
         }
-        write(info.t.type);
-        write(info.offset);
+        اكتب(info.t.type);
+        اكتب(info.دننه_واټن);
     }
 
-    void pad(const size_t alignment) {
-        while (written_bytes % alignment != 0) {
-            const int8_t zero = 0;
-            write(zero);
+    فراغ pad(ثابت size_t alignment) {
+        طالما (written_بایټونه % alignment != 0) {
+            ثابت int8_t zero = 0;
+            اكتب(zero);
         }
     }
 };
 
 // vector buffer based writer
-struct gguf_writer_buf final : public gguf_writer_base {
+بنية gguf_writer_buf final : عام gguf_writer_بنسټ {
     std::vector<int8_t> & buf;
 
     gguf_writer_buf(std::vector<int8_t> & buf) : buf(buf) {}
 
-    using gguf_writer_base::write;
+    کارول gguf_writer_بنسټ::اكتب;
 
-    void write(const int8_t val) override {
+    فراغ اكتب(ثابت int8_t val) override {
         buf.push_back(val);
-        written_bytes++;
+        written_بایټونه++;
     }
 
-    void write(const std::vector<int8_t> & val) override {
+    فراغ اكتب(ثابت std::vector<int8_t> & val) override {
         buf.insert(buf.end(), val.begin(), val.end());
-        written_bytes += val.size();
+        written_بایټونه += val.size();
     }
 
-    void write_tensor_data(const struct gguf_tensor_info & info, const size_t offset_data, const size_t alignment) override {
-        GGML_ASSERT(buf.size() - offset_data == info.offset);
+    فراغ write_tensor_معلومات(ثابت بنية gguf_tensor_info & info, ثابت size_t دننه_واټن_معلومات, ثابت size_t alignment) override {
+        GGML_ASSERT(buf.size() - دننه_واټن_معلومات == info.دننه_واټن);
 
         GGML_ASSERT(ggml_is_contiguous(&info.t));
-        const size_t offset = buf.size();
-        const size_t nbytes = ggml_nbytes(&info.t);
+        ثابت size_t دننه_واټن = buf.size();
+        ثابت size_t nbytes = ggml_nbytes(&info.t);
 
-        buf.resize(offset + nbytes);
-        if (info.t.buffer) {
-            ggml_backend_tensor_get(&info.t, buf.data() + offset, 0, nbytes);
-        } else {
-            GGML_ASSERT(info.t.data);
-            memcpy(buf.data() + offset, info.t.data, nbytes);
+        buf.resize(دننه_واټن + nbytes);
+        إذا (info.t.بفر) {
+            ggml_backend_tensor_get(&info.t, buf.معلومات() + دننه_واټن, 0, nbytes);
+        } وإلا {
+            GGML_ASSERT(info.t.معلومات);
+            حافظه_نقل(buf.معلومات() + دننه_واټن, info.t.معلومات, nbytes);
         }
-        written_bytes += nbytes;
+        written_بایټونه += nbytes;
 
         pad(alignment);
     }
 };
 
 // file based writer
-struct gguf_writer_file final : public gguf_writer_base {
+بنية gguf_writer_file final : عام gguf_writer_بنسټ {
     FILE * file;
 
     gguf_writer_file(FILE* file) : file(file) {}
 
-    using gguf_writer_base::write;
+    کارول gguf_writer_بنسټ::اكتب;
 
-    void write(const int8_t val) override {
-        const auto real_val = static_cast<uint8_t>(val);
-        const auto ret = fputc(real_val, file);
-        written_bytes++;
-        if (ret != real_val) {
-            throw std::runtime_error("unexpected fputc result '" + std::to_string(ret) + "' instead of '" + std::to_string((int)real_val) + "'");
+    فراغ اكتب(ثابت int8_t val) override {
+        ثابت خپلکاری real_val = static_cast<uint8_t>(val);
+        ثابت خپلکاری ret = fputc(real_val, file);
+        written_بایټونه++;
+        إذا (ret != real_val) {
+            ارم std::runtime_error("unexpected fputc result '" + std::to_string(ret) + "' instead of '" + std::to_string((صحيح)real_val) + "'");
         }
     }
 
-    void write(const std::vector<int8_t> & val) override {
-        const auto ret = fwrite(val.data(), 1, val.size(), file);
-        written_bytes += val.size();
-        if (ret != val.size()) {
-            throw std::runtime_error("unexpected fwrite number of bytes written, '" + std::to_string(ret) + "' instead of '" + std::to_string(val.size()) + "'");
+    فراغ اكتب(ثابت std::vector<int8_t> & val) override {
+        ثابت خپلکاری ret = fwrite(val.معلومات(), 1, val.size(), file);
+        written_بایټونه += val.size();
+        إذا (ret != val.size()) {
+            ارم std::runtime_error("unexpected fwrite number of bytes written, '" + std::to_string(ret) + "' instead of '" + std::to_string(val.size()) + "'");
         }
     }
 
-    void write_tensor_data(const struct gguf_tensor_info & info, const size_t offset_data, const size_t alignment) override {
-        GGML_ASSERT(written_bytes - offset_data == info.offset);
+    فراغ write_tensor_معلومات(ثابت بنية gguf_tensor_info & info, ثابت size_t دننه_واټن_معلومات, ثابت size_t alignment) override {
+        GGML_ASSERT(written_بایټونه - دننه_واټن_معلومات == info.دننه_واټن);
 
         GGML_ASSERT(ggml_is_contiguous(&info.t));
-        const size_t nbytes = ggml_nbytes(&info.t);
+        ثابت size_t nbytes = ggml_nbytes(&info.t);
 
         std::vector<int8_t> buf(nbytes);
-        if (info.t.buffer) {
-            ggml_backend_tensor_get(&info.t, buf.data(), 0, nbytes);
-        } else {
-            GGML_ASSERT(info.t.data);
-            memcpy(buf.data(), info.t.data, nbytes);
+        إذا (info.t.بفر) {
+            ggml_backend_tensor_get(&info.t, buf.معلومات(), 0, nbytes);
+        } وإلا {
+            GGML_ASSERT(info.t.معلومات);
+            حافظه_نقل(buf.معلومات(), info.t.معلومات, nbytes);
         }
-        write(buf);
+        اكتب(buf);
 
         pad(alignment);
     }
 };
 
-template <typename writer_t>
-static void gguf_write_out(const struct gguf_context * ctx, writer_t & gw, bool only_meta) {
-    const int64_t n_kv      = gguf_get_n_kv(ctx);
-    const int64_t n_tensors = gguf_get_n_tensors(ctx);
+کينډۍ <ډول_نوم writer_t>
+ساكن فراغ gguf_write_بهر(ثابت بنية gguf_context * ctx, writer_t & gw, منطقي only_meta) {
+    ثابت int64_t n_kv      = gguf_get_n_kv(ctx);
+    ثابت int64_t n_tensors = gguf_get_n_tensors(ctx);
 
     // write header
-    gw.write(GGUF_MAGIC[0]);
-    gw.write(GGUF_MAGIC[1]);
-    gw.write(GGUF_MAGIC[2]);
-    gw.write(GGUF_MAGIC[3]);
-    gw.write(ctx->version);
-    gw.write(n_tensors);
-    gw.write(n_kv);
+    gw.اكتب(GGUF_MAGIC[0]);
+    gw.اكتب(GGUF_MAGIC[1]);
+    gw.اكتب(GGUF_MAGIC[2]);
+    gw.اكتب(GGUF_MAGIC[3]);
+    gw.اكتب(ctx->نسخه_2);
+    gw.اكتب(n_tensors);
+    gw.اكتب(n_kv);
 
     // write key-value pairs
-    for (int64_t i = 0; i < n_kv; ++i) {
-        gw.write(ctx->kv[i]);
+    لكل (int64_t i = 0; i < n_kv; ++i) {
+        gw.اكتب(ctx->kv[i]);
     }
 
     // write tensor info
-    for (int64_t i = 0; i < n_tensors; ++i) {
+    لكل (int64_t i = 0; i < n_tensors; ++i) {
         gw.write_tensor_meta(ctx->info[i]);
     }
 
     // we require the data section to be aligned
     gw.pad(ctx->alignment);
 
-    if (only_meta) {
-        return;
+    إذا (only_meta) {
+        أرجع;
     }
 
-    const size_t offset_data = gw.written_bytes;
+    ثابت size_t دننه_واټن_معلومات = gw.written_بایټونه;
 
     // write tensor data
-    for (int64_t i = 0; i < n_tensors; ++i) {
-        gw.write_tensor_data(ctx->info[i], offset_data, ctx->alignment);
+    لكل (int64_t i = 0; i < n_tensors; ++i) {
+        gw.write_tensor_معلومات(ctx->info[i], دننه_واټن_معلومات, ctx->alignment);
     }
 }
 
-void gguf_write_to_buf(const struct gguf_context * ctx, std::vector<int8_t> & buf, bool only_meta) {
+فراغ gguf_write_منزل_buf(ثابت بنية gguf_context * ctx, std::vector<int8_t> & buf, منطقي only_meta) {
     gguf_writer_buf gw(buf);
-    gguf_write_out(ctx, gw, only_meta);
+    gguf_write_بهر(ctx, gw, only_meta);
 }
 
-bool gguf_write_to_file_ptr(const struct gguf_context * ctx, FILE * file, bool only_meta) {
+منطقي gguf_write_منزل_file_ptr(ثابت بنية gguf_context * ctx, FILE * file, منطقي only_meta) {
     GGML_ASSERT(file);
 
-    try {
+    حاول {
         gguf_writer_file gw(file);
-        gguf_write_out(ctx, gw, only_meta);
-    } catch (const std::runtime_error& ex) {
+        gguf_write_بهر(ctx, gw, only_meta);
+    } امسك (ثابت std::runtime_error& ex) {
         GGML_LOG_ERROR("%s: failed to write GGUF data: %s\n", __func__, ex.what());
-        return false;
+        أرجع خطأ;
     }
-    return true;
+    أرجع ریښتیا;
 }
 
-bool gguf_write_to_file(const struct gguf_context * ctx, const char * fname, bool only_meta) {
+منطقي gguf_write_منزل_file(ثابت بنية gguf_context * ctx, ثابت حرف * fname, منطقي only_meta) {
     FILE * file = ggml_fopen(fname, "wb");
 
-    if (!file) {
+    إذا (!file) {
         GGML_LOG_ERROR("%s: failed to open file '%s' for writing GGUF data\n", __func__, fname);
-        return false;
+        أرجع خطأ;
     }
 
-    const bool success = gguf_write_to_file_ptr(ctx, file, only_meta);
-    if (!success) {
+    ثابت منطقي success = gguf_write_منزل_file_ptr(ctx, file, only_meta);
+    إذا (!success) {
         GGML_LOG_ERROR("%s: failed to write GGUF data into '%s'\n", __func__, fname);
     }
 
     fclose(file);
-    return success;
+    أرجع success;
 }
 
-size_t gguf_get_meta_size(const struct gguf_context * ctx) {
+size_t gguf_get_meta_اندازه(ثابت بنية gguf_context * ctx) {
     // only return size
     std::vector<int8_t> buf;
-    gguf_write_to_buf(ctx, buf, /*only_meta =*/ true);
-    return buf.size();
+    gguf_write_منزل_buf(ctx, buf, /*only_meta =*/ ریښتیا);
+    أرجع buf.size();
 }
 
-void gguf_get_meta_data(const struct gguf_context * ctx, void * data) {
+فراغ gguf_get_meta_معلومات(ثابت بنية gguf_context * ctx, فراغ * معلومات) {
     std::vector<int8_t> buf;
-    gguf_write_to_buf(ctx, buf, /*only_meta =*/ true);
-    memcpy(data, buf.data(), buf.size());
+    gguf_write_منزل_buf(ctx, buf, /*only_meta =*/ ریښتیا);
+    حافظه_نقل(معلومات, buf.معلومات(), buf.size());
 }

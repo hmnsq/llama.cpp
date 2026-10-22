@@ -1,23 +1,23 @@
-#ifndef GGML_METAL_IMPL
-#define GGML_METAL_IMPL
+#که_نه_تعریف_شوی GGML_METAL_IMPL
+#تعریف_کړه GGML_METAL_IMPL
 
 // kernel parameters for mat-mat threadgroups
 //
 // TODO: become function constants
 
-#define SZ_SIMDGROUP 16
-#define N_MM_NK 2
-#define N_MM_NK_TOTAL (SZ_SIMDGROUP * N_MM_NK)
+#تعریف_کړه SZ_SIMDGROUP 16
+#تعریف_کړه N_MM_NK 2
+#تعریف_کړه N_MM_NK_ټول (SZ_SIMDGROUP * N_MM_NK)
 
-#define N_MM_BLOCK_X 4
-#define N_MM_BLOCK_Y 2
-#define N_MM_SIMD_GROUP_X 2
-#define N_MM_SIMD_GROUP_Y 2
+#تعریف_کړه N_MM_بلاک_X 4
+#تعریف_کړه N_MM_بلاک_Y 2
+#تعریف_کړه N_MM_SIMD_ډله_X 2
+#تعریف_کړه N_MM_SIMD_ډله_Y 2
 
-#define N_MM_NPART_AMAX 256
+#تعریف_کړه N_MM_NPART_AMAX 256
 
-#define N_ARGMAX_NPART_MAX 256
-#define N_ARGMAX_CHUNK 4096
+#تعریف_کړه N_ARGMAX_NPART_MAX 256
+#تعریف_کړه N_ARGMAX_CHUNK 4096
 
 // kernel parameters for mat-vec threadgroups
 //
@@ -26,165 +26,165 @@
 //
 // TODO: for optimal performance, become function of the device and work size
 
-#define N_R0_Q1_0 8
-#define N_SG_Q1_0 2
+#تعریف_کړه N_R0_Q1_0 8
+#تعریف_کړه N_SG_Q1_0 2
 
-#define N_R0_Q2_0 8
-#define N_SG_Q2_0 2
+#تعریف_کړه N_R0_Q2_0 8
+#تعریف_کړه N_SG_Q2_0 2
 
-#define N_R0_Q4_0 4
-#define N_SG_Q4_0 2
+#تعریف_کړه N_R0_Q4_0 4
+#تعریف_کړه N_SG_Q4_0 2
 
-#define N_R0_Q4_1 4
-#define N_SG_Q4_1 2
+#تعریف_کړه N_R0_Q4_1 4
+#تعریف_کړه N_SG_Q4_1 2
 
-#define N_R0_Q5_0 4
-#define N_SG_Q5_0 2
+#تعریف_کړه N_R0_Q5_0 4
+#تعریف_کړه N_SG_Q5_0 2
 
-#define N_R0_Q5_1 4
-#define N_SG_Q5_1 2
+#تعریف_کړه N_R0_Q5_1 4
+#تعریف_کړه N_SG_Q5_1 2
 
-#define N_R0_Q8_0 2
-#define N_SG_Q8_0 4
+#تعریف_کړه N_R0_Q8_0 2
+#تعریف_کړه N_SG_Q8_0 4
 
-#define N_R0_MXFP4 2
-#define N_SG_MXFP4 2
+#تعریف_کړه N_R0_MXFP4 2
+#تعریف_کړه N_SG_MXFP4 2
 
-#define N_R0_Q2_K 4
-#define N_SG_Q2_K 2
+#تعریف_کړه N_R0_Q2_K 4
+#تعریف_کړه N_SG_Q2_K 2
 
-#define N_R0_Q3_K 2
-#define N_SG_Q3_K 2
+#تعریف_کړه N_R0_Q3_K 2
+#تعریف_کړه N_SG_Q3_K 2
 
-#define N_R0_Q4_K 2
-#define N_SG_Q4_K 2
+#تعریف_کړه N_R0_Q4_K 2
+#تعریف_کړه N_SG_Q4_K 2
 
-#define N_R0_Q5_K 1
-#define N_SG_Q5_K 2
+#تعریف_کړه N_R0_Q5_K 1
+#تعریف_کړه N_SG_Q5_K 2
 
-#define N_R0_Q6_K 2
-#define N_SG_Q6_K 2
+#تعریف_کړه N_R0_Q6_K 2
+#تعریف_کړه N_SG_Q6_K 2
 
-#define N_R0_IQ1_S 4
-#define N_SG_IQ1_S 2
-#define N_R0_IQ1_S_SPLIT 8
+#تعریف_کړه N_R0_IQ1_S 4
+#تعریف_کړه N_SG_IQ1_S 2
+#تعریف_کړه N_R0_IQ1_S_وېشل 8
 
-#define N_R0_IQ1_M 4
-#define N_SG_IQ1_M 2
-#define N_R0_IQ1_M_SPLIT 8
+#تعریف_کړه N_R0_IQ1_M 4
+#تعریف_کړه N_SG_IQ1_M 2
+#تعریف_کړه N_R0_IQ1_M_وېشل 8
 
-#define N_R0_IQ2_XXS 4
-#define N_SG_IQ2_XXS 2
-#define N_R0_IQ2_XXS_SPLIT 8
+#تعریف_کړه N_R0_IQ2_XXS 4
+#تعریف_کړه N_SG_IQ2_XXS 2
+#تعریف_کړه N_R0_IQ2_XXS_وېشل 8
 
-#define N_R0_IQ2_XS 4
-#define N_SG_IQ2_XS 2
-#define N_R0_IQ2_XS_SPLIT 8
+#تعریف_کړه N_R0_IQ2_XS 4
+#تعریف_کړه N_SG_IQ2_XS 2
+#تعریف_کړه N_R0_IQ2_XS_وېشل 8
 
-#define N_R0_IQ2_S 4
-#define N_SG_IQ2_S 2
-#define N_R0_IQ2_S_SPLIT 8
+#تعریف_کړه N_R0_IQ2_S 4
+#تعریف_کړه N_SG_IQ2_S 2
+#تعریف_کړه N_R0_IQ2_S_وېشل 8
 
-#define N_R0_IQ3_XXS 4
-#define N_SG_IQ3_XXS 2
-#define N_R0_IQ3_XXS_SPLIT 8
+#تعریف_کړه N_R0_IQ3_XXS 4
+#تعریف_کړه N_SG_IQ3_XXS 2
+#تعریف_کړه N_R0_IQ3_XXS_وېشل 8
 
-#define N_R0_IQ3_S 4
-#define N_SG_IQ3_S 2
-#define N_R0_IQ3_S_SPLIT 8
+#تعریف_کړه N_R0_IQ3_S 4
+#تعریف_کړه N_SG_IQ3_S 2
+#تعریف_کړه N_R0_IQ3_S_وېشل 8
 
-#define N_R0_IQ4_NL 2
-#define N_SG_IQ4_NL 2
+#تعریف_کړه N_R0_IQ4_NL 2
+#تعریف_کړه N_SG_IQ4_NL 2
 
-#define N_R0_IQ4_XS 2
-#define N_SG_IQ4_XS 2
+#تعریف_کړه N_R0_IQ4_XS 2
+#تعریف_کړه N_SG_IQ4_XS 2
 
-#define N_R0_TQ2_0 4
-#define N_SG_TQ2_0 2
+#تعریف_کړه N_R0_TQ2_0 4
+#تعریف_کړه N_SG_TQ2_0 2
 
 // function constants offsets
-#define FC_FLASH_ATTN_EXT_PAD          100
-#define FC_FLASH_ATTN_EXT_BLK          200
-#define FC_FLASH_ATTN_EXT              300
-#define FC_FLASH_ATTN_EXT_VEC          400
-#define FC_FLASH_ATTN_EXT_VEC_REDUCE   500
-#define FC_MUL_MV                      600
-#define FC_MUL_MM                      700
-#define FC_ROPE                        800
-#define FC_SSM_CONV                    900
-#define FC_SOLVE_TRI                   1000
-#define FC_COUNT_EQUAL                 1100
-#define FC_UNARY                       1200
-#define FC_BIN                         1300
-#define FC_SUM_ROWS                    1400
-#define FC_UPSCALE                     1500
-#define FC_GATED_DELTA_NET             1600
-#define FC_NORM                        1700
-#define FC_TOPK_MOE                    1800
-#define FC_MOE_REDUCE                  1900
-#define FC_DSV4_HC                     2000
-#define FC_PAD                         2100
-#define FC_FLASH_ATTN_EXT_TENSOR       2200
-#define FC_LIGHTNING_INDEXER           2200
-#define FC_MUL_MV_MMA                  2300
+#تعریف_کړه FC_FLASH_ATTN_EXT_PAD          100
+#تعریف_کړه FC_FLASH_ATTN_EXT_BLK          200
+#تعریف_کړه FC_FLASH_ATTN_EXT              300
+#تعریف_کړه FC_FLASH_ATTN_EXT_VEC          400
+#تعریف_کړه FC_FLASH_ATTN_EXT_VEC_REDUCE   500
+#تعریف_کړه FC_MUL_MV                      600
+#تعریف_کړه FC_MUL_MM                      700
+#تعریف_کړه FC_ROPE                        800
+#تعریف_کړه FC_SSM_CONV                    900
+#تعریف_کړه FC_SOLVE_TRI                   1000
+#تعریف_کړه FC_شمېر_EQUAL                 1100
+#تعریف_کړه FC_UNARY                       1200
+#تعریف_کړه FC_BIN                         1300
+#تعریف_کړه FC_مجموعه_لیکې                    1400
+#تعریف_کړه FC_UPSCALE                     1500
+#تعریف_کړه FC_GATED_DELTA_NET             1600
+#تعریف_کړه FC_NORM                        1700
+#تعریف_کړه FC_TOPK_MOE                    1800
+#تعریف_کړه FC_MOE_REDUCE                  1900
+#تعریف_کړه FC_DSV4_HC                     2000
+#تعریف_کړه FC_PAD                         2100
+#تعریف_کړه FC_FLASH_ATTN_EXT_TENSOR       2200
+#تعریف_کړه FC_LIGHTNING_INDEXER           2200
+#تعریف_کړه FC_MUL_MV_MMA                  2300
 
 // op-specific constants
-#define OP_FLASH_ATTN_EXT_NQPSG 8
-#define OP_FLASH_ATTN_EXT_NCPSG 64
+#تعریف_کړه OP_FLASH_ATTN_EXT_NQPSG 8
+#تعریف_کړه OP_FLASH_ATTN_EXT_NCPSG 64
 
-#define OP_FLASH_ATTN_EXT_TENSOR_NQPSG       32
-#define OP_FLASH_ATTN_EXT_TENSOR_NQPSG_LARGE 16
-#define OP_FLASH_ATTN_EXT_TENSOR_NCPSG       64
-#define OP_FLASH_ATTN_EXT_TENSOR_NSG         8
+#تعریف_کړه OP_FLASH_ATTN_EXT_TENSOR_NQPSG       32
+#تعریف_کړه OP_FLASH_ATTN_EXT_TENSOR_NQPSG_LARGE 16
+#تعریف_کړه OP_FLASH_ATTN_EXT_TENSOR_NCPSG       64
+#تعریف_کړه OP_FLASH_ATTN_EXT_TENSOR_NSG         8
 
-#define OP_FLASH_ATTN_EXT_VEC_NQPSG 1
-#define OP_FLASH_ATTN_EXT_VEC_NCPSG 32
+#تعریف_کړه OP_FLASH_ATTN_EXT_VEC_NQPSG 1
+#تعریف_کړه OP_FLASH_ATTN_EXT_VEC_NCPSG 32
 
-#define OP_LIGHTNING_INDEXER_DK    128
-#define OP_LIGHTNING_INDEXER_NHPTG   8
-#define OP_LIGHTNING_INDEXER_NKPSG   8
-#define OP_LIGHTNING_INDEXER_NSG     8
-#define OP_LIGHTNING_INDEXER_NBPTG   8
+#تعریف_کړه OP_LIGHTNING_INDEXER_DK    128
+#تعریف_کړه OP_LIGHTNING_INDEXER_NHPTG   8
+#تعریف_کړه OP_LIGHTNING_INDEXER_NKPSG   8
+#تعریف_کړه OP_LIGHTNING_INDEXER_NSG     8
+#تعریف_کړه OP_LIGHTNING_INDEXER_NBPTG   8
 
-#define OP_UNARY_NUM_SCALE      10
-#define OP_UNARY_NUM_FILL       11
-#define OP_UNARY_NUM_CLAMP      12
-#define OP_UNARY_NUM_SQR        13
-#define OP_UNARY_NUM_SQRT       14
-#define OP_UNARY_NUM_SIN        15
-#define OP_UNARY_NUM_COS        16
-#define OP_UNARY_NUM_LOG        17
-#define OP_UNARY_NUM_LEAKY_RELU 18
+#تعریف_کړه OP_UNARY_عدد_SCALE      10
+#تعریف_کړه OP_UNARY_عدد_FILL       11
+#تعریف_کړه OP_UNARY_عدد_CLAMP      12
+#تعریف_کړه OP_UNARY_عدد_SQR        13
+#تعریف_کړه OP_UNARY_عدد_SQRT       14
+#تعریف_کړه OP_UNARY_عدد_SIN        15
+#تعریف_کړه OP_UNARY_عدد_COS        16
+#تعریف_کړه OP_UNARY_عدد_LOG        17
+#تعریف_کړه OP_UNARY_عدد_LEAKY_RELU 18
 
-#define OP_UNARY_NUM_TANH        100
-#define OP_UNARY_NUM_RELU        101
-#define OP_UNARY_NUM_SIGMOID     102
-#define OP_UNARY_NUM_GELU        103
-#define OP_UNARY_NUM_GELU_ERF    104
-#define OP_UNARY_NUM_GELU_QUICK  105
-#define OP_UNARY_NUM_SILU        106
-#define OP_UNARY_NUM_ELU         107
-#define OP_UNARY_NUM_NEG         108
-#define OP_UNARY_NUM_ABS         109
-#define OP_UNARY_NUM_SGN         110
-#define OP_UNARY_NUM_STEP        111
-#define OP_UNARY_NUM_HARDSWISH   112
-#define OP_UNARY_NUM_HARDSIGMOID 113
-#define OP_UNARY_NUM_EXP         114
-#define OP_UNARY_NUM_SOFTPLUS    115
-#define OP_UNARY_NUM_EXPM1       116
-#define OP_UNARY_NUM_FLOOR       117
-#define OP_UNARY_NUM_CEIL        118
-#define OP_UNARY_NUM_ROUND       119
-#define OP_UNARY_NUM_TRUNC       120
-#define OP_UNARY_NUM_XIELU       121
+#تعریف_کړه OP_UNARY_عدد_TANH        100
+#تعریف_کړه OP_UNARY_عدد_RELU        101
+#تعریف_کړه OP_UNARY_عدد_SIGMOID     102
+#تعریف_کړه OP_UNARY_عدد_GELU        103
+#تعریف_کړه OP_UNARY_عدد_GELU_ERF    104
+#تعریف_کړه OP_UNARY_عدد_GELU_چټک  105
+#تعریف_کړه OP_UNARY_عدد_SILU        106
+#تعریف_کړه OP_UNARY_عدد_ELU         107
+#تعریف_کړه OP_UNARY_عدد_NEG         108
+#تعریف_کړه OP_UNARY_عدد_ABS         109
+#تعریف_کړه OP_UNARY_عدد_SGN         110
+#تعریف_کړه OP_UNARY_عدد_ګام        111
+#تعریف_کړه OP_UNARY_عدد_HARDSWISH   112
+#تعریف_کړه OP_UNARY_عدد_HARDSIGMOID 113
+#تعریف_کړه OP_UNARY_عدد_EXP         114
+#تعریف_کړه OP_UNARY_عدد_SOFTPLUS    115
+#تعریف_کړه OP_UNARY_عدد_EXPM1       116
+#تعریف_کړه OP_UNARY_عدد_FLOOR       117
+#تعریف_کړه OP_UNARY_عدد_CEIL        118
+#تعریف_کړه OP_UNARY_عدد_پړاو       119
+#تعریف_کړه OP_UNARY_عدد_TRUNC       120
+#تعریف_کړه OP_UNARY_عدد_XIELU       121
 
-#define OP_SUM_ROWS_NUM_SUM_ROWS 10
-#define OP_SUM_ROWS_NUM_MEAN     11
+#تعریف_کړه OP_مجموعه_لیکې_عدد_مجموعه_لیکې 10
+#تعریف_کړه OP_مجموعه_لیکې_عدد_منځنۍ     11
 
-#define OP_SSM_SCAN_SSD_CS  64 // Metal-specific; Chunk Size; 64 is largest multiple of 8 (simdgroup tile) fitting into 32 KiB Metal threadgroup mem limit (~26.75 KiB shared mem; see smem layout comment in kernel_ssm_scan_ssd_mma_f32)
-#define OP_SSM_SCAN_SSD_HD  64 // Metal-specific; Head Dim the MMA kernel is specialized for (Mamba-2); use_mma gates on d_inner == this
-#define OP_SSM_SCAN_SSD_NSG 4  // Metal-specific; Number of SimdGroups per threadgroup; NSG*32 == threads dispatched per threadgroup
+#تعریف_کړه OP_SSM_لټون_SSD_CS  64 // Metal-specific; Chunk Size; 64 is largest multiple of 8 (simdgroup tile) fitting into 32 KiB Metal threadgroup mem limit (~26.75 KiB shared mem; see smem layout comment in kernel_ssm_scan_ssd_mma_f32)
+#تعریف_کړه OP_SSM_لټون_SSD_HD  64 // Metal-specific; Head Dim the MMA kernel is specialized for (Mamba-2); use_mma gates on d_inner == this
+#تعریف_کړه OP_SSM_لټون_SSD_NSG 4  // Metal-specific; Number of SimdGroups per threadgroup; NSG*32 == threads dispatched per threadgroup
 
 // kernel argument structs
 //
@@ -193,7 +193,7 @@
 //
 // - strides (e.g. nb00) use uint64_t
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -222,7 +222,7 @@ typedef struct {
     int32_t  nc0;
 } ggml_metal_kargs_concat;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -239,15 +239,15 @@ typedef struct {
     uint64_t nb1;
     uint64_t nb2;
     uint64_t nb3;
-    float    slope;
-    float    scale;
-    float    bias;
-    float    val;
-    float    min;
-    float    max;
+    عائم    میلان;
+    عائم    scale;
+    عائم    bias;
+    عائم    val;
+    عائم    min;
+    عائم    max;
 } ggml_metal_kargs_unary;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -276,16 +276,16 @@ typedef struct {
     uint64_t o1[8];
 } ggml_metal_kargs_bin;
 
-typedef struct {
+تعريفنوع بنية {
     int64_t ne0;
     int64_t ne1;
     size_t nb01;
     size_t nb02;
     size_t nb11;
     size_t nb21;
-} ggml_metal_kargs_add_id;
+} ggml_metal_kargs_جمع_کړه_id;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -304,7 +304,7 @@ typedef struct {
     uint64_t nb3;
 } ggml_metal_kargs_repeat;
 
-typedef struct {
+تعريفنوع بنية {
     int64_t  nk0;
     int64_t  ne00;
     int64_t  ne01;
@@ -324,7 +324,7 @@ typedef struct {
     uint64_t nb3;
 } ggml_metal_kargs_cpy;
 
-typedef struct {
+تعريفنوع بنية {
     int64_t  ne10;
     int64_t  ne11;
     int64_t  ne12;
@@ -337,9 +337,9 @@ typedef struct {
     uint64_t nb3;
     uint64_t offs;
     bool     inplace;
-} ggml_metal_kargs_set;
+} ggml_metal_kargs_سېټ;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -360,12 +360,12 @@ typedef struct {
     int32_t  n_dims;
     int32_t  n_offs;
     int32_t  n_ctx_orig;
-    float    freq_base;
-    float    freq_scale;
-    float    ext_factor;
-    float    attn_factor;
-    float    beta_fast;
-    float    beta_slow;
+    عائم    freq_بنسټ;
+    عائم    freq_scale;
+    عائم    ext_ضریب;
+    عائم    attn_ضریب;
+    عائم    beta_fast;
+    عائم    beta_slow;
     int32_t  sect_0;
     int32_t  sect_1;
     int32_t  sect_2;
@@ -374,7 +374,7 @@ typedef struct {
     bool     inplace;
 } ggml_metal_kargs_rope;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne0;
     int32_t  ne1;
     int32_t  ne2;
@@ -386,7 +386,7 @@ typedef struct {
     int32_t  nblocks;
 } ggml_metal_kargs_flash_attn_ext_kv_f16;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne11;
     int32_t  ne_12_2; // assume K and V are same shape
     int32_t  ne_12_3;
@@ -404,7 +404,7 @@ typedef struct {
     uint64_t nb33;
 } ggml_metal_kargs_flash_attn_ext_pad;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne01;
     int32_t  ne30;
     int32_t  ne31;
@@ -415,7 +415,7 @@ typedef struct {
     uint64_t nb33;
 } ggml_metal_kargs_flash_attn_ext_blk;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne01;
     int32_t  ne02;
     int32_t  ne03;
@@ -442,15 +442,15 @@ typedef struct {
     int32_t  ne1;
     int32_t  ne2;
     int32_t  ne3;
-    float    scale;
-    float    max_bias;
-    float    m0;
-    float    m1;
-    int32_t  n_head_log2;
-    float    logit_softcap;
+    عائم    scale;
+    عائم    max_bias;
+    عائم    m0;
+    عائم    m1;
+    int32_t  n_سر_log2;
+    عائم    logit_softcap;
 } ggml_metal_kargs_flash_attn_ext;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne01;
     int32_t  ne02;
     int32_t  ne03;
@@ -477,16 +477,16 @@ typedef struct {
     int32_t  ne1;
     int32_t  ne2;
     int32_t  ne3;
-    float    scale;
-    float    max_bias;
-    float    m0;
-    float    m1;
-    int32_t  n_head_log2;
-    float    logit_softcap;
+    عائم    scale;
+    عائم    max_bias;
+    عائم    m0;
+    عائم    m1;
+    int32_t  n_سر_log2;
+    عائم    logit_softcap;
     int32_t  n_kv_max_padded;
 } ggml_metal_kargs_flash_attn_ext_vec;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne30;
     int32_t  ne31;
     int32_t  ne32;
@@ -498,11 +498,11 @@ typedef struct {
     int32_t  n_kv_max_padded;
 } ggml_metal_kargs_flash_attn_ext_vec_idx;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  nrows;
 } ggml_metal_kargs_flash_attn_ext_vec_reduce;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne00;
     int32_t  ne02;
     uint64_t nb01;
@@ -519,7 +519,7 @@ typedef struct {
     int16_t  r3;
 } ggml_metal_kargs_mul_mm;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -541,7 +541,7 @@ typedef struct {
     int16_t  r3;
 } ggml_metal_kargs_mul_mv;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -562,7 +562,7 @@ typedef struct {
     int16_t  r3;
 } ggml_metal_kargs_mul_mv_ext;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne10;
     int32_t  ne11;  // n_expert_used (bcast)
     uint64_t nb11;
@@ -572,7 +572,7 @@ typedef struct {
     uint64_t nb21;
 } ggml_metal_kargs_mul_mm_id_map0;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -580,7 +580,7 @@ typedef struct {
     uint64_t nb02;
 } ggml_metal_kargs_mul_mm_id_amax;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne00;
     int32_t  ne02;
     uint64_t nb01;
@@ -598,7 +598,7 @@ typedef struct {
     int16_t  r3;
 } ggml_metal_kargs_mul_mm_id;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  nei0;
     int32_t  nei1;
     uint64_t nbi1;
@@ -623,23 +623,23 @@ typedef struct {
 
 // NORM
 // RMS_NORM
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne00;
     int32_t  ne00_t;
     uint64_t nb1;
     uint64_t nb2;
     uint64_t nb3;
-    float    eps;
+    عائم    eps;
     int32_t  nef1[3];
     int32_t  nef2[3];
     int32_t  nef3[3];
     uint64_t nbf1[3];
     uint64_t nbf2[3];
     uint64_t nbf3[3];
-    float    scale;
+    عائم    scale;
 } ggml_metal_kargs_norm;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -656,10 +656,10 @@ typedef struct {
     uint64_t nb1;
     uint64_t nb2;
     uint64_t nb3;
-    float    eps;
+    عائم    eps;
 } ggml_metal_kargs_l2_norm;
 
-typedef struct {
+تعريفنوع بنية {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -667,10 +667,10 @@ typedef struct {
     uint64_t nb01;
     uint64_t nb02;
     int32_t  ngrp;
-    float    eps;
-} ggml_metal_kargs_group_norm;
+    عائم    eps;
+} ggml_metal_kargs_ډله_norm;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  IC;
     int32_t  IL;
     int32_t  K;
@@ -679,9 +679,9 @@ typedef struct {
     uint64_t nb1;
 } ggml_metal_kargs_conv_transpose_1d;
 
-typedef struct {
-    int32_t  T_in;
-    int32_t  T_out;
+تعريفنوع بنية {
+    int32_t  T_دننه;
+    int32_t  T_بهر;
     int32_t  OC;
     int32_t  K;
     int32_t  K_OC;
@@ -689,12 +689,12 @@ typedef struct {
     int32_t  p0;
 } ggml_metal_kargs_col2im_1d;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t T;
     int32_t C;
 } ggml_metal_kargs_snake;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  IC;
     int32_t  IH;
     int32_t  IW;
@@ -708,7 +708,7 @@ typedef struct {
     uint64_t nb3;
 } ggml_metal_kargs_conv_transpose_2d;
 
-typedef struct {
+تعريفنوع بنية {
     uint64_t nb00;
     uint64_t nb01;
     uint64_t nb02;
@@ -738,7 +738,7 @@ typedef struct {
     int32_t  d1;
 } ggml_metal_kargs_conv_2d;
 
-typedef struct {
+تعريفنوع بنية {
     uint64_t nb00;  // kernel strides
     uint64_t nb01;
     uint64_t nb02;
@@ -766,7 +766,7 @@ typedef struct {
     int32_t  d1;    // dilation y
 } ggml_metal_kargs_conv_2d_dw;
 
-typedef struct {
+تعريفنوع بنية {
     uint64_t  ofs0;
     uint64_t  ofs1;
     int32_t  IW;
@@ -784,7 +784,7 @@ typedef struct {
     int32_t  KHW; // KH * KW, pre-computed on CPU to save GPU resources
 } ggml_metal_kargs_im2col;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  IW;
     int32_t  IH;
     int32_t  ID;
@@ -820,7 +820,7 @@ typedef struct {
     uint64_t nb3;
 } ggml_metal_kargs_conv_3d;
 
-typedef struct{
+تعريفنوع بنية{
     int32_t  ne00;
     uint64_t nb01;
     int32_t  ne10;
@@ -829,15 +829,15 @@ typedef struct{
     uint64_t nb1;
     int32_t  i00;
     int32_t  i10;
-    float    alpha;
-    float    limit;
+    عائم    alpha;
+    عائم    حد;
 } ggml_metal_kargs_glu;
 
-typedef struct {
+تعريفنوع بنية {
     uint64_t np;
-} ggml_metal_kargs_sum;
+} ggml_metal_kargs_مجموعه;
 
-typedef struct {
+تعريفنوع بنية {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -854,9 +854,9 @@ typedef struct {
     uint64_t nb1;
     uint64_t nb2;
     uint64_t nb3;
-} ggml_metal_kargs_sum_rows;
+} ggml_metal_kargs_مجموعه_لیکې;
 
-typedef struct {
+تعريفنوع بنية {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -876,7 +876,7 @@ typedef struct {
     bool     outb;
 } ggml_metal_kargs_cumsum_blk;
 
-typedef struct {
+تعريفنوع بنية {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -893,9 +893,9 @@ typedef struct {
     uint64_t nbt1;
     uint64_t nbt2;
     uint64_t nbt3;
-} ggml_metal_kargs_cumsum_add;
+} ggml_metal_kargs_cumsum_جمع_کړه;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -911,14 +911,14 @@ typedef struct {
     uint64_t nb1;
     uint64_t nb2;
     uint64_t nb3;
-    float    scale;
-    float    max_bias;
-    float    m0;
-    float    m1;
-    int32_t  n_head_log2;
+    عائم    scale;
+    عائم    max_bias;
+    عائم    m0;
+    عائم    m1;
+    int32_t  n_سر_log2;
 } ggml_metal_kargs_soft_max;
 
-typedef struct {
+تعريفنوع بنية {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -936,14 +936,14 @@ typedef struct {
     uint64_t nb2;
 } ggml_metal_kargs_ssm_conv;
 
-typedef struct {
+تعريفنوع بنية {
     int64_t  d_state;
     int64_t  d_inner;
-    int64_t  n_head;
-    int64_t  n_group;
-    int64_t  n_seq_tokens;
-    int64_t  n_seq_tokens_total;
-    int64_t  token_offset;
+    int64_t  n_سر;
+    int64_t  n_ډله;
+    int64_t  n_seq_نښې;
+    int64_t  n_seq_نښې_ټول;
+    int64_t  token_دننه_واټن;
     int64_t  n_seqs;
     int64_t  K;
     uint64_t s_off;
@@ -971,9 +971,9 @@ typedef struct {
     uint64_t ns52;
     uint64_t nb53;
     uint64_t nb0;
-} ggml_metal_kargs_ssm_scan;
+} ggml_metal_kargs_ssm_لټون;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -1009,10 +1009,10 @@ typedef struct {
     uint64_t nb1;
     uint64_t nb2;
     uint64_t nb3;
-    uint64_t nb_out; // 0 => snapshots are appended after the attn scores (unfused)
+    uint64_t nb_بهر; // 0 => snapshots are appended after the attn scores (unfused)
 } ggml_metal_kargs_gated_delta_net;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -1039,7 +1039,7 @@ typedef struct {
     uint64_t nb3;
 } ggml_metal_kargs_solve_tri;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne00t;
     int32_t  ne00;
     uint64_t nb01;
@@ -1052,9 +1052,9 @@ typedef struct {
     uint64_t nb1;
     uint64_t nb2;
     uint64_t nb3;
-} ggml_metal_kargs_get_rows;
+} ggml_metal_kargs_get_لیکې;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  nk0;
     int32_t  ne01;
     uint64_t nb01;
@@ -1068,9 +1068,9 @@ typedef struct {
     uint64_t nb1;
     uint64_t nb2;
     uint64_t nb3;
-} ggml_metal_kargs_set_rows;
+} ggml_metal_kargs_سېټ_لیکې;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -1089,7 +1089,7 @@ typedef struct {
     uint64_t nb3;
 } ggml_metal_kargs_diag;
 
-typedef struct {
+تعريفنوع بنية {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -1106,14 +1106,14 @@ typedef struct {
     uint64_t nb1;
     uint64_t nb2;
     uint64_t nb3;
-    float    sf0;
-    float    sf1;
-    float    sf2;
-    float    sf3;
-    float    poffs;
+    عائم    sf0;
+    عائم    sf1;
+    عائم    sf2;
+    عائم    sf3;
+    عائم    poffs;
 } ggml_metal_kargs_upscale;
 
-typedef struct {
+تعريفنوع بنية {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -1136,7 +1136,7 @@ typedef struct {
     int32_t  lp3;
 } ggml_metal_kargs_pad;
 
-typedef struct {
+تعريفنوع بنية {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -1157,7 +1157,7 @@ typedef struct {
     int32_t  p1;
 } ggml_metal_kargs_pad_reflect_1d;
 
-typedef struct {
+تعريفنوع بنية {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -1180,13 +1180,13 @@ typedef struct {
     int32_t  s3;
 } ggml_metal_kargs_roll;
 
-typedef struct {
+تعريفنوع بنية {
     uint64_t nb1;
-    int      dim;
-    int      max_period;
+    صحيح      dim;
+    صحيح      max_period;
 } ggml_metal_kargs_timestep_embedding;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -1205,7 +1205,7 @@ typedef struct {
     uint64_t nb3;
 } ggml_metal_kargs_tri;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -1218,10 +1218,10 @@ typedef struct {
     int32_t  ne1;
     int32_t  ne2;
     int32_t  ne3;
-    int32_t  top_k;
+    int32_t  سر_k;
 } ggml_metal_kargs_argsort;
 
-typedef struct {
+تعريفنوع بنية {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -1234,57 +1234,57 @@ typedef struct {
     int32_t  ne1;
     int32_t  ne2;
     int32_t  ne3;
-    int32_t  top_k;
+    int32_t  سر_k;
     int32_t  len;
-} ggml_metal_kargs_argsort_merge;
+} ggml_metal_kargs_argsort_یوځای;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne00;   // number of columns (elements per row)
-    int32_t  ne01;   // rows
+    int32_t  ne01;   //لیکې
     int32_t  ne02;
     int32_t  ne03;
     uint64_t nb01;   // row stride in src0
     uint64_t nb02;
     uint64_t nb03;
-    int32_t  top_k;  // k
-} ggml_metal_kargs_top_k;
+    int32_t  سر_k;  // k
+} ggml_metal_kargs_سر_k;
 
 // widths at or above this use the threadgroup FWHT kernel, one row per threadgroup
 // with GGML_METAL_FWHT_TG_NT threads, instead of one row per simdgroup
-#define GGML_METAL_FWHT_TG_MIN_N 512
-#define GGML_METAL_FWHT_TG_NT    256
+#تعریف_کړه GGML_METAL_FWHT_TG_MIN_N 512
+#تعریف_کړه GGML_METAL_FWHT_TG_NT    256
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne01;      // n_tokens
     uint64_t nb01;      // logits row stride
     uint64_t nb1_ids;   // ids row stride
-    float    clamp;
-    float    scale;
+    عائم    clamp;
+    عائم    scale;
 } ggml_metal_kargs_topk_moe;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t ne00; // n_embd
     int32_t ne02; // n_tokens
 } ggml_metal_kargs_moe_reduce;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t nrows;
 } ggml_metal_kargs_fwht;
 
-typedef struct {
+تعريفنوع بنية {
     int64_t  ne0;
-    float    start;
-    float    step;
+    عائم    پیل;
+    عائم    ګام;
 } ggml_metal_kargs_arange;
 
-typedef struct {
+تعريفنوع بنية {
     int64_t val;
 } ggml_metal_kargs_memset;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  n_kv;
     int32_t  n_batch;
-    int32_t  mask_ne3;
+    int32_t  ماسک_ne3;
     uint64_t nb1;
     uint64_t nb3;
     uint64_t nbq1;
@@ -1298,8 +1298,8 @@ typedef struct {
     uint64_t nbm3;
 } ggml_metal_kargs_lightning_indexer;
 
-typedef struct {
-    int32_t  n_tokens;
+تعريفنوع بنية {
+    int32_t  n_نښې;
     int32_t  n_iter;
     uint64_t nb_m0;
     uint64_t nb_m1;
@@ -1308,12 +1308,12 @@ typedef struct {
     uint64_t nb_d0;
     uint64_t nb_d1;
     uint64_t nb_d2;
-    float    eps;
+    عائم    eps;
 } ggml_metal_kargs_dsv4_hc_comb;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  n_embd;
-    int32_t  n_tokens;
+    int32_t  n_نښې;
     uint64_t nb_x0;
     uint64_t nb_x1;
     uint64_t nb_x2;
@@ -1322,12 +1322,12 @@ typedef struct {
     uint64_t nb_w2;
     uint64_t nb_d0;
     uint64_t nb_d1;
-    float    scale;
+    عائم    scale;
 } ggml_metal_kargs_dsv4_hc_pre;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  n_embd;
-    int32_t  n_tokens;
+    int32_t  n_نښې;
     uint64_t nb_x0;
     uint64_t nb_x1;
     uint64_t nb_r0;
@@ -1343,7 +1343,7 @@ typedef struct {
     uint64_t nb_d2;
 } ggml_metal_kargs_dsv4_hc_post;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -1356,9 +1356,9 @@ typedef struct {
     uint64_t nb11;
     uint64_t nb12;
     uint64_t nb13;
-} ggml_metal_kargs_count_equal;
+} ggml_metal_kargs_شمېر_equal;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  k0;
     int32_t  k1;
     int32_t  s0;
@@ -1372,7 +1372,7 @@ typedef struct {
     int64_t  np;
 } ggml_metal_kargs_pool_2d;
 
-typedef struct {
+تعريفنوع بنية {
     int32_t  k0;
     int32_t  s0;
     int32_t  p0;
@@ -1381,23 +1381,23 @@ typedef struct {
     int64_t  np;
 } ggml_metal_kargs_pool_1d;
 
-typedef struct {
+تعريفنوع بنية {
     int64_t ne00;
     uint64_t nb01;
     int64_t npart;
     int64_t ne01;
 } ggml_metal_kargs_argmax;
 
-typedef struct {
+تعريفنوع بنية {
     int64_t  np;
-} ggml_metal_kargs_opt_step_adamw;
+} ggml_metal_kargs_opt_ګام_adamw;
 
-typedef struct {
+تعريفنوع بنية {
     int64_t  np;
-} ggml_metal_kargs_opt_step_sgd;
+} ggml_metal_kargs_opt_ګام_sgd;
 
-typedef struct {
+تعريفنوع بنية {
     int64_t ne;
-} ggml_metal_kargs_silu_back;
+} ggml_metal_kargs_silu_شا;
 
-#endif // GGML_METAL_IMPL
+#د_که_پای // GGML_METAL_IMPL

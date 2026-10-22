@@ -1,83 +1,83 @@
-#pragma once
+#لارښوونه once
 
-#define GGML_COMMON_DECL_CPP
-#include "ggml-common.h"
+#تعریف_کړه GGML_COMMON_DECL_CPP
+#ضمن "ggml-common.h"
 
-#include "traits.h"
-#include "ggml.h"
+#ضمن "traits.h"
+#ضمن "ggml.h"
 
 // GGML internal header
 
-ggml_backend_buffer_type_t ggml_backend_cpu_repack_buffer_type(void);
+ggml_backend_بفر_type_t ggml_backend_cpu_repack_بفر_type(فراغ);
 
-template <int K> constexpr int QK_0() {
-    if constexpr (K == 1) {
-        return QK1_0;
+کينډۍ <صحيح K> constexpr صحيح QK_0() {
+    إذا constexpr (K == 1) {
+        أرجع QK1_0;
     }
-    if constexpr (K == 4) {
-        return QK4_0;
+    إذا constexpr (K == 4) {
+        أرجع QK4_0;
     }
-    if constexpr (K == 8) {
-        return QK8_0;
+    إذا constexpr (K == 8) {
+        أرجع QK8_0;
     }
-    return -1;
+    أرجع -1;
 }
 
-template <int K, int N> struct block {
+کينډۍ <صحيح K, صحيح N> بنية بلاک {
     ggml_half d[N];                         // deltas for N qK_0 blocks
     int8_t    qs[(QK_0<K>() * N * K) / 8];  // quants for N qK_0 blocks
 };
 
 // control size
-static_assert(sizeof(block<1, 4>) == 4 * sizeof(ggml_half) + QK1_0 / 2, "wrong block<1,4> size/padding");
-static_assert(sizeof(block<4, 4>) == 4 * sizeof(ggml_half) + QK8_0 * 2, "wrong block<4,4> size/padding");
-static_assert(sizeof(block<4, 8>) == 8 * sizeof(ggml_half) + QK8_0 * 4, "wrong block<4,8> size/padding");
-static_assert(sizeof(block<4, 16>) == 16 * sizeof(ggml_half) + QK8_0 * 8, "wrong block<4,16> size/padding");
-static_assert(sizeof(block<8, 4>) == 4 * sizeof(ggml_half) + QK8_0 * 4, "wrong block<8,4> size/padding");
-static_assert(sizeof(block<8, 8>) == 8 * sizeof(ggml_half) + QK8_0 * 8, "wrong block<8,8> size/padding");
-static_assert(sizeof(block<8, 16>) == 16 * sizeof(ggml_half) + QK8_0 * 16, "wrong block<8,16> size/padding");
+static_assert(حجم(بلاک<1, 4>) == 4 * حجم(ggml_half) + QK1_0 / 2, "wrong block<1,4> size/padding");
+static_assert(حجم(بلاک<4, 4>) == 4 * حجم(ggml_half) + QK8_0 * 2, "wrong block<4,4> size/padding");
+static_assert(حجم(بلاک<4, 8>) == 8 * حجم(ggml_half) + QK8_0 * 4, "wrong block<4,8> size/padding");
+static_assert(حجم(بلاک<4, 16>) == 16 * حجم(ggml_half) + QK8_0 * 8, "wrong block<4,16> size/padding");
+static_assert(حجم(بلاک<8, 4>) == 4 * حجم(ggml_half) + QK8_0 * 4, "wrong block<8,4> size/padding");
+static_assert(حجم(بلاک<8, 8>) == 8 * حجم(ggml_half) + QK8_0 * 8, "wrong block<8,8> size/padding");
+static_assert(حجم(بلاک<8, 16>) == 16 * حجم(ggml_half) + QK8_0 * 16, "wrong block<8,16> size/padding");
 
-using block_q1_0x4 = block<1, 4>;
-using block_q4_0x4 = block<4, 4>;
-using block_q4_0x8 = block<4, 8>;
-using block_q4_0x16 = block<4, 16>;
-using block_q8_0x4 = block<8, 4>;
-using block_q8_0x8 = block<8, 8>;
-using block_q8_0x16 = block<8, 16>;
+using بلاک_q1_0x4 = بلاک<1, 4>;
+using بلاک_q4_0x4 = بلاک<4, 4>;
+using بلاک_q4_0x8 = بلاک<4, 8>;
+using بلاک_q4_0x16 = بلاک<4, 16>;
+using بلاک_q8_0x4 = بلاک<8, 4>;
+using بلاک_q8_0x8 = بلاک<8, 8>;
+using بلاک_q8_0x16 = بلاک<8, 16>;
 
-struct block_q4_Kx8 {
+بنية بلاک_q4_Kx8 {
     ggml_half d[8];      // super-block scale for quantized scales
     ggml_half dmin[8];   // super-block scale for quantized mins
     uint8_t scales[96];  // scales and mins, quantized with 6 bits
     uint8_t qs[1024];    // 4--bit quants
 };
 
-static_assert(sizeof(block_q4_Kx8) == sizeof(ggml_half) * 16 + K_SCALE_SIZE * 8 + QK_K * 4, "wrong q4_K block size/padding");
-struct block_q4_Kx16 {
+static_assert(حجم(بلاک_q4_Kx8) == حجم(ggml_half) * 16 + K_SCALE_اندازه * 8 + QK_K * 4, "wrong q4_K block size/padding");
+بنية بلاک_q4_Kx16 {
     ggml_half d[16];      // super-block scale for quantized scales
     ggml_half dmin[16];   // super-block scale for quantized mins
     uint8_t scales[192];  // scales and mins, quantized with 6 bits
     uint8_t qs[2048];    // 4--bit quants
 };
 
-static_assert(sizeof(block_q4_Kx16) == sizeof(ggml_half) * 32 + K_SCALE_SIZE * 16 + QK_K * 8, "wrong q4_K block size/padding");
-struct block_q2_Kx8 {
+static_assert(حجم(بلاک_q4_Kx16) == حجم(ggml_half) * 32 + K_SCALE_اندازه * 16 + QK_K * 8, "wrong q4_K block size/padding");
+بنية بلاک_q2_Kx8 {
     ggml_half d[8];      // super-block scale for quantized scales
     ggml_half dmin[8];   // super-block scale for quantized mins
     uint8_t scales[128];  // scales and mins, quantized with 4 bits
     uint8_t qs[512];    // 2--bit quants
 };
 
-static_assert(sizeof(block_q2_Kx8) == sizeof(ggml_half) * 16 + QK_K/2 + QK_K * 2, "wrong q2_K block size/padding");
-struct block_q2_Kx16 {
+static_assert(حجم(بلاک_q2_Kx8) == حجم(ggml_half) * 16 + QK_K/2 + QK_K * 2, "wrong q2_K block size/padding");
+بنية بلاک_q2_Kx16 {
     ggml_half d[16];       // Super-block scale for quantized scales
     ggml_half dmin[16];    // Super-block scale for quantized mins
     uint8_t   scales[256]; // Sub-block scales (16 cols * 16 sub-blocks)
     uint8_t   qs[1024];    // Data (16 cols * 64 bytes per block)
 };
-static_assert(sizeof(block_q2_Kx16) == sizeof(ggml_half) * 32 + QK_K + QK_K * 4, "wrong q2_K block size/padding");
+static_assert(حجم(بلاک_q2_Kx16) == حجم(ggml_half) * 32 + QK_K + QK_K * 4, "wrong q2_K block size/padding");
 
-struct block_q5_Kx8 {
+بنية بلاک_q5_Kx8 {
     ggml_half d[8];              // super-block scale for quantized scales
     ggml_half dmin[8];           // super-block scale for quantized mins
     uint8_t   scales[96];        // scales and mins, quantized with 6 bits
@@ -85,174 +85,174 @@ struct block_q5_Kx8 {
     uint8_t   qs[QK_K * 8 / 2];  // low bits of 5-bit quants (in groups of 4)
 };
 
-static_assert(sizeof(block_q5_Kx8) == sizeof(ggml_half) * 16 + K_SCALE_SIZE * 8 + QK_K * 5,
+static_assert(حجم(بلاک_q5_Kx8) == حجم(ggml_half) * 16 + K_SCALE_اندازه * 8 + QK_K * 5,
               "wrong q5_K block size/padding");
 
-struct block_q6_Kx8 {
+بنية بلاک_q6_Kx8 {
     ggml_half d[8];
     int8_t    scales[QK_K / 16 * 8];
     uint8_t   ql[QK_K / 2 * 8];  // low bits of 6-bit quants (groups of 2)
     uint8_t   qh[QK_K / 4 * 8];  // high bits of 6-bit quants (groups of 4)
 };
 
-static_assert(sizeof(block_q6_Kx8) == sizeof(ggml_half) * 8 + QK_K / 16 * 8 + 3 * QK_K / 4 * 8,
+static_assert(حجم(بلاک_q6_Kx8) == حجم(ggml_half) * 8 + QK_K / 16 * 8 + 3 * QK_K / 4 * 8,
               "wrong q6_K block size/padding");
 
-struct block_q8_Kx4 {
-    float d[4];              // delta
+بنية بلاک_q8_Kx4 {
+    عائم d[4];              // delta
     int8_t qs[QK_K * 4];     // quants
     int16_t bsums[QK_K / 4]; // sum of quants in groups of 16
 };
 
-static_assert(sizeof(block_q8_Kx4) == sizeof(float) * 4 + QK_K * 4 + (QK_K / 4) * sizeof(int16_t), "wrong q8_K block size/padding");
+static_assert(حجم(بلاک_q8_Kx4) == حجم(عائم) * 4 + QK_K * 4 + (QK_K / 4) * حجم(int16_t), "wrong q8_K block size/padding");
 
-struct block_iq4_nlx4 {
+بنية بلاک_iq4_nlx4 {
     ggml_half d[4];            // deltas for 4 iq4_nl blocks
     uint8_t   qs[QK4_NL * 2];  // nibbles / quants for 4 iq4_nl blocks
 };
 
-static_assert(sizeof(block_iq4_nlx4) == 4 * sizeof(ggml_half) + QK4_NL * 2, "wrong iq4_nlx4 block size/padding");
+static_assert(حجم(بلاک_iq4_nlx4) == 4 * حجم(ggml_half) + QK4_NL * 2, "wrong iq4_nlx4 block size/padding");
 
-struct block_iq4_nlx8 {
+بنية بلاک_iq4_nlx8 {
     ggml_half d[8];            // deltas for 8 iq4_nl blocks
     uint8_t   qs[QK4_NL * 4];  // nibbles / quants for 8 iq4_nl blocks
 };
 
-static_assert(sizeof(block_iq4_nlx8) == 8 * sizeof(ggml_half) + QK4_NL * 4, "wrong iq4_nlx8 block size/padding");
+static_assert(حجم(بلاک_iq4_nlx8) == 8 * حجم(ggml_half) + QK4_NL * 4, "wrong iq4_nlx8 block size/padding");
 
-struct block_iq4_nlx16 {
+بنية بلاک_iq4_nlx16 {
     ggml_half d[16];            // deltas for 16 iq4_nl blocks
     uint8_t   qs[QK4_NL * 8];  // nibbles / quants for 16 iq4_nl blocks
 };
 
-static_assert(sizeof(block_iq4_nlx16) == 16 * sizeof(ggml_half) + QK4_NL * 8, "wrong iq4_nlx16 block size/padding");
-struct block_mxfp4x4 {
+static_assert(حجم(بلاک_iq4_nlx16) == 16 * حجم(ggml_half) + QK4_NL * 8, "wrong iq4_nlx16 block size/padding");
+بنية بلاک_mxfp4x4 {
     uint8_t e[4];
     uint8_t qs[QK_MXFP4 * 2];
 };
-static_assert(sizeof(block_mxfp4x4) == 4 + QK_MXFP4 * 2, "wrong mxfp4x4 block size/padding");
+static_assert(حجم(بلاک_mxfp4x4) == 4 + QK_MXFP4 * 2, "wrong mxfp4x4 block size/padding");
 
-struct block_mxfp4x8 {
+بنية بلاک_mxfp4x8 {
     uint8_t e[8];
     uint8_t qs[QK_MXFP4 * 4];
 };
-static_assert(sizeof(block_mxfp4x8) == 8 + QK_MXFP4 * 4, "wrong mxfp4x8 block size/padding");
+static_assert(حجم(بلاک_mxfp4x8) == 8 + QK_MXFP4 * 4, "wrong mxfp4x8 block size/padding");
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
+#إذا defined(__cplusplus)
+خارجي "C" {
+#د_که_پای
 
-void ggml_quantize_mat_q8_0_4x4(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k);
-void ggml_quantize_mat_q8_0_4x8(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k);
-void ggml_quantize_mat_q8_K_4x4(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k);
-void ggml_quantize_mat_q8_K_4x8(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k);
-void ggml_gemv_q1_0_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q1_0_4x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q4_0_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q4_0_4x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q4_K_8x4_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q5_K_8x4_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q5_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q6_K_8x4_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q6_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_iq4_nl_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_iq4_nl_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_mxfp4_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_mxfp4_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q8_0_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q8_0_4x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q1_0_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q1_0_4x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q4_0_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q4_0_4x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q4_K_8x4_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q5_K_8x4_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q5_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q6_K_8x4_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q6_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_iq4_nl_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_iq4_nl_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_mxfp4_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_mxfp4_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q8_0_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q8_0_4x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-#if defined __riscv_zvfh
-void ggml_quantize_mat_q8_0_4x1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k);
-void ggml_quantize_mat_q8_K_4x1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k);
-void ggml_gemv_q4_0_16x1_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q4_K_16x1_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_iq4_nl_16x1_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q8_0_16x1_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q2_K_16x1_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q4_0_16x1_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q4_K_16x1_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_iq4_nl_16x1_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q8_0_16x1_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q2_K_16x1_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-#endif
+فراغ ggml_quantize_mat_q8_0_4x4(ثابت عائم * GGML_RESTRICT x, فراغ * GGML_RESTRICT vy, int64_t k);
+فراغ ggml_quantize_mat_q8_0_4x8(ثابت عائم * GGML_RESTRICT x, فراغ * GGML_RESTRICT vy, int64_t k);
+فراغ ggml_quantize_mat_q8_K_4x4(ثابت عائم * GGML_RESTRICT x, فراغ * GGML_RESTRICT vy, int64_t k);
+فراغ ggml_quantize_mat_q8_K_4x8(ثابت عائم * GGML_RESTRICT x, فراغ * GGML_RESTRICT vy, int64_t k);
+فراغ ggml_gemv_q1_0_4x4_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q1_0_4x8_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q4_0_4x4_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q4_0_4x8_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q4_0_8x8_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q2_K_8x8_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q4_K_8x4_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q4_K_8x8_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q5_K_8x4_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q5_K_8x8_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q6_K_8x4_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q6_K_8x8_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_iq4_nl_4x4_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_iq4_nl_8x8_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_mxfp4_4x4_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_mxfp4_8x8_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q8_0_4x4_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q8_0_4x8_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q1_0_4x4_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q1_0_4x8_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q4_0_4x4_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q4_0_4x8_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q4_0_8x8_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q2_K_8x8_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q4_K_8x4_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q4_K_8x8_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q5_K_8x4_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q5_K_8x8_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q6_K_8x4_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q6_K_8x8_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_iq4_nl_4x4_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_iq4_nl_8x8_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_mxfp4_4x4_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_mxfp4_8x8_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q8_0_4x4_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q8_0_4x8_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+#إذا defined __riscv_zvfh
+فراغ ggml_quantize_mat_q8_0_4x1(ثابت عائم * GGML_RESTRICT x, فراغ * GGML_RESTRICT vy, int64_t k);
+فراغ ggml_quantize_mat_q8_K_4x1(ثابت عائم * GGML_RESTRICT x, فراغ * GGML_RESTRICT vy, int64_t k);
+فراغ ggml_gemv_q4_0_16x1_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q4_K_16x1_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_iq4_nl_16x1_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q8_0_16x1_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q2_K_16x1_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q4_0_16x1_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q4_K_16x1_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_iq4_nl_16x1_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q8_0_16x1_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q2_K_16x1_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+#د_که_پای
 
 // Native implementations
-void ggml_quantize_mat_q8_0_4x4_generic(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k);
-void ggml_quantize_mat_q8_0_4x8_generic(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k);
-void ggml_quantize_mat_q8_K_4x4_generic(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k);
-void ggml_quantize_mat_q8_K_4x8_generic(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k);
-void ggml_gemv_q1_0_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q1_0_4x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q4_0_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q4_0_4x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q4_0_8x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q2_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q4_K_8x4_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q4_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q5_K_8x4_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q5_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q6_K_8x4_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q6_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_iq4_nl_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_iq4_nl_8x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_mxfp4_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_mxfp4_8x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q8_0_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q8_0_4x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q1_0_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q1_0_4x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q4_0_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q4_0_4x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q4_0_8x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q2_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q4_K_8x4_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q4_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q5_K_8x4_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q5_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q6_K_8x4_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q6_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_iq4_nl_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_iq4_nl_8x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_mxfp4_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_mxfp4_8x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q8_0_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q8_0_4x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-#if defined __riscv_zvfh
-void ggml_quantize_mat_q8_0_4x1_generic(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k);
-void ggml_quantize_mat_q8_K_4x1_generic(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k);
-void ggml_gemv_q4_0_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q4_K_16x1_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q8_0_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_q2_K_16x1_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemv_iq4_nl_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q4_0_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q4_K_16x1_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q8_0_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_q2_K_16x1_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-void ggml_gemm_iq4_nl_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc);
-#endif
+فراغ ggml_quantize_mat_q8_0_4x4_generic(ثابت عائم * GGML_RESTRICT x, فراغ * GGML_RESTRICT vy, int64_t k);
+فراغ ggml_quantize_mat_q8_0_4x8_generic(ثابت عائم * GGML_RESTRICT x, فراغ * GGML_RESTRICT vy, int64_t k);
+فراغ ggml_quantize_mat_q8_K_4x4_generic(ثابت عائم * GGML_RESTRICT x, فراغ * GGML_RESTRICT vy, int64_t k);
+فراغ ggml_quantize_mat_q8_K_4x8_generic(ثابت عائم * GGML_RESTRICT x, فراغ * GGML_RESTRICT vy, int64_t k);
+فراغ ggml_gemv_q1_0_4x4_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q1_0_4x8_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q4_0_4x4_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q4_0_4x8_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q4_0_8x8_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q2_K_8x8_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q4_K_8x4_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q4_K_8x8_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q5_K_8x4_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q5_K_8x8_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q6_K_8x4_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q6_K_8x8_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_iq4_nl_4x4_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_iq4_nl_8x8_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_mxfp4_4x4_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_mxfp4_8x8_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q8_0_4x4_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q8_0_4x8_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q1_0_4x4_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q1_0_4x8_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q4_0_4x4_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q4_0_4x8_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q4_0_8x8_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q2_K_8x8_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q4_K_8x4_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q4_K_8x8_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q5_K_8x4_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q5_K_8x8_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q6_K_8x4_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q6_K_8x8_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_iq4_nl_4x4_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_iq4_nl_8x8_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_mxfp4_4x4_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_mxfp4_8x8_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q8_0_4x4_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q8_0_4x8_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+#إذا defined __riscv_zvfh
+فراغ ggml_quantize_mat_q8_0_4x1_generic(ثابت عائم * GGML_RESTRICT x, فراغ * GGML_RESTRICT vy, int64_t k);
+فراغ ggml_quantize_mat_q8_K_4x1_generic(ثابت عائم * GGML_RESTRICT x, فراغ * GGML_RESTRICT vy, int64_t k);
+فراغ ggml_gemv_q4_0_16x1_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q4_K_16x1_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q8_0_16x1_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_q2_K_16x1_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemv_iq4_nl_16x1_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q4_0_16x1_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q4_K_16x1_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q8_0_16x1_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_q2_K_16x1_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+فراغ ggml_gemm_iq4_nl_16x1_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc);
+#د_که_پای
 
-#if defined(__cplusplus)
+#إذا defined(__cplusplus)
 } // extern "C"
-#endif
+#د_که_پای

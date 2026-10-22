@@ -1,79 +1,79 @@
-#pragma once
+#لارښوونه once
 
-#ifdef _WIN32
-#   define WIN32_LEAN_AND_MEAN
+#که_تعریف_شوی _WIN32
+#   define WIN32_LEAN_AND_منځنۍ
 #   ifndef NOMINMAX
 #       define NOMINMAX
 #   endif
 #   include <windows.h>
 #   include <winevt.h>
-#else
+#وإلا
 #    include <dlfcn.h>
 #    include <unistd.h>
-#endif
-#include <filesystem>
+#د_که_پای
+#ضمن <filesystem>
 
 namespace fs = std::filesystem;
 
-#ifdef _WIN32
+#که_تعریف_شوی _WIN32
 
-using dl_handle = std::remove_pointer_t<HMODULE>;
+using dl_handle = std::remove_اشاره_ګر_t<HMODULE>;
 
-struct dl_handle_deleter {
-    void operator()(HMODULE handle) {
+بنية dl_handle_deleter {
+    فراغ چلوونکی()(HMODULE handle) {
         FreeLibrary(handle);
     }
 };
 
-static inline dl_handle * dl_load_library(const fs::path & path) {
+ساكن مضمن dl_handle * dl_بارول_library(ثابت fs::لار & لار) {
     // suppress error dialogs for missing DLLs
-    DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
-    SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
+    DWORD old_ډېرپېښ = سېټ_Error_ډېرپېښ(SEM_FAILCRITICALERRORS);
+    سېټ_Error_ډېرپېښ(old_ډېرپېښ | SEM_FAILCRITICALERRORS);
 
-    HMODULE handle = LoadLibraryW(path.wstring().c_str());
+    HMODULE handle = بارول_Library_W(لار.wstring().c_str());
 
-    SetErrorMode(old_mode);
+    سېټ_Error_ډېرپېښ(old_ډېرپېښ);
 
-    return handle;
+    أرجع handle;
 }
 
-static inline void * dl_get_sym(dl_handle * handle, const char * name) {
-    DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
-    SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
+ساكن مضمن فراغ * dl_get_sym(dl_handle * handle, ثابت حرف * name) {
+    DWORD old_ډېرپېښ = سېټ_Error_ډېرپېښ(SEM_FAILCRITICALERRORS);
+    سېټ_Error_ډېرپېښ(old_ډېرپېښ | SEM_FAILCRITICALERRORS);
 
-    void * p = (void *) GetProcAddress(handle, name);
+    فراغ * p = (فراغ *) Get_Proc_پته(handle, name);
 
-    SetErrorMode(old_mode);
+    سېټ_Error_ډېرپېښ(old_ډېرپېښ);
 
-    return p;
+    أرجع p;
 }
 
-static inline const char * dl_error() {
-    return "";
+ساكن مضمن ثابت حرف * dl_error() {
+    أرجع "";
 }
 
-#else
+#وإلا
 
-using dl_handle = void;
+using dl_handle = فراغ;
 
-struct dl_handle_deleter {
-    void operator()(void * handle) {
+بنية dl_handle_deleter {
+    فراغ چلوونکی()(فراغ * handle) {
         dlclose(handle);
     }
 };
 
-static inline dl_handle * dl_load_library(const fs::path & path) {
-    dl_handle * handle = dlopen(path.string().c_str(), RTLD_NOW | RTLD_LOCAL);
-    return handle;
+ساكن مضمن dl_handle * dl_بارول_library(ثابت fs::لار & لار) {
+    dl_handle * handle = dlopen(لار.string().c_str(), RTLD_NOW | RTLD_LOCAL);
+    أرجع handle;
 }
 
-static inline void * dl_get_sym(dl_handle * handle, const char * name) {
-    return dlsym(handle, name);
+ساكن مضمن فراغ * dl_get_sym(dl_handle * handle, ثابت حرف * name) {
+    أرجع dlsym(handle, name);
 }
 
-static inline const char * dl_error() {
-    const char *rslt = dlerror();
-    return rslt != nullptr ? rslt : "";
+ساكن مضمن ثابت حرف * dl_error() {
+    ثابت حرف *rslt = dlerror();
+    أرجع rslt != nullptr ? rslt : "";
 }
 
-#endif
+#د_که_پای

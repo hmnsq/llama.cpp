@@ -1,38 +1,38 @@
-#ifndef HTP_WORK_QUEUE_H
-#define HTP_WORK_QUEUE_H
+#که_نه_تعریف_شوی HTP_WORK_کتار_H
+#تعریف_کړه HTP_WORK_کتار_H
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <stddef.h>
+#ضمن <stdbool.h>
+#ضمن <stdint.h>
+#ضمن <stddef.h>
 
-typedef void (*work_queue_func_t)(unsigned int n, unsigned int i, void *);
+تعريفنوع فراغ (*work_کتار_func_t)(بینښه صحيح n, بینښه صحيح i, فراغ *);
 
-struct work_queue_s;
-typedef struct work_queue_s * work_queue_t;
+بنية work_کتار_s;
+تعريفنوع بنية work_کتار_s * work_کتار_t;
 
-#define WORK_QUEUE_MAX_N_THREADS      10
+#تعریف_کړه WORK_کتار_MAX_N_تارونه      10
 
-size_t       work_queue_sizeof(uint32_t n_threads, uint32_t capacity, uint32_t stack_size);
-size_t       work_queue_alignof(void);
-work_queue_t work_queue_init(void * ptr, uint32_t n_threads, uint32_t capacity, uint32_t stack_size);
-void         work_queue_free(work_queue_t q);
+size_t       work_کتار_sizeof(uint32_t n_تارونه, uint32_t ظرفیت, uint32_t ډېری_اندازه);
+size_t       work_کتار_alignof(فراغ);
+work_کتار_t work_کتار_init(فراغ * ptr, uint32_t n_تارونه, uint32_t ظرفیت, uint32_t ډېری_اندازه);
+فراغ         work_کتار_free(work_کتار_t q);
 
-void work_queue_wakeup(work_queue_t q);
-void work_queue_suspend(work_queue_t q);
+فراغ work_کتار_wakeup(work_کتار_t q);
+فراغ work_کتار_suspend(work_کتار_t q);
 
-bool work_queue_run_async(work_queue_t q, work_queue_func_t func, void * data, unsigned int n);
+bool work_کتار_پرلپسې_async(work_کتار_t q, work_کتار_func_t func, فراغ * معلومات, بینښه صحيح n);
 
-static inline bool work_queue_run(work_queue_t q, work_queue_func_t func, void * data, unsigned int n) {
-    if (n <= 1) {
-        func(n, 0, data);
-        return true;
+ساكن مضمن bool work_کتار_پرلپسې(work_کتار_t q, work_کتار_func_t func, فراغ * معلومات, بینښه صحيح n) {
+    إذا (n <= 1) {
+        func(n, 0, معلومات);
+        أرجع true;
     }
-    return work_queue_run_async(q, func, data, n);
+    أرجع work_کتار_پرلپسې_async(q, func, معلومات, n);
 }
 
 // Legacy compatibility
-typedef work_queue_func_t     worker_callback_t;
-#define worker_pool_run_func  work_queue_run
-#define worker_pool           work_queue
+تعريفنوع work_کتار_func_t     کارګر_callback_t;
+#تعریف_کړه کارګر_pool_پرلپسې_func  work_کتار_پرلپسې
+#تعریف_کړه کارګر_pool           work_کتار
 
-#endif  // #ifndef HTP_WORK_QUEUE_H
+#د_که_پای  // #ifndef HTP_WORK_QUEUE_H

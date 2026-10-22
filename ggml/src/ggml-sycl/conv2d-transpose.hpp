@@ -1,10 +1,10 @@
-#ifndef GGML_SYCL_CONV2D_TRANSPOSE_HPP
-#define GGML_SYCL_CONV2D_TRANSPOSE_HPP
+#که_نه_تعریف_شوی GGML_SYCL_CONV2D_TRANSPOSE_HPP
+#تعریف_کړه GGML_SYCL_CONV2D_TRANSPOSE_HPP
 
-#include "common.hpp"
+#ضمن "common.hpp"
 
-#define SYCL_CONV2D_TRANSPOSE_BLOCK_SIZE 256
+#تعریف_کړه SYCL_CONV2_D_TRANSPOSE_بلاک_اندازه 256
 
-void ggml_sycl_op_conv2d_transpose(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+فراغ ggml_sycl_op_conv2d_transpose(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-#endif // GGML_SYCL_CONV2D_TRANSPOSE_HPP
+#د_که_پای // GGML_SYCL_CONV2D_TRANSPOSE_HPP

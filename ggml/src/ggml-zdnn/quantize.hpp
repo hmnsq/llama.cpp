@@ -1,14 +1,14 @@
-#ifndef GGML_ZDNN_QUANTIZE_HPP
-#define GGML_ZDNN_QUANTIZE_HPP
+#که_نه_تعریف_شوی GGML_ZDNN_QUANTIZE_HPP
+#تعریف_کړه GGML_ZDNN_QUANTIZE_HPP
 
-#include "common.hpp"
+#ضمن "common.hpp"
 
-void ggml_zdnn_quantize_inputs(int32_t       n_threads,
-                         const ggml_tensor * inputs,
-                               int64_t       group_size,
-                         const float       * channel_scales,
+فراغ ggml_zdnn_quantize_inputs(int32_t       n_تارونه,
+                         ثابت ggml_tensor * inputs,
+                               int64_t       ډله_اندازه,
+                         ثابت عائم       * channel_scales,
                                int8_t      * quants,
                                int8_t      * residuals,
-                               float       * scales);
+                               عائم       * scales);
 
-#endif  // GGML_ZDNN_QUANTIZE_HPP
+#د_که_پای  // GGML_ZDNN_QUANTIZE_HPP

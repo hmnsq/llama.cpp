@@ -1,125 +1,125 @@
-#include "conv2d-transpose.hpp"
-#include "convert.hpp"
+#ضمن "conv2d-transpose.hpp"
+#ضمن "convert.hpp"
 
-template <typename kernel_t>
-static void conv2d_transpose_kernel(const float * input, const kernel_t * kernel, float * output,
-                                    const int in_w, const int in_h,
-                                    const int out_w, const int out_h,
-                                    const int kernel_w, const int kernel_h,
-                                    const int stride,
-                                    const int c_in, const int c_out, const int batches,
-                                    const sycl::nd_item<3> & item_ct1) {
-    const int global_idx     = item_ct1.get_local_id(2) +
-                               item_ct1.get_group(2) * item_ct1.get_local_range(2);
-    const int total_elements = out_w * out_h * c_out * batches;
+کينډۍ <ډول_نوم kernel_t>
+ساكن فراغ conv2d_transpose_kernel(ثابت عائم * ننوت, ثابت kernel_t * kernel, عائم * output,
+                                    ثابت صحيح دننه_w, ثابت صحيح دننه_h,
+                                    ثابت صحيح بهر_w, ثابت صحيح بهر_h,
+                                    ثابت صحيح kernel_w, ثابت صحيح kernel_h,
+                                    ثابت صحيح stride,
+                                    ثابت صحيح c_دننه, ثابت صحيح c_بهر, ثابت صحيح batches,
+                                    ثابت sycl::nd_توکی<3> & توکی_ct1) {
+    ثابت صحيح global_idx     = توکی_ct1.get_local_id(2) +
+                               توکی_ct1.get_ډله(2) * توکی_ct1.get_local_range(2);
+    ثابت صحيح ټول_elements = بهر_w * بهر_h * c_بهر * batches;
 
-    if (global_idx >= total_elements) {
-        return;
+    إذا (global_idx >= ټول_elements) {
+        أرجع;
     }
 
-    const int out_x = global_idx % out_w;
-    const int out_y = (global_idx / out_w) % out_h;
-    const int c_idx = (global_idx / (out_w * out_h)) % c_out;
-    const int n_idx = global_idx / (out_w * out_h * c_out);
+    ثابت صحيح بهر_x = global_idx % بهر_w;
+    ثابت صحيح بهر_y = (global_idx / بهر_w) % بهر_h;
+    ثابت صحيح c_idx = (global_idx / (بهر_w * بهر_h)) % c_بهر;
+    ثابت صحيح n_idx = global_idx / (بهر_w * بهر_h * c_بهر);
 
-    float acc = 0.0f;
+    عائم acc = 0.0f;
 
-    for (int c_in_idx = 0; c_in_idx < c_in; ++c_in_idx) {
-        for (int kh = 0; kh < kernel_h; ++kh) {
-            int in_y = out_y - kh;
-            if (in_y < 0 || in_y % stride) {
-                continue;
+    لكل (صحيح c_دننه_idx = 0; c_دننه_idx < c_دننه; ++c_دننه_idx) {
+        لكل (صحيح kh = 0; kh < kernel_h; ++kh) {
+            صحيح دننه_y = بهر_y - kh;
+            إذا (دننه_y < 0 || دننه_y % stride) {
+                استمر;
             }
-            in_y /= stride;
-            if (in_y >= in_h) {
-                continue;
+            دننه_y /= stride;
+            إذا (دننه_y >= دننه_h) {
+                استمر;
             }
 
-            for (int kw = 0; kw < kernel_w; ++kw) {
-                int in_x = out_x - kw;
-                if (in_x < 0 || in_x % stride) {
-                    continue;
+            لكل (صحيح kw = 0; kw < kernel_w; ++kw) {
+                صحيح دننه_x = بهر_x - kw;
+                إذا (دننه_x < 0 || دننه_x % stride) {
+                    استمر;
                 }
-                in_x /= stride;
-                if (in_x >= in_w) {
-                    continue;
+                دننه_x /= stride;
+                إذا (دننه_x >= دننه_w) {
+                    استمر;
                 }
 
-                const int input_idx  = (in_w * in_h * c_in) * n_idx + (in_w * in_h) * c_in_idx + in_w * in_y + in_x;
-                const int kernel_idx = (kernel_h * kernel_w * c_out) * c_in_idx + (kernel_h * kernel_w) * c_idx +
+                ثابت صحيح ننوت_idx  = (دننه_w * دننه_h * c_دننه) * n_idx + (دننه_w * دننه_h) * c_دننه_idx + دننه_w * دننه_y + دننه_x;
+                ثابت صحيح kernel_idx = (kernel_h * kernel_w * c_بهر) * c_دننه_idx + (kernel_h * kernel_w) * c_idx +
                                        kernel_w * kh + kw;
 
-                acc += input[input_idx] * ggml_sycl_cast<float>(kernel[kernel_idx]);
+                acc += ننوت[ننوت_idx] * ggml_sycl_cast<عائم>(kernel[kernel_idx]);
             }
         }
     }
 
-    output[(out_w * out_h * c_out) * n_idx + (out_w * out_h) * c_idx + out_w * out_y + out_x] = acc;
+    output[(بهر_w * بهر_h * c_بهر) * n_idx + (بهر_w * بهر_h) * c_idx + بهر_w * بهر_y + بهر_x] = acc;
 }
 
-template <typename kernel_t>
-static void conv2d_transpose_sycl(const float * input_d, const kernel_t * kernel_d, float * output_d,
-                                   const int in_w, const int in_h,
-                                   const int out_w, const int out_h,
-                                   const int kernel_w, const int kernel_h,
-                                   const int stride,
-                                   const int c_in, const int c_out, const int batches,
-                                   const queue_ptr & stream) {
-    const int total      = out_w * out_h * c_out * batches;
-    const int num_blocks = (total + SYCL_CONV2D_TRANSPOSE_BLOCK_SIZE - 1) / SYCL_CONV2D_TRANSPOSE_BLOCK_SIZE;
-    const sycl::range<3> block_dims(1, 1, SYCL_CONV2D_TRANSPOSE_BLOCK_SIZE);
-    const sycl::range<3> block_nums(1, 1, num_blocks);
-    stream->parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-        [=](sycl::nd_item<3> item_ct1) {
-            conv2d_transpose_kernel<kernel_t>(input_d, kernel_d, output_d,
-                                             in_w, in_h, out_w, out_h, kernel_w, kernel_h,
-                                             stride, c_in, c_out, batches, item_ct1);
+کينډۍ <ډول_نوم kernel_t>
+ساكن فراغ conv2d_transpose_sycl(ثابت عائم * ننوت_d, ثابت kernel_t * kernel_d, عائم * output_d,
+                                   ثابت صحيح دننه_w, ثابت صحيح دننه_h,
+                                   ثابت صحيح بهر_w, ثابت صحيح بهر_h,
+                                   ثابت صحيح kernel_w, ثابت صحيح kernel_h,
+                                   ثابت صحيح stride,
+                                   ثابت صحيح c_دننه, ثابت صحيح c_بهر, ثابت صحيح batches,
+                                   ثابت کتار_ptr & stream) {
+    ثابت صحيح ټول      = بهر_w * بهر_h * c_بهر * batches;
+    ثابت صحيح عدد_بلاکونه = (ټول + SYCL_CONV2_D_TRANSPOSE_بلاک_اندازه - 1) / SYCL_CONV2_D_TRANSPOSE_بلاک_اندازه;
+    ثابت sycl::range<3> بلاک_dims(1, 1, SYCL_CONV2_D_TRANSPOSE_بلاک_اندازه);
+    ثابت sycl::range<3> بلاک_nums(1, 1, عدد_بلاکونه);
+    stream->parallel_for(sycl::nd_range<3>(بلاک_nums * بلاک_dims, بلاک_dims),
+        [=](sycl::nd_توکی<3> توکی_ct1) {
+            conv2d_transpose_kernel<kernel_t>(ننوت_d, kernel_d, output_d,
+                                             دننه_w, دننه_h, بهر_w, بهر_h, kernel_w, kernel_h,
+                                             stride, c_دننه, c_بهر, batches, توکی_ct1);
         });
 }
 
 // input:  (W, H, C_in, N)
 // kernel: (W, H, C_out, C_in)
 // output: (W, H, C_out, N)
-void ggml_sycl_op_conv2d_transpose(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+فراغ ggml_sycl_op_conv2d_transpose(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
 
-    const ggml_tensor * kernel = dst->src[0];
-    const ggml_tensor * input  = dst->src[1];
+    ثابت ggml_tensor * kernel = dst->src[0];
+    ثابت ggml_tensor * ننوت  = dst->src[1];
 
     GGML_ASSERT(kernel->type == GGML_TYPE_F16 || kernel->type == GGML_TYPE_F32);
-    GGML_ASSERT(input->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32);
+    GGML_ASSERT(ننوت->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32);
 
-    GGML_ASSERT(ggml_is_contiguous(input));
+    GGML_ASSERT(ggml_is_contiguous(ننوت));
     GGML_ASSERT(ggml_is_contiguous(kernel));
     GGML_ASSERT(ggml_is_contiguous(dst));
 
-    const float * input_d  = (const float *) input->data;
-    float *       output_d = (float *) dst->data;
-    const void *  kernel_d = kernel->data;
+    ثابت عائم * ننوت_d  = (ثابت عائم *) ننوت->معلومات;
+    عائم *       output_d = (عائم *) dst->معلومات;
+    ثابت فراغ *  kernel_d = kernel->معلومات;
 
-    const int input_w      = input->ne[0];
-    const int input_h      = input->ne[1];
-    const int channels_in  = input->ne[2];
-    const int batches      = input->ne[3];
-    const int output_w     = dst->ne[0];
-    const int output_h     = dst->ne[1];
-    const int channels_out = kernel->ne[2];
-    const int kernel_w     = kernel->ne[0];
-    const int kernel_h     = kernel->ne[1];
-    const int stride       = dst->op_params[0];
+    ثابت صحيح ننوت_w      = ننوت->ne[0];
+    ثابت صحيح ننوت_h      = ننوت->ne[1];
+    ثابت صحيح channels_دننه  = ننوت->ne[2];
+    ثابت صحيح batches      = ننوت->ne[3];
+    ثابت صحيح output_w     = dst->ne[0];
+    ثابت صحيح output_h     = dst->ne[1];
+    ثابت صحيح channels_بهر = kernel->ne[2];
+    ثابت صحيح kernel_w     = kernel->ne[0];
+    ثابت صحيح kernel_h     = kernel->ne[1];
+    ثابت صحيح stride       = dst->op_params[0];
 
-    GGML_ASSERT(channels_in == kernel->ne[3]);
+    GGML_ASSERT(channels_دننه == kernel->ne[3]);
     GGML_ASSERT(stride > 0);
 
-    const queue_ptr stream = ctx.stream();
+    ثابت کتار_ptr stream = ctx.stream();
 
-    if (kernel->type == GGML_TYPE_F16) {
-        conv2d_transpose_sycl<sycl::half>(input_d, (const sycl::half *) kernel_d, output_d,
-                                          input_w, input_h, output_w, output_h, kernel_w, kernel_h,
-                                          stride, channels_in, channels_out, batches, stream);
-    } else {
-        conv2d_transpose_sycl<float>(input_d, (const float *) kernel_d, output_d,
-                                     input_w, input_h, output_w, output_h, kernel_w, kernel_h,
-                                     stride, channels_in, channels_out, batches, stream);
+    إذا (kernel->type == GGML_TYPE_F16) {
+        conv2d_transpose_sycl<sycl::half>(ننوت_d, (ثابت sycl::half *) kernel_d, output_d,
+                                          ننوت_w, ننوت_h, output_w, output_h, kernel_w, kernel_h,
+                                          stride, channels_دننه, channels_بهر, batches, stream);
+    } وإلا {
+        conv2d_transpose_sycl<عائم>(ننوت_d, (ثابت عائم *) kernel_d, output_d,
+                                     ننوت_w, ننوت_h, output_w, output_h, kernel_w, kernel_h,
+                                     stride, channels_دننه, channels_بهر, batches, stream);
     }
 }

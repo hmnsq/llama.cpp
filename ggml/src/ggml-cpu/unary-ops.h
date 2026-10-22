@@ -1,35 +1,35 @@
-#pragma once
+#لارښوونه once
 
-#include "common.h"
+#ضمن "common.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#که_تعریف_شوی __cplusplus
+خارجي "C" {
+#د_که_پای
 
-void ggml_compute_forward_abs(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_sgn(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_neg(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_step(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_tanh(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_elu(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_relu(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_sigmoid(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_hardsigmoid(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_exp(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_hardswish(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_sqr(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_sqrt(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_sin(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_cos(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_log(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_expm1(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_softplus(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_floor(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_ceil(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_round(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_trunc(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_xielu(const struct ggml_compute_params * params, struct ggml_tensor * dst);
+فراغ ggml_compute_forward_abs(ثابت بنية ggml_compute_params * params, بنية ggml_tensor * dst);
+فراغ ggml_compute_forward_sgn(ثابت بنية ggml_compute_params * params, بنية ggml_tensor * dst);
+فراغ ggml_compute_forward_neg(ثابت بنية ggml_compute_params * params, بنية ggml_tensor * dst);
+فراغ ggml_compute_forward_ګام(ثابت بنية ggml_compute_params * params, بنية ggml_tensor * dst);
+فراغ ggml_compute_forward_tanh(ثابت بنية ggml_compute_params * params, بنية ggml_tensor * dst);
+فراغ ggml_compute_forward_elu(ثابت بنية ggml_compute_params * params, بنية ggml_tensor * dst);
+فراغ ggml_compute_forward_relu(ثابت بنية ggml_compute_params * params, بنية ggml_tensor * dst);
+فراغ ggml_compute_forward_sigmoid(ثابت بنية ggml_compute_params * params, بنية ggml_tensor * dst);
+فراغ ggml_compute_forward_hardsigmoid(ثابت بنية ggml_compute_params * params, بنية ggml_tensor * dst);
+فراغ ggml_compute_forward_exp(ثابت بنية ggml_compute_params * params, بنية ggml_tensor * dst);
+فراغ ggml_compute_forward_hardswish(ثابت بنية ggml_compute_params * params, بنية ggml_tensor * dst);
+فراغ ggml_compute_forward_sqr(ثابت بنية ggml_compute_params * params, بنية ggml_tensor * dst);
+فراغ ggml_compute_forward_sqrt(ثابت بنية ggml_compute_params * params, بنية ggml_tensor * dst);
+فراغ ggml_compute_forward_sin(ثابت بنية ggml_compute_params * params, بنية ggml_tensor * dst);
+فراغ ggml_compute_forward_cos(ثابت بنية ggml_compute_params * params, بنية ggml_tensor * dst);
+فراغ ggml_compute_forward_log(ثابت بنية ggml_compute_params * params, بنية ggml_tensor * dst);
+فراغ ggml_compute_forward_expm1(ثابت بنية ggml_compute_params * params, بنية ggml_tensor * dst);
+فراغ ggml_compute_forward_softplus(ثابت بنية ggml_compute_params * params, بنية ggml_tensor * dst);
+فراغ ggml_compute_forward_floor(ثابت بنية ggml_compute_params * params, بنية ggml_tensor * dst);
+فراغ ggml_compute_forward_ceil(ثابت بنية ggml_compute_params * params, بنية ggml_tensor * dst);
+فراغ ggml_compute_forward_پړاو(ثابت بنية ggml_compute_params * params, بنية ggml_tensor * dst);
+فراغ ggml_compute_forward_trunc(ثابت بنية ggml_compute_params * params, بنية ggml_tensor * dst);
+فراغ ggml_compute_forward_xielu(ثابت بنية ggml_compute_params * params, بنية ggml_tensor * dst);
 
-#ifdef __cplusplus
+#که_تعریف_شوی __cplusplus
 }
-#endif
+#د_که_پای

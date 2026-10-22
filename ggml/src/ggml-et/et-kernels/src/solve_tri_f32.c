@@ -13,97 +13,97 @@
 // Lower-triangular, left-side, non-unit variant implemented.
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "math_fp.h"
-#include "platform.h"
+#ضمن "ggml_tensor.h"
+#ضمن "math_fp.h"
+#ضمن "platform.h"
 
-#include <stdint.h>
+#ضمن <stdint.h>
 
-struct ggml_et_solve_tri_params {
-    struct ggml_tensor src0;  // A: lower-triangular [n, n, B1, B2]
-    struct ggml_tensor src1;  // B: RHS [k, n, B1, B2]
-    struct ggml_tensor dst;   // X: solution [k, n, B1, B2]
+بنية ggml_et_solve_tri_params {
+    بنية ggml_tensor src0;  // A: lower-triangular [n, n, B1, B2]
+    بنية ggml_tensor src1;  // B: RHS [k, n, B1, B2]
+    بنية ggml_tensor dst;   // X: solution [k, n, B1, B2]
 };
 
-int entry_point(struct ggml_et_solve_tri_params * params, void * env) {
+صحيح ثبت_ټکی(بنية ggml_et_solve_tri_params * params, فراغ * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    إذا (!kernel_env) {
+        أرجع -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    صحيح thread_id   = get_relative_thread_id(kernel_env->shire_ماسک);
+    صحيح عدد_تارونه = get_عدد_تارونه(kernel_env->shire_ماسک);
 
-    if (thread_id < 0) {
-        return 0;
+    إذا (thread_id < 0) {
+        أرجع 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    إذا (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        أرجع -1;
     }
 
-    struct ggml_tensor * src0 = &params->src0;  // A
-    struct ggml_tensor * src1 = &params->src1;  // B
-    struct ggml_tensor * dst  = &params->dst;   // X
+    بنية ggml_tensor * src0 = &params->src0;  // A
+    بنية ggml_tensor * src1 = &params->src1;  // B
+    بنية ggml_tensor * dst  = &params->dst;   // X
 
-    if (src0->type != GGML_TYPE_F32 || src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    إذا (src0->type != GGML_TYPE_F32 || src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        أرجع -1;
     }
 
-    const float * A_data = (const float *) src0->data;
-    const float * B_data = (const float *) src1->data;
-    float *       X_data = (float *) dst->data;
+    ثابت عائم * A_معلومات = (ثابت عائم *) src0->معلومات;
+    ثابت عائم * B_معلومات = (ثابت عائم *) src1->معلومات;
+    عائم *       X_معلومات = (عائم *) dst->معلومات;
 
-    if (!A_data || !B_data || !X_data) {
-        return -1;
+    إذا (!A_معلومات || !B_معلومات || !X_معلومات) {
+        أرجع -1;
     }
 
-    const int64_t n   = src0->ne[1];  // A is n×n
-    const int64_t k   = src1->ne[0];  // number of RHS columns
-    const int64_t ne2 = src0->ne[2];
-    const int64_t ne3 = src0->ne[3];
+    ثابت int64_t n   = src0->ne[1];  // A is n×n
+    ثابت int64_t k   = src1->ne[0];  // number of RHS columns
+    ثابت int64_t ne2 = src0->ne[2];
+    ثابت int64_t ne3 = src0->ne[3];
 
     // Strides in bytes
-    const size_t nb01 = src0->nb[1], nb02 = src0->nb[2], nb03 = src0->nb[3];
-    const size_t nb11 = src1->nb[1], nb12 = src1->nb[2], nb13 = src1->nb[3];
-    const size_t nb1 = dst->nb[1], nb2 = dst->nb[2], nb3 = dst->nb[3];
+    ثابت size_t nb01 = src0->nb[1], nb02 = src0->nb[2], nb03 = src0->nb[3];
+    ثابت size_t nb11 = src1->nb[1], nb12 = src1->nb[2], nb13 = src1->nb[3];
+    ثابت size_t nb1 = dst->nb[1], nb2 = dst->nb[2], nb3 = dst->nb[3];
 
     // k % 16 == 0 guaranteed by supports_op. Rows are cache-line aligned,
     // so column groups of 16 map to exclusive cache lines.
     // TODO: Vectorize the thing
-    const int64_t cols_per_cl    = 16;
-    const int64_t num_col_groups = k / cols_per_cl;
-    const int64_t total_work     = num_col_groups * ne2 * ne3;
+    ثابت int64_t ستون_شمېر_فی_cl    = 16;
+    ثابت int64_t عدد_ستون_groups = k / ستون_شمېر_فی_cl;
+    ثابت int64_t ټول_work     = عدد_ستون_groups * ne2 * ne3;
 
-    for (int64_t work = thread_id; work < total_work; work += num_threads) {
-        const int64_t cg = work % num_col_groups;
-        const int64_t i2 = (work / num_col_groups) % ne2;
-        const int64_t i3 = work / (num_col_groups * ne2);
+    لكل (int64_t work = thread_id; work < ټول_work; work += عدد_تارونه) {
+        ثابت int64_t cg = work % عدد_ستون_groups;
+        ثابت int64_t i2 = (work / عدد_ستون_groups) % ne2;
+        ثابت int64_t i3 = work / (عدد_ستون_groups * ne2);
 
-        const int64_t j_start = cg * cols_per_cl;
-        const int64_t j_end   = j_start + cols_per_cl;
+        ثابت int64_t j_پیل = cg * ستون_شمېر_فی_cl;
+        ثابت int64_t j_پای_ټکی   = j_پیل + ستون_شمېر_فی_cl;
 
-        const float * A_batch = (const float *) ((const char *) A_data + i2 * nb02 + i3 * nb03);
-        const float * B_batch = (const float *) ((const char *) B_data + i2 * nb12 + i3 * nb13);
-        float *       X_batch = (float *) ((char *) X_data + i2 * nb2 + i3 * nb3);
+        ثابت عائم * A_batch = (ثابت عائم *) ((ثابت حرف *) A_معلومات + i2 * nb02 + i3 * nb03);
+        ثابت عائم * B_batch = (ثابت عائم *) ((ثابت حرف *) B_معلومات + i2 * nb12 + i3 * nb13);
+        عائم *       X_batch = (عائم *) ((حرف *) X_معلومات + i2 * nb2 + i3 * nb3);
 
-        for (int64_t j = j_start; j < j_end; j++) {
-            for (int64_t i = 0; i < n; i++) {
-                const float * A_row = (const float *) ((const char *) A_batch + i * nb01);
-                float *       X_row = (float *) ((char *) X_batch + i * nb1);
-                const float * B_row = (const float *) ((const char *) B_batch + i * nb11);
+        لكل (int64_t j = j_پیل; j < j_پای_ټکی; j++) {
+            لكل (int64_t i = 0; i < n; i++) {
+                ثابت عائم * A_لیکه = (ثابت عائم *) ((ثابت حرف *) A_batch + i * nb01);
+                عائم *       X_لیکه = (عائم *) ((حرف *) X_batch + i * nb1);
+                ثابت عائم * B_لیکه = (ثابت عائم *) ((ثابت حرف *) B_batch + i * nb11);
 
-                float sum = 0.0f;
-                for (int64_t t = 0; t < i; t++) {
-                    const float * X_t = (const float *) ((const char *) X_batch + t * nb1);
-                    sum += A_row[t] * X_t[j];
+                عائم مجموعه = 0.0f;
+                لكل (int64_t t = 0; t < i; t++) {
+                    ثابت عائم * X_t = (ثابت عائم *) ((ثابت حرف *) X_batch + t * nb1);
+                    مجموعه += A_لیکه[t] * X_t[j];
                 }
 
-                X_row[j] = et_fdiv(B_row[j] - sum, A_row[i]);
+                X_لیکه[j] = et_fdiv(B_لیکه[j] - مجموعه, A_لیکه[i]);
             }
         }
     }
 
-    return 0;
+    أرجع 0;
 }

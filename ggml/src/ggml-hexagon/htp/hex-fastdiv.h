@@ -1,5 +1,5 @@
-#ifndef HEX_FASTDIV_H
-#define HEX_FASTDIV_H
+#که_نه_تعریف_شوی HEX_FASTDIV_H
+#تعریف_کړه HEX_FASTDIV_H
 
 // See https://gmplib.org/~tege/divcnst-pldi94.pdf figure 4.1.
 // Precompute mp (m' in the paper) and L such that division
@@ -7,31 +7,31 @@
 // and a shift:
 //
 // n/d = (mulhi(n, mp) + n) >> L;
-struct fastdiv_values {
+بنية fastdiv_ارزښتونه {
     uint32_t mp;
     uint32_t l;
 };
 
-static inline struct fastdiv_values init_fastdiv_values(uint32_t d) {
-    struct fastdiv_values result = { 0, 0 };
+ساكن مضمن بنية fastdiv_ارزښتونه init_fastdiv_ارزښتونه(uint32_t d) {
+    بنية fastdiv_ارزښتونه پایله = { 0, 0 };
     // compute L = ceil(log2(d));
-    while (result.l < 32 && ((uint32_t) 1 << result.l) < d) {
-        ++(result.l);
+    طالما (پایله.l < 32 && ((uint32_t) 1 << پایله.l) < d) {
+        ++(پایله.l);
     }
 
-    result.mp = (uint32_t) (((uint64_t) 1 << 32) * (((uint64_t) 1 << result.l) - d) / d + 1);
-    return result;
+    پایله.mp = (uint32_t) (((uint64_t) 1 << 32) * (((uint64_t) 1 << پایله.l) - d) / d + 1);
+    أرجع پایله;
 }
 
-static inline uint32_t fastdiv(uint32_t n, const struct fastdiv_values * vals) {
+ساكن مضمن uint32_t fastdiv(uint32_t n, ثابت بنية fastdiv_ارزښتونه * vals) {
     // Compute high 32 bits of n * mp
-    const uint32_t hi = (uint32_t) (((uint64_t) n * vals->mp) >> 32);  // mulhi(n, mp)
+    ثابت uint32_t hi = (uint32_t) (((uint64_t) n * vals->mp) >> 32);  // mulhi(n, mp)
     // add n, apply bit shift
-    return (hi + n) >> vals->l;
+    أرجع (hi + n) >> vals->l;
 }
 
-static inline uint32_t fastmodulo(uint32_t n, uint32_t d, const struct fastdiv_values * vals) {
-    return n - fastdiv(n, vals) * d;
+ساكن مضمن uint32_t fastmodulo(uint32_t n, uint32_t d, ثابت بنية fastdiv_ارزښتونه * vals) {
+    أرجع n - fastdiv(n, vals) * d;
 }
 
-#endif /* HEX_FASTDIV_H */
+#د_که_پای /* HEX_FASTDIV_H */

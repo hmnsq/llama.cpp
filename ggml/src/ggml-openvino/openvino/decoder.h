@@ -1,131 +1,131 @@
-#pragma once
+#لارښوونه once
 
-#include <cstdint>
-#include <map>
-#include <openvino/core/node.hpp>
-#include <openvino/core/partial_shape.hpp>
-#include <openvino/core/shape.hpp>
-#include <openvino/frontend/decoder.hpp>
-#include <set>
-#include <string>
+#ضمن <cstdint>
+#ضمن <map>
+#ضمن <openvino/core/node.hpp>
+#ضمن <openvino/core/partial_shape.hpp>
+#ضمن <openvino/core/shape.hpp>
+#ضمن <openvino/frontend/decoder.hpp>
+#ضمن <set>
+#ضمن <string>
 
 namespace ov {
 namespace frontend {
 namespace ggml {
 
-struct ModelInputInfo {
+بنية Model_ننوت_Info {
     element::Type type;
     PartialShape shape;
 };
 
-struct ModelExtraInputInfo {
+بنية Model_Extra_ننوت_Info {
     element::Type type;
     Shape shape;
-    int64_t value;
+    int64_t ارزښت;
     bool is_parameter;
 };
 
-class GgmlDecoder : public DecoderBase {
-public:
-    virtual ov::Any get_attribute(const std::string & name) const = 0;
+class GgmlDecoder : عام Decoder_بنسټ {
+عام:
+    مجازي ov::Any get_attribute(ثابت std::string & name) ثابت = 0;
 
-    virtual PartialShape get_input_shape(int node_idx, const std::string & name) const = 0;
+    مجازي PartialShape get_ننوت_shape(صحيح غوټه_idx, ثابت std::string & name) ثابت = 0;
 
-    virtual std::vector<size_t> get_input_stride(int node_idx, const std::string & name) const = 0;
+    مجازي std::ویکټور<size_t> get_ننوت_stride(صحيح غوټه_idx, ثابت std::string & name) ثابت = 0;
 
-    virtual size_t get_view_input_size(int node_idx, const std::string & name) const = 0;
+    مجازي size_t get_view_ننوت_اندازه(صحيح غوټه_idx, ثابت std::string & name) ثابت = 0;
 
-    virtual size_t get_view_input_offset(int node_idx, const std::string & name, size_t view_index) const = 0;
+    مجازي size_t get_view_ننوت_دننه_واټن(صحيح غوټه_idx, ثابت std::string & name, size_t view_شاخص) ثابت = 0;
 
-    virtual size_t get_view_input_src_offset(int node_idx, const std::string & name, size_t view_index) const = 0;
+    مجازي size_t get_view_ننوت_src_دننه_واټن(صحيح غوټه_idx, ثابت std::string & name, size_t view_شاخص) ثابت = 0;
 
-    virtual std::vector<size_t> get_view_input_stride(int node_idx,
-                                                      const std::string & name,
-                                                      size_t view_index) const = 0;
+    مجازي std::ویکټور<size_t> get_view_ننوت_stride(صحيح غوټه_idx,
+                                                      ثابت std::string & name,
+                                                      size_t view_شاخص) ثابت = 0;
 
-    virtual std::vector<size_t> get_view_input_src_stride(int node_idx,
-                                                          const std::string & name,
-                                                          size_t view_index) const = 0;
+    مجازي std::ویکټور<size_t> get_view_ننوت_src_stride(صحيح غوټه_idx,
+                                                          ثابت std::string & name,
+                                                          size_t view_شاخص) ثابت = 0;
 
-    virtual Shape get_view_input_ggml_shape(int node_idx, const std::string & name, size_t view_index) const = 0;
+    مجازي Shape get_view_ننوت_ggml_shape(صحيح غوټه_idx, ثابت std::string & name, size_t view_شاخص) ثابت = 0;
 
-    virtual Shape get_view_input_src_ggml_shape(int node_idx, const std::string & name, size_t view_index) const = 0;
+    مجازي Shape get_view_ننوت_src_ggml_shape(صحيح غوټه_idx, ثابت std::string & name, size_t view_شاخص) ثابت = 0;
 
-    virtual PartialShape get_view_input_ov_shape(int node_idx, const std::string & name, size_t view_index) const = 0;
+    مجازي PartialShape get_view_ننوت_ov_shape(صحيح غوټه_idx, ثابت std::string & name, size_t view_شاخص) ثابت = 0;
 
-    virtual PartialShape get_view_input_src_ov_shape(int node_idx,
-                                                     const std::string & name,
-                                                     size_t view_index) const = 0;
+    مجازي PartialShape get_view_ننوت_src_ov_shape(صحيح غوټه_idx,
+                                                     ثابت std::string & name,
+                                                     size_t view_شاخص) ثابت = 0;
 
-    virtual std::string get_view_input_name(int node_idx, const std::string & name, size_t view_index) const = 0;
+    مجازي std::string get_view_ننوت_name(صحيح غوټه_idx, ثابت std::string & name, size_t view_شاخص) ثابت = 0;
 
-    virtual std::string get_view_input_src_name(int node_idx, const std::string & name, size_t view_index) const = 0;
+    مجازي std::string get_view_ننوت_src_name(صحيح غوټه_idx, ثابت std::string & name, size_t view_شاخص) ثابت = 0;
 
-    virtual element::Type get_input_type(int node_idx, const std::string & name) const = 0;
+    مجازي element::Type get_ننوت_type(صحيح غوټه_idx, ثابت std::string & name) ثابت = 0;
 
-    virtual size_t get_input_size() const = 0;
+    مجازي size_t get_ننوت_اندازه() ثابت = 0;
 
-    virtual size_t get_input_size(int node_idx) const = 0;
+    مجازي size_t get_ننوت_اندازه(صحيح غوټه_idx) ثابت = 0;
 
-    virtual void get_input_node(size_t input_port_idx,
-                                std::string & producer_name,
-                                std::string & producer_output_port_name,
-                                size_t & producer_output_port_index) const = 0;
+    مجازي فراغ get_ننوت_غوټه(size_t ننوت_پورټ_idx,
+                                std::string & تولیدوونکی_name,
+                                std::string & تولیدوونکی_output_پورټ_name,
+                                size_t & تولیدوونکی_output_پورټ_شاخص) ثابت = 0;
 
-    virtual std::vector<std::string> get_input_names(int node_idx) const = 0;
+    مجازي std::ویکټور<std::string> get_ننوت_نومونه(صحيح غوټه_idx) ثابت = 0;
 
-    virtual PartialShape get_output_shape(int node_idx) const = 0;
+    مجازي PartialShape get_output_shape(صحيح غوټه_idx) ثابت = 0;
 
-    virtual element::Type get_output_type(const int node_idx) const = 0;
+    مجازي element::Type get_output_type(ثابت صحيح غوټه_idx) ثابت = 0;
 
-    virtual std::vector<size_t> get_output_stride(int node_idx) const = 0;
+    مجازي std::ویکټور<size_t> get_output_stride(صحيح غوټه_idx) ثابت = 0;
 
-    virtual int32_t * get_input_op_params(int node_idx, const std::string & name) const = 0;
+    مجازي int32_t * get_ننوت_op_params(صحيح غوټه_idx, ثابت std::string & name) ثابت = 0;
 
-    virtual int32_t * get_output_op_params(int node_idx) const = 0;
+    مجازي int32_t * get_output_op_params(صحيح غوټه_idx) ثابت = 0;
 
-    virtual size_t get_output_op_offset(int node_idx) const = 0;
+    مجازي size_t get_output_op_دننه_واټن(صحيح غوټه_idx) ثابت = 0;
 
-    virtual std::vector<std::string> get_output_names(int node_idx) const = 0;
+    مجازي std::ویکټور<std::string> get_output_نومونه(صحيح غوټه_idx) ثابت = 0;
 
-    virtual std::string get_inplace_op_src(int node_idx) const = 0;
+    مجازي std::string get_inplace_op_src(صحيح غوټه_idx) ثابت = 0;
 
-    virtual bool is_view_like_alias_of(int node_idx, const std::string & view_src_name) const = 0;
+    مجازي bool is_view_like_alias_د(صحيح غوټه_idx, ثابت std::string & view_src_name) ثابت = 0;
 
-    virtual const std::string & get_op_type() const = 0;
+    مجازي ثابت std::string & get_op_type() ثابت = 0;
 
-    virtual const std::string & get_op_type(int node_idx) const = 0;
+    مجازي ثابت std::string & get_op_type(صحيح غوټه_idx) ثابت = 0;
 
-    virtual const std::string & get_op_name() const = 0;
+    مجازي ثابت std::string & get_op_name() ثابت = 0;
 
-    virtual const std::string & get_op_name(int node_idx) const = 0;
+    مجازي ثابت std::string & get_op_name(صحيح غوټه_idx) ثابت = 0;
 
-    virtual void visit_subgraph(std::function<void(std::shared_ptr<GgmlDecoder>, int node_idx)> node_visitor) const = 0;
+    مجازي فراغ لیدنه_subgraph(std::function<فراغ(std::shared_ptr<GgmlDecoder>, صحيح غوټه_idx)> غوټه_visitor) ثابت = 0;
 
-    virtual int get_op_case(int node_idx) const = 0;
+    مجازي صحيح get_op_case(صحيح غوټه_idx) ثابت = 0;
 
-    virtual const std::map<std::string, ModelInputInfo> & get_model_inputs() const = 0;
-    virtual const std::map<std::string, ModelExtraInputInfo> & get_model_extra_inputs() const = 0;
-    virtual const std::map<std::string, std::shared_ptr<ov::Node>> & get_model_weights() const = 0;
-    virtual std::set<std::string> get_model_output_names() const = 0;
+    مجازي ثابت std::map<std::string, Model_ننوت_Info> & get_model_inputs() ثابت = 0;
+    مجازي ثابت std::map<std::string, Model_Extra_ننوت_Info> & get_model_extra_inputs() ثابت = 0;
+    مجازي ثابت std::map<std::string, std::shared_ptr<ov::غوټه_2>> & get_model_weights() ثابت = 0;
+    مجازي std::سېټ<std::string> get_model_output_نومونه() ثابت = 0;
 
-    virtual int32_t * get_rope_params() const = 0;
+    مجازي int32_t * get_rope_params() ثابت = 0;
 
-    virtual bool has_mixed_rope_params() const = 0;
+    مجازي bool has_mixed_rope_params() ثابت = 0;
 
-    virtual int get_ssm_state_size() const = 0;
+    مجازي صحيح get_ssm_state_اندازه() ثابت = 0;
 
-    virtual std::map<std::string, std::string> get_kv_param_res_names() const = 0;
+    مجازي std::map<std::string, std::string> get_kv_param_res_نومونه() ثابت = 0;
 
-    virtual bool is_static() const = 0;
+    مجازي bool is_static() ثابت = 0;
 
-    virtual bool is_stateful() const = 0;
+    مجازي bool is_stateful() ثابت = 0;
 
-    virtual bool is_splited_model() const = 0;
+    مجازي bool is_splited_model() ثابت = 0;
 
-    virtual int is_swa_layer(int layer) const = 0;
+    مجازي صحيح is_swa_layer(صحيح layer) ثابت = 0;
 
-    virtual int32_t get_op_dynamic_dim(int node_idx) const = 0;
+    مجازي int32_t get_op_dynamic_dim(صحيح غوټه_idx) ثابت = 0;
 };
 
 }  // namespace ggml

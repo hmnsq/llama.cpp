@@ -1,37 +1,37 @@
-#include "ggml-impl.h"
-#include "ggml.h"
-#include "ime_kernels.h"
-#include "rvv_kernels.h"
+#ضمن "ggml-impl.h"
+#ضمن "ggml.h"
+#ضمن "ime_kernels.h"
+#ضمن "rvv_kernels.h"
 
-#include <algorithm>
-#include <cmath>
-#include <stdexcept>
+#ضمن <algorithm>
+#ضمن <cmath>
+#ضمن <stdexcept>
 
-#if !defined(__riscv_v) || !defined(__riscv_v_intrinsic)
+#إذا !defined(__riscv_v) || !defined(__riscv_v_intrinsic)
 #    error "riscv v extension or v_intrinsic not enabled"
-#else
+#وإلا
 #    include <riscv_vector.h>
-#endif
+#د_که_پای
 
-#if !defined(__riscv_zfh)
+#إذا !defined(__riscv_zfh)
 #    error "riscv zfh extension not enabled"
-#endif
+#د_که_پای
 
-#if defined(RISCV64_SPACEMIT_IME1)
-#else
+#إذا defined(RISCV64_SPACEMIT_IME1)
+#وإلا
 #    error "RISCV64_SPACEMIT_IME1 not defined"
-#endif
+#د_که_پای
 
 // clang-format off
-#if defined(__GNUC__)
-#pragma GCC diagnostic ignored "-Woverlength-strings"
-#pragma GCC diagnostic ignored "-Wcast-qual"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#endif
+#إذا defined(__GNUC__)
+#لارښوونه GCC diagnostic ignored "-Woverlength-strings"
+#لارښوونه GCC diagnostic ignored "-Wcast-qual"
+#لارښوونه GCC diagnostic ignored "-Wunused-parameter"
+#د_که_پای
 // clang-format on
-namespace spacemit_kernels {
+نطاق spacemit_kernels {
 
-#define QUANTIZEM4ROW_KERNEL                           \
+#تعریف_کړه QUANTIZEM4_لیکه_KERNEL                           \
     "vmv.s.x            v16, zero                \n\t" \
     "vfabs.v            v8, v0                   \n\t" \
     "vfredmax.vs        v16, v8, v16             \n\t" \
@@ -60,7 +60,7 @@ namespace spacemit_kernels {
     "vnclip.wx          v30, v22, zero           \n\t" \
     "vnclip.wx          v31, v23, zero           \n\t"
 
-#define QUANTIZEM4ROW_STORE                            \
+#تعریف_کړه QUANTIZEM4_لیکه_STORE                            \
     "addi               t1, %[BlkLen], 0         \n\t" \
     "vsetvli            t0, t1, e8, mf4          \n\t" \
     "vse8.v             v24, (s1)                \n\t" \
@@ -93,18 +93,18 @@ namespace spacemit_kernels {
     "vsetvli            t0, t1, e8, mf4          \n\t" \
     "vse8.v             v31, (s1)                \n\t"
 
-namespace ime1 {
-void quantize_a_4row_i8(size_t BlkLen, const float * A, size_t CountK, uint8_t * QuantA) {
-    constexpr float range_max_reciprocal = 1.0f / ((1 << 7) - 1);
-    const float     fone                 = 1.0f;
+نطاق ime1 {
+فراغ quantize_a_4row_i8(size_t BlkLen, ثابت عائم * A, size_t شمېر_K, uint8_t * QuantA) {
+    constexpr عائم range_max_reciprocal = 1.0f / ((1 << 7) - 1);
+    ثابت عائم     fone                 = 1.0f;
 
-    for (size_t row_index = 0; row_index < 4; ++row_index) {
-        const float * SRC = A + row_index * CountK;
-        uint8_t *     DST = QuantA + row_index * sizeof(float);
+    لكل (size_t لیکه_شاخص = 0; لیکه_شاخص < 4; ++لیکه_شاخص) {
+        ثابت عائم * SRC = A + لیکه_شاخص * شمېر_K;
+        uint8_t *     DST = QuantA + لیکه_شاخص * حجم(عائم);
 
-        const size_t offset = (4 - row_index) * 4 + row_index * 8;
-        const size_t stride = 4 * (sizeof(float) + BlkLen);
-        __asm__ volatile(
+        ثابت size_t دننه_واټن = (4 - لیکه_شاخص) * 4 + لیکه_شاخص * 8;
+        ثابت size_t stride = 4 * (حجم(عائم) + BlkLen);
+        __asm__ متطاير(
             "vsetvli            t0, zero, e32, m8        \n\t"
             "addi               t2, %[CountK], 0         \n\t"
             "addi               a1, %[DST], 0            \n\t"
@@ -118,7 +118,7 @@ void quantize_a_4row_i8(size_t BlkLen, const float * A, size_t CountK, uint8_t *
             "add                %[SRC], %[SRC], t1       \n\t"
             "add                s1, a1, %[OFFSET]        \n\t"
 
-            QUANTIZEM4ROW_KERNEL QUANTIZEM4ROW_STORE
+            QUANTIZEM4_لیکه_KERNEL QUANTIZEM4_لیکه_STORE
 
             "add                a1, a1, %[STRIDE]        \n\t"
             "bge                t2, %[BlkLen], LOOP%=    \n\t"
@@ -132,7 +132,7 @@ void quantize_a_4row_i8(size_t BlkLen, const float * A, size_t CountK, uint8_t *
             "vle32.v            v0, (%[SRC])             \n\t"
             "add                s1, a1, %[OFFSET]        \n\t"
 
-            QUANTIZEM4ROW_KERNEL
+            QUANTIZEM4_لیکه_KERNEL
 
             "addi               t3, %[BlkLen], 0         \n\t"
             "addi               s2, s1, 0                \n\t"
@@ -144,25 +144,25 @@ void quantize_a_4row_i8(size_t BlkLen, const float * A, size_t CountK, uint8_t *
             "addi               t3, t3, -8               \n\t"
             "bnez               t3, SET_ZERO%=           \n\t"
 
-            QUANTIZEM4ROW_STORE
+            QUANTIZEM4_لیکه_STORE
 
             "QUIT%=:                                     \n\t"
             : [SRC] "+r"(SRC)
-            : [DST] "r"(DST), [BlkLen] "r"(BlkLen), [OFFSET] "r"(offset), [STRIDE] "r"(stride), [CountK] "r"(CountK),
+            : [DST] "r"(DST), [BlkLen] "r"(BlkLen), [دننه_واټن_2] "r"(دننه_واټن), [STRIDE] "r"(stride), [شمېر_K] "r"(شمېر_K),
               [FONE] "f"(fone), [RMAXREC] "f"(range_max_reciprocal)
             : "cc", "t0", "t1", "t2", "t3", "a1", "s1", "s2", "f10", "f11");
     }
 }
 
-void quantize_a_row_i8(size_t BlkLen, const float * A, size_t CountK, uint8_t * QuantA) {
-    const float *   SRC                  = A;
+فراغ quantize_a_لیکه_i8(size_t BlkLen, ثابت عائم * A, size_t شمېر_K, uint8_t * QuantA) {
+    ثابت عائم *   SRC                  = A;
     uint8_t *       DST                  = QuantA;
-    constexpr float range_max_reciprocal = 1.0f / ((1 << 7) - 1);
-    const float     fone                 = 1.0f;
-    uint8_t *       QuantA_offset        = QuantA + CountK + 4 * ((CountK + BlkLen - 1) / BlkLen);
-    size_t          offset               = (CountK + BlkLen - 1) / BlkLen * BlkLen - CountK;
+    constexpr عائم range_max_reciprocal = 1.0f / ((1 << 7) - 1);
+    ثابت عائم     fone                 = 1.0f;
+    uint8_t *       Quant_A_دننه_واټن        = QuantA + شمېر_K + 4 * ((شمېر_K + BlkLen - 1) / BlkLen);
+    size_t          دننه_واټن               = (شمېر_K + BlkLen - 1) / BlkLen * BlkLen - شمېر_K;
 
-    __asm__ volatile(
+    __asm__ متطاير(
         "addi         t3, zero, 32*4          \n\t"
         "addi         t2, zero, 32            \n\t"
 
@@ -293,15 +293,15 @@ void quantize_a_row_i8(size_t BlkLen, const float * A, size_t CountK, uint8_t * 
         "vxor.vv      v16, v16, v16           \n\t"
         "jal          x0, LOOP_K%=            \n\t"
         "END%=:                               \n\t"
-        : [K] "+r"(CountK)
+        : [K] "+r"(شمېر_K)
         : [FONE] "f"(fone), [RMAXREC] "f"(range_max_reciprocal), [SRC] "r"(SRC), [DST] "r"(DST)
         : "cc", "t3", "t2", "t1", "t0", "a1", "a2", "a3", "a4", "s1", "s2", "s3", "s4", "f10", "f11", "f12", "f13");
 }
 
 }  // namespace ime1
 
-namespace {
-#define SQ4BIT_KERNEL_COMP_1x8x2_4X8X4          \
+نطاق {
+#تعریف_کړه SQ4_بټ_KERNEL_COMP_1x8x2_4_X8_X4          \
     "vmadot       v16, v14, v0            \n\t" \
     "vmadot       v18, v14, v1            \n\t" \
     "vmadot       v20, v14, v2            \n\t" \
@@ -311,7 +311,7 @@ namespace {
     "vmadot       v20, v15, v6            \n\t" \
     "vmadot       v22, v15, v7            \n\t"
 
-#define SQ4BIT_KERNEL_ACC_1X4X4                 \
+#تعریف_کړه SQ4_بټ_KERNEL_ACC_1_X4_X4                 \
     "vfcvt.f.x.v  v16,  v16               \n\t" \
     "vfcvt.f.x.v  v18,  v18               \n\t" \
     "vfcvt.f.x.v  v20,  v20               \n\t" \
@@ -325,7 +325,7 @@ namespace {
     "vfmacc.vv    v30, v20, v26           \n\t" \
     "vfmacc.vv    v31, v22, v27           \n\t"
 
-#define SQ4BIT_KERNEL_ACC_F16_1X4X4             \
+#تعریف_کړه SQ4_بټ_KERNEL_ACC_F16_1_X4_X4             \
     "vfcvt.f.x.v  v16,  v16               \n\t" \
     "vfcvt.f.x.v  v18,  v18               \n\t" \
     "vfcvt.f.x.v  v20,  v20               \n\t" \
@@ -339,7 +339,7 @@ namespace {
     "vfmacc.vv    v30, v20, v26           \n\t" \
     "vfmacc.vv    v31, v22, v27           \n\t"
 
-#define SQ4BIT_KERNEL_LOAD_1x8x2_4X8X4          \
+#تعریف_کړه SQ4_بټ_KERNEL_بارول_1x8x2_4_X8_X4          \
     "vle8.v       v4, (s1)                \n\t" \
     "addi         s1, s1, 128             \n\t" \
     "vle8.v       v5, (s2)                \n\t" \
@@ -364,7 +364,7 @@ namespace {
     "vsrl.vi      v6, v6, 4               \n\t" \
     "vsrl.vi      v7, v7, 4               \n\t"
 
-#define SQ4BIT_KERNEL_LOAD_ZP_16X1              \
+#تعریف_کړه SQ4_بټ_KERNEL_بارول_ZP_16_X1              \
     "vsetvli      t0, zero, e8, mf2       \n\t" \
     "vle8.v       v1, (s7)                \n\t" \
     "vsetvli      t0, zero, e8, m1        \n\t" \
@@ -378,7 +378,7 @@ namespace {
     "vadd.vi      v13, v13, -12           \n\t"
 
 // using for M4Kernel
-#define LOAD_B_16x8x2                           \
+#تعریف_کړه بارول_B_16x8x2                           \
     "vsetvli      t0, zero, e8, m1        \n\t" \
     "vle8.v       v6, (s1)                \n\t" \
     "addi         s1, s1, 32*4            \n\t" \
@@ -400,7 +400,7 @@ namespace {
     "vsrl.vi      v9, v9, 4               \n\t"
 
 // [s2|s5, s3, s4, s6]
-#define LOAD_SCALE_4x16_FP16                    \
+#تعریف_کړه بارول_SCALE_4x16_FP16                    \
     "addi         s2, s5, -8              \n\t" \
     "addi         s3, s5, 8               \n\t" \
     "addi         s4, s5, 16              \n\t" \
@@ -448,7 +448,7 @@ namespace {
     "vfmul.vf     v15, v15, f4, v0.t      \n\t"
 
 // [s2|s5, s3, s4, s6]
-#define LOAD_SCALE_4x16                         \
+#تعریف_کړه بارول_SCALE_4x16                         \
     "addi         s2, s5, -16             \n\t" \
     "addi         s3, s5, 16              \n\t" \
     "addi         s4, s5, 32              \n\t" \
@@ -489,7 +489,7 @@ namespace {
     "vfmul.vf     v15, v15, f4, v0.t      \n\t"
 
 //[s1| BIAS, s2, s3, s4]
-#define LOAD_BIAS                               \
+#تعریف_کړه بارول_BIAS                               \
     "vsetvli      t0, zero, e32, mf2      \n\t" \
     "li           t1, 0xf0                \n\t" \
     "vmv.s.x      v0, t1                  \n\t" \
@@ -512,7 +512,7 @@ namespace {
     "vmv.v.v      v29, v28                \n\t" \
     "vmv.v.v      v31, v30                \n\t"
 
-#define SQ4BIT_KERNEL_COMP_4x16x16              \
+#تعریف_کړه SQ4_بټ_KERNEL_COMP_4x16x16              \
     "vmadot       v16, v10, v2            \n\t" \
     "vmadot       v18, v10, v3            \n\t" \
     "vmadot       v20, v10, v4            \n\t" \
@@ -522,7 +522,7 @@ namespace {
     "vmadot       v20, v11, v8            \n\t" \
     "vmadot       v22, v11, v9            \n\t"
 
-#define SAVE_RESULT_4x16                        \
+#تعریف_کړه SAVE_پایله_4x16                        \
     "addi         a1, %[C], 0             \n\t" \
     "add          a2, %[C], %[LDC]        \n\t" \
     "add          a3, a2, %[LDC]          \n\t" \
@@ -570,7 +570,7 @@ namespace {
     "vse32.v      v30, (a2), v0.t         \n\t" \
     "vse32.v      v31, (a4), v0.t         \n\t"
 
-#define SQ4BIT_KERNEL_LOAD_ZP_16X1_v2           \
+#تعریف_کړه SQ4_بټ_KERNEL_بارول_ZP_16_X1_v2           \
     "vsetvli      t0, zero, e8, mf2       \n\t" \
     "vle8.v       v11, (s6)               \n\t" \
     "vsetvli      t0, zero, e8, m1        \n\t" \
@@ -583,32 +583,32 @@ namespace {
     "vrgather.vv  v15, v11, v1            \n\t" \
     "vadd.vi      v1, v1, -12             \n\t"
 
-template <bool HasZeroPoint>
-void SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
-                                                const uint8_t * QuantA,
-                                                const uint8_t * QuantBData,
-                                                float *         C,
-                                                size_t          CountN,
-                                                size_t          BlockCountK,
-                                                const size_t    ldc) {
-    size_t       LDC   = ldc * sizeof(float);
-    const size_t INNER = BlkLen / 16;
-    float        tmp[4 * 16];
+کينډۍ <منطقي Has_Zero_ټکی>
+فراغ SQ4_بټ_Gemm_M4_Kernel_Comp_Int8_Scale_Fp16_Impl(size_t          BlkLen,
+                                                ثابت uint8_t * QuantA,
+                                                ثابت uint8_t * QuantBData,
+                                                عائم *         C,
+                                                size_t          شمېر_N,
+                                                size_t          بلاک_شمېر_K,
+                                                ثابت size_t    ldc) {
+    size_t       LDC   = ldc * حجم(عائم);
+    ثابت size_t INNER = BlkLen / 16;
+    عائم        tmp[4 * 16];
 
-    if constexpr (HasZeroPoint) {
-        for (size_t n = 0; n < CountN; n += 16) {
-            size_t    NBLKS         = (CountN - n) > 16 ? 16 : CountN - n;
+    إذا constexpr (Has_Zero_ټکی) {
+        لكل (size_t n = 0; n < شمېر_N; n += 16) {
+            size_t    NBLKS         = (شمېر_N - n) > 16 ? 16 : شمېر_N - n;
             uint8_t * QuantBDataPtr = (uint8_t *) QuantBData +             //
-                                      n * BlockCountK * BlkLen / 2 +       // b data
-                                      n * BlockCountK * sizeof(uint8_t) +  // zp
-                                      n * BlockCountK * sizeof(_Float16);  // scale
-            float * CPtr = C + n;
-            if (NBLKS < 16) {
+                                      n * بلاک_شمېر_K * BlkLen / 2 +       // b data
+                                      n * بلاک_شمېر_K * حجم(uint8_t) +  // zp
+                                      n * بلاک_شمېر_K * حجم(_Float16);  // scale
+            عائم * CPtr = C + n;
+            إذا (NBLKS < 16) {
                 CPtr = tmp;
-                LDC  = 16 * sizeof(float);
+                LDC  = 16 * حجم(عائم);
             }
 
-            __asm__ volatile(
+            __asm__ متطاير(
                 "vsetvli            t0, zero, e32, m8           \n\t"
                 "vxor.vv            v24, v24, v24               \n\t"
                 "addi               t3, %[BlockCountK], 0       \n\t"
@@ -643,11 +643,11 @@ void SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
                 "addi               a1, a1, 16                  \n\t"
                 "addi               t2, %[INNER], 0             \n\t"
 
-                SQ4BIT_KERNEL_LOAD_ZP_16X1_v2
+                SQ4_بټ_KERNEL_بارول_ZP_16_X1_v2
 
                 "BLOCK_INNER_LOOP%=:                            \n\t"
 
-                LOAD_B_16x8x2
+                بارول_B_16x8x2
 
                 "vle8.v             v10, (a1)                   \n\t"
                 "addi               a1, a1, 32                  \n\t"
@@ -662,12 +662,12 @@ void SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
                 "vsub.vv            v5, v5, v15                 \n\t"
                 "vsub.vv            v9, v9, v15                 \n\t"
 
-                SQ4BIT_KERNEL_COMP_4x16x16
+                SQ4_بټ_KERNEL_COMP_4x16x16
 
                 "addi               t2, t2, -1                  \n\t"
                 "bnez               t2, BLOCK_INNER_LOOP%=      \n\t"
 
-                LOAD_SCALE_4x16_FP16
+                بارول_SCALE_4x16_FP16
 
                 "vsetvli            t0, zero, e32, m8           \n\t"
                 "vfcvt.f.x.v        v16, v16                    \n\t"
@@ -677,27 +677,27 @@ void SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
 
                 "RESULT_SAVE%=:                                 \n\t"
 
-                SAVE_RESULT_4x16
+                SAVE_پایله_4x16
 
                 :
                 : [INNER] "r"(INNER), [A] "r"(QuantA), [B] "r"(QuantBDataPtr), [LDC] "r"(LDC),
-                  [BlockCountK] "r"(BlockCountK), [C] "r"(CPtr)
+                  [بلاک_شمېر_K] "r"(بلاک_شمېر_K), [C] "r"(CPtr)
                 : "cc", "t0", "t1", "t2", "t3", "a1", "a2", "a3", "a4", "f1", "f2", "f3", "f4", "s1", "s2", "s3", "s4",
                   "s5", "s6");
         }
-    } else {
-        for (size_t n = 0; n < CountN; n += 16) {
-            size_t    NBLKS         = (CountN - n) > 16 ? 16 : CountN - n;
+    } وإلا {
+        لكل (size_t n = 0; n < شمېر_N; n += 16) {
+            size_t    NBLKS         = (شمېر_N - n) > 16 ? 16 : شمېر_N - n;
             uint8_t * QuantBDataPtr = (uint8_t *) QuantBData +             //
-                                      n * BlockCountK * BlkLen / 2 +       // b data
-                                      n * BlockCountK * sizeof(_Float16);  // scale
-            float * CPtr = C + n;
-            if (NBLKS < 16) {
+                                      n * بلاک_شمېر_K * BlkLen / 2 +       // b data
+                                      n * بلاک_شمېر_K * حجم(_Float16);  // scale
+            عائم * CPtr = C + n;
+            إذا (NBLKS < 16) {
                 CPtr = tmp;
-                LDC  = 16 * sizeof(float);
+                LDC  = 16 * حجم(عائم);
             }
 
-            __asm__ volatile(
+            __asm__ متطاير(
                 "vsetvli            t0, zero, e32, m8           \n\t"
                 "vxor.vv            v24, v24, v24               \n\t"
                 "addi               t3, %[BlockCountK], 0       \n\t"
@@ -720,7 +720,7 @@ void SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
                 "addi               t2, %[INNER], 0             \n\t"
                 "BLOCK_INNER_LOOP%=:                            \n\t"
 
-                LOAD_B_16x8x2
+                بارول_B_16x8x2
 
                 "vsetvli            t0, zero, e8, m1            \n\t"
                 "vle8.v             v10, (a1)                   \n\t"
@@ -736,12 +736,12 @@ void SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
                 "vadd.vi            v8, v8, -8                  \n\t"
                 "vadd.vi            v9, v9, -8                  \n\t"
 
-                SQ4BIT_KERNEL_COMP_4x16x16
+                SQ4_بټ_KERNEL_COMP_4x16x16
 
                 "addi               t2, t2, -1                  \n\t"
                 "bnez               t2, BLOCK_INNER_LOOP%=      \n\t"
 
-                LOAD_SCALE_4x16_FP16
+                بارول_SCALE_4x16_FP16
 
                 "vsetvli            t0, zero, e32, m8           \n\t"
                 "vfcvt.f.x.v        v16, v16                    \n\t"
@@ -750,39 +750,39 @@ void SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
                 "bnez               t3, BLOCK_COUNTK_LOOP%=     \n\t"
                 "RESULT_SAVE%=:                                 \n\t"
 
-                SAVE_RESULT_4x16
+                SAVE_پایله_4x16
 
                 :
                 : [INNER] "r"(INNER), [A] "r"(QuantA), [B] "r"(QuantBDataPtr), [LDC] "r"(LDC),
-                  [BlockCountK] "r"(BlockCountK), [C] "r"(CPtr)
+                  [بلاک_شمېر_K] "r"(بلاک_شمېر_K), [C] "r"(CPtr)
                 : "cc", "t0", "t1", "t2", "t3", "a1", "a2", "a3", "a4", "f1", "f2", "f3", "f4", "s1", "s2", "s3", "s4",
                   "s5", "s6");
         }
     }
 }
 
-template <bool HasZeroPoint>
-void SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
-                                                const uint8_t * QuantA,
-                                                const uint8_t * QuantBData,
-                                                float *         C,
-                                                size_t          CountN,
-                                                size_t          BlockCountK,
-                                                const size_t    ldc) {
-    GGML_UNUSED(ldc);
+کينډۍ <منطقي Has_Zero_ټکی>
+فراغ SQ4_بټ_Gemm_M1_Kernel_Comp_Int8_Scale_Fp16_Impl(size_t          BlkLen,
+                                                ثابت uint8_t * QuantA,
+                                                ثابت uint8_t * QuantBData,
+                                                عائم *         C,
+                                                size_t          شمېر_N,
+                                                size_t          بلاک_شمېر_K,
+                                                ثابت size_t    ldc) {
+    GGML_ناکارول_شوی(ldc);
     size_t INNER = BlkLen / 16;
 
-    if constexpr (HasZeroPoint) {
-        for (size_t n = 0; n < CountN; n += 16) {
-            size_t    nblks         = (CountN - n) > 16 ? 16 : CountN - n;
+    إذا constexpr (Has_Zero_ټکی) {
+        لكل (size_t n = 0; n < شمېر_N; n += 16) {
+            size_t    nblks         = (شمېر_N - n) > 16 ? 16 : شمېر_N - n;
             uint8_t * QuantBDataPtr = (uint8_t *) QuantBData +             //
-                                      n * BlockCountK * BlkLen / 2 +       // b data
-                                      n * BlockCountK * sizeof(uint8_t) +  // zp
-                                      n * BlockCountK * sizeof(_Float16);  // scale
-            float * CPtr = C + n;
-            size_t  cnt  = BlockCountK;
+                                      n * بلاک_شمېر_K * BlkLen / 2 +       // b data
+                                      n * بلاک_شمېر_K * حجم(uint8_t) +  // zp
+                                      n * بلاک_شمېر_K * حجم(_Float16);  // scale
+            عائم * CPtr = C + n;
+            size_t  cnt  = بلاک_شمېر_K;
 
-            __asm__ volatile(
+            __asm__ متطاير(
                 "vsetvli      t0, zero, e32, m4       \n\t"
                 "vxor.vv      v28, v28, v28           \n\t"
 
@@ -835,11 +835,11 @@ void SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
                 "vfmul.vf     v27, v11, f1            \n\t"
                 "addi         %[CNT], %[CNT], -1      \n\t"
 
-                SQ4BIT_KERNEL_LOAD_ZP_16X1
+                SQ4_بټ_KERNEL_بارول_ZP_16_X1
 
                 "LOOP_INNER%=:                        \n\t"
 
-                SQ4BIT_KERNEL_LOAD_1x8x2_4X8X4
+                SQ4_بټ_KERNEL_بارول_1x8x2_4_X8_X4
 
                 "vsub.vv      v0, v0, v8              \n\t"
                 "vsub.vv      v4, v4, v8              \n\t"
@@ -850,12 +850,12 @@ void SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
                 "vsub.vv      v3, v3, v11             \n\t"
                 "vsub.vv      v7, v7, v11             \n\t"
 
-                SQ4BIT_KERNEL_COMP_1x8x2_4X8X4
+                SQ4_بټ_KERNEL_COMP_1x8x2_4_X8_X4
 
                 "bnez         t5, LOOP_INNER%=        \n\t"
                 "vsetvli      t0, zero, e32, mf2      \n\t"
 
-                SQ4BIT_KERNEL_ACC_F16_1X4X4
+                SQ4_بټ_KERNEL_ACC_F16_1_X4_X4
                 "addi         s7, s1, 32              \n\t"
 
                 "bnez         %[CNT], LOOP_K%=        \n\t"
@@ -889,16 +889,16 @@ void SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
                 : [INNER] "r"(INNER), [A] "r"(QuantA), [B] "r"(QuantBDataPtr), [C] "r"(CPtr)
                 : "cc", "t0", "t5", "t3", "f1", "s1", "s2", "s3", "s4", "s5", "s6", "s7");
         }
-    } else {
-        for (size_t n = 0; n < CountN; n += 16) {
-            size_t    nblks         = (CountN - n) > 16 ? 16 : CountN - n;
+    } وإلا {
+        لكل (size_t n = 0; n < شمېر_N; n += 16) {
+            size_t    nblks         = (شمېر_N - n) > 16 ? 16 : شمېر_N - n;
             uint8_t * QuantBDataPtr = (uint8_t *) QuantBData +             //
-                                      n * BlockCountK * BlkLen / 2 +       // b data
-                                      n * BlockCountK * sizeof(_Float16);  // scale
-            float * CPtr = C + n;
-            size_t  cnt  = BlockCountK;
+                                      n * بلاک_شمېر_K * BlkLen / 2 +       // b data
+                                      n * بلاک_شمېر_K * حجم(_Float16);  // scale
+            عائم * CPtr = C + n;
+            size_t  cnt  = بلاک_شمېر_K;
 
-            __asm__ volatile(
+            __asm__ متطاير(
                 "vsetvli      t0, zero, e32, m4       \n\t"
                 "vxor.vv      v28, v28, v28           \n\t"
                 "addi         s1, %[B], 0             \n\t"
@@ -940,7 +940,7 @@ void SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
                 "vsetvli      t0, zero, e8, m1        \n\t"
                 "LOOP_INNER%=:                        \n\t"
 
-                SQ4BIT_KERNEL_LOAD_1x8x2_4X8X4
+                SQ4_بټ_KERNEL_بارول_1x8x2_4_X8_X4
 
                 "vadd.vi      v0, v0, -8              \n\t"
                 "vadd.vi      v1, v1, -8              \n\t"
@@ -951,12 +951,12 @@ void SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
                 "vadd.vi      v6, v6, -8              \n\t"
                 "vadd.vi      v7, v7, -8              \n\t"
 
-                SQ4BIT_KERNEL_COMP_1x8x2_4X8X4
+                SQ4_بټ_KERNEL_COMP_1x8x2_4_X8_X4
 
                 "bnez         t5, LOOP_INNER%=        \n\t"
                 "vsetvli      t0, zero, e32, mf2      \n\t"
 
-                SQ4BIT_KERNEL_ACC_F16_1X4X4
+                SQ4_بټ_KERNEL_ACC_F16_1_X4_X4
 
                 "bnez         %[CNT], LOOP_K%=        \n\t"
                 "addi         t3, zero, 16            \n\t"
@@ -1000,27 +1000,27 @@ void SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
 // directly onto vmadot's 4-lane row dimension, so the A side is identical to Q4_0.
 // B is block_q8_0x16 as in the M1 kernel: 32B of fp16 scales then 512B of interleaved
 // int8, loaded with 8 plain vle8 into v2..v9 (no nibble unpack).
-static void SQ8BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
-                                                       const uint8_t * QuantA,
-                                                       const uint8_t * QuantBData,
-                                                       float *         C,
-                                                       size_t          CountN,
-                                                       size_t          BlockCountK,
-                                                       const size_t    ldc) {
+ساكن فراغ SQ8_بټ_Gemm_M4_Kernel_Comp_Int8_Scale_Fp16_Impl(size_t          BlkLen,
+                                                       ثابت uint8_t * QuantA,
+                                                       ثابت uint8_t * QuantBData,
+                                                       عائم *         C,
+                                                       size_t          شمېر_N,
+                                                       size_t          بلاک_شمېر_K,
+                                                       ثابت size_t    ldc) {
     // Same invariant as the Q4_0 M4 kernel: SAVE_RESULT_4x16 stores a full 4x16 tile with no tail
     // handling. Q8_0 is only admitted to the IME1 path when ne[1] % 16 == 0 (ime.cpp),
     // and the n-tiling step is NB_COLS == 16, so a partial tile never reaches here.
-    GGML_ASSERT(CountN % 16 == 0);
+    GGML_ASSERT(شمېر_N % 16 == 0);
 
-    const size_t INNER = BlkLen / 16;
-    const size_t LDC   = ldc * sizeof(float);
+    ثابت size_t INNER = BlkLen / 16;
+    ثابت size_t LDC   = ldc * حجم(عائم);
 
-    for (size_t n = 0; n < CountN; n += 16) {
+    لكل (size_t n = 0; n < شمېر_N; n += 16) {
         uint8_t * QuantBDataPtr =
-            (uint8_t *) QuantBData + (n / 16) * BlockCountK * (16 * sizeof(_Float16) + 512);
-        float * CPtr = C + n;
+            (uint8_t *) QuantBData + (n / 16) * بلاک_شمېر_K * (16 * حجم(_Float16) + 512);
+        عائم * CPtr = C + n;
 
-        __asm__ volatile(
+        __asm__ متطاير(
             "vsetvli            t0, zero, e32, m8           \n\t"
             "vxor.vv            v24, v24, v24               \n\t"
             "addi               t3, %[BlockCountK], 0       \n\t"
@@ -1062,12 +1062,12 @@ static void SQ8BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
             "vle8.v             v11, (a1)                   \n\t"
             "addi               a1, a1, 32                  \n\t"
 
-            SQ4BIT_KERNEL_COMP_4x16x16
+            SQ4_بټ_KERNEL_COMP_4x16x16
 
             "addi               t2, t2, -1                  \n\t"
             "bnez               t2, BLOCK_INNER_LOOP%=      \n\t"
 
-            LOAD_SCALE_4x16_FP16
+            بارول_SCALE_4x16_FP16
 
             "vsetvli            t0, zero, e32, m8           \n\t"
             "vfcvt.f.x.v        v16, v16                    \n\t"
@@ -1077,11 +1077,11 @@ static void SQ8BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
 
             "RESULT_SAVE%=:                                 \n\t"
 
-            SAVE_RESULT_4x16
+            SAVE_پایله_4x16
 
             :
             : [INNER] "r"(INNER), [A] "r"(QuantA), [B] "r"(QuantBDataPtr), [LDC] "r"(LDC),
-              [BlockCountK] "r"(BlockCountK), [C] "r"(CPtr)
+              [بلاک_شمېر_K] "r"(بلاک_شمېر_K), [C] "r"(CPtr)
             : "cc", "t0", "t1", "t2", "t3", "a1", "a2", "a3", "a4", "f1", "f2", "f3", "f4",
               "s1", "s2", "s3", "s4", "s5", "s6");
     }
@@ -1092,24 +1092,24 @@ static void SQ8BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
 // int8 weights laid out as [INNER0: reg0..reg7][INNER1: reg0..reg7], each reg 32B = 4 columns x
 // (even=K-first-half / odd=K-second-half). A comes from quantize_a_row_i8 (same as Q4_0 path).
 // Reuses the vmadot COMP macro and the ACC_F16 dequant tail from the Q4_0 kernel.
-static void SQ8BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
-                                                       const uint8_t * QuantA,
-                                                       const uint8_t * QuantBData,
-                                                       float *         C,
-                                                       size_t          CountN,
-                                                       size_t          BlockCountK,
-                                                       const size_t    ldc) {
-    GGML_UNUSED(ldc);
-    const size_t INNER = BlkLen / 16;  // = 2 for QK8_0=32
+ساكن فراغ SQ8_بټ_Gemm_M1_Kernel_Comp_Int8_Scale_Fp16_Impl(size_t          BlkLen,
+                                                       ثابت uint8_t * QuantA,
+                                                       ثابت uint8_t * QuantBData,
+                                                       عائم *         C,
+                                                       size_t          شمېر_N,
+                                                       size_t          بلاک_شمېر_K,
+                                                       ثابت size_t    ldc) {
+    GGML_ناکارول_شوی(ldc);
+    ثابت size_t INNER = BlkLen / 16;  // = 2 for QK8_0=32
 
-    for (size_t n = 0; n < CountN; n += 16) {
-        size_t    nblks = (CountN - n) > 16 ? 16 : CountN - n;
+    لكل (size_t n = 0; n < شمېر_N; n += 16) {
+        size_t    nblks = (شمېر_N - n) > 16 ? 16 : شمېر_N - n;
         // Each x16 K-block is {16 fp16 scales (32B), 512B interleaved int8}; stride = 544B.
-        uint8_t * QuantBDataPtr = (uint8_t *) QuantBData + (n / 16) * BlockCountK * (16 * sizeof(_Float16) + 512);
-        float *   CPtr = C + n;
-        size_t    cnt  = BlockCountK;
+        uint8_t * QuantBDataPtr = (uint8_t *) QuantBData + (n / 16) * بلاک_شمېر_K * (16 * حجم(_Float16) + 512);
+        عائم *   CPtr = C + n;
+        size_t    cnt  = بلاک_شمېر_K;
 
-        __asm__ volatile(
+        __asm__ متطاير(
             "vsetvli      t0, zero, e32, m4       \n\t"
             "vxor.vv      v28, v28, v28           \n\t"
             // s7 = per-K-block base (scale@+0, data@+32, block stride 544)
@@ -1174,10 +1174,10 @@ static void SQ8BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
             "addi         s6, s6, 16              \n\t"
             "addi         t5, t5, -1              \n\t"
             "vsetvli      t0, zero, e8, m1        \n\t"
-            SQ4BIT_KERNEL_COMP_1x8x2_4X8X4
+            SQ4_بټ_KERNEL_COMP_1x8x2_4_X8_X4
             "bnez         t5, LOOP_INNER%=        \n\t"
             "vsetvli      t0, zero, e32, mf2      \n\t"
-            SQ4BIT_KERNEL_ACC_F16_1X4X4
+            SQ4_بټ_KERNEL_ACC_F16_1_X4_X4
             "bnez         %[CNT], LOOP_K%=        \n\t"
             "addi         t3, zero, 16            \n\t"
             "addi         s1, %[C], 16            \n\t"
@@ -1211,54 +1211,54 @@ static void SQ8BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
 
 }  // namespace
 
-namespace ime1 {
+نطاق ime1 {
 size_t gemm_kernel_i8i4(size_t          blk_len,
-                        const uint8_t * quant_a_ptr,
-                        const uint8_t * quant_b_data,
-                        const uint8_t * quant_b_zp,
-                        float *         c_ptr,
-                        size_t          count_m,
-                        size_t          count_n,
+                        ثابت uint8_t * quant_a_ptr,
+                        ثابت uint8_t * quant_b_معلومات,
+                        ثابت uint8_t * quant_b_zp,
+                        عائم *         c_ptr,
+                        size_t          شمېر_m,
+                        size_t          شمېر_n,
                         size_t          k_blks,
                         size_t          ldc) {
-    if (count_m >= 4) {
-        if (quant_b_zp != nullptr) {
-            SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl<true>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n, k_blks,
+    إذا (شمېر_m >= 4) {
+        إذا (quant_b_zp != تش_اشاره) {
+            SQ4_بټ_Gemm_M4_Kernel_Comp_Int8_Scale_Fp16_Impl<ریښتیا>(blk_len, quant_a_ptr, quant_b_معلومات, c_ptr, شمېر_n, k_blks,
                                                              ldc);
-        } else {
-            SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl<false>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n,
+        } وإلا {
+            SQ4_بټ_Gemm_M4_Kernel_Comp_Int8_Scale_Fp16_Impl<خطأ>(blk_len, quant_a_ptr, quant_b_معلومات, c_ptr, شمېر_n,
                                                               k_blks, ldc);
         }
-        return 4;
-    } else {
-        if (quant_b_zp != nullptr) {
-            SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl<true>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n, k_blks,
+        أرجع 4;
+    } وإلا {
+        إذا (quant_b_zp != تش_اشاره) {
+            SQ4_بټ_Gemm_M1_Kernel_Comp_Int8_Scale_Fp16_Impl<ریښتیا>(blk_len, quant_a_ptr, quant_b_معلومات, c_ptr, شمېر_n, k_blks,
                                                              ldc);
-        } else {
-            SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl<false>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n,
+        } وإلا {
+            SQ4_بټ_Gemm_M1_Kernel_Comp_Int8_Scale_Fp16_Impl<خطأ>(blk_len, quant_a_ptr, quant_b_معلومات, c_ptr, شمېر_n,
                                                               k_blks, ldc);
         }
-        return 1;
+        أرجع 1;
     }
 }
 
 size_t gemm_kernel_i8i8(size_t          blk_len,
-                        const uint8_t * quant_a_ptr,
-                        const uint8_t * quant_b_data,
-                        const uint8_t * quant_b_zp,
-                        float *         c_ptr,
-                        size_t          count_m,
-                        size_t          count_n,
+                        ثابت uint8_t * quant_a_ptr,
+                        ثابت uint8_t * quant_b_معلومات,
+                        ثابت uint8_t * quant_b_zp,
+                        عائم *         c_ptr,
+                        size_t          شمېر_m,
+                        size_t          شمېر_n,
                         size_t          k_blks,
                         size_t          ldc) {
-    GGML_UNUSED(quant_b_zp);
-    if (count_m >= 4) {
-        SQ8BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n, k_blks,
+    GGML_ناکارول_شوی(quant_b_zp);
+    إذا (شمېر_m >= 4) {
+        SQ8_بټ_Gemm_M4_Kernel_Comp_Int8_Scale_Fp16_Impl(blk_len, quant_a_ptr, quant_b_معلومات, c_ptr, شمېر_n, k_blks,
                                                    ldc);
-        return 4;
+        أرجع 4;
     }
-    SQ8BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n, k_blks, ldc);
-    return 1;
+    SQ8_بټ_Gemm_M1_Kernel_Comp_Int8_Scale_Fp16_Impl(blk_len, quant_a_ptr, quant_b_معلومات, c_ptr, شمېر_n, k_blks, ldc);
+    أرجع 1;
 }
 }  // namespace ime1
 }  // namespace spacemit_kernels

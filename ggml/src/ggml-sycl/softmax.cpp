@@ -1,22 +1,22 @@
-#include "softmax.hpp"
-#include <cstdint>
-#include <utility>
-#include <cmath>
+#ضمن "softmax.hpp"
+#ضمن <cstdint>
+#ضمن <utility>
+#ضمن <cmath>
 
 
-template <typename T> static __dpct_inline__ float t2f32(T val) {
-    return (float) val;
+کينډۍ <ډول_نوم T> ساكن __dpct_inline__ عائم t2f32(T val) {
+    أرجع (عائم) val;
 }
 
-template <> float __dpct_inline__ t2f32<sycl::half>(sycl::half val) {
-  return sycl::vec<sycl::half, 1>(val)
-      .convert<float, sycl::rounding_mode::automatic>()[0];
+کينډۍ <> عائم __dpct_inline__ t2f32<sycl::half>(sycl::half val) {
+  أرجع sycl::vec<sycl::half, 1>(val)
+      .convert<عائم, sycl::rounding_ډېرپېښ::automatic>()[0];
 }
 
-struct soft_max_params {
+بنية soft_max_params {
 
     int64_t nheads;
-    uint32_t n_head_log2;
+    uint32_t n_سر_log2;
     int64_t ncols;
     int64_t nrows_x;
     int64_t nrows_y;
@@ -30,211 +30,211 @@ struct soft_max_params {
 
     int64_t ne12;
     int64_t ne13;
-    float scale;
-    float max_bias;
-    float m0;
-    float m1;
+    عائم scale;
+    عائم max_bias;
+    عائم m0;
+    عائم m1;
 };
 
 // When ncols_template == 0 the bounds for the loops in this function are not known and can't be unrolled.
 // As we want to keep pragma unroll for all other cases we suppress the clang transformation warning here.
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpass-failed"
-#endif // __clang__
-template <bool use_shared, int ncols_template, int block_size_template, typename T>
-static void soft_max_f32(const float *         x,
-                         const T *             mask,
-                         const float *         sinks,
-                         float *               dst,
-                         const soft_max_params p,
+#که_تعریف_شوی __clang__
+#لارښوونه clang diagnostic ټېل
+#لارښوونه clang diagnostic ignored "-Wpass-failed"
+#د_که_پای // __clang__
+کينډۍ <منطقي use_shared, صحيح ncols_template, صحيح بلاک_اندازه_template, ډول_نوم T>
+ساكن فراغ soft_max_f32(ثابت عائم *         x,
+                         ثابت T *             ماسک,
+                         ثابت عائم *         sinks,
+                         عائم *               dst,
+                         ثابت soft_max_params p,
                          uint8_t *             dpct_local) {
-    auto      item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const int ncols    = ncols_template == 0 ? p.ncols : ncols_template;
-    const int block_size = block_size_template == 0
-                               ? item_ct1.get_local_range(2)
-                               : block_size_template;
-    const int nthreads = block_size;
-    const int nwarps = nthreads / WARP_SIZE;
-    const size_t nreduce = nwarps / WARP_SIZE;
+    خپلکاری      توکی_ct1 = sycl::ext::oneapi::this_work_توکی::get_nd_توکی<3>();
+    ثابت صحيح ncols    = ncols_template == 0 ? p.ncols : ncols_template;
+    ثابت صحيح بلاک_اندازه_3 = بلاک_اندازه_template == 0
+                               ? توکی_ct1.get_local_range(2)
+                               : بلاک_اندازه_template;
+    ثابت صحيح nthreads = بلاک_اندازه_3;
+    ثابت صحيح nwarps = nthreads / WARP_اندازه;
+    ثابت size_t nreduce = nwarps / WARP_اندازه;
 
-    const int tid = item_ct1.get_local_id(2);
+    ثابت صحيح tid = توکی_ct1.get_local_id(2);
 
-    const int64_t i03 = item_ct1.get_group(0);
-    const int64_t i02 = item_ct1.get_group(1);
-    const int64_t i01 = item_ct1.get_group(2);
+    ثابت int64_t i03 = توکی_ct1.get_ډله(0);
+    ثابت int64_t i02 = توکی_ct1.get_ډله(1);
+    ثابت int64_t i01 = توکی_ct1.get_ډله(2);
 
     //TODO: noncontigous inputs/outputs
-    const int rowx = item_ct1.get_group(2) +
-                     item_ct1.get_group(1) * item_ct1.get_group_range(2) +
-                     item_ct1.get_group(0) * item_ct1.get_group_range(2) *
-                         item_ct1.get_group_range(1);
+    ثابت صحيح rowx = توکی_ct1.get_ډله(2) +
+                     توکی_ct1.get_ډله(1) * توکی_ct1.get_ډله_range(2) +
+                     توکی_ct1.get_ډله(0) * توکی_ct1.get_ډله_range(2) *
+                         توکی_ct1.get_ډله_range(1);
 
-    const int64_t i11 = i01;
-    const int64_t i12 = i02 % p.ne12;
-    const int64_t i13 = i03 % p.ne13;
+    ثابت int64_t i11 = i01;
+    ثابت int64_t i12 = i02 % p.ne12;
+    ثابت int64_t i13 = i03 % p.ne13;
 
     x    += int64_t(rowx)*ncols;
-    mask += (i11*p.nb11 + i12*p.nb12 + i13*p.nb13) / sizeof(T) * (mask != nullptr);
+    ماسک += (i11*p.nb11 + i12*p.nb12 + i13*p.nb13) / حجم(T) * (ماسک != تش_اشاره);
     dst  += int64_t(rowx)*ncols;
 
-    const int warp_id = item_ct1.get_local_id(2) / WARP_SIZE;
-    const int lane_id = item_ct1.get_local_id(2) % WARP_SIZE;
+    ثابت صحيح warp_id = توکی_ct1.get_local_id(2) / WARP_اندازه;
+    ثابت صحيح lane_id = توکی_ct1.get_local_id(2) % WARP_اندازه;
 
-    const float slope = get_alibi_slope(p.max_bias, i02, p.n_head_log2, p.m0, p.m1);
+    ثابت عائم میلان = get_alibi_میلان(p.max_bias, i02, p.n_سر_log2, p.m0, p.m1);
 
-    float * buf_iw = (float *) dpct_local;
+    عائم * buf_iw = (عائم *) dpct_local;
 
     // shared memory buffer to cache values between iterations:
-    float *vals = use_shared ? buf_iw + sycl::max(nwarps, WARP_SIZE) : dst;
-    float max_val = sinks ? sinks[i02] : -INFINITY;
-#pragma unroll
-    for (int col0 = 0; col0 < ncols; col0 += block_size) {
-        const int col = col0 + tid;
+    عائم *vals = use_shared ? buf_iw + sycl::max(nwarps, WARP_اندازه) : dst;
+    عائم max_val = sinks ? sinks[i02] : -INFINITY;
+#لارښوونه unroll
+    لكل (صحيح col0 = 0; col0 < ncols; col0 += بلاک_اندازه_3) {
+        ثابت صحيح ستون = col0 + tid;
 
-        if (ncols_template == 0 && col >= ncols) {
-            break;
+        إذا (ncols_template == 0 && ستون >= ncols) {
+            اكسر;
         }
 
-        const float val = x[col]*p.scale + (mask ? slope*t2f32(mask[col]) : 0.0f);
+        ثابت عائم val = x[ستون]*p.scale + (ماسک ? میلان*t2f32(ماسک[ستون]) : 0.0f);
 
-        vals[col] = val;
+        vals[ستون] = val;
         max_val   = sycl::max(max_val, val);
     }
     // find the max value in the block
-    max_val = warp_reduce_max<WARP_SIZE>(max_val);
+    max_val = warp_reduce_max<WARP_اندازه>(max_val);
 
-    if (block_size > WARP_SIZE) {
-        if (lane_id == 0) {
+    إذا (بلاک_اندازه_3 > WARP_اندازه) {
+        إذا (lane_id == 0) {
             buf_iw[warp_id] = max_val;
         }
-        item_ct1.barrier();
+        توکی_ct1.barrier();
 
         max_val = -INFINITY;
-        for (int i = lane_id; i < nwarps; i += WARP_SIZE) {
+        لكل (صحيح i = lane_id; i < nwarps; i += WARP_اندازه) {
             max_val = sycl::max(max_val, buf_iw[i]);
         }
-        max_val = warp_reduce_max<WARP_SIZE>(max_val);
+        max_val = warp_reduce_max<WARP_اندازه>(max_val);
     }
-    float tmp = 0.0f; // partial sum
+    عائم tmp = 0.0f; // partial sum
 
-#pragma unroll
-    for (int col0 = 0; col0 < ncols; col0 += block_size) {
-        const int col = col0 + tid;
+#لارښوونه unroll
+    لكل (صحيح col0 = 0; col0 < ncols; col0 += بلاک_اندازه_3) {
+        ثابت صحيح ستون = col0 + tid;
 
-        if (ncols_template == 0 && col >= ncols) {
-            break;
+        إذا (ncols_template == 0 && ستون >= ncols) {
+            اكسر;
         }
 
-        const float val = sycl::native::exp(sycl::max(vals[col] - max_val, -80.0f));
+        ثابت عائم val = sycl::native::توانیز_تابع(sycl::max(vals[ستون] - max_val, -80.0f));
         tmp += val;
-        vals[col] = val;
+        vals[ستون] = val;
     }
     // find the sum of exps in the block
-    tmp = warp_reduce_sum<WARP_SIZE>(tmp);
-    if (block_size > WARP_SIZE) {
-        item_ct1.barrier();
-        if (warp_id == 0) {
+    tmp = warp_reduce_مجموعه<WARP_اندازه>(tmp);
+    إذا (بلاک_اندازه_3 > WARP_اندازه) {
+        توکی_ct1.barrier();
+        إذا (warp_id == 0) {
             buf_iw[lane_id] = 0.0f;
-            for (size_t i = 1; i < nreduce; i += 1) {
-                buf_iw[lane_id + i * WARP_SIZE] = 0.f;
+            لكل (size_t i = 1; i < nreduce; i += 1) {
+                buf_iw[lane_id + i * WARP_اندازه] = 0.f;
             }
         }
-        item_ct1.barrier();
+        توکی_ct1.barrier();
 
-        if (lane_id == 0) {
+        إذا (lane_id == 0) {
             buf_iw[warp_id] = tmp;
         }
-        item_ct1.barrier();
+        توکی_ct1.barrier();
 
         tmp = buf_iw[lane_id];
-        for (size_t i = 1; i < nreduce; i += 1) {
-            tmp += buf_iw[lane_id + i * WARP_SIZE];
+        لكل (size_t i = 1; i < nreduce; i += 1) {
+            tmp += buf_iw[lane_id + i * WARP_اندازه];
         }
-        tmp = warp_reduce_sum<WARP_SIZE>(tmp);
+        tmp = warp_reduce_مجموعه<WARP_اندازه>(tmp);
     }
-    if (sinks) {
-        tmp += sycl::native::exp(sycl::max(sinks[i02] - max_val, -80.0f));
+    إذا (sinks) {
+        tmp += sycl::native::توانیز_تابع(sycl::max(sinks[i02] - max_val, -80.0f));
     }
-    const float inv_sum = 1.0f / tmp;
+    ثابت عائم inv_مجموعه = 1.0f / tmp;
 
-#pragma unroll
-    for (int col0 = 0; col0 < ncols; col0 += block_size) {
-        const int col = col0 + tid;
+#لارښوونه unroll
+    لكل (صحيح col0 = 0; col0 < ncols; col0 += بلاک_اندازه_3) {
+        ثابت صحيح ستون = col0 + tid;
 
-        if (ncols_template == 0 && col >= ncols) {
-            return;
+        إذا (ncols_template == 0 && ستون >= ncols) {
+            أرجع;
         }
 
-        dst[col] = vals[col] * inv_sum;
+        dst[ستون] = vals[ستون] * inv_مجموعه;
     }
 }
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif // __clang__
+#که_تعریف_شوی __clang__
+#لارښوونه clang diagnostic راوباسه
+#د_که_پای // __clang__
 
-static void soft_max_back_f32(const float *grad, const float *dstf, float *dst,
-                              const int ncols, const float scale) {
-    auto      item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const int tid      = item_ct1.get_local_id(2);
-    const int rowx     = item_ct1.get_group(2);
+ساكن فراغ soft_max_شا_f32(ثابت عائم *grad, ثابت عائم *dstf, عائم *dst,
+                              ثابت صحيح ncols, ثابت عائم scale) {
+    خپلکاری      توکی_ct1 = sycl::ext::oneapi::this_work_توکی::get_nd_توکی<3>();
+    ثابت صحيح tid      = توکی_ct1.get_local_id(2);
+    ثابت صحيح rowx     = توکی_ct1.get_ډله(2);
 
     grad += int64_t(rowx)*ncols;
     dstf += int64_t(rowx)*ncols;
     dst  += int64_t(rowx)*ncols;
 
-    float dgf_dot = 0.0f; // dot product of dst from forward pass and gradients
+    عائم dgf_dot = 0.0f; // dot product of dst from forward pass and gradients
 
-    for (int col = tid; col < ncols; col += WARP_SIZE) {
-        dgf_dot += dstf[col]*grad[col];
+    لكل (صحيح ستون = tid; ستون < ncols; ستون += WARP_اندازه) {
+        dgf_dot += dstf[ستون]*grad[ستون];
     }
 
-    dgf_dot = warp_reduce_sum<WARP_SIZE>(dgf_dot);
+    dgf_dot = warp_reduce_مجموعه<WARP_اندازه>(dgf_dot);
 
-    for (int col = tid; col < ncols; col += WARP_SIZE) {
-        dst[col] = scale * (grad[col] - dgf_dot) * dstf[col];
+    لكل (صحيح ستون = tid; ستون < ncols; ستون += WARP_اندازه) {
+        dst[ستون] = scale * (grad[ستون] - dgf_dot) * dstf[ستون];
     }
 }
 
-template <int... Ns, typename T>
-static void launch_soft_max_kernels(const float *           x,
-                                    const T *               mask,
-                                    const float *           sinks,
-                                    float *                 dst,
-                                    const soft_max_params & p,
-                                    dpct::queue_ptr         stream,
-                                    dpct::dim3              block_dims,
-                                    dpct::dim3              block_nums,
+کينډۍ <صحيح... Ns, ډول_نوم T>
+ساكن فراغ launch_soft_max_kernels(ثابت عائم *           x,
+                                    ثابت T *               ماسک,
+                                    ثابت عائم *           sinks,
+                                    عائم *                 dst,
+                                    ثابت soft_max_params & p,
+                                    dpct::کتار_ptr         stream,
+                                    dpct::dim3              بلاک_dims,
+                                    dpct::dim3              بلاک_nums,
                                     size_t                  nbytes_shared)
 {
-    auto launch_kernel = [=](auto I) -> bool {
-        constexpr int ncols = decltype(I)::value;
-        constexpr int block = (ncols > 1024 ? 1024 : ncols);
-        if (p.ncols == ncols) {
+    خپلکاری launch_kernel = [=](خپلکاری I) -> منطقي {
+        constexpr صحيح ncols = decltype(I)::value;
+        constexpr صحيح بلاک = (ncols > 1024 ? 1024 : ncols);
+        إذا (p.ncols == ncols) {
             stream->submit([&](sycl::handler &cgh) {
                 sycl::local_accessor<uint8_t, 1> dpct_local_acc_ct1(
                     sycl::range<1>(nbytes_shared), cgh);
 
                 cgh.parallel_for(
-                    sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                    [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(
-                        WARP_SIZE)]] {
-                        soft_max_f32<true, ncols, block>(
-                            x, mask, sinks, dst, p,
+                    sycl::nd_range<3>(بلاک_nums * بلاک_dims, بلاک_dims),
+                    [=](sycl::nd_توکی<3> توکی_ct1) [[sycl::reqd_sub_ډله_اندازه(
+                        WARP_اندازه)]] {
+                        soft_max_f32<ریښتیا, ncols, بلاک>(
+                            x, ماسک, sinks, dst, p,
                             dpct_local_acc_ct1
                                 .get_multi_ptr<sycl::access::decorated::no>()
                                 .get());
-                        GGML_UNUSED(item_ct1);
+                        GGML_ناکارول_شوی(توکی_ct1);
                     });
             });
-            return true;
+            أرجع ریښتیا;
         }
-        return false;
+        أرجع خطأ;
     };
 
     // unary fold over launch_kernel
-    if ((launch_kernel(std::integral_constant<int, Ns>{}) || ...)) {
-        return;
+    إذا ((launch_kernel(std::integral_constant<صحيح, Ns>{}) || ...)) {
+        أرجع;
     }
 
     stream->submit([&](sycl::handler &cgh) {
@@ -242,95 +242,95 @@ static void launch_soft_max_kernels(const float *           x,
             sycl::range<1>(nbytes_shared), cgh);
 
         cgh.parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    soft_max_f32<true, 0, 0>(
-                        x, mask, sinks, dst, p,
+            sycl::nd_range<3>(بلاک_nums * بلاک_dims, بلاک_dims),
+            [=](sycl::nd_توکی<3> توکی_ct1)
+                [[sycl::reqd_sub_ډله_اندازه(WARP_اندازه)]] {
+                    soft_max_f32<ریښتیا, 0, 0>(
+                        x, ماسک, sinks, dst, p,
                         dpct_local_acc_ct1
                             .get_multi_ptr<sycl::access::decorated::no>()
                             .get());
-                    GGML_UNUSED(item_ct1);
+                    GGML_ناکارول_شوی(توکی_ct1);
                 });
     });
 }
 
-template <typename T>
-static void soft_max_f32_sycl(const float *x, const T *mask,
-                              const float *sinks, float *dst,
-                              const soft_max_params &params,
-                              dpct::queue_ptr stream, int device) {
-    int nth = WARP_SIZE;
-    int max_block_size = ggml_sycl_info().max_work_group_sizes[device];
-    const int64_t ncols_x = params.ncols;
+کينډۍ <ډول_نوم T>
+ساكن فراغ soft_max_f32_sycl(ثابت عائم *x, ثابت T *ماسک,
+                              ثابت عائم *sinks, عائم *dst,
+                              ثابت soft_max_params &params,
+                              dpct::کتار_ptr stream, صحيح device) {
+    صحيح nth = WARP_اندازه;
+    صحيح max_بلاک_اندازه = ggml_sycl_info().max_work_ډله_sizes[device];
+    ثابت int64_t ncols_x = params.ncols;
 
-    while (nth < ncols_x && nth < max_block_size) nth *= 2;
-    if (nth>max_block_size) nth = max_block_size;
+    طالما (nth < ncols_x && nth < max_بلاک_اندازه) nth *= 2;
+    إذا (nth>max_بلاک_اندازه) nth = max_بلاک_اندازه;
 
-    const dpct::dim3 block_dims(nth, 1, 1);
-    const dpct::dim3 block_nums(params.ne01, params.ne02, params.ne03);
-    const size_t nbytes_shared =
-        (GGML_PAD(ncols_x, WARP_SIZE) + WARP_SIZE) * sizeof(float);
+    ثابت dpct::dim3 بلاک_dims(nth, 1, 1);
+    ثابت dpct::dim3 بلاک_nums(params.ne01, params.ne02, params.ne03);
+    ثابت size_t nbytes_shared =
+        (GGML_PAD(ncols_x, WARP_اندازه) + WARP_اندازه) * حجم(عائم);
 
-    const int id       = get_current_device_id();
-    const size_t smpbo = ggml_sycl_info().devices[id].smpbo;
+    ثابت صحيح id       = get_current_device_id();
+    ثابت size_t smpbo = ggml_sycl_info().devices[id].smpbo;
 
-    if (nbytes_shared <= smpbo && ncols_x <= max_block_size) {
+    إذا (nbytes_shared <= smpbo && ncols_x <= max_بلاک_اندازه) {
         launch_soft_max_kernels<32, 64, 128, 256, 512, 1024, 2048, 4096>(
-            x, mask, sinks, dst, params, stream, block_dims, block_nums,
+            x, ماسک, sinks, dst, params, stream, بلاک_dims, بلاک_nums,
             nbytes_shared);
-    } else {
-        const size_t nbytes_shared_low = WARP_SIZE * sizeof(float);
+    } وإلا {
+        ثابت size_t nbytes_shared_ټیټ = WARP_اندازه * حجم(عائم);
 
         stream->submit([&](sycl::handler &cgh) {
             sycl::local_accessor<uint8_t, 1> dpct_local_acc_ct1(
-                sycl::range<1>(nbytes_shared_low), cgh);
+                sycl::range<1>(nbytes_shared_ټیټ), cgh);
 
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                    [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    soft_max_f32<false, 0, 0>(
-                        x, mask, sinks, dst, params,
+                sycl::nd_range<3>(بلاک_nums * بلاک_dims, بلاک_dims),
+                [=](sycl::nd_توکی<3> توکی_ct1)
+                    [[sycl::reqd_sub_ډله_اندازه(WARP_اندازه)]] {
+                    soft_max_f32<خطأ, 0, 0>(
+                        x, ماسک, sinks, dst, params,
                         dpct_local_acc_ct1
                             .get_multi_ptr<sycl::access::decorated::no>()
                             .get());
-                    GGML_UNUSED(item_ct1);
+                    GGML_ناکارول_شوی(توکی_ct1);
                 });
         });
     }
 }
 
-static void soft_max_back_f32_sycl(const float *   grad,
-                                   const float *   dstf,
-                                   float *         dst,
-                                   const int       ncols,
-                                   const int       nrows,
-                                   const float     scale,
-                                   dpct::queue_ptr stream) {
-    const dpct::dim3 block_dims(WARP_SIZE, 1, 1);
-    const dpct::dim3 block_nums(nrows, 1, 1);
+ساكن فراغ soft_max_شا_f32_sycl(ثابت عائم *   grad,
+                                   ثابت عائم *   dstf,
+                                   عائم *         dst,
+                                   ثابت صحيح       ncols,
+                                   ثابت صحيح       nrows,
+                                   ثابت عائم     scale,
+                                   dpct::کتار_ptr stream) {
+    ثابت dpct::dim3 بلاک_dims(WARP_اندازه, 1, 1);
+    ثابت dpct::dim3 بلاک_nums(nrows, 1, 1);
 
-    stream->parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                         [=](sycl::nd_item<3> item_ct1) {
-                             soft_max_back_f32(grad, dstf, dst, ncols, scale);
-                             GGML_UNUSED(item_ct1);
+    stream->parallel_for(sycl::nd_range<3>(بلاک_nums * بلاک_dims, بلاک_dims),
+                         [=](sycl::nd_توکی<3> توکی_ct1) {
+                             soft_max_شا_f32(grad, dstf, dst, ncols, scale);
+                             GGML_ناکارول_شوی(توکی_ct1);
                          });
 }
 
-void ggml_sycl_op_soft_max(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+فراغ ggml_sycl_op_soft_max(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
-    const ggml_tensor * src2 = dst->src[2];
+    ثابت ggml_tensor * src0 = dst->src[0];
+    ثابت ggml_tensor * src1 = dst->src[1];
+    ثابت ggml_tensor * src2 = dst->src[2];
 
-    const float * src0_d = (const float *) src0->data;
-    const void  * src1_d = src1 ? (const void *) src1->data : nullptr;
-    const void  * src2_d = src2 ? (const void *) src2->data : nullptr;
-    float       *  dst_d = (float *) dst->data;
+    ثابت عائم * src0_d = (ثابت عائم *) src0->معلومات;
+    ثابت فراغ  * src1_d = src1 ? (ثابت فراغ *) src1->معلومات : تش_اشاره;
+    ثابت فراغ  * src2_d = src2 ? (ثابت فراغ *) src2->معلومات : تش_اشاره;
+    عائم       *  dst_d = (عائم *) dst->معلومات;
 
-    dpct::queue_ptr stream = ctx.stream();
+    dpct::کتار_ptr stream = ctx.stream();
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
@@ -338,36 +338,36 @@ void ggml_sycl_op_soft_max(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     // src1 contains mask and it is optional
     GGML_ASSERT(!src1 || src1->type == GGML_TYPE_F16 || src1->type == GGML_TYPE_F32);
 
-    const int64_t nrows_x = ggml_nrows(src0);
-    const int64_t nrows_y = src0->ne[1];
+    ثابت int64_t nrows_x = ggml_nrows(src0);
+    ثابت int64_t nrows_y = src0->ne[1];
 
-    const int64_t ne00 = src0->ne[0];
+    ثابت int64_t ne00 = src0->ne[0];
 
-    float scale    = 1.0f;
-    float max_bias = 0.0f;
+    عائم scale    = 1.0f;
+    عائم max_bias = 0.0f;
 
-    memcpy(&scale,    (const float *) dst->op_params + 0, sizeof(float));
-    memcpy(&max_bias, (const float *) dst->op_params + 1, sizeof(float));
+    حافظه_نقل(&scale,    (ثابت عائم *) dst->op_params + 0, حجم(عائم));
+    حافظه_نقل(&max_bias, (ثابت عائم *) dst->op_params + 1, حجم(عائم));
 
-    const bool use_f16 = (src1 && src1->type == GGML_TYPE_F16);
+    ثابت منطقي use_f16 = (src1 && src1->type == GGML_TYPE_F16);
 
-    const int64_t nb11 = src1 ? src1->nb[1] : 1;
-    const int64_t nb12 = src1 ? src1->nb[2] : 1;
-    const int64_t nb13 = src1 ? src1->nb[3] : 1;
+    ثابت int64_t nb11 = src1 ? src1->nb[1] : 1;
+    ثابت int64_t nb12 = src1 ? src1->nb[2] : 1;
+    ثابت int64_t nb13 = src1 ? src1->nb[3] : 1;
 
-    const int64_t ne12 = src1 ? src1->ne[2] : 1;
-    const int64_t ne13 = src1 ? src1->ne[3] : 1;
+    ثابت int64_t ne12 = src1 ? src1->ne[2] : 1;
+    ثابت int64_t ne13 = src1 ? src1->ne[3] : 1;
 
-    const uint32_t n_head      = src0->ne[2];
-    const uint32_t n_head_log2 = 1u << (uint32_t) floorf(log2f((float) n_head));
+    ثابت uint32_t n_سر      = src0->ne[2];
+    ثابت uint32_t n_سر_log2 = 1u << (uint32_t) floorf(log2f((عائم) n_سر));
 
-    const float m0 = powf(2.0f, -(max_bias       ) / n_head_log2);
-    const float m1 = powf(2.0f, -(max_bias / 2.0f) / n_head_log2);
+    ثابت عائم m0 = powf(2.0f, -(max_bias       ) / n_سر_log2);
+    ثابت عائم m1 = powf(2.0f, -(max_bias / 2.0f) / n_سر_log2);
 
 
     soft_max_params params = {};
     params.nheads = src0->ne[2];
-    params.n_head_log2 = n_head_log2;
+    params.n_سر_log2 = n_سر_log2;
     params.ncols = ne00;
     params.nrows_x = nrows_x;
     params.nrows_y = nrows_y;
@@ -385,41 +385,41 @@ void ggml_sycl_op_soft_max(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     params.m0 = m0;
     params.m1 = m1;
 
-    if (use_f16) {
-        soft_max_f32_sycl(src0_d, (const sycl::half *)src1_d,
-                          (const float *)src2_d, dst_d, params, stream,
+    إذا (use_f16) {
+        soft_max_f32_sycl(src0_d, (ثابت sycl::half *)src1_d,
+                          (ثابت عائم *)src2_d, dst_d, params, stream,
                           ctx.device);
-    } else {
-        soft_max_f32_sycl(src0_d, (const float *)src1_d, (const float *)src2_d,
+    } وإلا {
+        soft_max_f32_sycl(src0_d, (ثابت عائم *)src1_d, (ثابت عائم *)src2_d,
                           dst_d, params, stream, ctx.device);
     }
 }
 
-void ggml_sycl_op_soft_max_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+فراغ ggml_sycl_op_soft_max_شا(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
-    const ggml_tensor * src0 = dst->src[0]; // grad
-    const ggml_tensor * src1 = dst->src[1]; // forward pass output
+    ثابت ggml_tensor * src0 = dst->src[0]; // grad
+    ثابت ggml_tensor * src1 = dst->src[1]; // forward pass output
 
-    const float * src0_d = (const float *) src0->data;
-    const float * src1_d = (const float *) src1->data;
-    float       * dst_d  = (float       *) dst->data;
+    ثابت عائم * src0_d = (ثابت عائم *) src0->معلومات;
+    ثابت عائم * src1_d = (ثابت عائم *) src1->معلومات;
+    عائم       * dst_d  = (عائم       *) dst->معلومات;
 
-    dpct::queue_ptr stream = ctx.stream();
+    dpct::کتار_ptr stream = ctx.stream();
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
 
-    const int64_t ncols = src0->ne[0];
-    const int64_t nrows = ggml_nrows(src0);
+    ثابت int64_t ncols = src0->ne[0];
+    ثابت int64_t nrows = ggml_nrows(src0);
 
-    float scale    = 1.0f;
-    float max_bias = 0.0f;
+    عائم scale    = 1.0f;
+    عائم max_bias = 0.0f;
 
-    memcpy(&scale,    (const float *) dst->op_params + 0, sizeof(float));
-    memcpy(&max_bias, (const float *) dst->op_params + 1, sizeof(float));
+    حافظه_نقل(&scale,    (ثابت عائم *) dst->op_params + 0, حجم(عائم));
+    حافظه_نقل(&max_bias, (ثابت عائم *) dst->op_params + 1, حجم(عائم));
 
     GGML_ASSERT(max_bias == 0.0f);
 
-    soft_max_back_f32_sycl(src0_d, src1_d, dst_d, ncols, nrows, scale, stream);
+    soft_max_شا_f32_sycl(src0_d, src1_d, dst_d, ncols, nrows, scale, stream);
 }

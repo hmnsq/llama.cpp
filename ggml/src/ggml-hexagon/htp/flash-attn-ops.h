@@ -1,91 +1,91 @@
-#ifndef HTP_FLASH_ATTN_OPS_H
-#define HTP_FLASH_ATTN_OPS_H
+#که_نه_تعریف_شوی HTP_FLASH_ATTN_OPS_H
+#تعریف_کړه HTP_FLASH_ATTN_OPS_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
+#ضمن <stdint.h>
+#ضمن <stddef.h>
+#ضمن <stdbool.h>
 
-#include "hex-fastdiv.h"
-#include "hex-common.h"
-#include "htp-vtcm.h"
+#ضمن "hex-fastdiv.h"
+#ضمن "hex-common.h"
+#ضمن "htp-vtcm.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#که_تعریف_شوی __cplusplus
+خارجي "C" {
+#د_که_پای
 
 // Tile constants (mirrored from hmx-utils.h for use on host side if needed)
-#define HTP_FA_HMX_TILE_SIZE   2048
-#define HMX_FP16_TILE_SIZE     2048
-#define HMX_FP16_TILE_N_ROWS   32
-#define HMX_FP16_TILE_N_COLS   32
-#define HMX_FP16_TILE_N_ELMS   1024
+#تعریف_کړه HTP_FA_HMX_TILE_اندازه   2048
+#تعریف_کړه HMX_FP16_TILE_اندازه     2048
+#تعریف_کړه HMX_FP16_TILE_N_لیکې   32
+#تعریف_کړه HMX_FP16_TILE_N_ستون_شمېر   32
+#تعریف_کړه HMX_FP16_TILE_N_ELMS   1024
 
-#define HVX_FA_DMA_CACHE_SIZE  128
-#define HMX_FA_DMA_CACHE_SIZE  4
+#تعریف_کړه HVX_FA_DMA_CACHE_اندازه  128
+#تعریف_کړه HMX_FA_DMA_CACHE_اندازه  4
 
 
-#define HTP_FA_M_INITIAL_VAL  -10000.0f
+#تعریف_کړه HTP_FA_M_INITIAL_VAL  -10000.0f
 
-enum htp_fa_kernel_type {
+تعداد htp_fa_kernel_type {
     HTP_FA_KERNEL_UNSUPPORTED = 0,
     HTP_FA_KERNEL_HVX,
     HTP_FA_KERNEL_HMX
 };
 
-struct htp_fa_kernel_params {
+بنية htp_fa_kernel_params {
     uint8_t  kernel_type;        // enum htp_fa_kernel_type
-    uint8_t  head_split;         // 1 = partition by KV heads in multicore, 0 = token partition
+    uint8_t  سر_وېشل;         // 1 = partition by KV heads in multicore, 0 = token partition
     uint8_t  flags;              // reserved
-    uint8_t  n_threads;          // Number of threads to run
+    uint8_t  n_تارونه;          // Number of threads to run
 
     // Common parameters
     uint16_t Br;
     uint16_t Bc;
-    uint16_t n_kv_blocks;        // also HVX's n_blocks
+    uint16_t n_kv_بلاکونه;        // also HVX's n_blocks
     uint16_t G;                  // GQA factor (n_heads / n_kv_heads)
 
-    float    scale;
-    float    max_bias;
-    float    logit_softcap;
-    uint32_t vtcm_size;
+    عائم    scale;
+    عائم    max_bias;
+    عائم    logit_softcap;
+    uint32_t vtcm_اندازه;
 
     uint32_t qrows;
-    uint32_t qrows_per_thread;
-    uint32_t qrow_start;
-    float    m0;
-    float    m1;
-    uint32_t n_head_log2;
+    uint32_t qrows_فی_thread;
+    uint32_t qrow_پیل;
+    عائم    m0;
+    عائم    m1;
+    uint32_t n_سر_log2;
 
-    struct fastdiv_values src3_div2;
-    struct fastdiv_values src3_div3;
+    بنية fastdiv_ارزښتونه src3_div2;
+    بنية fastdiv_ارزښتونه src3_div3;
 
-    struct fastdiv_values broadcast_rk2;
-    struct fastdiv_values broadcast_rk3;
-    struct fastdiv_values broadcast_rv2;
-    struct fastdiv_values broadcast_rv3;
+    بنية fastdiv_ارزښتونه خپرونه_rk2;
+    بنية fastdiv_ارزښتونه خپرونه_rk3;
+    بنية fastdiv_ارزښتونه خپرونه_rv2;
+    بنية fastdiv_ارزښتونه خپرونه_rv3;
 
-    union {
-        struct {
+    اتحاد {
+        بنية {
             uint32_t g_br;
-            uint32_t row_buf_stride;
-            uint32_t mask_buf_row_stride;
-            int32_t  mask_broadcast;
+            uint32_t لیکه_buf_stride;
+            uint32_t ماسک_buf_لیکه_stride;
+            int32_t  ماسک_خپرونه;
             int32_t  pipeline;
-            struct fastdiv_values div_G;
+            بنية fastdiv_ارزښتونه div_G;
         } hmx;
-        struct {
-            uint32_t size_q_row_padded;
-            uint32_t size_k_row_padded;
-            uint32_t size_v_row_padded;
-            struct fastdiv_values src0_div21;
-            struct fastdiv_values src0_div1;
+        بنية {
+            uint32_t اندازه_q_لیکه_padded;
+            uint32_t اندازه_k_لیکه_padded;
+            uint32_t اندازه_v_لیکه_padded;
+            بنية fastdiv_ارزښتونه src0_div21;
+            بنية fastdiv_ارزښتونه src0_div1;
         } hvx;
     } u;
 };
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_fa_kernel_params) <= 128, "htp_fa_kernel_params is too large for kernel_params blob");
-#endif
+#إذا defined(__cplusplus)
+static_assert(حجم(بنية htp_fa_kernel_params) <= 128, "htp_fa_kernel_params is too large for kernel_params blob");
+#د_که_پای
 
 // VTCM region layout for the HMX flash-attention kernel.
 //
@@ -99,7 +99,7 @@ static_assert(sizeof(struct htp_fa_kernel_params) <= 128, "htp_fa_kernel_params 
 // header stays host-includable. The device casts (base + off_*) to the proper type.
 // An offset of 0 marks a region that is not allocated for this configuration (only
 // off_v_tiles[1], which exists only when pipelining); the device sets such pointers NULL.
-struct hmx_fa_vtcm_layout {
+بنية hmx_fa_vtcm_layout {
     // Byte offsets from vtcm_base for each region.
     size_t off_q_tiles;
     size_t off_q_dma;
@@ -116,144 +116,144 @@ struct hmx_fa_vtcm_layout {
     size_t off_l_vec;
     size_t off_s_rowmax;
     size_t off_p_rowsum;
-    size_t off_row_bufs;
+    size_t off_لیکه_bufs;
     size_t off_hmx_scales_id;
     size_t off_hmx_scales_qk;
-    size_t off_mask_buf;
+    size_t off_ماسک_buf;
     size_t off_slopes;
     size_t off_sinks;
 
     // Region byte sizes reused by the device at runtime (not just for allocation).
-    size_t q_tile_bytes;
-    size_t o_tile_bytes;
-    size_t k_tile_bytes;
-    size_t s_tile_bytes;       // S and P tiles (same size)
-    size_t d_tile_bytes;       // d_tiles[0..1] + d_inv_l, allocated back to back
-    size_t m_line_bytes;       // one mask row
-    size_t m_buf_slot_bytes;   // one dma_cache slot = align_up(Br * m_line_bytes, 4096)
-    size_t col_vec_bytes;
-    size_t sinks_bytes;
+    size_t q_tile_بایټونه;
+    size_t o_tile_بایټونه;
+    size_t k_tile_بایټونه;
+    size_t s_tile_بایټونه;       // S and P tiles (same size)
+    size_t d_tile_بایټونه;       // d_tiles[0..1] + d_inv_l, allocated back to back
+    size_t m_کرښه_بایټونه;       // one mask row
+    size_t m_buf_خونه_بایټونه;   // one dma_cache slot = align_up(Br * m_line_bytes, 4096)
+    size_t ستون_vec_بایټونه;
+    size_t sinks_بایټونه;
 
     // Derived strides.
-    size_t row_buf_stride;       // HVX vectors (128B) per row buffer
-    size_t mask_buf_row_stride;  // __fp16 elements per row in the mask buffer
+    size_t لیکه_buf_stride;       // HVX vectors (128B) per row buffer
+    size_t ماسک_buf_لیکه_stride;  // __fp16 elements per row in the mask buffer
 
     bool   pipeline;
-    size_t total_bytes;
+    size_t ټول_بایټونه;
 };
 
-#define FA_MAX_KV_BLOCKS 1024
+#تعریف_کړه FA_MAX_KV_بلاکونه 1024
 
 // Build the VTCM layout.
 
-static inline void hmx_fa_vtcm_layout_build(struct hmx_fa_vtcm_layout * L,
-                                            size_t gqa_factor, size_t DK, size_t DV,
-                                            size_t Br, size_t Bc, size_t n_threads,
+ساكن مضمن فراغ hmx_fa_vtcm_layout_build(بنية hmx_fa_vtcm_layout * L,
+                                            size_t gqa_ضریب, size_t DK, size_t DV,
+                                            size_t Br, size_t Bc, size_t n_تارونه,
                                             bool pipeline, bool is_q_fp32,
                                             bool has_sinks, size_t n_heads) {
-    const size_t g_br         = hex_align_up(gqa_factor * Br, HMX_FP16_TILE_N_ROWS);
-    const size_t q_tile_size  = hex_align_up(g_br * DK   * sizeof(__fp16), HTP_FA_HMX_TILE_SIZE);
-    const size_t o_tile_size  = hex_align_up(g_br * DV   * sizeof(__fp16), HTP_FA_HMX_TILE_SIZE);
-    const size_t k_tile_size  = hex_align_up(Bc   * DK   * sizeof(__fp16), HTP_FA_HMX_TILE_SIZE);
-    const size_t v_tile_size  = hex_align_up(Bc   * DV   * sizeof(__fp16), HTP_FA_HMX_TILE_SIZE);
-    const size_t s_tile_size  = hex_align_up(g_br * Bc   * sizeof(__fp16), HTP_FA_HMX_TILE_SIZE);
+    ثابت size_t g_br         = hex_align_پورته(gqa_ضریب * Br, HMX_FP16_TILE_N_لیکې);
+    ثابت size_t q_tile_اندازه  = hex_align_پورته(g_br * DK   * حجم(__fp16), HTP_FA_HMX_TILE_اندازه);
+    ثابت size_t o_tile_اندازه  = hex_align_پورته(g_br * DV   * حجم(__fp16), HTP_FA_HMX_TILE_اندازه);
+    ثابت size_t k_tile_اندازه  = hex_align_پورته(Bc   * DK   * حجم(__fp16), HTP_FA_HMX_TILE_اندازه);
+    ثابت size_t v_tile_اندازه  = hex_align_پورته(Bc   * DV   * حجم(__fp16), HTP_FA_HMX_TILE_اندازه);
+    ثابت size_t s_tile_اندازه  = hex_align_پورته(g_br * Bc   * حجم(__fp16), HTP_FA_HMX_TILE_اندازه);
 
     // The rescale matrices are diagonal: the HMX kernels only ever load the g_br/32
     // tiles that sit on the diagonal, so store just those, packed back to back with
     // a stride of one tile.  The old [g_br, g_br] square layout allocated g_br/32
     // times more than it used, which is also why a second D buffer was unaffordable.
-    const size_t d_tile_size = (g_br / HMX_FP16_TILE_N_ROWS) * HTP_FA_HMX_TILE_SIZE;
+    ثابت size_t d_tile_اندازه = (g_br / HMX_FP16_TILE_N_لیکې) * HTP_FA_HMX_TILE_اندازه;
 
-    const size_t q_dma_size   = hex_align_up(g_br * DK * (is_q_fp32 ? sizeof(float) : sizeof(__fp16)), 128);
-    const size_t k_dma_size   = hex_align_up(Bc * hex_round_up(DK * sizeof(__fp16), 128), 128);
-    const size_t v_dma_size   = hex_align_up(Bc * hex_round_up(DV * sizeof(__fp16), 128), 128);
-    const size_t col_vec_size = hex_align_up(g_br * sizeof(float),  256);
-    const size_t row_vec_size = hex_align_up(Bc   * sizeof(__fp16), 256);
-    const size_t m_line_size  = hex_align_up(Bc   * sizeof(__fp16), 128);
-    const size_t m_buf_slot   = hex_align_up(Br * m_line_size, 256);
-    const size_t m_buf_size   = m_buf_slot * HMX_FA_DMA_CACHE_SIZE;
-    const size_t slopes_size  = hex_align_up(g_br * sizeof(__fp16), 128);
-    const size_t sinks_size   = hex_round_up(n_heads * sizeof(float), 128);
+    ثابت size_t q_dma_اندازه   = hex_align_پورته(g_br * DK * (is_q_fp32 ? حجم(عائم) : حجم(__fp16)), 128);
+    ثابت size_t k_dma_اندازه   = hex_align_پورته(Bc * hex_پړاو_پورته(DK * حجم(__fp16), 128), 128);
+    ثابت size_t v_dma_اندازه   = hex_align_پورته(Bc * hex_پړاو_پورته(DV * حجم(__fp16), 128), 128);
+    ثابت size_t ستون_vec_اندازه = hex_align_پورته(g_br * حجم(عائم),  256);
+    ثابت size_t لیکه_vec_اندازه = hex_align_پورته(Bc   * حجم(__fp16), 256);
+    ثابت size_t m_کرښه_اندازه  = hex_align_پورته(Bc   * حجم(__fp16), 128);
+    ثابت size_t m_buf_خونه   = hex_align_پورته(Br * m_کرښه_اندازه, 256);
+    ثابت size_t m_buf_اندازه   = m_buf_خونه * HMX_FA_DMA_CACHE_اندازه;
+    ثابت size_t slopes_اندازه  = hex_align_پورته(g_br * حجم(__fp16), 128);
+    ثابت size_t sinks_اندازه   = hex_پړاو_پورته(n_heads * حجم(عائم), 128);
 
     size_t off = 0;
 
     // Group A (Part 1 - HMX Tiled buffers)
-    VTCM_LAYOUT_ALLOC(off, off_q_tiles,       q_tile_size);
-    VTCM_LAYOUT_ALLOC(off, off_o_tiles[0],    o_tile_size);
-    VTCM_LAYOUT_ALLOC(off, off_o_tiles[1],    o_tile_size);
-    VTCM_LAYOUT_ALLOC(off, off_d_tiles[0],    d_tile_size);
-    VTCM_LAYOUT_ALLOC_OPTIONAL(off, off_d_tiles[1], d_tile_size, pipeline);
-    VTCM_LAYOUT_ALLOC(off, off_d_inv_l,       d_tile_size);
+    VTCM_LAYOUT_ALLOC(off, off_q_tiles,       q_tile_اندازه);
+    VTCM_LAYOUT_ALLOC(off, off_o_tiles[0],    o_tile_اندازه);
+    VTCM_LAYOUT_ALLOC(off, off_o_tiles[1],    o_tile_اندازه);
+    VTCM_LAYOUT_ALLOC(off, off_d_tiles[0],    d_tile_اندازه);
+    VTCM_LAYOUT_ALLOC_OPTIONAL(off, off_d_tiles[1], d_tile_اندازه, pipeline);
+    VTCM_LAYOUT_ALLOC(off, off_d_inv_l,       d_tile_اندازه);
 
     // Group B & C share start offset (Group B tiles must be 2KB aligned)
-    size_t off_group_b_c = hex_align_up(off, HTP_FA_HMX_TILE_SIZE);
+    size_t off_ډله_b_c = hex_align_پورته(off, HTP_FA_HMX_TILE_اندازه);
 
     // Group B: Compute-only buffers
-    size_t off_group_b = off_group_b_c;
-    VTCM_LAYOUT_ALLOC(off_group_b, off_k_tiles[0],    k_tile_size);
-    VTCM_LAYOUT_ALLOC_OPTIONAL(off_group_b, off_k_tiles[1], k_tile_size, pipeline);
-    VTCM_LAYOUT_ALLOC(off_group_b, off_v_tiles[0],    v_tile_size);
-    VTCM_LAYOUT_ALLOC_OPTIONAL(off_group_b, off_v_tiles[1], v_tile_size, pipeline);
-    VTCM_LAYOUT_ALLOC(off_group_b, off_s_tiles[0],    s_tile_size);
-    VTCM_LAYOUT_ALLOC_OPTIONAL(off_group_b, off_s_tiles[1], s_tile_size, pipeline);
-    VTCM_LAYOUT_ALLOC(off_group_b, off_p_tiles[0],    s_tile_size);
-    VTCM_LAYOUT_ALLOC_OPTIONAL(off_group_b, off_p_tiles[1], s_tile_size, pipeline);
-    VTCM_LAYOUT_ALLOC(off_group_b, off_s_rowmax,      col_vec_size);
-    VTCM_LAYOUT_ALLOC(off_group_b, off_p_rowsum,      col_vec_size);
-    VTCM_LAYOUT_ALLOC(off_group_b, off_row_bufs,      row_vec_size * 2 * n_threads);
+    size_t off_ډله_b = off_ډله_b_c;
+    VTCM_LAYOUT_ALLOC(off_ډله_b, off_k_tiles[0],    k_tile_اندازه);
+    VTCM_LAYOUT_ALLOC_OPTIONAL(off_ډله_b, off_k_tiles[1], k_tile_اندازه, pipeline);
+    VTCM_LAYOUT_ALLOC(off_ډله_b, off_v_tiles[0],    v_tile_اندازه);
+    VTCM_LAYOUT_ALLOC_OPTIONAL(off_ډله_b, off_v_tiles[1], v_tile_اندازه, pipeline);
+    VTCM_LAYOUT_ALLOC(off_ډله_b, off_s_tiles[0],    s_tile_اندازه);
+    VTCM_LAYOUT_ALLOC_OPTIONAL(off_ډله_b, off_s_tiles[1], s_tile_اندازه, pipeline);
+    VTCM_LAYOUT_ALLOC(off_ډله_b, off_p_tiles[0],    s_tile_اندازه);
+    VTCM_LAYOUT_ALLOC_OPTIONAL(off_ډله_b, off_p_tiles[1], s_tile_اندازه, pipeline);
+    VTCM_LAYOUT_ALLOC(off_ډله_b, off_s_rowmax,      ستون_vec_اندازه);
+    VTCM_LAYOUT_ALLOC(off_ډله_b, off_p_rowsum,      ستون_vec_اندازه);
+    VTCM_LAYOUT_ALLOC(off_ډله_b, off_لیکه_bufs,      لیکه_vec_اندازه * 2 * n_تارونه);
 
-    const size_t group_b_size = off_group_b - off_group_b_c;
+    ثابت size_t ډله_b_اندازه = off_ډله_b - off_ډله_b_c;
 
     // Group C: Q fetch DMA buffer
-    size_t off_group_c = off_group_b_c;
-    VTCM_LAYOUT_ALLOC(off_group_c, off_q_dma,         q_dma_size);
+    size_t off_ډله_c = off_ډله_b_c;
+    VTCM_LAYOUT_ALLOC(off_ډله_c, off_q_dma,         q_dma_اندازه);
 
-    const size_t group_c_size = off_group_c - off_group_b_c;
+    ثابت size_t ډله_c_اندازه = off_ډله_c - off_ډله_b_c;
 
-    off = off_group_b_c + hex_smax(group_b_size, group_c_size);
+    off = off_ډله_b_c + hex_smax(ډله_b_اندازه, ډله_c_اندازه);
 
     // Group A (Part 2 - remaining non-HMX buffers)
-    VTCM_LAYOUT_ALLOC(off, off_k_fp16[0],     k_dma_size);
-    VTCM_LAYOUT_ALLOC(off, off_k_fp16[1],     k_dma_size);
-    VTCM_LAYOUT_ALLOC(off, off_v_fp16[0],     v_dma_size);
-    VTCM_LAYOUT_ALLOC(off, off_v_fp16[1],     v_dma_size);
-    VTCM_LAYOUT_ALLOC(off, off_m_vec,         col_vec_size);
-    VTCM_LAYOUT_ALLOC(off, off_l_vec,         col_vec_size);
+    VTCM_LAYOUT_ALLOC(off, off_k_fp16[0],     k_dma_اندازه);
+    VTCM_LAYOUT_ALLOC(off, off_k_fp16[1],     k_dma_اندازه);
+    VTCM_LAYOUT_ALLOC(off, off_v_fp16[0],     v_dma_اندازه);
+    VTCM_LAYOUT_ALLOC(off, off_v_fp16[1],     v_dma_اندازه);
+    VTCM_LAYOUT_ALLOC(off, off_m_vec,         ستون_vec_اندازه);
+    VTCM_LAYOUT_ALLOC(off, off_l_vec,         ستون_vec_اندازه);
     VTCM_LAYOUT_ALLOC(off, off_hmx_scales_id, 256);
     VTCM_LAYOUT_ALLOC(off, off_hmx_scales_qk, 256);
-    VTCM_LAYOUT_ALLOC(off, off_mask_buf,      m_buf_size);
-    VTCM_LAYOUT_ALLOC(off, off_slopes,        slopes_size);
-    VTCM_LAYOUT_ALLOC_OPTIONAL(off, off_sinks, sinks_size, has_sinks);
+    VTCM_LAYOUT_ALLOC(off, off_ماسک_buf,      m_buf_اندازه);
+    VTCM_LAYOUT_ALLOC(off, off_slopes,        slopes_اندازه);
+    VTCM_LAYOUT_ALLOC_OPTIONAL(off, off_sinks, sinks_اندازه, has_sinks);
 
-    L->q_tile_bytes        = q_tile_size;
-    L->o_tile_bytes        = o_tile_size;
-    L->k_tile_bytes        = k_tile_size;
-    L->col_vec_bytes       = col_vec_size;
-    L->s_tile_bytes        = s_tile_size;
+    L->q_tile_بایټونه        = q_tile_اندازه;
+    L->o_tile_بایټونه        = o_tile_اندازه;
+    L->k_tile_بایټونه        = k_tile_اندازه;
+    L->ستون_vec_بایټونه       = ستون_vec_اندازه;
+    L->s_tile_بایټونه        = s_tile_اندازه;
     // Measured from the actual offsets rather than assumed to be N * d_tile_size, so
     // that inserting a region between them (or adding padding to VTCM_LAYOUT_ALLOC)
     // cannot silently leave the tail of the run unzeroed.
-    L->d_tile_bytes        = (L->off_d_inv_l + d_tile_size) - L->off_d_tiles[0];
-    L->m_line_bytes        = m_line_size;
-    L->m_buf_slot_bytes    = m_buf_slot;
-    L->row_buf_stride      = row_vec_size / 128;
-    L->mask_buf_row_stride = m_line_size / sizeof(__fp16);
-    L->sinks_bytes         = has_sinks ? sinks_size : 0;
+    L->d_tile_بایټونه        = (L->off_d_inv_l + d_tile_اندازه) - L->off_d_tiles[0];
+    L->m_کرښه_بایټونه        = m_کرښه_اندازه;
+    L->m_buf_خونه_بایټونه    = m_buf_خونه;
+    L->لیکه_buf_stride      = لیکه_vec_اندازه / 128;
+    L->ماسک_buf_لیکه_stride = m_کرښه_اندازه / حجم(__fp16);
+    L->sinks_بایټونه         = has_sinks ? sinks_اندازه : 0;
     L->pipeline            = pipeline;
-    L->total_bytes         = off;
+    L->ټول_بایټونه         = off;
 }
 
 // Exact VTCM usage for a given (gqa_factor, DK, DV, Br, Bc) configuration.
-static inline size_t hmx_fa_compute_vtcm_usage(size_t gqa_factor, size_t DK, size_t DV, size_t Br, size_t Bc, size_t n_threads, bool pipeline, bool is_q_fp32, bool has_sinks, size_t n_heads) {
-    struct hmx_fa_vtcm_layout L;
-    hmx_fa_vtcm_layout_build(&L, gqa_factor, DK, DV, Br, Bc, n_threads, pipeline, is_q_fp32, has_sinks, n_heads);
-    return L.total_bytes;
+ساكن مضمن size_t hmx_fa_compute_vtcm_usage(size_t gqa_ضریب, size_t DK, size_t DV, size_t Br, size_t Bc, size_t n_تارونه, bool pipeline, bool is_q_fp32, bool has_sinks, size_t n_heads) {
+    بنية hmx_fa_vtcm_layout L;
+    hmx_fa_vtcm_layout_build(&L, gqa_ضریب, DK, DV, Br, Bc, n_تارونه, pipeline, is_q_fp32, has_sinks, n_heads);
+    أرجع L.ټول_بایټونه;
 }
 
-#define FA_HVX_BLOCK_SIZE 64
-#define FA_HVX_G_MAX      8
+#تعریف_کړه FA_HVX_بلاک_اندازه 64
+#تعریف_کړه FA_HVX_G_MAX      8
 
-struct hvx_fa_vtcm_layout {
+بنية hvx_fa_vtcm_layout {
     size_t off_q;
     size_t off_k;
     size_t off_v;
@@ -261,141 +261,141 @@ struct hvx_fa_vtcm_layout {
     size_t off_a;
     size_t off_sinks;
 
-    size_t size_q_block;
-    size_t size_k_block;
-    size_t size_v_block;
-    size_t size_m_block;
-    size_t size_vkq_acc;
-    size_t size_sinks;
+    size_t اندازه_q_بلاک;
+    size_t اندازه_k_بلاک;
+    size_t اندازه_v_بلاک;
+    size_t اندازه_m_بلاک;
+    size_t اندازه_vkq_acc;
+    size_t اندازه_sinks;
 
-    size_t total_bytes;
+    size_t ټول_بایټونه;
 };
 
-static inline void hvx_fa_vtcm_layout_build(struct hvx_fa_vtcm_layout * L,
+ساكن مضمن فراغ hvx_fa_vtcm_layout_build(بنية hvx_fa_vtcm_layout * L,
                                             size_t DK, size_t DV,
-                                            bool is_q_fp32, bool has_mask,
+                                            bool is_q_fp32, bool has_ماسک,
                                             bool has_sinks, size_t n_heads,
-                                            size_t n_threads) {
-    const size_t size_q_row_padded = hex_round_up(DK * (is_q_fp32 ? 4 : 2), 128);
-    const size_t size_k_row_padded = hex_round_up(DK * sizeof(__fp16), 128);
-    const size_t size_v_row_padded = hex_round_up(DV * sizeof(__fp16), 128);
+                                            size_t n_تارونه) {
+    ثابت size_t اندازه_q_لیکه_padded = hex_پړاو_پورته(DK * (is_q_fp32 ? 4 : 2), 128);
+    ثابت size_t اندازه_k_لیکه_padded = hex_پړاو_پورته(DK * حجم(__fp16), 128);
+    ثابت size_t اندازه_v_لیکه_padded = hex_پړاو_پورته(DV * حجم(__fp16), 128);
 
-    const size_t size_q_block = size_q_row_padded * FA_HVX_G_MAX;
-    const size_t size_k_block = size_k_row_padded * FA_HVX_BLOCK_SIZE;
-    const size_t size_v_block = size_v_row_padded * FA_HVX_BLOCK_SIZE;
-    const size_t size_m_block = hex_round_up(FA_HVX_BLOCK_SIZE * sizeof(__fp16), 128);
-    const size_t size_vkq_acc = hex_round_up(DV * sizeof(float), 128) * FA_HVX_G_MAX;
-    const size_t size_sinks   = hex_round_up(n_heads * sizeof(float), 128);
+    ثابت size_t اندازه_q_بلاک = اندازه_q_لیکه_padded * FA_HVX_G_MAX;
+    ثابت size_t اندازه_k_بلاک = اندازه_k_لیکه_padded * FA_HVX_بلاک_اندازه;
+    ثابت size_t اندازه_v_بلاک = اندازه_v_لیکه_padded * FA_HVX_بلاک_اندازه;
+    ثابت size_t اندازه_m_بلاک = hex_پړاو_پورته(FA_HVX_بلاک_اندازه * حجم(__fp16), 128);
+    ثابت size_t اندازه_vkq_acc = hex_پړاو_پورته(DV * حجم(عائم), 128) * FA_HVX_G_MAX;
+    ثابت size_t اندازه_sinks   = hex_پړاو_پورته(n_heads * حجم(عائم), 128);
 
     size_t off = 0;
 
-    VTCM_LAYOUT_ALLOC(off, off_q, size_q_block * n_threads);
-    VTCM_LAYOUT_ALLOC(off, off_k, size_k_block * 2 * n_threads);
-    VTCM_LAYOUT_ALLOC(off, off_v, size_v_block * 2 * n_threads);
-    VTCM_LAYOUT_ALLOC_OPTIONAL(off, off_m, size_m_block * HVX_FA_DMA_CACHE_SIZE * n_threads, has_mask);
-    VTCM_LAYOUT_ALLOC(off, off_a, size_vkq_acc * n_threads);
-    VTCM_LAYOUT_ALLOC_OPTIONAL(off, off_sinks, size_sinks, has_sinks);
+    VTCM_LAYOUT_ALLOC(off, off_q, اندازه_q_بلاک * n_تارونه);
+    VTCM_LAYOUT_ALLOC(off, off_k, اندازه_k_بلاک * 2 * n_تارونه);
+    VTCM_LAYOUT_ALLOC(off, off_v, اندازه_v_بلاک * 2 * n_تارونه);
+    VTCM_LAYOUT_ALLOC_OPTIONAL(off, off_m, اندازه_m_بلاک * HVX_FA_DMA_CACHE_اندازه * n_تارونه, has_ماسک);
+    VTCM_LAYOUT_ALLOC(off, off_a, اندازه_vkq_acc * n_تارونه);
+    VTCM_LAYOUT_ALLOC_OPTIONAL(off, off_sinks, اندازه_sinks, has_sinks);
 
-    L->size_q_block = size_q_block;
-    L->size_k_block = size_k_block;
-    L->size_v_block = size_v_block;
-    L->size_m_block = size_m_block;
-    L->size_vkq_acc = size_vkq_acc;
-    L->size_sinks   = has_sinks ? size_sinks : 0;
-    L->total_bytes  = off;
+    L->اندازه_q_بلاک = اندازه_q_بلاک;
+    L->اندازه_k_بلاک = اندازه_k_بلاک;
+    L->اندازه_v_بلاک = اندازه_v_بلاک;
+    L->اندازه_m_بلاک = اندازه_m_بلاک;
+    L->اندازه_vkq_acc = اندازه_vkq_acc;
+    L->اندازه_sinks   = has_sinks ? اندازه_sinks : 0;
+    L->ټول_بایټونه  = off;
 }
 
-static inline size_t hvx_fa_compute_vtcm_usage(size_t DK, size_t DV, bool is_q_fp32, bool has_mask, bool has_sinks, size_t n_heads, size_t n_threads) {
-    struct hvx_fa_vtcm_layout L;
-    hvx_fa_vtcm_layout_build(&L, DK, DV, is_q_fp32, has_mask, has_sinks, n_heads, n_threads);
-    return L.total_bytes;
+ساكن مضمن size_t hvx_fa_compute_vtcm_usage(size_t DK, size_t DV, bool is_q_fp32, bool has_ماسک, bool has_sinks, size_t n_heads, size_t n_تارونه) {
+    بنية hvx_fa_vtcm_layout L;
+    hvx_fa_vtcm_layout_build(&L, DK, DV, is_q_fp32, has_ماسک, has_sinks, n_heads, n_تارونه);
+    أرجع L.ټول_بایټونه;
 }
 
-#define FA_MIN_KV_BLOCKS 3
+#تعریف_کړه FA_MIN_KV_بلاکونه 3
 
 // Cost-based (Br, Bc) search for flash attention with pipeline constraint.
-static inline int hmx_fa_find_chunk_size(size_t * Br_out,
-                                         size_t * Bc_out,
-                                         size_t   gqa_factor,
+ساكن مضمن صحيح hmx_fa_پیدا_کړه_chunk_اندازه(size_t * Br_بهر,
+                                         size_t * Bc_بهر,
+                                         size_t   gqa_ضریب,
                                          size_t   DK,
                                          size_t   DV,
                                          size_t   qo_len,
                                          size_t   kv_len,
                                          size_t   vtcm_budget,
-                                         size_t   n_threads,
+                                         size_t   n_تارونه,
                                          bool     is_q_fp32,
                                          bool     has_sinks,
                                          size_t   n_heads) {
-    const size_t T       = HMX_FP16_TILE_N_ROWS;  // 32
-    const size_t br_unit = hmx_ceil_div(T, gqa_factor);
-    const size_t bc_unit = HMX_FP16_TILE_N_COLS * 2;  // 64
-    const bool   can_pipeline = (kv_len >= FA_MIN_KV_BLOCKS * bc_unit && n_threads >= 2);
+    ثابت size_t T       = HMX_FP16_TILE_N_لیکې;  // 32
+    ثابت size_t br_unit = hmx_ceil_div(T, gqa_ضریب);
+    ثابت size_t bc_unit = HMX_FP16_TILE_N_ستون_شمېر * 2;  // 64
+    ثابت bool   can_pipeline = (kv_len >= FA_MIN_KV_بلاکونه * bc_unit && n_تارونه >= 2);
 
     // Br_max: largest Br aligned to br_unit that does not exceed qo_len.
-    const size_t Br_max = qo_len >= br_unit ? hex_align_down(qo_len, br_unit) : br_unit;
+    ثابت size_t Br_max = qo_len >= br_unit ? hex_align_ښکته(qo_len, br_unit) : br_unit;
 
     // Pipeline constraint: cap Bc so n_kv_blocks >= FA_MIN_KV_BLOCKS.
     // Only relax when kv_len is too short to form enough blocks.
-    size_t Bc_limit     = can_pipeline ? hex_align_down(kv_len / FA_MIN_KV_BLOCKS, bc_unit) :
-                                         (kv_len >= bc_unit ? hex_align_down(kv_len, bc_unit) : bc_unit);
+    size_t Bc_حد     = can_pipeline ? hex_align_ښکته(kv_len / FA_MIN_KV_بلاکونه, bc_unit) :
+                                         (kv_len >= bc_unit ? hex_align_ښکته(kv_len, bc_unit) : bc_unit);
     // For small-Q SWA-sized KV caches (qo_len <= 16, kv_len <= 2048), cap Bc at 256 for block-skipping granularity
-    if (qo_len <= 16 && kv_len <= 2048 && Bc_limit > 256) {
-        Bc_limit = 256;
+    إذا (qo_len <= 16 && kv_len <= 2048 && Bc_حد > 256) {
+        Bc_حد = 256;
     }
     // Cost coefficients calibrated from profiling
-    const size_t c_q_fixed    = 800;   // per-Q-block: q_load + epilogue o_update + o_norm + o_store
-    const size_t c_iter_base  = 200;   // per-KV-iter base (HMX dot/update + DMA)
-    const size_t c_softmax    = 600;   // per 64-row vector chunk on HVX
+    ثابت size_t c_q_fixed    = 800;   // per-Q-block: q_load + epilogue o_update + o_norm + o_store
+    ثابت size_t c_iter_بنسټ  = 200;   // per-KV-iter base (HMX dot/update + DMA)
+    ثابت size_t c_softmax    = 600;   // per 64-row vector chunk on HVX
 
-    size_t best_cost = SIZE_MAX, best_mn = 0;
-    size_t best_Br = 0, best_Bc = 0;
+    size_t غوره_لګښت = SIZE_MAX, غوره_mn = 0;
+    size_t غوره_Br = 0, غوره_Bc = 0;
 
-    for (size_t Br = Br_max; Br >= br_unit; Br -= br_unit) {
+    لكل (size_t Br = Br_max; Br >= br_unit; Br -= br_unit) {
         // Try all Bc candidates from Bc_limit down to bc_unit
-        for (size_t Bc = Bc_limit; Bc >= bc_unit; Bc -= bc_unit) {
-            size_t vtcm_needed = hmx_fa_compute_vtcm_usage(gqa_factor, DK, DV, Br, Bc, n_threads, can_pipeline, is_q_fp32, has_sinks, n_heads);
-            if (vtcm_needed <= vtcm_budget) {
+        لكل (size_t Bc = Bc_حد; Bc >= bc_unit; Bc -= bc_unit) {
+            size_t vtcm_needed = hmx_fa_compute_vtcm_usage(gqa_ضریب, DK, DV, Br, Bc, n_تارونه, can_pipeline, is_q_fp32, has_sinks, n_heads);
+            إذا (vtcm_needed <= vtcm_budget) {
                 // This Bc fits for this Br!
-                const size_t q_blocks       = (qo_len + Br - 1) / Br;
-                const size_t kv_blocks      = (kv_len + Bc - 1) / Bc;
-                const size_t actual_threads = (kv_blocks >= 3 && n_threads >= 2) ? n_threads : 1;
-                const size_t n_rows_g       = Br * gqa_factor;
-                const size_t n_row_vec_cnt  = (n_rows_g + 63) / 64;
-                const size_t n_use          = n_row_vec_cnt < actual_threads ? n_row_vec_cnt : actual_threads;
-                const size_t vecs_per_t     = n_use > 0 ? (n_row_vec_cnt + n_use - 1) / n_use : 1;
+                ثابت size_t q_بلاکونه       = (qo_len + Br - 1) / Br;
+                ثابت size_t kv_بلاکونه      = (kv_len + Bc - 1) / Bc;
+                ثابت size_t actual_تارونه = (kv_بلاکونه >= 3 && n_تارونه >= 2) ? n_تارونه : 1;
+                ثابت size_t n_لیکې_g       = Br * gqa_ضریب;
+                ثابت size_t n_لیکه_vec_cnt  = (n_لیکې_g + 63) / 64;
+                ثابت size_t n_use          = n_لیکه_vec_cnt < actual_تارونه ? n_لیکه_vec_cnt : actual_تارونه;
+                ثابت size_t vecs_فی_t     = n_use > 0 ? (n_لیکه_vec_cnt + n_use - 1) / n_use : 1;
 
-                const size_t c_iter_actual  = c_iter_base + c_softmax * vecs_per_t;
-                const size_t cost           = q_blocks * (c_q_fixed + kv_blocks * c_iter_actual);
-                const size_t mn             = Br * Bc;
+                ثابت size_t c_iter_actual  = c_iter_بنسټ + c_softmax * vecs_فی_t;
+                ثابت size_t لګښت           = q_بلاکونه * (c_q_fixed + kv_بلاکونه * c_iter_actual);
+                ثابت size_t mn             = Br * Bc;
 
-                if (cost < best_cost || (cost == best_cost && mn > best_mn)) {
-                    best_cost = cost;
-                    best_mn   = mn;
-                    best_Br   = Br;
-                    best_Bc   = Bc;
+                إذا (لګښت < غوره_لګښت || (لګښت == غوره_لګښت && mn > غوره_mn)) {
+                    غوره_لګښت = لګښت;
+                    غوره_mn   = mn;
+                    غوره_Br   = Br;
+                    غوره_Bc   = Bc;
                 }
                 // Since we iterate Bc from largest to smallest, this is the largest Bc that fits
                 // for this Br. We can break to the next Br.
-                break;
+                اكسر;
             }
         }
 
-        if (Br == br_unit) {
-            break;
+        إذا (Br == br_unit) {
+            اكسر;
         }
     }
 
-    if (best_Br == 0 || best_Bc == 0) {
-        return -1;
+    إذا (غوره_Br == 0 || غوره_Bc == 0) {
+        أرجع -1;
     }
 
-    *Br_out = best_Br;
-    *Bc_out = best_Bc;
-    return 0;
+    *Br_بهر = غوره_Br;
+    *Bc_بهر = غوره_Bc;
+    أرجع 0;
 }
 
-#ifdef __cplusplus
+#که_تعریف_شوی __cplusplus
 }
-#endif
+#د_که_پای
 
-#endif /* HTP_FLASH_ATTN_OPS_H */
+#د_که_پای /* HTP_FLASH_ATTN_OPS_H */

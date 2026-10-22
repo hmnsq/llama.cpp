@@ -10,571 +10,571 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#include "mmq.hpp"
-#include "vecdotq.hpp"
+#ضمن "mmq.hpp"
+#ضمن "vecdotq.hpp"
 
-typedef void (*allocate_tiles_sycl_t)(
-    int** x_ql,
+تعريفنوع فراغ (*allocate_tiles_sycl_t)(
+    صحيح** x_ql,
     sycl::half2** x_dm,
-    int** x_qh,
-    int** x_sc);
-typedef void (*load_tiles_sycl_t)(
-    const void* __restrict__ vx,
-    int* __restrict__ x_ql,
+    صحيح** x_qh,
+    صحيح** x_sc);
+تعريفنوع فراغ (*بارول_tiles_sycl_t)(
+    ثابت فراغ* __restrict__ vx,
+    صحيح* __restrict__ x_ql,
     sycl::half2* __restrict__ x_dm,
-    int* __restrict__ x_qh,
-    int* __restrict__ x_sc,
-    const int& i_offset,
-    const int& i_max,
-    const int& k,
-    const int& blocks_per_row);
-typedef float (*vec_dot_q_mul_mat_sycl_t)(
-    const int* __restrict__ x_ql,
-    const sycl::half2* __restrict__ x_dm,
-    const int* __restrict__ x_qh,
-    const int* __restrict__ x_sc,
-    const int* __restrict__ y_qs,
-    const sycl::half2* __restrict__ y_ms,
-    const int& i,
-    const int& j,
-    const int& k);
+    صحيح* __restrict__ x_qh,
+    صحيح* __restrict__ x_sc,
+    ثابت صحيح& i_دننه_واټن,
+    ثابت صحيح& i_max,
+    ثابت صحيح& k,
+    ثابت صحيح& بلاکونه_فی_لیکه);
+تعريفنوع عائم (*vec_dot_q_mul_mat_sycl_t)(
+    ثابت صحيح* __restrict__ x_ql,
+    ثابت sycl::half2* __restrict__ x_dm,
+    ثابت صحيح* __restrict__ x_qh,
+    ثابت صحيح* __restrict__ x_sc,
+    ثابت صحيح* __restrict__ y_qs,
+    ثابت sycl::half2* __restrict__ y_ms,
+    ثابت صحيح& i,
+    ثابت صحيح& j,
+    ثابت صحيح& k);
 
 
-template <int mmq_y>
-static __dpct_inline__ void
-allocate_tiles_q4_0(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
-                    int *tile_x_qs_q4_0, float *tile_x_d_q4_0) {
-    (void)x_qh; (void)x_sc;
+کينډۍ <صحيح mmq_y>
+ساكن __dpct_inline__ فراغ
+allocate_tiles_q4_0(صحيح **x_ql, sycl::half2 **x_dm, صحيح **x_qh, صحيح **x_sc,
+                    صحيح *tile_x_qs_q4_0, عائم *tile_x_d_q4_0) {
+    (فراغ)x_qh; (فراغ)x_sc;
 
     *x_ql = tile_x_qs_q4_0;
     *x_dm = (sycl::half2 *)tile_x_d_q4_0;
 }
 
-template <int mmq_y, int nwarps, bool need_check>
-static __dpct_inline__ void
-load_tiles_q4_0(const void *__restrict__ vx, int *__restrict__ x_ql,
-                sycl::half2 *__restrict__ x_dm, int *__restrict__ x_qh,
-                int *__restrict__ x_sc, const int &i_offset, const int &i_max,
-                const int &k, const int &blocks_per_row) {
-    (void)x_qh; (void)x_sc;
-    GGML_SYCL_ASSUME(i_offset >= 0);
-    GGML_SYCL_ASSUME(i_offset <  nwarps);
+کينډۍ <صحيح mmq_y, صحيح nwarps, منطقي need_check>
+ساكن __dpct_inline__ فراغ
+بارول_tiles_q4_0(ثابت فراغ *__restrict__ vx, صحيح *__restrict__ x_ql,
+                sycl::half2 *__restrict__ x_dm, صحيح *__restrict__ x_qh,
+                صحيح *__restrict__ x_sc, ثابت صحيح &i_دننه_واټن, ثابت صحيح &i_max,
+                ثابت صحيح &k, ثابت صحيح &بلاکونه_فی_لیکه) {
+    (فراغ)x_qh; (فراغ)x_sc;
+    GGML_SYCL_ASSUME(i_دننه_واټن >= 0);
+    GGML_SYCL_ASSUME(i_دننه_واټن <  nwarps);
     GGML_SYCL_ASSUME(k >= 0);
-    GGML_SYCL_ASSUME(k <  WARP_SIZE);
+    GGML_SYCL_ASSUME(k <  WARP_اندازه);
 
-    const int kbx  = k / QI4_0;
-    const int kqsx = k % QI4_0;
+    ثابت صحيح kbx  = k / QI4_0;
+    ثابت صحيح kqsx = k % QI4_0;
 
-    const block_q4_0 * bx0 = (const block_q4_0 *) vx;
+    ثابت بلاک_q4_0 * bx0 = (ثابت بلاک_q4_0 *) vx;
 
-    float * x_dmf = (float *) x_dm;
+    عائم * x_dmf = (عائم *) x_dm;
 
-#pragma unroll
-    for (int i0 = 0; i0 < mmq_y; i0 += nwarps) {
-        int i = i0 + i_offset;
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < mmq_y; i0 += nwarps) {
+        صحيح i = i0 + i_دننه_واټن;
 
-        if (need_check) {
+        إذا (need_check) {
             i = sycl::min(i, i_max);
         }
 
-        const block_q4_0 * bxi = bx0 + i*blocks_per_row + kbx;
+        ثابت بلاک_q4_0 * bxi = bx0 + i*بلاکونه_فی_لیکه + kbx;
 
-        x_ql[i * (WARP_SIZE + 1) + k] = get_int_from_uint8(bxi->qs, kqsx);
+        x_ql[i * (WARP_اندازه + 1) + k] = get_int_from_uint8(bxi->qs, kqsx);
         // x_dmf[i * (WARP_SIZE/QI4_0) + i / QI4_0 + kbx] = bxi->d;
     }
 
-    const int blocks_per_tile_x_row = WARP_SIZE / QI4_0;
-    const int kbxd = k % blocks_per_tile_x_row;
+    ثابت صحيح بلاکونه_فی_tile_x_لیکه = WARP_اندازه / QI4_0;
+    ثابت صحيح kbxd = k % بلاکونه_فی_tile_x_لیکه;
 
-#pragma unroll
-    for (int i0 = 0; i0 < mmq_y; i0 += nwarps * QI4_0) {
-        int i = i0 + i_offset * QI4_0 + k / blocks_per_tile_x_row;
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < mmq_y; i0 += nwarps * QI4_0) {
+        صحيح i = i0 + i_دننه_واټن * QI4_0 + k / بلاکونه_فی_tile_x_لیکه;
 
-        if (need_check) {
+        إذا (need_check) {
             i = sycl::min(i, i_max);
         }
 
-        const block_q4_0 * bxi = bx0 + i*blocks_per_row + kbxd;
+        ثابت بلاک_q4_0 * bxi = bx0 + i*بلاکونه_فی_لیکه + kbxd;
 
-        x_dmf[i * (WARP_SIZE/QI4_0) + i / QI4_0 + kbxd] = bxi->d;
+        x_dmf[i * (WARP_اندازه/QI4_0) + i / QI4_0 + kbxd] = bxi->d;
     }
 }
 
-static __dpct_inline__ float vec_dot_q4_0_q8_1_mul_mat(
-    const int *__restrict__ x_ql, const sycl::half2 *__restrict__ x_dm,
-    const int *__restrict__ x_qh, const int *__restrict__ x_sc,
-    const int *__restrict__ y_qs, const sycl::half2 *__restrict__ y_ds,
-    const int &i, const int &j, const int &k) {
-    (void)x_qh; (void)x_sc;
+ساكن __dpct_inline__ عائم vec_dot_q4_0_q8_1_mul_mat(
+    ثابت صحيح *__restrict__ x_ql, ثابت sycl::half2 *__restrict__ x_dm,
+    ثابت صحيح *__restrict__ x_qh, ثابت صحيح *__restrict__ x_sc,
+    ثابت صحيح *__restrict__ y_qs, ثابت sycl::half2 *__restrict__ y_ds,
+    ثابت صحيح &i, ثابت صحيح &j, ثابت صحيح &k) {
+    (فراغ)x_qh; (فراغ)x_sc;
 
-    const int kyqs = k % (QI8_1/2) + QI8_1 * (k / (QI8_1/2));
-    const float * x_dmf = (const float *) x_dm;
+    ثابت صحيح kyqs = k % (QI8_1/2) + QI8_1 * (k / (QI8_1/2));
+    ثابت عائم * x_dmf = (ثابت عائم *) x_dm;
 
-    int u[2*VDR_Q4_0_Q8_1_MMQ];
+    صحيح u[2*VDR_Q4_0_Q8_1_MMQ];
 
-#pragma unroll
-    for (int l = 0; l < VDR_Q4_0_Q8_1_MMQ; ++l) {
-        u[2*l+0] = y_qs[j * WARP_SIZE + (kyqs + l)         % WARP_SIZE];
-        u[2*l+1] = y_qs[j * WARP_SIZE + (kyqs + l + QI4_0) % WARP_SIZE];
+#لارښوونه unroll
+    لكل (صحيح l = 0; l < VDR_Q4_0_Q8_1_MMQ; ++l) {
+        u[2*l+0] = y_qs[j * WARP_اندازه + (kyqs + l)         % WARP_اندازه];
+        u[2*l+1] = y_qs[j * WARP_اندازه + (kyqs + l + QI4_0) % WARP_اندازه];
     }
 
-    return vec_dot_q4_0_q8_1_impl<VDR_Q4_0_Q8_1_MMQ>
-        (&x_ql[i * (WARP_SIZE + 1) + k], u, x_dmf[i * (WARP_SIZE/QI4_0) + i/QI4_0 + k/QI4_0],
-         y_ds[j * (WARP_SIZE/QI8_1) + (2*k/QI8_1) % (WARP_SIZE/QI8_1)]);
+    أرجع vec_dot_q4_0_q8_1_impl<VDR_Q4_0_Q8_1_MMQ>
+        (&x_ql[i * (WARP_اندازه + 1) + k], u, x_dmf[i * (WARP_اندازه/QI4_0) + i/QI4_0 + k/QI4_0],
+         y_ds[j * (WARP_اندازه/QI8_1) + (2*k/QI8_1) % (WARP_اندازه/QI8_1)]);
 }
 
-template <int mmq_y>
-static __dpct_inline__ void
-allocate_tiles_q4_1(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
-                    int *tile_x_qs_q4_1, sycl::half2 *tile_x_dm_q4_1) {
-    (void)x_qh; (void)x_sc;
+کينډۍ <صحيح mmq_y>
+ساكن __dpct_inline__ فراغ
+allocate_tiles_q4_1(صحيح **x_ql, sycl::half2 **x_dm, صحيح **x_qh, صحيح **x_sc,
+                    صحيح *tile_x_qs_q4_1, sycl::half2 *tile_x_dm_q4_1) {
+    (فراغ)x_qh; (فراغ)x_sc;
 
     *x_ql = tile_x_qs_q4_1;
     *x_dm = tile_x_dm_q4_1;
 }
 
 
-template <int mmq_y, int nwarps, bool need_check>
-static __dpct_inline__ void
-load_tiles_q4_1(const void *__restrict__ vx, int *__restrict__ x_ql,
-                sycl::half2 *__restrict__ x_dm, int *__restrict__ x_qh,
-                int *__restrict__ x_sc, const int &i_offset, const int &i_max,
-                const int &k, const int &blocks_per_row) {
-    (void)x_qh; (void)x_sc;
+کينډۍ <صحيح mmq_y, صحيح nwarps, منطقي need_check>
+ساكن __dpct_inline__ فراغ
+بارول_tiles_q4_1(ثابت فراغ *__restrict__ vx, صحيح *__restrict__ x_ql,
+                sycl::half2 *__restrict__ x_dm, صحيح *__restrict__ x_qh,
+                صحيح *__restrict__ x_sc, ثابت صحيح &i_دننه_واټن, ثابت صحيح &i_max,
+                ثابت صحيح &k, ثابت صحيح &بلاکونه_فی_لیکه) {
+    (فراغ)x_qh; (فراغ)x_sc;
 
-    GGML_SYCL_ASSUME(i_offset >= 0);
-    GGML_SYCL_ASSUME(i_offset <  nwarps);
+    GGML_SYCL_ASSUME(i_دننه_واټن >= 0);
+    GGML_SYCL_ASSUME(i_دننه_واټن <  nwarps);
     GGML_SYCL_ASSUME(k >= 0);
-    GGML_SYCL_ASSUME(k <  WARP_SIZE);
+    GGML_SYCL_ASSUME(k <  WARP_اندازه);
 
-    const int kbx  = k / QI4_1;
-    const int kqsx = k % QI4_1;
+    ثابت صحيح kbx  = k / QI4_1;
+    ثابت صحيح kqsx = k % QI4_1;
 
-    const block_q4_1 * bx0 = (const block_q4_1 *) vx;
+    ثابت بلاک_q4_1 * bx0 = (ثابت بلاک_q4_1 *) vx;
 
-#pragma unroll
-    for (int i0 = 0; i0 < mmq_y; i0 += nwarps) {
-        int i = i0 + i_offset;
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < mmq_y; i0 += nwarps) {
+        صحيح i = i0 + i_دننه_واټن;
 
-        if (need_check) {
+        إذا (need_check) {
             i = sycl::min(i, i_max);
         }
 
-        const block_q4_1 * bxi = bx0 + i*blocks_per_row + kbx;
+        ثابت بلاک_q4_1 * bxi = bx0 + i*بلاکونه_فی_لیکه + kbx;
 
-        x_ql[i * (WARP_SIZE + 1) + k] = get_int_from_uint8_aligned(bxi->qs, kqsx);
+        x_ql[i * (WARP_اندازه + 1) + k] = get_int_from_uint8_aligned(bxi->qs, kqsx);
     }
 
-    const int blocks_per_tile_x_row = WARP_SIZE / QI4_1;
-    const int kbxd = k % blocks_per_tile_x_row;
+    ثابت صحيح بلاکونه_فی_tile_x_لیکه = WARP_اندازه / QI4_1;
+    ثابت صحيح kbxd = k % بلاکونه_فی_tile_x_لیکه;
 
-#pragma unroll
-    for (int i0 = 0; i0 < mmq_y; i0 += nwarps * QI4_1) {
-        int i = i0 + i_offset * QI4_1 + k / blocks_per_tile_x_row;
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < mmq_y; i0 += nwarps * QI4_1) {
+        صحيح i = i0 + i_دننه_واټن * QI4_1 + k / بلاکونه_فی_tile_x_لیکه;
 
-        if (need_check) {
+        إذا (need_check) {
             i = sycl::min(i, i_max);
         }
 
-        const block_q4_1 * bxi = bx0 + i*blocks_per_row + kbxd;
+        ثابت بلاک_q4_1 * bxi = bx0 + i*بلاکونه_فی_لیکه + kbxd;
 
-        x_dm[i * (WARP_SIZE/QI4_1) + i / QI4_1 + kbxd] = bxi->dm;
+        x_dm[i * (WARP_اندازه/QI4_1) + i / QI4_1 + kbxd] = bxi->dm;
     }
 }
 
-static __dpct_inline__ float vec_dot_q4_1_q8_1_mul_mat(
-    const int *__restrict__ x_ql, const sycl::half2 *__restrict__ x_dm,
-    const int *__restrict__ x_qh, const int *__restrict__ x_sc,
-    const int *__restrict__ y_qs, const sycl::half2 *__restrict__ y_ds,
-    const int &i, const int &j, const int &k) {
-    (void)x_qh; (void)x_sc;
+ساكن __dpct_inline__ عائم vec_dot_q4_1_q8_1_mul_mat(
+    ثابت صحيح *__restrict__ x_ql, ثابت sycl::half2 *__restrict__ x_dm,
+    ثابت صحيح *__restrict__ x_qh, ثابت صحيح *__restrict__ x_sc,
+    ثابت صحيح *__restrict__ y_qs, ثابت sycl::half2 *__restrict__ y_ds,
+    ثابت صحيح &i, ثابت صحيح &j, ثابت صحيح &k) {
+    (فراغ)x_qh; (فراغ)x_sc;
 
-    const int kyqs = k % (QI8_1/2) + QI8_1 * (k / (QI8_1/2));
+    ثابت صحيح kyqs = k % (QI8_1/2) + QI8_1 * (k / (QI8_1/2));
 
-    int u[2*VDR_Q4_1_Q8_1_MMQ];
+    صحيح u[2*VDR_Q4_1_Q8_1_MMQ];
 
-#pragma unroll
-    for (int l = 0; l < VDR_Q4_1_Q8_1_MMQ; ++l) {
-        u[2*l+0] = y_qs[j * WARP_SIZE + (kyqs + l)         % WARP_SIZE];
-        u[2*l+1] = y_qs[j * WARP_SIZE + (kyqs + l + QI4_1) % WARP_SIZE];
+#لارښوونه unroll
+    لكل (صحيح l = 0; l < VDR_Q4_1_Q8_1_MMQ; ++l) {
+        u[2*l+0] = y_qs[j * WARP_اندازه + (kyqs + l)         % WARP_اندازه];
+        u[2*l+1] = y_qs[j * WARP_اندازه + (kyqs + l + QI4_1) % WARP_اندازه];
     }
 
-    return vec_dot_q4_1_q8_1_impl<VDR_Q4_1_Q8_1_MMQ>
-        (&x_ql[i * (WARP_SIZE + 1) + k], u, x_dm[i * (WARP_SIZE/QI4_1) + i/QI4_1 + k/QI4_1],
-         y_ds[j * (WARP_SIZE/QI8_1) + (2*k/QI8_1) % (WARP_SIZE/QI8_1)]);
+    أرجع vec_dot_q4_1_q8_1_impl<VDR_Q4_1_Q8_1_MMQ>
+        (&x_ql[i * (WARP_اندازه + 1) + k], u, x_dm[i * (WARP_اندازه/QI4_1) + i/QI4_1 + k/QI4_1],
+         y_ds[j * (WARP_اندازه/QI8_1) + (2*k/QI8_1) % (WARP_اندازه/QI8_1)]);
 }
 
-template <int mmq_y>
-static __dpct_inline__ void
-allocate_tiles_q5_0(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
-                    int *tile_x_ql_q5_0, float *tile_x_d_q5_0) {
-    (void)x_qh; (void)x_sc;
+کينډۍ <صحيح mmq_y>
+ساكن __dpct_inline__ فراغ
+allocate_tiles_q5_0(صحيح **x_ql, sycl::half2 **x_dm, صحيح **x_qh, صحيح **x_sc,
+                    صحيح *tile_x_ql_q5_0, عائم *tile_x_d_q5_0) {
+    (فراغ)x_qh; (فراغ)x_sc;
 
     *x_ql = tile_x_ql_q5_0;
     *x_dm = (sycl::half2 *)tile_x_d_q5_0;
 }
 
-template <int mmq_y, int nwarps, bool need_check>
-static __dpct_inline__ void
-load_tiles_q5_0(const void *__restrict__ vx, int *__restrict__ x_ql,
-                sycl::half2 *__restrict__ x_dm, int *__restrict__ x_qh,
-                int *__restrict__ x_sc, const int &i_offset, const int &i_max,
-                const int &k, const int &blocks_per_row) {
-    (void)x_qh; (void)x_sc;
+کينډۍ <صحيح mmq_y, صحيح nwarps, منطقي need_check>
+ساكن __dpct_inline__ فراغ
+بارول_tiles_q5_0(ثابت فراغ *__restrict__ vx, صحيح *__restrict__ x_ql,
+                sycl::half2 *__restrict__ x_dm, صحيح *__restrict__ x_qh,
+                صحيح *__restrict__ x_sc, ثابت صحيح &i_دننه_واټن, ثابت صحيح &i_max,
+                ثابت صحيح &k, ثابت صحيح &بلاکونه_فی_لیکه) {
+    (فراغ)x_qh; (فراغ)x_sc;
 
-    GGML_SYCL_ASSUME(i_offset >= 0);
-    GGML_SYCL_ASSUME(i_offset <  nwarps);
+    GGML_SYCL_ASSUME(i_دننه_واټن >= 0);
+    GGML_SYCL_ASSUME(i_دننه_واټن <  nwarps);
     GGML_SYCL_ASSUME(k >= 0);
-    GGML_SYCL_ASSUME(k <  WARP_SIZE);
+    GGML_SYCL_ASSUME(k <  WARP_اندازه);
 
-    const int kbx  = k / QI5_0;
-    const int kqsx = k % QI5_0;
+    ثابت صحيح kbx  = k / QI5_0;
+    ثابت صحيح kqsx = k % QI5_0;
 
-    const block_q5_0 * bx0 = (const block_q5_0 *) vx;
+    ثابت بلاک_q5_0 * bx0 = (ثابت بلاک_q5_0 *) vx;
 
-#pragma unroll
-    for (int i0 = 0; i0 < mmq_y; i0 += nwarps) {
-        int i = i0 + i_offset;
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < mmq_y; i0 += nwarps) {
+        صحيح i = i0 + i_دننه_واټن;
 
-        if (need_check) {
+        إذا (need_check) {
             i = sycl::min(i, i_max);
         }
 
-        const block_q5_0 * bxi = bx0 + i*blocks_per_row + kbx;
+        ثابت بلاک_q5_0 * bxi = bx0 + i*بلاکونه_فی_لیکه + kbx;
 
-        const int ql = get_int_from_uint8(bxi->qs, kqsx);
-        const int qh = get_int_from_uint8(bxi->qh, 0) >> (4 * (k % QI5_0));
+        ثابت صحيح ql = get_int_from_uint8(bxi->qs, kqsx);
+        ثابت صحيح qh = get_int_from_uint8(bxi->qh, 0) >> (4 * (k % QI5_0));
 
-        int qs0 = (ql >>  0)   & 0x0F0F0F0F;
+        صحيح qs0 = (ql >>  0)   & 0x0F0F0F0F;
         qs0    |= (qh <<  4)   & 0x00000010;  // 0 ->  4
         qs0    |= (qh << 11)   & 0x00001000;  // 1 -> 12
         qs0    |= (qh << 18)   & 0x00100000;  // 2 -> 20
         qs0    |= (qh << 25)   & 0x10000000;  // 3 -> 28
-        qs0 = dpct::vectorized_binary<sycl::char4>(
+        qs0 = dpct::vectorized_دوګونی<sycl::char4>(
             qs0, 0x10101010, dpct::sub_sat()); // subtract 16
 
-        x_ql[i * (2*WARP_SIZE + 1) + 2*k+0] = qs0;
+        x_ql[i * (2*WARP_اندازه + 1) + 2*k+0] = qs0;
 
-        int qs1 = (ql >>  4)   & 0x0F0F0F0F;
+        صحيح qs1 = (ql >>  4)   & 0x0F0F0F0F;
         qs1    |= (qh >> 12)   & 0x00000010;  // 16 ->  4
         qs1    |= (qh >>  5)   & 0x00001000;  // 17 -> 12
         qs1    |= (qh <<  2)   & 0x00100000;  // 18 -> 20
         qs1    |= (qh <<  9)   & 0x10000000;  // 19 -> 28
-        qs1 = dpct::vectorized_binary<sycl::char4>(
+        qs1 = dpct::vectorized_دوګونی<sycl::char4>(
             qs1, 0x10101010, dpct::sub_sat()); // subtract 16
 
-        x_ql[i * (2*WARP_SIZE + 1) + 2*k+1] = qs1;
+        x_ql[i * (2*WARP_اندازه + 1) + 2*k+1] = qs1;
     }
 
-    const int blocks_per_tile_x_row = WARP_SIZE / QI5_0;
-    const int kbxd = k % blocks_per_tile_x_row;
-    float * x_dmf = (float *) x_dm;
+    ثابت صحيح بلاکونه_فی_tile_x_لیکه = WARP_اندازه / QI5_0;
+    ثابت صحيح kbxd = k % بلاکونه_فی_tile_x_لیکه;
+    عائم * x_dmf = (عائم *) x_dm;
 
-#pragma unroll
-    for (int i0 = 0; i0 < mmq_y; i0 += nwarps * QI5_0) {
-        int i = i0 + i_offset * QI5_0 + k / blocks_per_tile_x_row;
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < mmq_y; i0 += nwarps * QI5_0) {
+        صحيح i = i0 + i_دننه_واټن * QI5_0 + k / بلاکونه_فی_tile_x_لیکه;
 
-        if (need_check) {
+        إذا (need_check) {
             i = sycl::min(i, i_max);
         }
 
-        const block_q5_0 * bxi = bx0 + i*blocks_per_row + kbxd;
+        ثابت بلاک_q5_0 * bxi = bx0 + i*بلاکونه_فی_لیکه + kbxd;
 
-        x_dmf[i * (WARP_SIZE/QI5_0) + i / QI5_0 + kbxd] = bxi->d;
+        x_dmf[i * (WARP_اندازه/QI5_0) + i / QI5_0 + kbxd] = bxi->d;
     }
 }
 
-static __dpct_inline__ float vec_dot_q5_0_q8_1_mul_mat(
-    const int *__restrict__ x_ql, const sycl::half2 *__restrict__ x_dm,
-    const int *__restrict__ x_qh, const int *__restrict__ x_sc,
-    const int *__restrict__ y_qs, const sycl::half2 *__restrict__ y_ds,
-    const int &i, const int &j, const int &k) {
-    (void)x_qh; (void)x_sc;
+ساكن __dpct_inline__ عائم vec_dot_q5_0_q8_1_mul_mat(
+    ثابت صحيح *__restrict__ x_ql, ثابت sycl::half2 *__restrict__ x_dm,
+    ثابت صحيح *__restrict__ x_qh, ثابت صحيح *__restrict__ x_sc,
+    ثابت صحيح *__restrict__ y_qs, ثابت sycl::half2 *__restrict__ y_ds,
+    ثابت صحيح &i, ثابت صحيح &j, ثابت صحيح &k) {
+    (فراغ)x_qh; (فراغ)x_sc;
 
-    const int kyqs = k % (QI8_1/2) + QI8_1 * (k / (QI8_1/2));
-    const int index_bx = i * (WARP_SIZE/QI5_0) + i/QI5_0 + k/QI5_0;
-    const float * x_dmf = (const float *) x_dm;
-    const float * y_df  = (const float *) y_ds;
+    ثابت صحيح kyqs = k % (QI8_1/2) + QI8_1 * (k / (QI8_1/2));
+    ثابت صحيح شاخص_bx = i * (WARP_اندازه/QI5_0) + i/QI5_0 + k/QI5_0;
+    ثابت عائم * x_dmf = (ثابت عائم *) x_dm;
+    ثابت عائم * y_df  = (ثابت عائم *) y_ds;
 
-    int u[2*VDR_Q5_0_Q8_1_MMQ];
+    صحيح u[2*VDR_Q5_0_Q8_1_MMQ];
 
-#pragma unroll
-    for (int l = 0; l < VDR_Q5_0_Q8_1_MMQ; ++l) {
-        u[2*l+0] = y_qs[j * WARP_SIZE + (kyqs + l)         % WARP_SIZE];
-        u[2*l+1] = y_qs[j * WARP_SIZE + (kyqs + l + QI5_0) % WARP_SIZE];
+#لارښوونه unroll
+    لكل (صحيح l = 0; l < VDR_Q5_0_Q8_1_MMQ; ++l) {
+        u[2*l+0] = y_qs[j * WARP_اندازه + (kyqs + l)         % WARP_اندازه];
+        u[2*l+1] = y_qs[j * WARP_اندازه + (kyqs + l + QI5_0) % WARP_اندازه];
     }
 
-    return vec_dot_q8_0_q8_1_impl<QR5_0*VDR_Q5_0_Q8_1_MMQ>
-        (&x_ql[i * (2*WARP_SIZE + 1) + 2 * k], u, x_dmf[index_bx], y_df[j * (WARP_SIZE/QI8_1) + (2*k/QI8_1) % (WARP_SIZE/QI8_1)]);
+    أرجع vec_dot_q8_0_q8_1_impl<QR5_0*VDR_Q5_0_Q8_1_MMQ>
+        (&x_ql[i * (2*WARP_اندازه + 1) + 2 * k], u, x_dmf[شاخص_bx], y_df[j * (WARP_اندازه/QI8_1) + (2*k/QI8_1) % (WARP_اندازه/QI8_1)]);
 }
 
-template <int mmq_y>
-static __dpct_inline__ void
-allocate_tiles_q5_1(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
-                    int *tile_x_ql_q5_1, sycl::half2 *tile_x_dm_q5_1) {
-    (void)x_qh; (void)x_sc;
+کينډۍ <صحيح mmq_y>
+ساكن __dpct_inline__ فراغ
+allocate_tiles_q5_1(صحيح **x_ql, sycl::half2 **x_dm, صحيح **x_qh, صحيح **x_sc,
+                    صحيح *tile_x_ql_q5_1, sycl::half2 *tile_x_dm_q5_1) {
+    (فراغ)x_qh; (فراغ)x_sc;
 
     *x_ql = tile_x_ql_q5_1;
     *x_dm = tile_x_dm_q5_1;
 }
 
-template <int mmq_y, int nwarps, bool need_check>
-static __dpct_inline__ void
-load_tiles_q5_1(const void *__restrict__ vx, int *__restrict__ x_ql,
-                sycl::half2 *__restrict__ x_dm, int *__restrict__ x_qh,
-                int *__restrict__ x_sc, const int &i_offset, const int &i_max,
-                const int &k, const int &blocks_per_row) {
-    (void)x_qh; (void)x_sc;
+کينډۍ <صحيح mmq_y, صحيح nwarps, منطقي need_check>
+ساكن __dpct_inline__ فراغ
+بارول_tiles_q5_1(ثابت فراغ *__restrict__ vx, صحيح *__restrict__ x_ql,
+                sycl::half2 *__restrict__ x_dm, صحيح *__restrict__ x_qh,
+                صحيح *__restrict__ x_sc, ثابت صحيح &i_دننه_واټن, ثابت صحيح &i_max,
+                ثابت صحيح &k, ثابت صحيح &بلاکونه_فی_لیکه) {
+    (فراغ)x_qh; (فراغ)x_sc;
 
-    GGML_SYCL_ASSUME(i_offset >= 0);
-    GGML_SYCL_ASSUME(i_offset < nwarps);
+    GGML_SYCL_ASSUME(i_دننه_واټن >= 0);
+    GGML_SYCL_ASSUME(i_دننه_واټن < nwarps);
     GGML_SYCL_ASSUME(k >= 0);
-    GGML_SYCL_ASSUME(k <  WARP_SIZE);
+    GGML_SYCL_ASSUME(k <  WARP_اندازه);
 
-    const int kbx  = k / QI5_1;
-    const int kqsx = k % QI5_1;
+    ثابت صحيح kbx  = k / QI5_1;
+    ثابت صحيح kqsx = k % QI5_1;
 
-    const block_q5_1 * bx0 = (const block_q5_1 *) vx;
+    ثابت بلاک_q5_1 * bx0 = (ثابت بلاک_q5_1 *) vx;
 
-#pragma unroll
-    for (int i0 = 0; i0 < mmq_y; i0 += nwarps) {
-        int i = i0 + i_offset;
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < mmq_y; i0 += nwarps) {
+        صحيح i = i0 + i_دننه_واټن;
 
-        if (need_check) {
+        إذا (need_check) {
             i = sycl::min(i, i_max);
         }
 
-        const block_q5_1 * bxi = bx0 + i*blocks_per_row + kbx;
+        ثابت بلاک_q5_1 * bxi = bx0 + i*بلاکونه_فی_لیکه + kbx;
 
-        const int ql = get_int_from_uint8_aligned(bxi->qs, kqsx);
-        const int qh = get_int_from_uint8_aligned(bxi->qh, 0) >> (4 * (k % QI5_1));
+        ثابت صحيح ql = get_int_from_uint8_aligned(bxi->qs, kqsx);
+        ثابت صحيح qh = get_int_from_uint8_aligned(bxi->qh, 0) >> (4 * (k % QI5_1));
 
-        int qs0 = (ql >>  0) & 0x0F0F0F0F;
+        صحيح qs0 = (ql >>  0) & 0x0F0F0F0F;
         qs0    |= (qh <<  4) & 0x00000010; // 0 ->  4
         qs0    |= (qh << 11) & 0x00001000; // 1 -> 12
         qs0    |= (qh << 18) & 0x00100000; // 2 -> 20
         qs0    |= (qh << 25) & 0x10000000; // 3 -> 28
 
-        x_ql[i * (2*WARP_SIZE + 1) + 2*k+0] = qs0;
+        x_ql[i * (2*WARP_اندازه + 1) + 2*k+0] = qs0;
 
-        int qs1 = (ql >>  4) & 0x0F0F0F0F;
+        صحيح qs1 = (ql >>  4) & 0x0F0F0F0F;
         qs1    |= (qh >> 12) & 0x00000010; // 16 ->  4
         qs1    |= (qh >>  5) & 0x00001000; // 17 -> 12
         qs1    |= (qh <<  2) & 0x00100000; // 18 -> 20
         qs1    |= (qh <<  9) & 0x10000000; // 19 -> 28
 
-        x_ql[i * (2*WARP_SIZE + 1) + 2*k+1] = qs1;
+        x_ql[i * (2*WARP_اندازه + 1) + 2*k+1] = qs1;
     }
 
-    const int blocks_per_tile_x_row = WARP_SIZE / QI5_1;
-    const int kbxd = k % blocks_per_tile_x_row;
+    ثابت صحيح بلاکونه_فی_tile_x_لیکه = WARP_اندازه / QI5_1;
+    ثابت صحيح kbxd = k % بلاکونه_فی_tile_x_لیکه;
 
-#pragma unroll
-    for (int i0 = 0; i0 < mmq_y; i0 += nwarps * QI5_1) {
-        int i = i0 + i_offset * QI5_1 + k / blocks_per_tile_x_row;
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < mmq_y; i0 += nwarps * QI5_1) {
+        صحيح i = i0 + i_دننه_واټن * QI5_1 + k / بلاکونه_فی_tile_x_لیکه;
 
-        if (need_check) {
+        إذا (need_check) {
             i = sycl::min(i, i_max);
         }
 
-        const block_q5_1 * bxi = bx0 + i*blocks_per_row + kbxd;
+        ثابت بلاک_q5_1 * bxi = bx0 + i*بلاکونه_فی_لیکه + kbxd;
 
-        x_dm[i * (WARP_SIZE/QI5_1) + i / QI5_1 + kbxd] = bxi->dm;
+        x_dm[i * (WARP_اندازه/QI5_1) + i / QI5_1 + kbxd] = bxi->dm;
     }
 }
 
-static __dpct_inline__ float vec_dot_q5_1_q8_1_mul_mat(
-    const int *__restrict__ x_ql, const sycl::half2 *__restrict__ x_dm,
-    const int *__restrict__ x_qh, const int *__restrict__ x_sc,
-    const int *__restrict__ y_qs, const sycl::half2 *__restrict__ y_ds,
-    const int &i, const int &j, const int &k) {
-    (void)x_qh; (void)x_sc;
+ساكن __dpct_inline__ عائم vec_dot_q5_1_q8_1_mul_mat(
+    ثابت صحيح *__restrict__ x_ql, ثابت sycl::half2 *__restrict__ x_dm,
+    ثابت صحيح *__restrict__ x_qh, ثابت صحيح *__restrict__ x_sc,
+    ثابت صحيح *__restrict__ y_qs, ثابت sycl::half2 *__restrict__ y_ds,
+    ثابت صحيح &i, ثابت صحيح &j, ثابت صحيح &k) {
+    (فراغ)x_qh; (فراغ)x_sc;
 
-    const int kyqs = k % (QI8_1/2) + QI8_1 * (k / (QI8_1/2));
-    const int index_bx = i * (WARP_SIZE/QI5_1) + + i/QI5_1 + k/QI5_1;
+    ثابت صحيح kyqs = k % (QI8_1/2) + QI8_1 * (k / (QI8_1/2));
+    ثابت صحيح شاخص_bx = i * (WARP_اندازه/QI5_1) + + i/QI5_1 + k/QI5_1;
 
-    int u[2*VDR_Q5_1_Q8_1_MMQ];
+    صحيح u[2*VDR_Q5_1_Q8_1_MMQ];
 
-#pragma unroll
-    for (int l = 0; l < VDR_Q5_1_Q8_1_MMQ; ++l) {
-        u[2*l+0] = y_qs[j * WARP_SIZE + (kyqs + l)         % WARP_SIZE];
-        u[2*l+1] = y_qs[j * WARP_SIZE + (kyqs + l + QI5_1) % WARP_SIZE];
+#لارښوونه unroll
+    لكل (صحيح l = 0; l < VDR_Q5_1_Q8_1_MMQ; ++l) {
+        u[2*l+0] = y_qs[j * WARP_اندازه + (kyqs + l)         % WARP_اندازه];
+        u[2*l+1] = y_qs[j * WARP_اندازه + (kyqs + l + QI5_1) % WARP_اندازه];
     }
 
-    return vec_dot_q8_1_q8_1_impl<QR5_1*VDR_Q5_1_Q8_1_MMQ>
-        (&x_ql[i * (2*WARP_SIZE + 1) + 2 * k], u, x_dm[index_bx], y_ds[j * (WARP_SIZE/QI8_1) + (2*k/QI8_1) % (WARP_SIZE/QI8_1)]);
+    أرجع vec_dot_q8_1_q8_1_impl<QR5_1*VDR_Q5_1_Q8_1_MMQ>
+        (&x_ql[i * (2*WARP_اندازه + 1) + 2 * k], u, x_dm[شاخص_bx], y_ds[j * (WARP_اندازه/QI8_1) + (2*k/QI8_1) % (WARP_اندازه/QI8_1)]);
 }
 
-template <int mmq_y>
-static __dpct_inline__ void
-allocate_tiles_q8_0(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
-                    int *tile_x_qs_q8_0, float *tile_x_d_q8_0) {
-    (void)x_qh; (void)x_sc;
+کينډۍ <صحيح mmq_y>
+ساكن __dpct_inline__ فراغ
+allocate_tiles_q8_0(صحيح **x_ql, sycl::half2 **x_dm, صحيح **x_qh, صحيح **x_sc,
+                    صحيح *tile_x_qs_q8_0, عائم *tile_x_d_q8_0) {
+    (فراغ)x_qh; (فراغ)x_sc;
 
     *x_ql = tile_x_qs_q8_0;
     *x_dm = (sycl::half2 *)tile_x_d_q8_0;
 }
 
-template <int mmq_y, int nwarps, bool need_check>
-static __dpct_inline__ void
-load_tiles_q8_0(const void *__restrict__ vx, int *__restrict__ x_ql,
-                sycl::half2 *__restrict__ x_dm, int *__restrict__ x_qh,
-                int *__restrict__ x_sc, const int &i_offset, const int &i_max,
-                const int &k, const int &blocks_per_row) {
-    (void)x_qh; (void)x_sc;
+کينډۍ <صحيح mmq_y, صحيح nwarps, منطقي need_check>
+ساكن __dpct_inline__ فراغ
+بارول_tiles_q8_0(ثابت فراغ *__restrict__ vx, صحيح *__restrict__ x_ql,
+                sycl::half2 *__restrict__ x_dm, صحيح *__restrict__ x_qh,
+                صحيح *__restrict__ x_sc, ثابت صحيح &i_دننه_واټن, ثابت صحيح &i_max,
+                ثابت صحيح &k, ثابت صحيح &بلاکونه_فی_لیکه) {
+    (فراغ)x_qh; (فراغ)x_sc;
 
-    GGML_SYCL_ASSUME(i_offset >= 0);
-    GGML_SYCL_ASSUME(i_offset <  nwarps);
+    GGML_SYCL_ASSUME(i_دننه_واټن >= 0);
+    GGML_SYCL_ASSUME(i_دننه_واټن <  nwarps);
     GGML_SYCL_ASSUME(k >= 0);
-    GGML_SYCL_ASSUME(k <  WARP_SIZE);
+    GGML_SYCL_ASSUME(k <  WARP_اندازه);
 
-    const int kbx  = k / QI8_0;
-    const int kqsx = k % QI8_0;
-    float * x_dmf = (float *) x_dm;
+    ثابت صحيح kbx  = k / QI8_0;
+    ثابت صحيح kqsx = k % QI8_0;
+    عائم * x_dmf = (عائم *) x_dm;
 
-    const block_q8_0 * bx0 = (const block_q8_0 *) vx;
+    ثابت بلاک_q8_0 * bx0 = (ثابت بلاک_q8_0 *) vx;
 
-#pragma unroll
-    for (int i0 = 0; i0 < mmq_y; i0 += nwarps) {
-        int i = i0 + i_offset;
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < mmq_y; i0 += nwarps) {
+        صحيح i = i0 + i_دننه_واټن;
 
-        if (need_check) {
+        إذا (need_check) {
             i = sycl::min(i, i_max);
         }
 
-        const block_q8_0 * bxi = bx0 + i*blocks_per_row + kbx;
+        ثابت بلاک_q8_0 * bxi = bx0 + i*بلاکونه_فی_لیکه + kbx;
 
-        x_ql[i * (WARP_SIZE + 1) + k] = get_int_from_int8(bxi->qs, kqsx);
+        x_ql[i * (WARP_اندازه + 1) + k] = get_int_from_int8(bxi->qs, kqsx);
     }
 
-    const int blocks_per_tile_x_row = WARP_SIZE / QI8_0;
-    const int kbxd = k % blocks_per_tile_x_row;
+    ثابت صحيح بلاکونه_فی_tile_x_لیکه = WARP_اندازه / QI8_0;
+    ثابت صحيح kbxd = k % بلاکونه_فی_tile_x_لیکه;
 
-#pragma unroll
-    for (int i0 = 0; i0 < mmq_y; i0 += nwarps * QI8_0) {
-        int i = i0 + i_offset * QI8_0 + k / blocks_per_tile_x_row;
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < mmq_y; i0 += nwarps * QI8_0) {
+        صحيح i = i0 + i_دننه_واټن * QI8_0 + k / بلاکونه_فی_tile_x_لیکه;
 
-        if (need_check) {
+        إذا (need_check) {
             i = sycl::min(i, i_max);
         }
 
-        const block_q8_0 * bxi = bx0 + i*blocks_per_row + kbxd;
+        ثابت بلاک_q8_0 * bxi = bx0 + i*بلاکونه_فی_لیکه + kbxd;
 
-        x_dmf[i * (WARP_SIZE/QI8_0) + i / QI8_0 + kbxd] = bxi->d;
+        x_dmf[i * (WARP_اندازه/QI8_0) + i / QI8_0 + kbxd] = bxi->d;
     }
 }
 
-static __dpct_inline__ float vec_dot_q8_0_q8_1_mul_mat(
-    const int *__restrict__ x_ql, const sycl::half2 *__restrict__ x_dm,
-    const int *__restrict__ x_qh, const int *__restrict__ x_sc,
-    const int *__restrict__ y_qs, const sycl::half2 *__restrict__ y_ds,
-    const int &i, const int &j, const int &k) {
-    (void)x_qh; (void)x_sc;
+ساكن __dpct_inline__ عائم vec_dot_q8_0_q8_1_mul_mat(
+    ثابت صحيح *__restrict__ x_ql, ثابت sycl::half2 *__restrict__ x_dm,
+    ثابت صحيح *__restrict__ x_qh, ثابت صحيح *__restrict__ x_sc,
+    ثابت صحيح *__restrict__ y_qs, ثابت sycl::half2 *__restrict__ y_ds,
+    ثابت صحيح &i, ثابت صحيح &j, ثابت صحيح &k) {
+    (فراغ)x_qh; (فراغ)x_sc;
 
-    const float * x_dmf = (const float *) x_dm;
-    const float * y_df  = (const float *) y_ds;
+    ثابت عائم * x_dmf = (ثابت عائم *) x_dm;
+    ثابت عائم * y_df  = (ثابت عائم *) y_ds;
 
-    return vec_dot_q8_0_q8_1_impl<VDR_Q8_0_Q8_1_MMQ>
-        (&x_ql[i * (WARP_SIZE + 1) + k], &y_qs[j * WARP_SIZE + k], x_dmf[i * (WARP_SIZE/QI8_0) + i/QI8_0 + k/QI8_0],
-         y_df[j * (WARP_SIZE/QI8_1) + k/QI8_1]);
+    أرجع vec_dot_q8_0_q8_1_impl<VDR_Q8_0_Q8_1_MMQ>
+        (&x_ql[i * (WARP_اندازه + 1) + k], &y_qs[j * WARP_اندازه + k], x_dmf[i * (WARP_اندازه/QI8_0) + i/QI8_0 + k/QI8_0],
+         y_df[j * (WARP_اندازه/QI8_1) + k/QI8_1]);
 }
 
-template <int mmq_y>
-static __dpct_inline__ void
-allocate_tiles_q2_K(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
-                    int *tile_x_ql_q2_K, sycl::half2 *tile_x_dm_q2_K,
-                    int *tile_x_sc_q2_K) {
-    (void)x_qh;
+کينډۍ <صحيح mmq_y>
+ساكن __dpct_inline__ فراغ
+allocate_tiles_q2_K(صحيح **x_ql, sycl::half2 **x_dm, صحيح **x_qh, صحيح **x_sc,
+                    صحيح *tile_x_ql_q2_K, sycl::half2 *tile_x_dm_q2_K,
+                    صحيح *tile_x_sc_q2_K) {
+    (فراغ)x_qh;
 
     *x_ql = tile_x_ql_q2_K;
     *x_dm = tile_x_dm_q2_K;
     *x_sc = tile_x_sc_q2_K;
 }
 
-template <int mmq_y, int nwarps, bool need_check>
-static __dpct_inline__ void
-load_tiles_q2_K(const void *__restrict__ vx, int *__restrict__ x_ql,
-                sycl::half2 *__restrict__ x_dm, int *__restrict__ x_qh,
-                int *__restrict__ x_sc, const int &i_offset, const int &i_max,
-                const int &k, const int &blocks_per_row) {
-    (void)x_qh;
+کينډۍ <صحيح mmq_y, صحيح nwarps, منطقي need_check>
+ساكن __dpct_inline__ فراغ
+بارول_tiles_q2_K(ثابت فراغ *__restrict__ vx, صحيح *__restrict__ x_ql,
+                sycl::half2 *__restrict__ x_dm, صحيح *__restrict__ x_qh,
+                صحيح *__restrict__ x_sc, ثابت صحيح &i_دننه_واټن, ثابت صحيح &i_max,
+                ثابت صحيح &k, ثابت صحيح &بلاکونه_فی_لیکه) {
+    (فراغ)x_qh;
 
-    GGML_SYCL_ASSUME(i_offset >= 0);
-    GGML_SYCL_ASSUME(i_offset <  nwarps);
+    GGML_SYCL_ASSUME(i_دننه_واټن >= 0);
+    GGML_SYCL_ASSUME(i_دننه_واټن <  nwarps);
     GGML_SYCL_ASSUME(k >= 0);
-    GGML_SYCL_ASSUME(k <  WARP_SIZE);
+    GGML_SYCL_ASSUME(k <  WARP_اندازه);
 
-    const int kbx  = k / QI2_K;
-    const int kqsx = k % QI2_K;
+    ثابت صحيح kbx  = k / QI2_K;
+    ثابت صحيح kqsx = k % QI2_K;
 
-    const block_q2_K * bx0 = (const block_q2_K *) vx;
+    ثابت بلاک_q2_K * bx0 = (ثابت بلاک_q2_K *) vx;
 
-#pragma unroll
-    for (int i0 = 0; i0 < mmq_y; i0 += nwarps) {
-        int i = i0 + i_offset;
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < mmq_y; i0 += nwarps) {
+        صحيح i = i0 + i_دننه_واټن;
 
-        if (need_check) {
+        إذا (need_check) {
             i = sycl::min(i, i_max);
         }
 
-        const block_q2_K * bxi = bx0 + i*blocks_per_row + kbx;
+        ثابت بلاک_q2_K * bxi = bx0 + i*بلاکونه_فی_لیکه + kbx;
 
-        x_ql[i * (WARP_SIZE + 1) + k] = get_int_from_uint8_aligned(bxi->qs, kqsx);
+        x_ql[i * (WARP_اندازه + 1) + k] = get_int_from_uint8_aligned(bxi->qs, kqsx);
     }
 
-    const int blocks_per_tile_x_row = WARP_SIZE / QI2_K;
-    const int kbxd = k % blocks_per_tile_x_row;
+    ثابت صحيح بلاکونه_فی_tile_x_لیکه = WARP_اندازه / QI2_K;
+    ثابت صحيح kbxd = k % بلاکونه_فی_tile_x_لیکه;
 
-#pragma unroll
-    for (int i0 = 0; i0 < mmq_y; i0 += nwarps * QI2_K) {
-        int i = (i0 + i_offset * QI2_K + k / blocks_per_tile_x_row) % mmq_y;
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < mmq_y; i0 += nwarps * QI2_K) {
+        صحيح i = (i0 + i_دننه_واټن * QI2_K + k / بلاکونه_فی_tile_x_لیکه) % mmq_y;
 
-        if (need_check) {
+        إذا (need_check) {
             i = sycl::min(i, i_max);
         }
 
-        const block_q2_K * bxi = bx0 + i*blocks_per_row + kbxd;
+        ثابت بلاک_q2_K * bxi = bx0 + i*بلاکونه_فی_لیکه + kbxd;
 
-        x_dm[i * (WARP_SIZE/QI2_K) + i / QI2_K + kbxd] = bxi->dm;
+        x_dm[i * (WARP_اندازه/QI2_K) + i / QI2_K + kbxd] = bxi->dm;
     }
 
-#pragma unroll
-    for (int i0 = 0; i0 < mmq_y; i0 += nwarps * 4) {
-        int i = i0 + i_offset * 4 + k / (WARP_SIZE/4);
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < mmq_y; i0 += nwarps * 4) {
+        صحيح i = i0 + i_دننه_واټن * 4 + k / (WARP_اندازه/4);
 
-        if (need_check) {
+        إذا (need_check) {
             i = sycl::min(i, i_max);
         }
 
-        const block_q2_K * bxi = bx0 + i*blocks_per_row + (k % (WARP_SIZE/4)) / (QI2_K/4);
+        ثابت بلاک_q2_K * bxi = bx0 + i*بلاکونه_فی_لیکه + (k % (WARP_اندازه/4)) / (QI2_K/4);
 
-        x_sc[i * (WARP_SIZE/4) + i / 4 + k % (WARP_SIZE/4)] = get_int_from_uint8_aligned(bxi->scales, k % (QI2_K/4));
+        x_sc[i * (WARP_اندازه/4) + i / 4 + k % (WARP_اندازه/4)] = get_int_from_uint8_aligned(bxi->scales, k % (QI2_K/4));
     }
 }
 
-#define VDR_Q2_K_Q8_1_MMQ  2
+#تعریف_کړه VDR_Q2_K_Q8_1_MMQ  2
 // contiguous u/y values
-static __dpct_inline__ float
-vec_dot_q2_K_q8_1_impl_mmq(const int *__restrict__ v, const int *__restrict__ u,
-                           const uint8_t *__restrict__ scales,
-                           const sycl::half2 &dm2, const float &d8) {
+ساكن __dpct_inline__ عائم
+vec_dot_q2_K_q8_1_impl_mmq(ثابت صحيح *__restrict__ v, ثابت صحيح *__restrict__ u,
+                           ثابت uint8_t *__restrict__ scales,
+                           ثابت sycl::half2 &dm2, ثابت عائم &d8) {
 
-    int sumi_d = 0;
-    int sumi_m = 0;
+    صحيح sumi_d = 0;
+    صحيح sumi_m = 0;
 
-#pragma unroll
-    for (int i0 = 0; i0 < QI8_1; i0 += QI8_1/2) {
-        int sumi_d_sc = 0;
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < QI8_1; i0 += QI8_1/2) {
+        صحيح sumi_d_sc = 0;
 
-        const int sc = scales[i0 / (QI8_1/2)];
+        ثابت صحيح sc = scales[i0 / (QI8_1/2)];
 
         // fill int with 4x m
-        int m = sc >> 4;
+        صحيح m = sc >> 4;
         m |= m <<  8;
         m |= m << 16;
 
-#pragma unroll
-        for (int i = i0; i < i0 + QI8_1/2; ++i) {
+#لارښوونه unroll
+        لكل (صحيح i = i0; i < i0 + QI8_1/2; ++i) {
             sumi_d_sc = dpct::dp4a(v[i], u[i], sumi_d_sc); // SIMD dot product
             sumi_m = dpct::dp4a(m, u[i],
                                 sumi_m); // multiply sum of q8_1 values with m
@@ -583,44 +583,44 @@ vec_dot_q2_K_q8_1_impl_mmq(const int *__restrict__ v, const int *__restrict__ u,
         sumi_d += sumi_d_sc * (sc & 0xF);
     }
 
-    const sycl::float2 dm2f =
-        dm2.convert<float, sycl::rounding_mode::automatic>();
+    ثابت sycl::float2 dm2f =
+        dm2.convert<عائم, sycl::rounding_ډېرپېښ::automatic>();
 
-    return d8 * (dm2f.x() * sumi_d - dm2f.y() * sumi_m);
+    أرجع d8 * (dm2f.x() * sumi_d - dm2f.y() * sumi_m);
 }
 
-static __dpct_inline__ float vec_dot_q2_K_q8_1_mul_mat(
-    const int *__restrict__ x_ql, const sycl::half2 *__restrict__ x_dm,
-    const int *__restrict__ x_qh, const int *__restrict__ x_sc,
-    const int *__restrict__ y_qs, const sycl::half2 *__restrict__ y_ds,
-    const int &i, const int &j, const int &k) {
-    (void)x_qh;
+ساكن __dpct_inline__ عائم vec_dot_q2_K_q8_1_mul_mat(
+    ثابت صحيح *__restrict__ x_ql, ثابت sycl::half2 *__restrict__ x_dm,
+    ثابت صحيح *__restrict__ x_qh, ثابت صحيح *__restrict__ x_sc,
+    ثابت صحيح *__restrict__ y_qs, ثابت sycl::half2 *__restrict__ y_ds,
+    ثابت صحيح &i, ثابت صحيح &j, ثابت صحيح &k) {
+    (فراغ)x_qh;
 
-    const int kbx = k / QI2_K;
-    const int ky  = (k % QI2_K) * QR2_K;
-    const float * y_df = (const float *) y_ds;
+    ثابت صحيح kbx = k / QI2_K;
+    ثابت صحيح ky  = (k % QI2_K) * QR2_K;
+    ثابت عائم * y_df = (ثابت عائم *) y_ds;
 
-    int v[QR2_K*VDR_Q2_K_Q8_1_MMQ];
+    صحيح v[QR2_K*VDR_Q2_K_Q8_1_MMQ];
 
-    const int kqsx = i * (WARP_SIZE + 1) + kbx*QI2_K + (QI2_K/2) * (ky/(2*QI2_K)) + ky % (QI2_K/2);
-    const int shift = 2 * ((ky % (2*QI2_K)) / (QI2_K/2));
+    ثابت صحيح kqsx = i * (WARP_اندازه + 1) + kbx*QI2_K + (QI2_K/2) * (ky/(2*QI2_K)) + ky % (QI2_K/2);
+    ثابت صحيح ښويدنه = 2 * ((ky % (2*QI2_K)) / (QI2_K/2));
 
-#pragma unroll
-    for (int l = 0; l < QR2_K*VDR_Q2_K_Q8_1_MMQ; ++l) {
-        v[l] = (x_ql[kqsx + l] >> shift) & 0x03030303;
+#لارښوونه unroll
+    لكل (صحيح l = 0; l < QR2_K*VDR_Q2_K_Q8_1_MMQ; ++l) {
+        v[l] = (x_ql[kqsx + l] >> ښويدنه) & 0x03030303;
     }
 
-    const uint8_t * scales = ((const uint8_t *) &x_sc[i * (WARP_SIZE/4) + i/4 + kbx*4]) + ky/4;
+    ثابت uint8_t * scales = ((ثابت uint8_t *) &x_sc[i * (WARP_اندازه/4) + i/4 + kbx*4]) + ky/4;
 
-    const int index_y = j * WARP_SIZE + (QR2_K*k) % WARP_SIZE;
-    return vec_dot_q2_K_q8_1_impl_mmq(v, &y_qs[index_y], scales, x_dm[i * (WARP_SIZE/QI2_K) + i/QI2_K + kbx], y_df[index_y/QI8_1]);
+    ثابت صحيح شاخص_y = j * WARP_اندازه + (QR2_K*k) % WARP_اندازه;
+    أرجع vec_dot_q2_K_q8_1_impl_mmq(v, &y_qs[شاخص_y], scales, x_dm[i * (WARP_اندازه/QI2_K) + i/QI2_K + kbx], y_df[شاخص_y/QI8_1]);
 }
 
-template <int mmq_y>
-static __dpct_inline__ void
-allocate_tiles_q3_K(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
-                    int *tile_x_ql_q3_K, sycl::half2 *tile_x_dm_q3_K,
-                    int *tile_x_qh_q3_K, int *tile_x_sc_q3_K) {
+کينډۍ <صحيح mmq_y>
+ساكن __dpct_inline__ فراغ
+allocate_tiles_q3_K(صحيح **x_ql, sycl::half2 **x_dm, صحيح **x_qh, صحيح **x_sc,
+                    صحيح *tile_x_ql_q3_K, sycl::half2 *tile_x_dm_q3_K,
+                    صحيح *tile_x_qh_q3_K, صحيح *tile_x_sc_q3_K) {
 
     *x_ql = tile_x_ql_q3_K;
     *x_dm = tile_x_dm_q3_K;
@@ -628,534 +628,534 @@ allocate_tiles_q3_K(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
     *x_sc = tile_x_sc_q3_K;
 }
 
-template <int mmq_y, int nwarps, bool need_check>
-static __dpct_inline__ void
-load_tiles_q3_K(const void *__restrict__ vx, int *__restrict__ x_ql,
-                sycl::half2 *__restrict__ x_dm, int *__restrict__ x_qh,
-                int *__restrict__ x_sc, const int &i_offset, const int &i_max,
-                const int &k, const int &blocks_per_row) {
+کينډۍ <صحيح mmq_y, صحيح nwarps, منطقي need_check>
+ساكن __dpct_inline__ فراغ
+بارول_tiles_q3_K(ثابت فراغ *__restrict__ vx, صحيح *__restrict__ x_ql,
+                sycl::half2 *__restrict__ x_dm, صحيح *__restrict__ x_qh,
+                صحيح *__restrict__ x_sc, ثابت صحيح &i_دننه_واټن, ثابت صحيح &i_max,
+                ثابت صحيح &k, ثابت صحيح &بلاکونه_فی_لیکه) {
 
-    GGML_SYCL_ASSUME(i_offset >= 0);
-    GGML_SYCL_ASSUME(i_offset <  nwarps);
+    GGML_SYCL_ASSUME(i_دننه_واټن >= 0);
+    GGML_SYCL_ASSUME(i_دننه_واټن <  nwarps);
     GGML_SYCL_ASSUME(k >= 0);
-    GGML_SYCL_ASSUME(k <  WARP_SIZE);
+    GGML_SYCL_ASSUME(k <  WARP_اندازه);
 
-    const int kbx  = k / QI3_K;
-    const int kqsx = k % QI3_K;
+    ثابت صحيح kbx  = k / QI3_K;
+    ثابت صحيح kqsx = k % QI3_K;
 
-    const block_q3_K * bx0 = (const block_q3_K *) vx;
+    ثابت بلاک_q3_K * bx0 = (ثابت بلاک_q3_K *) vx;
 
-#pragma unroll
-    for (int i0 = 0; i0 < mmq_y; i0 += nwarps) {
-        int i = i0 + i_offset;
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < mmq_y; i0 += nwarps) {
+        صحيح i = i0 + i_دننه_واټن;
 
-        if (need_check) {
+        إذا (need_check) {
             i = sycl::min(i, i_max);
         }
 
-        const block_q3_K * bxi = bx0 + i*blocks_per_row + kbx;
+        ثابت بلاک_q3_K * bxi = bx0 + i*بلاکونه_فی_لیکه + kbx;
 
-        x_ql[i * (WARP_SIZE + 1) + k] = get_int_from_uint8(bxi->qs, kqsx);
+        x_ql[i * (WARP_اندازه + 1) + k] = get_int_from_uint8(bxi->qs, kqsx);
     }
 
-    const int blocks_per_tile_x_row = WARP_SIZE / QI3_K;
-    const int kbxd = k % blocks_per_tile_x_row;
-    float * x_dmf = (float *) x_dm;
+    ثابت صحيح بلاکونه_فی_tile_x_لیکه = WARP_اندازه / QI3_K;
+    ثابت صحيح kbxd = k % بلاکونه_فی_tile_x_لیکه;
+    عائم * x_dmf = (عائم *) x_dm;
 
-#pragma unroll
-    for (int i0 = 0; i0 < mmq_y; i0 += nwarps * QI3_K) {
-        int i = (i0 + i_offset * QI3_K + k / blocks_per_tile_x_row) % mmq_y;
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < mmq_y; i0 += nwarps * QI3_K) {
+        صحيح i = (i0 + i_دننه_واټن * QI3_K + k / بلاکونه_فی_tile_x_لیکه) % mmq_y;
 
-        if (need_check) {
+        إذا (need_check) {
             i = sycl::min(i, i_max);
         }
 
-        const block_q3_K * bxi = bx0 + i*blocks_per_row + kbxd;
+        ثابت بلاک_q3_K * bxi = bx0 + i*بلاکونه_فی_لیکه + kbxd;
 
-        x_dmf[i * (WARP_SIZE/QI3_K) + i / QI3_K + kbxd] = bxi->d;
+        x_dmf[i * (WARP_اندازه/QI3_K) + i / QI3_K + kbxd] = bxi->d;
     }
 
-#pragma unroll
-    for (int i0 = 0; i0 < mmq_y; i0 += nwarps * 2) {
-        int i = i0 + i_offset * 2 + k / (WARP_SIZE/2);
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < mmq_y; i0 += nwarps * 2) {
+        صحيح i = i0 + i_دننه_واټن * 2 + k / (WARP_اندازه/2);
 
-        if (need_check) {
+        إذا (need_check) {
             i = sycl::min(i, i_max);
         }
 
-        const block_q3_K * bxi = bx0 + i*blocks_per_row + (k % (WARP_SIZE/2)) / (QI3_K/2);
+        ثابت بلاک_q3_K * bxi = bx0 + i*بلاکونه_فی_لیکه + (k % (WARP_اندازه/2)) / (QI3_K/2);
 
         // invert the mask with ~ so that a 0/1 results in 4/0 being subtracted
-        x_qh[i * (WARP_SIZE/2) + i / 2 + k % (WARP_SIZE/2)] = ~get_int_from_uint8(bxi->hmask, k % (QI3_K/2));
+        x_qh[i * (WARP_اندازه/2) + i / 2 + k % (WARP_اندازه/2)] = ~get_int_from_uint8(bxi->hmask, k % (QI3_K/2));
     }
 
-#pragma unroll
-    for (int i0 = 0; i0 < mmq_y; i0 += nwarps * 4) {
-        int i = i0 + i_offset * 4 + k / (WARP_SIZE/4);
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < mmq_y; i0 += nwarps * 4) {
+        صحيح i = i0 + i_دننه_واټن * 4 + k / (WARP_اندازه/4);
 
-        if (need_check) {
+        إذا (need_check) {
             i = sycl::min(i, i_max);
         }
 
-        const block_q3_K * bxi = bx0 + i*blocks_per_row + (k % (WARP_SIZE/4)) / (QI3_K/4);
+        ثابت بلاک_q3_K * bxi = bx0 + i*بلاکونه_فی_لیکه + (k % (WARP_اندازه/4)) / (QI3_K/4);
 
-        const int ksc = k % (QI3_K/4);
+        ثابت صحيح ksc = k % (QI3_K/4);
 
-        const int ksc_low = ksc % (QI3_K/8);
-        const int shift_low = 4 * (ksc / (QI3_K/8));
-        const int sc_low = (get_int_from_uint8(bxi->scales, ksc_low) >> shift_low) & 0x0F0F0F0F;
+        ثابت صحيح ksc_ټیټ = ksc % (QI3_K/8);
+        ثابت صحيح ښويدنه_ټیټ = 4 * (ksc / (QI3_K/8));
+        ثابت صحيح sc_ټیټ = (get_int_from_uint8(bxi->scales, ksc_ټیټ) >> ښويدنه_ټیټ) & 0x0F0F0F0F;
 
-        const int ksc_high = QI3_K/8;
-        const int shift_high = 2 * ksc;
-        const int sc_high = ((get_int_from_uint8(bxi->scales, ksc_high) >> shift_high) << 4) & 0x30303030;
+        ثابت صحيح ksc_لوړ = QI3_K/8;
+        ثابت صحيح ښويدنه_لوړ = 2 * ksc;
+        ثابت صحيح sc_لوړ = ((get_int_from_uint8(bxi->scales, ksc_لوړ) >> ښويدنه_لوړ) << 4) & 0x30303030;
 
-        const int sc = dpct::vectorized_binary<sycl::char4>(
-            sc_low | sc_high, 0x20202020, dpct::sub_sat());
+        ثابت صحيح sc = dpct::vectorized_دوګونی<sycl::char4>(
+            sc_ټیټ | sc_لوړ, 0x20202020, dpct::sub_sat());
 
-        x_sc[i * (WARP_SIZE/4) + i / 4 + k % (WARP_SIZE/4)] = sc;
+        x_sc[i * (WARP_اندازه/4) + i / 4 + k % (WARP_اندازه/4)] = sc;
     }
 }
 
-#define VDR_Q3_K_Q8_1_MMQ  2
+#تعریف_کړه VDR_Q3_K_Q8_1_MMQ  2
 // contiguous u/y values
-static __dpct_inline__ float
-vec_dot_q3_K_q8_1_impl_mmq(const int *__restrict__ v, const int *__restrict__ u,
-                           const int8_t *__restrict__ scales, const float &d3,
-                           const float &d8) {
+ساكن __dpct_inline__ عائم
+vec_dot_q3_K_q8_1_impl_mmq(ثابت صحيح *__restrict__ v, ثابت صحيح *__restrict__ u,
+                           ثابت int8_t *__restrict__ scales, ثابت عائم &d3,
+                           ثابت عائم &d8) {
 
-    int sumi = 0;
+    صحيح sumi = 0;
 
-#pragma unroll
-    for (int i0 = 0; i0 < QR3_K*VDR_Q3_K_Q8_1_MMQ; i0 += QI8_1/2) {
-        int sumi_sc = 0;
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < QR3_K*VDR_Q3_K_Q8_1_MMQ; i0 += QI8_1/2) {
+        صحيح sumi_sc = 0;
 
-        for (int i = i0; i < i0 + QI8_1/2; ++i) {
+        لكل (صحيح i = i0; i < i0 + QI8_1/2; ++i) {
             sumi_sc = dpct::dp4a(v[i], u[i], sumi_sc); // SIMD dot product
         }
 
         sumi += sumi_sc * scales[i0 / (QI8_1/2)];
     }
 
-    return d3*d8 * sumi;
+    أرجع d3*d8 * sumi;
 }
 
-static __dpct_inline__ float vec_dot_q3_K_q8_1_mul_mat(
-    const int *__restrict__ x_ql, const sycl::half2 *__restrict__ x_dm,
-    const int *__restrict__ x_qh, const int *__restrict__ x_sc,
-    const int *__restrict__ y_qs, const sycl::half2 *__restrict__ y_ds,
-    const int &i, const int &j, const int &k) {
+ساكن __dpct_inline__ عائم vec_dot_q3_K_q8_1_mul_mat(
+    ثابت صحيح *__restrict__ x_ql, ثابت sycl::half2 *__restrict__ x_dm,
+    ثابت صحيح *__restrict__ x_qh, ثابت صحيح *__restrict__ x_sc,
+    ثابت صحيح *__restrict__ y_qs, ثابت sycl::half2 *__restrict__ y_ds,
+    ثابت صحيح &i, ثابت صحيح &j, ثابت صحيح &k) {
 
-    const int kbx  = k / QI3_K;
-    const int ky  = (k % QI3_K) * QR3_K;
-    const float * x_dmf = (const float *) x_dm;
-    const float * y_df  = (const float *) y_ds;
+    ثابت صحيح kbx  = k / QI3_K;
+    ثابت صحيح ky  = (k % QI3_K) * QR3_K;
+    ثابت عائم * x_dmf = (ثابت عائم *) x_dm;
+    ثابت عائم * y_df  = (ثابت عائم *) y_ds;
 
-    const int8_t * scales = ((const int8_t *) (x_sc + i * (WARP_SIZE/4) + i/4 + kbx*4)) + ky/4;
+    ثابت int8_t * scales = ((ثابت int8_t *) (x_sc + i * (WARP_اندازه/4) + i/4 + kbx*4)) + ky/4;
 
-    int v[QR3_K*VDR_Q3_K_Q8_1_MMQ];
+    صحيح v[QR3_K*VDR_Q3_K_Q8_1_MMQ];
 
-#pragma unroll
-    for (int l = 0; l < QR3_K*VDR_Q3_K_Q8_1_MMQ; ++l) {
-        const int kqsx = i * (WARP_SIZE + 1) + kbx*QI3_K + (QI3_K/2) * (ky/(2*QI3_K)) + ky % (QI3_K/2);
-        const int shift = 2 * ((ky % 32) / 8);
-        const int vll = (x_ql[kqsx + l] >> shift) & 0x03030303;
+#لارښوونه unroll
+    لكل (صحيح l = 0; l < QR3_K*VDR_Q3_K_Q8_1_MMQ; ++l) {
+        ثابت صحيح kqsx = i * (WARP_اندازه + 1) + kbx*QI3_K + (QI3_K/2) * (ky/(2*QI3_K)) + ky % (QI3_K/2);
+        ثابت صحيح ښويدنه = 2 * ((ky % 32) / 8);
+        ثابت صحيح vll = (x_ql[kqsx + l] >> ښويدنه) & 0x03030303;
 
-        const int vh = x_qh[i * (WARP_SIZE/2) + i/2 + kbx * (QI3_K/2) + (ky+l)%8] >> ((ky+l) / 8);
-        const int vlh = (vh << 2) & 0x04040404;
+        ثابت صحيح vh = x_qh[i * (WARP_اندازه/2) + i/2 + kbx * (QI3_K/2) + (ky+l)%8] >> ((ky+l) / 8);
+        ثابت صحيح vlh = (vh << 2) & 0x04040404;
 
-        v[l] = dpct::vectorized_binary<sycl::char4>(vll, vlh, dpct::sub_sat());
+        v[l] = dpct::vectorized_دوګونی<sycl::char4>(vll, vlh, dpct::sub_sat());
     }
 
-    const int index_y = j * WARP_SIZE + (k*QR3_K) % WARP_SIZE;
-    return vec_dot_q3_K_q8_1_impl_mmq(v, &y_qs[index_y], scales, x_dmf[i * (WARP_SIZE/QI3_K) + i/QI3_K + kbx], y_df[index_y/QI8_1]);
+    ثابت صحيح شاخص_y = j * WARP_اندازه + (k*QR3_K) % WARP_اندازه;
+    أرجع vec_dot_q3_K_q8_1_impl_mmq(v, &y_qs[شاخص_y], scales, x_dmf[i * (WARP_اندازه/QI3_K) + i/QI3_K + kbx], y_df[شاخص_y/QI8_1]);
 }
 
-template <int mmq_y>
-static __dpct_inline__ void
-allocate_tiles_q4_K(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
-                    int *tile_x_ql_q4_K, sycl::half2 *tile_x_dm_q4_K,
-                    int *tile_x_sc_q4_K) {
-    (void)x_qh;
+کينډۍ <صحيح mmq_y>
+ساكن __dpct_inline__ فراغ
+allocate_tiles_q4_K(صحيح **x_ql, sycl::half2 **x_dm, صحيح **x_qh, صحيح **x_sc,
+                    صحيح *tile_x_ql_q4_K, sycl::half2 *tile_x_dm_q4_K,
+                    صحيح *tile_x_sc_q4_K) {
+    (فراغ)x_qh;
 
     *x_ql = tile_x_ql_q4_K;
     *x_dm = tile_x_dm_q4_K;
     *x_sc = tile_x_sc_q4_K;
 }
 
-template <int mmq_y, int nwarps, bool need_check>
-static __dpct_inline__ void
-load_tiles_q4_K(const void *__restrict__ vx, int *__restrict__ x_ql,
-                sycl::half2 *__restrict__ x_dm, int *__restrict__ x_qh,
-                int *__restrict__ x_sc, const int &i_offset, const int &i_max,
-                const int &k, const int &blocks_per_row) {
-    (void)x_qh;
+کينډۍ <صحيح mmq_y, صحيح nwarps, منطقي need_check>
+ساكن __dpct_inline__ فراغ
+بارول_tiles_q4_K(ثابت فراغ *__restrict__ vx, صحيح *__restrict__ x_ql,
+                sycl::half2 *__restrict__ x_dm, صحيح *__restrict__ x_qh,
+                صحيح *__restrict__ x_sc, ثابت صحيح &i_دننه_واټن, ثابت صحيح &i_max,
+                ثابت صحيح &k, ثابت صحيح &بلاکونه_فی_لیکه) {
+    (فراغ)x_qh;
 
-    GGML_SYCL_ASSUME(i_offset >= 0);
-    GGML_SYCL_ASSUME(i_offset <  nwarps);
+    GGML_SYCL_ASSUME(i_دننه_واټن >= 0);
+    GGML_SYCL_ASSUME(i_دننه_واټن <  nwarps);
     GGML_SYCL_ASSUME(k >= 0);
-    GGML_SYCL_ASSUME(k <  WARP_SIZE);
+    GGML_SYCL_ASSUME(k <  WARP_اندازه);
 
-    const int kbx  = k / QI4_K; // == 0 if QK_K == 256
-    const int kqsx = k % QI4_K; // == k if QK_K == 256
+    ثابت صحيح kbx  = k / QI4_K; // == 0 if QK_K == 256
+    ثابت صحيح kqsx = k % QI4_K; // == k if QK_K == 256
 
-    const block_q4_K * bx0 = (const block_q4_K *) vx;
+    ثابت بلاک_q4_K * bx0 = (ثابت بلاک_q4_K *) vx;
 
-#pragma unroll
-    for (int i0 = 0; i0 < mmq_y; i0 += nwarps) {
-        int i = i0 + i_offset;
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < mmq_y; i0 += nwarps) {
+        صحيح i = i0 + i_دننه_واټن;
 
-        if (need_check) {
+        إذا (need_check) {
             i = sycl::min(i, i_max);
         }
 
-        const block_q4_K * bxi = bx0 + i*blocks_per_row + kbx;
+        ثابت بلاک_q4_K * bxi = bx0 + i*بلاکونه_فی_لیکه + kbx;
 
-        x_ql[i * (WARP_SIZE + 1) + k] = get_int_from_uint8_aligned(bxi->qs, kqsx);
+        x_ql[i * (WARP_اندازه + 1) + k] = get_int_from_uint8_aligned(bxi->qs, kqsx);
     }
 
-    constexpr int blocks_per_tile_x_row = QI4_K > WARP_SIZE ? 1 : WARP_SIZE / QI4_K; // == 1 if QK_K == 256
-    const int kbxd = k % blocks_per_tile_x_row;          // == 0 if QK_K == 256
+    constexpr صحيح بلاکونه_فی_tile_x_لیکه = QI4_K > WARP_اندازه ? 1 : WARP_اندازه / QI4_K; // == 1 if QK_K == 256
+    ثابت صحيح kbxd = k % بلاکونه_فی_tile_x_لیکه;          // == 0 if QK_K == 256
 
-#pragma unroll
-    for (int i0 = 0; i0 < mmq_y; i0 += nwarps * QI4_K) {
-        int i = (i0 + i_offset * QI4_K + k / blocks_per_tile_x_row) % mmq_y;
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < mmq_y; i0 += nwarps * QI4_K) {
+        صحيح i = (i0 + i_دننه_واټن * QI4_K + k / بلاکونه_فی_tile_x_لیکه) % mmq_y;
 
-        if (need_check) {
+        إذا (need_check) {
             i = sycl::min(i, i_max);
         }
 
-        const block_q4_K * bxi = bx0 + i*blocks_per_row + kbxd;
+        ثابت بلاک_q4_K * bxi = bx0 + i*بلاکونه_فی_لیکه + kbxd;
 
-#if QK_K == 256
-        x_dm[i * (WARP_SIZE/QI4_K) + i / QI4_K + kbxd] = bxi->dm;
-#else
-        x_dm[i * (WARP_SIZE/QI4_K) + i / QI4_K + kbxd] = {bxi->dm[0], bxi->dm[1]};
-#endif
+#إذا QK_K == 256
+        x_dm[i * (WARP_اندازه/QI4_K) + i / QI4_K + kbxd] = bxi->dm;
+#وإلا
+        x_dm[i * (WARP_اندازه/QI4_K) + i / QI4_K + kbxd] = {bxi->dm[0], bxi->dm[1]};
+#د_که_پای
     }
 
-#pragma unroll
-    for (int i0 = 0; i0 < mmq_y; i0 += nwarps * 8) {
-        int i = (i0 + i_offset * 8 + k / (WARP_SIZE/8)) % mmq_y;
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < mmq_y; i0 += nwarps * 8) {
+        صحيح i = (i0 + i_دننه_واټن * 8 + k / (WARP_اندازه/8)) % mmq_y;
 
-        if (need_check) {
+        إذا (need_check) {
             i = sycl::min(i, i_max);
         }
 
-        const block_q4_K * bxi = bx0 + i*blocks_per_row + (k % (WARP_SIZE/8)) / (QI4_K/8);
+        ثابت بلاک_q4_K * bxi = bx0 + i*بلاکونه_فی_لیکه + (k % (WARP_اندازه/8)) / (QI4_K/8);
 
-        const int * scales = (const int *) bxi->scales;
+        ثابت صحيح * scales = (ثابت صحيح *) bxi->scales;
 
-        const int ksc = k % (WARP_SIZE/8);
+        ثابت صحيح ksc = k % (WARP_اندازه/8);
 
         // scale arrangement after the following two lines: sc0,...,sc3, sc4,...,sc7, m0,...,m3, m4,...,m8
-        int scales8 = (scales[(ksc%2) + (ksc!=0)] >> (4 * (ksc & (ksc/2)))) & 0x0F0F0F0F; // lower 4 bits
+        صحيح scales8 = (scales[(ksc%2) + (ksc!=0)] >> (4 * (ksc & (ksc/2)))) & 0x0F0F0F0F; // lower 4 bits
         scales8    |= (scales[ksc/2]              >> (2 * (ksc % 2)))       & 0x30303030; // upper 2 bits
 
-        x_sc[i * (WARP_SIZE/8) + i / 8 + ksc] = scales8;
+        x_sc[i * (WARP_اندازه/8) + i / 8 + ksc] = scales8;
     }
 }
 
 
-#define VDR_Q4_K_Q8_1_MMQ  8
+#تعریف_کړه VDR_Q4_K_Q8_1_MMQ  8
 
 // contiguous u/y values
-static __dpct_inline__ float vec_dot_q4_K_q8_1_impl_mmq(
-    const int *__restrict__ v, const int *__restrict__ u,
-    const uint8_t *__restrict__ sc, const uint8_t *__restrict__ m,
-    const sycl::half2 &dm4, const sycl::half2 *__restrict__ ds8) {
+ساكن __dpct_inline__ عائم vec_dot_q4_K_q8_1_impl_mmq(
+    ثابت صحيح *__restrict__ v, ثابت صحيح *__restrict__ u,
+    ثابت uint8_t *__restrict__ sc, ثابت uint8_t *__restrict__ m,
+    ثابت sycl::half2 &dm4, ثابت sycl::half2 *__restrict__ ds8) {
 
-    float sumf_d = 0.0f;
-    float sumf_m = 0.0f;
+    عائم sumf_d = 0.0f;
+    عائم sumf_m = 0.0f;
 
-#pragma unroll
-    for (int i = 0; i < QR4_K*VDR_Q4_K_Q8_1_MMQ/QI8_1; ++i) {
-        int sumi_d = 0;
+#لارښوونه unroll
+    لكل (صحيح i = 0; i < QR4_K*VDR_Q4_K_Q8_1_MMQ/QI8_1; ++i) {
+        صحيح sumi_d = 0;
 
-#pragma unroll
-        for (int j = 0; j < QI8_1; ++j) {
+#لارښوونه unroll
+        لكل (صحيح j = 0; j < QI8_1; ++j) {
             sumi_d = dpct::dp4a((v[j] >> (4 * i)) & 0x0F0F0F0F,
                                 u[i * QI8_1 + j], sumi_d); // SIMD dot product
         }
 
-        const sycl::float2 ds8f =
-            ds8[i].convert<float, sycl::rounding_mode::automatic>();
+        ثابت sycl::float2 ds8f =
+            ds8[i].convert<عائم, sycl::rounding_ډېرپېښ::automatic>();
 
         sumf_d += ds8f.x() * (sc[i] * sumi_d);
         sumf_m += ds8f.y() * m[i]; // sum of q8_1 block * q4_K min val
     }
 
-    const sycl::float2 dm4f =
-        dm4.convert<float, sycl::rounding_mode::automatic>();
+    ثابت sycl::float2 dm4f =
+        dm4.convert<عائم, sycl::rounding_ډېرپېښ::automatic>();
 
-    return dm4f.x() * sumf_d - dm4f.y() * sumf_m;
+    أرجع dm4f.x() * sumf_d - dm4f.y() * sumf_m;
 }
 
 
-static __dpct_inline__ float vec_dot_q4_K_q8_1_mul_mat(
-    const int *__restrict__ x_ql, const sycl::half2 *__restrict__ x_dm,
-    const int *__restrict__ x_qh, const int *__restrict__ x_sc,
-    const int *__restrict__ y_qs, const sycl::half2 *__restrict__ y_ds,
-    const int &i, const int &j, const int &k) {
-    (void)x_qh;
+ساكن __dpct_inline__ عائم vec_dot_q4_K_q8_1_mul_mat(
+    ثابت صحيح *__restrict__ x_ql, ثابت sycl::half2 *__restrict__ x_dm,
+    ثابت صحيح *__restrict__ x_qh, ثابت صحيح *__restrict__ x_sc,
+    ثابت صحيح *__restrict__ y_qs, ثابت sycl::half2 *__restrict__ y_ds,
+    ثابت صحيح &i, ثابت صحيح &j, ثابت صحيح &k) {
+    (فراغ)x_qh;
 
-    const uint8_t * sc = ((const uint8_t *) &x_sc[i * (WARP_SIZE/8) + i/8 + k/16]) + 2*((k % 16) / 8);
+    ثابت uint8_t * sc = ((ثابت uint8_t *) &x_sc[i * (WARP_اندازه/8) + i/8 + k/16]) + 2*((k % 16) / 8);
 
-    const int index_y = j * WARP_SIZE + (QR4_K*k) % WARP_SIZE;
-    return vec_dot_q4_K_q8_1_impl_mmq(&x_ql[i * (WARP_SIZE + 1) + k], &y_qs[index_y], sc, sc+8,
-                                      x_dm[i * (WARP_SIZE/QI4_K) + i/QI4_K], &y_ds[index_y/QI8_1]);
+    ثابت صحيح شاخص_y = j * WARP_اندازه + (QR4_K*k) % WARP_اندازه;
+    أرجع vec_dot_q4_K_q8_1_impl_mmq(&x_ql[i * (WARP_اندازه + 1) + k], &y_qs[شاخص_y], sc, sc+8,
+                                      x_dm[i * (WARP_اندازه/QI4_K) + i/QI4_K], &y_ds[شاخص_y/QI8_1]);
 }
 
-template <int mmq_y>
-static __dpct_inline__ void
-allocate_tiles_q5_K(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
-                    int *tile_x_ql_q5_K, sycl::half2 *tile_x_dm_q5_K,
-                    int *tile_x_sc_q5_K) {
-    (void)x_qh;
+کينډۍ <صحيح mmq_y>
+ساكن __dpct_inline__ فراغ
+allocate_tiles_q5_K(صحيح **x_ql, sycl::half2 **x_dm, صحيح **x_qh, صحيح **x_sc,
+                    صحيح *tile_x_ql_q5_K, sycl::half2 *tile_x_dm_q5_K,
+                    صحيح *tile_x_sc_q5_K) {
+    (فراغ)x_qh;
 
     *x_ql = tile_x_ql_q5_K;
     *x_dm = tile_x_dm_q5_K;
     *x_sc = tile_x_sc_q5_K;
 }
 
-template <int mmq_y, int nwarps, bool need_check>
-static __dpct_inline__ void
-load_tiles_q5_K(const void *__restrict__ vx, int *__restrict__ x_ql,
-                sycl::half2 *__restrict__ x_dm, int *__restrict__ x_qh,
-                int *__restrict__ x_sc, const int &i_offset, const int &i_max,
-                const int &k, const int &blocks_per_row) {
-    (void)x_qh;
+کينډۍ <صحيح mmq_y, صحيح nwarps, منطقي need_check>
+ساكن __dpct_inline__ فراغ
+بارول_tiles_q5_K(ثابت فراغ *__restrict__ vx, صحيح *__restrict__ x_ql,
+                sycl::half2 *__restrict__ x_dm, صحيح *__restrict__ x_qh,
+                صحيح *__restrict__ x_sc, ثابت صحيح &i_دننه_واټن, ثابت صحيح &i_max,
+                ثابت صحيح &k, ثابت صحيح &بلاکونه_فی_لیکه) {
+    (فراغ)x_qh;
 
-    GGML_SYCL_ASSUME(i_offset >= 0);
-    GGML_SYCL_ASSUME(i_offset <  nwarps);
+    GGML_SYCL_ASSUME(i_دننه_واټن >= 0);
+    GGML_SYCL_ASSUME(i_دننه_واټن <  nwarps);
     GGML_SYCL_ASSUME(k >= 0);
-    GGML_SYCL_ASSUME(k <  WARP_SIZE);
+    GGML_SYCL_ASSUME(k <  WARP_اندازه);
 
-    const int kbx  = k / QI5_K; // == 0 if QK_K == 256
-    const int kqsx = k % QI5_K; // == k if QK_K == 256
+    ثابت صحيح kbx  = k / QI5_K; // == 0 if QK_K == 256
+    ثابت صحيح kqsx = k % QI5_K; // == k if QK_K == 256
 
-    const block_q5_K * bx0 = (const block_q5_K *) vx;
+    ثابت بلاک_q5_K * bx0 = (ثابت بلاک_q5_K *) vx;
 
-#pragma unroll
-    for (int i0 = 0; i0 < mmq_y; i0 += nwarps) {
-        int i = i0 + i_offset;
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < mmq_y; i0 += nwarps) {
+        صحيح i = i0 + i_دننه_واټن;
 
-        if (need_check) {
+        إذا (need_check) {
             i = sycl::min(i, i_max);
         }
 
-        const block_q5_K * bxi = bx0 + i*blocks_per_row + kbx;
-        const int ky = QR5_K*kqsx;
+        ثابت بلاک_q5_K * bxi = bx0 + i*بلاکونه_فی_لیکه + kbx;
+        ثابت صحيح ky = QR5_K*kqsx;
 
-        const int ql = get_int_from_uint8_aligned(bxi->qs, kqsx);
-        const int ql0 = (ql >> 0) & 0x0F0F0F0F;
-        const int ql1 = (ql >> 4) & 0x0F0F0F0F;
+        ثابت صحيح ql = get_int_from_uint8_aligned(bxi->qs, kqsx);
+        ثابت صحيح ql0 = (ql >> 0) & 0x0F0F0F0F;
+        ثابت صحيح ql1 = (ql >> 4) & 0x0F0F0F0F;
 
-        const int qh = get_int_from_uint8_aligned(bxi->qh, kqsx % (QI5_K/4));
-        const int qh0 = ((qh >> (2 * (kqsx / (QI5_K/4)) + 0)) << 4) & 0x10101010;
-        const int qh1 = ((qh >> (2 * (kqsx / (QI5_K/4)) + 1)) << 4) & 0x10101010;
+        ثابت صحيح qh = get_int_from_uint8_aligned(bxi->qh, kqsx % (QI5_K/4));
+        ثابت صحيح qh0 = ((qh >> (2 * (kqsx / (QI5_K/4)) + 0)) << 4) & 0x10101010;
+        ثابت صحيح qh1 = ((qh >> (2 * (kqsx / (QI5_K/4)) + 1)) << 4) & 0x10101010;
 
-        const int kq0 = ky - ky % (QI5_K/2) + k % (QI5_K/4) + 0;
-        const int kq1 = ky - ky % (QI5_K/2) + k % (QI5_K/4) + (QI5_K/4);
+        ثابت صحيح kq0 = ky - ky % (QI5_K/2) + k % (QI5_K/4) + 0;
+        ثابت صحيح kq1 = ky - ky % (QI5_K/2) + k % (QI5_K/4) + (QI5_K/4);
 
-        x_ql[i * (2*WARP_SIZE + 1) + kq0] = ql0 | qh0;
-        x_ql[i * (2*WARP_SIZE + 1) + kq1] = ql1 | qh1;
+        x_ql[i * (2*WARP_اندازه + 1) + kq0] = ql0 | qh0;
+        x_ql[i * (2*WARP_اندازه + 1) + kq1] = ql1 | qh1;
     }
 
-    constexpr int blocks_per_tile_x_row = QI5_K > WARP_SIZE ? 1 : WARP_SIZE / QI5_K; // == 1 if QK_K == 256
-    const int kbxd = k % blocks_per_tile_x_row;          // == 0 if QK_K == 256
+    constexpr صحيح بلاکونه_فی_tile_x_لیکه = QI5_K > WARP_اندازه ? 1 : WARP_اندازه / QI5_K; // == 1 if QK_K == 256
+    ثابت صحيح kbxd = k % بلاکونه_فی_tile_x_لیکه;          // == 0 if QK_K == 256
 
-#pragma unroll
-    for (int i0 = 0; i0 < mmq_y; i0 += nwarps * QI5_K) {
-        int i = (i0 + i_offset * QI5_K + k / blocks_per_tile_x_row) % mmq_y;
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < mmq_y; i0 += nwarps * QI5_K) {
+        صحيح i = (i0 + i_دننه_واټن * QI5_K + k / بلاکونه_فی_tile_x_لیکه) % mmq_y;
 
-        if (need_check) {
+        إذا (need_check) {
             i = sycl::min(i, i_max);
         }
 
-        const block_q5_K * bxi = bx0 + i*blocks_per_row + kbxd;
+        ثابت بلاک_q5_K * bxi = bx0 + i*بلاکونه_فی_لیکه + kbxd;
 
-#if QK_K == 256
-        x_dm[i * (WARP_SIZE/QI5_K) + i / QI5_K + kbxd] = bxi->dm;
-#endif
+#إذا QK_K == 256
+        x_dm[i * (WARP_اندازه/QI5_K) + i / QI5_K + kbxd] = bxi->dm;
+#د_که_پای
     }
 
-#pragma unroll
-    for (int i0 = 0; i0 < mmq_y; i0 += nwarps * 8) {
-        int i = (i0 + i_offset * 8 + k / (WARP_SIZE/8)) % mmq_y;
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < mmq_y; i0 += nwarps * 8) {
+        صحيح i = (i0 + i_دننه_واټن * 8 + k / (WARP_اندازه/8)) % mmq_y;
 
-        if (need_check) {
+        إذا (need_check) {
             i = sycl::min(i, i_max);
         }
 
-        const block_q5_K * bxi = bx0 + i*blocks_per_row + (k % (WARP_SIZE/8)) / (QI5_K/8);
+        ثابت بلاک_q5_K * bxi = bx0 + i*بلاکونه_فی_لیکه + (k % (WARP_اندازه/8)) / (QI5_K/8);
 
-        const int * scales = (const int *) bxi->scales;
+        ثابت صحيح * scales = (ثابت صحيح *) bxi->scales;
 
-        const int ksc = k % (WARP_SIZE/8);
+        ثابت صحيح ksc = k % (WARP_اندازه/8);
 
         // scale arrangement after the following two lines: sc0,...,sc3, sc4,...,sc7, m0,...,m3, m4,...,m8
-        int scales8 = (scales[(ksc%2) + (ksc!=0)] >> (4 * (ksc & (ksc/2)))) & 0x0F0F0F0F; // lower 4 bits
+        صحيح scales8 = (scales[(ksc%2) + (ksc!=0)] >> (4 * (ksc & (ksc/2)))) & 0x0F0F0F0F; // lower 4 bits
         scales8    |= (scales[ksc/2]              >> (2 * (ksc % 2)))       & 0x30303030; // upper 2 bits
 
-        x_sc[i * (WARP_SIZE/8) + i / 8 + ksc] = scales8;
+        x_sc[i * (WARP_اندازه/8) + i / 8 + ksc] = scales8;
     }
 }
 
-#define VDR_Q5_K_Q8_1_MMQ  8
+#تعریف_کړه VDR_Q5_K_Q8_1_MMQ  8
 
 // contiguous u/y values
-static __dpct_inline__ float vec_dot_q5_K_q8_1_impl_mmq(
-    const int *__restrict__ v, const int *__restrict__ u,
-    const uint8_t *__restrict__ sc, const uint8_t *__restrict__ m,
-    const sycl::half2 &dm4, const sycl::half2 *__restrict__ ds8) {
+ساكن __dpct_inline__ عائم vec_dot_q5_K_q8_1_impl_mmq(
+    ثابت صحيح *__restrict__ v, ثابت صحيح *__restrict__ u,
+    ثابت uint8_t *__restrict__ sc, ثابت uint8_t *__restrict__ m,
+    ثابت sycl::half2 &dm4, ثابت sycl::half2 *__restrict__ ds8) {
 
-    float sumf_d = 0.0f;
-    float sumf_m = 0.0f;
+    عائم sumf_d = 0.0f;
+    عائم sumf_m = 0.0f;
 
-#pragma unroll
-    for (int i = 0; i < QR5_K*VDR_Q5_K_Q8_1_MMQ/QI8_1; ++i) {
-        int sumi_d = 0;
+#لارښوونه unroll
+    لكل (صحيح i = 0; i < QR5_K*VDR_Q5_K_Q8_1_MMQ/QI8_1; ++i) {
+        صحيح sumi_d = 0;
 
-#pragma unroll
-        for (int j = 0; j < QI8_1; ++j) {
+#لارښوونه unroll
+        لكل (صحيح j = 0; j < QI8_1; ++j) {
             sumi_d = dpct::dp4a(v[i * QI8_1 + j], u[i * QI8_1 + j],
                                 sumi_d); // SIMD dot product
         }
 
-        const sycl::float2 ds8f =
-            ds8[i].convert<float, sycl::rounding_mode::automatic>();
+        ثابت sycl::float2 ds8f =
+            ds8[i].convert<عائم, sycl::rounding_ډېرپېښ::automatic>();
 
         sumf_d += ds8f.x() * (sc[i] * sumi_d);
         sumf_m += ds8f.y() * m[i]; // sum of q8_1 block * q4_K min val
     }
 
-    const sycl::float2 dm4f =
-        dm4.convert<float, sycl::rounding_mode::automatic>();
+    ثابت sycl::float2 dm4f =
+        dm4.convert<عائم, sycl::rounding_ډېرپېښ::automatic>();
 
-    return dm4f.x() * sumf_d - dm4f.y() * sumf_m;
+    أرجع dm4f.x() * sumf_d - dm4f.y() * sumf_m;
 }
 
-static __dpct_inline__ float vec_dot_q5_K_q8_1_mul_mat(
-    const int *__restrict__ x_ql, const sycl::half2 *__restrict__ x_dm,
-    const int *__restrict__ x_qh, const int *__restrict__ x_sc,
-    const int *__restrict__ y_qs, const sycl::half2 *__restrict__ y_ds,
-    const int &i, const int &j, const int &k) {
-    (void)x_qh;
+ساكن __dpct_inline__ عائم vec_dot_q5_K_q8_1_mul_mat(
+    ثابت صحيح *__restrict__ x_ql, ثابت sycl::half2 *__restrict__ x_dm,
+    ثابت صحيح *__restrict__ x_qh, ثابت صحيح *__restrict__ x_sc,
+    ثابت صحيح *__restrict__ y_qs, ثابت sycl::half2 *__restrict__ y_ds,
+    ثابت صحيح &i, ثابت صحيح &j, ثابت صحيح &k) {
+    (فراغ)x_qh;
 
-    const uint8_t * sc = ((const uint8_t *) &x_sc[i * (WARP_SIZE/8) + i/8 + k/16]) + 2 * ((k % 16) / 8);
+    ثابت uint8_t * sc = ((ثابت uint8_t *) &x_sc[i * (WARP_اندازه/8) + i/8 + k/16]) + 2 * ((k % 16) / 8);
 
-    const int index_x = i * (QR5_K*WARP_SIZE + 1) +  QR5_K*k;
-    const int index_y = j * WARP_SIZE             + (QR5_K*k) % WARP_SIZE;
-    return vec_dot_q5_K_q8_1_impl_mmq(&x_ql[index_x], &y_qs[index_y], sc, sc+8,
-                                      x_dm[i * (WARP_SIZE/QI5_K) + i/QI5_K], &y_ds[index_y/QI8_1]);
+    ثابت صحيح شاخص_x = i * (QR5_K*WARP_اندازه + 1) +  QR5_K*k;
+    ثابت صحيح شاخص_y = j * WARP_اندازه             + (QR5_K*k) % WARP_اندازه;
+    أرجع vec_dot_q5_K_q8_1_impl_mmq(&x_ql[شاخص_x], &y_qs[شاخص_y], sc, sc+8,
+                                      x_dm[i * (WARP_اندازه/QI5_K) + i/QI5_K], &y_ds[شاخص_y/QI8_1]);
 }
 
-template <int mmq_y>
-static __dpct_inline__ void
-allocate_tiles_q6_K(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
-                    int *tile_x_ql, sycl::half2 *tile_x_dm, int *tile_x_sc) {
-    (void)x_qh;
+کينډۍ <صحيح mmq_y>
+ساكن __dpct_inline__ فراغ
+allocate_tiles_q6_K(صحيح **x_ql, sycl::half2 **x_dm, صحيح **x_qh, صحيح **x_sc,
+                    صحيح *tile_x_ql, sycl::half2 *tile_x_dm, صحيح *tile_x_sc) {
+    (فراغ)x_qh;
 
     *x_ql = tile_x_ql;
     *x_dm = tile_x_dm;
     *x_sc = tile_x_sc;
 }
 
-template <int mmq_y, int nwarps, bool need_check>
-static __dpct_inline__ void
-load_tiles_q6_K(const void *__restrict__ vx, int *__restrict__ x_ql,
-                sycl::half2 *__restrict__ x_dm, int *__restrict__ x_qh,
-                int *__restrict__ x_sc, const int &i_offset, const int &i_max,
-                const int &k, const int &blocks_per_row) {
-    (void)x_qh;
+کينډۍ <صحيح mmq_y, صحيح nwarps, منطقي need_check>
+ساكن __dpct_inline__ فراغ
+بارول_tiles_q6_K(ثابت فراغ *__restrict__ vx, صحيح *__restrict__ x_ql,
+                sycl::half2 *__restrict__ x_dm, صحيح *__restrict__ x_qh,
+                صحيح *__restrict__ x_sc, ثابت صحيح &i_دننه_واټن, ثابت صحيح &i_max,
+                ثابت صحيح &k, ثابت صحيح &بلاکونه_فی_لیکه) {
+    (فراغ)x_qh;
 
-    GGML_SYCL_ASSUME(i_offset >= 0);
-    GGML_SYCL_ASSUME(i_offset <  nwarps);
+    GGML_SYCL_ASSUME(i_دننه_واټن >= 0);
+    GGML_SYCL_ASSUME(i_دننه_واټن <  nwarps);
     GGML_SYCL_ASSUME(k >= 0);
-    GGML_SYCL_ASSUME(k <  WARP_SIZE);
+    GGML_SYCL_ASSUME(k <  WARP_اندازه);
 
-    const int kbx  = k / QI6_K; // == 0 if QK_K == 256
-    const int kqsx = k % QI6_K; // == k if QK_K == 256
+    ثابت صحيح kbx  = k / QI6_K; // == 0 if QK_K == 256
+    ثابت صحيح kqsx = k % QI6_K; // == k if QK_K == 256
 
-    const block_q6_K * bx0 = (const block_q6_K *) vx;
+    ثابت بلاک_q6_K * bx0 = (ثابت بلاک_q6_K *) vx;
 
-#pragma unroll
-    for (int i0 = 0; i0 < mmq_y; i0 += nwarps) {
-        int i = i0 + i_offset;
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < mmq_y; i0 += nwarps) {
+        صحيح i = i0 + i_دننه_واټن;
 
-        if (need_check) {
+        إذا (need_check) {
             i = sycl::min(i, i_max);
         }
 
-        const block_q6_K * bxi = bx0 + i*blocks_per_row + kbx;
-        const int ky = QR6_K*kqsx;
+        ثابت بلاک_q6_K * bxi = bx0 + i*بلاکونه_فی_لیکه + kbx;
+        ثابت صحيح ky = QR6_K*kqsx;
 
-        const int ql = get_int_from_uint8(bxi->ql, kqsx);
-        const int ql0 = (ql >> 0) & 0x0F0F0F0F;
-        const int ql1 = (ql >> 4) & 0x0F0F0F0F;
+        ثابت صحيح ql = get_int_from_uint8(bxi->ql, kqsx);
+        ثابت صحيح ql0 = (ql >> 0) & 0x0F0F0F0F;
+        ثابت صحيح ql1 = (ql >> 4) & 0x0F0F0F0F;
 
-        const int qh = get_int_from_uint8(bxi->qh, (QI6_K/4) * (kqsx / (QI6_K/2)) + kqsx % (QI6_K/4));
-        const int qh0 = ((qh >> (2 * ((kqsx % (QI6_K/2)) / (QI6_K/4)))) << 4) & 0x30303030;
-        const int qh1 =  (qh >> (2 * ((kqsx % (QI6_K/2)) / (QI6_K/4))))       & 0x30303030;
+        ثابت صحيح qh = get_int_from_uint8(bxi->qh, (QI6_K/4) * (kqsx / (QI6_K/2)) + kqsx % (QI6_K/4));
+        ثابت صحيح qh0 = ((qh >> (2 * ((kqsx % (QI6_K/2)) / (QI6_K/4)))) << 4) & 0x30303030;
+        ثابت صحيح qh1 =  (qh >> (2 * ((kqsx % (QI6_K/2)) / (QI6_K/4))))       & 0x30303030;
 
-        const int kq0 = ky - ky % QI6_K + k % (QI6_K/2) + 0;
-        const int kq1 = ky - ky % QI6_K + k % (QI6_K/2) + (QI6_K/2);
+        ثابت صحيح kq0 = ky - ky % QI6_K + k % (QI6_K/2) + 0;
+        ثابت صحيح kq1 = ky - ky % QI6_K + k % (QI6_K/2) + (QI6_K/2);
 
-        x_ql[i * (2 * WARP_SIZE + 1) + kq0] =
-            dpct::vectorized_binary<sycl::char4>(ql0 | qh0, 0x20202020,
+        x_ql[i * (2 * WARP_اندازه + 1) + kq0] =
+            dpct::vectorized_دوګونی<sycl::char4>(ql0 | qh0, 0x20202020,
                                                  dpct::sub_sat());
-        x_ql[i * (2 * WARP_SIZE + 1) + kq1] =
-            dpct::vectorized_binary<sycl::char4>(ql1 | qh1, 0x20202020,
+        x_ql[i * (2 * WARP_اندازه + 1) + kq1] =
+            dpct::vectorized_دوګونی<sycl::char4>(ql1 | qh1, 0x20202020,
                                                  dpct::sub_sat());
     }
 
-    constexpr int blocks_per_tile_x_row = QI6_K > WARP_SIZE ? 1 : WARP_SIZE / QI6_K; // == 1 if QK_K == 256
-    const int kbxd = k % blocks_per_tile_x_row;          // == 0 if QK_K == 256
-    float * x_dmf = (float *) x_dm;
+    constexpr صحيح بلاکونه_فی_tile_x_لیکه = QI6_K > WARP_اندازه ? 1 : WARP_اندازه / QI6_K; // == 1 if QK_K == 256
+    ثابت صحيح kbxd = k % بلاکونه_فی_tile_x_لیکه;          // == 0 if QK_K == 256
+    عائم * x_dmf = (عائم *) x_dm;
 
-#pragma unroll
-    for (int i0 = 0; i0 < mmq_y; i0 += nwarps * QI6_K) {
-        int i = (i0 + i_offset * QI6_K + k / blocks_per_tile_x_row) % mmq_y;
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < mmq_y; i0 += nwarps * QI6_K) {
+        صحيح i = (i0 + i_دننه_واټن * QI6_K + k / بلاکونه_فی_tile_x_لیکه) % mmq_y;
 
-        if (need_check) {
+        إذا (need_check) {
             i = sycl::min(i, i_max);
         }
 
-        const block_q6_K * bxi = bx0 + i*blocks_per_row + kbxd;
+        ثابت بلاک_q6_K * bxi = bx0 + i*بلاکونه_فی_لیکه + kbxd;
 
-        x_dmf[i * (WARP_SIZE/QI6_K) + i / QI6_K + kbxd] = bxi->d;
+        x_dmf[i * (WARP_اندازه/QI6_K) + i / QI6_K + kbxd] = bxi->d;
     }
 
-#pragma unroll
-    for (int i0 = 0; i0 < mmq_y; i0 += nwarps * 8) {
-        int i = (i0 + i_offset * 8 + k / (WARP_SIZE/8)) % mmq_y;
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < mmq_y; i0 += nwarps * 8) {
+        صحيح i = (i0 + i_دننه_واټن * 8 + k / (WARP_اندازه/8)) % mmq_y;
 
-        if (need_check) {
+        إذا (need_check) {
             i = sycl::min(i, i_max);
         }
 
-        const block_q6_K * bxi = bx0 + i*blocks_per_row + (k % (WARP_SIZE/8)) / 4;
+        ثابت بلاک_q6_K * bxi = bx0 + i*بلاکونه_فی_لیکه + (k % (WARP_اندازه/8)) / 4;
 
-        x_sc[i * (WARP_SIZE/8) + i / 8 + k % (WARP_SIZE/8)] = get_int_from_int8(bxi->scales, k % (QI6_K/8));
+        x_sc[i * (WARP_اندازه/8) + i / 8 + k % (WARP_اندازه/8)] = get_int_from_int8(bxi->scales, k % (QI6_K/8));
     }
 }
 
-#define VDR_Q6_K_Q8_1_MMQ  8
+#تعریف_کړه VDR_Q6_K_Q8_1_MMQ  8
 
 // contiguous u/y values
-static __dpct_inline__ float
-vec_dot_q6_K_q8_1_impl_mmq(const int *__restrict__ v, const int *__restrict__ u,
-                           const int8_t *__restrict__ sc, const float &d6,
-                           const float *__restrict__ d8) {
+ساكن __dpct_inline__ عائم
+vec_dot_q6_K_q8_1_impl_mmq(ثابت صحيح *__restrict__ v, ثابت صحيح *__restrict__ u,
+                           ثابت int8_t *__restrict__ sc, ثابت عائم &d6,
+                           ثابت عائم *__restrict__ d8) {
 
-    float sumf_d = 0.0f;
+    عائم sumf_d = 0.0f;
 
-#pragma unroll
-    for (int i0 = 0; i0 < VDR_Q6_K_Q8_1_MMQ; i0 += 4) {
+#لارښوونه unroll
+    لكل (صحيح i0 = 0; i0 < VDR_Q6_K_Q8_1_MMQ; i0 += 4) {
         sycl::int2 sumi_d = {0, 0}; // 2 q6_K scales per q8_1 scale
 
-#pragma unroll
-        for (int i = i0; i < i0 + 2; ++i) {
+#لارښوونه unroll
+        لكل (صحيح i = i0; i < i0 + 2; ++i) {
             sumi_d.x() = dpct::dp4a(v[2 * i + 0], u[2 * i + 0],
                                     sumi_d.x()); // SIMD dot product
             sumi_d.x() = dpct::dp4a(v[2 * i + 1], u[2 * i + 1],
@@ -1171,28 +1171,28 @@ vec_dot_q6_K_q8_1_impl_mmq(const int *__restrict__ v, const int *__restrict__ u,
                   (sc[i0 / 2 + 0] * sumi_d.x() + sc[i0 / 2 + 1] * sumi_d.y());
     }
 
-    return d6 * sumf_d;
+    أرجع d6 * sumf_d;
 }
 
-static __dpct_inline__ float vec_dot_q6_K_q8_1_mul_mat(
-    const int *__restrict__ x_ql, const sycl::half2 *__restrict__ x_dm,
-    const int *__restrict__ x_qh, const int *__restrict__ x_sc,
-    const int *__restrict__ y_qs, const sycl::half2 *__restrict__ y_ds,
-    const int &i, const int &j, const int &k) {
-    (void)x_qh;
+ساكن __dpct_inline__ عائم vec_dot_q6_K_q8_1_mul_mat(
+    ثابت صحيح *__restrict__ x_ql, ثابت sycl::half2 *__restrict__ x_dm,
+    ثابت صحيح *__restrict__ x_qh, ثابت صحيح *__restrict__ x_sc,
+    ثابت صحيح *__restrict__ y_qs, ثابت sycl::half2 *__restrict__ y_ds,
+    ثابت صحيح &i, ثابت صحيح &j, ثابت صحيح &k) {
+    (فراغ)x_qh;
 
-    const float * x_dmf = (const float *) x_dm;
-    const float * y_df  = (const float *) y_ds;
+    ثابت عائم * x_dmf = (ثابت عائم *) x_dm;
+    ثابت عائم * y_df  = (ثابت عائم *) y_ds;
 
-    const int8_t * sc = ((const int8_t *) &x_sc[i * (WARP_SIZE/8) + i/8 + k/8]);
+    ثابت int8_t * sc = ((ثابت int8_t *) &x_sc[i * (WARP_اندازه/8) + i/8 + k/8]);
 
-    const int index_x = i * (QR6_K*WARP_SIZE + 1) +  QR6_K*k;
-    const int index_y = j * WARP_SIZE             + (QR6_K*k) % WARP_SIZE;
-    return vec_dot_q6_K_q8_1_impl_mmq(&x_ql[index_x], &y_qs[index_y], sc, x_dmf[i * (WARP_SIZE/QI6_K) + i/QI6_K], &y_df[index_y/QI8_1]);
+    ثابت صحيح شاخص_x = i * (QR6_K*WARP_اندازه + 1) +  QR6_K*k;
+    ثابت صحيح شاخص_y = j * WARP_اندازه             + (QR6_K*k) % WARP_اندازه;
+    أرجع vec_dot_q6_K_q8_1_impl_mmq(&x_ql[شاخص_x], &y_qs[شاخص_y], sc, x_dmf[i * (WARP_اندازه/QI6_K) + i/QI6_K], &y_df[شاخص_y/QI8_1]);
 }
 
-template <int qk, int qr, int qi, bool need_sum, typename block_q_t, int mmq_x,
-          int mmq_y, int nwarps, load_tiles_sycl_t load_tiles, int vdr,
+کينډۍ <صحيح qk, صحيح qr, صحيح qi, منطقي need_مجموعه, ډول_نوم بلاک_q_t, صحيح mmq_x,
+          صحيح mmq_y, صحيح nwarps, بارول_tiles_sycl_t بارول_tiles, صحيح vdr,
           vec_dot_q_mul_mat_sycl_t vec_dot>
 /*
 DPCT1110:8: The total declared local variable size in device function mul_mat_q
@@ -1200,77 +1200,77 @@ exceeds 128 bytes and may cause high register pressure. Consult with your
 hardware vendor to find the total register size available and adjust the code,
 or use smaller sub-group size to avoid high register pressure.
 */
-static __dpct_inline__ void
-mul_mat_q(const void *__restrict__ vx, const void *__restrict__ vy,
-          float *__restrict__ dst, const int ncols_x, const int nrows_x,
-          const int ncols_y, const int nrows_y, const int nrows_dst,
-          int *tile_x_ql, sycl::half2 *tile_x_dm, int *tile_x_qh,
-          int *tile_x_sc, const sycl::nd_item<3> &item_ct1, int *tile_y_qs,
+ساكن __dpct_inline__ فراغ
+mul_mat_q(ثابت فراغ *__restrict__ vx, ثابت فراغ *__restrict__ vy,
+          عائم *__restrict__ dst, ثابت صحيح ncols_x, ثابت صحيح nrows_x,
+          ثابت صحيح ncols_y, ثابت صحيح nrows_y, ثابت صحيح nrows_dst,
+          صحيح *tile_x_ql, sycl::half2 *tile_x_dm, صحيح *tile_x_qh,
+          صحيح *tile_x_sc, ثابت sycl::nd_توکی<3> &توکی_ct1, صحيح *tile_y_qs,
           sycl::half2 *tile_y_ds) {
 
-    const block_q_t  * x = (const block_q_t  *) vx;
-    const block_q8_1 * y = (const block_q8_1 *) vy;
+    ثابت بلاک_q_t  * x = (ثابت بلاک_q_t  *) vx;
+    ثابت بلاک_q8_1 * y = (ثابت بلاک_q8_1 *) vy;
 
-    const int blocks_per_row_x = ncols_x / qk;
-    const int blocks_per_col_y = nrows_y / QK8_1;
-    const int blocks_per_warp = WARP_SIZE / qi;
+    ثابت صحيح بلاکونه_فی_لیکه_x = ncols_x / qk;
+    ثابت صحيح بلاکونه_فی_ستون_y = nrows_y / QK8_1;
+    ثابت صحيح بلاکونه_فی_warp = WARP_اندازه / qi;
 
-    const int & ncols_dst = ncols_y;
+    ثابت صحيح & ncols_dst = ncols_y;
 
-    const int row_dst_0 = item_ct1.get_group(2) * mmq_y;
-    const int & row_x_0 = row_dst_0;
+    ثابت صحيح لیکه_dst_0 = توکی_ct1.get_ډله(2) * mmq_y;
+    ثابت صحيح & لیکه_x_0 = لیکه_dst_0;
 
-    const int col_dst_0 = item_ct1.get_group(1) * mmq_x;
-    const int & col_y_0 = col_dst_0;
+    ثابت صحيح ستون_dst_0 = توکی_ct1.get_ډله(1) * mmq_x;
+    ثابت صحيح & ستون_y_0 = ستون_dst_0;
 
-    float sum[mmq_y/WARP_SIZE][mmq_x/nwarps] = {{0.0f}};
+    عائم مجموعه[mmq_y/WARP_اندازه][mmq_x/nwarps] = {{0.0f}};
 
-    for (int ib0 = 0; ib0 < blocks_per_row_x; ib0 += blocks_per_warp) {
+    لكل (صحيح ib0 = 0; ib0 < بلاکونه_فی_لیکه_x; ib0 += بلاکونه_فی_warp) {
 
-        load_tiles(x + row_x_0 * blocks_per_row_x + ib0, tile_x_ql, tile_x_dm,
-                   tile_x_qh, tile_x_sc, item_ct1.get_local_id(1),
-                   nrows_x - row_x_0 - 1, item_ct1.get_local_id(2),
-                   blocks_per_row_x);
+        بارول_tiles(x + لیکه_x_0 * بلاکونه_فی_لیکه_x + ib0, tile_x_ql, tile_x_dm,
+                   tile_x_qh, tile_x_sc, توکی_ct1.get_local_id(1),
+                   nrows_x - لیکه_x_0 - 1, توکی_ct1.get_local_id(2),
+                   بلاکونه_فی_لیکه_x);
 
-#pragma unroll
-        for (int ir = 0; ir < qr; ++ir) {
-            const int kqs = ir * WARP_SIZE + item_ct1.get_local_id(2);
-            const int kbxd = kqs / QI8_1;
+#لارښوونه unroll
+        لكل (صحيح ir = 0; ir < qr; ++ir) {
+            ثابت صحيح kqs = ir * WARP_اندازه + توکی_ct1.get_local_id(2);
+            ثابت صحيح kbxd = kqs / QI8_1;
 
-#pragma unroll
-            for (int i = 0; i < mmq_x; i += nwarps) {
-                const int col_y_eff = dpct::min(
-                    (unsigned int)(col_y_0 + item_ct1.get_local_id(1) + i),
+#لارښوونه unroll
+            لكل (صحيح i = 0; i < mmq_x; i += nwarps) {
+                ثابت صحيح ستون_y_eff = dpct::min(
+                    (بینښه صحيح)(ستون_y_0 + توکی_ct1.get_local_id(1) + i),
                     ncols_y - 1); // to prevent out-of-bounds memory accesses
 
-                const block_q8_1 * by0 = &y[col_y_eff*blocks_per_col_y + ib0 * (qk/QK8_1) + kbxd];
+                ثابت بلاک_q8_1 * by0 = &y[ستون_y_eff*بلاکونه_فی_ستون_y + ib0 * (qk/QK8_1) + kbxd];
 
-                const int index_y = (item_ct1.get_local_id(1) + i) * WARP_SIZE +
-                                    kqs % WARP_SIZE;
-                tile_y_qs[index_y] = get_int_from_int8_aligned(
-                    by0->qs, item_ct1.get_local_id(2) % QI8_1);
+                ثابت صحيح شاخص_y = (توکی_ct1.get_local_id(1) + i) * WARP_اندازه +
+                                    kqs % WARP_اندازه;
+                tile_y_qs[شاخص_y] = get_int_from_int8_aligned(
+                    by0->qs, توکی_ct1.get_local_id(2) % QI8_1);
             }
 
-#pragma unroll
-            for (int ids0 = 0; ids0 < mmq_x; ids0 += nwarps * QI8_1) {
-                const int ids =
-                    (ids0 + item_ct1.get_local_id(1) * QI8_1 +
-                     item_ct1.get_local_id(2) / (WARP_SIZE / QI8_1)) %
+#لارښوونه unroll
+            لكل (صحيح ids0 = 0; ids0 < mmq_x; ids0 += nwarps * QI8_1) {
+                ثابت صحيح ids =
+                    (ids0 + توکی_ct1.get_local_id(1) * QI8_1 +
+                     توکی_ct1.get_local_id(2) / (WARP_اندازه / QI8_1)) %
                     mmq_x;
-                const int kby = item_ct1.get_local_id(2) % (WARP_SIZE / QI8_1);
-                const int col_y_eff = sycl::min(col_y_0 + ids, ncols_y - 1);
+                ثابت صحيح kby = توکی_ct1.get_local_id(2) % (WARP_اندازه / QI8_1);
+                ثابت صحيح ستون_y_eff = sycl::min(ستون_y_0 + ids, ncols_y - 1);
 
                 // if the sum is not needed it's faster to transform the scale to f32 ahead of time
-                const sycl::half2 *dsi_src =
-                    &y[col_y_eff * blocks_per_col_y + ib0 * (qk / QK8_1) +
-                       ir * (WARP_SIZE / QI8_1) + kby]
+                ثابت sycl::half2 *dsi_src =
+                    &y[ستون_y_eff * بلاکونه_فی_ستون_y + ib0 * (qk / QK8_1) +
+                       ir * (WARP_اندازه / QI8_1) + kby]
                          .ds;
                 sycl::half2 *dsi_dst =
-                    &tile_y_ds[ids * (WARP_SIZE / QI8_1) + kby];
-                if (need_sum) {
+                    &tile_y_ds[ids * (WARP_اندازه / QI8_1) + kby];
+                إذا (need_مجموعه) {
                     *dsi_dst = *dsi_src;
-                } else {
-                    float * dfi_dst = (float *) dsi_dst;
+                } وإلا {
+                    عائم * dfi_dst = (عائم *) dsi_dst;
                     *dfi_dst = (*dsi_src)[0];
                 }
             }
@@ -1284,18 +1284,18 @@ mul_mat_q(const void *__restrict__ vx, const void *__restrict__ vy,
             sycl::nd_item::barrier(sycl::access::fence_space::local_space) for
             better performance if there is no access to global memory.
             */
-            item_ct1.barrier();
+            توکی_ct1.barrier();
 
 // #pragma unroll // unrolling this loop causes too much register pressure
-            for (int k = ir*WARP_SIZE/qr; k < (ir+1)*WARP_SIZE/qr; k += vdr) {
-#pragma unroll
-                for (int j = 0; j < mmq_x; j += nwarps) {
-#pragma unroll
-                    for (int i = 0; i < mmq_y; i += WARP_SIZE) {
-                        sum[i / WARP_SIZE][j / nwarps] += vec_dot(
+            لكل (صحيح k = ir*WARP_اندازه/qr; k < (ir+1)*WARP_اندازه/qr; k += vdr) {
+#لارښوونه unroll
+                لكل (صحيح j = 0; j < mmq_x; j += nwarps) {
+#لارښوونه unroll
+                    لكل (صحيح i = 0; i < mmq_y; i += WARP_اندازه) {
+                        مجموعه[i / WARP_اندازه][j / nwarps] += vec_dot(
                             tile_x_ql, tile_x_dm, tile_x_qh, tile_x_sc,
-                            tile_y_qs, tile_y_ds, item_ct1.get_local_id(2) + i,
-                            item_ct1.get_local_id(1) + j, k);
+                            tile_y_qs, tile_y_ds, توکی_ct1.get_local_id(2) + i,
+                            توکی_ct1.get_local_id(1) + j, k);
                     }
                 }
             }
@@ -1309,505 +1309,505 @@ mul_mat_q(const void *__restrict__ vx, const void *__restrict__ vy,
             sycl::nd_item::barrier(sycl::access::fence_space::local_space) for
             better performance if there is no access to global memory.
             */
-            item_ct1.barrier();
+            توکی_ct1.barrier();
         }
     }
 
-#pragma unroll
-    for (int j = 0; j < mmq_x; j += nwarps) {
-        const int col_dst = col_dst_0 + j + item_ct1.get_local_id(1);
+#لارښوونه unroll
+    لكل (صحيح j = 0; j < mmq_x; j += nwarps) {
+        ثابت صحيح ستون_dst = ستون_dst_0 + j + توکی_ct1.get_local_id(1);
 
-        if (col_dst >= ncols_dst) {
-            return;
+        إذا (ستون_dst >= ncols_dst) {
+            أرجع;
         }
 
-#pragma unroll
-        for (int i = 0; i < mmq_y; i += WARP_SIZE) {
-            const int row_dst = row_dst_0 + item_ct1.get_local_id(2) + i;
+#لارښوونه unroll
+        لكل (صحيح i = 0; i < mmq_y; i += WARP_اندازه) {
+            ثابت صحيح لیکه_dst = لیکه_dst_0 + توکی_ct1.get_local_id(2) + i;
 
-            if (row_dst >= nrows_dst) {
-                continue;
+            إذا (لیکه_dst >= nrows_dst) {
+                استمر;
             }
 
-            dst[col_dst*nrows_dst + row_dst] = sum[i/WARP_SIZE][j/nwarps];
+            dst[ستون_dst*nrows_dst + لیکه_dst] = مجموعه[i/WARP_اندازه][j/nwarps];
         }
     }
 }
 
-#define  MMQ_X_Q4_0_RDNA2  64
-#define  MMQ_Y_Q4_0_RDNA2  128
-#define NWARPS_Q4_0_RDNA2  8
-#define  MMQ_X_Q4_0_RDNA1  64
-#define  MMQ_Y_Q4_0_RDNA1  64
-#define NWARPS_Q4_0_RDNA1  8
-#if defined(SYCL_USE_XMX)
-#define  MMQ_X_Q4_0_AMPERE 4
-#define  MMQ_Y_Q4_0_AMPERE 32
-#define NWARPS_Q4_0_AMPERE 4
-#else
-#define  MMQ_X_Q4_0_AMPERE 64
-#define  MMQ_Y_Q4_0_AMPERE 128
-#define NWARPS_Q4_0_AMPERE 4
-#endif
-#define  MMQ_X_Q4_0_PASCAL 64
-#define  MMQ_Y_Q4_0_PASCAL 64
-#define NWARPS_Q4_0_PASCAL 8
+#تعریف_کړه  MMQ_X_Q4_0_RDNA2  64
+#تعریف_کړه  MMQ_Y_Q4_0_RDNA2  128
+#تعریف_کړه NWARPS_Q4_0_RDNA2  8
+#تعریف_کړه  MMQ_X_Q4_0_RDNA1  64
+#تعریف_کړه  MMQ_Y_Q4_0_RDNA1  64
+#تعریف_کړه NWARPS_Q4_0_RDNA1  8
+#إذا defined(SYCL_USE_XMX)
+#تعریف_کړه  MMQ_X_Q4_0_AMPERE 4
+#تعریف_کړه  MMQ_Y_Q4_0_AMPERE 32
+#تعریف_کړه NWARPS_Q4_0_AMPERE 4
+#وإلا
+#تعریف_کړه  MMQ_X_Q4_0_AMPERE 64
+#تعریف_کړه  MMQ_Y_Q4_0_AMPERE 128
+#تعریف_کړه NWARPS_Q4_0_AMPERE 4
+#د_که_پای
+#تعریف_کړه  MMQ_X_Q4_0_PASCAL 64
+#تعریف_کړه  MMQ_Y_Q4_0_PASCAL 64
+#تعریف_کړه NWARPS_Q4_0_PASCAL 8
 
-template <bool need_check> static void
+کينډۍ <منطقي need_check> ساكن فراغ
     mul_mat_q4_0(
-    const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
-    const int ncols_x, const int nrows_x, const int ncols_y, const int nrows_y, const int nrows_dst,
-    const sycl::nd_item<3> &item_ct1, int *tile_x_qs_q4_0, float *tile_x_d_q4_0,
-    int *tile_y_qs, sycl::half2 *tile_y_ds) {
-    int   * tile_x_ql = nullptr;
-    sycl::half2 *tile_x_dm = nullptr;
-    int   * tile_x_qh = nullptr;
-    int   * tile_x_sc = nullptr;
+    ثابت فراغ * __restrict__ vx, ثابت فراغ * __restrict__ vy, عائم * __restrict__ dst,
+    ثابت صحيح ncols_x, ثابت صحيح nrows_x, ثابت صحيح ncols_y, ثابت صحيح nrows_y, ثابت صحيح nrows_dst,
+    ثابت sycl::nd_توکی<3> &توکی_ct1, صحيح *tile_x_qs_q4_0, عائم *tile_x_d_q4_0,
+    صحيح *tile_y_qs, sycl::half2 *tile_y_ds) {
+    صحيح   * tile_x_ql = تش_اشاره;
+    sycl::half2 *tile_x_dm = تش_اشاره;
+    صحيح   * tile_x_qh = تش_اشاره;
+    صحيح   * tile_x_sc = تش_اشاره;
 
 //sycl_todo: change according to hardware
 
-    const int mmq_x  =  MMQ_X_Q4_0_AMPERE;
-    const int mmq_y  =  MMQ_Y_Q4_0_AMPERE;
-    const int nwarps = NWARPS_Q4_0_AMPERE;
+    ثابت صحيح mmq_x  =  MMQ_X_Q4_0_AMPERE;
+    ثابت صحيح mmq_y  =  MMQ_Y_Q4_0_AMPERE;
+    ثابت صحيح nwarps = NWARPS_Q4_0_AMPERE;
     allocate_tiles_q4_0<mmq_y>(&tile_x_ql, &tile_x_dm, &tile_x_qh, &tile_x_sc,
                                tile_x_qs_q4_0, tile_x_d_q4_0);
-    mul_mat_q<QK4_0, QR4_0, QI4_0, true, block_q4_0, mmq_x, mmq_y, nwarps,
-              load_tiles_q4_0<mmq_y, nwarps, need_check>, VDR_Q4_0_Q8_1_MMQ,
+    mul_mat_q<QK4_0, QR4_0, QI4_0, ریښتیا, بلاک_q4_0, mmq_x, mmq_y, nwarps,
+              بارول_tiles_q4_0<mmq_y, nwarps, need_check>, VDR_Q4_0_Q8_1_MMQ,
               vec_dot_q4_0_q8_1_mul_mat>(
         vx, vy, dst, ncols_x, nrows_x, ncols_y, nrows_y, nrows_dst, tile_x_ql,
-        tile_x_dm, tile_x_qh, tile_x_sc, item_ct1, tile_y_qs, tile_y_ds);
+        tile_x_dm, tile_x_qh, tile_x_sc, توکی_ct1, tile_y_qs, tile_y_ds);
 }
 
-#define  MMQ_X_Q4_1_RDNA2  64
-#define  MMQ_Y_Q4_1_RDNA2  128
-#define NWARPS_Q4_1_RDNA2  8
-#define  MMQ_X_Q4_1_RDNA1  64
-#define  MMQ_Y_Q4_1_RDNA1  64
-#define NWARPS_Q4_1_RDNA1  8
-#if defined(SYCL_USE_XMX)
-#define  MMQ_X_Q4_1_AMPERE 4
-#define  MMQ_Y_Q4_1_AMPERE 32
-#define NWARPS_Q4_1_AMPERE 4
-#else
-#define  MMQ_X_Q4_1_AMPERE 64
-#define  MMQ_Y_Q4_1_AMPERE 128
-#define NWARPS_Q4_1_AMPERE 4
-#endif
-#define  MMQ_X_Q4_1_PASCAL 64
-#define  MMQ_Y_Q4_1_PASCAL 64
-#define NWARPS_Q4_1_PASCAL 8
+#تعریف_کړه  MMQ_X_Q4_1_RDNA2  64
+#تعریف_کړه  MMQ_Y_Q4_1_RDNA2  128
+#تعریف_کړه NWARPS_Q4_1_RDNA2  8
+#تعریف_کړه  MMQ_X_Q4_1_RDNA1  64
+#تعریف_کړه  MMQ_Y_Q4_1_RDNA1  64
+#تعریف_کړه NWARPS_Q4_1_RDNA1  8
+#إذا defined(SYCL_USE_XMX)
+#تعریف_کړه  MMQ_X_Q4_1_AMPERE 4
+#تعریف_کړه  MMQ_Y_Q4_1_AMPERE 32
+#تعریف_کړه NWARPS_Q4_1_AMPERE 4
+#وإلا
+#تعریف_کړه  MMQ_X_Q4_1_AMPERE 64
+#تعریف_کړه  MMQ_Y_Q4_1_AMPERE 128
+#تعریف_کړه NWARPS_Q4_1_AMPERE 4
+#د_که_پای
+#تعریف_کړه  MMQ_X_Q4_1_PASCAL 64
+#تعریف_کړه  MMQ_Y_Q4_1_PASCAL 64
+#تعریف_کړه NWARPS_Q4_1_PASCAL 8
 
-template <bool need_check> static void
+کينډۍ <منطقي need_check> ساكن فراغ
     mul_mat_q4_1(
-    const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
-    const int ncols_x, const int nrows_x, const int ncols_y, const int nrows_y, const int nrows_dst,
-    const sycl::nd_item<3> &item_ct1, int *tile_x_qs_q4_1,
-    sycl::half2 *tile_x_dm_q4_1, int *tile_y_qs, sycl::half2 *tile_y_ds) {
-    int   * tile_x_ql = nullptr;
-    sycl::half2 *tile_x_dm = nullptr;
-    int   * tile_x_qh = nullptr;
-    int   * tile_x_sc = nullptr;
+    ثابت فراغ * __restrict__ vx, ثابت فراغ * __restrict__ vy, عائم * __restrict__ dst,
+    ثابت صحيح ncols_x, ثابت صحيح nrows_x, ثابت صحيح ncols_y, ثابت صحيح nrows_y, ثابت صحيح nrows_dst,
+    ثابت sycl::nd_توکی<3> &توکی_ct1, صحيح *tile_x_qs_q4_1,
+    sycl::half2 *tile_x_dm_q4_1, صحيح *tile_y_qs, sycl::half2 *tile_y_ds) {
+    صحيح   * tile_x_ql = تش_اشاره;
+    sycl::half2 *tile_x_dm = تش_اشاره;
+    صحيح   * tile_x_qh = تش_اشاره;
+    صحيح   * tile_x_sc = تش_اشاره;
 
 //sycl_todo: change according to hardware
-    const int mmq_x  =  MMQ_X_Q4_1_AMPERE;
-    const int mmq_y  =  MMQ_Y_Q4_1_AMPERE;
-    const int nwarps = NWARPS_Q4_1_AMPERE;
+    ثابت صحيح mmq_x  =  MMQ_X_Q4_1_AMPERE;
+    ثابت صحيح mmq_y  =  MMQ_Y_Q4_1_AMPERE;
+    ثابت صحيح nwarps = NWARPS_Q4_1_AMPERE;
     allocate_tiles_q4_1<mmq_y>(&tile_x_ql, &tile_x_dm, &tile_x_qh, &tile_x_sc,
                                tile_x_qs_q4_1, tile_x_dm_q4_1);
-    mul_mat_q<QK4_1, QR4_1, QI4_1, true, block_q4_1, mmq_x, mmq_y, nwarps,
-              load_tiles_q4_1<mmq_y, nwarps, need_check>, VDR_Q4_1_Q8_1_MMQ,
+    mul_mat_q<QK4_1, QR4_1, QI4_1, ریښتیا, بلاک_q4_1, mmq_x, mmq_y, nwarps,
+              بارول_tiles_q4_1<mmq_y, nwarps, need_check>, VDR_Q4_1_Q8_1_MMQ,
               vec_dot_q4_1_q8_1_mul_mat>(
         vx, vy, dst, ncols_x, nrows_x, ncols_y, nrows_y, nrows_dst, tile_x_ql,
-        tile_x_dm, tile_x_qh, tile_x_sc, item_ct1, tile_y_qs, tile_y_ds);
+        tile_x_dm, tile_x_qh, tile_x_sc, توکی_ct1, tile_y_qs, tile_y_ds);
 }
 
-#define  MMQ_X_Q5_0_RDNA2  64
-#define  MMQ_Y_Q5_0_RDNA2  128
-#define NWARPS_Q5_0_RDNA2  8
-#define  MMQ_X_Q5_0_RDNA1  64
-#define  MMQ_Y_Q5_0_RDNA1  64
-#define NWARPS_Q5_0_RDNA1  8
-#if defined(SYCL_USE_XMX)
-#define  MMQ_X_Q5_0_AMPERE 4
-#define  MMQ_Y_Q5_0_AMPERE 32
-#define NWARPS_Q5_0_AMPERE 4
-#else
-#define  MMQ_X_Q5_0_AMPERE 128
-#define  MMQ_Y_Q5_0_AMPERE 64
-#define NWARPS_Q5_0_AMPERE 4
-#endif
-#define  MMQ_X_Q5_0_PASCAL 64
-#define  MMQ_Y_Q5_0_PASCAL 64
-#define NWARPS_Q5_0_PASCAL 8
+#تعریف_کړه  MMQ_X_Q5_0_RDNA2  64
+#تعریف_کړه  MMQ_Y_Q5_0_RDNA2  128
+#تعریف_کړه NWARPS_Q5_0_RDNA2  8
+#تعریف_کړه  MMQ_X_Q5_0_RDNA1  64
+#تعریف_کړه  MMQ_Y_Q5_0_RDNA1  64
+#تعریف_کړه NWARPS_Q5_0_RDNA1  8
+#إذا defined(SYCL_USE_XMX)
+#تعریف_کړه  MMQ_X_Q5_0_AMPERE 4
+#تعریف_کړه  MMQ_Y_Q5_0_AMPERE 32
+#تعریف_کړه NWARPS_Q5_0_AMPERE 4
+#وإلا
+#تعریف_کړه  MMQ_X_Q5_0_AMPERE 128
+#تعریف_کړه  MMQ_Y_Q5_0_AMPERE 64
+#تعریف_کړه NWARPS_Q5_0_AMPERE 4
+#د_که_پای
+#تعریف_کړه  MMQ_X_Q5_0_PASCAL 64
+#تعریف_کړه  MMQ_Y_Q5_0_PASCAL 64
+#تعریف_کړه NWARPS_Q5_0_PASCAL 8
 
-template <bool need_check> static void
+کينډۍ <منطقي need_check> ساكن فراغ
     mul_mat_q5_0(
-    const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
-    const int ncols_x, const int nrows_x, const int ncols_y, const int nrows_y, const int nrows_dst,
-    const sycl::nd_item<3> &item_ct1, int *tile_x_ql_q5_0, float *tile_x_d_q5_0,
-    int *tile_y_qs, sycl::half2 *tile_y_ds) {
-    int   * tile_x_ql = nullptr;
-    sycl::half2 *tile_x_dm = nullptr;
-    int   * tile_x_qh = nullptr;
-    int   * tile_x_sc = nullptr;
+    ثابت فراغ * __restrict__ vx, ثابت فراغ * __restrict__ vy, عائم * __restrict__ dst,
+    ثابت صحيح ncols_x, ثابت صحيح nrows_x, ثابت صحيح ncols_y, ثابت صحيح nrows_y, ثابت صحيح nrows_dst,
+    ثابت sycl::nd_توکی<3> &توکی_ct1, صحيح *tile_x_ql_q5_0, عائم *tile_x_d_q5_0,
+    صحيح *tile_y_qs, sycl::half2 *tile_y_ds) {
+    صحيح   * tile_x_ql = تش_اشاره;
+    sycl::half2 *tile_x_dm = تش_اشاره;
+    صحيح   * tile_x_qh = تش_اشاره;
+    صحيح   * tile_x_sc = تش_اشاره;
 
 //sycl_todo: change according to hardware
-    const int mmq_x  =  MMQ_X_Q5_0_AMPERE;
-    const int mmq_y  =  MMQ_Y_Q5_0_AMPERE;
-    const int nwarps = NWARPS_Q5_0_AMPERE;
+    ثابت صحيح mmq_x  =  MMQ_X_Q5_0_AMPERE;
+    ثابت صحيح mmq_y  =  MMQ_Y_Q5_0_AMPERE;
+    ثابت صحيح nwarps = NWARPS_Q5_0_AMPERE;
     allocate_tiles_q5_0<mmq_y>(&tile_x_ql, &tile_x_dm, &tile_x_qh, &tile_x_sc,
                                tile_x_ql_q5_0, tile_x_d_q5_0);
-    mul_mat_q<QK5_0, QR5_0, QI5_0, false, block_q5_0, mmq_x, mmq_y, nwarps,
-              load_tiles_q5_0<mmq_y, nwarps, need_check>, VDR_Q5_0_Q8_1_MMQ,
+    mul_mat_q<QK5_0, QR5_0, QI5_0, خطأ, بلاک_q5_0, mmq_x, mmq_y, nwarps,
+              بارول_tiles_q5_0<mmq_y, nwarps, need_check>, VDR_Q5_0_Q8_1_MMQ,
               vec_dot_q5_0_q8_1_mul_mat>(
         vx, vy, dst, ncols_x, nrows_x, ncols_y, nrows_y, nrows_dst, tile_x_ql,
-        tile_x_dm, tile_x_qh, tile_x_sc, item_ct1, tile_y_qs, tile_y_ds);
+        tile_x_dm, tile_x_qh, tile_x_sc, توکی_ct1, tile_y_qs, tile_y_ds);
 }
 
-#define  MMQ_X_Q5_1_RDNA2  64
-#define  MMQ_Y_Q5_1_RDNA2  128
-#define NWARPS_Q5_1_RDNA2  8
-#define  MMQ_X_Q5_1_RDNA1  64
-#define  MMQ_Y_Q5_1_RDNA1  64
-#define NWARPS_Q5_1_RDNA1  8
-#if defined(SYCL_USE_XMX)
-#define  MMQ_X_Q5_1_AMPERE 4
-#define  MMQ_Y_Q5_1_AMPERE 32
-#define NWARPS_Q5_1_AMPERE 4
-#else
-#define  MMQ_X_Q5_1_AMPERE 128
-#define  MMQ_Y_Q5_1_AMPERE 64
-#define NWARPS_Q5_1_AMPERE 4
-#endif
-#define  MMQ_X_Q5_1_PASCAL 64
-#define  MMQ_Y_Q5_1_PASCAL 64
-#define NWARPS_Q5_1_PASCAL 8
+#تعریف_کړه  MMQ_X_Q5_1_RDNA2  64
+#تعریف_کړه  MMQ_Y_Q5_1_RDNA2  128
+#تعریف_کړه NWARPS_Q5_1_RDNA2  8
+#تعریف_کړه  MMQ_X_Q5_1_RDNA1  64
+#تعریف_کړه  MMQ_Y_Q5_1_RDNA1  64
+#تعریف_کړه NWARPS_Q5_1_RDNA1  8
+#إذا defined(SYCL_USE_XMX)
+#تعریف_کړه  MMQ_X_Q5_1_AMPERE 4
+#تعریف_کړه  MMQ_Y_Q5_1_AMPERE 32
+#تعریف_کړه NWARPS_Q5_1_AMPERE 4
+#وإلا
+#تعریف_کړه  MMQ_X_Q5_1_AMPERE 128
+#تعریف_کړه  MMQ_Y_Q5_1_AMPERE 64
+#تعریف_کړه NWARPS_Q5_1_AMPERE 4
+#د_که_پای
+#تعریف_کړه  MMQ_X_Q5_1_PASCAL 64
+#تعریف_کړه  MMQ_Y_Q5_1_PASCAL 64
+#تعریف_کړه NWARPS_Q5_1_PASCAL 8
 
-template <bool need_check> static void
+کينډۍ <منطقي need_check> ساكن فراغ
 mul_mat_q5_1(
-    const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
-    const int ncols_x, const int nrows_x, const int ncols_y, const int nrows_y, const int nrows_dst,
-    const sycl::nd_item<3> &item_ct1, int *tile_x_ql_q5_1,
-    sycl::half2 *tile_x_dm_q5_1, int *tile_y_qs, sycl::half2 *tile_y_ds) {
-    int   * tile_x_ql = nullptr;
-    sycl::half2 *tile_x_dm = nullptr;
-    int   * tile_x_qh = nullptr;
-    int   * tile_x_sc = nullptr;
+    ثابت فراغ * __restrict__ vx, ثابت فراغ * __restrict__ vy, عائم * __restrict__ dst,
+    ثابت صحيح ncols_x, ثابت صحيح nrows_x, ثابت صحيح ncols_y, ثابت صحيح nrows_y, ثابت صحيح nrows_dst,
+    ثابت sycl::nd_توکی<3> &توکی_ct1, صحيح *tile_x_ql_q5_1,
+    sycl::half2 *tile_x_dm_q5_1, صحيح *tile_y_qs, sycl::half2 *tile_y_ds) {
+    صحيح   * tile_x_ql = تش_اشاره;
+    sycl::half2 *tile_x_dm = تش_اشاره;
+    صحيح   * tile_x_qh = تش_اشاره;
+    صحيح   * tile_x_sc = تش_اشاره;
 
 //sycl_todo: change according to hardware
-    const int mmq_x  =  MMQ_X_Q5_1_AMPERE;
-    const int mmq_y  =  MMQ_Y_Q5_1_AMPERE;
-    const int nwarps = NWARPS_Q5_1_AMPERE;
+    ثابت صحيح mmq_x  =  MMQ_X_Q5_1_AMPERE;
+    ثابت صحيح mmq_y  =  MMQ_Y_Q5_1_AMPERE;
+    ثابت صحيح nwarps = NWARPS_Q5_1_AMPERE;
     allocate_tiles_q5_1<mmq_y>(&tile_x_ql, &tile_x_dm, &tile_x_qh, &tile_x_sc,
                                tile_x_ql_q5_1, tile_x_dm_q5_1);
-    mul_mat_q<QK5_1, QR5_1, QI5_1, true, block_q5_1, mmq_x, mmq_y, nwarps,
-              load_tiles_q5_1<mmq_y, nwarps, need_check>, VDR_Q5_1_Q8_1_MMQ,
+    mul_mat_q<QK5_1, QR5_1, QI5_1, ریښتیا, بلاک_q5_1, mmq_x, mmq_y, nwarps,
+              بارول_tiles_q5_1<mmq_y, nwarps, need_check>, VDR_Q5_1_Q8_1_MMQ,
               vec_dot_q5_1_q8_1_mul_mat>(
         vx, vy, dst, ncols_x, nrows_x, ncols_y, nrows_y, nrows_dst, tile_x_ql,
-        tile_x_dm, tile_x_qh, tile_x_sc, item_ct1, tile_y_qs, tile_y_ds);
+        tile_x_dm, tile_x_qh, tile_x_sc, توکی_ct1, tile_y_qs, tile_y_ds);
 }
 
-#define  MMQ_X_Q8_0_RDNA2  64
-#define  MMQ_Y_Q8_0_RDNA2  128
-#define NWARPS_Q8_0_RDNA2  8
-#define  MMQ_X_Q8_0_RDNA1  64
-#define  MMQ_Y_Q8_0_RDNA1  64
-#define NWARPS_Q8_0_RDNA1  8
-#if defined(SYCL_USE_XMX)
-#define  MMQ_X_Q8_0_AMPERE 4
-#define  MMQ_Y_Q8_0_AMPERE 32
-#define NWARPS_Q8_0_AMPERE 4
-#else
-#define  MMQ_X_Q8_0_AMPERE 128
-#define  MMQ_Y_Q8_0_AMPERE 64
-#define NWARPS_Q8_0_AMPERE 4
-#endif
-#define  MMQ_X_Q8_0_PASCAL 64
-#define  MMQ_Y_Q8_0_PASCAL 64
-#define NWARPS_Q8_0_PASCAL 8
+#تعریف_کړه  MMQ_X_Q8_0_RDNA2  64
+#تعریف_کړه  MMQ_Y_Q8_0_RDNA2  128
+#تعریف_کړه NWARPS_Q8_0_RDNA2  8
+#تعریف_کړه  MMQ_X_Q8_0_RDNA1  64
+#تعریف_کړه  MMQ_Y_Q8_0_RDNA1  64
+#تعریف_کړه NWARPS_Q8_0_RDNA1  8
+#إذا defined(SYCL_USE_XMX)
+#تعریف_کړه  MMQ_X_Q8_0_AMPERE 4
+#تعریف_کړه  MMQ_Y_Q8_0_AMPERE 32
+#تعریف_کړه NWARPS_Q8_0_AMPERE 4
+#وإلا
+#تعریف_کړه  MMQ_X_Q8_0_AMPERE 128
+#تعریف_کړه  MMQ_Y_Q8_0_AMPERE 64
+#تعریف_کړه NWARPS_Q8_0_AMPERE 4
+#د_که_پای
+#تعریف_کړه  MMQ_X_Q8_0_PASCAL 64
+#تعریف_کړه  MMQ_Y_Q8_0_PASCAL 64
+#تعریف_کړه NWARPS_Q8_0_PASCAL 8
 
-template <bool need_check> static void
+کينډۍ <منطقي need_check> ساكن فراغ
     mul_mat_q8_0(
-    const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
-    const int ncols_x, const int nrows_x, const int ncols_y, const int nrows_y, const int nrows_dst,
-    const sycl::nd_item<3> &item_ct1, int *tile_x_qs_q8_0, float *tile_x_d_q8_0,
-    int *tile_y_qs, sycl::half2 *tile_y_ds) {
-    int   * tile_x_ql = nullptr;
-    sycl::half2 *tile_x_dm = nullptr;
-    int   * tile_x_qh = nullptr;
-    int   * tile_x_sc = nullptr;
+    ثابت فراغ * __restrict__ vx, ثابت فراغ * __restrict__ vy, عائم * __restrict__ dst,
+    ثابت صحيح ncols_x, ثابت صحيح nrows_x, ثابت صحيح ncols_y, ثابت صحيح nrows_y, ثابت صحيح nrows_dst,
+    ثابت sycl::nd_توکی<3> &توکی_ct1, صحيح *tile_x_qs_q8_0, عائم *tile_x_d_q8_0,
+    صحيح *tile_y_qs, sycl::half2 *tile_y_ds) {
+    صحيح   * tile_x_ql = تش_اشاره;
+    sycl::half2 *tile_x_dm = تش_اشاره;
+    صحيح   * tile_x_qh = تش_اشاره;
+    صحيح   * tile_x_sc = تش_اشاره;
 
 //sycl_todo: change according to hardware
-    const int mmq_x  =  MMQ_X_Q8_0_AMPERE;
-    const int mmq_y  =  MMQ_Y_Q8_0_AMPERE;
-    const int nwarps = NWARPS_Q8_0_AMPERE;
+    ثابت صحيح mmq_x  =  MMQ_X_Q8_0_AMPERE;
+    ثابت صحيح mmq_y  =  MMQ_Y_Q8_0_AMPERE;
+    ثابت صحيح nwarps = NWARPS_Q8_0_AMPERE;
     allocate_tiles_q8_0<mmq_y>(&tile_x_ql, &tile_x_dm, &tile_x_qh, &tile_x_sc,
                                tile_x_qs_q8_0, tile_x_d_q8_0);
-    mul_mat_q<QK8_0, QR8_0, QI8_0, false, block_q8_0, mmq_x, mmq_y, nwarps,
-              load_tiles_q8_0<mmq_y, nwarps, need_check>, VDR_Q8_0_Q8_1_MMQ,
+    mul_mat_q<QK8_0, QR8_0, QI8_0, خطأ, بلاک_q8_0, mmq_x, mmq_y, nwarps,
+              بارول_tiles_q8_0<mmq_y, nwarps, need_check>, VDR_Q8_0_Q8_1_MMQ,
               vec_dot_q8_0_q8_1_mul_mat>(
         vx, vy, dst, ncols_x, nrows_x, ncols_y, nrows_y, nrows_dst, tile_x_ql,
-        tile_x_dm, tile_x_qh, tile_x_sc, item_ct1, tile_y_qs, tile_y_ds);
+        tile_x_dm, tile_x_qh, tile_x_sc, توکی_ct1, tile_y_qs, tile_y_ds);
 }
 
-#define  MMQ_X_Q2_K_RDNA2  64
-#define  MMQ_Y_Q2_K_RDNA2  128
-#define NWARPS_Q2_K_RDNA2  8
-#define  MMQ_X_Q2_K_RDNA1  128
-#define  MMQ_Y_Q2_K_RDNA1  32
-#define NWARPS_Q2_K_RDNA1  8
-#if defined(SYCL_USE_XMX)
-#define  MMQ_X_Q2_K_AMPERE 4
-#define  MMQ_Y_Q2_K_AMPERE 32
-#define NWARPS_Q2_K_AMPERE 4
-#else
-#define  MMQ_X_Q2_K_AMPERE 64
-#define  MMQ_Y_Q2_K_AMPERE 128
-#define NWARPS_Q2_K_AMPERE 4
-#endif
-#define  MMQ_X_Q2_K_PASCAL 64
-#define  MMQ_Y_Q2_K_PASCAL 64
-#define NWARPS_Q2_K_PASCAL 8
+#تعریف_کړه  MMQ_X_Q2_K_RDNA2  64
+#تعریف_کړه  MMQ_Y_Q2_K_RDNA2  128
+#تعریف_کړه NWARPS_Q2_K_RDNA2  8
+#تعریف_کړه  MMQ_X_Q2_K_RDNA1  128
+#تعریف_کړه  MMQ_Y_Q2_K_RDNA1  32
+#تعریف_کړه NWARPS_Q2_K_RDNA1  8
+#إذا defined(SYCL_USE_XMX)
+#تعریف_کړه  MMQ_X_Q2_K_AMPERE 4
+#تعریف_کړه  MMQ_Y_Q2_K_AMPERE 32
+#تعریف_کړه NWARPS_Q2_K_AMPERE 4
+#وإلا
+#تعریف_کړه  MMQ_X_Q2_K_AMPERE 64
+#تعریف_کړه  MMQ_Y_Q2_K_AMPERE 128
+#تعریف_کړه NWARPS_Q2_K_AMPERE 4
+#د_که_پای
+#تعریف_کړه  MMQ_X_Q2_K_PASCAL 64
+#تعریف_کړه  MMQ_Y_Q2_K_PASCAL 64
+#تعریف_کړه NWARPS_Q2_K_PASCAL 8
 
-template <bool need_check> static void
+کينډۍ <منطقي need_check> ساكن فراغ
 mul_mat_q2_K(
-    const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
-    const int ncols_x, const int nrows_x, const int ncols_y, const int nrows_y, const int nrows_dst,
-    const sycl::nd_item<3> &item_ct1, int *tile_x_ql_q2_K,
-    sycl::half2 *tile_x_dm_q2_K, int *tile_x_sc_q2_K, int *tile_y_qs,
+    ثابت فراغ * __restrict__ vx, ثابت فراغ * __restrict__ vy, عائم * __restrict__ dst,
+    ثابت صحيح ncols_x, ثابت صحيح nrows_x, ثابت صحيح ncols_y, ثابت صحيح nrows_y, ثابت صحيح nrows_dst,
+    ثابت sycl::nd_توکی<3> &توکی_ct1, صحيح *tile_x_ql_q2_K,
+    sycl::half2 *tile_x_dm_q2_K, صحيح *tile_x_sc_q2_K, صحيح *tile_y_qs,
     sycl::half2 *tile_y_ds) {
-    int   * tile_x_ql = nullptr;
-    sycl::half2 *tile_x_dm = nullptr;
-    int   * tile_x_qh = nullptr;
-    int   * tile_x_sc = nullptr;
+    صحيح   * tile_x_ql = تش_اشاره;
+    sycl::half2 *tile_x_dm = تش_اشاره;
+    صحيح   * tile_x_qh = تش_اشاره;
+    صحيح   * tile_x_sc = تش_اشاره;
 
 //sycl_todo: change according to hardware
-    const int mmq_x  =  MMQ_X_Q2_K_AMPERE;
-    const int mmq_y  =  MMQ_Y_Q2_K_AMPERE;
-    const int nwarps = NWARPS_Q2_K_AMPERE;
+    ثابت صحيح mmq_x  =  MMQ_X_Q2_K_AMPERE;
+    ثابت صحيح mmq_y  =  MMQ_Y_Q2_K_AMPERE;
+    ثابت صحيح nwarps = NWARPS_Q2_K_AMPERE;
     allocate_tiles_q2_K<mmq_y>(&tile_x_ql, &tile_x_dm, &tile_x_qh, &tile_x_sc,
                                tile_x_ql_q2_K, tile_x_dm_q2_K, tile_x_sc_q2_K);
-    mul_mat_q<QK_K, QR2_K, QI2_K, false, block_q2_K, mmq_x, mmq_y, nwarps,
-              load_tiles_q2_K<mmq_y, nwarps, need_check>, VDR_Q2_K_Q8_1_MMQ,
+    mul_mat_q<QK_K, QR2_K, QI2_K, خطأ, بلاک_q2_K, mmq_x, mmq_y, nwarps,
+              بارول_tiles_q2_K<mmq_y, nwarps, need_check>, VDR_Q2_K_Q8_1_MMQ,
               vec_dot_q2_K_q8_1_mul_mat>(
         vx, vy, dst, ncols_x, nrows_x, ncols_y, nrows_y, nrows_dst, tile_x_ql,
-        tile_x_dm, tile_x_qh, tile_x_sc, item_ct1, tile_y_qs, tile_y_ds);
+        tile_x_dm, tile_x_qh, tile_x_sc, توکی_ct1, tile_y_qs, tile_y_ds);
 }
 
-#define  MMQ_X_Q3_K_RDNA2  128
-#define  MMQ_Y_Q3_K_RDNA2  64
-#define NWARPS_Q3_K_RDNA2  8
-#define  MMQ_X_Q3_K_RDNA1  32
-#define  MMQ_Y_Q3_K_RDNA1  128
-#define NWARPS_Q3_K_RDNA1  8
-#if defined(SYCL_USE_XMX)
-#define  MMQ_X_Q3_K_AMPERE 4
-#define  MMQ_Y_Q3_K_AMPERE 32
-#define NWARPS_Q3_K_AMPERE 4
-#else
-#define  MMQ_X_Q3_K_AMPERE 128
-#define  MMQ_Y_Q3_K_AMPERE 128
-#define NWARPS_Q3_K_AMPERE 4
-#endif
-#define  MMQ_X_Q3_K_PASCAL 64
-#define  MMQ_Y_Q3_K_PASCAL 64
-#define NWARPS_Q3_K_PASCAL 8
+#تعریف_کړه  MMQ_X_Q3_K_RDNA2  128
+#تعریف_کړه  MMQ_Y_Q3_K_RDNA2  64
+#تعریف_کړه NWARPS_Q3_K_RDNA2  8
+#تعریف_کړه  MMQ_X_Q3_K_RDNA1  32
+#تعریف_کړه  MMQ_Y_Q3_K_RDNA1  128
+#تعریف_کړه NWARPS_Q3_K_RDNA1  8
+#إذا defined(SYCL_USE_XMX)
+#تعریف_کړه  MMQ_X_Q3_K_AMPERE 4
+#تعریف_کړه  MMQ_Y_Q3_K_AMPERE 32
+#تعریف_کړه NWARPS_Q3_K_AMPERE 4
+#وإلا
+#تعریف_کړه  MMQ_X_Q3_K_AMPERE 128
+#تعریف_کړه  MMQ_Y_Q3_K_AMPERE 128
+#تعریف_کړه NWARPS_Q3_K_AMPERE 4
+#د_که_پای
+#تعریف_کړه  MMQ_X_Q3_K_PASCAL 64
+#تعریف_کړه  MMQ_Y_Q3_K_PASCAL 64
+#تعریف_کړه NWARPS_Q3_K_PASCAL 8
 
-template <bool need_check> static void
+کينډۍ <منطقي need_check> ساكن فراغ
 mul_mat_q3_K(
-    const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
-    const int ncols_x, const int nrows_x, const int ncols_y, const int nrows_y, const int nrows_dst,
-    const sycl::nd_item<3> &item_ct1, int *tile_x_ql_q3_K,
-    sycl::half2 *tile_x_dm_q3_K, int *tile_x_qh_q3_K, int *tile_x_sc_q3_K,
-    int *tile_y_qs, sycl::half2 *tile_y_ds) {
-    int   * tile_x_ql = nullptr;
-    sycl::half2 *tile_x_dm = nullptr;
-    int   * tile_x_qh = nullptr;
-    int   * tile_x_sc = nullptr;
+    ثابت فراغ * __restrict__ vx, ثابت فراغ * __restrict__ vy, عائم * __restrict__ dst,
+    ثابت صحيح ncols_x, ثابت صحيح nrows_x, ثابت صحيح ncols_y, ثابت صحيح nrows_y, ثابت صحيح nrows_dst,
+    ثابت sycl::nd_توکی<3> &توکی_ct1, صحيح *tile_x_ql_q3_K,
+    sycl::half2 *tile_x_dm_q3_K, صحيح *tile_x_qh_q3_K, صحيح *tile_x_sc_q3_K,
+    صحيح *tile_y_qs, sycl::half2 *tile_y_ds) {
+    صحيح   * tile_x_ql = تش_اشاره;
+    sycl::half2 *tile_x_dm = تش_اشاره;
+    صحيح   * tile_x_qh = تش_اشاره;
+    صحيح   * tile_x_sc = تش_اشاره;
 
 //sycl_todo: change according to hardware
-    const int mmq_x  =  MMQ_X_Q3_K_AMPERE;
-    const int mmq_y  =  MMQ_Y_Q3_K_AMPERE;
-    const int nwarps = NWARPS_Q3_K_AMPERE;
+    ثابت صحيح mmq_x  =  MMQ_X_Q3_K_AMPERE;
+    ثابت صحيح mmq_y  =  MMQ_Y_Q3_K_AMPERE;
+    ثابت صحيح nwarps = NWARPS_Q3_K_AMPERE;
     allocate_tiles_q3_K<mmq_y>(&tile_x_ql, &tile_x_dm, &tile_x_qh, &tile_x_sc,
                                tile_x_ql_q3_K, tile_x_dm_q3_K, tile_x_qh_q3_K,
                                tile_x_sc_q3_K);
-    mul_mat_q<QK_K, QR3_K, QI3_K, false, block_q3_K, mmq_x, mmq_y, nwarps,
-              load_tiles_q3_K<mmq_y, nwarps, need_check>, VDR_Q3_K_Q8_1_MMQ,
+    mul_mat_q<QK_K, QR3_K, QI3_K, خطأ, بلاک_q3_K, mmq_x, mmq_y, nwarps,
+              بارول_tiles_q3_K<mmq_y, nwarps, need_check>, VDR_Q3_K_Q8_1_MMQ,
               vec_dot_q3_K_q8_1_mul_mat>(
         vx, vy, dst, ncols_x, nrows_x, ncols_y, nrows_y, nrows_dst, tile_x_ql,
-        tile_x_dm, tile_x_qh, tile_x_sc, item_ct1, tile_y_qs, tile_y_ds);
+        tile_x_dm, tile_x_qh, tile_x_sc, توکی_ct1, tile_y_qs, tile_y_ds);
 }
 
-#define  MMQ_X_Q4_K_RDNA2  64
-#define  MMQ_Y_Q4_K_RDNA2  128
-#define NWARPS_Q4_K_RDNA2  8
-#define  MMQ_X_Q4_K_RDNA1  32
-#define  MMQ_Y_Q4_K_RDNA1  64
-#define NWARPS_Q4_K_RDNA1  8
-#if defined(SYCL_USE_XMX)
-#define  MMQ_X_Q4_K_AMPERE 4
-#define  MMQ_Y_Q4_K_AMPERE 32
-#define NWARPS_Q4_K_AMPERE 4
-#else
-#define  MMQ_X_Q4_K_AMPERE 64
-#define  MMQ_Y_Q4_K_AMPERE 128
-#define NWARPS_Q4_K_AMPERE 4
-#endif
-#define  MMQ_X_Q4_K_PASCAL 64
-#define  MMQ_Y_Q4_K_PASCAL 64
-#define NWARPS_Q4_K_PASCAL 8
+#تعریف_کړه  MMQ_X_Q4_K_RDNA2  64
+#تعریف_کړه  MMQ_Y_Q4_K_RDNA2  128
+#تعریف_کړه NWARPS_Q4_K_RDNA2  8
+#تعریف_کړه  MMQ_X_Q4_K_RDNA1  32
+#تعریف_کړه  MMQ_Y_Q4_K_RDNA1  64
+#تعریف_کړه NWARPS_Q4_K_RDNA1  8
+#إذا defined(SYCL_USE_XMX)
+#تعریف_کړه  MMQ_X_Q4_K_AMPERE 4
+#تعریف_کړه  MMQ_Y_Q4_K_AMPERE 32
+#تعریف_کړه NWARPS_Q4_K_AMPERE 4
+#وإلا
+#تعریف_کړه  MMQ_X_Q4_K_AMPERE 64
+#تعریف_کړه  MMQ_Y_Q4_K_AMPERE 128
+#تعریف_کړه NWARPS_Q4_K_AMPERE 4
+#د_که_پای
+#تعریف_کړه  MMQ_X_Q4_K_PASCAL 64
+#تعریف_کړه  MMQ_Y_Q4_K_PASCAL 64
+#تعریف_کړه NWARPS_Q4_K_PASCAL 8
 
-template <bool need_check> static void
+کينډۍ <منطقي need_check> ساكن فراغ
     mul_mat_q4_K(
-    const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
-    const int ncols_x, const int nrows_x, const int ncols_y, const int nrows_y, const int nrows_dst,
-    const sycl::nd_item<3> &item_ct1, int *tile_x_ql_q4_K,
-    sycl::half2 *tile_x_dm_q4_K, int *tile_x_sc_q4_K, int *tile_y_qs,
+    ثابت فراغ * __restrict__ vx, ثابت فراغ * __restrict__ vy, عائم * __restrict__ dst,
+    ثابت صحيح ncols_x, ثابت صحيح nrows_x, ثابت صحيح ncols_y, ثابت صحيح nrows_y, ثابت صحيح nrows_dst,
+    ثابت sycl::nd_توکی<3> &توکی_ct1, صحيح *tile_x_ql_q4_K,
+    sycl::half2 *tile_x_dm_q4_K, صحيح *tile_x_sc_q4_K, صحيح *tile_y_qs,
     sycl::half2 *tile_y_ds) {
-    int   * tile_x_ql = nullptr;
-    sycl::half2 *tile_x_dm = nullptr;
-    int   * tile_x_qh = nullptr;
-    int   * tile_x_sc = nullptr;
+    صحيح   * tile_x_ql = تش_اشاره;
+    sycl::half2 *tile_x_dm = تش_اشاره;
+    صحيح   * tile_x_qh = تش_اشاره;
+    صحيح   * tile_x_sc = تش_اشاره;
 
 //sycl_todo: change according to hardware
-    const int mmq_x  =  MMQ_X_Q4_K_AMPERE;
-    const int mmq_y  =  MMQ_Y_Q4_K_AMPERE;
-    const int nwarps = NWARPS_Q4_K_AMPERE;
+    ثابت صحيح mmq_x  =  MMQ_X_Q4_K_AMPERE;
+    ثابت صحيح mmq_y  =  MMQ_Y_Q4_K_AMPERE;
+    ثابت صحيح nwarps = NWARPS_Q4_K_AMPERE;
     allocate_tiles_q4_K<mmq_y>(&tile_x_ql, &tile_x_dm, &tile_x_qh, &tile_x_sc,
                                tile_x_ql_q4_K, tile_x_dm_q4_K, tile_x_sc_q4_K);
-    mul_mat_q<QK_K, QR4_K, QI4_K, true, block_q4_K, mmq_x, mmq_y, nwarps,
-              load_tiles_q4_K<mmq_y, nwarps, need_check>, VDR_Q4_K_Q8_1_MMQ,
+    mul_mat_q<QK_K, QR4_K, QI4_K, ریښتیا, بلاک_q4_K, mmq_x, mmq_y, nwarps,
+              بارول_tiles_q4_K<mmq_y, nwarps, need_check>, VDR_Q4_K_Q8_1_MMQ,
               vec_dot_q4_K_q8_1_mul_mat>(
         vx, vy, dst, ncols_x, nrows_x, ncols_y, nrows_y, nrows_dst, tile_x_ql,
-        tile_x_dm, tile_x_qh, tile_x_sc, item_ct1, tile_y_qs, tile_y_ds);
+        tile_x_dm, tile_x_qh, tile_x_sc, توکی_ct1, tile_y_qs, tile_y_ds);
 }
 
-#define  MMQ_X_Q5_K_RDNA2  64
-#define  MMQ_Y_Q5_K_RDNA2  128
-#define NWARPS_Q5_K_RDNA2  8
-#define  MMQ_X_Q5_K_RDNA1  32
-#define  MMQ_Y_Q5_K_RDNA1  64
-#define NWARPS_Q5_K_RDNA1  8
-#if defined(SYCL_USE_XMX)
-#define  MMQ_X_Q5_K_AMPERE 4
-#define  MMQ_Y_Q5_K_AMPERE 32
-#define NWARPS_Q5_K_AMPERE 4
-#else
-#define  MMQ_X_Q5_K_AMPERE 64
-#define  MMQ_Y_Q5_K_AMPERE 128
-#define NWARPS_Q5_K_AMPERE 4
-#endif
-#define  MMQ_X_Q5_K_PASCAL 64
-#define  MMQ_Y_Q5_K_PASCAL 64
-#define NWARPS_Q5_K_PASCAL 8
+#تعریف_کړه  MMQ_X_Q5_K_RDNA2  64
+#تعریف_کړه  MMQ_Y_Q5_K_RDNA2  128
+#تعریف_کړه NWARPS_Q5_K_RDNA2  8
+#تعریف_کړه  MMQ_X_Q5_K_RDNA1  32
+#تعریف_کړه  MMQ_Y_Q5_K_RDNA1  64
+#تعریف_کړه NWARPS_Q5_K_RDNA1  8
+#إذا defined(SYCL_USE_XMX)
+#تعریف_کړه  MMQ_X_Q5_K_AMPERE 4
+#تعریف_کړه  MMQ_Y_Q5_K_AMPERE 32
+#تعریف_کړه NWARPS_Q5_K_AMPERE 4
+#وإلا
+#تعریف_کړه  MMQ_X_Q5_K_AMPERE 64
+#تعریف_کړه  MMQ_Y_Q5_K_AMPERE 128
+#تعریف_کړه NWARPS_Q5_K_AMPERE 4
+#د_که_پای
+#تعریف_کړه  MMQ_X_Q5_K_PASCAL 64
+#تعریف_کړه  MMQ_Y_Q5_K_PASCAL 64
+#تعریف_کړه NWARPS_Q5_K_PASCAL 8
 
-template <bool need_check> static void
+کينډۍ <منطقي need_check> ساكن فراغ
 mul_mat_q5_K(
-    const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
-    const int ncols_x, const int nrows_x, const int ncols_y, const int nrows_y, const int nrows_dst,
-    const sycl::nd_item<3> &item_ct1, int *tile_x_ql_q5_K,
-    sycl::half2 *tile_x_dm_q5_K, int *tile_x_sc_q5_K, int *tile_y_qs,
+    ثابت فراغ * __restrict__ vx, ثابت فراغ * __restrict__ vy, عائم * __restrict__ dst,
+    ثابت صحيح ncols_x, ثابت صحيح nrows_x, ثابت صحيح ncols_y, ثابت صحيح nrows_y, ثابت صحيح nrows_dst,
+    ثابت sycl::nd_توکی<3> &توکی_ct1, صحيح *tile_x_ql_q5_K,
+    sycl::half2 *tile_x_dm_q5_K, صحيح *tile_x_sc_q5_K, صحيح *tile_y_qs,
     sycl::half2 *tile_y_ds) {
-    int   * tile_x_ql = nullptr;
-    sycl::half2 *tile_x_dm = nullptr;
-    int   * tile_x_qh = nullptr;
-    int   * tile_x_sc = nullptr;
+    صحيح   * tile_x_ql = تش_اشاره;
+    sycl::half2 *tile_x_dm = تش_اشاره;
+    صحيح   * tile_x_qh = تش_اشاره;
+    صحيح   * tile_x_sc = تش_اشاره;
 
 //sycl_todo: change according to hardware
-    const int mmq_x  =  MMQ_X_Q5_K_AMPERE;
-    const int mmq_y  =  MMQ_Y_Q5_K_AMPERE;
-    const int nwarps = NWARPS_Q5_K_AMPERE;
+    ثابت صحيح mmq_x  =  MMQ_X_Q5_K_AMPERE;
+    ثابت صحيح mmq_y  =  MMQ_Y_Q5_K_AMPERE;
+    ثابت صحيح nwarps = NWARPS_Q5_K_AMPERE;
     allocate_tiles_q5_K<mmq_y>(&tile_x_ql, &tile_x_dm, &tile_x_qh, &tile_x_sc,
                                tile_x_ql_q5_K, tile_x_dm_q5_K, tile_x_sc_q5_K);
-    mul_mat_q<QK_K, QR5_K, QI5_K, true, block_q5_K, mmq_x, mmq_y, nwarps,
-              load_tiles_q5_K<mmq_y, nwarps, need_check>, VDR_Q5_K_Q8_1_MMQ,
+    mul_mat_q<QK_K, QR5_K, QI5_K, ریښتیا, بلاک_q5_K, mmq_x, mmq_y, nwarps,
+              بارول_tiles_q5_K<mmq_y, nwarps, need_check>, VDR_Q5_K_Q8_1_MMQ,
               vec_dot_q5_K_q8_1_mul_mat>(
         vx, vy, dst, ncols_x, nrows_x, ncols_y, nrows_y, nrows_dst, tile_x_ql,
-        tile_x_dm, tile_x_qh, tile_x_sc, item_ct1, tile_y_qs, tile_y_ds);
+        tile_x_dm, tile_x_qh, tile_x_sc, توکی_ct1, tile_y_qs, tile_y_ds);
 }
 
-#define  MMQ_X_Q6_K_RDNA2  64
-#define  MMQ_Y_Q6_K_RDNA2  128
-#define NWARPS_Q6_K_RDNA2  8
-#define  MMQ_X_Q6_K_RDNA1  32
-#define  MMQ_Y_Q6_K_RDNA1  64
-#define NWARPS_Q6_K_RDNA1  8
-#if defined(SYCL_USE_XMX)
-#define  MMQ_X_Q6_K_AMPERE 4
-#define  MMQ_Y_Q6_K_AMPERE 32
-#define NWARPS_Q6_K_AMPERE 4
-#else
-#define  MMQ_X_Q6_K_AMPERE 64
-#define  MMQ_Y_Q6_K_AMPERE 64
-#define NWARPS_Q6_K_AMPERE 4
-#endif
-#define  MMQ_X_Q6_K_PASCAL 64
-#define  MMQ_Y_Q6_K_PASCAL 64
-#define NWARPS_Q6_K_PASCAL 8
+#تعریف_کړه  MMQ_X_Q6_K_RDNA2  64
+#تعریف_کړه  MMQ_Y_Q6_K_RDNA2  128
+#تعریف_کړه NWARPS_Q6_K_RDNA2  8
+#تعریف_کړه  MMQ_X_Q6_K_RDNA1  32
+#تعریف_کړه  MMQ_Y_Q6_K_RDNA1  64
+#تعریف_کړه NWARPS_Q6_K_RDNA1  8
+#إذا defined(SYCL_USE_XMX)
+#تعریف_کړه  MMQ_X_Q6_K_AMPERE 4
+#تعریف_کړه  MMQ_Y_Q6_K_AMPERE 32
+#تعریف_کړه NWARPS_Q6_K_AMPERE 4
+#وإلا
+#تعریف_کړه  MMQ_X_Q6_K_AMPERE 64
+#تعریف_کړه  MMQ_Y_Q6_K_AMPERE 64
+#تعریف_کړه NWARPS_Q6_K_AMPERE 4
+#د_که_پای
+#تعریف_کړه  MMQ_X_Q6_K_PASCAL 64
+#تعریف_کړه  MMQ_Y_Q6_K_PASCAL 64
+#تعریف_کړه NWARPS_Q6_K_PASCAL 8
 
-template <bool need_check> static void
+کينډۍ <منطقي need_check> ساكن فراغ
     mul_mat_q6_K(
-    const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
-    const int ncols_x, const int nrows_x, const int ncols_y, const int nrows_y, const int nrows_dst,
-    const sycl::nd_item<3> &item_ct1, int *tile_x_ql, sycl::half2 *tile_x_dm,
-    int *tile_x_sc, int *tile_y_qs, sycl::half2 *tile_y_ds) {
+    ثابت فراغ * __restrict__ vx, ثابت فراغ * __restrict__ vy, عائم * __restrict__ dst,
+    ثابت صحيح ncols_x, ثابت صحيح nrows_x, ثابت صحيح ncols_y, ثابت صحيح nrows_y, ثابت صحيح nrows_dst,
+    ثابت sycl::nd_توکی<3> &توکی_ct1, صحيح *tile_x_ql, sycl::half2 *tile_x_dm,
+    صحيح *tile_x_sc, صحيح *tile_y_qs, sycl::half2 *tile_y_ds) {
     // int   * tile_x_ql = nullptr;
     // sycl::half2 *tile_x_dm = nullptr;
-    int   * tile_x_qh = nullptr;
+    صحيح   * tile_x_qh = تش_اشاره;
     // int   * tile_x_sc = nullptr;
 
 //sycl_todo: change according to hardware
-    const int mmq_x  =  MMQ_X_Q6_K_AMPERE;
-    const int mmq_y  =  MMQ_Y_Q6_K_AMPERE;
-    const int nwarps = NWARPS_Q6_K_AMPERE;
+    ثابت صحيح mmq_x  =  MMQ_X_Q6_K_AMPERE;
+    ثابت صحيح mmq_y  =  MMQ_Y_Q6_K_AMPERE;
+    ثابت صحيح nwarps = NWARPS_Q6_K_AMPERE;
     allocate_tiles_q6_K<mmq_y>(&tile_x_ql, &tile_x_dm, &tile_x_qh, &tile_x_sc,
                                tile_x_ql, tile_x_dm, tile_x_sc);
-    mul_mat_q<QK_K, QR6_K, QI6_K, false, block_q6_K, mmq_x, mmq_y, nwarps,
-              load_tiles_q6_K<mmq_y, nwarps, need_check>, VDR_Q6_K_Q8_1_MMQ,
+    mul_mat_q<QK_K, QR6_K, QI6_K, خطأ, بلاک_q6_K, mmq_x, mmq_y, nwarps,
+              بارول_tiles_q6_K<mmq_y, nwarps, need_check>, VDR_Q6_K_Q8_1_MMQ,
               vec_dot_q6_K_q8_1_mul_mat>(
         vx, vy, dst, ncols_x, nrows_x, ncols_y, nrows_y, nrows_dst, tile_x_ql,
-        tile_x_dm, tile_x_qh, tile_x_sc, item_ct1, tile_y_qs, tile_y_ds);
+        tile_x_dm, tile_x_qh, tile_x_sc, توکی_ct1, tile_y_qs, tile_y_ds);
 }
 
-static void ggml_mul_mat_q4_0_q8_1_sycl(const void *vx, const void *vy,
-                                        float *dst, const int ncols_x,
-                                        const int nrows_x, const int ncols_y,
-                                        const int nrows_y, const int nrows_dst,
-                                        dpct::queue_ptr stream) try {
+ساكن فراغ ggml_mul_mat_q4_0_q8_1_sycl(ثابت فراغ *vx, ثابت فراغ *vy,
+                                        عائم *dst, ثابت صحيح ncols_x,
+                                        ثابت صحيح nrows_x, ثابت صحيح ncols_y,
+                                        ثابت صحيح nrows_y, ثابت صحيح nrows_dst,
+                                        dpct::کتار_ptr stream) حاول {
 
-    int id;
+    صحيح id;
     SYCL_CHECK(
         CHECK_TRY_ERROR(id = get_current_device_id()));
-    const int compute_capability = ggml_sycl_info().devices[id].cc;
+    ثابت صحيح compute_capability = ggml_sycl_info().devices[id].cc;
 
-    int mmq_x, mmq_y, nwarps;
-    if (compute_capability >= VER_GEN13) {
+    صحيح mmq_x, mmq_y, nwarps;
+    إذا (compute_capability >= VER_GEN13) {
         mmq_x  =  MMQ_X_Q4_0_RDNA2;
         mmq_y  =  MMQ_Y_Q4_0_RDNA2;
         nwarps = NWARPS_Q4_0_RDNA2;
-    } else if (compute_capability >= VER_GEN12) {
+    } وإلا إذا (compute_capability >= VER_GEN12) {
         mmq_x  =  MMQ_X_Q4_0_RDNA1;
         mmq_y  =  MMQ_Y_Q4_0_RDNA1;
         nwarps = NWARPS_Q4_0_RDNA1;
-    } else if (compute_capability >= VER_GEN9) {
+    } وإلا إذا (compute_capability >= VER_GEN9) {
         mmq_x  =  MMQ_X_Q4_0_AMPERE;
         mmq_y  =  MMQ_Y_Q4_0_AMPERE;
         nwarps = NWARPS_Q4_0_AMPERE;
-    } else if (compute_capability >= VER_4VEC) {
+    } وإلا إذا (compute_capability >= VER_4VEC) {
         mmq_x  =  MMQ_X_Q4_0_PASCAL;
         mmq_y  =  MMQ_Y_Q4_0_PASCAL;
         nwarps = NWARPS_Q4_0_PASCAL;
-    } else {
+    } وإلا {
         GGML_ABORT("fatal error");
     }
 
-    const int block_num_x = (nrows_x + mmq_y - 1) / mmq_y;
-    const int block_num_y = (ncols_y + mmq_x - 1) / mmq_x;
-    const sycl::range<3> block_nums(1, block_num_y, block_num_x);
-    const sycl::range<3> block_dims(1, nwarps, WARP_SIZE);
+    ثابت صحيح بلاک_عدد_x = (nrows_x + mmq_y - 1) / mmq_y;
+    ثابت صحيح بلاک_عدد_y = (ncols_y + mmq_x - 1) / mmq_x;
+    ثابت sycl::range<3> بلاک_nums(1, بلاک_عدد_y, بلاک_عدد_x);
+    ثابت sycl::range<3> بلاک_dims(1, nwarps, WARP_اندازه);
 
-    const auto launch = [&](auto need_check) {
+    ثابت خپلکاری launch = [&](خپلکاری need_check) {
         /*
         DPCT1049:20: The work-group size passed to the SYCL kernel may exceed
         the limit. To get the device limit, query
@@ -1817,80 +1817,80 @@ static void ggml_mul_mat_q4_0_q8_1_sycl(const void *vx, const void *vy,
                                      {sycl::aspect::fp16});
 
         stream->submit([&](sycl::handler &cgh) {
-            sycl::local_accessor<int, 1> tile_x_qs_q4_0_acc_ct1(
-                sycl::range<1>(mmq_y * (WARP_SIZE) + mmq_y), cgh);
-            sycl::local_accessor<float, 1> tile_x_d_q4_0_acc_ct1(
-                sycl::range<1>(mmq_y * (WARP_SIZE / QI4_0) + mmq_y / QI4_0),
+            sycl::local_accessor<صحيح, 1> tile_x_qs_q4_0_acc_ct1(
+                sycl::range<1>(mmq_y * (WARP_اندازه) + mmq_y), cgh);
+            sycl::local_accessor<عائم, 1> tile_x_d_q4_0_acc_ct1(
+                sycl::range<1>(mmq_y * (WARP_اندازه / QI4_0) + mmq_y / QI4_0),
                 cgh);
-            sycl::local_accessor<int, 1> tile_y_qs_acc_ct1(
-                sycl::range<1>(mmq_x * WARP_SIZE), cgh);
+            sycl::local_accessor<صحيح, 1> tile_y_qs_acc_ct1(
+                sycl::range<1>(mmq_x * WARP_اندازه), cgh);
             sycl::local_accessor<sycl::half2, 1> tile_y_ds_acc_ct1(
-                sycl::range<1>(mmq_x * WARP_SIZE / QI8_1), cgh);
+                sycl::range<1>(mmq_x * WARP_اندازه / QI8_1), cgh);
 
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1) {
+                sycl::nd_range<3>(بلاک_nums * بلاک_dims, بلاک_dims),
+                [=](sycl::nd_توکی<3> توکی_ct1) {
                     mul_mat_q4_0<decltype(need_check)::value>(
                         vx, vy, dst, ncols_x, nrows_x, ncols_y, nrows_y,
-                        nrows_dst, item_ct1,
-                        get_pointer(tile_x_qs_q4_0_acc_ct1),
-                        get_pointer(tile_x_d_q4_0_acc_ct1),
-                        get_pointer(tile_y_qs_acc_ct1),
-                        get_pointer(tile_y_ds_acc_ct1));
+                        nrows_dst, توکی_ct1,
+                        get_اشاره_ګر(tile_x_qs_q4_0_acc_ct1),
+                        get_اشاره_ګر(tile_x_d_q4_0_acc_ct1),
+                        get_اشاره_ګر(tile_y_qs_acc_ct1),
+                        get_اشاره_ګر(tile_y_ds_acc_ct1));
                 });
         });
     };
 
-    if (nrows_x % mmq_y == 0) {
+    إذا (nrows_x % mmq_y == 0) {
         launch(std::false_type{});
-    } else {
+    } وإلا {
         launch(std::true_type{});
     }
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::کرښه_پای;
+  std::وتل(1);
 }
 
-static void ggml_mul_mat_q4_1_q8_1_sycl(const void *vx, const void *vy,
-                                        float *dst, const int ncols_x,
-                                        const int nrows_x, const int ncols_y,
-                                        const int nrows_y, const int nrows_dst,
-                                        dpct::queue_ptr stream) try {
+ساكن فراغ ggml_mul_mat_q4_1_q8_1_sycl(ثابت فراغ *vx, ثابت فراغ *vy,
+                                        عائم *dst, ثابت صحيح ncols_x,
+                                        ثابت صحيح nrows_x, ثابت صحيح ncols_y,
+                                        ثابت صحيح nrows_y, ثابت صحيح nrows_dst,
+                                        dpct::کتار_ptr stream) حاول {
 
-    int id;
+    صحيح id;
     SYCL_CHECK(
         CHECK_TRY_ERROR(id = get_current_device_id()));
-    const int compute_capability = ggml_sycl_info().devices[id].cc;
+    ثابت صحيح compute_capability = ggml_sycl_info().devices[id].cc;
 
-    int mmq_x, mmq_y, nwarps;
-    if (compute_capability >= VER_GEN13) {
+    صحيح mmq_x, mmq_y, nwarps;
+    إذا (compute_capability >= VER_GEN13) {
         mmq_x  =  MMQ_X_Q4_1_RDNA2;
         mmq_y  =  MMQ_Y_Q4_1_RDNA2;
         nwarps = NWARPS_Q4_1_RDNA2;
-    } else if (compute_capability >= VER_GEN12) {
+    } وإلا إذا (compute_capability >= VER_GEN12) {
         mmq_x  =  MMQ_X_Q4_1_RDNA1;
         mmq_y  =  MMQ_Y_Q4_1_RDNA1;
         nwarps = NWARPS_Q4_1_RDNA1;
-    } else if (compute_capability >= VER_GEN9) {
+    } وإلا إذا (compute_capability >= VER_GEN9) {
         mmq_x  =  MMQ_X_Q4_1_AMPERE;
         mmq_y  =  MMQ_Y_Q4_1_AMPERE;
         nwarps = NWARPS_Q4_1_AMPERE;
-    } else if (compute_capability >= VER_4VEC) {
+    } وإلا إذا (compute_capability >= VER_4VEC) {
         mmq_x  =  MMQ_X_Q4_1_PASCAL;
         mmq_y  =  MMQ_Y_Q4_1_PASCAL;
         nwarps = NWARPS_Q4_1_PASCAL;
-    } else {
+    } وإلا {
         GGML_ABORT("fatal error");
     }
 
-    const int block_num_x = (nrows_x + mmq_y - 1) / mmq_y;
-    const int block_num_y = (ncols_y + mmq_x - 1) / mmq_x;
-    const sycl::range<3> block_nums(1, block_num_y, block_num_x);
-    const sycl::range<3> block_dims(1, nwarps, WARP_SIZE);
+    ثابت صحيح بلاک_عدد_x = (nrows_x + mmq_y - 1) / mmq_y;
+    ثابت صحيح بلاک_عدد_y = (ncols_y + mmq_x - 1) / mmq_x;
+    ثابت sycl::range<3> بلاک_nums(1, بلاک_عدد_y, بلاک_عدد_x);
+    ثابت sycl::range<3> بلاک_dims(1, nwarps, WARP_اندازه);
 
-    const auto launch = [&](auto need_check) {
+    ثابت خپلکاری launch = [&](خپلکاری need_check) {
         /*
         DPCT1049:22: The work-group size passed to the SYCL kernel may exceed
         the limit. To get the device limit, query
@@ -1900,80 +1900,80 @@ static void ggml_mul_mat_q4_1_q8_1_sycl(const void *vx, const void *vy,
                                      {sycl::aspect::fp16});
 
         stream->submit([&](sycl::handler &cgh) {
-            sycl::local_accessor<int, 1> tile_x_qs_q4_1_acc_ct1(
-                sycl::range<1>(mmq_y * (WARP_SIZE) + +mmq_y), cgh);
+            sycl::local_accessor<صحيح, 1> tile_x_qs_q4_1_acc_ct1(
+                sycl::range<1>(mmq_y * (WARP_اندازه) + +mmq_y), cgh);
             sycl::local_accessor<sycl::half2, 1> tile_x_dm_q4_1_acc_ct1(
-                sycl::range<1>(mmq_y * (WARP_SIZE / QI4_1) + mmq_y / QI4_1),
+                sycl::range<1>(mmq_y * (WARP_اندازه / QI4_1) + mmq_y / QI4_1),
                 cgh);
-            sycl::local_accessor<int, 1> tile_y_qs_acc_ct1(
-                sycl::range<1>(mmq_x * WARP_SIZE), cgh);
+            sycl::local_accessor<صحيح, 1> tile_y_qs_acc_ct1(
+                sycl::range<1>(mmq_x * WARP_اندازه), cgh);
             sycl::local_accessor<sycl::half2, 1> tile_y_ds_acc_ct1(
-                sycl::range<1>(mmq_x * WARP_SIZE / QI8_1), cgh);
+                sycl::range<1>(mmq_x * WARP_اندازه / QI8_1), cgh);
 
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1) {
+                sycl::nd_range<3>(بلاک_nums * بلاک_dims, بلاک_dims),
+                [=](sycl::nd_توکی<3> توکی_ct1) {
                     mul_mat_q4_1<decltype(need_check)::value>(
                         vx, vy, dst, ncols_x, nrows_x, ncols_y, nrows_y,
-                        nrows_dst, item_ct1,
-                        get_pointer(tile_x_qs_q4_1_acc_ct1),
-                        get_pointer(tile_x_dm_q4_1_acc_ct1),
-                        get_pointer(tile_y_qs_acc_ct1),
-                        get_pointer(tile_y_ds_acc_ct1));
+                        nrows_dst, توکی_ct1,
+                        get_اشاره_ګر(tile_x_qs_q4_1_acc_ct1),
+                        get_اشاره_ګر(tile_x_dm_q4_1_acc_ct1),
+                        get_اشاره_ګر(tile_y_qs_acc_ct1),
+                        get_اشاره_ګر(tile_y_ds_acc_ct1));
                 });
         });
     };
 
-    if (nrows_x % mmq_y == 0) {
+    إذا (nrows_x % mmq_y == 0) {
         launch(std::false_type{});
-    } else {
+    } وإلا {
         launch(std::true_type{});
     }
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::کرښه_پای;
+  std::وتل(1);
 }
 
-static void ggml_mul_mat_q5_0_q8_1_sycl(const void *vx, const void *vy,
-                                        float *dst, const int ncols_x,
-                                        const int nrows_x, const int ncols_y,
-                                        const int nrows_y, const int nrows_dst,
-                                        dpct::queue_ptr stream) try {
+ساكن فراغ ggml_mul_mat_q5_0_q8_1_sycl(ثابت فراغ *vx, ثابت فراغ *vy,
+                                        عائم *dst, ثابت صحيح ncols_x,
+                                        ثابت صحيح nrows_x, ثابت صحيح ncols_y,
+                                        ثابت صحيح nrows_y, ثابت صحيح nrows_dst,
+                                        dpct::کتار_ptr stream) حاول {
 
-    int id;
+    صحيح id;
     SYCL_CHECK(
         CHECK_TRY_ERROR(id = get_current_device_id()));
-    const int compute_capability = ggml_sycl_info().devices[id].cc;
+    ثابت صحيح compute_capability = ggml_sycl_info().devices[id].cc;
 
-    int mmq_x, mmq_y, nwarps;
-    if (compute_capability >= VER_GEN13) {
+    صحيح mmq_x, mmq_y, nwarps;
+    إذا (compute_capability >= VER_GEN13) {
         mmq_x  =  MMQ_X_Q5_0_RDNA2;
         mmq_y  =  MMQ_Y_Q5_0_RDNA2;
         nwarps = NWARPS_Q5_0_RDNA2;
-    } else if (compute_capability >= VER_GEN12) {
+    } وإلا إذا (compute_capability >= VER_GEN12) {
         mmq_x  =  MMQ_X_Q5_0_RDNA1;
         mmq_y  =  MMQ_Y_Q5_0_RDNA1;
         nwarps = NWARPS_Q5_0_RDNA1;
-    } else if (compute_capability >= VER_GEN9) {
+    } وإلا إذا (compute_capability >= VER_GEN9) {
         mmq_x  =  MMQ_X_Q5_0_AMPERE;
         mmq_y  =  MMQ_Y_Q5_0_AMPERE;
         nwarps = NWARPS_Q5_0_AMPERE;
-    } else if (compute_capability >= VER_4VEC) {
+    } وإلا إذا (compute_capability >= VER_4VEC) {
         mmq_x  =  MMQ_X_Q5_0_PASCAL;
         mmq_y  =  MMQ_Y_Q5_0_PASCAL;
         nwarps = NWARPS_Q5_0_PASCAL;
-    } else {
+    } وإلا {
         GGML_ABORT("fatal error");
     }
 
-    const int block_num_x = (nrows_x + mmq_y - 1) / mmq_y;
-    const int block_num_y = (ncols_y + mmq_x - 1) / mmq_x;
-    const sycl::range<3> block_nums(1, block_num_y, block_num_x);
-    const sycl::range<3> block_dims(1, nwarps, WARP_SIZE);
+    ثابت صحيح بلاک_عدد_x = (nrows_x + mmq_y - 1) / mmq_y;
+    ثابت صحيح بلاک_عدد_y = (ncols_y + mmq_x - 1) / mmq_x;
+    ثابت sycl::range<3> بلاک_nums(1, بلاک_عدد_y, بلاک_عدد_x);
+    ثابت sycl::range<3> بلاک_dims(1, nwarps, WARP_اندازه);
 
-    const auto launch = [&](auto need_check) {
+    ثابت خپلکاری launch = [&](خپلکاری need_check) {
         /*
         DPCT1049:24: The work-group size passed to the SYCL kernel may exceed
         the limit. To get the device limit, query
@@ -1983,80 +1983,80 @@ static void ggml_mul_mat_q5_0_q8_1_sycl(const void *vx, const void *vy,
                                      {sycl::aspect::fp16});
 
         stream->submit([&](sycl::handler &cgh) {
-            sycl::local_accessor<int, 1> tile_x_ql_q5_0_acc_ct1(
-                sycl::range<1>(mmq_y * (2 * WARP_SIZE) + mmq_y), cgh);
-            sycl::local_accessor<float, 1> tile_x_d_q5_0_acc_ct1(
-                sycl::range<1>(mmq_y * (WARP_SIZE / QI5_0) + mmq_y / QI5_0),
+            sycl::local_accessor<صحيح, 1> tile_x_ql_q5_0_acc_ct1(
+                sycl::range<1>(mmq_y * (2 * WARP_اندازه) + mmq_y), cgh);
+            sycl::local_accessor<عائم, 1> tile_x_d_q5_0_acc_ct1(
+                sycl::range<1>(mmq_y * (WARP_اندازه / QI5_0) + mmq_y / QI5_0),
                 cgh);
-            sycl::local_accessor<int, 1> tile_y_qs_acc_ct1(
-                sycl::range<1>(mmq_x * WARP_SIZE), cgh);
+            sycl::local_accessor<صحيح, 1> tile_y_qs_acc_ct1(
+                sycl::range<1>(mmq_x * WARP_اندازه), cgh);
             sycl::local_accessor<sycl::half2, 1> tile_y_ds_acc_ct1(
-                sycl::range<1>(mmq_x * WARP_SIZE / QI8_1), cgh);
+                sycl::range<1>(mmq_x * WARP_اندازه / QI8_1), cgh);
 
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1) {
+                sycl::nd_range<3>(بلاک_nums * بلاک_dims, بلاک_dims),
+                [=](sycl::nd_توکی<3> توکی_ct1) {
                     mul_mat_q5_0<decltype(need_check)::value>(
                         vx, vy, dst, ncols_x, nrows_x, ncols_y, nrows_y,
-                        nrows_dst, item_ct1,
-                        get_pointer(tile_x_ql_q5_0_acc_ct1),
-                        get_pointer(tile_x_d_q5_0_acc_ct1),
-                        get_pointer(tile_y_qs_acc_ct1),
-                        get_pointer(tile_y_ds_acc_ct1));
+                        nrows_dst, توکی_ct1,
+                        get_اشاره_ګر(tile_x_ql_q5_0_acc_ct1),
+                        get_اشاره_ګر(tile_x_d_q5_0_acc_ct1),
+                        get_اشاره_ګر(tile_y_qs_acc_ct1),
+                        get_اشاره_ګر(tile_y_ds_acc_ct1));
                 });
         });
     };
 
-    if (nrows_x % mmq_y == 0) {
+    إذا (nrows_x % mmq_y == 0) {
         launch(std::false_type{});
-    } else {
+    } وإلا {
         launch(std::true_type{});
     }
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::کرښه_پای;
+  std::وتل(1);
 }
 
-static void ggml_mul_mat_q5_1_q8_1_sycl(const void *vx, const void *vy,
-                                        float *dst, const int ncols_x,
-                                        const int nrows_x, const int ncols_y,
-                                        const int nrows_y, const int nrows_dst,
-                                        dpct::queue_ptr stream) try {
+ساكن فراغ ggml_mul_mat_q5_1_q8_1_sycl(ثابت فراغ *vx, ثابت فراغ *vy,
+                                        عائم *dst, ثابت صحيح ncols_x,
+                                        ثابت صحيح nrows_x, ثابت صحيح ncols_y,
+                                        ثابت صحيح nrows_y, ثابت صحيح nrows_dst,
+                                        dpct::کتار_ptr stream) حاول {
 
-    int id;
+    صحيح id;
     SYCL_CHECK(
         CHECK_TRY_ERROR(id = get_current_device_id()));
-    const int compute_capability = ggml_sycl_info().devices[id].cc;
+    ثابت صحيح compute_capability = ggml_sycl_info().devices[id].cc;
 
-    int mmq_x, mmq_y, nwarps;
-    if (compute_capability >= VER_GEN13) {
+    صحيح mmq_x, mmq_y, nwarps;
+    إذا (compute_capability >= VER_GEN13) {
         mmq_x  =  MMQ_X_Q5_1_RDNA2;
         mmq_y  =  MMQ_Y_Q5_1_RDNA2;
         nwarps = NWARPS_Q5_1_RDNA2;
-    } else if (compute_capability >= VER_GEN12) {
+    } وإلا إذا (compute_capability >= VER_GEN12) {
         mmq_x  =  MMQ_X_Q5_1_RDNA1;
         mmq_y  =  MMQ_Y_Q5_1_RDNA1;
         nwarps = NWARPS_Q5_1_RDNA1;
-    } else if (compute_capability >= VER_GEN9) {
+    } وإلا إذا (compute_capability >= VER_GEN9) {
         mmq_x  =  MMQ_X_Q5_1_AMPERE;
         mmq_y  =  MMQ_Y_Q5_1_AMPERE;
         nwarps = NWARPS_Q5_1_AMPERE;
-    } else if (compute_capability >= VER_4VEC) {
+    } وإلا إذا (compute_capability >= VER_4VEC) {
         mmq_x  =  MMQ_X_Q5_1_PASCAL;
         mmq_y  =  MMQ_Y_Q5_1_PASCAL;
         nwarps = NWARPS_Q5_1_PASCAL;
-    } else {
+    } وإلا {
         GGML_ABORT("fatal error");
     }
 
-    const int block_num_x = (nrows_x + mmq_y - 1) / mmq_y;
-    const int block_num_y = (ncols_y + mmq_x - 1) / mmq_x;
-    const sycl::range<3> block_nums(1, block_num_y, block_num_x);
-    const sycl::range<3> block_dims(1, nwarps, WARP_SIZE);
+    ثابت صحيح بلاک_عدد_x = (nrows_x + mmq_y - 1) / mmq_y;
+    ثابت صحيح بلاک_عدد_y = (ncols_y + mmq_x - 1) / mmq_x;
+    ثابت sycl::range<3> بلاک_nums(1, بلاک_عدد_y, بلاک_عدد_x);
+    ثابت sycl::range<3> بلاک_dims(1, nwarps, WARP_اندازه);
 
-    const auto launch = [&](auto need_check) {
+    ثابت خپلکاری launch = [&](خپلکاری need_check) {
         /*
         DPCT1049:26: The work-group size passed to the SYCL kernel may exceed
         the limit. To get the device limit, query
@@ -2066,80 +2066,80 @@ static void ggml_mul_mat_q5_1_q8_1_sycl(const void *vx, const void *vy,
                                      {sycl::aspect::fp16});
 
         stream->submit([&](sycl::handler &cgh) {
-            sycl::local_accessor<int, 1> tile_x_ql_q5_1_acc_ct1(
-                sycl::range<1>(mmq_y * (2 * WARP_SIZE) + mmq_y), cgh);
+            sycl::local_accessor<صحيح, 1> tile_x_ql_q5_1_acc_ct1(
+                sycl::range<1>(mmq_y * (2 * WARP_اندازه) + mmq_y), cgh);
             sycl::local_accessor<sycl::half2, 1> tile_x_dm_q5_1_acc_ct1(
-                sycl::range<1>(mmq_y * (WARP_SIZE / QI5_1) + mmq_y / QI5_1),
+                sycl::range<1>(mmq_y * (WARP_اندازه / QI5_1) + mmq_y / QI5_1),
                 cgh);
-            sycl::local_accessor<int, 1> tile_y_qs_acc_ct1(
-                sycl::range<1>(mmq_x * WARP_SIZE), cgh);
+            sycl::local_accessor<صحيح, 1> tile_y_qs_acc_ct1(
+                sycl::range<1>(mmq_x * WARP_اندازه), cgh);
             sycl::local_accessor<sycl::half2, 1> tile_y_ds_acc_ct1(
-                sycl::range<1>(mmq_x * WARP_SIZE / QI8_1), cgh);
+                sycl::range<1>(mmq_x * WARP_اندازه / QI8_1), cgh);
 
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1) {
+                sycl::nd_range<3>(بلاک_nums * بلاک_dims, بلاک_dims),
+                [=](sycl::nd_توکی<3> توکی_ct1) {
                     mul_mat_q5_1<decltype(need_check)::value>(
                         vx, vy, dst, ncols_x, nrows_x, ncols_y, nrows_y,
-                        nrows_dst, item_ct1,
-                        get_pointer(tile_x_ql_q5_1_acc_ct1),
-                        get_pointer(tile_x_dm_q5_1_acc_ct1),
-                        get_pointer(tile_y_qs_acc_ct1),
-                        get_pointer(tile_y_ds_acc_ct1));
+                        nrows_dst, توکی_ct1,
+                        get_اشاره_ګر(tile_x_ql_q5_1_acc_ct1),
+                        get_اشاره_ګر(tile_x_dm_q5_1_acc_ct1),
+                        get_اشاره_ګر(tile_y_qs_acc_ct1),
+                        get_اشاره_ګر(tile_y_ds_acc_ct1));
                 });
         });
     };
 
-    if (nrows_x % mmq_y == 0) {
+    إذا (nrows_x % mmq_y == 0) {
         launch(std::false_type{});
-    } else {
+    } وإلا {
         launch(std::true_type{});
     }
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::کرښه_پای;
+  std::وتل(1);
 }
 
-static void ggml_mul_mat_q8_0_q8_1_sycl(const void *vx, const void *vy,
-                                        float *dst, const int ncols_x,
-                                        const int nrows_x, const int ncols_y,
-                                        const int nrows_y, const int nrows_dst,
-                                        dpct::queue_ptr stream) try {
+ساكن فراغ ggml_mul_mat_q8_0_q8_1_sycl(ثابت فراغ *vx, ثابت فراغ *vy,
+                                        عائم *dst, ثابت صحيح ncols_x,
+                                        ثابت صحيح nrows_x, ثابت صحيح ncols_y,
+                                        ثابت صحيح nrows_y, ثابت صحيح nrows_dst,
+                                        dpct::کتار_ptr stream) حاول {
 
-    int id;
+    صحيح id;
     SYCL_CHECK(
         CHECK_TRY_ERROR(id = get_current_device_id()));
-    const int compute_capability = ggml_sycl_info().devices[id].cc;
+    ثابت صحيح compute_capability = ggml_sycl_info().devices[id].cc;
 
-    int mmq_x, mmq_y, nwarps;
-    if (compute_capability >= VER_GEN13) {
+    صحيح mmq_x, mmq_y, nwarps;
+    إذا (compute_capability >= VER_GEN13) {
         mmq_x  =  MMQ_X_Q8_0_RDNA2;
         mmq_y  =  MMQ_Y_Q8_0_RDNA2;
         nwarps = NWARPS_Q8_0_RDNA2;
-    } else if (compute_capability >= VER_GEN12) {
+    } وإلا إذا (compute_capability >= VER_GEN12) {
         mmq_x  =  MMQ_X_Q8_0_RDNA1;
         mmq_y  =  MMQ_Y_Q8_0_RDNA1;
         nwarps = NWARPS_Q8_0_RDNA1;
-    } else if (compute_capability >= VER_GEN9) {
+    } وإلا إذا (compute_capability >= VER_GEN9) {
         mmq_x  =  MMQ_X_Q8_0_AMPERE;
         mmq_y  =  MMQ_Y_Q8_0_AMPERE;
         nwarps = NWARPS_Q8_0_AMPERE;
-    } else if (compute_capability >= VER_4VEC) {
+    } وإلا إذا (compute_capability >= VER_4VEC) {
         mmq_x  =  MMQ_X_Q8_0_PASCAL;
         mmq_y  =  MMQ_Y_Q8_0_PASCAL;
         nwarps = NWARPS_Q8_0_PASCAL;
-    } else {
+    } وإلا {
         GGML_ABORT("fatal error");
     }
 
-    const int block_num_x = (nrows_x + mmq_y - 1) / mmq_y;
-    const int block_num_y = (ncols_y + mmq_x - 1) / mmq_x;
-    const sycl::range<3> block_nums(1, block_num_y, block_num_x);
-    const sycl::range<3> block_dims(1, nwarps, WARP_SIZE);
+    ثابت صحيح بلاک_عدد_x = (nrows_x + mmq_y - 1) / mmq_y;
+    ثابت صحيح بلاک_عدد_y = (ncols_y + mmq_x - 1) / mmq_x;
+    ثابت sycl::range<3> بلاک_nums(1, بلاک_عدد_y, بلاک_عدد_x);
+    ثابت sycl::range<3> بلاک_dims(1, nwarps, WARP_اندازه);
 
-    const auto launch = [&](auto need_check) {
+    ثابت خپلکاری launch = [&](خپلکاری need_check) {
         /*
         DPCT1049:28: The work-group size passed to the SYCL kernel may exceed
         the limit. To get the device limit, query
@@ -2149,80 +2149,80 @@ static void ggml_mul_mat_q8_0_q8_1_sycl(const void *vx, const void *vy,
                                      {sycl::aspect::fp16});
 
         stream->submit([&](sycl::handler &cgh) {
-            sycl::local_accessor<int, 1> tile_x_qs_q8_0_acc_ct1(
-                sycl::range<1>(mmq_y * (WARP_SIZE) + mmq_y), cgh);
-            sycl::local_accessor<float, 1> tile_x_d_q8_0_acc_ct1(
-                sycl::range<1>(mmq_y * (WARP_SIZE / QI8_0) + mmq_y / QI8_0),
+            sycl::local_accessor<صحيح, 1> tile_x_qs_q8_0_acc_ct1(
+                sycl::range<1>(mmq_y * (WARP_اندازه) + mmq_y), cgh);
+            sycl::local_accessor<عائم, 1> tile_x_d_q8_0_acc_ct1(
+                sycl::range<1>(mmq_y * (WARP_اندازه / QI8_0) + mmq_y / QI8_0),
                 cgh);
-            sycl::local_accessor<int, 1> tile_y_qs_acc_ct1(
-                sycl::range<1>(mmq_x * WARP_SIZE), cgh);
+            sycl::local_accessor<صحيح, 1> tile_y_qs_acc_ct1(
+                sycl::range<1>(mmq_x * WARP_اندازه), cgh);
             sycl::local_accessor<sycl::half2, 1> tile_y_ds_acc_ct1(
-                sycl::range<1>(mmq_x * WARP_SIZE / QI8_1), cgh);
+                sycl::range<1>(mmq_x * WARP_اندازه / QI8_1), cgh);
 
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1) {
+                sycl::nd_range<3>(بلاک_nums * بلاک_dims, بلاک_dims),
+                [=](sycl::nd_توکی<3> توکی_ct1) {
                     mul_mat_q8_0<decltype(need_check)::value>(
                         vx, vy, dst, ncols_x, nrows_x, ncols_y, nrows_y,
-                        nrows_dst, item_ct1,
-                        get_pointer(tile_x_qs_q8_0_acc_ct1),
-                        get_pointer(tile_x_d_q8_0_acc_ct1),
-                        get_pointer(tile_y_qs_acc_ct1),
-                        get_pointer(tile_y_ds_acc_ct1));
+                        nrows_dst, توکی_ct1,
+                        get_اشاره_ګر(tile_x_qs_q8_0_acc_ct1),
+                        get_اشاره_ګر(tile_x_d_q8_0_acc_ct1),
+                        get_اشاره_ګر(tile_y_qs_acc_ct1),
+                        get_اشاره_ګر(tile_y_ds_acc_ct1));
                 });
         });
     };
 
-    if (nrows_x % mmq_y == 0) {
+    إذا (nrows_x % mmq_y == 0) {
         launch(std::false_type{});
-    } else {
+    } وإلا {
         launch(std::true_type{});
     }
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::کرښه_پای;
+  std::وتل(1);
 }
 
-static void ggml_mul_mat_q2_K_q8_1_sycl(const void *vx, const void *vy,
-                                        float *dst, const int ncols_x,
-                                        const int nrows_x, const int ncols_y,
-                                        const int nrows_y, const int nrows_dst,
-                                        dpct::queue_ptr stream) try {
+ساكن فراغ ggml_mul_mat_q2_K_q8_1_sycl(ثابت فراغ *vx, ثابت فراغ *vy,
+                                        عائم *dst, ثابت صحيح ncols_x,
+                                        ثابت صحيح nrows_x, ثابت صحيح ncols_y,
+                                        ثابت صحيح nrows_y, ثابت صحيح nrows_dst,
+                                        dpct::کتار_ptr stream) حاول {
 
-    int id;
+    صحيح id;
     SYCL_CHECK(
         CHECK_TRY_ERROR(id = get_current_device_id()));
-    const int compute_capability = ggml_sycl_info().devices[id].cc;
+    ثابت صحيح compute_capability = ggml_sycl_info().devices[id].cc;
 
-    int mmq_x, mmq_y, nwarps;
-    if (compute_capability >= VER_GEN13) {
+    صحيح mmq_x, mmq_y, nwarps;
+    إذا (compute_capability >= VER_GEN13) {
         mmq_x  =  MMQ_X_Q2_K_RDNA2;
         mmq_y  =  MMQ_Y_Q2_K_RDNA2;
         nwarps = NWARPS_Q2_K_RDNA2;
-    } else if (compute_capability >= VER_GEN12) {
+    } وإلا إذا (compute_capability >= VER_GEN12) {
         mmq_x  =  MMQ_X_Q2_K_RDNA1;
         mmq_y  =  MMQ_Y_Q2_K_RDNA1;
         nwarps = NWARPS_Q2_K_RDNA1;
-    } else if (compute_capability >= VER_GEN9) {
+    } وإلا إذا (compute_capability >= VER_GEN9) {
         mmq_x  =  MMQ_X_Q2_K_AMPERE;
         mmq_y  =  MMQ_Y_Q2_K_AMPERE;
         nwarps = NWARPS_Q2_K_AMPERE;
-    } else if (compute_capability >= VER_4VEC) {
+    } وإلا إذا (compute_capability >= VER_4VEC) {
         mmq_x  =  MMQ_X_Q2_K_PASCAL;
         mmq_y  =  MMQ_Y_Q2_K_PASCAL;
         nwarps = NWARPS_Q2_K_PASCAL;
-    } else {
+    } وإلا {
         GGML_ABORT("fatal error");
     }
 
-    const int block_num_x = (nrows_x + mmq_y - 1) / mmq_y;
-    const int block_num_y = (ncols_y + mmq_x - 1) / mmq_x;
-    const sycl::range<3> block_nums(1, block_num_y, block_num_x);
-    const sycl::range<3> block_dims(1, nwarps, WARP_SIZE);
+    ثابت صحيح بلاک_عدد_x = (nrows_x + mmq_y - 1) / mmq_y;
+    ثابت صحيح بلاک_عدد_y = (ncols_y + mmq_x - 1) / mmq_x;
+    ثابت sycl::range<3> بلاک_nums(1, بلاک_عدد_y, بلاک_عدد_x);
+    ثابت sycl::range<3> بلاک_dims(1, nwarps, WARP_اندازه);
 
-    const auto launch = [&](auto need_check) {
+    ثابت خپلکاری launch = [&](خپلکاری need_check) {
         /*
         DPCT1049:30: The work-group size passed to the SYCL kernel may exceed
         the limit. To get the device limit, query
@@ -2232,85 +2232,85 @@ static void ggml_mul_mat_q2_K_q8_1_sycl(const void *vx, const void *vy,
                                      {sycl::aspect::fp16});
 
         stream->submit([&](sycl::handler &cgh) {
-            sycl::local_accessor<int, 1> tile_x_ql_q2_K_acc_ct1(
-                sycl::range<1>(mmq_y * (WARP_SIZE) + mmq_y), cgh);
+            sycl::local_accessor<صحيح, 1> tile_x_ql_q2_K_acc_ct1(
+                sycl::range<1>(mmq_y * (WARP_اندازه) + mmq_y), cgh);
             sycl::local_accessor<sycl::half2, 1> tile_x_dm_q2_K_acc_ct1(
-                sycl::range<1>(mmq_y * (WARP_SIZE / QI2_K) + mmq_y / QI2_K),
+                sycl::range<1>(mmq_y * (WARP_اندازه / QI2_K) + mmq_y / QI2_K),
                 cgh);
-            sycl::local_accessor<int, 1> tile_x_sc_q2_K_acc_ct1(
-                sycl::range<1>(mmq_y * (WARP_SIZE / 4) + mmq_y / 4), cgh);
-            sycl::local_accessor<int, 1> tile_y_qs_acc_ct1(
-                sycl::range<1>(mmq_x * WARP_SIZE), cgh);
+            sycl::local_accessor<صحيح, 1> tile_x_sc_q2_K_acc_ct1(
+                sycl::range<1>(mmq_y * (WARP_اندازه / 4) + mmq_y / 4), cgh);
+            sycl::local_accessor<صحيح, 1> tile_y_qs_acc_ct1(
+                sycl::range<1>(mmq_x * WARP_اندازه), cgh);
             sycl::local_accessor<sycl::half2, 1> tile_y_ds_acc_ct1(
-                sycl::range<1>(mmq_x * WARP_SIZE / QI8_1), cgh);
+                sycl::range<1>(mmq_x * WARP_اندازه / QI8_1), cgh);
 
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1) {
+                sycl::nd_range<3>(بلاک_nums * بلاک_dims, بلاک_dims),
+                [=](sycl::nd_توکی<3> توکی_ct1) {
                     mul_mat_q2_K<decltype(need_check)::value>(
                         vx, vy, dst, ncols_x, nrows_x, ncols_y, nrows_y,
-                        nrows_dst, item_ct1,
-                        get_pointer(tile_x_ql_q2_K_acc_ct1),
-                        get_pointer(tile_x_dm_q2_K_acc_ct1),
-                        get_pointer(tile_x_sc_q2_K_acc_ct1),
-                        get_pointer(tile_y_qs_acc_ct1),
-                        get_pointer(tile_y_ds_acc_ct1));
+                        nrows_dst, توکی_ct1,
+                        get_اشاره_ګر(tile_x_ql_q2_K_acc_ct1),
+                        get_اشاره_ګر(tile_x_dm_q2_K_acc_ct1),
+                        get_اشاره_ګر(tile_x_sc_q2_K_acc_ct1),
+                        get_اشاره_ګر(tile_y_qs_acc_ct1),
+                        get_اشاره_ګر(tile_y_ds_acc_ct1));
                 });
         });
     };
 
-    if (nrows_x % mmq_y == 0) {
+    إذا (nrows_x % mmq_y == 0) {
         launch(std::false_type{});
-    } else {
+    } وإلا {
         launch(std::true_type{});
     }
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::کرښه_پای;
+  std::وتل(1);
 }
 
-static void ggml_mul_mat_q3_K_q8_1_sycl(const void *vx, const void *vy,
-                                        float *dst, const int ncols_x,
-                                        const int nrows_x, const int ncols_y,
-                                        const int nrows_y, const int nrows_dst,
-                                        dpct::queue_ptr stream) try {
+ساكن فراغ ggml_mul_mat_q3_K_q8_1_sycl(ثابت فراغ *vx, ثابت فراغ *vy,
+                                        عائم *dst, ثابت صحيح ncols_x,
+                                        ثابت صحيح nrows_x, ثابت صحيح ncols_y,
+                                        ثابت صحيح nrows_y, ثابت صحيح nrows_dst,
+                                        dpct::کتار_ptr stream) حاول {
 
-#if QK_K == 256
+#إذا QK_K == 256
 
-    int id;
+    صحيح id;
     SYCL_CHECK(
         CHECK_TRY_ERROR(id = get_current_device_id()));
-    const int compute_capability = ggml_sycl_info().devices[id].cc;
+    ثابت صحيح compute_capability = ggml_sycl_info().devices[id].cc;
 
-    int mmq_x, mmq_y, nwarps;
-    if (compute_capability >= VER_GEN13) {
+    صحيح mmq_x, mmq_y, nwarps;
+    إذا (compute_capability >= VER_GEN13) {
         mmq_x  =  MMQ_X_Q3_K_RDNA2;
         mmq_y  =  MMQ_Y_Q3_K_RDNA2;
         nwarps = NWARPS_Q3_K_RDNA2;
-    } else if (compute_capability >= VER_GEN12) {
+    } وإلا إذا (compute_capability >= VER_GEN12) {
         mmq_x  =  MMQ_X_Q3_K_RDNA1;
         mmq_y  =  MMQ_Y_Q3_K_RDNA1;
         nwarps = NWARPS_Q3_K_RDNA1;
-    } else if (compute_capability >= VER_GEN9) {
+    } وإلا إذا (compute_capability >= VER_GEN9) {
         mmq_x  =  MMQ_X_Q3_K_AMPERE;
         mmq_y  =  MMQ_Y_Q3_K_AMPERE;
         nwarps = NWARPS_Q3_K_AMPERE;
-    } else if (compute_capability >= VER_4VEC) {
+    } وإلا إذا (compute_capability >= VER_4VEC) {
         mmq_x  =  MMQ_X_Q3_K_PASCAL;
         mmq_y  =  MMQ_Y_Q3_K_PASCAL;
         nwarps = NWARPS_Q3_K_PASCAL;
-    } else {
+    } وإلا {
         GGML_ABORT("fatal error");
     }
 
-    const int block_num_x = (nrows_x + mmq_y - 1) / mmq_y;
-    const int block_num_y = (ncols_y + mmq_x - 1) / mmq_x;
-    const sycl::range<3> block_nums(1, block_num_y, block_num_x);
-    const sycl::range<3> block_dims(1, nwarps, WARP_SIZE);
+    ثابت صحيح بلاک_عدد_x = (nrows_x + mmq_y - 1) / mmq_y;
+    ثابت صحيح بلاک_عدد_y = (ncols_y + mmq_x - 1) / mmq_x;
+    ثابت sycl::range<3> بلاک_nums(1, بلاک_عدد_y, بلاک_عدد_x);
+    ثابت sycl::range<3> بلاک_dims(1, nwarps, WARP_اندازه);
 
-    const auto launch = [&](auto need_check) {
+    ثابت خپلکاری launch = [&](خپلکاری need_check) {
         /*
         DPCT1049:32: The work-group size passed to the SYCL kernel may exceed
         the limit. To get the device limit, query
@@ -2320,87 +2320,87 @@ static void ggml_mul_mat_q3_K_q8_1_sycl(const void *vx, const void *vy,
                                      {sycl::aspect::fp16});
 
         stream->submit([&](sycl::handler &cgh) {
-            sycl::local_accessor<int, 1> tile_x_ql_q3_K_acc_ct1(
-                sycl::range<1>(mmq_y * (WARP_SIZE) + mmq_y), cgh);
+            sycl::local_accessor<صحيح, 1> tile_x_ql_q3_K_acc_ct1(
+                sycl::range<1>(mmq_y * (WARP_اندازه) + mmq_y), cgh);
             sycl::local_accessor<sycl::half2, 1> tile_x_dm_q3_K_acc_ct1(
-                sycl::range<1>(mmq_y * (WARP_SIZE / QI3_K) + mmq_y / QI3_K),
+                sycl::range<1>(mmq_y * (WARP_اندازه / QI3_K) + mmq_y / QI3_K),
                 cgh);
-            sycl::local_accessor<int, 1> tile_x_qh_q3_K_acc_ct1(
-                sycl::range<1>(mmq_y * (WARP_SIZE / 2) + mmq_y / 2), cgh);
-            sycl::local_accessor<int, 1> tile_x_sc_q3_K_acc_ct1(
-                sycl::range<1>(mmq_y * (WARP_SIZE / 4) + mmq_y / 4), cgh);
-            sycl::local_accessor<int, 1> tile_y_qs_acc_ct1(
-                sycl::range<1>(mmq_x * WARP_SIZE), cgh);
+            sycl::local_accessor<صحيح, 1> tile_x_qh_q3_K_acc_ct1(
+                sycl::range<1>(mmq_y * (WARP_اندازه / 2) + mmq_y / 2), cgh);
+            sycl::local_accessor<صحيح, 1> tile_x_sc_q3_K_acc_ct1(
+                sycl::range<1>(mmq_y * (WARP_اندازه / 4) + mmq_y / 4), cgh);
+            sycl::local_accessor<صحيح, 1> tile_y_qs_acc_ct1(
+                sycl::range<1>(mmq_x * WARP_اندازه), cgh);
             sycl::local_accessor<sycl::half2, 1> tile_y_ds_acc_ct1(
-                sycl::range<1>(mmq_x * WARP_SIZE / QI8_1), cgh);
+                sycl::range<1>(mmq_x * WARP_اندازه / QI8_1), cgh);
 
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1) {
+                sycl::nd_range<3>(بلاک_nums * بلاک_dims, بلاک_dims),
+                [=](sycl::nd_توکی<3> توکی_ct1) {
                     mul_mat_q3_K<decltype(need_check)::value>(
                         vx, vy, dst, ncols_x, nrows_x, ncols_y, nrows_y,
-                        nrows_dst, item_ct1,
-                        get_pointer(tile_x_ql_q3_K_acc_ct1),
-                        get_pointer(tile_x_dm_q3_K_acc_ct1),
-                        get_pointer(tile_x_qh_q3_K_acc_ct1),
-                        get_pointer(tile_x_sc_q3_K_acc_ct1),
-                        get_pointer(tile_y_qs_acc_ct1),
-                        get_pointer(tile_y_ds_acc_ct1));
+                        nrows_dst, توکی_ct1,
+                        get_اشاره_ګر(tile_x_ql_q3_K_acc_ct1),
+                        get_اشاره_ګر(tile_x_dm_q3_K_acc_ct1),
+                        get_اشاره_ګر(tile_x_qh_q3_K_acc_ct1),
+                        get_اشاره_ګر(tile_x_sc_q3_K_acc_ct1),
+                        get_اشاره_ګر(tile_y_qs_acc_ct1),
+                        get_اشاره_ګر(tile_y_ds_acc_ct1));
                 });
         });
     };
 
-    if (nrows_x % mmq_y == 0) {
+    إذا (nrows_x % mmq_y == 0) {
         launch(std::false_type{});
-    } else {
+    } وإلا {
         launch(std::true_type{});
     }
-#endif
+#د_که_پای
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::کرښه_پای;
+  std::وتل(1);
 }
 
-static void ggml_mul_mat_q4_K_q8_1_sycl(const void *vx, const void *vy,
-                                        float *dst, const int ncols_x,
-                                        const int nrows_x, const int ncols_y,
-                                        const int nrows_y, const int nrows_dst,
-                                        dpct::queue_ptr stream) try {
+ساكن فراغ ggml_mul_mat_q4_K_q8_1_sycl(ثابت فراغ *vx, ثابت فراغ *vy,
+                                        عائم *dst, ثابت صحيح ncols_x,
+                                        ثابت صحيح nrows_x, ثابت صحيح ncols_y,
+                                        ثابت صحيح nrows_y, ثابت صحيح nrows_dst,
+                                        dpct::کتار_ptr stream) حاول {
 
-    int id;
+    صحيح id;
     SYCL_CHECK(
         CHECK_TRY_ERROR(id = get_current_device_id()));
-    const int compute_capability = ggml_sycl_info().devices[id].cc;
+    ثابت صحيح compute_capability = ggml_sycl_info().devices[id].cc;
 
-    int mmq_x, mmq_y, nwarps;
-    if (compute_capability >= VER_GEN13) {
+    صحيح mmq_x, mmq_y, nwarps;
+    إذا (compute_capability >= VER_GEN13) {
         mmq_x  =  MMQ_X_Q4_K_RDNA2;
         mmq_y  =  MMQ_Y_Q4_K_RDNA2;
         nwarps = NWARPS_Q4_K_RDNA2;
-    } else if (compute_capability >= VER_GEN12) {
+    } وإلا إذا (compute_capability >= VER_GEN12) {
         mmq_x  =  MMQ_X_Q4_K_RDNA1;
         mmq_y  =  MMQ_Y_Q4_K_RDNA1;
         nwarps = NWARPS_Q4_K_RDNA1;
-    } else if (compute_capability >= VER_GEN9) {
+    } وإلا إذا (compute_capability >= VER_GEN9) {
         mmq_x  =  MMQ_X_Q4_K_AMPERE;
         mmq_y  =  MMQ_Y_Q4_K_AMPERE;
         nwarps = NWARPS_Q4_K_AMPERE;
-    } else if (compute_capability >= VER_4VEC) {
+    } وإلا إذا (compute_capability >= VER_4VEC) {
         mmq_x  =  MMQ_X_Q4_K_PASCAL;
         mmq_y  =  MMQ_Y_Q4_K_PASCAL;
         nwarps = NWARPS_Q4_K_PASCAL;
-    } else {
+    } وإلا {
         GGML_ABORT("fatal error");
     }
 
-    const int block_num_x = (nrows_x + mmq_y - 1) / mmq_y;
-    const int block_num_y = (ncols_y + mmq_x - 1) / mmq_x;
-    const sycl::range<3> block_nums(1, block_num_y, block_num_x);
-    const sycl::range<3> block_dims(1, nwarps, WARP_SIZE);
+    ثابت صحيح بلاک_عدد_x = (nrows_x + mmq_y - 1) / mmq_y;
+    ثابت صحيح بلاک_عدد_y = (ncols_y + mmq_x - 1) / mmq_x;
+    ثابت sycl::range<3> بلاک_nums(1, بلاک_عدد_y, بلاک_عدد_x);
+    ثابت sycl::range<3> بلاک_dims(1, nwarps, WARP_اندازه);
 
-    const auto launch = [&](auto need_check) {
+    ثابت خپلکاری launch = [&](خپلکاری need_check) {
         /*
         DPCT1049:34: The work-group size passed to the SYCL kernel may exceed
         the limit. To get the device limit, query
@@ -2410,83 +2410,83 @@ static void ggml_mul_mat_q4_K_q8_1_sycl(const void *vx, const void *vy,
                                      {sycl::aspect::fp16});
 
         stream->submit([&](sycl::handler &cgh) {
-            sycl::local_accessor<int, 1> tile_x_ql_q4_K_acc_ct1(
-                sycl::range<1>(mmq_y * (WARP_SIZE) + mmq_y), cgh);
+            sycl::local_accessor<صحيح, 1> tile_x_ql_q4_K_acc_ct1(
+                sycl::range<1>(mmq_y * (WARP_اندازه) + mmq_y), cgh);
             sycl::local_accessor<sycl::half2, 1> tile_x_dm_q4_K_acc_ct1(
-                sycl::range<1>(mmq_y * (WARP_SIZE / QI4_K) + mmq_y / QI4_K),
+                sycl::range<1>(mmq_y * (WARP_اندازه / QI4_K) + mmq_y / QI4_K),
                 cgh);
-            sycl::local_accessor<int, 1> tile_x_sc_q4_K_acc_ct1(
-                sycl::range<1>(mmq_y * (WARP_SIZE / 8) + mmq_y / 8), cgh);
-            sycl::local_accessor<int, 1> tile_y_qs_acc_ct1(
-                sycl::range<1>(mmq_x * WARP_SIZE), cgh);
+            sycl::local_accessor<صحيح, 1> tile_x_sc_q4_K_acc_ct1(
+                sycl::range<1>(mmq_y * (WARP_اندازه / 8) + mmq_y / 8), cgh);
+            sycl::local_accessor<صحيح, 1> tile_y_qs_acc_ct1(
+                sycl::range<1>(mmq_x * WARP_اندازه), cgh);
             sycl::local_accessor<sycl::half2, 1> tile_y_ds_acc_ct1(
-                sycl::range<1>(mmq_x * WARP_SIZE / QI8_1), cgh);
+                sycl::range<1>(mmq_x * WARP_اندازه / QI8_1), cgh);
 
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1) {
+                sycl::nd_range<3>(بلاک_nums * بلاک_dims, بلاک_dims),
+                [=](sycl::nd_توکی<3> توکی_ct1) {
                     mul_mat_q4_K<decltype(need_check)::value>(
                         vx, vy, dst, ncols_x, nrows_x, ncols_y, nrows_y,
-                        nrows_dst, item_ct1,
-                        get_pointer(tile_x_ql_q4_K_acc_ct1),
-                        get_pointer(tile_x_dm_q4_K_acc_ct1),
-                        get_pointer(tile_x_sc_q4_K_acc_ct1),
-                        get_pointer(tile_y_qs_acc_ct1),
-                        get_pointer(tile_y_ds_acc_ct1));
+                        nrows_dst, توکی_ct1,
+                        get_اشاره_ګر(tile_x_ql_q4_K_acc_ct1),
+                        get_اشاره_ګر(tile_x_dm_q4_K_acc_ct1),
+                        get_اشاره_ګر(tile_x_sc_q4_K_acc_ct1),
+                        get_اشاره_ګر(tile_y_qs_acc_ct1),
+                        get_اشاره_ګر(tile_y_ds_acc_ct1));
                 });
         });
     };
 
-    if (nrows_x % mmq_y == 0) {
+    إذا (nrows_x % mmq_y == 0) {
         launch(std::false_type{});
-    } else {
+    } وإلا {
         launch(std::true_type{});
     }
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::کرښه_پای;
+  std::وتل(1);
 }
 
-static void ggml_mul_mat_q5_K_q8_1_sycl(const void *vx, const void *vy,
-                                        float *dst, const int ncols_x,
-                                        const int nrows_x, const int ncols_y,
-                                        const int nrows_y, const int nrows_dst,
-                                        dpct::queue_ptr stream) try {
+ساكن فراغ ggml_mul_mat_q5_K_q8_1_sycl(ثابت فراغ *vx, ثابت فراغ *vy,
+                                        عائم *dst, ثابت صحيح ncols_x,
+                                        ثابت صحيح nrows_x, ثابت صحيح ncols_y,
+                                        ثابت صحيح nrows_y, ثابت صحيح nrows_dst,
+                                        dpct::کتار_ptr stream) حاول {
 
-    int id;
+    صحيح id;
     SYCL_CHECK(
         CHECK_TRY_ERROR(id = get_current_device_id()));
-    const int compute_capability = ggml_sycl_info().devices[id].cc;
+    ثابت صحيح compute_capability = ggml_sycl_info().devices[id].cc;
 
-    int mmq_x, mmq_y, nwarps;
-    if (compute_capability >= VER_GEN13) {
+    صحيح mmq_x, mmq_y, nwarps;
+    إذا (compute_capability >= VER_GEN13) {
         mmq_x  =  MMQ_X_Q5_K_RDNA2;
         mmq_y  =  MMQ_Y_Q5_K_RDNA2;
         nwarps = NWARPS_Q5_K_RDNA2;
-    } else if (compute_capability >= VER_GEN12) {
+    } وإلا إذا (compute_capability >= VER_GEN12) {
         mmq_x  =  MMQ_X_Q5_K_RDNA1;
         mmq_y  =  MMQ_Y_Q5_K_RDNA1;
         nwarps = NWARPS_Q5_K_RDNA1;
-    } else if (compute_capability >= VER_GEN9) {
+    } وإلا إذا (compute_capability >= VER_GEN9) {
         mmq_x  =  MMQ_X_Q5_K_AMPERE;
         mmq_y  =  MMQ_Y_Q5_K_AMPERE;
         nwarps = NWARPS_Q5_K_AMPERE;
-    } else if (compute_capability >= VER_4VEC) {
+    } وإلا إذا (compute_capability >= VER_4VEC) {
         mmq_x  =  MMQ_X_Q5_K_PASCAL;
         mmq_y  =  MMQ_Y_Q5_K_PASCAL;
         nwarps = NWARPS_Q5_K_PASCAL;
-    } else {
+    } وإلا {
         GGML_ABORT("fatal error");
     }
 
-    const int block_num_x = (nrows_x + mmq_y - 1) / mmq_y;
-    const int block_num_y = (ncols_y + mmq_x - 1) / mmq_x;
-    const sycl::range<3> block_nums(1, block_num_y, block_num_x);
-    const sycl::range<3> block_dims(1, nwarps, WARP_SIZE);
+    ثابت صحيح بلاک_عدد_x = (nrows_x + mmq_y - 1) / mmq_y;
+    ثابت صحيح بلاک_عدد_y = (ncols_y + mmq_x - 1) / mmq_x;
+    ثابت sycl::range<3> بلاک_nums(1, بلاک_عدد_y, بلاک_عدد_x);
+    ثابت sycl::range<3> بلاک_dims(1, nwarps, WARP_اندازه);
 
-    const auto launch = [&](auto need_check) {
+    ثابت خپلکاری launch = [&](خپلکاری need_check) {
         /*
         DPCT1049:36: The work-group size passed to the SYCL kernel may exceed
         the limit. To get the device limit, query
@@ -2496,83 +2496,83 @@ static void ggml_mul_mat_q5_K_q8_1_sycl(const void *vx, const void *vy,
                                      {sycl::aspect::fp16});
 
         stream->submit([&](sycl::handler &cgh) {
-            sycl::local_accessor<int, 1> tile_x_ql_q5_K_acc_ct1(
-                sycl::range<1>(mmq_y * (2 * WARP_SIZE) + mmq_y), cgh);
+            sycl::local_accessor<صحيح, 1> tile_x_ql_q5_K_acc_ct1(
+                sycl::range<1>(mmq_y * (2 * WARP_اندازه) + mmq_y), cgh);
             sycl::local_accessor<sycl::half2, 1> tile_x_dm_q5_K_acc_ct1(
-                sycl::range<1>(mmq_y * (WARP_SIZE / QI5_K) + mmq_y / QI5_K),
+                sycl::range<1>(mmq_y * (WARP_اندازه / QI5_K) + mmq_y / QI5_K),
                 cgh);
-            sycl::local_accessor<int, 1> tile_x_sc_q5_K_acc_ct1(
-                sycl::range<1>(mmq_y * (WARP_SIZE / 8) + mmq_y / 8), cgh);
-            sycl::local_accessor<int, 1> tile_y_qs_acc_ct1(
-                sycl::range<1>(mmq_x * WARP_SIZE), cgh);
+            sycl::local_accessor<صحيح, 1> tile_x_sc_q5_K_acc_ct1(
+                sycl::range<1>(mmq_y * (WARP_اندازه / 8) + mmq_y / 8), cgh);
+            sycl::local_accessor<صحيح, 1> tile_y_qs_acc_ct1(
+                sycl::range<1>(mmq_x * WARP_اندازه), cgh);
             sycl::local_accessor<sycl::half2, 1> tile_y_ds_acc_ct1(
-                sycl::range<1>(mmq_x * WARP_SIZE / QI8_1), cgh);
+                sycl::range<1>(mmq_x * WARP_اندازه / QI8_1), cgh);
 
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1) {
+                sycl::nd_range<3>(بلاک_nums * بلاک_dims, بلاک_dims),
+                [=](sycl::nd_توکی<3> توکی_ct1) {
                     mul_mat_q5_K<decltype(need_check)::value>(
                         vx, vy, dst, ncols_x, nrows_x, ncols_y, nrows_y,
-                        nrows_dst, item_ct1,
-                        get_pointer(tile_x_ql_q5_K_acc_ct1),
-                        get_pointer(tile_x_dm_q5_K_acc_ct1),
-                        get_pointer(tile_x_sc_q5_K_acc_ct1),
-                        get_pointer(tile_y_qs_acc_ct1),
-                        get_pointer(tile_y_ds_acc_ct1));
+                        nrows_dst, توکی_ct1,
+                        get_اشاره_ګر(tile_x_ql_q5_K_acc_ct1),
+                        get_اشاره_ګر(tile_x_dm_q5_K_acc_ct1),
+                        get_اشاره_ګر(tile_x_sc_q5_K_acc_ct1),
+                        get_اشاره_ګر(tile_y_qs_acc_ct1),
+                        get_اشاره_ګر(tile_y_ds_acc_ct1));
                 });
         });
     };
 
-    if (nrows_x % mmq_y == 0) {
+    إذا (nrows_x % mmq_y == 0) {
         launch(std::false_type{});
-    } else {
+    } وإلا {
         launch(std::true_type{});
     }
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::کرښه_پای;
+  std::وتل(1);
 }
 
-static void ggml_mul_mat_q6_K_q8_1_sycl(const void *vx, const void *vy,
-                                        float *dst, const int ncols_x,
-                                        const int nrows_x, const int ncols_y,
-                                        const int nrows_y, const int nrows_dst,
-                                        dpct::queue_ptr stream) try {
+ساكن فراغ ggml_mul_mat_q6_K_q8_1_sycl(ثابت فراغ *vx, ثابت فراغ *vy,
+                                        عائم *dst, ثابت صحيح ncols_x,
+                                        ثابت صحيح nrows_x, ثابت صحيح ncols_y,
+                                        ثابت صحيح nrows_y, ثابت صحيح nrows_dst,
+                                        dpct::کتار_ptr stream) حاول {
 
-    int id;
+    صحيح id;
     SYCL_CHECK(
         CHECK_TRY_ERROR(id = get_current_device_id()));
-    const int compute_capability = ggml_sycl_info().devices[id].cc;
+    ثابت صحيح compute_capability = ggml_sycl_info().devices[id].cc;
 
-    int mmq_x, mmq_y, nwarps;
-    if (compute_capability >= VER_GEN13) {
+    صحيح mmq_x, mmq_y, nwarps;
+    إذا (compute_capability >= VER_GEN13) {
         mmq_x  =  MMQ_X_Q6_K_RDNA2;
         mmq_y  =  MMQ_Y_Q6_K_RDNA2;
         nwarps = NWARPS_Q6_K_RDNA2;
-    } else if (compute_capability >= VER_GEN12) {
+    } وإلا إذا (compute_capability >= VER_GEN12) {
         mmq_x  =  MMQ_X_Q6_K_RDNA1;
         mmq_y  =  MMQ_Y_Q6_K_RDNA1;
         nwarps = NWARPS_Q6_K_RDNA1;
-    } else if (compute_capability >= VER_GEN9) {
+    } وإلا إذا (compute_capability >= VER_GEN9) {
         mmq_x  =  MMQ_X_Q6_K_AMPERE;
         mmq_y  =  MMQ_Y_Q6_K_AMPERE;
         nwarps = NWARPS_Q6_K_AMPERE;
-    } else if (compute_capability >= VER_4VEC) {
+    } وإلا إذا (compute_capability >= VER_4VEC) {
         mmq_x  =  MMQ_X_Q6_K_PASCAL;
         mmq_y  =  MMQ_Y_Q6_K_PASCAL;
         nwarps = NWARPS_Q6_K_PASCAL;
-    } else {
+    } وإلا {
         GGML_ABORT("fatal error");
     }
 
-    const int block_num_x = (nrows_x + mmq_y - 1) / mmq_y;
-    const int block_num_y = (ncols_y + mmq_x - 1) / mmq_x;
-    const sycl::range<3> block_nums(1, block_num_y, block_num_x);
-    const sycl::range<3> block_dims(1, nwarps, WARP_SIZE);
+    ثابت صحيح بلاک_عدد_x = (nrows_x + mmq_y - 1) / mmq_y;
+    ثابت صحيح بلاک_عدد_y = (ncols_y + mmq_x - 1) / mmq_x;
+    ثابت sycl::range<3> بلاک_nums(1, بلاک_عدد_y, بلاک_عدد_x);
+    ثابت sycl::range<3> بلاک_dims(1, nwarps, WARP_اندازه);
 
-    const auto launch = [&](auto need_check) {
+    ثابت خپلکاری launch = [&](خپلکاری need_check) {
         /*
         DPCT1049:38: The work-group size passed to the SYCL kernel may exceed
         the limit. To get the device limit, query
@@ -2582,111 +2582,111 @@ static void ggml_mul_mat_q6_K_q8_1_sycl(const void *vx, const void *vy,
                                      {sycl::aspect::fp16});
 
         stream->submit([&](sycl::handler &cgh) {
-            sycl::local_accessor<int, 1> tile_x_ql_acc_ct1(
-                sycl::range<1>(mmq_y * (2 * WARP_SIZE) + mmq_y), cgh);
+            sycl::local_accessor<صحيح, 1> tile_x_ql_acc_ct1(
+                sycl::range<1>(mmq_y * (2 * WARP_اندازه) + mmq_y), cgh);
             sycl::local_accessor<sycl::half2, 1> tile_x_dm_acc_ct1(
-                sycl::range<1>(mmq_y * (WARP_SIZE / QI6_K) + mmq_y / QI6_K),
+                sycl::range<1>(mmq_y * (WARP_اندازه / QI6_K) + mmq_y / QI6_K),
                 cgh);
-            sycl::local_accessor<int, 1> tile_x_sc_acc_ct1(
-                sycl::range<1>(mmq_y * (WARP_SIZE / 8) + mmq_y / 8), cgh);
-            sycl::local_accessor<int, 1> tile_y_qs_acc_ct1(
-                sycl::range<1>(mmq_x * WARP_SIZE), cgh);
+            sycl::local_accessor<صحيح, 1> tile_x_sc_acc_ct1(
+                sycl::range<1>(mmq_y * (WARP_اندازه / 8) + mmq_y / 8), cgh);
+            sycl::local_accessor<صحيح, 1> tile_y_qs_acc_ct1(
+                sycl::range<1>(mmq_x * WARP_اندازه), cgh);
             sycl::local_accessor<sycl::half2, 1> tile_y_ds_acc_ct1(
-                sycl::range<1>(mmq_x * WARP_SIZE / QI8_1), cgh);
+                sycl::range<1>(mmq_x * WARP_اندازه / QI8_1), cgh);
 
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1) {
+                sycl::nd_range<3>(بلاک_nums * بلاک_dims, بلاک_dims),
+                [=](sycl::nd_توکی<3> توکی_ct1) {
                     mul_mat_q6_K<decltype(need_check)::value>(
                         vx, vy, dst, ncols_x, nrows_x, ncols_y, nrows_y,
-                        nrows_dst, item_ct1,
-                        get_pointer(tile_x_ql_acc_ct1),
-                        get_pointer(tile_x_dm_acc_ct1),
-                        get_pointer(tile_x_sc_acc_ct1),
-                        get_pointer(tile_y_qs_acc_ct1),
-                        get_pointer(tile_y_ds_acc_ct1));
+                        nrows_dst, توکی_ct1,
+                        get_اشاره_ګر(tile_x_ql_acc_ct1),
+                        get_اشاره_ګر(tile_x_dm_acc_ct1),
+                        get_اشاره_ګر(tile_x_sc_acc_ct1),
+                        get_اشاره_ګر(tile_y_qs_acc_ct1),
+                        get_اشاره_ګر(tile_y_ds_acc_ct1));
                 });
         });
     };
 
-    if (nrows_x % mmq_y == 0) {
+    إذا (nrows_x % mmq_y == 0) {
         launch(std::false_type{});
-    } else {
+    } وإلا {
         launch(std::true_type{});
     }
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::کرښه_پای;
+  std::وتل(1);
 }
 
-void ggml_sycl_op_mul_mat_q(
+فراغ ggml_sycl_op_mul_mat_q(
     ggml_backend_sycl_context & ctx,
-    const ggml_tensor *src0, const ggml_tensor *src1, ggml_tensor *dst,
-    const char *src0_dd_i, const float *src1_ddf_i, const char *src1_ddq_i,
-    float *dst_dd_i, const int64_t row_low, const int64_t row_high,
-    const int64_t src1_ncols, const int64_t src1_padded_row_size,
-    const dpct::queue_ptr &stream) try {
+    ثابت ggml_tensor *src0, ثابت ggml_tensor *src1, ggml_tensor *dst,
+    ثابت حرف *src0_dd_i, ثابت عائم *src1_ddf_i, ثابت حرف *src1_ddq_i,
+    عائم *dst_dd_i, ثابت int64_t لیکه_ټیټ, ثابت int64_t لیکه_لوړ,
+    ثابت int64_t src1_ncols, ثابت int64_t src1_padded_لیکه_اندازه,
+    ثابت dpct::کتار_ptr &stream) حاول {
 
-    const int64_t ne00 = src0->ne[0];
+    ثابت int64_t ne00 = src0->ne[0];
 
-    const int64_t ne10 = src1->ne[0];
+    ثابت int64_t ne10 = src1->ne[0];
     GGML_ASSERT(ne10 % QK8_1 == 0);
 
-    const int64_t ne0 = dst->ne[0];
+    ثابت int64_t ne0 = dst->ne[0];
 
-    const int64_t row_diff = row_high - row_low;
+    ثابت int64_t لیکه_diff = لیکه_لوړ - لیکه_ټیټ;
 
-    int device_id;
+    صحيح device_id;
     SYCL_CHECK(
         CHECK_TRY_ERROR(device_id = get_current_device_id()));
 
     // the main device has a larger memory buffer to hold the results from all GPUs
     // nrows_dst == nrows of the matrix that the dequantize_mul_mat kernel writes into
-    const int64_t nrows_dst = device_id == ctx.device ? ne0 : row_diff;
+    ثابت int64_t nrows_dst = device_id == ctx.device ? ne0 : لیکه_diff;
 
-    switch (src0->type) {
-        case GGML_TYPE_Q4_0:
-            ggml_mul_mat_q4_0_q8_1_sycl(src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff, src1_ncols, src1_padded_row_size, nrows_dst, stream);
-            break;
-        case GGML_TYPE_Q4_1:
-            ggml_mul_mat_q4_1_q8_1_sycl(src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff, src1_ncols, src1_padded_row_size, nrows_dst, stream);
-            break;
-        case GGML_TYPE_Q5_0:
-            ggml_mul_mat_q5_0_q8_1_sycl(src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff, src1_ncols, src1_padded_row_size, nrows_dst, stream);
-            break;
-        case GGML_TYPE_Q5_1:
-            ggml_mul_mat_q5_1_q8_1_sycl(src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff, src1_ncols, src1_padded_row_size, nrows_dst, stream);
-            break;
-        case GGML_TYPE_Q8_0:
-            ggml_mul_mat_q8_0_q8_1_sycl(src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff, src1_ncols, src1_padded_row_size, nrows_dst, stream);
-            break;
-        case GGML_TYPE_Q2_K:
-            ggml_mul_mat_q2_K_q8_1_sycl(src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff, src1_ncols, src1_padded_row_size, nrows_dst, stream);
-            break;
-        case GGML_TYPE_Q3_K:
-            ggml_mul_mat_q3_K_q8_1_sycl(src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff, src1_ncols, src1_padded_row_size, nrows_dst, stream);
-            break;
-        case GGML_TYPE_Q4_K:
-            ggml_mul_mat_q4_K_q8_1_sycl(src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff, src1_ncols, src1_padded_row_size, nrows_dst, stream);
-            break;
-        case GGML_TYPE_Q5_K:
-            ggml_mul_mat_q5_K_q8_1_sycl(src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff, src1_ncols, src1_padded_row_size, nrows_dst, stream);
-            break;
-        case GGML_TYPE_Q6_K:
-            ggml_mul_mat_q6_K_q8_1_sycl(src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff, src1_ncols, src1_padded_row_size, nrows_dst, stream);
-            break;
-        default:
+    بدل (src0->type) {
+        حالة GGML_TYPE_Q4_0:
+            ggml_mul_mat_q4_0_q8_1_sycl(src0_dd_i, src1_ddq_i, dst_dd_i, ne00, لیکه_diff, src1_ncols, src1_padded_لیکه_اندازه, nrows_dst, stream);
+            اكسر;
+        حالة GGML_TYPE_Q4_1:
+            ggml_mul_mat_q4_1_q8_1_sycl(src0_dd_i, src1_ddq_i, dst_dd_i, ne00, لیکه_diff, src1_ncols, src1_padded_لیکه_اندازه, nrows_dst, stream);
+            اكسر;
+        حالة GGML_TYPE_Q5_0:
+            ggml_mul_mat_q5_0_q8_1_sycl(src0_dd_i, src1_ddq_i, dst_dd_i, ne00, لیکه_diff, src1_ncols, src1_padded_لیکه_اندازه, nrows_dst, stream);
+            اكسر;
+        حالة GGML_TYPE_Q5_1:
+            ggml_mul_mat_q5_1_q8_1_sycl(src0_dd_i, src1_ddq_i, dst_dd_i, ne00, لیکه_diff, src1_ncols, src1_padded_لیکه_اندازه, nrows_dst, stream);
+            اكسر;
+        حالة GGML_TYPE_Q8_0:
+            ggml_mul_mat_q8_0_q8_1_sycl(src0_dd_i, src1_ddq_i, dst_dd_i, ne00, لیکه_diff, src1_ncols, src1_padded_لیکه_اندازه, nrows_dst, stream);
+            اكسر;
+        حالة GGML_TYPE_Q2_K:
+            ggml_mul_mat_q2_K_q8_1_sycl(src0_dd_i, src1_ddq_i, dst_dd_i, ne00, لیکه_diff, src1_ncols, src1_padded_لیکه_اندازه, nrows_dst, stream);
+            اكسر;
+        حالة GGML_TYPE_Q3_K:
+            ggml_mul_mat_q3_K_q8_1_sycl(src0_dd_i, src1_ddq_i, dst_dd_i, ne00, لیکه_diff, src1_ncols, src1_padded_لیکه_اندازه, nrows_dst, stream);
+            اكسر;
+        حالة GGML_TYPE_Q4_K:
+            ggml_mul_mat_q4_K_q8_1_sycl(src0_dd_i, src1_ddq_i, dst_dd_i, ne00, لیکه_diff, src1_ncols, src1_padded_لیکه_اندازه, nrows_dst, stream);
+            اكسر;
+        حالة GGML_TYPE_Q5_K:
+            ggml_mul_mat_q5_K_q8_1_sycl(src0_dd_i, src1_ddq_i, dst_dd_i, ne00, لیکه_diff, src1_ncols, src1_padded_لیکه_اندازه, nrows_dst, stream);
+            اكسر;
+        حالة GGML_TYPE_Q6_K:
+            ggml_mul_mat_q6_K_q8_1_sycl(src0_dd_i, src1_ddq_i, dst_dd_i, ne00, لیکه_diff, src1_ncols, src1_padded_لیکه_اندازه, nrows_dst, stream);
+            اكسر;
+        افتراضي:
             GGML_ABORT("fatal error");
     }
 
-    GGML_UNUSED(src1);
-    GGML_UNUSED(dst);
-    GGML_UNUSED(src1_ddf_i);
+    GGML_ناکارول_شوی(src1);
+    GGML_ناکارول_شوی(dst);
+    GGML_ناکارول_شوی(src1_ddf_i);
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::کرښه_پای;
+  std::وتل(1);
 }

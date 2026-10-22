@@ -10,76 +10,76 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#include "conv.hpp"
+#ضمن "conv.hpp"
 
-static  void conv_transpose_1d_kernel(
-        const int s0, const int output_size,
-        const int src0_ne0, const int src0_ne1, const int src0_ne2,
-        const int src1_ne0, const int dst_ne0,
-        const float * src0, const float * src1,  float * dst,
-        const sycl::nd_item<3> &item_ct1) {
-    int global_index = item_ct1.get_local_id(2) +
-                       item_ct1.get_group(2) * item_ct1.get_local_range(2);
-    if (global_index >= output_size) {
-        return;
+ساكن  فراغ conv_transpose_1d_kernel(
+        ثابت صحيح s0, ثابت صحيح output_اندازه,
+        ثابت صحيح src0_ne0, ثابت صحيح src0_ne1, ثابت صحيح src0_ne2,
+        ثابت صحيح src1_ne0, ثابت صحيح dst_ne0,
+        ثابت عائم * src0, ثابت عائم * src1,  عائم * dst,
+        ثابت sycl::nd_توکی<3> &توکی_ct1) {
+    صحيح global_شاخص = توکی_ct1.get_local_id(2) +
+                       توکی_ct1.get_ډله(2) * توکی_ct1.get_local_range(2);
+    إذا (global_شاخص >= output_اندازه) {
+        أرجع;
     }
 
-    int out_index = global_index / dst_ne0;
+    صحيح بهر_شاخص = global_شاخص / dst_ne0;
 
-    float accumulator = 0;
+    عائم راټولونکی = 0;
 
-    for (int c = 0; c < src0_ne2; c++) {
-        int idx = global_index % dst_ne0;
+    لكل (صحيح c = 0; c < src0_ne2; c++) {
+        صحيح idx = global_شاخص % dst_ne0;
 
-        int kernel_offset = (src0_ne0 * src0_ne1 * c) + (out_index * src0_ne0);
-        int input_offset = src1_ne0 * c;
+        صحيح kernel_دننه_واټن = (src0_ne0 * src0_ne1 * c) + (بهر_شاخص * src0_ne0);
+        صحيح ننوت_دننه_واټن = src1_ne0 * c;
 
-        for (int i = 0; i < src1_ne0; i++) {
-            if (!(idx >= i*s0 && idx < i*s0 + src0_ne0)) {
-                continue;
+        لكل (صحيح i = 0; i < src1_ne0; i++) {
+            إذا (!(idx >= i*s0 && idx < i*s0 + src0_ne0)) {
+                استمر;
             }
-            int weight_idx = idx - i*s0;
+            صحيح وزن_idx = idx - i*s0;
 
-            float kernel_weight = src0[kernel_offset + weight_idx];
-            float input_value =  src1[input_offset+i];
+            عائم kernel_وزن = src0[kernel_دننه_واټن + وزن_idx];
+            عائم ننوت_ارزښت =  src1[ننوت_دننه_واټن+i];
 
-            accumulator += kernel_weight * input_value;
+            راټولونکی += kernel_وزن * ننوت_ارزښت;
         }
     }
-    dst[global_index] = accumulator;
+    dst[global_شاخص] = راټولونکی;
 }
 
-static void conv_transpose_1d_f32_f32_sycl(
-    const int s0, const int output_size,
-    const int src0_ne0, const int src0_ne1, const int src0_ne2,
-    const int src1_ne0, const int dst_ne0,
-    const float *src0, const float *src1, float *dst,
-    const queue_ptr& stream) {
+ساكن فراغ conv_transpose_1d_f32_f32_sycl(
+    ثابت صحيح s0, ثابت صحيح output_اندازه,
+    ثابت صحيح src0_ne0, ثابت صحيح src0_ne1, ثابت صحيح src0_ne2,
+    ثابت صحيح src1_ne0, ثابت صحيح dst_ne0,
+    ثابت عائم *src0, ثابت عائم *src1, عائم *dst,
+    ثابت کتار_ptr& stream) {
 
-    const int num_blocks = (output_size + SYCL_CONV_TRANPOSE_1D_BLOCK_SIZE - 1) / SYCL_CONV_TRANPOSE_1D_BLOCK_SIZE;
-    const sycl::range<3> block_dims(1, 1, SYCL_CONV_TRANPOSE_1D_BLOCK_SIZE);
-    const sycl::range<3> block_nums(1, 1, num_blocks);
+    ثابت صحيح عدد_بلاکونه = (output_اندازه + SYCL_CONV_TRANPOSE_1_D_بلاک_اندازه - 1) / SYCL_CONV_TRANPOSE_1_D_بلاک_اندازه;
+    ثابت sycl::range<3> بلاک_dims(1, 1, SYCL_CONV_TRANPOSE_1_D_بلاک_اندازه);
+    ثابت sycl::range<3> بلاک_nums(1, 1, عدد_بلاکونه);
     stream->parallel_for(
         sycl::nd_range<3>(
-            block_nums * block_dims, block_dims),
-        [=](sycl::nd_item<3> item_ct1) {
+            بلاک_nums * بلاک_dims, بلاک_dims),
+        [=](sycl::nd_توکی<3> توکی_ct1) {
             conv_transpose_1d_kernel(
-                s0, output_size,
+                s0, output_اندازه,
                 src0_ne0, src0_ne1, src0_ne2,
                 src1_ne0, dst_ne0,
-                src0, src1, dst, item_ct1);
+                src0, src1, dst, توکی_ct1);
         });
 }
 
-void ggml_sycl_op_conv_transpose_1d(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
+فراغ ggml_sycl_op_conv_transpose_1d(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
-    const ggml_tensor *src0 = dst->src[0];
-    const ggml_tensor *src1 = dst->src[1];
-    const float * src0_d = (const float *)src0->data;
-    const float * src1_d = (const float *)src1->data;
+    ثابت ggml_tensor *src0 = dst->src[0];
+    ثابت ggml_tensor *src1 = dst->src[1];
+    ثابت عائم * src0_d = (ثابت عائم *)src0->معلومات;
+    ثابت عائم * src1_d = (ثابت عائم *)src1->معلومات;
 
-    float * dst_d = (float *)dst->data;
-    dpct::queue_ptr stream = ctx.stream();
+    عائم * dst_d = (عائم *)dst->معلومات;
+    dpct::کتار_ptr stream = ctx.stream();
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
@@ -87,13 +87,13 @@ void ggml_sycl_op_conv_transpose_1d(ggml_backend_sycl_context & ctx, ggml_tensor
     GGML_ASSERT(ggml_is_contiguous(src0));
     GGML_ASSERT(ggml_is_contiguous(src1));
 
-    const int32_t * opts = (const int32_t *)dst->op_params;
+    ثابت int32_t * opts = (ثابت int32_t *)dst->op_params;
 
-    const int s0 = opts[0];
+    ثابت صحيح s0 = opts[0];
 
-    const int64_t output_size = ggml_nelements(dst);
+    ثابت int64_t output_اندازه = ggml_nelements(dst);
 
-    conv_transpose_1d_f32_f32_sycl(s0, output_size,
+    conv_transpose_1d_f32_f32_sycl(s0, output_اندازه,
         src0->ne[0], src0->ne[1], src0->ne[2],
         src1->ne[0], dst->ne[0],
         src0_d, src1_d, dst_d, stream);
