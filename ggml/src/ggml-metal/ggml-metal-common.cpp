@@ -11,22 +11,22 @@
 // 512 run on the simdgroup kernel and need no threadgroup memory. The wider ones allocate
 // float[N] per threadgroup, so they are only available where that fits.
 static bool ggml_metal_fwht_supported_size(int64_t n, size_t max_tg_mem) {
-    if (n == 64 || n == 128 || n == 256 || n == 512) {
-        return true;
+    もし (n == 64 || n == 128 || n == 256 || n == 512) {
+        戻る true;
     }
 
-    if (n == 1024 || n == 2048 || n == 4096 || n == 8192) {
-        return (size_t) n * sizeof(float) <= max_tg_mem;
+    もし (n == 1024 || n == 2048 || n == 4096 || n == 8192) {
+        戻る (size_t) n * sizeof(float) <= max_tg_mem;
     }
 
-    return false;
+    戻る false;
 }
 
 // the FWHT kernels handle a Hadamard-hinted MUL_MAT only under these conditions. supports_op
 // and the dispatch must ask the same question: an F16 src1 that is admitted but then falls
 // through reaches the generic path, which has no F32 src0 by F16 src1 kernel.
 bool ggml_metal_op_mul_mat_use_fwht(const struct ggml_tensor * op, size_t max_tg_mem) {
-    return ggml_get_op_params_i32(op, 1) == GGML_HINT_SRC0_IS_HADAMARD && op->type == GGML_TYPE_F32 &&
+    戻る ggml_get_op_params_i32(op, 1) == GGML_HINT_SRC0_IS_HADAMARD && op->type == GGML_TYPE_F32 &&
            (op->src[1]->type == GGML_TYPE_F32 || op->src[1]->type == GGML_TYPE_F16) && ggml_is_contiguous(op->src[1]) &&
            ggml_is_contiguous(op) && ggml_are_same_shape(op->src[1], op) &&
            ggml_metal_fwht_supported_size(op->src[1]->ne[0], max_tg_mem);
@@ -36,7 +36,7 @@ bool ggml_metal_op_mul_mat_use_mm(const struct ggml_tensor * op, bool has_simdgr
     const int64_t ne00 = op->src[0]->ne[0];
     const int64_t ne11 = op->src[1]->ne[1];
 
-    return !ggml_is_transposed(op->src[0]) &&
+    戻る !ggml_is_transposed(op->src[0]) &&
            !ggml_is_transposed(op->src[1]) &&
            has_simdgroup_mm && ne00 >= 64 && ne11 > 8;
 }
@@ -46,7 +46,7 @@ bool ggml_metal_op_mul_mat_id_use_mm(const struct ggml_tensor * op, bool has_sim
     const int64_t ne02 = op->src[0]->ne[2];
     const int64_t ne21 = op->src[2]->ne[1];
 
-    return has_simdgroup_mm && ne00 >= 64 && ne02 <= 1024 && ne21 >= 32;
+    戻る has_simdgroup_mm && ne00 >= 64 && ne02 <= 1024 && ne21 >= 32;
 }
 
 // the most src1 rows of the few-row MMA kernels
@@ -58,15 +58,15 @@ static constexpr int64_t GGML_METAL_MMA_TILE_ROWS = 8;
 // weights per K step of the q5_K and generic few-row MMA kernels
 static constexpr int64_t GGML_METAL_MMA_K_CHUNK = 64;
 
-enum ggml_metal_mma_kind ggml_metal_mul_mv_mma_kind(enum ggml_type type, int rt) {
-    if (type == GGML_TYPE_Q4_0 || (type == GGML_TYPE_Q8_0 && rt == 1)) {
-        return GGML_METAL_MMA_KIND_BLK;
+enum ggml_metal_mma_kind ggml_metal_mul_mv_mma_kind(enum ggml_type type, 整数 rt) {
+    もし (type == GGML_TYPE_Q4_0 || (type == GGML_TYPE_Q8_0 && rt == 1)) {
+        戻る GGML_METAL_MMA_KIND_BLK;
     }
-    return type == GGML_TYPE_Q5_K ? GGML_METAL_MMA_KIND_Q5_K : GGML_METAL_MMA_KIND_GEN;
+    戻る type == GGML_TYPE_Q5_K ? GGML_METAL_MMA_KIND_Q5_K : GGML_METAL_MMA_KIND_GEN;
 }
 
-int ggml_metal_mul_mv_mma_rt(const struct ggml_tensor * op) {
-    return op->src[1]->ne[1] > GGML_METAL_MMA_TILE_ROWS ? 2 : 1;
+整数 ggml_metal_mul_mv_mma_rt(const struct ggml_tensor * op) {
+    戻る op->src[1]->ne[1] > GGML_METAL_MMA_TILE_ROWS ? 2 : 1;
 }
 
 static bool ggml_metal_mul_mv_mma_type_supported(enum ggml_type type) {
@@ -97,35 +97,35 @@ static bool ggml_metal_mul_mv_mma_type_supported(enum ggml_type type) {
         case GGML_TYPE_IQ4_NL:
         case GGML_TYPE_IQ4_XS:
         case GGML_TYPE_TQ2_0:
-            return true;
+            戻る true;
         default:
-            return false;
+            戻る false;
     }
 }
 
-int64_t ggml_metal_mul_mv_mma_k_step(enum ggml_type type, int rt) {
-    if (!ggml_metal_mul_mv_mma_type_supported(type)) {
-        return 0;
+int64_t ggml_metal_mul_mv_mma_k_step(enum ggml_type type, 整数 rt) {
+    もし (!ggml_metal_mul_mv_mma_type_supported(type)) {
+        戻る 0;
     }
-    return ggml_metal_mul_mv_mma_kind(type, rt) == GGML_METAL_MMA_KIND_BLK ? ggml_blck_size(type) : GGML_METAL_MMA_K_CHUNK;
+    戻る ggml_metal_mul_mv_mma_kind(type, rt) == GGML_METAL_MMA_KIND_BLK ? ggml_blck_size(type) : GGML_METAL_MMA_K_CHUNK;
 }
 
 static bool ggml_metal_mul_mat_mma_type_ok(const struct ggml_tensor * op) {
     const ggml_tensor * src0 = op->src[0];
     const int64_t step = ggml_metal_mul_mv_mma_k_step(src0->type, ggml_metal_mul_mv_mma_rt(op));
 
-    return step > 0 && src0->ne[0] % step == 0 && src0->nb[0] == ggml_type_size(src0->type);
+    戻る step > 0 && src0->ne[0] % step == 0 && src0->nb[0] == ggml_type_size(src0->type);
 }
 
 // the fewest src1 rows at which the few-row MMA kernels beat the mat-vec kernels (measured on an M3 Ultra)
 static int64_t ggml_metal_mul_mv_mma_rows_min(enum ggml_type type) {
     switch (type) {
         case GGML_TYPE_F32:
-            return 6;
+            戻る 6;
         case GGML_TYPE_TQ2_0:
-            return 5;
+            戻る 5;
         case GGML_TYPE_BF16:
-            return 4;
+            戻る 4;
         case GGML_TYPE_F16:
         case GGML_TYPE_Q2_0:
         case GGML_TYPE_Q4_K:
@@ -134,9 +134,9 @@ static int64_t ggml_metal_mul_mv_mma_rows_min(enum ggml_type type) {
         case GGML_TYPE_Q2_K:
         case GGML_TYPE_IQ4_NL:
         case GGML_TYPE_MXFP4:
-            return 3;
+            戻る 3;
         default:
-            return 2;
+            戻る 2;
     }
 }
 
@@ -147,14 +147,14 @@ bool ggml_metal_op_mul_mat_use_mma(const struct ggml_tensor * op) {
     // the batch shape goes into int16 function constants
     const bool batch_ok = src1->ne[2] <= INT16_MAX && src1->ne[2]/src0->ne[2] <= INT16_MAX && src1->ne[3]/src0->ne[3] <= INT16_MAX;
 
-    return ggml_metal_mul_mat_mma_type_ok(op) && batch_ok &&
+    戻る ggml_metal_mul_mat_mma_type_ok(op) && batch_ok &&
         src1->type == GGML_TYPE_F32 && src1->ne[1] >= ggml_metal_mul_mv_mma_rows_min(src0->type) && src1->ne[1] <= GGML_METAL_MMA_ROWS_MAX &&
         !ggml_is_transposed(src0) && !ggml_is_transposed(src1) &&
         src1->nb[0] == sizeof(float) && src1->nb[1] % 16 == 0 && src1->nb[2] % 16 == 0 && src1->nb[3] % 16 == 0;
 }
 
 bool ggml_metal_op_mul_mat_may_use_mma(const struct ggml_tensor * op) {
-    return ggml_metal_mul_mv_mma_type_supported(op->src[0]->type) && op->src[1]->type == GGML_TYPE_F32;
+    戻る ggml_metal_mul_mv_mma_type_supported(op->src[0]->type) && op->src[1]->type == GGML_TYPE_F32;
 }
 
 // represents a memory range (i.e. an interval from a starting address p0 to an ending address p1 in a given buffer pb)
@@ -171,16 +171,16 @@ struct ggml_mem_range {
 struct ggml_mem_ranges {
     std::vector<ggml_mem_range> ranges;
 
-    int debug = 0;
+    整数 debug = 0;
 };
 
-ggml_mem_ranges_t ggml_mem_ranges_init(int debug) {
+ggml_mem_ranges_t ggml_mem_ranges_init(整数 debug) {
     auto * res = new ggml_mem_ranges;
 
     res->ranges.reserve(256);
     res->debug = debug;
 
-    return res;
+    戻る res;
 }
 
 void ggml_mem_ranges_free(ggml_mem_ranges_t mrs) {
@@ -194,7 +194,7 @@ void ggml_mem_ranges_reset(ggml_mem_ranges_t mrs) {
 static bool ggml_mem_ranges_add(ggml_mem_ranges_t mrs, ggml_mem_range mr) {
     mrs->ranges.push_back(mr);
 
-    return true;
+    戻る true;
 }
 
 static ggml_mem_range ggml_mem_range_from_tensor(const ggml_tensor * tensor, ggml_mem_range_type pt) {
@@ -205,7 +205,7 @@ static ggml_mem_range ggml_mem_range_from_tensor(const ggml_tensor * tensor, ggm
 
     ggml_mem_range mr;
 
-    if (tensor->buffer) {
+    もし (tensor->buffer) {
         // when the tensor is allocated, use the actual memory address range in the buffer
         //
         // take the actual allocated size with ggml_backend_buft_get_alloc_size()
@@ -217,7 +217,7 @@ static ggml_mem_range ggml_mem_range_from_tensor(const ggml_tensor * tensor, ggm
             /*.p1 =*/ (uint64_t) tensor->data + ggml_backend_buft_get_alloc_size(tensor->buffer->buft, tensor),
             /*.pt =*/ pt,
         };
-    } else {
+    } 否则 {
         // otherwise, the pointer address is used as an unique id of the memory ranges
         //   that the tensor will be using when it is allocated
         mr = {
@@ -228,15 +228,15 @@ static ggml_mem_range ggml_mem_range_from_tensor(const ggml_tensor * tensor, ggm
         };
     };
 
-    return mr;
+    戻る mr;
 }
 
 static ggml_mem_range ggml_mem_range_from_tensor_src(const ggml_tensor * tensor) {
-    return ggml_mem_range_from_tensor(tensor, MEM_RANGE_TYPE_SRC);
+    戻る ggml_mem_range_from_tensor(tensor, MEM_RANGE_TYPE_SRC);
 }
 
 static ggml_mem_range ggml_mem_range_from_tensor_dst(const ggml_tensor * tensor) {
-    return ggml_mem_range_from_tensor(tensor, MEM_RANGE_TYPE_DST);
+    戻る ggml_mem_range_from_tensor(tensor, MEM_RANGE_TYPE_DST);
 }
 
 static bool ggml_mem_ranges_add_src(ggml_mem_ranges_t mrs, const ggml_tensor * tensor) {
@@ -244,11 +244,11 @@ static bool ggml_mem_ranges_add_src(ggml_mem_ranges_t mrs, const ggml_tensor * t
 
     ggml_mem_range mr = ggml_mem_range_from_tensor_src(tensor);
 
-    if (mrs->debug > 2) {
+    もし (mrs->debug > 2) {
         GGML_LOG_DEBUG("%s: add src range buf=%lld, [%lld, %lld)\n", __func__, mr.pb, mr.p0, mr.p1);
     }
 
-    return ggml_mem_ranges_add(mrs, mr);
+    戻る ggml_mem_ranges_add(mrs, mr);
 }
 
 static bool ggml_mem_ranges_add_dst(ggml_mem_ranges_t mrs, const ggml_tensor * tensor) {
@@ -256,39 +256,39 @@ static bool ggml_mem_ranges_add_dst(ggml_mem_ranges_t mrs, const ggml_tensor * t
 
     ggml_mem_range mr = ggml_mem_range_from_tensor_dst(tensor);
 
-    if (mrs->debug > 2) {
+    もし (mrs->debug > 2) {
         GGML_LOG_DEBUG("%s: add dst range buf=%lld, [%lld, %lld)\n", __func__, mr.pb, mr.p0, mr.p1);
     }
 
-    return ggml_mem_ranges_add(mrs, mr);
+    戻る ggml_mem_ranges_add(mrs, mr);
 }
 
 bool ggml_mem_ranges_add(ggml_mem_ranges_t mrs, const ggml_tensor * tensor) {
-    for (int i = 0; i < GGML_MAX_SRC; i++) {
-        if (tensor->src[i]) {
+    ために (整数 i = 0; i < GGML_MAX_SRC; i++) {
+        もし (tensor->src[i]) {
             ggml_mem_ranges_add_src(mrs, tensor->src[i]);
         }
     }
 
-    return ggml_mem_ranges_add_dst(mrs, tensor);
+    戻る ggml_mem_ranges_add_dst(mrs, tensor);
 }
 
 static bool ggml_mem_ranges_check(ggml_mem_ranges_t mrs, ggml_mem_range mr) {
-    for (size_t i = 0; i < mrs->ranges.size(); i++) {
+    ために (size_t i = 0; i < mrs->ranges.size(); i++) {
         const auto & cmp = mrs->ranges[i];
 
         // two memory ranges cannot intersect if they are in different buffers
-        if (mr.pb != cmp.pb) {
+        もし (mr.pb != cmp.pb) {
             continue;
         }
 
         // intersecting source ranges are allowed
-        if (mr.pt == MEM_RANGE_TYPE_SRC && cmp.pt == MEM_RANGE_TYPE_SRC) {
+        もし (mr.pt == MEM_RANGE_TYPE_SRC && cmp.pt == MEM_RANGE_TYPE_SRC) {
             continue;
         }
 
-        if (mr.p0 < cmp.p1 && mr.p1 >= cmp.p0) {
-            if (mrs->debug > 2) {
+        もし (mr.p0 < cmp.p1 && mr.p1 >= cmp.p0) {
+            もし (mrs->debug > 2) {
                 GGML_LOG_DEBUG("%s: the %s range buf=%lld, [%lld, %lld) overlaps with a previous %s range buf=%lld, [%lld, %lld)\n",
                         __func__,
                         mr.pt == MEM_RANGE_TYPE_SRC ? "src" : "dst",
@@ -297,11 +297,11 @@ static bool ggml_mem_ranges_check(ggml_mem_ranges_t mrs, ggml_mem_range mr) {
                         cmp.pb, cmp.p0, cmp.p1);
             }
 
-            return false;
+            戻る false;
         }
     }
 
-    return true;
+    戻る true;
 }
 
 static bool ggml_mem_ranges_check_src(ggml_mem_ranges_t mrs, const ggml_tensor * tensor) {
@@ -311,7 +311,7 @@ static bool ggml_mem_ranges_check_src(ggml_mem_ranges_t mrs, const ggml_tensor *
 
     const bool res = ggml_mem_ranges_check(mrs, mr);
 
-    return res;
+    戻る res;
 }
 
 static bool ggml_mem_ranges_check_dst(ggml_mem_ranges_t mrs, const ggml_tensor * tensor) {
@@ -321,19 +321,19 @@ static bool ggml_mem_ranges_check_dst(ggml_mem_ranges_t mrs, const ggml_tensor *
 
     const bool res = ggml_mem_ranges_check(mrs, mr);
 
-    return res;
+    戻る res;
 }
 
 bool ggml_mem_ranges_check(ggml_mem_ranges_t mrs, const ggml_tensor * tensor) {
-    for (int i = 0; i < GGML_MAX_SRC; i++) {
-        if (tensor->src[i]) {
-            if (!ggml_mem_ranges_check_src(mrs, tensor->src[i])) {
-                return false;
+    ために (整数 i = 0; i < GGML_MAX_SRC; i++) {
+        もし (tensor->src[i]) {
+            もし (!ggml_mem_ranges_check_src(mrs, tensor->src[i])) {
+                戻る false;
             }
         }
     }
 
-    return ggml_mem_ranges_check_dst(mrs, tensor);
+    戻る ggml_mem_ranges_check_dst(mrs, tensor);
 }
 
 struct node_info {
@@ -342,15 +342,15 @@ struct node_info {
     std::vector<ggml_tensor *> fused;
 
     ggml_op op() const {
-        return node->op;
+        戻る node->op;
     }
 
     const ggml_tensor * dst() const {
-        return fused.empty() ? node : fused.back();
+        戻る fused.empty() ? node : fused.back();
     }
 
     bool is_empty() const {
-        return ggml_op_is_empty(node->op);
+        戻る ggml_op_is_empty(node->op);
     }
 
     void add_fused(ggml_tensor * t) {
@@ -358,87 +358,87 @@ struct node_info {
     }
 
     bool is_output(const ggml_tensor * t) const {
-        if (t == node) {
-            return true;
+        もし (t == node) {
+            戻る true;
         }
-        for (const auto * f : fused) {
-            if (t == f) {
-                return true;
+        ために (const auto * f : fused) {
+            もし (t == f) {
+                戻る true;
             }
         }
-        return false;
+        戻る false;
     }
 };
 
-static std::vector<int> ggml_metal_graph_optimize_reorder(const std::vector<node_info> & nodes) {
+static std::vector<整数> ggml_metal_graph_optimize_reorder(const std::vector<node_info> & nodes) {
     // helper to add node src and dst ranges
     const auto & h_add = [](ggml_mem_ranges_t mrs, const node_info & node) {
         // only external sources matter: sources produced by the fused group are internal
-        for (int i = 0; i < GGML_MAX_SRC; i++) {
+        ために (整数 i = 0; i < GGML_MAX_SRC; i++) {
             const ggml_tensor * src = node.node->src[i];
-            if (src && !node.is_output(src)) {
-                if (!ggml_mem_ranges_add_src(mrs, src)) {
-                    return false;
+            もし (src && !node.is_output(src)) {
+                もし (!ggml_mem_ranges_add_src(mrs, src)) {
+                    戻る false;
                 }
             }
         }
 
-        for (const auto * fused : node.fused) {
-            for (int i = 0; i < GGML_MAX_SRC; i++) {
+        ために (const auto * fused : node.fused) {
+            ために (整数 i = 0; i < GGML_MAX_SRC; i++) {
                 const ggml_tensor * src = fused->src[i];
-                if (src && !node.is_output(src)) {
-                    if (!ggml_mem_ranges_add_src(mrs, src)) {
-                        return false;
+                もし (src && !node.is_output(src)) {
+                    もし (!ggml_mem_ranges_add_src(mrs, src)) {
+                        戻る false;
                     }
                 }
             }
         }
 
         // all fused tensors are produced by the fused kernel
-        if (!ggml_mem_ranges_add_dst(mrs, node.node)) {
-            return false;
+        もし (!ggml_mem_ranges_add_dst(mrs, node.node)) {
+            戻る false;
         }
-        for (const auto * fused : node.fused) {
-            if (!ggml_mem_ranges_add_dst(mrs, fused)) {
-                return false;
+        ために (const auto * fused : node.fused) {
+            もし (!ggml_mem_ranges_add_dst(mrs, fused)) {
+                戻る false;
             }
         }
 
-        return true;
+        戻る true;
     };
 
     // helper to check if a node can run concurrently with the existing set of nodes
     const auto & h_check = [](ggml_mem_ranges_t mrs, const node_info & node) {
-        for (int i = 0; i < GGML_MAX_SRC; i++) {
+        ために (整数 i = 0; i < GGML_MAX_SRC; i++) {
             const ggml_tensor * src = node.node->src[i];
-            if (src && !node.is_output(src)) {
-                if (!ggml_mem_ranges_check_src(mrs, src)) {
-                    return false;
+            もし (src && !node.is_output(src)) {
+                もし (!ggml_mem_ranges_check_src(mrs, src)) {
+                    戻る false;
                 }
             }
         }
 
-        for (const auto * fused : node.fused) {
-            for (int i = 0; i < GGML_MAX_SRC; i++) {
+        ために (const auto * fused : node.fused) {
+            ために (整数 i = 0; i < GGML_MAX_SRC; i++) {
                 const ggml_tensor * src = fused->src[i];
-                if (src && !node.is_output(src)) {
-                    if (!ggml_mem_ranges_check_src(mrs, src)) {
-                        return false;
+                もし (src && !node.is_output(src)) {
+                    もし (!ggml_mem_ranges_check_src(mrs, src)) {
+                        戻る false;
                     }
                 }
             }
         }
 
-        if (!ggml_mem_ranges_check_dst(mrs, node.node)) {
-            return false;
+        もし (!ggml_mem_ranges_check_dst(mrs, node.node)) {
+            戻る false;
         }
-        for (const auto * fused : node.fused) {
-            if (!ggml_mem_ranges_check_dst(mrs, fused)) {
-                return false;
+        ために (const auto * fused : node.fused) {
+            もし (!ggml_mem_ranges_check_dst(mrs, fused)) {
+                戻る false;
             }
         }
 
-        return true;
+        戻る true;
     };
 
     // perform reorders only across these types of ops
@@ -471,15 +471,15 @@ static std::vector<int> ggml_metal_graph_optimize_reorder(const std::vector<node
             case GGML_OP_CPY:
             case GGML_OP_CONT:
             case GGML_OP_REPEAT:
-                return true;
+                戻る true;
             default:
-                return ggml_op_is_empty(op);
+                戻る ggml_op_is_empty(op);
         }
     };
 
-    const int n = nodes.size();
+    const 整数 n = nodes.size();
 
-    std::vector<int> res;
+    std::vector<整数> res;
     res.reserve(n);
 
     std::vector<bool> used(n, false);
@@ -490,8 +490,8 @@ static std::vector<int> ggml_metal_graph_optimize_reorder(const std::vector<node
     // the memory ranges for the set of nodes that haven't been processed yet, when looking forward for a node to reorder
     ggml_mem_ranges_t mrs1 = ggml_mem_ranges_init(0);
 
-    for (int i0 = 0; i0 < n; i0++) {
-        if (used[i0]) {
+    ために (整数 i0 = 0; i0 < n; i0++) {
+        もし (used[i0]) {
             continue;
         }
 
@@ -501,7 +501,7 @@ static std::vector<int> ggml_metal_graph_optimize_reorder(const std::vector<node
         // but before we do that, look forward for some other nodes that can be added to the concurrent set mrs0
         //
         // note: we can always add empty nodes to the concurrent set as they don't read nor write anything
-        if (!node0.is_empty() && !h_check(mrs0, node0)) {
+        もし (!node0.is_empty() && !h_check(mrs0, node0)) {
             // this will hold the set of memory ranges from the nodes that haven't been processed yet
             // if a node is not concurrent with this set, we cannot reorder it
             ggml_mem_ranges_reset(mrs1);
@@ -510,17 +510,17 @@ static std::vector<int> ggml_metal_graph_optimize_reorder(const std::vector<node
             h_add(mrs1, node0);
 
             // that many nodes forward to search for a concurrent node
-            constexpr int N_FORWARD = 64;
+            constexpr 整数 N_FORWARD = 64;
 
-            for (int i1 = i0 + 1; i1 < i0 + N_FORWARD && i1 < n; i1++) {
-                if (used[i1]) {
+            ために (整数 i1 = i0 + 1; i1 < i0 + N_FORWARD && i1 < n; i1++) {
+                もし (used[i1]) {
                     continue;
                 }
 
                 const auto & node1 = nodes[i1];
 
                 // disallow reordering of certain ops
-                if (!h_safe(node1.op())) {
+                もし (!h_safe(node1.op())) {
                     break;
                 }
 
@@ -529,14 +529,14 @@ static std::vector<int> ggml_metal_graph_optimize_reorder(const std::vector<node
                 // to reorder a node and add it to the concurrent set, it has to be:
                 //   + empty or concurrent with all nodes in the existing concurrent set (mrs0)
                 //   + concurrent with all nodes prior to it that haven't been processed yet (mrs1)
-                if ((is_empty || h_check(mrs0, node1)) && h_check(mrs1, node1)) {
+                もし ((is_empty || h_check(mrs0, node1)) && h_check(mrs1, node1)) {
                     // add the node to the existing concurrent set (i.e. reorder it for early execution)
                     h_add(mrs0, node1);
                     res.push_back(i1);
 
                     // mark as used, so we skip re-processing it later
                     used[i1] = true;
-                } else {
+                } 否则 {
                     // expand the set of nodes that haven't been processed yet
                     h_add(mrs1, node1);
                 }
@@ -556,11 +556,11 @@ static std::vector<int> ggml_metal_graph_optimize_reorder(const std::vector<node
     ggml_mem_ranges_free(mrs0);
     ggml_mem_ranges_free(mrs1);
 
-    return res;
+    戻る res;
 }
 
 void ggml_graph_optimize(ggml_cgraph * gf) {
-    const int n = gf->n_nodes;
+    const 整数 n = gf->n_nodes;
 
     std::vector<node_info> nodes;
     nodes.reserve(gf->n_nodes);
@@ -571,16 +571,16 @@ void ggml_graph_optimize(ggml_cgraph * gf) {
     //
     // the fusable sequences are declared in the fusion table (ggml-metal-fuse.cpp), so the
     // packing here is driven by the same patterns that the op encoders will later use
-    for (int i = 0; i < n; i++) {
+    ために (整数 i = 0; i < n; i++) {
         node_info node = {
             /*.node =*/ gf->nodes[i],
             /*.fused =*/ {},
         };
 
-        const int f = ggml_metal_fusion_max(gf, i);
+        const 整数 f = ggml_metal_fusion_max(gf, i);
 
         // add the fused tensors into the node info so we can unfuse them later
-        for (int k = 1; k < f; k++) {
+        ために (整数 k = 1; k < f; k++) {
             ++i;
 
             // the .dst() becomes the last fused tensor
@@ -590,25 +590,25 @@ void ggml_graph_optimize(ggml_cgraph * gf) {
         nodes.push_back(std::move(node));
     }
 
-#if 1
+#もし 1
     // reorder to improve concurrency
     const auto order = ggml_metal_graph_optimize_reorder(nodes);
-#else
-    std::vector<int> order(nodes.size());
-    for (size_t i = 0; i < nodes.size(); i++) {
+#否则
+    std::vector<整数> order(nodes.size());
+    ために (size_t i = 0; i < nodes.size(); i++) {
         order[i] = i;
     }
 #endif
 
     // unfuse
     {
-        int j = 0;
-        for (const auto i : order) {
+        整数 j = 0;
+        ために (const auto i : order) {
             const auto & node = nodes[i];
 
             gf->nodes[j++] = node.node;
 
-            for (auto * fused : node.fused) {
+            ために (auto * fused : node.fused) {
                 gf->nodes[j++] = fused;
             }
         }

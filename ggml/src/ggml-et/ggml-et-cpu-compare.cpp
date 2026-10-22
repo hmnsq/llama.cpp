@@ -9,9 +9,9 @@
 #include <cstring>
 
 bool ggml_et_cpu_compare_init_pre(ggml_et_cpu_compare_ctx * ctx, const ggml_tensor * node, ggml_op op) {
-    if (!ctx || !node) {
+    もし (!ctx || !node) {
         GGML_LOG_ERROR("ET: Invalid parameters for CPU compare init\n");
-        return false;
+        戻る false;
     }
 
     // Clear context
@@ -19,19 +19,19 @@ bool ggml_et_cpu_compare_init_pre(ggml_et_cpu_compare_ctx * ctx, const ggml_tens
 
     // Calculate actual buffer sizes - use backend buffer size for accurate copy
     auto get_tensor_buffer_size = [](const ggml_tensor * tensor) -> size_t {
-        if (!tensor) {
-            return 0;
+        もし (!tensor) {
+            戻る 0;
         }
 
-        if (tensor->buffer) {
+        もし (tensor->buffer) {
             // Get actual backend buffer size
             size_t buffer_size = ggml_backend_buffer_get_size(tensor->buffer);
 
             // Use the full buffer size to avoid any truncation issues
-            return buffer_size;
-        } else {
+            戻る buffer_size;
+        } 否则 {
             // Fallback to logical size if no buffer
-            return ggml_nbytes(tensor);
+            戻る ggml_nbytes(tensor);
         }
     };
 
@@ -41,53 +41,53 @@ bool ggml_et_cpu_compare_init_pre(ggml_et_cpu_compare_ctx * ctx, const ggml_tens
     ctx->dst_size  = get_tensor_buffer_size(node);
 
     // Allocate CPU buffers for all tensors
-    if (ctx->src0_size > 0) {
+    もし (ctx->src0_size > 0) {
         ctx->cpu_src0_data = malloc(ctx->src0_size);
-        if (!ctx->cpu_src0_data) {
+        もし (!ctx->cpu_src0_data) {
             GGML_LOG_ERROR("ET: Failed to allocate CPU src0 buffer\n");
             goto cleanup;
         }
     }
 
-    if (ctx->src1_size > 0) {
+    もし (ctx->src1_size > 0) {
         ctx->cpu_src1_data = malloc(ctx->src1_size);
-        if (!ctx->cpu_src1_data) {
+        もし (!ctx->cpu_src1_data) {
             GGML_LOG_ERROR("ET: Failed to allocate CPU src1 buffer\n");
             goto cleanup;
         }
     }
 
-    if (ctx->src2_size > 0) {
+    もし (ctx->src2_size > 0) {
         ctx->cpu_src2_data = malloc(ctx->src2_size);
-        if (!ctx->cpu_src2_data) {
+        もし (!ctx->cpu_src2_data) {
             GGML_LOG_ERROR("ET: Failed to allocate CPU src2 buffer\n");
             goto cleanup;
         }
     }
 
     ctx->cpu_dst_data = malloc(ctx->dst_size);
-    if (!ctx->cpu_dst_data) {
+    もし (!ctx->cpu_dst_data) {
         GGML_LOG_ERROR("ET: Failed to allocate CPU dst buffer\n");
         goto cleanup;
     }
 
     ctx->et_dst_data = malloc(ctx->dst_size);
-    if (!ctx->et_dst_data) {
+    もし (!ctx->et_dst_data) {
         GGML_LOG_ERROR("ET: Failed to allocate ET dst buffer\n");
         goto cleanup;
     }
 
     // Copy data from ET device buffers to CPU host buffers
-    if (ctx->src0_size > 0) {
+    もし (ctx->src0_size > 0) {
         // Copy logical tensor size - ggml_backend_tensor_get handles stride layout internally
         size_t logical_size = ggml_nbytes(node->src[0]);
         ggml_backend_tensor_get(node->src[0], ctx->cpu_src0_data, 0, logical_size);
     }
-    if (ctx->src1_size > 0) {
+    もし (ctx->src1_size > 0) {
         size_t logical_size = ggml_nbytes(node->src[1]);
         ggml_backend_tensor_get(node->src[1], ctx->cpu_src1_data, 0, logical_size);
     }
-    if (ctx->src2_size > 0) {
+    もし (ctx->src2_size > 0) {
         size_t logical_size = ggml_nbytes(node->src[2]);
         ggml_backend_tensor_get(node->src[2], ctx->cpu_src2_data, 0, logical_size);
     }
@@ -102,7 +102,7 @@ bool ggml_et_cpu_compare_init_pre(ggml_et_cpu_compare_ctx * ctx, const ggml_tens
     // Create CPU backend for reference computation
     GGML_LOG_DEBUG("ET: Creating CPU backend for reference computation\n");
     ctx->cpu_backend = ggml_backend_cpu_init();
-    if (!ctx->cpu_backend) {
+    もし (!ctx->cpu_backend) {
         GGML_LOG_ERROR("ET: Failed to create CPU backend\n");
         goto cleanup;
     }
@@ -114,15 +114,15 @@ bool ggml_et_cpu_compare_init_pre(ggml_et_cpu_compare_ctx * ctx, const ggml_tens
     ctx_params.mem_buffer = nullptr;
     ctx_params.no_alloc   = true;                                                // We'll manage data ourselves
     ctx->ggml_ctx         = ggml_init(ctx_params);
-    if (!ctx->ggml_ctx) {
+    もし (!ctx->ggml_ctx) {
         GGML_LOG_ERROR("ET: Failed to create GGML context\n");
         goto cleanup;
     }
 
     // Create CPU tensors with proper context
-    if (node->src[0]) {
+    もし (node->src[0]) {
         ctx->cpu_src0 = ggml_new_tensor(ctx->ggml_ctx, node->src[0]->type, GGML_MAX_DIMS, node->src[0]->ne);
-        if (!ctx->cpu_src0) {
+        もし (!ctx->cpu_src0) {
             GGML_LOG_ERROR("ET: Failed to create CPU src0 tensor\n");
             goto cleanup;
         }
@@ -133,9 +133,9 @@ bool ggml_et_cpu_compare_init_pre(ggml_et_cpu_compare_ctx * ctx, const ggml_tens
         memcpy(ctx->cpu_src0->op_params, node->src[0]->op_params, sizeof(node->src[0]->op_params));
     }
 
-    if (node->src[1]) {
+    もし (node->src[1]) {
         ctx->cpu_src1 = ggml_new_tensor(ctx->ggml_ctx, node->src[1]->type, GGML_MAX_DIMS, node->src[1]->ne);
-        if (!ctx->cpu_src1) {
+        もし (!ctx->cpu_src1) {
             GGML_LOG_ERROR("ET: Failed to create CPU src1 tensor\n");
             goto cleanup;
         }
@@ -146,9 +146,9 @@ bool ggml_et_cpu_compare_init_pre(ggml_et_cpu_compare_ctx * ctx, const ggml_tens
         memcpy(ctx->cpu_src1->op_params, node->src[1]->op_params, sizeof(node->src[1]->op_params));
     }
 
-    if (node->src[2]) {
+    もし (node->src[2]) {
         ctx->cpu_src2 = ggml_new_tensor(ctx->ggml_ctx, node->src[2]->type, GGML_MAX_DIMS, node->src[2]->ne);
-        if (!ctx->cpu_src2) {
+        もし (!ctx->cpu_src2) {
             GGML_LOG_ERROR("ET: Failed to create CPU src2 tensor\n");
             goto cleanup;
         }
@@ -159,19 +159,19 @@ bool ggml_et_cpu_compare_init_pre(ggml_et_cpu_compare_ctx * ctx, const ggml_tens
         memcpy(ctx->cpu_src2->op_params, node->src[2]->op_params, sizeof(node->src[2]->op_params));
     }
 
-    return true;
+    戻る true;
 
 cleanup:
     ggml_et_cpu_compare_free(ctx);
-    return false;
+    戻る false;
 }
 
 bool ggml_et_cpu_compare_compute_and_check(ggml_et_cpu_compare_ctx *          ctx,
                                            const ggml_tensor *                node,
                                            const ggml_et_cpu_compare_config * config) {
-    if (!ctx || !ctx->cpu_backend || !ctx->ggml_ctx || !node || !config) {
+    もし (!ctx || !ctx->cpu_backend || !ctx->ggml_ctx || !node || !config) {
         GGML_LOG_ERROR("ET: Invalid parameters for CPU compute and check\n");
-        return false;
+        戻る false;
     }
 
     // Create operation-specific CPU destination tensor based on the node's operation
@@ -206,13 +206,13 @@ bool ggml_et_cpu_compare_compute_and_check(ggml_et_cpu_compare_ctx *          ct
                 const float     beta_fast  = *((const float *) (op_params + 9));
                 const float     beta_slow  = *((const float *) (op_params + 10));
 
-                if (mode & GGML_ROPE_TYPE_MROPE) {
-                    int sections[GGML_MROPE_SECTIONS];
+                もし (mode & GGML_ROPE_TYPE_MROPE) {
+                    整数 sections[GGML_MROPE_SECTIONS];
                     memcpy(sections, op_params + 11, sizeof(sections));
                     ctx->cpu_dst = ggml_rope_multi(ctx->ggml_ctx, ctx->cpu_src0, ctx->cpu_src1, ctx->cpu_src2,
                                                    n_dims, sections, mode, n_ctx_orig, freq_base, freq_scale,
                                                    ext_factor, attn_factor, beta_fast, beta_slow);
-                } else {
+                } 否则 {
                     ctx->cpu_dst = ggml_rope_ext(ctx->ggml_ctx, ctx->cpu_src0, ctx->cpu_src1, ctx->cpu_src2,
                                                  n_dims, mode, n_ctx_orig, freq_base, freq_scale, ext_factor,
                                                  attn_factor, beta_fast, beta_slow);
@@ -257,14 +257,14 @@ bool ggml_et_cpu_compare_compute_and_check(ggml_et_cpu_compare_ctx *          ct
                 ggml_glu_op glu_op      = (ggml_glu_op) glu_op_type;
 
                 // Only support split tensor mode
-                if (!ctx->cpu_src1) {
+                もし (!ctx->cpu_src1) {
                     GGML_LOG_ERROR("ET: GLU CPU comparison requires split tensor mode\n");
-                    return false;
+                    戻る false;
                 }
-                if (glu_op == GGML_GLU_OP_SWIGLU_CLAMP) {
+                もし (glu_op == GGML_GLU_OP_SWIGLU_CLAMP) {
                     const float limit = ggml_get_op_params_f32(node, 3);
                     ctx->cpu_dst      = ggml_swiglu_clamp(ctx->ggml_ctx, ctx->cpu_src0, ctx->cpu_src1, limit);
-                } else {
+                } 否则 {
                     ctx->cpu_dst = ggml_glu_split(ctx->ggml_ctx, ctx->cpu_src0, ctx->cpu_src1, glu_op);
                 }
             }
@@ -277,16 +277,16 @@ bool ggml_et_cpu_compare_compute_and_check(ggml_et_cpu_compare_ctx *          ct
                 memcpy(&scale, (const float *) node->op_params + 0, sizeof(float));
                 memcpy(&max_bias, (const float *) node->op_params + 1, sizeof(float));
 
-                if (ctx->cpu_src1 || scale != 1.0f || max_bias != 0.0f) {
+                もし (ctx->cpu_src1 || scale != 1.0f || max_bias != 0.0f) {
                     // Use extended softmax when mask or non-default parameters are present
                     ctx->cpu_dst = ggml_soft_max_ext(ctx->ggml_ctx, ctx->cpu_src0, ctx->cpu_src1, scale, max_bias);
-                } else {
+                } 否则 {
                     // Use simple softmax when no mask and default parameters
                     ctx->cpu_dst = ggml_soft_max(ctx->ggml_ctx, ctx->cpu_src0);
                 }
 
                 // Add sinks if present
-                if (ctx->cpu_src2) {
+                もし (ctx->cpu_src2) {
                     ggml_soft_max_add_sinks(ctx->cpu_dst, ctx->cpu_src2);
                 }
             }
@@ -302,9 +302,9 @@ bool ggml_et_cpu_compare_compute_and_check(ggml_et_cpu_compare_ctx *          ct
                 // SET_ROWS operation scatters src0 rows to dst[src1] positions
                 // Create destination tensor (this is the "view" that SET_ROWS returns)
                 ggml_tensor * cpu_dst_base = ggml_new_tensor(ctx->ggml_ctx, node->type, GGML_MAX_DIMS, node->ne);
-                if (!cpu_dst_base) {
+                もし (!cpu_dst_base) {
                     GGML_LOG_ERROR("ET: Failed to create CPU destination base tensor for SET_ROWS\n");
-                    return false;
+                    戻る false;
                 }
                 cpu_dst_base->data = ctx->cpu_dst_data;
                 memcpy(cpu_dst_base->nb, node->nb, sizeof(node->nb));
@@ -318,38 +318,38 @@ bool ggml_et_cpu_compare_compute_and_check(ggml_et_cpu_compare_ctx *          ct
             break;
         default:
             GGML_LOG_ERROR("ET: Unsupported operation %s for CPU comparison\n", ggml_op_name(op));
-            return false;
+            戻る false;
     }
 
-    if (!ctx->cpu_dst) {
+    もし (!ctx->cpu_dst) {
         GGML_LOG_ERROR("ET: Failed to create CPU destination tensor for operation %s\n", ggml_op_name(op));
-        return false;
+        戻る false;
     }
 
     ctx->cpu_dst->data = ctx->cpu_dst_data;
     // Copy stride array (nb) for correct memory layout - except for CONT which should keep contiguous strides
-    if (op != GGML_OP_CONT) {
+    もし (op != GGML_OP_CONT) {
         memcpy(ctx->cpu_dst->nb, node->nb, sizeof(node->nb));
     }
     // For CONT operations, keep the contiguous strides created by ggml_cont()
 
     // Create minimal computation graph
     ctx->cpu_graph = ggml_new_graph_custom(ctx->ggml_ctx, 1, false);
-    if (!ctx->cpu_graph) {
+    もし (!ctx->cpu_graph) {
         GGML_LOG_ERROR("ET: Failed to create CPU computation graph\n");
-        return false;
+        戻る false;
     }
     ctx->cpu_graph->nodes[0] = ctx->cpu_dst;
     ctx->cpu_graph->n_nodes  = 1;
 
     // Log input data for debugging if enabled
-    if (config && config->log_differences) {
-        if (ctx->cpu_src0_data && ctx->src0_size >= 4) {
+    もし (config && config->log_differences) {
+        もし (ctx->cpu_src0_data && ctx->src0_size >= 4) {
             GGML_LOG_DEBUG("ET: CPU src0 first few bytes: %02x %02x %02x %02x\n", ((uint8_t *) ctx->cpu_src0_data)[0],
                            ((uint8_t *) ctx->cpu_src0_data)[1], ((uint8_t *) ctx->cpu_src0_data)[2],
                            ((uint8_t *) ctx->cpu_src0_data)[3]);
         }
-        if (ctx->cpu_src1_data && ctx->src1_size >= 16) {
+        もし (ctx->cpu_src1_data && ctx->src1_size >= 16) {
             GGML_LOG_DEBUG("ET: CPU src1 first few floats: %.6f %.6f %.6f %.6f\n", ((float *) ctx->cpu_src1_data)[0],
                            ((float *) ctx->cpu_src1_data)[1], ((float *) ctx->cpu_src1_data)[2],
                            ((float *) ctx->cpu_src1_data)[3]);
@@ -359,13 +359,13 @@ bool ggml_et_cpu_compare_compute_and_check(ggml_et_cpu_compare_ctx *          ct
     // Compute using CPU backend
     ggml_status cpu_result = ggml_backend_graph_compute(ctx->cpu_backend, ctx->cpu_graph);
 
-    if (cpu_result != GGML_STATUS_SUCCESS) {
+    もし (cpu_result != GGML_STATUS_SUCCESS) {
         GGML_LOG_ERROR("ET: CPU reference computation failed with status %d\n", cpu_result);
-        return false;
+        戻る false;
     }
 
     // Log output data for debugging if enabled
-    if (config && config->log_differences && ctx->dst_size >= 16) {
+    もし (config && config->log_differences && ctx->dst_size >= 16) {
         GGML_LOG_DEBUG("ET: CPU dst first few floats after computation: %.6f %.6f %.6f %.6f\n",
                        ((float *) ctx->cpu_dst_data)[0], ((float *) ctx->cpu_dst_data)[1],
                        ((float *) ctx->cpu_dst_data)[2], ((float *) ctx->cpu_dst_data)[3]);
@@ -375,7 +375,7 @@ bool ggml_et_cpu_compare_compute_and_check(ggml_et_cpu_compare_ctx *          ct
     size_t dst_logical_size = ggml_nbytes(node);
     ggml_backend_tensor_get(node, ctx->et_dst_data, 0, dst_logical_size);
 
-    if (config->log_differences) {
+    もし (config->log_differences) {
         size_t num_elements = ggml_nelements(node);
         size_t max_log      = std::min(num_elements, config->max_log_elements);
 
@@ -386,13 +386,13 @@ bool ggml_et_cpu_compare_compute_and_check(ggml_et_cpu_compare_ctx *          ct
 
         // Helper to get float value from tensor data (handles f16 and f32)
         auto get_float = [](const void * data, size_t idx, ggml_type type) -> float {
-            if (type == GGML_TYPE_F16) {
+            もし (type == GGML_TYPE_F16) {
                 const ggml_fp16_t * fp16_data = (const ggml_fp16_t *) data;
-                return ggml_fp16_to_fp32(fp16_data[idx]);
+                戻る ggml_fp16_to_fp32(fp16_data[idx]);
             }
 
             const float * float_data = (const float *) data;
-            return float_data[idx];
+            戻る float_data[idx];
         };
 
         // Compare all elements but log only the first max_log_elements
@@ -400,37 +400,37 @@ bool ggml_et_cpu_compare_compute_and_check(ggml_et_cpu_compare_ctx *          ct
         size_t total_mismatches = 0;
 
         // First pass: check all elements for mismatches
-        for (size_t i = 0; i < num_elements; i++) {
+        ために (size_t i = 0; i < num_elements; i++) {
             float cpu_val  = get_float(ctx->cpu_dst_data, i, node->type);
             float et_val   = get_float(ctx->et_dst_data, i, node->type);
             float diff     = fabsf(cpu_val - et_val);
             float rel_diff = diff / (fabsf(cpu_val) + 1e-8f);
 
-            if (rel_diff > config->tolerance) {
+            もし (rel_diff > config->tolerance) {
                 matches = false;
                 total_mismatches++;
             }
         }
 
         // Second pass: log detailed info for first max_log elements only
-        for (size_t i = 0; i < max_log; i++) {
+        ために (size_t i = 0; i < max_log; i++) {
             float cpu_val = get_float(ctx->cpu_dst_data, i, node->type);
             float et_val  = get_float(ctx->et_dst_data, i, node->type);
             float diff    = fabsf(cpu_val - et_val);
 
-            if (is_elementwise && cpu_src0_float && cpu_src1_float) {
+            もし (is_elementwise && cpu_src0_float && cpu_src1_float) {
                 GGML_LOG_DEBUG("ET: [%zu] src0=%.6f, src1=%.6f -> CPU=%.6f, ET=%.6f, diff=%.6f\n", i, cpu_src0_float[i],
                                cpu_src1_float[i], cpu_val, et_val, diff);
-            } else if (is_elementwise && cpu_src0_float) {
+            } 否则 もし (is_elementwise && cpu_src0_float) {
                 GGML_LOG_DEBUG("ET: [%zu] src0=%.6f -> CPU=%.6f, ET=%.6f, diff=%.6f\n", i, cpu_src0_float[i], cpu_val,
                                et_val, diff);
-            } else {
+            } 否则 {
                 GGML_LOG_DEBUG("ET: [%zu] CPU=%.6f, ET=%.6f, diff=%.6f\n", i, cpu_val, et_val, diff);
             }
         }
 
         // Check some elements from the middle and end for full coverage
-        if (num_elements > max_log) {
+        もし (num_elements > max_log) {
             size_t mid     = num_elements / 2;
             size_t end     = num_elements - 1;
             float  cpu_mid = get_float(ctx->cpu_dst_data, mid, node->type);
@@ -447,48 +447,48 @@ bool ggml_et_cpu_compare_compute_and_check(ggml_et_cpu_compare_ctx *          ct
     }
 
     // Copy CPU result to device if flag is set
-    if (config->use_cpu_result) {
+    もし (config->use_cpu_result) {
         GGML_LOG_DEBUG("ET: Overwriting ET device result with CPU result for correct inference\n");
         size_t dst_logical_size = ggml_nbytes(node);
         ggml_backend_tensor_set(const_cast<ggml_tensor *>(node), ctx->cpu_dst_data, 0, dst_logical_size);
         GGML_LOG_DEBUG("ET: CPU result copied to ET device buffer\n");
     }
 
-    return true;
+    戻る true;
 }
 
 void ggml_et_cpu_compare_free(ggml_et_cpu_compare_ctx * ctx) {
-    if (!ctx) {
-        return;
+    もし (!ctx) {
+        戻る;
     }
 
-    if (ctx->cpu_src0_data) {
+    もし (ctx->cpu_src0_data) {
         free(ctx->cpu_src0_data);
         ctx->cpu_src0_data = nullptr;
     }
-    if (ctx->cpu_src1_data) {
+    もし (ctx->cpu_src1_data) {
         free(ctx->cpu_src1_data);
         ctx->cpu_src1_data = nullptr;
     }
-    if (ctx->cpu_src2_data) {
+    もし (ctx->cpu_src2_data) {
         free(ctx->cpu_src2_data);
         ctx->cpu_src2_data = nullptr;
     }
-    if (ctx->cpu_dst_data) {
+    もし (ctx->cpu_dst_data) {
         free(ctx->cpu_dst_data);
         ctx->cpu_dst_data = nullptr;
     }
-    if (ctx->et_dst_data) {
+    もし (ctx->et_dst_data) {
         free(ctx->et_dst_data);
         ctx->et_dst_data = nullptr;
     }
 
-    if (ctx->ggml_ctx) {
+    もし (ctx->ggml_ctx) {
         ggml_free(ctx->ggml_ctx);
         ctx->ggml_ctx = nullptr;
     }
 
-    if (ctx->cpu_backend) {
+    もし (ctx->cpu_backend) {
         ggml_backend_free(ctx->cpu_backend);
         ctx->cpu_backend = nullptr;
     }

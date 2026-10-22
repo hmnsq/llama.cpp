@@ -42,7 +42,7 @@ struct htp_binary_kernel_params {
     uint8_t  pad;
 };
 
-#if defined(__cplusplus)
+#もし defined(__cplusplus)
 static_assert(sizeof(struct htp_binary_kernel_params) <= 128, "htp_binary_kernel_params is too large for kernel_params blob");
 
 struct ggml_tensor;
@@ -52,19 +52,19 @@ static inline bool htp_binary_strides_safe(
     const struct ggml_tensor * dst,
     size_t elem_size
 ) {
-    if ((src0->ne[0] != 1 && src0->nb[0] != elem_size) ||
+    もし ((src0->ne[0] != 1 && src0->nb[0] != elem_size) ||
         (src1->ne[0] != 1 && src1->nb[0] != elem_size) ||
         (dst->ne[0]  != 1 && dst->nb[0]  != elem_size)) {
-        return false;
+        戻る false;
     }
-    if ((src0->ne[1] > 1 && src0->nb[1] < src0->ne[0] * elem_size) ||
+    もし ((src0->ne[1] > 1 && src0->nb[1] < src0->ne[0] * elem_size) ||
         (src1->ne[1] > 1 && src1->nb[1] < src1->ne[0] * elem_size) ||
         (dst->ne[1]  > 1 && dst->nb[1]  < dst->ne[0]  * elem_size)) {
-        return false;
+        戻る false;
     }
-    return true;
+    戻る true;
 }
-#else
+#否则
 _Static_assert(sizeof(struct htp_binary_kernel_params) <= 128, "htp_binary_kernel_params is too large for kernel_params blob");
 #endif
 
@@ -96,14 +96,14 @@ static inline void htp_binary_vtcm_layout_build(
     memset(L, 0, sizeof(*L));
 
     const uint32_t n_threads = kparams->n_threads;
-    if (n_threads == 0) {
-        return;
+    もし (n_threads == 0) {
+        戻る;
     }
 
-    if (kparams->kernel_type == HTP_BINARY_KERNEL_CHUNKED) {
+    もし (kparams->kernel_type == HTP_BINARY_KERNEL_CHUNKED) {
         const size_t chunk_bytes = kparams->chunk_bytes;
-        if (chunk_bytes == 0) {
-            return;
+        もし (chunk_bytes == 0) {
+            戻る;
         }
 
         L->src0_bytes_per_thread = 2 * chunk_bytes;
@@ -126,12 +126,12 @@ static inline void htp_binary_vtcm_layout_build(
         VTCM_LAYOUT_ALLOC(off, off_src1, src1_total);
         VTCM_LAYOUT_ALLOC(off, off_dst,  dst_total);
 
-        if (off > vtcm_size) {
-            return;
+        もし (off > vtcm_size) {
+            戻る;
         }
 
         L->total_bytes = off;
-        return;
+        戻る;
     }
 
     const size_t spad_row_total = (kparams->kernel_type == HTP_BINARY_KERNEL_SAME_SHAPE)
@@ -139,13 +139,13 @@ static inline void htp_binary_vtcm_layout_build(
         : 2 * (kparams->src0_row_size_aligned + kparams->dst_row_size_aligned);
 
     const size_t static_vtcm_size = kparams->src1_size + kparams->src2_size;
-    if (spad_row_total == 0 || vtcm_size < static_vtcm_size) {
-        return;
+    もし (spad_row_total == 0 || vtcm_size < static_vtcm_size) {
+        戻る;
     }
 
     const size_t rows_per_buffer = (vtcm_size - static_vtcm_size) / (n_threads * spad_row_total);
-    if (rows_per_buffer == 0) {
-        return;
+    もし (rows_per_buffer == 0) {
+        戻る;
     }
 
     L->rows_per_buffer = (uint32_t) rows_per_buffer;

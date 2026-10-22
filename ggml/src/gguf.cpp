@@ -23,7 +23,7 @@
 #ifdef _WIN32
 #    define gguf_ftell _ftelli64
 #    define gguf_fseek _fseeki64
-#else
+#否则
 #    define gguf_ftell ftello
 #    define gguf_fseek fseeko
 #endif
@@ -127,7 +127,7 @@ static_assert(GGUF_TYPE_COUNT == 13, "GGUF_TYPE_COUNT != 13");
 
 size_t gguf_type_size(enum gguf_type type) {
     auto it = GGUF_TYPE_SIZE.find(type);
-    return it == GGUF_TYPE_SIZE.end() ? 0 : it->second;
+    戻る it == GGUF_TYPE_SIZE.end() ? 0 : it->second;
 }
 
 struct gguf_kv {
@@ -152,7 +152,7 @@ struct gguf_kv {
             : key(key), is_array(true), type(type_to_gguf_type<T>::value) {
         GGML_ASSERT(!key.empty());
         data.resize(value.size()*sizeof(T));
-        for (size_t i = 0; i < value.size(); ++i) {
+        ために (size_t i = 0; i < value.size(); ++i) {
             const T tmp = value[i];
             memcpy(data.data() + i*sizeof(T), &tmp, sizeof(T));
         }
@@ -171,37 +171,37 @@ struct gguf_kv {
     }
 
     const std::string & get_key() const {
-        return key;
+        戻る key;
     }
 
     const enum gguf_type & get_type() const {
-        return type;
+        戻る type;
     }
 
     size_t get_ne() const {
-        if (type == GGUF_TYPE_STRING) {
+        もし (type == GGUF_TYPE_STRING) {
             const size_t ne = data_string.size();
             GGML_ASSERT(is_array || ne == 1);
-            return ne;
+            戻る ne;
         }
         const size_t type_size = gguf_type_size(type);
         GGML_ASSERT(data.size() % type_size == 0);
         const size_t ne = data.size() / type_size;
         GGML_ASSERT(is_array || ne == 1);
-        return ne;
+        戻る ne;
     }
 
     template <typename T>
     const T & get_val(const size_t i = 0) const {
         GGML_ASSERT(type_to_gguf_type<T>::value == type);
-        if constexpr (std::is_same<T, std::string>::value) {
+        もし constexpr (std::is_same<T, std::string>::value) {
             GGML_ASSERT(data_string.size() >= i+1);
-            return data_string[i];
+            戻る data_string[i];
         }
         const size_t type_size = gguf_type_size(type);
         GGML_ASSERT(data.size() % type_size == 0);
         GGML_ASSERT(data.size() >= (i+1)*type_size);
-        return reinterpret_cast<const T *>(data.data())[i];
+        戻る reinterpret_cast<const T *>(data.data())[i];
     }
 
     void cast(const enum gguf_type new_type) {
@@ -248,161 +248,161 @@ struct gguf_reader {
     // helper for remaining bytes in a file
     static uint64_t file_remain(FILE * file) {
         const int64_t cur = gguf_ftell(file);
-        if (cur < 0) {
-            return 0;
+        もし (cur < 0) {
+            戻る 0;
         }
-        if (gguf_fseek(file, 0, SEEK_END) != 0) {
+        もし (gguf_fseek(file, 0, SEEK_END) != 0) {
             gguf_fseek(file, cur, SEEK_SET);
 
-            return 0;
+            戻る 0;
         }
         const int64_t end = gguf_ftell(file);
-        if (end < 0) {
+        もし (end < 0) {
             gguf_fseek(file, cur, SEEK_SET);
 
-            return 0;
+            戻る 0;
         }
         gguf_fseek(file, cur, SEEK_SET);
-        return static_cast<uint64_t>(end - cur);
+        戻る static_cast<uint64_t>(end - cur);
     }
 
     template <typename T>
     bool read(T & dst) const {
         const size_t size = sizeof(dst);
-        if (size > nbytes_remain) {
-            return false;
+        もし (size > nbytes_remain) {
+            戻る false;
         }
-        return read_raw(&dst, size) == size;
+        戻る read_raw(&dst, size) == size;
     }
 
     template <typename T>
     bool read(std::vector<T> & dst, const size_t n) const {
-        if (n > GGUF_MAX_ARRAY_ELEMENTS) {
-            return false;
+        もし (n > GGUF_MAX_ARRAY_ELEMENTS) {
+            戻る false;
         }
-        if constexpr (std::is_same<T, std::string>::value) {
+        もし constexpr (std::is_same<T, std::string>::value) {
             // strings are prefixed with their length, so we need to account for that
-            if (n > SIZE_MAX / sizeof(uint64_t)) {
-                return false;
+            もし (n > SIZE_MAX / sizeof(uint64_t)) {
+                戻る false;
             }
-            if (nbytes_remain < n * sizeof(uint64_t)) {
-                return false;
+            もし (nbytes_remain < n * sizeof(uint64_t)) {
+                戻る false;
             }
-        } else {
-            if (n > SIZE_MAX / sizeof(T)) {
-                return false;
+        } 否则 {
+            もし (n > SIZE_MAX / sizeof(T)) {
+                戻る false;
             }
-            if (nbytes_remain < n * sizeof(T)) {
-                return false;
+            もし (nbytes_remain < n * sizeof(T)) {
+                戻る false;
             }
         }
         dst.resize(n);
-        for (size_t i = 0; i < dst.size(); ++i) {
-            if constexpr (std::is_same<T, bool>::value) {
+        ために (size_t i = 0; i < dst.size(); ++i) {
+            もし constexpr (std::is_same<T, bool>::value) {
                 bool tmp;
-                if (!read(tmp)) {
-                    return false;
+                もし (!read(tmp)) {
+                    戻る false;
                 }
                 dst[i] = tmp;
-            } else {
-                if (!read(dst[i])) {
-                    return false;
+            } 否则 {
+                もし (!read(dst[i])) {
+                    戻る false;
                 }
             }
         }
-        return true;
+        戻る true;
     }
 
     bool read(bool & dst) const {
         int8_t tmp = -1;
-        if (!read(tmp)) {
-            return false;
+        もし (!read(tmp)) {
+            戻る false;
         }
         dst = tmp != 0;
-        return true;
+        戻る true;
     }
 
     bool read(enum ggml_type & dst) const {
         int32_t tmp = -1;
-        if (!read(tmp)) {
-            return false;
+        もし (!read(tmp)) {
+            戻る false;
         }
         dst = ggml_type(tmp);
-        return true;
+        戻る true;
     }
 
     bool read(enum gguf_type & dst) const {
         int32_t tmp = -1;
-        if (!read(tmp)) {
-            return false;
+        もし (!read(tmp)) {
+            戻る false;
         }
         dst = gguf_type(tmp);
-        return true;
+        戻る true;
     }
 
     bool read(std::string & dst) const {
         uint64_t size = 0;
-        if (!read(size)) {
-            return false;
+        もし (!read(size)) {
+            戻る false;
         }
-        if (size > GGUF_MAX_STRING_LENGTH) {
+        もし (size > GGUF_MAX_STRING_LENGTH) {
             GGML_LOG_ERROR("%s: string length %" PRIu64 " exceeds maximum %" PRIu64 "\n", __func__, size, (uint64_t) GGUF_MAX_STRING_LENGTH);
-            return false;
+            戻る false;
         }
-        if (size > nbytes_remain) {
+        もし (size > nbytes_remain) {
             GGML_LOG_ERROR("%s: string length %" PRIu64 " exceeds remaining file size %" PRIu64 " bytes\n", __func__, size, nbytes_remain);
-            return false;
+            戻る false;
         }
         dst.resize(static_cast<size_t>(size));
-        return read_raw(dst.data(), static_cast<size_t>(size)) == size;
+        戻る read_raw(dst.data(), static_cast<size_t>(size)) == size;
     }
 
     bool read(void * dst, const size_t size) const {
-        if (size > nbytes_remain) {
-            return false;
+        もし (size > nbytes_remain) {
+            戻る false;
         }
-        return read_raw(dst, size) == size;
+        戻る read_raw(dst, size) == size;
     }
 
     uint64_t tell() const {
-        return data_offset;
+        戻る data_offset;
     }
 
     // position in the file where the GGUF data starts, alignment is relative to it, not to the file
     uint64_t start() const {
-        return start_offset;
+        戻る start_offset;
     }
 
     bool seek(uint64_t absolute_offset) const {
         const uint64_t end_offset = uint64_t(data_offset) + nbytes_remain;
-        if (absolute_offset > end_offset) {
-            return false;
+        もし (absolute_offset > end_offset) {
+            戻る false;
         }
 
         data_offset = absolute_offset;
         nbytes_remain = end_offset - absolute_offset;
 
-        return true;
+        戻る true;
     }
 
 private:
     size_t read_raw(void * dst, size_t size) const {
-        if (callback == nullptr || size == 0) {
-            return 0;
+        もし (callback == nullptr || size == 0) {
+            戻る 0;
         }
 
         uint8_t * data = static_cast<uint8_t *>(dst);
         size_t total_nread = 0;
         bool reached_eof = false;
 
-        while (total_nread < size) {
+        ながら (total_nread < size) {
             const size_t chunk_size = std::min(max_chunk_read, size - total_nread);
-            if (data_offset + total_nread < data_offset) {
+            もし (data_offset + total_nread < data_offset) {
                 break;
             }
             const size_t nread = callback(userdata, static_cast<void *>(data + total_nread), data_offset + total_nread, chunk_size);
             total_nread += nread;
-            if (nread != chunk_size) {
+            もし (nread != chunk_size) {
                 reached_eof = true;
                 break;
             }
@@ -412,11 +412,11 @@ private:
         GGML_ASSERT(total_nread <= nbytes_remain);
         nbytes_remain -= total_nread;
 
-        if (reached_eof) {
+        もし (reached_eof) {
             nbytes_remain = 0;
         }
 
-        return total_nread;
+        戻る total_nread;
     }
 
     gguf_reader_callback_t callback = nullptr;
@@ -428,33 +428,33 @@ private:
 };
 
 struct gguf_context * gguf_init_empty(void) {
-    return new gguf_context;
+    戻る new gguf_context;
 }
 
 template<typename T>
 bool gguf_read_emplace_helper(const struct gguf_reader & gr, std::vector<struct gguf_kv> & kv, const std::string & key, const bool is_array, const size_t n) {
-    if (is_array) {
+    もし (is_array) {
         std::vector<T> value;
         try {
-            if (!gr.read(value, n)) {
-                return false;
+            もし (!gr.read(value, n)) {
+                戻る false;
             }
         } catch (std::length_error &) {
             GGML_LOG_ERROR("%s: encountered length_error while reading value for key '%s'\n", __func__, key.c_str());
-            return false;
+            戻る false;
         } catch (std::bad_alloc &) {
             GGML_LOG_ERROR("%s: encountered bad_alloc error while reading value for key '%s'\n", __func__, key.c_str());
-            return false;
+            戻る false;
         }
         kv.emplace_back(key, value);
-    } else {
+    } 否则 {
         T value;
-        if (!gr.read(value)) {
-            return false;
+        もし (!gr.read(value)) {
+            戻る false;
         }
         kv.emplace_back(key, value);
     }
-    return true;
+    戻る true;
 }
 
 static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr, struct gguf_init_params params) {
@@ -467,21 +467,21 @@ static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr
         std::vector<char> magic;
         ok = ok && gr.read(magic, 4);
 
-        if (!ok) {
+        もし (!ok) {
             GGML_LOG_ERROR("%s: failed to read magic\n", __func__);
             gguf_free(ctx);
-            return nullptr;
+            戻る nullptr;
         }
 
-        for (uint32_t i = 0; i < magic.size(); i++) {
-            if (magic[i] != GGUF_MAGIC[i]) {
+        ために (uint32_t i = 0; i < magic.size(); i++) {
+            もし (magic[i] != GGUF_MAGIC[i]) {
                 char c0 = isprint(magic[0]) ? magic[0] : '?';
                 char c1 = isprint(magic[1]) ? magic[1] : '?';
                 char c2 = isprint(magic[2]) ? magic[2] : '?';
                 char c3 = isprint(magic[3]) ? magic[3] : '?';
                 GGML_LOG_ERROR("%s: invalid magic characters: '%c%c%c%c', expected 'GGUF'\n", __func__, c0, c1, c2, c3);
                 gguf_free(ctx);
-                return nullptr;
+                戻る nullptr;
             }
         }
     }
@@ -490,8 +490,8 @@ static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr
     int64_t n_kv      = 0;
     int64_t n_tensors = 0;
 
-    if (ok && gr.read(ctx->version)) {
-        if (ok && ctx->version == 0) {
+    もし (ok && gr.read(ctx->version)) {
+        もし (ok && ctx->version == 0) {
             GGML_LOG_ERROR("%s: bad GGUF version: %" PRIu32 "\n", __func__, ctx->version);
             ok = false;
         }
@@ -503,57 +503,57 @@ static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr
          * the last 4 hexadecimal digits to check if the model is the same
          * endianness as the host system.
         */
-        if (ok && (ctx->version & 0x0000FFFF) == 0x00000000) {
+        もし (ok && (ctx->version & 0x0000FFFF) == 0x00000000) {
             GGML_LOG_ERROR("%s: failed to load model: this GGUF file version %" PRIu32 " is extremely large, is there a mismatch between the host and model endianness?\n", __func__, ctx->version);
             ok = false;
         }
 
-        if (ok && ctx->version == 1) {
+        もし (ok && ctx->version == 1) {
             GGML_LOG_ERROR("%s: GGUFv1 is no longer supported, please use a more up-to-date version\n", __func__);
             ok = false;
         }
-        if (ok && ctx->version > GGUF_VERSION) {
+        もし (ok && ctx->version > GGUF_VERSION) {
             GGML_LOG_ERROR("%s: this GGUF file is version %" PRIu32 " but this software only supports up to version %d\n",
                 __func__, ctx->version, GGUF_VERSION);
             ok = false;
         }
-    } else {
+    } 否则 {
         ok = false;
     }
 
-    if (ok && gr.read(n_tensors)) {
+    もし (ok && gr.read(n_tensors)) {
         static_assert(sizeof(size_t) <= 8 && sizeof(gguf_tensor_info) >= 2, "int64_t insufficient for indexing");
-        if (n_tensors < 0 || n_tensors > int64_t(SIZE_MAX/sizeof(gguf_tensor_info))) {
+        もし (n_tensors < 0 || n_tensors > int64_t(SIZE_MAX/sizeof(gguf_tensor_info))) {
             GGML_LOG_ERROR("%s: number of tensors is %" PRIi64 " but must be in [0, %zu]\n",
                 __func__, n_tensors, SIZE_MAX/sizeof(gguf_tensor_info));
             ok = false;
         }
-    } else {
+    } 否则 {
         ok = false;
     }
 
-    if (ok && gr.read(n_kv)) {
+    もし (ok && gr.read(n_kv)) {
         static_assert(sizeof(size_t) <= 8 && sizeof(gguf_tensor_info) >= 2, "int64_t insufficient for indexing");
-        if (n_kv < 0 || n_kv > int64_t(SIZE_MAX/sizeof(gguf_kv))) {
+        もし (n_kv < 0 || n_kv > int64_t(SIZE_MAX/sizeof(gguf_kv))) {
             GGML_LOG_ERROR("%s: number of key value pairs is %" PRIi64 " but must be in [0, %zu]\n",
                     __func__, n_kv, SIZE_MAX/sizeof(gguf_kv));
             ok = false;
         }
-    } else {
+    } 否则 {
         ok = false;
     }
 
-    if (!ok) {
+    もし (!ok) {
         GGML_LOG_ERROR("%s: failed to read header\n", __func__);
         gguf_free(ctx);
-        return nullptr;
+        戻る nullptr;
     }
 
     // KV pairs
     {
         std::unordered_set<std::string> seen_keys;
 
-        for (int64_t i = 0; ok && i < n_kv; ++i) {
+        ために (int64_t i = 0; ok && i < n_kv; ++i) {
             std::string key;
             gguf_type   type     = gguf_type(-1);
             bool        is_array = false;
@@ -568,25 +568,25 @@ static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr
                 GGML_LOG_ERROR("%s: encountered bad_alloc error while reading key %" PRIi64 "\n", __func__, i);
                 ok = false;
             }
-            if (ok && key.empty()) {
+            もし (ok && key.empty()) {
                 GGML_LOG_ERROR("%s: key %" PRIi64 " is empty\n", __func__, i);
                 ok = false;
             }
-            if (ok && !seen_keys.insert(key).second) {
+            もし (ok && !seen_keys.insert(key).second) {
                 GGML_LOG_ERROR("%s: duplicate key '%s' for KV pair %" PRIi64 "\n", __func__, key.c_str(), i);
                 ok = false;
             }
-            if (!ok) {
+            もし (!ok) {
                 break;
             }
 
             ok = ok && gr.read(type);
-            if (type == GGUF_TYPE_ARRAY) {
+            もし (type == GGUF_TYPE_ARRAY) {
                 is_array = true;
                 ok = ok && gr.read(type);
                 ok = ok && gr.read(n);
             }
-            if (!ok) {
+            もし (!ok) {
                 break;
             }
 
@@ -612,34 +612,34 @@ static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr
             }
         }
 
-        if (!ok) {
+        もし (!ok) {
             GGML_LOG_ERROR("%s: failed to read key-value pairs\n", __func__);
             gguf_free(ctx);
-            return nullptr;
+            戻る nullptr;
         }
         GGML_ASSERT(int64_t(ctx->kv.size()) == n_kv);
 
-        const int alignment_idx = gguf_find_key(ctx, GGUF_KEY_GENERAL_ALIGNMENT);
-        if (alignment_idx != -1 && gguf_get_kv_type(ctx, alignment_idx) != GGUF_TYPE_UINT32) {
+        const 整数 alignment_idx = gguf_find_key(ctx, GGUF_KEY_GENERAL_ALIGNMENT);
+        もし (alignment_idx != -1 && gguf_get_kv_type(ctx, alignment_idx) != GGUF_TYPE_UINT32) {
             GGML_LOG_ERROR("%s: key '%s' must be of type %s but is %s\n",
                 __func__, GGUF_KEY_GENERAL_ALIGNMENT, gguf_type_name(GGUF_TYPE_UINT32),
                 gguf_type_name(gguf_get_kv_type(ctx, alignment_idx)));
             gguf_free(ctx);
-            return nullptr;
+            戻る nullptr;
         }
         ctx->alignment = alignment_idx == -1 ? GGUF_DEFAULT_ALIGNMENT : gguf_get_val_u32(ctx, alignment_idx);
 
-        if (ctx->alignment == 0 || (ctx->alignment & (ctx->alignment - 1)) != 0) {
+        もし (ctx->alignment == 0 || (ctx->alignment & (ctx->alignment - 1)) != 0) {
             GGML_LOG_ERROR("%s: alignment %zu is not a power of 2\n", __func__, ctx->alignment);
             gguf_free(ctx);
-            return nullptr;
+            戻る nullptr;
         }
     }
 
     // read the tensor info
     std::unordered_set<std::string> seen_tensor_names;
 
-    for (int64_t i = 0; ok && i < n_tensors; ++i) {
+    ために (int64_t i = 0; ok && i < n_tensors; ++i) {
         struct gguf_tensor_info info;
 
         // tensor name
@@ -654,7 +654,7 @@ static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr
                 GGML_LOG_ERROR("%s: encountered bad_alloc error while reading tensor name %" PRIi64 "\n", __func__, i);
                 ok = false;
             }
-            if (name.length() >= GGML_MAX_NAME) {
+            もし (name.length() >= GGML_MAX_NAME) {
                 GGML_LOG_ERROR("%s: tensor name %" PRIi64 " is too long: %zu >= %d\n", __func__, i, name.length(), GGML_MAX_NAME);
                 ok = false;
                 break;
@@ -662,13 +662,13 @@ static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr
             ggml_set_name(&info.t, name.c_str());
 
             // make sure there are no duplicate tensor names
-            if (ok && !seen_tensor_names.insert(name).second) {
+            もし (ok && !seen_tensor_names.insert(name).second) {
                 GGML_LOG_ERROR("%s: duplicate tensor name '%s' for tensor %" PRIi64 "\n", __func__, info.t.name, i);
                 ok = false;
                 break;
             }
         }
-        if (!ok) {
+        もし (!ok) {
             break;
         }
 
@@ -676,20 +676,20 @@ static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr
         {
             uint32_t n_dims = 0;
             ok = ok && gr.read(n_dims);
-            if (n_dims > GGML_MAX_DIMS) {
+            もし (n_dims > GGML_MAX_DIMS) {
                 GGML_LOG_ERROR("%s: tensor '%s' has invalid number of dimensions: %" PRIu32 " > %" PRIu32 "\n",
                     __func__, info.t.name, n_dims, GGML_MAX_DIMS);
                 ok = false;
                 break;
             }
-            for (uint32_t j = 0; ok && j < GGML_MAX_DIMS; ++j) {
+            ために (uint32_t j = 0; ok && j < GGML_MAX_DIMS; ++j) {
                 info.t.ne[j] = 1;
-                if (j < n_dims) {
+                もし (j < n_dims) {
                     ok = ok && gr.read(info.t.ne[j]);
                 }
 
                 // check that all ne are non-negative
-                if (info.t.ne[j] < 0) {
+                もし (info.t.ne[j] < 0) {
                     GGML_LOG_ERROR("%s: tensor '%s' dimension %" PRIu32 " has invalid number of elements: %" PRIi64 " < 0\n",
                         __func__, info.t.name, j, info.t.ne[j]);
                     ok = false;
@@ -699,18 +699,18 @@ static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr
 
             // check that the total number of elements is representable
             // (a zero-element tensor is trivially representable)
-            if (ok) {
+            もし (ok) {
                 int64_t current_nelements = info.t.ne[0];
-                for (int i = 1; i < GGML_MAX_DIMS; ++i) {
-                    if (info.t.ne[i] > 1) { // 1 or 0 won't cause an overflow
-                        if (INT64_MAX / info.t.ne[i] < current_nelements) {
+                ために (整数 i = 1; i < GGML_MAX_DIMS; ++i) {
+                    もし (info.t.ne[i] > 1) { // 1 or 0 won't cause an overflow
+                        もし (INT64_MAX / info.t.ne[i] < current_nelements) {
                              ok = false;
                              break;
                          }
                      }
                      current_nelements *= info.t.ne[i];
                  }
-                 if (!ok) {
+                 もし (!ok) {
                      GGML_LOG_ERROR("%s: incorrect shape for a tensor '%s' may cause overflow errors: "
                          "(%" PRIi64 ", %" PRIi64 ", %" PRIi64 ", %" PRIi64 ") is >= INT64_MAX (%" PRIi64 ")\n",
                          __func__, info.t.name, info.t.ne[0], info.t.ne[1], info.t.ne[2], info.t.ne[3], INT64_MAX);
@@ -718,7 +718,7 @@ static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr
                  }
             }
         }
-        if (!ok) {
+        もし (!ok) {
             break;
         }
 
@@ -727,7 +727,7 @@ static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr
             ok = ok && gr.read(info.t.type);
 
             // check that tensor type is within defined range
-            if (info.t.type < 0 || info.t.type >= GGML_TYPE_COUNT) {
+            もし (info.t.type < 0 || info.t.type >= GGML_TYPE_COUNT) {
                 GGML_LOG_ERROR("%s: tensor '%s' has invalid ggml type %d. should be in [0, %d)\n",
                     __func__, info.t.name, info.t.type, GGML_TYPE_COUNT);
                 ok = false;
@@ -737,16 +737,16 @@ static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr
             const int64_t blck_size = ggml_blck_size(info.t.type);
 
             // check that row size is divisible by block size
-            if (blck_size == 0 || info.t.ne[0] % blck_size != 0) {
+            もし (blck_size == 0 || info.t.ne[0] % blck_size != 0) {
                 GGML_LOG_ERROR("%s: tensor '%s' of type %d (%s) has %" PRId64 " elements per row, "
                     "not a multiple of block size (%" PRId64 ")\n",
-                    __func__, info.t.name, (int) info.t.type, ggml_type_name(info.t.type), info.t.ne[0], blck_size);
+                    __func__, info.t.name, (整数) info.t.type, ggml_type_name(info.t.type), info.t.ne[0], blck_size);
                 ok = false;
                 break;
             }
 
             // check that the size of the tensor in bytes is representable
-            if (ok && uint64_t(ggml_nelements(&info.t)/ggml_blck_size(info.t.type)) > SIZE_MAX/ggml_type_size(info.t.type)) {
+            もし (ok && uint64_t(ggml_nelements(&info.t)/ggml_blck_size(info.t.type)) > SIZE_MAX/ggml_type_size(info.t.type)) {
                 GGML_LOG_ERROR("%s: tensor '%s' with shape (%" PRIi64 ", %" PRIi64 ", %" PRIi64 ", %" PRIi64 ") has a size in bytes > %zu\n",
                     __func__, info.t.name, info.t.ne[0], info.t.ne[1], info.t.ne[2], info.t.ne[3], SIZE_MAX);
                 ok = false;
@@ -756,11 +756,11 @@ static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr
             // calculate byte offsets given the tensor shape and type
             info.t.nb[0] = type_size;
             info.t.nb[1] = info.t.nb[0]*(info.t.ne[0]/blck_size);
-            for (int j = 2; j < GGML_MAX_DIMS; ++j) {
+            ために (整数 j = 2; j < GGML_MAX_DIMS; ++j) {
                 info.t.nb[j] = info.t.nb[j - 1]*info.t.ne[j - 1];
             }
         }
-        if (!ok) {
+        もし (!ok) {
             break;
         }
 
@@ -770,18 +770,18 @@ static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr
         ctx->info.push_back(info);
     }
 
-    if (!ok) {
+    もし (!ok) {
         GGML_LOG_ERROR("%s: failed to read tensor info\n", __func__);
         gguf_free(ctx);
-        return nullptr;
+        戻る nullptr;
     }
     GGML_ASSERT(int64_t(ctx->info.size()) == n_tensors);
 
     // we require the data section to be aligned, so take into account any padding
-    if (n_tensors > 0 && !gr.seek(gr.start() + GGML_PAD(gr.tell() - gr.start(), ctx->alignment))) {
+    もし (n_tensors > 0 && !gr.seek(gr.start() + GGML_PAD(gr.tell() - gr.start(), ctx->alignment))) {
         GGML_LOG_ERROR("%s: failed to seek to beginning of data section\n", __func__);
         gguf_free(ctx);
-        return nullptr;
+        戻る nullptr;
     }
 
     // store the current file offset - this is where the data section starts
@@ -790,66 +790,66 @@ static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr
     // compute the total size of the data section, taking into account the alignment
     {
         ctx->size = 0;
-        for (size_t i = 0; i < ctx->info.size(); ++i) {
+        ために (size_t i = 0; i < ctx->info.size(); ++i) {
             const gguf_tensor_info & ti = ctx->info[i];
-            if (ti.offset != ctx->size) {
+            もし (ti.offset != ctx->size) {
                 GGML_LOG_ERROR("%s: tensor '%s' has offset %" PRIu64 ", expected %zu\n",
                     __func__, ti.t.name, ti.offset, ctx->size);
                 GGML_LOG_ERROR("%s: failed to read tensor data\n", __func__);
                 gguf_free(ctx);
-                return nullptr;
+                戻る nullptr;
             }
             const size_t nbytes = ggml_nbytes(&ti.t);
             // GGML_PAD adds (alignment - 1) to nbytes. when nbytes is near
             // SIZE_MAX this wraps to 0 and makes the check below dead.
-            if (nbytes > SIZE_MAX - (ctx->alignment - 1)) {
+            もし (nbytes > SIZE_MAX - (ctx->alignment - 1)) {
                 GGML_LOG_ERROR("%s: tensor '%s' size %zu overflows after padding (alignment %zu)\n",
                     __func__, ti.t.name, nbytes, ctx->alignment);
                 gguf_free(ctx);
-                return nullptr;
+                戻る nullptr;
             }
             const size_t padded_size = GGML_PAD(nbytes, ctx->alignment);
-            if (SIZE_MAX - ctx->size < padded_size) {
+            もし (SIZE_MAX - ctx->size < padded_size) {
                 GGML_LOG_ERROR("%s: tensor '%s' size overflow, cannot accumulate size %zu + %zu\n",
                     __func__, ti.t.name, ctx->size, padded_size);
                 gguf_free(ctx);
-                return nullptr;
+                戻る nullptr;
             }
             ctx->size += padded_size;
         }
     }
 
     // load the tensor data only if requested
-    if (params.ctx != nullptr) {
+    もし (params.ctx != nullptr) {
         // if the provided gguf_context is no_alloc, then we create "empty" tensors and do not read the binary blob
         // otherwise, we load the binary blob into the created ggml_context as well, and point the "data" members of
         //   the ggml_tensor structs to the appropriate locations in the binary blob
 
         // compute the exact size needed for the new ggml_context
         size_t mem_size = 0;
-        if (params.no_alloc) {
-            if (n_tensors != 0 && SIZE_MAX / n_tensors < ggml_tensor_overhead()) {
+        もし (params.no_alloc) {
+            もし (n_tensors != 0 && SIZE_MAX / n_tensors < ggml_tensor_overhead()) {
                 GGML_LOG_ERROR("%s: memory size overflow while allocating ggml context\n", __func__);
                 gguf_free(ctx);
-                return nullptr;
+                戻る nullptr;
             }
 
             const size_t overhead = n_tensors * ggml_tensor_overhead();
 
             mem_size = overhead;
-        } else {
-            if ((n_tensors + 1) != 0 && SIZE_MAX / (n_tensors + 1) < ggml_tensor_overhead()) {
+        } 否则 {
+            もし ((n_tensors + 1) != 0 && SIZE_MAX / (n_tensors + 1) < ggml_tensor_overhead()) {
                 GGML_LOG_ERROR("%s: memory size overflow while allocating ggml context\n", __func__);
                 gguf_free(ctx);
-                return nullptr;
+                戻る nullptr;
             }
 
             const size_t overhead = (n_tensors + 1) * ggml_tensor_overhead();
 
-            if (SIZE_MAX - overhead < ctx->size) {
+            もし (SIZE_MAX - overhead < ctx->size) {
                 GGML_LOG_ERROR("%s: memory size overflow while allocating ggml context\n", __func__);
                 gguf_free(ctx);
-                return nullptr;
+                戻る nullptr;
             }
 
             mem_size = overhead + ctx->size;
@@ -862,34 +862,34 @@ static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr
         };
 
         *params.ctx = ggml_init(pdata);
-        if (*params.ctx == nullptr) {
+        もし (*params.ctx == nullptr) {
             GGML_LOG_ERROR("%s: failed to initialize ggml context for storing tensors\n", __func__);
             gguf_free(ctx);
-            return nullptr;
+            戻る nullptr;
         }
 
         struct ggml_context * ctx_data = *params.ctx;
 
         struct ggml_tensor * data = nullptr;
 
-        if (!params.no_alloc) {
+        もし (!params.no_alloc) {
             data = ggml_new_tensor_1d(ctx_data, GGML_TYPE_I8, ctx->size);
 
             ok = ok && data != nullptr;
 
-            if (ok) {
+            もし (ok) {
                 ggml_set_name(data, "GGUF tensor data binary blob");
             }
 
             // read the binary blob with the tensor data
             ok = ok && gr.read(data->data, ctx->size);
 
-            if (!ok) {
+            もし (!ok) {
                 GGML_LOG_ERROR("%s: failed to read tensor data binary blob\n", __func__);
                 ggml_free(ctx_data);
                 *params.ctx = nullptr;
                 gguf_free(ctx);
-                return nullptr;
+                戻る nullptr;
             }
 
             ctx->data = data->data;
@@ -898,46 +898,46 @@ static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr
         ggml_set_no_alloc(ctx_data, true);
 
         // create the tensors
-        for (size_t i = 0; i < ctx->info.size(); ++i) {
+        ために (size_t i = 0; i < ctx->info.size(); ++i) {
             const struct gguf_tensor_info & info = ctx->info[i];
 
             struct ggml_tensor * cur = ggml_new_tensor(ctx_data, info.t.type, GGML_MAX_DIMS, info.t.ne);
 
             ok = ok && cur != nullptr;
 
-            if (!ok) {
+            もし (!ok) {
                 break;
             }
 
             ggml_set_name(cur, info.t.name);
 
             // point the data member to the appropriate location in the binary blob using the tensor info
-            if (!params.no_alloc) {
+            もし (!params.no_alloc) {
                 cur->data = (char *) data->data + info.offset;
             }
         }
 
-        if (!ok) {
+        もし (!ok) {
             GGML_LOG_ERROR("%s: failed to create tensors\n", __func__);
             ggml_free(ctx_data);
             *params.ctx = nullptr;
             gguf_free(ctx);
-            return nullptr;
+            戻る nullptr;
         }
 
         ggml_set_no_alloc(ctx_data, params.no_alloc);
     }
 
-    return ctx;
+    戻る ctx;
 }
 
 struct gguf_context * gguf_init_from_callback(gguf_reader_callback_t callback, void * userdata, size_t max_chunk_read, uint64_t max_expected_size, struct gguf_init_params params) {
-    if (callback == nullptr) {
-        return nullptr;
+    もし (callback == nullptr) {
+        戻る nullptr;
     }
 
     const struct gguf_reader gr(callback, userdata, max_chunk_read == 0 ? SIZE_MAX : max_chunk_read, 0, max_expected_size);
-    return gguf_init_from_reader(gr, params);
+    戻る gguf_init_from_reader(gr, params);
 }
 
 struct gguf_file_reader {
@@ -950,9 +950,9 @@ static size_t gguf_file_reader_callback(void * userdata, void * output, uint64_t
 
     gguf_file_reader & reader = *static_cast<gguf_file_reader *>(userdata);
 
-    if (reader.offset != offset) {
-        if (offset > INT64_MAX || gguf_fseek(reader.file, static_cast<int64_t>(offset), SEEK_SET) != 0) {
-            return 0;
+    もし (reader.offset != offset) {
+        もし (offset > INT64_MAX || gguf_fseek(reader.file, static_cast<int64_t>(offset), SEEK_SET) != 0) {
+            戻る 0;
         }
 
         reader.offset = offset;
@@ -960,17 +960,17 @@ static size_t gguf_file_reader_callback(void * userdata, void * output, uint64_t
 
     const size_t nread = fread(static_cast<uint8_t *>(output), 1, len, reader.file);
     reader.offset += nread;
-    return nread;
+    戻る nread;
 }
 
 struct gguf_context * gguf_init_from_file_ptr(FILE * file, struct gguf_init_params params) {
-    if (!file) {
-        return nullptr;
+    もし (!file) {
+        戻る nullptr;
     }
 
     const int64_t cur = gguf_ftell(file);
-    if (cur < 0) {
-        return nullptr;
+    もし (cur < 0) {
+        戻る nullptr;
     }
 
     gguf_file_reader reader = {
@@ -978,7 +978,7 @@ struct gguf_context * gguf_init_from_file_ptr(FILE * file, struct gguf_init_para
         /*.offset = */ static_cast<uint64_t>(cur),
     };
     const struct gguf_reader gr(gguf_file_reader_callback, &reader, SIZE_MAX, reader.offset, gguf_reader::file_remain(file));
-    return gguf_init_from_reader(gr, params);
+    戻る gguf_init_from_reader(gr, params);
 }
 
 struct gguf_buffer_reader {
@@ -991,19 +991,19 @@ static size_t gguf_buffer_reader_callback(void * userdata, void * output, uint64
 
     const gguf_buffer_reader & reader = *static_cast<gguf_buffer_reader *>(userdata);
 
-    if (offset > reader.size || len > reader.size - offset) {
-        return 0;
+    もし (offset > reader.size || len > reader.size - offset) {
+        戻る 0;
     }
 
     const size_t data_offset = static_cast<size_t>(offset);
     const size_t nread = std::min(len, reader.size - data_offset);
     memcpy(static_cast<uint8_t *>(output), reader.data + data_offset, nread);
-    return nread;
+    戻る nread;
 }
 
 struct gguf_context * gguf_init_from_buffer(const void * data, size_t size, struct gguf_init_params params) {
-    if (data == nullptr || size == 0) {
-        return nullptr;
+    もし (data == nullptr || size == 0) {
+        戻る nullptr;
     }
 
     gguf_buffer_reader reader = {
@@ -1011,48 +1011,48 @@ struct gguf_context * gguf_init_from_buffer(const void * data, size_t size, stru
         /*.size = */ size,
     };
     const struct gguf_reader gr(gguf_buffer_reader_callback, &reader, SIZE_MAX, 0, size);
-    return gguf_init_from_reader(gr, params);
+    戻る gguf_init_from_reader(gr, params);
 }
 
 struct gguf_context * gguf_init_from_file(const char * fname, struct gguf_init_params params) {
     FILE * file = ggml_fopen(fname, "rb");
 
-    if (!file) {
+    もし (!file) {
         GGML_LOG_ERROR("%s: failed to open GGUF file '%s' (%s)\n", __func__, fname, strerror(errno));
-        return nullptr;
+        戻る nullptr;
     }
 
     struct gguf_context * result = gguf_init_from_file_ptr(file, params);
     fclose(file);
-    return result;
+    戻る result;
 }
 
 void gguf_free(struct gguf_context * ctx) {
-    if (ctx == nullptr) {
-        return;
+    もし (ctx == nullptr) {
+        戻る;
     }
     delete ctx;
 }
 
 const char * gguf_type_name(enum gguf_type type) {
     auto it = GGUF_TYPE_NAME.find(type);
-    return it == GGUF_TYPE_NAME.end() ? nullptr : it->second;
+    戻る it == GGUF_TYPE_NAME.end() ? nullptr : it->second;
 }
 
 uint32_t gguf_get_version(const struct gguf_context * ctx) {
-    return ctx->version;
+    戻る ctx->version;
 }
 
 size_t gguf_get_alignment(const struct gguf_context * ctx) {
-    return ctx->alignment;
+    戻る ctx->alignment;
 }
 
 size_t gguf_get_data_offset(const struct gguf_context * ctx) {
-    return ctx->offset;
+    戻る ctx->offset;
 }
 
 int64_t gguf_get_n_kv(const struct gguf_context * ctx) {
-    return ctx->kv.size();
+    戻る ctx->kv.size();
 }
 
 int64_t gguf_find_key(const struct gguf_context * ctx, const char * key) {
@@ -1061,137 +1061,137 @@ int64_t gguf_find_key(const struct gguf_context * ctx, const char * key) {
 
     const int64_t n_kv = gguf_get_n_kv(ctx);
 
-    for (int64_t i = 0; i < n_kv; ++i) {
-        if (strcmp(key, gguf_get_key(ctx, i)) == 0) {
+    ために (int64_t i = 0; i < n_kv; ++i) {
+        もし (strcmp(key, gguf_get_key(ctx, i)) == 0) {
             keyfound = i;
             break;
         }
     }
 
-    return keyfound;
+    戻る keyfound;
 }
 
 const char * gguf_get_key(const struct gguf_context * ctx, int64_t key_id) {
     GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    return ctx->kv[key_id].get_key().c_str();
+    戻る ctx->kv[key_id].get_key().c_str();
 }
 
 enum gguf_type gguf_get_kv_type(const struct gguf_context * ctx, int64_t key_id) {
     GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    return ctx->kv[key_id].is_array ? GGUF_TYPE_ARRAY : ctx->kv[key_id].get_type();
+    戻る ctx->kv[key_id].is_array ? GGUF_TYPE_ARRAY : ctx->kv[key_id].get_type();
 }
 
 enum gguf_type gguf_get_arr_type(const struct gguf_context * ctx, int64_t key_id) {
     GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
     GGML_ASSERT(ctx->kv[key_id].is_array);
-    return ctx->kv[key_id].get_type();
+    戻る ctx->kv[key_id].get_type();
 }
 
 const void * gguf_get_arr_data(const struct gguf_context * ctx, int64_t key_id) {
     GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
     GGML_ASSERT(ctx->kv[key_id].get_type() != GGUF_TYPE_STRING);
-    return ctx->kv[key_id].data.data();
+    戻る ctx->kv[key_id].data.data();
 }
 
 const char * gguf_get_arr_str(const struct gguf_context * ctx, int64_t key_id, size_t i) {
     GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
     GGML_ASSERT(ctx->kv[key_id].get_type() == GGUF_TYPE_STRING);
-    return ctx->kv[key_id].data_string[i].c_str();
+    戻る ctx->kv[key_id].data_string[i].c_str();
 }
 
 size_t gguf_get_arr_n(const struct gguf_context * ctx, int64_t key_id) {
     GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
 
-    if (ctx->kv[key_id].type == GGUF_TYPE_STRING) {
-        return ctx->kv[key_id].data_string.size();
+    もし (ctx->kv[key_id].type == GGUF_TYPE_STRING) {
+        戻る ctx->kv[key_id].data_string.size();
     }
 
     const size_t type_size = gguf_type_size(ctx->kv[key_id].type);
     GGML_ASSERT(ctx->kv[key_id].data.size() % type_size == 0);
-    return ctx->kv[key_id].data.size() / type_size;
+    戻る ctx->kv[key_id].data.size() / type_size;
 }
 
 uint8_t gguf_get_val_u8(const struct gguf_context * ctx, int64_t key_id) {
     GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
     GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<uint8_t>();
+    戻る ctx->kv[key_id].get_val<uint8_t>();
 }
 
 int8_t gguf_get_val_i8(const struct gguf_context * ctx, int64_t key_id) {
     GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
     GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<int8_t>();
+    戻る ctx->kv[key_id].get_val<int8_t>();
 }
 
 uint16_t gguf_get_val_u16(const struct gguf_context * ctx, int64_t key_id) {
     GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
     GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<uint16_t>();
+    戻る ctx->kv[key_id].get_val<uint16_t>();
 }
 
 int16_t gguf_get_val_i16(const struct gguf_context * ctx, int64_t key_id) {
     GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
     GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<int16_t>();
+    戻る ctx->kv[key_id].get_val<int16_t>();
 }
 
 uint32_t gguf_get_val_u32(const struct gguf_context * ctx, int64_t key_id) {
     GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
     GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<uint32_t>();
+    戻る ctx->kv[key_id].get_val<uint32_t>();
 }
 
 int32_t gguf_get_val_i32(const struct gguf_context * ctx, int64_t key_id) {
     GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
     GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<int32_t>();
+    戻る ctx->kv[key_id].get_val<int32_t>();
 }
 
 float gguf_get_val_f32(const struct gguf_context * ctx, int64_t key_id) {
     GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
     GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<float>();
+    戻る ctx->kv[key_id].get_val<float>();
 }
 
 uint64_t gguf_get_val_u64(const struct gguf_context * ctx, int64_t key_id) {
     GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
     GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<uint64_t>();
+    戻る ctx->kv[key_id].get_val<uint64_t>();
 }
 
 int64_t gguf_get_val_i64(const struct gguf_context * ctx, int64_t key_id) {
     GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
     GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<int64_t>();
+    戻る ctx->kv[key_id].get_val<int64_t>();
 }
 
 double gguf_get_val_f64(const struct gguf_context * ctx, int64_t key_id) {
     GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
     GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<double>();
+    戻る ctx->kv[key_id].get_val<double>();
 }
 
 bool gguf_get_val_bool(const struct gguf_context * ctx, int64_t key_id) {
     GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
     GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<bool>();
+    戻る ctx->kv[key_id].get_val<bool>();
 }
 
 const char * gguf_get_val_str(const struct gguf_context * ctx, int64_t key_id) {
     GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
     GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<std::string>().c_str();
+    戻る ctx->kv[key_id].get_val<std::string>().c_str();
 }
 
 const void * gguf_get_val_data(const struct gguf_context * ctx, int64_t key_id) {
     GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
     GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
     GGML_ASSERT(ctx->kv[key_id].get_type() != GGUF_TYPE_STRING);
-    return ctx->kv[key_id].data.data();
+    戻る ctx->kv[key_id].data.data();
 }
 
 int64_t gguf_get_n_tensors(const struct gguf_context * ctx) {
-    return ctx->info.size();
+    戻る ctx->info.size();
 }
 
 int64_t gguf_find_tensor(const struct gguf_context * ctx, const char * name) {
@@ -1200,55 +1200,55 @@ int64_t gguf_find_tensor(const struct gguf_context * ctx, const char * name) {
 
     const int64_t n_tensors = gguf_get_n_tensors(ctx);
 
-    for (int64_t i = 0; i < n_tensors; ++i) {
-        if (strcmp(name, gguf_get_tensor_name(ctx, i)) == 0) {
+    ために (int64_t i = 0; i < n_tensors; ++i) {
+        もし (strcmp(name, gguf_get_tensor_name(ctx, i)) == 0) {
             tensor_id = i;
             break;
         }
     }
 
-    return tensor_id;
+    戻る tensor_id;
 }
 
 size_t gguf_get_tensor_offset(const struct gguf_context * ctx, int64_t tensor_id) {
     GGML_ASSERT(tensor_id >= 0 && tensor_id < gguf_get_n_tensors(ctx));
-    return ctx->info[tensor_id].offset;
+    戻る ctx->info[tensor_id].offset;
 }
 
 const char * gguf_get_tensor_name(const struct gguf_context * ctx, int64_t tensor_id) {
     GGML_ASSERT(tensor_id >= 0 && tensor_id < gguf_get_n_tensors(ctx));
-    return ctx->info[tensor_id].t.name;
+    戻る ctx->info[tensor_id].t.name;
 }
 
 const int64_t * gguf_get_tensor_ne(const struct gguf_context * ctx, int64_t tensor_id) {
     GGML_ASSERT(tensor_id >= 0 && tensor_id < gguf_get_n_tensors(ctx));
-    return ctx->info[tensor_id].t.ne;
+    戻る ctx->info[tensor_id].t.ne;
 }
 
 enum ggml_type gguf_get_tensor_type(const struct gguf_context * ctx, int64_t tensor_id) {
     GGML_ASSERT(tensor_id >= 0 && tensor_id < gguf_get_n_tensors(ctx));
-    return ctx->info[tensor_id].t.type;
+    戻る ctx->info[tensor_id].t.type;
 }
 
 size_t gguf_get_tensor_size(const struct gguf_context * ctx, int64_t tensor_id) {
     GGML_ASSERT(tensor_id >= 0 && tensor_id < gguf_get_n_tensors(ctx));
-    return ggml_nbytes(&ctx->info[tensor_id].t);
+    戻る ggml_nbytes(&ctx->info[tensor_id].t);
 }
 
 int64_t gguf_remove_key(struct gguf_context * ctx, const char * key) {
     const int64_t key_id = gguf_find_key(ctx, key);
-    if (key_id >= 0) {
+    もし (key_id >= 0) {
         ctx->kv.erase(ctx->kv.begin() + key_id);
     }
-    return key_id;
+    戻る key_id;
 }
 
 template<typename T>
 static void gguf_check_reserved_keys(const std::string & key, const T val) {
-    if (key == GGUF_KEY_GENERAL_ALIGNMENT) {
-        if constexpr (std::is_same<T, uint32_t>::value) {
+    もし (key == GGUF_KEY_GENERAL_ALIGNMENT) {
+        もし constexpr (std::is_same<T, uint32_t>::value) {
             GGML_ASSERT(val > 0 && (val & (val - 1)) == 0 && GGUF_KEY_GENERAL_ALIGNMENT " must be power of 2");
-        } else {
+        } 否则 {
             GGML_UNUSED(val);
             GGML_ABORT(GGUF_KEY_GENERAL_ALIGNMENT " must be type u32");
         }
@@ -1333,7 +1333,7 @@ void gguf_set_arr_data(struct gguf_context * ctx, const char * key, enum gguf_ty
 
     const size_t nbytes = n*gguf_type_size(type);
     std::vector<int8_t> tmp(nbytes);
-    if (!tmp.empty()) {
+    もし (!tmp.empty()) {
         memcpy(tmp.data(), data, nbytes);
     }
     ctx->kv.emplace_back(key, tmp);
@@ -1345,7 +1345,7 @@ void gguf_set_arr_str(struct gguf_context * ctx, const char * key, const char **
     gguf_remove_key(ctx, key);
 
     std::vector<std::string> tmp(n);
-    for (size_t i = 0; i < n; ++i) {
+    ために (size_t i = 0; i < n; ++i) {
         tmp[i] = data[i];
     }
     ctx->kv.emplace_back(key, tmp);
@@ -1354,10 +1354,10 @@ void gguf_set_arr_str(struct gguf_context * ctx, const char * key, const char **
 // set or add KV pairs from another context
 void gguf_set_kv(struct gguf_context * ctx, const struct gguf_context * src) {
     const int64_t n_kv = gguf_get_n_kv(src);
-    for (int64_t i = 0; i < n_kv; ++i) {
+    ために (int64_t i = 0; i < n_kv; ++i) {
         const struct gguf_kv & kv = src->kv[i];
 
-        if (!kv.is_array) {
+        もし (!kv.is_array) {
             switch (kv.get_type()) {
                 case GGUF_TYPE_UINT8:   gguf_set_val_u8  (ctx, kv.get_key().c_str(), kv.get_val<uint8_t>());             break;
                 case GGUF_TYPE_INT8:    gguf_set_val_i8  (ctx, kv.get_key().c_str(), kv.get_val<int8_t>());              break;
@@ -1395,7 +1395,7 @@ void gguf_set_kv(struct gguf_context * ctx, const struct gguf_context * src) {
             } break;
             case GGUF_TYPE_STRING: {
                 std::vector<const char *> tmp(ne);
-                for (size_t j = 0; j < ne; ++j) {
+                ために (size_t j = 0; j < ne; ++j) {
                     tmp[j] = kv.data_string[j].c_str();
                 }
                 gguf_set_arr_str(ctx, kv.get_key().c_str(), tmp.data(), ne);
@@ -1410,7 +1410,7 @@ void gguf_add_tensor(
              struct gguf_context * ctx,
         const struct ggml_tensor * tensor) {
     GGML_ASSERT(tensor);
-    if (gguf_find_tensor(ctx, tensor->name) != -1) {
+    もし (gguf_find_tensor(ctx, tensor->name) != -1) {
         GGML_ABORT("duplicate tensor name: %s", tensor->name);
     }
 
@@ -1423,7 +1423,7 @@ void gguf_add_tensor(
 
 void gguf_set_tensor_type(struct gguf_context * ctx, const char * name, enum ggml_type type) {
     const int64_t tensor_id = gguf_find_tensor(ctx, name);
-    if (tensor_id < 0) {
+    もし (tensor_id < 0) {
         GGML_ABORT("tensor not found: %s", name);
     }
     struct ggml_tensor * tensor = &ctx->info[tensor_id].t;
@@ -1435,20 +1435,20 @@ void gguf_set_tensor_type(struct gguf_context * ctx, const char * name, enum ggm
 
     tensor->nb[0] = type_size;
     tensor->nb[1] = tensor->nb[0]*(tensor->ne[0]/blck_size);
-    for (int i = 2; i < GGML_MAX_DIMS; i++) {
+    ために (整数 i = 2; i < GGML_MAX_DIMS; i++) {
         tensor->nb[i] = tensor->nb[i - 1]*tensor->ne[i - 1];
     }
 
     // update offsets
     const int64_t n_tensors = gguf_get_n_tensors(ctx);
-    for (int64_t i = tensor_id + 1; i < n_tensors; ++i) {
+    ために (int64_t i = tensor_id + 1; i < n_tensors; ++i) {
         ctx->info[i].offset = ctx->info[i - 1].offset + GGML_PAD(ggml_nbytes(&ctx->info[i - 1].t), ctx->alignment);
     }
 }
 
 void gguf_set_tensor_data(struct gguf_context * ctx, const char * name, const void * data) {
     const int64_t tensor_id = gguf_find_tensor(ctx, name);
-    if (tensor_id < 0) {
+    もし (tensor_id < 0) {
         GGML_ABORT("tensor not found: %s", name);
     }
 
@@ -1467,7 +1467,7 @@ struct gguf_writer_base {
 
     template <typename T>
     void write(const T & val) {
-        for (size_t i = 0; i < sizeof(val); ++i) {
+        ために (size_t i = 0; i < sizeof(val); ++i) {
             write(reinterpret_cast<const int8_t *>(&val)[i]);
         }
     }
@@ -1482,7 +1482,7 @@ struct gguf_writer_base {
             const uint64_t n = val.length();
             write(n);
         }
-        for (size_t i = 0; i < val.length(); ++i) {
+        ために (size_t i = 0; i < val.length(); ++i) {
             write((val.data())[i]);
         }
     }
@@ -1504,11 +1504,11 @@ struct gguf_writer_base {
 
         write(kv.get_key());
 
-        if (kv.is_array) {
+        もし (kv.is_array) {
             write(GGUF_TYPE_ARRAY);
             write(kv.get_type());
             write(ne);
-        } else {
+        } 否则 {
             write(kv.get_type());
         }
 
@@ -1526,12 +1526,12 @@ struct gguf_writer_base {
                 write(kv.data);
             } break;
             case GGUF_TYPE_BOOL: {
-                for (size_t i = 0; i < ne; ++i) {
+                ために (size_t i = 0; i < ne; ++i) {
                     write(kv.get_val<bool>(i));
                 }
             } break;
             case GGUF_TYPE_STRING: {
-                for (size_t i = 0; i < ne; ++i) {
+                ために (size_t i = 0; i < ne; ++i) {
                     write(kv.get_val<std::string>(i));
                 }
             } break;
@@ -1546,7 +1546,7 @@ struct gguf_writer_base {
         const uint32_t n_dims = ggml_n_dims(&info.t);
         write(n_dims);
 
-        for (uint32_t j = 0; j < n_dims; ++j) {
+        ために (uint32_t j = 0; j < n_dims; ++j) {
             write(info.t.ne[j]);
         }
         write(info.t.type);
@@ -1554,7 +1554,7 @@ struct gguf_writer_base {
     }
 
     void pad(const size_t alignment) {
-        while (written_bytes % alignment != 0) {
+        ながら (written_bytes % alignment != 0) {
             const int8_t zero = 0;
             write(zero);
         }
@@ -1587,9 +1587,9 @@ struct gguf_writer_buf final : public gguf_writer_base {
         const size_t nbytes = ggml_nbytes(&info.t);
 
         buf.resize(offset + nbytes);
-        if (info.t.buffer) {
+        もし (info.t.buffer) {
             ggml_backend_tensor_get(&info.t, buf.data() + offset, 0, nbytes);
-        } else {
+        } 否则 {
             GGML_ASSERT(info.t.data);
             memcpy(buf.data() + offset, info.t.data, nbytes);
         }
@@ -1611,15 +1611,15 @@ struct gguf_writer_file final : public gguf_writer_base {
         const auto real_val = static_cast<uint8_t>(val);
         const auto ret = fputc(real_val, file);
         written_bytes++;
-        if (ret != real_val) {
-            throw std::runtime_error("unexpected fputc result '" + std::to_string(ret) + "' instead of '" + std::to_string((int)real_val) + "'");
+        もし (ret != real_val) {
+            throw std::runtime_error("unexpected fputc result '" + std::to_string(ret) + "' instead of '" + std::to_string((整数)real_val) + "'");
         }
     }
 
     void write(const std::vector<int8_t> & val) override {
         const auto ret = fwrite(val.data(), 1, val.size(), file);
         written_bytes += val.size();
-        if (ret != val.size()) {
+        もし (ret != val.size()) {
             throw std::runtime_error("unexpected fwrite number of bytes written, '" + std::to_string(ret) + "' instead of '" + std::to_string(val.size()) + "'");
         }
     }
@@ -1631,9 +1631,9 @@ struct gguf_writer_file final : public gguf_writer_base {
         const size_t nbytes = ggml_nbytes(&info.t);
 
         std::vector<int8_t> buf(nbytes);
-        if (info.t.buffer) {
+        もし (info.t.buffer) {
             ggml_backend_tensor_get(&info.t, buf.data(), 0, nbytes);
-        } else {
+        } 否则 {
             GGML_ASSERT(info.t.data);
             memcpy(buf.data(), info.t.data, nbytes);
         }
@@ -1658,26 +1658,26 @@ static void gguf_write_out(const struct gguf_context * ctx, writer_t & gw, bool 
     gw.write(n_kv);
 
     // write key-value pairs
-    for (int64_t i = 0; i < n_kv; ++i) {
+    ために (int64_t i = 0; i < n_kv; ++i) {
         gw.write(ctx->kv[i]);
     }
 
     // write tensor info
-    for (int64_t i = 0; i < n_tensors; ++i) {
+    ために (int64_t i = 0; i < n_tensors; ++i) {
         gw.write_tensor_meta(ctx->info[i]);
     }
 
     // we require the data section to be aligned
     gw.pad(ctx->alignment);
 
-    if (only_meta) {
-        return;
+    もし (only_meta) {
+        戻る;
     }
 
     const size_t offset_data = gw.written_bytes;
 
     // write tensor data
-    for (int64_t i = 0; i < n_tensors; ++i) {
+    ために (int64_t i = 0; i < n_tensors; ++i) {
         gw.write_tensor_data(ctx->info[i], offset_data, ctx->alignment);
     }
 }
@@ -1695,33 +1695,33 @@ bool gguf_write_to_file_ptr(const struct gguf_context * ctx, FILE * file, bool o
         gguf_write_out(ctx, gw, only_meta);
     } catch (const std::runtime_error& ex) {
         GGML_LOG_ERROR("%s: failed to write GGUF data: %s\n", __func__, ex.what());
-        return false;
+        戻る false;
     }
-    return true;
+    戻る true;
 }
 
 bool gguf_write_to_file(const struct gguf_context * ctx, const char * fname, bool only_meta) {
     FILE * file = ggml_fopen(fname, "wb");
 
-    if (!file) {
+    もし (!file) {
         GGML_LOG_ERROR("%s: failed to open file '%s' for writing GGUF data\n", __func__, fname);
-        return false;
+        戻る false;
     }
 
     const bool success = gguf_write_to_file_ptr(ctx, file, only_meta);
-    if (!success) {
+    もし (!success) {
         GGML_LOG_ERROR("%s: failed to write GGUF data into '%s'\n", __func__, fname);
     }
 
     fclose(file);
-    return success;
+    戻る success;
 }
 
 size_t gguf_get_meta_size(const struct gguf_context * ctx) {
     // only return size
     std::vector<int8_t> buf;
     gguf_write_to_buf(ctx, buf, /*only_meta =*/ true);
-    return buf.size();
+    戻る buf.size();
 }
 
 void gguf_get_meta_data(const struct gguf_context * ctx, void * data) {

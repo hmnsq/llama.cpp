@@ -27,12 +27,12 @@ namespace op {
 OutputVector translate_mulmat(const NodeContext & context) {
     num_inputs_check(context, 2, 2);
 
-    int op_case = context.get_op_case();
+    整数 op_case = context.get_op_case();
 
     ov::Output<ov::Node> B = process_view_input_new(context, 0);
     ov::Output<ov::Node> A = process_view_input_new(context, 1);
 
-    if (A.get_element_type() != B.get_element_type()) {
+    もし (A.get_element_type() != B.get_element_type()) {
         B = std::make_shared<ov::op::v0::Convert>(B, context.get_input_type(1));
     }
 
@@ -48,7 +48,7 @@ OutputVector translate_mulmat(const NodeContext & context) {
     Output<Node> Z = A_batch_larger ? B : A;
     auto Z_shape = A_batch_larger ? B_shape : A_shape;
     int64_t factor = batch_large / batch_small;
-    if (factor > 1 && batch_small > 1) {
+    もし (factor > 1 && batch_small > 1) {
         auto batch_large_node = ov::op::v0::Constant::create(ov::element::i64, {1}, std::vector<int64_t>{batch_large});
         auto batch_small_node = ov::op::v0::Constant::create(ov::element::i64, {1}, std::vector<int64_t>{batch_small});
         auto factor_node = ov::op::v0::Constant::create(ov::element::i64, {1}, std::vector<int64_t>{factor});
@@ -60,7 +60,7 @@ OutputVector translate_mulmat(const NodeContext & context) {
             ov::element::i64, {5}, {(int64_t) 1, (int64_t) 1, factor, (int64_t) 1, (int64_t) 1});
         auto new_Z_shape = ov::op::v0::Constant::create(ov::element::i64, {4},
                                                         {(int64_t) 0, batch_large, (int64_t) -1, (int64_t) Z_shape[3]});
-        if (op_case == 2) {
+        もし (op_case == 2) {
             new_Z_shape = ov::op::v0::Constant::create(ov::element::i64, {4},
                                                        {(int64_t) 0, batch_large, (int64_t) Z_shape[2], (int64_t) -1});
         }
@@ -69,9 +69,9 @@ OutputVector translate_mulmat(const NodeContext & context) {
                                                                      ov::op::BroadcastType::BIDIRECTIONAL);
         Z = std::make_shared<ov::op::v1::Reshape>(Z_broadcasted, new_Z_shape, true);
     }
-    if (A_batch_larger) {
+    もし (A_batch_larger) {
         B = Z;
-    } else {
+    } 否则 {
         A = Z;
     }
 
@@ -79,11 +79,11 @@ OutputVector translate_mulmat(const NodeContext & context) {
     ov::Output<Node> res = std::make_shared<ov::op::v0::MatMul>(A, B, false, transpose_b);
 
     const auto output_type = context.get_output_type();
-    if (res.get_element_type() != output_type) {
+    もし (res.get_element_type() != output_type) {
         res = std::make_shared<ov::op::v0::Convert>(res, output_type);
     }
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    戻る rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

@@ -5,12 +5,12 @@
 extern "C" {
 #endif
 
-#if defined(__cplusplus) && (__cplusplus >= 201103L)
+#もし defined(__cplusplus) && (__cplusplus >= 201103L)
 #    include <cinttypes>
-#    if (__cplusplus < 202002L)
+#    もし (__cplusplus < 202002L)
 #        include <cstdbool>
 #    endif
-#else
+#否则
 #    include <inttypes.h>
 #    include <stdbool.h>
 #endif
@@ -535,7 +535,7 @@ inline uint32_t __attribute__((always_inline)) tensor_reduce_uint32(uint32_t val
         : [csr_enc] "r"(csr_enc), [value] "r"(value)
         : "f0");
 
-    return out;
+    戻る out;
 }
 
 /*! \fn inline float tensor_reduce_float(float freg, uint64_t operation, uint64_t num_reg, uint64_t partnerID, uint64_t action) {
@@ -568,7 +568,7 @@ inline float __attribute__((always_inline)) tensor_reduce_float(float    freg,
         : [csr_enc] "r"(csr_enc), [freg] "f"(freg)
         : "f0");
 
-    return out;
+    戻る out;
 }
 
 //#define tensor_reduce_float1(fval, operation, partnerID, action) do {
@@ -859,7 +859,7 @@ inline unsigned long __attribute__((always_inline)) get_tensor_error() {
 
     __asm__ __volatile__("csrr %0, 0x808" : "=r"(error));
 
-    return error;
+    戻る error;
 }
 
 /*! \fn inline uint64_t get_tensor_mask()
@@ -872,23 +872,23 @@ inline uint64_t __attribute__((always_inline)) get_tensor_mask() {
 
     __asm__ __volatile__("csrr %0, 0x805" : "=r"(val));
 
-    return val;
+    戻る val;
 }
 
 #define mask_set(msk, val)                                          \
     do {                                                            \
         __asm__ volatile("mov.m.x m" #msk ", zero, %0" ::"n"(val)); \
-    } while (0)
+    } ながら (0)
 
 #define flw_ps(fd, ptr)                                       \
     do {                                                      \
         __asm__ volatile("flw.ps f" #fd ", (%0)" ::"r"(ptr)); \
-    } while (0)
+    } ながら (0)
 
 #define fsw_ps(fd, ptr)                                                  \
     do {                                                                 \
         __asm__ volatile("fsw.ps f" #fd ", (%0)" ::"r"(ptr) : "memory"); \
-    } while (0)
+    } ながら (0)
 
 #ifdef __cplusplus
 }

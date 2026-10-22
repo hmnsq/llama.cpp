@@ -17,36 +17,36 @@ struct ggml_et_diag_params {
     struct ggml_tensor dst;   // F32 output diagonal matrix
 };
 
-int entry_point(struct ggml_et_diag_params * params, void * env) {
+整数 entry_point(struct ggml_et_diag_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    もし (!kernel_env) {
+        戻る -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    整数 thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    整数 num_threads = get_num_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    もし (thread_id < 0) {
+        戻る 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    もし (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        戻る -1;
     }
 
     struct ggml_tensor * src0 = &params->src0;
     struct ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    もし (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        戻る -1;
     }
 
     float * src0_data = (float *) src0->data;
     float * dst_data  = (float *) dst->data;
 
-    if (!src0_data || !dst_data) {
-        return -1;
+    もし (!src0_data || !dst_data) {
+        戻る -1;
     }
 
     const int64_t ne0 = dst->ne[0];  // N (row width = column count)
@@ -64,7 +64,7 @@ int entry_point(struct ggml_et_diag_params * params, void * env) {
     float zero = 0.0f;
     __asm__ volatile("fbc.ps f10, %[z]\n" : : [z] "m"(zero) : "f10");
 
-    for (int64_t row = thread_id; row < total_rows; row += num_threads) {
+    ために (int64_t row = thread_id; row < total_rows; row += num_threads) {
         int64_t i1 = row % ne1;
         int64_t i2 = (row / ne1) % ne2;
         int64_t i3 = row / (ne1 * ne2);
@@ -74,10 +74,10 @@ int entry_point(struct ggml_et_diag_params * params, void * env) {
         // Zero the entire row with SIMD
         int64_t       i0      = 0;
         const int64_t vec_end = (ne0 / 8) * 8;
-        for (; i0 < vec_end; i0 += 8) {
+        ために (; i0 < vec_end; i0 += 8) {
             __asm__ volatile("fsw.ps f10, %[d]\n" : [d] "=m"(*(float (*)[8]) & dst_row[i0])::"f10");
         }
-        for (; i0 < ne0; i0++) {
+        ために (; i0 < ne0; i0++) {
             dst_row[i0] = 0.0f;
         }
 
@@ -86,5 +86,5 @@ int entry_point(struct ggml_et_diag_params * params, void * env) {
         dst_row[i1]           = src_ptr[i1];
     }
 
-    return 0;
+    戻る 0;
 }

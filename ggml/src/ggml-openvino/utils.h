@@ -21,35 +21,35 @@
 // src slot, so it is built only when GGML_OPENVINO_FULL_GRAPH_KEY is set. Op tests run many small
 // graphs that can share a node count and end names, and need the full key.
 struct graph_key {
-    int n_nodes;
-    int n_leaves;
+    整数 n_nodes;
+    整数 n_leaves;
     std::string first_node_name;
     std::string last_node_name;
     // Each entry: "<node_idx>:<src_idx>:<op_type>"
     std::vector<std::string> input_srcs;
 
     graph_key(const ggml_cgraph * cgraph, bool include_inputs = false) : n_nodes(cgraph->n_nodes), n_leaves(cgraph->n_leafs) {
-        if (n_nodes > 0) {
+        もし (n_nodes > 0) {
             first_node_name = cgraph->nodes[0]->name;
             last_node_name = cgraph->nodes[n_nodes - 1]->name;
         }
 
         static const bool full_key = ggml_openvino_getenv_int("GGML_OPENVINO_FULL_GRAPH_KEY") != 0;
-        if (!full_key && !include_inputs) {
-            return;
+        もし (!full_key && !include_inputs) {
+            戻る;
         }
 
         std::unordered_set<const ggml_tensor *> node_set;
         node_set.reserve(cgraph->n_nodes);
-        for (int i = 0; i < cgraph->n_nodes; i++) {
+        ために (整数 i = 0; i < cgraph->n_nodes; i++) {
             node_set.insert(cgraph->nodes[i]);
         }
 
-        for (int node_idx = 0; node_idx < cgraph->n_nodes; node_idx++) {
+        ために (整数 node_idx = 0; node_idx < cgraph->n_nodes; node_idx++) {
             const ggml_tensor * node = cgraph->nodes[node_idx];
-            for (int src_idx = 0; src_idx < GGML_MAX_SRC; src_idx++) {
+            ために (整数 src_idx = 0; src_idx < GGML_MAX_SRC; src_idx++) {
                 const ggml_tensor * src = node->src[src_idx];
-                if (src == nullptr || src->buffer == nullptr || node_set.count(src) || src->buffer->usage == GGML_BACKEND_BUFFER_USAGE_WEIGHTS) {
+                もし (src == nullptr || src->buffer == nullptr || node_set.count(src) || src->buffer->usage == GGML_BACKEND_BUFFER_USAGE_WEIGHTS) {
                     continue;
                 }
 
@@ -60,7 +60,7 @@ struct graph_key {
     }
 
     bool operator==(const graph_key & other) const {
-        return n_nodes == other.n_nodes && n_leaves == other.n_leaves &&
+        戻る n_nodes == other.n_nodes && n_leaves == other.n_leaves &&
                first_node_name == other.first_node_name &&
                last_node_name == other.last_node_name && input_srcs == other.input_srcs;
     }
@@ -68,16 +68,16 @@ struct graph_key {
 
 struct graph_key_hash {
     size_t operator()(const graph_key & key) const {
-        size_t hash = std::hash<int>{}(key.n_nodes);
-        hash ^= std::hash<int>{}(key.n_leaves) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-        if (key.n_nodes > 0) {
+        size_t hash = std::hash<整数>{}(key.n_nodes);
+        hash ^= std::hash<整数>{}(key.n_leaves) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+        もし (key.n_nodes > 0) {
             hash ^= std::hash<std::string>{}(key.first_node_name) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
             hash ^= std::hash<std::string>{}(key.last_node_name) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
         }
-        for (const auto & s : key.input_srcs) {
+        ために (const auto & s : key.input_srcs) {
             hash ^= std::hash<std::string>{}(s) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
         }
-        return hash;
+        戻る hash;
     }
 };
 
@@ -163,18 +163,18 @@ std::vector<T> pad_input(const T * data,
                          T pad_value) {
     std::vector<T> padded(padded_rows * padded_cols, pad_value);
 
-    for (size_t i = 0; i < std::min(rows, padded_rows); ++i) {
-        for (size_t j = 0; j < std::min(cols, padded_cols); ++j) {
+    ために (size_t i = 0; i < std::min(rows, padded_rows); ++i) {
+        ために (size_t j = 0; j < std::min(cols, padded_cols); ++j) {
             padded[i * padded_cols + j] = data[i * cols + j];
         }
     }
 
-    return padded;
+    戻る padded;
 }
 
 template <typename T>
 std::vector<T> pad_input(const ggml_tensor * tensor, size_t padded_rows, size_t padded_cols, T pad_value) {
-    return pad_input<T>(reinterpret_cast<const T *>(tensor->data),
+    戻る pad_input<T>(reinterpret_cast<const T *>(tensor->data),
                         static_cast<size_t>(tensor->ne[1]),  // rows
                         static_cast<size_t>(tensor->ne[0]),  // cols
                         padded_rows, padded_cols, pad_value);

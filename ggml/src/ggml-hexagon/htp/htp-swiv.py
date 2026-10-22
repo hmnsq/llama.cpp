@@ -77,7 +77,7 @@ class Elf32_Ehdr:
                   self.e_shstrndx
                   ]
 
-        return (Elf32_Ehdr.s).pack(*values)
+        戻る (Elf32_Ehdr.s).pack(*values)
 
 
 class Elf32_Phdr:
@@ -105,7 +105,7 @@ class Elf32_Phdr:
                   self.p_align
                   ]
 
-        return (Elf32_Phdr.s).pack(*values)
+        戻る (Elf32_Phdr.s).pack(*values)
 
 
 class Elf32_Shdr:
@@ -137,7 +137,7 @@ class Elf32_Shdr:
                   self.sh_addralign,
                   self.sh_entsize]
 
-        return (Elf32_Shdr.s).pack(*values)
+        戻る (Elf32_Shdr.s).pack(*values)
 
 
 class Elf64_Ehdr:
@@ -177,7 +177,7 @@ class Elf64_Ehdr:
                   self.e_shstrndx
                   ]
 
-        return (Elf64_Ehdr.s).pack(*values)
+        戻る (Elf64_Ehdr.s).pack(*values)
 
 
 class Elf64_Phdr:
@@ -205,7 +205,7 @@ class Elf64_Phdr:
                   self.p_align
                   ]
 
-        return (Elf64_Phdr.s).pack(*values)
+        戻る (Elf64_Phdr.s).pack(*values)
 
 
 class Elf64_Shdr:
@@ -237,7 +237,7 @@ class Elf64_Shdr:
                   self.sh_addralign,
                   self.sh_entsize]
 
-        return (Elf64_Shdr.s).pack(*values)
+        戻る (Elf64_Shdr.s).pack(*values)
 
 
 class SWIV_Seg:
@@ -254,16 +254,16 @@ class SWIV_Seg:
                   self.padding
                   ]
 
-        return (SWIV_Seg.s).pack(*values)
+        戻る (SWIV_Seg.s).pack(*values)
 
 
 def is_elf64(elf_header):
-    return elf_header.e_ident[ELF_CLASS_INDEX] == ELFCLASS64
+    戻る elf_header.e_ident[ELF_CLASS_INDEX] == ELFCLASS64
 
 
 def verify_elf_header(elf_header):
     ident = elf_header.e_ident
-    return (ident.startswith(ELF_MAGIC)
+    戻る (ident.startswith(ELF_MAGIC)
             and ident[ELF_CLASS_INDEX] in (ELFCLASS32, ELFCLASS64)
             and ident[ELF_VERSION_INDEX] == EV_CURRENT)
 
@@ -274,21 +274,21 @@ def file_copy_offset(in_fp, in_off, out_fp, out_off, num_bytes):
     out_fp.seek(out_off)
     out_fp.write(read_in)
 
-    return num_bytes
+    戻る num_bytes
 
 
 def preprocess_elf_file(elf_file_name):
     with open(elf_file_name, 'rb') as elf_fp:
         elf_header = Elf_Ehdr_common(elf_fp.read(Elf_Ehdr_common.s.size))
 
-        if verify_elf_header(elf_header) is False:
+        もし verify_elf_header(elf_header) is False:
             raise RuntimeError("Input ELF verification failed : " + elf_file_name)
 
         elf_fp.seek(0)
 
-        if is_elf64(elf_header):
+        もし is_elf64(elf_header):
             elf_header = Elf64_Ehdr(elf_fp.read(Elf64_Ehdr.s.size))
-        else:
+        否则:
             elf_header = Elf32_Ehdr(elf_fp.read(Elf32_Ehdr.s.size))
 
         phdr_table = []
@@ -298,27 +298,27 @@ def preprocess_elf_file(elf_file_name):
         file_offset = elf_header.e_phoff
         elf_fp.seek(file_offset)
 
-        for _ in range(elf_header.e_phnum):
-            if is_elf64(elf_header):
+        ために _ in range(elf_header.e_phnum):
+            もし is_elf64(elf_header):
                 phdr_table.append(Elf64_Phdr(elf_fp.read(phdr_size)))
-            else:
+            否则:
                 phdr_table.append(Elf32_Phdr(elf_fp.read(phdr_size)))
 
-    return [elf_header, phdr_table]
+    戻る [elf_header, phdr_table]
 
 
 def process_section_header(elf_file_name):
     with open(elf_file_name, 'rb') as elf_fp:
         elf_header = Elf_Ehdr_common(elf_fp.read(Elf_Ehdr_common.s.size))
 
-        if verify_elf_header(elf_header) is False:
+        もし verify_elf_header(elf_header) is False:
             raise RuntimeError("Input ELF verification failed : " + elf_file_name)
 
         elf_fp.seek(0)
 
-        if is_elf64(elf_header):
+        もし is_elf64(elf_header):
             elf_header = Elf64_Ehdr(elf_fp.read(Elf64_Ehdr.s.size))
-        else:
+        否则:
             elf_header = Elf32_Ehdr(elf_fp.read(Elf32_Ehdr.s.size))
 
         shdr_table = []
@@ -326,55 +326,55 @@ def process_section_header(elf_file_name):
         shdr_size = elf_header.e_shentsize
         elf_fp.seek(elf_header.e_shoff)
 
-        for _ in range(elf_header.e_shnum):
-            if is_elf64(elf_header):
+        ために _ in range(elf_header.e_shnum):
+            もし is_elf64(elf_header):
                 shdr_table.append(Elf64_Shdr(elf_fp.read(shdr_size)))
-            else:
+            否则:
                 shdr_table.append(Elf32_Shdr(elf_fp.read(shdr_size)))
 
-    return shdr_table
+    戻る shdr_table
 
 
 def crc32_update_file(elf_fp, offset, size, crc):
     elf_fp.seek(offset)
     remaining = size
-    while remaining > 0:
+    ながら remaining > 0:
         chunk = elf_fp.read(min(1024 * 1024, remaining))
-        if not chunk:
+        もし not chunk:
             raise RuntimeError("Unexpected EOF while calculating CRC")
         crc = zlib.crc32(chunk, crc)
         remaining -= len(chunk)
-    return crc
+    戻る crc
 
 
 def crc32_update_zeros(size, crc):
     zero_chunk = b'\x00' * min(1024 * 1024, size)
     remaining = size
-    while remaining > 0:
+    ながら remaining > 0:
         chunk = zero_chunk[:min(len(zero_chunk), remaining)]
         crc = zlib.crc32(chunk, crc)
         remaining -= len(chunk)
-    return crc
+    戻る crc
 
 
 def crc32_calculate(elf_fp, phdr_table):
     crc = 0
 
     # SWIV validates loadable segment contents, including BSS as zeros.
-    for curr_phdr in phdr_table:
-        if curr_phdr.p_type != LOAD_TYPE:
+    ために curr_phdr in phdr_table:
+        もし curr_phdr.p_type != LOAD_TYPE:
             continue
 
         crc = crc32_update_file(elf_fp, curr_phdr.p_offset, curr_phdr.p_filesz, crc)
 
         zero_size = curr_phdr.p_memsz - curr_phdr.p_filesz
-        if zero_size > 0:
+        もし zero_size > 0:
             crc = crc32_update_zeros(zero_size, crc)
 
     crc &= 0xffffffff
     logger.info("calculated CRC: %#x", crc)
 
-    return crc
+    戻る crc
 
 
 def verify_swiv_seg(elf_in_fp, offset):
@@ -384,26 +384,26 @@ def verify_swiv_seg(elf_in_fp, offset):
     unpacked_data = (SWIV_Seg.s).unpack(elf_in_fp.read(SWIV_SEG_SIZE_MIN))
     swiv_seg.magic = unpacked_data[0]
 
-    return swiv_seg.magic == SWIV_MAGIC
+    戻る swiv_seg.magic == SWIV_MAGIC
 
 
 def same_output_file(input_elf, output_elf):
     try:
-        return os.path.exists(output_elf) and os.path.samefile(input_elf, output_elf)
+        戻る os.path.exists(output_elf) and os.path.samefile(input_elf, output_elf)
     except FileNotFoundError:
-        return False
+        戻る False
 
 
 def make_output_target(input_elf, output_elf):
-    if not same_output_file(input_elf, output_elf):
-        return output_elf, None
+    もし not same_output_file(input_elf, output_elf):
+        戻る output_elf, None
 
     output_dir = os.path.dirname(os.path.abspath(output_elf))
     output_base = os.path.basename(output_elf)
     fd, temp_output = tempfile.mkstemp(prefix=output_base + ".", suffix=".tmp", dir=output_dir)
     os.close(fd)
     shutil.copymode(input_elf, temp_output)
-    return temp_output, temp_output
+    戻る temp_output, temp_output
 
 
 def swiv_generate(input_elf, output_elf):
@@ -417,26 +417,26 @@ def swiv_generate(input_elf, output_elf):
             num_shdrs = elf_header.e_shnum
             phdr_size = elf_header.e_phentsize
 
-            if num_phdrs == 0 or num_phdrs > MAX_PHDR_COUNT:
+            もし num_phdrs == 0 or num_phdrs > MAX_PHDR_COUNT:
                 raise RuntimeError("Input ELF has invalid number of program headers.")
 
-            if elf_header.e_shoff == 0 or num_shdrs == 0:
+            もし elf_header.e_shoff == 0 or num_shdrs == 0:
                 raise RuntimeError("Input ELF does not contain a section header table.")
 
             shdr_table_input = process_section_header(input_elf)
             shdr_table_output = process_section_header(input_elf)
 
             last_phdr = phdr_table[num_phdrs - 1]
-            if last_phdr.p_memsz == SWIV_SEG_SIZE_MIN and verify_swiv_seg(elf_in_fp, last_phdr.p_offset):
+            もし last_phdr.p_memsz == SWIV_SEG_SIZE_MIN and verify_swiv_seg(elf_in_fp, last_phdr.p_offset):
                 raise RuntimeError("A SWIV segment is detected in the input ELF.")
 
             last_shdr = shdr_table_input[elf_header.e_shnum - 1]
-            if last_shdr.sh_size == SWIV_SEG_SIZE_MIN and verify_swiv_seg(elf_in_fp, last_shdr.sh_offset):
+            もし last_shdr.sh_size == SWIV_SEG_SIZE_MIN and verify_swiv_seg(elf_in_fp, last_shdr.sh_offset):
                 raise RuntimeError("A SWIV section is detected in the input ELF.")
 
-            if is_elf64(elf_header):
+            もし is_elf64(elf_header):
                 swiv_shdr = Elf64_Shdr(b'\0' * Elf64_Shdr.s.size)
-            else:
+            否则:
                 swiv_shdr = Elf32_Shdr(b'\0' * Elf32_Shdr.s.size)
 
             swiv_shdr.sh_name = 0
@@ -448,26 +448,26 @@ def swiv_generate(input_elf, output_elf):
             shdr_table_output.append(swiv_shdr)
             elf_header.e_shnum += 1
 
-            if elf_header.e_phoff != 0:
-                for phdr in phdr_table:
+            もし elf_header.e_phoff != 0:
+                ために phdr in phdr_table:
                     file_copy_offset(elf_in_fp, phdr.p_offset, elf_out_fp, phdr.p_offset, phdr.p_filesz)
 
             elf_out_fp.seek(0)
             elf_out_fp.write(elf_header.get_packed_data())
 
             phdr_start = elf_header.e_phoff
-            for phdr in phdr_table:
+            ために phdr in phdr_table:
                 elf_out_fp.seek(phdr_start)
                 elf_out_fp.write(phdr.get_packed_data())
                 phdr_start += phdr_size
 
-            for shdr in shdr_table_input[:num_shdrs]:
-                if shdr.sh_type == SHT_NOBITS or shdr.sh_size == 0:
+            ために shdr in shdr_table_input[:num_shdrs]:
+                もし shdr.sh_type == SHT_NOBITS or shdr.sh_size == 0:
                     continue
                 file_copy_offset(elf_in_fp, shdr.sh_offset, elf_out_fp, shdr.sh_offset, shdr.sh_size)
 
             shdr_start = elf_header.e_shoff
-            for shdr in shdr_table_output:
+            ために shdr in shdr_table_output:
                 elf_out_fp.seek(shdr_start)
                 elf_out_fp.write(shdr.get_packed_data())
                 shdr_start += elf_header.e_shentsize
@@ -479,17 +479,17 @@ def swiv_generate(input_elf, output_elf):
             elf_out_fp.seek(swiv_shdr.sh_offset)
             elf_out_fp.write(swiv_seg.get_packed_data())
 
-        if temp_output is not None:
+        もし temp_output is not None:
             os.replace(temp_output, output_elf)
             temp_output = None
 
-        return 0
+        戻る 0
     finally:
-        if temp_output is not None and os.path.exists(temp_output):
+        もし temp_output is not None and os.path.exists(temp_output):
             os.unlink(temp_output)
 
 
-def main(argv):
+def メインページ(argv):
     parser = argparse.ArgumentParser(description="Add a Software Image Validation (SWIV) section to an HTP ELF file.")
     parser.add_argument("-i", "--input", dest="input_file", metavar="INPUT", required=True)
     parser.add_argument("-o", "--output", dest="output_file", metavar="OUTPUT", required=True)
@@ -497,16 +497,16 @@ def main(argv):
     args = parser.parse_args(argv)
 
     logging.basicConfig(
-        level=logging.INFO if args.verbose else logging.WARNING,
+        level=logging.INFO もし args.verbose 否则 logging.WARNING,
         format="%(message)s",
     )
 
     try:
-        return swiv_generate(args.input_file, args.output_file)
+        戻る swiv_generate(args.input_file, args.output_file)
     except RuntimeError as exc:
         logger.error("ERROR: %s", exc)
-        return 2
+        戻る 2
 
 
-if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+もし __name__ == "__main__":
+    sys.exit(メインページ(sys.argv[1:]))

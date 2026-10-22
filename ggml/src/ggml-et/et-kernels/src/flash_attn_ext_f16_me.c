@@ -79,22 +79,22 @@ static inline float get_mask_val(const struct ggml_tensor * mask, int64_t iq1, i
     const char * base = (const char *) mask->data + iq1 * mask->nb[1] + (iq2 % mask->ne[2]) * mask->nb[2] +
                         (iq3 % mask->ne[3]) * mask->nb[3];
 
-    if (mask->type == GGML_TYPE_F32) {
-        return *(const float *) (base + ik1 * mask->nb[0]);
+    もし (mask->type == GGML_TYPE_F32) {
+        戻る *(const float *) (base + ik1 * mask->nb[0]);
     }
-    return fp16_to_fp32(*(const uint16_t *) (base + ik1 * mask->nb[0]));
+    戻る fp16_to_fp32(*(const uint16_t *) (base + ik1 * mask->nb[0]));
 }
 
 static inline const char * get_mask_row_base(const struct ggml_tensor * mask, int64_t iq1, int64_t iq2, int64_t iq3) {
-    return (const char *) mask->data + iq1 * mask->nb[1] + (iq2 % mask->ne[2]) * mask->nb[2] +
+    戻る (const char *) mask->data + iq1 * mask->nb[1] + (iq2 % mask->ne[2]) * mask->nb[2] +
            (iq3 % mask->ne[3]) * mask->nb[3];
 }
 
 static inline float get_mask_val_from_base(const struct ggml_tensor * mask, const char * base, int64_t ik1) {
-    if (mask->type == GGML_TYPE_F32) {
-        return *(const float *) (base + ik1 * mask->nb[0]);
+    もし (mask->type == GGML_TYPE_F32) {
+        戻る *(const float *) (base + ik1 * mask->nb[0]);
     }
-    return fp16_to_fp32(*(const uint16_t *) (base + ik1 * mask->nb[0]));
+    戻る fp16_to_fp32(*(const uint16_t *) (base + ik1 * mask->nb[0]));
 }
 
 // Pack K rows for TensorLoadTranspose16 (even/odd deinterleave)
@@ -112,7 +112,7 @@ static inline void __attribute__((always_inline)) pack_k_for_transpose16(et_fp16
         :
         :);
 
-    for (int j = 0; j < (int) kv_count; ++j) {
+    ために (整数 j = 0; j < (整数) kv_count; ++j) {
         const et_fp16_t * k_row    = (const et_fp16_t *) (k_base + (kv_start + j) * nb1_k) + dk_start;
         et_fp16_t *       even_row = out + (j * 2) * 32;
         et_fp16_t *       odd_row  = out + (j * 2 + 1) * 32;
@@ -138,10 +138,10 @@ static inline void __attribute__((always_inline)) pack_k_for_transpose16(et_fp16
 
     __asm__ volatile("mova.m.x  %[ms]            \n\t" : : [ms] "r"(old_mask));
 
-    for (int j = (int) kv_count; j < TILE_KV; ++j) {
+    ために (整数 j = (整数) kv_count; j < TILE_KV; ++j) {
         et_fp16_t * even_row = out + (j * 2) * 32;
         et_fp16_t * odd_row  = out + (j * 2 + 1) * 32;
-        for (int l = 0; l < TILE_K / 2; ++l) {
+        ために (整数 l = 0; l < TILE_K / 2; ++l) {
             even_row[l] = 0;
             odd_row[l]  = 0;
         }
@@ -155,17 +155,17 @@ static inline void __attribute__((always_inline)) pack_v_interleaved(et_fp16_t *
                                                                      int64_t      dv_start,
                                                                      int64_t      kv_count,
                                                                      int64_t      nb1_v) {
-    for (int k = 0; k < TILE_KV; ++k) {
-        const int         l   = k >> 1;
-        const int         r   = k & 1;
+    ために (整数 k = 0; k < TILE_KV; ++k) {
+        const 整数         l   = k >> 1;
+        const 整数         r   = k & 1;
         et_fp16_t * const dst = out + l * 32 + r;
-        if (k < (int) kv_count) {
+        もし (k < (整数) kv_count) {
             const et_fp16_t * v_row = (const et_fp16_t *) (v_head + (kv_base + k) * nb1_v) + dv_start;
-            for (int n = 0; n < 16; ++n) {
+            ために (整数 n = 0; n < 16; ++n) {
                 dst[n * 2] = v_row[n];
             }
-        } else {
-            for (int n = 0; n < 16; ++n) {
+        } 否则 {
+            ために (整数 n = 0; n < 16; ++n) {
                 dst[n * 2] = 0;
             }
         }
@@ -196,7 +196,7 @@ static inline void __attribute__((always_inline)) convert_q_row_f32_to_f16(et_fp
         : [offs] "r"(offsets)
         : "f1");
 
-    for (int64_t d = 0; d < n; d += 8) {
+    ために (int64_t d = 0; d < n; d += 8) {
         __asm__ volatile(
             "flw.ps      f2, 0(%[src])    \n\t"
             "fcvt.f16.ps f3, f2           \n\t"
@@ -216,7 +216,7 @@ static inline void __attribute__((always_inline)) zero_acc_vec(float * acc, int6
     __asm__ volatile("mov.m.x m0, x0, 0xFF");
     __asm__ volatile("fbc.ps  f2, 0(%[z])" ::[z] "r"(&zero) : "f2");
 
-    for (int64_t d = 0; d < dv; d += 8) {
+    ために (int64_t d = 0; d < dv; d += 8) {
         __asm__ volatile("fsw.ps  f2, 0(%[a])     \n\t" ::[a] "r"(acc + d) : "f2", "memory");
     }
 
@@ -228,7 +228,7 @@ static inline void __attribute__((always_inline)) scale_acc_vec(float * acc, int
     __asm__ volatile("mova.x.m %0" : "=r"(old_mask));
     __asm__ volatile("mov.m.x m0, x0, 0xFF");
 
-    for (int64_t d = 0; d < dv; d += 8) {
+    ために (int64_t d = 0; d < dv; d += 8) {
         __asm__ volatile(
             "fbc.ps    f2, 0(%[s])    \n\t"
             "flw.ps    f3, 0(%[a])    \n\t"
@@ -246,12 +246,12 @@ static inline void __attribute__((always_inline)) normalize_store_vec(float * ou
                                                                       float * acc,
                                                                       int64_t dv,
                                                                       float   inv,
-                                                                      int     use_fast_store) {
+                                                                      整数     use_fast_store) {
     unsigned long old_mask;
     __asm__ volatile("mova.x.m %0" : "=r"(old_mask));
     __asm__ volatile("mov.m.x m0, x0, 0xFF");
 
-    for (int64_t d = 0; d < dv; d += 8) {
+    ために (int64_t d = 0; d < dv; d += 8) {
         __asm__ volatile(
             "fbc.ps    f2, 0(%[inv])   \n\t"
             "flw.ps    f3, 0(%[a])     \n\t"
@@ -260,14 +260,14 @@ static inline void __attribute__((always_inline)) normalize_store_vec(float * ou
             :
             : [inv] "r"(&inv), [a] "r"(acc + d)
             : "f2", "f3", "memory");
-        if (use_fast_store) {
+        もし (use_fast_store) {
             __asm__ volatile(
                 "flw.ps  f4, 0(%[a])     \n\t"
                 "fsw.ps  f4, 0(%[o])     \n\t"
                 :
                 : [a] "r"(acc + d), [o] "r"(out + d)
                 : "f4", "memory");
-        } else {
+        } 否则 {
             atomic_store_f32((volatile float *) &out[d + 0], acc[d + 0]);
             atomic_store_f32((volatile float *) &out[d + 1], acc[d + 1]);
             atomic_store_f32((volatile float *) &out[d + 2], acc[d + 2]);
@@ -283,7 +283,7 @@ static inline void __attribute__((always_inline)) normalize_store_vec(float * ou
 }
 
 static inline size_t tensor_bytes_fa(const struct ggml_tensor * t) {
-    return (size_t) t->ne[0] * t->ne[1] * t->ne[2] * t->ne[3] * t->nb[0];
+    戻る (size_t) t->ne[0] * t->ne[1] * t->ne[2] * t->ne[3] * t->nb[0];
 }
 
 // Evict a byte range from L1D to L2 SCP, splitting into batches of ≤16
@@ -291,12 +291,12 @@ static inline size_t tensor_bytes_fa(const struct ggml_tensor * t) {
 // another minion in the shire needs to read the region, or after a barrier
 // on the reader side to drop stale L1D copies before reading peer data.
 static inline void __attribute__((always_inline)) evict_range_to_l2(const void * addr, int64_t bytes) {
-    if (bytes <= 0) {
-        return;
+    もし (bytes <= 0) {
+        戻る;
     }
     int64_t      lines = (bytes + 63) / 64;
     const char * p     = (const char *) addr;
-    while (lines > 0) {
+    ながら (lines > 0) {
         int64_t batch = lines > 16 ? 16 : lines;
         evict_to_l2((const void *) p, (uint64_t) batch, 64);
         p += batch * 64;
@@ -329,7 +329,7 @@ static inline void __attribute__((always_inline)) merge_rescale_add_asm(float * 
         : [ao] "r"(&alpha_own), [ap] "r"(&alpha_peer)
         : "f4", "f5");
 
-    for (int64_t d = 0; d < dv; d += 8) {
+    ために (int64_t d = 0; d < dv; d += 8) {
         __asm__ volatile(
             "flw.ps    f2, 0(%[a])      \n\t"  // own
             "flw.ps    f3, 0(%[p])      \n\t"  // peer
@@ -345,17 +345,17 @@ static inline void __attribute__((always_inline)) merge_rescale_add_asm(float * 
     __asm__ volatile("mova.m.x %0" ::"r"(old_mask));
 }
 
-int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
+整数 entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
     (void) env;
 
     uint64_t hart_id  = get_hart_id();
     uint64_t shire_id = get_shire_id();
 
-    if (shire_id >= NUM_COMPUTE_SHIRES) {
-        return 0;
+    もし (shire_id >= NUM_COMPUTE_SHIRES) {
+        戻る 0;
     }
 
-    const int is_hart1     = hart_id & 1;
+    const 整数 is_hart1     = hart_id & 1;
     uint64_t  local_minion = (hart_id >> 1) & 0x1F;
 
     struct ggml_tensor * q        = &params->src0;
@@ -374,7 +374,7 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
     evict_region_past_l2(q->data, tensor_bytes_fa(q));
     evict_region_past_l2(k->data, tensor_bytes_fa(k));
     evict_region_past_l2(v->data, tensor_bytes_fa(v));
-    if (mask) {
+    もし (mask) {
         evict_region_past_l2(mask->data, tensor_bytes_fa(mask));
     }
     et_barrier(ET_BARRIER_GLOBAL);
@@ -387,20 +387,20 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
     const int64_t nhk = k->ne[2];
     const int64_t dv  = v->ne[0];
 
-    if (dv > FA_DV_MAX || dk > FA_DK_MAX) {
-        return -1;
+    もし (dv > FA_DV_MAX || dk > FA_DK_MAX) {
+        戻る -1;
     }
-    if (k->nb[0] != 2 || v->nb[0] != 2) {
-        return -1;
+    もし (k->nb[0] != 2 || v->nb[0] != 2) {
+        戻る -1;
     }
-    if ((dk % 8) != 0 || (dv % 16) != 0) {
-        return -1;
+    もし ((dk % 8) != 0 || (dv % 16) != 0) {
+        戻る -1;
     }
 
     const int64_t gqa_ratio      = nhq / nhk;
     const int64_t total_rows     = nq * nhq * no;
     const float   scale          = params->scale;
-    const int     use_fast_store = (dv % 16 == 0);
+    const 整数     use_fast_store = (dv % 16 == 0);
 
     // Split-KV team layout (mirrors mul_mat_f16_matrix_engine.c)
     //
@@ -417,10 +417,10 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
     const int64_t nk_tiles      = (nk + TILE_KV - 1) / TILE_KV;
     const int64_t total_minions = 2 * NUM_COMPUTE_SHIRES * MINIONS_PER_SHIRE;
     int64_t       k_splits      = 1;
-    if (total_rows < total_minions) {
+    もし (total_rows < total_minions) {
         int64_t target = total_minions / total_rows;
         int64_t ks     = 1;
-        while (ks * 2 <= target && ks * 2 <= MINIONS_PER_SHIRE && ks * 2 <= nk_tiles) {
+        ながら (ks * 2 <= target && ks * 2 <= MINIONS_PER_SHIRE && ks * 2 <= nk_tiles) {
             ks *= 2;
         }
         k_splits = ks;
@@ -435,12 +435,12 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
     const int64_t tiles_per_split_rounded = (nk_tiles + k_splits - 1) / k_splits;
     const int64_t tile_start              = k_split * tiles_per_split_rounded;
     int64_t       tile_end                = tile_start + tiles_per_split_rounded;
-    if (tile_end > nk_tiles) {
+    もし (tile_end > nk_tiles) {
         tile_end = nk_tiles;
     }
     const int64_t kv_start = tile_start * TILE_KV;
     int64_t       kv_end   = tile_end * TILE_KV;
-    if (kv_end > nk) {
+    もし (kv_end > nk) {
         kv_end = nk;
     }
 
@@ -464,22 +464,22 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
     // past total_rows still call the barriers but skip the packing work.
     et_barrier(ET_BARRIER_SHIRE);
     // et_barrier(ET_BARRIER_GLOBAL);
-    if (is_hart1) {
+    もし (is_hart1) {
         uint32_t      chunk_id = 0;
         const int64_t row_base = (int64_t) shire_id + local_tile_idx * NUM_COMPUTE_SHIRES;
 
         int64_t max_iters;
-        if (k_splits > 1) {
+        もし (k_splits > 1) {
             max_iters = (total_rows + tiles_stride - 1) / tiles_stride;
-        } else {
+        } 否则 {
             max_iters = (row_base >= total_rows) ? 0 : ((total_rows - row_base - 1) / tiles_stride + 1);
         }
 
-        for (int64_t iter = 0; iter < max_iters; iter++) {
+        ために (int64_t iter = 0; iter < max_iters; iter++) {
             const int64_t row      = row_base + iter * tiles_stride;
-            const int     has_work = (row < total_rows);
+            const 整数     has_work = (row < total_rows);
 
-            if (has_work) {
+            もし (has_work) {
                 const int64_t iq3 = row / (nhq * nq);
                 const int64_t rem = row % (nhq * nq);
                 const int64_t iq2 = rem / nq;
@@ -487,11 +487,11 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
 
                 const char * k_head = k_data + ik2 * k->nb[2] + iq3 * k->nb[3];
 
-                for (int64_t kv_base = kv_start; kv_base < kv_end; kv_base += TILE_KV) {
+                ために (int64_t kv_base = kv_start; kv_base < kv_end; kv_base += TILE_KV) {
                     const int64_t kv_count = (kv_base + TILE_KV <= nk) ? TILE_KV : (nk - kv_base);
 
-                    for (int64_t dk_chunk = 0; dk_chunk < dk; dk_chunk += TILE_K) {
-                        int buf = chunk_id & 1;
+                    ために (int64_t dk_chunk = 0; dk_chunk < dk; dk_chunk += TILE_K) {
+                        整数 buf = chunk_id & 1;
 
                         // Back-pressure: before overwriting buf[buf] on chunk N
                         // (which will displace chunk N-2), wait for hart 0 to
@@ -503,7 +503,7 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
                         // minion barrier for minion 0 shares FLB 0 with
                         // ET_BARRIER_SHIRE. Mixing them deadlocks. See
                         // feedback_flb_collision.
-                        if (chunk_id >= 2) {
+                        もし (chunk_id >= 2) {
                             et_sem_wait(ET_BARRIER_MINION);
                         }
 
@@ -526,7 +526,7 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
             }
 
             // Shire barriers for split-KV merge (hart 1 is a passive arrival).
-            if (k_splits > 1) {
+            もし (k_splits > 1) {
                 et_barrier(ET_BARRIER_SHIRE);  // A: team has written its partial
                 et_barrier(ET_BARRIER_SHIRE);  // B: reducer has finished merge
             }
@@ -538,13 +538,13 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
         // carries +min(chunk_id,2) credits from hart 0's matching posts
         // that hart 1 never consumed.
         uint32_t drain = (chunk_id < 2) ? chunk_id : 2;
-        for (uint32_t d = 0; d < drain; d++) {
+        ために (uint32_t d = 0; d < drain; d++) {
             et_sem_wait(ET_BARRIER_MINION);
         }
 
         // FENCE;
         // et_barrier(ET_BARRIER_GLOBAL);
-        return 0;
+        戻る 0;
     }
 
     // Hart 0: tensor engine compute
@@ -573,17 +573,17 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
     // compute but still participate in the barriers.
     const int64_t hart0_row_base = (int64_t) shire_id + local_tile_idx * NUM_COMPUTE_SHIRES;
     int64_t       hart0_max_iters;
-    if (k_splits > 1) {
+    もし (k_splits > 1) {
         hart0_max_iters = (total_rows + tiles_stride - 1) / tiles_stride;
-    } else {
+    } 否则 {
         hart0_max_iters = (hart0_row_base >= total_rows) ? 0 : ((total_rows - hart0_row_base - 1) / tiles_stride + 1);
     }
 
-    for (int64_t iter = 0; iter < hart0_max_iters; iter++) {
+    ために (int64_t iter = 0; iter < hart0_max_iters; iter++) {
         const int64_t row = hart0_row_base + iter * tiles_stride;
-        if (row >= total_rows) {
+        もし (row >= total_rows) {
             // No-work iteration: only participate in barriers (k_splits > 1).
-            if (k_splits > 1) {
+            もし (k_splits > 1) {
                 et_barrier(ET_BARRIER_SHIRE);  // A
                 et_barrier(ET_BARRIER_SHIRE);  // B
             }
@@ -616,11 +616,11 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
         flush_to_l2(q_f16, (dk * 2 + 63) / 64, 64);
         WAIT_CACHEOPS;
 
-        for (int64_t kv_base = kv_start; kv_base < kv_end; kv_base += TILE_KV) {
+        ために (int64_t kv_base = kv_start; kv_base < kv_end; kv_base += TILE_KV) {
             const int64_t kv_count = (kv_base + TILE_KV <= nk) ? TILE_KV : (nk - kv_base);
 
             // Set tensor_mask for partial tiles
-            if (kv_count < TILE_KV) {
+            もし (kv_count < TILE_KV) {
                 uint64_t tmask = (1ULL << kv_count) - 1;
                 __asm__ __volatile__("csrw 0x805, %0" : : "r"(tmask));
             }
@@ -654,7 +654,7 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
 
             // Prologue: wait hart 1's K[0], issue K[0] load, wait both loads.
             {
-                int buf = chunk_id & 1;
+                整数 buf = chunk_id & 1;
                 et_sem_wait(ET_BARRIER_MINION);
                 tensor_load(false, false, K_BUFS[0], TENSOR_LOAD_TRANSPOSE16, 0, (uint64_t) scp_kp[buf], 0, 15, 64, 1);
                 tensor_wait(TENSOR_LOAD_WAIT_0);  // Q row complete
@@ -671,10 +671,10 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
             // immediately (frees scp_kp[buf] for hart 1 to refill chunk i+2),
             // then wait FMA. Putting sem_post after FMA wait would stall
             // hart 1 by a full FMA latency — defeating the producer pipeline.
-            for (int64_t i = 1; i < n_dk_chunks; i++) {
-                int buf         = chunk_id & 1;
-                int k_slot_prev = (int) ((i - 1) & 1);
-                int k_slot      = (int) (i & 1);
+            ために (int64_t i = 1; i < n_dk_chunks; i++) {
+                整数 buf         = chunk_id & 1;
+                整数 k_slot_prev = (整数) ((i - 1) & 1);
+                整数 k_slot      = (整数) (i & 1);
 
                 et_sem_wait(ET_BARRIER_MINION);
                 tensor_load(false, false, K_BUFS[k_slot], TENSOR_LOAD_TRANSPOSE16, 0, (uint64_t) scp_kp[buf], 0, 15, 64,
@@ -691,7 +691,7 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
 
             // Epilogue: FMA on the last chunk (no overlapping load).
             {
-                int k_slot_last = (int) ((n_dk_chunks - 1) & 1);
+                整数 k_slot_last = (整数) ((n_dk_chunks - 1) & 1);
                 tensor_fma((kv_count < TILE_KV), 3, 0, 15, 0, false, false, false, false, K_BUFS[k_slot_last],
                            (uint64_t) (n_dk_chunks - 1), TENSOR_FMA_OP_FP16, (n_dk_chunks == 1));
                 tensor_wait(TENSOR_FMA_WAIT);
@@ -699,8 +699,8 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
 
             // Prefetch V rows for this tile.
             // Only useful for the partial-tile path below
-            if (kv_count < TILE_KV) {
-                for (int64_t d = 0; d < dv; d += 32) {
+            もし (kv_count < TILE_KV) {
+                ために (int64_t d = 0; d < dv; d += 32) {
                     prefetch_kv_to_l2(v_head, kv_base, d, kv_count, v->nb[1]);
                 }
             }
@@ -730,17 +730,17 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
             float weights[TILE_KV] __attribute__((aligned(64)));
             {
                 // A1: apply mask to scores, pad unused slots
-                for (int64_t j = 0; j < kv_count; ++j) {
-                    if (has_mask) {
+                ために (int64_t j = 0; j < kv_count; ++j) {
+                    もし (has_mask) {
                         float mv = get_mask_val_from_base(mask, mask_base, kv_base + j);
-                        if (mv == ET_NEG_INF_F || mv != mv) {
+                        もし (mv == ET_NEG_INF_F || mv != mv) {
                             scores[j] = ET_NEG_INF_F;
-                        } else {
+                        } 否则 {
                             scores[j] += mv;
                         }
                     }
                 }
-                for (int64_t j = kv_count; j < TILE_KV; ++j) {
+                ために (int64_t j = kv_count; j < TILE_KV; ++j) {
                     scores[j] = ET_NEG_INF_F;
                 }
 
@@ -767,9 +767,9 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
                         : "f2", "f3", "t0", "memory");
                 }
 
-                if (tile_max > ET_NEG_INF_F) {
+                もし (tile_max > ET_NEG_INF_F) {
                     // A2: rescale accumulator if this tile has a new global max
-                    if (tile_max > M) {
+                    もし (tile_max > M) {
                         float rescale = et_exp2f((M - tile_max) * 1.4426950408889634f);
                         scale_acc_vec(acc, dv, rescale);
                         S *= rescale;
@@ -832,27 +832,27 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
                         // off the early V load on the full-tile fast path.
                         tensor_load(false, false, A_L1_START, TENSOR_LOAD_PLAIN, 0, (uint64_t) w_f16_buf, 0, 0, 64, 0);
 
-                        const int       v_full_tile = (kv_count == TILE_KV);
+                        const 整数       v_full_tile = (kv_count == TILE_KV);
                         const uintptr_t v_base      = (uintptr_t) v_head + kv_base * v->nb[1];
                         const uint64_t  nb1_v       = (uint64_t) v->nb[1];
                         uint64_t        b_cur       = 8;
 
-                        if (v_full_tile) {
+                        もし (v_full_tile) {
                             tensor_load(false, false, b_cur, TENSOR_LOAD_INTERLEAVE16, 0, (uint64_t) v_base, 0, 7,
                                         nb1_v, 1);
                         }
 
                         tensor_wait(TENSOR_LOAD_WAIT_0);      // weights in A_L1
-                        if (v_full_tile) {
+                        もし (v_full_tile) {
                             tensor_wait(TENSOR_LOAD_WAIT_1);  // V[0] in b_cur
                         }
 
                         // B2: process dv in chunks of 16
-                        if (v_full_tile) {
-                            for (int64_t dv_off = 0; dv_off < dv; dv_off += 16) {
+                        もし (v_full_tile) {
+                            ために (int64_t dv_off = 0; dv_off < dv; dv_off += 16) {
                                 const uint64_t b_nxt = b_cur ^ 24;
 
-                                if (dv_off + 16 < dv) {
+                                もし (dv_off + 16 < dv) {
                                     tensor_load(false, false, b_nxt, TENSOR_LOAD_INTERLEAVE16, 0,
                                                 (uint64_t) (v_base + (dv_off + 16) * 2), 0, 7, nb1_v, 1);
                                 }
@@ -879,14 +879,14 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
                                         : "f0", "f1", "f2", "f3", "memory");
                                 }
 
-                                if (dv_off + 16 < dv) {
+                                もし (dv_off + 16 < dv) {
                                     tensor_wait(TENSOR_LOAD_WAIT_1);
                                     b_cur = b_nxt;
                                 }
                             }
-                        } else {
+                        } 否则 {
                             // Partial tile: software pack, no pipeline
-                            for (int64_t dv_off = 0; dv_off < dv; dv_off += 16) {
+                            ために (int64_t dv_off = 0; dv_off < dv; dv_off += 16) {
                                 pack_v_interleaved(vpanel_buf, v_head, kv_base, dv_off, kv_count, v->nb[1]);
                                 FENCE;
                                 flush_to_l2(vpanel_buf, 8, 64);
@@ -934,7 +934,7 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
         //                softmax combine and the final store. All tensor
         //                engine ops are complete before this block, so
         //                f0..f31 are free to use.
-        if (k_splits > 1) {
+        もし (k_splits > 1) {
             // Publish our partial.
             volatile float * my_stats = (volatile float *) et_shire_l2scp_local(scp_base + SCP_STATS_OFF);
             my_stats[0]               = M;
@@ -947,7 +947,7 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
             // A: team members have all written their partials.
             et_barrier(ET_BARRIER_SHIRE);
 
-            if (k_split == 0) {
+            もし (k_split == 0) {
                 // Online softmax merge: fold peers 1..k_splits-1 into our
                 // own (M_running, S_running, acc). For each peer p:
                 //   M_new    = max(M_running, M_p)
@@ -959,7 +959,7 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
                 float       S_running = S;
                 const float log2e     = 1.4426950408889634f;
 
-                for (int64_t p = 1; p < k_splits; p++) {
+                ために (int64_t p = 1; p < k_splits; p++) {
                     uint64_t         peer_scp   = (local_tile_idx * k_splits + p) * SCP_PER_MINION;
                     volatile float * peer_stats = (volatile float *) et_shire_l2scp_local(peer_scp + SCP_STATS_OFF);
                     float *          peer_acc   = (float *) et_shire_l2scp_local(peer_scp + SCP_ACC_OFF);
@@ -988,7 +988,7 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
 
             // B: reducer is done, team may reuse its acc/stats slabs.
             et_barrier(ET_BARRIER_SHIRE);
-        } else {
+        } 否则 {
             // k_splits == 1 fast path — this minion owns the full row.
             const float S_inv = S == 0.0f ? 0.0f : et_fdiv(1.0f, S);
             normalize_store_vec(out, acc, dv, S_inv, use_fast_store);
@@ -996,5 +996,5 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
     }
 
     FENCE;
-    return 0;
+    戻る 0;
 }

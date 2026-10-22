@@ -11,23 +11,23 @@ static constexpr size_t GGML_QUANTIZATION_GROUP_SIZE = 32;
 inline const char * extra_quant_type_name(ExtraQuantType t) {
     switch (t) {
     case ExtraQuantType::F16:
-        return "F16";
+        戻る "F16";
     case ExtraQuantType::Q4_0_C:
-        return "Q4_0_C";
+        戻る "Q4_0_C";
     case ExtraQuantType::Q4_0_128:
-        return "Q4_0_128";
+        戻る "Q4_0_128";
     case ExtraQuantType::Q8_0_C:
-        return "Q8_0_C";
+        戻る "Q8_0_C";
     case ExtraQuantType::Q8_0_32:
-        return "Q8_0_32";
+        戻る "Q8_0_32";
     case ExtraQuantType::Q8_1_C:
-        return "Q8_1_C";
+        戻る "Q8_1_C";
     case ExtraQuantType::Q4_0_64:
-        return "Q4_0_64";
+        戻る "Q4_0_64";
     case ExtraQuantType::Q4_1_64:
-        return "Q4_1_64";
+        戻る "Q4_1_64";
     default:
-        return "unknown";
+        戻る "unknown";
     }
 }
 
@@ -40,7 +40,7 @@ struct OvWeight {
     ov::Tensor scales;
     ov::Tensor zp;
 
-    bool is_quantized() const { return layout.scales_size > 0; }
+    bool is_quantized() const { 戻る layout.scales_size > 0; }
 };
 
 // Process weight tensor and create an OpenVINO weight node

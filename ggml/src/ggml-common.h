@@ -1,6 +1,6 @@
 #ifndef GGML_COMMON_DECL
 
-#if defined(GGML_COMMON_DECL_C)
+#もし defined(GGML_COMMON_DECL_C)
 #include <stdint.h>
 
 typedef uint16_t ggml_half;
@@ -33,9 +33,9 @@ typedef half2 ggml_half2;
 
 #define GGML_COMMON_DECL
 #elif defined(GGML_COMMON_DECL_CUDA)
-#if defined(GGML_COMMON_DECL_MUSA)
+#もし defined(GGML_COMMON_DECL_MUSA)
 #include <musa_fp16.h>
-#else
+#否则
 #include <cuda_fp16.h>
 #endif
 #include <cstdint>
@@ -71,13 +71,13 @@ typedef sycl::half2 ggml_half2;
 #define GGML_COMMON_DECL
 #endif
 
-#if defined(GGML_COMMON_DECL)
+#もし defined(GGML_COMMON_DECL)
 
 #ifndef __cplusplus
 #ifndef static_assert
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201100L)
+#もし defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201100L)
 #define static_assert(cond, msg) _Static_assert(cond, msg)
-#else
+#否则
 #define static_assert(cond, msg) struct global_scope_noop_trick
 #endif
 #endif
@@ -89,7 +89,7 @@ typedef sycl::half2 ggml_half2;
 #define QK_K 256
 #define K_SCALE_SIZE 12
 
-#if defined(GGML_COMMON_DECL_CUDA) || defined(GGML_COMMON_DECL_HIP) || defined(GGML_COMMON_DECL_SYCL)
+#もし defined(GGML_COMMON_DECL_CUDA) || defined(GGML_COMMON_DECL_HIP) || defined(GGML_COMMON_DECL_SYCL)
 // QR = QK / number of values before dequantization
 // QI = number of 32 bit integers before dequantization
 
@@ -173,7 +173,7 @@ typedef sycl::half2 ggml_half2;
 
 #ifdef _MSC_VER
 #define GGML_EXTENSION
-#else // _MSC_VER
+#否则 // _MSC_VER
 #define GGML_EXTENSION __extension__
 #endif // _MSC_VER
 
@@ -466,7 +466,7 @@ static_assert(sizeof(block_iq4_xs) == sizeof(ggml_half) + sizeof(uint16_t) + QK_
 
 #ifndef GGML_COMMON_IMPL
 
-#if defined(GGML_COMMON_IMPL_C)
+#もし defined(GGML_COMMON_IMPL_C)
 #include <stdint.h>
 
 #define GGML_TABLE_BEGIN(type, name, size) static const type name[size] = {
@@ -504,7 +504,7 @@ static_assert(sizeof(block_iq4_xs) == sizeof(ggml_half) + sizeof(uint16_t) + QK_
 #define GGML_COMMON_IMPL
 #endif
 
-#if defined(GGML_COMMON_IMPL)
+#もし defined(GGML_COMMON_IMPL)
 
 GGML_TABLE_BEGIN(uint8_t, kmask_iq2xs, 8)
     1, 2, 4, 8, 16, 32, 64, 128
@@ -1131,7 +1131,7 @@ GGML_TABLE_END()
 #define NGRID_IQ1S 2048
 #define IQ1S_DELTA 0.125f
 #define IQ1M_DELTA 0.125f
-#if defined(GGML_COMMON_IMPL_C) || defined(GGML_COMMON_IMPL_CPP)
+#もし defined(GGML_COMMON_IMPL_C) || defined(GGML_COMMON_IMPL_CPP)
 GGML_TABLE_BEGIN(uint64_t, iq1s_grid, NGRID_IQ1S)
     0xffffffffffffffff, 0xffffffffffffff01, 0xffffffffffff0000, 0xffffffffffff01ff,
     0xffffffffffff0101, 0xffffffffff00ff00, 0xffffffffff000000, 0xffffffffff01ffff,
@@ -1646,7 +1646,7 @@ GGML_TABLE_BEGIN(uint64_t, iq1s_grid, NGRID_IQ1S)
     0x0101010101ffff01, 0x0101010101ff01ff, 0x0101010101ff0101, 0x0101010101000000,
     0x010101010101ffff, 0x010101010101ff01, 0x01010101010101ff, 0x0101010101010101,
 GGML_TABLE_END()
-#else
+#否则
 GGML_TABLE_BEGIN(uint32_t, iq1s_grid_gpu, NGRID_IQ1S)
     0x00000000, 0x00000002, 0x00000101, 0x00000200, 0x00000202, 0x00010001, 0x00010101, 0x00020000,
     0x00020002, 0x00020200, 0x00020202, 0x01000101, 0x01010001, 0x01010100, 0x01010102, 0x01020101,

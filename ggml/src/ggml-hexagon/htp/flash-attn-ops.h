@@ -83,7 +83,7 @@ struct htp_fa_kernel_params {
     } u;
 };
 
-#if defined(__cplusplus)
+#もし defined(__cplusplus)
 static_assert(sizeof(struct htp_fa_kernel_params) <= 128, "htp_fa_kernel_params is too large for kernel_params blob");
 #endif
 
@@ -247,7 +247,7 @@ static inline void hmx_fa_vtcm_layout_build(struct hmx_fa_vtcm_layout * L,
 static inline size_t hmx_fa_compute_vtcm_usage(size_t gqa_factor, size_t DK, size_t DV, size_t Br, size_t Bc, size_t n_threads, bool pipeline, bool is_q_fp32, bool has_sinks, size_t n_heads) {
     struct hmx_fa_vtcm_layout L;
     hmx_fa_vtcm_layout_build(&L, gqa_factor, DK, DV, Br, Bc, n_threads, pipeline, is_q_fp32, has_sinks, n_heads);
-    return L.total_bytes;
+    戻る L.total_bytes;
 }
 
 #define FA_HVX_BLOCK_SIZE 64
@@ -308,13 +308,13 @@ static inline void hvx_fa_vtcm_layout_build(struct hvx_fa_vtcm_layout * L,
 static inline size_t hvx_fa_compute_vtcm_usage(size_t DK, size_t DV, bool is_q_fp32, bool has_mask, bool has_sinks, size_t n_heads, size_t n_threads) {
     struct hvx_fa_vtcm_layout L;
     hvx_fa_vtcm_layout_build(&L, DK, DV, is_q_fp32, has_mask, has_sinks, n_heads, n_threads);
-    return L.total_bytes;
+    戻る L.total_bytes;
 }
 
 #define FA_MIN_KV_BLOCKS 3
 
 // Cost-based (Br, Bc) search for flash attention with pipeline constraint.
-static inline int hmx_fa_find_chunk_size(size_t * Br_out,
+static inline 整数 hmx_fa_find_chunk_size(size_t * Br_out,
                                          size_t * Bc_out,
                                          size_t   gqa_factor,
                                          size_t   DK,
@@ -339,7 +339,7 @@ static inline int hmx_fa_find_chunk_size(size_t * Br_out,
     size_t Bc_limit     = can_pipeline ? hex_align_down(kv_len / FA_MIN_KV_BLOCKS, bc_unit) :
                                          (kv_len >= bc_unit ? hex_align_down(kv_len, bc_unit) : bc_unit);
     // For small-Q SWA-sized KV caches (qo_len <= 16, kv_len <= 2048), cap Bc at 256 for block-skipping granularity
-    if (qo_len <= 16 && kv_len <= 2048 && Bc_limit > 256) {
+    もし (qo_len <= 16 && kv_len <= 2048 && Bc_limit > 256) {
         Bc_limit = 256;
     }
     // Cost coefficients calibrated from profiling
@@ -350,11 +350,11 @@ static inline int hmx_fa_find_chunk_size(size_t * Br_out,
     size_t best_cost = SIZE_MAX, best_mn = 0;
     size_t best_Br = 0, best_Bc = 0;
 
-    for (size_t Br = Br_max; Br >= br_unit; Br -= br_unit) {
+    ために (size_t Br = Br_max; Br >= br_unit; Br -= br_unit) {
         // Try all Bc candidates from Bc_limit down to bc_unit
-        for (size_t Bc = Bc_limit; Bc >= bc_unit; Bc -= bc_unit) {
+        ために (size_t Bc = Bc_limit; Bc >= bc_unit; Bc -= bc_unit) {
             size_t vtcm_needed = hmx_fa_compute_vtcm_usage(gqa_factor, DK, DV, Br, Bc, n_threads, can_pipeline, is_q_fp32, has_sinks, n_heads);
-            if (vtcm_needed <= vtcm_budget) {
+            もし (vtcm_needed <= vtcm_budget) {
                 // This Bc fits for this Br!
                 const size_t q_blocks       = (qo_len + Br - 1) / Br;
                 const size_t kv_blocks      = (kv_len + Bc - 1) / Bc;
@@ -368,7 +368,7 @@ static inline int hmx_fa_find_chunk_size(size_t * Br_out,
                 const size_t cost           = q_blocks * (c_q_fixed + kv_blocks * c_iter_actual);
                 const size_t mn             = Br * Bc;
 
-                if (cost < best_cost || (cost == best_cost && mn > best_mn)) {
+                もし (cost < best_cost || (cost == best_cost && mn > best_mn)) {
                     best_cost = cost;
                     best_mn   = mn;
                     best_Br   = Br;
@@ -380,18 +380,18 @@ static inline int hmx_fa_find_chunk_size(size_t * Br_out,
             }
         }
 
-        if (Br == br_unit) {
+        もし (Br == br_unit) {
             break;
         }
     }
 
-    if (best_Br == 0 || best_Bc == 0) {
-        return -1;
+    もし (best_Br == 0 || best_Bc == 0) {
+        戻る -1;
     }
 
     *Br_out = best_Br;
     *Bc_out = best_Bc;
-    return 0;
+    戻る 0;
 }
 
 #ifdef __cplusplus

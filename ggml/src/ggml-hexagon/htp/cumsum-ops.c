@@ -61,13 +61,13 @@ struct htp_cumsum_context {
 // HVX prefix scan helpers
 // ---------------------------------------------------------------------------
 
-#if __HVX_ARCH__ > 75
+#もし __HVX_ARCH__ > 75
 static inline HVX_Vector hvx_cumsum_vadd(HVX_Vector a, HVX_Vector b) {
-    return Q6_Vsf_vadd_VsfVsf(a, b);
+    戻る Q6_Vsf_vadd_VsfVsf(a, b);
 }
-#else
+#否则
 static inline HVX_Vector hvx_cumsum_vadd(HVX_Vector a, HVX_Vector b) {
-    return Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(a, b));
+    戻る Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(a, b));
 }
 #endif  // __HVX_ARCH__ > 75
 
@@ -81,11 +81,11 @@ static inline HVX_Vector hvx_prefix_scan_f32(HVX_Vector v, HVX_Vector carry_in) 
     v = hvx_cumsum_vadd(v, Q6_V_vlalign_VVR(v, zero, 64));
     v = hvx_cumsum_vadd(v, carry_in);
 
-    return v;
+    戻る v;
 }
 
 static inline HVX_Vector hvx_splat_last_f32(HVX_Vector v) {
-    return hvx_vec_repl4(Q6_V_vror_VR(v, 124));
+    戻る hvx_vec_repl4(Q6_V_vror_VR(v, 124));
 }
 
 static inline void hvx_cumsum_row_f32(const float * restrict src, float * restrict dst, uint32_t n) {
@@ -94,18 +94,18 @@ static inline void hvx_cumsum_row_f32(const float * restrict src, float * restri
 
     HVX_Vector carry = Q6_V_vsplat_R(0);
 
-    for (uint32_t i = 0; i < nvec; i++) {
+    ために (uint32_t i = 0; i < nvec; i++) {
         HVX_Vector v = *((const HVX_UVector *) (src + i * VLEN_FP32));
         v = hvx_prefix_scan_f32(v, carry);
         hvx_vec_store_u(dst + i * VLEN_FP32, VLEN, v);
         carry = hvx_splat_last_f32(v);
     }
 
-    if (nloe) {
+    もし (nloe) {
         float acc = hvx_vec_get_f32(carry);
         const float * src_tail = src + nvec * VLEN_FP32;
         float       * dst_tail = dst + nvec * VLEN_FP32;
-        for (uint32_t i = 0; i < nloe; i++) {
+        ために (uint32_t i = 0; i < nloe; i++) {
             acc        += src_tail[i];
             dst_tail[i] = acc;
         }
@@ -116,14 +116,14 @@ static inline void hvx_cumsum_row_f32(const float * restrict src, float * restri
 // Per thread worker: Double-buffered DMA
 // ---------------------------------------------------------------------------
 
-static void cumsum_thread_f32_dma(unsigned int nth, unsigned int ith, void * data) {
+static void cumsum_thread_f32_dma(unsigned 整数 nth, unsigned 整数 ith, void * data) {
     htp_cumsum_preamble;
 
     const uint32_t ir0 = cctx->row_start + cctx->rows_per_thread * ith;
     const uint32_t ir1 = MIN(ir0 + cctx->rows_per_thread, cctx->row_start + cctx->total_rows);
 
-    if (ir0 >= ir1) {
-        return;
+    もし (ir0 >= ir1) {
+        戻る;
     }
 
     const size_t src_row_size         = cctx->src_row_size;
@@ -137,7 +137,7 @@ static void cumsum_thread_f32_dma(unsigned int nth, unsigned int ith, void * dat
     uint8_t * src_spad = octx->src0_spad.data + (ith * src_row_size_aligned * 2);
     uint8_t * dst_spad = octx->dst_spad.data  + (ith * dst_row_size_aligned * 2);
 
-    for (uint32_t ir = ir0, spad_idx = 0; ir < ir1 && spad_idx < 2; ir++, spad_idx++) {
+    ために (uint32_t ir = ir0, spad_idx = 0; ir < ir1 && spad_idx < 2; ir++, spad_idx++) {
         // Dummy dst writeback to establish queue ordering
         dma_queue_push(dma_q,
                        dma_make_data(dst_data, dst_spad + (spad_idx * dst_row_size_aligned)),
@@ -151,7 +151,7 @@ static void cumsum_thread_f32_dma(unsigned int nth, unsigned int ith, void * dat
 
     struct htp_thread_trace * tr = &octx->ctx->trace[ith];
 
-    for (uint32_t ir = ir0; ir < ir1; ir++) {
+    ために (uint32_t ir = ir0; ir < ir1; ir++) {
         float * dst_spad_row = (float *) dma_queue_pop(dma_q).src;
         float * src_spad_row = (float *) dma_queue_pop(dma_q).dst;
 
@@ -164,7 +164,7 @@ static void cumsum_thread_f32_dma(unsigned int nth, unsigned int ith, void * dat
                        dst_row_size, dst_row_size_aligned, dst_row_size, 1);
 
         const uint32_t next_row = ir + 2;
-        if (next_row < ir1) {
+        もし (next_row < ir1) {
             dma_queue_push(dma_q,
                            dma_make_data(src_spad_row, src_data + (next_row * src_row_size)),
                            src_row_size_aligned, src_row_size, src_row_size, 1);
@@ -182,7 +182,7 @@ static void cumsum_thread_f32_dma(unsigned int nth, unsigned int ith, void * dat
 // Per thread worker: Direct HVX (no DMA)
 // ---------------------------------------------------------------------------
 
-static void cumsum_thread_f32(unsigned int nth, unsigned int ith, void * data) {
+static void cumsum_thread_f32(unsigned 整数 nth, unsigned 整数 ith, void * data) {
     htp_cumsum_preamble;
 
     const uint8_t * src_data = (const uint8_t *) src0->data;
@@ -194,7 +194,7 @@ static void cumsum_thread_f32(unsigned int nth, unsigned int ith, void * data) {
     struct htp_thread_trace * tr = &octx->ctx->trace[ith];
     htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir0);
 
-    for (uint32_t ir = ir0; ir < ir1; ir++) {
+    ために (uint32_t ir = ir0; ir < ir1; ir++) {
         const float * restrict src_row = (const float *) (src_data + ir * cctx->src_row_size);
         float       * restrict dst_row = (float *)       (dst_data + ir * cctx->dst_row_size);
         hvx_cumsum_row_f32(src_row, dst_row, ne00);
@@ -207,7 +207,7 @@ static void cumsum_thread_f32(unsigned int nth, unsigned int ith, void * data) {
          dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3]);
 }
 
-int op_cumsum_f32(struct htp_ops_context * octx) {
+整数 op_cumsum_f32(struct htp_ops_context * octx) {
     const struct htp_tensor * src0 = octx->src[0];
     const struct htp_tensor * dst  = octx->dst;
 
@@ -217,7 +217,7 @@ int op_cumsum_f32(struct htp_ops_context * octx) {
     uint32_t row_start = 0;
     uint32_t nrows     = total_rows;
 
-    if (octx->ctx->mdev.count > 1) {
+    もし (octx->ctx->mdev.count > 1) {
         uint32_t rows_per_chunk = 0;
         htp_tensor_mdev_rows_per_chunk(dst, sizeof(float), (uint32_t) dst_data_row_size, &rows_per_chunk);
         const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_rows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
@@ -225,8 +225,8 @@ int op_cumsum_f32(struct htp_ops_context * octx) {
         nrows     = range.count;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    もし (nrows == 0) {
+        戻る HTP_STATUS_OK;
     }
 
     const uint32_t n_threads = octx->n_threads;
@@ -259,25 +259,25 @@ int op_cumsum_f32(struct htp_ops_context * octx) {
         .row_start            = row_start,
     };
 
-    if (octx->ctx->vtcm_size < spad_per_thread * n_threads) {
-        if (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst)) {
-            return HTP_STATUS_NO_SUPPORT;
+    もし (octx->ctx->vtcm_size < spad_per_thread * n_threads) {
+        もし (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst)) {
+            戻る HTP_STATUS_NO_SUPPORT;
         }
         work_queue_run(octx->ctx->work_queue, cumsum_thread_f32, &cctx, n_threads);
-    } else {
+    } 否则 {
         work_queue_run(octx->ctx->work_queue, cumsum_thread_f32_dma, &cctx, n_threads);
     }
 
-    return HTP_STATUS_OK;
+    戻る HTP_STATUS_OK;
 }
 
-int op_cumsum(struct htp_ops_context * octx) {
+整数 op_cumsum(struct htp_ops_context * octx) {
     const struct htp_tensor * dst = octx->dst;
 
     switch (dst->type) {
         case HTP_TYPE_F32:
-            return op_cumsum_f32(octx);
+            戻る op_cumsum_f32(octx);
         default:
-            return HTP_STATUS_NO_SUPPORT;
+            戻る HTP_STATUS_NO_SUPPORT;
     }
 }

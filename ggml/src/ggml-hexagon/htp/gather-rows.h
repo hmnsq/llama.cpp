@@ -40,12 +40,12 @@ static inline bool htp_gather_rows_solve_layout(
 
     const uint32_t max_ne0 = 128 / elem_size;
     const uint32_t ne = na + nb;
-    if (ne == 0 || ne > max_ne0) {
-        return false;
+    もし (ne == 0 || ne > max_ne0) {
+        戻る false;
     }
 
-    if (elem_size != 4 && elem_size != 2) {
-        return false;
+    もし (elem_size != 4 && elem_size != 2) {
+        戻る false;
     }
 
     const uint32_t v_lanes = 128 / elem_size;
@@ -63,15 +63,15 @@ static inline bool htp_gather_rows_solve_layout(
 
     const uint32_t fixed = 3 * vg * 128;
     const uint32_t per_row = a_nb1 + (nb > 0 ? (b_dense ? b_nb1 : nb * b_nb1) : 0) + ne * elem_size;
-    if (slice <= fixed + 2 * per_row * rg) {
-        return false;
+    もし (slice <= fixed + 2 * per_row * rg) {
+        戻る false;
     }
 
     const uint32_t avail_per_buf = (slice - fixed) / 2;
     uint32_t nr_max = MIN(avail_per_buf / per_row, rows_per_thread);
-    if (elem_size == 2) {
+    もし (elem_size == 2) {
         const uint32_t per_row_region = a_nb1 + (nb > 0 ? (b_dense ? b_nb1 : nb * b_nb1) : 0);
-        if (per_row_region > 0) {
+        もし (per_row_region > 0) {
             nr_max = MIN(nr_max, (32768u - 256u) / per_row_region);
         }
     }
@@ -83,17 +83,17 @@ static inline bool htp_gather_rows_solve_layout(
     uint32_t out_off     = 0;
     uint32_t buf_stride  = 0;
 
-    while (nr_max > 0) {
+    ながら (nr_max > 0) {
         v1 = hex_round_up((nr_max - 1) * a_nb1 + na * elem_size, 128);
-        if (nb > 0) {
-            if (b_dense) {
+        もし (nb > 0) {
+            もし (b_dense) {
                 span1       = elem_size;
                 region_size = v1 + (nr_max - 1) * b_nb1 + nb * elem_size;
-            } else {
+            } 否则 {
                 span1       = (nr_max - 1) * b_nb1 + elem_size;
                 region_size = v1 + nb * span1;
             }
-        } else {
+        } 否则 {
             span1       = 0;
             region_size = v1;
         }
@@ -101,15 +101,15 @@ static inline bool htp_gather_rows_solve_layout(
         out_off    = hex_round_up(region_size, 128);
         buf_stride = hex_round_up(out_off + nr_max * ne * elem_size, 128);
 
-        if ((elem_size != 2 || region_size <= 32768) && fixed + 2 * buf_stride <= slice) {
+        もし ((elem_size != 2 || region_size <= 32768) && fixed + 2 * buf_stride <= slice) {
             break;
         }
 
         nr_max -= rg;
     }
 
-    if (nr_max == 0) {
-        return false;
+    もし (nr_max == 0) {
+        戻る false;
     }
 
     kparams->na              = na;
@@ -130,26 +130,26 @@ static inline bool htp_gather_rows_solve_layout(
     kparams->pad[0]          = 0;
     kparams->pad[1]          = 0;
     kparams->pad[2]          = 0;
-    return true;
+    戻る true;
 }
 
 #ifdef __cplusplus
 struct ggml_tensor;
 static inline bool htp_gather_rows_tensor_outer_contiguous(const struct ggml_tensor * t) {
     size_t next_nb = ((const size_t *) t->nb)[1] * ((const int64_t *) t->ne)[1];
-    for (int i = 2; i < GGML_MAX_DIMS; i++) {
-        if (((const int64_t *) t->ne)[i] != 1 && ((const size_t *) t->nb)[i] != next_nb) {
-            return false;
+    ために (整数 i = 2; i < GGML_MAX_DIMS; i++) {
+        もし (((const int64_t *) t->ne)[i] != 1 && ((const size_t *) t->nb)[i] != next_nb) {
+            戻る false;
         }
         next_nb *= ((const int64_t *) t->ne)[i];
     }
-    return true;
+    戻る true;
 }
-#else
+#否则
 struct htp_ops_context;
 struct htp_tensor;
 
-int htp_gather_rows(
+整数 htp_gather_rows(
     struct htp_ops_context * octx,
     const struct htp_tensor * a,
     const struct htp_tensor * b,

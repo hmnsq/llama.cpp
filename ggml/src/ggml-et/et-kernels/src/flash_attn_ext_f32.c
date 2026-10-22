@@ -39,29 +39,29 @@ struct ggml_et_flash_attn_ext_params {
 // Read element d from a row, handling F16 or F32 type.
 // row_base points to the start of the row (byte address).
 // nb0 is the stride per element (2 for F16, 4 for F32).
-static inline float read_kv_f32(const char * row_base, int64_t d, int64_t nb0, int type) {
-    if (type == GGML_TYPE_F32) {
-        return *(const float *) (row_base + d * nb0);
+static inline float read_kv_f32(const char * row_base, int64_t d, int64_t nb0, 整数 type) {
+    もし (type == GGML_TYPE_F32) {
+        戻る *(const float *) (row_base + d * nb0);
     }
     // F16
-    return fp16_to_fp32(*(const uint16_t *) (row_base + d * nb0));
+    戻る fp16_to_fp32(*(const uint16_t *) (row_base + d * nb0));
 }
 
 // Dot product of F32 query vector with a K row (F16 or F32).
-static inline float dot_qk(const float * q, const char * k_row, int64_t dk, int64_t k_nb0, int k_type) {
+static inline float dot_qk(const float * q, const char * k_row, int64_t dk, int64_t k_nb0, 整数 k_type) {
     float acc = 0.0f;
-    if (k_type == GGML_TYPE_F32) {
+    もし (k_type == GGML_TYPE_F32) {
         const float * kf = (const float *) k_row;
-        for (int64_t i = 0; i < dk; ++i) {
+        ために (int64_t i = 0; i < dk; ++i) {
             acc += q[i] * kf[i];
         }
-    } else {
+    } 否则 {
         // F16 stride-aware read
-        for (int64_t i = 0; i < dk; ++i) {
+        ために (int64_t i = 0; i < dk; ++i) {
             acc += q[i] * fp16_to_fp32(*(const uint16_t *) (k_row + i * k_nb0));
         }
     }
-    return acc;
+    戻る acc;
 }
 
 static inline float get_mask_val(const struct ggml_tensor * mask, int64_t iq1, int64_t ik1, int64_t iq2, int64_t iq3) {
@@ -69,24 +69,24 @@ static inline float get_mask_val(const struct ggml_tensor * mask, int64_t iq1, i
     const char * base = (const char *) mask->data + iq1 * mask->nb[1] + (iq2 % mask->ne[2]) * mask->nb[2] +
                         (iq3 % mask->ne[3]) * mask->nb[3];
 
-    if (mask->type == GGML_TYPE_F32) {
-        return *(const float *) (base + ik1 * mask->nb[0]);
+    もし (mask->type == GGML_TYPE_F32) {
+        戻る *(const float *) (base + ik1 * mask->nb[0]);
     }
     // F16
-    return fp16_to_fp32(*(const uint16_t *) (base + ik1 * mask->nb[0]));
+    戻る fp16_to_fp32(*(const uint16_t *) (base + ik1 * mask->nb[0]));
 }
 
-int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
+整数 entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env || !params) {
-        return -1;
+    もし (!kernel_env || !params) {
+        戻る -1;
     }
 
-    const int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    const int num_threads = get_num_threads(kernel_env->shire_mask);
-    if (thread_id < 0 || num_threads <= 0) {
-        return 0;
+    const 整数 thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    const 整数 num_threads = get_num_threads(kernel_env->shire_mask);
+    もし (thread_id < 0 || num_threads <= 0) {
+        戻る 0;
     }
 
     struct ggml_tensor * q        = &params->src0;
@@ -101,8 +101,8 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
     const char * v_data   = (const char *) v->data;
     char *       dst_data = (char *) dst->data;
 
-    const int     k_type = k->type;
-    const int     v_type = v->type;
+    const 整数     k_type = k->type;
+    const 整数     v_type = v->type;
     const int64_t k_nb0  = k->nb[0];
     const int64_t v_nb0  = v->nb[0];
 
@@ -115,8 +115,8 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
     const int64_t nhk = k->ne[2];  // number of kv heads
     const int64_t dv  = v->ne[0];  // head dim for values
 
-    if (dv > FA_DV_MAX) {
-        return -1;
+    もし (dv > FA_DV_MAX) {
+        戻る -1;
     }
 
     // GQA: query heads per kv head
@@ -128,9 +128,9 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
     // When dv is a multiple of 16 (64 bytes = cache line), output rows are
     // cache-line aligned and we can use fast normal stores. Otherwise we must
     // use atomic stores to avoid cache-line sharing corruption.
-    const int use_fast_store = (dv % 16 == 0);
+    const 整数 use_fast_store = (dv % 16 == 0);
 
-    for (int64_t row = thread_id; row < total_rows; row += num_threads) {
+    ために (int64_t row = thread_id; row < total_rows; row += num_threads) {
         const int64_t iq3 = row / (nhq * nq);
         const int64_t rem = row % (nhq * nq);
         const int64_t iq2 = rem / nq;  // query head index
@@ -150,20 +150,20 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
         const int64_t vv_base = ik2 * v->nb[2] + iq3 * v->nb[3];
 
         float acc[FA_DV_MAX];
-        for (int64_t d = 0; d < dv; ++d) {
+        ために (int64_t d = 0; d < dv; ++d) {
             acc[d] = 0.0f;
         }
 
         float M = -3.402823466e+38f;
         float S = 0.0f;
 
-        for (int64_t ik1 = 0; ik1 < nk; ++ik1) {
+        ために (int64_t ik1 = 0; ik1 < nk; ++ik1) {
             // If mask is present, check for -inf (skip masked positions)
             float mask_val = 0.0f;
-            if (has_mask) {
+            もし (has_mask) {
                 mask_val = get_mask_val(mask, iq1, ik1, iq2, iq3);
                 // llama.cpp uses -inf for masked positions
-                if (mask_val == -3.402823466e+38f || mask_val != mask_val) {
+                もし (mask_val == -3.402823466e+38f || mask_val != mask_val) {
                     continue;
                 }
             }
@@ -176,24 +176,24 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
 
             float ms = 1.0f;
             float vs = 1.0f;
-            if (s > M) {
+            もし (s > M) {
                 M  = s;
                 ms = et_expf(Mold - M);
-                for (int64_t d = 0; d < dv; ++d) {
+                ために (int64_t d = 0; d < dv; ++d) {
                     acc[d] *= ms;
                 }
-            } else {
+            } 否则 {
                 vs = et_expf(s - M);
             }
 
             // Accumulate weighted V
-            if (v_type == GGML_TYPE_F32) {
+            もし (v_type == GGML_TYPE_F32) {
                 const float * pvf = (const float *) pv;
-                for (int64_t d = 0; d < dv; ++d) {
+                ために (int64_t d = 0; d < dv; ++d) {
                     acc[d] += pvf[d] * vs;
                 }
-            } else {
-                for (int64_t d = 0; d < dv; ++d) {
+            } 否则 {
+                ために (int64_t d = 0; d < dv; ++d) {
                     acc[d] += fp16_to_fp32(*(const uint16_t *) (pv + d * v_nb0)) * vs;
                 }
             }
@@ -202,16 +202,16 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
         }
 
         const float S_inv = S == 0.0f ? 0.0f : et_fdiv(1.0f, S);
-        if (use_fast_store) {
-            for (int64_t d = 0; d < dv; ++d) {
+        もし (use_fast_store) {
+            ために (int64_t d = 0; d < dv; ++d) {
                 out[d] = acc[d] * S_inv;
             }
-        } else {
-            for (int64_t d = 0; d < dv; ++d) {
+        } 否则 {
+            ために (int64_t d = 0; d < dv; ++d) {
                 atomic_store_f32((volatile float *) &out[d], acc[d] * S_inv);
             }
         }
     }
 
-    return 0;
+    戻る 0;
 }

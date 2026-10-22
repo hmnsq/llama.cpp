@@ -27,17 +27,17 @@ static inline float et_fdiv(float a, float b) {
         : [temp] "=&r"(temp), [d] "=&f"(d)
         : [a] "f"(a), [b] "f"(b));
 
-    return d;
+    戻る d;
 }
 
 // Power function using ET hardware vector instructions
 // Implements pow(base, exp) = exp(exp * ln(base)) using FLOG.PS and FEXP.PS
 static inline float et_powf(float base, float exp) {
     // Handle special cases
-    if (base <= 0.0f) {
-        if (base == 0.0f) {
-            if (exp > 0.0f) {
-                return 0.0f;
+    もし (base <= 0.0f) {
+        もし (base == 0.0f) {
+            もし (exp > 0.0f) {
+                戻る 0.0f;
             }
 
             // For exp <= 0, return +infinity (IEEE 754: sign=0, exp=0xFF, mantissa=0)
@@ -46,7 +46,7 @@ static inline float et_powf(float base, float exp) {
                 uint32_t i;
             } inf = { .i = 0x7F800000 };
 
-            return inf.f;
+            戻る inf.f;
         }
 
         // For negative base, return NaN (IEEE 754: exp=0xFF, mantissa!=0)
@@ -55,16 +55,16 @@ static inline float et_powf(float base, float exp) {
             uint32_t i;
         } nan = { .i = 0x7FC00000 };
 
-        return nan.f;
+        戻る nan.f;
     }
-    if (base == 1.0f) {
-        return 1.0f;
+    もし (base == 1.0f) {
+        戻る 1.0f;
     }
-    if (exp == 0.0f) {
-        return 1.0f;
+    もし (exp == 0.0f) {
+        戻る 1.0f;
     }
-    if (exp == 1.0f) {
-        return base;
+    もし (exp == 1.0f) {
+        戻る base;
     }
 
     // Use ET hardware instructions following DNN library pattern:
@@ -82,32 +82,32 @@ static inline float et_powf(float base, float exp) {
         : [temp] "=&r"(temp), [result] "=&f"(result)
         : [base] "f"(base), [exp] "f"(exp));
 
-    return result;
+    戻る result;
 }
 
 // Natural logarithm.
 static inline float et_logf(float x) {
     // Handle special cases
-    if (x < 0.0f) {
+    もし (x < 0.0f) {
         // Return NaN for negative input
         union {
             float    f;
             uint32_t i;
         } nan = { .i = 0x7FC00000 };
 
-        return nan.f;
+        戻る nan.f;
     }
-    if (x == 0.0f) {
+    もし (x == 0.0f) {
         // Return -infinity for log(0)
         union {
             float    f;
             uint32_t i;
         } inf = { .i = 0xFF800000 };
 
-        return inf.f;
+        戻る inf.f;
     }
-    if (x == 1.0f) {
-        return 0.0f;
+    もし (x == 1.0f) {
+        戻る 0.0f;
     }
 
     float         log2_result;
@@ -123,26 +123,26 @@ static inline float et_logf(float x) {
 
     // Convert log2 to natural log: ln(x) = log2(x) * ln(2)
     const float ln2 = 0.69314718055994530942f;
-    return log2_result * ln2;
+    戻る log2_result * ln2;
 }
 
 // Square root function implemented as et_powf(x, 0.5)
 static inline float et_sqrtf(float x) {
     // Handle special cases
-    if (x < 0.0f) {
+    もし (x < 0.0f) {
         // Return NaN for negative input (IEEE 754: exp=0xFF, mantissa!=0)
         union {
             float    f;
             uint32_t i;
         } nan = { .i = 0x7FC00000 };
 
-        return nan.f;
+        戻る nan.f;
     }
-    if (x == 0.0f) {
-        return 0.0f;
+    もし (x == 0.0f) {
+        戻る 0.0f;
     }
 
-    return et_powf(x, 0.5f);
+    戻る et_powf(x, 0.5f);
 }
 
 // Base-2 exponential: returns 2^x using the ET hardware FEXP.PS instruction.
@@ -159,25 +159,25 @@ static inline float __attribute__((always_inline)) et_exp2f(float x) {
         "mova.m.x  %[ms]             \n\t"
         : [ms] "=&r"(old_mask), [out] "=&f"(out)
         : [x] "f"(x));
-    return out;
+    戻る out;
 }
 
 // Exponential function using ET hardware FEXP.PS instruction
 // Note: FEXP.PS computes 2^x, so we need to convert: exp(x) = 2^(x * log2(e))
 static inline float et_expf(float x) {
     // Handle special cases
-    if (x > 88.0f) {
+    もし (x > 88.0f) {
         // For x > 88, exp(x) would overflow, return +infinity
         union {
             float    f;
             uint32_t i;
         } inf = { .i = 0x7F800000 };
 
-        return inf.f;
+        戻る inf.f;
     }
-    if (x < -87.0f) {
+    もし (x < -87.0f) {
         // For x < -87, exp(x) is essentially 0
-        return 0.0f;
+        戻る 0.0f;
     }
 
     // Convert to base-2 exponent: x * log2(e)
@@ -196,7 +196,7 @@ static inline float et_expf(float x) {
         : [temp] "=&r"(temp), [result] "=&f"(result)
         : [x_log2e] "f"(x_log2e));
 
-    return result;
+    戻る result;
 }
 
 //******************************************************************************
@@ -211,10 +211,10 @@ static inline float et_sinf(float x) {
     const float two_pi    = 6.28318530717958647693f;
     const float pi_over_2 = 1.57079632679489661923f;
 
-    if (x > pi || x < -pi) {
+    もし (x > pi || x < -pi) {
         float cycles = x * et_fdiv(1.0f, two_pi);
-        int   n      = (int) cycles;
-        if (x < 0.0f) {
+        整数   n      = (整数) cycles;
+        もし (x < 0.0f) {
             n--;  // Floor for negative
         }
         x = x - (float) n * two_pi;
@@ -222,10 +222,10 @@ static inline float et_sinf(float x) {
 
     // sin(x) = sin(π - x) for x in [π/2, π]
     // sin(x) = -sin(-π - x) for x in [-π, -π/2]
-    int negate = 0;
-    if (x > pi_over_2) {
+    整数 negate = 0;
+    もし (x > pi_over_2) {
         x = pi - x;
-    } else if (x < -pi_over_2) {
+    } 否则 もし (x < -pi_over_2) {
         x      = -pi - x;
         negate = 1;
     }
@@ -244,13 +244,13 @@ static inline float et_sinf(float x) {
                    + x9 * et_fdiv(1.0f, 362880.0f)      // x^9/9!
                    - x11 * et_fdiv(1.0f, 39916800.0f);  // x^11/11!
 
-    return negate ? -result : result;
+    戻る negate ? -result : result;
 }
 
 // Cosine function using identity cos(x) = sin(x + π/2)
 static inline float et_cosf(float x) {
     const float pi_over_2 = 1.57079632679489661923f;
-    return et_sinf(x + pi_over_2);
+    戻る et_sinf(x + pi_over_2);
 }
 
 //******************************************************************************
@@ -273,7 +273,7 @@ static inline float fp16_to_fp32(uint16_t h) {
         : [temp] "=&r"(temp), [result] "=&f"(result)
         : [raw] "r"(raw));
 
-    return result;
+    戻る result;
 }
 
 // Convert FP32 (single precision) to FP16 (IEEE 754 half precision)
@@ -293,7 +293,7 @@ static inline uint16_t fp32_to_fp16(float f) {
     // Extract lower 16 bits containing the FP16 value
     // The instruction zero-extends to 32 bits, so upper 16 bits are 0
     uint32_t result_bits = *(uint32_t *) &result_f;
-    return (uint16_t) result_bits;
+    戻る (uint16_t) result_bits;
 }
 
 #endif  // MATH_FP_H

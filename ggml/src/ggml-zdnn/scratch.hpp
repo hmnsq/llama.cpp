@@ -35,7 +35,7 @@ struct ggml_zdnn_pool_alloc {
     }
 
     ~ggml_zdnn_pool_alloc() {
-        if (ptr != nullptr) {
+        もし (ptr != nullptr) {
             pool->free(ptr, actual_size);
         }
     }
@@ -45,11 +45,11 @@ struct ggml_zdnn_pool_alloc {
         GGML_ASSERT(ptr == nullptr);
         this->pool = &pool;
         ptr = (T *) pool.alloc(size * sizeof(T), &actual_size);
-        return ptr;
+        戻る ptr;
     }
 
     T * get() {
-        return ptr;
+        戻る ptr;
     }
 
     ggml_zdnn_pool_alloc(const ggml_zdnn_pool_alloc &) = delete;

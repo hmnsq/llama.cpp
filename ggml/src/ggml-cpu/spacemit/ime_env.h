@@ -31,10 +31,10 @@ struct spine_core_info {
 
 struct spine_env_info {
     std::vector<spine_core_info> core_info_list;
-    std::vector<int>             perfer_core_ids;
-    int                          aicpu_id_offset{ 0 };
-    int                          num_cores{ 0 };
-    int                          num_perfer_cores{ 0 };
+    std::vector<整数>             perfer_core_ids;
+    整数                          aicpu_id_offset{ 0 };
+    整数                          num_cores{ 0 };
+    整数                          num_perfer_cores{ 0 };
     spine_core_arch_id           perfer_core_arch_id{ spine_core_arch_id::core_arch_none };
     bool                         exclude_main_thread{ false };
     bool                         use_ime2{ false };

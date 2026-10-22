@@ -13,8 +13,8 @@ static void opt_step_adamw_f32_kernel(
     const sycl::nd_item<1> & item) {
 
     const int64_t i = (int64_t) item.get_global_id(0);
-    if (i >= k) {
-        return;
+    もし (i >= k) {
+        戻る;
     }
 
     const float alpha  = pars[0];
@@ -47,8 +47,8 @@ static void opt_step_sgd_f32_kernel(
     const sycl::nd_item<1> & item) {
 
     const int64_t i = (int64_t) item.get_global_id(0);
-    if (i >= k) {
-        return;
+    もし (i >= k) {
+        戻る;
     }
 
     x[i] = x[i] * (1.0f - pars[0] * pars[1]) - pars[0] * g[i];

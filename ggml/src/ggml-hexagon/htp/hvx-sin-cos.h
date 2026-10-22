@@ -65,14 +65,14 @@ static inline HVX_Vector hvx_vec_cos_f32(HVX_Vector x) {
     HVX_Vector vcos;
     HVX_Vector vsin;
     hvx_vec_sincos_f32(x, &vcos, &vsin);
-    return vcos;
+    戻る vcos;
 }
 
 static inline HVX_Vector hvx_vec_sin_f32(HVX_Vector x) {
     HVX_Vector vcos;
     HVX_Vector vsin;
     hvx_vec_sincos_f32(x, &vcos, &vsin);
-    return vsin;
+    戻る vsin;
 }
 
 #endif /* HVX_SIN_COS_H */

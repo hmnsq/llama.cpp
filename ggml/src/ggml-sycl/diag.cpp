@@ -10,8 +10,8 @@ static void diag_kernel(T * __restrict__ dst, const T * __restrict__ src,
                         const int64_t total_elements,
                         const sycl::nd_item<1> & item) {
     const int64_t i = item.get_global_id(0);
-    if (i >= total_elements) {
-        return;
+    もし (i >= total_elements) {
+        戻る;
     }
 
     const int64_t i0 = i % ne0;
@@ -21,10 +21,10 @@ static void diag_kernel(T * __restrict__ dst, const T * __restrict__ src,
 
     const int64_t dst_idx = ((i3 * ne2 + i2) * ne1 + i1) * ne0 + i0;
 
-    if (i0 == i1) {
+    もし (i0 == i1) {
         const int64_t batch_idx = i3 * ne2 + i2;
         dst[dst_idx] = src[batch_idx * ne0 + i0];
-    } else {
+    } 否则 {
         dst[dst_idx] = T(0);
     }
 

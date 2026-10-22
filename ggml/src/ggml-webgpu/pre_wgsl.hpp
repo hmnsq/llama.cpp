@@ -26,40 +26,40 @@ struct Options {
 //==============================================================
 static std::string trim(const std::string & s) {
     size_t a = 0;
-    while (a < s.size() && std::isspace((unsigned char) s[a])) {
+    ながら (a < s.size() && std::isspace((unsigned char) s[a])) {
         a++;
     }
     size_t b = s.size();
-    while (b > a && std::isspace((unsigned char) s[b - 1])) {
+    ながら (b > a && std::isspace((unsigned char) s[b - 1])) {
         b--;
     }
-    return s.substr(a, b - a);
+    戻る s.substr(a, b - a);
 }
 
 static std::string trim_value(std::istream & is) {
     std::ostringstream ss;
     ss << is.rdbuf();
-    return trim(ss.str());
+    戻る trim(ss.str());
 }
 
 static bool isIdentChar(char c) {
-    return std::isalnum(static_cast<unsigned char>(c)) || c == '_';
+    戻る std::isalnum(static_cast<unsigned char>(c)) || c == '_';
 }
 
 static bool endsWithContinuation(const std::string & line) {
     size_t i = line.size();
-    while (i > 0 && std::isspace((unsigned char) line[i - 1])) {
+    ながら (i > 0 && std::isspace((unsigned char) line[i - 1])) {
         i--;
     }
-    return i > 0 && line[i - 1] == '\\';
+    戻る i > 0 && line[i - 1] == '\\';
 }
 
 static void stripContinuation(std::string & line) {
     size_t i = line.size();
-    while (i > 0 && std::isspace((unsigned char) line[i - 1])) {
+    ながら (i > 0 && std::isspace((unsigned char) line[i - 1])) {
         i--;
     }
-    if (i > 0 && line[i - 1] == '\\') {
+    もし (i > 0 && line[i - 1] == '\\') {
         line.erase(i - 1);
     }
 }
@@ -71,26 +71,26 @@ static std::string expandMacrosRecursiveInternal(const std::string &            
 static std::string expandMacroValue(const std::string &                                  name,
                                     const std::unordered_map<std::string, std::string> & macros,
                                     std::unordered_set<std::string> &                    visiting) {
-    if (visiting.count(name)) {
+    もし (visiting.count(name)) {
         throw std::runtime_error("Recursive macro: " + name);
     }
     visiting.insert(name);
 
     auto it = macros.find(name);
-    if (it == macros.end()) {
+    もし (it == macros.end()) {
         visiting.erase(name);
-        return name;
+        戻る name;
     }
 
     const std::string & value = it->second;
-    if (value.empty()) {
+    もし (value.empty()) {
         visiting.erase(name);
-        return "";
+        戻る "";
     }
 
     std::string expanded = expandMacrosRecursiveInternal(value, macros, visiting);
     visiting.erase(name);
-    return expanded;
+    戻る expanded;
 }
 
 static std::string expandMacrosRecursiveInternal(const std::string &                                  line,
@@ -100,33 +100,33 @@ static std::string expandMacrosRecursiveInternal(const std::string &            
     result.reserve(line.size());
 
     size_t i = 0;
-    while (i < line.size()) {
-        if (isIdentChar(line[i])) {
+    ながら (i < line.size()) {
+        もし (isIdentChar(line[i])) {
             size_t start = i;
-            while (i < line.size() && isIdentChar(line[i])) {
+            ながら (i < line.size() && isIdentChar(line[i])) {
                 i++;
             }
             std::string token = line.substr(start, i - start);
 
             auto it = macros.find(token);
-            if (it != macros.end()) {
+            もし (it != macros.end()) {
                 result += expandMacroValue(token, macros, visiting);
-            } else {
+            } 否则 {
                 result += token;
             }
-        } else {
+        } 否则 {
             result += line[i];
             i++;
         }
     }
 
-    return result;
+    戻る result;
 }
 
 static std::string expandMacrosRecursive(const std::string &                                  line,
                                          const std::unordered_map<std::string, std::string> & macros) {
     std::unordered_set<std::string> visiting;
-    return expandMacrosRecursiveInternal(line, macros, visiting);
+    戻る expandMacrosRecursiveInternal(line, macros, visiting);
 }
 
 //==============================================================
@@ -145,57 +145,57 @@ class ExprLexer {
 
     Tok next() {
         skipWS();
-        if (pos >= src.size()) {
-            return { END, "" };
+        もし (pos >= src.size()) {
+            戻る { END, "" };
         }
 
         char c = src[pos];
 
         // number
-        if (std::isdigit((unsigned char) c)) {
+        もし (std::isdigit((unsigned char) c)) {
             size_t start = pos;
-            while (pos < src.size() && std::isdigit((unsigned char) src[pos])) {
+            ながら (pos < src.size() && std::isdigit((unsigned char) src[pos])) {
                 pos++;
             }
-            return { NUMBER, std::string(src.substr(start, pos - start)) };
+            戻る { NUMBER, std::string(src.substr(start, pos - start)) };
         }
 
         // identifier
-        if (std::isalpha((unsigned char) c) || c == '_') {
+        もし (std::isalpha((unsigned char) c) || c == '_') {
             size_t start = pos;
-            while (pos < src.size() && (std::isalnum((unsigned char) src[pos]) || src[pos] == '_')) {
+            ながら (pos < src.size() && (std::isalnum((unsigned char) src[pos]) || src[pos] == '_')) {
                 pos++;
             }
-            return { IDENT, std::string(src.substr(start, pos - start)) };
+            戻る { IDENT, std::string(src.substr(start, pos - start)) };
         }
 
-        if (c == '(') {
+        もし (c == '(') {
             pos++;
-            return { LPAREN, "(" };
+            戻る { LPAREN, "(" };
         }
-        if (c == ')') {
+        もし (c == ')') {
             pos++;
-            return { RPAREN, ")" };
+            戻る { RPAREN, ")" };
         }
 
         // multi-char operators
         static const char * two_ops[] = { "==", "!=", "<=", ">=", "&&", "||", "<<", ">>" };
-        for (auto op : two_ops) {
-            if (src.substr(pos, 2) == op) {
+        ために (auto op : two_ops) {
+            もし (src.substr(pos, 2) == op) {
                 pos += 2;
-                return { OP, std::string(op) };
+                戻る { OP, std::string(op) };
             }
         }
 
         // single-char operators
-        if (std::string("+-*/%<>!").find(c) != std::string::npos) {
+        もし (std::string("+-*/%<>!").find(c) != std::string::npos) {
             pos++;
-            return { OP, std::string(1, c) };
+            戻る { OP, std::string(1, c) };
         }
 
         // unexpected
         pos++;
-        return { END, "" };
+        戻る { END, "" };
     }
 
   private:
@@ -203,7 +203,7 @@ class ExprLexer {
     size_t           pos;
 
     void skipWS() {
-        while (pos < src.size() && std::isspace((unsigned char) src[pos])) {
+        ながら (pos < src.size() && std::isspace((unsigned char) src[pos])) {
             pos++;
         }
     }
@@ -223,7 +223,7 @@ class ExprParser {
         advance();
     }
 
-    int parse() { return parseLogicalOr(); }
+    整数 parse() { 戻る parseLogicalOr(); }
 
   private:
     ExprLexer                                            lex;
@@ -234,210 +234,210 @@ class ExprParser {
     void advance() { tok = lex.next(); }
 
     bool acceptOp(const std::string & s) {
-        if (tok.kind == ExprLexer::OP && tok.text == s) {
+        もし (tok.kind == ExprLexer::OP && tok.text == s) {
             advance();
-            return true;
+            戻る true;
         }
-        return false;
+        戻る false;
     }
 
     bool acceptKind(ExprLexer::Kind k) {
-        if (tok.kind == k) {
+        もし (tok.kind == k) {
             advance();
-            return true;
+            戻る true;
         }
-        return false;
+        戻る false;
     }
 
-    int parseLogicalOr() {
-        int v = parseLogicalAnd();
-        while (acceptOp("||")) {
-            int rhs = parseLogicalAnd();
+    整数 parseLogicalOr() {
+        整数 v = parseLogicalAnd();
+        ながら (acceptOp("||")) {
+            整数 rhs = parseLogicalAnd();
             v       = (v || rhs);
         }
-        return v;
+        戻る v;
     }
 
-    int parseLogicalAnd() {
-        int v = parseEquality();
-        while (acceptOp("&&")) {
-            int rhs = parseEquality();
+    整数 parseLogicalAnd() {
+        整数 v = parseEquality();
+        ながら (acceptOp("&&")) {
+            整数 rhs = parseEquality();
             v       = (v && rhs);
         }
-        return v;
+        戻る v;
     }
 
-    int parseEquality() {
-        int v = parseRelational();
-        for (;;) {
-            if (acceptOp("==")) {
-                int rhs = parseRelational();
+    整数 parseEquality() {
+        整数 v = parseRelational();
+        ために (;;) {
+            もし (acceptOp("==")) {
+                整数 rhs = parseRelational();
                 v       = (v == rhs);
-            } else if (acceptOp("!=")) {
-                int rhs = parseRelational();
+            } 否则 もし (acceptOp("!=")) {
+                整数 rhs = parseRelational();
                 v       = (v != rhs);
-            } else {
+            } 否则 {
                 break;
             }
         }
-        return v;
+        戻る v;
     }
 
-    int parseRelational() {
-        int v = parseShift();
-        for (;;) {
-            if (acceptOp("<")) {
-                int rhs = parseShift();
+    整数 parseRelational() {
+        整数 v = parseShift();
+        ために (;;) {
+            もし (acceptOp("<")) {
+                整数 rhs = parseShift();
                 v       = (v < rhs);
-            } else if (acceptOp(">")) {
-                int rhs = parseShift();
+            } 否则 もし (acceptOp(">")) {
+                整数 rhs = parseShift();
                 v       = (v > rhs);
-            } else if (acceptOp("<=")) {
-                int rhs = parseShift();
+            } 否则 もし (acceptOp("<=")) {
+                整数 rhs = parseShift();
                 v       = (v <= rhs);
-            } else if (acceptOp(">=")) {
-                int rhs = parseShift();
+            } 否则 もし (acceptOp(">=")) {
+                整数 rhs = parseShift();
                 v       = (v >= rhs);
-            } else {
+            } 否则 {
                 break;
             }
         }
-        return v;
+        戻る v;
     }
 
-    int parseShift() {
-        int v = parseAdd();
-        for (;;) {
-            if (acceptOp("<<")) {
-                int rhs = parseAdd();
+    整数 parseShift() {
+        整数 v = parseAdd();
+        ために (;;) {
+            もし (acceptOp("<<")) {
+                整数 rhs = parseAdd();
                 v       = (v << rhs);
-            } else if (acceptOp(">>")) {
-                int rhs = parseAdd();
+            } 否则 もし (acceptOp(">>")) {
+                整数 rhs = parseAdd();
                 v       = (v >> rhs);
-            } else {
+            } 否则 {
                 break;
             }
         }
-        return v;
+        戻る v;
     }
 
-    int parseAdd() {
-        int v = parseMult();
-        for (;;) {
-            if (acceptOp("+")) {
-                int rhs = parseMult();
+    整数 parseAdd() {
+        整数 v = parseMult();
+        ために (;;) {
+            もし (acceptOp("+")) {
+                整数 rhs = parseMult();
                 v       = (v + rhs);
-            } else if (acceptOp("-")) {
-                int rhs = parseMult();
+            } 否则 もし (acceptOp("-")) {
+                整数 rhs = parseMult();
                 v       = (v - rhs);
-            } else {
+            } 否则 {
                 break;
             }
         }
-        return v;
+        戻る v;
     }
 
-    int parseMult() {
-        int v = parseUnary();
-        for (;;) {
-            if (acceptOp("*")) {
-                int rhs = parseUnary();
+    整数 parseMult() {
+        整数 v = parseUnary();
+        ために (;;) {
+            もし (acceptOp("*")) {
+                整数 rhs = parseUnary();
                 v       = (v * rhs);
-            } else if (acceptOp("/")) {
-                int rhs = parseUnary();
+            } 否则 もし (acceptOp("/")) {
+                整数 rhs = parseUnary();
                 v       = (rhs == 0 ? 0 : v / rhs);
-            } else if (acceptOp("%")) {
-                int rhs = parseUnary();
+            } 否则 もし (acceptOp("%")) {
+                整数 rhs = parseUnary();
                 v       = (rhs == 0 ? 0 : v % rhs);
-            } else {
+            } 否则 {
                 break;
             }
         }
-        return v;
+        戻る v;
     }
 
-    int parseUnary() {
-        if (acceptOp("!")) {
-            return !parseUnary();
+    整数 parseUnary() {
+        もし (acceptOp("!")) {
+            戻る !parseUnary();
         }
-        if (acceptOp("-")) {
-            return -parseUnary();
+        もし (acceptOp("-")) {
+            戻る -parseUnary();
         }
-        if (acceptOp("+")) {
-            return +parseUnary();
+        もし (acceptOp("+")) {
+            戻る +parseUnary();
         }
-        return parsePrimary();
+        戻る parsePrimary();
     }
 
-    int parsePrimary() {
+    整数 parsePrimary() {
         // '(' expr ')'
-        if (acceptKind(ExprLexer::LPAREN)) {
-            int v = parse();
-            if (!acceptKind(ExprLexer::RPAREN)) {
+        もし (acceptKind(ExprLexer::LPAREN)) {
+            整数 v = parse();
+            もし (!acceptKind(ExprLexer::RPAREN)) {
                 throw std::runtime_error("missing ')'");
             }
-            return v;
+            戻る v;
         }
 
         // number
-        if (tok.kind == ExprLexer::NUMBER) {
-            int v = std::stoi(tok.text);
+        もし (tok.kind == ExprLexer::NUMBER) {
+            整数 v = std::stoi(tok.text);
             advance();
-            return v;
+            戻る v;
         }
 
         // defined(identifier)
-        if (tok.kind == ExprLexer::IDENT && tok.text == "defined") {
+        もし (tok.kind == ExprLexer::IDENT && tok.text == "defined") {
             advance();
-            if (acceptKind(ExprLexer::LPAREN)) {
-                if (tok.kind != ExprLexer::IDENT) {
+            もし (acceptKind(ExprLexer::LPAREN)) {
+                もし (tok.kind != ExprLexer::IDENT) {
                     throw std::runtime_error("expected identifier in defined()");
                 }
                 std::string name = tok.text;
                 advance();
-                if (!acceptKind(ExprLexer::RPAREN)) {
+                もし (!acceptKind(ExprLexer::RPAREN)) {
                     throw std::runtime_error("missing ) in defined()");
                 }
-                return macros.count(name) ? 1 : 0;
-            } else {
+                戻る macros.count(name) ? 1 : 0;
+            } 否则 {
                 // defined NAME
-                if (tok.kind != ExprLexer::IDENT) {
+                もし (tok.kind != ExprLexer::IDENT) {
                     throw std::runtime_error("expected identifier in defined NAME");
                 }
                 std::string name = tok.text;
                 advance();
-                return macros.count(name) ? 1 : 0;
+                戻る macros.count(name) ? 1 : 0;
             }
         }
 
         // identifier -> treat as integer, if defined use its value else 0
-        if (tok.kind == ExprLexer::IDENT) {
+        もし (tok.kind == ExprLexer::IDENT) {
             std::string name = tok.text;
             advance();
             auto it = macros.find(name);
-            if (it == macros.end()) {
-                return 0;
+            もし (it == macros.end()) {
+                戻る 0;
             }
-            if (it->second.empty()) {
-                return 1;
+            もし (it->second.empty()) {
+                戻る 1;
             }
-            return evalMacroExpression(name, it->second);
+            戻る evalMacroExpression(name, it->second);
         }
 
         // unexpected
-        return 0;
+        戻る 0;
     }
 
-    int evalMacroExpression(const std::string & name, const std::string & value) {
-        if (visiting.count(name)) {
+    整数 evalMacroExpression(const std::string & name, const std::string & value) {
+        もし (visiting.count(name)) {
             throw std::runtime_error("Recursive macro: " + name);
         }
 
         visiting.insert(name);
         ExprParser ep(value, macros, visiting);
-        int        v = ep.parse();
+        整数        v = ep.parse();
         visiting.erase(name);
-        return v;
+        戻る v;
     }
 };
 
@@ -448,7 +448,7 @@ class Preprocessor {
   public:
     explicit Preprocessor(Options opts = {}) : opts_(std::move(opts)) {
         // Treat empty include path as current directory
-        if (opts_.include_path.empty()) {
+        もし (opts_.include_path.empty()) {
             opts_.include_path = ".";
         }
         parseMacroDefinitions(opts_.macros);
@@ -461,7 +461,7 @@ class Preprocessor {
         buildMacros(additional_macros, macros, predefined);
 
         std::string result = processFile(filename, macros, predefined, include_stack, DirectiveMode::All);
-        return result;
+        戻る result;
     }
 
     std::string preprocess(const std::string & contents, const std::vector<std::string> & additional_macros = {}) {
@@ -471,7 +471,7 @@ class Preprocessor {
         buildMacros(additional_macros, macros, predefined);
 
         std::string result = processString(contents, macros, predefined, include_stack, DirectiveMode::All);
-        return result;
+        戻る result;
     }
 
     std::string preprocess_includes_file(const std::string & filename) {
@@ -479,7 +479,7 @@ class Preprocessor {
         std::unordered_set<std::string>              predefined;
         std::unordered_set<std::string>              include_stack;
         std::string result = processFile(filename, macros, predefined, include_stack, DirectiveMode::IncludesOnly);
-        return result;
+        戻る result;
     }
 
     std::string preprocess_includes(const std::string & contents) {
@@ -487,7 +487,7 @@ class Preprocessor {
         std::unordered_set<std::string>              predefined;
         std::unordered_set<std::string>              include_stack;
         std::string result = processString(contents, macros, predefined, include_stack, DirectiveMode::IncludesOnly);
-        return result;
+        戻る result;
     }
 
   private:
@@ -506,14 +506,14 @@ class Preprocessor {
     // Parse macro definitions into global_macros
     //----------------------------------------------------------
     void parseMacroDefinitions(const std::vector<std::string> & macro_defs) {
-        for (const auto & def : macro_defs) {
+        ために (const auto & def : macro_defs) {
             size_t eq_pos = def.find('=');
-            if (eq_pos != std::string::npos) {
+            もし (eq_pos != std::string::npos) {
                 // Format: NAME=VALUE
                 std::string name    = trim(def.substr(0, eq_pos));
                 std::string value   = trim(def.substr(eq_pos + 1));
                 global_macros[name] = value;
-            } else {
+            } 否则 {
                 // Format: NAME
                 std::string name    = trim(def);
                 global_macros[name] = "";
@@ -530,17 +530,17 @@ class Preprocessor {
         macros = global_macros;
         predefined.clear();
 
-        for (const auto & [name, value] : global_macros) {
+        ために (const auto & [name, value] : global_macros) {
             predefined.insert(name);
         }
 
-        for (const auto & def : additional_macros) {
+        ために (const auto & def : additional_macros) {
             size_t      eq_pos = def.find('=');
             std::string name, value;
-            if (eq_pos != std::string::npos) {
+            もし (eq_pos != std::string::npos) {
                 name  = trim(def.substr(0, eq_pos));
                 value = trim(def.substr(eq_pos + 1));
-            } else {
+            } 否则 {
                 name  = trim(def);
                 value = "";
             }
@@ -556,19 +556,19 @@ class Preprocessor {
     //----------------------------------------------------------
     std::string loadFile(const std::string & fname) {
         std::ifstream f(fname);
-        if (!f.is_open()) {
+        もし (!f.is_open()) {
             throw std::runtime_error("Could not open file: " + fname);
         }
         std::stringstream ss;
         ss << f.rdbuf();
-        return ss.str();
+        戻る ss.str();
     }
 
     bool condActive(const std::vector<Cond> & cond) const {
-        if (cond.empty()) {
-            return true;
+        もし (cond.empty()) {
+            戻る true;
         }
-        return cond.back().active;
+        戻る cond.back().active;
     }
 
     //----------------------------------------------------------
@@ -579,7 +579,7 @@ class Preprocessor {
                             const std::unordered_set<std::string> &        predefined_macros,
                             std::unordered_set<std::string> &              include_stack,
                             DirectiveMode                                  mode) {
-        if (include_stack.count(name)) {
+        もし (include_stack.count(name)) {
             throw std::runtime_error("Recursive include: " + name);
         }
 
@@ -587,7 +587,7 @@ class Preprocessor {
         std::string shader_code = loadFile(name);
         std::string out         = processString(shader_code, macros, predefined_macros, include_stack, mode);
         include_stack.erase(name);
-        return out;
+        戻る out;
     }
 
     std::string processIncludeFile(const std::string &                            fname,
@@ -596,7 +596,7 @@ class Preprocessor {
                                    std::unordered_set<std::string> &              include_stack,
                                    DirectiveMode                                  mode) {
         std::string full_path = opts_.include_path + "/" + fname;
-        return processFile(full_path, macros, predefined_macros, include_stack, mode);
+        戻る processFile(full_path, macros, predefined_macros, include_stack, mode);
     }
 
     //----------------------------------------------------------
@@ -612,13 +612,13 @@ class Preprocessor {
         std::istringstream in(shader_code);
         std::string        line;
 
-        while (std::getline(in, line)) {
+        ながら (std::getline(in, line)) {
             std::string logical = line;
             std::string t       = trim(logical);
-            if (!t.empty() && t[0] == '#') {
-                while (endsWithContinuation(logical)) {
+            もし (!t.empty() && t[0] == '#') {
+                ながら (endsWithContinuation(logical)) {
                     stripContinuation(logical);
-                    if (!std::getline(in, line)) {
+                    もし (!std::getline(in, line)) {
                         break;
                     }
                     logical += "\n";
@@ -627,15 +627,15 @@ class Preprocessor {
                 t = trim(logical);
             }
 
-            if (!t.empty() && t[0] == '#') {
+            もし (!t.empty() && t[0] == '#') {
                 bool handled = handleDirective(t, out, macros, predefined_macros, cond, include_stack, mode);
-                if (mode == DirectiveMode::IncludesOnly && !handled) {
+                もし (mode == DirectiveMode::IncludesOnly && !handled) {
                     out << logical << "\n";
                 }
-            } else {
-                if (mode == DirectiveMode::IncludesOnly) {
+            } 否则 {
+                もし (mode == DirectiveMode::IncludesOnly) {
                     out << logical << "\n";
-                } else if (condActive(cond)) {
+                } 否则 もし (condActive(cond)) {
                     // Expand macros in the line before outputting
                     std::string expanded = expandMacrosRecursive(logical, macros);
                     out << expanded << "\n";
@@ -643,11 +643,11 @@ class Preprocessor {
             }
         }
 
-        if (mode == DirectiveMode::All && !cond.empty()) {
+        もし (mode == DirectiveMode::All && !cond.empty()) {
             throw std::runtime_error("Unclosed #if directive");
         }
 
-        return out.str();
+        戻る out.str();
     }
 
     //----------------------------------------------------------
@@ -666,136 +666,136 @@ class Preprocessor {
         std::string        cmd;
         iss >> cmd;
 
-        if (cmd == "include") {
-            if (mode == DirectiveMode::All && !condActive(cond)) {
-                return true;
+        もし (cmd == "include") {
+            もし (mode == DirectiveMode::All && !condActive(cond)) {
+                戻る true;
             }
             std::string file;
             iss >> file;
-            if (file.size() >= 2 && file.front() == '"' && file.back() == '"') {
+            もし (file.size() >= 2 && file.front() == '"' && file.back() == '"') {
                 file = file.substr(1, file.size() - 2);
             }
             out << processIncludeFile(file, macros, predefined_macros, include_stack, mode);
-            return true;
+            戻る true;
         }
 
-        if (mode == DirectiveMode::IncludesOnly) {
-            return false;
+        もし (mode == DirectiveMode::IncludesOnly) {
+            戻る false;
         }
 
-        if (cmd == "define") {
-            if (!condActive(cond)) {
-                return true;
+        もし (cmd == "define") {
+            もし (!condActive(cond)) {
+                戻る true;
             }
             std::string name;
             iss >> name;
             // Don't override predefined macros from options
-            if (predefined_macros.count(name)) {
-                return true;
+            もし (predefined_macros.count(name)) {
+                戻る true;
             }
             std::string value = trim_value(iss);
             macros[name]      = value;
-            return true;
+            戻る true;
         }
 
-        if (cmd == "undef") {
-            if (!condActive(cond)) {
-                return true;
+        もし (cmd == "undef") {
+            もし (!condActive(cond)) {
+                戻る true;
             }
             std::string name;
             iss >> name;
             // Don't undef predefined macros from options
-            if (predefined_macros.count(name)) {
-                return true;
+            もし (predefined_macros.count(name)) {
+                戻る true;
             }
             macros.erase(name);
-            return true;
+            戻る true;
         }
 
-        if (cmd == "ifdef") {
+        もし (cmd == "ifdef") {
             std::string name;
             iss >> name;
             bool p = condActive(cond);
             bool v = macros.count(name);
             cond.push_back({ p, p && v, p && v });
-            return true;
+            戻る true;
         }
 
-        if (cmd == "ifndef") {
+        もし (cmd == "ifndef") {
             std::string name;
             iss >> name;
             bool p = condActive(cond);
             bool v = !macros.count(name);
             cond.push_back({ p, p && v, p && v });
-            return true;
+            戻る true;
         }
 
-        if (cmd == "if") {
+        もし (cmd == "if") {
             std::string expr = trim_value(iss);
             bool        p    = condActive(cond);
             bool        v    = false;
-            if (p) {
+            もし (p) {
                 std::unordered_set<std::string> visiting;
                 ExprParser                      ep(expr, macros, visiting);
                 v = ep.parse() != 0;
             }
             cond.push_back({ p, p && v, p && v });
-            return true;
+            戻る true;
         }
 
-        if (cmd == "elif") {
+        もし (cmd == "elif") {
             std::string expr = trim_value(iss);
 
-            if (cond.empty()) {
+            もし (cond.empty()) {
                 throw std::runtime_error("#elif without #if");
             }
 
             Cond & c = cond.back();
-            if (!c.parent_active) {
+            もし (!c.parent_active) {
                 c.active = false;
-                return true;
+                戻る true;
             }
 
-            if (c.taken) {
+            もし (c.taken) {
                 c.active = false;
-                return true;
+                戻る true;
             }
 
             std::unordered_set<std::string> visiting;
             ExprParser                      ep(expr, macros, visiting);
             bool                            v = ep.parse() != 0;
             c.active                          = v;
-            if (v) {
+            もし (v) {
                 c.taken = true;
             }
-            return true;
+            戻る true;
         }
 
-        if (cmd == "else") {
-            if (cond.empty()) {
+        もし (cmd == "else") {
+            もし (cond.empty()) {
                 throw std::runtime_error("#else without #if");
             }
 
             Cond & c = cond.back();
-            if (!c.parent_active) {
+            もし (!c.parent_active) {
                 c.active = false;
-                return true;
+                戻る true;
             }
-            if (c.taken) {
+            もし (c.taken) {
                 c.active = false;
-            } else {
+            } 否则 {
                 c.active = true;
                 c.taken  = true;
             }
-            return true;
+            戻る true;
         }
 
-        if (cmd == "endif") {
-            if (cond.empty()) {
+        もし (cmd == "endif") {
+            もし (cond.empty()) {
                 throw std::runtime_error("#endif without #if");
             }
             cond.pop_back();
-            return true;
+            戻る true;
         }
 
         // Unknown directive

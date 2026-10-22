@@ -12,7 +12,7 @@
 #include <hbwmalloc.h>
 
 static const char * ggml_backend_cpu_hbm_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
-    return "CPU_HBM";
+    戻る "CPU_HBM";
 
     GGML_UNUSED(buft);
 }
@@ -24,17 +24,17 @@ static void ggml_backend_cpu_hbm_buffer_free_buffer(ggml_backend_buffer_t buffer
 static ggml_backend_buffer_t ggml_backend_cpu_hbm_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft,
                                                                            size_t                     size) {
     void * ptr;
-    int    result = hbw_posix_memalign(&ptr, ggml_backend_cpu_buffer_type_get_alignment(buft), size);
-    if (result != 0) {
+    整数    result = hbw_posix_memalign(&ptr, ggml_backend_cpu_buffer_type_get_alignment(buft), size);
+    もし (result != 0) {
         GGML_LOG_ERROR("failed to allocate HBM buffer of size %zu\n", size);
-        return NULL;
+        戻る NULL;
     }
 
     ggml_backend_buffer_t buffer = ggml_backend_cpu_buffer_from_ptr(ptr, size);
     buffer->buft                 = buft;
     buffer->iface.free_buffer    = ggml_backend_cpu_hbm_buffer_free_buffer;
 
-    return buffer;
+    戻る buffer;
 }
 
 ggml_backend_buffer_type_t ggml_backend_cpu_hbm_buffer_type(void) {
@@ -52,6 +52,6 @@ ggml_backend_buffer_type_t ggml_backend_cpu_hbm_buffer_type(void) {
         /* .context  = */ nullptr,
     };
 
-    return &ggml_backend_cpu_buffer_type_hbm;
+    戻る &ggml_backend_cpu_buffer_type_hbm;
 }
 #endif

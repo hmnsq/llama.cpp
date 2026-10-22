@@ -36,9 +36,9 @@ struct htp_pool_2d_kernel_params {
     float    inv_kernel_area;
 };
 
-#if defined(__cplusplus)
+#もし defined(__cplusplus)
 static_assert(sizeof(struct htp_pool_2d_kernel_params) <= 128, "htp_pool_2d_kernel_params is too large");
-#else
+#否则
 _Static_assert(sizeof(struct htp_pool_2d_kernel_params) <= 128, "htp_pool_2d_kernel_params is too large");
 #endif
 
@@ -68,8 +68,8 @@ static inline bool htp_pool_solve_layout(
     const size_t dst_plane_aligned = hex_round_up((uint32_t) dst_plane_bytes, 128);
 
     const size_t spad_per_thread = 2 * (src_plane_aligned + dst_plane_aligned);
-    if (spad_per_thread * n_threads > vtcm_budget) {
-        return false;
+    もし (spad_per_thread * n_threads > vtcm_budget) {
+        戻る false;
     }
 
     layout->src_spad_half_size   = src_plane_aligned;
@@ -79,7 +79,7 @@ static inline bool htp_pool_solve_layout(
     layout->off_src              = 0;
     layout->off_dst              = layout->src_bytes_per_thread * n_threads;
     layout->total_bytes          = layout->off_dst + layout->dst_bytes_per_thread * n_threads;
-    return true;
+    戻る true;
 }
 
 #endif // HTP_POOL_OPS_H
