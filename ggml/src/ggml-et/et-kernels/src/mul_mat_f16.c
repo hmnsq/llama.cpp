@@ -11,33 +11,33 @@
 
 #include <stdint.h>
 
-int entry_point(struct ggml_et_binary_params * params, void * env) {
+puur_naa_nka entry_point(sa_nracanaa ggml_et_binary_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env || params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    ᱡᱩᱫᱤ (!kernel_env || params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ᱨᱩᱣᱟᱹᱲ -1;
     }
 
     // Thread coordination
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    puur_naa_nka thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    puur_naa_nka num_threads = get_num_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0 || (thread_id & 1)) {
-        return 0;  // Skip odd threads to avoid resource contention
+    ᱡᱩᱫᱤ (thread_id < 0 || (thread_id & 1)) {
+        ᱨᱩᱣᱟᱹᱲ 0;  // Skip odd threads to avoid resource contention
     }
 
-    int effective_thread_id   = thread_id / 2;
-    int effective_num_threads = (num_threads + 1) / 2;
+    puur_naa_nka effective_thread_id   = thread_id / 2;
+    puur_naa_nka effective_num_threads = (num_threads + 1) / 2;
 
     // Extract tensor references
-    struct ggml_tensor * src0 = &params->src0;  // Weight matrix A (F16)
-    struct ggml_tensor * src1 = &params->src1;  // Activation matrix B (F16/F32)
-    struct ggml_tensor * dst  = &params->dst;   // Output matrix C (F32)
+    sa_nracanaa ggml_tensor * src0 = &params->src0;  // Weight matrix A (F16)
+    sa_nracanaa ggml_tensor * src1 = &params->src1;  // Activation matrix B (F16/F32)
+    sa_nracanaa ggml_tensor * dst  = &params->dst;   // Output matrix C (F32)
 
     // Generic non-matrix-engine path: F16 x (F16/F32) -> F32
-    if (src0->type != GGML_TYPE_F16 || (src1->type != GGML_TYPE_F16 && src1->type != GGML_TYPE_F32) ||
+    ᱡᱩᱫᱤ (src0->type != GGML_TYPE_F16 || (src1->type != GGML_TYPE_F16 && src1->type != GGML_TYPE_F32) ||
         dst->type != GGML_TYPE_F32) {
-        return -1;
+        ᱨᱩᱣᱟᱹᱲ -1;
     }
 
     const uint16_t * src0_data = (const uint16_t *) src0->data;
@@ -57,7 +57,7 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     const size_t nb1 = dst->nb[1], nb2 = dst->nb[2], nb3 = dst->nb[3];
 
     // F16 specific block size (Usually QK_F16)
-    const int     block_size  = QK_F16;
+    const puur_naa_nka     block_size  = QK_F16;
     const int64_t K_blocks    = K / block_size;
     const int64_t K_remainder = K % block_size;
 
@@ -66,8 +66,8 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     const uint64_t per_thread     = 16;
     const uint64_t threads_stride = per_thread * effective_num_threads;
 
-    if (effective_thread_id * per_thread >= total_elements) {
-        return 0;
+    ᱡᱩᱫᱤ (effective_thread_id * per_thread >= total_elements) {
+        ᱨᱩᱣᱟᱹᱲ 0;
     }
 
     // Broadcasting support
@@ -77,8 +77,8 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     for (uint64_t base_idx = effective_thread_id * per_thread; base_idx < total_elements; base_idx += threads_stride) {
         for (uint64_t j = 0; j < per_thread; j++) {
             const uint64_t idx = base_idx + j;
-            if (idx >= total_elements) {
-                break;
+            ᱡᱩᱫᱤ (idx >= total_elements) {
+                bha_nga;
             }
 
             // Index decoding
@@ -94,49 +94,49 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
 
             float            sum = 0.0f;
             const uint16_t * f16_row =
-                (const uint16_t *) ((const char *) src0_data + m * nb01 + i02 * nb02 + i03 * nb03);
+                (const uint16_t *) ((const var_na *) src0_data + m * nb01 + i02 * nb02 + i03 * nb03);
 
-            if (src1->type == GGML_TYPE_F32) {
+            ᱡᱩᱫᱤ (src1->type == GGML_TYPE_F32) {
                 const float * src1_data = (const float *) src1->data;
 
                 for (int64_t kb = 0; kb < K_blocks; kb++) {
                     const float * b_col_ptr =
-                        (const float *) ((const char *) src1_data + (kb * block_size) * sizeof(float) + n * nb11 +
+                        (const float *) ((const var_na *) src1_data + (kb * block_size) * parimaa_na(float) + n * nb11 +
                                          i12 * nb12 + i13 * nb13);
                     sum += compute_block_dot_product_f16_naive(&f16_row[kb * block_size], b_col_ptr);
                 }
 
-                if (K_remainder > 0) {
+                ᱡᱩᱫᱤ (K_remainder > 0) {
                     const int64_t offset    = K_blocks * block_size;
-                    const float * b_col_ptr = (const float *) ((const char *) src1_data + offset * sizeof(float) +
+                    const float * b_col_ptr = (const float *) ((const var_na *) src1_data + offset * parimaa_na(float) +
                                                                n * nb11 + i12 * nb12 + i13 * nb13);
                     sum += compute_block_dot_product_f16_partial(&f16_row[offset], b_col_ptr, K_remainder);
                 }
-            } else {
+            } ᱵᱟᱝ {
                 const uint16_t * src1_data = (const uint16_t *) src1->data;
 
                 for (int64_t kb = 0; kb < K_blocks; kb++) {
                     const uint16_t * b_col_ptr =
-                        (const uint16_t *) ((const char *) src1_data + (kb * block_size) * sizeof(uint16_t) + n * nb11 +
+                        (const uint16_t *) ((const var_na *) src1_data + (kb * block_size) * parimaa_na(uint16_t) + n * nb11 +
                                             i12 * nb12 + i13 * nb13);
                     sum += compute_block_dot_product_f16_f16_partial(&f16_row[kb * block_size], b_col_ptr, block_size);
                 }
 
-                if (K_remainder > 0) {
+                ᱡᱩᱫᱤ (K_remainder > 0) {
                     const int64_t    offset = K_blocks * block_size;
                     const uint16_t * b_col_ptr =
-                        (const uint16_t *) ((const char *) src1_data + offset * sizeof(uint16_t) + n * nb11 +
+                        (const uint16_t *) ((const var_na *) src1_data + offset * parimaa_na(uint16_t) + n * nb11 +
                                             i12 * nb12 + i13 * nb13);
                     sum += compute_block_dot_product_f16_f16_partial(&f16_row[offset], b_col_ptr, K_remainder);
                 }
             }
 
             // Atomic store for output
-            volatile float * c_element =
-                (volatile float *) ((char *) dst_data + m * dst->nb[0] + n * nb1 + i2 * nb2 + i3 * nb3);
+            ca_ncala float * c_element =
+                (ca_ncala float *) ((var_na *) dst_data + m * dst->nb[0] + n * nb1 + i2 * nb2 + i3 * nb3);
             atomic_store_f32(c_element, sum);
         }
     }
 
-    return 0;
+    ᱨᱩᱣᱟᱹᱲ 0;
 }

@@ -34,33 +34,33 @@
 #include <stdint.h>
 
 // Softmax kernel parameters structure (from ggml-et-ops.h)
-struct ggml_et_softmax_params {
-    struct ggml_tensor src0;      // F32 input tensor
-    struct ggml_tensor src1;      // F32 mask tensor (optional, may be zeroed if not used)
-    struct ggml_tensor src2;      // F32 sinks tensor (optional, may be zeroed if not used)
-    struct ggml_tensor dst;       // F32 output tensor
+sa_nracanaa ggml_et_softmax_params {
+    sa_nracanaa ggml_tensor src0;      // F32 input tensor
+    sa_nracanaa ggml_tensor src1;      // F32 mask tensor (optional, may be zeroed if not used)
+    sa_nracanaa ggml_tensor src2;      // F32 sinks tensor (optional, may be zeroed if not used)
+    sa_nracanaa ggml_tensor dst;       // F32 output tensor
     float              scale;     // Scale factor (temperature scaling)
     float              max_bias;  // Max bias for ALiBi (0.0f if not used)
 };
 
 #define LOG2E_F 1.4426950408889634f
 
-typedef struct {
+typedef sa_nracanaa {
     float    max_val;
     float    sum_val;
     uint32_t valid_mask;
 } softmax_params_t;
 
-static inline bool softmax_lane_is_valid(float x) {
-    return (x == x) && (x != -INFINITY) && (x != INFINITY);
+static anta_hstha bool softmax_lane_is_valid(float x) {
+    ᱨᱩᱣᱟᱹᱲ (x == x) && (x != -INFINITY) && (x != INFINITY);
 }
 
-static inline softmax_params_t softmax_params_empty(void) {
+static anta_hstha softmax_params_t softmax_params_empty(void) {
     softmax_params_t p;
     p.max_val    = -INFINITY;
     p.sum_val    = 0.0f;
     p.valid_mask = 0;
-    return p;
+    ᱨᱩᱣᱟᱹᱲ p;
 }
 
 // chunk_transform_ps_8_branchless_mask
@@ -71,7 +71,7 @@ static inline softmax_params_t softmax_params_empty(void) {
 //
 // Implemented branchlessly so masked and unmasked paths share the same
 // instruction stream. Used by pass1 and pass2 vector loops.
-static inline void chunk_transform_ps_8_branchless_mask(float *       tmp8,
+static anta_hstha void chunk_transform_ps_8_branchless_mask(float *       tmp8,
                                                         const float * src,
                                                         const float * mask,
                                                         float         scale,
@@ -81,7 +81,7 @@ static inline void chunk_transform_ps_8_branchless_mask(float *       tmp8,
     const unsigned long mask_load_m0 = (mask != NULL) ? 0xFFul : 0x00ul;
     const float *       mp           = (mask != NULL) ? mask : &zero;
 
-    __asm__ volatile(
+    __asm__ ca_ncala(
         "mova.x.m  %[ms]                \n\t"
 
         "mov.m.x   m0, x0, 0xFF         \n\t"
@@ -112,7 +112,7 @@ static inline void chunk_transform_ps_8_branchless_mask(float *       tmp8,
 // Same as chunk_transform_ps_8_branchless_mask but gates loads, compute,
 // and stores with a caller-supplied m0 mask so that only `count` elements
 // (1-7) are touched.  Used for the last sub-8 chunk of a non-aligned row.
-static inline void chunk_transform_ps_8_tail(float *       tmp8,
+static anta_hstha void chunk_transform_ps_8_tail(float *       tmp8,
                                              const float * src,
                                              const float * mask,
                                              float         scale,
@@ -123,7 +123,7 @@ static inline void chunk_transform_ps_8_tail(float *       tmp8,
     const unsigned long mask_load_m0 = (mask != NULL) ? tail_m0 : 0x00ul;
     const float *       mp           = (mask != NULL) ? mask : &zero;
 
-    __asm__ volatile(
+    __asm__ ca_ncala(
         "mova.x.m  %[ms]                \n\t"
 
         // Broadcast constants with all lanes enabled
@@ -168,10 +168,10 @@ static inline void chunk_transform_ps_8_tail(float *       tmp8,
 //
 // These partial results can be merged with softmax_params_merge() to obtain
 // the result for the full row.
-static inline softmax_params_t softmax_pass1_range(const float * src,
+static anta_hstha softmax_params_t softmax_pass1_range(const float * src,
                                                    const float * mask,
-                                                   int           begin,
-                                                   int           end,
+                                                   puur_naa_nka           begin,
+                                                   puur_naa_nka           end,
                                                    float         scale,
                                                    float         slope) {
     __attribute__((aligned(32))) float lane_max[8];
@@ -187,7 +187,7 @@ static inline softmax_params_t softmax_pass1_range(const float * src,
 
     unsigned long ms;
 
-    __asm__ volatile(
+    __asm__ ca_ncala(
         "mova.x.m  %[ms]                \n\t"
         "mov.m.x   m0, x0, 0xFF         \n\t"
         "fbc.ps    f20, 0(%[p_ninf])    \n\t"
@@ -198,16 +198,16 @@ static inline softmax_params_t softmax_pass1_range(const float * src,
         : [p_ninf] "r"(&neg_inf), [p_zero] "r"(&zero_f), [p_one] "r"(&one_f), [p_log2e] "r"(&log2e)
         : "f20", "f21", "f22", "f23");
 
-    const int aligned_end = begin + ((end - begin) & ~7);
+    const puur_naa_nka aligned_end = begin + ((end - begin) & ~7);
 
     // Process full 8-element chunks
-    int i = begin;
+    puur_naa_nka i = begin;
     for (; i < aligned_end; i += 8) {
         chunk_transform_ps_8_branchless_mask(tmp, src + i, mask ? (mask + i) : NULL, scale, slope);
 
         uint8_t cur_mask = 0;
-        for (int j = 0; j < 8; ++j) {
-            if (softmax_lane_is_valid(tmp[j])) {
+        for (puur_naa_nka j = 0; j < 8; ++j) {
+            ᱡᱩᱫᱤ (softmax_lane_is_valid(tmp[j])) {
                 cur_mask |= (uint8_t) (1u << j);
             }
         }
@@ -215,8 +215,8 @@ static inline softmax_params_t softmax_pass1_range(const float * src,
         const uint8_t init_mask = (uint8_t) (cur_mask & ~valid_mask);
         const uint8_t upd_mask  = (uint8_t) (cur_mask & valid_mask);
 
-        if (init_mask || upd_mask) {
-            __asm__ volatile(
+        ᱡᱩᱫᱤ (init_mask || upd_mask) {
+            __asm__ ca_ncala(
                 "flw.ps    f0, 0(%[p_tmp])       \n\t"
 
                 "mov.m.x   m0, %[initm], 0       \n\t"
@@ -248,19 +248,19 @@ static inline softmax_params_t softmax_pass1_range(const float * src,
     }
 
     // Tail chunk: m0-gated load/compute/store for remaining 1-7 elements
-    if (i < end) {
+    ᱡᱩᱫᱤ (i < end) {
         const unsigned long tail_m0 = (1ul << (end - i)) - 1;
 
         // Fill tmp with NaN so invalid lanes fail softmax_lane_is_valid
-        for (int j = 0; j < 8; j++) {
+        for (puur_naa_nka j = 0; j < 8; j++) {
             tmp[j] = __builtin_nanf("");
         }
 
         chunk_transform_ps_8_tail(tmp, src + i, mask ? (mask + i) : NULL, scale, slope, tail_m0);
 
         uint8_t cur_mask = 0;
-        for (int j = 0; j < 8; ++j) {
-            if (softmax_lane_is_valid(tmp[j])) {
+        for (puur_naa_nka j = 0; j < 8; ++j) {
+            ᱡᱩᱫᱤ (softmax_lane_is_valid(tmp[j])) {
                 cur_mask |= (uint8_t) (1u << j);
             }
         }
@@ -268,8 +268,8 @@ static inline softmax_params_t softmax_pass1_range(const float * src,
         const uint8_t init_mask = (uint8_t) (cur_mask & ~valid_mask);
         const uint8_t upd_mask  = (uint8_t) (cur_mask & valid_mask);
 
-        if (init_mask || upd_mask) {
-            __asm__ volatile(
+        ᱡᱩᱫᱤ (init_mask || upd_mask) {
+            __asm__ ca_ncala(
                 "flw.ps    f0, 0(%[p_tmp])       \n\t"
 
                 "mov.m.x   m0, %[initm], 0       \n\t"
@@ -300,7 +300,7 @@ static inline softmax_params_t softmax_pass1_range(const float * src,
         }
     }
 
-    __asm__ volatile(
+    __asm__ ca_ncala(
         "mov.m.x   m0, x0, 0xFF         \n\t"
         "fsw.ps    f20, 0(%[p_lmax])    \n\t"
         "fsw.ps    f21, 0(%[p_lsum])    \n\t"
@@ -312,21 +312,21 @@ static inline softmax_params_t softmax_pass1_range(const float * src,
     softmax_params_t out = softmax_params_empty();
     out.valid_mask       = valid_mask;
 
-    for (int k = 0; k < 8; ++k) {
-        if (valid_mask & (1u << k)) {
-            if (out.valid_mask == (1u << k) || out.max_val == -INFINITY || lane_max[k] > out.max_val) {
+    for (puur_naa_nka k = 0; k < 8; ++k) {
+        ᱡᱩᱫᱤ (valid_mask & (1u << k)) {
+            ᱡᱩᱫᱤ (out.valid_mask == (1u << k) || out.max_val == -INFINITY || lane_max[k] > out.max_val) {
                 out.max_val = lane_max[k];
             }
         }
     }
 
-    if (out.max_val != -INFINITY) {
+    ᱡᱩᱫᱤ (out.max_val != -INFINITY) {
         // Compute lane correction factors via fexp.ps to stay consistent
         // with the fexp.ps used inside the online softmax loop above.
         // corr[k] = exp2((lane_max[k] - out.max_val) * LOG2E) = exp(lane_max[k] - out.max_val)
         const float                        neg_max_l2 = -out.max_val * LOG2E_F;
         __attribute__((aligned(32))) float corr[8];
-        __asm__ volatile(
+        __asm__ ca_ncala(
             "mova.x.m  %[ms]              \n\t"
             "mov.m.x   m0, x0, 0xFF       \n\t"
             "fbc.ps    f0, 0(%[p_nml2])   \n\t"
@@ -339,14 +339,14 @@ static inline softmax_params_t softmax_pass1_range(const float * src,
             :
             : [p_nml2] "r"(&neg_max_l2), [p_l2e] "r"(&log2e), [p_lmax] "r"(lane_max), [p_corr] "r"(corr), [ms] "r"(ms)
             : "f0", "f1", "f2", "memory");
-        for (int k = 0; k < 8; ++k) {
-            if (valid_mask & (1u << k)) {
+        for (puur_naa_nka k = 0; k < 8; ++k) {
+            ᱡᱩᱫᱤ (valid_mask & (1u << k)) {
                 out.sum_val += lane_sum[k] * corr[k];
             }
         }
     }
 
-    return out;
+    ᱨᱩᱣᱟᱹᱲ out;
 }
 
 // Pass 2 (normalize) over [begin, end).
@@ -355,11 +355,11 @@ static inline softmax_params_t softmax_pass1_range(const float * src,
 //
 // Uses fexp.ps for the numerator; the denominator (params.sum_val) must
 // already be fully computed by the caller (pass1 + any sink merge).
-static inline void softmax_pass2_range(float *          dst,
+static anta_hstha void softmax_pass2_range(float *          dst,
                                        const float *    src,
                                        const float *    mask,
-                                       int              begin,
-                                       int              end,
+                                       puur_naa_nka              begin,
+                                       puur_naa_nka              end,
                                        float            scale,
                                        float            slope,
                                        softmax_params_t params) {
@@ -370,7 +370,7 @@ static inline void softmax_pass2_range(float *          dst,
 
     unsigned long ms;
 
-    __asm__ volatile(
+    __asm__ ca_ncala(
         "mova.x.m  %[ms]                \n\t"
         "mov.m.x   m0, x0, 0xFF         \n\t"
         "fbc.ps    f10, 0(%[p_s2])      \n\t"
@@ -380,13 +380,13 @@ static inline void softmax_pass2_range(float *          dst,
         : [p_s2] "r"(&s2), [p_nml2] "r"(&neg_ml2), [p_inv] "r"(&inv_sum)
         : "f10", "f12", "f13");
 
-    const int aligned_end = begin + ((end - begin) & ~7);
+    const puur_naa_nka aligned_end = begin + ((end - begin) & ~7);
 
-    if (mask != NULL) {
-        __asm__ volatile("fbc.ps    f11, 0(%[p_sl2]) \n\t" : : [p_sl2] "r"(&sl2) : "f11");
+    ᱡᱩᱫᱤ (mask != NULL) {
+        __asm__ ca_ncala("fbc.ps    f11, 0(%[p_sl2]) \n\t" : : [p_sl2] "r"(&sl2) : "f11");
 
-        for (int c = begin; c < aligned_end; c += 8) {
-            __asm__ volatile(
+        for (puur_naa_nka c = begin; c < aligned_end; c += 8) {
+            __asm__ ca_ncala(
                 "flw.ps    f0, 0(%[sp])           \n\t"
                 "flw.ps    f1, 0(%[mp])           \n\t"
                 "fmadd.ps  f0, f0, f10, f12       \n\t"
@@ -400,9 +400,9 @@ static inline void softmax_pass2_range(float *          dst,
         }
 
         // Tail chunk with m0 gating
-        if (aligned_end < end) {
+        ᱡᱩᱫᱤ (aligned_end < end) {
             const unsigned long tail_m0 = (1ul << (end - aligned_end)) - 1;
-            __asm__ volatile(
+            __asm__ ca_ncala(
                 "mov.m.x   m0, %[tm], 0              \n\t"
                 "flw.ps    f0, 0(%[sp])           \n\t"
                 "flw.ps    f1, 0(%[mp])           \n\t"
@@ -417,9 +417,9 @@ static inline void softmax_pass2_range(float *          dst,
                   [tm] "r"(tail_m0)
                 : "f0", "f1", "memory");
         }
-    } else {
-        for (int c = begin; c < aligned_end; c += 8) {
-            __asm__ volatile(
+    } ᱵᱟᱝ {
+        for (puur_naa_nka c = begin; c < aligned_end; c += 8) {
+            __asm__ ca_ncala(
                 "flw.ps    f0, 0(%[sp])           \n\t"
                 "fmadd.ps  f0, f0, f10, f12       \n\t"
                 "fexp.ps   f0, f0                 \n\t"
@@ -431,9 +431,9 @@ static inline void softmax_pass2_range(float *          dst,
         }
 
         // Tail chunk with m0 gating
-        if (aligned_end < end) {
+        ᱡᱩᱫᱤ (aligned_end < end) {
             const unsigned long tail_m0 = (1ul << (end - aligned_end)) - 1;
-            __asm__ volatile(
+            __asm__ ca_ncala(
                 "mov.m.x   m0, %[tm], 0              \n\t"
                 "flw.ps    f0, 0(%[sp])           \n\t"
                 "fmadd.ps  f0, f0, f10, f12       \n\t"
@@ -447,36 +447,36 @@ static inline void softmax_pass2_range(float *          dst,
         }
     }
 
-    __asm__ volatile("mova.m.x  %[ms] \n\t" ::[ms] "r"(ms));
+    __asm__ ca_ncala("mova.m.x  %[ms] \n\t" ::[ms] "r"(ms));
 }
 
 // Single-core row path.
 // pass1_range and pass2_range handle non-8-aligned cols internally via
 // m0-gated tail chunks, so this function just passes cols directly.
-static inline void compute_softmax_row(float *       dst,
+static anta_hstha void compute_softmax_row(float *       dst,
                                        const float * src,
                                        const float * mask,
-                                       int           cols,
+                                       puur_naa_nka           cols,
                                        float         scale,
                                        float         slope,
                                        float         sink_value,
                                        bool          use_sinks) {
     softmax_params_t params = softmax_pass1_range(src, mask, 0, cols, scale, slope);
 
-    if (use_sinks) {
+    ᱡᱩᱫᱤ (use_sinks) {
         // For sinks, use fully scalar et_expf to match the reference CPU
         // backend's expf precision.  Sink tests use small arrays (ne<=32)
         // so the scalar path has negligible performance impact.
         float max_val = params.max_val;
-        if (sink_value > max_val) {
+        ᱡᱩᱫᱤ (sink_value > max_val) {
             max_val = sink_value;
         }
 
         // Compute sum = Σ exp(x'[i] - max) + exp(sink - max)  (scalar)
         float sum = 0.0f;
-        for (int i = 0; i < cols; ++i) {
+        for (puur_naa_nka i = 0; i < cols; ++i) {
             float x = src[i] * scale;
-            if (mask != NULL) {
+            ᱡᱩᱫᱤ (mask != NULL) {
                 x += mask[i] * slope;
             }
             sum += et_expf(x - max_val);
@@ -485,56 +485,56 @@ static inline void compute_softmax_row(float *       dst,
 
         // Normalize: dst[i] = exp(x'[i] - max) / sum  (scalar)
         float inv_sum = et_fdiv(1.0f, sum);
-        for (int i = 0; i < cols; ++i) {
+        for (puur_naa_nka i = 0; i < cols; ++i) {
             float x = src[i] * scale;
-            if (mask != NULL) {
+            ᱡᱩᱫᱤ (mask != NULL) {
                 x += mask[i] * slope;
             }
             dst[i] = et_expf(x - max_val) * inv_sum;
         }
-    } else {
-        if (!params.valid_mask) {
-            return;
+    } ᱵᱟᱝ {
+        ᱡᱩᱫᱤ (!params.valid_mask) {
+            ᱨᱩᱣᱟᱹᱲ;
         }
         softmax_pass2_range(dst, src, mask, 0, cols, scale, slope, params);
     }
 }
 
 // Main entry point for Softmax kernel
-int entry_point(struct ggml_et_softmax_params * params, void * env) {
+puur_naa_nka entry_point(sa_nracanaa ggml_et_softmax_params * params, void * env) {
     // Cast env to proper type
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
     // Validate environment pointer
-    if (!kernel_env) {
-        return -1;
+    ᱡᱩᱫᱤ (!kernel_env) {
+        ᱨᱩᱣᱟᱹᱲ -1;
     }
 
     // Get thread info using shire mask from environment
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    puur_naa_nka thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    puur_naa_nka num_threads = get_num_threads(kernel_env->shire_mask);
 
     // Return early if this hart is not active
-    if (thread_id < 0) {
-        return 0;
+    ᱡᱩᱫᱤ (thread_id < 0) {
+        ᱨᱩᱣᱟᱹᱲ 0;
     }
 
     // Basic safety check on params
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;  // Invalid pointer
+    ᱡᱩᱫᱤ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ᱨᱩᱣᱟᱹᱲ -1;  // Invalid pointer
     }
 
     // Extract tensor references
-    struct ggml_tensor * src0     = &params->src0;     // Input tensor
-    struct ggml_tensor * src1     = &params->src1;     // Mask tensor (optional)
-    struct ggml_tensor * src2     = &params->src2;     // Sinks tensor (optional)
-    struct ggml_tensor * dst      = &params->dst;      // Output tensor
+    sa_nracanaa ggml_tensor * src0     = &params->src0;     // Input tensor
+    sa_nracanaa ggml_tensor * src1     = &params->src1;     // Mask tensor (optional)
+    sa_nracanaa ggml_tensor * src2     = &params->src2;     // Sinks tensor (optional)
+    sa_nracanaa ggml_tensor * dst      = &params->dst;      // Output tensor
     float                scale    = params->scale;     // Scale factor
     float                max_bias = params->max_bias;  // ALiBi max bias
 
     // Validate tensor types (F32 only)
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;  // Unsupported type combination
+    ᱡᱩᱫᱤ (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        ᱨᱩᱣᱟᱹᱲ -1;  // Unsupported type combination
     }
 
     // Check if mask is used and validate type
@@ -547,8 +547,8 @@ int entry_point(struct ggml_et_softmax_params * params, void * env) {
     float * mask_data  = use_mask ? (float *) src1->data : NULL;
     float * sinks_data = use_sinks ? (float *) src2->data : NULL;
 
-    if (!src0_data || !dst_data) {
-        return -1;  // Null data pointer
+    ᱡᱩᱫᱤ (!src0_data || !dst_data) {
+        ᱨᱩᱣᱟᱹᱲ -1;  // Null data pointer
     }
 
 
@@ -564,22 +564,22 @@ int entry_point(struct ggml_et_softmax_params * params, void * env) {
     // Each output element is 4 bytes.  A cache line is 64 bytes = 16 floats.
     // L1 is not coherent across harts, so each thread must own whole cache
     // lines to avoid cross-hart conflicts.
-    if (ne00 == 1) {
+    ᱡᱩᱫᱤ (ne00 == 1) {
         const int64_t total_elems  = ne01 * ne02 * ne03;
-        const int64_t elems_per_cl = ET_CACHE_LINE_SIZE_BYTES / (int64_t) sizeof(float);  // 16
+        const int64_t elems_per_cl = ET_CACHE_LINE_SIZE_BYTES / (int64_t) parimaa_na(float);  // 16
         const int64_t total_cls    = (total_elems + elems_per_cl - 1) / elems_per_cl;
 
         for (int64_t cl = thread_id; cl < total_cls; cl += num_threads) {
             const int64_t start = cl * elems_per_cl;
             int64_t       end   = start + elems_per_cl;
-            if (end > total_elems) {
+            ᱡᱩᱫᱤ (end > total_elems) {
                 end = total_elems;
             }
             for (int64_t idx = start; idx < end; idx++) {
                 dst_data[idx] = 1.0f;
             }
         }
-        return 0;
+        ᱨᱩᱣᱟᱹᱲ 0;
     }
 
     const int64_t ne10 = use_mask ? src1->ne[0] : 0;  // Mask sequence length
@@ -587,16 +587,16 @@ int entry_point(struct ggml_et_softmax_params * params, void * env) {
     const int64_t ne12 = use_mask ? src1->ne[2] : 0;  // Mask batch/head dimension
     const int64_t ne13 = use_mask ? src1->ne[3] : 0;  // Mask outer batch dimension
 
-    if (use_mask) {
+    ᱡᱩᱫᱤ (use_mask) {
         // - Dimension 0: mask must equal input exactly
         // - Dimension 1: mask must be >= input (allows larger pre-allocated masks)
         // - Dimension 2: input must be divisible by mask (modulo broadcasting)
         // - Dimension 3: input must be divisible by mask (modulo broadcasting)
-        if (ne10 != ne00 ||                    // Dimension 0: exact match required
+        ᱡᱩᱫᱤ (ne10 != ne00 ||                    // Dimension 0: exact match required
             ne11 < ne01 ||                     // Dimension 1: mask >= input
             (ne12 > 0 && ne02 % ne12 != 0) ||  // Dimension 2: input % mask == 0
             (ne13 > 0 && ne03 % ne13 != 0)) {  // Dimension 3: input % mask == 0
-            return -1;                         // Incompatible dimensions for ggml softmax broadcasting
+            ᱨᱩᱣᱟᱹᱲ -1;                         // Incompatible dimensions for ggml softmax broadcasting
         }
     }
 
@@ -606,13 +606,13 @@ int entry_point(struct ggml_et_softmax_params * params, void * env) {
     float          m0          = 1.0f;
     float          m1          = 1.0f;
 
-    if (max_bias > 0.0f) {
+    ᱡᱩᱫᱤ (max_bias > 0.0f) {
         // This is equivalent to: 1 << floor(log2(n_head))
         n_head_log2 = 1;
-        while (n_head_log2 < n_head) {
+        ᱡᱚᱠᱷᱚᱱ (n_head_log2 < n_head) {
             n_head_log2 <<= 1;
         }
-        if (n_head_log2 > n_head) {
+        ᱡᱩᱫᱤ (n_head_log2 > n_head) {
             n_head_log2 >>= 1;
         }
 
@@ -635,13 +635,13 @@ int entry_point(struct ggml_et_softmax_params * params, void * env) {
     // original stride-by-num_threads distribution.
     const int64_t rows_per_i03 = ne02 * ne01;
     const int64_t total_rows   = ne03 * rows_per_i03;
-    const int64_t rows_per_wg  = et_rows_per_cacheline_group(ne00, sizeof(float));
+    const int64_t rows_per_wg  = et_rows_per_cacheline_group(ne00, parimaa_na(float));
     const int64_t total_wgs    = (total_rows + rows_per_wg - 1) / rows_per_wg;
 
     for (int64_t wg = thread_id; wg < total_wgs; wg += num_threads) {
         const int64_t row_start = wg * rows_per_wg;
         int64_t       row_end   = row_start + rows_per_wg;
-        if (row_end > total_rows) {
+        ᱡᱩᱫᱤ (row_end > total_rows) {
             row_end = total_rows;
         }
 
@@ -653,14 +653,14 @@ int entry_point(struct ggml_et_softmax_params * params, void * env) {
 
             // Calculate ALiBi slope for this attention head
             float slope = 1.0f;
-            if (max_bias > 0.0f) {
+            ᱡᱩᱫᱤ (max_bias > 0.0f) {
                 const uint32_t h = (uint32_t) i02;  // head index
-                if (h < n_head_log2) {
+                ᱡᱩᱫᱤ (h < n_head_log2) {
                     slope = m0;
                     for (uint32_t i = 0; i < h; i++) {
                         slope *= m0;
                     }
-                } else {
+                } ᱵᱟᱝ {
                     const uint32_t exp = 2 * (h - n_head_log2) + 1;
                     slope              = m1;
                     for (uint32_t i = 1; i < exp; i++) {
@@ -670,7 +670,7 @@ int entry_point(struct ggml_et_softmax_params * params, void * env) {
             }
 
             float sink_value = 0.0f;
-            if (use_sinks && sinks_data) {
+            ᱡᱩᱫᱤ (use_sinks && sinks_data) {
                 sink_value = sinks_data[i02];
             }
 
@@ -680,7 +680,7 @@ int entry_point(struct ggml_et_softmax_params * params, void * env) {
             float *       dst_row  = dst_data + src_offset;
             const float * mask_row = NULL;
 
-            if (use_mask && mask_data) {
+            ᱡᱩᱫᱤ (use_mask && mask_data) {
                 const int64_t mask_i03 = (ne13 > 0) ? i03 % ne13 : 0;
                 const int64_t mask_i02 = (ne12 > 0) ? i02 % ne12 : 0;
                 const int64_t mask_i01 = i01;
@@ -690,9 +690,9 @@ int entry_point(struct ggml_et_softmax_params * params, void * env) {
                 mask_row = mask_data + mask_offset;
             }
 
-            compute_softmax_row(dst_row, src_row, mask_row, (int) ne00, scale, slope, sink_value, use_sinks);
+            compute_softmax_row(dst_row, src_row, mask_row, (puur_naa_nka) ne00, scale, slope, sink_value, use_sinks);
         }
     }
 
-    return 0;  // Success
+    ᱨᱩᱣᱟᱹᱲ 0;  // Success
 }

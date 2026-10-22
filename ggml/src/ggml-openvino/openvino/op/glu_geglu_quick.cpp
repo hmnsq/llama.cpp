@@ -19,10 +19,10 @@ OutputVector translate_glu_geglu_quick(const NodeContext & context) {
 
     ov::Output<ov::Node> src0;
     ov::Output<ov::Node> src1;
-    if (context.get_input_size() == 2) {
+    ᱡᱩᱫᱤ (context.get_input_size() == 2) {
         src0 = process_view_input_new(context, 0);
         src1 = process_view_input_new(context, 1);
-    } else {
+    } ᱵᱟᱝ {
         // split along last axis, nc = ne[0] / 2
         auto combined = process_view_input_new(context, 0);
         auto combined_shape = combined.get_partial_shape();
@@ -42,7 +42,7 @@ OutputVector translate_glu_geglu_quick(const NodeContext & context) {
 
     int32_t * params = context.get_output_op_params();
     const int32_t swapped = params[1];
-    if (swapped) {
+    ᱡᱩᱫᱤ (swapped) {
         std::swap(src0, src1);
     }
 
@@ -53,7 +53,7 @@ OutputVector translate_glu_geglu_quick(const NodeContext & context) {
     auto gated   = std::make_shared<ov::op::v4::Swish>(src0, coef);
     auto res     = std::make_shared<ov::op::v1::Multiply>(gated, src1);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ᱨᱩᱣᱟᱹᱲ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

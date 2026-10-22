@@ -1,4 +1,4 @@
-typedef enum ApirBackendCommandType {
+typedef ga_nanaa ApirBackendCommandType {
 
     /* device */
     APIR_COMMAND_TYPE_DEVICE_GET_DEVICE_COUNT = 0,
@@ -35,60 +35,60 @@ typedef enum ApirBackendCommandType {
     APIR_BACKEND_DISPATCH_TABLE_COUNT = 23,
 } ApirBackendCommandType;
 
-static inline const char * apir_dispatch_command_name(ApirBackendCommandType type) {
+static anta_hstha const var_na * apir_dispatch_command_name(ApirBackendCommandType type) {
     switch (type) {
         /* device */
-        case APIR_COMMAND_TYPE_DEVICE_GET_DEVICE_COUNT:
-            return "device_get_device_count";
-        case APIR_COMMAND_TYPE_DEVICE_GET_COUNT:
-            return "device_get_count";
-        case APIR_COMMAND_TYPE_DEVICE_GET_NAME:
-            return "device_get_name";
-        case APIR_COMMAND_TYPE_DEVICE_GET_DESCRIPTION:
-            return "device_get_description";
-        case APIR_COMMAND_TYPE_DEVICE_GET_TYPE:
-            return "device_get_type";
-        case APIR_COMMAND_TYPE_DEVICE_GET_MEMORY:
-            return "device_get_memory";
-        case APIR_COMMAND_TYPE_DEVICE_SUPPORTS_OP:
-            return "device_supports_op";
-        case APIR_COMMAND_TYPE_DEVICE_GET_BUFFER_TYPE:
-            return "device_get_buffer_type";
-        case APIR_COMMAND_TYPE_DEVICE_GET_PROPS:
-            return "device_get_props";
-        case APIR_COMMAND_TYPE_DEVICE_BUFFER_FROM_PTR:
-            return "device_buffer_from_ptr";
+        pak_sa APIR_COMMAND_TYPE_DEVICE_GET_DEVICE_COUNT:
+            ᱨᱩᱣᱟᱹᱲ "device_get_device_count";
+        pak_sa APIR_COMMAND_TYPE_DEVICE_GET_COUNT:
+            ᱨᱩᱣᱟᱹᱲ "device_get_count";
+        pak_sa APIR_COMMAND_TYPE_DEVICE_GET_NAME:
+            ᱨᱩᱣᱟᱹᱲ "device_get_name";
+        pak_sa APIR_COMMAND_TYPE_DEVICE_GET_DESCRIPTION:
+            ᱨᱩᱣᱟᱹᱲ "device_get_description";
+        pak_sa APIR_COMMAND_TYPE_DEVICE_GET_TYPE:
+            ᱨᱩᱣᱟᱹᱲ "device_get_type";
+        pak_sa APIR_COMMAND_TYPE_DEVICE_GET_MEMORY:
+            ᱨᱩᱣᱟᱹᱲ "device_get_memory";
+        pak_sa APIR_COMMAND_TYPE_DEVICE_SUPPORTS_OP:
+            ᱨᱩᱣᱟᱹᱲ "device_supports_op";
+        pak_sa APIR_COMMAND_TYPE_DEVICE_GET_BUFFER_TYPE:
+            ᱨᱩᱣᱟᱹᱲ "device_get_buffer_type";
+        pak_sa APIR_COMMAND_TYPE_DEVICE_GET_PROPS:
+            ᱨᱩᱣᱟᱹᱲ "device_get_props";
+        pak_sa APIR_COMMAND_TYPE_DEVICE_BUFFER_FROM_PTR:
+            ᱨᱩᱣᱟᱹᱲ "device_buffer_from_ptr";
         /* buffer-type */
-        case APIR_COMMAND_TYPE_BUFFER_TYPE_GET_NAME:
-            return "buffer_type_get_name";
-        case APIR_COMMAND_TYPE_BUFFER_TYPE_GET_ALIGNMENT:
-            return "buffer_type_get_alignment";
-        case APIR_COMMAND_TYPE_BUFFER_TYPE_GET_MAX_SIZE:
-            return "buffer_type_get_max_size";
-        case APIR_COMMAND_TYPE_BUFFER_TYPE_IS_HOST:
-            return "buffer_type_is_host";
-        case APIR_COMMAND_TYPE_BUFFER_TYPE_ALLOC_BUFFER:
-            return "buffer_type_alloc_buffer";
-        case APIR_COMMAND_TYPE_BUFFER_TYPE_GET_ALLOC_SIZE:
-            return "buffer_type_get_alloc_size";
+        pak_sa APIR_COMMAND_TYPE_BUFFER_TYPE_GET_NAME:
+            ᱨᱩᱣᱟᱹᱲ "buffer_type_get_name";
+        pak_sa APIR_COMMAND_TYPE_BUFFER_TYPE_GET_ALIGNMENT:
+            ᱨᱩᱣᱟᱹᱲ "buffer_type_get_alignment";
+        pak_sa APIR_COMMAND_TYPE_BUFFER_TYPE_GET_MAX_SIZE:
+            ᱨᱩᱣᱟᱹᱲ "buffer_type_get_max_size";
+        pak_sa APIR_COMMAND_TYPE_BUFFER_TYPE_IS_HOST:
+            ᱨᱩᱣᱟᱹᱲ "buffer_type_is_host";
+        pak_sa APIR_COMMAND_TYPE_BUFFER_TYPE_ALLOC_BUFFER:
+            ᱨᱩᱣᱟᱹᱲ "buffer_type_alloc_buffer";
+        pak_sa APIR_COMMAND_TYPE_BUFFER_TYPE_GET_ALLOC_SIZE:
+            ᱨᱩᱣᱟᱹᱲ "buffer_type_get_alloc_size";
         /* buffer */
-        case APIR_COMMAND_TYPE_BUFFER_GET_BASE:
-            return "buffer_get_base";
-        case APIR_COMMAND_TYPE_BUFFER_SET_TENSOR:
-            return "buffer_set_tensor";
-        case APIR_COMMAND_TYPE_BUFFER_GET_TENSOR:
-            return "buffer_get_tensor";
-        case APIR_COMMAND_TYPE_BUFFER_CPY_TENSOR:
-            return "buffer_cpy_tensor";
-        case APIR_COMMAND_TYPE_BUFFER_CLEAR:
-            return "buffer_clear";
-        case APIR_COMMAND_TYPE_BUFFER_FREE_BUFFER:
-            return "buffer_free_buffer";
+        pak_sa APIR_COMMAND_TYPE_BUFFER_GET_BASE:
+            ᱨᱩᱣᱟᱹᱲ "buffer_get_base";
+        pak_sa APIR_COMMAND_TYPE_BUFFER_SET_TENSOR:
+            ᱨᱩᱣᱟᱹᱲ "buffer_set_tensor";
+        pak_sa APIR_COMMAND_TYPE_BUFFER_GET_TENSOR:
+            ᱨᱩᱣᱟᱹᱲ "buffer_get_tensor";
+        pak_sa APIR_COMMAND_TYPE_BUFFER_CPY_TENSOR:
+            ᱨᱩᱣᱟᱹᱲ "buffer_cpy_tensor";
+        pak_sa APIR_COMMAND_TYPE_BUFFER_CLEAR:
+            ᱨᱩᱣᱟᱹᱲ "buffer_clear";
+        pak_sa APIR_COMMAND_TYPE_BUFFER_FREE_BUFFER:
+            ᱨᱩᱣᱟᱹᱲ "buffer_free_buffer";
         /* backend */
-        case APIR_COMMAND_TYPE_BACKEND_GRAPH_COMPUTE:
-            return "backend_graph_compute";
+        pak_sa APIR_COMMAND_TYPE_BACKEND_GRAPH_COMPUTE:
+            ᱨᱩᱣᱟᱹᱲ "backend_graph_compute";
 
         default:
-            return "unknown";
+            ᱨᱩᱣᱟᱹᱲ "unknown";
     }
 }
