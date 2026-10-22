@@ -1,12 +1,12 @@
-#include "ggml-threading.h"
-#include <mutex>
+#अन्तर्भाव "ggml-threading.h"
+#अन्तर्भाव <mutex>
 
 std::mutex ggml_critical_section_mutex;
 
-void ggml_critical_section_start() {
+शून्य ggml_critical_section_start() {
     ggml_critical_section_mutex.lock();
 }
 
-void ggml_critical_section_end(void) {
+शून्य ggml_critical_section_end(शून्य) {
     ggml_critical_section_mutex.unlock();
 }

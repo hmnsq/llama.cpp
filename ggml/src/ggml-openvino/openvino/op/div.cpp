@@ -1,135 +1,135 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
-#include "ggml.h"
+#अन्तर्भाव "../node_context.h"
+#अन्तर्भाव "../op_table.h"
+#अन्तर्भाव "../utils.h"
+#अन्तर्भाव "ggml.h"
 
-#include <memory>
-#include <openvino/core/type.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/divide.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/shape_of.hpp>
-#include <openvino/op/sigmoid.hpp>
-#include <openvino/op/swish.hpp>
-#include <openvino/op/tile.hpp>
-#include <openvino/op/util/precision_sensitive_attribute.hpp>
-#include <vector>
+#अन्तर्भाव <memory>
+#अन्तर्भाव <openvino/core/type.hpp>
+#अन्तर्भाव <openvino/op/constant.hpp>
+#अन्तर्भाव <openvino/op/convert.hpp>
+#अन्तर्भाव <openvino/op/divide.hpp>
+#अन्तर्भाव <openvino/op/multiply.hpp>
+#अन्तर्भाव <openvino/op/shape_of.hpp>
+#अन्तर्भाव <openvino/op/sigmoid.hpp>
+#अन्तर्भाव <openvino/op/swish.hpp>
+#अन्तर्भाव <openvino/op/tile.hpp>
+#अन्तर्भाव <openvino/op/util/precision_sensitive_attribute.hpp>
+#अन्तर्भाव <vector>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+नामाकाश ov {
+नामाकाश frontend {
+नामाकाश ggml {
+नामाकाश op {
 
-namespace {
+नामाकाश {
 
-bool is_silu_div_pattern(const ov::Output<ov::Node> & numerator,
-                         const ov::Output<ov::Node> & denominator,
-                         const NodeContext & context) {
-    if (context.get_input_size() != 2) {
-        return false;
+तार्किक is_silu_div_pattern(ध्रुव ov::Output<ov::Node> & numerator,
+                         ध्रुव ov::Output<ov::Node> & denominator,
+                         ध्रुव ग्रन्थिः_Context & context) {
+    जइ (context.get_निवेशः_size() != 2) {
+        प्रत्यागम मिच्छ;
     }
 
-    const auto * unary_op = reinterpret_cast<const ggml_unary_op *>(context.get_input_op_params(0));
-    if (unary_op == nullptr || *unary_op != GGML_UNARY_OP_SILU) {
-        return false;
+    ध्रुव auto * unary_op = reinterpret_cast<ध्रुव ggml_unary_op *>(context.get_निवेशः_op_params(0));
+    जइ (unary_op == nullptr || *unary_op != GGML_UNARY_OP_SILU) {
+        प्रत्यागम मिच्छ;
     }
 
-    const auto denom_node = denominator.get_node_shared_ptr();
+    ध्रुव auto denom_ग्रन्थिः = denominator.get_ग्रन्थिः_shared_ptr();
 
-    if (auto swish = ov::as_type_ptr<ov::op::v4::Swish>(numerator.get_node_shared_ptr())) {
-        return swish->input_value(0).get_node_shared_ptr() == denom_node;
+    जइ (auto swish = ov::as_type_ptr<ov::op::v4::Swish>(numerator.get_ग्रन्थिः_shared_ptr())) {
+        प्रत्यागम swish->निवेशः_मानम्(0).get_ग्रन्थिः_shared_ptr() == denom_ग्रन्थिः;
     }
-    return false;
+    प्रत्यागम मिच्छ;
 }
 
-ov::Output<ov::Node> repeat_input_to_match(const NodeContext & context,
-                                           const ov::Output<ov::Node> & input,
-                                           const ov::Output<ov::Node> & target,
-                                           size_t input_index) {
-    const auto input_shape = context.get_input_shape(input_index);
-    const auto target_shape = context.get_input_shape(0);
+ov::Output<ov::Node> repeat_निवेशः_to_match(ध्रुव ग्रन्थिः_Context & context,
+                                           ध्रुव ov::Output<ov::Node> & निवेशः,
+                                           ध्रुव ov::Output<ov::Node> & target,
+                                           size_t निवेशः_index) {
+    ध्रुव auto निवेशः_shape = context.get_निवेशः_shape(निवेशः_index);
+    ध्रुव auto target_shape = context.get_निवेशः_shape(0);
 
-    if (input_shape == target_shape) {
-        return input;
+    जइ (निवेशः_shape == target_shape) {
+        प्रत्यागम निवेशः;
     }
 
-    if (input_shape.rank().is_static() && target_shape.rank().is_static()) {
-        const auto rank = static_cast<size_t>(input_shape.rank().get_length());
+    जइ (निवेशः_shape.rank().is_static() && target_shape.rank().is_static()) {
+        ध्रुव auto rank = static_cast<size_t>(निवेशः_shape.rank().get_length());
         std::vector<int64_t> repeats(rank, 1);
-        bool needs_repeat = false;
+        तार्किक needs_repeat = मिच्छ;
 
-        for (size_t axis = 0; axis < rank; ++axis) {
-            FRONT_END_OP_CONVERSION_CHECK(input_shape[axis].is_static() && target_shape[axis].is_static(),
+        प्रति (size_t axis = 0; axis < rank; ++axis) {
+            FRONT_END_OP_CONVERSION_CHECK(निवेशः_shape[axis].is_static() && target_shape[axis].is_static(),
                                           "DIV repeat requires static dimensions on both inputs");
 
-            const int64_t input_dim = input_shape[axis].get_length();
-            const int64_t target_dim = target_shape[axis].get_length();
+            ध्रुव int64_t निवेशः_dim = निवेशः_shape[axis].get_length();
+            ध्रुव int64_t target_dim = target_shape[axis].get_length();
 
-            FRONT_END_OP_CONVERSION_CHECK(input_dim > 0 && target_dim > 0 && target_dim % input_dim == 0,
-                                          "DIV input shape ", input_shape, " cannot repeat to match ", target_shape);
+            FRONT_END_OP_CONVERSION_CHECK(निवेशः_dim > 0 && target_dim > 0 && target_dim % निवेशः_dim == 0,
+                                          "DIV input shape ", निवेशः_shape, " cannot repeat to match ", target_shape);
 
-            repeats[axis] = target_dim / input_dim;
+            repeats[axis] = target_dim / निवेशः_dim;
             needs_repeat = needs_repeat || repeats[axis] != 1;
         }
 
-        if (!needs_repeat) {
-            return input;
+        जइ (!needs_repeat) {
+            प्रत्यागम निवेशः;
         }
 
-        auto repeats_node = ov::op::v0::Constant::create(ov::element::i64, {repeats.size()}, repeats);
-        return std::make_shared<ov::op::v0::Tile>(input, repeats_node);
+        auto repeats_ग्रन्थिः = ov::op::v0::Constant::create(ov::element::i64, {repeats.size()}, repeats);
+        प्रत्यागम std::make_shared<ov::op::v0::Tile>(निवेशः, repeats_ग्रन्थिः);
     }
 
-    auto input_shape_node = std::make_shared<ov::op::v3::ShapeOf>(input, ov::element::i64);
-    auto target_shape_node = std::make_shared<ov::op::v3::ShapeOf>(target, ov::element::i64);
-    auto repeats_node = std::make_shared<ov::op::v1::Divide>(target_shape_node, input_shape_node);
-    return std::make_shared<ov::op::v0::Tile>(input, repeats_node);
+    auto निवेशः_shape_ग्रन्थिः = std::make_shared<ov::op::v3::ShapeOf>(निवेशः, ov::element::i64);
+    auto target_shape_ग्रन्थिः = std::make_shared<ov::op::v3::ShapeOf>(target, ov::element::i64);
+    auto repeats_ग्रन्थिः = std::make_shared<ov::op::v1::Divide>(target_shape_ग्रन्थिः, निवेशः_shape_ग्रन्थिः);
+    प्रत्यागम std::make_shared<ov::op::v0::Tile>(निवेशः, repeats_ग्रन्थिः);
 }
 
 }  // namespace
 
-OutputVector translate_div(const NodeContext & context) {
-    num_inputs_check(context, 2, 2);
+OutputVector translate_div(ध्रुव ग्रन्थिः_Context & context) {
+    अङ्कः_inputs_check(context, 2, 2);
 
-    auto input_0 = process_view_input_new(context, 0);
-    auto input_1 = process_view_input_new(context, 1);
+    auto निवेशः_0 = process_view_निवेशः_new(context, 0);
+    auto निवेशः_1 = process_view_निवेशः_new(context, 1);
 
-    if (is_silu_div_pattern(input_0, input_1, context)) {
-        ov::Output<ov::Node> res = std::make_shared<ov::op::v0::Sigmoid>(input_1);
-        if (res.get_element_type() != context.get_output_type()) {
+    जइ (is_silu_div_pattern(निवेशः_0, निवेशः_1, context)) {
+        ov::Output<ov::Node> res = std::make_shared<ov::op::v0::Sigmoid>(निवेशः_1);
+        जइ (res.get_element_type() != context.get_output_type()) {
             res = std::make_shared<ov::op::v0::Convert>(res, context.get_output_type());
         }
-        return rename_outputs_with_suffix({res}, context.get_name());
+        प्रत्यागम rename_outputs_with_suffix({res}, context.get_name());
     }
 
-    input_1 = repeat_input_to_match(context, input_1, input_0, 1);
+    निवेशः_1 = repeat_निवेशः_to_match(context, निवेशः_1, निवेशः_0, 1);
 
-    const auto output_type = context.get_output_type();
-    const bool use_f32_compute = input_0.get_element_type() != ov::element::f32 ||
-                                 input_1.get_element_type() != ov::element::f32 || output_type != ov::element::f32;
+    ध्रुव auto output_type = context.get_output_type();
+    ध्रुव तार्किक use_f32_compute = निवेशः_0.get_element_type() != ov::element::f32 ||
+                                 निवेशः_1.get_element_type() != ov::element::f32 || output_type != ov::element::f32;
 
-    if (use_f32_compute) {
-        input_0 = std::make_shared<ov::op::v0::Convert>(input_0, ov::element::f32);
-        input_1 = std::make_shared<ov::op::v0::Convert>(input_1, ov::element::f32);
+    जइ (use_f32_compute) {
+        निवेशः_0 = std::make_shared<ov::op::v0::Convert>(निवेशः_0, ov::element::f32);
+        निवेशः_1 = std::make_shared<ov::op::v0::Convert>(निवेशः_1, ov::element::f32);
     }
 
-    ov::Output<ov::Node> res = std::make_shared<ov::op::v1::Divide>(input_0, input_1);
-    if (use_f32_compute) {
+    ov::Output<ov::Node> res = std::make_shared<ov::op::v1::Divide>(निवेशः_0, निवेशः_1);
+    जइ (use_f32_compute) {
         // Keep the reciprocal/divide path in FP32. Without this hint, the GPU
         // plugin can still compress the subgraph back to FP16 and overflow on
         // small shexp gate values (e.g. silu(x) / x in qwen2moe).
-        ov::mark_as_precision_sensitive(res.get_node_shared_ptr()->input(0));
-        ov::mark_as_precision_sensitive(res.get_node_shared_ptr()->input(1));
+        ov::mark_as_precision_sensitive(res.get_ग्रन्थिः_shared_ptr()->निवेशः(0));
+        ov::mark_as_precision_sensitive(res.get_ग्रन्थिः_shared_ptr()->निवेशः(1));
     }
-    if (res.get_element_type() != output_type) {
+    जइ (res.get_element_type() != output_type) {
         auto output_convert = std::make_shared<ov::op::v0::Convert>(res, output_type);
-        if (use_f32_compute) {
-            ov::mark_as_precision_sensitive(output_convert->input(0));
+        जइ (use_f32_compute) {
+            ov::mark_as_precision_sensitive(output_convert->निवेशः(0));
         }
         res = output_convert;
     }
-    return rename_outputs_with_suffix({res}, context.get_name());
+    प्रत्यागम rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

@@ -1,39 +1,39 @@
-#include "align_eltwise_ranks.h"
+#अन्तर्भाव "align_eltwise_ranks.h"
 
-#include <numeric>
-#include <openvino/op/add.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/divide.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/sqrt.hpp>
-#include <openvino/op/subtract.hpp>
-#include <openvino/op/unsqueeze.hpp>
-#include <openvino/pass/pattern/op/wrap_type.hpp>
+#अन्तर्भाव <numeric>
+#अन्तर्भाव <openvino/op/add.hpp>
+#अन्तर्भाव <openvino/op/constant.hpp>
+#अन्तर्भाव <openvino/op/divide.hpp>
+#अन्तर्भाव <openvino/op/multiply.hpp>
+#अन्तर्भाव <openvino/op/sqrt.hpp>
+#अन्तर्भाव <openvino/op/subtract.hpp>
+#अन्तर्भाव <openvino/op/unsqueeze.hpp>
+#अन्तर्भाव <openvino/pass/pattern/op/wrap_type.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace pass {
+नामाकाश ov {
+नामाकाश frontend {
+नामाकाश ggml {
+नामाकाश pass {
 
-namespace {
+नामाकाश {
 
 // True for an RMS-norm output, x * (1 / sqrt(mean(x^2) + eps)) as translate_rms_norm builds it, optionally
 // scaled by the norm weight.
-bool is_rms_norm_output(const ov::Output<ov::Node> & value, int depth = 1) {
-    const auto * node = value.get_node();
-    if (!ov::is_type<ov::op::v1::Multiply>(node)) {
-        return false;
+तार्किक is_rms_norm_output(ध्रुव ov::Output<ov::Node> & value, पूर्णाङ्क depth = 1) {
+    ध्रुव auto * ग्रन्थिः = value.get_ग्रन्थिः();
+    जइ (!ov::is_type<ov::op::v1::Multiply>(ग्रन्थिः)) {
+        प्रत्यागम मिच्छ;
     }
-    for (const auto & input : node->input_values()) {
-        const auto * src = input.get_node();
-        if (ov::is_type<ov::op::v1::Divide>(src) && ov::is_type<ov::op::v0::Sqrt>(src->get_input_node_ptr(1))) {
-            return true;
+    प्रति (ध्रुव auto & निवेशः : ग्रन्थिः->निवेशः_मानानि()) {
+        ध्रुव auto * src = निवेशः.get_ग्रन्थिः();
+        जइ (ov::is_type<ov::op::v1::Divide>(src) && ov::is_type<ov::op::v0::Sqrt>(src->get_निवेशः_ग्रन्थिः_ptr(1))) {
+            प्रत्यागम सच्च;
         }
-        if (depth > 0 && is_rms_norm_output(input, depth - 1)) {
-            return true;
+        जइ (depth > 0 && is_rms_norm_output(निवेशः, depth - 1)) {
+            प्रत्यागम सच्च;
         }
     }
-    return false;
+    प्रत्यागम मिच्छ;
 }
 
 }  // namespace
@@ -41,48 +41,48 @@ bool is_rms_norm_output(const ov::Output<ov::Node> & value, int depth = 1) {
 AlignEltwiseOperandRanks::AlignEltwiseOperandRanks() {
     auto eltwise_m = ov::pass::pattern::wrap_type<ov::op::v1::Add, ov::op::v1::Multiply, ov::op::v1::Subtract>();
 
-    const auto callback = [this](ov::pass::pattern::Matcher & m) {
-        auto node = m.get_match_root();
-        if (node->get_input_size() != 2) {
-            return false;
+    ध्रुव auto callback = [एतत्](ov::pass::pattern::Matcher & m) {
+        auto ग्रन्थिः = m.get_match_मूलम्();
+        जइ (ग्रन्थिः->get_निवेशः_size() != 2) {
+            प्रत्यागम मिच्छ;
         }
 
-        auto lhs = node->input_value(0);
-        auto rhs = node->input_value(1);
+        auto lhs = ग्रन्थिः->निवेशः_मानम्(0);
+        auto rhs = ग्रन्थिः->निवेशः_मानम्(1);
 
         // A tensor-vs-Constant mismatch is the norm's own eps / 1-over-sqrt arithmetic. That
         // folds into the `rms` primitive itself instead of becoming a fused eltwise post-op,
         // so it is not affected and is left alone.
-        if (ov::is_type<ov::op::v0::Constant>(lhs.get_node()) ||
-            ov::is_type<ov::op::v0::Constant>(rhs.get_node())) {
-            return false;
+        जइ (ov::is_type<ov::op::v0::Constant>(lhs.get_ग्रन्थिः()) ||
+            ov::is_type<ov::op::v0::Constant>(rhs.get_ग्रन्थिः())) {
+            प्रत्यागम मिच्छ;
         }
 
-        const auto lhs_rank = lhs.get_partial_shape().rank();
-        const auto rhs_rank = rhs.get_partial_shape().rank();
-        if (lhs_rank.is_dynamic() || rhs_rank.is_dynamic() || lhs_rank == rhs_rank) {
-            return false;
+        ध्रुव auto lhs_rank = lhs.get_partial_shape().rank();
+        ध्रुव auto rhs_rank = rhs.get_partial_shape().rank();
+        जइ (lhs_rank.is_dynamic() || rhs_rank.is_dynamic() || lhs_rank == rhs_rank) {
+            प्रत्यागम मिच्छ;
         }
 
-        const size_t shorter_idx = lhs_rank.get_length() < rhs_rank.get_length() ? 0 : 1;
-        const auto & shorter = shorter_idx == 0 ? lhs : rhs;
+        ध्रुव size_t shorter_idx = lhs_rank.get_length() < rhs_rank.get_length() ? 0 : 1;
+        ध्रुव auto & shorter = shorter_idx == 0 ? lhs : rhs;
 
         // The defect is with the norm output as the higher-rank operand. When the norm output is the
         // lower-rank one (gemma-3 adds it to a rank-4 residual), unsqueezing it puts the Unsqueeze between
         // `rms` and its post-op, and the GPU plugin then computes the layer wrongly.
-        if (is_rms_norm_output(shorter)) {
-            return false;
+        जइ (is_rms_norm_output(shorter)) {
+            प्रत्यागम मिच्छ;
         }
-        const int64_t diff = std::abs(lhs_rank.get_length() - rhs_rank.get_length());
+        ध्रुव int64_t diff = std::abs(lhs_rank.get_length() - rhs_rank.get_length());
 
         std::vector<int64_t> axes(static_cast<size_t>(diff));
         std::iota(axes.begin(), axes.end(), 0);
         auto unsqueeze = std::make_shared<ov::op::v0::Unsqueeze>(
             shorter, ov::op::v0::Constant::create(ov::element::i64, ov::Shape{ axes.size() }, axes));
 
-        node->input(shorter_idx).replace_source_output(unsqueeze->output(0));
-        register_new_node(unsqueeze);
-        return true;
+        ग्रन्थिः->निवेशः(shorter_idx).replace_source_output(unsqueeze->output(0));
+        register_new_ग्रन्थिः(unsqueeze);
+        प्रत्यागम सच्च;
     };
 
     register_matcher(

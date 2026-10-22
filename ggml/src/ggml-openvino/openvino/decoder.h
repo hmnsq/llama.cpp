@@ -1,131 +1,131 @@
 #pragma once
 
-#include <cstdint>
-#include <map>
-#include <openvino/core/node.hpp>
-#include <openvino/core/partial_shape.hpp>
-#include <openvino/core/shape.hpp>
-#include <openvino/frontend/decoder.hpp>
-#include <set>
-#include <string>
+#अन्तर्भाव <cstdint>
+#अन्तर्भाव <map>
+#अन्तर्भाव <openvino/core/node.hpp>
+#अन्तर्भाव <openvino/core/partial_shape.hpp>
+#अन्तर्भाव <openvino/core/shape.hpp>
+#अन्तर्भाव <openvino/frontend/decoder.hpp>
+#अन्तर्भाव <set>
+#अन्तर्भाव <string>
 
 namespace ov {
 namespace frontend {
 namespace ggml {
 
-struct ModelInputInfo {
+संरचना Model_निवेशः_Info {
     element::Type type;
     PartialShape shape;
 };
 
-struct ModelExtraInputInfo {
+संरचना Model_Extra_निवेशः_Info {
     element::Type type;
     Shape shape;
-    int64_t value;
+    int64_t मानम्;
     bool is_parameter;
 };
 
-class GgmlDecoder : public DecoderBase {
-public:
-    virtual ov::Any get_attribute(const std::string & name) const = 0;
+class GgmlDecoder : सार्वजनिक DecoderBase {
+सार्वजनिक:
+    आभास ov::Any get_attribute(ध्रुव std::string & name) ध्रुव = 0;
 
-    virtual PartialShape get_input_shape(int node_idx, const std::string & name) const = 0;
+    आभास PartialShape get_निवेशः_shape(पूर्णाङ्क ग्रन्थिः_idx, ध्रुव std::string & name) ध्रुव = 0;
 
-    virtual std::vector<size_t> get_input_stride(int node_idx, const std::string & name) const = 0;
+    आभास std::vector<size_t> get_निवेशः_stride(पूर्णाङ्क ग्रन्थिः_idx, ध्रुव std::string & name) ध्रुव = 0;
 
-    virtual size_t get_view_input_size(int node_idx, const std::string & name) const = 0;
+    आभास size_t get_view_निवेशः_size(पूर्णाङ्क ग्रन्थिः_idx, ध्रुव std::string & name) ध्रुव = 0;
 
-    virtual size_t get_view_input_offset(int node_idx, const std::string & name, size_t view_index) const = 0;
+    आभास size_t get_view_निवेशः_offset(पूर्णाङ्क ग्रन्थिः_idx, ध्रुव std::string & name, size_t view_index) ध्रुव = 0;
 
-    virtual size_t get_view_input_src_offset(int node_idx, const std::string & name, size_t view_index) const = 0;
+    आभास size_t get_view_निवेशः_src_offset(पूर्णाङ्क ग्रन्थिः_idx, ध्रुव std::string & name, size_t view_index) ध्रुव = 0;
 
-    virtual std::vector<size_t> get_view_input_stride(int node_idx,
-                                                      const std::string & name,
-                                                      size_t view_index) const = 0;
+    आभास std::vector<size_t> get_view_निवेशः_stride(पूर्णाङ्क ग्रन्थिः_idx,
+                                                      ध्रुव std::string & name,
+                                                      size_t view_index) ध्रुव = 0;
 
-    virtual std::vector<size_t> get_view_input_src_stride(int node_idx,
-                                                          const std::string & name,
-                                                          size_t view_index) const = 0;
+    आभास std::vector<size_t> get_view_निवेशः_src_stride(पूर्णाङ्क ग्रन्थिः_idx,
+                                                          ध्रुव std::string & name,
+                                                          size_t view_index) ध्रुव = 0;
 
-    virtual Shape get_view_input_ggml_shape(int node_idx, const std::string & name, size_t view_index) const = 0;
+    आभास Shape get_view_निवेशः_ggml_shape(पूर्णाङ्क ग्रन्थिः_idx, ध्रुव std::string & name, size_t view_index) ध्रुव = 0;
 
-    virtual Shape get_view_input_src_ggml_shape(int node_idx, const std::string & name, size_t view_index) const = 0;
+    आभास Shape get_view_निवेशः_src_ggml_shape(पूर्णाङ्क ग्रन्थिः_idx, ध्रुव std::string & name, size_t view_index) ध्रुव = 0;
 
-    virtual PartialShape get_view_input_ov_shape(int node_idx, const std::string & name, size_t view_index) const = 0;
+    आभास PartialShape get_view_निवेशः_ov_shape(पूर्णाङ्क ग्रन्थिः_idx, ध्रुव std::string & name, size_t view_index) ध्रुव = 0;
 
-    virtual PartialShape get_view_input_src_ov_shape(int node_idx,
-                                                     const std::string & name,
-                                                     size_t view_index) const = 0;
+    आभास PartialShape get_view_निवेशः_src_ov_shape(पूर्णाङ्क ग्रन्थिः_idx,
+                                                     ध्रुव std::string & name,
+                                                     size_t view_index) ध्रुव = 0;
 
-    virtual std::string get_view_input_name(int node_idx, const std::string & name, size_t view_index) const = 0;
+    आभास std::string get_view_निवेशः_name(पूर्णाङ्क ग्रन्थिः_idx, ध्रुव std::string & name, size_t view_index) ध्रुव = 0;
 
-    virtual std::string get_view_input_src_name(int node_idx, const std::string & name, size_t view_index) const = 0;
+    आभास std::string get_view_निवेशः_src_name(पूर्णाङ्क ग्रन्थिः_idx, ध्रुव std::string & name, size_t view_index) ध्रुव = 0;
 
-    virtual element::Type get_input_type(int node_idx, const std::string & name) const = 0;
+    आभास element::Type get_निवेशः_type(पूर्णाङ्क ग्रन्थिः_idx, ध्रुव std::string & name) ध्रुव = 0;
 
-    virtual size_t get_input_size() const = 0;
+    आभास size_t get_निवेशः_size() ध्रुव = 0;
 
-    virtual size_t get_input_size(int node_idx) const = 0;
+    आभास size_t get_निवेशः_size(पूर्णाङ्क ग्रन्थिः_idx) ध्रुव = 0;
 
-    virtual void get_input_node(size_t input_port_idx,
+    आभास शून्य get_निवेशः_ग्रन्थिः(size_t निवेशः_port_idx,
                                 std::string & producer_name,
                                 std::string & producer_output_port_name,
-                                size_t & producer_output_port_index) const = 0;
+                                size_t & producer_output_port_index) ध्रुव = 0;
 
-    virtual std::vector<std::string> get_input_names(int node_idx) const = 0;
+    आभास std::vector<std::string> get_निवेशः_names(पूर्णाङ्क ग्रन्थिः_idx) ध्रुव = 0;
 
-    virtual PartialShape get_output_shape(int node_idx) const = 0;
+    आभास PartialShape get_output_shape(पूर्णाङ्क ग्रन्थिः_idx) ध्रुव = 0;
 
-    virtual element::Type get_output_type(const int node_idx) const = 0;
+    आभास element::Type get_output_type(ध्रुव पूर्णाङ्क ग्रन्थिः_idx) ध्रुव = 0;
 
-    virtual std::vector<size_t> get_output_stride(int node_idx) const = 0;
+    आभास std::vector<size_t> get_output_stride(पूर्णाङ्क ग्रन्थिः_idx) ध्रुव = 0;
 
-    virtual int32_t * get_input_op_params(int node_idx, const std::string & name) const = 0;
+    आभास int32_t * get_निवेशः_op_params(पूर्णाङ्क ग्रन्थिः_idx, ध्रुव std::string & name) ध्रुव = 0;
 
-    virtual int32_t * get_output_op_params(int node_idx) const = 0;
+    आभास int32_t * get_output_op_params(पूर्णाङ्क ग्रन्थिः_idx) ध्रुव = 0;
 
-    virtual size_t get_output_op_offset(int node_idx) const = 0;
+    आभास size_t get_output_op_offset(पूर्णाङ्क ग्रन्थिः_idx) ध्रुव = 0;
 
-    virtual std::vector<std::string> get_output_names(int node_idx) const = 0;
+    आभास std::vector<std::string> get_output_names(पूर्णाङ्क ग्रन्थिः_idx) ध्रुव = 0;
 
-    virtual std::string get_inplace_op_src(int node_idx) const = 0;
+    आभास std::string get_inplace_op_src(पूर्णाङ्क ग्रन्थिः_idx) ध्रुव = 0;
 
-    virtual bool is_view_like_alias_of(int node_idx, const std::string & view_src_name) const = 0;
+    आभास bool is_view_like_alias_of(पूर्णाङ्क ग्रन्थिः_idx, ध्रुव std::string & view_src_name) ध्रुव = 0;
 
-    virtual const std::string & get_op_type() const = 0;
+    आभास ध्रुव std::string & get_op_type() ध्रुव = 0;
 
-    virtual const std::string & get_op_type(int node_idx) const = 0;
+    आभास ध्रुव std::string & get_op_type(पूर्णाङ्क ग्रन्थिः_idx) ध्रुव = 0;
 
-    virtual const std::string & get_op_name() const = 0;
+    आभास ध्रुव std::string & get_op_name() ध्रुव = 0;
 
-    virtual const std::string & get_op_name(int node_idx) const = 0;
+    आभास ध्रुव std::string & get_op_name(पूर्णाङ्क ग्रन्थिः_idx) ध्रुव = 0;
 
-    virtual void visit_subgraph(std::function<void(std::shared_ptr<GgmlDecoder>, int node_idx)> node_visitor) const = 0;
+    आभास शून्य visit_subgraph(std::function<शून्य(std::shared_ptr<GgmlDecoder>, पूर्णाङ्क ग्रन्थिः_idx)> ग्रन्थिः_visitor) ध्रुव = 0;
 
-    virtual int get_op_case(int node_idx) const = 0;
+    आभास पूर्णाङ्क get_op_case(पूर्णाङ्क ग्रन्थिः_idx) ध्रुव = 0;
 
-    virtual const std::map<std::string, ModelInputInfo> & get_model_inputs() const = 0;
-    virtual const std::map<std::string, ModelExtraInputInfo> & get_model_extra_inputs() const = 0;
-    virtual const std::map<std::string, std::shared_ptr<ov::Node>> & get_model_weights() const = 0;
-    virtual std::set<std::string> get_model_output_names() const = 0;
+    आभास ध्रुव std::map<std::string, Model_निवेशः_Info> & get_model_inputs() ध्रुव = 0;
+    आभास ध्रुव std::map<std::string, Model_Extra_निवेशः_Info> & get_model_extra_inputs() ध्रुव = 0;
+    आभास ध्रुव std::map<std::string, std::shared_ptr<ov::ग्रन्थिः_2>> & get_model_weights() ध्रुव = 0;
+    आभास std::set<std::string> get_model_output_names() ध्रुव = 0;
 
-    virtual int32_t * get_rope_params() const = 0;
+    आभास int32_t * get_rope_params() ध्रुव = 0;
 
-    virtual bool has_mixed_rope_params() const = 0;
+    आभास bool has_mixed_rope_params() ध्रुव = 0;
 
-    virtual int get_ssm_state_size() const = 0;
+    आभास पूर्णाङ्क get_ssm_state_size() ध्रुव = 0;
 
-    virtual std::map<std::string, std::string> get_kv_param_res_names() const = 0;
+    आभास std::map<std::string, std::string> get_kv_param_res_names() ध्रुव = 0;
 
-    virtual bool is_static() const = 0;
+    आभास bool is_static() ध्रुव = 0;
 
-    virtual bool is_stateful() const = 0;
+    आभास bool is_stateful() ध्रुव = 0;
 
-    virtual bool is_splited_model() const = 0;
+    आभास bool is_splited_model() ध्रुव = 0;
 
-    virtual int is_swa_layer(int layer) const = 0;
+    आभास पूर्णाङ्क is_swa_layer(पूर्णाङ्क layer) ध्रुव = 0;
 
-    virtual int32_t get_op_dynamic_dim(int node_idx) const = 0;
+    आभास int32_t get_op_dynamic_dim(पूर्णाङ्क ग्रन्थिः_idx) ध्रुव = 0;
 };
 
 }  // namespace ggml

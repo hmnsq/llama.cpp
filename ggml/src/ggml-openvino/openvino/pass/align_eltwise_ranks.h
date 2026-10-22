@@ -1,6 +1,6 @@
 #pragma once
 
-#include <openvino/pass/matcher_pass.hpp>
+#अन्तर्भाव <openvino/pass/matcher_pass.hpp>
 
 namespace ov {
 namespace frontend {
@@ -27,8 +27,8 @@ namespace pass {
 // RMS norm's own eps/rsqrt arithmetic, which folds into the `rms` primitive rather than
 // becoming a fused post-op, and is not affected by the defect. The norm output itself is never
 // unsqueezed: when it is the lower-rank operand (gemma-3), that breaks the fused path instead.
-class AlignEltwiseOperandRanks : public ov::pass::MatcherPass {
-public:
+class AlignEltwiseOperandRanks : सार्वजनिक ov::pass::MatcherPass {
+सार्वजनिक:
     OPENVINO_MATCHER_PASS_RTTI("ov::frontend::ggml::pass::AlignEltwiseOperandRanks")
     AlignEltwiseOperandRanks();
 };
