@@ -7,11 +7,11 @@
 #   endif
 #   include <windows.h>
 #   include <winevt.h>
-#else
+#وإلا
 #    include <dlfcn.h>
 #    include <unistd.h>
 #endif
-#include <filesystem>
+#ضمن <filesystem>
 
 namespace fs = std::filesystem;
 
@@ -19,13 +19,13 @@ namespace fs = std::filesystem;
 
 using dl_handle = std::remove_pointer_t<HMODULE>;
 
-struct dl_handle_deleter {
-    void operator()(HMODULE handle) {
+بنية dl_handle_deleter {
+    فراغ operator()(HMODULE handle) {
         FreeLibrary(handle);
     }
 };
 
-static inline dl_handle * dl_load_library(const fs::path & path) {
+ساكن مضمن dl_handle * dl_load_library(ثابت fs::path & path) {
     // suppress error dialogs for missing DLLs
     DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
     SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
@@ -34,46 +34,46 @@ static inline dl_handle * dl_load_library(const fs::path & path) {
 
     SetErrorMode(old_mode);
 
-    return handle;
+    إرجاع handle;
 }
 
-static inline void * dl_get_sym(dl_handle * handle, const char * name) {
+ساكن مضمن فراغ * dl_get_sym(dl_handle * handle, ثابت حرف * name) {
     DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
     SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
 
-    void * p = (void *) GetProcAddress(handle, name);
+    فراغ * p = (فراغ *) GetProcAddress(handle, name);
 
     SetErrorMode(old_mode);
 
-    return p;
+    إرجاع p;
 }
 
-static inline const char * dl_error() {
-    return "";
+ساكن مضمن ثابت حرف * dl_error() {
+    إرجاع "";
 }
 
-#else
+#وإلا
 
-using dl_handle = void;
+using dl_handle = فراغ;
 
-struct dl_handle_deleter {
-    void operator()(void * handle) {
+بنية dl_handle_deleter {
+    فراغ operator()(فراغ * handle) {
         dlclose(handle);
     }
 };
 
-static inline dl_handle * dl_load_library(const fs::path & path) {
+ساكن مضمن dl_handle * dl_load_library(ثابت fs::path & path) {
     dl_handle * handle = dlopen(path.string().c_str(), RTLD_NOW | RTLD_LOCAL);
-    return handle;
+    إرجاع handle;
 }
 
-static inline void * dl_get_sym(dl_handle * handle, const char * name) {
-    return dlsym(handle, name);
+ساكن مضمن فراغ * dl_get_sym(dl_handle * handle, ثابت حرف * name) {
+    إرجاع dlsym(handle, name);
 }
 
-static inline const char * dl_error() {
-    const char *rslt = dlerror();
-    return rslt != nullptr ? rslt : "";
+ساكن مضمن ثابت حرف * dl_error() {
+    ثابت حرف *rslt = dlerror();
+    إرجاع rslt != nullptr ? rslt : "";
 }
 
 #endif
