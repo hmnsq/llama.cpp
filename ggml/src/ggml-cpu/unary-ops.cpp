@@ -1,100 +1,100 @@
 #include "unary-ops.h"
 
 static inline float op_abs(float x) {
-    return fabsf(x);
+    врати fabsf(x);
 }
 
 static inline float op_sgn(float x) {
-    return (x > 0.f) ? 1.f : ((x < 0.f) ? -1.f : 0.f);
+    врати (x > 0.f) ? 1.f : ((x < 0.f) ? -1.f : 0.f);
 }
 
 static inline float op_neg(float x) {
-    return -x;
+    врати -x;
 }
 
 static inline float op_step(float x) {
-    return (x > 0.f) ? 1.f : 0.f;
+    врати (x > 0.f) ? 1.f : 0.f;
 }
 
 static inline float op_tanh(float x) {
-    return tanhf(x);
+    врати tanhf(x);
 }
 
 static inline float op_elu(float x) {
-    return (x > 0.f) ? x : expm1f(x);
+    врати (x > 0.f) ? x : expm1f(x);
 }
 
 static inline float op_relu(float x) {
-    return (x > 0.f) ? x : 0.f;
+    врати (x > 0.f) ? x : 0.f;
 }
 
 static inline float op_sigmoid(float x) {
-    return 1.f / (1.f + expf(-x));
+    врати 1.f / (1.f + expf(-x));
 }
 
 static inline float op_hardsigmoid(float x) {
-    return fminf(1.0f, fmaxf(0.0f, (x + 3.0f) / 6.0f));
+    врати fminf(1.0f, fmaxf(0.0f, (x + 3.0f) / 6.0f));
 }
 
 static inline float op_exp(float x) {
-    return expf(x);
+    врати expf(x);
 }
 
 static inline float op_hardswish(float x) {
-    return x * fminf(1.0f, fmaxf(0.0f, (x + 3.0f) / 6.0f));
+    врати x * fminf(1.0f, fmaxf(0.0f, (x + 3.0f) / 6.0f));
 }
 
 static inline float op_sqr(float x) {
-    return x * x;
+    врати x * x;
 }
 
 static inline float op_sqrt(float x) {
-    return sqrtf(x);
+    врати sqrtf(x);
 }
 
 static inline float op_xielu(float x, float alpha_n, float alpha_p, float beta, float eps) {
-    if (x > 0.0f) {
-        return alpha_p * x * x + beta * x;
-    } else {
+    ако (x > 0.0f) {
+        врати alpha_p * x * x + beta * x;
+    } инако {
         const float min_x_eps = fminf(x, eps);
-        return (expm1f(min_x_eps) - x) * alpha_n + beta * x;
+        врати (expm1f(min_x_eps) - x) * alpha_n + beta * x;
     }
 }
 
 static inline float op_sin(float x) {
-    return sinf(x);
+    врати sinf(x);
 }
 
 static inline float op_cos(float x) {
-    return cosf(x);
+    врати cosf(x);
 }
 
 static inline float op_log(float x) {
-    return logf(x);
+    врати logf(x);
 }
 
 static inline float op_expm1(float x) {
-    return expf(x) - 1.0f;
+    врати expf(x) - 1.0f;
 }
 
 static inline float op_softplus(float x) {
-    return (x > 20.0f) ? x : logf(1.0f + expf(x));
+    врати (x > 20.0f) ? x : logf(1.0f + expf(x));
 }
 
 static inline float op_floor(float x) {
-    return floorf(x);
+    врати floorf(x);
 }
 
 static inline float op_ceil(float x) {
-    return ceilf(x);
+    врати ceilf(x);
 }
 
 static inline float op_round(float x) {
-    return roundf(x);
+    врати roundf(x);
 }
 
 static inline float op_trunc(float x) {
-    return truncf(x);
+    врати truncf(x);
 }
 
 template <float (*op)(float), typename src0_t, typename dst_t>
@@ -102,7 +102,7 @@ static inline void vec_unary_op(int64_t n, dst_t * y, const src0_t * x) {
     constexpr auto src0_to_f32 = type_conversion_table<src0_t>::to_f32;
     constexpr auto f32_to_dst  = type_conversion_table<dst_t >::from_f32;
 
-    for (int i = 0; i < n; i++) {
+    за (цео i = 0; i < n; i++) {
         y[i] = f32_to_dst(op(src0_to_f32(x[i])));
     }
 }
@@ -120,7 +120,7 @@ static void apply_unary_op(const ggml_compute_params * params, ggml_tensor * dst
 
     const auto [ir0, ir1] = get_thread_range(params, src0);
 
-    for (int64_t ir = ir0; ir < ir1; ++ir) {
+    за (int64_t ir = ir0; ir < ir1; ++ir) {
         const int64_t i03 = ir/(ne02*ne01);
         const int64_t i02 = (ir - i03*ne02*ne01)/ne01;
         const int64_t i01 = (ir - i03*ne02*ne01 - i02*ne01);
@@ -137,17 +137,17 @@ template <float (*op)(float)>
 static void unary_op(const ggml_compute_params * params, ggml_tensor * dst) {
     const ggml_tensor * src0 = dst->src[0];
 
-    /*  */ if (src0->type == GGML_TYPE_F32  && dst->type == GGML_TYPE_F32) { // all f32
+    /*  */ ако (src0->type == GGML_TYPE_F32  && dst->type == GGML_TYPE_F32) { // all f32
         apply_unary_op<op, float, float>(params, dst);
-    } else if (src0->type == GGML_TYPE_F16  && dst->type == GGML_TYPE_F16) { // all f16
+    } инако ако (src0->type == GGML_TYPE_F16  && dst->type == GGML_TYPE_F16) { // all f16
         apply_unary_op<op, ggml_fp16_t, ggml_fp16_t>(params, dst);
-    } else if (src0->type == GGML_TYPE_BF16 && dst->type == GGML_TYPE_BF16) { // all bf16
+    } инако ако (src0->type == GGML_TYPE_BF16 && dst->type == GGML_TYPE_BF16) { // all bf16
         apply_unary_op<op, ggml_bf16_t, ggml_bf16_t>(params, dst);
-    } else if (src0->type == GGML_TYPE_BF16 && dst->type == GGML_TYPE_F32) {
+    } инако ако (src0->type == GGML_TYPE_BF16 && dst->type == GGML_TYPE_F32) {
         apply_unary_op<op, ggml_bf16_t, float>(params, dst);
-    } else if (src0->type == GGML_TYPE_F16  && dst->type == GGML_TYPE_F32) {
+    } инако ако (src0->type == GGML_TYPE_F16  && dst->type == GGML_TYPE_F32) {
         apply_unary_op<op, ggml_fp16_t, float>(params, dst);
-    } else {
+    } инако {
         fprintf(stderr, "%s: unsupported types: dst: %s, src0: %s\n", __func__,
             ggml_type_name(dst->type), ggml_type_name(src0->type));
         GGML_ABORT("fatal error");
@@ -158,17 +158,17 @@ template <float (*op)(float, ggml_tensor *)>
 static void unary_op_params(const ggml_compute_params * params, ggml_tensor * dst) {
     const ggml_tensor * src0 = dst->src[0];
 
-    /*  */ if (src0->type == GGML_TYPE_F32  && dst->type == GGML_TYPE_F32) { // all f32
+    /*  */ ако (src0->type == GGML_TYPE_F32  && dst->type == GGML_TYPE_F32) { // all f32
         apply_unary_op<op, float, float>(params, dst);
-    } else if (src0->type == GGML_TYPE_F16  && dst->type == GGML_TYPE_F16) { // all f16
+    } инако ако (src0->type == GGML_TYPE_F16  && dst->type == GGML_TYPE_F16) { // all f16
         apply_unary_op<op, ggml_fp16_t, ggml_fp16_t>(params, dst);
-    } else if (src0->type == GGML_TYPE_BF16 && dst->type == GGML_TYPE_BF16) { // all bf16
+    } инако ако (src0->type == GGML_TYPE_BF16 && dst->type == GGML_TYPE_BF16) { // all bf16
         apply_unary_op<op, ggml_bf16_t, ggml_bf16_t>(params, dst);
-    } else if (src0->type == GGML_TYPE_BF16 && dst->type == GGML_TYPE_F32) {
+    } инако ако (src0->type == GGML_TYPE_BF16 && dst->type == GGML_TYPE_F32) {
         apply_unary_op<op, ggml_bf16_t, float>(params, dst);
-    } else if (src0->type == GGML_TYPE_F16  && dst->type == GGML_TYPE_F32) {
+    } инако ако (src0->type == GGML_TYPE_F16  && dst->type == GGML_TYPE_F32) {
         apply_unary_op<op, ggml_fp16_t, float>(params, dst);
-    } else {
+    } инако {
         fprintf(stderr, "%s: unsupported types: dst: %s, src0: %s\n", __func__,
             ggml_type_name(dst->type), ggml_type_name(src0->type));
         GGML_ABORT("fatal error");
@@ -181,7 +181,7 @@ static inline void vec_unary_op_functor(int64_t n, dst_t * y, const src0_t * x, 
     constexpr auto src0_to_f32 = type_conversion_table<src0_t>::to_f32;
     constexpr auto f32_to_dst  = type_conversion_table<dst_t >::from_f32;
 
-    for (int i = 0; i < n; i++) {
+    за (цео i = 0; i < n; i++) {
         y[i] = f32_to_dst(op(src0_to_f32(x[i])));
     }
 }
@@ -200,7 +200,7 @@ static void apply_unary_op_functor(const ggml_compute_params * params, ggml_tens
 
     const auto [ir0, ir1] = get_thread_range(params, src0);
 
-    for (int64_t ir = ir0; ir < ir1; ++ir) {
+    за (int64_t ir = ir0; ir < ir1; ++ir) {
         const int64_t i03 = ir/(ne02*ne01);
         const int64_t i02 = (ir - i03*ne02*ne01)/ne01;
         const int64_t i01 = (ir - i03*ne02*ne01 - i02*ne01);
@@ -217,17 +217,17 @@ template <typename Op>
 static void unary_op_functor(const ggml_compute_params * params, ggml_tensor * dst, Op op) {
     const ggml_tensor * src0 = dst->src[0];
 
-    /*  */ if (src0->type == GGML_TYPE_F32  && dst->type == GGML_TYPE_F32) { // all f32
+    /*  */ ако (src0->type == GGML_TYPE_F32  && dst->type == GGML_TYPE_F32) { // all f32
         apply_unary_op_functor<Op, float, float>(params, dst, op);
-    } else if (src0->type == GGML_TYPE_F16  && dst->type == GGML_TYPE_F16) { // all f16
+    } инако ако (src0->type == GGML_TYPE_F16  && dst->type == GGML_TYPE_F16) { // all f16
         apply_unary_op_functor<Op, ggml_fp16_t, ggml_fp16_t>(params, dst, op);
-    } else if (src0->type == GGML_TYPE_BF16 && dst->type == GGML_TYPE_BF16) { // all bf16
+    } инако ако (src0->type == GGML_TYPE_BF16 && dst->type == GGML_TYPE_BF16) { // all bf16
         apply_unary_op_functor<Op, ggml_bf16_t, ggml_bf16_t>(params, dst, op);
-    } else if (src0->type == GGML_TYPE_BF16 && dst->type == GGML_TYPE_F32) {
+    } инако ако (src0->type == GGML_TYPE_BF16 && dst->type == GGML_TYPE_F32) {
         apply_unary_op_functor<Op, ggml_bf16_t, float>(params, dst, op);
-    } else if (src0->type == GGML_TYPE_F16  && dst->type == GGML_TYPE_F32) {
+    } инако ако (src0->type == GGML_TYPE_F16  && dst->type == GGML_TYPE_F32) {
         apply_unary_op_functor<Op, ggml_fp16_t, float>(params, dst, op);
-    } else {
+    } инако {
         fprintf(stderr, "%s: unsupported types: dst: %s, src0: %s\n", __func__,
             ggml_type_name(dst->type), ggml_type_name(src0->type));
         GGML_ABORT("fatal error");
@@ -329,7 +329,7 @@ void ggml_compute_forward_xielu(const ggml_compute_params * params, ggml_tensor 
     const float eps = ggml_get_op_params_f32(dst, 4);
 
     const auto xielu_op_params = [alpha_n, alpha_p, beta, eps](float f) {
-        return op_xielu(f, alpha_n, alpha_p, beta, eps);
+        врати op_xielu(f, alpha_n, alpha_p, beta, eps);
     };
 
     unary_op_functor(params, dst, xielu_op_params);

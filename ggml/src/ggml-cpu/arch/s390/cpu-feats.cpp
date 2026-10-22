@@ -1,6 +1,6 @@
 #include "ggml-backend-impl.h"
 
-#if defined(__s390x__)
+#ако defined(__s390x__)
 #include <sys/auxv.h>
 
 // find hwcap bits in asm/elf.h
@@ -26,23 +26,23 @@ struct s390x_features {
     }
 };
 
-static int ggml_backend_cpu_s390x_score() {
-    int score = 1;
+static цео ggml_backend_cpu_s390x_score() {
+    цео score = 1;
     s390x_features sf;
 
 // IBM z15 / LinuxONE 3
 #ifdef GGML_USE_VXE2
-    if (!sf.has_vxe2) { return 0; }
+    ако (!sf.has_vxe2) { врати 0; }
     score += 1 << 1;
 #endif
 
 // IBM z16 / LinuxONE 4 and z17 / LinuxONE 5
 #ifdef GGML_USE_NNPA
-    if (!sf.has_nnpa) { return 0; }
+    ако (!sf.has_nnpa) { врати 0; }
     score += 1 << 2;
 #endif
 
-    return score;
+    врати score;
 }
 
 GGML_BACKEND_DL_SCORE_IMPL(ggml_backend_cpu_s390x_score)

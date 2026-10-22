@@ -20,17 +20,17 @@ OutputVector translate_conv_2d(const NodeContext & context) {
     ov::Output<Node> kernel = process_view_input_new(context, 0);
     ov::Output<Node> input  = process_view_input_new(context, 1);
 
-    if (kernel.get_element_type() != input.get_element_type()) {
+    ако (kernel.get_element_type() != input.get_element_type()) {
         kernel = std::make_shared<ov::op::v0::Convert>(kernel, input.get_element_type());
     }
 
     const int32_t * params = context.get_output_op_params();
-    const int s0 = params[0];
-    const int s1 = params[1];
-    const int p0 = params[2];
-    const int p1 = params[3];
-    const int d0 = params[4];
-    const int d1 = params[5];
+    const цео s0 = params[0];
+    const цео s1 = params[1];
+    const цео p0 = params[2];
+    const цео p1 = params[3];
+    const цео d0 = params[4];
+    const цео d1 = params[5];
 
     ov::Strides strides{static_cast<size_t>(s1), static_cast<size_t>(s0)};
     ov::CoordinateDiff pads_begin{static_cast<ptrdiff_t>(p1), static_cast<ptrdiff_t>(p0)};
@@ -41,11 +41,11 @@ OutputVector translate_conv_2d(const NodeContext & context) {
         input, kernel, strides, pads_begin, pads_end, dilations, ov::op::PadType::EXPLICIT);
 
     const auto output_type = context.get_output_type();
-    if (res.get_element_type() != output_type) {
+    ако (res.get_element_type() != output_type) {
         res = std::make_shared<ov::op::v0::Convert>(res, output_type);
     }
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    врати rename_outputs_with_suffix({res}, context.get_name());
 }
 
 OutputVector translate_conv_2d_dw(const NodeContext & context) {
@@ -54,17 +54,17 @@ OutputVector translate_conv_2d_dw(const NodeContext & context) {
     ov::Output<Node> kernel = process_view_input_new(context, 0);
     ov::Output<Node> input  = process_view_input_new(context, 1);
 
-    if (kernel.get_element_type() != input.get_element_type()) {
+    ако (kernel.get_element_type() != input.get_element_type()) {
         kernel = std::make_shared<ov::op::v0::Convert>(kernel, input.get_element_type());
     }
 
     const int32_t * params = context.get_output_op_params();
-    const int s0 = params[0];
-    const int s1 = params[1];
-    const int p0 = params[2];
-    const int p1 = params[3];
-    const int d0 = params[4];
-    const int d1 = params[5];
+    const цео s0 = params[0];
+    const цео s1 = params[1];
+    const цео p0 = params[2];
+    const цео p1 = params[3];
+    const цео d0 = params[4];
+    const цео d1 = params[5];
 
     // Reshape kernel from [C, 1, KH, KW] to [C, 1, 1, KH, KW] for 2D GroupConvolution
     auto unsqueeze_axis = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {1});
@@ -79,11 +79,11 @@ OutputVector translate_conv_2d_dw(const NodeContext & context) {
         input, kernel_5d, strides, pads_begin, pads_end, dilations, ov::op::PadType::EXPLICIT);
 
     const auto output_type = context.get_output_type();
-    if (res.get_element_type() != output_type) {
+    ако (res.get_element_type() != output_type) {
         res = std::make_shared<ov::op::v0::Convert>(res, output_type);
     }
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    врати rename_outputs_with_suffix({res}, context.get_name());
 }
 
 OutputVector translate_conv_transpose_1d(const NodeContext & context) {
@@ -92,14 +92,14 @@ OutputVector translate_conv_transpose_1d(const NodeContext & context) {
     ov::Output<Node> kernel = process_view_input_new(context, 0);
     ov::Output<Node> input  = process_view_input_new(context, 1);
 
-    if (kernel.get_element_type() != input.get_element_type()) {
+    ако (kernel.get_element_type() != input.get_element_type()) {
         kernel = std::make_shared<ov::op::v0::Convert>(kernel, input.get_element_type());
     }
 
     const int32_t * params = context.get_output_op_params();
-    const int s0 = params[0];
-    const int p0 = params[1];
-    const int d0 = params[2];
+    const цео s0 = params[0];
+    const цео p0 = params[1];
+    const цео d0 = params[2];
 
     const auto kernel_shape = context.get_input_shape(0).to_shape();  // [1, Cin, Cout, K]
     const int64_t Cin = kernel_shape[1];
@@ -130,11 +130,11 @@ OutputVector translate_conv_transpose_1d(const NodeContext & context) {
     ov::Output<Node> res = std::make_shared<ov::op::v1::Reshape>(conv_tr, out_shape_const, false);
 
     const auto output_type = context.get_output_type();
-    if (res.get_element_type() != output_type) {
+    ако (res.get_element_type() != output_type) {
         res = std::make_shared<ov::op::v0::Convert>(res, output_type);
     }
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    врати rename_outputs_with_suffix({res}, context.get_name());
 }
 
 OutputVector translate_conv_transpose_2d(const NodeContext & context) {
@@ -143,12 +143,12 @@ OutputVector translate_conv_transpose_2d(const NodeContext & context) {
     ov::Output<Node> kernel = process_view_input_new(context, 0);
     ov::Output<Node> input  = process_view_input_new(context, 1);
 
-    if (kernel.get_element_type() != input.get_element_type()) {
+    ако (kernel.get_element_type() != input.get_element_type()) {
         kernel = std::make_shared<ov::op::v0::Convert>(kernel, input.get_element_type());
     }
 
     const int32_t * params = context.get_output_op_params();
-    const int stride = params[0];
+    const цео stride = params[0];
 
     ov::Strides strides{static_cast<size_t>(stride), static_cast<size_t>(stride)};
     ov::CoordinateDiff pads_begin{0, 0};
@@ -159,11 +159,11 @@ OutputVector translate_conv_transpose_2d(const NodeContext & context) {
         input, kernel, strides, pads_begin, pads_end, dilations);
 
     const auto output_type = context.get_output_type();
-    if (res.get_element_type() != output_type) {
+    ако (res.get_element_type() != output_type) {
         res = std::make_shared<ov::op::v0::Convert>(res, output_type);
     }
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    врати rename_outputs_with_suffix({res}, context.get_name());
 }
 
 OutputVector translate_conv_3d(const NodeContext & context) {
@@ -172,23 +172,23 @@ OutputVector translate_conv_3d(const NodeContext & context) {
     ov::Output<Node> kernel = process_view_input_new(context, 0);
     ov::Output<Node> input  = process_view_input_new(context, 1);
 
-    if (kernel.get_element_type() != input.get_element_type()) {
+    ако (kernel.get_element_type() != input.get_element_type()) {
         kernel = std::make_shared<ov::op::v0::Convert>(kernel, input.get_element_type());
     }
 
     const int32_t * params = context.get_output_op_params();
-    const int s0 = params[0];
-    const int s1 = params[1];
-    const int s2 = params[2];
-    const int p0 = params[3];
-    const int p1 = params[4];
-    const int p2 = params[5];
-    const int d0 = params[6];
-    const int d1 = params[7];
-    const int d2 = params[8];
-    const int c  = params[9];
-    const int n  = params[10];
-    const int oc = params[11];
+    const цео s0 = params[0];
+    const цео s1 = params[1];
+    const цео s2 = params[2];
+    const цео p0 = params[3];
+    const цео p1 = params[4];
+    const цео p2 = params[5];
+    const цео d0 = params[6];
+    const цео d1 = params[7];
+    const цео d2 = params[8];
+    const цео c  = params[9];
+    const цео n  = params[10];
+    const цео oc = params[11];
 
     const auto kshape = context.get_input_shape(0).to_shape();  // [c*oc, KD, KH, KW]
     const int64_t KD = kshape[1];
@@ -220,11 +220,11 @@ OutputVector translate_conv_3d(const NodeContext & context) {
     ov::Output<Node> res = std::make_shared<ov::op::v1::Reshape>(conv, out_shape_const, false);
 
     const auto output_type = context.get_output_type();
-    if (res.get_element_type() != output_type) {
+    ако (res.get_element_type() != output_type) {
         res = std::make_shared<ov::op::v0::Convert>(res, output_type);
     }
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    врати rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

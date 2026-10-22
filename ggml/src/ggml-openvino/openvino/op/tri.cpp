@@ -73,7 +73,7 @@ OutputVector translate_tri(const NodeContext & context) {
     auto zero = ov::op::v0::Constant::create(ov::element::f32, {}, {0.0f});
     auto res  = std::make_shared<ov::op::v1::Select>(mask, x, zero);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    врати rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

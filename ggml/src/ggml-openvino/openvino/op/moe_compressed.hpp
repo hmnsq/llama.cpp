@@ -75,7 +75,7 @@ public:
 
     MOECompressed(const OutputVector & args, const Config & config);
 
-    const Config & get_config() const { return m_config; }
+    const Config & get_config() const { врати m_config; }
 
     void set_scale_factor(float scale_factor) { m_config.scale_factor = scale_factor; }
 

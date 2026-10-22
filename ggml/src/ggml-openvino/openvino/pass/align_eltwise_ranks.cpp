@@ -19,21 +19,21 @@ namespace {
 
 // True for an RMS-norm output, x * (1 / sqrt(mean(x^2) + eps)) as translate_rms_norm builds it, optionally
 // scaled by the norm weight.
-bool is_rms_norm_output(const ov::Output<ov::Node> & value, int depth = 1) {
+bool is_rms_norm_output(const ov::Output<ov::Node> & value, цео depth = 1) {
     const auto * node = value.get_node();
-    if (!ov::is_type<ov::op::v1::Multiply>(node)) {
-        return false;
+    ако (!ov::is_type<ov::op::v1::Multiply>(node)) {
+        врати false;
     }
-    for (const auto & input : node->input_values()) {
+    за (const auto & input : node->input_values()) {
         const auto * src = input.get_node();
-        if (ov::is_type<ov::op::v1::Divide>(src) && ov::is_type<ov::op::v0::Sqrt>(src->get_input_node_ptr(1))) {
-            return true;
+        ако (ov::is_type<ov::op::v1::Divide>(src) && ov::is_type<ov::op::v0::Sqrt>(src->get_input_node_ptr(1))) {
+            врати true;
         }
-        if (depth > 0 && is_rms_norm_output(input, depth - 1)) {
-            return true;
+        ако (depth > 0 && is_rms_norm_output(input, depth - 1)) {
+            врати true;
         }
     }
-    return false;
+    врати false;
 }
 
 }  // namespace
@@ -43,8 +43,8 @@ AlignEltwiseOperandRanks::AlignEltwiseOperandRanks() {
 
     const auto callback = [this](ov::pass::pattern::Matcher & m) {
         auto node = m.get_match_root();
-        if (node->get_input_size() != 2) {
-            return false;
+        ако (node->get_input_size() != 2) {
+            врати false;
         }
 
         auto lhs = node->input_value(0);
@@ -53,15 +53,15 @@ AlignEltwiseOperandRanks::AlignEltwiseOperandRanks() {
         // A tensor-vs-Constant mismatch is the norm's own eps / 1-over-sqrt arithmetic. That
         // folds into the `rms` primitive itself instead of becoming a fused eltwise post-op,
         // so it is not affected and is left alone.
-        if (ov::is_type<ov::op::v0::Constant>(lhs.get_node()) ||
+        ако (ov::is_type<ov::op::v0::Constant>(lhs.get_node()) ||
             ov::is_type<ov::op::v0::Constant>(rhs.get_node())) {
-            return false;
+            врати false;
         }
 
         const auto lhs_rank = lhs.get_partial_shape().rank();
         const auto rhs_rank = rhs.get_partial_shape().rank();
-        if (lhs_rank.is_dynamic() || rhs_rank.is_dynamic() || lhs_rank == rhs_rank) {
-            return false;
+        ако (lhs_rank.is_dynamic() || rhs_rank.is_dynamic() || lhs_rank == rhs_rank) {
+            врати false;
         }
 
         const size_t shorter_idx = lhs_rank.get_length() < rhs_rank.get_length() ? 0 : 1;
@@ -70,8 +70,8 @@ AlignEltwiseOperandRanks::AlignEltwiseOperandRanks() {
         // The defect is with the norm output as the higher-rank operand. When the norm output is the
         // lower-rank one (gemma-3 adds it to a rank-4 residual), unsqueezing it puts the Unsqueeze between
         // `rms` and its post-op, and the GPU plugin then computes the layer wrongly.
-        if (is_rms_norm_output(shorter)) {
-            return false;
+        ако (is_rms_norm_output(shorter)) {
+            врати false;
         }
         const int64_t diff = std::abs(lhs_rank.get_length() - rhs_rank.get_length());
 
@@ -82,7 +82,7 @@ AlignEltwiseOperandRanks::AlignEltwiseOperandRanks() {
 
         node->input(shorter_idx).replace_source_output(unsqueeze->output(0));
         register_new_node(unsqueeze);
-        return true;
+        врати true;
     };
 
     register_matcher(

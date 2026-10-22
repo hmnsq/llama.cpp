@@ -58,9 +58,9 @@ struct htp_gdn_kernel_params {
     struct fastdiv_values div_n_threads;
 };
 
-#if defined(__cplusplus)
+#ако defined(__cplusplus)
 static_assert(sizeof(struct htp_gdn_kernel_params) <= 128, "htp_gdn_kernel_params is too large for kernel_params blob");
-#else
+#инако
 _Static_assert(sizeof(struct htp_gdn_kernel_params) <= 128, "htp_gdn_kernel_params is too large for kernel_params blob");
 #endif
 
@@ -272,30 +272,30 @@ static inline bool htp_gdn_hmx_solve_layout(
     uint32_t * n_heads_batch_out
 ) {
     uint32_t max_batch = 8;
-    if (max_batch > total_rows) {
+    ако (max_batch > total_rows) {
         max_batch = total_rows;
     }
-    if (max_batch > n_threads) {
+    ако (max_batch > n_threads) {
         max_batch = n_threads;
     }
     static const uint32_t candidates[] = { 8, 6, 4, 2, 1 };
-    for (size_t i = 0; i < sizeof(candidates) / sizeof(candidates[0]); ++i) {
+    за (size_t i = 0; i < sizeof(candidates) / sizeof(candidates[0]); ++i) {
         uint32_t bh = candidates[i];
-        if (bh > max_batch) {
+        ако (bh > max_batch) {
             continue;
         }
         struct htp_gdn_hmx_vtcm_layout L;
         htp_gdn_hmx_vtcm_layout_build(&L, S_v, chunk_size, bh, n_threads, pipeline);
-        if (L.total_bytes <= vtcm_budget) {
+        ако (L.total_bytes <= vtcm_budget) {
             *layout_out = L;
             *n_heads_batch_out = bh;
-            return true;
+            врати true;
         }
     }
-    if (pipeline) {
-        return htp_gdn_hmx_solve_layout(layout_out, S_v, chunk_size, total_rows, vtcm_budget, n_threads, false, n_heads_batch_out);
+    ако (pipeline) {
+        врати htp_gdn_hmx_solve_layout(layout_out, S_v, chunk_size, total_rows, vtcm_budget, n_threads, false, n_heads_batch_out);
     }
-    return false;
+    врати false;
 }
 
 #endif // HTP_GATED_DELTA_NET_OPS_H

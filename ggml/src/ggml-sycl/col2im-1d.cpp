@@ -4,13 +4,13 @@ template <typename T>
 static void col2im_1d_sycl(
         const T * col,
         T * dst,
-        const int T_in,
+        const цео T_in,
         const sycl::uint3 T_out_fd,
-        const int K,
-        const int K_OC,
+        const цео K,
+        const цео K_OC,
         const int32_t s0,
         const int32_t p0,
-        const int total,
+        const цео total,
         dpct::queue_ptr stream) {
 
     const uint32_t block_size = SYCL_COL2IM_1D_BLOCK_SIZE;
@@ -21,28 +21,28 @@ static void col2im_1d_sycl(
             sycl::range<3>(1, 1, num_blocks * block_size),
             sycl::range<3>(1, 1, block_size)),
         [=](sycl::nd_item<3> item_ct1) {
-            const int idx = (int) item_ct1.get_global_id(2);
-            if (idx >= total) {
-                return;
+            const цео idx = (цео) item_ct1.get_global_id(2);
+            ако (idx >= total) {
+                врати;
             }
 
             const sycl::uint2 qr = fast_div_modulo((uint32_t) idx, T_out_fd);
-            const int oc    = (int) qr.x();
-            const int t_out = (int) qr.y();
-            const int t_abs = t_out + p0;
+            const цео oc    = (цео) qr.x();
+            const цео t_out = (цео) qr.y();
+            const цео t_abs = t_out + p0;
 
-            int t_in_min = (t_abs - K + s0) / s0;
-            if (t_in_min < 0) {
+            цео t_in_min = (t_abs - K + s0) / s0;
+            ако (t_in_min < 0) {
                 t_in_min = 0;
             }
-            int t_in_max = t_abs / s0;
-            if (t_in_max >= T_in) {
+            цео t_in_max = t_abs / s0;
+            ако (t_in_max >= T_in) {
                 t_in_max = T_in - 1;
             }
 
             float sum = 0.0f;
-            for (int t_in = t_in_min; t_in <= t_in_max; ++t_in) {
-                const int k = t_abs - t_in * s0;
+            за (цео t_in = t_in_min; t_in <= t_in_max; ++t_in) {
+                const цео k = t_abs - t_in * s0;
                 sum += static_cast<float>(col[(oc * K + k) + t_in * K_OC]);
             }
 
@@ -61,17 +61,17 @@ void ggml_sycl_op_col2im_1d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) 
     const int32_t OC = ((const int32_t *) dst->op_params)[1];
     const int32_t p0 = ((const int32_t *) dst->op_params)[2];
 
-    const int K_OC  = (int) src0->ne[0];
-    const int T_in  = (int) src0->ne[1];
-    const int K     = K_OC / OC;
-    const int T_out = (int) dst->ne[0];
+    const цео K_OC  = (цео) src0->ne[0];
+    const цео T_in  = (цео) src0->ne[1];
+    const цео K     = K_OC / OC;
+    const цео T_out = (цео) dst->ne[0];
 
     GGML_ASSERT(OC > 0);
     GGML_ASSERT(K_OC % OC == 0);
 
     const sycl::uint3 T_out_fd = init_fastdiv_values((uint32_t) T_out);
 
-    const int total = T_out * OC;
+    const цео total = T_out * OC;
 
     dpct::queue_ptr stream = ctx.stream();
 

@@ -11,7 +11,7 @@ dl_handle * dl_load_library(const fs::path & path) {
 
     SetErrorMode(old_mode);
 
-    return handle;
+    врати handle;
 }
 
 void * dl_get_sym(dl_handle * handle, const char * name) {
@@ -22,27 +22,27 @@ void * dl_get_sym(dl_handle * handle, const char * name) {
 
     SetErrorMode(old_mode);
 
-    return p;
+    врати p;
 }
 
 const char * dl_error() {
-    return "";
+    врати "";
 }
 
-#else
+#инако
 
 dl_handle * dl_load_library(const fs::path & path) {
     dl_handle * handle = dlopen(path.string().c_str(), RTLD_NOW | RTLD_LOCAL);
-    return handle;
+    врати handle;
 }
 
 void * dl_get_sym(dl_handle * handle, const char * name) {
-    return dlsym(handle, name);
+    врати dlsym(handle, name);
 }
 
 const char * dl_error() {
     const char *rslt = dlerror();
-    return rslt != nullptr ? rslt : "";
+    врати rslt != nullptr ? rslt : "";
 }
 
 #endif

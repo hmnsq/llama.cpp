@@ -38,25 +38,25 @@ to_fp16_nc_sycl_t ggml_get_to_fp16_nc_sycl(ggml_type type);
 
 template<typename dst_t, typename src_t>
  inline dst_t ggml_sycl_cast(src_t x) {
-    if constexpr (std::is_same_v<dst_t, src_t>) {
-        return x;
+    ако constexpr (std::is_same_v<dst_t, src_t>) {
+        врати x;
 #ifdef GGML_SYCL_HAS_BF16
-    } else if constexpr (std::is_same_v<dst_t, sycl::ext::oneapi::bfloat16>) {
-        return sycl::ext::oneapi::bfloat16(float(x));
-    } else if constexpr (std::is_same_v<src_t, sycl::ext::oneapi::bfloat16>) {
-        return static_cast<float>(x);
+    } инако ако constexpr (std::is_same_v<dst_t, sycl::ext::oneapi::bfloat16>) {
+        врати sycl::ext::oneapi::bfloat16(float(x));
+    } инако ако constexpr (std::is_same_v<src_t, sycl::ext::oneapi::bfloat16>) {
+        врати static_cast<float>(x);
 #endif
-    } else if constexpr (std::is_same_v<src_t, sycl::float2> && std::is_same_v<dst_t, sycl::half2>) {
-        return x.template convert<sycl::half, sycl::rounding_mode::rte>();
+    } инако ако constexpr (std::is_same_v<src_t, sycl::float2> && std::is_same_v<dst_t, sycl::half2>) {
+        врати x.template convert<sycl::half, sycl::rounding_mode::rte>();
 #ifdef GGML_SYCL_HAS_BF16
-    } else if constexpr (std::is_same_v<src_t, sycl::float2> &&
+    } инако ако constexpr (std::is_same_v<src_t, sycl::float2> &&
                          std::is_same_v<dst_t, sycl::vec<sycl::ext::oneapi::bfloat16, 2>>) {
-        return {x.x, x.y};
+        врати {x.x, x.y};
 #endif
-    } else if constexpr(std::is_same_v<dst_t, int32_t>) {
-        return int32_t(x);
-    } else {
-        return float(x);
+    } инако ако constexpr(std::is_same_v<dst_t, int32_t>) {
+        врати int32_t(x);
+    } инако {
+        врати float(x);
     }
 }
 

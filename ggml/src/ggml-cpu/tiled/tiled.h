@@ -8,7 +8,7 @@ extern "C" {
 #endif
 
 // Amount of wdata to reserve for tiled workspaces
-size_t ggml_tiled_wdata_size(int n_tasks, struct ggml_tensor * dst);
+size_t ggml_tiled_wdata_size(цео n_tasks, struct ggml_tensor * dst);
 
 // tiled K-quant matmul; returns true if the op was computed here,
 // false to fall through to the stock path

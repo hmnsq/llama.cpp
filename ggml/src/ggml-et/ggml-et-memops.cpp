@@ -12,9 +12,9 @@ struct memset_params {
 };
 
 bool ggml_et_memset(ggml_backend_et_device_context * dev_ctx, void * dst_ptr, uint8_t value, size_t size) {
-    if (!dev_ctx || !dst_ptr || size == 0) {
+    ако (!dev_ctx || !dst_ptr || size == 0) {
         GGML_LOG_ERROR("ET: Invalid memset parameters\n");
-        return false;
+        врати false;
     }
 
     // Prepare kernel parameters
@@ -27,10 +27,10 @@ bool ggml_et_memset(ggml_backend_et_device_context * dev_ctx, void * dst_ptr, ui
     // Launch memops kernel (will lazy-load if not already loaded)
     bool success = ggml_et_launch_kernel(dev_ctx, "memops", &params, sizeof(params));
 
-    if (!success) {
+    ако (!success) {
         GGML_LOG_ERROR("ET: memset kernel launch failed\n");
-        return false;
+        врати false;
     }
 
-    return true;
+    врати true;
 }

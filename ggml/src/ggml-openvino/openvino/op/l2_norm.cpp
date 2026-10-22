@@ -22,7 +22,7 @@ OutputVector translate_l2_norm(const NodeContext & context) {
 
     auto input_node = process_view_input_new(context, 0);
 
-    if (context.get_op_case() == 1) {
+    ако (context.get_op_case() == 1) {
         // 92: [   128,    16,     1,     2] VIEW                 q_conv-1
         //      [  6144,     1,     2,     1]            0: UNARY       conv_output_silu-1
         // 93: [   128,    16,     1,     2] L2_NORM              q_conv_predelta-1
@@ -52,7 +52,7 @@ OutputVector translate_l2_norm(const NodeContext & context) {
 
     auto res = std::make_shared<ov::op::v1::Divide>(input_node, clamped_norm);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    врати rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

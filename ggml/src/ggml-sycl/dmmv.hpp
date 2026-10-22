@@ -31,6 +31,6 @@ void ggml_sycl_op_dequantize_mul_mat_vec(
 bool ggml_sycl_dequantize_mul_mat_vec_glu_reorder_esimd(
     enum ggml_type src0_type, enum ggml_glu_op glu_op,
     const void * vx, const void * vgate, const float * y,
-    float * dst, int ncols, int nrows, dpct::queue_ptr stream);
+    float * dst, цео ncols, цео nrows, dpct::queue_ptr stream);
 
 #endif // GGML_SYCL_DMMV_HPP

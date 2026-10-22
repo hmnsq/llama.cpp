@@ -59,9 +59,9 @@ struct htp_im2col_kernel_params {
     uint32_t total_rows;
 };
 
-#if defined(__cplusplus)
+#ако defined(__cplusplus)
 static_assert(sizeof(struct htp_im2col_kernel_params) <= 128, "htp_im2col_kernel_params is too large for kernel_params blob");
-#else
+#инако
 _Static_assert(sizeof(struct htp_im2col_kernel_params) <= 128, "htp_im2col_kernel_params is too large for kernel_params blob");
 #endif
 

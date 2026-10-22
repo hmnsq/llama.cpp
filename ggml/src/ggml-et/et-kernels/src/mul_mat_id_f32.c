@@ -49,35 +49,35 @@
 #include <stdint.h>
 
 // Main entry point for MUL_MAT_ID kernel (Mixture of Experts)
-int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
+цео entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ако (!kernel_env) {
+        врати -1;
     }
 
     // Get thread coordination info
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    цео thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    цео num_threads = get_num_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return -1;
+    ако (thread_id < 0) {
+        врати -1;
     }
 
     // Use even threads only to avoid resource contention
     // Each minion has 2 threads sharing instruction/data cache, NOC to RAM, and FPU
     // Odd threads return immediately to avoid fighting for shared resources
-    if (thread_id & 1) {
-        return 0;  // Odd thread - skip work
+    ако (thread_id & 1) {
+        врати 0;  // Odd thread - skip work
     }
 
     // Adjust thread count and ID for even-only threading
-    int effective_thread_id   = thread_id / 2;
-    int effective_num_threads = (num_threads + 1) / 2;  // Ceiling division
+    цео effective_thread_id   = thread_id / 2;
+    цео effective_num_threads = (num_threads + 1) / 2;  // Ceiling division
 
     // Validate params
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    ако (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        врати -1;
     }
 
     // Extract tensor references
@@ -87,8 +87,8 @@ int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
     struct ggml_tensor * dst  = &params->dst;   // Output [M, n_expert_used, batch, 1]
 
     // Validate tensor types
-    if (src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32 || src2->type != GGML_TYPE_I32) {
-        return -1;
+    ако (src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32 || src2->type != GGML_TYPE_I32) {
+        врати -1;
     }
 
     // Get data pointers
@@ -97,12 +97,12 @@ int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
     const int32_t * src2_data = (const int32_t *) src2->data;  // Expert IDs (I32)
     float *         dst_data  = (float *) dst->data;           // Output (F32)
 
-    if (!src0_data || !src1_data || !src2_data || !dst_data) {
-        return -1;
+    ако (!src0_data || !src1_data || !src2_data || !dst_data) {
+        врати -1;
     }
 
     // Determine block size based on src0 type
-    int block_size;
+    цео block_size;
     switch (src0->type) {
         case GGML_TYPE_Q8_0:
             block_size = QK8_0;
@@ -117,7 +117,7 @@ int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
             block_size = QK_F32;
             break;
         default:
-            return -1;
+            врати -1;
     }
 
     // Get dimensions
@@ -144,27 +144,27 @@ int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
     // Verify K dimension alignment for quantization
     // Q8_0 requires strict alignment (quantized data must be block-aligned)
     // F32 and F16 can handle partial blocks with scalar remainders
-    if ((src0->type == GGML_TYPE_Q8_0 || src0->type == GGML_TYPE_Q4_0) && K % block_size != 0) {
-        return -1;  // Q8_0 requires K to be multiple of block_size
+    ако ((src0->type == GGML_TYPE_Q8_0 || src0->type == GGML_TYPE_Q4_0) && K % block_size != 0) {
+        врати -1;  // Q8_0 requires K to be multiple of block_size
     }
 
     // Verify first dimension is contiguous
     size_t expected_element_size_src0;
-    if (src0->type == GGML_TYPE_Q8_0) {
+    ако (src0->type == GGML_TYPE_Q8_0) {
         expected_element_size_src0 = sizeof(block_q8_0);
-    } else if (src0->type == GGML_TYPE_Q4_0) {
+    } инако ако (src0->type == GGML_TYPE_Q4_0) {
         expected_element_size_src0 = sizeof(block_q4_0);
-    } else if (src0->type == GGML_TYPE_F16) {
+    } инако ако (src0->type == GGML_TYPE_F16) {
         expected_element_size_src0 = sizeof(uint16_t);
-    } else if (src0->type == GGML_TYPE_F32) {
+    } инако ако (src0->type == GGML_TYPE_F32) {
         expected_element_size_src0 = sizeof(float);
-    } else {
-        return -1;
+    } инако {
+        врати -1;
     }
 
-    if (src0->nb[0] != expected_element_size_src0 || src1->nb[0] != sizeof(float) || src2->nb[0] != sizeof(int32_t) ||
+    ако (src0->nb[0] != expected_element_size_src0 || src1->nb[0] != sizeof(float) || src2->nb[0] != sizeof(int32_t) ||
         dst->nb[0] != sizeof(float)) {
-        return -1;
+        врати -1;
     }
 
     const int64_t K_blocks = K / block_size;
@@ -176,16 +176,16 @@ int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
     const uint64_t per_thread     = 16;
     const uint64_t threads_stride = per_thread * effective_num_threads;
 
-    if (effective_thread_id * per_thread >= total_elements) {
-        return 0;
+    ако (effective_thread_id * per_thread >= total_elements) {
+        врати 0;
     }
 
     // Process elements assigned to this thread
-    for (uint64_t base_idx = effective_thread_id * per_thread; base_idx < total_elements; base_idx += threads_stride) {
-        for (uint64_t j = 0; j < per_thread; j++) {
+    за (uint64_t base_idx = effective_thread_id * per_thread; base_idx < total_elements; base_idx += threads_stride) {
+        за (uint64_t j = 0; j < per_thread; j++) {
             const uint64_t idx = base_idx + j;
 
-            if (idx >= total_elements) {
+            ако (idx >= total_elements) {
                 break;
             }
 
@@ -200,7 +200,7 @@ int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
             const int32_t expert_id = *(const int32_t *) ((const char *) src2_data + n_idx * nb20 + batch_idx * nb21);
 
             // Validate expert ID
-            if (expert_id < 0 || expert_id >= n_expert) {
+            ако (expert_id < 0 || expert_id >= n_expert) {
                 // Invalid expert ID - write zero and continue
                 volatile float * dst_element =
                     (volatile float *) ((char *) dst_data + m * dst->nb[0] + n_idx * nb1 + batch_idx * nb2);
@@ -238,13 +238,13 @@ int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
                     {
                         const uint16_t * f16_row     = (const uint16_t *) expert_row_base;
                         const int64_t    K_remainder = K % block_size;
-                        for (int64_t kb = 0; kb < K_blocks; kb++) {
+                        за (int64_t kb = 0; kb < K_blocks; kb++) {
                             const float * b_col_ptr =
                                 (const float *) ((const char *) src1_data + (kb * block_size) * sizeof(float) +
                                                  col_idx * nb11 + batch_idx * nb12);
                             sum += compute_block_dot_product_f16_naive(&f16_row[kb * block_size], b_col_ptr);
                         }
-                        if (K_remainder > 0) {
+                        ако (K_remainder > 0) {
                             const int64_t offset = K_blocks * block_size;
                             const float * b_col_ptr =
                                 (const float *) ((const char *) src1_data + offset * sizeof(float) + col_idx * nb11 +
@@ -257,13 +257,13 @@ int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
                     {
                         const float * f32_row     = (const float *) expert_row_base;
                         const int64_t K_remainder = K % block_size;
-                        for (int64_t kb = 0; kb < K_blocks; kb++) {
+                        за (int64_t kb = 0; kb < K_blocks; kb++) {
                             const float * b_col_ptr =
                                 (const float *) ((const char *) src1_data + (kb * block_size) * sizeof(float) +
                                                  col_idx * nb11 + batch_idx * nb12);
                             sum += compute_block_dot_product_f32(&f32_row[kb * block_size], b_col_ptr);
                         }
-                        if (K_remainder > 0) {
+                        ако (K_remainder > 0) {
                             const int64_t offset = K_blocks * block_size;
                             const float * b_col_ptr =
                                 (const float *) ((const char *) src1_data + offset * sizeof(float) + col_idx * nb11 +
@@ -273,7 +273,7 @@ int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
                         break;
                     }
                 default:
-                    return -1;
+                    врати -1;
             }
 
             // Store result using atomic store to avoid cache coherency issues
@@ -284,5 +284,5 @@ int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
         }
     }
 
-    return 0;
+    врати 0;
 }

@@ -10,41 +10,41 @@
 #include "hvx-base.h"
 #include "hvx-types.h"
 
-static inline HVX_Vector hvx_vec_reduce_sum_n_i32(HVX_Vector in, unsigned int n) {
-    unsigned int total = n * 4;  // total vec nbytes
-    unsigned int width = 4;      // int32
+static inline HVX_Vector hvx_vec_reduce_sum_n_i32(HVX_Vector in, unsigned цео n) {
+    unsigned цео total = n * 4;  // total vec nbytes
+    unsigned цео width = 4;      // int32
 
     HVX_Vector sum = in, sum_t;
-    while (width < total) {
+    док (width < total) {
         sum_t = Q6_V_vror_VR(sum, width);     // rotate right
         sum   = Q6_Vw_vadd_VwVw(sum_t, sum);  // elementwise sum
         width = width << 1;
     }
-    return sum;
+    врати sum;
 }
 
 static inline HVX_Vector hvx_vec_reduce_sum_i32(HVX_Vector in) {
-    return hvx_vec_reduce_sum_n_i32(in, 32);
+    врати hvx_vec_reduce_sum_n_i32(in, 32);
 }
 
-static inline HVX_Vector hvx_vec_reduce_sum_n_qf32(HVX_Vector in, unsigned int n) {
-    unsigned int total = n * 4;  // total vec nbytes
-    unsigned int width = 4;      // fp32 nbytes
+static inline HVX_Vector hvx_vec_reduce_sum_n_qf32(HVX_Vector in, unsigned цео n) {
+    unsigned цео total = n * 4;  // total vec nbytes
+    unsigned цео width = 4;      // fp32 nbytes
 
     HVX_Vector sum = in, sum_t;
-    while (width < total) {
+    док (width < total) {
         sum_t = Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(sum), width);  // rotate right
         sum   = Q6_Vqf32_vadd_Vqf32Vsf(sum, sum_t);             // elementwise sum
         width = width << 1;
     }
-    return sum;
+    врати sum;
 }
 
 static inline HVX_Vector hvx_vec_reduce_sum_qf32(HVX_Vector in) {
-    return hvx_vec_reduce_sum_n_qf32(in, 32);
+    врати hvx_vec_reduce_sum_n_qf32(in, 32);
 }
 
-#if __HVX_ARCH__ > 75
+#ако __HVX_ARCH__ > 75
 
 static inline HVX_Vector hvx_vec_reduce_sum_f32x4(HVX_Vector_x4 in) {
     HVX_VectorPair sum_p01 = Q6_W_vshuff_VVR(in.v[1], in.v[0], 4);
@@ -58,7 +58,7 @@ static inline HVX_Vector hvx_vec_reduce_sum_f32x4(HVX_Vector_x4 in) {
     sum_sf = Q6_Vsf_vadd_VsfVsf(sum_sf, Q6_V_vror_VR(sum_sf, VLEN / 2));
     sum_sf = Q6_Vsf_vadd_VsfVsf(sum_sf, Q6_V_vror_VR(sum_sf, VLEN / 4));
     sum_sf = Q6_Vsf_vadd_VsfVsf(sum_sf, Q6_V_vror_VR(sum_sf, VLEN / 8));
-    return sum_sf;
+    врати sum_sf;
 }
 
 static inline HVX_Vector hvx_vec_reduce_sum_f32x2(HVX_Vector in0, HVX_Vector in1) {
@@ -69,23 +69,23 @@ static inline HVX_Vector hvx_vec_reduce_sum_f32x2(HVX_Vector in0, HVX_Vector in1
     sum_sf = Q6_Vsf_vadd_VsfVsf(sum_sf, Q6_V_vror_VR(sum_sf, VLEN / 4));
     sum_sf = Q6_Vsf_vadd_VsfVsf(sum_sf, Q6_V_vror_VR(sum_sf, VLEN / 8));
     sum_sf = Q6_Vsf_vadd_VsfVsf(sum_sf, Q6_V_vror_VR(sum_sf, VLEN / 16));
-    return sum_sf;
+    врати sum_sf;
 }
 
-static inline HVX_Vector hvx_vec_reduce_sum_n_f32(HVX_Vector in, unsigned int n) {
-    unsigned int total = n * 4;  // total vec nbytes
-    unsigned int width = 4;      // fp32 nbytes
+static inline HVX_Vector hvx_vec_reduce_sum_n_f32(HVX_Vector in, unsigned цео n) {
+    unsigned цео total = n * 4;  // total vec nbytes
+    unsigned цео width = 4;      // fp32 nbytes
 
     HVX_Vector sum = in, sum_t;
-    while (width < total) {
+    док (width < total) {
         sum_t = Q6_V_vror_VR(sum, width);       // rotate right
         sum   = Q6_Vsf_vadd_VsfVsf(sum, sum_t); // elementwise sum
         width = width << 1;
     }
-    return sum;
+    врати sum;
 }
 
-#else
+#инако
 
 static inline HVX_Vector hvx_vec_reduce_sum_f32x4(HVX_Vector_x4 in) {
     HVX_VectorPair sum_p01  = Q6_W_vshuff_VVR(in.v[1], in.v[0], 4);
@@ -99,7 +99,7 @@ static inline HVX_Vector hvx_vec_reduce_sum_f32x4(HVX_Vector_x4 in) {
     sum_qf = Q6_Vqf32_vadd_Vqf32Vsf(sum_qf, Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(sum_qf), VLEN / 2));
     sum_qf = Q6_Vqf32_vadd_Vqf32Vsf(sum_qf, Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(sum_qf), VLEN / 4));
     sum_qf = Q6_Vqf32_vadd_Vqf32Vsf(sum_qf, Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(sum_qf), VLEN / 8));
-    return Q6_Vsf_equals_Vqf32(sum_qf);
+    врати Q6_Vsf_equals_Vqf32(sum_qf);
 }
 
 static inline HVX_Vector hvx_vec_reduce_sum_f32x2(HVX_Vector in0, HVX_Vector in1) {
@@ -110,26 +110,26 @@ static inline HVX_Vector hvx_vec_reduce_sum_f32x2(HVX_Vector in0, HVX_Vector in1
     sum_qf = Q6_Vqf32_vadd_Vqf32Vsf(sum_qf, Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(sum_qf), VLEN / 4));
     sum_qf = Q6_Vqf32_vadd_Vqf32Vsf(sum_qf, Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(sum_qf), VLEN / 8));
     sum_qf = Q6_Vqf32_vadd_Vqf32Vsf(sum_qf, Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(sum_qf), VLEN / 16));
-    return Q6_Vsf_equals_Vqf32(sum_qf);
+    врати Q6_Vsf_equals_Vqf32(sum_qf);
 }
 
-static inline HVX_Vector hvx_vec_reduce_sum_n_f32(HVX_Vector in, unsigned int n) {
-    unsigned int total = n * 4;  // total vec nbytes
-    unsigned int width = 4;      // fp32 nbytes
+static inline HVX_Vector hvx_vec_reduce_sum_n_f32(HVX_Vector in, unsigned цео n) {
+    unsigned цео total = n * 4;  // total vec nbytes
+    unsigned цео width = 4;      // fp32 nbytes
 
     HVX_Vector sum = in, sum_t;
-    while (width < total) {
+    док (width < total) {
         sum_t = Q6_V_vror_VR(sum, width);                               // rotate right
         sum   = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(sum, sum_t));  // elementwise sum
         width = width << 1;
     }
-    return sum;
+    врати sum;
 }
 
 #endif
 
 static inline HVX_Vector hvx_vec_reduce_sum_f32(HVX_Vector in) {
-    return hvx_vec_reduce_sum_n_f32(in, 32);
+    врати hvx_vec_reduce_sum_n_f32(in, 32);
 }
 
 static inline HVX_Vector hvx_vec_reduce_max_f16(HVX_Vector in) {
@@ -137,13 +137,13 @@ static inline HVX_Vector hvx_vec_reduce_max_f16(HVX_Vector in) {
     unsigned width = 2;    // fp16 nbytes
 
     HVX_Vector _max = in, _max_t;
-    while (width < total) {
+    док (width < total) {
         _max_t = Q6_V_vror_VR(_max, width);         // rotate right
         _max   = Q6_Vhf_vmax_VhfVhf(_max_t, _max);  // elementwise max
         width  = width << 1;
     }
 
-    return _max;
+    врати _max;
 }
 
 static inline HVX_Vector hvx_vec_reduce_max2_f16(HVX_Vector in, HVX_Vector _max) {
@@ -153,13 +153,13 @@ static inline HVX_Vector hvx_vec_reduce_max2_f16(HVX_Vector in, HVX_Vector _max)
     HVX_Vector _max_t;
 
     _max = Q6_Vhf_vmax_VhfVhf(in, _max);
-    while (width < total) {
+    док (width < total) {
         _max_t = Q6_V_vror_VR(_max, width);         // rotate right
         _max   = Q6_Vhf_vmax_VhfVhf(_max_t, _max);  // elementwise max
         width  = width << 1;
     }
 
-    return _max;
+    врати _max;
 }
 
 static inline HVX_Vector hvx_vec_reduce_max_f32(HVX_Vector in) {
@@ -167,13 +167,13 @@ static inline HVX_Vector hvx_vec_reduce_max_f32(HVX_Vector in) {
     unsigned width = 4;    // fp32 nbytes
 
     HVX_Vector _max = in, _max_t;
-    while (width < total) {
+    док (width < total) {
         _max_t = Q6_V_vror_VR(_max, width);         // rotate right
         _max   = Q6_Vsf_vmax_VsfVsf(_max_t, _max);  // elementwise max
         width  = width << 1;
     }
 
-    return _max;
+    врати _max;
 }
 
 static inline HVX_Vector hvx_vec_reduce_max2_f32(HVX_Vector in, HVX_Vector _max) {
@@ -183,13 +183,13 @@ static inline HVX_Vector hvx_vec_reduce_max2_f32(HVX_Vector in, HVX_Vector _max)
     HVX_Vector _max_t;
 
     _max = Q6_Vsf_vmax_VsfVsf(in, _max);
-    while (width < total) {
+    док (width < total) {
         _max_t = Q6_V_vror_VR(_max, width);         // rotate right
         _max   = Q6_Vsf_vmax_VsfVsf(_max_t, _max);  // elementwise max
         width  = width << 1;
     }
 
-    return _max;
+    врати _max;
 }
 
 #define hvx_reduce_loop_body(src_type, init_vec, pad_vec, vec_op, reduce_op, scalar_reduce) \
@@ -204,18 +204,18 @@ static inline HVX_Vector hvx_vec_reduce_max2_f32(HVX_Vector in, HVX_Vector _max)
                                                                                             \
         uint32_t i = 0;                                                                     \
         _Pragma("unroll(4)")                                                                \
-        for (; i < nvec; i++) {                                                             \
+        за (; i < nvec; i++) {                                                             \
             acc = vec_op(acc, vsrc[i]);                                                     \
         }                                                                                   \
-        if (nloe) {                                                                         \
+        ако (nloe) {                                                                         \
             const float * srcf = (const float *) src + i * epv;                             \
             HVX_Vector in = *(HVX_UVector *) srcf;                                          \
             HVX_Vector temp = Q6_V_valign_VVR(in, pad_vec, nloe * elem_size);               \
             acc = vec_op(acc, temp);                                                        \
         }                                                                                   \
         HVX_Vector v = reduce_op(acc);                                                      \
-        return scalar_reduce(v);                                                            \
-    } while(0)
+        врати scalar_reduce(v);                                                            \
+    } док(0)
 
 #define HVX_REDUCE_MAX_OP(acc, val) Q6_Vsf_vmax_VsfVsf(acc, val)
 #define HVX_REDUCE_SUM_OP(acc, val) Q6_Vqf32_vadd_VsfVsf(Q6_Vsf_equals_Vqf32(acc), val)
@@ -225,104 +225,104 @@ static inline HVX_Vector hvx_vec_reduce_max2_f32(HVX_Vector in, HVX_Vector _max)
 
 // Max variants
 
-static inline float hvx_reduce_max_f32_a(const uint8_t * restrict src, const int num_elems) {
+static inline float hvx_reduce_max_f32_a(const uint8_t * restrict src, const цео num_elems) {
     HVX_Vector init_vec = hvx_vec_splat_f32(((const float *) src)[0]);
     assert((unsigned long) src % 128 == 0);
     hvx_reduce_loop_body(HVX_Vector, init_vec, init_vec, HVX_REDUCE_MAX_OP, hvx_vec_reduce_max_f32, HVX_REDUCE_MAX_SCALAR);
 }
 
-static inline float hvx_reduce_max_f32_u(const uint8_t * restrict src, const int num_elems) {
+static inline float hvx_reduce_max_f32_u(const uint8_t * restrict src, const цео num_elems) {
     HVX_Vector init_vec = hvx_vec_splat_f32(((const float *) src)[0]);
     hvx_reduce_loop_body(HVX_UVector, init_vec, init_vec, HVX_REDUCE_MAX_OP, hvx_vec_reduce_max_f32, HVX_REDUCE_MAX_SCALAR);
 }
 
-static inline float hvx_reduce_max_f32(const uint8_t * restrict src, const int num_elems) {
-    if (hex_is_aligned((void *) src, 128)) {
-        return hvx_reduce_max_f32_a(src, num_elems);
-    } else {
-        return hvx_reduce_max_f32_u(src, num_elems);
+static inline float hvx_reduce_max_f32(const uint8_t * restrict src, const цео num_elems) {
+    ако (hex_is_aligned((void *) src, 128)) {
+        врати hvx_reduce_max_f32_a(src, num_elems);
+    } инако {
+        врати hvx_reduce_max_f32_u(src, num_elems);
     }
 }
 
 // Sum variants
 
-static inline float hvx_reduce_sum_f32_a(const uint8_t * restrict src, const int num_elems) {
+static inline float hvx_reduce_sum_f32_a(const uint8_t * restrict src, const цео num_elems) {
     HVX_Vector init_vec = Q6_V_vsplat_R(0);
     assert((unsigned long) src % 128 == 0);
     hvx_reduce_loop_body(HVX_Vector, init_vec, init_vec, HVX_REDUCE_SUM_OP, hvx_vec_reduce_sum_qf32, HVX_REDUCE_SUM_SCALAR);
 }
 
-static inline float hvx_reduce_sum_f32_u(const uint8_t * restrict src, const int num_elems) {
+static inline float hvx_reduce_sum_f32_u(const uint8_t * restrict src, const цео num_elems) {
     HVX_Vector init_vec = Q6_V_vsplat_R(0);
     hvx_reduce_loop_body(HVX_UVector, init_vec, init_vec, HVX_REDUCE_SUM_OP, hvx_vec_reduce_sum_qf32, HVX_REDUCE_SUM_SCALAR);
 }
 
-static inline float hvx_reduce_sum_f32(const uint8_t * restrict src, const int num_elems) {
-    if (hex_is_aligned((void *) src, 128)) {
-        return hvx_reduce_sum_f32_a(src, num_elems);
-    } else {
-        return hvx_reduce_sum_f32_u(src, num_elems);
+static inline float hvx_reduce_sum_f32(const uint8_t * restrict src, const цео num_elems) {
+    ако (hex_is_aligned((void *) src, 128)) {
+        врати hvx_reduce_sum_f32_a(src, num_elems);
+    } инако {
+        врати hvx_reduce_sum_f32_u(src, num_elems);
     }
 }
 
 // Sum of squares variants
 
-static inline float hvx_sum_of_squares_f32_a(const uint8_t * restrict src, const int num_elems) {
+static inline float hvx_sum_of_squares_f32_a(const uint8_t * restrict src, const цео num_elems) {
     HVX_Vector init_vec = Q6_V_vsplat_R(0);
     assert((uintptr_t) src % 128 == 0);
     hvx_reduce_loop_body(HVX_Vector, init_vec, init_vec, HVX_SUM_SQ_OP, hvx_vec_reduce_sum_qf32, HVX_REDUCE_SUM_SCALAR);
 }
 
-static inline float hvx_sum_of_squares_f32_u(const uint8_t * restrict src, const int num_elems) {
+static inline float hvx_sum_of_squares_f32_u(const uint8_t * restrict src, const цео num_elems) {
     HVX_Vector init_vec = Q6_V_vsplat_R(0);
     hvx_reduce_loop_body(HVX_UVector, init_vec, init_vec, HVX_SUM_SQ_OP, hvx_vec_reduce_sum_qf32, HVX_REDUCE_SUM_SCALAR);
 }
 
-static inline float hvx_sum_of_squares_f32(const uint8_t * restrict src, const int num_elems) {
-    if (hex_is_aligned((void *) src, 128)) {
-        return hvx_sum_of_squares_f32_a(src, num_elems);
-    } else {
-        return hvx_sum_of_squares_f32_u(src, num_elems);
+static inline float hvx_sum_of_squares_f32(const uint8_t * restrict src, const цео num_elems) {
+    ако (hex_is_aligned((void *) src, 128)) {
+        врати hvx_sum_of_squares_f32_a(src, num_elems);
+    } инако {
+        врати hvx_sum_of_squares_f32_u(src, num_elems);
     }
 }
 
 // Signed 32-bit Integer Max variants
 
-static inline HVX_Vector hvx_vec_reduce_max_n_i32(HVX_Vector in, unsigned int n) {
-    unsigned int total = n * 4;  // total vec nbytes
-    unsigned int width = 4;      // int32 nbytes
+static inline HVX_Vector hvx_vec_reduce_max_n_i32(HVX_Vector in, unsigned цео n) {
+    unsigned цео total = n * 4;  // total vec nbytes
+    unsigned цео width = 4;      // int32 nbytes
 
     HVX_Vector max_val = in, max_t;
-    while (width < total) {
+    док (width < total) {
         max_t = Q6_V_vror_VR(max_val, width);          // rotate right
         max_val = Q6_Vw_vmax_VwVw(max_t, max_val);      // elementwise signed max
         width = width << 1;
     }
-    return max_val;
+    врати max_val;
 }
 
 static inline HVX_Vector hvx_vec_reduce_max_i32(HVX_Vector in) {
-    return hvx_vec_reduce_max_n_i32(in, 32);
+    врати hvx_vec_reduce_max_n_i32(in, 32);
 }
 
-static inline int32_t hvx_reduce_max_i32_a(const uint8_t * restrict src, const int num_elems) {
+static inline int32_t hvx_reduce_max_i32_a(const uint8_t * restrict src, const цео num_elems) {
     HVX_Vector init_vec = Q6_V_vsplat_R(((const int32_t *) src)[0]);
     HVX_Vector pad_vec  = Q6_V_vsplat_R(0x80000000);
     assert((uintptr_t) src % 128 == 0);
     hvx_reduce_loop_body(HVX_Vector, init_vec, pad_vec, Q6_Vw_vmax_VwVw, hvx_vec_reduce_max_i32, hvx_vec_get_i32);
 }
 
-static inline int32_t hvx_reduce_max_i32_u(const uint8_t * restrict src, const int num_elems) {
+static inline int32_t hvx_reduce_max_i32_u(const uint8_t * restrict src, const цео num_elems) {
     HVX_Vector init_vec = Q6_V_vsplat_R(((const int32_t *) src)[0]);
     HVX_Vector pad_vec  = Q6_V_vsplat_R(0x80000000);
     hvx_reduce_loop_body(HVX_UVector, init_vec, pad_vec, Q6_Vw_vmax_VwVw, hvx_vec_reduce_max_i32, hvx_vec_get_i32);
 }
 
-static inline int32_t hvx_reduce_max_i32(const uint8_t * restrict src, const int num_elems) {
-    if (hex_is_aligned((void *) src, 128)) {
-        return hvx_reduce_max_i32_a(src, num_elems);
-    } else {
-        return hvx_reduce_max_i32_u(src, num_elems);
+static inline int32_t hvx_reduce_max_i32(const uint8_t * restrict src, const цео num_elems) {
+    ако (hex_is_aligned((void *) src, 128)) {
+        врати hvx_reduce_max_i32_a(src, num_elems);
+    } инако {
+        врати hvx_reduce_max_i32_u(src, num_elems);
     }
 }
 
@@ -333,24 +333,24 @@ static inline void hvx_argmax_f32(
     float * out_val,
     int32_t * out_idx
 ) {
-    if (n == 0) {
+    ако (n == 0) {
         *out_val = -INFINITY;
         *out_idx = (int32_t) offset;
-        return;
+        врати;
     }
 
-    if (n < 32 || !hex_is_aligned((void *) src, 128)) {
+    ако (n < 32 || !hex_is_aligned((void *) src, 128)) {
         float best_val = src[0];
         int32_t best_idx = (int32_t) offset;
-        for (uint32_t i = 1; i < n; i++) {
-            if (src[i] > best_val) {
+        за (uint32_t i = 1; i < n; i++) {
+            ако (src[i] > best_val) {
                 best_val = src[i];
                 best_idx = (int32_t) (offset + i);
             }
         }
         *out_val = best_val;
         *out_idx = best_idx;
-        return;
+        врати;
     }
 
     static const int32_t c_lane_idx[32] __attribute__((aligned(128))) = {
@@ -367,7 +367,7 @@ static inline void hvx_argmax_f32(
     const HVX_Vector * vsrc = (const HVX_Vector *) src;
     const uint32_t nvec = n / 32;
 
-    for (uint32_t vi = 0; vi < nvec; vi++) {
+    за (uint32_t vi = 0; vi < nvec; vi++) {
         HVX_Vector v = vsrc[vi];
         HVX_VectorPred pred = Q6_Q_vcmp_gt_VsfVsf(v, v_max_val);
         v_max_val = Q6_V_vmux_QVV(pred, v, v_max_val);
@@ -381,15 +381,15 @@ static inline void hvx_argmax_f32(
 
     float best_val = u_val.fp32[0];
     int32_t best_idx = (int32_t) u_idx.w[0];
-    for (int i = 1; i < 32; i++) {
-        if (u_val.fp32[i] > best_val) {
+    за (цео i = 1; i < 32; i++) {
+        ако (u_val.fp32[i] > best_val) {
             best_val = u_val.fp32[i];
             best_idx = (int32_t) u_idx.w[i];
         }
     }
 
-    for (uint32_t i = nvec * 32; i < n; i++) {
-        if (src[i] > best_val) {
+    за (uint32_t i = nvec * 32; i < n; i++) {
+        ако (src[i] > best_val) {
             best_val = src[i];
             best_idx = (int32_t) (offset + i);
         }

@@ -74,9 +74,9 @@ static void memset_tail(uint8_t * start, uint8_t * end, uint8_t val) {
     uint8_t * cur = start;
 
     // Full 64-byte rows via tensor_store (up to 16 at a time = 1KB)
-    while (cur + 64 <= end) {
+    док (cur + 64 <= end) {
         size_t rows = (end - cur) / 64;
-        if (rows > 16) {
+        ако (rows > 16) {
             rows = 16;
         }
         tensor_store(0, 0, 3, rows - 1, (uintptr_t) cur, 0, 64);
@@ -84,7 +84,7 @@ static void memset_tail(uint8_t * start, uint8_t * end, uint8_t val) {
     }
 
     // Remaining 16-byte aligned chunk (16, 32, or 48 bytes)
-    if (cur + 16 <= end) {
+    ако (cur + 16 <= end) {
         size_t cols = (end - cur) / 16;
         tensor_store(0, 0, cols - 1, 0, (uintptr_t) cur, 0, 64);
         cur += cols * 16;
@@ -93,7 +93,7 @@ static void memset_tail(uint8_t * start, uint8_t * end, uint8_t val) {
     tensor_wait(TENSOR_STORE_WAIT);
 
     // Final < 16 bytes with byte stores
-    while (cur < end) {
+    док (cur < end) {
         *(volatile uint8_t *) cur = val;
         cur++;
     }
@@ -101,31 +101,31 @@ static void memset_tail(uint8_t * start, uint8_t * end, uint8_t val) {
 
 #define ALIGN_UP(ptr, align) ((uint8_t *) (((uintptr_t) (ptr) + (align) - 1) & ~((uintptr_t) (align) - 1)))
 
-int entry_point(struct memset_params * params, kernel_environment_t * env) {
+цео entry_point(struct memset_params * params, kernel_environment_t * env) {
     uint64_t hart_id = get_hart_id();
 
     // Only even harts have tensor engine access
-    if (hart_id & 1) {
-        return 0;
+    ако (hart_id & 1) {
+        врати 0;
     }
 
-    if (!params || ((uintptr_t) params & 0x7) != 0) {
-        return -1;
+    ако (!params || ((uintptr_t) params & 0x7) != 0) {
+        врати -1;
     }
 
-    if (params->op_type != GGML_ET_MEMOP_MEMSET) {
-        return -1;
+    ако (params->op_type != GGML_ET_MEMOP_MEMSET) {
+        врати -1;
     }
 
     uint8_t * dst  = (uint8_t *) params->dst_ptr;
     size_t    size = params->size;
 
-    if (!dst || size == 0) {
-        return -1;
+    ако (!dst || size == 0) {
+        врати -1;
     }
 
     // Dynamic hart count from shire_mask
-    int num_even_harts = manual_popcountll(env->shire_mask) * SOC_MINIONS_PER_SHIRE;
+    цео num_even_harts = manual_popcountll(env->shire_mask) * SOC_MINIONS_PER_SHIRE;
 
     // global_id: shire * 32 + minion (for even harts)
     uint64_t global_id = ((hart_id >> 6) << 5) + ((hart_id >> 1) & 0x1F);
@@ -141,14 +141,14 @@ int entry_point(struct memset_params * params, kernel_environment_t * env) {
 
     // Align to 16 bytes (tensor_store minimum alignment)
     uint8_t * base = ALIGN_UP(dst, 16);
-    if (base > end) {
+    ако (base > end) {
         base = end;
     }
 
     // Hart 0 handles head bytes before alignment
-    if (global_id == 0) {
+    ако (global_id == 0) {
         volatile uint8_t * p = dst;
-        while (p < (volatile uint8_t *) base) {
+        док (p < (volatile uint8_t *) base) {
             *p++ = val;
         }
     }
@@ -157,14 +157,14 @@ int entry_point(struct memset_params * params, kernel_environment_t * env) {
     size_t aligned_size = end - base;
     size_t total_blocks = aligned_size / 1024;
 
-    if (total_blocks > 0) {
+    ако (total_blocks > 0) {
         size_t blocks_per_hart = total_blocks / num_even_harts;
         size_t extra           = total_blocks % num_even_harts;
         size_t my_start        = blocks_per_hart * global_id + (global_id < extra ? global_id : extra);
         size_t my_count        = blocks_per_hart + (global_id < extra ? 1 : 0);
 
         uint8_t * addr = base + my_start * 1024;
-        for (size_t b = 0; b < my_count; b++) {
+        за (size_t b = 0; b < my_count; b++) {
             tensor_store(0, 0, 3, 15, (uintptr_t) addr, 0, 64);
             addr += 1024;
         }
@@ -172,10 +172,10 @@ int entry_point(struct memset_params * params, kernel_environment_t * env) {
     }
 
     // Hart 0 handles the tail after the last full 1KB block
-    if (global_id == 0) {
+    ако (global_id == 0) {
         memset_tail(base + total_blocks * 1024, end, val);
     }
 
     FENCE;
-    return 0;
+    врати 0;
 }

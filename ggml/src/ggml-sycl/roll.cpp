@@ -3,31 +3,31 @@
 
 using namespace sycl;
 
-static inline int wrap_add(int i, int shift, int n) {
+static inline цео wrap_add(цео i, цео shift, цео n) {
 
-    int s = i + shift;
-    return (s >= n) ? (s - n) : s;
+    цео s = i + shift;
+    врати (s >= n) ? (s - n) : s;
 }
 
 static void kernel_roll_fused_i0_i1(
     queue &q,
     const float *src_d,
     float *dst_d,
-    int ne0, int ne1, int ne2, int ne3,
-    int sh0, int sh1, int sh2, int sh3)
+    цео ne0, цео ne1, цео ne2, цео ne3,
+    цео sh0, цео sh1, цео sh2, цео sh3)
 {
-    if (ne0 == 0 || ne1 == 0 || ne2 == 0 || ne3 == 0) return;
+    ако (ne0 == 0 || ne1 == 0 || ne2 == 0 || ne3 == 0) врати;
 
 
-    const int stride1 = ne0;
-    const int stride2 = ne0 * ne1;
-    const int stride3 = ne0 * ne1 * ne2;
+    const цео stride1 = ne0;
+    const цео stride2 = ne0 * ne1;
+    const цео stride3 = ne0 * ne1 * ne2;
 
 
-    const int shNe0 = (ne0 - sh0) % ne0;
-    const int shNe1 = (ne1 - sh1) % ne1;
-    const int shNe2 = (ne2 - sh2) % ne2;
-    const int shNe3 = (ne3 - sh3) % ne3;
+    const цео shNe0 = (ne0 - sh0) % ne0;
+    const цео shNe1 = (ne1 - sh1) % ne1;
+    const цео shNe2 = (ne2 - sh2) % ne2;
+    const цео shNe3 = (ne3 - sh3) % ne3;
 
 
     const size_t g0 = (size_t) ne3;
@@ -38,26 +38,26 @@ static void kernel_roll_fused_i0_i1(
 
     q.submit([&](handler &h) {
         h.parallel_for(global, [=](id<3> idx) {
-            const int i3 = (int) idx[0];
-            const int i2 = (int) idx[1];
+            const цео i3 = (цео) idx[0];
+            const цео i2 = (цео) idx[1];
 
-            const int fused = (int) idx[2];
-            const int i1 = fused / ne0;
-            const int i0 = fused - i1 * ne0;  // fused % ne0
+            const цео fused = (цео) idx[2];
+            const цео i1 = fused / ne0;
+            const цео i0 = fused - i1 * ne0;  // fused % ne0
 
 
-            const int idx_dst = i0
+            const цео idx_dst = i0
                               + i1 * stride1
                               + i2 * stride2
                               + i3 * stride3;
 
 
-            const int s0 = wrap_add(i0, shNe0, ne0);
-            const int s1 = wrap_add(i1, shNe1, ne1);
-            const int s2 = wrap_add(i2, shNe2, ne2);
-            const int s3 = wrap_add(i3, shNe3, ne3);
+            const цео s0 = wrap_add(i0, shNe0, ne0);
+            const цео s1 = wrap_add(i1, shNe1, ne1);
+            const цео s2 = wrap_add(i2, shNe2, ne2);
+            const цео s3 = wrap_add(i3, shNe3, ne3);
 
-            const int idx_src = s0
+            const цео idx_src = s0
                               + s1 * stride1
                               + s2 * stride2
                               + s3 * stride3;
@@ -75,30 +75,30 @@ void ggml_sycl_roll(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
 
     // the kernel indexes in 32-bit
     GGML_ASSERT(dst->ne[0] * dst->ne[1] * dst->ne[2] * dst->ne[3] <= INT32_MAX);
-    const int ne0 = (int) dst->ne[0];
-    const int ne1 = (int) dst->ne[1];
-    const int ne2 = (int) dst->ne[2];
-    const int ne3 = (int) dst->ne[3];
+    const цео ne0 = (цео) dst->ne[0];
+    const цео ne1 = (цео) dst->ne[1];
+    const цео ne2 = (цео) dst->ne[2];
+    const цео ne3 = (цео) dst->ne[3];
 
     const int32_t *params = (const int32_t *) dst->op_params;
-    int shift0 = params[0];
-    int shift1 = params[1];
-    int shift2 = params[2];
-    int shift3 = params[3];
+    цео shift0 = params[0];
+    цео shift1 = params[1];
+    цео shift2 = params[2];
+    цео shift3 = params[3];
 
 
-    if ((shift0 | shift1 | shift2 | shift3) == 0) {
+    ако ((shift0 | shift1 | shift2 | shift3) == 0) {
         const size_t nb = ggml_nbytes(src);
         queue *q = ctx.stream();
         SYCL_CHECK(CHECK_TRY_ERROR(q->memcpy(dst->data, src->data, nb)));
-        return;
+        врати;
     }
 
-    auto norm = [](int sh, int n) -> int {
-        if (n <= 0) return 0;
+    auto norm = [](цео sh, цео n) -> цео {
+        ако (n <= 0) врати 0;
         sh %= n;
-        if (sh < 0) sh += n;
-        return sh;
+        ако (sh < 0) sh += n;
+        врати sh;
     };
     shift0 = norm(shift0, ne0);
     shift1 = norm(shift1, ne1);

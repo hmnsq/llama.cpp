@@ -44,11 +44,11 @@ struct htp_get_rows_vtcm_layout {
 
 static inline void htp_get_rows_vtcm_layout_build(
     struct htp_get_rows_vtcm_layout * L,
-    int kernel_type,
-    int type,
+    цео kernel_type,
+    цео type,
     uint32_t ne00,
     uint32_t total_tasks,
-    int idx_type,
+    цео idx_type,
     uint32_t n_threads) {
 
     memset(L, 0, sizeof(*L));
@@ -60,13 +60,13 @@ static inline void htp_get_rows_vtcm_layout_build(
     L->src1_bytes = src1_bytes;
     const size_t src1_alloc_bytes = (src1_bytes + 255) & ~255;
 
-    if (kernel_type != HTP_GET_ROWS_KERNEL_SAMETYPE) {
+    ако (kernel_type != HTP_GET_ROWS_KERNEL_SAMETYPE) {
         size_t src0_row_size = 0;
-        if (kernel_type == HTP_GET_ROWS_KERNEL_TILED) {
+        ако (kernel_type == HTP_GET_ROWS_KERNEL_TILED) {
             const size_t tile_stride = htp_tensor_get_tile_padded_size(type);
             const uint32_t n_k_tiles = ne00 / htp_tensor_get_tile_k(type);
             src0_row_size = n_k_tiles > 0 ? (n_k_tiles * tile_stride) : tile_stride;
-        } else {
+        } инако {
             src0_row_size = htp_tensor_get_row_size(type, ne00);
         }
 
@@ -83,9 +83,9 @@ static inline void htp_get_rows_vtcm_layout_build(
     L->total_bytes = off;
 }
 
-#if defined(__cplusplus)
+#ако defined(__cplusplus)
 static_assert(sizeof(struct htp_get_rows_kernel_params) <= 128, "htp_get_rows_kernel_params is too large for kernel_params blob");
-#else
+#инако
 _Static_assert(sizeof(struct htp_get_rows_kernel_params) <= 128, "htp_get_rows_kernel_params is too large for kernel_params blob");
 #endif
 

@@ -57,12 +57,12 @@
 
 template<size_t(*Fn)(size_t,size_t,size_t)>
 static inline size_t kernel_offs_fn3(size_t a, size_t b, size_t c) {
-    return Fn(a, b, c);
+    врати Fn(a, b, c);
 }
 
 template<size_t(*Fn)(size_t,size_t)>
 static inline size_t kernel_offs_fn2(size_t a, size_t b, size_t) {
-    return Fn(a, b);
+    врати Fn(a, b);
 }
 
 template<void(*Fn)(size_t,size_t,size_t,size_t,const void*,const void*,float*,size_t,size_t,float,float)>
@@ -106,22 +106,22 @@ static inline void kernel_run_float_fn10(size_t m, size_t n, size_t k, size_t /*
 
 template<size_t(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t)>
 static inline size_t lhs_ps_fn6(size_t m, size_t k, size_t bl, size_t mr, size_t kr, size_t sr) {
-    return Fn(m, k, bl, mr, kr, sr);
+    врати Fn(m, k, bl, mr, kr, sr);
 }
 
 template<size_t(*Fn)(size_t,size_t,size_t,size_t,size_t)>
 static inline size_t lhs_ps_fn5(size_t m, size_t k, size_t /*bl*/, size_t mr, size_t kr, size_t sr) {
-    return Fn(m, k, mr, kr, sr);
+    врати Fn(m, k, mr, kr, sr);
 }
 
 template<size_t(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t)>
 static inline size_t lhs_offs_fn6(size_t m_idx, size_t k, size_t bl, size_t mr, size_t kr, size_t sr) {
-    return Fn(m_idx, k, bl, mr, kr, sr);
+    врати Fn(m_idx, k, bl, mr, kr, sr);
 }
 
 template<size_t(*Fn)(size_t,size_t,size_t,size_t,size_t)>
 static inline size_t lhs_offs_fn5(size_t m_idx, size_t k, size_t /*bl*/, size_t mr, size_t kr, size_t sr) {
-    return Fn(m_idx, k, mr, kr, sr);
+    врати Fn(m_idx, k, mr, kr, sr);
 }
 
 template<void(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t,size_t,const float*,size_t,void*)>
@@ -150,12 +150,12 @@ static inline void lhs_pack_float_fn9_no_bl(size_t m, size_t k, size_t /*bl*/, s
 
 template<size_t(*Fn)(size_t,size_t,size_t,size_t,size_t)>
 static inline size_t rhs_ps_fn5(size_t n, size_t k, size_t nr, size_t kr, size_t bl) {
-    return Fn(n, k, nr, kr, bl);
+    врати Fn(n, k, nr, kr, bl);
 }
 
 template<size_t(*Fn)(size_t,size_t)>
 static inline size_t rhs_ps_fn2(size_t n, size_t k, size_t /*nr*/, size_t /*kr*/, size_t /*bl*/) {
-    return Fn(n, k);
+    врати Fn(n, k);
 }
 
 template<void(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t,size_t,const uint8_t*,const float*,void*,size_t,const struct kai_rhs_pack_qs4cxs1s0_param*)>
@@ -198,11 +198,11 @@ static_assert(offsetof(block_q4_K, qs) == 16, "Unexpected ggml Q4_K data offset"
 static struct kai_matmul_uker_config q4_k_matmul_config() {
     struct kai_matmul_uker_config config = {};
     config.format.bl = KLEIDIAI_Q4_K_BLOCK_LENGTH;
-    return config;
+    врати config;
 }
 
 static struct kai_matmul_uker_config default_matmul_config() {
-    return {};
+    врати {};
 }
 
 template<
@@ -213,35 +213,35 @@ struct matmul_uker_adapter {
     static size_t get_m_step() {
         const struct kai_matmul_uker_api api = GetApi();
         const struct kai_matmul_uker_config config = GetConfig();
-        return api.get_step(&config).m;
+        врати api.get_step(&config).m;
     }
 
     static size_t get_n_step() {
         const struct kai_matmul_uker_api api = GetApi();
         const struct kai_matmul_uker_config config = GetConfig();
-        return api.get_step(&config).n;
+        врати api.get_step(&config).n;
     }
 
     static size_t get_mr() {
-        if constexpr (MR == 0) {
-            return get_m_step();
+        ако constexpr (MR == 0) {
+            врати get_m_step();
         }
-        return MR;
+        врати MR;
     }
 
     static size_t get_nr() {
-        if constexpr (NR == 0) {
-            return get_n_step();
+        ако constexpr (NR == 0) {
+            врати get_n_step();
         }
-        return NR;
+        врати NR;
     }
 
     static size_t get_kr() {
-        return KR;
+        врати KR;
     }
 
     static size_t get_sr() {
-        return SR;
+        врати SR;
     }
 
     static size_t get_dst_offset(size_t m_idx, size_t n_idx, size_t dst_stride) {
@@ -249,7 +249,7 @@ struct matmul_uker_adapter {
         const struct kai_matmul_uker_config config = GetConfig();
         const struct kai_matmul_uker_dst_dim_args index = { m_idx, n_idx };
         const struct kai_matmul_uker_dst_stride_args stride = { dst_stride };
-        return api.get_dst_offset(&config, &index, &stride);
+        врати api.get_dst_offset(&config, &index, &stride);
     }
 
     static size_t get_lhs_packed_offset(size_t m_idx, size_t k, size_t bl) {
@@ -259,7 +259,7 @@ struct matmul_uker_adapter {
         const struct kai_matmul_uker_lhs_dim_args shape = { m_idx, k };
         const struct kai_matmul_uker_lhs_dim_args index = { m_idx, 0 };
         const struct kai_matmul_uker_lhs_stride_args stride = api.get_lhs_stride(&config, &shape);
-        return api.get_lhs_offset(&config, &index, &stride);
+        врати api.get_lhs_offset(&config, &index, &stride);
     }
 
     static size_t get_rhs_packed_offset(size_t n_idx, size_t k, size_t bl) {
@@ -269,7 +269,7 @@ struct matmul_uker_adapter {
         const struct kai_matmul_uker_rhs_dim_args shape = { n_idx, k };
         const struct kai_matmul_uker_rhs_dim_args index = { n_idx, 0 };
         const struct kai_matmul_uker_rhs_stride_args stride = api.get_rhs_stride(&config, &shape);
-        return api.get_rhs_offset(&config, &index, &stride);
+        врати api.get_rhs_offset(&config, &index, &stride);
     }
 
     static void run(
@@ -315,7 +315,7 @@ using sve_q8_gemv_adapter = matmul_uker_adapter<
 
 static struct kai_matmul_pack_lhs_uker_config q4_k_lhs_pack_config() {
     struct kai_matmul_pack_lhs_uker_config config = {};
-    return config;
+    врати config;
 }
 
 static size_t q4_k_lhs_get_offset(size_t m_idx, size_t lhs_stride) {
@@ -323,7 +323,7 @@ static size_t q4_k_lhs_get_offset(size_t m_idx, size_t lhs_stride) {
     const struct kai_matmul_pack_lhs_uker_config config = q4_k_lhs_pack_config();
     const struct kai_matmul_pack_lhs_uker_lhs_dim_args index = { m_idx, 0 };
     const struct kai_matmul_pack_lhs_uker_lhs_stride_args stride = { lhs_stride };
-    return api.get_lhs_offset(&config, &index, &stride);
+    врати api.get_lhs_offset(&config, &index, &stride);
 }
 
 static size_t q4_k_lhs_get_packed_offset(
@@ -336,7 +336,7 @@ static size_t q4_k_lhs_get_packed_offset(
     const struct kai_matmul_pack_lhs_uker_lhs_packed_dim_args shape = { m_idx, k };
     const struct kai_matmul_pack_lhs_uker_lhs_packed_dim_args index = { m_idx, 0 };
     const struct kai_matmul_pack_lhs_uker_lhs_packed_stride_args stride = api.get_lhs_packed_stride(&config, &shape);
-    return api.get_lhs_packed_offset(&config, &index, &stride);
+    врати api.get_lhs_packed_offset(&config, &index, &stride);
 }
 
 static size_t q4_k_lhs_get_packed_size(
@@ -348,7 +348,7 @@ static size_t q4_k_lhs_get_packed_size(
     const struct kai_matmul_pack_lhs_uker_config config = q4_k_lhs_pack_config();
     const struct kai_matmul_pack_lhs_uker_lhs_packed_dim_args shape = { m, k };
     const struct kai_matmul_pack_lhs_uker_lhs_packed_stride_args stride = api.get_lhs_packed_stride(&config, &shape);
-    return api.get_lhs_packed_size(&config, &shape, &stride);
+    врати api.get_lhs_packed_size(&config, &shape, &stride);
 }
 
 static void q4_k_lhs_pack(
@@ -374,7 +374,7 @@ static void q4_k_lhs_pack(
 
 static struct kai_matmul_pack_rhs_uker_config q4_k_rhs_pack_config() {
     struct kai_matmul_pack_rhs_uker_config config = {};
-    return config;
+    врати config;
 }
 
 static size_t q4_k_rhs_get_packed_size(size_t n, size_t k, size_t nr, size_t /*kr*/, size_t bl) {
@@ -386,7 +386,7 @@ static size_t q4_k_rhs_get_packed_size(size_t n, size_t k, size_t nr, size_t /*k
     GGML_ASSERT(api.get_step(&config).n == nr);
     const struct kai_matmul_pack_rhs_uker_rhs_packed_dim_args shape = { n, k };
     const struct kai_matmul_pack_rhs_uker_rhs_packed_stride_args stride = api.get_rhs_packed_stride(&config, &shape);
-    return api.get_rhs_packed_size(&config, &shape, &stride);
+    врати api.get_rhs_packed_size(&config, &shape, &stride);
 }
 
 static void q4_k_rhs_pack(
@@ -412,7 +412,7 @@ static void q4_k_rhs_pack(
     args.shape = { n, k };
     args.operand.rhs.ptr = rhs;
     args.operand.rhs.stride = api.get_rhs_stride(&config, &rhs_shape);
-    if (rhs_stride != 0) {
+    ако (rhs_stride != 0) {
         GGML_ASSERT(rhs_stride >= args.operand.rhs.stride.n);
         args.operand.rhs.stride.n = rhs_stride;
     }
@@ -519,7 +519,7 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
         /* .rhs_type           = */ GGML_TYPE_F16,
         /* .op_type            = */ GGML_TYPE_F32,
     },
-#if defined(__APPLE__)
+#ако defined(__APPLE__)
     {
         /* DOTPROD GEMM */
         /* .kern_info = */ {
@@ -616,7 +616,7 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
         /* .rhs_type           = */ GGML_TYPE_Q4_0,
         /* .op_type            = */ GGML_TYPE_F32,
     },
-#else
+#инако
     {
         /* SVE i8mm GEMM */
         /* .kern_info = */ {
@@ -1165,27 +1165,27 @@ static ggml_kleidiai_kernels ggml_kleidiai_kernels_f32[] = {
 ggml_kleidiai_kernels * ggml_kleidiai_select_kernels(cpu_feature cpu_features, const ggml_tensor * tensor) {
     ggml_kleidiai_kernels * kernel = nullptr;
 
-    if (tensor->op == GGML_OP_MUL_MAT && tensor->src[0] != nullptr && tensor->src[1] != nullptr) {
+    ако (tensor->op == GGML_OP_MUL_MAT && tensor->src[0] != nullptr && tensor->src[1] != nullptr) {
         auto try_table = [&](auto & table) {
-            for (size_t i = 0; i < NELEMS(table) - 1; ++i) {
-                if ((cpu_features & table[i].required_cpu) == table[i].required_cpu &&
+            за (size_t i = 0; i < NELEMS(table) - 1; ++i) {
+                ако ((cpu_features & table[i].required_cpu) == table[i].required_cpu &&
                     table[i].lhs_type == tensor->src[1]->type &&
                     table[i].rhs_type == tensor->src[0]->type &&
                     table[i].op_type  == tensor->type) {
                     kernel = &table[i];
-                    return true;
+                    врати true;
                 }
             }
-            return false;
+            врати false;
         };
 
-        if (tensor->src[0]->type == GGML_TYPE_Q4_K) {
+        ако (tensor->src[0]->type == GGML_TYPE_Q4_K) {
             try_table(gemm_gemv_kernels_q4_k);
-        } else if (tensor->src[0]->type == GGML_TYPE_Q8_0 || tensor->src[0]->type == GGML_TYPE_Q6_K) {
+        } инако ако (tensor->src[0]->type == GGML_TYPE_Q8_0 || tensor->src[0]->type == GGML_TYPE_Q6_K) {
             const ggml_type original_type = tensor->src[0]->type;
-            if (original_type == GGML_TYPE_Q6_K) {
-                for (size_t i = 0; i < NELEMS(gemm_gemv_kernels_q8) - 1; ++i) {
-                    if ((cpu_features & gemm_gemv_kernels_q8[i].required_cpu) == gemm_gemv_kernels_q8[i].required_cpu &&
+            ако (original_type == GGML_TYPE_Q6_K) {
+                за (size_t i = 0; i < NELEMS(gemm_gemv_kernels_q8) - 1; ++i) {
+                    ако ((cpu_features & gemm_gemv_kernels_q8[i].required_cpu) == gemm_gemv_kernels_q8[i].required_cpu &&
                         gemm_gemv_kernels_q8[i].lhs_type == tensor->src[1]->type &&
                         gemm_gemv_kernels_q8[i].rhs_type == GGML_TYPE_Q8_0 &&
                         gemm_gemv_kernels_q8[i].op_type == tensor->type) {
@@ -1193,67 +1193,67 @@ ggml_kleidiai_kernels * ggml_kleidiai_select_kernels(cpu_feature cpu_features, c
                         break;
                     }
                 }
-            } else {
+            } инако {
                 try_table(gemm_gemv_kernels_q8);
             }
-        } else if (tensor->src[0]->type == GGML_TYPE_F32) {
+        } инако ако (tensor->src[0]->type == GGML_TYPE_F32) {
             try_table(ggml_kleidiai_kernels_f32);
-        } else {
+        } инако {
             try_table(gemm_gemv_kernels);
         }
     }
 
-    return kernel;
+    врати kernel;
 }
 
 ggml_kleidiai_kernels * ggml_kleidiai_select_kernels_q4_0(cpu_feature features) {
     ggml_kleidiai_kernels * kernels = nullptr;
 
-    for (size_t i = 0; i < NELEMS(gemm_gemv_kernels) - 1; ++i) {
-        if ((features & gemm_gemv_kernels[i].required_cpu) == gemm_gemv_kernels[i].required_cpu &&
+    за (size_t i = 0; i < NELEMS(gemm_gemv_kernels) - 1; ++i) {
+        ако ((features & gemm_gemv_kernels[i].required_cpu) == gemm_gemv_kernels[i].required_cpu &&
             gemm_gemv_kernels[i].rhs_type == GGML_TYPE_Q4_0) {
             kernels = &gemm_gemv_kernels[i];
             break;
         }
     }
 
-    return kernels;
+    врати kernels;
 }
 
 ggml_kleidiai_kernels * ggml_kleidiai_select_kernels_q4_k(cpu_feature features) {
     ggml_kleidiai_kernels * kernels = nullptr;
 
-    for (size_t i = 0; i < NELEMS(gemm_gemv_kernels_q4_k) - 1; ++i) {
-        if ((features & gemm_gemv_kernels_q4_k[i].required_cpu) == gemm_gemv_kernels_q4_k[i].required_cpu) {
+    за (size_t i = 0; i < NELEMS(gemm_gemv_kernels_q4_k) - 1; ++i) {
+        ако ((features & gemm_gemv_kernels_q4_k[i].required_cpu) == gemm_gemv_kernels_q4_k[i].required_cpu) {
             kernels = &gemm_gemv_kernels_q4_k[i];
             break;
         }
     }
 
-    return kernels;
+    врати kernels;
 }
 
 ggml_kleidiai_kernels * ggml_kleidiai_select_kernels_q8_0(cpu_feature features) {
     ggml_kleidiai_kernels * kernels = nullptr;
 
-    for (size_t i = 0; i < NELEMS(gemm_gemv_kernels_q8) - 1; ++i) {
-        if ((features & gemm_gemv_kernels_q8[i].required_cpu) == gemm_gemv_kernels_q8[i].required_cpu) {
+    за (size_t i = 0; i < NELEMS(gemm_gemv_kernels_q8) - 1; ++i) {
+        ако ((features & gemm_gemv_kernels_q8[i].required_cpu) == gemm_gemv_kernels_q8[i].required_cpu) {
             kernels = &gemm_gemv_kernels_q8[i];
             break;
         }
     }
 
-    return kernels;
+    врати kernels;
 }
 
 ggml_kleidiai_kernels * ggml_kleidiai_select_kernels_f32(cpu_feature features) {
     ggml_kleidiai_kernels * kernels = nullptr;
 
-    for (size_t i = 0; i < NELEMS(ggml_kleidiai_kernels_f32) - 1; ++i) {
-        if ((features & ggml_kleidiai_kernels_f32[i].required_cpu) == ggml_kleidiai_kernels_f32[i].required_cpu) {
+    за (size_t i = 0; i < NELEMS(ggml_kleidiai_kernels_f32) - 1; ++i) {
+        ако ((features & ggml_kleidiai_kernels_f32[i].required_cpu) == ggml_kleidiai_kernels_f32[i].required_cpu) {
             kernels = &ggml_kleidiai_kernels_f32[i];
             break;
         }
     }
-    return kernels;
+    врати kernels;
 }

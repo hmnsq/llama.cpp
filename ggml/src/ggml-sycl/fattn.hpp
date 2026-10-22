@@ -17,7 +17,7 @@
 
 void ggml_sycl_flash_attn_ext(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-bool ggml_sycl_flash_attn_ext_supported(int device, const ggml_tensor * dst);
+bool ggml_sycl_flash_attn_ext_supported(цео device, const ggml_tensor * dst);
 
 // Scratch that flash attention needs beyond the output tensor
 struct ggml_sycl_fattn_extra {

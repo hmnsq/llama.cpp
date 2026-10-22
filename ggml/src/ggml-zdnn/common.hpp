@@ -23,11 +23,11 @@
     do {                                \
         zdnn_status status = (stmt);    \
         GGML_ASSERT(status == ZDNN_OK); \
-    } while (0);
+    } док (0);
 
 struct ggml_backend_zdnn_device_context {
-    int zdnn_device;
-    int zdnn_device_ref_count;
+    цео zdnn_device;
+    цео zdnn_device_ref_count;
 
     bool has_parmblkformat_0;
     bool has_parmblkformat_1;  // checks for z17
@@ -57,12 +57,12 @@ struct ggml_backend_zdnn_buffer_context {
     size_t all_size;
     bool owned;
 
-    int n_buffers;
+    цео n_buffers;
     std::vector<std::unique_ptr<ggml_backend_zdnn_buffer>> buffers;
 };
 
 struct ggml_backend_zdnn_context {
-    int device;
+    цео device;
     int32_t n_threads;  // for the CPU work around zDNN calls
     ggml_cgraph * gf;
 
@@ -144,14 +144,14 @@ static inline zdnn_ztensor ggml_zdnn_stack_view(zdnn_tensor_desc * pre_tfm_desc,
     view.transformed_desc     = tfm_desc;
     view.buffer               = (char *) src.buffer + s0*stack_bytes;
     view.buffer_size          = n * stack_bytes;
-    return view;
+    врати view;
 }
 
 // zero bias of n_stacks stacks, created once per shape as it never changes
 static inline const zdnn_ztensor & ggml_zdnn_zero_bias(ggml_backend_zdnn_context * ctx, int64_t n_stacks, int64_t ne0) {
     std::unique_ptr<ggml_backend_zdnn_buffer> & bias = ctx->zero_bias[{ n_stacks, ne0 }];
 
-    if (!bias) {
+    ако (!bias) {
         bias = std::make_unique<ggml_backend_zdnn_buffer>();
 
         std::vector<float> zeros(n_stacks * ne0, 0.0f);
@@ -162,7 +162,7 @@ static inline const zdnn_ztensor & ggml_zdnn_zero_bias(ggml_backend_zdnn_context
         ZDNN_CHECK(zdnn_transform_ztensor(&bias->ztensor, zeros.data()));
     }
 
-    return bias->ztensor;
+    врати bias->ztensor;
 }
 
 //
@@ -175,7 +175,7 @@ static inline void ggml_zdnn_parallel_for(int32_t n_threads, int64_t n, const F 
     n_threads = (int32_t)std::max<int64_t>(1, std::min<int64_t>(n_threads, n));
 
     std::vector<std::future<void>> tasks;
-    for (int32_t ith = 1; ith < n_threads; ith++) {
+    за (int32_t ith = 1; ith < n_threads; ith++) {
         const int64_t start = (ith + 0) * n / n_threads;
         const int64_t end   = (ith + 1) * n / n_threads;
         tasks.push_back(std::async(std::launch::async, [&f, start, end]() { f(start, end); }));
@@ -183,7 +183,7 @@ static inline void ggml_zdnn_parallel_for(int32_t n_threads, int64_t n, const F 
 
     f(0, n/n_threads);
 
-    for (auto & task : tasks) {
+    за (auto & task : tasks) {
         task.get();
     }
 }

@@ -14,7 +14,7 @@ static inline void bitmap_clear(uint32_t * bitmap, uint32_t idx) {
 }
 
 static inline bool bitmap_test(const uint32_t * bitmap, uint32_t idx) {
-    return (bitmap[idx / 32] & (1U << (idx % 32))) != 0;
+    врати (bitmap[idx / 32] & (1U << (idx % 32))) != 0;
 }
 
 static inline void bitmap_reset(uint32_t * bitmap, size_t size_in_bits) {

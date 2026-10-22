@@ -23,77 +23,77 @@
 
 #define UNUSED GGML_UNUSED
 
-#if defined(__loongarch_sx)
+#ако defined(__loongarch_sx)
 
 static __m128i lsx_packs_w(__m128i a, __m128i b) {
     __m128i tmp, tmp1;
     tmp = __lsx_vsat_w(a, 15);
     tmp1 = __lsx_vsat_w(b, 15);
-    return __lsx_vpickev_h(tmp1, tmp);
+    врати __lsx_vpickev_h(tmp1, tmp);
 }
 
 static __m128i lsx_packs_h(__m128i a, __m128i b) {
     __m128i tmp, tmp1;
     tmp = __lsx_vsat_h(a, 7);
     tmp1 = __lsx_vsat_h(b, 7);
-    return __lsx_vpickev_b(tmp1, tmp);
+    врати __lsx_vpickev_b(tmp1, tmp);
 }
 
 static __m128i lsx_packus_h(__m128i a, __m128i b) {
     __m128i tmp, tmp1;
     tmp = __lsx_vsat_hu(a, 7);
     tmp1 = __lsx_vsat_hu(b, 7);
-    return __lsx_vpickev_b(tmp1, tmp);
+    врати __lsx_vpickev_b(tmp1, tmp);
 }
 
 static __m128i lsx_maddubs_h(__m128i a, __m128i b) {
     __m128i tmp1, tmp2;
     tmp1 = __lsx_vmulwev_h_b(a, b);
     tmp2 = __lsx_vmulwod_h_b(a, b);
-    return __lsx_vsadd_h(tmp1, tmp2);
+    врати __lsx_vsadd_h(tmp1, tmp2);
 }
 
 static __m128i lsx_madd_h(__m128i a, __m128i b) {
     __m128i tmp1, tmp2;
     tmp1 = __lsx_vmulwev_w_h(a, b);
     tmp2 = __lsx_vmulwod_w_h(a, b);
-    return __lsx_vadd_w(tmp1, tmp2);
+    врати __lsx_vadd_w(tmp1, tmp2);
 }
 
 static __m128i lsx_set_w(int32_t a, int32_t b, int32_t c, int32_t d) {
     v4i32 __ret = {d, c, b, a};
-    return (__m128i)__ret;
+    врати (__m128i)__ret;
 }
 
 static __m128i lsx_shuffle_b(__m128i a, __m128i b) {
     __m128i mask_f, zero, tmp0, tmp2, mask;
-    int f = 0x8f;
+    цео f = 0x8f;
     mask_f = __lsx_vreplgr2vr_b(f);
     zero = __lsx_vldi(0);
     tmp0 = __lsx_vand_v(b, mask_f); // get mask with low 4 bit and sign bits
     tmp0 = __lsx_vori_b(tmp0, 0x10); // make each mask or  with 0x10 prepare for positive
     mask = __lsx_vsle_b(zero, tmp0); // if mask >= 0, set mask
     tmp2 = __lsx_vand_v(tmp0, mask); // maskout the in2 < ones
-    return __lsx_vshuf_b(a, zero, tmp2);
+    врати __lsx_vshuf_b(a, zero, tmp2);
 }
 
 static __m128i lsx_hadd_h(__m128i a, __m128i b) {
     __m128i tmp1 = __lsx_vpickev_h(b, a);
     __m128i tmp2 = __lsx_vpickod_h(b, a);
-    return __lsx_vadd_h(tmp1, tmp2);
+    врати __lsx_vadd_h(tmp1, tmp2);
 }
 
 static __m128i lsx_hadd_w(__m128i a, __m128i b) {
     __m128i tmp1 = __lsx_vpickev_w(b, a);
     __m128i tmp2 = __lsx_vpickod_w(b, a);
-    return __lsx_vadd_w(tmp1, tmp2);
+    врати __lsx_vadd_w(tmp1, tmp2);
 }
 
 static __m128 lsx_hadd_s(__m128 a, __m128 b) {
     __m128 tmp1 = (__m128)__lsx_vpickev_w((__m128i)b, (__m128i)a);
     __m128 tmp2 = (__m128)__lsx_vpickod_w((__m128i)b, (__m128i)a);
 
-    return __lsx_vfadd_s(tmp1, tmp2);
+    врати __lsx_vfadd_s(tmp1, tmp2);
 }
 
 static inline float hsum_float_4x4(const __m128 a, const __m128 b, const __m128 c, const __m128 d) {
@@ -103,7 +103,7 @@ static inline float hsum_float_4x4(const __m128 a, const __m128 b, const __m128 
     res =lsx_hadd_s(res, res);
     res =lsx_hadd_s(res, res);
 
-    return ((v4f32)res)[0];
+    врати ((v4f32)res)[0];
 }
 
 // multiply int8_t, add results pairwise twice
@@ -115,16 +115,16 @@ static inline __m128i mul_sum_i8_pairs(const __m128i x, const __m128i y) {
     // Perform multiplication and create 16-bit values
     const __m128i dot = lsx_maddubs_h(ax, sy);
     const __m128i ones = __lsx_vreplgr2vr_h(1);
-    return lsx_madd_h(ones, dot);
+    врати lsx_madd_h(ones, dot);
 }
 #endif
 
-#if defined(__loongarch_asx)
+#ако defined(__loongarch_asx)
 
 #ifdef __clang__
 #define VREGS_PREFIX "$vr"
 #define XREGS_PREFIX "$xr"
-#else // GCC
+#инако // GCC
 #define VREGS_PREFIX "$f"
 #define XREGS_PREFIX "$f"
 #endif
@@ -144,7 +144,7 @@ static inline __m256i ____m256i(__m128i in) {
         ".endr                               \n\t"
         : [out] "+f" (out) : [in] "f" (in)
     );
-    return out;
+    врати out;
 }
 // Convert two __m128i to __m256i
 static inline __m256i lasx_set_q(__m128i inhi, __m128i inlo) {
@@ -173,7 +173,7 @@ static inline __m256i lasx_set_q(__m128i inhi, __m128i inlo) {
         : [out] "=f" (out), [hi] "+f" (inhi)
         : [lo] "f" (inlo)
     );
-    return out;
+    врати out;
 }
 // Convert __m256i low part to __m128i
 static inline __m128i lasx_extracti128_lo(__m256i in) {
@@ -192,7 +192,7 @@ static inline __m128i lasx_extracti128_lo(__m256i in) {
         ".endif                              \n\t"
         : [out] "=f" (out) : [in] "f" (in)
     );
-    return out;
+    врати out;
 }
 // Convert __m256i high part to __m128i
 static inline __m128i lasx_extracti128_hi(__m256i in) {
@@ -209,128 +209,128 @@ static inline __m128i lasx_extracti128_hi(__m256i in) {
         ".endr                               \n\t"
         : [out] "=f" (out) : [in] "f" (in)
     );
-    return out;
+    врати out;
 }
 
-static __m256i lasx_set_w(int e7, int e6, int e5, int e4, int e3, int e2, int e1, int e0) {
+static __m256i lasx_set_w(цео e7, цео e6, цео e5, цео e4, цео e3, цео e2, цео e1, цео e0) {
     v8i32 __ret = {e0, e1, e2, e3, e4, e5, e6, e7};
-    return (__m256i)__ret;
+    врати (__m256i)__ret;
 }
 
 static __m256i lasx_set_d(int64_t a, int64_t b, int64_t c, int64_t d) {
     v4i64 __ret = {d, c, b, a};
-    return (__m256i)__ret;
+    врати (__m256i)__ret;
 }
 
 static __m256i lasx_insertf128( __m128i x, __m128i y) {
-    return lasx_set_q(x, y);
+    врати lasx_set_q(x, y);
 }
 
 static __m256i lasx_shuffle_b(__m256i a, __m256i b) {
     __m256i mask_f, zero, tmp0, tmp2, mask;
-    int f = 0x8f;
+    цео f = 0x8f;
     mask_f = __lasx_xvreplgr2vr_b(f);
     zero = __lasx_xvldi(0);
     tmp0 = __lasx_xvand_v(b, mask_f); // get mask with low 4 bit and sign bits
     tmp0 = __lasx_xvori_b(tmp0, 0x10); // make each mask or  with 0x10 prepare for positive
     mask = __lasx_xvsle_b(zero, tmp0); // if mask >= 0, set mask
     tmp2 = __lasx_xvand_v(tmp0, mask); // maskout the in2 < ones
-    return __lasx_xvshuf_b(a, zero, tmp2);
+    врати __lasx_xvshuf_b(a, zero, tmp2);
 }
 
 static __m256i lasx_extu8_16(__m128i a) {
-    return __lasx_vext2xv_hu_bu(____m256i(a));
+    врати __lasx_vext2xv_hu_bu(____m256i(a));
 }
 
 static __m256i lasx_ext8_16(__m128i a) {
-    return __lasx_vext2xv_h_b(____m256i(a));
+    врати __lasx_vext2xv_h_b(____m256i(a));
 }
 
 static __m256i lasx_ext16_32(__m128i a) {
-    return __lasx_vext2xv_w_h(____m256i(a));
+    врати __lasx_vext2xv_w_h(____m256i(a));
 }
 
-static __m128i lasx_extracti128( __m256i a, int pos) {
+static __m128i lasx_extracti128( __m256i a, цео pos) {
     __m128i ret;
-    if( pos == 0)
+    ако( pos == 0)
     {
        ret = lasx_extracti128_lo(a);
-    } else {
+    } инако {
        ret = lasx_extracti128_hi(a);
     }
-    return ret;
+    врати ret;
 }
 
-static __m128 lasx_extractf128( __m256 a, int pos) {
+static __m128 lasx_extractf128( __m256 a, цео pos) {
     __m128 ret;
-    if( pos == 0)
+    ако( pos == 0)
     {
        ret = (__m128)lasx_extracti128_lo((__m256i)a);
-    } else {
+    } инако {
        ret = (__m128)lasx_extracti128_hi((__m256i)a);
     }
-    return ret;
+    врати ret;
 }
 
 static __m256i lasx_maddubs_h(__m256i a, __m256i b) {
     __m256i tmp1, tmp2;
     tmp1 = __lasx_xvmulwev_h_b(a, b);
     tmp2 = __lasx_xvmulwod_h_b(a, b);
-    return __lasx_xvsadd_h(tmp1, tmp2);
+    врати __lasx_xvsadd_h(tmp1, tmp2);
 }
 
 static __m256i lasx_madd_h(__m256i a, __m256i b) {
     __m256i tmp1, tmp2;
     tmp1 = __lasx_xvmulwev_w_h(a, b);
     tmp2 = __lasx_xvmulwod_w_h(a, b);
-    return __lasx_xvadd_w(tmp1, tmp2);
+    врати __lasx_xvadd_w(tmp1, tmp2);
 }
 
 static __m256i lasx_packs_w(__m256i a, __m256i b) {
     __m256i tmp, tmp1;
     tmp = __lasx_xvsat_w(a, 15);
     tmp1 = __lasx_xvsat_w(b, 15);
-    return __lasx_xvpickev_h(tmp1, tmp);
+    врати __lasx_xvpickev_h(tmp1, tmp);
 }
 
 static __m256i lasx_packs_h(__m256i a, __m256i b) {
     __m256i tmp, tmp1;
     tmp = __lasx_xvsat_h(a, 7);
     tmp1 = __lasx_xvsat_h(b, 7);
-    return __lasx_xvpickev_b(tmp1, tmp);
+    врати __lasx_xvpickev_b(tmp1, tmp);
 }
 
 static inline __m256i lasx_madd_h_b(__m256i a, __m256i b) {
     __m256i tmp1, tmp2;
     tmp1 = __lasx_xvmulwev_h_b(a, b);
     tmp2 = __lasx_xvmulwod_h_b(a, b);
-    return __lasx_xvadd_h(tmp1, tmp2);
+    врати __lasx_xvadd_h(tmp1, tmp2);
 }
 
-static inline __m256i lasx_xvrepl128vei_h(__m256i a, const unsigned int b) {
+static inline __m256i lasx_xvrepl128vei_h(__m256i a, const unsigned цео b) {
     switch (b) {
-        case 0: return __lasx_xvrepl128vei_h(a, 0);
-        case 1: return __lasx_xvrepl128vei_h(a, 1);
-        case 2: return __lasx_xvrepl128vei_h(a, 2);
-        case 3: return __lasx_xvrepl128vei_h(a, 3);
-        case 4: return __lasx_xvrepl128vei_h(a, 4);
-        case 5: return __lasx_xvrepl128vei_h(a, 5);
-        case 6: return __lasx_xvrepl128vei_h(a, 6);
-        case 7: return __lasx_xvrepl128vei_h(a, 7);
+        case 0: врати __lasx_xvrepl128vei_h(a, 0);
+        case 1: врати __lasx_xvrepl128vei_h(a, 1);
+        case 2: врати __lasx_xvrepl128vei_h(a, 2);
+        case 3: врати __lasx_xvrepl128vei_h(a, 3);
+        case 4: врати __lasx_xvrepl128vei_h(a, 4);
+        case 5: врати __lasx_xvrepl128vei_h(a, 5);
+        case 6: врати __lasx_xvrepl128vei_h(a, 6);
+        case 7: врати __lasx_xvrepl128vei_h(a, 7);
         default: __builtin_unreachable();
     }
 }
 
-static inline __m256i lasx_xvandi_b_bit(__m256i a, const unsigned int b) {
+static inline __m256i lasx_xvandi_b_bit(__m256i a, const unsigned цео b) {
     switch (b) {
-        case 0: return __lasx_xvandi_b(a, 1 << 0);
-        case 1: return __lasx_xvandi_b(a, 1 << 1);
-        case 2: return __lasx_xvandi_b(a, 1 << 2);
-        case 3: return __lasx_xvandi_b(a, 1 << 3);
-        case 4: return __lasx_xvandi_b(a, 1 << 4);
-        case 5: return __lasx_xvandi_b(a, 1 << 5);
-        case 6: return __lasx_xvandi_b(a, 1 << 6);
-        case 7: return __lasx_xvandi_b(a, 1 << 7);
+        case 0: врати __lasx_xvandi_b(a, 1 << 0);
+        case 1: врати __lasx_xvandi_b(a, 1 << 1);
+        case 2: врати __lasx_xvandi_b(a, 1 << 2);
+        case 3: врати __lasx_xvandi_b(a, 1 << 3);
+        case 4: врати __lasx_xvandi_b(a, 1 << 4);
+        case 5: врати __lasx_xvandi_b(a, 1 << 5);
+        case 6: врати __lasx_xvandi_b(a, 1 << 6);
+        case 7: врати __lasx_xvandi_b(a, 1 << 7);
         default: __builtin_unreachable();
     }
 }
@@ -341,11 +341,11 @@ static inline float hsum_float_8(const __m256 x) {
     res = __lsx_vfadd_s(res, lasx_extractf128(x, 0));
     res = __lsx_vfadd_s(res, (__m128)__lsx_vpickod_d((__m128i)res, (__m128i)res));
     res = __lsx_vfadd_s(res, (__m128)__lsx_vinsgr2vr_w(__lsx_vldi(0), __lsx_vpickve2gr_w(res, 1), 0));
-    return ((v4f32)res)[0];
+    врати ((v4f32)res)[0];
 }
 
 // horizontally add 8 int32_t
-static inline int hsum_i32_8(const __m256i a) {
+static inline цео hsum_i32_8(const __m256i a) {
 
     __m256i tmp1 = __lasx_xvpermi_q(a, a, 0x11);
     __m256i tmp2 = __lasx_xvpermi_q(a, a, 0x00);
@@ -359,24 +359,24 @@ static inline int hsum_i32_8(const __m256i a) {
     __m128i od = __lsx_vpickod_w(sum128, sum128);
     __m128i sum64 = __lsx_vadd_w(ev, od);
 
-    int sum64_1, sum64_2;
+    цео sum64_1, sum64_2;
     sum64_1 = __lsx_vpickve2gr_w(sum64, 0);
     sum64_2 = __lsx_vpickve2gr_w(sum64, 1);
 
-    return  sum64_1 + sum64_2;
+    врати  sum64_1 + sum64_2;
 }
 
 // horizontally add 4 int32_t
-static inline int hsum_i32_4(const __m128i a) {
+static inline цео hsum_i32_4(const __m128i a) {
     __m128i ev = __lsx_vpickev_w(a, a);
     __m128i od = __lsx_vpickod_w(a, a);
     __m128i sum64 = __lsx_vadd_w(ev, od);
 
-    int sum64_1, sum64_2;
+    цео sum64_1, sum64_2;
     sum64_1 = __lsx_vpickve2gr_w(sum64, 0);
     sum64_2 = __lsx_vpickve2gr_w(sum64, 1);
 
-    return  sum64_1 + sum64_2;
+    врати  sum64_1 + sum64_2;
 }
 
 // spread 32 bits to 32 bytes { 0x00, 0xFF }
@@ -391,7 +391,7 @@ static inline __m256i bytes_from_bits_32(const uint8_t * x) {
     __m256i bytes = lasx_shuffle_b(__lasx_xvreplgr2vr_w(x32), shuf_mask);
     const __m256i bit_mask = __lasx_xvreplgr2vr_d(0x7fbfdfeff7fbfdfe);
     bytes = __lasx_xvor_v(bytes, bit_mask);
-    return __lasx_xvseq_b(bytes, __lasx_xvreplgr2vr_d(-1));
+    врати __lasx_xvseq_b(bytes, __lasx_xvreplgr2vr_d(-1));
 }
 
 // Unpack 32 4-bit fields into 32 bytes
@@ -399,26 +399,26 @@ static inline __m256i bytes_from_bits_32(const uint8_t * x) {
 static inline __m256i bytes_from_nibbles_32(const uint8_t * rsi) {
     const __m128i lo = __lsx_vld((const __m128i *)rsi, 0);
     __m128i hi = __lsx_vsrli_h(lo, 4);
-    return __lasx_xvandi_b(lasx_insertf128(hi, lo), 0xf);
+    врати __lasx_xvandi_b(lasx_insertf128(hi, lo), 0xf);
 }
 
 // add int16_t pairwise and return as float vector
 static inline __m256 sum_i16_pairs_float(const __m256i x) {
     __m256i v = __lasx_xvpackod_h(x, x);
     __m256i summed_pairs = __lasx_xvaddwev_w_h(x, v);
-    return __lasx_xvffint_s_w(summed_pairs);
+    врати __lasx_xvffint_s_w(summed_pairs);
 }
 
 static inline __m256 mul_sum_us8_pairs_float(const __m256i ax, const __m256i sy) {
     // Perform multiplication and create 16-bit values
     const __m256i dot = lasx_maddubs_h(ax, sy);
-    return sum_i16_pairs_float(dot);
+    врати sum_i16_pairs_float(dot);
 }
 
 // multiply int8_t, add results pairwise twice and return as float vector
 static inline __m256 mul_sum_i8_pairs_float(const __m256i x, const __m256i y) {
     const __m256i dot = lasx_madd_h_b(x, y);
-    return sum_i16_pairs_float(dot);
+    врати sum_i16_pairs_float(dot);
 }
 
 static inline __m128i packNibbles( __m256i bytes ) {
@@ -441,19 +441,19 @@ static inline __m128i packNibbles( __m256i bytes ) {
 
     tmp = __lsx_vmax_h(zero, *r1);
     tmp3 = __lsx_vsat_hu(tmp, 7);
-    return  __lsx_vpickev_b(tmp3, tmp2);
+    врати  __lsx_vpickev_b(tmp3, tmp2);
 }
 #endif  //__loongarch_asx
 
 void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
     assert(QK8_0 == 32);
     assert(k % QK8_0 == 0);
-    const int nb = k / QK8_0;
+    const цео nb = k / QK8_0;
 
     block_q8_0 * GGML_RESTRICT y = vy;
 
-#if defined(__loongarch_asx)
-    for (int i = 0; i < nb; i++) {
+#ако defined(__loongarch_asx)
+    за (цео i = 0; i < nb; i++) {
         __m256 v0 = (__m256)__lasx_xvld( x , 0);
         __m256 v1 = (__m256)__lasx_xvld( x , 32);
         __m256 v2 = (__m256)__lasx_xvld( x , 64);
@@ -513,7 +513,7 @@ void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
         __lsx_vst(ni4, (__m128i *)(y[i].qs + 16), 0);
 
     }
-#else
+#инако
     GGML_UNUSED(nb);
     // scalar
     quantize_row_q8_0_ref(x, y, k);
@@ -522,12 +522,12 @@ void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
 
 void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
     assert(k % QK8_1 == 0);
-    const int nb = k / QK8_1;
+    const цео nb = k / QK8_1;
 
     block_q8_1 * GGML_RESTRICT y = vy;
 
-#if defined(__loongarch_asx)
-    for (int i = 0; i < nb; i++) {
+#ако defined(__loongarch_asx)
+    за (цео i = 0; i < nb; i++) {
         __m256 v0 = (__m256)__lasx_xvld( x , 0 );
         __m256 v1 = (__m256)__lasx_xvld( x , 32 );
         __m256 v2 = (__m256)__lasx_xvld( x , 64 );
@@ -591,7 +591,7 @@ void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
         __lsx_vst(ni0, (__m128i *)(y[i].qs +  0), 0);
         __lsx_vst(ni4, (__m128i *)(y[i].qs + 16), 0);
     }
-#else
+#инако
     GGML_UNUSED(nb);
     // scalar
     quantize_row_q8_1_ref(x, y, k);
@@ -605,18 +605,18 @@ void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
 // Helper functions
 //
 
-#if defined(__loongarch_asx)
+#ако defined(__loongarch_asx)
 // shuffles to pick the required scales in dot products
-static inline __m256i get_scale_shuffle_q3k(int i) {
+static inline __m256i get_scale_shuffle_q3k(цео i) {
     static const uint8_t k_shuffle[128] = {
          0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1,     2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3,
          4, 5, 4, 5, 4, 5, 4, 5, 4, 5, 4, 5, 4, 5, 4, 5,     6, 7, 6, 7, 6, 7, 6, 7, 6, 7, 6, 7, 6, 7, 6, 7,
          8, 9, 8, 9, 8, 9, 8, 9, 8, 9, 8, 9, 8, 9, 8, 9,    10,11,10,11,10,11,10,11,10,11,10,11,10,11,10,11,
         12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,    14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15,
     };
-    return __lasx_xvld((const __m256i*)k_shuffle + i, 0);
+    врати __lasx_xvld((const __m256i*)k_shuffle + i, 0);
 }
-static inline __m256i get_scale_shuffle_k4(int i) {
+static inline __m256i get_scale_shuffle_k4(цео i) {
     static const uint8_t k_shuffle[256] = {
          0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1,
          2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3,
@@ -627,9 +627,9 @@ static inline __m256i get_scale_shuffle_k4(int i) {
         12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,
         14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15
     };
-    return __lasx_xvld((const __m256i*)k_shuffle + i, 0);
+    врати __lasx_xvld((const __m256i*)k_shuffle + i, 0);
 }
-static inline __m128i get_scale_shuffle(int i) {
+static inline __m128i get_scale_shuffle(цео i) {
     static const uint8_t k_shuffle[128] = {
          0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
          2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,
@@ -640,13 +640,13 @@ static inline __m128i get_scale_shuffle(int i) {
         12,12,12,12,12,12,12,12, 13,13,13,13,13,13,13,13,
         14,14,14,14,14,14,14,14, 15,15,15,15,15,15,15,15
     };
-    return __lsx_vld((const __m128i*)k_shuffle + i, 0);
+    врати __lsx_vld((const __m128i*)k_shuffle + i, 0);
 }
 #endif
 
-void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
+void ggml_vec_dot_q4_0_q8_0(цео n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, цео nrc) {
+    const цео qk = QK8_0;
+    const цео nb = n / qk;
 
     assert(n % qk == 0);
     assert(nrc == 1);
@@ -658,15 +658,15 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q4_0 * GGML_RESTRICT x = vx;
     const block_q8_0 * GGML_RESTRICT y = vy;
 
-    int ib = 0;
+    цео ib = 0;
     float sumf = 0;
 
-#if defined(__loongarch_asx)
+#ако defined(__loongarch_asx)
     // Initialize accumulator with zeros
     __m256 acc = (__m256)__lasx_xvldi(0);
 
     // Main loop
-    for (; ib < nb; ++ib) {
+    за (; ib < nb; ++ib) {
         /* Compute combined scale for the block */
         const __m256 d = __lasx_xvreplfr2vr_s( GGML_CPU_FP16_TO_FP32(x[ib].d) * GGML_CPU_FP16_TO_FP32(y[ib].d) );
 
@@ -697,7 +697,7 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     __m128 acc_2 = (__m128)__lsx_vldi(0);
     __m128 acc_3 = (__m128)__lsx_vldi(0);
 
-    for (; ib + 1 < nb; ib += 2) {
+    за (; ib + 1 < nb; ib += 2) {
 
         // Compute combined scale for the block 0 and 1
         const float ft0 = GGML_CPU_FP16_TO_FP32(x[ib].d) * GGML_CPU_FP16_TO_FP32(y[ib].d);
@@ -753,28 +753,28 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     sumf = hsum_float_4x4(acc_0, acc_1, acc_2, acc_3);
 
 #endif
-    for (; ib < nb; ++ib) {
-        int sumi0 = 0;
-        int sumi1 = 0;
+    за (; ib < nb; ++ib) {
+        цео sumi0 = 0;
+        цео sumi1 = 0;
 
-        for (int j = 0; j < qk/2; ++j) {
-            const int v0 = (x[ib].qs[j] & 0x0F) - 8;
-            const int v1 = (x[ib].qs[j] >>   4) - 8;
+        за (цео j = 0; j < qk/2; ++j) {
+            const цео v0 = (x[ib].qs[j] & 0x0F) - 8;
+            const цео v1 = (x[ib].qs[j] >>   4) - 8;
 
             sumi0 += (v0 * y[ib].qs[j]);
             sumi1 += (v1 * y[ib].qs[j + qk/2]);
         }
 
-        int sumi = sumi0 + sumi1;
+        цео sumi = sumi0 + sumi1;
         sumf += sumi*GGML_CPU_FP16_TO_FP32(x[ib].d)*GGML_CPU_FP16_TO_FP32(y[ib].d);
     }
 
     *s = sumf;
 }
 
-void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_1;
-    const int nb = n / qk;
+void ggml_vec_dot_q4_1_q8_1(цео n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, цео nrc) {
+    const цео qk = QK8_1;
+    const цео nb = n / qk;
 
     assert(n % qk == 0);
     assert(nrc == 1);
@@ -786,17 +786,17 @@ void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q4_1 * GGML_RESTRICT x = vx;
     const block_q8_1 * GGML_RESTRICT y = vy;
 
-    int ib = 0;
+    цео ib = 0;
     float sumf = 0;
 
-#if defined(__loongarch_asx)
+#ако defined(__loongarch_asx)
     // Initialize accumulator with zeros
     __m256 acc = (__m256)__lasx_xvldi(0);
 
     float summs = 0;
 
     // Main loop
-    for (; ib < nb; ++ib) {
+    за (; ib < nb; ++ib) {
         const float d0 = GGML_CPU_FP16_TO_FP32(x[ib].d);
         const float d1 = GGML_CPU_FP16_TO_FP32(y[ib].d);
 
@@ -821,7 +821,7 @@ void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     sumf = hsum_float_8(acc) + summs;
 
     *s = sumf;
-#else
+#инако
     UNUSED(nb);
     UNUSED(x);
     UNUSED(y);
@@ -831,11 +831,11 @@ void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
+void ggml_vec_dot_q5_0_q8_0(цео n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, цео nrc) {
+    const цео qk = QK8_0;
+    const цео nb = n / qk;
 
-    int ib = 0;
+    цео ib = 0;
     float sumf = 0;
 
     assert(n % qk == 0);
@@ -849,12 +849,12 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q5_0 * GGML_RESTRICT x = vx;
     const block_q8_0 * GGML_RESTRICT y = vy;
 
-#if defined(__loongarch_asx)
+#ако defined(__loongarch_asx)
     // Initialize accumulator with zeros
     __m256 acc = (__m256)__lasx_xvldi(0);
 
     // Main loop
-    for (; ib < nb; ++ib) {
+    за (; ib < nb; ++ib) {
         /* Compute combined scale for the block */
         const __m256 d = __lasx_xvreplfr2vr_s(GGML_CPU_FP16_TO_FP32(x[ib].d) * GGML_CPU_FP16_TO_FP32(y[ib].d)); //FIXME
 
@@ -874,7 +874,7 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     sumf = hsum_float_8(acc);
 
     *s = sumf;
-#else
+#инако
     UNUSED(nb);
     UNUSED(ib);
     UNUSED(sumf);
@@ -884,11 +884,11 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_1;
-    const int nb = n / qk;
+void ggml_vec_dot_q5_1_q8_1(цео n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, цео nrc) {
+    const цео qk = QK8_1;
+    const цео nb = n / qk;
 
-    int ib = 0;
+    цео ib = 0;
     float sumf = 0;
 
     assert(n % qk == 0);
@@ -902,14 +902,14 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q5_1 * GGML_RESTRICT x = vx;
     const block_q8_1 * GGML_RESTRICT y = vy;
 
-#if defined(__loongarch_asx)
+#ако defined(__loongarch_asx)
     // Initialize accumulator with zeros
     __m256 acc = (__m256)__lasx_xvldi(0);
 
     float summs = 0.0f;
 
     // Main loop
-    for (; ib < nb; ++ib) {
+    за (; ib < nb; ++ib) {
         const __m256 dx = __lasx_xvreplfr2vr_s(GGML_CPU_FP16_TO_FP32(x[ib].d));
 
         summs += GGML_CPU_FP16_TO_FP32(x[ib].m) * GGML_CPU_FP16_TO_FP32(y[ib].s);
@@ -930,7 +930,7 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     sumf = hsum_float_8(acc) + summs;
 
     *s = sumf;
-#else
+#инако
     UNUSED(nb);
     UNUSED(ib);
     UNUSED(sumf);
@@ -940,9 +940,9 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
+void ggml_vec_dot_q8_0_q8_0(цео n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, цео nrc) {
+    const цео qk = QK8_0;
+    const цео nb = n / qk;
 
     assert(n % qk == 0);
     assert(nrc == 1);
@@ -954,15 +954,15 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q8_0 * GGML_RESTRICT x = vx;
     const block_q8_0 * GGML_RESTRICT y = vy;
 
-    int ib = 0;
+    цео ib = 0;
     float sumf = 0;
 
-#if defined(__loongarch_asx)
+#ако defined(__loongarch_asx)
     // Initialize accumulator with zeros
     __m256 acc = (__m256)__lasx_xvldi(0);
 
     // Main loop
-    for (; ib < nb; ++ib) {
+    за (; ib < nb; ++ib) {
         // Compute combined scale for the block
         const __m256 d = __lasx_xvreplfr2vr_s(GGML_CPU_FP16_TO_FP32(x[ib].d) * GGML_CPU_FP16_TO_FP32(y[ib].d));
         __m256i qx = __lasx_xvld((const __m256i *)x[ib].qs, 0);
@@ -982,7 +982,7 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     __m128 acc = (__m128)__lsx_vldi(0);
 
-    for (; ib < nb; ++ib) {
+    за (; ib < nb; ++ib) {
         const float d = GGML_CPU_FP16_TO_FP32(x[ib].d) * GGML_CPU_FP16_TO_FP32(y[ib].d);
         const __m128i qx_0 = __lsx_vld((const __m128i *)x[ib].qs, 0);
         const __m128i qx_1 = __lsx_vld((const __m128i *)x[ib].qs + 1, 0);
@@ -1006,7 +1006,7 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = sumf;
 
-#else
+#инако
     UNUSED(nb);
     UNUSED(ib);
     UNUSED(sumf);
@@ -1016,7 +1016,7 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_q2_K_q8_K(цео n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, цео nrc) {
     assert(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
@@ -1026,13 +1026,13 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q2_K * GGML_RESTRICT x = vx;
     const block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const цео nb = n / QK_K;
 
-#if defined __loongarch_asx
+#ако defined __loongarch_asx
 
     __m256 acc = (__m256)__lasx_xvldi(0);
 
-    for (int i = 0; i < nb; ++i) {
+    за (цео i = 0; i < nb; ++i) {
 
         const float d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
         const float dmin = -y[i].d * GGML_CPU_FP16_TO_FP32(x[i].dmin);
@@ -1052,7 +1052,7 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
         __m256i sumi = __lasx_xvldi(0);
 
-        for (int j = 0; j < QK_K/128; ++j) {
+        за (цео j = 0; j < QK_K/128; ++j) {
 
             const __m256i q2bits = __lasx_xvld((const __m256i*)q2, 0); q2 += 32;
 
@@ -1088,7 +1088,7 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = hsum_float_8(acc);
 
-#else
+#инако
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1096,7 +1096,7 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_q3_K_q8_K(цео n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, цео nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
     UNUSED(nrc);
@@ -1110,9 +1110,9 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q3_K * GGML_RESTRICT x = vx;
     const block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const цео nb = n / QK_K;
 
-#if defined __loongarch_asx
+#ако defined __loongarch_asx
 
     const __m128i m32 = __lsx_vreplgr2vr_b(32);
 
@@ -1120,7 +1120,7 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     uint32_t aux[3];
 
-    for (int i = 0; i < nb; ++i) {
+    за (цео i = 0; i < nb; ++i) {
 
         const float d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
         const uint8_t * GGML_RESTRICT q3 = x[i].qs;
@@ -1143,7 +1143,7 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         // integer accumulator
         __m256i sumi = __lasx_xvldi(0);
 
-        for (int j = 0; j < QK_K/128; ++j) {
+        за (цео j = 0; j < QK_K/128; ++j) {
             // load low 2 bits
             const __m256i q3bits = __lasx_xvld((const __m256i*)q3, 0); q3 += 32;
 
@@ -1189,7 +1189,7 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = hsum_float_8(acc);
 
-#else
+#инако
     UNUSED(kmask1);
     UNUSED(kmask2);
     UNUSED(x);
@@ -1199,7 +1199,7 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_q4_K_q8_K(цео n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, цео nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
     UNUSED(nrc);
@@ -1210,7 +1210,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q4_K * GGML_RESTRICT x = vx;
     const block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const цео nb = n / QK_K;
 
     static const uint32_t kmask1 = 0x3f3f3f3f;
     static const uint32_t kmask2 = 0x0f0f0f0f;
@@ -1218,12 +1218,12 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     uint32_t utmp[4];
 
-#if defined __loongarch_asx
+#ако defined __loongarch_asx
 
     __m256 acc = (__m256)__lasx_xvldi(0);
     __m128 acc_m = (__m128)__lsx_vldi(0);
 
-   for (int i = 0; i < nb; ++i) {
+   за (цео i = 0; i < nb; ++i) {
 
         const float d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
         const float dmin = -y[i].d * GGML_CPU_FP16_TO_FP32(x[i].dmin);
@@ -1251,7 +1251,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
         __m256i sumi = __lasx_xvldi(0);
 
-        for (int j = 0; j < QK_K/64; ++j) {
+        за (цео j = 0; j < QK_K/64; ++j) {
 
             const __m256i scale_l = lasx_xvrepl128vei_h(scales, 2 * j + 0);
             const __m256i scale_h = lasx_xvrepl128vei_h(scales, 2 * j + 1);
@@ -1284,7 +1284,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = hsum_float_8(acc) + ((v4f32)acc_m)[0];
 
-#else
+#инако
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1296,7 +1296,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy,  size_t by, int nrc) {
+void ggml_vec_dot_q5_K_q8_K(цео n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy,  size_t by, цео nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
     UNUSED(nrc);
@@ -1307,7 +1307,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q5_K * GGML_RESTRICT x = vx;
     const block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const цео nb = n / QK_K;
 
     static const uint32_t kmask1 = 0x3f3f3f3f;
     static const uint32_t kmask2 = 0x0f0f0f0f;
@@ -1315,12 +1315,12 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     uint32_t utmp[4];
 
-#if defined __loongarch_asx
+#ако defined __loongarch_asx
 
     __m256 acc = (__m256)__lasx_xvldi(0);
     __m128 acc_m = (__m128)__lsx_vldi(0);
 
-    for (int i = 0; i < nb; ++i) {
+    за (цео i = 0; i < nb; ++i) {
 
         const uint8_t * GGML_RESTRICT q5 = x[i].qs;
         const int8_t  * GGML_RESTRICT q8 = y[i].qs;
@@ -1350,7 +1350,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
         __m256i sumi = __lasx_xvldi(0);
 
-        for (int j = 0; j < QK_K/64; ++j) {
+        за (цео j = 0; j < QK_K/64; ++j) {
 
             const __m256i scale_0 = lasx_xvrepl128vei_h(scales, 2 * j + 0);
             const __m256i scale_1 = lasx_xvrepl128vei_h(scales, 2 * j + 1);
@@ -1387,7 +1387,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = hsum_float_8(acc) + ((v4f32)acc_m)[0];
 
-#else
+#инако
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1399,7 +1399,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_q6_K_q8_K(цео n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, цео nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
     UNUSED(nrc);
@@ -1410,15 +1410,15 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q6_K * GGML_RESTRICT x = vx;
     const block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const цео nb = n / QK_K;
 
-#if defined __loongarch_asx
+#ако defined __loongarch_asx
 
     const __m256i m32s = __lasx_xvreplgr2vr_b(32);
 
     __m256 acc = (__m256)__lasx_xvldi(0);
 
-    for (int i = 0; i < nb; ++i) {
+    за (цео i = 0; i < nb; ++i) {
 
         const float d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
 
@@ -1432,7 +1432,7 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
         __m256i sumi = __lasx_xvldi(0);
 
-        for (int j = 0; j < QK_K/128; ++j) {
+        за (цео j = 0; j < QK_K/128; ++j) {
 
             const __m256i q4bits1 = __lasx_xvld((const __m256i*)q4, 0); q4 += 32;
             const __m256i q4bits2 = __lasx_xvld((const __m256i*)q4, 0); q4 += 32;
@@ -1479,7 +1479,7 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     __m128 acc_0 = (__m128)__lsx_vldi(0);
     __m128 acc_1 = (__m128)__lsx_vldi(0);
 
-    for (int i = 0; i < nb; ++i) {
+    за (цео i = 0; i < nb; ++i) {
 
         const float d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
 
@@ -1494,7 +1494,7 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         __m128i sumi_0 = __lsx_vldi(0);
         __m128i sumi_1 = __lsx_vldi(0);
 
-        for (int j = 0; j < QK_K/128; ++j) {
+        за (цео j = 0; j < QK_K/128; ++j) {
 
             const __m128i q4bitsH_0 = __lsx_vld((const __m128i*)qh, 0); qh += 16;
             const __m128i q4bitsH_1 = __lsx_vld((const __m128i*)qh, 0); qh += 16;
@@ -1565,7 +1565,7 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = hsum_float_4x4(acc_0, acc_1, (__m128)__lsx_vldi(0), (__m128)__lsx_vldi(0));
 
-#else
+#инако
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1573,7 +1573,7 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-#if defined(__loongarch_asx)
+#ако defined(__loongarch_asx)
 static const int8_t keven_signs_q2xs[1024] = {
      1,  1,  1,  1,  1,  1,  1,  1, -1,  1,  1,  1,  1,  1,  1, -1,  1, -1,  1,  1,  1,  1,  1, -1, -1, -1,  1,  1,  1,  1,  1,  1,
      1,  1, -1,  1,  1,  1,  1, -1, -1,  1, -1,  1,  1,  1,  1,  1,  1, -1, -1,  1,  1,  1,  1,  1, -1, -1, -1,  1,  1,  1,  1, -1,
@@ -1610,7 +1610,7 @@ static const int8_t keven_signs_q2xs[1024] = {
 };
 #endif
 
-void ggml_vec_dot_iq2_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_iq2_xxs_q8_K(цео n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, цео nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
     UNUSED(nrc);
@@ -1621,9 +1621,9 @@ void ggml_vec_dot_iq2_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const 
     const block_iq2_xxs * GGML_RESTRICT x = vx;
     const block_q8_K    * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const цео nb = n / QK_K;
 
-#if defined(__loongarch_asx)
+#ако defined(__loongarch_asx)
 
     const uint64_t * signs64 = (const uint64_t *)keven_signs_q2xs;
 
@@ -1631,13 +1631,13 @@ void ggml_vec_dot_iq2_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const 
     const uint8_t * aux8 = (const uint8_t *)aux32;
 
     __m256 accumf = (__m256)__lasx_xvldi(0);
-    for (int i = 0; i < nb; ++i) {
+    за (цео i = 0; i < nb; ++i) {
         const float d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
         const uint16_t * GGML_RESTRICT q2 = x[i].qs;
         const int8_t   * GGML_RESTRICT q8 = y[i].qs;
         __m256i sumi1 = __lasx_xvldi(0);
         __m256i sumi2 = __lasx_xvldi(0);
-        for (int ib32 = 0; ib32 < QK_K/32; ib32 += 2) {
+        за (цео ib32 = 0; ib32 < QK_K/32; ib32 += 2) {
             const __m256i q8_1 = __lasx_xvld((const __m256i *)q8, 0); q8 += 32;
             const __m256i q8_2 = __lasx_xvld((const __m256i *)q8, 0); q8 += 32;
             memcpy(aux32, q2, 4*sizeof(uint32_t)); q2 += 8;
@@ -1665,7 +1665,7 @@ void ggml_vec_dot_iq2_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const 
 
     *s = 0.125f * hsum_float_8(accumf);
 
-#else
+#инако
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1673,7 +1673,7 @@ void ggml_vec_dot_iq2_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const 
 #endif
 }
 
-void ggml_vec_dot_iq2_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_iq2_xs_q8_K(цео n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, цео nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
     UNUSED(nrc);
@@ -1684,9 +1684,9 @@ void ggml_vec_dot_iq2_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
     const block_iq2_xs * GGML_RESTRICT x = vx;
     const block_q8_K   * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const цео nb = n / QK_K;
 
-#if defined(__loongarch_asx)
+#ако defined(__loongarch_asx)
 
     const __m256i mone = __lasx_xvreplgr2vr_b(1);
     static const char block_sign_shuffle_mask_1[32] = {
@@ -1722,7 +1722,7 @@ void ggml_vec_dot_iq2_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
     const uint16_t * gindex = (const uint16_t *)&aux_gindex;
 
     __m256 accumf = (__m256)__lasx_xvldi(0);
-    for (int i = 0; i < nb; ++i) {
+    за (цео i = 0; i < nb; ++i) {
         const float d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
         const uint16_t * GGML_RESTRICT q2 = x[i].qs;
         const int8_t   * GGML_RESTRICT q8 = y[i].qs;
@@ -1734,7 +1734,7 @@ void ggml_vec_dot_iq2_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
 
         __m256i sumi1 = __lasx_xvldi(0);
         __m256i sumi2 = __lasx_xvldi(0);
-        for (int ib32 = 0; ib32 < QK_K/32; ib32 += 4) {
+        за (цео ib32 = 0; ib32 < QK_K/32; ib32 += 4) {
 
             const __m256i q2_data = __lasx_xvld((const __m256i*)q2, 0);  q2 += 16;
             aux_gindex = __lasx_xvand_v(q2_data, m511);
@@ -1804,7 +1804,7 @@ void ggml_vec_dot_iq2_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
 
     *s = 0.125f * hsum_float_8(accumf);
 
-#else
+#инако
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1812,7 +1812,7 @@ void ggml_vec_dot_iq2_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
 #endif
 }
 
-void ggml_vec_dot_iq2_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_iq2_s_q8_K(цео n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, цео nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
     UNUSED(nrc);
@@ -1823,9 +1823,9 @@ void ggml_vec_dot_iq2_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
     const block_iq2_s * GGML_RESTRICT x = vx;
     const block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const цео nb = n / QK_K;
 
-#if defined(__loongarch_asx)
+#ако defined(__loongarch_asx)
 
    static const uint8_t k_mask1[32] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
                                        0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03
@@ -1844,7 +1844,7 @@ void ggml_vec_dot_iq2_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
     uint64_t aux64;
 
     __m256 accumf = (__m256)__lasx_xvldi(0);
-    for (int i = 0; i < nb; ++i) {
+    за (цео i = 0; i < nb; ++i) {
         const float d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
         const uint8_t * GGML_RESTRICT qs = x[i].qs;
         const uint8_t * GGML_RESTRICT qh = x[i].qh;
@@ -1860,7 +1860,7 @@ void ggml_vec_dot_iq2_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
         __m256i sumi1 = __lasx_xvldi(0);
         __m256i sumi2 = __lasx_xvldi(0);
-        for (int ib32 = 0; ib32 < QK_K/32; ib32 += 2) {
+        за (цео ib32 = 0; ib32 < QK_K/32; ib32 += 2) {
             const __m256i q8_1 = __lasx_xvld((const __m256i *)q8, 0); q8 += 32;
             const __m256i q8_2 = __lasx_xvld((const __m256i *)q8, 0); q8 += 32;
             const __m256i q2_1 = lasx_set_d(iq2s_grid[qs[3] | ((qh[ib32+0] << 2) & 0x300)],
@@ -1899,7 +1899,7 @@ void ggml_vec_dot_iq2_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
     *s = 0.125f * hsum_float_8(accumf);
 
-#else
+#инако
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1907,7 +1907,7 @@ void ggml_vec_dot_iq2_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 #endif
 }
 
-void ggml_vec_dot_iq3_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_iq3_xxs_q8_K(цео n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, цео nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
     UNUSED(nrc);
@@ -1918,23 +1918,23 @@ void ggml_vec_dot_iq3_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const 
     const block_iq3_xxs * GGML_RESTRICT x = vx;
     const block_q8_K    * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const цео nb = n / QK_K;
 
-#if defined(__loongarch_asx)
+#ако defined(__loongarch_asx)
 
     const uint64_t * signs64 = (const uint64_t *)keven_signs_q2xs;
 
     uint32_t aux32[2];
 
     __m256 accumf = (__m256)__lasx_xvldi(0);
-    for (int i = 0; i < nb; ++i) {
+    за (цео i = 0; i < nb; ++i) {
         const float d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
         const uint8_t * GGML_RESTRICT q3 = x[i].qs;
         const uint8_t * GGML_RESTRICT gas = x[i].qs + QK_K/4;
         const int8_t  * GGML_RESTRICT q8 = y[i].qs;
         __m256i sumi1 = __lasx_xvldi(0);
         __m256i sumi2 = __lasx_xvldi(0);
-        for (int ib32 = 0; ib32 < QK_K/32; ib32 += 2) {
+        за (цео ib32 = 0; ib32 < QK_K/32; ib32 += 2) {
             const __m256i q8_1 = __lasx_xvld((const __m256i *)q8, 0); q8 += 32;
             const __m256i q8_2 = __lasx_xvld((const __m256i *)q8, 0); q8 += 32;
             const __m256i q2_1 = lasx_set_w(iq3xxs_grid[q3[7]], iq3xxs_grid[q3[6]], iq3xxs_grid[q3[5]], iq3xxs_grid[q3[4]],
@@ -1967,7 +1967,7 @@ void ggml_vec_dot_iq3_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const 
 
     *s = 0.25f * hsum_float_8(accumf);
 
-#else
+#инако
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1975,7 +1975,7 @@ void ggml_vec_dot_iq3_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const 
 #endif
 }
 
-void ggml_vec_dot_iq3_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_iq3_s_q8_K(цео n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, цео nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
     UNUSED(nrc);
@@ -1986,9 +1986,9 @@ void ggml_vec_dot_iq3_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
     const block_iq3_s * GGML_RESTRICT x = vx;
     const block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const цео nb = n / QK_K;
 
-#if defined(__loongarch_asx)
+#ако defined(__loongarch_asx)
 
    static const uint8_t k_mask1[32] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
                                        0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03
@@ -2012,7 +2012,7 @@ void ggml_vec_dot_iq3_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
     index_t idx;
 
     __m256 accumf = (__m256)__lasx_xvldi(0);
-    for (int i = 0; i < nb; ++i) {
+    за (цео i = 0; i < nb; ++i) {
         const float d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
         const uint8_t * GGML_RESTRICT qs = x[i].qs;
         const uint8_t * GGML_RESTRICT qh = x[i].qh;
@@ -2020,7 +2020,7 @@ void ggml_vec_dot_iq3_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
         const int8_t  * GGML_RESTRICT q8 = y[i].qs;
         __m256i sumi1 = __lasx_xvldi(0);
         __m256i sumi2 = __lasx_xvldi(0);
-        for (int ib32 = 0; ib32 < QK_K/32; ib32 += 2) {
+        за (цео ib32 = 0; ib32 < QK_K/32; ib32 += 2) {
             const __m256i q8_1 = __lasx_xvld((const __m256i *)q8, 0); q8 += 32;
             const __m256i q8_2 = __lasx_xvld((const __m256i *)q8, 0); q8 += 32;
             const __m256i idx_l = lasx_extu8_16(__lsx_vld(qs, 0)); qs += 16;
@@ -2070,7 +2070,7 @@ void ggml_vec_dot_iq3_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
     *s = hsum_float_8(accumf);
 
-#else
+#инако
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -2078,15 +2078,15 @@ void ggml_vec_dot_iq3_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 #endif
 }
 
-#if defined(__loongarch_asx)
+#ако defined(__loongarch_asx)
 static inline __m256i mul_add_epi8(const __m256i x, const __m256i y) {
     const __m256i a = __lasx_xvmulwev_h_b(x, y);
     const __m256i b = __lasx_xvmulwod_h_b(x, y);
-    return __lasx_xvadd_h(a, b);
+    врати __lasx_xvadd_h(a, b);
 }
 #endif
 
-void ggml_vec_dot_iq1_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_iq1_s_q8_K(цео n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, цео nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
     UNUSED(nrc);
@@ -2097,21 +2097,21 @@ void ggml_vec_dot_iq1_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
     const block_iq1_s * GGML_RESTRICT x = vx;
     const block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const цео nb = n / QK_K;
 
-#if defined(__loongarch_asx)
+#ако defined(__loongarch_asx)
 
     __m256 accum = (__m256)__lasx_xvldi(0);
     float accum1 = 0;
-    for (int i = 0; i < nb; ++i) {
+    за (цео i = 0; i < nb; ++i) {
 
         const int8_t   * q8 = y[i].qs;
         const uint8_t  * qs = x[i].qs;
         const uint16_t * qh = x[i].qh;
 
         __m256i sumi = __lasx_xvldi(0);
-        int sumi1 = 0;
-        for (int ib = 0; ib < QK_K/32; ib += 2) {
+        цео sumi1 = 0;
+        за (цео ib = 0; ib < QK_K/32; ib += 2) {
             __m256i q1b_1 = __lasx_xvinsgr2vr_d(q1b_1, iq1s_grid[qs[0] | ((qh[ib+0] << 8) & 0x700)], 0);
             q1b_1 = __lasx_xvinsgr2vr_d(q1b_1, iq1s_grid[qs[1] | ((qh[ib+0] << 5) & 0x700)], 1);
             q1b_1 = __lasx_xvinsgr2vr_d(q1b_1, iq1s_grid[qs[2] | ((qh[ib+0] << 2) & 0x700)], 2);
@@ -2154,7 +2154,7 @@ void ggml_vec_dot_iq1_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
     *s = hsum_float_8(accum) + IQ1S_DELTA * accum1;
 
-#else
+#инако
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -2162,7 +2162,7 @@ void ggml_vec_dot_iq1_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 #endif
 }
 
-void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_iq4_nl_q8_0(цео n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, цео nrc) {
     assert(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
@@ -2174,12 +2174,12 @@ void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
     const block_iq4_nl * GGML_RESTRICT x = vx;
     const block_q8_0   * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK4_NL;
+    const цео nb = n / QK4_NL;
 
-    int ib = 0;
+    цео ib = 0;
     float sumf = 0;
 
-#if defined (__loongarch_asx)
+#ако defined (__loongarch_asx)
 
     const __m128i values128 = __lsx_vld((const __m128i*)kvalues_iq4nl, 0);
     const __m128i m4b  = __lsx_vreplgr2vr_b(0x0f);
@@ -2187,7 +2187,7 @@ void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
 
     __m256 accum1 = (__m256)__lasx_xvldi(0);
     __m256 accum2 = (__m256)__lasx_xvldi(0);
-    for (; ib + 1 < nb; ib += 2) {
+    за (; ib + 1 < nb; ib += 2) {
         const __m128i q4bits_1 = __lsx_vld((const __m128i*)x[ib + 0].qs, 0);
         const __m128i q4bits_2 = __lsx_vld((const __m128i*)x[ib + 1].qs, 0);
         const __m256i q8b_1 = __lasx_xvld((const __m256i *)y[ib + 0].qs, 0);
@@ -2209,10 +2209,10 @@ void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
     sumf = hsum_float_8(__lasx_xvfadd_s(accum1, accum2));
 
 #endif
-    for (; ib < nb; ++ib) {
+    за (; ib < nb; ++ib) {
         const float d = GGML_CPU_FP16_TO_FP32(y[ib].d)*GGML_CPU_FP16_TO_FP32(x[ib].d);
-        int sumi1 = 0, sumi2 = 0;
-        for (int j = 0; j < QK4_NL/2; ++j) {
+        цео sumi1 = 0, sumi2 = 0;
+        за (цео j = 0; j < QK4_NL/2; ++j) {
             sumi1 += y[ib].qs[j+       0] * kvalues_iq4nl[x[ib].qs[j] & 0xf];
             sumi2 += y[ib].qs[j+QK4_NL/2] * kvalues_iq4nl[x[ib].qs[j] >>  4];
         }
@@ -2221,7 +2221,7 @@ void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
     *s = sumf;
 }
 
-void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_iq4_xs_q8_K(цео n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, цео nrc) {
     assert(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
@@ -2232,21 +2232,21 @@ void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
     const block_iq4_xs * GGML_RESTRICT x = vx;
     const block_q8_K   * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const цео nb = n / QK_K;
 
-#if defined(__loongarch_asx)
+#ако defined(__loongarch_asx)
 
     const __m128i values128 = __lsx_vld((const __m128i*)kvalues_iq4nl, 0);
 
     __m256 accum = (__m256)__lasx_xvldi(0);
 
-    for (int ibl = 0; ibl < nb; ++ibl) {
+    за (цео ibl = 0; ibl < nb; ++ibl) {
         const uint8_t * qs = x[ibl].qs;
         const int8_t  * q8 = y[ibl].qs;
         uint16_t sh = x[ibl].scales_h;
         __m256i sumi1 = __lasx_xvldi(0);
         __m256i sumi2 = __lasx_xvldi(0);
-        for (int ib = 0; ib < QK_K/32; ib += 2) {
+        за (цео ib = 0; ib < QK_K/32; ib += 2) {
             const __m128i q4bits_1 = __lsx_vld((const __m128i*)qs, 0); qs += 16;
             const __m128i q4bits_2 = __lsx_vld((const __m128i*)qs, 0); qs += 16;
             const __m256i q8b_1 = __lasx_xvld((const __m256i *)q8, 0); q8 += 32;
@@ -2276,12 +2276,12 @@ void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
     const __m128i values128 = __lsx_vld((const __m128i*)kvalues_iq4nl, 0);
 
     __m128 accum = (__m128)__lsx_vldi(0);
-    for (int ibl = 0; ibl < nb; ++ibl) {
+    за (цео ibl = 0; ibl < nb; ++ibl) {
         const uint8_t * qs = x[ibl].qs;
         const int8_t  * q8 = y[ibl].qs;
         uint16_t sh = x[ibl].scales_h;
         __m128i sumi = __lsx_vldi(0);
-        for (int ib = 0; ib < QK_K/32; ++ib) {
+        за (цео ib = 0; ib < QK_K/32; ++ib) {
             const __m128i q4bits = __lsx_vld((const __m128i*)qs, 0); qs += 16;
             const __m128i q8b_0 = __lsx_vld((const __m128i*)q8, 0); q8 += 16;
             const __m128i q8b_1 = __lsx_vld((const __m128i*)q8, 0); q8 += 16;
@@ -2300,7 +2300,7 @@ void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
 
     *s = ((v4f32)lsx_hadd_s(lsx_hadd_s(accum, accum), lsx_hadd_s(accum, accum)))[0];
 
-#else
+#инако
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);

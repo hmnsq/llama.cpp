@@ -62,14 +62,14 @@ static inline float rope_floorf(float x) {
     } v = { .f = x };
 
     const uint32_t expo = (v.u >> 23) & 0xFF;
-    if (expo == 0xFF) {
-        return x;  // inf or NaN
+    ако (expo == 0xFF) {
+        врати x;  // inf or NaN
     }
-    if (expo >= 23 + 127) {
-        return x;  // already integer-valued
+    ако (expo >= 23 + 127) {
+        врати x;  // already integer-valued
     }
-    int i = (int) x;
-    return (x < 0.0f && (float) i != x) ? (float) (i - 1) : (float) i;
+    цео i = (цео) x;
+    врати (x < 0.0f && (float) i != x) ? (float) (i - 1) : (float) i;
 }
 
 static inline float rope_ceilf(float x) {
@@ -79,35 +79,35 @@ static inline float rope_ceilf(float x) {
     } v = { .f = x };
 
     const uint32_t expo = (v.u >> 23) & 0xFF;
-    if (expo == 0xFF) {
-        return x;  // inf or NaN
+    ако (expo == 0xFF) {
+        врати x;  // inf or NaN
     }
-    if (expo >= 23 + 127) {
-        return x;  // already integer-valued
+    ако (expo >= 23 + 127) {
+        врати x;  // already integer-valued
     }
-    int i = (int) x;
-    return (x > 0.0f && (float) i != x) ? (float) (i + 1) : (float) i;
+    цео i = (цео) x;
+    врати (x > 0.0f && (float) i != x) ? (float) (i + 1) : (float) i;
 }
 
-static inline float rope_yarn_ramp(const float low, const float high, const int i0) {
+static inline float rope_yarn_ramp(const float low, const float high, const цео i0) {
     float denom = high - low;
-    if (denom < 0.001f) {
+    ако (denom < 0.001f) {
         denom = 0.001f;
     }
 
     const float y       = et_fdiv((float) (i0 / 2) - low, denom);
     const float clamped = y < 0.0f ? 0.0f : (y > 1.0f ? 1.0f : y);
-    return 1.0f - clamped;
+    врати 1.0f - clamped;
 }
 
 // Matches CPU reference (ggml_rope_yarn_corr_dim).
-static inline float rope_yarn_corr_dim(int n_dims, int n_ctx_orig, float beta, float freq_base) {
-    return (float) n_dims *
+static inline float rope_yarn_corr_dim(цео n_dims, цео n_ctx_orig, float beta, float freq_base) {
+    врати (float) n_dims *
            et_fdiv(et_logf(et_fdiv((float) n_ctx_orig, beta * ROPE_TWO_PI)), 2.0f * et_logf(freq_base));
 }
 
-static inline void rope_yarn_corr_dims(int   n_dims,
-                                       int   n_ctx_orig,
+static inline void rope_yarn_corr_dims(цео   n_dims,
+                                       цео   n_ctx_orig,
                                        float freq_base,
                                        float beta_fast,
                                        float beta_slow,
@@ -151,7 +151,7 @@ static inline uint64_t rope_ps_enter_fullmask(void) {
         : "=r"(old_mask)
         :
         : "t0", "memory");
-    return old_mask;
+    врати old_mask;
 }
 
 static inline void rope_ps_leave_fullmask(uint64_t old_mask) {
@@ -197,13 +197,13 @@ static inline void rope_sincos_block8(float * sin8, float * cos8, const float * 
     float sin_sign[ROPE_VEC_WIDTH] __attribute__((aligned(32)));
     float cos_sign[ROPE_VEC_WIDTH] __attribute__((aligned(32)));
 
-    for (int i = 0; i < ROPE_VEC_WIDTH; ++i) {
+    за (цео i = 0; i < ROPE_VEC_WIDTH; ++i) {
         float x = theta8[i];
 
-        if (x > ROPE_PI || x < -ROPE_PI) {
+        ако (x > ROPE_PI || x < -ROPE_PI) {
             float cycles = x * ROPE_INV_TWO_PI;
-            int   n      = (int) cycles;
-            if (x < 0.0f) {
+            цео   n      = (цео) cycles;
+            ако (x < 0.0f) {
                 n--;
             }
             x = x - (float) n * ROPE_TWO_PI;
@@ -212,9 +212,9 @@ static inline void rope_sincos_block8(float * sin8, float * cos8, const float * 
         {
             float y = x;
             float s = 1.0f;
-            if (y > ROPE_PI_OVER_2) {
+            ако (y > ROPE_PI_OVER_2) {
                 y = ROPE_PI - y;
-            } else if (y < -ROPE_PI_OVER_2) {
+            } инако ако (y < -ROPE_PI_OVER_2) {
                 y = -ROPE_PI - y;
                 s = -1.0f;
             }
@@ -224,19 +224,19 @@ static inline void rope_sincos_block8(float * sin8, float * cos8, const float * 
 
         {
             float y = x + ROPE_PI_OVER_2;
-            if (y > ROPE_PI || y < -ROPE_PI) {
+            ако (y > ROPE_PI || y < -ROPE_PI) {
                 float cycles = y * ROPE_INV_TWO_PI;
-                int   n      = (int) cycles;
-                if (y < 0.0f) {
+                цео   n      = (цео) cycles;
+                ако (y < 0.0f) {
                     n--;
                 }
                 y = y - (float) n * ROPE_TWO_PI;
             }
 
             float s = 1.0f;
-            if (y > ROPE_PI_OVER_2) {
+            ако (y > ROPE_PI_OVER_2) {
                 y = ROPE_PI - y;
-            } else if (y < -ROPE_PI_OVER_2) {
+            } инако ако (y < -ROPE_PI_OVER_2) {
                 y = -ROPE_PI - y;
                 s = -1.0f;
             }
@@ -288,8 +288,8 @@ static inline void rope_yarn_scalar(float       theta_extrap,
     float theta_interp = freq_scale * theta_extrap;
     float theta        = theta_interp;
 
-    if (ext_factor != 0.0f) {
-        float ramp_mix = rope_yarn_ramp(corr_dims[0], corr_dims[1], (int) i0) * ext_factor;
+    ако (ext_factor != 0.0f) {
+        float ramp_mix = rope_yarn_ramp(corr_dims[0], corr_dims[1], (цео) i0) * ext_factor;
         theta          = theta_interp * (1.0f - ramp_mix) + theta_extrap * ramp_mix;
         mscale *= 1.0f + 0.1f * et_logf(et_fdiv(1.0f, freq_scale));
     }
@@ -317,16 +317,16 @@ static inline void compute_rope_cache(float *       cos_cache,
 
     int32_t dim_idx = 0;
 
-    for (; dim_idx + ROPE_VEC_WIDTH <= half_dims; dim_idx += ROPE_VEC_WIDTH) {
+    за (; dim_idx + ROPE_VEC_WIDTH <= half_dims; dim_idx += ROPE_VEC_WIDTH) {
         float theta_block[ROPE_VEC_WIDTH] __attribute__((aligned(32)));
         float theta_local = theta;
         float mscale      = attn_factor;
 
-        if (ext_factor != 0.0f) {
+        ако (ext_factor != 0.0f) {
             mscale *= 1.0f + 0.1f * et_logf(et_fdiv(1.0f, freq_scale));
         }
 
-        for (int i = 0; i < ROPE_VEC_WIDTH; ++i) {
+        за (цео i = 0; i < ROPE_VEC_WIDTH; ++i) {
             const int32_t pair_idx     = dim_idx + i;
             const float   ff           = freq_factors ? freq_factors[pair_idx] : 1.0f;
             const float   theta_base   = (float) pos * theta_local;
@@ -335,7 +335,7 @@ static inline void compute_rope_cache(float *       cos_cache,
             float theta_interp = freq_scale * theta_extrap;
             float theta_mix    = theta_interp;
 
-            if (ext_factor != 0.0f) {
+            ако (ext_factor != 0.0f) {
                 float ramp_mix = rope_yarn_ramp(corr_dims[0], corr_dims[1], pair_idx * 2) * ext_factor;
                 theta_mix      = theta_interp * (1.0f - ramp_mix) + theta_extrap * ramp_mix;
             }
@@ -346,7 +346,7 @@ static inline void compute_rope_cache(float *       cos_cache,
 
         rope_sincos_block8(&sin_cache[dim_idx], &cos_cache[dim_idx], theta_block);
 
-        for (int i = 0; i < ROPE_VEC_WIDTH; ++i) {
+        за (цео i = 0; i < ROPE_VEC_WIDTH; ++i) {
             sin_cache[dim_idx + i] *= mscale;
             cos_cache[dim_idx + i] *= mscale;
         }
@@ -355,7 +355,7 @@ static inline void compute_rope_cache(float *       cos_cache,
     }
 
     // tail fallback
-    for (; dim_idx < half_dims; ++dim_idx) {
+    за (; dim_idx < half_dims; ++dim_idx) {
         const float ff         = freq_factors ? freq_factors[dim_idx] : 1.0f;
         const float theta_base = (float) pos * theta;
 
@@ -397,28 +397,28 @@ static inline void compute_imrope_cache(float *       cos_cache,
 
     int32_t dim_idx = 0;
 
-    for (; dim_idx + ROPE_VEC_WIDTH <= half_dims; dim_idx += ROPE_VEC_WIDTH) {
+    за (; dim_idx + ROPE_VEC_WIDTH <= half_dims; dim_idx += ROPE_VEC_WIDTH) {
         float theta_block[ROPE_VEC_WIDTH] __attribute__((aligned(32)));
         float mscale = attn_factor;
 
-        if (ext_factor != 0.0f) {
+        ако (ext_factor != 0.0f) {
             mscale *= 1.0f + 0.1f * et_logf(et_fdiv(1.0f, freq_scale));
         }
 
-        for (int i = 0; i < ROPE_VEC_WIDTH; ++i) {
+        за (цео i = 0; i < ROPE_VEC_WIDTH; ++i) {
             const int32_t pair_idx = dim_idx + i;
             const int32_t sector   = pair_idx % sect_dims;
             const float   ff       = freq_factors ? freq_factors[pair_idx] : 1.0f;
 
             // Interleaved sector assignment (mod-3 pattern)
             float theta;
-            if (sector % 3 == 1 && sector < 3 * sections[1]) {
+            ако (sector % 3 == 1 && sector < 3 * sections[1]) {
                 theta = theta_h;
-            } else if (sector % 3 == 2 && sector < 3 * sections[2]) {
+            } инако ако (sector % 3 == 2 && sector < 3 * sections[2]) {
                 theta = theta_w;
-            } else if (sector % 3 == 0 && sector < 3 * sections[0]) {
+            } инако ако (sector % 3 == 0 && sector < 3 * sections[0]) {
                 theta = theta_t;
-            } else {
+            } инако {
                 theta = theta_e;
             }
 
@@ -426,7 +426,7 @@ static inline void compute_imrope_cache(float *       cos_cache,
             float       theta_interp = freq_scale * theta_extrap;
             float       theta_mix    = theta_interp;
 
-            if (ext_factor != 0.0f) {
+            ако (ext_factor != 0.0f) {
                 float ramp_mix = rope_yarn_ramp(corr_dims[0], corr_dims[1], pair_idx * 2) * ext_factor;
                 theta_mix      = theta_interp * (1.0f - ramp_mix) + theta_extrap * ramp_mix;
             }
@@ -442,25 +442,25 @@ static inline void compute_imrope_cache(float *       cos_cache,
 
         rope_sincos_block8(&sin_cache[dim_idx], &cos_cache[dim_idx], theta_block);
 
-        for (int i = 0; i < ROPE_VEC_WIDTH; ++i) {
+        за (цео i = 0; i < ROPE_VEC_WIDTH; ++i) {
             sin_cache[dim_idx + i] *= mscale;
             cos_cache[dim_idx + i] *= mscale;
         }
     }
 
     // Scalar tail
-    for (; dim_idx < half_dims; ++dim_idx) {
+    за (; dim_idx < half_dims; ++dim_idx) {
         const int32_t sector = dim_idx % sect_dims;
         const float   ff     = freq_factors ? freq_factors[dim_idx] : 1.0f;
 
         float theta;
-        if (sector % 3 == 1 && sector < 3 * sections[1]) {
+        ако (sector % 3 == 1 && sector < 3 * sections[1]) {
             theta = theta_h;
-        } else if (sector % 3 == 2 && sector < 3 * sections[2]) {
+        } инако ако (sector % 3 == 2 && sector < 3 * sections[2]) {
             theta = theta_w;
-        } else if (sector % 3 == 0 && sector < 3 * sections[0]) {
+        } инако ако (sector % 3 == 0 && sector < 3 * sections[0]) {
             theta = theta_t;
-        } else {
+        } инако {
             theta = theta_e;
         }
 
@@ -478,22 +478,22 @@ static inline void compute_imrope_cache(float *       cos_cache,
 // Entry point
 //------------------------------------------------------------------------------
 
-int entry_point(struct ggml_et_rope_params * params, void * env) {
+цео entry_point(struct ggml_et_rope_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ако (!kernel_env) {
+        врати -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    цео thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    цео num_threads = get_num_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return -1;
+    ако (thread_id < 0) {
+        врати -1;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    ако (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        врати -1;
     }
 
     struct ggml_tensor * src0 = &params->src0;
@@ -501,8 +501,8 @@ int entry_point(struct ggml_et_rope_params * params, void * env) {
     struct ggml_tensor * src2 = &params->src2;
     struct ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || src1->type != GGML_TYPE_I32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    ако (src0->type != GGML_TYPE_F32 || src1->type != GGML_TYPE_I32 || dst->type != GGML_TYPE_F32) {
+        врати -1;
     }
 
     const float *   src0_data    = (const float *) src0->data;
@@ -510,8 +510,8 @@ int entry_point(struct ggml_et_rope_params * params, void * env) {
     const float *   freq_factors = (src2 && src2->data) ? (const float *) src2->data : NULL;
     float *         dst_data     = (float *) dst->data;
 
-    if (!src0_data || !src1_data || !dst_data) {
-        return -1;
+    ако (!src0_data || !src1_data || !dst_data) {
+        врати -1;
     }
 #ifdef ET_UBERKERNEL
     const size_t src0_bytes = (size_t) src0->ne[0] * src0->ne[1] * src0->ne[2] * src0->ne[3] * src0->nb[0];
@@ -533,12 +533,12 @@ int entry_point(struct ggml_et_rope_params * params, void * env) {
     const float           freq_scale  = rope_params->freq_scale;
     const int32_t         mode        = rope_params->mode;
 
-    if (n_dims <= 0 || n_dims > head_dim || (n_dims & 1) != 0) {
-        return -1;
+    ако (n_dims <= 0 || n_dims > head_dim || (n_dims & 1) != 0) {
+        врати -1;
     }
 
-    if (n_dims / 2 > MAX_ROPE_HALF_DIMS) {
-        return -1;
+    ако (n_dims / 2 > MAX_ROPE_HALF_DIMS) {
+        врати -1;
     }
 
     float cos_cache[MAX_ROPE_HALF_DIMS];
@@ -554,15 +554,15 @@ int entry_point(struct ggml_et_rope_params * params, void * env) {
     const int64_t start_wu    = (total_heads * thread_id) / num_threads;
     const int64_t end_wu      = (total_heads * (thread_id + 1)) / num_threads;
 
-    if (start_wu >= end_wu) {
-        return 0;
+    ако (start_wu >= end_wu) {
+        врати 0;
     }
 
     const float   theta_scale       = et_powf(freq_base, et_fdiv(-2.0f, (float) n_dims));
     const int32_t half_dims         = n_dims / 2;
-    const int     is_neox           = (mode & GGML_ROPE_TYPE_NEOX) != 0;
-    const int     is_imrope         = (mode == GGML_ROPE_TYPE_IMROPE);
-    const int     use_neox_rotation = is_neox || is_imrope;
+    const цео     is_neox           = (mode & GGML_ROPE_TYPE_NEOX) != 0;
+    const цео     is_imrope         = (mode == GGML_ROPE_TYPE_IMROPE);
+    const цео     use_neox_rotation = is_neox || is_imrope;
 
     // For IMROPE position cache invalidation: track all 4 channels
     int32_t last_pos   = -1;
@@ -570,19 +570,19 @@ int entry_point(struct ggml_et_rope_params * params, void * env) {
     int32_t last_pos_w = -1;
     int32_t last_pos_e = -1;
 
-    for (int64_t wu = start_wu; wu < end_wu; ++wu) {
+    за (int64_t wu = start_wu; wu < end_wu; ++wu) {
         const int64_t h = wu % heads;
         const int64_t s = (wu / heads) % seq_len;
         const int64_t b = wu / (heads * seq_len);
 
-        if (is_imrope) {
+        ако (is_imrope) {
             // IMROPE: src1 layout is [p_t(0..S-1), p_h(0..S-1), p_w(0..S-1), p_e(0..S-1)]
             const int32_t pt = src1_data[s] + rope_params->n_past;
             const int32_t ph = src1_data[s + seq_len] + rope_params->n_past;
             const int32_t pw = src1_data[s + seq_len * 2] + rope_params->n_past;
             const int32_t pe = src1_data[s + seq_len * 3] + rope_params->n_past;
 
-            if (pt != last_pos || ph != last_pos_h || pw != last_pos_w || pe != last_pos_e) {
+            ако (pt != last_pos || ph != last_pos_h || pw != last_pos_w || pe != last_pos_e) {
                 compute_imrope_cache(cos_cache, sin_cache, n_dims, theta_scale, pt, ph, pw, pe, rope_params->sections,
                                      freq_factors, freq_scale, corr_dims, rope_params->ext_factor,
                                      rope_params->attn_factor);
@@ -591,10 +591,10 @@ int entry_point(struct ggml_et_rope_params * params, void * env) {
                 last_pos_w = pw;
                 last_pos_e = pe;
             }
-        } else {
+        } инако {
             const int32_t pos = src1_data[s] + rope_params->n_past;
 
-            if (pos != last_pos) {
+            ако (pos != last_pos) {
                 compute_rope_cache(cos_cache, sin_cache, n_dims, theta_scale, pos, freq_factors, freq_scale, corr_dims,
                                    rope_params->ext_factor, rope_params->attn_factor);
                 last_pos = pos;
@@ -607,17 +607,17 @@ int entry_point(struct ggml_et_rope_params * params, void * env) {
         float * head_dst = (float *) ((char *) dst_data + b * dst->nb[3] + s * dst->nb[2] + h * dst->nb[1]);
 
         // Copy dimensions beyond n_dims unchanged
-        for (int64_t d = n_dims; d < head_dim; ++d) {
+        за (int64_t d = n_dims; d < head_dim; ++d) {
             head_dst[d] = head_src[d];
         }
 
-        if (use_neox_rotation) {
+        ако (use_neox_rotation) {
             // NEOX/IMROPE: pairs at (i, i+half_dims)
             uint64_t temp_mask;
             __asm__ volatile("mova.x.m %0" : "=r"(temp_mask));
             __asm__ volatile("mov.m.x m0, x0, 0xFF");
 
-            for (int32_t dim_idx = 0; dim_idx < half_dims; dim_idx += 8) {
+            за (int32_t dim_idx = 0; dim_idx < half_dims; dim_idx += 8) {
                 __asm__ volatile(
                     "flw.ps f0, %[x0_src]       \n\t"
                     "flw.ps f1, %[x1_src]       \n\t"
@@ -639,9 +639,9 @@ int entry_point(struct ggml_et_rope_params * params, void * env) {
             }
 
             __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
-        } else {
+        } инако {
             // Standard: adjacent pairs (2i, 2i+1)
-            for (int32_t pair_idx = 0; pair_idx < half_dims; ++pair_idx) {
+            за (int32_t pair_idx = 0; pair_idx < half_dims; ++pair_idx) {
                 const int32_t dim_in_head = pair_idx * 2;
                 const float   x0          = head_src[dim_in_head];
                 const float   x1          = head_src[dim_in_head + 1];
@@ -652,5 +652,5 @@ int entry_point(struct ggml_et_rope_params * params, void * env) {
         }
     }
 
-    return 0;
+    врати 0;
 }

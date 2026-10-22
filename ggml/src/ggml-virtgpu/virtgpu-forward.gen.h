@@ -2,7 +2,7 @@
 
 /* device */
 void                           apir_device_get_device_count(struct virtgpu * gpu);
-int                            apir_device_get_count(struct virtgpu * gpu);
+цео                            apir_device_get_count(struct virtgpu * gpu);
 char *                         apir_device_get_name(struct virtgpu * gpu);
 char *                         apir_device_get_description(struct virtgpu * gpu);
 uint32_t                       apir_device_get_type(struct virtgpu * gpu);
