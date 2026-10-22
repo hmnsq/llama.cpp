@@ -1,46 +1,46 @@
 #pragma once
-#include "ggml-openvino-extra.h"  // For ExtraQuantType
-#include "ggml.h"
+#ଅନ୍ତର୍ଭାଵ "ggml-openvino-extra.h"  // For ExtraQuantType
+#ଅନ୍ତର୍ଭାଵ "ggml.h"
 
-#include <openvino/core/node_output.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/runtime/tensor.hpp>
+#ଅନ୍ତର୍ଭାଵ <openvino/core/node_output.hpp>
+#ଅନ୍ତର୍ଭାଵ <openvino/op/constant.hpp>
+#ଅନ୍ତର୍ଭାଵ <openvino/runtime/tensor.hpp>
 
-static constexpr size_t GGML_QUANTIZATION_GROUP_SIZE = 32;
+ସ୍ଥିର constexpr size_t GGML_QUANTIZATION_GROUP_SIZE = 32;
 
-inline const char * extra_quant_type_name(ExtraQuantType t) {
-    switch (t) {
-    case ExtraQuantType::F16:
-        return "F16";
-    case ExtraQuantType::Q4_0_C:
-        return "Q4_0_C";
-    case ExtraQuantType::Q4_0_128:
-        return "Q4_0_128";
-    case ExtraQuantType::Q8_0_C:
-        return "Q8_0_C";
-    case ExtraQuantType::Q8_0_32:
-        return "Q8_0_32";
-    case ExtraQuantType::Q8_1_C:
-        return "Q8_1_C";
-    case ExtraQuantType::Q4_0_64:
-        return "Q4_0_64";
-    case ExtraQuantType::Q4_1_64:
-        return "Q4_1_64";
-    default:
-        return "unknown";
+ଧାଡ଼ିଭିତରେ ଅଚଳ ଅକ୍ଷର * extra_quant_type_name(ExtraQuantType t) {
+    ବାଛ (t) {
+    ସ୍ଥିତି ExtraQuantType::F16:
+        ଫେରନ୍ତୁ "F16";
+    ସ୍ଥିତି ExtraQuantType::Q4_0_C:
+        ଫେରନ୍ତୁ "Q4_0_C";
+    ସ୍ଥିତି ExtraQuantType::Q4_0_128:
+        ଫେରନ୍ତୁ "Q4_0_128";
+    ସ୍ଥିତି ExtraQuantType::Q8_0_C:
+        ଫେରନ୍ତୁ "Q8_0_C";
+    ସ୍ଥିତି ExtraQuantType::Q8_0_32:
+        ଫେରନ୍ତୁ "Q8_0_32";
+    ସ୍ଥିତି ExtraQuantType::Q8_1_C:
+        ଫେରନ୍ତୁ "Q8_1_C";
+    ସ୍ଥିତି ExtraQuantType::Q4_0_64:
+        ଫେରନ୍ତୁ "Q4_0_64";
+    ସ୍ଥିତି ExtraQuantType::Q4_1_64:
+        ଫେରନ୍ତୁ "Q4_1_64";
+    ପୂର୍ବନିର୍ଦ୍ଧାରିତ:
+        ଫେରନ୍ତୁ "unknown";
     }
 }
 
 // Result from process_weight_tensor containing the weight node and tensors.
 // For quantized weights, also contains the extracted layout and scale/zp tensors.
-struct OvWeight {
-    std::shared_ptr<ov::Node> weight_node;
+ସଂରଚନା OvWeight {
+    std::shared_ptr<ov::ଗଣ୍ଠି_2> weight_ଗଣ୍ଠି;
     ggml_openvino_extracted_layout layout;  // Only meaningful for quantized (layout.total_size > 0)
     ov::Tensor weights;
     ov::Tensor scales;
     ov::Tensor zp;
 
-    bool is_quantized() const { return layout.scales_size > 0; }
+    bool is_quantized() ଅଚଳ { ଫେରନ୍ତୁ layout.scales_size > 0; }
 };
 
 // Process weight tensor and create an OpenVINO weight node
@@ -49,9 +49,9 @@ struct OvWeight {
 // If output_base_ptr is provided, uses pre-allocated buffers at specified offsets (for backend buffer use)
 // Returns OvWeight with the weight node and optional quantized tensors
 OvWeight process_weight_tensor(
-    const ggml_tensor * tensor,
-    const void * data,                 // Source data pointer (may differ from tensor->data)
-    void * output_base_ptr = nullptr,  // Base pointer for output buffers (or nullptr for internal allocation)
+    ଅଚଳ ggml_tensor * tensor,
+    ଅଚଳ ଶୂନ୍ୟ * data,                 // Source data pointer (may differ from tensor->data)
+    ଶୂନ୍ୟ * output_base_ptr = nullptr,  // Base pointer for output buffers (or nullptr for internal allocation)
     bool use_bias = false);            // Use an exact f16 zero point (vs. a rounded integer one);
                                        // always used for for_gather_matmul (3D MoE expert) weights
                                        // regardless of this flag, and also settable explicitly for

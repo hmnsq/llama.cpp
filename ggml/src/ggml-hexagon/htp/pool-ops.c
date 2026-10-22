@@ -1,48 +1,48 @@
 #pragma clang diagnostic ignored "-Wunused-variable"
 
-#include <float.h>
-#include <HAP_farf.h>
+#ଅନ୍ତର୍ଭାଵ <float.h>
+#ଅନ୍ତର୍ଭାଵ <HAP_farf.h>
 
-#include "hex-common.h"
-#include "dma-queue.h"
-#include "hex-profile.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-tensor.h"
-#include "hvx-inverse.h"
-#include "hvx-types.h"
-#include "hvx-utils.h"
-#include "pool-ops.h"
+#ଅନ୍ତର୍ଭାଵ "hex-common.h"
+#ଅନ୍ତର୍ଭାଵ "dma-queue.h"
+#ଅନ୍ତର୍ଭାଵ "hex-profile.h"
+#ଅନ୍ତର୍ଭାଵ "htp-ctx.h"
+#ଅନ୍ତର୍ଭାଵ "htp-ops.h"
+#ଅନ୍ତର୍ଭାଵ "htp-tensor.h"
+#ଅନ୍ତର୍ଭାଵ "hvx-inverse.h"
+#ଅନ୍ତର୍ଭାଵ "hvx-types.h"
+#ଅନ୍ତର୍ଭାଵ "hvx-utils.h"
+#ଅନ୍ତର୍ଭାଵ "pool-ops.h"
 
 #define HTP_POOL_MAX 0
 #define HTP_POOL_AVG 1
 
 // Fast path: exact non-overlapping tiling (stride == kernel, no padding), kernel_x in {1,2}.
 // Every window is guaranteed fully in-bounds, so this never needs boundary clamping.
-static void pool_plane_hvx(
-    const float * src, float * dst, const struct htp_pool_2d_kernel_params * p) {
-    const bool is_max = (p->pool_op == HTP_POOL_MAX);
-    const HVX_Vector scale = hvx_vec_splat_f32(p->inv_kernel_area);
-    const HVX_Vector seed  = is_max ? hvx_vec_splat_f32(-FLT_MAX) : Q6_V_vsplat_R(0);
+ସ୍ଥିର ଶୂନ୍ୟ pool_plane_hvx(
+    ଅଚଳ ଦଶମିକ * src, ଦଶମିକ * dst, ଅଚଳ ସଂରଚନା htp_pool_2d_kernel_params * p) {
+    ଅଚଳ bool is_max = (p->pool_op == HTP_POOL_MAX);
+    ଅଚଳ HVX_Vector scale = hvx_vec_splat_f32(p->inv_kernel_area);
+    ଅଚଳ HVX_Vector seed  = is_max ? hvx_vec_splat_f32(-FLT_MAX) : Q6_V_vsplat_R(0);
 
-    for (uint32_t oy = 0; oy < p->dst_y; ++oy) {
-        const uint32_t sy = oy * p->kernel_y;
-        for (uint32_t ox = 0; ox < p->dst_x; ox += VLEN_FP32) {
-            const uint32_t rem = p->dst_x - ox;
-            const uint32_t nbytes = (rem < VLEN_FP32) ? (rem * sizeof(float)) : VLEN;
+    ପାଇଁ (uint32_t oy = 0; oy < p->dst_y; ++oy) {
+        ଅଚଳ uint32_t sy = oy * p->kernel_y;
+        ପାଇଁ (uint32_t ox = 0; ox < p->dst_x; ox += VLEN_FP32) {
+            ଅଚଳ uint32_t rem = p->dst_x - ox;
+            ଅଚଳ uint32_t nbytes = (rem < VLEN_FP32) ? (rem * ଆକାର(ଦଶମିକ)) : VLEN;
             HVX_Vector acc = seed;
-            for (uint32_t ky = 0; ky < p->kernel_y; ++ky) {
-                const float * row = src + (sy + ky) * p->src_x;
-                if (p->kernel_x == 2) {
-                    const HVX_Vector v0 = *(const HVX_UVector *) (row + ox * 2);
-                    const HVX_Vector v1 = *(const HVX_UVector *) (row + ox * 2 + VLEN_FP32);
-                    const HVX_VectorPair deinterleaved = Q6_W_vdeal_VVR(v1, v0, -4);
-                    const HVX_Vector lo = Q6_V_lo_W(deinterleaved);
-                    const HVX_Vector hi = Q6_V_hi_W(deinterleaved);
+            ପାଇଁ (uint32_t ky = 0; ky < p->kernel_y; ++ky) {
+                ଅଚଳ ଦଶମିକ * row = src + (sy + ky) * p->src_x;
+                ଯଦି (p->kernel_x == 2) {
+                    ଅଚଳ HVX_Vector v0 = *(ଅଚଳ HVX_UVector *) (row + ox * 2);
+                    ଅଚଳ HVX_Vector v1 = *(ଅଚଳ HVX_UVector *) (row + ox * 2 + VLEN_FP32);
+                    ଅଚଳ HVX_VectorPair deinterleaved = Q6_W_vdeal_VVR(v1, v0, -4);
+                    ଅଚଳ HVX_Vector lo = Q6_V_lo_W(deinterleaved);
+                    ଅଚଳ HVX_Vector hi = Q6_V_hi_W(deinterleaved);
                     acc = is_max ? Q6_Vsf_vmax_VsfVsf(acc, Q6_Vsf_vmax_VsfVsf(lo, hi))
                                  : hvx_vec_add_f32_f32(acc, hvx_vec_add_f32_f32(lo, hi));
-                } else if (p->kernel_x == 1) {
-                    const HVX_Vector v = *(const HVX_UVector *) (row + ox);
+                } ଅନ୍ୟଥା ଯଦି (p->kernel_x == 1) {
+                    ଅଚଳ HVX_Vector v = *(ଅଚଳ HVX_UVector *) (row + ox);
                     acc = is_max ? Q6_Vsf_vmax_VsfVsf(acc, v) : hvx_vec_add_f32_f32(acc, v);
                 }
             }
@@ -53,64 +53,64 @@ static void pool_plane_hvx(
 
 // Narrow exact-tiling path. The input is staged in VTCM with one vector of
 // guard space, so full-width loads are safe even when src_x is below 32.
-static void pool_plane_hvx_narrow(
-    const float * src, float * dst, const struct htp_pool_2d_kernel_params * p) {
-    const bool is_max = (p->pool_op == HTP_POOL_MAX);
-    const HVX_Vector scale = hvx_vec_splat_f32(p->inv_kernel_area);
-    const HVX_Vector seed  = is_max ? hvx_vec_splat_f32(-FLT_MAX) : Q6_V_vsplat_R(0);
+ସ୍ଥିର ଶୂନ୍ୟ pool_plane_hvx_narrow(
+    ଅଚଳ ଦଶମିକ * src, ଦଶମିକ * dst, ଅଚଳ ସଂରଚନା htp_pool_2d_kernel_params * p) {
+    ଅଚଳ bool is_max = (p->pool_op == HTP_POOL_MAX);
+    ଅଚଳ HVX_Vector scale = hvx_vec_splat_f32(p->inv_kernel_area);
+    ଅଚଳ HVX_Vector seed  = is_max ? hvx_vec_splat_f32(-FLT_MAX) : Q6_V_vsplat_R(0);
 
-    for (uint32_t oy = 0; oy < p->dst_y; ++oy) {
-        const uint32_t sy = oy * p->kernel_y;
+    ପାଇଁ (uint32_t oy = 0; oy < p->dst_y; ++oy) {
+        ଅଚଳ uint32_t sy = oy * p->kernel_y;
         HVX_Vector acc = seed;
-        for (uint32_t ky = 0; ky < p->kernel_y; ++ky) {
-            const float * row = src + (sy + ky) * p->src_x;
-            const HVX_Vector v0 = *(const HVX_UVector *) row;
+        ପାଇଁ (uint32_t ky = 0; ky < p->kernel_y; ++ky) {
+            ଅଚଳ ଦଶମିକ * row = src + (sy + ky) * p->src_x;
+            ଅଚଳ HVX_Vector v0 = *(ଅଚଳ HVX_UVector *) row;
             HVX_Vector v = v0;
-            if (p->kernel_x == 2) {
+            ଯଦି (p->kernel_x == 2) {
                 // The second vector is zero because a narrow row has fewer
                 // than 32 input elements. The low lanes still contain the
                 // complete even/odd pairs needed by the output.
-                const HVX_Vector zero = Q6_V_vsplat_R(0);
-                const HVX_VectorPair deinterleaved = Q6_W_vdeal_VVR(zero, v0, -4);
-                const HVX_Vector even = Q6_V_lo_W(deinterleaved);
-                const HVX_Vector odd  = Q6_V_hi_W(deinterleaved);
+                ଅଚଳ HVX_Vector zero = Q6_V_vsplat_R(0);
+                ଅଚଳ HVX_VectorPair deinterleaved = Q6_W_vdeal_VVR(zero, v0, -4);
+                ଅଚଳ HVX_Vector even = Q6_V_lo_W(deinterleaved);
+                ଅଚଳ HVX_Vector odd  = Q6_V_hi_W(deinterleaved);
                 v = is_max ? Q6_Vsf_vmax_VsfVsf(even, odd)
                            : hvx_vec_add_f32_f32(even, odd);
             }
             acc = is_max ? Q6_Vsf_vmax_VsfVsf(acc, v)
                          : hvx_vec_add_f32_f32(acc, v);
         }
-        hvx_vec_store_u(dst + oy * p->dst_x, p->dst_x * sizeof(float),
+        hvx_vec_store_u(dst + oy * p->dst_x, p->dst_x * ଆକାର(ଦଶମିକ),
                         is_max ? acc : hvx_vec_mul_f32_f32(acc, scale));
     }
 }
 
-static void pool_plane_global(
-    const float * src, float * dst, const struct htp_pool_2d_kernel_params * p) {
-    const uint32_t n = p->src_x * p->src_y;
-    float val;
-    if (p->pool_op == HTP_POOL_MAX) {
-        val = hvx_reduce_max_f32((const uint8_t *) src, n);
-    } else {
-        val = hvx_reduce_sum_f32((const uint8_t *) src, n) * p->inv_kernel_area;
+ସ୍ଥିର ଶୂନ୍ୟ pool_plane_global(
+    ଅଚଳ ଦଶମିକ * src, ଦଶମିକ * dst, ଅଚଳ ସଂରଚନା htp_pool_2d_kernel_params * p) {
+    ଅଚଳ uint32_t n = p->src_x * p->src_y;
+    ଦଶମିକ val;
+    ଯଦି (p->pool_op == HTP_POOL_MAX) {
+        val = hvx_reduce_max_f32((ଅଚଳ uint8_t *) src, n);
+    } ଅନ୍ୟଥା {
+        val = hvx_reduce_sum_f32((ଅଚଳ uint8_t *) src, n) * p->inv_kernel_area;
     }
-    hvx_vec_store_u(dst, sizeof(float), hvx_vec_splat_f32(val));
+    hvx_vec_store_u(dst, ଆକାର(ଦଶମିକ), hvx_vec_splat_f32(val));
 }
 
-static void pool_plane_block(
-    const float * src, float * dst, const struct htp_pool_2d_kernel_params * p) {
-    for (uint32_t oy = 0; oy < p->dst_y; ++oy) {
-        const float * row = src + oy * p->src_x;
-        float * dst_row = dst + oy * p->dst_x;
-        for (uint32_t ox = 0; ox < p->dst_x; ++ox) {
-            const uint8_t * block = (const uint8_t *) (row + ox * p->kernel_x);
-            float val;
-            if (p->pool_op == HTP_POOL_MAX) {
+ସ୍ଥିର ଶୂନ୍ୟ pool_plane_block(
+    ଅଚଳ ଦଶମିକ * src, ଦଶମିକ * dst, ଅଚଳ ସଂରଚନା htp_pool_2d_kernel_params * p) {
+    ପାଇଁ (uint32_t oy = 0; oy < p->dst_y; ++oy) {
+        ଅଚଳ ଦଶମିକ * row = src + oy * p->src_x;
+        ଦଶମିକ * dst_row = dst + oy * p->dst_x;
+        ପାଇଁ (uint32_t ox = 0; ox < p->dst_x; ++ox) {
+            ଅଚଳ uint8_t * block = (ଅଚଳ uint8_t *) (row + ox * p->kernel_x);
+            ଦଶମିକ val;
+            ଯଦି (p->pool_op == HTP_POOL_MAX) {
                 val = hvx_reduce_max_f32(block, p->kernel_x);
-            } else {
+            } ଅନ୍ୟଥା {
                 val = hvx_reduce_sum_f32(block, p->kernel_x) * p->inv_kernel_area;
             }
-            hvx_vec_store_u(dst_row + ox, sizeof(float), hvx_vec_splat_f32(val));
+            hvx_vec_store_u(dst_row + ox, ଆକାର(ଦଶମିକ), hvx_vec_splat_f32(val));
         }
     }
 }
@@ -119,104 +119,104 @@ static void pool_plane_block(
 
 // Vertical padding is uniform across a whole output row (iy0 depends only on oy, not ox),
 // so it collapses to one valid-ky range per row instead of a per-element check.
-static inline void pool_row_bounds_y(
-    const struct htp_pool_2d_kernel_params * p, uint32_t oy, int32_t * iy0, uint32_t * ky_lo, uint32_t * ky_hi) {
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଶୂନ୍ୟ pool_row_bounds_y(
+    ଅଚଳ ସଂରଚନା htp_pool_2d_kernel_params * p, uint32_t oy, int32_t * iy0, uint32_t * ky_lo, uint32_t * ky_hi) {
     *iy0 = (int32_t) (oy * p->stride_y) - p->pad_y;
-    const int32_t lo = -(*iy0);
-    const int32_t hi = (int32_t) p->src_y - *iy0;
+    ଅଚଳ int32_t lo = -(*iy0);
+    ଅଚଳ int32_t hi = (int32_t) p->src_y - *iy0;
     *ky_lo = (uint32_t) MAX(0, lo);
     *ky_hi = (uint32_t) MAX(0, MIN((int32_t) p->kernel_y, hi));
 }
 
-static inline void pool_pixel_boundary_vec(
-    const float * src, float * dst_row, const struct htp_pool_2d_kernel_params * p,
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଶୂନ୍ୟ pool_pixel_boundary_vec(
+    ଅଚଳ ଦଶମିକ * src, ଦଶମିକ * dst_row, ଅଚଳ ସଂରଚନା htp_pool_2d_kernel_params * p,
     uint32_t ox, int32_t iy0, uint32_t ky_lo, uint32_t ky_hi, bool is_max) {
-    const int32_t ix0 = (int32_t) (ox * p->stride_x) - p->pad_x;
-    const int32_t kx_lo = MAX(0, -ix0);
-    const int32_t kx_hi = MIN((int32_t) p->kernel_x, (int32_t) p->src_x - ix0);
+    ଅଚଳ int32_t ix0 = (int32_t) (ox * p->stride_x) - p->pad_x;
+    ଅଚଳ int32_t kx_lo = MAX(0, -ix0);
+    ଅଚଳ int32_t kx_hi = MIN((int32_t) p->kernel_x, (int32_t) p->src_x - ix0);
 
-    if (kx_lo >= kx_hi || ky_lo >= ky_hi) {
+    ଯଦି (kx_lo >= kx_hi || ky_lo >= ky_hi) {
         HVX_Vector empty_val = is_max ? hvx_vec_splat_f32(-FLT_MAX) : Q6_V_vsplat_R(0);
-        hvx_vec_store_u(dst_row + ox, sizeof(float), empty_val);
-        return;
+        hvx_vec_store_u(dst_row + ox, ଆକାର(ଦଶମିକ), empty_val);
+        ଫେରନ୍ତୁ;
     }
 
-    const uint32_t valid_kx = (uint32_t) (kx_hi - kx_lo);
-    const HVX_Vector mask_identity = is_max ? hvx_vec_splat_f32(-FLT_MAX) : Q6_V_vsplat_R(0);
+    ଅଚଳ uint32_t valid_kx = (uint32_t) (kx_hi - kx_lo);
+    ଅଚଳ HVX_Vector mask_identity = is_max ? hvx_vec_splat_f32(-FLT_MAX) : Q6_V_vsplat_R(0);
 
     HVX_Vector acc = mask_identity;
-    for (uint32_t ky = ky_lo; ky < ky_hi; ++ky) {
-        const float * row = src + (uint32_t) (iy0 + (int32_t) ky) * p->src_x;
-        for (uint32_t k = 0; k < valid_kx; k += VLEN_FP32) {
-            const uint32_t k_rem = valid_kx - k;
-            const uint32_t n = (k_rem < VLEN_FP32) ? k_rem : VLEN_FP32;
-            const HVX_VectorPred q = Q6_Q_vsetq_R(n * sizeof(float));
-            const HVX_Vector raw = *(const HVX_UVector *) (row + ix0 + kx_lo + k);
-            const HVX_Vector v = Q6_V_vmux_QVV(q, raw, mask_identity);
+    ପାଇଁ (uint32_t ky = ky_lo; ky < ky_hi; ++ky) {
+        ଅଚଳ ଦଶମିକ * row = src + (uint32_t) (iy0 + (int32_t) ky) * p->src_x;
+        ପାଇଁ (uint32_t k = 0; k < valid_kx; k += VLEN_FP32) {
+            ଅଚଳ uint32_t k_rem = valid_kx - k;
+            ଅଚଳ uint32_t n = (k_rem < VLEN_FP32) ? k_rem : VLEN_FP32;
+            ଅଚଳ HVX_VectorPred q = Q6_Q_vsetq_R(n * ଆକାର(ଦଶମିକ));
+            ଅଚଳ HVX_Vector raw = *(ଅଚଳ HVX_UVector *) (row + ix0 + kx_lo + k);
+            ଅଚଳ HVX_Vector v = Q6_V_vmux_QVV(q, raw, mask_identity);
             acc = is_max ? Q6_Vsf_vmax_VsfVsf(acc, v) : hvx_vec_add_f32_f32(acc, v);
         }
     }
 
     HVX_Vector reduced = is_max ? hvx_vec_reduce_max_f32(acc) : hvx_vec_reduce_sum_f32(acc);
-    if (!is_max) {
+    ଯଦି (!is_max) {
         HVX_Vector scale_vec;
-        if (p->avg_divide_count) {
-            const uint32_t count = (ky_hi - ky_lo) * valid_kx;
-            scale_vec = hvx_vec_inverse_f32(hvx_vec_splat_f32((float) count));
-        } else {
+        ଯଦି (p->avg_divide_ଗଣନା) {
+            ଅଚଳ uint32_t ଗଣନା_2 = (ky_hi - ky_lo) * valid_kx;
+            scale_vec = hvx_vec_inverse_f32(hvx_vec_splat_f32((ଦଶମିକ) ଗଣନା_2));
+        } ଅନ୍ୟଥା {
             scale_vec = hvx_vec_splat_f32(p->inv_kernel_area);
         }
         reduced = hvx_vec_mul_f32_f32(reduced, scale_vec);
     }
-    hvx_vec_store_u(dst_row + ox, sizeof(float), reduced);
+    hvx_vec_store_u(dst_row + ox, ଆକାର(ଦଶମିକ), reduced);
 }
 
-static inline void pool_row_general_boundary_vec(
-    const float * src, float * dst_row, const struct htp_pool_2d_kernel_params * p,
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଶୂନ୍ୟ pool_row_general_boundary_vec(
+    ଅଚଳ ଦଶମିକ * src, ଦଶମିକ * dst_row, ଅଚଳ ସଂରଚନା htp_pool_2d_kernel_params * p,
     uint32_t ox_start, uint32_t ox_end, int32_t iy0, uint32_t ky_lo, uint32_t ky_hi, bool is_max) {
-    for (uint32_t ox = ox_start; ox < ox_end; ++ox) {
+    ପାଇଁ (uint32_t ox = ox_start; ox < ox_end; ++ox) {
         pool_pixel_boundary_vec(src, dst_row, p, ox, iy0, ky_lo, ky_hi, is_max);
     }
 }
 
 // Vectorized interior loop.
-static inline void pool_row_general_vec(
-    const float * src, float * dst_row, const struct htp_pool_2d_kernel_params * p,
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଶୂନ୍ୟ pool_row_general_vec(
+    ଅଚଳ ଦଶମିକ * src, ଦଶମିକ * dst_row, ଅଚଳ ସଂରଚନା htp_pool_2d_kernel_params * p,
     uint32_t ox_start, uint32_t ox_end, int32_t iy0, uint32_t ky_lo, uint32_t ky_hi, bool is_max) {
-    if (ox_start >= ox_end) {
-        return;
+    ଯଦି (ox_start >= ox_end) {
+        ଫେରନ୍ତୁ;
     }
 
-    if (p->stride_x != 1 && p->stride_x != 2) {
+    ଯଦି (p->stride_x != 1 && p->stride_x != 2) {
         pool_row_general_boundary_vec(src, dst_row, p, ox_start, ox_end, iy0, ky_lo, ky_hi, is_max);
-        return;
+        ଫେରନ୍ତୁ;
     }
 
-    const HVX_Vector scale = hvx_vec_splat_f32(p->inv_kernel_area);
-    const HVX_Vector seed  = is_max ? hvx_vec_splat_f32(-FLT_MAX) : Q6_V_vsplat_R(0);
+    ଅଚଳ HVX_Vector scale = hvx_vec_splat_f32(p->inv_kernel_area);
+    ଅଚଳ HVX_Vector seed  = is_max ? hvx_vec_splat_f32(-FLT_MAX) : Q6_V_vsplat_R(0);
 
-    for (uint32_t ox = ox_start; ox < ox_end; ox += VLEN_FP32) {
-        const uint32_t rem = ox_end - ox;
-        const uint32_t nbytes = (rem < VLEN_FP32) ? (rem * sizeof(float)) : VLEN;
-        const int32_t ix0 = (int32_t) (ox * p->stride_x) - p->pad_x;
+    ପାଇଁ (uint32_t ox = ox_start; ox < ox_end; ox += VLEN_FP32) {
+        ଅଚଳ uint32_t rem = ox_end - ox;
+        ଅଚଳ uint32_t nbytes = (rem < VLEN_FP32) ? (rem * ଆକାର(ଦଶମିକ)) : VLEN;
+        ଅଚଳ int32_t ix0 = (int32_t) (ox * p->stride_x) - p->pad_x;
         HVX_Vector acc = seed;
 
-        for (uint32_t ky = ky_lo; ky < ky_hi; ++ky) {
-            const float * row = src + (uint32_t) (iy0 + (int32_t) ky) * p->src_x;
-            if (p->stride_x == 1) {
-                for (uint32_t kx = 0; kx < p->kernel_x; ++kx) {
-                    const HVX_Vector v = *(const HVX_UVector *) (row + ix0 + (int32_t) kx);
+        ପାଇଁ (uint32_t ky = ky_lo; ky < ky_hi; ++ky) {
+            ଅଚଳ ଦଶମିକ * row = src + (uint32_t) (iy0 + (int32_t) ky) * p->src_x;
+            ଯଦି (p->stride_x == 1) {
+                ପାଇଁ (uint32_t kx = 0; kx < p->kernel_x; ++kx) {
+                    ଅଚଳ HVX_Vector v = *(ଅଚଳ HVX_UVector *) (row + ix0 + (int32_t) kx);
                     acc = is_max ? Q6_Vsf_vmax_VsfVsf(acc, v) : hvx_vec_add_f32_f32(acc, v);
                 }
-            } else {
-                for (uint32_t kx = 0; kx < p->kernel_x; kx += 2) {
-                    const HVX_Vector v0 = *(const HVX_UVector *) (row + ix0 + (int32_t) kx);
-                    const HVX_Vector v1 = *(const HVX_UVector *) (row + ix0 + (int32_t) kx + VLEN_FP32);
-                    const HVX_VectorPair deinterleaved = Q6_W_vdeal_VVR(v1, v0, -4);
-                    const HVX_Vector lo = Q6_V_lo_W(deinterleaved);
+            } ଅନ୍ୟଥା {
+                ପାଇଁ (uint32_t kx = 0; kx < p->kernel_x; kx += 2) {
+                    ଅଚଳ HVX_Vector v0 = *(ଅଚଳ HVX_UVector *) (row + ix0 + (int32_t) kx);
+                    ଅଚଳ HVX_Vector v1 = *(ଅଚଳ HVX_UVector *) (row + ix0 + (int32_t) kx + VLEN_FP32);
+                    ଅଚଳ HVX_VectorPair deinterleaved = Q6_W_vdeal_VVR(v1, v0, -4);
+                    ଅଚଳ HVX_Vector lo = Q6_V_lo_W(deinterleaved);
                     acc = is_max ? Q6_Vsf_vmax_VsfVsf(acc, lo) : hvx_vec_add_f32_f32(acc, lo);
-                    if (kx + 1 < p->kernel_x) {
-                        const HVX_Vector hi = Q6_V_hi_W(deinterleaved);
+                    ଯଦି (kx + 1 < p->kernel_x) {
+                        ଅଚଳ HVX_Vector hi = Q6_V_hi_W(deinterleaved);
                         acc = is_max ? Q6_Vsf_vmax_VsfVsf(acc, hi) : hvx_vec_add_f32_f32(acc, hi);
                     }
                 }
@@ -226,15 +226,15 @@ static inline void pool_row_general_vec(
     }
 }
 
-static void pool_plane_general(
-    const float * src, float * dst, const struct htp_pool_2d_kernel_params * p) {
-    const bool is_max = (p->pool_op == HTP_POOL_MAX);
+ସ୍ଥିର ଶୂନ୍ୟ pool_plane_general(
+    ଅଚଳ ଦଶମିକ * src, ଦଶମିକ * dst, ଅଚଳ ସଂରଚନା htp_pool_2d_kernel_params * p) {
+    ଅଚଳ bool is_max = (p->pool_op == HTP_POOL_MAX);
 
-    for (uint32_t oy = 0; oy < p->dst_y; ++oy) {
+    ପାଇଁ (uint32_t oy = 0; oy < p->dst_y; ++oy) {
         int32_t iy0;
         uint32_t ky_lo, ky_hi;
         pool_row_bounds_y(p, oy, &iy0, &ky_lo, &ky_hi);
-        float * dst_row = dst + oy * p->dst_x;
+        ଦଶମିକ * dst_row = dst + oy * p->dst_x;
 
         pool_row_general_boundary_vec(src, dst_row, p, 0, p->ox_lo, iy0, ky_lo, ky_hi, is_max);
         pool_row_general_vec(src, dst_row, p, p->ox_lo, p->ox_hi, iy0, ky_lo, ky_hi, is_max);
@@ -242,86 +242,86 @@ static void pool_plane_general(
     }
 }
 
-typedef void (*pool_plane_fn_t)(const float * src, float * dst, const struct htp_pool_2d_kernel_params * p);
+ପ୍ରକାରବ୍ୟାଖ୍ୟା ଶୂନ୍ୟ (*pool_plane_fn_t)(ଅଚଳ ଦଶମିକ * src, ଦଶମିକ * dst, ଅଚଳ ସଂରଚନା htp_pool_2d_kernel_params * p);
 
-struct pool_2d_context {
-    struct htp_ops_context * octx;
-    const struct htp_pool_2d_kernel_params * kparams;
+ସଂରଚନା pool_2d_context {
+    ସଂରଚନା htp_ops_context * octx;
+    ଅଚଳ ସଂରଚନା htp_pool_2d_kernel_params * kparams;
     pool_plane_fn_t pool_plane;
     uint32_t n_threads;
     uint32_t plane_start;
-    uint32_t plane_count;
+    uint32_t plane_ଗଣନା;
     uint32_t planes_per_thread;
 };
 
-static void pool_2d_thread(unsigned int nth, unsigned int ith, void * data) {
-    struct pool_2d_context * ctx = (struct pool_2d_context *) data;
-    const struct htp_pool_2d_kernel_params * p = ctx->kparams;
-    const struct htp_tensor * src0 = ctx->octx->src[0];
-    const struct htp_tensor * dst = ctx->octx->dst;
+ସ୍ଥିର ଶୂନ୍ୟ pool_2d_thread(unsigned ପୂର୍ଣ୍ଣସଂଖ୍ୟା nth, unsigned ପୂର୍ଣ୍ଣସଂଖ୍ୟା ith, ଶୂନ୍ୟ * data) {
+    ସଂରଚନା pool_2d_context * ctx = (ସଂରଚନା pool_2d_context *) data;
+    ଅଚଳ ସଂରଚନା htp_pool_2d_kernel_params * p = ctx->kparams;
+    ଅଚଳ ସଂରଚନା htp_tensor * src0 = ctx->octx->src[0];
+    ଅଚଳ ସଂରଚନା htp_tensor * dst = ctx->octx->dst;
     pool_plane_fn_t pool_plane = ctx->pool_plane;
-    const uint32_t planes_per_thread = ctx->planes_per_thread;
-    const uint32_t first = ctx->plane_start + ith * planes_per_thread;
-    const uint32_t last = MIN(first + planes_per_thread, ctx->plane_start + ctx->plane_count);
+    ଅଚଳ uint32_t planes_per_thread = ctx->planes_per_thread;
+    ଅଚଳ uint32_t first = ctx->plane_start + ith * planes_per_thread;
+    ଅଚଳ uint32_t last = MIN(first + planes_per_thread, ctx->plane_start + ctx->plane_ଗଣନା);
 
-    if (first >= last) {
-        return;
+    ଯଦି (first >= last) {
+        ଫେରନ୍ତୁ;
     }
 
-    struct htp_thread_trace * tr = &ctx->octx->ctx->trace[ith];
+    ସଂରଚନା htp_thread_trace * tr = &ctx->octx->ctx->trace[ith];
     dma_queue * dma_queue = ctx->octx->ctx->dma[ith];
 
-    const uint32_t src_spad_half = p->src_plane_bytes_aligned;
-    const uint32_t dst_spad_half = p->dst_plane_bytes_aligned;
-    const uint32_t src_bytes_per_thread = 2 * src_spad_half;
-    const uint32_t dst_bytes_per_thread = 2 * dst_spad_half;
-    const size_t off_dst = (size_t) ctx->n_threads * src_bytes_per_thread;
+    ଅଚଳ uint32_t src_spad_half = p->src_plane_bytes_aligned;
+    ଅଚଳ uint32_t dst_spad_half = p->dst_plane_bytes_aligned;
+    ଅଚଳ uint32_t src_bytes_per_thread = 2 * src_spad_half;
+    ଅଚଳ uint32_t dst_bytes_per_thread = 2 * dst_spad_half;
+    ଅଚଳ size_t off_dst = (size_t) ctx->n_threads * src_bytes_per_thread;
 
     uint8_t * vtcm_base = (uint8_t *) ctx->octx->ctx->vtcm_base;
     uint8_t * src_spad  = vtcm_base + ith * src_bytes_per_thread;
     uint8_t * dst_spad  = vtcm_base + off_dst + ith * dst_bytes_per_thread;
 
-    float * srcb2[2] = { (float *) src_spad, (float *) (src_spad + src_spad_half) };
-    float * dstb2[2] = { (float *) dst_spad, (float *) (dst_spad + dst_spad_half) };
+    ଦଶମିକ * srcb2[2] = { (ଦଶମିକ *) src_spad, (ଦଶମିକ *) (src_spad + src_spad_half) };
+    ଦଶମିକ * dstb2[2] = { (ଦଶମିକ *) dst_spad, (ଦଶମିକ *) (dst_spad + dst_spad_half) };
 
-    const uint32_t total = last - first;
+    ଅଚଳ uint32_t total = last - first;
 
     // Warm up the pipeline: push up to 2 initial (dummy dst, src) transfer pairs.
-    for (uint32_t i = 0; i < total && i < 2; ++i) {
-        dma_queue_push(dma_queue,
+    ପାଇଁ (uint32_t i = 0; i < total && i < 2; ++i) {
+        dma_queue_ଠେଲ(dma_queue,
                        dma_make_data(dst->data, dstb2[i]),
                        p->dst_plane_bytes, dst_spad_half,
                        p->dst_plane_bytes, 0);
 
-        const dma_addr_t src_addr = src0->data + (first + i) * p->src_plane_bytes;
-        dma_queue_push(dma_queue,
+        ଅଚଳ dma_addr_t src_addr = src0->data + (first + i) * p->src_plane_bytes;
+        dma_queue_ଠେଲ(dma_queue,
                        dma_make_data(srcb2[i], src_addr),
                        src_spad_half, p->src_plane_bytes,
                        p->src_plane_bytes, 1);
     }
 
-    for (uint32_t i = 0; i < total; ++i) {
-        const uint32_t plane = first + i;
-        const uint32_t buf   = i & 1u;
-        float * srcb = srcb2[buf];
-        float * dstb = dstb2[buf];
+    ପାଇଁ (uint32_t i = 0; i < total; ++i) {
+        ଅଚଳ uint32_t plane = first + i;
+        ଅଚଳ uint32_t buf   = i & 1u;
+        ଦଶମିକ * srcb = srcb2[buf];
+        ଦଶମିକ * dstb = dstb2[buf];
 
-        dma_queue_pop(dma_queue); // dst writeback from plane i - 2 (or dummy on iter 0, 1)
-        dma_queue_pop(dma_queue); // input for plane i
+        dma_queue_କାଢ଼(dma_queue); // dst writeback from plane i - 2 (or dummy on iter 0, 1)
+        dma_queue_କାଢ଼(dma_queue); // input for plane i
 
         htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) plane);
         pool_plane(srcb, dstb, p);
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) plane);
 
-        const dma_addr_t dst_addr = dst->data + plane * p->dst_plane_bytes;
-        dma_queue_push(dma_queue,
+        ଅଚଳ dma_addr_t dst_addr = dst->data + plane * p->dst_plane_bytes;
+        dma_queue_ଠେଲ(dma_queue,
                        dma_make_data(dst_addr, dstb),
                        p->dst_plane_bytes, dst_spad_half,
                        p->dst_plane_bytes, 1);
 
-        if (i + 2 < total) {
-            const dma_addr_t next_src_addr = src0->data + (plane + 2) * p->src_plane_bytes;
-            dma_queue_push(dma_queue,
+        ଯଦି (i + 2 < total) {
+            ଅଚଳ dma_addr_t next_src_addr = src0->data + (plane + 2) * p->src_plane_bytes;
+            dma_queue_ଠେଲ(dma_queue,
                            dma_make_data(srcb, next_src_addr),
                            src_spad_half, p->src_plane_bytes,
                            p->src_plane_bytes, 1);
@@ -330,70 +330,70 @@ static void pool_2d_thread(unsigned int nth, unsigned int ith, void * data) {
 
     dma_queue_flush(dma_queue);
 
-    FARF(HIGH, "pool2d-f32-dma %d/%d: %ux%ux%ux%u -> %ux%ux%ux%u (%u:%u)\n",
+    FARF(ଉପର_2, "pool2d-f32-dma %d/%d: %ux%ux%ux%u -> %ux%ux%ux%u (%u:%u)\n",
          ith, nth, src0->ne[0], src0->ne[1], src0->ne[2], src0->ne[3],
          dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3], first, last);
-    (void) nth;
+    (ଶୂନ୍ୟ) nth;
 }
 
-int op_pool_2d(struct htp_ops_context * octx) {
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * dst = octx->dst;
-    const struct htp_pool_2d_kernel_params * p =
-        (const struct htp_pool_2d_kernel_params *) octx->kernel_params;
+ପୂର୍ଣ୍ଣସଂଖ୍ୟା op_pool_2d(ସଂରଚନା htp_ops_context * octx) {
+    ଅଚଳ ସଂରଚନା htp_tensor * src0 = octx->src[0];
+    ଅଚଳ ସଂରଚନା htp_tensor * dst = octx->dst;
+    ଅଚଳ ସଂରଚନା htp_pool_2d_kernel_params * p =
+        (ଅଚଳ ସଂରଚନା htp_pool_2d_kernel_params *) octx->kernel_params;
 
-    if (src0->type != HTP_TYPE_F32 || dst->type != HTP_TYPE_F32 ||
+    ଯଦି (src0->type != HTP_TYPE_F32 || dst->type != HTP_TYPE_F32 ||
         (p->pool_op != HTP_POOL_AVG && p->pool_op != HTP_POOL_MAX)) {
-        return HTP_STATUS_NO_SUPPORT;
+        ଫେରନ୍ତୁ HTP_STATUS_NO_SUPPORT;
     }
 
     uint32_t plane_start = 0;
-    uint32_t plane_count = p->planes;
-    if (octx->ctx->mdev.count > 1) {
-        const uint32_t planes_per_chunk = (p->dst_plane_bytes > 0) ? (HEX_L2_LINE_SIZE / hex_gcd_u32(p->dst_plane_bytes, HEX_L2_LINE_SIZE)) : 1;
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(
-            plane_count, htp_tensor_mdev_data_aligned(dst) ? planes_per_chunk : 0,
-            octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
+    uint32_t plane_ଗଣନା = p->planes;
+    ଯଦି (octx->ctx->mdev.ଗଣନା_2 > 1) {
+        ଅଚଳ uint32_t planes_per_chunk = (p->dst_plane_bytes > 0) ? (HEX_L2_ଧାଡ଼ି_SIZE / hex_gcd_u32(p->dst_plane_bytes, HEX_L2_ଧାଡ଼ି_SIZE)) : 1;
+        ଅଚଳ ସଂରଚନା htp_tensor_mdev_range range = htp_tensor_mdev_partition(
+            plane_ଗଣନା, htp_tensor_mdev_data_aligned(dst) ? planes_per_chunk : 0,
+            octx->ctx->mdev.idx, octx->ctx->mdev.ଗଣନା_2, &octx->ctx->mdev.ଗଣନା_div);
         plane_start = range.start;
-        plane_count = range.count;
+        plane_ଗଣନା = range.ଗଣନା_2;
     }
-    if (plane_count == 0) {
-        return HTP_STATUS_OK;
-    }
-
-    const uint32_t n_threads = MIN(p->n_threads, plane_count);
-    if (!htp_ops_context_set_n_threads(octx, n_threads)) {
-        return HTP_STATUS_INVAL_PARAMS;
+    ଯଦି (plane_ଗଣନା == 0) {
+        ଫେରନ୍ତୁ HTP_STATUS_OK;
     }
 
-    const uint32_t planes_per_thread = fastdiv(plane_count + n_threads - 1, &octx->n_threads_div);
+    ଅଚଳ uint32_t n_threads = MIN(p->n_threads, plane_ଗଣନା);
+    ଯଦି (!htp_ops_context_set_n_threads(octx, n_threads)) {
+        ଫେରନ୍ତୁ HTP_STATUS_INVAL_PARAMS;
+    }
+
+    ଅଚଳ uint32_t planes_per_thread = fastdiv(plane_ଗଣନା + n_threads - 1, &octx->n_threads_div);
 
     pool_plane_fn_t pool_plane;
-    if (p->global_path) {
+    ଯଦି (p->global_path) {
         pool_plane = pool_plane_global;
-    } else if (p->block_path) {
+    } ଅନ୍ୟଥା ଯଦି (p->block_path) {
         pool_plane = pool_plane_block;
-    } else if (p->narrow_path) {
+    } ଅନ୍ୟଥା ଯଦି (p->narrow_path) {
         pool_plane = pool_plane_hvx_narrow;
-    } else if (p->fast_path) {
+    } ଅନ୍ୟଥା ଯଦି (p->fast_path) {
         pool_plane = pool_plane_hvx;
-    } else {
+    } ଅନ୍ୟଥା {
         pool_plane = pool_plane_general;
     }
 
-    struct pool_2d_context ctx = {
+    ସଂରଚନା pool_2d_context ctx = {
         .octx = octx,
         .kparams = p,
         .pool_plane = pool_plane,
         .n_threads = n_threads,
         .plane_start = plane_start,
-        .plane_count = plane_count,
+        .plane_ଗଣନା = plane_ଗଣନା,
         .planes_per_thread = planes_per_thread,
     };
     work_queue_run(octx->ctx->work_queue, pool_2d_thread, &ctx, n_threads);
-    return HTP_STATUS_OK;
+    ଫେରନ୍ତୁ HTP_STATUS_OK;
 }
 
-int op_pool_1d(struct htp_ops_context * octx) {
-    return op_pool_2d(octx);
+ପୂର୍ଣ୍ଣସଂଖ୍ୟା op_pool_1d(ସଂରଚନା htp_ops_context * octx) {
+    ଫେରନ୍ତୁ op_pool_2d(octx);
 }

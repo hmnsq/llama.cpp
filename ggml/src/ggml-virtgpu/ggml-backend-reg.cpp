@@ -1,58 +1,58 @@
-#include "ggml-remoting.h"
-#include "ggml-virtgpu.h"
+#ଅନ୍ତର୍ଭାଵ "ggml-remoting.h"
+#ଅନ୍ତର୍ଭାଵ "ggml-virtgpu.h"
 
-#include <iostream>
-#include <mutex>
+#ଅନ୍ତର୍ଭାଵ <iostream>
+#ଅନ୍ତର୍ଭାଵ <mutex>
 
-void ggml_virtgpu_cleanup(virtgpu * gpu);
+ଶୂନ୍ୟ ggml_virtgpu_cleanup(virtgpu * gpu);
 
-static virtgpu * apir_initialize() {
-    static virtgpu *         gpu         = NULL;
-    static std::atomic<bool> initialized = false;
+ସ୍ଥିର virtgpu * apir_initialize() {
+    ସ୍ଥିର virtgpu *         gpu         = ଖାଲି;
+    ସ୍ଥିର std::atomic<ତାର୍କିକ> initialized = ମିଥ୍ୟା;
 
-    if (initialized) {
+    ଯଦି (initialized) {
         // fast track
-        return gpu;
+        ଫେରନ୍ତୁ gpu;
     }
 
     {
-        static std::mutex           mutex;
+        ସ୍ଥିର std::mutex           mutex;
         std::lock_guard<std::mutex> lock(mutex);
 
-        if (initialized) {
+        ଯଦି (initialized) {
             // thread safe
-            return gpu;
+            ଫେରନ୍ତୁ gpu;
         }
 
         gpu = create_virtgpu();
-        if (!gpu) {
-            initialized = true;
-            return NULL;
+        ଯଦି (!gpu) {
+            initialized = ସତ୍ୟ;
+            ଫେରନ୍ତୁ ଖାଲି;
         }
 
         // Pre-fetch and cache all device information, it will not change
         gpu->cached_device_info.description = apir_device_get_description(gpu);
-        if (!gpu->cached_device_info.description) {
+        ଯଦି (!gpu->cached_device_info.description) {
             GGML_ABORT(GGML_VIRTGPU "%s: failed to initialize the virtgpu device description", __func__);
         }
-        gpu->cached_device_info.device_count = apir_device_get_count(gpu);
+        gpu->cached_device_info.device_ଗଣନା = apir_device_get_ଗଣନା(gpu);
         gpu->cached_device_info.type         = apir_device_get_type(gpu);
 
         {
             // Get the remote name and create prefixed version
-            char * rmt_device_name = apir_device_get_name(gpu);
-            if (!rmt_device_name) {
+            ଅକ୍ଷର * rmt_device_name = apir_device_get_name(gpu);
+            ଯଦି (!rmt_device_name) {
                 GGML_ABORT(GGML_VIRTGPU "%s: failed to get the virtgpu device name", __func__);
             }
 
             size_t device_name_len       = strlen(rmt_device_name) + 11;  // "[virtgpu] " + null terminator
-            gpu->cached_device_info.name = (char *) malloc(device_name_len);
-            if (!gpu->cached_device_info.name) {
-                free(rmt_device_name);
+            gpu->cached_device_info.name = (ଅକ୍ଷର *) malloc(device_name_len);
+            ଯଦି (!gpu->cached_device_info.name) {
+                ମୁକ୍ତ(rmt_device_name);
                 GGML_ABORT(GGML_VIRTGPU "%s: failed to allocate memory for prefixed device name", __func__);
             }
             snprintf(gpu->cached_device_info.name, device_name_len, "[virtgpu] %s", rmt_device_name);
-            free(rmt_device_name);
+            ମୁକ୍ତ(rmt_device_name);
         }
 
         apir_device_get_memory(gpu, &gpu->cached_device_info.memory_free, &gpu->cached_device_info.memory_total);
@@ -61,150 +61,150 @@ static virtgpu * apir_initialize() {
         gpu->cached_buffer_type.host_handle             = buft_host_handle;
         {
             // Get the remote name and create prefixed version
-            char * rmt_name = apir_buffer_type_get_name(gpu, buft_host_handle);
-            if (!rmt_name) {
+            ଅକ୍ଷର * rmt_name = apir_buffer_type_get_name(gpu, buft_host_handle);
+            ଯଦି (!rmt_name) {
                 GGML_ABORT(GGML_VIRTGPU "%s: failed to get the virtgpu buffer type name", __func__);
             }
 
             size_t prefixed_len          = strlen(rmt_name) + 11;  // "[virtgpu] " + null terminator
-            gpu->cached_buffer_type.name = (char *) malloc(prefixed_len);
-            if (!gpu->cached_buffer_type.name) {
-                free(rmt_name);
+            gpu->cached_buffer_type.name = (ଅକ୍ଷର *) malloc(prefixed_len);
+            ଯଦି (!gpu->cached_buffer_type.name) {
+                ମୁକ୍ତ(rmt_name);
                 GGML_ABORT(GGML_VIRTGPU "%s: failed to allocate memory for prefixed buffer type name", __func__);
             }
             snprintf(gpu->cached_buffer_type.name, prefixed_len, "[virtgpu] %s", rmt_name);
-            free(rmt_name);
+            ମୁକ୍ତ(rmt_name);
         }
 
         gpu->cached_buffer_type.alignment = apir_buffer_type_get_alignment(gpu, buft_host_handle);
         gpu->cached_buffer_type.max_size  = apir_buffer_type_get_max_size(gpu, buft_host_handle);
 
-        initialized = true;
+        initialized = ସତ୍ୟ;
     }
 
-    return gpu;
+    ଫେରନ୍ତୁ gpu;
 }
 
-static int ggml_backend_remoting_get_device_count() {
+ସ୍ଥିର ପୂର୍ଣ୍ଣସଂଖ୍ୟା ggml_backend_remoting_get_device_ଗଣନା() {
     virtgpu * gpu = apir_initialize();
-    if (!gpu) {
-        return 0;
+    ଯଦି (!gpu) {
+        ଫେରନ୍ତୁ 0;
     }
 
-    return gpu->cached_device_info.device_count;
+    ଫେରନ୍ତୁ gpu->cached_device_info.device_ଗଣନା;
 }
 
-static size_t ggml_backend_remoting_reg_get_device_count(ggml_backend_reg_t reg) {
+ସ୍ଥିର size_t ggml_backend_remoting_reg_get_device_ଗଣନା(ggml_backend_reg_t reg) {
     UNUSED(reg);
 
-    return ggml_backend_remoting_get_device_count();
+    ଫେରନ୍ତୁ ggml_backend_remoting_get_device_ଗଣନା();
 }
 
-static std::vector<ggml_backend_dev_t> devices;
+ସ୍ଥିର std::vector<ggml_backend_dev_t> devices;
 
 ggml_backend_dev_t ggml_backend_remoting_get_device(size_t device) {
     GGML_ASSERT(device < devices.size());
-    return devices[device];
+    ଫେରନ୍ତୁ devices[device];
 }
 
-static void ggml_backend_remoting_reg_init_devices(ggml_backend_reg_t reg) {
-    if (devices.size() > 0) {
+ସ୍ଥିର ଶୂନ୍ୟ ggml_backend_remoting_reg_init_devices(ggml_backend_reg_t reg) {
+    ଯଦି (devices.size() > 0) {
         GGML_LOG_INFO(GGML_VIRTGPU "%s: already initialized\n", __func__);
-        return;
+        ଫେରନ୍ତୁ;
     }
 
     virtgpu * gpu = apir_initialize();
-    if (!gpu) {
+    ଯଦି (!gpu) {
         GGML_LOG_ERROR(GGML_VIRTGPU "%s: apir_initialize failed\n", __func__);
-        return;
+        ଫେରନ୍ତୁ;
     }
 
-    static std::atomic<bool> initialized = false;
+    ସ୍ଥିର std::atomic<ତାର୍କିକ> initialized = ମିଥ୍ୟା;
 
-    if (initialized) {
-        return;  // fast track
+    ଯଦି (initialized) {
+        ଫେରନ୍ତୁ;  // fast track
     }
 
     {
-        static std::mutex           mutex;
+        ସ୍ଥିର std::mutex           mutex;
         std::lock_guard<std::mutex> lock(mutex);
-        if (!initialized) {
-            for (int i = 0; i < ggml_backend_remoting_get_device_count(); i++) {
-                ggml_backend_remoting_device_context * ctx       = new ggml_backend_remoting_device_context;
-                char                                   desc[256] = "ggml-virtgpu API Remoting device";
+        ଯଦି (!initialized) {
+            ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < ggml_backend_remoting_get_device_ଗଣନା(); i++) {
+                ggml_backend_remoting_device_context * ctx       = ନୂତନ ggml_backend_remoting_device_context;
+                ଅକ୍ଷର                                   desc[256] = "ggml-virtgpu API Remoting device";
 
                 ctx->device      = i;
                 ctx->name        = GGML_VIRTGPU_NAME + std::to_string(i);
                 ctx->description = desc;
                 ctx->gpu         = gpu;
 
-                ggml_backend_dev_t dev = new ggml_backend_device{
+                ggml_backend_dev_t dev = ନୂତନ ggml_backend_device{
                     /* .iface   = */ ggml_backend_remoting_device_interface,
                     /* .reg     = */ reg,
                     /* .context = */ ctx,
                 };
                 devices.push_back(dev);
             }
-            initialized = true;
+            initialized = ସତ୍ୟ;
         }
     }
 }
 
-static ggml_backend_dev_t ggml_backend_remoting_reg_get_device(ggml_backend_reg_t reg, size_t device) {
+ସ୍ଥିର ggml_backend_dev_t ggml_backend_remoting_reg_get_device(ggml_backend_reg_t reg, size_t device) {
     UNUSED(reg);
 
-    return ggml_backend_remoting_get_device(device);
+    ଫେରନ୍ତୁ ggml_backend_remoting_get_device(device);
 }
 
-static const char * ggml_backend_remoting_reg_get_name(ggml_backend_reg_t reg) {
+ସ୍ଥିର ଅଚଳ ଅକ୍ଷର * ggml_backend_remoting_reg_get_name(ggml_backend_reg_t reg) {
     UNUSED(reg);
 
-    return GGML_VIRTGPU_NAME;
+    ଫେରନ୍ତୁ GGML_VIRTGPU_NAME;
 }
 
-static const ggml_backend_reg_i ggml_backend_remoting_reg_i = {
+ସ୍ଥିର ଅଚଳ ggml_backend_reg_i ggml_backend_remoting_reg_i = {
     /* .get_name         = */ ggml_backend_remoting_reg_get_name,
-    /* .get_device_count = */ ggml_backend_remoting_reg_get_device_count,
+    /* .get_device_count = */ ggml_backend_remoting_reg_get_device_ଗଣନା,
     /* .get_device       = */ ggml_backend_remoting_reg_get_device,
-    /* .get_proc_address = */ NULL,
+    /* .get_proc_address = */ ଖାଲି,
 };
 
 ggml_backend_reg_t ggml_backend_virtgpu_reg() {
     virtgpu * gpu = apir_initialize();
-    if (!gpu) {
+    ଯଦି (!gpu) {
         GGML_LOG_ERROR(GGML_VIRTGPU "%s: virtgpu_apir_initialize failed\n", __func__);
     }
 
-    static ggml_backend_reg reg = {
+    ସ୍ଥିର ggml_backend_reg reg = {
         /* .api_version = */ GGML_BACKEND_API_VERSION,
         /* .iface       = */ ggml_backend_remoting_reg_i,
         /* .context     = */ gpu,
     };
 
-    static bool initialized = false;
-    if (initialized) {
-        return &reg;
+    ସ୍ଥିର ତାର୍କିକ initialized = ମିଥ୍ୟା;
+    ଯଦି (initialized) {
+        ଫେରନ୍ତୁ &reg;
     }
-    initialized = true;
+    initialized = ସତ୍ୟ;
 
     ggml_backend_remoting_reg_init_devices(&reg);
 
-    return &reg;
+    ଫେରନ୍ତୁ &reg;
 }
 
 // public function, not exposed in the GGML interface at the moment
-void ggml_virtgpu_cleanup(virtgpu * gpu) {
-    if (gpu->cached_device_info.name) {
-        free(gpu->cached_device_info.name);
-        gpu->cached_device_info.name = NULL;
+ଶୂନ୍ୟ ggml_virtgpu_cleanup(virtgpu * gpu) {
+    ଯଦି (gpu->cached_device_info.name) {
+        ମୁକ୍ତ(gpu->cached_device_info.name);
+        gpu->cached_device_info.name = ଖାଲି;
     }
-    if (gpu->cached_device_info.description) {
-        free(gpu->cached_device_info.description);
-        gpu->cached_device_info.description = NULL;
+    ଯଦି (gpu->cached_device_info.description) {
+        ମୁକ୍ତ(gpu->cached_device_info.description);
+        gpu->cached_device_info.description = ଖାଲି;
     }
-    if (gpu->cached_buffer_type.name) {
-        free(gpu->cached_buffer_type.name);
-        gpu->cached_buffer_type.name = NULL;
+    ଯଦି (gpu->cached_buffer_type.name) {
+        ମୁକ୍ତ(gpu->cached_buffer_type.name);
+        gpu->cached_buffer_type.name = ଖାଲି;
     }
 
     mtx_destroy(&gpu->data_shmem_mutex);

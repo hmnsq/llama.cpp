@@ -1,13 +1,13 @@
 #pragma once
 
-#include "ggml.h"
+#ଅନ୍ତର୍ଭାଵ "ggml.h"
 
 #ifdef __cplusplus
-extern "C" {
+ବାହ୍ୟ "C" {
 #endif
 
-GGML_API void ggml_critical_section_start(void);
-GGML_API void ggml_critical_section_end(void);
+GGML_API ଶୂନ୍ୟ ggml_critical_section_start(ଶୂନ୍ୟ);
+GGML_API ଶୂନ୍ୟ ggml_critical_section_end(ଶୂନ୍ୟ);
 
 #ifdef __cplusplus
 }

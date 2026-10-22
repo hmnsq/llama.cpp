@@ -3,288 +3,288 @@
 //
 
 // KleidiAI micro-kernels
-#include <cstddef>
+#ଅନ୍ତର୍ଭାଵ <cstddef>
 
-#include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_interface.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp_qsi8cxp_interface.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x8_qsi4c32p4x8_1x4x32_neon_dotprod.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p4x4_qsi4c32p4x4_16x4_neon_dotprod.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p4x8_qsi4c32p4x8_16x4_neon_i8mm.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot.h"
-#include "kai/ukernels/matmul/matmul_clamp_fp32_bf16p_bf16p/kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme_mopa.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme_dot.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4x4_1x4_neon_dotprod.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp4x4_qsi8cxp4x4_16x4_neon_dotprod.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p4x8_qsi4c32p8x8_16x8_sve_i8mm.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x8_qsi4c32p8x8_1x8_sve_dotprod.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_f16p_qsi4c32p/kai_matmul_clamp_f32_f16p1vlx2_qsi4c32p4vlx2_1vlx4vl_sme2_mopa.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p2vlx1b_1x16vl_sme2_mla.h"
-#include "kai/ukernels/matmul/matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_interface.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp_qsi8cxp_interface.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x8_qsi4c32p4x8_1x4x32_neon_dotprod.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p4x4_qsi4c32p4x4_16x4_neon_dotprod.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p4x8_qsi4c32p4x8_16x4_neon_i8mm.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/matmul_clamp_fp32_bf16p_bf16p/kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme_mopa.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme_dot.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4x4_1x4_neon_dotprod.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp4x4_qsi8cxp4x4_16x4_neon_dotprod.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/matmul_clamp_f32_qai8dxp_qsi8cxp/kai_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p4x8_qsi4c32p8x8_16x8_sve_i8mm.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/matmul_clamp_f32_qsi8d32p_qsi4c32p/kai_matmul_clamp_f32_qsi8d32p1x8_qsi4c32p8x8_1x8_sve_dotprod.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/matmul_clamp_f32_f16p_qsi4c32p/kai_matmul_clamp_f32_f16p1vlx2_qsi4c32p4vlx2_1vlx4vl_sme2_mopa.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1biasf32_sme2_mopa.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/matmul_clamp_f32_f32_f32p/kai_matmul_clamp_f32_f32_f32p2vlx1b_1x16vl_sme2_mla.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/matmul_clamp_f32_f32p_f32p/kai_matmul_clamp_f32_f32p2vlx1_f32p2vlx1b_2vlx2vl_sme_mopa.h"
 
-#include "kai/ukernels/matmul/pack/kai_lhs_pack_bf16p2vlx2_f32_sme.h"
-#include "kai/ukernels/matmul/pack/kai_lhs_pack_f32p2vlx1_f32_sme.h"
-#include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qsi8d32p_f32.h"
-#include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qsi8d32p4x8sb_f32_neon.h"
-#include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qsi8d32p_f32_neon.h"
-#include "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp_f32.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/pack/kai_lhs_pack_bf16p2vlx2_f32_sme.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/pack/kai_lhs_pack_f32p2vlx1_f32_sme.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qsi8d32p_f32.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qsi8d32p4x8sb_f32_neon.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qsi8d32p_f32_neon.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/pack/kai_lhs_quant_pack_qai8dxp_f32.h"
 
-#include "kai/ukernels/matmul/kai_matmul.h"
-#include "kai/ukernels/matmul/kai_matmul_pack_lhs.h"
-#include "kai/ukernels/matmul/kai_matmul_pack_rhs.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/kai_matmul.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/kai_matmul_pack_lhs.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/kai_matmul_pack_rhs.h"
 
-#include "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_bf16p2vlx2b_f32_x32_sme.h"
-#include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_f32p2vlx1biasf32_f32_f32_sme.h"
-#include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0.h"
-#include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon.h"
-#include "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon.h"
-#include "kai/ukernels/matmul/pack/kai_lhs_pack_f16pmrx2_f32_neon.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/pack/kai_rhs_pack_kxn_bf16p2vlx2b_f32_x32_sme.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_f32p2vlx1biasf32_f32_f32_sme.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/pack/kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon.h"
+#ଅନ୍ତର୍ଭାଵ "kai/ukernels/matmul/pack/kai_lhs_pack_f16pmrx2_f32_neon.h"
 
-#include "kai/kai_common.h"
+#ଅନ୍ତର୍ଭାଵ "kai/kai_common.h"
 
 #define GGML_COMMON_DECL_CPP
-#include "ggml-common.h"
+#ଅନ୍ତର୍ଭାଵ "ggml-common.h"
 
-#include "kernels.h"
+#ଅନ୍ତର୍ଭାଵ "kernels.h"
 
-#define NELEMS(x) (sizeof(x) / sizeof(*x))
+#define NELEMS(x) (ଆକାର(x) / ଆକାର(*x))
 
 template<size_t(*Fn)(size_t,size_t,size_t)>
-static inline size_t kernel_offs_fn3(size_t a, size_t b, size_t c) {
-    return Fn(a, b, c);
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ size_t kernel_offs_fn3(size_t a, size_t b, size_t c) {
+    ଫେରନ୍ତୁ Fn(a, b, c);
 }
 
 template<size_t(*Fn)(size_t,size_t)>
-static inline size_t kernel_offs_fn2(size_t a, size_t b, size_t) {
-    return Fn(a, b);
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ size_t kernel_offs_fn2(size_t a, size_t b, size_t) {
+    ଫେରନ୍ତୁ Fn(a, b);
 }
 
-template<void(*Fn)(size_t,size_t,size_t,size_t,const void*,const void*,float*,size_t,size_t,float,float)>
-static inline void kernel_run_fn11(size_t m, size_t n, size_t k, size_t bl,
-                                     const void* lhs, const void* rhs, void* dst,
+template<ଶୂନ୍ୟ(*Fn)(size_t,size_t,size_t,size_t,ଅଚଳ ଶୂନ୍ୟ*,ଅଚଳ ଶୂନ୍ୟ*,ଦଶମିକ*,size_t,size_t,ଦଶମିକ,ଦଶମିକ)>
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଶୂନ୍ୟ kernel_run_fn11(size_t m, size_t n, size_t k, size_t bl,
+                                     ଅଚଳ ଶୂନ୍ୟ* lhs, ଅଚଳ ଶୂନ୍ୟ* rhs, ଶୂନ୍ୟ* dst,
                                      size_t dst_stride_row, size_t dst_stride_col,
-                                     float clamp_min, float clamp_max) {
-    Fn(m, n, k, bl, lhs, rhs, static_cast<float*>(dst), dst_stride_row, dst_stride_col, clamp_min, clamp_max);
+                                     ଦଶମିକ clamp_min, ଦଶମିକ clamp_max) {
+    Fn(m, n, k, bl, lhs, rhs, static_cast<ଦଶମିକ*>(dst), dst_stride_row, dst_stride_col, clamp_min, clamp_max);
 }
 
-template<void(*Fn)(size_t,size_t,size_t,const void*,const void*,void*,size_t,size_t,float,float)>
-static inline void kernel_run_fn10(size_t m, size_t n, size_t k, size_t /*bl*/,
-                                   const void* lhs, const void* rhs, void* dst,
+template<ଶୂନ୍ୟ(*Fn)(size_t,size_t,size_t,ଅଚଳ ଶୂନ୍ୟ*,ଅଚଳ ଶୂନ୍ୟ*,ଶୂନ୍ୟ*,size_t,size_t,ଦଶମିକ,ଦଶମିକ)>
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଶୂନ୍ୟ kernel_run_fn10(size_t m, size_t n, size_t k, size_t /*bl*/,
+                                   ଅଚଳ ଶୂନ୍ୟ* lhs, ଅଚଳ ଶୂନ୍ୟ* rhs, ଶୂନ୍ୟ* dst,
                                    size_t dst_stride_row, size_t dst_stride_col,
-                                   float clamp_min, float clamp_max) {
+                                   ଦଶମିକ clamp_min, ଦଶମିକ clamp_max) {
     Fn(m, n, k, lhs, rhs, dst, dst_stride_row, dst_stride_col, clamp_min, clamp_max);
 }
 
-template <void (*Fn)(size_t, size_t, size_t, const void *, size_t, const void *, void *, size_t, size_t, float, float)>
-static inline void kernel_run_lhs_stride_fn10(size_t       m,
+template <ଶୂନ୍ୟ (*Fn)(size_t, size_t, size_t, ଅଚଳ ଶୂନ୍ୟ *, size_t, ଅଚଳ ଶୂନ୍ୟ *, ଶୂନ୍ୟ *, size_t, size_t, ଦଶମିକ, ଦଶମିକ)>
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଶୂନ୍ୟ kernel_run_lhs_stride_fn10(size_t       m,
                                               size_t       n,
                                               size_t       k,
                                               size_t       lhs_stride,
-                                              const void * lhs,
-                                              const void * rhs,
-                                              void *       dst,
+                                              ଅଚଳ ଶୂନ୍ୟ * lhs,
+                                              ଅଚଳ ଶୂନ୍ୟ * rhs,
+                                              ଶୂନ୍ୟ *       dst,
                                               size_t       dst_stride_row,
                                               size_t       dst_stride_col,
-                                              float        clamp_min,
-                                              float        clamp_max) {
+                                              ଦଶମିକ        clamp_min,
+                                              ଦଶମିକ        clamp_max) {
     Fn(m, n, k, lhs, lhs_stride, rhs, dst, dst_stride_row, dst_stride_col, clamp_min, clamp_max);
 }
 
-template<void(*Fn)(size_t,size_t,size_t,const void*,const void*,float*,size_t,size_t,float,float)>
-static inline void kernel_run_float_fn10(size_t m, size_t n, size_t k, size_t /*bl*/,
-                                         const void* lhs, const void* rhs, void* dst,
+template<ଶୂନ୍ୟ(*Fn)(size_t,size_t,size_t,ଅଚଳ ଶୂନ୍ୟ*,ଅଚଳ ଶୂନ୍ୟ*,ଦଶମିକ*,size_t,size_t,ଦଶମିକ,ଦଶମିକ)>
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଶୂନ୍ୟ kernel_run_float_fn10(size_t m, size_t n, size_t k, size_t /*bl*/,
+                                         ଅଚଳ ଶୂନ୍ୟ* lhs, ଅଚଳ ଶୂନ୍ୟ* rhs, ଶୂନ୍ୟ* dst,
                                          size_t dst_stride_row, size_t dst_stride_col,
-                                         float clamp_min, float clamp_max) {
-    Fn(m, n, k, lhs, rhs, static_cast<float*>(dst), dst_stride_row, dst_stride_col, clamp_min, clamp_max);
+                                         ଦଶମିକ clamp_min, ଦଶମିକ clamp_max) {
+    Fn(m, n, k, lhs, rhs, static_cast<ଦଶମିକ*>(dst), dst_stride_row, dst_stride_col, clamp_min, clamp_max);
 }
 
 template<size_t(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t)>
-static inline size_t lhs_ps_fn6(size_t m, size_t k, size_t bl, size_t mr, size_t kr, size_t sr) {
-    return Fn(m, k, bl, mr, kr, sr);
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ size_t lhs_ps_fn6(size_t m, size_t k, size_t bl, size_t mr, size_t kr, size_t sr) {
+    ଫେରନ୍ତୁ Fn(m, k, bl, mr, kr, sr);
 }
 
 template<size_t(*Fn)(size_t,size_t,size_t,size_t,size_t)>
-static inline size_t lhs_ps_fn5(size_t m, size_t k, size_t /*bl*/, size_t mr, size_t kr, size_t sr) {
-    return Fn(m, k, mr, kr, sr);
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ size_t lhs_ps_fn5(size_t m, size_t k, size_t /*bl*/, size_t mr, size_t kr, size_t sr) {
+    ଫେରନ୍ତୁ Fn(m, k, mr, kr, sr);
 }
 
 template<size_t(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t)>
-static inline size_t lhs_offs_fn6(size_t m_idx, size_t k, size_t bl, size_t mr, size_t kr, size_t sr) {
-    return Fn(m_idx, k, bl, mr, kr, sr);
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ size_t lhs_offs_fn6(size_t m_idx, size_t k, size_t bl, size_t mr, size_t kr, size_t sr) {
+    ଫେରନ୍ତୁ Fn(m_idx, k, bl, mr, kr, sr);
 }
 
 template<size_t(*Fn)(size_t,size_t,size_t,size_t,size_t)>
-static inline size_t lhs_offs_fn5(size_t m_idx, size_t k, size_t /*bl*/, size_t mr, size_t kr, size_t sr) {
-    return Fn(m_idx, k, mr, kr, sr);
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ size_t lhs_offs_fn5(size_t m_idx, size_t k, size_t /*bl*/, size_t mr, size_t kr, size_t sr) {
+    ଫେରନ୍ତୁ Fn(m_idx, k, mr, kr, sr);
 }
 
-template<void(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t,size_t,const float*,size_t,void*)>
-static inline void lhs_pack_float_fn10(size_t m, size_t k, size_t bl, size_t mr, size_t kr, size_t sr,
-                                            size_t m_idx_start, const void* lhs, size_t lhs_stride, void* lhs_packed) {
-    Fn(m, k, bl, mr, kr, sr, m_idx_start, static_cast<const float*>(lhs), lhs_stride, lhs_packed);
+template<ଶୂନ୍ୟ(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t,size_t,ଅଚଳ ଦଶମିକ*,size_t,ଶୂନ୍ୟ*)>
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଶୂନ୍ୟ lhs_pack_float_fn10(size_t m, size_t k, size_t bl, size_t mr, size_t kr, size_t sr,
+                                            size_t m_idx_start, ଅଚଳ ଶୂନ୍ୟ* lhs, size_t lhs_stride, ଶୂନ୍ୟ* lhs_packed) {
+    Fn(m, k, bl, mr, kr, sr, m_idx_start, static_cast<ଅଚଳ ଦଶମିକ*>(lhs), lhs_stride, lhs_packed);
 }
 
-template<void(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t,size_t,const void*,size_t,void*)>
-static inline void lhs_pack_void_fn10(size_t m, size_t k, size_t bl, size_t mr, size_t kr, size_t sr,
-                                           size_t m_idx_start, const void* lhs, size_t lhs_stride, void* lhs_packed) {
+template<ଶୂନ୍ୟ(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t,size_t,ଅଚଳ ଶୂନ୍ୟ*,size_t,ଶୂନ୍ୟ*)>
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଶୂନ୍ୟ lhs_pack_void_fn10(size_t m, size_t k, size_t bl, size_t mr, size_t kr, size_t sr,
+                                           size_t m_idx_start, ଅଚଳ ଶୂନ୍ୟ* lhs, size_t lhs_stride, ଶୂନ୍ୟ* lhs_packed) {
     Fn(m, k, bl, mr, kr, sr, m_idx_start, lhs, lhs_stride, lhs_packed);
 }
 
-template<void(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t,const void*,size_t,void*)>
-static inline void lhs_pack_void_fn9(size_t m, size_t k, size_t /*bl*/, size_t mr, size_t kr, size_t sr,
-                                             size_t m_idx_start, const void* lhs, size_t lhs_stride, void* lhs_packed) {
+template<ଶୂନ୍ୟ(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t,ଅଚଳ ଶୂନ୍ୟ*,size_t,ଶୂନ୍ୟ*)>
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଶୂନ୍ୟ lhs_pack_void_fn9(size_t m, size_t k, size_t /*bl*/, size_t mr, size_t kr, size_t sr,
+                                             size_t m_idx_start, ଅଚଳ ଶୂନ୍ୟ* lhs, size_t lhs_stride, ଶୂନ୍ୟ* lhs_packed) {
     Fn(m, k, mr, kr, sr, m_idx_start, lhs, lhs_stride, lhs_packed);
 }
 
-template<void(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t,const float*,size_t,void*)>
-static inline void lhs_pack_float_fn9_no_bl(size_t m, size_t k, size_t /*bl*/, size_t mr, size_t kr, size_t sr,
-                                            size_t m_idx_start, const void * lhs, size_t lhs_stride, void * lhs_packed) {
-    Fn(m, k, mr, kr, sr, m_idx_start, static_cast<const float*>(lhs), lhs_stride, lhs_packed);
+template<ଶୂନ୍ୟ(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t,ଅଚଳ ଦଶମିକ*,size_t,ଶୂନ୍ୟ*)>
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଶୂନ୍ୟ lhs_pack_float_fn9_no_bl(size_t m, size_t k, size_t /*bl*/, size_t mr, size_t kr, size_t sr,
+                                            size_t m_idx_start, ଅଚଳ ଶୂନ୍ୟ * lhs, size_t lhs_stride, ଶୂନ୍ୟ * lhs_packed) {
+    Fn(m, k, mr, kr, sr, m_idx_start, static_cast<ଅଚଳ ଦଶମିକ*>(lhs), lhs_stride, lhs_packed);
 }
 
 template<size_t(*Fn)(size_t,size_t,size_t,size_t,size_t)>
-static inline size_t rhs_ps_fn5(size_t n, size_t k, size_t nr, size_t kr, size_t bl) {
-    return Fn(n, k, nr, kr, bl);
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ size_t rhs_ps_fn5(size_t n, size_t k, size_t nr, size_t kr, size_t bl) {
+    ଫେରନ୍ତୁ Fn(n, k, nr, kr, bl);
 }
 
 template<size_t(*Fn)(size_t,size_t)>
-static inline size_t rhs_ps_fn2(size_t n, size_t k, size_t /*nr*/, size_t /*kr*/, size_t /*bl*/) {
-    return Fn(n, k);
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ size_t rhs_ps_fn2(size_t n, size_t k, size_t /*nr*/, size_t /*kr*/, size_t /*bl*/) {
+    ଫେରନ୍ତୁ Fn(n, k);
 }
 
-template<void(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t,size_t,const uint8_t*,const float*,void*,size_t,const struct kai_rhs_pack_qs4cxs1s0_param*)>
-static inline void rhs_pack_fn12(size_t num_groups, size_t n, size_t k, size_t nr, size_t kr, size_t sr, size_t bl,
-                                      size_t /*rhs_stride*/, const void* rhs, const void* bias, const void* /*scale*/,
-                                      void* rhs_packed, size_t extra_bytes, const void* params) {
-    Fn(num_groups, n, k, nr, kr, sr, bl,
-       static_cast<const uint8_t*>(rhs),
-       static_cast<const float*>(bias),
+template<ଶୂନ୍ୟ(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t,size_t,ଅଚଳ uint8_t*,ଅଚଳ ଦଶମିକ*,ଶୂନ୍ୟ*,size_t,ଅଚଳ ସଂରଚନା kai_rhs_pack_qs4cxs1s0_param*)>
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଶୂନ୍ୟ rhs_pack_fn12(size_t ଅଙ୍କ_groups, size_t n, size_t k, size_t nr, size_t kr, size_t sr, size_t bl,
+                                      size_t /*rhs_stride*/, ଅଚଳ ଶୂନ୍ୟ* rhs, ଅଚଳ ଶୂନ୍ୟ* bias, ଅଚଳ ଶୂନ୍ୟ* /*scale*/,
+                                      ଶୂନ୍ୟ* rhs_packed, size_t extra_bytes, ଅଚଳ ଶୂନ୍ୟ* params) {
+    Fn(ଅଙ୍କ_groups, n, k, nr, kr, sr, bl,
+       static_cast<ଅଚଳ uint8_t*>(rhs),
+       static_cast<ଅଚଳ ଦଶମିକ*>(bias),
        rhs_packed, extra_bytes,
-       static_cast<const kai_rhs_pack_qs4cxs1s0_param*>(params));
+       static_cast<ଅଚଳ kai_rhs_pack_qs4cxs1s0_param*>(params));
 }
 
-template<void(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t,const int8_t*,const float*,const float*,void*,size_t,const struct kai_rhs_pack_qsi8cx_params*)>
-static inline void rhs_pack_scale_fn12(size_t num_groups, size_t n, size_t k, size_t nr, size_t kr, size_t sr, size_t /*bl*/,
-                                       size_t /*rhs_stride*/, const void* rhs, const void* bias, const void* scale,
-                                       void* rhs_packed, size_t extra_bytes, const void* params) {
-    Fn(num_groups, n, k, nr, kr, sr,
-       static_cast<const int8_t*>(rhs),
-       static_cast<const float*>(bias),
-       static_cast<const float*>(scale),
+template<ଶୂନ୍ୟ(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t,ଅଚଳ int8_t*,ଅଚଳ ଦଶମିକ*,ଅଚଳ ଦଶମିକ*,ଶୂନ୍ୟ*,size_t,ଅଚଳ ସଂରଚନା kai_rhs_pack_qsi8cx_params*)>
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଶୂନ୍ୟ rhs_pack_scale_fn12(size_t ଅଙ୍କ_groups, size_t n, size_t k, size_t nr, size_t kr, size_t sr, size_t /*bl*/,
+                                       size_t /*rhs_stride*/, ଅଚଳ ଶୂନ୍ୟ* rhs, ଅଚଳ ଶୂନ୍ୟ* bias, ଅଚଳ ଶୂନ୍ୟ* scale,
+                                       ଶୂନ୍ୟ* rhs_packed, size_t extra_bytes, ଅଚଳ ଶୂନ୍ୟ* params) {
+    Fn(ଅଙ୍କ_groups, n, k, nr, kr, sr,
+       static_cast<ଅଚଳ int8_t*>(rhs),
+       static_cast<ଅଚଳ ଦଶମିକ*>(bias),
+       static_cast<ଅଚଳ ଦଶମିକ*>(scale),
        rhs_packed, extra_bytes,
-       static_cast<const kai_rhs_pack_qsi8cx_params*>(params));
+       static_cast<ଅଚଳ kai_rhs_pack_qsi8cx_params*>(params));
 }
 
-template<void(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t,size_t,const void*,const void*,const void*,void*,size_t,const void*)>
-static inline void rhs_pack_fn13(size_t num_groups, size_t n, size_t k, size_t nr, size_t kr, size_t sr, size_t /*bl*/,
-                                               size_t rhs_stride, const void* rhs, const void* bias, const void* scale,
-                                               void* rhs_packed, size_t extra_bytes, const void* params) {
-    Fn(num_groups, n, k, nr, kr, sr, rhs_stride, rhs, bias, scale, rhs_packed, extra_bytes, params);
+template<ଶୂନ୍ୟ(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t,size_t,ଅଚଳ ଶୂନ୍ୟ*,ଅଚଳ ଶୂନ୍ୟ*,ଅଚଳ ଶୂନ୍ୟ*,ଶୂନ୍ୟ*,size_t,ଅଚଳ ଶୂନ୍ୟ*)>
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଶୂନ୍ୟ rhs_pack_fn13(size_t ଅଙ୍କ_groups, size_t n, size_t k, size_t nr, size_t kr, size_t sr, size_t /*bl*/,
+                                               size_t rhs_stride, ଅଚଳ ଶୂନ୍ୟ* rhs, ଅଚଳ ଶୂନ୍ୟ* bias, ଅଚଳ ଶୂନ୍ୟ* scale,
+                                               ଶୂନ୍ୟ* rhs_packed, size_t extra_bytes, ଅଚଳ ଶୂନ୍ୟ* params) {
+    Fn(ଅଙ୍କ_groups, n, k, nr, kr, sr, rhs_stride, rhs, bias, scale, rhs_packed, extra_bytes, params);
 }
 
-static constexpr size_t KLEIDIAI_Q4_K_BLOCK_LENGTH = QK_K / 8;
+ସ୍ଥିର constexpr size_t KLEIDIAI_Q4_K_BLOCK_LENGTH = QK_K / 8;
 
 static_assert(QK_K == 256, "KleidiAI Q4_K kernels require 256-value super-blocks");
-static_assert(sizeof(block_q4_K) == 144, "Unexpected ggml Q4_K block layout");
+static_assert(ଆକାର(block_q4_K) == 144, "Unexpected ggml Q4_K block layout");
 static_assert(offsetof(block_q4_K, scales) == 4, "Unexpected ggml Q4_K metadata offset");
 static_assert(offsetof(block_q4_K, qs) == 16, "Unexpected ggml Q4_K data offset");
 
-static struct kai_matmul_uker_config q4_k_matmul_config() {
-    struct kai_matmul_uker_config config = {};
+ସ୍ଥିର ସଂରଚନା kai_matmul_uker_config q4_k_matmul_config() {
+    ସଂରଚନା kai_matmul_uker_config config = {};
     config.format.bl = KLEIDIAI_Q4_K_BLOCK_LENGTH;
-    return config;
+    ଫେରନ୍ତୁ config;
 }
 
-static struct kai_matmul_uker_config default_matmul_config() {
-    return {};
+ସ୍ଥିର ସଂରଚନା kai_matmul_uker_config default_matmul_config() {
+    ଫେରନ୍ତୁ {};
 }
 
 template<
-        struct kai_matmul_uker_api (*GetApi)(void),
-        struct kai_matmul_uker_config (*GetConfig)(void),
+        ସଂରଚନା kai_matmul_uker_api (*GetApi)(ଶୂନ୍ୟ),
+        ସଂରଚନା kai_matmul_uker_config (*GetConfig)(ଶୂନ୍ୟ),
         size_t MR, size_t NR, size_t KR, size_t SR>
-struct matmul_uker_adapter {
-    static size_t get_m_step() {
-        const struct kai_matmul_uker_api api = GetApi();
-        const struct kai_matmul_uker_config config = GetConfig();
-        return api.get_step(&config).m;
+ସଂରଚନା matmul_uker_adapter {
+    ସ୍ଥିର size_t get_m_step() {
+        ଅଚଳ ସଂରଚନା kai_matmul_uker_api api = GetApi();
+        ଅଚଳ ସଂରଚନା kai_matmul_uker_config config = GetConfig();
+        ଫେରନ୍ତୁ api.get_step(&config).m;
     }
 
-    static size_t get_n_step() {
-        const struct kai_matmul_uker_api api = GetApi();
-        const struct kai_matmul_uker_config config = GetConfig();
-        return api.get_step(&config).n;
+    ସ୍ଥିର size_t get_n_step() {
+        ଅଚଳ ସଂରଚନା kai_matmul_uker_api api = GetApi();
+        ଅଚଳ ସଂରଚନା kai_matmul_uker_config config = GetConfig();
+        ଫେରନ୍ତୁ api.get_step(&config).n;
     }
 
-    static size_t get_mr() {
-        if constexpr (MR == 0) {
-            return get_m_step();
+    ସ୍ଥିର size_t get_mr() {
+        ଯଦି constexpr (MR == 0) {
+            ଫେରନ୍ତୁ get_m_step();
         }
-        return MR;
+        ଫେରନ୍ତୁ MR;
     }
 
-    static size_t get_nr() {
-        if constexpr (NR == 0) {
-            return get_n_step();
+    ସ୍ଥିର size_t get_nr() {
+        ଯଦି constexpr (NR == 0) {
+            ଫେରନ୍ତୁ get_n_step();
         }
-        return NR;
+        ଫେରନ୍ତୁ NR;
     }
 
-    static size_t get_kr() {
-        return KR;
+    ସ୍ଥିର size_t get_kr() {
+        ଫେରନ୍ତୁ KR;
     }
 
-    static size_t get_sr() {
-        return SR;
+    ସ୍ଥିର size_t get_sr() {
+        ଫେରନ୍ତୁ SR;
     }
 
-    static size_t get_dst_offset(size_t m_idx, size_t n_idx, size_t dst_stride) {
-        const struct kai_matmul_uker_api api = GetApi();
-        const struct kai_matmul_uker_config config = GetConfig();
-        const struct kai_matmul_uker_dst_dim_args index = { m_idx, n_idx };
-        const struct kai_matmul_uker_dst_stride_args stride = { dst_stride };
-        return api.get_dst_offset(&config, &index, &stride);
+    ସ୍ଥିର size_t get_dst_offset(size_t m_idx, size_t n_idx, size_t dst_stride) {
+        ଅଚଳ ସଂରଚନା kai_matmul_uker_api api = GetApi();
+        ଅଚଳ ସଂରଚନା kai_matmul_uker_config config = GetConfig();
+        ଅଚଳ ସଂରଚନା kai_matmul_uker_dst_dim_args index = { m_idx, n_idx };
+        ଅଚଳ ସଂରଚନା kai_matmul_uker_dst_stride_args stride = { dst_stride };
+        ଫେରନ୍ତୁ api.get_dst_offset(&config, &index, &stride);
     }
 
-    static size_t get_lhs_packed_offset(size_t m_idx, size_t k, size_t bl) {
-        const struct kai_matmul_uker_api api = GetApi();
-        const struct kai_matmul_uker_config config = GetConfig();
+    ସ୍ଥିର size_t get_lhs_packed_offset(size_t m_idx, size_t k, size_t bl) {
+        ଅଚଳ ସଂରଚନା kai_matmul_uker_api api = GetApi();
+        ଅଚଳ ସଂରଚନା kai_matmul_uker_config config = GetConfig();
         GGML_ASSERT(bl == config.format.bl);
-        const struct kai_matmul_uker_lhs_dim_args shape = { m_idx, k };
-        const struct kai_matmul_uker_lhs_dim_args index = { m_idx, 0 };
-        const struct kai_matmul_uker_lhs_stride_args stride = api.get_lhs_stride(&config, &shape);
-        return api.get_lhs_offset(&config, &index, &stride);
+        ଅଚଳ ସଂରଚନା kai_matmul_uker_lhs_dim_args shape = { m_idx, k };
+        ଅଚଳ ସଂରଚନା kai_matmul_uker_lhs_dim_args index = { m_idx, 0 };
+        ଅଚଳ ସଂରଚନା kai_matmul_uker_lhs_stride_args stride = api.get_lhs_stride(&config, &shape);
+        ଫେରନ୍ତୁ api.get_lhs_offset(&config, &index, &stride);
     }
 
-    static size_t get_rhs_packed_offset(size_t n_idx, size_t k, size_t bl) {
-        const struct kai_matmul_uker_api api = GetApi();
-        const struct kai_matmul_uker_config config = GetConfig();
+    ସ୍ଥିର size_t get_rhs_packed_offset(size_t n_idx, size_t k, size_t bl) {
+        ଅଚଳ ସଂରଚନା kai_matmul_uker_api api = GetApi();
+        ଅଚଳ ସଂରଚନା kai_matmul_uker_config config = GetConfig();
         GGML_ASSERT(bl == config.format.bl);
-        const struct kai_matmul_uker_rhs_dim_args shape = { n_idx, k };
-        const struct kai_matmul_uker_rhs_dim_args index = { n_idx, 0 };
-        const struct kai_matmul_uker_rhs_stride_args stride = api.get_rhs_stride(&config, &shape);
-        return api.get_rhs_offset(&config, &index, &stride);
+        ଅଚଳ ସଂରଚନା kai_matmul_uker_rhs_dim_args shape = { n_idx, k };
+        ଅଚଳ ସଂରଚନା kai_matmul_uker_rhs_dim_args index = { n_idx, 0 };
+        ଅଚଳ ସଂରଚନା kai_matmul_uker_rhs_stride_args stride = api.get_rhs_stride(&config, &shape);
+        ଫେରନ୍ତୁ api.get_rhs_offset(&config, &index, &stride);
     }
 
-    static void run(
+    ସ୍ଥିର ଶୂନ୍ୟ run(
             size_t m, size_t n, size_t k, size_t bl,
-            const void * lhs_packed, const void * rhs_packed,
-            void * dst, size_t dst_stride_row, size_t dst_stride_col,
-            float clamp_min, float clamp_max) {
-        const struct kai_matmul_uker_api api = GetApi();
-        const struct kai_matmul_uker_config config = GetConfig();
+            ଅଚଳ ଶୂନ୍ୟ * lhs_packed, ଅଚଳ ଶୂନ୍ୟ * rhs_packed,
+            ଶୂନ୍ୟ * dst, size_t dst_stride_row, size_t dst_stride_col,
+            ଦଶମିକ clamp_min, ଦଶମିକ clamp_max) {
+        ଅଚଳ ସଂରଚନା kai_matmul_uker_api api = GetApi();
+        ଅଚଳ ସଂରଚନା kai_matmul_uker_config config = GetConfig();
         GGML_ASSERT(bl == config.format.bl);
-        GGML_ASSERT(dst_stride_col == sizeof(float));
-        const struct kai_matmul_uker_lhs_dim_args lhs_shape = { m, k };
-        const struct kai_matmul_uker_rhs_dim_args rhs_shape = { n, k };
+        GGML_ASSERT(dst_stride_col == ଆକାର(ଦଶମିକ));
+        ଅଚଳ ସଂରଚନା kai_matmul_uker_lhs_dim_args lhs_shape = { m, k };
+        ଅଚଳ ସଂରଚନା kai_matmul_uker_rhs_dim_args rhs_shape = { n, k };
 
-        struct kai_matmul_uker_args args = {};
+        ସଂରଚନା kai_matmul_uker_args args = {};
         args.flags = KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP;
         args.shape = { m, n, k };
         args.operand.lhs.ptr = lhs_packed;
@@ -313,56 +313,56 @@ using sve_q8_gemv_adapter = matmul_uker_adapter<
     kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp8x8_1x8_sve_dot,
     default_matmul_config, 1, 8, 8, 1>;
 
-static struct kai_matmul_pack_lhs_uker_config q4_k_lhs_pack_config() {
-    struct kai_matmul_pack_lhs_uker_config config = {};
-    return config;
+ସ୍ଥିର ସଂରଚନା kai_matmul_pack_lhs_uker_config q4_k_lhs_pack_config() {
+    ସଂରଚନା kai_matmul_pack_lhs_uker_config config = {};
+    ଫେରନ୍ତୁ config;
 }
 
-static size_t q4_k_lhs_get_offset(size_t m_idx, size_t lhs_stride) {
-    const struct kai_matmul_pack_lhs_uker_api api = kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon();
-    const struct kai_matmul_pack_lhs_uker_config config = q4_k_lhs_pack_config();
-    const struct kai_matmul_pack_lhs_uker_lhs_dim_args index = { m_idx, 0 };
-    const struct kai_matmul_pack_lhs_uker_lhs_stride_args stride = { lhs_stride };
-    return api.get_lhs_offset(&config, &index, &stride);
+ସ୍ଥିର size_t q4_k_lhs_get_offset(size_t m_idx, size_t lhs_stride) {
+    ଅଚଳ ସଂରଚନା kai_matmul_pack_lhs_uker_api api = kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon();
+    ଅଚଳ ସଂରଚନା kai_matmul_pack_lhs_uker_config config = q4_k_lhs_pack_config();
+    ଅଚଳ ସଂରଚନା kai_matmul_pack_lhs_uker_lhs_dim_args index = { m_idx, 0 };
+    ଅଚଳ ସଂରଚନା kai_matmul_pack_lhs_uker_lhs_stride_args stride = { lhs_stride };
+    ଫେରନ୍ତୁ api.get_lhs_offset(&config, &index, &stride);
 }
 
-static size_t q4_k_lhs_get_packed_offset(
+ସ୍ଥିର size_t q4_k_lhs_get_packed_offset(
         size_t m_idx, size_t k, size_t bl, size_t mr, size_t kr, size_t sr) {
     GGML_ASSERT(bl == KLEIDIAI_Q4_K_BLOCK_LENGTH);
     GGML_ASSERT(mr == 1 && kr == 4 && sr == 2);
 
-    const struct kai_matmul_pack_lhs_uker_api api = kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon();
-    const struct kai_matmul_pack_lhs_uker_config config = q4_k_lhs_pack_config();
-    const struct kai_matmul_pack_lhs_uker_lhs_packed_dim_args shape = { m_idx, k };
-    const struct kai_matmul_pack_lhs_uker_lhs_packed_dim_args index = { m_idx, 0 };
-    const struct kai_matmul_pack_lhs_uker_lhs_packed_stride_args stride = api.get_lhs_packed_stride(&config, &shape);
-    return api.get_lhs_packed_offset(&config, &index, &stride);
+    ଅଚଳ ସଂରଚନା kai_matmul_pack_lhs_uker_api api = kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon();
+    ଅଚଳ ସଂରଚନା kai_matmul_pack_lhs_uker_config config = q4_k_lhs_pack_config();
+    ଅଚଳ ସଂରଚନା kai_matmul_pack_lhs_uker_lhs_packed_dim_args shape = { m_idx, k };
+    ଅଚଳ ସଂରଚନା kai_matmul_pack_lhs_uker_lhs_packed_dim_args index = { m_idx, 0 };
+    ଅଚଳ ସଂରଚନା kai_matmul_pack_lhs_uker_lhs_packed_stride_args stride = api.get_lhs_packed_stride(&config, &shape);
+    ଫେରନ୍ତୁ api.get_lhs_packed_offset(&config, &index, &stride);
 }
 
-static size_t q4_k_lhs_get_packed_size(
+ସ୍ଥିର size_t q4_k_lhs_get_packed_size(
         size_t m, size_t k, size_t bl, size_t mr, size_t kr, size_t sr) {
     GGML_ASSERT(bl == KLEIDIAI_Q4_K_BLOCK_LENGTH);
     GGML_ASSERT(mr == 1 && kr == 4 && sr == 2);
 
-    const struct kai_matmul_pack_lhs_uker_api api = kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon();
-    const struct kai_matmul_pack_lhs_uker_config config = q4_k_lhs_pack_config();
-    const struct kai_matmul_pack_lhs_uker_lhs_packed_dim_args shape = { m, k };
-    const struct kai_matmul_pack_lhs_uker_lhs_packed_stride_args stride = api.get_lhs_packed_stride(&config, &shape);
-    return api.get_lhs_packed_size(&config, &shape, &stride);
+    ଅଚଳ ସଂରଚନା kai_matmul_pack_lhs_uker_api api = kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon();
+    ଅଚଳ ସଂରଚନା kai_matmul_pack_lhs_uker_config config = q4_k_lhs_pack_config();
+    ଅଚଳ ସଂରଚନା kai_matmul_pack_lhs_uker_lhs_packed_dim_args shape = { m, k };
+    ଅଚଳ ସଂରଚନା kai_matmul_pack_lhs_uker_lhs_packed_stride_args stride = api.get_lhs_packed_stride(&config, &shape);
+    ଫେରନ୍ତୁ api.get_lhs_packed_size(&config, &shape, &stride);
 }
 
-static void q4_k_lhs_pack(
+ସ୍ଥିର ଶୂନ୍ୟ q4_k_lhs_pack(
         size_t m, size_t k, size_t bl, size_t mr, size_t kr, size_t sr,
-        size_t m_idx_start, const void * lhs, size_t lhs_stride, void * lhs_packed) {
+        size_t m_idx_start, ଅଚଳ ଶୂନ୍ୟ * lhs, size_t lhs_stride, ଶୂନ୍ୟ * lhs_packed) {
     GGML_ASSERT(bl == KLEIDIAI_Q4_K_BLOCK_LENGTH);
     GGML_ASSERT(mr == 1 && kr == 4 && sr == 2);
     GGML_ASSERT(m_idx_start == 0);
 
-    const struct kai_matmul_pack_lhs_uker_api api = kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon();
-    const struct kai_matmul_pack_lhs_uker_config config = q4_k_lhs_pack_config();
-    const struct kai_matmul_pack_lhs_uker_lhs_packed_dim_args packed_shape = { m, k };
+    ଅଚଳ ସଂରଚନା kai_matmul_pack_lhs_uker_api api = kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon();
+    ଅଚଳ ସଂରଚନା kai_matmul_pack_lhs_uker_config config = q4_k_lhs_pack_config();
+    ଅଚଳ ସଂରଚନା kai_matmul_pack_lhs_uker_lhs_packed_dim_args packed_shape = { m, k };
 
-    struct kai_matmul_pack_lhs_uker_args args = {};
+    ସଂରଚନା kai_matmul_pack_lhs_uker_args args = {};
     args.flags = 0;
     args.shape = { m, k };
     args.operand.lhs.ptr = lhs;
@@ -372,47 +372,47 @@ static void q4_k_lhs_pack(
     api.run(&config, &args);
 }
 
-static struct kai_matmul_pack_rhs_uker_config q4_k_rhs_pack_config() {
-    struct kai_matmul_pack_rhs_uker_config config = {};
-    return config;
+ସ୍ଥିର ସଂରଚନା kai_matmul_pack_rhs_uker_config q4_k_rhs_pack_config() {
+    ସଂରଚନା kai_matmul_pack_rhs_uker_config config = {};
+    ଫେରନ୍ତୁ config;
 }
 
-static size_t q4_k_rhs_get_packed_size(size_t n, size_t k, size_t nr, size_t /*kr*/, size_t bl) {
+ସ୍ଥିର size_t q4_k_rhs_get_packed_size(size_t n, size_t k, size_t nr, size_t /*kr*/, size_t bl) {
     GGML_ASSERT(bl == KLEIDIAI_Q4_K_BLOCK_LENGTH);
 
-    const struct kai_matmul_pack_rhs_uker_api api =
+    ଅଚଳ ସଂରଚନା kai_matmul_pack_rhs_uker_api api =
         kai_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme();
-    const struct kai_matmul_pack_rhs_uker_config config = q4_k_rhs_pack_config();
+    ଅଚଳ ସଂରଚନା kai_matmul_pack_rhs_uker_config config = q4_k_rhs_pack_config();
     GGML_ASSERT(api.get_step(&config).n == nr);
-    const struct kai_matmul_pack_rhs_uker_rhs_packed_dim_args shape = { n, k };
-    const struct kai_matmul_pack_rhs_uker_rhs_packed_stride_args stride = api.get_rhs_packed_stride(&config, &shape);
-    return api.get_rhs_packed_size(&config, &shape, &stride);
+    ଅଚଳ ସଂରଚନା kai_matmul_pack_rhs_uker_rhs_packed_dim_args shape = { n, k };
+    ଅଚଳ ସଂରଚନା kai_matmul_pack_rhs_uker_rhs_packed_stride_args stride = api.get_rhs_packed_stride(&config, &shape);
+    ଫେରନ୍ତୁ api.get_rhs_packed_size(&config, &shape, &stride);
 }
 
-static void q4_k_rhs_pack(
-        size_t num_groups, size_t n, size_t k, size_t nr, size_t /*kr*/, size_t /*sr*/, size_t bl,
-        size_t rhs_stride, const void * rhs, const void * bias, const void * scale,
-        void * rhs_packed, size_t extra_bytes, const void * params) {
-    GGML_ASSERT(num_groups == 1);
+ସ୍ଥିର ଶୂନ୍ୟ q4_k_rhs_pack(
+        size_t ଅଙ୍କ_groups, size_t n, size_t k, size_t nr, size_t /*kr*/, size_t /*sr*/, size_t bl,
+        size_t rhs_stride, ଅଚଳ ଶୂନ୍ୟ * rhs, ଅଚଳ ଶୂନ୍ୟ * bias, ଅଚଳ ଶୂନ୍ୟ * scale,
+        ଶୂନ୍ୟ * rhs_packed, size_t extra_bytes, ଅଚଳ ଶୂନ୍ୟ * params) {
+    GGML_ASSERT(ଅଙ୍କ_groups == 1);
     GGML_ASSERT(bl == KLEIDIAI_Q4_K_BLOCK_LENGTH);
     GGML_ASSERT(bias == nullptr);
     GGML_ASSERT(scale == nullptr);
     GGML_ASSERT(extra_bytes == 0);
     GGML_ASSERT(params == nullptr);
 
-    const struct kai_matmul_pack_rhs_uker_api api =
+    ଅଚଳ ସଂରଚନା kai_matmul_pack_rhs_uker_api api =
         kai_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme();
-    const struct kai_matmul_pack_rhs_uker_config config = q4_k_rhs_pack_config();
+    ଅଚଳ ସଂରଚନା kai_matmul_pack_rhs_uker_config config = q4_k_rhs_pack_config();
     GGML_ASSERT(api.get_step(&config).n == nr);
-    const struct kai_matmul_pack_rhs_uker_rhs_dim_args rhs_shape = { n, k };
-    const struct kai_matmul_pack_rhs_uker_rhs_packed_dim_args packed_shape = { n, k };
+    ଅଚଳ ସଂରଚନା kai_matmul_pack_rhs_uker_rhs_dim_args rhs_shape = { n, k };
+    ଅଚଳ ସଂରଚନା kai_matmul_pack_rhs_uker_rhs_packed_dim_args packed_shape = { n, k };
 
-    struct kai_matmul_pack_rhs_uker_args args = {};
+    ସଂରଚନା kai_matmul_pack_rhs_uker_args args = {};
     args.flags = 0;
     args.shape = { n, k };
     args.operand.rhs.ptr = rhs;
     args.operand.rhs.stride = api.get_rhs_stride(&config, &rhs_shape);
-    if (rhs_stride != 0) {
+    ଯଦି (rhs_stride != 0) {
         GGML_ASSERT(rhs_stride >= args.operand.rhs.stride.n);
         args.operand.rhs.stride.n = rhs_stride;
     }
@@ -421,7 +421,7 @@ static void q4_k_rhs_pack(
     api.run(&config, &args);
 }
 
-static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
+ସ୍ଥିର ggml_kleidiai_kernels gemm_gemv_kernels[] = {
     {
         /* SME2 GEMM */
         /* .kern_info = */ {
@@ -519,7 +519,7 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
         /* .rhs_type           = */ GGML_TYPE_F16,
         /* .op_type            = */ GGML_TYPE_F32,
     },
-#if defined(__APPLE__)
+#ଯଦି defined(__APPLE__)
     {
         /* DOTPROD GEMM */
         /* .kern_info = */ {
@@ -616,7 +616,7 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
         /* .rhs_type           = */ GGML_TYPE_Q4_0,
         /* .op_type            = */ GGML_TYPE_F32,
     },
-#else
+#ଅନ୍ୟଥା
     {
         /* SVE i8mm GEMM */
         /* .kern_info = */ {
@@ -765,7 +765,7 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
     { /* Sentinel */ }
 };
 
-static ggml_kleidiai_kernels gemm_gemv_kernels_q4_k[] = {
+ସ୍ଥିର ggml_kleidiai_kernels gemm_gemv_kernels_q4_k[] = {
     {
         /* SME2 GEMM */
         {
@@ -818,7 +818,7 @@ static ggml_kleidiai_kernels gemm_gemv_kernels_q4_k[] = {
     { /* Sentinel */ }
 };
 
-static ggml_kleidiai_kernels gemm_gemv_kernels_q8[] = {
+ସ୍ଥିର ggml_kleidiai_kernels gemm_gemv_kernels_q8[] = {
     {
         /* SME2 GEMM */
         {
@@ -1062,7 +1062,7 @@ static ggml_kleidiai_kernels gemm_gemv_kernels_q8[] = {
     { /* Sentinel */ }
 };
 
-static ggml_kleidiai_kernels ggml_kleidiai_kernels_f32[] = {
+ସ୍ଥିର ggml_kleidiai_kernels ggml_kleidiai_kernels_f32[] = {
     {
         /* SME2 GEMM */
         {
@@ -1162,98 +1162,98 @@ static ggml_kleidiai_kernels ggml_kleidiai_kernels_f32[] = {
     { /* Sentinel */ }
 };
 
-ggml_kleidiai_kernels * ggml_kleidiai_select_kernels(cpu_feature cpu_features, const ggml_tensor * tensor) {
+ggml_kleidiai_kernels * ggml_kleidiai_select_kernels(cpu_feature cpu_features, ଅଚଳ ggml_tensor * tensor) {
     ggml_kleidiai_kernels * kernel = nullptr;
 
-    if (tensor->op == GGML_OP_MUL_MAT && tensor->src[0] != nullptr && tensor->src[1] != nullptr) {
+    ଯଦି (tensor->op == GGML_OP_MUL_MAT && tensor->src[0] != nullptr && tensor->src[1] != nullptr) {
         auto try_table = [&](auto & table) {
-            for (size_t i = 0; i < NELEMS(table) - 1; ++i) {
-                if ((cpu_features & table[i].required_cpu) == table[i].required_cpu &&
+            ପାଇଁ (size_t i = 0; i < NELEMS(table) - 1; ++i) {
+                ଯଦି ((cpu_features & table[i].required_cpu) == table[i].required_cpu &&
                     table[i].lhs_type == tensor->src[1]->type &&
                     table[i].rhs_type == tensor->src[0]->type &&
                     table[i].op_type  == tensor->type) {
                     kernel = &table[i];
-                    return true;
+                    ଫେରନ୍ତୁ ସତ୍ୟ;
                 }
             }
-            return false;
+            ଫେରନ୍ତୁ ମିଥ୍ୟା;
         };
 
-        if (tensor->src[0]->type == GGML_TYPE_Q4_K) {
+        ଯଦି (tensor->src[0]->type == GGML_TYPE_Q4_K) {
             try_table(gemm_gemv_kernels_q4_k);
-        } else if (tensor->src[0]->type == GGML_TYPE_Q8_0 || tensor->src[0]->type == GGML_TYPE_Q6_K) {
-            const ggml_type original_type = tensor->src[0]->type;
-            if (original_type == GGML_TYPE_Q6_K) {
-                for (size_t i = 0; i < NELEMS(gemm_gemv_kernels_q8) - 1; ++i) {
-                    if ((cpu_features & gemm_gemv_kernels_q8[i].required_cpu) == gemm_gemv_kernels_q8[i].required_cpu &&
+        } ଅନ୍ୟଥା ଯଦି (tensor->src[0]->type == GGML_TYPE_Q8_0 || tensor->src[0]->type == GGML_TYPE_Q6_K) {
+            ଅଚଳ ggml_type original_type = tensor->src[0]->type;
+            ଯଦି (original_type == GGML_TYPE_Q6_K) {
+                ପାଇଁ (size_t i = 0; i < NELEMS(gemm_gemv_kernels_q8) - 1; ++i) {
+                    ଯଦି ((cpu_features & gemm_gemv_kernels_q8[i].required_cpu) == gemm_gemv_kernels_q8[i].required_cpu &&
                         gemm_gemv_kernels_q8[i].lhs_type == tensor->src[1]->type &&
                         gemm_gemv_kernels_q8[i].rhs_type == GGML_TYPE_Q8_0 &&
                         gemm_gemv_kernels_q8[i].op_type == tensor->type) {
                         kernel = &gemm_gemv_kernels_q8[i];
-                        break;
+                        ଭାଙ୍ଗ;
                     }
                 }
-            } else {
+            } ଅନ୍ୟଥା {
                 try_table(gemm_gemv_kernels_q8);
             }
-        } else if (tensor->src[0]->type == GGML_TYPE_F32) {
+        } ଅନ୍ୟଥା ଯଦି (tensor->src[0]->type == GGML_TYPE_F32) {
             try_table(ggml_kleidiai_kernels_f32);
-        } else {
+        } ଅନ୍ୟଥା {
             try_table(gemm_gemv_kernels);
         }
     }
 
-    return kernel;
+    ଫେରନ୍ତୁ kernel;
 }
 
 ggml_kleidiai_kernels * ggml_kleidiai_select_kernels_q4_0(cpu_feature features) {
     ggml_kleidiai_kernels * kernels = nullptr;
 
-    for (size_t i = 0; i < NELEMS(gemm_gemv_kernels) - 1; ++i) {
-        if ((features & gemm_gemv_kernels[i].required_cpu) == gemm_gemv_kernels[i].required_cpu &&
+    ପାଇଁ (size_t i = 0; i < NELEMS(gemm_gemv_kernels) - 1; ++i) {
+        ଯଦି ((features & gemm_gemv_kernels[i].required_cpu) == gemm_gemv_kernels[i].required_cpu &&
             gemm_gemv_kernels[i].rhs_type == GGML_TYPE_Q4_0) {
             kernels = &gemm_gemv_kernels[i];
-            break;
+            ଭାଙ୍ଗ;
         }
     }
 
-    return kernels;
+    ଫେରନ୍ତୁ kernels;
 }
 
 ggml_kleidiai_kernels * ggml_kleidiai_select_kernels_q4_k(cpu_feature features) {
     ggml_kleidiai_kernels * kernels = nullptr;
 
-    for (size_t i = 0; i < NELEMS(gemm_gemv_kernels_q4_k) - 1; ++i) {
-        if ((features & gemm_gemv_kernels_q4_k[i].required_cpu) == gemm_gemv_kernels_q4_k[i].required_cpu) {
+    ପାଇଁ (size_t i = 0; i < NELEMS(gemm_gemv_kernels_q4_k) - 1; ++i) {
+        ଯଦି ((features & gemm_gemv_kernels_q4_k[i].required_cpu) == gemm_gemv_kernels_q4_k[i].required_cpu) {
             kernels = &gemm_gemv_kernels_q4_k[i];
-            break;
+            ଭାଙ୍ଗ;
         }
     }
 
-    return kernels;
+    ଫେରନ୍ତୁ kernels;
 }
 
 ggml_kleidiai_kernels * ggml_kleidiai_select_kernels_q8_0(cpu_feature features) {
     ggml_kleidiai_kernels * kernels = nullptr;
 
-    for (size_t i = 0; i < NELEMS(gemm_gemv_kernels_q8) - 1; ++i) {
-        if ((features & gemm_gemv_kernels_q8[i].required_cpu) == gemm_gemv_kernels_q8[i].required_cpu) {
+    ପାଇଁ (size_t i = 0; i < NELEMS(gemm_gemv_kernels_q8) - 1; ++i) {
+        ଯଦି ((features & gemm_gemv_kernels_q8[i].required_cpu) == gemm_gemv_kernels_q8[i].required_cpu) {
             kernels = &gemm_gemv_kernels_q8[i];
-            break;
+            ଭାଙ୍ଗ;
         }
     }
 
-    return kernels;
+    ଫେରନ୍ତୁ kernels;
 }
 
 ggml_kleidiai_kernels * ggml_kleidiai_select_kernels_f32(cpu_feature features) {
     ggml_kleidiai_kernels * kernels = nullptr;
 
-    for (size_t i = 0; i < NELEMS(ggml_kleidiai_kernels_f32) - 1; ++i) {
-        if ((features & ggml_kleidiai_kernels_f32[i].required_cpu) == ggml_kleidiai_kernels_f32[i].required_cpu) {
+    ପାଇଁ (size_t i = 0; i < NELEMS(ggml_kleidiai_kernels_f32) - 1; ++i) {
+        ଯଦି ((features & ggml_kleidiai_kernels_f32[i].required_cpu) == ggml_kleidiai_kernels_f32[i].required_cpu) {
             kernels = &ggml_kleidiai_kernels_f32[i];
-            break;
+            ଭାଙ୍ଗ;
         }
     }
-    return kernels;
+    ଫେରନ୍ତୁ kernels;
 }

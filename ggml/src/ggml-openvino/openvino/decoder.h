@@ -1,131 +1,131 @@
 #pragma once
 
-#include <cstdint>
-#include <map>
-#include <openvino/core/node.hpp>
-#include <openvino/core/partial_shape.hpp>
-#include <openvino/core/shape.hpp>
-#include <openvino/frontend/decoder.hpp>
-#include <set>
-#include <string>
+#ଅନ୍ତର୍ଭାଵ <cstdint>
+#ଅନ୍ତର୍ଭାଵ <map>
+#ଅନ୍ତର୍ଭାଵ <openvino/core/node.hpp>
+#ଅନ୍ତର୍ଭାଵ <openvino/core/partial_shape.hpp>
+#ଅନ୍ତର୍ଭାଵ <openvino/core/shape.hpp>
+#ଅନ୍ତର୍ଭାଵ <openvino/frontend/decoder.hpp>
+#ଅନ୍ତର୍ଭାଵ <set>
+#ଅନ୍ତର୍ଭାଵ <string>
 
 namespace ov {
 namespace frontend {
 namespace ggml {
 
-struct ModelInputInfo {
+ସଂରଚନା Model_ନିବେଶ_Info {
     element::Type type;
     PartialShape shape;
 };
 
-struct ModelExtraInputInfo {
+ସଂରଚନା Model_Extra_ନିବେଶ_Info {
     element::Type type;
     Shape shape;
-    int64_t value;
+    int64_t ମୂଲ୍ୟ;
     bool is_parameter;
 };
 
-class GgmlDecoder : public DecoderBase {
-public:
-    virtual ov::Any get_attribute(const std::string & name) const = 0;
+class GgmlDecoder : ସର୍ବସାଧାରଣ DecoderBase {
+ସର୍ବସାଧାରଣ:
+    ଆଭାସୀ ov::Any get_attribute(ଅଚଳ std::string & name) ଅଚଳ = 0;
 
-    virtual PartialShape get_input_shape(int node_idx, const std::string & name) const = 0;
+    ଆଭାସୀ PartialShape get_ନିବେଶ_shape(ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx, ଅଚଳ std::string & name) ଅଚଳ = 0;
 
-    virtual std::vector<size_t> get_input_stride(int node_idx, const std::string & name) const = 0;
+    ଆଭାସୀ std::vector<size_t> get_ନିବେଶ_stride(ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx, ଅଚଳ std::string & name) ଅଚଳ = 0;
 
-    virtual size_t get_view_input_size(int node_idx, const std::string & name) const = 0;
+    ଆଭାସୀ size_t get_view_ନିବେଶ_size(ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx, ଅଚଳ std::string & name) ଅଚଳ = 0;
 
-    virtual size_t get_view_input_offset(int node_idx, const std::string & name, size_t view_index) const = 0;
+    ଆଭାସୀ size_t get_view_ନିବେଶ_offset(ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx, ଅଚଳ std::string & name, size_t view_index) ଅଚଳ = 0;
 
-    virtual size_t get_view_input_src_offset(int node_idx, const std::string & name, size_t view_index) const = 0;
+    ଆଭାସୀ size_t get_view_ନିବେଶ_src_offset(ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx, ଅଚଳ std::string & name, size_t view_index) ଅଚଳ = 0;
 
-    virtual std::vector<size_t> get_view_input_stride(int node_idx,
-                                                      const std::string & name,
-                                                      size_t view_index) const = 0;
+    ଆଭାସୀ std::vector<size_t> get_view_ନିବେଶ_stride(ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx,
+                                                      ଅଚଳ std::string & name,
+                                                      size_t view_index) ଅଚଳ = 0;
 
-    virtual std::vector<size_t> get_view_input_src_stride(int node_idx,
-                                                          const std::string & name,
-                                                          size_t view_index) const = 0;
+    ଆଭାସୀ std::vector<size_t> get_view_ନିବେଶ_src_stride(ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx,
+                                                          ଅଚଳ std::string & name,
+                                                          size_t view_index) ଅଚଳ = 0;
 
-    virtual Shape get_view_input_ggml_shape(int node_idx, const std::string & name, size_t view_index) const = 0;
+    ଆଭାସୀ Shape get_view_ନିବେଶ_ggml_shape(ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx, ଅଚଳ std::string & name, size_t view_index) ଅଚଳ = 0;
 
-    virtual Shape get_view_input_src_ggml_shape(int node_idx, const std::string & name, size_t view_index) const = 0;
+    ଆଭାସୀ Shape get_view_ନିବେଶ_src_ggml_shape(ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx, ଅଚଳ std::string & name, size_t view_index) ଅଚଳ = 0;
 
-    virtual PartialShape get_view_input_ov_shape(int node_idx, const std::string & name, size_t view_index) const = 0;
+    ଆଭାସୀ PartialShape get_view_ନିବେଶ_ov_shape(ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx, ଅଚଳ std::string & name, size_t view_index) ଅଚଳ = 0;
 
-    virtual PartialShape get_view_input_src_ov_shape(int node_idx,
-                                                     const std::string & name,
-                                                     size_t view_index) const = 0;
+    ଆଭାସୀ PartialShape get_view_ନିବେଶ_src_ov_shape(ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx,
+                                                     ଅଚଳ std::string & name,
+                                                     size_t view_index) ଅଚଳ = 0;
 
-    virtual std::string get_view_input_name(int node_idx, const std::string & name, size_t view_index) const = 0;
+    ଆଭାସୀ std::string get_view_ନିବେଶ_name(ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx, ଅଚଳ std::string & name, size_t view_index) ଅଚଳ = 0;
 
-    virtual std::string get_view_input_src_name(int node_idx, const std::string & name, size_t view_index) const = 0;
+    ଆଭାସୀ std::string get_view_ନିବେଶ_src_name(ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx, ଅଚଳ std::string & name, size_t view_index) ଅଚଳ = 0;
 
-    virtual element::Type get_input_type(int node_idx, const std::string & name) const = 0;
+    ଆଭାସୀ element::Type get_ନିବେଶ_type(ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx, ଅଚଳ std::string & name) ଅଚଳ = 0;
 
-    virtual size_t get_input_size() const = 0;
+    ଆଭାସୀ size_t get_ନିବେଶ_size() ଅଚଳ = 0;
 
-    virtual size_t get_input_size(int node_idx) const = 0;
+    ଆଭାସୀ size_t get_ନିବେଶ_size(ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx) ଅଚଳ = 0;
 
-    virtual void get_input_node(size_t input_port_idx,
+    ଆଭାସୀ ଶୂନ୍ୟ get_ନିବେଶ_ଗଣ୍ଠି(size_t ନିବେଶ_port_idx,
                                 std::string & producer_name,
                                 std::string & producer_output_port_name,
-                                size_t & producer_output_port_index) const = 0;
+                                size_t & producer_output_port_index) ଅଚଳ = 0;
 
-    virtual std::vector<std::string> get_input_names(int node_idx) const = 0;
+    ଆଭାସୀ std::vector<std::string> get_ନିବେଶ_names(ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx) ଅଚଳ = 0;
 
-    virtual PartialShape get_output_shape(int node_idx) const = 0;
+    ଆଭାସୀ PartialShape get_output_shape(ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx) ଅଚଳ = 0;
 
-    virtual element::Type get_output_type(const int node_idx) const = 0;
+    ଆଭାସୀ element::Type get_output_type(ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx) ଅଚଳ = 0;
 
-    virtual std::vector<size_t> get_output_stride(int node_idx) const = 0;
+    ଆଭାସୀ std::vector<size_t> get_output_stride(ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx) ଅଚଳ = 0;
 
-    virtual int32_t * get_input_op_params(int node_idx, const std::string & name) const = 0;
+    ଆଭାସୀ int32_t * get_ନିବେଶ_op_params(ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx, ଅଚଳ std::string & name) ଅଚଳ = 0;
 
-    virtual int32_t * get_output_op_params(int node_idx) const = 0;
+    ଆଭାସୀ int32_t * get_output_op_params(ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx) ଅଚଳ = 0;
 
-    virtual size_t get_output_op_offset(int node_idx) const = 0;
+    ଆଭାସୀ size_t get_output_op_offset(ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx) ଅଚଳ = 0;
 
-    virtual std::vector<std::string> get_output_names(int node_idx) const = 0;
+    ଆଭାସୀ std::vector<std::string> get_output_names(ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx) ଅଚଳ = 0;
 
-    virtual std::string get_inplace_op_src(int node_idx) const = 0;
+    ଆଭାସୀ std::string get_inplace_op_src(ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx) ଅଚଳ = 0;
 
-    virtual bool is_view_like_alias_of(int node_idx, const std::string & view_src_name) const = 0;
+    ଆଭାସୀ bool is_view_like_alias_of(ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx, ଅଚଳ std::string & view_src_name) ଅଚଳ = 0;
 
-    virtual const std::string & get_op_type() const = 0;
+    ଆଭାସୀ ଅଚଳ std::string & get_op_type() ଅଚଳ = 0;
 
-    virtual const std::string & get_op_type(int node_idx) const = 0;
+    ଆଭାସୀ ଅଚଳ std::string & get_op_type(ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx) ଅଚଳ = 0;
 
-    virtual const std::string & get_op_name() const = 0;
+    ଆଭାସୀ ଅଚଳ std::string & get_op_name() ଅଚଳ = 0;
 
-    virtual const std::string & get_op_name(int node_idx) const = 0;
+    ଆଭାସୀ ଅଚଳ std::string & get_op_name(ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx) ଅଚଳ = 0;
 
-    virtual void visit_subgraph(std::function<void(std::shared_ptr<GgmlDecoder>, int node_idx)> node_visitor) const = 0;
+    ଆଭାସୀ ଶୂନ୍ୟ visit_subgraph(std::function<ଶୂନ୍ୟ(std::shared_ptr<GgmlDecoder>, ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx)> ଗଣ୍ଠି_visitor) ଅଚଳ = 0;
 
-    virtual int get_op_case(int node_idx) const = 0;
+    ଆଭାସୀ ପୂର୍ଣ୍ଣସଂଖ୍ୟା get_op_case(ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx) ଅଚଳ = 0;
 
-    virtual const std::map<std::string, ModelInputInfo> & get_model_inputs() const = 0;
-    virtual const std::map<std::string, ModelExtraInputInfo> & get_model_extra_inputs() const = 0;
-    virtual const std::map<std::string, std::shared_ptr<ov::Node>> & get_model_weights() const = 0;
-    virtual std::set<std::string> get_model_output_names() const = 0;
+    ଆଭାସୀ ଅଚଳ std::map<std::string, Model_ନିବେଶ_Info> & get_model_inputs() ଅଚଳ = 0;
+    ଆଭାସୀ ଅଚଳ std::map<std::string, Model_Extra_ନିବେଶ_Info> & get_model_extra_inputs() ଅଚଳ = 0;
+    ଆଭାସୀ ଅଚଳ std::map<std::string, std::shared_ptr<ov::ଗଣ୍ଠି_2>> & get_model_weights() ଅଚଳ = 0;
+    ଆଭାସୀ std::set<std::string> get_model_output_names() ଅଚଳ = 0;
 
-    virtual int32_t * get_rope_params() const = 0;
+    ଆଭାସୀ int32_t * get_rope_params() ଅଚଳ = 0;
 
-    virtual bool has_mixed_rope_params() const = 0;
+    ଆଭାସୀ bool has_mixed_rope_params() ଅଚଳ = 0;
 
-    virtual int get_ssm_state_size() const = 0;
+    ଆଭାସୀ ପୂର୍ଣ୍ଣସଂଖ୍ୟା get_ssm_state_size() ଅଚଳ = 0;
 
-    virtual std::map<std::string, std::string> get_kv_param_res_names() const = 0;
+    ଆଭାସୀ std::map<std::string, std::string> get_kv_param_res_names() ଅଚଳ = 0;
 
-    virtual bool is_static() const = 0;
+    ଆଭାସୀ bool is_static() ଅଚଳ = 0;
 
-    virtual bool is_stateful() const = 0;
+    ଆଭାସୀ bool is_stateful() ଅଚଳ = 0;
 
-    virtual bool is_splited_model() const = 0;
+    ଆଭାସୀ bool is_splited_model() ଅଚଳ = 0;
 
-    virtual int is_swa_layer(int layer) const = 0;
+    ଆଭାସୀ ପୂର୍ଣ୍ଣସଂଖ୍ୟା is_swa_layer(ପୂର୍ଣ୍ଣସଂଖ୍ୟା layer) ଅଚଳ = 0;
 
-    virtual int32_t get_op_dynamic_dim(int node_idx) const = 0;
+    ଆଭାସୀ int32_t get_op_dynamic_dim(ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx) ଅଚଳ = 0;
 };
 
 }  // namespace ggml

@@ -1,22 +1,22 @@
 #ifndef HTP_SET_ROWS_OPS_H
 #define HTP_SET_ROWS_OPS_H
 
-#include "hex-fastdiv.h"
+#ଅନ୍ତର୍ଭାଵ "hex-fastdiv.h"
 
-struct htp_set_rows_kernel_params {
+ସଂରଚନା htp_set_rows_kernel_params {
     int32_t  n_threads;
     int32_t  total_tasks;
     int32_t  tasks_per_thread;
     int32_t  vtcm_size;
 
     // Fastdiv helpers
-    struct fastdiv_values div_ne11;
-    struct fastdiv_values div_ne12;
-    struct fastdiv_values div_tasks_per_thread;
-    struct fastdiv_values div_ne02;
+    ସଂରଚନା fastdiv_ମୂଲ୍ୟଗୁଡ଼ିକ div_ne11;
+    ସଂରଚନା fastdiv_ମୂଲ୍ୟଗୁଡ଼ିକ div_ne12;
+    ସଂରଚନା fastdiv_ମୂଲ୍ୟଗୁଡ଼ିକ div_tasks_per_thread;
+    ସଂରଚନା fastdiv_ମୂଲ୍ୟଗୁଡ଼ିକ div_ne02;
 };
 
-struct htp_set_rows_vtcm_layout {
+ସଂରଚନା htp_set_rows_vtcm_layout {
     size_t total_bytes;
     size_t off_src0;
     size_t off_dst;
@@ -28,27 +28,27 @@ struct htp_set_rows_vtcm_layout {
     size_t dst_spad_half_size;
 };
 
-static inline void htp_set_rows_vtcm_layout_build(
-    struct htp_set_rows_vtcm_layout * vtcm_layout,
-    int dst_type,
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଶୂନ୍ୟ htp_set_rows_vtcm_layout_build(
+    ସଂରଚନା htp_set_rows_vtcm_layout * vtcm_layout,
+    ପୂର୍ଣ୍ଣସଂଖ୍ୟା dst_type,
     uint32_t ne00,
     uint32_t n_threads) {
 
     size_t src0_row_size = ne00 * 4;
     size_t dst_row_size = 0;
-    switch (dst_type) {
-        case 0: // HTP_TYPE_F32
+    ବାଛ (dst_type) {
+        ସ୍ଥିତି 0: // HTP_TYPE_F32
             dst_row_size = ne00 * 4;
-            break;
-        case 1: // HTP_TYPE_F16
+            ଭାଙ୍ଗ;
+        ସ୍ଥିତି 1: // HTP_TYPE_F16
             dst_row_size = ne00 * 2;
-            break;
-        case 8: // HTP_TYPE_Q8_0
+            ଭାଙ୍ଗ;
+        ସ୍ଥିତି 8: // HTP_TYPE_Q8_0
             dst_row_size = (ne00 / 32) * 34;
-            break;
-        default:
+            ଭାଙ୍ଗ;
+        ପୂର୍ବନିର୍ଦ୍ଧାରିତ:
             dst_row_size = 0;
-            break;
+            ଭାଙ୍ଗ;
     }
 
     size_t src0_row_size_aligned = (src0_row_size + 255) & ~255;
@@ -65,10 +65,10 @@ static inline void htp_set_rows_vtcm_layout_build(
     vtcm_layout->total_bytes = vtcm_layout->off_dst + vtcm_layout->dst_bytes_per_thread * n_threads;
 }
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_set_rows_kernel_params) <= 128, "htp_set_rows_kernel_params is too large for kernel_params blob");
-#else
-_Static_assert(sizeof(struct htp_set_rows_kernel_params) <= 128, "htp_set_rows_kernel_params is too large for kernel_params blob");
+#ଯଦି defined(__cplusplus)
+static_assert(ଆକାର(ସଂରଚନା htp_set_rows_kernel_params) <= 128, "htp_set_rows_kernel_params is too large for kernel_params blob");
+#ଅନ୍ୟଥା
+_Static_assert(ଆକାର(ସଂରଚନା htp_set_rows_kernel_params) <= 128, "htp_set_rows_kernel_params is too large for kernel_params blob");
 #endif
 
 #endif // HTP_SET_ROWS_OPS_H

@@ -1,25 +1,25 @@
 #pragma once
 
-#include <cuda_runtime.h>
-#include <cuda.h>
-#include <cublas_v2.h>
-#include <cuda_bf16.h>
-#include <cuda_fp16.h>
+#ଅନ୍ତର୍ଭାଵ <cuda_runtime.h>
+#ଅନ୍ତର୍ଭାଵ <cuda.h>
+#ଅନ୍ତର୍ଭାଵ <cublas_v2.h>
+#ଅନ୍ତର୍ଭାଵ <cuda_bf16.h>
+#ଅନ୍ତର୍ଭାଵ <cuda_fp16.h>
 
 #ifdef GGML_USE_NCCL
-#include <nccl.h>
+#ଅନ୍ତର୍ଭାଵ <nccl.h>
 #endif // GGML_USE_NCCL
 
-#if CUDART_VERSION >= 11080
-#include <cuda_fp8.h>
+#ଯଦି CUDART_VERSION >= 11080
+#ଅନ୍ତର୍ଭାଵ <cuda_fp8.h>
 #define FP8_AVAILABLE
 #endif // CUDART_VERSION >= 11080
 
-#if CUDART_VERSION >= 12080
-#include <cuda_fp4.h>
+#ଯଦି CUDART_VERSION >= 12080
+#ଅନ୍ତର୍ଭାଵ <cuda_fp4.h>
 #endif // CUDART_VERSION >= 12080
 
-#if CUDART_VERSION < 11020
+#ଯଦି CUDART_VERSION < 11020
 #define CU_DEVICE_ATTRIBUTE_VIRTUAL_MEMORY_MANAGEMENT_SUPPORTED CU_DEVICE_ATTRIBUTE_VIRTUAL_ADDRESS_MANAGEMENT_SUPPORTED
 #define CUBLAS_TF32_TENSOR_OP_MATH CUBLAS_TENSOR_OP_MATH
 #define CUBLAS_COMPUTE_16F CUDA_R_16F

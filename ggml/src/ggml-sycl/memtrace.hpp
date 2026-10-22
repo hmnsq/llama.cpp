@@ -1,27 +1,27 @@
 #ifndef GGML_SYCL_MEMTRACE_HPP
 #define GGML_SYCL_MEMTRACE_HPP
 
-#include <cstddef>
+#ଅନ୍ତର୍ଭାଵ <cstddef>
 
 #define GGML_SYCL_MEMTRACE_TAG "[SYCL-MEMTRACE]"
 
-enum ggml_sycl_mem_type {
+ଗଣନା ggml_sycl_mem_type {
     GGML_SYCL_MEM_BUFFER = 0,
     GGML_SYCL_MEM_POOL_LEG,
     GGML_SYCL_MEM_POOL_VMM,
     GGML_SYCL_MEM_ASYNC,
     GGML_SYCL_MEM_DIRECT,
 
-    GGML_SYCL_MEM_TYPE_COUNT,
+    GGML_SYCL_MEM_TYPE_ଗଣନା,
 };
 
-bool ggml_sycl_memtrace_enabled();
+ତାର୍କିକ ggml_sycl_memtrace_enabled();
 
-void ggml_sycl_memtrace_add(ggml_sycl_mem_type type, const void * ptr, size_t bytes);
-void ggml_sycl_memtrace_del(const void * ptr);
+ଶୂନ୍ୟ ggml_sycl_memtrace_add(ggml_sycl_mem_type type, ଅଚଳ ଶୂନ୍ୟ * ptr, size_t bytes);
+ଶୂନ୍ୟ ggml_sycl_memtrace_del(ଅଚଳ ଶୂନ୍ୟ * ptr);
 
-void ggml_sycl_memtrace_report(const char * tag);
-void ggml_sycl_memtrace_report_device(const char * tag, int device, size_t dev_free, size_t dev_total);
-void ggml_sycl_memtrace_fail(ggml_sycl_mem_type type, size_t bytes);
+ଶୂନ୍ୟ ggml_sycl_memtrace_report(ଅଚଳ ଅକ୍ଷର * tag);
+ଶୂନ୍ୟ ggml_sycl_memtrace_report_device(ଅଚଳ ଅକ୍ଷର * tag, ପୂର୍ଣ୍ଣସଂଖ୍ୟା device, size_t dev_free, size_t dev_total);
+ଶୂନ୍ୟ ggml_sycl_memtrace_fail(ggml_sycl_mem_type type, size_t bytes);
 
 #endif  // GGML_SYCL_MEMTRACE_HPP

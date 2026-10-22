@@ -1,13 +1,13 @@
 #pragma once
 
 #define HIP_DISABLE_WARP_SYNC_BUILTINS 1
-#include <hip/hip_runtime.h>
-#include <hipblas/hipblas.h>
-#include <hip/hip_fp16.h>
-#include <hip/hip_bf16.h>
+#ଅନ୍ତର୍ଭାଵ <hip/hip_runtime.h>
+#ଅନ୍ତର୍ଭାଵ <hipblas/hipblas.h>
+#ଅନ୍ତର୍ଭାଵ <hip/hip_fp16.h>
+#ଅନ୍ତର୍ଭାଵ <hip/hip_bf16.h>
 
 #ifdef GGML_USE_NCCL
-#include <rccl/rccl.h>
+#ଅନ୍ତର୍ଭାଵ <rccl/rccl.h>
 #endif // GGML_USE_NCCL
 
 
@@ -20,7 +20,7 @@
 #define CUDA_R_16F  HIPBLAS_R_16F
 #define CUDA_R_16BF HIPBLAS_R_16B
 #define CUDA_R_32F  HIPBLAS_R_32F
-#define CUBLAS_SIDE_RIGHT HIPBLAS_SIDE_RIGHT
+#define CUBLAS_SIDE_ଡାହାଣ HIPBLAS_SIDE_ଡାହାଣ
 #define CUBLAS_FILL_MODE_UPPER HIPBLAS_FILL_MODE_UPPER
 #define CUBLAS_DIAG_NON_UNIT HIPBLAS_DIAG_NON_UNIT
 #define CU_DEVICE_ATTRIBUTE_VIRTUAL_MEMORY_MANAGEMENT_SUPPORTED hipDeviceAttributeVirtualMemoryManagementSupported
@@ -28,7 +28,7 @@
 #define CU_MEM_ALLOCATION_TYPE_PINNED hipMemAllocationTypePinned
 #define CU_MEM_LOCATION_TYPE_DEVICE hipMemLocationTypeDevice
 #define CU_MEM_ACCESS_FLAGS_PROT_READWRITE hipMemAccessFlagsProtReadWrite
-#define CU_CHECK(fn) {hipError_t err = fn; if(err != hipSuccess) { GGML_ABORT("HipVMM Failure: %s\n", hipGetErrorString(err)); }}
+#define CU_CHECK(fn) {hipError_t err = fn; ଯଦି(err != hipSuccess) { GGML_ABORT("HipVMM Failure: %s\n", hipGetErrorString(err)); }}
 #define __shfl_sync(mask, var, laneMask, width) __shfl(var, laneMask, width)
 #define __shfl_up_sync(mask, var, laneMask, width) __shfl_up(var, laneMask, width)
 #define __shfl_xor_sync(mask, var, laneMask, width) __shfl_xor(var, laneMask, width)
@@ -69,7 +69,7 @@
 #define cudaFree hipFree
 #define cudaFreeHost hipHostFree
 #define cudaGetDevice hipGetDevice
-#define cudaGetDeviceCount hipGetDeviceCount
+#define cuda_Get_Device_ଗଣନା hip_Get_Device_ଗଣନା
 #define cudaGetDeviceProperties hipGetDeviceProperties
 #define cudaGetErrorString hipGetErrorString
 #define cudaGetLastError hipGetLastError
@@ -123,22 +123,22 @@
 #define cudaStreamSynchronize hipStreamSynchronize
 #define cudaStreamWaitEvent hipStreamWaitEvent
 #define cudaGraphExec_t hipGraphExec_t
-#define cudaGraphNode_t hipGraphNode_t
-#define cudaKernelNodeParams hipKernelNodeParams
-#define cudaKernelNodeParams hipKernelNodeParams
+#define cuda_Graph_ଗଣ୍ଠି_t hip_Graph_ଗଣ୍ଠି_t
+#define cuda_Kernel_ଗଣ୍ଠି_Params hip_Kernel_ଗଣ୍ଠି_Params
+#define cuda_Kernel_ଗଣ୍ଠି_Params hip_Kernel_ଗଣ୍ଠି_Params
 #define cudaGraphExecDestroy hipGraphExecDestroy
 #define cudaGraphLaunch hipGraphLaunch
 #define cudaErrorGraphExecUpdateFailure hipErrorGraphExecUpdateFailure
 #define cudaGraphExecUpdateResult hipGraphExecUpdateResult
-#define cudaGraphNodeType hipGraphNodeType
-#define cudaGraphNodeTypeKernel hipGraphNodeTypeKernel
+#define cuda_Graph_ଗଣ୍ଠି_Type hip_Graph_ଗଣ୍ଠି_Type
+#define cuda_Graph_ଗଣ୍ଠି_Type_Kernel hip_Graph_ଗଣ୍ଠି_Type_Kernel
 #define cudaGraphInstantiate hipGraphInstantiate
 #define cudaStreamEndCapture hipStreamEndCapture
 #define cudaGraphDestroy hipGraphDestroy
-#define cudaGraphKernelNodeSetParams hipGraphKernelNodeSetParams
+#define cuda_Graph_Kernel_ଗଣ୍ଠି_Set_Params hip_Graph_Kernel_ଗଣ୍ଠି_Set_Params
 #define cudaErrorInvalidDeviceFunction hipErrorInvalidDeviceFunction
-#define cudaGraphKernelNodeGetParams hipGraphKernelNodeGetParams
-#define cudaGraphNodeGetType hipGraphNodeGetType
+#define cuda_Graph_Kernel_ଗଣ୍ଠି_Get_Params hip_Graph_Kernel_ଗଣ୍ଠି_Get_Params
+#define cuda_Graph_ଗଣ୍ଠି_Get_Type hip_Graph_ଗଣ୍ଠି_Get_Type
 #define cudaGraphGetNodes hipGraphGetNodes
 #define cudaGraphExecUpdate hipGraphExecUpdate
 #define cudaStreamCaptureModeRelaxed hipStreamCaptureModeRelaxed
@@ -149,24 +149,24 @@
 #define cudaOccupancyMaxActiveBlocksPerMultiprocessor hipOccupancyMaxActiveBlocksPerMultiprocessor
 #define cudaFuncSetAttribute hipFuncSetAttribute
 #define cudaFuncAttributeMaxDynamicSharedMemorySize hipFuncAttributeMaxDynamicSharedMemorySize
-#define __trap() do { abort(); __builtin_unreachable(); } while(0)
+#define __trap() କର { abort(); __builtin_unreachable(); } ଯେତେବେଳେ(0)
 #define CUBLAS_STATUS_SUCCESS HIPBLAS_STATUS_SUCCESS
 #define CUBLAS_STATUS_NOT_INITIALIZED HIPBLAS_STATUS_NOT_INITIALIZED
 #define CUBLAS_STATUS_ALLOC_FAILED HIPBLAS_STATUS_ALLOC_FAILED
-#define CUBLAS_STATUS_INVALID_VALUE HIPBLAS_STATUS_INVALID_VALUE
+#define CUBLAS_STATUS_INVALID_ମୂଲ୍ୟ HIPBLAS_STATUS_INVALID_ମୂଲ୍ୟ
 #define CUBLAS_STATUS_ARCH_MISMATCH HIPBLAS_STATUS_ARCH_MISMATCH
 #define CUBLAS_STATUS_MAPPING_ERROR HIPBLAS_STATUS_MAPPING_ERROR
 #define CUBLAS_STATUS_EXECUTION_FAILED HIPBLAS_STATUS_EXECUTION_FAILED
 #define CUBLAS_STATUS_INTERNAL_ERROR HIPBLAS_STATUS_INTERNAL_ERROR
 #define CUBLAS_STATUS_NOT_SUPPORTED HIPBLAS_STATUS_NOT_SUPPORTED
 
-#if HIP_VERSION >= 60500000
+#ଯଦି HIP_VERSION >= 60500000
 #define CUBLAS_COMPUTE_16F HIPBLAS_COMPUTE_16F
 #define CUBLAS_COMPUTE_32F HIPBLAS_COMPUTE_32F
 #define CUBLAS_COMPUTE_32F_FAST_16F HIPBLAS_COMPUTE_32F_FAST_16F
 #define cublasComputeType_t hipblasComputeType_t
 #define cudaDataType_t hipDataType
-#else
+#ଅନ୍ୟଥା
 #define CUBLAS_COMPUTE_16F HIPBLAS_R_16F
 #define CUBLAS_COMPUTE_32F HIPBLAS_R_32F
 #define CUBLAS_COMPUTE_32F_FAST_16F HIPBLAS_R_32F
@@ -174,70 +174,70 @@
 #define cudaDataType_t hipblasDatatype_t
 #endif // HIP_VERSION >= 6050000
 
-#if !defined(__HIP_PLATFORM_AMD__)
+#ଯଦି !defined(__HIP_PLATFORM_AMD__)
 #error "The HIP backend supports only AMD targets"
 #endif // !defined(__HIP_PLATFORM_AMD__)
 
 #define __CUDA_ARCH__ 1300
 
-#if defined(__gfx900__) || defined(__gfx906__) || defined(__gfx909__) || defined(__gfx90c__)
+#ଯଦି defined(__gfx900__) || defined(__gfx906__) || defined(__gfx909__) || defined(__gfx90c__)
 #define GCN5
 #endif // defined(__gfx900__) || defined(__gfx906__) || defined(__gfx909__) || defined(__gfx90c__)
 
-#if defined(__gfx803__)
+#ଯଦି defined(__gfx803__)
 #define GCN4
 #endif // defined(__gfx803__)
 
-#if defined(GCN5) || defined(GCN4)
+#ଯଦି defined(GCN5) || defined(GCN4)
 #define GCN
 #endif // defined(GCN5) || defined(GCN4)
 
-#if defined(__gfx950__)
+#ଯଦି defined(__gfx950__)
 #define CDNA4
 #endif // defined(__gfx950__)
 
-#if defined(__gfx942__)
+#ଯଦି defined(__gfx942__)
 #define CDNA3
 #endif // defined(__gfx942__)
 
-#if defined(__gfx90a__)
+#ଯଦି defined(__gfx90a__)
 #define CDNA2
 #endif // defined(__gfx90a__)
 
-#if defined(__gfx908__)
+#ଯଦି defined(__gfx908__)
 #define CDNA1
 #endif // defined(__gfx908__)
 
-#if defined(CDNA4) || defined(CDNA3) || defined(CDNA2) || defined(CDNA1)
+#ଯଦି defined(CDNA4) || defined(CDNA3) || defined(CDNA2) || defined(CDNA1)
 #define CDNA // For the entire family
 #endif // defined(CDNA4) || defined(CDNA3) || defined(CDNA2) || defined(CDNA1)
 
-#if defined(__GFX12__)
+#ଯଦି defined(__GFX12__)
 #define RDNA4
 #endif // defined(__GFX12__)
 
-#if defined(__GFX11__)
+#ଯଦି defined(__GFX11__)
 #define RDNA3
 #endif // defined(__GFX11__)
 
-#if defined(__gfx1150__) || defined(__gfx1151__) || defined(__gfx1152__) || defined(__gfx1153__)
+#ଯଦି defined(__gfx1150__) || defined(__gfx1151__) || defined(__gfx1152__) || defined(__gfx1153__)
 #define RDNA3_5
 #endif // defined(__gfx1150__) || defined(__gfx1151__) || defined(__gfx1152__) || defined(__gfx1153__)
 
-#if defined(RDNA3) && !defined(RDNA3_5)
+#ଯଦି defined(RDNA3) && !defined(RDNA3_5)
 #define RDNA3_0
 #endif // defined(RDNA3) && !defined(RDNA3_5)
 
-#if defined(__gfx1030__) || defined(__gfx1031__) || defined(__gfx1032__) || defined(__gfx1033__) || \
+#ଯଦି defined(__gfx1030__) || defined(__gfx1031__) || defined(__gfx1032__) || defined(__gfx1033__) || \
     defined(__gfx1034__) || defined(__gfx1035__) || defined(__gfx1036__) || defined(__gfx1037__)
 #define RDNA2
 #endif
 
-#if defined(__gfx1010__) || defined(__gfx1012__)
+#ଯଦି defined(__gfx1010__) || defined(__gfx1012__)
 #define RDNA1
 #endif // defined(__gfx1010__) || defined(__gfx1012__)
 
-#if defined(RDNA4) || defined(RDNA3) || defined(RDNA2) || defined(RDNA1)
+#ଯଦି defined(RDNA4) || defined(RDNA3) || defined(RDNA2) || defined(RDNA1)
 #define RDNA // For the entire family
 #endif // defined(RDNA4) || defined(RDNA3) || defined(RDNA2) || defined(RDNA1)
 
@@ -245,69 +245,69 @@
     #define __has_builtin(x) 0
 #endif
 
-typedef __hip_bfloat16 nv_bfloat16;
-typedef __hip_bfloat162 nv_bfloat162;
+ପ୍ରକାରବ୍ୟାଖ୍ୟା __hip_bfloat16 nv_bfloat16;
+ପ୍ରକାରବ୍ୟାଖ୍ୟା __hip_bfloat162 nv_bfloat162;
 
-#if HIP_VERSION >= 60300000
-#include <hip/hip_fp8.h>
-typedef __hip_fp8_e4m3 __nv_fp8_e4m3;
+#ଯଦି HIP_VERSION >= 60300000
+#ଅନ୍ତର୍ଭାଵ <hip/hip_fp8.h>
+ପ୍ରକାରବ୍ୟାଖ୍ୟା __hip_fp8_e4m3 __nv_fp8_e4m3;
 #define FP8_AVAILABLE
 #endif // HIP_VERSION >= 60300000
 
-typedef int8_t int8x4_t __attribute__((ext_vector_type(4)));
-typedef uint8_t uint8x4_t __attribute__((ext_vector_type(4)));
-static __device__ __forceinline__ int __vsubss4(const int a, const int b) {
-    const int8x4_t va = reinterpret_cast<const int8x4_t&>(a);
-    const int8x4_t vb = reinterpret_cast<const int8x4_t&>(b);
-#if __has_builtin(__builtin_elementwise_sub_sat)
-    const int8x4_t c = __builtin_elementwise_sub_sat(va, vb);
-    return reinterpret_cast<const int &>(c);
-#else
+ପ୍ରକାରବ୍ୟାଖ୍ୟା int8_t int8x4_t __attribute__((ext_vector_type(4)));
+ପ୍ରକାରବ୍ୟାଖ୍ୟା uint8_t uint8x4_t __attribute__((ext_vector_type(4)));
+ସ୍ଥିର __device__ __forceinline__ ପୂର୍ଣ୍ଣସଂଖ୍ୟା __vsubss4(ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା a, ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା b) {
+    ଅଚଳ int8x4_t va = reinterpret_cast<ଅଚଳ int8x4_t&>(a);
+    ଅଚଳ int8x4_t vb = reinterpret_cast<ଅଚଳ int8x4_t&>(b);
+#ଯଦି __has_builtin(__builtin_elementwise_sub_sat)
+    ଅଚଳ int8x4_t c = __builtin_elementwise_sub_sat(va, vb);
+    ଫେରନ୍ତୁ reinterpret_cast<ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା &>(c);
+#ଅନ୍ୟଥା
     int8x4_t c;
     int16_t tmp;
 #pragma unroll
-    for (int i = 0; i < 4; i++) {
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < 4; i++) {
         tmp = va[i] - vb[i];
-        if(tmp > std::numeric_limits<int8_t>::max()) tmp = std::numeric_limits<int8_t>::max();
-        if(tmp < std::numeric_limits<int8_t>::min()) tmp = std::numeric_limits<int8_t>::min();
+        ଯଦି(tmp > std::numeric_limits<int8_t>::max()) tmp = std::numeric_limits<int8_t>::max();
+        ଯଦି(tmp < std::numeric_limits<int8_t>::min()) tmp = std::numeric_limits<int8_t>::min();
         c[i] = tmp;
     }
-    return reinterpret_cast<int &>(c);
+    ଫେରନ୍ତୁ reinterpret_cast<ପୂର୍ଣ୍ଣସଂଖ୍ୟା &>(c);
 #endif // __has_builtin(__builtin_elementwise_sub_sat)
 }
 
-static __device__ __forceinline__ int __vsub4(const int a, const int b) {
+ସ୍ଥିର __device__ __forceinline__ ପୂର୍ଣ୍ଣସଂଖ୍ୟା __vsub4(ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା a, ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା b) {
     // do some small modifications to a and b to make the subtraction not underflow
-    const unsigned int a_large = a | 0x80808080;
-    const unsigned int b_small = b & 0x7f7f7f7f;
-    const unsigned int result_low_7bits = a_large - b_small;
+    ଅଚଳ unsigned ପୂର୍ଣ୍ଣସଂଖ୍ୟା a_large = a | 0x80808080;
+    ଅଚଳ unsigned ପୂର୍ଣ୍ଣସଂଖ୍ୟା b_small = b & 0x7f7f7f7f;
+    ଅଚଳ unsigned ପୂର୍ଣ୍ଣସଂଖ୍ୟା result_ତଳ_7bits = a_large - b_small;
 
     // if two ops share the same high bit, we should flip the high bit of the result
-    const unsigned int should_flip_high_1bit = (a ^ ~b) & 0x80808080;
+    ଅଚଳ unsigned ପୂର୍ଣ୍ଣସଂଖ୍ୟା should_flip_ଉପର_1bit = (a ^ ~b) & 0x80808080;
 
-    return result_low_7bits ^ should_flip_high_1bit;
+    ଫେରନ୍ତୁ result_ତଳ_7bits ^ should_flip_ଉପର_1bit;
 }
 
-static __device__ __forceinline__ unsigned int __vcmpeq4(unsigned int a, unsigned int b) {
-    const uint8x4_t& va = reinterpret_cast<const uint8x4_t&>(a);
-    const uint8x4_t& vb = reinterpret_cast<const uint8x4_t&>(b);
-    unsigned int c;
+ସ୍ଥିର __device__ __forceinline__ unsigned ପୂର୍ଣ୍ଣସଂଖ୍ୟା __vcmpeq4(unsigned ପୂର୍ଣ୍ଣସଂଖ୍ୟା a, unsigned ପୂର୍ଣ୍ଣସଂଖ୍ୟା b) {
+    ଅଚଳ uint8x4_t& va = reinterpret_cast<ଅଚଳ uint8x4_t&>(a);
+    ଅଚଳ uint8x4_t& vb = reinterpret_cast<ଅଚଳ uint8x4_t&>(b);
+    unsigned ପୂର୍ଣ୍ଣସଂଖ୍ୟା c;
     uint8x4_t& vc = reinterpret_cast<uint8x4_t&>(c);
 #pragma unroll
-    for (int i = 0; i < 4; ++i) {
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < 4; ++i) {
         vc[i] = va[i] == vb[i] ? 0xff : 0x00;
     }
-    return c;
+    ଫେରନ୍ତୁ c;
 }
 
-static __device__ __forceinline__ unsigned int __vcmpne4(unsigned int a, unsigned int b) {
-    const unsigned int x = a ^ b;
+ସ୍ଥିର __device__ __forceinline__ unsigned ପୂର୍ଣ୍ଣସଂଖ୍ୟା __vcmpne4(unsigned ପୂର୍ଣ୍ଣସଂଖ୍ୟା a, unsigned ପୂର୍ଣ୍ଣସଂଖ୍ୟା b) {
+    ଅଚଳ unsigned ପୂର୍ଣ୍ଣସଂଖ୍ୟା x = a ^ b;
 
     // any non-equal bit in a byte will set the high bit of that byte here
     // the addition will not overflow in the byte as op1 and op2 are both less than 0x80
-    const unsigned int ne_low_7bits = ((x & 0x7f7f7f7f) + 0x7f7f7f7f) & 0x80808080;
-    const unsigned int ne_high_1bit = x & 0x80808080;
-    const unsigned int ne_any_bit = ne_low_7bits | ne_high_1bit;
+    ଅଚଳ unsigned ପୂର୍ଣ୍ଣସଂଖ୍ୟା ne_ତଳ_7bits = ((x & 0x7f7f7f7f) + 0x7f7f7f7f) & 0x80808080;
+    ଅଚଳ unsigned ପୂର୍ଣ୍ଣସଂଖ୍ୟା ne_ଉପର_1bit = x & 0x80808080;
+    ଅଚଳ unsigned ପୂର୍ଣ୍ଣସଂଖ୍ୟା ne_any_bit = ne_ତଳ_7bits | ne_ଉପର_1bit;
 
-    return (ne_any_bit >> 7) * 0xff;
+    ଫେରନ୍ତୁ (ne_any_bit >> 7) * 0xff;
 }

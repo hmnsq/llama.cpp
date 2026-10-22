@@ -1,85 +1,85 @@
 #ifndef HEX_DUMP_H
 #define HEX_DUMP_H
 
-#include <HAP_farf.h>
+#ଅନ୍ତର୍ଭାଵ <HAP_farf.h>
 
-static inline void hex_dump_int8_line(char * pref, const int8_t * x, int n) {
-    char str[1024], *p = str, *p_end = str + sizeof(str);
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଶୂନ୍ୟ hex_dump_int8_ଧାଡ଼ି(ଅକ୍ଷର * pref, ଅଚଳ int8_t * x, ପୂର୍ଣ୍ଣସଂଖ୍ୟା n) {
+    ଅକ୍ଷର str[1024], *p = str, *p_end = str + ଆକାର(str);
     p += snprintf(p, p_end - p, "%s: ", pref);
-    for (int i = 0; i < n && p < p_end; i++) {
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < n && p < p_end; i++) {
         p += snprintf(p, p_end - p, "%d, ", x[i]);
     }
-    FARF(HIGH, "%s\n", str);
+    FARF(ଉପର_2, "%s\n", str);
 }
 
-static inline void hex_dump_uint8_line(char * pref, const uint8_t * x, uint32_t n) {
-    char str[1024], *p = str, *p_end = str + sizeof(str);
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଶୂନ୍ୟ hex_dump_uint8_ଧାଡ଼ି(ଅକ୍ଷର * pref, ଅଚଳ uint8_t * x, uint32_t n) {
+    ଅକ୍ଷର str[1024], *p = str, *p_end = str + ଆକାର(str);
     p += snprintf(p, p_end - p, "%s: ", pref);
-    for (int i = 0; i < n && p < p_end; i++) {
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < n && p < p_end; i++) {
         p += snprintf(p, p_end - p, "%d, ", x[i]);
     }
-    FARF(HIGH, "%s\n", str);
+    FARF(ଉପର_2, "%s\n", str);
 }
 
-static inline void hex_dump_uint32_line(char * pref, const uint32_t * x, uint32_t n) {
-    char str[1024], *p = str, *p_end = str + sizeof(str);
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଶୂନ୍ୟ hex_dump_uint32_ଧାଡ଼ି(ଅକ୍ଷର * pref, ଅଚଳ uint32_t * x, uint32_t n) {
+    ଅକ୍ଷର str[1024], *p = str, *p_end = str + ଆକାର(str);
     p += snprintf(p, p_end - p, "%s: ", pref);
-    for (int i = 0; i < n; i++) {
-        p += snprintf(p, p_end - p, "%u, ", (unsigned int) x[i]);
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < n; i++) {
+        p += snprintf(p, p_end - p, "%u, ", (unsigned ପୂର୍ଣ୍ଣସଂଖ୍ୟା) x[i]);
     }
-    FARF(HIGH, "%s\n", str);
+    FARF(ଉପର_2, "%s\n", str);
 }
 
-static inline void hex_dump_int32_line(char * pref, const int32_t * x, uint32_t n) {
-    char str[1024], *p = str, *p_end = str + sizeof(str);
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଶୂନ୍ୟ hex_dump_int32_ଧାଡ଼ି(ଅକ୍ଷର * pref, ଅଚଳ int32_t * x, uint32_t n) {
+    ଅକ୍ଷର str[1024], *p = str, *p_end = str + ଆକାର(str);
     p += snprintf(p, p_end - p, "%s: ", pref);
-    for (int i = 0; i < n; i++) {
-        p += snprintf(p, p_end - p, "%d, ", (int) x[i]);
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < n; i++) {
+        p += snprintf(p, p_end - p, "%d, ", (ପୂର୍ଣ୍ଣସଂଖ୍ୟା) x[i]);
     }
-    FARF(HIGH, "%s\n", str);
+    FARF(ଉପର_2, "%s\n", str);
 }
 
-static inline void hex_dump_f16_line(char * pref, const __fp16 * x, uint32_t n) {
-    char str[1024], *p = str, *p_end = str + sizeof(str);
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଶୂନ୍ୟ hex_dump_f16_ଧାଡ଼ି(ଅକ୍ଷର * pref, ଅଚଳ __fp16 * x, uint32_t n) {
+    ଅକ୍ଷର str[1024], *p = str, *p_end = str + ଆକାର(str);
     p += snprintf(p, p_end - p, "%s: ", pref);
-    for (int i = 0; i < n; i++) {
-        p += snprintf(p, p_end - p, "%.6f, ", (float) x[i]);
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < n; i++) {
+        p += snprintf(p, p_end - p, "%.6f, ", (ଦଶମିକ) x[i]);
     }
-    FARF(HIGH, "%s\n", str);
+    FARF(ଉପର_2, "%s\n", str);
 }
 
-static inline void hex_dump_f32_line(char * pref, const float * x, uint32_t n) {
-    char str[1024], *p = str, *p_end = str + sizeof(str);
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଶୂନ୍ୟ hex_dump_f32_ଧାଡ଼ି(ଅକ୍ଷର * pref, ଅଚଳ ଦଶମିକ * x, uint32_t n) {
+    ଅକ୍ଷର str[1024], *p = str, *p_end = str + ଆକାର(str);
     p += snprintf(p, p_end - p, "%s: ", pref);
-    for (int i = 0; i < n; i++) {
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < n; i++) {
         p += snprintf(p, p_end - p, "%.6f, ", x[i]);
     }
-    FARF(HIGH, "%s\n", str);
+    FARF(ଉପର_2, "%s\n", str);
 }
 
-static inline void hex_dump_f32(char * pref, const float * x, uint32_t n) {
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଶୂନ୍ୟ hex_dump_f32(ଅକ୍ଷର * pref, ଅଚଳ ଦଶମିକ * x, uint32_t n) {
     uint32_t n0 = n / 16;
     uint32_t n1 = n % 16;
 
     uint32_t i = 0;
-    for (; i < n0; i++) {
-        hex_dump_f32_line(pref, x + (16 * i), 16);
+    ପାଇଁ (; i < n0; i++) {
+        hex_dump_f32_ଧାଡ଼ି(pref, x + (16 * i), 16);
     }
-    if (n1) {
-        hex_dump_f32_line(pref, x + (16 * i), n1);
+    ଯଦି (n1) {
+        hex_dump_f32_ଧାଡ଼ି(pref, x + (16 * i), n1);
     }
 }
 
-static inline void hex_dump_f16(char * pref, const __fp16 * x, uint32_t n) {
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଶୂନ୍ୟ hex_dump_f16(ଅକ୍ଷର * pref, ଅଚଳ __fp16 * x, uint32_t n) {
     uint32_t n0 = n / 16;
     uint32_t n1 = n % 16;
 
     uint32_t i = 0;
-    for (; i < n0; i++) {
-        hex_dump_f16_line(pref, x + (16 * i), 16);
+    ପାଇଁ (; i < n0; i++) {
+        hex_dump_f16_ଧାଡ଼ି(pref, x + (16 * i), 16);
     }
-    if (n1) {
-        hex_dump_f16_line(pref, x + (16 * i), n1);
+    ଯଦି (n1) {
+        hex_dump_f16_ଧାଡ଼ି(pref, x + (16 * i), n1);
     }
 }
 

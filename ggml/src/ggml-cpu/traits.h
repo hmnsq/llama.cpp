@@ -1,16 +1,16 @@
 #pragma once
-#include "ggml-backend-impl.h"
-#include "ggml-cpu-impl.h"
-#include "ggml.h"
+#ଅନ୍ତର୍ଭାଵ "ggml-backend-impl.h"
+#ଅନ୍ତର୍ଭାଵ "ggml-cpu-impl.h"
+#ଅନ୍ତର୍ଭାଵ "ggml.h"
 
 #ifdef __cplusplus
 #    include <vector>
-extern "C" {
+ବାହ୍ୟ "C" {
 #endif
 
 // return true if op part of extra "accelerator"
-bool ggml_cpu_extra_compute_forward(struct ggml_compute_params * params, struct ggml_tensor * op);
-bool ggml_cpu_extra_work_size(int n_threads, const struct ggml_tensor * op, size_t * size);
+bool ggml_cpu_extra_compute_forward(ସଂରଚନା ggml_compute_params * params, ସଂରଚନା ggml_tensor * op);
+bool ggml_cpu_extra_work_size(ପୂର୍ଣ୍ଣସଂଖ୍ୟା n_threads, ଅଚଳ ସଂରଚନା ggml_tensor * op, size_t * size);
 
 #ifdef __cplusplus
 }
@@ -18,17 +18,17 @@ bool ggml_cpu_extra_work_size(int n_threads, const struct ggml_tensor * op, size
 namespace ggml::cpu {
 // register in tensor->extra
 class tensor_traits {
-  public:
-    virtual ~tensor_traits();
-    virtual bool work_size(int n_threads, const struct ggml_tensor * op, size_t & size)        = 0;
-    virtual bool compute_forward(struct ggml_compute_params * params, struct ggml_tensor * op) = 0;
+  ସର୍ବସାଧାରଣ:
+    ଆଭାସୀ ~tensor_traits();
+    ଆଭାସୀ bool work_size(ପୂର୍ଣ୍ଣସଂଖ୍ୟା n_threads, ଅଚଳ ସଂରଚନା ggml_tensor * op, size_t & size)        = 0;
+    ଆଭାସୀ bool compute_forward(ସଂରଚନା ggml_compute_params * params, ସଂରଚନା ggml_tensor * op) = 0;
 };
 
 class extra_buffer_type {
-  public:
-    virtual ~extra_buffer_type();
-    virtual bool            supports_op(ggml_backend_dev_t dev, const struct ggml_tensor * op) = 0;
-    virtual tensor_traits * get_tensor_traits(const struct ggml_tensor * op)                   = 0;
+  ସର୍ବସାଧାରଣ:
+    ଆଭାସୀ ~extra_buffer_type();
+    ଆଭାସୀ bool            supports_op(ggml_backend_dev_t dev, ଅଚଳ ସଂରଚନା ggml_tensor * op) = 0;
+    ଆଭାସୀ tensor_traits * get_tensor_traits(ଅଚଳ ସଂରଚନା ggml_tensor * op)                   = 0;
 };
 }  // namespace ggml::cpu
 

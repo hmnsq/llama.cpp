@@ -1,55 +1,55 @@
-#include "conv2d-transpose.hpp"
-#include "convert.hpp"
+#ଅନ୍ତର୍ଭାଵ "conv2d-transpose.hpp"
+#ଅନ୍ତର୍ଭାଵ "convert.hpp"
 
 template <typename kernel_t>
-static void conv2d_transpose_kernel(const float * input, const kernel_t * kernel, float * output,
-                                    const int in_w, const int in_h,
-                                    const int out_w, const int out_h,
-                                    const int kernel_w, const int kernel_h,
-                                    const int stride,
-                                    const int c_in, const int c_out, const int batches,
-                                    const sycl::nd_item<3> & item_ct1) {
-    const int global_idx     = item_ct1.get_local_id(2) +
+ସ୍ଥିର ଶୂନ୍ୟ conv2d_transpose_kernel(ଅଚଳ ଦଶମିକ * ନିବେଶ, ଅଚଳ kernel_t * kernel, ଦଶମିକ * output,
+                                    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା in_w, ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା in_h,
+                                    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା out_w, ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା out_h,
+                                    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା kernel_w, ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା kernel_h,
+                                    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା stride,
+                                    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା c_in, ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା c_out, ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା batches,
+                                    ଅଚଳ sycl::nd_item<3> & item_ct1) {
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା global_idx     = item_ct1.get_local_id(2) +
                                item_ct1.get_group(2) * item_ct1.get_local_range(2);
-    const int total_elements = out_w * out_h * c_out * batches;
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା total_elements = out_w * out_h * c_out * batches;
 
-    if (global_idx >= total_elements) {
-        return;
+    ଯଦି (global_idx >= total_elements) {
+        ଫେରନ୍ତୁ;
     }
 
-    const int out_x = global_idx % out_w;
-    const int out_y = (global_idx / out_w) % out_h;
-    const int c_idx = (global_idx / (out_w * out_h)) % c_out;
-    const int n_idx = global_idx / (out_w * out_h * c_out);
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା out_x = global_idx % out_w;
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା out_y = (global_idx / out_w) % out_h;
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା c_idx = (global_idx / (out_w * out_h)) % c_out;
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା n_idx = global_idx / (out_w * out_h * c_out);
 
-    float acc = 0.0f;
+    ଦଶମିକ acc = 0.0f;
 
-    for (int c_in_idx = 0; c_in_idx < c_in; ++c_in_idx) {
-        for (int kh = 0; kh < kernel_h; ++kh) {
-            int in_y = out_y - kh;
-            if (in_y < 0 || in_y % stride) {
-                continue;
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା c_in_idx = 0; c_in_idx < c_in; ++c_in_idx) {
+        ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା kh = 0; kh < kernel_h; ++kh) {
+            ପୂର୍ଣ୍ଣସଂଖ୍ୟା in_y = out_y - kh;
+            ଯଦି (in_y < 0 || in_y % stride) {
+                ଜାରି;
             }
             in_y /= stride;
-            if (in_y >= in_h) {
-                continue;
+            ଯଦି (in_y >= in_h) {
+                ଜାରି;
             }
 
-            for (int kw = 0; kw < kernel_w; ++kw) {
-                int in_x = out_x - kw;
-                if (in_x < 0 || in_x % stride) {
-                    continue;
+            ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା kw = 0; kw < kernel_w; ++kw) {
+                ପୂର୍ଣ୍ଣସଂଖ୍ୟା in_x = out_x - kw;
+                ଯଦି (in_x < 0 || in_x % stride) {
+                    ଜାରି;
                 }
                 in_x /= stride;
-                if (in_x >= in_w) {
-                    continue;
+                ଯଦି (in_x >= in_w) {
+                    ଜାରି;
                 }
 
-                const int input_idx  = (in_w * in_h * c_in) * n_idx + (in_w * in_h) * c_in_idx + in_w * in_y + in_x;
-                const int kernel_idx = (kernel_h * kernel_w * c_out) * c_in_idx + (kernel_h * kernel_w) * c_idx +
+                ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା ନିବେଶ_idx  = (in_w * in_h * c_in) * n_idx + (in_w * in_h) * c_in_idx + in_w * in_y + in_x;
+                ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା kernel_idx = (kernel_h * kernel_w * c_out) * c_in_idx + (kernel_h * kernel_w) * c_idx +
                                        kernel_w * kh + kw;
 
-                acc += input[input_idx] * ggml_sycl_cast<float>(kernel[kernel_idx]);
+                acc += ନିବେଶ[ନିବେଶ_idx] * ggml_sycl_cast<ଦଶମିକ>(kernel[kernel_idx]);
             }
         }
     }
@@ -58,20 +58,20 @@ static void conv2d_transpose_kernel(const float * input, const kernel_t * kernel
 }
 
 template <typename kernel_t>
-static void conv2d_transpose_sycl(const float * input_d, const kernel_t * kernel_d, float * output_d,
-                                   const int in_w, const int in_h,
-                                   const int out_w, const int out_h,
-                                   const int kernel_w, const int kernel_h,
-                                   const int stride,
-                                   const int c_in, const int c_out, const int batches,
-                                   const queue_ptr & stream) {
-    const int total      = out_w * out_h * c_out * batches;
-    const int num_blocks = (total + SYCL_CONV2D_TRANSPOSE_BLOCK_SIZE - 1) / SYCL_CONV2D_TRANSPOSE_BLOCK_SIZE;
-    const sycl::range<3> block_dims(1, 1, SYCL_CONV2D_TRANSPOSE_BLOCK_SIZE);
-    const sycl::range<3> block_nums(1, 1, num_blocks);
+ସ୍ଥିର ଶୂନ୍ୟ conv2d_transpose_sycl(ଅଚଳ ଦଶମିକ * ନିବେଶ_d, ଅଚଳ kernel_t * kernel_d, ଦଶମିକ * output_d,
+                                   ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା in_w, ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା in_h,
+                                   ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା out_w, ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା out_h,
+                                   ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା kernel_w, ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା kernel_h,
+                                   ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା stride,
+                                   ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା c_in, ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା c_out, ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା batches,
+                                   ଅଚଳ queue_ptr & stream) {
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା total      = out_w * out_h * c_out * batches;
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଅଙ୍କ_blocks = (total + SYCL_CONV2D_TRANSPOSE_BLOCK_SIZE - 1) / SYCL_CONV2D_TRANSPOSE_BLOCK_SIZE;
+    ଅଚଳ sycl::range<3> block_dims(1, 1, SYCL_CONV2D_TRANSPOSE_BLOCK_SIZE);
+    ଅଚଳ sycl::range<3> block_nums(1, 1, ଅଙ୍କ_blocks);
     stream->parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
         [=](sycl::nd_item<3> item_ct1) {
-            conv2d_transpose_kernel<kernel_t>(input_d, kernel_d, output_d,
+            conv2d_transpose_kernel<kernel_t>(ନିବେଶ_d, kernel_d, output_d,
                                              in_w, in_h, out_w, out_h, kernel_w, kernel_h,
                                              stride, c_in, c_out, batches, item_ct1);
         });
@@ -80,46 +80,46 @@ static void conv2d_transpose_sycl(const float * input_d, const kernel_t * kernel
 // input:  (W, H, C_in, N)
 // kernel: (W, H, C_out, C_in)
 // output: (W, H, C_out, N)
-void ggml_sycl_op_conv2d_transpose(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ଶୂନ୍ୟ ggml_sycl_op_conv2d_transpose(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
 
-    const ggml_tensor * kernel = dst->src[0];
-    const ggml_tensor * input  = dst->src[1];
+    ଅଚଳ ggml_tensor * kernel = dst->src[0];
+    ଅଚଳ ggml_tensor * ନିବେଶ  = dst->src[1];
 
     GGML_ASSERT(kernel->type == GGML_TYPE_F16 || kernel->type == GGML_TYPE_F32);
-    GGML_ASSERT(input->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32);
+    GGML_ASSERT(ନିବେଶ->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32);
 
-    GGML_ASSERT(ggml_is_contiguous(input));
+    GGML_ASSERT(ggml_is_contiguous(ନିବେଶ));
     GGML_ASSERT(ggml_is_contiguous(kernel));
     GGML_ASSERT(ggml_is_contiguous(dst));
 
-    const float * input_d  = (const float *) input->data;
-    float *       output_d = (float *) dst->data;
-    const void *  kernel_d = kernel->data;
+    ଅଚଳ ଦଶମିକ * ନିବେଶ_d  = (ଅଚଳ ଦଶମିକ *) ନିବେଶ->data;
+    ଦଶମିକ *       output_d = (ଦଶମିକ *) dst->data;
+    ଅଚଳ ଶୂନ୍ୟ *  kernel_d = kernel->data;
 
-    const int input_w      = input->ne[0];
-    const int input_h      = input->ne[1];
-    const int channels_in  = input->ne[2];
-    const int batches      = input->ne[3];
-    const int output_w     = dst->ne[0];
-    const int output_h     = dst->ne[1];
-    const int channels_out = kernel->ne[2];
-    const int kernel_w     = kernel->ne[0];
-    const int kernel_h     = kernel->ne[1];
-    const int stride       = dst->op_params[0];
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା ନିବେଶ_w      = ନିବେଶ->ne[0];
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା ନିବେଶ_h      = ନିବେଶ->ne[1];
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା channels_in  = ନିବେଶ->ne[2];
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା batches      = ନିବେଶ->ne[3];
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା output_w     = dst->ne[0];
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା output_h     = dst->ne[1];
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା channels_out = kernel->ne[2];
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା kernel_w     = kernel->ne[0];
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା kernel_h     = kernel->ne[1];
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା stride       = dst->op_params[0];
 
     GGML_ASSERT(channels_in == kernel->ne[3]);
     GGML_ASSERT(stride > 0);
 
-    const queue_ptr stream = ctx.stream();
+    ଅଚଳ queue_ptr stream = ctx.stream();
 
-    if (kernel->type == GGML_TYPE_F16) {
-        conv2d_transpose_sycl<sycl::half>(input_d, (const sycl::half *) kernel_d, output_d,
-                                          input_w, input_h, output_w, output_h, kernel_w, kernel_h,
+    ଯଦି (kernel->type == GGML_TYPE_F16) {
+        conv2d_transpose_sycl<sycl::half>(ନିବେଶ_d, (ଅଚଳ sycl::half *) kernel_d, output_d,
+                                          ନିବେଶ_w, ନିବେଶ_h, output_w, output_h, kernel_w, kernel_h,
                                           stride, channels_in, channels_out, batches, stream);
-    } else {
-        conv2d_transpose_sycl<float>(input_d, (const float *) kernel_d, output_d,
-                                     input_w, input_h, output_w, output_h, kernel_w, kernel_h,
+    } ଅନ୍ୟଥା {
+        conv2d_transpose_sycl<ଦଶମିକ>(ନିବେଶ_d, (ଅଚଳ ଦଶମିକ *) kernel_d, output_d,
+                                     ନିବେଶ_w, ନିବେଶ_h, output_w, output_h, kernel_w, kernel_h,
                                      stride, channels_in, channels_out, batches, stream);
     }
 }

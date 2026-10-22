@@ -1,6 +1,6 @@
-#include "virtgpu-forward-impl.h"
+#ଅନ୍ତର୍ଭାଵ "virtgpu-forward-impl.h"
 
-void * apir_buffer_get_base(virtgpu * gpu, apir_buffer_context_t * buffer_context) {
+ଶୂନ୍ୟ * apir_buffer_get_base(virtgpu * gpu, apir_buffer_context_t * buffer_context) {
     apir_encoder *        encoder;
     apir_decoder *        decoder;
     ApirForwardReturnCode ret;
@@ -16,13 +16,13 @@ void * apir_buffer_get_base(virtgpu * gpu, apir_buffer_context_t * buffer_contex
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return (void *) base;
+    ଫେରନ୍ତୁ (ଶୂନ୍ୟ *) base;
 }
 
-void apir_buffer_set_tensor(virtgpu *               gpu,
+ଶୂନ୍ୟ apir_buffer_set_tensor(virtgpu *               gpu,
                             apir_buffer_context_t * buffer_context,
                             ggml_tensor *           tensor,
-                            const void *            data,
+                            ଅଚଳ ଶୂନ୍ୟ *            data,
                             size_t                  offset,
                             size_t                  size) {
     apir_encoder *        encoder;
@@ -36,17 +36,17 @@ void apir_buffer_set_tensor(virtgpu *               gpu,
 
     virtgpu_shmem   temp_shmem;  // Local storage for large buffers
     virtgpu_shmem * shmem              = &temp_shmem;
-    bool            using_shared_shmem = false;
+    ତାର୍କିକ            using_shared_shmem = ମିଥ୍ୟା;
 
-    if (size <= gpu->data_shmem.mmap_size) {
+    ଯଦି (size <= gpu->data_shmem.mmap_size) {
         // Lock mutex before using shared data_shmem buffer
-        if (mtx_lock(&gpu->data_shmem_mutex) != thrd_success) {
+        ଯଦି (mtx_lock(&gpu->data_shmem_mutex) != thrd_success) {
             GGML_ABORT(GGML_VIRTGPU "%s: Failed to lock data_shmem mutex", __func__);
         }
-        using_shared_shmem = true;
+        using_shared_shmem = ସତ୍ୟ;
         shmem              = &gpu->data_shmem;
 
-    } else if (virtgpu_shmem_create(gpu, size, shmem)) {
+    } ଅନ୍ୟଥା ଯଦି (virtgpu_shmem_create(gpu, size, shmem)) {
         GGML_ABORT(GGML_VIRTGPU "%s: Couldn't allocate the guest-host shared buffer", __func__);
     }
 
@@ -61,19 +61,19 @@ void apir_buffer_set_tensor(virtgpu *               gpu,
     remote_call_finish(gpu, encoder, decoder);
 
     // Unlock mutex before cleanup
-    if (using_shared_shmem) {
+    ଯଦି (using_shared_shmem) {
         mtx_unlock(&gpu->data_shmem_mutex);
-    } else {
+    } ଅନ୍ୟଥା {
         virtgpu_shmem_destroy(gpu, shmem);
     }
 
-    return;
+    ଫେରନ୍ତୁ;
 }
 
-void apir_buffer_get_tensor(virtgpu *               gpu,
+ଶୂନ୍ୟ apir_buffer_get_tensor(virtgpu *               gpu,
                             apir_buffer_context_t * buffer_context,
-                            const ggml_tensor *     tensor,
-                            void *                  data,
+                            ଅଚଳ ggml_tensor *     tensor,
+                            ଶୂନ୍ୟ *                  data,
                             size_t                  offset,
                             size_t                  size) {
     apir_encoder *        encoder;
@@ -87,17 +87,17 @@ void apir_buffer_get_tensor(virtgpu *               gpu,
 
     virtgpu_shmem   temp_shmem;  // Local storage for large buffers
     virtgpu_shmem * shmem              = &temp_shmem;
-    bool            using_shared_shmem = false;
+    ତାର୍କିକ            using_shared_shmem = ମିଥ୍ୟା;
 
-    if (size <= gpu->data_shmem.mmap_size) {
+    ଯଦି (size <= gpu->data_shmem.mmap_size) {
         // Lock mutex before using shared data_shmem buffer
-        if (mtx_lock(&gpu->data_shmem_mutex) != thrd_success) {
+        ଯଦି (mtx_lock(&gpu->data_shmem_mutex) != thrd_success) {
             GGML_ABORT(GGML_VIRTGPU "%s: Failed to lock data_shmem mutex", __func__);
         }
-        using_shared_shmem = true;
+        using_shared_shmem = ସତ୍ୟ;
         shmem              = &gpu->data_shmem;
 
-    } else if (virtgpu_shmem_create(gpu, size, shmem)) {
+    } ଅନ୍ୟଥା ଯଦି (virtgpu_shmem_create(gpu, size, shmem)) {
         GGML_ABORT(GGML_VIRTGPU "%s: Couldn't allocate the guest-host shared buffer", __func__);
     }
 
@@ -112,17 +112,17 @@ void apir_buffer_get_tensor(virtgpu *               gpu,
     remote_call_finish(gpu, encoder, decoder);
 
     // Unlock mutex before cleanup
-    if (using_shared_shmem) {
+    ଯଦି (using_shared_shmem) {
         mtx_unlock(&gpu->data_shmem_mutex);
-    } else {
+    } ଅନ୍ୟଥା {
         virtgpu_shmem_destroy(gpu, shmem);
     }
 }
 
-bool apir_buffer_cpy_tensor(virtgpu *               gpu,
+ତାର୍କିକ apir_buffer_cpy_tensor(virtgpu *               gpu,
                             apir_buffer_context_t * buffer_context,
-                            const ggml_tensor *     src,
-                            const ggml_tensor *     dst) {
+                            ଅଚଳ ggml_tensor *     src,
+                            ଅଚଳ ggml_tensor *     dst) {
     apir_encoder *        encoder;
     apir_decoder *        decoder;
     ApirForwardReturnCode ret;
@@ -135,15 +135,15 @@ bool apir_buffer_cpy_tensor(virtgpu *               gpu,
 
     REMOTE_CALL(gpu, encoder, decoder, ret);
 
-    bool ret_val;
+    ତାର୍କିକ ret_val;
     apir_decode_bool_t(decoder, &ret_val);
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return ret_val;
+    ଫେରନ୍ତୁ ret_val;
 }
 
-void apir_buffer_clear(virtgpu * gpu, apir_buffer_context_t * buffer_context, uint8_t value) {
+ଶୂନ୍ୟ apir_buffer_clear(virtgpu * gpu, apir_buffer_context_t * buffer_context, uint8_t value) {
     apir_encoder *        encoder;
     apir_decoder *        decoder;
     ApirForwardReturnCode ret;
@@ -158,7 +158,7 @@ void apir_buffer_clear(virtgpu * gpu, apir_buffer_context_t * buffer_context, ui
     remote_call_finish(gpu, encoder, decoder);
 }
 
-void apir_buffer_free_buffer(virtgpu * gpu, apir_buffer_context_t * buffer_context) {
+ଶୂନ୍ୟ apir_buffer_free_buffer(virtgpu * gpu, apir_buffer_context_t * buffer_context) {
     apir_encoder *        encoder;
     apir_decoder *        decoder;
     ApirForwardReturnCode ret;

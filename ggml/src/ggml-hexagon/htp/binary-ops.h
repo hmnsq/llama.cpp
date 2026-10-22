@@ -1,25 +1,25 @@
-#ifndef HTP_BINARY_OPS_H
-#define HTP_BINARY_OPS_H
+#ifndef HTP_ଦ୍ୱିମିକ_OPS_H
+#define HTP_ଦ୍ୱିମିକ_OPS_H
 
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
+#ଅନ୍ତର୍ଭାଵ <stddef.h>
+#ଅନ୍ତର୍ଭାଵ <stdint.h>
+#ଅନ୍ତର୍ଭାଵ <string.h>
 
-#include "hex-common.h"
-#include "htp-ops.h"
-#include "htp-vtcm.h"
+#ଅନ୍ତର୍ଭାଵ "hex-common.h"
+#ଅନ୍ତର୍ଭାଵ "htp-ops.h"
+#ଅନ୍ତର୍ଭାଵ "htp-vtcm.h"
 
-enum htp_binary_kernel_type {
-    HTP_BINARY_KERNEL_SAME_SHAPE = 0,
-    HTP_BINARY_KERNEL_ROW_BCAST,
-    HTP_BINARY_KERNEL_SCALAR,
-    HTP_BINARY_KERNEL_ADD_ID,
-    HTP_BINARY_KERNEL_COMPLEX,
-    HTP_BINARY_KERNEL_REPEAT,
-    HTP_BINARY_KERNEL_CHUNKED,
+ଗଣନା htp_ଦ୍ୱିମିକ_kernel_type {
+    HTP_ଦ୍ୱିମିକ_KERNEL_SAME_SHAPE = 0,
+    HTP_ଦ୍ୱିମିକ_KERNEL_ROW_BCAST,
+    HTP_ଦ୍ୱିମିକ_KERNEL_SCALAR,
+    HTP_ଦ୍ୱିମିକ_KERNEL_ADD_ID,
+    HTP_ଦ୍ୱିମିକ_KERNEL_COMPLEX,
+    HTP_ଦ୍ୱିମିକ_KERNEL_REPEAT,
+    HTP_ଦ୍ୱିମିକ_KERNEL_CHUNKED,
 };
 
-struct htp_binary_kernel_params {
+ସଂରଚନା htp_ଦ୍ୱିମିକ_kernel_params {
     uint32_t kernel_type;
     uint32_t n_threads;
     uint32_t rows_per_buffer;
@@ -42,33 +42,33 @@ struct htp_binary_kernel_params {
     uint8_t  pad;
 };
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_binary_kernel_params) <= 128, "htp_binary_kernel_params is too large for kernel_params blob");
+#ଯଦି defined(__cplusplus)
+static_assert(ଆକାର(ସଂରଚନା htp_ଦ୍ୱିମିକ_kernel_params) <= 128, "htp_binary_kernel_params is too large for kernel_params blob");
 
-struct ggml_tensor;
-static inline bool htp_binary_strides_safe(
-    const struct ggml_tensor * src0,
-    const struct ggml_tensor * src1,
-    const struct ggml_tensor * dst,
+ସଂରଚନା ggml_tensor;
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ bool htp_ଦ୍ୱିମିକ_strides_safe(
+    ଅଚଳ ସଂରଚନା ggml_tensor * src0,
+    ଅଚଳ ସଂରଚନା ggml_tensor * src1,
+    ଅଚଳ ସଂରଚନା ggml_tensor * dst,
     size_t elem_size
 ) {
-    if ((src0->ne[0] != 1 && src0->nb[0] != elem_size) ||
+    ଯଦି ((src0->ne[0] != 1 && src0->nb[0] != elem_size) ||
         (src1->ne[0] != 1 && src1->nb[0] != elem_size) ||
         (dst->ne[0]  != 1 && dst->nb[0]  != elem_size)) {
-        return false;
+        ଫେରନ୍ତୁ false;
     }
-    if ((src0->ne[1] > 1 && src0->nb[1] < src0->ne[0] * elem_size) ||
+    ଯଦି ((src0->ne[1] > 1 && src0->nb[1] < src0->ne[0] * elem_size) ||
         (src1->ne[1] > 1 && src1->nb[1] < src1->ne[0] * elem_size) ||
         (dst->ne[1]  > 1 && dst->nb[1]  < dst->ne[0]  * elem_size)) {
-        return false;
+        ଫେରନ୍ତୁ false;
     }
-    return true;
+    ଫେରନ୍ତୁ true;
 }
-#else
-_Static_assert(sizeof(struct htp_binary_kernel_params) <= 128, "htp_binary_kernel_params is too large for kernel_params blob");
+#ଅନ୍ୟଥା
+_Static_assert(ଆକାର(ସଂରଚନା htp_ଦ୍ୱିମିକ_kernel_params) <= 128, "htp_binary_kernel_params is too large for kernel_params blob");
 #endif
 
-struct htp_binary_vtcm_layout {
+ସଂରଚନା htp_ଦ୍ୱିମିକ_vtcm_layout {
     size_t total_bytes;
     size_t off_src0;
     size_t off_src1;
@@ -88,22 +88,22 @@ struct htp_binary_vtcm_layout {
     uint32_t rows_per_buffer;
 };
 
-static inline void htp_binary_vtcm_layout_build(
-    struct htp_binary_vtcm_layout * L,
-    const struct htp_binary_kernel_params * kparams,
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଶୂନ୍ୟ htp_ଦ୍ୱିମିକ_vtcm_layout_build(
+    ସଂରଚନା htp_ଦ୍ୱିମିକ_vtcm_layout * L,
+    ଅଚଳ ସଂରଚନା htp_ଦ୍ୱିମିକ_kernel_params * kparams,
     size_t vtcm_size
 ) {
-    memset(L, 0, sizeof(*L));
+    memset(L, 0, ଆକାର(*L));
 
-    const uint32_t n_threads = kparams->n_threads;
-    if (n_threads == 0) {
-        return;
+    ଅଚଳ uint32_t n_threads = kparams->n_threads;
+    ଯଦି (n_threads == 0) {
+        ଫେରନ୍ତୁ;
     }
 
-    if (kparams->kernel_type == HTP_BINARY_KERNEL_CHUNKED) {
-        const size_t chunk_bytes = kparams->chunk_bytes;
-        if (chunk_bytes == 0) {
-            return;
+    ଯଦି (kparams->kernel_type == HTP_ଦ୍ୱିମିକ_KERNEL_CHUNKED) {
+        ଅଚଳ size_t chunk_bytes = kparams->chunk_bytes;
+        ଯଦି (chunk_bytes == 0) {
+            ଫେରନ୍ତୁ;
         }
 
         L->src0_bytes_per_thread = 2 * chunk_bytes;
@@ -117,35 +117,35 @@ static inline void htp_binary_vtcm_layout_build(
         L->rows_per_buffer = 1;
         L->src1_size = 0;
 
-        const size_t src0_total = n_threads * L->src0_bytes_per_thread;
-        const size_t src1_total = kparams->is_scalar ? 128 : (n_threads * L->src1_bytes_per_thread);
-        const size_t dst_total  = n_threads * L->dst_bytes_per_thread;
+        ଅଚଳ size_t src0_total = n_threads * L->src0_bytes_per_thread;
+        ଅଚଳ size_t src1_total = kparams->is_scalar ? 128 : (n_threads * L->src1_bytes_per_thread);
+        ଅଚଳ size_t dst_total  = n_threads * L->dst_bytes_per_thread;
 
         size_t off = 0;
         VTCM_LAYOUT_ALLOC(off, off_src0, src0_total);
         VTCM_LAYOUT_ALLOC(off, off_src1, src1_total);
         VTCM_LAYOUT_ALLOC(off, off_dst,  dst_total);
 
-        if (off > vtcm_size) {
-            return;
+        ଯଦି (off > vtcm_size) {
+            ଫେରନ୍ତୁ;
         }
 
         L->total_bytes = off;
-        return;
+        ଫେରନ୍ତୁ;
     }
 
-    const size_t spad_row_total = (kparams->kernel_type == HTP_BINARY_KERNEL_SAME_SHAPE)
+    ଅଚଳ size_t spad_row_total = (kparams->kernel_type == HTP_ଦ୍ୱିମିକ_KERNEL_SAME_SHAPE)
         ? 2 * (kparams->src0_row_size_aligned + kparams->src1_row_size_aligned + kparams->dst_row_size_aligned)
         : 2 * (kparams->src0_row_size_aligned + kparams->dst_row_size_aligned);
 
-    const size_t static_vtcm_size = kparams->src1_size + kparams->src2_size;
-    if (spad_row_total == 0 || vtcm_size < static_vtcm_size) {
-        return;
+    ଅଚଳ size_t static_vtcm_size = kparams->src1_size + kparams->src2_size;
+    ଯଦି (spad_row_total == 0 || vtcm_size < static_vtcm_size) {
+        ଫେରନ୍ତୁ;
     }
 
-    const size_t rows_per_buffer = (vtcm_size - static_vtcm_size) / (n_threads * spad_row_total);
-    if (rows_per_buffer == 0) {
-        return;
+    ଅଚଳ size_t rows_per_buffer = (vtcm_size - static_vtcm_size) / (n_threads * spad_row_total);
+    ଯଦି (rows_per_buffer == 0) {
+        ଫେରନ୍ତୁ;
     }
 
     L->rows_per_buffer = (uint32_t) rows_per_buffer;
@@ -154,7 +154,7 @@ static inline void htp_binary_vtcm_layout_build(
 
     L->src0_bytes_per_thread = rows_per_buffer * 2 * kparams->src0_row_size_aligned;
     L->dst_bytes_per_thread  = rows_per_buffer * 2 * kparams->dst_row_size_aligned;
-    L->src1_bytes_per_thread = (kparams->kernel_type == HTP_BINARY_KERNEL_SAME_SHAPE)
+    L->src1_bytes_per_thread = (kparams->kernel_type == HTP_ଦ୍ୱିମିକ_KERNEL_SAME_SHAPE)
         ? rows_per_buffer * 2 * kparams->src1_row_size_aligned
         : 0;
 
@@ -162,12 +162,12 @@ static inline void htp_binary_vtcm_layout_build(
     L->src1_spad_half_size = L->src1_bytes_per_thread / 2;
     L->dst_spad_half_size  = L->dst_bytes_per_thread / 2;
 
-    const size_t src0_total = n_threads * L->src0_bytes_per_thread;
-    const size_t src1_total = (kparams->src1_size > 0)
+    ଅଚଳ size_t src0_total = n_threads * L->src0_bytes_per_thread;
+    ଅଚଳ size_t src1_total = (kparams->src1_size > 0)
         ? kparams->src1_size
         : n_threads * L->src1_bytes_per_thread;
-    const size_t src2_total = kparams->src2_size;
-    const size_t dst_total  = n_threads * L->dst_bytes_per_thread;
+    ଅଚଳ size_t src2_total = kparams->src2_size;
+    ଅଚଳ size_t dst_total  = n_threads * L->dst_bytes_per_thread;
 
     size_t off = 0;
     VTCM_LAYOUT_ALLOC(off, off_src0, src0_total);

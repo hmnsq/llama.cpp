@@ -1,15 +1,15 @@
-#include "input_model.h"
+#ଅନ୍ତର୍ଭାଵ "input_model.h"
 
-#include "decoder.h"
+#ଅନ୍ତର୍ଭାଵ "decoder.h"
 
-namespace ov {
-namespace frontend {
-namespace ggml {
+ନାମାକାଶ ov {
+ନାମାକାଶ frontend {
+ନାମାକାଶ ggml {
 
-InputModel::InputModel(const std::shared_ptr<GgmlDecoder> & gdecoder) : m_decoder(gdecoder) {}
+ନିବେଶ_Model::ନିବେଶ_Model(ଅଚଳ std::shared_ptr<GgmlDecoder> & gdecoder) : m_decoder(gdecoder) {}
 
-const std::shared_ptr<GgmlDecoder> & InputModel::get_model_decoder() const {
-    return m_decoder;
+ଅଚଳ std::shared_ptr<GgmlDecoder> & ନିବେଶ_Model::get_model_decoder() ଅଚଳ {
+    ଫେରନ୍ତୁ m_decoder;
 }
 
 }  // namespace ggml

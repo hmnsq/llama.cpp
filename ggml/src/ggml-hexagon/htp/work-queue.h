@@ -1,37 +1,37 @@
 #ifndef HTP_WORK_QUEUE_H
 #define HTP_WORK_QUEUE_H
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <stddef.h>
+#ଅନ୍ତର୍ଭାଵ <stdbool.h>
+#ଅନ୍ତର୍ଭାଵ <stdint.h>
+#ଅନ୍ତର୍ଭାଵ <stddef.h>
 
-typedef void (*work_queue_func_t)(unsigned int n, unsigned int i, void *);
+ପ୍ରକାରବ୍ୟାଖ୍ୟା ଶୂନ୍ୟ (*work_queue_func_t)(unsigned ପୂର୍ଣ୍ଣସଂଖ୍ୟା n, unsigned ପୂର୍ଣ୍ଣସଂଖ୍ୟା i, ଶୂନ୍ୟ *);
 
-struct work_queue_s;
-typedef struct work_queue_s * work_queue_t;
+ସଂରଚନା work_queue_s;
+ପ୍ରକାରବ୍ୟାଖ୍ୟା ସଂରଚନା work_queue_s * work_queue_t;
 
 #define WORK_QUEUE_MAX_N_THREADS      10
 
-size_t       work_queue_sizeof(uint32_t n_threads, uint32_t capacity, uint32_t stack_size);
-size_t       work_queue_alignof(void);
-work_queue_t work_queue_init(void * ptr, uint32_t n_threads, uint32_t capacity, uint32_t stack_size);
-void         work_queue_free(work_queue_t q);
+size_t       work_queue_sizeof(uint32_t n_threads, uint32_t capacity, uint32_t ଗଦା_size);
+size_t       work_queue_alignof(ଶୂନ୍ୟ);
+work_queue_t work_queue_init(ଶୂନ୍ୟ * ptr, uint32_t n_threads, uint32_t capacity, uint32_t ଗଦା_size);
+ଶୂନ୍ୟ         work_queue_free(work_queue_t q);
 
-void work_queue_wakeup(work_queue_t q);
-void work_queue_suspend(work_queue_t q);
+ଶୂନ୍ୟ work_queue_wakeup(work_queue_t q);
+ଶୂନ୍ୟ work_queue_suspend(work_queue_t q);
 
-bool work_queue_run_async(work_queue_t q, work_queue_func_t func, void * data, unsigned int n);
+bool work_queue_run_async(work_queue_t q, work_queue_func_t func, ଶୂନ୍ୟ * data, unsigned ପୂର୍ଣ୍ଣସଂଖ୍ୟା n);
 
-static inline bool work_queue_run(work_queue_t q, work_queue_func_t func, void * data, unsigned int n) {
-    if (n <= 1) {
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ bool work_queue_run(work_queue_t q, work_queue_func_t func, ଶୂନ୍ୟ * data, unsigned ପୂର୍ଣ୍ଣସଂଖ୍ୟା n) {
+    ଯଦି (n <= 1) {
         func(n, 0, data);
-        return true;
+        ଫେରନ୍ତୁ true;
     }
-    return work_queue_run_async(q, func, data, n);
+    ଫେରନ୍ତୁ work_queue_run_async(q, func, data, n);
 }
 
 // Legacy compatibility
-typedef work_queue_func_t     worker_callback_t;
+ପ୍ରକାରବ୍ୟାଖ୍ୟା work_queue_func_t     worker_callback_t;
 #define worker_pool_run_func  work_queue_run
 #define worker_pool           work_queue
 

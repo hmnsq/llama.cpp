@@ -1,11 +1,11 @@
 #ifndef HTP_UNARY_OPS_H
 #define HTP_UNARY_OPS_H
 
-#include "hex-common.h"
-#include "htp-ops.h"
+#ଅନ୍ତର୍ଭାଵ "hex-common.h"
+#ଅନ୍ତର୍ଭାଵ "htp-ops.h"
 
 // Op-specific struct for precomputed unary params
-struct htp_unary_kernel_params {
+ସଂରଚନା htp_unary_kernel_params {
     uint32_t  n_threads;
     uint32_t  col_tile;
     uint32_t  vtcm_row_per_thread;
@@ -27,51 +27,51 @@ struct htp_unary_kernel_params {
     uint32_t  vtcm_size;
 
     // Fastdiv helpers
-    struct fastdiv_values div_ne01;
-    struct fastdiv_values div_ne02;
-    struct fastdiv_values div_ne012;
-    struct fastdiv_values div_tpr;
+    ସଂରଚନା fastdiv_ମୂଲ୍ୟଗୁଡ଼ିକ div_ne01;
+    ସଂରଚନା fastdiv_ମୂଲ୍ୟଗୁଡ଼ିକ div_ne02;
+    ସଂରଚନା fastdiv_ମୂଲ୍ୟଗୁଡ଼ିକ div_ne012;
+    ସଂରଚନା fastdiv_ମୂଲ୍ୟଗୁଡ଼ିକ div_tpr;
 };
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_unary_kernel_params) <= 128, "htp_unary_kernel_params is too large for kernel_params blob");
-#else
-_Static_assert(sizeof(struct htp_unary_kernel_params) <= 128, "htp_unary_kernel_params is too large for kernel_params blob");
+#ଯଦି defined(__cplusplus)
+static_assert(ଆକାର(ସଂରଚନା htp_unary_kernel_params) <= 128, "htp_unary_kernel_params is too large for kernel_params blob");
+#ଅନ୍ୟଥା
+_Static_assert(ଆକାର(ସଂରଚନା htp_unary_kernel_params) <= 128, "htp_unary_kernel_params is too large for kernel_params blob");
 #endif
 
-static inline bool htp_op_is_unary(uint32_t opcode) {
-    switch (opcode) {
-        case HTP_OP_CLAMP:
-        case HTP_OP_LEAKY_RELU:
-        case HTP_OP_NORM:
-        case HTP_OP_RMS_NORM:
-        case HTP_OP_RMS_NORM_MUL:
-        case HTP_OP_SCALE:
-        case HTP_OP_SQR:
-        case HTP_OP_SQRT:
-        case HTP_OP_UNARY_NEG:
-        case HTP_OP_UNARY_EXP:
-        case HTP_OP_UNARY_SIGMOID:
-        case HTP_OP_UNARY_SILU:
-        case HTP_OP_UNARY_GELU:
-        case HTP_OP_UNARY_GELU_QUICK:
-        case HTP_OP_UNARY_GELU_ERF:
-        case HTP_OP_UNARY_SOFTPLUS:
-        case HTP_OP_UNARY_TANH:
-        case HTP_OP_UNARY_ABS:
-        case HTP_OP_UNARY_LOG:
-        case HTP_OP_UNARY_RELU:
-        case HTP_OP_UNARY_STEP:
-        case HTP_OP_L2_NORM:
-        case HTP_OP_TRI:
-        case HTP_OP_HADAMARD:
-            return true;
-        default:
-            return false;
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ bool htp_op_is_unary(uint32_t opcode) {
+    ବାଛ (opcode) {
+        ସ୍ଥିତି HTP_OP_CLAMP:
+        ସ୍ଥିତି HTP_OP_LEAKY_RELU:
+        ସ୍ଥିତି HTP_OP_NORM:
+        ସ୍ଥିତି HTP_OP_RMS_NORM:
+        ସ୍ଥିତି HTP_OP_RMS_NORM_MUL:
+        ସ୍ଥିତି HTP_OP_SCALE:
+        ସ୍ଥିତି HTP_OP_SQR:
+        ସ୍ଥିତି HTP_OP_SQRT:
+        ସ୍ଥିତି HTP_OP_UNARY_NEG:
+        ସ୍ଥିତି HTP_OP_UNARY_EXP:
+        ସ୍ଥିତି HTP_OP_UNARY_SIGMOID:
+        ସ୍ଥିତି HTP_OP_UNARY_SILU:
+        ସ୍ଥିତି HTP_OP_UNARY_GELU:
+        ସ୍ଥିତି HTP_OP_UNARY_GELU_QUICK:
+        ସ୍ଥିତି HTP_OP_UNARY_GELU_ERF:
+        ସ୍ଥିତି HTP_OP_UNARY_SOFTPLUS:
+        ସ୍ଥିତି HTP_OP_UNARY_TANH:
+        ସ୍ଥିତି HTP_OP_UNARY_ABS:
+        ସ୍ଥିତି HTP_OP_UNARY_LOG:
+        ସ୍ଥିତି HTP_OP_UNARY_RELU:
+        ସ୍ଥିତି HTP_OP_UNARY_STEP:
+        ସ୍ଥିତି HTP_OP_L2_NORM:
+        ସ୍ଥିତି HTP_OP_TRI:
+        ସ୍ଥିତି HTP_OP_HADAMARD:
+            ଫେରନ୍ତୁ true;
+        ପୂର୍ବନିର୍ଦ୍ଧାରିତ:
+            ଫେରନ୍ତୁ false;
     }
 }
 
-struct htp_unary_vtcm_layout {
+ସଂରଚନା htp_unary_vtcm_layout {
     size_t total_bytes;
     size_t off_src0;
     size_t off_src1;
@@ -82,8 +82,8 @@ struct htp_unary_vtcm_layout {
     size_t dst_bytes;
 };
 
-static inline void htp_unary_vtcm_layout_build(
-    struct htp_unary_vtcm_layout * L,
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଶୂନ୍ୟ htp_unary_vtcm_layout_build(
+    ସଂରଚନା htp_unary_vtcm_layout * L,
     uint32_t op,
     uint32_t ne00,
     uint32_t ne10,
@@ -95,44 +95,44 @@ static inline void htp_unary_vtcm_layout_build(
     uint32_t * out_col_tile,
     uint32_t * out_vtcm_row_per_thread
 ) {
-    const size_t dst_elem_size      = (op == HTP_OP_HADAMARD) ? sizeof(float) : elem_size;
-    const size_t src0_data_row_size = ne00 * elem_size;
-    const size_t dst_data_row_size  = ne10 * dst_elem_size;
+    ଅଚଳ size_t dst_elem_size      = (op == HTP_OP_HADAMARD) ? ଆକାର(ଦଶମିକ) : elem_size;
+    ଅଚଳ size_t src0_data_row_size = ne00 * elem_size;
+    ଅଚଳ size_t dst_data_row_size  = ne10 * dst_elem_size;
 
-    const size_t src0_row_size_aligned = hex_round_up(src0_data_row_size, 128);
-    const size_t dst_row_size_aligned  = hex_round_up(dst_data_row_size,  128);
+    ଅଚଳ size_t src0_row_size_aligned = hex_round_up(src0_data_row_size, 128);
+    ଅଚଳ size_t dst_row_size_aligned  = hex_round_up(dst_data_row_size,  128);
 
     size_t src1_row_size_aligned = 0;
-    if (op == HTP_OP_RMS_NORM_MUL) {
+    ଯଦି (op == HTP_OP_RMS_NORM_MUL) {
         // RMS_NORM_MUL fusion is F32-only; its weight tensor is always F32.
-        const size_t src1_data_row_size = ne11 * sizeof(float);
+        ଅଚଳ size_t src1_data_row_size = ne11 * ଆକାର(ଦଶମିକ);
         src1_row_size_aligned = hex_round_up(src1_data_row_size, 128);
     }
 
     size_t vtcm_size_per_row = 0;
     size_t vtcm_row_per_thread = 0;
 
-    if (op == HTP_OP_RMS_NORM_MUL) {
-        if (broadcast_weight) {
+    ଯଦି (op == HTP_OP_RMS_NORM_MUL) {
+        ଯଦି (broadcast_weight) {
             size_t available_vtcm = vtcm_size;
             size_t src1_vtcm_total = n_threads * src1_row_size_aligned;
-            if (available_vtcm > src1_vtcm_total) {
+            ଯଦି (available_vtcm > src1_vtcm_total) {
                 available_vtcm -= src1_vtcm_total;
-            } else {
+            } ଅନ୍ୟଥା {
                 available_vtcm = 0;
             }
             vtcm_size_per_row = 2 * (src0_row_size_aligned + dst_row_size_aligned);
             vtcm_row_per_thread = available_vtcm / (n_threads * vtcm_size_per_row);
-        } else {
+        } ଅନ୍ୟଥା {
             vtcm_size_per_row = 2 * (src0_row_size_aligned + dst_row_size_aligned + src1_row_size_aligned);
             vtcm_row_per_thread = vtcm_size / (n_threads * vtcm_size_per_row);
         }
-    } else {
+    } ଅନ୍ୟଥା {
         vtcm_size_per_row   = 2 * (src0_row_size_aligned + dst_row_size_aligned);
         vtcm_row_per_thread = vtcm_size / (n_threads * vtcm_size_per_row);
     }
 
-    const bool is_reduction = (op == HTP_OP_NORM || op == HTP_OP_RMS_NORM ||
+    ଅଚଳ bool is_reduction = (op == HTP_OP_NORM || op == HTP_OP_RMS_NORM ||
                                op == HTP_OP_RMS_NORM_MUL || op == HTP_OP_L2_NORM ||
                                op == HTP_OP_HADAMARD);
     // The tiled fallback path below only has F32 task functions (unary_task_f32_tiled_*);
@@ -141,36 +141,36 @@ static inline void htp_unary_vtcm_layout_build(
     // budget), execute_op_unary() will see BLOCK == 0 and skip computation for that op
     // (logged via FARF(ERROR, ...)) since there is no F16 tiled fallback. This is a known
     // limitation; supporting it would require adding F16 tiled kernels.
-    const bool is_f16 = (elem_size == sizeof(_Float16));
+    ଅଚଳ bool is_f16 = (elem_size == ଆକାର(_Float16));
     uint32_t col_tile = 0;
 
-    if (vtcm_row_per_thread == 0 && !is_reduction && !is_f16) {
-        const size_t per_thread_budget = vtcm_size / n_threads;
-        const size_t col_tile_bytes = hex_align_down(per_thread_budget / 4, 128);
+    ଯଦି (vtcm_row_per_thread == 0 && !is_reduction && !is_f16) {
+        ଅଚଳ size_t per_thread_budget = vtcm_size / n_threads;
+        ଅଚଳ size_t col_tile_bytes = hex_align_down(per_thread_budget / 4, 128);
         col_tile = (uint32_t) (col_tile_bytes / elem_size);
 
         L->src0_bytes = col_tile_bytes * 2;
         L->dst_bytes  = col_tile_bytes * 2;
         L->src1_bytes = 0;
-    } else {
+    } ଅନ୍ୟଥା {
         L->src0_bytes = src0_row_size_aligned * vtcm_row_per_thread * 2;
         L->dst_bytes  = dst_row_size_aligned * vtcm_row_per_thread * 2;
-        if (op == HTP_OP_RMS_NORM_MUL) {
-            if (broadcast_weight) {
+        ଯଦି (op == HTP_OP_RMS_NORM_MUL) {
+            ଯଦି (broadcast_weight) {
                 L->src1_bytes = src1_row_size_aligned;
-            } else {
+            } ଅନ୍ୟଥା {
                 L->src1_bytes = src1_row_size_aligned * vtcm_row_per_thread * 2;
             }
-        } else {
+        } ଅନ୍ୟଥା {
             L->src1_bytes = 0;
         }
     }
 
     L->off_src0 = 0;
-    if (op == HTP_OP_RMS_NORM_MUL) {
+    ଯଦି (op == HTP_OP_RMS_NORM_MUL) {
         L->off_src1 = L->off_src0 + L->src0_bytes * n_threads;
         L->off_dst  = L->off_src1 + L->src1_bytes * n_threads;
-    } else {
+    } ଅନ୍ୟଥା {
         L->off_src1 = 0;
         L->off_dst  = L->off_src0 + L->src0_bytes * n_threads;
     }

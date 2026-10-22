@@ -7,11 +7,11 @@
 #   endif
 #   include <windows.h>
 #   include <winevt.h>
-#else
+#ଅନ୍ୟଥା
 #    include <dlfcn.h>
 #    include <unistd.h>
 #endif
-#include <filesystem>
+#ଅନ୍ତର୍ଭାଵ <filesystem>
 
 namespace fs = std::filesystem;
 
@@ -19,13 +19,13 @@ namespace fs = std::filesystem;
 
 using dl_handle = std::remove_pointer_t<HMODULE>;
 
-struct dl_handle_deleter {
-    void operator()(HMODULE handle) {
+ସଂରଚନା dl_handle_deleter {
+    ଶୂନ୍ୟ operator()(HMODULE handle) {
         FreeLibrary(handle);
     }
 };
 
-static inline dl_handle * dl_load_library(const fs::path & path) {
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ dl_handle * dl_load_library(ଅଚଳ fs::path & path) {
     // suppress error dialogs for missing DLLs
     DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
     SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
@@ -34,46 +34,46 @@ static inline dl_handle * dl_load_library(const fs::path & path) {
 
     SetErrorMode(old_mode);
 
-    return handle;
+    ଫେରନ୍ତୁ handle;
 }
 
-static inline void * dl_get_sym(dl_handle * handle, const char * name) {
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଶୂନ୍ୟ * dl_get_sym(dl_handle * handle, ଅଚଳ ଅକ୍ଷର * name) {
     DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
     SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
 
-    void * p = (void *) GetProcAddress(handle, name);
+    ଶୂନ୍ୟ * p = (ଶୂନ୍ୟ *) GetProcAddress(handle, name);
 
     SetErrorMode(old_mode);
 
-    return p;
+    ଫେରନ୍ତୁ p;
 }
 
-static inline const char * dl_error() {
-    return "";
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଅଚଳ ଅକ୍ଷର * dl_error() {
+    ଫେରନ୍ତୁ "";
 }
 
-#else
+#ଅନ୍ୟଥା
 
-using dl_handle = void;
+using dl_handle = ଶୂନ୍ୟ;
 
-struct dl_handle_deleter {
-    void operator()(void * handle) {
+ସଂରଚନା dl_handle_deleter {
+    ଶୂନ୍ୟ operator()(ଶୂନ୍ୟ * handle) {
         dlclose(handle);
     }
 };
 
-static inline dl_handle * dl_load_library(const fs::path & path) {
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ dl_handle * dl_load_library(ଅଚଳ fs::path & path) {
     dl_handle * handle = dlopen(path.string().c_str(), RTLD_NOW | RTLD_LOCAL);
-    return handle;
+    ଫେରନ୍ତୁ handle;
 }
 
-static inline void * dl_get_sym(dl_handle * handle, const char * name) {
-    return dlsym(handle, name);
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଶୂନ୍ୟ * dl_get_sym(dl_handle * handle, ଅଚଳ ଅକ୍ଷର * name) {
+    ଫେରନ୍ତୁ dlsym(handle, name);
 }
 
-static inline const char * dl_error() {
-    const char *rslt = dlerror();
-    return rslt != nullptr ? rslt : "";
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ ଅଚଳ ଅକ୍ଷର * dl_error() {
+    ଅଚଳ ଅକ୍ଷର *rslt = dlerror();
+    ଫେରନ୍ତୁ rslt != nullptr ? rslt : "";
 }
 
 #endif

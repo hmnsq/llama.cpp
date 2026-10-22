@@ -13,24 +13,24 @@
 #ifndef GGML_SYCL_DMMV_HPP
 #define GGML_SYCL_DMMV_HPP
 
-#include "common.hpp"
+#ଅନ୍ତର୍ଭାଵ "common.hpp"
 
 
-void ggml_sycl_op_dequantize_mul_mat_vec(
+ଶୂନ୍ୟ ggml_sycl_op_dequantize_mul_mat_vec(
     ggml_backend_sycl_context & ctx,
-    const ggml_tensor *src0, const ggml_tensor *src1, ggml_tensor *dst,
-    const char *src0_dd_i, const float *src1_ddf_i, const char *src1_ddq_i,
-    float *dst_dd_i, const int64_t row_low, const int64_t row_high,
-    const int64_t src1_ncols, const int64_t src1_padded_row_size,
-    const dpct::queue_ptr &stream);
+    ଅଚଳ ggml_tensor *src0, ଅଚଳ ggml_tensor *src1, ggml_tensor *dst,
+    ଅଚଳ ଅକ୍ଷର *src0_dd_i, ଅଚଳ ଦଶମିକ *src1_ddf_i, ଅଚଳ ଅକ୍ଷର *src1_ddq_i,
+    ଦଶମିକ *dst_dd_i, ଅଚଳ int64_t row_ତଳ, ଅଚଳ int64_t row_ଉପର,
+    ଅଚଳ int64_t src1_ncols, ଅଚଳ int64_t src1_padded_row_size,
+    ଅଚଳ dpct::queue_ptr &stream);
 
 // Fused dense-FFN mat-vec: writes glu(gate . y, up . y) for same-type reordered
 // weights (Q2_K..Q6_K, Q8_0) and a single F32 activation column, using the ESIMD DMMV kernels.
 // vx is the up weight, vgate the gate weight. Only defined when GGML_SYCL_DMMV_HAS_ESIMD;
 // returns false if the type is unhandled.
-bool ggml_sycl_dequantize_mul_mat_vec_glu_reorder_esimd(
-    enum ggml_type src0_type, enum ggml_glu_op glu_op,
-    const void * vx, const void * vgate, const float * y,
-    float * dst, int ncols, int nrows, dpct::queue_ptr stream);
+ତାର୍କିକ ggml_sycl_dequantize_mul_mat_vec_glu_reorder_esimd(
+    ଗଣନା ggml_type src0_type, ଗଣନା ggml_glu_op glu_op,
+    ଅଚଳ ଶୂନ୍ୟ * vx, ଅଚଳ ଶୂନ୍ୟ * vgate, ଅଚଳ ଦଶମିକ * y,
+    ଦଶମିକ * dst, ପୂର୍ଣ୍ଣସଂଖ୍ୟା ncols, ପୂର୍ଣ୍ଣସଂଖ୍ୟା nrows, dpct::queue_ptr stream);
 
 #endif // GGML_SYCL_DMMV_HPP

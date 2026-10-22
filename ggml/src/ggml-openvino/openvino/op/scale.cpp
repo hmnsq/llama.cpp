@@ -1,51 +1,51 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#ଅନ୍ତର୍ଭାଵ "../node_context.h"
+#ଅନ୍ତର୍ଭାଵ "../op_table.h"
+#ଅନ୍ତର୍ଭାଵ "../utils.h"
 
-#include <openvino/core/except.hpp>
-#include <openvino/op/add.hpp>
-#include <openvino/op/concat.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/equal.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/greater_eq.hpp>
-#include <openvino/op/if.hpp>
-#include <openvino/op/less.hpp>
-#include <openvino/op/logical_or.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/range.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/shape_of.hpp>
-#include <openvino/op/slice.hpp>
-#include <openvino/op/squeeze.hpp>
-#include <openvino/op/unsqueeze.hpp>
-#include <vector>
+#ଅନ୍ତର୍ଭାଵ <openvino/core/except.hpp>
+#ଅନ୍ତର୍ଭାଵ <openvino/op/add.hpp>
+#ଅନ୍ତର୍ଭାଵ <openvino/op/concat.hpp>
+#ଅନ୍ତର୍ଭାଵ <openvino/op/constant.hpp>
+#ଅନ୍ତର୍ଭାଵ <openvino/op/convert.hpp>
+#ଅନ୍ତର୍ଭାଵ <openvino/op/equal.hpp>
+#ଅନ୍ତର୍ଭାଵ <openvino/op/gather.hpp>
+#ଅନ୍ତର୍ଭାଵ <openvino/op/greater_eq.hpp>
+#ଅନ୍ତର୍ଭାଵ <openvino/op/if.hpp>
+#ଅନ୍ତର୍ଭାଵ <openvino/op/less.hpp>
+#ଅନ୍ତର୍ଭାଵ <openvino/op/logical_or.hpp>
+#ଅନ୍ତର୍ଭାଵ <openvino/op/multiply.hpp>
+#ଅନ୍ତର୍ଭାଵ <openvino/op/range.hpp>
+#ଅନ୍ତର୍ଭାଵ <openvino/op/reshape.hpp>
+#ଅନ୍ତର୍ଭାଵ <openvino/op/shape_of.hpp>
+#ଅନ୍ତର୍ଭାଵ <openvino/op/slice.hpp>
+#ଅନ୍ତର୍ଭାଵ <openvino/op/squeeze.hpp>
+#ଅନ୍ତର୍ଭାଵ <openvino/op/unsqueeze.hpp>
+#ଅନ୍ତର୍ଭାଵ <vector>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+ନାମାକାଶ ov {
+ନାମାକାଶ frontend {
+ନାମାକାଶ ggml {
+ନାମାକାଶ op {
 
-OutputVector translate_scale(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+OutputVector translate_scale(ଅଚଳ ଗଣ୍ଠି_Context & context) {
+    ଅଙ୍କ_inputs_check(context, 1, 1);
 
-    float scale;
-    float bias;
-    memcpy(&scale, (float *) context.get_output_op_params() + 0, sizeof(float));
-    memcpy(&bias, (float *) context.get_output_op_params() + 1, sizeof(float));
+    ଦଶମିକ scale;
+    ଦଶମିକ bias;
+    memcpy(&scale, (ଦଶମିକ *) context.get_output_op_params() + 0, ଆକାର(ଦଶମିକ));
+    memcpy(&bias, (ଦଶମିକ *) context.get_output_op_params() + 1, ଆକାର(ଦଶମିକ));
 
-    auto scale_node = std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{}, std::vector<float>{scale});
+    auto scale_ଗଣ୍ଠି = std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{}, std::vector<ଦଶମିକ>{scale});
 
-    if (context.get_op_case() == 2) {
-        return {context.get_input(0)};
+    ଯଦି (context.get_op_case() == 2) {
+        ଫେରନ୍ତୁ {context.get_ନିବେଶ(0)};
     }
 
-    if (context.get_op_case() == 1 && context.has_input("cache_rs_reset_len")) {
-        auto cache_rs_reset_idx = context.get_input("cache_rs_reset_idx");
-        auto cache_rs_reset_len = context.get_input("cache_rs_reset_len");
+    ଯଦି (context.get_op_case() == 1 && context.has_ନିବେଶ("cache_rs_reset_len")) {
+        auto cache_rs_reset_idx = context.get_ନିବେଶ("cache_rs_reset_idx");
+        auto cache_rs_reset_len = context.get_ନିବେଶ("cache_rs_reset_len");
 
-        auto cache_rs = context.get_input(0);
+        auto cache_rs = context.get_ନିବେଶ(0);
 
         auto cache_shape = std::make_shared<ov::op::v3::ShapeOf>(cache_rs, ov::element::i64);
         auto n_slots_1d = std::make_shared<ov::op::v8::Gather>(
@@ -67,21 +67,21 @@ OutputVector translate_scale(const NodeContext & context) {
             keep_mask_f32, ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {1}));
 
         auto cleared_cache_rs = std::make_shared<ov::op::v1::Multiply>(cache_rs, keep_mask_reshape);
-        return rename_outputs_with_suffix({cleared_cache_rs}, context.get_name());
+        ଫେରନ୍ତୁ rename_outputs_with_suffix({cleared_cache_rs}, context.get_name());
     }
 
-    auto scaled = std::make_shared<ov::op::v1::Multiply>(context.get_input(0), scale_node);
+    auto scaled = std::make_shared<ov::op::v1::Multiply>(context.get_ନିବେଶ(0), scale_ଗଣ୍ଠି);
 
     std::shared_ptr<ov::Node> res;
-    if (bias != 0.0f) {
-        auto bias_node =
-            std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{}, std::vector<float>{bias});
-        res = std::make_shared<ov::op::v1::Add>(scaled, bias_node);
-    } else {
+    ଯଦି (bias != 0.0f) {
+        auto bias_ଗଣ୍ଠି =
+            std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{}, std::vector<ଦଶମିକ>{bias});
+        res = std::make_shared<ov::op::v1::Add>(scaled, bias_ଗଣ୍ଠି);
+    } ଅନ୍ୟଥା {
         res = scaled;
     }
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ଫେରନ୍ତୁ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

@@ -1,19 +1,19 @@
 #ifndef SYCL_HW_HPP
 #define SYCL_HW_HPP
 
-#include <algorithm>
-#include <stdio.h>
-#include <vector>
-#include <map>
+#ଅନ୍ତର୍ଭାଵ <algorithm>
+#ଅନ୍ତର୍ଭାଵ <stdio.h>
+#ଅନ୍ତର୍ଭାଵ <vector>
+#ଅନ୍ତର୍ଭାଵ <map>
 
-#include <sycl/sycl.hpp>
+#ଅନ୍ତର୍ଭାଵ <sycl/sycl.hpp>
 
-namespace syclex = sycl::ext::oneapi::experimental;
+ନାମାକାଶ syclex = sycl::ext::oneapi::experimental;
 using gpu_arch = sycl::ext::oneapi::experimental::architecture;
 
 // It's used to mark the GPU computing capacity
 // The value must flow the order of performance.
-enum sycl_intel_gpu_family {
+ଗଣନା sycl_intel_gpu_family {
   GPU_FAMILY_UKNOWN = -1,
   // iGPU without Xe core, before Meteor Lake iGPU(Xe)
   GPU_FAMILY_IGPU_NON_XE = 0,
@@ -25,9 +25,9 @@ enum sycl_intel_gpu_family {
   GPU_FAMILY_DGPU_CLOUD = 3
 };
 
-struct sycl_hw_info {
+ସଂରଚନା sycl_hw_info {
   syclex::architecture arch;
-  const char* arch_name;
+  ଅଚଳ ଅକ୍ଷର* arch_name;
   int32_t device_id;
   std::string name;
   sycl_intel_gpu_family gpu_family;

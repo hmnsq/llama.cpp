@@ -1,8 +1,8 @@
-#include "ggml-backend-dl.h"
+#ଅନ୍ତର୍ଭାଵ "ggml-backend-dl.h"
 
 #ifdef _WIN32
 
-dl_handle * dl_load_library(const fs::path & path) {
+dl_handle * dl_load_library(ଅଚଳ fs::path & path) {
     // suppress error dialogs for missing DLLs
     DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
     SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
@@ -11,38 +11,38 @@ dl_handle * dl_load_library(const fs::path & path) {
 
     SetErrorMode(old_mode);
 
-    return handle;
+    ଫେରନ୍ତୁ handle;
 }
 
-void * dl_get_sym(dl_handle * handle, const char * name) {
+ଶୂନ୍ୟ * dl_get_sym(dl_handle * handle, ଅଚଳ ଅକ୍ଷର * name) {
     DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
     SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
 
-    void * p = (void *) GetProcAddress(handle, name);
+    ଶୂନ୍ୟ * p = (ଶୂନ୍ୟ *) GetProcAddress(handle, name);
 
     SetErrorMode(old_mode);
 
-    return p;
+    ଫେରନ୍ତୁ p;
 }
 
-const char * dl_error() {
-    return "";
+ଅଚଳ ଅକ୍ଷର * dl_error() {
+    ଫେରନ୍ତୁ "";
 }
 
-#else
+#ଅନ୍ୟଥା
 
-dl_handle * dl_load_library(const fs::path & path) {
+dl_handle * dl_load_library(ଅଚଳ fs::path & path) {
     dl_handle * handle = dlopen(path.string().c_str(), RTLD_NOW | RTLD_LOCAL);
-    return handle;
+    ଫେରନ୍ତୁ handle;
 }
 
-void * dl_get_sym(dl_handle * handle, const char * name) {
-    return dlsym(handle, name);
+ଶୂନ୍ୟ * dl_get_sym(dl_handle * handle, ଅଚଳ ଅକ୍ଷର * name) {
+    ଫେରନ୍ତୁ dlsym(handle, name);
 }
 
-const char * dl_error() {
-    const char *rslt = dlerror();
-    return rslt != nullptr ? rslt : "";
+ଅଚଳ ଅକ୍ଷର * dl_error() {
+    ଅଚଳ ଅକ୍ଷର *rslt = dlerror();
+    ଫେରନ୍ତୁ rslt != nullptr ? rslt : "";
 }
 
 #endif

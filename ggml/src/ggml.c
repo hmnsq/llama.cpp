@@ -1,212 +1,212 @@
 #define _CRT_SECURE_NO_DEPRECATE // Disables "unsafe" warnings on Windows
 #define _USE_MATH_DEFINES // For M_PI on MSVC
 
-#include "ggml-version.h"
-#include "ggml-backend.h"
-#include "ggml-impl.h"
-#include "ggml-threading.h"
-#include "ggml-cpu.h"
-#include "ggml.h"
+#ଅନ୍ତର୍ଭାଵ "ggml-version.h"
+#ଅନ୍ତର୍ଭାଵ "ggml-backend.h"
+#ଅନ୍ତର୍ଭାଵ "ggml-impl.h"
+#ଅନ୍ତର୍ଭାଵ "ggml-threading.h"
+#ଅନ୍ତର୍ଭାଵ "ggml-cpu.h"
+#ଅନ୍ତର୍ଭାଵ "ggml.h"
 
 // FIXME: required here for quantization functions
-#include "ggml-quants.h"
+#ଅନ୍ତର୍ଭାଵ "ggml-quants.h"
 
 #ifdef GGML_USE_CPU_HBM
-#include <hbwmalloc.h>
+#ଅନ୍ତର୍ଭାଵ <hbwmalloc.h>
 #endif
 
-#if defined(_MSC_VER) || defined(__MINGW32__)
-#include <malloc.h> // using malloc.h with MSC/MINGW
-#elif !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__OpenBSD__)
-#include <alloca.h>
+#ଯଦି defined(_MSC_VER) || defined(__MINGW32__)
+#ଅନ୍ତର୍ଭାଵ <malloc.h> // using malloc.h with MSC/MINGW
+#ନଚେତଯଦି !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__OpenBSD__)
+#ଅନ୍ତର୍ଭାଵ <alloca.h>
 #endif
 
-#include <assert.h>
-#include <errno.h>
-#include <time.h>
-#include <math.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdint.h>
-#include <inttypes.h>
-#include <stdio.h>
-#include <float.h>
-#include <limits.h>
-#include <stdarg.h>
-#include <signal.h>
-#if defined(__gnu_linux__)
-#include <syscall.h>
+#ଅନ୍ତର୍ଭାଵ <assert.h>
+#ଅନ୍ତର୍ଭାଵ <errno.h>
+#ଅନ୍ତର୍ଭାଵ <time.h>
+#ଅନ୍ତର୍ଭାଵ <math.h>
+#ଅନ୍ତର୍ଭାଵ <stdlib.h>
+#ଅନ୍ତର୍ଭାଵ <string.h>
+#ଅନ୍ତର୍ଭାଵ <stdint.h>
+#ଅନ୍ତର୍ଭାଵ <inttypes.h>
+#ଅନ୍ତର୍ଭାଵ <stdio.h>
+#ଅନ୍ତର୍ଭାଵ <float.h>
+#ଅନ୍ତର୍ଭାଵ <limits.h>
+#ଅନ୍ତର୍ଭାଵ <stdarg.h>
+#ଅନ୍ତର୍ଭାଵ <signal.h>
+#ଯଦି defined(__gnu_linux__)
+#ଅନ୍ତର୍ଭାଵ <syscall.h>
 #endif
 
-#if defined(__APPLE__)
-#include <unistd.h>
-#include <mach/mach.h>
-#include <TargetConditionals.h>
+#ଯଦି defined(__APPLE__)
+#ଅନ୍ତର୍ଭାଵ <unistd.h>
+#ଅନ୍ତର୍ଭାଵ <mach/mach.h>
+#ଅନ୍ତର୍ଭାଵ <TargetConditionals.h>
 #endif
 
-#if defined(_WIN32)
+#ଯଦି defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
 #ifndef NOMINMAX
     #define NOMINMAX
 #endif
-#include <windows.h>
+#ଅନ୍ତର୍ଭାଵ <windows.h>
 #endif
 
 #define UNUSED GGML_UNUSED
 
-uint64_t ggml_graph_next_uid(void) {
+uint64_t ggml_graph_next_uid(ଶୂନ୍ୟ) {
 #ifdef _MSC_VER
-#if defined(_WIN32)
-    static volatile LONG counter = 1;
-    return (uint64_t) InterlockedIncrement(&counter) - 1;
-#else
-    static volatile long long counter = 1;
-    return (uint64_t) _InterlockedIncrement64(&counter) - 1;
+#ଯଦି defined(_WIN32)
+    ସ୍ଥିର ଅସ୍ଥିର LONG counter = 1;
+    ଫେରନ୍ତୁ (uint64_t) InterlockedIncrement(&counter) - 1;
+#ଅନ୍ୟଥା
+    ସ୍ଥିର ଅସ୍ଥିର long long counter = 1;
+    ଫେରନ୍ତୁ (uint64_t) _InterlockedIncrement64(&counter) - 1;
 #endif
-#else
-    static uint64_t counter = 1;
-    return __atomic_fetch_add(&counter, 1, __ATOMIC_RELAXED);
+#ଅନ୍ୟଥା
+    ସ୍ଥିର uint64_t counter = 1;
+    ଫେରନ୍ତୁ __atomic_fetch_add(&counter, 1, __ATOMIC_RELAXED);
 #endif
 }
 
 // Needed for ggml_fp32_to_bf16_row()
-#if defined(__AVX512BF16__)
-#if defined(_MSC_VER)
+#ଯଦି defined(__AVX512BF16__)
+#ଯଦି defined(_MSC_VER)
 #define m512i(p) p
-#else
-#include <immintrin.h>
+#ଅନ୍ୟଥା
+#ଅନ୍ତର୍ଭାଵ <immintrin.h>
 #define m512i(p) (__m512i)(p)
 #endif // defined(_MSC_VER)
 #endif // defined(__AVX512BF16__)
 
-#if defined(__linux__) || \
+#ଯଦି defined(__linux__) || \
     defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || \
     (defined(__APPLE__) && !TARGET_OS_TV && !TARGET_OS_WATCH)
 
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
-#if defined(__linux__)
-#include <sys/prctl.h>
+#ଅନ୍ତର୍ଭାଵ <unistd.h>
+#ଅନ୍ତର୍ଭାଵ <sys/types.h>
+#ଅନ୍ତର୍ଭାଵ <sys/stat.h>
+#ଅନ୍ତର୍ଭାଵ <sys/wait.h>
+#ଯଦି defined(__linux__)
+#ଅନ୍ତର୍ଭାଵ <sys/prctl.h>
 #endif
 
-#if defined(__ANDROID__)
-#include <unwind.h>
-#include <dlfcn.h>
-#include <stdio.h>
+#ଯଦି defined(__ANDROID__)
+#ଅନ୍ତର୍ଭାଵ <unwind.h>
+#ଅନ୍ତର୍ଭାଵ <dlfcn.h>
+#ଅନ୍ତର୍ଭାଵ <stdio.h>
 
-struct backtrace_state {
-    void ** current;
-    void ** end;
+ସଂରଚନା backtrace_state {
+    ଶୂନ୍ୟ ** current;
+    ଶୂନ୍ୟ ** end;
 };
 
-static _Unwind_Reason_Code unwind_callback(struct _Unwind_Context* context, void* arg) {
-    struct backtrace_state * state = (struct backtrace_state *)arg;
+ସ୍ଥିର _Unwind_Reason_Code unwind_callback(ସଂରଚନା _Unwind_Context* context, ଶୂନ୍ୟ* arg) {
+    ସଂରଚନା backtrace_state * state = (ସଂରଚନା backtrace_state *)arg;
     uintptr_t pc = _Unwind_GetIP(context);
-    if (pc) {
-        if (state->current == state->end) {
-            return _URC_END_OF_STACK;
-        } else {
-            *state->current++ = (void*)pc;
+    ଯଦି (pc) {
+        ଯଦି (state->current == state->end) {
+            ଫେରନ୍ତୁ URC_END_OF_ଗଦା;
+        } ଅନ୍ୟଥା {
+            *state->current++ = (ଶୂନ୍ୟ*)pc;
         }
     }
-    return _URC_NO_REASON;
+    ଫେରନ୍ତୁ _URC_NO_REASON;
 }
 
-static void ggml_print_backtrace_symbols(void) {
-    const int max = 100;
-    void* buffer[max];
+ସ୍ଥିର ଶୂନ୍ୟ ggml_print_backtrace_symbols(ଶୂନ୍ୟ) {
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା max = 100;
+    ଶୂନ୍ୟ* buffer[max];
 
-    struct backtrace_state state = {buffer, buffer + max};
+    ସଂରଚନା backtrace_state state = {buffer, buffer + max};
     _Unwind_Backtrace(unwind_callback, &state);
 
-    int count = state.current - buffer;
+    ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣନା_2 = state.current - buffer;
 
-    for (int idx = 0; idx < count; ++idx) {
-        const void * addr = buffer[idx];
-        const char * symbol = "";
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା idx = 0; idx < ଗଣନା_2; ++idx) {
+        ଅଚଳ ଶୂନ୍ୟ * addr = buffer[idx];
+        ଅଚଳ ଅକ୍ଷର * ପ୍ରତୀକ = "";
 
         Dl_info info;
-        if (dladdr(addr, &info) && info.dli_sname) {
-            symbol = info.dli_sname;
+        ଯଦି (dladdr(addr, &info) && info.dli_sname) {
+            ପ୍ରତୀକ = info.dli_sname;
         }
 
-        fprintf(stderr, "%d: %p %s\n", idx, addr, symbol);
+        fprintf(stderr, "%d: %p %s\n", idx, addr, ପ୍ରତୀକ);
     }
 }
-#elif defined(__linux__) && defined(__GLIBC__)
-#include <execinfo.h>
-static void ggml_print_backtrace_symbols(void) {
-    void * trace[100];
-    int nptrs = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
+#ନଚେତଯଦି defined(__linux__) && defined(__GLIBC__)
+#ଅନ୍ତର୍ଭାଵ <execinfo.h>
+ସ୍ଥିର ଶୂନ୍ୟ ggml_print_backtrace_symbols(ଶୂନ୍ୟ) {
+    ଶୂନ୍ୟ * trace[100];
+    ପୂର୍ଣ୍ଣସଂଖ୍ୟା nptrs = backtrace(trace, ଆକାର(trace)/ଆକାର(trace[0]));
     backtrace_symbols_fd(trace, nptrs, STDERR_FILENO);
 }
-#elif defined(__APPLE__)
-#include <execinfo.h>
-static void ggml_print_backtrace_symbols(void) {
-    void * trace[100];
-    int nptrs = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
+#ନଚେତଯଦି defined(__APPLE__)
+#ଅନ୍ତର୍ଭାଵ <execinfo.h>
+ସ୍ଥିର ଶୂନ୍ୟ ggml_print_backtrace_symbols(ଶୂନ୍ୟ) {
+    ଶୂନ୍ୟ * trace[100];
+    ପୂର୍ଣ୍ଣସଂଖ୍ୟା nptrs = backtrace(trace, ଆକାର(trace)/ଆକାର(trace[0]));
     backtrace_symbols_fd(trace, nptrs, STDERR_FILENO);
 }
-#else
-static void ggml_print_backtrace_symbols(void) {
+#ଅନ୍ୟଥା
+ସ୍ଥିର ଶୂନ୍ୟ ggml_print_backtrace_symbols(ଶୂନ୍ୟ) {
     // platform not supported
 }
 #endif
 
-void ggml_print_backtrace(void) {
-    const char * GGML_NO_BACKTRACE = getenv("GGML_NO_BACKTRACE");
-    if (GGML_NO_BACKTRACE) {
-        return;
+ଶୂନ୍ୟ ggml_print_backtrace(ଶୂନ୍ୟ) {
+    ଅଚଳ ଅକ୍ଷର * GGML_NO_BACKTRACE = getenv("GGML_NO_BACKTRACE");
+    ଯଦି (GGML_NO_BACKTRACE) {
+        ଫେରନ୍ତୁ;
     }
-#if defined(__APPLE__)
+#ଯଦି defined(__APPLE__)
     // On macOS, fork+debugger attachment is problematic due to:
     // 1. libdispatch "poisons" forked child processes
     // 2. lldb has issues attaching to parent from forked child
     // Use simple backtrace() instead to avoid Terminal.app crashes
-    const char * GGML_BACKTRACE_LLDB = getenv("GGML_BACKTRACE_LLDB");
-    if (!GGML_BACKTRACE_LLDB) {
+    ଅଚଳ ଅକ୍ଷର * GGML_BACKTRACE_LLDB = getenv("GGML_BACKTRACE_LLDB");
+    ଯଦି (!GGML_BACKTRACE_LLDB) {
         fprintf(stderr, "WARNING: Using native backtrace. Set GGML_BACKTRACE_LLDB for more info.\n");
         fprintf(stderr, "WARNING: GGML_BACKTRACE_LLDB may cause native MacOS Terminal.app to crash.\n");
         fprintf(stderr, "See: https://github.com/ggml-org/llama.cpp/pull/17869\n");
         ggml_print_backtrace_symbols();
-        return;
+        ଫେରନ୍ତୁ;
     }
 #endif
-#if defined(__linux__)
+#ଯଦି defined(__linux__)
     FILE * f = fopen("/proc/self/status", "r");
     size_t size = 0;
-    char * line = NULL;
+    ଅକ୍ଷର * ଧାଡ଼ି = ଖାଲି;
     ssize_t length = 0;
-    while ((length = getline(&line, &size, f)) > 0) {
-        if (!strncmp(line, "TracerPid:", sizeof("TracerPid:") - 1) &&
-            (length != sizeof("TracerPid:\t0\n") - 1 || line[length - 2] != '0')) {
+    ଯେତେବେଳେ ((length = getline(&ଧାଡ଼ି, &size, f)) > 0) {
+        ଯଦି (!strncmp(ଧାଡ଼ି, "TracerPid:", ଆକାର("TracerPid:") - 1) &&
+            (length != ଆକାର("TracerPid:\t0\n") - 1 || ଧାଡ଼ି[length - 2] != '0')) {
             // Already being debugged, and the breakpoint is the later abort()
-            free(line);
+            ମୁକ୍ତ(ଧାଡ଼ି);
             fclose(f);
-            return;
+            ଫେରନ୍ତୁ;
         }
     }
-    free(line);
+    ମୁକ୍ତ(ଧାଡ଼ି);
     fclose(f);
-    int lock[2] = { -1, -1 };
-    (void) !pipe(lock); // Don't start gdb until after PR_SET_PTRACER
+    ପୂର୍ଣ୍ଣସଂଖ୍ୟା lock[2] = { -1, -1 };
+    (ଶୂନ୍ୟ) !pipe(lock); // Don't start gdb until after PR_SET_PTRACER
 #endif
-    const int parent_pid = getpid();
-    const int child_pid = fork();
-    if (child_pid < 0) { // error
-#if defined(__linux__)
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା parent_pid = getpid();
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା child_pid = fork();
+    ଯଦି (child_pid < 0) { // error
+#ଯଦି defined(__linux__)
         close(lock[1]);
         close(lock[0]);
 #endif
-        return;
-    } else if (child_pid == 0) { // child
-        char attach[32];
-        snprintf(attach, sizeof(attach), "attach %d", parent_pid);
-#if defined(__linux__)
+        ଫେରନ୍ତୁ;
+    } ଅନ୍ୟଥା ଯଦି (child_pid == 0) { // child
+        ଅକ୍ଷର attach[32];
+        snprintf(attach, ଆକାର(attach), "attach %d", parent_pid);
+#ଯଦି defined(__linux__)
         close(lock[1]);
-        (void) !read(lock[0], lock, 1);
+        (ଶୂନ୍ୟ) !ପଠ(lock[0], lock, 1);
         close(lock[0]);
 #endif
         // try gdb
@@ -216,54 +216,54 @@ void ggml_print_backtrace(void) {
             "-ex", "bt -frame-info source-and-location",
             "-ex", "detach",
             "-ex", "quit",
-            (char *) NULL);
+            (ଅକ୍ଷର *) ଖାଲି);
         // try lldb
         execlp("lldb", "lldb", "--batch",
             "-o", "bt",
             "-o", "quit",
-            "-p", &attach[sizeof("attach ") - 1],
-            (char *) NULL);
+            "-p", &attach[ଆକାର("attach ") - 1],
+            (ଅକ୍ଷର *) ଖାଲି);
         // gdb failed, fallback to backtrace_symbols
         ggml_print_backtrace_symbols();
         _Exit(0);
-    } else { // parent
-#if defined(__linux__)
+    } ଅନ୍ୟଥା { // parent
+#ଯଦି defined(__linux__)
         prctl(PR_SET_PTRACER, child_pid);
         close(lock[1]);
         close(lock[0]);
 #endif
-        waitpid(child_pid, NULL, 0);
+        waitpid(child_pid, ଖାଲି, 0);
     }
 }
-#else
-void ggml_print_backtrace(void) {
+#ଅନ୍ୟଥା
+ଶୂନ୍ୟ ggml_print_backtrace(ଶୂନ୍ୟ) {
     // platform not supported
 }
 #endif
 
-static ggml_abort_callback_t g_abort_callback = NULL;
+ସ୍ଥିର ggml_abort_callback_t g_abort_callback = ଖାଲି;
 
 // Set the abort callback (passing null will restore original abort functionality: printing a message to stdout)
 GGML_API ggml_abort_callback_t ggml_set_abort_callback(ggml_abort_callback_t callback) {
     ggml_abort_callback_t ret_val = g_abort_callback;
     g_abort_callback = callback;
-    return ret_val;
+    ଫେରନ୍ତୁ ret_val;
 }
 
-void ggml_abort(const char * file, int line, const char * fmt, ...) {
+ଶୂନ୍ୟ ggml_abort(ଅଚଳ ଅକ୍ଷର * file, ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଧାଡ଼ି, ଅଚଳ ଅକ୍ଷର * fmt, ...) {
     fflush(stdout);
 
-    char message[2048];
-    int offset = snprintf(message, sizeof(message), "%s:%d: ", file, line);
+    ଅକ୍ଷର message[2048];
+    ପୂର୍ଣ୍ଣସଂଖ୍ୟା offset = snprintf(message, ଆକାର(message), "%s:%d: ", file, ଧାଡ଼ି);
 
     va_list args;
     va_start(args, fmt);
-    vsnprintf(message + offset, sizeof(message) - offset, fmt, args);
+    vsnprintf(message + offset, ଆକାର(message) - offset, fmt, args);
     va_end(args);
 
-    if (g_abort_callback) {
+    ଯଦି (g_abort_callback) {
         g_abort_callback(message);
-    } else {
+    } ଅନ୍ୟଥା {
         // default: print error and backtrace to stderr
         fprintf(stderr, "%s\n", message);
         ggml_print_backtrace();
@@ -278,42 +278,42 @@ void ggml_abort(const char * file, int line, const char * fmt, ...) {
 // logging
 //
 
-struct ggml_logger_state {
+ସଂରଚନା ggml_logger_state {
     ggml_log_callback log_callback;
-    void * log_callback_user_data;
+    ଶୂନ୍ୟ * log_callback_user_data;
 };
-static struct ggml_logger_state g_logger_state = {ggml_log_callback_default, NULL};
+ସ୍ଥିର ସଂରଚନା ggml_logger_state g_logger_state = {ggml_log_callback_default, ଖାଲି};
 
-static void ggml_log_internal_v(enum ggml_log_level level, const char * format, va_list args) {
-    if (format == NULL) {
-        return;
+ସ୍ଥିର ଶୂନ୍ୟ ggml_log_internal_v(ଗଣନା ggml_log_level level, ଅଚଳ ଅକ୍ଷର * format, va_list args) {
+    ଯଦି (format == ଖାଲି) {
+        ଫେରନ୍ତୁ;
     }
     va_list args_copy;
     va_copy(args_copy, args);
-    char buffer[128];
-    int len = vsnprintf(buffer, 128, format, args);
-    if (len < 128) {
+    ଅକ୍ଷର buffer[128];
+    ପୂର୍ଣ୍ଣସଂଖ୍ୟା len = vsnprintf(buffer, 128, format, args);
+    ଯଦି (len < 128) {
         g_logger_state.log_callback(level, buffer, g_logger_state.log_callback_user_data);
-    } else {
-        char * buffer2 = (char *) calloc(len + 1, sizeof(char));
+    } ଅନ୍ୟଥା {
+        ଅକ୍ଷର * buffer2 = (ଅକ୍ଷର *) calloc(len + 1, ଆକାର(ଅକ୍ଷର));
         vsnprintf(buffer2, len + 1, format, args_copy);
         buffer2[len] = 0;
         g_logger_state.log_callback(level, buffer2, g_logger_state.log_callback_user_data);
-        free(buffer2);
+        ମୁକ୍ତ(buffer2);
     }
     va_end(args_copy);
 }
 
-void ggml_log_internal(enum ggml_log_level level, const char * format, ...) {
+ଶୂନ୍ୟ ggml_log_internal(ଗଣନା ggml_log_level level, ଅଚଳ ଅକ୍ଷର * format, ...) {
     va_list args;
     va_start(args, format);
     ggml_log_internal_v(level, format, args);
     va_end(args);
 }
 
-void ggml_log_callback_default(enum ggml_log_level level, const char * text, void * user_data) {
-    (void) level;
-    (void) user_data;
+ଶୂନ୍ୟ ggml_log_callback_default(ଗଣନା ggml_log_level level, ଅଚଳ ଅକ୍ଷର * text, ଶୂନ୍ୟ * user_data) {
+    (ଶୂନ୍ୟ) level;
+    (ଶୂନ୍ୟ) user_data;
     fputs(text, stderr);
     fflush(stderr);
 }
@@ -330,214 +330,214 @@ void ggml_log_callback_default(enum ggml_log_level level, const char * text, voi
 
 
 // the thread sanitizer does not intercept vm_allocate and vm_deallocate, so it produces false positives
-#if defined(__has_feature)
-#if __has_feature(thread_sanitizer)
+#ଯଦି defined(__has_feature)
+#ଯଦି __has_feature(thread_sanitizer)
 #define GGML_TSAN_ENABLED 1
 #endif
-#else
-#if defined(__SANITIZE_THREAD__)
+#ଅନ୍ୟଥା
+#ଯଦି defined(__SANITIZE_THREAD__)
 #define GGML_TSAN_ENABLED 1
 #endif
 #endif
 
-void * ggml_aligned_malloc(size_t size) {
-#if defined(__s390x__)
-    const int alignment = 256;
-#else
-    const int alignment = 64;
+ଶୂନ୍ୟ * ggml_aligned_malloc(size_t size) {
+#ଯଦି defined(__s390x__)
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା alignment = 256;
+#ଅନ୍ୟଥା
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା alignment = 64;
 #endif
 
-#if defined(_MSC_VER) || defined(__MINGW32__)
-    return _aligned_malloc(size, alignment);
-#else
-    if (size == 0) {
+#ଯଦି defined(_MSC_VER) || defined(__MINGW32__)
+    ଫେରନ୍ତୁ _aligned_malloc(size, alignment);
+#ଅନ୍ୟଥା
+    ଯଦି (size == 0) {
         GGML_LOG_WARN("Behavior may be unexpected when allocating 0 bytes for ggml_aligned_malloc!\n");
-        return NULL;
+        ଫେରନ୍ତୁ ଖାଲି;
     }
-    void * aligned_memory = NULL;
+    ଶୂନ୍ୟ * aligned_memory = ଖାଲି;
   #ifdef GGML_USE_CPU_HBM
-    int result = hbw_posix_memalign(&aligned_memory, alignment, size);
-  #elif TARGET_OS_OSX && !defined(GGML_TSAN_ENABLED)
+    ପୂର୍ଣ୍ଣସଂଖ୍ୟା result = hbw_posix_memalign(&aligned_memory, alignment, size);
+  #ନଚେତଯଦି TARGET_OS_OSX && !defined(GGML_TSAN_ENABLED)
     GGML_UNUSED(alignment);
     kern_return_t alloc_status = vm_allocate((vm_map_t) mach_task_self(), (vm_address_t *) &aligned_memory, size, VM_FLAGS_ANYWHERE);
-    int result = EFAULT;
-    switch (alloc_status) {
-        case KERN_SUCCESS:
+    ପୂର୍ଣ୍ଣସଂଖ୍ୟା result = EFAULT;
+    ବାଛ (alloc_status) {
+        ସ୍ଥିତି KERN_SUCCESS:
             result = 0;
-            break;
-        case KERN_INVALID_ADDRESS:
+            ଭାଙ୍ଗ;
+        ସ୍ଥିତି KERN_INVALID_ADDRESS:
             result = EINVAL;
-            break;
-        case KERN_NO_SPACE:
+            ଭାଙ୍ଗ;
+        ସ୍ଥିତି KERN_NO_SPACE:
             result = ENOMEM;
-            break;
-        default:
+            ଭାଙ୍ଗ;
+        ପୂର୍ବନିର୍ଦ୍ଧାରିତ:
             result = EFAULT;
-            break;
+            ଭାଙ୍ଗ;
     }
-  #else
-    int result = posix_memalign(&aligned_memory, alignment, size);
+  #ଅନ୍ୟଥା
+    ପୂର୍ଣ୍ଣସଂଖ୍ୟା result = posix_memalign(&aligned_memory, alignment, size);
   #endif
-    if (result != 0) {
+    ଯଦି (result != 0) {
         // Handle allocation failure
-        const char *error_desc = "unknown allocation error";
-        switch (result) {
-            case EINVAL:
+        ଅଚଳ ଅକ୍ଷର *error_desc = "unknown allocation error";
+        ବାଛ (result) {
+            ସ୍ଥିତି EINVAL:
                 error_desc = "invalid alignment value";
-                break;
-            case ENOMEM:
+                ଭାଙ୍ଗ;
+            ସ୍ଥିତି ENOMEM:
                 error_desc = "insufficient memory";
-                break;
+                ଭାଙ୍ଗ;
         }
         GGML_LOG_ERROR("%s: %s (attempted to allocate %6.2f MB)\n", __func__, error_desc, size/(1024.0*1024.0));
-        return NULL;
+        ଫେରନ୍ତୁ ଖାଲି;
     }
-    return aligned_memory;
+    ଫେରନ୍ତୁ aligned_memory;
 #endif
 }
 
-void ggml_aligned_free(void * ptr, size_t size) {
+ଶୂନ୍ୟ ggml_aligned_free(ଶୂନ୍ୟ * ptr, size_t size) {
     GGML_UNUSED(size);
-#if defined(_MSC_VER) || defined(__MINGW32__)
+#ଯଦି defined(_MSC_VER) || defined(__MINGW32__)
     _aligned_free(ptr);
-#elif GGML_USE_CPU_HBM
-    if (ptr != NULL) {
+#ନଚେତଯଦି GGML_USE_CPU_HBM
+    ଯଦି (ptr != ଖାଲି) {
         hbw_free(ptr);
     }
-#elif TARGET_OS_OSX && !defined(GGML_TSAN_ENABLED)
-    if (ptr != NULL) {
+#ନଚେତଯଦି TARGET_OS_OSX && !defined(GGML_TSAN_ENABLED)
+    ଯଦି (ptr != ଖାଲି) {
         vm_deallocate((vm_map_t)mach_task_self(), (vm_address_t)ptr, size);
     }
-#else
-    free(ptr);
+#ଅନ୍ୟଥା
+    ମୁକ୍ତ(ptr);
 #endif
 }
 
 
-inline static void * ggml_malloc(size_t size) {
-    if (size == 0) {
+ଧାଡ଼ିଭିତରେ ସ୍ଥିର ଶୂନ୍ୟ * ggml_malloc(size_t size) {
+    ଯଦି (size == 0) {
         GGML_LOG_WARN("Behavior may be unexpected when allocating 0 bytes for ggml_malloc!\n");
-        return NULL;
+        ଫେରନ୍ତୁ ଖାଲି;
     }
-    void * result = malloc(size);
-    if (result == NULL) {
+    ଶୂନ୍ୟ * result = malloc(size);
+    ଯଦି (result == ଖାଲି) {
         GGML_LOG_ERROR("%s: failed to allocate %6.2f MB\n", __func__, size/(1024.0*1024.0));
         GGML_ABORT("fatal error");
     }
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // calloc
-inline static void * ggml_calloc(size_t num, size_t size) {
-    if (num == 0 || size == 0) {
+ଧାଡ଼ିଭିତରେ ସ୍ଥିର ଶୂନ୍ୟ * ggml_calloc(size_t ଅଙ୍କ, size_t size) {
+    ଯଦି (ଅଙ୍କ == 0 || size == 0) {
         GGML_LOG_WARN("Behavior may be unexpected when allocating 0 bytes for ggml_calloc!\n");
-        return NULL;
+        ଫେରନ୍ତୁ ଖାଲି;
     }
-    void * result = calloc(num, size);
-    if (result == NULL) {
+    ଶୂନ୍ୟ * result = calloc(ଅଙ୍କ, size);
+    ଯଦି (result == ଖାଲି) {
         GGML_LOG_ERROR("%s: failed to allocate %6.2f MB\n", __func__, size/(1024.0*1024.0));
         GGML_ABORT("fatal error");
     }
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 #define GGML_MALLOC(size)      ggml_malloc(size)
-#define GGML_CALLOC(num, size) ggml_calloc(num, size)
+#define GGML_CALLOC(ଅଙ୍କ, size) ggml_calloc(ଅଙ୍କ, size)
 
-#define GGML_FREE(ptr) free(ptr)
+#define GGML_FREE(ptr) ମୁକ୍ତ(ptr)
 
-const char * ggml_status_to_string(enum ggml_status status) {
-    switch (status) {
-        case GGML_STATUS_ALLOC_FAILED: return "GGML status: error (failed to allocate memory)";
-        case GGML_STATUS_FAILED:       return "GGML status: error (operation failed)";
-        case GGML_STATUS_SUCCESS:      return "GGML status: success";
-        case GGML_STATUS_ABORTED:      return "GGML status: warning (operation aborted)";
+ଅଚଳ ଅକ୍ଷର * ggml_status_to_string(ଗଣନା ggml_status status) {
+    ବାଛ (status) {
+        ସ୍ଥିତି GGML_STATUS_ALLOC_FAILED: ଫେରନ୍ତୁ "GGML status: error (failed to allocate memory)";
+        ସ୍ଥିତି GGML_STATUS_FAILED:       ଫେରନ୍ତୁ "GGML status: error (operation failed)";
+        ସ୍ଥିତି GGML_STATUS_SUCCESS:      ଫେରନ୍ତୁ "GGML status: success";
+        ସ୍ଥିତି GGML_STATUS_ABORTED:      ଫେରନ୍ତୁ "GGML status: warning (operation aborted)";
     }
 
-    return "GGML status: unknown";
+    ଫେରନ୍ତୁ "GGML status: unknown";
 }
 
-float ggml_fp16_to_fp32(ggml_fp16_t x) {
+ଦଶମିକ ggml_fp16_to_fp32(ggml_fp16_t x) {
 #define ggml_fp16_to_fp32 do_not_use__ggml_fp16_to_fp32__in_ggml
-    return GGML_FP16_TO_FP32(x);
+    ଫେରନ୍ତୁ GGML_FP16_TO_FP32(x);
 }
 
-ggml_fp16_t ggml_fp32_to_fp16(float x) {
+ggml_fp16_t ggml_fp32_to_fp16(ଦଶମିକ x) {
 #define ggml_fp32_to_fp16 do_not_use__ggml_fp32_to_fp16__in_ggml
-    return GGML_FP32_TO_FP16(x);
+    ଫେରନ୍ତୁ GGML_FP32_TO_FP16(x);
 }
 
-float ggml_bf16_to_fp32(ggml_bf16_t x) {
+ଦଶମିକ ggml_bf16_to_fp32(ggml_bf16_t x) {
 #define ggml_bf16_to_fp32 do_not_use__ggml_bf16_to_fp32__in_ggml
-    return GGML_BF16_TO_FP32(x);  // it just left shifts
+    ଫେରନ୍ତୁ GGML_BF16_TO_FP32(x);  // it just left shifts
 }
 
-ggml_bf16_t ggml_fp32_to_bf16(float x) {
+ggml_bf16_t ggml_fp32_to_bf16(ଦଶମିକ x) {
 #define ggml_fp32_to_bf16 do_not_use__ggml_fp32_to_bf16__in_ggml
-    return GGML_FP32_TO_BF16(x);
+    ଫେରନ୍ତୁ GGML_FP32_TO_BF16(x);
 }
 
-void ggml_fp16_to_fp32_row(const ggml_fp16_t * x, float * y, int64_t n) {
-    for (int64_t i = 0; i < n; i++) {
+ଶୂନ୍ୟ ggml_fp16_to_fp32_row(ଅଚଳ ggml_fp16_t * x, ଦଶମିକ * y, int64_t n) {
+    ପାଇଁ (int64_t i = 0; i < n; i++) {
         y[i] = GGML_FP16_TO_FP32(x[i]);
     }
 }
 
-void ggml_fp32_to_fp16_row(const float * x, ggml_fp16_t * y, int64_t n) {
-    int i = 0;
-    for (; i < n; ++i) {
+ଶୂନ୍ୟ ggml_fp32_to_fp16_row(ଅଚଳ ଦଶମିକ * x, ggml_fp16_t * y, int64_t n) {
+    ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0;
+    ପାଇଁ (; i < n; ++i) {
         y[i] = GGML_FP32_TO_FP16(x[i]);
     }
 }
 
-void ggml_bf16_to_fp32_row(const ggml_bf16_t * x, float * y, int64_t n) {
-    int i = 0;
-    for (; i < n; ++i) {
+ଶୂନ୍ୟ ggml_bf16_to_fp32_row(ଅଚଳ ggml_bf16_t * x, ଦଶମିକ * y, int64_t n) {
+    ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0;
+    ପାଇଁ (; i < n; ++i) {
         y[i] = GGML_BF16_TO_FP32(x[i]);
     }
 }
 
-void ggml_fp32_to_bf16_row_ref(const float * x, ggml_bf16_t * y, int64_t n) {
-    for (int i = 0; i < n; i++) {
+ଶୂନ୍ୟ ggml_fp32_to_bf16_row_ref(ଅଚଳ ଦଶମିକ * x, ggml_bf16_t * y, int64_t n) {
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < n; i++) {
         y[i] = ggml_compute_fp32_to_bf16(x[i]);
     }
 }
 
-void ggml_fp32_to_bf16_row(const float * x, ggml_bf16_t * y, int64_t n) {
-  int i = 0;
-#if defined(__AVX512BF16__)
+ଶୂନ୍ୟ ggml_fp32_to_bf16_row(ଅଚଳ ଦଶମିକ * x, ggml_bf16_t * y, int64_t n) {
+  ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0;
+#ଯଦି defined(__AVX512BF16__)
   // subnormals are flushed to zero on this platform
-  for (; i + 32 <= n; i += 32) {
+  ପାଇଁ (; i + 32 <= n; i += 32) {
         _mm512_storeu_si512(
             (__m512i *)(y + i),
             m512i(_mm512_cvtne2ps_pbh(_mm512_loadu_ps(x + i + 16),
                                 _mm512_loadu_ps(x + i))));
   }
 #endif
-    for (; i < n; i++) {
+    ପାଇଁ (; i < n; i++) {
         y[i] = GGML_FP32_TO_BF16(x[i]);
     }
 }
 
 bool ggml_guid_matches(ggml_guid_t guid_a, ggml_guid_t guid_b) {
-    return memcmp(guid_a, guid_b, sizeof(ggml_guid)) == 0;
+    ଫେରନ୍ତୁ memcmp(guid_a, guid_b, ଆକାର(ggml_guid)) == 0;
 }
 
-const char * ggml_version(void) {
-    return GGML_VERSION;
+ଅଚଳ ଅକ୍ଷର * ggml_version(ଶୂନ୍ୟ) {
+    ଫେରନ୍ତୁ GGML_VERSION;
 }
 
-const char * ggml_commit(void) {
-    return GGML_COMMIT;
+ଅଚଳ ଅକ୍ଷର * ggml_commit(ଶୂନ୍ୟ) {
+    ଫେରନ୍ତୁ GGML_COMMIT;
 }
 
 //
 // timing
 //
 
-#if defined(_MSC_VER) || defined(__MINGW32__)
-static int64_t timer_freq, timer_start;
-static BOOL CALLBACK ggml_time_init_once(PINIT_ONCE once, PVOID param, PVOID *ctx) {
+#ଯଦି defined(_MSC_VER) || defined(__MINGW32__)
+ସ୍ଥିର int64_t timer_freq, timer_start;
+ସ୍ଥିର BOOL CALLBACK ggml_time_init_once(PINIT_ONCE once, PVOID param, PVOID *ctx) {
     UNUSED(once);
     UNUSED(param);
     UNUSED(ctx);
@@ -552,43 +552,43 @@ static BOOL CALLBACK ggml_time_init_once(PINIT_ONCE once, PVOID param, PVOID *ct
     QueryPerformanceCounter(&t);
     timer_start = t.QuadPart;
 
-    return TRUE;
+    ଫେରନ୍ତୁ TRUE;
 }
-void ggml_time_init(void) {
-    static INIT_ONCE once = INIT_ONCE_STATIC_INIT;
-    InitOnceExecuteOnce(&once, ggml_time_init_once, NULL, NULL);
+ଶୂନ୍ୟ ggml_time_init(ଶୂନ୍ୟ) {
+    ସ୍ଥିର INIT_ONCE once = INIT_ONCE_STATIC_INIT;
+    InitOnceExecuteOnce(&once, ggml_time_init_once, ଖାଲି, ଖାଲି);
 }
-int64_t ggml_time_ms(void) {
+int64_t ggml_time_ms(ଶୂନ୍ୟ) {
     LARGE_INTEGER t;
     QueryPerformanceCounter(&t);
-    return ((t.QuadPart-timer_start) * 1000) / timer_freq;
+    ଫେରନ୍ତୁ ((t.QuadPart-timer_start) * 1000) / timer_freq;
 }
-int64_t ggml_time_us(void) {
+int64_t ggml_time_us(ଶୂନ୍ୟ) {
     LARGE_INTEGER t;
     QueryPerformanceCounter(&t);
-    return ((t.QuadPart-timer_start) * 1000000) / timer_freq;
+    ଫେରନ୍ତୁ ((t.QuadPart-timer_start) * 1000000) / timer_freq;
 }
-#else
-void ggml_time_init(void) {}
-int64_t ggml_time_ms(void) {
-    struct timespec ts;
+#ଅନ୍ୟଥା
+ଶୂନ୍ୟ ggml_time_init(ଶୂନ୍ୟ) {}
+int64_t ggml_time_ms(ଶୂନ୍ୟ) {
+    ସଂରଚନା timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    return (int64_t)ts.tv_sec*1000 + (int64_t)ts.tv_nsec/1000000;
+    ଫେରନ୍ତୁ (int64_t)ts.tv_sec*1000 + (int64_t)ts.tv_nsec/1000000;
 }
 
-int64_t ggml_time_us(void) {
-    struct timespec ts;
+int64_t ggml_time_us(ଶୂନ୍ୟ) {
+    ସଂରଚନା timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    return (int64_t)ts.tv_sec*1000000 + (int64_t)ts.tv_nsec/1000;
+    ଫେରନ୍ତୁ (int64_t)ts.tv_sec*1000000 + (int64_t)ts.tv_nsec/1000;
 }
 #endif
 
-int64_t ggml_cycles(void) {
-    return clock();
+int64_t ggml_cycles(ଶୂନ୍ୟ) {
+    ଫେରନ୍ତୁ clock();
 }
 
-int64_t ggml_cycles_per_ms(void) {
-    return CLOCKS_PER_SEC/1000;
+int64_t ggml_cycles_per_ms(ଶୂନ୍ୟ) {
+    ଫେରନ୍ତୁ CLOCKS_PER_SEC/1000;
 }
 
 //
@@ -596,35 +596,35 @@ int64_t ggml_cycles_per_ms(void) {
 //
 
 #ifdef _WIN32
-static wchar_t * ggml_mbstowcs(const char * mbs) {
-    int wlen = MultiByteToWideChar(CP_UTF8, 0, mbs, -1, NULL, 0);
-    if (!wlen) {
+ସ୍ଥିର wchar_t * ggml_mbstowcs(ଅଚଳ ଅକ୍ଷର * mbs) {
+    ପୂର୍ଣ୍ଣସଂଖ୍ୟା wlen = MultiByteToWideChar(CP_UTF8, 0, mbs, -1, ଖାଲି, 0);
+    ଯଦି (!wlen) {
         errno = EINVAL;
-        return NULL;
+        ଫେରନ୍ତୁ ଖାଲି;
     }
 
-    wchar_t * wbuf = GGML_MALLOC(wlen * sizeof(wchar_t));
+    wchar_t * wbuf = GGML_MALLOC(wlen * ଆକାର(wchar_t));
     wlen = MultiByteToWideChar(CP_UTF8, 0, mbs, -1, wbuf, wlen);
-    if (!wlen) {
+    ଯଦି (!wlen) {
         GGML_FREE(wbuf);
         errno = EINVAL;
-        return NULL;
+        ଫେରନ୍ତୁ ଖାଲି;
     }
 
-    return wbuf;
+    ଫେରନ୍ତୁ wbuf;
 }
 #endif
 
-FILE * ggml_fopen(const char * fname, const char * mode) {
+FILE * ggml_fopen(ଅଚଳ ଅକ୍ଷର * fname, ଅଚଳ ଅକ୍ଷର * mode) {
 #ifdef _WIN32
-    FILE * file = NULL;
+    FILE * file = ଖାଲି;
 
     // convert fname (UTF-8)
     wchar_t * wfname = ggml_mbstowcs(fname);
-    if (wfname) {
+    ଯଦି (wfname) {
         // convert mode (UTF-8)
         wchar_t * wmode = ggml_mbstowcs(mode);
-        if (wmode) {
+        ଯଦି (wmode) {
             // open file
             file = _wfopen(wfname, wmode);
             GGML_FREE(wmode);
@@ -633,54 +633,54 @@ FILE * ggml_fopen(const char * fname, const char * mode) {
         GGML_FREE(wfname);
     }
 
-    return file;
-#else
-    return fopen(fname, mode);
+    ଫେରନ୍ତୁ file;
+#ଅନ୍ୟଥା
+    ଫେରନ୍ତୁ fopen(fname, mode);
 #endif
 
 }
 
-static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
+ସ୍ଥିର ଅଚଳ ସଂରଚନା ggml_type_traits type_traits[GGML_TYPE_ଗଣନା] = {
     [GGML_TYPE_I8] = {
         .type_name                = "i8",
         .blck_size                = 1,
-        .type_size                = sizeof(int8_t),
+        .type_size                = ଆକାର(int8_t),
         .is_quantized             = false,
     },
     [GGML_TYPE_I16] = {
         .type_name                = "i16",
         .blck_size                = 1,
-        .type_size                = sizeof(int16_t),
+        .type_size                = ଆକାର(int16_t),
         .is_quantized             = false,
     },
     [GGML_TYPE_I32] = {
         .type_name                = "i32",
         .blck_size                = 1,
-        .type_size                = sizeof(int32_t),
+        .type_size                = ଆକାର(int32_t),
         .is_quantized             = false,
     },
     [GGML_TYPE_I64] = {
         .type_name                = "i64",
         .blck_size                = 1,
-        .type_size                = sizeof(int64_t),
+        .type_size                = ଆକାର(int64_t),
         .is_quantized             = false,
     },
     [GGML_TYPE_F64] = {
         .type_name                = "f64",
         .blck_size                = 1,
-        .type_size                = sizeof(double),
+        .type_size                = ଆକାର(ଦ୍ୱିଗୁଣ),
         .is_quantized             = false,
     },
     [GGML_TYPE_F32] = {
         .type_name                = "f32",
         .blck_size                = 1,
-        .type_size                = sizeof(float),
+        .type_size                = ଆକାର(ଦଶମିକ),
         .is_quantized             = false,
     },
     [GGML_TYPE_F16] = {
         .type_name                = "f16",
         .blck_size                = 1,
-        .type_size                = sizeof(ggml_fp16_t),
+        .type_size                = ଆକାର(ggml_fp16_t),
         .is_quantized             = false,
         .to_float                 = (ggml_to_float_t) ggml_fp16_to_fp32_row,
         .from_float_ref           = (ggml_from_float_t) ggml_fp32_to_fp16_row,
@@ -688,7 +688,7 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
     [GGML_TYPE_Q1_0] = {
         .type_name                = "q1_0",
         .blck_size                = QK1_0,
-        .type_size                = sizeof(block_q1_0),
+        .type_size                = ଆକାର(block_q1_0),
         .is_quantized             = true,
         .to_float                 = (ggml_to_float_t) dequantize_row_q1_0,
         .from_float_ref           = (ggml_from_float_t) quantize_row_q1_0_ref,
@@ -696,7 +696,7 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
     [GGML_TYPE_Q2_0] = {
         .type_name                = "q2_0",
         .blck_size                = QK2_0,
-        .type_size                = sizeof(block_q2_0),
+        .type_size                = ଆକାର(block_q2_0),
         .is_quantized             = true,
         .to_float                 = (ggml_to_float_t) dequantize_row_q2_0,
         .from_float_ref           = (ggml_from_float_t) quantize_row_q2_0_ref,
@@ -704,7 +704,7 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
     [GGML_TYPE_Q4_0] = {
         .type_name                = "q4_0",
         .blck_size                = QK4_0,
-        .type_size                = sizeof(block_q4_0),
+        .type_size                = ଆକାର(block_q4_0),
         .is_quantized             = true,
         .to_float                 = (ggml_to_float_t) dequantize_row_q4_0,
         .from_float_ref           = (ggml_from_float_t) quantize_row_q4_0_ref,
@@ -712,7 +712,7 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
     [GGML_TYPE_Q4_1] = {
         .type_name                = "q4_1",
         .blck_size                = QK4_1,
-        .type_size                = sizeof(block_q4_1),
+        .type_size                = ଆକାର(block_q4_1),
         .is_quantized             = true,
         .to_float                 = (ggml_to_float_t) dequantize_row_q4_1,
         .from_float_ref           = (ggml_from_float_t) quantize_row_q4_1_ref,
@@ -732,7 +732,7 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
     [GGML_TYPE_Q5_0] = {
         .type_name                = "q5_0",
         .blck_size                = QK5_0,
-        .type_size                = sizeof(block_q5_0),
+        .type_size                = ଆକାର(block_q5_0),
         .is_quantized             = true,
         .to_float                 = (ggml_to_float_t) dequantize_row_q5_0,
         .from_float_ref           = (ggml_from_float_t) quantize_row_q5_0_ref,
@@ -740,7 +740,7 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
     [GGML_TYPE_Q5_1] = {
         .type_name                = "q5_1",
         .blck_size                = QK5_1,
-        .type_size                = sizeof(block_q5_1),
+        .type_size                = ଆକାର(block_q5_1),
         .is_quantized             = true,
         .to_float                 = (ggml_to_float_t) dequantize_row_q5_1,
         .from_float_ref           = (ggml_from_float_t) quantize_row_q5_1_ref,
@@ -748,7 +748,7 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
     [GGML_TYPE_Q8_0] = {
         .type_name                = "q8_0",
         .blck_size                = QK8_0,
-        .type_size                = sizeof(block_q8_0),
+        .type_size                = ଆକାର(block_q8_0),
         .is_quantized             = true,
         .to_float                 = (ggml_to_float_t) dequantize_row_q8_0,
         .from_float_ref           = (ggml_from_float_t) quantize_row_q8_0_ref,
@@ -756,14 +756,14 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
     [GGML_TYPE_Q8_1] = {
         .type_name                = "q8_1",
         .blck_size                = QK8_1,
-        .type_size                = sizeof(block_q8_1),
+        .type_size                = ଆକାର(block_q8_1),
         .is_quantized             = true,
         .from_float_ref           = (ggml_from_float_t) quantize_row_q8_1_ref,
     },
     [GGML_TYPE_MXFP4] = {
         .type_name                = "mxfp4",
         .blck_size                = QK_MXFP4,
-        .type_size                = sizeof(block_mxfp4),
+        .type_size                = ଆକାର(block_mxfp4),
         .is_quantized             = true,
         .to_float                 = (ggml_to_float_t) dequantize_row_mxfp4,
         .from_float_ref           = (ggml_from_float_t)quantize_row_mxfp4_ref,
@@ -771,7 +771,7 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
     [GGML_TYPE_NVFP4] = {
         .type_name                = "nvfp4",
         .blck_size                = QK_NVFP4,
-        .type_size                = sizeof(block_nvfp4),
+        .type_size                = ଆକାର(block_nvfp4),
         .is_quantized             = true,
         .to_float                 = (ggml_to_float_t) dequantize_row_nvfp4,
         .from_float_ref           = (ggml_from_float_t)quantize_row_nvfp4_ref,
@@ -779,7 +779,7 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
     [GGML_TYPE_Q2_K] = {
         .type_name                = "q2_K",
         .blck_size                = QK_K,
-        .type_size                = sizeof(block_q2_K),
+        .type_size                = ଆକାର(block_q2_K),
         .is_quantized             = true,
         .to_float                 = (ggml_to_float_t) dequantize_row_q2_K,
         .from_float_ref           = (ggml_from_float_t) quantize_row_q2_K_ref,
@@ -787,7 +787,7 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
     [GGML_TYPE_Q3_K] = {
         .type_name                = "q3_K",
         .blck_size                = QK_K,
-        .type_size                = sizeof(block_q3_K),
+        .type_size                = ଆକାର(block_q3_K),
         .is_quantized             = true,
         .to_float                 = (ggml_to_float_t) dequantize_row_q3_K,
         .from_float_ref           = (ggml_from_float_t) quantize_row_q3_K_ref,
@@ -795,7 +795,7 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
     [GGML_TYPE_Q4_K] = {
         .type_name                = "q4_K",
         .blck_size                = QK_K,
-        .type_size                = sizeof(block_q4_K),
+        .type_size                = ଆକାର(block_q4_K),
         .is_quantized             = true,
         .to_float                 = (ggml_to_float_t) dequantize_row_q4_K,
         .from_float_ref           = (ggml_from_float_t) quantize_row_q4_K_ref,
@@ -803,7 +803,7 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
     [GGML_TYPE_Q5_K] = {
         .type_name                = "q5_K",
         .blck_size                = QK_K,
-        .type_size                = sizeof(block_q5_K),
+        .type_size                = ଆକାର(block_q5_K),
         .is_quantized             = true,
         .to_float                 = (ggml_to_float_t) dequantize_row_q5_K,
         .from_float_ref           = (ggml_from_float_t) quantize_row_q5_K_ref,
@@ -811,7 +811,7 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
     [GGML_TYPE_Q6_K] = {
         .type_name                = "q6_K",
         .blck_size                = QK_K,
-        .type_size                = sizeof(block_q6_K),
+        .type_size                = ଆକାର(block_q6_K),
         .is_quantized             = true,
         .to_float                 = (ggml_to_float_t) dequantize_row_q6_K,
         .from_float_ref           = (ggml_from_float_t) quantize_row_q6_K_ref,
@@ -819,23 +819,23 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
     [GGML_TYPE_IQ2_XXS] = {
         .type_name                = "iq2_xxs",
         .blck_size                = QK_K,
-        .type_size                = sizeof(block_iq2_xxs),
+        .type_size                = ଆକାର(block_iq2_xxs),
         .is_quantized             = true,
         .to_float                 = (ggml_to_float_t) dequantize_row_iq2_xxs,
-        .from_float_ref           = NULL,
+        .from_float_ref           = ଖାଲି,
     },
     [GGML_TYPE_IQ2_XS] = {
         .type_name                = "iq2_xs",
         .blck_size                = QK_K,
-        .type_size                = sizeof(block_iq2_xs),
+        .type_size                = ଆକାର(block_iq2_xs),
         .is_quantized             = true,
         .to_float                 = (ggml_to_float_t) dequantize_row_iq2_xs,
-        .from_float_ref           = NULL,
+        .from_float_ref           = ଖାଲି,
     },
     [GGML_TYPE_IQ3_XXS] = {
         .type_name                = "iq3_xxs",
         .blck_size                = QK_K,
-        .type_size                = sizeof(block_iq3_xxs),
+        .type_size                = ଆକାର(block_iq3_xxs),
         .is_quantized             = true,
         .to_float                 = (ggml_to_float_t) dequantize_row_iq3_xxs,
         .from_float_ref           = (ggml_from_float_t)quantize_row_iq3_xxs_ref,
@@ -843,7 +843,7 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
     [GGML_TYPE_IQ3_S] = {
         .type_name                = "iq3_s",
         .blck_size                = QK_K,
-        .type_size                = sizeof(block_iq3_s),
+        .type_size                = ଆକାର(block_iq3_s),
         .is_quantized             = true,
         .to_float                 = (ggml_to_float_t) dequantize_row_iq3_s,
         .from_float_ref           = (ggml_from_float_t)quantize_row_iq3_s_ref,
@@ -851,7 +851,7 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
     [GGML_TYPE_IQ2_S] = {
         .type_name                = "iq2_s",
         .blck_size                = QK_K,
-        .type_size                = sizeof(block_iq2_s),
+        .type_size                = ଆକାର(block_iq2_s),
         .is_quantized             = true,
         .to_float                 = (ggml_to_float_t) dequantize_row_iq2_s,
         .from_float_ref           = (ggml_from_float_t)quantize_row_iq2_s_ref,
@@ -859,23 +859,23 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
     [GGML_TYPE_IQ1_S] = {
         .type_name                = "iq1_s",
         .blck_size                = QK_K,
-        .type_size                = sizeof(block_iq1_s),
+        .type_size                = ଆକାର(block_iq1_s),
         .is_quantized             = true,
         .to_float                 = (ggml_to_float_t) dequantize_row_iq1_s,
-        .from_float_ref           = NULL,
+        .from_float_ref           = ଖାଲି,
     },
     [GGML_TYPE_IQ1_M] = {
         .type_name                = "iq1_m",
         .blck_size                = QK_K,
-        .type_size                = sizeof(block_iq1_m),
+        .type_size                = ଆକାର(block_iq1_m),
         .is_quantized             = true,
         .to_float                 = (ggml_to_float_t) dequantize_row_iq1_m,
-        .from_float_ref           = NULL,
+        .from_float_ref           = ଖାଲି,
     },
     [GGML_TYPE_IQ4_NL] = {
         .type_name                = "iq4_nl",
         .blck_size                = QK4_NL,
-        .type_size                = sizeof(block_iq4_nl),
+        .type_size                = ଆକାର(block_iq4_nl),
         .is_quantized             = true,
         .to_float                 = (ggml_to_float_t) dequantize_row_iq4_nl,
         .from_float_ref           = (ggml_from_float_t)quantize_row_iq4_nl_ref,
@@ -883,7 +883,7 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
     [GGML_TYPE_IQ4_XS] = {
         .type_name                = "iq4_xs",
         .blck_size                = QK_K,
-        .type_size                = sizeof(block_iq4_xs),
+        .type_size                = ଆକାର(block_iq4_xs),
         .is_quantized             = true,
         .to_float                 = (ggml_to_float_t) dequantize_row_iq4_xs,
         .from_float_ref           = (ggml_from_float_t)quantize_row_iq4_xs_ref,
@@ -891,13 +891,13 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
     [GGML_TYPE_Q8_K] = {
         .type_name                = "q8_K",
         .blck_size                = QK_K,
-        .type_size                = sizeof(block_q8_K),
+        .type_size                = ଆକାର(block_q8_K),
         .is_quantized             = true,
     },
     [GGML_TYPE_BF16] = {
         .type_name                = "bf16",
         .blck_size                = 1,
-        .type_size                = sizeof(ggml_bf16_t),
+        .type_size                = ଆକାର(ggml_bf16_t),
         .is_quantized             = false,
         .to_float                 = (ggml_to_float_t) ggml_bf16_to_fp32_row,
         .from_float_ref           = (ggml_from_float_t) ggml_fp32_to_bf16_row_ref,
@@ -923,7 +923,7 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
     [GGML_TYPE_TQ1_0] = {
         .type_name                = "tq1_0",
         .blck_size                = QK_K,
-        .type_size                = sizeof(block_tq1_0),
+        .type_size                = ଆକାର(block_tq1_0),
         .is_quantized             = true,
         .to_float                 = (ggml_to_float_t) dequantize_row_tq1_0,
         .from_float_ref           = (ggml_from_float_t) quantize_row_tq1_0_ref,
@@ -931,7 +931,7 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
     [GGML_TYPE_TQ2_0] = {
         .type_name                = "tq2_0",
         .blck_size                = QK_K,
-        .type_size                = sizeof(block_tq2_0),
+        .type_size                = ଆକାର(block_tq2_0),
         .is_quantized             = true,
         .to_float                 = (ggml_to_float_t) dequantize_row_tq2_0,
         .from_float_ref           = (ggml_from_float_t) quantize_row_tq2_0_ref,
@@ -956,50 +956,50 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
     },
 };
 
-const struct ggml_type_traits * ggml_get_type_traits(enum ggml_type type) {
-    assert(type >= 0);
-    assert(type < GGML_TYPE_COUNT);
-    return &type_traits[type];
+ଅଚଳ ସଂରଚନା ggml_type_traits * ggml_get_type_traits(ଗଣନା ggml_type type) {
+    ପ୍ରତିଜ୍ଞା(type >= 0);
+    ପ୍ରତିଜ୍ଞା(type < GGML_TYPE_ଗଣନା);
+    ଫେରନ୍ତୁ &type_traits[type];
 }
 
 //
 // ggml object
 //
 
-struct ggml_object {
+ସଂରଚନା ggml_object {
     size_t offs;
     size_t size;
 
-    struct ggml_object * next;
+    ସଂରଚନା ggml_object * next;
 
-    enum ggml_object_type type;
+    ଗଣନା ggml_object_type type;
 
-    char padding[4];
+    ଅକ୍ଷର padding[4];
 };
 
-static const size_t GGML_OBJECT_SIZE = sizeof(struct ggml_object);
+ସ୍ଥିର ଅଚଳ size_t GGML_OBJECT_SIZE = ଆକାର(ସଂରଚନା ggml_object);
 
 //
 // ggml context
 //
 
-struct ggml_context {
+ସଂରଚନା ggml_context {
     size_t mem_size;
-    void * mem_buffer;
+    ଶୂନ୍ୟ * mem_buffer;
     bool   mem_buffer_owned;
     bool   no_alloc;
 
-    int    n_objects;
+    ପୂର୍ଣ୍ଣସଂଖ୍ୟା    n_objects;
 
-    struct ggml_object * objects_begin;
-    struct ggml_object * objects_end;
+    ସଂରଚନା ggml_object * objects_begin;
+    ସଂରଚନା ggml_object * objects_end;
 };
 
 //
 // data types
 //
 
-static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
+ସ୍ଥିର ଅଚଳ ଅକ୍ଷର * GGML_OP_NAME[GGML_OP_ଗଣନା] = {
     "NONE",
 
     "DUP",
@@ -1113,9 +1113,9 @@ static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
     "GLU",
 };
 
-static_assert(GGML_OP_COUNT == 102, "GGML_OP_COUNT != 102");
+static_assert(GGML_OP_ଗଣନା == 102, "GGML_OP_COUNT != 102");
 
-static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
+ସ୍ଥିର ଅଚଳ ଅକ୍ଷର * GGML_OP_ପ୍ରତୀକ[GGML_OP_ଗଣନା] = {
     "none",
 
     "x",
@@ -1229,11 +1229,11 @@ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "glu(x)",
 };
 
-static_assert(GGML_OP_COUNT == 102, "GGML_OP_COUNT != 102");
+static_assert(GGML_OP_ଗଣନା == 102, "GGML_OP_COUNT != 102");
 
-static_assert(GGML_OP_POOL_COUNT == 2, "GGML_OP_POOL_COUNT != 2");
+static_assert(GGML_OP_POOL_ଗଣନା == 2, "GGML_OP_POOL_COUNT != 2");
 
-static const char * GGML_UNARY_OP_NAME[GGML_UNARY_OP_COUNT] = {
+ସ୍ଥିର ଅଚଳ ଅକ୍ଷର * GGML_UNARY_OP_NAME[GGML_UNARY_OP_ଗଣନା] = {
     "ABS",
     "SGN",
     "NEG",
@@ -1258,9 +1258,9 @@ static const char * GGML_UNARY_OP_NAME[GGML_UNARY_OP_COUNT] = {
     "TRUNC",
 };
 
-static_assert(GGML_UNARY_OP_COUNT == 22, "GGML_UNARY_OP_COUNT != 22");
+static_assert(GGML_UNARY_OP_ଗଣନା == 22, "GGML_UNARY_OP_COUNT != 22");
 
-static const char * GGML_GLU_OP_NAME[GGML_GLU_OP_COUNT] = {
+ସ୍ଥିର ଅଚଳ ଅକ୍ଷର * GGML_GLU_OP_NAME[GGML_GLU_OP_ଗଣନା] = {
     "REGLU",
     "GEGLU",
     "SWIGLU",
@@ -1270,25 +1270,25 @@ static const char * GGML_GLU_OP_NAME[GGML_GLU_OP_COUNT] = {
     "SWIGLU_CLAMP",
 };
 
-static_assert(GGML_GLU_OP_COUNT == 7, "GGML_GLU_OP_COUNT != 7");
+static_assert(GGML_GLU_OP_ଗଣନା == 7, "GGML_GLU_OP_COUNT != 7");
 
-static_assert(sizeof(struct ggml_object)%GGML_MEM_ALIGN == 0, "ggml_object size must be a multiple of GGML_MEM_ALIGN");
-static_assert(sizeof(struct ggml_tensor)%GGML_MEM_ALIGN == 0, "ggml_tensor size must be a multiple of GGML_MEM_ALIGN");
+static_assert(ଆକାର(ସଂରଚନା ggml_object)%GGML_MEM_ALIGN == 0, "ggml_object size must be a multiple of GGML_MEM_ALIGN");
+static_assert(ଆକାର(ସଂରଚନା ggml_tensor)%GGML_MEM_ALIGN == 0, "ggml_tensor size must be a multiple of GGML_MEM_ALIGN");
 
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ggml_print_object(const struct ggml_object * obj) {
+ଶୂନ୍ୟ ggml_print_object(ଅଚଳ ସଂରଚନା ggml_object * obj) {
     GGML_LOG_INFO(" - ggml_object: type = %d, offset = %zu, size = %zu, next = %p\n",
-            obj->type, obj->offs, obj->size, (const void *) obj->next);
+            obj->type, obj->offs, obj->size, (ଅଚଳ ଶୂନ୍ୟ *) obj->next);
 }
 
-void ggml_print_objects(const struct ggml_context * ctx) {
-    struct ggml_object * obj = ctx->objects_begin;
+ଶୂନ୍ୟ ggml_print_objects(ଅଚଳ ସଂରଚନା ggml_context * ctx) {
+    ସଂରଚନା ggml_object * obj = ctx->objects_begin;
 
-    GGML_LOG_INFO("%s: objects in context %p:\n", __func__, (const void *) ctx);
+    GGML_LOG_INFO("%s: objects in context %p:\n", __func__, (ଅଚଳ ଶୂନ୍ୟ *) ctx);
 
-    while (obj != NULL) {
+    ଯେତେବେଳେ (obj != ଖାଲି) {
         ggml_print_object(obj);
         obj = obj->next;
     }
@@ -1296,323 +1296,323 @@ void ggml_print_objects(const struct ggml_context * ctx) {
     GGML_LOG_INFO("%s: --- end ---\n", __func__);
 }
 
-int64_t ggml_nelements(const struct ggml_tensor * tensor) {
+int64_t ggml_nelements(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return tensor->ne[0]*tensor->ne[1]*tensor->ne[2]*tensor->ne[3];
+    ଫେରନ୍ତୁ tensor->ne[0]*tensor->ne[1]*tensor->ne[2]*tensor->ne[3];
 }
 
-int64_t ggml_nrows(const struct ggml_tensor * tensor) {
+int64_t ggml_nrows(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return tensor->ne[1]*tensor->ne[2]*tensor->ne[3];
+    ଫେରନ୍ତୁ tensor->ne[1]*tensor->ne[2]*tensor->ne[3];
 }
 
-size_t ggml_nbytes(const struct ggml_tensor * tensor) {
-    for (int i = 0; i < GGML_MAX_DIMS; ++i) {
-        if (tensor->ne[i] <= 0) {
-            return 0;
+size_t ggml_nbytes(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < GGML_MAX_DIMS; ++i) {
+        ଯଦି (tensor->ne[i] <= 0) {
+            ଫେରନ୍ତୁ 0;
         }
     }
 
     size_t nbytes;
-    const size_t blck_size = ggml_blck_size(tensor->type);
-    if (blck_size == 1) {
+    ଅଚଳ size_t blck_size = ggml_blck_size(tensor->type);
+    ଯଦି (blck_size == 1) {
         nbytes = ggml_type_size(tensor->type);
-        for (int i = 0; i < GGML_MAX_DIMS; ++i) {
+        ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < GGML_MAX_DIMS; ++i) {
             nbytes += (tensor->ne[i] - 1)*tensor->nb[i];
         }
     }
-    else {
+    ଅନ୍ୟଥା {
         nbytes = tensor->ne[0]*tensor->nb[0]/blck_size;
-        for (int i = 1; i < GGML_MAX_DIMS; ++i) {
+        ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 1; i < GGML_MAX_DIMS; ++i) {
             nbytes += (tensor->ne[i] - 1)*tensor->nb[i];
         }
     }
 
-    return nbytes;
+    ଫେରନ୍ତୁ nbytes;
 }
 
-size_t ggml_nbytes_pad(const struct ggml_tensor * tensor) {
-    return GGML_PAD(ggml_nbytes(tensor), GGML_MEM_ALIGN);
+size_t ggml_nbytes_pad(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
+    ଫେରନ୍ତୁ GGML_PAD(ggml_nbytes(tensor), GGML_MEM_ALIGN);
 }
 
-int64_t ggml_blck_size(enum ggml_type type) {
-    assert(type >= 0);
-    assert(type < GGML_TYPE_COUNT);
-    return type_traits[type].blck_size;
+int64_t ggml_blck_size(ଗଣନା ggml_type type) {
+    ପ୍ରତିଜ୍ଞା(type >= 0);
+    ପ୍ରତିଜ୍ଞା(type < GGML_TYPE_ଗଣନା);
+    ଫେରନ୍ତୁ type_traits[type].blck_size;
 }
 
-size_t ggml_type_size(enum ggml_type type) {
-    assert(type >= 0);
-    assert(type < GGML_TYPE_COUNT);
-    return type_traits[type].type_size;
+size_t ggml_type_size(ଗଣନା ggml_type type) {
+    ପ୍ରତିଜ୍ଞା(type >= 0);
+    ପ୍ରତିଜ୍ଞା(type < GGML_TYPE_ଗଣନା);
+    ଫେରନ୍ତୁ type_traits[type].type_size;
 }
 
-size_t ggml_row_size(enum ggml_type type, int64_t ne) {
-    assert(type >= 0);
-    assert(type < GGML_TYPE_COUNT);
-    assert(ne % ggml_blck_size(type) == 0);
-    return ggml_type_size(type)*ne/ggml_blck_size(type);
+size_t ggml_row_size(ଗଣନା ggml_type type, int64_t ne) {
+    ପ୍ରତିଜ୍ଞା(type >= 0);
+    ପ୍ରତିଜ୍ଞା(type < GGML_TYPE_ଗଣନା);
+    ପ୍ରତିଜ୍ଞା(ne % ggml_blck_size(type) == 0);
+    ଫେରନ୍ତୁ ggml_type_size(type)*ne/ggml_blck_size(type);
 }
 
-double ggml_type_sizef(enum ggml_type type) {
-    assert(type >= 0);
-    assert(type < GGML_TYPE_COUNT);
-    return ((double)(type_traits[type].type_size))/type_traits[type].blck_size;
+ଦ୍ୱିଗୁଣ ggml_type_sizef(ଗଣନା ggml_type type) {
+    ପ୍ରତିଜ୍ଞା(type >= 0);
+    ପ୍ରତିଜ୍ଞା(type < GGML_TYPE_ଗଣନା);
+    ଫେରନ୍ତୁ ((ଦ୍ୱିଗୁଣ)(type_traits[type].type_size))/type_traits[type].blck_size;
 }
 
-const char * ggml_type_name(enum ggml_type type) {
-    assert(type >= 0);
-    assert(type < GGML_TYPE_COUNT);
-    return type_traits[type].type_name;
+ଅଚଳ ଅକ୍ଷର * ggml_type_name(ଗଣନା ggml_type type) {
+    ପ୍ରତିଜ୍ଞା(type >= 0);
+    ପ୍ରତିଜ୍ଞା(type < GGML_TYPE_ଗଣନା);
+    ଫେରନ୍ତୁ type_traits[type].type_name;
 }
 
-bool ggml_is_quantized(enum ggml_type type) {
-    assert(type >= 0);
-    assert(type < GGML_TYPE_COUNT);
-    return type_traits[type].is_quantized;
+bool ggml_is_quantized(ଗଣନା ggml_type type) {
+    ପ୍ରତିଜ୍ଞା(type >= 0);
+    ପ୍ରତିଜ୍ଞା(type < GGML_TYPE_ଗଣନା);
+    ଫେରନ୍ତୁ type_traits[type].is_quantized;
 }
 
-const char * ggml_op_name(enum ggml_op op) {
-    return GGML_OP_NAME[op];
+ଅଚଳ ଅକ୍ଷର * ggml_op_name(ଗଣନା ggml_op op) {
+    ଫେରନ୍ତୁ GGML_OP_NAME[op];
 }
 
-const char * ggml_op_symbol(enum ggml_op op) {
-    return GGML_OP_SYMBOL[op];
+ଅଚଳ ଅକ୍ଷର * ggml_op_ପ୍ରତୀକ(ଗଣନା ggml_op op) {
+    ଫେରନ୍ତୁ GGML_OP_ପ୍ରତୀକ[op];
 }
 
-const char * ggml_unary_op_name(enum ggml_unary_op op) {
-    return GGML_UNARY_OP_NAME[op];
+ଅଚଳ ଅକ୍ଷର * ggml_unary_op_name(ଗଣନା ggml_unary_op op) {
+    ଫେରନ୍ତୁ GGML_UNARY_OP_NAME[op];
 }
 
-const char * ggml_glu_op_name(enum ggml_glu_op op) {
-    return GGML_GLU_OP_NAME[op];
+ଅଚଳ ଅକ୍ଷର * ggml_glu_op_name(ଗଣନା ggml_glu_op op) {
+    ଫେରନ୍ତୁ GGML_GLU_OP_NAME[op];
 }
 
-const char * ggml_op_desc(const struct ggml_tensor * t) {
-    if (t->op == GGML_OP_UNARY) {
-        enum ggml_unary_op uop = ggml_get_unary_op(t);
-        return ggml_unary_op_name(uop);
+ଅଚଳ ଅକ୍ଷର * ggml_op_desc(ଅଚଳ ସଂରଚନା ggml_tensor * t) {
+    ଯଦି (t->op == GGML_OP_UNARY) {
+        ଗଣନା ggml_unary_op uop = ggml_get_unary_op(t);
+        ଫେରନ୍ତୁ ggml_unary_op_name(uop);
     }
-    if (t->op == GGML_OP_GLU) {
-        enum ggml_glu_op gop = ggml_get_glu_op(t);
-        return ggml_glu_op_name(gop);
+    ଯଦି (t->op == GGML_OP_GLU) {
+        ଗଣନା ggml_glu_op gop = ggml_get_glu_op(t);
+        ଫେରନ୍ତୁ ggml_glu_op_name(gop);
     }
-    return ggml_op_name(t->op);
+    ଫେରନ୍ତୁ ggml_op_name(t->op);
 }
 
-size_t ggml_element_size(const struct ggml_tensor * tensor) {
-    return ggml_type_size(tensor->type);
+size_t ggml_element_size(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
+    ଫେରନ୍ତୁ ggml_type_size(tensor->type);
 }
 
-bool ggml_is_scalar(const struct ggml_tensor * tensor) {
+bool ggml_is_scalar(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return tensor->ne[0] == 1 && tensor->ne[1] == 1 && tensor->ne[2] == 1 && tensor->ne[3] == 1;
+    ଫେରନ୍ତୁ tensor->ne[0] == 1 && tensor->ne[1] == 1 && tensor->ne[2] == 1 && tensor->ne[3] == 1;
 }
 
-bool ggml_is_vector(const struct ggml_tensor * tensor) {
+bool ggml_is_vector(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return tensor->ne[1] == 1 && tensor->ne[2] == 1 && tensor->ne[3] == 1;
+    ଫେରନ୍ତୁ tensor->ne[1] == 1 && tensor->ne[2] == 1 && tensor->ne[3] == 1;
 }
 
-bool ggml_is_matrix(const struct ggml_tensor * tensor) {
+bool ggml_is_matrix(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return tensor->ne[2] == 1 && tensor->ne[3] == 1;
+    ଫେରନ୍ତୁ tensor->ne[2] == 1 && tensor->ne[3] == 1;
 }
 
-bool ggml_is_3d(const struct ggml_tensor * tensor) {
-    return tensor->ne[3] == 1;
+bool ggml_is_3d(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
+    ଫେରନ୍ତୁ tensor->ne[3] == 1;
 }
 
-int ggml_n_dims(const struct ggml_tensor * tensor) {
-    for (int i = GGML_MAX_DIMS - 1; i >= 1; --i) {
-        if (tensor->ne[i] > 1) {
-            return i + 1;
+ପୂର୍ଣ୍ଣସଂଖ୍ୟା ggml_n_dims(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = GGML_MAX_DIMS - 1; i >= 1; --i) {
+        ଯଦି (tensor->ne[i] > 1) {
+            ଫେରନ୍ତୁ i + 1;
         }
     }
-    return 1;
+    ଫେରନ୍ତୁ 1;
 }
 
-enum ggml_type ggml_ftype_to_ggml_type(enum ggml_ftype ftype) {
-    enum ggml_type wtype = GGML_TYPE_COUNT;
+ଗଣନା ggml_type ggml_ftype_to_ggml_type(ଗଣନା ggml_ftype ftype) {
+    ଗଣନା ggml_type wtype = GGML_TYPE_ଗଣନା;
 
-    switch (ftype) {
-        case GGML_FTYPE_ALL_F32:              wtype = GGML_TYPE_F32;   break;
-        case GGML_FTYPE_MOSTLY_F16:           wtype = GGML_TYPE_F16;   break;
-        case GGML_FTYPE_MOSTLY_BF16:          wtype = GGML_TYPE_BF16;  break;
-        case GGML_FTYPE_MOSTLY_Q4_0:          wtype = GGML_TYPE_Q4_0;  break;
-        case GGML_FTYPE_MOSTLY_Q4_1:          wtype = GGML_TYPE_Q4_1;  break;
-        case GGML_FTYPE_MOSTLY_Q1_0:          wtype = GGML_TYPE_Q1_0;  break;
-        case GGML_FTYPE_MOSTLY_Q2_0:          wtype = GGML_TYPE_Q2_0;  break;
-        case GGML_FTYPE_MOSTLY_Q5_0:          wtype = GGML_TYPE_Q5_0;  break;
-        case GGML_FTYPE_MOSTLY_Q5_1:          wtype = GGML_TYPE_Q5_1;  break;
-        case GGML_FTYPE_MOSTLY_Q8_0:          wtype = GGML_TYPE_Q8_0;  break;
-        case GGML_FTYPE_MOSTLY_MXFP4:         wtype = GGML_TYPE_MXFP4; break;
-        case GGML_FTYPE_MOSTLY_NVFP4:         wtype = GGML_TYPE_NVFP4; break;
-        case GGML_FTYPE_MOSTLY_Q2_K:          wtype = GGML_TYPE_Q2_K;  break;
-        case GGML_FTYPE_MOSTLY_Q3_K:          wtype = GGML_TYPE_Q3_K;  break;
-        case GGML_FTYPE_MOSTLY_Q4_K:          wtype = GGML_TYPE_Q4_K;  break;
-        case GGML_FTYPE_MOSTLY_Q5_K:          wtype = GGML_TYPE_Q5_K;  break;
-        case GGML_FTYPE_MOSTLY_Q6_K:          wtype = GGML_TYPE_Q6_K;  break;
-        case GGML_FTYPE_MOSTLY_IQ2_XXS:       wtype = GGML_TYPE_IQ2_XXS;  break;
-        case GGML_FTYPE_MOSTLY_IQ2_XS:        wtype = GGML_TYPE_IQ2_XS;   break;
-        case GGML_FTYPE_MOSTLY_IQ3_XXS:       wtype = GGML_TYPE_IQ3_XXS;  break;
-        case GGML_FTYPE_MOSTLY_IQ1_S:         wtype = GGML_TYPE_IQ1_S;    break;
-        case GGML_FTYPE_MOSTLY_IQ1_M:         wtype = GGML_TYPE_IQ1_M;    break;
-        case GGML_FTYPE_MOSTLY_IQ4_NL:        wtype = GGML_TYPE_IQ4_NL;   break;
-        case GGML_FTYPE_MOSTLY_IQ4_XS:        wtype = GGML_TYPE_IQ4_XS;   break;
-        case GGML_FTYPE_MOSTLY_IQ3_S:         wtype = GGML_TYPE_IQ3_S;    break;
-        case GGML_FTYPE_MOSTLY_IQ2_S:         wtype = GGML_TYPE_IQ2_S;    break;
-        case GGML_FTYPE_UNKNOWN:              wtype = GGML_TYPE_COUNT; break;
-        case GGML_FTYPE_MOSTLY_Q4_1_SOME_F16: wtype = GGML_TYPE_COUNT; break;
+    ବାଛ (ftype) {
+        ସ୍ଥିତି GGML_FTYPE_ALL_F32:              wtype = GGML_TYPE_F32;   ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_FTYPE_MOSTLY_F16:           wtype = GGML_TYPE_F16;   ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_FTYPE_MOSTLY_BF16:          wtype = GGML_TYPE_BF16;  ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_FTYPE_MOSTLY_Q4_0:          wtype = GGML_TYPE_Q4_0;  ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_FTYPE_MOSTLY_Q4_1:          wtype = GGML_TYPE_Q4_1;  ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_FTYPE_MOSTLY_Q1_0:          wtype = GGML_TYPE_Q1_0;  ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_FTYPE_MOSTLY_Q2_0:          wtype = GGML_TYPE_Q2_0;  ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_FTYPE_MOSTLY_Q5_0:          wtype = GGML_TYPE_Q5_0;  ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_FTYPE_MOSTLY_Q5_1:          wtype = GGML_TYPE_Q5_1;  ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_FTYPE_MOSTLY_Q8_0:          wtype = GGML_TYPE_Q8_0;  ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_FTYPE_MOSTLY_MXFP4:         wtype = GGML_TYPE_MXFP4; ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_FTYPE_MOSTLY_NVFP4:         wtype = GGML_TYPE_NVFP4; ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_FTYPE_MOSTLY_Q2_K:          wtype = GGML_TYPE_Q2_K;  ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_FTYPE_MOSTLY_Q3_K:          wtype = GGML_TYPE_Q3_K;  ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_FTYPE_MOSTLY_Q4_K:          wtype = GGML_TYPE_Q4_K;  ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_FTYPE_MOSTLY_Q5_K:          wtype = GGML_TYPE_Q5_K;  ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_FTYPE_MOSTLY_Q6_K:          wtype = GGML_TYPE_Q6_K;  ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_FTYPE_MOSTLY_IQ2_XXS:       wtype = GGML_TYPE_IQ2_XXS;  ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_FTYPE_MOSTLY_IQ2_XS:        wtype = GGML_TYPE_IQ2_XS;   ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_FTYPE_MOSTLY_IQ3_XXS:       wtype = GGML_TYPE_IQ3_XXS;  ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_FTYPE_MOSTLY_IQ1_S:         wtype = GGML_TYPE_IQ1_S;    ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_FTYPE_MOSTLY_IQ1_M:         wtype = GGML_TYPE_IQ1_M;    ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_FTYPE_MOSTLY_IQ4_NL:        wtype = GGML_TYPE_IQ4_NL;   ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_FTYPE_MOSTLY_IQ4_XS:        wtype = GGML_TYPE_IQ4_XS;   ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_FTYPE_MOSTLY_IQ3_S:         wtype = GGML_TYPE_IQ3_S;    ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_FTYPE_MOSTLY_IQ2_S:         wtype = GGML_TYPE_IQ2_S;    ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_FTYPE_UNKNOWN:              wtype = GGML_TYPE_ଗଣନା; ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_FTYPE_MOSTLY_Q4_1_SOME_F16: wtype = GGML_TYPE_ଗଣନା; ଭାଙ୍ଗ;
     }
 
-    GGML_ASSERT(wtype != GGML_TYPE_COUNT);
+    GGML_ASSERT(wtype != GGML_TYPE_ଗଣନା);
 
-    return wtype;
+    ଫେରନ୍ତୁ wtype;
 }
 
-size_t ggml_tensor_overhead(void) {
-    return GGML_OBJECT_SIZE + GGML_TENSOR_SIZE;
+size_t ggml_tensor_overhead(ଶୂନ୍ୟ) {
+    ଫେରନ୍ତୁ GGML_OBJECT_SIZE + GGML_TENSOR_SIZE;
 }
 
-bool ggml_is_transposed(const struct ggml_tensor * tensor) {
-    return tensor->nb[0] > tensor->nb[1];
+bool ggml_is_transposed(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
+    ଫେରନ୍ତୁ tensor->nb[0] > tensor->nb[1];
 }
 
-static bool ggml_is_contiguous_m_n(const struct ggml_tensor * tensor, int m, int n) {
+ସ୍ଥିର bool ggml_is_contiguous_m_n(ଅଚଳ ସଂରଚନା ggml_tensor * tensor, ପୂର୍ଣ୍ଣସଂଖ୍ୟା m, ପୂର୍ଣ୍ଣସଂଖ୍ୟା n) {
     size_t next_nb = ggml_type_size(tensor->type);
-    if (tensor->ne[0] != ggml_blck_size(tensor->type) && tensor->nb[0] != next_nb) {
-        return false;
+    ଯଦି (tensor->ne[0] != ggml_blck_size(tensor->type) && tensor->nb[0] != next_nb) {
+        ଫେରନ୍ତୁ false;
     }
     next_nb *= tensor->ne[0]/ggml_blck_size(tensor->type);
-    for (int i = 1; i < n; i++) {
-        if (i > m) {
-            if (tensor->ne[i] != 1 && tensor->nb[i] != next_nb) {
-                return false;
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 1; i < n; i++) {
+        ଯଦି (i > m) {
+            ଯଦି (tensor->ne[i] != 1 && tensor->nb[i] != next_nb) {
+                ଫେରନ୍ତୁ false;
             }
             next_nb *= tensor->ne[i];
-        } else {
+        } ଅନ୍ୟଥା {
             // this dimension does not need to be contiguous
             next_nb = tensor->ne[i]*tensor->nb[i];
         }
     }
-    return true;
+    ଫେରନ୍ତୁ true;
 }
 
-bool ggml_is_contiguous(const struct ggml_tensor * tensor) {
-    return ggml_is_contiguous_0(tensor);
+bool ggml_is_contiguous(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
+    ଫେରନ୍ତୁ ggml_is_contiguous_0(tensor);
 }
 
-bool ggml_is_contiguous_0(const struct ggml_tensor * tensor) {
-    return ggml_is_contiguous_m_n(tensor, 0, GGML_MAX_DIMS);
+bool ggml_is_contiguous_0(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
+    ଫେରନ୍ତୁ ggml_is_contiguous_m_n(tensor, 0, GGML_MAX_DIMS);
 }
 
-bool ggml_is_contiguous_1(const struct ggml_tensor * tensor) {
-    return ggml_is_contiguous_m_n(tensor, 1, GGML_MAX_DIMS);
+bool ggml_is_contiguous_1(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
+    ଫେରନ୍ତୁ ggml_is_contiguous_m_n(tensor, 1, GGML_MAX_DIMS);
 }
 
-bool ggml_is_contiguous_2(const struct ggml_tensor * tensor) {
-    return ggml_is_contiguous_m_n(tensor, 2, GGML_MAX_DIMS);
+bool ggml_is_contiguous_2(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
+    ଫେରନ୍ତୁ ggml_is_contiguous_m_n(tensor, 2, GGML_MAX_DIMS);
 }
 
-bool ggml_is_contiguous_to_1(const struct ggml_tensor * tensor) {
-    return ggml_is_contiguous_m_n(tensor, 0, 1);
+bool ggml_is_contiguous_to_1(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
+    ଫେରନ୍ତୁ ggml_is_contiguous_m_n(tensor, 0, 1);
 }
 
-bool ggml_is_contiguous_to_2(const struct ggml_tensor * tensor) {
-    return ggml_is_contiguous_m_n(tensor, 0, 2);
+bool ggml_is_contiguous_to_2(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
+    ଫେରନ୍ତୁ ggml_is_contiguous_m_n(tensor, 0, 2);
 }
 
-bool ggml_is_contiguous_to_3(const struct ggml_tensor * tensor) {
-    return ggml_is_contiguous_m_n(tensor, 0, 3);
+bool ggml_is_contiguous_to_3(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
+    ଫେରନ୍ତୁ ggml_is_contiguous_m_n(tensor, 0, 3);
 }
 
-bool ggml_is_contiguously_allocated(const struct ggml_tensor * tensor) {
-    return ggml_nbytes(tensor) == ggml_nelements(tensor) * ggml_type_size(tensor->type)/ggml_blck_size(tensor->type);
+bool ggml_is_contiguously_allocated(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
+    ଫେରନ୍ତୁ ggml_nbytes(tensor) == ggml_nelements(tensor) * ggml_type_size(tensor->type)/ggml_blck_size(tensor->type);
 }
 
-bool ggml_is_permuted(const struct ggml_tensor * tensor) {
+bool ggml_is_permuted(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return tensor->nb[0] > tensor->nb[1] || tensor->nb[1] > tensor->nb[2] || tensor->nb[2] > tensor->nb[3];
+    ଫେରନ୍ତୁ tensor->nb[0] > tensor->nb[1] || tensor->nb[1] > tensor->nb[2] || tensor->nb[2] > tensor->nb[3];
 }
 
-bool ggml_is_contiguous_channels(const struct ggml_tensor * tensor) {
-    return
+bool ggml_is_contiguous_channels(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
+    ଫେରନ୍ତୁ
         tensor->nb[0] > tensor->nb[2] &&
         tensor->nb[1] > tensor->nb[0] &&
         tensor->nb[2] == ggml_type_size(tensor->type);
 }
 
-bool ggml_is_contiguous_rows(const struct ggml_tensor * tensor) {
-    return
+bool ggml_is_contiguous_rows(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
+    ଫେରନ୍ତୁ
         tensor->ne[0] == ggml_blck_size(tensor->type) ||
         tensor->nb[0] == ggml_type_size(tensor->type);
 }
 
-static inline bool ggml_is_padded_1d(const struct ggml_tensor * tensor) {
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ bool ggml_is_padded_1d(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return
+    ଫେରନ୍ତୁ
         tensor->nb[0] == ggml_type_size(tensor->type) &&
         tensor->nb[2] == tensor->nb[1]*tensor->ne[1] &&
         tensor->nb[3] == tensor->nb[2]*tensor->ne[2];
 }
 
-bool ggml_is_empty(const struct ggml_tensor * tensor) {
-    for (int i = 0; i < GGML_MAX_DIMS; ++i) {
-        if (tensor->ne[i] == 0) {
+bool ggml_is_empty(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < GGML_MAX_DIMS; ++i) {
+        ଯଦି (tensor->ne[i] == 0) {
             // empty if any dimension has no elements
-            return true;
+            ଫେରନ୍ତୁ true;
         }
     }
-    return false;
+    ଫେରନ୍ତୁ false;
 }
 
-bool ggml_are_same_shape(const struct ggml_tensor * t0, const struct ggml_tensor * t1) {
+bool ggml_are_same_shape(ଅଚଳ ସଂରଚନା ggml_tensor * t0, ଅଚଳ ସଂରଚନା ggml_tensor * t1) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return
+    ଫେରନ୍ତୁ
         (t0->ne[0] == t1->ne[0]) &&
         (t0->ne[1] == t1->ne[1]) &&
         (t0->ne[2] == t1->ne[2]) &&
         (t0->ne[3] == t1->ne[3]);
 }
 
-bool ggml_are_same_stride(const struct ggml_tensor * t0, const struct ggml_tensor * t1) {
+bool ggml_are_same_stride(ଅଚଳ ସଂରଚନା ggml_tensor * t0, ଅଚଳ ସଂରଚନା ggml_tensor * t1) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return
+    ଫେରନ୍ତୁ
         (t0->nb[0] == t1->nb[0]) &&
         (t0->nb[1] == t1->nb[1]) &&
         (t0->nb[2] == t1->nb[2]) &&
         (t0->nb[3] == t1->nb[3]);
 }
 
-bool ggml_is_view(const struct ggml_tensor * t) {
-    return ggml_impl_is_view(t);
+bool ggml_is_view(ଅଚଳ ସଂରଚନା ggml_tensor * t) {
+    ଫେରନ୍ତୁ ggml_impl_is_view(t);
 }
 
 // check if t1 can be represented as a repetition of t0
-bool ggml_can_repeat(const struct ggml_tensor * t0, const struct ggml_tensor * t1) {
+bool ggml_can_repeat(ଅଚଳ ସଂରଚନା ggml_tensor * t0, ଅଚଳ ସଂରଚନା ggml_tensor * t1) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return ggml_is_empty(t0) ? ggml_is_empty(t1) :
+    ଫେରନ୍ତୁ ggml_is_empty(t0) ? ggml_is_empty(t1) :
         (t1->ne[0]%t0->ne[0] == 0) &&
         (t1->ne[1]%t0->ne[1] == 0) &&
         (t1->ne[2]%t0->ne[2] == 0) &&
         (t1->ne[3]%t0->ne[3] == 0);
 }
 
-static inline bool ggml_can_repeat_rows(const struct ggml_tensor * t0, const struct ggml_tensor * t1) {
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ bool ggml_can_repeat_rows(ଅଚଳ ସଂରଚନା ggml_tensor * t0, ଅଚଳ ସଂରଚନା ggml_tensor * t1) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return (t0->ne[0] == t1->ne[0]) && ggml_can_repeat(t0, t1);
+    ଫେରନ୍ତୁ (t0->ne[0] == t1->ne[0]) && ggml_can_repeat(t0, t1);
 }
 
 // assert that pointer is aligned to GGML_MEM_ALIGN
@@ -1621,12 +1621,12 @@ static inline bool ggml_can_repeat_rows(const struct ggml_tensor * t0, const str
 
 ////////////////////////////////////////////////////////////////////////////////
 
-struct ggml_context * ggml_init(struct ggml_init_params params) {
-    static bool is_first_call = true;
+ସଂରଚନା ggml_context * ggml_init(ସଂରଚନା ggml_init_params params) {
+    ସ୍ଥିର bool is_first_call = true;
 
     ggml_critical_section_start();
 
-    if (is_first_call) {
+    ଯଦି (is_first_call) {
         // initialize time system (required on Windows)
         ggml_time_init();
 
@@ -1635,136 +1635,136 @@ struct ggml_context * ggml_init(struct ggml_init_params params) {
 
     ggml_critical_section_end();
 
-    struct ggml_context * ctx = GGML_MALLOC(sizeof(struct ggml_context));
+    ସଂରଚନା ggml_context * ctx = GGML_MALLOC(ଆକାର(ସଂରଚନା ggml_context));
 
     // allow to call ggml_init with 0 size
-    if (params.mem_size == 0) {
+    ଯଦି (params.mem_size == 0) {
         params.mem_size = GGML_MEM_ALIGN;
     }
 
-    const size_t mem_size = params.mem_buffer ? params.mem_size : GGML_PAD(params.mem_size, GGML_MEM_ALIGN);
+    ଅଚଳ size_t mem_size = params.mem_buffer ? params.mem_size : GGML_PAD(params.mem_size, GGML_MEM_ALIGN);
 
-    *ctx = (struct ggml_context) {
+    *ctx = (ସଂରଚନା ggml_context) {
         /*.mem_size           =*/ mem_size,
         /*.mem_buffer         =*/ params.mem_buffer ? params.mem_buffer : ggml_aligned_malloc(mem_size),
         /*.mem_buffer_owned   =*/ params.mem_buffer ? false : true,
         /*.no_alloc           =*/ params.no_alloc,
         /*.n_objects          =*/ 0,
-        /*.objects_begin      =*/ NULL,
-        /*.objects_end        =*/ NULL,
+        /*.objects_begin      =*/ ଖାଲି,
+        /*.objects_end        =*/ ଖାଲି,
     };
 
-    GGML_ASSERT(ctx->mem_buffer != NULL);
+    GGML_ASSERT(ctx->mem_buffer != ଖାଲି);
 
     GGML_ASSERT_ALIGNED(ctx->mem_buffer);
 
     GGML_PRINT_DEBUG("%s: context initialized\n", __func__);
 
-    return ctx;
+    ଫେରନ୍ତୁ ctx;
 }
 
-void ggml_reset(struct ggml_context * ctx) {
-    if (ctx == NULL) {
-        return;
+ଶୂନ୍ୟ ggml_reset(ସଂରଚନା ggml_context * ctx) {
+    ଯଦି (ctx == ଖାଲି) {
+        ଫେରନ୍ତୁ;
     }
 
     ctx->n_objects     = 0;
-    ctx->objects_begin = NULL;
-    ctx->objects_end   = NULL;
+    ctx->objects_begin = ଖାଲି;
+    ctx->objects_end   = ଖାଲି;
 }
 
-void ggml_free(struct ggml_context * ctx) {
-    if (ctx == NULL) {
-        return;
+ଶୂନ୍ୟ ggml_free(ସଂରଚନା ggml_context * ctx) {
+    ଯଦି (ctx == ଖାଲି) {
+        ଫେରନ୍ତୁ;
     }
 
-    if (ctx->mem_buffer_owned) {
+    ଯଦି (ctx->mem_buffer_owned) {
         ggml_aligned_free(ctx->mem_buffer, ctx->mem_size);
     }
 
     GGML_FREE(ctx);
 }
 
-size_t ggml_used_mem(const struct ggml_context * ctx) {
-    return ctx->objects_end == NULL ? 0 : ctx->objects_end->offs + ctx->objects_end->size;
+size_t ggml_used_mem(ଅଚଳ ସଂରଚନା ggml_context * ctx) {
+    ଫେରନ୍ତୁ ctx->objects_end == ଖାଲି ? 0 : ctx->objects_end->offs + ctx->objects_end->size;
 }
 
-bool ggml_get_no_alloc(struct ggml_context * ctx) {
-    return ctx->no_alloc;
+bool ggml_get_no_alloc(ସଂରଚନା ggml_context * ctx) {
+    ଫେରନ୍ତୁ ctx->no_alloc;
 }
 
-void ggml_set_no_alloc(struct ggml_context * ctx, bool no_alloc) {
+ଶୂନ୍ୟ ggml_set_no_alloc(ସଂରଚନା ggml_context * ctx, bool no_alloc) {
     ctx->no_alloc = no_alloc;
 }
 
-void * ggml_get_mem_buffer(const struct ggml_context * ctx) {
-    return ctx->mem_buffer;
+ଶୂନ୍ୟ * ggml_get_mem_buffer(ଅଚଳ ସଂରଚନା ggml_context * ctx) {
+    ଫେରନ୍ତୁ ctx->mem_buffer;
 }
 
-size_t ggml_get_mem_size(const struct ggml_context * ctx) {
-    return ctx->mem_size;
+size_t ggml_get_mem_size(ଅଚଳ ସଂରଚନା ggml_context * ctx) {
+    ଫେରନ୍ତୁ ctx->mem_size;
 }
 
-size_t ggml_get_max_tensor_size(const struct ggml_context * ctx) {
+size_t ggml_get_max_tensor_size(ଅଚଳ ସଂରଚନା ggml_context * ctx) {
     size_t max_size = 0;
 
-    for (struct ggml_tensor * tensor = ggml_get_first_tensor(ctx); tensor != NULL; tensor = ggml_get_next_tensor(ctx, tensor)) {
+    ପାଇଁ (ସଂରଚନା ggml_tensor * tensor = ggml_get_first_tensor(ctx); tensor != ଖାଲି; tensor = ggml_get_next_tensor(ctx, tensor)) {
         size_t bytes = ggml_nbytes(tensor);
         max_size = MAX(max_size, bytes);
     }
 
-    return max_size;
+    ଫେରନ୍ତୁ max_size;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-static struct ggml_object * ggml_new_object(struct ggml_context * ctx, enum ggml_object_type type, size_t size) {
+ସ୍ଥିର ସଂରଚନା ggml_object * ggml_new_object(ସଂରଚନା ggml_context * ctx, ଗଣନା ggml_object_type type, size_t size) {
     // always insert objects at the end of the context's memory pool
-    struct ggml_object * obj_cur = ctx->objects_end;
+    ସଂରଚନା ggml_object * obj_cur = ctx->objects_end;
 
-    const size_t cur_offs = obj_cur == NULL ? 0 : obj_cur->offs;
-    const size_t cur_size = obj_cur == NULL ? 0 : obj_cur->size;
-    const size_t cur_end  = cur_offs + cur_size;
+    ଅଚଳ size_t cur_offs = obj_cur == ଖାଲି ? 0 : obj_cur->offs;
+    ଅଚଳ size_t cur_size = obj_cur == ଖାଲି ? 0 : obj_cur->size;
+    ଅଚଳ size_t cur_end  = cur_offs + cur_size;
 
     // align to GGML_MEM_ALIGN
     GGML_ASSERT(size <= SIZE_MAX - (GGML_MEM_ALIGN - 1));
     size_t size_needed = GGML_PAD(size, GGML_MEM_ALIGN);
 
-    char * const mem_buffer = ctx->mem_buffer;
-    struct ggml_object * const obj_new = (struct ggml_object *)(mem_buffer + cur_end);
+    ଅକ୍ଷର * ଅଚଳ mem_buffer = ctx->mem_buffer;
+    ସଂରଚନା ggml_object * ଅଚଳ obj_new = (ସଂରଚନା ggml_object *)(mem_buffer + cur_end);
 
     // integer overflow checks
-    if (cur_end > SIZE_MAX - size_needed) {
+    ଯଦି (cur_end > SIZE_MAX - size_needed) {
         GGML_LOG_WARN("%s: overflow detected in cur_end (%zu) + size_needed (%zu)\n", __func__, cur_end, size_needed);
-        return NULL;
+        ଫେରନ୍ତୁ ଖାଲି;
     }
-    if (cur_end + size_needed > SIZE_MAX - GGML_OBJECT_SIZE) {
+    ଯଦି (cur_end + size_needed > SIZE_MAX - GGML_OBJECT_SIZE) {
         GGML_LOG_WARN("%s: overflow detected in cur_end (%zu) + size_needed (%zu) + GGML_OBJECT_SIZE (%zu)\n", __func__,
                 cur_end, size_needed, (size_t) GGML_OBJECT_SIZE);
-        return NULL;
+        ଫେରନ୍ତୁ ଖାଲି;
     }
 
-    if (cur_end + size_needed + GGML_OBJECT_SIZE > ctx->mem_size) {
+    ଯଦି (cur_end + size_needed + GGML_OBJECT_SIZE > ctx->mem_size) {
         GGML_LOG_WARN("%s: not enough space in the context's memory pool (needed %zu, available %zu)\n",
                 __func__, cur_end + size_needed + GGML_OBJECT_SIZE, ctx->mem_size);
 #ifndef NDEBUG
         GGML_ABORT("not enough space in the context's memory pool");
 #endif
-        return NULL;
+        ଫେରନ୍ତୁ ଖାଲି;
     }
 
-    *obj_new = (struct ggml_object) {
+    *obj_new = (ସଂରଚନା ggml_object) {
         .offs = cur_end + GGML_OBJECT_SIZE,
         .size = size_needed,
-        .next = NULL,
+        .next = ଖାଲି,
         .type = type,
     };
 
     GGML_ASSERT_ALIGNED(mem_buffer + obj_new->offs);
 
-    if (obj_cur != NULL) {
+    ଯଦି (obj_cur != ଖାଲି) {
         obj_cur->next = obj_new;
-    } else {
+    } ଅନ୍ୟଥା {
         // this is the first object in this context
         ctx->objects_begin = obj_new;
     }
@@ -1773,347 +1773,347 @@ static struct ggml_object * ggml_new_object(struct ggml_context * ctx, enum ggml
 
     //printf("%s: inserted new object at %zu, size = %zu\n", __func__, cur_end, obj_new->size);
 
-    return obj_new;
+    ଫେରନ୍ତୁ obj_new;
 }
 
-static struct ggml_tensor * ggml_new_tensor_impl(
-        struct ggml_context * ctx,
-        enum   ggml_type      type,
-        int                   n_dims,
-        const int64_t       * ne,
-        struct ggml_tensor  * view_src,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_new_tensor_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ଗଣନା   ggml_type      type,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_dims,
+        ଅଚଳ int64_t       * ne,
+        ସଂରଚନା ggml_tensor  * view_src,
         size_t                view_offs) {
 
-    GGML_ASSERT(type >= 0 && type < GGML_TYPE_COUNT);
+    GGML_ASSERT(type >= 0 && type < GGML_TYPE_ଗଣନା);
     GGML_ASSERT(n_dims >= 1 && n_dims <= GGML_MAX_DIMS);
 
     // find the base tensor and absolute offset
-    if (view_src != NULL && view_src->view_src != NULL) {
+    ଯଦି (view_src != ଖାଲି && view_src->view_src != ଖାଲି) {
         view_offs += view_src->view_offs;
         view_src   = view_src->view_src;
     }
 
     // validate number of elements to fit in int64_t
     int64_t current_nelements = ne[0];
-    for (int i = 1; i < n_dims; i++) {
-        if (ne[i] > 1) {
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 1; i < n_dims; i++) {
+        ଯଦି (ne[i] > 1) {
             GGML_ASSERT(INT64_MAX / ne[i] > current_nelements);
             current_nelements *= ne[i];
         }
     }
 
     size_t data_size = ggml_row_size(type, ne[0]);
-    for (int i = 1; i < n_dims; i++) {
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 1; i < n_dims; i++) {
         data_size *= ne[i];
     }
 
-    GGML_ASSERT(view_src == NULL || data_size == 0 || data_size + view_offs <= ggml_nbytes(view_src));
+    GGML_ASSERT(view_src == ଖାଲି || data_size == 0 || data_size + view_offs <= ggml_nbytes(view_src));
 
-    void * data = view_src != NULL ? view_src->data : NULL;
-    if (data != NULL) {
-        data = (char *) data + view_offs;
+    ଶୂନ୍ୟ * data = view_src != ଖାଲି ? view_src->data : ଖାଲି;
+    ଯଦି (data != ଖାଲି) {
+        data = (ଅକ୍ଷର *) data + view_offs;
     }
 
     size_t obj_alloc_size = 0;
 
-    if (view_src == NULL && !ctx->no_alloc) {
+    ଯଦି (view_src == ଖାଲି && !ctx->no_alloc) {
         // allocate tensor data in the context's memory pool
         obj_alloc_size = data_size;
     }
 
     GGML_ASSERT(GGML_TENSOR_SIZE <= SIZE_MAX - obj_alloc_size);
 
-    struct ggml_object * const obj_new = ggml_new_object(ctx, GGML_OBJECT_TYPE_TENSOR, GGML_TENSOR_SIZE + obj_alloc_size);
+    ସଂରଚନା ggml_object * ଅଚଳ obj_new = ggml_new_object(ctx, GGML_OBJECT_TYPE_TENSOR, GGML_TENSOR_SIZE + obj_alloc_size);
     GGML_ASSERT(obj_new);
 
-    struct ggml_tensor * const result = (struct ggml_tensor *)((char *)ctx->mem_buffer + obj_new->offs);
+    ସଂରଚନା ggml_tensor * ଅଚଳ result = (ସଂରଚନା ggml_tensor *)((ଅକ୍ଷର *)ctx->mem_buffer + obj_new->offs);
 
-    *result = (struct ggml_tensor) {
+    *result = (ସଂରଚନା ggml_tensor) {
         /*.type         =*/ type,
-        /*.buffer       =*/ NULL,
+        /*.buffer       =*/ ଖାଲି,
         /*.ne           =*/ { 1, 1, 1, 1 },
         /*.nb           =*/ { 0, 0, 0, 0 },
         /*.op           =*/ GGML_OP_NONE,
         /*.op_params    =*/ { 0 },
         /*.flags        =*/ 0,
-        /*.src          =*/ { NULL },
+        /*.src          =*/ { ଖାଲି },
         /*.view_src     =*/ view_src,
         /*.view_offs    =*/ view_offs,
-        /*.data         =*/ obj_alloc_size > 0 ? (void *)(result + 1) : data,
+        /*.data         =*/ obj_alloc_size > 0 ? (ଶୂନ୍ୟ *)(result + 1) : data,
         /*.name         =*/ { 0 },
-        /*.extra        =*/ NULL,
+        /*.extra        =*/ ଖାଲି,
         /*.padding      =*/ { 0 },
     };
 
     // TODO: this should not be needed as long as we don't rely on aligned SIMD loads
     //GGML_ASSERT_ALIGNED(result->data);
 
-    for (int i = 0; i < n_dims; i++) {
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < n_dims; i++) {
         result->ne[i] = ne[i];
     }
 
     result->nb[0] = ggml_type_size(type);
     result->nb[1] = result->nb[0]*(result->ne[0]/ggml_blck_size(type));
-    for (int i = 2; i < GGML_MAX_DIMS; i++) {
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 2; i < GGML_MAX_DIMS; i++) {
         result->nb[i] = result->nb[i - 1]*result->ne[i - 1];
     }
 
     ctx->n_objects++;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_new_tensor(
-        struct ggml_context * ctx,
-        enum   ggml_type      type,
-        int                   n_dims,
-        const int64_t       * ne) {
-    return ggml_new_tensor_impl(ctx, type, n_dims, ne, NULL, 0);
+ସଂରଚନା ggml_tensor * ggml_new_tensor(
+        ସଂରଚନା ggml_context * ctx,
+        ଗଣନା   ggml_type      type,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_dims,
+        ଅଚଳ int64_t       * ne) {
+    ଫେରନ୍ତୁ ggml_new_tensor_impl(ctx, type, n_dims, ne, ଖାଲି, 0);
 }
 
-struct ggml_tensor * ggml_new_tensor_1d(
-        struct ggml_context * ctx,
-        enum   ggml_type      type,
+ସଂରଚନା ggml_tensor * ggml_new_tensor_1d(
+        ସଂରଚନା ggml_context * ctx,
+        ଗଣନା   ggml_type      type,
         int64_t ne0) {
-    return ggml_new_tensor(ctx, type, 1, &ne0);
+    ଫେରନ୍ତୁ ggml_new_tensor(ctx, type, 1, &ne0);
 }
 
-struct ggml_tensor * ggml_new_tensor_2d(
-        struct ggml_context * ctx,
-        enum   ggml_type      type,
+ସଂରଚନା ggml_tensor * ggml_new_tensor_2d(
+        ସଂରଚନା ggml_context * ctx,
+        ଗଣନା   ggml_type      type,
         int64_t ne0,
         int64_t ne1) {
-    const int64_t ne[2] = { ne0, ne1 };
-    return ggml_new_tensor(ctx, type, 2, ne);
+    ଅଚଳ int64_t ne[2] = { ne0, ne1 };
+    ଫେରନ୍ତୁ ggml_new_tensor(ctx, type, 2, ne);
 }
 
-struct ggml_tensor * ggml_new_tensor_3d(
-        struct ggml_context * ctx,
-        enum   ggml_type      type,
+ସଂରଚନା ggml_tensor * ggml_new_tensor_3d(
+        ସଂରଚନା ggml_context * ctx,
+        ଗଣନା   ggml_type      type,
         int64_t ne0,
         int64_t ne1,
         int64_t ne2) {
-    const int64_t ne[3] = { ne0, ne1, ne2 };
-    return ggml_new_tensor(ctx, type, 3, ne);
+    ଅଚଳ int64_t ne[3] = { ne0, ne1, ne2 };
+    ଫେରନ୍ତୁ ggml_new_tensor(ctx, type, 3, ne);
 }
 
-struct ggml_tensor * ggml_new_tensor_4d(
-        struct ggml_context * ctx,
-        enum   ggml_type type,
+ସଂରଚନା ggml_tensor * ggml_new_tensor_4d(
+        ସଂରଚନା ggml_context * ctx,
+        ଗଣନା   ggml_type type,
         int64_t ne0,
         int64_t ne1,
         int64_t ne2,
         int64_t ne3) {
-    const int64_t ne[4] = { ne0, ne1, ne2, ne3 };
-    return ggml_new_tensor(ctx, type, 4, ne);
+    ଅଚଳ int64_t ne[4] = { ne0, ne1, ne2, ne3 };
+    ଫେରନ୍ତୁ ggml_new_tensor(ctx, type, 4, ne);
 }
 
-void * ggml_new_buffer(struct ggml_context * ctx, size_t nbytes) {
-    struct ggml_object * obj = ggml_new_object(ctx, GGML_OBJECT_TYPE_WORK_BUFFER, nbytes);
+ଶୂନ୍ୟ * ggml_new_buffer(ସଂରଚନା ggml_context * ctx, size_t nbytes) {
+    ସଂରଚନା ggml_object * obj = ggml_new_object(ctx, GGML_OBJECT_TYPE_WORK_BUFFER, nbytes);
 
-    return (uint8_t *)ctx->mem_buffer + obj->offs;
+    ଫେରନ୍ତୁ (uint8_t *)ctx->mem_buffer + obj->offs;
 }
 
-struct ggml_tensor * ggml_dup_tensor(struct ggml_context * ctx, const struct ggml_tensor * src) {
-    return ggml_new_tensor(ctx, src->type, GGML_MAX_DIMS, src->ne);
+ସଂରଚନା ggml_tensor * ggml_dup_tensor(ସଂରଚନା ggml_context * ctx, ଅଚଳ ସଂରଚନା ggml_tensor * src) {
+    ଫେରନ୍ତୁ ggml_new_tensor(ctx, src->type, GGML_MAX_DIMS, src->ne);
 }
 
-void ggml_unravel_index(const struct ggml_tensor * tensor, int64_t i, int64_t * i0, int64_t * i1, int64_t * i2, int64_t * i3) {
-    const int64_t ne2 = tensor->ne[2];
-    const int64_t ne1 = tensor->ne[1];
-    const int64_t ne0 = tensor->ne[0];
+ଶୂନ୍ୟ ggml_unravel_index(ଅଚଳ ସଂରଚନା ggml_tensor * tensor, int64_t i, int64_t * i0, int64_t * i1, int64_t * i2, int64_t * i3) {
+    ଅଚଳ int64_t ne2 = tensor->ne[2];
+    ଅଚଳ int64_t ne1 = tensor->ne[1];
+    ଅଚଳ int64_t ne0 = tensor->ne[0];
 
-    const int64_t i3_ = (i/(ne2*ne1*ne0));
-    const int64_t i2_ = (i - i3_*ne2*ne1*ne0)/(ne1*ne0);
-    const int64_t i1_ = (i - i3_*ne2*ne1*ne0 - i2_*ne1*ne0)/ne0;
-    const int64_t i0_ = (i - i3_*ne2*ne1*ne0 - i2_*ne1*ne0 - i1_*ne0);
+    ଅଚଳ int64_t i3_ = (i/(ne2*ne1*ne0));
+    ଅଚଳ int64_t i2_ = (i - i3_*ne2*ne1*ne0)/(ne1*ne0);
+    ଅଚଳ int64_t i1_ = (i - i3_*ne2*ne1*ne0 - i2_*ne1*ne0)/ne0;
+    ଅଚଳ int64_t i0_ = (i - i3_*ne2*ne1*ne0 - i2_*ne1*ne0 - i1_*ne0);
 
-    if (i0) {
+    ଯଦି (i0) {
         * i0 = i0_;
     }
-    if (i1) {
+    ଯଦି (i1) {
         * i1 = i1_;
     }
-    if (i2) {
+    ଯଦି (i2) {
         * i2 = i2_;
     }
-    if (i3) {
+    ଯଦି (i3) {
         * i3 = i3_;
     }
 }
 
-void * ggml_get_data(const struct ggml_tensor * tensor) {
-    return tensor->data;
+ଶୂନ୍ୟ * ggml_get_data(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
+    ଫେରନ୍ତୁ tensor->data;
 }
 
-float * ggml_get_data_f32(const struct ggml_tensor * tensor) {
-    assert(tensor->type == GGML_TYPE_F32);
-    return (float *)(tensor->data);
+ଦଶମିକ * ggml_get_data_f32(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
+    ପ୍ରତିଜ୍ଞା(tensor->type == GGML_TYPE_F32);
+    ଫେରନ୍ତୁ (ଦଶମିକ *)(tensor->data);
 }
 
-enum ggml_unary_op ggml_get_unary_op(const struct ggml_tensor * tensor) {
+ଗଣନା ggml_unary_op ggml_get_unary_op(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
     GGML_ASSERT(tensor->op == GGML_OP_UNARY);
-    return (enum ggml_unary_op) ggml_get_op_params_i32(tensor, 0);
+    ଫେରନ୍ତୁ (ଗଣନା ggml_unary_op) ggml_get_op_params_i32(tensor, 0);
 }
 
-enum ggml_glu_op ggml_get_glu_op(const struct ggml_tensor * tensor) {
+ଗଣନା ggml_glu_op ggml_get_glu_op(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
     GGML_ASSERT(tensor->op == GGML_OP_GLU);
-    return (enum ggml_glu_op) ggml_get_op_params_i32(tensor, 0);
+    ଫେରନ୍ତୁ (ଗଣନା ggml_glu_op) ggml_get_op_params_i32(tensor, 0);
 }
 
-const char * ggml_get_name(const struct ggml_tensor * tensor) {
-    return tensor->name;
+ଅଚଳ ଅକ୍ଷର * ggml_get_name(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
+    ଫେରନ୍ତୁ tensor->name;
 }
 
-struct ggml_tensor * ggml_set_name(struct ggml_tensor * tensor, const char * name) {
+ସଂରଚନା ggml_tensor * ggml_set_name(ସଂରଚନା ggml_tensor * tensor, ଅଚଳ ଅକ୍ଷର * name) {
     size_t i;
-    for (i = 0; i < sizeof(tensor->name) - 1 && name[i] != '\0'; i++) {
+    ପାଇଁ (i = 0; i < ଆକାର(tensor->name) - 1 && name[i] != '\0'; i++) {
         tensor->name[i] = name[i];
     }
     tensor->name[i] = '\0';
-    return tensor;
+    ଫେରନ୍ତୁ tensor;
 }
 
-struct ggml_tensor * ggml_format_name(struct ggml_tensor * tensor, const char * fmt, ...) {
+ସଂରଚନା ggml_tensor * ggml_format_name(ସଂରଚନା ggml_tensor * tensor, ଅଚଳ ଅକ୍ଷର * fmt, ...) {
     va_list args;
     va_start(args, fmt);
-    vsnprintf(tensor->name, sizeof(tensor->name), fmt, args);
+    vsnprintf(tensor->name, ଆକାର(tensor->name), fmt, args);
     va_end(args);
-    return tensor;
+    ଫେରନ୍ତୁ tensor;
 }
 
-struct ggml_tensor * ggml_view_tensor(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * src) {
-    struct ggml_tensor * result = ggml_new_tensor_impl(ctx, src->type, GGML_MAX_DIMS, src->ne, src, 0);
+ସଂରଚନା ggml_tensor * ggml_view_tensor(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * src) {
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_impl(ctx, src->type, GGML_MAX_DIMS, src->ne, src, 0);
     ggml_format_name(result, "%s (view)", src->name);
 
-    for (int i = 0; i < GGML_MAX_DIMS; i++) {
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < GGML_MAX_DIMS; i++) {
         result->nb[i] = src->nb[i];
     }
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_get_first_tensor(const struct ggml_context * ctx) {
-    struct ggml_object * obj = ctx->objects_begin;
+ସଂରଚନା ggml_tensor * ggml_get_first_tensor(ଅଚଳ ସଂରଚନା ggml_context * ctx) {
+    ସଂରଚନା ggml_object * obj = ctx->objects_begin;
 
-    char * const mem_buffer = ctx->mem_buffer;
+    ଅକ୍ଷର * ଅଚଳ mem_buffer = ctx->mem_buffer;
 
-    while (obj != NULL) {
-        if (obj->type == GGML_OBJECT_TYPE_TENSOR) {
-            return (struct ggml_tensor *)(mem_buffer + obj->offs);
+    ଯେତେବେଳେ (obj != ଖାଲି) {
+        ଯଦି (obj->type == GGML_OBJECT_TYPE_TENSOR) {
+            ଫେରନ୍ତୁ (ସଂରଚନା ggml_tensor *)(mem_buffer + obj->offs);
         }
 
         obj = obj->next;
     }
 
-    return NULL;
+    ଫେରନ୍ତୁ ଖାଲି;
 }
 
-struct ggml_tensor * ggml_get_next_tensor(const struct ggml_context * ctx, struct ggml_tensor * tensor) {
-    struct ggml_object * obj = (struct ggml_object *) ((char *)tensor - GGML_OBJECT_SIZE);
+ସଂରଚନା ggml_tensor * ggml_get_next_tensor(ଅଚଳ ସଂରଚନା ggml_context * ctx, ସଂରଚନା ggml_tensor * tensor) {
+    ସଂରଚନା ggml_object * obj = (ସଂରଚନା ggml_object *) ((ଅକ୍ଷର *)tensor - GGML_OBJECT_SIZE);
     obj = obj->next;
 
-    char * const mem_buffer = ctx->mem_buffer;
+    ଅକ୍ଷର * ଅଚଳ mem_buffer = ctx->mem_buffer;
 
-    while (obj != NULL) {
-        if (obj->type == GGML_OBJECT_TYPE_TENSOR) {
-            return (struct ggml_tensor *)(mem_buffer + obj->offs);
+    ଯେତେବେଳେ (obj != ଖାଲି) {
+        ଯଦି (obj->type == GGML_OBJECT_TYPE_TENSOR) {
+            ଫେରନ୍ତୁ (ସଂରଚନା ggml_tensor *)(mem_buffer + obj->offs);
         }
 
         obj = obj->next;
     }
 
-    return NULL;
+    ଫେରନ୍ତୁ ଖାଲି;
 }
 
-struct ggml_tensor * ggml_get_tensor(struct ggml_context * ctx, const char * name) {
-    struct ggml_object * obj = ctx->objects_begin;
+ସଂରଚନା ggml_tensor * ggml_get_tensor(ସଂରଚନା ggml_context * ctx, ଅଚଳ ଅକ୍ଷର * name) {
+    ସଂରଚନା ggml_object * obj = ctx->objects_begin;
 
-    char * const mem_buffer = ctx->mem_buffer;
+    ଅକ୍ଷର * ଅଚଳ mem_buffer = ctx->mem_buffer;
 
-    while (obj != NULL) {
-        if (obj->type == GGML_OBJECT_TYPE_TENSOR) {
-            struct ggml_tensor * cur = (struct ggml_tensor *)(mem_buffer + obj->offs);
-            if (strcmp(cur->name, name) == 0) {
-                return cur;
+    ଯେତେବେଳେ (obj != ଖାଲି) {
+        ଯଦି (obj->type == GGML_OBJECT_TYPE_TENSOR) {
+            ସଂରଚନା ggml_tensor * cur = (ସଂରଚନା ggml_tensor *)(mem_buffer + obj->offs);
+            ଯଦି (strcmp(cur->name, name) == 0) {
+                ଫେରନ୍ତୁ cur;
             }
         }
 
         obj = obj->next;
     }
 
-    return NULL;
+    ଫେରନ୍ତୁ ଖାଲି;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 // ggml_dup
 
-static struct ggml_tensor * ggml_dup_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_dup_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
     result->op     = GGML_OP_DUP;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_dup(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_dup_impl(ctx, a, false);
+ସଂରଚନା ggml_tensor * ggml_dup(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_dup_impl(ctx, a, false);
 }
 
-struct ggml_tensor * ggml_dup_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_dup_impl(ctx, a, true);
+ସଂରଚନା ggml_tensor * ggml_dup_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_dup_impl(ctx, a, true);
 }
 
 // ggml_add
 
-static struct ggml_tensor * ggml_add_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_add_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
         bool                  inplace) {
     GGML_ASSERT(ggml_can_repeat(b, a));
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
     result->op     = GGML_OP_ADD;
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_add(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_add_impl(ctx, a, b, false);
+ସଂରଚନା ggml_tensor * ggml_add(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b) {
+    ଫେରନ୍ତୁ ggml_add_impl(ctx, a, b, false);
 }
 
-struct ggml_tensor * ggml_add_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_add_impl(ctx, a, b, true);
+ସଂରଚନା ggml_tensor * ggml_add_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b) {
+    ଫେରନ୍ତୁ ggml_add_impl(ctx, a, b, true);
 }
 
 // ggml_add_cast
 
-static struct ggml_tensor * ggml_add_cast_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        enum   ggml_type      type) {
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_add_cast_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ଗଣନା   ggml_type      type) {
     // TODO: support less-strict constraint
     //       GGML_ASSERT(ggml_can_repeat(b, a));
     GGML_ASSERT(ggml_can_repeat_rows(b, a));
@@ -2123,83 +2123,83 @@ static struct ggml_tensor * ggml_add_cast_impl(
                 a->type == GGML_TYPE_F16 ||
                 a->type == GGML_TYPE_BF16);
 
-    struct ggml_tensor * result = ggml_new_tensor(ctx, type, GGML_MAX_DIMS, a->ne);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, type, GGML_MAX_DIMS, a->ne);
 
     result->op     = GGML_OP_ADD;
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_add_cast(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        enum   ggml_type      type) {
-    return ggml_add_cast_impl(ctx, a, b, type);
+ସଂରଚନା ggml_tensor * ggml_add_cast(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ଗଣନା   ggml_type      type) {
+    ଫେରନ୍ତୁ ggml_add_cast_impl(ctx, a, b, type);
 }
 
-struct ggml_tensor * ggml_add_id(
-            struct ggml_context * ctx,
-            struct ggml_tensor  * a,
-            struct ggml_tensor  * b,
-            struct ggml_tensor  * ids) {
+ସଂରଚନା ggml_tensor * ggml_add_id(
+            ସଂରଚନା ggml_context * ctx,
+            ସଂରଚନା ggml_tensor  * a,
+            ସଂରଚନା ggml_tensor  * b,
+            ସଂରଚନା ggml_tensor  * ids) {
 
     GGML_ASSERT(a->ne[0] == b->ne[0]);
     GGML_ASSERT(a->ne[1] == ids->ne[0]);
     GGML_ASSERT(a->ne[2] == ids->ne[1]);
     GGML_ASSERT(ids->type == GGML_TYPE_I32);
 
-    struct ggml_tensor * result = ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = ggml_dup_tensor(ctx, a);
 
     result->op     = GGML_OP_ADD_ID;
     result->src[0] = a;
     result->src[1] = b;
     result->src[2] = ids;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_add1
 
-static struct ggml_tensor * ggml_add1_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_add1_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
         bool                  inplace) {
     GGML_ASSERT(ggml_is_scalar(b));
     GGML_ASSERT(ggml_is_padded_1d(a));
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
     result->op     = GGML_OP_ADD1;
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_add1(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_add1_impl(ctx, a, b, false);
+ସଂରଚନା ggml_tensor * ggml_add1(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b) {
+    ଫେରନ୍ତୁ ggml_add1_impl(ctx, a, b, false);
 }
 
-struct ggml_tensor * ggml_add1_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_add1_impl(ctx, a, b, true);
+ସଂରଚନା ggml_tensor * ggml_add1_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b) {
+    ଫେରନ୍ତୁ ggml_add1_impl(ctx, a, b, true);
 }
 
 // ggml_acc
 
-static struct ggml_tensor * ggml_acc_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_acc_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
         size_t                nb1,
         size_t                nb2,
         size_t                nb3,
@@ -2210,405 +2210,405 @@ static struct ggml_tensor * ggml_acc_impl(
     GGML_ASSERT(a->type == GGML_TYPE_F32);
     GGML_ASSERT(b->type == GGML_TYPE_F32);
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
     GGML_ASSERT(offset < (size_t)(1 << 30));
     int32_t params[] = { nb1, nb2, nb3, offset, inplace ? 1 : 0 };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_set_op_params(result, params, ଆକାର(params));
 
     result->op     = GGML_OP_ACC;
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_acc(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ସଂରଚନା ggml_tensor * ggml_acc(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
         size_t                nb1,
         size_t                nb2,
         size_t                nb3,
         size_t                offset) {
-    return ggml_acc_impl(ctx, a, b, nb1, nb2, nb3, offset, false);
+    ଫେରନ୍ତୁ ggml_acc_impl(ctx, a, b, nb1, nb2, nb3, offset, false);
 }
 
-struct ggml_tensor * ggml_acc_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ସଂରଚନା ggml_tensor * ggml_acc_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
         size_t                nb1,
         size_t                nb2,
         size_t                nb3,
         size_t                offset) {
-    return ggml_acc_impl(ctx, a, b, nb1, nb2, nb3, offset, true);
+    ଫେରନ୍ତୁ ggml_acc_impl(ctx, a, b, nb1, nb2, nb3, offset, true);
 }
 
 // ggml_sub
 
-static struct ggml_tensor * ggml_sub_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_sub_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
         bool                  inplace) {
     GGML_ASSERT(ggml_can_repeat(b, a));
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
     result->op     = GGML_OP_SUB;
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_sub(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_sub_impl(ctx, a, b, false);
+ସଂରଚନା ggml_tensor * ggml_sub(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b) {
+    ଫେରନ୍ତୁ ggml_sub_impl(ctx, a, b, false);
 }
 
-struct ggml_tensor * ggml_sub_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_sub_impl(ctx, a, b, true);
+ସଂରଚନା ggml_tensor * ggml_sub_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b) {
+    ଫେରନ୍ତୁ ggml_sub_impl(ctx, a, b, true);
 }
 
 // ggml_mul
 
-static struct ggml_tensor * ggml_mul_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_mul_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
         bool                  inplace) {
     GGML_ASSERT(ggml_can_repeat(b, a));
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
     result->op     = GGML_OP_MUL;
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_mul(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_mul_impl(ctx, a, b, false);
+ସଂରଚନା ggml_tensor * ggml_mul(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b) {
+    ଫେରନ୍ତୁ ggml_mul_impl(ctx, a, b, false);
 }
 
-struct ggml_tensor * ggml_mul_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_mul_impl(ctx, a, b, true);
+ସଂରଚନା ggml_tensor * ggml_mul_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b) {
+    ଫେରନ୍ତୁ ggml_mul_impl(ctx, a, b, true);
 }
 
 // ggml_div
 
-static struct ggml_tensor * ggml_div_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_div_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
         bool                  inplace) {
     GGML_ASSERT(ggml_can_repeat(b, a));
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
     result->op     = GGML_OP_DIV;
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_div(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_div_impl(ctx, a, b, false);
+ସଂରଚନା ggml_tensor * ggml_div(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b) {
+    ଫେରନ୍ତୁ ggml_div_impl(ctx, a, b, false);
 }
 
-struct ggml_tensor * ggml_div_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_div_impl(ctx, a, b, true);
+ସଂରଚନା ggml_tensor * ggml_div_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b) {
+    ଫେରନ୍ତୁ ggml_div_impl(ctx, a, b, true);
 }
 
 // ggml_sqr
 
-static struct ggml_tensor * ggml_sqr_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_sqr_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
     result->op     = GGML_OP_SQR;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_sqr(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_sqr_impl(ctx, a, false);
+ସଂରଚନା ggml_tensor * ggml_sqr(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_sqr_impl(ctx, a, false);
 }
 
-struct ggml_tensor * ggml_sqr_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_sqr_impl(ctx, a, true);
+ସଂରଚନା ggml_tensor * ggml_sqr_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_sqr_impl(ctx, a, true);
 }
 
 // ggml_sqrt
 
-static struct ggml_tensor * ggml_sqrt_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_sqrt_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
     result->op     = GGML_OP_SQRT;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_sqrt(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_sqrt_impl(ctx, a, false);
+ସଂରଚନା ggml_tensor * ggml_sqrt(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_sqrt_impl(ctx, a, false);
 }
 
-struct ggml_tensor * ggml_sqrt_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_sqrt_impl(ctx, a, true);
+ସଂରଚନା ggml_tensor * ggml_sqrt_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_sqrt_impl(ctx, a, true);
 }
 
 // ggml_log
 
-static struct ggml_tensor * ggml_log_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_log_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
     result->op     = GGML_OP_LOG;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_log(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_log_impl(ctx, a, false);
+ସଂରଚନା ggml_tensor * ggml_log(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_log_impl(ctx, a, false);
 }
 
-struct ggml_tensor * ggml_log_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_log_impl(ctx, a, true);
+ସଂରଚନା ggml_tensor * ggml_log_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_log_impl(ctx, a, true);
 }
 
-struct ggml_tensor * ggml_expm1(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_EXPM1);
+ସଂରଚନା ggml_tensor * ggml_expm1(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary(ctx, a, GGML_UNARY_OP_EXPM1);
 }
 
-struct ggml_tensor * ggml_expm1_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_EXPM1);
+ସଂରଚନା ggml_tensor * ggml_expm1_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary_inplace(ctx, a, GGML_UNARY_OP_EXPM1);
 }
 
-struct ggml_tensor * ggml_softplus(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_SOFTPLUS);
+ସଂରଚନା ggml_tensor * ggml_softplus(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary(ctx, a, GGML_UNARY_OP_SOFTPLUS);
 }
 
-struct ggml_tensor * ggml_softplus_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_SOFTPLUS);
+ସଂରଚନା ggml_tensor * ggml_softplus_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary_inplace(ctx, a, GGML_UNARY_OP_SOFTPLUS);
 }
 
 // ggml_sin
 
-static struct ggml_tensor * ggml_sin_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_sin_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
     result->op     = GGML_OP_SIN;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_sin(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_sin_impl(ctx, a, false);
+ସଂରଚନା ggml_tensor * ggml_sin(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_sin_impl(ctx, a, false);
 }
 
-struct ggml_tensor * ggml_sin_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_sin_impl(ctx, a, true);
+ସଂରଚନା ggml_tensor * ggml_sin_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_sin_impl(ctx, a, true);
 }
 
 // ggml_cos
 
-static struct ggml_tensor * ggml_cos_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_cos_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
     result->op     = GGML_OP_COS;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_cos(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_cos_impl(ctx, a, false);
+ସଂରଚନା ggml_tensor * ggml_cos(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_cos_impl(ctx, a, false);
 }
 
-struct ggml_tensor * ggml_cos_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_cos_impl(ctx, a, true);
+ସଂରଚନା ggml_tensor * ggml_cos_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_cos_impl(ctx, a, true);
 }
 
 // ggml_sum
 
-struct ggml_tensor * ggml_sum(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    struct ggml_tensor * result = ggml_new_tensor_1d(ctx, a->type, 1);
+ସଂରଚନା ggml_tensor * ggml_sum(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_1d(ctx, a->type, 1);
 
     result->op     = GGML_OP_SUM;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_sum_rows
 
-struct ggml_tensor * ggml_sum_rows(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
+ସଂରଚନା ggml_tensor * ggml_sum_rows(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
     int64_t ne[GGML_MAX_DIMS] = { 1 };
-    for (int i = 1; i < GGML_MAX_DIMS; ++i) {
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 1; i < GGML_MAX_DIMS; ++i) {
         ne[i] = a->ne[i];
     }
 
-    struct ggml_tensor * result = ggml_new_tensor(ctx, a->type, GGML_MAX_DIMS, ne);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, a->type, GGML_MAX_DIMS, ne);
 
     result->op     = GGML_OP_SUM_ROWS;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_cumsum
 
-struct ggml_tensor * ggml_cumsum(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
+ସଂରଚନା ggml_tensor * ggml_cumsum(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
     GGML_ASSERT(a->type == GGML_TYPE_F32);
 
-    struct ggml_tensor * result = ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = ggml_dup_tensor(ctx, a);
 
     result->op     = GGML_OP_CUMSUM;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_mean
 
-struct ggml_tensor * ggml_mean(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
+ସଂରଚନା ggml_tensor * ggml_mean(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
     int64_t ne[4] = { 1, a->ne[1], a->ne[2], a->ne[3] };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
     result->op     = GGML_OP_MEAN;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_argmax
 
-struct ggml_tensor * ggml_argmax(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
+ସଂରଚନା ggml_tensor * ggml_argmax(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
     GGML_ASSERT(ggml_is_matrix(a));
     GGML_ASSERT(a->ne[0] <= INT32_MAX);
 
-    struct ggml_tensor * result = ggml_new_tensor_1d(ctx, GGML_TYPE_I32, a->ne[1]);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_1d(ctx, GGML_TYPE_I32, a->ne[1]);
 
     result->op     = GGML_OP_ARGMAX;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_count_equal
 
-struct ggml_tensor * ggml_count_equal(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
+ସଂରଚନା ggml_tensor * ggml_ଗଣନା_equal(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b) {
     GGML_ASSERT(ggml_are_same_shape(a, b));
 
-    struct ggml_tensor * result = ggml_new_tensor_1d(ctx, GGML_TYPE_I64, 1);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_1d(ctx, GGML_TYPE_I64, 1);
 
-    result->op     = GGML_OP_COUNT_EQUAL;
+    result->op     = GGML_OP_ଗଣନା_EQUAL;
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_repeat
 
-struct ggml_tensor * ggml_repeat(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
+ସଂରଚନା ggml_tensor * ggml_repeat(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b) {
     GGML_ASSERT(ggml_can_repeat(a, b));
 
-    struct ggml_tensor * result = ggml_new_tensor(ctx, a->type, GGML_MAX_DIMS, b->ne);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, a->type, GGML_MAX_DIMS, b->ne);
 
     result->op     = GGML_OP_REPEAT;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_repeat_4d(
-        struct ggml_context * ctx,
-        struct ggml_tensor * a,
+ସଂରଚନା ggml_tensor * ggml_repeat_4d(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor * a,
         int64_t ne0, int64_t ne1, int64_t ne2, int64_t ne3) {
-    const bool can_repeat = ggml_is_empty(a) || (
+    ଅଚଳ bool can_repeat = ggml_is_empty(a) || (
         (ne0 % a->ne[0] == 0) &&
         (ne1 % a->ne[1] == 0) &&
         (ne2 % a->ne[2] == 0) &&
@@ -2616,51 +2616,51 @@ struct ggml_tensor * ggml_repeat_4d(
     );
     GGML_ASSERT(can_repeat);
 
-    struct ggml_tensor * result = ggml_new_tensor_4d(ctx, a->type, ne0, ne1, ne2, ne3);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_4d(ctx, a->type, ne0, ne1, ne2, ne3);
 
     result->op     = GGML_OP_REPEAT;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_repeat_back
 
-struct ggml_tensor * ggml_repeat_back(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
+ସଂରଚନା ggml_tensor * ggml_repeat_back(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b) {
     GGML_ASSERT(ggml_can_repeat(b, a));
 
-    struct ggml_tensor * result = ggml_new_tensor(ctx, a->type, GGML_MAX_DIMS, b->ne);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, a->type, GGML_MAX_DIMS, b->ne);
 
     result->op     = GGML_OP_REPEAT_BACK;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_concat
 
-struct ggml_tensor * ggml_concat(
-    struct ggml_context * ctx,
-    struct ggml_tensor  * a,
-    struct ggml_tensor  * b,
-    int                   dim) {
+ସଂରଚନା ggml_tensor * ggml_concat(
+    ସଂରଚନା ggml_context * ctx,
+    ସଂରଚନା ggml_tensor  * a,
+    ସଂରଚନା ggml_tensor  * b,
+    ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   dim) {
     GGML_ASSERT(dim >= 0 && dim < GGML_MAX_DIMS);
     GGML_ASSERT(a->type == b->type);
 
     int64_t ne[GGML_MAX_DIMS];
-    for (int d = 0; d < GGML_MAX_DIMS; ++d) {
-        if (d == dim) {
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା d = 0; d < GGML_MAX_DIMS; ++d) {
+        ଯଦି (d == dim) {
             ne[d] = a->ne[d] + b->ne[d];
-            continue;
+            ଜାରି;
         }
         GGML_ASSERT(a->ne[d] == b->ne[d]);
         ne[d] = a->ne[d];
     }
 
-    struct ggml_tensor * result = ggml_new_tensor(ctx, a->type, GGML_MAX_DIMS, ne);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, a->type, GGML_MAX_DIMS, ne);
 
     ggml_set_op_params_i32(result, 0, dim);
 
@@ -2668,204 +2668,204 @@ struct ggml_tensor * ggml_concat(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_abs
 
-struct ggml_tensor * ggml_abs(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_ABS);
+ସଂରଚନା ggml_tensor * ggml_abs(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary(ctx, a, GGML_UNARY_OP_ABS);
 }
 
-struct ggml_tensor * ggml_abs_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_ABS);
+ସଂରଚନା ggml_tensor * ggml_abs_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary_inplace(ctx, a, GGML_UNARY_OP_ABS);
 }
 
 // ggml_sgn
 
-struct ggml_tensor * ggml_sgn(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_SGN);
+ସଂରଚନା ggml_tensor * ggml_sgn(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary(ctx, a, GGML_UNARY_OP_SGN);
 }
 
-struct ggml_tensor * ggml_sgn_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_SGN);
+ସଂରଚନା ggml_tensor * ggml_sgn_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary_inplace(ctx, a, GGML_UNARY_OP_SGN);
 }
 
 // ggml_neg
 
-struct ggml_tensor * ggml_neg(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_NEG);
+ସଂରଚନା ggml_tensor * ggml_neg(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary(ctx, a, GGML_UNARY_OP_NEG);
 }
 
-struct ggml_tensor * ggml_neg_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_NEG);
+ସଂରଚନା ggml_tensor * ggml_neg_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary_inplace(ctx, a, GGML_UNARY_OP_NEG);
 }
 
 // ggml_step
 
-struct ggml_tensor * ggml_step(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_STEP);
+ସଂରଚନା ggml_tensor * ggml_step(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary(ctx, a, GGML_UNARY_OP_STEP);
 }
 
-struct ggml_tensor * ggml_step_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_STEP);
+ସଂରଚନା ggml_tensor * ggml_step_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary_inplace(ctx, a, GGML_UNARY_OP_STEP);
 }
 
 // ggml_tanh
 
-struct ggml_tensor * ggml_tanh(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_TANH);
+ସଂରଚନା ggml_tensor * ggml_tanh(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary(ctx, a, GGML_UNARY_OP_TANH);
 }
 
-struct ggml_tensor * ggml_tanh_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_TANH);
+ସଂରଚନା ggml_tensor * ggml_tanh_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary_inplace(ctx, a, GGML_UNARY_OP_TANH);
 }
 
 // ggml_elu
 
-struct ggml_tensor * ggml_elu(
-    struct ggml_context * ctx,
-    struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_ELU);
+ସଂରଚନା ggml_tensor * ggml_elu(
+    ସଂରଚନା ggml_context * ctx,
+    ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary(ctx, a, GGML_UNARY_OP_ELU);
 }
 
-struct ggml_tensor * ggml_elu_inplace(
-    struct ggml_context * ctx,
-    struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_ELU);
+ସଂରଚନା ggml_tensor * ggml_elu_inplace(
+    ସଂରଚନା ggml_context * ctx,
+    ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary_inplace(ctx, a, GGML_UNARY_OP_ELU);
 }
 
 // ggml_relu
 
-struct ggml_tensor * ggml_relu(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_RELU);
+ସଂରଚନା ggml_tensor * ggml_relu(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary(ctx, a, GGML_UNARY_OP_RELU);
 }
 
-struct ggml_tensor * ggml_relu_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_RELU);
+ସଂରଚନା ggml_tensor * ggml_relu_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary_inplace(ctx, a, GGML_UNARY_OP_RELU);
 }
 
 // ggml_leaky_relu
 
-struct ggml_tensor * ggml_leaky_relu(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 negative_slope,
+ସଂରଚନା ggml_tensor * ggml_leaky_relu(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ଦଶମିକ                 negative_slope,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    ggml_set_op_params(result, &negative_slope, sizeof(negative_slope));
+    ggml_set_op_params(result, &negative_slope, ଆକାର(negative_slope));
 
     result->op     = GGML_OP_LEAKY_RELU;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_sigmoid
 
-struct ggml_tensor * ggml_sigmoid(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_SIGMOID);
+ସଂରଚନା ggml_tensor * ggml_sigmoid(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary(ctx, a, GGML_UNARY_OP_SIGMOID);
 }
 
-struct ggml_tensor * ggml_sigmoid_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_SIGMOID);
+ସଂରଚନା ggml_tensor * ggml_sigmoid_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary_inplace(ctx, a, GGML_UNARY_OP_SIGMOID);
 }
 
 // ggml_gelu
 
-struct ggml_tensor * ggml_gelu(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_GELU);
+ସଂରଚନା ggml_tensor * ggml_gelu(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary(ctx, a, GGML_UNARY_OP_GELU);
 }
 
-struct ggml_tensor * ggml_gelu_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_GELU);
+ସଂରଚନା ggml_tensor * ggml_gelu_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary_inplace(ctx, a, GGML_UNARY_OP_GELU);
 }
 
 // ggml_gelu_erf
 
-struct ggml_tensor * ggml_gelu_erf(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_GELU_ERF);
+ସଂରଚନା ggml_tensor * ggml_gelu_erf(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary(ctx, a, GGML_UNARY_OP_GELU_ERF);
 }
 
-struct ggml_tensor * ggml_gelu_erf_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_GELU_ERF);
+ସଂରଚନା ggml_tensor * ggml_gelu_erf_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary_inplace(ctx, a, GGML_UNARY_OP_GELU_ERF);
 }
 
 // ggml_gelu_quick
 
-struct ggml_tensor * ggml_gelu_quick(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_GELU_QUICK);
+ସଂରଚନା ggml_tensor * ggml_gelu_quick(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary(ctx, a, GGML_UNARY_OP_GELU_QUICK);
 }
 
-struct ggml_tensor * ggml_gelu_quick_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_GELU_QUICK);
+ସଂରଚନା ggml_tensor * ggml_gelu_quick_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary_inplace(ctx, a, GGML_UNARY_OP_GELU_QUICK);
 }
 
 // ggml_silu
 
-struct ggml_tensor * ggml_silu(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_SILU);
+ସଂରଚନା ggml_tensor * ggml_silu(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary(ctx, a, GGML_UNARY_OP_SILU);
 }
 
-struct ggml_tensor * ggml_silu_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_SILU);
+ସଂରଚନା ggml_tensor * ggml_silu_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary_inplace(ctx, a, GGML_UNARY_OP_SILU);
 }
 
 // ggml_xielu
 
-struct ggml_tensor * ggml_xielu(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float alpha_n,
-        float alpha_p,
-        float beta,
-        float eps) {
-    struct ggml_tensor * result = ggml_dup_tensor(ctx, a);
+ସଂରଚନା ggml_tensor * ggml_xielu(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ଦଶମିକ alpha_n,
+        ଦଶମିକ alpha_p,
+        ଦଶମିକ beta,
+        ଦଶମିକ eps) {
+    ସଂରଚନା ggml_tensor * result = ggml_dup_tensor(ctx, a);
 
     ggml_set_op_params_i32(result, 0, (int32_t) GGML_UNARY_OP_XIELU);
     ggml_set_op_params_f32(result, 1, beta + ggml_compute_softplus_f32(alpha_n));
@@ -2876,72 +2876,72 @@ struct ggml_tensor * ggml_xielu(
     result->op     = GGML_OP_UNARY;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_silu_back
 
-struct ggml_tensor * ggml_silu_back(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    struct ggml_tensor * result = ggml_dup_tensor(ctx, a);
+ସଂରଚନା ggml_tensor * ggml_silu_back(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b) {
+    ସଂରଚନା ggml_tensor * result = ggml_dup_tensor(ctx, a);
 
     result->op     = GGML_OP_SILU_BACK;
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml hardswish
 
-struct ggml_tensor * ggml_hardswish(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_HARDSWISH);
+ସଂରଚନା ggml_tensor * ggml_hardswish(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary(ctx, a, GGML_UNARY_OP_HARDSWISH);
 }
 
 // ggml hardsigmoid
 
-struct ggml_tensor * ggml_hardsigmoid(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_HARDSIGMOID);
+ସଂରଚନା ggml_tensor * ggml_hardsigmoid(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary(ctx, a, GGML_UNARY_OP_HARDSIGMOID);
 }
 
 // ggml exp
 
-struct ggml_tensor * ggml_exp(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_EXP);
+ସଂରଚନା ggml_tensor * ggml_exp(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary(ctx, a, GGML_UNARY_OP_EXP);
 }
 
-struct ggml_tensor * ggml_exp_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_EXP);
+ସଂରଚନା ggml_tensor * ggml_exp_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary_inplace(ctx, a, GGML_UNARY_OP_EXP);
 }
 
 // ggml_glu
 
-static struct ggml_tensor * ggml_glu_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        enum ggml_glu_op      op,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_glu_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ଗଣନା ggml_glu_op      op,
         bool                  swapped) {
     GGML_ASSERT(ggml_is_contiguous_1(a));
 
-    if (b) {
+    ଯଦି (b) {
         GGML_ASSERT(ggml_is_contiguous_1(b));
         GGML_ASSERT(ggml_are_same_shape(a, b));
         GGML_ASSERT(a->type == b->type);
     }
 
-    int64_t ne[GGML_MAX_DIMS] = { a->ne[0] / 2 }; for (int i = 1; i < GGML_MAX_DIMS; i++) ne[i] = a->ne[i];
-    struct ggml_tensor * result = ggml_new_tensor_impl(ctx, a->type, GGML_MAX_DIMS, b ? a->ne : ne, NULL, 0);
+    int64_t ne[GGML_MAX_DIMS] = { a->ne[0] / 2 }; ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 1; i < GGML_MAX_DIMS; i++) ne[i] = a->ne[i];
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_impl(ctx, a->type, GGML_MAX_DIMS, b ? a->ne : ne, ଖାଲି, 0);
 
     ggml_set_op_params_i32(result, 0, (int32_t) op);
     ggml_set_op_params_i32(result, 1, (int32_t) swapped);
@@ -2950,299 +2950,299 @@ static struct ggml_tensor * ggml_glu_impl(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_floor
 
-struct ggml_tensor * ggml_floor(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_FLOOR);
+ସଂରଚନା ggml_tensor * ggml_floor(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary(ctx, a, GGML_UNARY_OP_FLOOR);
 }
 
-struct ggml_tensor * ggml_floor_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_FLOOR);
+ସଂରଚନା ggml_tensor * ggml_floor_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary_inplace(ctx, a, GGML_UNARY_OP_FLOOR);
 }
 
 // ggml_ceil
 
-struct ggml_tensor * ggml_ceil(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_CEIL);
+ସଂରଚନା ggml_tensor * ggml_ceil(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary(ctx, a, GGML_UNARY_OP_CEIL);
 }
 
-struct ggml_tensor * ggml_ceil_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_CEIL);
+ସଂରଚନା ggml_tensor * ggml_ceil_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary_inplace(ctx, a, GGML_UNARY_OP_CEIL);
 }
 
 //ggml_round
 
-struct ggml_tensor * ggml_round(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_ROUND);
+ସଂରଚନା ggml_tensor * ggml_round(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary(ctx, a, GGML_UNARY_OP_ROUND);
 }
 
-struct ggml_tensor * ggml_round_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_ROUND);
+ସଂରଚନା ggml_tensor * ggml_round_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary_inplace(ctx, a, GGML_UNARY_OP_ROUND);
 }
 
 //ggml_trunc
 
-struct ggml_tensor * ggml_trunc(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_TRUNC);
+ସଂରଚନା ggml_tensor * ggml_trunc(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary(ctx, a, GGML_UNARY_OP_TRUNC);
 }
 
-struct ggml_tensor * ggml_trunc_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_TRUNC);
+ସଂରଚନା ggml_tensor * ggml_trunc_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_unary_inplace(ctx, a, GGML_UNARY_OP_TRUNC);
 }
 
-struct ggml_tensor * ggml_glu(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        enum ggml_glu_op      op,
+ସଂରଚନା ggml_tensor * ggml_glu(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ଗଣନା ggml_glu_op      op,
         bool                  swapped) {
-    return ggml_glu_impl(ctx, a, NULL, op, swapped);
+    ଫେରନ୍ତୁ ggml_glu_impl(ctx, a, ଖାଲି, op, swapped);
 }
 
-struct ggml_tensor * ggml_glu_split(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        enum ggml_glu_op      op) {
-    return ggml_glu_impl(ctx, a, b, op, false);
+ସଂରଚନା ggml_tensor * ggml_glu_split(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ଗଣନା ggml_glu_op      op) {
+    ଫେରନ୍ତୁ ggml_glu_impl(ctx, a, b, op, false);
 }
 
 // ggml_reglu
 
-struct ggml_tensor * ggml_reglu(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_REGLU, false);
+ସଂରଚନା ggml_tensor * ggml_reglu(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_glu_impl(ctx, a, ଖାଲି, GGML_GLU_OP_REGLU, false);
 }
 
-struct ggml_tensor * ggml_reglu_swapped(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_REGLU, true);
+ସଂରଚନା ggml_tensor * ggml_reglu_swapped(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_glu_impl(ctx, a, ଖାଲି, GGML_GLU_OP_REGLU, true);
 }
 
-struct ggml_tensor * ggml_reglu_split(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_glu_impl(ctx, a, b, GGML_GLU_OP_REGLU, false);
+ସଂରଚନା ggml_tensor * ggml_reglu_split(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b) {
+    ଫେରନ୍ତୁ ggml_glu_impl(ctx, a, b, GGML_GLU_OP_REGLU, false);
 }
 
 // ggml_geglu
 
-struct ggml_tensor * ggml_geglu(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_GEGLU, false);
+ସଂରଚନା ggml_tensor * ggml_geglu(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_glu_impl(ctx, a, ଖାଲି, GGML_GLU_OP_GEGLU, false);
 }
 
-struct ggml_tensor * ggml_geglu_swapped(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_GEGLU, true);
+ସଂରଚନା ggml_tensor * ggml_geglu_swapped(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_glu_impl(ctx, a, ଖାଲି, GGML_GLU_OP_GEGLU, true);
 }
 
-struct ggml_tensor * ggml_geglu_split(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_glu_impl(ctx, a, b, GGML_GLU_OP_GEGLU, false);
+ସଂରଚନା ggml_tensor * ggml_geglu_split(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b) {
+    ଫେରନ୍ତୁ ggml_glu_impl(ctx, a, b, GGML_GLU_OP_GEGLU, false);
 }
 
 // ggml_swiglu
 
-struct ggml_tensor * ggml_swiglu(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_SWIGLU, false);
+ସଂରଚନା ggml_tensor * ggml_swiglu(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_glu_impl(ctx, a, ଖାଲି, GGML_GLU_OP_SWIGLU, false);
 }
 
-struct ggml_tensor * ggml_swiglu_swapped(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_SWIGLU, true);
+ସଂରଚନା ggml_tensor * ggml_swiglu_swapped(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_glu_impl(ctx, a, ଖାଲି, GGML_GLU_OP_SWIGLU, true);
 }
 
-struct ggml_tensor * ggml_swiglu_split(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_glu_impl(ctx, a, b, GGML_GLU_OP_SWIGLU, false);
+ସଂରଚନା ggml_tensor * ggml_swiglu_split(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b) {
+    ଫେରନ୍ତୁ ggml_glu_impl(ctx, a, b, GGML_GLU_OP_SWIGLU, false);
 }
 
 // ggml_geglu_erf
 
-struct ggml_tensor * ggml_geglu_erf(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_GEGLU_ERF, false);
+ସଂରଚନା ggml_tensor * ggml_geglu_erf(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_glu_impl(ctx, a, ଖାଲି, GGML_GLU_OP_GEGLU_ERF, false);
 }
 
-struct ggml_tensor * ggml_geglu_erf_swapped(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_GEGLU_ERF, true);
+ସଂରଚନା ggml_tensor * ggml_geglu_erf_swapped(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_glu_impl(ctx, a, ଖାଲି, GGML_GLU_OP_GEGLU_ERF, true);
 }
 
-struct ggml_tensor * ggml_geglu_erf_split(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_glu_impl(ctx, a, b, GGML_GLU_OP_GEGLU_ERF, false);
+ସଂରଚନା ggml_tensor * ggml_geglu_erf_split(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b) {
+    ଫେରନ୍ତୁ ggml_glu_impl(ctx, a, b, GGML_GLU_OP_GEGLU_ERF, false);
 }
 
 // ggml_geglu_quick
 
-struct ggml_tensor * ggml_geglu_quick(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_GEGLU_QUICK, false);
+ସଂରଚନା ggml_tensor * ggml_geglu_quick(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_glu_impl(ctx, a, ଖାଲି, GGML_GLU_OP_GEGLU_QUICK, false);
 }
 
-struct ggml_tensor * ggml_geglu_quick_swapped(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_GEGLU_QUICK, true);
+ସଂରଚନା ggml_tensor * ggml_geglu_quick_swapped(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_glu_impl(ctx, a, ଖାଲି, GGML_GLU_OP_GEGLU_QUICK, true);
 }
 
-struct ggml_tensor * ggml_geglu_quick_split(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_glu_impl(ctx, a, b, GGML_GLU_OP_GEGLU_QUICK, false);
+ସଂରଚନା ggml_tensor * ggml_geglu_quick_split(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b) {
+    ଫେରନ୍ତୁ ggml_glu_impl(ctx, a, b, GGML_GLU_OP_GEGLU_QUICK, false);
 }
 
-struct ggml_tensor * ggml_swiglu_oai(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        float                 alpha,
-        float                 limit) {
-    struct ggml_tensor * result = ggml_glu_impl(ctx, a, b, GGML_GLU_OP_SWIGLU_OAI, false);
+ସଂରଚନା ggml_tensor * ggml_swiglu_oai(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ଦଶମିକ                 alpha,
+        ଦଶମିକ                 limit) {
+    ସଂରଚନା ggml_tensor * result = ggml_glu_impl(ctx, a, b, GGML_GLU_OP_SWIGLU_OAI, false);
     ggml_set_op_params_f32(result, 2, alpha);
     ggml_set_op_params_f32(result, 3, limit);
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_swiglu_clamp(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        float                 limit) {
-    struct ggml_tensor * result = ggml_glu_impl(ctx, a, b, GGML_GLU_OP_SWIGLU_CLAMP, false);
+ସଂରଚନା ggml_tensor * ggml_swiglu_clamp(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ଦଶମିକ                 limit) {
+    ସଂରଚନା ggml_tensor * result = ggml_glu_impl(ctx, a, b, GGML_GLU_OP_SWIGLU_CLAMP, false);
     ggml_set_op_params_f32(result, 3, limit);
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_norm
 
-static struct ggml_tensor * ggml_norm_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 eps,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_norm_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ଦଶମିକ                 eps,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    ggml_set_op_params(result, &eps, sizeof(eps));
+    ggml_set_op_params(result, &eps, ଆକାର(eps));
 
     result->op     = GGML_OP_NORM;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_norm(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 eps) {
-    return ggml_norm_impl(ctx, a, eps, false);
+ସଂରଚନା ggml_tensor * ggml_norm(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ଦଶମିକ                 eps) {
+    ଫେରନ୍ତୁ ggml_norm_impl(ctx, a, eps, false);
 }
 
-struct ggml_tensor * ggml_norm_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 eps) {
-    return ggml_norm_impl(ctx, a, eps, true);
+ସଂରଚନା ggml_tensor * ggml_norm_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ଦଶମିକ                 eps) {
+    ଫେରନ୍ତୁ ggml_norm_impl(ctx, a, eps, true);
 }
 
 // ggml_rms_norm
 
-static struct ggml_tensor * ggml_rms_norm_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 eps,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_rms_norm_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ଦଶମିକ                 eps,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    ggml_set_op_params(result, &eps, sizeof(eps));
+    ggml_set_op_params(result, &eps, ଆକାର(eps));
 
     result->op     = GGML_OP_RMS_NORM;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_rms_norm(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 eps) {
-    return ggml_rms_norm_impl(ctx, a, eps, false);
+ସଂରଚନା ggml_tensor * ggml_rms_norm(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ଦଶମିକ                 eps) {
+    ଫେରନ୍ତୁ ggml_rms_norm_impl(ctx, a, eps, false);
 }
 
-struct ggml_tensor * ggml_rms_norm_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 eps) {
-    return ggml_rms_norm_impl(ctx, a, eps, true);
+ସଂରଚନା ggml_tensor * ggml_rms_norm_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ଦଶମିକ                 eps) {
+    ଫେରନ୍ତୁ ggml_rms_norm_impl(ctx, a, eps, true);
 }
 
 // ggml_rms_norm_back
 
-struct ggml_tensor * ggml_rms_norm_back(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        float                 eps) {
-    struct ggml_tensor * result = ggml_dup_tensor(ctx, a);
+ସଂରଚନା ggml_tensor * ggml_rms_norm_back(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ଦଶମିକ                 eps) {
+    ସଂରଚନା ggml_tensor * result = ggml_dup_tensor(ctx, a);
 
-    ggml_set_op_params(result, &eps, sizeof(eps));
+    ggml_set_op_params(result, &eps, ଆକାର(eps));
 
     result->op     = GGML_OP_RMS_NORM_BACK;
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_group_norm
 
-static struct ggml_tensor * ggml_group_norm_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   n_groups,
-        float                 eps,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_group_norm_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_groups,
+        ଦଶମିକ                 eps,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
     ggml_set_op_params_i32(result, 0, n_groups);
     ggml_set_op_params_f32(result, 1, eps);
@@ -3250,150 +3250,150 @@ static struct ggml_tensor * ggml_group_norm_impl(
     result->op     = GGML_OP_GROUP_NORM;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_group_norm(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   n_groups,
-        float                 eps) {
-    return ggml_group_norm_impl(ctx, a, n_groups, eps, false);
+ସଂରଚନା ggml_tensor * ggml_group_norm(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_groups,
+        ଦଶମିକ                 eps) {
+    ଫେରନ୍ତୁ ggml_group_norm_impl(ctx, a, n_groups, eps, false);
 }
 
-struct ggml_tensor * ggml_group_norm_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   n_groups,
-        float                 eps) {
-    return ggml_group_norm_impl(ctx, a, n_groups, eps, true);
+ସଂରଚନା ggml_tensor * ggml_group_norm_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_groups,
+        ଦଶମିକ                 eps) {
+    ଫେରନ୍ତୁ ggml_group_norm_impl(ctx, a, n_groups, eps, true);
 }
 
 // ggml_l2_norm
 
-static struct ggml_tensor * ggml_l2_norm_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 eps,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_l2_norm_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ଦଶମିକ                 eps,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
     ggml_set_op_params_f32(result, 0, eps);
 
     result->op     = GGML_OP_L2_NORM;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_l2_norm(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 eps) {
-    return ggml_l2_norm_impl(ctx, a, eps, false);
+ସଂରଚନା ggml_tensor * ggml_l2_norm(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ଦଶମିକ                 eps) {
+    ଫେରନ୍ତୁ ggml_l2_norm_impl(ctx, a, eps, false);
 }
 
-struct ggml_tensor * ggml_l2_norm_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 eps) {
-    return ggml_l2_norm_impl(ctx, a, eps, true);
+ସଂରଚନା ggml_tensor * ggml_l2_norm_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ଦଶମିକ                 eps) {
+    ଫେରନ୍ତୁ ggml_l2_norm_impl(ctx, a, eps, true);
 }
 
 // ggml_prec
 
 bool ggml_prec_set_acc(
-        struct ggml_tensor * a,
-        enum ggml_prec       prec) {
-    switch (a->op) {
-        case GGML_OP_MUL_MAT:
-        case GGML_OP_MUL_MAT_ID:
+        ସଂରଚନା ggml_tensor * a,
+        ଗଣନା ggml_prec       prec) {
+    ବାଛ (a->op) {
+        ସ୍ଥିତି GGML_OP_MUL_MAT:
+        ସ୍ଥିତି GGML_OP_MUL_MAT_ID:
             {
-                const int32_t prec_i32 = (int32_t) prec;
+                ଅଚଳ int32_t prec_i32 = (int32_t) prec;
                 ggml_set_op_params_i32(a, 0, prec_i32);
             }
-            break;
-        case GGML_OP_FLASH_ATTN_EXT:
+            ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_FLASH_ATTN_EXT:
             {
-                const int32_t prec_i32 = (int32_t) prec;
+                ଅଚଳ int32_t prec_i32 = (int32_t) prec;
                 ggml_set_op_params_i32(a, 3, prec_i32);
             }
-            break;
-        default:
-            return false;
+            ଭାଙ୍ଗ;
+        ପୂର୍ବନିର୍ଦ୍ଧାରିତ:
+            ଫେରନ୍ତୁ false;
     };
 
-    return true;
+    ଫେରନ୍ତୁ true;
 }
 
 bool ggml_prec_set_src(
-        struct ggml_tensor * a,
-        enum ggml_prec       prec,
-        int                  idx) {
+        ସଂରଚନା ggml_tensor * a,
+        ଗଣନା ggml_prec       prec,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                  idx) {
     GGML_ASSERT(idx >= 0 && idx < GGML_MAX_SRC);
 
-    switch (a->op) {
-        case GGML_OP_MUL_MAT:
-        case GGML_OP_MUL_MAT_ID:
+    ବାଛ (a->op) {
+        ସ୍ଥିତି GGML_OP_MUL_MAT:
+        ସ୍ଥିତି GGML_OP_MUL_MAT_ID:
             {
-                if (idx != 1) {
-                    return false;
+                ଯଦି (idx != 1) {
+                    ଫେରନ୍ତୁ false;
                 }
 
-                const int32_t prec_i32 = (int32_t) prec;
+                ଅଚଳ int32_t prec_i32 = (int32_t) prec;
                 ggml_set_op_params_i32(a, 2 + idx, prec_i32);
             }
-            break;
-        default:
-            return false;
+            ଭାଙ୍ଗ;
+        ପୂର୍ବନିର୍ଦ୍ଧାରିତ:
+            ଫେରନ୍ତୁ false;
     };
 
-    return true;
+    ଫେରନ୍ତୁ true;
 }
 
 // ggml_mul_mat
 
-static inline bool ggml_can_mul_mat(const struct ggml_tensor * t0, const struct ggml_tensor * t1) {
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ bool ggml_can_mul_mat(ଅଚଳ ସଂରଚନା ggml_tensor * t0, ଅଚଳ ସଂରଚନା ggml_tensor * t1) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return (t0->ne[0]           == t1->ne[0])  &&
+    ଫେରନ୍ତୁ (t0->ne[0]           == t1->ne[0])  &&
            (t1->ne[2]%t0->ne[2] == 0)          && // verify t0 is broadcastable
            (t1->ne[3]%t0->ne[3] == 0);
 }
 
-struct ggml_tensor * ggml_mul_mat(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
+ସଂରଚନା ggml_tensor * ggml_mul_mat(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b) {
     GGML_ASSERT(ggml_can_mul_mat(a, b));
     GGML_ASSERT(!ggml_is_transposed(a));
 
-    const int64_t ne[4] = { a->ne[1], b->ne[1], b->ne[2], b->ne[3] };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ଅଚଳ int64_t ne[4] = { a->ne[1], b->ne[1], b->ne[2], b->ne[3] };
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
     result->op     = GGML_OP_MUL_MAT;
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-void ggml_mul_mat_set_prec(
-        struct ggml_tensor * a,
-        enum ggml_prec       prec) {
+ଶୂନ୍ୟ ggml_mul_mat_set_prec(
+        ସଂରଚନା ggml_tensor * a,
+        ଗଣନା ggml_prec       prec) {
     GGML_ASSERT(a->op == GGML_OP_MUL_MAT);
 
-    const int32_t prec_i32 = (int32_t) prec;
+    ଅଚଳ int32_t prec_i32 = (int32_t) prec;
 
     ggml_set_op_params_i32(a, 0, prec_i32);
 }
 
-void ggml_mul_mat_set_hint(
-        struct ggml_tensor * a,
-        enum ggml_op_hint    hint) {
+ଶୂନ୍ୟ ggml_mul_mat_set_hint(
+        ସଂରଚନା ggml_tensor * a,
+        ଗଣନା ggml_op_hint    hint) {
     GGML_ASSERT(a->op == GGML_OP_MUL_MAT);
 
-    const int32_t hint_i32 = (int32_t) hint;
+    ଅଚଳ int32_t hint_i32 = (int32_t) hint;
 
     ggml_set_op_params_i32(a, 1, hint_i32);
 }
@@ -3412,11 +3412,11 @@ void ggml_mul_mat_set_hint(
 
     c ~= as[:,:,i] @ b[:,i%r,t], i = ids[e,t] for all e,t in ids
 */
-struct ggml_tensor * ggml_mul_mat_id(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * as,
-        struct ggml_tensor  * b,
-        struct ggml_tensor  * ids) {
+ସଂରଚନା ggml_tensor * ggml_mul_mat_id(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * as,
+        ସଂରଚନା ggml_tensor  * b,
+        ସଂରଚନା ggml_tensor  * ids) {
     GGML_ASSERT(!ggml_is_transposed(as));
     GGML_ASSERT(ids->type == GGML_TYPE_I32);
 
@@ -3427,102 +3427,102 @@ struct ggml_tensor * ggml_mul_mat_id(
     GGML_ASSERT(as->ne[0] == b->ne[0]); // can_mul_mat
     GGML_ASSERT(ids->ne[0] % b->ne[1] == 0); // can broadcast
 
-    const int64_t ne[4] = { as->ne[1], ids->ne[0], b->ne[2], 1 };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ଅଚଳ int64_t ne[4] = { as->ne[1], ids->ne[0], b->ne[2], 1 };
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
     result->op     = GGML_OP_MUL_MAT_ID;
     result->src[0] = as;
     result->src[1] = b;
     result->src[2] = ids;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_out_prod
 
-static inline bool ggml_can_out_prod(const struct ggml_tensor * t0, const struct ggml_tensor * t1) {
+ସ୍ଥିର ଧାଡ଼ିଭିତରେ bool ggml_can_out_prod(ଅଚଳ ସଂରଚନା ggml_tensor * t0, ଅଚଳ ସଂରଚନା ggml_tensor * t1) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return (t0->ne[1] == t1->ne[1])   &&
+    ଫେରନ୍ତୁ (t0->ne[1] == t1->ne[1])   &&
            (t1->ne[2]%t0->ne[2] == 0) && // verify t0 is broadcastable
            (t1->ne[3]%t0->ne[3] == 0);
 }
 
-struct ggml_tensor * ggml_out_prod(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
+ସଂରଚନା ggml_tensor * ggml_out_prod(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b) {
     GGML_ASSERT(ggml_can_out_prod(a, b));
     GGML_ASSERT(!ggml_is_transposed(a));
 
     // a is broadcastable to b for ne[2] and ne[3] -> use b->ne[2] and b->ne[3]
-    const int64_t ne[4] = { a->ne[0], b->ne[0], b->ne[2], b->ne[3] };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ଅଚଳ int64_t ne[4] = { a->ne[0], b->ne[0], b->ne[2], b->ne[3] };
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
     result->op     = GGML_OP_OUT_PROD;
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_scale
 
-static struct ggml_tensor * ggml_scale_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 s,
-        float                 b,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_scale_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ଦଶମିକ                 s,
+        ଦଶମିକ                 b,
         bool                  inplace) {
     GGML_ASSERT(ggml_is_padded_1d(a));
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    float params[2] = { s, b };
-    ggml_set_op_params(result, &params, sizeof(params));
+    ଦଶମିକ params[2] = { s, b };
+    ggml_set_op_params(result, &params, ଆକାର(params));
 
     result->op     = GGML_OP_SCALE;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_scale(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 s) {
-    return ggml_scale_impl(ctx, a, s, 0.0, false);
+ସଂରଚନା ggml_tensor * ggml_scale(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ଦଶମିକ                 s) {
+    ଫେରନ୍ତୁ ggml_scale_impl(ctx, a, s, 0.0, false);
 }
 
-struct ggml_tensor * ggml_scale_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 s) {
-    return ggml_scale_impl(ctx, a, s, 0.0, true);
+ସଂରଚନା ggml_tensor * ggml_scale_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ଦଶମିକ                 s) {
+    ଫେରନ୍ତୁ ggml_scale_impl(ctx, a, s, 0.0, true);
 }
 
-struct ggml_tensor * ggml_scale_bias(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 s,
-        float                 b) {
-    return ggml_scale_impl(ctx, a, s, b, false);
+ସଂରଚନା ggml_tensor * ggml_scale_bias(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ଦଶମିକ                 s,
+        ଦଶମିକ                 b) {
+    ଫେରନ୍ତୁ ggml_scale_impl(ctx, a, s, b, false);
 }
 
-struct ggml_tensor * ggml_scale_bias_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 s,
-        float                 b) {
-    return ggml_scale_impl(ctx, a, s, b, true);
+ସଂରଚନା ggml_tensor * ggml_scale_bias_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ଦଶମିକ                 s,
+        ଦଶମିକ                 b) {
+    ଫେରନ୍ତୁ ggml_scale_impl(ctx, a, s, b, true);
 }
 
 // ggml_set
 
-static struct ggml_tensor * ggml_set_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_set_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
         size_t                nb1,
         size_t                nb2,
         size_t                nb3,
@@ -3531,88 +3531,88 @@ static struct ggml_tensor * ggml_set_impl(
     GGML_ASSERT(ggml_nelements(a) >= ggml_nelements(b));
 
     // make a view of the destination
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
     GGML_ASSERT(offset < (size_t)(1 << 30));
     int32_t params[] = { nb1, nb2, nb3, offset, inplace ? 1 : 0 };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_set_op_params(result, params, ଆକାର(params));
 
     result->op     = GGML_OP_SET;
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_set(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ସଂରଚନା ggml_tensor * ggml_set(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
         size_t                nb1,
         size_t                nb2,
         size_t                nb3,
         size_t                offset) {
-    return ggml_set_impl(ctx, a, b, nb1, nb2, nb3, offset, false);
+    ଫେରନ୍ତୁ ggml_set_impl(ctx, a, b, nb1, nb2, nb3, offset, false);
 }
 
-struct ggml_tensor * ggml_set_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ସଂରଚନା ggml_tensor * ggml_set_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
         size_t                nb1,
         size_t                nb2,
         size_t                nb3,
         size_t                offset) {
-    return ggml_set_impl(ctx, a, b, nb1, nb2, nb3, offset, true);
+    ଫେରନ୍ତୁ ggml_set_impl(ctx, a, b, nb1, nb2, nb3, offset, true);
 }
 
-struct ggml_tensor * ggml_set_1d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ସଂରଚନା ggml_tensor * ggml_set_1d(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
         size_t                offset) {
-    return ggml_set_impl(ctx, a, b, a->nb[1], a->nb[2], a->nb[3], offset, false);
+    ଫେରନ୍ତୁ ggml_set_impl(ctx, a, b, a->nb[1], a->nb[2], a->nb[3], offset, false);
 }
 
-struct ggml_tensor * ggml_set_1d_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ସଂରଚନା ggml_tensor * ggml_set_1d_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
         size_t                offset) {
-    return ggml_set_impl(ctx, a, b, a->nb[1], a->nb[2], a->nb[3], offset, true);
+    ଫେରନ୍ତୁ ggml_set_impl(ctx, a, b, a->nb[1], a->nb[2], a->nb[3], offset, true);
 }
 
-struct ggml_tensor * ggml_set_2d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ସଂରଚନା ggml_tensor * ggml_set_2d(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
         size_t                nb1,
         size_t                offset) {
-    return ggml_set_impl(ctx, a, b, nb1, a->nb[2], a->nb[3], offset, false);
+    ଫେରନ୍ତୁ ggml_set_impl(ctx, a, b, nb1, a->nb[2], a->nb[3], offset, false);
 }
 
-struct ggml_tensor * ggml_set_2d_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ସଂରଚନା ggml_tensor * ggml_set_2d_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
         size_t                nb1,
         size_t                offset) {
-    return ggml_set_impl(ctx, a, b, nb1, a->nb[2], a->nb[3], offset, true);
+    ଫେରନ୍ତୁ ggml_set_impl(ctx, a, b, nb1, a->nb[2], a->nb[3], offset, true);
 }
 
 // ggml_cpy
 
-static struct ggml_tensor * ggml_cpy_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_cpy_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b) {
     GGML_ASSERT(ggml_nelements(a) == ggml_nelements(b));
 
     // make a view of the destination
-    struct ggml_tensor * result = ggml_view_tensor(ctx, b);
-    if (strlen(b->name) > 0) {
+    ସଂରଚନା ggml_tensor * result = ggml_view_tensor(ctx, b);
+    ଯଦି (strlen(b->name) > 0) {
         ggml_format_name(result, "%s (copy of %s)", b->name, a->name);
-    } else {
+    } ଅନ୍ୟଥା {
         ggml_format_name(result, "%s (copy)", a->name);
     }
 
@@ -3620,21 +3620,21 @@ static struct ggml_tensor * ggml_cpy_impl(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_cpy(
-        struct ggml_context * ctx,
-        struct ggml_tensor * a,
-        struct ggml_tensor * b) {
-    return ggml_cpy_impl(ctx, a, b);
+ସଂରଚନା ggml_tensor * ggml_cpy(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor * a,
+        ସଂରଚନା ggml_tensor * b) {
+    ଫେରନ୍ତୁ ggml_cpy_impl(ctx, a, b);
 }
 
-struct ggml_tensor * ggml_cast(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        enum   ggml_type      type) {
-    struct ggml_tensor * result = ggml_new_tensor(ctx, type, GGML_MAX_DIMS, a->ne);
+ସଂରଚନା ggml_tensor * ggml_cast(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ଗଣନା   ggml_type      type) {
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, type, GGML_MAX_DIMS, a->ne);
     ggml_format_name(result, "%s (copy)", a->name);
 
     result->op     = GGML_OP_CPY;
@@ -3642,148 +3642,148 @@ struct ggml_tensor * ggml_cast(
     result->src[1] = result; // note: this self-reference might seem redundant, but it's actually needed by some
                              //       backends for consistency with ggml_cpy_impl() above
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_cont
 
-static struct ggml_tensor * ggml_cont_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    struct ggml_tensor * result = ggml_dup_tensor(ctx, a);
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_cont_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ସଂରଚନା ggml_tensor * result = ggml_dup_tensor(ctx, a);
     ggml_format_name(result, "%s (cont)", a->name);
 
     result->op     = GGML_OP_CONT;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_cont(
-        struct ggml_context * ctx,
-        struct ggml_tensor * a) {
-    return ggml_cont_impl(ctx, a);
+ସଂରଚନା ggml_tensor * ggml_cont(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor * a) {
+    ଫେରନ୍ତୁ ggml_cont_impl(ctx, a);
 }
 
 // make contiguous, with new shape
-GGML_API struct ggml_tensor * ggml_cont_1d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+GGML_API ସଂରଚନା ggml_tensor * ggml_cont_1d(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
         int64_t               ne0) {
-    return ggml_cont_4d(ctx, a, ne0, 1, 1, 1);
+    ଫେରନ୍ତୁ ggml_cont_4d(ctx, a, ne0, 1, 1, 1);
 }
 
-GGML_API struct ggml_tensor * ggml_cont_2d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+GGML_API ସଂରଚନା ggml_tensor * ggml_cont_2d(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
         int64_t               ne0,
         int64_t               ne1) {
-    return ggml_cont_4d(ctx, a, ne0, ne1, 1, 1);
+    ଫେରନ୍ତୁ ggml_cont_4d(ctx, a, ne0, ne1, 1, 1);
 }
 
-GGML_API struct ggml_tensor * ggml_cont_3d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+GGML_API ସଂରଚନା ggml_tensor * ggml_cont_3d(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
         int64_t               ne0,
         int64_t               ne1,
         int64_t               ne2) {
-    return ggml_cont_4d(ctx, a, ne0, ne1, ne2, 1);
+    ଫେରନ୍ତୁ ggml_cont_4d(ctx, a, ne0, ne1, ne2, 1);
 }
 
-struct ggml_tensor * ggml_cont_4d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ସଂରଚନା ggml_tensor * ggml_cont_4d(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
         int64_t               ne0,
         int64_t               ne1,
         int64_t               ne2,
         int64_t               ne3) {
     GGML_ASSERT(ggml_nelements(a) == (ne0*ne1*ne2*ne3));
 
-    struct ggml_tensor * result = ggml_new_tensor_4d(ctx, a->type, ne0, ne1, ne2, ne3);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_4d(ctx, a->type, ne0, ne1, ne2, ne3);
     ggml_format_name(result, "%s (cont)", a->name);
 
     result->op     = GGML_OP_CONT;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_reshape
 
-struct ggml_tensor * ggml_reshape(
-        struct ggml_context * ctx,
-        struct ggml_tensor * a,
-        struct ggml_tensor * b) {
+ସଂରଚନା ggml_tensor * ggml_reshape(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor * a,
+        ସଂରଚନା ggml_tensor * b) {
     GGML_ASSERT(ggml_is_contiguous(a));
     // as only the shape of b is relevant, and not its memory layout, b is allowed to be non contiguous.
     GGML_ASSERT(ggml_nelements(a) == ggml_nelements(b));
 
-    struct ggml_tensor * result = ggml_new_tensor_impl(ctx, a->type, GGML_MAX_DIMS, b->ne, a, 0);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_impl(ctx, a->type, GGML_MAX_DIMS, b->ne, a, 0);
     ggml_format_name(result, "%s (reshaped)", a->name);
 
     result->op     = GGML_OP_RESHAPE;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_reshape_1d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ସଂରଚନା ggml_tensor * ggml_reshape_1d(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
         int64_t               ne0) {
     GGML_ASSERT(ggml_is_contiguous(a));
     GGML_ASSERT(ggml_nelements(a) == ne0);
 
-    const int64_t ne[1] = { ne0 };
-    struct ggml_tensor * result = ggml_new_tensor_impl(ctx, a->type, 1, ne, a, 0);
+    ଅଚଳ int64_t ne[1] = { ne0 };
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_impl(ctx, a->type, 1, ne, a, 0);
     ggml_format_name(result, "%s (reshaped)", a->name);
 
     result->op     = GGML_OP_RESHAPE;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_reshape_2d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ସଂରଚନା ggml_tensor * ggml_reshape_2d(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
         int64_t               ne0,
         int64_t               ne1) {
     GGML_ASSERT(ggml_is_contiguous(a));
     GGML_ASSERT(ggml_nelements(a) == ne0*ne1);
 
-    const int64_t ne[2] = { ne0, ne1 };
-    struct ggml_tensor * result = ggml_new_tensor_impl(ctx, a->type, 2, ne, a, 0);
+    ଅଚଳ int64_t ne[2] = { ne0, ne1 };
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_impl(ctx, a->type, 2, ne, a, 0);
     ggml_format_name(result, "%s (reshaped)", a->name);
 
     result->op     = GGML_OP_RESHAPE;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_reshape_3d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ସଂରଚନା ggml_tensor * ggml_reshape_3d(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
         int64_t               ne0,
         int64_t               ne1,
         int64_t               ne2) {
     GGML_ASSERT(ggml_is_contiguous(a));
     GGML_ASSERT(ggml_nelements(a) == ne0*ne1*ne2);
 
-    const int64_t ne[3] = { ne0, ne1, ne2 };
-    struct ggml_tensor * result = ggml_new_tensor_impl(ctx, a->type, 3, ne, a, 0);
+    ଅଚଳ int64_t ne[3] = { ne0, ne1, ne2 };
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_impl(ctx, a->type, 3, ne, a, 0);
     ggml_format_name(result, "%s (reshaped)", a->name);
 
     result->op     = GGML_OP_RESHAPE;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_reshape_4d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ସଂରଚନା ggml_tensor * ggml_reshape_4d(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
         int64_t               ne0,
         int64_t               ne1,
         int64_t               ne2,
@@ -3791,92 +3791,92 @@ struct ggml_tensor * ggml_reshape_4d(
     GGML_ASSERT(ggml_is_contiguous(a));
     GGML_ASSERT(ggml_nelements(a) == ne0*ne1*ne2*ne3);
 
-    const int64_t ne[4] = { ne0, ne1, ne2, ne3 };
-    struct ggml_tensor * result = ggml_new_tensor_impl(ctx, a->type, 4, ne, a, 0);
+    ଅଚଳ int64_t ne[4] = { ne0, ne1, ne2, ne3 };
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_impl(ctx, a->type, 4, ne, a, 0);
     ggml_format_name(result, "%s (reshaped)", a->name);
 
     result->op     = GGML_OP_RESHAPE;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-static struct ggml_tensor * ggml_view_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   n_dims,
-        const int64_t       * ne,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_view_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_dims,
+        ଅଚଳ int64_t       * ne,
         size_t                offset) {
-    struct ggml_tensor * result = ggml_new_tensor_impl(ctx, a->type, n_dims, ne, a, offset);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_impl(ctx, a->type, n_dims, ne, a, offset);
     ggml_format_name(result, "%s (view)", a->name);
 
-    ggml_set_op_params(result, &offset, sizeof(offset));
+    ggml_set_op_params(result, &offset, ଆକାର(offset));
 
     result->op     = GGML_OP_VIEW;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_view_1d
 
-struct ggml_tensor * ggml_view_1d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ସଂରଚନା ggml_tensor * ggml_view_1d(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
         int64_t               ne0,
         size_t                offset) {
-    struct ggml_tensor * result = ggml_view_impl(ctx, a, 1, &ne0, offset);
+    ସଂରଚନା ggml_tensor * result = ggml_view_impl(ctx, a, 1, &ne0, offset);
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_view_2d
 
-struct ggml_tensor * ggml_view_2d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ସଂରଚନା ggml_tensor * ggml_view_2d(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
         int64_t               ne0,
         int64_t               ne1,
         size_t                nb1,
         size_t                offset) {
-    const int64_t ne[2] = { ne0, ne1 };
+    ଅଚଳ int64_t ne[2] = { ne0, ne1 };
 
-    struct ggml_tensor * result = ggml_view_impl(ctx, a, 2, ne, offset);
+    ସଂରଚନା ggml_tensor * result = ggml_view_impl(ctx, a, 2, ne, offset);
 
     result->nb[1] = nb1;
     result->nb[2] = result->nb[1]*ne1;
     result->nb[3] = result->nb[2];
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_view_3d
 
-struct ggml_tensor * ggml_view_3d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ସଂରଚନା ggml_tensor * ggml_view_3d(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
         int64_t               ne0,
         int64_t               ne1,
         int64_t               ne2,
         size_t                nb1,
         size_t                nb2,
         size_t                offset) {
-    const int64_t ne[3] = { ne0, ne1, ne2 };
+    ଅଚଳ int64_t ne[3] = { ne0, ne1, ne2 };
 
-    struct ggml_tensor * result = ggml_view_impl(ctx, a, 3, ne, offset);
+    ସଂରଚନା ggml_tensor * result = ggml_view_impl(ctx, a, 3, ne, offset);
 
     result->nb[1] = nb1;
     result->nb[2] = nb2;
     result->nb[3] = result->nb[2]*ne2;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_view_4d
 
-struct ggml_tensor * ggml_view_4d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ସଂରଚନା ggml_tensor * ggml_view_4d(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
         int64_t               ne0,
         int64_t               ne1,
         int64_t               ne2,
@@ -3885,26 +3885,26 @@ struct ggml_tensor * ggml_view_4d(
         size_t                nb2,
         size_t                nb3,
         size_t                offset) {
-    const int64_t ne[4] = { ne0, ne1, ne2, ne3 };
+    ଅଚଳ int64_t ne[4] = { ne0, ne1, ne2, ne3 };
 
-    struct ggml_tensor * result = ggml_view_impl(ctx, a, 4, ne, offset);
+    ସଂରଚନା ggml_tensor * result = ggml_view_impl(ctx, a, 4, ne, offset);
 
     result->nb[1] = nb1;
     result->nb[2] = nb2;
     result->nb[3] = nb3;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_permute
 
-struct ggml_tensor * ggml_permute(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   axis0,
-        int                   axis1,
-        int                   axis2,
-        int                   axis3) {
+ସଂରଚନା ggml_tensor * ggml_permute(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   axis0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   axis1,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   axis2,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   axis3) {
     GGML_ASSERT(axis0 >= 0 && axis0 < GGML_MAX_DIMS);
     GGML_ASSERT(axis1 >= 0 && axis1 < GGML_MAX_DIMS);
     GGML_ASSERT(axis2 >= 0 && axis2 < GGML_MAX_DIMS);
@@ -3917,7 +3917,7 @@ struct ggml_tensor * ggml_permute(
     GGML_ASSERT(axis1 != axis3);
     GGML_ASSERT(axis2 != axis3);
 
-    struct ggml_tensor * result = ggml_view_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = ggml_view_tensor(ctx, a);
     ggml_format_name(result, "%s (permuted)", a->name);
 
     int64_t ne[GGML_MAX_DIMS];
@@ -3947,17 +3947,17 @@ struct ggml_tensor * ggml_permute(
     result->src[0] = a;
 
     int32_t params[] = { axis0, axis1, axis2, axis3 };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_set_op_params(result, params, ଆକାର(params));
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_transpose
 
-struct ggml_tensor * ggml_transpose(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    struct ggml_tensor * result = ggml_view_tensor(ctx, a);
+ସଂରଚନା ggml_tensor * ggml_transpose(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ସଂରଚନା ggml_tensor * result = ggml_view_tensor(ctx, a);
     ggml_format_name(result, "%s (transposed)", a->name);
 
     result->ne[0] = a->ne[1];
@@ -3969,62 +3969,62 @@ struct ggml_tensor * ggml_transpose(
     result->op     = GGML_OP_TRANSPOSE;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_get_rows
 
-struct ggml_tensor * ggml_get_rows(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
+ସଂରଚନା ggml_tensor * ggml_get_rows(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b) {
     GGML_ASSERT(a->ne[2] == b->ne[1]);
     GGML_ASSERT(a->ne[3] == b->ne[2]);
     GGML_ASSERT(b->ne[3] == 1);
     GGML_ASSERT(b->type == GGML_TYPE_I32);
 
     // TODO: implement non F32 return
-    enum ggml_type type = GGML_TYPE_F32;
-    if (a->type == GGML_TYPE_I32) {
+    ଗଣନା ggml_type type = GGML_TYPE_F32;
+    ଯଦି (a->type == GGML_TYPE_I32) {
         type = a->type;
     }
-    struct ggml_tensor * result = ggml_new_tensor_4d(ctx, type, a->ne[0], b->ne[0], b->ne[1], b->ne[2]);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_4d(ctx, type, a->ne[0], b->ne[0], b->ne[1], b->ne[2]);
 
     result->op     = GGML_OP_GET_ROWS;
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_get_rows_back
 
-struct ggml_tensor * ggml_get_rows_back(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        struct ggml_tensor  * c) {
+ସଂରଚନା ggml_tensor * ggml_get_rows_back(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ସଂରଚନା ggml_tensor  * c) {
     GGML_ASSERT(ggml_is_matrix(a) && ggml_is_vector(b) && b->type == GGML_TYPE_I32);
     GGML_ASSERT(ggml_is_matrix(c) && (a->ne[0] == c->ne[0]));
 
     // TODO: implement non F32 return
     //struct ggml_tensor * result = ggml_new_tensor_2d(ctx, a->type, a->ne[0], b->ne[0]);
-    struct ggml_tensor * result = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, c->ne[0], c->ne[1]);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, c->ne[0], c->ne[1]);
 
     result->op     = GGML_OP_GET_ROWS_BACK;
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_set_rows
 
-struct ggml_tensor * ggml_set_rows(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        struct ggml_tensor  * c) {
+ସଂରଚନା ggml_tensor * ggml_set_rows(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ସଂରଚନା ggml_tensor  * c) {
     GGML_ASSERT(a->ne[0] == b->ne[0]);
     GGML_ASSERT(a->ne[2] == b->ne[2]);
     GGML_ASSERT(a->ne[3] == b->ne[3]);
@@ -4038,143 +4038,143 @@ struct ggml_tensor * ggml_set_rows(
     GGML_ASSERT(ggml_is_contiguous_rows(a));
     GGML_ASSERT(ggml_is_contiguous_rows(b));
 
-    struct ggml_tensor * result = ggml_view_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = ggml_view_tensor(ctx, a);
 
     result->op     = GGML_OP_SET_ROWS;
     result->src[0] = b;
     result->src[1] = c;
     result->src[2] = a; // note: order is weird due to legacy reasons (https://github.com/ggml-org/llama.cpp/pull/16063#discussion_r2385795931)
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_diag
 
-struct ggml_tensor * ggml_diag(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
+ସଂରଚନା ggml_tensor * ggml_diag(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
     GGML_ASSERT(a->ne[1] == 1);
 
-    const int64_t ne[4] = { a->ne[0], a->ne[0], a->ne[2], a->ne[3] };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, a->type, 4, ne);
+    ଅଚଳ int64_t ne[4] = { a->ne[0], a->ne[0], a->ne[2], a->ne[3] };
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, a->type, 4, ne);
 
     result->op     = GGML_OP_DIAG;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_diag_mask_inf
 
-static struct ggml_tensor * ggml_diag_mask_inf_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   n_past,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_diag_mask_inf_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_past,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
     int32_t params[] = { n_past };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_set_op_params(result, params, ଆକାର(params));
 
     result->op     = GGML_OP_DIAG_MASK_INF;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_diag_mask_inf(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   n_past) {
-    return ggml_diag_mask_inf_impl(ctx, a, n_past, false);
+ସଂରଚନା ggml_tensor * ggml_diag_mask_inf(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_past) {
+    ଫେରନ୍ତୁ ggml_diag_mask_inf_impl(ctx, a, n_past, false);
 }
 
-struct ggml_tensor * ggml_diag_mask_inf_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   n_past) {
-    return ggml_diag_mask_inf_impl(ctx, a, n_past, true);
+ସଂରଚନା ggml_tensor * ggml_diag_mask_inf_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_past) {
+    ଫେରନ୍ତୁ ggml_diag_mask_inf_impl(ctx, a, n_past, true);
 }
 
 // ggml_diag_mask_zero
 
-static struct ggml_tensor * ggml_diag_mask_zero_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   n_past,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_diag_mask_zero_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_past,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
     int32_t params[] = { n_past };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_set_op_params(result, params, ଆକାର(params));
 
     result->op     = GGML_OP_DIAG_MASK_ZERO;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_diag_mask_zero(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   n_past) {
-    return ggml_diag_mask_zero_impl(ctx, a, n_past, false);
+ସଂରଚନା ggml_tensor * ggml_diag_mask_zero(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_past) {
+    ଫେରନ୍ତୁ ggml_diag_mask_zero_impl(ctx, a, n_past, false);
 }
 
-struct ggml_tensor * ggml_diag_mask_zero_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   n_past) {
-    return ggml_diag_mask_zero_impl(ctx, a, n_past, true);
+ସଂରଚନା ggml_tensor * ggml_diag_mask_zero_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_past) {
+    ଫେରନ୍ତୁ ggml_diag_mask_zero_impl(ctx, a, n_past, true);
 }
 
 // ggml_clamp
 
-static struct ggml_tensor * ggml_clamp_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        float                 min,
-        float                 max,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_clamp_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ଦଶମିକ                 min,
+        ଦଶମିକ                 max,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    float params[] = { min, max };
-    ggml_set_op_params(result, params, sizeof(params));
+    ଦଶମିକ params[] = { min, max };
+    ggml_set_op_params(result, params, ଆକାର(params));
 
     result->op     = GGML_OP_CLAMP;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_clamp(
-    struct ggml_context * ctx,
-    struct ggml_tensor  * a,
-    float                 min,
-    float                 max) {
-    return ggml_clamp_impl(ctx, a, min, max, false);
+ସଂରଚନା ggml_tensor * ggml_clamp(
+    ସଂରଚନା ggml_context * ctx,
+    ସଂରଚନା ggml_tensor  * a,
+    ଦଶମିକ                 min,
+    ଦଶମିକ                 max) {
+    ଫେରନ୍ତୁ ggml_clamp_impl(ctx, a, min, max, false);
 }
 
-struct ggml_tensor * ggml_clamp_inplace(
-    struct ggml_context * ctx,
-    struct ggml_tensor  * a,
-    float                 min,
-    float                 max) {
-    return ggml_clamp_impl(ctx, a, min, max, true);
+ସଂରଚନା ggml_tensor * ggml_clamp_inplace(
+    ସଂରଚନା ggml_context * ctx,
+    ସଂରଚନା ggml_tensor  * a,
+    ଦଶମିକ                 min,
+    ଦଶମିକ                 max) {
+    ଫେରନ୍ତୁ ggml_clamp_impl(ctx, a, min, max, true);
 }
 
 // ggml_soft_max
 
-static struct ggml_tensor * ggml_soft_max_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * mask,
-        float                 scale,
-        float                 max_bias,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_soft_max_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * mask,
+        ଦଶମିକ                 scale,
+        ଦଶମିକ                 max_bias,
         bool                  inplace) {
     GGML_ASSERT(ggml_is_contiguous(a));
 
-    if (mask) {
+    ଯଦି (mask) {
         GGML_ASSERT(mask->type == GGML_TYPE_F16 || mask->type == GGML_TYPE_F32);
         GGML_ASSERT(ggml_is_contiguous(mask));
         GGML_ASSERT(mask->ne[0] == a->ne[0]);
@@ -4183,62 +4183,62 @@ static struct ggml_tensor * ggml_soft_max_impl(
         GGML_ASSERT(a->ne[3]%mask->ne[3] == 0);
     }
 
-    if (max_bias > 0.0f) {
+    ଯଦି (max_bias > 0.0f) {
         GGML_ASSERT(mask);
     }
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    float params[] = { scale, max_bias };
-    ggml_set_op_params(result, params, sizeof(params));
+    ଦଶମିକ params[] = { scale, max_bias };
+    ggml_set_op_params(result, params, ଆକାର(params));
 
     result->op     = GGML_OP_SOFT_MAX;
     result->src[0] = a;
     result->src[1] = mask;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_soft_max(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_soft_max_impl(ctx, a, NULL, 1.0f, 0.0f, false);
+ସଂରଚନା ggml_tensor * ggml_soft_max(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_soft_max_impl(ctx, a, ଖାଲି, 1.0f, 0.0f, false);
 }
 
-struct ggml_tensor * ggml_soft_max_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_soft_max_impl(ctx, a, NULL, 1.0f, 0.0f, true);
+ସଂରଚନା ggml_tensor * ggml_soft_max_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a) {
+    ଫେରନ୍ତୁ ggml_soft_max_impl(ctx, a, ଖାଲି, 1.0f, 0.0f, true);
 }
 
-struct ggml_tensor * ggml_soft_max_ext(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * mask,
-        float                 scale,
-        float                 max_bias) {
-    return ggml_soft_max_impl(ctx, a, mask, scale, max_bias, false);
+ସଂରଚନା ggml_tensor * ggml_soft_max_ext(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * mask,
+        ଦଶମିକ                 scale,
+        ଦଶମିକ                 max_bias) {
+    ଫେରନ୍ତୁ ggml_soft_max_impl(ctx, a, mask, scale, max_bias, false);
 }
 
-struct ggml_tensor * ggml_soft_max_ext_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * mask,
-        float                 scale,
-        float                 max_bias) {
-    return ggml_soft_max_impl(ctx, a, mask, scale, max_bias, true);
+ସଂରଚନା ggml_tensor * ggml_soft_max_ext_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * mask,
+        ଦଶମିକ                 scale,
+        ଦଶମିକ                 max_bias) {
+    ଫେରନ୍ତୁ ggml_soft_max_impl(ctx, a, mask, scale, max_bias, true);
 }
 
-void ggml_soft_max_add_sinks(
-        struct ggml_tensor * a,
-        struct ggml_tensor * sinks) {
-    if (!sinks) {
-        a->src[2] = NULL;
-        return;
+ଶୂନ୍ୟ ggml_soft_max_add_sinks(
+        ସଂରଚନା ggml_tensor * a,
+        ସଂରଚନା ggml_tensor * sinks) {
+    ଯଦି (!sinks) {
+        a->src[2] = ଖାଲି;
+        ଫେରନ୍ତୁ;
     }
 
     GGML_ASSERT(a->op == GGML_OP_SOFT_MAX);
-    GGML_ASSERT(a->src[2] == NULL);
+    GGML_ASSERT(a->src[2] == ଖାଲି);
     GGML_ASSERT(a->src[0]->ne[2] == sinks->ne[0]);
     GGML_ASSERT(sinks->type == GGML_TYPE_F32);
 
@@ -4247,60 +4247,60 @@ void ggml_soft_max_add_sinks(
 
 // ggml_soft_max_ext_back
 
-static struct ggml_tensor * ggml_soft_max_ext_back_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        float                 scale,
-        float                 max_bias,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_soft_max_ext_back_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ଦଶମିକ                 scale,
+        ଦଶମିକ                 max_bias,
         bool                  inplace) {
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
     result->op     = GGML_OP_SOFT_MAX_BACK;
     result->src[0] = a;
     result->src[1] = b;
 
-    memcpy((float *) result->op_params + 0, &scale,    sizeof(float));
-    memcpy((float *) result->op_params + 1, &max_bias, sizeof(float));
+    memcpy((ଦଶମିକ *) result->op_params + 0, &scale,    ଆକାର(ଦଶମିକ));
+    memcpy((ଦଶମିକ *) result->op_params + 1, &max_bias, ଆକାର(ଦଶମିକ));
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_soft_max_ext_back(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        float                 scale,
-        float                 max_bias) {
-    return ggml_soft_max_ext_back_impl(ctx, a, b, scale, max_bias, false);
+ସଂରଚନା ggml_tensor * ggml_soft_max_ext_back(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ଦଶମିକ                 scale,
+        ଦଶମିକ                 max_bias) {
+    ଫେରନ୍ତୁ ggml_soft_max_ext_back_impl(ctx, a, b, scale, max_bias, false);
 }
 
-struct ggml_tensor * ggml_soft_max_ext_back_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        float                 scale,
-        float                 max_bias) {
-    return ggml_soft_max_ext_back_impl(ctx, a, b, scale, max_bias, true);
+ସଂରଚନା ggml_tensor * ggml_soft_max_ext_back_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ଦଶମିକ                 scale,
+        ଦଶମିକ                 max_bias) {
+    ଫେରନ୍ତୁ ggml_soft_max_ext_back_impl(ctx, a, b, scale, max_bias, true);
 }
 
 // ggml_rope
 
-static struct ggml_tensor * ggml_rope_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        struct ggml_tensor  * c,
-        int                   n_dims,
-        int                   sections[GGML_MROPE_SECTIONS],
-        int                   mode,
-        int                   n_ctx_orig,
-        float                 freq_base,
-        float                 freq_scale,
-        float                 ext_factor,
-        float                 attn_factor,
-        float                 beta_fast,
-        float                 beta_slow,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_rope_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ସଂରଚନା ggml_tensor  * c,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_dims,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   sections[GGML_MROPE_SECTIONS],
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   mode,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_ctx_orig,
+        ଦଶମିକ                 freq_base,
+        ଦଶମିକ                 freq_scale,
+        ଦଶମିକ                 ext_factor,
+        ଦଶମିକ                 attn_factor,
+        ଦଶମିକ                 beta_fast,
+        ଦଶମିକ                 beta_slow,
         bool                  inplace) {
     GGML_ASSERT((mode & 1) == 0 && "mode & 1 == 1 is no longer supported");
 
@@ -4308,344 +4308,344 @@ static struct ggml_tensor * ggml_rope_impl(
     GGML_ASSERT(b->type == GGML_TYPE_I32);
 
     bool mrope_used = mode & GGML_ROPE_TYPE_MROPE;
-    if (mrope_used) {
+    ଯଦି (mrope_used) {
         GGML_ASSERT(a->ne[2] * 4 == b->ne[0]); // mrope expecting 4 position ids per token
-    } else {
+    } ଅନ୍ୟଥା {
         GGML_ASSERT(a->ne[2] == b->ne[0]);
     }
 
-    if (c) {
+    ଯଦି (c) {
         GGML_ASSERT(c->type == GGML_TYPE_F32);
         GGML_ASSERT(c->ne[0] >= n_dims / 2);
     }
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
     int32_t params[16] = { /*n_past*/ 0, n_dims, mode, /*n_ctx*/ 0, n_ctx_orig };
-    memcpy(params +  5, &freq_base,    sizeof(float));
-    memcpy(params +  6, &freq_scale,   sizeof(float));
-    memcpy(params +  7, &ext_factor,   sizeof(float));
-    memcpy(params +  8, &attn_factor,  sizeof(float));
-    memcpy(params +  9, &beta_fast,    sizeof(float));
-    memcpy(params + 10, &beta_slow,    sizeof(float));
-    if (mrope_used && sections) {
-        memcpy(params + 11, sections,  sizeof(int32_t) * GGML_MROPE_SECTIONS);
-    } else {
-        memset(params + 11, 0,         sizeof(int32_t) * GGML_MROPE_SECTIONS);
+    memcpy(params +  5, &freq_base,    ଆକାର(ଦଶମିକ));
+    memcpy(params +  6, &freq_scale,   ଆକାର(ଦଶମିକ));
+    memcpy(params +  7, &ext_factor,   ଆକାର(ଦଶମିକ));
+    memcpy(params +  8, &attn_factor,  ଆକାର(ଦଶମିକ));
+    memcpy(params +  9, &beta_fast,    ଆକାର(ଦଶମିକ));
+    memcpy(params + 10, &beta_slow,    ଆକାର(ଦଶମିକ));
+    ଯଦି (mrope_used && sections) {
+        memcpy(params + 11, sections,  ଆକାର(int32_t) * GGML_MROPE_SECTIONS);
+    } ଅନ୍ୟଥା {
+        memset(params + 11, 0,         ଆକାର(int32_t) * GGML_MROPE_SECTIONS);
     }
     params[15] = 0; // n_offs, set via ggml_rope_set_offset()
 
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_set_op_params(result, params, ଆକାର(params));
 
     result->op     = GGML_OP_ROPE;
     result->src[0] = a;
     result->src[1] = b;
     result->src[2] = c;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_rope(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   n_dims,
-        int                   mode) {
-    return ggml_rope_impl(
-        ctx, a, b, NULL, n_dims, NULL, mode, 0, 10000.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, false
+ସଂରଚନା ggml_tensor * ggml_rope(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_dims,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   mode) {
+    ଫେରନ୍ତୁ ggml_rope_impl(
+        ctx, a, b, ଖାଲି, n_dims, ଖାଲି, mode, 0, 10000.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, false
     );
 }
 
-struct ggml_tensor * ggml_rope_multi(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        struct ggml_tensor  * c,
-        int                   n_dims,
-        int                   sections[GGML_MROPE_SECTIONS],
-        int                   mode,
-        int                   n_ctx_orig,
-        float                 freq_base,
-        float                 freq_scale,
-        float                 ext_factor,
-        float                 attn_factor,
-        float                 beta_fast,
-        float                 beta_slow) {
-    return ggml_rope_impl(
+ସଂରଚନା ggml_tensor * ggml_rope_multi(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ସଂରଚନା ggml_tensor  * c,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_dims,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   sections[GGML_MROPE_SECTIONS],
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   mode,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_ctx_orig,
+        ଦଶମିକ                 freq_base,
+        ଦଶମିକ                 freq_scale,
+        ଦଶମିକ                 ext_factor,
+        ଦଶମିକ                 attn_factor,
+        ଦଶମିକ                 beta_fast,
+        ଦଶମିକ                 beta_slow) {
+    ଫେରନ୍ତୁ ggml_rope_impl(
         ctx, a, b, c, n_dims, sections, mode, n_ctx_orig, freq_base, freq_scale,
         ext_factor, attn_factor, beta_fast, beta_slow, false
     );
 }
 
-struct ggml_tensor * ggml_rope_multi_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        struct ggml_tensor  * c,
-        int                   n_dims,
-        int                   sections[GGML_MROPE_SECTIONS],
-        int                   mode,
-        int                   n_ctx_orig,
-        float                 freq_base,
-        float                 freq_scale,
-        float                 ext_factor,
-        float                 attn_factor,
-        float                 beta_fast,
-        float                 beta_slow) {
-    return ggml_rope_impl(
+ସଂରଚନା ggml_tensor * ggml_rope_multi_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ସଂରଚନା ggml_tensor  * c,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_dims,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   sections[GGML_MROPE_SECTIONS],
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   mode,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_ctx_orig,
+        ଦଶମିକ                 freq_base,
+        ଦଶମିକ                 freq_scale,
+        ଦଶମିକ                 ext_factor,
+        ଦଶମିକ                 attn_factor,
+        ଦଶମିକ                 beta_fast,
+        ଦଶମିକ                 beta_slow) {
+    ଫେରନ୍ତୁ ggml_rope_impl(
         ctx, a, b, c, n_dims, sections, mode, n_ctx_orig, freq_base, freq_scale,
         ext_factor, attn_factor, beta_fast, beta_slow, true
     );
 }
 
-struct ggml_tensor * ggml_rope_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   n_dims,
-        int                   mode) {
-    return ggml_rope_impl(
-        ctx, a, b, NULL, n_dims, NULL, mode, 0, 10000.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, true
+ସଂରଚନା ggml_tensor * ggml_rope_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_dims,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   mode) {
+    ଫେରନ୍ତୁ ggml_rope_impl(
+        ctx, a, b, ଖାଲି, n_dims, ଖାଲି, mode, 0, 10000.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, true
     );
 }
 
-struct ggml_tensor * ggml_rope_ext(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        struct ggml_tensor  * c,
-        int                   n_dims,
-        int                   mode,
-        int                   n_ctx_orig,
-        float                 freq_base,
-        float                 freq_scale,
-        float                 ext_factor,
-        float                 attn_factor,
-        float                 beta_fast,
-        float                 beta_slow) {
-    return ggml_rope_impl(
-        ctx, a, b, c, n_dims, NULL, mode, n_ctx_orig, freq_base, freq_scale,
+ସଂରଚନା ggml_tensor * ggml_rope_ext(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ସଂରଚନା ggml_tensor  * c,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_dims,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   mode,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_ctx_orig,
+        ଦଶମିକ                 freq_base,
+        ଦଶମିକ                 freq_scale,
+        ଦଶମିକ                 ext_factor,
+        ଦଶମିକ                 attn_factor,
+        ଦଶମିକ                 beta_fast,
+        ଦଶମିକ                 beta_slow) {
+    ଫେରନ୍ତୁ ggml_rope_impl(
+        ctx, a, b, c, n_dims, ଖାଲି, mode, n_ctx_orig, freq_base, freq_scale,
         ext_factor, attn_factor, beta_fast, beta_slow, false
     );
 }
 
-struct ggml_tensor * ggml_rope_ext_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        struct ggml_tensor  * c,
-        int                   n_dims,
-        int                   mode,
-        int                   n_ctx_orig,
-        float                 freq_base,
-        float                 freq_scale,
-        float                 ext_factor,
-        float                 attn_factor,
-        float                 beta_fast,
-        float                 beta_slow) {
-    return ggml_rope_impl(
-        ctx, a, b, c, n_dims, NULL, mode, n_ctx_orig, freq_base, freq_scale,
+ସଂରଚନା ggml_tensor * ggml_rope_ext_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ସଂରଚନା ggml_tensor  * c,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_dims,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   mode,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_ctx_orig,
+        ଦଶମିକ                 freq_base,
+        ଦଶମିକ                 freq_scale,
+        ଦଶମିକ                 ext_factor,
+        ଦଶମିକ                 attn_factor,
+        ଦଶମିକ                 beta_fast,
+        ଦଶମିକ                 beta_slow) {
+    ଫେରନ୍ତୁ ggml_rope_impl(
+        ctx, a, b, c, n_dims, ଖାଲି, mode, n_ctx_orig, freq_base, freq_scale,
         ext_factor, attn_factor, beta_fast, beta_slow, true
     );
 }
 
-struct ggml_tensor * ggml_rope_custom(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   n_dims,
-        int                   mode,
-        int                   n_ctx_orig,
-        float                 freq_base,
-        float                 freq_scale,
-        float                 ext_factor,
-        float                 attn_factor,
-        float                 beta_fast,
-        float                 beta_slow) {
-    return ggml_rope_impl(
-        ctx, a, b, NULL, n_dims, NULL, mode, n_ctx_orig, freq_base, freq_scale,
+ସଂରଚନା ggml_tensor * ggml_rope_custom(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_dims,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   mode,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_ctx_orig,
+        ଦଶମିକ                 freq_base,
+        ଦଶମିକ                 freq_scale,
+        ଦଶମିକ                 ext_factor,
+        ଦଶମିକ                 attn_factor,
+        ଦଶମିକ                 beta_fast,
+        ଦଶମିକ                 beta_slow) {
+    ଫେରନ୍ତୁ ggml_rope_impl(
+        ctx, a, b, ଖାଲି, n_dims, ଖାଲି, mode, n_ctx_orig, freq_base, freq_scale,
         ext_factor, attn_factor, beta_fast, beta_slow, false
     );
 }
 
-struct ggml_tensor * ggml_rope_custom_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   n_dims,
-        int                   mode,
-        int                   n_ctx_orig,
-        float                 freq_base,
-        float                 freq_scale,
-        float                 ext_factor,
-        float                 attn_factor,
-        float                 beta_fast,
-        float                 beta_slow) {
-    return ggml_rope_impl(
-        ctx, a, b, NULL, n_dims, NULL, mode, n_ctx_orig, freq_base, freq_scale,
+ସଂରଚନା ggml_tensor * ggml_rope_custom_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_dims,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   mode,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_ctx_orig,
+        ଦଶମିକ                 freq_base,
+        ଦଶମିକ                 freq_scale,
+        ଦଶମିକ                 ext_factor,
+        ଦଶମିକ                 attn_factor,
+        ଦଶମିକ                 beta_fast,
+        ଦଶମିକ                 beta_slow) {
+    ଫେରନ୍ତୁ ggml_rope_impl(
+        ctx, a, b, ଖାଲି, n_dims, ଖାଲି, mode, n_ctx_orig, freq_base, freq_scale,
         ext_factor, attn_factor, beta_fast, beta_slow, true
     );
 }
 
 // Apparently solving `n_rot = 2pi * x * base^((2 * max_pos_emb) / n_dims)` for x, we get
 // `corr_dim(n_rot) = n_dims * log(max_pos_emb / (n_rot * 2pi)) / (2 * log(base))`
-static float ggml_rope_yarn_corr_dim(int n_dims, int n_ctx_orig, float n_rot, float base) {
-    return n_dims * logf(n_ctx_orig / (n_rot * 2 * (float)M_PI)) / (2 * logf(base));
+ସ୍ଥିର ଦଶମିକ ggml_rope_yarn_corr_dim(ପୂର୍ଣ୍ଣସଂଖ୍ୟା n_dims, ପୂର୍ଣ୍ଣସଂଖ୍ୟା n_ctx_orig, ଦଶମିକ n_rot, ଦଶମିକ base) {
+    ଫେରନ୍ତୁ n_dims * logf(n_ctx_orig / (n_rot * 2 * (ଦଶମିକ)M_PI)) / (2 * logf(base));
 }
 
-void ggml_rope_yarn_corr_dims(
-    int n_dims, int n_ctx_orig, float freq_base, float beta_fast, float beta_slow, float dims[2]
+ଶୂନ୍ୟ ggml_rope_yarn_corr_dims(
+    ପୂର୍ଣ୍ଣସଂଖ୍ୟା n_dims, ପୂର୍ଣ୍ଣସଂଖ୍ୟା n_ctx_orig, ଦଶମିକ freq_base, ଦଶମିକ beta_fast, ଦଶମିକ beta_slow, ଦଶମିକ dims[2]
 ) {
     // start and end correction dims
-    float start = floorf(ggml_rope_yarn_corr_dim(n_dims, n_ctx_orig, beta_fast, freq_base));
-    float end   =  ceilf(ggml_rope_yarn_corr_dim(n_dims, n_ctx_orig, beta_slow, freq_base));
+    ଦଶମିକ start = floorf(ggml_rope_yarn_corr_dim(n_dims, n_ctx_orig, beta_fast, freq_base));
+    ଦଶମିକ end   =  ceilf(ggml_rope_yarn_corr_dim(n_dims, n_ctx_orig, beta_slow, freq_base));
     dims[0] = MAX(0, start);
     dims[1] = MIN(n_dims - 1, end);
 }
 
 // ggml_rope_back
 
-struct ggml_tensor * ggml_rope_ext_back(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        struct ggml_tensor  * c,
-        int                   n_dims,
-        int                   mode,
-        int                   n_ctx_orig,
-        float                 freq_base,
-        float                 freq_scale,
-        float                 ext_factor,
-        float                 attn_factor,
-        float                 beta_fast,
-        float                 beta_slow) {
-    struct ggml_tensor * result = ggml_rope_ext(
+ସଂରଚନା ggml_tensor * ggml_rope_ext_back(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ସଂରଚନା ggml_tensor  * c,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_dims,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   mode,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_ctx_orig,
+        ଦଶମିକ                 freq_base,
+        ଦଶମିକ                 freq_scale,
+        ଦଶମିକ                 ext_factor,
+        ଦଶମିକ                 attn_factor,
+        ଦଶମିକ                 beta_fast,
+        ଦଶମିକ                 beta_slow) {
+    ସଂରଚନା ggml_tensor * result = ggml_rope_ext(
         ctx, a, b, c, n_dims, mode, n_ctx_orig, freq_base, freq_scale, ext_factor, attn_factor, beta_fast, beta_slow);
     result->op = GGML_OP_ROPE_BACK;
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_rope_multi_back(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        struct ggml_tensor  * c,
-        int                   n_dims,
-        int                   sections[4],
-        int                   mode,
-        int                   n_ctx_orig,
-        float                 freq_base,
-        float                 freq_scale,
-        float                 ext_factor,
-        float                 attn_factor,
-        float                 beta_fast,
-        float                 beta_slow) {
-    struct ggml_tensor * result = ggml_rope_multi(
+ସଂରଚନା ggml_tensor * ggml_rope_multi_back(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ସଂରଚନା ggml_tensor  * c,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_dims,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   sections[4],
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   mode,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_ctx_orig,
+        ଦଶମିକ                 freq_base,
+        ଦଶମିକ                 freq_scale,
+        ଦଶମିକ                 ext_factor,
+        ଦଶମିକ                 attn_factor,
+        ଦଶମିକ                 beta_fast,
+        ଦଶମିକ                 beta_slow) {
+    ସଂରଚନା ggml_tensor * result = ggml_rope_multi(
         ctx, a, b, c, n_dims, sections, mode, n_ctx_orig, freq_base, freq_scale, ext_factor, attn_factor, beta_fast, beta_slow);
     result->op = GGML_OP_ROPE_BACK;
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_rope_set_offset(
-        struct ggml_tensor  * a,
-        int                   n_offs) {
+ସଂରଚନା ggml_tensor * ggml_rope_set_offset(
+        ସଂରଚନା ggml_tensor  * a,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_offs) {
     GGML_ASSERT(a->op == GGML_OP_ROPE || a->op == GGML_OP_ROPE_BACK);
     GGML_ASSERT(n_offs >= 0);
 
-    const int32_t mode = ggml_get_op_params_i32(a, 2);
+    ଅଚଳ int32_t mode = ggml_get_op_params_i32(a, 2);
     GGML_ASSERT(mode != GGML_ROPE_TYPE_VISION);
 
     ggml_set_op_params_i32(a, 15, n_offs);
-    return a;
+    ଫେରନ୍ତୁ a;
 }
 
-static int64_t ggml_calc_conv_output_size(int64_t ins, int64_t ks, int s, int p, int d) {
-    return (ins + 2 * p - d * (ks - 1) - 1) / s + 1;
+ସ୍ଥିର int64_t ggml_calc_conv_output_size(int64_t ins, int64_t ks, ପୂର୍ଣ୍ଣସଂଖ୍ୟା s, ପୂର୍ଣ୍ଣସଂଖ୍ୟା p, ପୂର୍ଣ୍ଣସଂଖ୍ୟା d) {
+    ଫେରନ୍ତୁ (ins + 2 * p - d * (ks - 1) - 1) / s + 1;
 }
 
 // im2col: [N, IC, IH, IW] => [N, OH, OW, IC*KH*KW]
 // a: [OC，IC, KH, KW]
 // b: [N, IC, IH, IW]
 // result: [N, OH, OW, IC*KH*KW]
-struct ggml_tensor * ggml_im2col(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   s0,
-        int                   s1,
-        int                   p0,
-        int                   p1,
-        int                   d0,
-        int                   d1,
+ସଂରଚନା ggml_tensor * ggml_im2col(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s1,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p1,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   d0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   d1,
         bool                  is_2D,
-        enum ggml_type        dst_type) {
-    if (is_2D) {
+        ଗଣନା ggml_type        dst_type) {
+    ଯଦି (is_2D) {
         GGML_ASSERT(a->ne[2] == b->ne[2]);
-    } else {
+    } ଅନ୍ୟଥା {
         //GGML_ASSERT(b->ne[1] % a->ne[1] == 0);
         GGML_ASSERT(b->ne[1] == a->ne[1]);
         GGML_ASSERT(b->ne[3] == 1);
     }
 
-    const int64_t OH = is_2D ? ggml_calc_conv_output_size(b->ne[1], a->ne[1], s1, p1, d1) : 0;
-    const int64_t OW =         ggml_calc_conv_output_size(b->ne[0], a->ne[0], s0, p0, d0);
+    ଅଚଳ int64_t OH = is_2D ? ggml_calc_conv_output_size(b->ne[1], a->ne[1], s1, p1, d1) : 0;
+    ଅଚଳ int64_t OW =         ggml_calc_conv_output_size(b->ne[0], a->ne[0], s0, p0, d0);
 
     GGML_ASSERT((!is_2D || OH > 0) && "b too small compared to a");
     GGML_ASSERT((OW > 0)           && "b too small compared to a");
 
-    const int64_t ne[4] = {
+    ଅଚଳ int64_t ne[4] = {
         is_2D ? (a->ne[2] * a->ne[1] * a->ne[0]) : a->ne[1] * a->ne[0],
         OW,
         is_2D ? OH : b->ne[2],
         is_2D ?      b->ne[3] : 1,
     };
 
-    struct ggml_tensor * result = ggml_new_tensor(ctx, dst_type, 4, ne);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, dst_type, 4, ne);
     int32_t params[] = { s0, s1, p0, p1, d0, d1, (is_2D ? 1 : 0) };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_set_op_params(result, params, ଆକାର(params));
 
     result->op     = GGML_OP_IM2COL;
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_im2col_back(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ସଂରଚନା ggml_tensor * ggml_im2col_back(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
         int64_t             * ne,
-        int                   s0,
-        int                   s1,
-        int                   p0,
-        int                   p1,
-        int                   d0,
-        int                   d1,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s1,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p1,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   d0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   d1,
         bool                  is_2D) {
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
     int32_t params[] = { s0, s1, p0, p1, d0, d1, (is_2D ? 1 : 0) };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_set_op_params(result, params, ଆକାର(params));
 
     result->op     = GGML_OP_IM2COL_BACK;
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_conv_1d
 
-struct ggml_tensor * ggml_conv_1d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   s0,
-        int                   p0,
-        int                   d0) {
-    struct ggml_tensor * im2col = ggml_im2col(ctx, a, b, s0, 0, p0, 0, d0, 0, false, a->type == GGML_TYPE_BF16 ? GGML_TYPE_F32 : GGML_TYPE_F16); // [N, OL, IC * K]
+ସଂରଚନା ggml_tensor * ggml_conv_1d(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   d0) {
+    ସଂରଚନା ggml_tensor * im2col = ggml_im2col(ctx, a, b, s0, 0, p0, 0, d0, 0, false, a->type == GGML_TYPE_BF16 ? GGML_TYPE_F32 : GGML_TYPE_F16); // [N, OL, IC * K]
 
-    struct ggml_tensor * result =
+    ସଂରଚନା ggml_tensor * result =
         ggml_mul_mat(ctx,
                 ggml_reshape_2d(ctx, im2col, im2col->ne[0], (im2col->ne[2] * im2col->ne[1])), // [N, OL, IC * K] => [N*OL, IC * K]
                 ggml_reshape_2d(ctx, a, (a->ne[0] * a->ne[1]), a->ne[2]));                    // [OC，IC, K] => [OC, IC * K]
@@ -4653,59 +4653,59 @@ struct ggml_tensor * ggml_conv_1d(
     result = ggml_reshape_3d(ctx, result, im2col->ne[1], im2col->ne[2], a->ne[2]); // [OC, N, OL]
     result = ggml_cont(ctx, ggml_permute(ctx, result, 0, 2, 1, 3));                // [N, OC, OL]
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_conv_1d_ph
 
-struct ggml_tensor* ggml_conv_1d_ph(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   s,
-        int                   d) {
-    return ggml_conv_1d(ctx, a, b, s, a->ne[0] / 2, d);
+ସଂରଚନା ggml_tensor* ggml_conv_1d_ph(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   d) {
+    ଫେରନ୍ତୁ ggml_conv_1d(ctx, a, b, s, a->ne[0] / 2, d);
 }
 
 // ggml_conv_1d_dw
 
-struct ggml_tensor * ggml_conv_1d_dw(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   s0,
-        int                   p0,
-        int                   d0) {
-    struct ggml_tensor * new_b = ggml_reshape_4d(ctx, b, b->ne[0], 1, b->ne[1], b->ne[2]);
+ସଂରଚନା ggml_tensor * ggml_conv_1d_dw(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   d0) {
+    ସଂରଚନା ggml_tensor * new_b = ggml_reshape_4d(ctx, b, b->ne[0], 1, b->ne[1], b->ne[2]);
 
-    struct ggml_tensor * im2col = ggml_im2col(ctx, a, new_b, s0, 0, p0, 0, d0, 0, false, a->type == GGML_TYPE_BF16 ? GGML_TYPE_F32 : GGML_TYPE_F16);
+    ସଂରଚନା ggml_tensor * im2col = ggml_im2col(ctx, a, new_b, s0, 0, p0, 0, d0, 0, false, a->type == GGML_TYPE_BF16 ? GGML_TYPE_F32 : GGML_TYPE_F16);
 
-    struct ggml_tensor * result = ggml_mul_mat(ctx, im2col, a);
+    ସଂରଚନା ggml_tensor * result = ggml_mul_mat(ctx, im2col, a);
 
     result = ggml_reshape_3d(ctx, result, result->ne[0], result->ne[2], 1);
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_conv_1d_dw_ph
 
-struct ggml_tensor * ggml_conv_1d_dw_ph(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   s0,
-        int                   d0) {
-    return ggml_conv_1d_dw(ctx, a, b, s0, a->ne[0] / 2, d0);
+ସଂରଚନା ggml_tensor * ggml_conv_1d_dw_ph(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   d0) {
+    ଫେରନ୍ତୁ ggml_conv_1d_dw(ctx, a, b, s0, a->ne[0] / 2, d0);
 }
 
 // ggml_col2im_1d
 
-struct ggml_tensor * ggml_col2im_1d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   s0,
-        int                   oc,
-        int                   p0) {
+ସଂରଚନା ggml_tensor * ggml_col2im_1d(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   oc,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p0) {
     GGML_ASSERT(ggml_is_matrix(a));
     GGML_ASSERT(ggml_is_contiguous(a));
     GGML_ASSERT(a->type == GGML_TYPE_F32 || a->type == GGML_TYPE_F16 || a->type == GGML_TYPE_BF16);
@@ -4713,39 +4713,39 @@ struct ggml_tensor * ggml_col2im_1d(
     GGML_ASSERT(oc > 0);
     GGML_ASSERT(p0 >= 0);
 
-    const int64_t K_OC = a->ne[0];
-    const int64_t T_in = a->ne[1];
-    const int64_t K = K_OC / oc;
-    const int64_t T_out = (T_in - 1) * s0 + K - 2 * p0;
+    ଅଚଳ int64_t K_OC = a->ne[0];
+    ଅଚଳ int64_t T_in = a->ne[1];
+    ଅଚଳ int64_t K = K_OC / oc;
+    ଅଚଳ int64_t T_out = (T_in - 1) * s0 + K - 2 * p0;
 
     GGML_ASSERT(K_OC == K * oc);  // a->ne[0] must be a whole number of oc blocks
     GGML_ASSERT(K > 0 && T_out > 0);
 
-    const int64_t ne[4] = { T_out, oc, 1, 1 };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, a->type, 2, ne);
+    ଅଚଳ int64_t ne[4] = { T_out, oc, 1, 1 };
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, a->type, 2, ne);
 
     int32_t params[] = { s0, (int32_t)oc, (int32_t)p0 };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_set_op_params(result, params, ଆକାର(params));
 
     result->op     = GGML_OP_COL2IM_1D;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_conv_transpose_1d
 
-static int64_t ggml_calc_conv_transpose_1d_output_size(int64_t ins, int64_t ks, int s, int p, int d) {
-    return (ins - 1) * s - 2 * p + d * (ks - 1) + 1;
+ସ୍ଥିର int64_t ggml_calc_conv_transpose_1d_output_size(int64_t ins, int64_t ks, ପୂର୍ଣ୍ଣସଂଖ୍ୟା s, ପୂର୍ଣ୍ଣସଂଖ୍ୟା p, ପୂର୍ଣ୍ଣସଂଖ୍ୟା d) {
+    ଫେରନ୍ତୁ (ins - 1) * s - 2 * p + d * (ks - 1) + 1;
 }
 
-GGML_API struct ggml_tensor * ggml_conv_transpose_1d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   s0,
-        int                   p0,
-        int                   d0) {
+GGML_API ସଂରଚନା ggml_tensor * ggml_conv_transpose_1d(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   d0) {
     GGML_ASSERT(ggml_is_matrix(b));
     GGML_ASSERT(a->ne[2] == b->ne[1]);
     GGML_ASSERT(a->ne[3] == 1);
@@ -4753,20 +4753,20 @@ GGML_API struct ggml_tensor * ggml_conv_transpose_1d(
     GGML_ASSERT(p0 == 0);
     GGML_ASSERT(d0 == 1);
 
-    const int64_t ne[4] = {
+    ଅଚଳ int64_t ne[4] = {
         ggml_calc_conv_transpose_1d_output_size(b->ne[0], a->ne[0], s0, 0 /*p0*/, 1 /*d0*/),
         a->ne[1], b->ne[2], 1,
     };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
     int32_t params[] = { s0, p0, d0 };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_set_op_params(result, params, ଆକାର(params));
 
     result->op     = GGML_OP_CONV_TRANSPOSE_1D;
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_conv_2d
@@ -4774,19 +4774,19 @@ GGML_API struct ggml_tensor * ggml_conv_transpose_1d(
 // a: [OC，IC, KH, KW]
 // b: [N, IC, IH, IW]
 // result: [N, OC, OH, OW]
-struct ggml_tensor * ggml_conv_2d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   s0,
-        int                   s1,
-        int                   p0,
-        int                   p1,
-        int                   d0,
-        int                   d1) {
-    struct ggml_tensor * im2col = ggml_im2col(ctx, a, b, s0, s1, p0, p1, d0, d1, true, a->type == GGML_TYPE_BF16 ? GGML_TYPE_F32 : GGML_TYPE_F16); // [N, OH, OW, IC * KH * KW]
+ସଂରଚନା ggml_tensor * ggml_conv_2d(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s1,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p1,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   d0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   d1) {
+    ସଂରଚନା ggml_tensor * im2col = ggml_im2col(ctx, a, b, s0, s1, p0, p1, d0, d1, true, a->type == GGML_TYPE_BF16 ? GGML_TYPE_F32 : GGML_TYPE_F16); // [N, OH, OW, IC * KH * KW]
 
-    struct ggml_tensor * result =
+    ସଂରଚନା ggml_tensor * result =
         ggml_mul_mat(ctx,
                 ggml_reshape_2d(ctx, im2col, im2col->ne[0],  im2col->ne[3] * im2col->ne[2] * im2col->ne[1]), // [N, OH, OW, IC * KH * KW] => [N*OH*OW, IC * KH * KW]
                 ggml_reshape_2d(ctx, a, (a->ne[0] * a->ne[1] * a->ne[2]),  a->ne[3]));                       // [OC，IC, KH, KW] => [OC, IC * KH * KW]
@@ -4795,82 +4795,82 @@ struct ggml_tensor * ggml_conv_2d(
     result = ggml_cont(ctx, ggml_permute(ctx, result, 0, 1, 3, 2)); // [N, OC, OH, OW]
 
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // a: [OC*IC, KD, KH, KW]
 // b: [N*IC, ID, IH, IW]
 // result: [N*OD, OH, OW, IC * KD * KH * KW]
-struct ggml_tensor * ggml_im2col_3d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ସଂରଚନା ggml_tensor * ggml_im2col_3d(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
         int64_t               IC,
-        int                   s0, // stride width
-        int                   s1, // stride height
-        int                   s2, // stride depth
-        int                   p0, // padding width
-        int                   p1, // padding height
-        int                   p2, // padding depth
-        int                   d0, // dilation width
-        int                   d1, // dilation height
-        int                   d2, // dilation depth
-        enum ggml_type        dst_type) {
-    const int64_t N = b->ne[3] / IC;
-    const int64_t ID = b->ne[2];
-    const int64_t IH = b->ne[1];
-    const int64_t IW = b->ne[0];
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s0, // stride width
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s1, // stride height
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s2, // stride depth
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p0, // padding width
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p1, // padding height
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p2, // padding depth
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   d0, // dilation width
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   d1, // dilation height
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   d2, // dilation depth
+        ଗଣନା ggml_type        dst_type) {
+    ଅଚଳ int64_t N = b->ne[3] / IC;
+    ଅଚଳ int64_t ID = b->ne[2];
+    ଅଚଳ int64_t IH = b->ne[1];
+    ଅଚଳ int64_t IW = b->ne[0];
 
-    const int64_t OC = a->ne[3] / IC;
+    ଅଚଳ int64_t OC = a->ne[3] / IC;
     UNUSED(OC);
-    const int64_t KD = a->ne[2];
-    const int64_t KH = a->ne[1];
-    const int64_t KW = a->ne[0];
-    const int64_t OD = ggml_calc_conv_output_size(ID, KD, s2, p2, d2);
-    const int64_t OH = ggml_calc_conv_output_size(IH, KH, s1, p1, d1);
-    const int64_t OW = ggml_calc_conv_output_size(IW, KW, s0, p0, d0);
+    ଅଚଳ int64_t KD = a->ne[2];
+    ଅଚଳ int64_t KH = a->ne[1];
+    ଅଚଳ int64_t KW = a->ne[0];
+    ଅଚଳ int64_t OD = ggml_calc_conv_output_size(ID, KD, s2, p2, d2);
+    ଅଚଳ int64_t OH = ggml_calc_conv_output_size(IH, KH, s1, p1, d1);
+    ଅଚଳ int64_t OW = ggml_calc_conv_output_size(IW, KW, s0, p0, d0);
 
     GGML_ASSERT((OD > 0)  && "b too small compared to a");
     GGML_ASSERT((OH > 0)  && "b too small compared to a");
     GGML_ASSERT((OW > 0)  && "b too small compared to a");
 
 
-    const int64_t ne[4] = {KW*KH*KD*IC, OW, OH, OD*N};
+    ଅଚଳ int64_t ne[4] = {KW*KH*KD*IC, OW, OH, OD*N};
 
-    struct ggml_tensor * result = ggml_new_tensor(ctx, dst_type, 4, ne);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, dst_type, 4, ne);
     int32_t params[] = { s0, s1, s2, p0, p1, p2, d0, d1, d2, (int32_t)IC};
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_set_op_params(result, params, ଆକାର(params));
 
     result->op     = GGML_OP_IM2COL_3D;
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // a: [OC*IC, KD, KH, KW]
 // b: [N*IC, ID, IH, IW]
 // result: [N*OC, OD, OH, OW]
-struct ggml_tensor * ggml_conv_3d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
+ସଂରଚନା ggml_tensor * ggml_conv_3d(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
         int64_t               IC,
-        int                   s0, // stride width
-        int                   s1, // stride height
-        int                   s2, // stride depth
-        int                   p0, // padding width
-        int                   p1, // padding height
-        int                   p2, // padding depth
-        int                   d0, // dilation width
-        int                   d1, // dilation height
-        int                   d2  // dilation depth
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s0, // stride width
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s1, // stride height
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s2, // stride depth
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p0, // padding width
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p1, // padding height
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p2, // padding depth
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   d0, // dilation width
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   d1, // dilation height
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   d2  // dilation depth
         ) {
-    struct ggml_tensor * im2col = ggml_im2col_3d(ctx, a, b, IC, s0, s1, s2, p0, p1, p2, d0, d1, d2, a->type == GGML_TYPE_BF16 ? GGML_TYPE_F32 : GGML_TYPE_F16); // [N*OD, OH, OW, IC * KD * KH * KW]
+    ସଂରଚନା ggml_tensor * im2col = ggml_im2col_3d(ctx, a, b, IC, s0, s1, s2, p0, p1, p2, d0, d1, d2, a->type == GGML_TYPE_BF16 ? GGML_TYPE_F32 : GGML_TYPE_F16); // [N*OD, OH, OW, IC * KD * KH * KW]
 
     int64_t OC = a->ne[3] / IC;
     int64_t N = b->ne[3] / IC;
-    struct ggml_tensor * result =
+    ସଂରଚନା ggml_tensor * result =
         ggml_mul_mat(ctx,
                 ggml_reshape_2d(ctx, im2col, im2col->ne[0], im2col->ne[3] * im2col->ne[2] * im2col->ne[1]), // [N*OD, OH, OW, IC * KD * KH * KW] => [N*OD*OH*OW, IC * KD * KH * KW]
                 ggml_reshape_2d(ctx, a, (a->ne[0] * a->ne[1] * a->ne[2] * IC), OC));                          // [OC*IC, KD, KH, KW] => [OC, IC * KD * KH * KW]
@@ -4880,64 +4880,64 @@ struct ggml_tensor * ggml_conv_3d(
     result = ggml_cont(ctx, ggml_permute(ctx, result, 0, 1, 3, 2)); // [N, OC, OD, OH*OW]
     result = ggml_reshape_4d(ctx, result, im2col->ne[1], im2col->ne[2], OD, OC * N); // [N*OC, OD, OH, OW]
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_conv_2d_sk_p0
 
-struct ggml_tensor * ggml_conv_2d_sk_p0(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_conv_2d(ctx, a, b, a->ne[0], a->ne[1], 0, 0, 1, 1);
+ସଂରଚନା ggml_tensor * ggml_conv_2d_sk_p0(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b) {
+    ଫେରନ୍ତୁ ggml_conv_2d(ctx, a, b, a->ne[0], a->ne[1], 0, 0, 1, 1);
 }
 
 // ggml_conv_2d_s1_ph
 
-struct ggml_tensor * ggml_conv_2d_s1_ph(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_conv_2d(ctx, a, b, 1, 1, a->ne[0] / 2, a->ne[1] / 2, 1, 1);
+ସଂରଚନା ggml_tensor * ggml_conv_2d_s1_ph(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b) {
+    ଫେରନ୍ତୁ ggml_conv_2d(ctx, a, b, 1, 1, a->ne[0] / 2, a->ne[1] / 2, 1, 1);
 }
 
 // ggml_conv_2d_dw
 
-struct ggml_tensor * ggml_conv_2d_dw(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   s0,
-        int                   s1,
-        int                   p0,
-        int                   p1,
-        int                   d0,
-        int                   d1) {
-    struct ggml_tensor * new_a = ggml_reshape_4d(ctx, a, a->ne[0], a->ne[1], 1, a->ne[2] * a->ne[3]);
-    struct ggml_tensor * im2col = ggml_im2col(ctx, new_a,
+ସଂରଚନା ggml_tensor * ggml_conv_2d_dw(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s1,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p1,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   d0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   d1) {
+    ସଂରଚନା ggml_tensor * new_a = ggml_reshape_4d(ctx, a, a->ne[0], a->ne[1], 1, a->ne[2] * a->ne[3]);
+    ସଂରଚନା ggml_tensor * im2col = ggml_im2col(ctx, new_a,
                                         ggml_reshape_4d(ctx, b, b->ne[0], b->ne[1], 1, b->ne[2] * b->ne[3]),
                                         s0, s1, p0, p1, d0, d1, true, a->type == GGML_TYPE_BF16 ? GGML_TYPE_F32 : GGML_TYPE_F16); // [N * IC, OH, OW, KH * KW]
-    struct ggml_tensor * new_b = ggml_reshape_4d(ctx, im2col, im2col->ne[0], im2col->ne[2] * im2col->ne[1], b->ne[2], b->ne[3]); // [N * IC, OH, OW, KH * KW] => [N, IC, OH * OW, KH * KW]
+    ସଂରଚନା ggml_tensor * new_b = ggml_reshape_4d(ctx, im2col, im2col->ne[0], im2col->ne[2] * im2col->ne[1], b->ne[2], b->ne[3]); // [N * IC, OH, OW, KH * KW] => [N, IC, OH * OW, KH * KW]
 
     new_a = ggml_reshape_4d(ctx, new_a, (new_a->ne[0] * new_a->ne[1]), new_a->ne[2],  new_a->ne[3], 1);                       // [OC，1, KH, KW] => [1, OC, 1, KH * KW]
-    struct ggml_tensor * result = ggml_mul_mat(ctx, new_a, new_b);
+    ସଂରଚନା ggml_tensor * result = ggml_mul_mat(ctx, new_a, new_b);
     result = ggml_reshape_4d(ctx, result, im2col->ne[1], im2col->ne[2], b->ne[2], b->ne[3]); // [N, OC, OH, OW]
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_conv_2d_dw_direct
 
-struct ggml_tensor * ggml_conv_2d_dw_direct(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   stride0,
-        int                   stride1,
-        int                   pad0,
-        int                   pad1,
-        int                   dilation0,
-        int                   dilation1) {
+ସଂରଚନା ggml_tensor * ggml_conv_2d_dw_direct(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   stride0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   stride1,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   pad0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   pad1,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   dilation0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   dilation1) {
     GGML_ASSERT(a->ne[2] == 1);
     GGML_ASSERT(a->ne[3] == b->ne[2]);
     int64_t ne[4];
@@ -4946,11 +4946,11 @@ struct ggml_tensor * ggml_conv_2d_dw_direct(
     ne[2] = b->ne[2];
     ne[3] = b->ne[3];
 
-    struct ggml_tensor * result = ggml_new_tensor(ctx, b->type, 4, ne);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, b->type, 4, ne);
 
-    if (ggml_is_contiguous_channels(b)) {
+    ଯଦି (ggml_is_contiguous_channels(b)) {
         // Result will be permuted the same way as input (CWHN order)
-        const int64_t type_size = ggml_type_size(result->type);
+        ଅଚଳ int64_t type_size = ggml_type_size(result->type);
         GGML_ASSERT(ggml_blck_size(result->type) == 1);
         result->nb[0] = result->ne[2] * type_size;
         result->nb[1] = result->ne[0] * result->nb[0];
@@ -4958,26 +4958,26 @@ struct ggml_tensor * ggml_conv_2d_dw_direct(
     }
 
     int32_t params[] = { stride0, stride1, pad0, pad1, dilation0, dilation1 };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_set_op_params(result, params, ଆକାର(params));
 
     result->op     = GGML_OP_CONV_2D_DW;
     result->src[0] = a;
     result->src[1] = b;
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_conv_2d_direct
 
-struct ggml_tensor * ggml_conv_2d_direct(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,   // convolution kernel [KW, KH, IC, OC]
-        struct ggml_tensor  * b,   // input data [W, H, C, N]
-        int                   s0,  // stride dimension 0
-        int                   s1,  // stride dimension 1
-        int                   p0,  // padding dimension 0
-        int                   p1,  // padding dimension 1
-        int                   d0,  // dilation dimension 0
-        int                   d1) {// dilation dimension 1
+ସଂରଚନା ggml_tensor * ggml_conv_2d_direct(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,   // convolution kernel [KW, KH, IC, OC]
+        ସଂରଚନା ggml_tensor  * b,   // input data [W, H, C, N]
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s0,  // stride dimension 0
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s1,  // stride dimension 1
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p0,  // padding dimension 0
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p1,  // padding dimension 1
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   d0,  // dilation dimension 0
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   d1) {// dilation dimension 1
 
     GGML_ASSERT(a->ne[2] == b->ne[2]);
     //GGML_ASSERT(a->type == b->type);
@@ -4988,7 +4988,7 @@ struct ggml_tensor * ggml_conv_2d_direct(
     ne[2] = a->ne[3];
     ne[3] = b->ne[3];
 
-    struct ggml_tensor * result = ggml_new_tensor(ctx, b->type, 4, ne);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, b->type, 4, ne);
 
     ggml_set_op_params_i32(result, 0, s0);
     ggml_set_op_params_i32(result, 1, s1);
@@ -5001,27 +5001,27 @@ struct ggml_tensor * ggml_conv_2d_direct(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_conv_3d_direct
 
-struct ggml_tensor * ggml_conv_3d_direct(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   s0,
-        int                   s1,
-        int                   s2,
-        int                   p0,
-        int                   p1,
-        int                   p2,
-        int                   d0,
-        int                   d1,
-        int                   d2,
-        int                   c,
-        int                   n,
-        int                   oc) {
+ସଂରଚନା ggml_tensor * ggml_conv_3d_direct(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s1,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s2,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p1,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p2,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   d0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   d1,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   d2,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   c,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   oc) {
 
     GGML_ASSERT(a->ne[3] == (int64_t) c * oc);
     GGML_ASSERT(b->ne[3] == (int64_t) c * n);
@@ -5032,7 +5032,7 @@ struct ggml_tensor * ggml_conv_3d_direct(
     ne[2] = ggml_calc_conv_output_size(b->ne[2], a->ne[2], s2, p2, d2);
     ne[3] = (int64_t) oc * n;
 
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
     ggml_set_op_params_i32(result, 0,  s0);
     ggml_set_op_params_i32(result, 1,  s1);
@@ -5051,29 +5051,29 @@ struct ggml_tensor * ggml_conv_3d_direct(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_conv_transpose_2d_p0
 
-static int64_t ggml_calc_conv_transpose_output_size(int64_t ins, int64_t ks, int s, int p) {
-    return (ins - 1) * s - 2 * p + ks;
+ସ୍ଥିର int64_t ggml_calc_conv_transpose_output_size(int64_t ins, int64_t ks, ପୂର୍ଣ୍ଣସଂଖ୍ୟା s, ପୂର୍ଣ୍ଣସଂଖ୍ୟା p) {
+    ଫେରନ୍ତୁ (ins - 1) * s - 2 * p + ks;
 }
 
-struct ggml_tensor * ggml_conv_transpose_2d_p0(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        int                   stride) {
+ସଂରଚନା ggml_tensor * ggml_conv_transpose_2d_p0(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   stride) {
     GGML_ASSERT(a->ne[3] == b->ne[2]);
 
-    const int64_t ne[4] = {
+    ଅଚଳ int64_t ne[4] = {
         ggml_calc_conv_transpose_output_size(b->ne[0], a->ne[0], stride, 0 /*p0*/),
         ggml_calc_conv_transpose_output_size(b->ne[1], a->ne[1], stride, 0 /*p1*/),
         a->ne[2], b->ne[3],
     };
 
-    struct ggml_tensor* result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ସଂରଚନା ggml_tensor* result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
     ggml_set_op_params_i32(result, 0, stride);
 
@@ -5081,25 +5081,25 @@ struct ggml_tensor * ggml_conv_transpose_2d_p0(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_pool_*
 
-static int64_t ggml_calc_pool_output_size(int64_t ins, int ks, int s, float p) {
-    return (ins + 2 * p - ks) / s + 1;
+ସ୍ଥିର int64_t ggml_calc_pool_output_size(int64_t ins, ପୂର୍ଣ୍ଣସଂଖ୍ୟା ks, ପୂର୍ଣ୍ଣସଂଖ୍ୟା s, ଦଶମିକ p) {
+    ଫେରନ୍ତୁ (ins + 2 * p - ks) / s + 1;
 }
 
 // ggml_pool_1d
 
-struct ggml_tensor * ggml_pool_1d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        enum ggml_op_pool     op,
-        int                   k0,
-        int                   s0,
-        int                   p0) {
-    const int64_t ne[4] = {
+ସଂରଚନା ggml_tensor * ggml_pool_1d(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ଗଣନା ggml_op_pool     op,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   k0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p0) {
+    ଅଚଳ int64_t ne[4] = {
         ggml_calc_pool_output_size(a->ne[0], k0, s0, p0),
         a->ne[1],
         a->ne[2],
@@ -5107,31 +5107,31 @@ struct ggml_tensor * ggml_pool_1d(
     };
     GGML_ASSERT(ne[0] > 0);
 
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
     int32_t params[] = { op, k0, s0, p0 };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_set_op_params(result, params, ଆକାର(params));
 
     result->op     = GGML_OP_POOL_1D;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_pool_2d
 
-struct ggml_tensor * ggml_pool_2d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        enum ggml_op_pool     op,
-        int                   k0,
-        int                   k1,
-        int                   s0,
-        int                   s1,
-        float                 p0,
-        float                 p1) {
-    struct ggml_tensor * result;
-    const int64_t ne[4] = {
+ସଂରଚନା ggml_tensor * ggml_pool_2d(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ଗଣନା ggml_op_pool     op,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   k0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   k1,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s1,
+        ଦଶମିକ                 p0,
+        ଦଶମିକ                 p1) {
+    ସଂରଚନା ggml_tensor * result;
+    ଅଚଳ int64_t ne[4] = {
         ggml_calc_pool_output_size(a->ne[0], k0, s0, p0),
         ggml_calc_pool_output_size(a->ne[1], k1, s1, p1),
         a->ne[2],
@@ -5143,131 +5143,131 @@ struct ggml_tensor * ggml_pool_2d(
     result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
     int32_t params[] = { op, k0, k1, s0, s1, p0, p1 };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_set_op_params(result, params, ଆକାର(params));
 
     result->op     = GGML_OP_POOL_2D;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_pool_2d_back(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * af,
-        enum ggml_op_pool     op,
-        int                   k0,
-        int                   k1,
-        int                   s0,
-        int                   s1,
-        float                 p0,
-        float                 p1) {
-    struct ggml_tensor * result;
+ସଂରଚନା ggml_tensor * ggml_pool_2d_back(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * af,
+        ଗଣନା ggml_op_pool     op,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   k0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   k1,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   s1,
+        ଦଶମିକ                 p0,
+        ଦଶମିକ                 p1) {
+    ସଂରଚନା ggml_tensor * result;
     result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, af->ne);
 
     int32_t params[] = { op, k0, k1, s0, s1, p0, p1 };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_set_op_params(result, params, ଆକାର(params));
 
     result->op     = GGML_OP_POOL_2D_BACK;
     result->src[0] = a;
     result->src[1] = af;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_upscale / ggml_interpolate
 
-static struct ggml_tensor * ggml_interpolate_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_interpolate_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
         int64_t               ne0,
         int64_t               ne1,
         int64_t               ne2,
         int64_t               ne3,
         uint32_t              mode) {
-    GGML_ASSERT((mode & 0xFF) < GGML_SCALE_MODE_COUNT);
+    GGML_ASSERT((mode & 0xFF) < GGML_SCALE_MODE_ଗଣନା);
     // TODO: implement antialias for modes other than bilinear
     GGML_ASSERT(!(mode & GGML_SCALE_FLAG_ANTIALIAS) || (mode & 0xFF) == GGML_SCALE_MODE_BILINEAR);
     GGML_ASSERT(a->type == GGML_TYPE_F32);
 
-    struct ggml_tensor * result = ggml_new_tensor_4d(ctx, a->type, ne0, ne1, ne2, ne3);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_4d(ctx, a->type, ne0, ne1, ne2, ne3);
 
     ggml_set_op_params_i32(result, 0, (int32_t)mode);
 
     result->op     = GGML_OP_UPSCALE;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_upscale(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   scale_factor,
-        enum ggml_scale_mode  mode) {
+ସଂରଚନା ggml_tensor * ggml_upscale(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   scale_factor,
+        ଗଣନା ggml_scale_mode  mode) {
     GGML_ASSERT(scale_factor > 1);
-    return ggml_interpolate_impl(ctx, a, a->ne[0] * scale_factor, a->ne[1] * scale_factor, a->ne[2], a->ne[3], mode);
+    ଫେରନ୍ତୁ ggml_interpolate_impl(ctx, a, a->ne[0] * scale_factor, a->ne[1] * scale_factor, a->ne[2], a->ne[3], mode);
 }
 
-struct ggml_tensor * ggml_upscale_ext(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   ne0,
-        int                   ne1,
-        int                   ne2,
-        int                   ne3,
-        enum ggml_scale_mode  mode) {
-    return ggml_interpolate_impl(ctx, a, ne0, ne1, ne2, ne3, mode);
+ସଂରଚନା ggml_tensor * ggml_upscale_ext(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   ne0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   ne1,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   ne2,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   ne3,
+        ଗଣନା ggml_scale_mode  mode) {
+    ଫେରନ୍ତୁ ggml_interpolate_impl(ctx, a, ne0, ne1, ne2, ne3, mode);
 }
 
-struct ggml_tensor * ggml_interpolate(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
+ସଂରଚନା ggml_tensor * ggml_interpolate(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
         int64_t               ne0,
         int64_t               ne1,
         int64_t               ne2,
         int64_t               ne3,
         uint32_t              mode) {
-    return ggml_interpolate_impl(ctx, a, ne0, ne1, ne2, ne3, mode);
+    ଫେରନ୍ତୁ ggml_interpolate_impl(ctx, a, ne0, ne1, ne2, ne3, mode);
 }
 
 // ggml_pad
 
-struct ggml_tensor * ggml_pad(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   p0,
-        int                   p1,
-        int                   p2,
-        int                   p3) {
-    return ggml_pad_ext(ctx, a, 0, p0, 0, p1, 0, p2, 0, p3);
+ସଂରଚନା ggml_tensor * ggml_pad(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p1,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p2,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p3) {
+    ଫେରନ୍ତୁ ggml_pad_ext(ctx, a, 0, p0, 0, p1, 0, p2, 0, p3);
 }
 
 // ggml_pad_circular
 
-struct ggml_tensor * ggml_pad_circular(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   p0,
-        int                   p1,
-        int                   p2,
-        int                   p3) {
-    return ggml_pad_ext_circular(ctx, a, 0, p0, 0, p1, 0, p2, 0, p3);
+ସଂରଚନା ggml_tensor * ggml_pad_circular(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p1,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p2,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p3) {
+    ଫେରନ୍ତୁ ggml_pad_ext_circular(ctx, a, 0, p0, 0, p1, 0, p2, 0, p3);
 }
 
-struct ggml_tensor * ggml_pad_ext(
-            struct ggml_context * ctx,
-            struct ggml_tensor  * a,
-            int                  lp0,
-            int                  rp0,
-            int                  lp1,
-            int                  rp1,
-            int                  lp2,
-            int                  rp2,
-            int                  lp3,
-            int                  rp3
+ସଂରଚନା ggml_tensor * ggml_pad_ext(
+            ସଂରଚନା ggml_context * ctx,
+            ସଂରଚନା ggml_tensor  * a,
+            ପୂର୍ଣ୍ଣସଂଖ୍ୟା                  lp0,
+            ପୂର୍ଣ୍ଣସଂଖ୍ୟା                  rp0,
+            ପୂର୍ଣ୍ଣସଂଖ୍ୟା                  lp1,
+            ପୂର୍ଣ୍ଣସଂଖ୍ୟା                  rp1,
+            ପୂର୍ଣ୍ଣସଂଖ୍ୟା                  lp2,
+            ପୂର୍ଣ୍ଣସଂଖ୍ୟା                  rp2,
+            ପୂର୍ଣ୍ଣସଂଖ୍ୟା                  lp3,
+            ପୂର୍ଣ୍ଣସଂଖ୍ୟା                  rp3
             ) {
-    struct ggml_tensor * result = ggml_new_tensor_4d(ctx, a->type,
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_4d(ctx, a->type,
             a->ne[0] + lp0 + rp0,
             a->ne[1] + lp1 + rp1,
             a->ne[2] + lp2 + rp2,
@@ -5287,35 +5287,35 @@ struct ggml_tensor * ggml_pad_ext(
     result->op     = GGML_OP_PAD;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_pad_ext_circular
 
-struct ggml_tensor * ggml_pad_ext_circular(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                  lp0,
-        int                  rp0,
-        int                  lp1,
-        int                  rp1,
-        int                  lp2,
-        int                  rp2,
-        int                  lp3,
-        int                  rp3
+ସଂରଚନା ggml_tensor * ggml_pad_ext_circular(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                  lp0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                  rp0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                  lp1,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                  rp1,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                  lp2,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                  rp2,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                  lp3,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                  rp3
         ) {
-    struct ggml_tensor * result = ggml_pad_ext(ctx, a, lp0, rp0, lp1, rp1, lp2, rp2, lp3, rp3);
+    ସଂରଚନା ggml_tensor * result = ggml_pad_ext(ctx, a, lp0, rp0, lp1, rp1, lp2, rp2, lp3, rp3);
     ggml_set_op_params_i32(result, 8, 1); // circular
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_pad_reflect_1d
 
-struct ggml_tensor * ggml_pad_reflect_1d(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   p0,
-        int                   p1) {
+ସଂରଚନା ggml_tensor * ggml_pad_reflect_1d(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   p1) {
     GGML_ASSERT(p0 >= 0);
     GGML_ASSERT(p1 >= 0);
 
@@ -5325,37 +5325,37 @@ struct ggml_tensor * ggml_pad_reflect_1d(
     GGML_ASSERT(ggml_is_contiguous(a));
     GGML_ASSERT(a->type == GGML_TYPE_F32);
 
-    struct ggml_tensor * result = ggml_new_tensor_4d(ctx, a->type,
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_4d(ctx, a->type,
             a->ne[0] + p0 + p1,
             a->ne[1],
             a->ne[2],
             a->ne[3]);
 
     int32_t params[] = { p0, p1 };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_set_op_params(result, params, ଆକାର(params));
 
     result->op     = GGML_OP_PAD_REFLECT_1D;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_roll
 
-struct ggml_tensor * ggml_roll(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   shift0,
-        int                   shift1,
-        int                   shift2,
-        int                   shift3) {
+ସଂରଚନା ggml_tensor * ggml_roll(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   shift0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   shift1,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   shift2,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   shift3) {
     GGML_ASSERT(a->nb[0] == ggml_type_size(a->type));
     GGML_ASSERT(abs(shift0) < a->ne[0]);
     GGML_ASSERT(abs(shift1) < a->ne[1]);
     GGML_ASSERT(abs(shift2) < a->ne[2]);
     GGML_ASSERT(abs(shift3) < a->ne[3]);
 
-    struct ggml_tensor * result = ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = ggml_dup_tensor(ctx, a);
 
     ggml_set_op_params_i32(result, 0, shift0);
     ggml_set_op_params_i32(result, 1, shift1);
@@ -5365,18 +5365,18 @@ struct ggml_tensor * ggml_roll(
     result->op     = GGML_OP_ROLL;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_timestep_embedding
 
-struct ggml_tensor * ggml_timestep_embedding(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * timesteps,
-        int                   dim,
-        int                   max_period) {
+ସଂରଚନା ggml_tensor * ggml_timestep_embedding(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * timesteps,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   dim,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   max_period) {
 
-    struct ggml_tensor * result = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, dim, timesteps->ne[0]);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, dim, timesteps->ne[0]);
 
     ggml_set_op_params_i32(result, 0, dim);
     ggml_set_op_params_i32(result, 1, max_period);
@@ -5384,128 +5384,128 @@ struct ggml_tensor * ggml_timestep_embedding(
     result->op     = GGML_OP_TIMESTEP_EMBEDDING;
     result->src[0] = timesteps;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_tri
 
-struct ggml_tensor * ggml_tri(
-    struct ggml_context * ctx,
-    struct ggml_tensor  * a,
-    enum ggml_tri_type    type) {
+ସଂରଚନା ggml_tensor * ggml_tri(
+    ସଂରଚନା ggml_context * ctx,
+    ସଂରଚନା ggml_tensor  * a,
+    ଗଣନା ggml_tri_type    type) {
     GGML_ASSERT(a->type == GGML_TYPE_F32);
 
     GGML_ASSERT(ggml_is_contiguous(a));
     GGML_ASSERT(a->ne[0] == a->ne[1]);
 
-    struct ggml_tensor * result = ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = ggml_dup_tensor(ctx, a);
 
     ggml_set_op_params_i32(result, 0, type);
 
     result->op = GGML_OP_TRI;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_fill
 
-static struct ggml_tensor * ggml_fill_impl(
-    struct ggml_context * ctx,
-    struct ggml_tensor  * a,
-    float                 c,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_fill_impl(
+    ସଂରଚନା ggml_context * ctx,
+    ସଂରଚନା ggml_tensor  * a,
+    ଦଶମିକ                 c,
     bool                  inplace) {
     GGML_ASSERT(a->type == GGML_TYPE_F32 || a->type == GGML_TYPE_F16);
     GGML_ASSERT(ggml_is_contiguous(a));
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
     ggml_set_op_params_f32(result, 0, c);
 
     result->op = GGML_OP_FILL;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_fill(
-    struct ggml_context * ctx,
-    struct ggml_tensor  * a,
-    float                 c) {
-    return ggml_fill_impl(ctx, a, c, false);
+ସଂରଚନା ggml_tensor * ggml_fill(
+    ସଂରଚନା ggml_context * ctx,
+    ସଂରଚନା ggml_tensor  * a,
+    ଦଶମିକ                 c) {
+    ଫେରନ୍ତୁ ggml_fill_impl(ctx, a, c, false);
 }
 
-struct ggml_tensor * ggml_fill_inplace(
-    struct ggml_context * ctx,
-    struct ggml_tensor  * a,
-    float                 c) {
-    return ggml_fill_impl(ctx, a, c, true);
+ସଂରଚନା ggml_tensor * ggml_fill_inplace(
+    ସଂରଚନା ggml_context * ctx,
+    ସଂରଚନା ggml_tensor  * a,
+    ଦଶମିକ                 c) {
+    ଫେରନ୍ତୁ ggml_fill_impl(ctx, a, c, true);
 }
 
 // ggml_argsort
 
-struct ggml_tensor * ggml_argsort(
-        struct ggml_context  * ctx,
-        struct ggml_tensor   * a,
-        enum ggml_sort_order   order) {
+ସଂରଚନା ggml_tensor * ggml_argsort(
+        ସଂରଚନା ggml_context  * ctx,
+        ସଂରଚନା ggml_tensor   * a,
+        ଗଣନା ggml_sort_order   order) {
     GGML_ASSERT(a->ne[0] <= INT32_MAX);
 
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_I32, GGML_MAX_DIMS, a->ne);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_I32, GGML_MAX_DIMS, a->ne);
 
     ggml_set_op_params_i32(result, 0, (int32_t) order);
 
     result->op     = GGML_OP_ARGSORT;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_argsort_top_k
 
-struct ggml_tensor * ggml_argsort_top_k(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   k) {
+ସଂରଚନା ggml_tensor * ggml_argsort_ଶୀର୍ଷ_k(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   k) {
     GGML_ASSERT(a->ne[0] >= k);
 
-    struct ggml_tensor * result = ggml_argsort(ctx, a, GGML_SORT_ORDER_DESC);
+    ସଂରଚନା ggml_tensor * result = ggml_argsort(ctx, a, GGML_SORT_ORDER_DESC);
 
     result = ggml_view_4d(ctx, result,
                 k, result->ne[1], result->ne[2], result->ne[3],
                    result->nb[1], result->nb[2], result->nb[3],
                 0);
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_top_k
 
-struct ggml_tensor * ggml_top_k(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   k) {
+ସଂରଚନା ggml_tensor * ggml_ଶୀର୍ଷ_k(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   k) {
     GGML_ASSERT(a->ne[0] >= k);
 
-    struct ggml_tensor * result = ggml_new_tensor_4d(ctx, GGML_TYPE_I32, k, a->ne[1], a->ne[2], a->ne[3]);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_4d(ctx, GGML_TYPE_I32, k, a->ne[1], a->ne[2], a->ne[3]);
 
-    result->op     = GGML_OP_TOP_K;
+    result->op     = GGML_OP_ଶୀର୍ଷ_K;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_arange
 
-struct ggml_tensor * ggml_arange(
-        struct ggml_context * ctx,
-        float                 start,
-        float                 stop,
-        float                 step) {
+ସଂରଚନା ggml_tensor * ggml_arange(
+        ସଂରଚନା ggml_context * ctx,
+        ଦଶମିକ                 start,
+        ଦଶମିକ                 stop,
+        ଦଶମିକ                 step) {
     GGML_ASSERT(stop > start);
 
-    const int64_t steps = (int64_t) ceilf((stop - start) / step);
+    ଅଚଳ int64_t steps = (int64_t) ceilf((stop - start) / step);
 
-    struct ggml_tensor * result = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, steps);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, steps);
 
     ggml_set_op_params_f32(result, 0, start);
     ggml_set_op_params_f32(result, 1, stop);
@@ -5513,27 +5513,27 @@ struct ggml_tensor * ggml_arange(
 
     result->op = GGML_OP_ARANGE;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_flash_attn_ext
 
-struct ggml_tensor * ggml_flash_attn_ext(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * q,
-        struct ggml_tensor  * k,
-        struct ggml_tensor  * v,
-        struct ggml_tensor  * mask,
-        float                 scale,
-        float                 max_bias,
-        float                 logit_softcap) {
+ସଂରଚନା ggml_tensor * ggml_flash_attn_ext(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * q,
+        ସଂରଚନା ggml_tensor  * k,
+        ସଂରଚନା ggml_tensor  * v,
+        ସଂରଚନା ggml_tensor  * mask,
+        ଦଶମିକ                 scale,
+        ଦଶମିକ                 max_bias,
+        ଦଶମିକ                 logit_softcap) {
     GGML_ASSERT(ggml_can_mul_mat(k, q));
     // TODO: check if vT can be multiplied by (k*qT)
 
     GGML_ASSERT(q->ne[3] == k->ne[3]);
     GGML_ASSERT(q->ne[3] == v->ne[3]);
 
-    if (mask) {
+    ଯଦି (mask) {
         GGML_ASSERT(mask->type == GGML_TYPE_F16);
         GGML_ASSERT(ggml_is_contiguous(mask));
         //GGML_ASSERT(ggml_can_repeat_rows(mask, qk));
@@ -5542,16 +5542,16 @@ struct ggml_tensor * ggml_flash_attn_ext(
         GGML_ASSERT(q->ne[3] % mask->ne[3] == 0);
     }
 
-    if (max_bias > 0.0f) {
+    ଯଦି (max_bias > 0.0f) {
         GGML_ASSERT(mask);
     }
 
     // permute(0, 2, 1, 3)
     int64_t ne[4] = { v->ne[0], q->ne[2], q->ne[1], q->ne[3] };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
-    float params[] = { scale, max_bias, logit_softcap };
-    ggml_set_op_params(result, params, sizeof(params));
+    ଦଶମିକ params[] = { scale, max_bias, logit_softcap };
+    ggml_set_op_params(result, params, ଆକାର(params));
 
     result->op     = GGML_OP_FLASH_ATTN_EXT;
     result->src[0] = q;
@@ -5559,31 +5559,31 @@ struct ggml_tensor * ggml_flash_attn_ext(
     result->src[2] = v;
     result->src[3] = mask;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 
-void ggml_flash_attn_ext_set_prec(
-        struct ggml_tensor * a,
-        enum ggml_prec       prec) {
+ଶୂନ୍ୟ ggml_flash_attn_ext_set_prec(
+        ସଂରଚନା ggml_tensor * a,
+        ଗଣନା ggml_prec       prec) {
     GGML_ASSERT(a->op == GGML_OP_FLASH_ATTN_EXT);
 
-    const int32_t prec_i32 = (int32_t) prec;
+    ଅଚଳ int32_t prec_i32 = (int32_t) prec;
 
     ggml_set_op_params_i32(a, 3, prec_i32); // scale is on first pos, max_bias on second
 }
 
-enum ggml_prec ggml_flash_attn_ext_get_prec(
-        const struct ggml_tensor * a) {
+ଗଣନା ggml_prec ggml_flash_attn_ext_get_prec(
+        ଅଚଳ ସଂରଚନା ggml_tensor * a) {
     GGML_ASSERT(a->op == GGML_OP_FLASH_ATTN_EXT);
 
-    const int32_t prec_i32 = ggml_get_op_params_i32(a, 3);
+    ଅଚଳ int32_t prec_i32 = ggml_get_op_params_i32(a, 3);
 
-    return (enum ggml_prec) prec_i32;
+    ଫେରନ୍ତୁ (ଗଣନା ggml_prec) prec_i32;
 }
 
-void ggml_flash_attn_ext_set_n_kv_max(
-        struct ggml_tensor * a,
+ଶୂନ୍ୟ ggml_flash_attn_ext_set_n_kv_max(
+        ସଂରଚନା ggml_tensor * a,
         int32_t              n_kv_max) {
     GGML_ASSERT(a->op == GGML_OP_FLASH_ATTN_EXT);
     GGML_ASSERT(n_kv_max >= 0);
@@ -5591,16 +5591,16 @@ void ggml_flash_attn_ext_set_n_kv_max(
     ggml_set_op_params_i32(a, 4, n_kv_max);
 }
 
-void ggml_flash_attn_ext_add_sinks(
-        struct ggml_tensor * a,
-        struct ggml_tensor * sinks) {
-    if (!sinks) {
-        a->src[4] = NULL;
-        return;
+ଶୂନ୍ୟ ggml_flash_attn_ext_add_sinks(
+        ସଂରଚନା ggml_tensor * a,
+        ସଂରଚନା ggml_tensor * sinks) {
+    ଯଦି (!sinks) {
+        a->src[4] = ଖାଲି;
+        ଫେରନ୍ତୁ;
     }
 
     GGML_ASSERT(a->op == GGML_OP_FLASH_ATTN_EXT);
-    GGML_ASSERT(a->src[4] == NULL);
+    GGML_ASSERT(a->src[4] == ଖାଲି);
     GGML_ASSERT(a->src[0]->ne[2] == sinks->ne[0]);
     GGML_ASSERT(sinks->type == GGML_TYPE_F32);
 
@@ -5609,12 +5609,12 @@ void ggml_flash_attn_ext_add_sinks(
 
 // ggml_flash_attn_back
 
-struct ggml_tensor * ggml_flash_attn_back(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * q,
-        struct ggml_tensor  * k,
-        struct ggml_tensor  * v,
-        struct ggml_tensor  * d,
+ସଂରଚନା ggml_tensor * ggml_flash_attn_back(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * q,
+        ସଂରଚନା ggml_tensor  * k,
+        ସଂରଚନା ggml_tensor  * v,
+        ସଂରଚନା ggml_tensor  * d,
         bool                  masked) {
     GGML_ABORT("TODO: adapt to ggml_flash_attn_ext() changes");
 
@@ -5626,12 +5626,12 @@ struct ggml_tensor * ggml_flash_attn_back(
     // k shape [D,M,kvne2,ne3]
     // v shape [M,D,kvne2,ne3]
 
-    const int64_t     D = q->ne[0];
-    const int64_t     N = q->ne[1];
-    const int64_t     M = k->ne[1];
-    const int64_t   ne2 = q->ne[2];
-    const int64_t   ne3 = q->ne[3];
-    const int64_t kvne2 = k->ne[2];
+    ଅଚଳ int64_t     D = q->ne[0];
+    ଅଚଳ int64_t     N = q->ne[1];
+    ଅଚଳ int64_t     M = k->ne[1];
+    ଅଚଳ int64_t   ne2 = q->ne[2];
+    ଅଚଳ int64_t   ne3 = q->ne[3];
+    ଅଚଳ int64_t kvne2 = k->ne[2];
 
     GGML_ASSERT(k->ne[0] == D);
     GGML_ASSERT(v->ne[0] == M);
@@ -5649,25 +5649,25 @@ struct ggml_tensor * ggml_flash_attn_back(
 
     // store gradients of q, k and v as continuous tensors concatenated in result.
     // note: v and gradv are actually transposed, i.e. v->ne[0] != D.
-    const int64_t elem_q = ggml_nelements(q);
-    const int64_t elem_k = ggml_nelements(k);
-    const int64_t elem_v = ggml_nelements(v);
+    ଅଚଳ int64_t elem_q = ggml_nelements(q);
+    ଅଚଳ int64_t elem_k = ggml_nelements(k);
+    ଅଚଳ int64_t elem_v = ggml_nelements(v);
 
-    enum ggml_type result_type = GGML_TYPE_F32;
+    ଗଣନା ggml_type result_type = GGML_TYPE_F32;
     GGML_ASSERT(ggml_blck_size(result_type) == 1);
-    const size_t tsize = ggml_type_size(result_type);
+    ଅଚଳ size_t tsize = ggml_type_size(result_type);
 
-    const size_t offs_q = 0;
-    const size_t offs_k = offs_q + GGML_PAD(elem_q * tsize, GGML_MEM_ALIGN);
-    const size_t offs_v = offs_k + GGML_PAD(elem_k * tsize, GGML_MEM_ALIGN);
-    const size_t end    = offs_v + GGML_PAD(elem_v * tsize, GGML_MEM_ALIGN);
+    ଅଚଳ size_t offs_q = 0;
+    ଅଚଳ size_t offs_k = offs_q + GGML_PAD(elem_q * tsize, GGML_MEM_ALIGN);
+    ଅଚଳ size_t offs_v = offs_k + GGML_PAD(elem_k * tsize, GGML_MEM_ALIGN);
+    ଅଚଳ size_t end    = offs_v + GGML_PAD(elem_v * tsize, GGML_MEM_ALIGN);
 
-    const size_t nelements = (end + tsize - 1)/tsize;
+    ଅଚଳ size_t nelements = (end + tsize - 1)/tsize;
 
-    struct ggml_tensor * result = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, nelements);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, nelements);
 
     int32_t masked_i = masked ? 1 : 0;
-    ggml_set_op_params(result, &masked_i, sizeof(masked_i));
+    ggml_set_op_params(result, &masked_i, ଆକାର(masked_i));
 
     result->op     = GGML_OP_FLASH_ATTN_BACK;
     result->src[0] = q;
@@ -5675,48 +5675,48 @@ struct ggml_tensor * ggml_flash_attn_back(
     result->src[2] = v;
     result->src[3] = d;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_ssm_conv
 
-struct ggml_tensor * ggml_ssm_conv(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * sx,
-        struct ggml_tensor  * c) {
+ସଂରଚନା ggml_tensor * ggml_ssm_conv(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * sx,
+        ସଂରଚନା ggml_tensor  * c) {
     GGML_ASSERT(ggml_is_3d(sx));
     GGML_ASSERT(ggml_is_matrix(c));
 
-    const int64_t d_conv  = c->ne[0];
-    const int64_t d_inner = c->ne[1];
-    const int64_t n_t     = sx->ne[0] - d_conv + 1; // tokens per sequence
-    const int64_t n_s     = sx->ne[2];
+    ଅଚଳ int64_t d_conv  = c->ne[0];
+    ଅଚଳ int64_t d_inner = c->ne[1];
+    ଅଚଳ int64_t n_t     = sx->ne[0] - d_conv + 1; // tokens per sequence
+    ଅଚଳ int64_t n_s     = sx->ne[2];
 
     // TODO: maybe support other strides than 1?
     GGML_ASSERT(sx->ne[0] == d_conv - 1 + n_t);
     GGML_ASSERT(sx->ne[1] == d_inner);
     GGML_ASSERT(n_t >= 0);
 
-    struct ggml_tensor * result = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, d_inner, n_t, n_s);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, d_inner, n_t, n_s);
 
     result->op     = GGML_OP_SSM_CONV;
     result->src[0] = sx;
     result->src[1] = c;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_ssm_scan
 
-struct ggml_tensor * ggml_ssm_scan(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * s,
-        struct ggml_tensor  * x,
-        struct ggml_tensor  * dt,
-        struct ggml_tensor  * A,
-        struct ggml_tensor  * B,
-        struct ggml_tensor  * C,
-        struct ggml_tensor  * ids,
+ସଂରଚନା ggml_tensor * ggml_ssm_scan(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * s,
+        ସଂରଚନା ggml_tensor  * x,
+        ସଂରଚନା ggml_tensor  * dt,
+        ସଂରଚନା ggml_tensor  * A,
+        ସଂରଚନା ggml_tensor  * B,
+        ସଂରଚନା ggml_tensor  * C,
+        ସଂରଚନା ggml_tensor  * ids,
         int64_t               K) {
     GGML_ASSERT(K >= 1);
     GGML_ASSERT(K <= INT32_MAX);
@@ -5733,11 +5733,11 @@ struct ggml_tensor * ggml_ssm_scan(
     GGML_ASSERT(ids->type == GGML_TYPE_I32);
 
     {
-        const int64_t d_state      = s->ne[0];
-        const int64_t head_dim     = x->ne[0];
-        const int64_t n_head       = x->ne[1];
-        const int64_t n_seq_tokens = x->ne[2];
-        const int64_t n_seqs       = x->ne[3];
+        ଅଚଳ int64_t d_state      = s->ne[0];
+        ଅଚଳ int64_t head_dim     = x->ne[0];
+        ଅଚଳ int64_t n_head       = x->ne[1];
+        ଅଚଳ int64_t n_seq_tokens = x->ne[2];
+        ଅଚଳ int64_t n_seqs       = x->ne[3];
 
         GGML_ASSERT(dt->ne[0] == n_head);
         GGML_ASSERT(dt->ne[1] == n_seq_tokens);
@@ -5753,7 +5753,7 @@ struct ggml_tensor * ggml_ssm_scan(
         GGML_ASSERT(A->ne[1] == n_head);
         GGML_ASSERT(ggml_is_matrix(A));
 
-        if (A->ne[0] != 1) {
+        ଯଦି (A->ne[0] != 1) {
             // Mamba-1 has more granular decay factors
             GGML_ASSERT(A->ne[0] == d_state);
             GGML_ASSERT(K == 1);
@@ -5761,7 +5761,7 @@ struct ggml_tensor * ggml_ssm_scan(
     }
 
     // concatenated y + ssm_states
-    struct ggml_tensor * result = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, ggml_nelements(x) + K*s->ne[0]*s->ne[1]*s->ne[2]*ids->ne[0]);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, ggml_nelements(x) + K*s->ne[0]*s->ne[1]*s->ne[2]*ids->ne[0]);
 
     result->op   = GGML_OP_SSM_SCAN;
     result->src[0] = s;
@@ -5774,86 +5774,86 @@ struct ggml_tensor * ggml_ssm_scan(
 
     ggml_set_op_params_i32(result, 0, (int32_t) K);
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_win_part
 
-struct ggml_tensor * ggml_win_part(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   w) {
+ସଂରଚନା ggml_tensor * ggml_win_part(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   w) {
     GGML_ASSERT(a->ne[3] == 1);
     GGML_ASSERT(a->type  == GGML_TYPE_F32);
 
     // padding
-    const int px = (w - a->ne[1]%w)%w;
-    const int py = (w - a->ne[2]%w)%w;
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା px = (w - a->ne[1]%w)%w;
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା py = (w - a->ne[2]%w)%w;
 
-    const int npx = (px + a->ne[1])/w;
-    const int npy = (py + a->ne[2])/w;
-    const int np  = npx*npy;
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା npx = (px + a->ne[1])/w;
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା npy = (py + a->ne[2])/w;
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା np  = npx*npy;
 
-    const int64_t ne[4] = { a->ne[0], w, w, np, };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ଅଚଳ int64_t ne[4] = { a->ne[0], w, w, np, };
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
     int32_t params[] = { npx, npy, w };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_set_op_params(result, params, ଆକାର(params));
 
     result->op     = GGML_OP_WIN_PART;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_win_unpart
 
-struct ggml_tensor * ggml_win_unpart(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   w0,
-        int                   h0,
-        int                   w) {
+ସଂରଚନା ggml_tensor * ggml_win_unpart(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   w0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   h0,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   w) {
     GGML_ASSERT(a->type == GGML_TYPE_F32);
 
-    const int64_t ne[4] = { a->ne[0], w0, h0, 1, };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 3, ne);
+    ଅଚଳ int64_t ne[4] = { a->ne[0], w0, h0, 1, };
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 3, ne);
 
     int32_t params[] = { w };
-    ggml_set_op_params(result, params, sizeof(params));
+    ggml_set_op_params(result, params, ଆକାର(params));
 
     result->op     = GGML_OP_WIN_UNPART;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_get_rel_pos
 
-struct ggml_tensor * ggml_get_rel_pos(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        int                   qh,
-        int                   kh) {
+ସଂରଚନା ggml_tensor * ggml_get_rel_pos(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   qh,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   kh) {
     GGML_ASSERT(qh == kh);
     GGML_ASSERT(2*MAX(qh, kh) - 1 == a->ne[1]);
 
-    const int64_t ne[4] = { a->ne[0], kh, qh, 1, };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F16, 3, ne);
+    ଅଚଳ int64_t ne[4] = { a->ne[0], kh, qh, 1, };
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F16, 3, ne);
 
     result->op     = GGML_OP_GET_REL_POS;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_add_rel_pos
 
-static struct ggml_tensor * ggml_add_rel_pos_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * pw,
-        struct ggml_tensor  * ph,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_add_rel_pos_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * pw,
+        ସଂରଚନା ggml_tensor  * ph,
         bool                  inplace) {
     GGML_ASSERT(ggml_are_same_shape(pw, ph));
     GGML_ASSERT(ggml_is_contiguous(a));
@@ -5865,7 +5865,7 @@ static struct ggml_tensor * ggml_add_rel_pos_impl(
     GGML_ASSERT(pw->ne[0]*pw->ne[0] == a->ne[0]);
     GGML_ASSERT(pw->ne[1]*pw->ne[2] == a->ne[1]);
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
     ggml_set_op_params_i32(result, 0, inplace ? 1 : 0);
 
     result->op     = GGML_OP_ADD_REL_POS;
@@ -5873,35 +5873,35 @@ static struct ggml_tensor * ggml_add_rel_pos_impl(
     result->src[1] = pw;
     result->src[2] = ph;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_add_rel_pos(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * pw,
-        struct ggml_tensor  * ph) {
-    return ggml_add_rel_pos_impl(ctx, a, pw, ph, false);
+ସଂରଚନା ggml_tensor * ggml_add_rel_pos(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * pw,
+        ସଂରଚନା ggml_tensor  * ph) {
+    ଫେରନ୍ତୁ ggml_add_rel_pos_impl(ctx, a, pw, ph, false);
 }
 
-struct ggml_tensor * ggml_add_rel_pos_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * pw,
-        struct ggml_tensor  * ph) {
-    return ggml_add_rel_pos_impl(ctx, a, pw, ph, true);
+ସଂରଚନା ggml_tensor * ggml_add_rel_pos_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * pw,
+        ସଂରଚନା ggml_tensor  * ph) {
+    ଫେରନ୍ତୁ ggml_add_rel_pos_impl(ctx, a, pw, ph, true);
 }
 
 // ggml_rwkv_wkv6
 
-struct ggml_tensor * ggml_rwkv_wkv6(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * k,
-        struct ggml_tensor  * v,
-        struct ggml_tensor  * r,
-        struct ggml_tensor  * tf,
-        struct ggml_tensor  * td,
-        struct ggml_tensor  * state) {
+ସଂରଚନା ggml_tensor * ggml_rwkv_wkv6(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * k,
+        ସଂରଚନା ggml_tensor  * v,
+        ସଂରଚନା ggml_tensor  * r,
+        ସଂରଚନା ggml_tensor  * tf,
+        ସଂରଚନା ggml_tensor  * td,
+        ସଂରଚନା ggml_tensor  * state) {
     GGML_ASSERT(ggml_is_contiguous(k));
     GGML_ASSERT(ggml_is_contiguous(v));
     GGML_ASSERT(ggml_is_contiguous(r));
@@ -5909,10 +5909,10 @@ struct ggml_tensor * ggml_rwkv_wkv6(
     GGML_ASSERT(ggml_is_contiguous(td));
     GGML_ASSERT(ggml_is_contiguous(state));
 
-    const int64_t S = k->ne[0];
-    const int64_t H = k->ne[1];
-    const int64_t n_tokens = k->ne[2];
-    const int64_t n_seqs = state->ne[1];
+    ଅଚଳ int64_t S = k->ne[0];
+    ଅଚଳ int64_t H = k->ne[1];
+    ଅଚଳ int64_t n_tokens = k->ne[2];
+    ଅଚଳ int64_t n_seqs = state->ne[1];
     {
         GGML_ASSERT(v->ne[0] == S && v->ne[1] == H && v->ne[2] == n_tokens);
         GGML_ASSERT(r->ne[0] == S && r->ne[1] == H && r->ne[2] == n_tokens);
@@ -5921,8 +5921,8 @@ struct ggml_tensor * ggml_rwkv_wkv6(
     }
 
     // concat output and new_state
-    const int64_t ne[4] = { S * H, n_tokens + S * n_seqs, 1, 1 };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ଅଚଳ int64_t ne[4] = { S * H, n_tokens + S * n_seqs, 1, 1 };
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
     result->op     = GGML_OP_RWKV_WKV6;
     result->src[0] = k;
@@ -5932,29 +5932,29 @@ struct ggml_tensor * ggml_rwkv_wkv6(
     result->src[4] = td;
     result->src[5] = state;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_gated_linear_attn
 
-struct ggml_tensor * ggml_gated_linear_attn(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * k,
-        struct ggml_tensor  * v,
-        struct ggml_tensor  * q,
-        struct ggml_tensor  * g,
-        struct ggml_tensor  * state,
-        float scale) {
+ସଂରଚନା ggml_tensor * ggml_gated_linear_attn(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * k,
+        ସଂରଚନା ggml_tensor  * v,
+        ସଂରଚନା ggml_tensor  * q,
+        ସଂରଚନା ggml_tensor  * g,
+        ସଂରଚନା ggml_tensor  * state,
+        ଦଶମିକ scale) {
     GGML_ASSERT(ggml_is_contiguous(k));
     GGML_ASSERT(ggml_is_contiguous(v));
     GGML_ASSERT(ggml_is_contiguous(q));
     GGML_ASSERT(ggml_is_contiguous(g));
     GGML_ASSERT(ggml_is_contiguous(state));
 
-    const int64_t S = k->ne[0];
-    const int64_t H = k->ne[1];
-    const int64_t n_tokens = k->ne[2];
-    const int64_t n_seqs = state->ne[1];
+    ଅଚଳ int64_t S = k->ne[0];
+    ଅଚଳ int64_t H = k->ne[1];
+    ଅଚଳ int64_t n_tokens = k->ne[2];
+    ଅଚଳ int64_t n_seqs = state->ne[1];
     {
         GGML_ASSERT(v->ne[0] == S && v->ne[1] == H && v->ne[2] == n_tokens);
         GGML_ASSERT(q->ne[0] == S && q->ne[1] == H && q->ne[2] == n_tokens);
@@ -5963,8 +5963,8 @@ struct ggml_tensor * ggml_gated_linear_attn(
     }
 
     // concat output and new_state
-    const int64_t ne[4] = { S * H, n_tokens + S * n_seqs, 1, 1 };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ଅଚଳ int64_t ne[4] = { S * H, n_tokens + S * n_seqs, 1, 1 };
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
     ggml_set_op_params_f32(result, 0, scale);
 
@@ -5975,20 +5975,20 @@ struct ggml_tensor * ggml_gated_linear_attn(
     result->src[3] = g;
     result->src[4] = state;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_rwkv_wkv7
 
-struct ggml_tensor * ggml_rwkv_wkv7(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * r,
-        struct ggml_tensor  * w,
-        struct ggml_tensor  * k,
-        struct ggml_tensor  * v,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        struct ggml_tensor  * state) {
+ସଂରଚନା ggml_tensor * ggml_rwkv_wkv7(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * r,
+        ସଂରଚନା ggml_tensor  * w,
+        ସଂରଚନା ggml_tensor  * k,
+        ସଂରଚନା ggml_tensor  * v,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ସଂରଚନା ggml_tensor  * state) {
     GGML_ASSERT(ggml_is_contiguous(r));
     GGML_ASSERT(ggml_is_contiguous(w));
     GGML_ASSERT(ggml_is_contiguous(k));
@@ -5997,10 +5997,10 @@ struct ggml_tensor * ggml_rwkv_wkv7(
     GGML_ASSERT(ggml_is_contiguous(b));
     GGML_ASSERT(ggml_is_contiguous(state));
 
-    const int64_t S = k->ne[0];
-    const int64_t H = k->ne[1];
-    const int64_t n_tokens = k->ne[2];
-    const int64_t n_seqs = state->ne[1];
+    ଅଚଳ int64_t S = k->ne[0];
+    ଅଚଳ int64_t H = k->ne[1];
+    ଅଚଳ int64_t n_tokens = k->ne[2];
+    ଅଚଳ int64_t n_seqs = state->ne[1];
     {
         GGML_ASSERT(w->ne[0] == S && w->ne[1] == H && w->ne[2] == n_tokens);
         GGML_ASSERT(k->ne[0] == S && k->ne[1] == H && k->ne[2] == n_tokens);
@@ -6011,8 +6011,8 @@ struct ggml_tensor * ggml_rwkv_wkv7(
     }
 
     // concat output and new_state
-    const int64_t ne[4] = { S * H, n_tokens + S * n_seqs, 1, 1 };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ଅଚଳ int64_t ne[4] = { S * H, n_tokens + S * n_seqs, 1, 1 };
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
     result->op     = GGML_OP_RWKV_WKV7;
     result->src[0] = r;
@@ -6023,292 +6023,292 @@ struct ggml_tensor * ggml_rwkv_wkv7(
     result->src[5] = b;
     result->src[6] = state;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_unary
 
-static struct ggml_tensor * ggml_unary_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        enum ggml_unary_op    op,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_unary_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ଗଣନା ggml_unary_op    op,
         bool                  inplace) {
     GGML_ASSERT(ggml_is_contiguous_rows(a));
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
     ggml_set_op_params_i32(result, 0, (int32_t) op);
 
     result->op     = GGML_OP_UNARY;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_unary(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        enum ggml_unary_op    op) {
-    return ggml_unary_impl(ctx, a, op, false);
+ସଂରଚନା ggml_tensor * ggml_unary(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ଗଣନା ggml_unary_op    op) {
+    ଫେରନ୍ତୁ ggml_unary_impl(ctx, a, op, false);
 }
 
-struct ggml_tensor * ggml_unary_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        enum ggml_unary_op    op) {
-    return ggml_unary_impl(ctx, a, op, true);
+ସଂରଚନା ggml_tensor * ggml_unary_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ଗଣନା ggml_unary_op    op) {
+    ଫେରନ୍ତୁ ggml_unary_impl(ctx, a, op, true);
 }
 
 // ggml_map_custom1
 
-static struct ggml_tensor * ggml_map_custom1_impl(
-        struct ggml_context      * ctx,
-        struct ggml_tensor       * a,
-        const  ggml_custom1_op_t   fun,
-        int                        n_tasks,
-        void                     * userdata,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_map_custom1_impl(
+        ସଂରଚନା ggml_context      * ctx,
+        ସଂରଚନା ggml_tensor       * a,
+        ଅଚଳ  ggml_custom1_op_t   fun,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                        n_tasks,
+        ଶୂନ୍ୟ                     * userdata,
         bool                       inplace) {
     GGML_ASSERT(n_tasks == GGML_N_TASKS_MAX || n_tasks > 0);
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    struct ggml_map_custom1_op_params params = {
+    ସଂରଚନା ggml_map_custom1_op_params params = {
         /*.fun      =*/ fun,
         /*.n_tasks  =*/ n_tasks,
         /*.userdata =*/ userdata
     };
-    ggml_set_op_params(result, &params, sizeof(params));
+    ggml_set_op_params(result, &params, ଆକାର(params));
 
     result->op     = GGML_OP_MAP_CUSTOM1;
     result->src[0] = a;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_map_custom1(
-        struct ggml_context      * ctx,
-        struct ggml_tensor       * a,
-        const  ggml_custom1_op_t   fun,
-        int                        n_tasks,
-        void                     * userdata) {
-    return ggml_map_custom1_impl(ctx, a, fun, n_tasks, userdata, false);
+ସଂରଚନା ggml_tensor * ggml_map_custom1(
+        ସଂରଚନା ggml_context      * ctx,
+        ସଂରଚନା ggml_tensor       * a,
+        ଅଚଳ  ggml_custom1_op_t   fun,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                        n_tasks,
+        ଶୂନ୍ୟ                     * userdata) {
+    ଫେରନ୍ତୁ ggml_map_custom1_impl(ctx, a, fun, n_tasks, userdata, false);
 }
 
-struct ggml_tensor * ggml_map_custom1_inplace(
-        struct ggml_context      * ctx,
-        struct ggml_tensor       * a,
-        const  ggml_custom1_op_t   fun,
-        int                        n_tasks,
-        void                     * userdata) {
-    return ggml_map_custom1_impl(ctx, a, fun, n_tasks, userdata, true);
+ସଂରଚନା ggml_tensor * ggml_map_custom1_inplace(
+        ସଂରଚନା ggml_context      * ctx,
+        ସଂରଚନା ggml_tensor       * a,
+        ଅଚଳ  ggml_custom1_op_t   fun,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                        n_tasks,
+        ଶୂନ୍ୟ                     * userdata) {
+    ଫେରନ୍ତୁ ggml_map_custom1_impl(ctx, a, fun, n_tasks, userdata, true);
 }
 
 // ggml_map_custom2
 
-static struct ggml_tensor * ggml_map_custom2_impl(
-        struct ggml_context      * ctx,
-        struct ggml_tensor       * a,
-        struct ggml_tensor       * b,
-        const  ggml_custom2_op_t   fun,
-        int                        n_tasks,
-        void                     * userdata,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_map_custom2_impl(
+        ସଂରଚନା ggml_context      * ctx,
+        ସଂରଚନା ggml_tensor       * a,
+        ସଂରଚନା ggml_tensor       * b,
+        ଅଚଳ  ggml_custom2_op_t   fun,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                        n_tasks,
+        ଶୂନ୍ୟ                     * userdata,
         bool                       inplace) {
     GGML_ASSERT(n_tasks == GGML_N_TASKS_MAX || n_tasks > 0);
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    struct ggml_map_custom2_op_params params = {
+    ସଂରଚନା ggml_map_custom2_op_params params = {
         /*.fun      =*/ fun,
         /*.n_tasks  =*/ n_tasks,
         /*.userdata =*/ userdata
     };
-    ggml_set_op_params(result, &params, sizeof(params));
+    ggml_set_op_params(result, &params, ଆକାର(params));
 
     result->op     = GGML_OP_MAP_CUSTOM2;
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_map_custom2(
-        struct ggml_context      * ctx,
-        struct ggml_tensor       * a,
-        struct ggml_tensor       * b,
-        const  ggml_custom2_op_t   fun,
-        int                        n_tasks,
-        void                     * userdata) {
-    return ggml_map_custom2_impl(ctx, a, b, fun, n_tasks, userdata, false);
+ସଂରଚନା ggml_tensor * ggml_map_custom2(
+        ସଂରଚନା ggml_context      * ctx,
+        ସଂରଚନା ggml_tensor       * a,
+        ସଂରଚନା ggml_tensor       * b,
+        ଅଚଳ  ggml_custom2_op_t   fun,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                        n_tasks,
+        ଶୂନ୍ୟ                     * userdata) {
+    ଫେରନ୍ତୁ ggml_map_custom2_impl(ctx, a, b, fun, n_tasks, userdata, false);
 }
 
-struct ggml_tensor * ggml_map_custom2_inplace(
-        struct ggml_context      * ctx,
-        struct ggml_tensor       * a,
-        struct ggml_tensor       * b,
-        const  ggml_custom2_op_t   fun,
-        int                        n_tasks,
-        void                     * userdata) {
-    return ggml_map_custom2_impl(ctx, a, b, fun, n_tasks, userdata, true);
+ସଂରଚନା ggml_tensor * ggml_map_custom2_inplace(
+        ସଂରଚନା ggml_context      * ctx,
+        ସଂରଚନା ggml_tensor       * a,
+        ସଂରଚନା ggml_tensor       * b,
+        ଅଚଳ  ggml_custom2_op_t   fun,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                        n_tasks,
+        ଶୂନ୍ୟ                     * userdata) {
+    ଫେରନ୍ତୁ ggml_map_custom2_impl(ctx, a, b, fun, n_tasks, userdata, true);
 }
 
 // ggml_map_custom3
 
-static struct ggml_tensor * ggml_map_custom3_impl(
-        struct ggml_context      * ctx,
-        struct ggml_tensor       * a,
-        struct ggml_tensor       * b,
-        struct ggml_tensor       * c,
-        const  ggml_custom3_op_t   fun,
-        int                        n_tasks,
-        void                     * userdata,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_map_custom3_impl(
+        ସଂରଚନା ggml_context      * ctx,
+        ସଂରଚନା ggml_tensor       * a,
+        ସଂରଚନା ggml_tensor       * b,
+        ସଂରଚନା ggml_tensor       * c,
+        ଅଚଳ  ggml_custom3_op_t   fun,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                        n_tasks,
+        ଶୂନ୍ୟ                     * userdata,
         bool                       inplace) {
     GGML_ASSERT(n_tasks == GGML_N_TASKS_MAX || n_tasks > 0);
 
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    struct ggml_map_custom3_op_params params = {
+    ସଂରଚନା ggml_map_custom3_op_params params = {
         /*.fun      =*/ fun,
         /*.n_tasks  =*/ n_tasks,
         /*.userdata =*/ userdata
     };
-    ggml_set_op_params(result, &params, sizeof(params));
+    ggml_set_op_params(result, &params, ଆକାର(params));
 
     result->op     = GGML_OP_MAP_CUSTOM3;
     result->src[0] = a;
     result->src[1] = b;
     result->src[2] = c;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_map_custom3(
-        struct ggml_context      * ctx,
-        struct ggml_tensor       * a,
-        struct ggml_tensor       * b,
-        struct ggml_tensor       * c,
-        const  ggml_custom3_op_t   fun,
-        int                        n_tasks,
-        void                     * userdata) {
-    return ggml_map_custom3_impl(ctx, a, b, c, fun, n_tasks, userdata, false);
+ସଂରଚନା ggml_tensor * ggml_map_custom3(
+        ସଂରଚନା ggml_context      * ctx,
+        ସଂରଚନା ggml_tensor       * a,
+        ସଂରଚନା ggml_tensor       * b,
+        ସଂରଚନା ggml_tensor       * c,
+        ଅଚଳ  ggml_custom3_op_t   fun,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                        n_tasks,
+        ଶୂନ୍ୟ                     * userdata) {
+    ଫେରନ୍ତୁ ggml_map_custom3_impl(ctx, a, b, c, fun, n_tasks, userdata, false);
 }
 
-struct ggml_tensor * ggml_map_custom3_inplace(
-        struct ggml_context      * ctx,
-        struct ggml_tensor       * a,
-        struct ggml_tensor       * b,
-        struct ggml_tensor       * c,
-        const  ggml_custom3_op_t   fun,
-        int                        n_tasks,
-        void                     * userdata) {
-    return ggml_map_custom3_impl(ctx, a, b, c, fun, n_tasks, userdata, true);
+ସଂରଚନା ggml_tensor * ggml_map_custom3_inplace(
+        ସଂରଚନା ggml_context      * ctx,
+        ସଂରଚନା ggml_tensor       * a,
+        ସଂରଚନା ggml_tensor       * b,
+        ସଂରଚନା ggml_tensor       * c,
+        ଅଚଳ  ggml_custom3_op_t   fun,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                        n_tasks,
+        ଶୂନ୍ୟ                     * userdata) {
+    ଫେରନ୍ତୁ ggml_map_custom3_impl(ctx, a, b, c, fun, n_tasks, userdata, true);
 }
 
-struct ggml_tensor * ggml_custom_4d(
-        struct ggml_context * ctx,
-        enum ggml_type        type,
+ସଂରଚନା ggml_tensor * ggml_custom_4d(
+        ସଂରଚନା ggml_context * ctx,
+        ଗଣନା ggml_type        type,
         int64_t               ne0,
         int64_t               ne1,
         int64_t               ne2,
         int64_t               ne3,
-        struct ggml_tensor ** args,
-        int                   n_args,
+        ସଂରଚନା ggml_tensor ** args,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_args,
         ggml_custom_op_t      fun,
-        int                   n_tasks,
-        void                * userdata) {
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_tasks,
+        ଶୂନ୍ୟ                * userdata) {
 
     GGML_ASSERT(n_args < GGML_MAX_SRC);
 
-    struct ggml_tensor * result = ggml_new_tensor_4d(ctx, type, ne0, ne1, ne2, ne3);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_4d(ctx, type, ne0, ne1, ne2, ne3);
 
-    struct ggml_custom_op_params params = {
+    ସଂରଚନା ggml_custom_op_params params = {
         /*.fun      =*/ fun,
         /*.n_tasks  =*/ n_tasks,
         /*.userdata =*/ userdata
     };
-    ggml_set_op_params(result, &params, sizeof(params));
+    ggml_set_op_params(result, &params, ଆକାର(params));
 
     result->op = GGML_OP_CUSTOM;
-    for (int i = 0; i < n_args; i++) {
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < n_args; i++) {
         result->src[i] = args[i];
     }
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_custom_inplace(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor ** args,
-        int                   n_args,
+ସଂରଚନା ggml_tensor * ggml_custom_inplace(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor ** args,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_args,
         ggml_custom_op_t      fun,
-        int                   n_tasks,
-        void                * userdata) {
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_tasks,
+        ଶୂନ୍ୟ                * userdata) {
 
     GGML_ASSERT(n_args < GGML_MAX_SRC - 1);
 
-    struct ggml_tensor * result = ggml_view_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = ggml_view_tensor(ctx, a);
 
-    struct ggml_custom_op_params params = {
+    ସଂରଚନା ggml_custom_op_params params = {
         /*.fun      =*/ fun,
         /*.n_tasks  =*/ n_tasks,
         /*.userdata =*/ userdata
     };
-    ggml_set_op_params(result, &params, sizeof(params));
+    ggml_set_op_params(result, &params, ଆକାର(params));
 
     result->op = GGML_OP_CUSTOM;
     result->src[0] = a;
-    for (int i = 0; i < n_args; i++) {
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < n_args; i++) {
         result->src[i + 1] = args[i];
     }
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 // ggml_cross_entropy_loss
 
-struct ggml_tensor * ggml_cross_entropy_loss(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
+ସଂରଚନା ggml_tensor * ggml_cross_entropy_loss(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b) {
     GGML_ASSERT(ggml_are_same_shape(a, b));
 
-    struct ggml_tensor * result = ggml_new_tensor_1d(ctx, a->type, 1);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_1d(ctx, a->type, 1);
 
     result->op     = GGML_OP_CROSS_ENTROPY_LOSS;
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_cross_entropy_loss_back
 
-struct ggml_tensor * ggml_cross_entropy_loss_back(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        struct ggml_tensor  * c) {
+ସଂରଚନା ggml_tensor * ggml_cross_entropy_loss_back(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        ସଂରଚନା ggml_tensor  * c) {
     GGML_ASSERT(ggml_is_scalar(a));
     GGML_ASSERT(ggml_are_same_shape(b, c));
 
-    struct ggml_tensor * result = ggml_dup_tensor(ctx, b);
+    ସଂରଚନା ggml_tensor * result = ggml_dup_tensor(ctx, b);
 
     result->op     = GGML_OP_CROSS_ENTROPY_LOSS_BACK;
     result->src[0] = a;
     result->src[1] = b;
     result->src[2] = c;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // opt_step_adamw
 
-struct ggml_tensor * ggml_opt_step_adamw(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * grad,
-        struct ggml_tensor  * m,
-        struct ggml_tensor  * v,
-        struct ggml_tensor  * adamw_params) {
+ସଂରଚନା ggml_tensor * ggml_opt_step_adamw(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * grad,
+        ସଂରଚନା ggml_tensor  * m,
+        ସଂରଚନା ggml_tensor  * v,
+        ସଂରଚନା ggml_tensor  * adamw_params) {
     GGML_ASSERT(a->flags & GGML_TENSOR_FLAG_PARAM);
     GGML_ASSERT(ggml_are_same_shape(a, grad));
     GGML_ASSERT(ggml_are_same_shape(a, m));
@@ -6316,7 +6316,7 @@ struct ggml_tensor * ggml_opt_step_adamw(
     GGML_ASSERT(adamw_params->type == GGML_TYPE_F32);
     GGML_ASSERT(ggml_nelements(adamw_params) == 7);
 
-    struct ggml_tensor * result = ggml_view_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = ggml_view_tensor(ctx, a);
 
     result->op     = GGML_OP_OPT_STEP_ADAMW;
     result->src[0] = a;
@@ -6325,38 +6325,38 @@ struct ggml_tensor * ggml_opt_step_adamw(
     result->src[3] = v;
     result->src[4] = adamw_params;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // opt_step_sgd
 
-struct ggml_tensor * ggml_opt_step_sgd(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * grad,
-        struct ggml_tensor  * params) {
+ସଂରଚନା ggml_tensor * ggml_opt_step_sgd(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * grad,
+        ସଂରଚନା ggml_tensor  * params) {
     GGML_ASSERT(a->flags & GGML_TENSOR_FLAG_PARAM);
     GGML_ASSERT(ggml_are_same_shape(a, grad));
     GGML_ASSERT(params->type == GGML_TYPE_F32);
     GGML_ASSERT(ggml_nelements(params) == 2);
 
-    struct ggml_tensor * result = ggml_view_tensor(ctx, a);
+    ସଂରଚନା ggml_tensor * result = ggml_view_tensor(ctx, a);
 
     result->op     = GGML_OP_OPT_STEP_SGD;
     result->src[0] = a;
     result->src[1] = grad;
     result->src[2] = params;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // solve_tri
 
-struct ggml_tensor * ggml_solve_tri(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * a,
-        struct ggml_tensor  * b,
-        bool                  left,
+ସଂରଚନା ggml_tensor * ggml_solve_tri(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * a,
+        ସଂରଚନା ggml_tensor  * b,
+        bool                  ବାମ,
         bool                  lower,
         bool                  uni) {
     GGML_ASSERT(a->type == GGML_TYPE_F32);
@@ -6374,27 +6374,27 @@ struct ggml_tensor * ggml_solve_tri(
     GGML_ASSERT(ggml_is_contiguous(a));
     GGML_ASSERT(ggml_is_contiguous(b));
 
-    GGML_ASSERT(lower && left && !uni); // TODO: support other variants
+    GGML_ASSERT(lower && ବାମ && !uni); // TODO: support other variants
 
-    struct ggml_tensor * result = ggml_new_tensor_4d(ctx, GGML_TYPE_F32, b->ne[0], b->ne[1], b->ne[2], b->ne[3]);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_4d(ctx, GGML_TYPE_F32, b->ne[0], b->ne[1], b->ne[2], b->ne[3]);
 
     result->op     = GGML_OP_SOLVE_TRI;
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_gated_delta_net
 
-struct ggml_tensor * ggml_gated_delta_net(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * q,
-        struct ggml_tensor  * k,
-        struct ggml_tensor  * v,
-        struct ggml_tensor  * g,
-        struct ggml_tensor  * beta,
-        struct ggml_tensor  * state,
+ସଂରଚନା ggml_tensor * ggml_gated_delta_net(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * q,
+        ସଂରଚନା ggml_tensor  * k,
+        ସଂରଚନା ggml_tensor  * v,
+        ସଂରଚନା ggml_tensor  * g,
+        ସଂରଚନା ggml_tensor  * beta,
+        ସଂରଚନା ggml_tensor  * state,
         int64_t               K) {
     GGML_ASSERT(ggml_is_contiguous_rows(q));
     GGML_ASSERT(ggml_is_contiguous_rows(k));
@@ -6410,10 +6410,10 @@ struct ggml_tensor * ggml_gated_delta_net(
     GGML_ASSERT(beta->type == GGML_TYPE_F32);
     GGML_ASSERT(state->type == GGML_TYPE_F32);
 
-    const int64_t S_v      = v->ne[0];
-    const int64_t H        = v->ne[1];
-    const int64_t n_tokens = v->ne[2];
-    const int64_t n_seqs   = v->ne[3];
+    ଅଚଳ int64_t S_v      = v->ne[0];
+    ଅଚଳ int64_t H        = v->ne[1];
+    ଅଚଳ int64_t n_tokens = v->ne[2];
+    ଅଚଳ int64_t n_seqs   = v->ne[3];
 
     // gate: scalar [1, H, T, B] or vector [S_v, H, T, B] (KDA)
     GGML_ASSERT(g->ne[0] == 1 || g->ne[0] == S_v);
@@ -6425,9 +6425,9 @@ struct ggml_tensor * ggml_gated_delta_net(
     GGML_ASSERT(state->ne[2] == H);
     GGML_ASSERT(state->ne[3] == n_seqs);
     GGML_ASSERT(K >= 1);
-    const int64_t state_rows = K * S_v * n_seqs;
-    const int64_t ne[4] = { S_v * H, n_tokens * n_seqs + state_rows, 1, 1 };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ଅଚଳ int64_t state_rows = K * S_v * n_seqs;
+    ଅଚଳ int64_t ne[4] = { S_v * H, n_tokens * n_seqs + state_rows, 1, 1 };
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
     ggml_set_op_params_i32(result, 0, (int32_t) K);
 
@@ -6439,17 +6439,17 @@ struct ggml_tensor * ggml_gated_delta_net(
     result->src[4] = beta;
     result->src[5] = state;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_lightning_indexer
 
-struct ggml_tensor * ggml_lightning_indexer(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * q,
-        struct ggml_tensor  * k,
-        struct ggml_tensor  * weights,
-        struct ggml_tensor  * mask) {
+ସଂରଚନା ggml_tensor * ggml_lightning_indexer(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * q,
+        ସଂରଚନା ggml_tensor  * k,
+        ସଂରଚନା ggml_tensor  * weights,
+        ସଂରଚନା ggml_tensor  * mask) {
 
     GGML_ASSERT(       q->type == GGML_TYPE_F32);
     GGML_ASSERT( weights->type == GGML_TYPE_F32);
@@ -6467,7 +6467,7 @@ struct ggml_tensor * ggml_lightning_indexer(
     GGML_ASSERT(weights->ne[3] % mask->ne[3] == 0);
 
     int64_t ne[4] = { k->ne[2], q->ne[2], 1, q->ne[3] };
-    struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
     result->op   = GGML_OP_LIGHTNING_INDEXER;
     result->src[0] = q;
@@ -6475,31 +6475,31 @@ struct ggml_tensor * ggml_lightning_indexer(
     result->src[2] = weights;
     result->src[3] = mask;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_dsv4_hc_comb
 
-struct ggml_tensor * ggml_dsv4_hc_comb(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * mixes,
-        struct ggml_tensor  * scale,
-        struct ggml_tensor  * base,
-        float                 eps,
+ସଂରଚନା ggml_tensor * ggml_dsv4_hc_comb(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * mixes,
+        ସଂରଚନା ggml_tensor  * scale,
+        ସଂରଚନା ggml_tensor  * base,
+        ଦଶମିକ                 eps,
         int32_t               n_iter) {
     GGML_ASSERT(mixes->type == GGML_TYPE_F32);
     GGML_ASSERT(scale->type == GGML_TYPE_F32);
     GGML_ASSERT(base->type == GGML_TYPE_F32);
     GGML_ASSERT(n_iter > 0);
 
-    const int64_t hc_mix_dim = mixes->ne[0];
-    const int64_t n_tokens   = mixes->ne[1];
+    ଅଚଳ int64_t hc_mix_dim = mixes->ne[0];
+    ଅଚଳ int64_t n_tokens   = mixes->ne[1];
 
     int64_t hc = 0;
-    for (int64_t i = 1; i*i + 2*i <= hc_mix_dim; ++i) {
-        if ((2 + i)*i == hc_mix_dim) {
+    ପାଇଁ (int64_t i = 1; i*i + 2*i <= hc_mix_dim; ++i) {
+        ଯଦି ((2 + i)*i == hc_mix_dim) {
             hc = i;
-            break;
+            ଭାଙ୍ଗ;
         }
     }
 
@@ -6516,7 +6516,7 @@ struct ggml_tensor * ggml_dsv4_hc_comb(
     GGML_ASSERT(base->ne[2] == 1);
     GGML_ASSERT(base->ne[3] == 1);
 
-    struct ggml_tensor * result = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, hc, hc, n_tokens);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, hc, hc, n_tokens);
 
     ggml_set_op_params_f32(result, 0, eps);
     ggml_set_op_params_i32(result, 1, n_iter);
@@ -6526,38 +6526,38 @@ struct ggml_tensor * ggml_dsv4_hc_comb(
     result->src[1] = scale;
     result->src[2] = base;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_dsv4_hc_pre
 
-static struct ggml_tensor * ggml_dsv4_hc_pre_impl(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * x,
-        struct ggml_tensor  * weights,
-        float                 scale,
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_dsv4_hc_pre_impl(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * x,
+        ସଂରଚନା ggml_tensor  * weights,
+        ଦଶମିକ                 scale,
         bool                  gated) {
     GGML_ASSERT(x->type == GGML_TYPE_F32);
     GGML_ASSERT(weights->type == GGML_TYPE_F32);
 
-    const int64_t n_embd   = x->ne[0];
-    const int64_t hc       = x->ne[1];
-    const int64_t n_tokens = x->ne[2];
+    ଅଚଳ int64_t n_embd   = x->ne[0];
+    ଅଚଳ int64_t hc       = x->ne[1];
+    ଅଚଳ int64_t n_tokens = x->ne[2];
 
     GGML_ASSERT(hc > 0);
     GGML_ASSERT(x->ne[3] == 1);
-    if (gated) {
+    ଯଦି (gated) {
         GGML_ASSERT(weights->ne[0] == n_embd);
         GGML_ASSERT(weights->ne[1] == hc);
         GGML_ASSERT(weights->ne[2] == n_tokens);
-    } else {
+    } ଅନ୍ୟଥା {
         GGML_ASSERT(weights->ne[0] == hc);
         GGML_ASSERT(weights->ne[1] == n_tokens);
         GGML_ASSERT(weights->ne[2] == 1);
     }
     GGML_ASSERT(weights->ne[3] == 1);
 
-    struct ggml_tensor * result = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, n_embd, n_tokens);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, n_embd, n_tokens);
 
     ggml_set_op_params_f32(result, 0, scale);
     ggml_set_op_params_i32(result, 1, gated ? 1 : 0);
@@ -6566,39 +6566,39 @@ static struct ggml_tensor * ggml_dsv4_hc_pre_impl(
     result->src[0] = x;
     result->src[1] = weights;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_dsv4_hc_pre(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * x,
-        struct ggml_tensor  * weights) {
-    return ggml_dsv4_hc_pre_impl(ctx, x, weights, 1.0f, false);
+ସଂରଚନା ggml_tensor * ggml_dsv4_hc_pre(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * x,
+        ସଂରଚନା ggml_tensor  * weights) {
+    ଫେରନ୍ତୁ ggml_dsv4_hc_pre_impl(ctx, x, weights, 1.0f, false);
 }
 
-struct ggml_tensor * ggml_dsv4_hc_pre_gated(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * x,
-        struct ggml_tensor  * gate,
-        float                 scale) {
-    return ggml_dsv4_hc_pre_impl(ctx, x, gate, scale, true);
+ସଂରଚନା ggml_tensor * ggml_dsv4_hc_pre_gated(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * x,
+        ସଂରଚନା ggml_tensor  * gate,
+        ଦଶମିକ                 scale) {
+    ଫେରନ୍ତୁ ggml_dsv4_hc_pre_impl(ctx, x, gate, scale, true);
 }
 
 // ggml_dsv4_hc_post
 
-struct ggml_tensor * ggml_dsv4_hc_post(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * x,
-        struct ggml_tensor  * residual,
-        struct ggml_tensor  * post,
-        struct ggml_tensor  * comb) {
+ସଂରଚନା ggml_tensor * ggml_dsv4_hc_post(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * x,
+        ସଂରଚନା ggml_tensor  * residual,
+        ସଂରଚନା ggml_tensor  * post,
+        ସଂରଚନା ggml_tensor  * comb) {
     GGML_ASSERT(x->type == GGML_TYPE_F32);
     GGML_ASSERT(residual->type == GGML_TYPE_F32);
     GGML_ASSERT(post->type == GGML_TYPE_F32);
 
-    const int64_t n_embd   = x->ne[0];
-    const int64_t n_tokens = x->ne[1];
-    const int64_t hc       = residual->ne[1];
+    ଅଚଳ int64_t n_embd   = x->ne[0];
+    ଅଚଳ int64_t n_tokens = x->ne[1];
+    ଅଚଳ int64_t hc       = residual->ne[1];
 
     GGML_ASSERT(hc > 0);
     GGML_ASSERT(x->ne[2] == 1);
@@ -6613,7 +6613,7 @@ struct ggml_tensor * ggml_dsv4_hc_post(
     GGML_ASSERT(post->ne[2] == 1);
     GGML_ASSERT(post->ne[3] == 1);
 
-    if (comb) {
+    ଯଦି (comb) {
         GGML_ASSERT(comb->type == GGML_TYPE_F32);
         GGML_ASSERT(comb->ne[0] == hc);
         GGML_ASSERT(comb->ne[1] == hc);
@@ -6621,7 +6621,7 @@ struct ggml_tensor * ggml_dsv4_hc_post(
         GGML_ASSERT(comb->ne[3] == 1);
     }
 
-    struct ggml_tensor * result = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, n_embd, hc, n_tokens);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, n_embd, hc, n_tokens);
 
     result->op     = GGML_OP_DSV4_HC_POST;
     result->src[0] = x;
@@ -6629,110 +6629,110 @@ struct ggml_tensor * ggml_dsv4_hc_post(
     result->src[2] = post;
     result->src[3] = comb;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 // ggml_top_k_mask
 
-struct ggml_tensor * ggml_top_k_mask(
-        struct ggml_context * ctx,
-        struct ggml_tensor  * mask,
-        struct ggml_tensor  * top_k,
-        struct ggml_tensor  * score,
-        struct ggml_tensor  * blocks,
-        struct ggml_tensor  * extra) {
+ସଂରଚନା ggml_tensor * ggml_ଶୀର୍ଷ_k_mask(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_tensor  * mask,
+        ସଂରଚନା ggml_tensor  * ଶୀର୍ଷ_k,
+        ସଂରଚନା ggml_tensor  * score,
+        ସଂରଚନା ggml_tensor  * blocks,
+        ସଂରଚନା ggml_tensor  * extra) {
     GGML_ASSERT(mask->type == GGML_TYPE_F16 || mask->type == GGML_TYPE_F32);
     GGML_ASSERT(mask->nb[0] == ggml_type_size(mask->type));
-    GGML_ASSERT(top_k->type == GGML_TYPE_I32);
-    GGML_ASSERT(top_k->ne[1] % mask->ne[1] == 0 && top_k->ne[2] % mask->ne[2] == 0 && top_k->ne[3] % mask->ne[3] == 0);
+    GGML_ASSERT(ଶୀର୍ଷ_k->type == GGML_TYPE_I32);
+    GGML_ASSERT(ଶୀର୍ଷ_k->ne[1] % mask->ne[1] == 0 && ଶୀର୍ଷ_k->ne[2] % mask->ne[2] == 0 && ଶୀର୍ଷ_k->ne[3] % mask->ne[3] == 0);
 
-    if (score) {
+    ଯଦି (score) {
         GGML_ASSERT(score->type == GGML_TYPE_F32);
-        GGML_ASSERT(score->ne[1] == top_k->ne[1] && score->ne[2] == top_k->ne[2] && score->ne[3] == top_k->ne[3]);
+        GGML_ASSERT(score->ne[1] == ଶୀର୍ଷ_k->ne[1] && score->ne[2] == ଶୀର୍ଷ_k->ne[2] && score->ne[3] == ଶୀର୍ଷ_k->ne[3]);
     }
 
-    if (blocks) {
+    ଯଦି (blocks) {
         GGML_ASSERT(blocks->type == GGML_TYPE_I32);
         GGML_ASSERT(blocks->ne[2] == 1 && blocks->ne[3] == 1);
         GGML_ASSERT(!score || blocks->ne[1] == score->ne[0]);
     }
 
-    if (extra) {
+    ଯଦି (extra) {
         GGML_ASSERT(extra->type == GGML_TYPE_I32);
-        GGML_ASSERT(extra->ne[1] == top_k->ne[1] && extra->ne[2] == top_k->ne[2] && extra->ne[3] == top_k->ne[3]);
+        GGML_ASSERT(extra->ne[1] == ଶୀର୍ଷ_k->ne[1] && extra->ne[2] == ଶୀର୍ଷ_k->ne[2] && extra->ne[3] == ଶୀର୍ଷ_k->ne[3]);
     }
 
-    struct ggml_tensor * result = ggml_new_tensor_4d(ctx, mask->type, mask->ne[0], top_k->ne[1], top_k->ne[2], top_k->ne[3]);
+    ସଂରଚନା ggml_tensor * result = ggml_new_tensor_4d(ctx, mask->type, mask->ne[0], ଶୀର୍ଷ_k->ne[1], ଶୀର୍ଷ_k->ne[2], ଶୀର୍ଷ_k->ne[3]);
 
-    result->op     = GGML_OP_TOP_K_MASK;
+    result->op     = GGML_OP_ଶୀର୍ଷ_K_MASK;
     result->src[0] = mask;
-    result->src[1] = top_k;
+    result->src[1] = ଶୀର୍ଷ_k;
     result->src[2] = score;
     result->src[3] = blocks;
     result->src[4] = extra;
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-struct ggml_hash_set ggml_hash_set_new(size_t size) {
+ସଂରଚନା ggml_hash_set ggml_hash_set_new(size_t size) {
     size = ggml_hash_size(size);
-    struct ggml_hash_set result;
+    ସଂରଚନା ggml_hash_set result;
     result.size = size;
-    result.keys = GGML_MALLOC(sizeof(struct ggml_tensor *) * size);
-    result.used = GGML_CALLOC(ggml_bitset_size(size), sizeof(ggml_bitset_t));
-    return result;
+    result.ଚାବିଗୁଡ଼ିକ = GGML_MALLOC(ଆକାର(ସଂରଚନା ggml_tensor *) * size);
+    result.used = GGML_CALLOC(ggml_bitset_size(size), ଆକାର(ggml_bitset_t));
+    ଫେରନ୍ତୁ result;
 }
 
-void ggml_hash_set_reset(struct ggml_hash_set * hash_set) {
-    memset(hash_set->used, 0, sizeof(ggml_bitset_t) * ggml_bitset_size(hash_set->size));
+ଶୂନ୍ୟ ggml_hash_set_reset(ସଂରଚନା ggml_hash_set * hash_set) {
+    memset(hash_set->used, 0, ଆକାର(ggml_bitset_t) * ggml_bitset_size(hash_set->size));
 }
 
-void ggml_hash_set_free(struct ggml_hash_set * hash_set) {
+ଶୂନ୍ୟ ggml_hash_set_free(ସଂରଚନା ggml_hash_set * hash_set) {
     GGML_FREE(hash_set->used);
-    GGML_FREE(hash_set->keys);
+    GGML_FREE(hash_set->ଚାବିଗୁଡ଼ିକ);
 }
 
 size_t ggml_hash_size(size_t min_sz) {
     // next primes after powers of two
-    static const size_t primes[] = {
+    ସ୍ଥିର ଅଚଳ size_t primes[] = {
         2, 3, 5, 11, 17, 37, 67, 131, 257, 521, 1031,
         2053, 4099, 8209, 16411, 32771, 65537, 131101,
         262147, 524309, 1048583, 2097169, 4194319, 8388617,
         16777259, 33554467, 67108879, 134217757, 268435459,
         536870923, 1073741827, 2147483659
     };
-    static const size_t n_primes = sizeof(primes)/sizeof(primes[0]);
+    ସ୍ଥିର ଅଚଳ size_t n_primes = ଆକାର(primes)/ଆକାର(primes[0]);
 
     // find the smallest prime that is larger or equal than min_sz
     size_t l = 0;
     size_t r = n_primes;
-    while (l < r) {
+    ଯେତେବେଳେ (l < r) {
         size_t m = (l + r)/2;
-        if (primes[m] < min_sz) {
+        ଯଦି (primes[m] < min_sz) {
             l = m + 1;
-        } else {
+        } ଅନ୍ୟଥା {
             r = m;
         }
     }
     size_t sz = l < n_primes ? primes[l] : min_sz | 1;
-    return sz;
+    ଫେରନ୍ତୁ sz;
 }
 
-struct hash_map {
-    struct ggml_hash_set set;
-    struct ggml_tensor ** vals;
+ସଂରଚନା hash_map {
+    ସଂରଚନା ggml_hash_set set;
+    ସଂରଚନା ggml_tensor ** vals;
 };
 
-static struct hash_map * ggml_new_hash_map(size_t size) {
-    struct hash_map * result = GGML_MALLOC(sizeof(struct hash_map));
+ସ୍ଥିର ସଂରଚନା hash_map * ggml_new_hash_map(size_t size) {
+    ସଂରଚନା hash_map * result = GGML_MALLOC(ଆକାର(ସଂରଚନା hash_map));
     result->set = ggml_hash_set_new(size);
-    result->vals = GGML_CALLOC(result->set.size, sizeof(struct ggml_tensor *));
-    return result;
+    result->vals = GGML_CALLOC(result->set.size, ଆକାର(ସଂରଚନା ggml_tensor *));
+    ଫେରନ୍ତୁ result;
 }
 
-static void ggml_hash_map_free(struct hash_map * map) {
+ସ୍ଥିର ଶୂନ୍ୟ ggml_hash_map_free(ସଂରଚନା hash_map * map) {
     ggml_hash_set_free(&map->set);
     GGML_FREE(map->vals);
     GGML_FREE(map);
@@ -6745,224 +6745,224 @@ static void ggml_hash_map_free(struct hash_map * map) {
 // else if there is no gradient for tensor, set the corresponding value
 // else, just add/subtract/etc. the gradients
 
-static void ggml_add_or_set(
-        struct ggml_context * ctx,
-        struct ggml_cgraph  * cgraph,
+ସ୍ଥିର ଶୂନ୍ୟ ggml_add_or_set(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_cgraph  * cgraph,
         size_t                isrc,
-        struct ggml_tensor  * tensor) {
-    struct ggml_tensor * src = cgraph->visited_hash_set.keys[isrc];
+        ସଂରଚନା ggml_tensor  * tensor) {
+    ସଂରଚନା ggml_tensor * src = cgraph->visited_hash_set.ଚାବିଗୁଡ଼ିକ[isrc];
     GGML_ASSERT(src);
-    if (cgraph->grads[isrc]) {
+    ଯଦି (cgraph->grads[isrc]) {
         cgraph->grads[isrc] = ggml_add_impl(ctx, cgraph->grads[isrc], tensor, /*inplace =*/ cgraph->grad_accs[isrc]);
-    } else {
+    } ଅନ୍ୟଥା {
         cgraph->grads[isrc] = tensor;
     }
     ggml_format_name(cgraph->grads[isrc], "grad for %s", src->name);
     ggml_build_forward_expand(cgraph, cgraph->grads[isrc]);
 }
 
-static void ggml_acc_or_set(
-        struct ggml_context * ctx,
-        struct ggml_cgraph  * cgraph,
+ସ୍ଥିର ଶୂନ୍ୟ ggml_acc_or_set(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_cgraph  * cgraph,
         size_t                isrc,
-        struct ggml_tensor  * tensor,
-        const  size_t         nb1,
-        const  size_t         nb2,
-        const  size_t         nb3,
-        const  size_t         offset) {
-    struct ggml_tensor * src = cgraph->visited_hash_set.keys[isrc];
+        ସଂରଚନା ggml_tensor  * tensor,
+        ଅଚଳ  size_t         nb1,
+        ଅଚଳ  size_t         nb2,
+        ଅଚଳ  size_t         nb3,
+        ଅଚଳ  size_t         offset) {
+    ସଂରଚନା ggml_tensor * src = cgraph->visited_hash_set.ଚାବିଗୁଡ଼ିକ[isrc];
     GGML_ASSERT(src);
-    if (cgraph->grads[isrc]) {
+    ଯଦି (cgraph->grads[isrc]) {
         cgraph->grads[isrc] = ggml_acc_impl(ctx, cgraph->grads[isrc], tensor, nb1, nb2, nb3, offset, cgraph->grad_accs[isrc]);
-    } else {
-        struct ggml_tensor * a_zero = ggml_scale(ctx, src, 0.0f); // FIXME this is going to produce NaN if a contains inf/NaN
+    } ଅନ୍ୟଥା {
+        ସଂରଚନା ggml_tensor * a_zero = ggml_scale(ctx, src, 0.0f); // FIXME this is going to produce NaN if a contains inf/NaN
         cgraph->grads[isrc] = ggml_acc_impl(ctx, a_zero, tensor, nb1, nb2, nb3, offset, false);
     }
-    ggml_format_name(cgraph->grads[isrc], "grad for %s", cgraph->visited_hash_set.keys[isrc]->name);
+    ggml_format_name(cgraph->grads[isrc], "grad for %s", cgraph->visited_hash_set.ଚାବିଗୁଡ଼ିକ[isrc]->name);
     ggml_build_forward_expand(cgraph, cgraph->grads[isrc]);
 }
 
-static void ggml_add1_or_set(
-        struct ggml_context * ctx,
-        struct ggml_cgraph  * cgraph,
+ସ୍ଥିର ଶୂନ୍ୟ ggml_add1_or_set(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_cgraph  * cgraph,
         size_t                isrc,
-        struct ggml_tensor  * tensor) {
-    struct ggml_tensor * src = cgraph->visited_hash_set.keys[isrc];
+        ସଂରଚନା ggml_tensor  * tensor) {
+    ସଂରଚନା ggml_tensor * src = cgraph->visited_hash_set.ଚାବିଗୁଡ଼ିକ[isrc];
     GGML_ASSERT(src);
-    if (cgraph->grads[isrc]) {
+    ଯଦି (cgraph->grads[isrc]) {
         cgraph->grads[isrc] = ggml_add1_impl(ctx, cgraph->grads[isrc], tensor, cgraph->grad_accs[isrc]);
-    } else {
+    } ଅନ୍ୟଥା {
         cgraph->grads[isrc] = ggml_repeat(ctx, tensor, src);
     }
     ggml_format_name(cgraph->grads[isrc], "grad for %s", src->name);
     ggml_build_forward_expand(cgraph, cgraph->grads[isrc]);
 }
 
-static void ggml_sub_or_set(
-        struct ggml_context * ctx,
-        struct ggml_cgraph  * cgraph,
+ସ୍ଥିର ଶୂନ୍ୟ ggml_sub_or_set(
+        ସଂରଚନା ggml_context * ctx,
+        ସଂରଚନା ggml_cgraph  * cgraph,
         size_t                isrc,
-        struct ggml_tensor  * tensor) {
-    struct ggml_tensor * src = cgraph->visited_hash_set.keys[isrc];
+        ସଂରଚନା ggml_tensor  * tensor) {
+    ସଂରଚନା ggml_tensor * src = cgraph->visited_hash_set.ଚାବିଗୁଡ଼ିକ[isrc];
     GGML_ASSERT(src);
-    if (cgraph->grads[isrc]) {
+    ଯଦି (cgraph->grads[isrc]) {
         cgraph->grads[isrc] = ggml_sub_impl(ctx, cgraph->grads[isrc], tensor, cgraph->grad_accs[isrc]);
-    } else {
+    } ଅନ୍ୟଥା {
         cgraph->grads[isrc] = ggml_neg(ctx, tensor);
     }
     ggml_format_name(cgraph->grads[isrc], "grad for %s", src->name);
     ggml_build_forward_expand(cgraph, cgraph->grads[isrc]);
 }
 
-static void ggml_compute_backward(
-        struct ggml_context * ctx, struct ggml_cgraph * cgraph, int i, const bool * grads_needed) {
-    struct ggml_tensor * tensor = cgraph->nodes[i];
-    struct ggml_tensor * grad   = ggml_graph_get_grad(cgraph, tensor);
+ସ୍ଥିର ଶୂନ୍ୟ ggml_compute_backward(
+        ସଂରଚନା ggml_context * ctx, ସଂରଚନା ggml_cgraph * cgraph, ପୂର୍ଣ୍ଣସଂଖ୍ୟା i, ଅଚଳ bool * grads_needed) {
+    ସଂରଚନା ggml_tensor * tensor = cgraph->nodes[i];
+    ସଂରଚନା ggml_tensor * grad   = ggml_graph_get_grad(cgraph, tensor);
 
-    if (!grad) {
-        return;
+    ଯଦି (!grad) {
+        ଫେରନ୍ତୁ;
     }
 
-    struct ggml_tensor * src0 = tensor->src[0];
-    struct ggml_tensor * src1 = tensor->src[1];
-    struct ggml_tensor * src2 = tensor->src[2];
-    struct ggml_hash_set * hash_set = &cgraph->visited_hash_set;
-    const size_t isrc0 = src0 ? ggml_hash_find(hash_set, src0) : (size_t) -1;
-    const size_t isrc1 = src1 ? ggml_hash_find(hash_set, src1) : (size_t) -1;
-    const size_t isrc2 = src2 ? ggml_hash_find(hash_set, src2) : (size_t) -1;
-    const bool src0_needs_grads = src0 && isrc0 != GGML_HASHSET_FULL && ggml_bitset_get(hash_set->used, isrc0) && grads_needed[isrc0];
-    const bool src1_needs_grads = src1 && isrc1 != GGML_HASHSET_FULL && ggml_bitset_get(hash_set->used, isrc1) && grads_needed[isrc1];
-    const bool src2_needs_grads = src2 && isrc2 != GGML_HASHSET_FULL && ggml_bitset_get(hash_set->used, isrc2) && grads_needed[isrc2];
+    ସଂରଚନା ggml_tensor * src0 = tensor->src[0];
+    ସଂରଚନା ggml_tensor * src1 = tensor->src[1];
+    ସଂରଚନା ggml_tensor * src2 = tensor->src[2];
+    ସଂରଚନା ggml_hash_set * hash_set = &cgraph->visited_hash_set;
+    ଅଚଳ size_t isrc0 = src0 ? ggml_hash_find(hash_set, src0) : (size_t) -1;
+    ଅଚଳ size_t isrc1 = src1 ? ggml_hash_find(hash_set, src1) : (size_t) -1;
+    ଅଚଳ size_t isrc2 = src2 ? ggml_hash_find(hash_set, src2) : (size_t) -1;
+    ଅଚଳ bool src0_needs_grads = src0 && isrc0 != GGML_HASHSET_FULL && ggml_bitset_get(hash_set->used, isrc0) && grads_needed[isrc0];
+    ଅଚଳ bool src1_needs_grads = src1 && isrc1 != GGML_HASHSET_FULL && ggml_bitset_get(hash_set->used, isrc1) && grads_needed[isrc1];
+    ଅଚଳ bool src2_needs_grads = src2 && isrc2 != GGML_HASHSET_FULL && ggml_bitset_get(hash_set->used, isrc2) && grads_needed[isrc2];
 
-    switch (tensor->op) {
-        case GGML_OP_DUP: {
-            if (src0_needs_grads) {
+    ବାଛ (tensor->op) {
+        ସ୍ଥିତି GGML_OP_DUP: {
+            ଯଦି (src0_needs_grads) {
                 ggml_add_or_set(ctx, cgraph, isrc0, grad);
             }
-        } break;
-        case GGML_OP_ADD: {
-            if (src0_needs_grads) {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_ADD: {
+            ଯଦି (src0_needs_grads) {
                 ggml_add_or_set(ctx, cgraph, isrc0, grad);
             }
-            if (src1_needs_grads) {
-                struct ggml_tensor * tmp = grad;
-                if (!ggml_are_same_shape(src0, src1)) {
+            ଯଦି (src1_needs_grads) {
+                ସଂରଚନା ggml_tensor * tmp = grad;
+                ଯଦି (!ggml_are_same_shape(src0, src1)) {
                     tmp = ggml_repeat_back(ctx, tmp, src1);
                 }
                 ggml_add_or_set(ctx, cgraph, isrc1, tmp);
             }
-        } break;
-        case GGML_OP_ADD1: {
-            if (src0_needs_grads) {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_ADD1: {
+            ଯଦି (src0_needs_grads) {
                 ggml_add_or_set(ctx, cgraph, isrc0, grad);
             }
-            if (src1_needs_grads) {
+            ଯଦି (src1_needs_grads) {
                 ggml_add_or_set(ctx, cgraph, isrc1, ggml_mean(ctx, grad)); // TODO: should probably be sum instead of mean
             }
-        } break;
-        case GGML_OP_ACC: {
-            if (src0_needs_grads) {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_ACC: {
+            ଯଦି (src0_needs_grads) {
                 ggml_add_or_set(ctx, cgraph, isrc0, grad);
             }
-            if (src1_needs_grads) {
-                const size_t nb1    = ((int32_t *) tensor->op_params)[0];
-                const size_t nb2    = ((int32_t *) tensor->op_params)[1];
-                const size_t nb3    = ((int32_t *) tensor->op_params)[2];
-                const size_t offset = ((int32_t *) tensor->op_params)[3];
+            ଯଦି (src1_needs_grads) {
+                ଅଚଳ size_t nb1    = ((int32_t *) tensor->op_params)[0];
+                ଅଚଳ size_t nb2    = ((int32_t *) tensor->op_params)[1];
+                ଅଚଳ size_t nb3    = ((int32_t *) tensor->op_params)[2];
+                ଅଚଳ size_t offset = ((int32_t *) tensor->op_params)[3];
 
-                struct ggml_tensor * tensor_grad_view = ggml_view_4d(ctx,
+                ସଂରଚନା ggml_tensor * tensor_grad_view = ggml_view_4d(ctx,
                     grad, src1->ne[0], src1->ne[1], src1->ne[2], src1->ne[3],
                     nb1, nb2, nb3, offset);
 
                 ggml_add_or_set(ctx, cgraph, isrc1, ggml_reshape(ctx, ggml_cont(ctx, tensor_grad_view), src1));
             }
-        } break;
-        case GGML_OP_SUB: {
-            if (src0_needs_grads) {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_SUB: {
+            ଯଦି (src0_needs_grads) {
                 ggml_add_or_set(ctx, cgraph, isrc0, grad);
             }
-            if (src1_needs_grads) {
+            ଯଦି (src1_needs_grads) {
                 ggml_sub_or_set(ctx, cgraph, isrc1, grad);
             }
-        } break;
-        case GGML_OP_MUL: {
-            if (src0_needs_grads) {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_MUL: {
+            ଯଦି (src0_needs_grads) {
                 ggml_add_or_set(ctx, cgraph, isrc0, ggml_mul(ctx, grad, src1));
             }
-            if (src1_needs_grads) {
-                struct ggml_tensor * tmp = ggml_mul(ctx, src0, grad);
-                if (!ggml_are_same_shape(src0, src1)) {
+            ଯଦି (src1_needs_grads) {
+                ସଂରଚନା ggml_tensor * tmp = ggml_mul(ctx, src0, grad);
+                ଯଦି (!ggml_are_same_shape(src0, src1)) {
                     tmp = ggml_repeat_back(ctx, tmp, src1);
                 }
                 ggml_add_or_set(ctx, cgraph, isrc1, tmp);
             }
-        } break;
-        case GGML_OP_DIV: {
-            if (src0_needs_grads) {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_DIV: {
+            ଯଦି (src0_needs_grads) {
                 ggml_add_or_set(ctx, cgraph, isrc0, ggml_div(ctx, grad, src1));
             }
-            if (src1_needs_grads) {
+            ଯଦି (src1_needs_grads) {
                 ggml_sub_or_set(ctx, cgraph, isrc1, ggml_mul(ctx, grad, ggml_div(ctx, tensor, src1)));
             }
-        } break;
-        case GGML_OP_SQR: {
-            if (src0_needs_grads) {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_SQR: {
+            ଯଦି (src0_needs_grads) {
                 ggml_add_or_set(ctx, cgraph, isrc0, ggml_scale(ctx, ggml_mul(ctx, src0, grad), 2.0f));
             }
-        } break;
-        case GGML_OP_SQRT: {
-            if (src0_needs_grads) {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_SQRT: {
+            ଯଦି (src0_needs_grads) {
                 ggml_add_or_set(ctx, cgraph, isrc0, ggml_scale(ctx, ggml_div(ctx, grad, tensor), 0.5f));
             }
-        } break;
-        case GGML_OP_LOG: {
-            if (src0_needs_grads) {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_LOG: {
+            ଯଦି (src0_needs_grads) {
                 ggml_add_or_set(ctx, cgraph, isrc0, ggml_div(ctx, grad, src0));
             }
-        } break;
-        case GGML_OP_SIN: {
-            if (src0_needs_grads) {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_SIN: {
+            ଯଦି (src0_needs_grads) {
                 ggml_add_or_set(ctx, cgraph, isrc0, ggml_mul(ctx, grad, ggml_cos(ctx, src0)));
             }
-        } break;
-        case GGML_OP_COS: {
-            if (src0_needs_grads) {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_COS: {
+            ଯଦି (src0_needs_grads) {
                 ggml_sub_or_set(ctx, cgraph, isrc0, ggml_mul(ctx, grad, ggml_sin(ctx, src0)));
             }
-        } break;
-        case GGML_OP_SUM: {
-            if (src0_needs_grads) {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_SUM: {
+            ଯଦି (src0_needs_grads) {
                 ggml_add1_or_set(ctx, cgraph, isrc0, grad);
             }
-        } break;
-        case GGML_OP_SUM_ROWS: {
-            if (src0_needs_grads) {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_SUM_ROWS: {
+            ଯଦି (src0_needs_grads) {
                 ggml_add_or_set(ctx, cgraph, isrc0, ggml_repeat(ctx, grad, src0));
             }
-        } break;
-        case GGML_OP_MEAN: {
-            if (src0_needs_grads) {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_MEAN: {
+            ଯଦି (src0_needs_grads) {
                 ggml_add1_or_set(ctx, cgraph, isrc0, ggml_scale_impl(ctx, grad, 1.0f/src0->ne[0], 0.0, false));
             }
-        } break;
-        case GGML_OP_REPEAT: {
-            if (src0_needs_grads) {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_REPEAT: {
+            ଯଦି (src0_needs_grads) {
                 ggml_add_or_set(ctx, cgraph, isrc0, ggml_repeat_back(ctx, grad, src0));
             }
-        } break;
-        case GGML_OP_REPEAT_BACK: {
-            if (src0_needs_grads) {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_REPEAT_BACK: {
+            ଯଦି (src0_needs_grads) {
                 ggml_add_or_set(ctx, cgraph, isrc0, ggml_repeat(ctx, grad, src0));
             }
-        } break;
-        case GGML_OP_RMS_NORM: {
-            if (src0_needs_grads) {
-                float eps;
-                memcpy(&eps, tensor->op_params, sizeof(float));
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_RMS_NORM: {
+            ଯଦି (src0_needs_grads) {
+                ଦଶମିକ eps;
+                memcpy(&eps, tensor->op_params, ଆକାର(ଦଶମିକ));
                 ggml_add_or_set(ctx, cgraph, isrc0, ggml_rms_norm_back(ctx, grad, src0, eps));
             }
-        } break;
-        case GGML_OP_MUL_MAT: {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_MUL_MAT: {
             // https://cs231n.github.io/optimization-2/#staged
             // # forward pass
             // s0 = np.random.randn(5, 10)
@@ -6978,28 +6978,28 @@ static void ggml_compute_backward(
             // src0.shape   [n,m,q1,r1]
             // src1.shape   [n,p,qq,rr]
 
-            if (src0_needs_grads) {
+            ଯଦି (src0_needs_grads) {
                 GGML_ASSERT(grad->ne[2] == src1->ne[2]);
                 GGML_ASSERT(grad->ne[3] == src1->ne[3]);
-                struct ggml_tensor * tmp =
+                ସଂରଚନା ggml_tensor * tmp =
                     ggml_out_prod(ctx, // [n,m,qq,rr]
                         src1,          // [n,p,qq,rr]
                         grad);         // [m,p,qq,rr]
-                if (!ggml_are_same_shape(tmp, src0)) {
+                ଯଦି (!ggml_are_same_shape(tmp, src0)) {
                     GGML_ASSERT(tmp->ne[0] == src0->ne[0]);
                     GGML_ASSERT(tmp->ne[1] == src0->ne[1]);
                     GGML_ASSERT(tmp->ne[3] == 1);
 
-                    const int64_t nr2 = tmp->ne[2] / src0->ne[2];
-                    const size_t nb2 = tmp->nb[2] * nr2;
-                    const size_t nb3 = tmp->nb[2];
+                    ଅଚଳ int64_t nr2 = tmp->ne[2] / src0->ne[2];
+                    ଅଚଳ size_t nb2 = tmp->nb[2] * nr2;
+                    ଅଚଳ size_t nb3 = tmp->nb[2];
 
                     tmp = ggml_view_4d(ctx, tmp, src0->ne[0], src0->ne[1], src0->ne[2], nr2, tmp->nb[1], nb2, nb3, 0);
                     tmp = ggml_repeat_back(ctx, tmp, src0);
                 }
                 ggml_add_or_set(ctx, cgraph, isrc0, tmp);
             }
-            if (src1_needs_grads) {
+            ଯଦି (src1_needs_grads) {
                 ggml_add_or_set(ctx, cgraph, isrc1,
                         // ggml_mul_mat(ctx,                   // [n,p,qq,rr]
                         //     ggml_cont(ctx,                  // [m,n,q1,r1]
@@ -7014,23 +7014,23 @@ static void ggml_compute_backward(
                             ggml_transpose(ctx, // [p,m,qq,rr]
                                 grad)));        // [m,p,qq,rr]
             }
-        } break;
-        case GGML_OP_SCALE: {
-            if (src0_needs_grads) {
-                float s;
-                memcpy(&s, tensor->op_params, sizeof(float));
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_SCALE: {
+            ଯଦି (src0_needs_grads) {
+                ଦଶମିକ s;
+                memcpy(&s, tensor->op_params, ଆକାର(ଦଶମିକ));
                 ggml_add_or_set(ctx, cgraph, isrc0, ggml_scale_impl(ctx, grad, s, 0.0, false));
             }
-        } break;
-        case GGML_OP_SET: {
-            const size_t nb1    = ((const int32_t *) tensor->op_params)[0];
-            const size_t nb2    = ((const int32_t *) tensor->op_params)[1];
-            const size_t nb3    = ((const int32_t *) tensor->op_params)[2];
-            const size_t offset = ((const int32_t *) tensor->op_params)[3];
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_SET: {
+            ଅଚଳ size_t nb1    = ((ଅଚଳ int32_t *) tensor->op_params)[0];
+            ଅଚଳ size_t nb2    = ((ଅଚଳ int32_t *) tensor->op_params)[1];
+            ଅଚଳ size_t nb3    = ((ଅଚଳ int32_t *) tensor->op_params)[2];
+            ଅଚଳ size_t offset = ((ଅଚଳ int32_t *) tensor->op_params)[3];
 
-            struct ggml_tensor * tensor_grad_view = NULL;
+            ସଂରଚନା ggml_tensor * tensor_grad_view = ଖାଲି;
 
-            if (src0_needs_grads || src1_needs_grads) {
+            ଯଦି (src0_needs_grads || src1_needs_grads) {
                 GGML_ASSERT(src0->type == tensor->type);
                 GGML_ASSERT(!cgraph->grads[isrc0] ||                      cgraph->grads[isrc0]->type == grad->type);
                 GGML_ASSERT(!cgraph->grads[isrc1] || !src1_needs_grads || cgraph->grads[isrc1]->type == grad->type);
@@ -7040,54 +7040,54 @@ static void ggml_compute_backward(
                     nb1, nb2, nb3, offset);
             }
 
-            if (src0_needs_grads) {
-                struct ggml_tensor * tmp = ggml_neg(ctx, tensor_grad_view);
+            ଯଦି (src0_needs_grads) {
+                ସଂରଚନା ggml_tensor * tmp = ggml_neg(ctx, tensor_grad_view);
                 ggml_add_or_set(ctx, cgraph, isrc0, ggml_acc_impl(ctx, grad, tmp, nb1, nb2, nb3, offset, false));
             }
 
-            if (src1_needs_grads) {
+            ଯଦି (src1_needs_grads) {
                 ggml_add_or_set(ctx, cgraph, isrc1, ggml_reshape(ctx, ggml_cont(ctx, tensor_grad_view), src1));
             }
-        } break;
-        case GGML_OP_CPY: {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_CPY: {
             // cpy overwrites value of src1 by src0 and returns view(src1)
             // the overwriting is mathematically equivalent to:
             // tensor = src0 * 1 + src1 * 0
-            if (src0_needs_grads) {
+            ଯଦି (src0_needs_grads) {
                 // dsrc0 = dtensor * 1
                 ggml_add_or_set(ctx, cgraph, isrc0, ggml_reshape(ctx, grad, src0));
             }
-            if (src1_needs_grads) {
+            ଯଦି (src1_needs_grads) {
                 // dsrc1 = dtensor * 0 -> noop
             }
-        } break;
-        case GGML_OP_CONT: {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_CONT: {
             // same as cpy
-            if (src0_needs_grads) {
+            ଯଦି (src0_needs_grads) {
                 GGML_ASSERT(!cgraph->grads[isrc0] || ggml_is_contiguous(cgraph->grads[isrc0]));
                 GGML_ASSERT(ggml_is_contiguous(grad));
                 GGML_ASSERT(ggml_nelements(tensor) == ggml_nelements(src0));
                 ggml_add_or_set(ctx, cgraph, isrc0,
                     ggml_are_same_shape(tensor, src0) ? grad : ggml_reshape(ctx, grad, src0));
             }
-        } break;
-        case GGML_OP_RESHAPE: {
-            if (src0_needs_grads) {
-                struct ggml_tensor * grad_cont = ggml_is_contiguous(grad) ? grad : ggml_cont(ctx, grad);
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_RESHAPE: {
+            ଯଦି (src0_needs_grads) {
+                ସଂରଚନା ggml_tensor * grad_cont = ggml_is_contiguous(grad) ? grad : ggml_cont(ctx, grad);
                 ggml_add_or_set(ctx, cgraph, isrc0, ggml_reshape(ctx, grad_cont, src0));
             }
-        } break;
-        case GGML_OP_VIEW: {
-            if (src0_needs_grads) {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_VIEW: {
+            ଯଦି (src0_needs_grads) {
                 size_t offset;
 
-                memcpy(&offset, tensor->op_params, sizeof(offset));
+                memcpy(&offset, tensor->op_params, ଆକାର(offset));
 
                 size_t nb1 = tensor->nb[1];
                 size_t nb2 = tensor->nb[2];
                 size_t nb3 = tensor->nb[3];
 
-                if (cgraph->grads[isrc0] && src0->type != cgraph->grads[isrc0]->type) {
+                ଯଦି (cgraph->grads[isrc0] && src0->type != cgraph->grads[isrc0]->type) {
                     // gradient is typically F32, but src0 could be other type
                     size_t ng = ggml_element_size(cgraph->grads[isrc0]);
                     size_t n0 = ggml_element_size(src0);
@@ -7103,80 +7103,80 @@ static void ggml_compute_backward(
 
                 ggml_acc_or_set(ctx, cgraph, isrc0, grad, nb1, nb2, nb3, offset);
             }
-        } break;
-        case GGML_OP_PERMUTE: {
-            if (src0_needs_grads) {
-                const int32_t * axes = (const int32_t *) tensor->op_params;
-                const int axis0 = axes[0] & 0x3;
-                const int axis1 = axes[1] & 0x3;
-                const int axis2 = axes[2] & 0x3;
-                const int axis3 = axes[3] & 0x3;
-                int axb[4] = {0,0,0,0}; // axes backward
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_PERMUTE: {
+            ଯଦି (src0_needs_grads) {
+                ଅଚଳ int32_t * axes = (ଅଚଳ int32_t *) tensor->op_params;
+                ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା axis0 = axes[0] & 0x3;
+                ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା axis1 = axes[1] & 0x3;
+                ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା axis2 = axes[2] & 0x3;
+                ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା axis3 = axes[3] & 0x3;
+                ପୂର୍ଣ୍ଣସଂଖ୍ୟା axb[4] = {0,0,0,0}; // axes backward
                 axb[axis0] = 0;
                 axb[axis1] = 1;
                 axb[axis2] = 2;
                 axb[axis3] = 3;
                 ggml_add_or_set(ctx, cgraph, isrc0, ggml_permute(ctx, grad, axb[0], axb[1], axb[2], axb[3]));
             }
-        } break;
-        case GGML_OP_TRANSPOSE: {
-            if (src0_needs_grads) {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_TRANSPOSE: {
+            ଯଦି (src0_needs_grads) {
                 ggml_add_or_set(ctx, cgraph, isrc0, ggml_transpose(ctx, grad));
             }
-        } break;
-        case GGML_OP_GET_ROWS: {
-            if (src0_needs_grads) {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_GET_ROWS: {
+            ଯଦି (src0_needs_grads) {
                 ggml_add_or_set(ctx, cgraph, isrc0, ggml_get_rows_back(ctx, grad, src1, src0));
             }
-            if (src1_needs_grads) {
+            ଯଦି (src1_needs_grads) {
                 // noop
             }
-        } break;
-        case GGML_OP_DIAG_MASK_INF: {
-            if (src0_needs_grads) {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_DIAG_MASK_INF: {
+            ଯଦି (src0_needs_grads) {
                 /* ggml_diag_mask_inf_impl() shouldn't be here */
                 /* ref:  https://github.com/ggml-org/llama.cpp/pull/4203#discussion_r1412377992 */
-                const int n_past = ((const int32_t *) tensor->op_params)[0];
+                ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା n_past = ((ଅଚଳ int32_t *) tensor->op_params)[0];
                 ggml_add_or_set(ctx, cgraph, isrc0, ggml_diag_mask_zero_impl(ctx, grad, n_past, false));
             }
-        } break;
-        case GGML_OP_DIAG_MASK_ZERO: {
-            if (src0_needs_grads) {
-                const int n_past = ((const int32_t *) tensor->op_params)[0];
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_DIAG_MASK_ZERO: {
+            ଯଦି (src0_needs_grads) {
+                ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା n_past = ((ଅଚଳ int32_t *) tensor->op_params)[0];
                 ggml_add_or_set(ctx, cgraph, isrc0, ggml_diag_mask_zero_impl(ctx, grad, n_past, false));
             }
-        } break;
-        case GGML_OP_SOFT_MAX: {
-            if (src0_needs_grads) {
-                float scale    = 1.0f;
-                float max_bias = 0.0f;
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_SOFT_MAX: {
+            ଯଦି (src0_needs_grads) {
+                ଦଶମିକ scale    = 1.0f;
+                ଦଶମିକ max_bias = 0.0f;
 
-                memcpy(&scale,    (const float *) tensor->op_params + 0, sizeof(float));
-                memcpy(&max_bias, (const float *) tensor->op_params + 1, sizeof(float));
+                memcpy(&scale,    (ଅଚଳ ଦଶମିକ *) tensor->op_params + 0, ଆକାର(ଦଶମିକ));
+                memcpy(&max_bias, (ଅଚଳ ଦଶମିକ *) tensor->op_params + 1, ଆକାର(ଦଶମିକ));
 
                 ggml_add_or_set(ctx, cgraph, isrc0, ggml_soft_max_ext_back(ctx, grad, tensor, scale, max_bias));
             }
             GGML_ASSERT((!src1 || !src1_needs_grads) && "backward pass for softmax mask not implemented");
-        } break;
-        case GGML_OP_ROPE: {
-            if (src0_needs_grads) {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_ROPE: {
+            ଯଦି (src0_needs_grads) {
                 //const int n_past = ((int32_t *) tensor->op_params)[0];
-                const int n_dims     = ((const int32_t *) tensor->op_params)[1];
-                const int mode       = ((const int32_t *) tensor->op_params)[2];
+                ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା n_dims     = ((ଅଚଳ int32_t *) tensor->op_params)[1];
+                ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା mode       = ((ଅଚଳ int32_t *) tensor->op_params)[2];
                 //const int n_ctx      = ((int32_t *) tensor->op_params)[3];
-                const int n_ctx_orig = ((const int32_t *) tensor->op_params)[4];
-                float freq_base, freq_scale, ext_factor, attn_factor, beta_fast, beta_slow;
-                int sections[4] = {0, 0, 0, 0};
+                ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା n_ctx_orig = ((ଅଚଳ int32_t *) tensor->op_params)[4];
+                ଦଶମିକ freq_base, freq_scale, ext_factor, attn_factor, beta_fast, beta_slow;
+                ପୂର୍ଣ୍ଣସଂଖ୍ୟା sections[4] = {0, 0, 0, 0};
 
-                memcpy(&freq_base,   (const float *) tensor->op_params +  5, sizeof(float));
-                memcpy(&freq_scale,  (const float *) tensor->op_params +  6, sizeof(float));
-                memcpy(&ext_factor,  (const float *) tensor->op_params +  7, sizeof(float));
-                memcpy(&attn_factor, (const float *) tensor->op_params +  8, sizeof(float));
-                memcpy(&beta_fast,   (const float *) tensor->op_params +  9, sizeof(float));
-                memcpy(&beta_slow,   (const float *) tensor->op_params + 10, sizeof(float));
-                memcpy(&sections,                    tensor->op_params + 11, sizeof(sections));
+                memcpy(&freq_base,   (ଅଚଳ ଦଶମିକ *) tensor->op_params +  5, ଆକାର(ଦଶମିକ));
+                memcpy(&freq_scale,  (ଅଚଳ ଦଶମିକ *) tensor->op_params +  6, ଆକାର(ଦଶମିକ));
+                memcpy(&ext_factor,  (ଅଚଳ ଦଶମିକ *) tensor->op_params +  7, ଆକାର(ଦଶମିକ));
+                memcpy(&attn_factor, (ଅଚଳ ଦଶମିକ *) tensor->op_params +  8, ଆକାର(ଦଶମିକ));
+                memcpy(&beta_fast,   (ଅଚଳ ଦଶମିକ *) tensor->op_params +  9, ଆକାର(ଦଶମିକ));
+                memcpy(&beta_slow,   (ଅଚଳ ଦଶମିକ *) tensor->op_params + 10, ଆକାର(ଦଶମିକ));
+                memcpy(&sections,                    tensor->op_params + 11, ଆକାର(sections));
 
-                struct ggml_tensor * rope_back = grad->ne[2] == src1->ne[0] ?
+                ସଂରଚନା ggml_tensor * rope_back = grad->ne[2] == src1->ne[0] ?
                     ggml_rope_ext_back(ctx, grad, src1, src2, n_dims,
                         mode, n_ctx_orig, freq_base, freq_scale, ext_factor, attn_factor, beta_fast, beta_slow) :
                     ggml_rope_multi_back(ctx, grad, src1, src2, n_dims, sections,
@@ -7184,112 +7184,112 @@ static void ggml_compute_backward(
                 ggml_add_or_set(ctx, cgraph, isrc0, rope_back);
             }
             GGML_ASSERT((!src2 || !src2_needs_grads) && "gradients for freq factors not implemented");
-        } break;
-        case GGML_OP_IM2COL: {
-            if (src1_needs_grads) {
-                const int32_t s0    = ggml_get_op_params_i32(tensor, 0);
-                const int32_t s1    = ggml_get_op_params_i32(tensor, 1);
-                const int32_t p0    = ggml_get_op_params_i32(tensor, 2);
-                const int32_t p1    = ggml_get_op_params_i32(tensor, 3);
-                const int32_t d0    = ggml_get_op_params_i32(tensor, 4);
-                const int32_t d1    = ggml_get_op_params_i32(tensor, 5);
-                const bool    is_2D = ggml_get_op_params_i32(tensor, 6) == 1;
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_IM2COL: {
+            ଯଦି (src1_needs_grads) {
+                ଅଚଳ int32_t s0    = ggml_get_op_params_i32(tensor, 0);
+                ଅଚଳ int32_t s1    = ggml_get_op_params_i32(tensor, 1);
+                ଅଚଳ int32_t p0    = ggml_get_op_params_i32(tensor, 2);
+                ଅଚଳ int32_t p1    = ggml_get_op_params_i32(tensor, 3);
+                ଅଚଳ int32_t d0    = ggml_get_op_params_i32(tensor, 4);
+                ଅଚଳ int32_t d1    = ggml_get_op_params_i32(tensor, 5);
+                ଅଚଳ bool    is_2D = ggml_get_op_params_i32(tensor, 6) == 1;
 
                 ggml_add_or_set(ctx, cgraph, isrc1, ggml_im2col_back(ctx, grad, src0, src1->ne, s0, s1, p0, p1, d0, d1, is_2D));
             }
-        } break;
-        case GGML_OP_POOL_2D: {
-            if (src0_needs_grads) {
-                const enum ggml_op_pool op = ggml_get_op_params_i32(tensor, 0);
-                const      int32_t      k0 = ggml_get_op_params_i32(tensor, 1);
-                const      int32_t      k1 = ggml_get_op_params_i32(tensor, 2);
-                const      int32_t      s0 = ggml_get_op_params_i32(tensor, 3);
-                const      int32_t      s1 = ggml_get_op_params_i32(tensor, 4);
-                const      int32_t      p0 = ggml_get_op_params_i32(tensor, 5);
-                const      int32_t      p1 = ggml_get_op_params_i32(tensor, 6);
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_POOL_2D: {
+            ଯଦି (src0_needs_grads) {
+                ଅଚଳ ଗଣନା ggml_op_pool op = ggml_get_op_params_i32(tensor, 0);
+                ଅଚଳ      int32_t      k0 = ggml_get_op_params_i32(tensor, 1);
+                ଅଚଳ      int32_t      k1 = ggml_get_op_params_i32(tensor, 2);
+                ଅଚଳ      int32_t      s0 = ggml_get_op_params_i32(tensor, 3);
+                ଅଚଳ      int32_t      s1 = ggml_get_op_params_i32(tensor, 4);
+                ଅଚଳ      int32_t      p0 = ggml_get_op_params_i32(tensor, 5);
+                ଅଚଳ      int32_t      p1 = ggml_get_op_params_i32(tensor, 6);
 
                 ggml_add_or_set(ctx, cgraph, isrc0, ggml_pool_2d_back(ctx, grad, src0, op, k0, k1, s0, s1, p0, p1));
             }
-        } break;
-        case GGML_OP_WIN_PART:
-        case GGML_OP_WIN_UNPART:
-        case GGML_OP_UNARY: {
-            switch (ggml_get_unary_op(tensor)) {
-                case GGML_UNARY_OP_ABS: {
-                    if (src0_needs_grads) {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_WIN_PART:
+        ସ୍ଥିତି GGML_OP_WIN_UNPART:
+        ସ୍ଥିତି GGML_OP_UNARY: {
+            ବାଛ (ggml_get_unary_op(tensor)) {
+                ସ୍ଥିତି GGML_UNARY_OP_ABS: {
+                    ଯଦି (src0_needs_grads) {
                         ggml_add_or_set(ctx, cgraph, isrc0, ggml_mul(ctx, ggml_sgn(ctx, src0), grad));
                     }
-                } break;
-                case GGML_UNARY_OP_SGN: {
+                } ଭାଙ୍ଗ;
+                ସ୍ଥିତି GGML_UNARY_OP_SGN: {
                     // noop
-                } break;
-                case GGML_UNARY_OP_NEG: {
-                    if (src0_needs_grads) {
+                } ଭାଙ୍ଗ;
+                ସ୍ଥିତି GGML_UNARY_OP_NEG: {
+                    ଯଦି (src0_needs_grads) {
                         ggml_sub_or_set(ctx, cgraph, isrc0, grad);
                     }
-                } break;
-                case GGML_UNARY_OP_STEP: {
+                } ଭାଙ୍ଗ;
+                ସ୍ଥିତି GGML_UNARY_OP_STEP: {
                     // noop
-                } break;
-                case GGML_UNARY_OP_RELU: {
-                    if (src0_needs_grads) {
+                } ଭାଙ୍ଗ;
+                ସ୍ଥିତି GGML_UNARY_OP_RELU: {
+                    ଯଦି (src0_needs_grads) {
                         ggml_add_or_set(ctx, cgraph, isrc0, ggml_mul(ctx, ggml_step(ctx, src0), grad));
                     }
-                } break;
-                case GGML_UNARY_OP_SILU: {
-                    if (src0_needs_grads) {
+                } ଭାଙ୍ଗ;
+                ସ୍ଥିତି GGML_UNARY_OP_SILU: {
+                    ଯଦି (src0_needs_grads) {
                         ggml_add_or_set(ctx, cgraph, isrc0, ggml_silu_back(ctx, grad, src0));
                     }
-                } break;
-                case GGML_UNARY_OP_EXP: {
-                    if (src0_needs_grads) {
+                } ଭାଙ୍ଗ;
+                ସ୍ଥିତି GGML_UNARY_OP_EXP: {
+                    ଯଦି (src0_needs_grads) {
                         ggml_add_or_set(ctx, cgraph, isrc0, ggml_mul(ctx, tensor, grad));
                     }
-                } break;
-                case GGML_UNARY_OP_EXPM1: {
-                    if (src0_needs_grads) {
+                } ଭାଙ୍ଗ;
+                ସ୍ଥିତି GGML_UNARY_OP_EXPM1: {
+                    ଯଦି (src0_needs_grads) {
                         ggml_add_or_set(ctx, cgraph, isrc0, ggml_mul(ctx, grad, ggml_exp(ctx, src0)));
                     }
-                } break;
-                case GGML_UNARY_OP_SOFTPLUS: {
-                    if (src0_needs_grads) {
+                } ଭାଙ୍ଗ;
+                ସ୍ଥିତି GGML_UNARY_OP_SOFTPLUS: {
+                    ଯଦି (src0_needs_grads) {
                         ggml_add_or_set(ctx, cgraph, isrc0, ggml_mul(ctx, grad, ggml_sigmoid(ctx, src0)));
                     }
-                } break;
-                default: {
+                } ଭାଙ୍ଗ;
+                ପୂର୍ବନିର୍ଦ୍ଧାରିତ: {
                     fprintf(stderr, "%s: unsupported unary op for backward pass: %s\n",
                         __func__, ggml_unary_op_name(ggml_get_unary_op(tensor)));
                     GGML_ABORT("fatal error");
                 } //break;
             }
-        } break;
-        case GGML_OP_CROSS_ENTROPY_LOSS: {
-            if (src0_needs_grads) {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_CROSS_ENTROPY_LOSS: {
+            ଯଦି (src0_needs_grads) {
                 ggml_add_or_set(ctx, cgraph, isrc0, ggml_cross_entropy_loss_back(ctx, grad, src0, src1));
             }
             GGML_ASSERT(!src1_needs_grads && "backward pass for labels not implemented");
-        } break;
-        case GGML_OP_GLU: {
-            switch (ggml_get_glu_op(tensor)) {
-                case GGML_GLU_OP_SWIGLU: {
-                    if (src0_needs_grads) {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_GLU: {
+            ବାଛ (ggml_get_glu_op(tensor)) {
+                ସ୍ଥିତି GGML_GLU_OP_SWIGLU: {
+                    ଯଦି (src0_needs_grads) {
                         GGML_ASSERT(src1 && "backward pass only implemented for split swiglu");
                         ggml_add_or_set(ctx, cgraph, isrc0, ggml_silu_back(ctx, ggml_mul(ctx, grad, src1), src0));
                     }
-                    if (src1_needs_grads) {
+                    ଯଦି (src1_needs_grads) {
                         ggml_add_or_set(ctx, cgraph, isrc1, ggml_mul(ctx, ggml_silu(ctx, src0), grad));
                     }
-                } break;
-                default: {
+                } ଭାଙ୍ଗ;
+                ପୂର୍ବନିର୍ଦ୍ଧାରିତ: {
                     GGML_ABORT("unsupported glu op for backward pass: %s", ggml_glu_op_name(ggml_get_glu_op(tensor)));
                 } //break;
             }
-        } break;
-        case GGML_OP_NONE: {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_NONE: {
             // noop
-        } break;
-        case GGML_OP_COUNT:
-        default: {
+        } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_OP_ଗଣନା:
+        ପୂର୍ବନିର୍ଦ୍ଧାରିତ: {
             GGML_ABORT("%s: unsupported ggml op for backward pass: %s\n", __func__, ggml_op_name(tensor->op));
         } //break;
     }
@@ -7299,270 +7299,270 @@ static void ggml_compute_backward(
     GGML_ASSERT(!src2_needs_grads || ggml_are_same_shape(src2, cgraph->grads[isrc2]));
 }
 
-static size_t ggml_visit_parents_graph(struct ggml_cgraph * cgraph, struct ggml_tensor * node, bool compute) {
-    if (node->op != GGML_OP_NONE && compute) {
-        node->flags |= GGML_TENSOR_FLAG_COMPUTE;
+ସ୍ଥିର size_t ggml_visit_parents_graph(ସଂରଚନା ggml_cgraph * cgraph, ସଂରଚନା ggml_tensor * ଗଣ୍ଠି, bool compute) {
+    ଯଦି (ଗଣ୍ଠି->op != GGML_OP_NONE && compute) {
+        ଗଣ୍ଠି->flags |= GGML_TENSOR_FLAG_COMPUTE;
     }
 
-    const size_t node_hash_pos = ggml_hash_find(&cgraph->visited_hash_set, node);
-    GGML_ASSERT(node_hash_pos != GGML_HASHSET_FULL);
+    ଅଚଳ size_t ଗଣ୍ଠି_hash_pos = ggml_hash_find(&cgraph->visited_hash_set, ଗଣ୍ଠି);
+    GGML_ASSERT(ଗଣ୍ଠି_hash_pos != GGML_HASHSET_FULL);
 
-    if (ggml_bitset_get(cgraph->visited_hash_set.used, node_hash_pos)) {
+    ଯଦି (ggml_bitset_get(cgraph->visited_hash_set.used, ଗଣ୍ଠି_hash_pos)) {
         // already visited
 
-        if (compute) {
+        ଯଦି (compute) {
             // update the compute flag regardless
-            for (int i = 0; i < GGML_MAX_SRC; ++i) {
-                struct ggml_tensor * src = node->src[i];
-                if (src && ((src->flags & GGML_TENSOR_FLAG_COMPUTE) == 0)) {
+            ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < GGML_MAX_SRC; ++i) {
+                ସଂରଚନା ggml_tensor * src = ଗଣ୍ଠି->src[i];
+                ଯଦି (src && ((src->flags & GGML_TENSOR_FLAG_COMPUTE) == 0)) {
                     ggml_visit_parents_graph(cgraph, src, true);
                 }
             }
         }
 
-        return node_hash_pos;
+        ଫେରନ୍ତୁ ଗଣ୍ଠି_hash_pos;
     }
 
     // This is the first time we see this node in the current graph.
-    cgraph->visited_hash_set.keys[node_hash_pos] = node;
-    ggml_bitset_set(cgraph->visited_hash_set.used, node_hash_pos);
-    cgraph->use_counts[node_hash_pos] = 0;
+    cgraph->visited_hash_set.ଚାବିଗୁଡ଼ିକ[ଗଣ୍ଠି_hash_pos] = ଗଣ୍ଠି;
+    ggml_bitset_set(cgraph->visited_hash_set.used, ଗଣ୍ଠି_hash_pos);
+    cgraph->use_counts[ଗଣ୍ଠି_hash_pos] = 0;
 
-    for (int i = 0; i < GGML_MAX_SRC; ++i) {
-        const int k =
-            (cgraph->order == GGML_CGRAPH_EVAL_ORDER_LEFT_TO_RIGHT) ? i :
-            (cgraph->order == GGML_CGRAPH_EVAL_ORDER_RIGHT_TO_LEFT) ? (GGML_MAX_SRC-1-i) :
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < GGML_MAX_SRC; ++i) {
+        ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା k =
+            (cgraph->order == GGML_CGRAPH_EVAL_ORDER_ବାମ_TO_ଡାହାଣ) ? i :
+            (cgraph->order == GGML_CGRAPH_EVAL_ORDER_ଡାହାଣ_TO_ବାମ) ? (GGML_MAX_SRC-1-i) :
             /* unknown order, just fall back to using i */ i;
 
-        struct ggml_tensor * src = node->src[k];
-        if (src) {
-            const size_t src_hash_pos = ggml_visit_parents_graph(cgraph, src, compute);
+        ସଂରଚନା ggml_tensor * src = ଗଣ୍ଠି->src[k];
+        ଯଦି (src) {
+            ଅଚଳ size_t src_hash_pos = ggml_visit_parents_graph(cgraph, src, compute);
 
             // Update the use count for this operand.
             cgraph->use_counts[src_hash_pos]++;
         }
     }
 
-    if (node->op == GGML_OP_NONE && !(node->flags & GGML_TENSOR_FLAG_PARAM)) {
+    ଯଦି (ଗଣ୍ଠି->op == GGML_OP_NONE && !(ଗଣ୍ଠି->flags & GGML_TENSOR_FLAG_PARAM)) {
         // reached a leaf node, not part of the gradient graph (e.g. a constant)
         GGML_ASSERT(cgraph->n_leafs < cgraph->size);
 
-        if (strlen(node->name) == 0) {
-            ggml_format_name(node, "leaf_%d", cgraph->n_leafs);
+        ଯଦି (strlen(ଗଣ୍ଠି->name) == 0) {
+            ggml_format_name(ଗଣ୍ଠି, "leaf_%d", cgraph->n_leafs);
         }
 
-        cgraph->leafs[cgraph->n_leafs] = node;
+        cgraph->leafs[cgraph->n_leafs] = ଗଣ୍ଠି;
         cgraph->n_leafs++;
-    } else {
+    } ଅନ୍ୟଥା {
         GGML_ASSERT(cgraph->n_nodes < cgraph->size);
 
-        if (strlen(node->name) == 0) {
-            ggml_format_name(node, "node_%d", cgraph->n_nodes);
+        ଯଦି (strlen(ଗଣ୍ଠି->name) == 0) {
+            ggml_format_name(ଗଣ୍ଠି, "node_%d", cgraph->n_nodes);
         }
 
-        cgraph->nodes[cgraph->n_nodes] = node;
+        cgraph->nodes[cgraph->n_nodes] = ଗଣ୍ଠି;
         cgraph->n_nodes++;
     }
 
-    return node_hash_pos;
+    ଫେରନ୍ତୁ ଗଣ୍ଠି_hash_pos;
 }
 
-static void ggml_build_forward_impl(struct ggml_cgraph * cgraph, struct ggml_tensor * tensor, bool expand, bool compute) {
-    if (!expand) {
+ସ୍ଥିର ଶୂନ୍ୟ ggml_build_forward_impl(ସଂରଚନା ggml_cgraph * cgraph, ସଂରଚନା ggml_tensor * tensor, bool expand, bool compute) {
+    ଯଦି (!expand) {
         // TODO: this branch isn't accessible anymore, maybe move this to ggml_build_forward_expand
         ggml_graph_clear(cgraph);
     }
 
-    const int n_old = cgraph->n_nodes;
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା n_old = cgraph->n_nodes;
 
     ggml_visit_parents_graph(cgraph, tensor, compute);
 
-    const int n_new = cgraph->n_nodes - n_old;
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା n_new = cgraph->n_nodes - n_old;
     GGML_PRINT_DEBUG("%s: visited %d new nodes\n", __func__, n_new);
 
-    if (n_new > 0) {
+    ଯଦି (n_new > 0) {
         // the last added node should always be starting point
         GGML_ASSERT(cgraph->nodes[cgraph->n_nodes - 1] == tensor);
     }
 }
 
-struct ggml_tensor * ggml_build_forward_select(
-        struct ggml_cgraph  * cgraph,
-        struct ggml_tensor ** tensors,
-        int                   n_tensors,
-        int                   idx) {
+ସଂରଚନା ggml_tensor * ggml_build_forward_select(
+        ସଂରଚନା ggml_cgraph  * cgraph,
+        ସଂରଚନା ggml_tensor ** tensors,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   n_tensors,
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା                   idx) {
     GGML_ASSERT(idx >= 0 && idx < n_tensors);
 
-    for (int i = 0; i < n_tensors; i++) {
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < n_tensors; i++) {
         ggml_build_forward_impl(cgraph, tensors[i], true, i == idx ? true : false);
     }
 
-    return tensors[idx];
+    ଫେରନ୍ତୁ tensors[idx];
 }
 
-void ggml_build_forward_expand(struct ggml_cgraph * cgraph, struct ggml_tensor * tensor) {
+ଶୂନ୍ୟ ggml_build_forward_expand(ସଂରଚନା ggml_cgraph * cgraph, ସଂରଚନା ggml_tensor * tensor) {
     ggml_build_forward_impl(cgraph, tensor, true, true);
 }
 
-void ggml_build_forward_order(struct ggml_cgraph * cgraph, struct ggml_tensor * tensor) {
+ଶୂନ୍ୟ ggml_build_forward_order(ସଂରଚନା ggml_cgraph * cgraph, ସଂରଚନା ggml_tensor * tensor) {
     ggml_build_forward_impl(cgraph, tensor, true, false);
 }
 
-void ggml_build_backward_expand(
-        struct ggml_context *  ctx,
-        struct ggml_cgraph  *  cgraph,
-        struct ggml_tensor  ** grad_accs) {
+ଶୂନ୍ୟ ggml_build_backward_expand(
+        ସଂରଚନା ggml_context *  ctx,
+        ସଂରଚନା ggml_cgraph  *  cgraph,
+        ସଂରଚନା ggml_tensor  ** grad_accs) {
     GGML_ASSERT(cgraph->n_nodes > 0);
     GGML_ASSERT(cgraph->grads);
     GGML_ASSERT(cgraph->grad_accs);
 
-    const int n_nodes_f = cgraph->n_nodes;
+    ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା n_nodes_f = cgraph->n_nodes;
 
-    memset(cgraph->grads,     0, cgraph->visited_hash_set.size*sizeof(struct ggml_tensor *));
-    memset(cgraph->grad_accs, 0, cgraph->visited_hash_set.size*sizeof(struct ggml_tensor *));
-    bool * grads_needed = calloc(cgraph->visited_hash_set.size, sizeof(bool));
+    memset(cgraph->grads,     0, cgraph->visited_hash_set.size*ଆକାର(ସଂରଚନା ggml_tensor *));
+    memset(cgraph->grad_accs, 0, cgraph->visited_hash_set.size*ଆକାର(ସଂରଚନା ggml_tensor *));
+    bool * grads_needed = calloc(cgraph->visited_hash_set.size, ଆକାର(bool));
 
     {
         bool any_params = false;
         bool any_loss   = false;
-        for (int i = 0; i < n_nodes_f; ++i) {
-            struct ggml_tensor * node = cgraph->nodes[i];
-            any_params = any_params || (node->flags & GGML_TENSOR_FLAG_PARAM);
-            any_loss   = any_loss   || (node->flags & GGML_TENSOR_FLAG_LOSS);
+        ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < n_nodes_f; ++i) {
+            ସଂରଚନା ggml_tensor * ଗଣ୍ଠି = cgraph->nodes[i];
+            any_params = any_params || (ଗଣ୍ଠି->flags & GGML_TENSOR_FLAG_PARAM);
+            any_loss   = any_loss   || (ଗଣ୍ଠି->flags & GGML_TENSOR_FLAG_LOSS);
         }
         GGML_ASSERT(any_params && "no trainable parameters found, did you forget to call ggml_set_param?");
         GGML_ASSERT(any_loss && "no training loss found, did you forget to call ggml_set_loss?");
     }
 
-    for (int i = 0; i < n_nodes_f; ++i) {
-        struct ggml_tensor * node = cgraph->nodes[i];
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < n_nodes_f; ++i) {
+        ସଂରଚନା ggml_tensor * ଗଣ୍ଠି = cgraph->nodes[i];
 
-        if (node->type == GGML_TYPE_I32) {
-            continue;
+        ଯଦି (ଗଣ୍ଠି->type == GGML_TYPE_I32) {
+            ଜାରି;
         }
 
-        bool node_needs_grad = (node->flags & GGML_TENSOR_FLAG_PARAM) || (node->flags & GGML_TENSOR_FLAG_LOSS);
+        bool ଗଣ୍ଠି_needs_grad = (ଗଣ୍ଠି->flags & GGML_TENSOR_FLAG_PARAM) || (ଗଣ୍ଠି->flags & GGML_TENSOR_FLAG_LOSS);
         bool ignore_src[GGML_MAX_SRC] = {false};
-        switch (node->op) {
+        ବାଛ (ଗଣ୍ଠି->op) {
             // gradients in node->src[0] for one reason or another have no effect on output gradients
-            case GGML_OP_IM2COL:      // only used for its shape
-            case GGML_OP_IM2COL_BACK: // same as IM2COL
+            ସ୍ଥିତି GGML_OP_IM2COL:      // only used for its shape
+            ସ୍ଥିତି GGML_OP_IM2COL_BACK: // same as IM2COL
                 ignore_src[0] = true;
-                break;
-            case GGML_OP_UNARY: {
-                const enum ggml_unary_op uop = ggml_get_unary_op(node);
+                ଭାଙ୍ଗ;
+            ସ୍ଥିତି GGML_OP_UNARY: {
+                ଅଚଳ ଗଣନା ggml_unary_op uop = ggml_get_unary_op(ଗଣ୍ଠି);
                 // SGN and STEP unary ops are piecewise constant
-                if (uop == GGML_UNARY_OP_SGN || uop == GGML_UNARY_OP_STEP) {
+                ଯଦି (uop == GGML_UNARY_OP_SGN || uop == GGML_UNARY_OP_STEP) {
                     ignore_src[0] = true;
                 }
-            } break;
+            } ଭାଙ୍ଗ;
 
             // gradients in node->src[1] for one reason or another have no effect on output gradients
-            case GGML_OP_CPY:           // gradients in CPY target are irrelevant
-            case GGML_OP_GET_ROWS:      // row indices not differentiable
-            case GGML_OP_GET_ROWS_BACK: // same as for GET_ROWS
-            case GGML_OP_ROPE:          // positions not differentiable
+            ସ୍ଥିତି GGML_OP_CPY:           // gradients in CPY target are irrelevant
+            ସ୍ଥିତି GGML_OP_GET_ROWS:      // row indices not differentiable
+            ସ୍ଥିତି GGML_OP_GET_ROWS_BACK: // same as for GET_ROWS
+            ସ୍ଥିତି GGML_OP_ROPE:          // positions not differentiable
                 ignore_src[1] = true;
-                break;
+                ଭାଙ୍ଗ;
 
-            default:
-                break;
+            ପୂର୍ବନିର୍ଦ୍ଧାରିତ:
+                ଭାଙ୍ଗ;
         }
-        for (int j = 0; j < GGML_MAX_SRC; ++j) {
-            if (!node->src[j] || ignore_src[j] || !grads_needed[ggml_hash_find(&cgraph->visited_hash_set, node->src[j])]) {
-                continue;
+        ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା j = 0; j < GGML_MAX_SRC; ++j) {
+            ଯଦି (!ଗଣ୍ଠି->src[j] || ignore_src[j] || !grads_needed[ggml_hash_find(&cgraph->visited_hash_set, ଗଣ୍ଠି->src[j])]) {
+                ଜାରି;
             }
-            GGML_ASSERT(node->src[j]->type == GGML_TYPE_F32 || node->src[j]->type == GGML_TYPE_F16);
-            node_needs_grad = true;
-            break;
+            GGML_ASSERT(ଗଣ୍ଠି->src[j]->type == GGML_TYPE_F32 || ଗଣ୍ଠି->src[j]->type == GGML_TYPE_F16);
+            ଗଣ୍ଠି_needs_grad = true;
+            ଭାଙ୍ଗ;
         }
-        if (!node_needs_grad) {
-            continue;
+        ଯଦି (!ଗଣ୍ଠି_needs_grad) {
+            ଜାରି;
         }
 
         // inplace operations are currently not supported
-        GGML_ASSERT(!node->view_src || node->op == GGML_OP_CPY || node->op == GGML_OP_SET_ROWS || node->op == GGML_OP_VIEW ||
-            node->op == GGML_OP_RESHAPE || node->op == GGML_OP_PERMUTE || node->op == GGML_OP_TRANSPOSE);
+        GGML_ASSERT(!ଗଣ୍ଠି->view_src || ଗଣ୍ଠି->op == GGML_OP_CPY || ଗଣ୍ଠି->op == GGML_OP_SET_ROWS || ଗଣ୍ଠି->op == GGML_OP_VIEW ||
+            ଗଣ୍ଠି->op == GGML_OP_RESHAPE || ଗଣ୍ଠି->op == GGML_OP_PERMUTE || ଗଣ୍ଠି->op == GGML_OP_TRANSPOSE);
 
-        const size_t ihash = ggml_hash_find(&cgraph->visited_hash_set, node);
+        ଅଚଳ size_t ihash = ggml_hash_find(&cgraph->visited_hash_set, ଗଣ୍ଠି);
         GGML_ASSERT(ihash != GGML_HASHSET_FULL);
         GGML_ASSERT(ggml_bitset_get(cgraph->visited_hash_set.used, ihash));
-        if (grad_accs && grad_accs[i]) {
+        ଯଦି (grad_accs && grad_accs[i]) {
             cgraph->grad_accs[ihash] = grad_accs[i];
             cgraph->grads[ihash]     = cgraph->grad_accs[ihash];
-        } else if (node->flags & GGML_TENSOR_FLAG_LOSS) {
+        } ଅନ୍ୟଥା ଯଦି (ଗଣ୍ଠି->flags & GGML_TENSOR_FLAG_LOSS) {
             // loss tensors always need a gradient accumulator
-            cgraph->grad_accs[ihash] = ggml_new_tensor(ctx, GGML_TYPE_F32, GGML_MAX_DIMS, node->ne);
+            cgraph->grad_accs[ihash] = ggml_new_tensor(ctx, GGML_TYPE_F32, GGML_MAX_DIMS, ଗଣ୍ଠି->ne);
             cgraph->grads[ihash]     = cgraph->grad_accs[ihash];
         }
         grads_needed[ihash] = true;
     }
 
-    for (int i = n_nodes_f - 1; i >= 0; --i) {
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = n_nodes_f - 1; i >= 0; --i) {
         // inplace operations to add gradients are not created by ggml_compute_backward except for gradient accumulation
         // use allocator to automatically make inplace operations
         ggml_compute_backward(ctx, cgraph, i, grads_needed);
     }
 
-    free(grads_needed);
+    ମୁକ୍ତ(grads_needed);
 }
 
-static void * incr_ptr_aligned(void ** p, size_t size, size_t align) {
-    void * ptr = *p;
-    ptr = (void *) GGML_PAD((uintptr_t) ptr, align);
-    *p = (void *) ((char *) ptr + size);
-    return ptr;
+ସ୍ଥିର ଶୂନ୍ୟ * incr_ptr_aligned(ଶୂନ୍ୟ ** p, size_t size, size_t align) {
+    ଶୂନ୍ୟ * ptr = *p;
+    ptr = (ଶୂନ୍ୟ *) GGML_PAD((uintptr_t) ptr, align);
+    *p = (ଶୂନ୍ୟ *) ((ଅକ୍ଷର *) ptr + size);
+    ଫେରନ୍ତୁ ptr;
 }
 
-static size_t ggml_graph_nbytes(size_t size, bool grads) {
+ସ୍ଥିର size_t ggml_graph_nbytes(size_t size, bool grads) {
     size_t hash_size = ggml_hash_size(size * 2);
-    void * p = (char *) 1024; // workaround for ubsan error "applying non-zero offset X to null pointer"
-    incr_ptr_aligned(&p, sizeof(struct ggml_cgraph), 1);
-    incr_ptr_aligned(&p, size * sizeof(struct ggml_tensor *), sizeof(struct ggml_tensor *)); // nodes
-    incr_ptr_aligned(&p, size * sizeof(struct ggml_tensor *), sizeof(struct ggml_tensor *)); // leafs
-    incr_ptr_aligned(&p, hash_size * sizeof(int32_t), sizeof(int32_t)); // use_counts
-    incr_ptr_aligned(&p, hash_size * sizeof(struct ggml_tensor *), sizeof(struct ggml_tensor *)); // hash keys
-    if (grads) {
-        incr_ptr_aligned(&p, hash_size * sizeof(struct ggml_tensor *), sizeof(struct ggml_tensor *)); // grads
-        incr_ptr_aligned(&p, hash_size * sizeof(struct ggml_tensor *), sizeof(struct ggml_tensor *)); // grad_accs
+    ଶୂନ୍ୟ * p = (ଅକ୍ଷର *) 1024; // workaround for ubsan error "applying non-zero offset X to null pointer"
+    incr_ptr_aligned(&p, ଆକାର(ସଂରଚନା ggml_cgraph), 1);
+    incr_ptr_aligned(&p, size * ଆକାର(ସଂରଚନା ggml_tensor *), ଆକାର(ସଂରଚନା ggml_tensor *)); // nodes
+    incr_ptr_aligned(&p, size * ଆକାର(ସଂରଚନା ggml_tensor *), ଆକାର(ସଂରଚନା ggml_tensor *)); // leafs
+    incr_ptr_aligned(&p, hash_size * ଆକାର(int32_t), ଆକାର(int32_t)); // use_counts
+    incr_ptr_aligned(&p, hash_size * ଆକାର(ସଂରଚନା ggml_tensor *), ଆକାର(ସଂରଚନା ggml_tensor *)); // hash keys
+    ଯଦି (grads) {
+        incr_ptr_aligned(&p, hash_size * ଆକାର(ସଂରଚନା ggml_tensor *), ଆକାର(ସଂରଚନା ggml_tensor *)); // grads
+        incr_ptr_aligned(&p, hash_size * ଆକାର(ସଂରଚନା ggml_tensor *), ଆକାର(ସଂରଚନା ggml_tensor *)); // grad_accs
     }
-    incr_ptr_aligned(&p, ggml_bitset_size(hash_size) * sizeof(ggml_bitset_t), sizeof(ggml_bitset_t));
+    incr_ptr_aligned(&p, ggml_bitset_size(hash_size) * ଆକାର(ggml_bitset_t), ଆକାର(ggml_bitset_t));
 
     size_t nbytes = (size_t) p;
-    return nbytes - 1024;
+    ଫେରନ୍ତୁ nbytes - 1024;
 }
 
 size_t ggml_graph_overhead_custom(size_t size, bool grads) {
-    return GGML_OBJECT_SIZE + GGML_PAD(ggml_graph_nbytes(size, grads), GGML_MEM_ALIGN);
+    ଫେରନ୍ତୁ GGML_OBJECT_SIZE + GGML_PAD(ggml_graph_nbytes(size, grads), GGML_MEM_ALIGN);
 }
 
-size_t ggml_graph_overhead(void) {
-    return ggml_graph_overhead_custom(GGML_DEFAULT_GRAPH_SIZE, false);
+size_t ggml_graph_overhead(ଶୂନ୍ୟ) {
+    ଫେରନ୍ତୁ ggml_graph_overhead_custom(GGML_DEFAULT_GRAPH_SIZE, false);
 }
 
-struct ggml_cgraph * ggml_new_graph_custom(struct ggml_context * ctx, size_t size, bool grads) {
-    const size_t obj_size = ggml_graph_nbytes(size, grads);
-    struct ggml_object * obj = ggml_new_object(ctx, GGML_OBJECT_TYPE_GRAPH, obj_size);
-    struct ggml_cgraph * cgraph = (struct ggml_cgraph *) ((char *) ctx->mem_buffer + obj->offs);
+ସଂରଚନା ggml_cgraph * ggml_new_graph_custom(ସଂରଚନା ggml_context * ctx, size_t size, bool grads) {
+    ଅଚଳ size_t obj_size = ggml_graph_nbytes(size, grads);
+    ସଂରଚନା ggml_object * obj = ggml_new_object(ctx, GGML_OBJECT_TYPE_GRAPH, obj_size);
+    ସଂରଚନା ggml_cgraph * cgraph = (ସଂରଚନା ggml_cgraph *) ((ଅକ୍ଷର *) ctx->mem_buffer + obj->offs);
 
     // the size of the hash table is doubled since it needs to hold both nodes and leafs
     size_t hash_size = ggml_hash_size(size * 2);
 
-    void * p = cgraph + 1;
+    ଶୂନ୍ୟ * p = cgraph + 1;
 
-    struct ggml_tensor ** nodes_ptr      =         incr_ptr_aligned(&p, size      * sizeof(struct ggml_tensor *), sizeof(struct ggml_tensor *));
-    struct ggml_tensor ** leafs_ptr      =         incr_ptr_aligned(&p, size      * sizeof(struct ggml_tensor *), sizeof(struct ggml_tensor *));
-    int32_t             * use_counts_ptr =         incr_ptr_aligned(&p, hash_size * sizeof(int32_t), sizeof(int32_t));
-    struct ggml_tensor ** hash_keys_ptr  =         incr_ptr_aligned(&p, hash_size * sizeof(struct ggml_tensor *), sizeof(struct ggml_tensor *));
-    struct ggml_tensor ** grads_ptr      = grads ? incr_ptr_aligned(&p, hash_size * sizeof(struct ggml_tensor *), sizeof(struct ggml_tensor *)) : NULL;
-    struct ggml_tensor ** grad_accs_ptr  = grads ? incr_ptr_aligned(&p, hash_size * sizeof(struct ggml_tensor *), sizeof(struct ggml_tensor *)) : NULL;
+    ସଂରଚନା ggml_tensor ** nodes_ptr      =         incr_ptr_aligned(&p, size      * ଆକାର(ସଂରଚନା ggml_tensor *), ଆକାର(ସଂରଚନା ggml_tensor *));
+    ସଂରଚନା ggml_tensor ** leafs_ptr      =         incr_ptr_aligned(&p, size      * ଆକାର(ସଂରଚନା ggml_tensor *), ଆକାର(ସଂରଚନା ggml_tensor *));
+    int32_t             * use_counts_ptr =         incr_ptr_aligned(&p, hash_size * ଆକାର(int32_t), ଆକାର(int32_t));
+    ସଂରଚନା ggml_tensor ** hash_ଚାବିଗୁଡ଼ିକ_ptr  =         incr_ptr_aligned(&p, hash_size * ଆକାର(ସଂରଚନା ggml_tensor *), ଆକାର(ସଂରଚନା ggml_tensor *));
+    ସଂରଚନା ggml_tensor ** grads_ptr      = grads ? incr_ptr_aligned(&p, hash_size * ଆକାର(ସଂରଚନା ggml_tensor *), ଆକାର(ସଂରଚନା ggml_tensor *)) : ଖାଲି;
+    ସଂରଚନା ggml_tensor ** grad_accs_ptr  = grads ? incr_ptr_aligned(&p, hash_size * ଆକାର(ସଂରଚନା ggml_tensor *), ଆକାର(ସଂରଚନା ggml_tensor *)) : ଖାଲି;
 
-    ggml_bitset_t * hash_used = incr_ptr_aligned(&p, ggml_bitset_size(hash_size) * sizeof(ggml_bitset_t), sizeof(ggml_bitset_t));
+    ggml_bitset_t * hash_used = incr_ptr_aligned(&p, ggml_bitset_size(hash_size) * ଆକାର(ggml_bitset_t), ଆକାର(ggml_bitset_t));
 
     // check that we allocated the correct amount of memory
-    assert(obj_size == (size_t)((char *)p - (char *)cgraph));
+    ପ୍ରତିଜ୍ଞା(obj_size == (size_t)((ଅକ୍ଷର *)p - (ଅକ୍ଷର *)cgraph));
 
-    *cgraph = (struct ggml_cgraph) {
+    *cgraph = (ସଂରଚନା ggml_cgraph) {
         /*.size         =*/ size,
         /*.n_nodes      =*/ 0,
         /*.n_leafs      =*/ 0,
@@ -7571,43 +7571,43 @@ struct ggml_cgraph * ggml_new_graph_custom(struct ggml_context * ctx, size_t siz
         /*.grad_accs    =*/ grad_accs_ptr,
         /*.leafs        =*/ leafs_ptr,
         /*.use_counts   =*/ use_counts_ptr,
-        /*.hash_table   =*/ { hash_size, hash_used, hash_keys_ptr },
-        /*.order        =*/ GGML_CGRAPH_EVAL_ORDER_LEFT_TO_RIGHT,
+        /*.hash_table   =*/ { hash_size, hash_used, hash_ଚାବିଗୁଡ଼ିକ_ptr },
+        /*.order        =*/ GGML_CGRAPH_EVAL_ORDER_ବାମ_TO_ଡାହାଣ,
         /*.uid          =*/ 0,
     };
 
     ggml_hash_set_reset(&cgraph->visited_hash_set);
-    if (grads) {
-        memset(cgraph->grads,     0, hash_size*sizeof(struct ggml_tensor *));
-        memset(cgraph->grad_accs, 0, hash_size*sizeof(struct ggml_tensor *));
+    ଯଦି (grads) {
+        memset(cgraph->grads,     0, hash_size*ଆକାର(ସଂରଚନା ggml_tensor *));
+        memset(cgraph->grad_accs, 0, hash_size*ଆକାର(ସଂରଚନା ggml_tensor *));
     }
 
-    return cgraph;
+    ଫେରନ୍ତୁ cgraph;
 }
 
-struct ggml_cgraph * ggml_new_graph(struct ggml_context * ctx) {
-    return ggml_new_graph_custom(ctx, GGML_DEFAULT_GRAPH_SIZE, false);
+ସଂରଚନା ggml_cgraph * ggml_new_graph(ସଂରଚନା ggml_context * ctx) {
+    ଫେରନ୍ତୁ ggml_new_graph_custom(ctx, GGML_DEFAULT_GRAPH_SIZE, false);
 }
 
-struct ggml_cgraph ggml_graph_view(struct ggml_cgraph * cgraph0, int i0, int i1) {
-    struct ggml_cgraph cgraph = {
+ସଂରଚନା ggml_cgraph ggml_graph_view(ସଂରଚନା ggml_cgraph * cgraph0, ପୂର୍ଣ୍ଣସଂଖ୍ୟା i0, ପୂର୍ଣ୍ଣସଂଖ୍ୟା i1) {
+    ସଂରଚନା ggml_cgraph cgraph = {
         /*.size             =*/ 0,
         /*.n_nodes          =*/ i1 - i0,
         /*.n_leafs          =*/ 0,
         /*.nodes            =*/ cgraph0->nodes + i0,
-        /*.grads            =*/ NULL, // gradients would need visited_hash_set
-        /*.grad_accs        =*/ NULL,
-        /*.leafs            =*/ NULL,
+        /*.grads            =*/ ଖାଲି, // gradients would need visited_hash_set
+        /*.grad_accs        =*/ ଖାଲି,
+        /*.leafs            =*/ ଖାଲି,
         /*.use_counts       =*/ cgraph0->use_counts,
         /*.visited_hash_set =*/ cgraph0->visited_hash_set,
         /*.order            =*/ cgraph0->order,
         /*.uid              =*/ 0
     };
 
-    return cgraph;
+    ଫେରନ୍ତୁ cgraph;
 }
 
-void ggml_graph_cpy(struct ggml_cgraph * src, struct ggml_cgraph * dst) {
+ଶୂନ୍ୟ ggml_graph_cpy(ସଂରଚନା ggml_cgraph * src, ସଂରଚନା ggml_cgraph * dst) {
     GGML_ASSERT(dst->size >= src->n_leafs);
     GGML_ASSERT(dst->size >= src->n_nodes);
     GGML_ASSERT(dst->visited_hash_set.size >= src->visited_hash_set.size);
@@ -7616,32 +7616,32 @@ void ggml_graph_cpy(struct ggml_cgraph * src, struct ggml_cgraph * dst) {
     dst->n_nodes = src->n_nodes;
     dst->order   = src->order;
 
-    for (int i = 0; i < src->n_leafs; ++i) {
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < src->n_leafs; ++i) {
         dst->leafs[i] = src->leafs[i];
     }
 
-    for (int i = 0; i < src->n_nodes; ++i) {
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < src->n_nodes; ++i) {
         dst->nodes[i] = src->nodes[i];
     }
 
-    for (size_t i = 0; i < src->visited_hash_set.size; ++i) {
+    ପାଇଁ (size_t i = 0; i < src->visited_hash_set.size; ++i) {
         // copy all hashset keys (tensors) that are in use
-        if (ggml_bitset_get(src->visited_hash_set.used, i)) {
-            size_t new_hash_pos = ggml_hash_insert(&dst->visited_hash_set, src->visited_hash_set.keys[i]);
+        ଯଦି (ggml_bitset_get(src->visited_hash_set.used, i)) {
+            size_t new_hash_pos = ggml_hash_ଭର୍ତ୍ତି(&dst->visited_hash_set, src->visited_hash_set.ଚାବିଗୁଡ଼ିକ[i]);
             dst->use_counts[new_hash_pos] = src->use_counts[i];
         }
     }
 
-    if (dst->grads) {
-        memset(dst->grads,     0, dst->visited_hash_set.size*sizeof(struct ggml_tensor *));
-        memset(dst->grad_accs, 0, dst->visited_hash_set.size*sizeof(struct ggml_tensor *));
+    ଯଦି (dst->grads) {
+        memset(dst->grads,     0, dst->visited_hash_set.size*ଆକାର(ସଂରଚନା ggml_tensor *));
+        memset(dst->grad_accs, 0, dst->visited_hash_set.size*ଆକାର(ସଂରଚନା ggml_tensor *));
     }
-    if (src->grads) {
-        GGML_ASSERT(dst->grads     != NULL);
-        GGML_ASSERT(dst->grad_accs != NULL);
-        for (int i = 0; i < src->n_nodes; ++i) {
-            const size_t igrad_src = ggml_hash_find(&src->visited_hash_set, src->nodes[i]);
-            const size_t igrad_dst = ggml_hash_find(&dst->visited_hash_set, dst->nodes[i]);
+    ଯଦି (src->grads) {
+        GGML_ASSERT(dst->grads     != ଖାଲି);
+        GGML_ASSERT(dst->grad_accs != ଖାଲି);
+        ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < src->n_nodes; ++i) {
+            ଅଚଳ size_t igrad_src = ggml_hash_find(&src->visited_hash_set, src->nodes[i]);
+            ଅଚଳ size_t igrad_dst = ggml_hash_find(&dst->visited_hash_set, dst->nodes[i]);
 
             GGML_ASSERT(igrad_src != GGML_HASHSET_FULL);
             GGML_ASSERT(ggml_bitset_get(src->visited_hash_set.used, igrad_src));
@@ -7654,282 +7654,282 @@ void ggml_graph_cpy(struct ggml_cgraph * src, struct ggml_cgraph * dst) {
     }
 }
 
-struct ggml_cgraph * ggml_graph_dup(struct ggml_context * ctx, struct ggml_cgraph * cgraph, bool force_grads) {
-    struct ggml_cgraph * result = ggml_new_graph_custom(ctx, cgraph->size, cgraph->grads || force_grads);
+ସଂରଚନା ggml_cgraph * ggml_graph_dup(ସଂରଚନା ggml_context * ctx, ସଂରଚନା ggml_cgraph * cgraph, bool force_grads) {
+    ସଂରଚନା ggml_cgraph * result = ggml_new_graph_custom(ctx, cgraph->size, cgraph->grads || force_grads);
     ggml_graph_cpy(cgraph, result);
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
-struct ggml_tensor * ggml_set_zero(struct ggml_tensor * tensor) {
-    if (ggml_is_empty(tensor)) {
-        return tensor;
+ସଂରଚନା ggml_tensor * ggml_set_zero(ସଂରଚନା ggml_tensor * tensor) {
+    ଯଦି (ggml_is_empty(tensor)) {
+        ଫେରନ୍ତୁ tensor;
     }
-    if (tensor->buffer) {
+    ଯଦି (tensor->buffer) {
         ggml_backend_tensor_memset(tensor, 0, 0, ggml_nbytes(tensor));
-    } else {
+    } ଅନ୍ୟଥା {
         GGML_ASSERT(tensor->data);
         memset(tensor->data, 0, ggml_nbytes(tensor));
     }
-    return tensor;
+    ଫେରନ୍ତୁ tensor;
 }
 
-void ggml_graph_reset(struct ggml_cgraph * cgraph) {
-    if (!cgraph) {
-        return;
+ଶୂନ୍ୟ ggml_graph_reset(ସଂରଚନା ggml_cgraph * cgraph) {
+    ଯଦି (!cgraph) {
+        ଫେରନ୍ତୁ;
     }
-    GGML_ASSERT(cgraph->grads != NULL);
+    GGML_ASSERT(cgraph->grads != ଖାଲି);
 
-    for (int i = 0; i < cgraph->n_nodes; i++) {
-        struct ggml_tensor * node     = cgraph->nodes[i];
-        struct ggml_tensor * grad_acc = ggml_graph_get_grad_acc(cgraph, node);
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < cgraph->n_nodes; i++) {
+        ସଂରଚନା ggml_tensor * ଗଣ୍ଠି     = cgraph->nodes[i];
+        ସଂରଚନା ggml_tensor * grad_acc = ggml_graph_get_grad_acc(cgraph, ଗଣ୍ଠି);
 
-        if (node->op == GGML_OP_OPT_STEP_ADAMW) {
+        ଯଦି (ଗଣ୍ଠି->op == GGML_OP_OPT_STEP_ADAMW) {
             // clear momenta
-            ggml_set_zero(node->src[2]);
-            ggml_set_zero(node->src[3]);
+            ggml_set_zero(ଗଣ୍ଠି->src[2]);
+            ggml_set_zero(ଗଣ୍ଠି->src[3]);
         }
 
         // initial gradients of loss should be 1, 0 otherwise
-        if (grad_acc) {
-            if (node->flags & GGML_TENSOR_FLAG_LOSS) {
+        ଯଦି (grad_acc) {
+            ଯଦି (ଗଣ୍ଠି->flags & GGML_TENSOR_FLAG_LOSS) {
                 GGML_ASSERT(grad_acc->type == GGML_TYPE_F32);
                 GGML_ASSERT(ggml_is_scalar(grad_acc));
 
-                const float onef = 1.0f;
-                if (grad_acc->buffer) {
-                    ggml_backend_tensor_set(grad_acc, &onef, 0, sizeof(float));
-                } else {
+                ଅଚଳ ଦଶମିକ onef = 1.0f;
+                ଯଦି (grad_acc->buffer) {
+                    ggml_backend_tensor_set(grad_acc, &onef, 0, ଆକାର(ଦଶମିକ));
+                } ଅନ୍ୟଥା {
                     GGML_ASSERT(grad_acc->data);
-                    *((float *) grad_acc->data) = onef;
+                    *((ଦଶମିକ *) grad_acc->data) = onef;
                 }
-            } else {
+            } ଅନ୍ୟଥା {
                 ggml_set_zero(grad_acc);
             }
         }
     }
 }
 
-void ggml_graph_clear(struct ggml_cgraph * cgraph) {
+ଶୂନ୍ୟ ggml_graph_clear(ସଂରଚନା ggml_cgraph * cgraph) {
     cgraph->n_leafs = 0;
     cgraph->n_nodes = 0;
     ggml_hash_set_reset(&cgraph->visited_hash_set);
 }
 
-int ggml_graph_size(struct ggml_cgraph * cgraph) {
-    return cgraph->size;
+ପୂର୍ଣ୍ଣସଂଖ୍ୟା ggml_graph_size(ସଂରଚନା ggml_cgraph * cgraph) {
+    ଫେରନ୍ତୁ cgraph->size;
 }
 
-struct ggml_tensor * ggml_graph_node(struct ggml_cgraph * cgraph, int i) {
-    if (i < 0) {
+ସଂରଚନା ggml_tensor * ggml_graph_ଗଣ୍ଠି(ସଂରଚନା ggml_cgraph * cgraph, ପୂର୍ଣ୍ଣସଂଖ୍ୟା i) {
+    ଯଦି (i < 0) {
         GGML_ASSERT(cgraph->n_nodes + i >= 0);
-        return cgraph->nodes[cgraph->n_nodes + i];
+        ଫେରନ୍ତୁ cgraph->nodes[cgraph->n_nodes + i];
     }
 
     GGML_ASSERT(i < cgraph->n_nodes);
-    return cgraph->nodes[i];
+    ଫେରନ୍ତୁ cgraph->nodes[i];
 }
 
-struct ggml_tensor ** ggml_graph_nodes(struct ggml_cgraph * cgraph) {
-    return cgraph->nodes;
+ସଂରଚନା ggml_tensor ** ggml_graph_nodes(ସଂରଚନା ggml_cgraph * cgraph) {
+    ଫେରନ୍ତୁ cgraph->nodes;
 }
 
-int ggml_graph_n_nodes(struct ggml_cgraph * cgraph) {
-    return cgraph->n_nodes;
+ପୂର୍ଣ୍ଣସଂଖ୍ୟା ggml_graph_n_nodes(ସଂରଚନା ggml_cgraph * cgraph) {
+    ଫେରନ୍ତୁ cgraph->n_nodes;
 }
 
-void ggml_graph_add_node(struct ggml_cgraph * cgraph, struct ggml_tensor * tensor) {
+ଶୂନ୍ୟ ggml_graph_add_ଗଣ୍ଠି(ସଂରଚନା ggml_cgraph * cgraph, ସଂରଚନା ggml_tensor * tensor) {
     GGML_ASSERT(cgraph->size > cgraph->n_nodes);
     cgraph->nodes[cgraph->n_nodes] = tensor;
     cgraph->n_nodes++;
 }
 
-struct ggml_tensor * ggml_graph_get_tensor(const struct ggml_cgraph * cgraph, const char * name) {
-    for (int i = 0; i < cgraph->n_leafs; i++) {
-        struct ggml_tensor * leaf = cgraph->leafs[i];
+ସଂରଚନା ggml_tensor * ggml_graph_get_tensor(ଅଚଳ ସଂରଚନା ggml_cgraph * cgraph, ଅଚଳ ଅକ୍ଷର * name) {
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < cgraph->n_leafs; i++) {
+        ସଂରଚନା ggml_tensor * leaf = cgraph->leafs[i];
 
-        if (strcmp(leaf->name, name) == 0) {
-            return leaf;
+        ଯଦି (strcmp(leaf->name, name) == 0) {
+            ଫେରନ୍ତୁ leaf;
         }
     }
 
-    for (int i = 0; i < cgraph->n_nodes; i++) {
-        struct ggml_tensor * node = cgraph->nodes[i];
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < cgraph->n_nodes; i++) {
+        ସଂରଚନା ggml_tensor * ଗଣ୍ଠି = cgraph->nodes[i];
 
-        if (strcmp(node->name, name) == 0) {
-            return node;
+        ଯଦି (strcmp(ଗଣ୍ଠି->name, name) == 0) {
+            ଫେରନ୍ତୁ ଗଣ୍ଠି;
         }
     }
 
-    return NULL;
+    ଫେରନ୍ତୁ ଖାଲି;
 }
 
-struct ggml_tensor * ggml_graph_get_grad(const struct ggml_cgraph * cgraph, const struct ggml_tensor * node) {
-    const size_t igrad = ggml_hash_find(&cgraph->visited_hash_set, node);
-    return igrad != GGML_HASHSET_FULL && ggml_bitset_get(cgraph->visited_hash_set.used, igrad) && cgraph->grads ? cgraph->grads[igrad] : NULL;
+ସଂରଚନା ggml_tensor * ggml_graph_get_grad(ଅଚଳ ସଂରଚନା ggml_cgraph * cgraph, ଅଚଳ ସଂରଚନା ggml_tensor * ଗଣ୍ଠି) {
+    ଅଚଳ size_t igrad = ggml_hash_find(&cgraph->visited_hash_set, ଗଣ୍ଠି);
+    ଫେରନ୍ତୁ igrad != GGML_HASHSET_FULL && ggml_bitset_get(cgraph->visited_hash_set.used, igrad) && cgraph->grads ? cgraph->grads[igrad] : ଖାଲି;
 }
 
-struct ggml_tensor * ggml_graph_get_grad_acc(const struct ggml_cgraph * cgraph, const struct ggml_tensor * node) {
-    const size_t igrad = ggml_hash_find(&cgraph->visited_hash_set, node);
-    return igrad != GGML_HASHSET_FULL && ggml_bitset_get(cgraph->visited_hash_set.used, igrad) && cgraph->grad_accs ? cgraph->grad_accs[igrad] : NULL;
+ସଂରଚନା ggml_tensor * ggml_graph_get_grad_acc(ଅଚଳ ସଂରଚନା ggml_cgraph * cgraph, ଅଚଳ ସଂରଚନା ggml_tensor * ଗଣ୍ଠି) {
+    ଅଚଳ size_t igrad = ggml_hash_find(&cgraph->visited_hash_set, ଗଣ୍ଠି);
+    ଫେରନ୍ତୁ igrad != GGML_HASHSET_FULL && ggml_bitset_get(cgraph->visited_hash_set.used, igrad) && cgraph->grad_accs ? cgraph->grad_accs[igrad] : ଖାଲି;
 }
 
-void ggml_graph_print(const struct ggml_cgraph * cgraph) {
+ଶୂନ୍ୟ ggml_graph_print(ଅଚଳ ସଂରଚନା ggml_cgraph * cgraph) {
     GGML_LOG_INFO("=== GRAPH ===\n");
 
     GGML_LOG_INFO("n_nodes = %d\n", cgraph->n_nodes);
-    for (int i = 0; i < cgraph->n_nodes; i++) {
-        struct ggml_tensor * node = cgraph->nodes[i];
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < cgraph->n_nodes; i++) {
+        ସଂରଚନା ggml_tensor * ଗଣ୍ଠି = cgraph->nodes[i];
 
         GGML_LOG_INFO(" - %3d: [ %5" PRId64 ", %5" PRId64 ", %5" PRId64 "] %16s %s\n",
                 i,
-                node->ne[0], node->ne[1], node->ne[2],
-                ggml_op_name(node->op), (node->flags & GGML_TENSOR_FLAG_PARAM) ? "x" :
-                      ggml_graph_get_grad(cgraph, node) ? "g" : " ");
+                ଗଣ୍ଠି->ne[0], ଗଣ୍ଠି->ne[1], ଗଣ୍ଠି->ne[2],
+                ggml_op_name(ଗଣ୍ଠି->op), (ଗଣ୍ଠି->flags & GGML_TENSOR_FLAG_PARAM) ? "x" :
+                      ggml_graph_get_grad(cgraph, ଗଣ୍ଠି) ? "g" : " ");
     }
 
     GGML_LOG_INFO("n_leafs = %d\n", cgraph->n_leafs);
-    for (int i = 0; i < cgraph->n_leafs; i++) {
-        struct ggml_tensor * node = cgraph->leafs[i];
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < cgraph->n_leafs; i++) {
+        ସଂରଚନା ggml_tensor * ଗଣ୍ଠି = cgraph->leafs[i];
 
         GGML_LOG_INFO(" - %3d: [ %5" PRId64 ", %5" PRId64 "] %8s %16s\n",
                 i,
-                node->ne[0], node->ne[1],
-                ggml_op_name(node->op),
-                ggml_get_name(node));
+                ଗଣ୍ଠି->ne[0], ଗଣ୍ଠି->ne[1],
+                ggml_op_name(ଗଣ୍ଠି->op),
+                ggml_get_name(ଗଣ୍ଠି));
     }
 
     GGML_LOG_INFO("========================================\n");
 }
 
-static int ggml_node_list_find_tensor(const struct ggml_cgraph * cgraph,
-                                      const int *                idxs,
-                                      int                        count,
-                                      const struct ggml_tensor * tensor) {
+ସ୍ଥିର ପୂର୍ଣ୍ଣସଂଖ୍ୟା ggml_ଗଣ୍ଠି_list_find_tensor(ଅଚଳ ସଂରଚନା ggml_cgraph * cgraph,
+                                      ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା *                idxs,
+                                      ପୂର୍ଣ୍ଣସଂଖ୍ୟା                        ଗଣନା_2,
+                                      ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
     GGML_ASSERT(cgraph && idxs);
-    for (int i = 0; i < count; ++i) {
-        const int node_idx = idxs[i];
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < ଗଣନା_2; ++i) {
+        ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଗଣ୍ଠି_idx = idxs[i];
 
-        if (node_idx >= cgraph->n_nodes) {
-            return -1;
+        ଯଦି (ଗଣ୍ଠି_idx >= cgraph->n_nodes) {
+            ଫେରନ୍ତୁ -1;
         }
-        if (cgraph->nodes[node_idx] == tensor) {
-            return i;
+        ଯଦି (cgraph->nodes[ଗଣ୍ଠି_idx] == tensor) {
+            ଫେରନ୍ତୁ i;
         }
     }
-    return -1;
+    ଫେରନ୍ତୁ -1;
 }
 
-static bool ggml_is_constant(const struct ggml_tensor * tensor) {
-    return tensor->buffer != NULL && ggml_backend_buffer_get_usage(tensor->buffer) == GGML_BACKEND_BUFFER_USAGE_WEIGHTS && (tensor->flags & GGML_TENSOR_FLAG_PARAM) == 0;
+ସ୍ଥିର bool ggml_is_constant(ଅଚଳ ସଂରଚନା ggml_tensor * tensor) {
+    ଫେରନ୍ତୁ tensor->buffer != ଖାଲି && ggml_backend_buffer_get_usage(tensor->buffer) == GGML_BACKEND_BUFFER_USAGE_WEIGHTS && (tensor->flags & GGML_TENSOR_FLAG_PARAM) == 0;
 }
 
-bool ggml_can_fuse_subgraph_ext(const struct ggml_cgraph * cgraph,
-                                const int *                node_idxs,
-                                int                        count,
-                                const enum ggml_op *       ops,
-                                const int *                outputs,
-                                int                        num_outputs) {
-    GGML_ASSERT(outputs && num_outputs > 0);
+bool ggml_can_fuse_subgraph_ext(ଅଚଳ ସଂରଚନା ggml_cgraph * cgraph,
+                                ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା *                ଗଣ୍ଠି_idxs,
+                                ପୂର୍ଣ୍ଣସଂଖ୍ୟା                        ଗଣନା_2,
+                                ଅଚଳ ଗଣନା ggml_op *       ops,
+                                ଅଚଳ ପୂର୍ଣ୍ଣସଂଖ୍ୟା *                outputs,
+                                ପୂର୍ଣ୍ଣସଂଖ୍ୟା                        ଅଙ୍କ_outputs) {
+    GGML_ASSERT(outputs && ଅଙ୍କ_outputs > 0);
 
-    for (int i = 0; i < count; ++i) {
-        if (node_idxs[i] >= cgraph->n_nodes) {
-            return false;
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < ଗଣନା_2; ++i) {
+        ଯଦି (ଗଣ୍ଠି_idxs[i] >= cgraph->n_nodes) {
+            ଫେରନ୍ତୁ false;
         }
 
-        const struct ggml_tensor * node = cgraph->nodes[node_idxs[i]];
+        ଅଚଳ ସଂରଚନା ggml_tensor * ଗଣ୍ଠି = cgraph->nodes[ଗଣ୍ଠି_idxs[i]];
 
-        if (node->op != ops[i]) {
-            return false;
+        ଯଦି (ଗଣ୍ଠି->op != ops[i]) {
+            ଫେରନ୍ତୁ false;
         }
 
-        if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
-            return false;
+        ଯଦି ((ଗଣ୍ଠି->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+            ଫେରନ୍ତୁ false;
         }
 
-        if (ggml_node_list_find_tensor(cgraph, outputs, num_outputs, node) != -1) {
-            continue;
+        ଯଦି (ggml_ଗଣ୍ଠି_list_find_tensor(cgraph, outputs, ଅଙ୍କ_outputs, ଗଣ୍ଠି) != -1) {
+            ଜାରି;
         }
 
-        if (node->flags & GGML_TENSOR_FLAG_OUTPUT) {
-            return false;
+        ଯଦି (ଗଣ୍ଠି->flags & GGML_TENSOR_FLAG_OUTPUT) {
+            ଫେରନ୍ତୁ false;
         }
 
-        int subgraph_uses = 0;
-        for (int j = i + 1; j < count; ++j) {
-            const struct ggml_tensor * other_node = cgraph->nodes[node_idxs[j]];
-            for (int src_idx = 0; src_idx < GGML_MAX_SRC; src_idx++) {
-                if (other_node->src[src_idx] == node) {
+        ପୂର୍ଣ୍ଣସଂଖ୍ୟା subgraph_uses = 0;
+        ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା j = i + 1; j < ଗଣନା_2; ++j) {
+            ଅଚଳ ସଂରଚନା ggml_tensor * other_ଗଣ୍ଠି = cgraph->nodes[ଗଣ୍ଠି_idxs[j]];
+            ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା src_idx = 0; src_idx < GGML_MAX_SRC; src_idx++) {
+                ଯଦି (other_ଗଣ୍ଠି->src[src_idx] == ଗଣ୍ଠି) {
                     subgraph_uses++;
                 }
             }
         }
 
-        if (subgraph_uses != ggml_node_get_use_count(cgraph, node_idxs[i])) {
-            return false;
+        ଯଦି (subgraph_uses != ggml_ଗଣ୍ଠି_get_use_ଗଣନା(cgraph, ଗଣ୍ଠି_idxs[i])) {
+            ଫେରନ୍ତୁ false;
         }
 
         // if node is a view, check if the view_src and all its parent view_srcs are within the subgraph.
         // external view sources are allowed only for weight tensors, which are constant for this graph execution.
-        struct ggml_tensor * view_src = node->view_src;
-        while (view_src) {
-            if (ggml_node_list_find_tensor(cgraph, node_idxs, count, view_src) == -1 && !ggml_is_constant(view_src)) {
-                return false;
+        ସଂରଚନା ggml_tensor * view_src = ଗଣ୍ଠି->view_src;
+        ଯେତେବେଳେ (view_src) {
+            ଯଦି (ggml_ଗଣ୍ଠି_list_find_tensor(cgraph, ଗଣ୍ଠି_idxs, ଗଣନା_2, view_src) == -1 && !ggml_is_constant(view_src)) {
+                ଫେରନ୍ତୁ false;
             }
             view_src = view_src->view_src;
         }
     }
 
-    return true;
+    ଫେରନ୍ତୁ true;
 }
 
 // check if node is part of the graph
-static bool ggml_graph_find(const struct ggml_cgraph * cgraph, const struct ggml_tensor * node) {
-    if (cgraph == NULL) {
-        return true;
+ସ୍ଥିର bool ggml_graph_find(ଅଚଳ ସଂରଚନା ggml_cgraph * cgraph, ଅଚଳ ସଂରଚନା ggml_tensor * ଗଣ୍ଠି) {
+    ଯଦି (cgraph == ଖାଲି) {
+        ଫେରନ୍ତୁ true;
     }
 
-    for (int i = 0; i < cgraph->n_nodes; i++) {
-        if (cgraph->nodes[i] == node) {
-            return true;
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < cgraph->n_nodes; i++) {
+        ଯଦି (cgraph->nodes[i] == ଗଣ୍ଠି) {
+            ଫେରନ୍ତୁ true;
         }
     }
 
-    return false;
+    ଫେରନ୍ତୁ false;
 }
 
-static struct ggml_tensor * ggml_graph_get_parent(const struct ggml_cgraph * cgraph, const struct ggml_tensor * node) {
-    for (int i = 0; i < cgraph->n_nodes; i++) {
-        struct ggml_tensor * parent = cgraph->nodes[i];
-        struct ggml_tensor * grad = ggml_graph_get_grad(cgraph, parent);
+ସ୍ଥିର ସଂରଚନା ggml_tensor * ggml_graph_get_parent(ଅଚଳ ସଂରଚନା ggml_cgraph * cgraph, ଅଚଳ ସଂରଚନା ggml_tensor * ଗଣ୍ଠି) {
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < cgraph->n_nodes; i++) {
+        ସଂରଚନା ggml_tensor * parent = cgraph->nodes[i];
+        ସଂରଚନା ggml_tensor * grad = ggml_graph_get_grad(cgraph, parent);
 
-        if (grad == node) {
-            return parent;
+        ଯଦି (grad == ଗଣ୍ଠି) {
+            ଫେରନ୍ତୁ parent;
         }
     }
 
-    return NULL;
+    ଫେରନ୍ତୁ ଖାଲି;
 }
 
-static void ggml_graph_dump_dot_node_edge(FILE * fp, const struct ggml_cgraph * gb, struct ggml_tensor * node, struct ggml_tensor * parent, const char * label)  {
-    struct ggml_tensor * gparent = ggml_graph_get_parent(gb, node);
-    struct ggml_tensor * gparent0 = ggml_graph_get_parent(gb, parent);
+ସ୍ଥିର ଶୂନ୍ୟ ggml_graph_dump_dot_ଗଣ୍ଠି_edge(FILE * fp, ଅଚଳ ସଂରଚନା ggml_cgraph * gb, ସଂରଚନା ggml_tensor * ଗଣ୍ଠି, ସଂରଚନା ggml_tensor * parent, ଅଚଳ ଅକ୍ଷର * label)  {
+    ସଂରଚନା ggml_tensor * gparent = ggml_graph_get_parent(gb, ଗଣ୍ଠି);
+    ସଂରଚନା ggml_tensor * gparent0 = ggml_graph_get_parent(gb, parent);
     fprintf(fp, "  \"%p\" -> \"%p\" [ arrowhead = %s; style = %s; label = \"%s\"; ]\n",
-            gparent0 ? (void *) gparent0 : (void *) parent,
-            gparent ? (void *) gparent : (void *) node,
+            gparent0 ? (ଶୂନ୍ୟ *) gparent0 : (ଶୂନ୍ୟ *) parent,
+            gparent ? (ଶୂନ୍ୟ *) gparent : (ଶୂନ୍ୟ *) ଗଣ୍ଠି,
             gparent ? "empty" : "vee",
             gparent ? "dashed" : "solid",
             label);
 }
 
-static void ggml_graph_dump_dot_leaf_edge(FILE * fp, struct ggml_tensor * node, struct ggml_tensor * parent, const char * label)  {
+ସ୍ଥିର ଶୂନ୍ୟ ggml_graph_dump_dot_leaf_edge(FILE * fp, ସଂରଚନା ggml_tensor * ଗଣ୍ଠି, ସଂରଚନା ggml_tensor * parent, ଅଚଳ ଅକ୍ଷର * label)  {
     fprintf(fp, "  \"%p\" -> \"%p\" [ label = \"%s\"; ]\n",
-            (void *) parent,
-            (void *) node,
+            (ଶୂନ୍ୟ *) parent,
+            (ଶୂନ୍ୟ *) ଗଣ୍ଠି,
             label);
 }
 
-void ggml_graph_dump_dot(const struct ggml_cgraph * gb, const struct ggml_cgraph * cgraph, const char * filename) {
-    char color[16];
+ଶୂନ୍ୟ ggml_graph_dump_dot(ଅଚଳ ସଂରଚନା ggml_cgraph * gb, ଅଚଳ ସଂରଚନା ggml_cgraph * cgraph, ଅଚଳ ଅକ୍ଷର * filename) {
+    ଅକ୍ଷର color[16];
 
     FILE * fp = ggml_fopen(filename, "w");
     GGML_ASSERT(fp);
@@ -7938,70 +7938,70 @@ void ggml_graph_dump_dot(const struct ggml_cgraph * gb, const struct ggml_cgraph
     fprintf(fp, "  newrank = true;\n");
     fprintf(fp, "  rankdir = TB;\n");
 
-    for (int i = 0; i < gb->n_nodes; i++) {
-        struct ggml_tensor * node = gb->nodes[i];
-        struct ggml_tensor * grad = ggml_graph_get_grad(gb, node);
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < gb->n_nodes; i++) {
+        ସଂରଚନା ggml_tensor * ଗଣ୍ଠି = gb->nodes[i];
+        ସଂରଚନା ggml_tensor * grad = ggml_graph_get_grad(gb, ଗଣ୍ଠି);
 
-        if (ggml_graph_get_parent(gb, node) != NULL) {
-            continue;
+        ଯଦି (ggml_graph_get_parent(gb, ଗଣ୍ଠି) != ଖାଲି) {
+            ଜାରି;
         }
 
-        if (node->flags & GGML_TENSOR_FLAG_PARAM) {
-            snprintf(color, sizeof(color), "yellow");
-        } else if (grad) {
-            if (ggml_graph_find(cgraph, node)) {
-                snprintf(color, sizeof(color), "green");
-            } else {
-                snprintf(color, sizeof(color), "lightblue");
+        ଯଦି (ଗଣ୍ଠି->flags & GGML_TENSOR_FLAG_PARAM) {
+            snprintf(color, ଆକାର(color), "yellow");
+        } ଅନ୍ୟଥା ଯଦି (grad) {
+            ଯଦି (ggml_graph_find(cgraph, ଗଣ୍ଠି)) {
+                snprintf(color, ଆକାର(color), "green");
+            } ଅନ୍ୟଥା {
+                snprintf(color, ଆକାର(color), "lightblue");
             }
-        } else {
-            snprintf(color, sizeof(color), "white");
+        } ଅନ୍ୟଥା {
+            snprintf(color, ଆକାର(color), "white");
         }
 
         fprintf(fp, "  \"%p\" [ "
                     "style = filled; fillcolor = %s; shape = record; "
                     "label=\"",
-                (void *) node, color);
+                (ଶୂନ୍ୟ *) ଗଣ୍ଠି, color);
 
-        if (strlen(node->name) > 0) {
-            fprintf(fp, "%s (%s)|", node->name, ggml_type_name(node->type));
-        } else {
-            fprintf(fp, "(%s)|", ggml_type_name(node->type));
+        ଯଦି (strlen(ଗଣ୍ଠି->name) > 0) {
+            fprintf(fp, "%s (%s)|", ଗଣ୍ଠି->name, ggml_type_name(ଗଣ୍ଠି->type));
+        } ଅନ୍ୟଥା {
+            fprintf(fp, "(%s)|", ggml_type_name(ଗଣ୍ଠି->type));
         }
 
-        if (ggml_is_matrix(node)) {
-            fprintf(fp, "%d [%" PRId64 ", %" PRId64 "] | <x>%s", i, node->ne[0], node->ne[1], ggml_op_symbol(node->op));
-        } else {
-            fprintf(fp, "%d [%" PRId64 ", %" PRId64 ", %" PRId64 "] | <x>%s", i, node->ne[0], node->ne[1], node->ne[2], ggml_op_symbol(node->op));
+        ଯଦି (ggml_is_matrix(ଗଣ୍ଠି)) {
+            fprintf(fp, "%d [%" PRId64 ", %" PRId64 "] | <x>%s", i, ଗଣ୍ଠି->ne[0], ଗଣ୍ଠି->ne[1], ggml_op_ପ୍ରତୀକ(ଗଣ୍ଠି->op));
+        } ଅନ୍ୟଥା {
+            fprintf(fp, "%d [%" PRId64 ", %" PRId64 ", %" PRId64 "] | <x>%s", i, ଗଣ୍ଠି->ne[0], ଗଣ୍ଠି->ne[1], ଗଣ୍ଠି->ne[2], ggml_op_ପ୍ରତୀକ(ଗଣ୍ଠି->op));
         }
 
-        if (grad) {
-            fprintf(fp, " | <g>%s\"; ]\n", ggml_op_symbol(grad->op));
-        } else {
+        ଯଦି (grad) {
+            fprintf(fp, " | <g>%s\"; ]\n", ggml_op_ପ୍ରତୀକ(grad->op));
+        } ଅନ୍ୟଥା {
             fprintf(fp, "\"; ]\n");
         }
     }
 
-    for (int i = 0; i < gb->n_leafs; i++) {
-        struct ggml_tensor * node = gb->leafs[i];
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < gb->n_leafs; i++) {
+        ସଂରଚନା ggml_tensor * ଗଣ୍ଠି = gb->leafs[i];
 
-        snprintf(color, sizeof(color), "pink");
+        snprintf(color, ଆକାର(color), "pink");
 
         fprintf(fp, "  \"%p\" [ "
                     "style = filled; fillcolor = %s; shape = record; "
                     "label=\"<x>",
-                (void *) node, color);
+                (ଶୂନ୍ୟ *) ଗଣ୍ଠି, color);
 
-        if (strlen(node->name) > 0) {
-            fprintf(fp, "%s (%s)|", node->name, ggml_type_name(node->type));
-        } else {
-            fprintf(fp, "(%s)|", ggml_type_name(node->type));
+        ଯଦି (strlen(ଗଣ୍ଠି->name) > 0) {
+            fprintf(fp, "%s (%s)|", ଗଣ୍ଠି->name, ggml_type_name(ଗଣ୍ଠି->type));
+        } ଅନ୍ୟଥା {
+            fprintf(fp, "(%s)|", ggml_type_name(ଗଣ୍ଠି->type));
         }
 
-        fprintf(fp, "CONST %d [%" PRId64 ", %" PRId64 "]", i, node->ne[0], node->ne[1]);
-        if (ggml_nelements(node) < 5 && node->data != NULL) {
+        fprintf(fp, "CONST %d [%" PRId64 ", %" PRId64 "]", i, ଗଣ୍ଠି->ne[0], ଗଣ୍ଠି->ne[1]);
+        ଯଦି (ggml_nelements(ଗଣ୍ଠି) < 5 && ଗଣ୍ଠି->data != ଖାଲି) {
             fprintf(fp, " | (");
-            for (int j = 0; j < ggml_nelements(node); j++) {
+            ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା j = 0; j < ggml_nelements(ଗଣ୍ଠି); j++) {
                 // FIXME: use ggml-backend to obtain the tensor data
                 //if (node->type == GGML_TYPE_I8 || node->type == GGML_TYPE_I16 || node->type == GGML_TYPE_I32) {
                 //    fprintf(fp, "%d", ggml_get_i32_1d(node, j));
@@ -8015,7 +8015,7 @@ void ggml_graph_dump_dot(const struct ggml_cgraph * gb, const struct ggml_cgraph
                 {
                     fprintf(fp, "#");
                 }
-                if (j < ggml_nelements(node) - 1) {
+                ଯଦି (j < ggml_nelements(ଗଣ୍ଠି) - 1) {
                     fprintf(fp, ", ");
                 }
             }
@@ -8024,26 +8024,26 @@ void ggml_graph_dump_dot(const struct ggml_cgraph * gb, const struct ggml_cgraph
         fprintf(fp, "\"; ]\n");
     }
 
-    for (int i = 0; i < gb->n_nodes; i++) {
-        struct ggml_tensor * node = gb->nodes[i];
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < gb->n_nodes; i++) {
+        ସଂରଚନା ggml_tensor * ଗଣ୍ଠି = gb->nodes[i];
 
-        for (int j = 0; j < GGML_MAX_SRC; j++) {
-            if (node->src[j]) {
-                char label[16];
-                snprintf(label, sizeof(label), "src %d", j);
-                ggml_graph_dump_dot_node_edge(fp, gb, node, node->src[j], label);
+        ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା j = 0; j < GGML_MAX_SRC; j++) {
+            ଯଦି (ଗଣ୍ଠି->src[j]) {
+                ଅକ୍ଷର label[16];
+                snprintf(label, ଆକାର(label), "src %d", j);
+                ggml_graph_dump_dot_ଗଣ୍ଠି_edge(fp, gb, ଗଣ୍ଠି, ଗଣ୍ଠି->src[j], label);
             }
         }
     }
 
-    for (int i = 0; i < gb->n_leafs; i++) {
-        struct ggml_tensor * node = gb->leafs[i];
+    ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା i = 0; i < gb->n_leafs; i++) {
+        ସଂରଚନା ggml_tensor * ଗଣ୍ଠି = gb->leafs[i];
 
-        for (int j = 0; j < GGML_MAX_SRC; j++) {
-            if (node->src[j]) {
-                char label[16];
-                snprintf(label, sizeof(label), "src %d", j);
-                ggml_graph_dump_dot_leaf_edge(fp, node, node->src[j], label);
+        ପାଇଁ (ପୂର୍ଣ୍ଣସଂଖ୍ୟା j = 0; j < GGML_MAX_SRC; j++) {
+            ଯଦି (ଗଣ୍ଠି->src[j]) {
+                ଅକ୍ଷର label[16];
+                snprintf(label, ଆକାର(label), "src %d", j);
+                ggml_graph_dump_dot_leaf_edge(fp, ଗଣ୍ଠି, ଗଣ୍ଠି->src[j], label);
             }
         }
     }
@@ -8057,23 +8057,23 @@ void ggml_graph_dump_dot(const struct ggml_cgraph * gb, const struct ggml_cgraph
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ggml_set_input(struct ggml_tensor * tensor) {
+ଶୂନ୍ୟ ggml_set_ନିବେଶ(ସଂରଚନା ggml_tensor * tensor) {
     GGML_ASSERT(tensor->op == GGML_OP_NONE);
-    tensor->flags |= GGML_TENSOR_FLAG_INPUT;
+    tensor->flags |= GGML_TENSOR_FLAG_ନିବେଶ;
 }
 
-void ggml_set_output(struct ggml_tensor * tensor) {
-    for (struct ggml_tensor * cur = tensor; cur != NULL; cur = cur->view_src) {
+ଶୂନ୍ୟ ggml_set_output(ସଂରଚନା ggml_tensor * tensor) {
+    ପାଇଁ (ସଂରଚନା ggml_tensor * cur = tensor; cur != ଖାଲି; cur = cur->view_src) {
         cur->flags |= GGML_TENSOR_FLAG_OUTPUT;
     }
 }
 
-void ggml_set_param(struct ggml_tensor * tensor) {
+ଶୂନ୍ୟ ggml_set_param(ସଂରଚନା ggml_tensor * tensor) {
     GGML_ASSERT(tensor->op == GGML_OP_NONE);
     tensor->flags |= GGML_TENSOR_FLAG_PARAM;
 }
 
-void ggml_set_loss(struct ggml_tensor * tensor) {
+ଶୂନ୍ୟ ggml_set_loss(ସଂରଚନା ggml_tensor * tensor) {
     GGML_ASSERT(ggml_is_scalar(tensor));
     GGML_ASSERT(tensor->type == GGML_TYPE_F32);
     tensor->flags |= GGML_TENSOR_FLAG_LOSS;
@@ -8081,25 +8081,25 @@ void ggml_set_loss(struct ggml_tensor * tensor) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ggml_quantize_init(enum ggml_type type) {
+ଶୂନ୍ୟ ggml_quantize_init(ଗଣନା ggml_type type) {
     ggml_critical_section_start();
 
-    switch (type) {
-        case GGML_TYPE_IQ2_XXS:
-        case GGML_TYPE_IQ2_XS:
-        case GGML_TYPE_IQ2_S:
-        case GGML_TYPE_IQ1_S:
-        case GGML_TYPE_IQ1_M:   iq2xs_init_impl(type); break;
-        case GGML_TYPE_IQ3_XXS: iq3xs_init_impl(256); break;
-        case GGML_TYPE_IQ3_S:   iq3xs_init_impl(512); break;
-        default: // nothing
-            break;
+    ବାଛ (type) {
+        ସ୍ଥିତି GGML_TYPE_IQ2_XXS:
+        ସ୍ଥିତି GGML_TYPE_IQ2_XS:
+        ସ୍ଥିତି GGML_TYPE_IQ2_S:
+        ସ୍ଥିତି GGML_TYPE_IQ1_S:
+        ସ୍ଥିତି GGML_TYPE_IQ1_M:   iq2xs_init_impl(type); ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_IQ3_XXS: iq3xs_init_impl(256); ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_IQ3_S:   iq3xs_init_impl(512); ଭାଙ୍ଗ;
+        ପୂର୍ବନିର୍ଦ୍ଧାରିତ: // nothing
+            ଭାଙ୍ଗ;
     }
 
     ggml_critical_section_end();
 }
 
-void ggml_quantize_free(void) {
+ଶୂନ୍ୟ ggml_quantize_free(ଶୂନ୍ୟ) {
     ggml_critical_section_start();
 
     iq2xs_free_impl(GGML_TYPE_IQ2_XXS);
@@ -8113,8 +8113,8 @@ void ggml_quantize_free(void) {
     ggml_critical_section_end();
 }
 
-bool ggml_quantize_requires_imatrix(enum ggml_type type) {
-    return
+bool ggml_quantize_requires_imatrix(ଗଣନା ggml_type type) {
+    ଫେରନ୍ତୁ
         type == GGML_TYPE_IQ2_XXS ||
         type == GGML_TYPE_IQ2_XS  ||
         type == GGML_TYPE_IQ1_S;//   ||
@@ -8122,17 +8122,17 @@ bool ggml_quantize_requires_imatrix(enum ggml_type type) {
 }
 
 size_t ggml_quantize_chunk(
-        enum ggml_type   type,
-           const float * src,
-                  void * dst,
+        ଗଣନା ggml_type   type,
+           ଅଚଳ ଦଶମିକ * src,
+                  ଶୂନ୍ୟ * dst,
                int64_t   start,
                int64_t   nrows,
                int64_t   n_per_row,
-           const float * imatrix) {
-    const int64_t n = nrows * n_per_row;
+           ଅଚଳ ଦଶମିକ * imatrix) {
+    ଅଚଳ int64_t n = nrows * n_per_row;
 
-    if (ggml_quantize_requires_imatrix(type)) {
-        GGML_ASSERT(imatrix != NULL);
+    ଯଦି (ggml_quantize_requires_imatrix(type)) {
+        GGML_ASSERT(imatrix != ଖାଲି);
     }
 
     GGML_ASSERT(start % type_traits[type].blck_size == 0);
@@ -8140,77 +8140,77 @@ size_t ggml_quantize_chunk(
 
     ggml_quantize_init(type); // this is noop if already initialized
 
-    const size_t start_row = start / n_per_row;
-    const size_t row_size  = ggml_row_size(type, n_per_row);
+    ଅଚଳ size_t start_row = start / n_per_row;
+    ଅଚଳ size_t row_size  = ggml_row_size(type, n_per_row);
 
     size_t result = 0;
 
-    switch (type) {
-        case GGML_TYPE_Q1_0:    result = quantize_q1_0   (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_Q2_0:    result = quantize_q2_0   (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_Q4_0:    result = quantize_q4_0   (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_Q4_1:    result = quantize_q4_1   (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_Q5_0:    result = quantize_q5_0   (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_Q5_1:    result = quantize_q5_1   (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_Q8_0:    result = quantize_q8_0   (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_MXFP4:   result = quantize_mxfp4  (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_NVFP4:   result = quantize_nvfp4  (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_Q2_K:    result = quantize_q2_K   (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_Q3_K:    result = quantize_q3_K   (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_Q4_K:    result = quantize_q4_K   (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_Q5_K:    result = quantize_q5_K   (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_Q6_K:    result = quantize_q6_K   (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_TQ1_0:   result = quantize_tq1_0  (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_TQ2_0:   result = quantize_tq2_0  (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_IQ2_XXS: result = quantize_iq2_xxs(src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_IQ2_XS:  result = quantize_iq2_xs (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_IQ3_XXS: result = quantize_iq3_xxs(src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_IQ3_S:   result = quantize_iq3_s  (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_IQ2_S:   result = quantize_iq2_s  (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_IQ1_S:   result = quantize_iq1_s  (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_IQ1_M:   result = quantize_iq1_m  (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_IQ4_NL:  result = quantize_iq4_nl (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_IQ4_XS:  result = quantize_iq4_xs (src + start, (char *) dst + start_row * row_size, nrows, n_per_row, imatrix); break;
-        case GGML_TYPE_F16:
+    ବାଛ (type) {
+        ସ୍ଥିତି GGML_TYPE_Q1_0:    result = quantize_q1_0   (src + start, (ଅକ୍ଷର *) dst + start_row * row_size, nrows, n_per_row, imatrix); ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_Q2_0:    result = quantize_q2_0   (src + start, (ଅକ୍ଷର *) dst + start_row * row_size, nrows, n_per_row, imatrix); ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_Q4_0:    result = quantize_q4_0   (src + start, (ଅକ୍ଷର *) dst + start_row * row_size, nrows, n_per_row, imatrix); ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_Q4_1:    result = quantize_q4_1   (src + start, (ଅକ୍ଷର *) dst + start_row * row_size, nrows, n_per_row, imatrix); ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_Q5_0:    result = quantize_q5_0   (src + start, (ଅକ୍ଷର *) dst + start_row * row_size, nrows, n_per_row, imatrix); ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_Q5_1:    result = quantize_q5_1   (src + start, (ଅକ୍ଷର *) dst + start_row * row_size, nrows, n_per_row, imatrix); ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_Q8_0:    result = quantize_q8_0   (src + start, (ଅକ୍ଷର *) dst + start_row * row_size, nrows, n_per_row, imatrix); ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_MXFP4:   result = quantize_mxfp4  (src + start, (ଅକ୍ଷର *) dst + start_row * row_size, nrows, n_per_row, imatrix); ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_NVFP4:   result = quantize_nvfp4  (src + start, (ଅକ୍ଷର *) dst + start_row * row_size, nrows, n_per_row, imatrix); ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_Q2_K:    result = quantize_q2_K   (src + start, (ଅକ୍ଷର *) dst + start_row * row_size, nrows, n_per_row, imatrix); ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_Q3_K:    result = quantize_q3_K   (src + start, (ଅକ୍ଷର *) dst + start_row * row_size, nrows, n_per_row, imatrix); ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_Q4_K:    result = quantize_q4_K   (src + start, (ଅକ୍ଷର *) dst + start_row * row_size, nrows, n_per_row, imatrix); ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_Q5_K:    result = quantize_q5_K   (src + start, (ଅକ୍ଷର *) dst + start_row * row_size, nrows, n_per_row, imatrix); ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_Q6_K:    result = quantize_q6_K   (src + start, (ଅକ୍ଷର *) dst + start_row * row_size, nrows, n_per_row, imatrix); ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_TQ1_0:   result = quantize_tq1_0  (src + start, (ଅକ୍ଷର *) dst + start_row * row_size, nrows, n_per_row, imatrix); ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_TQ2_0:   result = quantize_tq2_0  (src + start, (ଅକ୍ଷର *) dst + start_row * row_size, nrows, n_per_row, imatrix); ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_IQ2_XXS: result = quantize_iq2_xxs(src + start, (ଅକ୍ଷର *) dst + start_row * row_size, nrows, n_per_row, imatrix); ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_IQ2_XS:  result = quantize_iq2_xs (src + start, (ଅକ୍ଷର *) dst + start_row * row_size, nrows, n_per_row, imatrix); ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_IQ3_XXS: result = quantize_iq3_xxs(src + start, (ଅକ୍ଷର *) dst + start_row * row_size, nrows, n_per_row, imatrix); ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_IQ3_S:   result = quantize_iq3_s  (src + start, (ଅକ୍ଷର *) dst + start_row * row_size, nrows, n_per_row, imatrix); ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_IQ2_S:   result = quantize_iq2_s  (src + start, (ଅକ୍ଷର *) dst + start_row * row_size, nrows, n_per_row, imatrix); ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_IQ1_S:   result = quantize_iq1_s  (src + start, (ଅକ୍ଷର *) dst + start_row * row_size, nrows, n_per_row, imatrix); ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_IQ1_M:   result = quantize_iq1_m  (src + start, (ଅକ୍ଷର *) dst + start_row * row_size, nrows, n_per_row, imatrix); ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_IQ4_NL:  result = quantize_iq4_nl (src + start, (ଅକ୍ଷର *) dst + start_row * row_size, nrows, n_per_row, imatrix); ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_IQ4_XS:  result = quantize_iq4_xs (src + start, (ଅକ୍ଷର *) dst + start_row * row_size, nrows, n_per_row, imatrix); ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_F16:
             {
-                size_t elemsize = sizeof(ggml_fp16_t);
+                size_t elemsize = ଆକାର(ggml_fp16_t);
                 ggml_fp32_to_fp16_row(src + start, (ggml_fp16_t *)dst + start, n);
                 result = n * elemsize;
-            } break;
-        case GGML_TYPE_BF16:
+            } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_BF16:
             {
-                size_t elemsize = sizeof(ggml_bf16_t);
+                size_t elemsize = ଆକାର(ggml_bf16_t);
                 ggml_fp32_to_bf16_row_ref(src + start, (ggml_bf16_t *)dst + start, n);
                 result = n * elemsize;
-            } break;
-        case GGML_TYPE_F32:
+            } ଭାଙ୍ଗ;
+        ସ୍ଥିତି GGML_TYPE_F32:
             {
-                size_t elemsize = sizeof(float);
+                size_t elemsize = ଆକାର(ଦଶମିକ);
                 result = n * elemsize;
                 memcpy((uint8_t *)dst + start * elemsize, src + start, result);
-            } break;
-        default:
-            assert(false);
+            } ଭାଙ୍ଗ;
+        ପୂର୍ବନିର୍ଦ୍ଧାରିତ:
+            ପ୍ରତିଜ୍ଞା(false);
     }
 
     GGML_ASSERT(result == nrows * row_size);
 
-    return result;
+    ଫେରନ୍ତୁ result;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ggml_log_get(ggml_log_callback * log_callback, void ** user_data) {
+ଶୂନ୍ୟ ggml_log_get(ggml_log_callback * log_callback, ଶୂନ୍ୟ ** user_data) {
     *log_callback = g_logger_state.log_callback;
     *user_data    = g_logger_state.log_callback_user_data;
 }
 
-void ggml_log_set(ggml_log_callback log_callback, void * user_data) {
+ଶୂନ୍ୟ ggml_log_set(ggml_log_callback log_callback, ଶୂନ୍ୟ * user_data) {
     g_logger_state.log_callback = log_callback ? log_callback : ggml_log_callback_default;
     g_logger_state.log_callback_user_data = user_data;
 }
 
-void ggml_threadpool_params_init(struct ggml_threadpool_params * p, int n_threads) {
+ଶୂନ୍ୟ ggml_threadpool_params_init(ସଂରଚନା ggml_threadpool_params * p, ପୂର୍ଣ୍ଣସଂଖ୍ୟା n_threads) {
     p->n_threads  = n_threads;
     p->prio       = 0;     // default priority (usually means normal or inherited)
     p->poll       = 50;    // hybrid-polling enabled
@@ -8219,16 +8219,16 @@ void ggml_threadpool_params_init(struct ggml_threadpool_params * p, int n_thread
     memset(p->cpumask, 0, GGML_MAX_N_THREADS); // all-zero means use the default affinity (usually inherited)
 }
 
-struct ggml_threadpool_params ggml_threadpool_params_default(int n_threads) {
-    struct ggml_threadpool_params p;
+ସଂରଚନା ggml_threadpool_params ggml_threadpool_params_default(ପୂର୍ଣ୍ଣସଂଖ୍ୟା n_threads) {
+    ସଂରଚନା ggml_threadpool_params p;
     ggml_threadpool_params_init(&p, n_threads);
-    return p;
+    ଫେରନ୍ତୁ p;
 }
 
-bool ggml_threadpool_params_match(const struct ggml_threadpool_params * p0, const struct ggml_threadpool_params * p1) {
-    if (p0->n_threads  != p1->n_threads  ) return false;
-    if (p0->prio       != p1->prio       ) return false;
-    if (p0->poll       != p1->poll       ) return false;
-    if (p0->strict_cpu != p1->strict_cpu ) return false;
-    return memcmp(p0->cpumask, p1->cpumask, GGML_MAX_N_THREADS) == 0;
+bool ggml_threadpool_params_match(ଅଚଳ ସଂରଚନା ggml_threadpool_params * p0, ଅଚଳ ସଂରଚନା ggml_threadpool_params * p1) {
+    ଯଦି (p0->n_threads  != p1->n_threads  ) ଫେରନ୍ତୁ false;
+    ଯଦି (p0->prio       != p1->prio       ) ଫେରନ୍ତୁ false;
+    ଯଦି (p0->poll       != p1->poll       ) ଫେରନ୍ତୁ false;
+    ଯଦି (p0->strict_cpu != p1->strict_cpu ) ଫେରନ୍ତୁ false;
+    ଫେରନ୍ତୁ memcmp(p0->cpumask, p1->cpumask, GGML_MAX_N_THREADS) == 0;
 }

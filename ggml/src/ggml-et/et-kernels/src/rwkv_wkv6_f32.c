@@ -13,19 +13,19 @@
 //
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "platform.h"
+#ଅନ୍ତର୍ଭାଵ "ggml_tensor.h"
+#ଅନ୍ତର୍ଭାଵ "platform.h"
 
-#include <stdint.h>
+#ଅନ୍ତର୍ଭାଵ <stdint.h>
 
-struct ggml_et_rwkv_wkv6_params {
-    float * k;         // src[0]: [S, H, T]  key
-    float * v;         // src[1]: [S, H, T]  value
-    float * r;         // src[2]: [S, H, T]  receptance
-    float * tf;        // src[3]: [S, H]     time_faaaa (per-head, not per-token)
-    float * td;        // src[4]: [S, H, T]  time_decay
-    float * state_in;  // src[5]: [S*S*H, n_seqs]  initial state
-    float * dst;       // [C, T + S*n_seqs]  output + state_out
+ସଂରଚନା ggml_et_rwkv_wkv6_params {
+    ଦଶମିକ * k;         // src[0]: [S, H, T]  key
+    ଦଶମିକ * v;         // src[1]: [S, H, T]  value
+    ଦଶମିକ * r;         // src[2]: [S, H, T]  receptance
+    ଦଶମିକ * tf;        // src[3]: [S, H]     time_faaaa (per-head, not per-token)
+    ଦଶମିକ * td;        // src[4]: [S, H, T]  time_decay
+    ଦଶମିକ * state_in;  // src[5]: [S*S*H, n_seqs]  initial state
+    ଦଶମିକ * dst;       // [C, T + S*n_seqs]  output + state_out
     int32_t C;         // total channels (S * H)
     int32_t H;         // number of heads
     int32_t S;         // head size
@@ -33,45 +33,45 @@ struct ggml_et_rwkv_wkv6_params {
     int32_t n_seqs;    // number of sequences
 };
 
-int entry_point(struct ggml_et_rwkv_wkv6_params * params, void * env) {
+ପୂର୍ଣ୍ଣସଂଖ୍ୟା entry_point(ସଂରଚନା ggml_et_rwkv_wkv6_params * params, ଶୂନ୍ୟ * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ଯଦି (!kernel_env) {
+        ଫେରନ୍ତୁ -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    ପୂର୍ଣ୍ଣସଂଖ୍ୟା thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    ପୂର୍ଣ୍ଣସଂଖ୍ୟା ଅଙ୍କ_threads = get_ଅଙ୍କ_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    ଯଦି (thread_id < 0) {
+        ଫେରନ୍ତୁ 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    ଯଦି (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ଫେରନ୍ତୁ -1;
     }
 
-    const float * k        = params->k;
-    const float * v        = params->v;
-    const float * r        = params->r;
-    const float * tf       = params->tf;
-    const float * td       = params->td;
-    const float * state_in = params->state_in;
-    float *       dst_data = params->dst;
+    ଅଚଳ ଦଶମିକ * k        = params->k;
+    ଅଚଳ ଦଶମିକ * v        = params->v;
+    ଅଚଳ ଦଶମିକ * r        = params->r;
+    ଅଚଳ ଦଶମିକ * tf       = params->tf;
+    ଅଚଳ ଦଶମିକ * td       = params->td;
+    ଅଚଳ ଦଶମିକ * state_in = params->state_in;
+    ଦଶମିକ *       dst_data = params->dst;
 
-    const int32_t C      = params->C;
-    const int32_t H      = params->H;
-    const int32_t S      = params->S;
-    const int32_t T      = params->T;
-    const int32_t n_seqs = params->n_seqs;
+    ଅଚଳ int32_t C      = params->C;
+    ଅଚଳ int32_t H      = params->H;
+    ଅଚଳ int32_t S      = params->S;
+    ଅଚଳ int32_t T      = params->T;
+    ଅଚଳ int32_t n_seqs = params->n_seqs;
 
-    if (!k || !v || !r || !tf || !td || !state_in || !dst_data) {
-        return -1;
+    ଯଦି (!k || !v || !r || !tf || !td || !state_in || !dst_data) {
+        ଫେରନ୍ତୁ -1;
     }
 
-    const int32_t tps       = T / n_seqs;  // tokens per sequence
-    float *       state_out = dst_data + C * T;
-    float         zero      = 0.0f;
+    ଅଚଳ int32_t tps       = T / n_seqs;  // tokens per sequence
+    ଦଶମିକ *       state_out = dst_data + C * T;
+    ଦଶମିକ         zero      = 0.0f;
 
     // Tile j by one cache line so each hart's dst/state writes never share
     // a 64-B line with another hart's writes (the chip is non-coherent).
@@ -79,69 +79,69 @@ int entry_point(struct ggml_et_rwkv_wkv6_params * params, void * env) {
     // across i — splitting i across harts would race on dst writes.
     // For S=64 this gives 4 tiles per head; for S<16 or odd S we fall back
     // to one-hart-per-head (= the original parallelism).
-    const int32_t j_tile         = (S % 16 == 0) ? 16 : S;
-    const int32_t tiles_per_head = S / j_tile;
-    const int32_t total_units    = H * tiles_per_head;
+    ଅଚଳ int32_t j_tile         = (S % 16 == 0) ? 16 : S;
+    ଅଚଳ int32_t tiles_per_head = S / j_tile;
+    ଅଚଳ int32_t total_units    = H * tiles_per_head;
 
     // Parallelize across (head, j-tile) pairs.  The t loop stays inside this
     // unit loop so the same hart owns the same column slice of state across
     // all timesteps — required for the recurrence to read back its own
     // writes without going through L2.
-    for (int32_t u = thread_id; u < total_units; u += num_threads) {
-        const int32_t h       = u / tiles_per_head;
-        const int32_t tile    = u % tiles_per_head;
-        const int32_t j_start = tile * j_tile;
-        const int32_t j_end   = j_start + j_tile;
+    ପାଇଁ (int32_t u = thread_id; u < total_units; u += ଅଙ୍କ_threads) {
+        ଅଚଳ int32_t h       = u / tiles_per_head;
+        ଅଚଳ int32_t tile    = u % tiles_per_head;
+        ଅଚଳ int32_t j_start = tile * j_tile;
+        ଅଚଳ int32_t j_end   = j_start + j_tile;
 
-        const int32_t h_off = h * S;      // offset within C for this head
-        const int32_t s2d   = h * S * S;  // offset within state for this head
+        ଅଚଳ int32_t h_off = h * S;      // offset within C for this head
+        ଅଚଳ int32_t s2d   = h * S * S;  // offset within state for this head
 
-        for (int32_t t = 0; t < T; t++) {
-            const int32_t seq       = t / tps;
-            const int32_t t_in_seq  = t % tps;
-            const int32_t seq_state = seq * S * C;
+        ପାଇଁ (int32_t t = 0; t < T; t++) {
+            ଅଚଳ int32_t seq       = t / tps;
+            ଅଚଳ int32_t t_in_seq  = t % tps;
+            ଅଚଳ int32_t seq_state = seq * S * C;
 
-            const float * s_prev;
-            float *       s_cur = state_out + seq_state + s2d;
+            ଅଚଳ ଦଶମିକ * s_prev;
+            ଦଶମିକ *       s_cur = state_out + seq_state + s2d;
 
-            if (t_in_seq == 0) {
+            ଯଦି (t_in_seq == 0) {
                 s_prev = state_in + seq_state + s2d;
-            } else {
+            } ଅନ୍ୟଥା {
                 s_prev = s_cur;
             }
 
-            const int32_t th = t * C + h_off;
+            ଅଚଳ int32_t th = t * C + h_off;
 
             // Pointers for this timestep/head
-            const float * k_ptr  = k + th;
-            const float * v_ptr  = v + th;
-            const float * r_ptr  = r + th;
-            const float * tf_ptr = tf + h_off;  // tf is per-head, no t offset
-            const float * td_ptr = td + th;
+            ଅଚଳ ଦଶମିକ * k_ptr  = k + th;
+            ଅଚଳ ଦଶମିକ * v_ptr  = v + th;
+            ଅଚଳ ଦଶମିକ * r_ptr  = r + th;
+            ଅଚଳ ଦଶମିକ * tf_ptr = tf + h_off;  // tf is per-head, no t offset
+            ଅଚଳ ଦଶମିକ * td_ptr = td + th;
 
             // Zero this hart's slice of dst: dst[th + j_start..th + j_end-1]
             // WKV6 accumulates dst[j] across all i, so must start from zero
-            float * dst_row = dst_data + th;
-            for (int32_t j = j_start; j < j_end; j += 8) {
-                __asm__ volatile(
+            ଦଶମିକ * dst_row = dst_data + th;
+            ପାଇଁ (int32_t j = j_start; j < j_end; j += 8) {
+                __asm__ ଅସ୍ଥିର(
                     "fbc.ps f10, %[z]\n"
                     "fsw.ps f10, %[dst_vec]\n"
-                    : [dst_vec] "=m"(*(float (*)[8]) & dst_row[j])
+                    : [dst_vec] "=m"(*(ଦଶମିକ (*)[8]) & dst_row[j])
                     : [z] "m"(zero)
                     : "f10");
             }
 
-            for (int32_t i = 0; i < S; i++) {
-                const float * sp_row = s_prev + i * S;  // state_prev row i
-                float *       sc_row = s_cur + i * S;   // state_cur  row i
+            ପାଇଁ (int32_t i = 0; i < S; i++) {
+                ଅଚଳ ଦଶମିକ * sp_row = s_prev + i * S;  // state_prev row i
+                ଦଶମିକ *       sc_row = s_cur + i * S;   // state_cur  row i
 
-                float k_val  = k_ptr[i];
-                float r_val  = r_ptr[i];
-                float tf_val = tf_ptr[i];
-                float td_val = td_ptr[i];
+                ଦଶମିକ k_val  = k_ptr[i];
+                ଦଶମିକ r_val  = r_ptr[i];
+                ଦଶମିକ tf_val = tf_ptr[i];
+                ଦଶମିକ td_val = td_ptr[i];
 
                 // Broadcast k[i], r[i], tf[i], td[i] to vector registers
-                __asm__ volatile(
+                __asm__ ଅସ୍ଥିର(
                     "fbc.ps f20, %[kv]\n"   // f20 = k[i] broadcast
                     "fbc.ps f21, %[rv]\n"   // f21 = r[i] broadcast
                     "fbc.ps f22, %[tfv]\n"  // f22 = tf[i] broadcast
@@ -150,8 +150,8 @@ int entry_point(struct ggml_et_rwkv_wkv6_params * params, void * env) {
                     : [kv] "m"(k_val), [rv] "m"(r_val), [tfv] "m"(tf_val), [tdv] "m"(td_val)
                     : "f20", "f21", "f22", "f23");
 
-                for (int32_t j = j_start; j < j_end; j += 8) {
-                    __asm__ volatile(
+                ପାଇଁ (int32_t j = j_start; j < j_end; j += 8) {
+                    __asm__ ଅସ୍ଥିର(
                         // Load v[j], state_prev[i][j], dst[j]
                         "flw.ps f10, %[v_vec]\n"  // v[j..j+7]
                         "flw.ps f11, %[s_vec]\n"  // state_prev[i][j..j+7]
@@ -171,14 +171,14 @@ int entry_point(struct ggml_et_rwkv_wkv6_params * params, void * env) {
                         "fmadd.ps f11, f11, f23, f13\n"  // state = state * td + kv
                         "fsw.ps f11, %[s_out]\n"         // store new state
 
-                        : [d_out] "=m"(*(float (*)[8]) & dst_row[j]), [s_out] "=m"(*(float (*)[8]) & sc_row[j])
-                        : [v_vec] "m"(*(const float (*)[8]) & v_ptr[j]), [s_vec] "m"(*(const float (*)[8]) & sp_row[j]),
-                          [d_vec] "m"(*(const float (*)[8]) & dst_row[j])
+                        : [d_out] "=m"(*(ଦଶମିକ (*)[8]) & dst_row[j]), [s_out] "=m"(*(ଦଶମିକ (*)[8]) & sc_row[j])
+                        : [v_vec] "m"(*(ଅଚଳ ଦଶମିକ (*)[8]) & v_ptr[j]), [s_vec] "m"(*(ଅଚଳ ଦଶମିକ (*)[8]) & sp_row[j]),
+                          [d_vec] "m"(*(ଅଚଳ ଦଶମିକ (*)[8]) & dst_row[j])
                         : "f10", "f11", "f12", "f13", "f14");
                 }
             }
         }
     }
 
-    return 0;
+    ଫେରନ୍ତୁ 0;
 }
