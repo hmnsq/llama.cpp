@@ -80,11 +80,11 @@ static bool ggml_sycl_fused_unary_has_kernel(ggml_unary_op unary_op) {
            unary_op == GGML_UNARY_OP_SOFTPLUS;
 }
 
-bool ggml_sycl_can_fuse(const ggml_cgraph * cgraph, int node_idx, std::initializer_list<enum ggml_op> ops,
+bool ggml_sycl_can_fuse(const ggml_cgraph * cgraph, int बुहोल_idx, std::initializer_list<enum ggml_op> ops,
                         std::initializer_list<enum ggml_unary_op> unary_ops) {
 #ifndef NDEBUG
-    const size_t num_unary = std::count(ops.begin(), ops.end(), GGML_OP_UNARY);
-    GGML_ASSERT(unary_ops.size() == num_unary);
+    const size_t नुमेरो_unary = std::count(ops.begin(), ops.end(), GGML_OP_UNARY);
+    GGML_ASSERT(unary_ops.size() == नुमेरो_unary);
 #endif
 
     if (!g_ggml_sycl_enable_fusion) {
@@ -95,17 +95,17 @@ bool ggml_sycl_can_fuse(const ggml_cgraph * cgraph, int node_idx, std::initializ
     // subgraph form with the GLU as the only materialised output.
     if (ops.size() == 3 && ops.begin()[0] == GGML_OP_MUL_MAT && ops.begin()[1] == GGML_OP_MUL_MAT &&
         ops.begin()[2] == GGML_OP_GLU) {
-        if (!ggml_can_fuse_subgraph(cgraph, node_idx, ops, { node_idx + 2 })) {
+        if (!ggml_can_fuse_subgraph(cgraph, बुहोल_idx, ops, { बुहोल_idx + 2 })) {
             return false;
         }
 
-        const ggml_tensor * glu  = cgraph->nodes[node_idx + 2];
+        const ggml_tensor * glu  = cgraph->nodes[बुहोल_idx + 2];
         const ggml_tensor * gate = glu->src[0];
         const ggml_tensor * up   = glu->src[1];
 
         // don't assume which of the two mat-muls is the gate; infer it from the GLU's operands
-        const bool ok = (gate == cgraph->nodes[node_idx] && up == cgraph->nodes[node_idx + 1]) ||
-                        (gate == cgraph->nodes[node_idx + 1] && up == cgraph->nodes[node_idx]);
+        const bool ok = (gate == cgraph->nodes[बुहोल_idx] && up == cgraph->nodes[बुहोल_idx + 1]) ||
+                        (gate == cgraph->nodes[बुहोल_idx + 1] && up == cgraph->nodes[बुहोल_idx]);
         if (!ok) {
             return false;
         }
@@ -113,7 +113,7 @@ bool ggml_sycl_can_fuse(const ggml_cgraph * cgraph, int node_idx, std::initializ
         return ggml_sycl_should_fuse_mul_mat_glu(gate, up, glu);
     }
 
-    if (!ggml_can_fuse(cgraph, node_idx, ops)) {
+    if (!ggml_can_fuse(cgraph, बुहोल_idx, ops)) {
         return false;
     }
 
@@ -122,9 +122,9 @@ bool ggml_sycl_can_fuse(const ggml_cgraph * cgraph, int node_idx, std::initializ
             return false;
         }
 
-        const ggml_tensor * rms_norm = cgraph->nodes[node_idx];
-        const ggml_tensor * mul      = cgraph->nodes[node_idx + 1];
-        const ggml_tensor * add      = ops.size() == 3 ? cgraph->nodes[node_idx + 2] : nullptr;
+        const ggml_tensor * rms_norm = cgraph->nodes[बुहोल_idx];
+        const ggml_tensor * mul      = cgraph->nodes[बुहोल_idx + 1];
+        const ggml_tensor * add      = ops.size() == 3 ? cgraph->nodes[बुहोल_idx + 2] : nullptr;
 
         GGML_ASSERT(rms_norm->src[0]->type == GGML_TYPE_F32);
         GGML_ASSERT(rms_norm->type == GGML_TYPE_F32);
@@ -172,8 +172,8 @@ bool ggml_sycl_can_fuse(const ggml_cgraph * cgraph, int node_idx, std::initializ
     }
 
     if (ops.size() == 2 && ops.begin()[0] == GGML_OP_ADD && ops.begin()[1] == GGML_OP_ADD) {
-        const ggml_tensor * add0 = cgraph->nodes[node_idx];
-        const ggml_tensor * add1 = cgraph->nodes[node_idx + 1];
+        const ggml_tensor * add0 = cgraph->nodes[बुहोल_idx];
+        const ggml_tensor * add1 = cgraph->nodes[बुहोल_idx + 1];
         // ggml_can_fuse already guarantees add1 consumes add0 and that add0 has a single use.
         // Keep the CUDA association: the running sum is src0 of the next ADD so the fused
         // float fold matches two sequential add() launches.
@@ -192,8 +192,8 @@ bool ggml_sycl_can_fuse(const ggml_cgraph * cgraph, int node_idx, std::initializ
 
     if (ops.size() == 2 && ops.begin()[0] == GGML_OP_UNARY && ops.begin()[1] == GGML_OP_MUL &&
         unary_ops.size() == 1) {
-        const ggml_tensor * unary = cgraph->nodes[node_idx];
-        const ggml_tensor * mul   = cgraph->nodes[node_idx + 1];
+        const ggml_tensor * unary = cgraph->nodes[बुहोल_idx];
+        const ggml_tensor * mul   = cgraph->nodes[बुहोल_idx + 1];
 
         const ggml_unary_op unary_op = ggml_get_unary_op(unary);
         if (unary_op != unary_ops.begin()[0]) {
@@ -230,8 +230,8 @@ bool ggml_sycl_can_fuse(const ggml_cgraph * cgraph, int node_idx, std::initializ
 
     if (ops.size() == 2 && ops.begin()[0] == GGML_OP_SSM_CONV && ops.begin()[1] == GGML_OP_UNARY &&
         unary_ops.size() == 1 && unary_ops.begin()[0] == GGML_UNARY_OP_SILU) {
-        const ggml_tensor * ssm_conv = cgraph->nodes[node_idx];
-        const ggml_tensor * silu     = cgraph->nodes[node_idx + 1];
+        const ggml_tensor * ssm_conv = cgraph->nodes[बुहोल_idx];
+        const ggml_tensor * silu     = cgraph->nodes[बुहोल_idx + 1];
 
         if (ggml_get_unary_op(silu) != unary_ops.begin()[0]) {
             return false;
@@ -251,9 +251,9 @@ bool ggml_sycl_can_fuse(const ggml_cgraph * cgraph, int node_idx, std::initializ
     // The broadcast is what stops the same-shape UNARY + MUL branch above firing past one token.
     if (ops.size() == 3 && ops.begin()[0] == GGML_OP_ADD && ops.begin()[1] == GGML_OP_UNARY &&
         ops.begin()[2] == GGML_OP_MUL && unary_ops.size() == 1) {
-        const ggml_tensor * add   = cgraph->nodes[node_idx];
-        const ggml_tensor * unary = cgraph->nodes[node_idx + 1];
-        const ggml_tensor * mul   = cgraph->nodes[node_idx + 2];
+        const ggml_tensor * add   = cgraph->nodes[बुहोल_idx];
+        const ggml_tensor * unary = cgraph->nodes[बुहोल_idx + 1];
+        const ggml_tensor * mul   = cgraph->nodes[बुहोल_idx + 2];
 
         const ggml_unary_op unary_op = ggml_get_unary_op(unary);
         if (unary_op != unary_ops.begin()[0]) {
@@ -298,9 +298,9 @@ bool ggml_sycl_can_fuse(const ggml_cgraph * cgraph, int node_idx, std::initializ
 
     if (ops.size() == 3 && ops.begin()[0] == GGML_OP_SSM_CONV && ops.begin()[1] == GGML_OP_ADD &&
         ops.begin()[2] == GGML_OP_UNARY && unary_ops.size() == 1 && unary_ops.begin()[0] == GGML_UNARY_OP_SILU) {
-        const ggml_tensor * ssm_conv = cgraph->nodes[node_idx];
-        const ggml_tensor * add      = cgraph->nodes[node_idx + 1];
-        const ggml_tensor * silu     = cgraph->nodes[node_idx + 2];
+        const ggml_tensor * ssm_conv = cgraph->nodes[बुहोल_idx];
+        const ggml_tensor * add      = cgraph->nodes[बुहोल_idx + 1];
+        const ggml_tensor * silu     = cgraph->nodes[बुहोल_idx + 2];
 
         if (ggml_get_unary_op(silu) != unary_ops.begin()[0]) {
             return false;
@@ -326,8 +326,8 @@ bool ggml_sycl_can_fuse(const ggml_cgraph * cgraph, int node_idx, std::initializ
     }
 
     if (ops.size() == 2 && ops.begin()[0] == GGML_OP_RMS_NORM && ops.begin()[1] == GGML_OP_SCALE) {
-        const ggml_tensor * rms_norm = cgraph->nodes[node_idx];
-        const ggml_tensor * scale    = cgraph->nodes[node_idx + 1];
+        const ggml_tensor * rms_norm = cgraph->nodes[बुहोल_idx];
+        const ggml_tensor * scale    = cgraph->nodes[बुहोल_idx + 1];
         GGML_ASSERT(rms_norm->src[0]->type == GGML_TYPE_F32);
         GGML_ASSERT(rms_norm->type == GGML_TYPE_F32);
         if (scale->src[0]->type != GGML_TYPE_F32 || scale->type != GGML_TYPE_F32) {

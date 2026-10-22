@@ -43,7 +43,7 @@ int entry_point(struct ggml_et_concat_params * params, void * env) {
     }
 
     int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    int नुमेरो_threads = get_नुमेरो_threads(kernel_env->shire_mask);
 
     if (thread_id < 0) {
         return 0;
@@ -90,7 +90,7 @@ int entry_point(struct ggml_et_concat_params * params, void * env) {
         const int64_t rows_per_group = et_rows_per_cacheline_group(ne0, sizeof(float));
         const int64_t total_groups   = (total_rows + rows_per_group - 1) / rows_per_group;
 
-        for (int64_t grp = thread_id; grp < total_groups; grp += num_threads) {
+        for (int64_t grp = thread_id; grp < total_groups; grp += नुमेरो_threads) {
             const int64_t row_start = grp * rows_per_group;
             int64_t       row_end   = row_start + rows_per_group;
             if (row_end > total_rows) {
@@ -119,7 +119,7 @@ int entry_point(struct ggml_et_concat_params * params, void * env) {
     }
 
     // Standard path: ne0 % 16 == 0, aligned rows
-    for (int64_t row = thread_id; row < total_rows; row += num_threads) {
+    for (int64_t row = thread_id; row < total_rows; row += नुमेरो_threads) {
         // Decompose linear row index into (i1, i2, i3)
         int64_t i1 = row % ne1;
         int64_t i2 = (row / ne1) % ne2;

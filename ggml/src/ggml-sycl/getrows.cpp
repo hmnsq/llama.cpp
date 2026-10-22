@@ -184,11 +184,11 @@ static void get_rows_sycl(ggml_backend_sycl_context & ctx, const ggml_tensor *sr
                           const int32_t *src1_dd, float *dst_dd,
                           queue_ptr stream) {
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const sycl::range<3> block_dims(1, 1, SYCL_GET_ROWS_BLOCK_SIZE);
-    const int block_num_x = (ne00 + 2*SYCL_GET_ROWS_BLOCK_SIZE - 1) / (2*SYCL_GET_ROWS_BLOCK_SIZE);
-    const sycl::range<3> block_nums(ne11 * ne12, ne10, block_num_x);
+    const int block_नुमेरो_x = (ne00 + 2*SYCL_GET_ROWS_BLOCK_SIZE - 1) / (2*SYCL_GET_ROWS_BLOCK_SIZE);
+    const sycl::range<3> block_nums(ne11 * ne12, ne10, block_नुमेरो_x);
 
     // strides in elements
     //const size_t s0 = nb0 / ggml_element_size(dst);
@@ -220,15 +220,15 @@ static void get_rows_sycl_reorder(const ggml_tensor *src0, const ggml_tensor *sr
                                   const int32_t *src1_dd, float *dst_dd,
                                   queue_ptr stream) {
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     // reorder is done only on 2D weights
     GGML_ASSERT(ne02 == 1 && ne03 == 1);
     GGML_ASSERT(ne00 % 2 == 0);
 
     const sycl::range<3> block_dims(1, 1, SYCL_GET_ROWS_BLOCK_SIZE);
-    const int block_num_x = (ne00 + 2*SYCL_GET_ROWS_BLOCK_SIZE - 1) / (2*SYCL_GET_ROWS_BLOCK_SIZE);
-    const sycl::range<3> block_nums(ne11 * ne12, ne10, block_num_x);
+    const int block_नुमेरो_x = (ne00 + 2*SYCL_GET_ROWS_BLOCK_SIZE - 1) / (2*SYCL_GET_ROWS_BLOCK_SIZE);
+    const sycl::range<3> block_nums(ne11 * ne12, ne10, block_नुमेरो_x);
 
     const size_t s1 = nb1 / ggml_element_size(dst);
     const size_t s2 = nb2 / ggml_element_size(dst);
@@ -256,7 +256,7 @@ static void get_rows_sycl_reorder_k(const ggml_tensor *src0, const ggml_tensor *
                                     ggml_tensor *dst, const int32_t *src1_dd, float *dst_dd,
                                     queue_ptr stream, F dequantize_block) {
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     // reorder is done only on 2D weights
     GGML_ASSERT(ne02 == 1 && ne03 == 1);
@@ -309,7 +309,7 @@ static void get_rows_sycl_reorder_iq3(ggml_backend_sycl_context & ctx, const ggm
                                       const ggml_tensor * src1, ggml_tensor * dst,
                                       const int32_t * src1_dd, float * dst_dd,
                                       F dequantize_block) {
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     // the persistent reorder is only installed for 2D weights
     GGML_ASSERT(ne02 == 1 && ne03 == 1);
@@ -353,11 +353,11 @@ static void get_rows_sycl_f32(ggml_backend_sycl_context & ctx, const ggml_tensor
                               const int32_t *src1_dd, float *dst_dd,
                               queue_ptr stream) {
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const sycl::range<3> block_dims(1, 1, SYCL_GET_ROWS_BLOCK_SIZE);
-    const int block_num_x = (ne00 + 2*SYCL_GET_ROWS_BLOCK_SIZE - 1) / (2*SYCL_GET_ROWS_BLOCK_SIZE);
-    const sycl::range<3> block_nums(ne11 * ne12, ne10, block_num_x);
+    const int block_नुमेरो_x = (ne00 + 2*SYCL_GET_ROWS_BLOCK_SIZE - 1) / (2*SYCL_GET_ROWS_BLOCK_SIZE);
+    const sycl::range<3> block_nums(ne11 * ne12, ne10, block_नुमेरो_x);
 
     const size_t s1 = nb1 / ggml_element_size(dst);
     const size_t s2 = nb2 / ggml_element_size(dst);
@@ -386,11 +386,11 @@ static void get_rows_sycl_float(ggml_backend_sycl_context & ctx, const ggml_tens
                                 const src0_t *src0_dd, const int32_t *src1_dd,
                                 dst_t *dst_dd, queue_ptr stream) {
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const sycl::range<3> block_dims(1, 1, SYCL_GET_ROWS_BLOCK_SIZE);
-    const int block_num_x = (ne00 + SYCL_GET_ROWS_BLOCK_SIZE - 1) / SYCL_GET_ROWS_BLOCK_SIZE;
-    const sycl::range<3> block_nums(ne11 * ne12, ne10, block_num_x);
+    const int block_नुमेरो_x = (ne00 + SYCL_GET_ROWS_BLOCK_SIZE - 1) / SYCL_GET_ROWS_BLOCK_SIZE;
+    const sycl::range<3> block_nums(ne11 * ne12, ne10, block_नुमेरो_x);
 
     // strides in elements
     //const size_t s0 = nb0 / ggml_element_size(dst);
@@ -425,7 +425,7 @@ static void k_get_rows_back_float(const src0_t * src0, const int32_t * src1, flo
                                   const size_t s01, const size_t s02,
                                   const size_t s10, const size_t s11,
                                   const size_t s1,
-                                  const int64_t block_num_y,
+                                  const int64_t block_नुमेरो_y,
                                   const sycl::nd_item<3> & item_ct1) {
     const int64_t col = item_ct1.get_group(2) * item_ct1.get_local_range(2) + item_ct1.get_local_id(2);
     if (col >= ncols) {
@@ -433,7 +433,7 @@ static void k_get_rows_back_float(const src0_t * src0, const int32_t * src1, flo
     }
 
     // block_num_y is clamped, so stride over destination rows like CUDA k_get_rows_back_float
-    for (int64_t dst_row = item_ct1.get_group(1); dst_row < nrows_dst; dst_row += block_num_y) {
+    for (int64_t dst_row = item_ct1.get_group(1); dst_row < nrows_dst; dst_row += block_नुमेरो_y) {
         float sum = 0.0f;
 
         const int64_t nrows_grad_total = nrows_grad_10 * nrows_grad_11;
@@ -456,7 +456,7 @@ static void get_rows_back_sycl_float(ggml_backend_sycl_context & ctx, const ggml
                                      const src0_t * src0_dd, const int32_t * src1_dd,
                                      float * dst_dd, queue_ptr stream) {
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     GGML_ASSERT(ne02*ne03 == 1);
     GGML_ASSERT(ne12*ne13 == 1);
@@ -479,16 +479,16 @@ static void get_rows_back_sycl_float(ggml_backend_sycl_context & ctx, const ggml
     const size_t s1 = nb1 / sizeof(float);
 
     const sycl::range<3> block_dims(1, 1, SYCL_GET_ROWS_BLOCK_SIZE);
-    const int64_t block_num_x = (ncols + SYCL_GET_ROWS_BLOCK_SIZE - 1) / SYCL_GET_ROWS_BLOCK_SIZE;
-    const int64_t block_num_y = std::min<int64_t>(nrows_dst, (int64_t) UINT16_MAX);
-    const sycl::range<3> block_nums(1, block_num_y, block_num_x);
+    const int64_t block_नुमेरो_x = (ncols + SYCL_GET_ROWS_BLOCK_SIZE - 1) / SYCL_GET_ROWS_BLOCK_SIZE;
+    const int64_t block_नुमेरो_y = std::min<int64_t>(nrows_dst, (int64_t) UINT16_MAX);
+    const sycl::range<3> block_nums(1, block_नुमेरो_y, block_नुमेरो_x);
 
     stream->parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                          [=](sycl::nd_item<3> item_ct1) {
                              k_get_rows_back_float(src0_dd, src1_dd, dst_dd,
                                                    ncols, nrows_grad_10, nrows_grad_11, nrows_dst,
                                                    s01, s02, s10, s11, s1,
-                                                   block_num_y, item_ct1);
+                                                   block_नुमेरो_y, item_ct1);
                          });
 
     GGML_UNUSED(src0);

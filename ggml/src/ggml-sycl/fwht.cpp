@@ -112,10 +112,10 @@ static void launch_fwht(const T * src, float * dst, const int64_t n_rows, const 
                         dpct::queue_ptr stream) {
     constexpr int rows_per_block = 4;
 
-    const int64_t num_blocks = (n_rows + rows_per_block - 1) / rows_per_block;
+    const int64_t नुमेरो_blocks = (n_rows + rows_per_block - 1) / rows_per_block;
 
     // dim 1 is the fastest-varying, so a sub-group is exactly one row's WARP_SIZE lanes.
-    const sycl::range<2> global(num_blocks * rows_per_block, WARP_SIZE);
+    const sycl::range<2> global(नुमेरो_blocks * rows_per_block, WARP_SIZE);
     const sycl::range<2> local(rows_per_block, WARP_SIZE);
 
     stream->parallel_for(sycl::nd_range<2>(global, local),
@@ -329,10 +329,10 @@ static void launch_kronecker(const T *       src,
                              dpct::queue_ptr stream) {
     constexpr int rows_per_block = 4;
 
-    const int64_t num_blocks = (n_rows + rows_per_block - 1) / rows_per_block;
+    const int64_t नुमेरो_blocks = (n_rows + rows_per_block - 1) / rows_per_block;
 
     // dim 1 is the fastest-varying, so a sub-group is exactly one row's WARP_SIZE lanes.
-    const sycl::range<2> global(num_blocks * rows_per_block, WARP_SIZE);
+    const sycl::range<2> global(नुमेरो_blocks * rows_per_block, WARP_SIZE);
     const sycl::range<2> local(rows_per_block, WARP_SIZE);
 
     stream->parallel_for(sycl::nd_range<2>(global, local),

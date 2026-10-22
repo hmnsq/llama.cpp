@@ -28,7 +28,7 @@ enum ApirLoadLibraryReturnCode {
     APIR_LOAD_LIBRARY_ALREADY_LOADED                 = 2,
     APIR_LOAD_LIBRARY_ENV_VAR_MISSING                = 3,
     APIR_LOAD_LIBRARY_CANNOT_OPEN                    = 4,
-    APIR_LOAD_LIBRARY_SYMBOL_MISSING                 = 5,
+    APIR_LOAD_LIBRARY_सिम्बोलो_MISSING                 = 5,
     // any value greater than this is an APIR *backend library* initialization return code
     APIR_LOAD_LIBRARY_INIT_BASE_INDEX                = 6,
 };
@@ -68,7 +68,7 @@ __attribute__((unused)) static const char * apir_load_library_error(ApirLoadLibr
     APIR_LOAD_LIBRARY_ERROR(APIR_LOAD_LIBRARY_ALREADY_LOADED);
     APIR_LOAD_LIBRARY_ERROR(APIR_LOAD_LIBRARY_ENV_VAR_MISSING);
     APIR_LOAD_LIBRARY_ERROR(APIR_LOAD_LIBRARY_CANNOT_OPEN);
-    APIR_LOAD_LIBRARY_ERROR(APIR_LOAD_LIBRARY_SYMBOL_MISSING);
+    APIR_LOAD_LIBRARY_ERROR(APIR_LOAD_LIBRARY_सिम्बोलो_MISSING);
     APIR_LOAD_LIBRARY_ERROR(APIR_LOAD_LIBRARY_INIT_BASE_INDEX);
 
     return "Unknown APIR_COMMAND_TYPE_LoadLibrary error";

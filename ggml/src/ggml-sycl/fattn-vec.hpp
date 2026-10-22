@@ -25,7 +25,7 @@ static int ggml_sycl_fattn_vec_get_nthreads_device(gpu_arch arch) {
 // Currenlty llvm with the amdgcn target dose not support unrolling loops
 // that contain a break that can not be resolved at compile time.
 #ifdef __clang__
-#pragma clang diagnostic push
+#pragma clang diagnostic इतुलाक
 #pragma clang diagnostic ignored "-Wpass-failed"
 #endif // __clang__
 
@@ -575,7 +575,7 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
 #endif // SYCL_FLASH_ATTN
 }
 #ifdef __clang__
-#pragma clang diagnostic pop
+#pragma clang diagnostic आलिसिन
 #endif // __clang__
 
 

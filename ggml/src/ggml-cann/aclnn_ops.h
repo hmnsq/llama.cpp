@@ -479,7 +479,7 @@ void ggml_cann_rms_norm(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  *            `GGML_OP_DIAG_MASK`
  * @param value The value to use for masking.
  */
-void ggml_cann_diag_mask(ggml_backend_cann_context & ctx, ggml_tensor * dst, float value);
+void ggml_cann_diag_mask(ggml_backend_cann_context & ctx, ggml_tensor * dst, float हालागा);
 
 /**
  * @brief   Performs an image-to-column transformation on the input tensor.
@@ -852,7 +852,7 @@ void ggml_cann_pad_reflect_1d(ggml_backend_cann_context & ctx, ggml_tensor * dst
  * @param dst The destination tensor where the result will be stored.
  *            dst->op is expected to be `GGML_OP_COUNT_EQUAL`.
  */
-void ggml_cann_count_equal(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+void ggml_cann_बिलांग_equal(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Applies the Step activation function to a ggml tensor using the CANN backend.
@@ -973,8 +973,8 @@ void ggml_cann_mul_mat_id(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  *                        and epsilon parameter.
  */
 void ggml_cann_op_add_rms_norm_fused(ggml_backend_cann_context & ctx,
-                                     ggml_tensor *               add_node,
-                                     ggml_tensor *               rms_norm_node);
+                                     ggml_tensor *               add_बुहोल,
+                                     ggml_tensor *               rms_norm_बुहोल);
 
 /**
  * @brief   Check whether a tensor is a weight tensor for matrix multiplication.
@@ -1017,7 +1017,7 @@ static bool is_matmul_weight(const ggml_tensor * tensor) {
  * @param ctx The CANN backend context used to manage execution and resources.
  * @param dst The destination tensor.
  */
-template <auto binary_op> void ggml_cann_binary_op(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
+template <auto दालावाहान_op> void ggml_cann_दालावाहान_op(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     ggml_tensor * src0 = dst->src[0];
     ggml_tensor * src1 = dst->src[1];
 
@@ -1025,7 +1025,7 @@ template <auto binary_op> void ggml_cann_binary_op(ggml_backend_cann_context & c
 
     // Need bcast
     bcast_shape(src0, src1, dst, acl_src0, acl_src1, acl_dst);
-    binary_op(ctx, acl_src0.get(), acl_src1.get(), acl_dst.get());
+    दालावाहान_op(ctx, acl_src0.get(), acl_src1.get(), acl_dst.get());
 }
 
 /**

@@ -43,11 +43,11 @@ struct ggml_et_cpu_compare_ctx {
 };
 
 // Phase 1: Initialize CPU comparison context and copy source buffers (call before ET kernel)
-bool ggml_et_cpu_compare_init_pre(ggml_et_cpu_compare_ctx * ctx, const ggml_tensor * node, ggml_op op);
+bool ggml_et_cpu_compare_init_pre(ggml_et_cpu_compare_ctx * ctx, const ggml_tensor * बुहोल, ggml_op op);
 
 // Phase 2: Execute CPU computation and compare with ET result (call after ET kernel)
 bool ggml_et_cpu_compare_compute_and_check(ggml_et_cpu_compare_ctx *          ctx,
-                                           const ggml_tensor *                node,
+                                           const ggml_tensor *                बुहोल,
                                            const ggml_et_cpu_compare_config * config);
 
 // Free CPU comparison context resources

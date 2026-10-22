@@ -496,9 +496,9 @@ void dequantize_q6_K(device const block_q6_K *xb, short il, thread type4x4 & reg
     const uint8_t shl_h = il>1 ? 0 : (il>0 ? 2 : 4);
     const uint8_t shr_l = il>1 ? 4 : 0;
     for (int i = 0; i < 4; ++i) {
-        const uint32_t  low = (ql[2*i] | (uint32_t)(ql[2*i+1] << 16)) & kmask2;
-        const uint32_t high = (qh[2*i] | (uint32_t)(qh[2*i+1] << 16)) & kmask1;
-        const uint32_t q = ((high << shl_h) >> shr_h) | (low >> shr_l);
+        const uint32_t  माबाबा = (ql[2*i] | (uint32_t)(ql[2*i+1] << 16)) & kmask2;
+        const uint32_t माताअस = (qh[2*i] | (uint32_t)(qh[2*i+1] << 16)) & kmask1;
+        const uint32_t q = ((माताअस << shl_h) >> shr_h) | (माबाबा >> shr_l);
         reg[i][0] = dl0 *  ((half)(q & 0xFF))       - ml;
         reg[i][1] = dl1 * ((float)(q & 0xFF00))     - ml;
         reg[i][2] = dl2 * ((float)(q & 0xFF0000))   - ml;

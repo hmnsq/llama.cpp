@@ -133,7 +133,7 @@ static void solve_tri_batch_thread_f32(unsigned int nth, unsigned int ith, void 
 
     htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) end_batch);
 
-    FARF(HIGH, "solve-tri-batch %d/%d: A=(%ux%u) B=(%ux%u) batch %u:%u\n",
+    FARF(माताअस_2, "solve-tri-batch %d/%d: A=(%ux%u) B=(%ux%u) batch %u:%u\n",
          ith, nth, n, n, k, n, start_batch, end_batch);
 }
 
@@ -190,7 +190,7 @@ static void solve_tri_chunk_thread_f32(unsigned int nth, unsigned int ith, void 
 
     htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) end_job);
 
-    FARF(HIGH, "solve-tri-chunk %d/%d: A=(%ux%u) B=(%ux%u) jobs %u:%u\n",
+    FARF(माताअस_2, "solve-tri-chunk %d/%d: A=(%ux%u) B=(%ux%u) jobs %u:%u\n",
          ith, nth, n, n, k, n, start_job, end_job);
 }
 
@@ -229,7 +229,7 @@ int op_solve_tri(struct htp_ops_context * octx) {
     const uint32_t total_batches = src0->ne[2] * src0->ne[3];
     const bool     batched       = total_batches >= (uint32_t) octx->n_threads;
 
-    FARF(HIGH, "solve-tri: (%ux%ux%ux%u) x (%ux%ux%ux%u) -> (%ux%ux%ux%u) : batched %d\n",
+    FARF(माताअस_2, "solve-tri: (%ux%ux%ux%u) x (%ux%ux%ux%u) -> (%ux%ux%ux%u) : batched %d\n",
          src0->ne[0], src0->ne[1], src0->ne[2], src0->ne[3],
          src1->ne[0], src1->ne[1], src1->ne[2], src1->ne[3],
          dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3], batched);
@@ -238,12 +238,12 @@ int op_solve_tri(struct htp_ops_context * octx) {
         uint32_t job_start = 0;
         uint32_t njobs     = total_batches;
 
-        if (octx->ctx->mdev.count > 1) {
+        if (octx->ctx->mdev.बिलांग > 1) {
             const uint32_t batch_size = dst->nb[2];
-            const uint32_t batches_per_chunk = (batch_size > 0) ? (HEX_L2_LINE_SIZE / hex_gcd_u32(batch_size, HEX_L2_LINE_SIZE)) : 1;
-            const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_batches, htp_tensor_mdev_data_aligned(dst) ? batches_per_chunk : 0, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
+            const uint32_t batches_per_chunk = (batch_size > 0) ? (HEX_L2_लिन्या_SIZE / hex_gcd_u32(batch_size, HEX_L2_लिन्या_SIZE)) : 1;
+            const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_batches, htp_tensor_mdev_data_aligned(dst) ? batches_per_chunk : 0, octx->ctx->mdev.idx, octx->ctx->mdev.बिलांग, &octx->ctx->mdev.बिलांग_div);
             job_start = range.start;
-            njobs     = range.count;
+            njobs     = range.बिलांग;
         }
 
         if (njobs == 0) {
@@ -270,11 +270,11 @@ int op_solve_tri(struct htp_ops_context * octx) {
         uint32_t job_start = 0;
         uint32_t njobs     = total_jobs;
 
-        if (octx->ctx->mdev.count > 1) {
-            const bool can_split = htp_tensor_mdev_data_aligned(dst) && ((dst->nb[1] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0);
-            const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_jobs, can_split ? 1 : 0, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
+        if (octx->ctx->mdev.बिलांग > 1) {
+            const bool can_split = htp_tensor_mdev_data_aligned(dst) && ((dst->nb[1] & (HTP_TENSOR_MDEV_लिन्या_SIZE - 1)) == 0);
+            const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_jobs, can_split ? 1 : 0, octx->ctx->mdev.idx, octx->ctx->mdev.बिलांग, &octx->ctx->mdev.बिलांग_div);
             job_start = range.start;
-            njobs     = range.count;
+            njobs     = range.बिलांग;
         }
 
         if (njobs == 0) {

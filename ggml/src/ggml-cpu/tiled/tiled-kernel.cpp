@@ -14,7 +14,7 @@
 // Reference implementation, slower than existing vec_dot approach
 template <int SUBBLK, bool HAS_MIN, int BIAS, int NK>
 static void tiled_run_microtile_scalar(const tiled_tile_src0 & src0, const tiled_tile_src1 & src1,
-                                       int i0, int j0, int num_k, int slab, float * buf, int buf_stride) {
+                                       int i0, int j0, int नुमेरो_k, int slab, float * buf, int buf_stride) {
     constexpr int NB = TILED_TILE_K / SUBBLK;    // subblocks per 256-K block
     constexpr int NS = SUBBLK / 16; // per-16 bsums per subblock
 
@@ -22,7 +22,7 @@ static void tiled_run_microtile_scalar(const tiled_tile_src0 & src0, const tiled
     // NK: 1 = standard single-slab (offsets 0, strides compile-time); 0 = runtime
     // (num_k/slab from the args). The narrow path is memory-bound, so one runtime
     // version serves all of it.
-    const int nkr  = (NK > 0) ? NK : num_k;
+    const int nkr  = (NK > 0) ? NK : नुमेरो_k;
     const int seff = (NK > 0) ? 0 : slab;
     const int qk_stride = nkr * TILED_TILE_K;
     const int qk_off = seff * TILED_TILE_K;
@@ -93,20 +93,20 @@ static void tiled_run_microtile_scalar(const tiled_tile_src0 & src0, const tiled
 // band pass and adds no register pressure);
 template <int SUBBLK, bool HAS_MIN, int BIAS, int NK>
 static void tiled_run_micro_vnni_8x16(const tiled_tile_src0 & src0, const tiled_tile_src1 & src1,
-                                          int i0, int j0, int num_k, int slab, float * buf, int buf_stride) {
+                                          int i0, int j0, int नुमेरो_k, int slab, float * buf, int buf_stride) {
     constexpr int NB = TILED_TILE_K / SUBBLK;
     constexpr int NS = SUBBLK / 16;
     constexpr int NG = SUBBLK / 4;
 
     // band width, see the register-pressure note above
-    constexpr int NUM_ROWS = 8;
+    constexpr int नुमेरो_ROWS = 8;
 
     // num_k = K-blocks per row (the narrow path holds num_k slabs at row stride num_k*256 so
     // each weight row is one long stream); slab = this call's slab. num_k=1, slab=0 = standard.
     // NK: 1 = standard single-slab (offsets 0, strides compile-time); 0 = runtime
     // (num_k/slab from the args). The narrow path is memory-bound, so one runtime
     // version serves all of it.
-    const int nkr  = (NK > 0) ? NK : num_k;
+    const int nkr  = (NK > 0) ? NK : नुमेरो_k;
     const int seff = (NK > 0) ? 0 : slab;
     const int qk_stride = nkr * TILED_TILE_K;
     const int qk_off = seff * TILED_TILE_K;
@@ -117,11 +117,11 @@ static void tiled_run_micro_vnni_8x16(const tiled_tile_src0 & src0, const tiled_
 
     const __m512 d1_vec = _mm512_load_ps(&src1.d[seff * TILED_MICRO + j0]);
 
-    __m512i s1_acc[NUM_ROWS];
-    for (int t = 0; t < NUM_ROWS; t++) { s1_acc[t] = _mm512_setzero_si512(); }
-    __m512i s2_acc[NUM_ROWS];
+    __m512i s1_acc[नुमेरो_ROWS];
+    for (int t = 0; t < नुमेरो_ROWS; t++) { s1_acc[t] = _mm512_setzero_si512(); }
+    __m512i s2_acc[नुमेरो_ROWS];
     if constexpr (HAS_MIN) {
-        for (int t = 0; t < NUM_ROWS; t++) { s2_acc[t] = _mm512_setzero_si512(); }
+        for (int t = 0; t < नुमेरो_ROWS; t++) { s2_acc[t] = _mm512_setzero_si512(); }
     }
 
     const int32_t * bsums = src1.bsums; // int32 per-16 sums; NS > 1 combines NS lanes per subblock
@@ -136,8 +136,8 @@ static void tiled_run_micro_vnni_8x16(const tiled_tile_src0 & src0, const tiled_
             bias32 = _mm512_mullo_epi32(bsums32, _mm512_set1_epi32(BIAS));
         }
 
-        __m512i acc16[NUM_ROWS];
-        for (int t = 0; t < NUM_ROWS; t++) { acc16[t] = _mm512_setzero_si512(); }
+        __m512i acc16[नुमेरो_ROWS];
+        for (int t = 0; t < नुमेरो_ROWS; t++) { acc16[t] = _mm512_setzero_si512(); }
 
 #ifdef __GNUC__
         #pragma GCC unroll 8 // pragma unrolled justified by measuing with/without
@@ -147,7 +147,7 @@ static void tiled_run_micro_vnni_8x16(const tiled_tile_src0 & src0, const tiled_
             // in-place interleave layout: [kg%16 @ TILED_TILE_K][kg/16 @ 64][row @ 4]
             const __m512i codes = _mm512_load_si512((const __m512i *) &src1.q[(j0 / TILED_MICRO) * (TILED_MICRO * qk_stride)
                 + qk_off + (kg % TILED_MICRO) * qk_stride + (kg / TILED_MICRO) * (TILED_MICRO * 4)]);
-            for (int t = 0; t < NUM_ROWS; t++) {
+            for (int t = 0; t < नुमेरो_ROWS; t++) {
                 const uint32_t u4 = *(const uint32_t *) &src0.q[(i0 + t) * qk_stride + qk_off + kg * 4];
                 const __m512i u4b = _mm512_set1_epi32((int) u4);
                 acc16[t] = _mm512_dpbusd_epi32(acc16[t], u4b, codes);
@@ -155,7 +155,7 @@ static void tiled_run_micro_vnni_8x16(const tiled_tile_src0 & src0, const tiled_
         }
 
         // int correction: s1_acc += scales*(raw-BIAS*bsums)
-        for (int t = 0; t < NUM_ROWS; t++) {
+        for (int t = 0; t < नुमेरो_ROWS; t++) {
             const int ar = i0 + t;
             __m512i rawi = acc16[t];
             if constexpr (BIAS != 0) {
@@ -174,7 +174,7 @@ static void tiled_run_micro_vnni_8x16(const tiled_tile_src0 & src0, const tiled_
             for (int u = 1; u < NS; u++) {
                 bsums32 = _mm512_add_epi32(bsums32, _mm512_load_si512((const __m512i *) &bsums[(bs_off + s * NS + u) * bs_stride + j0]));
             }
-            for (int t = 0; t < NUM_ROWS; t++) {
+            for (int t = 0; t < नुमेरो_ROWS; t++) {
                 s2_acc[t] = _mm512_add_epi32(s2_acc[t],
                     _mm512_mullo_epi32(bsums32, _mm512_set1_epi32(src0.mins[(i0 + t) * nb_stride + nb_off + s])));
             }
@@ -182,7 +182,7 @@ static void tiled_run_micro_vnni_8x16(const tiled_tile_src0 & src0, const tiled_
     }
 
     // epilogue: int->float, apply per-row scales, store to buf
-    for (int t = 0; t < NUM_ROWS; t++) {
+    for (int t = 0; t < नुमेरो_ROWS; t++) {
         const int ar = i0 + t;
         const int d_off = seff * TILED_MICRO + ar;
         __m512 f1 = _mm512_cvtepi32_ps(s1_acc[t]);
@@ -199,9 +199,9 @@ static void tiled_run_micro_vnni_8x16(const tiled_tile_src0 & src0, const tiled_
 // 16x16 microtile as two explicit 8x16 band passes
 template <int SUBBLK, bool HAS_MIN, int BIAS, int NK>
 static void tiled_run_microtile_vnni(const tiled_tile_src0 & src0, const tiled_tile_src1 & src1,
-                                         int i0, int j0, int num_k, int slab, float * buf, int buf_stride) {
-    tiled_run_micro_vnni_8x16<SUBBLK, HAS_MIN, BIAS, NK>(src0, src1, i0,      j0, num_k, slab, buf, buf_stride);
-    tiled_run_micro_vnni_8x16<SUBBLK, HAS_MIN, BIAS, NK>(src0, src1, i0 + 8,  j0, num_k, slab, buf, buf_stride);
+                                         int i0, int j0, int नुमेरो_k, int slab, float * buf, int buf_stride) {
+    tiled_run_micro_vnni_8x16<SUBBLK, HAS_MIN, BIAS, NK>(src0, src1, i0,      j0, नुमेरो_k, slab, buf, buf_stride);
+    tiled_run_micro_vnni_8x16<SUBBLK, HAS_MIN, BIAS, NK>(src0, src1, i0 + 8,  j0, नुमेरो_k, slab, buf, buf_stride);
 }
 
 #endif // __AVX512VNNI__ && __AVX512VL__
@@ -225,7 +225,7 @@ static void tiled_run_microtile_vnni(const tiled_tile_src0 & src0, const tiled_t
 //     one maddubs (2*127*127 < 32767) so it always fits.
 template <int SUBBLK, bool HAS_MIN, int BIAS, int NK, bool ACTBIAS>
 static void tiled_run_microtile_avx2(const tiled_tile_src0 & src0, const tiled_tile_src1 & src1,
-                                     int i0, int j0, int num_k, int slab, float * buf, int buf_stride) {
+                                     int i0, int j0, int नुमेरो_k, int slab, float * buf, int buf_stride) {
     constexpr int NB = TILED_TILE_K / SUBBLK;
     constexpr int GROUP = 8; // Process 8 src1 columns concurrently (1 YMM vector)
 
@@ -235,7 +235,7 @@ static void tiled_run_microtile_avx2(const tiled_tile_src0 & src0, const tiled_t
     // NK: 1 = standard single-slab (offsets 0, strides compile-time); 0 = runtime
     // (num_k/slab from the args). The narrow path is memory-bound, so one runtime
     // version serves all of it.
-    const int nkr  = (NK > 0) ? NK : num_k;
+    const int nkr  = (NK > 0) ? NK : नुमेरो_k;
     const int seff = (NK > 0) ? 0 : slab;
     const int qk_stride = nkr * TILED_TILE_K;
     const int qk_off = seff * TILED_TILE_K;
@@ -404,7 +404,7 @@ static void tiled_run_microtile_avx2(const tiled_tile_src0 & src0, const tiled_t
 #if defined(__AVX__) && !defined(__AVX2__)
 template <int SUBBLK, bool HAS_MIN, int BIAS, int NK>
 static void tiled_run_microtile_avx(const tiled_tile_src0 & src0, const tiled_tile_src1 & src1,
-                                    int i0, int j0, int num_k, int slab, float * buf, int buf_stride) {
+                                    int i0, int j0, int नुमेरो_k, int slab, float * buf, int buf_stride) {
     constexpr int NB = TILED_TILE_K / SUBBLK;
     constexpr int NS = SUBBLK / 16;
     constexpr int GROUP = 4; // src1 columns per group: one acc32 per column
@@ -413,7 +413,7 @@ static void tiled_run_microtile_avx(const tiled_tile_src0 & src0, const tiled_ti
     // NK: 1 = standard single-slab (offsets 0, strides compile-time); 0 = runtime
     // (num_k/slab from the args). The narrow path is memory-bound, so one runtime
     // version serves all of it.
-    const int nkr  = (NK > 0) ? NK : num_k;
+    const int nkr  = (NK > 0) ? NK : नुमेरो_k;
     const int seff = (NK > 0) ? 0 : slab;
     const int qk_stride = nkr * TILED_TILE_K;
     const int qk_off = seff * TILED_TILE_K;
@@ -504,31 +504,31 @@ static void tiled_run_microtile_avx(const tiled_tile_src0 & src0, const tiled_ti
 // version; it is memory-bound, so one version serves all of it.
 template <int SUBBLK, bool HAS_MIN, int BIAS, bool ACTBIAS>
 void tiled_run_microtile(const tiled_tile_src0 & src0, const tiled_tile_src1 & src1,
-                         int i0, int j0, int num_k, int slab, float * buf, int buf_stride) {
-    const bool standard = (num_k == 1);
+                         int i0, int j0, int नुमेरो_k, int slab, float * buf, int buf_stride) {
+    const bool standard = (नुमेरो_k == 1);
 #if defined(__AVX512VNNI__) && defined(__AVX512VL__) && defined(__AVX512DQ__)
     if (standard) {
-        tiled_run_microtile_vnni<SUBBLK, HAS_MIN, BIAS, 1>(src0, src1, i0, j0, num_k, slab, buf, buf_stride);
+        tiled_run_microtile_vnni<SUBBLK, HAS_MIN, BIAS, 1>(src0, src1, i0, j0, नुमेरो_k, slab, buf, buf_stride);
     } else {
-        tiled_run_microtile_vnni<SUBBLK, HAS_MIN, BIAS, 0>(src0, src1, i0, j0, num_k, slab, buf, buf_stride);
+        tiled_run_microtile_vnni<SUBBLK, HAS_MIN, BIAS, 0>(src0, src1, i0, j0, नुमेरो_k, slab, buf, buf_stride);
     }
 #elif defined(__AVX2__)
     if (standard) {
-        tiled_run_microtile_avx2<SUBBLK, HAS_MIN, BIAS, 1, ACTBIAS>(src0, src1, i0, j0, num_k, slab, buf, buf_stride);
+        tiled_run_microtile_avx2<SUBBLK, HAS_MIN, BIAS, 1, ACTBIAS>(src0, src1, i0, j0, नुमेरो_k, slab, buf, buf_stride);
     } else {
-        tiled_run_microtile_avx2<SUBBLK, HAS_MIN, BIAS, 0, ACTBIAS>(src0, src1, i0, j0, num_k, slab, buf, buf_stride);
+        tiled_run_microtile_avx2<SUBBLK, HAS_MIN, BIAS, 0, ACTBIAS>(src0, src1, i0, j0, नुमेरो_k, slab, buf, buf_stride);
     }
 #elif defined(__AVX__)
     if (standard) {
-        tiled_run_microtile_avx<SUBBLK, HAS_MIN, BIAS, 1>(src0, src1, i0, j0, num_k, slab, buf, buf_stride);
+        tiled_run_microtile_avx<SUBBLK, HAS_MIN, BIAS, 1>(src0, src1, i0, j0, नुमेरो_k, slab, buf, buf_stride);
     } else {
-        tiled_run_microtile_avx<SUBBLK, HAS_MIN, BIAS, 0>(src0, src1, i0, j0, num_k, slab, buf, buf_stride);
+        tiled_run_microtile_avx<SUBBLK, HAS_MIN, BIAS, 0>(src0, src1, i0, j0, नुमेरो_k, slab, buf, buf_stride);
     }
 #else
     if (standard) {
-        tiled_run_microtile_scalar<SUBBLK, HAS_MIN, BIAS, 1>(src0, src1, i0, j0, num_k, slab, buf, buf_stride);
+        tiled_run_microtile_scalar<SUBBLK, HAS_MIN, BIAS, 1>(src0, src1, i0, j0, नुमेरो_k, slab, buf, buf_stride);
     } else {
-        tiled_run_microtile_scalar<SUBBLK, HAS_MIN, BIAS, 0>(src0, src1, i0, j0, num_k, slab, buf, buf_stride);
+        tiled_run_microtile_scalar<SUBBLK, HAS_MIN, BIAS, 0>(src0, src1, i0, j0, नुमेरो_k, slab, buf, buf_stride);
     }
 #endif
 }
@@ -537,25 +537,25 @@ void tiled_run_microtile(const tiled_tile_src0 & src0, const tiled_tile_src1 & s
 // ACTBIAS selects the act-bias MAC (Wmax <= 64); iq4_xs (Wmax 127) keeps the sign trick
 // q4_K / q5_K: BIAS = 0
  template void tiled_run_microtile<32, true, 0, false>(const tiled_tile_src0 & src0, const tiled_tile_src1 & src1,
-                                               int i0, int j0, int num_k, int slab, float * buf, int buf_stride);
+                                               int i0, int j0, int नुमेरो_k, int slab, float * buf, int buf_stride);
 // iq4_xs: sign trick (Wmax 127 overflows act-bias)
 template void tiled_run_microtile<32, false, 128, false>(const tiled_tile_src0 & src0, const tiled_tile_src1 & src1,
-                                                  int i0, int j0, int num_k, int slab, float * buf, int buf_stride);
+                                                  int i0, int j0, int नुमेरो_k, int slab, float * buf, int buf_stride);
 // iq2_xxs, iq3_xxs, iq3_s, iq1_s: act-bias (Wmax <= 62)
 template void tiled_run_microtile<32, false, 128, true>(const tiled_tile_src0 & src0, const tiled_tile_src1 & src1,
-                                                  int i0, int j0, int num_k, int slab, float * buf, int buf_stride);
+                                                  int i0, int j0, int नुमेरो_k, int slab, float * buf, int buf_stride);
 // iq2_xs, iq2_s, iq1_m: act-bias
 template void tiled_run_microtile<16, false, 128, true>(const tiled_tile_src0 & src0, const tiled_tile_src1 & src1,
-                                                  int i0, int j0, int num_k, int slab, float * buf, int buf_stride);
+                                                  int i0, int j0, int नुमेरो_k, int slab, float * buf, int buf_stride);
 // q6_K: act-bias (Wmax 32)
 template void tiled_run_microtile<16, false, 32, true>(const tiled_tile_src0 & src0, const tiled_tile_src1 & src1,
-                                                 int i0, int j0, int num_k, int slab, float * buf, int buf_stride);
+                                                 int i0, int j0, int नुमेरो_k, int slab, float * buf, int buf_stride);
 // q3_K: act-bias (Wmax 4)
 template void tiled_run_microtile<16, false, 4, true>(const tiled_tile_src0 & src0, const tiled_tile_src1 & src1,
-                                                int i0, int j0, int num_k, int slab, float * buf, int buf_stride);
+                                                int i0, int j0, int नुमेरो_k, int slab, float * buf, int buf_stride);
 // q2_K: BIAS = 0
 template void tiled_run_microtile<16, true, 0, false>(const tiled_tile_src0 & src0, const tiled_tile_src1 & src1,
-                                               int i0, int j0, int num_k, int slab, float * buf, int buf_stride);
+                                               int i0, int j0, int नुमेरो_k, int slab, float * buf, int buf_stride);
 
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -569,10 +569,10 @@ static_assert(sizeof(block_q8_K) == 292 && offsetof(block_q8_K, qs) == 4,
 // n_tiles 16x16 int32 tiles are transposed to the right (tile t occupies bytes
 // [t*64, t*64+64) per row). Each 16-row group is self-contained in row_stride*16 bytes.
 #if defined(__AVX512VNNI__) && defined(__AVX512VL__) && defined(__AVX512DQ__)
-void tiled_repack_src1(tiled_tile_src1 * src1, int row0, int num_k, bool bias) {
+void tiled_repack_src1(tiled_tile_src1 * src1, int row0, int नुमेरो_k, bool bias) {
     GGML_UNUSED(bias);
-    const int n_tiles = num_k * (TILED_TILE_K / (TILED_MICRO * 4));
-    const int row_stride = num_k * TILED_TILE_K;
+    const int n_tiles = नुमेरो_k * (TILED_TILE_K / (TILED_MICRO * 4));
+    const int row_stride = नुमेरो_k * TILED_TILE_K;
     uint8_t * base = (uint8_t *) src1->q + row0 * row_stride;
     for (int t = 0; t < n_tiles; t++) {
         uint8_t * cbase = base + t * (TILED_MICRO * 4);
@@ -638,11 +638,11 @@ void tiled_repack_src1(tiled_tile_src1 * src1, int row0, int num_k, bool bias) {
 #elif defined(__AVX2__)
 // act-bias: pre-bias the activation in place (+128) so the MAC's maddubs(q1b, w) sees unsigned bytes;
 // no transpose on AVX2 (natural layout). 16 rows x n_tiles*64 bytes, row r at base + r*row_stride
-void tiled_repack_src1(tiled_tile_src1 * src1, int row0, int num_k, bool bias) {
+void tiled_repack_src1(tiled_tile_src1 * src1, int row0, int नुमेरो_k, bool bias) {
     if (!bias) {
         return;
     }
-    const int row_stride = num_k * TILED_TILE_K;
+    const int row_stride = नुमेरो_k * TILED_TILE_K;
     uint8_t * base = (uint8_t *) src1->q + row0 * row_stride;
     const int nbytes = row_stride; // full row width
     const __m256i b128 = _mm256_set1_epi8((int8_t) 0x80);
@@ -655,8 +655,8 @@ void tiled_repack_src1(tiled_tile_src1 * src1, int row0, int num_k, bool bias) {
     }
 }
 #else
-void tiled_repack_src1(tiled_tile_src1 * src1, int row0, int num_k, bool bias) {
-    GGML_UNUSED(src1); GGML_UNUSED(row0); GGML_UNUSED(num_k); GGML_UNUSED(bias);
+void tiled_repack_src1(tiled_tile_src1 * src1, int row0, int नुमेरो_k, bool bias) {
+    GGML_UNUSED(src1); GGML_UNUSED(row0); GGML_UNUSED(नुमेरो_k); GGML_UNUSED(bias);
 }
 #endif
 
@@ -684,16 +684,16 @@ static int32_t tiled_byte_sum_16(const uint8_t * p) {
 // HAS_MIN = false, which is exactly the act-bias case). Reused across all act bands and weight groups.
 // No-op off AVX2 (the act-bias MAC is AVX2-only) and when corr is false (iq4_xs / BIAS = 0).
 template <int SUBBLK>
-void tiled_repack_src0(tiled_tile_src0 * tile, int n_rows, int num_k, int BIAS, bool corr) {
+void tiled_repack_src0(tiled_tile_src0 * tile, int n_rows, int नुमेरो_k, int BIAS, bool corr) {
 #if defined(__AVX2__)
     if (!corr) {
         return;
     }
     constexpr int NB = TILED_TILE_K / SUBBLK;
-    const int nb_stride = NB * num_k;
-    for (int slab = 0; slab < num_k; slab++) {
+    const int nb_stride = NB * नुमेरो_k;
+    for (int slab = 0; slab < नुमेरो_k; slab++) {
         for (int r = 0; r < n_rows; r++) {
-            const uint8_t * q = &tile->q[r * (num_k * TILED_TILE_K) + slab * TILED_TILE_K];
+            const uint8_t * q = &tile->q[r * (नुमेरो_k * TILED_TILE_K) + slab * TILED_TILE_K];
             const int32_t * scales = &tile->scales[r * nb_stride + slab * NB];
             int32_t corr_val = 0;
             for (int s = 0; s < NB; s++) {
@@ -704,11 +704,11 @@ void tiled_repack_src0(tiled_tile_src0 * tile, int n_rows, int num_k, int BIAS, 
         }
     }
 #else
-    GGML_UNUSED(tile); GGML_UNUSED(n_rows); GGML_UNUSED(num_k); GGML_UNUSED(BIAS); GGML_UNUSED(corr);
+    GGML_UNUSED(tile); GGML_UNUSED(n_rows); GGML_UNUSED(नुमेरो_k); GGML_UNUSED(BIAS); GGML_UNUSED(corr);
 #endif
 }
 
-template void tiled_repack_src0<16>(tiled_tile_src0 * tile, int n_rows, int num_k, int BIAS, bool corr);
-template void tiled_repack_src0<32>(tiled_tile_src0 * tile, int n_rows, int num_k, int BIAS, bool corr);
+template void tiled_repack_src0<16>(tiled_tile_src0 * tile, int n_rows, int नुमेरो_k, int BIAS, bool corr);
+template void tiled_repack_src0<32>(tiled_tile_src0 * tile, int n_rows, int नुमेरो_k, int BIAS, bool corr);
 
 

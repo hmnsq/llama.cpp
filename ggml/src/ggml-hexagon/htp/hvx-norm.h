@@ -10,14 +10,14 @@
 
 static inline void hvx_fast_rms_norm_f32(const uint8_t * restrict src,
                                          uint8_t * restrict dst,
-                                         const int num_elems,
+                                         const int नुमेरो_elems,
                                          float     epsilon) {
 
     const HVX_Vector * restrict v_src = (HVX_Vector *) src;
     HVX_Vector * restrict v_dst       = (HVX_Vector *) dst;
 
-    const int nvec = num_elems / VLEN_FP32;    // number of full vectors
-    const int nloe = num_elems % VLEN_FP32;    // leftover elements
+    const int nvec = नुमेरो_elems / VLEN_FP32;    // number of full vectors
+    const int nloe = नुमेरो_elems % VLEN_FP32;    // leftover elements
 
     // Compute sum of squares for full vectors
     HVX_Vector sum_v = Q6_V_vsplat_R(0x00000000);
@@ -41,7 +41,7 @@ static inline void hvx_fast_rms_norm_f32(const uint8_t * restrict src,
     // Reduce HVX sum
     sum_v = hvx_vec_reduce_sum_f32(Q6_Vsf_equals_Vqf32(sum_v));
 
-    HVX_Vector t_v            = hvx_vec_splat_f32((float) num_elems);
+    HVX_Vector t_v            = hvx_vec_splat_f32((float) नुमेरो_elems);
     HVX_Vector denom_v        = hvx_vec_inverse_f32(t_v);
     HVX_Vector mean_v         = Q6_Vqf32_vmpy_VsfVsf(sum_v, denom_v);
     HVX_Vector mean_epsilon_v = Q6_Vqf32_vadd_Vqf32Vsf(mean_v, epsilon_v);
@@ -71,14 +71,14 @@ static inline void hvx_fast_rms_norm_f32(const uint8_t * restrict src,
 static inline void hvx_fast_rms_norm_mul_f32(const uint8_t * restrict src,
                                              const uint8_t * restrict weight,
                                              uint8_t * restrict dst,
-                                             const int num_elems,
+                                             const int नुमेरो_elems,
                                              float     epsilon) {
     const HVX_Vector * restrict v_src    = (const HVX_Vector *) src;
     const HVX_Vector * restrict v_weight = (const HVX_Vector *) weight;
     HVX_Vector * restrict v_dst          = (HVX_Vector *) dst;
 
-    const int nvec = num_elems / VLEN_FP32;    // number of full vectors
-    const int nloe = num_elems % VLEN_FP32;    // leftover elements
+    const int nvec = नुमेरो_elems / VLEN_FP32;    // number of full vectors
+    const int nloe = नुमेरो_elems % VLEN_FP32;    // leftover elements
 
     // Compute sum of squares for full vectors
     HVX_Vector sum_v = Q6_V_vsplat_R(0x00000000);
@@ -102,7 +102,7 @@ static inline void hvx_fast_rms_norm_mul_f32(const uint8_t * restrict src,
     // Reduce HVX sum
     sum_v = hvx_vec_reduce_sum_f32(Q6_Vsf_equals_Vqf32(sum_v));
 
-    HVX_Vector t_v            = hvx_vec_splat_f32((float) num_elems);
+    HVX_Vector t_v            = hvx_vec_splat_f32((float) नुमेरो_elems);
     HVX_Vector denom_v        = hvx_vec_inverse_f32(t_v);
     HVX_Vector mean_v         = Q6_Vqf32_vmpy_VsfVsf(sum_v, denom_v);
     HVX_Vector mean_epsilon_v = Q6_Vqf32_vadd_Vqf32Vsf(mean_v, epsilon_v);
@@ -135,14 +135,14 @@ static inline void hvx_fast_rms_norm_mul_f32(const uint8_t * restrict src,
 
 static inline void hvx_fast_norm_f32(const uint8_t * restrict src,
                                      uint8_t * restrict dst,
-                                     const int num_elems,
+                                     const int नुमेरो_elems,
                                      float     epsilon) {
 
     const HVX_Vector * restrict v_src = (HVX_Vector *) src;
     HVX_Vector * restrict v_dst       = (HVX_Vector *) dst;
 
-    const int nvec = num_elems / VLEN_FP32;    // number of full vectors
-    const int nloe = num_elems % VLEN_FP32;    // leftover elements
+    const int nvec = नुमेरो_elems / VLEN_FP32;    // number of full vectors
+    const int nloe = नुमेरो_elems % VLEN_FP32;    // leftover elements
 
     // Compute sum of squares and sum of values for full vectors
     HVX_Vector sum_sq_v = Q6_V_vsplat_R(0x00000000);
@@ -170,7 +170,7 @@ static inline void hvx_fast_norm_f32(const uint8_t * restrict src,
     sum_sq_v = hvx_vec_reduce_sum_f32(Q6_Vsf_equals_Vqf32(sum_sq_v));
     sum_x_v  = hvx_vec_reduce_sum_f32(Q6_Vsf_equals_Vqf32(sum_x_v));
 
-    HVX_Vector t_v            = hvx_vec_splat_f32((float) num_elems);
+    HVX_Vector t_v            = hvx_vec_splat_f32((float) नुमेरो_elems);
     HVX_Vector denom_v        = hvx_vec_inverse_f32(t_v);
     HVX_Vector mean_sq_v      = Q6_Vqf32_vmpy_VsfVsf(sum_sq_v, denom_v);
     HVX_Vector mean_x_v       = Q6_Vqf32_vmpy_VsfVsf(sum_x_v,  denom_v);
@@ -205,7 +205,7 @@ static inline void hvx_fast_norm_f32(const uint8_t * restrict src,
 
 static inline void hvx_fast_l2_norm_f32(const uint8_t * restrict src,
                                         uint8_t * restrict dst,
-                                        const int num_elems,
+                                        const int नुमेरो_elems,
                                         float     epsilon) {
 
     const HVX_Vector * restrict v_src = (HVX_Vector *) src;
@@ -213,8 +213,8 @@ static inline void hvx_fast_l2_norm_f32(const uint8_t * restrict src,
 
     HVX_Vector sum_v = hvx_vec_splat_f32(0.0f);
 
-    const int nvec = num_elems / VLEN_FP32;
-    const int nloe = num_elems % VLEN_FP32;
+    const int nvec = नुमेरो_elems / VLEN_FP32;
+    const int nloe = नुमेरो_elems % VLEN_FP32;
 
     #pragma unroll(4)
     for (int i = 0; i < nvec; i++) {
@@ -259,14 +259,14 @@ static inline void hvx_fast_l2_norm_f32(const uint8_t * restrict src,
 
 static inline void hvx_fast_rms_norm_f16(const uint8_t * restrict src,
                                          uint8_t * restrict dst,
-                                         const int num_elems,
+                                         const int नुमेरो_elems,
                                          float     epsilon) {
 
     const HVX_Vector * restrict v_src = (HVX_Vector *) src;
     HVX_Vector * restrict v_dst       = (HVX_Vector *) dst;
 
-    const int nvec = num_elems / VLEN_FP16;    // number of full f16 vectors
-    const int nloe = num_elems % VLEN_FP16;    // leftover elements
+    const int nvec = नुमेरो_elems / VLEN_FP16;    // number of full f16 vectors
+    const int nloe = नुमेरो_elems % VLEN_FP16;    // leftover elements
 
     HVX_Vector sum_v = Q6_V_vsplat_R(0x00000000);
     HVX_Vector epsilon_v = hvx_vec_splat_f32(epsilon);
@@ -292,7 +292,7 @@ static inline void hvx_fast_rms_norm_f16(const uint8_t * restrict src,
 
     sum_v = hvx_vec_reduce_sum_f32(Q6_Vsf_equals_Vqf32(sum_v));
 
-    HVX_Vector t_v            = hvx_vec_splat_f32((float) num_elems);
+    HVX_Vector t_v            = hvx_vec_splat_f32((float) नुमेरो_elems);
     HVX_Vector denom_v        = hvx_vec_inverse_f32(t_v);
     HVX_Vector mean_v         = Q6_Vqf32_vmpy_VsfVsf(sum_v, denom_v);
     HVX_Vector mean_epsilon_v = Q6_Vqf32_vadd_Vqf32Vsf(mean_v, epsilon_v);
@@ -320,14 +320,14 @@ static inline void hvx_fast_rms_norm_f16(const uint8_t * restrict src,
 
 static inline void hvx_fast_norm_f16(const uint8_t * restrict src,
                                      uint8_t * restrict dst,
-                                     const int num_elems,
+                                     const int नुमेरो_elems,
                                      float     epsilon) {
 
     const HVX_Vector * restrict v_src = (HVX_Vector *) src;
     HVX_Vector * restrict v_dst       = (HVX_Vector *) dst;
 
-    const int nvec = num_elems / VLEN_FP16;
-    const int nloe = num_elems % VLEN_FP16;
+    const int nvec = नुमेरो_elems / VLEN_FP16;
+    const int nloe = नुमेरो_elems % VLEN_FP16;
 
     HVX_Vector sum_sq_v = Q6_V_vsplat_R(0x00000000);
     HVX_Vector sum_x_v  = Q6_V_vsplat_R(0x00000000);
@@ -359,7 +359,7 @@ static inline void hvx_fast_norm_f16(const uint8_t * restrict src,
     sum_sq_v = hvx_vec_reduce_sum_f32(Q6_Vsf_equals_Vqf32(sum_sq_v));
     sum_x_v  = hvx_vec_reduce_sum_f32(Q6_Vsf_equals_Vqf32(sum_x_v));
 
-    HVX_Vector t_v            = hvx_vec_splat_f32((float) num_elems);
+    HVX_Vector t_v            = hvx_vec_splat_f32((float) नुमेरो_elems);
     HVX_Vector denom_v        = hvx_vec_inverse_f32(t_v);
     HVX_Vector mean_sq_v      = Q6_Vqf32_vmpy_VsfVsf(sum_sq_v, denom_v);
     HVX_Vector mean_x_v       = Q6_Vqf32_vmpy_VsfVsf(sum_x_v,  denom_v);
@@ -395,14 +395,14 @@ static inline void hvx_fast_norm_f16(const uint8_t * restrict src,
 
 static inline void hvx_fast_l2_norm_f16(const uint8_t * restrict src,
                                         uint8_t * restrict dst,
-                                        const int num_elems,
+                                        const int नुमेरो_elems,
                                         float     epsilon) {
 
     const HVX_Vector * restrict v_src = (HVX_Vector *) src;
     HVX_Vector * restrict v_dst       = (HVX_Vector *) dst;
 
-    const int nvec = num_elems / VLEN_FP16;
-    const int nloe = num_elems % VLEN_FP16;
+    const int nvec = नुमेरो_elems / VLEN_FP16;
+    const int nloe = नुमेरो_elems % VLEN_FP16;
 
     HVX_Vector sum_v = hvx_vec_splat_f32(0.0f);
 

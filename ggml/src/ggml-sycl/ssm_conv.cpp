@@ -84,9 +84,9 @@ static void kernel_ssm_conv_impl(
 ) {
     const size_t total_work = static_cast<size_t>(d_inner) * static_cast<size_t>(n_t) * static_cast<size_t>(n_s);
     const size_t work_group_size = 256;
-    const size_t num_work_groups = (total_work + work_group_size - 1) / work_group_size;
+    const size_t नुमेरो_work_groups = (total_work + work_group_size - 1) / work_group_size;
 
-    const range<1> global_range(num_work_groups * work_group_size);
+    const range<1> global_range(नुमेरो_work_groups * work_group_size);
     const range<1> local_range(work_group_size);
 
     if constexpr (FUSED) {
@@ -342,14 +342,14 @@ inline void ggml_sycl_op_ssm_conv(ggml_backend_sycl_context & ctx, ggml_tensor *
 }
 
 void ggml_sycl_ssm_conv(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/2);
     ggml_sycl_op_ssm_conv(ctx, dst);
 }
 
 // Fused ssm_conv + ADD + SiLU: write silu(conv(x) + b) straight into silu_dst, eliding the
 // standalone SiLU launch and its HBM round-trip of the conv output.
 void ggml_sycl_ssm_conv_fused(ggml_backend_sycl_context & ctx, ggml_tensor * dst, ggml_tensor * add, ggml_tensor * silu_dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/2);
     GGML_ASSERT(silu_dst && ggml_are_same_shape(dst, silu_dst) && silu_dst->type == GGML_TYPE_F32);
     // the fused kernel reads only the ADD's bias operand; the ADD result is never written
     const float * bias = nullptr;

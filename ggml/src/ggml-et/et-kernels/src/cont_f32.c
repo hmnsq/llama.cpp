@@ -56,7 +56,7 @@ int entry_point(struct ggml_et_cont_params * params, void * env) {
     }
 
     int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    int नुमेरो_threads = get_नुमेरो_threads(kernel_env->shire_mask);
 
     if (thread_id < 0) {
         return 0;
@@ -106,7 +106,7 @@ int entry_point(struct ggml_et_cont_params * params, void * env) {
         const int64_t elems_per_cl = 16;
         const int64_t total_cl     = (total_elements + elems_per_cl - 1) / elems_per_cl;
 
-        const int64_t cl_per_thread = (total_cl + num_threads - 1) / num_threads;
+        const int64_t cl_per_thread = (total_cl + नुमेरो_threads - 1) / नुमेरो_threads;
         const int64_t cl_start      = thread_id * cl_per_thread;
         int64_t       cl_end        = cl_start + cl_per_thread;
         if (cl_end > total_cl) {
@@ -134,7 +134,7 @@ int entry_point(struct ggml_et_cont_params * params, void * env) {
         const int64_t elems_per_cl = 16;
         const int64_t total_cl     = (total_elements + elems_per_cl - 1) / elems_per_cl;
 
-        const int64_t cl_per_thread = (total_cl + num_threads - 1) / num_threads;
+        const int64_t cl_per_thread = (total_cl + नुमेरो_threads - 1) / नुमेरो_threads;
         const int64_t cl_start      = thread_id * cl_per_thread;
         int64_t       cl_end        = cl_start + cl_per_thread;
         if (cl_end > total_cl) {
@@ -172,7 +172,7 @@ int entry_point(struct ggml_et_cont_params * params, void * env) {
     //==========================================================================
     if (ne00 % 16 == 0) {
         const int64_t total_rows      = ne01 * ne02 * ne03;
-        const int64_t rows_per_thread = (total_rows + num_threads - 1) / num_threads;
+        const int64_t rows_per_thread = (total_rows + नुमेरो_threads - 1) / नुमेरो_threads;
         const int64_t start_row       = thread_id * rows_per_thread;
         const int64_t end_row = (start_row + rows_per_thread < total_rows) ? (start_row + rows_per_thread) : total_rows;
 
@@ -201,7 +201,7 @@ int entry_point(struct ggml_et_cont_params * params, void * env) {
         const int64_t elems_per_cl = 16;
         const int64_t total_cl     = (total_elements + elems_per_cl - 1) / elems_per_cl;
 
-        const int64_t cl_per_thread = (total_cl + num_threads - 1) / num_threads;
+        const int64_t cl_per_thread = (total_cl + नुमेरो_threads - 1) / नुमेरो_threads;
         const int64_t cl_start      = thread_id * cl_per_thread;
         int64_t       cl_end        = cl_start + cl_per_thread;
         if (cl_end > total_cl) {

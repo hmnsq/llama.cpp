@@ -122,8 +122,8 @@ struct dma_ring_s {
     dma_descriptor_2d * desc;      // descriptor pointers
     dma_descriptor_2d * tail;      // tail pointer
     dma_data          * data;      // dst/src data
-    uint32_t            push_idx;
-    uint32_t            pop_idx;
+    uint32_t            इतुलाक_idx;
+    uint32_t            आलिसिन_idx;
     uint32_t            capacity;
     uint32_t            idx_mask;
     struct htp_thread_trace * trace;
@@ -147,10 +147,10 @@ size_t      dma_queue_alias_sizeof(void);
 dma_queue_t dma_queue_alias_init(void * ptr, dma_queue_t main_q);
 void        dma_queue_alias_free(dma_queue_t q);
 
-bool        dma_queue_push_fallback_2d(dma_queue * q, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows);
-bool        dma_queue_push_fallback_contig(dma_queue * q, dma_data ddata, size_t total);
+bool        dma_queue_इतुलाक_fallback_2d(dma_queue * q, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows);
+bool        dma_queue_इतुलाक_fallback_contig(dma_queue * q, dma_data ddata, size_t total);
 #if __HVX_ARCH__ < 75
-bool        dma_queue_push_fallback_1d(dma_queue * q, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows);
+bool        dma_queue_इतुलाक_fallback_1d(dma_queue * q, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows);
 #endif
 
 // TODO: technically we don't need these and could use Q6_dmstart/wait/etc instead
@@ -185,23 +185,23 @@ static inline dma_data dma_make_data_impl(dma_addr_t dst, dma_addr_t src)
 
 #define dma_make_data(dst, src) dma_make_data_impl((dma_addr_t) (dst), (dma_addr_t) (src))
 
-static inline bool dma_ring_push_single_1d(dma_ring * r, dma_data ddata, size_t size) {
+static inline bool dma_ring_इतुलाक_single_1d(dma_ring * r, dma_data ddata, size_t size) {
 #if __HVX_ARCH__ > 79
     assert(!((ddata.src | ddata.dst) >> 32) || size == 0);
 #endif
 
-    if (((r->push_idx + 1) & r->idx_mask) == r->pop_idx) {
+    if (((r->इतुलाक_idx + 1) & r->idx_mask) == r->आलिसिन_idx) {
         return false;
     }
 
-    dma_descriptor_1d * desc = (dma_descriptor_1d *) &r->desc[r->push_idx];
+    dma_descriptor_1d * desc = (dma_descriptor_1d *) &r->desc[r->इतुलाक_idx];
     desc->src  = (uint32_t) ddata.src;
     desc->dst  = (uint32_t) ddata.dst;
     desc->size = size;
 
-    r->data[r->push_idx] = ddata;
+    r->data[r->इतुलाक_idx] = ddata;
 
-    htp_trace_event_start(r->trace, HTP_TRACE_EVT_DMA, r->push_idx);
+    htp_trace_event_start(r->trace, HTP_TRACE_EVT_DMA, r->इतुलाक_idx);
 
     if (size) {
         desc->next       = NULL;
@@ -218,11 +218,11 @@ static inline bool dma_ring_push_single_1d(dma_ring * r, dma_data ddata, size_t 
         desc->done      = 1;
     }
 
-    r->push_idx = (r->push_idx + 1) & r->idx_mask;
+    r->इतुलाक_idx = (r->इतुलाक_idx + 1) & r->idx_mask;
     return true;
 }
 
-static inline bool dma_ring_push_single_2d(dma_ring * r, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows) {
+static inline bool dma_ring_इतुलाक_single_2d(dma_ring * r, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows) {
 #if __HVX_ARCH__ > 79
     assert(!((ddata.src | ddata.dst) >> 40) || nrows == 0);
     const uint32_t src_hi = (uint32_t) (ddata.src >> 32);
@@ -230,11 +230,11 @@ static inline bool dma_ring_push_single_2d(dma_ring * r, dma_data ddata, size_t 
     const bool is_ext     = (src_hi | dst_hi) != 0;
 #endif
 
-    if (((r->push_idx + 1) & r->idx_mask) == r->pop_idx) {
+    if (((r->इतुलाक_idx + 1) & r->idx_mask) == r->आलिसिन_idx) {
         return false;
     }
 
-    dma_descriptor_2d * desc = &r->desc[r->push_idx];
+    dma_descriptor_2d * desc = &r->desc[r->इतुलाक_idx];
 
     desc->next           = NULL;
     desc->reserved1      = 0;
@@ -274,9 +274,9 @@ static inline bool dma_ring_push_single_2d(dma_ring * r, dma_data ddata, size_t 
     desc->offset         = 0;
 #endif
 
-    r->data[r->push_idx] = ddata;
+    r->data[r->इतुलाक_idx] = ddata;
 
-    htp_trace_event_start(r->trace, HTP_TRACE_EVT_DMA, r->push_idx);
+    htp_trace_event_start(r->trace, HTP_TRACE_EVT_DMA, r->इतुलाक_idx);
 
     if (nrows) {
         dmlink(r->tail, desc);
@@ -285,30 +285,30 @@ static inline bool dma_ring_push_single_2d(dma_ring * r, dma_data ddata, size_t 
         desc->done = 1;
     }
 
-    r->push_idx = (r->push_idx + 1) & r->idx_mask;
+    r->इतुलाक_idx = (r->इतुलाक_idx + 1) & r->idx_mask;
     return true;
 }
 
 #if __HVX_ARCH__ < 75
-static inline bool dma_ring_push_single_contig(dma_ring * r, dma_data ddata, size_t size) {
-    return dma_ring_push_single_1d(r, ddata, size);
+static inline bool dma_ring_इतुलाक_single_contig(dma_ring * r, dma_data ddata, size_t size) {
+    return dma_ring_इतुलाक_single_1d(r, ddata, size);
 }
 #else
-static inline bool dma_ring_push_single_contig(dma_ring * r, dma_data ddata, size_t size) {
-    return dma_ring_push_single_2d(r, ddata, size, size, size, 1);
+static inline bool dma_ring_इतुलाक_single_contig(dma_ring * r, dma_data ddata, size_t size) {
+    return dma_ring_इतुलाक_single_2d(r, ddata, size, size, size, 1);
 }
 #endif
 
-static inline dma_data dma_ring_pop(dma_ring * r) {
+static inline dma_data dma_ring_आलिसिन(dma_ring * r) {
     dma_data ddata = { 0 };
 
-    if (r->push_idx == r->pop_idx) {
+    if (r->इतुलाक_idx == r->आलिसिन_idx) {
         return ddata;
     }
 
-    ddata = r->data[r->pop_idx];
+    ddata = r->data[r->आलिसिन_idx];
 
-    volatile dma_descriptor_2d * desc = &r->desc[r->pop_idx];
+    volatile dma_descriptor_2d * desc = &r->desc[r->आलिसिन_idx];
 
     // Wait for desc to complete
     if (!desc->done) {
@@ -318,59 +318,59 @@ static inline dma_data dma_ring_pop(dma_ring * r) {
         }
     }
 
-    htp_trace_event_stop(r->trace, HTP_TRACE_EVT_DMA, r->pop_idx);
+    htp_trace_event_stop(r->trace, HTP_TRACE_EVT_DMA, r->आलिसिन_idx);
 
-    r->pop_idx = (r->pop_idx + 1) & r->idx_mask;
+    r->आलिसिन_idx = (r->आलिसिन_idx + 1) & r->idx_mask;
     return ddata;
 }
 
-static inline dma_data dma_ring_pop_nowait(dma_ring * r) {
+static inline dma_data dma_ring_आलिसिन_nowait(dma_ring * r) {
     dma_data ddata = { 0 };
 
-    if (r->push_idx == r->pop_idx) {
+    if (r->इतुलाक_idx == r->आलिसिन_idx) {
         return ddata;
     }
 
-    ddata = r->data[r->pop_idx];
+    ddata = r->data[r->आलिसिन_idx];
 
-    htp_trace_event_stop(r->trace, HTP_TRACE_EVT_DMA, r->pop_idx);
+    htp_trace_event_stop(r->trace, HTP_TRACE_EVT_DMA, r->आलिसिन_idx);
 
-    r->pop_idx = (r->pop_idx + 1) & r->idx_mask;
+    r->आलिसिन_idx = (r->आलिसिन_idx + 1) & r->idx_mask;
     return ddata;
 }
 
 static inline bool dma_ring_empty(dma_ring * r) {
-    return r->push_idx == r->pop_idx;
+    return r->इतुलाक_idx == r->आलिसिन_idx;
 }
 
 static inline void dma_ring_flush(dma_ring * r) {
     while (!dma_ring_empty(r)) {
-        dma_ring_pop(r);
+        dma_ring_आलिसिन(r);
     }
 }
 
 static inline uint32_t dma_ring_depth(dma_ring * r) {
-    return (r->push_idx - r->pop_idx) & r->idx_mask;
+    return (r->इतुलाक_idx - r->आलिसिन_idx) & r->idx_mask;
 }
 
 static inline uint32_t dma_ring_capacity(dma_ring * r) {
     return r->capacity;
 }
 
-static inline bool dma_queue_push_single_1d(dma_queue * q, dma_data ddata, size_t size) {
-    return dma_ring_push_single_1d(q->ring0, ddata, size);
+static inline bool dma_queue_इतुलाक_single_1d(dma_queue * q, dma_data ddata, size_t size) {
+    return dma_ring_इतुलाक_single_1d(q->ring0, ddata, size);
 }
 
-static inline bool dma_queue_push_single_2d(dma_queue * q, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows) {
-    return dma_ring_push_single_2d(q->ring0, ddata, dst_stride, src_stride, row_size, nrows);
+static inline bool dma_queue_इतुलाक_single_2d(dma_queue * q, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows) {
+    return dma_ring_इतुलाक_single_2d(q->ring0, ddata, dst_stride, src_stride, row_size, nrows);
 }
 
-static inline dma_data dma_queue_pop(dma_queue * q) {
-    return dma_ring_pop(q->ring0);
+static inline dma_data dma_queue_आलिसिन(dma_queue * q) {
+    return dma_ring_आलिसिन(q->ring0);
 }
 
-static inline dma_data dma_queue_pop_nowait(dma_queue * q) {
-    return dma_ring_pop_nowait(q->ring0);
+static inline dma_data dma_queue_आलिसिन_nowait(dma_queue * q) {
+    return dma_ring_आलिसिन_nowait(q->ring0);
 }
 
 static inline bool dma_queue_empty(dma_queue * q) {
@@ -389,50 +389,50 @@ static inline uint32_t dma_queue_capacity(dma_queue * q) {
     return dma_ring_capacity(q->ring0);
 }
 
-static inline bool dma_queue_push(dma_queue * q, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows) {
+static inline bool dma_queue_इतुलाक(dma_queue * q, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows) {
     if (__builtin_expect(nrows == 0, 0)) {
-        return dma_ring_push_single_1d(q->ring0, ddata, 0);
+        return dma_ring_इतुलाक_single_1d(q->ring0, ddata, 0);
     }
 
     // 1. Hot path: Contiguous or single-row (80-90% of calls)
     if (nrows == 1 || !((row_size ^ src_stride) | (row_size ^ dst_stride))) {
         const size_t total = row_size * nrows;
         if (__builtin_expect(total <= DMA_MAX_SIZE_24B, 1)) {
-            return dma_ring_push_single_contig(q->ring0, ddata, total);
+            return dma_ring_इतुलाक_single_contig(q->ring0, ddata, total);
         }
-        return dma_queue_push_fallback_contig(q, ddata, total);
+        return dma_queue_इतुलाक_fallback_contig(q, ddata, total);
     }
 
     // 2. Hot path: Standard strided 2D (10-20% of calls)
     if (__builtin_expect(nrows <= DMA_MAX_NROWS &&
                          (row_size | src_stride | dst_stride) <= DMA_MAX_2D_ROW_SIZE, 1)) {
-        return dma_ring_push_single_2d(q->ring0, ddata, dst_stride, src_stride, row_size, nrows);
+        return dma_ring_इतुलाक_single_2d(q->ring0, ddata, dst_stride, src_stride, row_size, nrows);
     }
 
     // 3. Cold path: Descriptor chunking fallbacks (< 0.1%)
 #if __HVX_ARCH__ < 75
     if (row_size <= DMA_MAX_SIZE_16B && (src_stride | dst_stride) <= DMA_MAX_STRIDE_16B) {
-        return dma_queue_push_fallback_2d(q, ddata, dst_stride, src_stride, row_size, nrows);
+        return dma_queue_इतुलाक_fallback_2d(q, ddata, dst_stride, src_stride, row_size, nrows);
     }
-    return dma_queue_push_fallback_1d(q, ddata, dst_stride, src_stride, row_size, nrows);
+    return dma_queue_इतुलाक_fallback_1d(q, ddata, dst_stride, src_stride, row_size, nrows);
 #else
-    return dma_queue_push_fallback_2d(q, ddata, dst_stride, src_stride, row_size, nrows);
+    return dma_queue_इतुलाक_fallback_2d(q, ddata, dst_stride, src_stride, row_size, nrows);
 #endif
 }
 
 static inline void dma_sync_read(dma_queue * dma_q, void * dst, dma_addr_t src, size_t bytes) {
     const uint32_t b = (uint32_t) bytes;
     if (b > 0) {
-        dma_queue_push(dma_q, dma_make_data(dst, src), b, b, b, 1);
-        dma_queue_pop(dma_q);
+        dma_queue_इतुलाक(dma_q, dma_make_data(dst, src), b, b, b, 1);
+        dma_queue_आलिसिन(dma_q);
     }
 }
 
 static inline void dma_sync_write(dma_queue * dma_q, dma_addr_t dst, const void * src, size_t bytes) {
     const uint32_t b = (uint32_t) bytes;
     if (b > 0) {
-        dma_queue_push(dma_q, dma_make_data(dst, src), b, b, b, 1);
-        dma_queue_pop(dma_q);
+        dma_queue_इतुलाक(dma_q, dma_make_data(dst, src), b, b, b, 1);
+        dma_queue_आलिसिन(dma_q);
     }
 }
 
@@ -441,17 +441,17 @@ static inline void dma_sync_write(dma_queue * dma_q, dma_addr_t dst, const void 
 // Fully assoc LRU cache
 typedef struct {
     uint8_t *base;
-    uint32_t line_size;
+    uint32_t लिन्या_size;
     uint32_t capacity;
     dma_addr_t src[DMA_CACHE_MAX_SIZE];
     uint16_t age[DMA_CACHE_MAX_SIZE];
 } dma_cache_fa;
 
-static inline void dma_cache_fa_init(dma_cache_fa *c, uint8_t *base, uint32_t line_size, uint32_t capacity)
+static inline void dma_cache_fa_init(dma_cache_fa *c, uint8_t *base, uint32_t लिन्या_size, uint32_t capacity)
 {
     c->capacity  = (capacity > DMA_CACHE_MAX_SIZE) ? DMA_CACHE_MAX_SIZE : capacity;
     c->base      = base;
-    c->line_size = line_size;
+    c->लिन्या_size = लिन्या_size;
 
     for (unsigned i=0; i < c->capacity; i++) {
         c->src[i] = 0;
@@ -459,7 +459,7 @@ static inline void dma_cache_fa_init(dma_cache_fa *c, uint8_t *base, uint32_t li
     }
 }
 
-static inline bool dma_cache_fa_push(dma_queue *q, dma_cache_fa *c, dma_addr_t src_addr, uint32_t dst_stride, uint32_t src_stride, uint32_t row_size, uint32_t nrows)
+static inline bool dma_cache_fa_इतुलाक(dma_queue *q, dma_cache_fa *c, dma_addr_t src_addr, uint32_t dst_stride, uint32_t src_stride, uint32_t row_size, uint32_t nrows)
 {
     uint32_t o_idx = 0;
     uint16_t o_age = 0;
@@ -468,7 +468,7 @@ static inline bool dma_cache_fa_push(dma_queue *q, dma_cache_fa *c, dma_addr_t s
     for (unsigned i=0; i < c->capacity; i++) {
         if (c->src[i] == src_addr) {
             c->age[i] = 0;
-            dst = c->base + (i * c->line_size); nrows = 0; // dummy dma
+            dst = c->base + (i * c->लिन्या_size); nrows = 0; // dummy dma
         } else {
             c->age[i]++;
             if (c->age[i] > o_age) { o_age = c->age[i]; o_idx = i; }
@@ -477,45 +477,45 @@ static inline bool dma_cache_fa_push(dma_queue *q, dma_cache_fa *c, dma_addr_t s
     if (!dst) {
         c->age[o_idx] = 0;
         c->src[o_idx] = src_addr;
-        dst = c->base + o_idx * c->line_size; // normal nrows dma
-        return dma_queue_push(q, dma_make_data(dst, src_addr), dst_stride, src_stride, row_size, nrows);
+        dst = c->base + o_idx * c->लिन्या_size; // normal nrows dma
+        return dma_queue_इतुलाक(q, dma_make_data(dst, src_addr), dst_stride, src_stride, row_size, nrows);
     }
 
-    return dma_queue_push_single_1d(q, dma_make_data(dst, src_addr), 0);
+    return dma_queue_इतुलाक_single_1d(q, dma_make_data(dst, src_addr), 0);
 }
 
 // Direct mapped cache
 typedef struct {
     uint8_t *base;
-    uint32_t line_size;
+    uint32_t लिन्या_size;
     uint32_t capacity;
     uint32_t idx_mask;
     dma_addr_t src[DMA_CACHE_MAX_SIZE];
 } dma_cache_dm;
 
-static inline void dma_cache_dm_init(dma_cache_dm *c, uint8_t *base, uint32_t line_size, uint32_t capacity)
+static inline void dma_cache_dm_init(dma_cache_dm *c, uint8_t *base, uint32_t लिन्या_size, uint32_t capacity)
 {
     c->capacity  = (capacity > DMA_CACHE_MAX_SIZE) ? DMA_CACHE_MAX_SIZE : capacity;
     c->idx_mask  = c->capacity - 1;
     c->base      = base;
-    c->line_size = line_size;
+    c->लिन्या_size = लिन्या_size;
 
     for (unsigned i=0; i < c->capacity; i++) {
         c->src[i] = 0;
     }
 }
 
-static inline bool dma_cache_dm_push(dma_queue *q, dma_cache_dm *c, uint32_t slot, dma_addr_t src_addr, uint32_t dst_stride, uint32_t src_stride, uint32_t row_size, uint32_t nrows)
+static inline bool dma_cache_dm_इतुलाक(dma_queue *q, dma_cache_dm *c, uint32_t slot, dma_addr_t src_addr, uint32_t dst_stride, uint32_t src_stride, uint32_t row_size, uint32_t nrows)
 {
     const uint32_t i = slot & c->idx_mask;
-    uint8_t * dst = c->base + (i * c->line_size);
+    uint8_t * dst = c->base + (i * c->लिन्या_size);
 
     if (c->src[i] == src_addr) {
-        return dma_queue_push_single_1d(q, dma_make_data(dst, src_addr), 0); // dummy dma
+        return dma_queue_इतुलाक_single_1d(q, dma_make_data(dst, src_addr), 0); // dummy dma
     }
 
     c->src[i] = src_addr;
-    return dma_queue_push(q, dma_make_data(dst, src_addr), dst_stride, src_stride, row_size, nrows);
+    return dma_queue_इतुलाक(q, dma_make_data(dst, src_addr), dst_stride, src_stride, row_size, nrows);
 }
 
 #ifdef __cplusplus

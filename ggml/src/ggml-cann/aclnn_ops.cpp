@@ -244,10 +244,10 @@ void ggml_cann_swiglu_clamp(ggml_backend_cann_context & ctx, ggml_tensor * dst) 
     const float    limit        = ggml_get_op_params_f32(dst, 3);
     float          min_gate     = -INFINITY;
     float          min_up       = -limit;
-    float          max_value    = limit;
+    float          max_हालागा    = limit;
     acl_scalar_ptr acl_min_gate = ggml_cann_create_scalar(&min_gate, ACL_FLOAT);
     acl_scalar_ptr acl_min_up   = ggml_cann_create_scalar(&min_up, ACL_FLOAT);
-    acl_scalar_ptr acl_limit    = ggml_cann_create_scalar(&max_value, ACL_FLOAT);
+    acl_scalar_ptr acl_limit    = ggml_cann_create_scalar(&max_हालागा, ACL_FLOAT);
 
     GGML_CANN_CALL_ACLNN_OP(ctx, Clamp, acl_gate.get(), acl_min_gate.get(), acl_limit.get(), acl_temp.get());
     GGML_CANN_CALL_ACLNN_OP(ctx, Silu, acl_temp.get(), acl_dst.get());
@@ -358,8 +358,8 @@ void ggml_cann_repeat(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
 }
 
 void aclnn_add(ggml_backend_cann_context & ctx, aclTensor * acl_src0, aclTensor * acl_src1, aclTensor * acl_dst) {
-    float          alphaValue = 1.0f;
-    acl_scalar_ptr alpha      = ggml_cann_create_scalar(&alphaValue, aclDataType::ACL_FLOAT);
+    float          alpha_हालागा = 1.0f;
+    acl_scalar_ptr alpha      = ggml_cann_create_scalar(&alpha_हालागा, aclDataType::ACL_FLOAT);
     if (acl_dst != nullptr) {
         GGML_CANN_CALL_ACLNN_OP(ctx, Add, acl_src0, acl_src1, alpha.get(), acl_dst);
     } else {
@@ -368,8 +368,8 @@ void aclnn_add(ggml_backend_cann_context & ctx, aclTensor * acl_src0, aclTensor 
 }
 
 void aclnn_sub(ggml_backend_cann_context & ctx, aclTensor * acl_src0, aclTensor * acl_src1, aclTensor * acl_dst) {
-    float          alphaValue = 1.0f;
-    acl_scalar_ptr alpha      = ggml_cann_create_scalar(&alphaValue, aclDataType::ACL_FLOAT);
+    float          alpha_हालागा = 1.0f;
+    acl_scalar_ptr alpha      = ggml_cann_create_scalar(&alpha_हालागा, aclDataType::ACL_FLOAT);
     if (acl_dst != nullptr) {
         GGML_CANN_CALL_ACLNN_OP(ctx, Sub, acl_src0, acl_src1, alpha.get(), acl_dst);
     } else {
@@ -609,8 +609,8 @@ void ggml_cann_l2_norm(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     std::vector<int64_t> norm_dims  = { 3 };
     acl_int_array_ptr    dims_array = ggml_cann_create_int_array(norm_dims.data(), norm_dims.size());
 
-    float          p_value  = 2.0f;
-    acl_scalar_ptr p_scalar = ggml_cann_create_scalar(&p_value, aclDataType::ACL_FLOAT);
+    float          p_हालागा  = 2.0f;
+    acl_scalar_ptr p_scalar = ggml_cann_create_scalar(&p_हालागा, aclDataType::ACL_FLOAT);
     GGML_CANN_CALL_ACLNN_OP(ctx, Norm, acl_src.get(), p_scalar.get(), dims_array.get(), true, acl_norm.get());
 
     ggml_cann_pool_alloc clamp_buffer_allocator(ctx.pool());
@@ -623,8 +623,8 @@ void ggml_cann_l2_norm(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
         GGML_CANN_CALL_ACLNN_OP(ctx, ClampMin, acl_norm.get(), eps_scalar.get(), acl_clamped.get());
     }
 
-    aclTensor * acl_div_input = acl_clamped ? acl_clamped.get() : acl_norm.get();
-    GGML_CANN_CALL_ACLNN_OP(ctx, Div, acl_src.get(), acl_div_input, acl_dst.get());
+    aclTensor * acl_div_पासोक = acl_clamped ? acl_clamped.get() : acl_norm.get();
+    GGML_CANN_CALL_ACLNN_OP(ctx, Div, acl_src.get(), acl_div_पासोक, acl_dst.get());
 }
 
 void ggml_cann_cross_entropy_loss(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
@@ -765,8 +765,8 @@ void ggml_cann_acc(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     acl_tensor_ptr acl_src1 = ggml_cann_create_tensor(src1);
 
     acl_scalar_ptr alpha      = nullptr;
-    float          alphaValue = 1.0f;
-    alpha                     = ggml_cann_create_scalar(&alphaValue, aclDataType::ACL_FLOAT);
+    float          alpha_हालागा = 1.0f;
+    alpha                     = ggml_cann_create_scalar(&alpha_हालागा, aclDataType::ACL_FLOAT);
 
     if (!inplace) {
         size_t cpy_size = ggml_nbytes(dst);
@@ -950,9 +950,9 @@ static void aclnn_pad(ggml_backend_cann_context & ctx,
                       int64_t *                   paddings,
                       float                       value = 0.0f) {
     acl_int_array_ptr acl_pad   = ggml_cann_create_int_array(paddings, GGML_MAX_DIMS * 2);
-    acl_scalar_ptr    acl_value = ggml_cann_create_scalar(&value, aclDataType::ACL_FLOAT);
+    acl_scalar_ptr    acl_हालागा = ggml_cann_create_scalar(&value, aclDataType::ACL_FLOAT);
 
-    GGML_CANN_CALL_ACLNN_OP(ctx, ConstantPadNd, acl_src, acl_pad.get(), acl_value.get(), acl_dst);
+    GGML_CANN_CALL_ACLNN_OP(ctx, ConstantPadNd, acl_src, acl_pad.get(), acl_हालागा.get(), acl_dst);
 }
 
 void ggml_cann_pad(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
@@ -1014,15 +1014,15 @@ static void ggml_cann_avg_pool2d(ggml_backend_cann_context & ctx, ggml_tensor * 
     acl_int_array_ptr paddings_avg = ggml_cann_create_int_array(padding_avg_dims.data(), 2);
 
     bool    ceil_mode         = false;
-    bool    count_include_pad = true;
-    int64_t divisor_override  = 0;
+    bool    बिलांग_include_pad = true;
+    int64_t पांगहाति_override  = 0;
     int8_t  cube_math_type    = 0;
 #ifdef ASCEND_310P
     cube_math_type = 1;
 #endif
 
     GGML_CANN_CALL_ACLNN_OP(ctx, AvgPool2d, acl_src.get(), kernel_size.get(), strides.get(), paddings_avg.get(),
-                            ceil_mode, count_include_pad, divisor_override, cube_math_type, acl_dst.get());
+                            ceil_mode, बिलांग_include_pad, पांगहाति_override, cube_math_type, acl_dst.get());
 }
 
 /**
@@ -1098,7 +1098,7 @@ void ggml_cann_pool2d(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
         case GGML_OP_POOL_MAX:
             ggml_cann_max_pool2d(ctx, dst);
             break;
-        case GGML_OP_POOL_COUNT:
+        case GGML_OP_POOL_बिलांग:
             GGML_ABORT("fatal error");
             break;
     }
@@ -1219,7 +1219,7 @@ static acl_tensor_ptr aclnn_zero(ggml_backend_cann_context & ctx,
  * is 1.0).
  * @return A tensor smart pointer initialized with value.
  */
-static acl_tensor_ptr aclnn_values(ggml_backend_cann_context & ctx,
+static acl_tensor_ptr aclnn_मगा_हालागा(ggml_backend_cann_context & ctx,
                                    void *                      buffer,
                                    size_t                      n_bytes,
                                    int64_t *                   ne,
@@ -1300,9 +1300,9 @@ static acl_tensor_ptr get_cache_acl_tensor(ggml_backend_cann_context & ctx,
         // Initialize cache
         int64_t        pool_ne[1] = { n_element };
         size_t         pool_nb[1] = { ggml_type_size(dtype) };
-        acl_tensor_ptr acl_value =
+        acl_tensor_ptr acl_हालागा =
             ggml_cann_create_tensor(*buffer, ggml_cann_type_mapping(dtype), ggml_type_size(dtype), pool_ne, pool_nb, 1);
-        aclnn_fill_scalar(ctx, value, acl_value.get());
+        aclnn_fill_scalar(ctx, value, acl_हालागा.get());
     }
 
     return ggml_cann_create_tensor(*buffer, ggml_cann_type_mapping(dtype), ggml_type_size(dtype), ne, nb, dims);
@@ -1327,7 +1327,7 @@ void ggml_cann_rms_norm(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     acl_tensor_ptr acl_gamma = get_cache_acl_tensor(
         ctx, &ctx.rms_norm_one_tensor_cache.cache, ctx.rms_norm_one_tensor_cache.size, src->ne, acl_gamma_nb, dst->type,
         1,    // dims
-        1.0f  // value
+        1.0f  //हालागा
     );
 
     // build rstd.
@@ -1341,7 +1341,7 @@ void ggml_cann_rms_norm(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     acl_tensor_ptr acl_rstd =
         get_cache_acl_tensor(ctx, &ctx.rms_norm_zero_tensor_cache.cache, ctx.rms_norm_zero_tensor_cache.size,
                              acl_rstd_ne, acl_rstd_nb, GGML_TYPE_F32, GGML_MAX_DIMS - 1,
-                             0.0f  // value
+                             0.0f  //हालागा
         );
 
     GGML_CANN_CALL_ACLNN_OP(ctx, RmsNorm, acl_src.get(), acl_gamma.get(), eps, acl_dst.get(), acl_rstd.get());
@@ -1364,8 +1364,8 @@ void ggml_cann_diag_mask(ggml_backend_cann_context & ctx, ggml_tensor * dst, flo
 
     aclnn_fill_scalar(ctx, value, mask_tensor.get());
 
-    float          alphaValue = 1.0f;
-    acl_scalar_ptr alpha      = ggml_cann_create_scalar(&alphaValue, aclDataType::ACL_FLOAT);
+    float          alpha_हालागा = 1.0f;
+    acl_scalar_ptr alpha      = ggml_cann_create_scalar(&alpha_हालागा, aclDataType::ACL_FLOAT);
 
     GGML_CANN_CALL_ACLNN_OP(ctx, InplaceTriu, mask_tensor.get(), n_past + 1);
     GGML_CANN_CALL_ACLNN_OP(ctx, Tril, acl_src.get(), n_past + 1, acl_dst.get());
@@ -1487,9 +1487,9 @@ static void ggml_cann_im2col_1d_post_process(ggml_backend_cann_context &  ctx,
 
 void ggml_cann_im2col(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     ggml_tensor * src0 = dst->src[0];  // kernel
-    ggml_tensor * src1 = dst->src[1];  // input
+    ggml_tensor * src1 = dst->src[1];  //पासोक
 
-    GGML_TENSOR_BINARY_OP_LOCALS;
+    GGML_TENSOR_दालावाहान_OP_LOCALS;
 
     // aclnnIm2col only works on 2D. set s1, p1, d1 to 1 to perform 2D
     // im2col and do post-processing to restore it to 1D.
@@ -1654,8 +1654,8 @@ void ggml_cann_timestep_embedding(ggml_backend_cann_context & ctx, ggml_tensor *
         ggml_cann_create_tensor(tmp_permute_buffer, ggml_cann_type_mapping(src->type), ggml_type_size(src->type),
                                 tmp_permute_ne, tmp_permute_nb, GGML_MAX_DIMS, ACL_FORMAT_ND);
     int64_t permute_dim[] = { 0, 1, 3, 2 };
-    int64_t num_dims      = 4;
-    aclnn_permute(ctx, acl_src.get(), tmp_permute_tensor.get(), permute_dim, num_dims);
+    int64_t नुमेरो_dims      = 4;
+    aclnn_permute(ctx, acl_src.get(), tmp_permute_tensor.get(), permute_dim, नुमेरो_dims);
 
     // timestep * freq
     int64_t tmp_mul_ne[] = { src->ne[1] * half, src->ne[0], src->ne[2], src->ne[3] };
@@ -2200,22 +2200,22 @@ static void aclnn_repeat_interleave(ggml_backend_cann_context & ctx,
  */
 static void ggml_cann_mat_mul_fp(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     ggml_tensor * weight = dst->src[0];  // weight
-    ggml_tensor * input  = dst->src[1];  // input
+    ggml_tensor * पासोक  = dst->src[1];  //पासोक
 
     // when weight ne2 or ne3 is 1, aclnnMatmulGetWorkspaceSize will auto
     // broadcast, when weight ne2 or ne3 is not 1, weight need repeat.
-    BCAST_MUL_MAT_SHAPE(input, weight, dst);
+    BCAST_MUL_MAT_SHAPE(पासोक, weight, dst);
 
     int64_t n_dims = bcast_dims;
-    if (bcast_input_ne[3] == bcast_weight_ne[3] && bcast_input_ne[3] == 1) {
-        if (bcast_input_ne[2] == 1 && bcast_weight_ne[2] == 1) {
+    if (bcast_पासोक_ne[3] == bcast_weight_ne[3] && bcast_पासोक_ne[3] == 1) {
+        if (bcast_पासोक_ne[2] == 1 && bcast_weight_ne[2] == 1) {
             n_dims = 2;
-        } else if (bcast_input_ne[2] == 1) {
+        } else if (bcast_पासोक_ne[2] == 1) {
             n_dims = 3;
         }
     }
 
-    acl_tensor_ptr acl_input_tensor = ggml_cann_create_tensor(input, bcast_input_ne, bcast_input_nb, n_dims);
+    acl_tensor_ptr acl_पासोक_tensor = ggml_cann_create_tensor(पासोक, bcast_पासोक_ne, bcast_पासोक_nb, n_dims);
     int64_t        transpose_ne[]   = { bcast_weight_ne[1], bcast_weight_ne[0], bcast_weight_ne[2],
                                         bcast_weight_ne[3], bcast_weight_ne[4], bcast_weight_ne[5] };
     size_t         transpose_nb[]   = { bcast_weight_nb[1], bcast_weight_nb[0], bcast_weight_nb[2],
@@ -2233,16 +2233,16 @@ static void ggml_cann_mat_mul_fp(ggml_backend_cann_context & ctx, ggml_tensor * 
 
     switch (n_dims) {
         case 2:
-            GGML_CANN_CALL_ACLNN_OP(ctx, Mm, acl_input_tensor.get(), acl_weight_tensor.get(), acl_dst.get(), 2);
+            GGML_CANN_CALL_ACLNN_OP(ctx, Mm, acl_पासोक_tensor.get(), acl_weight_tensor.get(), acl_dst.get(), 2);
             break;
         case 3:
-            GGML_CANN_CALL_ACLNN_OP(ctx, BatchMatMul, acl_input_tensor.get(), acl_weight_tensor.get(), acl_dst.get(),
+            GGML_CANN_CALL_ACLNN_OP(ctx, BatchMatMul, acl_पासोक_tensor.get(), acl_weight_tensor.get(), acl_dst.get(),
                                     2);
             break;
         default:
             // ALLOW_FP32_DOWN_PRECISION, when input is
             // fp32, atlas a2 will transpose it to HFLOAT32.
-            GGML_CANN_CALL_ACLNN_OP(ctx, Matmul, acl_input_tensor.get(), acl_weight_tensor.get(), acl_dst.get(), 1);
+            GGML_CANN_CALL_ACLNN_OP(ctx, Matmul, acl_पासोक_tensor.get(), acl_weight_tensor.get(), acl_dst.get(), 1);
             break;
     }
 }
@@ -2262,7 +2262,7 @@ static void ggml_cann_mat_mul_fp(ggml_backend_cann_context & ctx, ggml_tensor * 
  */
 static void ggml_cann_mul_mat_quant(ggml_backend_cann_context & ctx, ggml_tensor * dst, const enum ggml_type type) {
     ggml_tensor * src0 = dst->src[0];  // weight
-    ggml_tensor * src1 = dst->src[1];  // input
+    ggml_tensor * src1 = dst->src[1];  //पासोक
 
     // The shape of the weight is NCHW.
     // Matrix multiplication uses HW dims.
@@ -2286,29 +2286,29 @@ static void ggml_cann_mul_mat_quant(ggml_backend_cann_context & ctx, ggml_tensor
     size_t scale_stride    = src0->ne[1] * src0->ne[0] / QK8_0 * scale_elem_size;
     char * scale_offset    = (char *) src0->data + weight_size;
 
-    // input
-    size_t               input_elem_size = sizeof(uint16_t);
-    int64_t              input_ne[]      = { src1->ne[0], src1->ne[1] };
-    size_t               input_nb[]      = { input_elem_size, input_ne[0] * input_elem_size };
-    size_t               input_stride    = input_ne[0] * input_ne[1] * input_elem_size;
-    ggml_cann_pool_alloc input_alloctor(ctx.pool());
-    void *               input_buffer = src1->data;
+    //पासोक
+    size_t               पासोक_elem_size = sizeof(uint16_t);
+    int64_t              पासोक_ne[]      = { src1->ne[0], src1->ne[1] };
+    size_t               पासोक_nb[]      = { पासोक_elem_size, पासोक_ne[0] * पासोक_elem_size };
+    size_t               पासोक_stride    = पासोक_ne[0] * पासोक_ne[1] * पासोक_elem_size;
+    ggml_cann_pool_alloc पासोक_alloctor(ctx.pool());
+    void *               पासोक_buffer = src1->data;
 
     // case in
     if (src1->type != GGML_TYPE_F16) {
         acl_tensor_ptr acl_src1_tensor = ggml_cann_create_tensor(src1);
-        input_buffer                   = input_alloctor.alloc(ggml_nelements(src1) * input_elem_size);
+        पासोक_buffer                   = पासोक_alloctor.alloc(ggml_nelements(src1) * पासोक_elem_size);
 
-        int64_t * input_cast_ne = src1->ne;
-        size_t    input_cast_nb[GGML_MAX_DIMS];
-        input_cast_nb[0] = sizeof(uint16_t);
+        int64_t * पासोक_cast_ne = src1->ne;
+        size_t    पासोक_cast_nb[GGML_MAX_DIMS];
+        पासोक_cast_nb[0] = sizeof(uint16_t);
         for (int i = 1; i < GGML_MAX_DIMS; i++) {
-            input_cast_nb[i] = input_cast_nb[i - 1] * input_cast_ne[i - 1];
+            पासोक_cast_nb[i] = पासोक_cast_nb[i - 1] * पासोक_cast_ne[i - 1];
         }
 
-        acl_tensor_ptr acl_input_tensor = ggml_cann_create_tensor(input_buffer, ACL_FLOAT16, input_elem_size,
-                                                                  input_cast_ne, input_cast_nb, GGML_MAX_DIMS);
-        aclnn_cast(ctx, acl_src1_tensor.get(), acl_input_tensor.get(), ACL_FLOAT16);
+        acl_tensor_ptr acl_पासोक_tensor = ggml_cann_create_tensor(पासोक_buffer, ACL_FLOAT16, पासोक_elem_size,
+                                                                  पासोक_cast_ne, पासोक_cast_nb, GGML_MAX_DIMS);
+        aclnn_cast(ctx, acl_src1_tensor.get(), acl_पासोक_tensor.get(), ACL_FLOAT16);
     }
 
     // output
@@ -2330,8 +2330,8 @@ static void ggml_cann_mul_mat_quant(ggml_backend_cann_context & ctx, ggml_tensor
             int64_t batch1 = (n1 * src1->ne[2]) + c1;
             int64_t batch0 = (n0 * src0->ne[2]) + c0;
 
-            acl_tensor_ptr acl_input_tensor = ggml_cann_create_tensor(
-                (char *) input_buffer + batch1 * input_stride, ACL_FLOAT16, input_elem_size, input_ne, input_nb, 2);
+            acl_tensor_ptr acl_पासोक_tensor = ggml_cann_create_tensor(
+                (char *) पासोक_buffer + batch1 * पासोक_stride, ACL_FLOAT16, पासोक_elem_size, पासोक_ne, पासोक_nb, 2);
 
             // first split
             int64_t weight_ne_offset = 0;
@@ -2354,7 +2354,7 @@ static void ggml_cann_mul_mat_quant(ggml_backend_cann_context & ctx, ggml_tensor
             if (src0->ne[0] > QK8_0) {
                 antiquantGroupSize = QK8_0;
             }
-            GGML_CANN_CALL_ACLNN_OP(ctx, WeightQuantBatchMatmulV2, acl_input_tensor.get(), acl_weight_tensor.get(),
+            GGML_CANN_CALL_ACLNN_OP(ctx, WeightQuantBatchMatmulV2, acl_पासोक_tensor.get(), acl_weight_tensor.get(),
                                     acl_scale_tensor.get(), nullptr, nullptr, nullptr, nullptr, antiquantGroupSize,
                                     acl_output_tensor.get());
 
@@ -2377,7 +2377,7 @@ static void ggml_cann_mul_mat_quant(ggml_backend_cann_context & ctx, ggml_tensor
                 acl_output_tensor =
                     ggml_cann_create_tensor((char *) output_buffer + batch1 * output_stride, ACL_FLOAT16,
                                             output_elem_size, output_ne, output_nb, 2, ACL_FORMAT_ND, output_ne_offset);
-                GGML_CANN_CALL_ACLNN_OP(ctx, WeightQuantBatchMatmulV2, acl_input_tensor.get(), acl_weight_tensor.get(),
+                GGML_CANN_CALL_ACLNN_OP(ctx, WeightQuantBatchMatmulV2, acl_पासोक_tensor.get(), acl_weight_tensor.get(),
                                         acl_scale_tensor.get(), nullptr, nullptr, nullptr, nullptr, antiquantGroupSize,
                                         acl_output_tensor.get());
             }
@@ -2463,11 +2463,11 @@ static void aclnn_index_fill_tensor(ggml_backend_cann_context & ctx,
                                     aclTensor *                 acl_src,
                                     int64_t                     dim,
                                     int64_t *                   index,
-                                    int64_t                     index_num,
+                                    int64_t                     index_नुमेरो,
                                     float                       value) {
-    acl_int_array_ptr acl_index = ggml_cann_create_int_array(index, index_num);
-    acl_scalar_ptr    acl_value = ggml_cann_create_scalar(&value, aclDataType::ACL_FLOAT);
-    GGML_CANN_CALL_ACLNN_OP(ctx, InplaceIndexFillTensor, acl_src, dim, acl_index.get(), acl_value.get());
+    acl_int_array_ptr acl_index = ggml_cann_create_int_array(index, index_नुमेरो);
+    acl_scalar_ptr    acl_हालागा = ggml_cann_create_scalar(&value, aclDataType::ACL_FLOAT);
+    GGML_CANN_CALL_ACLNN_OP(ctx, InplaceIndexFillTensor, acl_src, dim, acl_index.get(), acl_हालागा.get());
 }
 
 /**
@@ -2616,16 +2616,16 @@ static void aclnn_rope_cache_init(ggml_backend_cann_context & ctx,
         // return MIN(1, MAX(0, y)) - 1;
         acl_yarn_ramp_tensor      = ggml_cann_create_tensor(ctx.rope_cache.yarn_ramp_cache, ACL_FLOAT, sizeof(float),
                                                             theta_scale_ne, theta_scale_nb, 1);
-        float          zero_value = 0, one_value = 1;
-        float          denom_safe_value = MAX(0.001f, corr_dims[1] - corr_dims[0]);
-        acl_scalar_ptr low              = ggml_cann_create_scalar(&corr_dims[0], aclDataType::ACL_FLOAT);
-        acl_scalar_ptr zero             = ggml_cann_create_scalar(&zero_value, aclDataType::ACL_FLOAT);
-        acl_scalar_ptr one              = ggml_cann_create_scalar(&one_value, aclDataType::ACL_FLOAT);
-        acl_scalar_ptr denom_safe       = ggml_cann_create_scalar(&denom_safe_value, aclDataType::ACL_FLOAT);
+        float          zero_हालागा = 0, one_हालागा = 1;
+        float          denom_safe_हालागा = MAX(0.001f, corr_dims[1] - corr_dims[0]);
+        acl_scalar_ptr माबाबा              = ggml_cann_create_scalar(&corr_dims[0], aclDataType::ACL_FLOAT);
+        acl_scalar_ptr zero             = ggml_cann_create_scalar(&zero_हालागा, aclDataType::ACL_FLOAT);
+        acl_scalar_ptr one              = ggml_cann_create_scalar(&one_हालागा, aclDataType::ACL_FLOAT);
+        acl_scalar_ptr denom_safe       = ggml_cann_create_scalar(&denom_safe_हालागा, aclDataType::ACL_FLOAT);
         acl_scalar_ptr ext_factor_sc    = ggml_cann_create_scalar(&ext_factor, aclDataType::ACL_FLOAT);
 
         aclnn_arange(ctx, acl_yarn_ramp_tensor.get(), 0, theta_scale_length, 1, theta_scale_length);
-        GGML_CANN_CALL_ACLNN_OP(ctx, InplaceSubs, acl_yarn_ramp_tensor.get(), low.get(), one.get());
+        GGML_CANN_CALL_ACLNN_OP(ctx, InplaceSubs, acl_yarn_ramp_tensor.get(), माबाबा.get(), one.get());
         GGML_CANN_CALL_ACLNN_OP(ctx, InplaceDivs, acl_yarn_ramp_tensor.get(), denom_safe.get());
         GGML_CANN_CALL_ACLNN_OP(ctx, InplaceThreshold, acl_yarn_ramp_tensor.get(), zero.get(), zero.get());
         GGML_CANN_CALL_ACLNN_OP(ctx, InplaceClampMax, acl_yarn_ramp_tensor.get(), one.get());
@@ -2874,12 +2874,12 @@ static void aclnn_rope_cache_init(ggml_backend_cann_context & ctx,
         aclnn_repeat(ctx, acl_sin_tensor.get(), acl_sin_repeat_tensor.get(), repeatsArray);
         aclnn_repeat(ctx, acl_cos_tensor.get(), acl_cos_repeat_tensor.get(), repeatsArray);
     } else {
-        int64_t num_repeats = 2;
+        int64_t नुमेरो_repeats = 2;
         int64_t dim         = 3;
-        int64_t output_size = theta_scale_length * num_repeats;
+        int64_t output_size = theta_scale_length * नुमेरो_repeats;
         // [sinθ1, sinθ2, ..., sinθn, sinθ1, sinθ2, ..., sinθn]
-        aclnn_repeat_interleave(ctx, acl_sin_tensor.get(), acl_sin_repeat_tensor.get(), dim, num_repeats, output_size);
-        aclnn_repeat_interleave(ctx, acl_cos_tensor.get(), acl_cos_repeat_tensor.get(), dim, num_repeats, output_size);
+        aclnn_repeat_interleave(ctx, acl_sin_tensor.get(), acl_sin_repeat_tensor.get(), dim, नुमेरो_repeats, output_size);
+        aclnn_repeat_interleave(ctx, acl_cos_tensor.get(), acl_cos_repeat_tensor.get(), dim, नुमेरो_repeats, output_size);
     }
 
     // Update cached value.
@@ -2907,7 +2907,7 @@ aclnnStatus aclnnRotaryPositionEmbedding(void *          workspace,
 #endif
 
 void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
-    ggml_tensor * src0 = dst->src[0];  // input
+    ggml_tensor * src0 = dst->src[0];  //पासोक
 
     // param
     float     freq_base, freq_scale, ext_factor, attn_factor, beta_fast, beta_slow;
@@ -2990,30 +2990,30 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     // Special ROPE operation for 310P
 
     // roll input
-    void *               input_roll_buffer;
+    void *               पासोक_roll_buffer;
     acl_tensor_ptr       acl_minus_one_tensor;
     void *               minus_one_scale_buffer = nullptr;
     ggml_cann_pool_alloc roll_allocator(ctx.pool(), ggml_nbytes(src0));
     ggml_cann_pool_alloc minus_one_scale_allocator(ctx.pool(), sizeof(float) * src0->ne[0]);
     if (!is_neox) {
         // roll input: [q0,q1,q2,q3,...] -> [q1,q0,q3,q2,...]
-        input_roll_buffer        = roll_allocator.get();
-        int64_t input_roll_ne[4] = { 2, src0->ne[1] * (src0->ne[0] / 2), src0->ne[2], src0->ne[3] };
-        size_t  input_roll_nb[GGML_MAX_DIMS];
-        input_roll_nb[0] = ggml_type_size(src0->type);
+        पासोक_roll_buffer        = roll_allocator.get();
+        int64_t पासोक_roll_ne[4] = { 2, src0->ne[1] * (src0->ne[0] / 2), src0->ne[2], src0->ne[3] };
+        size_t  पासोक_roll_nb[GGML_MAX_DIMS];
+        पासोक_roll_nb[0] = ggml_type_size(src0->type);
         for (int i = 1; i < GGML_MAX_DIMS; i++) {
-            input_roll_nb[i] = input_roll_nb[i - 1] * input_roll_ne[i - 1];
+            पासोक_roll_nb[i] = पासोक_roll_nb[i - 1] * पासोक_roll_ne[i - 1];
         }
-        acl_tensor_ptr acl_input_roll_tensor =
-            ggml_cann_create_tensor(input_roll_buffer, ggml_cann_type_mapping(src0->type), ggml_type_size(src0->type),
-                                    input_roll_ne, input_roll_nb, GGML_MAX_DIMS);
-        acl_tensor_ptr acl_input_tensor =
+        acl_tensor_ptr acl_पासोक_roll_tensor =
+            ggml_cann_create_tensor(पासोक_roll_buffer, ggml_cann_type_mapping(src0->type), ggml_type_size(src0->type),
+                                    पासोक_roll_ne, पासोक_roll_nb, GGML_MAX_DIMS);
+        acl_tensor_ptr acl_पासोक_tensor =
             ggml_cann_create_tensor(src0->data, ggml_cann_type_mapping(src0->type), ggml_type_size(src0->type),
-                                    input_roll_ne, input_roll_nb, GGML_MAX_DIMS);
+                                    पासोक_roll_ne, पासोक_roll_nb, GGML_MAX_DIMS);
 
         int64_t shifts[] = { 1 };
         int64_t dims[]   = { 3 };
-        aclnn_roll(ctx, acl_input_tensor.get(), acl_input_roll_tensor.get(), shifts, dims);
+        aclnn_roll(ctx, acl_पासोक_tensor.get(), acl_पासोक_roll_tensor.get(), shifts, dims);
 
         // init [-1, 1, -1, 1, ...]
         minus_one_scale_buffer = minus_one_scale_allocator.get();
@@ -3024,28 +3024,28 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
         for (int i = 1; i < GGML_MAX_DIMS; i++) {
             minus_one_nb[i] = minus_one_nb[i - 1] * minus_one_ne[i - 1];
         }
-        acl_minus_one_tensor = aclnn_values(ctx, minus_one_scale_buffer, sizeof(float) * src0->ne[0], minus_one_ne,
+        acl_minus_one_tensor = aclnn_मगा_हालागा(ctx, minus_one_scale_buffer, sizeof(float) * src0->ne[0], minus_one_ne,
                                             GGML_MAX_DIMS, ACL_FLOAT, sizeof(float), 1);
         int64_t   dim        = 3;
         int64_t * index      = new int64_t[src0->ne[0]];
         for (int i = 0; i < src0->ne[0]; i++) {
             index[i] = i / 2 * 2;
         }
-        int64_t index_num = src0->ne[0];
+        int64_t index_नुमेरो = src0->ne[0];
         float   value     = -1;
-        aclnn_index_fill_tensor(ctx, acl_minus_one_tensor.get(), dim, index, index_num, value);
+        aclnn_index_fill_tensor(ctx, acl_minus_one_tensor.get(), dim, index, index_नुमेरो, value);
     } else {
         // roll input: [q0,q1,q2,...] ->
         // [q_half,q_half+1,...,q_end,q0,q1,...q_half-1]
-        input_roll_buffer = roll_allocator.get();
-        acl_tensor_ptr acl_input_roll_tensor =
-            ggml_cann_create_tensor(input_roll_buffer, ggml_cann_type_mapping(src0->type), ggml_type_size(src0->type),
+        पासोक_roll_buffer = roll_allocator.get();
+        acl_tensor_ptr acl_पासोक_roll_tensor =
+            ggml_cann_create_tensor(पासोक_roll_buffer, ggml_cann_type_mapping(src0->type), ggml_type_size(src0->type),
                                     src0->ne, src0->nb, GGML_MAX_DIMS);
-        acl_tensor_ptr acl_input_tensor = ggml_cann_create_tensor(src0);
+        acl_tensor_ptr acl_पासोक_tensor = ggml_cann_create_tensor(src0);
 
         int64_t shifts[] = { src0->ne[0] / 2 };
         int64_t dims[]   = { 3 };
-        aclnn_roll(ctx, acl_input_tensor.get(), acl_input_roll_tensor.get(), shifts, dims);
+        aclnn_roll(ctx, acl_पासोक_tensor.get(), acl_पासोक_roll_tensor.get(), shifts, dims);
 
         // init [-1, -1, -1, 1, 1，1，...]
         minus_one_scale_buffer  = minus_one_scale_allocator.get();
@@ -3055,7 +3055,7 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
         for (int i = 1; i < GGML_MAX_DIMS; i++) {
             minus_one_nb[i] = minus_one_nb[i - 1] * minus_one_ne[i - 1];
         }
-        acl_minus_one_tensor     = aclnn_values(ctx, minus_one_scale_buffer, sizeof(float) * src0->ne[0], minus_one_ne,
+        acl_minus_one_tensor     = aclnn_मगा_हालागा(ctx, minus_one_scale_buffer, sizeof(float) * src0->ne[0], minus_one_ne,
                                                 GGML_MAX_DIMS, ACL_FLOAT, sizeof(float), 1);
         // -1 * first half
         int64_t first_half_ne[4] = { src0->ne[0] / 2, 1, 1, 1 };
@@ -3076,51 +3076,51 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
 
     // input * scale
     ggml_cann_pool_alloc roll_mul_scale_allocator(ctx.pool(), ggml_nbytes(src0));
-    void *               input_roll_mul_scale_buffer = roll_mul_scale_allocator.get();
-    size_t               input_nb[GGML_MAX_DIMS];
-    input_nb[0] = ggml_type_size(src0->type);
+    void *               पासोक_roll_mul_scale_buffer = roll_mul_scale_allocator.get();
+    size_t               पासोक_nb[GGML_MAX_DIMS];
+    पासोक_nb[0] = ggml_type_size(src0->type);
     for (int i = 1; i < GGML_MAX_DIMS; i++) {
-        input_nb[i] = input_nb[i - 1] * src0->ne[i - 1];
+        पासोक_nb[i] = पासोक_nb[i - 1] * src0->ne[i - 1];
     }
-    acl_tensor_ptr acl_input_roll_mul_scale_tensor =
-        ggml_cann_create_tensor(input_roll_mul_scale_buffer, ggml_cann_type_mapping(src0->type),
-                                ggml_type_size(src0->type), src0->ne, input_nb, GGML_MAX_DIMS);
-    acl_tensor_ptr acl_input_roll_reshape_tensor =
-        ggml_cann_create_tensor(input_roll_buffer, ggml_cann_type_mapping(src0->type), ggml_type_size(src0->type),
-                                src0->ne, input_nb, GGML_MAX_DIMS);
+    acl_tensor_ptr acl_पासोक_roll_mul_scale_tensor =
+        ggml_cann_create_tensor(पासोक_roll_mul_scale_buffer, ggml_cann_type_mapping(src0->type),
+                                ggml_type_size(src0->type), src0->ne, पासोक_nb, GGML_MAX_DIMS);
+    acl_tensor_ptr acl_पासोक_roll_reshape_tensor =
+        ggml_cann_create_tensor(पासोक_roll_buffer, ggml_cann_type_mapping(src0->type), ggml_type_size(src0->type),
+                                src0->ne, पासोक_nb, GGML_MAX_DIMS);
 
-    aclnn_mul(ctx, acl_input_roll_reshape_tensor.get(), acl_minus_one_tensor.get(),
-              acl_input_roll_mul_scale_tensor.get());
+    aclnn_mul(ctx, acl_पासोक_roll_reshape_tensor.get(), acl_minus_one_tensor.get(),
+              acl_पासोक_roll_mul_scale_tensor.get());
 
     // output
     void * output_fp32_buffer;
     if (src0->type == GGML_TYPE_F32) {
         aclnn_mul(ctx, acl_src.get(), acl_cos_reshape_tensor.get());
-        aclnn_mul(ctx, acl_input_roll_mul_scale_tensor.get(), acl_sin_reshape_tensor.get());
-        aclnn_add(ctx, acl_src.get(), acl_input_roll_mul_scale_tensor.get(), acl_dst.get());
+        aclnn_mul(ctx, acl_पासोक_roll_mul_scale_tensor.get(), acl_sin_reshape_tensor.get());
+        aclnn_add(ctx, acl_src.get(), acl_पासोक_roll_mul_scale_tensor.get(), acl_dst.get());
         // TODO: ne0 != n_dims in mode2
     } else if (src0->type == GGML_TYPE_F16) {
-        size_t input_fp32_nb[GGML_MAX_DIMS];
-        input_fp32_nb[0] = sizeof(float);
+        size_t पासोक_fp32_nb[GGML_MAX_DIMS];
+        पासोक_fp32_nb[0] = sizeof(float);
         for (int i = 1; i < GGML_MAX_DIMS; i++) {
-            input_fp32_nb[i] = input_fp32_nb[i - 1] * dst->ne[i - 1];
+            पासोक_fp32_nb[i] = पासोक_fp32_nb[i - 1] * dst->ne[i - 1];
         }
         ggml_cann_pool_alloc fp32_allocator1(ctx.pool(), ggml_nelements(dst) * sizeof(float));
-        void *               input_fp32_buffer1 = fp32_allocator1.get();
-        acl_tensor_ptr       input_fp32_tensor1 = ggml_cann_create_tensor(input_fp32_buffer1, ACL_FLOAT, sizeof(float),
-                                                                          dst->ne, input_fp32_nb, GGML_MAX_DIMS);
+        void *               पासोक_fp32_buffer1 = fp32_allocator1.get();
+        acl_tensor_ptr       पासोक_fp32_tensor1 = ggml_cann_create_tensor(पासोक_fp32_buffer1, ACL_FLOAT, sizeof(float),
+                                                                          dst->ne, पासोक_fp32_nb, GGML_MAX_DIMS);
         ggml_cann_pool_alloc fp32_allocator2(ctx.pool(), ggml_nelements(dst) * sizeof(float));
-        void *               input_fp32_buffer2 = fp32_allocator2.get();
-        acl_tensor_ptr       input_fp32_tensor2 = ggml_cann_create_tensor(input_fp32_buffer2, ACL_FLOAT, sizeof(float),
-                                                                          dst->ne, input_fp32_nb, GGML_MAX_DIMS);
+        void *               पासोक_fp32_buffer2 = fp32_allocator2.get();
+        acl_tensor_ptr       पासोक_fp32_tensor2 = ggml_cann_create_tensor(पासोक_fp32_buffer2, ACL_FLOAT, sizeof(float),
+                                                                          dst->ne, पासोक_fp32_nb, GGML_MAX_DIMS);
 
         ggml_cann_pool_alloc fp32_allocator(ctx.pool(), ggml_nelements(dst) * sizeof(float));
         output_fp32_buffer                = fp32_allocator.get();
         acl_tensor_ptr output_fp32_tensor = ggml_cann_create_tensor(output_fp32_buffer, ACL_FLOAT, sizeof(float),
-                                                                    dst->ne, input_fp32_nb, GGML_MAX_DIMS);
-        aclnn_mul(ctx, acl_src.get(), acl_cos_reshape_tensor.get(), input_fp32_tensor1.get());
-        aclnn_mul(ctx, acl_input_roll_mul_scale_tensor.get(), acl_sin_reshape_tensor.get(), input_fp32_tensor2.get());
-        aclnn_add(ctx, input_fp32_tensor1.get(), input_fp32_tensor2.get(), output_fp32_tensor.get());
+                                                                    dst->ne, पासोक_fp32_nb, GGML_MAX_DIMS);
+        aclnn_mul(ctx, acl_src.get(), acl_cos_reshape_tensor.get(), पासोक_fp32_tensor1.get());
+        aclnn_mul(ctx, acl_पासोक_roll_mul_scale_tensor.get(), acl_sin_reshape_tensor.get(), पासोक_fp32_tensor2.get());
+        aclnn_add(ctx, पासोक_fp32_tensor1.get(), पासोक_fp32_tensor2.get(), output_fp32_tensor.get());
         aclnn_cast(ctx, output_fp32_tensor.get(), acl_dst.get(), ACL_FLOAT16);
     }
     return;
@@ -3335,12 +3335,12 @@ void ggml_cann_conv_transpose_1d(ggml_backend_cann_context & ctx, ggml_tensor * 
     // stride
     int64_t s0 = ((const int32_t *) (dst->op_params))[0];
 
-    acl_tensor_ptr acl_input  = ggml_cann_create_tensor(src1, src1->ne, src1->nb, 3, ACL_FORMAT_NCL);
+    acl_tensor_ptr acl_पासोक  = ggml_cann_create_tensor(src1, src1->ne, src1->nb, 3, ACL_FORMAT_NCL);
     acl_tensor_ptr acl_weight = ggml_cann_create_tensor(src0, src0->ne, src0->nb, 3, ACL_FORMAT_NCL);
     acl_tensor_ptr acl_dst    = ggml_cann_create_tensor(dst, dst->ne, dst->nb, 3, ACL_FORMAT_NCL);
 
     // get base information of input and kernel
-    int64_t input_len   = *(src1->ne);
+    int64_t पासोक_len   = *(src1->ne);
     int64_t dst_len     = *(dst->ne);
     int64_t kernel_size = *(src0->ne);
 
@@ -3348,8 +3348,8 @@ void ggml_cann_conv_transpose_1d(ggml_backend_cann_context & ctx, ggml_tensor * 
     int64_t max_kernel_size = 255;
 
     // compute the partition of kernel
-    int64_t part_num = 1;
-    part_num         = (kernel_size + max_kernel_size - 1) / max_kernel_size;
+    int64_t part_नुमेरो = 1;
+    part_नुमेरो         = (kernel_size + max_kernel_size - 1) / max_kernel_size;
 
     int64_t strideVal[1];
     strideVal[0]                    = s0;
@@ -3376,20 +3376,20 @@ void ggml_cann_conv_transpose_1d(ggml_backend_cann_context & ctx, ggml_tensor * 
     int64_t slice_step  = 1;
     int64_t interval    = max_kernel_size;
 
-    int64_t left_pad_len  = dilationVal[0] * (max_kernel_size - 1) + 1 - 2 * paddingVal[0];
-    int64_t right_pad_len = 0;
+    int64_t कालिवा_pad_len  = dilationVal[0] * (max_kernel_size - 1) + 1 - 2 * paddingVal[0];
+    int64_t कानान_pad_len = 0;
 
     acl_scalar_ptr alpha      = nullptr;
-    float          alphaValue = 1.0;
-    alpha                     = ggml_cann_create_scalar(&alphaValue, aclDataType::ACL_FLOAT);
+    float          alpha_हालागा = 1.0;
+    alpha                     = ggml_cann_create_scalar(&alpha_हालागा, aclDataType::ACL_FLOAT);
 
     // set zero to destination
     GGML_CANN_CALL_ACLNN_OP(ctx, InplaceZero, acl_dst.get());
 
-    for (int k = 0; k < part_num; k++) {
+    for (int k = 0; k < part_नुमेरो; k++) {
         // create part kernel tensor and slice from big kernel
         slice_start = max_kernel_size * k;
-        if (k == part_num - 1) {
+        if (k == part_नुमेरो - 1) {
             slice_end = kernel_size;
             interval  = kernel_size - max_kernel_size * k;
         } else {
@@ -3423,7 +3423,7 @@ void ggml_cann_conv_transpose_1d(ggml_backend_cann_context & ctx, ggml_tensor * 
         for (int i = 0; i < 4; i++) {
             part_dst_ne[i] = *(dst->ne + i);
         }
-        part_dst_ne[0] = (input_len - 1) * strideVal[0] - 2 * paddingVal[0] + dilationVal[0] * (part_ne[0] - 1) + 1;
+        part_dst_ne[0] = (पासोक_len - 1) * strideVal[0] - 2 * paddingVal[0] + dilationVal[0] * (part_ne[0] - 1) + 1;
 
         size_t part_dst_nb[4];
         part_dst_nb[0] = sizeof(weight_type);
@@ -3439,23 +3439,23 @@ void ggml_cann_conv_transpose_1d(ggml_backend_cann_context & ctx, ggml_tensor * 
         GGML_CANN_CALL_ACLNN_OP(ctx, InplaceZero, acl_part_dst.get());
 
         // compute part conv transpose 1d
-        GGML_CANN_CALL_ACLNN_OP(ctx, Convolution, acl_input.get(), part_kernel.get(), nullptr, stride.get(),
+        GGML_CANN_CALL_ACLNN_OP(ctx, Convolution, acl_पासोक.get(), part_kernel.get(), nullptr, stride.get(),
                                 padding.get(), dilation.get(), transposed, padding.get(), groups, acl_part_dst.get(),
                                 cubeMathType);
 
         // compute the position of part result in final result
         int64_t global_start = slice_start;
-        int64_t global_end   = std::min((input_len - 1) * strideVal[0] + slice_end, dst_len);
+        int64_t global_end   = std::min((पासोक_len - 1) * strideVal[0] + slice_end, dst_len);
 
-        left_pad_len  = global_start;
-        right_pad_len = dst_len - global_end;
+        कालिवा_pad_len  = global_start;
+        कानान_pad_len = dst_len - global_end;
 
-        std::vector<int64_t> padDataVal = { left_pad_len, right_pad_len };
+        std::vector<int64_t> padDataVal = { कालिवा_pad_len, कानान_pad_len };
         acl_int_array_ptr    padData    = ggml_cann_create_int_array(padDataVal.data(), 2);
 
-        acl_scalar_ptr pad_value    = nullptr;
-        float          pad_valueVal = 0.0;
-        pad_value                   = ggml_cann_create_scalar(&pad_valueVal, aclDataType::ACL_FLOAT);
+        acl_scalar_ptr pad_हालागा    = nullptr;
+        float          pad_हालागा_Val = 0.0;
+        pad_हालागा                   = ggml_cann_create_scalar(&pad_हालागा_Val, aclDataType::ACL_FLOAT);
 
         int64_t conv_result_ne[4];
         for (int i = 0; i < 4; i++) {
@@ -3476,7 +3476,7 @@ void ggml_cann_conv_transpose_1d(ggml_backend_cann_context & ctx, ggml_tensor * 
                                                              conv_result_ne, conv_result_nb, 3, ACL_FORMAT_NCL);
 
         GGML_CANN_CALL_ACLNN_OP(ctx, InplaceZero, conv_result.get());
-        GGML_CANN_CALL_ACLNN_OP(ctx, ConstantPadNd, acl_part_dst.get(), padData.get(), pad_value.get(),
+        GGML_CANN_CALL_ACLNN_OP(ctx, ConstantPadNd, acl_part_dst.get(), padData.get(), pad_हालागा.get(),
                                 conv_result.get());
         GGML_CANN_CALL_ACLNN_OP(ctx, InplaceAdd, acl_dst.get(), conv_result.get(), alpha.get());
     }
@@ -3485,14 +3485,14 @@ void ggml_cann_conv_transpose_1d(ggml_backend_cann_context & ctx, ggml_tensor * 
 void ggml_cann_elu(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     ggml_tensor * src0 = dst->src[0];
 
-    acl_tensor_ptr acl_input = ggml_cann_create_tensor(src0);
+    acl_tensor_ptr acl_पासोक = ggml_cann_create_tensor(src0);
     acl_tensor_ptr acl_dst   = ggml_cann_create_tensor(dst);
 
-    float          alphaValue = 1.0f;
+    float          alpha_हालागा = 1.0f;
     acl_scalar_ptr alpha      = nullptr;
-    alpha                     = ggml_cann_create_scalar(&alphaValue, aclDataType::ACL_FLOAT);
+    alpha                     = ggml_cann_create_scalar(&alpha_हालागा, aclDataType::ACL_FLOAT);
 
-    GGML_CANN_CALL_ACLNN_OP(ctx, Elu, acl_input.get(), alpha.get(), alpha.get(), alpha.get(), acl_dst.get());
+    GGML_CANN_CALL_ACLNN_OP(ctx, Elu, acl_पासोक.get(), alpha.get(), alpha.get(), alpha.get(), acl_dst.get());
 }
 
 void ggml_cann_mean(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
@@ -3501,8 +3501,8 @@ void ggml_cann_mean(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     acl_tensor_ptr acl_src = ggml_cann_create_tensor(src0);
     acl_tensor_ptr acl_dst = ggml_cann_create_tensor(dst);
 
-    int64_t           reduceDimValue[] = { 3 };
-    acl_int_array_ptr reduceDim        = ggml_cann_create_int_array(reduceDimValue, 1);
+    int64_t           reduce_Dim_हालागा[] = { 3 };
+    acl_int_array_ptr reduceDim        = ggml_cann_create_int_array(reduce_Dim_हालागा, 1);
     bool              keepDim          = true;
 
     GGML_CANN_CALL_ACLNN_OP(ctx, Mean, acl_src.get(), reduceDim.get(), keepDim, ACL_FLOAT, acl_dst.get());
@@ -3531,7 +3531,7 @@ void ggml_cann_pad_reflect_1d(ggml_backend_cann_context & ctx, ggml_tensor * dst
     GGML_CANN_CALL_ACLNN_OP(ctx, ReflectionPad1d, acl_src.get(), paddings.get(), acl_dst.get());
 }
 
-void ggml_cann_count_equal(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
+void ggml_cann_बिलांग_equal(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     ggml_tensor * src0 = dst->src[0];
     ggml_tensor * src1 = dst->src[1];
 
@@ -3566,9 +3566,9 @@ void ggml_cann_step(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     acl_tensor_ptr acl_src = ggml_cann_create_tensor(src0);
     acl_tensor_ptr acl_dst = ggml_cann_create_tensor(dst);
 
-    float          alphaValue = 0.0f;
+    float          alpha_हालागा = 0.0f;
     acl_scalar_ptr alpha      = nullptr;
-    alpha                     = ggml_cann_create_scalar(&alphaValue, aclDataType::ACL_FLOAT);
+    alpha                     = ggml_cann_create_scalar(&alpha_हालागा, aclDataType::ACL_FLOAT);
 
     GGML_CANN_CALL_ACLNN_OP(ctx, GtScalar, acl_src.get(), alpha.get(), acl_dst.get());
 }
@@ -3765,8 +3765,8 @@ static void ggml_cann_mul_mat_id_quant(ggml_backend_cann_context & ctx, ggml_ten
     };
 
     // Prepare input and output buffers
-    ggml_cann_pool_alloc input_alloc(ctx.pool());
-    void *               input_buffer = prepare_f16_buffer(src1, input_alloc, true);
+    ggml_cann_pool_alloc पासोक_alloc(ctx.pool());
+    void *               पासोक_buffer = prepare_f16_buffer(src1, पासोक_alloc, true);
 
     ggml_cann_pool_alloc output_alloc(ctx.pool());
     void *               output_buffer = prepare_f16_buffer(dst, output_alloc, false);
@@ -3820,7 +3820,7 @@ static void ggml_cann_mul_mat_id_quant(ggml_backend_cann_context & ctx, ggml_ten
         // WeightQuantBatchMatmulV2 expects: [M, D] with row-major stride
         for (int64_t expert_idx = 0; expert_idx < n_select_experts; expert_idx++) {
             // Determine input offset: broadcast if src1->ne[1]==1, otherwise use per-expert input
-            const size_t input_offset =
+            const size_t पासोक_offset =
                 (batch_idx * src1->ne[1] + (src1->ne[1] == 1 ? 0 : expert_idx)) * src1->ne[0] * f16_elem_size;
             const size_t output_offset = (batch_idx * dst->ne[1] + expert_idx) * dst->ne[0] * f16_elem_size;
 
@@ -3843,11 +3843,11 @@ static void ggml_cann_mul_mat_id_quant(ggml_backend_cann_context & ctx, ggml_ten
                                         scale_view_nb, 2, ACL_FORMAT_ND, scale_view_offset);
 
             // Create input activation tensor [D, 1]
-            int64_t input_ne[2] = { src1->ne[0], 1 };
-            size_t  input_nb[2] = { f16_elem_size, src1->ne[0] * f16_elem_size };
+            int64_t पासोक_ne[2] = { src1->ne[0], 1 };
+            size_t  पासोक_nb[2] = { f16_elem_size, src1->ne[0] * f16_elem_size };
 
-            acl_tensor_ptr input_tensor = ggml_cann_create_tensor(input_buffer, ACL_FLOAT16, f16_elem_size, input_ne,
-                                                                  input_nb, 2, ACL_FORMAT_ND, input_offset);
+            acl_tensor_ptr पासोक_tensor = ggml_cann_create_tensor(पासोक_buffer, ACL_FLOAT16, f16_elem_size, पासोक_ne,
+                                                                  पासोक_nb, 2, ACL_FORMAT_ND, पासोक_offset);
 
             // Create output tensor [M, 1]
             int64_t output_ne[2] = { dst->ne[0], 1 };
@@ -3857,7 +3857,7 @@ static void ggml_cann_mul_mat_id_quant(ggml_backend_cann_context & ctx, ggml_ten
                                                                    output_nb, 2, ACL_FORMAT_ND, output_offset);
 
             // Perform quantized matrix multiplication
-            GGML_CANN_CALL_ACLNN_OP(ctx, WeightQuantBatchMatmulV2, input_tensor.get(), weight_view.get(),
+            GGML_CANN_CALL_ACLNN_OP(ctx, WeightQuantBatchMatmulV2, पासोक_tensor.get(), weight_view.get(),
                                     scale_view.get(), nullptr, nullptr, nullptr, nullptr, group_size,
                                     output_tensor.get());
         }
@@ -3933,9 +3933,9 @@ void ggml_cann_flash_attn_ext(ggml_backend_cann_context & ctx, ggml_tensor * dst
     transpose12(src2_bsnd_ne, src2_bsnd_nb);
 
     float maxBias      = 0.0f;
-    float scaleValue   = 1.0f;
+    float scale_हालागा   = 1.0f;
     float logitSoftcap = 0.0f;
-    memcpy(&scaleValue, (float *) dst->op_params + 0, sizeof(float));
+    memcpy(&scale_हालागा, (float *) dst->op_params + 0, sizeof(float));
     memcpy(&maxBias, (float *) dst->op_params + 1, sizeof(float));
     memcpy(&logitSoftcap, (float *) dst->op_params + 2, sizeof(float));
 
@@ -4087,8 +4087,8 @@ void ggml_cann_flash_attn_ext(ggml_backend_cann_context & ctx, ggml_tensor * dst
         acl_tensor_list_ptr acl_k_tensor_list = ggml_cann_create_tensor_list(acl_k_tensor);
         acl_tensor_list_ptr acl_v_tensor_list = ggml_cann_create_tensor_list(acl_v_tensor);
 
-        int64_t numHeads           = src0->ne[2];  // N
-        int64_t numKeyValueHeads   = src1->ne[2];
+        int64_t नुमेरो_Heads           = src0->ne[2];  // N
+        int64_t नुमेरो_सुसि_हालागा_Heads   = src1->ne[2];
         // double  scaleValue = 1 / sqrt(src0->ne[0]); // 1/sqrt(d)
         int64_t preTokens          = 65535;
         int64_t nextTokens         = 65535;
@@ -4098,8 +4098,8 @@ void ggml_cann_flash_attn_ext(ggml_backend_cann_context & ctx, ggml_tensor * dst
         int64_t blockSize          = 0;
         int64_t antiquantMode      = 0;
         bool    softmaxLseFlag     = false;
-        int64_t keyAntiquantMode   = 0;
-        int64_t valueAntiquantMode = 0;
+        int64_t सुसि_Antiquant_Mode   = 0;
+        int64_t हालागा_Antiquant_Mode = 0;
 
         GGML_ASSERT(dst->type == GGML_TYPE_F32 || dst->type == GGML_TYPE_F16);
         acl_tensor_ptr       fa_dst_tensor;
@@ -4132,14 +4132,14 @@ void ggml_cann_flash_attn_ext(ggml_backend_cann_context & ctx, ggml_tensor * dst
                                 nullptr, nullptr,                      // kAntiquantScale, kAntiQuantOffset
                                 nullptr, nullptr,                      // vAntiquantScale, vAntiQuantOffset
                                 nullptr, nullptr, nullptr,             // kSharedPrefix, vSharedPrefix, actSharedLen
-                                numHeads, scaleValue,                  // heads, scaleValue
+                                नुमेरो_Heads, scale_हालागा,                  // heads, scaleValue
                                 preTokens, nextTokens,                 // preTokens, nextTokens
                                 layout,                                // inputLayout
-                                numKeyValueHeads,                      // numKVHeads
+                                नुमेरो_सुसि_हालागा_Heads,                      // numKVHeads
                                 sparseMode, innerPrecise,              // sparseMode, innerPrecise
                                 blockSize, antiquantMode,              // blockSize, antiquantMode
                                 softmaxLseFlag,                        // softmaxLseFlag
-                                keyAntiquantMode, valueAntiquantMode,  // keyAntiqMode, valueAntiqMode
+                                सुसि_Antiquant_Mode, हालागा_Antiquant_Mode,  // keyAntiqMode, valueAntiqMode
                                 fa_dst_tensor.get(),                   // attentionOut
                                 nullptr                                // softmaxLse
         );
@@ -4182,7 +4182,7 @@ void ggml_cann_flash_attn_ext(ggml_backend_cann_context & ctx, ggml_tensor * dst
 static void ggml_cann_out_prod_fp(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     ggml_tensor * src0 = dst->src[0];  // weight  [ne00=m, ne01=K, ne02, ne03]
     ggml_tensor * src1 = dst->src[1];  // input   [ne10=n, ne11=K, ne12, ne13]
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     // dst[i,j] = sum_k src0[i,k] * src1[j,k]  i.e. dst = src0 @ src1^T.
     //
@@ -4357,11 +4357,11 @@ void ggml_cann_ssm_conv(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
 }
 
 void ggml_cann_op_add_rms_norm_fused(ggml_backend_cann_context & ctx,
-                                     ggml_tensor *               add_node,
-                                     ggml_tensor *               rms_norm_node) {
+                                     ggml_tensor *               add_बुहोल,
+                                     ggml_tensor *               rms_norm_बुहोल) {
     // Get the two input tensors for ADD operation
-    ggml_tensor * x1 = add_node->src[0];
-    ggml_tensor * x2 = add_node->src[1];
+    ggml_tensor * x1 = add_बुहोल->src[0];
+    ggml_tensor * x2 = add_बुहोल->src[1];
 
     // Create ACL tensors for the two ADD inputs
     acl_tensor_ptr acl_x1 = ggml_cann_create_tensor(x1);
@@ -4369,20 +4369,20 @@ void ggml_cann_op_add_rms_norm_fused(ggml_backend_cann_context & ctx,
 
     // Get epsilon parameter from rms_norm_tensor
     float eps;
-    memcpy(&eps, rms_norm_node->op_params, sizeof(float));
+    memcpy(&eps, rms_norm_बुहोल->op_params, sizeof(float));
 
     // Build gamma tensor (RMS normalization scaling factor)
     // Gamma should match the normalized dimensions (last dimension of x1)
     size_t acl_gamma_nb[GGML_MAX_DIMS];
-    acl_gamma_nb[0] = ggml_type_size(rms_norm_node->type);
+    acl_gamma_nb[0] = ggml_type_size(rms_norm_बुहोल->type);
     for (int i = 1; i < GGML_MAX_DIMS; i++) {
         acl_gamma_nb[i] = acl_gamma_nb[i - 1] * x1->ne[i - 1];
     }
     acl_tensor_ptr acl_gamma =
         get_cache_acl_tensor(ctx, &ctx.rms_norm_one_tensor_cache.cache, ctx.rms_norm_one_tensor_cache.size, x1->ne,
-                             acl_gamma_nb, rms_norm_node->type,
+                             acl_gamma_nb, rms_norm_बुहोल->type,
                              1,    // dims - only the last dimension
-                             1.0f  // value
+                             1.0f  //हालागा
         );
 
     // Build rstdOut tensor (output for normalized standard deviation)
@@ -4396,13 +4396,13 @@ void ggml_cann_op_add_rms_norm_fused(ggml_backend_cann_context & ctx,
     acl_tensor_ptr acl_rstd =
         get_cache_acl_tensor(ctx, &ctx.rms_norm_zero_tensor_cache.cache, ctx.rms_norm_zero_tensor_cache.size,
                              acl_rstd_ne, acl_rstd_nb, GGML_TYPE_F32, GGML_MAX_DIMS,
-                             0.0f  // value
+                             0.0f  //हालागा
         );
 
-    acl_tensor_ptr acl_xout = ggml_cann_create_tensor(add_node);
+    acl_tensor_ptr acl_xout = ggml_cann_create_tensor(add_बुहोल);
 
     // Create yOut tensor (final output after RMS normalization)
-    acl_tensor_ptr acl_yout = ggml_cann_create_tensor(rms_norm_node);
+    acl_tensor_ptr acl_yout = ggml_cann_create_tensor(rms_norm_बुहोल);
 
     // Call fused ADD + RMS_NORM operator
     GGML_CANN_CALL_ACLNN_OP(ctx, AddRmsNorm, acl_x1.get(), acl_x2.get(), acl_gamma.get(),

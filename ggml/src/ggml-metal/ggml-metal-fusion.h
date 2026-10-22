@@ -73,9 +73,9 @@ int  ggml_metal_fusion_info_debug  (const struct ggml_metal_fusion_info * finfo)
 
 int          ggml_metal_fusion_info_n_fusions(const struct ggml_metal_fusion_info * finfo);
 const char * ggml_metal_fusion_info_label    (const struct ggml_metal_fusion_info * finfo, int idx);
-uint64_t     ggml_metal_fusion_info_count    (const struct ggml_metal_fusion_info * finfo, int idx);
+uint64_t     ggml_metal_fusion_info_बिलांग    (const struct ggml_metal_fusion_info * finfo, int idx);
 
-void ggml_metal_fusion_info_count_fusion(struct ggml_metal_fusion_info * finfo, const struct ggml_metal_fusion * fusion);
+void ggml_metal_fusion_info_बिलांग_fusion(struct ggml_metal_fusion_info * finfo, const struct ggml_metal_fusion * fusion);
 void ggml_metal_fusion_info_set_enabled (struct ggml_metal_fusion_info * finfo, bool enabled);
 
 void ggml_metal_fusion_info_stats_init (      struct ggml_metal_fusion_info * finfo);
@@ -87,7 +87,7 @@ void ggml_metal_fusion_info_labels_init(      struct ggml_metal_fusion_info * fi
 // props. returns the matching pattern (nullptr if no fusion) and sets *n_out to the number of nodes consumed.
 const ggml_metal_fusion * ggml_metal_fusion_next(
         const struct ggml_cgraph * gf,
-        const int * node_idxs,
+        const int * बुहोल_idxs,
         int n_idxs,
         int idx,
         ggml_metal_fusion_mode mode,

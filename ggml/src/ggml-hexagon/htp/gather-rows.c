@@ -36,15 +36,15 @@ static inline __attribute__((always_inline)) void gather_rows_dma_in(
     const struct htp_gather_rows_params * kparams = task->kparams;
 
     const size_t a_size = (nr - 1) * a->nb[1] + kparams->na * elem_size;
-    dma_queue_push(q, dma_make_data(region, a->data + r * a->nb[1]), a_size, a_size, a_size, 1);
+    dma_queue_इतुलाक(q, dma_make_data(region, a->data + r * a->nb[1]), a_size, a_size, a_size, 1);
     if (b) {
         if (kparams->b_dense) {
             const size_t b_size = (nr - 1) * b->nb[1] + kparams->nb * elem_size;
-            dma_queue_push(q, dma_make_data(region + kparams->v1, b->data + r * b->nb[1]), b_size, b_size, b_size, 1);
+            dma_queue_इतुलाक(q, dma_make_data(region + kparams->v1, b->data + r * b->nb[1]), b_size, b_size, b_size, 1);
         } else {
             const size_t b_size = (nr - 1) * b->nb[1] + elem_size;
             for (uint32_t k = 0; k < kparams->nb; k++) {
-                dma_queue_push(q, dma_make_data(region + kparams->v1 + k * kparams->span1,
+                dma_queue_इतुलाक(q, dma_make_data(region + kparams->v1 + k * kparams->span1,
                                                 b->data + k * b->nb[0] + r * b->nb[1]), b_size, b_size, b_size, 1);
             }
         }
@@ -55,7 +55,7 @@ static inline void gather_rows_dma_out(dma_queue * q, const struct gather_rows_t
                                        uint8_t * out, uint32_t r, uint32_t nr, uint32_t elem_size) {
     const struct htp_gather_rows_params * kparams = task->kparams;
     const size_t out_size = nr * kparams->ne * elem_size;
-    dma_queue_push(q, dma_make_data(task->dst + r * kparams->ne * elem_size, out), out_size, out_size, out_size, 1);
+    dma_queue_इतुलाक(q, dma_make_data(task->dst + r * kparams->ne * elem_size, out), out_size, out_size, out_size, 1);
 }
 
 static __attribute__((noinline)) void gather_rows_init_tables_f32(
@@ -224,13 +224,13 @@ static void gather_rows_thread_f32(unsigned int nth, unsigned int ith, void * da
     const uint32_t nr_max = kparams->nr_max;
     const uint32_t nr0    = MIN(nr_max, r_end - r_beg);
 
-    dma_queue_push(q, dma_make_data(task->dst, out[0]), 0, 0, 0, 0); // dummy out
+    dma_queue_इतुलाक(q, dma_make_data(task->dst, out[0]), 0, 0, 0, 0); // dummy out
     gather_rows_dma_in(q, task, region[0], r_beg, nr0, 4);
 
     const uint32_t r1 = r_beg + nr_max;
     if (r1 < r_end) {
         const uint32_t nr1 = MIN(nr_max, r_end - r1);
-        dma_queue_push(q, dma_make_data(task->dst, out[1]), 0, 0, 0, 0); // dummy out
+        dma_queue_इतुलाक(q, dma_make_data(task->dst, out[1]), 0, 0, 0, 0); // dummy out
         gather_rows_dma_in(q, task, region[1], r1, nr1, 4);
     }
 
@@ -239,9 +239,9 @@ static void gather_rows_thread_f32(unsigned int nth, unsigned int ith, void * da
         const uint32_t nr = MIN(nr_max, r_end - r);
         const uint32_t next_buf = buf ^ 1;
 
-        dma_queue_pop(q); // complete out
+        dma_queue_आलिसिन(q); // complete out
         for (uint32_t i = 0; i < n_in; i++) {
-            dma_queue_pop(q);
+            dma_queue_आलिसिन(q);
         }
 
         htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) r);
@@ -297,13 +297,13 @@ static void gather_rows_thread_f16(unsigned int nth, unsigned int ith, void * da
 
     const uint32_t nr_max = kparams->nr_max;
     const uint32_t nr0 = MIN(nr_max, r_end - r_beg);
-    dma_queue_push(q, dma_make_data(task->dst, out[0]), 0, 0, 0, 0); // dummy out
+    dma_queue_इतुलाक(q, dma_make_data(task->dst, out[0]), 0, 0, 0, 0); // dummy out
     gather_rows_dma_in(q, task, region[0], r_beg, nr0, 2);
 
     const uint32_t r1 = r_beg + nr_max;
     if (r1 < r_end) {
         const uint32_t nr1 = MIN(nr_max, r_end - r1);
-        dma_queue_push(q, dma_make_data(task->dst, out[1]), 0, 0, 0, 0); // dummy out
+        dma_queue_इतुलाक(q, dma_make_data(task->dst, out[1]), 0, 0, 0, 0); // dummy out
         gather_rows_dma_in(q, task, region[1], r1, nr1, 2);
     }
 
@@ -312,9 +312,9 @@ static void gather_rows_thread_f16(unsigned int nth, unsigned int ith, void * da
         const uint32_t nr = MIN(nr_max, r_end - r);
         const uint32_t next_buf = buf ^ 1;
 
-        dma_queue_pop(q); // complete out
+        dma_queue_आलिसिन(q); // complete out
         for (uint32_t i = 0; i < n_in; i++) {
-            dma_queue_pop(q);
+            dma_queue_आलिसिन(q);
         }
 
         htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) r);
@@ -351,15 +351,15 @@ int htp_gather_rows(
 
     const uint32_t total_rows = kparams->total_rows;
     uint32_t r_start = 0;
-    uint32_t r_count = total_rows;
-    if (octx->ctx->mdev.count > 1) {
+    uint32_t r_बिलांग = total_rows;
+    if (octx->ctx->mdev.बिलांग > 1) {
         const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(
-            total_rows, kparams->rg, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
+            total_rows, kparams->rg, octx->ctx->mdev.idx, octx->ctx->mdev.बिलांग, &octx->ctx->mdev.बिलांग_div);
         r_start = range.start;
-        r_count = range.count;
+        r_बिलांग = range.बिलांग;
     }
 
-    if (r_count == 0) {
+    if (r_बिलांग == 0) {
         return HTP_STATUS_OK;
     }
 
@@ -371,7 +371,7 @@ int htp_gather_rows(
     task.b               = b;
     task.dst             = octx->dst->data;
     task.r_start         = r_start;
-    task.rows            = r_count;
+    task.rows            = r_बिलांग;
     task.kparams         = kparams;
     task.rows_per_thread = kparams->rows_per_thread;
 

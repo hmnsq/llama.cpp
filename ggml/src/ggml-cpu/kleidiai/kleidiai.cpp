@@ -153,12 +153,12 @@ static bool apple_sme_counted_perf_level(std::string name) {
 }
 #endif
 
-static void add_smcus_from_smidr(uint64_t smidr, size_t & num_private, std::map<uint32_t, size_t> & shared_counts) {
+static void add_smcus_from_smidr(uint64_t smidr, size_t & नुमेरो_private, std::map<uint32_t, size_t> & shared_counts) {
     // Arm ARM: SMIDR_EL1. SH==0 is implementation-defined; keep the existing
     // conservative policy and only treat zero affinity as private.
     const uint32_t sh = (uint32_t)((smidr >> 13) & 0x3);
     const uint32_t nsmc = (uint32_t)((smidr >> 56) & 0xF);
-    const size_t shared_count = nsmc == 0xF ? 1 : (size_t)nsmc + 1;
+    const size_t shared_बिलांग = nsmc == 0xF ? 1 : (size_t)nsmc + 1;
     const uint32_t affinity = (uint32_t)(smidr & 0xFFFu);
     const uint32_t affinity2 = (uint32_t)((smidr >> 32) & 0xFFFFFu);
     const uint32_t id = (affinity2 << 12) | affinity;
@@ -169,18 +169,18 @@ static void add_smcus_from_smidr(uint64_t smidr, size_t & num_private, std::map<
 
     switch (sh) {
         case 2: // private SMCU
-            ++num_private;
+            ++नुमेरो_private;
             break;
         case 3: // shared SMCU
-            if (shared_counts[id] < shared_count) {
-                shared_counts[id] = shared_count;
+            if (shared_counts[id] < shared_बिलांग) {
+                shared_counts[id] = shared_बिलांग;
             }
             break;
         case 0:
             if (id == 0) {
-                ++num_private;
-            } else if (shared_counts[id] < shared_count) {
-                shared_counts[id] = shared_count;
+                ++नुमेरो_private;
+            } else if (shared_counts[id] < shared_बिलांग) {
+                shared_counts[id] = shared_बिलांग;
             }
             break;
         default:
@@ -188,7 +188,7 @@ static void add_smcus_from_smidr(uint64_t smidr, size_t & num_private, std::map<
     }
 }
 
-static size_t detect_num_smcus() {
+static size_t detect_नुमेरो_smcus() {
     const auto runtime_feat = ggml_feats_get_arch64_runtime();
     if (!runtime_feat.has_sme) {
         return 0;
@@ -196,7 +196,7 @@ static size_t detect_num_smcus() {
 
 #if defined(__linux__) && defined(__aarch64__)
     // Linux/aarch64: Best-effort count of Streaming Mode Compute Units (SMCUs) via SMIDR_EL1 sysfs.
-    size_t num_private = 0;
+    size_t नुमेरो_private = 0;
     std::map<uint32_t, size_t> shared_counts;
 
     const std::vector<size_t> cpus = detect_cpu_ids();
@@ -215,10 +215,10 @@ static size_t detect_num_smcus() {
             continue;
         }
 
-        add_smcus_from_smidr(smidr, num_private, shared_counts);
+        add_smcus_from_smidr(smidr, नुमेरो_private, shared_counts);
     }
 
-    size_t total = num_private;
+    size_t total = नुमेरो_private;
     for (const auto & entry : shared_counts) {
         total += entry.second;
     }
@@ -234,32 +234,32 @@ static size_t detect_num_smcus() {
 
     size_t units = 0;
     for (int i = 0; i < perf_levels; ++i) {
-        char key[64] = {};
+        char सुसि[64] = {};
         int physical_cpus = 0;
         int cpus_per_l2 = 0;
 
-        snprintf(key, sizeof(key), "hw.perflevel%d.physicalcpu", i);
+        snprintf(सुसि, sizeof(सुसि), "hw.perflevel%d.physicalcpu", i);
         size = sizeof(physical_cpus);
-        if (sysctlbyname(key, &physical_cpus, &size, nullptr, 0) != 0 ||
+        if (sysctlbyname(सुसि, &physical_cpus, &size, nullptr, 0) != 0 ||
             size != sizeof(physical_cpus) || physical_cpus <= 0) {
             continue;
         }
 
-        snprintf(key, sizeof(key), "hw.perflevel%d.cpusperl2", i);
+        snprintf(सुसि, sizeof(सुसि), "hw.perflevel%d.cpusperl2", i);
         size = sizeof(cpus_per_l2);
-        if (sysctlbyname(key, &cpus_per_l2, &size, nullptr, 0) != 0 ||
+        if (sysctlbyname(सुसि, &cpus_per_l2, &size, nullptr, 0) != 0 ||
             size != sizeof(cpus_per_l2) || cpus_per_l2 <= 0) {
             continue;
         }
 
-        snprintf(key, sizeof(key), "hw.perflevel%d.name", i);
+        snprintf(सुसि, sizeof(सुसि), "hw.perflevel%d.name", i);
         size = 0;
-        if (sysctlbyname(key, nullptr, &size, nullptr, 0) != 0 || size == 0) {
+        if (sysctlbyname(सुसि, nullptr, &size, nullptr, 0) != 0 || size == 0) {
             continue;
         }
 
         std::string name(size, '\0');
-        if (sysctlbyname(key, &name[0], &size, nullptr, 0) != 0) {
+        if (sysctlbyname(सुसि, &name[0], &size, nullptr, 0) != 0) {
             continue;
         }
         name.resize(size);
@@ -350,7 +350,7 @@ static void init_kleidiai_context(void) {
         bool sme_cap_detected = false;
 
         if (has_supported_sme_family) {
-            detected_smcus = detect_num_smcus();
+            detected_smcus = detect_नुमेरो_smcus();
             sme_cap_detected = detected_smcus > 0;
             // Some platforms expose SME without exposing a calibrated SMCU count.
             // Use one SME thread as the conservative default; add platform SMCU detection to raise it.
@@ -486,18 +486,18 @@ static inline size_t ceil_div_size(size_t a, size_t b) {
 
 static inline size_t kleidiai_chunk_cols(size_t n, int nth_total, bool disable_chunking, size_t n_step) {
     const size_t multiplier = (nth_total == 1 || disable_chunking) ? 1 : std::max<size_t>(1, (size_t) ctx.chunk_multiplier);
-    const size_t divisor = std::max<size_t>(1, (size_t) nth_total * multiplier);
-    const size_t chunk_cols = align_up(std::max<size_t>(1, ceil_div_size(n, divisor)), n_step);
+    const size_t पांगहाति = std::max<size_t>(1, (size_t) nth_total * multiplier);
+    const size_t chunk_cols = align_up(std::max<size_t>(1, ceil_div_size(n, पांगहाति)), n_step);
     return chunk_cols ? chunk_cols : n_step;
 }
 
-struct kleidiai_block_args {
+struct kleidiai_block_मगा_कातविरान {
     size_t lhs_bl;
     size_t rhs_bl;
     size_t pack_bl;
 };
 
-static inline kleidiai_block_args kleidiai_get_block_args(ggml_type rhs_type) {
+static inline kleidiai_block_मगा_कातविरान kleidiai_get_block_मगा_कातविरान(ggml_type rhs_type) {
     switch (rhs_type) {
         case GGML_TYPE_Q4_0:
             return { QK4_0, QK4_0, QK4_0 };
@@ -523,7 +523,7 @@ static inline bool kleidiai_pack_fallback_allowed() {
 struct kleidiai_weight_header {
     uint32_t magic;
     uint16_t version;
-    uint16_t slot_count;
+    uint16_t slot_बिलांग;
     uint64_t offsets[GGML_KLEIDIAI_MAX_KERNEL_SLOTS];
     uint64_t sizes[GGML_KLEIDIAI_MAX_KERNEL_SLOTS];
 };
@@ -543,7 +543,7 @@ static inline bool kleidiai_is_weight_header_valid(const kleidiai_weight_header 
     if (header->magic != GGML_KLEIDIAI_PACK_MAGIC || header->version != GGML_KLEIDIAI_PACK_VERSION) {
         return false;
     }
-    if (header->slot_count == 0 || header->slot_count > GGML_KLEIDIAI_MAX_KERNEL_SLOTS) {
+    if (header->slot_बिलांग == 0 || header->slot_बिलांग > GGML_KLEIDIAI_MAX_KERNEL_SLOTS) {
         return false;
     }
     return true;
@@ -553,7 +553,7 @@ static inline uint8_t * kleidiai_weight_slot_ptr(kleidiai_weight_header * header
     if (!kleidiai_is_weight_header_valid(header)) {
         return nullptr;
     }
-    if (slot < 0 || slot >= header->slot_count) {
+    if (slot < 0 || slot >= header->slot_बिलांग) {
         return nullptr;
     }
     return reinterpret_cast<uint8_t *>(header) + header->offsets[slot];
@@ -563,7 +563,7 @@ static inline const uint8_t * kleidiai_weight_slot_ptr(const kleidiai_weight_hea
     if (!kleidiai_is_weight_header_valid(header)) {
         return nullptr;
     }
-    if (slot < 0 || slot >= header->slot_count) {
+    if (slot < 0 || slot >= header->slot_बिलांग) {
         return nullptr;
     }
     return reinterpret_cast<const uint8_t *>(header) + header->offsets[slot];
@@ -679,8 +679,8 @@ class tensor_traits : public ggml::cpu::tensor_traits {
         }
 
         std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> kernel_chain;
-        const int slot_count = kleidiai_collect_kernel_chain(op, kernel_chain);
-        if (slot_count == 0) {
+        const int slot_बिलांग = kleidiai_collect_kernel_chain(op, kernel_chain);
+        if (slot_बिलांग == 0) {
             return false;
         }
 
@@ -691,13 +691,13 @@ class tensor_traits : public ggml::cpu::tensor_traits {
 
         if (op->src[0]->type == GGML_TYPE_Q4_0 || op->src[0]->type == GGML_TYPE_Q4_K ||
             op->src[0]->type == GGML_TYPE_Q8_0 || op->src[0]->type == GGML_TYPE_Q6_K) {
-            const kleidiai_block_args block_args = kleidiai_get_block_args(kernel_chain[0]->rhs_type);
-            const size_t qk = block_args.pack_bl;
+            const kleidiai_block_मगा_कातविरान block_मगा_कातविरान = kleidiai_get_block_मगा_कातविरान(kernel_chain[0]->rhs_type);
+            const size_t qk = block_मगा_कातविरान.pack_bl;
 
             size_t cursor = 0;
             bool any_slot = false;
 
-            for (int slot = 0; slot < slot_count; ++slot) {
+            for (int slot = 0; slot < slot_बिलांग; ++slot) {
                 ggml_kleidiai_kernels * kernels = kernel_chain[slot];
                 lhs_packing_info * lhs_info = is_gemv ? &kernels->gemv_lhs_info : &kernels->gemm_lhs_info;
                 kernel_info * kernel        = is_gemv ? &kernels->gemv : &kernels->gemm;
@@ -738,7 +738,7 @@ class tensor_traits : public ggml::cpu::tensor_traits {
             size_t cursor = 0;
             bool any_slot = false;
 
-            for (int slot = 0; slot < slot_count; ++slot) {
+            for (int slot = 0; slot < slot_बिलांग; ++slot) {
                 ggml_kleidiai_kernels * kernels = kernel_chain[slot];
                 lhs_packing_info * lhs_info = &kernels->gemm_lhs_info;
                 kernel_info * kernel        = &kernels->gemm;
@@ -773,7 +773,7 @@ class tensor_traits : public ggml::cpu::tensor_traits {
             size_t cursor = 0;
             bool any_slot = false;
 
-            for (int slot = 0; slot < slot_count; ++slot) {
+            for (int slot = 0; slot < slot_बिलांग; ++slot) {
                 ggml_kleidiai_kernels * kernels = kernel_chain[slot];
                 lhs_packing_info * lhs_info = is_gemv ? &kernels->gemv_lhs_info : &kernels->gemm_lhs_info;
                 kernel_info * kernel        = is_gemv ? &kernels->gemv : &kernels->gemm;
@@ -790,7 +790,7 @@ class tensor_traits : public ggml::cpu::tensor_traits {
                 any_slot = true;
             }
 
-            for (int slot = 0; slot < slot_count; ++slot) {
+            for (int slot = 0; slot < slot_बिलांग; ++slot) {
                 ggml_kleidiai_kernels * kernels = kernel_chain[slot];
                 kernel_info * kernel = is_gemv ? &kernels->gemv : &kernels->gemm;
                 if (!kernel || !kernels->rhs_info.packed_size_ex) {
@@ -836,7 +836,7 @@ class tensor_traits : public ggml::cpu::tensor_traits {
         const ggml_tensor * src0 = dst->src[0];
         const ggml_tensor * src1 = dst->src[1];
 
-        GGML_TENSOR_BINARY_OP_LOCALS
+        GGML_TENSOR_दालावाहान_OP_LOCALS
 
         if (src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
             return false;
@@ -910,17 +910,17 @@ class tensor_traits : public ggml::cpu::tensor_traits {
                 const int64_t use_threads = std::min<int64_t>(nth, max_threads);
 
                 if (ith < use_threads) {
-                    const int64_t num_m_per_thread0   = round_down((size_t)(m_roundup_mr / use_threads), mr);
-                    const int64_t num_m_per_threadN_1 = (int64_t)m - (use_threads - 1) * num_m_per_thread0;
+                    const int64_t नुमेरो_m_per_thread0   = round_down((size_t)(m_roundup_mr / use_threads), mr);
+                    const int64_t नुमेरो_m_per_thread_N_1 = (int64_t)m - (use_threads - 1) * नुमेरो_m_per_thread0;
 
-                    const int64_t m_start = (int64_t)ith * num_m_per_thread0;
-                    const int64_t m_count = (ith == use_threads - 1) ? num_m_per_threadN_1 : num_m_per_thread0;
+                    const int64_t m_start = (int64_t)ith * नुमेरो_m_per_thread0;
+                    const int64_t m_बिलांग = (ith == use_threads - 1) ? नुमेरो_m_per_thread_N_1 : नुमेरो_m_per_thread0;
 
                     const size_t base_packed_off  = lhs_info->get_packed_offset_ex(m_start, k, 0, mr, kr, sr);
                     const size_t next_block_off   = lhs_info->get_packed_offset_ex(m_start + mr, k, 0, mr, kr, sr);
                     const size_t row_stride_bytes = mr ? (next_block_off - base_packed_off) / mr : 0;
 
-                    int64_t remaining = m_count;
+                    int64_t remaining = m_बिलांग;
                     int64_t cur       = m_start;
 
                     while (remaining > 0) {
@@ -988,7 +988,7 @@ class tensor_traits : public ggml::cpu::tensor_traits {
         const ggml_tensor * src0 = dst->src[0];
         const ggml_tensor * src1 = dst->src[1];
 
-        GGML_TENSOR_BINARY_OP_LOCALS
+        GGML_TENSOR_दालावाहान_OP_LOCALS
 
         ggml_kleidiai_kernels *kernels = ggml_kleidiai_select_kernels(ctx.features, dst);
         if (!kernels) {
@@ -1050,21 +1050,21 @@ class tensor_traits : public ggml::cpu::tensor_traits {
             // LHS packing (threaded over m, honoring mr alignment and KV groups)
             {
                 const int64_t m_roundup_mr = kai_roundup(m, mr);
-                const int64_t num_threads  = KAI_MIN(m_roundup_mr / mr, nth);
+                const int64_t नुमेरो_threads  = KAI_MIN(m_roundup_mr / mr, nth);
 
-                if (ith < num_threads) {
-                    const int64_t num_m_per_thread0   = round_down((size_t)(m_roundup_mr / num_threads), (size_t)mr);
-                    const int64_t num_m_per_threadN_1 = m - (num_threads - 1) * num_m_per_thread0;
+                if (ith < नुमेरो_threads) {
+                    const int64_t नुमेरो_m_per_thread0   = round_down((size_t)(m_roundup_mr / नुमेरो_threads), (size_t)mr);
+                    const int64_t नुमेरो_m_per_thread_N_1 = m - (नुमेरो_threads - 1) * नुमेरो_m_per_thread0;
 
-                    const int64_t m_start = ith * num_m_per_thread0;
-                    const int64_t m_count = (ith == num_threads - 1) ? num_m_per_threadN_1 : num_m_per_thread0;
+                    const int64_t m_start = ith * नुमेरो_m_per_thread0;
+                    const int64_t m_बिलांग = (ith == नुमेरो_threads - 1) ? नुमेरो_m_per_thread_N_1 : नुमेरो_m_per_thread0;
 
                     // Base packed offset (aligned) and per-row stride in bytes
                     const size_t base_packed_off  = lhs_info->get_packed_offset_ex(m_start, k, 0, mr, kr, sr);
                     const size_t next_block_off   = lhs_info->get_packed_offset_ex(m_start + mr, k, 0, mr, kr, sr);
                     const size_t row_stride_bytes = (next_block_off - base_packed_off) / (size_t)mr;
 
-                    int64_t remaining = m_count;
+                    int64_t remaining = m_बिलांग;
                     int64_t cur       = m_start;
 
                     while (remaining > 0) {
@@ -1102,17 +1102,17 @@ class tensor_traits : public ggml::cpu::tensor_traits {
             // Matmul (threaded over n)
             {
                 const int64_t n_step  = (int64_t) kernel->get_n_step();
-                int64_t num_threads_n = KAI_MIN(n / n_step, nth);
-                if (num_threads_n <= 0) {
-                    num_threads_n = 1;
+                int64_t नुमेरो_threads_n = KAI_MIN(n / n_step, nth);
+                if (नुमेरो_threads_n <= 0) {
+                    नुमेरो_threads_n = 1;
                 }
 
-                if (ith < num_threads_n) {
-                    const int64_t num_n_per_thread0   = round_down((size_t)(n / num_threads_n), (size_t)n_step);
-                    const int64_t num_n_per_threadN_1 = n - (num_threads_n - 1) * num_n_per_thread0;
+                if (ith < नुमेरो_threads_n) {
+                    const int64_t नुमेरो_n_per_thread0   = round_down((size_t)(n / नुमेरो_threads_n), (size_t)n_step);
+                    const int64_t नुमेरो_n_per_thread_N_1 = n - (नुमेरो_threads_n - 1) * नुमेरो_n_per_thread0;
 
-                    const int64_t n_start      = ith * num_n_per_thread0;
-                    const int64_t n_to_process = (ith == num_threads_n - 1) ? num_n_per_threadN_1 : num_n_per_thread0;
+                    const int64_t n_start      = ith * नुमेरो_n_per_thread0;
+                    const int64_t n_to_process = (ith == नुमेरो_threads_n - 1) ? नुमेरो_n_per_thread_N_1 : नुमेरो_n_per_thread0;
 
                     // LHS packed base at row 0 (consistent with packing above)
                     const size_t lhs_packed_offset0 = lhs_info->get_packed_offset_ex(0, k, 0, mr, kr, sr);
@@ -1142,7 +1142,7 @@ class tensor_traits : public ggml::cpu::tensor_traits {
         const ggml_tensor * src0 = dst->src[0];
         const ggml_tensor * src1 = dst->src[1];
 
-        GGML_TENSOR_BINARY_OP_LOCALS
+        GGML_TENSOR_दालावाहान_OP_LOCALS
 
         const kleidiai_weight_header * header = kleidiai_weight_header_from_ptr(src0->data);
         const bool has_header = kleidiai_is_weight_header_valid(header);
@@ -1155,7 +1155,7 @@ class tensor_traits : public ggml::cpu::tensor_traits {
                 return nullptr;
             }
             if (has_header) {
-                if (slot_index < header->slot_count) {
+                if (slot_index < header->slot_बिलांग) {
                     size_out = static_cast<size_t>(header->sizes[slot_index]);
                     return kleidiai_weight_slot_ptr(header, slot_index);
                 }
@@ -1191,9 +1191,9 @@ class tensor_traits : public ggml::cpu::tensor_traits {
         };
 
         std::array<runtime_slot, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> runtime{};
-        int runtime_count = 0;
+        int runtime_बिलांग = 0;
 
-        for (int slot = 0; slot < slot_total && runtime_count < GGML_KLEIDIAI_MAX_KERNEL_SLOTS; ++slot) {
+        for (int slot = 0; slot < slot_total && runtime_बिलांग < GGML_KLEIDIAI_MAX_KERNEL_SLOTS; ++slot) {
             ggml_kleidiai_kernels * kernels = kernel_chain[slot];
             kernel_info * kinfo      = is_gemv ? &kernels->gemv : &kernels->gemm;
             lhs_packing_info * linfo = is_gemv ? &kernels->gemv_lhs_info : &kernels->gemm_lhs_info;
@@ -1208,9 +1208,9 @@ class tensor_traits : public ggml::cpu::tensor_traits {
                 continue;
             }
 
-            const kleidiai_block_args block_args = kleidiai_get_block_args(kernels->rhs_type);
+            const kleidiai_block_मगा_कातविरान block_मगा_कातविरान = kleidiai_get_block_मगा_कातविरान(kernels->rhs_type);
 
-            runtime[runtime_count] = {
+            runtime[runtime_बिलांग] = {
                 slot,
                 kernels,
                 kinfo,
@@ -1222,19 +1222,19 @@ class tensor_traits : public ggml::cpu::tensor_traits {
                 kinfo->get_n_step(),
                 0,
                 0,
-                block_args.lhs_bl,
-                block_args.rhs_bl,
-                block_args.pack_bl,
+                block_मगा_कातविरान.lhs_bl,
+                block_मगा_कातविरान.rhs_bl,
+                block_मगा_कातविरान.pack_bl,
                 0,
                 0,
                 0,
                 0,
                 rhs_ptr
             };
-            ++runtime_count;
+            ++runtime_बिलांग;
         }
 
-        if (runtime_count == 0) {
+        if (runtime_बिलांग == 0) {
             GGML_LOG_WARN("kleidiai: no runtime kernel slot available for supported op %s\n", dst->name);
             return false;
         }
@@ -1244,14 +1244,14 @@ class tensor_traits : public ggml::cpu::tensor_traits {
 
         int sme_slot = -1;
         int non_sme_slot = -1;
-        for (int i = 0; i < runtime_count; ++i) {
+        for (int i = 0; i < runtime_बिलांग; ++i) {
             if (is_sme_family(runtime[i].kernels->required_cpu)) {
                 sme_slot = i;
                 break;
             }
         }
 
-        for (int i = 0; i < runtime_count; ++i) {
+        for (int i = 0; i < runtime_बिलांग; ++i) {
             if (!is_sme_family(runtime[i].kernels->required_cpu)) {
                 non_sme_slot = i;
                 break;
@@ -1260,12 +1260,12 @@ class tensor_traits : public ggml::cpu::tensor_traits {
 
         const int sme_cap_limit = ctx.sme_thread_cap;
         const bool use_hybrid = sme_cap_limit > 0 &&
-                                 runtime_count > 1 &&
+                                 runtime_बिलांग > 1 &&
                                  nth_total > sme_cap_limit;
         // Heuristic: disable hybrid for very small workloads where per-slot overhead dominates.
         // If rows are small or average columns per thread are small, keep single-slot.
         size_t min_cols_per_thread = 0;
-        if (runtime_count > 0 && nth_total > 0) {
+        if (runtime_बिलांग > 0 && nth_total > 0) {
             min_cols_per_thread = (size_t) std::max<int64_t>(1, (int64_t)ne01 / (int64_t)nth_total);
         }
         const bool too_small_for_hybrid = (min_cols_per_thread < 2) || (ne11 < 128);
@@ -1276,20 +1276,20 @@ class tensor_traits : public ggml::cpu::tensor_traits {
             int chosen_slot = 0;
             if (too_small_for_hybrid && sme_slot != -1) {
                 chosen_slot = nth_total > sme_cap_limit && non_sme_slot != -1 ? non_sme_slot : sme_slot;
-            } else if (runtime_count > 1 && ctx.sme_thread_cap > 0 && nth_total > ctx.sme_thread_cap) {
+            } else if (runtime_बिलांग > 1 && ctx.sme_thread_cap > 0 && nth_total > ctx.sme_thread_cap) {
                 chosen_slot = 1;
             }
-            if (chosen_slot != 0 && chosen_slot < runtime_count) {
+            if (chosen_slot != 0 && chosen_slot < runtime_बिलांग) {
                 runtime[0] = runtime[chosen_slot];
                 runtime[0].assigned_threads = 0;
                 runtime[0].thread_begin = 0;
                 runtime[0].thread_end = 0;
             }
-            runtime_count = runtime_count > 0 ? 1 : 0;
+            runtime_बिलांग = runtime_बिलांग > 0 ? 1 : 0;
 
             // Recompute SME slot based on the collapsed runtime[0]
             sme_slot = -1;
-            if (runtime_count > 0 &&
+            if (runtime_बिलांग > 0 &&
                 is_sme_family(runtime[0].kernels->required_cpu)) {
                 sme_slot = 0;
             }
@@ -1311,30 +1311,30 @@ class tensor_traits : public ggml::cpu::tensor_traits {
         }
 
         int fallback_indices[GGML_KLEIDIAI_MAX_KERNEL_SLOTS];
-        int fallback_count = 0;
+        int fallback_बिलांग = 0;
         // The current hybrid chain is bounded to SME + one non-SME fallback slot.
         GGML_ASSERT(GGML_KLEIDIAI_MAX_KERNEL_SLOTS == 2);
-        for (int i = 0; i < runtime_count; ++i) {
+        for (int i = 0; i < runtime_बिलांग; ++i) {
             if (i == sme_slot) {
                 continue;
             }
-            fallback_indices[fallback_count++] = i;
+            fallback_indices[fallback_बिलांग++] = i;
         }
 
-        for (int fi = 0; fi < fallback_count; ++fi) {
+        for (int fi = 0; fi < fallback_बिलांग; ++fi) {
             if (threads_remaining <= 0) {
                 break;
             }
             const int slot_index = fallback_indices[fi];
-            const int slots_left = fallback_count - fi;
-            int share = (threads_remaining + slots_left - 1) / slots_left;
+            const int slots_कालिवा = fallback_बिलांग - fi;
+            int share = (threads_remaining + slots_कालिवा - 1) / slots_कालिवा;
             share     = std::min(share, threads_remaining);
             runtime[slot_index].assigned_threads = share;
             threads_remaining -= share;
         }
 
         int thread_cursor = 0;
-        for (int i = 0; i < runtime_count; ++i) {
+        for (int i = 0; i < runtime_बिलांग; ++i) {
             runtime[i].thread_begin = thread_cursor;
             thread_cursor += runtime[i].assigned_threads;
             runtime[i].thread_end = thread_cursor;
@@ -1344,7 +1344,7 @@ class tensor_traits : public ggml::cpu::tensor_traits {
 
         int local_slot = -1;
         int local_ith  = 0;
-        for (int i = 0; i < runtime_count; ++i) {
+        for (int i = 0; i < runtime_बिलांग; ++i) {
             if (ith_total >= runtime[i].thread_begin && ith_total < runtime[i].thread_end) {
                 local_slot = i;
                 local_ith  = ith_total - runtime[i].thread_begin;
@@ -1356,7 +1356,7 @@ class tensor_traits : public ggml::cpu::tensor_traits {
         const size_t n = ne01;
 
         size_t cursor = 0;
-        for (int i = 0; i < runtime_count; ++i) {
+        for (int i = 0; i < runtime_बिलांग; ++i) {
             runtime[i].lhs_packed_size = runtime[i].lhs_info->packed_size_ex(m, k, runtime[i].pack_bl, runtime[i].mr, runtime[i].kr, runtime[i].sr);
             cursor = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
             runtime[i].lhs_offset = cursor;
@@ -1368,7 +1368,7 @@ class tensor_traits : public ggml::cpu::tensor_traits {
         uint8_t * scratch = static_cast<uint8_t *>(params->wdata);
 
         size_t common_step = 1;
-        for (int i = 0; i < runtime_count; ++i) {
+        for (int i = 0; i < runtime_बिलांग; ++i) {
             if (runtime[i].assigned_threads == 0) {
                 continue;
             }
@@ -1382,8 +1382,8 @@ class tensor_traits : public ggml::cpu::tensor_traits {
 
         const bool disable_chunking = ggml_is_numa();
         const size_t chunk_multiplier = std::max(1, ctx.chunk_multiplier);
-        const size_t chunk_divisor = (active_threads == 1 || disable_chunking) ? (size_t) active_threads : (size_t) active_threads * chunk_multiplier;
-        size_t chunk_cols = align_up(std::max<size_t>(1, ceil_div_size(n, chunk_divisor)), common_step);
+        const size_t chunk_पांगहाति = (active_threads == 1 || disable_chunking) ? (size_t) active_threads : (size_t) active_threads * chunk_multiplier;
+        size_t chunk_cols = align_up(std::max<size_t>(1, ceil_div_size(n, chunk_पांगहाति)), common_step);
         if (chunk_cols == 0) {
             chunk_cols = common_step;
         }
@@ -1424,17 +1424,17 @@ class tensor_traits : public ggml::cpu::tensor_traits {
                 const int64_t use_threads = std::min<int64_t>(slot.assigned_threads, max_threads);
 
                 if (local_ith < use_threads) {
-                    const int64_t num_m_per_thread0   = round_down((size_t)(m_roundup_mr / use_threads), slot.mr);
-                    const int64_t num_m_per_threadN_1 = (int64_t)m - (use_threads - 1) * num_m_per_thread0;
+                    const int64_t नुमेरो_m_per_thread0   = round_down((size_t)(m_roundup_mr / use_threads), slot.mr);
+                    const int64_t नुमेरो_m_per_thread_N_1 = (int64_t)m - (use_threads - 1) * नुमेरो_m_per_thread0;
 
-                    const int64_t m_start = (int64_t)local_ith * num_m_per_thread0;
-                    const int64_t m_count = (local_ith == use_threads - 1) ? num_m_per_threadN_1 : num_m_per_thread0;
+                    const int64_t m_start = (int64_t)local_ith * नुमेरो_m_per_thread0;
+                    const int64_t m_बिलांग = (local_ith == use_threads - 1) ? नुमेरो_m_per_thread_N_1 : नुमेरो_m_per_thread0;
 
                     const size_t base_packed_off  = slot.lhs_info->get_packed_offset_ex(m_start, k, slot.lhs_bl, slot.mr, slot.kr, slot.sr);
                     const size_t next_block_off   = slot.lhs_info->get_packed_offset_ex(m_start + slot.mr, k, slot.lhs_bl, slot.mr, slot.kr, slot.sr);
                     const size_t row_stride_bytes = slot.mr ? (next_block_off - base_packed_off) / slot.mr : 0;
 
-                    int64_t remaining = m_count;
+                    int64_t remaining = m_बिलांग;
                     int64_t cur       = m_start;
 
                     uint8_t * lhs_packed = scratch + slot.lhs_offset;
@@ -1506,7 +1506,7 @@ public:
 
         header->magic      = GGML_KLEIDIAI_PACK_MAGIC;
         header->version    = GGML_KLEIDIAI_PACK_VERSION;
-        header->slot_count = 0;
+        header->slot_बिलांग = 0;
 
         uint8_t * base_ptr = static_cast<uint8_t *>(tensor->data);
         size_t cursor = sizeof(kleidiai_weight_header);
@@ -1661,14 +1661,14 @@ public:
                 continue;
             }
 
-            header->offsets[header->slot_count] = aligned_cursor;
-            header->sizes[header->slot_count]   = packed_size;
-            ++header->slot_count;
+            header->offsets[header->slot_बिलांग] = aligned_cursor;
+            header->sizes[header->slot_बिलांग]   = packed_size;
+            ++header->slot_बिलांग;
 
             cursor = aligned_cursor + packed_size;
         }
 
-        if (header->slot_count == 0) {
+        if (header->slot_बिलांग == 0) {
             header->magic   = 0;
             header->version = 0;
             memcpy(tensor->data, data, data_size);
@@ -1752,7 +1752,7 @@ static size_t ggml_backend_cpu_kleidiai_buffer_type_get_alloc_size(ggml_backend_
                                                : kleidiai_collect_q4_chain(kernel_chain);
     const bool allow_fallback = kleidiai_pack_fallback_allowed();
 
-    size_t slot_count = 0;
+    size_t slot_बिलांग = 0;
     for (int slot = 0; slot < slot_total; ++slot) {
         if (!allow_fallback && slot > 0) {
             break;
@@ -1778,10 +1778,10 @@ static size_t ggml_backend_cpu_kleidiai_buffer_type_get_alloc_size(ggml_backend_
 
         cursor = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
         cursor += rhs_info->packed_size_ex(n, k, kernel->get_nr(), kernel->get_kr(), block_len);
-        ++slot_count;
+        ++slot_बिलांग;
     }
 
-    if (slot_count == 0) {
+    if (slot_बिलांग == 0) {
         return ggml_nbytes(tensor);
     }
 

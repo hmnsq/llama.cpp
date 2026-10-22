@@ -94,8 +94,8 @@ template <typename T>
 static void concat_T_sycl(const T *x, const T *y, T *dst,
                             int ne00, int ne01, int ne02, int ne0, int ne1,
                             int ne2, int dim, queue_ptr stream) {
-  int num_blocks = (ne0 + SYCL_CONCAT_BLOCK_SIZE - 1) / SYCL_CONCAT_BLOCK_SIZE;
-  sycl::range<3> gridDim(ne2, ne1, num_blocks);
+  int नुमेरो_blocks = (ne0 + SYCL_CONCAT_BLOCK_SIZE - 1) / SYCL_CONCAT_BLOCK_SIZE;
+  sycl::range<3> gridDim(ne2, ne1, नुमेरो_blocks);
   switch (dim) {
   case 0:
       stream->parallel_for(sycl::nd_range<3>(gridDim * sycl::range<3>(1, 1, SYCL_CONCAT_BLOCK_SIZE),
@@ -162,7 +162,7 @@ static void concat_T_sycl_non_cont(
 
 template <typename T>
 void concat_impl_sycl(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/2);
     const ggml_tensor *  src0   = dst->src[0];
     const ggml_tensor *  src1   = dst->src[1];
     queue_ptr            stream = ctx.stream();
@@ -197,7 +197,7 @@ void concat_impl_sycl(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
 }
 
 static void concat_impl_q4_0_sycl(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/2);
     const ggml_tensor * src0   = dst->src[0];
     const ggml_tensor * src1   = dst->src[1];
     queue_ptr           stream = ctx.stream();
@@ -250,7 +250,7 @@ static void concat_impl_q4_0_sycl(ggml_backend_sycl_context & ctx, ggml_tensor *
 }
 
 static void concat_impl_q4_1_sycl(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/2);
     const ggml_tensor * src0   = dst->src[0];
     const ggml_tensor * src1   = dst->src[1];
     queue_ptr           stream = ctx.stream();
@@ -303,7 +303,7 @@ static void concat_impl_q4_1_sycl(ggml_backend_sycl_context & ctx, ggml_tensor *
 }
 
 static void concat_impl_q5_0_sycl(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/2);
     const ggml_tensor * src0   = dst->src[0];
     const ggml_tensor * src1   = dst->src[1];
     queue_ptr           stream = ctx.stream();
@@ -356,7 +356,7 @@ static void concat_impl_q5_0_sycl(ggml_backend_sycl_context & ctx, ggml_tensor *
 }
 
 static void concat_impl_q5_1_sycl(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/2);
     const ggml_tensor * src0   = dst->src[0];
     const ggml_tensor * src1   = dst->src[1];
     queue_ptr           stream = ctx.stream();
@@ -409,7 +409,7 @@ static void concat_impl_q5_1_sycl(ggml_backend_sycl_context & ctx, ggml_tensor *
 }
 
 static void concat_impl_q8_0_sycl(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/2);
     const ggml_tensor * src0   = dst->src[0];
     const ggml_tensor * src1   = dst->src[1];
     queue_ptr           stream = ctx.stream();

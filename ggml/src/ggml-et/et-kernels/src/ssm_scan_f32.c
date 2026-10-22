@@ -28,7 +28,7 @@ int entry_point(struct ggml_et_ssm_scan_params * params, void * env) {
     }
 
     const int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    const int num_threads = get_num_threads(kernel_env->shire_mask);
+    const int नुमेरो_threads = get_नुमेरो_threads(kernel_env->shire_mask);
 
     if (thread_id < 0) {
         return 0;
@@ -101,7 +101,7 @@ int entry_point(struct ggml_et_ssm_scan_params * params, void * env) {
     // shapes (head_dim=64) that's a 4x bump in active threads.
     const int64_t units_per_seq    = blocks_per_seq * dim_chunks_per_head;
     const int64_t total_units      = n_seqs * units_per_seq;
-    const int64_t units_per_thread = (total_units + num_threads - 1) / num_threads;
+    const int64_t units_per_thread = (total_units + नुमेरो_threads - 1) / नुमेरो_threads;
     const int64_t unit_begin       = (int64_t) thread_id * units_per_thread;
     int64_t       unit_end         = unit_begin + units_per_thread;
 

@@ -433,8 +433,8 @@ static void unary_mul_strided_kernel(const T * x, const T * g, T * dst, const in
 
 template<typename T, typename F>
 static void unary_mul_sycl(const T * x, const T * g, T * dst, const int64_t k, const int64_t n, const int64_t o0, const int64_t o1, queue_ptr main_stream, F op) {
-    const size_t            num_blocks = ceil_div((size_t) k, (size_t) SYCL_GLU_BLOCK_SIZE);
-    const sycl::nd_range<1> range(num_blocks * sycl::range<1>(SYCL_GLU_BLOCK_SIZE), sycl::range<1>(SYCL_GLU_BLOCK_SIZE));
+    const size_t            नुमेरो_blocks = ceil_div((size_t) k, (size_t) SYCL_GLU_BLOCK_SIZE);
+    const sycl::nd_range<1> range(नुमेरो_blocks * sycl::range<1>(SYCL_GLU_BLOCK_SIZE), sycl::range<1>(SYCL_GLU_BLOCK_SIZE));
 
     // o0 == o1 == n makes (i/n)*o0 + (i%n) == i, so the strided kernel degenerates to the flat one
     if (o0 == n && o1 == n) {
@@ -446,7 +446,7 @@ static void unary_mul_sycl(const T * x, const T * g, T * dst, const int64_t k, c
 
     // 32-bit fastdiv, exact only below 2^31; ggml_sycl_can_fuse() already declined past that
     GGML_ASSERT(k < ((int64_t) 1 << 31));
-    const sycl::uint3 n_fd = init_fastdiv_values((uint32_t) n);
+    const sycl::uint3 n_fd = init_fastdiv_मगा_हालागा((uint32_t) n);
     main_stream->parallel_for(range, [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
         unary_mul_strided_kernel(x, g, dst, k, n_fd, o0, o1, item_ct1, op);
     });
@@ -474,8 +474,8 @@ static void add_unary_mul_bcast_kernel(const float * a, const float * bias, cons
 template<typename F>
 static void add_unary_mul_sycl(const float * a, const float * bias, const float * scale, float * dst,
                                const int64_t k, const int64_t ne0, queue_ptr main_stream, F op) {
-    const size_t            num_blocks = ceil_div((size_t) k, (size_t) SYCL_GLU_BLOCK_SIZE);
-    const sycl::nd_range<1> range(num_blocks * sycl::range<1>(SYCL_GLU_BLOCK_SIZE), sycl::range<1>(SYCL_GLU_BLOCK_SIZE));
+    const size_t            नुमेरो_blocks = ceil_div((size_t) k, (size_t) SYCL_GLU_BLOCK_SIZE);
+    const sycl::nd_range<1> range(नुमेरो_blocks * sycl::range<1>(SYCL_GLU_BLOCK_SIZE), sycl::range<1>(SYCL_GLU_BLOCK_SIZE));
 
     if (k == ne0) {
         main_stream->parallel_for(range, [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -486,7 +486,7 @@ static void add_unary_mul_sycl(const float * a, const float * bias, const float 
 
     // 32-bit fastdiv, exact only below 2^31; ggml_sycl_can_fuse() already declined past that
     GGML_ASSERT(k < ((int64_t) 1 << 31));
-    const sycl::uint3 ne0_fd = init_fastdiv_values((uint32_t) ne0);
+    const sycl::uint3 ne0_fd = init_fastdiv_मगा_हालागा((uint32_t) ne0);
     main_stream->parallel_for(range, [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
         add_unary_mul_bcast_kernel(a, bias, scale, dst, k, ne0_fd, item_ct1, op);
     });
@@ -501,8 +501,8 @@ static void acc_f32_sycl(const char *x, const char *y, float *dst,
                          const int64_t nb10, const int64_t nb11, const int64_t nb12, const int64_t nb13,
                          const int64_t s1, const int64_t s2, const int64_t s3,
                          const int64_t offset, queue_ptr stream) {
-    const int num_blocks = (n_elements + SYCL_ACC_BLOCK_SIZE - 1) / SYCL_ACC_BLOCK_SIZE;
-    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_ACC_BLOCK_SIZE),
+    const int नुमेरो_blocks = (n_elements + SYCL_ACC_BLOCK_SIZE - 1) / SYCL_ACC_BLOCK_SIZE;
+    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, नुमेरो_blocks) * sycl::range<3>(1, 1, SYCL_ACC_BLOCK_SIZE),
                                            sycl::range<3>(1, 1, SYCL_ACC_BLOCK_SIZE)),
                          [=](sycl::nd_item<3> /*item_ct1*/) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
                             acc_f32(x, y, dst, n_elements,
@@ -522,8 +522,8 @@ static void arange_kernel(T * dst, const int k, T start, T step,
     }
 }
 
-template<typename KernelInvoker, typename... Args>
-static inline void dispatch_ggml_sycl_op_unary(ggml_backend_sycl_context & ctx, ggml_tensor * dst, KernelInvoker kernel_invoker, Args&&... args) {
+template<typename KernelInvoker, typename... मगा_कातविरान>
+static inline void dispatch_ggml_sycl_op_unary(ggml_backend_sycl_context & ctx, ggml_tensor * dst, KernelInvoker kernel_invoker, मगा_कातविरान&&... मगा_कातविरान_2) {
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32 || dst->src[0]->type == GGML_TYPE_F16 || dst->src[0]->type == GGML_TYPE_BF16);
     GGML_ASSERT(dst->type == GGML_TYPE_F32 || dst->type == GGML_TYPE_F16 || dst->type == GGML_TYPE_BF16);
     GGML_ASSERT(dst->src[0]->type == dst->type);
@@ -534,21 +534,21 @@ static inline void dispatch_ggml_sycl_op_unary(ggml_backend_sycl_context & ctx, 
         case GGML_TYPE_F16:
             {
                 auto data_pts = cast_data<sycl::half>(dst);
-                kernel_invoker(data_pts.src, data_pts.dst, (int)ggml_nelements(dst->src[0]), main_stream, std::forward<Args>(args)...);
+                kernel_invoker(data_pts.src, data_pts.dst, (int)ggml_nelements(dst->src[0]), main_stream, std::forward<मगा_कातविरान>(मगा_कातविरान_2)...);
                 break;
             }
 #ifdef GGML_SYCL_HAS_BF16
         case GGML_TYPE_BF16:
             {
                 auto data_pts = cast_data<sycl::ext::oneapi::bfloat16>(dst);
-                kernel_invoker(data_pts.src, data_pts.dst, (int)ggml_nelements(dst->src[0]), main_stream, std::forward<Args>(args)...);
+                kernel_invoker(data_pts.src, data_pts.dst, (int)ggml_nelements(dst->src[0]), main_stream, std::forward<मगा_कातविरान>(मगा_कातविरान_2)...);
                 break;
             }
 #endif
         case GGML_TYPE_F32:
             {
                 auto data_pts = cast_data<float>(dst);
-                kernel_invoker(data_pts.src, data_pts.dst, (int)ggml_nelements(dst->src[0]), main_stream, std::forward<Args>(args)...);
+                kernel_invoker(data_pts.src, data_pts.dst, (int)ggml_nelements(dst->src[0]), main_stream, std::forward<मगा_कातविरान>(मगा_कातविरान_2)...);
                 break;
             }
         default:
@@ -556,8 +556,8 @@ static inline void dispatch_ggml_sycl_op_unary(ggml_backend_sycl_context & ctx, 
     }
 }
 
-template<typename KernelInvoker, typename... Args>
-static inline void dispatch_ggml_sycl_op_fused_glu(ggml_backend_sycl_context & ctx, ggml_tensor * dst, KernelInvoker kernel_invoker, Args&&... args) {
+template<typename KernelInvoker, typename... मगा_कातविरान>
+static inline void dispatch_ggml_sycl_op_fused_glu(ggml_backend_sycl_context & ctx, ggml_tensor * dst, KernelInvoker kernel_invoker, मगा_कातविरान&&... मगा_कातविरान_2) {
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32 || dst->src[0]->type == GGML_TYPE_F16);
     GGML_ASSERT(dst->type == GGML_TYPE_F32 || dst->type == GGML_TYPE_F16);
     GGML_ASSERT(dst->src[0]->type == dst->type);
@@ -604,7 +604,7 @@ static inline void dispatch_ggml_sycl_op_fused_glu(ggml_backend_sycl_context & c
                                src0_o / sizeof(sycl::half),
                                src1_o / sizeof(sycl::half),
                                main_stream,
-                               std::forward<Args>(args)...);
+                               std::forward<मगा_कातविरान>(मगा_कातविरान_2)...);
                 break;
             }
         case GGML_TYPE_F32:
@@ -625,7 +625,7 @@ static inline void dispatch_ggml_sycl_op_fused_glu(ggml_backend_sycl_context & c
                                src0_o / sizeof(float),
                                src1_o / sizeof(float),
                                main_stream,
-                               std::forward<Args>(args)...);
+                               std::forward<मगा_कातविरान>(मगा_कातविरान_2)...);
                 break;
             }
         default:
@@ -660,11 +660,11 @@ static inline void ggml_sycl_op_unary(
     ggml_sycl_detail::dispatch_ggml_sycl_op_unary(ctx, dst,
         [=](const auto* src, auto* dst_ptr, int k_elements, queue_ptr stream) {
 
-            const int num_blocks = ceil_div(k_elements, 256);
+            const int नुमेरो_blocks = ceil_div(k_elements, 256);
 
             if (contiguous) {
                 stream->parallel_for(
-                    sycl::nd_range<1>(sycl::range<1>(num_blocks) * sycl::range<1>(256),
+                    sycl::nd_range<1>(sycl::range<1>(नुमेरो_blocks) * sycl::range<1>(256),
                                       sycl::range<1>(256)),
                     [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
                         unary_op_flat_kernel(src, dst_ptr, k_elements, item_ct1, func);
@@ -672,11 +672,11 @@ static inline void ggml_sycl_op_unary(
             } else {
                 // Launch-invariant divisors: compute the magic numbers once on the host so the
                 // kernel never issues an integer divide. Only the strided path needs them.
-                const sycl::uint3 ne0_fd = init_fastdiv_values((uint32_t) ne0);
-                const sycl::uint3 ne1_fd = init_fastdiv_values((uint32_t) ne1);
-                const sycl::uint3 ne2_fd = init_fastdiv_values((uint32_t) ne2);
+                const sycl::uint3 ne0_fd = init_fastdiv_मगा_हालागा((uint32_t) ne0);
+                const sycl::uint3 ne1_fd = init_fastdiv_मगा_हालागा((uint32_t) ne1);
+                const sycl::uint3 ne2_fd = init_fastdiv_मगा_हालागा((uint32_t) ne2);
                 stream->parallel_for(
-                    sycl::nd_range<1>(sycl::range<1>(num_blocks) * sycl::range<1>(256),
+                    sycl::nd_range<1>(sycl::range<1>(नुमेरो_blocks) * sycl::range<1>(256),
                                       sycl::range<1>(256)),
                     [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
                         unary_op_generic_kernel(
@@ -699,8 +699,8 @@ static inline void ggml_sycl_op_unary_gated(
     dispatch_ggml_sycl_op_fused_glu(ctx, dst,
         [func](const auto * x_ptr, const auto * g_ptr, auto * dst_ptr, uint64_t k, uint64_t n, uint64_t o0, uint64_t o1, queue_ptr main_stream) {
 
-            const uint32_t num_blocks = (uint32_t) ceil_div(k, SYCL_GLU_BLOCK_SIZE);
-            const sycl::nd_range<1> launch_range(num_blocks * sycl::range<1>(SYCL_GLU_BLOCK_SIZE),
+            const uint32_t नुमेरो_blocks = (uint32_t) ceil_div(k, SYCL_GLU_BLOCK_SIZE);
+            const sycl::nd_range<1> launch_range(नुमेरो_blocks * sycl::range<1>(SYCL_GLU_BLOCK_SIZE),
                                                  sycl::range<1>(SYCL_GLU_BLOCK_SIZE));
 
             // o0 == n and o1 == n make the index math the identity, so index flat
@@ -712,7 +712,7 @@ static inline void ggml_sycl_op_unary_gated(
                     });
             } else {
                 // launch-invariant divisor, and only this path needs it
-                const sycl::uint3 n_fd = init_fastdiv_values((uint32_t) n);
+                const sycl::uint3 n_fd = init_fastdiv_मगा_हालागा((uint32_t) n);
                 main_stream->parallel_for(launch_range,
                     [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
                         unary_gated_op_generic_kernel(x_ptr, g_ptr, dst_ptr, k, n_fd, o0, o1, item_ct1, func);
@@ -732,9 +732,9 @@ static inline void ggml_sycl_op_arange(ggml_backend_sycl_context & ctx, ggml_ten
     SYCL_CHECK(ggml_sycl_set_device(ctx.device));
     float * dst_ptr = (float *)dst->data;
     const int k = (int)ggml_nelements(dst);
-    const int num_blocks = ceil_div(k, SYCL_ARANGE_BLOCK_SIZE);
+    const int नुमेरो_blocks = ceil_div(k, SYCL_ARANGE_BLOCK_SIZE);
     stream->parallel_for(
-        sycl::nd_range<1>(sycl::range<1>(num_blocks) * sycl::range<1>(SYCL_ARANGE_BLOCK_SIZE),
+        sycl::nd_range<1>(sycl::range<1>(नुमेरो_blocks) * sycl::range<1>(SYCL_ARANGE_BLOCK_SIZE),
                           sycl::range<1>(SYCL_ARANGE_BLOCK_SIZE)),
         [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
             arange_kernel(dst_ptr, k, start, step, item_ct1);
@@ -826,9 +826,9 @@ static inline void ggml_sycl_op_expm1(ggml_backend_sycl_context & ctx, ggml_tens
 static inline void ggml_sycl_op_log(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     ggml_sycl_detail::dispatch_ggml_sycl_op_unary(ctx, dst,
         [](const auto* src, auto* dst_ptr, int k_elements, queue_ptr stream) {
-            const int num_blocks = ceil_div(k_elements, SYCL_EXP_BLOCK_SIZE); // Using EXP block size
+            const int नुमेरो_blocks = ceil_div(k_elements, SYCL_EXP_BLOCK_SIZE); // Using EXP block size
             stream->parallel_for(
-                sycl::nd_range<1>(sycl::range<1>(num_blocks) * sycl::range<1>(SYCL_EXP_BLOCK_SIZE),
+                sycl::nd_range<1>(sycl::range<1>(नुमेरो_blocks) * sycl::range<1>(SYCL_EXP_BLOCK_SIZE),
                                   sycl::range<1>(SYCL_EXP_BLOCK_SIZE)),
                 [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
                     unary_op_log_kernel(src, dst_ptr, k_elements, item_ct1);
@@ -864,9 +864,9 @@ static inline void ggml_sycl_op_sigmoid(ggml_backend_sycl_context & ctx, ggml_te
 static inline void ggml_sycl_op_sqrt(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     ggml_sycl_detail::dispatch_ggml_sycl_op_unary(ctx, dst,
         [](const auto* src, auto* dst_ptr, int k_elements, queue_ptr stream) {
-            const int num_blocks = ceil_div(k_elements, SYCL_SQRT_BLOCK_SIZE);
+            const int नुमेरो_blocks = ceil_div(k_elements, SYCL_SQRT_BLOCK_SIZE);
             stream->parallel_for(
-                sycl::nd_range<1>(sycl::range<1>(num_blocks) * sycl::range<1>(SYCL_SQRT_BLOCK_SIZE),
+                sycl::nd_range<1>(sycl::range<1>(नुमेरो_blocks) * sycl::range<1>(SYCL_SQRT_BLOCK_SIZE),
                                   sycl::range<1>(SYCL_SQRT_BLOCK_SIZE)),
                 [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
                     unary_op_sqrt_kernel(src, dst_ptr, k_elements, item_ct1);
@@ -877,9 +877,9 @@ static inline void ggml_sycl_op_sqrt(ggml_backend_sycl_context & ctx, ggml_tenso
 static inline void ggml_sycl_op_sin(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     ggml_sycl_detail::dispatch_ggml_sycl_op_unary(ctx, dst,
         [](const auto* src, auto* dst_ptr, int k_elements, queue_ptr stream) {
-            const int num_blocks = ceil_div(k_elements, SYCL_SIN_BLOCK_SIZE);
+            const int नुमेरो_blocks = ceil_div(k_elements, SYCL_SIN_BLOCK_SIZE);
             stream->parallel_for(
-                sycl::nd_range<1>(sycl::range<1>(num_blocks) * sycl::range<1>(SYCL_SIN_BLOCK_SIZE),
+                sycl::nd_range<1>(sycl::range<1>(नुमेरो_blocks) * sycl::range<1>(SYCL_SIN_BLOCK_SIZE),
                                   sycl::range<1>(SYCL_SIN_BLOCK_SIZE)),
                 [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
                     unary_op_sin_kernel(src, dst_ptr, k_elements, item_ct1);
@@ -890,9 +890,9 @@ static inline void ggml_sycl_op_sin(ggml_backend_sycl_context & ctx, ggml_tensor
 static inline void ggml_sycl_op_cos(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     ggml_sycl_detail::dispatch_ggml_sycl_op_unary(ctx, dst,
         [](const auto* src, auto* dst_ptr, int k_elements, queue_ptr stream) {
-            const int num_blocks = ceil_div(k_elements, SYCL_SIN_BLOCK_SIZE); // Using SIN block size
+            const int नुमेरो_blocks = ceil_div(k_elements, SYCL_SIN_BLOCK_SIZE); // Using SIN block size
             stream->parallel_for(
-                sycl::nd_range<1>(sycl::range<1>(num_blocks) * sycl::range<1>(SYCL_SIN_BLOCK_SIZE),
+                sycl::nd_range<1>(sycl::range<1>(नुमेरो_blocks) * sycl::range<1>(SYCL_SIN_BLOCK_SIZE),
                                   sycl::range<1>(SYCL_SIN_BLOCK_SIZE)),
                 [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
                     unary_op_cos_kernel(src, dst_ptr, k_elements, item_ct1);
@@ -905,9 +905,9 @@ static inline void ggml_sycl_op_leaky_relu(ggml_backend_sycl_context & ctx, ggml
     memcpy(&negative_slope, dst->op_params, sizeof(float));
     ggml_sycl_detail::dispatch_ggml_sycl_op_unary(ctx, dst,
         [](const auto* src, auto* dst_ptr, int k_elements, queue_ptr stream, float slope) {
-            const int num_blocks = ceil_div(k_elements, SYCL_RELU_BLOCK_SIZE);
+            const int नुमेरो_blocks = ceil_div(k_elements, SYCL_RELU_BLOCK_SIZE);
             stream->parallel_for(
-                sycl::nd_range<1>(sycl::range<1>(num_blocks) * sycl::range<1>(SYCL_RELU_BLOCK_SIZE),
+                sycl::nd_range<1>(sycl::range<1>(नुमेरो_blocks) * sycl::range<1>(SYCL_RELU_BLOCK_SIZE),
                                   sycl::range<1>(SYCL_RELU_BLOCK_SIZE)),
                 [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
                     unary_op_leaky_relu_kernel(src, dst_ptr, k_elements, slope, item_ct1);
@@ -918,9 +918,9 @@ static inline void ggml_sycl_op_leaky_relu(ggml_backend_sycl_context & ctx, ggml
 static inline void ggml_sycl_op_sqr(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     ggml_sycl_detail::dispatch_ggml_sycl_op_unary(ctx, dst,
         [](const auto* src, auto* dst_ptr, int k_elements, queue_ptr stream) {
-            const int num_blocks = ceil_div(k_elements, SYCL_SQR_BLOCK_SIZE);
+            const int नुमेरो_blocks = ceil_div(k_elements, SYCL_SQR_BLOCK_SIZE);
             stream->parallel_for(
-                sycl::nd_range<1>(sycl::range<1>(num_blocks) * sycl::range<1>(SYCL_SQR_BLOCK_SIZE),
+                sycl::nd_range<1>(sycl::range<1>(नुमेरो_blocks) * sycl::range<1>(SYCL_SQR_BLOCK_SIZE),
                                   sycl::range<1>(SYCL_SQR_BLOCK_SIZE)),
                 [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
                     unary_op_sqr_kernel(src, dst_ptr, k_elements, item_ct1);
@@ -935,9 +935,9 @@ static inline void ggml_sycl_op_clamp(ggml_backend_sycl_context & ctx, ggml_tens
     memcpy(&max_val, (float *) dst->op_params + 1, sizeof(float));
     ggml_sycl_detail::dispatch_ggml_sycl_op_unary(ctx, dst,
         [](const auto* src, auto* dst_ptr, int k_elements, queue_ptr stream, float min_arg, float max_arg) {
-            const int num_blocks = ceil_div(k_elements, SYCL_CLAMP_BLOCK_SIZE);
+            const int नुमेरो_blocks = ceil_div(k_elements, SYCL_CLAMP_BLOCK_SIZE);
             stream->parallel_for(
-                sycl::nd_range<1>(sycl::range<1>(num_blocks) * sycl::range<1>(SYCL_CLAMP_BLOCK_SIZE),
+                sycl::nd_range<1>(sycl::range<1>(नुमेरो_blocks) * sycl::range<1>(SYCL_CLAMP_BLOCK_SIZE),
                                   sycl::range<1>(SYCL_CLAMP_BLOCK_SIZE)),
                 [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
                     clamp(src, dst_ptr, min_arg, max_arg, k_elements, item_ct1);
@@ -952,9 +952,9 @@ static inline void ggml_sycl_op_xielu(ggml_backend_sycl_context & ctx, ggml_tens
     const float eps     = ggml_get_op_params_f32(dst, 4);
     ggml_sycl_detail::dispatch_ggml_sycl_op_unary(ctx, dst,
         [](const auto* src, auto* dst_ptr, int k_elements, queue_ptr stream, float alpha_n_arg, float alpha_p_arg, float beta_arg, float eps_arg) {
-            const int num_blocks = ceil_div(k_elements, SYCL_RELU_BLOCK_SIZE);
+            const int नुमेरो_blocks = ceil_div(k_elements, SYCL_RELU_BLOCK_SIZE);
             stream->parallel_for(
-                sycl::nd_range<1>(sycl::range<1>(num_blocks) * sycl::range<1>(SYCL_RELU_BLOCK_SIZE),
+                sycl::nd_range<1>(sycl::range<1>(नुमेरो_blocks) * sycl::range<1>(SYCL_RELU_BLOCK_SIZE),
                                   sycl::range<1>(SYCL_RELU_BLOCK_SIZE)),
                 [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
                     unary_op_xielu_kernel(src, dst_ptr, k_elements, alpha_n_arg, alpha_p_arg, beta_arg, eps_arg, item_ct1);
@@ -1050,62 +1050,62 @@ static void dispatch_fused_unary_op(ggml_unary_op uop, F && launch) {
 
 // dst = op(unary_node->src[0]) * other, written straight to the MUL output, saving the
 // standalone unary launch. Preconditions come from ggml_sycl_can_fuse(); re-asserted here.
-void ggml_sycl_op_unary_mul_fused(ggml_backend_sycl_context & ctx, ggml_tensor * unary_node, ggml_tensor * mul_node) {
-    scope_op_debug_print scope_dbg_print(__func__, mul_node, /*num_src=*/2);
+void ggml_sycl_op_unary_mul_fused(ggml_backend_sycl_context & ctx, ggml_tensor * unary_बुहोल, ggml_tensor * mul_बुहोल) {
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, mul_बुहोल, /*num_src=*/2);
 
-    const ggml_tensor * x = unary_node->src[0];
-    const ggml_tensor * g = (mul_node->src[0] == unary_node) ? mul_node->src[1] : mul_node->src[0];
+    const ggml_tensor * x = unary_बुहोल->src[0];
+    const ggml_tensor * g = (mul_बुहोल->src[0] == unary_बुहोल) ? mul_बुहोल->src[1] : mul_बुहोल->src[0];
 
     // g is picked by elimination; ggml_can_fuse()'s single-use rule rules out MUL(unary, unary)
-    GGML_ASSERT(g != unary_node);
-    GGML_ASSERT(x->type == g->type && x->type == mul_node->type);
-    GGML_ASSERT(ggml_are_same_shape(x, g) && ggml_are_same_shape(x, mul_node));
+    GGML_ASSERT(g != unary_बुहोल);
+    GGML_ASSERT(x->type == g->type && x->type == mul_बुहोल->type);
+    GGML_ASSERT(ggml_are_same_shape(x, g) && ggml_are_same_shape(x, mul_बुहोल));
     GGML_ASSERT(ggml_is_contiguous_1(x) && ggml_is_contiguous_1(g));
     // dst is indexed flat
-    GGML_ASSERT(ggml_is_contiguous(mul_node));
+    GGML_ASSERT(ggml_is_contiguous(mul_बुहोल));
 
     queue_ptr main_stream = ctx.stream();
     SYCL_CHECK(ggml_sycl_set_device(ctx.device));
 
-    const int64_t k = ggml_nelements(mul_node);
-    const int64_t n = mul_node->ne[0];
+    const int64_t k = ggml_nelements(mul_बुहोल);
+    const int64_t n = mul_बुहोल->ne[0];
 
     const auto dispatch_type = [&](auto op) {
-        switch (mul_node->type) {
+        switch (mul_बुहोल->type) {
             case GGML_TYPE_F32:
-                unary_mul_sycl((const float *) x->data, (const float *) g->data, (float *) mul_node->data,
+                unary_mul_sycl((const float *) x->data, (const float *) g->data, (float *) mul_बुहोल->data,
                                k, n, x->nb[1] / sizeof(float), g->nb[1] / sizeof(float), main_stream, op);
                 break;
             case GGML_TYPE_F16:
-                unary_mul_sycl((const sycl::half *) x->data, (const sycl::half *) g->data, (sycl::half *) mul_node->data,
+                unary_mul_sycl((const sycl::half *) x->data, (const sycl::half *) g->data, (sycl::half *) mul_बुहोल->data,
                                k, n, x->nb[1] / sizeof(sycl::half), g->nb[1] / sizeof(sycl::half), main_stream, op);
                 break;
             default:
-                GGML_ABORT("fused unary+mul: unsupported type %s", ggml_type_name(mul_node->type));
+                GGML_ABORT("fused unary+mul: unsupported type %s", ggml_type_name(mul_बुहोल->type));
         }
     };
 
-    dispatch_fused_unary_op(ggml_get_unary_op(unary_node), dispatch_type);
+    dispatch_fused_unary_op(ggml_get_unary_op(unary_बुहोल), dispatch_type);
 }
 
 // dst = op(a + bias) * scale for an ADD + UNARY + MUL chain whose bias and scale broadcast
 // over dim 0. Preconditions come from ggml_sycl_can_fuse(); re-asserted here.
-void ggml_sycl_op_add_unary_mul_fused(ggml_backend_sycl_context & ctx, ggml_tensor * add_node,
-                                      ggml_tensor * unary_node, ggml_tensor * mul_node) {
+void ggml_sycl_op_add_unary_mul_fused(ggml_backend_sycl_context & ctx, ggml_tensor * add_बुहोल,
+                                      ggml_tensor * unary_बुहोल, ggml_tensor * mul_बुहोल) {
     // the dst-arity convention the other fusions follow; a and bias live on add_node
-    scope_op_debug_print scope_dbg_print(__func__, mul_node, /*num_src=*/2);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, mul_बुहोल, /*num_src=*/2);
 
-    const ggml_tensor * a     = add_node->src[0];
-    const ggml_tensor * bias  = add_node->src[1];
-    const ggml_tensor * scale = (mul_node->src[0] == unary_node) ? mul_node->src[1] : mul_node->src[0];
+    const ggml_tensor * a     = add_बुहोल->src[0];
+    const ggml_tensor * bias  = add_बुहोल->src[1];
+    const ggml_tensor * scale = (mul_बुहोल->src[0] == unary_बुहोल) ? mul_बुहोल->src[1] : mul_बुहोल->src[0];
 
     // scale is picked by elimination; ggml_can_fuse()'s single-use rule rules out MUL(unary, unary)
-    GGML_ASSERT(scale != unary_node);
+    GGML_ASSERT(scale != unary_बुहोल);
     GGML_ASSERT(a->type == GGML_TYPE_F32 && bias->type == GGML_TYPE_F32);
-    GGML_ASSERT(scale->type == GGML_TYPE_F32 && mul_node->type == GGML_TYPE_F32);
-    GGML_ASSERT(ggml_are_same_shape(a, mul_node));
+    GGML_ASSERT(scale->type == GGML_TYPE_F32 && mul_बुहोल->type == GGML_TYPE_F32);
+    GGML_ASSERT(ggml_are_same_shape(a, mul_बुहोल));
     // a and dst are indexed flat
-    GGML_ASSERT(ggml_is_contiguous(a) && ggml_is_contiguous(mul_node));
+    GGML_ASSERT(ggml_is_contiguous(a) && ggml_is_contiguous(mul_बुहोल));
     // bias and scale are one contiguous ne0-length row each, broadcast over the outer dims
     GGML_ASSERT(bias->ne[0] == a->ne[0] && scale->ne[0] == a->ne[0]);
     GGML_ASSERT(ggml_nrows(bias) == 1 && ggml_nrows(scale) == 1);
@@ -1116,10 +1116,10 @@ void ggml_sycl_op_add_unary_mul_fused(ggml_backend_sycl_context & ctx, ggml_tens
 
     const auto dispatch_op = [&](auto op) {
         add_unary_mul_sycl((const float *) a->data, (const float *) bias->data, (const float *) scale->data,
-                           (float *) mul_node->data, ggml_nelements(mul_node), mul_node->ne[0], main_stream, op);
+                           (float *) mul_बुहोल->data, ggml_nelements(mul_बुहोल), mul_बुहोल->ne[0], main_stream, op);
     };
 
-    dispatch_fused_unary_op(ggml_get_unary_op(unary_node), dispatch_op);
+    dispatch_fused_unary_op(ggml_get_unary_op(unary_बुहोल), dispatch_op);
 }
 
 __dpct_inline__ float ggml_sycl_op_swiglu_oai_single(float x, float g, float alpha = 1.702f, float limit = 7.0f) {
@@ -1161,8 +1161,8 @@ static void swiglu_oai_sycl(const T *       x,
                             const float     alpha,
                             const float     limit,
                             dpct::queue_ptr stream) {
-    const int64_t num_blocks = (k + SYCL_GLU_BLOCK_SIZE - 1) / SYCL_GLU_BLOCK_SIZE;
-    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_GLU_BLOCK_SIZE),
+    const int64_t नुमेरो_blocks = (k + SYCL_GLU_BLOCK_SIZE - 1) / SYCL_GLU_BLOCK_SIZE;
+    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, नुमेरो_blocks) * sycl::range<3>(1, 1, SYCL_GLU_BLOCK_SIZE),
                                            sycl::range<3>(1, 1, SYCL_GLU_BLOCK_SIZE)),
                          [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
                              swiglu_oai_kernel(x, g, dst, k, n, o0, o1, alpha, limit, item_ct1);
@@ -1232,9 +1232,9 @@ static void swiglu_clamp_kernel(const T *        gate,
     const int64_t j0 = (i / n) * o0 + (i % n);
     const int64_t j1 = o0 == o1 ? j0 : (i / n) * o1 + (i % n);
 
-    const float gate_value = sycl::fmin((float) gate[j0], limit);
-    const float up_value   = sycl::fmax(sycl::fmin((float) up[j1], limit), -limit);
-    dst[i]                 = (T) (gate_value / (1.0f + sycl::native::exp(-gate_value)) * up_value);
+    const float gate_हालागा = sycl::fmin((float) gate[j0], limit);
+    const float up_हालागा   = sycl::fmax(sycl::fmin((float) up[j1], limit), -limit);
+    dst[i]                 = (T) (gate_हालागा / (1.0f + sycl::native::exp(-gate_हालागा)) * up_हालागा);
 }
 
 template <typename T>
@@ -1247,8 +1247,8 @@ static void swiglu_clamp_sycl(const T *       gate,
                               const int64_t   o1,
                               float           limit,
                               dpct::queue_ptr stream) {
-    const int64_t num_blocks = (k + SYCL_GLU_BLOCK_SIZE - 1) / SYCL_GLU_BLOCK_SIZE;
-    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_GLU_BLOCK_SIZE),
+    const int64_t नुमेरो_blocks = (k + SYCL_GLU_BLOCK_SIZE - 1) / SYCL_GLU_BLOCK_SIZE;
+    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, नुमेरो_blocks) * sycl::range<3>(1, 1, SYCL_GLU_BLOCK_SIZE),
                                            sycl::range<3>(1, 1, SYCL_GLU_BLOCK_SIZE)),
                          [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
                              swiglu_clamp_kernel(gate, up, dst, k, n, o0, o1, limit, item_ct1);
@@ -1323,191 +1323,191 @@ static inline void ggml_sycl_op_geglu_quick(ggml_backend_sycl_context & ctx, ggm
 
 
 void ggml_sycl_sqrt(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_sqrt(ctx, dst);
 }
 
 void ggml_sycl_sin(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_sin(ctx, dst);
 }
 
 void ggml_sycl_cos(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_cos(ctx, dst);
 }
 
 void ggml_sycl_acc(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/2);
     ggml_sycl_op_acc(ctx, dst);
 }
 
 void ggml_sycl_gelu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_gelu(ctx, dst);
 }
 
 void ggml_sycl_silu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_silu(ctx, dst);
 }
 
 void ggml_sycl_gelu_quick(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_gelu_quick(ctx, dst);
 }
 
 void ggml_sycl_gelu_erf(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_gelu_erf(ctx, dst);
 }
 
 void ggml_sycl_tanh(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_tanh(ctx, dst);
 }
 
 void ggml_sycl_relu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_relu(ctx, dst);
 }
 
 void ggml_sycl_sigmoid(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_sigmoid(ctx, dst);
 }
 
 void ggml_sycl_hardsigmoid(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_hardsigmoid(ctx, dst);
 }
 
 void ggml_sycl_hardswish(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_hardswish(ctx, dst);
 }
 
 void ggml_sycl_exp(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_exp(ctx, dst);
 }
 
 void ggml_sycl_expm1(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_expm1(ctx, dst);
 }
 
 void ggml_sycl_log(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_log(ctx, dst);
 }
 
 void ggml_sycl_softplus(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_softplus(ctx, dst);
 }
 
 void ggml_sycl_neg(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_neg(ctx, dst);
 }
 
 void ggml_sycl_step(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_step(ctx, dst);
 }
 
 void ggml_sycl_leaky_relu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_leaky_relu(ctx, dst);
 }
 
 void ggml_sycl_sqr(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_sqr(ctx, dst);
 }
 
 void ggml_sycl_clamp(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_clamp(ctx, dst);
 }
 
 void ggml_sycl_xielu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_xielu(ctx, dst);
 }
 
 void ggml_sycl_sgn(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_sgn(ctx, dst);
 }
 
 void ggml_sycl_abs(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_abs(ctx, dst);
 }
 
 void ggml_sycl_elu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_elu(ctx, dst);
 }
 
 void ggml_sycl_geglu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_geglu(ctx, dst);
 }
 
 void ggml_sycl_reglu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_reglu(ctx, dst);
 }
 
 void ggml_sycl_swiglu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_swiglu(ctx, dst);
 }
 
 void ggml_sycl_swiglu_oai(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_swiglu_oai(ctx, dst);
 }
 
 void ggml_sycl_swiglu_clamp(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_swiglu_clamp(ctx, dst);
 }
 
 void ggml_sycl_geglu_erf(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_geglu_erf(ctx, dst);
 }
 
 void ggml_sycl_geglu_quick(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_geglu_quick(ctx, dst);
 }
 
 void ggml_sycl_arange(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/0);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/0);
     ggml_sycl_detail::ggml_sycl_op_arange(ctx, dst);
 }
 
 void ggml_sycl_floor(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_floor(ctx, dst);
 }
 
 void ggml_sycl_ceil(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_ceil(ctx, dst);
 }
 
 void ggml_sycl_round(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_round(ctx, dst);
 }
 
 void ggml_sycl_trunc(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_trunc(ctx, dst);
 }

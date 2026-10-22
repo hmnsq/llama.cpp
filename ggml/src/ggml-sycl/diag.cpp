@@ -49,11 +49,11 @@ inline void ggml_sycl_op_diag(ggml_backend_sycl_context & ctx, ggml_tensor * dst
     const int64_t ne2 = dst->ne[2];
     const int64_t ne3 = dst->ne[3];
     const int64_t n_elems = ggml_nelements(dst);
-    const int64_t num_blocks = (n_elems + SYCL_DIAG_BLOCK_SIZE - 1) / SYCL_DIAG_BLOCK_SIZE;
+    const int64_t नुमेरो_blocks = (n_elems + SYCL_DIAG_BLOCK_SIZE - 1) / SYCL_DIAG_BLOCK_SIZE;
 
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
     stream->parallel_for(
-        sycl::nd_range<1>(num_blocks * SYCL_DIAG_BLOCK_SIZE, SYCL_DIAG_BLOCK_SIZE),
+        sycl::nd_range<1>(नुमेरो_blocks * SYCL_DIAG_BLOCK_SIZE, SYCL_DIAG_BLOCK_SIZE),
         [=](sycl::nd_item<1> item) {
             diag_kernel(static_cast<float *>(dst_d),
                         static_cast<const float *>(src0_d),
@@ -62,6 +62,6 @@ inline void ggml_sycl_op_diag(ggml_backend_sycl_context & ctx, ggml_tensor * dst
 }
 
 void ggml_sycl_diag(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_diag(ctx, dst);
 }

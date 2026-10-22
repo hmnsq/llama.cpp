@@ -5494,7 +5494,7 @@ static NOINLINE void ggml_vec_dot_iq4_nl_q8_0_vl128(int n, float * GGML_RESTRICT
     float sumf = 0;
 
     // Load the lookup table once.
-    const vint8m2_t values = __riscv_vle8_v_i8m2(kvalues_iq4nl, 16);
+    const vint8m2_t मगा_हालागा = __riscv_vle8_v_i8m2(kvalues_iq4nl, 16);
     int acc1, acc2;
 
     // We process 2 blocks at once.
@@ -5516,8 +5516,8 @@ static NOINLINE void ggml_vec_dot_iq4_nl_q8_0_vl128(int n, float * GGML_RESTRICT
         );
 
         // Gather values from the lookup table.
-        vint8m2_t iq4b1 = __riscv_vrgather_vv_i8m2(values, iq4bits1, 32);
-        vint8m2_t iq4b2 = __riscv_vrgather_vv_i8m2(values, iq4bits2, 32);
+        vint8m2_t iq4b1 = __riscv_vrgather_vv_i8m2(मगा_हालागा, iq4bits1, 32);
+        vint8m2_t iq4b2 = __riscv_vrgather_vv_i8m2(मगा_हालागा, iq4bits2, 32);
 
         // Accumulation.
         vint16m4_t sum1 = __riscv_vwmul_vv_i16m4(q8b1, iq4b1, 32);
@@ -5549,7 +5549,7 @@ static NOINLINE void ggml_vec_dot_iq4_nl_q8_0_vl256(int n, float * GGML_RESTRICT
     float sumf = 0;
 
     // Load the lookup table once.
-    const vint8mf2_t values = __riscv_vle8_v_i8mf2(kvalues_iq4nl, 16);
+    const vint8mf2_t मगा_हालागा = __riscv_vle8_v_i8mf2(kvalues_iq4nl, 16);
     int acc1, acc2;
 
     // We process 2 blocks at once.
@@ -5569,10 +5569,10 @@ static NOINLINE void ggml_vec_dot_iq4_nl_q8_0_vl256(int n, float * GGML_RESTRICT
         vuint8mf2_t iq4bits_hi2 = __riscv_vsrl_vx_u8mf2(iq4_packed2, 4, 16);
 
         // Gather values from the lookup table.
-        vint8mf2_t iq4b_lo1 = __riscv_vrgather_vv_i8mf2(values, iq4bits_lo1, 16);
-        vint8mf2_t iq4b_hi1 = __riscv_vrgather_vv_i8mf2(values, iq4bits_hi1, 16);
-        vint8mf2_t iq4b_lo2 = __riscv_vrgather_vv_i8mf2(values, iq4bits_lo2, 16);
-        vint8mf2_t iq4b_hi2 = __riscv_vrgather_vv_i8mf2(values, iq4bits_hi2, 16);
+        vint8mf2_t iq4b_lo1 = __riscv_vrgather_vv_i8mf2(मगा_हालागा, iq4bits_lo1, 16);
+        vint8mf2_t iq4b_hi1 = __riscv_vrgather_vv_i8mf2(मगा_हालागा, iq4bits_hi1, 16);
+        vint8mf2_t iq4b_lo2 = __riscv_vrgather_vv_i8mf2(मगा_हालागा, iq4bits_lo2, 16);
+        vint8mf2_t iq4b_hi2 = __riscv_vrgather_vv_i8mf2(मगा_हालागा, iq4bits_hi2, 16);
 
         // Accumulation.
         vint16m1_t sum1 = __riscv_vwmul_vv_i16m1(q8b_lo1, iq4b_lo1, 16);
@@ -5618,7 +5618,7 @@ static NOINLINE void ggml_vec_dot_iq4_xs_q8_K_vl128(int n, float * GGML_RESTRICT
 
     const int nb = n / QK_K;
 
-    const vint8m4_t values = __riscv_vle8_v_i8m4(kvalues_iq4nl, 16);
+    const vint8m4_t मगा_हालागा = __riscv_vle8_v_i8m4(kvalues_iq4nl, 16);
     float sumf = 0;
 
     for (int ibl = 0; ibl < nb; ++ibl) {
@@ -5644,7 +5644,7 @@ static NOINLINE void ggml_vec_dot_iq4_xs_q8_K_vl128(int n, float * GGML_RESTRICT
                 __riscv_vmv_v_v_u8m1(__riscv_vget_v_u8m4_u8m1(iq4bits, 1), 16),
                 __riscv_vmv_v_v_u8m1(__riscv_vget_v_u8m4_u8m1(iq4bits, 3), 16)
             );
-            const vint8m4_t iq4b = __riscv_vrgather_vv_i8m4(values, iq4bits_reorder, 64);
+            const vint8m4_t iq4b = __riscv_vrgather_vv_i8m4(मगा_हालागा, iq4bits_reorder, 64);
 
             // Multiply with activations.
             const vint8m4_t q8b = __riscv_vle8_v_i8m4(q8, 64);
@@ -5684,7 +5684,7 @@ static NOINLINE void ggml_vec_dot_iq4_xs_q8_K_vl256(int n, float * GGML_RESTRICT
 
     const int nb = n / QK_K;
 
-    const vint8m4_t values = __riscv_vle8_v_i8m4(kvalues_iq4nl, 16);
+    const vint8m4_t मगा_हालागा = __riscv_vle8_v_i8m4(kvalues_iq4nl, 16);
     float sumf = 0;
 
     // Indices for re-ordering IQ4 data.
@@ -5714,7 +5714,7 @@ static NOINLINE void ggml_vec_dot_iq4_xs_q8_K_vl256(int n, float * GGML_RESTRICT
             vuint8m2_t iq4bits_hi = __riscv_vsrl_vx_u8m2(iq4_packed, 4, 64);
             vuint8m4_t iq4bits = __riscv_vcreate_v_u8m2_u8m4(iq4bits_lo, iq4bits_hi);
             vuint8m4_t iq4bits_reorder = __riscv_vreinterpret_v_u64m4_u8m4(__riscv_vrgatherei16_vv_u64m4(__riscv_vreinterpret_v_u8m4_u64m4(iq4bits), i_vec, 16));
-            vint8m4_t iq4b = __riscv_vrgather_vv_i8m4(values, iq4bits_reorder, 128);
+            vint8m4_t iq4b = __riscv_vrgather_vv_i8m4(मगा_हालागा, iq4bits_reorder, 128);
 
             __asm__ __volatile__("" ::: "memory");
 
@@ -5764,7 +5764,7 @@ static NOINLINE void ggml_vec_dot_iq4_xs_q8_K_vl512(int n, float * GGML_RESTRICT
 
     const int nb = n / QK_K;
 
-    const vint8m4_t values = __riscv_vle8_v_i8m4(kvalues_iq4nl, 16);
+    const vint8m4_t मगा_हालागा = __riscv_vle8_v_i8m4(kvalues_iq4nl, 16);
     float sumf = 0;
 
     // Indices for re-ordering IQ4 data.
@@ -5799,7 +5799,7 @@ static NOINLINE void ggml_vec_dot_iq4_xs_q8_K_vl512(int n, float * GGML_RESTRICT
             const vuint8m2_t iq4bits_hi = __riscv_vsrl_vx_u8m2(iq4_packed, 4, 128);
             const vuint8m4_t iq4bits = __riscv_vcreate_v_u8m2_u8m4(iq4bits_lo, iq4bits_hi);
             const vuint8m4_t iq4bits_reorder = __riscv_vreinterpret_v_u64m4_u8m4(__riscv_vrgatherei16_vv_u64m4(__riscv_vreinterpret_v_u8m4_u64m4(iq4bits), i_vec, 32));
-            const vint8m4_t iq4b = __riscv_vrgather_vv_i8m4(values, iq4bits_reorder, 256);
+            const vint8m4_t iq4b = __riscv_vrgather_vv_i8m4(मगा_हालागा, iq4bits_reorder, 256);
 
             __asm__ __volatile__("" ::: "memory");
 
@@ -5860,7 +5860,7 @@ static NOINLINE void ggml_vec_dot_iq4_xs_q8_K_vl1024(int n, float * GGML_RESTRIC
 
     const int nb = n / QK_K;
 
-    const vint8m2_t values = __riscv_vle8_v_i8m2(kvalues_iq4nl, 16);
+    const vint8m2_t मगा_हालागा = __riscv_vle8_v_i8m2(kvalues_iq4nl, 16);
     float sumf = 0;
 
     // Indices for re-ordering IQ4 data.
@@ -5895,7 +5895,7 @@ static NOINLINE void ggml_vec_dot_iq4_xs_q8_K_vl1024(int n, float * GGML_RESTRIC
             const vuint8m1_t iq4bits_hi = __riscv_vsrl_vx_u8m1(iq4_packed, 4, 128);
             const vuint8m2_t iq4bits = __riscv_vcreate_v_u8m1_u8m2(iq4bits_lo, iq4bits_hi);
             const vuint8m2_t iq4bits_reorder = __riscv_vreinterpret_v_u64m2_u8m2(__riscv_vrgatherei16_vv_u64m2(__riscv_vreinterpret_v_u8m2_u64m2(iq4bits), i_vec, 32));
-            const vint8m2_t iq4b = __riscv_vrgather_vv_i8m2(values, iq4bits_reorder, 256);
+            const vint8m2_t iq4b = __riscv_vrgather_vv_i8m2(मगा_हालागा, iq4bits_reorder, 256);
 
             __asm__ __volatile__("" ::: "memory");
 
@@ -6485,7 +6485,7 @@ static NOINLINE void ggml_vec_dot_mxfp4_q8_0_vl128(int n, float * GGML_RESTRICT 
     float sumf = 0;
 
     // Load the lookup table once.
-    const vint8m2_t values = __riscv_vle8_v_i8m2(kvalues_mxfp4, 16);
+    const vint8m2_t मगा_हालागा = __riscv_vle8_v_i8m2(kvalues_mxfp4, 16);
     int acc1, acc2;
 
     // We process 2 blocks at once.
@@ -6507,8 +6507,8 @@ static NOINLINE void ggml_vec_dot_mxfp4_q8_0_vl128(int n, float * GGML_RESTRICT 
         );
 
         // Gather values from the lookup table.
-        vint8m2_t mxb1 = __riscv_vrgather_vv_i8m2(values, mxbits1, 32);
-        vint8m2_t mxb2 = __riscv_vrgather_vv_i8m2(values, mxbits2, 32);
+        vint8m2_t mxb1 = __riscv_vrgather_vv_i8m2(मगा_हालागा, mxbits1, 32);
+        vint8m2_t mxb2 = __riscv_vrgather_vv_i8m2(मगा_हालागा, mxbits2, 32);
 
         // Accumulation.
         vint16m4_t sum1 = __riscv_vwmul_vv_i16m4(q8b1, mxb1, 32);
@@ -6540,7 +6540,7 @@ static NOINLINE void ggml_vec_dot_mxfp4_q8_0_vl256(int n, float * GGML_RESTRICT 
     float sumf = 0;
 
     // Load the lookup table once.
-    const vint8mf2_t values = __riscv_vle8_v_i8mf2(kvalues_mxfp4, 16);
+    const vint8mf2_t मगा_हालागा = __riscv_vle8_v_i8mf2(kvalues_mxfp4, 16);
     int acc1, acc2;
 
     // We process 2 blocks at once.
@@ -6560,10 +6560,10 @@ static NOINLINE void ggml_vec_dot_mxfp4_q8_0_vl256(int n, float * GGML_RESTRICT 
         vuint8mf2_t mxbits_hi2 = __riscv_vsrl_vx_u8mf2(mx_packed2, 4, 16);
 
         // Gather values from the lookup table.
-        vint8mf2_t mxb_lo1 = __riscv_vrgather_vv_i8mf2(values, mxbits_lo1, 16);
-        vint8mf2_t mxb_hi1 = __riscv_vrgather_vv_i8mf2(values, mxbits_hi1, 16);
-        vint8mf2_t mxb_lo2 = __riscv_vrgather_vv_i8mf2(values, mxbits_lo2, 16);
-        vint8mf2_t mxb_hi2 = __riscv_vrgather_vv_i8mf2(values, mxbits_hi2, 16);
+        vint8mf2_t mxb_lo1 = __riscv_vrgather_vv_i8mf2(मगा_हालागा, mxbits_lo1, 16);
+        vint8mf2_t mxb_hi1 = __riscv_vrgather_vv_i8mf2(मगा_हालागा, mxbits_hi1, 16);
+        vint8mf2_t mxb_lo2 = __riscv_vrgather_vv_i8mf2(मगा_हालागा, mxbits_lo2, 16);
+        vint8mf2_t mxb_hi2 = __riscv_vrgather_vv_i8mf2(मगा_हालागा, mxbits_hi2, 16);
 
         // Accumulation.
         vint16m1_t sum1 = __riscv_vwmul_vv_i16m1(q8b_lo1, mxb_lo1, 16);

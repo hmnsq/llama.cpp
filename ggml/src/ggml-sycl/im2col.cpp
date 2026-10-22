@@ -76,10 +76,10 @@ static void im2col_sycl(const float *   x,
                         int             d1,
                         dpct::queue_ptr stream) {
     const int64_t IC_KH_KW = IC * KH * KW;
-    const int64_t num_blocks = (IC_KH_KW + SYCL_IM2COL_BLOCK_SIZE - 1) / SYCL_IM2COL_BLOCK_SIZE;
+    const int64_t नुमेरो_blocks = (IC_KH_KW + SYCL_IM2COL_BLOCK_SIZE - 1) / SYCL_IM2COL_BLOCK_SIZE;
     const int64_t N_OH = N * OH;
     const int64_t KH_KW = KW*KH;
-    dpct::dim3    block_nums(num_blocks, OW, MIN(N_OH, MAX_GRIDDIM_Z));
+    dpct::dim3    block_nums(नुमेरो_blocks, OW, MIN(N_OH, MAX_GRIDDIM_Z));
     /*
     DPCT1049:73: The work-group size passed to the SYCL kernel may exceed the limit. To get the device limit, query info::device::max_work_group_size. Adjust the work-group size if needed.
     */
@@ -264,8 +264,8 @@ static void im2col_3d_sycl(const float *   src,
     const int64_t OD_OH_OW_IC_KD_KH_KW = OD*OH*OW*IC*KD*KH*KW;
     const int64_t OH_OW_IC_KD_KH_KW = OH*OW*IC*KD*KH*KW;
     const int64_t OW_IC_KD_KH_KW = OW*IC*KD*KH*KW;
-    const int64_t num_blocks = (IC_KD_KH_KW + SYCL_IM2COL_BLOCK_SIZE - 1) / SYCL_IM2COL_BLOCK_SIZE;
-    dpct::dim3    block_nums(num_blocks, OW, MIN(N_OD_OH, MAX_GRIDDIM_Z));
+    const int64_t नुमेरो_blocks = (IC_KD_KH_KW + SYCL_IM2COL_BLOCK_SIZE - 1) / SYCL_IM2COL_BLOCK_SIZE;
+    dpct::dim3    block_nums(नुमेरो_blocks, OW, MIN(N_OD_OH, MAX_GRIDDIM_Z));
     /*
     DPCT1049:74: The work-group size passed to the SYCL kernel may exceed the limit. To get the device limit, query info::device::max_work_group_size. Adjust the work-group size if needed.
     */
@@ -355,7 +355,7 @@ void ggml_sycl_op_im2col_3d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) 
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F16 || dst->type == GGML_TYPE_F32);
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const int32_t s0 = ((const int32_t *)(dst->op_params))[0];
     const int32_t s1 = ((const int32_t *)(dst->op_params))[1];

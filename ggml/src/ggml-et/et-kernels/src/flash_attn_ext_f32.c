@@ -84,8 +84,8 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
     }
 
     const int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    const int num_threads = get_num_threads(kernel_env->shire_mask);
-    if (thread_id < 0 || num_threads <= 0) {
+    const int नुमेरो_threads = get_नुमेरो_threads(kernel_env->shire_mask);
+    if (thread_id < 0 || नुमेरो_threads <= 0) {
         return 0;
     }
 
@@ -130,7 +130,7 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
     // use atomic stores to avoid cache-line sharing corruption.
     const int use_fast_store = (dv % 16 == 0);
 
-    for (int64_t row = thread_id; row < total_rows; row += num_threads) {
+    for (int64_t row = thread_id; row < total_rows; row += नुमेरो_threads) {
         const int64_t iq3 = row / (nhq * nq);
         const int64_t rem = row % (nhq * nq);
         const int64_t iq2 = rem / nq;  // query head index

@@ -41,22 +41,22 @@ static void cumsum_f32_kernel(
     const float * src_row = src + i1 * s01 + i2 * s02 + i3 * s03;
     float       * dst_row = dst + i1 * d1  + i2 * d2  + i3 * d3;
 
-    constexpr int num_unroll = 4;
-    float temp[num_unroll];
+    constexpr int नुमेरो_unroll = 4;
+    float temp[नुमेरो_unroll];
 
-    for (int64_t i = 0; i < ne00; i += num_unroll * block_size) {
-        int64_t idx = i + tid * num_unroll;
+    for (int64_t i = 0; i < ne00; i += नुमेरो_unroll * block_size) {
+        int64_t idx = i + tid * नुमेरो_unroll;
 
         temp[0] = (idx < ne00 ? src_row[idx] : 0.0f);
 #pragma unroll
-        for (int j = 1; j < num_unroll; j++) {
+        for (int j = 1; j < नुमेरो_unroll; j++) {
             temp[j] = temp[j - 1];
             if (idx + j < ne00) {
                 temp[j] += src_row[idx + j];
             }
         }
 
-        float val = (idx < ne00) ? temp[num_unroll - 1] : 0.0f;
+        float val = (idx < ne00) ? temp[नुमेरो_unroll - 1] : 0.0f;
 
         val = warp_prefix_inclusive_sum_f32(val, item);
         s_vals[tid] = val;
@@ -79,10 +79,10 @@ static void cumsum_f32_kernel(
         item.barrier(sycl::access::fence_space::local_space);
 
         float carry = s_carry[0];
-        float final_offset = s_vals[tid] + s_warp_sums[warp] + carry - temp[num_unroll - 1];
+        float final_offset = s_vals[tid] + s_warp_sums[warp] + carry - temp[नुमेरो_unroll - 1];
 
 #pragma unroll
-        for (int j = 0; j < num_unroll; j++) {
+        for (int j = 0; j < नुमेरो_unroll; j++) {
             if (idx + j < ne00) {
                 dst_row[idx + j] = temp[j] + final_offset;
             }
@@ -121,8 +121,8 @@ inline void ggml_sycl_op_cumsum(ggml_backend_sycl_context & ctx, ggml_tensor * d
     const int64_t d2  = dst->nb[2] / ts;
     const int64_t d3  = dst->nb[3] / ts;
 
-    const int num_warps = (ne00 + WARP_SIZE - 1) / WARP_SIZE;
-    int block_size = num_warps * WARP_SIZE;
+    const int नुमेरो_warps = (ne00 + WARP_SIZE - 1) / WARP_SIZE;
+    int block_size = नुमेरो_warps * WARP_SIZE;
     block_size = std::min(block_size, SYCL_CUMSUM_BLOCK_SIZE);
     const int warps_per_block = block_size / WARP_SIZE;
     const int smem_size = block_size + warps_per_block + 2;
@@ -143,6 +143,6 @@ inline void ggml_sycl_op_cumsum(ggml_backend_sycl_context & ctx, ggml_tensor * d
 }
 
 void ggml_sycl_cumsum(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_cumsum(ctx, dst);
 }

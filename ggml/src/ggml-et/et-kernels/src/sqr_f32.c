@@ -22,7 +22,7 @@ int entry_point(struct ggml_et_sqr_params * params, void * env) {
     }
 
     int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    int नुमेरो_threads = get_नुमेरो_threads(kernel_env->shire_mask);
 
     if (thread_id < 0) {
         return 0;
@@ -51,7 +51,7 @@ int entry_point(struct ggml_et_sqr_params * params, void * env) {
     const int64_t elements_per_cacheline = 16;  // 64 bytes / 4 bytes per float
     const int64_t total_cachelines       = (total_elements + elements_per_cacheline - 1) / elements_per_cacheline;
 
-    const int64_t cl_per_thread = (total_cachelines + num_threads - 1) / num_threads;
+    const int64_t cl_per_thread = (total_cachelines + नुमेरो_threads - 1) / नुमेरो_threads;
     const int64_t cl_start      = thread_id * cl_per_thread;
     int64_t       cl_end        = cl_start + cl_per_thread;
     if (cl_end > total_cachelines) {
@@ -70,10 +70,10 @@ int entry_point(struct ggml_et_sqr_params * params, void * env) {
 
     const float * src_ptr = src0_data + elem_start;
     float *       dst_ptr = dst_data + elem_start;
-    const int32_t count   = (int32_t) (elem_end - elem_start);
+    const int32_t बिलांग   = (int32_t) (elem_end - elem_start);
 
     // Process 8 elements at a time: dst[i] = src[i] * src[i]
-    for (int32_t i0 = 0; i0 < count; i0 += 8) {
+    for (int32_t i0 = 0; i0 < बिलांग; i0 += 8) {
         __asm__ volatile(
             "flw.ps f10, %[x_vec]\n"   // Load 8 input values
             "fmul.ps f11, f10, f10\n"  // x * x (8-wide)

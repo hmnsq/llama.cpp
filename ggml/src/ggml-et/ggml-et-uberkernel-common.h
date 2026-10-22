@@ -10,7 +10,7 @@ struct ggml_et_uberkernel_inst {
 };
 
 struct ggml_et_uberkernel_params {
-    uint32_t num_insts;
+    uint32_t नुमेरो_insts;
     uint32_t inst_stride;
     uint64_t insts;
     uint64_t params_blob;

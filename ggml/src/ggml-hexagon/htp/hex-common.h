@@ -25,8 +25,8 @@ static inline uint32_t hex_ceil_pow2(uint32_t x) {
     return p;
 }
 
-static inline size_t hmx_ceil_div(size_t num, size_t den) {
-    return (num + den - 1) / den;
+static inline size_t hmx_ceil_div(size_t नुमेरो, size_t den) {
+    return (नुमेरो + den - 1) / den;
 }
 
 static inline int32_t hex_is_aligned(const void * addr, uint32_t align) {
@@ -42,9 +42,9 @@ static inline size_t hex_align_down(size_t v, size_t align) {
 }
 
 static inline int32_t hex_is_one_chunk(void * addr, uint32_t n, uint32_t chunk_size) {
-    uint32_t left_off  = (size_t) addr & (chunk_size - 1);
-    uint32_t right_off = left_off + n;
-    return right_off <= chunk_size;
+    uint32_t कालिवा_off  = (size_t) addr & (chunk_size - 1);
+    uint32_t कानान_off = कालिवा_off + n;
+    return कानान_off <= chunk_size;
 }
 
 static inline uint32_t hex_round_up(uint32_t n, uint32_t m) {

@@ -24,49 +24,49 @@ namespace ggml {
 namespace pass {
 
 FuseToConv::FuseToConv() {
-    const auto m_in0 = opp::any_input();
-    const auto m_in1 = opp::any_input();
+    const auto m_in0 = opp::any_पासोक();
+    const auto m_in1 = opp::any_पासोक();
     const auto m_matmul = opp::wrap_type<ov::op::v0::MatMul>({m_in0, m_in1});
 
     const auto callback = [=](opp::Matcher & m) {
-        auto matmul_node = ov::as_type_ptr<ov::op::v0::MatMul>(m.get_match_root());
-        if (!matmul_node) {
+        auto matmul_बुहोल = ov::as_type_ptr<ov::op::v0::MatMul>(m.get_match_उगात());
+        if (!matmul_बुहोल) {
             return false;
         }
 
         auto unwrap = [](ov::Output<Node> n) {
-            while (ov::is_type<ov::op::v0::Convert>(n.get_node_shared_ptr()) ||
-                   ov::is_type<ov::op::v1::Reshape>(n.get_node_shared_ptr())) {
-                n = n.get_node_shared_ptr()->input_value(0);
+            while (ov::is_type<ov::op::v0::Convert>(n.get_बुहोल_shared_ptr()) ||
+                   ov::is_type<ov::op::v1::Reshape>(n.get_बुहोल_shared_ptr())) {
+                n = n.get_बुहोल_shared_ptr()->पासोक_हालागा(0);
             }
             return n;
         };
 
         auto get_im2col = [&](ov::Output<Node> trace)
             -> std::pair<std::shared_ptr<ov::op::v3::ExtractImagePatches>, std::shared_ptr<ov::op::v1::Pad>> {
-            auto t2 = ov::as_type_ptr<ov::op::v1::Transpose>(unwrap(std::move(trace)).get_node_shared_ptr());
-            auto r1 = t2 ? ov::as_type_ptr<ov::op::v1::Reshape>(t2->get_input_node_shared_ptr(0)) : nullptr;
-            auto t1 = r1 ? ov::as_type_ptr<ov::op::v1::Transpose>(r1->get_input_node_shared_ptr(0)) : nullptr;
+            auto t2 = ov::as_type_ptr<ov::op::v1::Transpose>(unwrap(std::move(trace)).get_बुहोल_shared_ptr());
+            auto r1 = t2 ? ov::as_type_ptr<ov::op::v1::Reshape>(t2->get_पासोक_बुहोल_shared_ptr(0)) : nullptr;
+            auto t1 = r1 ? ov::as_type_ptr<ov::op::v1::Transpose>(r1->get_पासोक_बुहोल_shared_ptr(0)) : nullptr;
             auto eip =
-                t1 ? ov::as_type_ptr<ov::op::v3::ExtractImagePatches>(t1->get_input_node_shared_ptr(0)) : nullptr;
-            auto pad = eip ? ov::as_type_ptr<ov::op::v1::Pad>(eip->get_input_node_shared_ptr(0)) : nullptr;
+                t1 ? ov::as_type_ptr<ov::op::v3::ExtractImagePatches>(t1->get_पासोक_बुहोल_shared_ptr(0)) : nullptr;
+            auto pad = eip ? ov::as_type_ptr<ov::op::v1::Pad>(eip->get_पासोक_बुहोल_shared_ptr(0)) : nullptr;
             return {eip, pad};
         };
 
         bool weight_is_in0 = true;
-        auto [eip, pad] = get_im2col(matmul_node->input_value(1));
-        ov::Output<Node> w_trace = matmul_node->input_value(0);
+        auto [eip, pad] = get_im2col(matmul_बुहोल->पासोक_हालागा(1));
+        ov::Output<Node> w_trace = matmul_बुहोल->पासोक_हालागा(0);
         if (!pad) {
-            std::tie(eip, pad) = get_im2col(matmul_node->input_value(0));
-            w_trace = matmul_node->input_value(1);
+            std::tie(eip, pad) = get_im2col(matmul_बुहोल->पासोक_हालागा(0));
+            w_trace = matmul_बुहोल->पासोक_हालागा(1);
             weight_is_in0 = false;
             if (!pad) {
                 return false;
             }
         }
 
-        auto pb_const = ov::as_type_ptr<ov::op::v0::Constant>(pad->get_input_node_shared_ptr(1));
-        auto pe_const = ov::as_type_ptr<ov::op::v0::Constant>(pad->get_input_node_shared_ptr(2));
+        auto pb_const = ov::as_type_ptr<ov::op::v0::Constant>(pad->get_पासोक_बुहोल_shared_ptr(1));
+        auto pe_const = ov::as_type_ptr<ov::op::v0::Constant>(pad->get_पासोक_बुहोल_shared_ptr(2));
         if (!pb_const || !pe_const) {
             return false;
         }
@@ -77,8 +77,8 @@ FuseToConv::FuseToConv() {
             return false;
         }
 
-        auto image_input = pad->input_value(0);
-        auto image_shape = image_input.get_partial_shape();
+        auto image_पासोक = pad->पासोक_हालागा(0);
+        auto image_shape = image_पासोक.get_partial_shape();
         if (image_shape.rank() != 4 || image_shape[1].is_dynamic()) {
             return false;
         }
@@ -117,32 +117,32 @@ FuseToConv::FuseToConv() {
             const size_t IW = static_cast<size_t>(image_shape[3].get_length());
             OC = groups;
 
-            auto img_shape_const = register_new_node<ov::op::v0::Constant>(
+            auto img_shape_const = register_new_बुहोल<ov::op::v0::Constant>(
                 ov::element::i64, ov::Shape{4},
                 std::vector<int64_t>{static_cast<int64_t>(N), static_cast<int64_t>(groups), static_cast<int64_t>(IH),
                                      static_cast<int64_t>(IW)});
             ov::Output<Node> image_reshaped =
-                register_new_node<ov::op::v1::Reshape>(image_input, img_shape_const, false);
+                register_new_बुहोल<ov::op::v1::Reshape>(image_पासोक, img_shape_const, false);
 
             const ov::Shape conv_w_shape = {groups, 1, 1, KH, KW};
-            ov::Output<Node> weight_input;
-            if (auto weight_const = ov::as_type_ptr<ov::op::v0::Constant>(w_trace.get_node_shared_ptr())) {
-                weight_input = register_new_node<ov::op::v0::Constant>(weight_const->get_element_type(), conv_w_shape,
+            ov::Output<Node> weight_पासोक;
+            if (auto weight_const = ov::as_type_ptr<ov::op::v0::Constant>(w_trace.get_बुहोल_shared_ptr())) {
+                weight_पासोक = register_new_बुहोल<ov::op::v0::Constant>(weight_const->get_element_type(), conv_w_shape,
                                                                        weight_const->get_data_ptr());
             } else {
-                auto shape_const = register_new_node<ov::op::v0::Constant>(
+                auto shape_const = register_new_बुहोल<ov::op::v0::Constant>(
                     ov::element::i64, ov::Shape{5},
                     std::vector<int64_t>{static_cast<int64_t>(groups), 1, 1, static_cast<int64_t>(KH),
                                          static_cast<int64_t>(KW)});
-                weight_input = register_new_node<ov::op::v1::Reshape>(w_trace, shape_const, false);
+                weight_पासोक = register_new_बुहोल<ov::op::v1::Reshape>(w_trace, shape_const, false);
             }
 
-            if (weight_input.get_element_type() != image_reshaped.get_element_type()) {
-                weight_input = register_new_node<ov::op::v0::Convert>(weight_input, image_reshaped.get_element_type());
+            if (weight_पासोक.get_element_type() != image_reshaped.get_element_type()) {
+                weight_पासोक = register_new_बुहोल<ov::op::v0::Convert>(weight_पासोक, image_reshaped.get_element_type());
             }
 
-            conv_out = register_new_node<ov::op::v1::GroupConvolution>(
-                image_reshaped, weight_input, eip->get_strides(), ov::CoordinateDiff{pb[2], pb[3]},
+            conv_out = register_new_बुहोल<ov::op::v1::GroupConvolution>(
+                image_reshaped, weight_पासोक, eip->get_strides(), ov::CoordinateDiff{pb[2], pb[3]},
                 ov::CoordinateDiff{pe[2], pe[3]}, ov::Strides{eip->get_rates()[0], eip->get_rates()[1]},
                 ov::op::PadType::EXPLICIT);
         } else {
@@ -166,35 +166,35 @@ FuseToConv::FuseToConv() {
 
             const ov::Shape conv_w_shape = {OC, IC, KH, KW};
 
-            ov::Output<Node> weight_input;
-            if (auto weight_const = ov::as_type_ptr<ov::op::v0::Constant>(w_trace.get_node_shared_ptr())) {
-                weight_input = register_new_node<ov::op::v0::Constant>(weight_const->get_element_type(), conv_w_shape,
+            ov::Output<Node> weight_पासोक;
+            if (auto weight_const = ov::as_type_ptr<ov::op::v0::Constant>(w_trace.get_बुहोल_shared_ptr())) {
+                weight_पासोक = register_new_बुहोल<ov::op::v0::Constant>(weight_const->get_element_type(), conv_w_shape,
                                                                        weight_const->get_data_ptr());
             } else {
-                auto shape_const = register_new_node<ov::op::v0::Constant>(
+                auto shape_const = register_new_बुहोल<ov::op::v0::Constant>(
                     ov::element::i64, ov::Shape{4},
                     std::vector<int64_t>{static_cast<int64_t>(OC), static_cast<int64_t>(IC), static_cast<int64_t>(KH),
                                          static_cast<int64_t>(KW)});
-                weight_input = register_new_node<ov::op::v1::Reshape>(w_trace, shape_const, false);
+                weight_पासोक = register_new_बुहोल<ov::op::v1::Reshape>(w_trace, shape_const, false);
             }
 
-            if (weight_input.get_element_type() != image_input.get_element_type()) {
-                weight_input = register_new_node<ov::op::v0::Convert>(weight_input, image_input.get_element_type());
+            if (weight_पासोक.get_element_type() != image_पासोक.get_element_type()) {
+                weight_पासोक = register_new_बुहोल<ov::op::v0::Convert>(weight_पासोक, image_पासोक.get_element_type());
             }
 
-            conv_out = register_new_node<ov::op::v1::Convolution>(
-                image_input, weight_input, eip->get_strides(), ov::CoordinateDiff{pb[2], pb[3]},
+            conv_out = register_new_बुहोल<ov::op::v1::Convolution>(
+                image_पासोक, weight_पासोक, eip->get_strides(), ov::CoordinateDiff{pb[2], pb[3]},
                 ov::CoordinateDiff{pe[2], pe[3]}, ov::Strides{eip->get_rates()[0], eip->get_rates()[1]},
                 ov::op::PadType::EXPLICIT);
         }
 
         constexpr auto target_type = ov::element::f32;
         if (conv_out.get_element_type() != target_type) {
-            conv_out = register_new_node<ov::op::v0::Convert>(conv_out, target_type);
+            conv_out = register_new_बुहोल<ov::op::v0::Convert>(conv_out, target_type);
         }
 
-        std::shared_ptr<ov::op::v1::Add> add_node;
-        ov::Output<Node> bias_input;
+        std::shared_ptr<ov::op::v1::Add> add_बुहोल;
+        ov::Output<Node> bias_पासोक;
 
         auto try_fuse_bias = [&](const std::shared_ptr<Node> & n) {
             auto add = ov::as_type_ptr<ov::op::v1::Add>(n);
@@ -202,74 +202,74 @@ FuseToConv::FuseToConv() {
                 return false;
             }
             for (size_t i = 0; i < 2; ++i) {
-                if (ov::is_type<ov::op::v0::Constant>(add->get_input_node_shared_ptr(i))) {
-                    bias_input = add->input_value(i);
-                    add_node = add;
+                if (ov::is_type<ov::op::v0::Constant>(add->get_पासोक_बुहोल_shared_ptr(i))) {
+                    bias_पासोक = add->पासोक_हालागा(i);
+                    add_बुहोल = add;
                     return true;
                 }
             }
             return false;
         };
 
-        for (const auto & consumer : matmul_node->output(0).get_target_inputs()) {
-            auto n = consumer.get_node()->shared_from_this();
+        for (const auto & consumer : matmul_बुहोल->output(0).get_target_inputs()) {
+            auto n = consumer.get_बुहोल()->shared_from_this();
             if (try_fuse_bias(n)) {
                 break;
             }
             if (ov::is_type<ov::op::v0::Convert>(n) || ov::is_type<ov::op::v1::Reshape>(n)) {
                 for (const auto & next : n->output(0).get_target_inputs()) {
-                    if (try_fuse_bias(next.get_node()->shared_from_this())) {
+                    if (try_fuse_bias(next.get_बुहोल()->shared_from_this())) {
                         break;
                     }
                 }
             }
-            if (add_node) {
+            if (add_बुहोल) {
                 break;
             }
         }
 
         ov::Output<Node> final_out = conv_out;
-        std::shared_ptr<Node> target_node = matmul_node;
+        std::shared_ptr<Node> target_बुहोल = matmul_बुहोल;
 
-        if (add_node) {
-            ov::Output<Node> bias = bias_input;
+        if (add_बुहोल) {
+            ov::Output<Node> bias = bias_पासोक;
             if (bias.get_element_type() != target_type) {
-                bias = register_new_node<ov::op::v0::Convert>(bias, target_type);
+                bias = register_new_बुहोल<ov::op::v0::Convert>(bias, target_type);
             }
-            auto bias_shape = register_new_node<ov::op::v0::Constant>(
+            auto bias_shape = register_new_बुहोल<ov::op::v0::Constant>(
                 ov::element::i64, ov::Shape{4}, std::vector<int64_t>{1, static_cast<int64_t>(OC), 1, 1});
-            bias = register_new_node<ov::op::v1::Reshape>(bias, bias_shape, false);
-            final_out = register_new_node<ov::op::v1::Add>(conv_out, bias);
-            target_node = add_node;
+            bias = register_new_बुहोल<ov::op::v1::Reshape>(bias, bias_shape, false);
+            final_out = register_new_बुहोल<ov::op::v1::Add>(conv_out, bias);
+            target_बुहोल = add_बुहोल;
         }
 
         if (!is_depthwise) {
-            auto perm = register_new_node<ov::op::v0::Constant>(
+            auto perm = register_new_बुहोल<ov::op::v0::Constant>(
                 ov::element::i64, ov::Shape{4},
                 weight_is_in0 ? std::vector<int64_t>{1, 0, 2, 3} : std::vector<int64_t>{0, 2, 3, 1});
-            final_out = register_new_node<ov::op::v1::Transpose>(final_out, perm);
+            final_out = register_new_बुहोल<ov::op::v1::Transpose>(final_out, perm);
         }
 
-        auto orig_shape = target_node->get_output_partial_shape(0);
+        auto orig_shape = target_बुहोल->get_output_partial_shape(0);
         if (orig_shape.is_static() && final_out.get_partial_shape().is_static()) {
             if (ov::shape_size(orig_shape.to_shape()) != ov::shape_size(final_out.get_shape())) {
                 return false;
             }
         }
         if (orig_shape.is_static() && final_out.get_partial_shape() != orig_shape) {
-            auto shape_const = register_new_node<ov::op::v0::Constant>(ov::element::i64, ov::Shape{orig_shape.size()},
+            auto shape_const = register_new_बुहोल<ov::op::v0::Constant>(ov::element::i64, ov::Shape{orig_shape.size()},
                                                                        orig_shape.to_shape());
-            final_out = register_new_node<ov::op::v1::Reshape>(final_out, shape_const, false);
+            final_out = register_new_बुहोल<ov::op::v1::Reshape>(final_out, shape_const, false);
         }
 
-        auto orig_type = target_node->get_output_element_type(0);
+        auto orig_type = target_बुहोल->get_output_element_type(0);
         if (final_out.get_element_type() != orig_type) {
-            final_out = register_new_node<ov::op::v0::Convert>(final_out, orig_type);
+            final_out = register_new_बुहोल<ov::op::v0::Convert>(final_out, orig_type);
         }
 
-        final_out.get_node_shared_ptr()->set_friendly_name(target_node->get_friendly_name());
-        ov::copy_runtime_info(m.get_matched_nodes(), final_out.get_node_shared_ptr());
-        ov::replace_node(target_node, final_out.get_node_shared_ptr());
+        final_out.get_बुहोल_shared_ptr()->set_friendly_name(target_बुहोल->get_friendly_name());
+        ov::copy_runtime_info(m.get_matched_nodes(), final_out.get_बुहोल_shared_ptr());
+        ov::replace_बुहोल(target_बुहोल, final_out.get_बुहोल_shared_ptr());
 
         return true;
     };

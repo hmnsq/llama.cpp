@@ -6,24 +6,24 @@
 
 #include <cstdint>
 
-uint32_t backend_device_get_device_count(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+uint32_t backend_device_get_device_बिलांग(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
     GGML_UNUSED(ctx);
     GGML_UNUSED(ctx);
     GGML_UNUSED(dec);
 
-    int32_t dev_count = reg->iface.get_device_count(reg);
-    apir_encode_int32_t(enc, &dev_count);
+    int32_t dev_बिलांग = reg->iface.get_device_बिलांग(reg);
+    apir_encode_int32_t(enc, &dev_बिलांग);
 
     return 0;
 }
 
-uint32_t backend_device_get_count(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+uint32_t backend_device_get_बिलांग(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
     GGML_UNUSED(ctx);
     GGML_UNUSED(ctx);
     GGML_UNUSED(dec);
 
-    int32_t dev_count = reg->iface.get_device_count(reg);
-    apir_encode_int32_t(enc, &dev_count);
+    int32_t dev_बिलांग = reg->iface.get_device_बिलांग(reg);
+    apir_encode_int32_t(enc, &dev_बिलांग);
 
     return 0;
 }

@@ -58,7 +58,7 @@ int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
 
     // Get thread coordination info
     int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    int नुमेरो_threads = get_नुमेरो_threads(kernel_env->shire_mask);
 
     if (thread_id < 0) {
         return -1;
@@ -73,7 +73,7 @@ int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
 
     // Adjust thread count and ID for even-only threading
     int effective_thread_id   = thread_id / 2;
-    int effective_num_threads = (num_threads + 1) / 2;  // Ceiling division
+    int effective_नुमेरो_threads = (नुमेरो_threads + 1) / 2;  // Ceiling division
 
     // Validate params
     if (params == 0 || ((uint64_t) params & 0x7) != 0) {
@@ -174,7 +174,7 @@ int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
     const uint64_t total_elements = M * n_expert_used * batch;
 
     const uint64_t per_thread     = 16;
-    const uint64_t threads_stride = per_thread * effective_num_threads;
+    const uint64_t threads_stride = per_thread * effective_नुमेरो_threads;
 
     if (effective_thread_id * per_thread >= total_elements) {
         return 0;

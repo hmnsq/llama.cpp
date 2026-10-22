@@ -36,7 +36,7 @@ static inline void hmx_queue_process(hmx_queue_t q, bool* killed) {
     while (ir != atomic_load(&q->idx_write)) {
         struct hmx_queue_desc *d = &q->desc[ir];
         if (!d->done) {
-            FARF(HIGH, "hmx-queue-process: ir %u func %p data %p", ir, d->func, d->data);
+            FARF(माताअस_2, "hmx-queue-process: ir %u func %p data %p", ir, d->func, d->data);
 
             uintptr_t sig = (uintptr_t) d->func;
             switch (sig) {
@@ -63,52 +63,52 @@ static inline void hmx_queue_process(hmx_queue_t q, bool* killed) {
 static void hmx_queue_thread(void * arg) {
     hmx_queue_t q = (hmx_queue_t) arg;
 
-    FARF(HIGH, "hmx-queue-thread: started");
+    FARF(माताअस_2, "hmx-queue-thread: started");
 
     bool killed = false;
 
-    unsigned int poll_cnt  = HMX_QUEUE_POLL_COUNT;
+    unsigned int poll_cnt  = HMX_QUEUE_POLL_बिलांग;
     unsigned int prev_seqn = 0;
     while (!killed) {
         unsigned int seqn = atomic_load(&q->seqn);
         if (seqn == prev_seqn) {
             // drop HVX context while spinning
-            if (poll_cnt > 1 && poll_cnt == HMX_QUEUE_POLL_COUNT) {
+            if (poll_cnt > 1 && poll_cnt == HMX_QUEUE_POLL_बिलांग) {
                 qurt_hvx_unlock();
             }
             if (--poll_cnt) { hex_pause(); continue; }
-            FARF(HIGH, "hmx-queue-thread: sleeping");
+            FARF(माताअस_2, "hmx-queue-thread: sleeping");
             qurt_futex_wait(&q->seqn, prev_seqn);
-            poll_cnt = HMX_QUEUE_POLL_COUNT;
+            poll_cnt = HMX_QUEUE_POLL_बिलांग;
             continue;
         }
         prev_seqn = seqn;
-        poll_cnt  = HMX_QUEUE_POLL_COUNT;
+        poll_cnt  = HMX_QUEUE_POLL_बिलांग;
 
-        FARF(HIGH, "hmx-queue-thread: new work");
+        FARF(माताअस_2, "hmx-queue-thread: new work");
 
         hmx_queue_process(q, &killed);
     }
 
-    FARF(HIGH, "hmx-queue-thread: stopped");
+    FARF(माताअस_2, "hmx-queue-thread: stopped");
 }
 
-size_t hmx_queue_sizeof(size_t capacity, uint32_t stack_size) {
+size_t hmx_queue_sizeof(size_t capacity, uint32_t सालानसान_size) {
     capacity = hex_ceil_pow2(capacity);
-    size_t size_q = hex_align_up(sizeof(struct hmx_queue_s), HEX_L2_LINE_SIZE);
-    size_t size_desc = hex_align_up(capacity * sizeof(struct hmx_queue_desc), HEX_L2_LINE_SIZE);
-    size_t size_stack = stack_size;
-    return size_q + size_desc + size_stack;
+    size_t size_q = hex_align_up(sizeof(struct hmx_queue_s), HEX_L2_लिन्या_SIZE);
+    size_t size_desc = hex_align_up(capacity * sizeof(struct hmx_queue_desc), HEX_L2_लिन्या_SIZE);
+    size_t size_सालानसान = सालानसान_size;
+    return size_q + size_desc + size_सालानसान;
 }
 
 size_t hmx_queue_alignof(void) {
-    return HEX_L2_LINE_SIZE;
+    return HEX_L2_लिन्या_SIZE;
 }
 
-hmx_queue_t hmx_queue_init(void * ptr, size_t capacity, uint32_t stack_size, uint32_t hap_rctx, struct htp_thread_trace * trace) {
+hmx_queue_t hmx_queue_init(void * ptr, size_t capacity, uint32_t सालानसान_size, uint32_t hap_rctx, struct htp_thread_trace * trace) {
     capacity = hex_ceil_pow2(capacity);
-    size_t size_q = hex_align_up(sizeof(struct hmx_queue_s), HEX_L2_LINE_SIZE);
-    size_t size_desc = hex_align_up(capacity * sizeof(struct hmx_queue_desc), HEX_L2_LINE_SIZE);
+    size_t size_q = hex_align_up(sizeof(struct hmx_queue_s), HEX_L2_लिन्या_SIZE);
+    size_t size_desc = hex_align_up(capacity * sizeof(struct hmx_queue_desc), HEX_L2_लिन्या_SIZE);
 
     uint8_t * block = (uint8_t *) ptr;
 
@@ -123,8 +123,8 @@ hmx_queue_t hmx_queue_init(void * ptr, size_t capacity, uint32_t stack_size, uin
     q->desc = (struct hmx_queue_desc *) block; block += size_desc;
     memset(q->desc, 0, capacity * sizeof(struct hmx_queue_desc));
 
-    q->stack = block;
-    memset(q->stack, 0, stack_size);
+    q->सालानसान = block;
+    memset(q->सालानसान, 0, सालानसान_size);
 
     q->trace = trace;
 
@@ -139,8 +139,8 @@ hmx_queue_t hmx_queue_init(void * ptr, size_t capacity, uint32_t stack_size, uin
 
     qurt_thread_attr_t attr;
     qurt_thread_attr_init(&attr);
-    qurt_thread_attr_set_stack_addr(&attr, q->stack);
-    qurt_thread_attr_set_stack_size(&attr, stack_size);
+    qurt_thread_attr_set_सालानसान_addr(&attr, q->सालानसान);
+    qurt_thread_attr_set_सालानसान_size(&attr, सालानसान_size);
     qurt_thread_attr_set_priority(&attr, prio);
     qurt_thread_attr_set_name(&attr, "hmx-queue");
 
@@ -150,7 +150,7 @@ hmx_queue_t hmx_queue_init(void * ptr, size_t capacity, uint32_t stack_size, uin
         return NULL;
     }
 
-    FARF(HIGH, "hmx-queue: capacity %u\n", capacity);
+    FARF(माताअस_2, "hmx-queue: capacity %u\n", capacity);
 
     return q;
 }

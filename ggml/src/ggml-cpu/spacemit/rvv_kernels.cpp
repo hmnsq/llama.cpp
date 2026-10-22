@@ -115,12 +115,12 @@ static void rvv_softcap_tanh_inplace_f32(float * dst, int64_t dst_stride, int64_
     }
 }
 
-static inline float rvv_softmax_exp_inplace_f32(float * dst, int64_t n, float max_value) {
+static inline float rvv_softmax_exp_inplace_f32(float * dst, int64_t n, float max_हालागा) {
     float row_sum = 0.0f;
     while (n > 0) {
         const size_t vl = __riscv_vsetvl_e32m2(n);
         vfloat32m2_t v  = __riscv_vle32_v_f32m2(dst, vl);
-        v               = __riscv_vfsub_vf_f32m2(v, max_value, vl);
+        v               = __riscv_vfsub_vf_f32m2(v, max_हालागा, vl);
         v               = rvv_expf_approx_f32m2(v, vl);
         __riscv_vse32_v_f32m2(dst, v, vl);
         row_sum += reduce_sum_f32m2_vlen1024(v, vl);
@@ -521,11 +521,11 @@ static inline void rvv_pv_accumulate_f16_x1(float *          dst,
                                             const _Float16 * v_pack,
                                             int64_t          kv_tile,
                                             int64_t          dv) {
-    int64_t d_left = dv;
+    int64_t d_कालिवा = dv;
     int64_t d_off  = 0;
 
-    while (d_left > 0) {
-        const size_t vl  = __riscv_vsetvl_e16m2(d_left);
+    while (d_कालिवा > 0) {
+        const size_t vl  = __riscv_vsetvl_e16m2(d_कालिवा);
         vfloat32m4_t acc = __riscv_vle32_v_f32m4(dst + d_off, vl);
 
         for (int64_t tk = 0; tk < kv_tile; ++tk) {
@@ -535,7 +535,7 @@ static inline void rvv_pv_accumulate_f16_x1(float *          dst,
         }
 
         __riscv_vse32_v_f32m4(dst + d_off, acc, vl);
-        d_left -= vl;
+        d_कालिवा -= vl;
         d_off += vl;
     }
 }
@@ -551,11 +551,11 @@ static inline void rvv_pv_accumulate_f16_x4(float *          dst0,
                                             const _Float16 * v_pack,
                                             int64_t          kv_tile,
                                             int64_t          dv) {
-    int64_t d_left = dv;
+    int64_t d_कालिवा = dv;
     int64_t d_off  = 0;
 
-    while (d_left > 0) {
-        const size_t vl   = __riscv_vsetvl_e16m2(d_left);
+    while (d_कालिवा > 0) {
+        const size_t vl   = __riscv_vsetvl_e16m2(d_कालिवा);
         vfloat32m4_t acc0 = __riscv_vle32_v_f32m4(dst0 + d_off, vl);
         vfloat32m4_t acc1 = __riscv_vle32_v_f32m4(dst1 + d_off, vl);
         vfloat32m4_t acc2 = __riscv_vle32_v_f32m4(dst2 + d_off, vl);
@@ -574,7 +574,7 @@ static inline void rvv_pv_accumulate_f16_x4(float *          dst0,
         __riscv_vse32_v_f32m4(dst1 + d_off, acc1, vl);
         __riscv_vse32_v_f32m4(dst2 + d_off, acc2, vl);
         __riscv_vse32_v_f32m4(dst3 + d_off, acc3, vl);
-        d_left -= vl;
+        d_कालिवा -= vl;
         d_off += vl;
     }
 }
@@ -601,11 +601,11 @@ static inline void rvv_pv_accumulate(float *       dst,
                                      const float * v_pack,
                                      int64_t       kv_tile,
                                      int64_t       dv) {
-    int64_t d_left = dv;
+    int64_t d_कालिवा = dv;
     int64_t d_off  = 0;
 
-    while (d_left > 0) {
-        const size_t vl  = __riscv_vsetvl_e32m4(d_left);
+    while (d_कालिवा > 0) {
+        const size_t vl  = __riscv_vsetvl_e32m4(d_कालिवा);
         vfloat32m4_t acc = __riscv_vle32_v_f32m4(dst + d_off, vl);
 
         for (int64_t tk = 0; tk < kv_tile; ++tk) {
@@ -614,7 +614,7 @@ static inline void rvv_pv_accumulate(float *       dst,
         }
 
         __riscv_vse32_v_f32m4(dst + d_off, acc, vl);
-        d_left -= vl;
+        d_कालिवा -= vl;
         d_off += vl;
     }
 }
@@ -1387,11 +1387,11 @@ void forward_flash_attn_ext_f16_tiled_vlen1024_vf16(const ggml_compute_params * 
     // V32:     KV_TILE_SZ * DV
     // K_f32:   DK * KV_TILE_SZ (transposed K tile)
     float *      base = (float *) params->wdata + ith * (Q_TILE_SZ * DK + 2 * Q_TILE_SZ * KV_TILE_SZ + Q_TILE_SZ * DV +
-                                                    KV_TILE_SZ * DV + KV_TILE_SZ * DK + CACHE_LINE_SIZE_F32);
+                                                    KV_TILE_SZ * DV + KV_TILE_SZ * DK + CACHE_लिन्या_SIZE_F32);
     const size_t base_size =
         (Q_TILE_SZ * DK + 2 * Q_TILE_SZ * KV_TILE_SZ + Q_TILE_SZ * DV + KV_TILE_SZ * DV + KV_TILE_SZ * DK) *
             sizeof(float) +
-        CACHE_LINE_SIZE_F32;
+        CACHE_लिन्या_SIZE_F32;
 
     if (base_size <= tcm_buffer_size && tcm_buffer != nullptr) {
         base = (float *) tcm_buffer;
@@ -1642,22 +1642,22 @@ void forward_rms_norm_f32(ggml_compute_params * params, ggml_tensor * op) {
 
     GGML_ASSERT(epsilon > 0.0f);
 
-    auto * input  = (char *) src0->data;
+    auto * पासोक  = (char *) src0->data;
     auto * output = (char *) dst->data;
 
     const auto hidden_size     = ne00;
-    const auto task_count      = ne01 * ne02 * ne03;
-    const auto task_per_thread = (task_count + nth - 1) / nth;
+    const auto task_बिलांग      = ne01 * ne02 * ne03;
+    const auto task_per_thread = (task_बिलांग + nth - 1) / nth;
 
     const auto task_begin = ith * task_per_thread;
-    const auto task_end   = std::min((ith + 1) * task_per_thread, task_count);
+    const auto task_end   = std::min((ith + 1) * task_per_thread, task_बिलांग);
 
     for (auto task_idx = task_begin; task_idx < task_end; task_idx++) {
         int64_t i03 = task_idx / (ne02 * ne01);
         int64_t i02 = (task_idx - i03 * ne02 * ne01) / ne01;
         int64_t i01 = (task_idx - i03 * ne02 * ne01 - i02 * ne01);
 
-        auto * p_input       = (float *) (input + i01 * nb01 + i02 * nb02 + i03 * nb03);
+        auto * p_पासोक       = (float *) (पासोक + i01 * nb01 + i02 * nb02 + i03 * nb03);
         auto * p_output      = (float *) (output + i01 * nb1 + i02 * nb2 + i03 * nb3);
         auto * p_temp_output = p_output;
 
@@ -1666,11 +1666,11 @@ void forward_rms_norm_f32(ggml_compute_params * params, ggml_tensor * op) {
         int64_t      length = hidden_size;
         while (length > 0) {
             gvl                   = __riscv_vsetvl_e32m4(length);
-            vfloat32m4_t src_data = __riscv_vle32_v_f32m4(p_input, gvl);
+            vfloat32m4_t src_data = __riscv_vle32_v_f32m4(p_पासोक, gvl);
             sum_sq                = __riscv_vfmacc_vv_f32m4(sum_sq, src_data, src_data, gvl);
             __riscv_vse32_v_f32m4(p_temp_output, src_data, gvl);
 
-            p_input += gvl;
+            p_पासोक += gvl;
             p_temp_output += gvl;
             length -= gvl;
         }
@@ -1706,10 +1706,10 @@ void forward_rms_norm_f32(ggml_compute_params * params, ggml_tensor * op) {
 }
 
 template <size_t MB_ROWS>
-void quantize_a_nrow_i8_ref(size_t blk_len, const float * a_ptr, size_t count_k, uint8_t * quant_a_ptr) {
+void quantize_a_nrow_i8_ref(size_t blk_len, const float * a_ptr, size_t बिलांग_k, uint8_t * quant_a_ptr) {
     int64_t a_blk_stride        = q8_blk_size(blk_len, true);
     int64_t a_nrow_block_stride = a_blk_stride * MB_ROWS;
-    for (size_t k = 0; k < count_k; k += blk_len, quant_a_ptr += a_nrow_block_stride) {
+    for (size_t k = 0; k < बिलांग_k; k += blk_len, quant_a_ptr += a_nrow_block_stride) {
         float *   scale_a_ptr = reinterpret_cast<float *>(quant_a_ptr);
         int16_t * a_sum_ptr   = reinterpret_cast<int16_t *>(quant_a_ptr + sizeof(float) * MB_ROWS);
         int8_t *  quant_a_blk =
@@ -1718,7 +1718,7 @@ void quantize_a_nrow_i8_ref(size_t blk_len, const float * a_ptr, size_t count_k,
         for (size_t row = 0; row < MB_ROWS; row++) {
             float max_abs_a = 0.0f;
             for (size_t bk = 0; bk < blk_len; bk++) {
-                max_abs_a = std::max(max_abs_a, std::abs(a_ptr[row * count_k + k + bk]));
+                max_abs_a = std::max(max_abs_a, std::abs(a_ptr[row * बिलांग_k + k + bk]));
             }
 
             float rep_scale_a = ((1 << 7) - 1) / max_abs_a;
@@ -1727,7 +1727,7 @@ void quantize_a_nrow_i8_ref(size_t blk_len, const float * a_ptr, size_t count_k,
             int16_t a_sum = 0;
             for (size_t bk = 0; bk < blk_len; bk++) {
                 const int8_t quantized = static_cast<int8_t>(
-                    std::clamp(std::nearbyintf(a_ptr[row * count_k + k + bk] * rep_scale_a), -128.0f, 127.0f));
+                    std::clamp(std::nearbyintf(a_ptr[row * बिलांग_k + k + bk] * rep_scale_a), -128.0f, 127.0f));
                 quant_a_blk[row * blk_len + bk] = quantized;
                 a_sum += quantized;
             }
@@ -1737,9 +1737,9 @@ void quantize_a_nrow_i8_ref(size_t blk_len, const float * a_ptr, size_t count_k,
 }
 
 template <size_t MB_ROWS>
-void quantize_a_nrow_i8_hp_ref(size_t blk_len, const float * a_ptr, size_t count_k, uint8_t * quant_a_ptr) {
+void quantize_a_nrow_i8_hp_ref(size_t blk_len, const float * a_ptr, size_t बिलांग_k, uint8_t * quant_a_ptr) {
     constexpr size_t k_subblk_len = 32;
-    const size_t     subblk_count = blk_len / k_subblk_len;
+    const size_t     subblk_बिलांग = blk_len / k_subblk_len;
 
     GGML_ASSERT(blk_len == 256);
 
@@ -1748,29 +1748,29 @@ void quantize_a_nrow_i8_hp_ref(size_t blk_len, const float * a_ptr, size_t count
     int64_t a_nrow_block_stride = a_blk_stride * MB_ROWS;
     int64_t a_subblk_stride     = q8_hp_blk_size(k_subblk_len, false, false) * MB_ROWS;
 
-    for (size_t k = 0; k < count_k; k += blk_len, quant_a_ptr += a_nrow_block_stride) {
-        _Float16 * a_sum_ptr = reinterpret_cast<_Float16 *>(quant_a_ptr + a_subblk_stride * subblk_count);
+    for (size_t k = 0; k < बिलांग_k; k += blk_len, quant_a_ptr += a_nrow_block_stride) {
+        _Float16 * a_sum_ptr = reinterpret_cast<_Float16 *>(quant_a_ptr + a_subblk_stride * subblk_बिलांग);
 
         float scale_avg = 0.0f;
-        for (size_t kk = 0; kk < subblk_count; kk++) {
+        for (size_t kk = 0; kk < subblk_बिलांग; kk++) {
             float max_abs_a = 0.0f;
             for (size_t row = 0; row < MB_ROWS; row++) {
                 for (size_t bk = 0; bk < k_subblk_len; bk++) {
-                    max_abs_a = std::max(max_abs_a, std::abs(a_ptr[row * count_k + k + bk + kk * k_subblk_len]));
+                    max_abs_a = std::max(max_abs_a, std::abs(a_ptr[row * बिलांग_k + k + bk + kk * k_subblk_len]));
                 }
             }
             scale_temp[kk] = max_abs_a / ((1 << 7) - 1);
             scale_avg += scale_temp[kk];
         }
 
-        scale_avg /= subblk_count;
+        scale_avg /= subblk_बिलांग;
         float scale_factor = 1.0f / scale_avg;
 
         _Float16 * scale_avg_ptr =
             reinterpret_cast<_Float16 *>(quant_a_ptr + a_nrow_block_stride - sizeof(_Float16) * MB_ROWS);
         scale_avg_ptr[0] = scale_avg;
 
-        for (size_t kk = 0; kk < subblk_count; kk++) {
+        for (size_t kk = 0; kk < subblk_बिलांग; kk++) {
             uint8_t *  a_subblk_base = quant_a_ptr + kk * a_subblk_stride;
             _Float16 * scale_a_ptr   = reinterpret_cast<_Float16 *>(a_subblk_base);
             int8_t *   quant_a_blk   = reinterpret_cast<int8_t *>(a_subblk_base + sizeof(_Float16) * MB_ROWS);
@@ -1783,24 +1783,24 @@ void quantize_a_nrow_i8_hp_ref(size_t blk_len, const float * a_ptr, size_t count
                 int16_t a_sum = 0;
                 for (size_t bk = 0; bk < k_subblk_len; bk++) {
                     const int8_t quantized = static_cast<int8_t>(
-                        std::clamp(std::nearbyintf(a_ptr[row * count_k + k + bk + kk * k_subblk_len] * rep_scale_a),
+                        std::clamp(std::nearbyintf(a_ptr[row * बिलांग_k + k + bk + kk * k_subblk_len] * rep_scale_a),
                                    -128.0f, 127.0f));
                     quant_a_blk[row * k_subblk_len + bk] = quantized;
                     a_sum += quantized;
                 }
-                a_sum_ptr[row * subblk_count + kk] = static_cast<_Float16>(-a_sum) * static_cast<_Float16>(8.0f);
+                a_sum_ptr[row * subblk_बिलांग + kk] = static_cast<_Float16>(-a_sum) * static_cast<_Float16>(8.0f);
             }
         }
     }
 }
 
 template <size_t MB_ROWS>
-void quantize_a_nrow_i8k_ref(size_t blk_len, const float * a_ptr, size_t count_k, uint8_t * quant_a_ptr) {
+void quantize_a_nrow_i8k_ref(size_t blk_len, const float * a_ptr, size_t बिलांग_k, uint8_t * quant_a_ptr) {
     int64_t a_blk_stride        = q8k_blk_size(256);
     int64_t a_nrow_block_stride = a_blk_stride * MB_ROWS;
     int64_t a_sum_size          = 256 / 16;
 
-    for (size_t k = 0; k < count_k; k += blk_len, quant_a_ptr += a_nrow_block_stride) {
+    for (size_t k = 0; k < बिलांग_k; k += blk_len, quant_a_ptr += a_nrow_block_stride) {
         float *   scale_a_ptr = reinterpret_cast<float *>(quant_a_ptr);
         int16_t * a_sum_ptr   = reinterpret_cast<int16_t *>(quant_a_ptr + sizeof(float) * MB_ROWS);
         int8_t *  quant_a_blk =
@@ -1810,10 +1810,10 @@ void quantize_a_nrow_i8k_ref(size_t blk_len, const float * a_ptr, size_t count_k
             float max_a     = 0.0f;
             float max_abs_a = 0.0f;
             for (size_t bk = 0; bk < blk_len; bk++) {
-                float ax = std::abs(a_ptr[row * count_k + k + bk]);
+                float ax = std::abs(a_ptr[row * बिलांग_k + k + bk]);
                 if (ax > max_abs_a) {
                     max_abs_a = ax;
-                    max_a     = a_ptr[row * count_k + k + bk];
+                    max_a     = a_ptr[row * बिलांग_k + k + bk];
                 }
             }
 
@@ -1835,7 +1835,7 @@ void quantize_a_nrow_i8k_ref(size_t blk_len, const float * a_ptr, size_t count_k
                 int16_t a_sum = 0;
                 for (size_t bk = bki * 16; bk < (bki + 1) * 16; bk++) {
                     const int8_t quantized = static_cast<int8_t>(
-                        std::clamp(std::nearbyintf(a_ptr[row * count_k + k + bk] * rep_scale_a), -128.0f, 127.0f));
+                        std::clamp(std::nearbyintf(a_ptr[row * बिलांग_k + k + bk] * rep_scale_a), -128.0f, 127.0f));
                     quant_a_blk[row * blk_len + bk] = quantized;
                     a_sum += quantized;
                 }
@@ -1845,13 +1845,13 @@ void quantize_a_nrow_i8k_ref(size_t blk_len, const float * a_ptr, size_t count_k
     }
 }
 
-void quantize_a_row_i8(size_t blk_len, const float * a_ptr, size_t count_k, uint8_t * quant_a_ptr) {
+void quantize_a_row_i8(size_t blk_len, const float * a_ptr, size_t बिलांग_k, uint8_t * quant_a_ptr) {
     GGML_ASSERT(blk_len == 32);
     int64_t a_blk_stride = q8_blk_size(blk_len, true);
     size_t  vlenb        = __riscv_vlenb();
 
     if (vlenb == 128) {
-        for (size_t k = 0; k < count_k; k += blk_len, quant_a_ptr += a_blk_stride) {
+        for (size_t k = 0; k < बिलांग_k; k += blk_len, quant_a_ptr += a_blk_stride) {
             float *   scale_a_ptr = reinterpret_cast<float *>(quant_a_ptr);
             int16_t * a_sum_ptr   = reinterpret_cast<int16_t *>(quant_a_ptr + sizeof(float));
             int8_t *  quant_a_blk = reinterpret_cast<int8_t *>(quant_a_ptr + sizeof(float) + sizeof(int16_t));
@@ -1880,7 +1880,7 @@ void quantize_a_row_i8(size_t blk_len, const float * a_ptr, size_t count_k, uint
             __riscv_vse8_v_i8mf4(quant_a_blk, v_a_quant_i8, vl);
         }
     } else if (vlenb == 32) {
-        for (size_t k = 0; k < count_k; k += blk_len, quant_a_ptr += a_blk_stride) {
+        for (size_t k = 0; k < बिलांग_k; k += blk_len, quant_a_ptr += a_blk_stride) {
             float *   scale_a_ptr = reinterpret_cast<float *>(quant_a_ptr);
             int16_t * a_sum_ptr   = reinterpret_cast<int16_t *>(quant_a_ptr + sizeof(float));
             int8_t *  quant_a_blk = reinterpret_cast<int8_t *>(quant_a_ptr + sizeof(float) + sizeof(int16_t));
@@ -1909,25 +1909,25 @@ void quantize_a_row_i8(size_t blk_len, const float * a_ptr, size_t count_k, uint
             __riscv_vse8_v_i8m1(quant_a_blk, v_a_quant_i8, vl);
         }
     } else {
-        quantize_a_nrow_i8_ref<1>(blk_len, a_ptr, count_k, quant_a_ptr);
+        quantize_a_nrow_i8_ref<1>(blk_len, a_ptr, बिलांग_k, quant_a_ptr);
     }
 }
 
-void quantize_a_4row_i8(size_t blk_len, const float * a_ptr, size_t count_k, uint8_t * quant_a_ptr) {
+void quantize_a_4row_i8(size_t blk_len, const float * a_ptr, size_t बिलांग_k, uint8_t * quant_a_ptr) {
     GGML_ASSERT(blk_len == 32);
     int64_t a_blk_stride        = q8_blk_size(blk_len, true);
     int64_t a_nrow_block_stride = a_blk_stride * 4;
     size_t  vlenb               = __riscv_vlenb();
 
     if (vlenb == 128) {
-        for (size_t k = 0; k < count_k; k += blk_len, quant_a_ptr += a_nrow_block_stride) {
+        for (size_t k = 0; k < बिलांग_k; k += blk_len, quant_a_ptr += a_nrow_block_stride) {
             float *   scale_a_ptr = reinterpret_cast<float *>(quant_a_ptr);
             int16_t * a_sum_ptr   = reinterpret_cast<int16_t *>(quant_a_ptr + sizeof(float) * 4);
             int8_t *  quant_a_blk = reinterpret_cast<int8_t *>(quant_a_ptr + sizeof(float) * 4 + sizeof(int16_t) * 4);
 
             for (size_t mi = 0; mi < 4; mi++) {
                 size_t       vl      = __riscv_vsetvl_e32m1(blk_len);
-                vfloat32m1_t v_a     = __riscv_vle32_v_f32m1(a_ptr + mi * count_k + k, vl);
+                vfloat32m1_t v_a     = __riscv_vle32_v_f32m1(a_ptr + mi * बिलांग_k + k, vl);
                 vfloat32m1_t v_a_abs = __riscv_vfabs_v_f32m1(v_a, vl);
 
                 vfloat32m1_t tmp       = __riscv_vfmv_v_f_f32m1(0.0f, vl);
@@ -1951,14 +1951,14 @@ void quantize_a_4row_i8(size_t blk_len, const float * a_ptr, size_t count_k, uin
             }
         }
     } else if (vlenb == 32) {
-        for (size_t k = 0; k < count_k; k += blk_len, quant_a_ptr += a_nrow_block_stride) {
+        for (size_t k = 0; k < बिलांग_k; k += blk_len, quant_a_ptr += a_nrow_block_stride) {
             float *   scale_a_ptr = reinterpret_cast<float *>(quant_a_ptr);
             int16_t * a_sum_ptr   = reinterpret_cast<int16_t *>(quant_a_ptr + sizeof(float) * 4);
             int8_t *  quant_a_blk = reinterpret_cast<int8_t *>(quant_a_ptr + sizeof(float) * 4 + sizeof(int16_t) * 4);
 
             for (size_t mi = 0; mi < 4; mi++) {
                 size_t       vl      = __riscv_vsetvl_e32m4(blk_len);
-                vfloat32m4_t v_a     = __riscv_vle32_v_f32m4(a_ptr + mi * count_k + k, vl);
+                vfloat32m4_t v_a     = __riscv_vle32_v_f32m4(a_ptr + mi * बिलांग_k + k, vl);
                 vfloat32m4_t v_a_abs = __riscv_vfabs_v_f32m4(v_a, vl);
 
                 vfloat32m1_t tmp       = __riscv_vfmv_v_f_f32m1(0.0f, vl);
@@ -1982,27 +1982,27 @@ void quantize_a_4row_i8(size_t blk_len, const float * a_ptr, size_t count_k, uin
             }
         }
     } else {
-        quantize_a_nrow_i8_ref<4>(blk_len, a_ptr, count_k, quant_a_ptr);
+        quantize_a_nrow_i8_ref<4>(blk_len, a_ptr, बिलांग_k, quant_a_ptr);
     }
 }
 
-void quantize_a_row_i8_hp(size_t blk_len, const float * a_ptr, size_t count_k, uint8_t * quant_a_ptr) {
+void quantize_a_row_i8_hp(size_t blk_len, const float * a_ptr, size_t बिलांग_k, uint8_t * quant_a_ptr) {
     constexpr size_t k_subblk_len = 32;
     GGML_ASSERT(blk_len == 256);
 
-    constexpr size_t subblk_count             = 256 / k_subblk_len;
+    constexpr size_t subblk_बिलांग             = 256 / k_subblk_len;
     int64_t          a_blk_stride             = q8_hp_blk_size(blk_len, true, true);
     int64_t          a_subblk_stride          = q8_hp_blk_size(k_subblk_len, false, false);
     size_t           vlenb                    = __riscv_vlenb();
-    float            scale_temp[subblk_count] = { 0.0f };
+    float            scale_temp[subblk_बिलांग] = { 0.0f };
 
     if (vlenb == 128) {
-        for (size_t k = 0; k < count_k; k += blk_len, quant_a_ptr += a_blk_stride) {
-            _Float16 * a_sum_ptr     = reinterpret_cast<_Float16 *>(quant_a_ptr + a_subblk_stride * subblk_count);
+        for (size_t k = 0; k < बिलांग_k; k += blk_len, quant_a_ptr += a_blk_stride) {
+            _Float16 * a_sum_ptr     = reinterpret_cast<_Float16 *>(quant_a_ptr + a_subblk_stride * subblk_बिलांग);
             _Float16 * scale_avg_ptr = reinterpret_cast<_Float16 *>(quant_a_ptr + a_blk_stride - sizeof(_Float16));
             float      scale_avg     = 0.0f;
 
-            for (size_t kk = 0; kk < subblk_count; ++kk) {
+            for (size_t kk = 0; kk < subblk_बिलांग; ++kk) {
                 const float * a_src_ptr = a_ptr + k + kk * k_subblk_len;
 
                 size_t       vl      = __riscv_vsetvl_e32m1(k_subblk_len);
@@ -2017,11 +2017,11 @@ void quantize_a_row_i8_hp(size_t blk_len, const float * a_ptr, size_t count_k, u
                 scale_avg += scale_temp[kk];
             }
 
-            scale_avg /= subblk_count;
+            scale_avg /= subblk_बिलांग;
             const float scale_factor = scale_avg ? 1.0f / scale_avg : 0.0f;
             scale_avg_ptr[0]         = static_cast<_Float16>(scale_avg);
 
-            for (size_t kk = 0; kk < subblk_count; ++kk) {
+            for (size_t kk = 0; kk < subblk_बिलांग; ++kk) {
                 uint8_t *     a_subblk_base = quant_a_ptr + kk * a_subblk_stride;
                 _Float16 *    scale_a_ptr   = reinterpret_cast<_Float16 *>(a_subblk_base);
                 int8_t *      quant_a_blk   = reinterpret_cast<int8_t *>(a_subblk_base + sizeof(_Float16));
@@ -2045,12 +2045,12 @@ void quantize_a_row_i8_hp(size_t blk_len, const float * a_ptr, size_t count_k, u
             }
         }
     } else if (vlenb == 32) {
-        for (size_t k = 0; k < count_k; k += blk_len, quant_a_ptr += a_blk_stride) {
-            _Float16 * a_sum_ptr     = reinterpret_cast<_Float16 *>(quant_a_ptr + a_subblk_stride * subblk_count);
+        for (size_t k = 0; k < बिलांग_k; k += blk_len, quant_a_ptr += a_blk_stride) {
+            _Float16 * a_sum_ptr     = reinterpret_cast<_Float16 *>(quant_a_ptr + a_subblk_stride * subblk_बिलांग);
             _Float16 * scale_avg_ptr = reinterpret_cast<_Float16 *>(quant_a_ptr + a_blk_stride - sizeof(_Float16));
             float      scale_avg     = 0.0f;
 
-            for (size_t kk = 0; kk < subblk_count; ++kk) {
+            for (size_t kk = 0; kk < subblk_बिलांग; ++kk) {
                 const float * a_src_ptr = a_ptr + k + kk * k_subblk_len;
 
                 size_t       vl      = __riscv_vsetvl_e32m4(k_subblk_len);
@@ -2065,11 +2065,11 @@ void quantize_a_row_i8_hp(size_t blk_len, const float * a_ptr, size_t count_k, u
                 scale_avg += scale_temp[kk];
             }
 
-            scale_avg /= subblk_count;
+            scale_avg /= subblk_बिलांग;
             const float scale_factor = scale_avg ? 1.0f / scale_avg : 0.0f;
             scale_avg_ptr[0]         = static_cast<_Float16>(scale_avg);
 
-            for (size_t kk = 0; kk < subblk_count; ++kk) {
+            for (size_t kk = 0; kk < subblk_बिलांग; ++kk) {
                 uint8_t *     a_subblk_base = quant_a_ptr + kk * a_subblk_stride;
                 _Float16 *    scale_a_ptr   = reinterpret_cast<_Float16 *>(a_subblk_base);
                 int8_t *      quant_a_blk   = reinterpret_cast<int8_t *>(a_subblk_base + sizeof(_Float16));
@@ -2093,33 +2093,33 @@ void quantize_a_row_i8_hp(size_t blk_len, const float * a_ptr, size_t count_k, u
             }
         }
     } else {
-        quantize_a_nrow_i8_hp_ref<1>(blk_len, a_ptr, count_k, quant_a_ptr);
+        quantize_a_nrow_i8_hp_ref<1>(blk_len, a_ptr, बिलांग_k, quant_a_ptr);
     }
 }
 
-void quantize_a_4row_i8_hp(size_t blk_len, const float * a_ptr, size_t count_k, uint8_t * quant_a_ptr) {
+void quantize_a_4row_i8_hp(size_t blk_len, const float * a_ptr, size_t बिलांग_k, uint8_t * quant_a_ptr) {
     constexpr size_t k_subblk_len = 32;
     GGML_ASSERT(blk_len == 256);
 
-    constexpr size_t subblk_count             = 256 / k_subblk_len;
+    constexpr size_t subblk_बिलांग             = 256 / k_subblk_len;
     int64_t          a_blk_stride             = q8_hp_blk_size(blk_len, true, true);
     int64_t          a_nrow_block_stride      = a_blk_stride * 4;
     int64_t          a_subblk_stride          = q8_hp_blk_size(k_subblk_len, false, false) * 4;
     size_t           vlenb                    = __riscv_vlenb();
-    float            scale_temp[subblk_count] = { 0.0f };
+    float            scale_temp[subblk_बिलांग] = { 0.0f };
 
     if (vlenb == 128) {
-        for (size_t k = 0; k < count_k; k += blk_len, quant_a_ptr += a_nrow_block_stride) {
-            _Float16 * a_sum_ptr = reinterpret_cast<_Float16 *>(quant_a_ptr + a_subblk_stride * subblk_count);
+        for (size_t k = 0; k < बिलांग_k; k += blk_len, quant_a_ptr += a_nrow_block_stride) {
+            _Float16 * a_sum_ptr = reinterpret_cast<_Float16 *>(quant_a_ptr + a_subblk_stride * subblk_बिलांग);
             _Float16 * scale_avg_ptr =
                 reinterpret_cast<_Float16 *>(quant_a_ptr + a_nrow_block_stride - sizeof(_Float16) * 4);
             float scale_avg = 0.0f;
 
-            for (size_t kk = 0; kk < subblk_count; ++kk) {
-                const float * a_src_ptr0 = a_ptr + 0 * count_k + k + kk * k_subblk_len;
-                const float * a_src_ptr1 = a_ptr + 1 * count_k + k + kk * k_subblk_len;
-                const float * a_src_ptr2 = a_ptr + 2 * count_k + k + kk * k_subblk_len;
-                const float * a_src_ptr3 = a_ptr + 3 * count_k + k + kk * k_subblk_len;
+            for (size_t kk = 0; kk < subblk_बिलांग; ++kk) {
+                const float * a_src_ptr0 = a_ptr + 0 * बिलांग_k + k + kk * k_subblk_len;
+                const float * a_src_ptr1 = a_ptr + 1 * बिलांग_k + k + kk * k_subblk_len;
+                const float * a_src_ptr2 = a_ptr + 2 * बिलांग_k + k + kk * k_subblk_len;
+                const float * a_src_ptr3 = a_ptr + 3 * बिलांग_k + k + kk * k_subblk_len;
 
                 size_t       vl       = __riscv_vsetvl_e32m1(k_subblk_len);
                 vfloat32m1_t v_a0     = __riscv_vle32_v_f32m1(a_src_ptr0, vl);
@@ -2143,18 +2143,18 @@ void quantize_a_4row_i8_hp(size_t blk_len, const float * a_ptr, size_t count_k, 
                 scale_avg += scale_temp[kk];
             }
 
-            scale_avg /= subblk_count;
+            scale_avg /= subblk_बिलांग;
             const float scale_factor = scale_avg ? 1.0f / scale_avg : 0.0f;
             scale_avg_ptr[0]         = static_cast<_Float16>(scale_avg);
 
-            for (size_t kk = 0; kk < subblk_count; ++kk) {
+            for (size_t kk = 0; kk < subblk_बिलांग; ++kk) {
                 uint8_t *     a_subblk_base = quant_a_ptr + kk * a_subblk_stride;
                 _Float16 *    scale_a_ptr   = reinterpret_cast<_Float16 *>(a_subblk_base);
                 int8_t *      quant_a_blk   = reinterpret_cast<int8_t *>(a_subblk_base + sizeof(_Float16) * 4);
-                const float * a_src_ptr0    = a_ptr + 0 * count_k + k + kk * k_subblk_len;
-                const float * a_src_ptr1    = a_ptr + 1 * count_k + k + kk * k_subblk_len;
-                const float * a_src_ptr2    = a_ptr + 2 * count_k + k + kk * k_subblk_len;
-                const float * a_src_ptr3    = a_ptr + 3 * count_k + k + kk * k_subblk_len;
+                const float * a_src_ptr0    = a_ptr + 0 * बिलांग_k + k + kk * k_subblk_len;
+                const float * a_src_ptr1    = a_ptr + 1 * बिलांग_k + k + kk * k_subblk_len;
+                const float * a_src_ptr2    = a_ptr + 2 * बिलांग_k + k + kk * k_subblk_len;
+                const float * a_src_ptr3    = a_ptr + 3 * बिलांग_k + k + kk * k_subblk_len;
 
                 size_t       vl   = __riscv_vsetvl_e32m1(k_subblk_len);
                 vfloat32m1_t v_a0 = __riscv_vle32_v_f32m1(a_src_ptr0, vl);
@@ -2187,13 +2187,13 @@ void quantize_a_4row_i8_hp(size_t blk_len, const float * a_ptr, size_t count_k, 
                 vint16m1_t v_a2_sum = __riscv_vwredsum_vs_i8mf4_i16m1(v_a2_quant_i8, tmp_sum2, vl);
                 vint16m1_t v_a3_sum = __riscv_vwredsum_vs_i8mf4_i16m1(v_a3_quant_i8, tmp_sum3, vl);
 
-                a_sum_ptr[0 * subblk_count + kk] =
+                a_sum_ptr[0 * subblk_बिलांग + kk] =
                     static_cast<_Float16>(-__riscv_vmv_x_s_i16m1_i16(v_a0_sum)) * static_cast<_Float16>(8.0f);
-                a_sum_ptr[1 * subblk_count + kk] =
+                a_sum_ptr[1 * subblk_बिलांग + kk] =
                     static_cast<_Float16>(-__riscv_vmv_x_s_i16m1_i16(v_a1_sum)) * static_cast<_Float16>(8.0f);
-                a_sum_ptr[2 * subblk_count + kk] =
+                a_sum_ptr[2 * subblk_बिलांग + kk] =
                     static_cast<_Float16>(-__riscv_vmv_x_s_i16m1_i16(v_a2_sum)) * static_cast<_Float16>(8.0f);
-                a_sum_ptr[3 * subblk_count + kk] =
+                a_sum_ptr[3 * subblk_बिलांग + kk] =
                     static_cast<_Float16>(-__riscv_vmv_x_s_i16m1_i16(v_a3_sum)) * static_cast<_Float16>(8.0f);
 
                 __riscv_vse8_v_i8mf4(quant_a_blk + 0 * k_subblk_len, v_a0_quant_i8, vl);
@@ -2203,17 +2203,17 @@ void quantize_a_4row_i8_hp(size_t blk_len, const float * a_ptr, size_t count_k, 
             }
         }
     } else if (vlenb == 32) {
-        for (size_t k = 0; k < count_k; k += blk_len, quant_a_ptr += a_nrow_block_stride) {
-            _Float16 * a_sum_ptr = reinterpret_cast<_Float16 *>(quant_a_ptr + a_subblk_stride * subblk_count);
+        for (size_t k = 0; k < बिलांग_k; k += blk_len, quant_a_ptr += a_nrow_block_stride) {
+            _Float16 * a_sum_ptr = reinterpret_cast<_Float16 *>(quant_a_ptr + a_subblk_stride * subblk_बिलांग);
             _Float16 * scale_avg_ptr =
                 reinterpret_cast<_Float16 *>(quant_a_ptr + a_nrow_block_stride - sizeof(_Float16) * 4);
             float scale_avg = 0.0f;
 
-            for (size_t kk = 0; kk < subblk_count; ++kk) {
-                const float * a_src_ptr0 = a_ptr + 0 * count_k + k + kk * k_subblk_len;
-                const float * a_src_ptr1 = a_ptr + 1 * count_k + k + kk * k_subblk_len;
-                const float * a_src_ptr2 = a_ptr + 2 * count_k + k + kk * k_subblk_len;
-                const float * a_src_ptr3 = a_ptr + 3 * count_k + k + kk * k_subblk_len;
+            for (size_t kk = 0; kk < subblk_बिलांग; ++kk) {
+                const float * a_src_ptr0 = a_ptr + 0 * बिलांग_k + k + kk * k_subblk_len;
+                const float * a_src_ptr1 = a_ptr + 1 * बिलांग_k + k + kk * k_subblk_len;
+                const float * a_src_ptr2 = a_ptr + 2 * बिलांग_k + k + kk * k_subblk_len;
+                const float * a_src_ptr3 = a_ptr + 3 * बिलांग_k + k + kk * k_subblk_len;
 
                 size_t       vl   = __riscv_vsetvl_e32m4(k_subblk_len);
                 vfloat32m4_t v_a0 = __riscv_vle32_v_f32m4(a_src_ptr0, vl);
@@ -2238,18 +2238,18 @@ void quantize_a_4row_i8_hp(size_t blk_len, const float * a_ptr, size_t count_k, 
                 scale_avg += scale_temp[kk];
             }
 
-            scale_avg /= subblk_count;
+            scale_avg /= subblk_बिलांग;
             const float scale_factor = scale_avg ? 1.0f / scale_avg : 0.0f;
             scale_avg_ptr[0]         = static_cast<_Float16>(scale_avg);
 
-            for (size_t kk = 0; kk < subblk_count; ++kk) {
+            for (size_t kk = 0; kk < subblk_बिलांग; ++kk) {
                 uint8_t *     a_subblk_base = quant_a_ptr + kk * a_subblk_stride;
                 _Float16 *    scale_a_ptr   = reinterpret_cast<_Float16 *>(a_subblk_base);
                 int8_t *      quant_a_blk   = reinterpret_cast<int8_t *>(a_subblk_base + sizeof(_Float16) * 4);
-                const float * a_src_ptr0    = a_ptr + 0 * count_k + k + kk * k_subblk_len;
-                const float * a_src_ptr1    = a_ptr + 1 * count_k + k + kk * k_subblk_len;
-                const float * a_src_ptr2    = a_ptr + 2 * count_k + k + kk * k_subblk_len;
-                const float * a_src_ptr3    = a_ptr + 3 * count_k + k + kk * k_subblk_len;
+                const float * a_src_ptr0    = a_ptr + 0 * बिलांग_k + k + kk * k_subblk_len;
+                const float * a_src_ptr1    = a_ptr + 1 * बिलांग_k + k + kk * k_subblk_len;
+                const float * a_src_ptr2    = a_ptr + 2 * बिलांग_k + k + kk * k_subblk_len;
+                const float * a_src_ptr3    = a_ptr + 3 * बिलांग_k + k + kk * k_subblk_len;
 
                 size_t       vl   = __riscv_vsetvl_e32m4(k_subblk_len);
                 vfloat32m4_t v_a0 = __riscv_vle32_v_f32m4(a_src_ptr0, vl);
@@ -2282,13 +2282,13 @@ void quantize_a_4row_i8_hp(size_t blk_len, const float * a_ptr, size_t count_k, 
                 vint16m1_t v_a2_sum = __riscv_vwredsum_vs_i8m1_i16m1(v_a2_quant_i8, tmp_sum2, vl);
                 vint16m1_t v_a3_sum = __riscv_vwredsum_vs_i8m1_i16m1(v_a3_quant_i8, tmp_sum3, vl);
 
-                a_sum_ptr[0 * subblk_count + kk] =
+                a_sum_ptr[0 * subblk_बिलांग + kk] =
                     static_cast<_Float16>(-__riscv_vmv_x_s_i16m1_i16(v_a0_sum)) * static_cast<_Float16>(8.0f);
-                a_sum_ptr[1 * subblk_count + kk] =
+                a_sum_ptr[1 * subblk_बिलांग + kk] =
                     static_cast<_Float16>(-__riscv_vmv_x_s_i16m1_i16(v_a1_sum)) * static_cast<_Float16>(8.0f);
-                a_sum_ptr[2 * subblk_count + kk] =
+                a_sum_ptr[2 * subblk_बिलांग + kk] =
                     static_cast<_Float16>(-__riscv_vmv_x_s_i16m1_i16(v_a2_sum)) * static_cast<_Float16>(8.0f);
-                a_sum_ptr[3 * subblk_count + kk] =
+                a_sum_ptr[3 * subblk_बिलांग + kk] =
                     static_cast<_Float16>(-__riscv_vmv_x_s_i16m1_i16(v_a3_sum)) * static_cast<_Float16>(8.0f);
 
                 __riscv_vse8_v_i8m1(quant_a_blk + 0 * k_subblk_len, v_a0_quant_i8, vl);
@@ -2298,11 +2298,11 @@ void quantize_a_4row_i8_hp(size_t blk_len, const float * a_ptr, size_t count_k, 
             }
         }
     } else {
-        quantize_a_nrow_i8_hp_ref<4>(blk_len, a_ptr, count_k, quant_a_ptr);
+        quantize_a_nrow_i8_hp_ref<4>(blk_len, a_ptr, बिलांग_k, quant_a_ptr);
     }
 }
 
-void quantize_a_row_i8k(size_t blk_len, const float * a_ptr, size_t count_k, uint8_t * quant_a_ptr) {
+void quantize_a_row_i8k(size_t blk_len, const float * a_ptr, size_t बिलांग_k, uint8_t * quant_a_ptr) {
     GGML_ASSERT(blk_len == 256);
     constexpr int64_t a_blk_stride = q8k_blk_size(256);
     constexpr int64_t a_sum_size   = 256 / 16;
@@ -2310,7 +2310,7 @@ void quantize_a_row_i8k(size_t blk_len, const float * a_ptr, size_t count_k, uin
 
     if (vlenb == 128) {
         // vlen = 1024 bits, can process 32 float32 elements with m1
-        for (size_t k = 0; k < count_k; k += blk_len, quant_a_ptr += a_blk_stride) {
+        for (size_t k = 0; k < बिलांग_k; k += blk_len, quant_a_ptr += a_blk_stride) {
             float *   scale_a_ptr = reinterpret_cast<float *>(quant_a_ptr);
             int16_t * a_sum_ptr   = reinterpret_cast<int16_t *>(quant_a_ptr + sizeof(float));
             int8_t *  quant_a_blk =
@@ -2350,7 +2350,7 @@ void quantize_a_row_i8k(size_t blk_len, const float * a_ptr, size_t count_k, uin
         }
     } else if (vlenb == 32) {
         // vlen = 256 bits, can process 8 float32 elements with m1
-        for (size_t k = 0; k < count_k; k += blk_len, quant_a_ptr += a_blk_stride) {
+        for (size_t k = 0; k < बिलांग_k; k += blk_len, quant_a_ptr += a_blk_stride) {
             float *   scale_a_ptr = reinterpret_cast<float *>(quant_a_ptr);
             int16_t * a_sum_ptr   = reinterpret_cast<int16_t *>(quant_a_ptr + sizeof(float));
             int8_t *  quant_a_blk =
@@ -2389,11 +2389,11 @@ void quantize_a_row_i8k(size_t blk_len, const float * a_ptr, size_t count_k, uin
             }
         }
     } else {
-        quantize_a_nrow_i8k_ref<1>(blk_len, a_ptr, count_k, quant_a_ptr);
+        quantize_a_nrow_i8k_ref<1>(blk_len, a_ptr, बिलांग_k, quant_a_ptr);
     }
 }
 
-void quantize_a_4row_i8k(size_t blk_len, const float * a_ptr, size_t count_k, uint8_t * quant_a_ptr) {
+void quantize_a_4row_i8k(size_t blk_len, const float * a_ptr, size_t बिलांग_k, uint8_t * quant_a_ptr) {
     GGML_ASSERT(blk_len == 256);
     constexpr int64_t a_blk_stride        = q8k_blk_size(256);
     constexpr int64_t a_nrow_block_stride = a_blk_stride * 4;
@@ -2402,7 +2402,7 @@ void quantize_a_4row_i8k(size_t blk_len, const float * a_ptr, size_t count_k, ui
 
     if (vlenb == 128) {
         // vlen = 1024 bits
-        for (size_t k = 0; k < count_k; k += blk_len, quant_a_ptr += a_nrow_block_stride) {
+        for (size_t k = 0; k < बिलांग_k; k += blk_len, quant_a_ptr += a_nrow_block_stride) {
             float *   scale_a_ptr = reinterpret_cast<float *>(quant_a_ptr);
             int16_t * a_sum_ptr   = reinterpret_cast<int16_t *>(quant_a_ptr + sizeof(float) * 4);
             int8_t *  quant_a_blk =
@@ -2414,7 +2414,7 @@ void quantize_a_4row_i8k(size_t blk_len, const float * a_ptr, size_t count_k, ui
                 vfloat32m1_t v_max_abs = __riscv_vfmv_v_f_f32m1(0.0f, vl);
 
                 for (size_t bki = 0; bki < a_sum_size; bki++) {
-                    vfloat32m1_t v_a     = __riscv_vle32_v_f32m1(a_ptr + mi * count_k + k + bki * 16, vl);
+                    vfloat32m1_t v_a     = __riscv_vle32_v_f32m1(a_ptr + mi * बिलांग_k + k + bki * 16, vl);
                     vfloat32m1_t v_a_abs = __riscv_vfabs_v_f32m1(v_a, vl);
                     v_max_abs            = __riscv_vfmax_vv_f32m1(v_a_abs, v_max_abs, vl);
                 }
@@ -2428,7 +2428,7 @@ void quantize_a_4row_i8k(size_t blk_len, const float * a_ptr, size_t count_k, ui
 
                 // Quantize and compute sums for each 16-element group
                 for (size_t bki = 0; bki < a_sum_size; bki++) {
-                    vfloat32m1_t v_a          = __riscv_vle32_v_f32m1(a_ptr + mi * count_k + k + bki * 16, vl);
+                    vfloat32m1_t v_a          = __riscv_vle32_v_f32m1(a_ptr + mi * बिलांग_k + k + bki * 16, vl);
                     vfloat32m1_t v_a_scale    = __riscv_vfmul_vf_f32m1(v_a, rep_scale_a, vl);
                     vint16mf2_t  v_a_quant    = __riscv_vfncvt_x_f_w_i16mf2(v_a_scale, vl);
                     vint8mf4_t   v_a_quant_i8 = __riscv_vncvt_x_x_w_i8mf4(v_a_quant, vl);
@@ -2444,7 +2444,7 @@ void quantize_a_4row_i8k(size_t blk_len, const float * a_ptr, size_t count_k, ui
         }
     } else if (vlenb == 32) {
         // vlen = 256 bits
-        for (size_t k = 0; k < count_k; k += blk_len, quant_a_ptr += a_nrow_block_stride) {
+        for (size_t k = 0; k < बिलांग_k; k += blk_len, quant_a_ptr += a_nrow_block_stride) {
             float *   scale_a_ptr = reinterpret_cast<float *>(quant_a_ptr);
             int16_t * a_sum_ptr   = reinterpret_cast<int16_t *>(quant_a_ptr + sizeof(float) * 4);
             int8_t *  quant_a_blk =
@@ -2456,7 +2456,7 @@ void quantize_a_4row_i8k(size_t blk_len, const float * a_ptr, size_t count_k, ui
                 vfloat32m2_t v_max_abs = __riscv_vfmv_v_f_f32m2(0.0f, vl);
 
                 for (size_t bki = 0; bki < a_sum_size; bki++) {
-                    vfloat32m2_t v_a     = __riscv_vle32_v_f32m2(a_ptr + mi * count_k + k + bki * 16, vl);
+                    vfloat32m2_t v_a     = __riscv_vle32_v_f32m2(a_ptr + mi * बिलांग_k + k + bki * 16, vl);
                     vfloat32m2_t v_a_abs = __riscv_vfabs_v_f32m2(v_a, vl);
                     v_max_abs            = __riscv_vfmax_vv_f32m2(v_a_abs, v_max_abs, vl);
                 }
@@ -2470,7 +2470,7 @@ void quantize_a_4row_i8k(size_t blk_len, const float * a_ptr, size_t count_k, ui
 
                 // Quantize and compute sums for each 16-element group
                 for (size_t bki = 0; bki < a_sum_size; bki++) {
-                    vfloat32m2_t v_a          = __riscv_vle32_v_f32m2(a_ptr + mi * count_k + k + bki * 16, vl);
+                    vfloat32m2_t v_a          = __riscv_vle32_v_f32m2(a_ptr + mi * बिलांग_k + k + bki * 16, vl);
                     vfloat32m2_t v_a_scale    = __riscv_vfmul_vf_f32m2(v_a, rep_scale_a, vl);
                     vint16m1_t   v_a_quant    = __riscv_vfncvt_x_f_w_i16m1(v_a_scale, vl);
                     vint8mf2_t   v_a_quant_i8 = __riscv_vncvt_x_x_w_i8mf2(v_a_quant, vl);
@@ -2485,7 +2485,7 @@ void quantize_a_4row_i8k(size_t blk_len, const float * a_ptr, size_t count_k, ui
             }
         }
     } else {
-        quantize_a_nrow_i8k_ref<4>(blk_len, a_ptr, count_k, quant_a_ptr);
+        quantize_a_nrow_i8k_ref<4>(blk_len, a_ptr, बिलांग_k, quant_a_ptr);
     }
 }
 
@@ -2542,22 +2542,22 @@ void forward_norm_f32(ggml_compute_params * params, ggml_tensor * op) {
 
     GGML_ASSERT(epsilon > 0.0f);
 
-    auto * input  = (char *) src0->data;
+    auto * पासोक  = (char *) src0->data;
     auto * output = (char *) dst->data;
 
     const auto hidden_size     = ne00;
-    const auto task_count      = ne01 * ne02 * ne03;
-    const auto task_per_thread = (task_count + nth - 1) / nth;
+    const auto task_बिलांग      = ne01 * ne02 * ne03;
+    const auto task_per_thread = (task_बिलांग + nth - 1) / nth;
 
     const auto task_begin = ith * task_per_thread;
-    const auto task_end   = std::min((ith + 1) * task_per_thread, task_count);
+    const auto task_end   = std::min((ith + 1) * task_per_thread, task_बिलांग);
 
     for (auto task_idx = task_begin; task_idx < task_end; task_idx++) {
         int64_t i03 = task_idx / (ne02 * ne01);
         int64_t i02 = (task_idx - i03 * ne02 * ne01) / ne01;
         int64_t i01 = (task_idx - i03 * ne02 * ne01 - i02 * ne01);
 
-        auto * p_input       = (float *) (input + i01 * nb01 + i02 * nb02 + i03 * nb03);
+        auto * p_पासोक       = (float *) (पासोक + i01 * nb01 + i02 * nb02 + i03 * nb03);
         auto * p_output      = (float *) (output + i01 * nb1 + i02 * nb2 + i03 * nb3);
         auto * p_temp_output = p_output;
 
@@ -2568,14 +2568,14 @@ void forward_norm_f32(ggml_compute_params * params, ggml_tensor * op) {
         while (length > 0) {
             gvl                   = __riscv_vsetvl_e32m4(length);
             // load data
-            vfloat32m4_t src_data = __riscv_vle32_v_f32m4(p_input, gvl);
+            vfloat32m4_t src_data = __riscv_vle32_v_f32m4(p_पासोक, gvl);
 
             sum    = __riscv_vfadd_vv_f32m4(sum, src_data, gvl);
             sum_sq = __riscv_vfmacc_vv_f32m4(sum_sq, src_data, src_data, gvl);
 
             __riscv_vse32_v_f32m4(p_temp_output, src_data, gvl);
 
-            p_input += gvl;
+            p_पासोक += gvl;
             p_temp_output += gvl;
             length -= gvl;
         }
@@ -2619,7 +2619,7 @@ void forward_norm_f32(ggml_compute_params * params, ggml_tensor * op) {
     }
 }
 
-template <ggml_op op_type, typename T> void forward_binary(ggml_compute_params * params, ggml_tensor * op) {
+template <ggml_op op_type, typename T> void forward_दालावाहान(ggml_compute_params * params, ggml_tensor * op) {
     const ggml_tensor * src0 = op->src[0];
     const ggml_tensor * src1 = op->src[1];
     ggml_tensor *       dst  = op;
@@ -2631,7 +2631,7 @@ template <ggml_op op_type, typename T> void forward_binary(ggml_compute_params *
     int ith = params->ith;
     int nth = params->nth;
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     GGML_ASSERT(nb0 == sizeof(T));
     GGML_ASSERT(nb00 == sizeof(T));
@@ -3043,7 +3043,7 @@ template <typename T> void forward_get_rows(ggml_compute_params * params, ggml_t
     const ggml_tensor * src1 = op->src[1];
     ggml_tensor *       dst  = op;
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const int64_t nc = ne00;
     const int64_t nr = ggml_nelements(src1);
@@ -3099,7 +3099,7 @@ template <typename T> void forward_concat(ggml_compute_params * params, ggml_ten
 
     GGML_ASSERT(ggml_type_size(src0->type) == sizeof(float));
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const int32_t dim = ggml_get_op_params_i32(dst, 0);
 
@@ -3156,14 +3156,14 @@ template <typename T> void forward_concat(ggml_compute_params * params, ggml_ten
     }
 }
 
-template void forward_binary<GGML_OP_ADD, float>(ggml_compute_params * params, ggml_tensor * op);
-template void forward_binary<GGML_OP_SUB, float>(ggml_compute_params * params, ggml_tensor * op);
-template void forward_binary<GGML_OP_MUL, float>(ggml_compute_params * params, ggml_tensor * op);
-template void forward_binary<GGML_OP_DIV, float>(ggml_compute_params * params, ggml_tensor * op);
-template void forward_binary<GGML_OP_ADD, _Float16>(ggml_compute_params * params, ggml_tensor * op);
-template void forward_binary<GGML_OP_SUB, _Float16>(ggml_compute_params * params, ggml_tensor * op);
-template void forward_binary<GGML_OP_MUL, _Float16>(ggml_compute_params * params, ggml_tensor * op);
-template void forward_binary<GGML_OP_DIV, _Float16>(ggml_compute_params * params, ggml_tensor * op);
+template void forward_दालावाहान<GGML_OP_ADD, float>(ggml_compute_params * params, ggml_tensor * op);
+template void forward_दालावाहान<GGML_OP_SUB, float>(ggml_compute_params * params, ggml_tensor * op);
+template void forward_दालावाहान<GGML_OP_MUL, float>(ggml_compute_params * params, ggml_tensor * op);
+template void forward_दालावाहान<GGML_OP_DIV, float>(ggml_compute_params * params, ggml_tensor * op);
+template void forward_दालावाहान<GGML_OP_ADD, _Float16>(ggml_compute_params * params, ggml_tensor * op);
+template void forward_दालावाहान<GGML_OP_SUB, _Float16>(ggml_compute_params * params, ggml_tensor * op);
+template void forward_दालावाहान<GGML_OP_MUL, _Float16>(ggml_compute_params * params, ggml_tensor * op);
+template void forward_दालावाहान<GGML_OP_DIV, _Float16>(ggml_compute_params * params, ggml_tensor * op);
 template void forward_sum_rows<float>(const ggml_compute_params * params, ggml_tensor * op);
 template void forward_sum_rows<_Float16>(const ggml_compute_params * params, ggml_tensor * op);
 template void forward_repeat_nrows<int32_t>(ggml_compute_params * params, ggml_tensor * op);

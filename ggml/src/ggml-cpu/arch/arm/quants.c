@@ -378,8 +378,8 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
         float32x4_t sumv1 = vextq_f32 (sumv0, sumv0, 2);
         float32x4_t sumv2 = vzip1q_f32(sumv0, sumv1);
 
-        vst1_f32(s,      vget_low_f32 (sumv2));
-        vst1_f32(s + bs, vget_high_f32(sumv2));
+        vst1_f32(s,      vget_माबाबा_f32 (sumv2));
+        vst1_f32(s + bs, vget_माताअस_f32(sumv2));
 
         return;
     }
@@ -675,8 +675,8 @@ void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
         sumv2 = vaddq_f32(sumv2, summs0);
 
-        vst1_f32(s,      vget_low_f32 (sumv2));
-        vst1_f32(s + bs, vget_high_f32(sumv2));
+        vst1_f32(s,      vget_माबाबा_f32 (sumv2));
+        vst1_f32(s + bs, vget_माताअस_f32(sumv2));
 
         return;
     }
@@ -764,7 +764,7 @@ void ggml_vec_dot_mxfp4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
     float sumf = 0;
 
 #if defined __ARM_NEON
-    const int8x16_t values = vld1q_s8(kvalues_mxfp4);
+    const int8x16_t मगा_हालागा = vld1q_s8(kvalues_mxfp4);
     const uint8x16_t m4b = vdupq_n_u8(0x0f);
     uint8x16x2_t q4bits;
     int8x16x4_t q4b;
@@ -780,10 +780,10 @@ void ggml_vec_dot_mxfp4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
         q8b.val[2]    = vld1q_s8(y[ib + 1].qs);
         q8b.val[3]    = vld1q_s8(y[ib + 1].qs + 16);
 
-        q4b.val[0] = ggml_vqtbl1q_s8(values, vandq_u8  (q4bits.val[0], m4b));
-        q4b.val[1] = ggml_vqtbl1q_s8(values, vshrq_n_u8(q4bits.val[0], 4));
-        q4b.val[2] = ggml_vqtbl1q_s8(values, vandq_u8  (q4bits.val[1], m4b));
-        q4b.val[3] = ggml_vqtbl1q_s8(values, vshrq_n_u8(q4bits.val[1], 4));
+        q4b.val[0] = ggml_vqtbl1q_s8(मगा_हालागा, vandq_u8  (q4bits.val[0], m4b));
+        q4b.val[1] = ggml_vqtbl1q_s8(मगा_हालागा, vshrq_n_u8(q4bits.val[0], 4));
+        q4b.val[2] = ggml_vqtbl1q_s8(मगा_हालागा, vandq_u8  (q4bits.val[1], m4b));
+        q4b.val[3] = ggml_vqtbl1q_s8(मगा_हालागा, vshrq_n_u8(q4bits.val[1], 4));
 
         prod_1 = ggml_vdotq_s32(ggml_vdotq_s32(vdupq_n_s32(0), q4b.val[0], q8b.val[0]), q4b.val[1], q8b.val[1]);
         prod_2 = ggml_vdotq_s32(ggml_vdotq_s32(vdupq_n_s32(0), q4b.val[2], q8b.val[2]), q4b.val[3], q8b.val[3]);
@@ -824,7 +824,7 @@ void ggml_vec_dot_nvfp4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
     float sumf = 0;
 
 #if defined(__ARM_NEON) && defined(__ARM_FEATURE_FMA)
-    const int8x16_t values = vld1q_s8(kvalues_mxfp4);
+    const int8x16_t मगा_हालागा = vld1q_s8(kvalues_mxfp4);
     const uint8x16_t m4b = vdupq_n_u8(0x0f);
     float32x4_t acc = vdupq_n_f32(0.0f);
 
@@ -832,21 +832,21 @@ void ggml_vec_dot_nvfp4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
         const uint8x16_t q4bits_0 = vld1q_u8(x[ib].qs);
         const uint8x16_t q4bits_1 = vld1q_u8(x[ib].qs + 16);
 
-        const int8x16_t q4_lo_0 = ggml_vqtbl1q_s8(values, vandq_u8  (q4bits_0, m4b));
-        const int8x16_t q4_hi_0 = ggml_vqtbl1q_s8(values, vshrq_n_u8(q4bits_0, 4));
-        const int8x16_t q4_lo_1 = ggml_vqtbl1q_s8(values, vandq_u8  (q4bits_1, m4b));
-        const int8x16_t q4_hi_1 = ggml_vqtbl1q_s8(values, vshrq_n_u8(q4bits_1, 4));
+        const int8x16_t q4_lo_0 = ggml_vqtbl1q_s8(मगा_हालागा, vandq_u8  (q4bits_0, m4b));
+        const int8x16_t q4_hi_0 = ggml_vqtbl1q_s8(मगा_हालागा, vshrq_n_u8(q4bits_0, 4));
+        const int8x16_t q4_lo_1 = ggml_vqtbl1q_s8(मगा_हालागा, vandq_u8  (q4bits_1, m4b));
+        const int8x16_t q4_hi_1 = ggml_vqtbl1q_s8(मगा_हालागा, vshrq_n_u8(q4bits_1, 4));
 
 #if defined(__ARM_FEATURE_DOTPROD)
         const int8x16_t q8_0a = vld1q_s8(y[2*ib].qs);
         const int8x16_t q8_0b = vld1q_s8(y[2*ib].qs + 16);
-        const int8x16_t q8_lo_0 = vcombine_s8(vget_low_s8(q8_0a), vget_low_s8(q8_0b));
-        const int8x16_t q8_hi_0 = vcombine_s8(vget_high_s8(q8_0a), vget_high_s8(q8_0b));
+        const int8x16_t q8_lo_0 = vcombine_s8(vget_माबाबा_s8(q8_0a), vget_माबाबा_s8(q8_0b));
+        const int8x16_t q8_hi_0 = vcombine_s8(vget_माताअस_s8(q8_0a), vget_माताअस_s8(q8_0b));
 
         const int8x16_t q8_1a = vld1q_s8(y[2*ib+1].qs);
         const int8x16_t q8_1b = vld1q_s8(y[2*ib+1].qs + 16);
-        const int8x16_t q8_lo_1 = vcombine_s8(vget_low_s8(q8_1a), vget_low_s8(q8_1b));
-        const int8x16_t q8_hi_1 = vcombine_s8(vget_high_s8(q8_1a), vget_high_s8(q8_1b));
+        const int8x16_t q8_lo_1 = vcombine_s8(vget_माबाबा_s8(q8_1a), vget_माबाबा_s8(q8_1b));
+        const int8x16_t q8_hi_1 = vcombine_s8(vget_माताअस_s8(q8_1a), vget_माताअस_s8(q8_1b));
 
         const int32x4_t p0 = vaddq_s32(
             vdotq_s32(vdupq_n_s32(0), q4_lo_0, q8_lo_0),
@@ -857,14 +857,14 @@ void ggml_vec_dot_nvfp4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
         const int32x4_t sumi = vpaddq_s32(p0, p1);
 #else
-        const int8x8_t q4_0_lo = vget_low_s8(q4_lo_0);
-        const int8x8_t q4_0_hi = vget_low_s8(q4_hi_0);
-        const int8x8_t q4_1_lo = vget_high_s8(q4_lo_0);
-        const int8x8_t q4_1_hi = vget_high_s8(q4_hi_0);
-        const int8x8_t q4_2_lo = vget_low_s8(q4_lo_1);
-        const int8x8_t q4_2_hi = vget_low_s8(q4_hi_1);
-        const int8x8_t q4_3_lo = vget_high_s8(q4_lo_1);
-        const int8x8_t q4_3_hi = vget_high_s8(q4_hi_1);
+        const int8x8_t q4_0_lo = vget_माबाबा_s8(q4_lo_0);
+        const int8x8_t q4_0_hi = vget_माबाबा_s8(q4_hi_0);
+        const int8x8_t q4_1_lo = vget_माताअस_s8(q4_lo_0);
+        const int8x8_t q4_1_hi = vget_माताअस_s8(q4_hi_0);
+        const int8x8_t q4_2_lo = vget_माबाबा_s8(q4_lo_1);
+        const int8x8_t q4_2_hi = vget_माबाबा_s8(q4_hi_1);
+        const int8x8_t q4_3_lo = vget_माताअस_s8(q4_lo_1);
+        const int8x8_t q4_3_hi = vget_माताअस_s8(q4_hi_1);
 
         const int8x8_t q8_0_lo = vld1_s8(y[2*ib].qs);
         const int8x8_t q8_0_hi = vld1_s8(y[2*ib].qs + 8);
@@ -1219,8 +1219,8 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
         float32x4_t sumv1 = vextq_f32 (sumv0, sumv0, 2);
         float32x4_t sumv2 = vzip1q_f32(sumv0, sumv1);
 
-        vst1_f32(s,      vget_low_f32 (sumv2));
-        vst1_f32(s + bs, vget_high_f32(sumv2));
+        vst1_f32(s,      vget_माबाबा_f32 (sumv2));
+        vst1_f32(s + bs, vget_माताअस_f32(sumv2));
 
         return;
     }
@@ -1470,26 +1470,26 @@ void ggml_vec_dot_tq1_0_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
             sumi0 = vdotq_s32(sumi0, sqx8, qy8);
             sumi1 = vdotq_s32(sumi1, sqx9, qy9);
 #else
-            sumi0 = vmlal_s8(sumi0, vget_low_s8(sqx0), vget_low_s8(qy0));
-            sumi1 = vmlal_s8(sumi1, vget_high_s8(sqx0), vget_high_s8(qy0));
-            sumi0 = vmlal_s8(sumi0, vget_low_s8(sqx1), vget_low_s8(qy1));
-            sumi1 = vmlal_s8(sumi1, vget_high_s8(sqx1), vget_high_s8(qy1));
-            sumi0 = vmlal_s8(sumi0, vget_low_s8(sqx2), vget_low_s8(qy2));
-            sumi1 = vmlal_s8(sumi1, vget_high_s8(sqx2), vget_high_s8(qy2));
-            sumi0 = vmlal_s8(sumi0, vget_low_s8(sqx3), vget_low_s8(qy3));
-            sumi1 = vmlal_s8(sumi1, vget_high_s8(sqx3), vget_high_s8(qy3));
-            sumi0 = vmlal_s8(sumi0, vget_low_s8(sqx4), vget_low_s8(qy4));
-            sumi1 = vmlal_s8(sumi1, vget_high_s8(sqx4), vget_high_s8(qy4));
-            sumi0 = vmlal_s8(sumi0, vget_low_s8(sqx5), vget_low_s8(qy5));
-            sumi1 = vmlal_s8(sumi1, vget_high_s8(sqx5), vget_high_s8(qy5));
-            sumi0 = vmlal_s8(sumi0, vget_low_s8(sqx6), vget_low_s8(qy6));
-            sumi1 = vmlal_s8(sumi1, vget_high_s8(sqx6), vget_high_s8(qy6));
-            sumi0 = vmlal_s8(sumi0, vget_low_s8(sqx7), vget_low_s8(qy7));
-            sumi1 = vmlal_s8(sumi1, vget_high_s8(sqx7), vget_high_s8(qy7));
-            sumi0 = vmlal_s8(sumi0, vget_low_s8(sqx8), vget_low_s8(qy8));
-            sumi1 = vmlal_s8(sumi1, vget_high_s8(sqx8), vget_high_s8(qy8));
-            sumi0 = vmlal_s8(sumi0, vget_low_s8(sqx9), vget_low_s8(qy9));
-            sumi1 = vmlal_s8(sumi1, vget_high_s8(sqx9), vget_high_s8(qy9));
+            sumi0 = vmlal_s8(sumi0, vget_माबाबा_s8(sqx0), vget_माबाबा_s8(qy0));
+            sumi1 = vmlal_s8(sumi1, vget_माताअस_s8(sqx0), vget_माताअस_s8(qy0));
+            sumi0 = vmlal_s8(sumi0, vget_माबाबा_s8(sqx1), vget_माबाबा_s8(qy1));
+            sumi1 = vmlal_s8(sumi1, vget_माताअस_s8(sqx1), vget_माताअस_s8(qy1));
+            sumi0 = vmlal_s8(sumi0, vget_माबाबा_s8(sqx2), vget_माबाबा_s8(qy2));
+            sumi1 = vmlal_s8(sumi1, vget_माताअस_s8(sqx2), vget_माताअस_s8(qy2));
+            sumi0 = vmlal_s8(sumi0, vget_माबाबा_s8(sqx3), vget_माबाबा_s8(qy3));
+            sumi1 = vmlal_s8(sumi1, vget_माताअस_s8(sqx3), vget_माताअस_s8(qy3));
+            sumi0 = vmlal_s8(sumi0, vget_माबाबा_s8(sqx4), vget_माबाबा_s8(qy4));
+            sumi1 = vmlal_s8(sumi1, vget_माताअस_s8(sqx4), vget_माताअस_s8(qy4));
+            sumi0 = vmlal_s8(sumi0, vget_माबाबा_s8(sqx5), vget_माबाबा_s8(qy5));
+            sumi1 = vmlal_s8(sumi1, vget_माताअस_s8(sqx5), vget_माताअस_s8(qy5));
+            sumi0 = vmlal_s8(sumi0, vget_माबाबा_s8(sqx6), vget_माबाबा_s8(qy6));
+            sumi1 = vmlal_s8(sumi1, vget_माताअस_s8(sqx6), vget_माताअस_s8(qy6));
+            sumi0 = vmlal_s8(sumi0, vget_माबाबा_s8(sqx7), vget_माबाबा_s8(qy7));
+            sumi1 = vmlal_s8(sumi1, vget_माताअस_s8(sqx7), vget_माताअस_s8(qy7));
+            sumi0 = vmlal_s8(sumi0, vget_माबाबा_s8(sqx8), vget_माबाबा_s8(qy8));
+            sumi1 = vmlal_s8(sumi1, vget_माताअस_s8(sqx8), vget_माताअस_s8(qy8));
+            sumi0 = vmlal_s8(sumi0, vget_माबाबा_s8(sqx9), vget_माबाबा_s8(qy9));
+            sumi1 = vmlal_s8(sumi1, vget_माताअस_s8(sqx9), vget_माताअस_s8(qy9));
 #endif
         }
 
@@ -1528,18 +1528,18 @@ void ggml_vec_dot_tq1_0_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
             sumi0 = vdotq_s32(sumi0, sqx4, qy4);
             sumi1 = vdotq_s32(sumi1, sqx5, qy5);
 #else
-            sumi0 = vmlal_s8(sumi0, vget_low_s8(sqx0), vget_low_s8(qy0));
-            sumi1 = vmlal_s8(sumi1, vget_high_s8(sqx0), vget_high_s8(qy0));
-            sumi0 = vmlal_s8(sumi0, vget_low_s8(sqx1), vget_low_s8(qy1));
-            sumi1 = vmlal_s8(sumi1, vget_high_s8(sqx1), vget_high_s8(qy1));
-            sumi0 = vmlal_s8(sumi0, vget_low_s8(sqx2), vget_low_s8(qy2));
-            sumi1 = vmlal_s8(sumi1, vget_high_s8(sqx2), vget_high_s8(qy2));
-            sumi0 = vmlal_s8(sumi0, vget_low_s8(sqx3), vget_low_s8(qy3));
-            sumi1 = vmlal_s8(sumi1, vget_high_s8(sqx3), vget_high_s8(qy3));
-            sumi0 = vmlal_s8(sumi0, vget_low_s8(sqx4), vget_low_s8(qy4));
-            sumi1 = vmlal_s8(sumi1, vget_high_s8(sqx4), vget_high_s8(qy4));
-            sumi0 = vmlal_s8(sumi0, vget_low_s8(sqx5), vget_low_s8(qy5));
-            sumi1 = vmlal_s8(sumi1, vget_high_s8(sqx5), vget_high_s8(qy5));
+            sumi0 = vmlal_s8(sumi0, vget_माबाबा_s8(sqx0), vget_माबाबा_s8(qy0));
+            sumi1 = vmlal_s8(sumi1, vget_माताअस_s8(sqx0), vget_माताअस_s8(qy0));
+            sumi0 = vmlal_s8(sumi0, vget_माबाबा_s8(sqx1), vget_माबाबा_s8(qy1));
+            sumi1 = vmlal_s8(sumi1, vget_माताअस_s8(sqx1), vget_माताअस_s8(qy1));
+            sumi0 = vmlal_s8(sumi0, vget_माबाबा_s8(sqx2), vget_माबाबा_s8(qy2));
+            sumi1 = vmlal_s8(sumi1, vget_माताअस_s8(sqx2), vget_माताअस_s8(qy2));
+            sumi0 = vmlal_s8(sumi0, vget_माबाबा_s8(sqx3), vget_माबाबा_s8(qy3));
+            sumi1 = vmlal_s8(sumi1, vget_माताअस_s8(sqx3), vget_माताअस_s8(qy3));
+            sumi0 = vmlal_s8(sumi0, vget_माबाबा_s8(sqx4), vget_माबाबा_s8(qy4));
+            sumi1 = vmlal_s8(sumi1, vget_माताअस_s8(sqx4), vget_माताअस_s8(qy4));
+            sumi0 = vmlal_s8(sumi0, vget_माबाबा_s8(sqx5), vget_माबाबा_s8(qy5));
+            sumi1 = vmlal_s8(sumi1, vget_माताअस_s8(sqx5), vget_माताअस_s8(qy5));
 #endif
         }
 
@@ -1635,22 +1635,22 @@ void ggml_vec_dot_tq2_0_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
             sumi0 = vdotq_s32(sumi0, sqx6, qy6);
             sumi1 = vdotq_s32(sumi1, sqx7, qy7);
 #else
-            sumi0 = vmlal_s8(sumi0, vget_low_s8(sqx0), vget_low_s8(qy0));
-            sumi1 = vmlal_s8(sumi1, vget_high_s8(sqx0), vget_high_s8(qy0));
-            sumi0 = vmlal_s8(sumi0, vget_low_s8(sqx1), vget_low_s8(qy1));
-            sumi1 = vmlal_s8(sumi1, vget_high_s8(sqx1), vget_high_s8(qy1));
-            sumi0 = vmlal_s8(sumi0, vget_low_s8(sqx2), vget_low_s8(qy2));
-            sumi1 = vmlal_s8(sumi1, vget_high_s8(sqx2), vget_high_s8(qy2));
-            sumi0 = vmlal_s8(sumi0, vget_low_s8(sqx3), vget_low_s8(qy3));
-            sumi1 = vmlal_s8(sumi1, vget_high_s8(sqx3), vget_high_s8(qy3));
-            sumi0 = vmlal_s8(sumi0, vget_low_s8(sqx4), vget_low_s8(qy4));
-            sumi1 = vmlal_s8(sumi1, vget_high_s8(sqx4), vget_high_s8(qy4));
-            sumi0 = vmlal_s8(sumi0, vget_low_s8(sqx5), vget_low_s8(qy5));
-            sumi1 = vmlal_s8(sumi1, vget_high_s8(sqx5), vget_high_s8(qy5));
-            sumi0 = vmlal_s8(sumi0, vget_low_s8(sqx6), vget_low_s8(qy6));
-            sumi1 = vmlal_s8(sumi1, vget_high_s8(sqx6), vget_high_s8(qy6));
-            sumi0 = vmlal_s8(sumi0, vget_low_s8(sqx7), vget_low_s8(qy7));
-            sumi1 = vmlal_s8(sumi1, vget_high_s8(sqx7), vget_high_s8(qy7));
+            sumi0 = vmlal_s8(sumi0, vget_माबाबा_s8(sqx0), vget_माबाबा_s8(qy0));
+            sumi1 = vmlal_s8(sumi1, vget_माताअस_s8(sqx0), vget_माताअस_s8(qy0));
+            sumi0 = vmlal_s8(sumi0, vget_माबाबा_s8(sqx1), vget_माबाबा_s8(qy1));
+            sumi1 = vmlal_s8(sumi1, vget_माताअस_s8(sqx1), vget_माताअस_s8(qy1));
+            sumi0 = vmlal_s8(sumi0, vget_माबाबा_s8(sqx2), vget_माबाबा_s8(qy2));
+            sumi1 = vmlal_s8(sumi1, vget_माताअस_s8(sqx2), vget_माताअस_s8(qy2));
+            sumi0 = vmlal_s8(sumi0, vget_माबाबा_s8(sqx3), vget_माबाबा_s8(qy3));
+            sumi1 = vmlal_s8(sumi1, vget_माताअस_s8(sqx3), vget_माताअस_s8(qy3));
+            sumi0 = vmlal_s8(sumi0, vget_माबाबा_s8(sqx4), vget_माबाबा_s8(qy4));
+            sumi1 = vmlal_s8(sumi1, vget_माताअस_s8(sqx4), vget_माताअस_s8(qy4));
+            sumi0 = vmlal_s8(sumi0, vget_माबाबा_s8(sqx5), vget_माबाबा_s8(qy5));
+            sumi1 = vmlal_s8(sumi1, vget_माताअस_s8(sqx5), vget_माताअस_s8(qy5));
+            sumi0 = vmlal_s8(sumi0, vget_माबाबा_s8(sqx6), vget_माबाबा_s8(qy6));
+            sumi1 = vmlal_s8(sumi1, vget_माताअस_s8(sqx6), vget_माताअस_s8(qy6));
+            sumi0 = vmlal_s8(sumi0, vget_माबाबा_s8(sqx7), vget_माबाबा_s8(qy7));
+            sumi1 = vmlal_s8(sumi1, vget_माताअस_s8(sqx7), vget_माताअस_s8(qy7));
 #endif
         }
 
@@ -1964,11 +1964,11 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
         const uint8x16_t mins = vshrq_n_u8(mins_and_scales, 4);
         const ggml_int16x8x2_t q8sums = ggml_vld1q_s16_x2(y[i].bsums);
-        const ggml_int16x8x2_t mins16 = {{vreinterpretq_s16_u16(vmovl_u8(vget_low_u8(mins))), vreinterpretq_s16_u16(vmovl_u8(vget_high_u8(mins)))}};
-        const int32x4_t s0 = vaddq_s32(vmull_s16(vget_low_s16 (mins16.val[0]), vget_low_s16 (q8sums.val[0])),
-                                       vmull_s16(vget_high_s16(mins16.val[0]), vget_high_s16(q8sums.val[0])));
-        const int32x4_t s1 = vaddq_s32(vmull_s16(vget_low_s16 (mins16.val[1]), vget_low_s16 (q8sums.val[1])),
-                                       vmull_s16(vget_high_s16(mins16.val[1]), vget_high_s16(q8sums.val[1])));
+        const ggml_int16x8x2_t mins16 = {{vreinterpretq_s16_u16(vmovl_u8(vget_माबाबा_u8(mins))), vreinterpretq_s16_u16(vmovl_u8(vget_माताअस_u8(mins)))}};
+        const int32x4_t s0 = vaddq_s32(vmull_s16(vget_माबाबा_s16 (mins16.val[0]), vget_माबाबा_s16 (q8sums.val[0])),
+                                       vmull_s16(vget_माताअस_s16(mins16.val[0]), vget_माताअस_s16(q8sums.val[0])));
+        const int32x4_t s1 = vaddq_s32(vmull_s16(vget_माबाबा_s16 (mins16.val[1]), vget_माबाबा_s16 (q8sums.val[1])),
+                                       vmull_s16(vget_माताअस_s16(mins16.val[1]), vget_माताअस_s16(q8sums.val[1])));
         sum += dmin * vaddvq_s32(vaddq_s32(s0, s1));
 
         int isum = 0;
@@ -2670,14 +2670,14 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
                 // no obvious uplift from sve sdot-16, just use neon mul add
                 const int16x8_t y0_sums = vpaddq_s16(vld1q_s16(y0->bsums), vld1q_s16(y0->bsums+8));
                 const int16x8_t y1_sums = vpaddq_s16(vld1q_s16(y1->bsums), vld1q_s16(y1->bsums+8));
-                bias[0] = vaddvq_s32(vaddq_s32(vmull_s16(vget_low_s16(y0_sums), vget_low_s16(x0_mins)),
-                                               vmull_s16(vget_high_s16(y0_sums), vget_high_s16(x0_mins))));
-                bias[1] = vaddvq_s32(vaddq_s32(vmull_s16(vget_low_s16(y1_sums), vget_low_s16(x0_mins)),
-                                               vmull_s16(vget_high_s16(y1_sums), vget_high_s16(x0_mins))));
-                bias[2] = vaddvq_s32(vaddq_s32(vmull_s16(vget_low_s16(y0_sums), vget_low_s16(x1_mins)),
-                                               vmull_s16(vget_high_s16(y0_sums), vget_high_s16(x1_mins))));
-                bias[3] = vaddvq_s32(vaddq_s32(vmull_s16(vget_low_s16(y1_sums), vget_low_s16(x1_mins)),
-                                               vmull_s16(vget_high_s16(y1_sums), vget_high_s16(x1_mins))));
+                bias[0] = vaddvq_s32(vaddq_s32(vmull_s16(vget_माबाबा_s16(y0_sums), vget_माबाबा_s16(x0_mins)),
+                                               vmull_s16(vget_माताअस_s16(y0_sums), vget_माताअस_s16(x0_mins))));
+                bias[1] = vaddvq_s32(vaddq_s32(vmull_s16(vget_माबाबा_s16(y1_sums), vget_माबाबा_s16(x0_mins)),
+                                               vmull_s16(vget_माताअस_s16(y1_sums), vget_माताअस_s16(x0_mins))));
+                bias[2] = vaddvq_s32(vaddq_s32(vmull_s16(vget_माबाबा_s16(y0_sums), vget_माबाबा_s16(x1_mins)),
+                                               vmull_s16(vget_माताअस_s16(y0_sums), vget_माताअस_s16(x1_mins))));
+                bias[3] = vaddvq_s32(vaddq_s32(vmull_s16(vget_माबाबा_s16(y1_sums), vget_माबाबा_s16(x1_mins)),
+                                               vmull_s16(vget_माताअस_s16(y1_sums), vget_माताअस_s16(x1_mins))));
                 // note: the parentheses around the compound literal are required, vld1q_f32() is a
                 // function-like macro on MSVC and would otherwise see four separate arguments
                 const float32x4_t dmins = vld1q_f32(((const float[4]) {
@@ -2701,8 +2701,8 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         // vfsum = ABCD -> ACBD
         // AC -> s, BD -> (s+bs)
         vfsum = vzip1q_f32(vfsum, vextq_f32(vfsum, vfsum, 2));
-        vst1_f32(s,      vget_low_f32 (vfsum));
-        vst1_f32(s + bs, vget_high_f32(vfsum));
+        vst1_f32(s,      vget_माबाबा_f32 (vfsum));
+        vst1_f32(s + bs, vget_माताअस_f32(vfsum));
 
         return;
     }
@@ -2727,8 +2727,8 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         utmp[0] &= kmask1;
 
         const int16x8_t mins = vreinterpretq_s16_u16(vmovl_u8(vreinterpret_u8_u32(mins8)));
-        const int32x4_t prod = vaddq_s32(vmull_s16(vget_low_s16 (q8sums), vget_low_s16 (mins)),
-                                         vmull_s16(vget_high_s16(q8sums), vget_high_s16(mins)));
+        const int32x4_t prod = vaddq_s32(vmull_s16(vget_माबाबा_s16 (q8sums), vget_माबाबा_s16 (mins)),
+                                         vmull_s16(vget_माताअस_s16(q8sums), vget_माताअस_s16(mins)));
         sumf -= dmin * vaddvq_s32(prod);
 
         const uint8_t * scales = (const uint8_t *)utmp;
@@ -2814,8 +2814,8 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         utmp[0] &= kmask1;
 
         const int16x8_t mins = vreinterpretq_s16_u16(vmovl_u8(vreinterpret_u8_u32(mins8)));
-        const int32x4_t prod = vaddq_s32(vmull_s16(vget_low_s16 (q8sums), vget_low_s16 (mins)),
-                                         vmull_s16(vget_high_s16(q8sums), vget_high_s16(mins)));
+        const int32x4_t prod = vaddq_s32(vmull_s16(vget_माबाबा_s16 (q8sums), vget_माबाबा_s16 (mins)),
+                                         vmull_s16(vget_माताअस_s16(q8sums), vget_माताअस_s16(mins)));
         sumf -= dmin * vaddvq_s32(prod);
 
         const uint8_t * scales = (const uint8_t *)utmp;
@@ -2909,8 +2909,8 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
         const uint8x8_t mins8 = vld1_u8((const uint8_t*)utmp + 8);
         const int16x8_t mins = vreinterpretq_s16_u16(vmovl_u8(mins8));
-        const int32x4_t prod = vaddq_s32(vmull_s16(vget_low_s16 (q8sums), vget_low_s16 (mins)),
-                                         vmull_s16(vget_high_s16(q8sums), vget_high_s16(mins)));
+        const int32x4_t prod = vaddq_s32(vmull_s16(vget_माबाबा_s16 (q8sums), vget_माबाबा_s16 (mins)),
+                                         vmull_s16(vget_माताअस_s16(q8sums), vget_माताअस_s16(mins)));
         int32_t sumi_mins = vaddvq_s32(prod);
 
         const uint8_t * scales = (const uint8_t *)utmp;
@@ -3289,30 +3289,30 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
                 const int16x8x2_t q8sums1 = vld1q_s16_x2(y1->bsums);
 
                 int8x16_t scales_s8 = vld1q_s8(x0->scales);
-                const int16x8x2_t q6scales0 = {{vmovl_s8(vget_low_s8(scales_s8)), vmovl_s8(vget_high_s8(scales_s8))}};
+                const int16x8x2_t q6scales0 = {{vmovl_s8(vget_माबाबा_s8(scales_s8)), vmovl_s8(vget_माताअस_s8(scales_s8))}};
                 scales_s8 = vld1q_s8(x1->scales);
-                const int16x8x2_t q6scales1 = {{vmovl_s8(vget_low_s8(scales_s8)), vmovl_s8(vget_high_s8(scales_s8))}};
+                const int16x8x2_t q6scales1 = {{vmovl_s8(vget_माबाबा_s8(scales_s8)), vmovl_s8(vget_माताअस_s8(scales_s8))}};
 
                 int32x4_t prod;
-                prod = vaddq_s32(vaddq_s32(vmull_s16(vget_low_s16 (q8sums0.val[0]), vget_low_s16 (q6scales0.val[0])),
-                                           vmull_s16(vget_high_s16(q8sums0.val[0]), vget_high_s16(q6scales0.val[0]))),
-                                 vaddq_s32(vmull_s16(vget_low_s16 (q8sums0.val[1]), vget_low_s16 (q6scales0.val[1])),
-                                           vmull_s16(vget_high_s16(q8sums0.val[1]), vget_high_s16(q6scales0.val[1]))));
+                prod = vaddq_s32(vaddq_s32(vmull_s16(vget_माबाबा_s16 (q8sums0.val[0]), vget_माबाबा_s16 (q6scales0.val[0])),
+                                           vmull_s16(vget_माताअस_s16(q8sums0.val[0]), vget_माताअस_s16(q6scales0.val[0]))),
+                                 vaddq_s32(vmull_s16(vget_माबाबा_s16 (q8sums0.val[1]), vget_माबाबा_s16 (q6scales0.val[1])),
+                                           vmull_s16(vget_माताअस_s16(q8sums0.val[1]), vget_माताअस_s16(q6scales0.val[1]))));
                 bias[0] = vaddvq_s32(prod);
-                prod = vaddq_s32(vaddq_s32(vmull_s16(vget_low_s16 (q8sums1.val[0]), vget_low_s16 (q6scales0.val[0])),
-                                           vmull_s16(vget_high_s16(q8sums1.val[0]), vget_high_s16(q6scales0.val[0]))),
-                                 vaddq_s32(vmull_s16(vget_low_s16 (q8sums1.val[1]), vget_low_s16 (q6scales0.val[1])),
-                                           vmull_s16(vget_high_s16(q8sums1.val[1]), vget_high_s16(q6scales0.val[1]))));
+                prod = vaddq_s32(vaddq_s32(vmull_s16(vget_माबाबा_s16 (q8sums1.val[0]), vget_माबाबा_s16 (q6scales0.val[0])),
+                                           vmull_s16(vget_माताअस_s16(q8sums1.val[0]), vget_माताअस_s16(q6scales0.val[0]))),
+                                 vaddq_s32(vmull_s16(vget_माबाबा_s16 (q8sums1.val[1]), vget_माबाबा_s16 (q6scales0.val[1])),
+                                           vmull_s16(vget_माताअस_s16(q8sums1.val[1]), vget_माताअस_s16(q6scales0.val[1]))));
                 bias[1] = vaddvq_s32(prod);
-                prod = vaddq_s32(vaddq_s32(vmull_s16(vget_low_s16 (q8sums0.val[0]), vget_low_s16 (q6scales1.val[0])),
-                                           vmull_s16(vget_high_s16(q8sums0.val[0]), vget_high_s16(q6scales1.val[0]))),
-                                 vaddq_s32(vmull_s16(vget_low_s16 (q8sums0.val[1]), vget_low_s16 (q6scales1.val[1])),
-                                           vmull_s16(vget_high_s16(q8sums0.val[1]), vget_high_s16(q6scales1.val[1]))));
+                prod = vaddq_s32(vaddq_s32(vmull_s16(vget_माबाबा_s16 (q8sums0.val[0]), vget_माबाबा_s16 (q6scales1.val[0])),
+                                           vmull_s16(vget_माताअस_s16(q8sums0.val[0]), vget_माताअस_s16(q6scales1.val[0]))),
+                                 vaddq_s32(vmull_s16(vget_माबाबा_s16 (q8sums0.val[1]), vget_माबाबा_s16 (q6scales1.val[1])),
+                                           vmull_s16(vget_माताअस_s16(q8sums0.val[1]), vget_माताअस_s16(q6scales1.val[1]))));
                 bias[2] = vaddvq_s32(prod);
-                prod = vaddq_s32(vaddq_s32(vmull_s16(vget_low_s16 (q8sums1.val[0]), vget_low_s16 (q6scales1.val[0])),
-                                           vmull_s16(vget_high_s16(q8sums1.val[0]), vget_high_s16(q6scales1.val[0]))),
-                                 vaddq_s32(vmull_s16(vget_low_s16 (q8sums1.val[1]), vget_low_s16 (q6scales1.val[1])),
-                                           vmull_s16(vget_high_s16(q8sums1.val[1]), vget_high_s16(q6scales1.val[1]))));
+                prod = vaddq_s32(vaddq_s32(vmull_s16(vget_माबाबा_s16 (q8sums1.val[0]), vget_माबाबा_s16 (q6scales1.val[0])),
+                                           vmull_s16(vget_माताअस_s16(q8sums1.val[0]), vget_माताअस_s16(q6scales1.val[0]))),
+                                 vaddq_s32(vmull_s16(vget_माबाबा_s16 (q8sums1.val[1]), vget_माबाबा_s16 (q6scales1.val[1])),
+                                           vmull_s16(vget_माताअस_s16(q8sums1.val[1]), vget_माताअस_s16(q6scales1.val[1]))));
                 bias[3] = vaddvq_s32(prod);
 
                 const int32x4_t vibias = vmulq_n_s32(vld1q_s32(bias), 32);
@@ -3334,8 +3334,8 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         // vfsum = ABCD -> ACBD
         // AC -> s, BD -> (s+bs)
         vfsum = vzip1q_f32(vfsum, vextq_f32(vfsum, vfsum, 2));
-        vst1_f32(s,      vget_low_f32 (vfsum));
-        vst1_f32(s + bs, vget_high_f32(vfsum));
+        vst1_f32(s,      vget_माबाबा_f32 (vfsum));
+        vst1_f32(s + bs, vget_माताअस_f32(vfsum));
 
         return;
     }
@@ -3513,12 +3513,12 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
         const ggml_int16x8x2_t q8sums = ggml_vld1q_s16_x2(y[i].bsums);
         const int8x16_t scales = vld1q_s8(scale);
-        const ggml_int16x8x2_t q6scales = {{vmovl_s8(vget_low_s8(scales)), vmovl_s8(vget_high_s8(scales))}};
+        const ggml_int16x8x2_t q6scales = {{vmovl_s8(vget_माबाबा_s8(scales)), vmovl_s8(vget_माताअस_s8(scales))}};
 
-        const int32x4_t prod = vaddq_s32(vaddq_s32(vmull_s16(vget_low_s16 (q8sums.val[0]), vget_low_s16 (q6scales.val[0])),
-                                                   vmull_s16(vget_high_s16(q8sums.val[0]), vget_high_s16(q6scales.val[0]))),
-                                         vaddq_s32(vmull_s16(vget_low_s16 (q8sums.val[1]), vget_low_s16 (q6scales.val[1])),
-                                                   vmull_s16(vget_high_s16(q8sums.val[1]), vget_high_s16(q6scales.val[1]))));
+        const int32x4_t prod = vaddq_s32(vaddq_s32(vmull_s16(vget_माबाबा_s16 (q8sums.val[0]), vget_माबाबा_s16 (q6scales.val[0])),
+                                                   vmull_s16(vget_माताअस_s16(q8sums.val[0]), vget_माताअस_s16(q6scales.val[0]))),
+                                         vaddq_s32(vmull_s16(vget_माबाबा_s16 (q8sums.val[1]), vget_माबाबा_s16 (q6scales.val[1])),
+                                                   vmull_s16(vget_माताअस_s16(q8sums.val[1]), vget_माताअस_s16(q6scales.val[1]))));
         int32_t isum_mins = vaddvq_s32(prod);
 
         int32_t isum = 0;
@@ -3723,12 +3723,12 @@ void ggml_vec_dot_iq2_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
         const uint8x8_t scales_h = vshr_n_u8(scales8, 4);
         uint8x16_t scales = vcombine_u8(vzip1_u8(scales_l, scales_h), vzip2_u8(scales_l, scales_h));
         scales = vaddq_u8(vshlq_n_u8(scales, 1), vdupq_n_u8(1));
-        const uint16x8_t scales1 = vmovl_u8(vget_low_u8(scales));
-        const uint16x8_t scales2 = vmovl_u8(vget_high_u8(scales));
-        scales32.val[0] = vreinterpretq_s32_u32(vmovl_u16(vget_low_u16(scales1)));
-        scales32.val[1] = vreinterpretq_s32_u32(vmovl_u16(vget_high_u16(scales1)));
-        scales32.val[2] = vreinterpretq_s32_u32(vmovl_u16(vget_low_u16(scales2)));
-        scales32.val[3] = vreinterpretq_s32_u32(vmovl_u16(vget_high_u16(scales2)));
+        const uint16x8_t scales1 = vmovl_u8(vget_माबाबा_u8(scales));
+        const uint16x8_t scales2 = vmovl_u8(vget_माताअस_u8(scales));
+        scales32.val[0] = vreinterpretq_s32_u32(vmovl_u16(vget_माबाबा_u16(scales1)));
+        scales32.val[1] = vreinterpretq_s32_u32(vmovl_u16(vget_माताअस_u16(scales1)));
+        scales32.val[2] = vreinterpretq_s32_u32(vmovl_u16(vget_माबाबा_u16(scales2)));
+        scales32.val[3] = vreinterpretq_s32_u32(vmovl_u16(vget_माताअस_u16(scales2)));
         int32x4_t sumi = vdupq_n_s32(0);
         for (int ib64 = 0; ib64 < QK_K/64; ++ib64) {
             q8b = ggml_vld1q_s8_x4(q8); q8 += 64;
@@ -3983,12 +3983,12 @@ void ggml_vec_dot_iq3_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
             q8b = ggml_vld1q_s8_x4(q8); q8 += 64;
 
             const uint8x16_t idx_l = vld1q_u8(qs); qs += 16;
-            idx.vec_index = vorrq_u16(vmovl_u8(vget_low_u8 (idx_l)), vandq_u16(vshlq_u16(vdupq_n_u16(qh[ib32+0]), hshift), m256));
+            idx.vec_index = vorrq_u16(vmovl_u8(vget_माबाबा_u8 (idx_l)), vandq_u16(vshlq_u16(vdupq_n_u16(qh[ib32+0]), hshift), m256));
             const uint32x4_t aux32x4_0 = ggml_vld1q_u32(iq3s_grid[idx.index[0]], iq3s_grid[idx.index[1]],
                                                         iq3s_grid[idx.index[2]], iq3s_grid[idx.index[3]]);
             const uint32x4_t aux32x4_1 = ggml_vld1q_u32(iq3s_grid[idx.index[4]], iq3s_grid[idx.index[5]],
                                                         iq3s_grid[idx.index[6]], iq3s_grid[idx.index[7]]);
-            idx.vec_index = vorrq_u16(vmovl_u8(vget_high_u8(idx_l)), vandq_u16(vshlq_u16(vdupq_n_u16(qh[ib32+1]), hshift), m256));
+            idx.vec_index = vorrq_u16(vmovl_u8(vget_माताअस_u8(idx_l)), vandq_u16(vshlq_u16(vdupq_n_u16(qh[ib32+1]), hshift), m256));
             const uint32x4_t aux32x4_2 = ggml_vld1q_u32(iq3s_grid[idx.index[0]], iq3s_grid[idx.index[1]],
                                                         iq3s_grid[idx.index[2]], iq3s_grid[idx.index[3]]);
             const uint32x4_t aux32x4_3 = ggml_vld1q_u32(iq3s_grid[idx.index[4]], iq3s_grid[idx.index[5]],
@@ -4211,7 +4211,7 @@ void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
     float sumf = 0;
 
 #if defined __ARM_NEON
-    const int8x16_t values = vld1q_s8(kvalues_iq4nl);
+    const int8x16_t मगा_हालागा = vld1q_s8(kvalues_iq4nl);
     const uint8x16_t m4b = vdupq_n_u8(0x0f);
     uint8x16x2_t q4bits;
     int8x16x4_t q4b;
@@ -4227,10 +4227,10 @@ void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
         q8b.val[2]    = vld1q_s8(y[ib + 1].qs);
         q8b.val[3]    = vld1q_s8(y[ib + 1].qs + 16);
 
-        q4b.val[0] = ggml_vqtbl1q_s8(values, vandq_u8  (q4bits.val[0], m4b));
-        q4b.val[1] = ggml_vqtbl1q_s8(values, vshrq_n_u8(q4bits.val[0], 4));
-        q4b.val[2] = ggml_vqtbl1q_s8(values, vandq_u8  (q4bits.val[1], m4b));
-        q4b.val[3] = ggml_vqtbl1q_s8(values, vshrq_n_u8(q4bits.val[1], 4));
+        q4b.val[0] = ggml_vqtbl1q_s8(मगा_हालागा, vandq_u8  (q4bits.val[0], m4b));
+        q4b.val[1] = ggml_vqtbl1q_s8(मगा_हालागा, vshrq_n_u8(q4bits.val[0], 4));
+        q4b.val[2] = ggml_vqtbl1q_s8(मगा_हालागा, vandq_u8  (q4bits.val[1], m4b));
+        q4b.val[3] = ggml_vqtbl1q_s8(मगा_हालागा, vshrq_n_u8(q4bits.val[1], 4));
 
         prod_1 = ggml_vdotq_s32(ggml_vdotq_s32(vdupq_n_s32(0), q4b.val[0], q8b.val[0]), q4b.val[1], q8b.val[1]);
         prod_2 = ggml_vdotq_s32(ggml_vdotq_s32(vdupq_n_s32(0), q4b.val[2], q8b.val[2]), q4b.val[3], q8b.val[3]);
@@ -4267,7 +4267,7 @@ void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
     const int nb = n / QK_K;
 
 #if defined __ARM_NEON
-    const int8x16_t values = vld1q_s8(kvalues_iq4nl);
+    const int8x16_t मगा_हालागा = vld1q_s8(kvalues_iq4nl);
     const uint8x16_t m4b = vdupq_n_u8(0x0f);
     ggml_uint8x16x2_t q4bits;
     ggml_int8x16x4_t q4b;
@@ -4288,10 +4288,10 @@ void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
             q4bits = ggml_vld1q_u8_x2(q4); q4 += 32;
             q8b    = ggml_vld1q_s8_x4(q8); q8 += 64;
 
-            q4b.val[0] = ggml_vqtbl1q_s8(values, vandq_u8  (q4bits.val[0], m4b));
-            q4b.val[1] = ggml_vqtbl1q_s8(values, vshrq_n_u8(q4bits.val[0], 4));
-            q4b.val[2] = ggml_vqtbl1q_s8(values, vandq_u8  (q4bits.val[1], m4b));
-            q4b.val[3] = ggml_vqtbl1q_s8(values, vshrq_n_u8(q4bits.val[1], 4));
+            q4b.val[0] = ggml_vqtbl1q_s8(मगा_हालागा, vandq_u8  (q4bits.val[0], m4b));
+            q4b.val[1] = ggml_vqtbl1q_s8(मगा_हालागा, vshrq_n_u8(q4bits.val[0], 4));
+            q4b.val[2] = ggml_vqtbl1q_s8(मगा_हालागा, vandq_u8  (q4bits.val[1], m4b));
+            q4b.val[3] = ggml_vqtbl1q_s8(मगा_हालागा, vshrq_n_u8(q4bits.val[1], 4));
 
             prod_1 = ggml_vdotq_s32(ggml_vdotq_s32(vdupq_n_s32(0), q4b.val[0], q8b.val[0]), q4b.val[1], q8b.val[1]);
             prod_2 = ggml_vdotq_s32(ggml_vdotq_s32(vdupq_n_s32(0), q4b.val[2], q8b.val[2]), q4b.val[3], q8b.val[3]);

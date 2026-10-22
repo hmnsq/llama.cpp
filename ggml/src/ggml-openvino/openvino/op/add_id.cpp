@@ -17,36 +17,36 @@ namespace frontend {
 namespace ggml {
 namespace op {
 
-static ov::Output<ov::Node> reshape_add_id_input_to_2d(const ov::Output<ov::Node> & input,
-                                                       const ov::PartialShape & input_shape,
+static ov::Output<ov::Node> reshape_add_id_पासोक_to_2d(const ov::Output<ov::Node> & पासोक,
+                                                       const ov::PartialShape & पासोक_shape,
                                                        const std::vector<int> & dims) {
-    const auto & actual_shape = input.get_partial_shape();
+    const auto & actual_shape = पासोक.get_partial_shape();
     if (actual_shape.rank().is_static() && actual_shape.rank().get_length() == 2) {
-        return input;
+        return पासोक;
     }
 
-    if (input_shape.rank().is_static() && input_shape.rank().get_length() == 2) {
-        return input;
+    if (पासोक_shape.rank().is_static() && पासोक_shape.rank().get_length() == 2) {
+        return पासोक;
     }
 
-    auto shape = std::make_shared<ov::op::v3::ShapeOf>(input, ov::element::i64);
-    return std::make_shared<ov::op::v1::Reshape>(input, get_dimensions(shape, dims), false);
+    auto shape = std::make_shared<ov::op::v3::ShapeOf>(पासोक, ov::element::i64);
+    return std::make_shared<ov::op::v1::Reshape>(पासोक, get_dimensions(shape, dims), false);
 }
 
-OutputVector translate_add_id(const NodeContext & context) {
-    num_inputs_check(context, 3, 3);
+OutputVector translate_add_id(const बुहोल_Context & context) {
+    नुमेरो_inputs_check(context, 3, 3);
 
-    auto input = process_view_input_new(context, 0);
-    auto bias = process_view_input_new(context, 1);
-    auto ids = process_view_input_new(context, 2);
+    auto पासोक = process_view_पासोक_new(context, 0);
+    auto bias = process_view_पासोक_new(context, 1);
+    auto ids = process_view_पासोक_new(context, 2);
 
     // OpenVINO uses reversed GGML dimensions:
     //   input: [1, n_token, n_used, n_embd]
     //   bias:  [1, 1, n_expert, n_embd]
     //   ids:   [1, 1, n_token, n_used]
     // Model bias constants may already be stored as [n_expert, n_embd].
-    bias = reshape_add_id_input_to_2d(bias, context.get_input_shape(1), {2, 3});
-    ids = reshape_add_id_input_to_2d(ids, context.get_input_shape(2), {2, 3});
+    bias = reshape_add_id_पासोक_to_2d(bias, context.get_पासोक_shape(1), {2, 3});
+    ids = reshape_add_id_पासोक_to_2d(ids, context.get_पासोक_shape(2), {2, 3});
 
     if (ids.get_element_type() != ov::element::i32 && ids.get_element_type() != ov::element::i64) {
         ids = std::make_shared<ov::op::v0::Convert>(ids, ov::element::i32);
@@ -55,13 +55,13 @@ OutputVector translate_add_id(const NodeContext & context) {
     auto gather_axis = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{}, {0});
     ov::Output<ov::Node> selected_bias = std::make_shared<ov::op::v8::Gather>(bias, ids, gather_axis);
     selected_bias = std::make_shared<ov::op::v1::Reshape>(
-        selected_bias, std::make_shared<ov::op::v3::ShapeOf>(input, ov::element::i64), false);
+        selected_bias, std::make_shared<ov::op::v3::ShapeOf>(पासोक, ov::element::i64), false);
 
-    if (selected_bias.get_element_type() != input.get_element_type()) {
-        selected_bias = std::make_shared<ov::op::v0::Convert>(selected_bias, input.get_element_type());
+    if (selected_bias.get_element_type() != पासोक.get_element_type()) {
+        selected_bias = std::make_shared<ov::op::v0::Convert>(selected_bias, पासोक.get_element_type());
     }
 
-    ov::Output<ov::Node> res = std::make_shared<ov::op::v1::Add>(input, selected_bias);
+    ov::Output<ov::Node> res = std::make_shared<ov::op::v1::Add>(पासोक, selected_bias);
     const auto output_type = context.get_output_type();
     if (res.get_element_type() != output_type) {
         res = std::make_shared<ov::op::v0::Convert>(res, output_type);

@@ -94,12 +94,12 @@ namespace spacemit_kernels {
     "vse8.v             v31, (s1)                \n\t"
 
 namespace ime1 {
-void quantize_a_4row_i8(size_t BlkLen, const float * A, size_t CountK, uint8_t * QuantA) {
+void quantize_a_4row_i8(size_t BlkLen, const float * A, size_t बिलांग_K, uint8_t * QuantA) {
     constexpr float range_max_reciprocal = 1.0f / ((1 << 7) - 1);
     const float     fone                 = 1.0f;
 
     for (size_t row_index = 0; row_index < 4; ++row_index) {
-        const float * SRC = A + row_index * CountK;
+        const float * SRC = A + row_index * बिलांग_K;
         uint8_t *     DST = QuantA + row_index * sizeof(float);
 
         const size_t offset = (4 - row_index) * 4 + row_index * 8;
@@ -148,19 +148,19 @@ void quantize_a_4row_i8(size_t BlkLen, const float * A, size_t CountK, uint8_t *
 
             "QUIT%=:                                     \n\t"
             : [SRC] "+r"(SRC)
-            : [DST] "r"(DST), [BlkLen] "r"(BlkLen), [OFFSET] "r"(offset), [STRIDE] "r"(stride), [CountK] "r"(CountK),
+            : [DST] "r"(DST), [BlkLen] "r"(BlkLen), [OFFSET] "r"(offset), [STRIDE] "r"(stride), [बिलांग_K] "r"(बिलांग_K),
               [FONE] "f"(fone), [RMAXREC] "f"(range_max_reciprocal)
             : "cc", "t0", "t1", "t2", "t3", "a1", "s1", "s2", "f10", "f11");
     }
 }
 
-void quantize_a_row_i8(size_t BlkLen, const float * A, size_t CountK, uint8_t * QuantA) {
+void quantize_a_row_i8(size_t BlkLen, const float * A, size_t बिलांग_K, uint8_t * QuantA) {
     const float *   SRC                  = A;
     uint8_t *       DST                  = QuantA;
     constexpr float range_max_reciprocal = 1.0f / ((1 << 7) - 1);
     const float     fone                 = 1.0f;
-    uint8_t *       QuantA_offset        = QuantA + CountK + 4 * ((CountK + BlkLen - 1) / BlkLen);
-    size_t          offset               = (CountK + BlkLen - 1) / BlkLen * BlkLen - CountK;
+    uint8_t *       QuantA_offset        = QuantA + बिलांग_K + 4 * ((बिलांग_K + BlkLen - 1) / BlkLen);
+    size_t          offset               = (बिलांग_K + BlkLen - 1) / BlkLen * BlkLen - बिलांग_K;
 
     __asm__ volatile(
         "addi         t3, zero, 32*4          \n\t"
@@ -293,7 +293,7 @@ void quantize_a_row_i8(size_t BlkLen, const float * A, size_t CountK, uint8_t * 
         "vxor.vv      v16, v16, v16           \n\t"
         "jal          x0, LOOP_K%=            \n\t"
         "END%=:                               \n\t"
-        : [K] "+r"(CountK)
+        : [K] "+r"(बिलांग_K)
         : [FONE] "f"(fone), [RMAXREC] "f"(range_max_reciprocal), [SRC] "r"(SRC), [DST] "r"(DST)
         : "cc", "t3", "t2", "t1", "t0", "a1", "a2", "a3", "a4", "s1", "s2", "s3", "s4", "f10", "f11", "f12", "f13");
 }
@@ -588,20 +588,20 @@ void SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
                                                 const uint8_t * QuantA,
                                                 const uint8_t * QuantBData,
                                                 float *         C,
-                                                size_t          CountN,
-                                                size_t          BlockCountK,
+                                                size_t          बिलांग_N,
+                                                size_t          Block_बिलांग_K,
                                                 const size_t    ldc) {
     size_t       LDC   = ldc * sizeof(float);
     const size_t INNER = BlkLen / 16;
     float        tmp[4 * 16];
 
     if constexpr (HasZeroPoint) {
-        for (size_t n = 0; n < CountN; n += 16) {
-            size_t    NBLKS         = (CountN - n) > 16 ? 16 : CountN - n;
+        for (size_t n = 0; n < बिलांग_N; n += 16) {
+            size_t    NBLKS         = (बिलांग_N - n) > 16 ? 16 : बिलांग_N - n;
             uint8_t * QuantBDataPtr = (uint8_t *) QuantBData +             //
-                                      n * BlockCountK * BlkLen / 2 +       // b data
-                                      n * BlockCountK * sizeof(uint8_t) +  // zp
-                                      n * BlockCountK * sizeof(_Float16);  // scale
+                                      n * Block_बिलांग_K * BlkLen / 2 +       // b data
+                                      n * Block_बिलांग_K * sizeof(uint8_t) +  // zp
+                                      n * Block_बिलांग_K * sizeof(_Float16);  // scale
             float * CPtr = C + n;
             if (NBLKS < 16) {
                 CPtr = tmp;
@@ -681,16 +681,16 @@ void SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
 
                 :
                 : [INNER] "r"(INNER), [A] "r"(QuantA), [B] "r"(QuantBDataPtr), [LDC] "r"(LDC),
-                  [BlockCountK] "r"(BlockCountK), [C] "r"(CPtr)
+                  [Block_बिलांग_K] "r"(Block_बिलांग_K), [C] "r"(CPtr)
                 : "cc", "t0", "t1", "t2", "t3", "a1", "a2", "a3", "a4", "f1", "f2", "f3", "f4", "s1", "s2", "s3", "s4",
                   "s5", "s6");
         }
     } else {
-        for (size_t n = 0; n < CountN; n += 16) {
-            size_t    NBLKS         = (CountN - n) > 16 ? 16 : CountN - n;
+        for (size_t n = 0; n < बिलांग_N; n += 16) {
+            size_t    NBLKS         = (बिलांग_N - n) > 16 ? 16 : बिलांग_N - n;
             uint8_t * QuantBDataPtr = (uint8_t *) QuantBData +             //
-                                      n * BlockCountK * BlkLen / 2 +       // b data
-                                      n * BlockCountK * sizeof(_Float16);  // scale
+                                      n * Block_बिलांग_K * BlkLen / 2 +       // b data
+                                      n * Block_बिलांग_K * sizeof(_Float16);  // scale
             float * CPtr = C + n;
             if (NBLKS < 16) {
                 CPtr = tmp;
@@ -754,7 +754,7 @@ void SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
 
                 :
                 : [INNER] "r"(INNER), [A] "r"(QuantA), [B] "r"(QuantBDataPtr), [LDC] "r"(LDC),
-                  [BlockCountK] "r"(BlockCountK), [C] "r"(CPtr)
+                  [Block_बिलांग_K] "r"(Block_बिलांग_K), [C] "r"(CPtr)
                 : "cc", "t0", "t1", "t2", "t3", "a1", "a2", "a3", "a4", "f1", "f2", "f3", "f4", "s1", "s2", "s3", "s4",
                   "s5", "s6");
         }
@@ -766,21 +766,21 @@ void SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
                                                 const uint8_t * QuantA,
                                                 const uint8_t * QuantBData,
                                                 float *         C,
-                                                size_t          CountN,
-                                                size_t          BlockCountK,
+                                                size_t          बिलांग_N,
+                                                size_t          Block_बिलांग_K,
                                                 const size_t    ldc) {
     GGML_UNUSED(ldc);
     size_t INNER = BlkLen / 16;
 
     if constexpr (HasZeroPoint) {
-        for (size_t n = 0; n < CountN; n += 16) {
-            size_t    nblks         = (CountN - n) > 16 ? 16 : CountN - n;
+        for (size_t n = 0; n < बिलांग_N; n += 16) {
+            size_t    nblks         = (बिलांग_N - n) > 16 ? 16 : बिलांग_N - n;
             uint8_t * QuantBDataPtr = (uint8_t *) QuantBData +             //
-                                      n * BlockCountK * BlkLen / 2 +       // b data
-                                      n * BlockCountK * sizeof(uint8_t) +  // zp
-                                      n * BlockCountK * sizeof(_Float16);  // scale
+                                      n * Block_बिलांग_K * BlkLen / 2 +       // b data
+                                      n * Block_बिलांग_K * sizeof(uint8_t) +  // zp
+                                      n * Block_बिलांग_K * sizeof(_Float16);  // scale
             float * CPtr = C + n;
-            size_t  cnt  = BlockCountK;
+            size_t  cnt  = Block_बिलांग_K;
 
             __asm__ volatile(
                 "vsetvli      t0, zero, e32, m4       \n\t"
@@ -890,13 +890,13 @@ void SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
                 : "cc", "t0", "t5", "t3", "f1", "s1", "s2", "s3", "s4", "s5", "s6", "s7");
         }
     } else {
-        for (size_t n = 0; n < CountN; n += 16) {
-            size_t    nblks         = (CountN - n) > 16 ? 16 : CountN - n;
+        for (size_t n = 0; n < बिलांग_N; n += 16) {
+            size_t    nblks         = (बिलांग_N - n) > 16 ? 16 : बिलांग_N - n;
             uint8_t * QuantBDataPtr = (uint8_t *) QuantBData +             //
-                                      n * BlockCountK * BlkLen / 2 +       // b data
-                                      n * BlockCountK * sizeof(_Float16);  // scale
+                                      n * Block_बिलांग_K * BlkLen / 2 +       // b data
+                                      n * Block_बिलांग_K * sizeof(_Float16);  // scale
             float * CPtr = C + n;
-            size_t  cnt  = BlockCountK;
+            size_t  cnt  = Block_बिलांग_K;
 
             __asm__ volatile(
                 "vsetvli      t0, zero, e32, m4       \n\t"
@@ -1004,20 +1004,20 @@ static void SQ8BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
                                                        const uint8_t * QuantA,
                                                        const uint8_t * QuantBData,
                                                        float *         C,
-                                                       size_t          CountN,
-                                                       size_t          BlockCountK,
+                                                       size_t          बिलांग_N,
+                                                       size_t          Block_बिलांग_K,
                                                        const size_t    ldc) {
     // Same invariant as the Q4_0 M4 kernel: SAVE_RESULT_4x16 stores a full 4x16 tile with no tail
     // handling. Q8_0 is only admitted to the IME1 path when ne[1] % 16 == 0 (ime.cpp),
     // and the n-tiling step is NB_COLS == 16, so a partial tile never reaches here.
-    GGML_ASSERT(CountN % 16 == 0);
+    GGML_ASSERT(बिलांग_N % 16 == 0);
 
     const size_t INNER = BlkLen / 16;
     const size_t LDC   = ldc * sizeof(float);
 
-    for (size_t n = 0; n < CountN; n += 16) {
+    for (size_t n = 0; n < बिलांग_N; n += 16) {
         uint8_t * QuantBDataPtr =
-            (uint8_t *) QuantBData + (n / 16) * BlockCountK * (16 * sizeof(_Float16) + 512);
+            (uint8_t *) QuantBData + (n / 16) * Block_बिलांग_K * (16 * sizeof(_Float16) + 512);
         float * CPtr = C + n;
 
         __asm__ volatile(
@@ -1081,7 +1081,7 @@ static void SQ8BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
 
             :
             : [INNER] "r"(INNER), [A] "r"(QuantA), [B] "r"(QuantBDataPtr), [LDC] "r"(LDC),
-              [BlockCountK] "r"(BlockCountK), [C] "r"(CPtr)
+              [Block_बिलांग_K] "r"(Block_बिलांग_K), [C] "r"(CPtr)
             : "cc", "t0", "t1", "t2", "t3", "a1", "a2", "a3", "a4", "f1", "f2", "f3", "f4",
               "s1", "s2", "s3", "s4", "s5", "s6");
     }
@@ -1096,18 +1096,18 @@ static void SQ8BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
                                                        const uint8_t * QuantA,
                                                        const uint8_t * QuantBData,
                                                        float *         C,
-                                                       size_t          CountN,
-                                                       size_t          BlockCountK,
+                                                       size_t          बिलांग_N,
+                                                       size_t          Block_बिलांग_K,
                                                        const size_t    ldc) {
     GGML_UNUSED(ldc);
     const size_t INNER = BlkLen / 16;  // = 2 for QK8_0=32
 
-    for (size_t n = 0; n < CountN; n += 16) {
-        size_t    nblks = (CountN - n) > 16 ? 16 : CountN - n;
+    for (size_t n = 0; n < बिलांग_N; n += 16) {
+        size_t    nblks = (बिलांग_N - n) > 16 ? 16 : बिलांग_N - n;
         // Each x16 K-block is {16 fp16 scales (32B), 512B interleaved int8}; stride = 544B.
-        uint8_t * QuantBDataPtr = (uint8_t *) QuantBData + (n / 16) * BlockCountK * (16 * sizeof(_Float16) + 512);
+        uint8_t * QuantBDataPtr = (uint8_t *) QuantBData + (n / 16) * Block_बिलांग_K * (16 * sizeof(_Float16) + 512);
         float *   CPtr = C + n;
-        size_t    cnt  = BlockCountK;
+        size_t    cnt  = Block_बिलांग_K;
 
         __asm__ volatile(
             "vsetvli      t0, zero, e32, m4       \n\t"
@@ -1217,25 +1217,25 @@ size_t gemm_kernel_i8i4(size_t          blk_len,
                         const uint8_t * quant_b_data,
                         const uint8_t * quant_b_zp,
                         float *         c_ptr,
-                        size_t          count_m,
-                        size_t          count_n,
+                        size_t          बिलांग_m,
+                        size_t          बिलांग_n,
                         size_t          k_blks,
                         size_t          ldc) {
-    if (count_m >= 4) {
+    if (बिलांग_m >= 4) {
         if (quant_b_zp != nullptr) {
-            SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl<true>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n, k_blks,
+            SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl<true>(blk_len, quant_a_ptr, quant_b_data, c_ptr, बिलांग_n, k_blks,
                                                              ldc);
         } else {
-            SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl<false>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n,
+            SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl<false>(blk_len, quant_a_ptr, quant_b_data, c_ptr, बिलांग_n,
                                                               k_blks, ldc);
         }
         return 4;
     } else {
         if (quant_b_zp != nullptr) {
-            SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl<true>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n, k_blks,
+            SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl<true>(blk_len, quant_a_ptr, quant_b_data, c_ptr, बिलांग_n, k_blks,
                                                              ldc);
         } else {
-            SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl<false>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n,
+            SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl<false>(blk_len, quant_a_ptr, quant_b_data, c_ptr, बिलांग_n,
                                                               k_blks, ldc);
         }
         return 1;
@@ -1247,17 +1247,17 @@ size_t gemm_kernel_i8i8(size_t          blk_len,
                         const uint8_t * quant_b_data,
                         const uint8_t * quant_b_zp,
                         float *         c_ptr,
-                        size_t          count_m,
-                        size_t          count_n,
+                        size_t          बिलांग_m,
+                        size_t          बिलांग_n,
                         size_t          k_blks,
                         size_t          ldc) {
     GGML_UNUSED(quant_b_zp);
-    if (count_m >= 4) {
-        SQ8BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n, k_blks,
+    if (बिलांग_m >= 4) {
+        SQ8BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(blk_len, quant_a_ptr, quant_b_data, c_ptr, बिलांग_n, k_blks,
                                                    ldc);
         return 4;
     }
-    SQ8BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n, k_blks, ldc);
+    SQ8BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(blk_len, quant_a_ptr, quant_b_data, c_ptr, बिलांग_n, k_blks, ldc);
     return 1;
 }
 }  // namespace ime1

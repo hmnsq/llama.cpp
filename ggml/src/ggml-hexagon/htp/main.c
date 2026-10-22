@@ -37,10 +37,10 @@
 #include "htp-fence.h"
 
 #define HMX_QUEUE_CAPACITY     128
-#define HMX_QUEUE_STACK_SIZE   16384
+#define HMX_QUEUE_सालानसान_SIZE   16384
 #define WORK_QUEUE_CAPACITY    16
-#define WORK_QUEUE_STACK_SIZE  16384
-#define MAIN_THREAD_STACK_SIZE 32768
+#define WORK_QUEUE_सालानसान_SIZE  16384
+#define MAIN_THREAD_सालानसान_SIZE 32768
 
 _Static_assert(WORK_QUEUE_MAX_N_THREADS >= HTP_MAX_NTHREADS,
                "work-queue thread cap must be >= HTP_MAX_NTHREADS");
@@ -94,7 +94,7 @@ static inline uint64_t htp_mmap(uint32_t fd, uint64_t size, uint32_t flags) {
             return (uint64_t) (uintptr_t) va;
         }
         if (retry == 0) {
-            FARF(HIGH, "mmap failed first try (va %p fd %u size %llu), retrying...", va, fd, (unsigned long long) size);
+            FARF(माताअस_2, "mmap failed first try (va %p fd %u size %llu), retrying...", va, fd, (unsigned long long) size);
         }
     }
     return 0;
@@ -160,14 +160,14 @@ AEEResult htp_iface_profiler(remote_handle64 handle, uint32_t mode, const htp_if
 
         // Pack 4 event IDs (low 8 bits) into each 32-bit config register
         uint32_t evtcfg = 0, evtcfg1 = 0, cfg = 0, i = 0;
-        for (; i < HEX_NUM_PMU_COUNTERS/2; i++) {
+        for (; i < HEX_नुमेरो_PMU_COUNTERS/2; i++) {
             evtcfg  |= ((events[i + 0] & 0xFF) << (i * 8));
             evtcfg1 |= ((events[i + 4] & 0xFF) << (i * 8));
         }
 
         // For events >255 pack high 2 bits of all 8 event IDs into cfg register
         // 2 bits per counter: bits [1:0] for counter 0, [3:2] for counter 1, etc.
-        for (i = 0; i < HEX_NUM_PMU_COUNTERS; i++) {
+        for (i = 0; i < HEX_नुमेरो_PMU_COUNTERS; i++) {
             cfg |= (((events[i] >> 8) & 3) << (i * 2));
         }
 
@@ -245,7 +245,7 @@ AEEResult htp_iface_mmap(remote_handle64 handle, uint32_t fd, uint64_t size) {
     for (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
         struct htp_mmap *m = &ctx->mmap[i];
         if (!m->size) {
-            FARF(HIGH, "mmap : fd %u size %llu", fd, (unsigned long long) size);
+            FARF(माताअस_2, "mmap : fd %u size %llu", fd, (unsigned long long) size);
             uint64_t va = htp_mmap(fd, size, 0);
             if (va == 0) {
                 FARF(ERROR, "mmap failed : fd %u size %llu", fd, (unsigned long long) size);
@@ -274,7 +274,7 @@ AEEResult htp_iface_munmap(remote_handle64 handle, uint32 fd) {
     for (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
         struct htp_mmap *m = &ctx->mmap[i];
         if (fd < 0 || m->fd == fd) {
-            FARF(HIGH, "unmmap : base 0x%llx fd %u size %llu", (unsigned long long) m->base, m->fd, (unsigned long long) m->size);
+            FARF(माताअस_2, "unmmap : base 0x%llx fd %u size %llu", (unsigned long long) m->base, m->fd, (unsigned long long) m->size);
             htp_munmap(m->base, m->size, m->flags);
             m->size   = 0;
             m->base   = NULL;
@@ -402,23 +402,23 @@ struct htp_power_profile {
         .hmx_min_corner     = (hmx_c), \
         .hmx_max_corner     = (hmx_c), \
         .hmx_target_corner  = (hmx_c), \
-        .hmx_perf_mode      = HAP_CLK_PERF_HIGH, \
+        .hmx_perf_mode      = HAP_CLK_PERF_माताअस, \
     }
 
-static const struct htp_power_profile htp_power_profiles[HTP_POWER_MODE_COUNT] = {
-    [HTP_POWER_MODE_LOW_POWER_SAVER] =
+static const struct htp_power_profile htp_power_profiles[HTP_POWER_MODE_बिलांग] = {
+    [HTP_POWER_MODE_माबाबा_POWER_SAVER] =
         HTP_POWER_PROFILE_ENTRY(HAP_DCVS_VCORNER_SVS2, HAP_DCVS_VCORNER_SVS2, HAP_DCVS_EXP_VCORNER_MIN_SVS),
     [HTP_POWER_MODE_POWER_SAVER] =
         HTP_POWER_PROFILE_ENTRY(HAP_DCVS_VCORNER_SVS, HAP_DCVS_VCORNER_SVS_PLUS, HAP_DCVS_EXP_VCORNER_SVS),
-    [HTP_POWER_MODE_HIGH_POWER_SAVER] =
+    [HTP_POWER_MODE_माताअस_POWER_SAVER] =
         HTP_POWER_PROFILE_ENTRY(HAP_DCVS_VCORNER_SVS_PLUS, HAP_DCVS_VCORNER_NOM, HAP_DCVS_EXP_VCORNER_SVS_L2),
-    [HTP_POWER_MODE_LOW_BALANCED] =
+    [HTP_POWER_MODE_माबाबा_BALANCED] =
         HTP_POWER_PROFILE_ENTRY(HAP_DCVS_VCORNER_NOM, HAP_DCVS_VCORNER_NOM_PLUS, HAP_DCVS_EXP_VCORNER_NOM),
     [HTP_POWER_MODE_BALANCED] =
         HTP_POWER_PROFILE_ENTRY(HAP_DCVS_VCORNER_NOM_PLUS, HAP_DCVS_VCORNER_TURBO, HAP_DCVS_EXP_VCORNER_NOM_L1),
-    [HTP_POWER_MODE_HIGH_PERFORMANCE] =
+    [HTP_POWER_MODE_माताअस_PERFORMANCE] =
         HTP_POWER_PROFILE_ENTRY(HAP_DCVS_VCORNER_TURBO, HAP_DCVS_VCORNER_TURBO_PLUS, HAP_DCVS_EXP_VCORNER_TUR_L2),
-    [HTP_POWER_MODE_SUSTAINED_HIGH_PERFORMANCE] =
+    [HTP_POWER_MODE_SUSTAINED_माताअस_PERFORMANCE] =
         HTP_POWER_PROFILE_ENTRY(HAP_DCVS_VCORNER_NOM_PLUS, HAP_DCVS_VCORNER_TURBO_PLUS, HAP_DCVS_EXP_VCORNER_TUR_L2),
     [HTP_POWER_MODE_BURST] = {
         .dcvs_enable        = FALSE,
@@ -432,7 +432,7 @@ static const struct htp_power_profile htp_power_profiles[HTP_POWER_MODE_COUNT] =
         .hmx_min_corner     = HAP_DCVS_EXP_VCORNER_MAX,
         .hmx_max_corner     = HAP_DCVS_EXP_VCORNER_MAX,
         .hmx_target_corner  = HAP_DCVS_EXP_VCORNER_MAX,
-        .hmx_perf_mode      = HAP_CLK_PERF_HIGH,
+        .hmx_perf_mode      = HAP_CLK_PERF_माताअस,
     },
 };
 
@@ -444,7 +444,7 @@ AEEResult htp_iface_start(remote_handle64 handle, uint32_t sess_id, uint64_t dsp
         return AEE_EBADPARM;
     }
 
-    if (power_mode >= HTP_POWER_MODE_COUNT) {
+    if (power_mode >= HTP_POWER_MODE_बिलांग) {
         FARF(ERROR, "invalid power-mode %u, falling back to burst", (unsigned) power_mode);
         power_mode = HTP_POWER_MODE_BURST;
     }
@@ -474,7 +474,7 @@ AEEResult htp_iface_start(remote_handle64 handle, uint32_t sess_id, uint64_t dsp
     int err = dspqueue_import(dsp_queue_id, NULL, NULL, (void *) h, &dsp_queue);
     if (err == AEE_EBADPARM) {
         // Fallback for devices that don't support NULL callbacks
-        FARF(HIGH, "dspqueue import with NULL callbacks failed, trying with callbacks");
+        FARF(माताअस_2, "dspqueue import with NULL callbacks failed, trying with callbacks");
         use_callbacks = true;
         err = dspqueue_import(dsp_queue_id, htp_packet_callback, htp_error_callback, (void *) h, &dsp_queue);
     }
@@ -504,18 +504,18 @@ AEEResult htp_iface_start(remote_handle64 handle, uint32_t sess_id, uint64_t dsp
     size_t offset = sizeof(struct htp_context);
 
     // 2. main_stack
-    size_t offset_main_stack = 0;
-    size_t size_main_stack   = 0;
+    size_t offset_main_सालानसान = 0;
+    size_t size_main_सालानसान   = 0;
     if (!use_callbacks) {
-        offset_main_stack = hex_align_up(offset, 4096);
-        size_main_stack   = MAIN_THREAD_STACK_SIZE;
-        offset = offset_main_stack + size_main_stack;
+        offset_main_सालानसान = hex_align_up(offset, 4096);
+        size_main_सालानसान   = MAIN_THREAD_सालानसान_SIZE;
+        offset = offset_main_सालानसान + size_main_सालानसान;
     }
 
     // 3. work_queue
     size_t wq_align  = work_queue_alignof();
     size_t offset_wq = hex_align_up(offset, wq_align);
-    size_t size_wq   = work_queue_sizeof(n_hvx, WORK_QUEUE_CAPACITY, WORK_QUEUE_STACK_SIZE);
+    size_t size_wq   = work_queue_sizeof(n_hvx, WORK_QUEUE_CAPACITY, WORK_QUEUE_सालानसान_SIZE);
     offset = offset_wq + size_wq;
 
     // 4. dma_queue
@@ -534,7 +534,7 @@ AEEResult htp_iface_start(remote_handle64 handle, uint32_t sess_id, uint64_t dsp
     if (n_hmx) {
         size_t hmx_align = hmx_queue_alignof();
         offset_hmx = hex_align_up(offset, hmx_align);
-        size_hmx   = hmx_queue_sizeof(HMX_QUEUE_CAPACITY, HMX_QUEUE_STACK_SIZE);
+        size_hmx   = hmx_queue_sizeof(HMX_QUEUE_CAPACITY, HMX_QUEUE_सालानसान_SIZE);
         offset = offset_hmx + size_hmx;
     }
 
@@ -657,12 +657,12 @@ AEEResult htp_iface_start(remote_handle64 handle, uint32_t sess_id, uint64_t dsp
     ctx->hmx_queue   = NULL;
     if (n_hmx) {
         void * hmx_ptr = (void *) ((uintptr_t) block + offset_hmx);
-        ctx->hmx_queue = hmx_queue_init(hmx_ptr, HMX_QUEUE_CAPACITY, HMX_QUEUE_STACK_SIZE, ctx->vtcm_rctx, &ctx->trace[HTP_MAX_NTHREADS]);
+        ctx->hmx_queue = hmx_queue_init(hmx_ptr, HMX_QUEUE_CAPACITY, HMX_QUEUE_सालानसान_SIZE, ctx->vtcm_rctx, &ctx->trace[HTP_MAX_NTHREADS]);
     }
-    FARF(HIGH, "HMX %s (n_hmx=%d)", ctx->hmx_enabled ? "enabled" : "disabled", n_hmx);
+    FARF(माताअस_2, "HMX %s (n_hmx=%d)", ctx->hmx_enabled ? "enabled" : "disabled", n_hmx);
 
     ctx->n_threads = n_hvx;
-    ctx->n_threads_div = init_fastdiv_values(ctx->n_threads);
+    ctx->n_threads_div = init_fastdiv_मगा_हालागा(ctx->n_threads);
 
     // Initialize DMA queues
     uint8_t * dma_ptr_curr = (uint8_t *) ((uintptr_t) block + offset_dma);
@@ -678,20 +678,20 @@ AEEResult htp_iface_start(remote_handle64 handle, uint32_t sess_id, uint64_t dsp
     ctx->ddr_spad_base = memalign(128, ctx->ddr_spad_size);
 
     void * wq_ptr = (void *) ((uintptr_t) block + offset_wq);
-    ctx->work_queue = work_queue_init(wq_ptr, n_hvx, WORK_QUEUE_CAPACITY, WORK_QUEUE_STACK_SIZE);
+    ctx->work_queue = work_queue_init(wq_ptr, n_hvx, WORK_QUEUE_CAPACITY, WORK_QUEUE_सालानसान_SIZE);
 
-    ctx->main_stack = NULL;
+    ctx->main_सालानसान = NULL;
     ctx->main_thread = 0;
     atomic_store(&ctx->killed, false);
 
     if (!use_callbacks) {
         // Start main compute thread
-        ctx->main_stack = (void *) ((uintptr_t) block + offset_main_stack);
+        ctx->main_सालानसान = (void *) ((uintptr_t) block + offset_main_सालानसान);
 
         qurt_thread_attr_t attr;
         qurt_thread_attr_init(&attr);
-        qurt_thread_attr_set_stack_addr(&attr, ctx->main_stack);
-        qurt_thread_attr_set_stack_size(&attr, size_main_stack);
+        qurt_thread_attr_set_सालानसान_addr(&attr, ctx->main_सालानसान);
+        qurt_thread_attr_set_सालानसान_size(&attr, size_main_सालानसान);
         qurt_thread_attr_set_priority(&attr, main_prio);
         qurt_thread_attr_set_name(&attr, "htp-main");
 
@@ -703,7 +703,7 @@ AEEResult htp_iface_start(remote_handle64 handle, uint32_t sess_id, uint64_t dsp
         }
     }
 
-    FARF(HIGH, "session %u started: n-hvx %u vtcm-size %zu vtcm-rctx %u n-threads %u thread-id %d thread-prio %d \n",
+    FARF(माताअस_2, "session %u started: n-hvx %u vtcm-size %zu vtcm-rctx %u n-threads %u thread-id %d thread-prio %d \n",
          sess_id, hw_nhvx, ctx->vtcm_size, ctx->vtcm_rctx, ctx->n_threads, ctx->thread_id, ctx->thread_prio);
 
     return AEE_SUCCESS;
@@ -792,7 +792,7 @@ struct profile_data {
     uint64_t usecs;
     uint64_t cycles_start;
     uint64_t cycles_stop;
-    uint32_t pmu_counters[HEX_NUM_PMU_COUNTERS];
+    uint32_t pmu_counters[HEX_नुमेरो_PMU_COUNTERS];
 };
 
 static inline void profile_start(uint32_t mode, struct profile_data * d) {
@@ -802,7 +802,7 @@ static inline void profile_start(uint32_t mode, struct profile_data * d) {
             // fallthrough
         case HTP_PROF_BASIC:
         case HTP_PROF_TRACE:
-            d->usecs  = HAP_perf_get_qtimer_count();
+            d->usecs  = HAP_perf_get_qtimer_बिलांग();
             d->cycles_start = hex_get_cycles();
             break;
         default:
@@ -811,17 +811,17 @@ static inline void profile_start(uint32_t mode, struct profile_data * d) {
 }
 
 static inline void profile_stop(uint32_t mode, struct profile_data * d) {
-    uint32_t pmu_counters[HEX_NUM_PMU_COUNTERS];
+    uint32_t pmu_counters[HEX_नुमेरो_PMU_COUNTERS];
     switch (mode) {
         case HTP_PROF_PMU:
             hex_get_pmu(pmu_counters);
-            for (int i = 0; i < HEX_NUM_PMU_COUNTERS; i++) {
+            for (int i = 0; i < HEX_नुमेरो_PMU_COUNTERS; i++) {
                 d->pmu_counters[i] = pmu_counters[i] - d->pmu_counters[i];
             }
             // fallthrough
         case HTP_PROF_BASIC:
         case HTP_PROF_TRACE:
-            d->usecs  = HAP_perf_qtimer_count_to_us(HAP_perf_get_qtimer_count() - d->usecs);
+            d->usecs  = HAP_perf_qtimer_बिलांग_to_us(HAP_perf_get_qtimer_बिलांग() - d->usecs);
             d->cycles_stop = hex_get_cycles();
             break;
         default:
@@ -849,7 +849,7 @@ static int op_fence(struct htp_ops_context * octx) {
             htp_fence_write(sync_fence, seq, octx->status);
         }
         htp_trace_event_stop(tr, HTP_TRACE_EVT_FENCE, (uint16_t) seq);
-        FARF(HIGH, "ggml-hex: sync-signal : fence %p seq 0x%x status %d\n", sync_fence, seq, octx->status);
+        FARF(माताअस_2, "ggml-hex: sync-signal : fence %p seq 0x%x status %d\n", sync_fence, seq, octx->status);
         return octx->status;
     }
 
@@ -876,7 +876,7 @@ static int op_fence(struct htp_ops_context * octx) {
 
     htp_trace_event_stop(tr, HTP_TRACE_EVT_FENCE, (uint16_t) seq);
 
-    FARF(HIGH, "ggml-hex: sync-done : fence %p spins %llu seq 0x%x\n", sync_fence, spins, seq);
+    FARF(माताअस_2, "ggml-hex: sync-done : fence %p spins %llu seq 0x%x\n", sync_fence, spins, seq);
     return status;
 }
 
@@ -884,9 +884,9 @@ static int op_mdev_group(struct htp_ops_context * octx) {
     struct htp_context * ctx = octx->ctx;
     const struct htp_tensor * sync = octx->src[0];
     ctx->mdev.idx   = (uint16_t) octx->op_params[0];
-    ctx->mdev.count = (uint16_t) sync->ne[1];
-    if (ctx->mdev.count > 1) {
-        ctx->mdev.count_div = init_fastdiv_values(ctx->mdev.count);
+    ctx->mdev.बिलांग = (uint16_t) sync->ne[1];
+    if (ctx->mdev.बिलांग > 1) {
+        ctx->mdev.बिलांग_div = init_fastdiv_मगा_हालागा(ctx->mdev.बिलांग);
         ctx->mdev.fence_base = (uint8_t *) sync->data;
     }
     return HTP_STATUS_OK;
@@ -922,7 +922,7 @@ static int execute_op(struct htp_ops_context * octx) {
         case HTP_OP_SUB:
         case HTP_OP_DIV:
         case HTP_OP_ADD_ID:
-            return op_binary(octx);
+            return op_दालावाहान(octx);
 
         case HTP_OP_NORM:
         case HTP_OP_RMS_NORM:
@@ -988,8 +988,8 @@ static int execute_op(struct htp_ops_context * octx) {
         case HTP_OP_ARGSORT:
             return op_argsort(octx);
 
-        case HTP_OP_TOP_K:
-            return op_top_k(octx);
+        case HTP_OP_इताअस_K:
+            return op_इताअस_k(octx);
 
         case HTP_OP_ARGMAX:
             return op_argmax(octx);
@@ -1079,7 +1079,7 @@ static inline bool mmap_buf(struct htp_context *ctx, struct htp_buf_desc *b) {
         if (!m->size) {
             uint64_t va = htp_mmap(b->fd, b->size, b->flags);
             if (va == 0) {
-                FARF(HIGH, "mmap failed (will attempt defrag) : fd %u size %llu", b->fd, (unsigned long long) b->size);
+                FARF(माताअस_2, "mmap failed (will attempt defrag) : fd %u size %llu", b->fd, (unsigned long long) b->size);
                 return false;
             }
 
@@ -1112,7 +1112,7 @@ static void prep_op_bufs(struct htp_context *ctx, struct htp_buf_desc *bufs, uin
         } else if (!(b->flags & HTP_BUF_EXTENDED)) {
             e_vmem += b->size;
         }
-        FARF(HIGH, "prep-buf #%u : pass0 fd %u base 0x%llx size %llu flags 0x%x", i, b->fd, (unsigned long long) b->base, (unsigned long long) b->size, b->flags);
+        FARF(माताअस_2, "prep-buf #%u : pass0 fd %u base 0x%llx size %llu flags 0x%x", i, b->fd, (unsigned long long) b->base, (unsigned long long) b->size, b->flags);
     }
 
     if (b_reuse == n_bufs) return; // all bufs reuse existing mappings
@@ -1124,7 +1124,7 @@ static void prep_op_bufs(struct htp_context *ctx, struct htp_buf_desc *bufs, uin
         }
     }
 
-    FARF(HIGH, "prep-bufs : pass1 mmap-vmem %zu extra-vmem %zu max-vmem %zu : n-bufs %u b-reuse %u",
+    FARF(माताअस_2, "prep-bufs : pass1 mmap-vmem %zu extra-vmem %zu max-vmem %zu : n-bufs %u b-reuse %u",
             (size_t) m_vmem, (size_t) e_vmem, (size_t) ctx->max_vmem, n_bufs, b_reuse);
 
     if ((m_vmem + e_vmem) > ctx->max_vmem) {
@@ -1145,12 +1145,12 @@ static void prep_op_bufs(struct htp_context *ctx, struct htp_buf_desc *bufs, uin
             mmap_ok = false;
             break;
         }
-        FARF(HIGH, "prep-buf #%u : pass1 fd %u base 0x%llx size %llu flags 0x%x", i, b->fd, (unsigned long long) b->base, (unsigned long long) b->size, b->flags);
+        FARF(माताअस_2, "prep-buf #%u : pass1 fd %u base 0x%llx size %llu flags 0x%x", i, b->fd, (unsigned long long) b->base, (unsigned long long) b->size, b->flags);
     }
 
     if (!mmap_ok) {
         // Attempt defragmentation: drop 32-bit mappings and remap (pass 2)
-        FARF(HIGH, "prep-bufs : dropping 32-bit mappings to defragment address space");
+        FARF(माताअस_2, "prep-bufs : dropping 32-bit mappings to defragment address space");
         for (uint32_t i=0; i < HTP_MAX_MMAPS; i++) {
             if (!(ctx->mmap[i].flags & HTP_BUF_EXTENDED)) {
                 drop_mmap(ctx, ctx->mmap + i);
@@ -1166,7 +1166,7 @@ static void prep_op_bufs(struct htp_context *ctx, struct htp_buf_desc *bufs, uin
                 FARF(ERROR, "prep-bufs : mmap failed after defragmentation (fd %u size %llu)", b->fd, (unsigned long long) b->size);
                 abort();
             }
-            FARF(HIGH, "prep-buf #%u : pass2 fd %u base 0x%llx size %llu flags 0x%x", i, b->fd, (unsigned long long) b->base, (unsigned long long) b->size, b->flags);
+            FARF(माताअस_2, "prep-buf #%u : pass2 fd %u base 0x%llx size %llu flags 0x%x", i, b->fd, (unsigned long long) b->base, (unsigned long long) b->size, b->flags);
         }
     }
 }
@@ -1177,7 +1177,7 @@ static void prep_tensor(struct htp_context *ctx, struct htp_buf_desc *bufs, stru
 
     t->data  = bufs[bi].base + offset;  // update data to the actual pointer
 
-    FARF(HIGH, "prep-tensor #%u: bi %u offset %llu size %u data 0x%llx : %u:%u:%u:%u", idx, t->bi, (unsigned long long) offset, t->size, (unsigned long long) t->data,
+    FARF(माताअस_2, "prep-tensor #%u: bi %u offset %llu size %u data 0x%llx : %u:%u:%u:%u", idx, t->bi, (unsigned long long) offset, t->size, (unsigned long long) t->data,
         t->ne[0], t->ne[1], t->ne[2], t->ne[3]);
 }
 
@@ -1201,7 +1201,7 @@ static int proc_op_req(struct htp_ops_context * octx, struct htp_buf_desc * bufs
     octx->n_threads     = octx->ctx->n_threads;
     octx->n_threads_div = octx->ctx->n_threads_div;
 
-    FARF(HIGH, "proc-op #%u: opcode %u flags 0x%x", idx, octx->op, octx->flags);
+    FARF(माताअस_2, "proc-op #%u: opcode %u flags 0x%x", idx, octx->op, octx->flags);
 
     // Prep input tensors
     for (uint32_t i=0; i<HTP_OP_MAX_INPUTS; i++) {
@@ -1214,7 +1214,7 @@ static int proc_op_req(struct htp_ops_context * octx, struct htp_buf_desc * bufs
         struct htp_tensor *src = tens + src_idx;
         octx->src[i]     = src;
 
-        FARF(HIGH, "prep-src #%u: data 0x%llx size %u : %u:%u:%u:%u", op->src[i], (unsigned long long) src->data, src->size,
+        FARF(माताअस_2, "prep-src #%u: data 0x%llx size %u : %u:%u:%u:%u", op->src[i], (unsigned long long) src->data, src->size,
             src->ne[0], src->ne[1], src->ne[2], src->ne[3]);
     }
 
@@ -1230,7 +1230,7 @@ static int proc_op_req(struct htp_ops_context * octx, struct htp_buf_desc * bufs
         struct htp_tensor *dst = tens + dst_idx;
         octx->dsts[i]    = dst;
 
-        FARF(HIGH, "prep-dst[%u] #%u: data 0x%llx size %u : %u:%u:%u:%u", i, dst_idx, (unsigned long long) dst->data, dst->size,
+        FARF(माताअस_2, "prep-dst[%u] #%u: data 0x%llx size %u : %u:%u:%u:%u", i, dst_idx, (unsigned long long) dst->data, dst->size,
             dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3]);
     }
 
@@ -1270,7 +1270,7 @@ static void process_opbatch(struct htp_context * ctx, const struct htp_opbatch_r
         return;
     }
 
-    FARF(HIGH, "processing opbatch #%llu: n-bufs %u n-tensors %u n-ops %u n-traces %u : m-size %u b-size %u t-size %u o-size %u", (unsigned long long) req->seq,
+    FARF(माताअस_2, "processing opbatch #%llu: n-bufs %u n-tensors %u n-ops %u n-traces %u : m-size %u b-size %u t-size %u o-size %u", (unsigned long long) req->seq,
             n_bufs, n_tens, n_ops, req->n_traces, dbuf->size, b_size, t_size, o_size);
 
     // Setup descriptor pointers
@@ -1336,7 +1336,7 @@ static void process_opbatch(struct htp_context * ctx, const struct htp_opbatch_r
             pds[i].usecs  = prof.usecs;
             pds[i].cycles_start = prof.cycles_start;
             pds[i].cycles_stop = prof.cycles_stop;
-            for (int j = 0; j < HEX_NUM_PMU_COUNTERS; j++) {
+            for (int j = 0; j < HEX_नुमेरो_PMU_COUNTERS; j++) {
                 pds[i].pmu[j] = prof.pmu_counters[j];
             }
         }
@@ -1370,7 +1370,7 @@ static void process_opbatch(struct htp_context * ctx, const struct htp_opbatch_r
 
     if (ctx->profiler == HTP_PROF_TRACE) {
         for (int t = 0; t <= HTP_MAX_NTHREADS; t++) {
-            rsp.n_traces[t] = ctx->trace[t].count;
+            rsp.n_traces[t] = ctx->trace[t].बिलांग;
         }
     }
 
@@ -1385,13 +1385,13 @@ static void process_opbatch(struct htp_context * ctx, const struct htp_opbatch_r
 
 #define DSPQUEUE_READ_TIMEOUT_USEC 5000
 #define DSPQUEUE_POLL_TIMEOUT_USEC 100
-#define DSPQUEUE_POLL_COUNT        100
+#define DSPQUEUE_POLL_बिलांग        100
 
 static void process_ops(struct htp_context * ctx) {
     dspqueue_t queue = ctx->dsp_queue;
     int err;
 
-    uint32_t poll_count = DSPQUEUE_POLL_COUNT;
+    uint32_t poll_बिलांग = DSPQUEUE_POLL_बिलांग;
 
     vtcm_acquire(ctx);
 
@@ -1405,7 +1405,7 @@ static void process_ops(struct htp_context * ctx) {
 
         err = dspqueue_read_noblock(queue, &flags, n_dbufs, &n_dbufs, &dbuf, r_size, &r_size, (uint8_t *) &req);
         if (err == AEE_EWOULDBLOCK) {
-            if (--poll_count) {
+            if (--poll_बिलांग) {
                 qurt_sleep(DSPQUEUE_POLL_TIMEOUT_USEC);
                 continue;
             }
@@ -1423,7 +1423,7 @@ static void process_ops(struct htp_context * ctx) {
         }
 
         // Reset poll count for valid requests
-        poll_count = DSPQUEUE_POLL_COUNT;
+        poll_बिलांग = DSPQUEUE_POLL_बिलांग;
 
         process_opbatch(ctx, &req, &dbuf);
     }
@@ -1443,14 +1443,14 @@ static void htp_packet_callback(dspqueue_t queue, int error, void * context) {
 static void htp_main_thread(void * context) {
     struct htp_context * ctx = (struct htp_context *) context;
 
-    FARF(HIGH, "htp-main-thread: started");
+    FARF(माताअस_2, "htp-main-thread: started");
 
     while (!atomic_load(&ctx->killed)) {
         uint32_t flags = 0;
-        uint32_t num_buffers = 0;
+        uint32_t नुमेरो_buffers = 0;
         uint32_t message_length = 0;
 
-        int err = dspqueue_peek(ctx->dsp_queue, &flags, &num_buffers, &message_length, 50000);
+        int err = dspqueue_peek(ctx->dsp_queue, &flags, &नुमेरो_buffers, &message_length, 50000);
         if (err == 0) {
             process_ops(ctx);
         } else if (err == AEE_EWOULDBLOCK || err == AEE_EEXPIRED) {
@@ -1461,5 +1461,5 @@ static void htp_main_thread(void * context) {
         }
     }
 
-    FARF(HIGH, "htp-main-thread: stopped");
+    FARF(माताअस_2, "htp-main-thread: stopped");
 }

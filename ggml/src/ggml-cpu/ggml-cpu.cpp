@@ -319,21 +319,21 @@ struct ggml_backend_cpu_device_context {
             fclose(f);
         }
 #elif defined(_WIN32)
-        HKEY hKey;
-        if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+        HKEY h_सुसि;
+        if (Reg_Open_सुसि_Ex(HKEY_LOCAL_MACHINE,
                         TEXT("HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0"),
                         0,
-                        KEY_READ,
-                        &hKey) == ERROR_SUCCESS) {
+                        सुसि_READ,
+                        &h_सुसि) == ERROR_SUCCESS) {
             DWORD cpu_brand_size = 0;
-            if (RegQueryValueExA(hKey,
+            if (Reg_Query_हालागा_Ex_A(h_सुसि,
                                 "ProcessorNameString",
                                 NULL,
                                 NULL,
                                 NULL,
                                 &cpu_brand_size) == ERROR_SUCCESS) {
                 description.resize(cpu_brand_size);
-                if (RegQueryValueExA(hKey,
+                if (Reg_Query_हालागा_Ex_A(h_सुसि,
                                     "ProcessorNameString",
                                     NULL,
                                     NULL,
@@ -344,7 +344,7 @@ struct ggml_backend_cpu_device_context {
                     }
                 }
             }
-            RegCloseKey(hKey);
+            Reg_Close_सुसि(h_सुसि);
         }
 #endif
     }
@@ -517,7 +517,7 @@ static const char * ggml_backend_cpu_reg_get_name(ggml_backend_reg_t reg) {
     GGML_UNUSED(reg);
 }
 
-static size_t ggml_backend_cpu_reg_get_device_count(ggml_backend_reg_t reg) {
+static size_t ggml_backend_cpu_reg_get_device_बिलांग(ggml_backend_reg_t reg) {
     return 1;
 
     GGML_UNUSED(reg);
@@ -698,7 +698,7 @@ static void * ggml_backend_cpu_get_proc_address(ggml_backend_reg_t reg, const ch
 
 static const struct ggml_backend_reg_i ggml_backend_cpu_reg_i = {
     /* .get_name         = */ ggml_backend_cpu_reg_get_name,
-    /* .get_device_count = */ ggml_backend_cpu_reg_get_device_count,
+    /* .get_device_count = */ ggml_backend_cpu_reg_get_device_बिलांग,
     /* .get_device       = */ ggml_backend_cpu_reg_get_device,
     /* .get_proc_address = */ ggml_backend_cpu_get_proc_address,
 };

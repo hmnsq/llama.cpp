@@ -107,18 +107,18 @@ static inline void hvx_sqrt_f32_uu(uint8_t * restrict dst, const uint8_t * restr
     hvx_sqrt_f32_loop_body(HVX_UVector, HVX_UVector, hvx_vec_store_u);
 }
 
-static inline void hvx_sqrt_f32(uint8_t * restrict dst, const uint8_t * restrict src, const int num_elems) {
+static inline void hvx_sqrt_f32(uint8_t * restrict dst, const uint8_t * restrict src, const int नुमेरो_elems) {
     if ((unsigned long) dst % 128 == 0) {
         if ((unsigned long) src % 128 == 0) {
-            hvx_sqrt_f32_aa(dst, src, num_elems);
+            hvx_sqrt_f32_aa(dst, src, नुमेरो_elems);
         } else {
-            hvx_sqrt_f32_au(dst, src, num_elems);
+            hvx_sqrt_f32_au(dst, src, नुमेरो_elems);
         }
     } else {
         if ((unsigned long) src % 128 == 0) {
-            hvx_sqrt_f32_ua(dst, src, num_elems);
+            hvx_sqrt_f32_ua(dst, src, नुमेरो_elems);
         } else {
-            hvx_sqrt_f32_uu(dst, src, num_elems);
+            hvx_sqrt_f32_uu(dst, src, नुमेरो_elems);
         }
     }
 }
@@ -170,18 +170,18 @@ static inline void hvx_sqrt_f16_uu(uint8_t * restrict dst, const uint8_t * restr
     hvx_sqrt_f16_loop_body(HVX_UVector, HVX_UVector, hvx_vec_store_u);
 }
 
-static inline void hvx_sqrt_f16(uint8_t * restrict dst, const uint8_t * restrict src, const int num_elems) {
+static inline void hvx_sqrt_f16(uint8_t * restrict dst, const uint8_t * restrict src, const int नुमेरो_elems) {
     if ((unsigned long) dst % 128 == 0) {
         if ((unsigned long) src % 128 == 0) {
-            hvx_sqrt_f16_aa(dst, src, num_elems);
+            hvx_sqrt_f16_aa(dst, src, नुमेरो_elems);
         } else {
-            hvx_sqrt_f16_au(dst, src, num_elems);
+            hvx_sqrt_f16_au(dst, src, नुमेरो_elems);
         }
     } else {
         if ((unsigned long) src % 128 == 0) {
-            hvx_sqrt_f16_ua(dst, src, num_elems);
+            hvx_sqrt_f16_ua(dst, src, नुमेरो_elems);
         } else {
-            hvx_sqrt_f16_uu(dst, src, num_elems);
+            hvx_sqrt_f16_uu(dst, src, नुमेरो_elems);
         }
     }
 }

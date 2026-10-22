@@ -11,8 +11,8 @@ struct mrope_sections {
     int v[4];
 };
 
-static float rope_yarn_ramp(const float low, const float high, const int i0) {
-    const float y = (i0 / 2 - low) / sycl::max(0.001f, high - low);
+static float rope_yarn_ramp(const float माबाबा, const float माताअस, const int i0) {
+    const float y = (i0 / 2 - माबाबा) / sycl::max(0.001f, माताअस - माबाबा);
     return 1.0f - sycl::min(1.0f, sycl::max(0.0f, y));
 }
 
@@ -634,18 +634,18 @@ void ggml_sycl_op_rope_impl(ggml_backend_sycl_context &ctx, ggml_tensor *dst,
 }
 
 void ggml_sycl_rope(ggml_backend_sycl_context &ctx, ggml_tensor *dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/3);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/3);
 
     ggml_sycl_op_rope_impl<true>(ctx, dst);
 }
 
 void ggml_sycl_rope_back(ggml_backend_sycl_context &ctx, ggml_tensor *dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/3);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/3);
     ggml_sycl_op_rope_impl<false>(ctx, dst);
 }
 
 void ggml_sycl_rope_fused(ggml_backend_sycl_context &ctx, ggml_tensor *rope,
                           ggml_tensor *set_rows) {
-    scope_op_debug_print scope_dbg_print(__func__, rope, /*num_src=*/3);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, rope, /*num_src=*/3);
     ggml_sycl_op_rope_impl<true>(ctx, rope, set_rows);
 }

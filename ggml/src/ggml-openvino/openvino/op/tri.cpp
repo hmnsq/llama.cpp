@@ -27,14 +27,14 @@ namespace op {
 //   ggml dim 0 (ne0, cols) → OV axis 3
 //   ggml dim 1 (ne1, rows) → OV axis 2
 // The matrix is square so ne0 == ne1.
-OutputVector translate_tri(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+OutputVector translate_tri(const बुहोल_Context & context) {
+    नुमेरो_inputs_check(context, 1, 1);
 
-    auto x = context.get_input(0);  // OV shape: [ne3, ne2, ne1, ne0]
+    auto x = context.get_पासोक(0);  // OV shape: [ne3, ne2, ne1, ne0]
 
     int32_t tri_type = context.get_output_op_params()[0];
 
-    auto shape = context.get_input_shape(0).to_shape();
+    auto shape = context.get_पासोक_shape(0).to_shape();
     int64_t n = static_cast<int64_t>(shape[3]);  // ne0 == ne1
 
     // Build index range [0, 1, ..., n-1]

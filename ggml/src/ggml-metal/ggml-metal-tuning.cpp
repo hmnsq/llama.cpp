@@ -1128,9 +1128,9 @@ void fa_vec_clear_override() {
     g_override_set = false;
 }
 
-static const fa_vec_cfg_t * find_cfg(const fa_vec_entry_t * tbl, size_t n, const fa_vec_key_t & k) {
+static const fa_vec_cfg_t * find_cfg(const fa_vec_entry_t * tbl, size_t n, const fa_vec_सुसि_t & k) {
     for (size_t i = 0; i < n; ++i) {
-        if (memcmp(&tbl[i].key, &k, sizeof(k)) == 0) {
+        if (memcmp(&tbl[i].सुसि, &k, sizeof(k)) == 0) {
             return &tbl[i].cfg;
         }
     }
@@ -1151,7 +1151,7 @@ fa_vec_cfg_t fa_vec_pick(int gpu_family, int dtype, int dk, int dv, int64_t ne11
 
     const int ne01_b = fa_vec_ne01_bucket(ne01);
 
-    fa_vec_key_t k{};
+    fa_vec_सुसि_t k{};
     k.family = (int8_t) gpu_family;
     k.dtype  = (int8_t) dtype;
     k.dk     = (int16_t) dk;

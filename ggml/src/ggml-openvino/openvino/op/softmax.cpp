@@ -32,7 +32,7 @@ static bool same_static_dim(const ov::Dimension & lhs, const ov::Dimension & rhs
     return lhs.is_static() && rhs.is_static() && lhs.get_length() == rhs.get_length();
 }
 
-static bool is_attention_sinks_input_shape(const ov::PartialShape & candidate, const ov::PartialShape & logits_shape) {
+static bool is_attention_sinks_पासोक_shape(const ov::PartialShape & candidate, const ov::PartialShape & logits_shape) {
     if (candidate.rank().is_dynamic() || logits_shape.rank().is_dynamic() || candidate.rank().get_length() != 4 ||
         logits_shape.rank().get_length() != 4) {
         return false;
@@ -47,20 +47,20 @@ static bool is_attention_sinks_input_shape(const ov::PartialShape & candidate, c
 // 2) logits += mask (if provided)
 // 3) append attention sinks as hidden logits (if provided)
 // 4) softmax over the last dimension and remove the hidden sink column
-OutputVector translate_soft_max(const NodeContext & context) {
-    num_inputs_check(context, 1, 3);
+OutputVector translate_soft_max(const बुहोल_Context & context) {
+    नुमेरो_inputs_check(context, 1, 3);
 
     float scale = 1.0f;
     float max_bias = 0.0f;
     memcpy(&scale, (float *) context.get_output_op_params() + 0, sizeof(float));
     memcpy(&max_bias, (float *) context.get_output_op_params() + 1, sizeof(float));
 
-    ov::Output<ov::Node> logits = context.get_input(0);
-    const bool second_input_is_sinks =
-        context.get_input_size() == 2 && is_attention_sinks_input_shape(context.get_input_shape(1), context.get_output_shape());
-    const bool has_mask = context.get_input_size() > 1 && !second_input_is_sinks;
-    const bool has_sinks = second_input_is_sinks || context.get_input_size() > 2;
-    const size_t sinks_input_idx = second_input_is_sinks ? 1 : 2;
+    ov::Output<ov::Node> logits = context.get_पासोक(0);
+    const bool second_पासोक_is_sinks =
+        context.get_पासोक_size() == 2 && is_attention_sinks_पासोक_shape(context.get_पासोक_shape(1), context.get_output_shape());
+    const bool has_mask = context.get_पासोक_size() > 1 && !second_पासोक_is_sinks;
+    const bool has_sinks = second_पासोक_is_sinks || context.get_पासोक_size() > 2;
+    const size_t sinks_पासोक_idx = second_पासोक_is_sinks ? 1 : 2;
 
     // Apply scale first: logits = src0 * scale
     if (scale != 1.0f) {
@@ -75,15 +75,15 @@ OutputVector translate_soft_max(const NodeContext & context) {
     // Optional mask add: logits += mask
     // For max_bias > 0 (ALiBi), apply per-head slope to mask before adding.
     if (has_mask) {
-        ov::Output<ov::Node> mask = context.get_input(1);
+        ov::Output<ov::Node> mask = context.get_पासोक(1);
 
         // For stateful
         std::string mask_name = "KQ_mask_sliced";
-        if (context.get_input_names()[1].find("swa") != std::string::npos) {
+        if (context.get_पासोक_names()[1].find("swa") != std::string::npos) {
             mask_name = "KQ_mask_swa_sliced";
         }
-        if (context.has_input(mask_name)) {
-            mask = context.get_input(mask_name);
+        if (context.has_पासोक(mask_name)) {
+            mask = context.get_पासोक(mask_name);
         }
 
         if (mask.get_element_type() != logits.get_element_type()) {
@@ -107,24 +107,24 @@ OutputVector translate_soft_max(const NodeContext & context) {
                                               std::pow(m1, static_cast<float>(2 * (h - n_head_log2) + 1));
             }
 
-            ov::Output<ov::Node> slope_node =
+            ov::Output<ov::Node> slope_बुहोल =
                 std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{n_head}, slopes);
-            if (slope_node.get_element_type() != mask.get_element_type()) {
-                slope_node = std::make_shared<ov::op::v0::Convert>(slope_node, mask.get_element_type());
+            if (slope_बुहोल.get_element_type() != mask.get_element_type()) {
+                slope_बुहोल = std::make_shared<ov::op::v0::Convert>(slope_बुहोल, mask.get_element_type());
             }
 
             auto slope_shape = std::make_shared<ov::op::v0::Constant>(
                 ov::element::i64, ov::Shape{4}, std::vector<int64_t>{1, static_cast<int64_t>(n_head), 1, 1});
-            auto slope_4d = std::make_shared<ov::op::v1::Reshape>(slope_node, slope_shape, false);
+            auto slope_4d = std::make_shared<ov::op::v1::Reshape>(slope_बुहोल, slope_shape, false);
             mask = std::make_shared<ov::op::v1::Multiply>(mask, slope_4d);
         }
 
         logits = std::make_shared<ov::op::v1::Add>(logits, mask);
     }
 
-    ov::Output<ov::Node> softmax_input = logits;
+    ov::Output<ov::Node> softmax_पासोक = logits;
     if (has_sinks) {
-        ov::Output<ov::Node> sinks = context.get_input(sinks_input_idx);
+        ov::Output<ov::Node> sinks = context.get_पासोक(sinks_पासोक_idx);
         if (sinks.get_element_type() != logits.get_element_type()) {
             sinks = std::make_shared<ov::op::v0::Convert>(sinks, logits.get_element_type());
         }
@@ -145,9 +145,9 @@ OutputVector translate_soft_max(const NodeContext & context) {
             ov::OutputVector{sink_prefix_shape, sink_last_dim}, 0);
         auto sink_column = std::make_shared<ov::op::v3::Broadcast>(sinks_4d, sink_broadcast_shape,
                                                                    ov::op::BroadcastType::BIDIRECTIONAL);
-        softmax_input = std::make_shared<ov::op::v0::Concat>(ov::OutputVector{logits, sink_column}, 3);
+        softmax_पासोक = std::make_shared<ov::op::v0::Concat>(ov::OutputVector{logits, sink_column}, 3);
 
-        auto softmax_with_sink = std::make_shared<ov::op::v8::Softmax>(softmax_input, -1);
+        auto softmax_with_sink = std::make_shared<ov::op::v8::Softmax>(softmax_पासोक, -1);
         auto original_last_dim = std::make_shared<ov::op::v8::Slice>(logits_shape, three, four, one, shape_axis);
         auto res = std::make_shared<ov::op::v8::Slice>(softmax_with_sink, zero, original_last_dim, one, three);
 
@@ -155,7 +155,7 @@ OutputVector translate_soft_max(const NodeContext & context) {
     }
 
     // Softmax along last dimension (equivalent to ggml softmax over ne[0]).
-    auto res = std::make_shared<ov::op::v8::Softmax>(softmax_input, -1);
+    auto res = std::make_shared<ov::op::v8::Softmax>(softmax_पासोक, -1);
 
     return rename_outputs_with_suffix({res}, context.get_name());
 }

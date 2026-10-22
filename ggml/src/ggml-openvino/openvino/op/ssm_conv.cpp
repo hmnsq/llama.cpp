@@ -14,14 +14,14 @@ namespace frontend {
 namespace ggml {
 namespace op {
 
-OutputVector translate_ssm_conv(const NodeContext & context) {
-    num_inputs_check(context, 2, 2);
+OutputVector translate_ssm_conv(const बुहोल_Context & context) {
+    नुमेरो_inputs_check(context, 2, 2);
 
-    auto sx = context.get_input(0);                         // conv state + input: OV shape [1, n_s, d_inner, ncs]
-    auto c = context.get_input(1);                          // conv1d weight:      OV shape [1, 1, d_inner, d_conv]
+    auto sx = context.get_पासोक(0);                         // conv state + input: OV shape [1, n_s, d_inner, ncs]
+    auto c = context.get_पासोक(1);                          // conv1d weight:      OV shape [1, 1, d_inner, d_conv]
 
-    auto sx_shape = context.get_input_shape(0).to_shape();  // [1, n_s, d_inner, ncs]
-    auto c_shape = context.get_input_shape(1).to_shape();   // [1, 1, d_inner, d_conv]
+    auto sx_shape = context.get_पासोक_shape(0).to_shape();  // [1, n_s, d_inner, ncs]
+    auto c_shape = context.get_पासोक_shape(1).to_shape();   // [1, 1, d_inner, d_conv]
 
     // int64_t n_s  = sx_shape[1];
     int64_t d_inner = sx_shape[2];

@@ -56,7 +56,7 @@
 #define HVX_OP_MUL_F16(a, b) hvx_vec_mul_f16_f16(a, b)
 
 // Generic macro to define alignment permutations for an op
-#define DEFINE_HVX_BINARY_OP_VARIANTS(OP_NAME, OP_MACRO, ELEM_TYPE)                                           \
+#define DEFINE_HVX_दालावाहान_OP_VARIANTS(OP_NAME, OP_MACRO, ELEM_TYPE)                                           \
 static inline void OP_NAME##_aaa(uint8_t * dst, const uint8_t * src0, const uint8_t * src1, uint32_t n) {     \
     assert((uintptr_t) dst % 128 == 0);                                                                       \
     assert((uintptr_t) src0 % 128 == 0);                                                                      \
@@ -94,46 +94,46 @@ static inline void OP_NAME##_uuu(uint8_t * dst, const uint8_t * src0, const uint
     hvx_arith_loop_body(HVX_UVector, HVX_UVector, HVX_UVector, sizeof(ELEM_TYPE), hvx_vec_store_u, OP_MACRO); \
 }                                                                                                             \
 
-DEFINE_HVX_BINARY_OP_VARIANTS(hvx_add_f32, HVX_OP_ADD_F32, float)
-DEFINE_HVX_BINARY_OP_VARIANTS(hvx_sub_f32, HVX_OP_SUB_F32, float)
-DEFINE_HVX_BINARY_OP_VARIANTS(hvx_mul_f32, HVX_OP_MUL_F32, float)
+DEFINE_HVX_दालावाहान_OP_VARIANTS(hvx_add_f32, HVX_OP_ADD_F32, float)
+DEFINE_HVX_दालावाहान_OP_VARIANTS(hvx_sub_f32, HVX_OP_SUB_F32, float)
+DEFINE_HVX_दालावाहान_OP_VARIANTS(hvx_mul_f32, HVX_OP_MUL_F32, float)
 
-DEFINE_HVX_BINARY_OP_VARIANTS(hvx_add_f16, HVX_OP_ADD_F16, _Float16)
-DEFINE_HVX_BINARY_OP_VARIANTS(hvx_sub_f16, HVX_OP_SUB_F16, _Float16)
-DEFINE_HVX_BINARY_OP_VARIANTS(hvx_mul_f16, HVX_OP_MUL_F16, _Float16)
+DEFINE_HVX_दालावाहान_OP_VARIANTS(hvx_add_f16, HVX_OP_ADD_F16, _Float16)
+DEFINE_HVX_दालावाहान_OP_VARIANTS(hvx_sub_f16, HVX_OP_SUB_F16, _Float16)
+DEFINE_HVX_दालावाहान_OP_VARIANTS(hvx_mul_f16, HVX_OP_MUL_F16, _Float16)
 
 // Dispatcher logic
-#define HVX_BINARY_DISPATCHER(OP_NAME)                                                                                                       \
-static inline void OP_NAME(uint8_t * restrict dst, const uint8_t * restrict src0, const uint8_t * restrict src1, const uint32_t num_elems) { \
+#define HVX_दालावाहान_DISPATCHER(OP_NAME)                                                                                                       \
+static inline void OP_NAME(uint8_t * restrict dst, const uint8_t * restrict src0, const uint8_t * restrict src1, const uint32_t नुमेरो_elems) { \
     if (hex_is_aligned((void *) dst, 128)) {                                                                                                 \
         if (hex_is_aligned((void *) src0, 128)) {                                                                                            \
-            if (hex_is_aligned((void *) src1, 128)) OP_NAME##_aaa(dst, src0, src1, num_elems);                                               \
-            else                                    OP_NAME##_aau(dst, src0, src1, num_elems);                                               \
+            if (hex_is_aligned((void *) src1, 128)) OP_NAME##_aaa(dst, src0, src1, नुमेरो_elems);                                               \
+            else                                    OP_NAME##_aau(dst, src0, src1, नुमेरो_elems);                                               \
         } else {                                                                                                                             \
-            if (hex_is_aligned((void *) src1, 128)) OP_NAME##_aua(dst, src0, src1, num_elems);                                               \
-            else                                    OP_NAME##_auu(dst, src0, src1, num_elems);                                               \
+            if (hex_is_aligned((void *) src1, 128)) OP_NAME##_aua(dst, src0, src1, नुमेरो_elems);                                               \
+            else                                    OP_NAME##_auu(dst, src0, src1, नुमेरो_elems);                                               \
         }                                                                                                                                    \
     } else {                                                                                                                                 \
         if (hex_is_aligned((void *) src0, 128)) {                                                                                            \
-            if (hex_is_aligned((void *) src1, 128)) OP_NAME##_uaa(dst, src0, src1, num_elems);                                               \
-            else                                    OP_NAME##_uau(dst, src0, src1, num_elems);                                               \
+            if (hex_is_aligned((void *) src1, 128)) OP_NAME##_uaa(dst, src0, src1, नुमेरो_elems);                                               \
+            else                                    OP_NAME##_uau(dst, src0, src1, नुमेरो_elems);                                               \
         } else {                                                                                                                             \
-            if (hex_is_aligned((void *) src1, 128)) OP_NAME##_uua(dst, src0, src1, num_elems);                                               \
-            else                                    OP_NAME##_uuu(dst, src0, src1, num_elems);                                               \
+            if (hex_is_aligned((void *) src1, 128)) OP_NAME##_uua(dst, src0, src1, नुमेरो_elems);                                               \
+            else                                    OP_NAME##_uuu(dst, src0, src1, नुमेरो_elems);                                               \
         }                                                                                                                                    \
     }                                                                                                                                        \
 }
 
-HVX_BINARY_DISPATCHER(hvx_add_f32)
-HVX_BINARY_DISPATCHER(hvx_sub_f32)
-HVX_BINARY_DISPATCHER(hvx_mul_f32)
+HVX_दालावाहान_DISPATCHER(hvx_add_f32)
+HVX_दालावाहान_DISPATCHER(hvx_sub_f32)
+HVX_दालावाहान_DISPATCHER(hvx_mul_f32)
 
-HVX_BINARY_DISPATCHER(hvx_add_f16)
-HVX_BINARY_DISPATCHER(hvx_sub_f16)
-HVX_BINARY_DISPATCHER(hvx_mul_f16)
+HVX_दालावाहान_DISPATCHER(hvx_add_f16)
+HVX_दालावाहान_DISPATCHER(hvx_sub_f16)
+HVX_दालावाहान_DISPATCHER(hvx_mul_f16)
 
 // Mul-Mul Optimized
-static inline void hvx_mul_mul_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src0, const uint8_t * restrict src1, const uint8_t * restrict src2, const uint32_t num_elems) {
+static inline void hvx_mul_mul_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src0, const uint8_t * restrict src1, const uint8_t * restrict src2, const uint32_t नुमेरो_elems) {
     assert((unsigned long) dst % 128 == 0);
     assert((unsigned long) src0 % 128 == 0);
     assert((unsigned long) src1 % 128 == 0);
@@ -146,8 +146,8 @@ static inline void hvx_mul_mul_f32_aa(uint8_t * restrict dst, const uint8_t * re
 
     const uint32_t elem_size = sizeof(float);
     const uint32_t epv  = 128 / elem_size;
-    const uint32_t nvec = num_elems / epv;
-    const uint32_t nloe = num_elems % epv;
+    const uint32_t nvec = नुमेरो_elems / epv;
+    const uint32_t nloe = नुमेरो_elems % epv;
 
     uint32_t i = 0;
 
@@ -164,7 +164,7 @@ static inline void hvx_mul_mul_f32_aa(uint8_t * restrict dst, const uint8_t * re
     }
 }
 
-static inline void hvx_mul_mul_f16_aa(uint8_t * restrict dst, const uint8_t * restrict src0, const uint8_t * restrict src1, const uint8_t * restrict src2, const uint32_t num_elems) {
+static inline void hvx_mul_mul_f16_aa(uint8_t * restrict dst, const uint8_t * restrict src0, const uint8_t * restrict src1, const uint8_t * restrict src2, const uint32_t नुमेरो_elems) {
     assert((unsigned long) dst % 128 == 0);
     assert((unsigned long) src0 % 128 == 0);
     assert((unsigned long) src1 % 128 == 0);
@@ -177,8 +177,8 @@ static inline void hvx_mul_mul_f16_aa(uint8_t * restrict dst, const uint8_t * re
 
     const uint32_t elem_size = sizeof(_Float16);
     const uint32_t epv  = 128 / elem_size;
-    const uint32_t nvec = num_elems / epv;
-    const uint32_t nloe = num_elems % epv;
+    const uint32_t nvec = नुमेरो_elems / epv;
+    const uint32_t nloe = नुमेरो_elems % epv;
 
     uint32_t i = 0;
 
@@ -243,7 +243,7 @@ static inline void hvx_mul_mul_f16_aa(uint8_t * restrict dst, const uint8_t * re
 // Scalar Variants
 
 // Generic macro to define alignment permutations for an op
-#define DEFINE_HVX_BINARY_SCALAR_OP_VARIANTS(OP_NAME, OP_MACRO, SPLAT_MACRO, ELEM_TYPE)                                  \
+#define DEFINE_HVX_दालावाहान_SCALAR_OP_VARIANTS(OP_NAME, OP_MACRO, SPLAT_MACRO, ELEM_TYPE)                                  \
 static inline void OP_NAME##_aa(uint8_t * restrict dst, const uint8_t * restrict src, const ELEM_TYPE val, uint32_t n) { \
     const HVX_Vector val_vec = SPLAT_MACRO(val);                                                                         \
     const HVX_Vector inf = SPLAT_MACRO((ELEM_TYPE)INFINITY); UNUSED(inf);                                                \
@@ -269,35 +269,35 @@ static inline void OP_NAME##_uu(uint8_t * restrict dst, const uint8_t * restrict
     hvx_scalar_loop_body(HVX_UVector, HVX_UVector, sizeof(ELEM_TYPE), hvx_vec_store_u, OP_MACRO);                        \
 }                                                                                                                        \
 
-DEFINE_HVX_BINARY_SCALAR_OP_VARIANTS(hvx_add_scalar_f32, HVX_OP_ADD_SCALAR_F32, hvx_vec_splat_f32, float)
-DEFINE_HVX_BINARY_SCALAR_OP_VARIANTS(hvx_sub_scalar_f32, HVX_OP_SUB_SCALAR_F32, hvx_vec_splat_f32, float)
-DEFINE_HVX_BINARY_SCALAR_OP_VARIANTS(hvx_mul_scalar_f32, HVX_OP_MUL_SCALAR_F32, hvx_vec_splat_f32, float)
+DEFINE_HVX_दालावाहान_SCALAR_OP_VARIANTS(hvx_add_scalar_f32, HVX_OP_ADD_SCALAR_F32, hvx_vec_splat_f32, float)
+DEFINE_HVX_दालावाहान_SCALAR_OP_VARIANTS(hvx_sub_scalar_f32, HVX_OP_SUB_SCALAR_F32, hvx_vec_splat_f32, float)
+DEFINE_HVX_दालावाहान_SCALAR_OP_VARIANTS(hvx_mul_scalar_f32, HVX_OP_MUL_SCALAR_F32, hvx_vec_splat_f32, float)
 
-DEFINE_HVX_BINARY_SCALAR_OP_VARIANTS(hvx_add_scalar_f16, HVX_OP_ADD_SCALAR_F16, hvx_vec_splat_f16, _Float16)
-DEFINE_HVX_BINARY_SCALAR_OP_VARIANTS(hvx_sub_scalar_f16, HVX_OP_SUB_SCALAR_F16, hvx_vec_splat_f16, _Float16)
-DEFINE_HVX_BINARY_SCALAR_OP_VARIANTS(hvx_mul_scalar_f16, HVX_OP_MUL_SCALAR_F16, hvx_vec_splat_f16, _Float16)
+DEFINE_HVX_दालावाहान_SCALAR_OP_VARIANTS(hvx_add_scalar_f16, HVX_OP_ADD_SCALAR_F16, hvx_vec_splat_f16, _Float16)
+DEFINE_HVX_दालावाहान_SCALAR_OP_VARIANTS(hvx_sub_scalar_f16, HVX_OP_SUB_SCALAR_F16, hvx_vec_splat_f16, _Float16)
+DEFINE_HVX_दालावाहान_SCALAR_OP_VARIANTS(hvx_mul_scalar_f16, HVX_OP_MUL_SCALAR_F16, hvx_vec_splat_f16, _Float16)
 
 // Dispatcher logic
-#define HVX_BINARY_SCALAR_DISPATCHER(OP_NAME, ELEM_TYPE)                                                                          \
-static inline void OP_NAME(uint8_t * restrict dst, const uint8_t * restrict src, const ELEM_TYPE val, const uint32_t num_elems) { \
+#define HVX_दालावाहान_SCALAR_DISPATCHER(OP_NAME, ELEM_TYPE)                                                                          \
+static inline void OP_NAME(uint8_t * restrict dst, const uint8_t * restrict src, const ELEM_TYPE val, const uint32_t नुमेरो_elems) { \
     if (hex_is_aligned((void *) dst, 128) && hex_is_aligned((void *) src, 128)) {                                                 \
-        OP_NAME##_aa(dst, src, val, num_elems);                                                                                   \
+        OP_NAME##_aa(dst, src, val, नुमेरो_elems);                                                                                   \
     } else if (hex_is_aligned((void *) dst, 128)) {                                                                               \
-        OP_NAME##_au(dst, src, val, num_elems);                                                                                   \
+        OP_NAME##_au(dst, src, val, नुमेरो_elems);                                                                                   \
     } else if (hex_is_aligned((void *) src, 128)) {                                                                               \
-        OP_NAME##_ua(dst, src, val, num_elems);                                                                                   \
+        OP_NAME##_ua(dst, src, val, नुमेरो_elems);                                                                                   \
     } else {                                                                                                                      \
-        OP_NAME##_uu(dst, src, val, num_elems);                                                                                   \
+        OP_NAME##_uu(dst, src, val, नुमेरो_elems);                                                                                   \
     }                                                                                                                             \
 }
 
-HVX_BINARY_SCALAR_DISPATCHER(hvx_add_scalar_f32, float)
-HVX_BINARY_SCALAR_DISPATCHER(hvx_sub_scalar_f32, float)
-HVX_BINARY_SCALAR_DISPATCHER(hvx_mul_scalar_f32, float)
+HVX_दालावाहान_SCALAR_DISPATCHER(hvx_add_scalar_f32, float)
+HVX_दालावाहान_SCALAR_DISPATCHER(hvx_sub_scalar_f32, float)
+HVX_दालावाहान_SCALAR_DISPATCHER(hvx_mul_scalar_f32, float)
 
-HVX_BINARY_SCALAR_DISPATCHER(hvx_add_scalar_f16, _Float16)
-HVX_BINARY_SCALAR_DISPATCHER(hvx_sub_scalar_f16, _Float16)
-HVX_BINARY_SCALAR_DISPATCHER(hvx_mul_scalar_f16, _Float16)
+HVX_दालावाहान_SCALAR_DISPATCHER(hvx_add_scalar_f16, _Float16)
+HVX_दालावाहान_SCALAR_DISPATCHER(hvx_sub_scalar_f16, _Float16)
+HVX_दालावाहान_SCALAR_DISPATCHER(hvx_mul_scalar_f16, _Float16)
 
 // MIN Scalar variants
 
@@ -327,15 +327,15 @@ static inline void hvx_min_scalar_f32_uu(uint8_t * restrict dst, const uint8_t *
     hvx_scalar_loop_body(HVX_UVector, HVX_UVector, sizeof(float), hvx_vec_store_u, HVX_OP_MIN_SCALAR);
 }
 
-static inline void hvx_min_scalar_f32(uint8_t * restrict dst, const uint8_t * restrict src, const float val, const int num_elems) {
+static inline void hvx_min_scalar_f32(uint8_t * restrict dst, const uint8_t * restrict src, const float val, const int नुमेरो_elems) {
     if (hex_is_aligned((void *) dst, 128) && hex_is_aligned((void *) src, 128)) {
-        hvx_min_scalar_f32_aa(dst, src, val, num_elems);
+        hvx_min_scalar_f32_aa(dst, src, val, नुमेरो_elems);
     } else if (hex_is_aligned((void *) dst, 128)) {
-        hvx_min_scalar_f32_au(dst, src, val, num_elems);
+        hvx_min_scalar_f32_au(dst, src, val, नुमेरो_elems);
     } else if (hex_is_aligned((void *) src, 128)) {
-        hvx_min_scalar_f32_ua(dst, src, val, num_elems);
+        hvx_min_scalar_f32_ua(dst, src, val, नुमेरो_elems);
     } else {
-        hvx_min_scalar_f32_uu(dst, src, val, num_elems);
+        hvx_min_scalar_f32_uu(dst, src, val, नुमेरो_elems);
     }
 }
 
@@ -367,15 +367,15 @@ static inline void hvx_max_scalar_f32_uu(uint8_t * restrict dst, const uint8_t *
     hvx_scalar_loop_body(HVX_UVector, HVX_UVector, sizeof(float), hvx_vec_store_u, HVX_OP_MAX_SCALAR);
 }
 
-static inline void hvx_max_scalar_f32(uint8_t * restrict dst, const uint8_t * restrict src, const float val, const int num_elems) {
+static inline void hvx_max_scalar_f32(uint8_t * restrict dst, const uint8_t * restrict src, const float val, const int नुमेरो_elems) {
     if (hex_is_aligned((void *) dst, 128) && hex_is_aligned((void *) src, 128)) {
-        hvx_max_scalar_f32_aa(dst, src, val, num_elems);
+        hvx_max_scalar_f32_aa(dst, src, val, नुमेरो_elems);
     } else if (hex_is_aligned((void *) dst, 128)) {
-        hvx_max_scalar_f32_au(dst, src, val, num_elems);
+        hvx_max_scalar_f32_au(dst, src, val, नुमेरो_elems);
     } else if (hex_is_aligned((void *) src, 128)) {
-        hvx_max_scalar_f32_ua(dst, src, val, num_elems);
+        hvx_max_scalar_f32_ua(dst, src, val, नुमेरो_elems);
     } else {
-        hvx_max_scalar_f32_uu(dst, src, val, num_elems);
+        hvx_max_scalar_f32_uu(dst, src, val, नुमेरो_elems);
     }
 }
 
@@ -405,15 +405,15 @@ static inline void hvx_min_scalar_f16_uu(uint8_t * restrict dst, const uint8_t *
     hvx_scalar_loop_body(HVX_UVector, HVX_UVector, sizeof(_Float16), hvx_vec_store_u, HVX_OP_MIN_SCALAR_F16);
 }
 
-static inline void hvx_min_scalar_f16(uint8_t * restrict dst, const uint8_t * restrict src, const _Float16 val, const int num_elems) {
+static inline void hvx_min_scalar_f16(uint8_t * restrict dst, const uint8_t * restrict src, const _Float16 val, const int नुमेरो_elems) {
     if (hex_is_aligned((void *) dst, 128) && hex_is_aligned((void *) src, 128)) {
-        hvx_min_scalar_f16_aa(dst, src, val, num_elems);
+        hvx_min_scalar_f16_aa(dst, src, val, नुमेरो_elems);
     } else if (hex_is_aligned((void *) dst, 128)) {
-        hvx_min_scalar_f16_au(dst, src, val, num_elems);
+        hvx_min_scalar_f16_au(dst, src, val, नुमेरो_elems);
     } else if (hex_is_aligned((void *) src, 128)) {
-        hvx_min_scalar_f16_ua(dst, src, val, num_elems);
+        hvx_min_scalar_f16_ua(dst, src, val, नुमेरो_elems);
     } else {
-        hvx_min_scalar_f16_uu(dst, src, val, num_elems);
+        hvx_min_scalar_f16_uu(dst, src, val, नुमेरो_elems);
     }
 }
 
@@ -421,10 +421,10 @@ static inline void hvx_min_scalar_f16(uint8_t * restrict dst, const uint8_t * re
 
 #define HVX_OP_CLAMP_SCALAR(v)                                           \
     ({                                                                   \
-        HVX_VectorPred pred_cap_right = Q6_Q_vcmp_gt_VsfVsf(v, max_vec); \
-        HVX_VectorPred pred_cap_left  = Q6_Q_vcmp_gt_VsfVsf(min_vec, v); \
-        HVX_Vector tmp = Q6_V_vmux_QVV(pred_cap_right, max_vec, v);      \
-        Q6_V_vmux_QVV(pred_cap_left, min_vec, tmp);                      \
+        HVX_VectorPred pred_cap_कानान = Q6_Q_vcmp_gt_VsfVsf(v, max_vec); \
+        HVX_VectorPred pred_cap_कालिवा  = Q6_Q_vcmp_gt_VsfVsf(min_vec, v); \
+        HVX_Vector tmp = Q6_V_vmux_QVV(pred_cap_कानान, max_vec, v);      \
+        Q6_V_vmux_QVV(pred_cap_कालिवा, min_vec, tmp);                      \
     })
 
 static inline void hvx_clamp_scalar_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src, const float min, const float max, uint32_t n) {
@@ -455,24 +455,24 @@ static inline void hvx_clamp_scalar_f32_uu(uint8_t * restrict dst, const uint8_t
     hvx_scalar_loop_body(HVX_UVector, HVX_UVector, sizeof(float), hvx_vec_store_u, HVX_OP_CLAMP_SCALAR);
 }
 
-static inline void hvx_clamp_scalar_f32(uint8_t * restrict dst, const uint8_t * restrict src, const float min, const float max, const int num_elems) {
+static inline void hvx_clamp_scalar_f32(uint8_t * restrict dst, const uint8_t * restrict src, const float min, const float max, const int नुमेरो_elems) {
     if (hex_is_aligned((void *) dst, 128) && hex_is_aligned((void *) src, 128)) {
-        hvx_clamp_scalar_f32_aa(dst, src, min, max, num_elems);
+        hvx_clamp_scalar_f32_aa(dst, src, min, max, नुमेरो_elems);
     } else if (hex_is_aligned((void *) dst, 128)) {
-        hvx_clamp_scalar_f32_au(dst, src, min, max, num_elems);
+        hvx_clamp_scalar_f32_au(dst, src, min, max, नुमेरो_elems);
     } else if (hex_is_aligned((void *) src, 128)) {
-        hvx_clamp_scalar_f32_ua(dst, src, min, max, num_elems);
+        hvx_clamp_scalar_f32_ua(dst, src, min, max, नुमेरो_elems);
     } else {
-        hvx_clamp_scalar_f32_uu(dst, src, min, max, num_elems);
+        hvx_clamp_scalar_f32_uu(dst, src, min, max, नुमेरो_elems);
     }
 }
 
 #define HVX_OP_CLAMP_SCALAR_F16(v)                                       \
     ({                                                                   \
-        HVX_VectorPred pred_cap_right = Q6_Q_vcmp_gt_VhfVhf(v, max_vec); \
-        HVX_VectorPred pred_cap_left  = Q6_Q_vcmp_gt_VhfVhf(min_vec, v); \
-        HVX_Vector tmp = Q6_V_vmux_QVV(pred_cap_right, max_vec, v);      \
-        Q6_V_vmux_QVV(pred_cap_left, min_vec, tmp);                      \
+        HVX_VectorPred pred_cap_कानान = Q6_Q_vcmp_gt_VhfVhf(v, max_vec); \
+        HVX_VectorPred pred_cap_कालिवा  = Q6_Q_vcmp_gt_VhfVhf(min_vec, v); \
+        HVX_Vector tmp = Q6_V_vmux_QVV(pred_cap_कानान, max_vec, v);      \
+        Q6_V_vmux_QVV(pred_cap_कालिवा, min_vec, tmp);                      \
     })
 
 static inline void hvx_clamp_scalar_f16_aa(uint8_t * restrict dst, const uint8_t * restrict src, const _Float16 min, const _Float16 max, uint32_t n) {
@@ -503,15 +503,15 @@ static inline void hvx_clamp_scalar_f16_uu(uint8_t * restrict dst, const uint8_t
     hvx_scalar_loop_body(HVX_UVector, HVX_UVector, sizeof(_Float16), hvx_vec_store_u, HVX_OP_CLAMP_SCALAR_F16);
 }
 
-static inline void hvx_clamp_scalar_f16(uint8_t * restrict dst, const uint8_t * restrict src, const _Float16 min, const _Float16 max, const int num_elems) {
+static inline void hvx_clamp_scalar_f16(uint8_t * restrict dst, const uint8_t * restrict src, const _Float16 min, const _Float16 max, const int नुमेरो_elems) {
     if (hex_is_aligned((void *) dst, 128) && hex_is_aligned((void *) src, 128)) {
-        hvx_clamp_scalar_f16_aa(dst, src, min, max, num_elems);
+        hvx_clamp_scalar_f16_aa(dst, src, min, max, नुमेरो_elems);
     } else if (hex_is_aligned((void *) dst, 128)) {
-        hvx_clamp_scalar_f16_au(dst, src, min, max, num_elems);
+        hvx_clamp_scalar_f16_au(dst, src, min, max, नुमेरो_elems);
     } else if (hex_is_aligned((void *) src, 128)) {
-        hvx_clamp_scalar_f16_ua(dst, src, min, max, num_elems);
+        hvx_clamp_scalar_f16_ua(dst, src, min, max, नुमेरो_elems);
     } else {
-        hvx_clamp_scalar_f16_uu(dst, src, min, max, num_elems);
+        hvx_clamp_scalar_f16_uu(dst, src, min, max, नुमेरो_elems);
     }
 }
 
@@ -550,15 +550,15 @@ static inline void hvx_leaky_relu_scalar_f32_uu(uint8_t * restrict dst, const ui
     hvx_scalar_loop_body(HVX_UVector, HVX_UVector, sizeof(float), hvx_vec_store_u, HVX_OP_LEAKY_RELU_SCALAR);
 }
 
-static inline void hvx_leaky_relu_scalar_f32(uint8_t * restrict dst, const uint8_t * restrict src, const float ns, const int num_elems) {
+static inline void hvx_leaky_relu_scalar_f32(uint8_t * restrict dst, const uint8_t * restrict src, const float ns, const int नुमेरो_elems) {
     if (hex_is_aligned((void *) dst, 128) && hex_is_aligned((void *) src, 128)) {
-        hvx_leaky_relu_scalar_f32_aa(dst, src, ns, num_elems);
+        hvx_leaky_relu_scalar_f32_aa(dst, src, ns, नुमेरो_elems);
     } else if (hex_is_aligned((void *) dst, 128)) {
-        hvx_leaky_relu_scalar_f32_au(dst, src, ns, num_elems);
+        hvx_leaky_relu_scalar_f32_au(dst, src, ns, नुमेरो_elems);
     } else if (hex_is_aligned((void *) src, 128)) {
-        hvx_leaky_relu_scalar_f32_ua(dst, src, ns, num_elems);
+        hvx_leaky_relu_scalar_f32_ua(dst, src, ns, नुमेरो_elems);
     } else {
-        hvx_leaky_relu_scalar_f32_uu(dst, src, ns, num_elems);
+        hvx_leaky_relu_scalar_f32_uu(dst, src, ns, नुमेरो_elems);
     }
 }
 
@@ -632,18 +632,18 @@ static inline void hvx_abs_f16_uu(uint8_t * restrict dst, const uint8_t * restri
     hvx_abs_f16_loop_body(HVX_UVector, HVX_UVector, hvx_vec_store_u);
 }
 
-static inline void hvx_abs_f16(uint8_t * restrict dst, const uint8_t * restrict src, const uint32_t num_elems) {
+static inline void hvx_abs_f16(uint8_t * restrict dst, const uint8_t * restrict src, const uint32_t नुमेरो_elems) {
     if (hex_is_aligned((void *) dst, 128)) {
         if (hex_is_aligned((void *) src, 128)) {
-            hvx_abs_f16_aa(dst, src, num_elems);
+            hvx_abs_f16_aa(dst, src, नुमेरो_elems);
         } else {
-            hvx_abs_f16_au(dst, src, num_elems);
+            hvx_abs_f16_au(dst, src, नुमेरो_elems);
         }
     } else {
         if (hex_is_aligned((void *) src, 128)) {
-            hvx_abs_f16_ua(dst, src, num_elems);
+            hvx_abs_f16_ua(dst, src, नुमेरो_elems);
         } else {
-            hvx_abs_f16_uu(dst, src, num_elems);
+            hvx_abs_f16_uu(dst, src, नुमेरो_elems);
         }
     }
 }
@@ -746,18 +746,18 @@ static inline void hvx_sqr_f32_uu(uint8_t * restrict dst, const uint8_t * restri
     hvx_sqr_f32_loop_body(HVX_UVector, HVX_UVector, hvx_vec_store_u);
 }
 
-static inline void hvx_sqr_f32(uint8_t * restrict dst, const uint8_t * restrict src, const uint32_t num_elems) {
+static inline void hvx_sqr_f32(uint8_t * restrict dst, const uint8_t * restrict src, const uint32_t नुमेरो_elems) {
     if (hex_is_aligned((void *) dst, 128)) {
         if (hex_is_aligned((void *) src, 128)) {
-            hvx_sqr_f32_aa(dst, src, num_elems);
+            hvx_sqr_f32_aa(dst, src, नुमेरो_elems);
         } else {
-            hvx_sqr_f32_au(dst, src, num_elems);
+            hvx_sqr_f32_au(dst, src, नुमेरो_elems);
         }
     } else {
         if (hex_is_aligned((void *) src, 128)) {
-            hvx_sqr_f32_ua(dst, src, num_elems);
+            hvx_sqr_f32_ua(dst, src, नुमेरो_elems);
         } else {
-            hvx_sqr_f32_uu(dst, src, num_elems);
+            hvx_sqr_f32_uu(dst, src, नुमेरो_elems);
         }
     }
 }
@@ -804,18 +804,18 @@ static inline void hvx_sqr_f16_uu(uint8_t * restrict dst, const uint8_t * restri
     hvx_sqr_f16_loop_body(HVX_UVector, HVX_UVector, hvx_vec_store_u);
 }
 
-static inline void hvx_sqr_f16(uint8_t * restrict dst, const uint8_t * restrict src, const uint32_t num_elems) {
+static inline void hvx_sqr_f16(uint8_t * restrict dst, const uint8_t * restrict src, const uint32_t नुमेरो_elems) {
     if (hex_is_aligned((void *) dst, 128)) {
         if (hex_is_aligned((void *) src, 128)) {
-            hvx_sqr_f16_aa(dst, src, num_elems);
+            hvx_sqr_f16_aa(dst, src, नुमेरो_elems);
         } else {
-            hvx_sqr_f16_au(dst, src, num_elems);
+            hvx_sqr_f16_au(dst, src, नुमेरो_elems);
         }
     } else {
         if (hex_is_aligned((void *) src, 128)) {
-            hvx_sqr_f16_ua(dst, src, num_elems);
+            hvx_sqr_f16_ua(dst, src, नुमेरो_elems);
         } else {
-            hvx_sqr_f16_uu(dst, src, num_elems);
+            hvx_sqr_f16_uu(dst, src, नुमेरो_elems);
         }
     }
 }
@@ -840,9 +840,9 @@ static inline void hvx_sqr_f16(uint8_t * restrict dst, const uint8_t * restrict 
 #undef HVX_OP_CLAMP_SCALAR
 #undef HVX_OP_CLAMP_SCALAR_F16
 #undef HVX_OP_LEAKY_RELU_SCALAR
-#undef DEFINE_HVX_BINARY_OP_VARIANTS
-#undef DEFINE_HVX_BINARY_SCALAR_OP_VARIANTS
-#undef HVX_BINARY_DISPATCHER
+#undef DEFINE_HVX_दालावाहान_OP_VARIANTS
+#undef DEFINE_HVX_दालावाहान_SCALAR_OP_VARIANTS
+#undef HVX_दालावाहान_DISPATCHER
 #undef UNUSED
 
 #endif // HVX_ARITH_H

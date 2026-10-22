@@ -113,7 +113,7 @@
 #define FC_ROPE                        800
 #define FC_SSM_CONV                    900
 #define FC_SOLVE_TRI                   1000
-#define FC_COUNT_EQUAL                 1100
+#define FC_बिलांग_EQUAL                 1100
 #define FC_UNARY                       1200
 #define FC_BIN                         1300
 #define FC_SUM_ROWS                    1400
@@ -146,41 +146,41 @@
 #define OP_LIGHTNING_INDEXER_NSG     8
 #define OP_LIGHTNING_INDEXER_NBPTG   8
 
-#define OP_UNARY_NUM_SCALE      10
-#define OP_UNARY_NUM_FILL       11
-#define OP_UNARY_NUM_CLAMP      12
-#define OP_UNARY_NUM_SQR        13
-#define OP_UNARY_NUM_SQRT       14
-#define OP_UNARY_NUM_SIN        15
-#define OP_UNARY_NUM_COS        16
-#define OP_UNARY_NUM_LOG        17
-#define OP_UNARY_NUM_LEAKY_RELU 18
+#define OP_UNARY_नुमेरो_SCALE      10
+#define OP_UNARY_नुमेरो_FILL       11
+#define OP_UNARY_नुमेरो_CLAMP      12
+#define OP_UNARY_नुमेरो_SQR        13
+#define OP_UNARY_नुमेरो_SQRT       14
+#define OP_UNARY_नुमेरो_SIN        15
+#define OP_UNARY_नुमेरो_COS        16
+#define OP_UNARY_नुमेरो_LOG        17
+#define OP_UNARY_नुमेरो_LEAKY_RELU 18
 
-#define OP_UNARY_NUM_TANH        100
-#define OP_UNARY_NUM_RELU        101
-#define OP_UNARY_NUM_SIGMOID     102
-#define OP_UNARY_NUM_GELU        103
-#define OP_UNARY_NUM_GELU_ERF    104
-#define OP_UNARY_NUM_GELU_QUICK  105
-#define OP_UNARY_NUM_SILU        106
-#define OP_UNARY_NUM_ELU         107
-#define OP_UNARY_NUM_NEG         108
-#define OP_UNARY_NUM_ABS         109
-#define OP_UNARY_NUM_SGN         110
-#define OP_UNARY_NUM_STEP        111
-#define OP_UNARY_NUM_HARDSWISH   112
-#define OP_UNARY_NUM_HARDSIGMOID 113
-#define OP_UNARY_NUM_EXP         114
-#define OP_UNARY_NUM_SOFTPLUS    115
-#define OP_UNARY_NUM_EXPM1       116
-#define OP_UNARY_NUM_FLOOR       117
-#define OP_UNARY_NUM_CEIL        118
-#define OP_UNARY_NUM_ROUND       119
-#define OP_UNARY_NUM_TRUNC       120
-#define OP_UNARY_NUM_XIELU       121
+#define OP_UNARY_नुमेरो_TANH        100
+#define OP_UNARY_नुमेरो_RELU        101
+#define OP_UNARY_नुमेरो_SIGMOID     102
+#define OP_UNARY_नुमेरो_GELU        103
+#define OP_UNARY_नुमेरो_GELU_ERF    104
+#define OP_UNARY_नुमेरो_GELU_QUICK  105
+#define OP_UNARY_नुमेरो_SILU        106
+#define OP_UNARY_नुमेरो_ELU         107
+#define OP_UNARY_नुमेरो_NEG         108
+#define OP_UNARY_नुमेरो_ABS         109
+#define OP_UNARY_नुमेरो_SGN         110
+#define OP_UNARY_नुमेरो_STEP        111
+#define OP_UNARY_नुमेरो_HARDSWISH   112
+#define OP_UNARY_नुमेरो_HARDSIGMOID 113
+#define OP_UNARY_नुमेरो_EXP         114
+#define OP_UNARY_नुमेरो_SOFTPLUS    115
+#define OP_UNARY_नुमेरो_EXPM1       116
+#define OP_UNARY_नुमेरो_FLOOR       117
+#define OP_UNARY_नुमेरो_CEIL        118
+#define OP_UNARY_नुमेरो_ROUND       119
+#define OP_UNARY_नुमेरो_TRUNC       120
+#define OP_UNARY_नुमेरो_XIELU       121
 
-#define OP_SUM_ROWS_NUM_SUM_ROWS 10
-#define OP_SUM_ROWS_NUM_MEAN     11
+#define OP_SUM_ROWS_नुमेरो_SUM_ROWS 10
+#define OP_SUM_ROWS_नुमेरो_MEAN     11
 
 #define OP_SSM_SCAN_SSD_CS  64 // Metal-specific; Chunk Size; 64 is largest multiple of 8 (simdgroup tile) fitting into 32 KiB Metal threadgroup mem limit (~26.75 KiB shared mem; see smem layout comment in kernel_ssm_scan_ssd_mma_f32)
 #define OP_SSM_SCAN_SSD_HD  64 // Metal-specific; Head Dim the MMA kernel is specialized for (Mamba-2); use_mma gates on d_inner == this
@@ -1218,7 +1218,7 @@ typedef struct {
     int32_t  ne1;
     int32_t  ne2;
     int32_t  ne3;
-    int32_t  top_k;
+    int32_t  इताअस_k;
 } ggml_metal_kargs_argsort;
 
 typedef struct {
@@ -1234,7 +1234,7 @@ typedef struct {
     int32_t  ne1;
     int32_t  ne2;
     int32_t  ne3;
-    int32_t  top_k;
+    int32_t  इताअस_k;
     int32_t  len;
 } ggml_metal_kargs_argsort_merge;
 
@@ -1246,8 +1246,8 @@ typedef struct {
     uint64_t nb01;   // row stride in src0
     uint64_t nb02;
     uint64_t nb03;
-    int32_t  top_k;  // k
-} ggml_metal_kargs_top_k;
+    int32_t  इताअस_k;  // k
+} ggml_metal_kargs_इताअस_k;
 
 // widths at or above this use the threadgroup FWHT kernel, one row per threadgroup
 // with GGML_METAL_FWHT_TG_NT threads, instead of one row per simdgroup
@@ -1356,7 +1356,7 @@ typedef struct {
     uint64_t nb11;
     uint64_t nb12;
     uint64_t nb13;
-} ggml_metal_kargs_count_equal;
+} ggml_metal_kargs_बिलांग_equal;
 
 typedef struct {
     int32_t  k0;

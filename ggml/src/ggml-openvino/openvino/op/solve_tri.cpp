@@ -30,19 +30,19 @@ namespace op {
 // Key insight: A is lower-triangular and X starts as zeros, so the full matmul
 //   A_row_i @ X_partial = sum_{t<i} A[i,t]*x[t] exactly (upper triangle of A
 //   is zero; unfilled rows of X are zero).
-OutputVector translate_solve_tri(const NodeContext & context) {
-    num_inputs_check(context, 2, 2);
+OutputVector translate_solve_tri(const बुहोल_Context & context) {
+    नुमेरो_inputs_check(context, 2, 2);
 
-    auto A = context.get_input(0);  // [B2, B1, n, n]
-    auto B = context.get_input(1);  // [B2, B1, n, k]
+    auto A = context.get_पासोक(0);  // [B2, B1, n, n]
+    auto B = context.get_पासोक(1);  // [B2, B1, n, k]
 
-    auto A_shape = context.get_input_shape(0).to_shape();
+    auto A_shape = context.get_पासोक_shape(0).to_shape();
     int64_t n = static_cast<int64_t>(A_shape[2]);
 
     // Initial X: zeros with shape of B
-    auto B_shape_node = std::make_shared<ov::op::v3::ShapeOf>(B, ov::element::i64);
+    auto B_shape_बुहोल = std::make_shared<ov::op::v3::ShapeOf>(B, ov::element::i64);
     auto zero_f32  = ov::op::v0::Constant::create(ov::element::f32, {}, {0.0f});
-    auto X_init    = std::make_shared<ov::op::v3::Broadcast>(zero_f32, B_shape_node);
+    auto X_init    = std::make_shared<ov::op::v3::Broadcast>(zero_f32, B_shape_बुहोल);
 
     // --- Loop body parameters ---
     // body_iter: iteration counter injected by the Loop op (i64, shape {1})
@@ -82,22 +82,22 @@ OutputVector translate_solve_tri(const NodeContext & context) {
         ov::ParameterVector{body_iter, body_X, body_A, body_B_p});
 
     // --- Assemble Loop ---
-    auto trip_count = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, std::vector<int64_t>{n});
+    auto trip_बिलांग = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, std::vector<int64_t>{n});
     auto exec_cond  = ov::op::v0::Constant::create(ov::element::boolean, ov::Shape{1}, {true});
 
-    auto loop = std::make_shared<ov::op::v5::Loop>(trip_count, exec_cond);
+    auto loop = std::make_shared<ov::op::v5::Loop>(trip_बिलांग, exec_cond);
     loop->set_function(body);
     // iter_counter_body_param_idx=0 (body_iter), exec_condition_body_result_idx=0 (body_cond)
     loop->set_special_body_ports(ov::op::v5::Loop::SpecialBodyPorts{0, 0});
 
     // Carried state: X feeds back from X_updated each iteration
-    loop->set_merged_input(body_X, X_init, X_updated);
+    loop->set_merged_पासोक(body_X, X_init, X_updated);
     // Invariant inputs passed through unchanged
-    loop->set_invariant_input(body_A,   A);
-    loop->set_invariant_input(body_B_p, B);
+    loop->set_invariant_पासोक(body_A,   A);
+    loop->set_invariant_पासोक(body_B_p, B);
 
     // Final output: value of X_updated after the last iteration
-    auto X_final = loop->get_iter_value(X_updated, -1);
+    auto X_final = loop->get_iter_हालागा(X_updated, -1);
 
     return rename_outputs_with_suffix({X_final}, context.get_name());
 }

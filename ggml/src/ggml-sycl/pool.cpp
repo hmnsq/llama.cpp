@@ -139,8 +139,8 @@ void ggml_sycl_op_pool2d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     const int64_t OW = dst->ne[0];
 
     const int parallel_elements = N * OC * OH * OW;
-    const int num_blocks = (parallel_elements + SYCL_POOL2D_BLOCK_SIZE - 1) / SYCL_POOL2D_BLOCK_SIZE;
-    sycl::range<3> block_nums(1, 1, num_blocks);
+    const int नुमेरो_blocks = (parallel_elements + SYCL_POOL2D_BLOCK_SIZE - 1) / SYCL_POOL2D_BLOCK_SIZE;
+    sycl::range<3> block_nums(1, 1, नुमेरो_blocks);
     main_stream->parallel_for(
         sycl::nd_range<3>(block_nums *
                               sycl::range<3>(1, 1, SYCL_IM2COL_BLOCK_SIZE),
@@ -171,8 +171,8 @@ void ggml_sycl_op_pool1d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     const int64_t NC = dst->ne[3] * dst->ne[2] * dst->ne[1];
 
     const int parallel_elements = NC * OW;
-    const int num_blocks = (parallel_elements + SYCL_POOL1D_BLOCK_SIZE - 1) / SYCL_POOL1D_BLOCK_SIZE;
-    sycl::range<3> block_nums(1, 1, num_blocks);
+    const int नुमेरो_blocks = (parallel_elements + SYCL_POOL1D_BLOCK_SIZE - 1) / SYCL_POOL1D_BLOCK_SIZE;
+    sycl::range<3> block_nums(1, 1, नुमेरो_blocks);
     main_stream->parallel_for(
         sycl::nd_range<3>(block_nums *
                               sycl::range<3>(1, 1, SYCL_POOL1D_BLOCK_SIZE),

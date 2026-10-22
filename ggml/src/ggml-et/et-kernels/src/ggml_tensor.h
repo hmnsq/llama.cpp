@@ -8,7 +8,7 @@
 
 #include "ggml.h"
 
-struct ggml_et_binary_params {
+struct ggml_et_दालावाहान_params {
     struct ggml_tensor src0;
     struct ggml_tensor src1;
     struct ggml_tensor dst;

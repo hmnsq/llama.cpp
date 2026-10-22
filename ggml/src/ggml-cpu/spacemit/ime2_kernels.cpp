@@ -37,8 +37,8 @@ void gemm_kernel_i8i2k_mrow_ref(size_t          blk_len,
                                 const uint8_t * quant_a_ptr,
                                 const uint8_t * quant_b_data,
                                 float *         c_ptr,
-                                size_t          count_m,
-                                size_t          count_n,
+                                size_t          बिलांग_m,
+                                size_t          बिलांग_n,
                                 size_t          k_blks,
                                 size_t          ldc) {
     using blk_type                 = nrow_block_q2_k<NB_COLS>;
@@ -53,8 +53,8 @@ void gemm_kernel_i8i2k_mrow_ref(size_t          blk_len,
     _Float16   output_f16[MB_ROWS * NB_COLS] = { 0 };
     blk_type * quant_b_blk_data              = (blk_type *) (quant_b_data);
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-        size_t nb_real = std::min<size_t>(NB_COLS, count_n - ni);
+    for (size_t ni = 0; ni < बिलांग_n; ni += NB_COLS, c_ptr += NB_COLS) {
+        size_t nb_real = std::min<size_t>(NB_COLS, बिलांग_n - ni);
 
         int8_t * a_data = (int8_t *) quant_a_ptr + sizeof(float) * MB_ROWS + sizeof(int16_t) * MB_ROWS * 16;
 
@@ -128,8 +128,8 @@ void gemm_kernel_i8i3k_mrow_ref(size_t          blk_len,
                                 const uint8_t * quant_a_ptr,
                                 const uint8_t * quant_b_data,
                                 float *         c_ptr,
-                                size_t          count_m,
-                                size_t          count_n,
+                                size_t          बिलांग_m,
+                                size_t          बिलांग_n,
                                 size_t          k_blks,
                                 size_t          ldc) {
     using blk_type                 = nrow_block_q2_k<NB_COLS>;
@@ -145,8 +145,8 @@ void gemm_kernel_i8i3k_mrow_ref(size_t          blk_len,
 
     blk_type * quant_b_blk_data = (blk_type *) (quant_b_data);
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-        size_t nb_real = std::min<size_t>(NB_COLS, count_n - ni);
+    for (size_t ni = 0; ni < बिलांग_n; ni += NB_COLS, c_ptr += NB_COLS) {
+        size_t nb_real = std::min<size_t>(NB_COLS, बिलांग_n - ni);
 
         int8_t * a_data = (int8_t *) quant_a_ptr + sizeof(float) * MB_ROWS + sizeof(int16_t) * MB_ROWS * 16;
 
@@ -220,8 +220,8 @@ void gemm_kernel_i8i4_mrow_ref(size_t          blk_len,
                                const uint8_t * quant_b_data,
                                const uint8_t * quant_b_zp,
                                float *         c_ptr,
-                               size_t          count_m,
-                               size_t          count_n,
+                               size_t          बिलांग_m,
+                               size_t          बिलांग_n,
                                size_t          k_blks,
                                size_t          ldc) {
     constexpr size_t kblks_per_blk = 16;
@@ -236,8 +236,8 @@ void gemm_kernel_i8i4_mrow_ref(size_t          blk_len,
     float    output[MB_ROWS * NB_COLS]     = { 0 };
     _Float16 output_f16[MB_ROWS * NB_COLS] = { 0 };
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-        size_t    nb_real = std::min<size_t>(NB_COLS, count_n - ni);
+    for (size_t ni = 0; ni < बिलांग_n; ni += NB_COLS, c_ptr += NB_COLS) {
+        size_t    nb_real = std::min<size_t>(NB_COLS, बिलांग_n - ni);
         uint8_t * b_data  = (uint8_t *) quant_b_data + ni * b_stride + NB_COLS * sizeof(_Float16);
         if (quant_b_zp) {
             b_data += NB_COLS * sizeof(uint8_t);
@@ -327,8 +327,8 @@ void gemm_kernel_i8i4_hp_mrow_ref(size_t          blk_len,
                                   const uint8_t * quant_b_data,
                                   const uint8_t * quant_b_zp,
                                   float *         c_ptr,
-                                  size_t          count_m,
-                                  size_t          count_n,
+                                  size_t          बिलांग_m,
+                                  size_t          बिलांग_n,
                                   size_t          k_blks,
                                   size_t          ldc) {
     constexpr size_t k_subblks_per_superblk = 8;
@@ -348,8 +348,8 @@ void gemm_kernel_i8i4_hp_mrow_ref(size_t          blk_len,
     const size_t a_subblk_stride     = q8_hp_blk_size(32, false, false) * MB_ROWS;
 
     float output[MB_ROWS * NB_COLS] = { 0 };
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-        size_t          nb_real     = std::min<size_t>(NB_COLS, count_n - ni);
+    for (size_t ni = 0; ni < बिलांग_n; ni += NB_COLS, c_ptr += NB_COLS) {
+        size_t          nb_real     = std::min<size_t>(NB_COLS, बिलांग_n - ni);
         const uint8_t * b_tile_base = quant_b_data + (ni / NB_COLS) * b_tile_stride;
         int8_t *        a_data      = (int8_t *) quant_a_ptr;
 
@@ -441,8 +441,8 @@ void moe_gemm_kernel_i8i4_mrow_ref(size_t           blk_len,
                                    const uint8_t *  quant_b_data,
                                    const uint8_t *  quant_b_zp,
                                    float **         c_ptr,
-                                   size_t           count_m,
-                                   size_t           count_n,
+                                   size_t           बिलांग_m,
+                                   size_t           बिलांग_n,
                                    size_t           k_blks,
                                    size_t           ldc) {
     int64_t b_blk_stride        = (sizeof(ggml_fp16_t) + (blk_len / 2) + (quant_b_zp ? sizeof(uint8_t) : 0));
@@ -458,8 +458,8 @@ void moe_gemm_kernel_i8i4_mrow_ref(size_t           blk_len,
         c_data[mi] = c_ptr[mi];
     }
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-        size_t    nb_real = std::min<size_t>(NB_COLS, count_n - ni);
+    for (size_t ni = 0; ni < बिलांग_n; ni += NB_COLS) {
+        size_t    nb_real = std::min<size_t>(NB_COLS, बिलांग_n - ni);
         uint8_t * b_data  = (uint8_t *) quant_b_data + ni * b_stride + NB_COLS * sizeof(ggml_fp16_t);
         if (quant_b_zp) {
             b_data += NB_COLS * sizeof(uint8_t);
@@ -534,11 +534,11 @@ void moe_gemm_kernel_i8i5_mrow_ref(size_t           blk_len,
                                    const uint8_t *  quant_b_data,
                                    const uint8_t *  quant_b_zp,
                                    float **         c_ptr,
-                                   size_t           count_m,
-                                   size_t           count_n,
+                                   size_t           बिलांग_m,
+                                   size_t           बिलांग_n,
                                    size_t           k_blks,
                                    size_t           ldc) {
-    GGML_UNUSED(count_m);
+    GGML_UNUSED(बिलांग_m);
     GGML_UNUSED(ldc);
 
     // blk_len is expected to be 32 for Q5 types.
@@ -555,8 +555,8 @@ void moe_gemm_kernel_i8i5_mrow_ref(size_t           blk_len,
     if (quant_b_zp) {
         using blk_type = nrow_block_q5_1<NB_COLS>;
 
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-            size_t     nb_real          = std::min<size_t>(NB_COLS, count_n - ni);
+        for (size_t ni = 0; ni < बिलांग_n; ni += NB_COLS) {
+            size_t     nb_real          = std::min<size_t>(NB_COLS, बिलांग_n - ni);
             blk_type * quant_b_blk_data = (blk_type *) quant_b_data + (ni / NB_COLS) * k_blks;
 
             for (size_t mi = 0; mi < MB_ROWS; ++mi) {
@@ -616,8 +616,8 @@ void moe_gemm_kernel_i8i5_mrow_ref(size_t           blk_len,
     } else {
         using blk_type = nrow_block_q5_0<NB_COLS>;
 
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-            size_t     nb_real          = std::min<size_t>(NB_COLS, count_n - ni);
+        for (size_t ni = 0; ni < बिलांग_n; ni += NB_COLS) {
+            size_t     nb_real          = std::min<size_t>(NB_COLS, बिलांग_n - ni);
             blk_type * quant_b_blk_data = (blk_type *) quant_b_data + (ni / NB_COLS) * k_blks;
 
             for (size_t mi = 0; mi < MB_ROWS; ++mi) {
@@ -682,8 +682,8 @@ void gemm_kernel_i8i8_mrow_ref(size_t          blk_len,
                                const uint8_t * quant_b_data,
                                const uint8_t * quant_b_zp,
                                float *         c_ptr,
-                               size_t          count_m,
-                               size_t          count_n,
+                               size_t          बिलांग_m,
+                               size_t          बिलांग_n,
                                size_t          k_blks,
                                size_t          ldc) {
     int64_t b_blk_stride        = (sizeof(ggml_fp16_t) + blk_len);
@@ -694,8 +694,8 @@ void gemm_kernel_i8i8_mrow_ref(size_t          blk_len,
 
     float output[MB_ROWS * NB_COLS] = { 0 };
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-        size_t   nb_real = std::min<size_t>(NB_COLS, count_n - ni);
+    for (size_t ni = 0; ni < बिलांग_n; ni += NB_COLS, c_ptr += NB_COLS) {
+        size_t   nb_real = std::min<size_t>(NB_COLS, बिलांग_n - ni);
         int8_t * b_data  = (int8_t *) quant_b_data + ni * b_stride + NB_COLS * sizeof(ggml_fp16_t);
 
         int8_t * a_data = (int8_t *) quant_a_ptr + sizeof(float) * MB_ROWS + sizeof(int16_t) * MB_ROWS;
@@ -740,8 +740,8 @@ void gemm_kernel_i8i5_mrow_ref(size_t          blk_len,
                                const uint8_t * quant_b_data,
                                const uint8_t * quant_b_zp,
                                float *         c_ptr,
-                               size_t          count_m,
-                               size_t          count_n,
+                               size_t          बिलांग_m,
+                               size_t          बिलांग_n,
                                size_t          k_blks,
                                size_t          ldc) {
     // blk_len is expected to be 32 for Q5 types
@@ -759,8 +759,8 @@ void gemm_kernel_i8i5_mrow_ref(size_t          blk_len,
         int64_t    b_ncol_block_stride = sizeof(blk_type);
         blk_type * quant_b_blk_data    = (blk_type *) quant_b_data;
 
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-            size_t nb_real = std::min<size_t>(NB_COLS, count_n - ni);
+        for (size_t ni = 0; ni < बिलांग_n; ni += NB_COLS, c_ptr += NB_COLS) {
+            size_t nb_real = std::min<size_t>(NB_COLS, बिलांग_n - ni);
 
             int8_t * a_data = (int8_t *) quant_a_ptr + sizeof(float) * MB_ROWS + sizeof(int16_t) * MB_ROWS;
 
@@ -820,8 +820,8 @@ void gemm_kernel_i8i5_mrow_ref(size_t          blk_len,
         int64_t    b_ncol_block_stride = sizeof(blk_type);
         blk_type * quant_b_blk_data    = (blk_type *) quant_b_data;
 
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-            size_t nb_real = std::min<size_t>(NB_COLS, count_n - ni);
+        for (size_t ni = 0; ni < बिलांग_n; ni += NB_COLS, c_ptr += NB_COLS) {
+            size_t nb_real = std::min<size_t>(NB_COLS, बिलांग_n - ni);
 
             int8_t * a_data = (int8_t *) quant_a_ptr + sizeof(float) * MB_ROWS + sizeof(int16_t) * MB_ROWS;
 
@@ -883,8 +883,8 @@ void gemm_kernel_i8mxfp4_mrow_ref(size_t          blk_len,
                                   const uint8_t * quant_b_data,
                                   const uint8_t * quant_b_zp,
                                   float *         c_ptr,
-                                  size_t          count_m,
-                                  size_t          count_n,
+                                  size_t          बिलांग_m,
+                                  size_t          बिलांग_n,
                                   size_t          k_blks,
                                   size_t          ldc) {
     // blk_len is expected to be 32 (QK_MXFP4)
@@ -899,8 +899,8 @@ void gemm_kernel_i8mxfp4_mrow_ref(size_t          blk_len,
     using blk_type              = nrow_block_mxfp4<NB_COLS>;
     blk_type * quant_b_blk_data = (blk_type *) quant_b_data;
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-        size_t nb_real = std::min<size_t>(NB_COLS, count_n - ni);
+    for (size_t ni = 0; ni < बिलांग_n; ni += NB_COLS, c_ptr += NB_COLS) {
+        size_t nb_real = std::min<size_t>(NB_COLS, बिलांग_n - ni);
 
         int8_t * a_data = (int8_t *) quant_a_ptr + sizeof(float) * MB_ROWS + sizeof(int16_t) * MB_ROWS;
 
@@ -959,8 +959,8 @@ void gemm_kernel_i8i2k_m1(size_t          blk_len,
                           const uint8_t * quant_a_ptr,
                           const uint8_t * quant_b_data,
                           float *         c_ptr,
-                          size_t          count_m,
-                          size_t          count_n,
+                          size_t          बिलांग_m,
+                          size_t          बिलांग_n,
                           size_t          k_blks,
                           size_t          ldc) {
     constexpr size_t NB_COLS = 32;
@@ -968,7 +968,7 @@ void gemm_kernel_i8i2k_m1(size_t          blk_len,
 
     int64_t b_ncol_block_stride = sizeof(blk_type) * k_blks;
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
+    for (size_t ni = 0; ni < बिलांग_n; ni += NB_COLS) {
         uint8_t * b_data = (uint8_t *) quant_b_data + (ni / NB_COLS) * b_ncol_block_stride;
         int8_t *  a_data = (int8_t *) quant_a_ptr;
         float *   dst_c  = (float *) c_ptr + ni;
@@ -1179,8 +1179,8 @@ void gemm_kernel_i8i2k_m4(size_t          blk_len,
                           const uint8_t * quant_a_ptr,
                           const uint8_t * quant_b_data,
                           float *         c_ptr,
-                          size_t          count_m,
-                          size_t          count_n,
+                          size_t          बिलांग_m,
+                          size_t          बिलांग_n,
                           size_t          k_blks,
                           size_t          ldc) {
     constexpr size_t NB_COLS = 32;
@@ -1190,7 +1190,7 @@ void gemm_kernel_i8i2k_m4(size_t          blk_len,
     _Float16 scale               = 0.0625f;
     _Float16 scale_1             = 16.0f;
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
+    for (size_t ni = 0; ni < बिलांग_n; ni += NB_COLS) {
         uint8_t * b_data = (uint8_t *) quant_b_data + (ni / NB_COLS) * b_ncol_block_stride;
         int8_t *  a_data = (int8_t *) quant_a_ptr;
         float *   dst_c  = (float *) c_ptr + ni;
@@ -1420,8 +1420,8 @@ void gemm_kernel_i8i3k_m1(size_t          blk_len,
                           const uint8_t * quant_a_ptr,
                           const uint8_t * quant_b_data,
                           float *         c_ptr,
-                          size_t          count_m,
-                          size_t          count_n,
+                          size_t          बिलांग_m,
+                          size_t          बिलांग_n,
                           size_t          k_blks,
                           size_t          ldc) {
     constexpr size_t NB_COLS = 32;  //only support 32 in ASM
@@ -1439,8 +1439,8 @@ void gemm_kernel_i8i3k_m1(size_t          blk_len,
     const _Float16 k_q3k_scale_step   = (_Float16) 0.0625f;  // 1 / 16
     const float    k_a_scale_post_mul = 16.0f;
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-        size_t           nb_real          = std::min<size_t>(NB_COLS, count_n - ni);
+    for (size_t ni = 0; ni < बिलांग_n; ni += NB_COLS, c_ptr += NB_COLS) {
+        size_t           nb_real          = std::min<size_t>(NB_COLS, बिलांग_n - ni);
         const blk_type * quant_b_blk_data = b_base + (ni / NB_COLS) * k_blks;
 #if 0
         //------------------------------------------------------------------------------
@@ -2032,8 +2032,8 @@ void gemm_kernel_i8i3k_m4(size_t          blk_len,
                           const uint8_t * quant_a_ptr,
                           const uint8_t * quant_b_data,
                           float *         c_ptr,
-                          size_t          count_m,
-                          size_t          count_n,
+                          size_t          बिलांग_m,
+                          size_t          बिलांग_n,
                           size_t          k_blks,
                           size_t          ldc) {
     using blk_type           = nrow_block_q3_k<32>;
@@ -2045,8 +2045,8 @@ void gemm_kernel_i8i3k_m4(size_t          blk_len,
     int64_t a_nrow_block_stride = a_blk_stride * 4;
     int64_t b_ncol_block_stride = sizeof(blk_type);
 
-    for (size_t ni = 0; ni < count_n; ni += NB_COLS, c_ptr += NB_COLS) {
-        size_t           nb_real          = std::min<size_t>(NB_COLS, count_n - ni);
+    for (size_t ni = 0; ni < बिलांग_n; ni += NB_COLS, c_ptr += NB_COLS) {
+        size_t           nb_real          = std::min<size_t>(NB_COLS, बिलांग_n - ni);
         const blk_type * quant_b_blk_data = b_base + (ni / NB_COLS) * k_blks;
 
         //------------------------------------------------------------------------------
@@ -2432,13 +2432,13 @@ void gemm_kernel_i8i4_m1(size_t          blk_len,
                          const uint8_t * quant_b_data,
                          const uint8_t * quant_b_zp,
                          float *         c_ptr,
-                         size_t          count_m,
-                         size_t          count_n,
+                         size_t          बिलांग_m,
+                         size_t          बिलांग_n,
                          size_t          k_blks,
                          size_t          ldc) {
     if (quant_b_zp == NULL) {
-        for (size_t n = 0; n < count_n; n += 32) {
-            size_t    nblks         = (count_n - n) > 32 ? 32 : count_n - n;
+        for (size_t n = 0; n < बिलांग_n; n += 32) {
+            size_t    nblks         = (बिलांग_n - n) > 32 ? 32 : बिलांग_n - n;
             uint8_t * QuantBDataPtr = (uint8_t *) quant_b_data +      //
                                       n * k_blks * blk_len / 2 +      // b data
                                       n * k_blks * sizeof(_Float16);  // scale
@@ -2649,8 +2649,8 @@ void gemm_kernel_i8i4_m1(size_t          blk_len,
 #endif
         }
     } else {
-        for (size_t n = 0; n < count_n; n += 32) {
-            size_t    nblks         = (count_n - n) > 32 ? 32 : count_n - n;
+        for (size_t n = 0; n < बिलांग_n; n += 32) {
+            size_t    nblks         = (बिलांग_n - n) > 32 ? 32 : बिलांग_n - n;
             uint8_t * QuantBDataPtr = (uint8_t *) quant_b_data +      //
                                       n * k_blks * blk_len / 2 +      // b data
                                       n * k_blks * sizeof(uint8_t) +  // b zp
@@ -2885,8 +2885,8 @@ void gemm_kernel_i8i4_hp_m1(size_t          blk_len,
                             const uint8_t * quant_b_data,
                             const uint8_t * quant_b_zp,
                             float *         c_ptr,
-                            size_t          count_m,
-                            size_t          count_n,
+                            size_t          बिलांग_m,
+                            size_t          बिलांग_n,
                             size_t          k_blks,
                             size_t          ldc) {
     constexpr size_t NB_COLS                = 32;
@@ -2904,7 +2904,7 @@ void gemm_kernel_i8i4_hp_m1(size_t          blk_len,
     const size_t b_tile_stride = k_blks * b_superblk_stride;
 
     if (quant_b_zp == NULL) {
-        for (size_t ni = 0; ni < count_n; ni += 32) {
+        for (size_t ni = 0; ni < बिलांग_n; ni += 32) {
             uint8_t * b_data = (uint8_t *) quant_b_data + (ni / NB_COLS) * b_tile_stride;
             int8_t *  a_data = (int8_t *) quant_a_ptr;
             float *   dst_c  = c_ptr + ni;
@@ -3009,14 +3009,14 @@ void gemm_kernel_i8i4_m4(size_t          blk_len,
                          const uint8_t * quant_b_data,
                          const uint8_t * quant_b_zp,
                          float *         c_ptr,
-                         size_t          count_m,
-                         size_t          count_n,
+                         size_t          बिलांग_m,
+                         size_t          बिलांग_n,
                          size_t          k_blks,
                          size_t          ldc) {
     int64_t b_data_stride =
         k_blks * (sizeof(ggml_fp16_t) + 16 * sizeof(int8_t) + (quant_b_zp != NULL ? sizeof(int8_t) : 0));
     if (quant_b_zp == NULL) {
-        for (size_t ni = 0; ni < count_n; ni += 32) {
+        for (size_t ni = 0; ni < बिलांग_n; ni += 32) {
             uint8_t * b_data = (uint8_t *) quant_b_data + ni * b_data_stride;
             int8_t *  a_data = (int8_t *) quant_a_ptr;
             float *   dst_c  = c_ptr + ni;
@@ -3230,7 +3230,7 @@ void gemm_kernel_i8i4_m4(size_t          blk_len,
 #endif
         }
     } else {
-        for (size_t ni = 0; ni < count_n; ni += 32) {
+        for (size_t ni = 0; ni < बिलांग_n; ni += 32) {
             uint8_t * b_data = (uint8_t *) quant_b_data + ni * b_data_stride;
             int8_t *  a_data = (int8_t *) quant_a_ptr;
             float *   dst_c  = c_ptr + ni;
@@ -3362,8 +3362,8 @@ void gemm_kernel_i8i4_hp_m4(size_t          blk_len,
                             const uint8_t * quant_b_data,
                             const uint8_t * quant_b_zp,
                             float *         c_ptr,
-                            size_t          count_m,
-                            size_t          count_n,
+                            size_t          बिलांग_m,
+                            size_t          बिलांग_n,
                             size_t          k_blks,
                             size_t          ldc) {
     constexpr size_t NB_COLS                = 32;
@@ -3376,7 +3376,7 @@ void gemm_kernel_i8i4_hp_m4(size_t          blk_len,
     };
 
     GGML_ASSERT(blk_len == 256);
-    GGML_ASSERT(count_m >= 4);
+    GGML_ASSERT(बिलांग_m >= 4);
 
     // Contract:
     // - computes a 4-row x 32-col tile per inner invocation
@@ -3391,8 +3391,8 @@ void gemm_kernel_i8i4_hp_m4(size_t          blk_len,
     const size_t a_subblk_stride     = q8_hp_blk_size(K_SUBBLK_LEN, false, false) * 4;
 
     if (quant_b_zp != nullptr) {
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-            const size_t nb_real = std::min<size_t>(NB_COLS, count_n - ni);
+        for (size_t ni = 0; ni < बिलांग_n; ni += NB_COLS) {
+            const size_t nb_real = std::min<size_t>(NB_COLS, बिलांग_n - ni);
             if (nb_real != NB_COLS) {
                 break;
             }
@@ -3579,8 +3579,8 @@ void gemm_kernel_i8i4_hp_m4(size_t          blk_len,
         }
         return;
     } else {
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-            const size_t nb_real = std::min<size_t>(NB_COLS, count_n - ni);
+        for (size_t ni = 0; ni < बिलांग_n; ni += NB_COLS) {
+            const size_t nb_real = std::min<size_t>(NB_COLS, बिलांग_n - ni);
             if (nb_real != NB_COLS) {
                 break;
             }
@@ -3745,8 +3745,8 @@ void gemm_kernel_i8mxfp4_m1(size_t          blk_len,
                             const uint8_t * quant_b_data,
                             const uint8_t * quant_b_zp,
                             float *         c_ptr,
-                            size_t          count_m,
-                            size_t          count_n,
+                            size_t          बिलांग_m,
+                            size_t          बिलांग_n,
                             size_t          k_blks,
                             size_t          ldc) {
     constexpr size_t NB_COLS = 32;
@@ -3754,7 +3754,7 @@ void gemm_kernel_i8mxfp4_m1(size_t          blk_len,
     using blk_type           = nrow_block_mxfp4<NB_COLS>;
 
     GGML_ASSERT(blk_len == K_TILE);
-    GGML_ASSERT(count_m == 1);
+    GGML_ASSERT(बिलांग_m == 1);
     GGML_UNUSED(quant_b_zp);
 
     const size_t a_blk_stride  = q8_blk_size(blk_len, true);
@@ -3762,8 +3762,8 @@ void gemm_kernel_i8mxfp4_m1(size_t          blk_len,
     const size_t b_tile_stride = k_blks * b_blk_stride;
 
     if (quant_b_zp == NULL) {
-        for (size_t n = 0; n < count_n; n += 32) {
-            size_t    nblks         = (count_n - n) > 32 ? 32 : count_n - n;
+        for (size_t n = 0; n < बिलांग_n; n += 32) {
+            size_t    nblks         = (बिलांग_n - n) > 32 ? 32 : बिलांग_n - n;
             // MXFP4 no-zp: per column per k-block stride = scale_e8m0(1B) + qs(16B) + qh(4B) = 21B
             uint8_t * QuantBDataPtr = (uint8_t *) quant_b_data +     //
                                       n * k_blks * (blk_len / 8) +   // qh sign/high-bit mask: n×k_blks×4
@@ -3934,8 +3934,8 @@ void gemm_kernel_i8mxfp4_m4(size_t          blk_len,
                             const uint8_t * quant_b_data,
                             const uint8_t * quant_b_zp,
                             float *         c_ptr,
-                            size_t          count_m,
-                            size_t          count_n,
+                            size_t          बिलांग_m,
+                            size_t          बिलांग_n,
                             size_t          k_blks,
                             size_t          ldc) {
     constexpr size_t NB_COLS = 32;
@@ -3943,7 +3943,7 @@ void gemm_kernel_i8mxfp4_m4(size_t          blk_len,
     using blk_type           = nrow_block_mxfp4<NB_COLS>;
 
     GGML_ASSERT(blk_len == K_TILE);
-    GGML_ASSERT(count_m == 4);
+    GGML_ASSERT(बिलांग_m == 4);
     GGML_UNUSED(quant_b_zp);
 
     const size_t a_blk_stride  = q8_blk_size(blk_len, true);
@@ -3954,8 +3954,8 @@ void gemm_kernel_i8mxfp4_m4(size_t          blk_len,
         // MXFP4 block layout per K32/N32 tile:
         //   [scale_e8m0 x 32][qh sign/high-bit mask x 128B][qs packed 4-bit magnitudes x 512B]
         // There is no explicit zp stream; qh is combined with qs to reconstruct signed MXFP4 values.
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-            size_t    nb_real = std::min<size_t>(NB_COLS, count_n - ni);
+        for (size_t ni = 0; ni < बिलांग_n; ni += NB_COLS) {
+            size_t    nb_real = std::min<size_t>(NB_COLS, बिलांग_n - ni);
             uint8_t * b_data  = (uint8_t *) quant_b_data + (ni / NB_COLS) * b_tile_stride;
             uint8_t * a_data  = (uint8_t *) quant_a_ptr;
             float *   dst_c   = c_ptr + ni;
@@ -4094,8 +4094,8 @@ void gemm_kernel_i8i5_m1(size_t          blk_len,
                          const uint8_t * quant_b_data,
                          const uint8_t * quant_b_zp,
                          float *         c_ptr,
-                         size_t          count_m,
-                         size_t          count_n,
+                         size_t          बिलांग_m,
+                         size_t          बिलांग_n,
                          size_t          k_blks,
                          size_t          ldc) {
     // =========================================================================
@@ -4127,8 +4127,8 @@ void gemm_kernel_i8i5_m1(size_t          blk_len,
     // =========================================================================
 
     if (quant_b_zp == NULL) {
-        for (size_t n = 0; n < count_n; n += 32) {
-            size_t    nblks         = (count_n - n) > 32 ? 32 : count_n - n;
+        for (size_t n = 0; n < बिलांग_n; n += 32) {
+            size_t    nblks         = (बिलांग_n - n) > 32 ? 32 : बिलांग_n - n;
             // i8i5 no-zp: per column per k-block stride = fp16(2B) + i4(16B) + i1(4B) = 22B
             uint8_t * QuantBDataPtr = (uint8_t *) quant_b_data +      //
                                       n * k_blks * (blk_len / 8) +    // Bh i1 mask: n×k_blks×4
@@ -4289,8 +4289,8 @@ void gemm_kernel_i8i5_m1(size_t          blk_len,
                   "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31");
         }
     } else {
-        for (size_t n = 0; n < count_n; n += 32) {
-            size_t    nblks         = (count_n - n) > 32 ? 32 : count_n - n;
+        for (size_t n = 0; n < बिलांग_n; n += 32) {
+            size_t    nblks         = (बिलांग_n - n) > 32 ? 32 : बिलांग_n - n;
             // i8i5 with-zp: per column per k-block stride = fp16(2B)+zp(1B)+i4(16B)+i1(4B)=23B
             uint8_t * QuantBDataPtr = (uint8_t *) quant_b_data +      //
                                       n * k_blks * blk_len / 2 +      // Bs i4: n×k_blks×16
@@ -4466,13 +4466,13 @@ void gemm_kernel_i8i5_m4(size_t          blk_len,
                          const uint8_t * quant_b_data,
                          const uint8_t * quant_b_zp,
                          float *         c_ptr,
-                         size_t          count_m,
-                         size_t          count_n,
+                         size_t          बिलांग_m,
+                         size_t          बिलांग_n,
                          size_t          k_blks,
                          size_t          ldc) {
     constexpr size_t NB_COLS = 32;
 
-    GGML_UNUSED(count_m);
+    GGML_UNUSED(बिलांग_m);
     GGML_UNUSED(blk_len);
 
     // This kernel computes a 4x32 output tile. For each K32 block we decode the
@@ -4483,8 +4483,8 @@ void gemm_kernel_i8i5_m4(size_t          blk_len,
     if (quant_b_zp) {
         // Q5_1 block layout per K32/N32 tile:
         //   [scale_fp16 x 32][zp_u8 x 32][qh high-bit mask x 128B][qs low nibbles x 512B]
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-            size_t    nb_real = std::min<size_t>(NB_COLS, count_n - ni);
+        for (size_t ni = 0; ni < बिलांग_n; ni += NB_COLS) {
+            size_t    nb_real = std::min<size_t>(NB_COLS, बिलांग_n - ni);
             uint8_t * b_data  = (uint8_t *) quant_b_data + (ni / NB_COLS) * k_blks * B_Q51_BLK_STRIDE;
             uint8_t * a_data  = (uint8_t *) quant_a_ptr;
             float *   dst_c   = c_ptr + ni;
@@ -4633,8 +4633,8 @@ void gemm_kernel_i8i5_m4(size_t          blk_len,
         // Q5_0 block layout per K32/N32 tile:
         //   [scale_fp16 x 32][qh high-bit mask x 128B][qs low nibbles x 512B]
         // There is no explicit zp stream; the implicit midpoint correction is +16.
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-            size_t    nb_real = std::min<size_t>(NB_COLS, count_n - ni);
+        for (size_t ni = 0; ni < बिलांग_n; ni += NB_COLS) {
+            size_t    nb_real = std::min<size_t>(NB_COLS, बिलांग_n - ni);
             uint8_t * b_data  = (uint8_t *) quant_b_data + (ni / NB_COLS) * k_blks * B_Q50_BLK_STRIDE;
             uint8_t * a_data  = (uint8_t *) quant_a_ptr;
             float *   dst_c   = c_ptr + ni;
@@ -4775,12 +4775,12 @@ void gemm_kernel_i8i8_m1(size_t          blk_len,
                          const uint8_t * quant_b_data,
                          const uint8_t * quant_b_zp,
                          float *         c_ptr,
-                         size_t          count_m,
-                         size_t          count_n,
+                         size_t          बिलांग_m,
+                         size_t          बिलांग_n,
                          size_t          k_blks,
                          size_t          ldc) {
-    for (size_t n = 0; n < count_n; n += 32) {
-        size_t    nblks         = (count_n - n) > 32 ? 32 : count_n - n;
+    for (size_t n = 0; n < बिलांग_n; n += 32) {
+        size_t    nblks         = (बिलांग_n - n) > 32 ? 32 : बिलांग_n - n;
         uint8_t * QuantBDataPtr = (uint8_t *) quant_b_data +      //
                                   n * k_blks * blk_len +          // b data
                                   n * k_blks * sizeof(_Float16);  // scale
@@ -4896,12 +4896,12 @@ void gemm_kernel_i8i8_m4(size_t          blk_len,
                          const uint8_t * quant_b_data,
                          const uint8_t * quant_b_zp,
                          float *         c_ptr,
-                         size_t          count_m,
-                         size_t          count_n,
+                         size_t          बिलांग_m,
+                         size_t          बिलांग_n,
                          size_t          k_blks,
                          size_t          ldc) {
     int64_t b_data_stride = k_blks * sizeof(ggml_fp16_t) + k_blks * blk_len;
-    for (size_t ni = 0; ni < count_n; ni += 32) {
+    for (size_t ni = 0; ni < बिलांग_n; ni += 32) {
         uint8_t * b_data = (uint8_t *) quant_b_data + ni * b_data_stride;
         int8_t *  a_data = (int8_t *) quant_a_ptr;
         float *   dst_c  = c_ptr + ni;
@@ -5008,18 +5008,18 @@ void moe_m2_gemm_kernel_i8i4_impl(size_t           blk_len,
                                   const uint8_t *  quant_b_data,
                                   const uint8_t *  quant_b_zp,
                                   float **         c_ptr,
-                                  size_t           count_m,
-                                  size_t           count_n,
+                                  size_t           बिलांग_m,
+                                  size_t           बिलांग_n,
                                   size_t           k_blks,
                                   size_t           ldc) {
 #if 0
-    moe_gemm_kernel_i8i4_mrow_ref<2, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks,
+    moe_gemm_kernel_i8i4_mrow_ref<2, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, बिलांग_m, बिलांग_n, k_blks,
                                      ldc);
 #else
     int64_t b_data_stride =
         k_blks * (sizeof(ggml_fp16_t) + 16 * sizeof(int8_t) + (quant_b_zp != NULL ? sizeof(int8_t) : 0));
     if (quant_b_zp == NULL) {
-        for (size_t ni = 0; ni < count_n; ni += 32) {
+        for (size_t ni = 0; ni < बिलांग_n; ni += 32) {
             uint8_t * b_data  = (uint8_t *) quant_b_data + ni * b_data_stride;
             int8_t *  a_data0 = (int8_t *) quant_a_ptr[0];
             int8_t *  a_data1 = (int8_t *) quant_a_ptr[1];
@@ -5120,10 +5120,10 @@ void moe_m2_gemm_kernel_i8i4_impl(size_t           blk_len,
         }
     } else {
 #    if 0
-        moe_gemm_kernel_i8i4_mrow_ref<2, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+        moe_gemm_kernel_i8i4_mrow_ref<2, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, बिलांग_m, बिलांग_n,
                                          k_blks, ldc);
 #    else
-        for (size_t ni = 0; ni < count_n; ni += 32) {
+        for (size_t ni = 0; ni < बिलांग_n; ni += 32) {
             uint8_t * b_data  = (uint8_t *) quant_b_data + ni * b_data_stride;
             int8_t *  a_data0 = (int8_t *) quant_a_ptr[0];
             int8_t *  a_data1 = (int8_t *) quant_a_ptr[1];
@@ -5249,8 +5249,8 @@ void moe_m2_gemm_kernel_i8i5_impl(size_t           blk_len,
                                   const uint8_t *  quant_b_data,
                                   const uint8_t *  quant_b_zp,
                                   float **         c_ptr,
-                                  size_t           count_m,
-                                  size_t           count_n,
+                                  size_t           बिलांग_m,
+                                  size_t           बिलांग_n,
                                   size_t           k_blks,
                                   size_t           ldc) {
     constexpr size_t NB_COLS          = 32;
@@ -5258,12 +5258,12 @@ void moe_m2_gemm_kernel_i8i5_impl(size_t           blk_len,
     constexpr size_t B_Q51_BLK_STRIDE = sizeof(nrow_block_q5_1<NB_COLS>);
 
     GGML_UNUSED(blk_len);
-    GGML_UNUSED(count_m);
+    GGML_UNUSED(बिलांग_m);
     GGML_UNUSED(ldc);
 
     if (quant_b_zp == NULL) {
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-            size_t    nb_real = std::min<size_t>(NB_COLS, count_n - ni);
+        for (size_t ni = 0; ni < बिलांग_n; ni += NB_COLS) {
+            size_t    nb_real = std::min<size_t>(NB_COLS, बिलांग_n - ni);
             uint8_t * b_data  = (uint8_t *) quant_b_data + (ni / NB_COLS) * k_blks * B_Q50_BLK_STRIDE;
             int8_t *  a_data0 = (int8_t *) quant_a_ptr[0];
             int8_t *  a_data1 = (int8_t *) quant_a_ptr[1];
@@ -5387,8 +5387,8 @@ void moe_m2_gemm_kernel_i8i5_impl(size_t           blk_len,
                   "v23", "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31", "f0", "f1");
         }
     } else {
-        for (size_t ni = 0; ni < count_n; ni += NB_COLS) {
-            size_t    nb_real = std::min<size_t>(NB_COLS, count_n - ni);
+        for (size_t ni = 0; ni < बिलांग_n; ni += NB_COLS) {
+            size_t    nb_real = std::min<size_t>(NB_COLS, बिलांग_n - ni);
             uint8_t * b_data  = (uint8_t *) quant_b_data + (ni / NB_COLS) * k_blks * B_Q51_BLK_STRIDE;
             int8_t *  a_data0 = (int8_t *) quant_a_ptr[0];
             int8_t *  a_data1 = (int8_t *) quant_a_ptr[1];
@@ -5532,23 +5532,23 @@ size_t gemm_kernel_i8i2k(size_t          blk_len,
                          const uint8_t * quant_b_data,
                          const uint8_t * quant_b_zp,
                          float *         c_ptr,
-                         size_t          count_m,
-                         size_t          count_n,
+                         size_t          बिलांग_m,
+                         size_t          बिलांग_n,
                          size_t          k_blks,
                          size_t          ldc) {
-    if (count_m >= 4) {
+    if (बिलांग_m >= 4) {
 #if 0
-        gemm_kernel_i8i2k_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_m, count_n, k_blks, ldc);
+        gemm_kernel_i8i2k_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_data, c_ptr, बिलांग_m, बिलांग_n, k_blks, ldc);
 #else
-        gemm_kernel_i8i2k_m4(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_m, count_n, k_blks, ldc);
+        gemm_kernel_i8i2k_m4(blk_len, quant_a_ptr, quant_b_data, c_ptr, बिलांग_m, बिलांग_n, k_blks, ldc);
 #endif
         return 4;
     } else {
 #if 0
-        gemm_kernel_i8i2k_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_m, count_n, k_blks,
+        gemm_kernel_i8i2k_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_data, c_ptr, बिलांग_m, बिलांग_n, k_blks,
                                       ldc);
 #else
-        gemm_kernel_i8i2k_m1(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_m, count_n, k_blks, ldc);
+        gemm_kernel_i8i2k_m1(blk_len, quant_a_ptr, quant_b_data, c_ptr, बिलांग_m, बिलांग_n, k_blks, ldc);
 #endif
         return 1;
     }
@@ -5559,22 +5559,22 @@ size_t gemm_kernel_i8i3k(size_t          blk_len,
                          const uint8_t * quant_b_data,
                          const uint8_t * quant_b_zp,
                          float *         c_ptr,
-                         size_t          count_m,
-                         size_t          count_n,
+                         size_t          बिलांग_m,
+                         size_t          बिलांग_n,
                          size_t          k_blks,
                          size_t          ldc) {
-    if (count_m >= 4) {
+    if (बिलांग_m >= 4) {
 #if 0
-        gemm_kernel_i8i3k_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_m, count_n, k_blks, ldc);
+        gemm_kernel_i8i3k_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_data, c_ptr, बिलांग_m, बिलांग_n, k_blks, ldc);
 #else
-        gemm_kernel_i8i3k_m4(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_m, count_n, k_blks, ldc);
+        gemm_kernel_i8i3k_m4(blk_len, quant_a_ptr, quant_b_data, c_ptr, बिलांग_m, बिलांग_n, k_blks, ldc);
 #endif
         return 4;
     } else {
 #if 0
-        gemm_kernel_i8i3k_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_m, count_n, k_blks, ldc);
+        gemm_kernel_i8i3k_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_data, c_ptr, बिलांग_m, बिलांग_n, k_blks, ldc);
 #else
-        gemm_kernel_i8i3k_m1(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_m, count_n, k_blks, ldc);
+        gemm_kernel_i8i3k_m1(blk_len, quant_a_ptr, quant_b_data, c_ptr, बिलांग_m, बिलांग_n, k_blks, ldc);
 #endif
         return 1;
     }
@@ -5585,24 +5585,24 @@ size_t gemm_kernel_i8i4(size_t          blk_len,
                         const uint8_t * quant_b_data,
                         const uint8_t * quant_b_zp,
                         float *         c_ptr,
-                        size_t          count_m,
-                        size_t          count_n,
+                        size_t          बिलांग_m,
+                        size_t          बिलांग_n,
                         size_t          k_blks,
                         size_t          ldc) {
-    if (count_m >= 4) {
+    if (बिलांग_m >= 4) {
 #if 0
-        gemm_kernel_i8i4_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+        gemm_kernel_i8i4_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, बिलांग_m, बिलांग_n,
                                          k_blks, ldc);
 #else
-        gemm_kernel_i8i4_m4(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
+        gemm_kernel_i8i4_m4(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, बिलांग_m, बिलांग_n, k_blks, ldc);
 #endif
         return 4;
     } else {
 #if 0
-        gemm_kernel_i8i4_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+        gemm_kernel_i8i4_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, बिलांग_m, बिलांग_n,
                                          k_blks, ldc);
 #else
-        gemm_kernel_i8i4_m1(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
+        gemm_kernel_i8i4_m1(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, बिलांग_m, बिलांग_n, k_blks, ldc);
 #endif
         return 1;
     }
@@ -5613,24 +5613,24 @@ size_t gemm_kernel_i8i4_hp(size_t          blk_len,
                            const uint8_t * quant_b_data,
                            const uint8_t * quant_b_zp,
                            float *         c_ptr,
-                           size_t          count_m,
-                           size_t          count_n,
+                           size_t          बिलांग_m,
+                           size_t          बिलांग_n,
                            size_t          k_blks,
                            size_t          ldc) {
-    if (count_m >= 4) {
+    if (बिलांग_m >= 4) {
 #if 0
-        gemm_kernel_i8i4_hp_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+        gemm_kernel_i8i4_hp_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, बिलांग_m, बिलांग_n,
                                             k_blks, ldc);
 #else
-        gemm_kernel_i8i4_hp_m4(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
+        gemm_kernel_i8i4_hp_m4(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, बिलांग_m, बिलांग_n, k_blks, ldc);
 #endif
         return 4;
     } else {
 #if 0
-        gemm_kernel_i8i4_hp_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+        gemm_kernel_i8i4_hp_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, बिलांग_m, बिलांग_n,
                                             k_blks, ldc);
 #else
-        gemm_kernel_i8i4_hp_m1(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
+        gemm_kernel_i8i4_hp_m1(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, बिलांग_m, बिलांग_n, k_blks, ldc);
 #endif
         return 1;
     }
@@ -5641,11 +5641,11 @@ size_t moe_m2_gemm_kernel_i8i4(size_t           blk_len,
                                const uint8_t *  quant_b_data,
                                const uint8_t *  quant_b_zp,
                                float **         c_ptr,
-                               size_t           count_m,
-                               size_t           count_n,
+                               size_t           बिलांग_m,
+                               size_t           बिलांग_n,
                                size_t           k_blks,
                                size_t           ldc) {
-    moe_m2_gemm_kernel_i8i4_impl(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
+    moe_m2_gemm_kernel_i8i4_impl(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, बिलांग_m, बिलांग_n, k_blks, ldc);
     return 2;
 }
 
@@ -5654,24 +5654,24 @@ size_t gemm_kernel_i8i8(size_t          blk_len,
                         const uint8_t * quant_b_data,
                         const uint8_t * quant_b_zp,
                         float *         c_ptr,
-                        size_t          count_m,
-                        size_t          count_n,
+                        size_t          बिलांग_m,
+                        size_t          बिलांग_n,
                         size_t          k_blks,
                         size_t          ldc) {
-    if (count_m >= 4) {
+    if (बिलांग_m >= 4) {
 #if 0
-        gemm_kernel_i8i8_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+        gemm_kernel_i8i8_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, बिलांग_m, बिलांग_n,
                                          k_blks, ldc);
 #else
-        gemm_kernel_i8i8_m4(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
+        gemm_kernel_i8i8_m4(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, बिलांग_m, बिलांग_n, k_blks, ldc);
 #endif
         return 4;
     } else {
 #if 0
-        gemm_kernel_i8i8_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+        gemm_kernel_i8i8_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, बिलांग_m, बिलांग_n,
                                          k_blks, ldc);
 #else
-        gemm_kernel_i8i8_m1(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
+        gemm_kernel_i8i8_m1(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, बिलांग_m, बिलांग_n, k_blks, ldc);
 #endif
         return 1;
     }
@@ -5682,24 +5682,24 @@ size_t gemm_kernel_i8mxfp4(size_t          blk_len,
                            const uint8_t * quant_b_data,
                            const uint8_t * quant_b_zp,
                            float *         c_ptr,
-                           size_t          count_m,
-                           size_t          count_n,
+                           size_t          बिलांग_m,
+                           size_t          बिलांग_n,
                            size_t          k_blks,
                            size_t          ldc) {
-    if (count_m >= 4) {
+    if (बिलांग_m >= 4) {
 #if 1
-        gemm_kernel_i8mxfp4_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+        gemm_kernel_i8mxfp4_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, बिलांग_m, बिलांग_n,
                                             k_blks, ldc);
 #else
-        gemm_kernel_i8mxfp4_m4(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
+        gemm_kernel_i8mxfp4_m4(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, बिलांग_m, बिलांग_n, k_blks, ldc);
 #endif
         return 4;
     } else {
 #if 1
-        gemm_kernel_i8mxfp4_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+        gemm_kernel_i8mxfp4_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, बिलांग_m, बिलांग_n,
                                             k_blks, ldc);
 #else
-        gemm_kernel_i8mxfp4_m1(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
+        gemm_kernel_i8mxfp4_m1(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, बिलांग_m, बिलांग_n, k_blks, ldc);
 #endif
         return 1;
     }
@@ -5710,8 +5710,8 @@ size_t moe_m2_gemm_kernel_i8mxfp4(size_t           blk_len,
                                   const uint8_t *  quant_b_data,
                                   const uint8_t *  quant_b_zp,
                                   float **         c_ptr,
-                                  size_t           count_m,
-                                  size_t           count_n,
+                                  size_t           बिलांग_m,
+                                  size_t           बिलांग_n,
                                   size_t           k_blks,
                                   size_t           ldc) {
     //moe_m2_gemm_kernel_i8mxfp4_impl(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
@@ -5723,24 +5723,24 @@ size_t gemm_kernel_i8i5(size_t          blk_len,
                         const uint8_t * quant_b_data,
                         const uint8_t * quant_b_zp,
                         float *         c_ptr,
-                        size_t          count_m,
-                        size_t          count_n,
+                        size_t          बिलांग_m,
+                        size_t          बिलांग_n,
                         size_t          k_blks,
                         size_t          ldc) {
-    if (count_m >= 4) {
+    if (बिलांग_m >= 4) {
 #if 0
-        gemm_kernel_i8i5_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+        gemm_kernel_i8i5_mrow_ref<4, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, बिलांग_m, बिलांग_n,
                                          k_blks, ldc);
 #else
-        gemm_kernel_i8i5_m4(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
+        gemm_kernel_i8i5_m4(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, बिलांग_m, बिलांग_n, k_blks, ldc);
 #endif
         return 4;
     } else {
 #if 0
-        gemm_kernel_i8i5_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+        gemm_kernel_i8i5_mrow_ref<1, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, बिलांग_m, बिलांग_n,
                                          k_blks, ldc);
 #else
-        gemm_kernel_i8i5_m1(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
+        gemm_kernel_i8i5_m1(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, बिलांग_m, बिलांग_n, k_blks, ldc);
 #endif
         return 1;
     }
@@ -5751,15 +5751,15 @@ size_t moe_m2_gemm_kernel_i8i5(size_t           blk_len,
                                const uint8_t *  quant_b_data,
                                const uint8_t *  quant_b_zp,
                                float **         c_ptr,
-                               size_t           count_m,
-                               size_t           count_n,
+                               size_t           बिलांग_m,
+                               size_t           बिलांग_n,
                                size_t           k_blks,
                                size_t           ldc) {
 #if 0
-    moe_gemm_kernel_i8i5_mrow_ref<2, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n,
+    moe_gemm_kernel_i8i5_mrow_ref<2, 32>(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, बिलांग_m, बिलांग_n,
                                          k_blks, ldc);
 #else
-    moe_m2_gemm_kernel_i8i5_impl(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, count_m, count_n, k_blks, ldc);
+    moe_m2_gemm_kernel_i8i5_impl(blk_len, quant_a_ptr, quant_b_data, quant_b_zp, c_ptr, बिलांग_m, बिलांग_n, k_blks, ldc);
 #endif
     return 2;
 }

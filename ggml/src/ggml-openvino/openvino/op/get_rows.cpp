@@ -21,26 +21,26 @@ namespace frontend {
 namespace ggml {
 namespace op {
 
-OutputVector translate_get_rows(const NodeContext & context) {
-    num_inputs_check(context, 2, 2);
+OutputVector translate_get_rows(const बुहोल_Context & context) {
+    नुमेरो_inputs_check(context, 2, 2);
 
     Output<Node> res;
     Output<Node> data;
     int64_t row_offset = 0;
-    if (context.get_view_input_size(0) > 0 && context.get_input(0).get_partial_shape().rank() == 2) {
+    if (context.get_view_पासोक_size(0) > 0 && context.get_पासोक(0).get_partial_shape().rank() == 2) {
         // A row range view over a 2D weight Constant folds into the gather indices,
         // which keeps the dequantization subgraph intact for the plugins.
-        const auto view_shape = context.get_view_input_ggml_shape(0, 0);
-        const auto view_stride = context.get_view_input_stride(0, 0);
-        const size_t view_offset = context.get_view_input_offset(0, 0);
+        const auto view_shape = context.get_view_पासोक_ggml_shape(0, 0);
+        const auto view_stride = context.get_view_पासोक_stride(0, 0);
+        const size_t view_offset = context.get_view_पासोक_offset(0, 0);
         const size_t row_bytes = view_stride[2];
-        data = context.get_input(0);
+        data = context.get_पासोक(0);
         FRONT_END_OP_CONVERSION_CHECK(row_bytes > 0 && view_offset % row_bytes == 0 &&
                                           data.get_partial_shape()[1].compatible(view_shape[3]),
                                       "GET_ROWS: view over a weight must be a row range");
         row_offset = static_cast<int64_t>(view_offset / row_bytes);
     } else {
-        data = process_view_input_new(context, 0);
+        data = process_view_पासोक_new(context, 0);
     }
 
     auto op_case = context.get_op_case();
@@ -49,12 +49,12 @@ OutputVector translate_get_rows(const NodeContext & context) {
     }
 
     ov::Output<ov::Node> indices;
-    if ((op_case == 1 || op_case == 2) && context.has_input("s_copy_active_slot_len")) {
+    if ((op_case == 1 || op_case == 2) && context.has_पासोक("s_copy_active_slot_len")) {
         // Recurrent state reorder (inp->s_copy): slice the active (op_case 1) or extra (op_case 2)
         // segment from the s_copy index list at runtime, instead of baking the static view offset,
         // so the cached IR works for any number of active sequences.
-        auto s_copy = context.get_input(1);
-        auto len = context.get_input("s_copy_active_slot_len");
+        auto s_copy = context.get_पासोक(1);
+        auto len = context.get_पासोक("s_copy_active_slot_len");
         auto step = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
         auto axis = ov::op::v0::Constant::create(ov::element::i64, {1}, {3});
         if (op_case == 1) {
@@ -65,7 +65,7 @@ OutputVector translate_get_rows(const NodeContext & context) {
             indices = std::make_shared<ov::op::v8::Slice>(s_copy, len, end, step, axis);
         }
     } else {
-        indices = process_view_input_new(context, 1);
+        indices = process_view_पासोक_new(context, 1);
     }
 
     // data[1,b,x,y] ind[1,1,b,x'] test-backend-ops case

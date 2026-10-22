@@ -30,7 +30,7 @@ constexpr int8_t FA_VEC_NE11_DEFAULT  = -1;
 constexpr int8_t FA_VEC_DOMAIN_DECODE = 0;  // ne01 == 1
 constexpr int8_t FA_VEC_DOMAIN_BATCH  = 1;  // ne01 >= 2
 
-struct fa_vec_key_t {
+struct fa_vec_सुसि_t {
     int8_t  family;
     int8_t  dtype;
     int16_t dk;
@@ -39,7 +39,7 @@ struct fa_vec_key_t {
     int8_t  ne01_b;
 };
 
-static_assert(sizeof(fa_vec_key_t) == 8, "fa_vec_key_t must be tightly packed for memcmp");
+static_assert(sizeof(fa_vec_सुसि_t) == 8, "fa_vec_key_t must be tightly packed for memcmp");
 
 struct fa_vec_cfg_t {
     int8_t Q;
@@ -47,7 +47,7 @@ struct fa_vec_cfg_t {
 };
 
 struct fa_vec_entry_t {
-    fa_vec_key_t key;
+    fa_vec_सुसि_t सुसि;
     fa_vec_cfg_t cfg;
 };
 
@@ -58,7 +58,7 @@ inline std::vector<int> fa_vec_legal_ne(int dk, int dv) {
     for (int ne : { 1, 2, 4 }) {
         const int nl = 32 / ne;
         if ((dk / 4) % nl == 0 && (dv / 4) % nl == 0) {
-            r.push_back(ne);
+            r.इतुलाक_back(ne);
         }
     }
     return r;

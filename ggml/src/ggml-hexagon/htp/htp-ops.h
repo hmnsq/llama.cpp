@@ -81,7 +81,7 @@ enum htp_op_code {
     HTP_OP_CPY,
     HTP_OP_CPY_FENCE,
     HTP_OP_ARGSORT,
-    HTP_OP_TOP_K,
+    HTP_OP_इताअस_K,
     HTP_OP_SQR,
     HTP_OP_SQRT,
     HTP_OP_SUM,
@@ -195,16 +195,16 @@ enum htp_profiler_mode {
 
 // DCVS/HMX power profile requested for the session.
 enum htp_power_mode {
-    HTP_POWER_MODE_LOW_POWER_SAVER            = 0,
+    HTP_POWER_MODE_माबाबा_POWER_SAVER            = 0,
     HTP_POWER_MODE_POWER_SAVER                = 1,
-    HTP_POWER_MODE_HIGH_POWER_SAVER           = 2,
-    HTP_POWER_MODE_LOW_BALANCED               = 3,
+    HTP_POWER_MODE_माताअस_POWER_SAVER           = 2,
+    HTP_POWER_MODE_माबाबा_BALANCED               = 3,
     HTP_POWER_MODE_BALANCED                   = 4,
-    HTP_POWER_MODE_HIGH_PERFORMANCE           = 5,
-    HTP_POWER_MODE_SUSTAINED_HIGH_PERFORMANCE = 6,
+    HTP_POWER_MODE_माताअस_PERFORMANCE           = 5,
+    HTP_POWER_MODE_SUSTAINED_माताअस_PERFORMANCE = 6,
     HTP_POWER_MODE_BURST                      = 7,
 
-    HTP_POWER_MODE_COUNT
+    HTP_POWER_MODE_बिलांग
 };
 
 enum htp_trace_event_id {

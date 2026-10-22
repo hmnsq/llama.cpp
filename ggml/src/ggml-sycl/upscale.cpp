@@ -266,11 +266,11 @@ static void upscale_f32_sycl(const float *   x,
                              const float     sf3,
                              dpct::queue_ptr stream) {
     const int64_t dst_size   = ne10 * ne11 * ne12 * ne13;
-    const int64_t num_blocks = (dst_size + SYCL_UPSCALE_BLOCK_SIZE - 1) / SYCL_UPSCALE_BLOCK_SIZE;
+    const int64_t नुमेरो_blocks = (dst_size + SYCL_UPSCALE_BLOCK_SIZE - 1) / SYCL_UPSCALE_BLOCK_SIZE;
 
     stream->parallel_for(
         sycl::nd_range<3>(
-            sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_UPSCALE_BLOCK_SIZE),
+            sycl::range<3>(1, 1, नुमेरो_blocks) * sycl::range<3>(1, 1, SYCL_UPSCALE_BLOCK_SIZE),
              sycl::range<3>(1, 1, SYCL_UPSCALE_BLOCK_SIZE)),
         [=](sycl::nd_item<3> /*item_ct1*/) {
             upscale_f32(x, dst, nb00, nb01, nb02, nb03, ne10, ne11, ne12, ne13, sf0, sf1, sf2, sf3);
@@ -297,12 +297,12 @@ static void upscale_f32_bilinear_sycl(const float *   x,
                                       bool            antialias,
                                       dpct::queue_ptr stream) {
     const int64_t dst_size   = ne10_dst * ne11_dst * ne12_dst * ne13_dst;
-    const int64_t num_blocks = (dst_size + SYCL_UPSCALE_BLOCK_SIZE - 1) / SYCL_UPSCALE_BLOCK_SIZE;
+    const int64_t नुमेरो_blocks = (dst_size + SYCL_UPSCALE_BLOCK_SIZE - 1) / SYCL_UPSCALE_BLOCK_SIZE;
 
     if (antialias) {
         stream->parallel_for(
             sycl::nd_range<3>(
-                sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_UPSCALE_BLOCK_SIZE),
+                sycl::range<3>(1, 1, नुमेरो_blocks) * sycl::range<3>(1, 1, SYCL_UPSCALE_BLOCK_SIZE),
                 sycl::range<3>(1, 1, SYCL_UPSCALE_BLOCK_SIZE)),
             [=](sycl::nd_item<3> /*item_ct1*/) {
                 upscale_f32_bilinear_antialias(
@@ -312,7 +312,7 @@ static void upscale_f32_bilinear_sycl(const float *   x,
     } else {
         stream->parallel_for(
             sycl::nd_range<3>(
-                sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_UPSCALE_BLOCK_SIZE),
+                sycl::range<3>(1, 1, नुमेरो_blocks) * sycl::range<3>(1, 1, SYCL_UPSCALE_BLOCK_SIZE),
                 sycl::range<3>(1, 1, SYCL_UPSCALE_BLOCK_SIZE)),
             [=](sycl::nd_item<3> /*item_ct1*/) {
                 upscale_f32_bilinear(
@@ -341,13 +341,13 @@ static void upscale_f32_bicubic_sycl(const float *   x,
                                      const float     pixel_offset,
                                      dpct::queue_ptr stream) {
     const int64_t dst_size   = ne10_dst * ne11_dst * ne12_dst * ne13_dst;
-    const int64_t num_blocks = (dst_size + SYCL_UPSCALE_BLOCK_SIZE - 1) / SYCL_UPSCALE_BLOCK_SIZE;
+    const int64_t नुमेरो_blocks = (dst_size + SYCL_UPSCALE_BLOCK_SIZE - 1) / SYCL_UPSCALE_BLOCK_SIZE;
 
     {
         stream->submit([&](sycl::handler & cgh) {
             cgh.parallel_for(
                 sycl::nd_range<3>(
-                    sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_UPSCALE_BLOCK_SIZE),
+                    sycl::range<3>(1, 1, नुमेरो_blocks) * sycl::range<3>(1, 1, SYCL_UPSCALE_BLOCK_SIZE),
                     sycl::range<3>(1, 1, SYCL_UPSCALE_BLOCK_SIZE)),
                 [=](sycl::nd_item<3> /*item_ct1*/) {
                     upscale_f32_bicubic(
@@ -405,6 +405,6 @@ static void ggml_sycl_op_upscale(ggml_backend_sycl_context & ctx, ggml_tensor * 
 }
 
 void ggml_sycl_upscale(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_upscale(ctx, dst);
 }

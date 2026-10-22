@@ -25,7 +25,7 @@ int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
     }
 
     int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    int नुमेरो_threads = get_नुमेरो_threads(kernel_env->shire_mask);
     if (thread_id < 0) {
         return 0;
     }
@@ -82,7 +82,7 @@ int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
         return 0;
     }
 
-    const uint64_t chunk    = (total_outputs + (uint64_t) num_threads - 1) / (uint64_t) num_threads;
+    const uint64_t chunk    = (total_outputs + (uint64_t) नुमेरो_threads - 1) / (uint64_t) नुमेरो_threads;
     const uint64_t my_start = (uint64_t) thread_id * chunk;
     if (my_start >= total_outputs) {
         return 0;
@@ -129,10 +129,10 @@ int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
         const char * expert_base = (const char *) src0_data + expert_id * (int64_t) nb02;
 
         int64_t m    = m0;
-        int64_t left = run_len;
+        int64_t कालिवा = run_len;
 
         if (use_x2) {
-            while (left >= 2) {
+            while (कालिवा >= 2) {
                 const block_q8_0 * row0 = (const block_q8_0 *) (expert_base + m * (int64_t) nb01);
                 const block_q8_0 * row1 = (const block_q8_0 *) (expert_base + (m + 1) * (int64_t) nb01);
                 float              s0, s1;
@@ -140,16 +140,16 @@ int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
                 atomic_store_f32((volatile float *) (dst_slot + m * (int64_t) nbd0), s0);
                 atomic_store_f32((volatile float *) (dst_slot + (m + 1) * (int64_t) nbd0), s1);
                 m += 2;
-                left -= 2;
+                कालिवा -= 2;
             }
         }
 
-        while (left > 0) {
+        while (कालिवा > 0) {
             const block_q8_0 * row = (const block_q8_0 *) (expert_base + m * (int64_t) nb01);
             float              s   = q8_dot_compute(row, b_col_base, K_blocks);
             atomic_store_f32((volatile float *) (dst_slot + m * (int64_t) nbd0), s);
             m++;
-            left--;
+            कालिवा--;
         }
 
         idx += (uint64_t) run_len;

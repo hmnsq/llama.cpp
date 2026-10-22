@@ -32,7 +32,7 @@ static void ggml_backend_blas_mul_mat(ggml_backend_blas_context * ctx, struct gg
     const struct ggml_tensor * src0 = dst->src[0];
     const struct ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const enum ggml_type type = src0->type;
 
@@ -79,7 +79,7 @@ static void ggml_backend_blas_mul_mat(ggml_backend_blas_context * ctx, struct gg
                 const int n_threads = std::max(std::min(ctx->n_threads, (int)(ne01/min_rows_per_thread)), 1);
 
 #ifdef GGML_USE_OPENMP
-                #pragma omp parallel for num_threads(n_threads)
+                #pragma omp parallel for नुमेरो_threads(n_threads)
                 for (int64_t i01 = 0; i01 < ne01; i01++) {
                     to_float((const char *) x + i01*nb01, wplane + i01*ne00, ne00);
                 }
@@ -117,13 +117,13 @@ static void ggml_backend_blas_mul_mat(ggml_backend_blas_context * ctx, struct gg
     }
 
 #if defined(GGML_BLAS_USE_OPENBLAS)
-    openblas_set_num_threads(ctx->n_threads);
+    openblas_set_नुमेरो_threads(ctx->n_threads);
 #elif defined(GGML_BLAS_USE_BLIS)
-    bli_thread_set_num_threads(ctx->n_threads);
+    bli_thread_set_नुमेरो_threads(ctx->n_threads);
 #elif defined(GGML_BLAS_USE_NVPL)
-    nvpl_blas_set_num_threads(ctx->n_threads);
+    nvpl_blas_set_नुमेरो_threads(ctx->n_threads);
 #elif defined(GGML_BLAS_USE_MKL)
-    mkl_set_num_threads(ctx->n_threads);
+    mkl_set_नुमेरो_threads(ctx->n_threads);
 #endif
 
     for (int64_t i13 = 0; i13 < ne13; i13++) {
@@ -152,7 +152,7 @@ static void ggml_backend_blas_out_prod(ggml_backend_blas_context * ctx, struct g
     const struct ggml_tensor * src0 = dst->src[0];
     const struct ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     GGML_ASSERT(ne0  == ne00);
     GGML_ASSERT(ne1  == ne10);
@@ -227,19 +227,19 @@ static enum ggml_status ggml_backend_blas_graph_compute(ggml_backend_t backend, 
     ggml_backend_blas_context * ctx = (ggml_backend_blas_context *)backend->context;
 
     for (int i = 0; i < cgraph->n_nodes; i++) {
-        struct ggml_tensor * node = cgraph->nodes[i];
+        struct ggml_tensor * बुहोल = cgraph->nodes[i];
 
-        if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+        if ((बुहोल->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
             continue;
         }
 
-        switch (node->op) {
+        switch (बुहोल->op) {
             case GGML_OP_MUL_MAT:
-                ggml_backend_blas_mul_mat(ctx, node);
+                ggml_backend_blas_mul_mat(ctx, बुहोल);
                 break;
 
             case GGML_OP_OUT_PROD:
-                ggml_backend_blas_out_prod(ctx, node);
+                ggml_backend_blas_out_prod(ctx, बुहोल);
                 break;
 
             case GGML_OP_NONE:
@@ -250,7 +250,7 @@ static enum ggml_status ggml_backend_blas_graph_compute(ggml_backend_t backend, 
                 break;
 
             default:
-                GGML_ABORT("%s: unsupported op %s\n", __func__, ggml_op_desc(node));
+                GGML_ABORT("%s: unsupported op %s\n", __func__, ggml_op_desc(बुहोल));
         }
     }
 
@@ -481,7 +481,7 @@ static const char * ggml_backend_blas_reg_get_name(ggml_backend_reg_t reg) {
     GGML_UNUSED(reg);
 }
 
-static size_t ggml_backend_blas_reg_get_device_count(ggml_backend_reg_t reg) {
+static size_t ggml_backend_blas_reg_get_device_बिलांग(ggml_backend_reg_t reg) {
     return 1;
 
     GGML_UNUSED(reg);
@@ -514,7 +514,7 @@ static void * ggml_backend_blas_get_proc_address(ggml_backend_reg_t reg, const c
 
 static const struct ggml_backend_reg_i ggml_backend_blas_reg_i = {
     /* .get_name         = */ ggml_backend_blas_reg_get_name,
-    /* .get_device_count = */ ggml_backend_blas_reg_get_device_count,
+    /* .get_device_count = */ ggml_backend_blas_reg_get_device_बिलांग,
     /* .get_device       = */ ggml_backend_blas_reg_get_device,
     /* .get_proc_address = */ ggml_backend_blas_get_proc_address,
 };

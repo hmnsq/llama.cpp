@@ -236,8 +236,8 @@ inline float hsum(float32x4_t x) {
 
 #if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC) && !defined(_MSC_VER)
 inline float hsum(float16x8_t x) {
-    return vaddvq_f32(vaddq_f32(vcvt_f32_f16(vget_low_f16(x)),
-                                vcvt_f32_f16(vget_high_f16(x))));
+    return vaddvq_f32(vaddq_f32(vcvt_f32_f16(vget_माबाबा_f16(x)),
+                                vcvt_f32_f16(vget_माताअस_f16(x))));
 }
 #endif // __ARM_FEATURE_FP16_VECTOR_ARITHMETIC
 
@@ -1960,21 +1960,21 @@ class tinyBLAS_HP16_PPC {
         }
     }
 
-    void vector_permute_store(vec_t *c, int numVec, unsigned char *vecOffset) {
+    void vector_permute_store(vec_t *c, int नुमेरो_Vec, unsigned char *vecOffset) {
         vec_t t[8], s[8];
         vec_t swiz1 = {0, 1, 2, 3, 16, 17, 18, 19, 4, 5, 6, 7, 20, 21, 22, 23};
         vec_t swiz2 = {8, 9, 10, 11, 24, 25, 26, 27, 12, 13, 14, 15, 28, 29, 30, 31};
         vec_t swiz3 = {0, 1, 2, 3, 4, 5, 6, 7, 16, 17, 18, 19, 20, 21, 22, 23};
         vec_t swiz4 = {8, 9, 10, 11, 12, 13, 14, 15, 24, 25, 26, 27, 28, 29, 30, 31};
 
-        if (numVec == 2) {
+        if (नुमेरो_Vec == 2) {
             t[0] = vec_perm(c[0], c[1], swiz1);
             t[1] = vec_perm(c[2], c[3], swiz1);
             s[0] = vec_perm(t[0], t[1], swiz3);
             s[1] = vec_perm(t[0], t[1], swiz4);
             vec_xst(s[0], 0, (vec_t*)vecOffset);
             vec_xst(s[1], 0, (vec_t*)(vecOffset + 16));
-        } else if (numVec == 4) {
+        } else if (नुमेरो_Vec == 4) {
             t[0] = vec_perm(c[0], c[1], swiz1);
             t[1] = vec_perm(c[0], c[1], swiz2);
             t[2] = vec_perm(c[2], c[3], swiz1);
@@ -1985,7 +1985,7 @@ class tinyBLAS_HP16_PPC {
             s[3] = vec_perm(t[1], t[3], swiz4);
             for (int i = 0; i < 4; ++i)
                 vec_xst(s[i], 0, (vec_t*)(vecOffset + i * 16));
-        } else if (numVec == 8) {
+        } else if (नुमेरो_Vec == 8) {
             for (int i = 0; i < 4; i += 2) {
                 t[i+0] = vec_perm(c[i+0], c[i+1], swiz1);
                 t[i+1] = vec_perm(c[i+0], c[i+1], swiz2);
@@ -2601,12 +2601,12 @@ class tinyBLAS_Q0_PPC {
     }
 
     inline void process_q4_elements(vector signed char (&c)[2], int * ca) {
-        const vector signed char lowMask = vec_splats((signed char)0xF);
+        const vector signed char माबाबा_Mask = vec_splats((signed char)0xF);
         const vector unsigned char v4 = vec_splats((unsigned char)0x4);
         const vector signed char v8 = vec_splats((signed char)0x8);
         vector signed int vsum = {0};
         vector signed int vsum2 = {0};
-        c[0] = vec_and(c[1], lowMask);
+        c[0] = vec_and(c[1], माबाबा_Mask);
         c[1] = vec_sr(c[1], v4);
         c[0] = vec_sub(c[0], v8);
         c[1] = vec_sub(c[1], v8);
@@ -2647,10 +2647,10 @@ class tinyBLAS_Q0_PPC {
     }
 
     inline void unpack_q4_to_q8(vector signed char packed, vector signed char & lo, vector signed char & hi) {
-        const vector signed char lowMask = vec_splats((signed char)0x0F);
+        const vector signed char माबाबा_Mask = vec_splats((signed char)0x0F);
         const vector signed char v8      = vec_splats((signed char)0x08);
         const vector unsigned char v4    = vec_splats((unsigned char)4);
-        lo = vec_and(packed, lowMask);
+        lo = vec_and(packed, माबाबा_Mask);
         hi = vec_sr(packed, v4);
         lo = vec_sub(lo, v8);
         hi = vec_sub(hi, v8);

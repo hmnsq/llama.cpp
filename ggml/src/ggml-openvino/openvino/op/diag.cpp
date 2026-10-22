@@ -17,12 +17,12 @@ namespace op {
 //   input:  [ne3, ne2, 1, ne0]
 //   output: [ne3, ne2, ne0, ne0]
 // The diagonal: output[..., i, j] = input[..., 0, j] if i == j, else 0.
-OutputVector translate_diag(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+OutputVector translate_diag(const बुहोल_Context & context) {
+    नुमेरो_inputs_check(context, 1, 1);
 
-    auto x = process_view_input_new(context, 0);  // OV shape: [ne3, ne2, 1, ne0]
+    auto x = process_view_पासोक_new(context, 0);  // OV shape: [ne3, ne2, 1, ne0]
 
-    auto n = get_dimensions(x.get_node_shared_ptr(), {3});
+    auto n = get_dimensions(x.get_बुहोल_shared_ptr(), {3});
     auto zero_diag = ov::op::v0::Constant::create(ov::element::i64, {}, {0});
 
     auto eye = std::make_shared<ov::op::v9::Eye>(n, n, zero_diag, x.get_element_type());

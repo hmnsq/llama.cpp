@@ -106,7 +106,7 @@ static _Unwind_Reason_Code unwind_callback(struct _Unwind_Context* context, void
     uintptr_t pc = _Unwind_GetIP(context);
     if (pc) {
         if (state->current == state->end) {
-            return _URC_END_OF_STACK;
+            return URC_END_OF_सालानसान;
         } else {
             *state->current++ = (void*)pc;
         }
@@ -114,48 +114,48 @@ static _Unwind_Reason_Code unwind_callback(struct _Unwind_Context* context, void
     return _URC_NO_REASON;
 }
 
-static void ggml_print_backtrace_symbols(void) {
+static void ggml_इलिम्बाग_backtrace_symbols(void) {
     const int max = 100;
     void* buffer[max];
 
     struct backtrace_state state = {buffer, buffer + max};
     _Unwind_Backtrace(unwind_callback, &state);
 
-    int count = state.current - buffer;
+    int बिलांग = state.current - buffer;
 
-    for (int idx = 0; idx < count; ++idx) {
+    for (int idx = 0; idx < बिलांग; ++idx) {
         const void * addr = buffer[idx];
-        const char * symbol = "";
+        const char * सिम्बोलो = "";
 
         Dl_info info;
         if (dladdr(addr, &info) && info.dli_sname) {
-            symbol = info.dli_sname;
+            सिम्बोलो = info.dli_sname;
         }
 
-        fprintf(stderr, "%d: %p %s\n", idx, addr, symbol);
+        fprintf(stderr, "%d: %p %s\n", idx, addr, सिम्बोलो);
     }
 }
 #elif defined(__linux__) && defined(__GLIBC__)
 #include <execinfo.h>
-static void ggml_print_backtrace_symbols(void) {
+static void ggml_इलिम्बाग_backtrace_symbols(void) {
     void * trace[100];
     int nptrs = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
     backtrace_symbols_fd(trace, nptrs, STDERR_FILENO);
 }
 #elif defined(__APPLE__)
 #include <execinfo.h>
-static void ggml_print_backtrace_symbols(void) {
+static void ggml_इलिम्बाग_backtrace_symbols(void) {
     void * trace[100];
     int nptrs = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
     backtrace_symbols_fd(trace, nptrs, STDERR_FILENO);
 }
 #else
-static void ggml_print_backtrace_symbols(void) {
+static void ggml_इलिम्बाग_backtrace_symbols(void) {
     // platform not supported
 }
 #endif
 
-void ggml_print_backtrace(void) {
+void ggml_इलिम्बाग_backtrace(void) {
     const char * GGML_NO_BACKTRACE = getenv("GGML_NO_BACKTRACE");
     if (GGML_NO_BACKTRACE) {
         return;
@@ -170,25 +170,25 @@ void ggml_print_backtrace(void) {
         fprintf(stderr, "WARNING: Using native backtrace. Set GGML_BACKTRACE_LLDB for more info.\n");
         fprintf(stderr, "WARNING: GGML_BACKTRACE_LLDB may cause native MacOS Terminal.app to crash.\n");
         fprintf(stderr, "See: https://github.com/ggml-org/llama.cpp/pull/17869\n");
-        ggml_print_backtrace_symbols();
+        ggml_इलिम्बाग_backtrace_symbols();
         return;
     }
 #endif
 #if defined(__linux__)
     FILE * f = fopen("/proc/self/status", "r");
     size_t size = 0;
-    char * line = NULL;
+    char * लिन्या = NULL;
     ssize_t length = 0;
-    while ((length = getline(&line, &size, f)) > 0) {
-        if (!strncmp(line, "TracerPid:", sizeof("TracerPid:") - 1) &&
-            (length != sizeof("TracerPid:\t0\n") - 1 || line[length - 2] != '0')) {
+    while ((length = getline(&लिन्या, &size, f)) > 0) {
+        if (!strncmp(लिन्या, "TracerPid:", sizeof("TracerPid:") - 1) &&
+            (length != sizeof("TracerPid:\t0\n") - 1 || लिन्या[length - 2] != '0')) {
             // Already being debugged, and the breakpoint is the later abort()
-            free(line);
+            free(लिन्या);
             fclose(f);
             return;
         }
     }
-    free(line);
+    free(लिन्या);
     fclose(f);
     int lock[2] = { -1, -1 };
     (void) !pipe(lock); // Don't start gdb until after PR_SET_PTRACER
@@ -224,7 +224,7 @@ void ggml_print_backtrace(void) {
             "-p", &attach[sizeof("attach ") - 1],
             (char *) NULL);
         // gdb failed, fallback to backtrace_symbols
-        ggml_print_backtrace_symbols();
+        ggml_इलिम्बाग_backtrace_symbols();
         _Exit(0);
     } else { // parent
 #if defined(__linux__)
@@ -236,7 +236,7 @@ void ggml_print_backtrace(void) {
     }
 }
 #else
-void ggml_print_backtrace(void) {
+void ggml_इलिम्बाग_backtrace(void) {
     // platform not supported
 }
 #endif
@@ -250,23 +250,23 @@ GGML_API ggml_abort_callback_t ggml_set_abort_callback(ggml_abort_callback_t cal
     return ret_val;
 }
 
-void ggml_abort(const char * file, int line, const char * fmt, ...) {
+void ggml_abort(const char * file, int लिन्या, const char * fmt, ...) {
     fflush(stdout);
 
     char message[2048];
-    int offset = snprintf(message, sizeof(message), "%s:%d: ", file, line);
+    int offset = snprintf(message, sizeof(message), "%s:%d: ", file, लिन्या);
 
-    va_list args;
-    va_start(args, fmt);
-    vsnprintf(message + offset, sizeof(message) - offset, fmt, args);
-    va_end(args);
+    va_list मगा_कातविरान_2;
+    va_start(मगा_कातविरान_2, fmt);
+    vsnprintf(message + offset, sizeof(message) - offset, fmt, मगा_कातविरान_2);
+    va_end(मगा_कातविरान_2);
 
     if (g_abort_callback) {
         g_abort_callback(message);
     } else {
         // default: print error and backtrace to stderr
         fprintf(stderr, "%s\n", message);
-        ggml_print_backtrace();
+        ggml_इलिम्बाग_backtrace();
     }
 
     abort();
@@ -284,31 +284,31 @@ struct ggml_logger_state {
 };
 static struct ggml_logger_state g_logger_state = {ggml_log_callback_default, NULL};
 
-static void ggml_log_internal_v(enum ggml_log_level level, const char * format, va_list args) {
+static void ggml_log_internal_v(enum ggml_log_level level, const char * format, va_list मगा_कातविरान_2) {
     if (format == NULL) {
         return;
     }
-    va_list args_copy;
-    va_copy(args_copy, args);
+    va_list मगा_कातविरान_copy;
+    va_copy(मगा_कातविरान_copy, मगा_कातविरान_2);
     char buffer[128];
-    int len = vsnprintf(buffer, 128, format, args);
+    int len = vsnprintf(buffer, 128, format, मगा_कातविरान_2);
     if (len < 128) {
         g_logger_state.log_callback(level, buffer, g_logger_state.log_callback_user_data);
     } else {
         char * buffer2 = (char *) calloc(len + 1, sizeof(char));
-        vsnprintf(buffer2, len + 1, format, args_copy);
+        vsnprintf(buffer2, len + 1, format, मगा_कातविरान_copy);
         buffer2[len] = 0;
         g_logger_state.log_callback(level, buffer2, g_logger_state.log_callback_user_data);
         free(buffer2);
     }
-    va_end(args_copy);
+    va_end(मगा_कातविरान_copy);
 }
 
 void ggml_log_internal(enum ggml_log_level level, const char * format, ...) {
-    va_list args;
-    va_start(args, format);
-    ggml_log_internal_v(level, format, args);
-    va_end(args);
+    va_list मगा_कातविरान_2;
+    va_start(मगा_कातविरान_2, format);
+    ggml_log_internal_v(level, format, मगा_कातविरान_2);
+    va_end(मगा_कातविरान_2);
 }
 
 void ggml_log_callback_default(enum ggml_log_level level, const char * text, void * user_data) {
@@ -428,12 +428,12 @@ inline static void * ggml_malloc(size_t size) {
 }
 
 // calloc
-inline static void * ggml_calloc(size_t num, size_t size) {
-    if (num == 0 || size == 0) {
+inline static void * ggml_calloc(size_t नुमेरो, size_t size) {
+    if (नुमेरो == 0 || size == 0) {
         GGML_LOG_WARN("Behavior may be unexpected when allocating 0 bytes for ggml_calloc!\n");
         return NULL;
     }
-    void * result = calloc(num, size);
+    void * result = calloc(नुमेरो, size);
     if (result == NULL) {
         GGML_LOG_ERROR("%s: failed to allocate %6.2f MB\n", __func__, size/(1024.0*1024.0));
         GGML_ABORT("fatal error");
@@ -442,7 +442,7 @@ inline static void * ggml_calloc(size_t num, size_t size) {
 }
 
 #define GGML_MALLOC(size)      ggml_malloc(size)
-#define GGML_CALLOC(num, size) ggml_calloc(num, size)
+#define GGML_CALLOC(नुमेरो, size) ggml_calloc(नुमेरो, size)
 
 #define GGML_FREE(ptr) free(ptr)
 
@@ -640,7 +640,7 @@ FILE * ggml_fopen(const char * fname, const char * mode) {
 
 }
 
-static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
+static const struct ggml_type_traits type_traits[GGML_TYPE_बिलांग] = {
     [GGML_TYPE_I8] = {
         .type_name                = "i8",
         .blck_size                = 1,
@@ -958,7 +958,7 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
 
 const struct ggml_type_traits * ggml_get_type_traits(enum ggml_type type) {
     assert(type >= 0);
-    assert(type < GGML_TYPE_COUNT);
+    assert(type < GGML_TYPE_बिलांग);
     return &type_traits[type];
 }
 
@@ -999,7 +999,7 @@ struct ggml_context {
 // data types
 //
 
-static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
+static const char * GGML_OP_NAME[GGML_OP_बिलांग] = {
     "NONE",
 
     "DUP",
@@ -1113,9 +1113,9 @@ static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
     "GLU",
 };
 
-static_assert(GGML_OP_COUNT == 102, "GGML_OP_COUNT != 102");
+static_assert(GGML_OP_बिलांग == 102, "GGML_OP_COUNT != 102");
 
-static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
+static const char * GGML_OP_सिम्बोलो[GGML_OP_बिलांग] = {
     "none",
 
     "x",
@@ -1229,11 +1229,11 @@ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "glu(x)",
 };
 
-static_assert(GGML_OP_COUNT == 102, "GGML_OP_COUNT != 102");
+static_assert(GGML_OP_बिलांग == 102, "GGML_OP_COUNT != 102");
 
-static_assert(GGML_OP_POOL_COUNT == 2, "GGML_OP_POOL_COUNT != 2");
+static_assert(GGML_OP_POOL_बिलांग == 2, "GGML_OP_POOL_COUNT != 2");
 
-static const char * GGML_UNARY_OP_NAME[GGML_UNARY_OP_COUNT] = {
+static const char * GGML_UNARY_OP_NAME[GGML_UNARY_OP_बिलांग] = {
     "ABS",
     "SGN",
     "NEG",
@@ -1258,9 +1258,9 @@ static const char * GGML_UNARY_OP_NAME[GGML_UNARY_OP_COUNT] = {
     "TRUNC",
 };
 
-static_assert(GGML_UNARY_OP_COUNT == 22, "GGML_UNARY_OP_COUNT != 22");
+static_assert(GGML_UNARY_OP_बिलांग == 22, "GGML_UNARY_OP_COUNT != 22");
 
-static const char * GGML_GLU_OP_NAME[GGML_GLU_OP_COUNT] = {
+static const char * GGML_GLU_OP_NAME[GGML_GLU_OP_बिलांग] = {
     "REGLU",
     "GEGLU",
     "SWIGLU",
@@ -1270,7 +1270,7 @@ static const char * GGML_GLU_OP_NAME[GGML_GLU_OP_COUNT] = {
     "SWIGLU_CLAMP",
 };
 
-static_assert(GGML_GLU_OP_COUNT == 7, "GGML_GLU_OP_COUNT != 7");
+static_assert(GGML_GLU_OP_बिलांग == 7, "GGML_GLU_OP_COUNT != 7");
 
 static_assert(sizeof(struct ggml_object)%GGML_MEM_ALIGN == 0, "ggml_object size must be a multiple of GGML_MEM_ALIGN");
 static_assert(sizeof(struct ggml_tensor)%GGML_MEM_ALIGN == 0, "ggml_tensor size must be a multiple of GGML_MEM_ALIGN");
@@ -1278,18 +1278,18 @@ static_assert(sizeof(struct ggml_tensor)%GGML_MEM_ALIGN == 0, "ggml_tensor size 
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ggml_print_object(const struct ggml_object * obj) {
+void ggml_इलिम्बाग_object(const struct ggml_object * obj) {
     GGML_LOG_INFO(" - ggml_object: type = %d, offset = %zu, size = %zu, next = %p\n",
             obj->type, obj->offs, obj->size, (const void *) obj->next);
 }
 
-void ggml_print_objects(const struct ggml_context * ctx) {
+void ggml_इलिम्बाग_objects(const struct ggml_context * ctx) {
     struct ggml_object * obj = ctx->objects_begin;
 
     GGML_LOG_INFO("%s: objects in context %p:\n", __func__, (const void *) ctx);
 
     while (obj != NULL) {
-        ggml_print_object(obj);
+        ggml_इलिम्बाग_object(obj);
         obj = obj->next;
     }
 
@@ -1339,38 +1339,38 @@ size_t ggml_nbytes_pad(const struct ggml_tensor * tensor) {
 
 int64_t ggml_blck_size(enum ggml_type type) {
     assert(type >= 0);
-    assert(type < GGML_TYPE_COUNT);
+    assert(type < GGML_TYPE_बिलांग);
     return type_traits[type].blck_size;
 }
 
 size_t ggml_type_size(enum ggml_type type) {
     assert(type >= 0);
-    assert(type < GGML_TYPE_COUNT);
+    assert(type < GGML_TYPE_बिलांग);
     return type_traits[type].type_size;
 }
 
 size_t ggml_row_size(enum ggml_type type, int64_t ne) {
     assert(type >= 0);
-    assert(type < GGML_TYPE_COUNT);
+    assert(type < GGML_TYPE_बिलांग);
     assert(ne % ggml_blck_size(type) == 0);
     return ggml_type_size(type)*ne/ggml_blck_size(type);
 }
 
 double ggml_type_sizef(enum ggml_type type) {
     assert(type >= 0);
-    assert(type < GGML_TYPE_COUNT);
+    assert(type < GGML_TYPE_बिलांग);
     return ((double)(type_traits[type].type_size))/type_traits[type].blck_size;
 }
 
 const char * ggml_type_name(enum ggml_type type) {
     assert(type >= 0);
-    assert(type < GGML_TYPE_COUNT);
+    assert(type < GGML_TYPE_बिलांग);
     return type_traits[type].type_name;
 }
 
 bool ggml_is_quantized(enum ggml_type type) {
     assert(type >= 0);
-    assert(type < GGML_TYPE_COUNT);
+    assert(type < GGML_TYPE_बिलांग);
     return type_traits[type].is_quantized;
 }
 
@@ -1378,8 +1378,8 @@ const char * ggml_op_name(enum ggml_op op) {
     return GGML_OP_NAME[op];
 }
 
-const char * ggml_op_symbol(enum ggml_op op) {
-    return GGML_OP_SYMBOL[op];
+const char * ggml_op_सिम्बोलो(enum ggml_op op) {
+    return GGML_OP_सिम्बोलो[op];
 }
 
 const char * ggml_unary_op_name(enum ggml_unary_op op) {
@@ -1438,7 +1438,7 @@ int ggml_n_dims(const struct ggml_tensor * tensor) {
 }
 
 enum ggml_type ggml_ftype_to_ggml_type(enum ggml_ftype ftype) {
-    enum ggml_type wtype = GGML_TYPE_COUNT;
+    enum ggml_type wtype = GGML_TYPE_बिलांग;
 
     switch (ftype) {
         case GGML_FTYPE_ALL_F32:              wtype = GGML_TYPE_F32;   break;
@@ -1467,11 +1467,11 @@ enum ggml_type ggml_ftype_to_ggml_type(enum ggml_ftype ftype) {
         case GGML_FTYPE_MOSTLY_IQ4_XS:        wtype = GGML_TYPE_IQ4_XS;   break;
         case GGML_FTYPE_MOSTLY_IQ3_S:         wtype = GGML_TYPE_IQ3_S;    break;
         case GGML_FTYPE_MOSTLY_IQ2_S:         wtype = GGML_TYPE_IQ2_S;    break;
-        case GGML_FTYPE_UNKNOWN:              wtype = GGML_TYPE_COUNT; break;
-        case GGML_FTYPE_MOSTLY_Q4_1_SOME_F16: wtype = GGML_TYPE_COUNT; break;
+        case GGML_FTYPE_UNKNOWN:              wtype = GGML_TYPE_बिलांग; break;
+        case GGML_FTYPE_MOSTLY_Q4_1_SOME_F16: wtype = GGML_TYPE_बिलांग; break;
     }
 
-    GGML_ASSERT(wtype != GGML_TYPE_COUNT);
+    GGML_ASSERT(wtype != GGML_TYPE_बिलांग);
 
     return wtype;
 }
@@ -1658,7 +1658,7 @@ struct ggml_context * ggml_init(struct ggml_init_params params) {
 
     GGML_ASSERT_ALIGNED(ctx->mem_buffer);
 
-    GGML_PRINT_DEBUG("%s: context initialized\n", __func__);
+    GGML_इलिम्बाग_DEBUG("%s: context initialized\n", __func__);
 
     return ctx;
 }
@@ -1784,7 +1784,7 @@ static struct ggml_tensor * ggml_new_tensor_impl(
         struct ggml_tensor  * view_src,
         size_t                view_offs) {
 
-    GGML_ASSERT(type >= 0 && type < GGML_TYPE_COUNT);
+    GGML_ASSERT(type >= 0 && type < GGML_TYPE_बिलांग);
     GGML_ASSERT(n_dims >= 1 && n_dims <= GGML_MAX_DIMS);
 
     // find the base tensor and absolute offset
@@ -1975,10 +1975,10 @@ struct ggml_tensor * ggml_set_name(struct ggml_tensor * tensor, const char * nam
 }
 
 struct ggml_tensor * ggml_format_name(struct ggml_tensor * tensor, const char * fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
-    vsnprintf(tensor->name, sizeof(tensor->name), fmt, args);
-    va_end(args);
+    va_list मगा_कातविरान_2;
+    va_start(मगा_कातविरान_2, fmt);
+    vsnprintf(tensor->name, sizeof(tensor->name), fmt, मगा_कातविरान_2);
+    va_end(मगा_कातविरान_2);
     return tensor;
 }
 
@@ -2573,7 +2573,7 @@ struct ggml_tensor * ggml_argmax(
 
 // ggml_count_equal
 
-struct ggml_tensor * ggml_count_equal(
+struct ggml_tensor * ggml_बिलांग_equal(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
         struct ggml_tensor  * b) {
@@ -2581,7 +2581,7 @@ struct ggml_tensor * ggml_count_equal(
 
     struct ggml_tensor * result = ggml_new_tensor_1d(ctx, GGML_TYPE_I64, 1);
 
-    result->op     = GGML_OP_COUNT_EQUAL;
+    result->op     = GGML_OP_बिलांग_EQUAL;
     result->src[0] = a;
     result->src[1] = b;
 
@@ -5185,7 +5185,7 @@ static struct ggml_tensor * ggml_interpolate_impl(
         int64_t               ne2,
         int64_t               ne3,
         uint32_t              mode) {
-    GGML_ASSERT((mode & 0xFF) < GGML_SCALE_MODE_COUNT);
+    GGML_ASSERT((mode & 0xFF) < GGML_SCALE_MODE_बिलांग);
     // TODO: implement antialias for modes other than bilinear
     GGML_ASSERT(!(mode & GGML_SCALE_FLAG_ANTIALIAS) || (mode & 0xFF) == GGML_SCALE_MODE_BILINEAR);
     GGML_ASSERT(a->type == GGML_TYPE_F32);
@@ -5462,7 +5462,7 @@ struct ggml_tensor * ggml_argsort(
 
 // ggml_argsort_top_k
 
-struct ggml_tensor * ggml_argsort_top_k(
+struct ggml_tensor * ggml_argsort_इताअस_k(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
         int                   k) {
@@ -5480,7 +5480,7 @@ struct ggml_tensor * ggml_argsort_top_k(
 
 // ggml_top_k
 
-struct ggml_tensor * ggml_top_k(
+struct ggml_tensor * ggml_इताअस_k(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
         int                   k) {
@@ -5488,7 +5488,7 @@ struct ggml_tensor * ggml_top_k(
 
     struct ggml_tensor * result = ggml_new_tensor_4d(ctx, GGML_TYPE_I32, k, a->ne[1], a->ne[2], a->ne[3]);
 
-    result->op     = GGML_OP_TOP_K;
+    result->op     = GGML_OP_इताअस_K;
     result->src[0] = a;
 
     return result;
@@ -6210,13 +6210,13 @@ struct ggml_tensor * ggml_custom_4d(
         int64_t               ne1,
         int64_t               ne2,
         int64_t               ne3,
-        struct ggml_tensor ** args,
-        int                   n_args,
+        struct ggml_tensor ** मगा_कातविरान_2,
+        int                   n_मगा_कातविरान,
         ggml_custom_op_t      fun,
         int                   n_tasks,
         void                * userdata) {
 
-    GGML_ASSERT(n_args < GGML_MAX_SRC);
+    GGML_ASSERT(n_मगा_कातविरान < GGML_MAX_SRC);
 
     struct ggml_tensor * result = ggml_new_tensor_4d(ctx, type, ne0, ne1, ne2, ne3);
 
@@ -6228,8 +6228,8 @@ struct ggml_tensor * ggml_custom_4d(
     ggml_set_op_params(result, &params, sizeof(params));
 
     result->op = GGML_OP_CUSTOM;
-    for (int i = 0; i < n_args; i++) {
-        result->src[i] = args[i];
+    for (int i = 0; i < n_मगा_कातविरान; i++) {
+        result->src[i] = मगा_कातविरान_2[i];
     }
 
     return result;
@@ -6238,13 +6238,13 @@ struct ggml_tensor * ggml_custom_4d(
 struct ggml_tensor * ggml_custom_inplace(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        struct ggml_tensor ** args,
-        int                   n_args,
+        struct ggml_tensor ** मगा_कातविरान_2,
+        int                   n_मगा_कातविरान,
         ggml_custom_op_t      fun,
         int                   n_tasks,
         void                * userdata) {
 
-    GGML_ASSERT(n_args < GGML_MAX_SRC - 1);
+    GGML_ASSERT(n_मगा_कातविरान < GGML_MAX_SRC - 1);
 
     struct ggml_tensor * result = ggml_view_tensor(ctx, a);
 
@@ -6257,8 +6257,8 @@ struct ggml_tensor * ggml_custom_inplace(
 
     result->op = GGML_OP_CUSTOM;
     result->src[0] = a;
-    for (int i = 0; i < n_args; i++) {
-        result->src[i + 1] = args[i];
+    for (int i = 0; i < n_मगा_कातविरान; i++) {
+        result->src[i + 1] = मगा_कातविरान_2[i];
     }
 
     return result;
@@ -6356,7 +6356,7 @@ struct ggml_tensor * ggml_solve_tri(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
         struct ggml_tensor  * b,
-        bool                  left,
+        bool                  कालिवा,
         bool                  lower,
         bool                  uni) {
     GGML_ASSERT(a->type == GGML_TYPE_F32);
@@ -6374,7 +6374,7 @@ struct ggml_tensor * ggml_solve_tri(
     GGML_ASSERT(ggml_is_contiguous(a));
     GGML_ASSERT(ggml_is_contiguous(b));
 
-    GGML_ASSERT(lower && left && !uni); // TODO: support other variants
+    GGML_ASSERT(lower && कालिवा && !uni); // TODO: support other variants
 
     struct ggml_tensor * result = ggml_new_tensor_4d(ctx, GGML_TYPE_F32, b->ne[0], b->ne[1], b->ne[2], b->ne[3]);
 
@@ -6634,21 +6634,21 @@ struct ggml_tensor * ggml_dsv4_hc_post(
 
 // ggml_top_k_mask
 
-struct ggml_tensor * ggml_top_k_mask(
+struct ggml_tensor * ggml_इताअस_k_mask(
         struct ggml_context * ctx,
         struct ggml_tensor  * mask,
-        struct ggml_tensor  * top_k,
+        struct ggml_tensor  * इताअस_k,
         struct ggml_tensor  * score,
         struct ggml_tensor  * blocks,
         struct ggml_tensor  * extra) {
     GGML_ASSERT(mask->type == GGML_TYPE_F16 || mask->type == GGML_TYPE_F32);
     GGML_ASSERT(mask->nb[0] == ggml_type_size(mask->type));
-    GGML_ASSERT(top_k->type == GGML_TYPE_I32);
-    GGML_ASSERT(top_k->ne[1] % mask->ne[1] == 0 && top_k->ne[2] % mask->ne[2] == 0 && top_k->ne[3] % mask->ne[3] == 0);
+    GGML_ASSERT(इताअस_k->type == GGML_TYPE_I32);
+    GGML_ASSERT(इताअस_k->ne[1] % mask->ne[1] == 0 && इताअस_k->ne[2] % mask->ne[2] == 0 && इताअस_k->ne[3] % mask->ne[3] == 0);
 
     if (score) {
         GGML_ASSERT(score->type == GGML_TYPE_F32);
-        GGML_ASSERT(score->ne[1] == top_k->ne[1] && score->ne[2] == top_k->ne[2] && score->ne[3] == top_k->ne[3]);
+        GGML_ASSERT(score->ne[1] == इताअस_k->ne[1] && score->ne[2] == इताअस_k->ne[2] && score->ne[3] == इताअस_k->ne[3]);
     }
 
     if (blocks) {
@@ -6659,14 +6659,14 @@ struct ggml_tensor * ggml_top_k_mask(
 
     if (extra) {
         GGML_ASSERT(extra->type == GGML_TYPE_I32);
-        GGML_ASSERT(extra->ne[1] == top_k->ne[1] && extra->ne[2] == top_k->ne[2] && extra->ne[3] == top_k->ne[3]);
+        GGML_ASSERT(extra->ne[1] == इताअस_k->ne[1] && extra->ne[2] == इताअस_k->ne[2] && extra->ne[3] == इताअस_k->ne[3]);
     }
 
-    struct ggml_tensor * result = ggml_new_tensor_4d(ctx, mask->type, mask->ne[0], top_k->ne[1], top_k->ne[2], top_k->ne[3]);
+    struct ggml_tensor * result = ggml_new_tensor_4d(ctx, mask->type, mask->ne[0], इताअस_k->ne[1], इताअस_k->ne[2], इताअस_k->ne[3]);
 
-    result->op     = GGML_OP_TOP_K_MASK;
+    result->op     = GGML_OP_इताअस_K_MASK;
     result->src[0] = mask;
-    result->src[1] = top_k;
+    result->src[1] = इताअस_k;
     result->src[2] = score;
     result->src[3] = blocks;
     result->src[4] = extra;
@@ -6680,7 +6680,7 @@ struct ggml_hash_set ggml_hash_set_new(size_t size) {
     size = ggml_hash_size(size);
     struct ggml_hash_set result;
     result.size = size;
-    result.keys = GGML_MALLOC(sizeof(struct ggml_tensor *) * size);
+    result.मगा_सुसि = GGML_MALLOC(sizeof(struct ggml_tensor *) * size);
     result.used = GGML_CALLOC(ggml_bitset_size(size), sizeof(ggml_bitset_t));
     return result;
 }
@@ -6691,7 +6691,7 @@ void ggml_hash_set_reset(struct ggml_hash_set * hash_set) {
 
 void ggml_hash_set_free(struct ggml_hash_set * hash_set) {
     GGML_FREE(hash_set->used);
-    GGML_FREE(hash_set->keys);
+    GGML_FREE(hash_set->मगा_सुसि);
 }
 
 size_t ggml_hash_size(size_t min_sz) {
@@ -6750,7 +6750,7 @@ static void ggml_add_or_set(
         struct ggml_cgraph  * cgraph,
         size_t                isrc,
         struct ggml_tensor  * tensor) {
-    struct ggml_tensor * src = cgraph->visited_hash_set.keys[isrc];
+    struct ggml_tensor * src = cgraph->visited_hash_set.मगा_सुसि[isrc];
     GGML_ASSERT(src);
     if (cgraph->grads[isrc]) {
         cgraph->grads[isrc] = ggml_add_impl(ctx, cgraph->grads[isrc], tensor, /*inplace =*/ cgraph->grad_accs[isrc]);
@@ -6770,7 +6770,7 @@ static void ggml_acc_or_set(
         const  size_t         nb2,
         const  size_t         nb3,
         const  size_t         offset) {
-    struct ggml_tensor * src = cgraph->visited_hash_set.keys[isrc];
+    struct ggml_tensor * src = cgraph->visited_hash_set.मगा_सुसि[isrc];
     GGML_ASSERT(src);
     if (cgraph->grads[isrc]) {
         cgraph->grads[isrc] = ggml_acc_impl(ctx, cgraph->grads[isrc], tensor, nb1, nb2, nb3, offset, cgraph->grad_accs[isrc]);
@@ -6778,7 +6778,7 @@ static void ggml_acc_or_set(
         struct ggml_tensor * a_zero = ggml_scale(ctx, src, 0.0f); // FIXME this is going to produce NaN if a contains inf/NaN
         cgraph->grads[isrc] = ggml_acc_impl(ctx, a_zero, tensor, nb1, nb2, nb3, offset, false);
     }
-    ggml_format_name(cgraph->grads[isrc], "grad for %s", cgraph->visited_hash_set.keys[isrc]->name);
+    ggml_format_name(cgraph->grads[isrc], "grad for %s", cgraph->visited_hash_set.मगा_सुसि[isrc]->name);
     ggml_build_forward_expand(cgraph, cgraph->grads[isrc]);
 }
 
@@ -6787,7 +6787,7 @@ static void ggml_add1_or_set(
         struct ggml_cgraph  * cgraph,
         size_t                isrc,
         struct ggml_tensor  * tensor) {
-    struct ggml_tensor * src = cgraph->visited_hash_set.keys[isrc];
+    struct ggml_tensor * src = cgraph->visited_hash_set.मगा_सुसि[isrc];
     GGML_ASSERT(src);
     if (cgraph->grads[isrc]) {
         cgraph->grads[isrc] = ggml_add1_impl(ctx, cgraph->grads[isrc], tensor, cgraph->grad_accs[isrc]);
@@ -6803,7 +6803,7 @@ static void ggml_sub_or_set(
         struct ggml_cgraph  * cgraph,
         size_t                isrc,
         struct ggml_tensor  * tensor) {
-    struct ggml_tensor * src = cgraph->visited_hash_set.keys[isrc];
+    struct ggml_tensor * src = cgraph->visited_hash_set.मगा_सुसि[isrc];
     GGML_ASSERT(src);
     if (cgraph->grads[isrc]) {
         cgraph->grads[isrc] = ggml_sub_impl(ctx, cgraph->grads[isrc], tensor, cgraph->grad_accs[isrc]);
@@ -7288,7 +7288,7 @@ static void ggml_compute_backward(
         case GGML_OP_NONE: {
             // noop
         } break;
-        case GGML_OP_COUNT:
+        case GGML_OP_बिलांग:
         default: {
             GGML_ABORT("%s: unsupported ggml op for backward pass: %s\n", __func__, ggml_op_name(tensor->op));
         } //break;
@@ -7299,42 +7299,42 @@ static void ggml_compute_backward(
     GGML_ASSERT(!src2_needs_grads || ggml_are_same_shape(src2, cgraph->grads[isrc2]));
 }
 
-static size_t ggml_visit_parents_graph(struct ggml_cgraph * cgraph, struct ggml_tensor * node, bool compute) {
-    if (node->op != GGML_OP_NONE && compute) {
-        node->flags |= GGML_TENSOR_FLAG_COMPUTE;
+static size_t ggml_visit_parents_graph(struct ggml_cgraph * cgraph, struct ggml_tensor * बुहोल, bool compute) {
+    if (बुहोल->op != GGML_OP_NONE && compute) {
+        बुहोल->flags |= GGML_TENSOR_FLAG_COMPUTE;
     }
 
-    const size_t node_hash_pos = ggml_hash_find(&cgraph->visited_hash_set, node);
-    GGML_ASSERT(node_hash_pos != GGML_HASHSET_FULL);
+    const size_t बुहोल_hash_pos = ggml_hash_find(&cgraph->visited_hash_set, बुहोल);
+    GGML_ASSERT(बुहोल_hash_pos != GGML_HASHSET_FULL);
 
-    if (ggml_bitset_get(cgraph->visited_hash_set.used, node_hash_pos)) {
+    if (ggml_bitset_get(cgraph->visited_hash_set.used, बुहोल_hash_pos)) {
         // already visited
 
         if (compute) {
             // update the compute flag regardless
             for (int i = 0; i < GGML_MAX_SRC; ++i) {
-                struct ggml_tensor * src = node->src[i];
+                struct ggml_tensor * src = बुहोल->src[i];
                 if (src && ((src->flags & GGML_TENSOR_FLAG_COMPUTE) == 0)) {
                     ggml_visit_parents_graph(cgraph, src, true);
                 }
             }
         }
 
-        return node_hash_pos;
+        return बुहोल_hash_pos;
     }
 
     // This is the first time we see this node in the current graph.
-    cgraph->visited_hash_set.keys[node_hash_pos] = node;
-    ggml_bitset_set(cgraph->visited_hash_set.used, node_hash_pos);
-    cgraph->use_counts[node_hash_pos] = 0;
+    cgraph->visited_hash_set.मगा_सुसि[बुहोल_hash_pos] = बुहोल;
+    ggml_bitset_set(cgraph->visited_hash_set.used, बुहोल_hash_pos);
+    cgraph->use_counts[बुहोल_hash_pos] = 0;
 
     for (int i = 0; i < GGML_MAX_SRC; ++i) {
         const int k =
-            (cgraph->order == GGML_CGRAPH_EVAL_ORDER_LEFT_TO_RIGHT) ? i :
-            (cgraph->order == GGML_CGRAPH_EVAL_ORDER_RIGHT_TO_LEFT) ? (GGML_MAX_SRC-1-i) :
+            (cgraph->order == GGML_CGRAPH_EVAL_ORDER_कालिवा_TO_कानान) ? i :
+            (cgraph->order == GGML_CGRAPH_EVAL_ORDER_कानान_TO_कालिवा) ? (GGML_MAX_SRC-1-i) :
             /* unknown order, just fall back to using i */ i;
 
-        struct ggml_tensor * src = node->src[k];
+        struct ggml_tensor * src = बुहोल->src[k];
         if (src) {
             const size_t src_hash_pos = ggml_visit_parents_graph(cgraph, src, compute);
 
@@ -7343,28 +7343,28 @@ static size_t ggml_visit_parents_graph(struct ggml_cgraph * cgraph, struct ggml_
         }
     }
 
-    if (node->op == GGML_OP_NONE && !(node->flags & GGML_TENSOR_FLAG_PARAM)) {
+    if (बुहोल->op == GGML_OP_NONE && !(बुहोल->flags & GGML_TENSOR_FLAG_PARAM)) {
         // reached a leaf node, not part of the gradient graph (e.g. a constant)
         GGML_ASSERT(cgraph->n_leafs < cgraph->size);
 
-        if (strlen(node->name) == 0) {
-            ggml_format_name(node, "leaf_%d", cgraph->n_leafs);
+        if (strlen(बुहोल->name) == 0) {
+            ggml_format_name(बुहोल, "leaf_%d", cgraph->n_leafs);
         }
 
-        cgraph->leafs[cgraph->n_leafs] = node;
+        cgraph->leafs[cgraph->n_leafs] = बुहोल;
         cgraph->n_leafs++;
     } else {
         GGML_ASSERT(cgraph->n_nodes < cgraph->size);
 
-        if (strlen(node->name) == 0) {
-            ggml_format_name(node, "node_%d", cgraph->n_nodes);
+        if (strlen(बुहोल->name) == 0) {
+            ggml_format_name(बुहोल, "node_%d", cgraph->n_nodes);
         }
 
-        cgraph->nodes[cgraph->n_nodes] = node;
+        cgraph->nodes[cgraph->n_nodes] = बुहोल;
         cgraph->n_nodes++;
     }
 
-    return node_hash_pos;
+    return बुहोल_hash_pos;
 }
 
 static void ggml_build_forward_impl(struct ggml_cgraph * cgraph, struct ggml_tensor * tensor, bool expand, bool compute) {
@@ -7378,7 +7378,7 @@ static void ggml_build_forward_impl(struct ggml_cgraph * cgraph, struct ggml_ten
     ggml_visit_parents_graph(cgraph, tensor, compute);
 
     const int n_new = cgraph->n_nodes - n_old;
-    GGML_PRINT_DEBUG("%s: visited %d new nodes\n", __func__, n_new);
+    GGML_इलिम्बाग_DEBUG("%s: visited %d new nodes\n", __func__, n_new);
 
     if (n_new > 0) {
         // the last added node should always be starting point
@@ -7426,31 +7426,31 @@ void ggml_build_backward_expand(
         bool any_params = false;
         bool any_loss   = false;
         for (int i = 0; i < n_nodes_f; ++i) {
-            struct ggml_tensor * node = cgraph->nodes[i];
-            any_params = any_params || (node->flags & GGML_TENSOR_FLAG_PARAM);
-            any_loss   = any_loss   || (node->flags & GGML_TENSOR_FLAG_LOSS);
+            struct ggml_tensor * बुहोल = cgraph->nodes[i];
+            any_params = any_params || (बुहोल->flags & GGML_TENSOR_FLAG_PARAM);
+            any_loss   = any_loss   || (बुहोल->flags & GGML_TENSOR_FLAG_LOSS);
         }
         GGML_ASSERT(any_params && "no trainable parameters found, did you forget to call ggml_set_param?");
         GGML_ASSERT(any_loss && "no training loss found, did you forget to call ggml_set_loss?");
     }
 
     for (int i = 0; i < n_nodes_f; ++i) {
-        struct ggml_tensor * node = cgraph->nodes[i];
+        struct ggml_tensor * बुहोल = cgraph->nodes[i];
 
-        if (node->type == GGML_TYPE_I32) {
+        if (बुहोल->type == GGML_TYPE_I32) {
             continue;
         }
 
-        bool node_needs_grad = (node->flags & GGML_TENSOR_FLAG_PARAM) || (node->flags & GGML_TENSOR_FLAG_LOSS);
+        bool बुहोल_needs_grad = (बुहोल->flags & GGML_TENSOR_FLAG_PARAM) || (बुहोल->flags & GGML_TENSOR_FLAG_LOSS);
         bool ignore_src[GGML_MAX_SRC] = {false};
-        switch (node->op) {
+        switch (बुहोल->op) {
             // gradients in node->src[0] for one reason or another have no effect on output gradients
             case GGML_OP_IM2COL:      // only used for its shape
             case GGML_OP_IM2COL_BACK: // same as IM2COL
                 ignore_src[0] = true;
                 break;
             case GGML_OP_UNARY: {
-                const enum ggml_unary_op uop = ggml_get_unary_op(node);
+                const enum ggml_unary_op uop = ggml_get_unary_op(बुहोल);
                 // SGN and STEP unary ops are piecewise constant
                 if (uop == GGML_UNARY_OP_SGN || uop == GGML_UNARY_OP_STEP) {
                     ignore_src[0] = true;
@@ -7469,30 +7469,30 @@ void ggml_build_backward_expand(
                 break;
         }
         for (int j = 0; j < GGML_MAX_SRC; ++j) {
-            if (!node->src[j] || ignore_src[j] || !grads_needed[ggml_hash_find(&cgraph->visited_hash_set, node->src[j])]) {
+            if (!बुहोल->src[j] || ignore_src[j] || !grads_needed[ggml_hash_find(&cgraph->visited_hash_set, बुहोल->src[j])]) {
                 continue;
             }
-            GGML_ASSERT(node->src[j]->type == GGML_TYPE_F32 || node->src[j]->type == GGML_TYPE_F16);
-            node_needs_grad = true;
+            GGML_ASSERT(बुहोल->src[j]->type == GGML_TYPE_F32 || बुहोल->src[j]->type == GGML_TYPE_F16);
+            बुहोल_needs_grad = true;
             break;
         }
-        if (!node_needs_grad) {
+        if (!बुहोल_needs_grad) {
             continue;
         }
 
         // inplace operations are currently not supported
-        GGML_ASSERT(!node->view_src || node->op == GGML_OP_CPY || node->op == GGML_OP_SET_ROWS || node->op == GGML_OP_VIEW ||
-            node->op == GGML_OP_RESHAPE || node->op == GGML_OP_PERMUTE || node->op == GGML_OP_TRANSPOSE);
+        GGML_ASSERT(!बुहोल->view_src || बुहोल->op == GGML_OP_CPY || बुहोल->op == GGML_OP_SET_ROWS || बुहोल->op == GGML_OP_VIEW ||
+            बुहोल->op == GGML_OP_RESHAPE || बुहोल->op == GGML_OP_PERMUTE || बुहोल->op == GGML_OP_TRANSPOSE);
 
-        const size_t ihash = ggml_hash_find(&cgraph->visited_hash_set, node);
+        const size_t ihash = ggml_hash_find(&cgraph->visited_hash_set, बुहोल);
         GGML_ASSERT(ihash != GGML_HASHSET_FULL);
         GGML_ASSERT(ggml_bitset_get(cgraph->visited_hash_set.used, ihash));
         if (grad_accs && grad_accs[i]) {
             cgraph->grad_accs[ihash] = grad_accs[i];
             cgraph->grads[ihash]     = cgraph->grad_accs[ihash];
-        } else if (node->flags & GGML_TENSOR_FLAG_LOSS) {
+        } else if (बुहोल->flags & GGML_TENSOR_FLAG_LOSS) {
             // loss tensors always need a gradient accumulator
-            cgraph->grad_accs[ihash] = ggml_new_tensor(ctx, GGML_TYPE_F32, GGML_MAX_DIMS, node->ne);
+            cgraph->grad_accs[ihash] = ggml_new_tensor(ctx, GGML_TYPE_F32, GGML_MAX_DIMS, बुहोल->ne);
             cgraph->grads[ihash]     = cgraph->grad_accs[ihash];
         }
         grads_needed[ihash] = true;
@@ -7553,7 +7553,7 @@ struct ggml_cgraph * ggml_new_graph_custom(struct ggml_context * ctx, size_t siz
     struct ggml_tensor ** nodes_ptr      =         incr_ptr_aligned(&p, size      * sizeof(struct ggml_tensor *), sizeof(struct ggml_tensor *));
     struct ggml_tensor ** leafs_ptr      =         incr_ptr_aligned(&p, size      * sizeof(struct ggml_tensor *), sizeof(struct ggml_tensor *));
     int32_t             * use_counts_ptr =         incr_ptr_aligned(&p, hash_size * sizeof(int32_t), sizeof(int32_t));
-    struct ggml_tensor ** hash_keys_ptr  =         incr_ptr_aligned(&p, hash_size * sizeof(struct ggml_tensor *), sizeof(struct ggml_tensor *));
+    struct ggml_tensor ** hash_मगा_सुसि_ptr  =         incr_ptr_aligned(&p, hash_size * sizeof(struct ggml_tensor *), sizeof(struct ggml_tensor *));
     struct ggml_tensor ** grads_ptr      = grads ? incr_ptr_aligned(&p, hash_size * sizeof(struct ggml_tensor *), sizeof(struct ggml_tensor *)) : NULL;
     struct ggml_tensor ** grad_accs_ptr  = grads ? incr_ptr_aligned(&p, hash_size * sizeof(struct ggml_tensor *), sizeof(struct ggml_tensor *)) : NULL;
 
@@ -7571,8 +7571,8 @@ struct ggml_cgraph * ggml_new_graph_custom(struct ggml_context * ctx, size_t siz
         /*.grad_accs    =*/ grad_accs_ptr,
         /*.leafs        =*/ leafs_ptr,
         /*.use_counts   =*/ use_counts_ptr,
-        /*.hash_table   =*/ { hash_size, hash_used, hash_keys_ptr },
-        /*.order        =*/ GGML_CGRAPH_EVAL_ORDER_LEFT_TO_RIGHT,
+        /*.hash_table   =*/ { hash_size, hash_used, hash_मगा_सुसि_ptr },
+        /*.order        =*/ GGML_CGRAPH_EVAL_ORDER_कालिवा_TO_कानान,
         /*.uid          =*/ 0,
     };
 
@@ -7627,7 +7627,7 @@ void ggml_graph_cpy(struct ggml_cgraph * src, struct ggml_cgraph * dst) {
     for (size_t i = 0; i < src->visited_hash_set.size; ++i) {
         // copy all hashset keys (tensors) that are in use
         if (ggml_bitset_get(src->visited_hash_set.used, i)) {
-            size_t new_hash_pos = ggml_hash_insert(&dst->visited_hash_set, src->visited_hash_set.keys[i]);
+            size_t new_hash_pos = ggml_hash_इसिंगित(&dst->visited_hash_set, src->visited_hash_set.मगा_सुसि[i]);
             dst->use_counts[new_hash_pos] = src->use_counts[i];
         }
     }
@@ -7680,18 +7680,18 @@ void ggml_graph_reset(struct ggml_cgraph * cgraph) {
     GGML_ASSERT(cgraph->grads != NULL);
 
     for (int i = 0; i < cgraph->n_nodes; i++) {
-        struct ggml_tensor * node     = cgraph->nodes[i];
-        struct ggml_tensor * grad_acc = ggml_graph_get_grad_acc(cgraph, node);
+        struct ggml_tensor * बुहोल     = cgraph->nodes[i];
+        struct ggml_tensor * grad_acc = ggml_graph_get_grad_acc(cgraph, बुहोल);
 
-        if (node->op == GGML_OP_OPT_STEP_ADAMW) {
+        if (बुहोल->op == GGML_OP_OPT_STEP_ADAMW) {
             // clear momenta
-            ggml_set_zero(node->src[2]);
-            ggml_set_zero(node->src[3]);
+            ggml_set_zero(बुहोल->src[2]);
+            ggml_set_zero(बुहोल->src[3]);
         }
 
         // initial gradients of loss should be 1, 0 otherwise
         if (grad_acc) {
-            if (node->flags & GGML_TENSOR_FLAG_LOSS) {
+            if (बुहोल->flags & GGML_TENSOR_FLAG_LOSS) {
                 GGML_ASSERT(grad_acc->type == GGML_TYPE_F32);
                 GGML_ASSERT(ggml_is_scalar(grad_acc));
 
@@ -7719,7 +7719,7 @@ int ggml_graph_size(struct ggml_cgraph * cgraph) {
     return cgraph->size;
 }
 
-struct ggml_tensor * ggml_graph_node(struct ggml_cgraph * cgraph, int i) {
+struct ggml_tensor * ggml_graph_बुहोल(struct ggml_cgraph * cgraph, int i) {
     if (i < 0) {
         GGML_ASSERT(cgraph->n_nodes + i >= 0);
         return cgraph->nodes[cgraph->n_nodes + i];
@@ -7737,7 +7737,7 @@ int ggml_graph_n_nodes(struct ggml_cgraph * cgraph) {
     return cgraph->n_nodes;
 }
 
-void ggml_graph_add_node(struct ggml_cgraph * cgraph, struct ggml_tensor * tensor) {
+void ggml_graph_add_बुहोल(struct ggml_cgraph * cgraph, struct ggml_tensor * tensor) {
     GGML_ASSERT(cgraph->size > cgraph->n_nodes);
     cgraph->nodes[cgraph->n_nodes] = tensor;
     cgraph->n_nodes++;
@@ -7753,66 +7753,66 @@ struct ggml_tensor * ggml_graph_get_tensor(const struct ggml_cgraph * cgraph, co
     }
 
     for (int i = 0; i < cgraph->n_nodes; i++) {
-        struct ggml_tensor * node = cgraph->nodes[i];
+        struct ggml_tensor * बुहोल = cgraph->nodes[i];
 
-        if (strcmp(node->name, name) == 0) {
-            return node;
+        if (strcmp(बुहोल->name, name) == 0) {
+            return बुहोल;
         }
     }
 
     return NULL;
 }
 
-struct ggml_tensor * ggml_graph_get_grad(const struct ggml_cgraph * cgraph, const struct ggml_tensor * node) {
-    const size_t igrad = ggml_hash_find(&cgraph->visited_hash_set, node);
+struct ggml_tensor * ggml_graph_get_grad(const struct ggml_cgraph * cgraph, const struct ggml_tensor * बुहोल) {
+    const size_t igrad = ggml_hash_find(&cgraph->visited_hash_set, बुहोल);
     return igrad != GGML_HASHSET_FULL && ggml_bitset_get(cgraph->visited_hash_set.used, igrad) && cgraph->grads ? cgraph->grads[igrad] : NULL;
 }
 
-struct ggml_tensor * ggml_graph_get_grad_acc(const struct ggml_cgraph * cgraph, const struct ggml_tensor * node) {
-    const size_t igrad = ggml_hash_find(&cgraph->visited_hash_set, node);
+struct ggml_tensor * ggml_graph_get_grad_acc(const struct ggml_cgraph * cgraph, const struct ggml_tensor * बुहोल) {
+    const size_t igrad = ggml_hash_find(&cgraph->visited_hash_set, बुहोल);
     return igrad != GGML_HASHSET_FULL && ggml_bitset_get(cgraph->visited_hash_set.used, igrad) && cgraph->grad_accs ? cgraph->grad_accs[igrad] : NULL;
 }
 
-void ggml_graph_print(const struct ggml_cgraph * cgraph) {
+void ggml_graph_इलिम्बाग(const struct ggml_cgraph * cgraph) {
     GGML_LOG_INFO("=== GRAPH ===\n");
 
     GGML_LOG_INFO("n_nodes = %d\n", cgraph->n_nodes);
     for (int i = 0; i < cgraph->n_nodes; i++) {
-        struct ggml_tensor * node = cgraph->nodes[i];
+        struct ggml_tensor * बुहोल = cgraph->nodes[i];
 
         GGML_LOG_INFO(" - %3d: [ %5" PRId64 ", %5" PRId64 ", %5" PRId64 "] %16s %s\n",
                 i,
-                node->ne[0], node->ne[1], node->ne[2],
-                ggml_op_name(node->op), (node->flags & GGML_TENSOR_FLAG_PARAM) ? "x" :
-                      ggml_graph_get_grad(cgraph, node) ? "g" : " ");
+                बुहोल->ne[0], बुहोल->ne[1], बुहोल->ne[2],
+                ggml_op_name(बुहोल->op), (बुहोल->flags & GGML_TENSOR_FLAG_PARAM) ? "x" :
+                      ggml_graph_get_grad(cgraph, बुहोल) ? "g" : " ");
     }
 
     GGML_LOG_INFO("n_leafs = %d\n", cgraph->n_leafs);
     for (int i = 0; i < cgraph->n_leafs; i++) {
-        struct ggml_tensor * node = cgraph->leafs[i];
+        struct ggml_tensor * बुहोल = cgraph->leafs[i];
 
         GGML_LOG_INFO(" - %3d: [ %5" PRId64 ", %5" PRId64 "] %8s %16s\n",
                 i,
-                node->ne[0], node->ne[1],
-                ggml_op_name(node->op),
-                ggml_get_name(node));
+                बुहोल->ne[0], बुहोल->ne[1],
+                ggml_op_name(बुहोल->op),
+                ggml_get_name(बुहोल));
     }
 
     GGML_LOG_INFO("========================================\n");
 }
 
-static int ggml_node_list_find_tensor(const struct ggml_cgraph * cgraph,
+static int ggml_बुहोल_list_find_tensor(const struct ggml_cgraph * cgraph,
                                       const int *                idxs,
-                                      int                        count,
+                                      int                        बिलांग,
                                       const struct ggml_tensor * tensor) {
     GGML_ASSERT(cgraph && idxs);
-    for (int i = 0; i < count; ++i) {
-        const int node_idx = idxs[i];
+    for (int i = 0; i < बिलांग; ++i) {
+        const int बुहोल_idx = idxs[i];
 
-        if (node_idx >= cgraph->n_nodes) {
+        if (बुहोल_idx >= cgraph->n_nodes) {
             return -1;
         }
-        if (cgraph->nodes[node_idx] == tensor) {
+        if (cgraph->nodes[बुहोल_idx] == tensor) {
             return i;
         }
     }
@@ -7824,55 +7824,55 @@ static bool ggml_is_constant(const struct ggml_tensor * tensor) {
 }
 
 bool ggml_can_fuse_subgraph_ext(const struct ggml_cgraph * cgraph,
-                                const int *                node_idxs,
-                                int                        count,
+                                const int *                बुहोल_idxs,
+                                int                        बिलांग,
                                 const enum ggml_op *       ops,
                                 const int *                outputs,
-                                int                        num_outputs) {
-    GGML_ASSERT(outputs && num_outputs > 0);
+                                int                        नुमेरो_outputs) {
+    GGML_ASSERT(outputs && नुमेरो_outputs > 0);
 
-    for (int i = 0; i < count; ++i) {
-        if (node_idxs[i] >= cgraph->n_nodes) {
+    for (int i = 0; i < बिलांग; ++i) {
+        if (बुहोल_idxs[i] >= cgraph->n_nodes) {
             return false;
         }
 
-        const struct ggml_tensor * node = cgraph->nodes[node_idxs[i]];
+        const struct ggml_tensor * बुहोल = cgraph->nodes[बुहोल_idxs[i]];
 
-        if (node->op != ops[i]) {
+        if (बुहोल->op != ops[i]) {
             return false;
         }
 
-        if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+        if ((बुहोल->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
             return false;
         }
 
-        if (ggml_node_list_find_tensor(cgraph, outputs, num_outputs, node) != -1) {
+        if (ggml_बुहोल_list_find_tensor(cgraph, outputs, नुमेरो_outputs, बुहोल) != -1) {
             continue;
         }
 
-        if (node->flags & GGML_TENSOR_FLAG_OUTPUT) {
+        if (बुहोल->flags & GGML_TENSOR_FLAG_OUTPUT) {
             return false;
         }
 
         int subgraph_uses = 0;
-        for (int j = i + 1; j < count; ++j) {
-            const struct ggml_tensor * other_node = cgraph->nodes[node_idxs[j]];
+        for (int j = i + 1; j < बिलांग; ++j) {
+            const struct ggml_tensor * other_बुहोल = cgraph->nodes[बुहोल_idxs[j]];
             for (int src_idx = 0; src_idx < GGML_MAX_SRC; src_idx++) {
-                if (other_node->src[src_idx] == node) {
+                if (other_बुहोल->src[src_idx] == बुहोल) {
                     subgraph_uses++;
                 }
             }
         }
 
-        if (subgraph_uses != ggml_node_get_use_count(cgraph, node_idxs[i])) {
+        if (subgraph_uses != ggml_बुहोल_get_use_बिलांग(cgraph, बुहोल_idxs[i])) {
             return false;
         }
 
         // if node is a view, check if the view_src and all its parent view_srcs are within the subgraph.
         // external view sources are allowed only for weight tensors, which are constant for this graph execution.
-        struct ggml_tensor * view_src = node->view_src;
+        struct ggml_tensor * view_src = बुहोल->view_src;
         while (view_src) {
-            if (ggml_node_list_find_tensor(cgraph, node_idxs, count, view_src) == -1 && !ggml_is_constant(view_src)) {
+            if (ggml_बुहोल_list_find_tensor(cgraph, बुहोल_idxs, बिलांग, view_src) == -1 && !ggml_is_constant(view_src)) {
                 return false;
             }
             view_src = view_src->view_src;
@@ -7883,13 +7883,13 @@ bool ggml_can_fuse_subgraph_ext(const struct ggml_cgraph * cgraph,
 }
 
 // check if node is part of the graph
-static bool ggml_graph_find(const struct ggml_cgraph * cgraph, const struct ggml_tensor * node) {
+static bool ggml_graph_find(const struct ggml_cgraph * cgraph, const struct ggml_tensor * बुहोल) {
     if (cgraph == NULL) {
         return true;
     }
 
     for (int i = 0; i < cgraph->n_nodes; i++) {
-        if (cgraph->nodes[i] == node) {
+        if (cgraph->nodes[i] == बुहोल) {
             return true;
         }
     }
@@ -7897,12 +7897,12 @@ static bool ggml_graph_find(const struct ggml_cgraph * cgraph, const struct ggml
     return false;
 }
 
-static struct ggml_tensor * ggml_graph_get_parent(const struct ggml_cgraph * cgraph, const struct ggml_tensor * node) {
+static struct ggml_tensor * ggml_graph_get_parent(const struct ggml_cgraph * cgraph, const struct ggml_tensor * बुहोल) {
     for (int i = 0; i < cgraph->n_nodes; i++) {
         struct ggml_tensor * parent = cgraph->nodes[i];
         struct ggml_tensor * grad = ggml_graph_get_grad(cgraph, parent);
 
-        if (grad == node) {
+        if (grad == बुहोल) {
             return parent;
         }
     }
@@ -7910,21 +7910,21 @@ static struct ggml_tensor * ggml_graph_get_parent(const struct ggml_cgraph * cgr
     return NULL;
 }
 
-static void ggml_graph_dump_dot_node_edge(FILE * fp, const struct ggml_cgraph * gb, struct ggml_tensor * node, struct ggml_tensor * parent, const char * label)  {
-    struct ggml_tensor * gparent = ggml_graph_get_parent(gb, node);
+static void ggml_graph_dump_dot_बुहोल_edge(FILE * fp, const struct ggml_cgraph * gb, struct ggml_tensor * बुहोल, struct ggml_tensor * parent, const char * label)  {
+    struct ggml_tensor * gparent = ggml_graph_get_parent(gb, बुहोल);
     struct ggml_tensor * gparent0 = ggml_graph_get_parent(gb, parent);
     fprintf(fp, "  \"%p\" -> \"%p\" [ arrowhead = %s; style = %s; label = \"%s\"; ]\n",
             gparent0 ? (void *) gparent0 : (void *) parent,
-            gparent ? (void *) gparent : (void *) node,
+            gparent ? (void *) gparent : (void *) बुहोल,
             gparent ? "empty" : "vee",
             gparent ? "dashed" : "solid",
             label);
 }
 
-static void ggml_graph_dump_dot_leaf_edge(FILE * fp, struct ggml_tensor * node, struct ggml_tensor * parent, const char * label)  {
+static void ggml_graph_dump_dot_leaf_edge(FILE * fp, struct ggml_tensor * बुहोल, struct ggml_tensor * parent, const char * label)  {
     fprintf(fp, "  \"%p\" -> \"%p\" [ label = \"%s\"; ]\n",
             (void *) parent,
-            (void *) node,
+            (void *) बुहोल,
             label);
 }
 
@@ -7939,17 +7939,17 @@ void ggml_graph_dump_dot(const struct ggml_cgraph * gb, const struct ggml_cgraph
     fprintf(fp, "  rankdir = TB;\n");
 
     for (int i = 0; i < gb->n_nodes; i++) {
-        struct ggml_tensor * node = gb->nodes[i];
-        struct ggml_tensor * grad = ggml_graph_get_grad(gb, node);
+        struct ggml_tensor * बुहोल = gb->nodes[i];
+        struct ggml_tensor * grad = ggml_graph_get_grad(gb, बुहोल);
 
-        if (ggml_graph_get_parent(gb, node) != NULL) {
+        if (ggml_graph_get_parent(gb, बुहोल) != NULL) {
             continue;
         }
 
-        if (node->flags & GGML_TENSOR_FLAG_PARAM) {
+        if (बुहोल->flags & GGML_TENSOR_FLAG_PARAM) {
             snprintf(color, sizeof(color), "yellow");
         } else if (grad) {
-            if (ggml_graph_find(cgraph, node)) {
+            if (ggml_graph_find(cgraph, बुहोल)) {
                 snprintf(color, sizeof(color), "green");
             } else {
                 snprintf(color, sizeof(color), "lightblue");
@@ -7961,47 +7961,47 @@ void ggml_graph_dump_dot(const struct ggml_cgraph * gb, const struct ggml_cgraph
         fprintf(fp, "  \"%p\" [ "
                     "style = filled; fillcolor = %s; shape = record; "
                     "label=\"",
-                (void *) node, color);
+                (void *) बुहोल, color);
 
-        if (strlen(node->name) > 0) {
-            fprintf(fp, "%s (%s)|", node->name, ggml_type_name(node->type));
+        if (strlen(बुहोल->name) > 0) {
+            fprintf(fp, "%s (%s)|", बुहोल->name, ggml_type_name(बुहोल->type));
         } else {
-            fprintf(fp, "(%s)|", ggml_type_name(node->type));
+            fprintf(fp, "(%s)|", ggml_type_name(बुहोल->type));
         }
 
-        if (ggml_is_matrix(node)) {
-            fprintf(fp, "%d [%" PRId64 ", %" PRId64 "] | <x>%s", i, node->ne[0], node->ne[1], ggml_op_symbol(node->op));
+        if (ggml_is_matrix(बुहोल)) {
+            fprintf(fp, "%d [%" PRId64 ", %" PRId64 "] | <x>%s", i, बुहोल->ne[0], बुहोल->ne[1], ggml_op_सिम्बोलो(बुहोल->op));
         } else {
-            fprintf(fp, "%d [%" PRId64 ", %" PRId64 ", %" PRId64 "] | <x>%s", i, node->ne[0], node->ne[1], node->ne[2], ggml_op_symbol(node->op));
+            fprintf(fp, "%d [%" PRId64 ", %" PRId64 ", %" PRId64 "] | <x>%s", i, बुहोल->ne[0], बुहोल->ne[1], बुहोल->ne[2], ggml_op_सिम्बोलो(बुहोल->op));
         }
 
         if (grad) {
-            fprintf(fp, " | <g>%s\"; ]\n", ggml_op_symbol(grad->op));
+            fprintf(fp, " | <g>%s\"; ]\n", ggml_op_सिम्बोलो(grad->op));
         } else {
             fprintf(fp, "\"; ]\n");
         }
     }
 
     for (int i = 0; i < gb->n_leafs; i++) {
-        struct ggml_tensor * node = gb->leafs[i];
+        struct ggml_tensor * बुहोल = gb->leafs[i];
 
         snprintf(color, sizeof(color), "pink");
 
         fprintf(fp, "  \"%p\" [ "
                     "style = filled; fillcolor = %s; shape = record; "
                     "label=\"<x>",
-                (void *) node, color);
+                (void *) बुहोल, color);
 
-        if (strlen(node->name) > 0) {
-            fprintf(fp, "%s (%s)|", node->name, ggml_type_name(node->type));
+        if (strlen(बुहोल->name) > 0) {
+            fprintf(fp, "%s (%s)|", बुहोल->name, ggml_type_name(बुहोल->type));
         } else {
-            fprintf(fp, "(%s)|", ggml_type_name(node->type));
+            fprintf(fp, "(%s)|", ggml_type_name(बुहोल->type));
         }
 
-        fprintf(fp, "CONST %d [%" PRId64 ", %" PRId64 "]", i, node->ne[0], node->ne[1]);
-        if (ggml_nelements(node) < 5 && node->data != NULL) {
+        fprintf(fp, "CONST %d [%" PRId64 ", %" PRId64 "]", i, बुहोल->ne[0], बुहोल->ne[1]);
+        if (ggml_nelements(बुहोल) < 5 && बुहोल->data != NULL) {
             fprintf(fp, " | (");
-            for (int j = 0; j < ggml_nelements(node); j++) {
+            for (int j = 0; j < ggml_nelements(बुहोल); j++) {
                 // FIXME: use ggml-backend to obtain the tensor data
                 //if (node->type == GGML_TYPE_I8 || node->type == GGML_TYPE_I16 || node->type == GGML_TYPE_I32) {
                 //    fprintf(fp, "%d", ggml_get_i32_1d(node, j));
@@ -8015,7 +8015,7 @@ void ggml_graph_dump_dot(const struct ggml_cgraph * gb, const struct ggml_cgraph
                 {
                     fprintf(fp, "#");
                 }
-                if (j < ggml_nelements(node) - 1) {
+                if (j < ggml_nelements(बुहोल) - 1) {
                     fprintf(fp, ", ");
                 }
             }
@@ -8025,25 +8025,25 @@ void ggml_graph_dump_dot(const struct ggml_cgraph * gb, const struct ggml_cgraph
     }
 
     for (int i = 0; i < gb->n_nodes; i++) {
-        struct ggml_tensor * node = gb->nodes[i];
+        struct ggml_tensor * बुहोल = gb->nodes[i];
 
         for (int j = 0; j < GGML_MAX_SRC; j++) {
-            if (node->src[j]) {
+            if (बुहोल->src[j]) {
                 char label[16];
                 snprintf(label, sizeof(label), "src %d", j);
-                ggml_graph_dump_dot_node_edge(fp, gb, node, node->src[j], label);
+                ggml_graph_dump_dot_बुहोल_edge(fp, gb, बुहोल, बुहोल->src[j], label);
             }
         }
     }
 
     for (int i = 0; i < gb->n_leafs; i++) {
-        struct ggml_tensor * node = gb->leafs[i];
+        struct ggml_tensor * बुहोल = gb->leafs[i];
 
         for (int j = 0; j < GGML_MAX_SRC; j++) {
-            if (node->src[j]) {
+            if (बुहोल->src[j]) {
                 char label[16];
                 snprintf(label, sizeof(label), "src %d", j);
-                ggml_graph_dump_dot_leaf_edge(fp, node, node->src[j], label);
+                ggml_graph_dump_dot_leaf_edge(fp, बुहोल, बुहोल->src[j], label);
             }
         }
     }
@@ -8057,9 +8057,9 @@ void ggml_graph_dump_dot(const struct ggml_cgraph * gb, const struct ggml_cgraph
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ggml_set_input(struct ggml_tensor * tensor) {
+void ggml_set_पासोक(struct ggml_tensor * tensor) {
     GGML_ASSERT(tensor->op == GGML_OP_NONE);
-    tensor->flags |= GGML_TENSOR_FLAG_INPUT;
+    tensor->flags |= GGML_TENSOR_FLAG_पासोक;
 }
 
 void ggml_set_output(struct ggml_tensor * tensor) {

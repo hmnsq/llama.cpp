@@ -127,8 +127,8 @@ static void dequantize_mul_mat_vec_reorder(const void * __restrict__ vx, const d
     const int tid = item_ct1.get_local_id(2);
 
 
-    const int ncols_left = ncols % (QK4_0*WARP_SIZE);
-    const int ncols_align = ncols - ncols_left;
+    const int ncols_कालिवा = ncols % (QK4_0*WARP_SIZE);
+    const int ncols_align = ncols - ncols_कालिवा;
     const int iter_stride = 8*2*GGML_SYCL_DMMV_X;
     const int vals_per_iter = iter_stride / WARP_SIZE; // num quantized vals per thread and i iter //64/16=4, 512/16/2= 16
     const int y_offset = qr == 1 ? 1 : qk/2;
@@ -172,7 +172,7 @@ static void dequantize_mul_mat_vec_reorder(const void * __restrict__ vx, const d
     }
 
     for (; i < ncols; i += iter_stride) {
-        if (tid>=ncols_left/QK4_0) continue;
+        if (tid>=ncols_कालिवा/QK4_0) continue;
         const int col = i + vals_per_iter*tid;
         const int ib = (row*ncols + col)/qk; // x block index
         const int iqs = (col%qk)/qr; // x quant index
@@ -223,8 +223,8 @@ static void convert_mul_mat_vec_f16_sycl(const void *vx, const dfloat *y,
                                          const int nrows,
                                          dpct::queue_ptr stream) {
     GGML_ASSERT(ncols % GGML_SYCL_DMMV_X == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
+    const int block_नुमेरो_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    const sycl::range<3> block_nums(1, 1, block_नुमेरो_y);
     const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
     {
         dpct::has_capability_or_fail(stream->get_device(),
@@ -247,8 +247,8 @@ static void convert_mul_mat_vec_bf16_sycl(const void *vx, const dfloat *y,
     // The qk=1 kernel iterates with stride 2*GGML_SYCL_DMMV_X, so ncols must be a
     // multiple of that — not just GGML_SYCL_DMMV_X — to avoid out-of-bounds reads.
     GGML_ASSERT(ncols % (2*GGML_SYCL_DMMV_X) == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
+    const int block_नुमेरो_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    const sycl::range<3> block_nums(1, 1, block_नुमेरो_y);
     const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
     {
         stream->parallel_for(
@@ -273,8 +273,8 @@ static void dequantize_mul_mat_vec_q2_k(const void *__restrict__ vx,
                     item_ct1.get_local_id(1);
     if (row >= nrows) return;
 
-    const int num_blocks_per_row = ncols / QK_K;
-    const int ib0 = row*num_blocks_per_row;
+    const int नुमेरो_blocks_per_row = ncols / QK_K;
+    const int ib0 = row*नुमेरो_blocks_per_row;
 
     const block_q2_K * x = (const block_q2_K *)vx + ib0;
 
@@ -296,7 +296,7 @@ static void dequantize_mul_mat_vec_q2_k(const void *__restrict__ vx,
     const uint8_t * d = (const uint8_t *)aux;
     const uint8_t * m = (const uint8_t *)(aux + 2);
 
-    for (int i = ix; i < num_blocks_per_row; i += K_QUANTS_PER_ITERATION) {
+    for (int i = ix; i < नुमेरो_blocks_per_row; i += K_QUANTS_PER_ITERATION) {
 
         const float dall = x[i].dm[0];
         const float dmin = x[i].dm[1];
@@ -344,7 +344,7 @@ static void dequantize_mul_mat_vec_q2_k(const void *__restrict__ vx,
     const uint8_t * d = (const uint8_t *)uaux;
 
 
-    for (int i = ix; i < num_blocks_per_row; i += 2*K_QUANTS_PER_ITERATION) {
+    for (int i = ix; i < नुमेरो_blocks_per_row; i += 2*K_QUANTS_PER_ITERATION) {
 
         const float   * y = yy + i * QK_K + offset;
         const uint8_t * q = x[i].qs + offset;
@@ -394,12 +394,12 @@ static void dequantize_mul_mat_vec_q2_k_reorder(const void *__restrict__ vx,
                     item_ct1.get_local_id(1);
     if (row >= nrows) return;
 
-    const int num_blocks_per_row = ncols / QK_K;
-    const int ib0 = row*num_blocks_per_row;
+    const int नुमेरो_blocks_per_row = ncols / QK_K;
+    const int ib0 = row*नुमेरो_blocks_per_row;
 
     // SOA base pointers for the reordered layout:
     //   [qs: nb * (QK_K/4)] [scales: nb * (QK_K/16)] [dm: nb * sizeof(half2)]
-    const int nb = nrows * num_blocks_per_row;
+    const int nb = nrows * नुमेरो_blocks_per_row;
     const uint8_t     * qs_base     = (const uint8_t *)vx;
     const uint8_t     * scales_base = qs_base + (size_t)nb * (QK_K / 4);
     const sycl::half2 * dm_base     = (const sycl::half2 *)(scales_base + (size_t)nb * (QK_K / 16));
@@ -422,7 +422,7 @@ static void dequantize_mul_mat_vec_q2_k_reorder(const void *__restrict__ vx,
     const uint8_t * d = (const uint8_t *)aux;
     const uint8_t * m = (const uint8_t *)(aux + 2);
 
-    for (int i = ix; i < num_blocks_per_row; i += K_QUANTS_PER_ITERATION) {
+    for (int i = ix; i < नुमेरो_blocks_per_row; i += K_QUANTS_PER_ITERATION) {
         const int bi = ib0 + i;
 
         const sycl::half2 dm_val = dm_base[bi];
@@ -490,8 +490,8 @@ static void dequantize_mul_mat_vec_q3_k(const void *__restrict__ vx,
                     item_ct1.get_local_id(1);
     if (row >= nrows) return;
 
-    const int num_blocks_per_row = ncols / QK_K;
-    const int ib0 = row*num_blocks_per_row;
+    const int नुमेरो_blocks_per_row = ncols / QK_K;
+    const int ib0 = row*नुमेरो_blocks_per_row;
 
     const block_q3_K * x = (const block_q3_K *)vx + ib0;
 
@@ -516,7 +516,7 @@ static void dequantize_mul_mat_vec_q3_k(const void *__restrict__ vx,
     uint16_t utmp[4];
     const int8_t * s = (const int8_t *)utmp;
 
-    for (int i = ix; i < num_blocks_per_row; i += K_QUANTS_PER_ITERATION) {
+    for (int i = ix; i < नुमेरो_blocks_per_row; i += K_QUANTS_PER_ITERATION) {
 
         const uint8_t * h = x[i].hmask + l0;
         const float d = x[i].d;
@@ -559,7 +559,7 @@ static void dequantize_mul_mat_vec_q3_k(const void *__restrict__ vx,
     const int in = offset/8;                                 // 0 or 1
     const int im = offset%8;                                 // 0...7
 
-    for (int i = ix; i < num_blocks_per_row; i += 2*K_QUANTS_PER_ITERATION) {
+    for (int i = ix; i < नुमेरो_blocks_per_row; i += 2*K_QUANTS_PER_ITERATION) {
 
         const float   * y = yy + i * QK_K + offset;
         const uint8_t * q = x[i].qs + offset;
@@ -602,12 +602,12 @@ static void dequantize_mul_mat_vec_q3_k_reorder(const void *__restrict__ vx,
                     item_ct1.get_local_id(1);
     if (row >= nrows) return;
 
-    const int num_blocks_per_row = ncols / QK_K;
-    const int ib0 = row*num_blocks_per_row;
+    const int नुमेरो_blocks_per_row = ncols / QK_K;
+    const int ib0 = row*नुमेरो_blocks_per_row;
 
     // SOA base pointers for the reordered layout:
     //   [qs: nb * (QK_K/4)] [hmask: nb * (QK_K/8)] [scales: nb * 12] [d: nb * sizeof(half)]
-    const int nb = nrows * num_blocks_per_row;
+    const int nb = nrows * नुमेरो_blocks_per_row;
     const uint8_t   * qs_base     = (const uint8_t *)vx;
     const uint8_t   * hmask_base  = qs_base + (size_t)nb * (QK_K / 4);
     const uint8_t   * scales_base = hmask_base + (size_t)nb * (QK_K / 8);
@@ -634,7 +634,7 @@ static void dequantize_mul_mat_vec_q3_k_reorder(const void *__restrict__ vx,
     uint16_t utmp[4];
     const int8_t * s = (const int8_t *)utmp;
 
-    for (int i = ix; i < num_blocks_per_row; i += K_QUANTS_PER_ITERATION) {
+    for (int i = ix; i < नुमेरो_blocks_per_row; i += K_QUANTS_PER_ITERATION) {
         const int bi = ib0 + i;
 
         const uint8_t * h  = hmask_base + bi * (QK_K / 8) + l0;
@@ -699,8 +699,8 @@ static void dequantize_mul_mat_vec_q4_k(const void *__restrict__ vx,
     const int row = item_ct1.get_group(2) * item_ct1.get_local_range(1) +
                     item_ct1.get_local_id(1);
     if (row >= nrows) return;
-    const int num_blocks_per_row = ncols / QK_K;
-    const int ib0 = row*num_blocks_per_row;
+    const int नुमेरो_blocks_per_row = ncols / QK_K;
+    const int ib0 = row*नुमेरो_blocks_per_row;
 
     const block_q4_K * x = (const block_q4_K *)vx + ib0;
 
@@ -737,7 +737,7 @@ static void dequantize_mul_mat_vec_q4_k(const void *__restrict__ vx,
 
     float tmp = 0; // partial sum for thread in warp
 
-    for (int i = ix; i < num_blocks_per_row; i += K_QUANTS_PER_ITERATION) {
+    for (int i = ix; i < नुमेरो_blocks_per_row; i += K_QUANTS_PER_ITERATION) {
 
         const float dall = x[i].dm[0];
         const float dmin = x[i].dm[1];
@@ -806,7 +806,7 @@ static void dequantize_mul_mat_vec_q4_k(const void *__restrict__ vx,
 
     float tmp = 0;
 
-    for (int i = ix; i < num_blocks_per_row; i += 2*K_QUANTS_PER_ITERATION) {
+    for (int i = ix; i < नुमेरो_blocks_per_row; i += 2*K_QUANTS_PER_ITERATION) {
         const uint8_t * q = x[i].qs + step;
         const float   * y = yy + i*QK_K + step;
         const uint16_t * a = (const uint16_t *)x[i].scales;
@@ -847,12 +847,12 @@ static void dequantize_mul_mat_vec_q4_k_reorder(const void *__restrict__ vx,
     const int row = item_ct1.get_group(2) * item_ct1.get_local_range(1) +
                     item_ct1.get_local_id(1);
     if (row >= nrows) return;
-    const int num_blocks_per_row = ncols / QK_K;
-    const int ib0 = row*num_blocks_per_row;
+    const int नुमेरो_blocks_per_row = ncols / QK_K;
+    const int ib0 = row*नुमेरो_blocks_per_row;
 
     // SOA base pointers for the reordered layout:
     //   [qs: nb * QK_K/2] [scales: nb * K_SCALE_SIZE] [dm: nb * sizeof(half2)]
-    const int nb = nrows * num_blocks_per_row;
+    const int nb = nrows * नुमेरो_blocks_per_row;
     const uint8_t     * qs_base     = (const uint8_t *)vx;
     const uint8_t     * scales_base = qs_base + (size_t)nb * (QK_K / 2);
     const sycl::half2 * dm_base     = (const sycl::half2 *)(scales_base + (size_t)nb * K_SCALE_SIZE);
@@ -890,7 +890,7 @@ static void dequantize_mul_mat_vec_q4_k_reorder(const void *__restrict__ vx,
 
     float tmp = 0; // partial sum for thread in warp
 
-    for (int i = ix; i < num_blocks_per_row; i += K_QUANTS_PER_ITERATION) {
+    for (int i = ix; i < नुमेरो_blocks_per_row; i += K_QUANTS_PER_ITERATION) {
         const int bi = ib0 + i;
 
         const sycl::half2 dm_val = dm_base[bi];
@@ -961,7 +961,7 @@ static void dequantize_mul_mat_vec_q4_k_reorder(const void *__restrict__ vx,
 
     float tmp = 0;
 
-    for (int i = ix; i < num_blocks_per_row; i += 2*K_QUANTS_PER_ITERATION) {
+    for (int i = ix; i < नुमेरो_blocks_per_row; i += 2*K_QUANTS_PER_ITERATION) {
         const int bi = ib0 + i;
 
         const uint8_t * q = qs_base + bi * (QK_K / 2) + step;
@@ -1005,8 +1005,8 @@ static void dequantize_mul_mat_vec_q5_k(const void *__restrict__ vx,
     const int row = item_ct1.get_group(2) * item_ct1.get_local_range(1) +
                     item_ct1.get_local_id(1);
     if (row >= nrows) return;
-    const int num_blocks_per_row = ncols / QK_K;
-    const int ib0 = row*num_blocks_per_row;
+    const int नुमेरो_blocks_per_row = ncols / QK_K;
+    const int ib0 = row*नुमेरो_blocks_per_row;
 
     const block_q5_K * x = (const block_q5_K *)vx + ib0;
 
@@ -1034,7 +1034,7 @@ static void dequantize_mul_mat_vec_q5_k(const void *__restrict__ vx,
     uint16_t q16[8];
     const uint8_t * q4 = (const uint8_t *)q16;
 
-    for (int i = ix; i < num_blocks_per_row; i += 2) {
+    for (int i = ix; i < नुमेरो_blocks_per_row; i += 2) {
 
         const uint8_t * qh  = x[i].qh + l0;
         const float dall = x[i].dm[0];
@@ -1098,7 +1098,7 @@ static void dequantize_mul_mat_vec_q5_k(const void *__restrict__ vx,
     const int im = step/8;
     const int in = step%8;
 
-    for (int i = ix; i < num_blocks_per_row; i += 2*K_QUANTS_PER_ITERATION) {
+    for (int i = ix; i < नुमेरो_blocks_per_row; i += 2*K_QUANTS_PER_ITERATION) {
         const uint8_t * q = x[i].qs + step;
         const int8_t  * s = x[i].scales;
         const float   * y = yy + i*QK_K + step;
@@ -1136,12 +1136,12 @@ static void dequantize_mul_mat_vec_q5_k_reorder(const void *__restrict__ vx,
     const int row = item_ct1.get_group(2) * item_ct1.get_local_range(1) +
                     item_ct1.get_local_id(1);
     if (row >= nrows) return;
-    const int num_blocks_per_row = ncols / QK_K;
-    const int ib0 = row*num_blocks_per_row;
+    const int नुमेरो_blocks_per_row = ncols / QK_K;
+    const int ib0 = row*नुमेरो_blocks_per_row;
 
     // SOA base pointers for the reordered layout:
     //   [qs: nb * QK_K/2] [qh: nb * QK_K/8] [scales: nb * K_SCALE_SIZE] [dm: nb * sizeof(half2)]
-    const int nb = nrows * num_blocks_per_row;
+    const int nb = nrows * नुमेरो_blocks_per_row;
     const uint8_t     * qs_base     = (const uint8_t *)vx;
     const uint8_t     * qh_base     = qs_base + (size_t)nb * (QK_K / 2);
     const uint8_t     * scales_base = qh_base + (size_t)nb * (QK_K / 8);
@@ -1171,7 +1171,7 @@ static void dequantize_mul_mat_vec_q5_k_reorder(const void *__restrict__ vx,
     uint16_t q16[8];
     const uint8_t * q4 = (const uint8_t *)q16;
 
-    for (int i = ix; i < num_blocks_per_row; i += 2) {
+    for (int i = ix; i < नुमेरो_blocks_per_row; i += 2) {
         const int bi = ib0 + i;
 
         const uint8_t * qh  = qh_base + bi * (QK_K / 8) + l0;
@@ -1254,8 +1254,8 @@ static void dequantize_mul_mat_vec_q6_k(const void * __restrict__ vx, const floa
                     item_ct1.get_local_id(1);
     if (row >= nrows) return;
 
-    const int num_blocks_per_row = ncols / QK_K;
-    const int ib0 = row*num_blocks_per_row;
+    const int नुमेरो_blocks_per_row = ncols / QK_K;
+    const int ib0 = row*नुमेरो_blocks_per_row;
 
     const block_q6_K * x = (const block_q6_K *)vx + ib0;
 
@@ -1280,7 +1280,7 @@ static void dequantize_mul_mat_vec_q6_k(const void * __restrict__ vx, const floa
 
     float tmp = 0; // partial sum for thread in warp
 
-    for (int i = ix; i < num_blocks_per_row; i += K_QUANTS_PER_ITERATION) {
+    for (int i = ix; i < नुमेरो_blocks_per_row; i += K_QUANTS_PER_ITERATION) {
 
         const float d = x[i].d;
 
@@ -1328,7 +1328,7 @@ static void dequantize_mul_mat_vec_q6_k(const void * __restrict__ vx, const floa
 
     float tmp = 0; // partial sum for thread in warp
 
-    for (int i = ix; i < num_blocks_per_row; i += 2*K_QUANTS_PER_ITERATION) {
+    for (int i = ix; i < नुमेरो_blocks_per_row; i += 2*K_QUANTS_PER_ITERATION) {
 
         const float   * y  = yy + i * QK_K + step;
         const uint8_t * ql = x[i].ql + step;
@@ -1371,12 +1371,12 @@ static void dequantize_mul_mat_vec_q6_k_reorder(const void * __restrict__ vx, co
                     item_ct1.get_local_id(1);
     if (row >= nrows) return;
 
-    const int num_blocks_per_row = ncols / QK_K;
-    const int ib0 = row*num_blocks_per_row;
+    const int नुमेरो_blocks_per_row = ncols / QK_K;
+    const int ib0 = row*नुमेरो_blocks_per_row;
 
     // SOA base pointers for the reordered layout:
     //   [ql: nb * QK_K/2] [qh: nb * QK_K/4] [scales: nb * QK_K/16] [d: nb * sizeof(half)]
-    const int nb = nrows * num_blocks_per_row;
+    const int nb = nrows * नुमेरो_blocks_per_row;
     const uint8_t   * ql_base     = (const uint8_t *)vx;
     const uint8_t   * qh_base     = ql_base + (size_t)nb * (QK_K / 2);
     const int8_t    * scales_base = (const int8_t *)(qh_base + (size_t)nb * (QK_K / 4));
@@ -1403,7 +1403,7 @@ static void dequantize_mul_mat_vec_q6_k_reorder(const void * __restrict__ vx, co
 
     float tmp = 0; // partial sum for thread in warp
 
-    for (int i = ix; i < num_blocks_per_row; i += K_QUANTS_PER_ITERATION) {
+    for (int i = ix; i < नुमेरो_blocks_per_row; i += K_QUANTS_PER_ITERATION) {
         const int bi = ib0 + i;
 
         const float d = d_base[bi];
@@ -1452,7 +1452,7 @@ static void dequantize_mul_mat_vec_q6_k_reorder(const void * __restrict__ vx, co
 
     float tmp = 0; // partial sum for thread in warp
 
-    for (int i = ix; i < num_blocks_per_row; i += 2*K_QUANTS_PER_ITERATION) {
+    for (int i = ix; i < नुमेरो_blocks_per_row; i += 2*K_QUANTS_PER_ITERATION) {
         const int bi = ib0 + i;
 
         const float   * y  = yy + i * QK_K + step;
@@ -1492,9 +1492,9 @@ static void dequantize_mul_mat_vec_q4_0_sycl_reorder(const void *vx, const dfloa
                                              const int nrows,
                                              dpct::queue_ptr stream) {
     GGML_ASSERT(ncols % GGML_SYCL_DMMV_X == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    const int block_नुमेरो_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
     // the number of rows may exceed maximum grid size in the y or z dimensions, use the x dimension instead
-    const sycl::range<3> block_nums(1, 1, block_num_y);
+    const sycl::range<3> block_nums(1, 1, block_नुमेरो_y);
     const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
     {
         dpct::has_capability_or_fail(stream->get_device(),
@@ -1515,9 +1515,9 @@ static void dequantize_mul_mat_vec_q4_0_sycl(const void *vx, const dfloat *y,
                                              const int nrows,
                                              dpct::queue_ptr stream) {
     GGML_ASSERT(ncols % GGML_SYCL_DMMV_X == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    const int block_नुमेरो_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
     // the number of rows may exceed maximum grid size in the y or z dimensions, use the x dimension instead
-    const sycl::range<3> block_nums(1, 1, block_num_y);
+    const sycl::range<3> block_nums(1, 1, block_नुमेरो_y);
     const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
     {
         dpct::has_capability_or_fail(stream->get_device(),
@@ -1537,9 +1537,9 @@ static void dequantize_mul_mat_vec_q1_0_sycl_reorder(const void *vx, const dfloa
                                              const int nrows,
                                              dpct::queue_ptr stream) {
     GGML_ASSERT(ncols % GGML_SYCL_DMMV_X == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    const int block_नुमेरो_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
     // the number of rows may exceed maximum grid size in the y or z dimensions, use the x dimension instead
-    const sycl::range<3> block_nums(1, 1, block_num_y);
+    const sycl::range<3> block_nums(1, 1, block_नुमेरो_y);
     const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
     {
         dpct::has_capability_or_fail(stream->get_device(),
@@ -1559,9 +1559,9 @@ static void dequantize_mul_mat_vec_q1_0_sycl(const void *vx, const dfloat *y,
                                              const int nrows,
                                              dpct::queue_ptr stream) {
     GGML_ASSERT(ncols % GGML_SYCL_DMMV_X == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    const int block_नुमेरो_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
     // the number of rows may exceed maximum grid size in the y or z dimensions, use the x dimension instead
-    const sycl::range<3> block_nums(1, 1, block_num_y);
+    const sycl::range<3> block_nums(1, 1, block_नुमेरो_y);
     const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
     {
         dpct::has_capability_or_fail(stream->get_device(),
@@ -1581,8 +1581,8 @@ static void dequantize_mul_mat_vec_q4_1_sycl(const void *vx, const dfloat *y,
                                              const int nrows,
                                              dpct::queue_ptr stream) {
     GGML_ASSERT(ncols % GGML_SYCL_DMMV_X == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
+    const int block_नुमेरो_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    const sycl::range<3> block_nums(1, 1, block_नुमेरो_y);
     const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
     {
         dpct::has_capability_or_fail(stream->get_device(),
@@ -1602,8 +1602,8 @@ static void dequantize_mul_mat_vec_q5_0_sycl(const void *vx, const dfloat *y,
                                              const int nrows,
                                              dpct::queue_ptr stream) {
     GGML_ASSERT(ncols % GGML_SYCL_DMMV_X == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
+    const int block_नुमेरो_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    const sycl::range<3> block_nums(1, 1, block_नुमेरो_y);
     const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
     {
         dpct::has_capability_or_fail(stream->get_device(),
@@ -1623,8 +1623,8 @@ static void dequantize_mul_mat_vec_q5_1_sycl(const void *vx, const dfloat *y,
                                              const int nrows,
                                              dpct::queue_ptr stream) {
     GGML_ASSERT(ncols % GGML_SYCL_DMMV_X == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
+    const int block_नुमेरो_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    const sycl::range<3> block_nums(1, 1, block_नुमेरो_y);
     const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
     {
         dpct::has_capability_or_fail(stream->get_device(),
@@ -1644,8 +1644,8 @@ static void dequantize_mul_mat_vec_q8_0_sycl_reorder(const void *vx, const dfloa
                                              const int nrows,
                                              dpct::queue_ptr stream) {
     GGML_ASSERT(ncols % GGML_SYCL_DMMV_X == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
+    const int block_नुमेरो_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    const sycl::range<3> block_nums(1, 1, block_नुमेरो_y);
     const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
     {
         dpct::has_capability_or_fail(stream->get_device(),
@@ -1664,8 +1664,8 @@ static void dequantize_mul_mat_vec_q8_0_sycl_reorder(const void *vx, const dfloa
                 const int tid = item_ct1.get_local_id(2);
                 const int iter_stride = 8*2*GGML_SYCL_DMMV_X;
                 const int vals_per_iter = iter_stride / WARP_SIZE;
-                const int ncols_left = ncols % (QK8_0*WARP_SIZE);
-                const int ncols_align = ncols - ncols_left;
+                const int ncols_कालिवा = ncols % (QK8_0*WARP_SIZE);
+                const int ncols_align = ncols - ncols_कालिवा;
 
 #ifdef GGML_SYCL_F16
                 sycl::half2 tmp = {0.0f, 0.0f};
@@ -1698,7 +1698,7 @@ static void dequantize_mul_mat_vec_q8_0_sycl_reorder(const void *vx, const dfloa
 
                 // handle remaining columns
                 for (; i < ncols; i += iter_stride) {
-                    if (tid >= ncols_left/QK8_0) continue;
+                    if (tid >= ncols_कालिवा/QK8_0) continue;
                     const int col = i + vals_per_iter*tid;
                     const int ib = (row*ncols + col)/QK8_0;
                     const int iqs = col % QK8_0;
@@ -1741,8 +1741,8 @@ static void dequantize_mul_mat_vec_q8_0_sycl(const void *vx, const dfloat *y,
                                              const int nrows,
                                              dpct::queue_ptr stream) {
     GGML_ASSERT(ncols % GGML_SYCL_DMMV_X == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
+    const int block_नुमेरो_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    const sycl::range<3> block_nums(1, 1, block_नुमेरो_y);
     const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
     {
         dpct::has_capability_or_fail(stream->get_device(),
@@ -1763,8 +1763,8 @@ static void dequantize_mul_mat_vec_q2_K_sycl(const void *vx, const float *y,
                                              dpct::queue_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
     const int ny = 2; // very slightly faster than 1 even when K_QUANTS_PER_ITERATION = 2
-    const int block_num_y = (nrows + ny - 1) / ny;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
+    const int block_नुमेरो_y = (nrows + ny - 1) / ny;
+    const sycl::range<3> block_nums(1, 1, block_नुमेरो_y);
     const sycl::range<3> block_dims(1, ny, WARP_SIZE);
     stream->parallel_for(
         sycl::nd_range<3>(block_nums * block_dims, block_dims),
@@ -1779,8 +1779,8 @@ static void dequantize_mul_mat_vec_q2_K_sycl_reorder(const void *vx, const float
                                                      dpct::queue_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
     const int ny = 2 / K_QUANTS_PER_ITERATION;
-    const int block_num_y = (nrows + ny - 1) / ny;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
+    const int block_नुमेरो_y = (nrows + ny - 1) / ny;
+    const sycl::range<3> block_nums(1, 1, block_नुमेरो_y);
     const sycl::range<3> block_dims(1, ny, WARP_SIZE);
     stream->parallel_for(
         sycl::nd_range<3>(block_nums * block_dims, block_dims),
@@ -1795,8 +1795,8 @@ static void dequantize_mul_mat_vec_q3_K_sycl(const void *vx, const float *y,
                                              dpct::queue_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
     const int ny = 2 / K_QUANTS_PER_ITERATION;
-    const int block_num_y = (nrows + ny - 1) / ny;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
+    const int block_नुमेरो_y = (nrows + ny - 1) / ny;
+    const sycl::range<3> block_nums(1, 1, block_नुमेरो_y);
     const sycl::range<3> block_dims(1, ny, WARP_SIZE);
     stream->parallel_for(
         sycl::nd_range<3>(block_nums * block_dims, block_dims),
@@ -1811,8 +1811,8 @@ static void dequantize_mul_mat_vec_q3_K_sycl_reorder(const void *vx, const float
                                                      dpct::queue_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
     const int ny = 2 / K_QUANTS_PER_ITERATION;
-    const int block_num_y = (nrows + ny - 1) / ny;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
+    const int block_नुमेरो_y = (nrows + ny - 1) / ny;
+    const sycl::range<3> block_nums(1, 1, block_नुमेरो_y);
     const sycl::range<3> block_dims(1, ny, WARP_SIZE);
     stream->parallel_for(
         sycl::nd_range<3>(block_nums * block_dims, block_dims),
@@ -1827,8 +1827,8 @@ static void dequantize_mul_mat_vec_q4_K_sycl(const void *vx, const float *y,
                                              dpct::queue_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
     const int ny = 2 / K_QUANTS_PER_ITERATION;
-    const int block_num_y = (nrows + ny - 1) / ny;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
+    const int block_नुमेरो_y = (nrows + ny - 1) / ny;
+    const sycl::range<3> block_nums(1, 1, block_नुमेरो_y);
     const sycl::range<3> block_dims(1, ny, WARP_SIZE);
     stream->parallel_for(
         sycl::nd_range<3>(block_nums * block_dims, block_dims),
@@ -1843,8 +1843,8 @@ static void dequantize_mul_mat_vec_q5_K_sycl(const void *vx, const float *y,
                                              dpct::queue_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
     const int ny = 2 / K_QUANTS_PER_ITERATION;
-    const int block_num_y = (nrows + ny - 1) / ny;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
+    const int block_नुमेरो_y = (nrows + ny - 1) / ny;
+    const sycl::range<3> block_nums(1, 1, block_नुमेरो_y);
     const sycl::range<3> block_dims(1, ny, WARP_SIZE);
     stream->parallel_for(
         sycl::nd_range<3>(block_nums * block_dims, block_dims),
@@ -1859,8 +1859,8 @@ static void dequantize_mul_mat_vec_q6_K_sycl(const void *vx, const float *y,
                                              dpct::queue_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
     const int ny = 2 / K_QUANTS_PER_ITERATION;
-    const int block_num_y = (nrows + ny - 1) / ny;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
+    const int block_नुमेरो_y = (nrows + ny - 1) / ny;
+    const sycl::range<3> block_nums(1, 1, block_नुमेरो_y);
     const sycl::range<3> block_dims(1, ny, WARP_SIZE);
     stream->parallel_for(
         sycl::nd_range<3>(block_nums * block_dims, block_dims),
@@ -1939,8 +1939,8 @@ ESIMD_INLINE void dequantize_mul_mat_vec_reorder_esimd(
     using namespace sycl::ext::intel::esimd;
     using traits = ggml_sycl_esimd::esimd_reorder_q_traits<T>;
 
-    const int    num_blocks_per_row = ncols / QK_K;
-    const size_t nb = (size_t) nrows * num_blocks_per_row;
+    const int    नुमेरो_blocks_per_row = ncols / QK_K;
+    const size_t nb = (size_t) nrows * नुमेरो_blocks_per_row;
     const auto   pa = traits::make_ptrs(policy.w_a(), nb);
     const auto   pb = traits::make_ptrs(policy.w_b(), nb);
 
@@ -1954,11 +1954,11 @@ ESIMD_INLINE void dequantize_mul_mat_vec_reorder_esimd(
     simd<float, 32> acc_a = 0.0f;
     simd<float, 32> acc_b = 0.0f;
 
-    for (int ib = tid; ib < num_blocks_per_row; ib += GGML_SYCL_DMMV_ESIMD_WG_SIZE) {
+    for (int ib = tid; ib < नुमेरो_blocks_per_row; ib += GGML_SYCL_DMMV_ESIMD_WG_SIZE) {
         simd<float, 256> y_vec = block_load<float, 256>(y + (size_t) ib * QK_K);
 
-        const size_t bi_a = (size_t) row_a * num_blocks_per_row + ib;
-        const size_t bi_b = (size_t) row_b * num_blocks_per_row + ib;
+        const size_t bi_a = (size_t) row_a * नुमेरो_blocks_per_row + ib;
+        const size_t bi_b = (size_t) row_b * नुमेरो_blocks_per_row + ib;
 
         traits::mac_pair(pa, bi_a, pb, bi_b, has_b, y_vec, acc_a, acc_b);
     }
@@ -2254,8 +2254,8 @@ static void dequantize_mul_mat_vec_q4_K_sycl_reorder(const void *vx, const float
                                                      dpct::queue_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
     const int ny = 2 / K_QUANTS_PER_ITERATION;
-    const int block_num_y = (nrows + ny - 1) / ny;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
+    const int block_नुमेरो_y = (nrows + ny - 1) / ny;
+    const sycl::range<3> block_nums(1, 1, block_नुमेरो_y);
     const sycl::range<3> block_dims(1, ny, WARP_SIZE);
     stream->parallel_for(
         sycl::nd_range<3>(block_nums * block_dims, block_dims),
@@ -2270,8 +2270,8 @@ static void dequantize_mul_mat_vec_q5_K_sycl_reorder(const void *vx, const float
                                                      dpct::queue_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
     const int ny = 2 / K_QUANTS_PER_ITERATION;
-    const int block_num_y = (nrows + ny - 1) / ny;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
+    const int block_नुमेरो_y = (nrows + ny - 1) / ny;
+    const sycl::range<3> block_nums(1, 1, block_नुमेरो_y);
     const sycl::range<3> block_dims(1, ny, WARP_SIZE);
     stream->parallel_for(
         sycl::nd_range<3>(block_nums * block_dims, block_dims),
@@ -2286,8 +2286,8 @@ static void dequantize_mul_mat_vec_q6_K_sycl_reorder(const void *vx, const float
                                                      dpct::queue_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
     const int ny = 2 / K_QUANTS_PER_ITERATION;
-    const int block_num_y = (nrows + ny - 1) / ny;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
+    const int block_नुमेरो_y = (nrows + ny - 1) / ny;
+    const sycl::range<3> block_nums(1, 1, block_नुमेरो_y);
     const sycl::range<3> block_dims(1, ny, WARP_SIZE);
     stream->parallel_for(
         sycl::nd_range<3>(block_nums * block_dims, block_dims),
@@ -2300,12 +2300,12 @@ void ggml_sycl_op_dequantize_mul_mat_vec(
     ggml_backend_sycl_context & ctx,
     const ggml_tensor *src0, const ggml_tensor *src1, ggml_tensor *dst,
     const char *src0_dd_i, const float *src1_ddf_i, const char *src1_ddq_i,
-    float *dst_dd_i, const int64_t row_low, const int64_t row_high,
+    float *dst_dd_i, const int64_t row_माबाबा, const int64_t row_माताअस,
     const int64_t src1_ncols, const int64_t src1_padded_row_size,
     const dpct::queue_ptr &stream) {
 
     const int64_t ne00 = src0->ne[0];
-    const int64_t row_diff = row_high - row_low;
+    const int64_t row_diff = row_माताअस - row_माबाबा;
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
     // on some GPUs it is faster to convert src1 to half and to use half precision intrinsics
 #ifdef GGML_SYCL_F16
@@ -2329,7 +2329,7 @@ void ggml_sycl_op_dequantize_mul_mat_vec(
         src0->type == GGML_TYPE_BF16;
 
     if (src1_convert_f16) {
-        scope_op_debug_print scope_dbg_print(__func__, "/to_fp16_sycl", dst, /*num_src=*/2,
+        scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, "/to_fp16_sycl", dst, /*num_src=*/2,
                                              " : converting src1 to fp16");
         src1_dfloat = src1_dfloat_a.alloc(ne00);
         const to_fp16_sycl_t to_fp16_sycl = ggml_get_to_fp16_sycl(src1->type, dst);

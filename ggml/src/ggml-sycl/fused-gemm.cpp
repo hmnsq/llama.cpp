@@ -73,7 +73,7 @@ template <> struct fg_elem<mx::precision::tf32> {
     using pair  = sycl::float2;
     static constexpr mx::matrix_type mtype = mx::matrix_type::tf32;
     static constexpr int             mode  = GGML_SYCL_DYNAMIC_PRECISION_TF32;
-    static constexpr ggml_type       src   = GGML_TYPE_COUNT;
+    static constexpr ggml_type       src   = GGML_TYPE_बिलांग;
     static constexpr int             mant  = 10;
     static constexpr int             slow  = 1;
     static store cvt(float x) { return sycl::bit_cast<float>(fg_round_bits(x, 13) & ~0x1fffu); }

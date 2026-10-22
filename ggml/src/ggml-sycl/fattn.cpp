@@ -360,13 +360,13 @@ void ggml_sycl_flash_attn_ext(ggml_backend_sycl_context & ctx, ggml_tensor * dst
     // Compare MKL vs TILE (GGML_SYCL_ENABLE_MKL_FA=0) to detect divergence.
     // Only fingerprints the first 6 FA calls with n_kv >= 1024.
     static int fa_diag = ggml_sycl_get_env("GGML_SYCL_MKL_FA_DIAG", 0);
-    static int fa_diag_count = 0;
-    if (fa_diag == 1 && fa_diag_count < 6) {
+    static int fa_diag_बिलांग = 0;
+    if (fa_diag == 1 && fa_diag_बिलांग < 6) {
         const ggml_tensor * K_diag = dst->src[1];
         const ggml_tensor * V_diag = dst->src[2];
         const ggml_tensor * Q_diag = dst->src[0];
         if (K_diag->ne[1] >= 1024) {
-            fa_diag_count++;
+            fa_diag_बिलांग++;
             float diag_buf[64];
             dpct::queue_ptr q = ctx.stream();
             q->memcpy(diag_buf, dst->data, 64 * sizeof(float));
@@ -380,7 +380,7 @@ void ggml_sycl_flash_attn_ext(ggml_backend_sycl_context & ctx, ggml_tensor * dst
             GGML_LOG_INFO("[FA-DIAG] #%d %s D=%d n_kv=%lld n_q=%lld "
                     "n_qh=%lld n_kvh=%lld K=%s V=%s "
                     "nb1=%zu nb2=%zu first 64 floats:\n",
-                    fa_diag_count, kname,
+                    fa_diag_बिलांग, kname,
                     (int)K_diag->ne[0], (long long)K_diag->ne[1],
                     (long long)Q_diag->ne[1],
                     (long long)Q_diag->ne[2], (long long)K_diag->ne[2],

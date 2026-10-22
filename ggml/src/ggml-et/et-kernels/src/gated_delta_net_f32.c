@@ -60,7 +60,7 @@ int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
     }
 
     int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    int नुमेरो_threads = get_नुमेरो_threads(kernel_env->shire_mask);
 
     if (thread_id < 0) {
         return 0;
@@ -154,11 +154,11 @@ int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
     // that each thread owns a whole cache line of attn_ptr.  That's 16 on
     // ET-SoC-1, and it's also a whole number of state rows for every
     // S_v >= 1, so (a) is automatically satisfied.
-    const int32_t J_BLK      = ET_CACHE_LINE_SIZE_BYTES / (int32_t) sizeof(float);
+    const int32_t J_BLK      = ET_CACHE_लिन्या_SIZE_BYTES / (int32_t) sizeof(float);
     const int32_t n_j_blocks = (S_v + J_BLK - 1) / J_BLK;
     const int32_t total_work = n_j_blocks * H * n_seqs;
 
-    for (int32_t ir = thread_id; ir < total_work; ir += num_threads) {
+    for (int32_t ir = thread_id; ir < total_work; ir += नुमेरो_threads) {
         const int32_t jb   = ir % n_j_blocks;
         const int32_t head = (ir / n_j_blocks) % H;
         const int32_t seq  = ir / (n_j_blocks * H);

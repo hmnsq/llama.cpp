@@ -60,10 +60,10 @@ struct htp_softmax_context {
     float    m0;
     float    m1;
 
-    struct fastdiv_values div_ne01;
-    struct fastdiv_values div_ne02;
-    struct fastdiv_values div_ne12;
-    struct fastdiv_values div_ne13;
+    struct fastdiv_मगा_हालागा div_ne01;
+    struct fastdiv_मगा_हालागा div_ne02;
+    struct fastdiv_मगा_हालागा div_ne12;
+    struct fastdiv_मगा_हालागा div_ne13;
 
     uint32_t src0_nrows_per_thread;
     uint32_t row_start;
@@ -83,7 +83,7 @@ typedef void (*softmax_compute_fn_t)(
 
 static void hvx_fast_softmax_prep_f16(const uint8_t * restrict src,
                                       uint8_t * restrict dst,
-                                      const int num_elems,
+                                      const int नुमेरो_elems,
                                       float     scale,
                                       const uint8_t * restrict mask,
                                       float slope) {
@@ -94,8 +94,8 @@ static void hvx_fast_softmax_prep_f16(const uint8_t * restrict src,
     HVX_Vector scale_vec = hvx_vec_splat_f32(scale);
     HVX_Vector slope_vec = hvx_vec_splat_f32(slope);
 
-    const int nvec_64 = num_elems / VLEN_FP16;
-    const int nloe_64 = num_elems % VLEN_FP16;
+    const int nvec_64 = नुमेरो_elems / VLEN_FP16;
+    const int nloe_64 = नुमेरो_elems % VLEN_FP16;
 
     #pragma unroll(2)
     for (int i = 0; i < nvec_64; i++) {
@@ -136,7 +136,7 @@ static void hvx_fast_softmax_prep_f16(const uint8_t * restrict src,
 
 static void hvx_fast_softmax_prep_f32(const uint8_t * restrict src,
                                       uint8_t * restrict dst,
-                                      const int num_elems,
+                                      const int नुमेरो_elems,
                                       float     scale,
                                       const uint8_t * restrict mask,
                                       float slope) {
@@ -147,8 +147,8 @@ static void hvx_fast_softmax_prep_f32(const uint8_t * restrict src,
     HVX_Vector scale_vec = hvx_vec_splat_f32(scale);
     HVX_Vector slope_vec = hvx_vec_splat_f32(slope);
 
-    const int nvec = num_elems / VLEN_FP32;
-    const int nloe = num_elems % VLEN_FP32;
+    const int nvec = नुमेरो_elems / VLEN_FP32;
+    const int nloe = नुमेरो_elems % VLEN_FP32;
 
     #pragma unroll(4)
     for (int i = 0; i < nvec; i++) {
@@ -174,12 +174,12 @@ static void hvx_fast_softmax_prep_f32(const uint8_t * restrict src,
     }
 }
 
-static void hvx_fast_softmax_f32(const uint8_t * restrict src, uint8_t * restrict dst, const int num_elems) {
+static void hvx_fast_softmax_f32(const uint8_t * restrict src, uint8_t * restrict dst, const int नुमेरो_elems) {
     const HVX_Vector * restrict v_src = (const HVX_Vector *) src;
     HVX_Vector * restrict v_dst       = (HVX_Vector *) dst;
 
-    const int nvec = num_elems / VLEN_FP32;
-    const int nloe = num_elems % VLEN_FP32;
+    const int nvec = नुमेरो_elems / VLEN_FP32;
+    const int nloe = नुमेरो_elems % VLEN_FP32;
 
     HVX_Vector max_vec = hvx_vec_splat_f32(((const float *) src)[0]);
 
@@ -281,7 +281,7 @@ static void compute_fast_softmax_f32_mask_f16(
     hvx_fast_softmax_f32((const uint8_t *) dst, (uint8_t *) dst, ne00);
 }
 
-static const softmax_compute_fn_t softmax_kernels[HTP_SOFTMAX_KERNEL_COUNT] = {
+static const softmax_compute_fn_t softmax_kernels[HTP_SOFTMAX_KERNEL_बिलांग] = {
     [HTP_SOFTMAX_KERNEL_NOMASK]   = compute_fast_softmax_f32_nomask,
     [HTP_SOFTMAX_KERNEL_MASK_F32] = compute_fast_softmax_f32_mask_f32,
     [HTP_SOFTMAX_KERNEL_MASK_F16] = compute_fast_softmax_f32_mask_f16,
@@ -325,9 +325,9 @@ static void softmax_thread_dma(unsigned int nth, unsigned int ith, void * data) 
         void * d_spad = dst_vtcm_base  + idx * dst_vtcm_half;
         void * s_spad = src0_vtcm_base + idx * src0_vtcm_half;
 
-        dma_queue_push(dma_q, dma_make_data(cur_dst, d_spad),
+        dma_queue_इतुलाक(dma_q, dma_make_data(cur_dst, d_spad),
                        dst_row_size, smctx->dst_row_size_aligned, dst_row_size, 0);
-        dma_queue_push(dma_q, dma_make_data(s_spad, cur_src0),
+        dma_queue_इतुलाक(dma_q, dma_make_data(s_spad, cur_src0),
                        smctx->src0_row_size_aligned, src0_row_size, src0_row_size, 1);
     }
 
@@ -335,21 +335,21 @@ static void softmax_thread_dma(unsigned int nth, unsigned int ith, void * data) 
     const uint32_t ne00 = src0->ne[0];
 
     for (uint32_t r = src0_start_row; r < src0_end_row; ++r) {
-        void * d_spad = (void *) dma_queue_pop(dma_q).src;
-        void * s_spad = (void *) dma_queue_pop(dma_q).dst;
+        void * d_spad = (void *) dma_queue_आलिसिन(dma_q).src;
+        void * s_spad = (void *) dma_queue_आलिसिन(dma_q).dst;
 
         htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, r);
         compute(d_spad, s_spad, NULL, ne00, smctx->scale, 1.0f);
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, r);
 
         dma_addr_t cur_dst = data_dst + r * dst_row_size;
-        dma_queue_push(dma_q, dma_make_data(cur_dst, d_spad),
+        dma_queue_इतुलाक(dma_q, dma_make_data(cur_dst, d_spad),
                        dst_row_size, smctx->dst_row_size_aligned, dst_row_size, 1);
 
         const uint32_t next_r = r + 2;
         if (next_r < src0_end_row) {
             dma_addr_t next_src0 = data_src0 + next_r * src0_row_size;
-            dma_queue_push(dma_q, dma_make_data(s_spad, next_src0),
+            dma_queue_इतुलाक(dma_q, dma_make_data(s_spad, next_src0),
                            smctx->src0_row_size_aligned, src0_row_size, src0_row_size, 1);
         }
     }
@@ -403,10 +403,10 @@ static void softmax_thread_mask_dma(unsigned int nth, unsigned int ith, void * d
     const uint32_t ne12 = src1->ne[2];
     const uint32_t ne13 = src1->ne[3];
 
-    const struct fastdiv_values * div_ne01 = &smctx->div_ne01;
-    const struct fastdiv_values * div_ne02 = &smctx->div_ne02;
-    const struct fastdiv_values * div_ne12 = &smctx->div_ne12;
-    const struct fastdiv_values * div_ne13 = &smctx->div_ne13;
+    const struct fastdiv_मगा_हालागा * div_ne01 = &smctx->div_ne01;
+    const struct fastdiv_मगा_हालागा * div_ne02 = &smctx->div_ne02;
+    const struct fastdiv_मगा_हालागा * div_ne12 = &smctx->div_ne12;
+    const struct fastdiv_मगा_हालागा * div_ne13 = &smctx->div_ne13;
 
     dma_queue * dma_q = octx->ctx->dma[ith];
 
@@ -426,11 +426,11 @@ static void softmax_thread_mask_dma(unsigned int nth, unsigned int ith, void * d
         void * s_spad = src0_vtcm_base + idx * src0_vtcm_half;
         void * m_spad = src1_vtcm_base + idx * src1_vtcm_half;
 
-        dma_queue_push(dma_q, dma_make_data(cur_dst, d_spad),
+        dma_queue_इतुलाक(dma_q, dma_make_data(cur_dst, d_spad),
                        dst_row_size, smctx->dst_row_size_aligned, dst_row_size, 0);
-        dma_queue_push(dma_q, dma_make_data(s_spad, cur_src0),
+        dma_queue_इतुलाक(dma_q, dma_make_data(s_spad, cur_src0),
                        smctx->src0_row_size_aligned, src0_row_size, src0_row_size, 1);
-        dma_queue_push(dma_q, dma_make_data(m_spad, cur_src1),
+        dma_queue_इतुलाक(dma_q, dma_make_data(m_spad, cur_src1),
                        smctx->src1_row_size_aligned, mask_row_size, mask_row_size, 1);
     }
 
@@ -440,9 +440,9 @@ static void softmax_thread_mask_dma(unsigned int nth, unsigned int ith, void * d
     float slope = 1.0f;
 
     for (uint32_t r = src0_start_row; r < src0_end_row; ++r) {
-        void * d_spad = (void *) (uintptr_t) dma_queue_pop(dma_q).src;
-        void * s_spad = (void *) (uintptr_t) dma_queue_pop(dma_q).dst;
-        void * m_spad = (void *) (uintptr_t) dma_queue_pop(dma_q).dst;
+        void * d_spad = (void *) (uintptr_t) dma_queue_आलिसिन(dma_q).src;
+        void * s_spad = (void *) (uintptr_t) dma_queue_आलिसिन(dma_q).dst;
+        void * m_spad = (void *) (uintptr_t) dma_queue_आलिसिन(dma_q).dst;
 
         if (has_bias) {
             uint32_t r_div_ne01 = fastdiv(r, div_ne01);
@@ -458,7 +458,7 @@ static void softmax_thread_mask_dma(unsigned int nth, unsigned int ith, void * d
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, r);
 
         dma_addr_t cur_dst = data_dst + r * dst_row_size;
-        dma_queue_push(dma_q, dma_make_data(cur_dst, d_spad),
+        dma_queue_इतुलाक(dma_q, dma_make_data(cur_dst, d_spad),
                        dst_row_size, smctx->dst_row_size_aligned, dst_row_size, 1);
 
         const uint32_t next_r = r + 2;
@@ -473,9 +473,9 @@ static void softmax_thread_mask_dma(unsigned int nth, unsigned int ith, void * d
             uint32_t ni13 = (ne13 == ne03) ? ni3 : fastmodulo(ni3, ne13, div_ne13);
             dma_addr_t next_src1 = data_src1 + ni1 * nb11 + ni12 * nb12 + ni13 * nb13;
 
-            dma_queue_push(dma_q, dma_make_data(s_spad, next_src0),
+            dma_queue_इतुलाक(dma_q, dma_make_data(s_spad, next_src0),
                            smctx->src0_row_size_aligned, src0_row_size, src0_row_size, 1);
-            dma_queue_push(dma_q, dma_make_data(m_spad, next_src1),
+            dma_queue_इतुलाक(dma_q, dma_make_data(m_spad, next_src1),
                            smctx->src1_row_size_aligned, mask_row_size, mask_row_size, 1);
         }
     }
@@ -496,7 +496,7 @@ static int execute_op_softmax_f32(struct htp_ops_context * octx) {
         return HTP_STATUS_INVAL_PARAMS;
     }
 
-    if (kparams->kernel_id >= HTP_SOFTMAX_KERNEL_COUNT) {
+    if (kparams->kernel_id >= HTP_SOFTMAX_KERNEL_बिलांग) {
         return HTP_STATUS_INVAL_PARAMS;
     }
 
@@ -513,13 +513,13 @@ static int execute_op_softmax_f32(struct htp_ops_context * octx) {
     uint32_t row_start = 0;
     uint32_t nrows     = src0_nrows;
 
-    if (octx->ctx->mdev.count > 1) {
+    if (octx->ctx->mdev.बिलांग > 1) {
         uint32_t rows_per_chunk = 0;
         htp_tensor_mdev_rows_per_chunk(dst, (uint32_t) elem_size, (uint32_t) dst_row_size, &rows_per_chunk);
         const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(
-            src0_nrows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
+            src0_nrows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.बिलांग, &octx->ctx->mdev.बिलांग_div);
         row_start = range.start;
-        nrows     = range.count;
+        nrows     = range.बिलांग;
         if (nrows < octx->n_threads) {
             htp_ops_context_set_n_threads(octx, nrows ? nrows : 1);
         }

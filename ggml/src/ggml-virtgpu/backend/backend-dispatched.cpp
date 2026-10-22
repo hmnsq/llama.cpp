@@ -13,7 +13,7 @@ ggml_backend_t     bck = NULL;
 
 uint64_t timer_start = 0;
 uint64_t timer_total = 0;
-uint64_t timer_count = 0;
+uint64_t timer_बिलांग = 0;
 
 uint32_t backend_dispatch_initialize(void * ggml_backend_reg_fct_p) {
     if (reg != NULL) {
@@ -28,8 +28,8 @@ uint32_t backend_dispatch_initialize(void * ggml_backend_reg_fct_p) {
         return APIR_BACKEND_INITIALIZE_BACKEND_REG_FAILED;
     }
 
-    size_t device_count = reg->iface.get_device_count(reg);
-    if (!device_count) {
+    size_t device_बिलांग = reg->iface.get_device_बिलांग(reg);
+    if (!device_बिलांग) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: no device found\n", __func__);
         return APIR_BACKEND_INITIALIZE_NO_DEVICE;
     }

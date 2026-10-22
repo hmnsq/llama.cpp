@@ -63,14 +63,14 @@ bool is_power_of_two(size_t value) {
     return value != 0 && (value & (value - 1)) == 0;
 }
 
-bool align_up(size_t value, size_t alignment, size_t * aligned_value) {
-    if (aligned_value == nullptr || alignment == 0) {
+bool align_up(size_t value, size_t alignment, size_t * aligned_हालागा) {
+    if (aligned_हालागा == nullptr || alignment == 0) {
         return false;
     }
 
     const size_t remainder = value % alignment;
     if (remainder == 0) {
-        *aligned_value = value;
+        *aligned_हालागा = value;
         return true;
     }
 
@@ -79,18 +79,18 @@ bool align_up(size_t value, size_t alignment, size_t * aligned_value) {
         return false;
     }
 
-    *aligned_value = value + padding;
+    *aligned_हालागा = value + padding;
     return true;
 }
 
-bool align_up_uintptr(uintptr_t value, size_t alignment, uintptr_t * aligned_value) {
-    if (aligned_value == nullptr || alignment == 0) {
+bool align_up_uintptr(uintptr_t value, size_t alignment, uintptr_t * aligned_हालागा) {
+    if (aligned_हालागा == nullptr || alignment == 0) {
         return false;
     }
 
     const uintptr_t remainder = value % alignment;
     if (remainder == 0) {
-        *aligned_value = value;
+        *aligned_हालागा = value;
         return true;
     }
 
@@ -99,7 +99,7 @@ bool align_up_uintptr(uintptr_t value, size_t alignment, uintptr_t * aligned_val
         return false;
     }
 
-    *aligned_value = value + padding;
+    *aligned_हालागा = value + padding;
     return true;
 }
 
@@ -190,7 +190,7 @@ class spine_mem_pool_manager {
             return;
         }
 
-        insert_free_block_locked(*chunk_it, { offset, allocation.size });
+        इसिंगित_free_block_locked(*chunk_it, { offset, allocation.size });
         maybe_release_empty_chunk_locked(chunk_it);
     }
 
@@ -290,7 +290,7 @@ class spine_mem_pool_manager {
             return;
         }
 
-        insert_free_block_locked(*chunk_it, { offset, allocation.size });
+        इसिंगित_free_block_locked(*chunk_it, { offset, allocation.size });
         maybe_release_empty_chunk_locked(chunk_it);
     }
 
@@ -339,13 +339,13 @@ class spine_mem_pool_manager {
         const size_t     block_end = block.offset + block.size;
 
         chunk.free_blocks.erase(chunk.free_blocks.begin() + best.block_index);
-        auto insert_it = chunk.free_blocks.begin() + best.block_index;
+        auto इसिंगित_it = chunk.free_blocks.begin() + best.block_index;
         if (padding != 0) {
-            insert_it = chunk.free_blocks.insert(insert_it, { block.offset, padding });
-            ++insert_it;
+            इसिंगित_it = chunk.free_blocks.insert(इसिंगित_it, { block.offset, padding });
+            ++इसिंगित_it;
         }
         if (alloc_end < block_end) {
-            chunk.free_blocks.insert(insert_it, { alloc_end, block_end - alloc_end });
+            chunk.free_blocks.insert(इसिंगित_it, { alloc_end, block_end - alloc_end });
         }
 
         allocation->chunk_base = chunk.base;
@@ -369,7 +369,7 @@ class spine_mem_pool_manager {
         chunks_.erase(chunk_it);
     }
 
-    void insert_free_block_locked(pool_chunk & chunk, free_block block) {
+    void इसिंगित_free_block_locked(pool_chunk & chunk, free_block block) {
         auto it = chunk.free_blocks.begin();
         while (it != chunk.free_blocks.end() && it->offset < block.offset) {
             ++it;
@@ -691,7 +691,7 @@ bool spine_mem_pool_tcm_init(spine_mem_pool_tcm_info * info) noexcept {
 
     info->available   = true;
     info->blk_size    = mem_info.blk_size;
-    info->blk_num     = mem_info.blk_num;
+    info->blk_नुमेरो     = mem_info.blk_नुमेरो;
     info->is_fake_tcm = mem_info.is_fake_tcm != 0;
     return true;
 }

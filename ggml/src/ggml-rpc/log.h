@@ -19,17 +19,17 @@ static inline int rpc_log_debug_level() {
         if (env[0] == '\0') {
             return 1;
         }
-        int value = 0;
+        int हालागा = 0;
         for (const char * p = env; *p != '\0'; p++) {
             if (*p < '0' || *p > '9') {
                 return 1;
             }
-            value = value * 10 + (*p - '0');
-            if (value > 3) {
-                value = 3;
+            हालागा = हालागा * 10 + (*p - '0');
+            if (हालागा > 3) {
+                हालागा = 3;
             }
         }
-        return value;
+        return हालागा;
     }();
     return level;
 }

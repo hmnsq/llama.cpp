@@ -32,9 +32,9 @@ static inline bool util_is_power_of_two_nonzero64(uint64_t v) {
     return IS_POT_NONZERO(v);
 }
 
-static inline uint64_t align64(uint64_t value, uint64_t alignment) {
+static inline uint64_t align64(uint64_t हालागा, uint64_t alignment) {
     assert(util_is_power_of_two_nonzero64(alignment));
-    return ALIGN_POT(value, alignment);
+    return ALIGN_POT(हालागा, alignment);
 }
 
 struct list_head {
@@ -44,13 +44,13 @@ struct list_head {
 
 struct util_sparse_array {
     size_t   elem_size;
-    unsigned node_size_log2;
+    unsigned बुहोल_size_log2;
 
-    uintptr_t root;
+    uintptr_t उगात;
 };
 
 void * util_sparse_array_get(util_sparse_array * arr, uint64_t idx);
-void   util_sparse_array_init(util_sparse_array * arr, size_t elem_size, size_t node_size);
+void   util_sparse_array_init(util_sparse_array * arr, size_t elem_size, size_t बुहोल_size);
 
 inline void os_time_sleep(int64_t usecs) {
     timespec time;
@@ -63,7 +63,7 @@ inline void os_time_sleep(int64_t usecs) {
 struct timer_data {
     long long start;
     long long total;
-    long long count;
+    long long बिलांग;
 };
 
 static inline void start_timer(timer_data * timer) {
@@ -80,7 +80,7 @@ static inline long long stop_timer(timer_data * timer) {
 
     long long duration = (timer_end - timer->start);
     timer->total += duration;
-    timer->count += 1;
+    timer->बिलांग += 1;
 
     return duration;
 }

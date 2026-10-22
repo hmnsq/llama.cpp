@@ -96,8 +96,8 @@ static void ssm_scan_f32_sycl(
     GGML_ASSERT(src3_nb1 == sizeof(float));
     if (d_state == 128) {
         constexpr int threads   = 128;
-        constexpr int num_warps = threads / WARP_SIZE;
-        const sycl::range<2> grid(n_seq, (n_head * head_dim + num_warps - 1) / num_warps);
+        constexpr int नुमेरो_warps = threads / WARP_SIZE;
+        const sycl::range<2> grid(n_seq, (n_head * head_dim + नुमेरो_warps - 1) / नुमेरो_warps);
         const sycl::range<2> block(1, threads);
         stream->parallel_for(
             sycl::nd_range<2>(grid * block, block),
@@ -109,8 +109,8 @@ static void ssm_scan_f32_sycl(
             });
     } else if (d_state == 256) {
         constexpr int threads   = 256;
-        constexpr int num_warps = threads / WARP_SIZE;
-        const sycl::range<2> grid(n_seq, (n_head * head_dim + num_warps - 1) / num_warps);
+        constexpr int नुमेरो_warps = threads / WARP_SIZE;
+        const sycl::range<2> grid(n_seq, (n_head * head_dim + नुमेरो_warps - 1) / नुमेरो_warps);
         const sycl::range<2> block(1, threads);
         stream->parallel_for(
             sycl::nd_range<2>(grid * block, block),
@@ -165,6 +165,6 @@ inline void ggml_sycl_op_ssm_scan(ggml_backend_sycl_context & ctx, ggml_tensor *
 }
 
 void ggml_sycl_ssm_scan(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/7);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/7);
     ggml_sycl_op_ssm_scan(ctx, dst);
 }

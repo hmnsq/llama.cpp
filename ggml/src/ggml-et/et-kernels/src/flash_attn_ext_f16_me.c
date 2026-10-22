@@ -26,7 +26,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#define NUM_COMPUTE_SHIRES 32
+#define नुमेरो_COMPUTE_SHIRES 32
 #define MINIONS_PER_SHIRE  32
 
 // QK^T tiles: 16 KV positions at a time, K in chunks of 32 F16
@@ -102,7 +102,7 @@ static inline void __attribute__((always_inline)) pack_k_for_transpose16(et_fp16
                                                                          const char * k_base,
                                                                          int64_t      kv_start,
                                                                          int64_t      dk_start,
-                                                                         int64_t      kv_count,
+                                                                         int64_t      kv_बिलांग,
                                                                          int64_t      nb1_k) {
     unsigned long old_mask;
     __asm__ volatile(
@@ -112,7 +112,7 @@ static inline void __attribute__((always_inline)) pack_k_for_transpose16(et_fp16
         :
         :);
 
-    for (int j = 0; j < (int) kv_count; ++j) {
+    for (int j = 0; j < (int) kv_बिलांग; ++j) {
         const et_fp16_t * k_row    = (const et_fp16_t *) (k_base + (kv_start + j) * nb1_k) + dk_start;
         et_fp16_t *       even_row = out + (j * 2) * 32;
         et_fp16_t *       odd_row  = out + (j * 2 + 1) * 32;
@@ -138,7 +138,7 @@ static inline void __attribute__((always_inline)) pack_k_for_transpose16(et_fp16
 
     __asm__ volatile("mova.m.x  %[ms]            \n\t" : : [ms] "r"(old_mask));
 
-    for (int j = (int) kv_count; j < TILE_KV; ++j) {
+    for (int j = (int) kv_बिलांग; j < TILE_KV; ++j) {
         et_fp16_t * even_row = out + (j * 2) * 32;
         et_fp16_t * odd_row  = out + (j * 2 + 1) * 32;
         for (int l = 0; l < TILE_K / 2; ++l) {
@@ -153,13 +153,13 @@ static inline void __attribute__((always_inline)) pack_v_interleaved(et_fp16_t *
                                                                      const char * v_head,
                                                                      int64_t      kv_base,
                                                                      int64_t      dv_start,
-                                                                     int64_t      kv_count,
+                                                                     int64_t      kv_बिलांग,
                                                                      int64_t      nb1_v) {
     for (int k = 0; k < TILE_KV; ++k) {
         const int         l   = k >> 1;
         const int         r   = k & 1;
         et_fp16_t * const dst = out + l * 32 + r;
-        if (k < (int) kv_count) {
+        if (k < (int) kv_बिलांग) {
             const et_fp16_t * v_row = (const et_fp16_t *) (v_head + (kv_base + k) * nb1_v) + dv_start;
             for (int n = 0; n < 16; ++n) {
                 dst[n * 2] = v_row[n];
@@ -176,10 +176,10 @@ static inline void __attribute__((always_inline)) pack_v_interleaved(et_fp16_t *
 static inline void __attribute__((always_inline)) prefetch_kv_to_l2(const char * head,
                                                                     int64_t      kv_start,
                                                                     int64_t      d_start,
-                                                                    int64_t      kv_count,
+                                                                    int64_t      kv_बिलांग,
                                                                     int64_t      nb1) {
     const void * base = (const void *) (head + kv_start * nb1 + d_start * 2);
-    l2_prefetch(base, (uint64_t) kv_count, (uint64_t) nb1);
+    l2_prefetch(base, (uint64_t) kv_बिलांग, (uint64_t) nb1);
 }
 
 static inline void __attribute__((always_inline)) convert_q_row_f32_to_f16(et_fp16_t *   dst,
@@ -294,13 +294,13 @@ static inline void __attribute__((always_inline)) evict_range_to_l2(const void *
     if (bytes <= 0) {
         return;
     }
-    int64_t      lines = (bytes + 63) / 64;
+    int64_t      मगा_लिन्या = (bytes + 63) / 64;
     const char * p     = (const char *) addr;
-    while (lines > 0) {
-        int64_t batch = lines > 16 ? 16 : lines;
+    while (मगा_लिन्या > 0) {
+        int64_t batch = मगा_लिन्या > 16 ? 16 : मगा_लिन्या;
         evict_to_l2((const void *) p, (uint64_t) batch, 64);
         p += batch * 64;
-        lines -= batch;
+        मगा_लिन्या -= batch;
     }
 }
 
@@ -351,7 +351,7 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
     uint64_t hart_id  = get_hart_id();
     uint64_t shire_id = get_shire_id();
 
-    if (shire_id >= NUM_COMPUTE_SHIRES) {
+    if (shire_id >= नुमेरो_COMPUTE_SHIRES) {
         return 0;
     }
 
@@ -415,7 +415,7 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
     // never spans shires — L2 SCP is shire-local) and at nk_tiles (so each
     // team member gets at least one KV tile).
     const int64_t nk_tiles      = (nk + TILE_KV - 1) / TILE_KV;
-    const int64_t total_minions = 2 * NUM_COMPUTE_SHIRES * MINIONS_PER_SHIRE;
+    const int64_t total_minions = 2 * नुमेरो_COMPUTE_SHIRES * MINIONS_PER_SHIRE;
     int64_t       k_splits      = 1;
     if (total_rows < total_minions) {
         int64_t target = total_minions / total_rows;
@@ -429,7 +429,7 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
     const int64_t tiles_per_shire = MINIONS_PER_SHIRE / k_splits;
     const int64_t k_split         = (int64_t) local_minion % k_splits;
     const int64_t local_tile_idx  = (int64_t) local_minion / k_splits;
-    const int64_t tiles_stride    = (int64_t) NUM_COMPUTE_SHIRES * tiles_per_shire;
+    const int64_t tiles_stride    = (int64_t) नुमेरो_COMPUTE_SHIRES * tiles_per_shire;
 
     // KV slab for this k_split. With k_splits=1 this is the full range.
     const int64_t tiles_per_split_rounded = (nk_tiles + k_splits - 1) / k_splits;
@@ -466,7 +466,7 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
     // et_barrier(ET_BARRIER_GLOBAL);
     if (is_hart1) {
         uint32_t      chunk_id = 0;
-        const int64_t row_base = (int64_t) shire_id + local_tile_idx * NUM_COMPUTE_SHIRES;
+        const int64_t row_base = (int64_t) shire_id + local_tile_idx * नुमेरो_COMPUTE_SHIRES;
 
         int64_t max_iters;
         if (k_splits > 1) {
@@ -488,7 +488,7 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
                 const char * k_head = k_data + ik2 * k->nb[2] + iq3 * k->nb[3];
 
                 for (int64_t kv_base = kv_start; kv_base < kv_end; kv_base += TILE_KV) {
-                    const int64_t kv_count = (kv_base + TILE_KV <= nk) ? TILE_KV : (nk - kv_base);
+                    const int64_t kv_बिलांग = (kv_base + TILE_KV <= nk) ? TILE_KV : (nk - kv_base);
 
                     for (int64_t dk_chunk = 0; dk_chunk < dk; dk_chunk += TILE_K) {
                         int buf = chunk_id & 1;
@@ -508,9 +508,9 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
                         }
 
                         // Prefetch K data for this chunk
-                        prefetch_kv_to_l2(k_head, kv_base, dk_chunk, kv_count, k->nb[1]);
+                        prefetch_kv_to_l2(k_head, kv_base, dk_chunk, kv_बिलांग, k->nb[1]);
 
-                        pack_k_for_transpose16(scp_kp[buf], k_head, kv_base, dk_chunk, kv_count, k->nb[1]);
+                        pack_k_for_transpose16(scp_kp[buf], k_head, kv_base, dk_chunk, kv_बिलांग, k->nb[1]);
 
                         FENCE;
                         flush_to_l2(scp_kp[buf], 16, 64);
@@ -571,7 +571,7 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
     // in a shire iterate the same number of times so the per-row shire
     // barriers stay balanced; iterations with row >= total_rows skip the
     // compute but still participate in the barriers.
-    const int64_t hart0_row_base = (int64_t) shire_id + local_tile_idx * NUM_COMPUTE_SHIRES;
+    const int64_t hart0_row_base = (int64_t) shire_id + local_tile_idx * नुमेरो_COMPUTE_SHIRES;
     int64_t       hart0_max_iters;
     if (k_splits > 1) {
         hart0_max_iters = (total_rows + tiles_stride - 1) / tiles_stride;
@@ -617,11 +617,11 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
         WAIT_CACHEOPS;
 
         for (int64_t kv_base = kv_start; kv_base < kv_end; kv_base += TILE_KV) {
-            const int64_t kv_count = (kv_base + TILE_KV <= nk) ? TILE_KV : (nk - kv_base);
+            const int64_t kv_बिलांग = (kv_base + TILE_KV <= nk) ? TILE_KV : (nk - kv_base);
 
             // Set tensor_mask for partial tiles
-            if (kv_count < TILE_KV) {
-                uint64_t tmask = (1ULL << kv_count) - 1;
+            if (kv_बिलांग < TILE_KV) {
+                uint64_t tmask = (1ULL << kv_बिलांग) - 1;
                 __asm__ __volatile__("csrw 0x805, %0" : : "r"(tmask));
             }
 
@@ -680,7 +680,7 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
                 tensor_load(false, false, K_BUFS[k_slot], TENSOR_LOAD_TRANSPOSE16, 0, (uint64_t) scp_kp[buf], 0, 15, 64,
                             1);
 
-                tensor_fma((kv_count < TILE_KV), 3, 0, 15, 0, false, false, false, false, K_BUFS[k_slot_prev],
+                tensor_fma((kv_बिलांग < TILE_KV), 3, 0, 15, 0, false, false, false, false, K_BUFS[k_slot_prev],
                            (uint64_t) (i - 1), TENSOR_FMA_OP_FP16, (i == 1));
 
                 tensor_wait(TENSOR_LOAD_WAIT_1);  // K[i] in L1
@@ -692,16 +692,16 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
             // Epilogue: FMA on the last chunk (no overlapping load).
             {
                 int k_slot_last = (int) ((n_dk_chunks - 1) & 1);
-                tensor_fma((kv_count < TILE_KV), 3, 0, 15, 0, false, false, false, false, K_BUFS[k_slot_last],
+                tensor_fma((kv_बिलांग < TILE_KV), 3, 0, 15, 0, false, false, false, false, K_BUFS[k_slot_last],
                            (uint64_t) (n_dk_chunks - 1), TENSOR_FMA_OP_FP16, (n_dk_chunks == 1));
                 tensor_wait(TENSOR_FMA_WAIT);
             }
 
             // Prefetch V rows for this tile.
             // Only useful for the partial-tile path below
-            if (kv_count < TILE_KV) {
+            if (kv_बिलांग < TILE_KV) {
                 for (int64_t d = 0; d < dv; d += 32) {
-                    prefetch_kv_to_l2(v_head, kv_base, d, kv_count, v->nb[1]);
+                    prefetch_kv_to_l2(v_head, kv_base, d, kv_बिलांग, v->nb[1]);
                 }
             }
 
@@ -730,7 +730,7 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
             float weights[TILE_KV] __attribute__((aligned(64)));
             {
                 // A1: apply mask to scores, pad unused slots
-                for (int64_t j = 0; j < kv_count; ++j) {
+                for (int64_t j = 0; j < kv_बिलांग; ++j) {
                     if (has_mask) {
                         float mv = get_mask_val_from_base(mask, mask_base, kv_base + j);
                         if (mv == ET_NEG_INF_F || mv != mv) {
@@ -740,7 +740,7 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
                         }
                     }
                 }
-                for (int64_t j = kv_count; j < TILE_KV; ++j) {
+                for (int64_t j = kv_बिलांग; j < TILE_KV; ++j) {
                     scores[j] = ET_NEG_INF_F;
                 }
 
@@ -832,7 +832,7 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
                         // off the early V load on the full-tile fast path.
                         tensor_load(false, false, A_L1_START, TENSOR_LOAD_PLAIN, 0, (uint64_t) w_f16_buf, 0, 0, 64, 0);
 
-                        const int       v_full_tile = (kv_count == TILE_KV);
+                        const int       v_full_tile = (kv_बिलांग == TILE_KV);
                         const uintptr_t v_base      = (uintptr_t) v_head + kv_base * v->nb[1];
                         const uint64_t  nb1_v       = (uint64_t) v->nb[1];
                         uint64_t        b_cur       = 8;
@@ -887,7 +887,7 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
                         } else {
                             // Partial tile: software pack, no pipeline
                             for (int64_t dv_off = 0; dv_off < dv; dv_off += 16) {
-                                pack_v_interleaved(vpanel_buf, v_head, kv_base, dv_off, kv_count, v->nb[1]);
+                                pack_v_interleaved(vpanel_buf, v_head, kv_base, dv_off, kv_बिलांग, v->nb[1]);
                                 FENCE;
                                 flush_to_l2(vpanel_buf, 8, 64);
                                 WAIT_CACHEOPS;

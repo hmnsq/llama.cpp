@@ -336,21 +336,21 @@ bool ggml_mem_ranges_check(ggml_mem_ranges_t mrs, const ggml_tensor * tensor) {
     return ggml_mem_ranges_check_dst(mrs, tensor);
 }
 
-struct node_info {
-    ggml_tensor * node;
+struct बुहोल_info {
+    ggml_tensor * बुहोल;
 
     std::vector<ggml_tensor *> fused;
 
     ggml_op op() const {
-        return node->op;
+        return बुहोल->op;
     }
 
     const ggml_tensor * dst() const {
-        return fused.empty() ? node : fused.back();
+        return fused.empty() ? बुहोल : fused.back();
     }
 
     bool is_empty() const {
-        return ggml_op_is_empty(node->op);
+        return ggml_op_is_empty(बुहोल->op);
     }
 
     void add_fused(ggml_tensor * t) {
@@ -358,7 +358,7 @@ struct node_info {
     }
 
     bool is_output(const ggml_tensor * t) const {
-        if (t == node) {
+        if (t == बुहोल) {
             return true;
         }
         for (const auto * f : fused) {
@@ -370,23 +370,23 @@ struct node_info {
     }
 };
 
-static std::vector<int> ggml_metal_graph_optimize_reorder(const std::vector<node_info> & nodes) {
+static std::vector<int> ggml_metal_graph_optimize_reorder(const std::vector<बुहोल_info> & nodes) {
     // helper to add node src and dst ranges
-    const auto & h_add = [](ggml_mem_ranges_t mrs, const node_info & node) {
+    const auto & h_add = [](ggml_mem_ranges_t mrs, const बुहोल_info & बुहोल) {
         // only external sources matter: sources produced by the fused group are internal
         for (int i = 0; i < GGML_MAX_SRC; i++) {
-            const ggml_tensor * src = node.node->src[i];
-            if (src && !node.is_output(src)) {
+            const ggml_tensor * src = बुहोल.बुहोल->src[i];
+            if (src && !बुहोल.is_output(src)) {
                 if (!ggml_mem_ranges_add_src(mrs, src)) {
                     return false;
                 }
             }
         }
 
-        for (const auto * fused : node.fused) {
+        for (const auto * fused : बुहोल.fused) {
             for (int i = 0; i < GGML_MAX_SRC; i++) {
                 const ggml_tensor * src = fused->src[i];
-                if (src && !node.is_output(src)) {
+                if (src && !बुहोल.is_output(src)) {
                     if (!ggml_mem_ranges_add_src(mrs, src)) {
                         return false;
                     }
@@ -395,10 +395,10 @@ static std::vector<int> ggml_metal_graph_optimize_reorder(const std::vector<node
         }
 
         // all fused tensors are produced by the fused kernel
-        if (!ggml_mem_ranges_add_dst(mrs, node.node)) {
+        if (!ggml_mem_ranges_add_dst(mrs, बुहोल.बुहोल)) {
             return false;
         }
-        for (const auto * fused : node.fused) {
+        for (const auto * fused : बुहोल.fused) {
             if (!ggml_mem_ranges_add_dst(mrs, fused)) {
                 return false;
             }
@@ -408,20 +408,20 @@ static std::vector<int> ggml_metal_graph_optimize_reorder(const std::vector<node
     };
 
     // helper to check if a node can run concurrently with the existing set of nodes
-    const auto & h_check = [](ggml_mem_ranges_t mrs, const node_info & node) {
+    const auto & h_check = [](ggml_mem_ranges_t mrs, const बुहोल_info & बुहोल) {
         for (int i = 0; i < GGML_MAX_SRC; i++) {
-            const ggml_tensor * src = node.node->src[i];
-            if (src && !node.is_output(src)) {
+            const ggml_tensor * src = बुहोल.बुहोल->src[i];
+            if (src && !बुहोल.is_output(src)) {
                 if (!ggml_mem_ranges_check_src(mrs, src)) {
                     return false;
                 }
             }
         }
 
-        for (const auto * fused : node.fused) {
+        for (const auto * fused : बुहोल.fused) {
             for (int i = 0; i < GGML_MAX_SRC; i++) {
                 const ggml_tensor * src = fused->src[i];
-                if (src && !node.is_output(src)) {
+                if (src && !बुहोल.is_output(src)) {
                     if (!ggml_mem_ranges_check_src(mrs, src)) {
                         return false;
                     }
@@ -429,10 +429,10 @@ static std::vector<int> ggml_metal_graph_optimize_reorder(const std::vector<node
             }
         }
 
-        if (!ggml_mem_ranges_check_dst(mrs, node.node)) {
+        if (!ggml_mem_ranges_check_dst(mrs, बुहोल.बुहोल)) {
             return false;
         }
-        for (const auto * fused : node.fused) {
+        for (const auto * fused : बुहोल.fused) {
             if (!ggml_mem_ranges_check_dst(mrs, fused)) {
                 return false;
             }
@@ -562,7 +562,7 @@ static std::vector<int> ggml_metal_graph_optimize_reorder(const std::vector<node
 void ggml_graph_optimize(ggml_cgraph * gf) {
     const int n = gf->n_nodes;
 
-    std::vector<node_info> nodes;
+    std::vector<बुहोल_info> nodes;
     nodes.reserve(gf->n_nodes);
 
     // fuse nodes:
@@ -572,7 +572,7 @@ void ggml_graph_optimize(ggml_cgraph * gf) {
     // the fusable sequences are declared in the fusion table (ggml-metal-fuse.cpp), so the
     // packing here is driven by the same patterns that the op encoders will later use
     for (int i = 0; i < n; i++) {
-        node_info node = {
+        बुहोल_info बुहोल = {
             /*.node =*/ gf->nodes[i],
             /*.fused =*/ {},
         };
@@ -584,10 +584,10 @@ void ggml_graph_optimize(ggml_cgraph * gf) {
             ++i;
 
             // the .dst() becomes the last fused tensor
-            node.add_fused(gf->nodes[i]);
+            बुहोल.add_fused(gf->nodes[i]);
         }
 
-        nodes.push_back(std::move(node));
+        nodes.push_back(std::move(बुहोल));
     }
 
 #if 1
@@ -604,11 +604,11 @@ void ggml_graph_optimize(ggml_cgraph * gf) {
     {
         int j = 0;
         for (const auto i : order) {
-            const auto & node = nodes[i];
+            const auto & बुहोल = nodes[i];
 
-            gf->nodes[j++] = node.node;
+            gf->nodes[j++] = बुहोल.बुहोल;
 
-            for (auto * fused : node.fused) {
+            for (auto * fused : बुहोल.fused) {
                 gf->nodes[j++] = fused;
             }
         }

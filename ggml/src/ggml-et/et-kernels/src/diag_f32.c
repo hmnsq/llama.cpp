@@ -25,7 +25,7 @@ int entry_point(struct ggml_et_diag_params * params, void * env) {
     }
 
     int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    int नुमेरो_threads = get_नुमेरो_threads(kernel_env->shire_mask);
 
     if (thread_id < 0) {
         return 0;
@@ -64,7 +64,7 @@ int entry_point(struct ggml_et_diag_params * params, void * env) {
     float zero = 0.0f;
     __asm__ volatile("fbc.ps f10, %[z]\n" : : [z] "m"(zero) : "f10");
 
-    for (int64_t row = thread_id; row < total_rows; row += num_threads) {
+    for (int64_t row = thread_id; row < total_rows; row += नुमेरो_threads) {
         int64_t i1 = row % ne1;
         int64_t i2 = (row / ne1) % ne2;
         int64_t i3 = row / (ne1 * ne2);

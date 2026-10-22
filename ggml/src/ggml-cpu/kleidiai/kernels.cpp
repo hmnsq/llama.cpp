@@ -159,10 +159,10 @@ static inline size_t rhs_ps_fn2(size_t n, size_t k, size_t /*nr*/, size_t /*kr*/
 }
 
 template<void(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t,size_t,const uint8_t*,const float*,void*,size_t,const struct kai_rhs_pack_qs4cxs1s0_param*)>
-static inline void rhs_pack_fn12(size_t num_groups, size_t n, size_t k, size_t nr, size_t kr, size_t sr, size_t bl,
+static inline void rhs_pack_fn12(size_t नुमेरो_groups, size_t n, size_t k, size_t nr, size_t kr, size_t sr, size_t bl,
                                       size_t /*rhs_stride*/, const void* rhs, const void* bias, const void* /*scale*/,
                                       void* rhs_packed, size_t extra_bytes, const void* params) {
-    Fn(num_groups, n, k, nr, kr, sr, bl,
+    Fn(नुमेरो_groups, n, k, nr, kr, sr, bl,
        static_cast<const uint8_t*>(rhs),
        static_cast<const float*>(bias),
        rhs_packed, extra_bytes,
@@ -170,10 +170,10 @@ static inline void rhs_pack_fn12(size_t num_groups, size_t n, size_t k, size_t n
 }
 
 template<void(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t,const int8_t*,const float*,const float*,void*,size_t,const struct kai_rhs_pack_qsi8cx_params*)>
-static inline void rhs_pack_scale_fn12(size_t num_groups, size_t n, size_t k, size_t nr, size_t kr, size_t sr, size_t /*bl*/,
+static inline void rhs_pack_scale_fn12(size_t नुमेरो_groups, size_t n, size_t k, size_t nr, size_t kr, size_t sr, size_t /*bl*/,
                                        size_t /*rhs_stride*/, const void* rhs, const void* bias, const void* scale,
                                        void* rhs_packed, size_t extra_bytes, const void* params) {
-    Fn(num_groups, n, k, nr, kr, sr,
+    Fn(नुमेरो_groups, n, k, nr, kr, sr,
        static_cast<const int8_t*>(rhs),
        static_cast<const float*>(bias),
        static_cast<const float*>(scale),
@@ -182,10 +182,10 @@ static inline void rhs_pack_scale_fn12(size_t num_groups, size_t n, size_t k, si
 }
 
 template<void(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t,size_t,const void*,const void*,const void*,void*,size_t,const void*)>
-static inline void rhs_pack_fn13(size_t num_groups, size_t n, size_t k, size_t nr, size_t kr, size_t sr, size_t /*bl*/,
+static inline void rhs_pack_fn13(size_t नुमेरो_groups, size_t n, size_t k, size_t nr, size_t kr, size_t sr, size_t /*bl*/,
                                                size_t rhs_stride, const void* rhs, const void* bias, const void* scale,
                                                void* rhs_packed, size_t extra_bytes, const void* params) {
-    Fn(num_groups, n, k, nr, kr, sr, rhs_stride, rhs, bias, scale, rhs_packed, extra_bytes, params);
+    Fn(नुमेरो_groups, n, k, nr, kr, sr, rhs_stride, rhs, bias, scale, rhs_packed, extra_bytes, params);
 }
 
 static constexpr size_t KLEIDIAI_Q4_K_BLOCK_LENGTH = QK_K / 8;
@@ -247,8 +247,8 @@ struct matmul_uker_adapter {
     static size_t get_dst_offset(size_t m_idx, size_t n_idx, size_t dst_stride) {
         const struct kai_matmul_uker_api api = GetApi();
         const struct kai_matmul_uker_config config = GetConfig();
-        const struct kai_matmul_uker_dst_dim_args index = { m_idx, n_idx };
-        const struct kai_matmul_uker_dst_stride_args stride = { dst_stride };
+        const struct kai_matmul_uker_dst_dim_मगा_कातविरान index = { m_idx, n_idx };
+        const struct kai_matmul_uker_dst_stride_मगा_कातविरान stride = { dst_stride };
         return api.get_dst_offset(&config, &index, &stride);
     }
 
@@ -256,9 +256,9 @@ struct matmul_uker_adapter {
         const struct kai_matmul_uker_api api = GetApi();
         const struct kai_matmul_uker_config config = GetConfig();
         GGML_ASSERT(bl == config.format.bl);
-        const struct kai_matmul_uker_lhs_dim_args shape = { m_idx, k };
-        const struct kai_matmul_uker_lhs_dim_args index = { m_idx, 0 };
-        const struct kai_matmul_uker_lhs_stride_args stride = api.get_lhs_stride(&config, &shape);
+        const struct kai_matmul_uker_lhs_dim_मगा_कातविरान shape = { m_idx, k };
+        const struct kai_matmul_uker_lhs_dim_मगा_कातविरान index = { m_idx, 0 };
+        const struct kai_matmul_uker_lhs_stride_मगा_कातविरान stride = api.get_lhs_stride(&config, &shape);
         return api.get_lhs_offset(&config, &index, &stride);
     }
 
@@ -266,9 +266,9 @@ struct matmul_uker_adapter {
         const struct kai_matmul_uker_api api = GetApi();
         const struct kai_matmul_uker_config config = GetConfig();
         GGML_ASSERT(bl == config.format.bl);
-        const struct kai_matmul_uker_rhs_dim_args shape = { n_idx, k };
-        const struct kai_matmul_uker_rhs_dim_args index = { n_idx, 0 };
-        const struct kai_matmul_uker_rhs_stride_args stride = api.get_rhs_stride(&config, &shape);
+        const struct kai_matmul_uker_rhs_dim_मगा_कातविरान shape = { n_idx, k };
+        const struct kai_matmul_uker_rhs_dim_मगा_कातविरान index = { n_idx, 0 };
+        const struct kai_matmul_uker_rhs_stride_मगा_कातविरान stride = api.get_rhs_stride(&config, &shape);
         return api.get_rhs_offset(&config, &index, &stride);
     }
 
@@ -281,21 +281,21 @@ struct matmul_uker_adapter {
         const struct kai_matmul_uker_config config = GetConfig();
         GGML_ASSERT(bl == config.format.bl);
         GGML_ASSERT(dst_stride_col == sizeof(float));
-        const struct kai_matmul_uker_lhs_dim_args lhs_shape = { m, k };
-        const struct kai_matmul_uker_rhs_dim_args rhs_shape = { n, k };
+        const struct kai_matmul_uker_lhs_dim_मगा_कातविरान lhs_shape = { m, k };
+        const struct kai_matmul_uker_rhs_dim_मगा_कातविरान rhs_shape = { n, k };
 
-        struct kai_matmul_uker_args args = {};
-        args.flags = KAI_MATMUL_UKER_FLAGS_ARGS_CLAMP;
-        args.shape = { m, n, k };
-        args.operand.lhs.ptr = lhs_packed;
-        args.operand.lhs.stride = api.get_lhs_stride(&config, &lhs_shape);
-        args.operand.rhs.ptr = rhs_packed;
-        args.operand.rhs.stride = api.get_rhs_stride(&config, &rhs_shape);
-        args.operand.dst.ptr = dst;
-        args.operand.dst.stride.m = dst_stride_row;
-        args.activation.clamp.min_ptr = &clamp_min;
-        args.activation.clamp.max_ptr = &clamp_max;
-        api.run(&config, &args);
+        struct kai_matmul_uker_मगा_कातविरान मगा_कातविरान_2 = {};
+        मगा_कातविरान_2.flags = KAI_MATMUL_UKER_FLAGS_मगा_कातविरान_CLAMP;
+        मगा_कातविरान_2.shape = { m, n, k };
+        मगा_कातविरान_2.operand.lhs.ptr = lhs_packed;
+        मगा_कातविरान_2.operand.lhs.stride = api.get_lhs_stride(&config, &lhs_shape);
+        मगा_कातविरान_2.operand.rhs.ptr = rhs_packed;
+        मगा_कातविरान_2.operand.rhs.stride = api.get_rhs_stride(&config, &rhs_shape);
+        मगा_कातविरान_2.operand.dst.ptr = dst;
+        मगा_कातविरान_2.operand.dst.stride.m = dst_stride_row;
+        मगा_कातविरान_2.activation.clamp.min_ptr = &clamp_min;
+        मगा_कातविरान_2.activation.clamp.max_ptr = &clamp_max;
+        api.run(&config, &मगा_कातविरान_2);
     }
 };
 
@@ -321,8 +321,8 @@ static struct kai_matmul_pack_lhs_uker_config q4_k_lhs_pack_config() {
 static size_t q4_k_lhs_get_offset(size_t m_idx, size_t lhs_stride) {
     const struct kai_matmul_pack_lhs_uker_api api = kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon();
     const struct kai_matmul_pack_lhs_uker_config config = q4_k_lhs_pack_config();
-    const struct kai_matmul_pack_lhs_uker_lhs_dim_args index = { m_idx, 0 };
-    const struct kai_matmul_pack_lhs_uker_lhs_stride_args stride = { lhs_stride };
+    const struct kai_matmul_pack_lhs_uker_lhs_dim_मगा_कातविरान index = { m_idx, 0 };
+    const struct kai_matmul_pack_lhs_uker_lhs_stride_मगा_कातविरान stride = { lhs_stride };
     return api.get_lhs_offset(&config, &index, &stride);
 }
 
@@ -333,9 +333,9 @@ static size_t q4_k_lhs_get_packed_offset(
 
     const struct kai_matmul_pack_lhs_uker_api api = kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon();
     const struct kai_matmul_pack_lhs_uker_config config = q4_k_lhs_pack_config();
-    const struct kai_matmul_pack_lhs_uker_lhs_packed_dim_args shape = { m_idx, k };
-    const struct kai_matmul_pack_lhs_uker_lhs_packed_dim_args index = { m_idx, 0 };
-    const struct kai_matmul_pack_lhs_uker_lhs_packed_stride_args stride = api.get_lhs_packed_stride(&config, &shape);
+    const struct kai_matmul_pack_lhs_uker_lhs_packed_dim_मगा_कातविरान shape = { m_idx, k };
+    const struct kai_matmul_pack_lhs_uker_lhs_packed_dim_मगा_कातविरान index = { m_idx, 0 };
+    const struct kai_matmul_pack_lhs_uker_lhs_packed_stride_मगा_कातविरान stride = api.get_lhs_packed_stride(&config, &shape);
     return api.get_lhs_packed_offset(&config, &index, &stride);
 }
 
@@ -346,8 +346,8 @@ static size_t q4_k_lhs_get_packed_size(
 
     const struct kai_matmul_pack_lhs_uker_api api = kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon();
     const struct kai_matmul_pack_lhs_uker_config config = q4_k_lhs_pack_config();
-    const struct kai_matmul_pack_lhs_uker_lhs_packed_dim_args shape = { m, k };
-    const struct kai_matmul_pack_lhs_uker_lhs_packed_stride_args stride = api.get_lhs_packed_stride(&config, &shape);
+    const struct kai_matmul_pack_lhs_uker_lhs_packed_dim_मगा_कातविरान shape = { m, k };
+    const struct kai_matmul_pack_lhs_uker_lhs_packed_stride_मगा_कातविरान stride = api.get_lhs_packed_stride(&config, &shape);
     return api.get_lhs_packed_size(&config, &shape, &stride);
 }
 
@@ -360,16 +360,16 @@ static void q4_k_lhs_pack(
 
     const struct kai_matmul_pack_lhs_uker_api api = kai_matmul_pack_lhs_mxk_qsi8d32p1x4sf16_f32_neon();
     const struct kai_matmul_pack_lhs_uker_config config = q4_k_lhs_pack_config();
-    const struct kai_matmul_pack_lhs_uker_lhs_packed_dim_args packed_shape = { m, k };
+    const struct kai_matmul_pack_lhs_uker_lhs_packed_dim_मगा_कातविरान packed_shape = { m, k };
 
-    struct kai_matmul_pack_lhs_uker_args args = {};
-    args.flags = 0;
-    args.shape = { m, k };
-    args.operand.lhs.ptr = lhs;
-    args.operand.lhs.stride.m = lhs_stride;
-    args.operand.lhs_packed.ptr = lhs_packed;
-    args.operand.lhs_packed.stride = api.get_lhs_packed_stride(&config, &packed_shape);
-    api.run(&config, &args);
+    struct kai_matmul_pack_lhs_uker_मगा_कातविरान मगा_कातविरान_2 = {};
+    मगा_कातविरान_2.flags = 0;
+    मगा_कातविरान_2.shape = { m, k };
+    मगा_कातविरान_2.operand.lhs.ptr = lhs;
+    मगा_कातविरान_2.operand.lhs.stride.m = lhs_stride;
+    मगा_कातविरान_2.operand.lhs_packed.ptr = lhs_packed;
+    मगा_कातविरान_2.operand.lhs_packed.stride = api.get_lhs_packed_stride(&config, &packed_shape);
+    api.run(&config, &मगा_कातविरान_2);
 }
 
 static struct kai_matmul_pack_rhs_uker_config q4_k_rhs_pack_config() {
@@ -384,16 +384,16 @@ static size_t q4_k_rhs_get_packed_size(size_t n, size_t k, size_t nr, size_t /*k
         kai_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme();
     const struct kai_matmul_pack_rhs_uker_config config = q4_k_rhs_pack_config();
     GGML_ASSERT(api.get_step(&config).n == nr);
-    const struct kai_matmul_pack_rhs_uker_rhs_packed_dim_args shape = { n, k };
-    const struct kai_matmul_pack_rhs_uker_rhs_packed_stride_args stride = api.get_rhs_packed_stride(&config, &shape);
+    const struct kai_matmul_pack_rhs_uker_rhs_packed_dim_मगा_कातविरान shape = { n, k };
+    const struct kai_matmul_pack_rhs_uker_rhs_packed_stride_मगा_कातविरान stride = api.get_rhs_packed_stride(&config, &shape);
     return api.get_rhs_packed_size(&config, &shape, &stride);
 }
 
 static void q4_k_rhs_pack(
-        size_t num_groups, size_t n, size_t k, size_t nr, size_t /*kr*/, size_t /*sr*/, size_t bl,
+        size_t नुमेरो_groups, size_t n, size_t k, size_t nr, size_t /*kr*/, size_t /*sr*/, size_t bl,
         size_t rhs_stride, const void * rhs, const void * bias, const void * scale,
         void * rhs_packed, size_t extra_bytes, const void * params) {
-    GGML_ASSERT(num_groups == 1);
+    GGML_ASSERT(नुमेरो_groups == 1);
     GGML_ASSERT(bl == KLEIDIAI_Q4_K_BLOCK_LENGTH);
     GGML_ASSERT(bias == nullptr);
     GGML_ASSERT(scale == nullptr);
@@ -404,21 +404,21 @@ static void q4_k_rhs_pack(
         kai_matmul_pack_rhs_nxk_qai4c32p16vsx4s1s0sf16_qai4c32k256sf16s32s0_sme();
     const struct kai_matmul_pack_rhs_uker_config config = q4_k_rhs_pack_config();
     GGML_ASSERT(api.get_step(&config).n == nr);
-    const struct kai_matmul_pack_rhs_uker_rhs_dim_args rhs_shape = { n, k };
-    const struct kai_matmul_pack_rhs_uker_rhs_packed_dim_args packed_shape = { n, k };
+    const struct kai_matmul_pack_rhs_uker_rhs_dim_मगा_कातविरान rhs_shape = { n, k };
+    const struct kai_matmul_pack_rhs_uker_rhs_packed_dim_मगा_कातविरान packed_shape = { n, k };
 
-    struct kai_matmul_pack_rhs_uker_args args = {};
-    args.flags = 0;
-    args.shape = { n, k };
-    args.operand.rhs.ptr = rhs;
-    args.operand.rhs.stride = api.get_rhs_stride(&config, &rhs_shape);
+    struct kai_matmul_pack_rhs_uker_मगा_कातविरान मगा_कातविरान_2 = {};
+    मगा_कातविरान_2.flags = 0;
+    मगा_कातविरान_2.shape = { n, k };
+    मगा_कातविरान_2.operand.rhs.ptr = rhs;
+    मगा_कातविरान_2.operand.rhs.stride = api.get_rhs_stride(&config, &rhs_shape);
     if (rhs_stride != 0) {
-        GGML_ASSERT(rhs_stride >= args.operand.rhs.stride.n);
-        args.operand.rhs.stride.n = rhs_stride;
+        GGML_ASSERT(rhs_stride >= मगा_कातविरान_2.operand.rhs.stride.n);
+        मगा_कातविरान_2.operand.rhs.stride.n = rhs_stride;
     }
-    args.operand.rhs_packed.ptr = rhs_packed;
-    args.operand.rhs_packed.stride = api.get_rhs_packed_stride(&config, &packed_shape);
-    api.run(&config, &args);
+    मगा_कातविरान_2.operand.rhs_packed.ptr = rhs_packed;
+    मगा_कातविरान_2.operand.rhs_packed.stride = api.get_rhs_packed_stride(&config, &packed_shape);
+    api.run(&config, &मगा_कातविरान_2);
 }
 
 static ggml_kleidiai_kernels gemm_gemv_kernels[] = {

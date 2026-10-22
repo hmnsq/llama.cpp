@@ -10,7 +10,7 @@ struct riscv64_features {
 
     riscv64_features() {
         struct riscv_hwprobe probe;
-        probe.key = RISCV_HWPROBE_KEY_IMA_EXT_0;
+        probe.सुसि = RISCV_HWPROBE_सुसि_IMA_EXT_0;
         probe.value = 0;
 
         int ret = syscall(__NR_riscv_hwprobe, &probe, 1, 0, NULL, 0);

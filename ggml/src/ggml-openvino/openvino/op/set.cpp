@@ -19,15 +19,15 @@ namespace ggml {
 namespace op {
 
 // GGML SET writes src1 into a view of src0 and returns the updated tensor.
-OutputVector translate_set(const NodeContext & context) {
-    num_inputs_check(context, 2, 2);
+OutputVector translate_set(const बुहोल_Context & context) {
+    नुमेरो_inputs_check(context, 2, 2);
 
-    auto dst = process_view_input_new(context, 0);
-    auto src = process_view_input_new(context, 1);
+    auto dst = process_view_पासोक_new(context, 0);
+    auto src = process_view_पासोक_new(context, 1);
 
     src = std::make_shared<ov::op::v0::Convert>(src, context.get_output_type());
 
-    const auto dst_stride = context.get_input_stride(0);
+    const auto dst_stride = context.get_पासोक_stride(0);
     FRONT_END_OP_CONVERSION_CHECK(dst_stride.size() >= 4, "SET requires 4D destination strides");
 
     const auto * op_params = reinterpret_cast<const uint32_t *>(context.get_output_op_params());

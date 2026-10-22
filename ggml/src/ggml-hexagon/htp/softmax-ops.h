@@ -12,7 +12,7 @@ enum htp_softmax_kernel_id {
     HTP_SOFTMAX_KERNEL_NOMASK = 0,
     HTP_SOFTMAX_KERNEL_MASK_F32,
     HTP_SOFTMAX_KERNEL_MASK_F16,
-    HTP_SOFTMAX_KERNEL_COUNT,
+    HTP_SOFTMAX_KERNEL_बिलांग,
 };
 
 struct htp_softmax_kernel_params {
@@ -44,10 +44,10 @@ struct htp_softmax_kernel_params {
     float    m0;
     float    m1;
 
-    struct fastdiv_values div_ne01;
-    struct fastdiv_values div_ne02;
-    struct fastdiv_values div_ne12;
-    struct fastdiv_values div_ne13;
+    struct fastdiv_मगा_हालागा div_ne01;
+    struct fastdiv_मगा_हालागा div_ne02;
+    struct fastdiv_मगा_हालागा div_ne12;
+    struct fastdiv_मगा_हालागा div_ne13;
 };
 
 #if defined(__cplusplus)

@@ -199,8 +199,8 @@ static inline HVX_Vector hvx_vec_reduce_max2_f32(HVX_Vector in, HVX_Vector _max)
                                                                                             \
         const uint32_t elem_size = sizeof(float);                                           \
         const uint32_t epv  = 128 / elem_size;                                              \
-        const uint32_t nvec = num_elems / epv;                                              \
-        const uint32_t nloe = num_elems % epv;                                              \
+        const uint32_t nvec = नुमेरो_elems / epv;                                              \
+        const uint32_t nloe = नुमेरो_elems % epv;                                              \
                                                                                             \
         uint32_t i = 0;                                                                     \
         _Pragma("unroll(4)")                                                                \
@@ -225,64 +225,64 @@ static inline HVX_Vector hvx_vec_reduce_max2_f32(HVX_Vector in, HVX_Vector _max)
 
 // Max variants
 
-static inline float hvx_reduce_max_f32_a(const uint8_t * restrict src, const int num_elems) {
+static inline float hvx_reduce_max_f32_a(const uint8_t * restrict src, const int नुमेरो_elems) {
     HVX_Vector init_vec = hvx_vec_splat_f32(((const float *) src)[0]);
     assert((unsigned long) src % 128 == 0);
     hvx_reduce_loop_body(HVX_Vector, init_vec, init_vec, HVX_REDUCE_MAX_OP, hvx_vec_reduce_max_f32, HVX_REDUCE_MAX_SCALAR);
 }
 
-static inline float hvx_reduce_max_f32_u(const uint8_t * restrict src, const int num_elems) {
+static inline float hvx_reduce_max_f32_u(const uint8_t * restrict src, const int नुमेरो_elems) {
     HVX_Vector init_vec = hvx_vec_splat_f32(((const float *) src)[0]);
     hvx_reduce_loop_body(HVX_UVector, init_vec, init_vec, HVX_REDUCE_MAX_OP, hvx_vec_reduce_max_f32, HVX_REDUCE_MAX_SCALAR);
 }
 
-static inline float hvx_reduce_max_f32(const uint8_t * restrict src, const int num_elems) {
+static inline float hvx_reduce_max_f32(const uint8_t * restrict src, const int नुमेरो_elems) {
     if (hex_is_aligned((void *) src, 128)) {
-        return hvx_reduce_max_f32_a(src, num_elems);
+        return hvx_reduce_max_f32_a(src, नुमेरो_elems);
     } else {
-        return hvx_reduce_max_f32_u(src, num_elems);
+        return hvx_reduce_max_f32_u(src, नुमेरो_elems);
     }
 }
 
 // Sum variants
 
-static inline float hvx_reduce_sum_f32_a(const uint8_t * restrict src, const int num_elems) {
+static inline float hvx_reduce_sum_f32_a(const uint8_t * restrict src, const int नुमेरो_elems) {
     HVX_Vector init_vec = Q6_V_vsplat_R(0);
     assert((unsigned long) src % 128 == 0);
     hvx_reduce_loop_body(HVX_Vector, init_vec, init_vec, HVX_REDUCE_SUM_OP, hvx_vec_reduce_sum_qf32, HVX_REDUCE_SUM_SCALAR);
 }
 
-static inline float hvx_reduce_sum_f32_u(const uint8_t * restrict src, const int num_elems) {
+static inline float hvx_reduce_sum_f32_u(const uint8_t * restrict src, const int नुमेरो_elems) {
     HVX_Vector init_vec = Q6_V_vsplat_R(0);
     hvx_reduce_loop_body(HVX_UVector, init_vec, init_vec, HVX_REDUCE_SUM_OP, hvx_vec_reduce_sum_qf32, HVX_REDUCE_SUM_SCALAR);
 }
 
-static inline float hvx_reduce_sum_f32(const uint8_t * restrict src, const int num_elems) {
+static inline float hvx_reduce_sum_f32(const uint8_t * restrict src, const int नुमेरो_elems) {
     if (hex_is_aligned((void *) src, 128)) {
-        return hvx_reduce_sum_f32_a(src, num_elems);
+        return hvx_reduce_sum_f32_a(src, नुमेरो_elems);
     } else {
-        return hvx_reduce_sum_f32_u(src, num_elems);
+        return hvx_reduce_sum_f32_u(src, नुमेरो_elems);
     }
 }
 
 // Sum of squares variants
 
-static inline float hvx_sum_of_squares_f32_a(const uint8_t * restrict src, const int num_elems) {
+static inline float hvx_sum_of_squares_f32_a(const uint8_t * restrict src, const int नुमेरो_elems) {
     HVX_Vector init_vec = Q6_V_vsplat_R(0);
     assert((uintptr_t) src % 128 == 0);
     hvx_reduce_loop_body(HVX_Vector, init_vec, init_vec, HVX_SUM_SQ_OP, hvx_vec_reduce_sum_qf32, HVX_REDUCE_SUM_SCALAR);
 }
 
-static inline float hvx_sum_of_squares_f32_u(const uint8_t * restrict src, const int num_elems) {
+static inline float hvx_sum_of_squares_f32_u(const uint8_t * restrict src, const int नुमेरो_elems) {
     HVX_Vector init_vec = Q6_V_vsplat_R(0);
     hvx_reduce_loop_body(HVX_UVector, init_vec, init_vec, HVX_SUM_SQ_OP, hvx_vec_reduce_sum_qf32, HVX_REDUCE_SUM_SCALAR);
 }
 
-static inline float hvx_sum_of_squares_f32(const uint8_t * restrict src, const int num_elems) {
+static inline float hvx_sum_of_squares_f32(const uint8_t * restrict src, const int नुमेरो_elems) {
     if (hex_is_aligned((void *) src, 128)) {
-        return hvx_sum_of_squares_f32_a(src, num_elems);
+        return hvx_sum_of_squares_f32_a(src, नुमेरो_elems);
     } else {
-        return hvx_sum_of_squares_f32_u(src, num_elems);
+        return hvx_sum_of_squares_f32_u(src, नुमेरो_elems);
     }
 }
 
@@ -305,24 +305,24 @@ static inline HVX_Vector hvx_vec_reduce_max_i32(HVX_Vector in) {
     return hvx_vec_reduce_max_n_i32(in, 32);
 }
 
-static inline int32_t hvx_reduce_max_i32_a(const uint8_t * restrict src, const int num_elems) {
+static inline int32_t hvx_reduce_max_i32_a(const uint8_t * restrict src, const int नुमेरो_elems) {
     HVX_Vector init_vec = Q6_V_vsplat_R(((const int32_t *) src)[0]);
     HVX_Vector pad_vec  = Q6_V_vsplat_R(0x80000000);
     assert((uintptr_t) src % 128 == 0);
     hvx_reduce_loop_body(HVX_Vector, init_vec, pad_vec, Q6_Vw_vmax_VwVw, hvx_vec_reduce_max_i32, hvx_vec_get_i32);
 }
 
-static inline int32_t hvx_reduce_max_i32_u(const uint8_t * restrict src, const int num_elems) {
+static inline int32_t hvx_reduce_max_i32_u(const uint8_t * restrict src, const int नुमेरो_elems) {
     HVX_Vector init_vec = Q6_V_vsplat_R(((const int32_t *) src)[0]);
     HVX_Vector pad_vec  = Q6_V_vsplat_R(0x80000000);
     hvx_reduce_loop_body(HVX_UVector, init_vec, pad_vec, Q6_Vw_vmax_VwVw, hvx_vec_reduce_max_i32, hvx_vec_get_i32);
 }
 
-static inline int32_t hvx_reduce_max_i32(const uint8_t * restrict src, const int num_elems) {
+static inline int32_t hvx_reduce_max_i32(const uint8_t * restrict src, const int नुमेरो_elems) {
     if (hex_is_aligned((void *) src, 128)) {
-        return hvx_reduce_max_i32_a(src, num_elems);
+        return hvx_reduce_max_i32_a(src, नुमेरो_elems);
     } else {
-        return hvx_reduce_max_i32_u(src, num_elems);
+        return hvx_reduce_max_i32_u(src, नुमेरो_elems);
     }
 }
 

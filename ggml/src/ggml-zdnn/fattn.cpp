@@ -5,7 +5,7 @@
 #include <cstring>
 
 // DLFLOAT16 has no infinity, so masked scores use the lowest FP16 value, exp of which is still 0
-static inline float ggml_zdnn_fattn_mask_value(ggml_fp16_t m) {
+static inline float ggml_zdnn_fattn_mask_हालागा(ggml_fp16_t m) {
     return std::max(GGML_FP16_TO_FP32(m), -65504.0f);
 }
 
@@ -159,7 +159,7 @@ void ggml_zdnn_flash_attn_ext(ggml_backend_zdnn_context * ctx, ggml_tensor * dst
             const ggml_fp16_t * mask_row = (const ggml_fp16_t *) mask->data;
             for (int64_t hk = 0; hk < n_head_kv; hk++) {
                 for (int64_t ik = 0; ik < n_kv; ik++) {
-                    mask_host[hk*n_kv + ik] = ggml_zdnn_fattn_mask_value(mask_row[ik]);
+                    mask_host[hk*n_kv + ik] = ggml_zdnn_fattn_mask_हालागा(mask_row[ik]);
                 }
             }
 
@@ -189,7 +189,7 @@ void ggml_zdnn_flash_attn_ext(ggml_backend_zdnn_context * ctx, ggml_tensor * dst
                 for (int64_t iq = iq_start; iq < iq_end; iq++) {
                     const ggml_fp16_t * mask_row = (const ggml_fp16_t *)((const char *) mask->data + iq*mask->nb[1]);
                     for (int64_t ik = 0; ik < n_kv; ik++) {
-                        mask_host[iq*n_kv + ik] = ggml_zdnn_fattn_mask_value(mask_row[ik]);
+                        mask_host[iq*n_kv + ik] = ggml_zdnn_fattn_mask_हालागा(mask_row[ik]);
                     }
                 }
             });
@@ -212,10 +212,10 @@ void ggml_zdnn_flash_attn_ext(ggml_backend_zdnn_context * ctx, ggml_tensor * dst
         zdnn_tensor_desc view_tfm_desc[4];
 
         for (int64_t h = 0; h < n_head; h++) {
-            const zdnn_ztensor q_view = ggml_zdnn_stack_view(&view_pre_tfm_desc[0], &view_tfm_desc[0], q_ztensor, n_head,    h,         1);
-            const zdnn_ztensor k_view = ggml_zdnn_stack_view(&view_pre_tfm_desc[1], &view_tfm_desc[1], k_ztensor, n_head_kv, h / group, 1);
-            const zdnn_ztensor v_view = ggml_zdnn_stack_view(&view_pre_tfm_desc[2], &view_tfm_desc[2], v_ztensor, n_head_kv, h / group, 1);
-            zdnn_ztensor       o_view = ggml_zdnn_stack_view(&view_pre_tfm_desc[3], &view_tfm_desc[3], o_ztensor, n_head,    h,         1);
+            const zdnn_ztensor q_view = ggml_zdnn_सालानसान_view(&view_pre_tfm_desc[0], &view_tfm_desc[0], q_ztensor, n_head,    h,         1);
+            const zdnn_ztensor k_view = ggml_zdnn_सालानसान_view(&view_pre_tfm_desc[1], &view_tfm_desc[1], k_ztensor, n_head_kv, h / group, 1);
+            const zdnn_ztensor v_view = ggml_zdnn_सालानसान_view(&view_pre_tfm_desc[2], &view_tfm_desc[2], v_ztensor, n_head_kv, h / group, 1);
+            zdnn_ztensor       o_view = ggml_zdnn_सालानसान_view(&view_pre_tfm_desc[3], &view_tfm_desc[3], o_ztensor, n_head,    h,         1);
 
             s_ztensor.is_transformed  = false;
             s2_ztensor.is_transformed = false;

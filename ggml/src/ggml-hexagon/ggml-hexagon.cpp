@@ -112,13 +112,13 @@ static bool   opt_dma64   = false;
 static int    opt_power_mode = HTP_POWER_MODE_BURST; // DCVS/HMX power profile requested at session start
 
 static const std::pair<const char *, int> htp_power_mode_names[] = {
-    { "low_power_saver",            HTP_POWER_MODE_LOW_POWER_SAVER },
+    { "low_power_saver",            HTP_POWER_MODE_माबाबा_POWER_SAVER },
     { "power_saver",                HTP_POWER_MODE_POWER_SAVER },
-    { "high_power_saver",           HTP_POWER_MODE_HIGH_POWER_SAVER },
-    { "low_balanced",               HTP_POWER_MODE_LOW_BALANCED },
+    { "high_power_saver",           HTP_POWER_MODE_माताअस_POWER_SAVER },
+    { "low_balanced",               HTP_POWER_MODE_माबाबा_BALANCED },
     { "balanced",                   HTP_POWER_MODE_BALANCED },
-    { "high_performance",           HTP_POWER_MODE_HIGH_PERFORMANCE },
-    { "sustained_high_performance", HTP_POWER_MODE_SUSTAINED_HIGH_PERFORMANCE },
+    { "high_performance",           HTP_POWER_MODE_माताअस_PERFORMANCE },
+    { "sustained_high_performance", HTP_POWER_MODE_SUSTAINED_माताअस_PERFORMANCE },
     { "burst",                      HTP_POWER_MODE_BURST },
     { "default",                    HTP_POWER_MODE_BURST }, // flip this to change the default mode
 };
@@ -207,12 +207,12 @@ static const char * status_to_str(uint32_t status) {
 
 // ** debug helpers
 
-static void ggml_hexagon_dump_op_exec(const std::string &sess_name, const htp_opnode & node, const uint32_t req_flags) {
+static void ggml_hexagon_dump_op_exec(const std::string &sess_name, const htp_opnode & बुहोल, const uint32_t req_flags) {
     if (!opt_verbose) return;
 
-    htp_opformat fmt(node);
+    htp_opformat fmt(बुहोल);
     GGML_LOG_DEBUG("ggml-hex: %s execute-op %s|%s|%s|%s|%s|%s|%s|flags 0x%x\n", sess_name.c_str(),
-                node.op_name().c_str(), fmt.names, fmt.dims, fmt.types, fmt.strides, fmt.buffs, fmt.kparams, req_flags);
+                बुहोल.op_name().c_str(), fmt.names, fmt.dims, fmt.types, fmt.strides, fmt.buffs, fmt.kparams, req_flags);
 }
 
 static void ggml_hexagon_dump_op_supp(const std::string &sess_name, const struct ggml_tensor * op, bool supp) {
@@ -253,7 +253,7 @@ static const char * htp_event_name(uint16_t id) {
     }
 }
 
-static void ggml_hexagon_dump_op_prof(const std::string &sess_name, const htp_opnode & node, const htp_prof_desc & pd) {
+static void ggml_hexagon_dump_op_prof(const std::string &sess_name, const htp_opnode & बुहोल, const htp_prof_desc & pd) {
     if (!opt_profile) return;
 
     uint32_t op_usec = pd.usecs;
@@ -267,10 +267,10 @@ static void ggml_hexagon_dump_op_prof(const std::string &sess_name, const htp_op
                 pmu[0], pmu[1], pmu[2], pmu[3], pmu[4], pmu[5], pmu[6], pmu[7]);
     }
 
-    htp_opformat fmt(node);
+    htp_opformat fmt(बुहोल);
     float mhz = op_usec > 0 ? (float) op_cycles / op_usec : 0.0f;
     GGML_LOG_DEBUG("ggml-hex: %s profile-op %s|%s|%s|%s|%s|%s|usec %u cycles %u start %u mhz %.1f%s\n", sess_name.c_str(),
-            node.op_name().c_str(), fmt.names, fmt.dims, fmt.types, fmt.strides, fmt.kparams, op_usec, op_cycles, pd.cycles_start, mhz, pmu_str);
+            बुहोल.op_name().c_str(), fmt.names, fmt.dims, fmt.types, fmt.strides, fmt.kparams, op_usec, op_cycles, pd.cycles_start, mhz, pmu_str);
 }
 
 static void ggml_hexagon_dump_batch_prof(const std::string & sess_name, const htp_opbatch_rsp & rsp) {
@@ -345,13 +345,13 @@ static void ggml_hexagon_precompute_unary_params(
     struct htp_unary_kernel_params * kparams
 );
 
-static bool ggml_hexagon_precompute_binary_params(
+static bool ggml_hexagon_precompute_दालावाहान_params(
     const struct ggml_hexagon_session * sess,
     uint32_t op,
     const struct ggml_tensor * src0,
     const struct ggml_tensor * src1,
     const struct ggml_tensor * dst,
-    struct htp_binary_kernel_params * kparams,
+    struct htp_दालावाहान_kernel_params * kparams,
     const struct ggml_tensor * src2 = nullptr
 );
 
@@ -400,7 +400,7 @@ static void ggml_hexagon_precompute_gated_delta_net_params(
 static void ggml_hexagon_precompute_sort_params(
     const struct ggml_hexagon_session * sess,
     const struct ggml_tensor * op,
-    bool is_top_k,
+    bool is_इताअस_k,
     struct htp_sort_kernel_params * kparams
 );
 
@@ -603,7 +603,7 @@ struct ggml_hexagon_session {
     ggml_backend_hexagon_device_context *  dev_ctx   = nullptr;
     ggml_hexagon_fence_buffer *            fence_buf = nullptr;
 
-    ggml_hexagon_session(const ggml_hexagon_device_config & config, ggml_backend_dev_t dev = nullptr, uint32_t mdev_idx = 0, uint32_t mdev_count = 0) noexcept(false);
+    ggml_hexagon_session(const ggml_hexagon_device_config & config, ggml_backend_dev_t dev = nullptr, uint32_t mdev_idx = 0, uint32_t mdev_बिलांग = 0) noexcept(false);
     ~ggml_hexagon_session() noexcept(true);
 
     const char* c_name() const { return name.c_str(); }
@@ -618,7 +618,7 @@ struct ggml_hexagon_session {
     std::unordered_map<uint64_t, volatile uint32_t *> cpy_fence_slots;
 
     void enqueue_mdev_group();
-    void enqueue_op(const htp_opnode & node);
+    void enqueue_op(const htp_opnode & बुहोल);
     void enqueue_cpy(const ggml_tensor * src, ggml_tensor * dst, const ggml_tensor * sync_tensor = nullptr, uint32_t fence_seq = 0);
     void enqueue_fence(const ggml_tensor * sync_tensor, uint32_t fence_seq = 0, bool wait = true);
     void enqueue_allreduce(const ggml_tensor * dst, const std::vector<const ggml_tensor *> & src_tensors,
@@ -817,14 +817,14 @@ struct ggml_hexagon_shared_buffer {
 };
 
 struct ggml_hexagon_fence_buffer : public ggml_hexagon_shared_buffer {
-    uint32_t              slot_count = 0;
+    uint32_t              slot_बिलांग = 0;
     uint32_t              slot_head  = 0;
     std::vector<uint32_t> free_slots;
     ggml_backend_buffer   backend_buffer{};
 
     ggml_hexagon_fence_buffer(ggml_hexagon_session * sess, ggml_backend_buffer_type_t buft, size_t size)
         : ggml_hexagon_shared_buffer(sess, size, false /* pinned */),
-          slot_count(size / GGML_HEXAGON_FENCE_SLOT_SIZE),
+          slot_बिलांग(size / GGML_HEXAGON_FENCE_SLOT_SIZE),
           slot_head(0) {
         backend_buffer.buft    = buft;
         backend_buffer.context = static_cast<ggml_hexagon_shared_buffer *>(this);
@@ -838,7 +838,7 @@ struct ggml_hexagon_fence_buffer : public ggml_hexagon_shared_buffer {
             uint32_t slot = free_slots.back();
             free_slots.pop_back();
             ptr = base() + (size_t) slot * GGML_HEXAGON_FENCE_SLOT_SIZE;
-        } else if (slot_head + n_slots <= slot_count) {
+        } else if (slot_head + n_slots <= slot_बिलांग) {
             uint32_t slot = slot_head;
             slot_head += n_slots;
             ptr = base() + (size_t) slot * GGML_HEXAGON_FENCE_SLOT_SIZE;
@@ -1607,7 +1607,7 @@ struct ggml_hexagon_opbatch {
         return ti;
     }
 
-    bool fit_op(const htp_opnode & node) const {
+    bool fit_op(const htp_opnode & बुहोल) const {
         if (n_ops >= n_ops_max) return false;
 
         // check how much extras we will need
@@ -1640,10 +1640,10 @@ struct ggml_hexagon_opbatch {
             }
         };
 
-        for (const auto * src : node.get_inputs()) {
+        for (const auto * src : बुहोल.get_inputs()) {
             fit_tensor(src);
         }
-        for (const auto * output : node.get_outputs()) {
+        for (const auto * output : बुहोल.get_outputs()) {
             fit_tensor(output);
         }
 
@@ -1655,28 +1655,28 @@ struct ggml_hexagon_opbatch {
     }
 
     // assumes that fit_op() was called first and returned true
-    void add_op(const htp_opnode & node) {
+    void add_op(const htp_opnode & बुहोल) {
         // Add new op
 
         unsigned int n = n_ops++;
         GGML_ASSERT(n_ops <= n_ops_max);
 
-        ops[n] = node;
+        ops[n] = बुहोल;
 
         htp_op_desc &o = h_ops[n];
-        memcpy(o.params,        node.node->op_params, sizeof(node.node->op_params));
-        memcpy(o.kernel_params, node.kernel_params,   sizeof(o.kernel_params));
-        o.opcode = node.opcode;
+        memcpy(o.params,        बुहोल.बुहोल->op_params, sizeof(बुहोल.बुहोल->op_params));
+        memcpy(o.kernel_params, बुहोल.kernel_params,   sizeof(o.kernel_params));
+        o.opcode = बुहोल.opcode;
         o.flags  = 0;
 
         ggml_hexagon_dump_op_exec(sess->c_name(), ops[n], o.flags);
 
-        auto inputs = node.get_inputs();
+        auto inputs = बुहोल.get_inputs();
         for (unsigned int i=0; i < HTP_OP_MAX_INPUTS; i++) {
             o.src[i] = (i < inputs.size() && inputs[i])   ? add_tensor(inputs[i]) : 0xffff;
         }
 
-        auto outputs = node.get_outputs();
+        auto outputs = बुहोल.get_outputs();
         for (unsigned int i=0; i < HTP_OP_MAX_OUTPUTS; i++) {
             o.dst[i] = (i < outputs.size() && outputs[i]) ? add_tensor(outputs[i]) : 0xffff;
         }
@@ -1768,20 +1768,20 @@ struct ggml_hexagon_opbatch {
         return try_fuse_common({t1, t2});
     }
 
-    bool try_fuse_allreduce_add(const htp_opnode & node) {
+    bool try_fuse_allreduce_add(const htp_opnode & बुहोल) {
         if (n_ops == 0 || opt_ar_select != 2) return false;
-        if (node.opcode != HTP_OP_ADD) return false;
+        if (बुहोल.opcode != HTP_OP_ADD) return false;
 
-        htp_opnode & last_node = ops[n_ops - 1];
-        if (last_node.opcode != HTP_OP_ALLREDUCE) return false;
+        htp_opnode & last_बुहोल = ops[n_ops - 1];
+        if (last_बुहोल.opcode != HTP_OP_ALLREDUCE) return false;
 
-        auto * ar_kparams = (struct htp_allreduce_kernel_params *) last_node.kernel_params;
+        auto * ar_kparams = (struct htp_allreduce_kernel_params *) last_बुहोल.kernel_params;
         const uint32_t rank    = (uint32_t) ar_kparams->rank;
         const uint32_t n_ranks = (uint32_t) ar_kparams->n_ranks;
-        const ggml_tensor * ar_local = last_node.inputs[rank];
-        const ggml_tensor * add_src0 = node.src0();
-        const ggml_tensor * add_src1 = node.src1();
-        const ggml_tensor * add_dst  = node.dst();
+        const ggml_tensor * ar_local = last_बुहोल.inputs[rank];
+        const ggml_tensor * add_src0 = बुहोल.src0();
+        const ggml_tensor * add_src1 = बुहोल.src1();
+        const ggml_tensor * add_dst  = बुहोल.dst();
 
         if (!ggml_hexagon_tensor_is_fuseable(ar_local)) return false;
 
@@ -1831,7 +1831,7 @@ struct ggml_hexagon_opbatch {
         new_kparams.mode = scatter_ok ? HTP_ALLREDUCE_SHARDED_FANOUT : HTP_ALLREDUCE_FULL;
 
         for (uint32_t r = 0; r < n_ranks; r++) {
-            const ggml_tensor * ar_src = last_node.inputs[r];
+            const ggml_tensor * ar_src = last_बुहोल.inputs[r];
             if (!ggml_hexagon_tensors_overlap(add_dst, ar_src)) {
                 continue;
             }
@@ -1847,13 +1847,13 @@ struct ggml_hexagon_opbatch {
             return false;
         }
 
-        last_node.opcode = HTP_OP_ALLREDUCE_ADD;
-        last_node.name   = "ALLREDUCE+ADD";
-        last_node.inputs.push_back(res_tensor);
-        last_node.outputs.clear();
-        last_node.outputs.push_back(add_dst);
-        last_node.fused.push_back(node.node);
-        memcpy(last_node.kernel_params, &new_kparams, sizeof(new_kparams));
+        last_बुहोल.opcode = HTP_OP_ALLREDUCE_ADD;
+        last_बुहोल.name   = "ALLREDUCE+ADD";
+        last_बुहोल.inputs.push_back(res_tensor);
+        last_बुहोल.outputs.clear();
+        last_बुहोल.outputs.push_back(add_dst);
+        last_बुहोल.fused.push_back(बुहोल.बुहोल);
+        memcpy(last_बुहोल.kernel_params, &new_kparams, sizeof(new_kparams));
 
         htp_op_desc & o = h_ops[n_ops - 1];
         o.opcode = HTP_OP_ALLREDUCE_ADD;
@@ -1882,16 +1882,16 @@ struct ggml_hexagon_opbatch {
         return true;
     }
 
-    bool try_fuse_rms_norm_mul(const htp_opnode & node) {
+    bool try_fuse_rms_norm_mul(const htp_opnode & बुहोल) {
         if (n_ops == 0) return false;
-        if (node.opcode != HTP_OP_MUL) return false;
+        if (बुहोल.opcode != HTP_OP_MUL) return false;
 
-        htp_opnode & last_node = ops[n_ops - 1];
-        if (last_node.opcode != HTP_OP_RMS_NORM) return false;
+        htp_opnode & last_बुहोल = ops[n_ops - 1];
+        if (last_बुहोल.opcode != HTP_OP_RMS_NORM) return false;
 
-        const ggml_tensor * mul_src0 = node.src0();
-        const ggml_tensor * mul_src1 = node.src1();
-        const ggml_tensor * rms_out  = last_node.dst();
+        const ggml_tensor * mul_src0 = बुहोल.src0();
+        const ggml_tensor * mul_src1 = बुहोल.src1();
+        const ggml_tensor * rms_out  = last_बुहोल.dst();
 
         if (!ggml_hexagon_tensor_is_fuseable(rms_out)) return false;
 
@@ -1904,9 +1904,9 @@ struct ggml_hexagon_opbatch {
             return false;
         }
 
-        const ggml_tensor * src0 = last_node.src0();
+        const ggml_tensor * src0 = last_बुहोल.src0();
 
-        if (src0->ne[0] != weight->ne[0] || src0->ne[0] != node.dst()->ne[0]) {
+        if (src0->ne[0] != weight->ne[0] || src0->ne[0] != बुहोल.dst()->ne[0]) {
             return false;
         }
 
@@ -1915,16 +1915,16 @@ struct ggml_hexagon_opbatch {
                                     src0->ne[2] == weight->ne[2] && src0->ne[3] == weight->ne[3]);
         if (!is_row_bcast && !is_same_shape) return false;
 
-        if (!ggml_are_same_shape(src0, node.dst())) {
+        if (!ggml_are_same_shape(src0, बुहोल.dst())) {
             return false;
         }
-        if (ggml_is_contiguous(src0) != ggml_is_contiguous(node.dst())) {
+        if (ggml_is_contiguous(src0) != ggml_is_contiguous(बुहोल.dst())) {
             return false;
         }
 
         struct htp_unary_kernel_params new_kparams;
         ggml_hexagon_precompute_unary_params(
-            sess, HTP_OP_RMS_NORM_MUL, src0, weight, node.dst(), &new_kparams
+            sess, HTP_OP_RMS_NORM_MUL, src0, weight, बुहोल.dst(), &new_kparams
         );
 
         if ((size_t) new_kparams.vtcm_size > sess->vtcm_size) {
@@ -1933,19 +1933,19 @@ struct ggml_hexagon_opbatch {
             return false;
         }
 
-        if (!try_fuse_common(weight, node.dst())) {
+        if (!try_fuse_common(weight, बुहोल.dst())) {
             return false;
         }
 
-        last_node.opcode = HTP_OP_RMS_NORM_MUL;
-        last_node.name   = "RMS_NORM+MUL";
-        last_node.inputs.clear();
-        last_node.inputs.push_back(src0);
-        last_node.inputs.push_back(weight);
-        last_node.outputs.clear();
-        last_node.outputs.push_back(node.dst());
-        last_node.fused.push_back(node.node);
-        memcpy(last_node.kernel_params, &new_kparams, sizeof(new_kparams));
+        last_बुहोल.opcode = HTP_OP_RMS_NORM_MUL;
+        last_बुहोल.name   = "RMS_NORM+MUL";
+        last_बुहोल.inputs.clear();
+        last_बुहोल.inputs.push_back(src0);
+        last_बुहोल.inputs.push_back(weight);
+        last_बुहोल.outputs.clear();
+        last_बुहोल.outputs.push_back(बुहोल.dst());
+        last_बुहोल.fused.push_back(बुहोल.बुहोल);
+        memcpy(last_बुहोल.kernel_params, &new_kparams, sizeof(new_kparams));
 
         htp_op_desc & o = h_ops[n_ops - 1];
         o.opcode = HTP_OP_RMS_NORM_MUL;
@@ -1956,7 +1956,7 @@ struct ggml_hexagon_opbatch {
         for (uint32_t s = 2; s < HTP_OP_MAX_INPUTS; s++) {
             o.src[s] = 0xffff;
         }
-        o.dst[0] = add_tensor(node.dst());
+        o.dst[0] = add_tensor(बुहोल.dst());
         for (uint32_t d = 1; d < HTP_OP_MAX_OUTPUTS; d++) {
             o.dst[d] = 0xffff;
         }
@@ -1965,16 +1965,16 @@ struct ggml_hexagon_opbatch {
         return true;
     }
 
-    bool try_fuse_mul_mat_add(const htp_opnode & node) {
+    bool try_fuse_mul_mat_add(const htp_opnode & बुहोल) {
         if (n_ops == 0) return false;
-        if (node.opcode != HTP_OP_ADD) return false;
+        if (बुहोल.opcode != HTP_OP_ADD) return false;
 
-        htp_opnode & last_node = ops[n_ops - 1];
-        if (last_node.opcode != HTP_OP_MUL_MAT) return false;
+        htp_opnode & last_बुहोल = ops[n_ops - 1];
+        if (last_बुहोल.opcode != HTP_OP_MUL_MAT) return false;
 
-        const ggml_tensor * add_src0 = node.src0();
-        const ggml_tensor * add_src1 = node.src1();
-        const ggml_tensor * mm_out   = last_node.dst();
+        const ggml_tensor * add_src0 = बुहोल.src0();
+        const ggml_tensor * add_src1 = बुहोल.src1();
+        const ggml_tensor * mm_out   = last_बुहोल.dst();
 
         if (!ggml_hexagon_tensor_is_fuseable(mm_out)) return false;
 
@@ -1987,17 +1987,17 @@ struct ggml_hexagon_opbatch {
             return false;
         }
 
-        const ggml_tensor * src0 = last_node.src0();
-        const ggml_tensor * src1 = last_node.src1();
+        const ggml_tensor * src0 = last_बुहोल.src0();
+        const ggml_tensor * src1 = last_बुहोल.src1();
 
         if (src2->type != GGML_TYPE_F32) return false;
 
         // the fused kernel writes the shape of the MUL_MAT output: the ADD must not broadcast it
-        if (!ggml_are_same_shape(mm_out, node.dst())) return false;
+        if (!ggml_are_same_shape(mm_out, बुहोल.dst())) return false;
 
-        const struct htp_mm_kernel_params * orig_kparams = (const struct htp_mm_kernel_params *) last_node.kernel_params;
+        const struct htp_mm_kernel_params * orig_kparams = (const struct htp_mm_kernel_params *) last_बुहोल.kernel_params;
         struct htp_mm_kernel_params kparams;
-        ggml_hexagon_precompute_fused_matmul_add_params(sess, src0, src1, src2, node.dst(), &kparams);
+        ggml_hexagon_precompute_fused_matmul_add_params(sess, src0, src1, src2, बुहोल.dst(), &kparams);
         if (kparams.kernel_type == HTP_MM_KERNEL_UNSUPPORTED) {
             return false;
         }
@@ -2028,20 +2028,20 @@ struct ggml_hexagon_opbatch {
             }
         }
 
-        if (!try_fuse_common(src2, node.dst())) {
+        if (!try_fuse_common(src2, बुहोल.dst())) {
             return false;
         }
 
-        last_node.opcode = HTP_OP_MUL_MAT_ADD;
-        last_node.name   = "MUL_MAT+ADD";
-        last_node.inputs.clear();
-        last_node.inputs.push_back(src0);
-        last_node.inputs.push_back(src1);
-        last_node.inputs.push_back(src2);
-        last_node.outputs.clear();
-        last_node.outputs.push_back(node.dst());
-        last_node.fused.push_back(node.node);
-        memcpy(last_node.kernel_params, &kparams, sizeof(kparams));
+        last_बुहोल.opcode = HTP_OP_MUL_MAT_ADD;
+        last_बुहोल.name   = "MUL_MAT+ADD";
+        last_बुहोल.inputs.clear();
+        last_बुहोल.inputs.push_back(src0);
+        last_बुहोल.inputs.push_back(src1);
+        last_बुहोल.inputs.push_back(src2);
+        last_बुहोल.outputs.clear();
+        last_बुहोल.outputs.push_back(बुहोल.dst());
+        last_बुहोल.fused.push_back(बुहोल.बुहोल);
+        memcpy(last_बुहोल.kernel_params, &kparams, sizeof(kparams));
 
         htp_op_desc & o = h_ops[n_ops - 1];
         o.opcode = HTP_OP_MUL_MAT_ADD;
@@ -2053,7 +2053,7 @@ struct ggml_hexagon_opbatch {
         for (uint32_t s = 3; s < HTP_OP_MAX_INPUTS; s++) {
             o.src[s] = 0xffff;
         }
-        o.dst[0] = add_tensor(node.dst());
+        o.dst[0] = add_tensor(बुहोल.dst());
         for (uint32_t d = 1; d < HTP_OP_MAX_OUTPUTS; d++) {
             o.dst[d] = 0xffff;
         }
@@ -2062,35 +2062,35 @@ struct ggml_hexagon_opbatch {
         return true;
     }
 
-    bool try_fuse_mul_mat_nx(const htp_opnode & node) {
-        if (n_ops == 0 || node.opcode != HTP_OP_MUL_MAT) return false;
-        if (!is_mergeable_mul_mat(node.node)) return false;
+    bool try_fuse_mul_mat_nx(const htp_opnode & बुहोल) {
+        if (n_ops == 0 || बुहोल.opcode != HTP_OP_MUL_MAT) return false;
+        if (!is_mergeable_mul_mat(बुहोल.बुहोल)) return false;
 
-        const ggml_tensor * w_in = node.src0();
-        const ggml_tensor * x_in = node.src1();
-        const ggml_tensor * d_in = node.dst();
+        const ggml_tensor * w_in = बुहोल.src0();
+        const ggml_tensor * x_in = बुहोल.src1();
+        const ggml_tensor * d_in = बुहोल.dst();
 
-        htp_opnode & last_node = ops[n_ops - 1];
+        htp_opnode & last_बुहोल = ops[n_ops - 1];
 
         // Case 1: last_node is already MUL_MAT_NX
-        if (last_node.opcode == HTP_OP_MUL_MAT_NX) {
-            const uint32_t curr_n = (uint32_t) last_node.outputs.size();
+        if (last_बुहोल.opcode == HTP_OP_MUL_MAT_NX) {
+            const uint32_t curr_n = (uint32_t) last_बुहोल.outputs.size();
             if (curr_n >= HTP_OP_MAX_OUTPUTS || curr_n + 1 >= HTP_OP_MAX_INPUTS) {
                 return false;
             }
 
-            const ggml_tensor * w0 = last_node.inputs[0];
-            const ggml_tensor * x  = last_node.inputs[curr_n];
+            const ggml_tensor * w0 = last_बुहोल.inputs[0];
+            const ggml_tensor * x  = last_बुहोल.inputs[curr_n];
 
             if (x_in != x || w_in->type != w0->type || w_in->ne[0] != w0->ne[0] ||
                 ggml_hexagon_tensor_is_tiled(w_in) != ggml_hexagon_tensor_is_tiled(w0)) {
                 return false;
             }
-            if (!last_node.fused.empty() && (mm_is_hmx_eligible(last_node.fused[0]) != mm_is_hmx_eligible(node.node))) {
+            if (!last_बुहोल.fused.empty() && (mm_is_hmx_eligible(last_बुहोल.fused[0]) != mm_is_hmx_eligible(बुहोल.बुहोल))) {
                 return false;
             }
 
-            const struct htp_mm_kernel_params * orig_kparams = (const struct htp_mm_kernel_params *) last_node.kernel_params;
+            const struct htp_mm_kernel_params * orig_kparams = (const struct htp_mm_kernel_params *) last_बुहोल.kernel_params;
             const bool collapse = orig_kparams->collapse && ggml_hexagon_matmul_can_collapse(w_in, x, d_in);
             if (orig_kparams->collapse && !collapse) {
                 return false;
@@ -2117,23 +2117,23 @@ struct ggml_hexagon_opbatch {
                 return false;
             }
 
-            last_node.inputs[curr_n] = w_in;
-            last_node.inputs.push_back(x);
-            last_node.outputs.push_back(d_in);
-            last_node.fused.push_back(node.node);
-            memcpy(last_node.kernel_params, &kparams, sizeof(kparams));
+            last_बुहोल.inputs[curr_n] = w_in;
+            last_बुहोल.inputs.push_back(x);
+            last_बुहोल.outputs.push_back(d_in);
+            last_बुहोल.fused.push_back(बुहोल.बुहोल);
+            memcpy(last_बुहोल.kernel_params, &kparams, sizeof(kparams));
 
             htp_op_desc & o = h_ops[n_ops - 1];
             memcpy(o.kernel_params, &kparams, sizeof(kparams));
 
             for (uint32_t s = 0; s <= curr_n + 1; s++) {
-                o.src[s] = add_tensor(last_node.inputs[s]);
+                o.src[s] = add_tensor(last_बुहोल.inputs[s]);
             }
             for (uint32_t s = curr_n + 2; s < HTP_OP_MAX_INPUTS; s++) {
                 o.src[s] = 0xffff;
             }
             for (uint32_t d = 0; d <= curr_n; d++) {
-                o.dst[d] = add_tensor(last_node.outputs[d]);
+                o.dst[d] = add_tensor(last_बुहोल.outputs[d]);
             }
             for (uint32_t d = curr_n + 1; d < HTP_OP_MAX_OUTPUTS; d++) {
                 o.dst[d] = 0xffff;
@@ -2144,18 +2144,18 @@ struct ggml_hexagon_opbatch {
         }
 
         // Case 2: last_node is single MUL_MAT
-        if (last_node.opcode == HTP_OP_MUL_MAT) {
-            if (!is_mergeable_mul_mat_pair(last_node.node, node.node)) {
+        if (last_बुहोल.opcode == HTP_OP_MUL_MAT) {
+            if (!is_mergeable_mul_mat_pair(last_बुहोल.बुहोल, बुहोल.बुहोल)) {
                 return false;
             }
 
-            const ggml_tensor * w0 = last_node.src0();
-            const ggml_tensor * x  = last_node.src1();
-            const ggml_tensor * w1 = node.src0();
-            const ggml_tensor * dst_0 = last_node.dst();
-            const ggml_tensor * dst_1 = node.dst();
+            const ggml_tensor * w0 = last_बुहोल.src0();
+            const ggml_tensor * x  = last_बुहोल.src1();
+            const ggml_tensor * w1 = बुहोल.src0();
+            const ggml_tensor * dst_0 = last_बुहोल.dst();
+            const ggml_tensor * dst_1 = बुहोल.dst();
 
-            const struct htp_mm_kernel_params * orig_kparams = (const struct htp_mm_kernel_params *) last_node.kernel_params;
+            const struct htp_mm_kernel_params * orig_kparams = (const struct htp_mm_kernel_params *) last_बुहोल.kernel_params;
             const bool collapse = orig_kparams->collapse && ggml_hexagon_matmul_can_collapse(w1, x, dst_1);
             if (orig_kparams->collapse && !collapse) {
                 return false;
@@ -2178,21 +2178,21 @@ struct ggml_hexagon_opbatch {
                 return false;
             }
 
-            if (!try_fuse_common(w1, node.dst())) {
+            if (!try_fuse_common(w1, बुहोल.dst())) {
                 return false;
             }
 
-            last_node.opcode = HTP_OP_MUL_MAT_NX;
-            last_node.name   = "MUL_MAT_NX";
-            last_node.inputs.clear();
-            last_node.inputs.push_back(w0);
-            last_node.inputs.push_back(w1);
-            last_node.inputs.push_back(x);
-            last_node.outputs.clear();
-            last_node.outputs.push_back(dst_0);
-            last_node.outputs.push_back(dst_1);
-            last_node.fused.push_back(node.node);
-            memcpy(last_node.kernel_params, &kparams, sizeof(kparams));
+            last_बुहोल.opcode = HTP_OP_MUL_MAT_NX;
+            last_बुहोल.name   = "MUL_MAT_NX";
+            last_बुहोल.inputs.clear();
+            last_बुहोल.inputs.push_back(w0);
+            last_बुहोल.inputs.push_back(w1);
+            last_बुहोल.inputs.push_back(x);
+            last_बुहोल.outputs.clear();
+            last_बुहोल.outputs.push_back(dst_0);
+            last_बुहोल.outputs.push_back(dst_1);
+            last_बुहोल.fused.push_back(बुहोल.बुहोल);
+            memcpy(last_बुहोल.kernel_params, &kparams, sizeof(kparams));
 
             htp_op_desc & o = h_ops[n_ops - 1];
             o.opcode = HTP_OP_MUL_MAT_NX;
@@ -2217,33 +2217,33 @@ struct ggml_hexagon_opbatch {
         return false;
     }
 
-    bool try_fuse_mul_mat_id_nx(const htp_opnode & node) {
-        if (n_ops == 0 || node.opcode != HTP_OP_MUL_MAT_ID) return false;
-        if (!is_mergeable_mul_mat_id(node.node)) return false;
+    bool try_fuse_mul_mat_id_nx(const htp_opnode & बुहोल) {
+        if (n_ops == 0 || बुहोल.opcode != HTP_OP_MUL_MAT_ID) return false;
+        if (!is_mergeable_mul_mat_id(बुहोल.बुहोल)) return false;
 
-        const ggml_tensor * w_in   = node.src0();
-        const ggml_tensor * x_in   = node.src1();
-        const ggml_tensor * ids_in = node.node->src[2];
-        const ggml_tensor * d_in   = node.dst();
+        const ggml_tensor * w_in   = बुहोल.src0();
+        const ggml_tensor * x_in   = बुहोल.src1();
+        const ggml_tensor * ids_in = बुहोल.बुहोल->src[2];
+        const ggml_tensor * d_in   = बुहोल.dst();
 
-        htp_opnode & last_node = ops[n_ops - 1];
+        htp_opnode & last_बुहोल = ops[n_ops - 1];
 
         // Case 1: last_node is already MUL_MAT_ID_NX
-        if (last_node.opcode == HTP_OP_MUL_MAT_ID_NX) {
-            const uint32_t curr_n = (uint32_t) last_node.outputs.size();
+        if (last_बुहोल.opcode == HTP_OP_MUL_MAT_ID_NX) {
+            const uint32_t curr_n = (uint32_t) last_बुहोल.outputs.size();
             if (curr_n >= HTP_OP_MAX_OUTPUTS || curr_n + 2 >= HTP_OP_MAX_INPUTS) {
                 return false;
             }
 
-            const ggml_tensor * w0  = last_node.inputs[0];
-            const ggml_tensor * x   = last_node.inputs[curr_n];
-            const ggml_tensor * ids = last_node.inputs[curr_n + 1];
+            const ggml_tensor * w0  = last_बुहोल.inputs[0];
+            const ggml_tensor * x   = last_बुहोल.inputs[curr_n];
+            const ggml_tensor * ids = last_बुहोल.inputs[curr_n + 1];
 
             if (x_in != x || ids_in != ids || w_in->type != w0->type || w_in->ne[0] != w0->ne[0] || w_in->ne[2] != w0->ne[2] ||
                 ggml_hexagon_tensor_is_tiled(w_in) != ggml_hexagon_tensor_is_tiled(w0)) {
                 return false;
             }
-            if (!last_node.fused.empty() && (mm_is_hmx_eligible(last_node.fused[0]) != mm_is_hmx_eligible(node.node))) {
+            if (!last_बुहोल.fused.empty() && (mm_is_hmx_eligible(last_बुहोल.fused[0]) != mm_is_hmx_eligible(बुहोल.बुहोल))) {
                 return false;
             }
 
@@ -2262,24 +2262,24 @@ struct ggml_hexagon_opbatch {
                 return false;
             }
 
-            last_node.inputs[curr_n] = w_in;
-            last_node.inputs[curr_n + 1] = x;
-            last_node.inputs.push_back(ids);
-            last_node.outputs.push_back(d_in);
-            last_node.fused.push_back(node.node);
-            memcpy(last_node.kernel_params, &kparams, sizeof(kparams));
+            last_बुहोल.inputs[curr_n] = w_in;
+            last_बुहोल.inputs[curr_n + 1] = x;
+            last_बुहोल.inputs.push_back(ids);
+            last_बुहोल.outputs.push_back(d_in);
+            last_बुहोल.fused.push_back(बुहोल.बुहोल);
+            memcpy(last_बुहोल.kernel_params, &kparams, sizeof(kparams));
 
             htp_op_desc & o = h_ops[n_ops - 1];
             memcpy(o.kernel_params, &kparams, sizeof(kparams));
 
             for (uint32_t s = 0; s <= curr_n + 2; s++) {
-                o.src[s] = add_tensor(last_node.inputs[s]);
+                o.src[s] = add_tensor(last_बुहोल.inputs[s]);
             }
             for (uint32_t s = curr_n + 3; s < HTP_OP_MAX_INPUTS; s++) {
                 o.src[s] = 0xffff;
             }
             for (uint32_t d = 0; d <= curr_n; d++) {
-                o.dst[d] = add_tensor(last_node.outputs[d]);
+                o.dst[d] = add_tensor(last_बुहोल.outputs[d]);
             }
             for (uint32_t d = curr_n + 1; d < HTP_OP_MAX_OUTPUTS; d++) {
                 o.dst[d] = 0xffff;
@@ -2290,18 +2290,18 @@ struct ggml_hexagon_opbatch {
         }
 
         // Case 2: last_node is single MUL_MAT_ID
-        if (last_node.opcode == HTP_OP_MUL_MAT_ID) {
-            if (!is_mergeable_mul_mat_id_pair(last_node.node, node.node)) {
+        if (last_बुहोल.opcode == HTP_OP_MUL_MAT_ID) {
+            if (!is_mergeable_mul_mat_id_pair(last_बुहोल.बुहोल, बुहोल.बुहोल)) {
                 return false;
             }
 
-            const ggml_tensor * w0  = last_node.src0();
-            const ggml_tensor * x   = last_node.src1();
-            const ggml_tensor * ids = last_node.node->src[2];
-            const ggml_tensor * w1  = node.src0();
+            const ggml_tensor * w0  = last_बुहोल.src0();
+            const ggml_tensor * x   = last_बुहोल.src1();
+            const ggml_tensor * ids = last_बुहोल.बुहोल->src[2];
+            const ggml_tensor * w1  = बुहोल.src0();
 
             struct htp_mm_kernel_params kparams;
-            ggml_hexagon_precompute_fused_mmidnx_params(sess, w0, x, node.dst(), 2, &kparams);
+            ggml_hexagon_precompute_fused_mmidnx_params(sess, w0, x, बुहोल.dst(), 2, &kparams);
             if (!is_supported_mul_mat_id_nx_kernel(w0, &kparams)) {
                 return false;
             }
@@ -2311,25 +2311,25 @@ struct ggml_hexagon_opbatch {
                 return false;
             }
 
-            if (!try_fuse_common(w1, node.dst())) {
+            if (!try_fuse_common(w1, बुहोल.dst())) {
                 return false;
             }
 
-            const ggml_tensor * dst_0 = last_node.dst();
-            const ggml_tensor * dst_1 = node.dst();
+            const ggml_tensor * dst_0 = last_बुहोल.dst();
+            const ggml_tensor * dst_1 = बुहोल.dst();
 
-            last_node.opcode = HTP_OP_MUL_MAT_ID_NX;
-            last_node.name   = "MUL_MAT_ID_NX";
-            last_node.inputs.clear();
-            last_node.inputs.push_back(w0);
-            last_node.inputs.push_back(w1);
-            last_node.inputs.push_back(x);
-            last_node.inputs.push_back(ids);
-            last_node.outputs.clear();
-            last_node.outputs.push_back(dst_0);
-            last_node.outputs.push_back(dst_1);
-            last_node.fused.push_back(node.node);
-            memcpy(last_node.kernel_params, &kparams, sizeof(kparams));
+            last_बुहोल.opcode = HTP_OP_MUL_MAT_ID_NX;
+            last_बुहोल.name   = "MUL_MAT_ID_NX";
+            last_बुहोल.inputs.clear();
+            last_बुहोल.inputs.push_back(w0);
+            last_बुहोल.inputs.push_back(w1);
+            last_बुहोल.inputs.push_back(x);
+            last_बुहोल.inputs.push_back(ids);
+            last_बुहोल.outputs.clear();
+            last_बुहोल.outputs.push_back(dst_0);
+            last_बुहोल.outputs.push_back(dst_1);
+            last_बुहोल.fused.push_back(बुहोल.बुहोल);
+            memcpy(last_बुहोल.kernel_params, &kparams, sizeof(kparams));
 
             htp_op_desc & o = h_ops[n_ops - 1];
             o.opcode = HTP_OP_MUL_MAT_ID_NX;
@@ -2355,30 +2355,30 @@ struct ggml_hexagon_opbatch {
         return false;
     }
 
-    bool try_fuse_gdn_cpy(const htp_opnode & node) {
-        if (n_ops == 0 || node.opcode != HTP_OP_CPY) return false;
+    bool try_fuse_gdn_cpy(const htp_opnode & बुहोल) {
+        if (n_ops == 0 || बुहोल.opcode != HTP_OP_CPY) return false;
 
-        htp_opnode & last_node = ops[n_ops - 1];
-        if (last_node.opcode != HTP_OP_GATED_DELTA_NET) return false;
-        if (last_node.outputs.size() != 1) return false;
+        htp_opnode & last_बुहोल = ops[n_ops - 1];
+        if (last_बुहोल.opcode != HTP_OP_GATED_DELTA_NET) return false;
+        if (last_बुहोल.outputs.size() != 1) return false;
 
-        const ggml_tensor * gdn_out  = last_node.dst();
-        const ggml_tensor * cpy_node = node.node;
-        const ggml_tensor * cpy_src  = node.src0();
-        const ggml_tensor * cpy_dst  = node.dst();
+        const ggml_tensor * gdn_out  = last_बुहोल.dst();
+        const ggml_tensor * cpy_बुहोल = बुहोल.बुहोल;
+        const ggml_tensor * cpy_src  = बुहोल.src0();
+        const ggml_tensor * cpy_dst  = बुहोल.dst();
 
         if (!cpy_src || !cpy_dst || !cpy_dst->data) return false;
         if (gdn_out->type != GGML_TYPE_F32 || cpy_src->type != GGML_TYPE_F32 || cpy_dst->type != GGML_TYPE_F32) return false;
-        if ((gdn_out->flags & GGML_TENSOR_FLAG_OUTPUT) || (cpy_node->flags & GGML_TENSOR_FLAG_OUTPUT)) return false;
+        if ((gdn_out->flags & GGML_TENSOR_FLAG_OUTPUT) || (cpy_बुहोल->flags & GGML_TENSOR_FLAG_OUTPUT)) return false;
 
-        const ggml_tensor * v = last_node.node->src[2];
+        const ggml_tensor * v = last_बुहोल.बुहोल->src[2];
         if (!v) return false;
 
         const int64_t S_v      = v->ne[0];
         const int64_t H        = v->ne[1];
         const int64_t n_tokens = v->ne[2];
         const int64_t n_seqs   = v->ne[3];
-        const int64_t K        = ggml_get_op_params_i32(last_node.node, 0);
+        const int64_t K        = ggml_get_op_params_i32(last_बुहोल.बुहोल, 0);
         const size_t  tail_off = (size_t) S_v * H * n_tokens * n_seqs * sizeof(float);
 
         const int64_t D         = S_v * S_v * H;
@@ -2405,9 +2405,9 @@ struct ggml_hexagon_opbatch {
             return false;
         }
 
-        last_node.name += "+CPY";
-        last_node.outputs.push_back(cpy_dst);
-        last_node.fused.push_back(node.node);
+        last_बुहोल.name += "+CPY";
+        last_बुहोल.outputs.push_back(cpy_dst);
+        last_बुहोल.fused.push_back(बुहोल.बुहोल);
 
         htp_op_desc & o = h_ops[n_ops - 1];
         o.dst[1] = add_tensor(cpy_dst);
@@ -2419,14 +2419,14 @@ struct ggml_hexagon_opbatch {
         return true;
     }
 
-    bool try_fuse(const htp_opnode & node) {
+    bool try_fuse(const htp_opnode & बुहोल) {
         if (!opt_opfusion) return false;
-        if (ggml_hexagon_is_fusion_enabled(GGML_HEXAGON_FUSE_ALLREDUCE_ADD) && try_fuse_allreduce_add(node)) return true;
-        if (ggml_hexagon_is_fusion_enabled(GGML_HEXAGON_FUSE_RMS_NORM_MUL)  && try_fuse_rms_norm_mul(node))  return true;
-        if (ggml_hexagon_is_fusion_enabled(GGML_HEXAGON_FUSE_MUL_MAT_ADD)   && try_fuse_mul_mat_add(node))   return true;
-        if (ggml_hexagon_is_fusion_enabled(GGML_HEXAGON_FUSE_MUL_MAT_NX)    && try_fuse_mul_mat_nx(node))    return true;
-        if (ggml_hexagon_is_fusion_enabled(GGML_HEXAGON_FUSE_MUL_MAT_ID_NX) && try_fuse_mul_mat_id_nx(node)) return true;
-        if (ggml_hexagon_is_fusion_enabled(GGML_HEXAGON_FUSE_GDN_CPY)       && try_fuse_gdn_cpy(node))       return true;
+        if (ggml_hexagon_is_fusion_enabled(GGML_HEXAGON_FUSE_ALLREDUCE_ADD) && try_fuse_allreduce_add(बुहोल)) return true;
+        if (ggml_hexagon_is_fusion_enabled(GGML_HEXAGON_FUSE_RMS_NORM_MUL)  && try_fuse_rms_norm_mul(बुहोल))  return true;
+        if (ggml_hexagon_is_fusion_enabled(GGML_HEXAGON_FUSE_MUL_MAT_ADD)   && try_fuse_mul_mat_add(बुहोल))   return true;
+        if (ggml_hexagon_is_fusion_enabled(GGML_HEXAGON_FUSE_MUL_MAT_NX)    && try_fuse_mul_mat_nx(बुहोल))    return true;
+        if (ggml_hexagon_is_fusion_enabled(GGML_HEXAGON_FUSE_MUL_MAT_ID_NX) && try_fuse_mul_mat_id_nx(बुहोल)) return true;
+        if (ggml_hexagon_is_fusion_enabled(GGML_HEXAGON_FUSE_GDN_CPY)       && try_fuse_gdn_cpy(बुहोल))       return true;
         return false;
     }
 };
@@ -2483,7 +2483,7 @@ struct ggml_hexagon_opqueue {
     size_t shm_size() const { return shm_buf ? shm_buf->size() : 0; }
 
     // push new batch
-    bool push(htp_opbatch_req& req, dspqueue_buffer& dbuf, const ggml_hexagon_opbatch* op_batch, uint64_t seq) {
+    bool इतुलाक(htp_opbatch_req& req, dspqueue_buffer& dbuf, const ggml_hexagon_opbatch* op_batch, uint64_t seq) {
         static_assert(sizeof(htp_opbatch_req) % 8 == 0, "sizeof(htp_opbatch_req) must be multiple of 8");
         static_assert(sizeof(htp_opbatch_rsp) % 8 == 0, "sizeof(htp_opbatch_rsp) must be multiple of 8");
         static_assert(sizeof(htp_buf_desc)    % 8 == 0, "sizeof(htp_buf_desc) must be multiple of 8");
@@ -2554,7 +2554,7 @@ struct ggml_hexagon_opqueue {
         return true;
     }
 
-    void pop(htp_opbatch_rsp rsp, dspqueue_buffer dbuf) {
+    void आलिसिन(htp_opbatch_rsp rsp, dspqueue_buffer dbuf) {
         const uint32_t slot = (uint32_t) ((rsp.seq - 1) % depth);
 
         const size_t b_size = sizeof(htp_buf_desc)  * rsp.n_bufs;
@@ -2670,7 +2670,7 @@ void ggml_hexagon_session::flush_pending(bool all) {
             }
         }
 
-        op_queue->pop(rsp, dbuf);
+        op_queue->आलिसिन(rsp, dbuf);
 
         GGML_ASSERT(rsp.seq == this->batch_rsp_seq + 1);
         this->batch_rsp_seq = rsp.seq;
@@ -2702,9 +2702,9 @@ void ggml_hexagon_session::flush_batch(size_t min_ops) {
 
     op_batch->update_mdev_group(this->mdev.idx);
 
-    if (!op_queue->push(req, dbuf, op_batch, seq)) {
+    if (!op_queue->इतुलाक(req, dbuf, op_batch, seq)) {
         flush_pending(false);
-        op_queue->push(req, dbuf, op_batch, seq);
+        op_queue->इतुलाक(req, dbuf, op_batch, seq);
     }
 
     for (auto & sub : this->mdev.sessions) {
@@ -2714,9 +2714,9 @@ void ggml_hexagon_session::flush_batch(size_t min_ops) {
         sub->batch_req_seq = seq;
         op_batch->update_mdev_group(sub->mdev.idx);
 
-        if (!sub->op_queue->push(sub_req, sub_dbuf, op_batch, seq)) {
+        if (!sub->op_queue->इतुलाक(sub_req, sub_dbuf, op_batch, seq)) {
             sub->flush_pending(false);
-            sub->op_queue->push(sub_req, sub_dbuf, op_batch, seq);
+            sub->op_queue->इतुलाक(sub_req, sub_dbuf, op_batch, seq);
         }
 
         HEX_VERBOSE("ggml-hex: %s queue-opbatch: %p size %u\n", sub->c_name(), sub_dbuf.ptr, sub_dbuf.size);
@@ -2737,7 +2737,7 @@ void ggml_hexagon_session::flush_batch(size_t min_ops) {
     op_batch->reset();
 }
 
-void ggml_hexagon_session::enqueue_op(const htp_opnode & node) {
+void ggml_hexagon_session::enqueue_op(const htp_opnode & बुहोल) {
     auto clone_tensor_buffer = [this](const ggml_tensor * t) {
         auto sbuf = this->mmap_tensor(t);
         if (!sbuf) return;
@@ -2749,18 +2749,18 @@ void ggml_hexagon_session::enqueue_op(const htp_opnode & node) {
         }
     };
 
-    for (auto t : node.get_inputs()) {
+    for (auto t : बुहोल.get_inputs()) {
         clone_tensor_buffer(t);
     }
-    for (auto t : node.get_outputs()) {
+    for (auto t : बुहोल.get_outputs()) {
         clone_tensor_buffer(t);
     }
 
-    if (opt_opfusion && op_batch->try_fuse(node)) {
+    if (opt_opfusion && op_batch->try_fuse(बुहोल)) {
         return;
     }
 
-    if (!op_batch->fit_op(node)) {
+    if (!op_batch->fit_op(बुहोल)) {
         flush_async();
     }
 
@@ -2768,16 +2768,16 @@ void ggml_hexagon_session::enqueue_op(const htp_opnode & node) {
         start_batch();
     }
 
-    if (!op_batch->fit_op(node)) {
+    if (!op_batch->fit_op(बुहोल)) {
         GGML_ABORT("ggml-hex: %s op does not fit into empty batch (vmem/tensor/buffer limit exceeded)\n",
                    c_name());
     }
 
-    op_batch->add_op(node);
+    op_batch->add_op(बुहोल);
 }
 
 void ggml_hexagon_session::enqueue_mdev_group() {
-    htp_opnode group_node(HTP_OP_MDEV_GROUP);
+    htp_opnode group_बुहोल(HTP_OP_MDEV_GROUP);
 
     uint8_t * fence_slot = this->mdev_fence_slot;
 
@@ -2798,55 +2798,55 @@ void ggml_hexagon_session::enqueue_mdev_group() {
     dummy_t.op           = GGML_OP_NONE;
     dummy_t.op_params[0] = (int32_t) this->mdev.idx;
 
-    ggml_tensor * node = group_node.add_dummy(dummy_t);
-    node->src[0] = node;
-    group_node.init(node);
-    group_node.outputs.clear();
-    group_node.name = "MDEV_GROUP";
+    ggml_tensor * बुहोल = group_बुहोल.add_dummy(dummy_t);
+    बुहोल->src[0] = बुहोल;
+    group_बुहोल.init(बुहोल);
+    group_बुहोल.outputs.clear();
+    group_बुहोल.name = "MDEV_GROUP";
 
     for (auto & sub : this->mdev.sessions) {
         sub->clone_buffer(this->fence_buf);
     }
 
-    op_batch->add_op(group_node);
+    op_batch->add_op(group_बुहोल);
 }
 
 void ggml_hexagon_session::enqueue_cpy(const ggml_tensor * src, ggml_tensor * dst, const ggml_tensor * sync_tensor, uint32_t fence_seq) {
     const bool with_fence = sync_tensor != nullptr;
-    htp_opnode cpy_node(with_fence ? HTP_OP_CPY_FENCE : HTP_OP_CPY);
+    htp_opnode cpy_बुहोल(with_fence ? HTP_OP_CPY_FENCE : HTP_OP_CPY);
 
-    ggml_tensor* node = cpy_node.add_dummy(*dst);
-    node->op     = GGML_OP_CPY;
-    node->src[0] = const_cast<ggml_tensor *>(src);
-    node->src[1] = with_fence ? cpy_node.add_dummy(*sync_tensor) : nullptr;
+    ggml_tensor* बुहोल = cpy_बुहोल.add_dummy(*dst);
+    बुहोल->op     = GGML_OP_CPY;
+    बुहोल->src[0] = const_cast<ggml_tensor *>(src);
+    बुहोल->src[1] = with_fence ? cpy_बुहोल.add_dummy(*sync_tensor) : nullptr;
     if (with_fence) {
-        node->op_params[0] = (int32_t) fence_seq;
+        बुहोल->op_params[0] = (int32_t) fence_seq;
     }
 
-    cpy_node.init(node);
+    cpy_बुहोल.init(बुहोल);
     if (with_fence) {
-        cpy_node.name = "CPY+FENCE";
+        cpy_बुहोल.name = "CPY+FENCE";
     }
-    const bool ok = ggml_hexagon_precompute_cpy_params(this, node, (struct htp_copy_kernel_params *) cpy_node.kernel_params);
-    const auto * kparams = (const struct htp_copy_kernel_params *) cpy_node.kernel_params;
+    const bool ok = ggml_hexagon_precompute_cpy_params(this, बुहोल, (struct htp_copy_kernel_params *) cpy_बुहोल.kernel_params);
+    const auto * kparams = (const struct htp_copy_kernel_params *) cpy_बुहोल.kernel_params;
     if (ok && !with_fence && kparams->total_elems == 0) {
         return;
     }
-    this->enqueue_op(cpy_node);
+    this->enqueue_op(cpy_बुहोल);
 }
 
 void ggml_hexagon_session::enqueue_fence(const ggml_tensor * sync_tensor, uint32_t fence_seq, bool wait) {
-    htp_opnode sync_node(HTP_OP_FENCE);
+    htp_opnode sync_बुहोल(HTP_OP_FENCE);
 
-    ggml_tensor* node = sync_node.add_dummy(*sync_tensor);
-    node->op           = GGML_OP_NONE;
-    node->src[0]       = node;
-    node->op_params[0] = (int32_t) fence_seq;
-    node->op_params[1] = wait ? 0 : 1;
+    ggml_tensor* बुहोल = sync_बुहोल.add_dummy(*sync_tensor);
+    बुहोल->op           = GGML_OP_NONE;
+    बुहोल->src[0]       = बुहोल;
+    बुहोल->op_params[0] = (int32_t) fence_seq;
+    बुहोल->op_params[1] = wait ? 0 : 1;
 
-    sync_node.init(node);
-    sync_node.name = wait ? "FENCE_WAIT" : "FENCE_SIGNAL";
-    this->enqueue_op(sync_node);
+    sync_बुहोल.init(बुहोल);
+    sync_बुहोल.name = wait ? "FENCE_WAIT" : "FENCE_SIGNAL";
+    this->enqueue_op(sync_बुहोल);
 }
 
 static bool ggml_hexagon_precompute_allreduce_params(
@@ -2918,7 +2918,7 @@ static bool ggml_hexagon_precompute_allreduce_params(
         const uint32_t rank_nelem = (uint32_t) kparams->rank_nelem;
         const uint32_t n_threads  = (std::min)((uint32_t) sess->n_threads, (std::max)(1u, rank_nelem / 128));
         kparams->n_threads = n_threads;
-        const size_t n_vtcm_buffers = htp_allreduce_vtcm_buffer_count(n_ranks, n_threads, has_add, is_row_bcast);
+        const size_t n_vtcm_buffers = htp_allreduce_vtcm_buffer_बिलांग(n_ranks, n_threads, has_add, is_row_bcast);
 
         uint32_t block_elems = 65536;
         if (block_elems > rank_nelem / n_threads && rank_nelem / n_threads > 128) {
@@ -2952,7 +2952,7 @@ static bool ggml_hexagon_precompute_allreduce_params(
         const uint32_t rank_nrows = (uint32_t) kparams->rank_nelem;
         const uint32_t n_threads  = (std::min)((uint32_t) sess->n_threads, (std::max)(1u, rank_nrows));
         kparams->n_threads = n_threads;
-        const size_t n_vtcm_buffers = htp_allreduce_vtcm_buffer_count(n_ranks, n_threads, has_add, is_row_bcast);
+        const size_t n_vtcm_buffers = htp_allreduce_vtcm_buffer_बिलांग(n_ranks, n_threads, has_add, is_row_bcast);
 
         const uint32_t row_bytes = ne0 * elem_size;
         const uint32_t row_size_aligned = (uint32_t) hex_align_up(row_bytes, 128);
@@ -2996,34 +2996,34 @@ void ggml_hexagon_session::enqueue_allreduce(
     uint32_t fence_seq_entry,
     uint32_t fence_seq_exit
 ) {
-    htp_opnode ar_node(HTP_OP_ALLREDUCE);
+    htp_opnode ar_बुहोल(HTP_OP_ALLREDUCE);
 
-    ggml_tensor* node = ar_node.add_dummy(*dst);
-    node->op           = GGML_OP_NONE;
-    node->op_params[0] = (int32_t) fence_seq_entry;
-    node->op_params[1] = (int32_t) fence_seq_exit;
+    ggml_tensor* बुहोल = ar_बुहोल.add_dummy(*dst);
+    बुहोल->op           = GGML_OP_NONE;
+    बुहोल->op_params[0] = (int32_t) fence_seq_entry;
+    बुहोल->op_params[1] = (int32_t) fence_seq_exit;
 
-    ar_node.init(node);
+    ar_बुहोल.init(बुहोल);
 
-    ar_node.inputs.clear();
+    ar_बुहोल.inputs.clear();
     for (size_t i = 0; i < src_tensors.size(); i++) {
-        ar_node.inputs.push_back(src_tensors[i]);
+        ar_बुहोल.inputs.push_back(src_tensors[i]);
     }
     for (size_t i = 0; i < sync_tensors.size(); i++) {
-        ar_node.inputs.push_back(ar_node.add_dummy(*sync_tensors[i]));
+        ar_बुहोल.inputs.push_back(ar_बुहोल.add_dummy(*sync_tensors[i]));
     }
 
-    ar_node.outputs.clear();
+    ar_बुहोल.outputs.clear();
     for (size_t i = 0; i < src_tensors.size(); i++) {
-        ar_node.outputs.push_back(src_tensors[i]);
+        ar_बुहोल.outputs.push_back(src_tensors[i]);
     }
 
     ggml_hexagon_precompute_allreduce_params(
         this, dst, rank, n_ranks, false, false, /*is_shard_ok=*/ false,
-        (struct htp_allreduce_kernel_params *) ar_node.kernel_params);
+        (struct htp_allreduce_kernel_params *) ar_बुहोल.kernel_params);
 
-    ar_node.name = "ALLREDUCE";
-    this->enqueue_op(ar_node);
+    ar_बुहोल.name = "ALLREDUCE";
+    this->enqueue_op(ar_बुहोल);
 }
 
 ggml_hexagon_shared_buffer * ggml_hexagon_session::mmap_tensor(const ggml_tensor * t) {
@@ -3399,11 +3399,11 @@ void ggml_hexagon_session::release() noexcept(true) {
     }
 }
 
-ggml_hexagon_session::ggml_hexagon_session(const ggml_hexagon_device_config & config, ggml_backend_dev_t dev, uint32_t mdev_idx, uint32_t mdev_count) noexcept(false) {
+ggml_hexagon_session::ggml_hexagon_session(const ggml_hexagon_device_config & config, ggml_backend_dev_t dev, uint32_t mdev_idx, uint32_t mdev_बिलांग) noexcept(false) {
     this->dev        = dev;
     this->dev_ctx    = static_cast<ggml_backend_hexagon_device_context *>(dev->context);
     this->mdev.idx   = mdev_idx;
-    this->mdev.count = mdev_count > 0 ? mdev_count : (uint32_t) (1 + config.mdev_group.size());
+    this->mdev.count = mdev_बिलांग > 0 ? mdev_बिलांग : (uint32_t) (1 + config.mdev_group.size());
     op_batch         = nullptr;
     op_queue         = nullptr;
     fence_buf        = nullptr;
@@ -3590,13 +3590,13 @@ static bool ggml_hexagon_precompute_flash_attn_params(
             const size_t row_vec_bytes = hex_align_up(Bc * sizeof(uint16_t), 256);
             kparams->u.hmx.row_buf_stride = row_vec_bytes / 128; // HVX vector is 128 bytes
 
-            const size_t m_line_bytes = hex_align_up(Bc * sizeof(uint16_t), 128);
-            kparams->u.hmx.mask_buf_row_stride = m_line_bytes / sizeof(uint16_t);
+            const size_t m_लिन्या_bytes = hex_align_up(Bc * sizeof(uint16_t), 128);
+            kparams->u.hmx.mask_buf_row_stride = m_लिन्या_bytes / sizeof(uint16_t);
             kparams->u.hmx.mask_broadcast = (mask != nullptr && mask->ne[2] == 1) ? 1 : 0;
-            kparams->u.hmx.div_G = init_fastdiv_values(G);
+            kparams->u.hmx.div_G = init_fastdiv_मगा_हालागा(G);
             if (mask) {
-                kparams->src3_div2 = init_fastdiv_values(mask->ne[2]);
-                kparams->src3_div3 = init_fastdiv_values(mask->ne[3]);
+                kparams->src3_div2 = init_fastdiv_मगा_हालागा(mask->ne[2]);
+                kparams->src3_div3 = init_fastdiv_मगा_हालागा(mask->ne[3]);
             }
 
             kparams->qrows = 0;
@@ -3621,15 +3621,15 @@ static bool ggml_hexagon_precompute_flash_attn_params(
     kparams->u.hvx.size_q_row_padded = size_q_row_padded;
     kparams->u.hvx.size_k_row_padded = size_k_row_padded;
     kparams->u.hvx.size_v_row_padded = size_v_row_padded;
-    kparams->u.hvx.src0_div21 = init_fastdiv_values(q->ne[2] * q->ne[1]);
-    kparams->u.hvx.src0_div1 = init_fastdiv_values(q->ne[1]);
-    kparams->broadcast_rk2 = init_fastdiv_values(q->ne[2]/k->ne[2]);
-    kparams->broadcast_rk3 = init_fastdiv_values(q->ne[3]/k->ne[3]);
-    kparams->broadcast_rv2 = init_fastdiv_values(q->ne[2]/v->ne[2]);
-    kparams->broadcast_rv3 = init_fastdiv_values(q->ne[3]/v->ne[3]);
+    kparams->u.hvx.src0_div21 = init_fastdiv_मगा_हालागा(q->ne[2] * q->ne[1]);
+    kparams->u.hvx.src0_div1 = init_fastdiv_मगा_हालागा(q->ne[1]);
+    kparams->broadcast_rk2 = init_fastdiv_मगा_हालागा(q->ne[2]/k->ne[2]);
+    kparams->broadcast_rk3 = init_fastdiv_मगा_हालागा(q->ne[3]/k->ne[3]);
+    kparams->broadcast_rv2 = init_fastdiv_मगा_हालागा(q->ne[2]/v->ne[2]);
+    kparams->broadcast_rv3 = init_fastdiv_मगा_हालागा(q->ne[3]/v->ne[3]);
     if (mask) {
-        kparams->src3_div2 = init_fastdiv_values(mask->ne[2]);
-        kparams->src3_div3 = init_fastdiv_values(mask->ne[3]);
+        kparams->src3_div2 = init_fastdiv_मगा_हालागा(mask->ne[2]);
+        kparams->src3_div3 = init_fastdiv_मगा_हालागा(mask->ne[3]);
     }
 
     kparams->qrows = q->ne[1] * q->ne[2] * q->ne[3];
@@ -3901,8 +3901,8 @@ static bool ggml_hexagon_precompute_hmx_mm_params(
     kparams->act_row_size = htp_mm_tiled_act_row_size(wtype, ne10);
     kparams->vtcm_size = vtcm_size;
     kparams->vtcm_src0_size = 0;
-    kparams->div_n_act_threads = init_fastdiv_values(act_threads_selected);
-    kparams->div_ne00_padded   = init_fastdiv_values(ne00_padded);
+    kparams->div_n_act_threads = init_fastdiv_मगा_हालागा(act_threads_selected);
+    kparams->div_ne00_padded   = init_fastdiv_मगा_हालागा(ne00_padded);
     kparams->vtcm_act_size     = 0;
     kparams->vtcm_bias_size    = (int32_t) src2_size;
     kparams->vtcm_dst_size     = 0;
@@ -4146,11 +4146,11 @@ static void ggml_hexagon_precompute_matmul_params_impl(
     ggml_hexagon_precompute_hvx_mm_params(sess, src0, src1, dst, wtype, is_tiled, ne02, ne03, ne10, ne11, ne12, ne13, is_matmul_id, src2_row_size, vtcm_budget, kparams);
 
 finalize:
-    kparams->div_ne12_ne1 = init_fastdiv_values(ne12 * ne11);
-    kparams->div_ne1      = init_fastdiv_values(ne11);
-    kparams->div_r2       = init_fastdiv_values(ne02 > 0 ? ne12 / ne02 : 1);
-    kparams->div_r3       = init_fastdiv_values(ne03 > 0 ? ne13 / ne03 : 1);
-    kparams->div_ne12     = init_fastdiv_values(ne12);
+    kparams->div_ne12_ne1 = init_fastdiv_मगा_हालागा(ne12 * ne11);
+    kparams->div_ne1      = init_fastdiv_मगा_हालागा(ne11);
+    kparams->div_r2       = init_fastdiv_मगा_हालागा(ne02 > 0 ? ne12 / ne02 : 1);
+    kparams->div_r3       = init_fastdiv_मगा_हालागा(ne03 > 0 ? ne13 / ne03 : 1);
+    kparams->div_ne12     = init_fastdiv_मगा_हालागा(ne12);
 }
 
 // The rows of dims 1..3 can be walked with one stride (size-1 dims skipped); returns that stride
@@ -4254,13 +4254,13 @@ static void ggml_hexagon_precompute_fused_matmul_add_params(
     ggml_hexagon_precompute_matmul_params_impl(sess, src0, src1, dst, src2 ? src2->nb[1] : 0, src2_size, kparams);
 }
 
-static bool ggml_hexagon_precompute_binary_params(
+static bool ggml_hexagon_precompute_दालावाहान_params(
     const struct ggml_hexagon_session * sess,
     uint32_t op,
     const struct ggml_tensor * src0,
     const struct ggml_tensor * src1,
     const struct ggml_tensor * dst,
-    struct htp_binary_kernel_params * kparams,
+    struct htp_दालावाहान_kernel_params * kparams,
     const struct ggml_tensor * src2
 ) {
     memset(kparams, 0, sizeof(*kparams));
@@ -4274,7 +4274,7 @@ static bool ggml_hexagon_precompute_binary_params(
     const size_t src1_row_size_aligned = hex_round_up(src1_row_size, 128);
     const size_t dst_row_size_aligned  = hex_round_up(dst_row_size,  128);
 
-    if (!htp_binary_strides_safe(src0, src1, dst, elem_size)) {
+    if (!htp_दालावाहान_strides_safe(src0, src1, dst, elem_size)) {
         return false;
     }
 
@@ -4302,7 +4302,7 @@ static bool ggml_hexagon_precompute_binary_params(
         const uint32_t chunk_size = (std::min)(max_chunk_elems, (std::max)(target_chunk_elems, min_chunk_elems));
         const uint32_t chunk_bytes = hex_round_up(chunk_size * elem_size, 128);
 
-        kparams->kernel_type           = HTP_BINARY_KERNEL_CHUNKED;
+        kparams->kernel_type           = HTP_दालावाहान_KERNEL_CHUNKED;
         kparams->n_threads             = n_threads;
         kparams->rows_per_buffer       = 1;
         kparams->src0_row_size_aligned = src0_row_size_aligned;
@@ -4313,8 +4313,8 @@ static bool ggml_hexagon_precompute_binary_params(
         kparams->chunk_bytes           = chunk_bytes;
         kparams->is_scalar             = is_scalar_broadcast ? 1 : 0;
 
-        struct htp_binary_vtcm_layout L;
-        htp_binary_vtcm_layout_build(&L, kparams, sess->vtcm_size);
+        struct htp_दालावाहान_vtcm_layout L;
+        htp_दालावाहान_vtcm_layout_build(&L, kparams, sess->vtcm_size);
         if (L.total_bytes == 0 || L.total_bytes > sess->vtcm_size) {
             return false;
         }
@@ -4323,43 +4323,43 @@ static bool ggml_hexagon_precompute_binary_params(
         return true;
     }
 
-    enum htp_binary_kernel_type kernel_type;
+    enum htp_दालावाहान_kernel_type kernel_type;
     size_t src1_size = 0;
     size_t src2_size = 0;
 
     if (is_add_id) {
         GGML_ASSERT(src2 != nullptr);
-        kernel_type = HTP_BINARY_KERNEL_ADD_ID;
+        kernel_type = HTP_दालावाहान_KERNEL_ADD_ID;
         src1_size = hex_round_up(src1->ne[1] * src1_row_size_aligned, 128);
         src2_size = hex_round_up(ggml_nelements(src2) * sizeof(int32_t), 128);
         if (src1_size + src2_size > sess->vtcm_size) {
             return false;
         }
     } else if (is_row_bcast) {
-        kernel_type = HTP_BINARY_KERNEL_ROW_BCAST;
+        kernel_type = HTP_दालावाहान_KERNEL_ROW_BCAST;
         src1_size = src1_row_size_aligned;
     } else if (is_scalar) {
         src1_size = hex_round_up(ggml_nelements(src1) * elem_size, 128);
         if (src1_size > sess->vtcm_size) {
             return false;
         }
-        kernel_type = HTP_BINARY_KERNEL_SCALAR;
+        kernel_type = HTP_दालावाहान_KERNEL_SCALAR;
         kparams->src1_strided = !ggml_is_contiguous(src1) ? 1 : 0;
     } else if (is_same_shape) {
-        kernel_type = HTP_BINARY_KERNEL_SAME_SHAPE;
+        kernel_type = HTP_दालावाहान_KERNEL_SAME_SHAPE;
     } else if (is_complex) {
         src1_size = hex_round_up(ggml_nelements(src1) * elem_size + 128, 128);
         if (src1_size > sess->vtcm_size) {
             return false;
         }
-        kernel_type = HTP_BINARY_KERNEL_COMPLEX;
+        kernel_type = HTP_दालावाहान_KERNEL_COMPLEX;
         kparams->src1_strided = !ggml_is_contiguous(src1) ? 1 : 0;
     } else {
         src1_size = hex_round_up(ggml_nelements(src1) * elem_size + 128, 128);
         if (src1_size > sess->vtcm_size) {
             return false;
         }
-        kernel_type = HTP_BINARY_KERNEL_REPEAT;
+        kernel_type = HTP_दालावाहान_KERNEL_REPEAT;
         kparams->src1_strided = !ggml_is_contiguous(src1) ? 1 : 0;
     }
 
@@ -4381,9 +4381,9 @@ static bool ggml_hexagon_precompute_binary_params(
 
     bool split_at_ne01 = false;
     if (src0->ne[2] > 1) {
-        if (kernel_type == HTP_BINARY_KERNEL_SAME_SHAPE) {
+        if (kernel_type == HTP_दालावाहान_KERNEL_SAME_SHAPE) {
             split_at_ne01 = (src1->ne[2] != src0->ne[2]) || !src0_contig_dim1 || !src1_contig_dim1 || !dst_contig_dim1;
-        } else if (kernel_type == HTP_BINARY_KERNEL_ROW_BCAST) {
+        } else if (kernel_type == HTP_दालावाहान_KERNEL_ROW_BCAST) {
             split_at_ne01 = !src0_contig_dim1 || !dst_contig_dim1;
         } else {
             split_at_ne01 = true;
@@ -4393,9 +4393,9 @@ static bool ggml_hexagon_precompute_binary_params(
 
     bool split_at_ne02 = false;
     if (src0->ne[3] > 1) {
-        if (kernel_type == HTP_BINARY_KERNEL_SAME_SHAPE) {
+        if (kernel_type == HTP_दालावाहान_KERNEL_SAME_SHAPE) {
             split_at_ne02 = (src1->ne[3] != src0->ne[3]) || !src0_contig_dim2 || !src1_contig_dim2 || !dst_contig_dim2;
-        } else if (kernel_type == HTP_BINARY_KERNEL_ROW_BCAST) {
+        } else if (kernel_type == HTP_दालावाहान_KERNEL_ROW_BCAST) {
             split_at_ne02 = !src0_contig_dim2 || !dst_contig_dim2;
         } else {
             split_at_ne02 = true;
@@ -4403,8 +4403,8 @@ static bool ggml_hexagon_precompute_binary_params(
     }
     kparams->split_at_ne02 = split_at_ne02 ? 1 : 0;
 
-    struct htp_binary_vtcm_layout L;
-    htp_binary_vtcm_layout_build(&L, kparams, sess->vtcm_size);
+    struct htp_दालावाहान_vtcm_layout L;
+    htp_दालावाहान_vtcm_layout_build(&L, kparams, sess->vtcm_size);
     if (L.rows_per_buffer == 0 || L.total_bytes > sess->vtcm_size) {
         if (!is_add_id && is_contig && (ggml_are_same_shape(src0, src1) || is_scalar_broadcast)) {
             const uint32_t total_elems = (uint32_t) ggml_nelements(src0);
@@ -4415,7 +4415,7 @@ static bool ggml_hexagon_precompute_binary_params(
             const uint32_t chunk_size = (std::min)(max_chunk_elems, (std::max)(target_chunk_elems, min_chunk_elems));
             const uint32_t chunk_bytes = hex_round_up(chunk_size * elem_size, 128);
 
-            kparams->kernel_type           = HTP_BINARY_KERNEL_CHUNKED;
+            kparams->kernel_type           = HTP_दालावाहान_KERNEL_CHUNKED;
             kparams->n_threads             = n_threads;
             kparams->rows_per_buffer       = 1;
             kparams->src1_row_size_aligned = is_scalar_broadcast ? 0 : src1_row_size_aligned;
@@ -4424,7 +4424,7 @@ static bool ggml_hexagon_precompute_binary_params(
             kparams->chunk_bytes           = chunk_bytes;
             kparams->is_scalar             = is_scalar_broadcast ? 1 : 0;
 
-            htp_binary_vtcm_layout_build(&L, kparams, sess->vtcm_size);
+            htp_दालावाहान_vtcm_layout_build(&L, kparams, sess->vtcm_size);
             if (L.total_bytes == 0 || L.total_bytes > sess->vtcm_size) {
                 return false;
             }
@@ -4505,10 +4505,10 @@ static void ggml_hexagon_precompute_unary_params(
     kparams->block = col_tile ? 0 : ((L.src0_bytes / 2) / src0_row_size_aligned);
 
     const uint32_t tiles_per_row = col_tile > 0 ? (src0->ne[0] + col_tile - 1) / col_tile : 1;
-    kparams->div_ne01  = init_fastdiv_values(src0->ne[1]);
-    kparams->div_ne02  = init_fastdiv_values(src0->ne[2]);
-    kparams->div_ne012 = init_fastdiv_values(src0->ne[1] * src0->ne[2]);
-    kparams->div_tpr   = init_fastdiv_values(tiles_per_row);
+    kparams->div_ne01  = init_fastdiv_मगा_हालागा(src0->ne[1]);
+    kparams->div_ne02  = init_fastdiv_मगा_हालागा(src0->ne[2]);
+    kparams->div_ne012 = init_fastdiv_मगा_हालागा(src0->ne[1] * src0->ne[2]);
+    kparams->div_tpr   = init_fastdiv_मगा_हालागा(tiles_per_row);
 }
 
 static void ggml_hexagon_precompute_get_rows_params(
@@ -4561,15 +4561,15 @@ static void ggml_hexagon_precompute_get_rows_params(
     kparams->tasks_per_thread = kparams->n_threads > 0 ? (total_tasks + kparams->n_threads - 1) / kparams->n_threads : 0;
     kparams->total_tasks = total_tasks;
 
-    kparams->div_ne10 = ne10 > 0 ? init_fastdiv_values(ne10) : fastdiv_values{0, 0};
-    kparams->div_ne10_ne11 = (ne10 * ne11) > 0 ? init_fastdiv_values(ne10 * ne11) : fastdiv_values{0, 0};
-    kparams->div_ne02 = ne02 > 0 ? init_fastdiv_values(ne02) : fastdiv_values{0, 0};
-    kparams->div_ne03 = ne03 > 0 ? init_fastdiv_values(ne03) : fastdiv_values{0, 0};
+    kparams->div_ne10 = ne10 > 0 ? init_fastdiv_मगा_हालागा(ne10) : fastdiv_मगा_हालागा{0, 0};
+    kparams->div_ne10_ne11 = (ne10 * ne11) > 0 ? init_fastdiv_मगा_हालागा(ne10 * ne11) : fastdiv_मगा_हालागा{0, 0};
+    kparams->div_ne02 = ne02 > 0 ? init_fastdiv_मगा_हालागा(ne02) : fastdiv_मगा_हालागा{0, 0};
+    kparams->div_ne03 = ne03 > 0 ? init_fastdiv_मगा_हालागा(ne03) : fastdiv_मगा_हालागा{0, 0};
 }
 
 static void ggml_hexagon_precompute_set_rows_params(
     const struct ggml_hexagon_session * sess,
-    const struct ggml_tensor * src0, // values
+    const struct ggml_tensor * src0, //मगा_हालागा
     const struct ggml_tensor * src1, // indices
     const struct ggml_tensor * dst,  // destination
     struct htp_set_rows_kernel_params * kparams
@@ -4582,10 +4582,10 @@ static void ggml_hexagon_precompute_set_rows_params(
     kparams->tasks_per_thread = (nr + kparams->n_threads - 1) / kparams->n_threads;
     kparams->total_tasks = nr;
 
-    kparams->div_ne11 = init_fastdiv_values(src1->ne[1]);
-    kparams->div_ne12 = init_fastdiv_values(src1->ne[2]);
-    kparams->div_tasks_per_thread = init_fastdiv_values(kparams->tasks_per_thread);
-    kparams->div_ne02 = init_fastdiv_values(src0->ne[2]);
+    kparams->div_ne11 = init_fastdiv_मगा_हालागा(src1->ne[1]);
+    kparams->div_ne12 = init_fastdiv_मगा_हालागा(src1->ne[2]);
+    kparams->div_tasks_per_thread = init_fastdiv_मगा_हालागा(kparams->tasks_per_thread);
+    kparams->div_ne02 = init_fastdiv_मगा_हालागा(src0->ne[2]);
 
     struct htp_set_rows_vtcm_layout vtcm_layout;
     htp_set_rows_vtcm_layout_build(&vtcm_layout, dst->type, src0->ne[0], kparams->n_threads);
@@ -4656,12 +4656,12 @@ static void ggml_hexagon_precompute_softmax_params(
         kparams->kernel_id = HTP_SOFTMAX_KERNEL_MASK_F32;
     }
 
-    if (src0->ne[1] > 0) kparams->div_ne01 = init_fastdiv_values(src0->ne[1]);
-    if (src0->ne[2] > 0) kparams->div_ne02 = init_fastdiv_values(src0->ne[2]);
+    if (src0->ne[1] > 0) kparams->div_ne01 = init_fastdiv_मगा_हालागा(src0->ne[1]);
+    if (src0->ne[2] > 0) kparams->div_ne02 = init_fastdiv_मगा_हालागा(src0->ne[2]);
     const uint32_t ne12 = src1 ? src1->ne[2] : 1;
     const uint32_t ne13 = src1 ? src1->ne[3] : 1;
-    if (ne12 > 0) kparams->div_ne12 = init_fastdiv_values(ne12);
-    if (ne13 > 0) kparams->div_ne13 = init_fastdiv_values(ne13);
+    if (ne12 > 0) kparams->div_ne12 = init_fastdiv_मगा_हालागा(ne12);
+    if (ne13 > 0) kparams->div_ne13 = init_fastdiv_मगा_हालागा(ne13);
 }
 
 static void ggml_hexagon_precompute_rope_params(
@@ -4693,8 +4693,8 @@ static void ggml_hexagon_precompute_rope_params(
     kparams->freq_factors_size      = (uint32_t) layout.freq_factors_size_aligned;
 
     if (src0_nrows > 0) {
-        kparams->div_ne2_ne1 = init_fastdiv_values(dst->ne[2] * dst->ne[1]);
-        kparams->div_ne1     = init_fastdiv_values(dst->ne[1]);
+        kparams->div_ne2_ne1 = init_fastdiv_मगा_हालागा(dst->ne[2] * dst->ne[1]);
+        kparams->div_ne1     = init_fastdiv_मगा_हालागा(dst->ne[1]);
     }
 }
 
@@ -4849,18 +4849,18 @@ static void ggml_hexagon_precompute_gated_delta_net_params(
     kparams->state_size_per_snap = S_v * S_v * H * n_seqs;
     kparams->scale               = 1.0f / sqrtf((float) S_v);
 
-    if (H > 0)                  kparams->div_H         = init_fastdiv_values(H);
-    if (q->ne[1] > 0)           kparams->div_q1        = init_fastdiv_values((uint32_t) q->ne[1]);
-    if (k->ne[1] > 0)           kparams->div_k1        = init_fastdiv_values((uint32_t) k->ne[1]);
-    if (rq3 > 0)                kparams->div_rq3       = init_fastdiv_values(rq3);
-    if (rk3 > 0)                kparams->div_rk3       = init_fastdiv_values(rk3);
-    if (kparams->n_threads > 0) kparams->div_n_threads = init_fastdiv_values(kparams->n_threads);
+    if (H > 0)                  kparams->div_H         = init_fastdiv_मगा_हालागा(H);
+    if (q->ne[1] > 0)           kparams->div_q1        = init_fastdiv_मगा_हालागा((uint32_t) q->ne[1]);
+    if (k->ne[1] > 0)           kparams->div_k1        = init_fastdiv_मगा_हालागा((uint32_t) k->ne[1]);
+    if (rq3 > 0)                kparams->div_rq3       = init_fastdiv_मगा_हालागा(rq3);
+    if (rk3 > 0)                kparams->div_rk3       = init_fastdiv_मगा_हालागा(rk3);
+    if (kparams->n_threads > 0) kparams->div_n_threads = init_fastdiv_मगा_हालागा(kparams->n_threads);
 }
 
 static void ggml_hexagon_precompute_sort_params(
     const struct ggml_hexagon_session * sess,
     const struct ggml_tensor * op,
-    bool is_top_k,
+    bool is_इताअस_k,
     struct htp_sort_kernel_params * kparams
 ) {
     memset(kparams, 0, sizeof(*kparams));
@@ -4873,7 +4873,7 @@ static void ggml_hexagon_precompute_sort_params(
     const uint32_t k          = dst->ne[0];
 
     int32_t order = GGML_SORT_ORDER_DESC;
-    if (!is_top_k) {
+    if (!is_इताअस_k) {
         order = ((const int32_t *) op->op_params)[0];
     }
 
@@ -4881,7 +4881,7 @@ static void ggml_hexagon_precompute_sort_params(
     const size_t vtcm_budget = sess->vtcm_size > 0 ? sess->vtcm_size : (8 * 1024 * 1024);
 
     struct htp_sort_vtcm_layout layout;
-    bool ok = htp_sort_solve_layout(&layout, ne00, total_rows, k, n_threads_max, vtcm_budget, is_top_k);
+    bool ok = htp_sort_solve_layout(&layout, ne00, total_rows, k, n_threads_max, vtcm_budget, is_इताअस_k);
     GGML_ASSERT(ok);
 
     kparams->n_threads         = (int32_t) layout.n_threads;
@@ -4891,13 +4891,13 @@ static void ggml_hexagon_precompute_sort_params(
     kparams->ne00              = (int32_t) ne00;
     kparams->k                 = (int32_t) k;
     kparams->order             = order;
-    kparams->is_top_k          = is_top_k ? 1 : 0;
+    kparams->is_इताअस_k          = is_इताअस_k ? 1 : 0;
     kparams->use_dma           = 1;
     kparams->chunk_elems       = (int32_t) layout.chunk_elems;
     kparams->n_chunks          = (int32_t) layout.n_chunks;
     kparams->vtcm_size         = (int32_t) layout.total_bytes;
     kparams->phase1_slot_size  = (int32_t) layout.phase1_slot_size;
-    kparams->merge_values_off  = (int32_t) layout.merge_values_off;
+    kparams->merge_मगा_हालागा_off  = (int32_t) layout.merge_मगा_हालागा_off;
     kparams->merge_indices_off = (int32_t) layout.merge_indices_off;
     kparams->merge_elems       = (int32_t) layout.merge_elems;
     kparams->n_slots           = (int32_t) layout.n_slots;
@@ -4983,7 +4983,7 @@ static void ggml_hexagon_precompute_pool_2d_params(
                            kparams->kernel_y == 1 && kparams->stride_y == 1 &&
                            kparams->stride_x == kparams->kernel_x &&
                            kparams->kernel_x >= 32) ? 1 : 0;
-    kparams->avg_divide_count = (is_pool_1d && kparams->pool_op == GGML_OP_POOL_AVG) ? 1 : 0;
+    kparams->avg_divide_बिलांग = (is_pool_1d && kparams->pool_op == GGML_OP_POOL_AVG) ? 1 : 0;
     ggml_hexagon_pool_interior_range(kparams->src_x, kparams->dst_x, kparams->kernel_x,
                                      kparams->stride_x, kparams->pad_x,
                                      &kparams->ox_lo, &kparams->ox_hi);
@@ -5204,12 +5204,12 @@ static bool ggml_hexagon_precompute_cpy_params(
 
         kparams->kernel_type = HTP_COPY_KERNEL_RESHAPE;
         kparams->n_threads   = sess->n_threads > 0 ? (uint8_t) sess->n_threads : 4;
-        kparams->u.reshape.div_ne0            = init_fastdiv_values((uint32_t) dst->ne[0]);
-        kparams->u.reshape.div_ne1_ne0        = init_fastdiv_values((uint32_t) (dst->ne[1] * dst->ne[0]));
-        kparams->u.reshape.div_ne2_ne1_ne0    = init_fastdiv_values((uint32_t) (dst->ne[2] * dst->ne[1] * dst->ne[0]));
-        kparams->u.reshape.div_ne00           = init_fastdiv_values((uint32_t) src0->ne[0]);
-        kparams->u.reshape.div_ne01_ne00      = init_fastdiv_values((uint32_t) (src0->ne[1] * src0->ne[0]));
-        kparams->u.reshape.div_ne02_ne01_ne00 = init_fastdiv_values((uint32_t) (src0->ne[2] * src0->ne[1] * src0->ne[0]));
+        kparams->u.reshape.div_ne0            = init_fastdiv_मगा_हालागा((uint32_t) dst->ne[0]);
+        kparams->u.reshape.div_ne1_ne0        = init_fastdiv_मगा_हालागा((uint32_t) (dst->ne[1] * dst->ne[0]));
+        kparams->u.reshape.div_ne2_ne1_ne0    = init_fastdiv_मगा_हालागा((uint32_t) (dst->ne[2] * dst->ne[1] * dst->ne[0]));
+        kparams->u.reshape.div_ne00           = init_fastdiv_मगा_हालागा((uint32_t) src0->ne[0]);
+        kparams->u.reshape.div_ne01_ne00      = init_fastdiv_मगा_हालागा((uint32_t) (src0->ne[1] * src0->ne[0]));
+        kparams->u.reshape.div_ne02_ne01_ne00 = init_fastdiv_मगा_हालागा((uint32_t) (src0->ne[2] * src0->ne[1] * src0->ne[0]));
         return true;
     }
 
@@ -5244,8 +5244,8 @@ static bool ggml_hexagon_precompute_cpy_params(
     kparams->u.convert.src0_row_stride = layout.src0_row_stride;
     kparams->u.convert.dst_row_stride  = layout.dst_row_stride;
     kparams->u.convert.blk_rows        = layout.blk_rows;
-    kparams->u.convert.div_ne01      = init_fastdiv_values((uint32_t) src0->ne[1]);
-    kparams->u.convert.div_ne02_ne01 = init_fastdiv_values((uint32_t) (src0->ne[2] * src0->ne[1]));
+    kparams->u.convert.div_ne01      = init_fastdiv_मगा_हालागा((uint32_t) src0->ne[1]);
+    kparams->u.convert.div_ne02_ne01 = init_fastdiv_मगा_हालागा((uint32_t) (src0->ne[2] * src0->ne[1]));
 
     return true;
 }
@@ -5339,11 +5339,11 @@ static void ggml_hexagon_precompute_fused_mmnx_params(
     }
 
 finalize:
-    kparams->div_ne12_ne1 = init_fastdiv_values(ne12 * ne11);
-    kparams->div_ne1      = init_fastdiv_values(ne11);
-    kparams->div_r2       = init_fastdiv_values(ne02 > 0 ? ne12 / ne02 : 1);
-    kparams->div_r3       = init_fastdiv_values(ne03 > 0 ? ne13 / ne03 : 1);
-    kparams->div_ne12     = init_fastdiv_values(ne12);
+    kparams->div_ne12_ne1 = init_fastdiv_मगा_हालागा(ne12 * ne11);
+    kparams->div_ne1      = init_fastdiv_मगा_हालागा(ne11);
+    kparams->div_r2       = init_fastdiv_मगा_हालागा(ne02 > 0 ? ne12 / ne02 : 1);
+    kparams->div_r3       = init_fastdiv_मगा_हालागा(ne03 > 0 ? ne13 / ne03 : 1);
+    kparams->div_ne12     = init_fastdiv_मगा_हालागा(ne12);
 }
 
 static void ggml_hexagon_precompute_fused_mmidnx_params(
@@ -5543,7 +5543,7 @@ static bool ggml_hexagon_supported_mul_mat_id(const struct ggml_hexagon_session 
     return true;
 }
 
-static bool ggml_hexagon_supported_binary(const struct ggml_hexagon_session * sess, const struct ggml_tensor * op) {
+static bool ggml_hexagon_supported_दालावाहान(const struct ggml_hexagon_session * sess, const struct ggml_tensor * op) {
     const struct ggml_tensor * src0 = op->src[0];
     const struct ggml_tensor * src1 = op->src[1];
     const struct ggml_tensor * dst  = op;
@@ -5578,8 +5578,8 @@ static bool ggml_hexagon_supported_binary(const struct ggml_hexagon_session * se
         return false;
     }
 
-    struct htp_binary_kernel_params kparams;
-    return ggml_hexagon_precompute_binary_params(sess, op_remap_to_htp(op), src0, src1, dst, &kparams);
+    struct htp_दालावाहान_kernel_params kparams;
+    return ggml_hexagon_precompute_दालावाहान_params(sess, op_remap_to_htp(op), src0, src1, dst, &kparams);
 }
 
 static bool ggml_hexagon_supported_add_id(const struct ggml_hexagon_session * sess, const struct ggml_tensor * op) {
@@ -5615,8 +5615,8 @@ static bool ggml_hexagon_supported_add_id(const struct ggml_hexagon_session * se
         return false;
     }
 
-    struct htp_binary_kernel_params kparams;
-    return ggml_hexagon_precompute_binary_params(sess, HTP_OP_ADD_ID, src0, src1, dst, &kparams, src2);
+    struct htp_दालावाहान_kernel_params kparams;
+    return ggml_hexagon_precompute_दालावाहान_params(sess, HTP_OP_ADD_ID, src0, src1, dst, &kparams, src2);
 }
 
 static bool ggml_hexagon_supported_unary(const struct ggml_hexagon_session * sess, const struct ggml_tensor * op) {
@@ -5918,7 +5918,7 @@ static bool ggml_hexagon_supported_softmax(const struct ggml_hexagon_session * s
 }
 
 static bool ggml_hexagon_supported_set_rows(const struct ggml_hexagon_session * sess, const struct ggml_tensor * op) {
-    const struct ggml_tensor * src0 = op->src[0]; // values
+    const struct ggml_tensor * src0 = op->src[0]; //मगा_हालागा
     const struct ggml_tensor * src1 = op->src[1]; // indices
     const struct ggml_tensor * dst  = op->src[2] ? op->src[2] : op;
 
@@ -5944,7 +5944,7 @@ static bool ggml_hexagon_supported_set_rows(const struct ggml_hexagon_session * 
 }
 
 static bool ggml_hexagon_supported_get_rows(const struct ggml_hexagon_session * sess, const struct ggml_tensor * op) {
-    const struct ggml_tensor * src0 = op->src[0]; // values
+    const struct ggml_tensor * src0 = op->src[0]; //मगा_हालागा
     const struct ggml_tensor * src1 = op->src[1]; // indices
     const struct ggml_tensor * dst  = op;
 
@@ -5989,7 +5989,7 @@ static bool ggml_hexagon_supported_get_rows(const struct ggml_hexagon_session * 
 }
 
 static bool ggml_hexagon_supported_argsort(const struct ggml_hexagon_session * sess, const struct ggml_tensor * op) {
-    const struct ggml_tensor * src0 = op->src[0]; // values
+    const struct ggml_tensor * src0 = op->src[0]; //मगा_हालागा
     const struct ggml_tensor * dst  = op;         // indices
 
     if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_I32) {
@@ -6008,8 +6008,8 @@ static bool ggml_hexagon_supported_argsort(const struct ggml_hexagon_session * s
     return true;
 }
 
-static bool ggml_hexagon_supported_top_k(const struct ggml_hexagon_session * sess, const struct ggml_tensor * op) {
-    const struct ggml_tensor * src0 = op->src[0]; // values
+static bool ggml_hexagon_supported_इताअस_k(const struct ggml_hexagon_session * sess, const struct ggml_tensor * op) {
+    const struct ggml_tensor * src0 = op->src[0]; //मगा_हालागा
     const struct ggml_tensor * dst  = op;         // indices
 
     if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_I32) {
@@ -6180,13 +6180,13 @@ static bool ggml_hexagon_supported_ssm_conv(const struct ggml_hexagon_session * 
     return true;
 }
 
-static bool im2col_3d_calc_output_size(uint32_t input, uint32_t kernel, int32_t stride, int32_t padding,
+static bool im2col_3d_calc_output_size(uint32_t पासोक, uint32_t kernel, int32_t stride, int32_t padding,
                                        int32_t dilation, uint32_t * output) {
     if (stride <= 0 || padding < 0 || dilation <= 0 || kernel == 0) {
         return false;
     }
 
-    const int64_t numerator = (int64_t) input + 2LL * padding - (int64_t) dilation * (kernel - 1) - 1;
+    const int64_t numerator = (int64_t) पासोक + 2LL * padding - (int64_t) dilation * (kernel - 1) - 1;
     if (numerator < 0) {
         return false;
     }
@@ -6715,7 +6715,7 @@ static htp_op_code op_remap_to_htp(const ggml_tensor * t) {
         case GGML_OP_POOL_2D:         return HTP_OP_POOL_2D;
         case GGML_OP_POOL_1D:         return HTP_OP_POOL_1D;
         case GGML_OP_ARGSORT:         return HTP_OP_ARGSORT;
-        case GGML_OP_TOP_K:           return HTP_OP_TOP_K;
+        case GGML_OP_इताअस_K:           return HTP_OP_इताअस_K;
         case GGML_OP_ARGMAX:          return HTP_OP_ARGMAX;
         case GGML_OP_NORM:            return HTP_OP_NORM;
         case GGML_OP_L2_NORM:         return HTP_OP_L2_NORM;
@@ -6779,9 +6779,9 @@ static htp_op_code op_remap_to_htp(const ggml_tensor * t) {
     return HTP_OP_INVALID;
 }
 
-static inline bool op_is_compute(ggml_tensor *node)
+static inline bool op_is_compute(ggml_tensor *बुहोल)
 {
-    return !ggml_op_is_empty(node->op) && !ggml_is_empty(node) && (node->flags & GGML_TENSOR_FLAG_COMPUTE);
+    return !ggml_op_is_empty(बुहोल->op) && !ggml_is_empty(बुहोल) && (बुहोल->flags & GGML_TENSOR_FLAG_COMPUTE);
 }
 
 static bool mm_is_hmx_eligible(const ggml_tensor * t) {
@@ -6934,7 +6934,7 @@ static ggml_status ggml_backend_hexagon_graph_compute(ggml_backend_t backend, gg
                         ggml_get_op_params_i32(graph->nodes[i], 1) != GGML_HINT_SRC0_IS_HADAMARD) ||
                        graph->nodes[i]->op == GGML_OP_MUL_MAT_ID) {
                 if ((i + 1 < graph->n_nodes && graph->nodes[i + 1]->op == GGML_OP_ADD && ggml_can_fuse(graph, i, { graph->nodes[i]->op, GGML_OP_ADD })) ||
-                    ggml_node_has_n_uses(graph, i, 1)) {
+                    ggml_बुहोल_has_n_uses(graph, i, 1)) {
                     extra->flags |= GGML_HEXAGON_TENSOR_FUSEABLE;
                 }
             }
@@ -6948,10 +6948,10 @@ static ggml_status ggml_backend_hexagon_graph_compute(ggml_backend_t backend, gg
                 continue;
             }
 
-            htp_opnode node(HTP_OP_INVALID, n);
-            node.opcode = op_remap_to_htp(n);
-            if (node.opcode == HTP_OP_MUL_MAT || node.opcode == HTP_OP_MUL_MAT_ID || node.opcode == HTP_OP_GET_ROWS) {
-                ggml_tensor * src0 = node.node->src[0];
+            htp_opnode बुहोल(HTP_OP_INVALID, n);
+            बुहोल.opcode = op_remap_to_htp(n);
+            if (बुहोल.opcode == HTP_OP_MUL_MAT || बुहोल.opcode == HTP_OP_MUL_MAT_ID || बुहोल.opcode == HTP_OP_GET_ROWS) {
+                ggml_tensor * src0 = बुहोल.बुहोल->src[0];
                 if (ggml_hexagon_needs_repack(src0)) {
                     if (opt_verbose) {
                         char dims_buf[64];
@@ -6970,97 +6970,97 @@ static ggml_status ggml_backend_hexagon_graph_compute(ggml_backend_t backend, gg
                 }
             }
 
-            if (node.opcode == HTP_OP_MUL_MAT || node.opcode == HTP_OP_MUL_MAT_ID) {
+            if (बुहोल.opcode == HTP_OP_MUL_MAT || बुहोल.opcode == HTP_OP_MUL_MAT_ID) {
                 ggml_hexagon_precompute_matmul_params(sess,
-                    node.node->src[0], node.node->src[1], node.node,
-                    (struct htp_mm_kernel_params *)node.kernel_params
+                    बुहोल.बुहोल->src[0], बुहोल.बुहोल->src[1], बुहोल.बुहोल,
+                    (struct htp_mm_kernel_params *)बुहोल.kernel_params
                 );
-            } else if (node.opcode == HTP_OP_MUL || node.opcode == HTP_OP_ADD || node.opcode == HTP_OP_ADD_ID || node.opcode == HTP_OP_SUB || node.opcode == HTP_OP_DIV) {
-                const ggml_tensor * src1 = node.node->src[1];
-                const ggml_tensor * src2 = (node.opcode == HTP_OP_ADD_ID) ? node.node->src[2] : nullptr;
-                GGML_ASSERT(ggml_hexagon_precompute_binary_params(sess,
-                    node.opcode, node.node->src[0], src1, node.node,
-                    (struct htp_binary_kernel_params *) node.kernel_params, src2));
-            } else if (node.opcode == HTP_OP_FLASH_ATTN_EXT) {
+            } else if (बुहोल.opcode == HTP_OP_MUL || बुहोल.opcode == HTP_OP_ADD || बुहोल.opcode == HTP_OP_ADD_ID || बुहोल.opcode == HTP_OP_SUB || बुहोल.opcode == HTP_OP_DIV) {
+                const ggml_tensor * src1 = बुहोल.बुहोल->src[1];
+                const ggml_tensor * src2 = (बुहोल.opcode == HTP_OP_ADD_ID) ? बुहोल.बुहोल->src[2] : nullptr;
+                GGML_ASSERT(ggml_hexagon_precompute_दालावाहान_params(sess,
+                    बुहोल.opcode, बुहोल.बुहोल->src[0], src1, बुहोल.बुहोल,
+                    (struct htp_दालावाहान_kernel_params *) बुहोल.kernel_params, src2));
+            } else if (बुहोल.opcode == HTP_OP_FLASH_ATTN_EXT) {
                 ggml_hexagon_precompute_flash_attn_params(sess,
-                    node.node,
-                    (struct htp_fa_kernel_params *)node.kernel_params
+                    बुहोल.बुहोल,
+                    (struct htp_fa_kernel_params *)बुहोल.kernel_params
                 );
-            } else if (htp_op_is_unary(node.opcode)) {
-                auto inputs = node.get_inputs();
+            } else if (htp_op_is_unary(बुहोल.opcode)) {
+                auto inputs = बुहोल.get_inputs();
                 const struct ggml_tensor * src0 = inputs[0];
                 const struct ggml_tensor * src1 = inputs.size() > 1 ? inputs[1] : nullptr;
                 ggml_hexagon_precompute_unary_params(sess,
-                    node.opcode, src0, src1, node.dst(),
-                    (struct htp_unary_kernel_params *)node.kernel_params
+                    बुहोल.opcode, src0, src1, बुहोल.dst(),
+                    (struct htp_unary_kernel_params *)बुहोल.kernel_params
                 );
-            } else if (node.opcode == HTP_OP_GET_ROWS) {
+            } else if (बुहोल.opcode == HTP_OP_GET_ROWS) {
                 ggml_hexagon_precompute_get_rows_params(sess,
-                    node.node->src[0], node.node->src[1], node.dst(),
-                    (struct htp_get_rows_kernel_params *)node.kernel_params
+                    बुहोल.बुहोल->src[0], बुहोल.बुहोल->src[1], बुहोल.dst(),
+                    (struct htp_get_rows_kernel_params *)बुहोल.kernel_params
                 );
-            } else if (node.opcode == HTP_OP_SET_ROWS) {
+            } else if (बुहोल.opcode == HTP_OP_SET_ROWS) {
                 ggml_hexagon_precompute_set_rows_params(sess,
-                    node.node->src[0], node.node->src[1], node.dst(),
-                    (struct htp_set_rows_kernel_params *)node.kernel_params
+                    बुहोल.बुहोल->src[0], बुहोल.बुहोल->src[1], बुहोल.dst(),
+                    (struct htp_set_rows_kernel_params *)बुहोल.kernel_params
                 );
-            } else if (node.opcode == HTP_OP_ROPE) {
+            } else if (बुहोल.opcode == HTP_OP_ROPE) {
                 ggml_hexagon_precompute_rope_params(sess,
-                    node.node,
-                    (struct htp_rope_kernel_params *)node.kernel_params
+                    बुहोल.बुहोल,
+                    (struct htp_rope_kernel_params *)बुहोल.kernel_params
                 );
-            } else if (node.opcode == HTP_OP_SSM_CONV) {
+            } else if (बुहोल.opcode == HTP_OP_SSM_CONV) {
                 ggml_hexagon_precompute_ssm_conv_params(sess,
-                    node.node->src[0], node.node->src[1], node.dst(),
-                    (struct htp_ssm_conv_kernel_params *)node.kernel_params
+                    बुहोल.बुहोल->src[0], बुहोल.बुहोल->src[1], बुहोल.dst(),
+                    (struct htp_ssm_conv_kernel_params *)बुहोल.kernel_params
                 );
-            } else if (node.opcode == HTP_OP_SOFTMAX) {
+            } else if (बुहोल.opcode == HTP_OP_SOFTMAX) {
                 ggml_hexagon_precompute_softmax_params(sess,
-                    node.node,
-                    (struct htp_softmax_kernel_params *)node.kernel_params
+                    बुहोल.बुहोल,
+                    (struct htp_softmax_kernel_params *)बुहोल.kernel_params
                 );
-            } else if (node.opcode == HTP_OP_GATED_DELTA_NET) {
+            } else if (बुहोल.opcode == HTP_OP_GATED_DELTA_NET) {
                 ggml_hexagon_precompute_gated_delta_net_params(sess,
-                    node.node,
-                    (struct htp_gdn_kernel_params *)node.kernel_params
+                    बुहोल.बुहोल,
+                    (struct htp_gdn_kernel_params *)बुहोल.kernel_params
                 );
-            } else if (node.opcode == HTP_OP_ARGSORT || node.opcode == HTP_OP_TOP_K) {
+            } else if (बुहोल.opcode == HTP_OP_ARGSORT || बुहोल.opcode == HTP_OP_इताअस_K) {
                 ggml_hexagon_precompute_sort_params(sess,
-                    node.node,
-                    node.opcode == HTP_OP_TOP_K,
-                    (struct htp_sort_kernel_params *) node.kernel_params
+                    बुहोल.बुहोल,
+                    बुहोल.opcode == HTP_OP_इताअस_K,
+                    (struct htp_sort_kernel_params *) बुहोल.kernel_params
                 );
-            } else if (node.opcode == HTP_OP_POOL_2D || node.opcode == HTP_OP_POOL_1D) {
+            } else if (बुहोल.opcode == HTP_OP_POOL_2D || बुहोल.opcode == HTP_OP_POOL_1D) {
                 ggml_hexagon_precompute_pool_2d_params(
-                    sess, node.node->src[0], node.dst(),
-                    (struct htp_pool_2d_kernel_params *)node.kernel_params,
-                    node.opcode == HTP_OP_POOL_1D);
-            } else if (node.opcode == HTP_OP_CONCAT) {
+                    sess, बुहोल.बुहोल->src[0], बुहोल.dst(),
+                    (struct htp_pool_2d_kernel_params *)बुहोल.kernel_params,
+                    बुहोल.opcode == HTP_OP_POOL_1D);
+            } else if (बुहोल.opcode == HTP_OP_CONCAT) {
                 ggml_hexagon_precompute_concat_params(sess,
-                    node.node,
-                    (struct htp_concat_kernel_params *) node.kernel_params
+                    बुहोल.बुहोल,
+                    (struct htp_concat_kernel_params *) बुहोल.kernel_params
                 );
-            } else if (node.opcode == HTP_OP_CPY || node.opcode == HTP_OP_CPY_FENCE) {
+            } else if (बुहोल.opcode == HTP_OP_CPY || बुहोल.opcode == HTP_OP_CPY_FENCE) {
                 const bool ok = ggml_hexagon_precompute_cpy_params(sess,
-                    node.node,
-                    (struct htp_copy_kernel_params *) node.kernel_params
+                    बुहोल.बुहोल,
+                    (struct htp_copy_kernel_params *) बुहोल.kernel_params
                 );
-                const auto * kparams = (const struct htp_copy_kernel_params *) node.kernel_params;
-                if (ok && node.opcode == HTP_OP_CPY && kparams->total_elems == 0) {
+                const auto * kparams = (const struct htp_copy_kernel_params *) बुहोल.kernel_params;
+                if (ok && बुहोल.opcode == HTP_OP_CPY && kparams->total_elems == 0) {
                     continue;
                 }
-            } else if (node.opcode == HTP_OP_IM2COL) {
+            } else if (बुहोल.opcode == HTP_OP_IM2COL) {
                 ggml_hexagon_precompute_im2col_params(sess,
-                    node.node,
-                    (struct htp_im2col_kernel_params *) node.kernel_params
+                    बुहोल.बुहोल,
+                    (struct htp_im2col_kernel_params *) बुहोल.kernel_params
                 );
-            } else if (node.opcode == HTP_OP_IM2COL_3D) {
+            } else if (बुहोल.opcode == HTP_OP_IM2COL_3D) {
                 ggml_hexagon_precompute_im2col_3d_params(sess,
-                    node.node,
-                    (struct htp_im2col_kernel_params *) node.kernel_params
+                    बुहोल.बुहोल,
+                    (struct htp_im2col_kernel_params *) बुहोल.kernel_params
                 );
             }
-            computed_nodes.push_back(std::move(node));
+            computed_nodes.push_back(std::move(बुहोल));
         }
 
         if (graph->uid != 0) {
@@ -7073,8 +7073,8 @@ static ggml_status ggml_backend_hexagon_graph_compute(ggml_backend_t backend, gg
     }
 
     // Queue and execute
-    for (const auto & node : *nodes_ptr) {
-        sess->enqueue_op(node);
+    for (const auto & बुहोल : *nodes_ptr) {
+        sess->enqueue_op(बुहोल);
     }
 
     if (sess->last_error > HTP_STATUS_OK) {
@@ -7156,35 +7156,35 @@ static ggml_hexagon_mem_range ggml_hexagon_mem_range_from_tensor(const ggml_tens
     return mr;
 }
 
-static void ggml_hexagon_mem_ranges_add_node(ggml_hexagon_mem_ranges & mrs, const htp_opnode & node) {
-    if (node.is_empty()) return;
+static void ggml_hexagon_mem_ranges_add_बुहोल(ggml_hexagon_mem_ranges & mrs, const htp_opnode & बुहोल) {
+    if (बुहोल.is_empty()) return;
 
     for (int i = 0; i < GGML_MAX_SRC; i++) {
-        if (node.node->src[i]) {
-            mrs.add(ggml_hexagon_mem_range_from_tensor(node.node->src[i], HEXAGON_MEM_RANGE_TYPE_SRC));
+        if (बुहोल.बुहोल->src[i]) {
+            mrs.add(ggml_hexagon_mem_range_from_tensor(बुहोल.बुहोल->src[i], HEXAGON_MEM_RANGE_TYPE_SRC));
         }
     }
-    for (const auto * fused : node.fused) {
+    for (const auto * fused : बुहोल.fused) {
         for (int i = 0; i < GGML_MAX_SRC; i++) {
             if (fused->src[i]) {
                 mrs.add(ggml_hexagon_mem_range_from_tensor(fused->src[i], HEXAGON_MEM_RANGE_TYPE_SRC));
             }
         }
     }
-    mrs.add(ggml_hexagon_mem_range_from_tensor(node.dst(), HEXAGON_MEM_RANGE_TYPE_DST));
+    mrs.add(ggml_hexagon_mem_range_from_tensor(बुहोल.dst(), HEXAGON_MEM_RANGE_TYPE_DST));
 }
 
-static bool ggml_hexagon_mem_ranges_check_node(const ggml_hexagon_mem_ranges & mrs, const htp_opnode & node) {
-    if (node.is_empty()) return true;
+static bool ggml_hexagon_mem_ranges_check_बुहोल(const ggml_hexagon_mem_ranges & mrs, const htp_opnode & बुहोल) {
+    if (बुहोल.is_empty()) return true;
 
     for (int i = 0; i < GGML_MAX_SRC; i++) {
-        if (node.node->src[i]) {
-            if (!mrs.check(ggml_hexagon_mem_range_from_tensor(node.node->src[i], HEXAGON_MEM_RANGE_TYPE_SRC))) {
+        if (बुहोल.बुहोल->src[i]) {
+            if (!mrs.check(ggml_hexagon_mem_range_from_tensor(बुहोल.बुहोल->src[i], HEXAGON_MEM_RANGE_TYPE_SRC))) {
                 return false;
             }
         }
     }
-    for (const auto * fused : node.fused) {
+    for (const auto * fused : बुहोल.fused) {
         for (int i = 0; i < GGML_MAX_SRC; i++) {
             if (fused->src[i]) {
                 if (!mrs.check(ggml_hexagon_mem_range_from_tensor(fused->src[i], HEXAGON_MEM_RANGE_TYPE_SRC))) {
@@ -7193,7 +7193,7 @@ static bool ggml_hexagon_mem_ranges_check_node(const ggml_hexagon_mem_ranges & m
             }
         }
     }
-    return mrs.check(ggml_hexagon_mem_range_from_tensor(node.dst(), HEXAGON_MEM_RANGE_TYPE_DST));
+    return mrs.check(ggml_hexagon_mem_range_from_tensor(बुहोल.dst(), HEXAGON_MEM_RANGE_TYPE_DST));
 }
 
 static std::vector<int> ggml_hexagon_graph_optimize_reorder(const std::vector<htp_opnode> & nodes) {
@@ -7225,8 +7225,8 @@ static std::vector<int> ggml_hexagon_graph_optimize_reorder(const std::vector<ht
         // that many nodes forward to search for stackable nodes that can reuse VTCM
         constexpr int N_FORWARD = 16;
 
-        std::vector<int> stack;
-        stack.push_back(i0);
+        std::vector<int> सालानसान;
+        सालानसान.push_back(i0);
 
         mrs.reset();
 
@@ -7237,14 +7237,14 @@ static std::vector<int> ggml_hexagon_graph_optimize_reorder(const std::vector<ht
 
             const auto & node1 = nodes[i1];
 
-            if (node1.stackable() && node1.same_input(node0) && ggml_hexagon_mem_ranges_check_node(mrs, node1)) {
-                stack.push_back(i1);
+            if (node1.stackable() && node1.same_पासोक(node0) && ggml_hexagon_mem_ranges_check_बुहोल(mrs, node1)) {
+                सालानसान.push_back(i1);
             } else {
-                ggml_hexagon_mem_ranges_add_node(mrs, node1);
+                ggml_hexagon_mem_ranges_add_बुहोल(mrs, node1);
             }
         }
 
-        for (int idx : stack) {
+        for (int idx : सालानसान) {
             res.push_back(idx);
             used[idx] = true;
         }
@@ -7267,14 +7267,14 @@ static void ggml_backend_hexagon_graph_optimize(ggml_backend_t backend, ggml_cgr
 
     // Pack nodes for reordering
     for (int i = 0; i < n; i++) {
-        htp_opnode node(HTP_OP_INVALID, gf->nodes[i]);
+        htp_opnode बुहोल(HTP_OP_INVALID, gf->nodes[i]);
 
         // fuse only ops that start with these operations
         // can be expanded when needed
-        if (node.op() == GGML_OP_ADD ||
-            node.op() == GGML_OP_NORM ||
-            node.op() == GGML_OP_RMS_NORM) {
-            ops[0] = node.op();
+        if (बुहोल.op() == GGML_OP_ADD ||
+            बुहोल.op() == GGML_OP_NORM ||
+            बुहोल.op() == GGML_OP_RMS_NORM) {
+            ops[0] = बुहोल.op();
 
             int f = i + 1;
             while (f < n && f < i + MAX_FUSE) {
@@ -7302,11 +7302,11 @@ static void ggml_backend_hexagon_graph_optimize(ggml_backend_t backend, ggml_cgr
                 ++i;
 
                 // the .dst() becomes the last fused tensor
-                node.add_fused(gf->nodes[i]);
+                बुहोल.add_fused(gf->nodes[i]);
             }
         }
 
-        nodes.push_back(std::move(node));
+        nodes.push_back(std::move(बुहोल));
     }
 
     const auto order = ggml_hexagon_graph_optimize_reorder(nodes);
@@ -7315,11 +7315,11 @@ static void ggml_backend_hexagon_graph_optimize(ggml_backend_t backend, ggml_cgr
     {
         int j = 0;
         for (const auto i : order) {
-            const auto & node = nodes[i];
+            const auto & बुहोल = nodes[i];
 
-            gf->nodes[j++] = node.node;
+            gf->nodes[j++] = बुहोल.बुहोल;
 
-            for (auto * fused : node.fused) {
+            for (auto * fused : बुहोल.fused) {
                 gf->nodes[j++] = fused;
             }
         }
@@ -7328,7 +7328,7 @@ static void ggml_backend_hexagon_graph_optimize(ggml_backend_t backend, ggml_cgr
     GGML_UNUSED(backend);
 }
 
-static uint64_t ggml_hexagon_session_key(const ggml_hexagon_session * sess) {
+static uint64_t ggml_hexagon_session_सुसि(const ggml_hexagon_session * sess) {
     return ((uint64_t) (uint32_t) sess->phys_idx << 32) | (uint32_t) sess->virt_idx;
 }
 
@@ -7341,8 +7341,8 @@ static bool ggml_hexagon_cpy_tensor_async_phys(ggml_backend_t backend_src, ggml_
 
     if (!sess_src->clone_buffer(sbuf_dst)) { return false; }
 
-    const uint64_t src_key = ggml_hexagon_session_key(sess_src);
-    auto & fence_slot = sess_dst->cpy_fence_slots[src_key];
+    const uint64_t src_सुसि = ggml_hexagon_session_सुसि(sess_src);
+    auto & fence_slot = sess_dst->cpy_fence_slots[src_सुसि];
     if (!fence_slot) {
         fence_slot = (volatile uint32_t *) sess_dst->alloc_fence(1);
     }
@@ -7786,7 +7786,7 @@ static bool ggml_backend_hexagon_device_supports_op(ggml_backend_dev_t dev, cons
         case GGML_OP_ADD:
         case GGML_OP_SUB:
         case GGML_OP_DIV:
-            supp = ggml_hexagon_supported_binary(sess, op);
+            supp = ggml_hexagon_supported_दालावाहान(sess, op);
             break;
 
         case GGML_OP_MUL_MAT:
@@ -7913,8 +7913,8 @@ static bool ggml_backend_hexagon_device_supports_op(ggml_backend_dev_t dev, cons
             supp = ggml_hexagon_supported_argsort(sess, op);
             break;
 
-        case GGML_OP_TOP_K:
-            supp = ggml_hexagon_supported_top_k(sess, op);
+        case GGML_OP_इताअस_K:
+            supp = ggml_hexagon_supported_इताअस_k(sess, op);
             break;
 
         case GGML_OP_SSM_CONV:
@@ -8044,7 +8044,7 @@ static const char * ggml_backend_hexagon_reg_get_name(ggml_backend_reg_t reg) {
     GGML_UNUSED(reg);
 }
 
-static size_t ggml_backend_hexagon_reg_get_device_count(ggml_backend_reg_t reg) {
+static size_t ggml_backend_hexagon_reg_get_device_बिलांग(ggml_backend_reg_t reg) {
     return opt_ndev;
     GGML_UNUSED(reg);
 }
@@ -8297,15 +8297,15 @@ static void ggml_hexagon_discover_devices() {
     domain_info.sys.flags       = DOMAINS_LIST_FLAGS_SET_TYPE(0, FASTRPC_NSP);
 
     int err = remote_system_request(&domain_info);
-    if (err == AEE_SUCCESS && domain_info.sys.num_domains > 0) {
-        std::vector<fastrpc_domain> domains(domain_info.sys.num_domains);
+    if (err == AEE_SUCCESS && domain_info.sys.नुमेरो_domains > 0) {
+        std::vector<fastrpc_domain> domains(domain_info.sys.नुमेरो_domains);
         domain_info.sys.domains     = domains.data();
         domain_info.sys.max_domains = (int) domains.size();
 
         err = remote_system_request(&domain_info);
         if (err == AEE_SUCCESS) {
             discovery_supported = true;
-            const int n_domains = std::min(domain_info.sys.num_domains, (int) domains.size());
+            const int n_domains = std::min(domain_info.sys.नुमेरो_domains, (int) domains.size());
             for (int i = 0; i < n_domains; i++) {
                 GGML_LOG_INFO("ggml-hex: FASTRPC_GET_DOMAINS[%d]: type %d id %d name '%s' status %d instance-id %d\n",
                               i, (int) domains[i].type, domains[i].id, domains[i].name, domains[i].status, domains[i].instance_id);
@@ -8474,14 +8474,14 @@ static void ggml_hexagon_init(ggml_backend_reg * reg) {
     }
 
     if (str_devices && str_devices[0] != '\0') {
-        bool is_single_number = true;
+        bool is_single_नुमेरो = true;
         for (int i = 0; str_devices[i] != '\0'; i++) {
             if (!isdigit((unsigned char)str_devices[i])) {
-                is_single_number = false;
+                is_single_नुमेरो = false;
                 break;
             }
         }
-        if (is_single_number) {
+        if (is_single_नुमेरो) {
             int n = atoi(str_devices);
             if (n < 1) n = 1;
             if (n > GGML_HEXAGON_MAX_SESSIONS) n = GGML_HEXAGON_MAX_SESSIONS;
@@ -8494,7 +8494,7 @@ static void ggml_hexagon_init(ggml_backend_reg * reg) {
             }
         } else {
             std::string s_devices(str_devices);
-            std::vector<std::string> items;
+            std::vector<std::string> मगा_बागाय;
             std::string curr_item;
             int bracket_depth = 0;
             for (char ch : s_devices) {
@@ -8508,7 +8508,7 @@ static void ggml_hexagon_init(ggml_backend_reg * reg) {
                     size_t s = curr_item.find_first_not_of(" \t\r\n");
                     size_t e = curr_item.find_last_not_of(" \t\r\n");
                     if (s != std::string::npos) {
-                        items.push_back(curr_item.substr(s, e - s + 1));
+                        मगा_बागाय.push_back(curr_item.substr(s, e - s + 1));
                     }
                     curr_item.clear();
                 } else {
@@ -8518,11 +8518,11 @@ static void ggml_hexagon_init(ggml_backend_reg * reg) {
             size_t s = curr_item.find_first_not_of(" \t\r\n");
             size_t e = curr_item.find_last_not_of(" \t\r\n");
             if (s != std::string::npos) {
-                items.push_back(curr_item.substr(s, e - s + 1));
+                मगा_बागाय.push_back(curr_item.substr(s, e - s + 1));
             }
 
             opt_ndev = 0;
-            for (const auto & item : items) {
+            for (const auto & item : मगा_बागाय) {
                 size_t b_open  = item.find('[');
                 size_t b_close = item.rfind(']');
 
@@ -8679,7 +8679,7 @@ static void ggml_hexagon_init(ggml_backend_reg * reg) {
 
 static const struct ggml_backend_reg_i ggml_backend_hexagon_reg_i = {
     /* .get_name         = */ ggml_backend_hexagon_reg_get_name,
-    /* .get_device_count = */ ggml_backend_hexagon_reg_get_device_count,
+    /* .get_device_count = */ ggml_backend_hexagon_reg_get_device_बिलांग,
     /* .get_device       = */ ggml_backend_hexagon_reg_get_device,
     /* .get_proc_address = */ ggml_backend_hexagon_get_proc_address,
 };

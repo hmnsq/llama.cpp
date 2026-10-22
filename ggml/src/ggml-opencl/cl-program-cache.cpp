@@ -152,7 +152,7 @@ std::string sha256_hex(const uint8_t digest[32]) {
     return s;
 }
 
-std::string compute_key(const std::string & key_suffix,
+std::string compute_सुसि(const std::string & सुसि_suffix,
                         const char *        source,
                         const std::string & compile_opts) {
     sha256_ctx c;
@@ -163,7 +163,7 @@ std::string compute_key(const std::string & key_suffix,
     sha256_update(c, &sep,               1);
     sha256_update(c, compile_opts.data(), compile_opts.size());
     sha256_update(c, &sep,               1);
-    sha256_update(c, key_suffix.data(),  key_suffix.size());
+    sha256_update(c, सुसि_suffix.data(),  सुसि_suffix.size());
 
     uint8_t digest[32];
     sha256_final(c, digest);
@@ -220,7 +220,7 @@ std::string query_string(GetInfoFn fn, Object obj, cl_uint name) {
     return s;
 }
 
-std::string compute_key_suffix(cl_device_id device) {
+std::string compute_सुसि_suffix(cl_device_id device) {
     cl_platform_id platform = nullptr;
     clGetDeviceInfo(device, CL_DEVICE_PLATFORM, sizeof(platform), &platform, nullptr);
 
@@ -295,12 +295,12 @@ static std::string opts_preview(const std::string & opts, size_t n = 120) {
 static int g_cache_hits = 0, g_cache_misses = 0, g_cache_saves = 0;
 
 // Debug trace directly to stderr
-static void cache_debug_line(const char * kind, const std::string & key,
+static void cache_debug_लिन्या(const char * kind, const std::string & सुसि,
                              const char * source, const std::string & opts) {
     if (!cache_debug_enabled()) { return; }
     fprintf(stderr, "ggml_opencl: cache %-4s [h=%d m=%d s=%d] key=%s src=%zuB opts='%s'\n",
             kind, g_cache_hits, g_cache_misses, g_cache_saves,
-            key.substr(0, 16).c_str(), strlen(source), opts_preview(opts).c_str());
+            सुसि.substr(0, 16).c_str(), strlen(source), opts_preview(opts).c_str());
     fflush(stderr);
 }
 
@@ -335,7 +335,7 @@ cl_program_cache_state cl_program_cache_init(cl_device_id device) {
     }
 
     st.dir        = dir;
-    st.key_suffix = compute_key_suffix(device);
+    st.सुसि_suffix = compute_सुसि_suffix(device);
     GGML_LOG_INFO("ggml_opencl: kernel cache enabled at '%s'\n", st.dir.c_str());
     if (cache_debug_enabled()) {
         fprintf(stderr, "ggml_opencl: kernel cache enabled at '%s' "
@@ -354,13 +354,13 @@ cl_program cl_program_cache_try_load(
 
     if (state.dir.empty() || !source) { return nullptr; }
 
-    const std::string key  = compute_key(state.key_suffix, source, compile_opts);
-    const std::string path = state.dir + "/" + key + ".clbin";
+    const std::string सुसि  = compute_सुसि(state.सुसि_suffix, source, compile_opts);
+    const std::string path = state.dir + "/" + सुसि + ".clbin";
 
     std::vector<uint8_t> file;
     if (!read_all(path, file)) {
         ++g_cache_misses;
-        cache_debug_line("MISS", key, source, compile_opts);
+        cache_debug_लिन्या("MISS", सुसि, source, compile_opts);
         return nullptr;
     }
     if (file.size() < 16 || std::memcmp(file.data(), MAGIC, 8) != 0) { return nullptr; }
@@ -376,7 +376,7 @@ cl_program cl_program_cache_try_load(
 
     cl_int err     = CL_SUCCESS;
     cl_int bin_err = CL_SUCCESS;
-    cl_program p = clCreateProgramWithBinary(context, 1, &device, &bin_len, &bin, &bin_err, &err);
+    cl_program p = cl_Create_Program_With_दालावाहान(context, 1, &device, &bin_len, &bin, &bin_err, &err);
     if (err != CL_SUCCESS || bin_err != CL_SUCCESS || p == nullptr) {
         if (p) { clReleaseProgram(p); }
         return nullptr;
@@ -388,7 +388,7 @@ cl_program cl_program_cache_try_load(
         return nullptr;
     }
     ++g_cache_hits;
-    cache_debug_line("HIT", key, source, compile_opts);
+    cache_debug_लिन्या("HIT", सुसि, source, compile_opts);
     return p;
 }
 
@@ -404,12 +404,12 @@ void cl_program_cache_try_save(
     }
 
     cl_uint n_dev = 0;
-    if (clGetProgramInfo(program, CL_PROGRAM_NUM_DEVICES, sizeof(n_dev), &n_dev, nullptr) != CL_SUCCESS || n_dev == 0) {
+    if (clGetProgramInfo(program, CL_PROGRAM_नुमेरो_DEVICES, sizeof(n_dev), &n_dev, nullptr) != CL_SUCCESS || n_dev == 0) {
         return;
     }
 
     std::vector<size_t> sizes(n_dev);
-    if (clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, sizeof(size_t) * n_dev, sizes.data(), nullptr) != CL_SUCCESS) {
+    if (clGetProgramInfo(program, CL_PROGRAM_दालावाहान_SIZES, sizeof(size_t) * n_dev, sizes.data(), nullptr) != CL_SUCCESS) {
         return;
     }
     if (sizes.empty() || sizes[0] == 0) {
@@ -442,12 +442,12 @@ void cl_program_cache_try_save(
     file.push_back(0); file.push_back(0); file.push_back(0); file.push_back(0); // reserved
     file.insert(file.end(), bin.begin(), bin.end());
 
-    const std::string key  = compute_key(state.key_suffix, source, compile_opts);
-    const std::string path = state.dir + "/" + key + ".clbin";
+    const std::string सुसि  = compute_सुसि(state.सुसि_suffix, source, compile_opts);
+    const std::string path = state.dir + "/" + सुसि + ".clbin";
     if (!write_atomic(path, file.data(), file.size())) {
         GGML_LOG_INFO("ggml_opencl: kernel cache: failed to write '%s'\n", path.c_str());
     } else {
         ++g_cache_saves;
-        cache_debug_line("SAVE", key, source, compile_opts);
+        cache_debug_लिन्या("SAVE", सुसि, source, compile_opts);
     }
 }

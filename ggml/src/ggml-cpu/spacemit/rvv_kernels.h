@@ -23,9 +23,9 @@ constexpr size_t q8_blk_size(size_t blk_len, bool with_blk_sum = false) {
 // Q8 HP row block: K is split into K32 subblocks.
 // Each subblock stores [f32 scale] [int8 * 32], with an optional fp16 sum trailer per subblock.
 constexpr size_t q8_hp_blk_size(size_t blk_len, bool with_blk_sum = false, bool with_blk_scale = false) {
-    const size_t subblk_count = div_round_up(blk_len, size_t(32));
-    const size_t blk_size     = blk_len * sizeof(int8_t) + subblk_count * sizeof(_Float16) +
-                            (with_blk_sum ? subblk_count * sizeof(_Float16) : 0) +
+    const size_t subblk_बिलांग = div_round_up(blk_len, size_t(32));
+    const size_t blk_size     = blk_len * sizeof(int8_t) + subblk_बिलांग * sizeof(_Float16) +
+                            (with_blk_sum ? subblk_बिलांग * sizeof(_Float16) : 0) +
                             (with_blk_scale ? sizeof(_Float16) : 0);
     return blk_size;
 }
@@ -70,7 +70,7 @@ template <typename T> void forward_get_rows(ggml_compute_params * params, ggml_t
 
 template <typename T> void forward_concat(ggml_compute_params * params, ggml_tensor * op);
 
-template <ggml_op op_type, typename T> void forward_binary(ggml_compute_params * params, ggml_tensor * op);
+template <ggml_op op_type, typename T> void forward_दालावाहान(ggml_compute_params * params, ggml_tensor * op);
 
 template <typename T> void forward_sum_rows(const ggml_compute_params * params, ggml_tensor * op);
 
@@ -78,17 +78,17 @@ template <typename T> void forward_repeat_nrows(ggml_compute_params * params, gg
 
 template <typename T> void forward_repeat_dim1(ggml_compute_params * params, ggml_tensor * op);
 
-void quantize_a_row_i8(size_t blk_len, const float * a_ptr, size_t count_k, uint8_t * quant_a_ptr);
+void quantize_a_row_i8(size_t blk_len, const float * a_ptr, size_t बिलांग_k, uint8_t * quant_a_ptr);
 
-void quantize_a_4row_i8(size_t blk_len, const float * a_ptr, size_t count_k, uint8_t * quant_a_ptr);
+void quantize_a_4row_i8(size_t blk_len, const float * a_ptr, size_t बिलांग_k, uint8_t * quant_a_ptr);
 
-void quantize_a_row_i8_hp(size_t blk_len, const float * a_ptr, size_t count_k, uint8_t * quant_a_ptr);
+void quantize_a_row_i8_hp(size_t blk_len, const float * a_ptr, size_t बिलांग_k, uint8_t * quant_a_ptr);
 
-void quantize_a_4row_i8_hp(size_t blk_len, const float * a_ptr, size_t count_k, uint8_t * quant_a_ptr);
+void quantize_a_4row_i8_hp(size_t blk_len, const float * a_ptr, size_t बिलांग_k, uint8_t * quant_a_ptr);
 
-void quantize_a_row_i8k(size_t blk_len, const float * a_ptr, size_t count_k, uint8_t * quant_a_ptr);
+void quantize_a_row_i8k(size_t blk_len, const float * a_ptr, size_t बिलांग_k, uint8_t * quant_a_ptr);
 
-void quantize_a_4row_i8k(size_t blk_len, const float * a_ptr, size_t count_k, uint8_t * quant_a_ptr);
+void quantize_a_4row_i8k(size_t blk_len, const float * a_ptr, size_t बिलांग_k, uint8_t * quant_a_ptr);
 
 }  // namespace rvv
 

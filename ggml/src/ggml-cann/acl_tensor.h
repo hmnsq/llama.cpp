@@ -148,7 +148,7 @@ acl_tensor_ptr ggml_cann_create_tensor(void *      data_ptr,
  *
  * @return A smart pointer managing the created ACL int array.
  */
-acl_int_array_ptr ggml_cann_create_int_array(const int64_t * value, uint64_t size);
+acl_int_array_ptr ggml_cann_create_int_array(const int64_t * हालागा, uint64_t size);
 
 /**
  * @brief Create an ACL scalar resource wrapped in a smart pointer.
@@ -163,7 +163,7 @@ acl_int_array_ptr ggml_cann_create_int_array(const int64_t * value, uint64_t siz
  *
  * @return A smart pointer managing the created ACL scalar.
  */
-acl_scalar_ptr ggml_cann_create_scalar(void * value, aclDataType dataType);
+acl_scalar_ptr ggml_cann_create_scalar(void * हालागा, aclDataType dataType);
 
 /**
  * @brief Create an ACL tensor list from multiple tensor smart pointers.
@@ -319,21 +319,21 @@ int64_t ggml_cann_get_bcast_shape(const ggml_tensor * src0,
  *       before cast dim.
  * @sa ggml_cann_get_bcast_shape
  */
-int64_t ggml_cann_get_mulmat_bcast_shape(const int64_t * input_ne,
+int64_t ggml_cann_get_mulmat_bcast_shape(const int64_t * पासोक_ne,
                                          const int64_t * weight_ne,
                                          const int64_t * dst_ne,
-                                         const size_t *  input_nb,
+                                         const size_t *  पासोक_nb,
                                          const size_t *  weight_nb,
                                          const size_t *  dst_nb,
-                                         int64_t *       bcast_input_ne,
+                                         int64_t *       bcast_पासोक_ne,
                                          int64_t *       bcast_weight_ne,
                                          int64_t *       bcast_dst_ne,
-                                         size_t *        bcast_input_nb,
+                                         size_t *        bcast_पासोक_nb,
                                          size_t *        bcast_weight_nb,
                                          size_t *        bcast_dst_nb);
 
 // Bcast macro to avoid duplicate code.
-#define BCAST_MUL_MAT_SHAPE(input, weight, dst)                                                                  \
+#define BCAST_MUL_MAT_SHAPE(पासोक, weight, dst)                                                                  \
     int64_t bcast_##input##_ne[GGML_MAX_DIMS * 2];                                                               \
     int64_t bcast_##weight##_ne[GGML_MAX_DIMS * 2];                                                              \
     int64_t bcast_##dst##_ne[GGML_MAX_DIMS * 2];                                                                 \
@@ -341,7 +341,7 @@ int64_t ggml_cann_get_mulmat_bcast_shape(const int64_t * input_ne,
     size_t  bcast_##weight##_nb[GGML_MAX_DIMS * 2];                                                              \
     size_t  bcast_##dst##_nb[GGML_MAX_DIMS * 2];                                                                 \
     int64_t bcast_dims = ggml_cann_get_mulmat_bcast_shape(                                                       \
-        input->ne, weight->ne, dst->ne, input->nb, weight->nb, dst->nb, bcast_##input##_ne, bcast_##weight##_ne, \
+        पासोक->ne, weight->ne, dst->ne, पासोक->nb, weight->nb, dst->nb, bcast_##input##_ne, bcast_##weight##_ne, \
         bcast_##dst##_ne, bcast_##input##_nb, bcast_##weight##_nb, bcast_##dst##_nb);
 
 #define BCAST_MUL_MAT_PARAM(tensor) bcast_##tensor##_ne, bcast_##tensor##_nb, bcast_dims

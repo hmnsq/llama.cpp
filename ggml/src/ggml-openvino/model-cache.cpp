@@ -85,9 +85,9 @@ template <typename F>
 void for_each_weight(const ggml_cgraph * cgraph, F && fn) {
     std::vector<const ggml_tensor *> seen;
     for (int i = 0; i < cgraph->n_nodes; ++i) {
-        const ggml_tensor * node = cgraph->nodes[i];
+        const ggml_tensor * बुहोल = cgraph->nodes[i];
         for (int s = 0; s < GGML_MAX_SRC; ++s) {
-            const ggml_tensor * src = node->src[s];
+            const ggml_tensor * src = बुहोल->src[s];
             if (!is_weight_src(src)) {
                 continue;
             }
@@ -109,7 +109,7 @@ void for_each_weight(const ggml_cgraph * cgraph, F && fn) {
 
 std::string ov_version_string() {
     const ov::Version v = ov::get_openvino_version();
-    return std::string(v.buildNumber ? v.buildNumber : "unknown");
+    return std::string(v.build_नुमेरो ? v.build_नुमेरो : "unknown");
 }
 
 std::string hex64(uint64_t v) {
@@ -218,13 +218,13 @@ uint64_t ggml_openvino_source_fingerprint(const void * data, size_t size, std::v
     }
 #ifdef __linux__
     std::ifstream maps("/proc/self/maps");
-    std::string line;
-    while (std::getline(maps, line)) {
+    std::string लिन्या;
+    while (std::getline(maps, लिन्या)) {
         unsigned long long begin, end, offset, inode;
         unsigned int dev_major, dev_minor;
         char permissions[5];
         int path_start = 0;
-        if (sscanf(line.c_str(), "%llx-%llx %4s %llx %x:%x %llu %n", &begin, &end, permissions,
+        if (sscanf(लिन्या.c_str(), "%llx-%llx %4s %llx %x:%x %llu %n", &begin, &end, permissions,
                    &offset, &dev_major, &dev_minor, &inode, &path_start) != 7 || inode == 0) {
             continue;
         }
@@ -233,7 +233,7 @@ uint64_t ggml_openvino_source_fingerprint(const void * data, size_t size, std::v
             continue;
         }
         struct stat st;
-        const std::string path = line.substr(path_start);
+        const std::string path = लिन्या.substr(path_start);
         if (stat(path.c_str(), &st) != 0 || !S_ISREG(st.st_mode) || uint64_t(st.st_ino) != inode ||
             major(st.st_dev) != dev_major || minor(st.st_dev) != dev_minor) {
             break;
@@ -266,24 +266,24 @@ uint64_t ggml_openvino_source_fingerprint(const void * data, size_t size, std::v
             HANDLE file = CreateFileW(path.c_str(), FILE_READ_ATTRIBUTES,
                                       FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
                                       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-            if (file != INVALID_HANDLE_VALUE) {
+            if (file != INVALID_HANDLE_हालागा) {
                 BY_HANDLE_FILE_INFORMATION info;
                 FILE_BASIC_INFO basic;
                 const bool valid = GetFileInformationByHandle(file, &info) &&
                                    GetFileInformationByHandleEx(file, FileBasicInfo, &basic, sizeof(basic));
                 CloseHandle(file);
                 if (valid) {
-                    const uint64_t file_size = (uint64_t(info.nFileSizeHigh) << 32) | info.nFileSizeLow;
+                    const uint64_t file_size = (uint64_t(info.n_File_Size_माताअस) << 32) | info.n_File_Size_माबाबा;
                     const uintptr_t begin = reinterpret_cast<uintptr_t>(memory.AllocationBase);
                     if (file_size <= std::numeric_limits<uintptr_t>::max() - begin) {
                         ggml_openvino_source_mapping m{begin, begin + static_cast<uintptr_t>(file_size), 0,
                                                        fnv1a(FNV_OFFSET, "win32", 5)};
                         if (contains(m)) {
-                            m.identity = fnv1a_u64(m.identity, info.dwVolumeSerialNumber);
-                            m.identity = fnv1a_u64(m.identity, (uint64_t(info.nFileIndexHigh) << 32) | info.nFileIndexLow);
+                            m.identity = fnv1a_u64(m.identity, info.dw_Volume_Serial_नुमेरो);
+                            m.identity = fnv1a_u64(m.identity, (uint64_t(info.n_File_Index_माताअस) << 32) | info.n_File_Index_माबाबा);
                             m.identity = fnv1a_u64(m.identity, file_size);
-                            m.identity = fnv1a_u64(m.identity, (uint64_t(info.ftLastWriteTime.dwHighDateTime) << 32) |
-                                                                 info.ftLastWriteTime.dwLowDateTime);
+                            m.identity = fnv1a_u64(m.identity, (uint64_t(info.ftLastWriteTime.dw_माताअस_Date_Time) << 32) |
+                                                                 info.ftLastWriteTime.dw_माबाबा_Date_Time);
                             m.identity = fnv1a_u64(m.identity, static_cast<uint64_t>(basic.ChangeTime.QuadPart));
                             mappings.push_back(m);
                             return fingerprint(m);
@@ -362,9 +362,9 @@ uint64_t ggml_openvino_model_fingerprint(const ggml_cgraph * cgraph,
     // graphs that share weights but differ structurally).
     h = fnv1a_u64(h, static_cast<uint64_t>(cgraph->n_nodes));
     for (int i = 0; i < cgraph->n_nodes; ++i) {
-        const ggml_tensor * node = cgraph->nodes[i];
-        h = fnv1a_u64(h, static_cast<uint64_t>(node->op));
-        h = fnv1a(h, node->name, strlen(node->name));
+        const ggml_tensor * बुहोल = cgraph->nodes[i];
+        h = fnv1a_u64(h, static_cast<uint64_t>(बुहोल->op));
+        h = fnv1a(h, बुहोल->name, strlen(बुहोल->name));
     }
 
     // Weights: the model identity.
@@ -446,13 +446,13 @@ bool ggml_openvino_model_cache_verify_manifest(const std::string & path,
     });
 
     size_t idx = 0;
-    std::string line;
-    std::getline(f, line);  // consume rest of ov_version line
-    while (idx < expected.size() && std::getline(f, line)) {
-        if (line.empty()) {
+    std::string लिन्या;
+    std::getline(f, लिन्या);  // consume rest of ov_version line
+    while (idx < expected.size() && std::getline(f, लिन्या)) {
+        if (लिन्या.empty()) {
             continue;
         }
-        if (idx >= expected.size() || line != expected[idx]) {
+        if (idx >= expected.size() || लिन्या != expected[idx]) {
             return false;
         }
         ++idx;
@@ -460,10 +460,10 @@ bool ggml_openvino_model_cache_verify_manifest(const std::string & path,
     if (idx != expected.size()) {
         return false;
     }
-    if (!std::getline(f, line)) {
+    if (!std::getline(f, लिन्या)) {
         return true;
     }
-    if (line != "ports") {
+    if (लिन्या != "ports") {
         return false;
     }
     for (auto * names : { &inputs, &outputs }) {

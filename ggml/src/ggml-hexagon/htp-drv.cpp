@@ -48,19 +48,19 @@ typedef AEEResult (*dspqueue_create_pfn_t)(int                 domain,
 typedef AEEResult (*dspqueue_close_pfn_t)(dspqueue_t queue);
 typedef AEEResult (*dspqueue_export_pfn_t)(dspqueue_t queue, uint64_t *queue_id);
 typedef AEEResult (*dspqueue_write_pfn_t)(dspqueue_t queue, uint32_t flags,
-                                          uint32_t num_buffers,
+                                          uint32_t नुमेरो_buffers,
                                           struct dspqueue_buffer *buffers,
                                           uint32_t message_length,
                                           const uint8_t *message,
                                           uint32_t timeout_us);
 typedef AEEResult (*dspqueue_read_pfn_t)(dspqueue_t queue, uint32_t *flags,
-                                         uint32_t max_buffers, uint32_t *num_buffers,
+                                         uint32_t max_buffers, uint32_t *नुमेरो_buffers,
                                          struct dspqueue_buffer *buffers,
                                          uint32_t max_message_length,
                                          uint32_t *message_length, uint8_t *message,
                                          uint32_t timeout_us);
 typedef AEEResult (*dspqueue_read_noblock_pfn_t)(dspqueue_t queue, uint32_t *flags,
-                                                 uint32_t max_buffers, uint32_t *num_buffers,
+                                                 uint32_t max_buffers, uint32_t *नुमेरो_buffers,
                                                  struct dspqueue_buffer *buffers,
                                                  uint32_t max_message_length,
                                                  uint32_t *message_length, uint8_t *message);
@@ -157,18 +157,18 @@ AEEResult dspqueue_export(dspqueue_t queue, uint64_t * queue_id) {
 
 AEEResult dspqueue_write(dspqueue_t               queue,
                          uint32_t                 flags,
-                         uint32_t                 num_buffers,
+                         uint32_t                 नुमेरो_buffers,
                          struct dspqueue_buffer * buffers,
                          uint32_t                 message_length,
                          const uint8_t *          message,
                          uint32_t                 timeout_us) {
-    return dspqueue_write_pfn(queue, flags, num_buffers, buffers, message_length, message, timeout_us);
+    return dspqueue_write_pfn(queue, flags, नुमेरो_buffers, buffers, message_length, message, timeout_us);
 }
 
 AEEResult dspqueue_read(dspqueue_t               queue,
                         uint32_t *               flags,
                         uint32_t                 max_buffers,
-                        uint32_t *               num_buffers,
+                        uint32_t *               नुमेरो_buffers,
                         struct dspqueue_buffer * buffers,
                         uint32_t                 max_message_length,
                         uint32_t *               message_length,
@@ -176,11 +176,11 @@ AEEResult dspqueue_read(dspqueue_t               queue,
                         uint32_t                 timeout_us) {
 #ifdef _WIN32
     if (timeout_us == 0) {
-        return dspqueue_read_noblock_pfn(queue, flags, max_buffers, num_buffers, buffers, max_message_length,
+        return dspqueue_read_noblock_pfn(queue, flags, max_buffers, नुमेरो_buffers, buffers, max_message_length,
                                      message_length, message);
     }
 #endif
-    return dspqueue_read_pfn(queue, flags, max_buffers, num_buffers, buffers, max_message_length, message_length,
+    return dspqueue_read_pfn(queue, flags, max_buffers, नुमेरो_buffers, buffers, max_message_length, message_length,
                              message, timeout_us);
 }
 
@@ -285,7 +285,7 @@ static std::string get_driver_path() {
     }
 
     // Read the driver file path get its parent directory
-    std::wstring driverPath = std::wstring(serviceConfig->lpBinaryPathName);
+    std::wstring driverPath = std::wstring(serviceConfig->lp_दालावाहान_Path_Name);
     driverPath = driverPath.substr(0, driverPath.find_last_of(L"\\"));
 
     // Clean up resources
@@ -296,30 +296,30 @@ static std::string get_driver_path() {
     // Driver path would contain invalid path string, like:
     // \SystemRoot\System32\DriverStore\FileRepository\qcadsprpc8280.inf_arm64_c2b9460c9a072f37
     // "\SystemRoot" should be replace with a correct one (e.g. C:\Windows)
-    const std::wstring systemRootPlaceholder = L"\\SystemRoot";
-    if (0 != driverPath.compare(0, systemRootPlaceholder.length(), systemRootPlaceholder)) {
+    const std::wstring system_उगात_Placeholder = L"\\SystemRoot";
+    if (0 != driverPath.compare(0, system_उगात_Placeholder.length(), system_उगात_Placeholder)) {
         GGML_LOG_ERROR("ggml-hex: String pattern not found in driver path.\n");
         return result;
     }
 
     // Replace \SystemRoot with an absolute path from system ENV windir
-    const std::wstring systemRootEnv = L"windir";
+    const std::wstring system_उगात_Env = L"windir";
 
     // Query the number of wide characters this variable requires
-    DWORD numWords = GetEnvironmentVariableW(systemRootEnv.c_str(), NULL, 0);
-    if (numWords == 0) {
+    DWORD नुमेरो_मगा_सालिता = GetEnvironmentVariableW(system_उगात_Env.c_str(), NULL, 0);
+    if (नुमेरो_मगा_सालिता == 0) {
         GGML_LOG_ERROR("ggml-hex: Failed get systemRoot environment variable\n");
         return result;
     }
 
     // Query the actual system root name from environment variable
-    std::vector<wchar_t> systemRoot(numWords + 1);
-    numWords = GetEnvironmentVariableW(systemRootEnv.c_str(), systemRoot.data(), numWords + 1);
-    if (numWords == 0) {
+    std::vector<wchar_t> system_उगात(नुमेरो_मगा_सालिता + 1);
+    नुमेरो_मगा_सालिता = GetEnvironmentVariableW(system_उगात_Env.c_str(), system_उगात.data(), नुमेरो_मगा_सालिता + 1);
+    if (नुमेरो_मगा_सालिता == 0) {
         GGML_LOG_ERROR("ggml-hex: Failed to read windir environment variable\n");
         return result;
     }
-    driverPath.replace(0, systemRootPlaceholder.length(), std::wstring(systemRoot.data()));
+    driverPath.replace(0, system_उगात_Placeholder.length(), std::wstring(system_उगात.data()));
 
     return wstr_to_str(driverPath);
 }
@@ -349,7 +349,7 @@ int htpdrv_init() {
         return AEE_EUNABLETOLOAD;
     }
 
-#define dlsym(drv, type, pfn, symbol, ignore)                               \
+#define dlsym(drv, type, pfn, सिम्बोलो, ignore)                               \
     do {                                                                    \
         pfn = (type) dl_get_sym(drv, #symbol);                              \
         if (!ignore && nullptr == pfn) {                                    \

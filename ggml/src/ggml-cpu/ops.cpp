@@ -294,7 +294,7 @@ static void ggml_compute_forward_dup_to_q(
             ggml_get_type_traits_cpu(dst->type)->from_float) {
         // casting non-quantized types --> intermediate f32 --> quantized
         ggml_from_float_t const quantize_row_q = ggml_get_type_traits_cpu(dst->type)->from_float;
-        float * src0_f32 = (float *) params->wdata + (ne00 + CACHE_LINE_SIZE_F32) * ith;
+        float * src0_f32 = (float *) params->wdata + (ne00 + CACHE_लिन्या_SIZE_F32) * ith;
 
         size_t id = 0;
         size_t rs = nb0 * (ne00 / ggml_blck_size(dst->type));
@@ -479,7 +479,7 @@ static void ggml_compute_forward_dup_from_q(
     const ggml_tensor * src0 = dst->src[0];
     const ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const ggml_type type = src0->type;
     ggml_to_float_t const dequantize_row_q = ggml_get_type_traits(type)->to_float;
@@ -586,7 +586,7 @@ static void ggml_compute_forward_add_q_f32(
 
     const int nr  = ggml_nrows(src0);
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const int ith = params->ith;
     const int nth = params->nth;
@@ -615,7 +615,7 @@ static void ggml_compute_forward_add_q_f32(
     const int ir0 = dr*ith;
     const int ir1 = MIN(ir0 + dr, nr);
 
-    float * wdata = (float *) params->wdata + (ne00 + CACHE_LINE_SIZE_F32) * ith;
+    float * wdata = (float *) params->wdata + (ne00 + CACHE_लिन्या_SIZE_F32) * ith;
 
     for (int ir = ir0; ir < ir1; ++ir) {
         // src0 indices
@@ -961,7 +961,7 @@ static void ggml_compute_forward_add1_q_f32(
     const int ir0 = dr*ith;
     const int ir1 = MIN(ir0 + dr, nr);
 
-    float * wdata = (float *) params->wdata + (ne0 + CACHE_LINE_SIZE_F32) * ith;
+    float * wdata = (float *) params->wdata + (ne0 + CACHE_लिन्या_SIZE_F32) * ith;
 
     for (int ir = ir0; ir < ir1; ++ir) {
         // src0 and dst are same shape => same indices
@@ -1628,14 +1628,14 @@ void ggml_compute_forward_argmax(
 
 // ggml_compute_forward_count_equal
 
-static void ggml_compute_forward_count_equal_i32(
+static void ggml_compute_forward_बिलांग_equal_i32(
         const ggml_compute_params * params,
         ggml_tensor * dst) {
 
     const ggml_tensor * src0 = dst->src[0];
     const ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS;
+    GGML_TENSOR_दालावाहान_OP_LOCALS;
 
     GGML_ASSERT(src0->type == GGML_TYPE_I32);
     GGML_ASSERT(src1->type == GGML_TYPE_I32);
@@ -1688,7 +1688,7 @@ static void ggml_compute_forward_count_equal_i32(
     *((int64_t *) dst->data) = sum_thread;
 }
 
-void ggml_compute_forward_count_equal(
+void ggml_compute_forward_बिलांग_equal(
         const ggml_compute_params * params,
         ggml_tensor * dst) {
 
@@ -1697,7 +1697,7 @@ void ggml_compute_forward_count_equal(
     switch (src0->type) {
         case GGML_TYPE_I32:
             {
-                ggml_compute_forward_count_equal_i32(params, dst);
+                ggml_compute_forward_बिलांग_equal_i32(params, dst);
             } break;
         default:
             {
@@ -1919,7 +1919,7 @@ static void ggml_compute_forward_concat_any(
     const int ith = params->ith;
     const int nth = params->nth;
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const int32_t dim = ggml_get_op_params_i32(dst, 0);
 
@@ -1973,7 +1973,7 @@ static void ggml_compute_forward_concat_i8(
     const int ith = params->ith;
     const int nth = params->nth;
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const int32_t dim = ggml_get_op_params_i32(dst, 0);
 
@@ -2016,7 +2016,7 @@ static void ggml_compute_forward_concat_f16(
     const int ith = params->ith;
     const int nth = params->nth;
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const int32_t dim = ggml_get_op_params_i32(dst, 0);
 
@@ -2059,7 +2059,7 @@ static void ggml_compute_forward_concat_f32(
     const int ith = params->ith;
     const int nth = params->nth;
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const int32_t dim = ggml_get_op_params_i32(dst, 0);
 
@@ -4209,7 +4209,7 @@ static void ggml_compute_forward_rms_norm_f32(
     const int ith = params->ith;
     const int nth = params->nth;
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     float eps;
     memcpy(&eps, dst_rms_norm->op_params, sizeof(float));
@@ -4310,7 +4310,7 @@ static void ggml_compute_forward_rms_norm_back_f32(
     const int ith = params->ith;
     const int nth = params->nth;
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     float eps;
     memcpy(&eps, dst->op_params, sizeof(float));
@@ -4642,7 +4642,7 @@ static void ggml_compute_forward_out_prod_f32(
     const ggml_tensor * src0 = dst->src[0];
     const ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
@@ -4763,7 +4763,7 @@ static void ggml_compute_forward_out_prod_q_f32(
     const ggml_tensor * src0 = dst->src[0];
     const ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS;
+    GGML_TENSOR_दालावाहान_OP_LOCALS;
 
     const int ith = params->ith;
     const int nth = params->nth;
@@ -4817,7 +4817,7 @@ static void ggml_compute_forward_out_prod_q_f32(
     //       for i0:
     //         dst[i0,i1,i2,i3] += src0[i0,i01,i2,i3] * src1[i1,i01,i2,i3]
 
-    float * wdata = (float *) params->wdata + (ne0 + CACHE_LINE_SIZE_F32) * ith;
+    float * wdata = (float *) params->wdata + (ne0 + CACHE_लिन्या_SIZE_F32) * ith;
 
     for (int64_t ir = ir0; ir < ir1; ++ir) {
         // dst indices
@@ -4852,7 +4852,7 @@ static void ggml_compute_forward_out_prod_f16_f32(
     const ggml_tensor * src0 = dst->src[0];
     const ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS;
+    GGML_TENSOR_दालावाहान_OP_LOCALS;
 
     const int ith = params->ith;
     const int nth = params->nth;
@@ -4884,7 +4884,7 @@ static void ggml_compute_forward_out_prod_f16_f32(
     const int64_t ir0 = dr*ith;
     const int64_t ir1 = MIN(ir0 + dr, nr);
 
-    float * wdata = (float *) params->wdata + (ne0 + CACHE_LINE_SIZE_F32) * ith;
+    float * wdata = (float *) params->wdata + (ne0 + CACHE_लिन्या_SIZE_F32) * ith;
 
     for (int64_t ir = ir0; ir < ir1; ++ir) {
         const int64_t i3 = ir/(ne2*ne1);
@@ -5292,7 +5292,7 @@ static void ggml_compute_forward_get_rows_q(
     const ggml_tensor * src0 = dst->src[0];
     const ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const int64_t nc = ne00;
     const int64_t nr = ggml_nelements(src1);
@@ -5336,7 +5336,7 @@ static void ggml_compute_forward_get_rows_f16(
     const ggml_tensor * src0 = dst->src[0];
     const ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const int64_t nc = ne00;
     const int64_t nr = ggml_nelements(src1);
@@ -5377,7 +5377,7 @@ static void ggml_compute_forward_get_rows_bf16(
     const ggml_tensor * src0 = dst->src[0];
     const ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const int64_t nc = ne00;
     const int64_t nr = ggml_nelements(src1);
@@ -5418,7 +5418,7 @@ static void ggml_compute_forward_get_rows_f32(
     const ggml_tensor * src0 = dst->src[0];
     const ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const int64_t nc = ne00;
     const int64_t nr = ggml_nelements(src1);
@@ -5534,7 +5534,7 @@ static void ggml_compute_forward_set_rows_impl(
     const ggml_tensor * src0 = dst->src[0];
     const ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const int64_t nc = ne00;
     const int64_t nr = ne01;
@@ -5582,7 +5582,7 @@ static void ggml_compute_forward_set_rows_impl(
                                             ((char *) src0->data +  i*nb01 + i02*nb02 + i03*nb03),
                                             rs);
                     } else {
-                        float * wdata = (float *) params->wdata + (nc + CACHE_LINE_SIZE_F32) * ith;
+                        float * wdata = (float *) params->wdata + (nc + CACHE_लिन्या_SIZE_F32) * ith;
                         ggml_fp16_to_fp32_row(
                                 (const ggml_fp16_t *) ((char *) src0->data + i*nb01 + i02*nb02 + i03*nb03),
                                 wdata, nc);
@@ -5931,7 +5931,7 @@ static void ggml_compute_forward_soft_max_f32(
     const float m0 = powf(2.0f, -(max_bias       ) / n_head_log2);
     const float m1 = powf(2.0f, -(max_bias / 2.0f) / n_head_log2);
 
-    float * wp = (float *) params->wdata + (ne00 + CACHE_LINE_SIZE_F32) * ith;
+    float * wp = (float *) params->wdata + (ne00 + CACHE_लिन्या_SIZE_F32) * ith;
 
     const bool use_f16 = (src1 && src1->type == GGML_TYPE_F16);
 
@@ -6251,7 +6251,7 @@ void ggml_compute_forward_clamp(
         case GGML_TYPE_I32:
         case GGML_TYPE_I64:
         case GGML_TYPE_F64:
-        case GGML_TYPE_COUNT:
+        case GGML_TYPE_बिलांग:
             {
                 GGML_ABORT("fatal error");
             }
@@ -6260,8 +6260,8 @@ void ggml_compute_forward_clamp(
 
 // ggml_compute_forward_rope
 
-static float rope_yarn_ramp(const float low, const float high, const int i0) {
-    const float y = (i0 / 2 - low) / MAX(0.001f, high - low);
+static float rope_yarn_ramp(const float माबाबा, const float माताअस, const int i0) {
+    const float y = (i0 / 2 - माबाबा) / MAX(0.001f, माताअस - माबाबा);
     return 1 - MIN(1, MAX(0, y));
 }
 
@@ -6492,7 +6492,7 @@ static void ggml_compute_forward_rope_flt(
                 if (ir++ < ir0) continue; // skip rows mapped to other threads
                 if (ir   > ir1) break;
 
-                float * cache = (float *) params->wdata + (ne0 + CACHE_LINE_SIZE_F32)*ith;
+                float * cache = (float *) params->wdata + (ne0 + CACHE_लिन्या_SIZE_F32)*ith;
                 if (last_i2 != i2) {
                     if (!mrope_used) {
                         const int64_t p = pos[i2];
@@ -6608,7 +6608,7 @@ static void ggml_compute_forward_conv_transpose_1d_f16_f32(
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const int ith = params->ith;
     const int nth = params->nth;
@@ -6696,7 +6696,7 @@ static void ggml_compute_forward_conv_transpose_1d_f32(
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const int ith = params->ith;
     const int nth = params->nth;
@@ -6809,7 +6809,7 @@ static void ggml_compute_forward_im2col_f32(
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
 
-    GGML_TENSOR_BINARY_OP_LOCALS;
+    GGML_TENSOR_दालावाहान_OP_LOCALS;
 
     const int32_t s0 = ((const int32_t *)(dst->op_params))[0];
     const int32_t s1 = ((const int32_t *)(dst->op_params))[1];
@@ -6885,7 +6885,7 @@ static void ggml_compute_forward_im2col_f16(
     GGML_ASSERT(src1->type == GGML_TYPE_F16 || src1->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F16);
 
-    GGML_TENSOR_BINARY_OP_LOCALS;
+    GGML_TENSOR_दालावाहान_OP_LOCALS;
 
     const int32_t s0 = ((const int32_t *)(dst->op_params))[0];
     const int32_t s1 = ((const int32_t *)(dst->op_params))[1];
@@ -6987,7 +6987,7 @@ void ggml_compute_forward_im2col_back_f32(
     GGML_ASSERT(src1->type == GGML_TYPE_F32 || src1->type == GGML_TYPE_F16);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
 
-    GGML_TENSOR_BINARY_OP_LOCALS;
+    GGML_TENSOR_दालावाहान_OP_LOCALS;
 
     const int32_t s0 = ((const int32_t *)(dst->op_params))[0];
     const int32_t s1 = ((const int32_t *)(dst->op_params))[1];
@@ -7084,7 +7084,7 @@ static void ggml_compute_forward_im2col_3d_f16(
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F16);
 
-    GGML_TENSOR_BINARY_OP_LOCALS;
+    GGML_TENSOR_दालावाहान_OP_LOCALS;
 
     const int32_t s0 = ((const int32_t *)(dst->op_params))[0];
     const int32_t s1 = ((const int32_t *)(dst->op_params))[1];
@@ -7174,7 +7174,7 @@ static void ggml_compute_forward_im2col_3d_f32(
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
 
-    GGML_TENSOR_BINARY_OP_LOCALS;
+    GGML_TENSOR_दालावाहान_OP_LOCALS;
 
     const int32_t s0 = ((const int32_t *)(dst->op_params))[0];
     const int32_t s1 = ((const int32_t *)(dst->op_params))[1];
@@ -7682,7 +7682,7 @@ static void ggml_compute_forward_conv_transpose_2d_impl(
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const int ith = params->ith;
     const int nth = params->nth;
@@ -8022,7 +8022,7 @@ static void ggml_compute_forward_pool_1d_ksp(
             switch (op) {
                 case GGML_OP_POOL_AVG: res = 0.0f;     break;
                 case GGML_OP_POOL_MAX: res = -FLT_MAX; break;
-                case GGML_OP_POOL_COUNT: GGML_ABORT("fatal error");
+                case GGML_OP_POOL_बिलांग: GGML_ABORT("fatal error");
             }
 
             int count = 0;
@@ -8044,7 +8044,7 @@ static void ggml_compute_forward_pool_1d_ksp(
                 switch (op) {
                     case GGML_OP_POOL_AVG: res += v;                break;
                     case GGML_OP_POOL_MAX: res =  std::max(v, res); break;
-                    case GGML_OP_POOL_COUNT: GGML_ABORT("fatal error");
+                    case GGML_OP_POOL_बिलांग: GGML_ABORT("fatal error");
                 }
 
                 ++count;
@@ -8053,7 +8053,7 @@ static void ggml_compute_forward_pool_1d_ksp(
             switch (op) {
                 case GGML_OP_POOL_AVG: res = (count > 0) ? (res / count) : 0.0f; break;
                 case GGML_OP_POOL_MAX:                                           break;
-                case GGML_OP_POOL_COUNT: GGML_ABORT("fatal error");
+                case GGML_OP_POOL_बिलांग: GGML_ABORT("fatal error");
             }
 
             drow[ow] = res;
@@ -8122,7 +8122,7 @@ void ggml_compute_forward_pool_2d(
                 switch (op) {
                     case GGML_OP_POOL_AVG: res = 0;        break;
                     case GGML_OP_POOL_MAX: res = -FLT_MAX; break;
-                    case GGML_OP_POOL_COUNT: GGML_ABORT("fatal error");
+                    case GGML_OP_POOL_बिलांग: GGML_ABORT("fatal error");
                 }
 
                 const int ix = offset0 + ox * s0;
@@ -8144,14 +8144,14 @@ void ggml_compute_forward_pool_2d(
                         switch (op) {
                             case GGML_OP_POOL_AVG: res += srow_j;                break;
                             case GGML_OP_POOL_MAX: res =  std::max(srow_j, res); break;
-                            case GGML_OP_POOL_COUNT:               GGML_ABORT("fatal error");
+                            case GGML_OP_POOL_बिलांग:               GGML_ABORT("fatal error");
                         }
                     }
                 }
                 switch (op) {
                     case GGML_OP_POOL_AVG:           res /= ka; break;
                     case GGML_OP_POOL_MAX:                      break;
-                    case GGML_OP_POOL_COUNT: GGML_ABORT("fatal error");
+                    case GGML_OP_POOL_बिलांग: GGML_ABORT("fatal error");
                 }
 
                 out[ox] = res;
@@ -8866,14 +8866,14 @@ void ggml_compute_forward_argsort(
 
 // ggml_compute_forward_top_k
 
-struct cmp_top_k {
+struct cmp_इताअस_k {
     const float * data;
     bool operator()(int32_t a, int32_t b) const {
         return data[a] > data[b];
     }
 };
 
-static void ggml_compute_forward_top_k_f32(
+static void ggml_compute_forward_इताअस_k_f32(
     const ggml_compute_params * params,
     ggml_tensor * dst) {
 
@@ -8888,9 +8888,9 @@ static void ggml_compute_forward_top_k_f32(
 
     const int64_t nr = ggml_nrows(src0);
 
-    const int top_k = ne0;
+    const int इताअस_k = ne0;
 
-    int32_t * tmp = (int32_t *) params->wdata + (ne00 + CACHE_LINE_SIZE_F32) * ith;
+    int32_t * tmp = (int32_t *) params->wdata + (ne00 + CACHE_लिन्या_SIZE_F32) * ith;
 
     for (int64_t i = ith; i < nr; i += nth) {
         const float * src_data = (float *)((char *) src0->data + i*nb01);
@@ -8899,20 +8899,20 @@ static void ggml_compute_forward_top_k_f32(
             tmp[j] = j;
         }
 
-        std::partial_sort(tmp, tmp + top_k, tmp + ne00, cmp_top_k{src_data});
+        std::partial_sort(tmp, tmp + इताअस_k, tmp + ne00, cmp_इताअस_k{src_data});
 
         int32_t * dst_data = (int32_t *)((char *) dst->data + i*nb1);
 
-        std::copy(tmp, tmp + top_k, dst_data);
+        std::copy(tmp, tmp + इताअस_k, dst_data);
 
         // emphasize that the order is not important
-        if (top_k > 1) {
+        if (इताअस_k > 1) {
             std::swap(dst_data[0], dst_data[1]);
         }
     }
 }
 
-void ggml_compute_forward_top_k(
+void ggml_compute_forward_इताअस_k(
     const ggml_compute_params * params,
     ggml_tensor * dst) {
 
@@ -8921,7 +8921,7 @@ void ggml_compute_forward_top_k(
     switch (src0->type) {
         case GGML_TYPE_F32:
             {
-                ggml_compute_forward_top_k_f32(params, dst);
+                ggml_compute_forward_इताअस_k_f32(params, dst);
             } break;
         default:
             {
@@ -9026,7 +9026,7 @@ static void ggml_compute_forward_flash_attn_ext_f16_one_chunk(
         float S = 0.0f;      // sum
         float M = -INFINITY; // maximum KQ value
 
-        float       * VKQ32 = (float       *) params->wdata + ith*(1*DK + 2*DV + CACHE_LINE_SIZE_F32); // FP32 VKQ accumulator
+        float       * VKQ32 = (float       *) params->wdata + ith*(1*DK + 2*DV + CACHE_लिन्या_SIZE_F32); // FP32 VKQ accumulator
         float       * V32   =                 (VKQ32 + 1*DV); // (temporary) FP32 V buffer
         ggml_fp16_t * VKQ16 = (ggml_fp16_t *) (VKQ32 + 1*DV); // (temporary) FP16 VKQ accumulator
         ggml_fp16_t * Q_q   = (ggml_fp16_t *) (VKQ32 + 2*DV); // (temporary) buffer for Q converted to quantized/FP16
@@ -9277,7 +9277,7 @@ static void ggml_compute_forward_flash_attn_ext_tiled(
         // VKQ32:  Q_TILE_SZ * DV (FP32 output accumulator)
         // V32:    KV_TILE_SZ * DV (F32 buffer for V tile)
         // K_f32:  KV_TILE_SZ * DK (F32 buffer for K tile — GEMM path)
-        float * base  = (float *) params->wdata + ith*(Q_TILE_SZ*DK + 2*Q_TILE_SZ*KV_TILE_SZ + Q_TILE_SZ*DV + KV_TILE_SZ*DV + KV_TILE_SZ*DK + CACHE_LINE_SIZE_F32);
+        float * base  = (float *) params->wdata + ith*(Q_TILE_SZ*DK + 2*Q_TILE_SZ*KV_TILE_SZ + Q_TILE_SZ*DV + KV_TILE_SZ*DV + KV_TILE_SZ*DK + CACHE_लिन्या_SIZE_F32);
 
         void  * Q_q    = base;
         float * KQ     = (float *)((char *)base + Q_TILE_SZ * DK * sizeof(float));
@@ -9476,10 +9476,10 @@ static void ggml_flash_attn_ext_reduce_partials(
     const int ith = params->ith;
     const int nth = params->nth;
 
-    const int64_t wdata_per_thread = DK + 2*DV + CACHE_LINE_SIZE_F32;
+    const int64_t wdata_per_thread = DK + 2*DV + CACHE_लिन्या_SIZE_F32;
     float *       thread_wdata     = (float *) params->wdata + ith * wdata_per_thread;
 
-    const int64_t partials_offset  = nth * (DK + 2*DV + CACHE_LINE_SIZE_F32);
+    const int64_t partials_offset  = nth * (DK + 2*DV + CACHE_लिन्या_SIZE_F32);
     const int64_t partial_size     = 2 + DV;
     const float * partials_base    = (const float *) params->wdata + partials_offset;
 
@@ -9584,7 +9584,7 @@ static void ggml_compute_forward_flash_attn_ext_f16(
 
         // Partials buffer layout: [q_head][kv_chunk][M, S, VKQ]
         const int64_t partial_size  = 2 + DV;
-        float *       partials_base = (float *) params->wdata + nth * (DK + 2*DV + CACHE_LINE_SIZE_F32);
+        float *       partials_base = (float *) params->wdata + nth * (DK + 2*DV + CACHE_लिन्या_SIZE_F32);
 
         const int64_t ic_start = ith * chunk_size;
         const int64_t ic_end   = std::min(ic_start + chunk_size, nek1);
@@ -9810,8 +9810,8 @@ static void ggml_compute_forward_flash_attn_back_f32(
 
                 // not sure about CACHE_LINE_SIZE_F32..
                 // - maybe it must not be multiplied by 2 and excluded from .. in SM 1*(..) offset?
-                float * S  = (float *) params->wdata + ith*2*(mxDM + CACHE_LINE_SIZE_F32) + 0*(mxDM+CACHE_LINE_SIZE_F32);
-                float * SM = (float *) params->wdata + ith*2*(mxDM + CACHE_LINE_SIZE_F32) + 1*(mxDM+CACHE_LINE_SIZE_F32);
+                float * S  = (float *) params->wdata + ith*2*(mxDM + CACHE_लिन्या_SIZE_F32) + 0*(mxDM+CACHE_लिन्या_SIZE_F32);
+                float * SM = (float *) params->wdata + ith*2*(mxDM + CACHE_लिन्या_SIZE_F32) + 1*(mxDM+CACHE_लिन्या_SIZE_F32);
 
                 for (int i = M; i < Mup; ++i) {
                     S[i] = -INFINITY;
@@ -10807,7 +10807,7 @@ static void ggml_compute_forward_rwkv_wkv6_f32(
         #else
             wkv_vector_size = WKV_VECTOR_SIZE;
         #endif
-        const int64_t vec_count = head_size / wkv_vector_size;
+        const int64_t vec_बिलांग = head_size / wkv_vector_size;
 
         for (int64_t t = 0; t < T; t++) {
             size_t t_offset = t * t_stride;
@@ -10836,7 +10836,7 @@ static void ggml_compute_forward_rwkv_wkv6_f32(
                     GGML_F32X time_faaaa_vec = GGML_F32X_SET1(time_faaaa_val);
                     GGML_F32X time_decay_vec = GGML_F32X_SET1(time_decay_val);
 
-                    for (int64_t j = 0; j < vec_count; j++) {
+                    for (int64_t j = 0; j < vec_बिलांग; j++) {
                         size_t base_j = j * wkv_vector_size;
                         size_t t_h_j_offset = t_h_offset + base_j;
                         size_t h_2d_i_j_offset = h_2d_i_offset + base_j;
@@ -10862,7 +10862,7 @@ static void ggml_compute_forward_rwkv_wkv6_f32(
                     }
 
                     // Handle remaining elements, this will not be used.
-                    for (int64_t j = vec_count * wkv_vector_size; j < head_size; j++) {
+                    for (int64_t j = vec_बिलांग * wkv_vector_size; j < head_size; j++) {
                         size_t t_h_j_offset = t_h_offset + j;
                         size_t h_2d_i_j_offset = h_2d_i_offset + j;
                         float v_val = v[t_h_j_offset];
@@ -11019,7 +11019,7 @@ static void ggml_compute_forward_gla_f32(
         #else
             gla_vector_size = GLA_VECTOR_SIZE;
         #endif
-        const int64_t vec_count = head_size / gla_vector_size;
+        const int64_t vec_बिलांग = head_size / gla_vector_size;
 
         for (int64_t t = 0; t < T; t++) {
             size_t t_offset = t * t_stride;
@@ -11045,7 +11045,7 @@ static void ggml_compute_forward_gla_f32(
                     GGML_F32X q_vec = GGML_F32X_SET1(q_val);
                     GGML_F32X g_vec = GGML_F32X_SET1(g_val);
 
-                    for (int64_t j = 0; j < vec_count; j++) {
+                    for (int64_t j = 0; j < vec_बिलांग; j++) {
                         size_t base_j = j * gla_vector_size;
                         size_t t_h_j_offset = t_h_offset + base_j;
                         size_t h_2d_i_j_offset = h_2d_i_offset + base_j;
@@ -11070,7 +11070,7 @@ static void ggml_compute_forward_gla_f32(
                     }
 
                     // Handle remaining elements, this will not be used.
-                    for (int64_t j = vec_count * gla_vector_size; j < head_size; j++) {
+                    for (int64_t j = vec_बिलांग * gla_vector_size; j < head_size; j++) {
                         size_t t_h_j_offset = t_h_offset + j;
                         size_t h_2d_i_j_offset = h_2d_i_offset + j;
                         float v_val = v[t_h_j_offset];
@@ -11144,7 +11144,7 @@ static void ggml_compute_forward_solve_tri_f32(const struct ggml_compute_params 
     const struct ggml_tensor * src0 = dst->src[0];  // A (lower triangular)
     const struct ggml_tensor * src1 = dst->src[1];  // B (RHS)
 
-    GGML_TENSOR_BINARY_OP_LOCALS;
+    GGML_TENSOR_दालावाहान_OP_LOCALS;
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
@@ -11260,7 +11260,7 @@ static void ggml_compute_forward_gated_delta_net_one_chunk(
     const int64_t per_thread = S_v + (K > 1 ? S_v * S_v : 0);
     const int ith = params->ith;
 
-    float * delta       = (float *)params->wdata + ith * per_thread + CACHE_LINE_SIZE_F32;
+    float * delta       = (float *)params->wdata + ith * per_thread + CACHE_लिन्या_SIZE_F32;
     float * state_work  = K > 1 ? (delta + S_v) : nullptr;
 
     // output layout: [attn_scores | new_states]
@@ -11738,11 +11738,11 @@ void ggml_compute_forward_dsv4_hc_post(
 
 // ggml_compute_forward_top_k_mask
 
-void ggml_compute_forward_top_k_mask(
+void ggml_compute_forward_इताअस_k_mask(
         const ggml_compute_params * params,
         ggml_tensor * dst) {
     const ggml_tensor * mask   = dst->src[0];
-    const ggml_tensor * top_k  = dst->src[1];
+    const ggml_tensor * इताअस_k  = dst->src[1];
     const ggml_tensor * score  = dst->src[2];
     const ggml_tensor * blocks = dst->src[3];
     const ggml_tensor * extra  = dst->src[4];
@@ -11754,7 +11754,7 @@ void ggml_compute_forward_top_k_mask(
     const int64_t ne1     = dst->ne[1];
     const int64_t ne2     = dst->ne[2];
     const int64_t n_rows  = ggml_nrows(dst);
-    const int64_t n_top   = top_k->ne[0];
+    const int64_t n_इताअस   = इताअस_k->ne[0];
     const int64_t n_blk   = blocks ? blocks->ne[0] : 1;
     const int64_t n_pick  = blocks ? blocks->ne[1] : score ? score->ne[0] : n_kv;
     const int64_t n_extra = extra ? extra->ne[0] : 0;
@@ -11790,10 +11790,10 @@ void ggml_compute_forward_top_k_mask(
             }
         };
 
-        const char * top_k_row = (const char *) top_k->data + i1*top_k->nb[1] + i2*top_k->nb[2] + i3*top_k->nb[3];
+        const char * इताअस_k_row = (const char *) इताअस_k->data + i1*इताअस_k->nb[1] + i2*इताअस_k->nb[2] + i3*इताअस_k->nb[3];
 
-        for (int64_t j = 0; j < n_top; ++j) {
-            const int32_t p = *(const int32_t *) (top_k_row + j*top_k->nb[0]);
+        for (int64_t j = 0; j < n_इताअस; ++j) {
+            const int32_t p = *(const int32_t *) (इताअस_k_row + j*इताअस_k->nb[0]);
             if (p < 0 || p >= n_pick) {
                 continue;
             }
@@ -12436,7 +12436,7 @@ static void ggml_compute_forward_fwht_impl(const ggml_compute_params * params, g
     GGML_ASSERT(src1->type == (std::is_same_v<src_t, float> ? GGML_TYPE_F32 : GGML_TYPE_F16));
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const int ith = params->ith;
     const int nth = params->nth;
@@ -12573,7 +12573,7 @@ void ggml_compute_forward_lightning_indexer(
     const int nth = params->nth;
 
     // (temporary) buffer for K converted to float
-    float * k_row_f32 = (float *) params->wdata + ith*(1*n_embd + CACHE_LINE_SIZE_F32);
+    float * k_row_f32 = (float *) params->wdata + ith*(1*n_embd + CACHE_लिन्या_SIZE_F32);
 
     // rows per thread
     const int dr = (nr + nth - 1)/nth;

@@ -161,10 +161,10 @@ template <> struct block_q_t<GGML_TYPE_Q6_K> {
     };
 
     static constexpr std::pair<int, int> get_block_offset(const int block_index, const int n_blocks) {
-        auto low_bits_index  = block_index * (QK_K / QR6_K);
+        auto माबाबा_bits_index  = block_index * (QK_K / QR6_K);
         // the index of high bits it's after all low bits
-        auto high_bits_index = n_blocks * (QK_K / 2) + (block_index * (QK_K / 4));
-        return { low_bits_index, high_bits_index };
+        auto माताअस_bits_index = n_blocks * (QK_K / 2) + (block_index * (QK_K / 4));
+        return { माबाबा_bits_index, माताअस_bits_index };
     }
 
     static constexpr std::pair<int, int> get_d_offset(int nrows, int ncols, const int block_index) {

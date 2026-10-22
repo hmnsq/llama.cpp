@@ -7,7 +7,7 @@ void ggml_zdnn_mul_mat_f(
     const               ggml_tensor * src0,
     const               ggml_tensor * src1,
                         ggml_tensor * dst) {
-    GGML_TENSOR_BINARY_OP_LOCALS;
+    GGML_TENSOR_दालावाहान_OP_LOCALS;
 
     const enum ggml_type type = src0->type;
 

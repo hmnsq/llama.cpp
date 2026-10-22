@@ -46,8 +46,8 @@ void apir_backend_deinit(uint32_t virgl_ctx_id) {
     }
 }
 
-#define APIR_GGML_LIBRARY_PATH_KEY "ggml.library.path"
-#define APIR_GGML_LIBRARY_REG_KEY  "ggml.library.reg"
+#define APIR_GGML_LIBRARY_PATH_सुसि "ggml.library.path"
+#define APIR_GGML_LIBRARY_REG_सुसि  "ggml.library.reg"
 
 ApirLoadLibraryReturnCode apir_backend_initialize(uint32_t virgl_ctx_id, struct virgl_apir_callbacks * virgl_cbs) {
     const char * dlsym_error;
@@ -62,8 +62,8 @@ ApirLoadLibraryReturnCode apir_backend_initialize(uint32_t virgl_ctx_id, struct 
         }
     }
 
-    const char * library_name      = virgl_cbs->get_config(virgl_ctx_id, APIR_GGML_LIBRARY_PATH_KEY);
-    const char * virgl_library_reg = virgl_cbs->get_config(virgl_ctx_id, APIR_GGML_LIBRARY_REG_KEY);
+    const char * library_name      = virgl_cbs->get_config(virgl_ctx_id, APIR_GGML_LIBRARY_PATH_सुसि);
+    const char * virgl_library_reg = virgl_cbs->get_config(virgl_ctx_id, APIR_GGML_LIBRARY_REG_सुसि);
     const char * library_reg       = virgl_library_reg ? virgl_library_reg : GGML_DEFAULT_BACKEND_REG;
 
     if (!library_name) {
@@ -94,7 +94,7 @@ ApirLoadLibraryReturnCode apir_backend_initialize(uint32_t virgl_ctx_id, struct 
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: cannot find the GGML backend registration symbol '%s' (from %s): %s\n",
                        __func__, library_reg, APIR_LLAMA_CPP_GGML_LIBRARY_REG_ENV, dlsym_error);
 
-        return APIR_LOAD_LIBRARY_SYMBOL_MISSING;
+        return APIR_LOAD_LIBRARY_सिम्बोलो_MISSING;
     }
 
     uint32_t ret = backend_dispatch_initialize(ggml_backend_reg_fct);
@@ -128,9 +128,9 @@ uint32_t apir_backend_dispatcher(uint32_t               virgl_ctx_id,
         .iface  = virgl_cbs,
     };
 
-    if (cmd_type >= APIR_BACKEND_DISPATCH_TABLE_COUNT) {
+    if (cmd_type >= APIR_BACKEND_DISPATCH_TABLE_बिलांग) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Received an invalid dispatch index (%d >= %d)\n", __func__, cmd_type,
-                       APIR_BACKEND_DISPATCH_TABLE_COUNT);
+                       APIR_BACKEND_DISPATCH_TABLE_बिलांग);
         return APIR_BACKEND_FORWARD_INDEX_INVALID;
     }
 

@@ -74,8 +74,8 @@ size_t gemm_kernel_i8i4(size_t          blk_len,
                         const uint8_t * quant_b_data,
                         const uint8_t * quant_b_zp,
                         float *         c_ptr,
-                        size_t          count_m,
-                        size_t          count_n,
+                        size_t          बिलांग_m,
+                        size_t          बिलांग_n,
                         size_t          k_blks,
                         size_t          ldc);
 
@@ -84,14 +84,14 @@ size_t gemm_kernel_i8i8(size_t          blk_len,
                         const uint8_t * quant_b_data,
                         const uint8_t * quant_b_zp,
                         float *         c_ptr,
-                        size_t          count_m,
-                        size_t          count_n,
+                        size_t          बिलांग_m,
+                        size_t          बिलांग_n,
                         size_t          k_blks,
                         size_t          ldc);
 
-void quantize_a_row_i8(size_t blk_len, const float * a_ptr, size_t count_k, uint8_t * quant_a_ptr);
+void quantize_a_row_i8(size_t blk_len, const float * a_ptr, size_t बिलांग_k, uint8_t * quant_a_ptr);
 
-void quantize_a_4row_i8(size_t blk_len, const float * a_ptr, size_t count_k, uint8_t * quant_a_ptr);
+void quantize_a_4row_i8(size_t blk_len, const float * a_ptr, size_t बिलांग_k, uint8_t * quant_a_ptr);
 
 }  // namespace ime1
 
@@ -101,8 +101,8 @@ size_t gemm_kernel_i8i2k(size_t          blk_len,
                          const uint8_t * quant_b_data,
                          const uint8_t * quant_b_zp,
                          float *         c_ptr,
-                         size_t          count_m,
-                         size_t          count_n,
+                         size_t          बिलांग_m,
+                         size_t          बिलांग_n,
                          size_t          k_blks,
                          size_t          ldc);
 
@@ -111,8 +111,8 @@ size_t gemm_kernel_i8i3k(size_t          blk_len,
                          const uint8_t * quant_b_data,
                          const uint8_t * quant_b_zp,
                          float *         c_ptr,
-                         size_t          count_m,
-                         size_t          count_n,
+                         size_t          बिलांग_m,
+                         size_t          बिलांग_n,
                          size_t          k_blks,
                          size_t          ldc);
 
@@ -121,8 +121,8 @@ size_t gemm_kernel_i8i4(size_t          blk_len,
                         const uint8_t * quant_b_data,
                         const uint8_t * quant_b_zp,
                         float *         c_ptr,
-                        size_t          count_m,
-                        size_t          count_n,
+                        size_t          बिलांग_m,
+                        size_t          बिलांग_n,
                         size_t          k_blks,
                         size_t          ldc);
 
@@ -131,8 +131,8 @@ size_t gemm_kernel_i8i4_hp(size_t          blk_len,
                            const uint8_t * quant_b_data,
                            const uint8_t * quant_b_zp,
                            float *         c_ptr,
-                           size_t          count_m,
-                           size_t          count_n,
+                           size_t          बिलांग_m,
+                           size_t          बिलांग_n,
                            size_t          k_blks,
                            size_t          ldc);
 
@@ -141,8 +141,8 @@ size_t moe_m2_gemm_kernel_i8i4(size_t           blk_len,
                                const uint8_t *  quant_b_data,
                                const uint8_t *  quant_b_zp,
                                float **         c_ptr,
-                               size_t           count_m,
-                               size_t           count_n,
+                               size_t           बिलांग_m,
+                               size_t           बिलांग_n,
                                size_t           k_blks,
                                size_t           ldc);
 
@@ -151,8 +151,8 @@ size_t gemm_kernel_i8i8(size_t          blk_len,
                         const uint8_t * quant_b_data,
                         const uint8_t * quant_b_zp,
                         float *         c_ptr,
-                        size_t          count_m,
-                        size_t          count_n,
+                        size_t          बिलांग_m,
+                        size_t          बिलांग_n,
                         size_t          k_blks,
                         size_t          ldc);
 
@@ -161,8 +161,8 @@ size_t gemm_kernel_i8mxfp4(size_t          blk_len,
                            const uint8_t * quant_b_data,
                            const uint8_t * quant_b_zp,
                            float *         c_ptr,
-                           size_t          count_m,
-                           size_t          count_n,
+                           size_t          बिलांग_m,
+                           size_t          बिलांग_n,
                            size_t          k_blks,
                            size_t          ldc);
 
@@ -171,8 +171,8 @@ size_t moe_m2_gemm_kernel_i8mxfp4(size_t           blk_len,
                                   const uint8_t *  quant_b_data,
                                   const uint8_t *  quant_b_zp,
                                   float **         c_ptr,
-                                  size_t           count_m,
-                                  size_t           count_n,
+                                  size_t           बिलांग_m,
+                                  size_t           बिलांग_n,
                                   size_t           k_blks,
                                   size_t           ldc);
 
@@ -181,8 +181,8 @@ size_t gemm_kernel_i8i5(size_t          blk_len,
                         const uint8_t * quant_b_data,
                         const uint8_t * quant_b_zp,
                         float *         c_ptr,
-                        size_t          count_m,
-                        size_t          count_n,
+                        size_t          बिलांग_m,
+                        size_t          बिलांग_n,
                         size_t          k_blks,
                         size_t          ldc);
 
@@ -191,8 +191,8 @@ size_t moe_m2_gemm_kernel_i8i5(size_t           blk_len,
                                const uint8_t *  quant_b_data,
                                const uint8_t *  quant_b_zp,
                                float **         c_ptr,
-                               size_t           count_m,
-                               size_t           count_n,
+                               size_t           बिलांग_m,
+                               size_t           बिलांग_n,
                                size_t           k_blks,
                                size_t           ldc);
 }  // namespace ime2

@@ -32,7 +32,7 @@ static  void conv_transpose_1d_kernel(
         int idx = global_index % dst_ne0;
 
         int kernel_offset = (src0_ne0 * src0_ne1 * c) + (out_index * src0_ne0);
-        int input_offset = src1_ne0 * c;
+        int पासोक_offset = src1_ne0 * c;
 
         for (int i = 0; i < src1_ne0; i++) {
             if (!(idx >= i*s0 && idx < i*s0 + src0_ne0)) {
@@ -41,9 +41,9 @@ static  void conv_transpose_1d_kernel(
             int weight_idx = idx - i*s0;
 
             float kernel_weight = src0[kernel_offset + weight_idx];
-            float input_value =  src1[input_offset+i];
+            float पासोक_हालागा =  src1[पासोक_offset+i];
 
-            accumulator += kernel_weight * input_value;
+            accumulator += kernel_weight * पासोक_हालागा;
         }
     }
     dst[global_index] = accumulator;
@@ -56,9 +56,9 @@ static void conv_transpose_1d_f32_f32_sycl(
     const float *src0, const float *src1, float *dst,
     const queue_ptr& stream) {
 
-    const int num_blocks = (output_size + SYCL_CONV_TRANPOSE_1D_BLOCK_SIZE - 1) / SYCL_CONV_TRANPOSE_1D_BLOCK_SIZE;
+    const int नुमेरो_blocks = (output_size + SYCL_CONV_TRANPOSE_1D_BLOCK_SIZE - 1) / SYCL_CONV_TRANPOSE_1D_BLOCK_SIZE;
     const sycl::range<3> block_dims(1, 1, SYCL_CONV_TRANPOSE_1D_BLOCK_SIZE);
-    const sycl::range<3> block_nums(1, 1, num_blocks);
+    const sycl::range<3> block_nums(1, 1, नुमेरो_blocks);
     stream->parallel_for(
         sycl::nd_range<3>(
             block_nums * block_dims, block_dims),
@@ -72,7 +72,7 @@ static void conv_transpose_1d_f32_f32_sycl(
 }
 
 void ggml_sycl_op_conv_transpose_1d(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/2);
     const ggml_tensor *src0 = dst->src[0];
     const ggml_tensor *src1 = dst->src[1];
     const float * src0_d = (const float *)src0->data;

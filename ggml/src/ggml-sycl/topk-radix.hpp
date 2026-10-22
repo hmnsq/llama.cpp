@@ -10,11 +10,11 @@
 // (columns and rows) may also be a driving factor.
 // We select the legacy implementation for k below this constant because the overhead of radix select
 // exceeds the benefit for very small problems
-constexpr int SYCL_TOP_K_SCAN_MERGE_MAX_K = 8;
+constexpr int SYCL_इताअस_K_SCAN_MERGE_MAX_K = 8;
 
 // Top-k of every row of src, k indices per row into dst_indices, in no particular order.
 // Picks between the one-group-per-row and the split-row kernel from the shape and the device.
-void ggml_sycl_top_k_radix(
+void ggml_sycl_इताअस_k_radix(
     ggml_backend_sycl_context & ctx,
     const float *   src,
     int32_t *       dst_indices,

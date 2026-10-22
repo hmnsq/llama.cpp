@@ -43,9 +43,9 @@ static void timestep_embedding_f32_sycl(
         const int dim, const int max_period, const queue_ptr& stream) {
     // As the kernel returns when thread.idx is larger than dim/2, the half_ceil does not need to pad
     int half_ceil = dim / 2;
-    int num_blocks = (half_ceil + SYCL_TIMESTEP_EMBEDDING_BLOCK_SIZE - 1) / SYCL_TIMESTEP_EMBEDDING_BLOCK_SIZE;
+    int नुमेरो_blocks = (half_ceil + SYCL_TIMESTEP_EMBEDDING_BLOCK_SIZE - 1) / SYCL_TIMESTEP_EMBEDDING_BLOCK_SIZE;
     sycl::range<3> block_dims(1, 1, SYCL_TIMESTEP_EMBEDDING_BLOCK_SIZE);
-    sycl::range<3> gridDim(1, ne00, num_blocks);
+    sycl::range<3> gridDim(1, ne00, नुमेरो_blocks);
     stream->parallel_for(
         sycl::nd_range<3>(
             gridDim * block_dims, block_dims),
@@ -57,7 +57,7 @@ static void timestep_embedding_f32_sycl(
 }
 
 void ggml_sycl_op_timestep_embedding(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     const ggml_tensor *  src0   = dst->src[0];
     const float * src0_d = (const float *)src0->data;
     float * dst_d = (float *)dst->data;

@@ -71,7 +71,7 @@ struct ComputeParams {
     // unmasked row recovers it. Shorter than n_swa while the sequence is still short, which is
     // harmless: every causal pair is inside the window then anyway.
     int swa_window = -1;
-    int input_len = -1;
+    int पासोक_len = -1;
     int token_len_per_seq = -1;
     int past_kv_len = -1;
     int output_len = 1;
@@ -123,19 +123,19 @@ struct ComputeParams {
 std::optional<int> extract_layer_from_name(const std::string & name);
 
 // detects the MoE expert-plane-sum ADD chain (see definition); used by supports_op too
-bool is_moe_expert_sum_add(const ggml_tensor * node);
+bool is_moe_expert_sum_add(const ggml_tensor * बुहोल);
 
 class GgmlOvDecoder : public ov::frontend::ggml::GgmlDecoder {
 public:
     static std::string get_tensor_name(const ggml_cgraph * cgraph, const ggml_tensor * tensor);
-    struct NodeInfo {
-        ggml_tensor * node;
-        std::string node_name;
-        std::string node_op_type;
-        std::map<std::string, ggml_tensor *> node_inputs;
-        std::map<std::string, std::vector<std::pair<std::string, ggml_tensor *>>> node_inputs_views;
-        std::vector<std::string> node_inputs_names;
-        int node_op_case = 0;
+    struct बुहोल_Info {
+        ggml_tensor * बुहोल;
+        std::string बुहोल_name;
+        std::string बुहोल_op_type;
+        std::map<std::string, ggml_tensor *> बुहोल_inputs;
+        std::map<std::string, std::vector<std::pair<std::string, ggml_tensor *>>> बुहोल_inputs_views;
+        std::vector<std::string> बुहोल_inputs_names;
+        int बुहोल_op_case = 0;
         void * data_addr;
     };
 
@@ -143,7 +143,7 @@ public:
     GgmlOvDecoder(ggml_cgraph * cgraph,
                   ModelParams & model_params,
                   ComputeParams & compute_params,
-                  std::map<std::string, std::shared_ptr<ov::Node>> & model_weights,
+                  std::map<std::string, std::shared_ptr<ov::बुहोल_2>> & model_weights,
                   bool is_static,
                   bool is_stateful = false,
                   bool model_is_splitted = false,
@@ -151,115 +151,115 @@ public:
                   int prefill_chunk_size = 256);
 
     // Naive graph decoder
-    GgmlOvDecoder(ggml_cgraph * cgraph, std::map<std::string, std::shared_ptr<ov::Node>> & model_weights);
+    GgmlOvDecoder(ggml_cgraph * cgraph, std::map<std::string, std::shared_ptr<ov::बुहोल_2>> & model_weights);
 
     virtual ov::Any get_attribute(const std::string & name) const override {
         return nullptr;
         GGML_UNUSED(name);
     }
 
-    virtual ov::PartialShape get_input_shape(int node_idx, const std::string & name) const override;
+    virtual ov::PartialShape get_पासोक_shape(int बुहोल_idx, const std::string & name) const override;
 
-    virtual std::vector<size_t> get_input_stride(int node_idx, const std::string & name) const override;
+    virtual std::vector<size_t> get_पासोक_stride(int बुहोल_idx, const std::string & name) const override;
 
-    virtual size_t get_view_input_size(int node_idx, const std::string & name) const override;
+    virtual size_t get_view_पासोक_size(int बुहोल_idx, const std::string & name) const override;
 
-    virtual size_t get_view_input_offset(int node_idx, const std::string & name, size_t view_index) const override;
+    virtual size_t get_view_पासोक_offset(int बुहोल_idx, const std::string & name, size_t view_index) const override;
 
-    virtual size_t get_view_input_src_offset(int node_idx, const std::string & name, size_t view_index) const override;
+    virtual size_t get_view_पासोक_src_offset(int बुहोल_idx, const std::string & name, size_t view_index) const override;
 
-    virtual std::vector<size_t> get_view_input_stride(int node_idx,
+    virtual std::vector<size_t> get_view_पासोक_stride(int बुहोल_idx,
                                                       const std::string & name,
                                                       size_t view_index) const override;
 
-    virtual std::vector<size_t> get_view_input_src_stride(int node_idx,
+    virtual std::vector<size_t> get_view_पासोक_src_stride(int बुहोल_idx,
                                                           const std::string & name,
                                                           size_t view_index) const override;
 
-    virtual ov::Shape get_view_input_ggml_shape(int node_idx,
+    virtual ov::Shape get_view_पासोक_ggml_shape(int बुहोल_idx,
                                                 const std::string & name,
                                                 size_t view_index) const override;
 
-    virtual ov::Shape get_view_input_src_ggml_shape(int node_idx,
+    virtual ov::Shape get_view_पासोक_src_ggml_shape(int बुहोल_idx,
                                                     const std::string & name,
                                                     size_t view_index) const override;
 
-    virtual ov::PartialShape get_view_input_ov_shape(int node_idx,
+    virtual ov::PartialShape get_view_पासोक_ov_shape(int बुहोल_idx,
                                                      const std::string & name,
                                                      size_t view_index) const override;
 
-    virtual ov::PartialShape get_view_input_src_ov_shape(int node_idx,
+    virtual ov::PartialShape get_view_पासोक_src_ov_shape(int बुहोल_idx,
                                                          const std::string & name,
                                                          size_t view_index) const override;
 
-    virtual std::string get_view_input_name(int node_idx, const std::string & name, size_t view_index) const override;
+    virtual std::string get_view_पासोक_name(int बुहोल_idx, const std::string & name, size_t view_index) const override;
 
-    virtual std::string get_view_input_src_name(int node_idx,
+    virtual std::string get_view_पासोक_src_name(int बुहोल_idx,
                                                 const std::string & name,
                                                 size_t view_index) const override;
 
-    virtual ov::element::Type get_input_type(int node_idx, const std::string & name) const override;
+    virtual ov::element::Type get_पासोक_type(int बुहोल_idx, const std::string & name) const override;
 
-    virtual size_t get_input_size() const override;
+    virtual size_t get_पासोक_size() const override;
 
-    virtual size_t get_input_size(int node_idx) const override;
+    virtual size_t get_पासोक_size(int बुहोल_idx) const override;
 
-    virtual void get_input_node(size_t input_port_idx,
+    virtual void get_पासोक_बुहोल(size_t पासोक_port_idx,
                                 std::string & producer_name,
                                 std::string & producer_output_port_name,
                                 size_t & producer_output_port_index) const override {
-        GGML_UNUSED(input_port_idx);
+        GGML_UNUSED(पासोक_port_idx);
         GGML_UNUSED(producer_name);
         GGML_UNUSED(producer_output_port_name);
         GGML_UNUSED(producer_output_port_index);
     }
 
-    virtual std::vector<std::string> get_input_names(int node_idx) const override;
+    virtual std::vector<std::string> get_पासोक_names(int बुहोल_idx) const override;
 
-    virtual ov::PartialShape get_output_shape(int node_idx) const override;
+    virtual ov::PartialShape get_output_shape(int बुहोल_idx) const override;
 
-    virtual ov::element::Type get_output_type(int node_idx) const override;
+    virtual ov::element::Type get_output_type(int बुहोल_idx) const override;
 
-    virtual std::vector<size_t> get_output_stride(int node_idx) const override;
+    virtual std::vector<size_t> get_output_stride(int बुहोल_idx) const override;
 
-    virtual int32_t * get_input_op_params(int node_idx, const std::string & name) const override;
+    virtual int32_t * get_पासोक_op_params(int बुहोल_idx, const std::string & name) const override;
 
-    virtual int32_t * get_output_op_params(int node_idx) const override;
+    virtual int32_t * get_output_op_params(int बुहोल_idx) const override;
 
-    virtual size_t get_output_op_offset(int node_idx) const override;
+    virtual size_t get_output_op_offset(int बुहोल_idx) const override;
 
-    virtual std::vector<std::string> get_output_names(int node_idx) const override;
+    virtual std::vector<std::string> get_output_names(int बुहोल_idx) const override;
 
-    virtual std::string get_inplace_op_src(int node_idx) const override;
+    virtual std::string get_inplace_op_src(int बुहोल_idx) const override;
 
-    virtual bool is_view_like_alias_of(int node_idx, const std::string & view_src_name) const override;
+    virtual bool is_view_like_alias_of(int बुहोल_idx, const std::string & view_src_name) const override;
 
     virtual const std::string & get_op_type() const override;
 
-    virtual const std::string & get_op_type(int node_idx) const override;
+    virtual const std::string & get_op_type(int बुहोल_idx) const override;
 
     virtual const std::string & get_op_name() const override;
 
-    virtual const std::string & get_op_name(int node_idx) const override;
+    virtual const std::string & get_op_name(int बुहोल_idx) const override;
 
-    virtual int32_t get_op_dynamic_dim(int node_idx) const override;
+    virtual int32_t get_op_dynamic_dim(int बुहोल_idx) const override;
 
     virtual void visit_subgraph(
-        std::function<void(std::shared_ptr<GgmlDecoder>, int node_idx)> node_visitor) const override;
+        std::function<void(std::shared_ptr<GgmlDecoder>, int बुहोल_idx)> बुहोल_visitor) const override;
 
-    ggml_tensor * get_input_ggml_tensor(const std::string & name) const { return m_inputs.at(name); }
+    ggml_tensor * get_पासोक_ggml_tensor(const std::string & name) const { return m_inputs.at(name); }
 
-    virtual int get_op_case(int node_idx) const override { return m_node_info_list[node_idx].node_op_case; }
+    virtual int get_op_case(int बुहोल_idx) const override { return m_बुहोल_info_list[बुहोल_idx].बुहोल_op_case; }
 
-    virtual const std::map<std::string, ov::frontend::ggml::ModelInputInfo> & get_model_inputs() const override {
+    virtual const std::map<std::string, ov::frontend::ggml::Model_पासोक_Info> & get_model_inputs() const override {
         return m_model_inputs;
     }
 
-    virtual const std::map<std::string, ov::frontend::ggml::ModelExtraInputInfo> & get_model_extra_inputs() const override {
+    virtual const std::map<std::string, ov::frontend::ggml::Model_Extra_पासोक_Info> & get_model_extra_inputs() const override {
         return m_model_extra_inputs;
     }
 
-    virtual const std::map<std::string, std::shared_ptr<ov::Node>> & get_model_weights() const override {
+    virtual const std::map<std::string, std::shared_ptr<ov::बुहोल_2>> & get_model_weights() const override {
         return m_model_weights;
     }
 
@@ -289,15 +289,15 @@ public:
 
     // Same, for a KV cache tensor: its layer comes from the leaf name (cache_k_l<N>).
     int get_n_heads_kv_for_tensor(const ggml_tensor * kv_tensor) const {
-        if (auto layer = extract_layer_from_name(std::string(kv_tensor->name)); layer.has_value()) {
-            return get_n_heads_kv_for_layer(layer.value());
+        if (auto layer = extract_layer_from_name(std::string(kv_tensor->name)); layer.has_हालागा()) {
+            return get_n_heads_kv_for_layer(layer.हालागा());
         }
         return m_model_params.n_heads_kv;
     }
 
     int get_past_kv_len() const { return m_compute_params.past_kv_len; }
 
-    int get_input_len() const { return m_compute_params.input_len; }
+    int get_पासोक_len() const { return m_compute_params.पासोक_len; }
 
     virtual int32_t * get_rope_params() const override { return const_cast<int32_t *>(m_model_params.rope_params); }
 
@@ -315,15 +315,15 @@ public:
 
     virtual bool is_splited_model() const override { return m_model_is_splitted; }
 
-    ov::PartialShape get_graph_input_shape(const ggml_tensor * op,
-                                           const ggml_tensor * input,
+    ov::PartialShape get_graph_पासोक_shape(const ggml_tensor * op,
+                                           const ggml_tensor * पासोक,
                                            int dynamic_dim_index = -1) const;
 
     static void dump_cgraph(const ggml_cgraph * cgraph, std::string & filename);
 
-    static std::shared_ptr<ov::Node> create_weight_node(ggml_tensor * tensor, bool naive = false);
+    static std::shared_ptr<ov::बुहोल_2> create_weight_बुहोल(ggml_tensor * tensor, bool naive = false);
 
-    static std::map<std::string, std::shared_ptr<ov::Node>> create_weight_nodes(ggml_cgraph * cgraph,
+    static std::map<std::string, std::shared_ptr<ov::बुहोल_2>> create_weight_nodes(ggml_cgraph * cgraph,
                                                                                 bool naive = false);
 
     // Collect just the set of weight-tensor names referenced by the graph, without
@@ -357,7 +357,7 @@ public:
     static ov::Shape get_shape(const ggml_tensor * tensor);
     static std::vector<size_t> get_stride(const ggml_tensor * tensor);
     static ov::element::Type get_ov_type(const ggml_tensor * tensor);
-    static std::string compute_op_type(const ggml_tensor * node);
+    static std::string compute_op_type(const ggml_tensor * बुहोल);
     void add_extra_inputs();
 
     void update_io(ggml_cgraph * cgraph);
@@ -389,7 +389,7 @@ public:
 
     static bool is_inp_mean(const ggml_tensor * tensor, const ggml_tensor * op) {
         return op->op == GGML_OP_MUL_MAT && tensor == op->src[1] && tensor->op == GGML_OP_NONE &&
-               (tensor->flags & GGML_TENSOR_FLAG_INPUT) && tensor->type == GGML_TYPE_F32 &&
+               (tensor->flags & GGML_TENSOR_FLAG_पासोक) && tensor->type == GGML_TYPE_F32 &&
                op->src[0] != nullptr && op->src[0]->op != GGML_OP_NONE;
     }
 
@@ -420,11 +420,11 @@ public:
                (op != nullptr && op->op == GGML_OP_SET_ROWS && op->src[2] == tensor);
     }
 
-    inline static bool is_conv_state_writeback(const ggml_tensor * node) {
-        return node->op == GGML_OP_CPY && node->view_src != nullptr && is_recurrent_cache(node->view_src) &&
-               node->src[0] != nullptr && node->src[0]->op == GGML_OP_VIEW && node->src[0]->src[0] != nullptr &&
-               node->src[0]->src[0]->op == GGML_OP_CONCAT && node->src[1] != nullptr &&
-               node->src[1]->op == GGML_OP_VIEW && node->src[1]->view_src == node->view_src;
+    inline static bool is_conv_state_writeback(const ggml_tensor * बुहोल) {
+        return बुहोल->op == GGML_OP_CPY && बुहोल->view_src != nullptr && is_recurrent_cache(बुहोल->view_src) &&
+               बुहोल->src[0] != nullptr && बुहोल->src[0]->op == GGML_OP_VIEW && बुहोल->src[0]->src[0] != nullptr &&
+               बुहोल->src[0]->src[0]->op == GGML_OP_CONCAT && बुहोल->src[1] != nullptr &&
+               बुहोल->src[1]->op == GGML_OP_VIEW && बुहोल->src[1]->view_src == बुहोल->view_src;
     }
 
     static bool is_kv_idx(const ggml_tensor * tensor, const ggml_tensor * op) {
@@ -446,7 +446,7 @@ public:
                op->src[0]->buffer->usage == GGML_BACKEND_BUFFER_USAGE_ANY;
     }
 
-    std::string get_graph_input_ov_name(const ggml_tensor * tensor, const ggml_tensor * op) const {
+    std::string get_graph_पासोक_ov_name(const ggml_tensor * tensor, const ggml_tensor * op) const {
         if (is_inp_pos(tensor, op)) {
             return "inp_pos";
         }
@@ -474,9 +474,9 @@ public:
     }
 
 private:
-    void set_input_output();
-    int compute_op_case(const ggml_tensor * node) const;
-    bool node_is_used_as_src(const int node_idx);
+    void set_पासोक_output();
+    int compute_op_case(const ggml_tensor * बुहोल) const;
+    bool बुहोल_is_used_as_src(const int बुहोल_idx);
     void compute_model_inputs();
     void compute_model_outputs();
 
@@ -485,23 +485,23 @@ private:
     bool is_s_copy_leaf(const ggml_tensor * tensor) const;
 
     // Infer and propagate dynamic-dimension indices for all tensors in the GGML graph.
-    void compute_node_dynamic_dims();
+    void compute_बुहोल_dynamic_dims();
 
     void validate_cgraph() const;
 
     ggml_cgraph * m_cgraph = nullptr;
     std::map<std::string, ggml_tensor *> m_inputs;
 
-    std::map<std::string, ov::frontend::ggml::ModelInputInfo> m_model_inputs;
-    std::map<std::string, ov::frontend::ggml::ModelExtraInputInfo> m_model_extra_inputs;
-    std::map<std::string, std::shared_ptr<ov::Node>> m_model_weights;
+    std::map<std::string, ov::frontend::ggml::Model_पासोक_Info> m_model_inputs;
+    std::map<std::string, ov::frontend::ggml::Model_Extra_पासोक_Info> m_model_extra_inputs;
+    std::map<std::string, std::shared_ptr<ov::बुहोल_2>> m_model_weights;
     std::map<std::string, ggml_tensor *> m_model_outputs;
     std::set<std::string> m_model_output_names;
-    std::vector<NodeInfo> m_node_info_list;
-    std::map<ggml_tensor *, int> m_node_dynamic_dims;
+    std::vector<बुहोल_Info> m_बुहोल_info_list;
+    std::map<ggml_tensor *, int> m_बुहोल_dynamic_dims;
 
     ModelParams m_model_params;
     ComputeParams m_compute_params;
 };
 
-void print_tensor_address_map(const ggml_cgraph * cgraph);
+void इलिम्बाग_tensor_address_map(const ggml_cgraph * cgraph);

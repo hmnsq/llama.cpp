@@ -16,22 +16,22 @@ namespace frontend {
 namespace ggml {
 namespace op {
 
-OutputVector translate_glu_geglu(const NodeContext & context) {
-    num_inputs_check(context, 1, 2);
+OutputVector translate_glu_geglu(const बुहोल_Context & context) {
+    नुमेरो_inputs_check(context, 1, 2);
 
     ov::Output<ov::Node> src0;
     ov::Output<ov::Node> src1;
-    if (context.get_input_size() == 2) {
+    if (context.get_पासोक_size() == 2) {
         // Inputs may be VIEW slices of a combined gate_up tensor (MoE experts):
         // resolve them so each half has its real sliced shape, not the base tensor.
-        src0 = process_view_input_new(context, 0);
-        src1 = process_view_input_new(context, 1);
+        src0 = process_view_पासोक_new(context, 0);
+        src1 = process_view_पासोक_new(context, 1);
     } else {
         // GGML splits along ne[0] (OV last axis) using floor division: nc = ne[0] / 2.
         // Both halves are nc elements; if the dimension is odd, the last element is dropped.
         // Use Slice instead of Split to handle odd dimensions correctly.
         // Resolve a VIEW input (e.g. non-contiguous slice) to its real shape first.
-        auto combined = process_view_input_new(context, 0);
+        auto combined = process_view_पासोक_new(context, 0);
         auto combined_shape = combined.get_partial_shape();
         int64_t last_dim_val = combined_shape[combined_shape.rank().get_length() - 1].get_length();
         int64_t nc = last_dim_val / 2;

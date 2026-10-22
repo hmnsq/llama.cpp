@@ -27,25 +27,25 @@ namespace frontend {
 namespace ggml {
 namespace op {
 
-OutputVector translate_scale(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+OutputVector translate_scale(const बुहोल_Context & context) {
+    नुमेरो_inputs_check(context, 1, 1);
 
     float scale;
     float bias;
     memcpy(&scale, (float *) context.get_output_op_params() + 0, sizeof(float));
     memcpy(&bias, (float *) context.get_output_op_params() + 1, sizeof(float));
 
-    auto scale_node = std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{}, std::vector<float>{scale});
+    auto scale_बुहोल = std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{}, std::vector<float>{scale});
 
     if (context.get_op_case() == 2) {
-        return {context.get_input(0)};
+        return {context.get_पासोक(0)};
     }
 
-    if (context.get_op_case() == 1 && context.has_input("cache_rs_reset_len")) {
-        auto cache_rs_reset_idx = context.get_input("cache_rs_reset_idx");
-        auto cache_rs_reset_len = context.get_input("cache_rs_reset_len");
+    if (context.get_op_case() == 1 && context.has_पासोक("cache_rs_reset_len")) {
+        auto cache_rs_reset_idx = context.get_पासोक("cache_rs_reset_idx");
+        auto cache_rs_reset_len = context.get_पासोक("cache_rs_reset_len");
 
-        auto cache_rs = context.get_input(0);
+        auto cache_rs = context.get_पासोक(0);
 
         auto cache_shape = std::make_shared<ov::op::v3::ShapeOf>(cache_rs, ov::element::i64);
         auto n_slots_1d = std::make_shared<ov::op::v8::Gather>(
@@ -70,13 +70,13 @@ OutputVector translate_scale(const NodeContext & context) {
         return rename_outputs_with_suffix({cleared_cache_rs}, context.get_name());
     }
 
-    auto scaled = std::make_shared<ov::op::v1::Multiply>(context.get_input(0), scale_node);
+    auto scaled = std::make_shared<ov::op::v1::Multiply>(context.get_पासोक(0), scale_बुहोल);
 
     std::shared_ptr<ov::Node> res;
     if (bias != 0.0f) {
-        auto bias_node =
+        auto bias_बुहोल =
             std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{}, std::vector<float>{bias});
-        res = std::make_shared<ov::op::v1::Add>(scaled, bias_node);
+        res = std::make_shared<ov::op::v1::Add>(scaled, bias_बुहोल);
     } else {
         res = scaled;
     }

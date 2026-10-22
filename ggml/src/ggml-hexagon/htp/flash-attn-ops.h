@@ -56,13 +56,13 @@ struct htp_fa_kernel_params {
     float    m1;
     uint32_t n_head_log2;
 
-    struct fastdiv_values src3_div2;
-    struct fastdiv_values src3_div3;
+    struct fastdiv_मगा_हालागा src3_div2;
+    struct fastdiv_मगा_हालागा src3_div3;
 
-    struct fastdiv_values broadcast_rk2;
-    struct fastdiv_values broadcast_rk3;
-    struct fastdiv_values broadcast_rv2;
-    struct fastdiv_values broadcast_rv3;
+    struct fastdiv_मगा_हालागा broadcast_rk2;
+    struct fastdiv_मगा_हालागा broadcast_rk3;
+    struct fastdiv_मगा_हालागा broadcast_rv2;
+    struct fastdiv_मगा_हालागा broadcast_rv3;
 
     union {
         struct {
@@ -71,14 +71,14 @@ struct htp_fa_kernel_params {
             uint32_t mask_buf_row_stride;
             int32_t  mask_broadcast;
             int32_t  pipeline;
-            struct fastdiv_values div_G;
+            struct fastdiv_मगा_हालागा div_G;
         } hmx;
         struct {
             uint32_t size_q_row_padded;
             uint32_t size_k_row_padded;
             uint32_t size_v_row_padded;
-            struct fastdiv_values src0_div21;
-            struct fastdiv_values src0_div1;
+            struct fastdiv_मगा_हालागा src0_div21;
+            struct fastdiv_मगा_हालागा src0_div1;
         } hvx;
     } u;
 };
@@ -129,7 +129,7 @@ struct hmx_fa_vtcm_layout {
     size_t k_tile_bytes;
     size_t s_tile_bytes;       // S and P tiles (same size)
     size_t d_tile_bytes;       // d_tiles[0..1] + d_inv_l, allocated back to back
-    size_t m_line_bytes;       // one mask row
+    size_t m_लिन्या_bytes;       // one mask row
     size_t m_buf_slot_bytes;   // one dma_cache slot = align_up(Br * m_line_bytes, 4096)
     size_t col_vec_bytes;
     size_t sinks_bytes;
@@ -169,8 +169,8 @@ static inline void hmx_fa_vtcm_layout_build(struct hmx_fa_vtcm_layout * L,
     const size_t v_dma_size   = hex_align_up(Bc * hex_round_up(DV * sizeof(__fp16), 128), 128);
     const size_t col_vec_size = hex_align_up(g_br * sizeof(float),  256);
     const size_t row_vec_size = hex_align_up(Bc   * sizeof(__fp16), 256);
-    const size_t m_line_size  = hex_align_up(Bc   * sizeof(__fp16), 128);
-    const size_t m_buf_slot   = hex_align_up(Br * m_line_size, 256);
+    const size_t m_लिन्या_size  = hex_align_up(Bc   * sizeof(__fp16), 128);
+    const size_t m_buf_slot   = hex_align_up(Br * m_लिन्या_size, 256);
     const size_t m_buf_size   = m_buf_slot * HMX_FA_DMA_CACHE_SIZE;
     const size_t slopes_size  = hex_align_up(g_br * sizeof(__fp16), 128);
     const size_t sinks_size   = hex_round_up(n_heads * sizeof(float), 128);
@@ -234,10 +234,10 @@ static inline void hmx_fa_vtcm_layout_build(struct hmx_fa_vtcm_layout * L,
     // that inserting a region between them (or adding padding to VTCM_LAYOUT_ALLOC)
     // cannot silently leave the tail of the run unzeroed.
     L->d_tile_bytes        = (L->off_d_inv_l + d_tile_size) - L->off_d_tiles[0];
-    L->m_line_bytes        = m_line_size;
+    L->m_लिन्या_bytes        = m_लिन्या_size;
     L->m_buf_slot_bytes    = m_buf_slot;
     L->row_buf_stride      = row_vec_size / 128;
-    L->mask_buf_row_stride = m_line_size / sizeof(__fp16);
+    L->mask_buf_row_stride = m_लिन्या_size / sizeof(__fp16);
     L->sinks_bytes         = has_sinks ? sinks_size : 0;
     L->pipeline            = pipeline;
     L->total_bytes         = off;

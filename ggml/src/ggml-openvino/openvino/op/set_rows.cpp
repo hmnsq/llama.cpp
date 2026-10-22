@@ -28,16 +28,16 @@ namespace frontend {
 namespace ggml {
 namespace op {
 
-OutputVector translate_set_rows(const NodeContext & context) {
-    num_inputs_check(context, 3, 3);
+OutputVector translate_set_rows(const बुहोल_Context & context) {
+    नुमेरो_inputs_check(context, 3, 3);
 
-    auto data = process_view_input_new(context, 0);
-    auto indices = process_view_input_new(context, 1);
-    auto dst = process_view_input_new(context, 2);
+    auto data = process_view_पासोक_new(context, 0);
+    auto indices = process_view_पासोक_new(context, 1);
+    auto dst = process_view_पासोक_new(context, 2);
 
     data = std::make_shared<ov::op::v0::Convert>(data, context.get_output_type());
 
-    const auto indices_shape = context.get_input_shape(1);
+    const auto indices_shape = context.get_पासोक_shape(1);
     const bool multidim_indices = indices_shape.rank().is_static() &&
                                   indices_shape.rank().get_length() == 4 &&
                                   ((indices_shape[1].is_static() && indices_shape[1].get_length() > 1) ||
@@ -65,7 +65,7 @@ OutputVector translate_set_rows(const NodeContext & context) {
 
         res = std::make_shared<ov::op::v3::ScatterElementsUpdate>(dst, broadcasted_indices, data, axes);
     } else {
-        auto row_size = context.get_input_shape(2)[3].get_length();
+        auto row_size = context.get_पासोक_shape(2)[3].get_length();
         auto ind_squeezed = std::make_shared<ov::op::v0::Squeeze>(
             indices, ov::op::v0::Constant::create(ov::element::i64, {3}, {0, 1, 2}));
         auto data_reshaped = std::make_shared<ov::op::v1::Reshape>(
@@ -76,11 +76,11 @@ OutputVector translate_set_rows(const NodeContext & context) {
         res = std::make_shared<ov::op::v3::ScatterUpdate>(dst, ind_squeezed, data_reshaped, axes);
     }
 
-    auto dst_reshape = ov::as_type_ptr<ov::op::v1::Reshape>(dst.get_node_shared_ptr());
+    auto dst_reshape = ov::as_type_ptr<ov::op::v1::Reshape>(dst.get_बुहोल_shared_ptr());
     if (!multidim_indices && dst_reshape) {
         // Fix the case of multiple sequences, reshape back to original shape [1, n_seq, ctx_per_seq, emb]
         // ctx_per_seq is not fixed due to llama-bench compatibility
-        auto dst_shape_partial = dst_reshape->get_input_partial_shape(0);
+        auto dst_shape_partial = dst_reshape->get_पासोक_partial_shape(0);
         std::vector<int64_t> dst_shape = {dst_shape_partial[0].get_length(), dst_shape_partial[1].get_length(),
                                           dst_shape_partial[2].is_static() ? dst_shape_partial[2].get_length() : -1,
                                           dst_shape_partial[3].get_length()};

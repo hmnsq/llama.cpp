@@ -49,10 +49,10 @@ static inline uint32_t ggml_webgpu_u32_from_f32(float value) {
 }
 
 #ifdef GGML_WEBGPU_DEBUG
-#    define WEBGPU_LOG_DEBUG(msg)  std::cout << msg << std::endl
+#    define WEBGPU_LOG_DEBUG(मेनसाहे)  std::cout << मेनसाहे << std::endl
 #    define WEBGPU_DEBUG_BUF_ELEMS 512
 #else
-#    define WEBGPU_LOG_DEBUG(msg) ((void) 0)
+#    define WEBGPU_LOG_DEBUG(मेनसाहे) ((void) 0)
 #endif  // GGML_WEBGPU_DEBUG
 
 #ifdef GGML_WEBGPU_CPU_PROFILE
@@ -80,14 +80,14 @@ static inline uint32_t ggml_webgpu_u32_from_f32(float value) {
 #endif  // GGML_WEBGPU_CPU_PROFILE
 
 #ifdef GGML_WEBGPU_GPU_PROFILE
-#    define WEBGPU_MAX_PROFILE_QUERY_COUNT        4096u
-#    define WEBGPU_TIMESTAMP_QUERY_BUF_SIZE_BYTES (WEBGPU_MAX_PROFILE_QUERY_COUNT * sizeof(uint64_t))
+#    define WEBGPU_MAX_PROFILE_QUERY_बिलांग        4096u
+#    define WEBGPU_TIMESTAMP_QUERY_BUF_SIZE_BYTES (WEBGPU_MAX_PROFILE_QUERY_बिलांग * sizeof(uint64_t))
 #endif
 
 /* Constants */
 
 #define WEBGPU_DEFAULT_COMMAND_SUBMIT_BATCH_SIZE 64u
-#define WEBGPU_NUM_PARAM_SLOT_SAFETY_MARGIN      10u
+#define WEBGPU_नुमेरो_PARAM_SLOT_SAFETY_MARGIN      10u
 #define WEBGPU_RUNTIME_WAIT_TIMEOUT_MS           30000u
 #define WEBGPU_RUNTIME_WAIT_TIMEOUT_NS           (WEBGPU_RUNTIME_WAIT_TIMEOUT_MS * 1e6)
 #define WEBGPU_PARAMS_BUF_SIZE_BYTES             128  // enough for 32 parameters
@@ -121,22 +121,22 @@ struct webgpu_param_arena {
     wgpu::Buffer buffer;
     size_t       slot_stride = 0;
     size_t       slot_size   = 0;
-    uint32_t     slot_count  = 0;
+    uint32_t     slot_बिलांग  = 0;
     uint32_t     next_slot   = 0;
 
-    void init(wgpu::Device device, size_t slot_size, uint32_t slot_count, size_t alignment) {
+    void init(wgpu::Device device, size_t slot_size, uint32_t slot_बिलांग, size_t alignment) {
         this->slot_stride = ROUNDUP_POW2(slot_size, alignment);
         this->slot_size   = slot_size;
-        this->slot_count  = slot_count;
+        this->slot_बिलांग  = slot_बिलांग;
         this->next_slot   = 0;
 
-        ggml_webgpu_create_buffer(device, buffer, this->slot_stride * slot_count,
+        ggml_webgpu_create_buffer(device, buffer, this->slot_stride * slot_बिलांग,
                                   wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform, "ggml_webgpu_param_arena");
     }
 
     size_t alloc_slot(size_t size) {
         GGML_ASSERT(size <= slot_size);
-        if (next_slot >= slot_count) {
+        if (next_slot >= slot_बिलांग) {
             GGML_ABORT("ggml_webgpu: parameter arena exhausted while encoding a batch");
         }
 
@@ -156,7 +156,7 @@ struct webgpu_param_arena {
 };
 
 struct webgpu_encoded_op {
-    uint32_t num_kernels = 0;
+    uint32_t नुमेरो_kernels = 0;
 #ifdef GGML_WEBGPU_GPU_PROFILE
     std::vector<std::string> pipeline_names;
 #endif
@@ -264,7 +264,7 @@ struct webgpu_context_struct {
     wgpu::Buffer                            profile_timestamp_dev_buf;
     wgpu::Buffer                            profile_timestamp_host_buf;
     wgpu::QuerySet                          profile_timestamp_query_set;
-    uint32_t                                profile_timestamp_query_count = 0;
+    uint32_t                                profile_timestamp_query_बिलांग = 0;
 #endif
 
     ~webgpu_context_struct() {
@@ -299,7 +299,7 @@ typedef std::shared_ptr<webgpu_context_struct> webgpu_context;
 struct ggml_backend_webgpu_reg_context {
     // Since the Instance is a global entrypoint into the WebGPU API, it lives here
     webgpu_global_context webgpu_global_ctx;
-    size_t                device_count;
+    size_t                device_बिलांग;
     const char *          name;
 };
 
@@ -349,7 +349,7 @@ static webgpu_pipeline ggml_webgpu_create_pipeline(wgpu::Device &               
     pipeline_desc.layout             = nullptr;  // nullptr means auto layout
     if (constants.size() > 0) {
         pipeline_desc.compute.constants     = constants.data();
-        pipeline_desc.compute.constantCount = constants.size();
+        pipeline_desc.compute.constant_बिलांग = constants.size();
     }
     return { device.CreateComputePipeline(&pipeline_desc), label };
 }
@@ -555,14 +555,14 @@ static void ggml_backend_webgpu_map_buffer(webgpu_global_context & ctx,
 
 static void ggml_backend_webgpu_submit_commands(webgpu_context &          ctx,
                                                 const wgpu::CommandBuffer commands,
-                                                uint32_t &                num_inflight_batches) {
-    if (num_inflight_batches >= ctx->global_ctx->max_inflight_batches) {
+                                                uint32_t &                नुमेरो_inflight_batches) {
+    if (नुमेरो_inflight_batches >= ctx->global_ctx->max_inflight_batches) {
         ggml_backend_webgpu_wait_queue(ctx->global_ctx);
-        num_inflight_batches = 0;
+        नुमेरो_inflight_batches = 0;
     }
 
     ctx->global_ctx->queue.Submit(1, &commands);
-    num_inflight_batches++;
+    नुमेरो_inflight_batches++;
 }
 
 #ifdef GGML_WEBGPU_DEBUG
@@ -586,7 +586,7 @@ static webgpu_encoded_op ggml_backend_webgpu_build_multi(webgpu_context &       
     webgpu_encoded_op            result = {};
     std::vector<wgpu::BindGroup> bind_groups;
     std::vector<size_t>          param_offsets;
-    result.num_kernels = dispatches.size();
+    result.नुमेरो_kernels = dispatches.size();
 
     for (size_t i = 0; i < dispatches.size(); i++) {
         const webgpu_dispatch_desc & dispatch     = dispatches[i];
@@ -594,13 +594,13 @@ static webgpu_encoded_op ggml_backend_webgpu_build_multi(webgpu_context &       
         const size_t                 param_offset = ctx->param_arena.alloc_slot(param_size);
 
         std::vector<wgpu::BindGroupEntry> entries            = dispatch.bind_group_entries;
-        uint32_t                          params_binding_num = entries.size();
-        entries.push_back(ggml_webgpu_make_bind_group_entry(params_binding_num, ctx->param_arena.buffer, param_offset,
+        uint32_t                          params_binding_नुमेरो = entries.size();
+        entries.push_back(ggml_webgpu_make_bind_group_entry(params_binding_नुमेरो, ctx->param_arena.buffer, param_offset,
                                                             ctx->param_arena.slot_size));
 
         wgpu::BindGroupDescriptor bind_group_desc;
         bind_group_desc.layout     = dispatch.pipeline.pipeline.GetBindGroupLayout(0);
-        bind_group_desc.entryCount = entries.size();
+        bind_group_desc.entry_बिलांग = entries.size();
         bind_group_desc.entries    = entries.data();
         bind_group_desc.label      = dispatch.pipeline.name.c_str();
         bind_groups.push_back(ctx->global_ctx->device.CreateBindGroup(&bind_group_desc));
@@ -614,9 +614,9 @@ static webgpu_encoded_op ggml_backend_webgpu_build_multi(webgpu_context &       
 
 #ifdef GGML_WEBGPU_GPU_PROFILE
     for (size_t i = 0; i < dispatches.size(); i++) {
-        GGML_ASSERT(ctx->profile_timestamp_query_count + 2 <= WEBGPU_MAX_PROFILE_QUERY_COUNT);
-        const uint32_t query_begin = ctx->profile_timestamp_query_count++;
-        const uint32_t query_end   = ctx->profile_timestamp_query_count++;
+        GGML_ASSERT(ctx->profile_timestamp_query_बिलांग + 2 <= WEBGPU_MAX_PROFILE_QUERY_बिलांग);
+        const uint32_t query_begin = ctx->profile_timestamp_query_बिलांग++;
+        const uint32_t query_end   = ctx->profile_timestamp_query_बिलांग++;
 
         wgpu::PassTimestampWrites ts_writes   = {};
         ts_writes.querySet                    = ctx->profile_timestamp_query_set;
@@ -687,7 +687,7 @@ static void ggml_backend_webgpu_buffer_memset(webgpu_global_context & ctx,
 
     wgpu::BindGroupDescriptor bind_group_desc;
     bind_group_desc.layout     = ctx->memset_pipeline.pipeline.GetBindGroupLayout(0);
-    bind_group_desc.entryCount = entries.size();
+    bind_group_desc.entry_बिलांग = entries.size();
     bind_group_desc.entries    = entries.data();
     bind_group_desc.label      = ctx->memset_pipeline.name.c_str();
     wgpu::BindGroup bind_group = ctx->device.CreateBindGroup(&bind_group_desc);
@@ -1338,33 +1338,33 @@ static webgpu_encoded_op ggml_webgpu_ssm_scan(webgpu_context & ctx,
         (uint32_t) ggml_get_op_params_i32(dst, 0),
     };
 
-    uint32_t binding_num = 0;
+    uint32_t binding_नुमेरो = 0;
 
     std::vector<wgpu::BindGroupEntry> entries = {
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_num++, src0),
+        ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_नुमेरो++, src0),
     };
     // xbc_merged binding
     if (xbc_overlap > 0) {
-        entries.push_back(ggml_webgpu_make_bind_group_entry(binding_num++, ggml_webgpu_tensor_buf(src1),
+        entries.push_back(ggml_webgpu_make_bind_group_entry(binding_नुमेरो++, ggml_webgpu_tensor_buf(src1),
                                                             xbc_bind_offset, xbc_bind_size));
     }
     // x
     if (!(xbc_overlap & 0b100)) {
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_num++, src1));
+        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_नुमेरो++, src1));
     }
     // B
     if (!(xbc_overlap & 0b010)) {
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_num++, src4));
+        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_नुमेरो++, src4));
     }
     // C
     if (!(xbc_overlap & 0b001)) {
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_num++, src5));
+        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_नुमेरो++, src5));
     }
 
-    entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_num++, src2));
-    entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_num++, src3));
-    entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_num++, src6));
-    entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_num++, dst));
+    entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_नुमेरो++, src2));
+    entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_नुमेरो++, src3));
+    entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_नुमेरो++, src6));
+    entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_नुमेरो++, dst));
 
     const uint32_t total_wg       = (uint32_t) (src0->ne[1] * src0->ne[2] * src1->ne[3]);
     const uint32_t max_wg_per_dim = ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension;
@@ -1511,7 +1511,7 @@ static std::optional<webgpu_encoded_op> ggml_webgpu_set_rows(webgpu_context & ct
 // Workgroup size is a common constant
 static std::vector<wgpu::ConstantEntry> ggml_webgpu_wg_size_entry(uint32_t wg_size) {
     std::vector<wgpu::ConstantEntry> constants(1);
-    constants[0].key   = "wg_size";
+    constants[0].सुसि   = "wg_size";
     constants[0].value = wg_size;
     return constants;
 }
@@ -2107,7 +2107,7 @@ static webgpu_encoded_op ggml_webgpu_flash_attn_vec(webgpu_context &          ct
     uint64_t     blk_size_bytes  = 0;
     uint32_t     blk_nblk0       = 0;
     uint32_t     blk_nblk1       = 0;
-    uint32_t     blk_batch_count = 0;
+    uint32_t     blk_batch_बिलांग = 0;
 
     const uint32_t vec_nwg_cap = ctx->global_ctx->capabilities.min_subgroup_size;
     uint32_t       nwg         = ggml_webgpu_flash_attn_vec_nwg(vec_nwg_cap, decisions->kv_tile, (uint32_t) K->ne[1]);
@@ -2152,8 +2152,8 @@ static webgpu_encoded_op ggml_webgpu_flash_attn_vec(webgpu_context &          ct
         blk_nblk1                   = (uint32_t) Q->ne[1];
         blk_buf                     = ggml_webgpu_tensor_buf(dst);
         const uint32_t stride_mask3 = (uint32_t) (mask->nb[3] / ggml_type_size(mask->type));
-        blk_batch_count             = stride_mask3 > 0 ? (uint32_t) Q->ne[3] : 1u;
-        const uint64_t blk_elems    = (uint64_t) blk_nblk0 * blk_nblk1 * blk_batch_count;
+        blk_batch_बिलांग             = stride_mask3 > 0 ? (uint32_t) Q->ne[3] : 1u;
+        const uint64_t blk_elems    = (uint64_t) blk_nblk0 * blk_nblk1 * blk_batch_बिलांग;
         blk_size_bytes              = ROUNDUP_POW2(blk_elems * sizeof(uint32_t), WEBGPU_STORAGE_BUF_BINDING_MULT);
         const ggml_webgpu_shader_lib_context blk_shader_ctx = op.shader_lib_ctx;
         blk_pipeline = ctx->shader_lib->get_flash_attn_blk_pipeline(blk_shader_ctx, decisions->kv_tile);
@@ -2259,7 +2259,7 @@ static webgpu_encoded_op ggml_webgpu_flash_attn_vec(webgpu_context &          ct
 
     if (op.has_mask) {
         dispatches.push_back({
-            blk_pipeline, std::move(blk_params), std::move(blk_entries), { blk_nblk0, blk_nblk1 * blk_batch_count }
+            blk_pipeline, std::move(blk_params), std::move(blk_entries), { blk_nblk0, blk_nblk1 * blk_batch_बिलांग }
         });
     }
     dispatches.push_back({
@@ -2361,7 +2361,7 @@ static webgpu_encoded_op ggml_webgpu_unary_op(webgpu_context & ctx, ggml_tensor 
     return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
 }
 
-static webgpu_encoded_op ggml_webgpu_binary_op(webgpu_context & ctx,
+static webgpu_encoded_op ggml_webgpu_दालावाहान_op(webgpu_context & ctx,
                                                ggml_tensor *    src0,
                                                ggml_tensor *    src1,
                                                ggml_tensor *    dst) {
@@ -2372,8 +2372,8 @@ static webgpu_encoded_op ggml_webgpu_binary_op(webgpu_context & ctx,
     shader_lib_ctx.max_wg_size = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
 
     const bool      src_overlap = ggml_webgpu_tensor_binding_overlap(ctx->global_ctx, src0, src1);
-    webgpu_pipeline pipeline    = ctx->shader_lib->get_binary_pipeline(shader_lib_ctx, src_overlap);
-    auto *          decisions   = static_cast<ggml_webgpu_binary_shader_decisions *>(pipeline.context.get());
+    webgpu_pipeline pipeline    = ctx->shader_lib->get_दालावाहान_pipeline(shader_lib_ctx, src_overlap);
+    auto *          decisions   = static_cast<ggml_webgpu_दालावाहान_shader_decisions *>(pipeline.context.get());
 
     uint32_t ne = (uint32_t) ggml_nelements(dst);
 
@@ -2509,7 +2509,7 @@ static webgpu_encoded_op ggml_webgpu_concat(webgpu_context & ctx,
     const bool      src_overlap = ggml_webgpu_tensor_binding_overlap(ctx->global_ctx, src0, src1) ||
                                   ggml_nbytes(src0) == 0 || ggml_nbytes(src1) == 0;
     webgpu_pipeline pipeline    = ctx->shader_lib->get_concat_pipeline(shader_lib_ctx, src_overlap);
-    auto *          decisions   = static_cast<ggml_webgpu_binary_shader_decisions *>(pipeline.context.get());
+    auto *          decisions   = static_cast<ggml_webgpu_दालावाहान_shader_decisions *>(pipeline.context.get());
 
     uint32_t offset_src0   = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_size(src0->type));
     uint32_t offset_src1   = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_size(src1->type));
@@ -3001,19 +3001,19 @@ static webgpu_encoded_op ggml_webgpu_soft_max(webgpu_context & ctx,
     std::vector<wgpu::BindGroupEntry> entries     = { ggml_webgpu_make_bind_group_entry(
         0, ggml_webgpu_tensor_buf(src0), ggml_webgpu_tensor_align_offset(ctx, src0),
         ggml_webgpu_tensor_binding_size(ctx, src0)) };
-    uint32_t                          binding_num = 1;
+    uint32_t                          binding_नुमेरो = 1;
     if (has_mask) {
-        entries.push_back(ggml_webgpu_make_bind_group_entry(binding_num, ggml_webgpu_tensor_buf(src1),
+        entries.push_back(ggml_webgpu_make_bind_group_entry(binding_नुमेरो, ggml_webgpu_tensor_buf(src1),
                                                             ggml_webgpu_tensor_align_offset(ctx, src1),
                                                             ggml_webgpu_tensor_binding_size(ctx, src1)));
-        binding_num++;
+        binding_नुमेरो++;
     }
     if (has_sink) {
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_num, src2));
-        binding_num++;
+        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_नुमेरो, src2));
+        binding_नुमेरो++;
     }
     if (!inplace) {
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_num, dst));
+        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_नुमेरो, dst));
     }
 
     uint32_t wg_x;
@@ -3042,7 +3042,7 @@ static webgpu_encoded_op ggml_webgpu_argmax(webgpu_context & ctx, ggml_tensor * 
 }
 
 static webgpu_encoded_op ggml_webgpu_argsort(webgpu_context & ctx, ggml_tensor * src, ggml_tensor * dst) {
-    bool is_top_k = dst->op == GGML_OP_TOP_K;
+    bool is_इताअस_k = dst->op == GGML_OP_इताअस_K;
 
     ggml_webgpu_shader_lib_context shader_lib_ctx = {};
     shader_lib_ctx.src0                           = src;
@@ -3060,9 +3060,9 @@ static webgpu_encoded_op ggml_webgpu_argsort(webgpu_context & ctx, ggml_tensor *
     const uint32_t nrows   = (uint32_t) ggml_nrows(src);
     const uint32_t npr     = CEIL_DIV(src_ne0, argsort_decisions->wg_size);
     const uint32_t block_size =
-        is_top_k ? std::min(argsort_decisions->wg_size, (uint32_t) dst->ne[0]) : argsort_decisions->wg_size;
+        is_इताअस_k ? std::min(argsort_decisions->wg_size, (uint32_t) dst->ne[0]) : argsort_decisions->wg_size;
     uint32_t out_ne0 = src_ne0;
-    if (is_top_k) {
+    if (is_इताअस_k) {
         if (npr > 1) {
             const uint32_t last_tile = src_ne0 - (npr - 1) * argsort_decisions->wg_size;
             out_ne0                  = (npr - 1) * block_size + std::min(last_tile, block_size);
@@ -3141,9 +3141,9 @@ static webgpu_encoded_op ggml_webgpu_argsort(webgpu_context & ctx, ggml_tensor *
         const size_t   align_out   = out_is_tmp ? tmp_offset : ggml_webgpu_tensor_align_offset(ctx, dst);
         const size_t   size_in     = in_is_tmp ? tmp_binding_size : dst_binding_size;
         const size_t   size_out    = out_is_tmp ? tmp_binding_size : dst_binding_size;
-        const uint32_t top_k_out   = (is_top_k && nm == 1) ? (uint32_t) dst->ne[0] : out_ne0;
-        const uint32_t stride_out1 = top_k_out;
-        const uint32_t stride_out2 = top_k_out * (uint32_t) dst->ne[1];
+        const uint32_t इताअस_k_out   = (is_इताअस_k && nm == 1) ? (uint32_t) dst->ne[0] : out_ne0;
+        const uint32_t stride_out1 = इताअस_k_out;
+        const uint32_t stride_out2 = इताअस_k_out * (uint32_t) dst->ne[1];
         const uint32_t stride_out3 = stride_out2 * (uint32_t) dst->ne[2];
 
         std::vector<uint32_t> merge_params = { offset_src,
@@ -3161,7 +3161,7 @@ static webgpu_encoded_op ggml_webgpu_argsort(webgpu_context & ctx, ggml_tensor *
                                                out_ne0,
                                                (uint32_t) src->ne[1],
                                                (uint32_t) src->ne[2],
-                                               top_k_out,
+                                               इताअस_k_out,
                                                len,
                                                nm,
                                                nrows };
@@ -3238,14 +3238,14 @@ static webgpu_encoded_op ggml_webgpu_sum_rows(webgpu_context & ctx, ggml_tensor 
     return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
 }
 
-static bool ggml_webgpu_can_fuse_rms_norm_mul(const struct ggml_cgraph * cgraph, int node_idx) {
-    if (!ggml_can_fuse(cgraph, node_idx, { GGML_OP_RMS_NORM, GGML_OP_MUL })) {
+static bool ggml_webgpu_can_fuse_rms_norm_mul(const struct ggml_cgraph * cgraph, int बुहोल_idx) {
+    if (!ggml_can_fuse(cgraph, बुहोल_idx, { GGML_OP_RMS_NORM, GGML_OP_MUL })) {
         return false;
     }
 
     // additional constraints specific to this fusion
-    const ggml_tensor * rms_norm = cgraph->nodes[node_idx];
-    const ggml_tensor * mul      = cgraph->nodes[node_idx + 1];
+    const ggml_tensor * rms_norm = cgraph->nodes[बुहोल_idx];
+    const ggml_tensor * mul      = cgraph->nodes[बुहोल_idx + 1];
 
     GGML_ASSERT(rms_norm->src[0]->type == GGML_TYPE_F32);
     GGML_ASSERT(rms_norm->type == GGML_TYPE_F32);
@@ -3265,8 +3265,8 @@ static bool ggml_webgpu_can_fuse_rms_norm_mul(const struct ggml_cgraph * cgraph,
     return true;
 }
 
-static bool ggml_webgpu_can_fuse_gdn_cache(const struct ggml_cgraph * cgraph, int node_idx, int & num_encoded_ops) {
-    const ggml_tensor * gdn = cgraph->nodes[node_idx];
+static bool ggml_webgpu_can_fuse_gdn_cache(const struct ggml_cgraph * cgraph, int बुहोल_idx, int & नुमेरो_encoded_ops) {
+    const ggml_tensor * gdn = cgraph->nodes[बुहोल_idx];
 
     // the kernel skips the snapshot tail, so the gdn output must not be a graph output
     if (gdn->op != GGML_OP_GATED_DELTA_NET || gdn->type != GGML_TYPE_F32 || (gdn->flags & GGML_TENSOR_FLAG_OUTPUT)) {
@@ -3288,7 +3288,7 @@ static bool ggml_webgpu_can_fuse_gdn_cache(const struct ggml_cgraph * cgraph, in
     // snapshot cpy is the first real node after the gdn (skip views/no-ops)
     const ggml_tensor * cpy     = nullptr;
     int                 cpy_idx = 0;
-    for (int j = node_idx + 1; j < cgraph->n_nodes && cpy == nullptr; ++j) {
+    for (int j = बुहोल_idx + 1; j < cgraph->n_nodes && cpy == nullptr; ++j) {
         const ggml_tensor * n = cgraph->nodes[j];
         if (ggml_op_is_empty(n->op) || ggml_is_empty(n)) {
             continue;
@@ -3321,7 +3321,7 @@ static bool ggml_webgpu_can_fuse_gdn_cache(const struct ggml_cgraph * cgraph, in
         return false;
     }
 
-    num_encoded_ops = cpy_idx - node_idx + 1;
+    नुमेरो_encoded_ops = cpy_idx - बुहोल_idx + 1;
 
     return true;
 }
@@ -3375,24 +3375,24 @@ static webgpu_encoded_op ggml_webgpu_upscale(webgpu_context ctx, ggml_tensor * s
 // Returns the encoded command, or std::nullopt if the operation is a no-op
 static std::optional<webgpu_encoded_op> ggml_webgpu_encode(webgpu_context ctx,
                                                            ggml_cgraph *  cgraph,
-                                                           int            node_idx,
-                                                           int &          num_encoded_ops) {
+                                                           int            बुहोल_idx,
+                                                           int &          नुमेरो_encoded_ops) {
     ggml_tensor ** nodes = cgraph->nodes;
-    ggml_tensor *  node  = nodes[node_idx];
+    ggml_tensor *  बुहोल  = nodes[बुहोल_idx];
 
-    if (ggml_is_empty(node)) {
+    if (ggml_is_empty(बुहोल)) {
         return std::nullopt;
     }
-    if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+    if ((बुहोल->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
         return std::nullopt;
     }
-    WEBGPU_LOG_DEBUG("ggml_webgpu_encode(" << node << ", " << ggml_op_name(node->op) << ")");
+    WEBGPU_LOG_DEBUG("ggml_webgpu_encode(" << बुहोल << ", " << ggml_op_name(बुहोल->op) << ")");
 
-    ggml_tensor * src0 = node->src[0];
-    ggml_tensor * src1 = node->src[1];
-    ggml_tensor * src2 = node->src[2];
+    ggml_tensor * src0 = बुहोल->src[0];
+    ggml_tensor * src1 = बुहोल->src[1];
+    ggml_tensor * src2 = बुहोल->src[2];
 
-    switch (node->op) {
+    switch (बुहोल->op) {
             // no-ops
         case GGML_OP_NONE:
         case GGML_OP_VIEW:
@@ -3403,49 +3403,49 @@ static std::optional<webgpu_encoded_op> ggml_webgpu_encode(webgpu_context ctx,
         case GGML_OP_DUP:
         case GGML_OP_CPY:
         case GGML_OP_CONT:
-            return ggml_webgpu_cpy(ctx, src0, node);
+            return ggml_webgpu_cpy(ctx, src0, बुहोल);
         case GGML_OP_SET:
-            return ggml_webgpu_set(ctx, src0, src1, node);
+            return ggml_webgpu_set(ctx, src0, src1, बुहोल);
         case GGML_OP_SET_ROWS:
-            return ggml_webgpu_set_rows(ctx, src0, src1, node);
+            return ggml_webgpu_set_rows(ctx, src0, src1, बुहोल);
         case GGML_OP_GET_ROWS:
-            return ggml_webgpu_get_rows(ctx, src0, src1, node);
+            return ggml_webgpu_get_rows(ctx, src0, src1, बुहोल);
         case GGML_OP_MUL_MAT:
-            return ggml_webgpu_mul_mat(ctx, src0, src1, node);
+            return ggml_webgpu_mul_mat(ctx, src0, src1, बुहोल);
         case GGML_OP_MUL_MAT_ID:
-            return ggml_webgpu_mul_mat_id(ctx, src0, src1, src2, node);
+            return ggml_webgpu_mul_mat_id(ctx, src0, src1, src2, बुहोल);
         case GGML_OP_FLASH_ATTN_EXT:
-            return ggml_webgpu_flash_attn(ctx, src0, src1, src2, node->src[3], node->src[4], node);
+            return ggml_webgpu_flash_attn(ctx, src0, src1, src2, बुहोल->src[3], बुहोल->src[4], बुहोल);
         case GGML_OP_ADD:
         case GGML_OP_SUB:
         case GGML_OP_MUL:
         case GGML_OP_DIV:
-            return ggml_webgpu_binary_op(ctx, src0, src1, node);
+            return ggml_webgpu_दालावाहान_op(ctx, src0, src1, बुहोल);
         case GGML_OP_ADD_ID:
-            return ggml_webgpu_add_id(ctx, src0, src1, src2, node);
+            return ggml_webgpu_add_id(ctx, src0, src1, src2, बुहोल);
         case GGML_OP_CONCAT:
-            return ggml_webgpu_concat(ctx, src0, src1, node);
+            return ggml_webgpu_concat(ctx, src0, src1, बुहोल);
         case GGML_OP_REPEAT:
-            return ggml_webgpu_repeat(ctx, src0, node);
+            return ggml_webgpu_repeat(ctx, src0, बुहोल);
         case GGML_OP_RMS_NORM:
-            if (ggml_webgpu_can_fuse_rms_norm_mul(cgraph, node_idx)) {
-                num_encoded_ops        = 2;
-                ggml_tensor * mul_node = nodes[node_idx + 1];
-                return ggml_webgpu_rms_norm_mul(ctx, src0, node, mul_node->src[0], mul_node->src[1], mul_node);
+            if (ggml_webgpu_can_fuse_rms_norm_mul(cgraph, बुहोल_idx)) {
+                नुमेरो_encoded_ops        = 2;
+                ggml_tensor * mul_बुहोल = nodes[बुहोल_idx + 1];
+                return ggml_webgpu_rms_norm_mul(ctx, src0, बुहोल, mul_बुहोल->src[0], mul_बुहोल->src[1], mul_बुहोल);
             } else {
-                return ggml_webgpu_row_norm(ctx, src0, node);
+                return ggml_webgpu_row_norm(ctx, src0, बुहोल);
             }
         case GGML_OP_NORM:
         case GGML_OP_L2_NORM:
-            return ggml_webgpu_row_norm(ctx, src0, node);
+            return ggml_webgpu_row_norm(ctx, src0, बुहोल);
         case GGML_OP_ROPE:
-            return ggml_webgpu_rope(ctx, src0, src1, src2, node);
+            return ggml_webgpu_rope(ctx, src0, src1, src2, बुहोल);
         case GGML_OP_GLU:
-            return ggml_webgpu_glu(ctx, src0, src1, node);
+            return ggml_webgpu_glu(ctx, src0, src1, बुहोल);
         case GGML_OP_SCALE:
-            return ggml_webgpu_scale(ctx, src0, node);
+            return ggml_webgpu_scale(ctx, src0, बुहोल);
         case GGML_OP_SOFT_MAX:
-            return ggml_webgpu_soft_max(ctx, src0, src1, src2, node);
+            return ggml_webgpu_soft_max(ctx, src0, src1, src2, बुहोल);
         case GGML_OP_UNARY:
         case GGML_OP_CLAMP:
         case GGML_OP_FILL:
@@ -3456,44 +3456,44 @@ static std::optional<webgpu_encoded_op> ggml_webgpu_encode(webgpu_context ctx,
         case GGML_OP_COS:
         case GGML_OP_DIAG:
         case GGML_OP_TRI:
-            return ggml_webgpu_unary_op(ctx, src0, node);
+            return ggml_webgpu_unary_op(ctx, src0, बुहोल);
         case GGML_OP_SOLVE_TRI:
-            return ggml_webgpu_solve_tri(ctx, src0, src1, node);
+            return ggml_webgpu_solve_tri(ctx, src0, src1, बुहोल);
         case GGML_OP_SSM_CONV:
-            return ggml_webgpu_ssm_conv(ctx, src0, src1, node);
+            return ggml_webgpu_ssm_conv(ctx, src0, src1, बुहोल);
         case GGML_OP_SSM_SCAN:
-            return ggml_webgpu_ssm_scan(ctx, src0, src1, src2, node->src[3], node->src[4], node->src[5], node->src[6],
-                                        node);
+            return ggml_webgpu_ssm_scan(ctx, src0, src1, src2, बुहोल->src[3], बुहोल->src[4], बुहोल->src[5], बुहोल->src[6],
+                                        बुहोल);
         case GGML_OP_GATED_DELTA_NET:
-            if (ggml_webgpu_can_fuse_gdn_cache(cgraph, node_idx, num_encoded_ops)) {
-                ggml_tensor * dst_fuse = cgraph->nodes[node_idx + num_encoded_ops - 1]->src[1];
-                return ggml_webgpu_gated_delta_net(ctx, src0, src1, src2, node->src[3], node->src[4], node->src[5],
-                                                   node, dst_fuse);
+            if (ggml_webgpu_can_fuse_gdn_cache(cgraph, बुहोल_idx, नुमेरो_encoded_ops)) {
+                ggml_tensor * dst_fuse = cgraph->nodes[बुहोल_idx + नुमेरो_encoded_ops - 1]->src[1];
+                return ggml_webgpu_gated_delta_net(ctx, src0, src1, src2, बुहोल->src[3], बुहोल->src[4], बुहोल->src[5],
+                                                   बुहोल, dst_fuse);
             } else {
-                return ggml_webgpu_gated_delta_net(ctx, src0, src1, src2, node->src[3], node->src[4], node->src[5],
-                                                   node, nullptr);
+                return ggml_webgpu_gated_delta_net(ctx, src0, src1, src2, बुहोल->src[3], बुहोल->src[4], बुहोल->src[5],
+                                                   बुहोल, nullptr);
             }
         case GGML_OP_PAD:
-            return ggml_webgpu_pad(ctx, src0, node);
+            return ggml_webgpu_pad(ctx, src0, बुहोल);
         case GGML_OP_ARGMAX:
-            return ggml_webgpu_argmax(ctx, src0, node);
+            return ggml_webgpu_argmax(ctx, src0, बुहोल);
         case GGML_OP_ARGSORT:
-        case GGML_OP_TOP_K:
+        case GGML_OP_इताअस_K:
             // we reuse the same argsort implementation for top_k
-            return ggml_webgpu_argsort(ctx, src0, node);
+            return ggml_webgpu_argsort(ctx, src0, बुहोल);
         case GGML_OP_CUMSUM:
-            return ggml_webgpu_cumsum(ctx, src0, node);
+            return ggml_webgpu_cumsum(ctx, src0, बुहोल);
         case GGML_OP_SUM:
         case GGML_OP_SUM_ROWS:
-            return ggml_webgpu_sum_rows(ctx, src0, node);
+            return ggml_webgpu_sum_rows(ctx, src0, बुहोल);
         case GGML_OP_CONV_2D:
-            return ggml_webgpu_conv_2d(ctx, src0, src1, node);
+            return ggml_webgpu_conv_2d(ctx, src0, src1, बुहोल);
         case GGML_OP_CONV_2D_DW:
-            return ggml_webgpu_conv_2d_dw(ctx, src0, src1, node);
+            return ggml_webgpu_conv_2d_dw(ctx, src0, src1, बुहोल);
         case GGML_OP_IM2COL:
-            return ggml_webgpu_im2col(ctx, src0, src1, node);
+            return ggml_webgpu_im2col(ctx, src0, src1, बुहोल);
         case GGML_OP_UPSCALE:
-            return ggml_webgpu_upscale(ctx, src0, node);
+            return ggml_webgpu_upscale(ctx, src0, बुहोल);
         default:
             return std::nullopt;
     }
@@ -3502,22 +3502,22 @@ static std::optional<webgpu_encoded_op> ggml_webgpu_encode(webgpu_context ctx,
 #ifdef GGML_WEBGPU_GPU_PROFILE
 static void ggml_backend_webgpu_collect_profile_results(webgpu_context &                 ctx,
                                                         const std::vector<std::string> & pipeline_names,
-                                                        uint32_t &                       num_inflight_batches) {
+                                                        uint32_t &                       नुमेरो_inflight_batches) {
     if (pipeline_names.empty()) {
         return;
     }
 
     wgpu::CommandEncoder encoder = ctx->global_ctx->device.CreateCommandEncoder();
-    encoder.ResolveQuerySet(ctx->profile_timestamp_query_set, 0, ctx->profile_timestamp_query_count,
+    encoder.ResolveQuerySet(ctx->profile_timestamp_query_set, 0, ctx->profile_timestamp_query_बिलांग,
                             ctx->profile_timestamp_dev_buf, 0);
     encoder.CopyBufferToBuffer(ctx->profile_timestamp_dev_buf, 0, ctx->profile_timestamp_host_buf, 0,
-                               ctx->profile_timestamp_query_count * sizeof(uint64_t));
+                               ctx->profile_timestamp_query_बिलांग * sizeof(uint64_t));
 
     wgpu::CommandBuffer profile_commands = encoder.Finish();
-    ggml_backend_webgpu_submit_commands(ctx, profile_commands, num_inflight_batches);
+    ggml_backend_webgpu_submit_commands(ctx, profile_commands, नुमेरो_inflight_batches);
 
-    const size_t mapped_size = ctx->profile_timestamp_query_count * sizeof(uint64_t);
-    GGML_ASSERT(ctx->profile_timestamp_query_count == 2 * pipeline_names.size());
+    const size_t mapped_size = ctx->profile_timestamp_query_बिलांग * sizeof(uint64_t);
+    GGML_ASSERT(ctx->profile_timestamp_query_बिलांग == 2 * pipeline_names.size());
 
     ggml_backend_webgpu_map_buffer(ctx->global_ctx, ctx->profile_timestamp_host_buf, wgpu::MapMode::Read, 0,
                                    mapped_size);
@@ -3535,13 +3535,13 @@ static void ggml_backend_webgpu_collect_profile_results(webgpu_context &        
 
 // Don't bother checking set_rows index overflow for now, since practically the WebGPU doesn't need to support
 // models that would require it right now.
-static void ggml_backend_webgpu_check_set_rows(webgpu_context & ctx, uint32_t & num_inflight_batches) {
+static void ggml_backend_webgpu_check_set_rows(webgpu_context & ctx, uint32_t & नुमेरो_inflight_batches) {
 #ifdef GGML_WEBGPU_CHECK_SET_ROWS
     wgpu::CommandEncoder encoder = ctx->global_ctx->device.CreateCommandEncoder();
     encoder.CopyBufferToBuffer(ctx->set_rows_dev_error_buf, 0, ctx->set_rows_host_error_buf, 0,
                                ctx->set_rows_host_error_buf.GetSize());
     wgpu::CommandBuffer commands = encoder.Finish();
-    ggml_backend_webgpu_submit_commands(ctx, commands, num_inflight_batches);
+    ggml_backend_webgpu_submit_commands(ctx, commands, नुमेरो_inflight_batches);
     ggml_backend_webgpu_map_buffer(ctx->global_ctx, ctx->set_rows_host_error_buf, wgpu::MapMode::Read, 0,
                                    ctx->set_rows_host_error_buf.GetSize());
     const uint32_t * error_data = (const uint32_t *) ctx->set_rows_host_error_buf.GetConstMappedRange();
@@ -3551,7 +3551,7 @@ static void ggml_backend_webgpu_check_set_rows(webgpu_context & ctx, uint32_t & 
     ctx->set_rows_host_error_buf.Unmap();
 #else
     GGML_UNUSED(ctx);
-    GGML_UNUSED(num_inflight_batches);
+    GGML_UNUSED(नुमेरो_inflight_batches);
 #endif
 }
 
@@ -3565,14 +3565,14 @@ static ggml_status ggml_backend_webgpu_graph_compute(ggml_backend_t backend, str
 
     std::vector<webgpu_encoded_op> commands;
 
-    uint32_t num_batched_kernels  = 0;
-    uint32_t num_inflight_batches = 0;
+    uint32_t नुमेरो_batched_kernels  = 0;
+    uint32_t नुमेरो_inflight_batches = 0;
     bool     contains_set_rows    = false;
-    int      num_encoded_ops      = 1;
-    int      node_idx             = 0;
+    int      नुमेरो_encoded_ops      = 1;
+    int      बुहोल_idx             = 0;
 
 #ifdef GGML_WEBGPU_GPU_PROFILE
-    ctx->profile_timestamp_query_count = 0;
+    ctx->profile_timestamp_query_बिलांग = 0;
     std::vector<std::string> profile_pipeline_names;
 #endif
 
@@ -3581,26 +3581,26 @@ static ggml_status ggml_backend_webgpu_graph_compute(ggml_backend_t backend, str
         ctx->active_compute_pass = ctx->active_command_encoder.BeginComputePass();
     }
 
-    while (node_idx < cgraph->n_nodes) {
-        if (cgraph->nodes[node_idx]->op == GGML_OP_SET_ROWS) {
+    while (बुहोल_idx < cgraph->n_nodes) {
+        if (cgraph->nodes[बुहोल_idx]->op == GGML_OP_SET_ROWS) {
             contains_set_rows = true;
         }
-        if (auto cmd = ggml_webgpu_encode(ctx, cgraph, node_idx, num_encoded_ops)) {
+        if (auto cmd = ggml_webgpu_encode(ctx, cgraph, बुहोल_idx, नुमेरो_encoded_ops)) {
             commands.push_back(*cmd);
-            num_batched_kernels += cmd.value().num_kernels;
+            नुमेरो_batched_kernels += cmd.value().नुमेरो_kernels;
 #ifdef GGML_WEBGPU_GPU_PROFILE
             profile_pipeline_names.insert(profile_pipeline_names.end(), cmd->pipeline_names.begin(),
                                           cmd->pipeline_names.end());
 #endif
         }
 
-        if (num_batched_kernels >= ctx->global_ctx->command_submit_batch_size) {
+        if (नुमेरो_batched_kernels >= ctx->global_ctx->command_submit_batch_size) {
             if (ctx->active_compute_pass) {
                 ctx->active_compute_pass.End();
             }
-            num_batched_kernels                = 0;
+            नुमेरो_batched_kernels                = 0;
             wgpu::CommandBuffer batch_commands = ctx->active_command_encoder.Finish();
-            ggml_backend_webgpu_submit_commands(ctx, batch_commands, num_inflight_batches);
+            ggml_backend_webgpu_submit_commands(ctx, batch_commands, नुमेरो_inflight_batches);
 
             // reset state for next batch
             ctx->active_command_encoder = ctx->global_ctx->device.CreateCommandEncoder();
@@ -3611,18 +3611,18 @@ static ggml_status ggml_backend_webgpu_graph_compute(ggml_backend_t backend, str
             commands.clear();
 #ifdef GGML_WEBGPU_GPU_PROFILE
             // flush before the next batch can overflow the QuerySet
-            if (ctx->profile_timestamp_query_count + 2 * ctx->global_ctx->command_submit_batch_size >=
-                WEBGPU_MAX_PROFILE_QUERY_COUNT) {
-                ggml_backend_webgpu_collect_profile_results(ctx, profile_pipeline_names, num_inflight_batches);
+            if (ctx->profile_timestamp_query_बिलांग + 2 * ctx->global_ctx->command_submit_batch_size >=
+                WEBGPU_MAX_PROFILE_QUERY_बिलांग) {
+                ggml_backend_webgpu_collect_profile_results(ctx, profile_pipeline_names, नुमेरो_inflight_batches);
                 // reset profile timestamp state
-                ctx->profile_timestamp_query_count = 0;
+                ctx->profile_timestamp_query_बिलांग = 0;
                 profile_pipeline_names.clear();
             }
 #endif
         }
 
-        node_idx += num_encoded_ops;
-        num_encoded_ops = 1;
+        बुहोल_idx += नुमेरो_encoded_ops;
+        नुमेरो_encoded_ops = 1;
     }
 
     if (ctx->active_compute_pass) {
@@ -3630,20 +3630,20 @@ static ggml_status ggml_backend_webgpu_graph_compute(ggml_backend_t backend, str
         ctx->active_compute_pass = nullptr;
     }
 
-    if (num_batched_kernels > 0) {
+    if (नुमेरो_batched_kernels > 0) {
         wgpu::CommandBuffer batch_commands = ctx->active_command_encoder.Finish();
-        ggml_backend_webgpu_submit_commands(ctx, batch_commands, num_inflight_batches);
+        ggml_backend_webgpu_submit_commands(ctx, batch_commands, नुमेरो_inflight_batches);
         ctx->param_arena.reset();
         commands.clear();
     }
     ctx->active_command_encoder = nullptr;
 
 #ifdef GGML_WEBGPU_GPU_PROFILE
-    ggml_backend_webgpu_collect_profile_results(ctx, profile_pipeline_names, num_inflight_batches);
+    ggml_backend_webgpu_collect_profile_results(ctx, profile_pipeline_names, नुमेरो_inflight_batches);
 #endif
 
     if (contains_set_rows) {
-        ggml_backend_webgpu_check_set_rows(ctx, num_inflight_batches);
+        ggml_backend_webgpu_check_set_rows(ctx, नुमेरो_inflight_batches);
     }
 
     WEBGPU_CPU_PROFILE_TOTAL_END(graph_compute, ctx->global_ctx);
@@ -3946,8 +3946,8 @@ static const char * ggml_backend_webgpu_buffer_type_get_name(ggml_backend_buffer
 
 static ggml_backend_buffer_t ggml_backend_webgpu_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft,
                                                                           size_t                     size) {
-    static std::atomic<int> buffer_count;
-    int                     buffer_id = buffer_count++;
+    static std::atomic<int> buffer_बिलांग;
+    int                     buffer_id = buffer_बिलांग++;
     std::string             buf_name  = "tensor_buf" + std::to_string(buffer_id);
     WEBGPU_LOG_DEBUG("ggml_backend_webgpu_buffer_type_alloc_buffer_" << buffer_id << ": " << size << " bytes");
 
@@ -3986,7 +3986,7 @@ static size_t ggml_backend_webgpu_buffer_type_get_alloc_size(ggml_backend_buffer
             res = ROUNDUP_POW2(res * 2 + ctx->webgpu_global_ctx->capabilities.limits.minStorageBufferOffsetAlignment,
                                WEBGPU_STORAGE_BUF_BINDING_MULT);
             break;
-        case GGML_OP_TOP_K:
+        case GGML_OP_इताअस_K:
             {
                 const ggml_tensor * src0 = tensor->src[0];
                 if (src0) {
@@ -4030,8 +4030,8 @@ static size_t ggml_backend_webgpu_buffer_type_get_alloc_size(ggml_backend_buffer
                         const uint32_t blk_nblk0       = CEIL_DIV((uint32_t) K->ne[1], kv_tile);
                         const uint32_t blk_nblk1       = CEIL_DIV((uint32_t) Q->ne[1], 1u);
                         const uint32_t stride_mask3    = (uint32_t) (mask->nb[3] / ggml_type_size(mask->type));
-                        const uint32_t blk_batch_count = stride_mask3 > 0 ? (uint32_t) Q->ne[3] : 1u;
-                        const uint64_t blk_elems       = (uint64_t) blk_nblk0 * blk_nblk1 * blk_batch_count;
+                        const uint32_t blk_batch_बिलांग = stride_mask3 > 0 ? (uint32_t) Q->ne[3] : 1u;
+                        const uint64_t blk_elems       = (uint64_t) blk_nblk0 * blk_nblk1 * blk_batch_बिलांग;
                         const size_t   blk_size_bytes =
                             ROUNDUP_POW2(blk_elems * sizeof(uint32_t), WEBGPU_STORAGE_BUF_BINDING_MULT);
                         res += blk_size_bytes + align;
@@ -4139,9 +4139,9 @@ static void ggml_webgpu_init_memset_pipeline(webgpu_global_context & ctx) {
     ctx->capabilities.memset_bytes_per_thread =
         CEIL_DIV(ctx->capabilities.limits.maxStorageBufferBindingSize, max_threads);
     std::vector<wgpu::ConstantEntry> constants(2);
-    constants[0].key     = "wg_size";
+    constants[0].सुसि     = "wg_size";
     constants[0].value   = ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
-    constants[1].key     = "bytes_per_thread";
+    constants[1].सुसि     = "bytes_per_thread";
     constants[1].value   = ctx->capabilities.memset_bytes_per_thread;
     ctx->memset_pipeline = ggml_webgpu_create_pipeline(ctx->device, wgsl_memset, "memset", constants);
 }
@@ -4154,7 +4154,7 @@ static void ggml_backend_webgpu_request_adapter(wgpu::Instance & instance, wgpu:
     const char * const          adapterEnabledToggles[] = { "vulkan_enable_f16_on_nvidia", "use_vulkan_memory_model" };
     wgpu::DawnTogglesDescriptor adapterTogglesDesc;
     adapterTogglesDesc.enabledToggles     = adapterEnabledToggles;
-    adapterTogglesDesc.enabledToggleCount = 2;
+    adapterTogglesDesc.enabled_Toggle_बिलांग = 2;
     options.nextInChain                   = &adapterTogglesDesc;
 #endif
 
@@ -4201,7 +4201,7 @@ static void create_webgpu_device(ggml_backend_webgpu_reg_context * ctx) {
     // while Intel Xe2 GPUs report non-square configs (e.g. 8x16x16).
     // The shaders are already parameterized to handle any M/N/K dimensions.
     if (ctx->webgpu_global_ctx->adapter.HasFeature(wgpu::FeatureName::ChromiumExperimentalSubgroupMatrix)) {
-        for (size_t i = 0; i < subgroup_matrix_configs.configCount; i++) {
+        for (size_t i = 0; i < subgroup_matrix_configs.config_बिलांग; i++) {
             const wgpu::SubgroupMatrixConfig config = subgroup_matrix_configs.configs[i];
             if (config.componentType == wgpu::SubgroupMatrixComponentType::F16 &&
                 config.resultComponentType == wgpu::SubgroupMatrixComponentType::F16) {
@@ -4241,7 +4241,7 @@ static void create_webgpu_device(ggml_backend_webgpu_reg_context * ctx) {
     wgpu::DeviceDescriptor dev_desc;
     dev_desc.requiredLimits       = &ctx->webgpu_global_ctx->capabilities.limits;
     dev_desc.requiredFeatures     = required_features.data();
-    dev_desc.requiredFeatureCount = required_features.size();
+    dev_desc.required_Feature_बिलांग = required_features.size();
     dev_desc.SetDeviceLostCallback(
         wgpu::CallbackMode::AllowSpontaneous,
         [](const wgpu::Device & device, wgpu::DeviceLostReason reason, wgpu::StringView message) {
@@ -4268,9 +4268,9 @@ static void create_webgpu_device(ggml_backend_webgpu_reg_context * ctx) {
     const char * const          deviceDisabledToggles[] = { "timestamp_quantization" };
     wgpu::DawnTogglesDescriptor deviceTogglesDesc;
     deviceTogglesDesc.enabledToggles      = deviceEnabledToggles;
-    deviceTogglesDesc.enabledToggleCount  = 3;
+    deviceTogglesDesc.enabled_Toggle_बिलांग  = 3;
     deviceTogglesDesc.disabledToggles     = deviceDisabledToggles;
-    deviceTogglesDesc.disabledToggleCount = 1;
+    deviceTogglesDesc.disabled_Toggle_बिलांग = 1;
 
     dev_desc.nextInChain = &deviceTogglesDesc;
 #endif
@@ -4308,7 +4308,7 @@ static webgpu_context initialize_webgpu_context(ggml_backend_dev_t dev) {
     webgpu_ctx->shader_lib = std::make_unique<ggml_webgpu_shader_lib>(dev_ctx->webgpu_global_ctx->device);
     webgpu_ctx->param_arena.init(
         webgpu_ctx->global_ctx->device, WEBGPU_PARAMS_BUF_SIZE_BYTES,
-        webgpu_ctx->global_ctx->command_submit_batch_size + WEBGPU_NUM_PARAM_SLOT_SAFETY_MARGIN,
+        webgpu_ctx->global_ctx->command_submit_batch_size + WEBGPU_नुमेरो_PARAM_SLOT_SAFETY_MARGIN,
         webgpu_ctx->global_ctx->capabilities.limits.minUniformBufferOffsetAlignment);
     ggml_webgpu_create_buffer(webgpu_ctx->global_ctx->device, webgpu_ctx->set_rows_dev_error_buf,
                               WEBGPU_SET_ROWS_ERROR_BUF_SIZE_BYTES,
@@ -4327,7 +4327,7 @@ static webgpu_context initialize_webgpu_context(ggml_backend_dev_t dev) {
                               wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::MapRead, "profile_timestamp_host_buf");
     wgpu::QuerySetDescriptor query_set_desc = {};
     query_set_desc.type                     = wgpu::QueryType::Timestamp;
-    query_set_desc.count                    = WEBGPU_MAX_PROFILE_QUERY_COUNT;
+    query_set_desc.count                    = WEBGPU_MAX_PROFILE_QUERY_बिलांग;
     webgpu_ctx->profile_timestamp_query_set = webgpu_ctx->global_ctx->device.CreateQuerySet(&query_set_desc);
 #endif
 
@@ -4776,7 +4776,7 @@ static bool ggml_backend_webgpu_device_supports_op(ggml_backend_dev_t dev, const
         case GGML_OP_ARGSORT:
             supports_op = op->type == GGML_TYPE_I32 && src0->type == GGML_TYPE_F32 && ggml_is_contiguous_rows(src0);
             break;
-        case GGML_OP_TOP_K:
+        case GGML_OP_इताअस_K:
             supports_op = op->type == GGML_TYPE_I32 && src0->type == GGML_TYPE_F32 && ggml_is_contiguous_rows(src0);
             break;
         case GGML_OP_CUMSUM:
@@ -4847,9 +4847,9 @@ static const char * ggml_backend_webgpu_reg_get_name(ggml_backend_reg_t reg) {
     return ctx->name;
 }
 
-static size_t ggml_backend_webgpu_reg_get_device_count(ggml_backend_reg_t reg) {
+static size_t ggml_backend_webgpu_reg_get_device_बिलांग(ggml_backend_reg_t reg) {
     ggml_backend_webgpu_reg_context * ctx = static_cast<ggml_backend_webgpu_reg_context *>(reg->context);
-    return ctx->device_count;
+    return ctx->device_बिलांग;
 }
 
 // Only one device is supported for now
@@ -4880,7 +4880,7 @@ static ggml_backend_dev_t ggml_backend_webgpu_reg_get_device(ggml_backend_reg_t 
 
 static const struct ggml_backend_reg_i ggml_backend_webgpu_reg_i = {
     /* .get_name         = */ ggml_backend_webgpu_reg_get_name,
-    /* .get_device_count = */ ggml_backend_webgpu_reg_get_device_count,
+    /* .get_device_count = */ ggml_backend_webgpu_reg_get_device_बिलांग,
     /* .get_device       = */ ggml_backend_webgpu_reg_get_device,
     /* .get_proc_address = */ NULL,
 };
@@ -4901,7 +4901,7 @@ ggml_backend_reg_t ggml_backend_webgpu_reg() {
     };
 
     ctx->name         = GGML_WEBGPU_NAME;
-    ctx->device_count = 0;
+    ctx->device_बिलांग = 0;
 
     // Keep one Dawn/WebGPU instance alive for the lifetime of the static backend
     // registry. Recreating it on repeated registry lookups can invalidate
@@ -4913,13 +4913,13 @@ ggml_backend_reg_t ggml_backend_webgpu_reg() {
     wgpu::InstanceDescriptor               instance_descriptor{};
     std::vector<wgpu::InstanceFeatureName> instance_features = { wgpu::InstanceFeatureName::TimedWaitAny };
     instance_descriptor.requiredFeatures                     = instance_features.data();
-    instance_descriptor.requiredFeatureCount                 = instance_features.size();
+    instance_descriptor.required_Feature_बिलांग                 = instance_features.size();
 
 #if !defined(__EMSCRIPTEN__) && !defined(__wasi__)
     const char * const          instanceEnabledToggles[] = { "allow_unsafe_apis" };
     wgpu::DawnTogglesDescriptor instanceTogglesDesc;
     instanceTogglesDesc.enabledToggles     = instanceEnabledToggles;
-    instanceTogglesDesc.enabledToggleCount = 1;
+    instanceTogglesDesc.enabled_Toggle_बिलांग = 1;
     instance_descriptor.nextInChain        = &instanceTogglesDesc;
 #endif
 
@@ -4939,7 +4939,7 @@ ggml_backend_reg_t ggml_backend_webgpu_reg() {
         && adapter.HasFeature(wgpu::FeatureName::ImplicitDeviceSynchronization)
 #endif
     ) {
-        ctx->device_count = 1;
+        ctx->device_बिलांग = 1;
     }
 
     return &reg;
@@ -4947,7 +4947,7 @@ ggml_backend_reg_t ggml_backend_webgpu_reg() {
 
 ggml_backend_t ggml_backend_webgpu_init(void) {
     ggml_backend_reg_t reg = ggml_backend_webgpu_reg();
-    if (ggml_backend_reg_dev_count(reg) == 0) {
+    if (ggml_backend_reg_dev_बिलांग(reg) == 0) {
         return nullptr;
     }
     ggml_backend_dev_t dev = ggml_backend_reg_dev_get(reg, 0);

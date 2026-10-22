@@ -68,10 +68,10 @@ static void sparse_fa_gather_rows(sycl::queue * stream,
                                   const int64_t n_kv_g,
                                   const int64_t n_head) {
     GGML_ASSERT(row_size % sizeof(uint32_t) == 0);
-    const size_t words = row_size / sizeof(uint32_t);
+    const size_t मगा_सालिता = row_size / sizeof(uint32_t);
 
     stream->parallel_for(
-        sycl::range<3>((size_t) n_head, (size_t) n_kv_g, words),
+        sycl::range<3>((size_t) n_head, (size_t) n_kv_g, मगा_सालिता),
         [=](sycl::id<3> id) {
             const int64_t h    = (int64_t) id[0];
             const int64_t slot = (int64_t) id[1];

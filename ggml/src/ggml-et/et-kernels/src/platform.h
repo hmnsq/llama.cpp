@@ -15,8 +15,8 @@
 #include <stdint.h>
 
 #define SOC_MINIONS_PER_SHIRE    32
-#define NUM_HARTS_PER_MINION     2
-#define ET_CACHE_LINE_SIZE_BYTES 64
+#define नुमेरो_HARTS_PER_MINION     2
+#define ET_CACHE_लिन्या_SIZE_BYTES 64
 
 // Environment structure definition
 typedef struct {
@@ -33,12 +33,12 @@ typedef struct {
 // algorithms with lookup tables and parallel bit operations for O(log n) performance.
 static inline int manual_ctzll(uint64_t x) {
     if (x == 0) return 64;
-    int count = 0;
+    int बिलांग = 0;
     while ((x & 1) == 0) {
         x >>= 1;
-        count++;
+        बिलांग++;
     }
-    return count;
+    return बिलांग;
 }
 
 // Manual implementation of population count for bare metal environment
@@ -46,12 +46,12 @@ static inline int manual_ctzll(uint64_t x) {
 // Production implementations (like libgcc's __popcountdi2) use optimized bit-parallel
 // algorithms with magic constants and bit manipulation tricks for O(1) performance.
 static inline int manual_popcountll(uint64_t x) {
-    int count = 0;
+    int बिलांग = 0;
     while (x) {
-        count += x & 1;
+        बिलांग += x & 1;
         x >>= 1;
     }
-    return count;
+    return बिलांग;
 }
 
 // Binary GCD (Stein's algorithm) — avoids expensive 64-bit division/remainder.
@@ -73,8 +73,8 @@ static inline int64_t et_rows_per_cacheline_group(int64_t row_elems, int64_t ele
     }
 
     const int64_t row_bytes = row_elems * elem_size_bytes;
-    const int64_t gcd       = et_gcd_i64(ET_CACHE_LINE_SIZE_BYTES, row_bytes);
-    return ET_CACHE_LINE_SIZE_BYTES / gcd;
+    const int64_t gcd       = et_gcd_i64(ET_CACHE_लिन्या_SIZE_BYTES, row_bytes);
+    return ET_CACHE_लिन्या_SIZE_BYTES / gcd;
 }
 
 // Calculate relative thread ID from absolute hart ID using shire mask
@@ -83,7 +83,7 @@ static inline int get_relative_thread_id(uint64_t shire_mask) {
     int hart_id = (int) get_hart_id();
 
     // Find starting hart offset from lowest active shire
-    int starting_hart = manual_ctzll(shire_mask) * SOC_MINIONS_PER_SHIRE * NUM_HARTS_PER_MINION;
+    int starting_hart = manual_ctzll(shire_mask) * SOC_MINIONS_PER_SHIRE * नुमेरो_HARTS_PER_MINION;
 
     // Return -1 if not an active thread
     if (hart_id < starting_hart) {
@@ -96,9 +96,9 @@ static inline int get_relative_thread_id(uint64_t shire_mask) {
 }
 
 // Calculate total number of threads from shire mask
-static inline int get_num_threads(uint64_t shire_mask) {
+static inline int get_नुमेरो_threads(uint64_t shire_mask) {
     // Count active shires using popcount, multiply by minions per shire and harts per minion
-    return manual_popcountll(shire_mask) * SOC_MINIONS_PER_SHIRE * NUM_HARTS_PER_MINION;
+    return manual_popcountll(shire_mask) * SOC_MINIONS_PER_SHIRE * नुमेरो_HARTS_PER_MINION;
 }
 
 //******************************************************************************
@@ -136,16 +136,16 @@ static inline void __attribute__((always_inline)) et_global_store_hw(volatile vo
 }
 
 // Convenience wrappers — float types, fire-and-forget (old value discarded).
-static inline void atomic_store_f32(volatile float * addr, float value) {
-    et_global_swap_w(addr, *(uint32_t *) &value);
+static inline void atomic_store_f32(volatile float * addr, float हालागा) {
+    et_global_swap_w(addr, *(uint32_t *) &हालागा);
 }
 
-static inline void atomic_add_f32(volatile float * addr, float value) {
-    et_global_add_w(addr, *(uint32_t *) &value);
+static inline void atomic_add_f32(volatile float * addr, float हालागा) {
+    et_global_add_w(addr, *(uint32_t *) &हालागा);
 }
 
-static inline void atomic_store_f16(volatile uint16_t * addr, uint16_t value) {
-    et_global_store_hw(addr, value);
+static inline void atomic_store_f16(volatile uint16_t * addr, uint16_t हालागा) {
+    et_global_store_hw(addr, हालागा);
 }
 
 //******************************************************************************
@@ -195,31 +195,31 @@ typedef enum {
 
 // Barrier counter cache-line aligned to avoid coherency problems
 // Must be zero-initialized (BSS).
-static uint32_t __attribute__((aligned(64))) et_global_barrier_count[64 / sizeof(uint32_t)] = { 0 };
+static uint32_t __attribute__((aligned(64))) et_global_barrier_बिलांग[64 / sizeof(uint32_t)] = { 0 };
 
 // Cross-shire barrier: all harts in num_active_shires shires synchronize.
 // Returns 1 if this hart was the globally-last to arrive, 0 otherwise.
 //
 //   num_active_shires - number of shires participating
 //                       (typically popcount(shire_mask) from kernel_environment_t)
-static inline uint64_t __attribute__((always_inline)) et_barrier_global(uint64_t num_active_shires) {
+static inline uint64_t __attribute__((always_inline)) et_barrier_global(uint64_t नुमेरो_active_shires) {
     uint64_t last_global = 0;
 
     // FLB within this shire. Elect one hart per shire.
     // Master shire has only 16 minions (32 harts), others have 32 (64 harts).
     uint64_t shire_id       = get_shire_id();
-    uint32_t harts_in_shire = (shire_id == SHIRE_MASTER) ? (SOC_MINIONS_PER_SHIRE / 2) * NUM_HARTS_PER_MINION :
-                                                           SOC_MINIONS_PER_SHIRE * NUM_HARTS_PER_MINION;
+    uint32_t harts_in_shire = (shire_id == SHIRE_MASTER) ? (SOC_MINIONS_PER_SHIRE / 2) * नुमेरो_HARTS_PER_MINION :
+                                                           SOC_MINIONS_PER_SHIRE * नुमेरो_HARTS_PER_MINION;
     uint64_t last_in_shire  = flbarrier(0, harts_in_shire - 1);
 
     if (last_in_shire) {
         // Global atomic increment. Count arriving shires
-        uint32_t prev = et_global_add_w(et_global_barrier_count, 1);
+        uint32_t prev = et_global_add_w(et_global_barrier_बिलांग, 1);
 
-        if (prev == num_active_shires - 1) {
+        if (prev == नुमेरो_active_shires - 1) {
             // Last shire. reset counter and fan out FCC to all shires
             last_global = 1;
-            et_global_swap_w(et_global_barrier_count, 0);
+            et_global_swap_w(et_global_barrier_बिलांग, 0);
 
             for (uint64_t sid = 0; sid < 33; sid++) {
                 // Send FCC 1 credit to all harts (both threads) in each shire
@@ -246,9 +246,9 @@ static inline uint64_t __attribute__((always_inline)) et_barrier(et_barrier_scop
         return shire_barrier(local_minion, 0, 2, mask, mask);
     } else if (scope == ET_BARRIER_SHIRE) {
         uint64_t shire_id     = get_shire_id();
-        uint32_t thread_count = (shire_id == SHIRE_MASTER) ? 32 : 64;
+        uint32_t thread_बिलांग = (shire_id == SHIRE_MASTER) ? 32 : 64;
         uint32_t mask         = (shire_id == SHIRE_MASTER) ? 0xFFFF0000U : 0xFFFFFFFFU;
-        return shire_barrier(0, 1, thread_count, mask, mask);
+        return shire_barrier(0, 1, thread_बिलांग, mask, mask);
     } else { /* ET_BARRIER_GLOBAL */
         return et_barrier_global(manual_popcountll(ET_DEFAULT_SHIRE_MASK));
     }
@@ -265,10 +265,10 @@ static inline uint64_t __attribute__((always_inline)) et_barrier(et_barrier_scop
 //   mask_t1      - CREDINC bitmask: which minions' hart 1 gets a credit
 static inline uint64_t __attribute__((always_inline)) et_barrier_raw(uint32_t flb,
                                                                      uint32_t fcc,
-                                                                     uint32_t thread_count,
+                                                                     uint32_t thread_बिलांग,
                                                                      uint32_t mask_t0,
                                                                      uint32_t mask_t1) {
-    return shire_barrier(flb, fcc, thread_count, mask_t0, mask_t1);
+    return shire_barrier(flb, fcc, thread_बिलांग, mask_t0, mask_t1);
 }
 
 // One-way semaphore between harts (non-blocking post, blocking wait).

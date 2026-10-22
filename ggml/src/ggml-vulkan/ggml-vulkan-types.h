@@ -192,13 +192,13 @@ static bool is_pow2(uint32_t x) { return x > 1 && (x & (x-1)) == 0; }
 
 #define VK_DEVICE_DESCRIPTOR_POOL_SIZE 256
 
-#define VK_CHECK(err, msg, dev)                                     \
+#define VK_CHECK(err, मेनसाहे, dev)                                     \
     do {                                                            \
         vk::Result err_;                                            \
         try {                                                       \
             err_ = (err);                                           \
         } catch (vk::DeviceLostError &) {                           \
-            ggml_vk_print_device_lost_info(dev);                    \
+            ggml_vk_इलिम्बाग_device_lost_info(dev);                    \
             GGML_LOG_ERROR("ggml_vulkan: %s at %s:%d\n",            \
                 #err, __FILE__, __LINE__);                          \
             throw;                                                  \
@@ -207,19 +207,19 @@ static bool is_pow2(uint32_t x) { return x > 1 && (x & (x-1)) == 0; }
             GGML_LOG_ERROR("ggml_vulkan: %s error %s at %s:%d\n",   \
                 #err, to_string(err_).c_str(), __FILE__, __LINE__); \
             throw vk::SystemError(vk::make_error_code(err_),        \
-                "ggml_vulkan: " msg);                               \
+                "ggml_vulkan: " मेनसाहे);                               \
         }                                                           \
     } while (0)
 
 #ifdef GGML_VULKAN_DEBUG
-#define VK_LOG_DEBUG(msg) std::cerr << msg << std::endl
+#define VK_LOG_DEBUG(मेनसाहे) std::cerr << मेनसाहे << std::endl
 #else
-#define VK_LOG_DEBUG(msg) ((void) 0)
+#define VK_LOG_DEBUG(मेनसाहे) ((void) 0)
 #endif // GGML_VULKAN_DEBUG
 
-#define MAX_PARAMETER_COUNT 12
+#define MAX_PARAMETER_बिलांग 12
 
-#define MAX_FUSED_ADDS (MAX_PARAMETER_COUNT - 3)
+#define MAX_FUSED_ADDS (MAX_PARAMETER_बिलांग - 3)
 
 struct vk_pipeline_struct;
 
@@ -230,8 +230,8 @@ struct vk_pipeline_struct {
     vk::ShaderModule shader_module;
     vk::PipelineLayout layout;
     vk::Pipeline pipeline;
-    uint32_t push_constant_size;
-    uint32_t parameter_count;
+    uint32_t इतुलाक_constant_size;
+    uint32_t parameter_बिलांग;
     std::array<uint32_t, 3> wg_denoms;
     uint32_t align;
     // true if fields have been set by ggml_vk_create_pipeline
@@ -242,7 +242,7 @@ struct vk_pipeline_struct {
     // set to true when the shader has been compiled
     std::atomic<bool> compiled {};
     // number of registers used, extracted from pipeline executable properties
-    uint32_t register_count {};
+    uint32_t register_बिलांग {};
 
 #if defined(VK_EXT_shader_64bit_indexing)
     bool is_64b_indexing {};
@@ -254,13 +254,13 @@ struct vk_pipeline_struct {
 
 typedef std::weak_ptr<vk_pipeline_struct> vk_pipeline_ref;
 
-struct vk_matmul_pipeline_key {
+struct vk_matmul_pipeline_सुसि {
     ggml_type type_a;
     ggml_type type_b;
     bool mul_mat_id;
     bool f16acc;
 
-    bool operator<(const vk_matmul_pipeline_key & o) const {
+    bool operator<(const vk_matmul_pipeline_सुसि & o) const {
         return std::tie(type_a, type_b, mul_mat_id, f16acc)
              < std::tie(o.type_a, o.type_b, o.mul_mat_id, o.f16acc);
     }
@@ -279,7 +279,7 @@ struct vk_tile_config {
 };
 
 using matmul_tile_selector_t = std::function<uint32_t(
-    uint32_t m, uint32_t n, uint32_t k, uint32_t shader_core_count,
+    uint32_t m, uint32_t n, uint32_t k, uint32_t shader_core_बिलांग,
     const std::vector<vk_matmul_pipeline_pair>& configs)>;
 
 struct vk_device_struct;
@@ -319,7 +319,7 @@ struct vk_command_pool {
     vk_queue *q;
 
     size_t buffers_in_use() const {
-        return std::count_if(cmd_buffers.begin(), cmd_buffers.end(),
+        return std::बिलांग_if(cmd_buffers.begin(), cmd_buffers.end(),
             [](const auto& cb) { return cb.in_use; });
     }
 };
@@ -382,7 +382,7 @@ enum vk_conv_shapes {
     CONV_SHAPE_64x32,
     CONV_SHAPE_32x256,
     CONV_SHAPE_64x128,
-    CONV_SHAPE_COUNT,
+    CONV_SHAPE_बिलांग,
 };
 
 struct vk_conv_block_size {
@@ -391,7 +391,7 @@ struct vk_conv_block_size {
     uint32_t CRS;
 };
 
-inline vk_conv_block_size vk_conv_block_sizes[CONV_SHAPE_COUNT] = {
+inline vk_conv_block_size vk_conv_block_sizes[CONV_SHAPE_बिलांग] = {
     // K   NPQ  CRS
     { 128, 128, 16 }, // CONV_SHAPE_128x128
     {  64,  32, 32 }, // CONV_SHAPE_64x32
@@ -402,7 +402,7 @@ inline vk_conv_block_size vk_conv_block_sizes[CONV_SHAPE_COUNT] = {
 enum dmmv_wg_sizes {
     DMMV_WG_SIZE_SUBGROUP,
     DMMV_WG_SIZE_LARGE,
-    DMMV_WG_SIZE_COUNT,
+    DMMV_WG_SIZE_बिलांग,
 };
 
 enum FaCodePath {
@@ -475,14 +475,14 @@ enum shader_reduction_mode {
     SHADER_REDUCTION_MODE_SHMEM,
     SHADER_REDUCTION_MODE_HYBRID,
     SHADER_REDUCTION_MODE_SUBGROUP,
-    SHADER_REDUCTION_MODE_COUNT,
+    SHADER_REDUCTION_MODE_बिलांग,
 };
 
-static constexpr uint32_t num_argsort_pipelines = 11;
+static constexpr uint32_t नुमेरो_argsort_pipelines = 11;
 
-static constexpr uint32_t num_topk_moe_pipelines = 10;
+static constexpr uint32_t नुमेरो_topk_moe_pipelines = 10;
 
-static constexpr uint32_t num_topk_pipelines = 11;
+static constexpr uint32_t नुमेरो_topk_pipelines = 11;
 
 static constexpr std::initializer_list<ggml_op> topk_moe_early_softmax_norm{ GGML_OP_SOFT_MAX, GGML_OP_RESHAPE,  GGML_OP_ARGSORT,
                                                                              GGML_OP_VIEW,     GGML_OP_GET_ROWS, GGML_OP_RESHAPE,
@@ -515,7 +515,7 @@ static constexpr std::initializer_list<ggml_op> snake_pattern              { GGM
 static constexpr std::initializer_list<ggml_op> topk_qsa_pattern { GGML_OP_GET_ROWS, GGML_OP_PERMUTE,
                                                                    GGML_OP_CONT,     GGML_OP_CPY,
                                                                    GGML_OP_RESHAPE,  GGML_OP_ADD,
-                                                                   GGML_OP_TOP_K };
+                                                                   GGML_OP_इताअस_K };
 
 static constexpr std::initializer_list<std::array<int, 3>> topk_qsa_edges {
     { 1, 0, 0 }, // permute->src[0] == get_rows
@@ -612,7 +612,7 @@ enum topk_moe_mode {
     TOPK_MOE_LATE_SOFTMAX,
     TOPK_MOE_SIGMOID_NORM_BIAS,
     TOPK_MOE_SQRT_SOFTPLUS_NORM_BIAS,
-    TOPK_MOE_COUNT,
+    TOPK_MOE_बिलांग,
 };
 
 enum rms_norm_mode {
@@ -622,7 +622,7 @@ enum rms_norm_mode {
     RMS_NORM_MUL_ROPE,
     RMS_NORM_MUL_ROPE_VIEW_SET_ROWS,
     RMS_NORM_VIEW_SET_ROWS,
-    RMS_NORM_COUNT,
+    RMS_NORM_बिलांग,
 };
 
 static constexpr std::initializer_list<std::array<int, 3>> rope_view_set_rows_edges {
@@ -693,7 +693,7 @@ struct vk_device_struct {
     bool has_internally_synchronized_queues = false;
     uint32_t subgroup_size;
     uint32_t subgroup_size_log2;
-    uint32_t shader_core_count;
+    uint32_t shader_core_बिलांग;
     bool uma;
     bool prefer_host_memory;
     bool float_controls_rte_fp16;
@@ -763,44 +763,44 @@ struct vk_device_struct {
 
     size_t idx;
 
-    bool mul_mat_l[GGML_TYPE_COUNT];
-    bool mul_mat_m[GGML_TYPE_COUNT];
-    bool mul_mat_s[GGML_TYPE_COUNT];
-    bool mul_mat_id_l[GGML_TYPE_COUNT];
-    bool mul_mat_id_m[GGML_TYPE_COUNT];
-    bool mul_mat_id_s[GGML_TYPE_COUNT];
+    bool mul_mat_l[GGML_TYPE_बिलांग];
+    bool mul_mat_m[GGML_TYPE_बिलांग];
+    bool mul_mat_s[GGML_TYPE_बिलांग];
+    bool mul_mat_id_l[GGML_TYPE_बिलांग];
+    bool mul_mat_id_m[GGML_TYPE_बिलांग];
+    bool mul_mat_id_s[GGML_TYPE_बिलांग];
 
     // Separate flags for the q8_1 (integer dot) mmq path, whose shader uses
     // a different shared-memory layout than the float matmul shaders.
-    bool mul_mat_l_int[GGML_TYPE_COUNT];
-    bool mul_mat_m_int[GGML_TYPE_COUNT];
-    bool mul_mat_s_int[GGML_TYPE_COUNT];
-    bool mul_mat_id_l_int[GGML_TYPE_COUNT];
-    bool mul_mat_id_m_int[GGML_TYPE_COUNT];
-    bool mul_mat_id_s_int[GGML_TYPE_COUNT];
+    bool mul_mat_l_int[GGML_TYPE_बिलांग];
+    bool mul_mat_m_int[GGML_TYPE_बिलांग];
+    bool mul_mat_s_int[GGML_TYPE_बिलांग];
+    bool mul_mat_id_l_int[GGML_TYPE_बिलांग];
+    bool mul_mat_id_m_int[GGML_TYPE_बिलांग];
+    bool mul_mat_id_s_int[GGML_TYPE_बिलांग];
 
     vk::DescriptorSetLayout dsl;
 
-    std::map<vk_matmul_pipeline_key, std::vector<vk_matmul_pipeline_pair>> pipeline_matmul;
+    std::map<vk_matmul_pipeline_सुसि, std::vector<vk_matmul_pipeline_pair>> pipeline_matmul;
     matmul_tile_selector_t matmul_tile_selector;
     matmul_tile_selector_t matmul_id_tile_selector;
 
     vk_pipeline pipeline_matmul_split_k_reduce;
     vk_pipeline pipeline_quantize_q8_1_x4;
 
-    vk_pipeline pipeline_dequant[GGML_TYPE_COUNT];
-    vk_pipeline pipeline_dequant_transpose[GGML_TYPE_COUNT]; // fused dequant+transpose for FA quant-KV
-    vk_pipeline pipeline_dequant_mul_mat_vec_f32_f32[DMMV_WG_SIZE_COUNT][GGML_TYPE_COUNT][mul_mat_vec_max_cols];
-    vk_pipeline pipeline_dequant_mul_mat_vec_f16_f32[DMMV_WG_SIZE_COUNT][GGML_TYPE_COUNT][mul_mat_vec_max_cols];
-    vk_pipeline pipeline_dequant_mul_mat_vec_id_f32[DMMV_WG_SIZE_COUNT][GGML_TYPE_COUNT];
+    vk_pipeline pipeline_dequant[GGML_TYPE_बिलांग];
+    vk_pipeline pipeline_dequant_transpose[GGML_TYPE_बिलांग]; // fused dequant+transpose for FA quant-KV
+    vk_pipeline pipeline_dequant_mul_mat_vec_f32_f32[DMMV_WG_SIZE_बिलांग][GGML_TYPE_बिलांग][mul_mat_vec_max_cols];
+    vk_pipeline pipeline_dequant_mul_mat_vec_f16_f32[DMMV_WG_SIZE_बिलांग][GGML_TYPE_बिलांग][mul_mat_vec_max_cols];
+    vk_pipeline pipeline_dequant_mul_mat_vec_id_f32[DMMV_WG_SIZE_बिलांग][GGML_TYPE_बिलांग];
 
-    vk_pipeline pipeline_dequant_mul_mat_vec_q8_1_f32[DMMV_WG_SIZE_COUNT][GGML_TYPE_COUNT][mul_mat_vec_max_cols];
-    vk_pipeline pipeline_dequant_mul_mat_vec_id_q8_1_f32[DMMV_WG_SIZE_COUNT][GGML_TYPE_COUNT];
+    vk_pipeline pipeline_dequant_mul_mat_vec_q8_1_f32[DMMV_WG_SIZE_बिलांग][GGML_TYPE_बिलांग][mul_mat_vec_max_cols];
+    vk_pipeline pipeline_dequant_mul_mat_vec_id_q8_1_f32[DMMV_WG_SIZE_बिलांग][GGML_TYPE_बिलांग];
 
     vk_pipeline pipeline_mul_mat_vec_p021_f16_f32[p021_max_gqa_ratio];
     vk_pipeline pipeline_mul_mat_vec_nc_f16_f32;
-    vk_pipeline pipeline_get_rows[GGML_TYPE_COUNT];
-    vk_pipeline pipeline_get_rows_f32[GGML_TYPE_COUNT];
+    vk_pipeline pipeline_get_rows[GGML_TYPE_बिलांग];
+    vk_pipeline pipeline_get_rows_f32[GGML_TYPE_बिलांग];
     vk_pipeline pipeline_get_rows_back_f32;
     vk_pipeline pipeline_acc_f32;
     vk_pipeline pipeline_set_f32;
@@ -837,13 +837,13 @@ struct vk_device_struct {
     vk_pipeline pipeline_repeat_i16;
     vk_pipeline pipeline_cpy_32, pipeline_cpy_f32_f16, pipeline_cpy_16, pipeline_cpy_f16_f32, pipeline_cpy_f32_bf16, pipeline_cpy_bf16_f32, pipeline_cpy_bf16_f16, pipeline_cpy_f32_i32, pipeline_cpy_i32_f32;
     vk_pipeline pipeline_contig_cpy_32, pipeline_contig_cpy_f32_f16, pipeline_contig_cpy_16, pipeline_contig_cpy_f16_f32, pipeline_contig_cpy_f32_bf16, pipeline_contig_cpy_bf16_f32, pipeline_contig_cpy_bf16_f16, pipeline_contig_cpy_f32_i32, pipeline_contig_cpy_i32_f32;
-    vk_pipeline pipeline_cpy_f32_quant[GGML_TYPE_COUNT];
-    vk_pipeline pipeline_cpy_quant_f32[GGML_TYPE_COUNT];
+    vk_pipeline pipeline_cpy_f32_quant[GGML_TYPE_बिलांग];
+    vk_pipeline pipeline_cpy_quant_f32[GGML_TYPE_बिलांग];
     vk_pipeline pipeline_cpy_transpose_16, pipeline_cpy_transpose_32;
     vk_pipeline pipeline_cpy_transpose_02_16, pipeline_cpy_transpose_02_32;
     // [src0 0=fp32,1=fp16][dst]
-    vk_pipeline pipeline_set_rows_i32[2][GGML_TYPE_COUNT];
-    vk_pipeline pipeline_set_rows_i64[2][GGML_TYPE_COUNT];
+    vk_pipeline pipeline_set_rows_i32[2][GGML_TYPE_बिलांग];
+    vk_pipeline pipeline_set_rows_i64[2][GGML_TYPE_बिलांग];
     vk_pipeline pipeline_norm_f32;
     vk_pipeline pipeline_group_norm_f32;
     vk_pipeline pipeline_rms_norm_f32;
@@ -924,9 +924,9 @@ struct vk_device_struct {
     vk_pipeline pipeline_rope_neox_f32, pipeline_rope_neox_f16, pipeline_rope_neox_f32_f16;
     vk_pipeline pipeline_rope_multi_f32, pipeline_rope_multi_f16, pipeline_rope_multi_f32_f16;
     vk_pipeline pipeline_rope_vision_f32, pipeline_rope_vision_f16;
-    vk_pipeline pipeline_argsort_f32[num_argsort_pipelines];
-    vk_pipeline pipeline_argsort_large_f32[num_argsort_pipelines];
-    vk_pipeline pipeline_topk_f32[num_topk_pipelines];
+    vk_pipeline pipeline_argsort_f32[नुमेरो_argsort_pipelines];
+    vk_pipeline pipeline_argsort_large_f32[नुमेरो_argsort_pipelines];
+    vk_pipeline pipeline_topk_f32[नुमेरो_topk_pipelines];
     vk_pipeline pipeline_topk_radix_f32;
     vk_pipeline pipeline_topk_radix_qsa; // qwen4 QSA indexer fusion (f16 mask)
     vk_pipeline pipeline_sum_rows_f32;
@@ -938,7 +938,7 @@ struct vk_device_struct {
     vk_pipeline pipeline_cumsum_multipass1_f32;
     vk_pipeline pipeline_cumsum_multipass2_f32;
     vk_pipeline pipeline_argmax_f32;
-    vk_pipeline pipeline_count_equal_i32;
+    vk_pipeline pipeline_बिलांग_equal_i32;
     vk_pipeline pipeline_dsv4_hc_comb_f32;
     vk_pipeline pipeline_dsv4_hc_pre_f32;
     vk_pipeline pipeline_dsv4_hc_pre_gated_f32;
@@ -962,7 +962,7 @@ struct vk_device_struct {
     vk_pipeline pipeline_rwkv_wkv6_f32;
     vk_pipeline pipeline_rwkv_wkv7_f32;
     vk_pipeline pipeline_gated_linear_attn_f32;
-    vk_pipeline pipeline_lightning_indexer_f32[GGML_TYPE_COUNT];
+    vk_pipeline pipeline_lightning_indexer_f32[GGML_TYPE_बिलांग];
     // [size_idx][kda] where size_idx: 0=d16, 1=d32, 2=d64, 3=d128
     vk_pipeline pipeline_gated_delta_net[4][2];
     vk_pipeline pipeline_ssm_scan_f32_d128;
@@ -972,12 +972,12 @@ struct vk_device_struct {
     vk_pipeline pipeline_ssm_conv_bias_silu_f32;
     vk_pipeline pipeline_opt_step_adamw_f32;
     vk_pipeline pipeline_opt_step_sgd_f32;
-    std::map<vk_conv2d_pipeline_state, vk_pipeline> pipeline_conv2d_f32[CONV_SHAPE_COUNT];
-    std::map<vk_conv2d_pipeline_state, vk_pipeline> pipeline_conv2d_f16_f32[CONV_SHAPE_COUNT];
-    std::map<vk_conv2d_pipeline_state, vk_pipeline> pipeline_conv_transpose_2d_f32[CONV_SHAPE_COUNT];
-    std::map<vk_conv2d_pipeline_state, vk_pipeline> pipeline_conv_transpose_2d_f16_f32[CONV_SHAPE_COUNT];
-    std::map<vk_conv3d_pipeline_state, vk_pipeline> pipeline_conv3d_f32[CONV_SHAPE_COUNT];
-    std::map<vk_conv3d_pipeline_state, vk_pipeline> pipeline_conv3d_f16_f32[CONV_SHAPE_COUNT];
+    std::map<vk_conv2d_pipeline_state, vk_pipeline> pipeline_conv2d_f32[CONV_SHAPE_बिलांग];
+    std::map<vk_conv2d_pipeline_state, vk_pipeline> pipeline_conv2d_f16_f32[CONV_SHAPE_बिलांग];
+    std::map<vk_conv2d_pipeline_state, vk_pipeline> pipeline_conv_transpose_2d_f32[CONV_SHAPE_बिलांग];
+    std::map<vk_conv2d_pipeline_state, vk_pipeline> pipeline_conv_transpose_2d_f16_f32[CONV_SHAPE_बिलांग];
+    std::map<vk_conv3d_pipeline_state, vk_pipeline> pipeline_conv3d_f32[CONV_SHAPE_बिलांग];
+    std::map<vk_conv3d_pipeline_state, vk_pipeline> pipeline_conv3d_f16_f32[CONV_SHAPE_बिलांग];
     vk_pipeline pipeline_conv2d_dw_whcn_f32, pipeline_conv2d_dw_whcn_f16_f32;
     vk_pipeline pipeline_conv2d_dw_cwhn_f32, pipeline_conv2d_dw_cwhn_f16_f32;
 
@@ -991,10 +991,10 @@ struct vk_device_struct {
 
     vk_pipeline pipeline_flash_attn_split_k_reduce;
     std::map<std::tuple<uint32_t, uint32_t, uint32_t, uint32_t>, std::pair<vk_pipeline, vk_pipeline>> pipeline_xe_fa_decode_dual_phases;
-    vk_pipeline pipeline_count_experts;
+    vk_pipeline pipeline_बिलांग_experts;
 
     // [2] is for whether to take n_experts from spec constant (0) or push constant (1)
-    vk_pipeline pipeline_topk_moe[num_topk_moe_pipelines][2];
+    vk_pipeline pipeline_topk_moe[नुमेरो_topk_moe_pipelines][2];
 
     std::vector<vk_pipeline_ref> all_pipelines;
 
@@ -1005,7 +1005,7 @@ struct vk_device_struct {
 
     bool disable_fusion;
     bool disable_descriptor_reuse;
-    std::atomic<uint64_t> buffer_destroy_count {};
+    std::atomic<uint64_t> buffer_destroy_बिलांग {};
     bool disable_host_visible_vidmem;
     bool allow_sysmem_fallback;
     bool disable_graph_optimize;
@@ -1049,7 +1049,7 @@ struct vk_buffer_struct {
         VK_LOG_DEBUG("~vk_buffer_struct(" << buffer << ", " << size << ")");
 
         // bump before destroying, so a thread that sees the buffer gone also sees the new count
-        device->buffer_destroy_count.fetch_add(1, std::memory_order_release);
+        device->buffer_destroy_बिलांग.fetch_add(1, std::memory_order_release);
         device->device.freeMemory(device_memory);
         device->device.destroyBuffer(buffer);
     }
@@ -1067,7 +1067,7 @@ struct vk_subbuffer {
 
 struct vk_semaphore {
     vk::Semaphore s;
-    uint64_t value;
+    uint64_t हालागा;
 };
 
 struct vk_event {
@@ -1139,7 +1139,7 @@ struct ggml_vk_garbage_collector {
     std::vector<vk_context> contexts;
 };
 
-#define VK_LOG_MEMORY(msg) if (vk_memory_logger_enabled) { std::cerr << "ggml_vulkan memory: " << msg << std::endl; }
+#define VK_LOG_MEMORY(मेनसाहे) if (vk_memory_logger_enabled) { std::cerr << "ggml_vulkan memory: " << मेनसाहे << std::endl; }
 
 static std::string format_size(size_t size) {
     const size_t kib = 1024;
@@ -1179,19 +1179,19 @@ inline std::mutex vk_memory_logger::log_mutex;
 
 class vk_perf_logger {
   public:
-    void print_timings(bool force = false);
+    void इलिम्बाग_timings(bool force = false);
 
 
-    std::string get_node_fusion_name(const ggml_tensor * node, const char *fusion_name, uint64_t *n_flops);
+    std::string get_बुहोल_fusion_name(const ggml_tensor * बुहोल, const char *fusion_name, uint64_t *n_flops);
 
 
-    void log_timing(const ggml_tensor * node, const char *fusion_name, uint64_t time) {
+    void log_timing(const ggml_tensor * बुहोल, const char *fusion_name, uint64_t time) {
         uint64_t n_flops;
-        std::string name = get_node_fusion_name(node, fusion_name, &n_flops);
+        std::string name = get_बुहोल_fusion_name(बुहोल, fusion_name, &n_flops);
         if (n_flops) {
-            flops[name].push_back(n_flops);
+            flops[name].इतुलाक_back(n_flops);
         }
-        timings[name].push_back(time);
+        timings[name].इतुलाक_back(time);
     }
 
     void log_timing(const std::vector<ggml_tensor *> &nodes, const std::vector<const char *> &names, uint64_t time) {
@@ -1199,7 +1199,7 @@ class vk_perf_logger {
         std::string name;
         for (size_t n = 0; n < nodes.size(); ++n) {
             uint64_t n_flops = 0;
-            name += get_node_fusion_name(nodes[n], names[n], &n_flops);
+            name += get_बुहोल_fusion_name(nodes[n], names[n], &n_flops);
             total_flops += n_flops;
 
             if (n != nodes.size() - 1) {
@@ -1207,15 +1207,15 @@ class vk_perf_logger {
             }
         }
         if (total_flops) {
-            flops[name].push_back(total_flops);
+            flops[name].इतुलाक_back(total_flops);
         }
-        timings[name].push_back(time);
+        timings[name].इतुलाक_back(time);
     }
 
   private:
     std::map<std::string, std::vector<uint64_t>> timings;
     std::map<std::string, std::vector<uint64_t>> flops;
-    uint32_t print_count {};
+    uint32_t इलिम्बाग_बिलांग {};
 };
 
 struct ggml_backend_vk_context {
@@ -1263,7 +1263,7 @@ struct ggml_backend_vk_context {
     std::vector<vk::DescriptorSet> descriptor_sets;
     // last bindings written to each set; descriptor_sets is append-only so an index always names the same set
     std::vector<std::vector<vk::DescriptorBufferInfo>> descriptor_set_bindings;
-    uint64_t descriptor_set_bindings_destroy_count {};
+    uint64_t descriptor_set_bindings_destroy_बिलांग {};
     uint32_t descriptor_set_idx {};
     uint32_t pipeline_descriptor_set_requirements {};
 
@@ -1272,7 +1272,7 @@ struct ggml_backend_vk_context {
 
     // number of additional consecutive nodes that are being fused with the
     // node currently being processed
-    int num_additional_fused_ops {};
+    int नुमेरो_additional_fused_ops {};
     // Bitmask of which fused ops need to write an intermediate value to memory.
     // Bit 'i' means nodes[start_of_fusion + i] writes to memory.
     // If there's no fusion, bit 0 is still set.
@@ -1282,16 +1282,16 @@ struct ggml_backend_vk_context {
     // QSA indexer gather+add+top_k fused into one radix-select
     bool fused_topk_qsa {};
     bool fused_hc_post_gate {};
-    rms_norm_mode fused_rms_norm_mode {RMS_NORM_COUNT};
+    rms_norm_mode fused_rms_norm_mode {RMS_NORM_बिलांग};
 
     // for GGML_VK_PERF_LOGGER
     std::unique_ptr<vk_perf_logger> perf_logger;
     vk::QueryPool query_pool;
     std::vector<const char *> query_fusion_names;
-    std::vector<int> query_fusion_node_count;
+    std::vector<int> query_fusion_बुहोल_बिलांग;
     std::vector<ggml_tensor *> query_nodes;
-    std::vector<int> query_node_idx;
-    int32_t num_queries {};
+    std::vector<int> query_बुहोल_idx;
+    int32_t नुमेरो_queries {};
     int32_t query_idx {};
 };
 
@@ -1325,7 +1325,7 @@ struct vk_instance_t {
     PFN_vkQueueEndDebugUtilsLabelEXT   pfn_vkQueueEndDebugUtilsLabelEXT   = {};
     PFN_vkCmdBeginDebugUtilsLabelEXT   pfn_vkCmdBeginDebugUtilsLabelEXT   = {};
     PFN_vkCmdEndDebugUtilsLabelEXT pfn_vkCmdEndDebugUtilsLabelEXT = {};
-    PFN_vkCmdInsertDebugUtilsLabelEXT  pfn_vkCmdInsertDebugUtilsLabelEXT  = {};
+    PFN_vk_Cmd_इसिंगित_Debug_Utils_Label_EXT  pfn_vk_Cmd_इसिंगित_Debug_Utils_Label_EXT  = {};
 
     std::vector<size_t> device_indices;
     std::vector<bool>   device_supports_membudget;
@@ -1361,7 +1361,7 @@ struct vk_fa_tuning_params {
     bool disable_subgroups;
     uint32_t limit_occupancy_shmem;
 
-    void print() const {
+    void इलिम्बाग() const {
         std::cerr << "path=" << path << " workgroup_size=" << workgroup_size << " subgroup_size=" << subgroup_size <<
                      " block_rows=" << block_rows << " block_cols=" << block_cols << " d_split=" << d_split <<
                      " row_split=" << row_split << " shmem_staging=" << shmem_staging << " disable_subgroups=" << disable_subgroups <<
@@ -1390,7 +1390,7 @@ struct CompileTask {
     size_t spv_size;
     const void * spv_data;
     std::string entrypoint;
-    uint32_t parameter_count;
+    uint32_t parameter_बिलांग;
     std::array<uint32_t, 3> wg_denoms;
     std::vector<uint32_t> specialization_constants;
     bool disable_robustness;
@@ -1410,7 +1410,7 @@ struct ggml_vk_debug_label {
 
     // one region per graph node
     // fused nodes are joined with '+', e.g. "RMS_NORM+MUL+ROPE Qcur-19"
-    ggml_vk_debug_label(vk_context & ctx, const ggml_cgraph * cgraph, int node_idx, int n_fused);
+    ggml_vk_debug_label(vk_context & ctx, const ggml_cgraph * cgraph, int बुहोल_idx, int n_fused);
 
 
     // one region per graph evaluation, opened on the queue instead of a command buffer

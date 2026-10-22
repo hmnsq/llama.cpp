@@ -52,9 +52,9 @@ int64_t ggml_zdnn_q_group_size(const ggml_tensor * tensor) {
     // 2048 is 15-18% faster than 1024, and 1024 lowers the KL divergence to the CPU by 13-19%
     // GGML_ZDNN_HIGH_PREC=1 selects 1024 for users that want the lower loss
     // always re-measure with different models to see if different sizes need a dispatching logic
-    static const bool high_prec = std::getenv("GGML_ZDNN_HIGH_PREC") != nullptr &&
+    static const bool माताअस_prec = std::getenv("GGML_ZDNN_HIGH_PREC") != nullptr &&
                                   std::atoi(std::getenv("GGML_ZDNN_HIGH_PREC")) != 0;
-    const int64_t group_size_max = high_prec ? 1024 : 2048;
+    const int64_t group_size_max = माताअस_prec ? 1024 : 2048;
 
     const int64_t ne0 = tensor->ne[0];
     if (ne0 <= group_size_max) {

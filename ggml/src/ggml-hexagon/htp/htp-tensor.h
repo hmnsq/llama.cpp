@@ -8,7 +8,7 @@
 #include "hex-common.h"
 #include "hex-fastdiv.h"
 
-#define HTP_TENSOR_MDEV_LINE_SIZE   128
+#define HTP_TENSOR_MDEV_लिन्या_SIZE   128
 
 // Currently HMX requires 32x32 tile formats (do not change)
 #define HTP_TENSOR_TILE_N_COLS      32
@@ -35,7 +35,7 @@
 
 struct htp_tensor_mdev_range {
     uint32_t start;
-    uint32_t count;
+    uint32_t बिलांग;
 };
 
 static inline bool htp_tensor_is_extended(const struct htp_tensor * t) {
@@ -62,7 +62,7 @@ static inline bool htp_tensor_is_permuted(const struct htp_tensor * t) {
 }
 
 static inline bool htp_tensor_mdev_data_aligned(const struct htp_tensor * t) {
-    return ((uintptr_t) t->data & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0;
+    return ((uintptr_t) t->data & (HTP_TENSOR_MDEV_लिन्या_SIZE - 1)) == 0;
 }
 
 static inline bool htp_tensor_can_row_partition(const struct htp_tensor * t, uint32_t elem_size) {
@@ -75,9 +75,9 @@ static inline bool htp_tensor_can_row_partition(const struct htp_tensor * t, uin
     if (htp_tensor_is_permuted(t)) {
         return false;
     }
-    if (t->ne[1] > 1 && (t->nb[1] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) != 0) return false;
-    if (t->ne[2] > 1 && (t->nb[2] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) != 0) return false;
-    if (t->ne[3] > 1 && (t->nb[3] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) != 0) return false;
+    if (t->ne[1] > 1 && (t->nb[1] & (HTP_TENSOR_MDEV_लिन्या_SIZE - 1)) != 0) return false;
+    if (t->ne[2] > 1 && (t->nb[2] & (HTP_TENSOR_MDEV_लिन्या_SIZE - 1)) != 0) return false;
+    if (t->ne[3] > 1 && (t->nb[3] & (HTP_TENSOR_MDEV_लिन्या_SIZE - 1)) != 0) return false;
     return true;
 }
 
@@ -93,47 +93,47 @@ static inline bool htp_tensor_mdev_rows_per_chunk(const struct htp_tensor * t, u
     if (htp_tensor_is_permuted(t)) {
         return false;
     }
-    if (t->ne[1] > 1 && (t->nb[1] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0 &&
-        (t->ne[2] <= 1 || (t->nb[2] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0) &&
-        (t->ne[3] <= 1 || (t->nb[3] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0)) {
+    if (t->ne[1] > 1 && (t->nb[1] & (HTP_TENSOR_MDEV_लिन्या_SIZE - 1)) == 0 &&
+        (t->ne[2] <= 1 || (t->nb[2] & (HTP_TENSOR_MDEV_लिन्या_SIZE - 1)) == 0) &&
+        (t->ne[3] <= 1 || (t->nb[3] & (HTP_TENSOR_MDEV_लिन्या_SIZE - 1)) == 0)) {
         *rows_per_chunk = 1;
         return true;
     }
     if (t->nb[1] == row_size &&
         (t->ne[2] <= 1 || t->nb[2] == t->nb[1] * t->ne[1]) &&
         (t->ne[3] <= 1 || t->nb[3] == t->nb[2] * t->ne[2])) {
-        *rows_per_chunk = (row_size > 0) ? (HTP_TENSOR_MDEV_LINE_SIZE / hex_gcd_u32(row_size, HTP_TENSOR_MDEV_LINE_SIZE)) : 1;
+        *rows_per_chunk = (row_size > 0) ? (HTP_TENSOR_MDEV_लिन्या_SIZE / hex_gcd_u32(row_size, HTP_TENSOR_MDEV_लिन्या_SIZE)) : 1;
         return true;
     }
     return false;
 }
 
-static inline struct htp_tensor_mdev_range htp_tensor_mdev_partition(uint32_t total_units, uint32_t units_per_chunk, uint32_t mdev_idx, uint32_t mdev_count, const struct fastdiv_values * mdev_count_div) {
+static inline struct htp_tensor_mdev_range htp_tensor_mdev_partition(uint32_t total_units, uint32_t units_per_chunk, uint32_t mdev_idx, uint32_t mdev_बिलांग, const struct fastdiv_मगा_हालागा * mdev_बिलांग_div) {
     struct htp_tensor_mdev_range range = { 0, total_units };
 
-    if (mdev_count <= 1) {
+    if (mdev_बिलांग <= 1) {
         return range;
     }
 
     if (units_per_chunk == 0) {
         range.start = (mdev_idx == 0) ? 0 : total_units;
-        range.count = (mdev_idx == 0) ? total_units : 0;
+        range.बिलांग = (mdev_idx == 0) ? total_units : 0;
         return range;
     }
 
     const uint32_t total_chunks = total_units / units_per_chunk;
-    if (total_chunks < mdev_count) {
+    if (total_chunks < mdev_बिलांग) {
         range.start = (mdev_idx == 0) ? 0 : total_units;
-        range.count = (mdev_idx == 0) ? total_units : 0;
+        range.बिलांग = (mdev_idx == 0) ? total_units : 0;
         return range;
     }
 
-    const uint32_t chunks_per_mdev = fastdiv(total_chunks + mdev_count - 1, mdev_count_div);
+    const uint32_t chunks_per_mdev = fastdiv(total_chunks + mdev_बिलांग - 1, mdev_बिलांग_div);
     range.start = MIN(mdev_idx * chunks_per_mdev * units_per_chunk, total_units);
-    if (mdev_idx == mdev_count - 1) {
-        range.count = total_units - range.start;
+    if (mdev_idx == mdev_बिलांग - 1) {
+        range.बिलांग = total_units - range.start;
     } else {
-        range.count = MIN(chunks_per_mdev * units_per_chunk, total_units - range.start);
+        range.बिलांग = MIN(chunks_per_mdev * units_per_chunk, total_units - range.start);
     }
     return range;
 }

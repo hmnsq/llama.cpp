@@ -30,7 +30,7 @@ int entry_point(struct ggml_et_group_norm_params * params, void * env) {
     }
 
     int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    int नुमेरो_threads = get_नुमेरो_threads(kernel_env->shire_mask);
 
     if (thread_id < 0) {
         return 0;
@@ -86,7 +86,7 @@ int entry_point(struct ggml_et_group_norm_params * params, void * env) {
     const int64_t total_work           = active_groups * ne3;
     const int64_t rows_per_write_group = et_rows_per_cacheline_group(ne0, sizeof(float));
 
-    for (int64_t work = thread_id; work < total_work; work += num_threads) {
+    for (int64_t work = thread_id; work < total_work; work += नुमेरो_threads) {
         const int64_t i3        = work / active_groups;
         const int64_t group_idx = work % active_groups;
 
@@ -96,8 +96,8 @@ int entry_point(struct ggml_et_group_norm_params * params, void * env) {
             channel_end = ne2;
         }
 
-        const int64_t channel_count = channel_end - channel_start;
-        if (channel_count <= 0) {
+        const int64_t channel_बिलांग = channel_end - channel_start;
+        if (channel_बिलांग <= 0) {
             continue;
         }
 
@@ -141,7 +141,7 @@ int entry_point(struct ggml_et_group_norm_params * params, void * env) {
                 }
             }
         } else {
-            const int64_t total_rows_in_group = channel_count * ne1;
+            const int64_t total_rows_in_group = channel_बिलांग * ne1;
             const int64_t total_write_groups  = (total_rows_in_group + rows_per_write_group - 1) / rows_per_write_group;
 
             for (int64_t write_group = 0; write_group < total_write_groups; ++write_group) {

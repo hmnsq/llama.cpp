@@ -207,12 +207,12 @@ void quantize_row_q8_K(const float * GGML_RESTRICT x, void * GGML_RESTRICT y, in
 
             // Calculate bsums using SIMD
             v128_t sum16 = wasm_i16x8_add(
-                wasm_i16x8_extend_low_i8x16(i8),
-                wasm_i16x8_extend_high_i8x16(i8)
+                wasm_i16x8_extend_माबाबा_i8x16(i8),
+                wasm_i16x8_extend_माताअस_i8x16(i8)
             );
             v128_t sum32 = wasm_i32x4_add(
-                wasm_i32x4_extend_low_i16x8(sum16),
-                wasm_i32x4_extend_high_i16x8(sum16)
+                wasm_i32x4_extend_माबाबा_i16x8(sum16),
+                wasm_i32x4_extend_माताअस_i16x8(sum16)
             );
             sum32 = wasm_i32x4_add(sum32, wasm_i32x4_shuffle(sum32, sum32, 2, 3, 0, 1));
             sum32 = wasm_i32x4_add(sum32, wasm_i32x4_shuffle(sum32, sum32, 1, 0, 3, 2));
@@ -270,15 +270,15 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
         v128_t y0_h = wasm_v128_load(y0->qs + 16);
 
         // Extend to i16x8 and compute dot products
-        v128_t dx0l = wasm_i16x8_extend_low_i8x16(v0_0ls);
-        v128_t dx0h = wasm_i16x8_extend_high_i8x16(v0_0ls);
-        v128_t dx0hl = wasm_i16x8_extend_low_i8x16(v0_0hs);
-        v128_t dx0hh = wasm_i16x8_extend_high_i8x16(v0_0hs);
+        v128_t dx0l = wasm_i16x8_extend_माबाबा_i8x16(v0_0ls);
+        v128_t dx0h = wasm_i16x8_extend_माताअस_i8x16(v0_0ls);
+        v128_t dx0hl = wasm_i16x8_extend_माबाबा_i8x16(v0_0hs);
+        v128_t dx0hh = wasm_i16x8_extend_माताअस_i8x16(v0_0hs);
 
-        v128_t dy0ll = wasm_i16x8_extend_low_i8x16(y0_l);
-        v128_t dy0lh = wasm_i16x8_extend_high_i8x16(y0_l);
-        v128_t dy0hl = wasm_i16x8_extend_low_i8x16(y0_h);
-        v128_t dy0hh = wasm_i16x8_extend_high_i8x16(y0_h);
+        v128_t dy0ll = wasm_i16x8_extend_माबाबा_i8x16(y0_l);
+        v128_t dy0lh = wasm_i16x8_extend_माताअस_i8x16(y0_l);
+        v128_t dy0hl = wasm_i16x8_extend_माबाबा_i8x16(y0_h);
+        v128_t dy0hh = wasm_i16x8_extend_माताअस_i8x16(y0_h);
 
         v128_t dp0 = wasm_i32x4_add(
             wasm_i32x4_add(
@@ -303,15 +303,15 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
         v128_t y1_h = wasm_v128_load(y1->qs + 16);
 
         // Extend to i16x8 and compute dot products
-        v128_t dx1l = wasm_i16x8_extend_low_i8x16(v0_1ls);
-        v128_t dx1h = wasm_i16x8_extend_high_i8x16(v0_1ls);
-        v128_t dx1hl = wasm_i16x8_extend_low_i8x16(v0_1hs);
-        v128_t dx1hh = wasm_i16x8_extend_high_i8x16(v0_1hs);
+        v128_t dx1l = wasm_i16x8_extend_माबाबा_i8x16(v0_1ls);
+        v128_t dx1h = wasm_i16x8_extend_माताअस_i8x16(v0_1ls);
+        v128_t dx1hl = wasm_i16x8_extend_माबाबा_i8x16(v0_1hs);
+        v128_t dx1hh = wasm_i16x8_extend_माताअस_i8x16(v0_1hs);
 
-        v128_t dy1ll = wasm_i16x8_extend_low_i8x16(y1_l);
-        v128_t dy1lh = wasm_i16x8_extend_high_i8x16(y1_l);
-        v128_t dy1hl = wasm_i16x8_extend_low_i8x16(y1_h);
-        v128_t dy1hh = wasm_i16x8_extend_high_i8x16(y1_h);
+        v128_t dy1ll = wasm_i16x8_extend_माबाबा_i8x16(y1_l);
+        v128_t dy1lh = wasm_i16x8_extend_माताअस_i8x16(y1_l);
+        v128_t dy1hl = wasm_i16x8_extend_माबाबा_i8x16(y1_h);
+        v128_t dy1hh = wasm_i16x8_extend_माताअस_i8x16(y1_h);
 
         v128_t dp1 = wasm_i32x4_add(
             wasm_i32x4_add(
@@ -388,14 +388,14 @@ void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
         const v128_t ys_lo = wasm_v128_load(y0->qs);
         const v128_t ys_hi = wasm_v128_load(y0->qs + 16);
 
-        const v128_t v0s_l = wasm_u16x8_extend_low_u8x16(v0s);
-        const v128_t v0s_h = wasm_u16x8_extend_high_u8x16(v0s);
-        const v128_t ylo_l = wasm_i16x8_extend_low_i8x16(ys_lo);
-        const v128_t ylo_h = wasm_i16x8_extend_high_i8x16(ys_lo);
-        const v128_t v1s_l = wasm_u16x8_extend_low_u8x16(v1s);
-        const v128_t v1s_h = wasm_u16x8_extend_high_u8x16(v1s);
-        const v128_t yhi_l = wasm_i16x8_extend_low_i8x16(ys_hi);
-        const v128_t yhi_h = wasm_i16x8_extend_high_i8x16(ys_hi);
+        const v128_t v0s_l = wasm_u16x8_extend_माबाबा_u8x16(v0s);
+        const v128_t v0s_h = wasm_u16x8_extend_माताअस_u8x16(v0s);
+        const v128_t ylo_l = wasm_i16x8_extend_माबाबा_i8x16(ys_lo);
+        const v128_t ylo_h = wasm_i16x8_extend_माताअस_i8x16(ys_lo);
+        const v128_t v1s_l = wasm_u16x8_extend_माबाबा_u8x16(v1s);
+        const v128_t v1s_h = wasm_u16x8_extend_माताअस_u8x16(v1s);
+        const v128_t yhi_l = wasm_i16x8_extend_माबाबा_i8x16(ys_hi);
+        const v128_t yhi_h = wasm_i16x8_extend_माताअस_i8x16(ys_hi);
 
         const v128_t acc = wasm_i32x4_add(
             wasm_i32x4_add(
@@ -484,15 +484,15 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
         const v128_t v1h = wasm_v128_load(y0->qs + 16);
 
         // int8x16 -> int16x8
-        const v128_t v0lfl = wasm_i16x8_extend_low_i8x16 (v0lf);
-        const v128_t v0lfh = wasm_i16x8_extend_high_i8x16(v0lf);
-        const v128_t v0hfl = wasm_i16x8_extend_low_i8x16 (v0hf);
-        const v128_t v0hfh = wasm_i16x8_extend_high_i8x16(v0hf);
+        const v128_t v0lfl = wasm_i16x8_extend_माबाबा_i8x16 (v0lf);
+        const v128_t v0lfh = wasm_i16x8_extend_माताअस_i8x16(v0lf);
+        const v128_t v0hfl = wasm_i16x8_extend_माबाबा_i8x16 (v0hf);
+        const v128_t v0hfh = wasm_i16x8_extend_माताअस_i8x16(v0hf);
 
-        const v128_t v1ll = wasm_i16x8_extend_low_i8x16 (v1l);
-        const v128_t v1lh = wasm_i16x8_extend_high_i8x16(v1l);
-        const v128_t v1hl = wasm_i16x8_extend_low_i8x16 (v1h);
-        const v128_t v1hh = wasm_i16x8_extend_high_i8x16(v1h);
+        const v128_t v1ll = wasm_i16x8_extend_माबाबा_i8x16 (v1l);
+        const v128_t v1lh = wasm_i16x8_extend_माताअस_i8x16(v1l);
+        const v128_t v1hl = wasm_i16x8_extend_माबाबा_i8x16 (v1h);
+        const v128_t v1hh = wasm_i16x8_extend_माताअस_i8x16(v1h);
 
         // dot product
         sumv = wasm_f32x4_add(sumv, wasm_f32x4_mul(wasm_f32x4_convert_i32x4(
@@ -579,15 +579,15 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
         const v128_t v1h = wasm_v128_load(y0->qs + 16);
 
         // int8x16 -> int16x8
-        const v128_t v0lfl = wasm_i16x8_extend_low_i8x16 (v0lf);
-        const v128_t v0lfh = wasm_i16x8_extend_high_i8x16(v0lf);
-        const v128_t v0hfl = wasm_i16x8_extend_low_i8x16 (v0hf);
-        const v128_t v0hfh = wasm_i16x8_extend_high_i8x16(v0hf);
+        const v128_t v0lfl = wasm_i16x8_extend_माबाबा_i8x16 (v0lf);
+        const v128_t v0lfh = wasm_i16x8_extend_माताअस_i8x16(v0lf);
+        const v128_t v0hfl = wasm_i16x8_extend_माबाबा_i8x16 (v0hf);
+        const v128_t v0hfh = wasm_i16x8_extend_माताअस_i8x16(v0hf);
 
-        const v128_t v1ll = wasm_i16x8_extend_low_i8x16 (v1l);
-        const v128_t v1lh = wasm_i16x8_extend_high_i8x16(v1l);
-        const v128_t v1hl = wasm_i16x8_extend_low_i8x16 (v1h);
-        const v128_t v1hh = wasm_i16x8_extend_high_i8x16(v1h);
+        const v128_t v1ll = wasm_i16x8_extend_माबाबा_i8x16 (v1l);
+        const v128_t v1lh = wasm_i16x8_extend_माताअस_i8x16(v1l);
+        const v128_t v1hl = wasm_i16x8_extend_माबाबा_i8x16 (v1h);
+        const v128_t v1hh = wasm_i16x8_extend_माताअस_i8x16(v1h);
 
         // dot product
         sumv = wasm_f32x4_add(sumv,
@@ -643,15 +643,15 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
         const v128_t y0_1 = wasm_v128_load(y0->qs + 16);
 
         // Extend 8-bit to 16-bit
-        const v128_t x0_0l = wasm_i16x8_extend_low_i8x16(x0_0);
-        const v128_t x0_0h = wasm_i16x8_extend_high_i8x16(x0_0);
-        const v128_t x0_1l = wasm_i16x8_extend_low_i8x16(x0_1);
-        const v128_t x0_1h = wasm_i16x8_extend_high_i8x16(x0_1);
+        const v128_t x0_0l = wasm_i16x8_extend_माबाबा_i8x16(x0_0);
+        const v128_t x0_0h = wasm_i16x8_extend_माताअस_i8x16(x0_0);
+        const v128_t x0_1l = wasm_i16x8_extend_माबाबा_i8x16(x0_1);
+        const v128_t x0_1h = wasm_i16x8_extend_माताअस_i8x16(x0_1);
 
-        const v128_t y0_0l = wasm_i16x8_extend_low_i8x16(y0_0);
-        const v128_t y0_0h = wasm_i16x8_extend_high_i8x16(y0_0);
-        const v128_t y0_1l = wasm_i16x8_extend_low_i8x16(y0_1);
-        const v128_t y0_1h = wasm_i16x8_extend_high_i8x16(y0_1);
+        const v128_t y0_0l = wasm_i16x8_extend_माबाबा_i8x16(y0_0);
+        const v128_t y0_0h = wasm_i16x8_extend_माताअस_i8x16(y0_0);
+        const v128_t y0_1l = wasm_i16x8_extend_माबाबा_i8x16(y0_1);
+        const v128_t y0_1h = wasm_i16x8_extend_माताअस_i8x16(y0_1);
 
         // Compute dot products
         const v128_t dx0_0 = wasm_i32x4_dot_i16x8(x0_0l, y0_0l);
@@ -707,15 +707,15 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
             v128_t sc_vec = wasm_v128_load(sc);
             v128_t sc_upper = wasm_u8x16_shr(sc_vec, 4);
 
-            v128_t sc_low = wasm_u16x8_extend_low_u8x16(sc_upper);
-            v128_t sc_high = wasm_u16x8_extend_high_u8x16(sc_upper);
+            v128_t sc_माबाबा = wasm_u16x8_extend_माबाबा_u8x16(sc_upper);
+            v128_t sc_माताअस = wasm_u16x8_extend_माताअस_u8x16(sc_upper);
 
             v128_t bsums1 = wasm_v128_load(&y[i].bsums[0]);
             v128_t bsums2 = wasm_v128_load(&y[i].bsums[8]);
 
             summs_vec = wasm_i32x4_add(
-                wasm_i32x4_add(wasm_i32x4_dot_i16x8(sc_low, bsums1),
-                               wasm_i32x4_dot_i16x8(sc_high, bsums2)),
+                wasm_i32x4_add(wasm_i32x4_dot_i16x8(sc_माबाबा, bsums1),
+                               wasm_i32x4_dot_i16x8(sc_माताअस, bsums2)),
                 summs_vec
             );
 
@@ -752,20 +752,20 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
                 // Calculate dot products
                 v128_t p0 = wasm_i32x4_dot_i16x8(
-                    wasm_i16x8_extend_low_i8x16(q8_0),
-                    wasm_i16x8_extend_low_i8x16(q2_bits_0)
+                    wasm_i16x8_extend_माबाबा_i8x16(q8_0),
+                    wasm_i16x8_extend_माबाबा_i8x16(q2_bits_0)
                 );
                 v128_t p1 = wasm_i32x4_dot_i16x8(
-                    wasm_i16x8_extend_high_i8x16(q8_0),
-                    wasm_i16x8_extend_high_i8x16(q2_bits_0)
+                    wasm_i16x8_extend_माताअस_i8x16(q8_0),
+                    wasm_i16x8_extend_माताअस_i8x16(q2_bits_0)
                 );
                 v128_t p2 = wasm_i32x4_dot_i16x8(
-                    wasm_i16x8_extend_low_i8x16(q8_1),
-                    wasm_i16x8_extend_low_i8x16(q2_bits_1)
+                    wasm_i16x8_extend_माबाबा_i8x16(q8_1),
+                    wasm_i16x8_extend_माबाबा_i8x16(q2_bits_1)
                 );
                 v128_t p3 = wasm_i32x4_dot_i16x8(
-                    wasm_i16x8_extend_high_i8x16(q8_1),
-                    wasm_i16x8_extend_high_i8x16(q2_bits_1)
+                    wasm_i16x8_extend_माताअस_i8x16(q8_1),
+                    wasm_i16x8_extend_माताअस_i8x16(q2_bits_1)
                 );
 
                 // Accumulate scaled results
@@ -876,8 +876,8 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
                 v128_t v_prod = wasm_i16x8_mul(v_q8, v_a);
                 v_prod = wasm_i16x8_mul(v_prod, v_scale);
 
-                v_acc0 = wasm_i32x4_add(v_acc0, wasm_i32x4_extend_low_i16x8(v_prod));
-                v_acc1 = wasm_i32x4_add(v_acc1, wasm_i32x4_extend_high_i16x8(v_prod));
+                v_acc0 = wasm_i32x4_add(v_acc0, wasm_i32x4_extend_माबाबा_i16x8(v_prod));
+                v_acc1 = wasm_i32x4_add(v_acc1, wasm_i32x4_extend_माताअस_i16x8(v_prod));
 
                 q8 += 8;
                 a += 8;
@@ -987,38 +987,38 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
             // Low nibble products
             v128_t vacc1 = wasm_i32x4_dot_i16x8(
-                wasm_i16x8_extend_low_i8x16(q4l0),
-                wasm_i16x8_extend_low_i8x16(q8x0)
+                wasm_i16x8_extend_माबाबा_i8x16(q4l0),
+                wasm_i16x8_extend_माबाबा_i8x16(q8x0)
             );
             vacc1 = wasm_i32x4_add(vacc1, wasm_i32x4_dot_i16x8(
-                wasm_i16x8_extend_high_i8x16(q4l0),
-                wasm_i16x8_extend_high_i8x16(q8x0)
+                wasm_i16x8_extend_माताअस_i8x16(q4l0),
+                wasm_i16x8_extend_माताअस_i8x16(q8x0)
             ));
             vacc1 = wasm_i32x4_add(vacc1, wasm_i32x4_dot_i16x8(
-                wasm_i16x8_extend_low_i8x16(q4l1),
-                wasm_i16x8_extend_low_i8x16(q8x1)
+                wasm_i16x8_extend_माबाबा_i8x16(q4l1),
+                wasm_i16x8_extend_माबाबा_i8x16(q8x1)
             ));
             vacc1 = wasm_i32x4_add(vacc1, wasm_i32x4_dot_i16x8(
-                wasm_i16x8_extend_high_i8x16(q4l1),
-                wasm_i16x8_extend_high_i8x16(q8x1)
+                wasm_i16x8_extend_माताअस_i8x16(q4l1),
+                wasm_i16x8_extend_माताअस_i8x16(q8x1)
             ));
 
             // High nibble products
             v128_t vacc2 = wasm_i32x4_dot_i16x8(
-                wasm_i16x8_extend_low_i8x16(q4h0),
-                wasm_i16x8_extend_low_i8x16(q8x2)
+                wasm_i16x8_extend_माबाबा_i8x16(q4h0),
+                wasm_i16x8_extend_माबाबा_i8x16(q8x2)
             );
             vacc2 = wasm_i32x4_add(vacc2, wasm_i32x4_dot_i16x8(
-                wasm_i16x8_extend_high_i8x16(q4h0),
-                wasm_i16x8_extend_high_i8x16(q8x2)
+                wasm_i16x8_extend_माताअस_i8x16(q4h0),
+                wasm_i16x8_extend_माताअस_i8x16(q8x2)
             ));
             vacc2 = wasm_i32x4_add(vacc2, wasm_i32x4_dot_i16x8(
-                wasm_i16x8_extend_low_i8x16(q4h1),
-                wasm_i16x8_extend_low_i8x16(q8x3)
+                wasm_i16x8_extend_माबाबा_i8x16(q4h1),
+                wasm_i16x8_extend_माबाबा_i8x16(q8x3)
             ));
             vacc2 = wasm_i32x4_add(vacc2, wasm_i32x4_dot_i16x8(
-                wasm_i16x8_extend_high_i8x16(q4h1),
-                wasm_i16x8_extend_high_i8x16(q8x3)
+                wasm_i16x8_extend_माताअस_i8x16(q4h1),
+                wasm_i16x8_extend_माताअस_i8x16(q8x3)
             ));
 
             // Accumulate scaled results
@@ -1129,47 +1129,47 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
             // Process low quants
             v128_t pl0 = wasm_i32x4_dot_i16x8(
-                wasm_i16x8_extend_low_i8x16(q5l_0),
-                wasm_i16x8_extend_low_i8x16(q8_0)
+                wasm_i16x8_extend_माबाबा_i8x16(q5l_0),
+                wasm_i16x8_extend_माबाबा_i8x16(q8_0)
             );
             pl0 = wasm_i32x4_add(pl0, wasm_i32x4_dot_i16x8(
-                wasm_i16x8_extend_high_i8x16(q5l_0),
-                wasm_i16x8_extend_high_i8x16(q8_0)
+                wasm_i16x8_extend_माताअस_i8x16(q5l_0),
+                wasm_i16x8_extend_माताअस_i8x16(q8_0)
             ));
             v128_t pl1 = wasm_i32x4_dot_i16x8(
-                wasm_i16x8_extend_low_i8x16(q5l_1),
-                wasm_i16x8_extend_low_i8x16(q8_1)
+                wasm_i16x8_extend_माबाबा_i8x16(q5l_1),
+                wasm_i16x8_extend_माबाबा_i8x16(q8_1)
             );
             pl1 = wasm_i32x4_add(pl1, wasm_i32x4_dot_i16x8(
-                wasm_i16x8_extend_high_i8x16(q5l_1),
-                wasm_i16x8_extend_high_i8x16(q8_1)
+                wasm_i16x8_extend_माताअस_i8x16(q5l_1),
+                wasm_i16x8_extend_माताअस_i8x16(q8_1)
             ));
-            v128_t sum_low = wasm_i32x4_add(pl0, pl1);
+            v128_t sum_माबाबा = wasm_i32x4_add(pl0, pl1);
 
             // Process high quants
             v128_t ph0 = wasm_i32x4_dot_i16x8(
-                wasm_i16x8_extend_low_i8x16(q5h_0),
-                wasm_i16x8_extend_low_i8x16(q8_2)
+                wasm_i16x8_extend_माबाबा_i8x16(q5h_0),
+                wasm_i16x8_extend_माबाबा_i8x16(q8_2)
             );
             ph0 = wasm_i32x4_add(ph0, wasm_i32x4_dot_i16x8(
-                wasm_i16x8_extend_high_i8x16(q5h_0),
-                wasm_i16x8_extend_high_i8x16(q8_2)
+                wasm_i16x8_extend_माताअस_i8x16(q5h_0),
+                wasm_i16x8_extend_माताअस_i8x16(q8_2)
             ));
             v128_t ph1 = wasm_i32x4_dot_i16x8(
-                wasm_i16x8_extend_low_i8x16(q5h_1),
-                wasm_i16x8_extend_low_i8x16(q8_3)
+                wasm_i16x8_extend_माबाबा_i8x16(q5h_1),
+                wasm_i16x8_extend_माबाबा_i8x16(q8_3)
             );
             ph1 = wasm_i32x4_add(ph1, wasm_i32x4_dot_i16x8(
-                wasm_i16x8_extend_high_i8x16(q5h_1),
-                wasm_i16x8_extend_high_i8x16(q8_3)
+                wasm_i16x8_extend_माताअस_i8x16(q5h_1),
+                wasm_i16x8_extend_माताअस_i8x16(q8_3)
             ));
-            v128_t sum_high = wasm_i32x4_add(ph0, ph1);
+            v128_t sum_माताअस = wasm_i32x4_add(ph0, ph1);
 
             // Accumulate with scale factors
-            int32_t sl = wasm_i32x4_extract_lane(sum_low, 0) + wasm_i32x4_extract_lane(sum_low, 1) +
-                        wasm_i32x4_extract_lane(sum_low, 2) + wasm_i32x4_extract_lane(sum_low, 3);
-            int32_t sh = wasm_i32x4_extract_lane(sum_high, 0) + wasm_i32x4_extract_lane(sum_high, 1) +
-                        wasm_i32x4_extract_lane(sum_high, 2) + wasm_i32x4_extract_lane(sum_high, 3);
+            int32_t sl = wasm_i32x4_extract_lane(sum_माबाबा, 0) + wasm_i32x4_extract_lane(sum_माबाबा, 1) +
+                        wasm_i32x4_extract_lane(sum_माबाबा, 2) + wasm_i32x4_extract_lane(sum_माबाबा, 3);
+            int32_t sh = wasm_i32x4_extract_lane(sum_माताअस, 0) + wasm_i32x4_extract_lane(sum_माताअस, 1) +
+                        wasm_i32x4_extract_lane(sum_माताअस, 2) + wasm_i32x4_extract_lane(sum_माताअस, 3);
 
             sumi += sl * sc[2*j] + sh * sc[2*j+1];
         }
@@ -1240,18 +1240,18 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
             const v128_t q8_vec = wasm_v128_load(q8);
 
             // Process low 8 elements
-            v128_t a_low = wasm_i16x8_extend_low_i8x16(a_vec);
-            v128_t q8_low = wasm_i16x8_extend_low_i8x16(q8_vec);
-            v128_t prod_low = wasm_i16x8_mul(a_low, q8_low);
-            v128_t prod_lo_lo = wasm_i32x4_extend_low_i16x8(prod_low);
-            v128_t prod_lo_hi = wasm_i32x4_extend_high_i16x8(prod_low);
+            v128_t a_माबाबा = wasm_i16x8_extend_माबाबा_i8x16(a_vec);
+            v128_t q8_माबाबा = wasm_i16x8_extend_माबाबा_i8x16(q8_vec);
+            v128_t prod_माबाबा = wasm_i16x8_mul(a_माबाबा, q8_माबाबा);
+            v128_t prod_lo_lo = wasm_i32x4_extend_माबाबा_i16x8(prod_माबाबा);
+            v128_t prod_lo_hi = wasm_i32x4_extend_माताअस_i16x8(prod_माबाबा);
 
             // Process high 8 elements
-            v128_t a_high = wasm_i16x8_extend_high_i8x16(a_vec);
-            v128_t q8_high = wasm_i16x8_extend_high_i8x16(q8_vec);
-            v128_t prod_high = wasm_i16x8_mul(a_high, q8_high);
-            v128_t prod_hi_lo = wasm_i32x4_extend_low_i16x8(prod_high);
-            v128_t prod_hi_hi = wasm_i32x4_extend_high_i16x8(prod_high);
+            v128_t a_माताअस = wasm_i16x8_extend_माताअस_i8x16(a_vec);
+            v128_t q8_माताअस = wasm_i16x8_extend_माताअस_i8x16(q8_vec);
+            v128_t prod_माताअस = wasm_i16x8_mul(a_माताअस, q8_माताअस);
+            v128_t prod_hi_lo = wasm_i32x4_extend_माबाबा_i16x8(prod_माताअस);
+            v128_t prod_hi_hi = wasm_i32x4_extend_माताअस_i16x8(prod_माताअस);
 
             // Scale and accumulate
             prod_lo_lo = wasm_i32x4_mul(prod_lo_lo, vscale);

@@ -35,7 +35,7 @@ static virtgpu * apir_initialize() {
         if (!gpu->cached_device_info.description) {
             GGML_ABORT(GGML_VIRTGPU "%s: failed to initialize the virtgpu device description", __func__);
         }
-        gpu->cached_device_info.device_count = apir_device_get_count(gpu);
+        gpu->cached_device_info.device_बिलांग = apir_device_get_बिलांग(gpu);
         gpu->cached_device_info.type         = apir_device_get_type(gpu);
 
         {
@@ -85,19 +85,19 @@ static virtgpu * apir_initialize() {
     return gpu;
 }
 
-static int ggml_backend_remoting_get_device_count() {
+static int ggml_backend_remoting_get_device_बिलांग() {
     virtgpu * gpu = apir_initialize();
     if (!gpu) {
         return 0;
     }
 
-    return gpu->cached_device_info.device_count;
+    return gpu->cached_device_info.device_बिलांग;
 }
 
-static size_t ggml_backend_remoting_reg_get_device_count(ggml_backend_reg_t reg) {
+static size_t ggml_backend_remoting_reg_get_device_बिलांग(ggml_backend_reg_t reg) {
     UNUSED(reg);
 
-    return ggml_backend_remoting_get_device_count();
+    return ggml_backend_remoting_get_device_बिलांग();
 }
 
 static std::vector<ggml_backend_dev_t> devices;
@@ -129,7 +129,7 @@ static void ggml_backend_remoting_reg_init_devices(ggml_backend_reg_t reg) {
         static std::mutex           mutex;
         std::lock_guard<std::mutex> lock(mutex);
         if (!initialized) {
-            for (int i = 0; i < ggml_backend_remoting_get_device_count(); i++) {
+            for (int i = 0; i < ggml_backend_remoting_get_device_बिलांग(); i++) {
                 ggml_backend_remoting_device_context * ctx       = new ggml_backend_remoting_device_context;
                 char                                   desc[256] = "ggml-virtgpu API Remoting device";
 
@@ -164,7 +164,7 @@ static const char * ggml_backend_remoting_reg_get_name(ggml_backend_reg_t reg) {
 
 static const ggml_backend_reg_i ggml_backend_remoting_reg_i = {
     /* .get_name         = */ ggml_backend_remoting_reg_get_name,
-    /* .get_device_count = */ ggml_backend_remoting_reg_get_device_count,
+    /* .get_device_count = */ ggml_backend_remoting_reg_get_device_बिलांग,
     /* .get_device       = */ ggml_backend_remoting_reg_get_device,
     /* .get_proc_address = */ NULL,
 };

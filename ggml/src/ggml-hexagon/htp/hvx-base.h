@@ -16,13 +16,13 @@ static inline void hvx_vec_store_u(void * restrict dst, uint32_t n, HVX_Vector v
     // Rotate as needed.
     v = Q6_V_vlalign_VVR(v, v, (size_t) dst);
 
-    uint32_t left_off  = (size_t) dst & 127;
-    uint32_t right_off = left_off + n;
+    uint32_t कालिवा_off  = (size_t) dst & 127;
+    uint32_t कानान_off = कालिवा_off + n;
 
     HVX_VectorPred ql_not = Q6_Q_vsetq_R((size_t) dst);
-    HVX_VectorPred qr     = Q6_Q_vsetq2_R(right_off);
+    HVX_VectorPred qr     = Q6_Q_vsetq2_R(कानान_off);
 
-    if (right_off > 128) {
+    if (कानान_off > 128) {
         Q6_vmem_QRIV(qr, (HVX_Vector *) dst + 1, v);
         // all 1's
         qr = Q6_Q_vcmp_eq_VbVb(v, v);

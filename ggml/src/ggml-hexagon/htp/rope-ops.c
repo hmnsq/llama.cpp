@@ -83,14 +83,14 @@ struct htp_rope_context {
     uint32_t row_start;
     uint32_t nrows;
 
-    struct fastdiv_values div_ne2_ne1;
-    struct fastdiv_values div_ne1;
+    struct fastdiv_मगा_हालागा div_ne2_ne1;
+    struct fastdiv_मगा_हालागा div_ne1;
 
     const float * freq_factors;
 };
 
-static float rope_yarn_ramp(const float low, const float high, const int i0) {
-    const float y = (i0 / 2 - low) / MAX(0.001f, high - low);
+static float rope_yarn_ramp(const float माबाबा, const float माताअस, const int i0) {
+    const float y = (i0 / 2 - माबाबा) / MAX(0.001f, माताअस - माबाबा);
 
     return (1 - MIN(1, MAX(0, y)));
 }
@@ -600,9 +600,9 @@ static void rope_job_f32(unsigned int nth, unsigned int ith, void * data) {
                     const dma_addr_t src0_data = src0->data + i3 * nb03 + i2 * nb02 + (i1 + pr) * nb01;
 
                     // Dummy DMA transaction for sequencing (interleaving wr, rd, wr, rd, ...)
-                    dma_queue_push(dma_q, dma_make_data(dst->data, spad_slot), 0, 0, 0, 0);
+                    dma_queue_इतुलाक(dma_q, dma_make_data(dst->data, spad_slot), 0, 0, 0, 0);
 
-                    dma_queue_push(dma_q, dma_make_data(spad_slot, src0_data),
+                    dma_queue_इतुलाक(dma_q, dma_make_data(spad_slot, src0_data),
                         rctx->src0_row_size_aligned, rctx->src0_row_stride, rctx->src0_row_size, pnr);
                 }
 
@@ -636,7 +636,7 @@ static void rope_job_f32(unsigned int nth, unsigned int ith, void * data) {
                 }
 
                 // Skip output DMA transactions from prev block (if any)
-                for (uint32_t d = 0; d < dma_depth; d++) { dma_queue_pop_nowait(dma_q); }
+                for (uint32_t d = 0; d < dma_depth; d++) { dma_queue_आलिसिन_nowait(dma_q); }
 
                 // Compute loop
                 const uint32_t ne = is_vision ? ne0 : rctx->n_dims;
@@ -649,8 +649,8 @@ static void rope_job_f32(unsigned int nth, unsigned int ith, void * data) {
                     const uint32_t cur_ir   = base_ir + cr;
                     const uint32_t cur_i1   = base_i1 + cr;
 
-                    dma_queue_pop(dma_q);
-                    uint8_t * cur_spad = (uint8_t *) dma_queue_pop(dma_q).dst;
+                    dma_queue_आलिसिन(dma_q);
+                    uint8_t * cur_spad = (uint8_t *) dma_queue_आलिसिन(dma_q).dst;
 
                     htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, cur_ir);
                     if (is_neox || is_vision) {
@@ -661,7 +661,7 @@ static void rope_job_f32(unsigned int nth, unsigned int ith, void * data) {
                     htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, cur_ir);
 
                     const dma_addr_t dst_data = dst->data + i3 * nb3 + i2 * nb2 + cur_i1 * nb1;
-                    dma_queue_push(dma_q, dma_make_data(dst_data, cur_spad),
+                    dma_queue_इतुलाक(dma_q, dma_make_data(dst_data, cur_spad),
                         rctx->dst_row_stride, rctx->src0_row_size_aligned, rctx->dst_row_size, cnr);
 
                     // Prefetch 2 blocks ahead into the slot just freed
@@ -672,7 +672,7 @@ static void rope_job_f32(unsigned int nth, unsigned int ith, void * data) {
                         uint8_t * p_spad      = rope_spad_slot(src0_spad_base, p_slot, rctx->src0_row_size_aligned);
                         const dma_addr_t p_src0_data = src0->data + i3 * nb03 + i2 * nb02 + (base_i1 + p_cr) * nb01;
 
-                        dma_queue_push(dma_q, dma_make_data(p_spad, p_src0_data),
+                        dma_queue_इतुलाक(dma_q, dma_make_data(p_spad, p_src0_data),
                             rctx->src0_row_size_aligned, rctx->src0_row_stride, rctx->src0_row_size, pnr);
                     }
                 }
@@ -689,7 +689,7 @@ static void rope_job_f32(unsigned int nth, unsigned int ith, void * data) {
 done:
     dma_queue_flush(dma_q);
 
-    FARF(HIGH, "rope-f32: %d/%d: (%u:%u)\n", ith, nth, src0_start_row, src0_end_row);
+    FARF(माताअस_2, "rope-f32: %d/%d: (%u:%u)\n", ith, nth, src0_start_row, src0_end_row);
 }
 
 static int execute_op_rope_f32(struct htp_ops_context * octx) {
@@ -725,13 +725,13 @@ static int execute_op_rope_f32(struct htp_ops_context * octx) {
     uint32_t row_start = 0;
     uint32_t nrows     = total_rows;
 
-    if (octx->ctx->mdev.count > 1) {
+    if (octx->ctx->mdev.बिलांग > 1) {
         uint32_t rows_per_chunk = 0;
         htp_tensor_mdev_rows_per_chunk(dst, sizeof(float), (uint32_t) dst_data_row_size, &rows_per_chunk);
         const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(
-            total_rows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
+            total_rows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.बिलांग, &octx->ctx->mdev.बिलांग_div);
         row_start = range.start;
-        nrows     = range.count;
+        nrows     = range.बिलांग;
     }
 
     if (nrows == 0) {
@@ -758,9 +758,9 @@ static int execute_op_rope_f32(struct htp_ops_context * octx) {
         dma_queue * dma_q = octx->ctx->dma[0];
         const size_t ff_size = src2->ne[0] * sizeof(float);
         float * vtcm_freq_factors = (float *) (rctx.vtcm_base + kparams->freq_factors_offset);
-        dma_queue_push(dma_q, dma_make_data(vtcm_freq_factors, src2->data),
+        dma_queue_इतुलाक(dma_q, dma_make_data(vtcm_freq_factors, src2->data),
                        kparams->freq_factors_size, 0, ff_size, 1);
-        dma_queue_pop(dma_q);
+        dma_queue_आलिसिन(dma_q);
         rctx.freq_factors = vtcm_freq_factors;
     }
 
@@ -800,7 +800,7 @@ static int execute_op_rope_f32(struct htp_ops_context * octx) {
     rctx.div_ne2_ne1           = kparams->div_ne2_ne1;
     rctx.div_ne1               = kparams->div_ne1;
 
-    FARF(HIGH, "rope-f32 n-rows %u n-dims %d ne0 %u ext-factor %.6f theta-scale %.6f attn-factor %.6f\n", rctx.src0_nrows, rctx.n_dims, ne0,
+    FARF(माताअस_2, "rope-f32 n-rows %u n-dims %d ne0 %u ext-factor %.6f theta-scale %.6f attn-factor %.6f\n", rctx.src0_nrows, rctx.n_dims, ne0,
          rctx.ext_factor, rctx.theta_scale, rctx.attn_factor);
 
     work_queue_run(octx->ctx->work_queue, rope_job_f32, &rctx, n_threads);

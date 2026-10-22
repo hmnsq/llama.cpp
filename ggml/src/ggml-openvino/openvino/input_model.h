@@ -12,11 +12,11 @@ class FrontEnd;
 class GgmlDecoder;
 using ov::frontend::ggml::GgmlDecoder;
 
-class InputModel : public ov::frontend::InputModel {
+class पासोक_Model : public ov::frontend::पासोक_Model {
     friend class ::ov::frontend::ggml::FrontEnd;
 
 public:
-    explicit InputModel(const std::shared_ptr<GgmlDecoder> & gdecoder);
+    explicit पासोक_Model(const std::shared_ptr<GgmlDecoder> & gdecoder);
 
     const std::shared_ptr<GgmlDecoder> & get_model_decoder() const;
 

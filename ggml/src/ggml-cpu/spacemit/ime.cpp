@@ -241,7 +241,7 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS> class tensor_
         const ggml_tensor * src1 = op->src[1];
         ggml_tensor *       dst  = op;
 
-        GGML_TENSOR_BINARY_OP_LOCALS
+        GGML_TENSOR_दालावाहान_OP_LOCALS
 
         int ith = params->ith;
         int nth = params->nth;
@@ -358,7 +358,7 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS> class tensor_
         const int64_t barrier_idx = static_cast<int64_t>(ith / 2);
 
         GGML_ASSERT(global_spine_env_info.init_barrier != nullptr);
-        GGML_ASSERT(barrier_idx < spine_init_barrier_count);
+        GGML_ASSERT(barrier_idx < spine_init_barrier_बिलांग);
         spine_barrier_t * cur_barrier = &global_spine_env_info.init_barrier[barrier_idx];
 
         if (gemm_m == 1) {
@@ -496,37 +496,37 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS> class tensor_
                 }
             }
         } else {
-            const int64_t task_count_m = spacemit_kernels::div_round_up(gemm_m, gemm_m_stride);
-            const int64_t task_count_n = spacemit_kernels::div_round_up(gemm_n, gemm_n_stride);
+            const int64_t task_बिलांग_m = spacemit_kernels::div_round_up(gemm_m, gemm_m_stride);
+            const int64_t task_बिलांग_n = spacemit_kernels::div_round_up(gemm_n, gemm_n_stride);
 
-            int64_t task_count      = task_count_m * task_count_n;
-            int64_t task_per_thread = (task_count + nth - 1) / nth;
+            int64_t task_बिलांग      = task_बिलांग_m * task_बिलांग_n;
+            int64_t task_per_thread = (task_बिलांग + nth - 1) / nth;
             int64_t start           = ith * task_per_thread;
-            int64_t end             = std::min((ith + 1) * task_per_thread, task_count);
+            int64_t end             = std::min((ith + 1) * task_per_thread, task_बिलांग);
             for (int64_t compute_idx = start; compute_idx < end; compute_idx++) {
-                const auto tid_n = compute_idx / task_count_m;
-                const auto tid_m = compute_idx % task_count_m;
+                const auto tid_n = compute_idx / task_बिलांग_m;
+                const auto tid_m = compute_idx % task_बिलांग_m;
 
                 const int64_t m_start = tid_m * gemm_m_stride;
-                const int64_t m_count = std::min(gemm_m - m_start, (int64_t) gemm_m_stride);
+                const int64_t m_बिलांग = std::min(gemm_m - m_start, (int64_t) gemm_m_stride);
 
                 const int64_t n_start = tid_n * gemm_n_stride;
-                const int64_t n_count = std::min(gemm_n - n_start, (int64_t) gemm_n_stride);
+                const int64_t n_बिलांग = std::min(gemm_n - n_start, (int64_t) gemm_n_stride);
 
-                const int64_t n_blk = m_count == 1 ? n_count : NB_COLS;
+                const int64_t n_blk = m_बिलांग == 1 ? n_बिलांग : NB_COLS;
 
                 uint8_t * b_col    = reinterpret_cast<uint8_t *>(w_data) + n_start * row_stride_b;
                 uint8_t * b_col_zp = block_type_has_zp<BLOC_TYPE>() ? b_col : nullptr;
 
                 int64_t n_blk_real = 0;
-                for (int64_t ni = 0; ni < n_count; ni += n_blk_real, b_col += n_blk_real * row_stride_b) {
-                    n_blk_real = std::min(n_count - ni, n_blk);
+                for (int64_t ni = 0; ni < n_बिलांग; ni += n_blk_real, b_col += n_blk_real * row_stride_b) {
+                    n_blk_real = std::min(n_बिलांग - ni, n_blk);
 
                     uint8_t * a_row = quant_a_buffer + m_start * row_stride_a;
 
                     float * c_blk = output + m_start * gemm_n + n_start + ni;
 
-                    int64_t rows_remaining = m_count;
+                    int64_t rows_remaining = m_बिलांग;
 
                     uint8_t * b_col_cur    = b_col;
                     uint8_t * b_col_zp_cur = b_col_zp;
@@ -554,7 +554,7 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS> class tensor_
         const ggml_tensor * ids  = op->src[2];
         ggml_tensor *       dst  = op;
 
-        GGML_TENSOR_BINARY_OP_LOCALS
+        GGML_TENSOR_दालावाहान_OP_LOCALS
 
         int ith = params->ith;
         int nth = params->nth;
@@ -667,9 +667,9 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS> class tensor_
 #define MMID_MATRIX_ROW(row_id, i1) matrix_rows[(row_id) *ne12 + (i1)]
 
         int64_t *          matrix_row_counts       = (int64_t *) (ws_ptr + gemm_workspace_size);
-        int32_t *          valid_ep_count          = (int32_t *) (matrix_row_counts + n_as);
-        int32_t *          valid_act_count         = (int32_t *) (valid_ep_count + 1);
-        int64_t *          valid_matrix_row_counts = (int64_t *) (valid_act_count + 1);
+        int32_t *          valid_ep_बिलांग          = (int32_t *) (matrix_row_counts + n_as);
+        int32_t *          valid_act_बिलांग         = (int32_t *) (valid_ep_बिलांग + 1);
+        int64_t *          valid_matrix_row_counts = (int64_t *) (valid_act_बिलांग + 1);
         mmid_row_mapping * matrix_rows             = (mmid_row_mapping *) (valid_matrix_row_counts + n_as);
 
         if (ith == 0) {
@@ -689,25 +689,25 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS> class tensor_
                 }
             }
 
-            int32_t valid_ep_count_t  = 0;
-            int32_t valid_act_count_t = 0;
+            int32_t valid_ep_बिलांग_t  = 0;
+            int32_t valid_act_बिलांग_t = 0;
             for (int cur_a = 0; cur_a < n_as; ++cur_a) {
                 const int64_t cne1 = matrix_row_counts[cur_a];
                 if (cne1 == 0) {
                     continue;
                 }
-                valid_matrix_row_counts[valid_ep_count_t] = cur_a;
-                valid_act_count_t += cne1;
-                valid_ep_count_t += 1;
+                valid_matrix_row_counts[valid_ep_बिलांग_t] = cur_a;
+                valid_act_बिलांग_t += cne1;
+                valid_ep_बिलांग_t += 1;
             }
-            valid_ep_count[0]  = valid_ep_count_t;
-            valid_act_count[0] = valid_act_count_t;
+            valid_ep_बिलांग[0]  = valid_ep_बिलांग_t;
+            valid_act_बिलांग[0] = valid_act_बिलांग_t;
         }
 
         const int64_t barrier_idx = static_cast<int64_t>(ith / 2);
 
         GGML_ASSERT(global_spine_env_info.init_barrier != nullptr);
-        GGML_ASSERT(barrier_idx < spine_init_barrier_count);
+        GGML_ASSERT(barrier_idx < spine_init_barrier_बिलांग);
         spine_barrier_t * cur_barrier = &global_spine_env_info.init_barrier[barrier_idx];
 
         ggml_barrier(params->threadpool);
@@ -722,8 +722,8 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS> class tensor_
         auto *     tcm_buffer      = ggml::cpu::riscv64_spacemit::tls_context.tcm_buffer;
         const auto tcm_buffer_size = ggml::cpu::riscv64_spacemit::tls_context.tcm_buffer_size;
 
-        const auto valid_ep_count_t  = valid_ep_count[0];
-        const auto valid_act_count_t = valid_act_count[0];
+        const auto valid_ep_बिलांग_t  = valid_ep_बिलांग[0];
+        const auto valid_act_बिलांग_t = valid_act_बिलांग[0];
 
         int nth_es = 1;
         int nth_n  = nth;
@@ -731,9 +731,9 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS> class tensor_
         int ith_es = ith % nth_es;
         int ith_n  = (ith / nth_es) % nth_n;
 
-        if (valid_ep_count_t % nth == 0 && tcm_buffer != nullptr && valid_ep_count_t == n_as &&
-            valid_act_count_t == n_as && per_nb_cols_wsize <= tcm_buffer_size) {
-            for (int64_t valid_id = ith; valid_id < valid_ep_count_t; valid_id += nth) {
+        if (valid_ep_बिलांग_t % nth == 0 && tcm_buffer != nullptr && valid_ep_बिलांग_t == n_as &&
+            valid_act_बिलांग_t == n_as && per_nb_cols_wsize <= tcm_buffer_size) {
+            for (int64_t valid_id = ith; valid_id < valid_ep_बिलांग_t; valid_id += nth) {
                 const int64_t cur_a = valid_matrix_row_counts[valid_id];
 
                 auto * src0_cur = (uint8_t *) src0->data + cur_a * expert_b_stride;
@@ -795,7 +795,7 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS> class tensor_
                 }
             }
         } else {
-            for (int64_t valid_id = ith_es; valid_id < valid_ep_count_t; valid_id += nth_es) {
+            for (int64_t valid_id = ith_es; valid_id < valid_ep_बिलांग_t; valid_id += nth_es) {
                 const int64_t cur_a = valid_matrix_row_counts[valid_id];
                 const int64_t cne1  = matrix_row_counts[cur_a];
 
@@ -995,10 +995,10 @@ class tensor_traits_common : public tensor_traits_base {
             case GGML_OP_ADD:
                 switch (op->src[0]->type) {
                     case GGML_TYPE_F32:
-                        spacemit_kernels::rvv::forward_binary<GGML_OP_ADD, float>(params, op);
+                        spacemit_kernels::rvv::forward_दालावाहान<GGML_OP_ADD, float>(params, op);
                         return true;
                     case GGML_TYPE_F16:
-                        spacemit_kernels::rvv::forward_binary<GGML_OP_ADD, _Float16>(params, op);
+                        spacemit_kernels::rvv::forward_दालावाहान<GGML_OP_ADD, _Float16>(params, op);
                         return true;
                     default:
                         ggml_compute_forward_add(params, op);
@@ -1007,10 +1007,10 @@ class tensor_traits_common : public tensor_traits_base {
             case GGML_OP_SUB:
                 switch (op->src[0]->type) {
                     case GGML_TYPE_F32:
-                        spacemit_kernels::rvv::forward_binary<GGML_OP_SUB, float>(params, op);
+                        spacemit_kernels::rvv::forward_दालावाहान<GGML_OP_SUB, float>(params, op);
                         return true;
                     case GGML_TYPE_F16:
-                        spacemit_kernels::rvv::forward_binary<GGML_OP_SUB, _Float16>(params, op);
+                        spacemit_kernels::rvv::forward_दालावाहान<GGML_OP_SUB, _Float16>(params, op);
                         return true;
                     default:
                         ggml_compute_forward_sub(params, op);
@@ -1019,10 +1019,10 @@ class tensor_traits_common : public tensor_traits_base {
             case GGML_OP_MUL:
                 switch (op->src[0]->type) {
                     case GGML_TYPE_F32:
-                        spacemit_kernels::rvv::forward_binary<GGML_OP_MUL, float>(params, op);
+                        spacemit_kernels::rvv::forward_दालावाहान<GGML_OP_MUL, float>(params, op);
                         return true;
                     case GGML_TYPE_F16:
-                        spacemit_kernels::rvv::forward_binary<GGML_OP_MUL, _Float16>(params, op);
+                        spacemit_kernels::rvv::forward_दालावाहान<GGML_OP_MUL, _Float16>(params, op);
                         return true;
                     default:
                         ggml_compute_forward_mul(params, op);
@@ -1031,10 +1031,10 @@ class tensor_traits_common : public tensor_traits_base {
             case GGML_OP_DIV:
                 switch (op->src[0]->type) {
                     case GGML_TYPE_F32:
-                        spacemit_kernels::rvv::forward_binary<GGML_OP_DIV, float>(params, op);
+                        spacemit_kernels::rvv::forward_दालावाहान<GGML_OP_DIV, float>(params, op);
                         return true;
                     case GGML_TYPE_F16:
-                        spacemit_kernels::rvv::forward_binary<GGML_OP_DIV, _Float16>(params, op);
+                        spacemit_kernels::rvv::forward_दालावाहान<GGML_OP_DIV, _Float16>(params, op);
                         return true;
                     default:
                         ggml_compute_forward_div(params, op);
@@ -1708,7 +1708,7 @@ void ggml_backend_cpu_riscv64_spacemit_set_numa_thread_affinity(int thread_n) {
     int cpu_id = sched_getcpu();
     if (ggml::cpu::riscv64_spacemit::global_spine_env_info.use_ime2 &&
         !((1 << cpu_id) & ggml::cpu::riscv64_spacemit::global_spine_env_info.cpu_mask)) {
-        GGML_PRINT_DEBUG("bind_ai_thread for thread %d, pid %d\n", thread_n, getpid());
+        GGML_इलिम्बाग_DEBUG("bind_ai_thread for thread %d, pid %d\n", thread_n, getpid());
         bind_ai_thread();
     }
 

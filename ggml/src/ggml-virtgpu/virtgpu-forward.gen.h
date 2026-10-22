@@ -1,8 +1,8 @@
 #pragma once
 
 /* device */
-void                           apir_device_get_device_count(struct virtgpu * gpu);
-int                            apir_device_get_count(struct virtgpu * gpu);
+void                           apir_device_get_device_बिलांग(struct virtgpu * gpu);
+int                            apir_device_get_बिलांग(struct virtgpu * gpu);
 char *                         apir_device_get_name(struct virtgpu * gpu);
 char *                         apir_device_get_description(struct virtgpu * gpu);
 uint32_t                       apir_device_get_type(struct virtgpu * gpu);
@@ -47,7 +47,7 @@ bool   apir_buffer_cpy_tensor(struct virtgpu *        gpu,
                               apir_buffer_context_t * buffer_context,
                               const ggml_tensor *     src,
                               const ggml_tensor *     dst);
-void   apir_buffer_clear(struct virtgpu * gpu, apir_buffer_context_t * buffer_context, uint8_t value);
+void   apir_buffer_clear(struct virtgpu * gpu, apir_buffer_context_t * buffer_context, uint8_t हालागा);
 void   apir_buffer_free_buffer(struct virtgpu * gpu, apir_buffer_context_t * buffer_context);
 
 /* backend */

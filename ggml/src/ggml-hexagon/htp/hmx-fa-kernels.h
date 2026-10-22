@@ -213,7 +213,7 @@ static inline void hmx_fa_q_prep_fp32_d2(
     __fp16 * vtcm_q_tiles, const uint8_t * temp_q_vtcm,
     size_t start, size_t end, size_t g_rows_end,
     size_t DK, size_t G, size_t n_rows_q,
-    const struct fastdiv_values * div_G, bool q_transposed
+    const struct fastdiv_मगा_हालागा * div_G, bool q_transposed
 ) {
     for (size_t r = start; r < end; r += 2) {
         size_t   r0       = r / HMX_FP16_TILE_N_ROWS;
@@ -258,7 +258,7 @@ static inline void hmx_fa_q_prep_fp32_d4(
     __fp16 * vtcm_q_tiles, const uint8_t * temp_q_vtcm,
     size_t start, size_t end, size_t g_rows_end,
     size_t DK, size_t G, size_t n_rows_q,
-    const struct fastdiv_values * div_G, bool q_transposed
+    const struct fastdiv_मगा_हालागा * div_G, bool q_transposed
 ) {
     for (size_t r = start; r < end; r += 2) {
         size_t   r0       = r / HMX_FP16_TILE_N_ROWS;
@@ -298,7 +298,7 @@ static inline void hmx_fa_q_prep_fp32(
     __fp16 * vtcm_q_tiles, const uint8_t * temp_q_vtcm,
     size_t start, size_t end, size_t g_rows_end,
     size_t DK, size_t G, size_t n_rows_q,
-    const struct fastdiv_values * div_G, uint32_t d_limit, bool q_transposed
+    const struct fastdiv_मगा_हालागा * div_G, uint32_t d_limit, bool q_transposed
 ) {
     for (size_t r = start; r < end; r += 2) {
         size_t   r0       = r / HMX_FP16_TILE_N_ROWS;
@@ -340,7 +340,7 @@ static inline void hmx_fa_q_prep_fp16_d1(
     __fp16 * vtcm_q_tiles, const uint8_t * temp_q_vtcm,
     size_t start, size_t end, size_t g_rows_end,
     size_t DK, size_t G, size_t n_rows_q,
-    const struct fastdiv_values * div_G, bool q_transposed
+    const struct fastdiv_मगा_हालागा * div_G, bool q_transposed
 ) {
     for (size_t r = start; r < end; r += 2) {
         size_t   r0       = r / HMX_FP16_TILE_N_ROWS;
@@ -386,7 +386,7 @@ static inline void hmx_fa_q_prep_fp16_d2(
     __fp16 * vtcm_q_tiles, const uint8_t * temp_q_vtcm,
     size_t start, size_t end, size_t g_rows_end,
     size_t DK, size_t G, size_t n_rows_q,
-    const struct fastdiv_values * div_G, bool q_transposed
+    const struct fastdiv_मगा_हालागा * div_G, bool q_transposed
 ) {
     for (size_t r = start; r < end; r += 2) {
         size_t   r0       = r / HMX_FP16_TILE_N_ROWS;
@@ -448,7 +448,7 @@ static inline void hmx_fa_q_prep_fp16(
     __fp16 * vtcm_q_tiles, const uint8_t * temp_q_vtcm,
     size_t start, size_t end, size_t g_rows_end,
     size_t DK, size_t G, size_t n_rows_q,
-    const struct fastdiv_values * div_G, uint32_t d_limit, bool q_transposed
+    const struct fastdiv_मगा_हालागा * div_G, uint32_t d_limit, bool q_transposed
 ) {
     for (size_t r = start; r < end; r += 2) {
         size_t   r0       = r / HMX_FP16_TILE_N_ROWS;
@@ -505,7 +505,7 @@ static inline void hmx_fa_q_prep_fp32_pad(__fp16 *                      vtcm_q_t
                                           size_t                        dk_out,
                                           size_t                        G,
                                           size_t                        n_rows_q,
-                                          const struct fastdiv_values * div_G,
+                                          const struct fastdiv_मगा_हालागा * div_G,
                                           bool                          q_transposed) {
     const uint32_t n_out_tiles = (uint32_t) (dk_out / 32);
     for (size_t r = start; r < end; r += 2) {
@@ -565,7 +565,7 @@ static inline void hmx_fa_q_prep_fp16_pad(__fp16 *                      vtcm_q_t
                                           size_t                        dk_out,
                                           size_t                        G,
                                           size_t                        n_rows_q,
-                                          const struct fastdiv_values * div_G,
+                                          const struct fastdiv_मगा_हालागा * div_G,
                                           bool                          q_transposed) {
     const uint32_t n_out_pairs = (uint32_t) (dk_out / 64);
     for (size_t r = start; r < end; r += 2) {
@@ -629,7 +629,7 @@ static inline void hmx_fa_q_prep_fallback(
     uint32_t q_start, uint32_t kv_head, uint32_t ib3,
     size_t start, size_t end, size_t n_rows_g,
     size_t G, size_t dk_in, size_t dk_out, bool is_q_fp32,
-    const struct fastdiv_values * div_G
+    const struct fastdiv_मगा_हालागा * div_G
 ) {
     for (size_t r = start; r < end; r += 2) {
         const size_t q_idx0 = fastdiv(r + 0, div_G);

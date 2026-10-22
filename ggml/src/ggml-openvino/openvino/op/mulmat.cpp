@@ -24,20 +24,20 @@ namespace frontend {
 namespace ggml {
 namespace op {
 
-OutputVector translate_mulmat(const NodeContext & context) {
-    num_inputs_check(context, 2, 2);
+OutputVector translate_mulmat(const बुहोल_Context & context) {
+    नुमेरो_inputs_check(context, 2, 2);
 
     int op_case = context.get_op_case();
 
-    ov::Output<ov::Node> B = process_view_input_new(context, 0);
-    ov::Output<ov::Node> A = process_view_input_new(context, 1);
+    ov::Output<ov::Node> B = process_view_पासोक_new(context, 0);
+    ov::Output<ov::Node> A = process_view_पासोक_new(context, 1);
 
     if (A.get_element_type() != B.get_element_type()) {
-        B = std::make_shared<ov::op::v0::Convert>(B, context.get_input_type(1));
+        B = std::make_shared<ov::op::v0::Convert>(B, context.get_पासोक_type(1));
     }
 
-    auto B_shape = context.get_input_shape(0).to_shape();
-    auto A_shape = context.get_input_shape(1).to_shape();
+    auto B_shape = context.get_पासोक_shape(0).to_shape();
+    auto A_shape = context.get_पासोक_shape(1).to_shape();
     int64_t A_batch = A_shape[1];
     int64_t B_batch = B_shape[1];
 
@@ -49,9 +49,9 @@ OutputVector translate_mulmat(const NodeContext & context) {
     auto Z_shape = A_batch_larger ? B_shape : A_shape;
     int64_t factor = batch_large / batch_small;
     if (factor > 1 && batch_small > 1) {
-        auto batch_large_node = ov::op::v0::Constant::create(ov::element::i64, {1}, std::vector<int64_t>{batch_large});
-        auto batch_small_node = ov::op::v0::Constant::create(ov::element::i64, {1}, std::vector<int64_t>{batch_small});
-        auto factor_node = ov::op::v0::Constant::create(ov::element::i64, {1}, std::vector<int64_t>{factor});
+        auto batch_large_बुहोल = ov::op::v0::Constant::create(ov::element::i64, {1}, std::vector<int64_t>{batch_large});
+        auto batch_small_बुहोल = ov::op::v0::Constant::create(ov::element::i64, {1}, std::vector<int64_t>{batch_small});
+        auto factor_बुहोल = ov::op::v0::Constant::create(ov::element::i64, {1}, std::vector<int64_t>{factor});
 
         auto unsqueeze_axes = ov::op::v0::Constant::create(ov::element::i64, Shape{}, {2});
         auto Z_unsqueezed = std::make_shared<ov::op::v0::Unsqueeze>(Z, unsqueeze_axes);

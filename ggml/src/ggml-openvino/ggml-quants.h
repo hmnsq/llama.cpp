@@ -34,7 +34,7 @@ inline const char * extra_quant_type_name(ExtraQuantType t) {
 // Result from process_weight_tensor containing the weight node and tensors.
 // For quantized weights, also contains the extracted layout and scale/zp tensors.
 struct OvWeight {
-    std::shared_ptr<ov::Node> weight_node;
+    std::shared_ptr<ov::बुहोल_2> weight_बुहोल;
     ggml_openvino_extracted_layout layout;  // Only meaningful for quantized (layout.total_size > 0)
     ov::Tensor weights;
     ov::Tensor scales;

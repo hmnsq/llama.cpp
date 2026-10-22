@@ -14,7 +14,7 @@ class FrontEnd {
 public:
     FrontEnd();
 
-    static std::shared_ptr<Model> convert(const InputModel::Ptr & model, bool naive = false);
+    static std::shared_ptr<Model> convert(const पासोक_Model::Ptr & model, bool naive = false);
 };
 
 }  // namespace ggml

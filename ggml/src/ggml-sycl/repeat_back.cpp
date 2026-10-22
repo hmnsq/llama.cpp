@@ -33,17 +33,17 @@ void ggml_sycl_op_repeat_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst
 
     const size_t  total      = (size_t) ne0 * ne1 * ne2 * ne3;
     constexpr int BLOCK_SIZE = 256;
-    const int     num_blocks = (total + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    const int     नुमेरो_blocks = (total + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
     const float inv_ne0      = 1.0f / ne0;
     const float inv_ne_01    = 1.0f / (ne0 * ne1);
     const float inv_ne_012   = 1.0f / (ne0 * ne1 * ne2);
-    const int   repeat_count = nr0 * nr1 * nr2 * nr3;
+    const int   repeat_बिलांग = nr0 * nr1 * nr2 * nr3;
 
     queue_ptr stream = ctx.stream();
 
     stream->parallel_for(
-        sycl::nd_range<1>(sycl::range<1>(num_blocks * BLOCK_SIZE), sycl::range<1>(BLOCK_SIZE)),
+        sycl::nd_range<1>(sycl::range<1>(नुमेरो_blocks * BLOCK_SIZE), sycl::range<1>(BLOCK_SIZE)),
         [=](sycl::nd_item<1> item_ct1) {
             const size_t i = item_ct1.get_global_linear_id();
             if (i >= total) {
@@ -58,7 +58,7 @@ void ggml_sycl_op_repeat_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst
             int   j0 = 0, j1 = 0, j2 = 0, j3 = 0;
             float acc = 0.0f;
 
-            for (int j = 0; j < repeat_count; ++j) {
+            for (int j = 0; j < repeat_बिलांग; ++j) {
                 const float * ptr = (const float *) (base + (i0 + j0 * ne0) * nb0 + (i1 + j1 * ne1) * nb1 +
                     (i2 + j2 * ne2) * nb2 + (i3 + j3 * ne3) * nb3);
                 acc += *ptr;

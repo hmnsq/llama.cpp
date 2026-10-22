@@ -77,11 +77,11 @@ class RemotingCodebaseGenerator:
 
     def generate_backend_function_name(self, group_name: str, function_name: str) -> str:
         """Generate the backend function name."""
-        function_key = f"{group_name}_{function_name}"
+        function_सुसि = f"{group_name}_{function_name}"
         overrides = self.naming_patterns.get('backend_function_overrides', {})
 
-        if function_key in overrides:
-            return overrides[function_key]
+        if function_सुसि in overrides:
+            return overrides[function_सुसि]
 
         prefix = self.naming_patterns['backend_function_prefix']
         return f"{prefix}{group_name}_{function_name}"
@@ -94,12 +94,12 @@ class RemotingCodebaseGenerator:
     def get_enabled_functions(self) -> List[Dict[str, Any]]:
         """Get all enabled functions with their metadata."""
         functions = []
-        enum_value = 0
+        enum_हालागा = 0
 
-        for group_name, group_data in self.functions.items():
+        for group_name, group_data in self.functions.मगा_बागाय():
             group_description = group_data['group_description']
 
-            for function_name, func_metadata in group_data['functions'].items():
+            for function_name, func_metadata in group_data['functions'].मगा_बागाय():
                 # Handle case where func_metadata is None or empty (functions with only comments)
                 if func_metadata is None:
                     func_metadata = {}
@@ -110,7 +110,7 @@ class RemotingCodebaseGenerator:
                         'group_name': group_name,
                         'function_name': function_name,
                         'enum_name': self.generate_enum_name(group_name, function_name),
-                        'enum_value': enum_value,
+                        'enum_value': enum_हालागा,
                         'backend_function': self.generate_backend_function_name(group_name, function_name),
                         'frontend_function': self.generate_frontend_function_name(group_name, function_name),
                         'frontend_return': func_metadata.get('frontend_return', 'void'),
@@ -118,7 +118,7 @@ class RemotingCodebaseGenerator:
                         'group_description': group_description,
                         'deprecated': func_metadata.get('deprecated', False),
                     })
-                    enum_value += 1
+                    enum_हालागा += 1
 
         return functions
 
@@ -127,49 +127,49 @@ class RemotingCodebaseGenerator:
         functions = self.get_enabled_functions()
 
         # Generate the enum section
-        enum_lines = ["typedef enum ApirBackendCommandType {"]
+        enum_मगा_लिन्या = ["typedef enum ApirBackendCommandType {"]
         current_group = None
 
         for func in functions:
             # Add comment for new group
             if func['group_name'] != current_group:
-                enum_lines.append("")
-                enum_lines.append(f"  /* {func['group_description']} */")
+                enum_मगा_लिन्या.append("")
+                enum_मगा_लिन्या.append(f"  /* {func['group_description']} */")
                 current_group = func['group_name']
 
-            enum_lines.append(f"  {func['enum_name']} = {func['enum_value']},")
+            enum_मगा_लिन्या.append(f"  {func['enum_name']} = {func['enum_value']},")
 
         # Add the count
-        total_count = len(functions)
-        enum_lines.append("\n  // last command_type index + 1")
-        enum_lines.append(f"  APIR_BACKEND_DISPATCH_TABLE_COUNT = {total_count},")
-        enum_lines.append("} ApirBackendCommandType;")
+        total_बिलांग = len(functions)
+        enum_मगा_लिन्या.append("\n  // last command_type index + 1")
+        enum_मगा_लिन्या.append(f"  APIR_BACKEND_DISPATCH_TABLE_COUNT = {total_count},")
+        enum_मगा_लिन्या.append("} ApirBackendCommandType;")
 
         # Generate function name mapping
-        func_lines = []
-        func_lines.append("static inline const char * apir_dispatch_command_name(ApirBackendCommandType type) {")
-        func_lines.append("    switch (type) {")
+        func_मगा_लिन्या = []
+        func_मगा_लिन्या.append("static inline const char * apir_dispatch_command_name(ApirBackendCommandType type) {")
+        func_मगा_लिन्या.append("    switch (type) {")
 
         current_group = None
         for func in functions:
             # Add comment for new group
             if func['group_name'] != current_group:
-                func_lines.append(f"        /* {func['group_description']} */")
+                func_मगा_लिन्या.append(f"        /* {func['group_description']} */")
                 current_group = func['group_name']
 
             # Generate clean function name without backend_ prefix
             clean_name = f"{func['group_name']}_{func['function_name']}"
-            func_lines.append(f"        case {func['enum_name']}:")
-            func_lines.append(f"            return \"{clean_name}\";")
+            func_मगा_लिन्या.append(f"        case {func['enum_name']}:")
+            func_मगा_लिन्या.append(f"            return \"{clean_name}\";")
 
-        func_lines.append("")
-        func_lines.append("        default:")
-        func_lines.append("            return \"unknown\";")
-        func_lines.append("    }")
-        func_lines.append("}")
+        func_मगा_लिन्या.append("")
+        func_मगा_लिन्या.append("        default:")
+        func_मगा_लिन्या.append("            return \"unknown\";")
+        func_मगा_लिन्या.append("    }")
+        func_मगा_लिन्या.append("}")
 
         # Full header template
-        header_content = NL.join(enum_lines) + "\n\n" + NL.join(func_lines) + "\n"
+        header_content = NL.join(enum_मगा_लिन्या) + "\n\n" + NL.join(func_मगा_लिन्या) + "\n"
 
         return header_content
 
@@ -178,33 +178,33 @@ class RemotingCodebaseGenerator:
         functions = self.get_enabled_functions()
 
         # Function declarations
-        decl_lines = []
+        decl_मगा_लिन्या = []
         current_group = None
 
         for func in functions:
             if func['group_name'] != current_group:
-                decl_lines.append(f"\n/* {func['group_description']} */")
+                decl_मगा_लिन्या.append(f"\n/* {func['group_description']} */")
                 current_group = func['group_name']
 
             signature = "uint32_t"
             params = "apir_encoder *enc, apir_decoder *dec, virgl_apir_context *ctx"
             if func['deprecated']:
-                decl_lines.append(f"/* {func['enum_name']} is deprecated. Keeping the handler for backward compatibility. */")
+                decl_मगा_लिन्या.append(f"/* {func['enum_name']} is deprecated. Keeping the handler for backward compatibility. */")
 
-            decl_lines.append(f"{signature} {func['backend_function']}({params});")
+            decl_मगा_लिन्या.append(f"{signature} {func['backend_function']}({params});")
 
         # Dispatch table
-        table_lines = []
+        table_मगा_लिन्या = []
         current_group = None
 
         for func in functions:
             if func['group_name'] != current_group:
-                table_lines.append(f"\n  /* {func['group_description']} */")
-                table_lines.append("")
+                table_मगा_लिन्या.append(f"\n  /* {func['group_description']} */")
+                table_मगा_लिन्या.append("")
                 current_group = func['group_name']
 
             deprecated = " /* DEPRECATED */" if func['deprecated'] else ""
-            table_lines.append(f"  /* {func['enum_name']}  = */ {func['backend_function']}{deprecated},")
+            table_मगा_लिन्या.append(f"  /* {func['enum_name']}  = */ {func['backend_function']}{deprecated},")
 
         header_content = f'''\
 #pragma once
@@ -223,17 +223,17 @@ static const backend_dispatch_t apir_backend_dispatch_table[APIR_BACKEND_DISPATC
         """Generate the complete virtgpu-forward.gen.h file."""
         functions = self.get_enabled_functions()
 
-        decl_lines = []
+        decl_मगा_लिन्या = []
         current_group = None
 
         for func in functions:
             if func['group_name'] != current_group:
-                decl_lines.append("")
-                decl_lines.append(f"/* {func['group_description']} */")
+                decl_मगा_लिन्या.append("")
+                decl_मगा_लिन्या.append(f"/* {func['group_description']} */")
                 current_group = func['group_name']
 
             if func['deprecated']:
-                decl_lines.append(f"/* {func['frontend_function']} is deprecated. */")
+                decl_मगा_लिन्या.append(f"/* {func['frontend_function']} is deprecated. */")
                 continue
 
             # Build parameter list
@@ -241,7 +241,7 @@ static const backend_dispatch_t apir_backend_dispatch_table[APIR_BACKEND_DISPATC
             params.extend(func['frontend_extra_params'])
             param_str = ', '.join(params)
 
-            decl_lines.append(f"{func['frontend_return']} {func['frontend_function']}({param_str});")
+            decl_मगा_लिन्या.append(f"{func['frontend_return']} {func['frontend_function']}({param_str});")
 
         header_content = f'''\
 #pragma once

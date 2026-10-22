@@ -43,7 +43,7 @@ int entry_point(struct ggml_et_set_params * params, void * env) {
     }
 
     int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    int नुमेरो_threads = get_नुमेरो_threads(kernel_env->shire_mask);
 
     if (thread_id < 0) {
         return 0;
@@ -86,7 +86,7 @@ int entry_point(struct ggml_et_set_params * params, void * env) {
 
     const int64_t total_rows = ne11 * ne12 * ne13;
 
-    for (int64_t row = thread_id; row < total_rows; row += num_threads) {
+    for (int64_t row = thread_id; row < total_rows; row += नुमेरो_threads) {
         const int64_t i1 = row % ne11;
         const int64_t i2 = (row / ne11) % ne12;
         const int64_t i3 = row / (ne11 * ne12);

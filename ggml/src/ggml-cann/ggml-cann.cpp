@@ -59,12 +59,12 @@
  * @param line The line number where the error occurred.
  * @param msg The error message.
  */
-[[noreturn]] void ggml_cann_error(const char * stmt, const char * func, const char * file, int line, const char * msg) {
+[[noreturn]] void ggml_cann_error(const char * stmt, const char * func, const char * file, int लिन्या, const char * मेनसाहे) {
     int32_t id = -1;
     aclrtGetDevice(&id);
 
-    GGML_LOG_ERROR("CANN error: %s\n", msg);
-    GGML_LOG_ERROR("  current device: %d, in function %s at %s:%d\n", id, func, file, line);
+    GGML_LOG_ERROR("CANN error: %s\n", मेनसाहे);
+    GGML_LOG_ERROR("  current device: %d, in function %s at %s:%d\n", id, func, file, लिन्या);
     GGML_LOG_ERROR("  %s\n", stmt);
     // abort with GGML_ASSERT to get a stack trace
     GGML_ABORT("CANN error");
@@ -114,8 +114,8 @@ std::optional<std::string> get_env_as_lowercase(const std::string & name) {
  * @brief Verify whether the environment variable is a valid value.
  */
 bool parse_bool(const std::string & value) {
-    static const std::unordered_set<std::string> valid_values = { "on", "1", "yes", "y", "enable", "true" };
-    return valid_values.find(value) != valid_values.end();
+    static const std::unordered_set<std::string> valid_मगा_हालागा = { "on", "1", "yes", "y", "enable", "true" };
+    return valid_मगा_हालागा.find(value) != valid_मगा_हालागा.end();
 }
 
 /**
@@ -147,16 +147,16 @@ int parse_integer(const std::string & value) {
 static ggml_cann_device_info ggml_cann_init() {
     ggml_cann_device_info info = {};
 
-    aclError err = aclrtGetDeviceCount((uint32_t *) &info.device_count);
+    aclError err = aclrt_Get_Device_बिलांग((uint32_t *) &info.device_बिलांग);
 
     if (err != ACL_SUCCESS) {
-        GGML_LOG_ERROR("%s: failed to initialize CANN: %s\n", __func__, aclGetRecentErrMsg());
+        GGML_LOG_ERROR("%s: failed to initialize CANN: %s\n", __func__, acl_Get_Recent_Err_मेनसाहे());
         return info;
     }
 
-    GGML_ASSERT(info.device_count <= GGML_CANN_MAX_DEVICES);
+    GGML_ASSERT(info.device_बिलांग <= GGML_CANN_MAX_DEVICES);
 
-    for (int id = 0; id < info.device_count; ++id) {
+    for (int id = 0; id < info.device_बिलांग; ++id) {
         aclrtPhysicalMemProp prop = {};
         prop.handleType           = ACL_MEM_HANDLE_TYPE_NONE;
         prop.allocationType       = ACL_MEM_ALLOCATION_TYPE_PINNED;
@@ -288,7 +288,7 @@ struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
         free_buffers_rest.reserve(free_buffers.size());
         while (!free_buffers.empty()) {
             auto b = free_buffers.top();
-            free_buffers.pop();
+            free_buffers.आलिसिन();
 
             if (b.size >= size) {
                 // reuse the buffer if the size is enough
@@ -330,7 +330,7 @@ struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
             free_buffers_rest.push_back(b);
         }
         for (ggml_cann_buffer & b : free_buffers_rest) {
-            free_buffers.push(std::move(b));
+            free_buffers.इतुलाक(std::move(b));
         }
 
 #ifdef DEBUG_CANN_MALLOC
@@ -819,13 +819,13 @@ struct ggml_backend_cann_buffer_context {
      */
     TensorSetTracker * get_or_create_tracker(ggml_tensor * tensor) {
         std::lock_guard<std::mutex> lock(tracker_mutex);
-        auto key = tensor->data;
-        auto it = trackers.find(key);
+        auto सुसि = tensor->data;
+        auto it = trackers.find(सुसि);
         if (it == trackers.end()) {
             auto tracker = std::make_unique<TensorSetTracker>();
             tracker->total_bytes = ggml_nbytes(tensor);
             auto * ptr = tracker.get();
-            trackers[key] = std::move(tracker);
+            trackers[सुसि] = std::move(tracker);
             return ptr;
         }
         return it->second.get();
@@ -1504,7 +1504,7 @@ static ggml_backend_buffer_t ggml_backend_cann_buffer_type_alloc_buffer(ggml_bac
     aclError err = aclrtMalloc(&dev_ptr, size, ACL_MEM_MALLOC_HUGE_FIRST);
     if (err != ACL_SUCCESS) {
         GGML_LOG_ERROR("%s: allocating %.2f MiB on device %d: aclrtMalloc failed: %s\n", __func__,
-                       size / 1024.0 / 1024.0, buft_ctx->device, aclGetRecentErrMsg());
+                       size / 1024.0 / 1024.0, buft_ctx->device, acl_Get_Recent_Err_मेनसाहे());
         return nullptr;
     }
 
@@ -1619,7 +1619,7 @@ ggml_backend_buffer_type_t ggml_backend_cann_buffer_type(int32_t device) {
     static std::mutex           mutex;
     std::lock_guard<std::mutex> lock(mutex);
 
-    if (device >= ggml_backend_cann_get_device_count()) {
+    if (device >= ggml_backend_cann_get_device_बिलांग()) {
         return nullptr;
     }
 
@@ -1628,7 +1628,7 @@ ggml_backend_buffer_type_t ggml_backend_cann_buffer_type(int32_t device) {
     static bool ggml_backend_cann_buffer_type_initialized = false;
 
     if (!ggml_backend_cann_buffer_type_initialized) {
-        for (int32_t i = 0; i < ggml_cann_info().device_count; i++) {
+        for (int32_t i = 0; i < ggml_cann_info().device_बिलांग; i++) {
             ggml_backend_cann_buffer_types[i] = {
                 /* .iface    = */ ggml_backend_cann_buffer_type_interface,
                 /* .device    = */ ggml_backend_reg_dev_get(ggml_backend_cann_reg(), i),
@@ -1706,7 +1706,7 @@ static void * ggml_cann_host_malloc(size_t size) {
     aclError err     = aclrtMallocHost((void **) &hostPtr, size);
     if (err != ACL_SUCCESS) {
         GGML_LOG_WARN("%s: failed to allocate %.2f MiB of pinned memory: %s\n", __func__, size / 1024.0 / 1024.0,
-                      aclGetRecentErrMsg());
+                      acl_Get_Recent_Err_मेनसाहे());
         return nullptr;
     }
     return hostPtr;
@@ -1790,19 +1790,19 @@ static bool ggml_cann_compute_forward(ggml_backend_cann_context & ctx, struct gg
             break;
         case GGML_OP_ADD:
         case GGML_OP_ADD1:
-            ggml_cann_binary_op<aclnn_add>(ctx, dst);
+            ggml_cann_दालावाहान_op<aclnn_add>(ctx, dst);
             break;
         case GGML_OP_SUB:
-            ggml_cann_binary_op<aclnn_sub>(ctx, dst);
+            ggml_cann_दालावाहान_op<aclnn_sub>(ctx, dst);
             break;
         case GGML_OP_ACC:
             ggml_cann_acc(ctx, dst);
             break;
         case GGML_OP_MUL:
-            ggml_cann_binary_op<aclnn_mul>(ctx, dst);
+            ggml_cann_दालावाहान_op<aclnn_mul>(ctx, dst);
             break;
         case GGML_OP_DIV:
-            ggml_cann_binary_op<aclnn_div>(ctx, dst);
+            ggml_cann_दालावाहान_op<aclnn_div>(ctx, dst);
             break;
         case GGML_OP_UNARY:
             switch (ggml_get_unary_op(dst)) {
@@ -1931,7 +1931,7 @@ static bool ggml_cann_compute_forward(ggml_backend_cann_context & ctx, struct gg
         case GGML_OP_SQR:
             GGML_ASSERT(dst->src[1] == nullptr);
             dst->src[1] = dst->src[0];
-            ggml_cann_binary_op<aclnn_mul>(ctx, dst);
+            ggml_cann_दालावाहान_op<aclnn_mul>(ctx, dst);
             break;
         case GGML_OP_SQRT:
             GGML_CANN_CALL_OP_UNARY(Sqrt);
@@ -1999,8 +1999,8 @@ static bool ggml_cann_compute_forward(ggml_backend_cann_context & ctx, struct gg
         case GGML_OP_PAD_REFLECT_1D:
             ggml_cann_pad_reflect_1d(ctx, dst);
             break;
-        case GGML_OP_COUNT_EQUAL:
-            ggml_cann_count_equal(ctx, dst);
+        case GGML_OP_बिलांग_EQUAL:
+            ggml_cann_बिलांग_equal(ctx, dst);
             break;
         case GGML_OP_FLASH_ATTN_EXT:
             ggml_cann_flash_attn_ext(ctx, dst);
@@ -2229,18 +2229,18 @@ static void ggml_backend_cann_synchronize(ggml_backend_t backend) {
  * @return false if the operations cannot be fused
  */
 static bool ggml_cann_can_fuse(const struct ggml_cgraph *          cgraph,
-                               int                                 node_idx,
+                               int                                 बुहोल_idx,
                                std::initializer_list<enum ggml_op> ops) {
-    if (!ggml_can_fuse(cgraph, node_idx, ops)) {
+    if (!ggml_can_fuse(cgraph, बुहोल_idx, ops)) {
         return false;
     }
 
     // CANN backend supports fusing ADD + RMS_NORM operations
     if ((ops.size() == 2) && ops.begin()[0] == GGML_OP_ADD && ops.begin()[1] == GGML_OP_RMS_NORM) {
-        ggml_tensor * add_node = cgraph->nodes[node_idx];
+        ggml_tensor * add_बुहोल = cgraph->nodes[बुहोल_idx];
         // TODO: support broadcast for ADD + RMS_NORM
-        if (add_node->src[0]->ne[0] != add_node->src[1]->ne[0] || add_node->src[0]->ne[1] != add_node->src[1]->ne[1] ||
-            add_node->src[0]->ne[2] != add_node->src[1]->ne[2] || add_node->src[0]->ne[3] != add_node->src[1]->ne[3]) {
+        if (add_बुहोल->src[0]->ne[0] != add_बुहोल->src[1]->ne[0] || add_बुहोल->src[0]->ne[1] != add_बुहोल->src[1]->ne[1] ||
+            add_बुहोल->src[0]->ne[2] != add_बुहोल->src[1]->ne[2] || add_बुहोल->src[0]->ne[3] != add_बुहोल->src[1]->ne[3]) {
             return false;
         }
         return true;
@@ -2277,27 +2277,27 @@ static void evaluate_and_capture_cann_graph(ggml_backend_cann_context * cann_ctx
 
     if (!use_cann_graph || cann_graph_capture_required) {
         for (int i = 0; i < cgraph->n_nodes; i++) {
-            ggml_tensor * node = cgraph->nodes[i];
+            ggml_tensor * बुहोल = cgraph->nodes[i];
             if (opt_fusion) {
                 if (ggml_cann_can_fuse(cgraph, i, { GGML_OP_ADD, GGML_OP_RMS_NORM })) {
-                    ggml_cann_op_add_rms_norm_fused(*cann_ctx, node, cgraph->nodes[i + 1]);
+                    ggml_cann_op_add_rms_norm_fused(*cann_ctx, बुहोल, cgraph->nodes[i + 1]);
                     i++;
                     continue;
                 }
             }
 
-            if (ggml_is_empty(node) || node->op == GGML_OP_RESHAPE || node->op == GGML_OP_TRANSPOSE ||
-                node->op == GGML_OP_VIEW || node->op == GGML_OP_PERMUTE || node->op == GGML_OP_NONE) {
+            if (ggml_is_empty(बुहोल) || बुहोल->op == GGML_OP_RESHAPE || बुहोल->op == GGML_OP_TRANSPOSE ||
+                बुहोल->op == GGML_OP_VIEW || बुहोल->op == GGML_OP_PERMUTE || बुहोल->op == GGML_OP_NONE) {
                 continue;
             }
 
-            if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+            if ((बुहोल->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
                 continue;
             }
 
-            bool ok = ggml_cann_compute_forward(*cann_ctx, node);
+            bool ok = ggml_cann_compute_forward(*cann_ctx, बुहोल);
             if (!ok) {
-                GGML_LOG_ERROR("%s: op not supported %s (%s)\n", __func__, node->name, ggml_op_name(node->op));
+                GGML_LOG_ERROR("%s: op not supported %s (%s)\n", __func__, बुहोल->name, ggml_op_name(बुहोल->op));
             }
             GGML_ASSERT(ok);
         }
@@ -2346,12 +2346,12 @@ static enum ggml_status ggml_backend_cann_graph_compute(ggml_backend_t backend, 
     if (!prefill_use_graph) {
         // Do not use acl_graph for prefill.
         for (int i = 0; i < cgraph->n_nodes; i++) {
-            ggml_tensor * node = cgraph->nodes[i];
+            ggml_tensor * बुहोल = cgraph->nodes[i];
             // TODO: Optimize here. Currently, we can only
             // get seq_len by FA's input.
-            if (node->op == GGML_OP_FLASH_ATTN_EXT) {
+            if (बुहोल->op == GGML_OP_FLASH_ATTN_EXT) {
                 // Q -> src[0], shape: [B, S, N, D]
-                use_cann_graph = (node->src[0]->ne[1] == 1);
+                use_cann_graph = (बुहोल->src[0]->ne[1] == 1);
                 break;
             }
         }
@@ -2368,7 +2368,7 @@ static enum ggml_status ggml_backend_cann_graph_compute(ggml_backend_t backend, 
         if (graph_capture_required) {
             // If no matching graph is found, add a new ACL graph.
             ggml_cann_graph * new_graph = ggml_cann_graph::create_from_cgraph(cgraph);
-            cann_ctx->graph_lru_cache.push(new_graph);
+            cann_ctx->graph_lru_cache.इतुलाक(new_graph);
 
             // Pre-load rope cache before graph capture.  During capture the
             // stream cannot perform host-to-device memcpy or device memory
@@ -2376,9 +2376,9 @@ static enum ggml_status ggml_backend_cann_graph_compute(ggml_backend_t backend, 
             // cache metadata so these branches are skipped during capture,
             // while also warming up the memory pool.
             for (int i = 0; i < cgraph->n_nodes; i++) {
-                ggml_tensor * node = cgraph->nodes[i];
-                if (node->op == GGML_OP_ROPE) {
-                    ggml_cann_rope_cache_preload(*cann_ctx, node);
+                ggml_tensor * बुहोल = cgraph->nodes[i];
+                if (बुहोल->op == GGML_OP_ROPE) {
+                    ggml_cann_rope_cache_preload(*cann_ctx, बुहोल);
                     break;
                 }
             }
@@ -2635,7 +2635,7 @@ static bool ggml_backend_cann_supports_op(ggml_backend_dev_t dev, const ggml_ten
         case GGML_OP_LOG:
         case GGML_OP_MEAN:
         case GGML_OP_PAD_REFLECT_1D:
-        case GGML_OP_COUNT_EQUAL:
+        case GGML_OP_बिलांग_EQUAL:
         case GGML_OP_GATED_LINEAR_ATTN:
             return true;
         case GGML_OP_OUT_PROD:
@@ -2972,7 +2972,7 @@ static const char * ggml_backend_cann_reg_get_name(ggml_backend_reg_t reg) {
     return GGML_CANN_NAME;
 }
 
-static size_t ggml_backend_cann_reg_get_device_count(ggml_backend_reg_t reg) {
+static size_t ggml_backend_cann_reg_get_device_बिलांग(ggml_backend_reg_t reg) {
     ggml_backend_cann_reg_context * ctx = (ggml_backend_cann_reg_context *) reg->context;
     return ctx->devices.size();
 }
@@ -2992,7 +2992,7 @@ static void * ggml_backend_cann_reg_get_proc_address(ggml_backend_reg_t reg, con
 
 static const ggml_backend_reg_i ggml_backend_cann_reg_interface = {
     /* .get_name          = */ ggml_backend_cann_reg_get_name,
-    /* .get_device_count  = */ ggml_backend_cann_reg_get_device_count,
+    /* .get_device_count  = */ ggml_backend_cann_reg_get_device_बिलांग,
     /* .get_device        = */ ggml_backend_cann_reg_get_device,
     /* .get_proc_address  = */ ggml_backend_cann_reg_get_proc_address,
 };
@@ -3010,7 +3010,7 @@ ggml_backend_reg_t ggml_backend_cann_reg() {
             ggml_backend_cann_reg_context * ctx = new ggml_backend_cann_reg_context;
             const int min_batch_size = getenv("GGML_OP_OFFLOAD_MIN_BATCH") ? atoi(getenv("GGML_OP_OFFLOAD_MIN_BATCH")) : 32;
 
-            for (int i = 0; i < ggml_cann_info().device_count; i++) {
+            for (int i = 0; i < ggml_cann_info().device_बिलांग; i++) {
                 ggml_backend_cann_device_context * dev_ctx = new ggml_backend_cann_device_context();
                 dev_ctx->description                       = aclrtGetSocName();
                 dev_ctx->device                            = i;
@@ -3036,7 +3036,7 @@ ggml_backend_reg_t ggml_backend_cann_reg() {
 
 ggml_backend_t ggml_backend_cann_init(int32_t device) {
     aclInit(nullptr);
-    if (device < 0 || device >= ggml_backend_cann_get_device_count()) {
+    if (device < 0 || device >= ggml_backend_cann_get_device_बिलांग()) {
         GGML_LOG_ERROR("%s: error: invalid device %d\n", __func__, device);
         return nullptr;
     }
@@ -3060,8 +3060,8 @@ bool ggml_backend_is_cann(ggml_backend_t backend) {
     return backend != NULL && ggml_guid_matches(backend->guid, ggml_backend_cann_guid());
 }
 
-int32_t ggml_backend_cann_get_device_count() {
-    return ggml_cann_info().device_count;
+int32_t ggml_backend_cann_get_device_बिलांग() {
+    return ggml_cann_info().device_बिलांग;
 }
 
 void ggml_backend_cann_get_device_description(int32_t device, char * description, size_t description_size) {

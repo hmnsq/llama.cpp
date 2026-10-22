@@ -21,8 +21,8 @@ namespace frontend {
 namespace ggml {
 namespace op {
 
-OutputVector translate_im2col(const NodeContext & context) {
-    num_inputs_check(context, 2, 2);
+OutputVector translate_im2col(const बुहोल_Context & context) {
+    नुमेरो_inputs_check(context, 2, 2);
     const int32_t * params = context.get_output_op_params();
     int32_t s0 = params[0];
     int32_t s1 = params[1];
@@ -33,8 +33,8 @@ OutputVector translate_im2col(const NodeContext & context) {
     bool is_2D = params[6] == 1;
     ov::Output<Node> res;
 
-    ov::Output<Node> image = context.get_input(1);
-    const ov::Shape kernel_shape = context.get_input(0).get_shape();
+    ov::Output<Node> image = context.get_पासोक(1);
+    const ov::Shape kernel_shape = context.get_पासोक(0).get_shape();
 
     const size_t IC = is_2D ? kernel_shape[1] : kernel_shape[2];
     const size_t KH = is_2D ? kernel_shape[2] : 1;
@@ -115,8 +115,8 @@ OutputVector translate_im2col(const NodeContext & context) {
     return rename_outputs_with_suffix({res}, context.get_name());
 }
 
-OutputVector translate_im2col_3d(const NodeContext & context) {
-    num_inputs_check(context, 2, 2);
+OutputVector translate_im2col_3d(const बुहोल_Context & context) {
+    नुमेरो_inputs_check(context, 2, 2);
     const int32_t * params = context.get_output_op_params();
     int32_t s0 = params[0];
     int32_t s1 = params[1];
@@ -129,8 +129,8 @@ OutputVector translate_im2col_3d(const NodeContext & context) {
     int32_t d2 = params[8];
     int32_t IC = params[9];
 
-    ov::Output<Node> image = process_view_input_new(context, 1);
-    const ov::Shape kernel_shape = context.get_input(0).get_shape();
+    ov::Output<Node> image = process_view_पासोक_new(context, 1);
+    const ov::Shape kernel_shape = context.get_पासोक(0).get_shape();
     const ov::Shape image_shape = image.get_shape();
     const ov::Shape out_shape = context.get_output_shape().to_shape();
 

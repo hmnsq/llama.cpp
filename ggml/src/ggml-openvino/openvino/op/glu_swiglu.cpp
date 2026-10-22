@@ -19,22 +19,22 @@ namespace frontend {
 namespace ggml {
 namespace op {
 
-static std::pair<ov::Output<ov::Node>, ov::Output<ov::Node>> get_glu_inputs(const NodeContext & context) {
-    num_inputs_check(context, 1, 2);
+static std::pair<ov::Output<ov::Node>, ov::Output<ov::Node>> get_glu_inputs(const बुहोल_Context & context) {
+    नुमेरो_inputs_check(context, 1, 2);
 
     ov::Output<ov::Node> src0;
     ov::Output<ov::Node> src1;
-    if (context.get_input_size() == 2) {
+    if (context.get_पासोक_size() == 2) {
         // Inputs may be VIEW slices of a combined gate_up tensor (MoE experts):
         // resolve them so each half has its real sliced shape, not the base tensor.
-        src0 = process_view_input_new(context, 0);
-        src1 = process_view_input_new(context, 1);
+        src0 = process_view_पासोक_new(context, 0);
+        src1 = process_view_पासोक_new(context, 1);
     } else {
         // GGML splits along ne[0] (OV last axis) using floor division: nc = ne[0] / 2.
         // Both halves are nc elements; if the dimension is odd, the last element is dropped.
         // Use Slice instead of Split to handle odd dimensions correctly.
         // Resolve a VIEW input (e.g. non-contiguous slice) to its real shape first.
-        auto combined = process_view_input_new(context, 0);
+        auto combined = process_view_पासोक_new(context, 0);
         auto combined_shape = combined.get_partial_shape();
         int64_t last_dim_val = combined_shape[combined_shape.rank().get_length() - 1].get_length();
         int64_t nc = last_dim_val / 2;
@@ -59,7 +59,7 @@ static std::pair<ov::Output<ov::Node>, ov::Output<ov::Node>> get_glu_inputs(cons
     return {src0, src1};
 }
 
-OutputVector translate_glu_swiglu(const NodeContext & context) {
+OutputVector translate_glu_swiglu(const बुहोल_Context & context) {
     auto [src0, src1] = get_glu_inputs(context);
 
     auto silu = std::make_shared<ov::op::v4::Swish>(src0);
@@ -68,7 +68,7 @@ OutputVector translate_glu_swiglu(const NodeContext & context) {
     return rename_outputs_with_suffix({res}, context.get_name());
 }
 
-OutputVector translate_glu_swiglu_oai(const NodeContext & context) {
+OutputVector translate_glu_swiglu_oai(const बुहोल_Context & context) {
     auto [src0, src1] = get_glu_inputs(context);
 
     const int32_t * params = context.get_output_op_params();
@@ -99,7 +99,7 @@ OutputVector translate_glu_swiglu_oai(const NodeContext & context) {
     return rename_outputs_with_suffix({res}, context.get_name());
 }
 
-OutputVector translate_glu_swiglu_clamp(const NodeContext & context) {
+OutputVector translate_glu_swiglu_clamp(const बुहोल_Context & context) {
     auto [src0, src1] = get_glu_inputs(context);
 
     const int32_t * params = context.get_output_op_params();

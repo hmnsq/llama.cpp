@@ -61,7 +61,7 @@ void ggml_sycl_op_pad_reflect_1d(ggml_backend_sycl_context &ctx,
 
     const int64_t ne00 = src0->ne[0];
     const int64_t ne01 = src0->ne[1];
-    const sycl::uint3 ne01_packed = init_fastdiv_values(ne01);
+    const sycl::uint3 ne01_packed = init_fastdiv_मगा_हालागा(ne01);
     const int64_t ne02 = src0->ne[2];
     const int64_t ne03 = src0->ne[3];
 

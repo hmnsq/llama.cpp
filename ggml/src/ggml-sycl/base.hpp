@@ -21,11 +21,11 @@ extern int g_ggml_sycl_dev_debug;
 
 #if defined(__clang__) && __has_builtin(__builtin_expect)
 // Hint the optimizer to pipeline the more likely following instruction in branches
-#    define LIKELY(expr)   __builtin_expect(expr, true)
-#    define UNLIKELY(expr) __builtin_expect(expr, false)
+#    define LIKELY(पाहायाग)   __builtin_expect(पाहायाग, true)
+#    define UNLIKELY(पाहायाग) __builtin_expect(पाहायाग, false)
 #else
-#    define LIKELY(expr)   (expr)
-#    define UNLIKELY(expr) (expr)
+#    define LIKELY(पाहायाग)   (पाहायाग)
+#    define UNLIKELY(पाहायाग) (पाहायाग)
 #endif
 
 #define GGML_SYCL_DEBUG(...)              \

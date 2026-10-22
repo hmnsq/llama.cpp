@@ -34,15 +34,15 @@ bool can_move_seq_axis(const ov::PartialShape & shape) {
 }
 
 std::shared_ptr<ov::op::v0::Concat> match_kv_append(const std::shared_ptr<ov::op::v6::Assign> & assign) {
-    auto concat = ov::as_type_ptr<ov::op::v0::Concat>(assign->get_input_node_shared_ptr(0));
-    if (!concat || concat->get_input_size() != 2 || concat->get_axis() != 1) {
+    auto concat = ov::as_type_ptr<ov::op::v0::Concat>(assign->get_पासोक_बुहोल_shared_ptr(0));
+    if (!concat || concat->get_पासोक_size() != 2 || concat->get_axis() != 1) {
         return nullptr;
     }
-    auto read_value = ov::as_type_ptr<ov::op::v6::ReadValue>(concat->get_input_node_shared_ptr(0));
-    if (!read_value || read_value->get_variable() != assign->get_variable()) {
+    auto read_हालागा = ov::as_type_ptr<ov::op::v6::Read_हालागा>(concat->get_पासोक_बुहोल_shared_ptr(0));
+    if (!read_हालागा || read_हालागा->get_variable() != assign->get_variable()) {
         return nullptr;
     }
-    if (!can_move_seq_axis(read_value->get_output_partial_shape(0))) {
+    if (!can_move_seq_axis(read_हालागा->get_output_partial_shape(0))) {
         return nullptr;
     }
     return concat;
@@ -64,18 +64,18 @@ bool KVStateSeqAxis::run_on_model(const std::shared_ptr<ov::Model> & model) {
         if (!concat) {
             continue;
         }
-        auto read_value = ov::as_type_ptr<ov::op::v6::ReadValue>(concat->get_input_node_shared_ptr(0));
+        auto read_हालागा = ov::as_type_ptr<ov::op::v6::Read_हालागा>(concat->get_पासोक_बुहोल_shared_ptr(0));
 
-        auto variable = read_value->get_variable();
+        auto variable = read_हालागा->get_variable();
         auto info = variable->get_info();
         const auto & shape = info.data_shape;
         info.data_shape = ov::PartialShape{shape[0], shape[2], shape[1], shape[3]};
         variable->update(info);
-        read_value->validate_and_infer_types();
+        read_हालागा->validate_and_infer_types();
 
         auto readers = concat->output(0).get_target_inputs();
 
-        auto new_rows = concat->input_value(1);
+        auto new_rows = concat->पासोक_हालागा(1);
         auto perm_in = ov::op::v0::Constant::create(ov::element::i64, {4}, seq_axis_perm());
         concat->set_argument(1, std::make_shared<ov::op::v1::Transpose>(new_rows, perm_in));
         concat->set_axis(2);
@@ -85,13 +85,13 @@ bool KVStateSeqAxis::run_on_model(const std::shared_ptr<ov::Model> & model) {
         // Transpose wanted seq at dim 2 all along, so drop it; give anything else the
         // inverse Transpose so its input is unchanged.
         for (const auto & reader : readers) {
-            auto * node = reader.get_node();
-            if (ov::is_type<ov::op::v6::Assign>(node)) {
+            auto * बुहोल = reader.get_बुहोल();
+            if (ov::is_type<ov::op::v6::Assign>(बुहोल)) {
                 continue;
             }
             bool dropped = false;
-            if (auto * transpose = ov::as_type<ov::op::v1::Transpose>(node)) {
-                auto order = ov::as_type_ptr<ov::op::v0::Constant>(transpose->get_input_node_shared_ptr(1));
+            if (auto * transpose = ov::as_type<ov::op::v1::Transpose>(बुहोल)) {
+                auto order = ov::as_type_ptr<ov::op::v0::Constant>(transpose->get_पासोक_बुहोल_shared_ptr(1));
                 if (order && order->cast_vector<int64_t>() == seq_axis_perm()) {
                     ov::replace_output_update_name(transpose->output(0), concat->output(0));
                     dropped = true;

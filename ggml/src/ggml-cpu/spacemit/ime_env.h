@@ -10,7 +10,7 @@
 namespace ggml::cpu::riscv64_spacemit {
 
 constexpr uint64_t spine_invalid_core_id    = 0xFFFFFFFF;
-constexpr size_t   spine_init_barrier_count = 16;
+constexpr size_t   spine_init_barrier_बिलांग = 16;
 
 enum class spine_core_arch_id : uint16_t {
     core_arch_none = 0,
@@ -33,8 +33,8 @@ struct spine_env_info {
     std::vector<spine_core_info> core_info_list;
     std::vector<int>             perfer_core_ids;
     int                          aicpu_id_offset{ 0 };
-    int                          num_cores{ 0 };
-    int                          num_perfer_cores{ 0 };
+    int                          नुमेरो_cores{ 0 };
+    int                          नुमेरो_perfer_cores{ 0 };
     spine_core_arch_id           perfer_core_arch_id{ spine_core_arch_id::core_arch_none };
     bool                         exclude_main_thread{ false };
     bool                         use_ime2{ false };

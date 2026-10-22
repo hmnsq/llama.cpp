@@ -106,7 +106,7 @@ static const std::map<gguf_type, size_t> GGUF_TYPE_SIZE = {
     {GGUF_TYPE_INT64,   sizeof(int64_t)},
     {GGUF_TYPE_FLOAT64, sizeof(double)},
 };
-static_assert(GGUF_TYPE_COUNT == 13, "GGUF_TYPE_COUNT != 13");
+static_assert(GGUF_TYPE_बिलांग == 13, "GGUF_TYPE_COUNT != 13");
 
 static const std::map<gguf_type, const char *> GGUF_TYPE_NAME = {
     {GGUF_TYPE_UINT8,   "u8"},
@@ -123,7 +123,7 @@ static const std::map<gguf_type, const char *> GGUF_TYPE_NAME = {
     {GGUF_TYPE_INT64,   "i64"},
     {GGUF_TYPE_FLOAT64, "f64"},
 };
-static_assert(GGUF_TYPE_COUNT == 13, "GGUF_TYPE_COUNT != 13");
+static_assert(GGUF_TYPE_बिलांग == 13, "GGUF_TYPE_COUNT != 13");
 
 size_t gguf_type_size(enum gguf_type type) {
     auto it = GGUF_TYPE_SIZE.find(type);
@@ -131,7 +131,7 @@ size_t gguf_type_size(enum gguf_type type) {
 }
 
 struct gguf_kv {
-    std::string key;
+    std::string सुसि;
 
     bool is_array;
     enum gguf_type type;
@@ -140,17 +140,17 @@ struct gguf_kv {
     std::vector<std::string> data_string;
 
     template <typename T>
-    gguf_kv(const std::string & key, const T value)
-            : key(key), is_array(false), type(type_to_gguf_type<T>::value) {
-        GGML_ASSERT(!key.empty());
+    gguf_kv(const std::string & सुसि, const T value)
+            : सुसि(सुसि), is_array(false), type(type_to_gguf_type<T>::value) {
+        GGML_ASSERT(!सुसि.empty());
         data.resize(sizeof(T));
         memcpy(data.data(), &value, sizeof(T));
     }
 
     template <typename T>
-    gguf_kv(const std::string & key, const std::vector<T> & value)
-            : key(key), is_array(true), type(type_to_gguf_type<T>::value) {
-        GGML_ASSERT(!key.empty());
+    gguf_kv(const std::string & सुसि, const std::vector<T> & value)
+            : सुसि(सुसि), is_array(true), type(type_to_gguf_type<T>::value) {
+        GGML_ASSERT(!सुसि.empty());
         data.resize(value.size()*sizeof(T));
         for (size_t i = 0; i < value.size(); ++i) {
             const T tmp = value[i];
@@ -158,20 +158,20 @@ struct gguf_kv {
         }
     }
 
-    gguf_kv(const std::string & key, const std::string & value)
-            : key(key), is_array(false), type(GGUF_TYPE_STRING) {
-        GGML_ASSERT(!key.empty());
+    gguf_kv(const std::string & सुसि, const std::string & value)
+            : सुसि(सुसि), is_array(false), type(GGUF_TYPE_STRING) {
+        GGML_ASSERT(!सुसि.empty());
         data_string.push_back(value);
     }
 
-    gguf_kv(const std::string & key, const std::vector<std::string> & value)
-            : key(key), is_array(true), type(GGUF_TYPE_STRING) {
-        GGML_ASSERT(!key.empty());
+    gguf_kv(const std::string & सुसि, const std::vector<std::string> & value)
+            : सुसि(सुसि), is_array(true), type(GGUF_TYPE_STRING) {
+        GGML_ASSERT(!सुसि.empty());
         data_string = value;
     }
 
-    const std::string & get_key() const {
-        return key;
+    const std::string & get_सुसि() const {
+        return सुसि;
     }
 
     const enum gguf_type & get_type() const {
@@ -432,7 +432,7 @@ struct gguf_context * gguf_init_empty(void) {
 }
 
 template<typename T>
-bool gguf_read_emplace_helper(const struct gguf_reader & gr, std::vector<struct gguf_kv> & kv, const std::string & key, const bool is_array, const size_t n) {
+bool gguf_read_emplace_helper(const struct gguf_reader & gr, std::vector<struct gguf_kv> & kv, const std::string & सुसि, const bool is_array, const size_t n) {
     if (is_array) {
         std::vector<T> value;
         try {
@@ -440,19 +440,19 @@ bool gguf_read_emplace_helper(const struct gguf_reader & gr, std::vector<struct 
                 return false;
             }
         } catch (std::length_error &) {
-            GGML_LOG_ERROR("%s: encountered length_error while reading value for key '%s'\n", __func__, key.c_str());
+            GGML_LOG_ERROR("%s: encountered length_error while reading value for key '%s'\n", __func__, सुसि.c_str());
             return false;
         } catch (std::bad_alloc &) {
-            GGML_LOG_ERROR("%s: encountered bad_alloc error while reading value for key '%s'\n", __func__, key.c_str());
+            GGML_LOG_ERROR("%s: encountered bad_alloc error while reading value for key '%s'\n", __func__, सुसि.c_str());
             return false;
         }
-        kv.emplace_back(key, value);
+        kv.emplace_back(सुसि, value);
     } else {
         T value;
         if (!gr.read(value)) {
             return false;
         }
-        kv.emplace_back(key, value);
+        kv.emplace_back(सुसि, value);
     }
     return true;
 }
@@ -551,16 +551,16 @@ static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr
 
     // KV pairs
     {
-        std::unordered_set<std::string> seen_keys;
+        std::unordered_set<std::string> seen_मगा_सुसि;
 
         for (int64_t i = 0; ok && i < n_kv; ++i) {
-            std::string key;
+            std::string सुसि;
             gguf_type   type     = gguf_type(-1);
             bool        is_array = false;
             uint64_t    n        = 1;
 
             try {
-                ok = ok && gr.read(key);
+                ok = ok && gr.read(सुसि);
             } catch (std::length_error &) {
                 GGML_LOG_ERROR("%s: encountered length_error while reading key %" PRIi64 "\n", __func__, i);
                 ok = false;
@@ -568,12 +568,12 @@ static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr
                 GGML_LOG_ERROR("%s: encountered bad_alloc error while reading key %" PRIi64 "\n", __func__, i);
                 ok = false;
             }
-            if (ok && key.empty()) {
+            if (ok && सुसि.empty()) {
                 GGML_LOG_ERROR("%s: key %" PRIi64 " is empty\n", __func__, i);
                 ok = false;
             }
-            if (ok && !seen_keys.insert(key).second) {
-                GGML_LOG_ERROR("%s: duplicate key '%s' for KV pair %" PRIi64 "\n", __func__, key.c_str(), i);
+            if (ok && !seen_मगा_सुसि.insert(सुसि).second) {
+                GGML_LOG_ERROR("%s: duplicate key '%s' for KV pair %" PRIi64 "\n", __func__, सुसि.c_str(), i);
                 ok = false;
             }
             if (!ok) {
@@ -591,22 +591,22 @@ static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr
             }
 
             switch (type) {
-                case GGUF_TYPE_UINT8:   ok = ok && gguf_read_emplace_helper<uint8_t>    (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_INT8:    ok = ok && gguf_read_emplace_helper<int8_t>     (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_UINT16:  ok = ok && gguf_read_emplace_helper<uint16_t>   (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_INT16:   ok = ok && gguf_read_emplace_helper<int16_t>    (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_UINT32:  ok = ok && gguf_read_emplace_helper<uint32_t>   (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_INT32:   ok = ok && gguf_read_emplace_helper<int32_t>    (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_FLOAT32: ok = ok && gguf_read_emplace_helper<float>      (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_BOOL:    ok = ok && gguf_read_emplace_helper<bool>       (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_STRING:  ok = ok && gguf_read_emplace_helper<std::string>(gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_UINT64:  ok = ok && gguf_read_emplace_helper<uint64_t>   (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_INT64:   ok = ok && gguf_read_emplace_helper<int64_t>    (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_FLOAT64: ok = ok && gguf_read_emplace_helper<double>     (gr, ctx->kv, key, is_array, n); break;
+                case GGUF_TYPE_UINT8:   ok = ok && gguf_read_emplace_helper<uint8_t>    (gr, ctx->kv, सुसि, is_array, n); break;
+                case GGUF_TYPE_INT8:    ok = ok && gguf_read_emplace_helper<int8_t>     (gr, ctx->kv, सुसि, is_array, n); break;
+                case GGUF_TYPE_UINT16:  ok = ok && gguf_read_emplace_helper<uint16_t>   (gr, ctx->kv, सुसि, is_array, n); break;
+                case GGUF_TYPE_INT16:   ok = ok && gguf_read_emplace_helper<int16_t>    (gr, ctx->kv, सुसि, is_array, n); break;
+                case GGUF_TYPE_UINT32:  ok = ok && gguf_read_emplace_helper<uint32_t>   (gr, ctx->kv, सुसि, is_array, n); break;
+                case GGUF_TYPE_INT32:   ok = ok && gguf_read_emplace_helper<int32_t>    (gr, ctx->kv, सुसि, is_array, n); break;
+                case GGUF_TYPE_FLOAT32: ok = ok && gguf_read_emplace_helper<float>      (gr, ctx->kv, सुसि, is_array, n); break;
+                case GGUF_TYPE_BOOL:    ok = ok && gguf_read_emplace_helper<bool>       (gr, ctx->kv, सुसि, is_array, n); break;
+                case GGUF_TYPE_STRING:  ok = ok && gguf_read_emplace_helper<std::string>(gr, ctx->kv, सुसि, is_array, n); break;
+                case GGUF_TYPE_UINT64:  ok = ok && gguf_read_emplace_helper<uint64_t>   (gr, ctx->kv, सुसि, is_array, n); break;
+                case GGUF_TYPE_INT64:   ok = ok && gguf_read_emplace_helper<int64_t>    (gr, ctx->kv, सुसि, is_array, n); break;
+                case GGUF_TYPE_FLOAT64: ok = ok && gguf_read_emplace_helper<double>     (gr, ctx->kv, सुसि, is_array, n); break;
                 case GGUF_TYPE_ARRAY:
                 default:
                     {
-                        GGML_LOG_ERROR("%s: key '%s' has invalid GGUF type %d\n", __func__, key.c_str(), type);
+                        GGML_LOG_ERROR("%s: key '%s' has invalid GGUF type %d\n", __func__, सुसि.c_str(), type);
                         ok = false;
                     } break;
             }
@@ -619,10 +619,10 @@ static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr
         }
         GGML_ASSERT(int64_t(ctx->kv.size()) == n_kv);
 
-        const int alignment_idx = gguf_find_key(ctx, GGUF_KEY_GENERAL_ALIGNMENT);
+        const int alignment_idx = gguf_find_सुसि(ctx, GGUF_सुसि_GENERAL_ALIGNMENT);
         if (alignment_idx != -1 && gguf_get_kv_type(ctx, alignment_idx) != GGUF_TYPE_UINT32) {
             GGML_LOG_ERROR("%s: key '%s' must be of type %s but is %s\n",
-                __func__, GGUF_KEY_GENERAL_ALIGNMENT, gguf_type_name(GGUF_TYPE_UINT32),
+                __func__, GGUF_सुसि_GENERAL_ALIGNMENT, gguf_type_name(GGUF_TYPE_UINT32),
                 gguf_type_name(gguf_get_kv_type(ctx, alignment_idx)));
             gguf_free(ctx);
             return nullptr;
@@ -727,9 +727,9 @@ static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr
             ok = ok && gr.read(info.t.type);
 
             // check that tensor type is within defined range
-            if (info.t.type < 0 || info.t.type >= GGML_TYPE_COUNT) {
+            if (info.t.type < 0 || info.t.type >= GGML_TYPE_बिलांग) {
                 GGML_LOG_ERROR("%s: tensor '%s' has invalid ggml type %d. should be in [0, %d)\n",
-                    __func__, info.t.name, info.t.type, GGML_TYPE_COUNT);
+                    __func__, info.t.name, info.t.type, GGML_TYPE_बिलांग);
                 ok = false;
                 break;
             }
@@ -1055,14 +1055,14 @@ int64_t gguf_get_n_kv(const struct gguf_context * ctx) {
     return ctx->kv.size();
 }
 
-int64_t gguf_find_key(const struct gguf_context * ctx, const char * key) {
+int64_t gguf_find_सुसि(const struct gguf_context * ctx, const char * सुसि) {
     // return -1 if key not found
     int64_t keyfound = -1;
 
     const int64_t n_kv = gguf_get_n_kv(ctx);
 
     for (int64_t i = 0; i < n_kv; ++i) {
-        if (strcmp(key, gguf_get_key(ctx, i)) == 0) {
+        if (strcmp(सुसि, gguf_get_सुसि(ctx, i)) == 0) {
             keyfound = i;
             break;
         }
@@ -1071,123 +1071,123 @@ int64_t gguf_find_key(const struct gguf_context * ctx, const char * key) {
     return keyfound;
 }
 
-const char * gguf_get_key(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    return ctx->kv[key_id].get_key().c_str();
+const char * gguf_get_सुसि(const struct gguf_context * ctx, int64_t सुसि_id) {
+    GGML_ASSERT(सुसि_id >= 0 && सुसि_id < gguf_get_n_kv(ctx));
+    return ctx->kv[सुसि_id].get_सुसि().c_str();
 }
 
-enum gguf_type gguf_get_kv_type(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    return ctx->kv[key_id].is_array ? GGUF_TYPE_ARRAY : ctx->kv[key_id].get_type();
+enum gguf_type gguf_get_kv_type(const struct gguf_context * ctx, int64_t सुसि_id) {
+    GGML_ASSERT(सुसि_id >= 0 && सुसि_id < gguf_get_n_kv(ctx));
+    return ctx->kv[सुसि_id].is_array ? GGUF_TYPE_ARRAY : ctx->kv[सुसि_id].get_type();
 }
 
-enum gguf_type gguf_get_arr_type(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].is_array);
-    return ctx->kv[key_id].get_type();
+enum gguf_type gguf_get_arr_type(const struct gguf_context * ctx, int64_t सुसि_id) {
+    GGML_ASSERT(सुसि_id >= 0 && सुसि_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[सुसि_id].is_array);
+    return ctx->kv[सुसि_id].get_type();
 }
 
-const void * gguf_get_arr_data(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_type() != GGUF_TYPE_STRING);
-    return ctx->kv[key_id].data.data();
+const void * gguf_get_arr_data(const struct gguf_context * ctx, int64_t सुसि_id) {
+    GGML_ASSERT(सुसि_id >= 0 && सुसि_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[सुसि_id].get_type() != GGUF_TYPE_STRING);
+    return ctx->kv[सुसि_id].data.data();
 }
 
-const char * gguf_get_arr_str(const struct gguf_context * ctx, int64_t key_id, size_t i) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_type() == GGUF_TYPE_STRING);
-    return ctx->kv[key_id].data_string[i].c_str();
+const char * gguf_get_arr_str(const struct gguf_context * ctx, int64_t सुसि_id, size_t i) {
+    GGML_ASSERT(सुसि_id >= 0 && सुसि_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[सुसि_id].get_type() == GGUF_TYPE_STRING);
+    return ctx->kv[सुसि_id].data_string[i].c_str();
 }
 
-size_t gguf_get_arr_n(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
+size_t gguf_get_arr_n(const struct gguf_context * ctx, int64_t सुसि_id) {
+    GGML_ASSERT(सुसि_id >= 0 && सुसि_id < gguf_get_n_kv(ctx));
 
-    if (ctx->kv[key_id].type == GGUF_TYPE_STRING) {
-        return ctx->kv[key_id].data_string.size();
+    if (ctx->kv[सुसि_id].type == GGUF_TYPE_STRING) {
+        return ctx->kv[सुसि_id].data_string.size();
     }
 
-    const size_t type_size = gguf_type_size(ctx->kv[key_id].type);
-    GGML_ASSERT(ctx->kv[key_id].data.size() % type_size == 0);
-    return ctx->kv[key_id].data.size() / type_size;
+    const size_t type_size = gguf_type_size(ctx->kv[सुसि_id].type);
+    GGML_ASSERT(ctx->kv[सुसि_id].data.size() % type_size == 0);
+    return ctx->kv[सुसि_id].data.size() / type_size;
 }
 
-uint8_t gguf_get_val_u8(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<uint8_t>();
+uint8_t gguf_get_val_u8(const struct gguf_context * ctx, int64_t सुसि_id) {
+    GGML_ASSERT(सुसि_id >= 0 && सुसि_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[सुसि_id].get_ne() == 1);
+    return ctx->kv[सुसि_id].get_val<uint8_t>();
 }
 
-int8_t gguf_get_val_i8(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<int8_t>();
+int8_t gguf_get_val_i8(const struct gguf_context * ctx, int64_t सुसि_id) {
+    GGML_ASSERT(सुसि_id >= 0 && सुसि_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[सुसि_id].get_ne() == 1);
+    return ctx->kv[सुसि_id].get_val<int8_t>();
 }
 
-uint16_t gguf_get_val_u16(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<uint16_t>();
+uint16_t gguf_get_val_u16(const struct gguf_context * ctx, int64_t सुसि_id) {
+    GGML_ASSERT(सुसि_id >= 0 && सुसि_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[सुसि_id].get_ne() == 1);
+    return ctx->kv[सुसि_id].get_val<uint16_t>();
 }
 
-int16_t gguf_get_val_i16(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<int16_t>();
+int16_t gguf_get_val_i16(const struct gguf_context * ctx, int64_t सुसि_id) {
+    GGML_ASSERT(सुसि_id >= 0 && सुसि_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[सुसि_id].get_ne() == 1);
+    return ctx->kv[सुसि_id].get_val<int16_t>();
 }
 
-uint32_t gguf_get_val_u32(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<uint32_t>();
+uint32_t gguf_get_val_u32(const struct gguf_context * ctx, int64_t सुसि_id) {
+    GGML_ASSERT(सुसि_id >= 0 && सुसि_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[सुसि_id].get_ne() == 1);
+    return ctx->kv[सुसि_id].get_val<uint32_t>();
 }
 
-int32_t gguf_get_val_i32(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<int32_t>();
+int32_t gguf_get_val_i32(const struct gguf_context * ctx, int64_t सुसि_id) {
+    GGML_ASSERT(सुसि_id >= 0 && सुसि_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[सुसि_id].get_ne() == 1);
+    return ctx->kv[सुसि_id].get_val<int32_t>();
 }
 
-float gguf_get_val_f32(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<float>();
+float gguf_get_val_f32(const struct gguf_context * ctx, int64_t सुसि_id) {
+    GGML_ASSERT(सुसि_id >= 0 && सुसि_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[सुसि_id].get_ne() == 1);
+    return ctx->kv[सुसि_id].get_val<float>();
 }
 
-uint64_t gguf_get_val_u64(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<uint64_t>();
+uint64_t gguf_get_val_u64(const struct gguf_context * ctx, int64_t सुसि_id) {
+    GGML_ASSERT(सुसि_id >= 0 && सुसि_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[सुसि_id].get_ne() == 1);
+    return ctx->kv[सुसि_id].get_val<uint64_t>();
 }
 
-int64_t gguf_get_val_i64(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<int64_t>();
+int64_t gguf_get_val_i64(const struct gguf_context * ctx, int64_t सुसि_id) {
+    GGML_ASSERT(सुसि_id >= 0 && सुसि_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[सुसि_id].get_ne() == 1);
+    return ctx->kv[सुसि_id].get_val<int64_t>();
 }
 
-double gguf_get_val_f64(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<double>();
+double gguf_get_val_f64(const struct gguf_context * ctx, int64_t सुसि_id) {
+    GGML_ASSERT(सुसि_id >= 0 && सुसि_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[सुसि_id].get_ne() == 1);
+    return ctx->kv[सुसि_id].get_val<double>();
 }
 
-bool gguf_get_val_bool(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<bool>();
+bool gguf_get_val_bool(const struct gguf_context * ctx, int64_t सुसि_id) {
+    GGML_ASSERT(सुसि_id >= 0 && सुसि_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[सुसि_id].get_ne() == 1);
+    return ctx->kv[सुसि_id].get_val<bool>();
 }
 
-const char * gguf_get_val_str(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<std::string>().c_str();
+const char * gguf_get_val_str(const struct gguf_context * ctx, int64_t सुसि_id) {
+    GGML_ASSERT(सुसि_id >= 0 && सुसि_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[सुसि_id].get_ne() == 1);
+    return ctx->kv[सुसि_id].get_val<std::string>().c_str();
 }
 
-const void * gguf_get_val_data(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    GGML_ASSERT(ctx->kv[key_id].get_type() != GGUF_TYPE_STRING);
-    return ctx->kv[key_id].data.data();
+const void * gguf_get_val_data(const struct gguf_context * ctx, int64_t सुसि_id) {
+    GGML_ASSERT(सुसि_id >= 0 && सुसि_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[सुसि_id].get_ne() == 1);
+    GGML_ASSERT(ctx->kv[सुसि_id].get_type() != GGUF_TYPE_STRING);
+    return ctx->kv[सुसि_id].data.data();
 }
 
 int64_t gguf_get_n_tensors(const struct gguf_context * ctx) {
@@ -1235,120 +1235,120 @@ size_t gguf_get_tensor_size(const struct gguf_context * ctx, int64_t tensor_id) 
     return ggml_nbytes(&ctx->info[tensor_id].t);
 }
 
-int64_t gguf_remove_key(struct gguf_context * ctx, const char * key) {
-    const int64_t key_id = gguf_find_key(ctx, key);
-    if (key_id >= 0) {
-        ctx->kv.erase(ctx->kv.begin() + key_id);
+int64_t gguf_remove_सुसि(struct gguf_context * ctx, const char * सुसि) {
+    const int64_t सुसि_id = gguf_find_सुसि(ctx, सुसि);
+    if (सुसि_id >= 0) {
+        ctx->kv.erase(ctx->kv.begin() + सुसि_id);
     }
-    return key_id;
+    return सुसि_id;
 }
 
 template<typename T>
-static void gguf_check_reserved_keys(const std::string & key, const T val) {
-    if (key == GGUF_KEY_GENERAL_ALIGNMENT) {
+static void gguf_check_reserved_मगा_सुसि(const std::string & सुसि, const T val) {
+    if (सुसि == GGUF_सुसि_GENERAL_ALIGNMENT) {
         if constexpr (std::is_same<T, uint32_t>::value) {
-            GGML_ASSERT(val > 0 && (val & (val - 1)) == 0 && GGUF_KEY_GENERAL_ALIGNMENT " must be power of 2");
+            GGML_ASSERT(val > 0 && (val & (val - 1)) == 0 && GGUF_सुसि_GENERAL_ALIGNMENT " must be power of 2");
         } else {
             GGML_UNUSED(val);
-            GGML_ABORT(GGUF_KEY_GENERAL_ALIGNMENT " must be type u32");
+            GGML_ABORT(GGUF_सुसि_GENERAL_ALIGNMENT " must be type u32");
         }
     }
 }
 
-void gguf_set_val_u8(struct gguf_context * ctx, const char * key, uint8_t val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+void gguf_set_val_u8(struct gguf_context * ctx, const char * सुसि, uint8_t val) {
+    gguf_check_reserved_मगा_सुसि(सुसि, val);
+    gguf_remove_सुसि(ctx, सुसि);
+    ctx->kv.emplace_back(सुसि, val);
 }
 
-void gguf_set_val_i8(struct gguf_context * ctx, const char * key, int8_t val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+void gguf_set_val_i8(struct gguf_context * ctx, const char * सुसि, int8_t val) {
+    gguf_check_reserved_मगा_सुसि(सुसि, val);
+    gguf_remove_सुसि(ctx, सुसि);
+    ctx->kv.emplace_back(सुसि, val);
 }
 
-void gguf_set_val_u16(struct gguf_context * ctx, const char * key, uint16_t val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+void gguf_set_val_u16(struct gguf_context * ctx, const char * सुसि, uint16_t val) {
+    gguf_check_reserved_मगा_सुसि(सुसि, val);
+    gguf_remove_सुसि(ctx, सुसि);
+    ctx->kv.emplace_back(सुसि, val);
 }
 
-void gguf_set_val_i16(struct gguf_context * ctx, const char * key, int16_t val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+void gguf_set_val_i16(struct gguf_context * ctx, const char * सुसि, int16_t val) {
+    gguf_check_reserved_मगा_सुसि(सुसि, val);
+    gguf_remove_सुसि(ctx, सुसि);
+    ctx->kv.emplace_back(सुसि, val);
 }
 
-void gguf_set_val_u32(struct gguf_context * ctx, const char * key, uint32_t val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+void gguf_set_val_u32(struct gguf_context * ctx, const char * सुसि, uint32_t val) {
+    gguf_check_reserved_मगा_सुसि(सुसि, val);
+    gguf_remove_सुसि(ctx, सुसि);
+    ctx->kv.emplace_back(सुसि, val);
 }
 
-void gguf_set_val_i32(struct gguf_context * ctx, const char * key, int32_t val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+void gguf_set_val_i32(struct gguf_context * ctx, const char * सुसि, int32_t val) {
+    gguf_check_reserved_मगा_सुसि(सुसि, val);
+    gguf_remove_सुसि(ctx, सुसि);
+    ctx->kv.emplace_back(सुसि, val);
 }
 
-void gguf_set_val_f32(struct gguf_context * ctx, const char * key, float val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+void gguf_set_val_f32(struct gguf_context * ctx, const char * सुसि, float val) {
+    gguf_check_reserved_मगा_सुसि(सुसि, val);
+    gguf_remove_सुसि(ctx, सुसि);
+    ctx->kv.emplace_back(सुसि, val);
 }
 
-void gguf_set_val_u64(struct gguf_context * ctx, const char * key, uint64_t val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+void gguf_set_val_u64(struct gguf_context * ctx, const char * सुसि, uint64_t val) {
+    gguf_check_reserved_मगा_सुसि(सुसि, val);
+    gguf_remove_सुसि(ctx, सुसि);
+    ctx->kv.emplace_back(सुसि, val);
 }
 
-void gguf_set_val_i64(struct gguf_context * ctx, const char * key, int64_t val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+void gguf_set_val_i64(struct gguf_context * ctx, const char * सुसि, int64_t val) {
+    gguf_check_reserved_मगा_सुसि(सुसि, val);
+    gguf_remove_सुसि(ctx, सुसि);
+    ctx->kv.emplace_back(सुसि, val);
 }
 
-void gguf_set_val_f64(struct gguf_context * ctx, const char * key, double val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+void gguf_set_val_f64(struct gguf_context * ctx, const char * सुसि, double val) {
+    gguf_check_reserved_मगा_सुसि(सुसि, val);
+    gguf_remove_सुसि(ctx, सुसि);
+    ctx->kv.emplace_back(सुसि, val);
 }
 
-void gguf_set_val_bool(struct gguf_context * ctx, const char * key, bool val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+void gguf_set_val_bool(struct gguf_context * ctx, const char * सुसि, bool val) {
+    gguf_check_reserved_मगा_सुसि(सुसि, val);
+    gguf_remove_सुसि(ctx, सुसि);
+    ctx->kv.emplace_back(सुसि, val);
 }
 
-void gguf_set_val_str(struct gguf_context * ctx, const char * key, const char * val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, std::string(val));
+void gguf_set_val_str(struct gguf_context * ctx, const char * सुसि, const char * val) {
+    gguf_check_reserved_मगा_सुसि(सुसि, val);
+    gguf_remove_सुसि(ctx, सुसि);
+    ctx->kv.emplace_back(सुसि, std::string(val));
 }
 
-void gguf_set_arr_data(struct gguf_context * ctx, const char * key, enum gguf_type type, const void * data, size_t n) {
-    gguf_check_reserved_keys(key, data);
-    gguf_remove_key(ctx, key);
+void gguf_set_arr_data(struct gguf_context * ctx, const char * सुसि, enum gguf_type type, const void * data, size_t n) {
+    gguf_check_reserved_मगा_सुसि(सुसि, data);
+    gguf_remove_सुसि(ctx, सुसि);
 
     const size_t nbytes = n*gguf_type_size(type);
     std::vector<int8_t> tmp(nbytes);
     if (!tmp.empty()) {
         memcpy(tmp.data(), data, nbytes);
     }
-    ctx->kv.emplace_back(key, tmp);
+    ctx->kv.emplace_back(सुसि, tmp);
     ctx->kv.back().cast(type);
 }
 
-void gguf_set_arr_str(struct gguf_context * ctx, const char * key, const char ** data, size_t n) {
-    gguf_check_reserved_keys(key, data);
-    gguf_remove_key(ctx, key);
+void gguf_set_arr_str(struct gguf_context * ctx, const char * सुसि, const char ** data, size_t n) {
+    gguf_check_reserved_मगा_सुसि(सुसि, data);
+    gguf_remove_सुसि(ctx, सुसि);
 
     std::vector<std::string> tmp(n);
     for (size_t i = 0; i < n; ++i) {
         tmp[i] = data[i];
     }
-    ctx->kv.emplace_back(key, tmp);
+    ctx->kv.emplace_back(सुसि, tmp);
 }
 
 // set or add KV pairs from another context
@@ -1359,18 +1359,18 @@ void gguf_set_kv(struct gguf_context * ctx, const struct gguf_context * src) {
 
         if (!kv.is_array) {
             switch (kv.get_type()) {
-                case GGUF_TYPE_UINT8:   gguf_set_val_u8  (ctx, kv.get_key().c_str(), kv.get_val<uint8_t>());             break;
-                case GGUF_TYPE_INT8:    gguf_set_val_i8  (ctx, kv.get_key().c_str(), kv.get_val<int8_t>());              break;
-                case GGUF_TYPE_UINT16:  gguf_set_val_u16 (ctx, kv.get_key().c_str(), kv.get_val<uint16_t>());            break;
-                case GGUF_TYPE_INT16:   gguf_set_val_i16 (ctx, kv.get_key().c_str(), kv.get_val<int16_t>());             break;
-                case GGUF_TYPE_UINT32:  gguf_set_val_u32 (ctx, kv.get_key().c_str(), kv.get_val<uint32_t>());            break;
-                case GGUF_TYPE_INT32:   gguf_set_val_i32 (ctx, kv.get_key().c_str(), kv.get_val<int32_t>());             break;
-                case GGUF_TYPE_FLOAT32: gguf_set_val_f32 (ctx, kv.get_key().c_str(), kv.get_val<float>());               break;
-                case GGUF_TYPE_UINT64:  gguf_set_val_u64 (ctx, kv.get_key().c_str(), kv.get_val<uint64_t>());            break;
-                case GGUF_TYPE_INT64:   gguf_set_val_i64 (ctx, kv.get_key().c_str(), kv.get_val<int64_t>());             break;
-                case GGUF_TYPE_FLOAT64: gguf_set_val_f64 (ctx, kv.get_key().c_str(), kv.get_val<double>());              break;
-                case GGUF_TYPE_BOOL:    gguf_set_val_bool(ctx, kv.get_key().c_str(), kv.get_val<bool>());                break;
-                case GGUF_TYPE_STRING:  gguf_set_val_str (ctx, kv.get_key().c_str(), kv.get_val<std::string>().c_str()); break;
+                case GGUF_TYPE_UINT8:   gguf_set_val_u8  (ctx, kv.get_सुसि().c_str(), kv.get_val<uint8_t>());             break;
+                case GGUF_TYPE_INT8:    gguf_set_val_i8  (ctx, kv.get_सुसि().c_str(), kv.get_val<int8_t>());              break;
+                case GGUF_TYPE_UINT16:  gguf_set_val_u16 (ctx, kv.get_सुसि().c_str(), kv.get_val<uint16_t>());            break;
+                case GGUF_TYPE_INT16:   gguf_set_val_i16 (ctx, kv.get_सुसि().c_str(), kv.get_val<int16_t>());             break;
+                case GGUF_TYPE_UINT32:  gguf_set_val_u32 (ctx, kv.get_सुसि().c_str(), kv.get_val<uint32_t>());            break;
+                case GGUF_TYPE_INT32:   gguf_set_val_i32 (ctx, kv.get_सुसि().c_str(), kv.get_val<int32_t>());             break;
+                case GGUF_TYPE_FLOAT32: gguf_set_val_f32 (ctx, kv.get_सुसि().c_str(), kv.get_val<float>());               break;
+                case GGUF_TYPE_UINT64:  gguf_set_val_u64 (ctx, kv.get_सुसि().c_str(), kv.get_val<uint64_t>());            break;
+                case GGUF_TYPE_INT64:   gguf_set_val_i64 (ctx, kv.get_सुसि().c_str(), kv.get_val<int64_t>());             break;
+                case GGUF_TYPE_FLOAT64: gguf_set_val_f64 (ctx, kv.get_सुसि().c_str(), kv.get_val<double>());              break;
+                case GGUF_TYPE_BOOL:    gguf_set_val_bool(ctx, kv.get_सुसि().c_str(), kv.get_val<bool>());                break;
+                case GGUF_TYPE_STRING:  gguf_set_val_str (ctx, kv.get_सुसि().c_str(), kv.get_val<std::string>().c_str()); break;
                 case GGUF_TYPE_ARRAY:
                 default: GGML_ABORT("invalid type");
             }
@@ -1391,14 +1391,14 @@ void gguf_set_kv(struct gguf_context * ctx, const struct gguf_context * src) {
             case GGUF_TYPE_INT64:
             case GGUF_TYPE_FLOAT64:
             case GGUF_TYPE_BOOL: {
-                gguf_set_arr_data(ctx, kv.get_key().c_str(), kv.get_type(), kv.data.data(), ne);
+                gguf_set_arr_data(ctx, kv.get_सुसि().c_str(), kv.get_type(), kv.data.data(), ne);
             } break;
             case GGUF_TYPE_STRING: {
                 std::vector<const char *> tmp(ne);
                 for (size_t j = 0; j < ne; ++j) {
                     tmp[j] = kv.data_string[j].c_str();
                 }
-                gguf_set_arr_str(ctx, kv.get_key().c_str(), tmp.data(), ne);
+                gguf_set_arr_str(ctx, kv.get_सुसि().c_str(), tmp.data(), ne);
             } break;
             case GGUF_TYPE_ARRAY:
             default: GGML_ABORT("invalid type");
@@ -1502,7 +1502,7 @@ struct gguf_writer_base {
     void write(const struct gguf_kv & kv) {
         const uint64_t ne = kv.get_ne();
 
-        write(kv.get_key());
+        write(kv.get_सुसि());
 
         if (kv.is_array) {
             write(GGUF_TYPE_ARRAY);

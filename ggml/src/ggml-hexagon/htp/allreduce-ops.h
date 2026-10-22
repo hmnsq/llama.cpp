@@ -22,7 +22,7 @@ enum htp_allreduce_mode {
     HTP_ALLREDUCE_SHARDED_FANOUT = 1, // each rank reduces 1/N shard and fans out to all buffers
 };
 
-static inline size_t htp_allreduce_vtcm_buffer_count(
+static inline size_t htp_allreduce_vtcm_buffer_बिलांग(
     uint32_t n_ranks,
     uint32_t n_threads,
     bool has_add,

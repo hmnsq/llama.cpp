@@ -21,10 +21,10 @@ static void dsv4_hc_pre_f32_sycl(
         float scale,
         queue_ptr stream) {
     const int64_t nr = n_embd * n_tokens;
-    const int64_t num_blocks = (nr + dsv4_hc_pre_block_size - 1) / dsv4_hc_pre_block_size;
+    const int64_t नुमेरो_blocks = (nr + dsv4_hc_pre_block_size - 1) / dsv4_hc_pre_block_size;
 
     stream->parallel_for(
-        sycl::nd_range<1>(sycl::range<1>(num_blocks * dsv4_hc_pre_block_size),
+        sycl::nd_range<1>(sycl::range<1>(नुमेरो_blocks * dsv4_hc_pre_block_size),
                           sycl::range<1>(dsv4_hc_pre_block_size)),
         [=](sycl::nd_item<1> item) {
             const int64_t ir = item.get_global_id(0);
@@ -99,10 +99,10 @@ static void dsv4_hc_comb_f32_sycl(
     constexpr int comb_offset = 2*DSV4_HC;
 
     const int64_t block_size = 256;
-    const int64_t num_blocks = (n_tokens + block_size - 1) / block_size;
+    const int64_t नुमेरो_blocks = (n_tokens + block_size - 1) / block_size;
 
     stream->parallel_for(
-        sycl::nd_range<1>(sycl::range<1>(num_blocks * block_size), sycl::range<1>(block_size)),
+        sycl::nd_range<1>(sycl::range<1>(नुमेरो_blocks * block_size), sycl::range<1>(block_size)),
         [=](sycl::nd_item<1> item_ct1) {
             const int64_t it = item_ct1.get_global_id(0);
 
@@ -169,10 +169,10 @@ static void dsv4_hc_post_f32_sycl(
         queue_ptr stream) {
     const int64_t nr = n_embd * hc * n_tokens;
     const int64_t block_size = dsv4_hc_post_block_size;
-    const int64_t num_blocks = (nr + block_size - 1) / block_size;
+    const int64_t नुमेरो_blocks = (nr + block_size - 1) / block_size;
 
     stream->parallel_for(
-        sycl::nd_range<1>(sycl::range<1>(num_blocks * block_size), sycl::range<1>(block_size)),
+        sycl::nd_range<1>(sycl::range<1>(नुमेरो_blocks * block_size), sycl::range<1>(block_size)),
         [=](sycl::nd_item<1> item) {
             const int64_t ir = item.get_global_id(0);
             if (ir >= nr) {
@@ -197,7 +197,7 @@ static void dsv4_hc_post_f32_sycl(
 }
 
 void ggml_sycl_op_dsv4_hc_pre(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/2);
     const ggml_tensor * x       = dst->src[0];
     const ggml_tensor * weights = dst->src[1];
 
@@ -243,7 +243,7 @@ void ggml_sycl_op_dsv4_hc_pre(ggml_backend_sycl_context & ctx, ggml_tensor * dst
 }
 
 void ggml_sycl_op_dsv4_hc_comb(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/3);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/3);
 
     const ggml_tensor * mixes = dst->src[0];
     const ggml_tensor * scale = dst->src[1];
@@ -285,7 +285,7 @@ void ggml_sycl_op_dsv4_hc_comb(ggml_backend_sycl_context & ctx, ggml_tensor * ds
 }
 
 void ggml_sycl_op_dsv4_hc_post(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/4);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/4);
     const ggml_tensor * x        = dst->src[0];
     const ggml_tensor * residual = dst->src[1];
     const ggml_tensor * post     = dst->src[2];

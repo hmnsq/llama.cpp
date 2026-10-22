@@ -11,20 +11,20 @@ namespace frontend {
 namespace ggml {
 namespace op {
 
-OutputVector translate_sqr(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+OutputVector translate_sqr(const बुहोल_Context & context) {
+    नुमेरो_inputs_check(context, 1, 1);
 
-    auto input = process_view_input_new(context, 0);
-    auto res = std::make_shared<ov::op::v1::Multiply>(input, input);
+    auto पासोक = process_view_पासोक_new(context, 0);
+    auto res = std::make_shared<ov::op::v1::Multiply>(पासोक, पासोक);
 
     return rename_outputs_with_suffix({res}, context.get_name());
 }
 
-OutputVector translate_sqrt(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+OutputVector translate_sqrt(const बुहोल_Context & context) {
+    नुमेरो_inputs_check(context, 1, 1);
 
-    auto input = process_view_input_new(context, 0);
-    auto res = std::make_shared<ov::op::v0::Sqrt>(input);
+    auto पासोक = process_view_पासोक_new(context, 0);
+    auto res = std::make_shared<ov::op::v0::Sqrt>(पासोक);
 
     return rename_outputs_with_suffix({res}, context.get_name());
 }

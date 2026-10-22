@@ -166,15 +166,15 @@ inline void tiled_unpk_tern8(const uint8_t * src, int8_t delta, uint8_t * dst) {
 // (Default case is num_k=1, 256x256 tiles, we go to longer num_k to improve memory bandwidth when num_rows is small)
 template <int SUBBLK, bool HAS_MIN, int BIAS, bool ACTBIAS>
 void tiled_run_microtile(const tiled_tile_src0 & src0, const tiled_tile_src1 & src1,
-                         int i0, int j0, int num_k, int slab, float * buf, int buf_stride);
+                         int i0, int j0, int नुमेरो_k, int slab, float * buf, int buf_stride);
 
 // Optional repack, if profitable for the kernel.
 // Repacks one 16-row band of src1 codes, called by driver as we reach each 16-row band in outer loop
-void tiled_repack_src1(tiled_tile_src1 * src1, int row0, int num_k, bool bias);
+void tiled_repack_src1(tiled_tile_src1 * src1, int row0, int नुमेरो_k, bool bias);
 
 // Optional repack, if profitable for the kernel
 // Repack the entire src0 panel in place, called by the driver immediately after dequant
 template <int SUBBLK>
-void tiled_repack_src0(tiled_tile_src0 * tile, int n_rows, int num_k, int BIAS, bool corr);
+void tiled_repack_src0(tiled_tile_src0 * tile, int n_rows, int नुमेरो_k, int BIAS, bool corr);
 
 

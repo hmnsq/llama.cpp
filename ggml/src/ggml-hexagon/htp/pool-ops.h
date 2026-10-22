@@ -30,7 +30,7 @@ struct htp_pool_2d_kernel_params {
     uint32_t narrow_path;
     uint32_t global_path;
     uint32_t block_path;
-    uint32_t avg_divide_count;
+    uint32_t avg_divide_बिलांग;
     uint32_t ox_lo;
     uint32_t ox_hi;
     float    inv_kernel_area;

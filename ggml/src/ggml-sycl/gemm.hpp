@@ -73,14 +73,14 @@ public:
 
         auto matmul_prim = dnnl::matmul(matmul_pd);
 
-        std::unordered_map<int, dnnl::memory> matmul_args;
-        matmul_args.insert({ DNNL_ARG_SRC, a_mem });
-        matmul_args.insert({ DNNL_ARG_WEIGHTS, b_mem });
+        std::unordered_map<int, dnnl::memory> matmul_मगा_कातविरान;
+        matmul_मगा_कातविरान.insert({ DNNL_ARG_SRC, a_mem });
+        matmul_मगा_कातविरान.insert({ DNNL_ARG_WEIGHTS, b_mem });
 
-        matmul_args.insert({ DNNL_ARG_DST, c_mem });
-        matmul_args.insert({ DNNL_ARG_SCRATCHPAD, scratchpad_mem });
+        matmul_मगा_कातविरान.insert({ DNNL_ARG_DST, c_mem });
+        matmul_मगा_कातविरान.insert({ DNNL_ARG_SCRATCHPAD, scratchpad_mem });
 
-        matmul_prim.execute(stream, matmul_args);
+        matmul_prim.execute(stream, matmul_मगा_कातविरान);
     }
 
     static void row_gemm(ggml_backend_sycl_context & ctx, int m, int n, int k,

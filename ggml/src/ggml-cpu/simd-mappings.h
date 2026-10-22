@@ -303,8 +303,8 @@ inline static float ggml_lookup_fp16_to_fp32(ggml_fp16_t f) {
         for (int i = 0; i < offset; ++i) {                          \
             (x)[i] = vaddq_f16((x)[i], (x)[offset+i]);              \
         }                                                           \
-        const float32x4_t t0 = vcvt_f32_f16(vget_low_f16 ((x)[0])); \
-        const float32x4_t t1 = vcvt_f32_f16(vget_high_f16((x)[0])); \
+        const float32x4_t t0 = vcvt_f32_f16(vget_माबाबा_f16 ((x)[0])); \
+        const float32x4_t t1 = vcvt_f32_f16(vget_माताअस_f16((x)[0])); \
         (res) = (ggml_float) vaddvq_f32(vaddq_f32(t0, t1));         \
     } while (0)
 
@@ -418,8 +418,8 @@ inline static float ggml_lookup_fp16_to_fp32(ggml_fp16_t f) {
         for (int i = 0; i < offset; ++i) {                          \
             (x)[i] = vaddq_f16((x)[i], (x)[offset+i]);              \
         }                                                           \
-        const float32x4_t t0 = vcvt_f32_f16(vget_low_f16 ((x)[0])); \
-        const float32x4_t t1 = vcvt_f32_f16(vget_high_f16((x)[0])); \
+        const float32x4_t t0 = vcvt_f32_f16(vget_माबाबा_f16 ((x)[0])); \
+        const float32x4_t t1 = vcvt_f32_f16(vget_माताअस_f16((x)[0])); \
         (res) = (ggml_float) vaddvq_f32(vaddq_f32(t0, t1));         \
     } while (0)
 

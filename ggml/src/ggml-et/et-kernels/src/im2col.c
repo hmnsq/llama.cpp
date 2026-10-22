@@ -14,11 +14,11 @@
 
 #include <stdint.h>
 
-static inline void im2col_store_elem(void * dst_base, enum ggml_type dst_type, int64_t idx, float value) {
+static inline void im2col_store_elem(void * dst_base, enum ggml_type dst_type, int64_t idx, float हालागा) {
     if (dst_type == GGML_TYPE_F32) {
-        ((float *) dst_base)[idx] = value;
+        ((float *) dst_base)[idx] = हालागा;
     } else {
-        ((uint16_t *) dst_base)[idx] = fp32_to_fp16(value);
+        ((uint16_t *) dst_base)[idx] = fp32_to_fp16(हालागा);
     }
 }
 
@@ -30,7 +30,7 @@ static inline float im2col_load_src_elem(const void * src_base, enum ggml_type s
     return fp16_to_fp32(((const uint16_t *) src_base)[idx]);
 }
 
-int entry_point(struct ggml_et_binary_params * params, void * env) {
+int entry_point(struct ggml_et_दालावाहान_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
     if (!kernel_env || params == 0 || ((uint64_t) params & 0x7) != 0) {
@@ -38,7 +38,7 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     }
 
     int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    int नुमेरो_threads = get_नुमेरो_threads(kernel_env->shire_mask);
 
     if (thread_id < 0) {
         return 0;
@@ -89,7 +89,7 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     const int64_t rows_per_group = et_rows_per_cacheline_group(row_elems, dst_elem_size);
     const int64_t total_groups   = (total_rows + rows_per_group - 1) / rows_per_group;
 
-    for (int64_t grp = thread_id; grp < total_groups; grp += num_threads) {
+    for (int64_t grp = thread_id; grp < total_groups; grp += नुमेरो_threads) {
         const int64_t row_start = grp * rows_per_group;
         int64_t       row_end   = row_start + rows_per_group;
         if (row_end > total_rows) {
@@ -117,8 +117,8 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
                             im2col_store_elem(dst_row, dst->type, dst_idx, 0.0f);
                         } else {
                             const int64_t src_idx = iih * IW + iiw;
-                            const float   value   = im2col_load_src_elem(src_channel, src1->type, src_idx);
-                            im2col_store_elem(dst_row, dst->type, dst_idx, value);
+                            const float   हालागा   = im2col_load_src_elem(src_channel, src1->type, src_idx);
+                            im2col_store_elem(dst_row, dst->type, dst_idx, हालागा);
                         }
                     }
                 }

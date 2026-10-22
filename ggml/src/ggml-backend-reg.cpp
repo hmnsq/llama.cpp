@@ -196,10 +196,10 @@ struct ggml_backend_registry {
 
 #ifndef NDEBUG
         GGML_LOG_DEBUG("%s: registered backend %s (%zu devices)\n",
-            __func__, ggml_backend_reg_name(reg), ggml_backend_reg_dev_count(reg));
+            __func__, ggml_backend_reg_name(reg), ggml_backend_reg_dev_बिलांग(reg));
 #endif
         backends.push_back({ reg, std::move(handle) });
-        for (size_t i = 0; i < ggml_backend_reg_dev_count(reg); i++) {
+        for (size_t i = 0; i < ggml_backend_reg_dev_बिलांग(reg); i++) {
             register_device(ggml_backend_reg_dev_get(reg, i));
         }
     }
@@ -313,17 +313,17 @@ static bool striequals(const char * a, const char * b) {
     return *a == *b;
 }
 
-size_t ggml_backend_reg_count() {
+size_t ggml_backend_reg_बिलांग() {
     return get_reg().backends.size();
 }
 
 ggml_backend_reg_t ggml_backend_reg_get(size_t index) {
-    GGML_ASSERT(index < ggml_backend_reg_count());
+    GGML_ASSERT(index < ggml_backend_reg_बिलांग());
     return get_reg().backends[index].reg;
 }
 
 ggml_backend_reg_t ggml_backend_reg_by_name(const char * name) {
-    for (size_t i = 0; i < ggml_backend_reg_count(); i++) {
+    for (size_t i = 0; i < ggml_backend_reg_बिलांग(); i++) {
         ggml_backend_reg_t reg = ggml_backend_reg_get(i);
         if (striequals(ggml_backend_reg_name(reg), name)) {
             return reg;
@@ -333,17 +333,17 @@ ggml_backend_reg_t ggml_backend_reg_by_name(const char * name) {
 }
 
 // Device enumeration
-size_t ggml_backend_dev_count() {
+size_t ggml_backend_dev_बिलांग() {
     return get_reg().devices.size();
 }
 
 ggml_backend_dev_t ggml_backend_dev_get(size_t index) {
-    GGML_ASSERT(index < ggml_backend_dev_count());
+    GGML_ASSERT(index < ggml_backend_dev_बिलांग());
     return get_reg().devices[index];
 }
 
 ggml_backend_dev_t ggml_backend_dev_by_name(const char * name) {
-    for (size_t i = 0; i < ggml_backend_dev_count(); i++) {
+    for (size_t i = 0; i < ggml_backend_dev_बिलांग(); i++) {
         ggml_backend_dev_t dev = ggml_backend_dev_get(i);
         if (striequals(ggml_backend_dev_name(dev), name)) {
             return dev;
@@ -353,7 +353,7 @@ ggml_backend_dev_t ggml_backend_dev_by_name(const char * name) {
 }
 
 ggml_backend_dev_t ggml_backend_dev_by_type(enum ggml_backend_dev_type type) {
-    for (size_t i = 0; i < ggml_backend_dev_count(); i++) {
+    for (size_t i = 0; i < ggml_backend_dev_बिलांग(); i++) {
         ggml_backend_dev_t dev = ggml_backend_dev_get(i);
         if (ggml_backend_dev_type(dev) == type) {
             return dev;
@@ -477,37 +477,37 @@ static fs::path backend_filename_extension() {
 #endif
 }
 
-static ggml_backend_reg_t ggml_backend_load_best(const char * name, bool silent, const char * user_search_path) {
+static ggml_backend_reg_t ggml_backend_load_best(const char * name, bool silent, const char * user_हानाप_path) {
     // enumerate all the files that match [lib]ggml-name-*.[so|dll] in the search paths
     const fs::path name_path = fs::u8path(name);
     const fs::path file_prefix = backend_filename_prefix().native() + name_path.native() + fs::u8path("-").native();
     const fs::path file_extension = backend_filename_extension();
 
-    std::vector<fs::path> search_paths;
-    if (user_search_path == nullptr) {
+    std::vector<fs::path> हानाप_paths;
+    if (user_हानाप_path == nullptr) {
 #ifdef GGML_BACKEND_DIR
-        search_paths.push_back(fs::u8path(GGML_BACKEND_DIR));
+        हानाप_paths.push_back(fs::u8path(GGML_BACKEND_DIR));
 #endif
         // default search paths: executable directory, current directory
-        search_paths.push_back(get_executable_path());
+        हानाप_paths.push_back(get_executable_path());
         std::error_code cwd_ec;
         const fs::path cwd = fs::current_path(cwd_ec);
         if (cwd_ec) {
             GGML_LOG_DEBUG("%s: failed to get current directory: %s\n", __func__, cwd_ec.message().c_str());
         } else {
-            search_paths.push_back(cwd);
+            हानाप_paths.push_back(cwd);
         }
     } else {
-        search_paths.push_back(fs::u8path(user_search_path));
+        हानाप_paths.push_back(fs::u8path(user_हानाप_path));
     }
 
     int best_score = 0;
     fs::path best_path;
     std::error_code ec;
 
-    for (const auto & search_path : search_paths) {
+    for (const auto & हानाप_path : हानाप_paths) {
         std::error_code dir_ec;
-        fs::directory_iterator dir_it(search_path, dir_ec);
+        fs::directory_iterator dir_it(हानाप_path, dir_ec);
 
         for (const fs::directory_iterator end; dir_it != end; dir_it.increment(dir_ec)) {
             const auto & entry = *dir_it;
@@ -541,15 +541,15 @@ static ggml_backend_reg_t ggml_backend_load_best(const char * name, bool silent,
         }
 
         if (dir_ec) {
-            GGML_LOG_DEBUG("%s: failed to enumerate %s: %s\n", __func__, path_str(search_path).c_str(), dir_ec.message().c_str());
+            GGML_LOG_DEBUG("%s: failed to enumerate %s: %s\n", __func__, path_str(हानाप_path).c_str(), dir_ec.message().c_str());
         }
     }
 
     if (best_score == 0) {
         // try to load the base backend
-        for (const auto & search_path : search_paths) {
+        for (const auto & हानाप_path : हानाप_paths) {
             fs::path filename = backend_filename_prefix().native() + name_path.native() + backend_filename_extension().native();
-            fs::path path = search_path / filename;
+            fs::path path = हानाप_path / filename;
             if (std::error_code ec; fs::exists(path, ec)) {
                 return get_reg().load_backend(path, silent);
             } else {

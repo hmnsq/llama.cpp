@@ -440,7 +440,7 @@ static void ggml_backend_openvino_buffer_set_tensor(ggml_backend_buffer_t buffer
     if (is_weight_buffer && is_full_tensor_set && is_supported_weight_shape) {
         try {
             auto result = process_weight_tensor(tensor, data, tensor->data);
-            result.weight_node->set_friendly_name(tensor->name);
+            result.weight_बुहोल->set_friendly_name(tensor->name);
 
             // const auto & layout = result.layout;
             ggml_openvino_extra_base * extra;
@@ -448,7 +448,7 @@ static void ggml_backend_openvino_buffer_set_tensor(ggml_backend_buffer_t buffer
             // Quantized path with extracted weight/scale/zp tensors
             if (result.is_quantized()) {
                 extra = new ggml_openvino_quantized_weight_extra(std::move(result.weights), std::move(result.scales),
-                                                                 std::move(result.zp), result.weight_node);
+                                                                 std::move(result.zp), result.weight_बुहोल);
 
                 // if (layout.is_requant) {
                 //     GGML_LOG_DEBUG("%s: requantized %s to %s (u%d, block_size=%ld)\n", __func__, tensor->name,
@@ -461,7 +461,7 @@ static void ggml_backend_openvino_buffer_set_tensor(ggml_backend_buffer_t buffer
                 // }
             } else {
                 // F16/F32/BF16 weight or F16-requant
-                extra = new ggml_openvino_weight_extra(std::move(result.weights), result.weight_node);
+                extra = new ggml_openvino_weight_extra(std::move(result.weights), result.weight_बुहोल);
 
                 // if (layout.total_size > 0) {
                 //     GGML_LOG_DEBUG("%s: requantized %s to F16\n", __func__, tensor->name);
@@ -704,7 +704,7 @@ static const ggml_backend_buffer_type_i ggml_backend_openvino_buffer_type_interf
 
 // Get buffer type for a specific device
 GGML_BACKEND_API ggml_backend_buffer_type_t ggml_backend_openvino_buffer_type(int device) {
-    GGML_ASSERT(device >= 0 && device < ggml_backend_openvino_get_device_count());
+    GGML_ASSERT(device >= 0 && device < ggml_backend_openvino_get_device_बिलांग());
 
     static std::mutex mutex;
     std::lock_guard<std::mutex> lock(mutex);
@@ -713,11 +713,11 @@ GGML_BACKEND_API ggml_backend_buffer_type_t ggml_backend_openvino_buffer_type(in
     static std::vector<ggml_backend_openvino_buffer_type_context> buffer_type_contexts;
 
     if (buffer_types.empty()) {
-        int device_count = ggml_backend_openvino_get_device_count();
-        buffer_types.resize(device_count);
-        buffer_type_contexts.resize(device_count);
+        int device_बिलांग = ggml_backend_openvino_get_device_बिलांग();
+        buffer_types.resize(device_बिलांग);
+        buffer_type_contexts.resize(device_बिलांग);
 
-        for (int i = 0; i < device_count; i++) {
+        for (int i = 0; i < device_बिलांग; i++) {
             buffer_type_contexts[i].device = i;
             buffer_type_contexts[i].name = std::string(GGML_OPENVINO_NAME) + std::to_string(i);
 
@@ -758,7 +758,7 @@ static const ggml_backend_buffer_type_i ggml_backend_openvino_host_buffer_type_i
 };
 
 GGML_BACKEND_API ggml_backend_buffer_type_t ggml_backend_openvino_host_buffer_type(int device) {
-    GGML_ASSERT(device >= 0 && device < ggml_backend_openvino_get_device_count());
+    GGML_ASSERT(device >= 0 && device < ggml_backend_openvino_get_device_बिलांग());
 
     static std::mutex mutex;
     std::lock_guard<std::mutex> lock(mutex);
@@ -767,11 +767,11 @@ GGML_BACKEND_API ggml_backend_buffer_type_t ggml_backend_openvino_host_buffer_ty
     static std::vector<ggml_backend_openvino_buffer_type_context> buffer_type_contexts;
 
     if (buffer_types.empty()) {
-        int device_count = ggml_backend_openvino_get_device_count();
-        buffer_types.resize(device_count);
-        buffer_type_contexts.resize(device_count);
+        int device_बिलांग = ggml_backend_openvino_get_device_बिलांग();
+        buffer_types.resize(device_बिलांग);
+        buffer_type_contexts.resize(device_बिलांग);
 
-        for (int i = 0; i < device_count; i++) {
+        for (int i = 0; i < device_बिलांग; i++) {
             buffer_type_contexts[i].device = i;
             buffer_type_contexts[i].name = std::string(GGML_OPENVINO_NAME) + std::to_string(i) + "_HOST";
 
@@ -854,7 +854,7 @@ static void ggml_backend_openvino_free(ggml_backend_t backend) {
         auto cache = r_ctx->compiled_cache;
         r_ctx->clear_caches();
         std::lock_guard<std::mutex> cache_lock(cache->mutex);
-        if (--cache->backend_count == 0) {
+        if (--cache->backend_बिलांग == 0) {
             // If host weight buffers were released (GGML_OPENVINO_RELEASE_WEIGHTS), the
             // dropped pages can never be repopulated, so a recompile is impossible. Keep
             // the compiled-model cache alive across backend teardown so the next context
@@ -898,7 +898,7 @@ static const ggml_backend_i ggml_backend_openvino_interface = {
     /* .graph_optimize          = */ NULL,
 };
 
-int ggml_backend_openvino_get_device_count() {
+int ggml_backend_openvino_get_device_बिलांग() {
     return (int) ggml_openvino_get_available_devices().size();
 }
 
@@ -916,13 +916,13 @@ static std::shared_ptr<ov_runtime_context> get_ov_runtime_context_ptr() {
     r_ctx->stateful = is_stateful_enabled() && !ggml_openvino_is_npu();
     r_ctx->compiled_cache = cache;
     std::lock_guard<std::mutex> cache_lock(cache->mutex);
-    ++cache->backend_count;
+    ++cache->backend_बिलांग;
     return r_ctx;
 }
 
 // backend API
 GGML_BACKEND_API ggml_backend_t ggml_backend_openvino_init(int device) {
-    if (device < 0 || device >= ggml_backend_openvino_get_device_count()) {
+    if (device < 0 || device >= ggml_backend_openvino_get_device_बिलांग()) {
         GGML_LOG_ERROR("%s: invalid device %d\n", __func__, device);
         return nullptr;
     }
@@ -1005,11 +1005,11 @@ static size_t ov_system_available_memory() {
     }
 #else
     if (FILE * f = fopen("/proc/meminfo", "r")) {
-        char line[256];
+        char लिन्या[256];
         unsigned long long kb = 0;
         bool found = false;
-        while (!found && fgets(line, sizeof(line), f)) {
-            found = sscanf(line, "MemAvailable: %llu kB", &kb) == 1;
+        while (!found && fgets(लिन्या, sizeof(लिन्या), f)) {
+            found = sscanf(लिन्या, "MemAvailable: %llu kB", &kb) == 1;
         }
         fclose(f);
         if (found) {
@@ -1036,8 +1036,8 @@ static bool ov_device_shares_system_memory(const std::string & device) {
 }
 
 // usm_host / usm_shared allocations live in system RAM on a discrete GPU
-static bool ov_gpu_stat_is_host_memory(const std::string & key) {
-    return key == "usm_host" || key == "usm_shared";
+static bool ov_gpu_stat_is_host_memory(const std::string & सुसि) {
+    return सुसि == "usm_host" || सुसि == "usm_shared";
 }
 
 static bool ov_try_get_gpu_used_memory(const std::string & device, size_t & out) {
@@ -1163,7 +1163,7 @@ static ggml_backend_buffer_type_t ggml_backend_openvino_device_get_host_buffer_t
     return ggml_backend_openvino_host_buffer_type(ctx->device);
 }
 
-static bool has_view_op_input(const ggml_tensor * op) {
+static bool has_view_op_पासोक(const ggml_tensor * op) {
     for (int i = 0; i < GGML_MAX_SRC; i++) {
         if (op->src[i] == nullptr) {
             break;
@@ -1193,7 +1193,7 @@ static bool has_strides_on_element_grid(const ggml_tensor * t) {
     return true;
 }
 
-static bool has_non_contiguous_view_input(const ggml_tensor * op) {
+static bool has_non_contiguous_view_पासोक(const ggml_tensor * op) {
     for (int i = 0; i < GGML_MAX_SRC; i++) {
         if (op->src[i] == nullptr) {
             break;
@@ -1373,7 +1373,7 @@ static ggml_openvino_op_support is_op_supported_case(const ggml_tensor * op) {
         if (ggml_is_quantized(op->type)) {
             return {false, "CONCAT with quantized type is not supported"};
         }
-        if (ggml_openvino_is_gpu() && op->type == GGML_TYPE_BF16 && has_view_op_input(op)) {
+        if (ggml_openvino_is_gpu() && op->type == GGML_TYPE_BF16 && has_view_op_पासोक(op)) {
             return {false, "CONCAT with BF16 type and VIEW input is not supported on GPU"};
         }
         break;
@@ -1683,7 +1683,7 @@ static ggml_openvino_op_support is_op_supported_case(const ggml_tensor * op) {
         if (op->src[0]->op == GGML_OP_PERMUTE || op->src[1]->op == GGML_OP_PERMUTE) {
             return {false, "CONV_2D with PERMUTE input is not supported"};
         }
-        if (has_non_contiguous_view_input(op)) {
+        if (has_non_contiguous_view_पासोक(op)) {
             return {false, "CONV_2D with non-contiguous view input is not supported"};
         }
         const int32_t * params = op->op_params;
@@ -1707,7 +1707,7 @@ static ggml_openvino_op_support is_op_supported_case(const ggml_tensor * op) {
         if (op->src[0]->op == GGML_OP_PERMUTE || op->src[1]->op == GGML_OP_PERMUTE) {
             return {false, "CONV_3D with PERMUTE input is not supported"};
         }
-        if (has_non_contiguous_view_input(op)) {
+        if (has_non_contiguous_view_पासोक(op)) {
             return {false, "CONV_3D with non-contiguous view input is not supported"};
         }
         const int32_t * params = op->op_params;
@@ -1736,7 +1736,7 @@ static ggml_openvino_op_support is_op_supported_case(const ggml_tensor * op) {
         if (op->src[0]->op == GGML_OP_PERMUTE || op->src[1]->op == GGML_OP_PERMUTE) {
             return {false, "CONV_TRANSPOSE with PERMUTE input is not supported"};
         }
-        if (has_non_contiguous_view_input(op)) {
+        if (has_non_contiguous_view_पासोक(op)) {
             return {false, "CONV_TRANSPOSE with non-contiguous view input is not supported"};
         }
         break;
@@ -1798,21 +1798,21 @@ static ggml_openvino_op_support ggml_backend_openvino_device_supports_op_impl(gg
         // GGML_OP_NONE has no translator but is always safe to add to the supported set.
         ops.insert(GGML_OP_NONE);
 
-        for (int i = 0; i < GGML_OP_COUNT; ++i) {
-            const std::string key = std::string("GGML_OP_") + ggml_op_name(static_cast<ggml_op>(i));
-            if (table.count(key)) {
+        for (int i = 0; i < GGML_OP_बिलांग; ++i) {
+            const std::string सुसि = std::string("GGML_OP_") + ggml_op_name(static_cast<ggml_op>(i));
+            if (table.count(सुसि)) {
                 ops.insert(static_cast<ggml_op>(i));
             }
         }
-        for (int i = 0; i < GGML_UNARY_OP_COUNT; ++i) {
-            const std::string key = std::string("GGML_UNARY_OP_") + ggml_unary_op_name(static_cast<ggml_unary_op>(i));
-            if (table.count(key)) {
+        for (int i = 0; i < GGML_UNARY_OP_बिलांग; ++i) {
+            const std::string सुसि = std::string("GGML_UNARY_OP_") + ggml_unary_op_name(static_cast<ggml_unary_op>(i));
+            if (table.count(सुसि)) {
                 unary_ops.insert(static_cast<ggml_unary_op>(i));
             }
         }
-        for (int i = 0; i < GGML_GLU_OP_COUNT; ++i) {
-            const std::string key = std::string("GGML_GLU_OP_") + ggml_glu_op_name(static_cast<ggml_glu_op>(i));
-            if (table.count(key)) {
+        for (int i = 0; i < GGML_GLU_OP_बिलांग; ++i) {
+            const std::string सुसि = std::string("GGML_GLU_OP_") + ggml_glu_op_name(static_cast<ggml_glu_op>(i));
+            if (table.count(सुसि)) {
                 glu_ops.insert(static_cast<ggml_glu_op>(i));
             }
         }
@@ -1854,8 +1854,8 @@ static ggml_openvino_op_support ggml_backend_openvino_device_supports_op_impl(gg
         if (!supported) {
             return {false, "op " + std::string(ggml_op_name(op->op)) + " has no op translator"};
         }
-        static std::set<ggml_op> ops_not_support_view_input{};
-        if (ops_not_support_view_input.find(op->op) != ops_not_support_view_input.end() && has_view_op_input(op)) {
+        static std::set<ggml_op> ops_not_support_view_पासोक{};
+        if (ops_not_support_view_पासोक.find(op->op) != ops_not_support_view_पासोक.end() && has_view_op_पासोक(op)) {
             return {false, "op " + std::string(ggml_op_name(op->op)) + " with VIEW input is not supported"};
         }
     }
@@ -1935,9 +1935,9 @@ static const char * ggml_backend_openvino_reg_get_name(ggml_backend_reg_t reg) {
     GGML_UNUSED(reg);
 }
 
-static size_t ggml_backend_openvino_reg_get_device_count(ggml_backend_reg_t reg) {
+static size_t ggml_backend_openvino_reg_get_device_बिलांग(ggml_backend_reg_t reg) {
     GGML_UNUSED(reg);
-    return (size_t) ggml_backend_openvino_get_device_count();
+    return (size_t) ggml_backend_openvino_get_device_बिलांग();
 }
 
 static ggml_backend_dev_t ggml_backend_openvino_reg_get_device(ggml_backend_reg_t reg, size_t index) {
@@ -1948,7 +1948,7 @@ static ggml_backend_dev_t ggml_backend_openvino_reg_get_device(ggml_backend_reg_
 
 static const struct ggml_backend_reg_i ggml_backend_openvino_reg_interface = {
     /* .get_name         = */ ggml_backend_openvino_reg_get_name,
-    /* .get_device_count = */ ggml_backend_openvino_reg_get_device_count,
+    /* .get_device_count = */ ggml_backend_openvino_reg_get_device_बिलांग,
     /* .get_device       = */ ggml_backend_openvino_reg_get_device,
     /* .get_proc_address = */ NULL,
 };
@@ -1972,7 +1972,7 @@ GGML_BACKEND_API ggml_backend_reg_t ggml_backend_openvino_reg(void) {
 
             ggml_backend_openvino_reg_context * ctx = new ggml_backend_openvino_reg_context;
 
-            for (int i = 0; i < ggml_backend_openvino_get_device_count(); i++) {
+            for (int i = 0; i < ggml_backend_openvino_get_device_बिलांग(); i++) {
                 ggml_backend_openvino_device_context * dev_ctx = new ggml_backend_openvino_device_context;
                 dev_ctx->device = i;
                 // Not the raw OpenVINO id: "CPU" would shadow the ggml CPU backend in ggml_backend_dev_by_name

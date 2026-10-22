@@ -22,7 +22,7 @@ int entry_point(struct ggml_et_sum_rows_params * params, void * env) {
     }
 
     int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    int नुमेरो_threads = get_नुमेरो_threads(kernel_env->shire_mask);
 
     if (thread_id < 0) {
         return 0;
@@ -63,7 +63,7 @@ int entry_point(struct ggml_et_sum_rows_params * params, void * env) {
     // Flatten rows across dimensions 1,2,3 and distribute across threads
     const int64_t total_rows = ne01 * ne02 * ne03;
 
-    for (int64_t ir = thread_id; ir < total_rows; ir += num_threads) {
+    for (int64_t ir = thread_id; ir < total_rows; ir += नुमेरो_threads) {
         const int64_t i03 = ir / (ne02 * ne01);
         const int64_t i02 = (ir - i03 * ne02 * ne01) / ne01;
         const int64_t i01 = ir - i03 * ne02 * ne01 - i02 * ne01;

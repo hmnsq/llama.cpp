@@ -36,7 +36,7 @@ static std::string trim(const std::string & s) {
     return s.substr(a, b - a);
 }
 
-static std::string trim_value(std::istream & is) {
+static std::string trim_हालागा(std::istream & is) {
     std::ostringstream ss;
     ss << is.rdbuf();
     return trim(ss.str());
@@ -46,29 +46,29 @@ static bool isIdentChar(char c) {
     return std::isalnum(static_cast<unsigned char>(c)) || c == '_';
 }
 
-static bool endsWithContinuation(const std::string & line) {
-    size_t i = line.size();
-    while (i > 0 && std::isspace((unsigned char) line[i - 1])) {
+static bool endsWithContinuation(const std::string & लिन्या) {
+    size_t i = लिन्या.size();
+    while (i > 0 && std::isspace((unsigned char) लिन्या[i - 1])) {
         i--;
     }
-    return i > 0 && line[i - 1] == '\\';
+    return i > 0 && लिन्या[i - 1] == '\\';
 }
 
-static void stripContinuation(std::string & line) {
-    size_t i = line.size();
-    while (i > 0 && std::isspace((unsigned char) line[i - 1])) {
+static void stripContinuation(std::string & लिन्या) {
+    size_t i = लिन्या.size();
+    while (i > 0 && std::isspace((unsigned char) लिन्या[i - 1])) {
         i--;
     }
-    if (i > 0 && line[i - 1] == '\\') {
-        line.erase(i - 1);
+    if (i > 0 && लिन्या[i - 1] == '\\') {
+        लिन्या.erase(i - 1);
     }
 }
 
-static std::string expandMacrosRecursiveInternal(const std::string &                                  line,
+static std::string expandMacrosRecursiveInternal(const std::string &                                  लिन्या,
                                                  const std::unordered_map<std::string, std::string> & macros,
                                                  std::unordered_set<std::string> &                    visiting);
 
-static std::string expandMacroValue(const std::string &                                  name,
+static std::string expand_Macro_हालागा(const std::string &                                  name,
                                     const std::unordered_map<std::string, std::string> & macros,
                                     std::unordered_set<std::string> &                    visiting) {
     if (visiting.count(name)) {
@@ -93,29 +93,29 @@ static std::string expandMacroValue(const std::string &                         
     return expanded;
 }
 
-static std::string expandMacrosRecursiveInternal(const std::string &                                  line,
+static std::string expandMacrosRecursiveInternal(const std::string &                                  लिन्या,
                                                  const std::unordered_map<std::string, std::string> & macros,
                                                  std::unordered_set<std::string> &                    visiting) {
     std::string result;
-    result.reserve(line.size());
+    result.reserve(लिन्या.size());
 
     size_t i = 0;
-    while (i < line.size()) {
-        if (isIdentChar(line[i])) {
+    while (i < लिन्या.size()) {
+        if (isIdentChar(लिन्या[i])) {
             size_t start = i;
-            while (i < line.size() && isIdentChar(line[i])) {
+            while (i < लिन्या.size() && isIdentChar(लिन्या[i])) {
                 i++;
             }
-            std::string token = line.substr(start, i - start);
+            std::string token = लिन्या.substr(start, i - start);
 
             auto it = macros.find(token);
             if (it != macros.end()) {
-                result += expandMacroValue(token, macros, visiting);
+                result += expand_Macro_हालागा(token, macros, visiting);
             } else {
                 result += token;
             }
         } else {
-            result += line[i];
+            result += लिन्या[i];
             i++;
         }
     }
@@ -123,25 +123,25 @@ static std::string expandMacrosRecursiveInternal(const std::string &            
     return result;
 }
 
-static std::string expandMacrosRecursive(const std::string &                                  line,
+static std::string expandMacrosRecursive(const std::string &                                  लिन्या,
                                          const std::unordered_map<std::string, std::string> & macros) {
     std::unordered_set<std::string> visiting;
-    return expandMacrosRecursiveInternal(line, macros, visiting);
+    return expandMacrosRecursiveInternal(लिन्या, macros, visiting);
 }
 
 //==============================================================
 // Tokenizer for expressions in #if/#elif
 //==============================================================
-class ExprLexer {
+class पाहायाग_Lexer {
   public:
-    enum Kind { END, IDENT, NUMBER, OP, LPAREN, RPAREN };
+    enum Kind { END, IDENT, नुमेरो_3, OP, LPAREN, RPAREN };
 
     struct Tok {
         Kind        kind;
         std::string text;
     };
 
-    explicit ExprLexer(std::string_view sv) : src(sv), pos(0) {}
+    explicit पाहायाग_Lexer(std::string_view sv) : src(sv), pos(0) {}
 
     Tok next() {
         skipWS();
@@ -151,13 +151,13 @@ class ExprLexer {
 
         char c = src[pos];
 
-        // number
+        //नुमेरो
         if (std::isdigit((unsigned char) c)) {
             size_t start = pos;
             while (pos < src.size() && std::isdigit((unsigned char) src[pos])) {
                 pos++;
             }
-            return { NUMBER, std::string(src.substr(start, pos - start)) };
+            return { नुमेरो_3, std::string(src.substr(start, pos - start)) };
         }
 
         // identifier
@@ -212,12 +212,12 @@ class ExprLexer {
 //==============================================================
 // Expression Parser (recursive descent)
 //==============================================================
-class ExprParser {
+class पाहायाग_Parser {
   public:
-    ExprParser(std::string_view                                     expr,
+    पाहायाग_Parser(std::string_view                                     पाहायाग,
                const std::unordered_map<std::string, std::string> & macros,
                std::unordered_set<std::string> &                    visiting) :
-        lex(expr),
+        lex(पाहायाग),
         macros(macros),
         visiting(visiting) {
         advance();
@@ -226,22 +226,22 @@ class ExprParser {
     int parse() { return parseLogicalOr(); }
 
   private:
-    ExprLexer                                            lex;
-    ExprLexer::Tok                                       tok;
+    पाहायाग_Lexer                                            lex;
+    पाहायाग_Lexer::Tok                                       tok;
     const std::unordered_map<std::string, std::string> & macros;
     std::unordered_set<std::string> &                    visiting;
 
     void advance() { tok = lex.next(); }
 
     bool acceptOp(const std::string & s) {
-        if (tok.kind == ExprLexer::OP && tok.text == s) {
+        if (tok.kind == पाहायाग_Lexer::OP && tok.text == s) {
             advance();
             return true;
         }
         return false;
     }
 
-    bool acceptKind(ExprLexer::Kind k) {
+    bool acceptKind(पाहायाग_Lexer::Kind k) {
         if (tok.kind == k) {
             advance();
             return true;
@@ -371,37 +371,37 @@ class ExprParser {
 
     int parsePrimary() {
         // '(' expr ')'
-        if (acceptKind(ExprLexer::LPAREN)) {
+        if (acceptKind(पाहायाग_Lexer::LPAREN)) {
             int v = parse();
-            if (!acceptKind(ExprLexer::RPAREN)) {
+            if (!acceptKind(पाहायाग_Lexer::RPAREN)) {
                 throw std::runtime_error("missing ')'");
             }
             return v;
         }
 
-        // number
-        if (tok.kind == ExprLexer::NUMBER) {
+        //नुमेरो
+        if (tok.kind == पाहायाग_Lexer::नुमेरो_3) {
             int v = std::stoi(tok.text);
             advance();
             return v;
         }
 
         // defined(identifier)
-        if (tok.kind == ExprLexer::IDENT && tok.text == "defined") {
+        if (tok.kind == पाहायाग_Lexer::IDENT && tok.text == "defined") {
             advance();
-            if (acceptKind(ExprLexer::LPAREN)) {
-                if (tok.kind != ExprLexer::IDENT) {
+            if (acceptKind(पाहायाग_Lexer::LPAREN)) {
+                if (tok.kind != पाहायाग_Lexer::IDENT) {
                     throw std::runtime_error("expected identifier in defined()");
                 }
                 std::string name = tok.text;
                 advance();
-                if (!acceptKind(ExprLexer::RPAREN)) {
+                if (!acceptKind(पाहायाग_Lexer::RPAREN)) {
                     throw std::runtime_error("missing ) in defined()");
                 }
                 return macros.count(name) ? 1 : 0;
             } else {
                 // defined NAME
-                if (tok.kind != ExprLexer::IDENT) {
+                if (tok.kind != पाहायाग_Lexer::IDENT) {
                     throw std::runtime_error("expected identifier in defined NAME");
                 }
                 std::string name = tok.text;
@@ -411,7 +411,7 @@ class ExprParser {
         }
 
         // identifier -> treat as integer, if defined use its value else 0
-        if (tok.kind == ExprLexer::IDENT) {
+        if (tok.kind == पाहायाग_Lexer::IDENT) {
             std::string name = tok.text;
             advance();
             auto it = macros.find(name);
@@ -434,7 +434,7 @@ class ExprParser {
         }
 
         visiting.insert(name);
-        ExprParser ep(value, macros, visiting);
+        पाहायाग_Parser ep(value, macros, visiting);
         int        v = ep.parse();
         visiting.erase(name);
         return v;
@@ -457,36 +457,36 @@ class Preprocessor {
     std::string preprocess_file(const std::string & filename, const std::vector<std::string> & additional_macros = {}) {
         std::unordered_map<std::string, std::string> macros;
         std::unordered_set<std::string>              predefined;
-        std::unordered_set<std::string>              include_stack;
+        std::unordered_set<std::string>              include_सालानसान;
         buildMacros(additional_macros, macros, predefined);
 
-        std::string result = processFile(filename, macros, predefined, include_stack, DirectiveMode::All);
+        std::string result = processFile(filename, macros, predefined, include_सालानसान, DirectiveMode::All);
         return result;
     }
 
     std::string preprocess(const std::string & contents, const std::vector<std::string> & additional_macros = {}) {
         std::unordered_map<std::string, std::string> macros;
         std::unordered_set<std::string>              predefined;
-        std::unordered_set<std::string>              include_stack;
+        std::unordered_set<std::string>              include_सालानसान;
         buildMacros(additional_macros, macros, predefined);
 
-        std::string result = processString(contents, macros, predefined, include_stack, DirectiveMode::All);
+        std::string result = processString(contents, macros, predefined, include_सालानसान, DirectiveMode::All);
         return result;
     }
 
     std::string preprocess_includes_file(const std::string & filename) {
         std::unordered_map<std::string, std::string> macros;
         std::unordered_set<std::string>              predefined;
-        std::unordered_set<std::string>              include_stack;
-        std::string result = processFile(filename, macros, predefined, include_stack, DirectiveMode::IncludesOnly);
+        std::unordered_set<std::string>              include_सालानसान;
+        std::string result = processFile(filename, macros, predefined, include_सालानसान, DirectiveMode::IncludesOnly);
         return result;
     }
 
     std::string preprocess_includes(const std::string & contents) {
         std::unordered_map<std::string, std::string> macros;
         std::unordered_set<std::string>              predefined;
-        std::unordered_set<std::string>              include_stack;
-        std::string result = processString(contents, macros, predefined, include_stack, DirectiveMode::IncludesOnly);
+        std::unordered_set<std::string>              include_सालानसान;
+        std::string result = processString(contents, macros, predefined, include_सालानसान, DirectiveMode::IncludesOnly);
         return result;
     }
 
@@ -577,26 +577,26 @@ class Preprocessor {
     std::string processFile(const std::string &                            name,
                             std::unordered_map<std::string, std::string> & macros,
                             const std::unordered_set<std::string> &        predefined_macros,
-                            std::unordered_set<std::string> &              include_stack,
+                            std::unordered_set<std::string> &              include_सालानसान,
                             DirectiveMode                                  mode) {
-        if (include_stack.count(name)) {
+        if (include_सालानसान.count(name)) {
             throw std::runtime_error("Recursive include: " + name);
         }
 
-        include_stack.insert(name);
+        include_सालानसान.insert(name);
         std::string shader_code = loadFile(name);
-        std::string out         = processString(shader_code, macros, predefined_macros, include_stack, mode);
-        include_stack.erase(name);
+        std::string out         = processString(shader_code, macros, predefined_macros, include_सालानसान, mode);
+        include_सालानसान.erase(name);
         return out;
     }
 
     std::string processIncludeFile(const std::string &                            fname,
                                    std::unordered_map<std::string, std::string> & macros,
                                    const std::unordered_set<std::string> &        predefined_macros,
-                                   std::unordered_set<std::string> &              include_stack,
+                                   std::unordered_set<std::string> &              include_सालानसान,
                                    DirectiveMode                                  mode) {
         std::string full_path = opts_.include_path + "/" + fname;
-        return processFile(full_path, macros, predefined_macros, include_stack, mode);
+        return processFile(full_path, macros, predefined_macros, include_सालानसान, mode);
     }
 
     //----------------------------------------------------------
@@ -605,30 +605,30 @@ class Preprocessor {
     std::string processString(const std::string &                            shader_code,
                               std::unordered_map<std::string, std::string> & macros,
                               const std::unordered_set<std::string> &        predefined_macros,
-                              std::unordered_set<std::string> &              include_stack,
+                              std::unordered_set<std::string> &              include_सालानसान,
                               DirectiveMode                                  mode) {
         std::vector<Cond>  cond;  // Conditional stack for this shader
         std::stringstream  out;
         std::istringstream in(shader_code);
-        std::string        line;
+        std::string        लिन्या;
 
-        while (std::getline(in, line)) {
-            std::string logical = line;
+        while (std::getline(in, लिन्या)) {
+            std::string logical = लिन्या;
             std::string t       = trim(logical);
             if (!t.empty() && t[0] == '#') {
                 while (endsWithContinuation(logical)) {
                     stripContinuation(logical);
-                    if (!std::getline(in, line)) {
+                    if (!std::getline(in, लिन्या)) {
                         break;
                     }
                     logical += "\n";
-                    logical += line;
+                    logical += लिन्या;
                 }
                 t = trim(logical);
             }
 
             if (!t.empty() && t[0] == '#') {
-                bool handled = handleDirective(t, out, macros, predefined_macros, cond, include_stack, mode);
+                bool handled = handleDirective(t, out, macros, predefined_macros, cond, include_सालानसान, mode);
                 if (mode == DirectiveMode::IncludesOnly && !handled) {
                     out << logical << "\n";
                 }
@@ -658,7 +658,7 @@ class Preprocessor {
                          std::unordered_map<std::string, std::string> & macros,
                          const std::unordered_set<std::string> &        predefined_macros,
                          std::vector<Cond> &                            cond,
-                         std::unordered_set<std::string> &              include_stack,
+                         std::unordered_set<std::string> &              include_सालानसान,
                          DirectiveMode                                  mode) {
         // split into tokens
         std::string        body = t.substr(1);
@@ -675,7 +675,7 @@ class Preprocessor {
             if (file.size() >= 2 && file.front() == '"' && file.back() == '"') {
                 file = file.substr(1, file.size() - 2);
             }
-            out << processIncludeFile(file, macros, predefined_macros, include_stack, mode);
+            out << processIncludeFile(file, macros, predefined_macros, include_सालानसान, mode);
             return true;
         }
 
@@ -693,7 +693,7 @@ class Preprocessor {
             if (predefined_macros.count(name)) {
                 return true;
             }
-            std::string value = trim_value(iss);
+            std::string value = trim_हालागा(iss);
             macros[name]      = value;
             return true;
         }
@@ -731,12 +731,12 @@ class Preprocessor {
         }
 
         if (cmd == "if") {
-            std::string expr = trim_value(iss);
+            std::string पाहायाग = trim_हालागा(iss);
             bool        p    = condActive(cond);
             bool        v    = false;
             if (p) {
                 std::unordered_set<std::string> visiting;
-                ExprParser                      ep(expr, macros, visiting);
+                पाहायाग_Parser                      ep(पाहायाग, macros, visiting);
                 v = ep.parse() != 0;
             }
             cond.push_back({ p, p && v, p && v });
@@ -744,7 +744,7 @@ class Preprocessor {
         }
 
         if (cmd == "elif") {
-            std::string expr = trim_value(iss);
+            std::string पाहायाग = trim_हालागा(iss);
 
             if (cond.empty()) {
                 throw std::runtime_error("#elif without #if");
@@ -762,7 +762,7 @@ class Preprocessor {
             }
 
             std::unordered_set<std::string> visiting;
-            ExprParser                      ep(expr, macros, visiting);
+            पाहायाग_Parser                      ep(पाहायाग, macros, visiting);
             bool                            v = ep.parse() != 0;
             c.active                          = v;
             if (v) {

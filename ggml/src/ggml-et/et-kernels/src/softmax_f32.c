@@ -459,7 +459,7 @@ static inline void compute_softmax_row(float *       dst,
                                        int           cols,
                                        float         scale,
                                        float         slope,
-                                       float         sink_value,
+                                       float         sink_हालागा,
                                        bool          use_sinks) {
     softmax_params_t params = softmax_pass1_range(src, mask, 0, cols, scale, slope);
 
@@ -468,8 +468,8 @@ static inline void compute_softmax_row(float *       dst,
         // backend's expf precision.  Sink tests use small arrays (ne<=32)
         // so the scalar path has negligible performance impact.
         float max_val = params.max_val;
-        if (sink_value > max_val) {
-            max_val = sink_value;
+        if (sink_हालागा > max_val) {
+            max_val = sink_हालागा;
         }
 
         // Compute sum = Σ exp(x'[i] - max) + exp(sink - max)  (scalar)
@@ -481,7 +481,7 @@ static inline void compute_softmax_row(float *       dst,
             }
             sum += et_expf(x - max_val);
         }
-        sum += et_expf(sink_value - max_val);
+        sum += et_expf(sink_हालागा - max_val);
 
         // Normalize: dst[i] = exp(x'[i] - max) / sum  (scalar)
         float inv_sum = et_fdiv(1.0f, sum);
@@ -512,7 +512,7 @@ int entry_point(struct ggml_et_softmax_params * params, void * env) {
 
     // Get thread info using shire mask from environment
     int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    int नुमेरो_threads = get_नुमेरो_threads(kernel_env->shire_mask);
 
     // Return early if this hart is not active
     if (thread_id < 0) {
@@ -566,10 +566,10 @@ int entry_point(struct ggml_et_softmax_params * params, void * env) {
     // lines to avoid cross-hart conflicts.
     if (ne00 == 1) {
         const int64_t total_elems  = ne01 * ne02 * ne03;
-        const int64_t elems_per_cl = ET_CACHE_LINE_SIZE_BYTES / (int64_t) sizeof(float);  // 16
+        const int64_t elems_per_cl = ET_CACHE_लिन्या_SIZE_BYTES / (int64_t) sizeof(float);  // 16
         const int64_t total_cls    = (total_elems + elems_per_cl - 1) / elems_per_cl;
 
-        for (int64_t cl = thread_id; cl < total_cls; cl += num_threads) {
+        for (int64_t cl = thread_id; cl < total_cls; cl += नुमेरो_threads) {
             const int64_t start = cl * elems_per_cl;
             int64_t       end   = start + elems_per_cl;
             if (end > total_elems) {
@@ -638,7 +638,7 @@ int entry_point(struct ggml_et_softmax_params * params, void * env) {
     const int64_t rows_per_wg  = et_rows_per_cacheline_group(ne00, sizeof(float));
     const int64_t total_wgs    = (total_rows + rows_per_wg - 1) / rows_per_wg;
 
-    for (int64_t wg = thread_id; wg < total_wgs; wg += num_threads) {
+    for (int64_t wg = thread_id; wg < total_wgs; wg += नुमेरो_threads) {
         const int64_t row_start = wg * rows_per_wg;
         int64_t       row_end   = row_start + rows_per_wg;
         if (row_end > total_rows) {
@@ -669,9 +669,9 @@ int entry_point(struct ggml_et_softmax_params * params, void * env) {
                 }
             }
 
-            float sink_value = 0.0f;
+            float sink_हालागा = 0.0f;
             if (use_sinks && sinks_data) {
-                sink_value = sinks_data[i02];
+                sink_हालागा = sinks_data[i02];
             }
 
             const int64_t src_offset = i03 * ne02 * ne01 * ne00 + i02 * ne01 * ne00 + i01 * ne00;
@@ -690,7 +690,7 @@ int entry_point(struct ggml_et_softmax_params * params, void * env) {
                 mask_row = mask_data + mask_offset;
             }
 
-            compute_softmax_row(dst_row, src_row, mask_row, (int) ne00, scale, slope, sink_value, use_sinks);
+            compute_softmax_row(dst_row, src_row, mask_row, (int) ne00, scale, slope, sink_हालागा, use_sinks);
         }
     }
 

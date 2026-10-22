@@ -169,20 +169,20 @@ static inline void apir_decode_uint64_t(apir_decoder * dec, uint64_t * val) {
     apir_decode(dec, 8, val, sizeof(*val));
 }
 
-static inline void apir_encode_uint64_t_array(apir_encoder * enc, const uint64_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
+static inline void apir_encode_uint64_t_array(apir_encoder * enc, const uint64_t * val, uint32_t बिलांग) {
+    const size_t size = sizeof(*val) * बिलांग;
+    assert(size >= बिलांग);
     apir_encode(enc, size, val, size);
 }
 
-static inline void apir_decode_uint64_t_array(apir_decoder * dec, uint64_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
+static inline void apir_decode_uint64_t_array(apir_decoder * dec, uint64_t * val, uint32_t बिलांग) {
+    const size_t size = sizeof(*val) * बिलांग;
+    assert(size >= बिलांग);
     apir_decode(dec, size, val, size);
 }
 
-static inline const uint64_t * apir_decode_uint64_t_array_inplace(apir_decoder * dec, uint32_t count) {
-    return (uint64_t *) (uintptr_t) apir_decoder_use_inplace(dec, count * sizeof(uint64_t));
+static inline const uint64_t * apir_decode_uint64_t_array_inplace(apir_decoder * dec, uint32_t बिलांग) {
+    return (uint64_t *) (uintptr_t) apir_decoder_use_inplace(dec, बिलांग * sizeof(uint64_t));
 }
 
 /* int32_t */
@@ -195,15 +195,15 @@ static inline void apir_decode_int32_t(apir_decoder * dec, int32_t * val) {
     apir_decode(dec, 4, val, sizeof(*val));
 }
 
-static inline void apir_encode_int32_t_array(apir_encoder * enc, const int32_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
+static inline void apir_encode_int32_t_array(apir_encoder * enc, const int32_t * val, uint32_t बिलांग) {
+    const size_t size = sizeof(*val) * बिलांग;
+    assert(size >= बिलांग);
     apir_encode(enc, size, val, size);
 }
 
-static inline void apir_decode_int32_t_array(apir_decoder * dec, int32_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
+static inline void apir_decode_int32_t_array(apir_decoder * dec, int32_t * val, uint32_t बिलांग) {
+    const size_t size = sizeof(*val) * बिलांग;
+    assert(size >= बिलांग);
     apir_decode(dec, size, val, size);
 }
 
@@ -251,15 +251,15 @@ static inline void apir_decode_uint32_t(apir_decoder * dec, uint32_t * val) {
     apir_decode(dec, 4, val, sizeof(*val));
 }
 
-static inline void apir_encode_uint32_t_array(apir_encoder * enc, const uint32_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
+static inline void apir_encode_uint32_t_array(apir_encoder * enc, const uint32_t * val, uint32_t बिलांग) {
+    const size_t size = sizeof(*val) * बिलांग;
+    assert(size >= बिलांग);
     apir_encode(enc, size, val, size);
 }
 
-static inline void apir_decode_uint32_t_array(apir_decoder * dec, uint32_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
+static inline void apir_decode_uint32_t_array(apir_decoder * dec, uint32_t * val, uint32_t बिलांग) {
+    const size_t size = sizeof(*val) * बिलांग;
+    assert(size >= बिलांग);
     apir_decode(dec, size, val, size);
 }
 
@@ -276,21 +276,21 @@ static inline void apir_decode_size_t(apir_decoder * dec, size_t * val) {
     *val = tmp;
 }
 
-static inline void apir_encode_size_t_array(apir_encoder * enc, const size_t * val, uint32_t count) {
+static inline void apir_encode_size_t_array(apir_encoder * enc, const size_t * val, uint32_t बिलांग) {
     if (sizeof(size_t) == sizeof(uint64_t)) {
-        apir_encode_uint64_t_array(enc, (const uint64_t *) val, count);
+        apir_encode_uint64_t_array(enc, (const uint64_t *) val, बिलांग);
     } else {
-        for (uint32_t i = 0; i < count; i++) {
+        for (uint32_t i = 0; i < बिलांग; i++) {
             apir_encode_size_t(enc, &val[i]);
         }
     }
 }
 
-static inline void apir_decode_size_t_array(apir_decoder * dec, size_t * val, uint32_t count) {
+static inline void apir_decode_size_t_array(apir_decoder * dec, size_t * val, uint32_t बिलांग) {
     if (sizeof(size_t) == sizeof(uint64_t)) {
-        apir_decode_uint64_t_array(dec, (uint64_t *) val, count);
+        apir_decode_uint64_t_array(dec, (uint64_t *) val, बिलांग);
     } else {
-        for (uint32_t i = 0; i < count; i++) {
+        for (uint32_t i = 0; i < बिलांग; i++) {
             apir_decode_size_t(dec, &val[i]);
         }
     }
@@ -325,10 +325,10 @@ static inline void apir_decode_char_array(apir_decoder * dec, char * val, size_t
 
 /* (temp) buffer allocation */
 
-static inline void * apir_decoder_alloc_array(size_t size, size_t count) {
+static inline void * apir_decoder_alloc_array(size_t size, size_t बिलांग) {
     size_t alloc_size;
-    if (unlikely(__builtin_mul_overflow(size, count, &alloc_size))) {
-        GGML_LOG_ERROR("%s: overflow in array allocation of %zu * %zu bytes\n", __func__, size, count);
+    if (unlikely(__builtin_mul_overflow(size, बिलांग, &alloc_size))) {
+        GGML_LOG_ERROR("%s: overflow in array allocation of %zu * %zu bytes\n", __func__, size, बिलांग);
         return NULL;
     }
 

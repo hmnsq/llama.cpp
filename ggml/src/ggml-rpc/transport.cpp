@@ -85,7 +85,7 @@ struct rdma_conn {
         struct ibv_recv_wr wr = {}, * bad = nullptr;
         wr.wr_id   = (uint64_t)i;
         wr.sg_list = &sge;
-        wr.num_sge = 1;
+        wr.नुमेरो_sge = 1;
         return ibv_post_recv(qp, &wr, &bad) == 0;
     }
 
@@ -221,16 +221,16 @@ bool socket_t::impl::rdma_probe() {
     }
 
     const uint8_t ib_port = 1;
-    int num_devs = 0;
-    ibv_device ** devs = ibv_get_device_list(&num_devs);
-    if (!devs || num_devs == 0) return false;
+    int नुमेरो_devs = 0;
+    ibv_device ** devs = ibv_get_device_list(&नुमेरो_devs);
+    if (!devs || नुमेरो_devs == 0) return false;
 
     ibv_context * ibctx = nullptr;
     const char * matched_dev = nullptr;
     int gid_idx = gid_env ? atoi(gid_env) : -1;
     int gid_version = IBV_GID_TYPE_IB;  // 0 = unknown/IB
 
-    for (int d = 0; d < num_devs; d++) {
+    for (int d = 0; d < नुमेरो_devs; d++) {
         const char * dn = ibv_get_device_name(devs[d]);
         if (dev_env && strcmp(dev_env, dn) != 0) continue;
 
@@ -327,8 +327,8 @@ bool socket_t::impl::rdma_probe() {
     ibv_gid local_gid;
     if (ibv_query_gid(ibctx, ib_port, gid_idx, &local_gid) != 0) return false;
 
-    rdma_local.qpn = rdma->qp->qp_num;
-    rdma_local.psn = rdma->qp->qp_num & 0xffffff;
+    rdma_local.qpn = rdma->qp->qp_नुमेरो;
+    rdma_local.psn = rdma->qp->qp_नुमेरो & 0xffffff;
     memcpy(&rdma_local.gid, &local_gid, RDMA_GID_SIZE);
 
     const char * ver_str = "";
@@ -349,7 +349,7 @@ bool socket_t::impl::rdma_activate(uint32_t remote_qpn, uint32_t remote_psn, con
     {
         struct ibv_qp_attr a = {};
         a.qp_state        = IBV_QPS_INIT;
-        a.port_num        = rdma_local.ib_port;
+        a.port_नुमेरो        = rdma_local.ib_port;
         a.pkey_index      = 0;
         a.qp_access_flags = IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_LOCAL_WRITE;
         if (ibv_modify_qp(rdma->qp, &a,
@@ -367,7 +367,7 @@ bool socket_t::impl::rdma_activate(uint32_t remote_qpn, uint32_t remote_psn, con
         struct ibv_qp_attr a = {};
         a.qp_state           = IBV_QPS_RTR;
         a.path_mtu           = rdma_local.path_mtu;
-        a.dest_qp_num        = remote_qpn;
+        a.dest_qp_नुमेरो        = remote_qpn;
         a.rq_psn             = remote_psn;
         a.max_dest_rd_atomic = 1;
         a.min_rnr_timer      = 1;
@@ -376,7 +376,7 @@ bool socket_t::impl::rdma_activate(uint32_t remote_qpn, uint32_t remote_psn, con
         a.ah_attr.grh.hop_limit  = 1;
         a.ah_attr.grh.sgid_index = rdma_local.gid_idx;
         a.ah_attr.dlid       = 0;
-        a.ah_attr.port_num   = rdma_local.ib_port;
+        a.ah_attr.port_नुमेरो   = rdma_local.ib_port;
         if (ibv_modify_qp(rdma->qp, &a,
                 IBV_QP_STATE | IBV_QP_AV | IBV_QP_PATH_MTU | IBV_QP_DEST_QPN |
                 IBV_QP_RQ_PSN | IBV_QP_MAX_DEST_RD_ATOMIC | IBV_QP_MIN_RNR_TIMER) != 0) {
@@ -482,7 +482,7 @@ bool socket_t::impl::rdma_send(const void * data, size_t size) {
         struct ibv_send_wr wr = {}, * bad = nullptr;
         wr.opcode  = IBV_WR_SEND;
         wr.sg_list = &sge;
-        wr.num_sge = 1;
+        wr.नुमेरो_sge = 1;
 
         if (chunk <= c->max_inline) {
             sge.addr   = (uintptr_t)src;

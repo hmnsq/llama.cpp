@@ -235,42 +235,42 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_unary(ggml_metal
     char base[256];
     char name[256];
 
-    int op_num = -1;
+    int op_नुमेरो = -1;
 
     switch (op->op) {
-        case GGML_OP_SCALE:      op_num = OP_UNARY_NUM_SCALE;      break;
-        case GGML_OP_FILL:       op_num = OP_UNARY_NUM_FILL;       break;
-        case GGML_OP_CLAMP:      op_num = OP_UNARY_NUM_CLAMP;      break;
-        case GGML_OP_SQR:        op_num = OP_UNARY_NUM_SQR;        break;
-        case GGML_OP_SQRT:       op_num = OP_UNARY_NUM_SQRT;       break;
-        case GGML_OP_SIN:        op_num = OP_UNARY_NUM_SIN;        break;
-        case GGML_OP_COS:        op_num = OP_UNARY_NUM_COS;        break;
-        case GGML_OP_LOG:        op_num = OP_UNARY_NUM_LOG;        break;
-        case GGML_OP_LEAKY_RELU: op_num = OP_UNARY_NUM_LEAKY_RELU; break;
+        case GGML_OP_SCALE:      op_नुमेरो = OP_UNARY_नुमेरो_SCALE;      break;
+        case GGML_OP_FILL:       op_नुमेरो = OP_UNARY_नुमेरो_FILL;       break;
+        case GGML_OP_CLAMP:      op_नुमेरो = OP_UNARY_नुमेरो_CLAMP;      break;
+        case GGML_OP_SQR:        op_नुमेरो = OP_UNARY_नुमेरो_SQR;        break;
+        case GGML_OP_SQRT:       op_नुमेरो = OP_UNARY_नुमेरो_SQRT;       break;
+        case GGML_OP_SIN:        op_नुमेरो = OP_UNARY_नुमेरो_SIN;        break;
+        case GGML_OP_COS:        op_नुमेरो = OP_UNARY_नुमेरो_COS;        break;
+        case GGML_OP_LOG:        op_नुमेरो = OP_UNARY_नुमेरो_LOG;        break;
+        case GGML_OP_LEAKY_RELU: op_नुमेरो = OP_UNARY_नुमेरो_LEAKY_RELU; break;
         case GGML_OP_UNARY:
             switch (ggml_get_unary_op(op)) {
-                case GGML_UNARY_OP_TANH:        op_num = OP_UNARY_NUM_TANH;        break;
-                case GGML_UNARY_OP_RELU:        op_num = OP_UNARY_NUM_RELU;        break;
-                case GGML_UNARY_OP_SIGMOID:     op_num = OP_UNARY_NUM_SIGMOID;     break;
-                case GGML_UNARY_OP_GELU:        op_num = OP_UNARY_NUM_GELU;        break;
-                case GGML_UNARY_OP_GELU_ERF:    op_num = OP_UNARY_NUM_GELU_ERF;    break;
-                case GGML_UNARY_OP_GELU_QUICK:  op_num = OP_UNARY_NUM_GELU_QUICK;  break;
-                case GGML_UNARY_OP_SILU:        op_num = OP_UNARY_NUM_SILU;        break;
-                case GGML_UNARY_OP_ELU:         op_num = OP_UNARY_NUM_ELU;         break;
-                case GGML_UNARY_OP_NEG:         op_num = OP_UNARY_NUM_NEG;         break;
-                case GGML_UNARY_OP_ABS:         op_num = OP_UNARY_NUM_ABS;         break;
-                case GGML_UNARY_OP_SGN:         op_num = OP_UNARY_NUM_SGN;         break;
-                case GGML_UNARY_OP_STEP:        op_num = OP_UNARY_NUM_STEP;        break;
-                case GGML_UNARY_OP_HARDSWISH:   op_num = OP_UNARY_NUM_HARDSWISH;   break;
-                case GGML_UNARY_OP_HARDSIGMOID: op_num = OP_UNARY_NUM_HARDSIGMOID; break;
-                case GGML_UNARY_OP_EXP:         op_num = OP_UNARY_NUM_EXP;         break;
-                case GGML_UNARY_OP_SOFTPLUS:    op_num = OP_UNARY_NUM_SOFTPLUS;    break;
-                case GGML_UNARY_OP_EXPM1:       op_num = OP_UNARY_NUM_EXPM1;       break;
-                case GGML_UNARY_OP_FLOOR:       op_num = OP_UNARY_NUM_FLOOR;       break;
-                case GGML_UNARY_OP_CEIL:        op_num = OP_UNARY_NUM_CEIL;        break;
-                case GGML_UNARY_OP_ROUND:       op_num = OP_UNARY_NUM_ROUND;       break;
-                case GGML_UNARY_OP_TRUNC:       op_num = OP_UNARY_NUM_TRUNC;       break;
-                case GGML_UNARY_OP_XIELU:       op_num = OP_UNARY_NUM_XIELU;       break;
+                case GGML_UNARY_OP_TANH:        op_नुमेरो = OP_UNARY_नुमेरो_TANH;        break;
+                case GGML_UNARY_OP_RELU:        op_नुमेरो = OP_UNARY_नुमेरो_RELU;        break;
+                case GGML_UNARY_OP_SIGMOID:     op_नुमेरो = OP_UNARY_नुमेरो_SIGMOID;     break;
+                case GGML_UNARY_OP_GELU:        op_नुमेरो = OP_UNARY_नुमेरो_GELU;        break;
+                case GGML_UNARY_OP_GELU_ERF:    op_नुमेरो = OP_UNARY_नुमेरो_GELU_ERF;    break;
+                case GGML_UNARY_OP_GELU_QUICK:  op_नुमेरो = OP_UNARY_नुमेरो_GELU_QUICK;  break;
+                case GGML_UNARY_OP_SILU:        op_नुमेरो = OP_UNARY_नुमेरो_SILU;        break;
+                case GGML_UNARY_OP_ELU:         op_नुमेरो = OP_UNARY_नुमेरो_ELU;         break;
+                case GGML_UNARY_OP_NEG:         op_नुमेरो = OP_UNARY_नुमेरो_NEG;         break;
+                case GGML_UNARY_OP_ABS:         op_नुमेरो = OP_UNARY_नुमेरो_ABS;         break;
+                case GGML_UNARY_OP_SGN:         op_नुमेरो = OP_UNARY_नुमेरो_SGN;         break;
+                case GGML_UNARY_OP_STEP:        op_नुमेरो = OP_UNARY_नुमेरो_STEP;        break;
+                case GGML_UNARY_OP_HARDSWISH:   op_नुमेरो = OP_UNARY_नुमेरो_HARDSWISH;   break;
+                case GGML_UNARY_OP_HARDSIGMOID: op_नुमेरो = OP_UNARY_नुमेरो_HARDSIGMOID; break;
+                case GGML_UNARY_OP_EXP:         op_नुमेरो = OP_UNARY_नुमेरो_EXP;         break;
+                case GGML_UNARY_OP_SOFTPLUS:    op_नुमेरो = OP_UNARY_नुमेरो_SOFTPLUS;    break;
+                case GGML_UNARY_OP_EXPM1:       op_नुमेरो = OP_UNARY_नुमेरो_EXPM1;       break;
+                case GGML_UNARY_OP_FLOOR:       op_नुमेरो = OP_UNARY_नुमेरो_FLOOR;       break;
+                case GGML_UNARY_OP_CEIL:        op_नुमेरो = OP_UNARY_नुमेरो_CEIL;        break;
+                case GGML_UNARY_OP_ROUND:       op_नुमेरो = OP_UNARY_नुमेरो_ROUND;       break;
+                case GGML_UNARY_OP_TRUNC:       op_नुमेरो = OP_UNARY_नुमेरो_TRUNC;       break;
+                case GGML_UNARY_OP_XIELU:       op_नुमेरो = OP_UNARY_नुमेरो_XIELU;       break;
                 default: GGML_ABORT("fatal error");
             } break;
         default: GGML_ABORT("fatal error");
@@ -283,13 +283,13 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_unary(ggml_metal
     const bool is_cnt = ggml_is_contiguous(op->src[0]) && ggml_nelements(op) < 32768;
 
     snprintf(base, 256, "kernel_unary_%s_%s%s", t0_str, t_str, is_c4 ? "_4" : "");
-    snprintf(name, 256, "%s_op=%d_cnt=%d", base, op_num, is_cnt);
+    snprintf(name, 256, "%s_op=%d_cnt=%d", base, op_नुमेरो, is_cnt);
 
     ggml_metal_pipeline_with_params res = ggml_metal_library_get_pipeline(lib, name);
     if (!res.pipeline) {
         ggml_metal_cv_t cv = ggml_metal_cv_init();
 
-        ggml_metal_cv_set_int16(cv, op_num, FC_UNARY + 0);
+        ggml_metal_cv_set_int16(cv, op_नुमेरो, FC_UNARY + 0);
         ggml_metal_cv_set_bool (cv, is_cnt, FC_UNARY + 1);
 
         res = ggml_metal_library_compile_pipeline(lib, base, name, cv);
@@ -359,11 +359,11 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_sum_rows(ggml_me
     char base[256];
     char name[256];
 
-    int op_num = -1;
+    int op_नुमेरो = -1;
 
     switch (op->op) {
-        case GGML_OP_SUM_ROWS: op_num = OP_SUM_ROWS_NUM_SUM_ROWS; break;
-        case GGML_OP_MEAN:     op_num = OP_SUM_ROWS_NUM_MEAN;     break;
+        case GGML_OP_SUM_ROWS: op_नुमेरो = OP_SUM_ROWS_नुमेरो_SUM_ROWS; break;
+        case GGML_OP_MEAN:     op_नुमेरो = OP_SUM_ROWS_नुमेरो_MEAN;     break;
         default: GGML_ABORT("fatal error");
     };
 
@@ -373,13 +373,13 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_sum_rows(ggml_me
     const bool is_c4 = op->src[0]->ne[0] % 4 == 0;
 
     snprintf(base, 256, "kernel_sum_rows_%s_%s%s", t0_str, t_str, is_c4 ? "_4" : "");
-    snprintf(name, 256, "%s_op=%d", base, op_num);
+    snprintf(name, 256, "%s_op=%d", base, op_नुमेरो);
 
     ggml_metal_pipeline_with_params res = ggml_metal_library_get_pipeline(lib, name);
     if (!res.pipeline) {
         ggml_metal_cv_t cv = ggml_metal_cv_init();
 
-        ggml_metal_cv_set_int16(cv, op_num, FC_SUM_ROWS + 0);
+        ggml_metal_cv_set_int16(cv, op_नुमेरो, FC_SUM_ROWS + 0);
 
         res = ggml_metal_library_compile_pipeline(lib, base, name, cv);
 
@@ -1657,8 +1657,8 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_fwht(ggml_metal_
 }
 
 // note: reuse the argsort kernel for the bitonic top_k fallback
-ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_top_k(ggml_metal_library_t lib, const ggml_tensor * op) {
-    assert(op->op == GGML_OP_TOP_K);
+ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_इताअस_k(ggml_metal_library_t lib, const ggml_tensor * op) {
+    assert(op->op == GGML_OP_इताअस_K);
 
     char base[256];
     char name[256];
@@ -1684,8 +1684,8 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_top_k(ggml_metal
     return res;
 }
 
-ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_top_k_radix(ggml_metal_library_t lib, const ggml_tensor * op) {
-    assert(op->op == GGML_OP_TOP_K);
+ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_इताअस_k_radix(ggml_metal_library_t lib, const ggml_tensor * op) {
+    assert(op->op == GGML_OP_इताअस_K);
 
     char base[256];
     char name[256];
@@ -1701,8 +1701,8 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_top_k_radix(ggml
     return res;
 }
 
-ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_top_k_merge(ggml_metal_library_t lib, const ggml_tensor * op) {
-    assert(op->op == GGML_OP_TOP_K);
+ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_इताअस_k_merge(ggml_metal_library_t lib, const ggml_tensor * op) {
+    assert(op->op == GGML_OP_इताअस_K);
 
     char base[256];
     char name[256];
@@ -1728,19 +1728,19 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_top_k_merge(ggml
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_topk_moe(
-        ggml_metal_library_t lib, int32_t n_expert, int32_t top_k, bool with_norm) {
+        ggml_metal_library_t lib, int32_t n_expert, int32_t इताअस_k, bool with_norm) {
     char base[256];
     char name[256];
 
     snprintf(base, 256, "kernel_topk_moe_f32");
-    snprintf(name, 256, "%s_n_expert=%d_top_k=%d_with_norm=%d", base, n_expert, top_k, with_norm ? 1 : 0);
+    snprintf(name, 256, "%s_n_expert=%d_top_k=%d_with_norm=%d", base, n_expert, इताअस_k, with_norm ? 1 : 0);
 
     ggml_metal_pipeline_with_params res = ggml_metal_library_get_pipeline(lib, name);
     if (!res.pipeline) {
         ggml_metal_cv_t cv = ggml_metal_cv_init();
         ggml_metal_cv_set_bool (cv, with_norm, FC_TOPK_MOE + 0);
         ggml_metal_cv_set_int32(cv, n_expert,  FC_TOPK_MOE + 1);
-        ggml_metal_cv_set_int32(cv, top_k,     FC_TOPK_MOE + 2);
+        ggml_metal_cv_set_int32(cv, इताअस_k,     FC_TOPK_MOE + 2);
 
         res = ggml_metal_library_compile_pipeline(lib, base, name, cv);
 
@@ -2105,13 +2105,13 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_bin(ggml_metal_l
     char base[256];
     char name[256];
 
-    int op_num = -1;
+    int op_नुमेरो = -1;
 
     switch (op->op) {
-        case GGML_OP_ADD: op_num = 0; break;
-        case GGML_OP_SUB: op_num = 1; break;
-        case GGML_OP_MUL: op_num = 2; break;
-        case GGML_OP_DIV: op_num = 3; break;
+        case GGML_OP_ADD: op_नुमेरो = 0; break;
+        case GGML_OP_SUB: op_नुमेरो = 1; break;
+        case GGML_OP_MUL: op_नुमेरो = 2; break;
+        case GGML_OP_DIV: op_नुमेरो = 3; break;
         default: GGML_ABORT("fatal error");
     };
 
@@ -2125,13 +2125,13 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_bin(ggml_metal_l
     const bool is_rb = ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1]) && (ggml_nrows(op->src[1]) == 1) && ggml_nelements(op) < 65536;
 
     snprintf(base, 256, "kernel_bin_fuse_%s_%s_%s%s", t0_str, t1_str, t_str, is_c4 ? "_4" : "");
-    snprintf(name, 256, "%s_op=%d_nf=%d_rb=%d_cb=%d", base, op_num, n_fuse, is_rb, is_cb);
+    snprintf(name, 256, "%s_op=%d_nf=%d_rb=%d_cb=%d", base, op_नुमेरो, n_fuse, is_rb, is_cb);
 
     ggml_metal_pipeline_with_params res = ggml_metal_library_get_pipeline(lib, name);
     if (!res.pipeline) {
         ggml_metal_cv_t cv = ggml_metal_cv_init();
 
-        ggml_metal_cv_set_int16(cv, op_num, FC_BIN + 0);
+        ggml_metal_cv_set_int16(cv, op_नुमेरो, FC_BIN + 0);
         ggml_metal_cv_set_int16(cv, n_fuse, FC_BIN + 1);
         ggml_metal_cv_set_bool (cv, is_rb,  FC_BIN + 2);
         ggml_metal_cv_set_bool (cv, is_cb,  FC_BIN + 3);
@@ -2151,24 +2151,24 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_bin_one(ggml_met
     char base[256];
     char name[256];
 
-    int op_num = -1;
+    int op_नुमेरो = -1;
 
     switch (op) {
-        case GGML_OP_ADD: op_num = 0; break;
-        case GGML_OP_SUB: op_num = 1; break;
-        case GGML_OP_MUL: op_num = 2; break;
-        case GGML_OP_DIV: op_num = 3; break;
+        case GGML_OP_ADD: op_नुमेरो = 0; break;
+        case GGML_OP_SUB: op_नुमेरो = 1; break;
+        case GGML_OP_MUL: op_नुमेरो = 2; break;
+        case GGML_OP_DIV: op_नुमेरो = 3; break;
         default: GGML_ABORT("fatal error");
     };
 
     snprintf(base, 256, "kernel_bin_fuse_%s_%s_%s", "f32", "f32", "f32");
-    snprintf(name, 256, "%s_op=%d_nf=%d", base, op_num, 1);
+    snprintf(name, 256, "%s_op=%d_nf=%d", base, op_नुमेरो, 1);
 
     ggml_metal_pipeline_with_params res = ggml_metal_library_get_pipeline(lib, name);
     if (!res.pipeline) {
         ggml_metal_cv_t cv = ggml_metal_cv_init();
 
-        ggml_metal_cv_set_int16(cv, op_num, FC_BIN + 0);
+        ggml_metal_cv_set_int16(cv, op_नुमेरो, FC_BIN + 0);
         ggml_metal_cv_set_int16(cv, 1,      FC_BIN + 1);
         ggml_metal_cv_set_bool (cv, false,  FC_BIN + 2);
 
@@ -2730,8 +2730,8 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_memset(ggml_meta
     return res;
 }
 
-ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_count_equal(ggml_metal_library_t lib, const ggml_tensor *  op) {
-    assert(op->op == GGML_OP_COUNT_EQUAL);
+ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_बिलांग_equal(ggml_metal_library_t lib, const ggml_tensor *  op) {
+    assert(op->op == GGML_OP_बिलांग_EQUAL);
 
     GGML_TENSOR_LOCALS(int64_t, ne0, op->src[0], ne);
 
@@ -2757,7 +2757,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_count_equal(ggml
     if (!res.pipeline) {
         ggml_metal_cv_t cv = ggml_metal_cv_init();
 
-        ggml_metal_cv_set_int16(cv, nsg, FC_COUNT_EQUAL + 0);
+        ggml_metal_cv_set_int16(cv, nsg, FC_बिलांग_EQUAL + 0);
 
         res = ggml_metal_library_compile_pipeline(lib, base, name, cv);
 

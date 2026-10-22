@@ -32,7 +32,7 @@ static inline void htp_fence_read(const void * fence_ptr, uint32_t * seq, uint32
 
 static inline void htp_mdev_group_barrier(struct htp_ops_context * octx) {
     struct htp_context * ctx = octx->ctx;
-    if (ctx->mdev.count <= 1) {
+    if (ctx->mdev.बिलांग <= 1) {
         return;
     }
 
@@ -42,13 +42,13 @@ static inline void htp_mdev_group_barrier(struct htp_ops_context * octx) {
     htp_trace_event_start(tr, HTP_TRACE_EVT_FENCE, (uint16_t) seq);
 
     const uint32_t mdev_idx   = ctx->mdev.idx;
-    const uint32_t mdev_count = ctx->mdev.count;
+    const uint32_t mdev_बिलांग = ctx->mdev.बिलांग;
 
     uint8_t * fence_base   = ctx->mdev.fence_base;
     atomic_uint * my_fence = htp_mdev_fence_slot(fence_base, mdev_idx);
     htp_fence_write(my_fence, seq, octx->status);
 
-    for (uint32_t d = 0; d < mdev_count; d++) {
+    for (uint32_t d = 0; d < mdev_बिलांग; d++) {
         if (d == mdev_idx) continue;
         atomic_uint * peer_fence = htp_mdev_fence_slot(fence_base, d);
         uint64_t spins = 0;

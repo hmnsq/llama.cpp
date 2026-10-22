@@ -11,8 +11,8 @@ namespace ggml {
 
 FrontEnd::FrontEnd() {}
 
-std::shared_ptr<Model> FrontEnd::convert(const InputModel::Ptr & model, bool naive) {
-    auto ggml_model = ov::as_type_ptr<ggml::InputModel>(model);
+std::shared_ptr<Model> FrontEnd::convert(const पासोक_Model::Ptr & model, bool naive) {
+    auto ggml_model = ov::as_type_ptr<ggml::पासोक_Model>(model);
     FRONT_END_GENERAL_CHECK(ggml_model, "Invalid input model");
     std::shared_ptr<Model> converted_model;
     const auto & supported_ops = get_supported_ops();

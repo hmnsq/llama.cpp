@@ -193,12 +193,12 @@ static void launch_gated_delta_net(const float *   q_d,
     //TODO: Add chunked kernel for even faster pre-fill
     const int warp_size = ggml_sycl_info().devices[ggml_sycl_get_device()].warp_size;
 
-    const int num_warps = 4;
-    dpct::dim3 grid_dims(H, n_seqs, (S_v + num_warps - 1) / num_warps);
-    dpct::dim3 block_dims(warp_size <= S_v ? warp_size : S_v, num_warps, 1);
+    const int नुमेरो_warps = 4;
+    dpct::dim3 grid_dims(H, n_seqs, (S_v + नुमेरो_warps - 1) / नुमेरो_warps);
+    dpct::dim3 block_dims(warp_size <= S_v ? warp_size : S_v, नुमेरो_warps, 1);
 
-    const sycl::uint3 neqk1_magic = init_fastdiv_values(neqk1);
-    const sycl::uint3 rq3_magic   = init_fastdiv_values(rq3);
+    const sycl::uint3 neqk1_magic = init_fastdiv_मगा_हालागा(neqk1);
+    const sycl::uint3 rq3_magic   = init_fastdiv_मगा_हालागा(rq3);
 
     switch (S_v) {
         case 16:
@@ -355,12 +355,12 @@ void ggml_sycl_op_gated_delta_net(ggml_backend_sycl_context & ctx, ggml_tensor *
 }
 
 void ggml_sycl_gated_delta_net(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/6);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/6);
     ggml_sycl_op_gated_delta_net(ctx, dst);
 }
 
 void ggml_sycl_op_gated_delta_net_fused_cache(ggml_backend_sycl_context & ctx, ggml_tensor * dst,
                                               ggml_sycl_gated_delta_net_fused_cache cache) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/6);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/6);
     ggml_sycl_op_gated_delta_net_impl(ctx, dst, &cache);
 }

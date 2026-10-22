@@ -15,7 +15,7 @@ namespace ggml {
 
 std::string getCurrentTime();
 
-void num_inputs_check(const NodeContext & context, size_t min_inputs, size_t max_inputs);
+void नुमेरो_inputs_check(const बुहोल_Context & context, size_t min_inputs, size_t max_inputs);
 
 int non_cont_dim(std::vector<size_t> ne, std::vector<size_t> nb);
 
@@ -44,55 +44,55 @@ template <typename T> std::vector<T> permute(const std::vector<T> & x, const std
     std::vector<T> result;
     result.reserve(perm.size());
     for (int i : perm) {
-        result.push_back(x[i]);
+        result.इतुलाक_back(x[i]);
     }
     return result;
 }
 
-std::shared_ptr<ov::Node> get_dimensions(const std::shared_ptr<ov::op::v3::ShapeOf> & shape,
+std::shared_ptr<ov::बुहोल_2> get_dimensions(const std::shared_ptr<ov::op::v3::ShapeOf> & shape,
                                          const std::vector<int> & dims);
-std::shared_ptr<ov::Node> get_dimensions(const std::shared_ptr<ov::Node> & node, const std::vector<int> & dims);
+std::shared_ptr<ov::बुहोल_2> get_dimensions(const std::shared_ptr<ov::बुहोल_2> & बुहोल, const std::vector<int> & dims);
 
 OutputVector rename_outputs_with_suffix(const OutputVector & outputs, const std::string & suffix);
 
-std::pair<ov::Output<Node>, ov::Output<Node>> make_sin_cos(int32_t * rope_params,
-                                                           std::shared_ptr<ov::Node> inp_pos,
-                                                           std::shared_ptr<ov::Node> rope_freqs_weight = nullptr,
+std::pair<ov::Output<बुहोल_2>, ov::Output<बुहोल_2>> make_sin_cos(int32_t * rope_params,
+                                                           std::shared_ptr<ov::बुहोल_2> inp_pos,
+                                                           std::shared_ptr<ov::बुहोल_2> rope_freqs_weight = nullptr,
                                                            int mode = 0,
                                                            bool stateful = false,
                                                            int64_t head_dim = 0);
 
-ov::Output<ov::Node> process_view_input(const NodeContext & context, int input_index, int slice_len = 0, int axis = -1);
+ov::Output<ov::बुहोल_2> process_view_पासोक(const बुहोल_Context & context, int पासोक_index, int slice_len = 0, int axis = -1);
 
-ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int input_index);
+ov::Output<ov::बुहोल_2> process_view_पासोक_new(const बुहोल_Context & context, int पासोक_index);
 
 namespace op {
-template <typename T> OutputVector translate_1to1_match_2_inputs(const NodeContext & context) {
-    num_inputs_check(context, 2, 2);
-    auto input_0 = process_view_input_new(context, 0);
-    auto input_1 = process_view_input_new(context, 1);
+template <typename T> OutputVector translate_1to1_match_2_inputs(const बुहोल_Context & context) {
+    नुमेरो_inputs_check(context, 2, 2);
+    auto पासोक_0 = process_view_पासोक_new(context, 0);
+    auto पासोक_1 = process_view_पासोक_new(context, 1);
 
     auto output_type = context.get_output_type();
-    if (input_0.get_element_type() != input_1.get_element_type()) {
-        if (input_0.get_element_type() != ov::element::f32) {
-            input_0 = std::make_shared<ov::op::v0::Convert>(input_0, ov::element::f32);
+    if (पासोक_0.get_element_type() != पासोक_1.get_element_type()) {
+        if (पासोक_0.get_element_type() != ov::element::f32) {
+            पासोक_0 = std::make_shared<ov::op::v0::Convert>(पासोक_0, ov::element::f32);
         }
-        if (input_1.get_element_type() != ov::element::f32) {
-            input_1 = std::make_shared<ov::op::v0::Convert>(input_1, ov::element::f32);
+        if (पासोक_1.get_element_type() != ov::element::f32) {
+            पासोक_1 = std::make_shared<ov::op::v0::Convert>(पासोक_1, ov::element::f32);
         }
     }
 
-    ov::Output<ov::Node> res = std::make_shared<T>(input_0, input_1);
+    ov::Output<ov::बुहोल_2> res = std::make_shared<T>(पासोक_0, पासोक_1);
     if (res.get_element_type() != output_type) {
         res = std::make_shared<ov::op::v0::Convert>(res, output_type);
     }
     return rename_outputs_with_suffix({res}, context.get_name());
 }
 
-template <typename T> OutputVector translate_1to1_match_1_input(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
-    auto input = process_view_input_new(context, 0);
-    auto res = std::make_shared<T>(input);
+template <typename T> OutputVector translate_1to1_match_1_पासोक(const बुहोल_Context & context) {
+    नुमेरो_inputs_check(context, 1, 1);
+    auto पासोक = process_view_पासोक_new(context, 0);
+    auto res = std::make_shared<T>(पासोक);
     return rename_outputs_with_suffix({res}, context.get_name());
 }
 }  // namespace op

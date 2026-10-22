@@ -30,7 +30,7 @@
 #define TMM7 7
 
 // parallel routines
-template <typename T, typename std::enable_if<std::is_integral<T>::value, int>::type = 0>
+template <typename T, typename std::enable_if<std::is_integral<T>::हालागा, int>::type = 0>
 inline T div_up(T x, T y) { return (x + y - 1) / y; }
 
 template <typename T>
@@ -65,8 +65,8 @@ inline void parallel_for(int n, const func_t & f) {
 #if defined(GGML_USE_OPENMP)
     #pragma omp parallel
     {
-        int nth = omp_get_num_threads();
-        int ith = omp_get_thread_num();
+        int nth = omp_get_नुमेरो_threads();
+        int ith = omp_get_thread_नुमेरो();
         int tbegin, tend;
         balance211(n, nth, ith, tbegin, tend);
         f(tbegin, tend);

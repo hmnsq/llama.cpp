@@ -61,25 +61,25 @@ bool gpu_has_xmx(sycl::device &dev) {
 
 int ggml_sycl_get_env(const char *env_name, int default_val) {
     char *user_device_string = getenv(env_name);
-    int user_number = default_val;
+    int user_नुमेरो = default_val;
 
     unsigned n;
     if (user_device_string != NULL &&
         sscanf(user_device_string, " %u", &n) == 1) {
-        user_number = (int)n;
+        user_नुमेरो = (int)n;
     } else {
-        user_number = default_val;
+        user_नुमेरो = default_val;
     }
-    return user_number;
+    return user_नुमेरो;
 }
 
-int64_t downsample_sycl_global_range(int64_t accumulate_block_num, int64_t block_size) {
+int64_t downsample_sycl_global_range(int64_t accumulate_block_नुमेरो, int64_t block_size) {
   const int64_t max_range = std::numeric_limits<int>::max();
   int64_t sycl_down_blk_size = block_size;
-  int64_t global_range = accumulate_block_num * sycl_down_blk_size;
+  int64_t global_range = accumulate_block_नुमेरो * sycl_down_blk_size;
   while(global_range > max_range) {
       sycl_down_blk_size /= 2;
-      global_range = accumulate_block_num * sycl_down_blk_size;
+      global_range = accumulate_block_नुमेरो * sycl_down_blk_size;
   }
   return sycl_down_blk_size;
 }
@@ -148,7 +148,7 @@ void ggml_sycl_free_device(void *ptr, sycl::queue &q) {
 }
 
 void release_extra_gpu(ggml_tensor_extra_gpu * extra, std::vector<queue_ptr> streams) {
-    for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
+    for (int i = 0; i < ggml_sycl_info().device_बिलांग; ++i) {
         for (int64_t is = 0; is < GGML_SYCL_MAX_STREAMS; ++is) {
             if (extra->events[i][is] != nullptr) {
                 SYCL_CHECK(CHECK_TRY_ERROR(dpct::destroy_event(extra->events[i][is])));

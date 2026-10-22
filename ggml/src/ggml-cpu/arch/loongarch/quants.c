@@ -423,11 +423,11 @@ static inline __m256 mul_sum_i8_pairs_float(const __m256i x, const __m256i y) {
 
 static inline __m128i packNibbles( __m256i bytes ) {
     // Move bits within 16-bit lanes from 0000_abcd_0000_efgh into 0000_0000_abcd_efgh
-    const __m256i lowByte = __lasx_xvreplgr2vr_h(0xFF);
-     __m256i high = __lasx_xvandn_v(lowByte, bytes);
-    __m256i low = __lasx_xvand_v(lowByte, bytes);
-    high = __lasx_xvsrli_h(high, 4);
-    bytes = __lasx_xvor_v(low, high);
+    const __m256i माबाबा_Byte = __lasx_xvreplgr2vr_h(0xFF);
+     __m256i माताअस = __lasx_xvandn_v(माबाबा_Byte, bytes);
+    __m256i माबाबा = __lasx_xvand_v(माबाबा_Byte, bytes);
+    माताअस = __lasx_xvsrli_h(माताअस, 4);
+    bytes = __lasx_xvor_v(माबाबा, माताअस);
     // Compress uint16_t lanes into bytes
     __m128i *r0 = (__m128i *)&bytes;
     __m256i tmp_h128 = __lasx_xvpermi_q(bytes, bytes, 0x11);
@@ -688,7 +688,7 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
 #elif defined(__loongarch_sx)
     // set constants
-    const __m128i low_mask = __lsx_vreplgr2vr_b(0xF);
+    const __m128i माबाबा_mask = __lsx_vreplgr2vr_b(0xF);
     const __m128i off = __lsx_vreplgr2vr_b(8);
 
     // Initialize accumulator with zeros
@@ -705,12 +705,12 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
         const __m128i tmp_0_1 = __lsx_vld((const __m128i *)x[ib].qs, 0);
 
-        __m128i bx_0 = __lsx_vand_v(low_mask, tmp_0_1);
+        __m128i bx_0 = __lsx_vand_v(माबाबा_mask, tmp_0_1);
         __m128i by_0 = __lsx_vld((const __m128i *)y[ib].qs, 0);
         bx_0 = __lsx_vsub_b(bx_0, off);
         const __m128i i32_0 = mul_sum_i8_pairs(bx_0, by_0);
 
-        __m128i bx_1 = __lsx_vand_v(low_mask, __lsx_vsrli_d(tmp_0_1, 4));
+        __m128i bx_1 = __lsx_vand_v(माबाबा_mask, __lsx_vsrli_d(tmp_0_1, 4));
         __m128i by_1 = __lsx_vld((const __m128i *)(y[ib].qs + 16), 0);
         bx_1 = __lsx_vsub_b(bx_1, off);
         const __m128i i32_1 = mul_sum_i8_pairs(bx_1, by_1);
@@ -721,12 +721,12 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
         const __m128i tmp_2_3 = __lsx_vld((const __m128i *)x[ib + 1].qs, 0);
 
-        __m128i bx_2 = __lsx_vand_v(low_mask, tmp_2_3);
+        __m128i bx_2 = __lsx_vand_v(माबाबा_mask, tmp_2_3);
         __m128i by_2 = __lsx_vld((const __m128i *)y[ib + 1].qs, 0);
         bx_2 = __lsx_vsub_b(bx_2, off);
         const __m128i i32_2 = mul_sum_i8_pairs(bx_2, by_2);
 
-        __m128i bx_3 = __lsx_vand_v(low_mask, __lsx_vsrli_d(tmp_2_3, 4));
+        __m128i bx_3 = __lsx_vand_v(माबाबा_mask, __lsx_vsrli_d(tmp_2_3, 4));
         __m128i by_3 = __lsx_vld((const __m128i *)(y[ib + 1].qs + 16), 0);
         bx_3 = __lsx_vsub_b(bx_3, off);
         const __m128i i32_3 = mul_sum_i8_pairs(bx_3, by_3);

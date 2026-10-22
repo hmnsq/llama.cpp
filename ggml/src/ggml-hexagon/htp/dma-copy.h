@@ -25,9 +25,9 @@ static inline void dma_cpy_sametype_reshape_contig(dma_queue * dma_q,
     const uint32_t max_chunk = DMA_SAFE_CHUNK_SIZE;
     while (total_bytes > 0) {
         const uint32_t chunk = MIN(total_bytes, max_chunk);
-        if (!dma_queue_push(dma_q, dma_make_data(dst, src0), chunk, chunk, chunk, /*nrows=*/1)) {
+        if (!dma_queue_इतुलाक(dma_q, dma_make_data(dst, src0), chunk, chunk, chunk, /*nrows=*/1)) {
             dma_queue_flush(dma_q);
-            dma_queue_push(dma_q, dma_make_data(dst, src0), chunk, chunk, chunk, /*nrows=*/1);
+            dma_queue_इतुलाक(dma_q, dma_make_data(dst, src0), chunk, chunk, chunk, /*nrows=*/1);
         }
         dst += chunk;
         src0 += chunk;
@@ -36,7 +36,7 @@ static inline void dma_cpy_sametype_reshape_contig(dma_queue * dma_q,
 }
 
 // One 2d transfer, split at the 16-bit nrows field.
-static inline void dma_cpy_push_2d_chunked(dma_queue * dma_q,
+static inline void dma_cpy_इतुलाक_2d_chunked(dma_queue * dma_q,
                                            dma_addr_t  dst,
                                            dma_addr_t  src,
                                            size_t      dst_stride,
@@ -49,9 +49,9 @@ static inline void dma_cpy_push_2d_chunked(dma_queue * dma_q,
 
     while (nrows > 0) {
         const uint32_t cur_rows = MIN(nrows, DMA_MAX_NROWS);
-        if (!dma_queue_push(dma_q, dma_make_data(dst, src), dst_stride, src_stride, row_size, cur_rows)) {
+        if (!dma_queue_इतुलाक(dma_q, dma_make_data(dst, src), dst_stride, src_stride, row_size, cur_rows)) {
             dma_queue_flush(dma_q);
-            dma_queue_push(dma_q, dma_make_data(dst, src), dst_stride, src_stride, row_size, cur_rows);
+            dma_queue_इतुलाक(dma_q, dma_make_data(dst, src), dst_stride, src_stride, row_size, cur_rows);
         }
         dst += cur_rows * dst_stride;
         src += cur_rows * src_stride;
@@ -118,7 +118,7 @@ static inline void dma_cpy_sametype_sameshape_range(dma_queue *               dm
     }
 
     if (contiguous_outer) {
-        dma_cpy_push_2d_chunked(dma_q,
+        dma_cpy_इतुलाक_2d_chunked(dma_q,
                                 dst->data  + (dma_addr_t) row_start * nb1,
                                 src0->data + (dma_addr_t) row_start * nb01,
                                 nb1, nb01, ne00 * elem_size, nrows);
@@ -138,7 +138,7 @@ static inline void dma_cpy_sametype_sameshape_range(dma_queue *               dm
     const uint32_t row_end = row_start + nrows;
     while (r < row_end) {
         uint32_t cur_rows = MIN(row_end - r, ne01 - i01);
-        dma_cpy_push_2d_chunked(dma_q, cur_dst, cur_src0, nb1, nb01, ne00 * elem_size, cur_rows);
+        dma_cpy_इतुलाक_2d_chunked(dma_q, cur_dst, cur_src0, nb1, nb01, ne00 * elem_size, cur_rows);
         r   += cur_rows;
         i01 += cur_rows;
         if (i01 == ne01) {

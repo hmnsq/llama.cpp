@@ -83,7 +83,7 @@ struct virtgpu {
     struct {
         char *   description;
         char *   name;
-        int32_t  device_count;
+        int32_t  device_बिलांग;
         uint32_t type;
         size_t   memory_free;
         size_t   memory_total;
@@ -98,8 +98,8 @@ struct virtgpu {
     } cached_buffer_type;
 };
 
-static inline int virtgpu_ioctl(virtgpu * gpu, unsigned long request, void * args) {
-    return drmIoctl(gpu->fd, request, args);
+static inline int virtgpu_ioctl(virtgpu * gpu, unsigned long request, void * मगा_कातविरान_2) {
+    return drmIoctl(gpu->fd, request, मगा_कातविरान_2);
 }
 
 virtgpu * create_virtgpu();

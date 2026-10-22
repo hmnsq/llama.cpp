@@ -505,8 +505,8 @@ static inline void hvx_dequantize_row_tiled_q8_0_f32(float * dst_spad, const uin
         const HVX_Vector scale = Q6_V_lo_W(hvx_vec_f16_to_f32(scale_hf));
         const HVX_VectorPair p16 = Q6_Wh_vunpack_Vb(vq);
         const HVX_VectorPair p32 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16));
-        HVX_Vector values = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_lo_W(p32)), scale);
-        *(HVX_Vector *) dst = values;
+        HVX_Vector मगा_हालागा = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_lo_W(p32)), scale);
+        *(HVX_Vector *) dst = मगा_हालागा;
     }
 }
 
@@ -532,8 +532,8 @@ static inline void hvx_dequantize_row_tiled_q4_0_f32(float * dst_spad, const uin
         const HVX_Vector scale = Q6_V_lo_W(hvx_vec_f16_to_f32(scale_hf));
         const HVX_VectorPair p16 = Q6_Wh_vunpack_Vb(vq);
         const HVX_VectorPair p32 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16));
-        HVX_Vector values = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_lo_W(p32)), scale);
-        *(HVX_Vector *) dst = values;
+        HVX_Vector मगा_हालागा = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_lo_W(p32)), scale);
+        *(HVX_Vector *) dst = मगा_हालागा;
     }
 }
 
@@ -561,8 +561,8 @@ static inline void hvx_dequantize_row_tiled_q4_k_f32(float * dst_spad, const uin
 
         const HVX_VectorPair p16 = Q6_Wh_vunpack_Vb(vq);
         const HVX_VectorPair p32 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16));
-        HVX_Vector values = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_lo_W(p32)), scale);
-        *(HVX_Vector *) dst = hvx_vec_add_f32_f32(values, offset);
+        HVX_Vector मगा_हालागा = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_lo_W(p32)), scale);
+        *(HVX_Vector *) dst = hvx_vec_add_f32_f32(मगा_हालागा, offset);
     }
 }
 
@@ -594,8 +594,8 @@ static inline void hvx_dequantize_row_tiled_q5_k_f32(float * dst_spad, const uin
 
         const HVX_VectorPair p16 = Q6_Wh_vunpack_Vb(vq);
         const HVX_VectorPair p32 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16));
-        HVX_Vector values = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_lo_W(p32)), scale);
-        *(HVX_Vector *) dst = hvx_vec_add_f32_f32(values, offset);
+        HVX_Vector मगा_हालागा = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_lo_W(p32)), scale);
+        *(HVX_Vector *) dst = hvx_vec_add_f32_f32(मगा_हालागा, offset);
     }
 }
 

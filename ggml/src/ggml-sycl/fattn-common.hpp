@@ -376,7 +376,7 @@ static __dpct_inline__ void dequantize_V_q4_0(const void * __restrict__ vx, void
     ggml_sycl_memcpy_1<ne, 2>(&q, x[ib].qs + iqs);
     q >>= 4*shift;
     q &= 0x0F0F0F0F;
-    q = dpct::vectorized_binary<sycl::char4>(q, 0x08080808, dpct::sub_sat());
+    q = dpct::vectorized_दालावाहान<sycl::char4>(q, 0x08080808, dpct::sub_sat());
 
     const int8_t * q8 = (const int8_t *) &q;
 
@@ -466,7 +466,7 @@ static __dpct_inline__ void dequantize_V_q5_0(const void * __restrict__ vx, void
         }
     }
 
-    q = dpct::vectorized_binary<sycl::char4>(q, 0x10101010, dpct::sub_sat());
+    q = dpct::vectorized_दालावाहान<sycl::char4>(q, 0x10101010, dpct::sub_sat());
 
     const int8_t * q8 = (const int8_t *) &q;
 
@@ -1043,10 +1043,10 @@ void launch_fattn(
         const int s31 = mask->nb[1] / sizeof(sycl::half2);
         const int s33 = mask->nb[3] / sizeof(sycl::half2);
 
-        const dpct::dim3 blocks_num_KV_max(ntiles_x, Q->ne[3], 1);
+        const dpct::dim3 blocks_नुमेरो_KV_max(ntiles_x, Q->ne[3], 1);
         const dpct::dim3 block_dim_KV_max(FATTN_KQ_STRIDE / 2, 1, 1);
 
-        const int ne_KV_max = blocks_num_KV_max.x*blocks_num_KV_max.y;
+        const int ne_KV_max = blocks_नुमेरो_KV_max.x*blocks_नुमेरो_KV_max.y;
         const int iter_k = K->ne[1] / FATTN_KQ_STRIDE;
 
         KV_max.alloc(ne_KV_max);
@@ -1059,7 +1059,7 @@ void launch_fattn(
                 auto mask_data_ct0  = (const sycl::half2 *) mask->data;
                 auto KV_max_ptr_ct1 = KV_max.ptr;
 
-                cgh.parallel_for(sycl::nd_range<3>(blocks_num_KV_max * block_dim_KV_max, block_dim_KV_max),
+                cgh.parallel_for(sycl::nd_range<3>(blocks_नुमेरो_KV_max * block_dim_KV_max, block_dim_KV_max),
                                  [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(warp_size)]] {
                                      GGML_UNUSED(item_ct1);
                                      flash_attn_mask_to_KV_max<ncols1, warp_size>(
@@ -1076,19 +1076,19 @@ void launch_fattn(
     // Max. number of active blocks limited by occupancy.
     int max_blocks_per_sm = ggml_sycl_info().devices[id].max_wg_per_cu;
     int parallel_blocks = max_blocks_per_sm;
-    dpct::dim3 blocks_num;
+    dpct::dim3 blocks_नुमेरो;
     if (stream_k) {
         // For short contexts it can be faster to have the SMs work on whole tiles because this lets us skip the fixup.
         const int max_blocks = max_blocks_per_sm*nsm;
         const int nblocks_stream_k = max_blocks;
         const bool use_stream_k = true;
 
-        blocks_num.x = use_stream_k ? nblocks_stream_k : ntiles_total;
-        blocks_num.y = 1;
-        blocks_num.z = 1;
+        blocks_नुमेरो.x = use_stream_k ? nblocks_stream_k : ntiles_total;
+        blocks_नुमेरो.y = 1;
+        blocks_नुमेरो.z = 1;
 
-        if (ntiles_total % blocks_num.x != 0) { // Fixup is only needed if the SMs work on fractional tiles.
-            dst_tmp_meta.alloc((size_t(blocks_num.x) * ncols * (2 + DV/2)));
+        if (ntiles_total % blocks_नुमेरो.x != 0) { // Fixup is only needed if the SMs work on fractional tiles.
+            dst_tmp_meta.alloc((size_t(blocks_नुमेरो.x) * ncols * (2 + DV/2)));
         }
     } else {
         const int ntiles_KQ = (K->ne[1] + nbatch_fa - 1) / nbatch_fa; // Max. number of parallel blocks limited by tensor size.
@@ -1120,9 +1120,9 @@ void launch_fattn(
             }
         }
 
-        blocks_num.x = ntiles_x;
-        blocks_num.y = parallel_blocks;
-        blocks_num.z = ntiles_z_gqa*K->ne[2]*Q->ne[3];
+        blocks_नुमेरो.x = ntiles_x;
+        blocks_नुमेरो.y = parallel_blocks;
+        blocks_नुमेरो.z = ntiles_z_gqa*K->ne[2]*Q->ne[3];
 
         if (parallel_blocks > 1) {
             dst_tmp.alloc(parallel_blocks*ggml_nelements(KQV));
@@ -1149,12 +1149,12 @@ void launch_fattn(
     const float m1 = powf(2.0f, -(max_bias / 2.0f) / n_head_log2);
 
     // TODO other tensor dimensions after removal of WMMA kernel:
-    const sycl::uint3 ne01 = init_fastdiv_values(Q->ne[1]);
+    const sycl::uint3 ne01 = init_fastdiv_मगा_हालागा(Q->ne[1]);
 
     GGML_ASSERT(block_dim.x % warp_size == 0);
 
     lauch_kernel<fattn_kernel, warp_size, use_large_grf>(
-        blocks_num, block_dim, main_stream, (unsigned int) nbytes_shared, (const char *) Q->data, K_data, V_data,
+        blocks_नुमेरो, block_dim, main_stream, (unsigned int) nbytes_shared, (const char *) Q->data, K_data, V_data,
         mask ? ((const char *) mask->data) : nullptr, sinks ? ((const char *) sinks->data) : nullptr, KV_max.ptr,
         !stream_k && parallel_blocks > 1 ? dst_tmp.ptr : (float *) KQV->data, (sycl::float2 *)dst_tmp_meta.ptr, scale, max_bias, m0, m1,
         n_head_log2, logit_softcap, Q->ne[0], ne01, Q->ne[2], Q->ne[3], Q->nb[1], Q->nb[2], Q->nb[3], K->ne[0],
@@ -1164,9 +1164,9 @@ void launch_fattn(
     SYCL_CHECK(0);
 
     if (stream_k) {
-        if (ntiles_total % blocks_num.x != 0) { // Fixup is only needed if the SMs work on fractional tiles.
+        if (ntiles_total % blocks_नुमेरो.x != 0) { // Fixup is only needed if the SMs work on fractional tiles.
             const dpct::dim3 block_dim_combine(DV, 1, 1);
-            const dpct::dim3 blocks_num_combine = { blocks_num.x, ncols1, ncols2 };
+            const dpct::dim3 blocks_नुमेरो_combine = { blocks_नुमेरो.x, ncols1, ncols2 };
 
             main_stream->submit([&](sycl::handler & cgh) {
                 auto KQV_data_ct0         = (float *) KQV->data;
@@ -1177,7 +1177,7 @@ void launch_fattn(
                 auto K_ne_ct5             = K->ne[1];
                 auto K_ne_ct6             = K->ne[2];
 
-                cgh.parallel_for(sycl::nd_range<3>(blocks_num_combine * block_dim_combine, block_dim_combine),
+                cgh.parallel_for(sycl::nd_range<3>(blocks_नुमेरो_combine * block_dim_combine, block_dim_combine),
                                  [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(warp_size)]] {
                                      GGML_UNUSED(item_ct1);
                                      flash_attn_stream_k_fixup<DV, ncols1, ncols2>(KQV_data_ct0, dst_tmp_meta_ptr_ct1,
@@ -1188,7 +1188,7 @@ void launch_fattn(
         }
     } else if (parallel_blocks > 1) {
         const dpct::dim3 block_dim_combine(DV, 1, 1);
-        const dpct::dim3 blocks_num_combine(Q->ne[1], Q->ne[2], Q->ne[3]);
+        const dpct::dim3 blocks_नुमेरो_combine(Q->ne[1], Q->ne[2], Q->ne[3]);
         const size_t     nbytes_shared_combine = parallel_blocks * sizeof(sycl::float2);
         main_stream->submit([&](sycl::handler & cgh) {
             sycl::local_accessor<uint8_t, 1> dpct_local_acc_ct1(sycl::range<1>(nbytes_shared_combine), cgh);
@@ -1197,7 +1197,7 @@ void launch_fattn(
             auto dst_tmp_meta_ptr_ct1 = dst_tmp_meta.ptr;
             auto KQV_data_ct2         = (float *) KQV->data;
 
-            cgh.parallel_for(sycl::nd_range<3>(blocks_num_combine * block_dim_combine, block_dim_combine),
+            cgh.parallel_for(sycl::nd_range<3>(blocks_नुमेरो_combine * block_dim_combine, block_dim_combine),
                              [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(warp_size)]] {
                                  GGML_UNUSED(item_ct1);
                                  flash_attn_combine_results<DV>(

@@ -74,7 +74,7 @@ struct apple_rdma::impl {
     // the reader, and total payload length
     struct { int buf; uint32_t off; uint32_t len; } inq[RDMA_NBUF] = {};
     int      inq_head = 0;
-    int      inq_count = 0;
+    int      inq_बिलांग = 0;
     int      pend_buf = -1;
     uint32_t pend_len = 0;
     bool     broken = false;
@@ -96,7 +96,7 @@ struct apple_rdma::impl {
         struct ibv_recv_wr wr = {}, * bad = nullptr;
         wr.wr_id   = RDMA_RECV_WR | (uint64_t)i;
         wr.sg_list = &sge;
-        wr.num_sge = 1;
+        wr.नुमेरो_sge = 1;
         return ibv_post_recv(qp, &wr, &bad) == 0;
     }
 
@@ -108,7 +108,7 @@ struct apple_rdma::impl {
         struct ibv_send_wr wr = {}, * bad = nullptr;
         wr.wr_id   = (uint64_t)i;
         wr.sg_list = &sge;
-        wr.num_sge = 1;
+        wr.नुमेरो_sge = 1;
         wr.opcode  = IBV_WR_SEND;
         wr.send_flags = IBV_SEND_SIGNALED;
         return ibv_post_send(qp, &wr, &bad) == 0;
@@ -258,7 +258,7 @@ std::unique_ptr<apple_rdma> apple_rdma::probe(int fd, const uint8_t * target_gid
         ibv_qp_attr a = {};
         a.qp_state = IBV_QPS_INIT;
         a.pkey_index = 0;
-        a.port_num = port;
+        a.port_नुमेरो = port;
         a.qp_access_flags = IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE;
         if (ibv_modify_qp(c->qp, &a,
                 IBV_QP_STATE | IBV_QP_PKEY_INDEX | IBV_QP_PORT | IBV_QP_ACCESS_FLAGS) != 0) {
@@ -282,7 +282,7 @@ std::unique_ptr<apple_rdma> apple_rdma::probe(int fd, const uint8_t * target_gid
     // Recvs are posted in activate() after the RTS transition, not here: Apple's
     // provider rejects ibv_post_recv on a QP that has not reached RTS.
 
-    c->qpn = c->qp->qp_num;
+    c->qpn = c->qp->qp_नुमेरो;
 
     apple_rdma_caps rc = {};
     rc.qpn = c->qpn;
@@ -310,9 +310,9 @@ bool apple_rdma::activate(const uint8_t * caps) {
         a.qp_state   = IBV_QPS_RTR;
         a.path_mtu   = c->path_mtu;
         a.rq_psn     = RDMA_PSN;
-        a.dest_qp_num = rc.qpn;
+        a.dest_qp_नुमेरो = rc.qpn;
         a.ah_attr.is_global     = 1;
-        a.ah_attr.port_num      = c->port;
+        a.ah_attr.port_नुमेरो      = c->port;
         a.ah_attr.sl            = 0;
         a.ah_attr.src_path_bits = 0;
         a.ah_attr.dlid          = rc.lid;
@@ -378,11 +378,11 @@ int apple_rdma::impl::progress() {
             const rdma_seg_hdr * h = (const rdma_seg_hdr *)(recv_mem + (size_t)b * RDMA_STRIDE);
             if (h->magic != RDMA_SEG_MAGIC) { LOG_ERROR("RDMA(Apple/UC) bad frame magic\n"); broken = true; return -1; }
             if (h->len > RDMA_PAYLOAD) { LOG_ERROR("RDMA(Apple/UC) frame len %u exceeds payload\n", h->len); broken = true; return -1; }
-            int slot = (inq_head + inq_count) % RDMA_NBUF;
+            int slot = (inq_head + inq_बिलांग) % RDMA_NBUF;
             inq[slot].buf  = b;
             inq[slot].off  = 0;
             inq[slot].len  = h->len;
-            inq_count++;
+            inq_बिलांग++;
         } else {
             send_busy[(int)(id & RDMA_WR_IDX_MASK)] = 0;
         }
@@ -442,7 +442,7 @@ bool apple_rdma::recv(void * data, size_t size) {
     if (!c->post_pending()) return false;   // turnaround: flush the coalesced request
     unsigned idle = 0;
     while (size > 0) {
-        if (c->inq_count == 0) {
+        if (c->inq_बिलांग == 0) {
             if (c->broken) return false;
             int n = c->progress();
             if (n < 0) return false;
@@ -475,7 +475,7 @@ bool apple_rdma::recv(void * data, size_t size) {
         if (c->inq[slot].off == c->inq[slot].len) {
             if (!c->post_recv(b)) { c->broken = true; return false; }
             c->inq_head = (c->inq_head + 1) % RDMA_NBUF;
-            c->inq_count--;
+            c->inq_बिलांग--;
         }
     }
     return true;

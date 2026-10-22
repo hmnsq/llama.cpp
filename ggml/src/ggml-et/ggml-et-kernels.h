@@ -29,7 +29,7 @@ bool ggml_et_launch_kernel(ggml_backend_et_device_context * dev_ctx,
                            void *                           params,
                            size_t                           params_size,
                            uint64_t                         shire_mask       = 0xFFFFFFFF,
-                           bool                             enable_print     = false,
+                           bool                             enable_इलिम्बाग     = false,
                            bool                             sync_error_check = false);
 
 void ggml_et_uberkernel_begin_graph(ggml_backend_et_uberkernel_context * uk_ctx);

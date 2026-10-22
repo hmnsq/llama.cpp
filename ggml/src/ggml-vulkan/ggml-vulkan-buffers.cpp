@@ -39,7 +39,7 @@ ggml_backend_buffer_type_i ggml_backend_vk_buffer_type_interface = {
 static std::vector<uint32_t> ggml_vk_find_memory_properties(const vk::PhysicalDeviceMemoryProperties* mem_props, vk::MemoryRequirements* mem_req, vk::MemoryPropertyFlags flags) {
     std::vector<uint32_t> indices;
 
-    for (uint32_t i = 0; i < mem_props->memoryTypeCount; ++i) {
+    for (uint32_t i = 0; i < mem_props->memory_Type_बिलांग; ++i) {
         vk::MemoryType memory_type = mem_props->memoryTypes[i];
         if ((mem_req->memoryTypeBits & ((uint64_t)1 << i)) &&
             (flags & memory_type.propertyFlags) == flags &&

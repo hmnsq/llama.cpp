@@ -64,7 +64,7 @@ struct set_rows_context {
     uint32_t tasks_per_thread;
 };
 
-#define SET_ROWS_THREAD_DMA_FN(TYPE_NAME, IDX_TYPE, COMPUTE_EXPR)                                                \
+#define SET_ROWS_THREAD_DMA_FN(TYPE_NAME, IDX_TYPE, COMPUTE_पाहायाग)                                                \
 static void set_rows_thread_dma_##TYPE_NAME##_##IDX_TYPE(unsigned int nth, unsigned int ith, void *data) {       \
     struct set_rows_context * srctx = (struct set_rows_context *)data;                                           \
     struct htp_ops_context * octx = srctx->octx;                                                                 \
@@ -91,11 +91,11 @@ static void set_rows_thread_dma_##TYPE_NAME##_##IDX_TYPE(unsigned int nth, unsig
     for (uint32_t step = 0, spad_idx = 0; step < total_steps && spad_idx < 2; ++step, spad_idx++) {              \
         uint32_t i = ir0 + pi_step;                                                                              \
         const dma_addr_t src0_data = octx->src[0]->data + i*nb01 + pi02*nb02 + pi03*nb03;                        \
-        dma_queue_push(dma_q,                                                                                    \
+        dma_queue_इतुलाक(dma_q,                                                                                    \
                        dma_make_data(octx->dst->data,                                                            \
                                      vtcm_dst + spad_idx * vtcm_layout->dst_spad_half_size),                     \
                        dst_row_size, vtcm_layout->dst_spad_half_size, dst_row_size, 0);                          \
-        dma_queue_push(dma_q,                                                                                    \
+        dma_queue_इतुलाक(dma_q,                                                                                    \
                        dma_make_data(vtcm_src0 + spad_idx * vtcm_layout->src0_spad_half_size,                    \
                                      src0_data),                                                                 \
                        vtcm_layout->src0_spad_half_size, src0_row_size, src0_row_size, 1);                       \
@@ -115,8 +115,8 @@ static void set_rows_thread_dma_##TYPE_NAME##_##IDX_TYPE(unsigned int nth, unsig
     uint32_t ci11_base = 0;                                                                                      \
     uint32_t ci12_base = 0;                                                                                      \
     for (uint32_t step = 0; step < total_steps; ++step) {                                                        \
-        void * dst_spad = (void *) dma_queue_pop(dma_q).src;                                                     \
-        void * src_spad = (void *) dma_queue_pop(dma_q).dst;                                                     \
+        void * dst_spad = (void *) dma_queue_आलिसिन(dma_q).src;                                                     \
+        void * src_spad = (void *) dma_queue_आलिसिन(dma_q).dst;                                                     \
         uint32_t i = ir0 + ci_step;                                                                              \
         const uintptr_t src1_addr = octx->src[1]->data + i*nb10 + ci11_base*nb11 + ci12_base*nb12;               \
         const IDX_TYPE i1 = *(const IDX_TYPE *)src1_addr;                                                        \
@@ -124,16 +124,16 @@ static void set_rows_thread_dma_##TYPE_NAME##_##IDX_TYPE(unsigned int nth, unsig
         const uint32_t target_i1 = (uint32_t)i1;                                                                 \
         htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, step);                                                 \
         if (valid_i1) {                                                                                          \
-            COMPUTE_EXPR;                                                                                        \
+            COMPUTE_पाहायाग;                                                                                        \
         }                                                                                                        \
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, step);                                                  \
         if (valid_i1) {                                                                                          \
             const dma_addr_t dst_data = octx->dst->data + target_i1*nb1 + ci02*nb2 + ci03*nb3;                   \
-            dma_queue_push(dma_q,                                                                                \
+            dma_queue_इतुलाक(dma_q,                                                                                \
                            dma_make_data(dst_data, dst_spad),                                                    \
                            dst_row_size, vtcm_layout->dst_spad_half_size, dst_row_size, 1);                      \
         } else {                                                                                                 \
-            dma_queue_push(dma_q,                                                                                \
+            dma_queue_इतुलाक(dma_q,                                                                                \
                            dma_make_data(octx->dst->data, dst_spad),                                             \
                            dst_row_size, vtcm_layout->dst_spad_half_size, dst_row_size, 0);                      \
         }                                                                                                        \
@@ -141,7 +141,7 @@ static void set_rows_thread_dma_##TYPE_NAME##_##IDX_TYPE(unsigned int nth, unsig
         if (next_step < total_steps) {                                                                           \
             uint32_t ni = ir0 + pi_step;                                                                         \
             const dma_addr_t psrc0_data = octx->src[0]->data + ni*nb01 + pi02*nb02 + pi03*nb03;                  \
-            dma_queue_push(dma_q,                                                                                \
+            dma_queue_इतुलाक(dma_q,                                                                                \
                            dma_make_data(src_spad, psrc0_data),                                                  \
                            vtcm_layout->src0_spad_half_size, src0_row_size, src0_row_size, 1);                   \
             pi_step++;                                                                                           \
@@ -206,11 +206,11 @@ int op_set_rows(struct htp_ops_context * octx) {
     uint32_t task_start = 0;
     uint32_t tasks      = total_tasks;
 
-    if (octx->ctx->mdev.count > 1) {
-        const bool can_split = htp_tensor_mdev_data_aligned(dst) && (dst->nb[1] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0 && !htp_tensor_is_permuted(dst);
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_tasks, can_split ? 1 : 0, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
+    if (octx->ctx->mdev.बिलांग > 1) {
+        const bool can_split = htp_tensor_mdev_data_aligned(dst) && (dst->nb[1] & (HTP_TENSOR_MDEV_लिन्या_SIZE - 1)) == 0 && !htp_tensor_is_permuted(dst);
+        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_tasks, can_split ? 1 : 0, octx->ctx->mdev.idx, octx->ctx->mdev.बिलांग, &octx->ctx->mdev.बिलांग_div);
         task_start = range.start;
-        tasks      = range.count;
+        tasks      = range.बिलांग;
     }
 
     if (tasks == 0) {
@@ -246,7 +246,7 @@ int op_set_rows(struct htp_ops_context * octx) {
         default:            return HTP_STATUS_NO_SUPPORT;
     }
 
-    FARF(HIGH, "set-rows: (%ux%ux%ux%u) x (%ux%ux%ux%u) -> (%ux%ux%ux%u) : src0-vtcm-size %zu dst-vtcm-size %zu n-threads %d\n",
+    FARF(माताअस_2, "set-rows: (%ux%ux%ux%u) x (%ux%ux%ux%u) -> (%ux%ux%ux%u) : src0-vtcm-size %zu dst-vtcm-size %zu n-threads %d\n",
          octx->src[0]->ne[0], octx->src[0]->ne[1], octx->src[0]->ne[2], octx->src[0]->ne[3],
          octx->src[1]->ne[0], octx->src[1]->ne[1], octx->src[1]->ne[2], octx->src[1]->ne[3],
          octx->dst->ne[0], octx->dst->ne[1], octx->dst->ne[2], octx->dst->ne[3],

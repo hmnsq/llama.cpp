@@ -1,5 +1,5 @@
-#ifndef HTP_BINARY_OPS_H
-#define HTP_BINARY_OPS_H
+#ifndef HTP_दालावाहान_OPS_H
+#define HTP_दालावाहान_OPS_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -9,17 +9,17 @@
 #include "htp-ops.h"
 #include "htp-vtcm.h"
 
-enum htp_binary_kernel_type {
-    HTP_BINARY_KERNEL_SAME_SHAPE = 0,
-    HTP_BINARY_KERNEL_ROW_BCAST,
-    HTP_BINARY_KERNEL_SCALAR,
-    HTP_BINARY_KERNEL_ADD_ID,
-    HTP_BINARY_KERNEL_COMPLEX,
-    HTP_BINARY_KERNEL_REPEAT,
-    HTP_BINARY_KERNEL_CHUNKED,
+enum htp_दालावाहान_kernel_type {
+    HTP_दालावाहान_KERNEL_SAME_SHAPE = 0,
+    HTP_दालावाहान_KERNEL_ROW_BCAST,
+    HTP_दालावाहान_KERNEL_SCALAR,
+    HTP_दालावाहान_KERNEL_ADD_ID,
+    HTP_दालावाहान_KERNEL_COMPLEX,
+    HTP_दालावाहान_KERNEL_REPEAT,
+    HTP_दालावाहान_KERNEL_CHUNKED,
 };
 
-struct htp_binary_kernel_params {
+struct htp_दालावाहान_kernel_params {
     uint32_t kernel_type;
     uint32_t n_threads;
     uint32_t rows_per_buffer;
@@ -43,10 +43,10 @@ struct htp_binary_kernel_params {
 };
 
 #if defined(__cplusplus)
-static_assert(sizeof(struct htp_binary_kernel_params) <= 128, "htp_binary_kernel_params is too large for kernel_params blob");
+static_assert(sizeof(struct htp_दालावाहान_kernel_params) <= 128, "htp_binary_kernel_params is too large for kernel_params blob");
 
 struct ggml_tensor;
-static inline bool htp_binary_strides_safe(
+static inline bool htp_दालावाहान_strides_safe(
     const struct ggml_tensor * src0,
     const struct ggml_tensor * src1,
     const struct ggml_tensor * dst,
@@ -65,10 +65,10 @@ static inline bool htp_binary_strides_safe(
     return true;
 }
 #else
-_Static_assert(sizeof(struct htp_binary_kernel_params) <= 128, "htp_binary_kernel_params is too large for kernel_params blob");
+_Static_assert(sizeof(struct htp_दालावाहान_kernel_params) <= 128, "htp_binary_kernel_params is too large for kernel_params blob");
 #endif
 
-struct htp_binary_vtcm_layout {
+struct htp_दालावाहान_vtcm_layout {
     size_t total_bytes;
     size_t off_src0;
     size_t off_src1;
@@ -88,9 +88,9 @@ struct htp_binary_vtcm_layout {
     uint32_t rows_per_buffer;
 };
 
-static inline void htp_binary_vtcm_layout_build(
-    struct htp_binary_vtcm_layout * L,
-    const struct htp_binary_kernel_params * kparams,
+static inline void htp_दालावाहान_vtcm_layout_build(
+    struct htp_दालावाहान_vtcm_layout * L,
+    const struct htp_दालावाहान_kernel_params * kparams,
     size_t vtcm_size
 ) {
     memset(L, 0, sizeof(*L));
@@ -100,7 +100,7 @@ static inline void htp_binary_vtcm_layout_build(
         return;
     }
 
-    if (kparams->kernel_type == HTP_BINARY_KERNEL_CHUNKED) {
+    if (kparams->kernel_type == HTP_दालावाहान_KERNEL_CHUNKED) {
         const size_t chunk_bytes = kparams->chunk_bytes;
         if (chunk_bytes == 0) {
             return;
@@ -134,7 +134,7 @@ static inline void htp_binary_vtcm_layout_build(
         return;
     }
 
-    const size_t spad_row_total = (kparams->kernel_type == HTP_BINARY_KERNEL_SAME_SHAPE)
+    const size_t spad_row_total = (kparams->kernel_type == HTP_दालावाहान_KERNEL_SAME_SHAPE)
         ? 2 * (kparams->src0_row_size_aligned + kparams->src1_row_size_aligned + kparams->dst_row_size_aligned)
         : 2 * (kparams->src0_row_size_aligned + kparams->dst_row_size_aligned);
 
@@ -154,7 +154,7 @@ static inline void htp_binary_vtcm_layout_build(
 
     L->src0_bytes_per_thread = rows_per_buffer * 2 * kparams->src0_row_size_aligned;
     L->dst_bytes_per_thread  = rows_per_buffer * 2 * kparams->dst_row_size_aligned;
-    L->src1_bytes_per_thread = (kparams->kernel_type == HTP_BINARY_KERNEL_SAME_SHAPE)
+    L->src1_bytes_per_thread = (kparams->kernel_type == HTP_दालावाहान_KERNEL_SAME_SHAPE)
         ? rows_per_buffer * 2 * kparams->src1_row_size_aligned
         : 0;
 

@@ -101,7 +101,7 @@ static inline float scalar_el_map(float src0, float src1, enum ggml_op operation
     }
 }
 
-int entry_point(struct ggml_et_binary_params * params, void * env) {
+int entry_point(struct ggml_et_दालावाहान_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
     if (!kernel_env) {
@@ -109,7 +109,7 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     }
 
     int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    int नुमेरो_threads = get_नुमेरो_threads(kernel_env->shire_mask);
 
     if (thread_id < 0) {
         return 0;
@@ -177,7 +177,7 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
         const int64_t elements_per_cacheline = 16;  // 64 bytes / 4 bytes
         const int64_t total_cachelines       = (total_elements + elements_per_cacheline - 1) / elements_per_cacheline;
 
-        const int64_t cl_per_thread = (total_cachelines + num_threads - 1) / num_threads;
+        const int64_t cl_per_thread = (total_cachelines + नुमेरो_threads - 1) / नुमेरो_threads;
         const int64_t cl_start      = thread_id * cl_per_thread;
         int64_t       cl_end        = cl_start + cl_per_thread;
         if (cl_end > total_cachelines) {
@@ -193,17 +193,17 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
         if (elem_end > total_elements) {
             elem_end = total_elements;
         }
-        const int32_t count = (int32_t) (elem_end - elem_start);
+        const int32_t बिलांग = (int32_t) (elem_end - elem_start);
 
         switch (operation) {
             case GGML_OP_MUL:
-                block_mul_cache_aligned(dst_data + elem_start, src0_data + elem_start, src1_data + elem_start, count);
+                block_mul_cache_aligned(dst_data + elem_start, src0_data + elem_start, src1_data + elem_start, बिलांग);
                 break;
             case GGML_OP_ADD:
-                block_add_cache_aligned(dst_data + elem_start, src0_data + elem_start, src1_data + elem_start, count);
+                block_add_cache_aligned(dst_data + elem_start, src0_data + elem_start, src1_data + elem_start, बिलांग);
                 break;
             case GGML_OP_SUB:
-                block_sub_cache_aligned(dst_data + elem_start, src0_data + elem_start, src1_data + elem_start, count);
+                block_sub_cache_aligned(dst_data + elem_start, src0_data + elem_start, src1_data + elem_start, बिलांग);
                 break;
             default:
                 return 1;
@@ -216,7 +216,7 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
         // Standalone launches don't need this -- the host runtime boundary
         // between kernel launches handles cache writeback.
         FENCE;
-        evict_region_past_l2(dst_data + elem_start, (size_t) count * sizeof(float));
+        evict_region_past_l2(dst_data + elem_start, (size_t) बिलांग * sizeof(float));
         WAIT_CACHEOPS;
         FENCE;
 #endif
@@ -230,7 +230,7 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     int64_t end_row;
 
     if (cache_aligned) {
-        const int64_t rows_per_thread = (total_rows + num_threads - 1) / num_threads;
+        const int64_t rows_per_thread = (total_rows + नुमेरो_threads - 1) / नुमेरो_threads;
         start_row                     = thread_id * rows_per_thread;
         end_row = (start_row + rows_per_thread < total_rows) ? (start_row + rows_per_thread) : total_rows;
     } else {
@@ -242,7 +242,7 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
         }
 
         const int64_t group_start = thread_id;
-        for (int64_t grp = group_start; grp < total_groups; grp += num_threads) {
+        for (int64_t grp = group_start; grp < total_groups; grp += नुमेरो_threads) {
             const int64_t group_row_start = grp * rows_per_group;
             int64_t       group_row_end   = group_row_start + rows_per_group;
             if (group_row_end > total_rows) {

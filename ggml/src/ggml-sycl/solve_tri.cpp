@@ -43,34 +43,34 @@ static void solve_tri_f32_fast(const float * __restrict__ A,
 
     item.barrier(sycl::access::fence_space::local_space);
 
-    float x_low  = (lane < n) ? B_batch[lane * k + col_idx] : 0.0f;
-    float x_high = (WARP_SIZE + lane < n) ? B_batch[(WARP_SIZE + lane) * k + col_idx] : 0.0f;
+    float x_माबाबा  = (lane < n) ? B_batch[lane * k + col_idx] : 0.0f;
+    float x_माताअस = (WARP_SIZE + lane < n) ? B_batch[(WARP_SIZE + lane) * k + col_idx] : 0.0f;
 
     const int half      = WARP_SIZE;
-    const int nrows_low = (n < half) ? n : half;
+    const int nrows_माबाबा = (n < half) ? n : half;
 
 #pragma unroll
-    for (int row = 0; row < nrows_low; ++row) {
+    for (int row = 0; row < nrows_माबाबा; ++row) {
         float sum = 0.0f;
         if (lane < row) {
-            sum += sA[row * n + lane] * x_low;
+            sum += sA[row * n + lane] * x_माबाबा;
         }
         sum = warp_reduce_sum<WARP_SIZE>(sum);
         if (lane == row) {
-            x_low = (x_low - sum) / sA[row * n + row];
+            x_माबाबा = (x_माबाबा - sum) / sA[row * n + row];
         }
     }
 
 #pragma unroll
     for (int row = half; row < n; ++row) {
-        float     sum = sA[row * n + lane] * x_low;
+        float     sum = sA[row * n + lane] * x_माबाबा;
         const int j   = half + lane;
         if (j < row) {
-            sum += sA[row * n + j] * x_high;
+            sum += sA[row * n + j] * x_माताअस;
         }
         sum = warp_reduce_sum<WARP_SIZE>(sum);
         if (lane == row - half) {
-            x_high = (x_high - sum) / sA[row * n + row];
+            x_माताअस = (x_माताअस - sum) / sA[row * n + row];
         }
     }
 
@@ -78,7 +78,7 @@ static void solve_tri_f32_fast(const float * __restrict__ A,
     for (int rr = 0; rr < 2; ++rr) {
         const int row = rr * WARP_SIZE + lane;
         if (row < n) {
-            const float val            = (row < half) ? x_low : x_high;
+            const float val            = (row < half) ? x_माबाबा : x_माताअस;
             X_batch[row * k + col_idx] = val;
         }
     }
@@ -167,6 +167,6 @@ inline void ggml_sycl_op_solve_tri(ggml_backend_sycl_context & ctx, ggml_tensor 
 }
 
 void ggml_sycl_solve_tri(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/2);
     ggml_sycl_op_solve_tri(ctx, dst);
 }

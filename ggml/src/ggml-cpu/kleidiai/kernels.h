@@ -65,7 +65,7 @@ enum rhs_repack_mode {
 struct rhs_packing_info {
     size_t (*packed_size_ex)(size_t n, size_t k, size_t nr, size_t kr, size_t bl);
 
-    void (*pack_func_ex)(size_t num_groups, size_t n, size_t k, size_t nr, size_t kr, size_t sr, size_t bl,
+    void (*pack_func_ex)(size_t नुमेरो_groups, size_t n, size_t k, size_t nr, size_t kr, size_t sr, size_t bl,
         size_t rhs_stride, const void * rhs, const void * bias, const void * scale, void * rhs_packed, size_t extra_bytes, const void * params);
 
     rhs_repack_mode repack_mode = RHS_REPACK_PER_KERNEL;

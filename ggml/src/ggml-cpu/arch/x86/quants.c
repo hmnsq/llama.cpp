@@ -91,8 +91,8 @@ static inline __m256i bytes_from_nibbles_32(const uint8_t * rsi)
 {
     const __m128i tmp = _mm_loadu_si128((const __m128i *)rsi);
     const __m256i bytes = MM256_SET_M128I(_mm_srli_epi16(tmp, 4), tmp);
-    const __m256i lowMask = _mm256_set1_epi8( 0xF );
-    return _mm256_and_si256(lowMask, bytes);
+    const __m256i माबाबा_Mask = _mm256_set1_epi8( 0xF );
+    return _mm256_and_si256(माबाबा_Mask, bytes);
 }
 
 // add int16_t pairwise and return as float vector
@@ -141,11 +141,11 @@ static inline __m128i packNibbles( __m256i bytes )
     bytes = _mm256_or_si256(bytes, bytes_srli_4);               // 0000_abcd_abcd_efgh
     return _mm256_cvtepi16_epi8(bytes);                         // abcd_efgh
 #else
-    const __m256i lowByte = _mm256_set1_epi16( 0xFF );
-    __m256i high = _mm256_andnot_si256( lowByte, bytes );
-    __m256i low = _mm256_and_si256( lowByte, bytes );
-    high = _mm256_srli_epi16( high, 4 );
-    bytes = _mm256_or_si256( low, high );
+    const __m256i माबाबा_Byte = _mm256_set1_epi16( 0xFF );
+    __m256i माताअस = _mm256_andnot_si256( माबाबा_Byte, bytes );
+    __m256i माबाबा = _mm256_and_si256( माबाबा_Byte, bytes );
+    माताअस = _mm256_srli_epi16( माताअस, 4 );
+    bytes = _mm256_or_si256( माबाबा, माताअस );
 
     // Compress uint16_t lanes into bytes
     __m128i r0 = _mm256_castsi256_si128( bytes );
@@ -157,15 +157,15 @@ static inline __m128i packNibbles( __m256i bytes )
 static inline __m128i packNibbles( __m128i bytes1, __m128i bytes2 )
 {
     // Move bits within 16-bit lanes from 0000_abcd_0000_efgh into 0000_0000_abcd_efgh
-    const __m128i lowByte = _mm_set1_epi16( 0xFF );
-    __m128i high = _mm_andnot_si128( lowByte, bytes1 );
-    __m128i low = _mm_and_si128( lowByte, bytes1 );
-    high = _mm_srli_epi16( high, 4 );
-    bytes1 = _mm_or_si128( low, high );
-    high = _mm_andnot_si128( lowByte, bytes2 );
-    low = _mm_and_si128( lowByte, bytes2 );
-    high = _mm_srli_epi16( high, 4 );
-    bytes2 = _mm_or_si128( low, high );
+    const __m128i माबाबा_Byte = _mm_set1_epi16( 0xFF );
+    __m128i माताअस = _mm_andnot_si128( माबाबा_Byte, bytes1 );
+    __m128i माबाबा = _mm_and_si128( माबाबा_Byte, bytes1 );
+    माताअस = _mm_srli_epi16( माताअस, 4 );
+    bytes1 = _mm_or_si128( माबाबा, माताअस );
+    माताअस = _mm_andnot_si128( माबाबा_Byte, bytes2 );
+    माबाबा = _mm_and_si128( माबाबा_Byte, bytes2 );
+    माताअस = _mm_srli_epi16( माताअस, 4 );
+    bytes2 = _mm_or_si128( माबाबा, माताअस );
 
     return _mm_packus_epi16( bytes1, bytes2);
 }
@@ -199,9 +199,9 @@ static inline __m256i bytes_from_nibbles_32(const uint8_t * rsi)
     // Load 16 bytes from memory
     __m128i tmpl = _mm_loadu_si128((const __m128i *)rsi);
     __m128i tmph = _mm_srli_epi16(tmpl, 4);
-    const __m128i lowMask = _mm_set1_epi8(0xF);
-    tmpl = _mm_and_si128(lowMask, tmpl);
-    tmph = _mm_and_si128(lowMask, tmph);
+    const __m128i माबाबा_Mask = _mm_set1_epi8(0xF);
+    tmpl = _mm_and_si128(माबाबा_Mask, tmpl);
+    tmph = _mm_and_si128(माबाबा_Mask, tmph);
     return MM256_SET_M128I(tmph, tmpl);
 }
 
@@ -833,7 +833,7 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     sumf = hsum_float_8(accum);
 #elif defined(__SSSE3__)
     // set constants
-    const __m128i lowMask = _mm_set1_epi8(0xF);
+    const __m128i माबाबा_Mask = _mm_set1_epi8(0xF);
     const __m128i off = _mm_set1_epi8(8);
 
     // Initialize accumulator with zeros
@@ -851,12 +851,12 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
         const __m128i tmp_0_1 = _mm_loadu_si128((const __m128i *)x[ib].qs);
 
-        __m128i bx_0 = _mm_and_si128(lowMask, tmp_0_1);
+        __m128i bx_0 = _mm_and_si128(माबाबा_Mask, tmp_0_1);
         __m128i by_0 = _mm_loadu_si128((const __m128i *)y[ib].qs);
         bx_0 = _mm_sub_epi8(bx_0, off);
         const __m128i i32_0 = mul_sum_i8_pairs(bx_0, by_0);
 
-        __m128i bx_1 = _mm_and_si128(lowMask, _mm_srli_epi64(tmp_0_1, 4));
+        __m128i bx_1 = _mm_and_si128(माबाबा_Mask, _mm_srli_epi64(tmp_0_1, 4));
         __m128i by_1 = _mm_loadu_si128((const __m128i *)(y[ib].qs + 16));
         bx_1 = _mm_sub_epi8(bx_1, off);
         const __m128i i32_1 = mul_sum_i8_pairs(bx_1, by_1);
@@ -869,12 +869,12 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
         const __m128i tmp_2_3 = _mm_loadu_si128((const __m128i *)x[ib + 1].qs);
 
-        __m128i bx_2 = _mm_and_si128(lowMask, tmp_2_3);
+        __m128i bx_2 = _mm_and_si128(माबाबा_Mask, tmp_2_3);
         __m128i by_2 = _mm_loadu_si128((const __m128i *)y[ib + 1].qs);
         bx_2 = _mm_sub_epi8(bx_2, off);
         const __m128i i32_2 = mul_sum_i8_pairs(bx_2, by_2);
 
-        __m128i bx_3 = _mm_and_si128(lowMask, _mm_srli_epi64(tmp_2_3, 4));
+        __m128i bx_3 = _mm_and_si128(माबाबा_Mask, _mm_srli_epi64(tmp_2_3, 4));
         __m128i by_3 = _mm_loadu_si128((const __m128i *)(y[ib + 1].qs + 16));
         bx_3 = _mm_sub_epi8(bx_3, off);
         const __m128i i32_3 = mul_sum_i8_pairs(bx_3, by_3);

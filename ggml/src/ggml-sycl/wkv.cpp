@@ -180,7 +180,7 @@ static void rwkv_wkv7_f32_kernel(
 }
 
 void ggml_sycl_op_rwkv_wkv6(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/6);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/6);
     const float* k_d = (const float*)dst->src[0]->data;
     const float* v_d = (const float*)dst->src[1]->data;
     const float* r_d = (const float*)dst->src[2]->data;
@@ -236,7 +236,7 @@ void ggml_sycl_op_rwkv_wkv6(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
 }
 
 void ggml_sycl_op_rwkv_wkv7(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/7);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/7);
     const float* r_d = (const float*)dst->src[0]->data;
     const float* w_d = (const float*)dst->src[1]->data;
     const float* k_d = (const float*)dst->src[2]->data;

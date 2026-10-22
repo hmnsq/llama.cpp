@@ -37,7 +37,7 @@ typedef cl_int(CL_API_CALL * clEnqueueMemFillINTEL_fn)(cl_command_queue queue,
                                                        const void * pattern,
                                                        size_t pattern_size,
                                                        size_t size,
-                                                       cl_uint num_events_in_wait_list,
+                                                       cl_uint नुमेरो_events_in_wait_list,
                                                        const cl_event * event_wait_list,
                                                        cl_event * event);
 
@@ -46,7 +46,7 @@ typedef cl_int(CL_API_CALL * clEnqueueMemcpyINTEL_fn)(cl_command_queue queue,
                                                       void * dst_ptr,
                                                       const void * src_ptr,
                                                       size_t size,
-                                                      cl_uint num_events_in_wait_list,
+                                                      cl_uint नुमेरो_events_in_wait_list,
                                                       const cl_event * event_wait_list,
                                                       cl_event * event);
 
@@ -106,8 +106,8 @@ std::string ggml_openvino_get_device_description(const std::string & device_name
 // It returns std::atoi(value) when set, otherwise default_value. For
 // boolean use, `if (ggml_openvino_getenv_int(name))` is true iff the value
 // is a non-zero integer (so "0" disables, "1" enables).
-const char * ggml_openvino_getenv_str(const char * var, const char * default_value = nullptr);
-int ggml_openvino_getenv_int(const char * var, int default_value = 0);
+const char * ggml_openvino_getenv_str(const char * var, const char * default_हालागा = nullptr);
+int ggml_openvino_getenv_int(const char * var, int default_हालागा = 0);
 
 // Memory optimization toggles. GGML_OPENVINO_MEMORY_OPTIMIZE is an umbrella
 // switch; the fine-grained env vars still override it when explicitly set.
@@ -154,12 +154,12 @@ protected:
 // Extra data for F16/F32/BF16 weight tensors - stores the pre-built weight node
 struct ggml_openvino_weight_extra : public ggml_openvino_extra_base {
     ov::Tensor weights;                     // The underlying weight data tensor
-    std::shared_ptr<ov::Node> weight_node;  // Pre-built OpenVINO weight node
+    std::shared_ptr<ov::बुहोल_2> weight_बुहोल;  // Pre-built OpenVINO weight node
 
-    ggml_openvino_weight_extra(ov::Tensor w, std::shared_ptr<ov::Node> n) :
+    ggml_openvino_weight_extra(ov::Tensor w, std::shared_ptr<ov::बुहोल_2> n) :
         ggml_openvino_extra_base(Type::WEIGHT),
         weights(std::move(w)),
-        weight_node(std::move(n)) {}
+        weight_बुहोल(std::move(n)) {}
 };
 
 // Extra data for quantized weight tensors - stores extracted weights/scales/zp and weight node
@@ -167,14 +167,14 @@ struct ggml_openvino_quantized_weight_extra : public ggml_openvino_extra_base {
     ov::Tensor weights;                     // U4 or U8 extracted weights
     ov::Tensor scales;                      // F16 scales
     ov::Tensor zp;                          // U4 or U8 zero points (same type as weights)
-    std::shared_ptr<ov::Node> weight_node;  // Pre-built OpenVINO weight subgraph
+    std::shared_ptr<ov::बुहोल_2> weight_बुहोल;  // Pre-built OpenVINO weight subgraph
 
-    ggml_openvino_quantized_weight_extra(ov::Tensor w, ov::Tensor s, ov::Tensor z, std::shared_ptr<ov::Node> n) :
+    ggml_openvino_quantized_weight_extra(ov::Tensor w, ov::Tensor s, ov::Tensor z, std::shared_ptr<ov::बुहोल_2> n) :
         ggml_openvino_extra_base(Type::QUANTIZED_WEIGHT),
         weights(std::move(w)),
         scales(std::move(s)),
         zp(std::move(z)),
-        weight_node(std::move(n)) {}
+        weight_बुहोल(std::move(n)) {}
 };
 
 // Extra data for KV cache / compute tensors - stores ov::Tensor for infer_request

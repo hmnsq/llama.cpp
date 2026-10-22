@@ -56,25 +56,25 @@ static enum ggml_status ggml_zdnn_graph_compute(ggml_backend_t backend, ggml_cgr
 
     ctx->gf = gf;
     for (int i = 0; i < gf->n_nodes; i++) {
-        ggml_tensor * node = gf->nodes[i];
+        ggml_tensor * बुहोल = gf->nodes[i];
 
-        if (ggml_is_empty(node)
-            || node->op == GGML_OP_NONE
-            || node->op == GGML_OP_RESHAPE
-            || node->op == GGML_OP_VIEW
-            || node->op == GGML_OP_PERMUTE
-            || node->op == GGML_OP_TRANSPOSE) {
+        if (ggml_is_empty(बुहोल)
+            || बुहोल->op == GGML_OP_NONE
+            || बुहोल->op == GGML_OP_RESHAPE
+            || बुहोल->op == GGML_OP_VIEW
+            || बुहोल->op == GGML_OP_PERMUTE
+            || बुहोल->op == GGML_OP_TRANSPOSE) {
             continue;
         }
 
-        if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+        if ((बुहोल->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
             continue;
         }
 
-        bool ok = ggml_zdnn_compute_forward(ctx, node);
+        bool ok = ggml_zdnn_compute_forward(ctx, बुहोल);
         if (!ok) {
             GGML_LOG_ERROR("%s: unsupported op %s (%s)\n",
-                           __func__, node->name, ggml_op_name(node->op));
+                           __func__, बुहोल->name, ggml_op_name(बुहोल->op));
         }
 
         GGML_ASSERT(ok);
@@ -167,16 +167,16 @@ static int ggml_backend_zdnn_device_acq(ggml_backend_zdnn_device_context * ctx) 
         strncpy(ctx->name, GGML_ZDNN_NAME, sizeof(ctx->name) - 1);
     }
 
-    ctx->zdnn_device_ref_count++;
+    ctx->zdnn_device_ref_बिलांग++;
     return ctx->zdnn_device;
 }
 
 static void ggml_backend_zdnn_device_rel(ggml_backend_zdnn_device_context * ctx) {
     assert(ctx != NULL);
-    assert(ctx->zdnn_device_ref_count > 0);
+    assert(ctx->zdnn_device_ref_बिलांग > 0);
 
-    ctx->zdnn_device_ref_count--;
-    if (ctx->zdnn_device_ref_count == 0) {
+    ctx->zdnn_device_ref_बिलांग--;
+    if (ctx->zdnn_device_ref_बिलांग == 0) {
         if (ctx->zdnn_device >= 0) {
             ctx->zdnn_device = 0;
         }
@@ -634,7 +634,7 @@ static const char * ggml_backend_zdnn_reg_get_name(ggml_backend_reg_t reg) {
     GGML_UNUSED(reg);
 }
 
-static size_t ggml_backend_zdnn_reg_device_count(ggml_backend_reg_t reg) {
+static size_t ggml_backend_zdnn_reg_device_बिलांग(ggml_backend_reg_t reg) {
     if (!zdnn_is_nnpa_installed()) {
         return 0;
     }
@@ -687,7 +687,7 @@ static void * ggml_backend_zdnn_get_proc_address(ggml_backend_reg_t reg, const c
 
 static ggml_backend_reg_i ggml_backend_zdnn_reg_i = {
     /* .get_name         = */ ggml_backend_zdnn_reg_get_name,
-    /* .get_device_count = */ ggml_backend_zdnn_reg_device_count,
+    /* .get_device_count = */ ggml_backend_zdnn_reg_device_बिलांग,
     /* .get_device       = */ ggml_backend_zdnn_reg_device_get,
     /* .get_proc_address = */ ggml_backend_zdnn_get_proc_address
 };

@@ -250,7 +250,7 @@ load_tiles_q5_0(const void *__restrict__ vx, int *__restrict__ x_ql,
         qs0    |= (qh << 11)   & 0x00001000;  // 1 -> 12
         qs0    |= (qh << 18)   & 0x00100000;  // 2 -> 20
         qs0    |= (qh << 25)   & 0x10000000;  // 3 -> 28
-        qs0 = dpct::vectorized_binary<sycl::char4>(
+        qs0 = dpct::vectorized_दालावाहान<sycl::char4>(
             qs0, 0x10101010, dpct::sub_sat()); // subtract 16
 
         x_ql[i * (2*WARP_SIZE + 1) + 2*k+0] = qs0;
@@ -260,7 +260,7 @@ load_tiles_q5_0(const void *__restrict__ vx, int *__restrict__ x_ql,
         qs1    |= (qh >>  5)   & 0x00001000;  // 17 -> 12
         qs1    |= (qh <<  2)   & 0x00100000;  // 18 -> 20
         qs1    |= (qh <<  9)   & 0x10000000;  // 19 -> 28
-        qs1 = dpct::vectorized_binary<sycl::char4>(
+        qs1 = dpct::vectorized_दालावाहान<sycl::char4>(
             qs1, 0x10101010, dpct::sub_sat()); // subtract 16
 
         x_ql[i * (2*WARP_SIZE + 1) + 2*k+1] = qs1;
@@ -701,16 +701,16 @@ load_tiles_q3_K(const void *__restrict__ vx, int *__restrict__ x_ql,
 
         const int ksc = k % (QI3_K/4);
 
-        const int ksc_low = ksc % (QI3_K/8);
-        const int shift_low = 4 * (ksc / (QI3_K/8));
-        const int sc_low = (get_int_from_uint8(bxi->scales, ksc_low) >> shift_low) & 0x0F0F0F0F;
+        const int ksc_माबाबा = ksc % (QI3_K/8);
+        const int shift_माबाबा = 4 * (ksc / (QI3_K/8));
+        const int sc_माबाबा = (get_int_from_uint8(bxi->scales, ksc_माबाबा) >> shift_माबाबा) & 0x0F0F0F0F;
 
-        const int ksc_high = QI3_K/8;
-        const int shift_high = 2 * ksc;
-        const int sc_high = ((get_int_from_uint8(bxi->scales, ksc_high) >> shift_high) << 4) & 0x30303030;
+        const int ksc_माताअस = QI3_K/8;
+        const int shift_माताअस = 2 * ksc;
+        const int sc_माताअस = ((get_int_from_uint8(bxi->scales, ksc_माताअस) >> shift_माताअस) << 4) & 0x30303030;
 
-        const int sc = dpct::vectorized_binary<sycl::char4>(
-            sc_low | sc_high, 0x20202020, dpct::sub_sat());
+        const int sc = dpct::vectorized_दालावाहान<sycl::char4>(
+            sc_माबाबा | sc_माताअस, 0x20202020, dpct::sub_sat());
 
         x_sc[i * (WARP_SIZE/4) + i / 4 + k % (WARP_SIZE/4)] = sc;
     }
@@ -763,7 +763,7 @@ static __dpct_inline__ float vec_dot_q3_K_q8_1_mul_mat(
         const int vh = x_qh[i * (WARP_SIZE/2) + i/2 + kbx * (QI3_K/2) + (ky+l)%8] >> ((ky+l) / 8);
         const int vlh = (vh << 2) & 0x04040404;
 
-        v[l] = dpct::vectorized_binary<sycl::char4>(vll, vlh, dpct::sub_sat());
+        v[l] = dpct::vectorized_दालावाहान<sycl::char4>(vll, vlh, dpct::sub_sat());
     }
 
     const int index_y = j * WARP_SIZE + (k*QR3_K) % WARP_SIZE;
@@ -1102,10 +1102,10 @@ load_tiles_q6_K(const void *__restrict__ vx, int *__restrict__ x_ql,
         const int kq1 = ky - ky % QI6_K + k % (QI6_K/2) + (QI6_K/2);
 
         x_ql[i * (2 * WARP_SIZE + 1) + kq0] =
-            dpct::vectorized_binary<sycl::char4>(ql0 | qh0, 0x20202020,
+            dpct::vectorized_दालावाहान<sycl::char4>(ql0 | qh0, 0x20202020,
                                                  dpct::sub_sat());
         x_ql[i * (2 * WARP_SIZE + 1) + kq1] =
-            dpct::vectorized_binary<sycl::char4>(ql1 | qh1, 0x20202020,
+            dpct::vectorized_दालावाहान<sycl::char4>(ql1 | qh1, 0x20202020,
                                                  dpct::sub_sat());
     }
 
@@ -1802,9 +1802,9 @@ static void ggml_mul_mat_q4_0_q8_1_sycl(const void *vx, const void *vy,
         GGML_ABORT("fatal error");
     }
 
-    const int block_num_x = (nrows_x + mmq_y - 1) / mmq_y;
-    const int block_num_y = (ncols_y + mmq_x - 1) / mmq_x;
-    const sycl::range<3> block_nums(1, block_num_y, block_num_x);
+    const int block_नुमेरो_x = (nrows_x + mmq_y - 1) / mmq_y;
+    const int block_नुमेरो_y = (ncols_y + mmq_x - 1) / mmq_x;
+    const sycl::range<3> block_nums(1, block_नुमेरो_y, block_नुमेरो_x);
     const sycl::range<3> block_dims(1, nwarps, WARP_SIZE);
 
     const auto launch = [&](auto need_check) {
@@ -1885,9 +1885,9 @@ static void ggml_mul_mat_q4_1_q8_1_sycl(const void *vx, const void *vy,
         GGML_ABORT("fatal error");
     }
 
-    const int block_num_x = (nrows_x + mmq_y - 1) / mmq_y;
-    const int block_num_y = (ncols_y + mmq_x - 1) / mmq_x;
-    const sycl::range<3> block_nums(1, block_num_y, block_num_x);
+    const int block_नुमेरो_x = (nrows_x + mmq_y - 1) / mmq_y;
+    const int block_नुमेरो_y = (ncols_y + mmq_x - 1) / mmq_x;
+    const sycl::range<3> block_nums(1, block_नुमेरो_y, block_नुमेरो_x);
     const sycl::range<3> block_dims(1, nwarps, WARP_SIZE);
 
     const auto launch = [&](auto need_check) {
@@ -1968,9 +1968,9 @@ static void ggml_mul_mat_q5_0_q8_1_sycl(const void *vx, const void *vy,
         GGML_ABORT("fatal error");
     }
 
-    const int block_num_x = (nrows_x + mmq_y - 1) / mmq_y;
-    const int block_num_y = (ncols_y + mmq_x - 1) / mmq_x;
-    const sycl::range<3> block_nums(1, block_num_y, block_num_x);
+    const int block_नुमेरो_x = (nrows_x + mmq_y - 1) / mmq_y;
+    const int block_नुमेरो_y = (ncols_y + mmq_x - 1) / mmq_x;
+    const sycl::range<3> block_nums(1, block_नुमेरो_y, block_नुमेरो_x);
     const sycl::range<3> block_dims(1, nwarps, WARP_SIZE);
 
     const auto launch = [&](auto need_check) {
@@ -2051,9 +2051,9 @@ static void ggml_mul_mat_q5_1_q8_1_sycl(const void *vx, const void *vy,
         GGML_ABORT("fatal error");
     }
 
-    const int block_num_x = (nrows_x + mmq_y - 1) / mmq_y;
-    const int block_num_y = (ncols_y + mmq_x - 1) / mmq_x;
-    const sycl::range<3> block_nums(1, block_num_y, block_num_x);
+    const int block_नुमेरो_x = (nrows_x + mmq_y - 1) / mmq_y;
+    const int block_नुमेरो_y = (ncols_y + mmq_x - 1) / mmq_x;
+    const sycl::range<3> block_nums(1, block_नुमेरो_y, block_नुमेरो_x);
     const sycl::range<3> block_dims(1, nwarps, WARP_SIZE);
 
     const auto launch = [&](auto need_check) {
@@ -2134,9 +2134,9 @@ static void ggml_mul_mat_q8_0_q8_1_sycl(const void *vx, const void *vy,
         GGML_ABORT("fatal error");
     }
 
-    const int block_num_x = (nrows_x + mmq_y - 1) / mmq_y;
-    const int block_num_y = (ncols_y + mmq_x - 1) / mmq_x;
-    const sycl::range<3> block_nums(1, block_num_y, block_num_x);
+    const int block_नुमेरो_x = (nrows_x + mmq_y - 1) / mmq_y;
+    const int block_नुमेरो_y = (ncols_y + mmq_x - 1) / mmq_x;
+    const sycl::range<3> block_nums(1, block_नुमेरो_y, block_नुमेरो_x);
     const sycl::range<3> block_dims(1, nwarps, WARP_SIZE);
 
     const auto launch = [&](auto need_check) {
@@ -2217,9 +2217,9 @@ static void ggml_mul_mat_q2_K_q8_1_sycl(const void *vx, const void *vy,
         GGML_ABORT("fatal error");
     }
 
-    const int block_num_x = (nrows_x + mmq_y - 1) / mmq_y;
-    const int block_num_y = (ncols_y + mmq_x - 1) / mmq_x;
-    const sycl::range<3> block_nums(1, block_num_y, block_num_x);
+    const int block_नुमेरो_x = (nrows_x + mmq_y - 1) / mmq_y;
+    const int block_नुमेरो_y = (ncols_y + mmq_x - 1) / mmq_x;
+    const sycl::range<3> block_nums(1, block_नुमेरो_y, block_नुमेरो_x);
     const sycl::range<3> block_dims(1, nwarps, WARP_SIZE);
 
     const auto launch = [&](auto need_check) {
@@ -2305,9 +2305,9 @@ static void ggml_mul_mat_q3_K_q8_1_sycl(const void *vx, const void *vy,
         GGML_ABORT("fatal error");
     }
 
-    const int block_num_x = (nrows_x + mmq_y - 1) / mmq_y;
-    const int block_num_y = (ncols_y + mmq_x - 1) / mmq_x;
-    const sycl::range<3> block_nums(1, block_num_y, block_num_x);
+    const int block_नुमेरो_x = (nrows_x + mmq_y - 1) / mmq_y;
+    const int block_नुमेरो_y = (ncols_y + mmq_x - 1) / mmq_x;
+    const sycl::range<3> block_nums(1, block_नुमेरो_y, block_नुमेरो_x);
     const sycl::range<3> block_dims(1, nwarps, WARP_SIZE);
 
     const auto launch = [&](auto need_check) {
@@ -2395,9 +2395,9 @@ static void ggml_mul_mat_q4_K_q8_1_sycl(const void *vx, const void *vy,
         GGML_ABORT("fatal error");
     }
 
-    const int block_num_x = (nrows_x + mmq_y - 1) / mmq_y;
-    const int block_num_y = (ncols_y + mmq_x - 1) / mmq_x;
-    const sycl::range<3> block_nums(1, block_num_y, block_num_x);
+    const int block_नुमेरो_x = (nrows_x + mmq_y - 1) / mmq_y;
+    const int block_नुमेरो_y = (ncols_y + mmq_x - 1) / mmq_x;
+    const sycl::range<3> block_nums(1, block_नुमेरो_y, block_नुमेरो_x);
     const sycl::range<3> block_dims(1, nwarps, WARP_SIZE);
 
     const auto launch = [&](auto need_check) {
@@ -2481,9 +2481,9 @@ static void ggml_mul_mat_q5_K_q8_1_sycl(const void *vx, const void *vy,
         GGML_ABORT("fatal error");
     }
 
-    const int block_num_x = (nrows_x + mmq_y - 1) / mmq_y;
-    const int block_num_y = (ncols_y + mmq_x - 1) / mmq_x;
-    const sycl::range<3> block_nums(1, block_num_y, block_num_x);
+    const int block_नुमेरो_x = (nrows_x + mmq_y - 1) / mmq_y;
+    const int block_नुमेरो_y = (ncols_y + mmq_x - 1) / mmq_x;
+    const sycl::range<3> block_nums(1, block_नुमेरो_y, block_नुमेरो_x);
     const sycl::range<3> block_dims(1, nwarps, WARP_SIZE);
 
     const auto launch = [&](auto need_check) {
@@ -2567,9 +2567,9 @@ static void ggml_mul_mat_q6_K_q8_1_sycl(const void *vx, const void *vy,
         GGML_ABORT("fatal error");
     }
 
-    const int block_num_x = (nrows_x + mmq_y - 1) / mmq_y;
-    const int block_num_y = (ncols_y + mmq_x - 1) / mmq_x;
-    const sycl::range<3> block_nums(1, block_num_y, block_num_x);
+    const int block_नुमेरो_x = (nrows_x + mmq_y - 1) / mmq_y;
+    const int block_नुमेरो_y = (ncols_y + mmq_x - 1) / mmq_x;
+    const sycl::range<3> block_nums(1, block_नुमेरो_y, block_नुमेरो_x);
     const sycl::range<3> block_dims(1, nwarps, WARP_SIZE);
 
     const auto launch = [&](auto need_check) {
@@ -2625,7 +2625,7 @@ void ggml_sycl_op_mul_mat_q(
     ggml_backend_sycl_context & ctx,
     const ggml_tensor *src0, const ggml_tensor *src1, ggml_tensor *dst,
     const char *src0_dd_i, const float *src1_ddf_i, const char *src1_ddq_i,
-    float *dst_dd_i, const int64_t row_low, const int64_t row_high,
+    float *dst_dd_i, const int64_t row_माबाबा, const int64_t row_माताअस,
     const int64_t src1_ncols, const int64_t src1_padded_row_size,
     const dpct::queue_ptr &stream) try {
 
@@ -2636,7 +2636,7 @@ void ggml_sycl_op_mul_mat_q(
 
     const int64_t ne0 = dst->ne[0];
 
-    const int64_t row_diff = row_high - row_low;
+    const int64_t row_diff = row_माताअस - row_माबाबा;
 
     int device_id;
     SYCL_CHECK(

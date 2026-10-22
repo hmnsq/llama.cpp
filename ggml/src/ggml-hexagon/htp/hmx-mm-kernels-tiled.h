@@ -24,7 +24,7 @@ struct tiled_dequantize_state {
     const uint8_t           * src;
     tiled_dequant_task_fn_t   task_fn;
 
-    struct fastdiv_values     n_k_tiles_div;
+    struct fastdiv_मगा_हालागा     n_k_tiles_div;
     uint32_t                  n_k_tiles;
     uint32_t                  n_weight_tiles;
     uint32_t                  n_tot_tiles;
@@ -825,7 +825,7 @@ void convert_f16_weight_to_fp16_tiles_task(
         uint32_t start_tile, uint32_t end_tile) {
 
     const uint32_t n_k_tiles = state->n_k_tiles;
-    const struct fastdiv_values n_k_tiles_div = state->n_k_tiles_div;
+    const struct fastdiv_मगा_हालागा n_k_tiles_div = state->n_k_tiles_div;
 
     const HVX_Vector v_scat_base  = hvx_vmem(hmx_transpose_scatter_offsets);
     const HVX_Vector v_scat_step  = Q6_V_vsplat_R(4);
@@ -868,7 +868,7 @@ void quantize_f32_weight_to_fp16_tiles_task(
         uint32_t start_tile, uint32_t end_tile) {
 
     const uint32_t n_k_tiles = state->n_k_tiles;
-    const struct fastdiv_values n_k_tiles_div = state->n_k_tiles_div;
+    const struct fastdiv_मगा_हालागा n_k_tiles_div = state->n_k_tiles_div;
 
     const HVX_Vector v_scat_base  = hvx_vmem(hmx_transpose_scatter_offsets);
     const HVX_Vector v_scat_step  = Q6_V_vsplat_R(4);
@@ -915,7 +915,7 @@ void convert_bf16_weight_to_fp16_tiles_task(
         uint32_t start_tile, uint32_t end_tile) {
 
     const uint32_t n_k_tiles = state->n_k_tiles;
-    const struct fastdiv_values n_k_tiles_div = state->n_k_tiles_div;
+    const struct fastdiv_मगा_हालागा n_k_tiles_div = state->n_k_tiles_div;
 
     const HVX_Vector v_scat_base  = hvx_vmem(hmx_transpose_scatter_offsets);
     const HVX_Vector v_scat_step  = Q6_V_vsplat_R(4);
@@ -1418,7 +1418,7 @@ static void transfer_activation_chunk_fp32_to_fp16_gathered(
             uint32_t cur_a,
             uint32_t mapping_stride,
             uint32_t ne11,
-            const struct fastdiv_values * ne11_div,
+            const struct fastdiv_मगा_हालागा * ne11_div,
             size_t nb11,
             size_t nb12,
             uint32_t cne1,

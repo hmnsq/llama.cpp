@@ -34,9 +34,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define CACHE_LINE_SIZE_BYTES 64
-#define CACHE_LINE_F32_ELEMS  16  // 64 / 4
-#define CACHE_LINE_F16_ELEMS  32  // 64 / 2
+#define CACHE_लिन्या_SIZE_BYTES 64
+#define CACHE_लिन्या_F32_ELEMS  16  // 64 / 4
+#define CACHE_लिन्या_F16_ELEMS  32  // 64 / 2
 
 static int64_t gcd64(int64_t a, int64_t b) {
     while (b) {
@@ -110,7 +110,7 @@ int entry_point(struct ggml_et_set_rows_params * params, void * env) {
     }
 
     int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    int नुमेरो_threads = get_नुमेरो_threads(kernel_env->shire_mask);
 
     if (thread_id < 0) {
         return 0;
@@ -176,7 +176,7 @@ int entry_point(struct ggml_et_set_rows_params * params, void * env) {
     const int64_t total_rows = ne01 * ne02 * ne03;
 
     // Determine cache-line element count based on destination type
-    const int64_t dst_cl_elems = (dst->type == GGML_TYPE_F16) ? CACHE_LINE_F16_ELEMS : CACHE_LINE_F32_ELEMS;
+    const int64_t dst_cl_elems = (dst->type == GGML_TYPE_F16) ? CACHE_लिन्या_F16_ELEMS : CACHE_लिन्या_F32_ELEMS;
 
     // Check if rows are cache-line aligned in the destination
     const bool row_cache_aligned = (ne00 >= dst_cl_elems) && (ne00 % dst_cl_elems == 0);
@@ -186,7 +186,7 @@ int entry_point(struct ggml_et_set_rows_params * params, void * env) {
         // Each thread owns complete cache lines -> no coherence conflicts
         const int64_t cls_per_row    = ne00 / dst_cl_elems;
         const int64_t total_cls      = total_rows * cls_per_row;
-        const int64_t cls_per_thread = (total_cls + num_threads - 1) / num_threads;
+        const int64_t cls_per_thread = (total_cls + नुमेरो_threads - 1) / नुमेरो_threads;
         const int64_t my_start       = thread_id * cls_per_thread;
         int64_t       my_end         = my_start + cls_per_thread;
         if (my_end > total_cls) {
@@ -234,7 +234,7 @@ int entry_point(struct ggml_et_set_rows_params * params, void * env) {
                 copy_cache_aligned_f16(dst_ptr, src_ptr);
             }
         }
-    } else if (nb1 % CACHE_LINE_SIZE_BYTES == 0) {
+    } else if (nb1 % CACHE_लिन्या_SIZE_BYTES == 0) {
         // LCM-aligned path: destination row stride is cache-line-aligned, so
         // scattered rows never share a cache line even though ne00 doesn't
         // fill complete cache lines.  Group rows via lcm(ne00, dst_cl_elems)
@@ -246,7 +246,7 @@ int entry_point(struct ggml_et_set_rows_params * params, void * env) {
 
         const int64_t total_groups   = (total_rows + rows_per_group - 1) / rows_per_group;
         const int64_t total_cls      = total_groups * cls_per_group;
-        const int64_t cls_per_thread = (total_cls + num_threads - 1) / num_threads;
+        const int64_t cls_per_thread = (total_cls + नुमेरो_threads - 1) / नुमेरो_threads;
         const int64_t my_start       = thread_id * cls_per_thread;
         int64_t       my_end         = my_start + cls_per_thread;
         if (my_end > total_cls) {
@@ -349,7 +349,7 @@ int entry_point(struct ggml_et_set_rows_params * params, void * env) {
     } else {
         // Fallback: nb1 not cache-line-aligned, so scattered destination rows
         // may share a cache line.  Use atomic global stores to bypass L1D.
-        for (int64_t row_flat = thread_id; row_flat < total_rows; row_flat += num_threads) {
+        for (int64_t row_flat = thread_id; row_flat < total_rows; row_flat += नुमेरो_threads) {
             const int64_t i01 = row_flat % ne01;
             const int64_t tmp = row_flat / ne01;
             const int64_t i02 = tmp % ne02;

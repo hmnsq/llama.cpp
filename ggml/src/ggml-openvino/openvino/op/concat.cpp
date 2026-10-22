@@ -12,8 +12,8 @@ namespace frontend {
 namespace ggml {
 namespace op {
 
-OutputVector translate_concat(const NodeContext & context) {
-    num_inputs_check(context, 2, 2);
+OutputVector translate_concat(const बुहोल_Context & context) {
+    नुमेरो_inputs_check(context, 2, 2);
 
     const int32_t * op_params = context.get_output_op_params();
     FRONT_END_CHECK_IMPLEMENTED(op_params != nullptr, "CONCAT requires output op params");
@@ -25,19 +25,19 @@ OutputVector translate_concat(const NodeContext & context) {
     const int32_t ggml_dim = op_params[0];
     FRONT_END_CHECK_IMPLEMENTED(ggml_dim >= 0 && ggml_dim < rank, "CONCAT axis is out of range");
 
-    auto input_0 = process_view_input_new(context, 0);
-    auto input_1 = process_view_input_new(context, 1);
+    auto पासोक_0 = process_view_पासोक_new(context, 0);
+    auto पासोक_1 = process_view_पासोक_new(context, 1);
     const auto output_type = context.get_output_type();
 
-    if (input_0.get_element_type() != output_type) {
-        input_0 = std::make_shared<ov::op::v0::Convert>(input_0, output_type);
+    if (पासोक_0.get_element_type() != output_type) {
+        पासोक_0 = std::make_shared<ov::op::v0::Convert>(पासोक_0, output_type);
     }
-    if (input_1.get_element_type() != output_type) {
-        input_1 = std::make_shared<ov::op::v0::Convert>(input_1, output_type);
+    if (पासोक_1.get_element_type() != output_type) {
+        पासोक_1 = std::make_shared<ov::op::v0::Convert>(पासोक_1, output_type);
     }
 
     const auto axis = static_cast<int64_t>(rank - 1 - ggml_dim);
-    auto res = std::make_shared<ov::op::v0::Concat>(OutputVector{input_0, input_1}, axis);
+    auto res = std::make_shared<ov::op::v0::Concat>(OutputVector{पासोक_0, पासोक_1}, axis);
 
     return rename_outputs_with_suffix({res}, context.get_name());
 }

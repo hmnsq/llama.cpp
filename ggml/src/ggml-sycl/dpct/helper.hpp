@@ -92,7 +92,7 @@ inline std::string get_device_backend_and_type(const sycl::device &device) {
 
 template <typename Ts> struct matrix_info_t {
     oneapi::mkl::transpose transpose_info[2];
-    Ts                     value_info[2];
+    Ts                     हालागा_info[2];
     std::int64_t           size_info[3];
     std::int64_t           ld_info[3];
     std::int64_t           groupsize_info;
@@ -346,9 +346,9 @@ namespace dpct
         int get_max_compute_units() const { return _max_compute_units; }
         int get_max_work_group_size() const { return _max_work_group_size; }
         int get_max_sub_group_size() const { return _max_sub_group_size; }
-        int get_max_work_items_per_compute_unit() const
+        int get_max_work_मगा_बागाय_per_compute_unit() const
         {
-            return _max_work_items_per_compute_unit;
+            return max_work_मगा_बागाय_per_compute_unit;
         }
         int get_max_register_size_per_work_group() const
         {
@@ -453,9 +453,9 @@ namespace dpct
             _max_sub_group_size = max_sub_group_size;
         }
         void
-        set_max_work_items_per_compute_unit(int max_work_items_per_compute_unit)
+        set_max_work_मगा_बागाय_per_compute_unit(int max_work_मगा_बागाय_per_compute_unit_2)
         {
-            _max_work_items_per_compute_unit = max_work_items_per_compute_unit;
+            max_work_मगा_बागाय_per_compute_unit = max_work_मगा_बागाय_per_compute_unit_2;
         }
         void set_max_nd_range_size(int max_nd_range_size[])
         {
@@ -507,7 +507,7 @@ namespace dpct
         int _max_compute_units;
         int _max_work_group_size;
         int _max_sub_group_size;
-        int _max_work_items_per_compute_unit;
+        int max_work_मगा_बागाय_per_compute_unit;
         int _max_register_size_per_work_group;
         size_t _global_mem_size;
         size_t _local_mem_size;
@@ -611,7 +611,7 @@ namespace dpct
 
         prop.set_max_sub_group_size(max_sub_group_size);
 
-        prop.set_max_work_items_per_compute_unit(
+        prop.set_max_work_मगा_बागाय_per_compute_unit(
             dev.get_info<sycl::info::device::max_work_group_size>());
         int max_nd_range_size[] = {0x7FFFFFFF, 0x7FFFFFFF, 0x7FFFFFFF};
         prop.set_max_nd_range_size(max_nd_range_size);
@@ -892,7 +892,7 @@ namespace dpct
             check_id(id);
             _thread2dev_map[get_tid()] = id;
         }
-        unsigned int device_count() { return _devs.size(); }
+        unsigned int device_बिलांग() { return _devs.size(); }
 
         unsigned int get_device_id(const sycl::device &dev)
         {
@@ -959,13 +959,13 @@ namespace dpct
                 }
 
                 auto platform_name = platform.get_info<sycl::info::platform::name>();
-                std::string platform_name_low_case;
-                platform_name_low_case.resize(platform_name.size());
+                std::string platform_name_माबाबा_case;
+                platform_name_माबाबा_case.resize(platform_name.size());
 
                 std::transform(
-                    platform_name.begin(), platform_name.end(), platform_name_low_case.begin(), ::tolower);
+                    platform_name.begin(), platform_name.end(), platform_name_माबाबा_case.begin(), ::tolower);
 
-                if (platform_name_low_case.find(filter) == std::string::npos) {
+                if (platform_name_माबाबा_case.find(filter) == std::string::npos) {
                     // cout << "platform [" << platform_name
                     //      << "] does not match with requested "
                     //      << filter << ", skipping\n";
@@ -1061,14 +1061,14 @@ namespace dpct
                 }
             }
 
-            std::vector<std::string> keys;
+            std::vector<std::string> मगा_सुसि;
             for(auto it = backend_devices.begin(); it != backend_devices.end(); ++it) {
-                keys.push_back(it->first);
+                मगा_सुसि.push_back(it->first);
             }
-            std::sort(keys.begin(), keys.end(), compare_backend);
+            std::sort(मगा_सुसि.begin(), मगा_सुसि.end(), compare_backend);
 
-            for (auto &key : keys) {
-                std::vector<sycl::device> devs = backend_devices[key];
+            for (auto &सुसि : मगा_सुसि) {
+                std::vector<sycl::device> devs = backend_devices[सुसि];
                 std::sort(devs.begin(), devs.end(), compare_dev);
                 for (const auto &dev : devs) {
                     sycl_all_devs.push_back(dev);
@@ -1305,10 +1305,10 @@ namespace dpct
             static constexpr size_t type_size = sizeof(T);
             using element_t =
                 typename std::conditional<Memory == constant, const T, T>::type;
-            using value_t = typename std::remove_cv<T>::type;
+            using हालागा_t = typename std::remove_cv<T>::type;
             template <size_t Dimension = 1>
             using accessor_t = typename std::conditional<
-                Memory == local, sycl::local_accessor<value_t, Dimension>,
+                Memory == local, sycl::local_accessor<हालागा_t, Dimension>,
                 sycl::accessor<T, Dimension, mode, target>>::type;
             using pointer_t = T *;
         };
@@ -1335,9 +1335,9 @@ namespace dpct
          * @param [in] size Number of elements to be set to the value.
          * @return An event representing the memset operation.
          */
-        template <typename valueT>
+        template <typename हालागा_T>
         static inline sycl::event dpct_memset(sycl::queue &q, void *dev_ptr,
-                                              valueT value, size_t size)
+                                              हालागा_T value, size_t size)
         {
             return q.fill(dev_ptr, value, size);
         }
@@ -1351,9 +1351,9 @@ namespace dpct
          * @param [in] size 3D memory region by number of elements.
          * @return An event list representing the memset operations.
          */
-        template <typename valueT>
+        template <typename हालागा_T>
         static inline std::vector<sycl::event>
-        dpct_memset(sycl::queue &q, pitched_data data, valueT value,
+        dpct_memset(sycl::queue &q, pitched_data data, हालागा_T value,
                     sycl::range<3> size)
         {
             std::vector<sycl::event> event_list;
@@ -1383,9 +1383,9 @@ namespace dpct
          * @param [in] y The height of memory region by number of elements.
          * @return An event list representing the memset operations.
          */
-        template <typename valueT>
+        template <typename हालागा_T>
         static inline std::vector<sycl::event>
-        dpct_memset(sycl::queue &q, void *ptr, size_t pitch, valueT val, size_t x,
+        dpct_memset(sycl::queue &q, void *ptr, size_t pitch, हालागा_T val, size_t x,
                     size_t y)
         {
             return dpct_memset(q, pitched_data(ptr, pitch, x, 1), val,
@@ -1692,7 +1692,7 @@ namespace dpct
         }
 
         template <typename T>
-        inline typename DataType<T>::T2 get_value(const T *s, sycl::queue &q)
+        inline typename DataType<T>::T2 get_हालागा(const T *s, sycl::queue &q)
         {
             using Ty = typename DataType<T>::T2;
             Ty s_h;
@@ -1707,9 +1707,9 @@ namespace dpct
     } // namespace detail
 
     template <typename T>
-    inline auto get_value(const T *s, sycl::queue &q)
+    inline auto get_हालागा(const T *s, sycl::queue &q)
     {
-        return detail::get_value(s, q);
+        return detail::get_हालागा(s, q);
     }
 
     namespace detail
@@ -1718,39 +1718,39 @@ namespace dpct
     inline void gemm_impl(sycl::queue & q, oneapi::mkl::transpose a_trans, oneapi::mkl::transpose b_trans, int m,
                           int n, int k, const void * alpha, const void * a, int lda, const void * b, int ldb,
                           const void * beta, void * c, int ldc) {
-        Ts   alpha_value = dpct::get_value(reinterpret_cast<const Ts *>(alpha), q);
-        Ts   beta_value  = dpct::get_value(reinterpret_cast<const Ts *>(beta), q);
+        Ts   alpha_हालागा_2 = dpct::get_हालागा(reinterpret_cast<const Ts *>(alpha), q);
+        Ts   beta_हालागा  = dpct::get_हालागा(reinterpret_cast<const Ts *>(beta), q);
         auto data_a      = get_memory<const Ta>(a);
         auto data_b      = get_memory<const Tb>(b);
         auto data_c      = get_memory<Tc>(c);
-        oneapi::mkl::blas::column_major::gemm(q, a_trans, b_trans, m, n, k, alpha_value, data_a,
-                                               lda, data_b, ldb, beta_value, data_c, ldc);
+        oneapi::mkl::blas::column_major::gemm(q, a_trans, b_trans, m, n, k, alpha_हालागा_2, data_a,
+                                               lda, data_b, ldb, beta_हालागा, data_c, ldc);
     }
 
-        template <typename VecT, class BinaryOperation, class = void>
-        class vectorized_binary
+        template <typename VecT, class दालावाहान_Operation, class = void>
+        class vectorized_दालावाहान
         {
         public:
-            inline VecT operator()(VecT a, VecT b, const BinaryOperation binary_op)
+            inline VecT operator()(VecT a, VecT b, const दालावाहान_Operation दालावाहान_op)
             {
                 VecT v4;
                 for (size_t i = 0; i < v4.size(); ++i)
                 {
-                    v4[i] = binary_op(a[i], b[i]);
+                    v4[i] = दालावाहान_op(a[i], b[i]);
                 }
                 return v4;
             }
         };
 
-        template <typename VecT, class BinaryOperation>
-        class vectorized_binary<
-            VecT, BinaryOperation,
-            std::void_t<std::invoke_result_t<BinaryOperation, VecT, VecT>>>
+        template <typename VecT, class दालावाहान_Operation>
+        class vectorized_दालावाहान<
+            VecT, दालावाहान_Operation,
+            std::void_t<std::invoke_result_t<दालावाहान_Operation, VecT, VecT>>>
         {
         public:
-            inline VecT operator()(VecT a, VecT b, const BinaryOperation binary_op)
+            inline VecT operator()(VecT a, VecT b, const दालावाहान_Operation दालावाहान_op)
             {
-                return binary_op(a, b).template as<VecT>();
+                return दालावाहान_op(a, b).template as<VecT>();
             }
         };
 
@@ -1759,13 +1759,13 @@ namespace dpct
                                     int m, int n, int k, const void * alpha, const void ** a, int lda, const void ** b,
                                     int ldb, const void * beta, void ** c, int ldc, int batch_size,
                                     matrix_info_t<float> * matrix_info) {
-            Ts alpha_value = dpct::get_value(reinterpret_cast<const Ts *>(alpha), q);
-            Ts beta_value = dpct::get_value(reinterpret_cast<const Ts *>(beta), q);
+            Ts alpha_हालागा_2 = dpct::get_हालागा(reinterpret_cast<const Ts *>(alpha), q);
+            Ts beta_हालागा = dpct::get_हालागा(reinterpret_cast<const Ts *>(beta), q);
 
             matrix_info->transpose_info[0] = a_trans;
             matrix_info->transpose_info[1] = b_trans;
-            matrix_info->value_info[0] = alpha_value;
-            matrix_info->value_info[1] = beta_value;
+            matrix_info->हालागा_info[0] = alpha_हालागा_2;
+            matrix_info->हालागा_info[1] = beta_हालागा;
             matrix_info->size_info[0] = m;
             matrix_info->size_info[1] = n;
             matrix_info->size_info[2] = k;
@@ -1777,9 +1777,9 @@ namespace dpct
             sycl::event e = oneapi::mkl::blas::column_major::gemm_batch(
                 q, matrix_info->transpose_info, matrix_info->transpose_info + 1,
                 matrix_info->size_info, matrix_info->size_info + 1, matrix_info->size_info + 2,
-                reinterpret_cast<Ts *>(matrix_info->value_info), reinterpret_cast<const Ta **>(a), matrix_info->ld_info,
+                reinterpret_cast<Ts *>(matrix_info->हालागा_info), reinterpret_cast<const Ta **>(a), matrix_info->ld_info,
                 reinterpret_cast<const Tb **>(b), matrix_info->ld_info + 1,
-                reinterpret_cast<Ts *>(matrix_info->value_info + 1), reinterpret_cast<Tc **>(c),
+                reinterpret_cast<Ts *>(matrix_info->हालागा_info + 1), reinterpret_cast<Tc **>(c),
                 matrix_info->ld_info + 2, 1, &(matrix_info->groupsize_info));
         }
 
@@ -1788,27 +1788,27 @@ namespace dpct
                                     int m, int n, int k, const void * alpha, const void * a, int lda,
                                     long long int stride_a, const void * b, int ldb, long long int stride_b,
                                     const void * beta, void * c, int ldc, long long int stride_c, int batch_size) {
-            Ts alpha_value = dpct::get_value(reinterpret_cast<const Ts *>(alpha), q);
-            Ts beta_value = dpct::get_value(reinterpret_cast<const Ts *>(beta), q);
+            Ts alpha_हालागा_2 = dpct::get_हालागा(reinterpret_cast<const Ts *>(alpha), q);
+            Ts beta_हालागा = dpct::get_हालागा(reinterpret_cast<const Ts *>(beta), q);
             auto data_a = get_memory<const Ta>(a);
             auto data_b = get_memory<const Tb>(b);
             auto data_c = get_memory<Tc>(c);
-            oneapi::mkl::blas::column_major::gemm_batch(q, a_trans, b_trans, m, n, k, alpha_value,
-                                                         data_a, lda, stride_a, data_b, ldb, stride_b, beta_value,
+            oneapi::mkl::blas::column_major::gemm_batch(q, a_trans, b_trans, m, n, k, alpha_हालागा_2,
+                                                         data_a, lda, stride_a, data_b, ldb, stride_b, beta_हालागा,
                                                          data_c, ldc, stride_c, batch_size);
         }
 
     } // namespace detail
 
-    template <typename VecT, class BinaryOperation>
-    inline unsigned vectorized_binary(unsigned a, unsigned b,
-                                      const BinaryOperation binary_op)
+    template <typename VecT, class दालावाहान_Operation>
+    inline unsigned vectorized_दालावाहान(unsigned a, unsigned b,
+                                      const दालावाहान_Operation दालावाहान_op)
     {
         sycl::vec<unsigned, 1> v0{a}, v1{b};
         auto v2 = v0.as<VecT>();
         auto v3 = v1.as<VecT>();
         auto v4 =
-            detail::vectorized_binary<VecT, BinaryOperation>()(v2, v3, binary_op);
+            detail::vectorized_दालावाहान<VecT, दालावाहान_Operation>()(v2, v3, दालावाहान_op);
         v0 = v4.template as<sycl::vec<unsigned, 1>>();
         return v0;
     }
@@ -2051,9 +2051,9 @@ namespace dpct
         return #ASPECT;
 #define __SYCL_ASPECT_DEPRECATED(ASPECT, ID, MESSAGE) __SYCL_ASPECT(ASPECT, ID)
 #define __SYCL_ASPECT_DEPRECATED_ALIAS(ASPECT, ID, MESSAGE)
-                auto getAspectNameStr = [](sycl::aspect AspectNum) -> std::string
+                auto getAspectNameStr = [](sycl::aspect Aspect_नुमेरो) -> std::string
                 {
-                    switch (AspectNum)
+                    switch (Aspect_नुमेरो)
                     {
 #include <sycl/info/aspects.def>
 #include <sycl/info/aspects_deprecated.def>
@@ -2295,9 +2295,9 @@ namespace dpct
             scaling_type = library_data_t::complex_double;
         }
 
-        std::uint64_t key =
+        std::uint64_t सुसि =
             detail::get_type_combination_id(a_type, b_type, c_type, scaling_type);
-        switch (key)
+        switch (सुसि)
         {
         case detail::get_type_combination_id(
             library_data_t::real_float, library_data_t::real_float,
@@ -2363,12 +2363,12 @@ namespace dpct
             library_data_t::real_half, library_data_t::real_half,
             library_data_t::real_half, library_data_t::real_float):
         {
-            float alpha_value =
-                dpct::get_value(reinterpret_cast<const float *>(alpha), q);
-            float beta_value =
-                dpct::get_value(reinterpret_cast<const float *>(beta), q);
-            sycl::half alpha_half(alpha_value);
-            sycl::half beta_half(beta_value);
+            float alpha_हालागा_2 =
+                dpct::get_हालागा(reinterpret_cast<const float *>(alpha), q);
+            float beta_हालागा =
+                dpct::get_हालागा(reinterpret_cast<const float *>(beta), q);
+            sycl::half alpha_half(alpha_हालागा_2);
+            sycl::half beta_half(beta_हालागा);
             detail::gemm_impl<sycl::half, sycl::half, sycl::half,
                               sycl::half>(q, a_trans, b_trans, m, n, k, &alpha_half,
                                           a, lda, b, ldb, &beta_half, c, ldc);
@@ -2395,9 +2395,9 @@ namespace dpct
             library_data_t::real_int32, library_data_t::real_int32):
         {
             float alpha_float =
-                dpct::get_value(reinterpret_cast<const std::int32_t *>(alpha), q);
+                dpct::get_हालागा(reinterpret_cast<const std::int32_t *>(alpha), q);
             float beta_float =
-                dpct::get_value(reinterpret_cast<const std::int32_t *>(beta), q);
+                dpct::get_हालागा(reinterpret_cast<const std::int32_t *>(beta), q);
             detail::gemm_impl<std::int8_t, std::int8_t, std::int32_t, float>(
                 q, a_trans, b_trans, m, n, k, &alpha_float, a, lda, b, ldb, &beta_float, c, ldc);
             break;
@@ -2433,9 +2433,9 @@ namespace dpct
                            const void * b[], library_data_t b_type, int ldb, const void * beta, void * c[],
                            library_data_t c_type, int ldc, int batch_size, library_data_t scaling_type,
                            matrix_info_t<float> * matrix_info) {
-        std::uint64_t key =
+        std::uint64_t सुसि =
             detail::get_type_combination_id(a_type, b_type, c_type, scaling_type);
-        switch (key)
+        switch (सुसि)
         {
         case detail::get_type_combination_id(
             library_data_t::real_float, library_data_t::real_float,
@@ -2484,9 +2484,9 @@ namespace dpct
             library_data_t::real_int32, library_data_t::real_int32):
         {
             float alpha_float =
-                dpct::get_value(reinterpret_cast<const std::int32_t *>(alpha), q);
+                dpct::get_हालागा(reinterpret_cast<const std::int32_t *>(alpha), q);
             float beta_float =
-                dpct::get_value(reinterpret_cast<const std::int32_t *>(beta), q);
+                dpct::get_हालागा(reinterpret_cast<const std::int32_t *>(beta), q);
             detail::gemm_batch_impl<std::int8_t, std::int8_t, std::int32_t, float>(
                 q, a_trans, b_trans, m, n, k, &alpha_float, a, lda, b, ldb, &beta_float, c, ldc, batch_size,
                 matrix_info);
@@ -2512,12 +2512,12 @@ namespace dpct
             library_data_t::real_half, library_data_t::real_half,
             library_data_t::real_half, library_data_t::real_float):
         {
-            float alpha_value =
-                dpct::get_value(reinterpret_cast<const float *>(alpha), q);
-            float beta_value =
-                dpct::get_value(reinterpret_cast<const float *>(beta), q);
-            sycl::half alpha_half(alpha_value);
-            sycl::half beta_half(beta_value);
+            float alpha_हालागा_2 =
+                dpct::get_हालागा(reinterpret_cast<const float *>(alpha), q);
+            float beta_हालागा =
+                dpct::get_हालागा(reinterpret_cast<const float *>(beta), q);
+            sycl::half alpha_half(alpha_हालागा_2);
+            sycl::half beta_half(beta_हालागा);
             detail::gemm_batch_impl<sycl::half, sycl::half, sycl::half, sycl::half>(
                 q, a_trans, b_trans, m, n, k, &alpha_half, a, lda, b, ldb, &beta_half, c, ldc, batch_size, matrix_info);
             break;
@@ -2566,9 +2566,9 @@ namespace dpct
             scaling_type = library_data_t::complex_double;
         }
 
-        std::uint64_t key =
+        std::uint64_t सुसि =
             detail::get_type_combination_id(a_type, b_type, c_type, scaling_type);
-        switch (key)
+        switch (सुसि)
         {
         case detail::get_type_combination_id(
             library_data_t::real_float, library_data_t::real_float,
@@ -2670,12 +2670,12 @@ namespace dpct
             library_data_t::real_half, library_data_t::real_half,
             library_data_t::real_half, library_data_t::real_float):
         {
-            float alpha_value =
-                dpct::get_value(reinterpret_cast<const float *>(alpha), q);
-            float beta_value =
-                dpct::get_value(reinterpret_cast<const float *>(beta), q);
-            sycl::half alpha_half(alpha_value);
-            sycl::half beta_half(beta_value);
+            float alpha_हालागा_2 =
+                dpct::get_हालागा(reinterpret_cast<const float *>(alpha), q);
+            float beta_हालागा =
+                dpct::get_हालागा(reinterpret_cast<const float *>(beta), q);
+            sycl::half alpha_half(alpha_हालागा_2);
+            sycl::half beta_half(beta_हालागा);
             detail::gemm_batch_impl<sycl::half, sycl::half, sycl::half, sycl::half>(
                 q, a_trans, b_trans, m, n, k, &alpha_half, a, lda, stride_a, b, ldb, stride_b,
                 &beta_half, c, ldc, stride_c, batch_size);
@@ -2761,17 +2761,17 @@ namespace dpct
             using accessor_t =
                 typename detail::memory_traits<Memory,
                                             T>::template accessor_t<Dimension>;
-            using value_t = typename detail::memory_traits<Memory, T>::value_t;
+            using हालागा_t = typename detail::memory_traits<Memory, T>::हालागा_t;
             using dpct_accessor_t = dpct::accessor<T, Memory, Dimension>;
 
             device_memory() : device_memory(sycl::range<Dimension>(1)) {}
 
             /// Constructor of 1-D array with initializer list
             device_memory(const sycl::range<Dimension> &in_range,
-                        std::initializer_list<value_t> &&init_list)
+                        std::initializer_list<हालागा_t> &&init_list)
                 : device_memory(in_range) {
                 assert(init_list.size() <= in_range.size());
-                _host_ptr = (value_t *)std::malloc(_size);
+                _host_ptr = (हालागा_t *)std::malloc(_size);
                 std::memset(_host_ptr, 0, _size);
                 std::memcpy(_host_ptr, init_list.begin(), init_list.size() * sizeof(T));
             }
@@ -2780,10 +2780,10 @@ namespace dpct
             template <size_t D = Dimension>
             device_memory(
                 const typename std::enable_if<D == 2, sycl::range<2>>::type &in_range,
-                std::initializer_list<std::initializer_list<value_t>> &&init_list)
+                std::initializer_list<std::initializer_list<हालागा_t>> &&init_list)
                 : device_memory(in_range) {
                 assert(init_list.size() <= in_range[0]);
-                _host_ptr = (value_t *)std::malloc(_size);
+                _host_ptr = (हालागा_t *)std::malloc(_size);
                 std::memset(_host_ptr, 0, _size);
                 auto tmp_data = _host_ptr;
                 for (auto sub_list : init_list) {
@@ -2808,8 +2808,8 @@ namespace dpct
             }
 
             /// Constructor with range
-            template <class... Args>
-            device_memory(Args... Arguments)
+            template <class... मगा_कातविरान>
+            device_memory(मगा_कातविरान... Arguments)
                 : device_memory(sycl::range<Dimension>(Arguments...)) {}
 
             ~device_memory() {
@@ -2836,17 +2836,17 @@ namespace dpct
             }
 
             /// The variable is assigned to a device pointer.
-            void assign(value_t *src, size_t size) {
+            void assign(हालागा_t *src, size_t size) {
                 this->~device_memory();
                 new (this) device_memory(src, size);
             }
 
             /// Get memory pointer of the memory object, which is virtual pointer when
             /// usm is not used, and device pointer when usm is used.
-            value_t *get_ptr() { return get_ptr(get_default_queue()); }
+            हालागा_t *get_ptr() { return get_ptr(get_default_queue()); }
             /// Get memory pointer of the memory object, which is virtual pointer when
             /// usm is not used, and device pointer when usm is used.
-            value_t *get_ptr(sycl::queue &q) {
+            हालागा_t *get_ptr(sycl::queue &q) {
                 init(q);
                 return _device_ptr;
             }
@@ -2869,45 +2869,45 @@ namespace dpct
             }
 
         private:
-            device_memory(value_t *memory_ptr, size_t size)
+            device_memory(हालागा_t *memory_ptr, size_t size)
                 : _size(size), _range(size / sizeof(T)), _reference(true),
                 _device_ptr(memory_ptr) {}
 
             void allocate_device(sycl::queue &q) {
         #ifndef DPCT_USM_LEVEL_NONE
                 if (Memory == shared) {
-                    _device_ptr = (value_t *)sycl::malloc_shared(_size, q.get_device(),
+                    _device_ptr = (हालागा_t *)sycl::malloc_shared(_size, q.get_device(),
                                                                 q.get_context());
                     return;
                 }
         #ifdef SYCL_EXT_ONEAPI_USM_DEVICE_READ_ONLY
                 if (Memory == constant) {
-                    _device_ptr = (value_t *)sycl::malloc_device(
+                    _device_ptr = (हालागा_t *)sycl::malloc_device(
                         _size, q.get_device(), q.get_context(),
                         sycl::ext::oneapi::property::usm::device_read_only());
                     return;
                 }
         #endif
         #endif
-                _device_ptr = (value_t *)detail::dpct_malloc(_size, q);
+                _device_ptr = (हालागा_t *)detail::dpct_malloc(_size, q);
             }
 
             size_t _size;
             sycl::range<Dimension> _range;
             bool _reference;
-            value_t *_host_ptr;
-            value_t *_device_ptr;
+            हालागा_t *_host_ptr;
+            हालागा_t *_device_ptr;
         };
         template <class T, memory_region Memory>
         class device_memory<T, Memory, 0> : public device_memory<T, Memory, 1> {
         public:
             using base = device_memory<T, Memory, 1>;
-            using value_t = typename base::value_t;
+            using हालागा_t = typename base::हालागा_t;
             using accessor_t =
                 typename detail::memory_traits<Memory, T>::template accessor_t<0>;
 
             /// Constructor with initial value.
-            device_memory(const value_t &val) : base(sycl::range<1>(1), {val}) {}
+            device_memory(const हालागा_t &val) : base(sycl::range<1>(1), {val}) {}
 
             /// Default constructor
             device_memory() : base(1) {}
@@ -3006,7 +3006,7 @@ namespace dpct
     }
 
     template <int n_nondefault_params, int n_default_params, typename T>
-    class args_selector;
+    class मगा_कातविरान_selector;
 
     /// args_selector is a helper class for extracting arguments from an
     /// array of pointers to arguments or buffer of arguments to pass to a
@@ -3029,10 +3029,10 @@ namespace dpct
     ///   selector.get<2>() returns a reference to float
     template <int n_nondefault_params, int n_default_params, typename R,
               typename... Ts>
-    class args_selector<n_nondefault_params, n_default_params, R(Ts...)> {
+    class मगा_कातविरान_selector<n_nondefault_params, n_default_params, R(Ts...)> {
       private:
         void **kernel_params;
-        char *args_buffer;
+        char *मगा_कातविरान_buffer;
 
         template <int i> static constexpr int account_for_default_params() {
             constexpr int n_total_params = sizeof...(Ts);
@@ -3051,7 +3051,7 @@ namespace dpct
         template <int i>
         using arg_type = std::tuple_element_t<account_for_default_params<i>(),
                                               std::tuple<Ts...>>;
-        static constexpr int params_num = sizeof...(Ts);
+        static constexpr int params_नुमेरो = sizeof...(Ts);
 
       private:
         template <int i> static constexpr int get_offset() {
@@ -3077,7 +3077,7 @@ namespace dpct
             }
         }
 
-        static char *get_args_buffer(void **extra) {
+        static char *get_मगा_कातविरान_buffer(void **extra) {
             if (!extra)
                 return nullptr;
             for (; (std::size_t)*extra != 0; ++extra) {
@@ -3095,9 +3095,9 @@ namespace dpct
         /// \param [in] kernel_params Array of pointers to arguments
         /// a or null pointer.
         /// \param [in] extra Array containing pointer to argument buffer.
-        args_selector(void **kernel_params, void **extra)
+        मगा_कातविरान_selector(void **kernel_params, void **extra)
             : kernel_params(kernel_params),
-              args_buffer(get_args_buffer(extra)) {}
+              मगा_कातविरान_buffer(get_मगा_कातविरान_buffer(extra)) {}
 
         /// Get a reference to the ith argument extracted from kernel_params
         /// or extra.
@@ -3107,7 +3107,7 @@ namespace dpct
             if (kernel_params) {
                 return *static_cast<arg_type<i> *>(kernel_params[i]);
             } else {
-                return *reinterpret_cast<arg_type<i> *>(args_buffer +
+                return *reinterpret_cast<arg_type<i> *>(मगा_कातविरान_buffer +
                                                         get_offset<i>());
             }
         }
@@ -3194,12 +3194,12 @@ namespace dpct
         /// \param [in] local_mem_size The size of local memory required by the
         /// kernel function. \param [in] que SYCL queue used to execute kernel.
         /// \param [in] args Kernel arguments.
-        template <typename FuncT, typename... ArgsT>
-        static std::enable_if_t<std::is_invocable_v<FuncT *, ArgsT...>, void>
+        template <typename FuncT, typename... मगा_कातविरान_T>
+        static std::enable_if_t<std::is_invocable_v<FuncT *, मगा_कातविरान_T...>, void>
         launch(FuncT *func, dim3 group_range, dim3 local_range,
-               unsigned int local_mem_size, queue_ptr que, ArgsT... args) {
+               unsigned int local_mem_size, queue_ptr que, मगा_कातविरान_T... मगा_कातविरान_2) {
             set_execution_config(group_range, local_range, local_mem_size, que);
-            func(args...);
+            func(मगा_कातविरान_2...);
         }
         /// Launches a kernel function through registered kernel function
         /// wrapper. \param [in] func Pointer to the registered kernel function
@@ -3209,7 +3209,7 @@ namespace dpct
         /// memory required by the kernel function. \param [in] que SYCL queue
         /// used to execute kernel.
         static void launch(const void *func, dim3 group_range, dim3 local_range,
-                           void **args, unsigned int local_mem_size,
+                           void **मगा_कातविरान_2, unsigned int local_mem_size,
                            queue_ptr que) {
             std::lock_guard<std::mutex> lock(kernel_function_ptr_map_mutex);
             auto Iter = kernel_function_ptr_map.find(func);
@@ -3217,7 +3217,7 @@ namespace dpct
                 throw std::runtime_error("dpct::launch() : no registered "
                                          "kernel function wrapper found.");
             }
-            (Iter->second)(group_range, local_range, args, local_mem_size, que);
+            (Iter->second)(group_range, local_range, मगा_कातविरान_2, local_mem_size, que);
         }
         /// Launches a kernel function with packed arguments through kernel
         /// function wrapper.
@@ -3230,12 +3230,12 @@ namespace dpct
         /// kernel function. \param [in] que SYCL queue used to execute kernel.
         template <typename FuncT>
         static std::enable_if_t<std::is_function_v<FuncT>, void>
-        launch(FuncT *func, dim3 group_range, dim3 local_range, void **args,
+        launch(FuncT *func, dim3 group_range, dim3 local_range, void **मगा_कातविरान_2,
                unsigned int local_mem_size, queue_ptr que) {
-            constexpr size_t p_num = args_selector<0, 0, FuncT>::params_num;
+            constexpr size_t p_नुमेरो = मगा_कातविरान_selector<0, 0, FuncT>::params_नुमेरो;
             set_execution_config(group_range, local_range, local_mem_size, que);
-            args_selector<p_num, p_num, FuncT> selector(args, nullptr);
-            launch_helper(func, selector, std::make_index_sequence<p_num>{});
+            मगा_कातविरान_selector<p_नुमेरो, p_नुमेरो, FuncT> selector(मगा_कातविरान_2, nullptr);
+            launch_helper(func, selector, std::make_index_sequence<p_नुमेरो>{});
         }
     }; // COPY from DPCT head file
        // /opt/intel/oneapi/dpcpp-ct/latest/include/dpct/kernel.hpp

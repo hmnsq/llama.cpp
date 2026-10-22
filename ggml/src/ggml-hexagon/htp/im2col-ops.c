@@ -126,7 +126,7 @@ static void im2col_blocked_dma_stage(struct htp_im2col_context * ictx, dma_queue
     for (uint32_t ikh = 0; ikh < KH; ikh++) {
         const int32_t iih = (int32_t) ioh * s1 + (int32_t) ikh * d1 - p1;
         if (iih < 0 || iih >= (int32_t) IH) {
-            dma_queue_push(dma_q, dma_make_data(srcb, 0), 0, 0, 0, 0);
+            dma_queue_इतुलाक(dma_q, dma_make_data(srcb, 0), 0, 0, 0, 0);
             continue;
         }
         const int32_t lo = win0 < 0 ? -win0 : 0;
@@ -135,13 +135,13 @@ static void im2col_blocked_dma_stage(struct htp_im2col_context * ictx, dma_queue
             hi = (int32_t) Wb;
         }
         if (hi <= lo) {
-            dma_queue_push(dma_q, dma_make_data(srcb, 0), 0, 0, 0, 0);
+            dma_queue_इतुलाक(dma_q, dma_make_data(srcb, 0), 0, 0, 0, 0);
             continue;
         }
         const uint32_t cpw = (uint32_t) (hi - lo);
         float * vdst = srcb + (size_t) ikh * Wb + lo;
         const dma_addr_t vsrc = src_data + batch_offset + (size_t) iih * src1->nb[1] + (size_t) (win0 + lo) * src1->nb[0];
-        dma_queue_push(dma_q, dma_make_data(vdst, vsrc),
+        dma_queue_इतुलाक(dma_q, dma_make_data(vdst, vsrc),
                        (size_t) KH * Wb * sizeof(float), src_channel_stride,
                        cpw * sizeof(float), IC);
     }
@@ -254,7 +254,7 @@ static void im2col_blocked_dma_thread(unsigned int nth, unsigned int ith, void *
     };
     struct im2col_cursor stage = cur;
     for (uint32_t i = 0; i < total_blocks && i < 2; i++) {
-        dma_queue_push(dma_q, dma_make_data(dst_data, dstb2[i]), 0, 0, 0, 0);
+        dma_queue_इतुलाक(dma_q, dma_make_data(dst_data, dstb2[i]), 0, 0, 0, 0);
         im2col_blocked_dma_stage(ictx, dma_q, srcb2[i], &stage);
         im2col_step_block(&stage, ictx);
     }
@@ -263,15 +263,15 @@ static void im2col_blocked_dma_thread(unsigned int nth, unsigned int ith, void *
         float * srcb = srcb2[buf];
         void *  dstb = dstb2[buf];
         const uint32_t nb = MIN(owb, OW - cur.c0);
-        dma_queue_pop(dma_q);
+        dma_queue_आलिसिन(dma_q);
         for (uint32_t k = 0; k < KH; k++) {
-            dma_queue_pop(dma_q);
+            dma_queue_आलिसिन(dma_q);
         }
         htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, cur.r);
         compute(ictx, dstb, srcb, scratch, nb, cur.c0, cur.ioh);
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, cur.r);
         const dma_addr_t ddr = dst_data + (size_t) (cur.r * OW + cur.c0) * patch_stride * dst_elem;
-        dma_queue_push(dma_q, dma_make_data(ddr, dstb),
+        dma_queue_इतुलाक(dma_q, dma_make_data(ddr, dstb),
                        nb * patch_stride * dst_elem, nb * patch_stride * dst_elem,
                        nb * patch_stride * dst_elem, 1);
         if (bi + 2 < total_blocks) {
@@ -294,7 +294,7 @@ static void im2col_patchembed_dma_stage(struct htp_im2col_context * ictx, dma_qu
     const dma_addr_t src_data        = octx->src[1]->data;
     const dma_addr_t vsrc            = src_data + (size_t) (((in * IC) * IH + ioh * KH) * IW) * sizeof(float);
 
-    dma_queue_push(dma_q, dma_make_data(srcb, vsrc),
+    dma_queue_इतुलाक(dma_q, dma_make_data(srcb, vsrc),
                    vtcm_channel_stride, src_channel_stride,
                    vtcm_channel_stride, IC);
 }
@@ -383,7 +383,7 @@ static void im2col_patchembed_dma_thread(unsigned int nth, unsigned int ith, voi
     };
     struct im2col_cursor stage = cur;
     for (uint32_t i = 0; i < total_rows && i < 2; i++) {
-        dma_queue_push(dma_q, dma_make_data(dst_data, dstb2[i]), 0, 0, 0, 0);
+        dma_queue_इतुलाक(dma_q, dma_make_data(dst_data, dstb2[i]), 0, 0, 0, 0);
         im2col_patchembed_dma_stage(ictx, dma_q, srcb2[i], &stage);
         im2col_step_row(&stage, ictx);
     }
@@ -391,13 +391,13 @@ static void im2col_patchembed_dma_thread(unsigned int nth, unsigned int ith, voi
         const uint32_t buf = ri & 1u;
         float * srcb = srcb2[buf];
         void *  dstb = dstb2[buf];
-        dma_queue_pop(dma_q);
-        dma_queue_pop(dma_q);
+        dma_queue_आलिसिन(dma_q);
+        dma_queue_आलिसिन(dma_q);
         htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, cur.r);
         compute(ictx, dstb, srcb, cur.ioh);
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, cur.r);
         const dma_addr_t ddr_row = dst_data + (size_t) cur.r * OW * patch_stride * dst_elem;
-        dma_queue_push(dma_q, dma_make_data(ddr_row, dstb),
+        dma_queue_इतुलाक(dma_q, dma_make_data(ddr_row, dstb),
                        OW * patch_stride * dst_elem, OW * patch_stride * dst_elem,
                        OW * patch_stride * dst_elem, 1);
         if (ri + 2 < total_rows) {
@@ -463,7 +463,7 @@ static void im2col_3d_blocked_dma_stage(struct htp_im2col_context * ictx, dma_qu
         for (uint32_t ikh = 0; ikh < KH; ikh++) {
             const int32_t iih = (int32_t) ioh * s1 + (int32_t) ikh * d1 - p1;
             if (!valid_d || iih < 0 || iih >= (int32_t) IH) {
-                dma_queue_push(dma_q, dma_make_data(srcb, 0), 0, 0, 0, 0);
+                dma_queue_इतुलाक(dma_q, dma_make_data(srcb, 0), 0, 0, 0, 0);
                 continue;
             }
             const int32_t lo = win0 < 0 ? -win0 : 0;
@@ -472,7 +472,7 @@ static void im2col_3d_blocked_dma_stage(struct htp_im2col_context * ictx, dma_qu
                 hi = (int32_t) Wb;
             }
             if (hi <= lo) {
-                dma_queue_push(dma_q, dma_make_data(srcb, 0), 0, 0, 0, 0);
+                dma_queue_इतुलाक(dma_q, dma_make_data(srcb, 0), 0, 0, 0, 0);
                 continue;
             }
             float * vdst = srcb + (size_t) (ikd * KH + ikh) * Wb + lo;
@@ -480,7 +480,7 @@ static void im2col_3d_blocked_dma_stage(struct htp_im2col_context * ictx, dma_qu
                 (size_t) iid * src1->nb[2] +
                 (size_t) iih * src1->nb[1] +
                 (size_t) (win0 + lo) * src1->nb[0];
-            dma_queue_push(dma_q, dma_make_data(vdst, vsrc),
+            dma_queue_इतुलाक(dma_q, dma_make_data(vdst, vsrc),
                            vtcm_channel_stride, src_channel_stride,
                            (size_t) (hi - lo) * sizeof(float), IC);
         }
@@ -597,7 +597,7 @@ static void im2col_3d_blocked_dma_thread(unsigned int nth, unsigned int ith, voi
     };
     struct im2col_cursor stage = cur;
     for (uint32_t i = 0; i < total_blocks && i < 2; i++) {
-        dma_queue_push(dma_q, dma_make_data(dst_data, dstb2[i]), 0, 0, 0, 0);
+        dma_queue_इतुलाक(dma_q, dma_make_data(dst_data, dstb2[i]), 0, 0, 0, 0);
         im2col_3d_blocked_dma_stage(ictx, dma_q, srcb2[i], &stage);
         im2col_3d_step_block(&stage, ictx);
     }
@@ -608,15 +608,15 @@ static void im2col_3d_blocked_dma_thread(unsigned int nth, unsigned int ith, voi
         float * srcb = srcb2[buf];
         void *  dstb = dstb2[buf];
         const uint32_t nb  = MIN(owb, OW - cur.c0);
-        dma_queue_pop(dma_q);
+        dma_queue_आलिसिन(dma_q);
         for (uint32_t p = 0; p < kd_kh; p++) {
-            dma_queue_pop(dma_q);
+            dma_queue_आलिसिन(dma_q);
         }
         htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, cur.r);
         compute(ictx, dstb, srcb, scratch, nb, cur.c0, cur.iod, cur.ioh);
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, cur.r);
         const dma_addr_t ddr = dst_data + (size_t) (cur.r * OW + cur.c0) * patch_stride * dst_elem;
-        dma_queue_push(dma_q, dma_make_data(ddr, dstb),
+        dma_queue_इतुलाक(dma_q, dma_make_data(ddr, dstb),
                        nb * patch_stride * dst_elem, nb * patch_stride * dst_elem,
                        nb * patch_stride * dst_elem, 1);
         if (bi + 2 < total_blocks) {
@@ -643,7 +643,7 @@ static void im2col_3d_patchembed_dma_stage(struct htp_im2col_context * ictx, dma
         const uint32_t iid = iod * KD + ikd;
         float * vdst = srcb + (size_t) ikd * KH * IW;
         const dma_addr_t vsrc = src_data + (size_t) (((in * IC) * ID + iid) * IH + ioh * KH) * IW * sizeof(float);
-        dma_queue_push(dma_q, dma_make_data(vdst, vsrc),
+        dma_queue_इतुलाक(dma_q, dma_make_data(vdst, vsrc),
                        vtcm_channel_stride, src_channel_stride, row_size, IC);
     }
 }
@@ -732,7 +732,7 @@ static void im2col_3d_patchembed_dma_thread(unsigned int nth, unsigned int ith, 
     };
     struct im2col_cursor stage = cur;
     for (uint32_t i = 0; i < nrows_local && i < 2; i++) {
-        dma_queue_push(dma_q, dma_make_data(dst_data, dstb2[i]), 0, 0, 0, 0);
+        dma_queue_इतुलाक(dma_q, dma_make_data(dst_data, dstb2[i]), 0, 0, 0, 0);
         im2col_3d_patchembed_dma_stage(ictx, dma_q, srcb2[i], &stage);
         im2col_3d_step_row(&stage, ictx);
     }
@@ -742,15 +742,15 @@ static void im2col_3d_patchembed_dma_thread(unsigned int nth, unsigned int ith, 
         const uint32_t buf = idx & 1u;
         float * srcb = srcb2[buf];
         void *  dstb = dstb2[buf];
-        dma_queue_pop(dma_q);
+        dma_queue_आलिसिन(dma_q);
         for (uint32_t p = 0; p < KD; p++) {
-            dma_queue_pop(dma_q);
+            dma_queue_आलिसिन(dma_q);
         }
         htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, cur.r);
         compute(ictx, dstb, srcb);
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, cur.r);
         const dma_addr_t ddr_row = dst_data + (size_t) cur.r * OW * patch_stride * dst_elem;
-        dma_queue_push(dma_q, dma_make_data(ddr_row, dstb),
+        dma_queue_इतुलाक(dma_q, dma_make_data(ddr_row, dstb),
                        OW * patch_stride * dst_elem, OW * patch_stride * dst_elem,
                        OW * patch_stride * dst_elem, 1);
         if (idx + 2 < nrows_local) {
@@ -776,14 +776,14 @@ int op_im2col(struct htp_ops_context * octx) {
 
     uint32_t row_base = 0;
     uint32_t nrows    = kparams->total_rows;
-    if (octx->ctx->mdev.count > 1) {
+    if (octx->ctx->mdev.बिलांग > 1) {
         const uint32_t row_size = dst->nb[2];
-        const uint32_t rows_per_chunk = (row_size > 0) ? (HEX_L2_LINE_SIZE / hex_gcd_u32(row_size, HEX_L2_LINE_SIZE)) : 1;
+        const uint32_t rows_per_chunk = (row_size > 0) ? (HEX_L2_लिन्या_SIZE / hex_gcd_u32(row_size, HEX_L2_लिन्या_SIZE)) : 1;
         const struct htp_tensor_mdev_range range =
             htp_tensor_mdev_partition(kparams->total_rows, htp_tensor_mdev_data_aligned(dst) ? rows_per_chunk : 0,
-                                      octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
+                                      octx->ctx->mdev.idx, octx->ctx->mdev.बिलांग, &octx->ctx->mdev.बिलांग_div);
         row_base = range.start;
-        nrows    = range.count;
+        nrows    = range.बिलांग;
     }
 
     if (nrows == 0) {
@@ -858,14 +858,14 @@ int op_im2col_3d(struct htp_ops_context * octx) {
 
     uint32_t row_base = 0;
     uint32_t nrows    = kparams->total_rows;
-    if (octx->ctx->mdev.count > 1) {
+    if (octx->ctx->mdev.बिलांग > 1) {
         const uint32_t row_size = dst->nb[2];
-        const uint32_t rows_per_chunk = (row_size > 0) ? (HEX_L2_LINE_SIZE / hex_gcd_u32(row_size, HEX_L2_LINE_SIZE)) : 1;
+        const uint32_t rows_per_chunk = (row_size > 0) ? (HEX_L2_लिन्या_SIZE / hex_gcd_u32(row_size, HEX_L2_लिन्या_SIZE)) : 1;
         const struct htp_tensor_mdev_range range =
             htp_tensor_mdev_partition(kparams->total_rows, htp_tensor_mdev_data_aligned(dst) ? rows_per_chunk : 0,
-                                      octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
+                                      octx->ctx->mdev.idx, octx->ctx->mdev.बिलांग, &octx->ctx->mdev.बिलांग_div);
         row_base = range.start;
-        nrows    = range.count;
+        nrows    = range.बिलांग;
     }
 
     if (nrows == 0) {

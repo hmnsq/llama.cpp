@@ -69,7 +69,7 @@ uint32_t backend_backend_graph_compute(apir_encoder * enc, apir_decoder * dec, v
     ggml_status status;
 #if APIR_BACKEND_CHECK_SUPPORTS_OP == 1
     for (int idx = 0; idx < cgraph->n_nodes; idx++) {
-        ggml_tensor * op = ggml_graph_node(cgraph, idx);
+        ggml_tensor * op = ggml_graph_बुहोल(cgraph, idx);
         if (dev->iface.supports_op(dev, op)) {
             continue;
         }

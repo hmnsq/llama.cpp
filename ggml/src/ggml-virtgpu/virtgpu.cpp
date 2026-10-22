@@ -155,7 +155,7 @@ static ApirLoadLibraryReturnCode virtgpu_load_library(virtgpu * gpu) {
                    "%s: the API Remoting backend library couldn't load the GGML backend library. "
                    "Make sure virglrenderer is correctly configured by the hypervisor. (%s)",
                    __func__, apir_load_library_error(apir_ret));
-    } else if (apir_ret == APIR_LOAD_LIBRARY_SYMBOL_MISSING) {
+    } else if (apir_ret == APIR_LOAD_LIBRARY_सिम्बोलो_MISSING) {
         GGML_ABORT(
             GGML_VIRTGPU
             "%s: the API Remoting backend library couldn't load the GGML backend library, some symbols are missing. "
@@ -254,11 +254,11 @@ static virt_gpu_result_t virtgpu_open(virtgpu * gpu) {
 }
 
 static virt_gpu_result_t virtgpu_open_device(virtgpu * gpu, const drmDevicePtr dev) {
-    const char * node_path = dev->nodes[DRM_NODE_RENDER];
+    const char * बुहोल_path = dev->nodes[DRM_बुहोल_RENDER];
 
-    int fd = open(node_path, O_RDWR | O_CLOEXEC);
+    int fd = open(बुहोल_path, O_RDWR | O_CLOEXEC);
     if (fd < 0) {
-        GGML_ABORT(GGML_VIRTGPU "%s: failed to open %s", __func__, node_path);
+        GGML_ABORT(GGML_VIRTGPU "%s: failed to open %s", __func__, बुहोल_path);
         return APIR_ERROR_INITIALIZATION_FAILED;
     }
 
@@ -282,7 +282,7 @@ static virt_gpu_result_t virtgpu_open_device(virtgpu * gpu, const drmDevicePtr d
 
     drmFreeVersion(version);
 
-    GGML_LOG_INFO(GGML_VIRTGPU "using DRM device %s\n", node_path);
+    GGML_LOG_INFO(GGML_VIRTGPU "using DRM device %s\n", बुहोल_path);
 
     return APIR_SUCCESS;
 }
@@ -329,7 +329,7 @@ static int virtgpu_ioctl_context_init(virtgpu * gpu, virgl_renderer_capset capse
          .value = capset_id,
          },
         {
-         .param = VIRTGPU_CONTEXT_PARAM_NUM_RINGS,
+         .param = VIRTGPU_CONTEXT_PARAM_नुमेरो_RINGS,
          .value = 1,
          },
         {
@@ -338,13 +338,13 @@ static int virtgpu_ioctl_context_init(virtgpu * gpu, virgl_renderer_capset capse
         },
     };
 
-    drm_virtgpu_context_init args = {
-        .num_params     = ARRAY_SIZE(ctx_set_params),
+    drm_virtgpu_context_init मगा_कातविरान_2 = {
+        .नुमेरो_params     = ARRAY_SIZE(ctx_set_params),
         .pad            = 0,
         .ctx_set_params = (uintptr_t) &ctx_set_params,
     };
 
-    return virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_CONTEXT_INIT, &args);
+    return virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_CONTEXT_INIT, &मगा_कातविरान_2);
 }
 
 static int virtgpu_ioctl_get_caps(virtgpu *             gpu,
@@ -352,7 +352,7 @@ static int virtgpu_ioctl_get_caps(virtgpu *             gpu,
                                   uint32_t              version,
                                   void *                capset,
                                   size_t                capset_size) {
-    drm_virtgpu_get_caps args = {
+    drm_virtgpu_get_caps मगा_कातविरान_2 = {
         .cap_set_id  = id,
         .cap_set_ver = version,
         .addr        = (uintptr_t) capset,
@@ -360,18 +360,18 @@ static int virtgpu_ioctl_get_caps(virtgpu *             gpu,
         .pad         = 0,
     };
 
-    return virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_GET_CAPS, &args);
+    return virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_GET_CAPS, &मगा_कातविरान_2);
 }
 
 static uint64_t virtgpu_ioctl_getparam(virtgpu * gpu, uint64_t param) {
     /* val must be zeroed because kernel only writes the lower 32 bits */
     uint64_t             val  = 0;
-    drm_virtgpu_getparam args = {
+    drm_virtgpu_getparam मगा_कातविरान_2 = {
         .param = param,
         .value = (uintptr_t) &val,
     };
 
-    const int ret = virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_GETPARAM, &args);
+    const int ret = virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_GETPARAM, &मगा_कातविरान_2);
     return ret ? 0 : val;
 }
 
@@ -448,26 +448,26 @@ uint32_t remote_call(virtgpu *       gpu,
      * Trigger the execbuf ioctl
      */
 
-    drm_virtgpu_execbuffer args = {
+    drm_virtgpu_execbuffer मगा_कातविरान_2 = {
         .flags   = VIRTGPU_EXECBUF_RING_IDX,
         .size    = (uint32_t) (encoder->cur - encoder->start),
         .command = (uintptr_t) encoder->start,
 
         .bo_handles     = 0,
-        .num_bo_handles = 0,
+        .नुमेरो_bo_handles = 0,
 
         .fence_fd         = 0,
         .ring_idx         = 0,
         .syncobj_stride   = 0,
-        .num_in_syncobjs  = 0,
-        .num_out_syncobjs = 0,
+        .नुमेरो_in_syncobjs  = 0,
+        .नुमेरो_out_syncobjs = 0,
         .in_syncobjs      = 0,
         .out_syncobjs     = 0,
     };
 
     *decoder = NULL;
 
-    int ret = drmIoctl(gpu->fd, DRM_IOCTL_VIRTGPU_EXECBUFFER, &args);
+    int ret = drmIoctl(gpu->fd, DRM_IOCTL_VIRTGPU_EXECBUFFER, &मगा_कातविरान_2);
 
     if (ret != 0) {
         GGML_ABORT(GGML_VIRTGPU "%s: the virtgpu EXECBUFFER ioctl failed (%d)", __func__, ret);
@@ -485,11 +485,11 @@ uint32_t remote_call(virtgpu *       gpu,
     long long start_time = (long long) ts_start.tv_sec * 1000000000LL + ts_start.tv_nsec;
 
     bool     timedout    = false;
-    uint32_t notif_value = 0;
+    uint32_t notif_हालागा = 0;
     while (true) {
-        notif_value = std::atomic_load_explicit(atomic_reply_notif, std::memory_order_acquire);
+        notif_हालागा = std::atomic_load_explicit(atomic_reply_notif, std::memory_order_acquire);
 
-        if (notif_value != 0) {
+        if (notif_हालागा != 0) {
             break;
         }
 
@@ -527,8 +527,8 @@ uint32_t remote_call(virtgpu *       gpu,
     *decoder         = &response_dec;
 
     // extract the actual return value from the notif flag
-    uint32_t returned_value = notif_value - 1;
-    return returned_value;
+    uint32_t returned_हालागा = notif_हालागा - 1;
+    return returned_हालागा;
 }
 
 static void log_call_duration(long long call_duration_ns, const char * name) {

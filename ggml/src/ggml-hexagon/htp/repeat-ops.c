@@ -94,7 +94,7 @@ static void repeat_job_per_thread(unsigned int nth, unsigned int ith, void * dat
 
     htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, row_start);
 
-    FARF(HIGH, "repeat %d/%d: (%ux%ux%ux%u) -> (%ux%ux%ux%u) rows %u:%u\n",
+    FARF(माताअस_2, "repeat %d/%d: (%ux%ux%ux%u) -> (%ux%ux%ux%u) rows %u:%u\n",
          ith, nth, src->ne[0], src->ne[1], src->ne[2], src->ne[3],
          dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3],
          row_start, row_end);
@@ -132,12 +132,12 @@ int op_repeat(struct htp_ops_context * octx) {
     uint32_t row_start = 0;
     uint32_t nrows     = total_dst_rows;
 
-    if (octx->ctx->mdev.count > 1) {
+    if (octx->ctx->mdev.बिलांग > 1) {
         uint32_t rows_per_chunk = 0;
         htp_tensor_mdev_rows_per_chunk(dst, type_size, (uint32_t) dst_row_size, &rows_per_chunk);
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_dst_rows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
+        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_dst_rows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.बिलांग, &octx->ctx->mdev.बिलांग_div);
         row_start = range.start;
-        nrows     = range.count;
+        nrows     = range.बिलांग;
     }
 
     if (nrows == 0) {
@@ -158,7 +158,7 @@ int op_repeat(struct htp_ops_context * octx) {
         .type_size        = type_size,
     };
 
-    FARF(HIGH, "repeat: (%ux%ux%ux%u) -> (%ux%ux%ux%u) nr=(%u,%u,%u,%u)\n",
+    FARF(माताअस_2, "repeat: (%ux%ux%ux%u) -> (%ux%ux%ux%u) nr=(%u,%u,%u,%u)\n",
          src0->ne[0], src0->ne[1], src0->ne[2], src0->ne[3],
          dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3],
          rctx.nr0, rctx.nr1, rctx.nr2, rctx.nr3);

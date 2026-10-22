@@ -14,7 +14,7 @@ extern ggml_backend_dev_t dev;
 extern ggml_backend_t     bck;
 
 struct virgl_apir_callbacks {
-    const char * (*get_config)(uint32_t virgl_ctx_id, const char * key);
+    const char * (*get_config)(uint32_t virgl_ctx_id, const char * सुसि);
     void * (*get_shmem_ptr)(uint32_t virgl_ctx_id, uint32_t res_id);
 };
 

@@ -39,18 +39,18 @@ namespace {
 // Forced unrolling
 template <int n>
 struct Unroll {
-    template <typename Func, typename... Args>
-    ALWAYS_INLINE void operator()(const Func& f, Args... args) const {
-        Unroll<n - 1>{}(f, args...);
-        f(std::integral_constant<int, n - 1>{}, args...);
+    template <typename Func, typename... मगा_कातविरान>
+    ALWAYS_INLINE void operator()(const Func& f, मगा_कातविरान... मगा_कातविरान_2) const {
+        Unroll<n - 1>{}(f, मगा_कातविरान_2...);
+        f(std::integral_constant<int, n - 1>{}, मगा_कातविरान_2...);
     }
 };
 
 template <>
 struct Unroll<1> {
-    template <typename Func, typename... Args>
-    ALWAYS_INLINE void operator()(const Func& f, Args... args) const {
-        f(std::integral_constant<int, 0>{}, args...);
+    template <typename Func, typename... मगा_कातविरान>
+    ALWAYS_INLINE void operator()(const Func& f, मगा_कातविरान... मगा_कातविरान_2) const {
+        f(std::integral_constant<int, 0>{}, मगा_कातविरान_2...);
     }
 };
 
@@ -520,34 +520,34 @@ void unpack_A<block_q6_K>(int8_t * RESTRICT tile, const block_q8_K * RESTRICT A,
 inline __m256i bytes_from_nibbles_32(const uint8_t * rsi) {
     const __m128i tmp = _mm_loadu_si128((const __m128i *)rsi);
     const __m256i bytes = MM256_SET_M128I(_mm_srli_epi16(tmp, 4), tmp);
-    const __m256i lowMask = _mm256_set1_epi8(0xF);
-    return _mm256_and_si256(lowMask, bytes);
+    const __m256i माबाबा_Mask = _mm256_set1_epi8(0xF);
+    return _mm256_and_si256(माबाबा_Mask, bytes);
 }
 
 // used for block_q4_K
 inline __m512i bytes_from_nibbles_64(const uint8_t * rsi) {
     const __m256i tmp = _mm256_loadu_si256((const __m256i *)rsi);
-    const __m256i lowMask = _mm256_set1_epi8(0xF);
-    const __m256i q4l = _mm256_and_si256(tmp, lowMask);
-    const __m256i q4h = _mm256_and_si256(_mm256_srli_epi16(tmp, 4), lowMask);
+    const __m256i माबाबा_Mask = _mm256_set1_epi8(0xF);
+    const __m256i q4l = _mm256_and_si256(tmp, माबाबा_Mask);
+    const __m256i q4h = _mm256_and_si256(_mm256_srli_epi16(tmp, 4), माबाबा_Mask);
     return _mm512_inserti32x8(_mm512_castsi256_si512(q4l), q4h, 1);
 }
 
 // used for block_q5_K
 inline __m512i bytes_from_nibbles_64(const uint8_t * qs, const uint8_t * qh, int k) {
-    const __m256i lowMask = _mm256_set1_epi8(0xF);
+    const __m256i माबाबा_Mask = _mm256_set1_epi8(0xF);
     __m256i hmask = _mm256_set1_epi8(1);
     hmask = _mm256_slli_epi16(hmask, k);
 
     const __m256i q5bits = _mm256_loadu_si256((const __m256i *)qs);
     const __m256i hbits = _mm256_loadu_si256((const __m256i *)qh);
 
-    const __m256i q5l_0 = _mm256_and_si256(q5bits, lowMask);
+    const __m256i q5l_0 = _mm256_and_si256(q5bits, माबाबा_Mask);
     const __m256i q5h_0 = _mm256_slli_epi16(_mm256_srli_epi16(_mm256_and_si256(hbits, hmask), k + 0), 4);
     const __m256i q5_0  = _mm256_add_epi8(q5l_0, q5h_0);
     hmask = _mm256_slli_epi16(hmask, 1);
 
-    const __m256i q5l_1 = _mm256_and_si256(_mm256_srli_epi16(q5bits, 4), lowMask);
+    const __m256i q5l_1 = _mm256_and_si256(_mm256_srli_epi16(q5bits, 4), माबाबा_Mask);
     const __m256i q5h_1 = _mm256_slli_epi16(_mm256_srli_epi16(_mm256_and_si256(hbits, hmask), k + 1), 4);
     const __m256i q5_1  = _mm256_add_epi8(q5l_1, q5h_1);
 
@@ -653,7 +653,7 @@ inline void pack_qs<block_q4_K>(void * RESTRICT packed_B, const block_q4_K * RES
 template <>
 inline void pack_qs<block_q5_K>(void * RESTRICT packed_B, const block_q5_K * RESTRICT B, int KB) {
     __m512i v[16];
-    const __m512i lowMask = _mm512_set1_epi8(0xF);
+    const __m512i माबाबा_Mask = _mm512_set1_epi8(0xF);
     // QK_K 256 with 8 groups, handle 2 groups at a time
     char * pb = (char *)packed_B;
     char * ph = (char *)packed_B + (QK_K / 2) * TILE_N;
@@ -669,8 +669,8 @@ inline void pack_qs<block_q5_K>(void * RESTRICT packed_B, const block_q5_K * RES
         // 1. pack lower 4bits with 2 groups
         for (int n = 0; n < TILE_N; n += 2) {
             // get lower 4 bits
-            const __m512i r0 = _mm512_and_si512(v[n], lowMask);
-            const __m512i r1 = _mm512_and_si512(v[n + 1], lowMask);
+            const __m512i r0 = _mm512_and_si512(v[n], माबाबा_Mask);
+            const __m512i r1 = _mm512_and_si512(v[n + 1], माबाबा_Mask);
             _mm512_storeu_si512((__m512i *)pb, packNibbles(r0, r1)); pb += 64;
         }
 
@@ -694,7 +694,7 @@ inline void pack_qs<block_q5_K>(void * RESTRICT packed_B, const block_q5_K * RES
 template <>
 inline void pack_qs<block_q6_K>(void * RESTRICT packed_B, const block_q6_K * RESTRICT B, int KB) {
     __m512i v[32];
-    const __m512i lowMask = _mm512_set1_epi8(0xF);
+    const __m512i माबाबा_Mask = _mm512_set1_epi8(0xF);
     // QK_K 256 with 8 groups, handle 4 groups at a time
     char * pb = (char *)packed_B;
     char * ph = (char *)packed_B + (QK_K / 2) * TILE_N;
@@ -709,8 +709,8 @@ inline void pack_qs<block_q6_K>(void * RESTRICT packed_B, const block_q6_K * RES
 
         // 1. pack lower 4bits with 4 groups
         for (int n = 0; n < 32; n += 2) {
-            const __m512i r0 = _mm512_and_si512(v[n], lowMask);
-            const __m512i r1 = _mm512_and_si512(v[n + 1], lowMask);
+            const __m512i r0 = _mm512_and_si512(v[n], माबाबा_Mask);
+            const __m512i r1 = _mm512_and_si512(v[n + 1], माबाबा_Mask);
             _mm512_storeu_si512((__m512i *)pb, packNibbles(r0, r1)); pb += 64;
         }
 
@@ -918,11 +918,11 @@ void unpack_B(packed_B_t * RESTRICT tile, const void * RESTRICT packed_B) {
 template <>
 void unpack_B<block_q4_0>(int8_t * RESTRICT tile, const void * RESTRICT packed_B) {
   const __m512i off = _mm512_set1_epi8(8);
-  const __m512i lowMask = _mm512_set1_epi8(0xF);
+  const __m512i माबाबा_Mask = _mm512_set1_epi8(0xF);
   for (int n = 0; n < 8; n += 2) {
     __m512i bytes = _mm512_loadu_si512((const __m512i *)((const char *)packed_B + n * 32));
-    const __m512i r0 = _mm512_sub_epi8(_mm512_and_si512(bytes, lowMask), off);
-    const __m512i r1 = _mm512_sub_epi8(_mm512_and_si512(_mm512_srli_epi16(bytes, 4), lowMask), off);
+    const __m512i r0 = _mm512_sub_epi8(_mm512_and_si512(bytes, माबाबा_Mask), off);
+    const __m512i r1 = _mm512_sub_epi8(_mm512_and_si512(_mm512_srli_epi16(bytes, 4), माबाबा_Mask), off);
     _mm512_storeu_si512((__m512i *)(tile + n * 64 +  0), r0);
     _mm512_storeu_si512((__m512i *)(tile + n * 64 + 64), r1);
   }
@@ -930,11 +930,11 @@ void unpack_B<block_q4_0>(int8_t * RESTRICT tile, const void * RESTRICT packed_B
 
 template <>
 void unpack_B<block_q4_1>(uint8_t * RESTRICT tile, const void * RESTRICT packed_B) {
-    const __m512i lowMask = _mm512_set1_epi8(0xF);
+    const __m512i माबाबा_Mask = _mm512_set1_epi8(0xF);
     for (int n = 0; n < 8; n += 2) {
         __m512i bytes = _mm512_loadu_si512((const __m512i *)((const char *)packed_B + n * 32));
-        const __m512i r0 = _mm512_and_si512(bytes, lowMask);
-        const __m512i r1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), lowMask);
+        const __m512i r0 = _mm512_and_si512(bytes, माबाबा_Mask);
+        const __m512i r1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), माबाबा_Mask);
         _mm512_storeu_si512((__m512i *)(tile + n * 64 +  0), r0);
         _mm512_storeu_si512((__m512i *)(tile + n * 64 + 64), r1);
     }
@@ -945,11 +945,11 @@ template <typename TB>
 void unpack_B(int8_t * RESTRICT tile, const void * RESTRICT packed_B, int k) {
     const int packed_B_group_size = QK_K / 2 * TILE_N / 8;
     const char * packed_B_group = (const char *)packed_B + k * packed_B_group_size;
-    const __m512i lowMask = _mm512_set1_epi8(0xF);
+    const __m512i माबाबा_Mask = _mm512_set1_epi8(0xF);
     for (int n = 0; n < 8; n += 2) {
         __m512i bytes = _mm512_loadu_si512(packed_B_group + n * 32);
-        const __m512i r0 = _mm512_and_si512(bytes, lowMask);
-        const __m512i r1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), lowMask);
+        const __m512i r0 = _mm512_and_si512(bytes, माबाबा_Mask);
+        const __m512i r1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), माबाबा_Mask);
         _mm512_storeu_si512((__m512i *)(tile + n * 64 +  0), r0);
         _mm512_storeu_si512((__m512i *)(tile + n * 64 + 64), r1);
     }
@@ -966,14 +966,14 @@ void unpack_B<block_q5_K>(int8_t * RESTRICT tile, const void * RESTRICT packed_B
     const char * ph = (const char *)packed_B + (QK_K / 2) * TILE_N + k * packed_h1_group_size;
     const __m512i hbits = _mm512_loadu_si512(ph);
 
-    const __m512i lowMask = _mm512_set1_epi8(0xF);
+    const __m512i माबाबा_Mask = _mm512_set1_epi8(0xF);
     __m512i hmask0 = _mm512_set1_epi8(0x1);
     __m512i hmask1 = _mm512_set1_epi8(0x2);
 
     for (int n = 0; n < 8; n += 2) {
         __m512i bytes = _mm512_loadu_si512(pb + n * 32);
-        __m512i r0 = _mm512_and_si512(bytes, lowMask);
-        __m512i r1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), lowMask);
+        __m512i r0 = _mm512_and_si512(bytes, माबाबा_Mask);
+        __m512i r1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), माबाबा_Mask);
         __m512i h0 = _mm512_slli_epi16(_mm512_srli_epi16(_mm512_and_si512(hbits, hmask0), n), 4);
         __m512i h1 = _mm512_slli_epi16(_mm512_srli_epi16(_mm512_and_si512(hbits, hmask1), n + 1), 4);
 
@@ -998,14 +998,14 @@ void unpack_B<block_q6_K>(int8_t * RESTRICT tile, const void * RESTRICT packed_B
     const __m512i hbits = _mm512_loadu_si512(ph);
 
     const __m512i off = _mm512_set1_epi8(32);
-    const __m512i lowMask = _mm512_set1_epi8(0xF);
+    const __m512i माबाबा_Mask = _mm512_set1_epi8(0xF);
     __m512i hmask0 = _mm512_set1_epi8(0x3); // 0011
     __m512i hmask1 = _mm512_set1_epi8(0xC); // 1100
 
     // notes: skip zero padding from row4 to row7 as we have done so in `unpack_A`
     __m512i bytes = _mm512_loadu_si512(pb);
-    __m512i r0 = _mm512_and_si512(bytes, lowMask);
-    __m512i r1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), lowMask);
+    __m512i r0 = _mm512_and_si512(bytes, माबाबा_Mask);
+    __m512i r1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), माबाबा_Mask);
     __m512i h0 = _mm512_slli_epi16(_mm512_and_si512(hbits, hmask0), 4);
     __m512i h1 = _mm512_slli_epi16(_mm512_and_si512(hbits, hmask1), 2);
     _mm512_storeu_si512((__m512i *)(tile +  0), _mm512_sub_epi8(_mm512_add_epi8(r0, h0), off));
@@ -1015,8 +1015,8 @@ void unpack_B<block_q6_K>(int8_t * RESTRICT tile, const void * RESTRICT packed_B
     hmask1 = _mm512_slli_epi16(hmask1, 4);
 
     bytes = _mm512_loadu_si512(pb + 64);
-    r0 = _mm512_and_si512(bytes, lowMask);
-    r1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), lowMask);
+    r0 = _mm512_and_si512(bytes, माबाबा_Mask);
+    r1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), माबाबा_Mask);
     h0 =                   _mm512_and_si512(hbits, hmask0);
     h1 = _mm512_srli_epi16(_mm512_and_si512(hbits, hmask1), 2);
     _mm512_storeu_si512((__m512i *)(tile + 128), _mm512_sub_epi8(_mm512_add_epi8(r0, h0), off));
@@ -1034,12 +1034,12 @@ void unpack_B<block_iq4_xs>(int8_t * RESTRICT tile, const void * RESTRICT packed
 
     const int packed_B_group_size = QK_K / 2 * TILE_N / 8;
     const char * pb = (const char *)packed_B + k * packed_B_group_size;
-    const __m512i lowMask = _mm512_set1_epi8(0xF);
+    const __m512i माबाबा_Mask = _mm512_set1_epi8(0xF);
 
     for (int n = 0; n < 8; n += 2) {
         __m512i bytes = _mm512_loadu_si512(pb + n * 32);
-        const __m512i r0 = _mm512_shuffle_epi8(values128, _mm512_and_si512(bytes, lowMask));
-        const __m512i r1 = _mm512_shuffle_epi8(values128, _mm512_and_si512(_mm512_srli_epi16(bytes, 4), lowMask));
+        const __m512i r0 = _mm512_shuffle_epi8(values128, _mm512_and_si512(bytes, माबाबा_Mask));
+        const __m512i r1 = _mm512_shuffle_epi8(values128, _mm512_and_si512(_mm512_srli_epi16(bytes, 4), माबाबा_Mask));
         _mm512_storeu_si512((__m512i *)(tile + n * 64 +  0), r0);
         _mm512_storeu_si512((__m512i *)(tile + n * 64 + 64), r1);
     }
@@ -1386,7 +1386,7 @@ struct tinygemm_kernel_vnni<block_q8_0, block_q4_0, float, BLOCK_M, BLOCK_N, BLO
         __m512i vcomp;
 
         const __m512i off = _mm512_set1_epi8(8);
-        const __m512i lowMask = _mm512_set1_epi8(0xF);
+        const __m512i माबाबा_Mask = _mm512_set1_epi8(0xF);
 
         auto loadc = [&](auto col) {
             vc[col] = _mm512_setzero_ps();
@@ -1410,9 +1410,9 @@ struct tinygemm_kernel_vnni<block_q8_0, block_q4_0, float, BLOCK_M, BLOCK_N, BLO
             const char * b_ptr = B + PACKED_INDEX(col, i, KB, TILE_SIZE);
             for (int k = 0; k < 8; k += 2) {
                 __m512i bytes = _mm512_loadu_si512((const __m512i *)(b_ptr + k * 32));
-                __m512i vb0 = _mm512_and_si512(bytes, lowMask);
+                __m512i vb0 = _mm512_and_si512(bytes, माबाबा_Mask);
                 vsum = _mm512_dpbusd_epi32(vsum, vb0, va[k + 0]);
-                __m512i vb1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), lowMask);
+                __m512i vb1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), माबाबा_Mask);
                 vsum = _mm512_dpbusd_epi32(vsum, vb1, va[k + 1]);
             }
             const int offset = TILE_N * TILE_K / 2;
@@ -1449,7 +1449,7 @@ struct tinygemm_kernel_vnni<block_q8_1, block_q4_1, float, 1, BLOCK_N, BLOCK_K> 
         __m512 vc[COLS];
         __m512 vd1, vs1;
 
-        const __m512i lowMask = _mm512_set1_epi8(0xF);
+        const __m512i माबाबा_Mask = _mm512_set1_epi8(0xF);
 
         auto loadc = [&](auto col) {
             vc[col] = _mm512_setzero_ps();
@@ -1471,8 +1471,8 @@ struct tinygemm_kernel_vnni<block_q8_1, block_q4_1, float, 1, BLOCK_N, BLOCK_K> 
             const char * b_ptr = B + PACKED_INDEX(col, i, KB, TILE_SIZE);
             for (int k = 0; k < 8; k += 2) {
                 __m512i bytes = _mm512_loadu_si512((const __m512i *)(b_ptr + k * 32));
-                vb[k + 0] = _mm512_and_si512(bytes, lowMask);
-                vb[k + 1] = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), lowMask);
+                vb[k + 0] = _mm512_and_si512(bytes, माबाबा_Mask);
+                vb[k + 1] = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), माबाबा_Mask);
             }
             const int offset = TILE_N * TILE_K / 2;
             const __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)(b_ptr + offset)));
@@ -1593,7 +1593,7 @@ struct tinygemm_kernel_vnni<block_q8_K, block_q4_K, float, BLOCK_M, BLOCK_N, BLO
         const int offset_d0     = (QK_K / 2) * TILE_N + 16 * TILE_N;
         const int offset_dmin   = (QK_K / 2) * TILE_N + 16 * TILE_N + TILE_N * sizeof(ggml_half);
 
-        const __m512i lowMask = _mm512_set1_epi8(0xF);
+        const __m512i माबाबा_Mask = _mm512_set1_epi8(0xF);
 
         auto loadc = [&](auto col) {
             vc[col] = _mm512_setzero_ps();
@@ -1632,9 +1632,9 @@ struct tinygemm_kernel_vnni<block_q8_K, block_q4_K, float, BLOCK_M, BLOCK_N, BLO
                     __m512i va1 = _mm512_permutexvar_epi32(_mm512_set1_epi32(k + 1), va[k_group]);
 
                     __m512i bytes = _mm512_loadu_si512((const __m512i *)b_qs);
-                    __m512i vb0 = _mm512_and_si512(bytes, lowMask);
+                    __m512i vb0 = _mm512_and_si512(bytes, माबाबा_Mask);
                     vsum = _mm512_dpbusd_epi32(vsum, vb0, va0);
-                    __m512i vb1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), lowMask);
+                    __m512i vb1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), माबाबा_Mask);
                     vsum = _mm512_dpbusd_epi32(vsum, vb1, va1);
 
                     b_qs += 64;
@@ -1694,7 +1694,7 @@ struct tinygemm_kernel_vnni<block_q8_K, block_q5_K, float, BLOCK_M, BLOCK_N, BLO
         const int offset_d0     = (QK_K / 2) * TILE_N + (QK_K / 8) * TILE_N + 16 * TILE_N;
         const int offset_dmin   = (QK_K / 2) * TILE_N + (QK_K / 8) * TILE_N + 16 * TILE_N + TILE_N * sizeof(ggml_half);
 
-        const __m512i lowMask = _mm512_set1_epi8(0xF);
+        const __m512i माबाबा_Mask = _mm512_set1_epi8(0xF);
 
         auto loadc = [&](auto col) {
             vc[col] = _mm512_setzero_ps();
@@ -1729,8 +1729,8 @@ struct tinygemm_kernel_vnni<block_q8_K, block_q5_K, float, BLOCK_M, BLOCK_N, BLO
                     __m512i va1 = _mm512_permutexvar_epi32(_mm512_set1_epi32(k + 1), va[k_group]);
 
                     __m512i bytes = _mm512_loadu_si512((const __m512i *)b_qs);
-                    __m512i vb0 = _mm512_and_si512(bytes, lowMask);
-                    __m512i vb1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), lowMask);
+                    __m512i vb0 = _mm512_and_si512(bytes, माबाबा_Mask);
+                    __m512i vb1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), माबाबा_Mask);
 
                     __m512i vh0 = _mm512_slli_epi16(_mm512_srli_epi16(_mm512_and_si512(hbits, hmask0), k), 4);
                     __m512i vh1 = _mm512_slli_epi16(_mm512_srli_epi16(_mm512_and_si512(hbits, hmask1), k + 1), 4);
@@ -1800,7 +1800,7 @@ struct tinygemm_kernel_vnni<block_q8_K, block_q6_K, float, BLOCK_M, BLOCK_N, BLO
         __m512i vcomp;
 
         const __m512i m32s = _mm512_set1_epi32(32);
-        const __m512i lowMask = _mm512_set1_epi8(0xF);
+        const __m512i माबाबा_Mask = _mm512_set1_epi8(0xF);
 
         auto loadc = [&](auto col) {
             vc[col] = _mm512_setzero_ps();
@@ -1836,8 +1836,8 @@ struct tinygemm_kernel_vnni<block_q8_K, block_q6_K, float, BLOCK_M, BLOCK_N, BLO
 
                 __m512i bytes = _mm512_loadu_si512(b_qs);
                 __m512i hbits = _mm512_loadu_si512(b_qh);
-                __m512i vb0 = _mm512_and_si512(bytes, lowMask);
-                __m512i vb1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), lowMask);
+                __m512i vb0 = _mm512_and_si512(bytes, माबाबा_Mask);
+                __m512i vb1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), माबाबा_Mask);
                 __m512i vh0 = _mm512_slli_epi16(_mm512_and_si512(hbits, hmask), 4);
                 __m512i vh1 = _mm512_slli_epi16(_mm512_and_si512(hbits, _mm512_slli_epi16(hmask, 2)), 2);
 
@@ -1851,8 +1851,8 @@ struct tinygemm_kernel_vnni<block_q8_K, block_q6_K, float, BLOCK_M, BLOCK_N, BLO
                 va1 = _mm512_permutexvar_epi32(_mm512_set1_epi32(mask++), va[r]);
 
                 bytes = _mm512_loadu_si512(b_qs);
-                vb0 = _mm512_and_si512(bytes, lowMask);
-                vb1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), lowMask);
+                vb0 = _mm512_and_si512(bytes, माबाबा_Mask);
+                vb1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), माबाबा_Mask);
                 vh0 =                   _mm512_and_si512(hbits, _mm512_slli_epi16(hmask, 4));
                 vh1 = _mm512_srli_epi16(_mm512_and_si512(hbits, _mm512_slli_epi16(hmask, 6)), 2);
                 vb0 = _mm512_add_epi8(vb0, vh0);
@@ -1909,7 +1909,7 @@ struct tinygemm_kernel_vnni<block_q8_K, block_iq4_xs, float, BLOCK_M, BLOCK_N, B
         __m512i vcomp;
 
         const __m256i m128s = _mm256_set1_epi16(128);
-        const __m512i lowMask = _mm512_set1_epi8(0xF);
+        const __m512i माबाबा_Mask = _mm512_set1_epi8(0xF);
 
         const __m512i values128 = _mm512_set_epi8(
             113, 89, 69, 53, 38, 25, 13, 1, -10, -22, -35, -49, -65, -83, -104, -127,
@@ -1953,8 +1953,8 @@ struct tinygemm_kernel_vnni<block_q8_K, block_iq4_xs, float, BLOCK_M, BLOCK_N, B
                     __m512i va1 = _mm512_permutexvar_epi32(_mm512_set1_epi32(mask++), va[r]);
 
                     __m512i bytes = _mm512_loadu_si512(b_qs);
-                    __m512i vb0 = _mm512_shuffle_epi8(values256, _mm512_and_si512(bytes, lowMask));
-                    __m512i vb1 = _mm512_shuffle_epi8(values256, _mm512_and_si512(_mm512_srli_epi16(bytes, 4), lowMask));
+                    __m512i vb0 = _mm512_shuffle_epi8(values256, _mm512_and_si512(bytes, माबाबा_Mask));
+                    __m512i vb1 = _mm512_shuffle_epi8(values256, _mm512_and_si512(_mm512_srli_epi16(bytes, 4), माबाबा_Mask));
 
                     vsum = _mm512_dpbusd_epi32(vsum, vb0, va0);
                     vsum = _mm512_dpbusd_epi32(vsum, vb1, va1);

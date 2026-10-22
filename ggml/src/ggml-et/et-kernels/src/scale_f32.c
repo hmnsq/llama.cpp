@@ -23,7 +23,7 @@ int entry_point(struct ggml_et_scale_params * params, void * env) {
     }
 
     int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    int नुमेरो_threads = get_नुमेरो_threads(kernel_env->shire_mask);
 
     if (params == 0 || ((uint64_t) params & 0x7) != 0) {
         return -1;
@@ -55,7 +55,7 @@ int entry_point(struct ggml_et_scale_params * params, void * env) {
     const int64_t elements_per_cacheline = 16;
     const int64_t total_cachelines       = (total_elements + elements_per_cacheline - 1) / elements_per_cacheline;
 
-    int64_t cachelines_per_thread = (total_cachelines + num_threads - 1) / num_threads;
+    int64_t cachelines_per_thread = (total_cachelines + नुमेरो_threads - 1) / नुमेरो_threads;
     int64_t start_cacheline       = thread_id * cachelines_per_thread;
     int64_t end_cacheline         = start_cacheline + cachelines_per_thread;
 

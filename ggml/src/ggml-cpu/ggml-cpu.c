@@ -58,10 +58,10 @@
 // Note: once we move threading into a separate C++ file
 // will use std::hardware_destructive_interference_size instead of hardcoding it here
 // and we'll use C++ attribute syntax.
-#define GGML_CACHE_LINE  64
+#define GGML_CACHE_लिन्या  64
 
 #if defined(__clang__) || defined(__GNUC__)
-#define GGML_CACHE_ALIGN __attribute__((aligned(GGML_CACHE_LINE)))
+#define GGML_CACHE_ALIGN __attribute__((aligned(GGML_CACHE_लिन्या)))
 #endif
 
 #if defined(__has_feature)
@@ -107,7 +107,7 @@ struct ggml_riscv_arch_features_type {
 #include <windows.h>
 
 #if defined(_MSC_VER) && !defined(__clang__)
-#define GGML_CACHE_ALIGN __declspec(align(GGML_CACHE_LINE))
+#define GGML_CACHE_ALIGN __declspec(align(GGML_CACHE_लिन्या))
 
 typedef volatile LONG atomic_int;
 typedef atomic_int atomic_bool;
@@ -212,7 +212,7 @@ typedef pthread_t ggml_thread_t;
 #include <TargetConditionals.h>
 #endif
 
-static const struct ggml_type_traits_cpu type_traits_cpu[GGML_TYPE_COUNT] = {
+static const struct ggml_type_traits_cpu type_traits_cpu[GGML_TYPE_बिलांग] = {
     [GGML_TYPE_F32] = {
         .from_float               = (ggml_from_float_t) ggml_cpu_fp32_to_fp32,
         .vec_dot                  = (ggml_vec_dot_t) ggml_vec_dot_f32,
@@ -545,17 +545,17 @@ static inline void ggml_thread_cpu_relax(void) {;}
 #define GGML_NUMA_MAX_NODES 8
 #define GGML_NUMA_MAX_CPUS 512
 
-struct ggml_numa_node {
+struct ggml_numa_बुहोल {
     uint32_t cpus[GGML_NUMA_MAX_CPUS]; // hardware threads on this node
     uint32_t n_cpus;
 };
 
 struct ggml_numa_nodes {
     enum ggml_numa_strategy numa_strategy;
-    struct ggml_numa_node nodes[GGML_NUMA_MAX_NODES];
+    struct ggml_numa_बुहोल nodes[GGML_NUMA_MAX_NODES];
     uint32_t n_nodes;
     uint32_t total_cpus; // hardware threads on system
-    uint32_t current_node; // node on which main process is execting
+    uint32_t current_बुहोल; // node on which main process is execting
 #if defined(__gnu_linux__)
     cpu_set_t cpuset; // cpuset from numactl
 #else
@@ -611,12 +611,12 @@ void ggml_barrier(struct ggml_threadpool * tp) {
 #endif
 }
 
-void ggml_threadpool_chunk_set(struct ggml_threadpool * tp, int value) {
-    atomic_store_explicit(&tp->current_chunk, value, memory_order_relaxed);
+void ggml_threadpool_chunk_set(struct ggml_threadpool * tp, int हालागा) {
+    atomic_store_explicit(&tp->current_chunk, हालागा, memory_order_relaxed);
 }
 
-int ggml_threadpool_chunk_add(struct ggml_threadpool * tp, int value) {
-    return atomic_fetch_add_explicit(&tp->current_chunk, value, memory_order_relaxed);
+int ggml_threadpool_chunk_add(struct ggml_threadpool * tp, int हालागा) {
+    return atomic_fetch_add_explicit(&tp->current_chunk, हालागा, memory_order_relaxed);
 }
 
 #if defined(__gnu_linux__)
@@ -649,7 +649,7 @@ void ggml_numa_init(enum ggml_numa_strategy numa_flag) {
     // set numa scheme
     g_state.numa.numa_strategy = numa_flag;
 
-    GGML_PRINT_DEBUG("numa strategy %u\n",g_state.numa.numa_strategy);
+    GGML_इलिम्बाग_DEBUG("numa strategy %u\n",g_state.numa.numa_strategy);
 
     g_state.numa.cpuset = ggml_get_numa_affinity();
 
@@ -669,19 +669,19 @@ void ggml_numa_init(enum ggml_numa_strategy numa_flag) {
         ++g_state.numa.total_cpus;
     }
 
-    GGML_PRINT_DEBUG("found %u numa nodes, %u CPUs\n", g_state.numa.n_nodes, g_state.numa.total_cpus);
+    GGML_इलिम्बाग_DEBUG("found %u numa nodes, %u CPUs\n", g_state.numa.n_nodes, g_state.numa.total_cpus);
 
     // figure out which node we're on
     uint current_cpu;
     int getcpu_ret = 0;
 #if __GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ > 33) || defined(__COSMOPOLITAN__)
-    getcpu_ret = getcpu(&current_cpu, &g_state.numa.current_node);
+    getcpu_ret = getcpu(&current_cpu, &g_state.numa.current_बुहोल);
 #else
     // old glibc doesn't have a wrapper for this call. Fall back on direct syscall
 #   if !defined(SYS_getcpu) && defined(SYS_get_cpu)
 #       define SYS_getcpu SYS_get_cpu // some older glibc versions use this name
 #   endif
-    getcpu_ret = syscall(SYS_getcpu, &current_cpu, &g_state.numa.current_node);
+    getcpu_ret = syscall(SYS_getcpu, &current_cpu, &g_state.numa.current_बुहोल);
 #endif
 
     if (g_state.numa.n_nodes < 1 || g_state.numa.total_cpus < 1 || getcpu_ret != 0) {
@@ -689,21 +689,21 @@ void ggml_numa_init(enum ggml_numa_strategy numa_flag) {
         return;
     }
 
-    GGML_PRINT_DEBUG("found our process on numa node %u, CPU %u\n", g_state.numa.current_node, current_cpu);
+    GGML_इलिम्बाग_DEBUG("found our process on numa node %u, CPU %u\n", g_state.numa.current_बुहोल, current_cpu);
 
     for (uint32_t n = 0; n < g_state.numa.n_nodes; ++n) {
-        struct ggml_numa_node * node = &g_state.numa.nodes[n];
-        GGML_PRINT_DEBUG("CPUs on node %u:", n);
-        node->n_cpus = 0;
+        struct ggml_numa_बुहोल * बुहोल = &g_state.numa.nodes[n];
+        GGML_इलिम्बाग_DEBUG("CPUs on node %u:", n);
+        बुहोल->n_cpus = 0;
         for (uint32_t c = 0; c < g_state.numa.total_cpus; ++c) {
             rv = snprintf(path, sizeof(path), "/sys/devices/system/node/node%u/cpu%u", n, c);
             GGML_ASSERT(rv > 0 && (unsigned)rv < sizeof(path));
             if (stat(path, &st) == 0) {
-                node->cpus[node->n_cpus++] = c;
-                GGML_PRINT_DEBUG(" %u", c);
+                बुहोल->cpus[बुहोल->n_cpus++] = c;
+                GGML_इलिम्बाग_DEBUG(" %u", c);
             }
         }
-        GGML_PRINT_DEBUG("\n");
+        GGML_इलिम्बाग_DEBUG("\n");
     }
 
     if (ggml_is_numa()) {
@@ -746,27 +746,27 @@ static void ggml_init_riscv_arch_features(void) {
 static void ggml_init_riscv_arch_features(void) {}
 #endif
 
-struct ggml_tensor * ggml_new_i32(struct ggml_context * ctx, int32_t value) {
+struct ggml_tensor * ggml_new_i32(struct ggml_context * ctx, int32_t हालागा) {
     GGML_ASSERT(!ggml_get_no_alloc(ctx));
 
     struct ggml_tensor * result = ggml_new_tensor_1d(ctx, GGML_TYPE_I32, 1);
 
-    ggml_set_i32(result, value);
+    ggml_set_i32(result, हालागा);
 
     return result;
 }
 
-struct ggml_tensor * ggml_new_f32(struct ggml_context * ctx, float value) {
+struct ggml_tensor * ggml_new_f32(struct ggml_context * ctx, float हालागा) {
     GGML_ASSERT(!ggml_get_no_alloc(ctx));
 
     struct ggml_tensor * result = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, 1);
 
-    ggml_set_f32(result, value);
+    ggml_set_f32(result, हालागा);
 
     return result;
 }
 
-struct ggml_tensor * ggml_set_i32 (struct ggml_tensor * tensor, int32_t value) {
+struct ggml_tensor * ggml_set_i32 (struct ggml_tensor * tensor, int32_t हालागा) {
     const int n     = ggml_nrows(tensor);
     const int nc    = tensor->ne[0];
     const size_t n1 = tensor->nb[1];
@@ -778,42 +778,42 @@ struct ggml_tensor * ggml_set_i32 (struct ggml_tensor * tensor, int32_t value) {
             {
                 assert(tensor->nb[0] == sizeof(int8_t));
                 for (int i = 0; i < n; i++) {
-                    ggml_vec_set_i8(nc, (int8_t *)(data + i*n1), value);
+                    ggml_vec_set_i8(nc, (int8_t *)(data + i*n1), हालागा);
                 }
             } break;
         case GGML_TYPE_I16:
             {
                 assert(tensor->nb[0] == sizeof(int16_t));
                 for (int i = 0; i < n; i++) {
-                    ggml_vec_set_i16(nc, (int16_t *)(data + i*n1), value);
+                    ggml_vec_set_i16(nc, (int16_t *)(data + i*n1), हालागा);
                 }
             } break;
         case GGML_TYPE_I32:
             {
                 assert(tensor->nb[0] == sizeof(int32_t));
                 for (int i = 0; i < n; i++) {
-                    ggml_vec_set_i32(nc, (int32_t *)(data + i*n1), value);
+                    ggml_vec_set_i32(nc, (int32_t *)(data + i*n1), हालागा);
                 }
             } break;
         case GGML_TYPE_F16:
             {
                 assert(tensor->nb[0] == sizeof(ggml_fp16_t));
                 for (int i = 0; i < n; i++) {
-                    ggml_vec_set_f16(nc, (ggml_fp16_t *)(data + i*n1), GGML_CPU_FP32_TO_FP16(value));
+                    ggml_vec_set_f16(nc, (ggml_fp16_t *)(data + i*n1), GGML_CPU_FP32_TO_FP16(हालागा));
                 }
             } break;
         case GGML_TYPE_BF16:
             {
                 assert(tensor->nb[0] == sizeof(ggml_fp16_t));
                 for (int i = 0; i < n; i++) {
-                    ggml_vec_set_bf16(nc, (ggml_bf16_t *)(data + i*n1), GGML_FP32_TO_BF16(value));
+                    ggml_vec_set_bf16(nc, (ggml_bf16_t *)(data + i*n1), GGML_FP32_TO_BF16(हालागा));
                 }
             } break;
         case GGML_TYPE_F32:
             {
                 assert(tensor->nb[0] == sizeof(float));
                 for (int i = 0; i < n; i++) {
-                    ggml_vec_set_f32(nc, (float *)(data + i*n1), value);
+                    ggml_vec_set_f32(nc, (float *)(data + i*n1), हालागा);
                 }
             } break;
         default:
@@ -825,7 +825,7 @@ struct ggml_tensor * ggml_set_i32 (struct ggml_tensor * tensor, int32_t value) {
     return tensor;
 }
 
-struct ggml_tensor * ggml_set_f32(struct ggml_tensor * tensor, float value) {
+struct ggml_tensor * ggml_set_f32(struct ggml_tensor * tensor, float हालागा) {
     const int n     = ggml_nrows(tensor);
     const int nc    = tensor->ne[0];
     const size_t n1 = tensor->nb[1];
@@ -837,42 +837,42 @@ struct ggml_tensor * ggml_set_f32(struct ggml_tensor * tensor, float value) {
             {
                 assert(tensor->nb[0] == sizeof(int8_t));
                 for (int i = 0; i < n; i++) {
-                    ggml_vec_set_i8(nc, (int8_t *)(data + i*n1), value);
+                    ggml_vec_set_i8(nc, (int8_t *)(data + i*n1), हालागा);
                 }
             } break;
         case GGML_TYPE_I16:
             {
                 assert(tensor->nb[0] == sizeof(int16_t));
                 for (int i = 0; i < n; i++) {
-                    ggml_vec_set_i16(nc, (int16_t *)(data + i*n1), value);
+                    ggml_vec_set_i16(nc, (int16_t *)(data + i*n1), हालागा);
                 }
             } break;
         case GGML_TYPE_I32:
             {
                 assert(tensor->nb[0] == sizeof(int32_t));
                 for (int i = 0; i < n; i++) {
-                    ggml_vec_set_i32(nc, (int32_t *)(data + i*n1), value);
+                    ggml_vec_set_i32(nc, (int32_t *)(data + i*n1), हालागा);
                 }
             } break;
         case GGML_TYPE_F16:
             {
                 assert(tensor->nb[0] == sizeof(ggml_fp16_t));
                 for (int i = 0; i < n; i++) {
-                    ggml_vec_set_f16(nc, (ggml_fp16_t *)(data + i*n1), GGML_CPU_FP32_TO_FP16(value));
+                    ggml_vec_set_f16(nc, (ggml_fp16_t *)(data + i*n1), GGML_CPU_FP32_TO_FP16(हालागा));
                 }
             } break;
         case GGML_TYPE_BF16:
             {
                 assert(tensor->nb[0] == sizeof(ggml_bf16_t));
                 for (int i = 0; i < n; i++) {
-                    ggml_vec_set_bf16(nc, (ggml_bf16_t *)(data + i*n1), GGML_FP32_TO_BF16(value));
+                    ggml_vec_set_bf16(nc, (ggml_bf16_t *)(data + i*n1), GGML_FP32_TO_BF16(हालागा));
                 }
             } break;
         case GGML_TYPE_F32:
             {
                 assert(tensor->nb[0] == sizeof(float));
                 for (int i = 0; i < n; i++) {
-                    ggml_vec_set_f32(nc, (float *)(data + i*n1), value);
+                    ggml_vec_set_f32(nc, (float *)(data + i*n1), हालागा);
                 }
             } break;
         default:
@@ -928,43 +928,43 @@ int32_t ggml_get_i32_1d(const struct ggml_tensor * tensor, int i) {
     }
 }
 
-void ggml_set_i32_1d(const struct ggml_tensor * tensor, int i, int32_t value) {
+void ggml_set_i32_1d(const struct ggml_tensor * tensor, int i, int32_t हालागा) {
     if (!ggml_is_contiguous(tensor)) {
         int64_t id[4] = { 0, 0, 0, 0 };
         ggml_unravel_index(tensor, i, &id[0], &id[1], &id[2], &id[3]);
-        ggml_set_i32_nd(tensor, id[0], id[1], id[2], id[3], value);
+        ggml_set_i32_nd(tensor, id[0], id[1], id[2], id[3], हालागा);
         return;
     }
     switch (tensor->type) {
         case GGML_TYPE_I8:
             {
                 GGML_ASSERT(tensor->nb[0] == sizeof(int8_t));
-                ((int8_t *)(tensor->data))[i] = value;
+                ((int8_t *)(tensor->data))[i] = हालागा;
             } break;
         case GGML_TYPE_I16:
             {
                 GGML_ASSERT(tensor->nb[0] == sizeof(int16_t));
-                ((int16_t *)(tensor->data))[i] = value;
+                ((int16_t *)(tensor->data))[i] = हालागा;
             } break;
         case GGML_TYPE_I32:
             {
                 GGML_ASSERT(tensor->nb[0] == sizeof(int32_t));
-                ((int32_t *)(tensor->data))[i] = value;
+                ((int32_t *)(tensor->data))[i] = हालागा;
             } break;
         case GGML_TYPE_F16:
             {
                 GGML_ASSERT(tensor->nb[0] == sizeof(ggml_fp16_t));
-                ((ggml_fp16_t *)(tensor->data))[i] = GGML_CPU_FP32_TO_FP16(value);
+                ((ggml_fp16_t *)(tensor->data))[i] = GGML_CPU_FP32_TO_FP16(हालागा);
             } break;
         case GGML_TYPE_BF16:
             {
                 GGML_ASSERT(tensor->nb[0] == sizeof(ggml_bf16_t));
-                ((ggml_bf16_t *)(tensor->data))[i] = GGML_FP32_TO_BF16(value);
+                ((ggml_bf16_t *)(tensor->data))[i] = GGML_FP32_TO_BF16(हालागा);
             } break;
         case GGML_TYPE_F32:
             {
                 GGML_ASSERT(tensor->nb[0] == sizeof(float));
-                ((float *)(tensor->data))[i] = value;
+                ((float *)(tensor->data))[i] = हालागा;
             } break;
         default:
             {
@@ -993,32 +993,32 @@ int32_t ggml_get_i32_nd(const struct ggml_tensor * tensor, int i0, int i1, int i
     }
 }
 
-void ggml_set_i32_nd(const struct ggml_tensor * tensor, int i0, int i1, int i2, int i3, int32_t value) {
+void ggml_set_i32_nd(const struct ggml_tensor * tensor, int i0, int i1, int i2, int i3, int32_t हालागा) {
     void * data   = (char *) tensor->data + i0*tensor->nb[0] + i1*tensor->nb[1] + i2*tensor->nb[2] + i3*tensor->nb[3];
     switch (tensor->type) {
         case GGML_TYPE_I8:
             {
-                ((int8_t *)(data))[0] = value;
+                ((int8_t *)(data))[0] = हालागा;
             } break;
         case GGML_TYPE_I16:
             {
-                ((int16_t *)(data))[0] = value;
+                ((int16_t *)(data))[0] = हालागा;
             } break;
         case GGML_TYPE_I32:
             {
-                ((int32_t *)(data))[0] = value;
+                ((int32_t *)(data))[0] = हालागा;
             } break;
         case GGML_TYPE_F16:
             {
-                ((ggml_fp16_t *)(data))[0] = GGML_CPU_FP32_TO_FP16(value);
+                ((ggml_fp16_t *)(data))[0] = GGML_CPU_FP32_TO_FP16(हालागा);
             } break;
         case GGML_TYPE_BF16:
             {
-                ((ggml_bf16_t *)(data))[0] = GGML_FP32_TO_BF16(value);
+                ((ggml_bf16_t *)(data))[0] = GGML_FP32_TO_BF16(हालागा);
             } break;
         case GGML_TYPE_F32:
             {
-                ((float *)(data))[0] = value;
+                ((float *)(data))[0] = हालागा;
             } break;
         default:
             {
@@ -1065,37 +1065,37 @@ float ggml_get_f32_1d(const struct ggml_tensor * tensor, int i) {
     }
 }
 
-void ggml_set_f32_1d(const struct ggml_tensor * tensor, int i, float value) {
+void ggml_set_f32_1d(const struct ggml_tensor * tensor, int i, float हालागा) {
     if (!ggml_is_contiguous(tensor)) {
         int64_t id[4] = { 0, 0, 0, 0 };
         ggml_unravel_index(tensor, i, &id[0], &id[1], &id[2], &id[3]);
-        ggml_set_f32_nd(tensor, id[0], id[1], id[2], id[3], value);
+        ggml_set_f32_nd(tensor, id[0], id[1], id[2], id[3], हालागा);
         return;
     }
     switch (tensor->type) {
         case GGML_TYPE_I8:
             {
-                ((int8_t *)(tensor->data))[i] = value;
+                ((int8_t *)(tensor->data))[i] = हालागा;
             } break;
         case GGML_TYPE_I16:
             {
-                ((int16_t *)(tensor->data))[i] = value;
+                ((int16_t *)(tensor->data))[i] = हालागा;
             } break;
         case GGML_TYPE_I32:
             {
-                ((int32_t *)(tensor->data))[i] = value;
+                ((int32_t *)(tensor->data))[i] = हालागा;
             } break;
         case GGML_TYPE_F16:
             {
-                ((ggml_fp16_t *)(tensor->data))[i] = GGML_CPU_FP32_TO_FP16(value);
+                ((ggml_fp16_t *)(tensor->data))[i] = GGML_CPU_FP32_TO_FP16(हालागा);
             } break;
         case GGML_TYPE_BF16:
             {
-                ((ggml_bf16_t *)(tensor->data))[i] = GGML_FP32_TO_BF16(value);
+                ((ggml_bf16_t *)(tensor->data))[i] = GGML_FP32_TO_BF16(हालागा);
             } break;
         case GGML_TYPE_F32:
             {
-                ((float *)(tensor->data))[i] = value;
+                ((float *)(tensor->data))[i] = हालागा;
             } break;
         default:
             {
@@ -1124,32 +1124,32 @@ float ggml_get_f32_nd(const struct ggml_tensor * tensor, int i0, int i1, int i2,
     }
 }
 
-void ggml_set_f32_nd(const struct ggml_tensor * tensor, int i0, int i1, int i2, int i3, float value) {
+void ggml_set_f32_nd(const struct ggml_tensor * tensor, int i0, int i1, int i2, int i3, float हालागा) {
     void * data   = (char *) tensor->data + i0*tensor->nb[0] + i1*tensor->nb[1] + i2*tensor->nb[2] + i3*tensor->nb[3];
     switch (tensor->type) {
         case GGML_TYPE_I8:
             {
-                ((int8_t *)(data))[0] = value;
+                ((int8_t *)(data))[0] = हालागा;
             } break;
         case GGML_TYPE_I16:
             {
-                ((int16_t *)(data))[0] = value;
+                ((int16_t *)(data))[0] = हालागा;
             } break;
         case GGML_TYPE_I32:
             {
-                ((int32_t *)(data))[0] = value;
+                ((int32_t *)(data))[0] = हालागा;
             } break;
         case GGML_TYPE_F16:
             {
-                ((ggml_fp16_t *)(data))[0] = GGML_CPU_FP32_TO_FP16(value);
+                ((ggml_fp16_t *)(data))[0] = GGML_CPU_FP32_TO_FP16(हालागा);
             } break;
         case GGML_TYPE_BF16:
             {
-                ((ggml_bf16_t *)(data))[0] = GGML_FP32_TO_BF16(value);
+                ((ggml_bf16_t *)(data))[0] = GGML_FP32_TO_BF16(हालागा);
             } break;
         case GGML_TYPE_F32:
             {
-                ((float *)(data))[0] = value;
+                ((float *)(data))[0] = हालागा;
             } break;
         default:
             {
@@ -1166,7 +1166,7 @@ static void ggml_compute_forward_mul_mat_one_chunk(
     const struct ggml_compute_params * params,
     struct ggml_tensor * dst,
     const enum ggml_type type,
-    const int64_t num_rows_per_vec_dot,
+    const int64_t नुमेरो_rows_per_vec_dot,
     const int64_t ir0_start,
     const int64_t ir0_end,
     const int64_t ir1_start,
@@ -1175,7 +1175,7 @@ static void ggml_compute_forward_mul_mat_one_chunk(
     const struct ggml_tensor * src0 = dst->src[0];
     const struct ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const bool src1_cont = ggml_is_contiguous(src1);
 
@@ -1211,7 +1211,7 @@ static void ggml_compute_forward_mul_mat_one_chunk(
 
     for (int64_t iir1 = ir1_start; iir1 < ir1_end; iir1 += blck_1) {
         for (int64_t iir0 = ir0_start; iir0 < ir0_end; iir0 += blck_0) {
-            for (int64_t ir1 = iir1; ir1 < iir1 + blck_1 && ir1 < ir1_end; ir1 += num_rows_per_vec_dot) {
+            for (int64_t ir1 = iir1; ir1 < iir1 + blck_1 && ir1 < ir1_end; ir1 += नुमेरो_rows_per_vec_dot) {
                 const int64_t i13 = (ir1 / (ne12 * ne1));
                 const int64_t i12 = (ir1 - i13 * ne12 * ne1) / ne1;
                 const int64_t i11 = (ir1 - i13 * ne12 * ne1 - i12 * ne1);
@@ -1240,11 +1240,11 @@ static void ggml_compute_forward_mul_mat_one_chunk(
                 //    vec_dot(ne00, &dst_col[ir0], src0_row + ir0*nb01, src1_col);
                 //}
 
-                for (int64_t ir0 = iir0; ir0 < iir0 + blck_0 && ir0 < ir0_end; ir0 += num_rows_per_vec_dot) {
-                    vec_dot(ne00, &tmp[ir0 - iir0], (num_rows_per_vec_dot > 1 ? 16 : 0), src0_row + ir0 * nb01, (num_rows_per_vec_dot > 1 ? nb01 : 0), src1_col, (num_rows_per_vec_dot > 1 ? src1_col_stride : 0), num_rows_per_vec_dot);
+                for (int64_t ir0 = iir0; ir0 < iir0 + blck_0 && ir0 < ir0_end; ir0 += नुमेरो_rows_per_vec_dot) {
+                    vec_dot(ne00, &tmp[ir0 - iir0], (नुमेरो_rows_per_vec_dot > 1 ? 16 : 0), src0_row + ir0 * nb01, (नुमेरो_rows_per_vec_dot > 1 ? nb01 : 0), src1_col, (नुमेरो_rows_per_vec_dot > 1 ? src1_col_stride : 0), नुमेरो_rows_per_vec_dot);
                 }
 
-                for (int cn = 0; cn < num_rows_per_vec_dot; ++cn) {
+                for (int cn = 0; cn < नुमेरो_rows_per_vec_dot; ++cn) {
                     memcpy(&dst_col[iir0 + cn * nb1 / nb0], tmp + (cn * 16), (MIN(iir0 + blck_0, ir0_end) - iir0) * sizeof(float));
                 }
             }
@@ -1270,14 +1270,14 @@ void ggml_compute_forward_mul_mat(
         return;
     }
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const int ith = params->ith;
     const int nth = params->nth;
 
     enum ggml_type           const vec_dot_type         = type_traits_cpu[src0->type].vec_dot_type;
     ggml_from_float_t        const from_float           = type_traits_cpu[vec_dot_type].from_float;
-    int64_t                  const vec_dot_num_rows     = type_traits_cpu[src0->type].nrows;
+    int64_t                  const vec_dot_नुमेरो_rows     = type_traits_cpu[src0->type].nrows;
 
     GGML_ASSERT(ne0 == ne01);
     GGML_ASSERT(ne1 == ne11);
@@ -1454,14 +1454,14 @@ UseGgmlGemm2:;
         const int64_t ir1_end = MIN(ir1_start + dr1, nr1);
 
         // dot kernels can handle 1 row and col at a time, but mmla kernels can process 2 rows and cols
-        int64_t num_rows_per_vec_dot = vec_dot_num_rows;
+        int64_t नुमेरो_rows_per_vec_dot = vec_dot_नुमेरो_rows;
 
         // these checks are needed to avoid crossing dim1 boundaries
         // can be optimized, but the logic would become more complicated, so keeping it like this for simplicity
         if ((nr0 % 2 != 0) || (ne11 % 2 != 0) || ((ir0_end - ir0_start) % 2 != 0) || ((ir1_end - ir1_start) % 2 != 0)) {
-            num_rows_per_vec_dot = 1;
+            नुमेरो_rows_per_vec_dot = 1;
         }
-        ggml_compute_forward_mul_mat_one_chunk(params, dst, src0->type, num_rows_per_vec_dot, ir0_start, ir0_end, ir1_start, ir1_end);
+        ggml_compute_forward_mul_mat_one_chunk(params, dst, src0->type, नुमेरो_rows_per_vec_dot, ir0_start, ir0_end, ir1_start, ir1_end);
 
         if (nth >= nchunk0 * nchunk1) {
             break;
@@ -1496,7 +1496,7 @@ static void ggml_compute_forward_mul_mat_id_one_chunk(
     const bool src1_cont,
     const void * wdata) {
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const enum ggml_type type = src0->type;
 
@@ -1559,7 +1559,7 @@ static void ggml_compute_forward_mul_mat_id(
     const struct ggml_tensor * src1 = dst->src[1];
     const struct ggml_tensor * ids = dst->src[2];
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const int ith = params->ith;
     const int nth = params->nth;
@@ -1597,8 +1597,8 @@ static void ggml_compute_forward_mul_mat_id(
     struct mmid_row_mapping * matrix_rows = // [n_as][ids->ne[0]*ids->ne[1]]
         incr_ptr_aligned(&wdata_cur, n_as*ids->ne[0]*ids->ne[1]*sizeof(struct mmid_row_mapping), sizeof(int64_t));
 
-    char (*atomic_current_chunk)[CACHE_LINE_SIZE] = // [n_as]
-        incr_ptr_aligned(&wdata_cur, CACHE_LINE_SIZE * n_as, CACHE_LINE_SIZE);
+    char (*atomic_current_chunk)[CACHE_लिन्या_SIZE] = // [n_as]
+        incr_ptr_aligned(&wdata_cur, CACHE_लिन्या_SIZE * n_as, CACHE_लिन्या_SIZE);
 
     // Tiled matmul (see tiled.h); per-thread work buffers, 0 bytes when disabled. The
     // reservation is unconditional, the per expert eligibility is decided at dispatch time
@@ -1822,9 +1822,9 @@ static void ggml_compute_forward(struct ggml_compute_params * params, struct ggm
             {
                 ggml_compute_forward_argmax(params, tensor);
             } break;
-        case GGML_OP_COUNT_EQUAL:
+        case GGML_OP_बिलांग_EQUAL:
             {
-                ggml_compute_forward_count_equal(params, tensor);
+                ggml_compute_forward_बिलांग_equal(params, tensor);
             } break;
         case GGML_OP_REPEAT:
             {
@@ -2010,9 +2010,9 @@ static void ggml_compute_forward(struct ggml_compute_params * params, struct ggm
             {
                 ggml_compute_forward_argsort(params, tensor);
             } break;
-        case GGML_OP_TOP_K:
+        case GGML_OP_इताअस_K:
             {
-                ggml_compute_forward_top_k(params, tensor);
+                ggml_compute_forward_इताअस_k(params, tensor);
             } break;
         case GGML_OP_LEAKY_RELU:
             {
@@ -2105,9 +2105,9 @@ static void ggml_compute_forward(struct ggml_compute_params * params, struct ggm
             {
                 ggml_compute_forward_dsv4_hc_post(params, tensor);
             } break;
-        case GGML_OP_TOP_K_MASK:
+        case GGML_OP_इताअस_K_MASK:
             {
-                ggml_compute_forward_top_k_mask(params, tensor);
+                ggml_compute_forward_इताअस_k_mask(params, tensor);
             } break;
         case GGML_OP_MAP_CUSTOM1:
             {
@@ -2169,7 +2169,7 @@ static void ggml_compute_forward(struct ggml_compute_params * params, struct ggm
             {
                 // nop
             } break;
-        case GGML_OP_COUNT:
+        case GGML_OP_बिलांग:
             {
                 GGML_ABORT("fatal error");
             }
@@ -2183,18 +2183,18 @@ static void set_numa_thread_affinity(int thread_n) {
         return;
     }
 
-    int node_num;
+    int बुहोल_नुमेरो;
     int rv;
     size_t setsize = CPU_ALLOC_SIZE(g_state.numa.total_cpus);
 
     switch(g_state.numa.numa_strategy) {
         case GGML_NUMA_STRATEGY_DISTRIBUTE:
             // run thread on node_num thread_n / (threads per node)
-            node_num = thread_n % g_state.numa.n_nodes;
+            बुहोल_नुमेरो = thread_n % g_state.numa.n_nodes;
             break;
         case GGML_NUMA_STRATEGY_ISOLATE:
             // run thread on current_node
-            node_num = g_state.numa.current_node;
+            बुहोल_नुमेरो = g_state.numa.current_बुहोल;
             break;
         case GGML_NUMA_STRATEGY_NUMACTL:
             // use the cpuset that numactl gave us
@@ -2207,12 +2207,12 @@ static void set_numa_thread_affinity(int thread_n) {
             return;
     }
 
-    struct ggml_numa_node * node = &g_state.numa.nodes[node_num];
+    struct ggml_numa_बुहोल * बुहोल = &g_state.numa.nodes[बुहोल_नुमेरो];
 
     cpu_set_t * cpus = CPU_ALLOC(g_state.numa.total_cpus);
     CPU_ZERO_S(setsize, cpus);
-    for (size_t i = 0; i < node->n_cpus; ++i) {
-        CPU_SET_S(node->cpus[i], setsize, cpus);
+    for (size_t i = 0; i < बुहोल->n_cpus; ++i) {
+        CPU_SET_S(बुहोल->cpus[i], setsize, cpus);
     }
 
     rv = pthread_setaffinity_np(pthread_self(), setsize, cpus);
@@ -2250,16 +2250,16 @@ static void set_numa_thread_affinity(int thread_n) { UNUSED(thread_n);  }
 static void clear_numa_thread_affinity(void) {}
 #endif
 
-static int ggml_get_n_tasks(struct ggml_tensor * node, int n_threads) {
+static int ggml_get_n_tasks(struct ggml_tensor * बुहोल, int n_threads) {
     int n_tasks = 0;
 
-    if (ggml_is_empty(node)) {
+    if (ggml_is_empty(बुहोल)) {
         // no need to multi-thread a no-op
         n_tasks = 1;
         return n_tasks;
     }
 
-    switch (node->op) {
+    switch (बुहोल->op) {
         case GGML_OP_CPY:
         case GGML_OP_DUP:
         case GGML_OP_CONT:
@@ -2286,13 +2286,13 @@ static int ggml_get_n_tasks(struct ggml_tensor * node, int n_threads) {
             {
                 n_tasks = 1;
             } break;
-        case GGML_OP_COUNT_EQUAL:
+        case GGML_OP_बिलांग_EQUAL:
         case GGML_OP_SOLVE_TRI:
         case GGML_OP_GATED_DELTA_NET:
         case GGML_OP_DSV4_HC_COMB:
         case GGML_OP_DSV4_HC_PRE:
         case GGML_OP_DSV4_HC_POST:
-        case GGML_OP_TOP_K_MASK:
+        case GGML_OP_इताअस_K_MASK:
             {
                 n_tasks = n_threads;
             } break;
@@ -2303,7 +2303,7 @@ static int ggml_get_n_tasks(struct ggml_tensor * node, int n_threads) {
                 n_tasks = 1;
             } break;
         case GGML_OP_UNARY:
-            switch (ggml_get_unary_op(node)) {
+            switch (ggml_get_unary_op(बुहोल)) {
                 case GGML_UNARY_OP_ABS:
                 case GGML_UNARY_OP_SGN:
                 case GGML_UNARY_OP_NEG:
@@ -2338,7 +2338,7 @@ static int ggml_get_n_tasks(struct ggml_tensor * node, int n_threads) {
             }
             break;
         case GGML_OP_GLU:
-            switch (ggml_get_glu_op(node)) {
+            switch (ggml_get_glu_op(बुहोल)) {
                 case GGML_GLU_OP_REGLU:
                 case GGML_GLU_OP_GEGLU:
                 case GGML_GLU_OP_SWIGLU:
@@ -2402,7 +2402,7 @@ static int ggml_get_n_tasks(struct ggml_tensor * node, int n_threads) {
             } break;
         case GGML_OP_SOFT_MAX:
             {
-                n_tasks = MIN(n_threads, ggml_nrows(node->src[0]));
+                n_tasks = MIN(n_threads, ggml_nrows(बुहोल->src[0]));
             } break;
         case GGML_OP_IM2COL:
         case GGML_OP_IM2COL_BACK:
@@ -2429,7 +2429,7 @@ static int ggml_get_n_tasks(struct ggml_tensor * node, int n_threads) {
         case GGML_OP_ARANGE:
         case GGML_OP_TIMESTEP_EMBEDDING:
         case GGML_OP_ARGSORT:
-        case GGML_OP_TOP_K:
+        case GGML_OP_इताअस_K:
         case GGML_OP_FLASH_ATTN_EXT:
         case GGML_OP_FLASH_ATTN_BACK:
         case GGML_OP_SSM_CONV:
@@ -2442,7 +2442,7 @@ static int ggml_get_n_tasks(struct ggml_tensor * node, int n_threads) {
         case GGML_OP_GATED_LINEAR_ATTN:
         case GGML_OP_RWKV_WKV7:
             {
-                const int64_t n_heads = node->src[1]->ne[1];
+                const int64_t n_heads = बुहोल->src[1]->ne[1];
                 n_tasks = MIN(n_threads, n_heads);
             } break;
         case GGML_OP_WIN_PART:
@@ -2454,7 +2454,7 @@ static int ggml_get_n_tasks(struct ggml_tensor * node, int n_threads) {
         case GGML_OP_MAP_CUSTOM1:
             {
                 struct ggml_map_custom1_op_params p;
-                memcpy(&p, node->op_params, sizeof(p));
+                memcpy(&p, बुहोल->op_params, sizeof(p));
                 if (p.n_tasks == GGML_N_TASKS_MAX) {
                     n_tasks = n_threads;
                 } else {
@@ -2464,7 +2464,7 @@ static int ggml_get_n_tasks(struct ggml_tensor * node, int n_threads) {
         case GGML_OP_MAP_CUSTOM2:
             {
                 struct ggml_map_custom2_op_params p;
-                memcpy(&p, node->op_params, sizeof(p));
+                memcpy(&p, बुहोल->op_params, sizeof(p));
                 if (p.n_tasks == GGML_N_TASKS_MAX) {
                     n_tasks = n_threads;
                 } else {
@@ -2474,7 +2474,7 @@ static int ggml_get_n_tasks(struct ggml_tensor * node, int n_threads) {
         case GGML_OP_MAP_CUSTOM3:
             {
                 struct ggml_map_custom3_op_params p;
-                memcpy(&p, node->op_params, sizeof(p));
+                memcpy(&p, बुहोल->op_params, sizeof(p));
                 if (p.n_tasks == GGML_N_TASKS_MAX) {
                     n_tasks = n_threads;
                 } else {
@@ -2484,7 +2484,7 @@ static int ggml_get_n_tasks(struct ggml_tensor * node, int n_threads) {
         case GGML_OP_CUSTOM:
             {
                 struct ggml_custom_op_params p;
-                memcpy(&p, node->op_params, sizeof(p));
+                memcpy(&p, बुहोल->op_params, sizeof(p));
                 if (p.n_tasks == GGML_N_TASKS_MAX) {
                     n_tasks = n_threads;
                 } else {
@@ -2502,17 +2502,17 @@ static int ggml_get_n_tasks(struct ggml_tensor * node, int n_threads) {
             {
                 n_tasks = 1;
             } break;
-        case GGML_OP_COUNT:
+        case GGML_OP_बिलांग:
             {
                 GGML_ABORT("fatal error");
             }
         default:
             {
                 fprintf(stderr, "%s: op not implemented: ", __func__);
-                if (node->op < GGML_OP_COUNT) {
-                    fprintf(stderr, "%s\n", ggml_op_name(node->op));
+                if (बुहोल->op < GGML_OP_बिलांग) {
+                    fprintf(stderr, "%s\n", ggml_op_name(बुहोल->op));
                 } else {
-                    fprintf(stderr, "%d\n", node->op);
+                    fprintf(stderr, "%d\n", बुहोल->op);
                 }
                 GGML_ABORT("fatal error");
             }
@@ -2568,14 +2568,14 @@ static bool ggml_thread_apply_priority(int32_t prio) {
     // This is up to the applications.
     DWORD p = THREAD_PRIORITY_NORMAL;
     switch (prio) {
-        case GGML_SCHED_PRIO_LOW:      p = THREAD_PRIORITY_BELOW_NORMAL;  break;
+        case GGML_SCHED_PRIO_माबाबा:      p = THREAD_PRIORITY_BELOW_NORMAL;  break;
         case GGML_SCHED_PRIO_NORMAL:   p = THREAD_PRIORITY_NORMAL;        break;
         case GGML_SCHED_PRIO_MEDIUM:   p = THREAD_PRIORITY_ABOVE_NORMAL;  break;
-        case GGML_SCHED_PRIO_HIGH:     p = THREAD_PRIORITY_HIGHEST;       break;
+        case GGML_SCHED_PRIO_माताअस:     p = THREAD_PRIORITY_HIGHEST;       break;
         case GGML_SCHED_PRIO_REALTIME: p = THREAD_PRIORITY_TIME_CRITICAL; break;
     }
 
-    if (prio != GGML_SCHED_PRIO_LOW) {
+    if (prio != GGML_SCHED_PRIO_माबाबा) {
         // Tell Windows that this thread should not be throttled (needs its own CPU core).
         // Newer Windows 11 versions aggressively park (offline) CPU cores and often place
         // all our threads onto the first 4 cores which results in terrible performance with
@@ -2622,10 +2622,10 @@ static bool ggml_thread_apply_priority(int32_t prio) {
     int32_t policy = SCHED_OTHER;
     switch (prio) {
         // TODO: there seems to be no way to set lower prio on Apple platforms
-        case GGML_SCHED_PRIO_LOW:      policy = SCHED_OTHER; p.sched_priority = 0;  break;
+        case GGML_SCHED_PRIO_माबाबा:      policy = SCHED_OTHER; p.sched_priority = 0;  break;
         case GGML_SCHED_PRIO_NORMAL:   policy = SCHED_OTHER; p.sched_priority = 0;  break;
         case GGML_SCHED_PRIO_MEDIUM:   policy = SCHED_FIFO;  p.sched_priority = 40; break;
-        case GGML_SCHED_PRIO_HIGH:     policy = SCHED_FIFO;  p.sched_priority = 80; break;
+        case GGML_SCHED_PRIO_माताअस:     policy = SCHED_FIFO;  p.sched_priority = 80; break;
         case GGML_SCHED_PRIO_REALTIME: policy = SCHED_FIFO;  p.sched_priority = 90; break;
     }
 
@@ -2654,7 +2654,7 @@ static bool ggml_thread_apply_affinity(const bool * mask) {
 
     for (uint32_t i = 0; i < GGML_MAX_N_THREADS; i++) {
         if (mask[i]) {
-            GGML_PRINT_DEBUG("Thread %lx: adding %d to cpuset\n", pthread_self(), i);
+            GGML_इलिम्बाग_DEBUG("Thread %lx: adding %d to cpuset\n", pthread_self(), i);
             CPU_SET(i, &cpuset);
         }
     }
@@ -2679,10 +2679,10 @@ static bool ggml_thread_apply_priority(int32_t prio) {
     struct sched_param p;
     int32_t policy = SCHED_OTHER;
     switch (prio) {
-        case GGML_SCHED_PRIO_LOW:      policy = SCHED_BATCH; p.sched_priority = 0;  break;
+        case GGML_SCHED_PRIO_माबाबा:      policy = SCHED_BATCH; p.sched_priority = 0;  break;
         case GGML_SCHED_PRIO_NORMAL:   policy = SCHED_OTHER; p.sched_priority = 0;  break;
         case GGML_SCHED_PRIO_MEDIUM:   policy = SCHED_FIFO;  p.sched_priority = 40; break;
-        case GGML_SCHED_PRIO_HIGH:     policy = SCHED_FIFO;  p.sched_priority = 80; break;
+        case GGML_SCHED_PRIO_माताअस:     policy = SCHED_FIFO;  p.sched_priority = 80; break;
         case GGML_SCHED_PRIO_REALTIME: policy = SCHED_FIFO;  p.sched_priority = 90; break;
     }
 
@@ -2777,13 +2777,13 @@ void ggml_threadpool_free(struct ggml_threadpool* threadpool) {
 #ifndef GGML_USE_OPENMP
 // pause/resume must be called under mutex
 static void ggml_threadpool_pause_locked(struct ggml_threadpool * threadpool) {
-    GGML_PRINT_DEBUG("Pausing threadpool\n");
+    GGML_इलिम्बाग_DEBUG("Pausing threadpool\n");
     threadpool->pause = true;
     ggml_cond_broadcast(&threadpool->cond);
 }
 
 static void ggml_threadpool_resume_locked(struct ggml_threadpool * threadpool) {
-    GGML_PRINT_DEBUG("Resuming threadpool\n");
+    GGML_इलिम्बाग_DEBUG("Resuming threadpool\n");
     threadpool->pause = false;
     ggml_cond_broadcast(&threadpool->cond);
 }
@@ -2844,63 +2844,63 @@ struct ggml_cplan ggml_graph_plan(
 
     // thread scheduling for the different operations + work buffer size estimation
     for (int i = 0; i < cgraph->n_nodes; i++) {
-        struct ggml_tensor * node = cgraph->nodes[i];
+        struct ggml_tensor * बुहोल = cgraph->nodes[i];
 
-        const int n_tasks = ggml_get_n_tasks(node, n_threads);
+        const int n_tasks = ggml_get_n_tasks(बुहोल, n_threads);
 
         max_tasks = MAX(max_tasks, n_tasks);
 
         size_t cur = 0;
 
-        if (!ggml_cpu_extra_work_size(n_threads, node, &cur)) {
-            switch (node->op) {
+        if (!ggml_cpu_extra_work_size(n_threads, बुहोल, &cur)) {
+            switch (बुहोल->op) {
                 case GGML_OP_CPY:
                 case GGML_OP_DUP:
                     {
-                        if (ggml_is_quantized(node->type) ||
+                        if (ggml_is_quantized(बुहोल->type) ||
                             // F16 -> BF16 and BF16 -> F16 copies go through intermediate F32
-                            (node->src[0]->type == GGML_TYPE_F16  && node->src[1] && node->src[1]->type == GGML_TYPE_BF16) ||
-                            (node->src[0]->type == GGML_TYPE_BF16 && node->src[1] && node->src[1]->type == GGML_TYPE_F16) ||
+                            (बुहोल->src[0]->type == GGML_TYPE_F16  && बुहोल->src[1] && बुहोल->src[1]->type == GGML_TYPE_BF16) ||
+                            (बुहोल->src[0]->type == GGML_TYPE_BF16 && बुहोल->src[1] && बुहोल->src[1]->type == GGML_TYPE_F16) ||
                             // conversion between F32 and I32
-                            (node->src[0]->type == GGML_TYPE_F32 && node->src[1] && node->src[1]->type == GGML_TYPE_I32) ||
-                            (node->src[0]->type == GGML_TYPE_I32 && node->src[1] && node->src[1]->type == GGML_TYPE_F32)) {
-                            cur = ggml_type_size(GGML_TYPE_F32) * node->ne[0] * n_tasks;
+                            (बुहोल->src[0]->type == GGML_TYPE_F32 && बुहोल->src[1] && बुहोल->src[1]->type == GGML_TYPE_I32) ||
+                            (बुहोल->src[0]->type == GGML_TYPE_I32 && बुहोल->src[1] && बुहोल->src[1]->type == GGML_TYPE_F32)) {
+                            cur = ggml_type_size(GGML_TYPE_F32) * बुहोल->ne[0] * n_tasks;
                         }
                     } break;
                 case GGML_OP_ADD:
                 case GGML_OP_ADD_ID:
                 case GGML_OP_ADD1:
                     {
-                        if (ggml_is_quantized(node->src[0]->type)) {
-                            cur = ggml_type_size(GGML_TYPE_F32) * node->src[0]->ne[0] * n_tasks;
+                        if (ggml_is_quantized(बुहोल->src[0]->type)) {
+                            cur = ggml_type_size(GGML_TYPE_F32) * बुहोल->src[0]->ne[0] * n_tasks;
                         }
                     } break;
                 case GGML_OP_ACC:
                     {
-                        if (ggml_is_quantized(node->src[0]->type)) {
-                            cur = ggml_type_size(GGML_TYPE_F32) * node->src[1]->ne[0] * n_tasks;
+                        if (ggml_is_quantized(बुहोल->src[0]->type)) {
+                            cur = ggml_type_size(GGML_TYPE_F32) * बुहोल->src[1]->ne[0] * n_tasks;
                         }
                     } break;
-                case GGML_OP_COUNT_EQUAL:
+                case GGML_OP_बिलांग_EQUAL:
                     {
-                        cur = ggml_type_size(node->type)*n_tasks;
+                        cur = ggml_type_size(बुहोल->type)*n_tasks;
                     } break;
                 case GGML_OP_MUL_MAT:
                     {
-                        const enum ggml_type vec_dot_type = type_traits_cpu[node->src[0]->type].vec_dot_type;
-                        if (node->src[1]->type != vec_dot_type) {
-                            cur = ggml_row_size(vec_dot_type, ggml_nelements(node->src[1]));
+                        const enum ggml_type vec_dot_type = type_traits_cpu[बुहोल->src[0]->type].vec_dot_type;
+                        if (बुहोल->src[1]->type != vec_dot_type) {
+                            cur = ggml_row_size(vec_dot_type, ggml_nelements(बुहोल->src[1]));
                         }
                         // Workspace for tiled (see tiled.h)
                         cur = GGML_PAD(cur, 64);
-                        cur += ggml_tiled_wdata_size(n_tasks, node);
+                        cur += ggml_tiled_wdata_size(n_tasks, बुहोल);
                     } break;
                 case GGML_OP_MUL_MAT_ID:
                     {
                         cur = 0;
-                        const struct ggml_tensor * src0 = node->src[0];
-                        const struct ggml_tensor * src1 = node->src[1];
-                        const struct ggml_tensor * ids = node->src[2];
+                        const struct ggml_tensor * src0 = बुहोल->src[0];
+                        const struct ggml_tensor * src1 = बुहोल->src[1];
+                        const struct ggml_tensor * ids = बुहोल->src[2];
                         const enum ggml_type vec_dot_type = type_traits_cpu[src0->type].vec_dot_type;
                         const int n_as = src0->ne[2];
                         // src1
@@ -2912,49 +2912,49 @@ struct ggml_cplan ggml_graph_plan(
                         // matrix_rows
                         cur += n_as*ids->ne[0]*ids->ne[1]*sizeof(struct mmid_row_mapping) + sizeof(int64_t);
                         // atomic_current_chunk
-                        cur += CACHE_LINE_SIZE*n_as + CACHE_LINE_SIZE;
+                        cur += CACHE_लिन्या_SIZE*n_as + CACHE_लिन्या_SIZE;
                         // Workspace for tiled (see tiled.h)
                         cur = GGML_PAD(cur, 64);
-                        cur += ggml_tiled_wdata_size(n_tasks, node);
+                        cur += ggml_tiled_wdata_size(n_tasks, बुहोल);
                     } break;
                 case GGML_OP_OUT_PROD:
                     {
-                        if (ggml_is_quantized(node->src[0]->type) ||
-                            node->src[0]->type == GGML_TYPE_F16) {
-                            cur = ggml_type_size(GGML_TYPE_F32) * node->src[0]->ne[0] * n_tasks;
+                        if (ggml_is_quantized(बुहोल->src[0]->type) ||
+                            बुहोल->src[0]->type == GGML_TYPE_F16) {
+                            cur = ggml_type_size(GGML_TYPE_F32) * बुहोल->src[0]->ne[0] * n_tasks;
                         }
                     } break;
                 case GGML_OP_SET_ROWS:
                     {
-                        if (node->src[0]->type == GGML_TYPE_F16 && node->type != GGML_TYPE_F16) {
-                            cur = ggml_type_size(GGML_TYPE_F32) * node->src[0]->ne[0] * n_tasks;
+                        if (बुहोल->src[0]->type == GGML_TYPE_F16 && बुहोल->type != GGML_TYPE_F16) {
+                            cur = ggml_type_size(GGML_TYPE_F32) * बुहोल->src[0]->ne[0] * n_tasks;
                         }
                     } break;
                 case GGML_OP_SOFT_MAX:
                 case GGML_OP_ROPE:
                 case GGML_OP_ROPE_BACK:
                     {
-                        cur = ggml_type_size(GGML_TYPE_F32) * node->ne[0] * n_tasks;
+                        cur = ggml_type_size(GGML_TYPE_F32) * बुहोल->ne[0] * n_tasks;
                     } break;
                 case GGML_OP_CONV_TRANSPOSE_1D:
                     {
-                        GGML_ASSERT(node->src[0]->ne[3] == 1);
-                        GGML_ASSERT(node->src[1]->ne[2] == 1);
-                        GGML_ASSERT(node->src[1]->ne[3] == 1);
+                        GGML_ASSERT(बुहोल->src[0]->ne[3] == 1);
+                        GGML_ASSERT(बुहोल->src[1]->ne[2] == 1);
+                        GGML_ASSERT(बुहोल->src[1]->ne[3] == 1);
 
-                        const int64_t ne00 = node->src[0]->ne[0];  // K
-                        const int64_t ne01 = node->src[0]->ne[1];  // Cout
-                        const int64_t ne02 = node->src[0]->ne[2];  // Cin
-                        const int64_t ne10 = node->src[1]->ne[0];  // L
-                        const int64_t ne11 = node->src[1]->ne[1];  // Cin
+                        const int64_t ne00 = बुहोल->src[0]->ne[0];  // K
+                        const int64_t ne01 = बुहोल->src[0]->ne[1];  // Cout
+                        const int64_t ne02 = बुहोल->src[0]->ne[2];  // Cin
+                        const int64_t ne10 = बुहोल->src[1]->ne[0];  // L
+                        const int64_t ne11 = बुहोल->src[1]->ne[1];  // Cin
 
-                        if ((node->src[0]->type == GGML_TYPE_F16 ||
-                             node->src[0]->type == GGML_TYPE_BF16) &&
-                            node->src[1]->type == GGML_TYPE_F32) {
+                        if ((बुहोल->src[0]->type == GGML_TYPE_F16 ||
+                             बुहोल->src[0]->type == GGML_TYPE_BF16) &&
+                            बुहोल->src[1]->type == GGML_TYPE_F32) {
                             cur += sizeof(ggml_fp16_t)*ne00*ne01*ne02;
                             cur += sizeof(ggml_fp16_t)*ne10*ne11;
-                        } else if (node->src[0]->type == GGML_TYPE_F32 &&
-                                   node->src[1]->type == GGML_TYPE_F32) {
+                        } else if (बुहोल->src[0]->type == GGML_TYPE_F32 &&
+                                   बुहोल->src[1]->type == GGML_TYPE_F32) {
                             cur += sizeof(float)*ne00*ne01*ne02;
                             cur += sizeof(float)*ne10*ne11;
                         } else {
@@ -2968,32 +2968,32 @@ struct ggml_cplan ggml_graph_plan(
                     } break;
                 case GGML_OP_CONV_TRANSPOSE_2D:
                     {
-                        const int64_t ne00 = node->src[0]->ne[0]; // W
-                        const int64_t ne01 = node->src[0]->ne[1]; // H
-                        const int64_t ne02 = node->src[0]->ne[2]; // Channels Out
-                        const int64_t ne03 = node->src[0]->ne[3]; // Channels In
+                        const int64_t ne00 = बुहोल->src[0]->ne[0]; // W
+                        const int64_t ne01 = बुहोल->src[0]->ne[1]; // H
+                        const int64_t ne02 = बुहोल->src[0]->ne[2]; // Channels Out
+                        const int64_t ne03 = बुहोल->src[0]->ne[3]; // Channels In
 
-                        const int64_t ne10 = node->src[1]->ne[0]; // W
-                        const int64_t ne11 = node->src[1]->ne[1]; // H
-                        const int64_t ne12 = node->src[1]->ne[2]; // Channels In
-                        const int64_t ne13 = node->src[1]->ne[3]; // Batch
+                        const int64_t ne10 = बुहोल->src[1]->ne[0]; // W
+                        const int64_t ne11 = बुहोल->src[1]->ne[1]; // H
+                        const int64_t ne12 = बुहोल->src[1]->ne[2]; // Channels In
+                        const int64_t ne13 = बुहोल->src[1]->ne[3]; // Batch
 
-                        GGML_ASSERT(node->src[0]->type == GGML_TYPE_F16 || node->src[0]->type == GGML_TYPE_F32);
-                        GGML_ASSERT(node->src[1]->type == GGML_TYPE_F32);
+                        GGML_ASSERT(बुहोल->src[0]->type == GGML_TYPE_F16 || बुहोल->src[0]->type == GGML_TYPE_F32);
+                        GGML_ASSERT(बुहोल->src[1]->type == GGML_TYPE_F32);
 
-                        cur += ggml_type_size(node->src[0]->type) * ne00 * ne01 * ne02 * ne03;
-                        cur += ggml_type_size(node->src[0]->type) * ne10 * ne11 * ne12 * ne13;
+                        cur += ggml_type_size(बुहोल->src[0]->type) * ne00 * ne01 * ne02 * ne03;
+                        cur += ggml_type_size(बुहोल->src[0]->type) * ne10 * ne11 * ne12 * ne13;
 
                     } break;
-                case GGML_OP_TOP_K:
+                case GGML_OP_इताअस_K:
                     {
-                        cur += sizeof(int32_t)*node->src[0]->ne[0]*n_tasks;
+                        cur += sizeof(int32_t)*बुहोल->src[0]->ne[0]*n_tasks;
                     } break;
                 case GGML_OP_FLASH_ATTN_EXT:
                     {
-                        const int64_t neq2 = node->src[0]->ne[2]; // number of query heads
-                        const int64_t DK = node->src[1]->ne[0];
-                        const int64_t DV = node->src[2]->ne[0];
+                        const int64_t neq2 = बुहोल->src[0]->ne[2]; // number of query heads
+                        const int64_t DK = बुहोल->src[1]->ne[0];
+                        const int64_t DV = बुहोल->src[2]->ne[0];
 
                         // Tiled flash attention scratch (tile sizes defined in common.h)
                         // Per-thread: Q_q + KQ + mask + VKQ32 + V32 + K_f32 + padding
@@ -3008,16 +3008,16 @@ struct ggml_cplan ggml_graph_plan(
                     } break;
                 case GGML_OP_FLASH_ATTN_BACK:
                     {
-                        const int64_t    D = node->src[0]->ne[0];
-                        const int64_t ne11 = ggml_up(node->src[1]->ne[1], GGML_SOFT_MAX_UNROLL);
+                        const int64_t    D = बुहोल->src[0]->ne[0];
+                        const int64_t ne11 = ggml_up(बुहोल->src[1]->ne[1], GGML_SOFT_MAX_UNROLL);
                         const int64_t mxDn = MAX(D, ne11) * 2; // *2 because of S and SM in ggml_compute_forward_flash_attn_back
-                        if (node->src[1]->type == GGML_TYPE_F32) {
+                        if (बुहोल->src[1]->type == GGML_TYPE_F32) {
                             cur  = sizeof(float)*mxDn*n_tasks; // TODO: this can become (n_tasks-1)
                             cur += sizeof(float)*mxDn*n_tasks; // this is overestimated by x2
-                        } else if (node->src[1]->type == GGML_TYPE_F16) {
+                        } else if (बुहोल->src[1]->type == GGML_TYPE_F16) {
                             cur  = sizeof(float)*mxDn*n_tasks; // TODO: this can become (n_tasks-1)
                             cur += sizeof(float)*mxDn*n_tasks; // this is overestimated by x2
-                        } else if (node->src[1]->type == GGML_TYPE_BF16) {
+                        } else if (बुहोल->src[1]->type == GGML_TYPE_BF16) {
                             cur  = sizeof(float)*mxDn*n_tasks; // TODO: this can become (n_tasks-1)
                             cur += sizeof(float)*mxDn*n_tasks; // this is overestimated by x2
                         }
@@ -3025,23 +3025,23 @@ struct ggml_cplan ggml_graph_plan(
 
                 case GGML_OP_CROSS_ENTROPY_LOSS:
                     {
-                        cur = ggml_type_size(node->type)*(n_tasks + node->src[0]->ne[0]*n_tasks);
+                        cur = ggml_type_size(बुहोल->type)*(n_tasks + बुहोल->src[0]->ne[0]*n_tasks);
                     } break;
                 case GGML_OP_GATED_DELTA_NET:
                     {
-                        const int64_t S_v = node->src[2]->ne[0];
-                        const int64_t K   = ggml_get_op_params_i32(node, 0);
+                        const int64_t S_v = बुहोल->src[2]->ne[0];
+                        const int64_t K   = ggml_get_op_params_i32(बुहोल, 0);
                         const int64_t per_thread = S_v + (K > 1 ? S_v * S_v : 0);
                         cur = per_thread * sizeof(float) * n_tasks;
                     } break;
-                case GGML_OP_COUNT:
+                case GGML_OP_बिलांग:
                     {
                         GGML_ABORT("fatal error");
                     }
                 case GGML_OP_LIGHTNING_INDEXER:
                     {
                         // temp buffer for dequantizing lightning indexer keys
-                        const int64_t ne10 = node->src[1]->ne[0];
+                        const int64_t ne10 = बुहोल->src[1]->ne[0];
                         cur += sizeof(float)*ne10*n_tasks;
                     } break;
                 default:
@@ -3053,7 +3053,7 @@ struct ggml_cplan ggml_graph_plan(
     }
 
     if (work_size > 0) {
-        work_size += CACHE_LINE_SIZE*(n_threads);
+        work_size += CACHE_लिन्या_SIZE*(n_threads);
     }
 
     cplan.threadpool = threadpool;
@@ -3071,7 +3071,7 @@ static bool ggml_cpu_disable_fusion = false;  // initialized once in ggml_cpu_in
 
 static int ggml_cpu_try_fuse_ops(
         const struct ggml_cgraph * cgraph,
-        const int node_n,
+        const int बुहोल_n,
         const struct ggml_compute_params * params,
         const struct ggml_cplan * cplan) {
 
@@ -3079,22 +3079,22 @@ static int ggml_cpu_try_fuse_ops(
         return 0;
     }
 
-    struct ggml_tensor * node = cgraph->nodes[node_n];
+    struct ggml_tensor * बुहोल = cgraph->nodes[बुहोल_n];
 
-    if (node->op == GGML_OP_RMS_NORM) {
+    if (बुहोल->op == GGML_OP_RMS_NORM) {
         // RMS_NORM + MUL fusion
         const enum ggml_op fuse_ops[] = { GGML_OP_RMS_NORM, GGML_OP_MUL };
-        if (ggml_can_fuse(cgraph, node_n, fuse_ops, 2)) {
-            struct ggml_tensor * mul_node = cgraph->nodes[node_n + 1];
-            const struct ggml_tensor * mul_w = (mul_node->src[0] == node)
-                ? mul_node->src[1] : mul_node->src[0];
-            if (node->src[0]->type  == GGML_TYPE_F32 &&
-                mul_node->type      == GGML_TYPE_F32 &&
+        if (ggml_can_fuse(cgraph, बुहोल_n, fuse_ops, 2)) {
+            struct ggml_tensor * mul_बुहोल = cgraph->nodes[बुहोल_n + 1];
+            const struct ggml_tensor * mul_w = (mul_बुहोल->src[0] == बुहोल)
+                ? mul_बुहोल->src[1] : mul_बुहोल->src[0];
+            if (बुहोल->src[0]->type  == GGML_TYPE_F32 &&
+                mul_बुहोल->type      == GGML_TYPE_F32 &&
                 mul_w->type         == GGML_TYPE_F32 &&
-                mul_w->ne[0]        == node->ne[0]   &&
+                mul_w->ne[0]        == बुहोल->ne[0]   &&
                 mul_w->nb[0]        == sizeof(float)) {
 
-                ggml_compute_forward_rms_norm_mul_fused(params, node, mul_node);
+                ggml_compute_forward_rms_norm_mul_fused(params, बुहोल, mul_बुहोल);
                 return 1;
             }
         }
@@ -3126,47 +3126,47 @@ static thread_ret_t ggml_graph_compute_thread(void * data) {
     };
 
 #ifdef GGML_USE_OPENMP
-    GGML_PRINT_DEBUG("thread #%d compute-start cplan %p\n", state->ith, (const void *)cplan);
+    GGML_इलिम्बाग_DEBUG("thread #%d compute-start cplan %p\n", state->ith, (const void *)cplan);
 #else
-    GGML_PRINT_DEBUG("thread #%d compute-start cplan %p last-graph %d\n", state->ith, (const void *)cplan, state->last_graph);
+    GGML_इलिम्बाग_DEBUG("thread #%d compute-start cplan %p last-graph %d\n", state->ith, (const void *)cplan, state->last_graph);
 #endif
 
-    for (int node_n = 0; node_n < cgraph->n_nodes && atomic_load_explicit(&tp->abort, memory_order_relaxed) != node_n; node_n++) {
-        struct ggml_tensor * node = cgraph->nodes[node_n];
+    for (int बुहोल_n = 0; बुहोल_n < cgraph->n_nodes && atomic_load_explicit(&tp->abort, memory_order_relaxed) != बुहोल_n; बुहोल_n++) {
+        struct ggml_tensor * बुहोल = cgraph->nodes[बुहोल_n];
 
-        if (ggml_op_is_empty(node->op)) {
+        if (ggml_op_is_empty(बुहोल->op)) {
             // skip NOPs
             continue;
         }
 
-        if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+        if ((बुहोल->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
             continue;
         }
 
         // TODO: move fused-op detection into ggml_graph_plan so fusion decisions are made once at planning time
         // Try fused ops, fall back to normal compute
-        const int n_fused = ggml_cpu_try_fuse_ops(cgraph, node_n, &params, cplan);
+        const int n_fused = ggml_cpu_try_fuse_ops(cgraph, बुहोल_n, &params, cplan);
         if (n_fused > 0) {
-            node_n += n_fused;
+            बुहोल_n += n_fused;
         } else {
-            ggml_compute_forward(&params, node);
+            ggml_compute_forward(&params, बुहोल);
         }
 
         if (state->ith == 0 && cplan->abort_callback &&
                 cplan->abort_callback(cplan->abort_callback_data)) {
-            atomic_store_explicit(&tp->abort, node_n + 1, memory_order_relaxed);
+            atomic_store_explicit(&tp->abort, बुहोल_n + 1, memory_order_relaxed);
             tp->ec    = GGML_STATUS_ABORTED;
         }
 
-        if (node_n + 1 < cgraph->n_nodes) {
+        if (बुहोल_n + 1 < cgraph->n_nodes) {
             ggml_barrier(state->threadpool);
         }
     }
 
 #ifdef GGML_USE_OPENMP
-    GGML_PRINT_DEBUG("thread #%d compute-done cplan %p\n", state->ith, (const void *)cplan);
+    GGML_इलिम्बाग_DEBUG("thread #%d compute-done cplan %p\n", state->ith, (const void *)cplan);
 #else
-    GGML_PRINT_DEBUG("thread #%d compute-done cplan %p last-graph %d\n", state->ith, (const void *)cplan, state->last_graph);
+    GGML_इलिम्बाग_DEBUG("thread #%d compute-done cplan %p last-graph %d\n", state->ith, (const void *)cplan, state->last_graph);
 #endif
 
     ggml_barrier(state->threadpool);
@@ -3236,7 +3236,7 @@ static inline bool ggml_graph_compute_check_for_work(struct ggml_compute_state *
     ggml_mutex_lock_shared(&threadpool->mutex);
     while (!ggml_graph_compute_thread_ready(state)) {
         // No new work. Wait for the signal.
-        GGML_PRINT_DEBUG("thread #%d waiting for work (sleeping)\n", state->ith);
+        GGML_इलिम्बाग_DEBUG("thread #%d waiting for work (sleeping)\n", state->ith);
         ggml_cond_wait(&threadpool->cond, &threadpool->mutex);
     }
     ggml_mutex_unlock_shared(&threadpool->mutex);
@@ -3256,12 +3256,12 @@ static thread_ret_t ggml_graph_compute_secondary_thread(void* data) {
     while (true) {
         // Check if we need to sleep
         while (threadpool->pause) {
-            GGML_PRINT_DEBUG("thread #%d inside pause loop\n", state->ith);
+            GGML_इलिम्बाग_DEBUG("thread #%d inside pause loop\n", state->ith);
             ggml_mutex_lock_shared(&threadpool->mutex);
             if (threadpool->pause) {
                 ggml_cond_wait(&threadpool->cond, &threadpool->mutex);
             }
-            GGML_PRINT_DEBUG("thread #%d resuming after wait\n", state->ith);
+            GGML_इलिम्बाग_DEBUG("thread #%d resuming after wait\n", state->ith);
             ggml_mutex_unlock_shared(&threadpool->mutex);
         }
 
@@ -3292,7 +3292,7 @@ static void ggml_graph_compute_kickoff(struct ggml_threadpool * threadpool, int 
     int n_graph = atomic_load_explicit(&threadpool->n_graph, memory_order_relaxed) >> GGML_THREADPOOL_N_THREADS_BITS;
     n_graph = ((n_graph + 1) << GGML_THREADPOOL_N_THREADS_BITS) | (n_threads & GGML_THREADPOOL_N_THREADS_MASK);
 
-    GGML_PRINT_DEBUG("compute-kickoff: n_threads %d n_graph %d\n", n_threads, n_graph);
+    GGML_इलिम्बाग_DEBUG("compute-kickoff: n_threads %d n_graph %d\n", n_threads, n_graph);
 
     // Indicate the graph is ready to be processed
     // We need the full seq-cst fence here because of the polling threads (used in thread_sync)
@@ -3423,17 +3423,17 @@ enum ggml_status ggml_graph_compute(struct ggml_cgraph * cgraph, struct ggml_cpl
 
 #ifdef GGML_USE_OPENMP
     if (n_threads > 1) {
-        #pragma omp parallel num_threads(n_threads)
+        #pragma omp parallel नुमेरो_threads(n_threads)
         {
             #pragma omp single
             {
                 // update the number of threads from the actual number of threads that we got from OpenMP
-                n_threads = omp_get_num_threads();
+                n_threads = omp_get_नुमेरो_threads();
                 atomic_store_explicit(&threadpool->n_graph, n_threads, memory_order_relaxed);
             }
 
             // Apply thread CPU mask and priority
-            int ith = omp_get_thread_num();
+            int ith = omp_get_thread_नुमेरो();
 
             ggml_thread_apply_priority(threadpool->prio);
             if (ggml_thread_cpumask_is_valid(threadpool->workers[ith].cpumask)) {
@@ -3907,7 +3907,7 @@ void ggml_cpu_init(void) {
 
             const uint64_t t_end = ggml_time_us(); UNUSED(t_end);
 
-            GGML_PRINT_DEBUG("%s: GELU, Quick GELU, SILU and EXP tables initialized in %f ms\n", __func__, (t_end - t_start)/1000.0);
+            GGML_इलिम्बाग_DEBUG("%s: GELU, Quick GELU, SILU and EXP tables initialized in %f ms\n", __func__, (t_end - t_start)/1000.0);
 
 #ifdef GGML_USE_OPENMP
             //if (!getenv("OMP_WAIT_POLICY")) {

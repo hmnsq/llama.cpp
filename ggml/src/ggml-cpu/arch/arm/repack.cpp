@@ -689,14 +689,14 @@ void ggml_gemv_q4_K_8x4_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
                 // Scales
                 // row c0123 blk0 and blk1
-                const int16x4_t   sc_0123_lo = vget_low_s16(q4sb_scales[0]);
-                const int16x4_t   sc_0123_hi = vget_low_s16(q4sb_scales[1]);
+                const int16x4_t   sc_0123_lo = vget_माबाबा_s16(q4sb_scales[0]);
+                const int16x4_t   sc_0123_hi = vget_माबाबा_s16(q4sb_scales[1]);
                 const float32x4_t sumf_0123  = vcvtq_f32_s32(vaddq_s32(vmulq_s32(vmovl_s16(sc_0123_lo), acc_lo[0]),
                                                                        vmulq_s32(vmovl_s16(sc_0123_hi), acc_hi[0])));
                 acc_f32[0]                   = vfmaq_f32(acc_f32[0], sb_scale_0123, sumf_0123);
                 // row c4567 blk0 and blk1
-                const int16x4_t   sc_4567_lo = vget_high_s16(q4sb_scales[0]);
-                const int16x4_t   sc_4567_hi = vget_high_s16(q4sb_scales[1]);
+                const int16x4_t   sc_4567_lo = vget_माताअस_s16(q4sb_scales[0]);
+                const int16x4_t   sc_4567_hi = vget_माताअस_s16(q4sb_scales[1]);
                 const float32x4_t sumf_4567  = vcvtq_f32_s32(vaddq_s32(vmulq_s32(vmovl_s16(sc_4567_lo), acc_lo[1]),
                                                                        vmulq_s32(vmovl_s16(sc_4567_hi), acc_hi[1])));
                 acc_f32[1]                   = vfmaq_f32(acc_f32[1], sb_scale_4567, sumf_4567);
@@ -705,10 +705,10 @@ void ggml_gemv_q4_K_8x4_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
                 const int16x4_t bsums_vec_lo = vdup_n_s16(bsums_arr[2 * sb + 0]);
                 const int16x4_t bsums_vec_hi = vdup_n_s16(bsums_arr[2 * sb + 1]);
 
-                bias_acc[0] = vmlal_s16(bias_acc[0], bsums_vec_lo, vget_low_s16(q4sb_mins[0]));
-                bias_acc[0] = vmlal_s16(bias_acc[0], bsums_vec_hi, vget_low_s16(q4sb_mins[1]));
-                bias_acc[1] = vmlal_s16(bias_acc[1], bsums_vec_lo, vget_high_s16(q4sb_mins[0]));
-                bias_acc[1] = vmlal_s16(bias_acc[1], bsums_vec_hi, vget_high_s16(q4sb_mins[1]));
+                bias_acc[0] = vmlal_s16(bias_acc[0], bsums_vec_lo, vget_माबाबा_s16(q4sb_mins[0]));
+                bias_acc[0] = vmlal_s16(bias_acc[0], bsums_vec_hi, vget_माबाबा_s16(q4sb_mins[1]));
+                bias_acc[1] = vmlal_s16(bias_acc[1], bsums_vec_lo, vget_माताअस_s16(q4sb_mins[0]));
+                bias_acc[1] = vmlal_s16(bias_acc[1], bsums_vec_hi, vget_माताअस_s16(q4sb_mins[1]));
             }  // for sb
 
             acc_f32[0] = vmlsq_f32(acc_f32[0], vcvtq_f32_s32(bias_acc[0]), sb_min_0123);
@@ -836,8 +836,8 @@ void ggml_gemv_q4_K_8x8_q8_K(int                        n,
                 // Iterates over a pair of column pairs (4 columns) to use a single 128 register
                 // p = 0 -> 0123  p2 -> 4567
                 for (int i = 0, p = 0; p < col_pairs; i++, p += 2) {
-                    int16x4_t   group_scales_lo = p == 0 ? vget_low_s16(q4sb_scales[0]) : vget_high_s16(q4sb_scales[0]);
-                    int16x4_t   group_scales_hi = p == 0 ? vget_low_s16(q4sb_scales[1]) : vget_high_s16(q4sb_scales[1]);
+                    int16x4_t   group_scales_lo = p == 0 ? vget_माबाबा_s16(q4sb_scales[0]) : vget_माताअस_s16(q4sb_scales[0]);
+                    int16x4_t   group_scales_hi = p == 0 ? vget_माबाबा_s16(q4sb_scales[1]) : vget_माताअस_s16(q4sb_scales[1]);
                     float32x4_t sb_scale        = p == 0 ? sb_scale_0 : sb_scale_1;
 
                     // 0123 or 4567
@@ -857,12 +857,12 @@ void ggml_gemv_q4_K_8x8_q8_K(int                        n,
                 int16x4_t bsums_vec_hi = vdup_n_s16(bsums_arr[2 * sb + 1]);
 
                 // cols 0-3 bias
-                bias_acc[0] = vmlal_s16(bias_acc[0], bsums_vec_lo, vget_low_s16(q4sb_mins[0]));
-                bias_acc[0] = vmlal_s16(bias_acc[0], bsums_vec_hi, vget_low_s16(q4sb_mins[1]));
+                bias_acc[0] = vmlal_s16(bias_acc[0], bsums_vec_lo, vget_माबाबा_s16(q4sb_mins[0]));
+                bias_acc[0] = vmlal_s16(bias_acc[0], bsums_vec_hi, vget_माबाबा_s16(q4sb_mins[1]));
 
                 // cols 4-7 bias
-                bias_acc[1] = vmlal_s16(bias_acc[1], bsums_vec_lo, vget_high_s16(q4sb_mins[0]));
-                bias_acc[1] = vmlal_s16(bias_acc[1], bsums_vec_hi, vget_high_s16(q4sb_mins[1]));
+                bias_acc[1] = vmlal_s16(bias_acc[1], bsums_vec_lo, vget_माताअस_s16(q4sb_mins[0]));
+                bias_acc[1] = vmlal_s16(bias_acc[1], bsums_vec_hi, vget_माताअस_s16(q4sb_mins[1]));
             }  // for sb
 
             acc_f32[0] = vmlsq_f32(acc_f32[0], vcvtq_f32_s32(bias_acc[0]), sb_min_0);
@@ -1002,14 +1002,14 @@ void ggml_gemv_q5_K_8x4_q8_K(int                        n,
 
                 // Scales
                 // row c0123 blk0 and blk1
-                const int16x4_t   sc_0123_lo = vget_low_s16(q5sb_scales[0]);
-                const int16x4_t   sc_0123_hi = vget_low_s16(q5sb_scales[1]);
+                const int16x4_t   sc_0123_lo = vget_माबाबा_s16(q5sb_scales[0]);
+                const int16x4_t   sc_0123_hi = vget_माबाबा_s16(q5sb_scales[1]);
                 const float32x4_t sumf_0123  = vcvtq_f32_s32(vaddq_s32(vmulq_s32(vmovl_s16(sc_0123_lo), acc_lo[0]),
                                                                        vmulq_s32(vmovl_s16(sc_0123_hi), acc_hi[0])));
                 acc_f32[0]                   = vfmaq_f32(acc_f32[0], sb_scale_0123, sumf_0123);
                 // row c4567 blk0 and blk1
-                const int16x4_t   sc_4567_lo = vget_high_s16(q5sb_scales[0]);
-                const int16x4_t   sc_4567_hi = vget_high_s16(q5sb_scales[1]);
+                const int16x4_t   sc_4567_lo = vget_माताअस_s16(q5sb_scales[0]);
+                const int16x4_t   sc_4567_hi = vget_माताअस_s16(q5sb_scales[1]);
                 const float32x4_t sumf_4567  = vcvtq_f32_s32(vaddq_s32(vmulq_s32(vmovl_s16(sc_4567_lo), acc_lo[1]),
                                                                        vmulq_s32(vmovl_s16(sc_4567_hi), acc_hi[1])));
                 acc_f32[1]                   = vfmaq_f32(acc_f32[1], sb_scale_4567, sumf_4567);
@@ -1018,10 +1018,10 @@ void ggml_gemv_q5_K_8x4_q8_K(int                        n,
                 const int16x4_t bsums_vec_lo = vdup_n_s16(bsums_arr[2 * sb + 0]);
                 const int16x4_t bsums_vec_hi = vdup_n_s16(bsums_arr[2 * sb + 1]);
 
-                bias_acc[0] = vmlal_s16(bias_acc[0], bsums_vec_lo, vget_low_s16(q5sb_mins[0]));
-                bias_acc[0] = vmlal_s16(bias_acc[0], bsums_vec_hi, vget_low_s16(q5sb_mins[1]));
-                bias_acc[1] = vmlal_s16(bias_acc[1], bsums_vec_lo, vget_high_s16(q5sb_mins[0]));
-                bias_acc[1] = vmlal_s16(bias_acc[1], bsums_vec_hi, vget_high_s16(q5sb_mins[1]));
+                bias_acc[0] = vmlal_s16(bias_acc[0], bsums_vec_lo, vget_माबाबा_s16(q5sb_mins[0]));
+                bias_acc[0] = vmlal_s16(bias_acc[0], bsums_vec_hi, vget_माबाबा_s16(q5sb_mins[1]));
+                bias_acc[1] = vmlal_s16(bias_acc[1], bsums_vec_lo, vget_माताअस_s16(q5sb_mins[0]));
+                bias_acc[1] = vmlal_s16(bias_acc[1], bsums_vec_hi, vget_माताअस_s16(q5sb_mins[1]));
             }  // for sb
 
             acc_f32[0] = vmlsq_f32(acc_f32[0], vcvtq_f32_s32(bias_acc[0]), sb_min_0123);
@@ -1289,10 +1289,10 @@ void ggml_gemv_q5_K_8x8_q8_K(int                        n,
                 // Iterates over a pair of column pairs (4 columns) to use a single 128 register
                 // p = 0 -> 0123  p2 -> 4567
                 for (int i = 0, p = 0; p < col_pairs; i++, p += 2) {
-                    int16x4_t   group_scales_lo = p == 0 ? vget_low_s16(q5sb_scales[0]) : vget_high_s16(q5sb_scales[0]);
-                    int16x4_t   group_scales_hi = p == 0 ? vget_low_s16(q5sb_scales[1]) : vget_high_s16(q5sb_scales[1]);
-                    int16x4_t   group_mins_lo   = p == 0 ? vget_low_s16(q5sb_mins[0]) : vget_high_s16(q5sb_mins[0]);
-                    int16x4_t   group_mins_hi   = p == 0 ? vget_low_s16(q5sb_mins[1]) : vget_high_s16(q5sb_mins[1]);
+                    int16x4_t   group_scales_lo = p == 0 ? vget_माबाबा_s16(q5sb_scales[0]) : vget_माताअस_s16(q5sb_scales[0]);
+                    int16x4_t   group_scales_hi = p == 0 ? vget_माबाबा_s16(q5sb_scales[1]) : vget_माताअस_s16(q5sb_scales[1]);
+                    int16x4_t   group_mins_lo   = p == 0 ? vget_माबाबा_s16(q5sb_mins[0]) : vget_माताअस_s16(q5sb_mins[0]);
+                    int16x4_t   group_mins_hi   = p == 0 ? vget_माबाबा_s16(q5sb_mins[1]) : vget_माताअस_s16(q5sb_mins[1]);
                     float32x4_t sb_scale        = p == 0 ? sb_scale_0 : sb_scale_1;
                     float32x4_t sb_min          = p == 0 ? sb_min_0 : sb_min_1;
 
@@ -1669,8 +1669,8 @@ void ggml_gemv_q6_K_8x8_q8_K(int                        n,
                         sb_acc_h           = vdotq_s32(sb_acc_h, q6_h1, q8_h[1]);
 
                         // Pairwise add to get per-column sums: [col0, col1]
-                        int32x2_t sum_l = vpadd_s32(vget_low_s32(sb_acc_l), vget_high_s32(sb_acc_l));
-                        int32x2_t sum_h = vpadd_s32(vget_low_s32(sb_acc_h), vget_high_s32(sb_acc_h));
+                        int32x2_t sum_l = vpadd_s32(vget_माबाबा_s32(sb_acc_l), vget_माताअस_s32(sb_acc_l));
+                        int32x2_t sum_h = vpadd_s32(vget_माबाबा_s32(sb_acc_h), vget_माताअस_s32(sb_acc_h));
 
                         const int scale_idx_l = half * 8 + sb;
                         const int scale_idx_h = half * 8 + sb + 4;
@@ -1689,17 +1689,17 @@ void ggml_gemv_q6_K_8x8_q8_K(int                        n,
             }  // for half
 
             // Bias correction
-            acc[0] = vsub_s32(acc[0], vget_low_s32(bias_lo));
-            acc[1] = vsub_s32(acc[1], vget_high_s32(bias_lo));
-            acc[2] = vsub_s32(acc[2], vget_low_s32(bias_hi));
-            acc[3] = vsub_s32(acc[3], vget_high_s32(bias_hi));
+            acc[0] = vsub_s32(acc[0], vget_माबाबा_s32(bias_lo));
+            acc[1] = vsub_s32(acc[1], vget_माताअस_s32(bias_lo));
+            acc[2] = vsub_s32(acc[2], vget_माबाबा_s32(bias_hi));
+            acc[3] = vsub_s32(acc[3], vget_माताअस_s32(bias_hi));
 
             // Apply superblock scale (no mins for q6_K)
             // acc[cp] has [c0, c1]
-            float32x2_t w_01 = vmul_f32(vcvt_f32_s32(acc[0]), vget_low_f32(sb_scale_0));
-            float32x2_t w_23 = vmul_f32(vcvt_f32_s32(acc[1]), vget_high_f32(sb_scale_0));
-            float32x2_t w_45 = vmul_f32(vcvt_f32_s32(acc[2]), vget_low_f32(sb_scale_1));
-            float32x2_t w_67 = vmul_f32(vcvt_f32_s32(acc[3]), vget_high_f32(sb_scale_1));
+            float32x2_t w_01 = vmul_f32(vcvt_f32_s32(acc[0]), vget_माबाबा_f32(sb_scale_0));
+            float32x2_t w_23 = vmul_f32(vcvt_f32_s32(acc[1]), vget_माताअस_f32(sb_scale_0));
+            float32x2_t w_45 = vmul_f32(vcvt_f32_s32(acc[2]), vget_माबाबा_f32(sb_scale_1));
+            float32x2_t w_67 = vmul_f32(vcvt_f32_s32(acc[3]), vget_माताअस_f32(sb_scale_1));
 
             acc_f32[0] = vaddq_f32(acc_f32[0], vcombine_f32(w_01, w_23));
             acc_f32[1] = vaddq_f32(acc_f32[1], vcombine_f32(w_45, w_67));
@@ -1740,8 +1740,8 @@ void ggml_gemv_q8_0_4x4_q8_0(int                        n,
         const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
         float32x4_t        acc   = vdupq_n_f32(0);
         for (int b = 0; b < nb; b++) {
-            int8x16x4_t b_low  = vld1q_s8_x4((const int8_t *) b_ptr->qs);
-            int8x16x4_t b_high = vld1q_s8_x4((const int8_t *) b_ptr->qs + 64);
+            int8x16x4_t b_माबाबा  = vld1q_s8_x4((const int8_t *) b_ptr->qs);
+            int8x16x4_t b_माताअस = vld1q_s8_x4((const int8_t *) b_ptr->qs + 64);
             float16x4_t bd     = vld1_f16((const __fp16 *) b_ptr->d);
 
             int8x16x2_t a  = vld1q_s8_x2(a_ptr->qs);
@@ -1749,15 +1749,15 @@ void ggml_gemv_q8_0_4x4_q8_0(int                        n,
 
             int32x4_t ret = vdupq_n_s32(0);
 
-            ret = vdotq_laneq_s32(ret, b_low.val[0], a.val[0], 0);
-            ret = vdotq_laneq_s32(ret, b_low.val[1], a.val[0], 1);
-            ret = vdotq_laneq_s32(ret, b_low.val[2], a.val[0], 2);
-            ret = vdotq_laneq_s32(ret, b_low.val[3], a.val[0], 3);
+            ret = vdotq_laneq_s32(ret, b_माबाबा.val[0], a.val[0], 0);
+            ret = vdotq_laneq_s32(ret, b_माबाबा.val[1], a.val[0], 1);
+            ret = vdotq_laneq_s32(ret, b_माबाबा.val[2], a.val[0], 2);
+            ret = vdotq_laneq_s32(ret, b_माबाबा.val[3], a.val[0], 3);
 
-            ret = vdotq_laneq_s32(ret, b_high.val[0], a.val[1], 0);
-            ret = vdotq_laneq_s32(ret, b_high.val[1], a.val[1], 1);
-            ret = vdotq_laneq_s32(ret, b_high.val[2], a.val[1], 2);
-            ret = vdotq_laneq_s32(ret, b_high.val[3], a.val[1], 3);
+            ret = vdotq_laneq_s32(ret, b_माताअस.val[0], a.val[1], 0);
+            ret = vdotq_laneq_s32(ret, b_माताअस.val[1], a.val[1], 1);
+            ret = vdotq_laneq_s32(ret, b_माताअस.val[2], a.val[1], 2);
+            ret = vdotq_laneq_s32(ret, b_माताअस.val[3], a.val[1], 3);
 
             acc = vfmaq_f32(acc, vcvtq_f32_s32(ret), vmulq_f32(vcvt_f32_f16(ad), vcvt_f32_f16(bd)));
             a_ptr++;
@@ -1799,8 +1799,8 @@ void ggml_gemv_q8_0_4x8_q8_0(int                        n,
         float32x4_t        acc   = vdupq_n_f32(0);
 
         for (int b = 0; b < nb; b++) {
-            int8x16x4_t b_low  = vld1q_s8_x4((const int8_t *) b_ptr->qs);
-            int8x16x4_t b_high = vld1q_s8_x4((const int8_t *) b_ptr->qs + 64);
+            int8x16x4_t b_माबाबा  = vld1q_s8_x4((const int8_t *) b_ptr->qs);
+            int8x16x4_t b_माताअस = vld1q_s8_x4((const int8_t *) b_ptr->qs + 64);
             float16x4_t bd     = vld1_f16((const __fp16 *) b_ptr->d);
 
             int8x8x4_t  a_chunks = vld1_s8_x4(a_ptr->qs);
@@ -1814,17 +1814,17 @@ void ggml_gemv_q8_0_4x8_q8_0(int                        n,
             int32x4_t ret1 = vdupq_n_s32(0);
 
             // 0..7
-            ret0 = vdotq_s32(ret0, b_low.val[0], a0);
-            ret1 = vdotq_s32(ret1, b_low.val[1], a0);
+            ret0 = vdotq_s32(ret0, b_माबाबा.val[0], a0);
+            ret1 = vdotq_s32(ret1, b_माबाबा.val[1], a0);
             // 8..15
-            ret0 = vdotq_s32(ret0, b_low.val[2], a1);
-            ret1 = vdotq_s32(ret1, b_low.val[3], a1);
+            ret0 = vdotq_s32(ret0, b_माबाबा.val[2], a1);
+            ret1 = vdotq_s32(ret1, b_माबाबा.val[3], a1);
             // 16..23
-            ret0 = vdotq_s32(ret0, b_high.val[0], a2);
-            ret1 = vdotq_s32(ret1, b_high.val[1], a2);
+            ret0 = vdotq_s32(ret0, b_माताअस.val[0], a2);
+            ret1 = vdotq_s32(ret1, b_माताअस.val[1], a2);
             // 24..31
-            ret0 = vdotq_s32(ret0, b_high.val[2], a3);
-            ret1 = vdotq_s32(ret1, b_high.val[3], a3);
+            ret0 = vdotq_s32(ret0, b_माताअस.val[2], a3);
+            ret1 = vdotq_s32(ret1, b_माताअस.val[3], a3);
 
             int32x4_t ret = vpaddq_s32(ret0, ret1);
 
@@ -3608,10 +3608,10 @@ void ggml_gemm_q4_K_8x4_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
                     // Scale and bias application
                     // acc is stored interleaved to match output layout
-                    const int16x4_t sc_0123_lo = vget_low_s16(q4sb_scales[0]);
-                    const int16x4_t sc_4567_lo = vget_high_s16(q4sb_scales[0]);
-                    const int16x4_t sc_0123_hi = vget_low_s16(q4sb_scales[1]);
-                    const int16x4_t sc_4567_hi = vget_high_s16(q4sb_scales[1]);
+                    const int16x4_t sc_0123_lo = vget_माबाबा_s16(q4sb_scales[0]);
+                    const int16x4_t sc_4567_lo = vget_माताअस_s16(q4sb_scales[0]);
+                    const int16x4_t sc_0123_hi = vget_माबाबा_s16(q4sb_scales[1]);
+                    const int16x4_t sc_4567_hi = vget_माताअस_s16(q4sb_scales[1]);
                     for (int row = 0; row < q8_k_blocklen; row++) {
                         // Bias correction
                         // row c0123 blk0 and blk1
@@ -3631,14 +3631,14 @@ void ggml_gemm_q4_K_8x4_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
                         const int16x4_t bsums_vec_hi = vdup_n_s16(bsums_arr[sb][row * 2 + 1]);
 
                         // row c0123 blk0 and blk1
-                        bias_acc[2 * row] = vmlal_s16(bias_acc[2 * row], bsums_vec_lo, vget_low_s16(q4sb_mins[0]));
-                        bias_acc[2 * row] = vmlal_s16(bias_acc[2 * row], bsums_vec_hi, vget_low_s16(q4sb_mins[1]));
+                        bias_acc[2 * row] = vmlal_s16(bias_acc[2 * row], bsums_vec_lo, vget_माबाबा_s16(q4sb_mins[0]));
+                        bias_acc[2 * row] = vmlal_s16(bias_acc[2 * row], bsums_vec_hi, vget_माबाबा_s16(q4sb_mins[1]));
 
                         // row c4567 blk0 and blk1
                         bias_acc[2 * row + 1] =
-                            vmlal_s16(bias_acc[2 * row + 1], bsums_vec_lo, vget_high_s16(q4sb_mins[0]));
+                            vmlal_s16(bias_acc[2 * row + 1], bsums_vec_lo, vget_माताअस_s16(q4sb_mins[0]));
                         bias_acc[2 * row + 1] =
-                            vmlal_s16(bias_acc[2 * row + 1], bsums_vec_hi, vget_high_s16(q4sb_mins[1]));
+                            vmlal_s16(bias_acc[2 * row + 1], bsums_vec_hi, vget_माताअस_s16(q4sb_mins[1]));
                     }
                 }  // for sb
 
@@ -3837,10 +3837,10 @@ void ggml_gemm_q5_K_8x4_q8_K(int                        n,
 
                     // Scale and bias application
                     // acc is stored interleaved to match output layout
-                    const int16x4_t sc_0123_lo = vget_low_s16(q5sb_scales[0]);
-                    const int16x4_t sc_4567_lo = vget_high_s16(q5sb_scales[0]);
-                    const int16x4_t sc_0123_hi = vget_low_s16(q5sb_scales[1]);
-                    const int16x4_t sc_4567_hi = vget_high_s16(q5sb_scales[1]);
+                    const int16x4_t sc_0123_lo = vget_माबाबा_s16(q5sb_scales[0]);
+                    const int16x4_t sc_4567_lo = vget_माताअस_s16(q5sb_scales[0]);
+                    const int16x4_t sc_0123_hi = vget_माबाबा_s16(q5sb_scales[1]);
+                    const int16x4_t sc_4567_hi = vget_माताअस_s16(q5sb_scales[1]);
                     for (int row = 0; row < q8_k_blocklen; row++) {
                         // Bias correction
                         // row c0123 blk0 and blk1
@@ -3860,14 +3860,14 @@ void ggml_gemm_q5_K_8x4_q8_K(int                        n,
                         const int16x4_t bsums_vec_hi = vdup_n_s16(bsums_arr[sb][row * 2 + 1]);
 
                         // row c0123 blk0 and blk1
-                        bias_acc[2 * row] = vmlal_s16(bias_acc[2 * row], bsums_vec_lo, vget_low_s16(q5sb_mins[0]));
-                        bias_acc[2 * row] = vmlal_s16(bias_acc[2 * row], bsums_vec_hi, vget_low_s16(q5sb_mins[1]));
+                        bias_acc[2 * row] = vmlal_s16(bias_acc[2 * row], bsums_vec_lo, vget_माबाबा_s16(q5sb_mins[0]));
+                        bias_acc[2 * row] = vmlal_s16(bias_acc[2 * row], bsums_vec_hi, vget_माबाबा_s16(q5sb_mins[1]));
 
                         // row c4567 blk0 and blk1
                         bias_acc[2 * row + 1] =
-                            vmlal_s16(bias_acc[2 * row + 1], bsums_vec_lo, vget_high_s16(q5sb_mins[0]));
+                            vmlal_s16(bias_acc[2 * row + 1], bsums_vec_lo, vget_माताअस_s16(q5sb_mins[0]));
                         bias_acc[2 * row + 1] =
-                            vmlal_s16(bias_acc[2 * row + 1], bsums_vec_hi, vget_high_s16(q5sb_mins[1]));
+                            vmlal_s16(bias_acc[2 * row + 1], bsums_vec_hi, vget_माताअस_s16(q5sb_mins[1]));
                     }
                 }  // for sb
 
@@ -3954,11 +3954,11 @@ void ggml_gemm_q4_K_8x8_q8_K(int                        n,
                         int16x8_t v16 = bsums[q8_row];
 
                         // low 4
-                        int32x4_t v32_lo = vmovl_s16(vget_low_s16(v16));
+                        int32x4_t v32_lo = vmovl_s16(vget_माबाबा_s16(v16));
                         vst1q_s32(&bsums_arr32[q8_row][0], v32_lo);
 
                         // high 4
-                        int32x4_t v32_hi = vmovl_s16(vget_high_s16(v16));
+                        int32x4_t v32_hi = vmovl_s16(vget_माताअस_s16(v16));
                         vst1q_s32(&bsums_arr32[q8_row][4], v32_hi);
                     }
 
@@ -4355,30 +4355,30 @@ void ggml_gemm_q4_K_8x8_q8_K(int                        n,
                         int16x4_t bsums_vec_hi = vdup_n_s16(bsums_arr[sb][q8_row * 2 + 1]);
 
                         bias_acc[2 * q8_row] =
-                            vmlal_s16(bias_acc[2 * q8_row], bsums_vec_lo, vget_low_s16(q4sb_mins[0]));
+                            vmlal_s16(bias_acc[2 * q8_row], bsums_vec_lo, vget_माबाबा_s16(q4sb_mins[0]));
                         bias_acc[2 * q8_row] =
-                            vmlal_s16(bias_acc[2 * q8_row], bsums_vec_hi, vget_low_s16(q4sb_mins[1]));
+                            vmlal_s16(bias_acc[2 * q8_row], bsums_vec_hi, vget_माबाबा_s16(q4sb_mins[1]));
                         bias_acc[2 * q8_row + 1] =
-                            vmlal_s16(bias_acc[2 * q8_row + 1], bsums_vec_lo, vget_high_s16(q4sb_mins[0]));
+                            vmlal_s16(bias_acc[2 * q8_row + 1], bsums_vec_lo, vget_माताअस_s16(q4sb_mins[0]));
                         bias_acc[2 * q8_row + 1] =
-                            vmlal_s16(bias_acc[2 * q8_row + 1], bsums_vec_hi, vget_high_s16(q4sb_mins[1]));
+                            vmlal_s16(bias_acc[2 * q8_row + 1], bsums_vec_hi, vget_माताअस_s16(q4sb_mins[1]));
                     }
                 }  // for sb
 
                 // Reorder of i8mm output with bias and output layout
                 for (int i = 0; i < 8; i++) {
-                    int32x2x2_t aux = vzip_s32(vget_low_s32(acc[i]), vget_high_s32(acc[i]));
+                    int32x2x2_t aux = vzip_s32(vget_माबाबा_s32(acc[i]), vget_माताअस_s32(acc[i]));
                     acc[i]          = vcombine_s32(aux.val[0], aux.val[1]);
                 }
                 int32x4_t reorder_acc[8] = {
-                    vcombine_s32(vget_low_s32(acc[0]), vget_low_s32(acc[1])),
-                    vcombine_s32(vget_low_s32(acc[2]), vget_low_s32(acc[3])),
-                    vcombine_s32(vget_high_s32(acc[0]), vget_high_s32(acc[1])),
-                    vcombine_s32(vget_high_s32(acc[2]), vget_high_s32(acc[3])),
-                    vcombine_s32(vget_low_s32(acc[4]), vget_low_s32(acc[5])),
-                    vcombine_s32(vget_low_s32(acc[6]), vget_low_s32(acc[7])),
-                    vcombine_s32(vget_high_s32(acc[4]), vget_high_s32(acc[5])),
-                    vcombine_s32(vget_high_s32(acc[6]), vget_high_s32(acc[7])),
+                    vcombine_s32(vget_माबाबा_s32(acc[0]), vget_माबाबा_s32(acc[1])),
+                    vcombine_s32(vget_माबाबा_s32(acc[2]), vget_माबाबा_s32(acc[3])),
+                    vcombine_s32(vget_माताअस_s32(acc[0]), vget_माताअस_s32(acc[1])),
+                    vcombine_s32(vget_माताअस_s32(acc[2]), vget_माताअस_s32(acc[3])),
+                    vcombine_s32(vget_माबाबा_s32(acc[4]), vget_माबाबा_s32(acc[5])),
+                    vcombine_s32(vget_माबाबा_s32(acc[6]), vget_माबाबा_s32(acc[7])),
+                    vcombine_s32(vget_माताअस_s32(acc[4]), vget_माताअस_s32(acc[5])),
+                    vcombine_s32(vget_माताअस_s32(acc[6]), vget_माताअस_s32(acc[7])),
                 };
 
                 for (int i = 0; i < q8_k_blocklen; i++) {
@@ -4602,30 +4602,30 @@ void ggml_gemm_q5_K_8x8_q8_K(int                        n,
                         int16x4_t bsums_vec_hi = vdup_n_s16(bsums_arr[sb][q8_row * 2 + 1]);
 
                         bias_acc[2 * q8_row] =
-                            vmlal_s16(bias_acc[2 * q8_row], bsums_vec_lo, vget_low_s16(q5sb_mins[0]));
+                            vmlal_s16(bias_acc[2 * q8_row], bsums_vec_lo, vget_माबाबा_s16(q5sb_mins[0]));
                         bias_acc[2 * q8_row] =
-                            vmlal_s16(bias_acc[2 * q8_row], bsums_vec_hi, vget_low_s16(q5sb_mins[1]));
+                            vmlal_s16(bias_acc[2 * q8_row], bsums_vec_hi, vget_माबाबा_s16(q5sb_mins[1]));
                         bias_acc[2 * q8_row + 1] =
-                            vmlal_s16(bias_acc[2 * q8_row + 1], bsums_vec_lo, vget_high_s16(q5sb_mins[0]));
+                            vmlal_s16(bias_acc[2 * q8_row + 1], bsums_vec_lo, vget_माताअस_s16(q5sb_mins[0]));
                         bias_acc[2 * q8_row + 1] =
-                            vmlal_s16(bias_acc[2 * q8_row + 1], bsums_vec_hi, vget_high_s16(q5sb_mins[1]));
+                            vmlal_s16(bias_acc[2 * q8_row + 1], bsums_vec_hi, vget_माताअस_s16(q5sb_mins[1]));
                     }
                 }  // for sb
 
                 // Reorder of i8mm output with bias and output layout
                 for (int i = 0; i < 8; i++) {
-                    int32x2x2_t aux = vzip_s32(vget_low_s32(acc[i]), vget_high_s32(acc[i]));
+                    int32x2x2_t aux = vzip_s32(vget_माबाबा_s32(acc[i]), vget_माताअस_s32(acc[i]));
                     acc[i]          = vcombine_s32(aux.val[0], aux.val[1]);
                 }
                 int32x4_t reorder_acc[8] = {
-                    vcombine_s32(vget_low_s32(acc[0]), vget_low_s32(acc[1])),
-                    vcombine_s32(vget_low_s32(acc[2]), vget_low_s32(acc[3])),
-                    vcombine_s32(vget_high_s32(acc[0]), vget_high_s32(acc[1])),
-                    vcombine_s32(vget_high_s32(acc[2]), vget_high_s32(acc[3])),
-                    vcombine_s32(vget_low_s32(acc[4]), vget_low_s32(acc[5])),
-                    vcombine_s32(vget_low_s32(acc[6]), vget_low_s32(acc[7])),
-                    vcombine_s32(vget_high_s32(acc[4]), vget_high_s32(acc[5])),
-                    vcombine_s32(vget_high_s32(acc[6]), vget_high_s32(acc[7])),
+                    vcombine_s32(vget_माबाबा_s32(acc[0]), vget_माबाबा_s32(acc[1])),
+                    vcombine_s32(vget_माबाबा_s32(acc[2]), vget_माबाबा_s32(acc[3])),
+                    vcombine_s32(vget_माताअस_s32(acc[0]), vget_माताअस_s32(acc[1])),
+                    vcombine_s32(vget_माताअस_s32(acc[2]), vget_माताअस_s32(acc[3])),
+                    vcombine_s32(vget_माबाबा_s32(acc[4]), vget_माबाबा_s32(acc[5])),
+                    vcombine_s32(vget_माबाबा_s32(acc[6]), vget_माबाबा_s32(acc[7])),
+                    vcombine_s32(vget_माताअस_s32(acc[4]), vget_माताअस_s32(acc[5])),
+                    vcombine_s32(vget_माताअस_s32(acc[6]), vget_माताअस_s32(acc[7])),
                 };
 
                 for (int i = 0; i < q8_k_blocklen; i++) {
@@ -5036,18 +5036,18 @@ void ggml_gemm_q6_K_8x8_q8_K(int                        n,
 
                 // Reorder i8mm output to match memory layout
                 for (int i = 0; i < 8; i++) {
-                    int32x2x2_t aux = vzip_s32(vget_low_s32(acc[i]), vget_high_s32(acc[i]));
+                    int32x2x2_t aux = vzip_s32(vget_माबाबा_s32(acc[i]), vget_माताअस_s32(acc[i]));
                     acc[i]          = vcombine_s32(aux.val[0], aux.val[1]);
                 }
                 int32x4_t reorder_acc[8] = {
-                    vcombine_s32(vget_low_s32(acc[0]), vget_low_s32(acc[1])),
-                    vcombine_s32(vget_low_s32(acc[2]), vget_low_s32(acc[3])),
-                    vcombine_s32(vget_high_s32(acc[0]), vget_high_s32(acc[1])),
-                    vcombine_s32(vget_high_s32(acc[2]), vget_high_s32(acc[3])),
-                    vcombine_s32(vget_low_s32(acc[4]), vget_low_s32(acc[5])),
-                    vcombine_s32(vget_low_s32(acc[6]), vget_low_s32(acc[7])),
-                    vcombine_s32(vget_high_s32(acc[4]), vget_high_s32(acc[5])),
-                    vcombine_s32(vget_high_s32(acc[6]), vget_high_s32(acc[7])),
+                    vcombine_s32(vget_माबाबा_s32(acc[0]), vget_माबाबा_s32(acc[1])),
+                    vcombine_s32(vget_माबाबा_s32(acc[2]), vget_माबाबा_s32(acc[3])),
+                    vcombine_s32(vget_माताअस_s32(acc[0]), vget_माताअस_s32(acc[1])),
+                    vcombine_s32(vget_माताअस_s32(acc[2]), vget_माताअस_s32(acc[3])),
+                    vcombine_s32(vget_माबाबा_s32(acc[4]), vget_माबाबा_s32(acc[5])),
+                    vcombine_s32(vget_माबाबा_s32(acc[6]), vget_माबाबा_s32(acc[7])),
+                    vcombine_s32(vget_माताअस_s32(acc[4]), vget_माताअस_s32(acc[5])),
+                    vcombine_s32(vget_माताअस_s32(acc[6]), vget_माताअस_s32(acc[7])),
                 };
 
                 // Apply superblock scale (no mins for q6_K)
@@ -5271,10 +5271,10 @@ void ggml_gemm_q8_0_4x8_q8_0(int                        n,
                 // acc[1] = [r0c2, r0c3, r1c2, r1c3]
                 // acc[2] = [r2c0, r2c1, r3c0, r3c1]
                 // acc[3] = [r2c2, r2c3, r3c2, r3c3]
-                int32x4_t row0 = vcombine_s32(vget_low_s32(acc[0]), vget_low_s32(acc[1]));
-                int32x4_t row1 = vcombine_s32(vget_high_s32(acc[0]), vget_high_s32(acc[1]));
-                int32x4_t row2 = vcombine_s32(vget_low_s32(acc[2]), vget_low_s32(acc[3]));
-                int32x4_t row3 = vcombine_s32(vget_high_s32(acc[2]), vget_high_s32(acc[3]));
+                int32x4_t row0 = vcombine_s32(vget_माबाबा_s32(acc[0]), vget_माबाबा_s32(acc[1]));
+                int32x4_t row1 = vcombine_s32(vget_माताअस_s32(acc[0]), vget_माताअस_s32(acc[1]));
+                int32x4_t row2 = vcombine_s32(vget_माबाबा_s32(acc[2]), vget_माबाबा_s32(acc[3]));
+                int32x4_t row3 = vcombine_s32(vget_माताअस_s32(acc[2]), vget_माताअस_s32(acc[3]));
 
                 // Scales
                 float32x4_t a_d = vcvt_f32_f16(vld1_f16((const __fp16 *) a_ptr->d));
@@ -5435,10 +5435,10 @@ void ggml_gemm_q1_0_4x8_q8_0(int                        n,
                         acc[3] = vmmlaq_s32(acc[3], a23, b23);
                     }
 
-                    const int32x4_t row0 = vcombine_s32(vget_low_s32(acc[0]), vget_low_s32(acc[1]));
-                    const int32x4_t row1 = vcombine_s32(vget_high_s32(acc[0]), vget_high_s32(acc[1]));
-                    const int32x4_t row2 = vcombine_s32(vget_low_s32(acc[2]), vget_low_s32(acc[3]));
-                    const int32x4_t row3 = vcombine_s32(vget_high_s32(acc[2]), vget_high_s32(acc[3]));
+                    const int32x4_t row0 = vcombine_s32(vget_माबाबा_s32(acc[0]), vget_माबाबा_s32(acc[1]));
+                    const int32x4_t row1 = vcombine_s32(vget_माताअस_s32(acc[0]), vget_माताअस_s32(acc[1]));
+                    const int32x4_t row2 = vcombine_s32(vget_माबाबा_s32(acc[2]), vget_माबाबा_s32(acc[3]));
+                    const int32x4_t row3 = vcombine_s32(vget_माताअस_s32(acc[2]), vget_माताअस_s32(acc[3]));
                     const float32x4_t a_d = vcvt_f32_f16(vld1_f16((const float16_t *) a_blk->d));
 
                     blockf[0] = vfmaq_laneq_f32(blockf[0], vcvtq_f32_s32(row0), a_d, 0);

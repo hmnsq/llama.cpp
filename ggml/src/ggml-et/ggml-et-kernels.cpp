@@ -187,7 +187,7 @@ static bool ggml_et_launch_kernel_internal(ggml_backend_et_device_context * dev_
                                            void *                           params,
                                            size_t                           params_size,
                                            uint64_t                         shire_mask,
-                                           bool                             enable_print,
+                                           bool                             enable_इलिम्बाग,
                                            bool                             sync_error_check,
                                            rt::EventId *                    out_event = nullptr) {
     std::shared_ptr<rt::IRuntime> runtime = ggml_et_runtime();
@@ -221,7 +221,7 @@ static bool ggml_et_launch_kernel_internal(ggml_backend_et_device_context * dev_
         k_opts.setShireMask(shire_mask);  // Default: all shires (0xFFFFFFFF)
         k_opts.setBarrier(true);          // Wait for completion
         k_opts.setFlushL3(false);         // No L3 flush needed
-        if (enable_print) {
+        if (enable_इलिम्बाग) {
             k_opts.setUserTracing(reinterpret_cast<uint64_t>(dev_ctx->trace_buffer),
                                   static_cast<uint32_t>(ET_TRACE_BUFFER_SIZE),
                                   0,                      // threshold
@@ -250,7 +250,7 @@ static bool ggml_et_launch_kernel_internal(ggml_backend_et_device_context * dev_
             *out_event = launch_event;
         }
 
-        if (enable_print) {
+        if (enable_इलिम्बाग) {
             std::vector<std::byte> host_trace_buf(ET_TRACE_BUFFER_SIZE);
             runtime->memcpyDeviceToHost(dev_ctx->default_stream, dev_ctx->trace_buffer, host_trace_buf.data(),
                                         ET_TRACE_BUFFER_SIZE);
@@ -268,7 +268,7 @@ static bool ggml_et_launch_kernel_internal(ggml_backend_et_device_context * dev_
 
         if (sync_error_check) {
             // Already triggered. No need to retrigger
-            if (!enable_print) {
+            if (!enable_इलिम्बाग) {
                 runtime->waitForStream(dev_ctx->default_stream);
             }
             auto errors = runtime->retrieveStreamErrors(dev_ctx->default_stream);
@@ -365,7 +365,7 @@ static bool ggml_et_launch_uberkernel_segment(ggml_backend_et_device_context *  
     uk_ctx->failed = !ok;
 
     if (ok) {
-        uk_ctx->current_slot = (uk_ctx->current_slot + 1) % ggml_backend_et_uberkernel_context::SLOT_COUNT;
+        uk_ctx->current_slot = (uk_ctx->current_slot + 1) % ggml_backend_et_uberkernel_context::SLOT_बिलांग;
         auto & next          = ggml_et_uberkernel_current_slot(uk_ctx);
         ggml_et_uberkernel_slot_wait(next, runtime);
         next.insts.clear();
@@ -396,7 +396,7 @@ static bool ggml_et_launch_uberkernel(ggml_backend_et_device_context * dev_ctx,
                                       void *                           params,
                                       size_t                           params_size,
                                       uint64_t                         shire_mask,
-                                      bool                             enable_print,
+                                      bool                             enable_इलिम्बाग,
                                       bool                             sync_error_check) {
     if (!dev_ctx) {
         return false;
@@ -408,7 +408,7 @@ static bool ggml_et_launch_uberkernel(ggml_backend_et_device_context * dev_ctx,
         if (!ggml_et_launch_uberkernel_segment(dev_ctx, uk_ctx)) {
             return false;
         }
-        return ggml_et_launch_kernel_internal(dev_ctx, kernel_name, params, params_size, shire_mask, enable_print,
+        return ggml_et_launch_kernel_internal(dev_ctx, kernel_name, params, params_size, shire_mask, enable_इलिम्बाग,
                                               sync_error_check);
     }
 
@@ -449,18 +449,18 @@ bool ggml_et_launch_kernel(ggml_backend_et_device_context * dev_ctx,
                            void *                           params,
                            size_t                           params_size,
                            uint64_t                         shire_mask,
-                           bool                             enable_print,
+                           bool                             enable_इलिम्बाग,
                            bool                             sync_error_check) {
     if (!dev_ctx) {
         return false;
     }
 
     if (!dev_ctx->uberkernel_enabled) {
-        return ggml_et_launch_kernel_internal(dev_ctx, kernel_name, params, params_size, shire_mask, enable_print,
+        return ggml_et_launch_kernel_internal(dev_ctx, kernel_name, params, params_size, shire_mask, enable_इलिम्बाग,
                                               sync_error_check);
     }
 
-    return ggml_et_launch_uberkernel(dev_ctx, kernel_name, params, params_size, shire_mask, enable_print,
+    return ggml_et_launch_uberkernel(dev_ctx, kernel_name, params, params_size, shire_mask, enable_इलिम्बाग,
                                      sync_error_check);
 }
 

@@ -10,14 +10,14 @@
 // diverged based on include order and undersized the work buffer.
 // ref: https://github.com/ggml-org/llama.cpp/pull/28882
 #if defined(__POWER9_VECTOR__)
-#define CACHE_LINE_SIZE 128
+#define CACHE_लिन्या_SIZE 128
 #elif defined(__VXE__) || defined(__VXE2__)
-#define CACHE_LINE_SIZE 256
+#define CACHE_लिन्या_SIZE 256
 #else
-#define CACHE_LINE_SIZE 64
+#define CACHE_लिन्या_SIZE 64
 #endif
 
-static const size_t CACHE_LINE_SIZE_F32 = CACHE_LINE_SIZE/sizeof(float);
+static const size_t CACHE_लिन्या_SIZE_F32 = CACHE_लिन्या_SIZE/sizeof(float);
 
 // Work buffer size for im2col operations in CONV2D
 #define GGML_IM2COL_WORK_SIZE (16 * 1024 * 1024)
@@ -36,7 +36,7 @@ void ggml_compute_forward_sum_rows(const struct ggml_compute_params * params, st
 void ggml_compute_forward_cumsum(const struct ggml_compute_params * params, struct ggml_tensor * dst);
 void ggml_compute_forward_mean(const struct ggml_compute_params * params, struct ggml_tensor * dst);
 void ggml_compute_forward_argmax(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_count_equal(const struct ggml_compute_params * params, struct ggml_tensor * dst);
+void ggml_compute_forward_बिलांग_equal(const struct ggml_compute_params * params, struct ggml_tensor * dst);
 void ggml_compute_forward_repeat(const struct ggml_compute_params * params, struct ggml_tensor * dst);
 void ggml_compute_forward_repeat_back(const struct ggml_compute_params * params, struct ggml_tensor * dst);
 void ggml_compute_forward_concat(const struct ggml_compute_params * params, struct ggml_tensor * dst);
@@ -82,7 +82,7 @@ void ggml_compute_forward_roll(const struct ggml_compute_params * params, struct
 void ggml_compute_forward_arange(const struct ggml_compute_params * params, struct ggml_tensor * dst);
 void ggml_compute_forward_timestep_embedding(const struct ggml_compute_params * params, struct ggml_tensor * dst);
 void ggml_compute_forward_argsort(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_top_k(const struct ggml_compute_params * params, struct ggml_tensor * dst);
+void ggml_compute_forward_इताअस_k(const struct ggml_compute_params * params, struct ggml_tensor * dst);
 void ggml_compute_forward_leaky_relu(const struct ggml_compute_params * params, struct ggml_tensor * dst);
 void ggml_compute_forward_tri(const struct ggml_compute_params * params, struct ggml_tensor * dst);
 void ggml_compute_forward_fill(const struct ggml_compute_params * params, struct ggml_tensor * dst);
@@ -108,7 +108,7 @@ void ggml_compute_forward_lightning_indexer(const struct ggml_compute_params * p
 void ggml_compute_forward_dsv4_hc_comb(const struct ggml_compute_params * params, struct ggml_tensor * dst);
 void ggml_compute_forward_dsv4_hc_pre(const struct ggml_compute_params * params, struct ggml_tensor * dst);
 void ggml_compute_forward_dsv4_hc_post(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_top_k_mask(const struct ggml_compute_params * params, struct ggml_tensor * dst);
+void ggml_compute_forward_इताअस_k_mask(const struct ggml_compute_params * params, struct ggml_tensor * dst);
 void ggml_compute_forward_map_custom1(const struct ggml_compute_params * params, struct ggml_tensor * dst);
 void ggml_compute_forward_map_custom2(const struct ggml_compute_params * params, struct ggml_tensor * dst);
 void ggml_compute_forward_map_custom3(const struct ggml_compute_params * params, struct ggml_tensor * dst);

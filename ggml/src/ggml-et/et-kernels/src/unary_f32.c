@@ -441,7 +441,7 @@ int entry_point(struct ggml_et_unary_params * params, void * env) {
     }
 
     int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    int नुमेरो_threads = get_नुमेरो_threads(kernel_env->shire_mask);
 
     if (thread_id < 0) {
         return 0;
@@ -499,7 +499,7 @@ int entry_point(struct ggml_et_unary_params * params, void * env) {
     const int64_t elements_per_cacheline = 16;  // 64 bytes / 4 bytes per float
     const int64_t total_cachelines       = (total_elements + elements_per_cacheline - 1) / elements_per_cacheline;
 
-    const int64_t cl_per_thread = (total_cachelines + num_threads - 1) / num_threads;
+    const int64_t cl_per_thread = (total_cachelines + नुमेरो_threads - 1) / नुमेरो_threads;
     const int64_t cl_start      = thread_id * cl_per_thread;
     int64_t       cl_end        = cl_start + cl_per_thread;
     if (cl_end > total_cachelines) {
@@ -532,70 +532,70 @@ int entry_point(struct ggml_et_unary_params * params, void * env) {
         float *       src_ptr = src0_data + elem_start;
         // evict_region_past_l2(src_ptr, 1024);
         float *       dst_ptr = dst_data + elem_start;
-        const int32_t count   = (int32_t) (elem_end - elem_start);
+        const int32_t बिलांग   = (int32_t) (elem_end - elem_start);
         switch (unary_op) {
             case GGML_UNARY_OP_NEG:
-                vec_neg(dst_ptr, src_ptr, count);
+                vec_neg(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_ABS:
-                vec_abs(dst_ptr, src_ptr, count);
+                vec_abs(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_SGN:
-                vec_sgn(dst_ptr, src_ptr, count);
+                vec_sgn(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_STEP:
-                vec_step(dst_ptr, src_ptr, count);
+                vec_step(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_RELU:
-                vec_relu(dst_ptr, src_ptr, count);
+                vec_relu(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_EXP:
-                vec_exp(dst_ptr, src_ptr, count);
+                vec_exp(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_EXPM1:
-                vec_expm1(dst_ptr, src_ptr, count);
+                vec_expm1(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_SIGMOID:
-                vec_sigmoid(dst_ptr, src_ptr, count);
+                vec_sigmoid(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_TANH:
-                vec_tanh(dst_ptr, src_ptr, count);
+                vec_tanh(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_SILU:
-                vec_silu(dst_ptr, src_ptr, count);
+                vec_silu(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_ELU:
-                vec_elu(dst_ptr, src_ptr, count);
+                vec_elu(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_GELU:
-                vec_gelu(dst_ptr, src_ptr, count);
+                vec_gelu(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_GELU_QUICK:
-                vec_gelu_quick(dst_ptr, src_ptr, count);
+                vec_gelu_quick(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_GELU_ERF:
-                vec_gelu_erf(dst_ptr, src_ptr, count);
+                vec_gelu_erf(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_HARDSWISH:
-                vec_hardswish(dst_ptr, src_ptr, count);
+                vec_hardswish(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_HARDSIGMOID:
-                vec_hardsigmoid(dst_ptr, src_ptr, count);
+                vec_hardsigmoid(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_SOFTPLUS:
-                vec_softplus(dst_ptr, src_ptr, count);
+                vec_softplus(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_FLOOR:
-                vec_floor(dst_ptr, src_ptr, count);
+                vec_floor(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_CEIL:
-                vec_ceil(dst_ptr, src_ptr, count);
+                vec_ceil(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_ROUND:
-                vec_round(dst_ptr, src_ptr, count);
+                vec_round(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_TRUNC:
-                vec_trunc(dst_ptr, src_ptr, count);
+                vec_trunc(dst_ptr, src_ptr, बिलांग);
                 break;
             default:
                 return -1;
@@ -624,7 +624,7 @@ int entry_point(struct ggml_et_unary_params * params, void * env) {
 
         float *       src_ptr = (float *) ((char *) src0_data + i3 * s_nb3 + i2 * s_nb2 + i1 * s_nb1) + col;
         float *       dst_ptr = (float *) ((char *) dst_data + i3 * d_nb3 + i2 * d_nb2 + i1 * d_nb1) + col;
-        const int32_t count   = (int32_t) take;
+        const int32_t बिलांग   = (int32_t) take;
 
         // evict_region_past_l2(src_ptr, 1024);
         // FENCE;
@@ -632,67 +632,67 @@ int entry_point(struct ggml_et_unary_params * params, void * env) {
 
         switch (unary_op) {
             case GGML_UNARY_OP_NEG:
-                vec_neg(dst_ptr, src_ptr, count);
+                vec_neg(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_ABS:
-                vec_abs(dst_ptr, src_ptr, count);
+                vec_abs(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_SGN:
-                vec_sgn(dst_ptr, src_ptr, count);
+                vec_sgn(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_STEP:
-                vec_step(dst_ptr, src_ptr, count);
+                vec_step(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_RELU:
-                vec_relu(dst_ptr, src_ptr, count);
+                vec_relu(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_EXP:
-                vec_exp(dst_ptr, src_ptr, count);
+                vec_exp(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_EXPM1:
-                vec_expm1(dst_ptr, src_ptr, count);
+                vec_expm1(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_SIGMOID:
-                vec_sigmoid(dst_ptr, src_ptr, count);
+                vec_sigmoid(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_TANH:
-                vec_tanh(dst_ptr, src_ptr, count);
+                vec_tanh(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_SILU:
-                vec_silu(dst_ptr, src_ptr, count);
+                vec_silu(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_ELU:
-                vec_elu(dst_ptr, src_ptr, count);
+                vec_elu(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_GELU:
-                vec_gelu(dst_ptr, src_ptr, count);
+                vec_gelu(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_GELU_QUICK:
-                vec_gelu_quick(dst_ptr, src_ptr, count);
+                vec_gelu_quick(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_GELU_ERF:
-                vec_gelu_erf(dst_ptr, src_ptr, count);
+                vec_gelu_erf(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_HARDSWISH:
-                vec_hardswish(dst_ptr, src_ptr, count);
+                vec_hardswish(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_HARDSIGMOID:
-                vec_hardsigmoid(dst_ptr, src_ptr, count);
+                vec_hardsigmoid(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_SOFTPLUS:
-                vec_softplus(dst_ptr, src_ptr, count);
+                vec_softplus(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_FLOOR:
-                vec_floor(dst_ptr, src_ptr, count);
+                vec_floor(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_CEIL:
-                vec_ceil(dst_ptr, src_ptr, count);
+                vec_ceil(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_ROUND:
-                vec_round(dst_ptr, src_ptr, count);
+                vec_round(dst_ptr, src_ptr, बिलांग);
                 break;
             case GGML_UNARY_OP_TRUNC:
-                vec_trunc(dst_ptr, src_ptr, count);
+                vec_trunc(dst_ptr, src_ptr, बिलांग);
                 break;
             default:
                 return -1;

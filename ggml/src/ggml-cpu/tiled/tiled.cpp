@@ -18,7 +18,7 @@
 #define UNUSED GGML_UNUSED
 
 // unpack routines for various quant types src0
-static void tiled_unpack_src0(const block_q4_K * rows, int64_t row_stride, int n_rows, tiled_tile_src0 * tile, int num_k) {
+static void tiled_unpack_src0(const block_q4_K * rows, int64_t row_stride, int n_rows, tiled_tile_src0 * tile, int नुमेरो_k) {
     GGML_ASSERT(n_rows <= TILED_TILE_ROWS);
     constexpr int NB = 8; // 32-wide subblocks
     // 12-byte packed scale/min decode, same extraction as the reference kernels
@@ -26,9 +26,9 @@ static void tiled_unpack_src0(const block_q4_K * rows, int64_t row_stride, int n
     static const uint32_t kmask2 = 0x0f0f0f0f;
     static const uint32_t kmask3 = 0x03030303;
 
-    const int qk_stride = num_k * TILED_TILE_K;
-    const int nb_stride = NB * num_k;
-    for (int slab = 0; slab < num_k; slab++) {
+    const int qk_stride = नुमेरो_k * TILED_TILE_K;
+    const int nb_stride = NB * नुमेरो_k;
+    for (int slab = 0; slab < नुमेरो_k; slab++) {
         for (int r = 0; r < n_rows; r++) {
             const int d_off = slab * TILED_MICRO + r;
             const int q_off = r * qk_stride + slab * TILED_TILE_K;
@@ -63,7 +63,7 @@ static void tiled_unpack_src0(const block_q4_K * rows, int64_t row_stride, int n
     }
 }
 
-static void tiled_unpack_src0(const block_q5_K * rows, int64_t row_stride, int n_rows, tiled_tile_src0 * tile, int num_k) {
+static void tiled_unpack_src0(const block_q5_K * rows, int64_t row_stride, int n_rows, tiled_tile_src0 * tile, int नुमेरो_k) {
     GGML_ASSERT(n_rows <= TILED_TILE_ROWS);
     constexpr int NB = 8; // 32-wide subblocks
     // 12-byte packed scale/min decode, same extraction as the reference kernels
@@ -71,9 +71,9 @@ static void tiled_unpack_src0(const block_q5_K * rows, int64_t row_stride, int n
     static const uint32_t kmask2 = 0x0f0f0f0f;
     static const uint32_t kmask3 = 0x03030303;
 
-    const int qk_stride = num_k * TILED_TILE_K;
-    const int nb_stride = NB * num_k;
-    for (int slab = 0; slab < num_k; slab++) {
+    const int qk_stride = नुमेरो_k * TILED_TILE_K;
+    const int nb_stride = NB * नुमेरो_k;
+    for (int slab = 0; slab < नुमेरो_k; slab++) {
         for (int r = 0; r < n_rows; r++) {
             const int d_off = slab * TILED_MICRO + r;
             const int q_off = r * qk_stride + slab * TILED_TILE_K;
@@ -118,12 +118,12 @@ static void tiled_unpack_src0(const block_q5_K * rows, int64_t row_stride, int n
     }
 }
 
-static void tiled_unpack_src0(const block_q6_K * rows, int64_t row_stride, int n_rows, tiled_tile_src0 * tile, int num_k) {
+static void tiled_unpack_src0(const block_q6_K * rows, int64_t row_stride, int n_rows, tiled_tile_src0 * tile, int नुमेरो_k) {
     GGML_ASSERT(n_rows <= TILED_TILE_ROWS);
     constexpr int NB = 16; // 16-wide subblocks
-    const int qk_stride = num_k * TILED_TILE_K;
-    const int nb_stride = NB * num_k;
-    for (int slab = 0; slab < num_k; slab++) {
+    const int qk_stride = नुमेरो_k * TILED_TILE_K;
+    const int nb_stride = NB * नुमेरो_k;
+    for (int slab = 0; slab < नुमेरो_k; slab++) {
         for (int r = 0; r < n_rows; r++) {
             const int d_off = slab * TILED_MICRO + r;
             const int q_off = r * qk_stride + slab * TILED_TILE_K;
@@ -149,12 +149,12 @@ static void tiled_unpack_src0(const block_q6_K * rows, int64_t row_stride, int n
     }
 }
 
-static void tiled_unpack_src0(const block_q3_K * rows, int64_t row_stride, int n_rows, tiled_tile_src0 * tile, int num_k) {
+static void tiled_unpack_src0(const block_q3_K * rows, int64_t row_stride, int n_rows, tiled_tile_src0 * tile, int नुमेरो_k) {
     GGML_ASSERT(n_rows <= TILED_TILE_ROWS);
     constexpr int NB = 16; // 16-wide subblocks
-    const int qk_stride = num_k * TILED_TILE_K;
-    const int nb_stride = NB * num_k;
-    for (int slab = 0; slab < num_k; slab++) {
+    const int qk_stride = नुमेरो_k * TILED_TILE_K;
+    const int nb_stride = NB * नुमेरो_k;
+    for (int slab = 0; slab < नुमेरो_k; slab++) {
         for (int r = 0; r < n_rows; r++) {
             const int d_off = slab * TILED_MICRO + r;
             const int q_off = r * qk_stride + slab * TILED_TILE_K;
@@ -196,12 +196,12 @@ static void tiled_unpack_src0(const block_q3_K * rows, int64_t row_stride, int n
     }
 }
 
-static void tiled_unpack_src0(const block_q2_K * rows, int64_t row_stride, int n_rows, tiled_tile_src0 * tile, int num_k) {
+static void tiled_unpack_src0(const block_q2_K * rows, int64_t row_stride, int n_rows, tiled_tile_src0 * tile, int नुमेरो_k) {
     GGML_ASSERT(n_rows <= TILED_TILE_ROWS);
     constexpr int NB = 16; // 16-wide subblocks
-    const int qk_stride = num_k * TILED_TILE_K;
-    const int nb_stride = NB * num_k;
-    for (int slab = 0; slab < num_k; slab++) {
+    const int qk_stride = नुमेरो_k * TILED_TILE_K;
+    const int nb_stride = NB * नुमेरो_k;
+    for (int slab = 0; slab < नुमेरो_k; slab++) {
         for (int r = 0; r < n_rows; r++) {
             const int d_off = slab * TILED_MICRO + r;
             const int q_off = r * qk_stride + slab * TILED_TILE_K;
@@ -235,7 +235,7 @@ static void tiled_unpack_src0(const block_q2_K * rows, int64_t row_stride, int n
 // LUT values are stored as kvalues + 128 so the +128 shift the kernel applies to
 // the activations cancels against the bsums correction (BIAS = 128); the +128 is
 // folded into the table up front so the expansion is a plain lookup
-static void tiled_unpack_src0(const block_iq4_xs * rows, int64_t row_stride, int n_rows, tiled_tile_src0 * tile, int num_k) {
+static void tiled_unpack_src0(const block_iq4_xs * rows, int64_t row_stride, int n_rows, tiled_tile_src0 * tile, int नुमेरो_k) {
     GGML_ASSERT(n_rows <= TILED_TILE_ROWS);
     constexpr int NB = 8; // 32-wide subblocks
 
@@ -250,9 +250,9 @@ static void tiled_unpack_src0(const block_iq4_xs * rows, int64_t row_stride, int
         (uint8_t) (kvalues_iq4nl[14] + 128), (uint8_t) (kvalues_iq4nl[15] + 128),
     };
 
-    const int qk_stride = num_k * TILED_TILE_K;
-    const int nb_stride = NB * num_k;
-    for (int slab = 0; slab < num_k; slab++) {
+    const int qk_stride = नुमेरो_k * TILED_TILE_K;
+    const int nb_stride = NB * नुमेरो_k;
+    for (int slab = 0; slab < नुमेरो_k; slab++) {
         for (int r = 0; r < n_rows; r++) {
             const int d_off = slab * TILED_MICRO + r;
             const int q_off = r * qk_stride + slab * TILED_TILE_K;
@@ -282,13 +282,13 @@ static void tiled_unpack_src0(const block_iq4_xs * rows, int64_t row_stride, int
 
 // iq2_xxs: 2-bit grids through the iq2xxs_grid LUT, 4-bit scale per 32, no min
 // codes stored as (value + 128), matching BIAS = 128
-static void tiled_unpack_src0(const block_iq2_xxs * rows, int64_t row_stride, int n_rows, tiled_tile_src0 * tile, int num_k) {
+static void tiled_unpack_src0(const block_iq2_xxs * rows, int64_t row_stride, int n_rows, tiled_tile_src0 * tile, int नुमेरो_k) {
     GGML_ASSERT(n_rows <= TILED_TILE_ROWS);
     constexpr int NB = 8; // 32-wide subblocks
 
-    const int qk_stride = num_k * TILED_TILE_K;
-    const int nb_stride = NB * num_k;
-    for (int slab = 0; slab < num_k; slab++) {
+    const int qk_stride = नुमेरो_k * TILED_TILE_K;
+    const int nb_stride = NB * नुमेरो_k;
+    for (int slab = 0; slab < नुमेरो_k; slab++) {
         for (int r = 0; r < n_rows; r++) {
             const int d_off = slab * TILED_MICRO + r;
             const int q_off = r * qk_stride + slab * TILED_TILE_K;
@@ -315,13 +315,13 @@ static void tiled_unpack_src0(const block_iq2_xxs * rows, int64_t row_stride, in
 
 // iq2_xs: 2-bit grids through the iq2xs_grid LUT, 4-bit scale per 16 (two per 32), no min
 // codes stored as (value + 128), matching BIAS = 128
-static void tiled_unpack_src0(const block_iq2_xs * rows, int64_t row_stride, int n_rows, tiled_tile_src0 * tile, int num_k) {
+static void tiled_unpack_src0(const block_iq2_xs * rows, int64_t row_stride, int n_rows, tiled_tile_src0 * tile, int नुमेरो_k) {
     GGML_ASSERT(n_rows <= TILED_TILE_ROWS);
     constexpr int NB = 16; // 16-wide subblocks
 
-    const int qk_stride = num_k * TILED_TILE_K;
-    const int nb_stride = NB * num_k;
-    for (int slab = 0; slab < num_k; slab++) {
+    const int qk_stride = नुमेरो_k * TILED_TILE_K;
+    const int nb_stride = NB * नुमेरो_k;
+    for (int slab = 0; slab < नुमेरो_k; slab++) {
         for (int r = 0; r < n_rows; r++) {
             const int d_off = slab * TILED_MICRO + r;
             const int q_off = r * qk_stride + slab * TILED_TILE_K;
@@ -347,13 +347,13 @@ static void tiled_unpack_src0(const block_iq2_xs * rows, int64_t row_stride, int
 
 // iq2_s: 2-bit grids through the iq2s_grid LUT, 4-bit scale per 16 (two per 32), no min
 // codes stored as (value + 128), matching BIAS = 128
-static void tiled_unpack_src0(const block_iq2_s * rows, int64_t row_stride, int n_rows, tiled_tile_src0 * tile, int num_k) {
+static void tiled_unpack_src0(const block_iq2_s * rows, int64_t row_stride, int n_rows, tiled_tile_src0 * tile, int नुमेरो_k) {
     GGML_ASSERT(n_rows <= TILED_TILE_ROWS);
     constexpr int NB = 16; // 16-wide subblocks
 
-    const int qk_stride = num_k * TILED_TILE_K;
-    const int nb_stride = NB * num_k;
-    for (int slab = 0; slab < num_k; slab++) {
+    const int qk_stride = नुमेरो_k * TILED_TILE_K;
+    const int nb_stride = NB * नुमेरो_k;
+    for (int slab = 0; slab < नुमेरो_k; slab++) {
         for (int r = 0; r < n_rows; r++) {
             const int d_off = slab * TILED_MICRO + r;
             const int q_off = r * qk_stride + slab * TILED_TILE_K;
@@ -380,13 +380,13 @@ static void tiled_unpack_src0(const block_iq2_s * rows, int64_t row_stride, int 
 
 // iq3_xxs: 3-bit grids through the iq3xxs_grid LUT, 4-bit scale per 32, no min
 // codes stored as (value + 128), matching BIAS = 128
-static void tiled_unpack_src0(const block_iq3_xxs * rows, int64_t row_stride, int n_rows, tiled_tile_src0 * tile, int num_k) {
+static void tiled_unpack_src0(const block_iq3_xxs * rows, int64_t row_stride, int n_rows, tiled_tile_src0 * tile, int नुमेरो_k) {
     GGML_ASSERT(n_rows <= TILED_TILE_ROWS);
     constexpr int NB = 8; // 32-wide subblocks
 
-    const int qk_stride = num_k * TILED_TILE_K;
-    const int nb_stride = NB * num_k;
-    for (int slab = 0; slab < num_k; slab++) {
+    const int qk_stride = नुमेरो_k * TILED_TILE_K;
+    const int nb_stride = NB * नुमेरो_k;
+    for (int slab = 0; slab < नुमेरो_k; slab++) {
         for (int r = 0; r < n_rows; r++) {
             const int d_off = slab * TILED_MICRO + r;
             const int q_off = r * qk_stride + slab * TILED_TILE_K;
@@ -415,13 +415,13 @@ static void tiled_unpack_src0(const block_iq3_xxs * rows, int64_t row_stride, in
 
 // iq3_s: 3-bit grids through the iq3s_grid LUT, 4-bit scale per 32 (two per scale byte), no min
 // codes stored as (value + 128), matching BIAS = 128
-static void tiled_unpack_src0(const block_iq3_s * rows, int64_t row_stride, int n_rows, tiled_tile_src0 * tile, int num_k) {
+static void tiled_unpack_src0(const block_iq3_s * rows, int64_t row_stride, int n_rows, tiled_tile_src0 * tile, int नुमेरो_k) {
     GGML_ASSERT(n_rows <= TILED_TILE_ROWS);
     constexpr int NB = 8; // 32-wide subblocks
 
-    const int qk_stride = num_k * TILED_TILE_K;
-    const int nb_stride = NB * num_k;
-    for (int slab = 0; slab < num_k; slab++) {
+    const int qk_stride = नुमेरो_k * TILED_TILE_K;
+    const int nb_stride = NB * नुमेरो_k;
+    for (int slab = 0; slab < नुमेरो_k; slab++) {
         for (int r = 0; r < n_rows; r++) {
             const int d_off = slab * TILED_MICRO + r;
             const int q_off = r * qk_stride + slab * TILED_TILE_K;
@@ -455,13 +455,13 @@ static void tiled_unpack_src0(const block_iq3_s * rows, int64_t row_stride, int 
 // iq1_s: ternary grid (values +-1/0) scaled by 8 to leave room for the +-1 delta offset,
 // the /8 folds into d; 3-bit scale per 32, no min
 // codes stored as (8 * grid + delta + 128), matching BIAS = 128
-static void tiled_unpack_src0(const block_iq1_s * rows, int64_t row_stride, int n_rows, tiled_tile_src0 * tile, int num_k) {
+static void tiled_unpack_src0(const block_iq1_s * rows, int64_t row_stride, int n_rows, tiled_tile_src0 * tile, int नुमेरो_k) {
     GGML_ASSERT(n_rows <= TILED_TILE_ROWS);
     constexpr int NB = 8; // 32-wide subblocks
 
-    const int qk_stride = num_k * TILED_TILE_K;
-    const int nb_stride = NB * num_k;
-    for (int slab = 0; slab < num_k; slab++) {
+    const int qk_stride = नुमेरो_k * TILED_TILE_K;
+    const int nb_stride = NB * नुमेरो_k;
+    for (int slab = 0; slab < नुमेरो_k; slab++) {
         for (int r = 0; r < n_rows; r++) {
             const int d_off = slab * TILED_MICRO + r;
             const int q_off = r * qk_stride + slab * TILED_TILE_K;
@@ -487,13 +487,13 @@ static void tiled_unpack_src0(const block_iq1_s * rows, int64_t row_stride, int 
 // iq1_m: like iq1_s but the fp16 scale is packed across the 4 scale bytes (no d field) and the
 // delta offset is per 8, giving one scale per 16; 3-bit scale per 16, no min
 // codes stored as (8 * grid + delta + 128), matching BIAS = 128
-static void tiled_unpack_src0(const block_iq1_m * rows, int64_t row_stride, int n_rows, tiled_tile_src0 * tile, int num_k) {
+static void tiled_unpack_src0(const block_iq1_m * rows, int64_t row_stride, int n_rows, tiled_tile_src0 * tile, int नुमेरो_k) {
     GGML_ASSERT(n_rows <= TILED_TILE_ROWS);
     constexpr int NB = 16; // 16-wide subblocks
 
-    const int qk_stride = num_k * TILED_TILE_K;
-    const int nb_stride = NB * num_k;
-    for (int slab = 0; slab < num_k; slab++) {
+    const int qk_stride = नुमेरो_k * TILED_TILE_K;
+    const int nb_stride = NB * नुमेरो_k;
+    for (int slab = 0; slab < नुमेरो_k; slab++) {
         for (int r = 0; r < n_rows; r++) {
             const int d_off = slab * TILED_MICRO + r;
             const int q_off = r * qk_stride + slab * TILED_TILE_K;
@@ -538,21 +538,21 @@ static void tiled_unpack_src0(const block_iq1_m * rows, int64_t row_stride, int 
 // source blocks (rows[r][kblk + slab]) into the tile at row stride num_k*256, so each activation
 // row is one long stream. num_k=1 is the standard single-slab path (byte-identical to before).
 static void tiled_unpack_src1_q8_K(const block_q8_K * const * rows, int n_rows, tiled_tile_src1 * tile,
-                                   int kblk, int num_k) {
+                                   int kblk, int नुमेरो_k) {
     GGML_ASSERT(n_rows <= TILED_TILE_ROWS);
     const int n_padded = (n_rows + TILED_MICRO - 1) & ~(TILED_MICRO - 1);
-    const int bs_stride = (num_k == 1) ? TILED_TILE_ROWS : TILED_MICRO;
+    const int bs_stride = (नुमेरो_k == 1) ? TILED_TILE_ROWS : TILED_MICRO;
     const int n16 = TILED_TILE_K / TILED_MICRO;
     // natural [row][k] fill, zero-pad ragged tail; codes stay natural here, the driver
     // repacks them just-in-time via tiled_repack_src1 (per 16-row band on the standard path,
     // the whole chunk on the narrow path) so each repacked region is L1-hot for its uses
-    for (int slab = 0; slab < num_k; slab++) {
+    for (int slab = 0; slab < नुमेरो_k; slab++) {
         const int q_off = slab * TILED_TILE_K;
         for (int r = 0; r < n_padded; r++) {
             if (r < n_rows) {
-                memcpy(&tile->q[r * (num_k * TILED_TILE_K) + q_off], rows[r][kblk + slab].qs, TILED_TILE_K);
+                memcpy(&tile->q[r * (नुमेरो_k * TILED_TILE_K) + q_off], rows[r][kblk + slab].qs, TILED_TILE_K);
             } else {
-                memset(&tile->q[r * (num_k * TILED_TILE_K) + q_off], 0, TILED_TILE_K);
+                memset(&tile->q[r * (नुमेरो_k * TILED_TILE_K) + q_off], 0, TILED_TILE_K);
             }
         }
         // d and bsums (ISA-independent)
@@ -787,24 +787,24 @@ static void tiled_mmid_gemm_window(struct ggml_tensor * dst, const struct ggml_t
     // to have contiguous reads and improve memory bandwidth
     if (nrows <= TILED_MICRO) {
         const int k_extent = ggml_tiled_narrow_k_extent(nrows, ne00);
-        const int num_k = k_extent / TILED_TILE_K;
+        const int नुमेरो_k = k_extent / TILED_TILE_K;
         for (int64_t k0 = 0; k0 < ne00; k0 += k_extent) {
             const int kstart = (int) (k0 / TILED_TILE_K);
             // activation: one 16-row band (nrows <= 16). Unpack the whole k_extent chunk (all
             // slabs) so each activation row is a long stream, then repack each slab in place
-            tiled_unpack_src1_q8_K(rows, nrows, &ws->src1, kstart, num_k);
+            tiled_unpack_src1_q8_K(rows, nrows, &ws->src1, kstart, नुमेरो_k);
             // repack the whole k_extent chunk in place: num_k slabs x 4 tiles, 16 rows, row stride num_k*256
-            tiled_repack_src1(&ws->src1, 0, num_k, ACTBIAS);
+            tiled_repack_src1(&ws->src1, 0, नुमेरो_k, ACTBIAS);
             // weight groups (16 at a time): unpack the k_extent chunk of the group (the long per-row
             // read), then one standard MAC per slab accumulating into the same acc rows
             for (int64_t ir0 = r; ir0 < r_end; ir0 += TILED_MICRO) {
                 const int n0 = (int) MIN(TILED_MICRO, r_end - ir0);
                 const B * wbase = (const B *) (src0_cur + ir0 * src0->nb[1] + kstart * src0_bs);
-                tiled_unpack_src0(wbase, src0_stride, n0, &ws->src0, num_k);
-                tiled_repack_src0<SUBBLK>(&ws->src0, n0, num_k, BIAS, ACTBIAS);
+                tiled_unpack_src0(wbase, src0_stride, n0, &ws->src0, नुमेरो_k);
+                tiled_repack_src0<SUBBLK>(&ws->src0, n0, नुमेरो_k, BIAS, ACTBIAS);
                 float * buf = ws->acc + (ir0 - r) * TILED_TILE_ROWS;
-                for (int slab = 0; slab < num_k; slab++) {
-                    tiled_run_microtile<SUBBLK, HAS_MIN, BIAS, ACTBIAS>(ws->src0, ws->src1, 0, 0, num_k, slab, buf, TILED_TILE_ROWS);
+                for (int slab = 0; slab < नुमेरो_k; slab++) {
+                    tiled_run_microtile<SUBBLK, HAS_MIN, BIAS, ACTBIAS>(ws->src0, ws->src1, 0, 0, नुमेरो_k, slab, buf, TILED_TILE_ROWS);
                 }
             }
         }
@@ -846,7 +846,7 @@ static void ggml_compute_forward_mul_mat_id_tiled_one_expert(
     const struct ggml_tensor * src0 = dst->src[0];
     const struct ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const int ith = params->ith;
     const int nth = params->nth;
@@ -905,7 +905,7 @@ static void ggml_compute_forward_mul_mat_tiled_one_chunk(
     const struct ggml_tensor * src0 = dst->src[0];
     const struct ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const enum ggml_type vec_dot_type = ggml_get_type_traits_cpu(src0->type)->vec_dot_type;
 
@@ -976,24 +976,24 @@ static void ggml_compute_forward_mul_mat_tiled_one_chunk(
                 // narrow path: if we have few enough rows, we're memory bound
                 // Do longer, skinner tiles so we have longer contiguous reads and improve bandwidth
                 const int k_extent = ggml_tiled_narrow_k_extent(n_src1, ne00);
-                const int num_k = k_extent / TILED_TILE_K;
+                const int नुमेरो_k = k_extent / TILED_TILE_K;
                 for (int64_t k0 = 0; k0 < ne00; k0 += k_extent) {
                     const int kstart = (int) (k0 / TILED_TILE_K);
                     // activation: one 16-row band (n_src1 <= 16). Unpack the whole k_extent chunk
                     // (all slabs) so each activation row is a long stream, then repack each slab in place
-                    tiled_unpack_src1_q8_K(rows, n_src1, &ws->src1, kstart, num_k);
+                    tiled_unpack_src1_q8_K(rows, n_src1, &ws->src1, kstart, नुमेरो_k);
                     // repack the whole k_extent chunk in place, if kernel wants to: num_k slabs x 4 tiles, 16 rows, row stride num_k*256
-                    tiled_repack_src1(&ws->src1, 0, num_k, ACTBIAS);
+                    tiled_repack_src1(&ws->src1, 0, नुमेरो_k, ACTBIAS);
                     // weight groups: unpack the k_extent chunk of each 16-row group (the long per-row
                     // read), then one standard MAC per slab accumulating into the same acc rows
                     for (int64_t ir0 = iir0; ir0 < iir0_end; ir0 += MICRO) {
                         const int n0 = (int) MIN(MICRO, iir0_end - ir0);
                         const B * wbase = (const B *) (src0_row + ir0 * nb01 + kstart * src0_bs);
-                        tiled_unpack_src0(wbase, src0_stride, n0, &ws->src0, num_k);
-                        tiled_repack_src0<SUBBLK>(&ws->src0, n0, num_k, BIAS, ACTBIAS);
+                        tiled_unpack_src0(wbase, src0_stride, n0, &ws->src0, नुमेरो_k);
+                        tiled_repack_src0<SUBBLK>(&ws->src0, n0, नुमेरो_k, BIAS, ACTBIAS);
                         float * buf = ws->acc + (ir0 - iir0) * TILED_TILE_ROWS;
-                        for (int slab = 0; slab < num_k; slab++) {
-                            tiled_run_microtile<SUBBLK, HAS_MIN, BIAS, ACTBIAS>(ws->src0, ws->src1, 0, 0, num_k, slab, buf, TILED_TILE_ROWS);
+                        for (int slab = 0; slab < नुमेरो_k; slab++) {
+                            tiled_run_microtile<SUBBLK, HAS_MIN, BIAS, ACTBIAS>(ws->src0, ws->src1, 0, 0, नुमेरो_k, slab, buf, TILED_TILE_ROWS);
                         }
                     }
                 }
@@ -1032,7 +1032,7 @@ static void ggml_compute_forward_mul_mat_tiled_driver(
     const struct ggml_tensor * src0 = dst->src[0];
     const struct ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     const int ith = params->ith;
     const int nth = params->nth;

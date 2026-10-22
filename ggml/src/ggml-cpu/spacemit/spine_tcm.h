@@ -49,7 +49,7 @@ extern "C" {
 
 typedef struct spine_tcm_mem_info {
     size_t blk_size;
-    size_t blk_num;
+    size_t blk_नुमेरो;
     int    is_fake_tcm;
 } spine_tcm_mem_info_t;
 
@@ -159,20 +159,20 @@ static inline void spine_tcm_handle_reset(spine_tcm_handle_t * handle) {
 }
 
 static inline int spine_tcm_handle_bind(spine_tcm_handle_t * handle) {
-    void * symbol_scope = handle->use_global_scope ? RTLD_DEFAULT : handle->module_handle;
+    void * सिम्बोलो_scope = handle->use_global_scope ? RTLD_DEFAULT : handle->module_handle;
 
-    handle->runtime_version      = (const char * (*) (void) ) dlsym(symbol_scope, "spine_tcm_runtime_version");
-    handle->runtime_is_available = (int (*)(void)) dlsym(symbol_scope, "spine_tcm_runtime_is_available");
+    handle->runtime_version      = (const char * (*) (void) ) dlsym(सिम्बोलो_scope, "spine_tcm_runtime_version");
+    handle->runtime_is_available = (int (*)(void)) dlsym(सिम्बोलो_scope, "spine_tcm_runtime_is_available");
     handle->runtime_layout_info =
-        (int (*)(spine_tcm_mem_info_t *)) dlsym(symbol_scope, "spine_tcm_runtime_layout_info");
+        (int (*)(spine_tcm_mem_info_t *)) dlsym(सिम्बोलो_scope, "spine_tcm_runtime_layout_info");
     handle->runtime_mem_info =
-        (int (*)(int, spine_tcm_block_info_t *)) dlsym(symbol_scope, "spine_tcm_runtime_mem_info");
-    handle->runtime_mem_get      = (void * (*) (int) ) dlsym(symbol_scope, "spine_tcm_runtime_mem_get");
-    handle->runtime_mem_free     = (int (*)(int)) dlsym(symbol_scope, "spine_tcm_runtime_mem_free");
-    handle->runtime_mem_try_wait = (void * (*) (int, size_t)) dlsym(symbol_scope, "spine_tcm_runtime_mem_try_wait");
-    handle->runtime_mem_release  = (int (*)(int)) dlsym(symbol_scope, "spine_tcm_runtime_mem_release");
-    handle->runtime_mem_force_release = (int (*)(int)) dlsym(symbol_scope, "spine_tcm_runtime_mem_force_release");
-    handle->runtime_mem_query         = (int (*)(int)) dlsym(symbol_scope, "spine_tcm_runtime_mem_query");
+        (int (*)(int, spine_tcm_block_info_t *)) dlsym(सिम्बोलो_scope, "spine_tcm_runtime_mem_info");
+    handle->runtime_mem_get      = (void * (*) (int) ) dlsym(सिम्बोलो_scope, "spine_tcm_runtime_mem_get");
+    handle->runtime_mem_free     = (int (*)(int)) dlsym(सिम्बोलो_scope, "spine_tcm_runtime_mem_free");
+    handle->runtime_mem_try_wait = (void * (*) (int, size_t)) dlsym(सिम्बोलो_scope, "spine_tcm_runtime_mem_try_wait");
+    handle->runtime_mem_release  = (int (*)(int)) dlsym(सिम्बोलो_scope, "spine_tcm_runtime_mem_release");
+    handle->runtime_mem_force_release = (int (*)(int)) dlsym(सिम्बोलो_scope, "spine_tcm_runtime_mem_force_release");
+    handle->runtime_mem_query         = (int (*)(int)) dlsym(सिम्बोलो_scope, "spine_tcm_runtime_mem_query");
 
     return handle->runtime_version != NULL && handle->runtime_is_available != NULL &&
                    handle->runtime_layout_info != NULL && handle->runtime_mem_info != NULL &&

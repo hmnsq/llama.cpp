@@ -241,7 +241,7 @@ static size_t ggml_backend_metal_buffer_type_get_alloc_size(ggml_backend_buffer_
             {
                 res *= 2;
             } break;
-        case GGML_OP_TOP_K:
+        case GGML_OP_इताअस_K:
             {
                 res = 2*sizeof(int32_t)*ggml_nelements(tensor->src[0]);
             } break;
@@ -871,7 +871,7 @@ static const char * ggml_backend_metal_reg_get_name(ggml_backend_reg_t reg) {
     GGML_UNUSED(reg);
 }
 
-static size_t ggml_backend_metal_reg_device_count(ggml_backend_reg_t reg) {
+static size_t ggml_backend_metal_reg_device_बिलांग(ggml_backend_reg_t reg) {
     ggml_backend_metal_reg_t ctx = (ggml_backend_metal_reg_t)reg->context;
     return ctx->devices.size();
 }
@@ -993,7 +993,7 @@ static void * ggml_backend_metal_get_proc_address(ggml_backend_reg_t reg, const 
 
 static ggml_backend_reg_i ggml_backend_metal_reg_i = {
     /* .get_name         = */ ggml_backend_metal_reg_get_name,
-    /* .get_device_count = */ ggml_backend_metal_reg_device_count,
+    /* .get_device_count = */ ggml_backend_metal_reg_device_बिलांग,
     /* .get_device       = */ ggml_backend_metal_reg_device_get,
     /* .get_proc_address = */ ggml_backend_metal_get_proc_address,
 };

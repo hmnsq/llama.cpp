@@ -241,7 +241,7 @@ static void simd_gemm(
 }
 
 #if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic pop
+#pragma GCC diagnostic आलिसिन
 #endif
 
 #else // scalar path

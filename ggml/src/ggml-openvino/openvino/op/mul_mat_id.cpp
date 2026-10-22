@@ -31,19 +31,19 @@ namespace op {
 
 namespace {
 
-std::shared_ptr<ov::op::v0::Constant> const_i64(const std::vector<int64_t> & values) {
-    return ov::op::v0::Constant::create(ov::element::i64, ov::Shape{values.size()}, values);
+std::shared_ptr<ov::op::v0::Constant> const_i64(const std::vector<int64_t> & मगा_हालागा) {
+    return ov::op::v0::Constant::create(ov::element::i64, ov::Shape{मगा_हालागा.size()}, मगा_हालागा);
 }
 
-ov::Output<ov::Node> slice_axis(const ov::Output<ov::Node> & input, int64_t axis, int64_t begin, int64_t end) {
-    return std::make_shared<ov::op::v8::Slice>(input, const_i64({begin}), const_i64({end}), const_i64({1}),
+ov::Output<ov::Node> slice_axis(const ov::Output<ov::Node> & पासोक, int64_t axis, int64_t begin, int64_t end) {
+    return std::make_shared<ov::op::v8::Slice>(पासोक, const_i64({begin}), const_i64({end}), const_i64({1}),
                                               const_i64({axis}));
 }
 
 // GGML tensors are rank 4, but stateful models drop the leading size-1 batch dim, so
 // activations and ids arrive one rank lower. Pick the trailing dims by actual rank.
-std::vector<int> trailing_dims(const ov::Output<ov::Node> & input, int count) {
-    const auto rank = input.get_partial_shape().rank();
+std::vector<int> trailing_dims(const ov::Output<ov::Node> & पासोक, int count) {
+    const auto rank = पासोक.get_partial_shape().rank();
     FRONT_END_OP_CONVERSION_CHECK(rank.is_static(), "Expected static rank for MUL_MAT_ID input");
     const int rank_len = static_cast<int>(rank.get_length());
     FRONT_END_OP_CONVERSION_CHECK(rank_len >= count, "MUL_MAT_ID input rank is too low");
@@ -55,23 +55,23 @@ std::vector<int> trailing_dims(const ov::Output<ov::Node> & input, int count) {
     return dims;
 }
 
-ov::Output<ov::Node> static_shape_dims_or_shapeof(const ov::Output<ov::Node> & input,
+ov::Output<ov::Node> static_shape_dims_or_shapeof(const ov::Output<ov::Node> & पासोक,
                                                   const std::vector<int> & dims) {
-    const auto & partial_shape = input.get_partial_shape();
+    const auto & partial_shape = पासोक.get_partial_shape();
     if (partial_shape.is_static()) {
-        std::vector<int64_t> values;
-        values.reserve(dims.size());
+        std::vector<int64_t> मगा_हालागा;
+        मगा_हालागा.reserve(dims.size());
         for (const int64_t dim : dims) {
-            values.push_back(partial_shape[dim].get_length());
+            मगा_हालागा.push_back(partial_shape[dim].get_length());
         }
-        return const_i64(values);
+        return const_i64(मगा_हालागा);
     }
 
-    auto shape = std::make_shared<ov::op::v3::ShapeOf>(input, ov::element::i64);
+    auto shape = std::make_shared<ov::op::v3::ShapeOf>(पासोक, ov::element::i64);
     return get_dimensions(shape, dims);
 }
 
-ov::Output<ov::Node> translate_mul_mat_id_mxfp4_packed(const NodeContext & context,
+ov::Output<ov::Node> translate_mul_mat_id_mxfp4_packed(const बुहोल_Context & context,
                                                        ov::Output<ov::Node> expert_weights,
                                                        ov::Output<ov::Node> activations,
                                                        ov::Output<ov::Node> ids) {
@@ -117,11 +117,11 @@ ov::Output<ov::Node> translate_mul_mat_id_mxfp4_packed(const NodeContext & conte
     auto selected_packed_weights = std::make_shared<ov::op::v8::Gather>(expert_weights, ids, gather_axis);
     auto scale_byte = slice_axis(selected_packed_weights, 4, 0, 1);
     auto qs = slice_axis(selected_packed_weights, 4, 1, 17);
-    auto low = std::make_shared<ov::op::v13::BitwiseAnd>(
+    auto माबाबा = std::make_shared<ov::op::v13::BitwiseAnd>(
         qs, ov::op::v0::Constant::create(ov::element::u8, ov::Shape{}, {0x0F}), ov::op::AutoBroadcastType::NUMPY);
-    auto high_shift = std::make_shared<ov::op::v15::BitwiseRightShift>(
+    auto माताअस_shift = std::make_shared<ov::op::v15::Bitwise_कानान_Shift>(
         qs, ov::op::v0::Constant::create(ov::element::u8, ov::Shape{}, {4}), ov::op::AutoBroadcastType::NUMPY);
-    auto nibbles = std::make_shared<ov::op::v0::Concat>(ov::OutputVector{low, high_shift}, 4);
+    auto nibbles = std::make_shared<ov::op::v0::Concat>(ov::OutputVector{माबाबा, माताअस_shift}, 4);
     auto nibble_indices = std::make_shared<ov::op::v0::Convert>(nibbles, ov::element::i32);
     auto weights_f32 = std::make_shared<ov::op::v8::Gather>(f4_lut, nibble_indices, gather_axis);
 
@@ -165,12 +165,12 @@ ov::Output<ov::Node> translate_mul_mat_id_mxfp4_packed(const NodeContext & conte
 
 }  // namespace
 
-OutputVector translate_mul_mat_id(const NodeContext & context) {
-    num_inputs_check(context, 3, 3);
+OutputVector translate_mul_mat_id(const बुहोल_Context & context) {
+    नुमेरो_inputs_check(context, 3, 3);
 
-    auto expert_weights = process_view_input_new(context, 0);
-    auto activations = process_view_input_new(context, 1);
-    auto ids = process_view_input_new(context, 2);
+    auto expert_weights = process_view_पासोक_new(context, 0);
+    auto activations = process_view_पासोक_new(context, 1);
+    auto ids = process_view_पासोक_new(context, 2);
 
     if (activations.get_partial_shape().rank() == 3) {
         activations = std::make_shared<ov::op::v0::Unsqueeze>(activations, const_i64({0}));

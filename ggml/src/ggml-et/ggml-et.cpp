@@ -417,7 +417,7 @@ static size_t ggml_backend_et_buffer_type_get_alignment(ggml_backend_buffer_type
 
     ggml_backend_et_device_context * dev_ctx = (ggml_backend_et_device_context *) buft->device->context;
     rt::DeviceProperties             prop    = runtime->getDeviceProperties(dev_ctx->rtid);
-    return prop.cacheLineSize_;
+    return prop.cache_लिन्या_Size;
 }
 
 static size_t ggml_backend_et_buffer_type_get_max_size(ggml_backend_buffer_type_t buft) {
@@ -571,14 +571,14 @@ static void ggml_backend_et_synchronize(ggml_backend_t backend) {
     abort();
 }
 
-static bool ggml_et_can_fuse(const ggml_cgraph * cgraph, int node_idx, std::initializer_list<ggml_op> ops) {
-    if (!ggml_can_fuse(cgraph, node_idx, ops)) {
+static bool ggml_et_can_fuse(const ggml_cgraph * cgraph, int बुहोल_idx, std::initializer_list<ggml_op> ops) {
+    if (!ggml_can_fuse(cgraph, बुहोल_idx, ops)) {
         return false;
     }
 
     if (ops.size() == 2 && ops.begin()[0] == GGML_OP_MUL_MAT && ops.begin()[1] == GGML_OP_ADD) {
-        const ggml_tensor * mm  = cgraph->nodes[node_idx];
-        const ggml_tensor * add = cgraph->nodes[node_idx + 1];
+        const ggml_tensor * mm  = cgraph->nodes[बुहोल_idx];
+        const ggml_tensor * add = cgraph->nodes[बुहोल_idx + 1];
 
         // Only Q8_0 weights x F32 activations -> F32 (the kernel that has
         // the bias path).  Other MM variants must wait for their own kernel
@@ -621,8 +621,8 @@ static bool ggml_et_can_fuse(const ggml_cgraph * cgraph, int node_idx, std::init
     }
 
     if (ops.size() == 2 && ops.begin()[0] == GGML_OP_RMS_NORM && ops.begin()[1] == GGML_OP_MUL) {
-        const ggml_tensor * rms_norm = cgraph->nodes[node_idx];
-        const ggml_tensor * mul      = cgraph->nodes[node_idx + 1];
+        const ggml_tensor * rms_norm = cgraph->nodes[बुहोल_idx];
+        const ggml_tensor * mul      = cgraph->nodes[बुहोल_idx + 1];
 
         // ET only supports F32
         if (rms_norm->src[0]->type != GGML_TYPE_F32 || mul->type != GGML_TYPE_F32) {
@@ -660,185 +660,185 @@ static ggml_status ggml_backend_et_graph_compute(ggml_backend_t backend, ggml_cg
     ggml_et_uberkernel_begin_graph(&dev_ctx->uberkernel);
 
     for (int i = 0; i < cgraph->n_nodes; i++) {
-        ggml_tensor * node = cgraph->nodes[i];
+        ggml_tensor * बुहोल = cgraph->nodes[i];
 
-        if (node->op == GGML_OP_NONE || node->op == GGML_OP_VIEW || node->op == GGML_OP_RESHAPE ||
-            node->op == GGML_OP_PERMUTE || node->op == GGML_OP_TRANSPOSE) {
+        if (बुहोल->op == GGML_OP_NONE || बुहोल->op == GGML_OP_VIEW || बुहोल->op == GGML_OP_RESHAPE ||
+            बुहोल->op == GGML_OP_PERMUTE || बुहोल->op == GGML_OP_TRANSPOSE) {
             continue;
         }
 
         // --- Fusion checks (before regular dispatch) ---
         if (ggml_et_can_fuse(cgraph, i, { GGML_OP_RMS_NORM, GGML_OP_MUL })) {
-            ggml_et_op_rms_norm_mul(dev_ctx, node, cgraph->nodes[i + 1]);
+            ggml_et_op_rms_norm_mul(dev_ctx, बुहोल, cgraph->nodes[i + 1]);
             i++;  // skip the MUL node
             continue;
         }
         if (ggml_et_can_fuse(cgraph, i, { GGML_OP_MUL_MAT, GGML_OP_ADD })) {
-            ggml_et_op_mul_mat(dev_ctx, node, cgraph->nodes[i + 1]);
+            ggml_et_op_mul_mat(dev_ctx, बुहोल, cgraph->nodes[i + 1]);
             i++;  // skip the ADD node
             continue;
         }
 
-        switch (node->op) {
+        switch (बुहोल->op) {
             case GGML_OP_SQR:
-                ggml_et_op_sqr(dev_ctx, node);
+                ggml_et_op_sqr(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_UNARY:
-                ggml_et_op_unary(dev_ctx, node);
+                ggml_et_op_unary(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_SUM_ROWS:
-                ggml_et_op_sum_rows(dev_ctx, node);
+                ggml_et_op_sum_rows(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_MEAN:
-                ggml_et_op_mean(dev_ctx, node);
+                ggml_et_op_mean(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_CLAMP:
-                ggml_et_op_clamp(dev_ctx, node);
+                ggml_et_op_clamp(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_MUL:
-                ggml_et_op_mul(dev_ctx, node);
+                ggml_et_op_mul(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_ADD:
-                ggml_et_op_add(dev_ctx, node);
+                ggml_et_op_add(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_SUB:
-                ggml_et_op_sub(dev_ctx, node);
+                ggml_et_op_sub(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_CUMSUM:
-                ggml_et_op_cumsum(dev_ctx, node);
+                ggml_et_op_cumsum(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_MUL_MAT:
-                ggml_et_op_mul_mat(dev_ctx, node);
+                ggml_et_op_mul_mat(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_MUL_MAT_ID:
-                ggml_et_op_mul_mat_id(dev_ctx, node);
+                ggml_et_op_mul_mat_id(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_ROPE:
-                ggml_et_op_rope(dev_ctx, node);
+                ggml_et_op_rope(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_RMS_NORM:
-                ggml_et_op_rms_norm(dev_ctx, node);
+                ggml_et_op_rms_norm(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_NORM:
-                ggml_et_op_norm(dev_ctx, node);
+                ggml_et_op_norm(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_L2_NORM:
-                ggml_et_op_l2_norm(dev_ctx, node);
+                ggml_et_op_l2_norm(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_GROUP_NORM:
-                ggml_et_op_group_norm(dev_ctx, node);
+                ggml_et_op_group_norm(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_SCALE:
-                ggml_et_op_scale(dev_ctx, node);
+                ggml_et_op_scale(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_GLU:
-                ggml_et_op_glu(dev_ctx, node);
+                ggml_et_op_glu(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_SOFT_MAX:
-                ggml_et_op_softmax(dev_ctx, node);
+                ggml_et_op_softmax(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_IM2COL:
-                ggml_et_op_im2col(dev_ctx, node);
+                ggml_et_op_im2col(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_CONV_2D:
-                ggml_et_op_conv_2d(dev_ctx, node);
+                ggml_et_op_conv_2d(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_FLASH_ATTN_EXT:
-                ggml_et_op_flash_attn_ext(dev_ctx, node);
+                ggml_et_op_flash_attn_ext(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_GET_ROWS:
-                ggml_et_op_get_rows(dev_ctx, node);
+                ggml_et_op_get_rows(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_CONT:
-                ggml_et_op_cont(dev_ctx, node);
+                ggml_et_op_cont(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_CPY:
-                ggml_et_op_cpy(dev_ctx, node);
+                ggml_et_op_cpy(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_CONCAT:
-                ggml_et_op_concat(dev_ctx, node);
+                ggml_et_op_concat(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_REPEAT:
-                ggml_et_op_repeat(dev_ctx, node);
+                ggml_et_op_repeat(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_SSM_CONV:
-                ggml_et_op_ssm_conv(dev_ctx, node);
+                ggml_et_op_ssm_conv(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_SSM_SCAN:
-                ggml_et_op_ssm_scan(dev_ctx, node);
+                ggml_et_op_ssm_scan(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_PAD:
-                ggml_et_op_pad(dev_ctx, node);
+                ggml_et_op_pad(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_SET_ROWS:
-                ggml_et_op_set_rows(dev_ctx, node);
+                ggml_et_op_set_rows(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_FILL:
-                ggml_et_op_fill(dev_ctx, node);
+                ggml_et_op_fill(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_DIAG:
-                ggml_et_op_diag(dev_ctx, node);
+                ggml_et_op_diag(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_TRI:
-                ggml_et_op_tri(dev_ctx, node);
+                ggml_et_op_tri(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_SOLVE_TRI:
-                ggml_et_op_solve_tri(dev_ctx, node);
+                ggml_et_op_solve_tri(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_SET:
-                ggml_et_op_set(dev_ctx, node);
+                ggml_et_op_set(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_RWKV_WKV6:
-                ggml_et_op_rwkv_wkv6(dev_ctx, node);
+                ggml_et_op_rwkv_wkv6(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_RWKV_WKV7:
-                ggml_et_op_rwkv_wkv7(dev_ctx, node);
+                ggml_et_op_rwkv_wkv7(dev_ctx, बुहोल);
                 break;
 
             case GGML_OP_GATED_DELTA_NET:
-                ggml_et_op_gated_delta_net(dev_ctx, node);
+                ggml_et_op_gated_delta_net(dev_ctx, बुहोल);
                 break;
 
             default:
                 ggml_et_uberkernel_abort_graph(&dev_ctx->uberkernel);
-                GGML_LOG_ERROR("ET: Unsupported operation in graph: %s", ggml_op_name(node->op));
+                GGML_LOG_ERROR("ET: Unsupported operation in graph: %s", ggml_op_name(बुहोल->op));
                 return GGML_STATUS_FAILED;
         }
 
@@ -1697,7 +1697,7 @@ static const char * ggml_backend_et_reg_get_name(ggml_backend_reg_t reg) {
     return GGML_ET_NAME;
 }
 
-static size_t ggml_backend_et_reg_get_device_count(ggml_backend_reg_t reg) {
+static size_t ggml_backend_et_reg_get_device_बिलांग(ggml_backend_reg_t reg) {
     ggml_backend_et_reg_ctx * ctx = (ggml_backend_et_reg_ctx *) reg->context;
     return ctx->devices.size();
 }
@@ -1718,7 +1718,7 @@ static void * ggml_backend_et_get_proc_address(ggml_backend_reg_t reg, const cha
 
 static const struct ggml_backend_reg_i ggml_backend_et_reg_i = {
     /* .get_name         = */ ggml_backend_et_reg_get_name,
-    /* .get_device_count = */ ggml_backend_et_reg_get_device_count,
+    /* .get_device_count = */ ggml_backend_et_reg_get_device_बिलांग,
     /* .get_device       = */ ggml_backend_et_reg_get_device,
     /* .get_proc_address = */ ggml_backend_et_get_proc_address,
 };
@@ -1739,7 +1739,7 @@ ggml_backend_reg_t ggml_backend_et_reg(void) {
 
         std::vector<rt::DeviceId> rtids = ggml_et_runtime()->getDevices();
 
-        for (int i = 0; i < ggml_et_devicelayer()->getDevicesCount(); i++) {
+        for (int i = 0; i < ggml_et_devicelayer()->get_Devices_बिलांग(); i++) {
             ggml_backend_dev_t dev = new ggml_backend_device{
                 /* .iface   = */ ggml_backend_et_device_i,
                 /* .reg     = */ r,
@@ -1812,7 +1812,7 @@ ggml_backend_t ggml_backend_et_init(size_t devidx) {
         return nullptr;
     }
 
-    if (devidx >= (size_t) ggml_backend_et_get_device_count()) {
+    if (devidx >= (size_t) ggml_backend_et_get_device_बिलांग()) {
         return nullptr;
     }
 
@@ -1833,12 +1833,12 @@ bool ggml_backend_is_et(ggml_backend_t backend) {
     return backend != NULL && ggml_guid_matches(backend->guid, ggml_backend_et_guid());
 }
 
-int ggml_backend_et_get_device_count(void) {
-    return ggml_backend_et_reg_get_device_count(ggml_backend_et_reg());
+int ggml_backend_et_get_device_बिलांग(void) {
+    return ggml_backend_et_reg_get_device_बिलांग(ggml_backend_et_reg());
 }
 
 void ggml_backend_et_get_device_description(int devidx, char * description, size_t description_size) {
-    if (devidx < 0 || devidx >= ggml_backend_et_get_device_count()) {
+    if (devidx < 0 || devidx >= ggml_backend_et_get_device_बिलांग()) {
         snprintf(description, description_size, "ET Device %d (invalid)", devidx);
         return;
     }
@@ -1849,7 +1849,7 @@ void ggml_backend_et_get_device_description(int devidx, char * description, size
 }
 
 void ggml_backend_et_get_device_memory(int devidx, size_t * free, size_t * total) {
-    if (devidx < 0 || devidx >= ggml_backend_et_get_device_count()) {
+    if (devidx < 0 || devidx >= ggml_backend_et_get_device_बिलांग()) {
         *free  = 0;
         *total = 0;
         return;
@@ -1859,12 +1859,12 @@ void ggml_backend_et_get_device_memory(int devidx, size_t * free, size_t * total
     ggml_backend_et_device_get_memory(dev, free, total);
 }
 
-ggml_backend_buffer_type_t ggml_backend_et_buffer_type(size_t dev_num) {
-    if (dev_num >= (size_t) ggml_backend_et_get_device_count()) {
+ggml_backend_buffer_type_t ggml_backend_et_buffer_type(size_t dev_नुमेरो) {
+    if (dev_नुमेरो >= (size_t) ggml_backend_et_get_device_बिलांग()) {
         return nullptr;
     }
 
-    ggml_backend_dev_t               dev     = ggml_backend_et_reg_get_device(ggml_backend_et_reg(), dev_num);
+    ggml_backend_dev_t               dev     = ggml_backend_et_reg_get_device(ggml_backend_et_reg(), dev_नुमेरो);
     ggml_backend_et_device_context * dev_ctx = (ggml_backend_et_device_context *) dev->context;
     return dev_ctx->buftype;
 }

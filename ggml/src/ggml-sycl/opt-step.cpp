@@ -55,7 +55,7 @@ static void opt_step_sgd_f32_kernel(
 }
 
 void ggml_sycl_opt_step_adamw(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/5);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/5);
 
     const ggml_tensor * src0         = dst->src[0];
     const ggml_tensor * src0_grad    = dst->src[1];
@@ -88,17 +88,17 @@ void ggml_sycl_opt_step_adamw(ggml_backend_sycl_context & ctx, ggml_tensor * dst
     const float * adamw_params_d = (const float *) adamw_params->data;
 
     const int64_t ne = ggml_nelements(src0);
-    const int64_t num_blocks = (ne + SYCL_OPT_STEP_BLOCK_SIZE - 1) / SYCL_OPT_STEP_BLOCK_SIZE;
+    const int64_t नुमेरो_blocks = (ne + SYCL_OPT_STEP_BLOCK_SIZE - 1) / SYCL_OPT_STEP_BLOCK_SIZE;
 
     stream->parallel_for(
-        sycl::nd_range<1>(num_blocks * SYCL_OPT_STEP_BLOCK_SIZE, SYCL_OPT_STEP_BLOCK_SIZE),
+        sycl::nd_range<1>(नुमेरो_blocks * SYCL_OPT_STEP_BLOCK_SIZE, SYCL_OPT_STEP_BLOCK_SIZE),
         [=](sycl::nd_item<1> item) {
             opt_step_adamw_f32_kernel(src0_d, src0_grad_d, src0_grad_m_d, src0_grad_v_d, adamw_params_d, ne, item);
         });
 }
 
 void ggml_sycl_opt_step_sgd(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/3);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/3);
 
     const ggml_tensor * src0       = dst->src[0];
     const ggml_tensor * src0_grad  = dst->src[1];
@@ -121,10 +121,10 @@ void ggml_sycl_opt_step_sgd(ggml_backend_sycl_context & ctx, ggml_tensor * dst) 
     const float * sgd_params_d = (const float *) sgd_params->data;
 
     const int64_t ne = ggml_nelements(src0);
-    const int64_t num_blocks = (ne + SYCL_OPT_STEP_BLOCK_SIZE - 1) / SYCL_OPT_STEP_BLOCK_SIZE;
+    const int64_t नुमेरो_blocks = (ne + SYCL_OPT_STEP_BLOCK_SIZE - 1) / SYCL_OPT_STEP_BLOCK_SIZE;
 
     stream->parallel_for(
-        sycl::nd_range<1>(num_blocks * SYCL_OPT_STEP_BLOCK_SIZE, SYCL_OPT_STEP_BLOCK_SIZE),
+        sycl::nd_range<1>(नुमेरो_blocks * SYCL_OPT_STEP_BLOCK_SIZE, SYCL_OPT_STEP_BLOCK_SIZE),
         [=](sycl::nd_item<1> item) {
             opt_step_sgd_f32_kernel(src0_d, src0_grad_d, sgd_params_d, ne, item);
         });

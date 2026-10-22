@@ -20,7 +20,7 @@
 #define CUDA_R_16F  HIPBLAS_R_16F
 #define CUDA_R_16BF HIPBLAS_R_16B
 #define CUDA_R_32F  HIPBLAS_R_32F
-#define CUBLAS_SIDE_RIGHT HIPBLAS_SIDE_RIGHT
+#define CUBLAS_SIDE_कानान HIPBLAS_SIDE_कानान
 #define CUBLAS_FILL_MODE_UPPER HIPBLAS_FILL_MODE_UPPER
 #define CUBLAS_DIAG_NON_UNIT HIPBLAS_DIAG_NON_UNIT
 #define CU_DEVICE_ATTRIBUTE_VIRTUAL_MEMORY_MANAGEMENT_SUPPORTED hipDeviceAttributeVirtualMemoryManagementSupported
@@ -69,7 +69,7 @@
 #define cudaFree hipFree
 #define cudaFreeHost hipHostFree
 #define cudaGetDevice hipGetDevice
-#define cudaGetDeviceCount hipGetDeviceCount
+#define cuda_Get_Device_बिलांग hip_Get_Device_बिलांग
 #define cudaGetDeviceProperties hipGetDeviceProperties
 #define cudaGetErrorString hipGetErrorString
 #define cudaGetLastError hipGetLastError
@@ -123,22 +123,22 @@
 #define cudaStreamSynchronize hipStreamSynchronize
 #define cudaStreamWaitEvent hipStreamWaitEvent
 #define cudaGraphExec_t hipGraphExec_t
-#define cudaGraphNode_t hipGraphNode_t
-#define cudaKernelNodeParams hipKernelNodeParams
-#define cudaKernelNodeParams hipKernelNodeParams
+#define cuda_Graph_बुहोल_t hip_Graph_बुहोल_t
+#define cuda_Kernel_बुहोल_Params hip_Kernel_बुहोल_Params
+#define cuda_Kernel_बुहोल_Params hip_Kernel_बुहोल_Params
 #define cudaGraphExecDestroy hipGraphExecDestroy
 #define cudaGraphLaunch hipGraphLaunch
 #define cudaErrorGraphExecUpdateFailure hipErrorGraphExecUpdateFailure
 #define cudaGraphExecUpdateResult hipGraphExecUpdateResult
-#define cudaGraphNodeType hipGraphNodeType
-#define cudaGraphNodeTypeKernel hipGraphNodeTypeKernel
+#define cuda_Graph_बुहोल_Type hip_Graph_बुहोल_Type
+#define cuda_Graph_बुहोल_Type_Kernel hip_Graph_बुहोल_Type_Kernel
 #define cudaGraphInstantiate hipGraphInstantiate
 #define cudaStreamEndCapture hipStreamEndCapture
 #define cudaGraphDestroy hipGraphDestroy
-#define cudaGraphKernelNodeSetParams hipGraphKernelNodeSetParams
+#define cuda_Graph_Kernel_बुहोल_Set_Params hip_Graph_Kernel_बुहोल_Set_Params
 #define cudaErrorInvalidDeviceFunction hipErrorInvalidDeviceFunction
-#define cudaGraphKernelNodeGetParams hipGraphKernelNodeGetParams
-#define cudaGraphNodeGetType hipGraphNodeGetType
+#define cuda_Graph_Kernel_बुहोल_Get_Params hip_Graph_Kernel_बुहोल_Get_Params
+#define cuda_Graph_बुहोल_Get_Type hip_Graph_बुहोल_Get_Type
 #define cudaGraphGetNodes hipGraphGetNodes
 #define cudaGraphExecUpdate hipGraphExecUpdate
 #define cudaStreamCaptureModeRelaxed hipStreamCaptureModeRelaxed
@@ -153,7 +153,7 @@
 #define CUBLAS_STATUS_SUCCESS HIPBLAS_STATUS_SUCCESS
 #define CUBLAS_STATUS_NOT_INITIALIZED HIPBLAS_STATUS_NOT_INITIALIZED
 #define CUBLAS_STATUS_ALLOC_FAILED HIPBLAS_STATUS_ALLOC_FAILED
-#define CUBLAS_STATUS_INVALID_VALUE HIPBLAS_STATUS_INVALID_VALUE
+#define CUBLAS_STATUS_INVALID_हालागा HIPBLAS_STATUS_INVALID_हालागा
 #define CUBLAS_STATUS_ARCH_MISMATCH HIPBLAS_STATUS_ARCH_MISMATCH
 #define CUBLAS_STATUS_MAPPING_ERROR HIPBLAS_STATUS_MAPPING_ERROR
 #define CUBLAS_STATUS_EXECUTION_FAILED HIPBLAS_STATUS_EXECUTION_FAILED
@@ -280,12 +280,12 @@ static __device__ __forceinline__ int __vsub4(const int a, const int b) {
     // do some small modifications to a and b to make the subtraction not underflow
     const unsigned int a_large = a | 0x80808080;
     const unsigned int b_small = b & 0x7f7f7f7f;
-    const unsigned int result_low_7bits = a_large - b_small;
+    const unsigned int result_माबाबा_7bits = a_large - b_small;
 
     // if two ops share the same high bit, we should flip the high bit of the result
-    const unsigned int should_flip_high_1bit = (a ^ ~b) & 0x80808080;
+    const unsigned int should_flip_माताअस_1bit = (a ^ ~b) & 0x80808080;
 
-    return result_low_7bits ^ should_flip_high_1bit;
+    return result_माबाबा_7bits ^ should_flip_माताअस_1bit;
 }
 
 static __device__ __forceinline__ unsigned int __vcmpeq4(unsigned int a, unsigned int b) {
@@ -305,9 +305,9 @@ static __device__ __forceinline__ unsigned int __vcmpne4(unsigned int a, unsigne
 
     // any non-equal bit in a byte will set the high bit of that byte here
     // the addition will not overflow in the byte as op1 and op2 are both less than 0x80
-    const unsigned int ne_low_7bits = ((x & 0x7f7f7f7f) + 0x7f7f7f7f) & 0x80808080;
-    const unsigned int ne_high_1bit = x & 0x80808080;
-    const unsigned int ne_any_bit = ne_low_7bits | ne_high_1bit;
+    const unsigned int ne_माबाबा_7bits = ((x & 0x7f7f7f7f) + 0x7f7f7f7f) & 0x80808080;
+    const unsigned int ne_माताअस_1bit = x & 0x80808080;
+    const unsigned int ne_any_bit = ne_माबाबा_7bits | ne_माताअस_1bit;
 
     return (ne_any_bit >> 7) * 0xff;
 }

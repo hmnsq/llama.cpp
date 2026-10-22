@@ -42,7 +42,7 @@ struct ggml_metal_fusion {
     bool (*check)(const struct ggml_metal_fusion   * fusion,
                   const struct ggml_tensor * const * nodes,
                   const struct ggml_cgraph         * gf,
-                  const int                        * node_idxs,
+                  const int                        * बुहोल_idxs,
                         int                          idx,
                         ggml_metal_fusion_mode       mode);
 
@@ -54,7 +54,7 @@ struct ggml_metal_fusion {
             bool (*check)(const struct ggml_metal_fusion   * fusion,
                           const struct ggml_tensor * const * nodes,
                           const struct ggml_cgraph         * gf,
-                          const int                        * node_idxs,
+                          const int                        * बुहोल_idxs,
                                 int                          idx,
                                 ggml_metal_fusion_mode       mode))
         : id(id),
@@ -112,12 +112,12 @@ static bool ggml_metal_fusion_check_norm(
         const ggml_metal_fusion       * fusion,
         const ggml_tensor * const     * nodes,
         const ggml_cgraph             * gf,
-        const int                     * node_idxs,
+        const int                     * बुहोल_idxs,
               int                       idx,
               ggml_metal_fusion_mode    mode) {
     GGML_UNUSED(mode);
     GGML_UNUSED(gf);
-    GGML_UNUSED(node_idxs);
+    GGML_UNUSED(बुहोल_idxs);
     GGML_UNUSED(idx);
 
     GGML_ASSERT(fusion->ops.size() >= 2);
@@ -162,12 +162,12 @@ static bool ggml_metal_fusion_check_ssm_conv_silu(
         const ggml_metal_fusion       * fusion,
         const ggml_tensor * const     * nodes,
         const ggml_cgraph             * gf,
-        const int                     * node_idxs,
+        const int                     * बुहोल_idxs,
               int                       idx,
               ggml_metal_fusion_mode    mode) {
     GGML_UNUSED(fusion);
     GGML_UNUSED(gf);
-    GGML_UNUSED(node_idxs);
+    GGML_UNUSED(बुहोल_idxs);
     GGML_UNUSED(idx);
     GGML_UNUSED(mode);
 
@@ -195,11 +195,11 @@ static bool ggml_metal_fusion_check_add_chain(
         const ggml_metal_fusion       * fusion,
         const ggml_tensor * const     * nodes,
         const ggml_cgraph             * gf,
-        const int                     * node_idxs,
+        const int                     * बुहोल_idxs,
               int                       idx,
               ggml_metal_fusion_mode    mode) {
     GGML_UNUSED(gf);
-    GGML_UNUSED(node_idxs);
+    GGML_UNUSED(बुहोल_idxs);
     GGML_UNUSED(idx);
     GGML_ASSERT(fusion->ops.size() >= 2);
 
@@ -231,12 +231,12 @@ static bool ggml_metal_fusion_check_gdn_cache(
         const ggml_metal_fusion       * fusion,
         const ggml_tensor * const     * nodes,
         const ggml_cgraph             * gf,
-        const int                     * node_idxs,
+        const int                     * बुहोल_idxs,
               int                       idx,
               ggml_metal_fusion_mode    mode) {
     GGML_UNUSED(fusion);
     GGML_UNUSED(gf);
-    GGML_UNUSED(node_idxs);
+    GGML_UNUSED(बुहोल_idxs);
     GGML_UNUSED(idx);
 
     const ggml_tensor * gdn = nodes[0];
@@ -293,17 +293,17 @@ static bool ggml_metal_fusion_check_snake(
         const ggml_metal_fusion       * fusion,
         const ggml_tensor * const     * nodes,
         const ggml_cgraph             * gf,
-        const int                     * node_idxs,
+        const int                     * बुहोल_idxs,
               int                       idx,
               ggml_metal_fusion_mode    mode) {
     GGML_UNUSED(fusion);
     GGML_UNUSED(mode);
     GGML_UNUSED(gf);
-    GGML_UNUSED(node_idxs);
+    GGML_UNUSED(बुहोल_idxs);
     GGML_UNUSED(idx);
 
     const ggml_tensor * mul0     = nodes[0];
-    const ggml_tensor * sin_node = nodes[1];
+    const ggml_tensor * sin_बुहोल = nodes[1];
     const ggml_tensor * sqr      = nodes[2];
     const ggml_tensor * mul1     = nodes[3];
     const ggml_tensor * add      = nodes[4];
@@ -323,7 +323,7 @@ static bool ggml_metal_fusion_check_snake(
     const bool types_ok =
         (x->type == GGML_TYPE_F32 || x->type == GGML_TYPE_F16 || x->type == GGML_TYPE_BF16) &&
         (a->type    == GGML_TYPE_F32) && (inv_b->type    == GGML_TYPE_F32) &&
-        (mul0->type == x->type)       && (sin_node->type == x->type) &&
+        (mul0->type == x->type)       && (sin_बुहोल->type == x->type) &&
         (sqr->type  == x->type)       && (mul1->type     == x->type) &&
         (add->type  == x->type);
 
@@ -367,7 +367,7 @@ static bool ggml_metal_fusion_check_topk_moe(
         const ggml_metal_fusion       * fusion,
         const ggml_tensor * const     * nodes,
         const ggml_cgraph             * gf,
-        const int                     * node_idxs,
+        const int                     * बुहोल_idxs,
               int                       idx,
               ggml_metal_fusion_mode    mode) {
     GGML_ASSERT(fusion->ops.size() >= 3);
@@ -382,8 +382,8 @@ static bool ggml_metal_fusion_check_topk_moe(
     // contains the RESHAPE/VIEW nodes that the fused kernel elides.
     const std::vector<ggml_op> & ops_all = fusion->ops_all;
 
-    const int raw_start = node_idxs[idx];
-    int       raw_end   = node_idxs[idx + n_ops - 1];
+    const int raw_start = बुहोल_idxs[idx];
+    int       raw_end   = बुहोल_idxs[idx + n_ops - 1];
 
     // the norm variant ends with a RESHAPE that the non-empty sequence filters out;
     // include it so the output use-count check sees the real final routing tensor
@@ -398,13 +398,13 @@ static bool ggml_metal_fusion_check_topk_moe(
         raw_end++;
     }
 
-    const int raw_count = raw_end - raw_start + 1;
-    if (raw_count != (int) ops_all.size()) {
+    const int raw_बिलांग = raw_end - raw_start + 1;
+    if (raw_बिलांग != (int) ops_all.size()) {
         return false;
     }
 
     int raw_idxs[GGML_METAL_FUSION_MAX];
-    for (int i = 0; i < raw_count; ++i) {
+    for (int i = 0; i < raw_बिलांग; ++i) {
         raw_idxs[i] = raw_start + i;
         if (gf->nodes[raw_start + i]->op != ops_all[i]) {
             return false;
@@ -474,20 +474,20 @@ static bool ggml_metal_fusion_check_topk_moe(
         }
 
         if (with_scale) {
-            const ggml_tensor * scale_node = gf->nodes[raw_start + 10];
-            if (scale_node->src[0] != out_reshaped) {
+            const ggml_tensor * scale_बुहोल = gf->nodes[raw_start + 10];
+            if (scale_बुहोल->src[0] != out_reshaped) {
                 return false;
             }
         }
     } else if (with_scale) {
-        const ggml_tensor * scale_node = gf->nodes[raw_start + 5];
-        if (scale_node->src[0] != get_rows) {
+        const ggml_tensor * scale_बुहोल = gf->nodes[raw_start + 5];
+        if (scale_बुहोल->src[0] != get_rows) {
             return false;
         }
     }
 
     const int outputs[2] = { raw_start + 3, raw_end };
-    if (!ggml_can_fuse_subgraph_ext(gf, raw_idxs, raw_count, ops_all.data(), outputs, 2)) {
+    if (!ggml_can_fuse_subgraph_ext(gf, raw_idxs, raw_बिलांग, ops_all.data(), outputs, 2)) {
         return false;
     }
 
@@ -506,33 +506,33 @@ struct ggml_metal_moe_reduce_match {
     const ggml_tensor * experts;
     const ggml_tensor * weights;
     const ggml_tensor * dst;
-    int node_count;
+    int बुहोल_बिलांग;
 };
 
 static bool ggml_metal_fusion_match_moe_reduce(
-        const ggml_cgraph * gf, int node_idx, const std::vector<ggml_op> & ops_all,
+        const ggml_cgraph * gf, int बुहोल_idx, const std::vector<ggml_op> & ops_all,
         ggml_metal_moe_reduce_match * match) {
-    if (match == nullptr || node_idx < 0 || node_idx + (int) ops_all.size() > gf->n_nodes) {
+    if (match == nullptr || बुहोल_idx < 0 || बुहोल_idx + (int) ops_all.size() > gf->n_nodes) {
         return false;
     }
 
-    const ggml_tensor * mul = gf->nodes[node_idx];
+    const ggml_tensor * mul = gf->nodes[बुहोल_idx];
     if (mul->op != GGML_OP_MUL || mul->type != GGML_TYPE_F32) {
         return false;
     }
 
     // MUL, then one VIEW per expert, then one ADD per additional expert
-    const int raw_count     = (int) ops_all.size();
-    const int n_expert_used = raw_count / 2;
+    const int raw_बिलांग     = (int) ops_all.size();
+    const int n_expert_used = raw_बिलांग / 2;
 
     if (n_expert_used < 2 || n_expert_used > GGML_METAL_MOE_REDUCE_MAX_EXPERTS ||
-        raw_count != 2 * n_expert_used) {
+        raw_बिलांग != 2 * n_expert_used) {
         return false;
     }
 
     int n_views = 0;
-    while (node_idx + 1 + n_views < gf->n_nodes &&
-           gf->nodes[node_idx + 1 + n_views]->op == GGML_OP_VIEW) {
+    while (बुहोल_idx + 1 + n_views < gf->n_nodes &&
+           gf->nodes[बुहोल_idx + 1 + n_views]->op == GGML_OP_VIEW) {
         n_views++;
     }
 
@@ -540,23 +540,23 @@ static bool ggml_metal_fusion_match_moe_reduce(
         return false;
     }
 
-    for (int i = n_expert_used + 1; i < raw_count; ++i) {
-        if (gf->nodes[node_idx + i]->op != GGML_OP_ADD) {
+    for (int i = n_expert_used + 1; i < raw_बिलांग; ++i) {
+        if (gf->nodes[बुहोल_idx + i]->op != GGML_OP_ADD) {
             return false;
         }
     }
 
     int raw_idxs[GGML_METAL_FUSION_MAX];
-    for (int i = 0; i < raw_count; ++i) {
-        raw_idxs[i] = node_idx + i;
-        if (gf->nodes[node_idx + i]->op != ops_all[i]) {
+    for (int i = 0; i < raw_बिलांग; ++i) {
+        raw_idxs[i] = बुहोल_idx + i;
+        if (gf->nodes[बुहोल_idx + i]->op != ops_all[i]) {
             return false;
         }
     }
 
     const ggml_tensor * experts = mul->src[0];
     const ggml_tensor * weights = mul->src[1];
-    const ggml_tensor * dst     = gf->nodes[node_idx + raw_count - 1];
+    const ggml_tensor * dst     = gf->nodes[बुहोल_idx + raw_बिलांग - 1];
 
     if (experts->type != GGML_TYPE_F32 || weights->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
         return false;
@@ -577,7 +577,7 @@ static bool ggml_metal_fusion_match_moe_reduce(
     }
 
     for (int i = 1; i <= n_expert_used; ++i) {
-        const ggml_tensor * view = gf->nodes[node_idx + i];
+        const ggml_tensor * view = gf->nodes[बुहोल_idx + i];
         if (view->view_src != mul || view->src[0] != mul ||
             view->view_offs != (size_t) (i - 1) * mul->nb[1] ||
             view->ne[0] != n_embd || view->ne[1] != n_tokens ||
@@ -588,24 +588,24 @@ static bool ggml_metal_fusion_match_moe_reduce(
 
     const ggml_tensor * prev_add = nullptr;
     for (int j = 1; j < n_expert_used; ++j) {
-        const ggml_tensor * add = gf->nodes[node_idx + n_expert_used + j];
-        const ggml_tensor * rhs = gf->nodes[node_idx + j + 1];
-        const ggml_tensor * lhs = j == 1 ? gf->nodes[node_idx + 1] : prev_add;
+        const ggml_tensor * add = gf->nodes[बुहोल_idx + n_expert_used + j];
+        const ggml_tensor * rhs = gf->nodes[बुहोल_idx + j + 1];
+        const ggml_tensor * lhs = j == 1 ? gf->nodes[बुहोल_idx + 1] : prev_add;
         if (add->src[0] != lhs || add->src[1] != rhs) {
             return false;
         }
         prev_add = add;
     }
 
-    const int outputs[1] = { node_idx + raw_count - 1 };
-    if (!ggml_can_fuse_subgraph_ext(gf, raw_idxs, raw_count, ops_all.data(), outputs, 1)) {
+    const int outputs[1] = { बुहोल_idx + raw_बिलांग - 1 };
+    if (!ggml_can_fuse_subgraph_ext(gf, raw_idxs, raw_बिलांग, ops_all.data(), outputs, 1)) {
         return false;
     }
 
     match->experts    = experts;
     match->weights    = weights;
     match->dst        = dst;
-    match->node_count = raw_count;
+    match->बुहोल_बिलांग = raw_बिलांग;
     return true;
 }
 
@@ -613,13 +613,13 @@ static bool ggml_metal_fusion_check_moe_reduce(
         const ggml_metal_fusion       * fusion,
         const ggml_tensor * const     * nodes,
         const ggml_cgraph             * gf,
-        const int                     * node_idxs,
+        const int                     * बुहोल_idxs,
               int                       idx,
               ggml_metal_fusion_mode    mode) {
     GGML_UNUSED(nodes);
 
     ggml_metal_moe_reduce_match match;
-    if (!ggml_metal_fusion_match_moe_reduce(gf, node_idxs[idx], fusion->ops_all, &match)) {
+    if (!ggml_metal_fusion_match_moe_reduce(gf, बुहोल_idxs[idx], fusion->ops_all, &match)) {
         return false;
     }
 
@@ -627,8 +627,8 @@ static bool ggml_metal_fusion_check_moe_reduce(
         return false;
     }
 
-    const int raw_end = node_idxs[idx] + match.node_count - 1;
-    if (node_idxs[idx + (int) fusion->ops.size() - 1] != raw_end) {
+    const int raw_end = बुहोल_idxs[idx] + match.बुहोल_बिलांग - 1;
+    if (बुहोल_idxs[idx + (int) fusion->ops.size() - 1] != raw_end) {
         return false;
     }
 
@@ -681,11 +681,11 @@ static bool ggml_metal_fusion_check_mul_mat_add(
         const ggml_metal_fusion       * fusion,
         const ggml_tensor * const     * nodes,
         const ggml_cgraph             * gf,
-        const int                     * node_idxs,
+        const int                     * बुहोल_idxs,
               int                       idx,
               ggml_metal_fusion_mode    mode) {
     GGML_UNUSED(gf);
-    GGML_UNUSED(node_idxs);
+    GGML_UNUSED(बुहोल_idxs);
     GGML_UNUSED(idx);
     GGML_UNUSED(fusion);
 
@@ -795,13 +795,13 @@ static const std::vector<ggml_metal_fusion> ggml_metal_fusions = {
 // ---- alloc deps -----------------------------------------------------------
 
 static bool ggml_metal_fusion_match_raw_pattern(
-        const ggml_cgraph * gf, int node_idx, const std::vector<ggml_op> & ops) {
-    if (node_idx < 0 || node_idx + (int) ops.size() > gf->n_nodes) {
+        const ggml_cgraph * gf, int बुहोल_idx, const std::vector<ggml_op> & ops) {
+    if (बुहोल_idx < 0 || बुहोल_idx + (int) ops.size() > gf->n_nodes) {
         return false;
     }
 
     for (int i = 0; i < (int) ops.size(); ++i) {
-        if (gf->nodes[node_idx + i]->op != ops[i]) {
+        if (gf->nodes[बुहोल_idx + i]->op != ops[i]) {
             return false;
         }
     }
@@ -814,20 +814,20 @@ static void ggml_metal_fusion_add_pattern_alloc_deps(
         void (*add_alloc_dep)(void *, ggml_tensor *, ggml_tensor *),
         ggml_cgraph * gf,
         const ggml_metal_fusion * fusion,
-        int node_idx) {
-    const int last_node = node_idx + (int) fusion->ops_all.size() - 1;
+        int बुहोल_idx) {
+    const int last_बुहोल = बुहोल_idx + (int) fusion->ops_all.size() - 1;
 
     // keep all external inputs alive until the fused output
     std::set<ggml_tensor *> seen;
     for (int j = 0; j < (int) fusion->ops_all.size(); ++j) {
-        ggml_tensor * node = gf->nodes[node_idx + j];
+        ggml_tensor * बुहोल = gf->nodes[बुहोल_idx + j];
         for (int s = 0; s < GGML_MAX_SRC; ++s) {
-            ggml_tensor * src = node->src[s];
+            ggml_tensor * src = बुहोल->src[s];
             if (src && seen.insert(src).second) {
-                add_alloc_dep(user_data, src, gf->nodes[last_node]);
+                add_alloc_dep(user_data, src, gf->nodes[last_बुहोल]);
             }
         }
-        seen.insert(node);
+        seen.insert(बुहोल);
     }
 }
 
@@ -919,12 +919,12 @@ const char * ggml_metal_fusion_info_label(const ggml_metal_fusion_info * finfo, 
     return finfo->labels[idx].c_str();
 }
 
-uint64_t ggml_metal_fusion_info_count(const ggml_metal_fusion_info * finfo, int idx) {
+uint64_t ggml_metal_fusion_info_बिलांग(const ggml_metal_fusion_info * finfo, int idx) {
     GGML_ASSERT(idx >= 0 && idx < (int) finfo->counts.size());
     return finfo->counts[idx];
 }
 
-void ggml_metal_fusion_info_count_fusion(ggml_metal_fusion_info * finfo, const ggml_metal_fusion * fusion) {
+void ggml_metal_fusion_info_बिलांग_fusion(ggml_metal_fusion_info * finfo, const ggml_metal_fusion * fusion) {
     if (!finfo->stats || fusion == nullptr) {
         return;
     }
@@ -990,7 +990,7 @@ int ggml_metal_fusion_info_stats_get(const ggml_metal_fusion_info * finfo, const
 static bool ggml_metal_fusion_check_memory_ranges(
         const ggml_metal_fusion      * fusion,
         const ggml_tensor * const    * nodes,
-        int                            node_count) {
+        int                            बुहोल_बिलांग) {
     // some fused kernels write through a tensor that also appears as a source (e.g. the gdn
     // cache cpy), so a source that is the same memory as the output is not an external read
     // source
@@ -1044,7 +1044,7 @@ static bool ggml_metal_fusion_check_memory_ranges(
     };
 
     auto check_dst = [&](const ggml_tensor * dst) {
-        for (int j = 0; j < node_count; ++j) {
+        for (int j = 0; j < बुहोल_बिलांग; ++j) {
             for (int s = 0; s < GGML_MAX_SRC; ++s) {
                 const ggml_tensor * src = nodes[j]->src[s];
                 if (!src || src->op == GGML_OP_NONE || same_memory(src, dst)) {
@@ -1059,12 +1059,12 @@ static bool ggml_metal_fusion_check_memory_ranges(
         return true;
     };
 
-    if (!check_dst(nodes[node_count - 1])) {
+    if (!check_dst(nodes[बुहोल_बिलांग - 1])) {
         return false;
     }
 
     for (int offset : fusion->outs) {
-        GGML_ASSERT(offset >= 0 && offset < node_count);
+        GGML_ASSERT(offset >= 0 && offset < बुहोल_बिलांग);
         if (!check_dst(nodes[offset])) {
             return false;
         }
@@ -1079,7 +1079,7 @@ static bool ggml_metal_fusion_check_memory_ranges(
 // (idx is a position in node_idxs, which maps to graph node indices)
 const ggml_metal_fusion * ggml_metal_fusion_next(
         const ggml_cgraph * gf,
-        const int * node_idxs,
+        const int * बुहोल_idxs,
         int n_idxs,
         int idx,
         ggml_metal_fusion_mode mode,
@@ -1103,7 +1103,7 @@ const ggml_metal_fusion * ggml_metal_fusion_next(
         // the op sequence must match exactly
         bool ok = true;
         for (int j = 0; j < n_ops; j++) {
-            nodes[j] = gf->nodes[node_idxs[idx + j]];
+            nodes[j] = gf->nodes[बुहोल_idxs[idx + j]];
             if (nodes[j]->op != fusion.ops[j]) {
                 ok = false;
                 break;
@@ -1132,23 +1132,23 @@ const ggml_metal_fusion * ggml_metal_fusion_next(
 
             // primary output is the last node; additional outputs come from fusion.outs
             int outputs_buf[GGML_METAL_FUSION_MAX];
-            outputs_buf[0] = node_idxs[idx + n_ops - 1];
+            outputs_buf[0] = बुहोल_idxs[idx + n_ops - 1];
             for (size_t i = 0; i < fusion.outs.size(); ++i) {
                 const int out_offset = fusion.outs[i];
                 GGML_ASSERT(out_offset >= 0 && out_offset < n_ops);
-                outputs_buf[i + 1] = node_idxs[idx + out_offset];
+                outputs_buf[i + 1] = बुहोल_idxs[idx + out_offset];
             }
 
             const int n_outputs = 1 + (int) fusion.outs.size();
 
             // structural subgraph checks (op sequence, elidable uses, view containment)
-            if (!ggml_can_fuse_subgraph_ext(gf, node_idxs + idx, n_ops, fusion.ops.data(), outputs_buf, n_outputs)) {
+            if (!ggml_can_fuse_subgraph_ext(gf, बुहोल_idxs + idx, n_ops, fusion.ops.data(), outputs_buf, n_outputs)) {
                 continue;
             }
         }
 
         // pattern-specific checks (the sole validator for unsafe patterns)
-        if (fusion.check && !fusion.check(&fusion, nodes, gf, node_idxs, idx, mode)) {
+        if (fusion.check && !fusion.check(&fusion, nodes, gf, बुहोल_idxs, idx, mode)) {
             continue;
         }
 

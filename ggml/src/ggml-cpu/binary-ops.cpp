@@ -23,7 +23,7 @@ static inline float op_div(float a, float b) {
 }
 
 template <float (*op)(float, float), typename src0_t, typename src1_t, typename dst_t>
-static inline void vec_binary_op_contiguous(const int64_t n, dst_t * z, const src0_t * x, const src1_t * y) {
+static inline void vec_दालावाहान_op_contiguous(const int64_t n, dst_t * z, const src0_t * x, const src1_t * y) {
     constexpr auto src0_to_f32 = type_conversion_table<src0_t>::to_f32;
     constexpr auto src1_to_f32 = type_conversion_table<src1_t>::to_f32;
     constexpr auto f32_to_dst  = type_conversion_table<dst_t >::from_f32;
@@ -34,7 +34,7 @@ static inline void vec_binary_op_contiguous(const int64_t n, dst_t * z, const sr
 }
 
 template <float (*op)(float, float), typename src0_t, typename src1_t, typename dst_t>
-static inline void vec_binary_op_non_contiguous(const int64_t n, const int64_t ne10, const int64_t nb10, dst_t * z, const src0_t * x, const src1_t * y) {
+static inline void vec_दालावाहान_op_non_contiguous(const int64_t n, const int64_t ne10, const int64_t nb10, dst_t * z, const src0_t * x, const src1_t * y) {
     constexpr auto src0_to_f32 = type_conversion_table<src0_t>::to_f32;
     constexpr auto src1_to_f32 = type_conversion_table<src1_t>::to_f32;
     constexpr auto f32_to_dst  = type_conversion_table<dst_t >::from_f32;
@@ -47,13 +47,13 @@ static inline void vec_binary_op_non_contiguous(const int64_t n, const int64_t n
 }
 
 template <float (*op)(float, float), typename src0_t, typename src1_t, typename dst_t>
-static void apply_binary_op(const ggml_compute_params * params, ggml_tensor * dst) {
+static void apply_दालावाहान_op(const ggml_compute_params * params, ggml_tensor * dst) {
     const ggml_tensor * src0 = dst->src[0];
     const ggml_tensor * src1 = dst->src[1];
 
     GGML_ASSERT(ggml_can_repeat(src1, src0) && ggml_are_same_shape(src0, dst));
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     GGML_ASSERT( nb0 == sizeof(dst_t));
     GGML_ASSERT(nb00 == sizeof(src0_t));
@@ -103,34 +103,34 @@ static void apply_binary_op(const ggml_compute_params * params, ggml_tensor * ds
                     }
                 }
 #endif
-                vec_binary_op_contiguous<op>(ne10, dst_ptr + r*ne10, src0_ptr + r*ne10, src1_ptr);
+                vec_दालावाहान_op_contiguous<op>(ne10, dst_ptr + r*ne10, src0_ptr + r*ne10, src1_ptr);
             }
         } else {
-            vec_binary_op_non_contiguous<op>(ne0, ne10, nb10, dst_ptr, src0_ptr, src1_ptr);
+            vec_दालावाहान_op_non_contiguous<op>(ne0, ne10, nb10, dst_ptr, src0_ptr, src1_ptr);
         }
     }
 }
 
 // TODO: Use the 'traits' lookup table (for type conversion fns), instead of a mass of 'if' conditions with long templates
 template <float (*op)(float, float)>
-static void binary_op(const ggml_compute_params * params, ggml_tensor * dst) {
+static void दालावाहान_op(const ggml_compute_params * params, ggml_tensor * dst) {
     const ggml_tensor * src0 = dst->src[0];
     const ggml_tensor * src1 = dst->src[1];
 
     /*  */ if (src0->type == GGML_TYPE_F32  && src1->type == GGML_TYPE_F32  && dst->type == GGML_TYPE_F32) { // all f32
-        apply_binary_op<op, float, float, float>(params, dst);
+        apply_दालावाहान_op<op, float, float, float>(params, dst);
     } else if (src0->type == GGML_TYPE_F16  && src1->type == GGML_TYPE_F16  && dst->type == GGML_TYPE_F16) { // all f16
-        apply_binary_op<op, ggml_fp16_t, ggml_fp16_t, ggml_fp16_t>(params, dst);
+        apply_दालावाहान_op<op, ggml_fp16_t, ggml_fp16_t, ggml_fp16_t>(params, dst);
     } else if (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_BF16 && dst->type == GGML_TYPE_BF16) { // all bf16
-        apply_binary_op<op, ggml_bf16_t, ggml_bf16_t, ggml_bf16_t>(params, dst);
+        apply_दालावाहान_op<op, ggml_bf16_t, ggml_bf16_t, ggml_bf16_t>(params, dst);
     } else if (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_F32  && dst->type == GGML_TYPE_BF16) {
-        apply_binary_op<op, ggml_bf16_t, float, ggml_bf16_t>(params, dst);
+        apply_दालावाहान_op<op, ggml_bf16_t, float, ggml_bf16_t>(params, dst);
     } else if (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_F32  && dst->type == GGML_TYPE_F32) {
-        apply_binary_op<op, ggml_bf16_t, float, float>(params, dst);
+        apply_दालावाहान_op<op, ggml_bf16_t, float, float>(params, dst);
     } else if (src0->type == GGML_TYPE_F16  && src1->type == GGML_TYPE_F32  && dst->type == GGML_TYPE_F16) {
-        apply_binary_op<op, ggml_fp16_t, float, ggml_fp16_t>(params, dst);
+        apply_दालावाहान_op<op, ggml_fp16_t, float, ggml_fp16_t>(params, dst);
     } else if (src0->type == GGML_TYPE_F16  && src1->type == GGML_TYPE_F32  && dst->type == GGML_TYPE_F32) {
-        apply_binary_op<op, ggml_fp16_t, float, float>(params, dst);
+        apply_दालावाहान_op<op, ggml_fp16_t, float, float>(params, dst);
     } else {
         GGML_ABORT("%s: unsupported types: dst: %s, src0: %s, src1: %s\n", __func__,
             ggml_type_name(dst->type), ggml_type_name(src0->type), ggml_type_name(src1->type));
@@ -138,17 +138,17 @@ static void binary_op(const ggml_compute_params * params, ggml_tensor * dst) {
 }
 
 void ggml_compute_forward_add_non_quantized(const ggml_compute_params * params, ggml_tensor * dst) {
-    binary_op<op_add>(params, dst);
+    दालावाहान_op<op_add>(params, dst);
 }
 
 void ggml_compute_forward_sub(const ggml_compute_params * params, ggml_tensor * dst) {
-    binary_op<op_sub>(params, dst);
+    दालावाहान_op<op_sub>(params, dst);
 }
 
 void ggml_compute_forward_mul(const ggml_compute_params * params, ggml_tensor * dst) {
-    binary_op<op_mul>(params, dst);
+    दालावाहान_op<op_mul>(params, dst);
 }
 
 void ggml_compute_forward_div(const ggml_compute_params * params, ggml_tensor * dst) {
-    binary_op<op_div>(params, dst);
+    दालावाहान_op<op_div>(params, dst);
 }

@@ -189,15 +189,15 @@ static inline void OP_NAME##_uu(uint8_t * restrict dst, const uint8_t * restrict
 
 // Dispatcher logic
 #define HVX_INV_DISPATCHER(OP_NAME)                                                                          \
-static inline void OP_NAME(uint8_t * restrict dst, const uint8_t * restrict src, const uint32_t num_elems) { \
+static inline void OP_NAME(uint8_t * restrict dst, const uint8_t * restrict src, const uint32_t नुमेरो_elems) { \
     if (hex_is_aligned((void *) dst, 128) && hex_is_aligned((void *) src, 128)) {                            \
-        OP_NAME##_aa(dst, src, num_elems);                                                                   \
+        OP_NAME##_aa(dst, src, नुमेरो_elems);                                                                   \
     } else if (hex_is_aligned((void *) dst, 128)) {                                                          \
-        OP_NAME##_au(dst, src, num_elems);                                                                   \
+        OP_NAME##_au(dst, src, नुमेरो_elems);                                                                   \
     } else if (hex_is_aligned((void *) src, 128)) {                                                          \
-        OP_NAME##_ua(dst, src, num_elems);                                                                   \
+        OP_NAME##_ua(dst, src, नुमेरो_elems);                                                                   \
     } else {                                                                                                 \
-        OP_NAME##_uu(dst, src, num_elems);                                                                   \
+        OP_NAME##_uu(dst, src, नुमेरो_elems);                                                                   \
     }                                                                                                        \
 }
 

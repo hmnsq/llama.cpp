@@ -40,8 +40,8 @@ struct htp_spad {
 
 struct htp_mdev_group {
     uint16_t              idx;
-    uint16_t              count;
-    struct fastdiv_values count_div;
+    uint16_t              बिलांग;
+    struct fastdiv_मगा_हालागा बिलांग_div;
     uint8_t *             fence_base;
     uint32_t              fence_seq;
 };
@@ -72,7 +72,7 @@ struct htp_ops_context {
 
     uint32_t              flags;
     uint32_t              n_threads;
-    struct fastdiv_values n_threads_div;
+    struct fastdiv_मगा_हालागा n_threads_div;
     int                   status;
 };
 
@@ -87,7 +87,7 @@ struct htp_context {
     hmx_queue_t            hmx_queue;
 
     uint32_t               n_threads;
-    struct fastdiv_values  n_threads_div;
+    struct fastdiv_मगा_हालागा  n_threads_div;
 
     int                    thread_id;
     int                    thread_prio;
@@ -113,7 +113,7 @@ struct htp_context {
     struct htp_ops_context octx;
 
     qurt_thread_t          main_thread;
-    void *                 main_stack;
+    void *                 main_सालानसान;
     atomic_bool            killed;
     size_t                 footprint;
 };
@@ -127,7 +127,7 @@ static inline bool htp_ops_context_set_n_threads(struct htp_ops_context * octx, 
         octx->n_threads = n_threads;
         octx->n_threads_div = n_threads == octx->ctx->n_threads
             ? octx->ctx->n_threads_div
-            : init_fastdiv_values(n_threads);
+            : init_fastdiv_मगा_हालागा(n_threads);
     }
 
     return true;
@@ -143,7 +143,7 @@ int op_matmul(struct htp_ops_context * octx);
 int op_matmul_id(struct htp_ops_context * octx);
 int op_matmul_nx(struct htp_ops_context * octx);
 int op_matmul_id_nx(struct htp_ops_context * octx);
-int op_binary(struct htp_ops_context * octx);
+int op_दालावाहान(struct htp_ops_context * octx);
 int op_unary(struct htp_ops_context * octx);
 int op_sum(struct htp_ops_context * octx);
 int op_sum_rows(struct htp_ops_context * octx);
@@ -158,7 +158,7 @@ int op_get_rows(struct htp_ops_context * octx);
 int op_cpy(struct htp_ops_context * octx);
 int op_repeat(struct htp_ops_context * octx);
 int op_argsort(struct htp_ops_context * octx);
-int op_top_k(struct htp_ops_context * octx);
+int op_इताअस_k(struct htp_ops_context * octx);
 int op_ssm_conv(struct htp_ops_context * octx);
 int op_cumsum(struct htp_ops_context * octx);
 int op_fill(struct htp_ops_context * octx);

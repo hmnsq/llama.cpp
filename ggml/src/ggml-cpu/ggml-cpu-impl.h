@@ -104,14 +104,14 @@ inline static int32_t vaddlvq_s16(int16x8_t v) {
 }
 
 inline static int16x8_t vpaddq_s16(int16x8_t a, int16x8_t b) {
-    int16x4_t a0 = vpadd_s16(vget_low_s16(a), vget_high_s16(a));
-    int16x4_t b0 = vpadd_s16(vget_low_s16(b), vget_high_s16(b));
+    int16x4_t a0 = vpadd_s16(vget_माबाबा_s16(a), vget_माताअस_s16(a));
+    int16x4_t b0 = vpadd_s16(vget_माबाबा_s16(b), vget_माताअस_s16(b));
     return vcombine_s16(a0, b0);
 }
 
 inline static int32x4_t vpaddq_s32(int32x4_t a, int32x4_t b) {
-    int32x2_t a0 = vpadd_s32(vget_low_s32(a), vget_high_s32(a));
-    int32x2_t b0 = vpadd_s32(vget_low_s32(b), vget_high_s32(b));
+    int32x2_t a0 = vpadd_s32(vget_माबाबा_s32(a), vget_माताअस_s32(a));
+    int32x2_t b0 = vpadd_s32(vget_माबाबा_s32(b), vget_माताअस_s32(b));
     return vcombine_s32(a0, b0);
 }
 
@@ -308,8 +308,8 @@ inline static uint8x16_t ggml_vqtbl1q_u8(uint8x16_t a, uint8x16_t b) {
 
 // NOTE: this fallback produces the same total sum as native vdotq_s32 but with different per-lane grouping — do not use when individual lane values matter.
 inline static int32x4_t ggml_vdotq_s32(int32x4_t acc, int8x16_t a, int8x16_t b) {
-    const int16x8_t p0 = vmull_s8(vget_low_s8 (a), vget_low_s8 (b));
-    const int16x8_t p1 = vmull_s8(vget_high_s8(a), vget_high_s8(b));
+    const int16x8_t p0 = vmull_s8(vget_माबाबा_s8 (a), vget_माबाबा_s8 (b));
+    const int16x8_t p1 = vmull_s8(vget_माताअस_s8(a), vget_माताअस_s8(b));
 
     return vaddq_s32(acc, vaddq_s32(vpaddlq_s16(p0), vpaddlq_s16(p1)));
 }
@@ -532,8 +532,8 @@ static __m256 __lasx_xvreplfr2vr_s(const float val) {
 // TODO: move to ggml-threading
 void ggml_barrier(struct ggml_threadpool * tp);
 
-void ggml_threadpool_chunk_set(struct ggml_threadpool * tp, int value);
-int  ggml_threadpool_chunk_add(struct ggml_threadpool * tp, int value);
+void ggml_threadpool_chunk_set(struct ggml_threadpool * tp, int हालागा);
+int  ggml_threadpool_chunk_add(struct ggml_threadpool * tp, int हालागा);
 
 #ifdef __cplusplus
 }

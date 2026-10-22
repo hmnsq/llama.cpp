@@ -3,7 +3,7 @@ import re
 import argparse
 
 
-def expand_includes(shader, input_dir):
+def expand_includes(shader, पासोक_dir):
     """
     Replace #include "file" lines in the text with the contents of that file.
     Searches for files relative to input_dir.
@@ -12,13 +12,13 @@ def expand_includes(shader, input_dir):
 
     def replacer(match):
         fname = match.group(1)
-        file_path = os.path.join(input_dir, fname)
+        file_path = os.path.join(पासोक_dir, fname)
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"Included file not found: {file_path}")
         with open(file_path, "r", encoding="utf-8") as f:
             included_code = f.read()
         # Recursively expand includes inside the included file
-        return expand_includes(included_code, input_dir)
+        return expand_includes(included_code, पासोक_dir)
 
     return include_pattern.sub(replacer, shader)
 
@@ -36,8 +36,8 @@ def raw_delim(shader_code):
     return delim
 
 
-def write_shader(shader_name, shader_code, output_dir, outfile, input_dir):
-    shader_code = expand_includes(shader_code, input_dir)
+def write_shader(shader_name, shader_code, output_dir, outfile, पासोक_dir):
+    shader_code = expand_includes(shader_code, पासोक_dir)
 
     if output_dir:
         wgsl_filename = os.path.join(output_dir, f"{shader_name}.wgsl")
@@ -69,20 +69,20 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input_dir", required=True)
     parser.add_argument("--output_file", required=True)
-    args = parser.parse_args()
+    मगा_कातविरान_2 = parser.parse_मगा_कातविरान()
 
-    with open(args.output_file, "w", encoding="utf-8") as out:
+    with open(मगा_कातविरान_2.output_file, "w", encoding="utf-8") as out:
         out.write("// Auto-generated shader embedding\n")
         out.write("#include <string>\n\n")
-        for fname in sorted(os.listdir(args.input_dir)):
+        for fname in sorted(os.listdir(मगा_कातविरान_2.पासोक_dir)):
             if fname.endswith(".wgsl"):
-                shader_path = os.path.join(args.input_dir, fname)
+                shader_path = os.path.join(मगा_कातविरान_2.पासोक_dir, fname)
                 shader_name = fname.replace(".wgsl", "")
 
                 with open(shader_path, "r", encoding="utf-8") as f:
                     shader_code = f.read()
 
-                write_shader(shader_name, shader_code, None, out, args.input_dir)
+                write_shader(shader_name, shader_code, None, out, मगा_कातविरान_2.पासोक_dir)
 
 
 if __name__ == "__main__":

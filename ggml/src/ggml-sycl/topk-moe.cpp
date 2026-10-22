@@ -12,7 +12,7 @@
 // ggml-cuda.cu (pure graph / pointer inspection, backend-agnostic). Bias is not implemented here:
 // if a routing bias is detected, the fusion is declined and the eager path runs unchanged.
 
-struct ggml_sycl_topk_moe_args {
+struct ggml_sycl_topk_moe_मगा_कातविरान {
     bool sigmoid{};
     bool softmax{};
     bool delayed_softmax{};
@@ -226,7 +226,7 @@ static void ggml_sycl_op_topk_moe(ggml_backend_sycl_context &     ctx,
                                   ggml_tensor *                   ids,
                                   const ggml_tensor *             clamp,
                                   const ggml_tensor *             scale,
-                                  const ggml_sycl_topk_moe_args & args) {
+                                  const ggml_sycl_topk_moe_मगा_कातविरान & मगा_कातविरान_2) {
     GGML_ASSERT(logits->type  == GGML_TYPE_F32);
     GGML_ASSERT(weights->type == GGML_TYPE_F32);
     GGML_ASSERT(ids->type     == GGML_TYPE_I32);
@@ -246,9 +246,9 @@ static void ggml_sycl_op_topk_moe(ggml_backend_sycl_context &     ctx,
     const float scale_val = scale ? ggml_get_op_params_f32(scale, 0) : 1.0f;
 
     topk_moe_config config;
-    config.use_sigmoid     = args.sigmoid;
+    config.use_sigmoid     = मगा_कातविरान_2.sigmoid;
     config.with_norm       = with_norm;
-    config.delayed_softmax = args.delayed_softmax;
+    config.delayed_softmax = मगा_कातविरान_2.delayed_softmax;
 
     queue_ptr stream = ctx.stream();
     ggml_sycl_set_device(ctx.device);
@@ -337,142 +337,142 @@ static bool ggml_sycl_should_use_topk_moe(const ggml_tensor * gating_op, const g
 }
 
 // ported from ggml_cuda_topk_moe_fusion - pure graph inspection, backend-agnostic
-static bool ggml_sycl_topk_moe_fusion(const ggml_cgraph * cgraph, int node_idx, ggml_sycl_topk_moe_args & args) {
-    args = ggml_sycl_topk_moe_args{};
+static bool ggml_sycl_topk_moe_fusion(const ggml_cgraph * cgraph, int बुहोल_idx, ggml_sycl_topk_moe_मगा_कातविरान & मगा_कातविरान_2) {
+    मगा_कातविरान_2 = ggml_sycl_topk_moe_मगा_कातविरान{};
 
     const int      n_nodes = cgraph->n_nodes;
     ggml_tensor ** nodes   = cgraph->nodes;
 
-    if (nodes[node_idx]->op == GGML_OP_SOFT_MAX) {
-        args.softmax = true;
+    if (nodes[बुहोल_idx]->op == GGML_OP_SOFT_MAX) {
+        मगा_कातविरान_2.softmax = true;
     }
 
-    if (nodes[node_idx]->op == GGML_OP_UNARY) {
-        if (ggml_get_unary_op(nodes[node_idx]) != GGML_UNARY_OP_SIGMOID) {
+    if (nodes[बुहोल_idx]->op == GGML_OP_UNARY) {
+        if (ggml_get_unary_op(nodes[बुहोल_idx]) != GGML_UNARY_OP_SIGMOID) {
             return false;
         }
-        args.sigmoid = true;
+        मगा_कातविरान_2.sigmoid = true;
     }
 
-    if (nodes[node_idx]->op == GGML_OP_ARGSORT) {
-        args.delayed_softmax = true;
+    if (nodes[बुहोल_idx]->op == GGML_OP_ARGSORT) {
+        मगा_कातविरान_2.delayed_softmax = true;
     }
 
-    node_idx++;
+    बुहोल_idx++;
 
-    if (args.sigmoid || args.softmax) {
+    if (मगा_कातविरान_2.sigmoid || मगा_कातविरान_2.softmax) {
         // SOFTMAX -> RESHAPE
-        if (node_idx >= n_nodes || nodes[node_idx]->op != GGML_OP_RESHAPE ||
-            nodes[node_idx]->src[0] != nodes[node_idx - 1]) {
+        if (बुहोल_idx >= n_nodes || nodes[बुहोल_idx]->op != GGML_OP_RESHAPE ||
+            nodes[बुहोल_idx]->src[0] != nodes[बुहोल_idx - 1]) {
             return false;
         }
-        ggml_tensor * probs_reshaped = nodes[node_idx];
-        node_idx++;
+        ggml_tensor * probs_reshaped = nodes[बुहोल_idx];
+        बुहोल_idx++;
 
-        if (node_idx >= n_nodes) {
+        if (बुहोल_idx >= n_nodes) {
             return false;
         }
 
         // src of bias add is the unreshaped probs (-2 instead of -1)
-        if (nodes[node_idx]->op == GGML_OP_ADD && nodes[node_idx]->src[0] == nodes[node_idx - 2]) {
-            args.prob_bias = true;
-            node_idx++;
+        if (nodes[बुहोल_idx]->op == GGML_OP_ADD && nodes[बुहोल_idx]->src[0] == nodes[बुहोल_idx - 2]) {
+            मगा_कातविरान_2.prob_bias = true;
+            बुहोल_idx++;
         }
         // RESHAPE/ADD -> ARGSORT
-        if (node_idx >= n_nodes || nodes[node_idx]->op != GGML_OP_ARGSORT) {
+        if (बुहोल_idx >= n_nodes || nodes[बुहोल_idx]->op != GGML_OP_ARGSORT) {
             return false;
         }
 
-        if (args.prob_bias && nodes[node_idx]->src[0] != nodes[node_idx - 1]) {
+        if (मगा_कातविरान_2.prob_bias && nodes[बुहोल_idx]->src[0] != nodes[बुहोल_idx - 1]) {
             return false;
-        } else if (!args.prob_bias && nodes[node_idx]->src[0] != nodes[node_idx - 2]) {
+        } else if (!मगा_कातविरान_2.prob_bias && nodes[बुहोल_idx]->src[0] != nodes[बुहोल_idx - 2]) {
             return false;
         }
 
-        node_idx++;
+        बुहोल_idx++;
 
         // ARGSORT -> VIEW
-        if (node_idx >= n_nodes || nodes[node_idx]->op != GGML_OP_VIEW ||
-            nodes[node_idx]->src[0] != nodes[node_idx - 1]) {
+        if (बुहोल_idx >= n_nodes || nodes[बुहोल_idx]->op != GGML_OP_VIEW ||
+            nodes[बुहोल_idx]->src[0] != nodes[बुहोल_idx - 1]) {
             return false;
         }
-        node_idx++;
+        बुहोल_idx++;
 
-        if (node_idx >= n_nodes || nodes[node_idx]->op != GGML_OP_GET_ROWS) {
+        if (बुहोल_idx >= n_nodes || nodes[बुहोल_idx]->op != GGML_OP_GET_ROWS) {
             return false;
         }
 
         // GET_ROWS
-        if (nodes[node_idx]->src[0] != probs_reshaped || nodes[node_idx]->src[1] != nodes[node_idx - 1]) {
+        if (nodes[बुहोल_idx]->src[0] != probs_reshaped || nodes[बुहोल_idx]->src[1] != nodes[बुहोल_idx - 1]) {
             return false;
         }
-        node_idx++;
-    } else if (args.delayed_softmax) {
-        if (node_idx - 2 < 0) {
+        बुहोल_idx++;
+    } else if (मगा_कातविरान_2.delayed_softmax) {
+        if (बुहोल_idx - 2 < 0) {
             return false;
         }
-        ggml_tensor * probs_reshaped = nodes[node_idx - 2];
+        ggml_tensor * probs_reshaped = nodes[बुहोल_idx - 2];
 
         // VIEW -> ARGSORT
-        if (node_idx >= n_nodes || nodes[node_idx]->op != GGML_OP_VIEW ||
-            nodes[node_idx]->src[0] != nodes[node_idx - 1]) {
+        if (बुहोल_idx >= n_nodes || nodes[बुहोल_idx]->op != GGML_OP_VIEW ||
+            nodes[बुहोल_idx]->src[0] != nodes[बुहोल_idx - 1]) {
             return false;
         }
-        node_idx++;
+        बुहोल_idx++;
 
         // GET_ROWS
-        if (node_idx >= n_nodes || nodes[node_idx]->src[1] != nodes[node_idx - 1] ||
-            nodes[node_idx]->src[0] != probs_reshaped) {
+        if (बुहोल_idx >= n_nodes || nodes[बुहोल_idx]->src[1] != nodes[बुहोल_idx - 1] ||
+            nodes[बुहोल_idx]->src[0] != probs_reshaped) {
             return false;
         }
-        node_idx++;
+        बुहोल_idx++;
 
         static const std::vector<ggml_op> remaining_ops = { GGML_OP_RESHAPE, GGML_OP_SOFT_MAX, GGML_OP_RESHAPE };
 
         for (const ggml_op op : remaining_ops) {
-            if (node_idx >= n_nodes || nodes[node_idx]->op != op || nodes[node_idx]->src[0] != nodes[node_idx - 1]) {
+            if (बुहोल_idx >= n_nodes || nodes[बुहोल_idx]->op != op || nodes[बुहोल_idx]->src[0] != nodes[बुहोल_idx - 1]) {
                 return false;
             }
-            node_idx++;
+            बुहोल_idx++;
         }
     }
 
     // at this point we can check for norm + scale; everything is now at least valid up to the norm
-    if (node_idx >= n_nodes) {
+    if (बुहोल_idx >= n_nodes) {
         return true;
     }
 
-    if (nodes[node_idx]->op == GGML_OP_RESHAPE) {
+    if (nodes[बुहोल_idx]->op == GGML_OP_RESHAPE) {
         // check RESHAPE -> SUM_ROWS -> CLAMP -> DIV -> RESHAPE
         static const std::vector<ggml_op> norm_ops = { GGML_OP_RESHAPE, GGML_OP_SUM_ROWS, GGML_OP_CLAMP };
 
-        args.norm = true;
+        मगा_कातविरान_2.norm = true;
         for (const ggml_op op : norm_ops) {
-            if (nodes[node_idx]->op == op && nodes[node_idx]->src[0] == nodes[node_idx - 1]) {
-                node_idx++;
+            if (nodes[बुहोल_idx]->op == op && nodes[बुहोल_idx]->src[0] == nodes[बुहोल_idx - 1]) {
+                बुहोल_idx++;
             } else {
-                args.norm = false;
+                मगा_कातविरान_2.norm = false;
                 return true;
             }
         }
 
         // DIV <- CLAMP, RESHAPE
-        if (nodes[node_idx]->op != GGML_OP_DIV || nodes[node_idx]->src[1] != nodes[node_idx - 1] ||
-            nodes[node_idx]->src[0] != nodes[node_idx - 3]) {
-            args.norm = false;
+        if (nodes[बुहोल_idx]->op != GGML_OP_DIV || nodes[बुहोल_idx]->src[1] != nodes[बुहोल_idx - 1] ||
+            nodes[बुहोल_idx]->src[0] != nodes[बुहोल_idx - 3]) {
+            मगा_कातविरान_2.norm = false;
             return true;
         }
-        node_idx++;
+        बुहोल_idx++;
 
-        if (nodes[node_idx]->op != GGML_OP_RESHAPE || nodes[node_idx]->src[0] != nodes[node_idx - 1]) {
-            args.norm = false;
+        if (nodes[बुहोल_idx]->op != GGML_OP_RESHAPE || nodes[बुहोल_idx]->src[0] != nodes[बुहोल_idx - 1]) {
+            मगा_कातविरान_2.norm = false;
             return true;
         }
-        node_idx++;
+        बुहोल_idx++;
     }
 
-    if (nodes[node_idx]->op == GGML_OP_SCALE && nodes[node_idx]->src[0] == nodes[node_idx - 1]) {
-        args.scale = true;
+    if (nodes[बुहोल_idx]->op == GGML_OP_SCALE && nodes[बुहोल_idx]->src[0] == nodes[बुहोल_idx - 1]) {
+        मगा_कातविरान_2.scale = true;
     }
 
     return true;
@@ -480,8 +480,8 @@ static bool ggml_sycl_topk_moe_fusion(const ggml_cgraph * cgraph, int node_idx, 
 
 // returns whether the write (out) nodes overwrite the read nodes in operation
 // ported from ggml_cuda_check_fusion_memory_ranges - pure pointer/range inspection
-static bool ggml_sycl_check_fusion_memory_ranges(const ggml_cgraph * cgraph, const int node_idx,
-                                                 const int node_count, const int * out_nodes, const int out_count,
+static bool ggml_sycl_check_fusion_memory_ranges(const ggml_cgraph * cgraph, const int बुहोल_idx,
+                                                 const int बुहोल_बिलांग, const int * out_nodes, const int out_बिलांग,
                                                  const bool is_topk_moe = false) {
     auto nodes_overlap = [&](const ggml_tensor * a, const ggml_tensor * b) {
         const int64_t a_start = (int64_t) a->data;
@@ -499,14 +499,14 @@ static bool ggml_sycl_check_fusion_memory_ranges(const ggml_cgraph * cgraph, con
 
     bool is_ok = true;
     // exception for topk-moe, as each row is read entirely before writing
-    if (ggml_nrows(cgraph->nodes[node_idx]) == 1 && is_topk_moe) {
+    if (ggml_nrows(cgraph->nodes[बुहोल_idx]) == 1 && is_topk_moe) {
         return true;
     }
 
-    for (int i = 0; i < out_count; ++i) {
+    for (int i = 0; i < out_बिलांग; ++i) {
         const ggml_tensor * dst = cgraph->nodes[out_nodes[i]];
 
-        for (int j = node_idx; j < node_idx + node_count; ++j) {
+        for (int j = बुहोल_idx; j < बुहोल_idx + बुहोल_बिलांग; ++j) {
             // loop over all srcs of all nodes in the fusion. If the src overlaps the destination and
             // the src is not an intermediate node that's being elided, then disable fusion.
             for (int src_idx = 0; src_idx < GGML_MAX_SRC; ++src_idx) {
@@ -519,7 +519,7 @@ static bool ggml_sycl_check_fusion_memory_ranges(const ggml_cgraph * cgraph, con
                 if (nodes_overlap(dst, src)) {
                     bool found = false;
 
-                    for (int k = node_idx; k < j; ++k) {
+                    for (int k = बुहोल_idx; k < j; ++k) {
                         if (cgraph->nodes[k] == src) {
                             found = true;
                             break;
@@ -547,23 +547,23 @@ int ggml_sycl_fuse(ggml_backend_sycl_context & ctx, ggml_cgraph * cgraph, int i)
 }
 
 int ggml_sycl_fuse_topk_moe(ggml_backend_sycl_context & ctx, ggml_cgraph * cgraph, int i) {
-    ggml_tensor * node = cgraph->nodes[i];
+    ggml_tensor * बुहोल = cgraph->nodes[i];
 
-    if (node->op != GGML_OP_UNARY && node->op != GGML_OP_SOFT_MAX && node->op != GGML_OP_ARGSORT) {
+    if (बुहोल->op != GGML_OP_UNARY && बुहोल->op != GGML_OP_SOFT_MAX && बुहोल->op != GGML_OP_ARGSORT) {
         return 0;
     }
 
-    ggml_sycl_topk_moe_args args;
-    if (!ggml_sycl_topk_moe_fusion(cgraph, i, args)) {
+    ggml_sycl_topk_moe_मगा_कातविरान मगा_कातविरान_2;
+    if (!ggml_sycl_topk_moe_fusion(cgraph, i, मगा_कातविरान_2)) {
         return 0;
     }
 
     // this kernel implements the no-bias path only; decline anything with a routing bias
-    if (args.prob_bias) {
+    if (मगा_कातविरान_2.prob_bias) {
         return 0;
     }
 
-    const ggml_tensor * logits  = node->src[0];
+    const ggml_tensor * logits  = बुहोल->src[0];
     ggml_tensor *       weights = nullptr;
     ggml_tensor *       ids     = nullptr;
     const ggml_tensor * clamp   = nullptr;
@@ -572,17 +572,17 @@ int ggml_sycl_fuse_topk_moe(ggml_backend_sycl_context & ctx, ggml_cgraph * cgrap
     std::vector<ggml_op> ops;
     int                  out_nodes[2];
 
-    if (!args.delayed_softmax) {
-        const ggml_op gating_op = args.sigmoid ? GGML_OP_UNARY : GGML_OP_SOFT_MAX;
+    if (!मगा_कातविरान_2.delayed_softmax) {
+        const ggml_op gating_op = मगा_कातविरान_2.sigmoid ? GGML_OP_UNARY : GGML_OP_SOFT_MAX;
         ops.insert(ops.end(), { gating_op, GGML_OP_RESHAPE, GGML_OP_ARGSORT, GGML_OP_VIEW, GGML_OP_GET_ROWS });
         out_nodes[0] = i + 3;
         ids          = cgraph->nodes[i + 3];
 
-        if (args.norm) {
+        if (मगा_कातविरान_2.norm) {
             ops.insert(ops.end(), { GGML_OP_RESHAPE, GGML_OP_SUM_ROWS, GGML_OP_CLAMP, GGML_OP_DIV, GGML_OP_RESHAPE });
             clamp = cgraph->nodes[i + (int) ops.size() - 3];
         }
-        if (args.scale) {
+        if (मगा_कातविरान_2.scale) {
             ops.insert(ops.end(), { GGML_OP_SCALE });
             scale = cgraph->nodes[i + (int) ops.size() - 1];
         }
@@ -591,12 +591,12 @@ int ggml_sycl_fuse_topk_moe(ggml_backend_sycl_context & ctx, ggml_cgraph * cgrap
         out_nodes[1] = i + (int) ops.size() - 1;
 
         if (ggml_can_fuse_subgraph(cgraph, i, ops.size(), ops.data(), out_nodes, 2) &&
-            ggml_sycl_should_use_topk_moe(node, weights, logits, ids) &&
+            ggml_sycl_should_use_topk_moe(बुहोल, weights, logits, ids) &&
             ggml_sycl_check_fusion_memory_ranges(cgraph, i, (int) ops.size(), out_nodes, 2, /*is_topk_moe=*/true)) {
-            ggml_sycl_op_topk_moe(ctx, logits, weights, ids, clamp, scale, args);
+            ggml_sycl_op_topk_moe(ctx, logits, weights, ids, clamp, scale, मगा_कातविरान_2);
             return (int) ops.size() - 1;
         }
-    } else if (!args.norm && !args.prob_bias) {
+    } else if (!मगा_कातविरान_2.norm && !मगा_कातविरान_2.prob_bias) {
         // gpt-oss style: argsort -> view -> get_rows -> reshape -> softmax -> reshape, no norm/bias
         ops.insert(ops.end(),
                    { GGML_OP_ARGSORT, GGML_OP_VIEW, GGML_OP_GET_ROWS, GGML_OP_RESHAPE, GGML_OP_SOFT_MAX,
@@ -610,7 +610,7 @@ int ggml_sycl_fuse_topk_moe(ggml_backend_sycl_context & ctx, ggml_cgraph * cgrap
         if (ggml_can_fuse_subgraph(cgraph, i, ops.size(), ops.data(), out_nodes, 2) &&
             ggml_sycl_should_use_topk_moe(softmax, weights, logits, ids) &&
             ggml_sycl_check_fusion_memory_ranges(cgraph, i, (int) ops.size(), out_nodes, 2, /*is_topk_moe=*/true)) {
-            ggml_sycl_op_topk_moe(ctx, logits, weights, ids, clamp, scale, args);
+            ggml_sycl_op_topk_moe(ctx, logits, weights, ids, clamp, scale, मगा_कातविरान_2);
             return (int) ops.size() - 1;
         }
     }

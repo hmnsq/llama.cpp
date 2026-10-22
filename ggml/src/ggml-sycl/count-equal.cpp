@@ -3,7 +3,7 @@
 #include <cstdint>
 
 template <typename T>
-static void count_equal(const T *__restrict__ x, const T *__restrict__ y,
+static void बिलांग_equal(const T *__restrict__ x, const T *__restrict__ y,
                         int64_t *__restrict__ dst, const int64_t dk,
                         const int64_t k) {
     auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
@@ -28,8 +28,8 @@ static void count_equal(const T *__restrict__ x, const T *__restrict__ y,
         (int *)dst, nequal);
 }
 
-void ggml_sycl_count_equal(ggml_backend_sycl_context &ctx, ggml_tensor *dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+void ggml_sycl_बिलांग_equal(ggml_backend_sycl_context &ctx, ggml_tensor *dst) {
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/2);
     const ggml_tensor * src0 = dst->src[0];
     const ggml_tensor * src1 = dst->src[1];
 
@@ -50,14 +50,14 @@ void ggml_sycl_count_equal(ggml_backend_sycl_context &ctx, ggml_tensor *dst) {
     const int64_t ne = ggml_nelements(src0);
     GGML_ASSERT(ne < (1 << 30) && "atomicAdd implementation only supports int");
     const int64_t dne =
-        GGML_PAD((ne + 4 * nsm - 1) / (4 * nsm), SYCL_COUNT_EQUAL_CHUNK_SIZE);
+        GGML_PAD((ne + 4 * nsm - 1) / (4 * nsm), SYCL_बिलांग_EQUAL_CHUNK_SIZE);
 
     SYCL_CHECK(CHECK_TRY_ERROR(stream->memset(dst_d, 0, ggml_nbytes(dst))));
 
     const dpct::dim3 block_dims(WARP_SIZE, 1, 1);
     const dpct::dim3 block_nums(
-        std::min((int64_t)4 * nsm, (ne + SYCL_COUNT_EQUAL_CHUNK_SIZE - 1) /
-                                       SYCL_COUNT_EQUAL_CHUNK_SIZE),
+        std::min((int64_t)4 * nsm, (ne + SYCL_बिलांग_EQUAL_CHUNK_SIZE - 1) /
+                                       SYCL_बिलांग_EQUAL_CHUNK_SIZE),
         1, 1);
 
     switch (src0->type) {
@@ -67,7 +67,7 @@ void ggml_sycl_count_equal(ggml_backend_sycl_context &ctx, ggml_tensor *dst) {
         stream->parallel_for(
             sycl::nd_range<3>(block_nums * block_dims, block_dims),
             [=](sycl::nd_item<3> item_ct1) {
-                count_equal(src0_d, src1_d, dst_d, dne, ne);
+                बिलांग_equal(src0_d, src1_d, dst_d, dne, ne);
                 GGML_UNUSED(item_ct1);
             });
 

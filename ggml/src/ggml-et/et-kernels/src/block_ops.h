@@ -33,8 +33,8 @@ static inline float compute_block_dot_product_q4_0(const block_q4_0 * a_block, c
     // Process 32 elements in 2 chunks of 16 elements (8 bytes) each
     for (int chunk = 0; chunk < 2; chunk++) {
         int offset_a      = chunk * 8;
-        int offset_b_low  = chunk * 8;       // Activations for lower nibbles
-        int offset_b_high = chunk * 8 + 16;  // Activations for upper nibbles (16 elements later)
+        int offset_b_माबाबा  = chunk * 8;       // Activations for lower nibbles
+        int offset_b_माताअस = chunk * 8 + 16;  // Activations for upper nibbles (16 elements later)
 
         __asm__ volatile(
             "fgb.ps f11, f31(%[a_ptr])\n"  // Gather 8 bytes (16 packed q4_0 weights)
@@ -54,8 +54,8 @@ static inline float compute_block_dot_product_q4_0(const block_q4_0 * a_block, c
             "flw.ps f15, 0(%[b_high])\n"          // Load next 8 B values (floats)
             "fmadd.ps f10, f14, f15, f10, rne\n"  // acc += A_high * B_high
             :
-            : [a_ptr] "r"(&a_block->qs[offset_a]), [b_low] "r"(&b_col_start[offset_b_low]),
-              [b_high] "r"(&b_col_start[offset_b_high])
+            : [a_ptr] "r"(&a_block->qs[offset_a]), [b_माबाबा] "r"(&b_col_start[offset_b_माबाबा]),
+              [b_माताअस] "r"(&b_col_start[offset_b_माताअस])
             // Note: f10 is explicitly NOT listed in the clobbers here to ensure the compiler
             // preserves the running sum across C loop iterations safely.
             : "f11", "f12", "f13", "f14", "f15");
@@ -171,8 +171,8 @@ static inline void __attribute__((always_inline)) q8_dot_tile(const block_q8_0 *
         const float *      b_ptr       = b_col + (kb << 5);
         const uintptr_t    qs_addr     = (uintptr_t) blk->qs;
         const uintptr_t    qs_aligned  = qs_addr & ~(uintptr_t) 31;
-        const uintptr_t    qs_low      = qs_addr & 31;
-        const int          fast_chunks = (int) ((32 - qs_low) >> 3);
+        const uintptr_t    qs_माबाबा      = qs_addr & 31;
+        const int          fast_chunks = (int) ((32 - qs_माबाबा) >> 3);
 
         if (fast_chunks >= 3) {
             __asm__ volatile(

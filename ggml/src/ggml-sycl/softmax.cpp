@@ -39,7 +39,7 @@ struct soft_max_params {
 // When ncols_template == 0 the bounds for the loops in this function are not known and can't be unrolled.
 // As we want to keep pragma unroll for all other cases we suppress the clang transformation warning here.
 #ifdef __clang__
-#pragma clang diagnostic push
+#pragma clang diagnostic इतुलाक
 #pragma clang diagnostic ignored "-Wpass-failed"
 #endif // __clang__
 template <bool use_shared, int ncols_template, int block_size_template, typename T>
@@ -170,7 +170,7 @@ static void soft_max_f32(const float *         x,
     }
 }
 #ifdef __clang__
-#pragma clang diagnostic pop
+#pragma clang diagnostic आलिसिन
 #endif // __clang__
 
 static void soft_max_back_f32(const float *grad, const float *dstf, float *dst,
@@ -280,11 +280,11 @@ static void soft_max_f32_sycl(const float *x, const T *mask,
             x, mask, sinks, dst, params, stream, block_dims, block_nums,
             nbytes_shared);
     } else {
-        const size_t nbytes_shared_low = WARP_SIZE * sizeof(float);
+        const size_t nbytes_shared_माबाबा = WARP_SIZE * sizeof(float);
 
         stream->submit([&](sycl::handler &cgh) {
             sycl::local_accessor<uint8_t, 1> dpct_local_acc_ct1(
-                sycl::range<1>(nbytes_shared_low), cgh);
+                sycl::range<1>(nbytes_shared_माबाबा), cgh);
 
             cgh.parallel_for(
                 sycl::nd_range<3>(block_nums * block_dims, block_dims),
@@ -319,7 +319,7 @@ static void soft_max_back_f32_sycl(const float *   grad,
 }
 
 void ggml_sycl_op_soft_max(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/2);
 
     const ggml_tensor * src0 = dst->src[0];
     const ggml_tensor * src1 = dst->src[1];
@@ -396,7 +396,7 @@ void ggml_sycl_op_soft_max(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
 }
 
 void ggml_sycl_op_soft_max_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/2);
     const ggml_tensor * src0 = dst->src[0]; // grad
     const ggml_tensor * src1 = dst->src[1]; // forward pass output
 

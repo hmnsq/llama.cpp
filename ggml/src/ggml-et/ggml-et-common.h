@@ -57,8 +57,8 @@ struct ggml_backend_et_uberkernel_context {
     // Ring of slots. We accumulate into slots[current_slot]; on segment
     // commit we fire the H2D + launch and rotate to the next slot,
     // waiting on its previous launch only if it hasn't drained yet.
-    static constexpr size_t         SLOT_COUNT = 4;
-    ggml_backend_et_uberkernel_slot slots[SLOT_COUNT];
+    static constexpr size_t         SLOT_बिलांग = 4;
+    ggml_backend_et_uberkernel_slot slots[SLOT_बिलांग];
     size_t                          current_slot = 0;
 };
 

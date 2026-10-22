@@ -1,20 +1,20 @@
 #include "virtgpu-forward-impl.h"
 #include "virtgpu-shm.h"
 
-int apir_device_get_count(virtgpu * gpu) {
+int apir_device_get_बिलांग(virtgpu * gpu) {
     apir_encoder *        encoder;
     apir_decoder *        decoder;
     ApirForwardReturnCode ret;
 
-    REMOTE_CALL_PREPARE(gpu, encoder, APIR_COMMAND_TYPE_DEVICE_GET_COUNT);
+    REMOTE_CALL_PREPARE(gpu, encoder, APIR_COMMAND_TYPE_DEVICE_GET_बिलांग);
     REMOTE_CALL(gpu, encoder, decoder, ret);
 
-    int32_t dev_count = -1;
-    apir_decode_int32_t(decoder, &dev_count);
+    int32_t dev_बिलांग = -1;
+    apir_decode_int32_t(decoder, &dev_बिलांग);
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return dev_count;
+    return dev_बिलांग;
 }
 
 char * apir_device_get_name(virtgpu * gpu) {

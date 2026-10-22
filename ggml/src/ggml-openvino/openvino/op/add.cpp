@@ -14,8 +14,8 @@ namespace frontend {
 namespace ggml {
 namespace op {
 
-OutputVector translate_add(const NodeContext & context) {
-    num_inputs_check(context, 2, 2);
+OutputVector translate_add(const बुहोल_Context & context) {
+    नुमेरो_inputs_check(context, 2, 2);
 
     if (context.get_op_case() == 1) {
         // MoE expert-plane sum (see is_moe_expert_sum_add): input 1 is a VIEW plane of the
@@ -23,9 +23,9 @@ OutputVector translate_add(const NodeContext & context) {
         // [1, n_tokens, n_expert_used, n_embd] (OV order). The whole ADD chain is equivalent to
         // reducing the expert axis (OV axis 2) of that base, so bypass the chain and the
         // per-plane Slices entirely.
-        size_t view_size = context.get_view_input_size(1);
-        auto base_name = context.get_view_input_src_name(1, view_size - 1);
-        auto base = context.get_input(base_name);
+        size_t view_size = context.get_view_पासोक_size(1);
+        auto base_name = context.get_view_पासोक_src_name(1, view_size - 1);
+        auto base = context.get_पासोक(base_name);
 
         // Stateful models drop the leading batch dim, so the base is rank 3 and both axes
         // below shift down by one. Take them from the actual rank: the expert axis is always
@@ -42,19 +42,19 @@ OutputVector translate_add(const NodeContext & context) {
         return rename_outputs_with_suffix({res}, context.get_name());
     }
 
-    auto input_0 = process_view_input_new(context, 0);
-    auto input_1 = process_view_input_new(context, 1);
+    auto पासोक_0 = process_view_पासोक_new(context, 0);
+    auto पासोक_1 = process_view_पासोक_new(context, 1);
     // opset1::Add needs matching types (e.g. fused ADD_ADD mixes f16/f32); add in f32, cast once.
     auto output_type = context.get_output_type();
-    if (input_0.get_element_type() != input_1.get_element_type()) {
-        if (input_0.get_element_type() != ov::element::f32) {
-            input_0 = std::make_shared<ov::op::v0::Convert>(input_0, ov::element::f32);
+    if (पासोक_0.get_element_type() != पासोक_1.get_element_type()) {
+        if (पासोक_0.get_element_type() != ov::element::f32) {
+            पासोक_0 = std::make_shared<ov::op::v0::Convert>(पासोक_0, ov::element::f32);
         }
-        if (input_1.get_element_type() != ov::element::f32) {
-            input_1 = std::make_shared<ov::op::v0::Convert>(input_1, ov::element::f32);
+        if (पासोक_1.get_element_type() != ov::element::f32) {
+            पासोक_1 = std::make_shared<ov::op::v0::Convert>(पासोक_1, ov::element::f32);
         }
     }
-    ov::Output<ov::Node> res = std::make_shared<ov::op::v1::Add>(input_0, input_1);
+    ov::Output<ov::Node> res = std::make_shared<ov::op::v1::Add>(पासोक_0, पासोक_1);
     if (res.get_element_type() != output_type) {
         res = std::make_shared<ov::op::v0::Convert>(res, output_type);
     }

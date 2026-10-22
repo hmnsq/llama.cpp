@@ -117,12 +117,12 @@ int op_sum_rows(struct htp_ops_context * octx) {
     uint32_t row_start = 0;
     uint32_t nrows     = src0_nrows;
 
-    if (octx->ctx->mdev.count > 1) {
+    if (octx->ctx->mdev.बिलांग > 1) {
         uint32_t rows_per_chunk = 0;
         htp_tensor_mdev_rows_per_chunk(dst, sizeof(float), (uint32_t) dst_data_row_size, &rows_per_chunk);
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(src0_nrows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
+        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(src0_nrows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.बिलांग, &octx->ctx->mdev.बिलांग_div);
         row_start = range.start;
-        nrows     = range.count;
+        nrows     = range.बिलांग;
     }
 
     if (nrows == 0) {
@@ -197,7 +197,7 @@ int op_sum(struct htp_ops_context * octx) {
         return HTP_STATUS_NO_SUPPORT;
     }
 
-    if (octx->ctx->mdev.count > 1 && octx->ctx->mdev.idx > 0) {
+    if (octx->ctx->mdev.बिलांग > 1 && octx->ctx->mdev.idx > 0) {
         return HTP_STATUS_OK;
     }
 
@@ -332,7 +332,7 @@ int op_argmax(struct htp_ops_context * octx) {
     }
 
     if (src0_nrows == 1) {
-        if (octx->ctx->mdev.count > 1 && octx->ctx->mdev.idx > 0) {
+        if (octx->ctx->mdev.बिलांग > 1 && octx->ctx->mdev.idx > 0) {
             return HTP_STATUS_OK;
         }
 
@@ -375,14 +375,14 @@ int op_argmax(struct htp_ops_context * octx) {
     uint32_t row_start = 0;
     uint32_t nrows     = src0_nrows;
 
-    if (octx->ctx->mdev.count > 1) {
+    if (octx->ctx->mdev.बिलांग > 1) {
         const bool can_split = htp_tensor_mdev_data_aligned(dst) &&
                                htp_tensor_is_contiguous(dst, sizeof(int32_t));
         const uint32_t elems_per_chunk = can_split ? 32 : 0;
         const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(
-            src0_nrows, elems_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
+            src0_nrows, elems_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.बिलांग, &octx->ctx->mdev.बिलांग_div);
         row_start = range.start;
-        nrows     = range.count;
+        nrows     = range.बिलांग;
     }
 
     if (nrows == 0) {

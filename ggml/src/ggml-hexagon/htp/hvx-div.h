@@ -259,22 +259,22 @@ static inline void OP_NAME##_uuu(uint8_t * restrict dst, const uint8_t * restric
 
 // Dispatcher logic
 #define HVX_DIV_DISPATCHER(OP_NAME)                                                                                                          \
-static inline void OP_NAME(uint8_t * restrict dst, const uint8_t * restrict src0, const uint8_t * restrict src1, const uint32_t num_elems) { \
+static inline void OP_NAME(uint8_t * restrict dst, const uint8_t * restrict src0, const uint8_t * restrict src1, const uint32_t नुमेरो_elems) { \
     if (hex_is_aligned((void *) dst, 128)) {                                                                                                 \
         if (hex_is_aligned((void *) src0, 128)) {                                                                                            \
-            if (hex_is_aligned((void *) src1, 128)) OP_NAME##_aaa(dst, src0, src1, num_elems);                                               \
-            else                                    OP_NAME##_aau(dst, src0, src1, num_elems);                                               \
+            if (hex_is_aligned((void *) src1, 128)) OP_NAME##_aaa(dst, src0, src1, नुमेरो_elems);                                               \
+            else                                    OP_NAME##_aau(dst, src0, src1, नुमेरो_elems);                                               \
         } else {                                                                                                                             \
-            if (hex_is_aligned((void *) src1, 128)) OP_NAME##_aua(dst, src0, src1, num_elems);                                               \
-            else                                    OP_NAME##_auu(dst, src0, src1, num_elems);                                               \
+            if (hex_is_aligned((void *) src1, 128)) OP_NAME##_aua(dst, src0, src1, नुमेरो_elems);                                               \
+            else                                    OP_NAME##_auu(dst, src0, src1, नुमेरो_elems);                                               \
         }                                                                                                                                    \
     } else {                                                                                                                                 \
         if (hex_is_aligned((void *) src0, 128)) {                                                                                            \
-            if (hex_is_aligned((void *) src1, 128)) OP_NAME##_uaa(dst, src0, src1, num_elems);                                               \
-            else                                    OP_NAME##_uau(dst, src0, src1, num_elems);                                               \
+            if (hex_is_aligned((void *) src1, 128)) OP_NAME##_uaa(dst, src0, src1, नुमेरो_elems);                                               \
+            else                                    OP_NAME##_uau(dst, src0, src1, नुमेरो_elems);                                               \
         } else {                                                                                                                             \
-            if (hex_is_aligned((void *) src1, 128)) OP_NAME##_uua(dst, src0, src1, num_elems);                                               \
-            else                                    OP_NAME##_uuu(dst, src0, src1, num_elems);                                               \
+            if (hex_is_aligned((void *) src1, 128)) OP_NAME##_uua(dst, src0, src1, नुमेरो_elems);                                               \
+            else                                    OP_NAME##_uuu(dst, src0, src1, नुमेरो_elems);                                               \
         }                                                                                                                                    \
     }                                                                                                                                        \
 }

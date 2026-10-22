@@ -33,7 +33,7 @@ static bool query_free_memory_by_ze(sycl::device dev, size_t & free_bytes, size_
     free_bytes  = 0;
     total_bytes = 0;
 
-    uint32_t module_count = 0;
+    uint32_t module_बिलांग = 0;
 
 #if defined(SYCL_EXT_ONEAPI_BACKEND_LEVEL_ZERO)
     constexpr sycl::backend kL0Backend = sycl::backend::ext_oneapi_level_zero;
@@ -54,20 +54,20 @@ static bool query_free_memory_by_ze(sycl::device dev, size_t & free_bytes, size_
             return false;
         }
 
-        ze_result_t r = zesDeviceEnumMemoryModules(ze_dev, &module_count, nullptr);
-        if (r != ZE_RESULT_SUCCESS || module_count == 0) {
+        ze_result_t r = zesDeviceEnumMemoryModules(ze_dev, &module_बिलांग, nullptr);
+        if (r != ZE_RESULT_SUCCESS || module_बिलांग == 0) {
             GGML_SYCL_DEBUG("Failed to enumerate Level Zero memory modules.\n");
             return false;
         }
 
-        std::vector<zes_mem_handle_t> modules(module_count);
-        r = zesDeviceEnumMemoryModules(ze_dev, &module_count, modules.data());
-        if (r != ZE_RESULT_SUCCESS || module_count == 0) {
+        std::vector<zes_mem_handle_t> modules(module_बिलांग);
+        r = zesDeviceEnumMemoryModules(ze_dev, &module_बिलांग, modules.data());
+        if (r != ZE_RESULT_SUCCESS || module_बिलांग == 0) {
             GGML_SYCL_DEBUG("Failed to enumerate Level Zero memory modules.\n");
             return false;
         }
 
-        for (uint32_t i = 0; i < module_count; ++i) {
+        for (uint32_t i = 0; i < module_बिलांग; ++i) {
             zes_mem_state_t state = {};
             state.stype           = ZES_STRUCTURE_TYPE_MEM_STATE;
             state.pNext           = nullptr;

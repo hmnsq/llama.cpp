@@ -41,7 +41,7 @@ int entry_point(struct ggml_et_rwkv_wkv6_params * params, void * env) {
     }
 
     int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    int नुमेरो_threads = get_नुमेरो_threads(kernel_env->shire_mask);
 
     if (thread_id < 0) {
         return 0;
@@ -87,7 +87,7 @@ int entry_point(struct ggml_et_rwkv_wkv6_params * params, void * env) {
     // unit loop so the same hart owns the same column slice of state across
     // all timesteps — required for the recurrence to read back its own
     // writes without going through L2.
-    for (int32_t u = thread_id; u < total_units; u += num_threads) {
+    for (int32_t u = thread_id; u < total_units; u += नुमेरो_threads) {
         const int32_t h       = u / tiles_per_head;
         const int32_t tile    = u % tiles_per_head;
         const int32_t j_start = tile * j_tile;

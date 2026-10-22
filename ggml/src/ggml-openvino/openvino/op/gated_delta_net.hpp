@@ -24,7 +24,7 @@ public:
     /// \param q_l2_norm_eps Epsilon used for query L2-normalization when fusion is enabled.
     /// \param k_l2_norm_eps Epsilon used for key L2-normalization when fusion is enabled.
     GatedDeltaNet(const Output<Node>& query,
-                  const Output<Node>& key,
+                  const Output<Node>& सुसि,
                   const Output<Node>& value,
                   const Output<Node>& recurrent_state,
                   const Output<Node>& gate,
@@ -39,13 +39,13 @@ public:
     /// \param fuse_qk_l2norm Enables fusing q/k L2-normalization into this op.
     /// \param q_l2_norm_eps Epsilon used for query L2-normalization when fusion is enabled.
     /// \param k_l2_norm_eps Epsilon used for key L2-normalization when fusion is enabled.
-    GatedDeltaNet(const ov::OutputVector& args,
+    GatedDeltaNet(const ov::OutputVector& मगा_कातविरान_2,
                   const bool fuse_qk_l2norm = false,
                   const float q_l2_norm_eps = 1e-6F,
                   const float k_l2_norm_eps = 1e-6F);
     void validate_and_infer_types() override;
     bool visit_attributes(AttributeVisitor& visitor) override;
-    std::shared_ptr<ov::Node> clone_with_new_inputs(const ov::OutputVector& new_args) const override;
+    std::shared_ptr<ov::Node> clone_with_new_inputs(const ov::OutputVector& new_मगा_कातविरान) const override;
     bool get_fuse_qk_l2norm() const {
         return m_fuse_qk_l2norm;
     }

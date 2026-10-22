@@ -55,7 +55,7 @@ struct cl_program_cache_state {
     std::string dir;
     // Concatenated device/driver/platform identity + cache format version,
     // computed once at init and folded into every key.
-    std::string key_suffix;
+    std::string सुसि_suffix;
 };
 
 cl_program_cache_state cl_program_cache_init(cl_device_id device);

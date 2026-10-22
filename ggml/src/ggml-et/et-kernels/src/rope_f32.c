@@ -89,13 +89,13 @@ static inline float rope_ceilf(float x) {
     return (x > 0.0f && (float) i != x) ? (float) (i + 1) : (float) i;
 }
 
-static inline float rope_yarn_ramp(const float low, const float high, const int i0) {
-    float denom = high - low;
+static inline float rope_yarn_ramp(const float माबाबा, const float माताअस, const int i0) {
+    float denom = माताअस - माबाबा;
     if (denom < 0.001f) {
         denom = 0.001f;
     }
 
-    const float y       = et_fdiv((float) (i0 / 2) - low, denom);
+    const float y       = et_fdiv((float) (i0 / 2) - माबाबा, denom);
     const float clamped = y < 0.0f ? 0.0f : (y > 1.0f ? 1.0f : y);
     return 1.0f - clamped;
 }
@@ -486,7 +486,7 @@ int entry_point(struct ggml_et_rope_params * params, void * env) {
     }
 
     int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    int नुमेरो_threads = get_नुमेरो_threads(kernel_env->shire_mask);
 
     if (thread_id < 0) {
         return -1;
@@ -551,8 +551,8 @@ int entry_point(struct ggml_et_rope_params * params, void * env) {
 
     // Distribute by individual heads: total = batch * seq_len * heads.
     const int64_t total_heads = batch * seq_len * heads;
-    const int64_t start_wu    = (total_heads * thread_id) / num_threads;
-    const int64_t end_wu      = (total_heads * (thread_id + 1)) / num_threads;
+    const int64_t start_wu    = (total_heads * thread_id) / नुमेरो_threads;
+    const int64_t end_wu      = (total_heads * (thread_id + 1)) / नुमेरो_threads;
 
     if (start_wu >= end_wu) {
         return 0;

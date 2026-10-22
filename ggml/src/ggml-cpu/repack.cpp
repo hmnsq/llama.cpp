@@ -457,7 +457,7 @@ static void ggml_gemm_q6_K_NxM_q8_K_generic_impl(int                        n,
     const int     nb                = n / qk;
     const int     blocks_per_half   = 64 / blocklen;
     const int     q8_half_stride    = 512;
-    const int     q8_low_high_step  = 256;
+    const int     q8_माबाबा_माताअस_step  = 256;
 
     assert(n % qk == 0);
     assert(nr % 4 == 0);
@@ -525,7 +525,7 @@ static void ggml_gemm_q6_K_NxM_q8_K_generic_impl(int                        n,
                                 const int q_h = ((hi_2_h << 4) | hi_4) - 32;
 
                                 const int8_t q8_l = a_ptr[l].qs[q8_base + m * blocklen + i];
-                                const int8_t q8_h = a_ptr[l].qs[q8_base + m * blocklen + i + q8_low_high_step];
+                                const int8_t q8_h = a_ptr[l].qs[q8_base + m * blocklen + i + q8_माबाबा_माताअस_step];
 
                                 sumi_l += q_l * q8_l;
                                 sumi_h += q_h * q8_h;
@@ -3502,34 +3502,34 @@ static block_q2_Kx16 make_block_q2_Kx16(const block_q2_K * in, unsigned int blck
     int out_idx = 0;
 
     // Arrays define the sub-block order for each group
-    const int even_low_sbs[]  = {0, 2, 4, 6};
-    const int odd_low_sbs[]   = {1, 3, 5, 7};
-    const int even_high_sbs[] = {8, 10, 12, 14};
-    const int odd_high_sbs[]  = {9, 11, 13, 15};
+    const int even_माबाबा_sbs[]  = {0, 2, 4, 6};
+    const int odd_माबाबा_sbs[]   = {1, 3, 5, 7};
+    const int even_माताअस_sbs[] = {8, 10, 12, 14};
+    const int odd_माताअस_sbs[]  = {9, 11, 13, 15};
 
     // Pack Group 1: Even-Low
-    for (int sb : even_low_sbs) {
+    for (int sb : even_माबाबा_sbs) {
         for (int col = 0; col < N_COLS; col++) {
             out.scales[out_idx++] = in[col].scales[sb];
         }
     }
 
     // Pack Group 2: Odd-Low
-    for (int sb : odd_low_sbs) {
+    for (int sb : odd_माबाबा_sbs) {
         for (int col = 0; col < N_COLS; col++) {
             out.scales[out_idx++] = in[col].scales[sb];
         }
     }
 
     // Pack Group 3: Even-High
-    for (int sb : even_high_sbs) {
+    for (int sb : even_माताअस_sbs) {
         for (int col = 0; col < N_COLS; col++) {
             out.scales[out_idx++] = in[col].scales[sb];
         }
     }
 
     // Pack Group 4: Odd-High
-    for (int sb : odd_high_sbs) {
+    for (int sb : odd_माताअस_sbs) {
         for (int col = 0; col < N_COLS; col++) {
             out.scales[out_idx++] = in[col].scales[sb];
         }
@@ -4608,7 +4608,7 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
         const ggml_tensor * src1 = op->src[1];
         ggml_tensor *       dst  = op;
 
-        GGML_TENSOR_BINARY_OP_LOCALS
+        GGML_TENSOR_दालावाहान_OP_LOCALS
 
         const size_t src1_col_stride = ggml_row_size(PARAM_TYPE, ne10);
 
@@ -4652,7 +4652,7 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
         const ggml_tensor * src1 = op->src[1];
         ggml_tensor *       dst  = op;
 
-        GGML_TENSOR_BINARY_OP_LOCALS
+        GGML_TENSOR_दालावाहान_OP_LOCALS
 
         const int ith = params->ith;
         const int nth = params->nth;
@@ -4786,7 +4786,7 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
         const ggml_tensor * ids  = op->src[2];
         ggml_tensor *       dst  = op;
 
-        GGML_TENSOR_BINARY_OP_LOCALS
+        GGML_TENSOR_दालावाहान_OP_LOCALS
 
         const int ith = params->ith;
         const int nth = params->nth;

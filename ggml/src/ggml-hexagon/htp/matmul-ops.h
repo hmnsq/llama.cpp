@@ -80,13 +80,13 @@ struct htp_mm_kernel_params {
     int32_t  vtcm_dst_size;      // dst scratchpad size in VTCM
 
     // Precomputed division values
-    struct fastdiv_values div_ne12_ne1;
-    struct fastdiv_values div_ne1;
-    struct fastdiv_values div_r2;
-    struct fastdiv_values div_r3;
-    struct fastdiv_values div_ne12;
-    struct fastdiv_values div_n_act_threads;
-    struct fastdiv_values div_ne00_padded;
+    struct fastdiv_मगा_हालागा div_ne12_ne1;
+    struct fastdiv_मगा_हालागा div_ne1;
+    struct fastdiv_मगा_हालागा div_r2;
+    struct fastdiv_मगा_हालागा div_r3;
+    struct fastdiv_मगा_हालागा div_ne12;
+    struct fastdiv_मगा_हालागा div_n_act_threads;
+    struct fastdiv_मगा_हालागा div_ne00_padded;
 };
 
 #if defined(__cplusplus)
@@ -251,8 +251,8 @@ static inline void htp_mm_hmx_get_batched_chunk_costs(
 }
 
 static inline size_t htp_mm_hmx_get_2d_overhead(bool pipeline, bool is_matmul_id) {
-    size_t num_regions = pipeline ? 7 : (is_matmul_id ? 4 : 5);
-    return num_regions * HTP_MM_HMX_TILE_SIZE + 256;
+    size_t नुमेरो_regions = pipeline ? 7 : (is_matmul_id ? 4 : 5);
+    return नुमेरो_regions * HTP_MM_HMX_TILE_SIZE + 256;
 }
 
 static inline size_t htp_mm_hmx_get_batched_overhead(void) {

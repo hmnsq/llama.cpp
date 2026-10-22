@@ -26,7 +26,7 @@ int entry_point(struct ggml_et_rms_norm_params * params, void * env) {
     }
 
     int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    int नुमेरो_threads = get_नुमेरो_threads(kernel_env->shire_mask);
 
     if (thread_id < 0) {
         return 0;
@@ -81,13 +81,13 @@ int entry_point(struct ggml_et_rms_norm_params * params, void * env) {
 
     // Intra-row cooperation only works within a single shire (barrier + L2SCP
     // are shire-local). Use per-shire thread count for the threshold.
-    const int shire_threads = SOC_MINIONS_PER_SHIRE * NUM_HARTS_PER_MINION;  // 64
+    const int shire_threads = SOC_MINIONS_PER_SHIRE * नुमेरो_HARTS_PER_MINION;  // 64
 
     if (total_rows >= shire_threads) {
         // Row-parallel: each thread processes whole rows
         for (int64_t i3 = 0; i3 < ne3; i3++) {
             for (int64_t i2 = 0; i2 < ne2; i2++) {
-                for (int64_t i1 = thread_id; i1 < ne1; i1 += num_threads) {
+                for (int64_t i1 = thread_id; i1 < ne1; i1 += नुमेरो_threads) {
                     const float * src_ptr =
                         (const float *) ((const char *) src0_data + i3 * nb03 + i2 * nb02 + i1 * nb01);
                     float * dst_ptr = (float *) ((char *) dst_data + i3 * nb3 + i2 * nb2 + i1 * nb1);

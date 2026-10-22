@@ -17,7 +17,7 @@ int entry_point(struct ggml_et_ssm_conv_params * params, void * env) {
     }
 
     int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    int नुमेरो_threads = get_नुमेरो_threads(kernel_env->shire_mask);
 
     if (thread_id < 0) {
         return 0;
@@ -69,7 +69,7 @@ int entry_point(struct ggml_et_ssm_conv_params * params, void * env) {
             const float * s = (const float *) ((const char *) src0_data + i2 * src0->nb[0] + i3 * src0->nb[2]);
             float *       x = (float *) ((char *) dst_data + i2 * dst->nb[1] + i3 * dst->nb[2]);
 
-            for (int64_t ci = thread_id; ci < n_chunks; ci += num_threads) {
+            for (int64_t ci = thread_id; ci < n_chunks; ci += नुमेरो_threads) {
                 const int64_t i1_start = ci * chunk;
                 const int64_t i1_end   = i1_start + chunk < nr ? i1_start + chunk : nr;
 

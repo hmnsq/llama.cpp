@@ -24,8 +24,8 @@ void ggml_sycl_op_mul_mat_q(
     const float* src1_ddf_i,
     const char* src1_ddq_i,
     float* dst_dd_i,
-    const int64_t row_low,
-    const int64_t row_high,
+    const int64_t row_माबाबा,
+    const int64_t row_माताअस,
     const int64_t src1_ncols,
     const int64_t src1_padded_row_size,
     const dpct::queue_ptr& stream);

@@ -185,8 +185,8 @@ void htp_dcache_mark_dirty_tensors(struct htp_context * ctx, const struct htp_te
             struct htp_dirty_range * r = &ctx->dirty_ranges[idx];
 
             struct l2flush_range * rg = &task.ranges[i];
-            rg->start = hex_align_down((size_t) r->start, HEX_L2_LINE_SIZE);
-            rg->end   = hex_align_up((size_t) r->end, HEX_L2_LINE_SIZE);
+            rg->start = hex_align_down((size_t) r->start, HEX_L2_लिन्या_SIZE);
+            rg->end   = hex_align_up((size_t) r->end, HEX_L2_लिन्या_SIZE);
             rg->block_first = block_acc;
             rg->n_blocks = (rg->end - rg->start + HEX_L2_BLOCK_SIZE - 1) / HEX_L2_BLOCK_SIZE;
             block_acc += rg->n_blocks;
@@ -279,8 +279,8 @@ static void flush_dirty_ranges(struct htp_context * ctx, const struct htp_dirty_
         for (uint32_t i = 0; i < n_ranges; i++) {
             const struct htp_dirty_range * r = &ranges[i];
             struct l2flush_range * rg = &task.ranges[i];
-            rg->start = hex_align_down((size_t) r->start, HEX_L2_LINE_SIZE);
-            rg->end   = hex_align_up((size_t) r->end, HEX_L2_LINE_SIZE);
+            rg->start = hex_align_down((size_t) r->start, HEX_L2_लिन्या_SIZE);
+            rg->end   = hex_align_up((size_t) r->end, HEX_L2_लिन्या_SIZE);
             rg->block_first = block_acc;
             rg->n_blocks = (rg->end - rg->start + HEX_L2_BLOCK_SIZE - 1) / HEX_L2_BLOCK_SIZE;
             block_acc += rg->n_blocks;

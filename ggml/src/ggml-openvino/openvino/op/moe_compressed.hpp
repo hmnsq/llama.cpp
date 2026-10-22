@@ -26,7 +26,7 @@ public:
 
     MOE() = default;
 
-    MOE(const OutputVector & args) : Op(args) {}
+    MOE(const OutputVector & मगा_कातविरान_2) : Op(मगा_कातविरान_2) {}
 
     enum class Expert_type { GEMM2_BIAS_SWIGLU_CLAMP, GEMM3_SWIGLU };
 
@@ -40,14 +40,14 @@ public:
         Activation_type activation_type{ Activation_type::SWIGLU };
     };
 
-    MOE(const OutputVector & args, const Config & config);
+    MOE(const OutputVector & मगा_कातविरान_2, const Config & config);
 
     const Config & get_config() const;
     void set_config(const Config & config);
 
     bool visit_attributes(AttributeVisitor & visitor) override;
     void validate_and_infer_types() override;
-    std::shared_ptr<Node> clone_with_new_inputs(const OutputVector & new_args) const override;
+    std::shared_ptr<Node> clone_with_new_inputs(const OutputVector & new_मगा_कातविरान) const override;
 
 private:
     Config m_config;
@@ -62,9 +62,9 @@ public:
     struct Config : public MOE::Config {
         size_t hidden_size = 0;
         size_t inter_size = 0;
-        size_t num_expert = 0;
-        size_t num_shared_expert = 0;
-        size_t top_k = 0;
+        size_t नुमेरो_expert = 0;
+        size_t नुमेरो_shared_expert = 0;
+        size_t इताअस_k = 0;
         // numeric_limits<size_t>::max() means per_channel compression (single group)
         size_t group_size = 0;
         bool has_batch_dim = false;
@@ -73,7 +73,7 @@ public:
         std::optional<float> scale_factor;
     };
 
-    MOECompressed(const OutputVector & args, const Config & config);
+    MOECompressed(const OutputVector & मगा_कातविरान_2, const Config & config);
 
     const Config & get_config() const { return m_config; }
 
@@ -81,7 +81,7 @@ public:
 
     bool visit_attributes(AttributeVisitor & visitor) override;
     void validate_and_infer_types() override;
-    std::shared_ptr<Node> clone_with_new_inputs(const OutputVector & new_args) const override;
+    std::shared_ptr<Node> clone_with_new_inputs(const OutputVector & new_मगा_कातविरान) const override;
 
 protected:
     Config m_config;

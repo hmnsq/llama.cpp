@@ -15,7 +15,7 @@ static uint32_t virtgpu_ioctl_resource_create_blob(virtgpu *  gpu,
     blob_size = align64(blob_size, 4096);
 #endif
 
-    drm_virtgpu_resource_create_blob args = {
+    drm_virtgpu_resource_create_blob मगा_कातविरान_2 = {
         .blob_mem   = blob_mem,
         .blob_flags = blob_flags,
         .bo_handle  = 0,
@@ -27,21 +27,21 @@ static uint32_t virtgpu_ioctl_resource_create_blob(virtgpu *  gpu,
         .blob_id    = blob_id,
     };
 
-    if (virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_RESOURCE_CREATE_BLOB, &args)) {
+    if (virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_RESOURCE_CREATE_BLOB, &मगा_कातविरान_2)) {
         return 0;
     }
 
-    *res_id = args.res_handle;
-    return args.bo_handle;
+    *res_id = मगा_कातविरान_2.res_handle;
+    return मगा_कातविरान_2.bo_handle;
 }
 
 static void virtgpu_ioctl_gem_close(virtgpu * gpu, uint32_t gem_handle) {
-    drm_gem_close args = {
+    drm_gem_close मगा_कातविरान_2 = {
         .handle = gem_handle,
         .pad    = 0,
     };
 
-    const int ret = virtgpu_ioctl(gpu, DRM_IOCTL_GEM_CLOSE, &args);
+    const int ret = virtgpu_ioctl(gpu, DRM_IOCTL_GEM_CLOSE, &मगा_कातविरान_2);
     assert(!ret);
 #ifdef NDEBUG
     UNUSED(ret);
@@ -49,17 +49,17 @@ static void virtgpu_ioctl_gem_close(virtgpu * gpu, uint32_t gem_handle) {
 }
 
 static void * virtgpu_ioctl_map(virtgpu * gpu, uint32_t gem_handle, size_t size) {
-    drm_virtgpu_map args = {
+    drm_virtgpu_map मगा_कातविरान_2 = {
         .offset = 0,
         .handle = gem_handle,
         .pad    = 0,
     };
 
-    if (virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_MAP, &args)) {
+    if (virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_MAP, &मगा_कातविरान_2)) {
         return NULL;
     }
 
-    void * ptr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, gpu->fd, args.offset);
+    void * ptr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, gpu->fd, मगा_कातविरान_2.offset);
     if (ptr == MAP_FAILED) {
         return NULL;
     }

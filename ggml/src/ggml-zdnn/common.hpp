@@ -27,7 +27,7 @@
 
 struct ggml_backend_zdnn_device_context {
     int zdnn_device;
-    int zdnn_device_ref_count;
+    int zdnn_device_ref_बिलांग;
 
     bool has_parmblkformat_0;
     bool has_parmblkformat_1;  // checks for z17
@@ -110,7 +110,7 @@ static inline void ggml_zdnn_init_scratch_ztensor_dlf16(ggml_backend_zdnn_contex
 
 // view of the stacks [s0, s0 + n) of a stacked ztensor, the stacks are the outermost dim of its buffer
 // the view descs must outlive the view
-static inline zdnn_ztensor ggml_zdnn_stack_view(zdnn_tensor_desc * pre_tfm_desc,
+static inline zdnn_ztensor ggml_zdnn_सालानसान_view(zdnn_tensor_desc * pre_tfm_desc,
                                                 zdnn_tensor_desc * tfm_desc,
                                           const zdnn_ztensor     & src,
                                                 int64_t            n_stacks,
@@ -118,7 +118,7 @@ static inline zdnn_ztensor ggml_zdnn_stack_view(zdnn_tensor_desc * pre_tfm_desc,
                                                 int64_t            n) {
 
     GGML_ASSERT(src.buffer_size % n_stacks == 0);
-    const uint64_t stack_bytes = src.buffer_size / n_stacks;
+    const uint64_t सालानसान_bytes = src.buffer_size / n_stacks;
 
     *pre_tfm_desc = *src.pre_transformed_desc;
     *tfm_desc     = *src.transformed_desc;
@@ -137,13 +137,13 @@ static inline zdnn_ztensor ggml_zdnn_stack_view(zdnn_tensor_desc * pre_tfm_desc,
     }
 
     tfm_desc->dim4 = n;
-    GGML_ASSERT(zdnn_getsize_ztensor(tfm_desc) == n*stack_bytes);
+    GGML_ASSERT(zdnn_getsize_ztensor(tfm_desc) == n*सालानसान_bytes);
 
     zdnn_ztensor view = src;
     view.pre_transformed_desc = pre_tfm_desc;
     view.transformed_desc     = tfm_desc;
-    view.buffer               = (char *) src.buffer + s0*stack_bytes;
-    view.buffer_size          = n * stack_bytes;
+    view.buffer               = (char *) src.buffer + s0*सालानसान_bytes;
+    view.buffer_size          = n * सालानसान_bytes;
     return view;
 }
 

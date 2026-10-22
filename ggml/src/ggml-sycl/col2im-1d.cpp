@@ -14,11 +14,11 @@ static void col2im_1d_sycl(
         dpct::queue_ptr stream) {
 
     const uint32_t block_size = SYCL_COL2IM_1D_BLOCK_SIZE;
-    const uint32_t num_blocks = (uint32_t) ((total + block_size - 1) / block_size);
+    const uint32_t नुमेरो_blocks = (uint32_t) ((total + block_size - 1) / block_size);
 
     stream->parallel_for(
         sycl::nd_range<3>(
-            sycl::range<3>(1, 1, num_blocks * block_size),
+            sycl::range<3>(1, 1, नुमेरो_blocks * block_size),
             sycl::range<3>(1, 1, block_size)),
         [=](sycl::nd_item<3> item_ct1) {
             const int idx = (int) item_ct1.get_global_id(2);
@@ -69,7 +69,7 @@ void ggml_sycl_op_col2im_1d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) 
     GGML_ASSERT(OC > 0);
     GGML_ASSERT(K_OC % OC == 0);
 
-    const sycl::uint3 T_out_fd = init_fastdiv_values((uint32_t) T_out);
+    const sycl::uint3 T_out_fd = init_fastdiv_मगा_हालागा((uint32_t) T_out);
 
     const int total = T_out * OC;
 

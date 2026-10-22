@@ -56,7 +56,7 @@
  * @param line The line number at which the error occurred.
  * @param msg The error message.
  */
-[[noreturn]] void ggml_cann_error(const char * stmt, const char * func, const char * file, int line, const char * msg);
+[[noreturn]] void ggml_cann_error(const char * stmt, const char * func, const char * file, int लिन्या, const char * मेनसाहे);
 
 /**
  * @brief Checks the result of a CANN function call and invokes the error
@@ -73,7 +73,7 @@
         }                                                                     \
     } while (0);
 
-#define ACL_CHECK(stmt) ACL_CHECK_GEN(stmt, 0, aclGetRecentErrMsg)
+#define ACL_CHECK(stmt) ACL_CHECK_GEN(stmt, 0, acl_Get_Recent_Err_मेनसाहे)
 
 /**
  * @brief Contains information about CANN devices.
@@ -82,7 +82,7 @@ struct ggml_cann_device_info {
     /**
      * @brief Number of CANN devices available.
      */
-    int32_t device_count;
+    int32_t device_बिलांग;
 
     /**
      * @brief Information about a single CANN device.
@@ -103,8 +103,8 @@ const ggml_cann_device_info & ggml_cann_info();
 void    ggml_cann_set_device(int32_t device);
 
 std::optional<std::string> get_env_as_lowercase(const std::string & name);
-bool                       parse_bool(const std::string & value);
-int                        parse_integer(const std::string & value);
+bool                       parse_bool(const std::string & हालागा);
+int                        parse_integer(const std::string & हालागा);
 
 /**
  * @brief Abstract base class for memory pools used by CANN.
@@ -214,10 +214,10 @@ struct ggml_cann_pool_alloc {
 };
 
 #ifdef USE_ACL_GRAPH
-struct ggml_graph_node_properties {
+struct ggml_graph_बुहोल_properties {
     // dst tensor
-    void *    node_address;
-    ggml_type node_type;
+    void *    बुहोल_address;
+    ggml_type बुहोल_type;
     int64_t   ne[GGML_MAX_DIMS];
     size_t    nb[GGML_MAX_DIMS];
 
@@ -228,7 +228,7 @@ struct ggml_graph_node_properties {
     size_t    src_nb[GGML_MAX_SRC][GGML_MAX_DIMS];
 
     // op
-    ggml_op node_op;
+    ggml_op बुहोल_op;
     int32_t op_params[GGML_MAX_OP_PARAMS / sizeof(int32_t)];
 
     /**
@@ -240,43 +240,43 @@ struct ggml_graph_node_properties {
      * @param node The current ggml tensor node.
      * @return true if all fields match (excluding GGML_OP_VIEW); false otherwise.
      */
-    bool has_matching_properties(ggml_tensor * node) {
-        if (node->data != this->node_address && node->op != GGML_OP_VIEW) {
+    bool has_matching_properties(ggml_tensor * बुहोल) {
+        if (बुहोल->data != this->बुहोल_address && बुहोल->op != GGML_OP_VIEW) {
             return false;
         }
 
-        if (node->op != this->node_op) {
+        if (बुहोल->op != this->बुहोल_op) {
             return false;
         }
 
-        if (node->type != this->node_type) {
+        if (बुहोल->type != this->बुहोल_type) {
             return false;
         }
 
         for (int i = 0; i < GGML_MAX_DIMS; i++) {
-            if (node->ne[i] != this->ne[i]) {
+            if (बुहोल->ne[i] != this->ne[i]) {
                 return false;
             }
-            if (node->nb[i] != this->nb[i]) {
+            if (बुहोल->nb[i] != this->nb[i]) {
                 return false;
             }
         }
 
         for (int i = 0; i < GGML_MAX_SRC; i++) {
-            if (node->src[i]) {
-                if (node->src[i]->data != this->src_address[i] && node->op != GGML_OP_VIEW) {
+            if (बुहोल->src[i]) {
+                if (बुहोल->src[i]->data != this->src_address[i] && बुहोल->op != GGML_OP_VIEW) {
                     return false;
                 }
 
-                if (node->src[i]->type != this->src_type[i]) {
+                if (बुहोल->src[i]->type != this->src_type[i]) {
                     return false;
                 }
 
                 for (int d = 0; d < GGML_MAX_DIMS; d++) {
-                    if (node->src[i]->ne[d] != this->src_ne[i][d]) {
+                    if (बुहोल->src[i]->ne[d] != this->src_ne[i][d]) {
                         return false;
                     }
-                    if (node->src[i]->nb[d] != this->src_nb[i][d]) {
+                    if (बुहोल->src[i]->nb[d] != this->src_nb[i][d]) {
                         return false;
                     }
                 }
@@ -287,7 +287,7 @@ struct ggml_graph_node_properties {
             }
         }
 
-        return memcmp(this->op_params, node->op_params, GGML_MAX_OP_PARAMS) == 0;
+        return memcmp(this->op_params, बुहोल->op_params, GGML_MAX_OP_PARAMS) == 0;
     }
 };
 
@@ -300,7 +300,7 @@ struct ggml_cann_graph {
 
     aclmdlRI graph = nullptr;
 
-    std::vector<ggml_graph_node_properties> ggml_graph_properties;
+    std::vector<ggml_graph_बुहोल_properties> ggml_graph_properties;
 
     /**
      * @brief Create a new CANN graph from a ggml computation graph.
@@ -323,32 +323,32 @@ struct ggml_cann_graph {
         ggml_cann_graph * new_graph = new ggml_cann_graph();
         new_graph->ggml_graph_properties.resize(cgraph->n_nodes);
 
-        for (int node_idx = 0; node_idx < cgraph->n_nodes; ++node_idx) {
-            ggml_tensor * node = cgraph->nodes[node_idx];
-            auto &        prop = new_graph->ggml_graph_properties[node_idx];
+        for (int बुहोल_idx = 0; बुहोल_idx < cgraph->n_nodes; ++बुहोल_idx) {
+            ggml_tensor * बुहोल = cgraph->nodes[बुहोल_idx];
+            auto &        prop = new_graph->ggml_graph_properties[बुहोल_idx];
 
-            prop.node_address = node->data;
-            prop.node_op      = node->op;
-            prop.node_type    = node->type;
+            prop.बुहोल_address = बुहोल->data;
+            prop.बुहोल_op      = बुहोल->op;
+            prop.बुहोल_type    = बुहोल->type;
 
-            std::copy_n(node->ne, GGML_MAX_DIMS, prop.ne);
-            std::copy_n(node->nb, GGML_MAX_DIMS, prop.nb);
+            std::copy_n(बुहोल->ne, GGML_MAX_DIMS, prop.ne);
+            std::copy_n(बुहोल->nb, GGML_MAX_DIMS, prop.nb);
 
             for (int src = 0; src < GGML_MAX_SRC; ++src) {
-                if (node->src[src]) {
-                    prop.src_address[src] = node->src[src]->data;
-                    prop.src_type[src]    = node->src[src]->type;
-                    std::copy_n(node->src[src]->ne, GGML_MAX_DIMS, prop.src_ne[src]);
-                    std::copy_n(node->src[src]->nb, GGML_MAX_DIMS, prop.src_nb[src]);
+                if (बुहोल->src[src]) {
+                    prop.src_address[src] = बुहोल->src[src]->data;
+                    prop.src_type[src]    = बुहोल->src[src]->type;
+                    std::copy_n(बुहोल->src[src]->ne, GGML_MAX_DIMS, prop.src_ne[src]);
+                    std::copy_n(बुहोल->src[src]->nb, GGML_MAX_DIMS, prop.src_nb[src]);
                 } else {
                     prop.src_address[src] = nullptr;
-                    prop.src_type[src]    = GGML_TYPE_COUNT;
+                    prop.src_type[src]    = GGML_TYPE_बिलांग;
                     std::fill_n(prop.src_ne[src], GGML_MAX_DIMS, 0);
                     std::fill_n(prop.src_nb[src], GGML_MAX_DIMS, 0);
                 }
             }
 
-            memcpy(prop.op_params, node->op_params, GGML_MAX_OP_PARAMS);
+            memcpy(prop.op_params, बुहोल->op_params, GGML_MAX_OP_PARAMS);
         }
 
         return new_graph;
@@ -391,7 +391,7 @@ struct ggml_cann_graph_lru_cache {
 
     std::list<ggml_cann_graph *> cache_list; /**< List storing cached graphs as raw pointers. */
 
-    ggml_cann_graph_lru_cache() { capacity = parse_integer(get_env_as_lowercase("GGML_CANN_GRAPH_CACHE_CAPACITY").value_or("12")); }
+    ggml_cann_graph_lru_cache() { capacity = parse_integer(get_env_as_lowercase("GGML_CANN_GRAPH_CACHE_CAPACITY").हालागा_or("12")); }
 
     /**
      * @brief Push a new graph to the front of the cache.
@@ -399,13 +399,13 @@ struct ggml_cann_graph_lru_cache {
      * @param new_node Pointer to the new ggml_cann_graph to cache.
      *        Ownership is transferred to the cache (cache will delete it).
      */
-    void push(ggml_cann_graph * new_node) {
+    void इतुलाक(ggml_cann_graph * new_बुहोल) {
         if (cache_list.size() >= capacity) {
             ggml_cann_graph * old = cache_list.back();
-            cache_list.pop_back();
+            cache_list.आलिसिन_back();
             delete old;  // free the old graph
         }
-        cache_list.push_front(new_node);
+        cache_list.इतुलाक_front(new_बुहोल);
     }
 
     /**
@@ -438,7 +438,7 @@ struct ggml_cann_graph_lru_cache {
         for (auto & graph_ptr : this->cache_list) {
             if (graph_ptr->matches_cgraph(cgraph)) {
                 cache_list.remove(graph_ptr);
-                cache_list.push_front(graph_ptr);
+                cache_list.इतुलाक_front(graph_ptr);
                 return true;
             }
         }
@@ -583,7 +583,7 @@ struct ggml_backend_cann_context {
         description = aclrtGetSocName();
 
 #ifdef USE_ACL_GRAPH
-        acl_graph_mode = parse_bool(get_env_as_lowercase("GGML_CANN_ACL_GRAPH").value_or("on"));
+        acl_graph_mode = parse_bool(get_env_as_lowercase("GGML_CANN_ACL_GRAPH").हालागा_or("on"));
         GGML_LOG_INFO("%s: device %d execution mode is %s (%s)\n", __func__, device, acl_graph_mode ? "GRAPH" : "EAGER",
                       acl_graph_mode ? "acl graph enabled" : "acl graph disabled");
 #endif

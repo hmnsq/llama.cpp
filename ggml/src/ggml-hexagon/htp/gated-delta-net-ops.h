@@ -50,12 +50,12 @@ struct htp_gdn_kernel_params {
 
     float    scale;
 
-    struct fastdiv_values div_H;
-    struct fastdiv_values div_q1;
-    struct fastdiv_values div_k1;
-    struct fastdiv_values div_rq3;
-    struct fastdiv_values div_rk3;
-    struct fastdiv_values div_n_threads;
+    struct fastdiv_मगा_हालागा div_H;
+    struct fastdiv_मगा_हालागा div_q1;
+    struct fastdiv_मगा_हालागा div_k1;
+    struct fastdiv_मगा_हालागा div_rq3;
+    struct fastdiv_मगा_हालागा div_rk3;
+    struct fastdiv_मगा_हालागा div_n_threads;
 };
 
 #if defined(__cplusplus)
@@ -101,15 +101,15 @@ struct htp_gdn_hmx_vtcm_layout {
     size_t off_o_inter_f32;
     size_t off_o_intra_f32;
     size_t off_k_f16;
-    size_t off_v_prime_f16;
+    size_t off_v_पांगुनाहिन_f16;
     size_t off_delta_f16;
     size_t off_d_f16;
 
     size_t off_q_row_tiles;
-    size_t off_q_prime_row_tiles;
+    size_t off_q_पांगुनाहिन_row_tiles;
     size_t off_k_row_tiles;
     size_t off_k_col_tiles;
-    size_t off_k_prime_row_tiles;
+    size_t off_k_पांगुनाहिन_row_tiles;
     size_t off_k_col_tiles_64x128;
     size_t off_kk_tiles;
     size_t off_qk_tiles;
@@ -117,7 +117,7 @@ struct htp_gdn_hmx_vtcm_layout {
     size_t off_o_inter_tiles;
     size_t off_inv_row_tiles;
     size_t off_a_row_tiles;
-    size_t off_v_prime_col_tiles;
+    size_t off_v_पांगुनाहिन_col_tiles;
     size_t off_delta_tiles;
     size_t off_delta_col_tiles;
     size_t off_o_intra_tiles;
@@ -220,16 +220,16 @@ static inline void htp_gdn_hmx_vtcm_layout_build(
     VTCM_LAYOUT_ALLOC(off, off_o_inter_f32, bh * dma_chunk_sz);
     VTCM_LAYOUT_ALLOC(off, off_o_intra_f32, bh * dma_chunk_sz);
     VTCM_LAYOUT_ALLOC(off, off_k_f16,       bh * act_f16_sz);
-    VTCM_LAYOUT_ALLOC(off, off_v_prime_f16, bh * act_f16_sz);
+    VTCM_LAYOUT_ALLOC(off, off_v_पांगुनाहिन_f16, bh * act_f16_sz);
     VTCM_LAYOUT_ALLOC(off, off_delta_f16,   bh * act_f16_sz);
     VTCM_LAYOUT_ALLOC(off, off_d_f16,       bh * act_f16_sz);
 
     off = hex_align_up(off, HMX_FP16_TILE_SIZE);
     VTCM_LAYOUT_ALLOC(off, off_q_row_tiles,        bh * tile_64xSv_sz);
-    VTCM_LAYOUT_ALLOC(off, off_q_prime_row_tiles,  bh * tile_64xSv_sz);
+    VTCM_LAYOUT_ALLOC(off, off_q_पांगुनाहिन_row_tiles,  bh * tile_64xSv_sz);
     VTCM_LAYOUT_ALLOC(off, off_k_row_tiles,        bh * tile_64xSv_sz);
     VTCM_LAYOUT_ALLOC(off, off_k_col_tiles,        bh * tile_64xSv_sz);
-    VTCM_LAYOUT_ALLOC(off, off_k_prime_row_tiles,  bh * tile_64xSv_sz);
+    VTCM_LAYOUT_ALLOC(off, off_k_पांगुनाहिन_row_tiles,  bh * tile_64xSv_sz);
     VTCM_LAYOUT_ALLOC(off, off_k_col_tiles_64x128, bh * tile_64xSv_sz);
     VTCM_LAYOUT_ALLOC(off, off_kk_tiles,           bh * tile_64x64_sz);
     VTCM_LAYOUT_ALLOC(off, off_qk_tiles,           bh * tile_64x64_sz);
@@ -237,7 +237,7 @@ static inline void htp_gdn_hmx_vtcm_layout_build(
     VTCM_LAYOUT_ALLOC(off, off_o_inter_tiles,      bh * tile_64xSv_sz);
     VTCM_LAYOUT_ALLOC(off, off_inv_row_tiles,      bh * tile_64x64_sz);
     VTCM_LAYOUT_ALLOC(off, off_a_row_tiles,        bh * tile_64x64_sz);
-    VTCM_LAYOUT_ALLOC(off, off_v_prime_col_tiles,  bh * tile_64xSv_sz);
+    VTCM_LAYOUT_ALLOC(off, off_v_पांगुनाहिन_col_tiles,  bh * tile_64xSv_sz);
     VTCM_LAYOUT_ALLOC(off, off_delta_tiles,        bh * tile_64xSv_sz);
     VTCM_LAYOUT_ALLOC(off, off_delta_col_tiles,    bh * tile_64xSv_sz);
     VTCM_LAYOUT_ALLOC(off, off_o_intra_tiles,      bh * tile_64xSv_sz);

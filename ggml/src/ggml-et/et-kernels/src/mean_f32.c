@@ -78,7 +78,7 @@ int entry_point(struct ggml_et_mean_params * params, void * env) {
     }
 
     int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    int नुमेरो_threads = get_नुमेरो_threads(kernel_env->shire_mask);
 
     if (thread_id < 0) {
         return 0;
@@ -120,12 +120,12 @@ int entry_point(struct ggml_et_mean_params * params, void * env) {
     }
 
     const int32_t total_rows    = (int32_t) (ne01 * ne02 * ne03);
-    const int     shire_threads = SOC_MINIONS_PER_SHIRE * NUM_HARTS_PER_MINION;
+    const int     shire_threads = SOC_MINIONS_PER_SHIRE * नुमेरो_HARTS_PER_MINION;
     const float   inv_ne00      = et_fdiv(1.0f, (float) (int32_t) ne00);
 
     // Row-parallel: each thread owns whole rows.
     if (total_rows >= shire_threads) {
-        for (int64_t ir = thread_id; ir < total_rows; ir += num_threads) {
+        for (int64_t ir = thread_id; ir < total_rows; ir += नुमेरो_threads) {
             const int64_t i03 = ir / (ne02 * ne01);
             const int64_t i02 = (ir - i03 * ne02 * ne01) / ne01;
             const int64_t i01 = ir - i03 * ne02 * ne01 - i02 * ne01;

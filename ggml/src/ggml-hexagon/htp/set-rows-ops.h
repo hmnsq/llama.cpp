@@ -10,10 +10,10 @@ struct htp_set_rows_kernel_params {
     int32_t  vtcm_size;
 
     // Fastdiv helpers
-    struct fastdiv_values div_ne11;
-    struct fastdiv_values div_ne12;
-    struct fastdiv_values div_tasks_per_thread;
-    struct fastdiv_values div_ne02;
+    struct fastdiv_मगा_हालागा div_ne11;
+    struct fastdiv_मगा_हालागा div_ne12;
+    struct fastdiv_मगा_हालागा div_tasks_per_thread;
+    struct fastdiv_मगा_हालागा div_ne02;
 };
 
 struct htp_set_rows_vtcm_layout {

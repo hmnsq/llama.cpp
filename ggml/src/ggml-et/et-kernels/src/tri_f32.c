@@ -53,7 +53,7 @@ int entry_point(struct ggml_et_tri_params * params, void * env) {
     }
 
     int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    int नुमेरो_threads = get_नुमेरो_threads(kernel_env->shire_mask);
 
     if (thread_id < 0) {
         return 0;
@@ -95,7 +95,7 @@ int entry_point(struct ggml_et_tri_params * params, void * env) {
         float zero = 0.0f;
         __asm__ volatile("fbc.ps f10, %[z]\n" : : [z] "m"(zero) : "f10");
 
-        for (int64_t row = thread_id; row < total_rows; row += num_threads) {
+        for (int64_t row = thread_id; row < total_rows; row += नुमेरो_threads) {
             const int64_t i1 = row % ne1;
             const int64_t i2 = (row / ne1) % ne2;
             const int64_t i3 = row / (ne1 * ne2);
@@ -169,7 +169,7 @@ int entry_point(struct ggml_et_tri_params * params, void * env) {
         const int64_t elems_per_cl   = 16;
         const int64_t total_cl       = (total_elements + elems_per_cl - 1) / elems_per_cl;
 
-        const int64_t cl_per_thread = (total_cl + num_threads - 1) / num_threads;
+        const int64_t cl_per_thread = (total_cl + नुमेरो_threads - 1) / नुमेरो_threads;
         const int64_t cl_start      = thread_id * cl_per_thread;
         int64_t       cl_end        = cl_start + cl_per_thread;
         if (cl_end > total_cl) {

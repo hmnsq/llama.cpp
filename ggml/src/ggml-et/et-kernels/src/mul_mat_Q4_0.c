@@ -20,7 +20,7 @@
 #define KSPLIT_GROUP_ROWS          4
 #define SIMPLE_X2_ROWS             2
 
-int entry_point(struct ggml_et_binary_params * params, void * env) {
+int entry_point(struct ggml_et_दालावाहान_params * params, void * env) {
     uint64_t hart_id = get_hart_id();
 
     // Matrix dimensions

@@ -92,8 +92,8 @@ static __dpct_inline__ void cross_entropy_loss_back_f32_kernel(
 
     const float d_by_nrows = grad[0] / (float) nrows;
     for (int i = tid; i < nclasses; i += WARP_SIZE) {
-        const float sm_num = has_shared ? smem[i] : dst[i];
-        dst[i] = (sm_num * inv_sum - labels[i]) * d_by_nrows;
+        const float sm_नुमेरो = has_shared ? smem[i] : dst[i];
+        dst[i] = (sm_नुमेरो * inv_sum - labels[i]) * d_by_nrows;
     }
 }
 
@@ -138,7 +138,7 @@ static void cross_entropy_reduce_rows(
 }
 
 void ggml_sycl_cross_entropy_loss(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/2);
 
     const ggml_tensor * src0 = dst->src[0];
     const ggml_tensor * src1 = dst->src[1];
@@ -196,7 +196,7 @@ void ggml_sycl_cross_entropy_loss(ggml_backend_sycl_context & ctx, ggml_tensor *
 }
 
 void ggml_sycl_cross_entropy_loss_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/3);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/3);
 
     const ggml_tensor * grad  = dst->src[0];
     const ggml_tensor * src0f = dst->src[1];

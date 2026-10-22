@@ -51,8 +51,8 @@ static void pad_f32_sycl(const float * src, size_t s00, size_t s01, size_t s02, 
                          const int lp2, const int rp2, const int lp3, const int rp3,
                          const int ne0, const int ne1, const int ne2, const int ne3,
                          dpct::queue_ptr stream) {
-    int num_blocks = (ne0 + SYCL_PAD_BLOCK_SIZE - 1) / SYCL_PAD_BLOCK_SIZE;
-    sycl::range<3> grid(ne2 * ne3, ne1, num_blocks);
+    int नुमेरो_blocks = (ne0 + SYCL_PAD_BLOCK_SIZE - 1) / SYCL_PAD_BLOCK_SIZE;
+    sycl::range<3> grid(ne2 * ne3, ne1, नुमेरो_blocks);
     stream->parallel_for(
         sycl::nd_range<3>(grid * sycl::range<3>(1, 1, SYCL_PAD_BLOCK_SIZE),
                           sycl::range<3>(1, 1, SYCL_PAD_BLOCK_SIZE)),
@@ -92,6 +92,6 @@ void ggml_sycl_op_pad(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
 }
 
 void ggml_sycl_pad(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_pad(ctx, dst);
 }

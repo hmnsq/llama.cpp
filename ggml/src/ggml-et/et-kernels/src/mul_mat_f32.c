@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-int entry_point(struct ggml_et_binary_params * params, void * env) {
+int entry_point(struct ggml_et_दालावाहान_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
     if (!kernel_env || params == 0 || ((uint64_t) params & 0x7) != 0) {
@@ -16,14 +16,14 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
 
     // Thread coordination
     int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    int नुमेरो_threads = get_नुमेरो_threads(kernel_env->shire_mask);
 
     if (thread_id < 0 || (thread_id & 1)) {
         return 0;  // Skip odd threads to avoid resource contention
     }
 
     int effective_thread_id   = thread_id / 2;
-    int effective_num_threads = (num_threads + 1) / 2;
+    int effective_नुमेरो_threads = (नुमेरो_threads + 1) / 2;
 
     // Extract tensor references
     struct ggml_tensor * src0 = &params->src0;  // Weight matrix A (F32)
@@ -60,7 +60,7 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     // Threading distribution
     const uint64_t total_elements = M * N * ne2 * ne3;
     const uint64_t per_thread     = 16;
-    const uint64_t threads_stride = per_thread * effective_num_threads;
+    const uint64_t threads_stride = per_thread * effective_नुमेरो_threads;
 
     if (effective_thread_id * per_thread >= total_elements) {
         return 0;

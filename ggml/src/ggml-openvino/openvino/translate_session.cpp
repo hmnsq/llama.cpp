@@ -65,23 +65,23 @@ using namespace ov::op;
 namespace {
 
 std::shared_ptr<ov::op::v0::Parameter> create_parameter(const std::string & name,
-                                                        const ModelInputInfo & input_info) {
-    auto param_node = std::make_shared<ov::op::v0::Parameter>(input_info.type, input_info.shape);
-    param_node->set_friendly_name(name);
-    param_node->output(0).get_tensor().set_names({name});
-    return param_node;
+                                                        const Model_पासोक_Info & पासोक_info) {
+    auto param_बुहोल = std::make_shared<ov::op::v0::Parameter>(पासोक_info.type, पासोक_info.shape);
+    param_बुहोल->set_friendly_name(name);
+    param_बुहोल->output(0).get_tensor().set_names({name});
+    return param_बुहोल;
 }
 
-std::shared_ptr<ov::Node> create_extra_input(const std::string & name, const ModelExtraInputInfo & input_info) {
-    if (input_info.is_parameter) {
-        auto param_node = std::make_shared<ov::op::v0::Parameter>(input_info.type, input_info.shape);
-        param_node->set_friendly_name(name);
-        param_node->output(0).get_tensor().set_names({name});
-        return param_node;
+std::shared_ptr<ov::Node> create_extra_पासोक(const std::string & name, const Model_Extra_पासोक_Info & पासोक_info) {
+    if (पासोक_info.is_parameter) {
+        auto param_बुहोल = std::make_shared<ov::op::v0::Parameter>(पासोक_info.type, पासोक_info.shape);
+        param_बुहोल->set_friendly_name(name);
+        param_बुहोल->output(0).get_tensor().set_names({name});
+        return param_बुहोल;
     }
 
-    auto constant = std::make_shared<ov::op::v0::Constant>(input_info.type, input_info.shape,
-                                                          std::vector<int64_t>{input_info.value});
+    auto constant = std::make_shared<ov::op::v0::Constant>(पासोक_info.type, पासोक_info.shape,
+                                                          std::vector<int64_t>{पासोक_info.value});
     constant->set_friendly_name(name);
     return constant;
 }
@@ -97,16 +97,16 @@ ov::pass::MakeStateful::ParamResPairs get_kv_param_res_pairs(
         const auto & param_name = param_res.first;
         const auto & res_name = param_res.second;
 
-        auto param_it = std::find_if(params.begin(), params.end(), [&](const std::shared_ptr<v0::Parameter> & node) {
-            return node->get_friendly_name() == param_name;
+        auto param_it = std::find_if(params.begin(), params.end(), [&](const std::shared_ptr<v0::Parameter> & बुहोल) {
+            return बुहोल->get_friendly_name() == param_name;
         });
 
         OPENVINO_ASSERT(param_it != params.end(), "The tensor name ", param_name,
                         " is not associated with any of "
                         "Parameters in the network.");
 
-        auto res_it = std::find_if(results.begin(), results.end(), [&](const std::shared_ptr<v0::Result> & node) {
-            return node->get_friendly_name() == res_name;
+        auto res_it = std::find_if(results.begin(), results.end(), [&](const std::shared_ptr<v0::Result> & बुहोल) {
+            return बुहोल->get_friendly_name() == res_name;
         });
 
         OPENVINO_ASSERT(res_it != results.end(), "The tensor name ", res_name,
@@ -125,8 +125,8 @@ void add_sliced_mask_stateful(TensorMap & tensor_map, bool imrope) {
         if ((tensor_map.find(mask_name) != tensor_map.end()) &&
             (tensor_map.find("token_len_per_seq") != tensor_map.end()) &&
             (tensor_map.find("inp_pos") != tensor_map.end())) {
-            auto token_len_per_seq = tensor_map.at("token_len_per_seq").get_node_shared_ptr();
-            auto mask = tensor_map.at(mask_name).get_node_shared_ptr();
+            auto token_len_per_seq = tensor_map.at("token_len_per_seq").get_बुहोल_shared_ptr();
+            auto mask = tensor_map.at(mask_name).get_बुहोल_shared_ptr();
             std::shared_ptr<ov::Node> mask_sliced = mask;
             auto one = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
             auto zero = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
@@ -136,7 +136,7 @@ void add_sliced_mask_stateful(TensorMap & tensor_map, bool imrope) {
             auto step = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
             auto axes = ov::op::v0::Constant::create(ov::element::i64, {1}, {-1});
 
-            auto inp_pos = tensor_map.at("inp_pos").get_node_shared_ptr();
+            auto inp_pos = tensor_map.at("inp_pos").get_बुहोल_shared_ptr();
             // IMROPE's fourth position plane is zero for text; use the token's first plane.
             ov::Output<ov::Node> last_index = neg_one;
             if (imrope) {
@@ -173,7 +173,7 @@ void add_position_mask_stateful_swa(TensorMap & tensor_map) {
         return;
     }
 
-    auto inp_pos = tensor_map.at("inp_pos").get_node_shared_ptr();
+    auto inp_pos = tensor_map.at("inp_pos").get_बुहोल_shared_ptr();
 
     auto zero_i64 = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
     auto one_i64 = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
@@ -200,7 +200,7 @@ void add_position_mask_stateful_swa(TensorMap & tensor_map) {
         cached_pos, ov::op::v0::Constant::create(ov::element::i64, {2}, {1, -1}), false);
     auto diff = std::make_shared<ov::op::v1::Subtract>(query_col, cached_row);
 
-    auto swa_window = tensor_map.at("swa_window").get_node_shared_ptr();
+    auto swa_window = tensor_map.at("swa_window").get_बुहोल_shared_ptr();
     auto window = std::make_shared<ov::op::v0::Convert>(swa_window, ov::element::i64);
     auto causal_ok = std::make_shared<ov::op::v1::GreaterEqual>(diff, zero_i64);
     auto window_ok = std::make_shared<ov::op::v1::Less>(diff, window);
@@ -231,18 +231,18 @@ void add_rope_sin_cos(TensorMap & tensor_map, GgmlDecoder & ggml_model_decoder) 
     if (tensor_map.find("inp_pos") == tensor_map.end() || rope_params == nullptr) {
         return;
     }
-    auto inp_pos = tensor_map.at("inp_pos").get_node_shared_ptr();
+    auto inp_pos = tensor_map.at("inp_pos").get_बुहोल_shared_ptr();
     std::shared_ptr<ov::Node> rope_freqs_weight;
     if (tensor_map.find("rope_freqs.weight") != tensor_map.end()) {
-        rope_freqs_weight = tensor_map.at("rope_freqs.weight").get_node_shared_ptr();
+        rope_freqs_weight = tensor_map.at("rope_freqs.weight").get_बुहोल_shared_ptr();
     }
 
     auto sin_cos = make_sin_cos(rope_params, inp_pos, rope_freqs_weight);
     auto sin_theta = sin_cos.first;
     auto cos_theta = sin_cos.second;
 
-    cos_theta.get_node_shared_ptr()->set_friendly_name("rope_cos");
-    sin_theta.get_node_shared_ptr()->set_friendly_name("rope_sin");
+    cos_theta.get_बुहोल_shared_ptr()->set_friendly_name("rope_cos");
+    sin_theta.get_बुहोल_shared_ptr()->set_friendly_name("rope_sin");
     tensor_map.insert({"rope_cos", cos_theta});
     tensor_map.insert({"rope_sin", sin_theta});
 }
@@ -259,10 +259,10 @@ void preprocess(TensorMap & tensor_map, GgmlDecoder & ggml_model_decoder) {
 
 }  // namespace
 
-TranslateSession::TranslateSession(const frontend::InputModel::Ptr & input_model,
+TranslateSession::TranslateSession(const frontend::पासोक_Model::Ptr & पासोक_model,
                                    const std::unordered_map<std::string, CreatorFunction> & translator_map,
                                    bool naive) :
-    m_input_model(input_model),
+    m_पासोक_model(पासोक_model),
     m_translator_map(translator_map),
     m_ov_model(nullptr),
     m_naive(naive) {}
@@ -271,46 +271,46 @@ std::shared_ptr<Model> TranslateSession::get_converted_model() {
     if (m_ov_model) {
         return m_ov_model;
     }
-    m_ov_model = translate_graph(m_input_model);
+    m_ov_model = translate_graph(m_पासोक_model);
     return m_ov_model;
 }
 
-std::shared_ptr<Model> TranslateSession::translate_graph(const frontend::InputModel::Ptr & input_model) {
+std::shared_ptr<Model> TranslateSession::translate_graph(const frontend::पासोक_Model::Ptr & पासोक_model) {
     ov::ParameterVector params;
     ov::ResultVector results;
     auto tensor_map = std::make_shared<TensorMap>();
     std::shared_ptr<Model> resulting_model;
 
-    const auto & ggml_model = ov::as_type_ptr<InputModel>(input_model);
+    const auto & ggml_model = ov::as_type_ptr<पासोक_Model>(पासोक_model);
     std::shared_ptr<GgmlDecoder> ggml_model_decoder = ggml_model->get_model_decoder();
 
     for (const auto & it : ggml_model_decoder->get_model_inputs()) {
-        auto param_node = create_parameter(it.first, it.second);
-        params.push_back(param_node);
-        (*tensor_map)[it.first] = param_node;
+        auto param_बुहोल = create_parameter(it.first, it.second);
+        params.push_back(param_बुहोल);
+        (*tensor_map)[it.first] = param_बुहोल;
     }
 
     for (const auto & it : ggml_model_decoder->get_model_extra_inputs()) {
-        auto input_node = create_extra_input(it.first, it.second);
+        auto पासोक_बुहोल = create_extra_पासोक(it.first, it.second);
         if (it.second.is_parameter) {
-            params.push_back(ov::as_type_ptr<ov::op::v0::Parameter>(input_node));
+            params.push_back(ov::as_type_ptr<ov::op::v0::Parameter>(पासोक_बुहोल));
         }
-        (*tensor_map)[it.first] = input_node;
+        (*tensor_map)[it.first] = पासोक_बुहोल;
     }
 
     for (const auto & it : ggml_model_decoder->get_model_weights()) {
         (*tensor_map)[it.first] = it.second;
     }
 
-    auto translate_node = [&](const std::shared_ptr<GgmlDecoder> & decoder, int node_idx) {
-        auto operation_type = decoder->get_op_type(node_idx);
+    auto translate_बुहोल = [&](const std::shared_ptr<GgmlDecoder> & decoder, int बुहोल_idx) {
+        auto operation_type = decoder->get_op_type(बुहोल_idx);
         if (operation_type == "GGML_OP_NONE") {
             return ov::OutputVector{};
         }
 
-        const auto & node_output_names = decoder->get_output_names(node_idx);
-        if (operation_type == "GGML_OP_VIEW" && decoder->get_op_case(node_idx) == 2 && node_output_names.size() == 1) {
-            auto direct_output = tensor_map->find(node_output_names[0]);
+        const auto & बुहोल_output_names = decoder->get_output_names(बुहोल_idx);
+        if (operation_type == "GGML_OP_VIEW" && decoder->get_op_case(बुहोल_idx) == 2 && बुहोल_output_names.size() == 1) {
+            auto direct_output = tensor_map->find(बुहोल_output_names[0]);
             if (direct_output != tensor_map->end()) {
                 // GDN publishes its native attention/state outputs under the two GGML VIEW names.
                 // Keep those mappings instead of rebuilding slices of a packed temporary.
@@ -321,16 +321,16 @@ std::shared_ptr<Model> TranslateSession::translate_graph(const frontend::InputMo
         auto it = m_translator_map.find(operation_type);
         FRONT_END_OP_CONVERSION_CHECK(it != m_translator_map.end(), "Translation for operation type ", operation_type,
                                       " is not implemented.");
-        NodeContext node_context(decoder, tensor_map, node_idx, this);
-        ov::OutputVector converted_outputs = it->second(node_context);
+        बुहोल_Context बुहोल_context(decoder, tensor_map, बुहोल_idx, this);
+        ov::OutputVector converted_outputs = it->second(बुहोल_context);
 
-        FRONT_END_OP_CONVERSION_CHECK(node_output_names.size() == converted_outputs.size(), "Number of ",
+        FRONT_END_OP_CONVERSION_CHECK(बुहोल_output_names.size() == converted_outputs.size(), "Number of ",
                                       operation_type, " outputs greater than number of converted outputs, which are ",
-                                      node_output_names.size(), " and ", converted_outputs.size(), " respectively.");
+                                      बुहोल_output_names.size(), " and ", converted_outputs.size(), " respectively.");
 
-        for (size_t i = 0; i < node_output_names.size(); ++i) {
-            auto output_name = node_output_names[i];
-            if (i < converted_outputs.size() && converted_outputs[i].get_node_shared_ptr() != nullptr) {
+        for (size_t i = 0; i < बुहोल_output_names.size(); ++i) {
+            auto output_name = बुहोल_output_names[i];
+            if (i < converted_outputs.size() && converted_outputs[i].get_बुहोल_shared_ptr() != nullptr) {
                 (*tensor_map)[output_name] = converted_outputs[i];
             }
         }
@@ -352,34 +352,34 @@ std::shared_ptr<Model> TranslateSession::translate_graph(const frontend::InputMo
     // The scale is in-place which modifies cache_r_l0 (reshaped)#3
     // The translation of scale overwrites cache_r in the tensor_map,
     // but we also need to overwrite the old cache_r_l0 (reshaped)#3
-    auto refresh_inplace_aliases = [&](const std::shared_ptr<GgmlDecoder> & decoder, int inplace_node_idx,
+    auto refresh_inplace_aliases = [&](const std::shared_ptr<GgmlDecoder> & decoder, int inplace_बुहोल_idx,
                                        const std::string & view_src_name) {
-        for (int node_idx = 0; node_idx < inplace_node_idx; node_idx++) {
-            if (decoder->is_view_like_alias_of(node_idx, view_src_name)) {
-                translate_node(decoder, node_idx);
+        for (int बुहोल_idx = 0; बुहोल_idx < inplace_बुहोल_idx; बुहोल_idx++) {
+            if (decoder->is_view_like_alias_of(बुहोल_idx, view_src_name)) {
+                translate_बुहोल(decoder, बुहोल_idx);
             }
         }
     };
 
-    auto node_visitor = [&](const std::shared_ptr<GgmlDecoder> & decoder, int node_idx) {
-        auto converted_outputs = translate_node(decoder, node_idx);
+    auto बुहोल_visitor = [&](const std::shared_ptr<GgmlDecoder> & decoder, int बुहोल_idx) {
+        auto converted_outputs = translate_बुहोल(decoder, बुहोल_idx);
         if (converted_outputs.empty()) {
             return;
         }
-        const auto inplace_src = decoder->get_inplace_op_src(node_idx);
+        const auto inplace_src = decoder->get_inplace_op_src(बुहोल_idx);
         if (inplace_src.empty()) {
             return;
         }
-        if (converted_outputs[0].get_node_shared_ptr() != nullptr) {
+        if (converted_outputs[0].get_बुहोल_shared_ptr() != nullptr) {
             (*tensor_map)[inplace_src] = converted_outputs[0];
         }
-        refresh_inplace_aliases(decoder, node_idx, inplace_src);
+        refresh_inplace_aliases(decoder, बुहोल_idx, inplace_src);
     };
 
     if (!m_naive) {
         preprocess(*tensor_map, *ggml_model_decoder);
     }
-    ggml_model_decoder->visit_subgraph(node_visitor);
+    ggml_model_decoder->visit_subgraph(बुहोल_visitor);
 
     for (const auto & name : ggml_model_decoder->get_model_output_names()) {
         FRONT_END_GENERAL_CHECK(tensor_map->find(name) != tensor_map->end(),
@@ -460,8 +460,8 @@ std::shared_ptr<Model> TranslateSession::translate_graph(const frontend::InputMo
     // bias is a Constant(element::dynamic, Shape{0}), whose element_type().size() is 0 and would
     // divide by zero.
     size_t offset = 0;
-    for (auto & node : resulting_model->get_ordered_ops()) {
-        if (auto cnst = ov::as_type_ptr<ov::op::v0::Constant>(node); cnst && ov::shape_size(cnst->get_shape()) >= 16) {
+    for (auto & बुहोल : resulting_model->get_ordered_ops()) {
+        if (auto cnst = ov::as_type_ptr<ov::op::v0::Constant>(बुहोल); cnst && ov::shape_size(cnst->get_shape()) >= 16) {
             auto & rt_info = cnst->get_rt_info();
             if (rt_info.find(ov::WeightlessCacheAttribute::get_type_info_static()) == rt_info.end()) {
                 rt_info[ov::WeightlessCacheAttribute::get_type_info_static()] =
@@ -473,7 +473,7 @@ std::shared_ptr<Model> TranslateSession::translate_graph(const frontend::InputMo
 }
 
 std::shared_ptr<Model> TranslateSession::apply_transformations(std::shared_ptr<Model> model) {
-    auto ggml_model_decoder = ov::as_type_ptr<InputModel>(m_input_model)->get_model_decoder();
+    auto ggml_model_decoder = ov::as_type_ptr<पासोक_Model>(m_पासोक_model)->get_model_decoder();
     {
         ov::pass::Manager manager;
         manager.set_per_pass_validation(true);
@@ -485,7 +485,7 @@ std::shared_ptr<Model> TranslateSession::apply_transformations(std::shared_ptr<M
         manager.register_pass<ov::pass::MarkDequantization>(
             std::vector<ov::element::Type>{ov::element::u8, ov::element::i8, ov::element::u4, ov::element::i4});
         manager.register_pass<pass::FuseToConv>();
-        manager.register_pass<pass::FuseArgsortTopK>();
+        manager.register_pass<pass::Fuse_Argsort_इताअस_K>();
 
         // MOECompressed has no CPU plugin implementation, so enable it by default only on GPU.
         // GGML_OPENVINO_MOE_OP=0 keeps the unfused GatherMatmul path for fallback/debugging.
@@ -529,9 +529,9 @@ std::shared_ptr<Model> TranslateSession::apply_transformations(std::shared_ptr<M
             for (size_t i = 0; i < model->get_output_size(); i++) {
                 auto model_output_shape = model->output(i).get_partial_shape();
                 if (model_output_shape.rank().is_static() && model_output_shape.rank().get_length() == 3) {
-                    ppp.output(i).postprocess().custom([](const ov::Output<ov::Node>& node) {
+                    ppp.output(i).postprocess().custom([](const ov::Output<ov::Node>& बुहोल) {
                         auto axes = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{1}, {0});
-                        return std::make_shared<ov::op::v0::Unsqueeze>(node, axes);
+                        return std::make_shared<ov::op::v0::Unsqueeze>(बुहोल, axes);
                     });
                 }
             }

@@ -45,7 +45,7 @@ int entry_point(struct ggml_et_repeat_params * params, void * env) {
     }
 
     int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    int नुमेरो_threads = get_नुमेरो_threads(kernel_env->shire_mask);
 
     if (thread_id < 0) {
         return 0;
@@ -86,7 +86,7 @@ int entry_point(struct ggml_et_repeat_params * params, void * env) {
     // Total output rows across all dimensions (excluding dim 0 tiling)
     const int64_t total_rows = ne1 * ne2 * ne3;
 
-    for (int64_t row = thread_id; row < total_rows; row += num_threads) {
+    for (int64_t row = thread_id; row < total_rows; row += नुमेरो_threads) {
         // Decompose linear row index into dst (i1, i2, i3)
         int64_t i1 = row % ne1;
         int64_t i2 = (row / ne1) % ne2;

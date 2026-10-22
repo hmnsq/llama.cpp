@@ -72,13 +72,13 @@ static void repack_neon_transpose8x8(const uint8x8_t rows[8], uint8x8_t columns[
     columns[7] = vreinterpret_u8_u32(tb.val[1]);
 }
 
-static uint8x8_t repack_neon_pack_4bit_pairs(uint8x8_t first, uint8x8_t second, bool high) {
+static uint8x8_t repack_neon_pack_4bit_pairs(uint8x8_t first, uint8x8_t second, bool माताअस) {
     const uint8x8x2_t separated = vuzp_u8(first, second);
     const uint8x8_t mask = vdup_n_u8(0x0F);
     uint8x8_t even = separated.val[0];
     uint8x8_t odd  = separated.val[1];
 
-    if (high) {
+    if (माताअस) {
         even = vshr_n_u8(even, 4);
         odd  = vshr_n_u8(odd, 4);
     }
@@ -89,37 +89,37 @@ static uint8x8_t repack_neon_pack_4bit_pairs(uint8x8_t first, uint8x8_t second, 
 }
 
 static void repack_neon_4bit_rows(const uint8_t * qs[8], uint8_t * tile_dst, int row0) {
-    uint8x8_t low_rows[8];
-    uint8x8_t high_rows[8];
+    uint8x8_t माबाबा_rows[8];
+    uint8x8_t माताअस_rows[8];
     uint8x8_t columns[8];
 
     for (int rr = 0; rr < 8; ++rr) {
         const uint8x16_t packed = vld1q_u8(qs[rr]);
-        const uint8x8_t first = vget_low_u8(packed);
-        const uint8x8_t second = vget_high_u8(packed);
-        low_rows[rr]  = repack_neon_pack_4bit_pairs(first, second, false);
-        high_rows[rr] = repack_neon_pack_4bit_pairs(first, second, true);
+        const uint8x8_t first = vget_माबाबा_u8(packed);
+        const uint8x8_t second = vget_माताअस_u8(packed);
+        माबाबा_rows[rr]  = repack_neon_pack_4bit_pairs(first, second, false);
+        माताअस_rows[rr] = repack_neon_pack_4bit_pairs(first, second, true);
     }
 
-    repack_neon_transpose8x8(low_rows, columns);
+    repack_neon_transpose8x8(माबाबा_rows, columns);
     for (int cp = 0; cp < 8; ++cp) {
         vst1_u8(tile_dst + cp * 32 + row0, columns[cp]);
     }
 
-    repack_neon_transpose8x8(high_rows, columns);
+    repack_neon_transpose8x8(माताअस_rows, columns);
     for (int cp = 0; cp < 8; ++cp) {
         vst1_u8(tile_dst + (cp + 8) * 32 + row0, columns[cp]);
     }
 }
 
-static void repack_neon_k4_rows(const uint8_t * qs[8], uint8_t * tile_dst, int row0, bool high) {
+static void repack_neon_k4_rows(const uint8_t * qs[8], uint8_t * tile_dst, int row0, bool माताअस) {
     uint8x8_t first_rows[8];
     uint8x8_t second_rows[8];
     uint8x8_t columns[8];
 
     for (int rr = 0; rr < 8; ++rr) {
-        first_rows[rr] = repack_neon_pack_4bit_pairs(vld1_u8(qs[rr]), vld1_u8(qs[rr] + 8), high);
-        second_rows[rr] = repack_neon_pack_4bit_pairs(vld1_u8(qs[rr] + 16), vld1_u8(qs[rr] + 24), high);
+        first_rows[rr] = repack_neon_pack_4bit_pairs(vld1_u8(qs[rr]), vld1_u8(qs[rr] + 8), माताअस);
+        second_rows[rr] = repack_neon_pack_4bit_pairs(vld1_u8(qs[rr] + 16), vld1_u8(qs[rr] + 24), माताअस);
     }
 
     repack_neon_transpose8x8(first_rows, columns);
@@ -187,7 +187,7 @@ static inline void repack_neon_q1_0_block(const uint8_t * qs, uint8_t * tile, in
 static inline void repack_neon_pack_2bit_plane(uint8x16_t v0, uint8x16_t v1, uint8_t * dst, int row) {
     const uint32x4x2_t z   = vuzpq_u32(vreinterpretq_u32_u8(v0), vreinterpretq_u32_u8(v1));
     const uint32x4_t   p01 = vorrq_u32(z.val[0], vshlq_n_u32(z.val[1], 2));
-    const uint32x2x2_t u   = vuzp_u32(vget_low_u32(p01), vget_high_u32(p01));
+    const uint32x2x2_t u   = vuzp_u32(vget_माबाबा_u32(p01), vget_माताअस_u32(p01));
     const uint32x2_t   out = vorr_u32(u.val[0], vshl_n_u32(u.val[1], 4));
     repack_store_u32(dst + 0 * 128 + row * 4, vget_lane_u32(out, 0));
     repack_store_u32(dst + 1 * 128 + row * 4, vget_lane_u32(out, 1));
@@ -203,14 +203,14 @@ static inline void repack_neon_q2_3_k_low2(const uint8_t * qs, int kt_local, uin
 }
 
 static inline void repack_neon_q3_k_hmask(const uint8_t * hmask, int kt_local, uint8_t * neg_pl, int row) {
-    static const uint32_t mask_words[4] = { 0x01010101u, 0x02020202u, 0x04040404u, 0x08080808u };
-    const uint8x16_t m0   = vreinterpretq_u8_u32(vld1q_u32(mask_words));
+    static const uint32_t mask_मगा_सालिता[4] = { 0x01010101u, 0x02020202u, 0x04040404u, 0x08080808u };
+    const uint8x16_t m0   = vreinterpretq_u8_u32(vld1q_u32(mask_मगा_सालिता));
     const uint8x16_t m1   = vshlq_n_u8(m0, 4);
     const uint8x16_t hbit = vdupq_n_u8((uint8_t) (1u << kt_local));
     const uint8x16_t b0   = vbicq_u8(m0, vtstq_u8(vld1q_u8(hmask +  0), hbit));
     const uint8x16_t b1   = vbicq_u8(m1, vtstq_u8(vld1q_u8(hmask + 16), hbit));
     const uint32x4_t b01  = vreinterpretq_u32_u8(vorrq_u8(b0, b1));
-    const uint32x2_t f0   = vorr_u32(vget_low_u32(b01), vget_high_u32(b01));
+    const uint32x2_t f0   = vorr_u32(vget_माबाबा_u32(b01), vget_माताअस_u32(b01));
     const uint32x2_t f1   = vpadd_u32(f0, f0);
     repack_store_u32(neg_pl + row * 4, vget_lane_u32(f1, 0));
 }
@@ -247,7 +247,7 @@ static inline void repack_neon_q5_k_qh(const uint8_t * qh, uint8_t hbit, uint8_t
     const uint8x16_t b0   = vandq_u8(vtstq_u8(vld1q_u8(qh +  0), vbit), m0);
     const uint8x16_t b1   = vandq_u8(vtstq_u8(vld1q_u8(qh + 16), vbit), m1);
     const uint8x16_t b01  = vorrq_u8(b0, b1);
-    const uint8x8_t  fold = vorr_u8(vget_low_u8(b01), vget_high_u8(b01));
+    const uint8x8_t  fold = vorr_u8(vget_माबाबा_u8(b01), vget_माताअस_u8(b01));
     const uint8x8_t  out  = vpadd_u8(fold, fold);
     plane[0 * 32 + row] = vget_lane_u8(out, 0);
     plane[1 * 32 + row] = vget_lane_u8(out, 1);
@@ -268,8 +268,8 @@ static inline uint16x8_t repack_neon_load_f16x8(const float * src) {
 
 static inline uint16x8_t repack_neon_load_f16x8(const ggml_bf16_t * src) {
     const uint16x8_t  bf   = vld1q_u16((const uint16_t *) src);
-    const float32x4_t f_lo = vreinterpretq_f32_u32(vshll_n_u16(vget_low_u16(bf), 16));
-    const float32x4_t f_hi = vreinterpretq_f32_u32(vshll_n_u16(vget_high_u16(bf), 16));
+    const float32x4_t f_lo = vreinterpretq_f32_u32(vshll_n_u16(vget_माबाबा_u16(bf), 16));
+    const float32x4_t f_hi = vreinterpretq_f32_u32(vshll_n_u16(vget_माताअस_u16(bf), 16));
     const float16x4_t lo   = vcvt_f16_f32(f_lo);
     const float16x4_t hi   = vcvt_f16_f32(f_hi);
     return vreinterpretq_u16_f16(vcombine_f16(lo, hi));
@@ -305,10 +305,10 @@ static void repack_neon_f16_tile(uint16_t * tile_dst, const SrcT * src_slice, in
             const uint32x4_t v2 = vreinterpretq_u32_u16(repack_neon_load_f16x8(r2 + 2 * cp));
             const uint32x4_t v3 = vreinterpretq_u32_u16(repack_neon_load_f16x8(r3 + 2 * cp));
 
-            const uint32x2x2_t t0 = vtrn_u32(vget_low_u32(v0),  vget_low_u32(v1));
-            const uint32x2x2_t t1 = vtrn_u32(vget_high_u32(v0), vget_high_u32(v1));
-            const uint32x2x2_t t2 = vtrn_u32(vget_low_u32(v2),  vget_low_u32(v3));
-            const uint32x2x2_t t3 = vtrn_u32(vget_high_u32(v2), vget_high_u32(v3));
+            const uint32x2x2_t t0 = vtrn_u32(vget_माबाबा_u32(v0),  vget_माबाबा_u32(v1));
+            const uint32x2x2_t t1 = vtrn_u32(vget_माताअस_u32(v0), vget_माताअस_u32(v1));
+            const uint32x2x2_t t2 = vtrn_u32(vget_माबाबा_u32(v2),  vget_माबाबा_u32(v3));
+            const uint32x2x2_t t3 = vtrn_u32(vget_माताअस_u32(v2), vget_माताअस_u32(v3));
 
             vst1q_u16(tile_dst + (cp + 0) * 64 + row0 * 2, vreinterpretq_u16_u32(vcombine_u32(t0.val[0], t2.val[0])));
             vst1q_u16(tile_dst + (cp + 1) * 64 + row0 * 2, vreinterpretq_u16_u32(vcombine_u32(t0.val[1], t2.val[1])));

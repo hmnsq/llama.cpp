@@ -19,8 +19,8 @@ struct htp_rope_kernel_params {
     uint32_t freq_factors_offset;
     uint32_t freq_factors_size;
 
-    struct fastdiv_values div_ne2_ne1;
-    struct fastdiv_values div_ne1;
+    struct fastdiv_मगा_हालागा div_ne2_ne1;
+    struct fastdiv_मगा_हालागा div_ne1;
 };
 
 #if defined(__cplusplus)

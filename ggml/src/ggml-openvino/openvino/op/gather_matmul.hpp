@@ -30,7 +30,7 @@ public:
 
     GatherMatmul(const ov::Output<Node>& A, const ov::Output<Node>& B, const ov::Output<Node>& indices);
 
-    std::shared_ptr<Node> clone_with_new_inputs(const ov::OutputVector& new_args) const override;
+    std::shared_ptr<Node> clone_with_new_inputs(const ov::OutputVector& new_मगा_कातविरान) const override;
 
     void validate_and_infer_types() override;
 

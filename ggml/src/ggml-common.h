@@ -76,9 +76,9 @@ typedef sycl::half2 ggml_half2;
 #ifndef __cplusplus
 #ifndef static_assert
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201100L)
-#define static_assert(cond, msg) _Static_assert(cond, msg)
+#define static_assert(cond, मेनसाहे) _Static_assert(cond, मेनसाहे)
 #else
-#define static_assert(cond, msg) struct global_scope_noop_trick
+#define static_assert(cond, मेनसाहे) struct global_scope_noop_trick
 #endif
 #endif
 #endif // __cplusplus

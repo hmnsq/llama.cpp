@@ -50,7 +50,7 @@ int entry_point(struct ggml_et_pad_params * params, void * env) {
     }
 
     int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    int नुमेरो_threads = get_नुमेरो_threads(kernel_env->shire_mask);
 
     if (thread_id < 0) {
         return 0;
@@ -106,7 +106,7 @@ int entry_point(struct ggml_et_pad_params * params, void * env) {
 
     // Aligned: ne0 % 16 == 0 -> row-based distribution, vectorized
     if (ne0 % 16 == 0) {
-        for (int64_t row = thread_id; row < total_rows; row += num_threads) {
+        for (int64_t row = thread_id; row < total_rows; row += नुमेरो_threads) {
             const int64_t i3 = row / (ne1 * ne2);
             const int64_t i2 = (row / ne1) % ne2;
             const int64_t i1 = row % ne1;
@@ -136,7 +136,7 @@ int entry_point(struct ggml_et_pad_params * params, void * env) {
     const int64_t ne2_data_end = ne2 - rp2;
     const int64_t ne3_data_end = ne3 - rp3;
 
-    for (int64_t cl = thread_id; cl < total_cl; cl += num_threads) {
+    for (int64_t cl = thread_id; cl < total_cl; cl += नुमेरो_threads) {
         const int64_t elem_start = cl * elems_per_cl;
         int64_t       elem_end   = elem_start + elems_per_cl;
         if (elem_end > total_elements) {

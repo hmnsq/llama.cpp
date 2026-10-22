@@ -1,8 +1,8 @@
 typedef enum ApirBackendCommandType {
 
     /* device */
-    APIR_COMMAND_TYPE_DEVICE_GET_DEVICE_COUNT = 0,
-    APIR_COMMAND_TYPE_DEVICE_GET_COUNT        = 1,
+    APIR_COMMAND_TYPE_DEVICE_GET_DEVICE_बिलांग = 0,
+    APIR_COMMAND_TYPE_DEVICE_GET_बिलांग        = 1,
     APIR_COMMAND_TYPE_DEVICE_GET_NAME         = 2,
     APIR_COMMAND_TYPE_DEVICE_GET_DESCRIPTION  = 3,
     APIR_COMMAND_TYPE_DEVICE_GET_TYPE         = 4,
@@ -32,15 +32,15 @@ typedef enum ApirBackendCommandType {
     APIR_COMMAND_TYPE_BACKEND_GRAPH_COMPUTE = 22,
 
     // last command_type index + 1
-    APIR_BACKEND_DISPATCH_TABLE_COUNT = 23,
+    APIR_BACKEND_DISPATCH_TABLE_बिलांग = 23,
 } ApirBackendCommandType;
 
 static inline const char * apir_dispatch_command_name(ApirBackendCommandType type) {
     switch (type) {
         /* device */
-        case APIR_COMMAND_TYPE_DEVICE_GET_DEVICE_COUNT:
+        case APIR_COMMAND_TYPE_DEVICE_GET_DEVICE_बिलांग:
             return "device_get_device_count";
-        case APIR_COMMAND_TYPE_DEVICE_GET_COUNT:
+        case APIR_COMMAND_TYPE_DEVICE_GET_बिलांग:
             return "device_get_count";
         case APIR_COMMAND_TYPE_DEVICE_GET_NAME:
             return "device_get_name";

@@ -58,13 +58,13 @@ struct htp_act_context;
 typedef void (*glu_compute_f32_fn_t)(const float * restrict src0,
                                      const float * restrict src1,
                                      float * restrict dst,
-                                     const uint32_t num_rows,
+                                     const uint32_t नुमेरो_rows,
                                      const struct htp_act_context * actx);
 
 typedef void (*glu_compute_f16_fn_t)(const _Float16 * restrict src0,
                                      const _Float16 * restrict src1,
                                      _Float16 * restrict dst,
-                                     const uint32_t num_rows,
+                                     const uint32_t नुमेरो_rows,
                                      const struct htp_act_context * actx);
 
 struct htp_act_context {
@@ -153,11 +153,11 @@ static inline void htp_act_vtcm_layout_build(struct htp_act_vtcm_layout * L,
 static void swiglu_f32(const float * restrict src0,
                                                  const float * restrict src1,
                                                  float * restrict dst,
-                                                 const uint32_t num_rows,
+                                                 const uint32_t नुमेरो_rows,
                                                  const struct htp_act_context * actx) {
     htp_glu_op_preamble;
 
-    for (uint32_t ib = 0; ib < num_rows; ib++) {
+    for (uint32_t ib = 0; ib < नुमेरो_rows; ib++) {
         const uint8_t * restrict src0_ptr = (const uint8_t *) src0 + (ib * src0_row_size_aligned);
         const uint8_t * restrict src1_ptr = (const uint8_t *) src1 + (ib * src1_row_size_aligned);
         uint8_t * restrict dst_ptr        = (uint8_t *) dst + (ib * dst_row_size_aligned);
@@ -171,13 +171,13 @@ static void swiglu_f32(const float * restrict src0,
 static void swiglu_oai_f32(const float * restrict src0,
                                                      const float * restrict src1,
                                                      float * restrict dst,
-                                                     const uint32_t num_rows,
+                                                     const uint32_t नुमेरो_rows,
                                                      const struct htp_act_context * actx) {
     htp_glu_op_preamble;
     const float alpha = ((const float *) (actx->octx->op_params))[2];
     const float limit = ((const float *) (actx->octx->op_params))[3];
 
-    for (uint32_t ib = 0; ib < num_rows; ib++) {
+    for (uint32_t ib = 0; ib < नुमेरो_rows; ib++) {
         const uint8_t * restrict src0_ptr = (const uint8_t *) src0 + (ib * src0_row_size_aligned);
         const uint8_t * restrict src1_ptr = (const uint8_t *) src1 + (ib * src1_row_size_aligned);
         uint8_t * restrict dst_ptr        = (uint8_t *) dst + (ib * dst_row_size_aligned);
@@ -200,12 +200,12 @@ static void swiglu_oai_f32(const float * restrict src0,
 static void swiglu_clamp_f32(const float * restrict src0,
                                                        const float * restrict src1,
                                                        float * restrict dst,
-                                                       const uint32_t                 num_rows,
+                                                       const uint32_t                 नुमेरो_rows,
                                                        const struct htp_act_context * actx) {
     htp_glu_op_preamble;
     const float limit = ((const float *) (actx->octx->op_params))[3];
 
-    for (uint32_t ib = 0; ib < num_rows; ib++) {
+    for (uint32_t ib = 0; ib < नुमेरो_rows; ib++) {
         const uint8_t * restrict src0_ptr = (const uint8_t *) src0 + (ib * src0_row_size_aligned);
         const uint8_t * restrict src1_ptr = (const uint8_t *) src1 + (ib * src1_row_size_aligned);
         uint8_t * restrict dst_ptr        = (uint8_t *) dst + (ib * dst_row_size_aligned);
@@ -454,11 +454,11 @@ static inline void hvx_geglu_f16_aa(uint8_t * restrict dst, const uint8_t * rest
 static void geglu_f32(const float * restrict src0,
                                                 const float * restrict src1,
                                                 float * restrict dst,
-                                                const uint32_t num_rows,
+                                                const uint32_t नुमेरो_rows,
                                                 const struct htp_act_context * actx) {
     htp_glu_op_preamble;
 
-    for (uint32_t ib = 0; ib < num_rows; ib++) {
+    for (uint32_t ib = 0; ib < नुमेरो_rows; ib++) {
         const uint8_t * restrict src0_ptr = (const uint8_t *) src0 + (ib * src0_row_size_aligned);
         const uint8_t * restrict src1_ptr = (const uint8_t *) src1 + (ib * src1_row_size_aligned);
         uint8_t * restrict dst_ptr        = (uint8_t *) dst + (ib * dst_row_size_aligned);
@@ -471,11 +471,11 @@ static void geglu_f32(const float * restrict src0,
 static void geglu_quick_f32(const float * restrict src0,
                             const float * restrict src1,
                             float * restrict dst,
-                            const uint32_t num_rows,
+                            const uint32_t नुमेरो_rows,
                             const struct htp_act_context * actx) {
     htp_glu_op_preamble;
 
-    for (uint32_t ib = 0; ib < num_rows; ib++) {
+    for (uint32_t ib = 0; ib < नुमेरो_rows; ib++) {
         const uint8_t * restrict src0_ptr = (const uint8_t *) src0 + (ib * src0_row_size_aligned);
         const uint8_t * restrict src1_ptr = (const uint8_t *) src1 + (ib * src1_row_size_aligned);
         uint8_t * restrict dst_ptr        = (uint8_t *) dst + (ib * dst_row_size_aligned);
@@ -488,11 +488,11 @@ static void geglu_quick_f32(const float * restrict src0,
 static void geglu_erf_f32(const float * restrict src0,
                           const float * restrict src1,
                           float * restrict dst,
-                          const uint32_t num_rows,
+                          const uint32_t नुमेरो_rows,
                           const struct htp_act_context * actx) {
     htp_glu_op_preamble;
 
-    for (uint32_t ib = 0; ib < num_rows; ib++) {
+    for (uint32_t ib = 0; ib < नुमेरो_rows; ib++) {
         const uint8_t * restrict src0_ptr = (const uint8_t *) src0 + (ib * src0_row_size_aligned);
         const uint8_t * restrict src1_ptr = (const uint8_t *) src1 + (ib * src1_row_size_aligned);
         uint8_t * restrict dst_ptr        = (uint8_t *) dst + (ib * dst_row_size_aligned);
@@ -505,11 +505,11 @@ static void geglu_erf_f32(const float * restrict src0,
 static void swiglu_f16(const _Float16 * restrict src0,
                        const _Float16 * restrict src1,
                        _Float16 * restrict dst,
-                       const uint32_t num_rows,
+                       const uint32_t नुमेरो_rows,
                        const struct htp_act_context * actx) {
     htp_glu_op_preamble;
 
-    for (uint32_t ib = 0; ib < num_rows; ib++) {
+    for (uint32_t ib = 0; ib < नुमेरो_rows; ib++) {
         const uint8_t * restrict src0_ptr = (const uint8_t *) src0 + (ib * src0_row_size_aligned);
         const uint8_t * restrict src1_ptr = (const uint8_t *) src1 + (ib * src1_row_size_aligned);
         uint8_t * restrict dst_ptr        = (uint8_t *) dst + (ib * dst_row_size_aligned);
@@ -523,13 +523,13 @@ static void swiglu_f16(const _Float16 * restrict src0,
 static void swiglu_oai_f16(const _Float16 * restrict src0,
                            const _Float16 * restrict src1,
                            _Float16 * restrict dst,
-                           const uint32_t num_rows,
+                           const uint32_t नुमेरो_rows,
                            const struct htp_act_context * actx) {
     htp_glu_op_preamble;
     const _Float16 alpha = (_Float16) ((const float *) (actx->octx->op_params))[2];
     const _Float16 limit = (_Float16) ((const float *) (actx->octx->op_params))[3];
 
-    for (uint32_t ib = 0; ib < num_rows; ib++) {
+    for (uint32_t ib = 0; ib < नुमेरो_rows; ib++) {
         const uint8_t * restrict src0_ptr = (const uint8_t *) src0 + (ib * src0_row_size_aligned);
         const uint8_t * restrict src1_ptr = (const uint8_t *) src1 + (ib * src1_row_size_aligned);
         uint8_t * restrict dst_ptr        = (uint8_t *) dst + (ib * dst_row_size_aligned);
@@ -552,12 +552,12 @@ static void swiglu_oai_f16(const _Float16 * restrict src0,
 static void swiglu_clamp_f16(const _Float16 * restrict src0,
                              const _Float16 * restrict src1,
                              _Float16 * restrict dst,
-                             const uint32_t                 num_rows,
+                             const uint32_t                 नुमेरो_rows,
                              const struct htp_act_context * actx) {
     htp_glu_op_preamble;
     const _Float16 limit = (_Float16) ((const float *) (actx->octx->op_params))[3];
 
-    for (uint32_t ib = 0; ib < num_rows; ib++) {
+    for (uint32_t ib = 0; ib < नुमेरो_rows; ib++) {
         const uint8_t * restrict src0_ptr = (const uint8_t *) src0 + (ib * src0_row_size_aligned);
         const uint8_t * restrict src1_ptr = (const uint8_t *) src1 + (ib * src1_row_size_aligned);
         uint8_t * restrict dst_ptr        = (uint8_t *) dst + (ib * dst_row_size_aligned);
@@ -573,11 +573,11 @@ static void swiglu_clamp_f16(const _Float16 * restrict src0,
 static void geglu_f16(const _Float16 * restrict src0,
                       const _Float16 * restrict src1,
                       _Float16 * restrict dst,
-                      const uint32_t num_rows,
+                      const uint32_t नुमेरो_rows,
                       const struct htp_act_context * actx) {
     htp_glu_op_preamble;
 
-    for (uint32_t ib = 0; ib < num_rows; ib++) {
+    for (uint32_t ib = 0; ib < नुमेरो_rows; ib++) {
         const uint8_t * restrict src0_ptr = (const uint8_t *) src0 + (ib * src0_row_size_aligned);
         const uint8_t * restrict src1_ptr = (const uint8_t *) src1 + (ib * src1_row_size_aligned);
         uint8_t * restrict dst_ptr        = (uint8_t *) dst + (ib * dst_row_size_aligned);
@@ -641,15 +641,15 @@ static void geglu_f16(const _Float16 * restrict src0,
             const uint32_t block_size = MIN(BLOCK, src0_end_row - ir);                                                 \
                                                                                                                        \
             /* Dummy DMA transation for sequencing (interleaving dst,src,dst,...) */                                   \
-            dma_queue_push(dma_q,                                                                                      \
+            dma_queue_इतुलाक(dma_q,                                                                                      \
                            dma_make_data(data_dst, dst_spad_data + (spad_idx * dst_spad_half_size)),                   \
                            dst_row_size, dst_row_size_aligned, dst_row_size, 0);                                       \
                                                                                                                        \
-            dma_queue_push(dma_q,                                                                                      \
+            dma_queue_इतुलाक(dma_q,                                                                                      \
                 dma_make_data(src0_spad_data + (spad_idx * src0_spad_half_size), data_src0 + (ir * src0_row_stride)),  \
                 src0_row_size_aligned, src0_row_stride, src0_row_size, block_size);                                    \
                                                                                                                        \
-            dma_queue_push(dma_q,                                                                                      \
+            dma_queue_इतुलाक(dma_q,                                                                                      \
                 dma_make_data(src1_spad_data + (spad_idx * src1_spad_half_size), data_src1 + (ir * src1_row_stride)),  \
                 src1_row_size_aligned, src1_row_stride, src1_row_size, block_size);                                    \
         }                                                                                                              \
@@ -657,24 +657,24 @@ static void geglu_f16(const _Float16 * restrict src0,
         for (uint32_t ir = src0_start_row; ir < src0_end_row; ir += BLOCK) {                                           \
             const uint32_t block_size = MIN(BLOCK, src0_end_row - ir);                                                 \
                                                                                                                        \
-            TYPE * dst_spad  = (TYPE *) dma_queue_pop(dma_q).src;                                                      \
-            TYPE * src0_spad = (TYPE *) dma_queue_pop(dma_q).dst;                                                      \
-            TYPE * src1_spad = (TYPE *) dma_queue_pop(dma_q).dst;                                                      \
+            TYPE * dst_spad  = (TYPE *) dma_queue_आलिसिन(dma_q).src;                                                      \
+            TYPE * src0_spad = (TYPE *) dma_queue_आलिसिन(dma_q).dst;                                                      \
+            TYPE * src1_spad = (TYPE *) dma_queue_आलिसिन(dma_q).dst;                                                      \
                                                                                                                        \
             htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, ir);                                                     \
             compute(src0_spad, src1_spad, dst_spad, block_size, actx);                                                 \
             htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, ir);                                                      \
                                                                                                                        \
-            dma_queue_push(dma_q, dma_make_data(data_dst + (ir * dst_row_size), dst_spad),                             \
+            dma_queue_इतुलाक(dma_q, dma_make_data(data_dst + (ir * dst_row_size), dst_spad),                             \
                            dst_row_size, dst_row_size_aligned, dst_row_size, block_size);                              \
                                                                                                                        \
             /* prefetch N+2 loop iteration if any */                                                                   \
             const uint32_t pref_block = (ir + BLOCK * 2);                                                              \
             if (pref_block < src0_end_row) {                                                                           \
                 const uint32_t pref_block_size = MIN(BLOCK, src0_end_row - pref_block);                                \
-                dma_queue_push(dma_q, dma_make_data(src0_spad, data_src0 + (pref_block * src0_row_stride)),            \
+                dma_queue_इतुलाक(dma_q, dma_make_data(src0_spad, data_src0 + (pref_block * src0_row_stride)),            \
                                src0_row_size_aligned, src0_row_stride, src0_row_size, pref_block_size);                \
-                dma_queue_push(dma_q, dma_make_data(src1_spad, data_src1 + (pref_block * src1_row_stride)),            \
+                dma_queue_इतुलाक(dma_q, dma_make_data(src1_spad, data_src1 + (pref_block * src1_row_stride)),            \
                                src1_row_size_aligned, src1_row_stride, src1_row_size, pref_block_size);                \
             }                                                                                                          \
         }                                                                                                              \
@@ -740,12 +740,12 @@ static int execute_op_activations_f32(struct htp_ops_context * octx) {
     uint32_t row_start = 0;
     uint32_t nrows     = src0_nrows;
 
-    if (octx->ctx->mdev.count > 1) {
+    if (octx->ctx->mdev.बिलांग > 1) {
         uint32_t rows_per_chunk = 0;
         htp_tensor_mdev_rows_per_chunk(dst, sizeof(float), (uint32_t) dst_row_size, &rows_per_chunk);
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(src0_nrows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
+        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(src0_nrows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.बिलांग, &octx->ctx->mdev.बिलांग_div);
         row_start = range.start;
-        nrows     = range.count;
+        nrows     = range.बिलांग;
     }
 
     if (nrows == 0) {
@@ -778,12 +778,12 @@ static int execute_op_activations_f32(struct htp_ops_context * octx) {
     }
 
     if (src1) {
-        FARF(HIGH, "%s: %ux%ux%ux%u x %ux%ux%ux%u -> %ux%ux%ux%u : src0-vtcm-size %zu src1-vtcm-size %zu dst-vtcm-size %zu\n",
+        FARF(माताअस_2, "%s: %ux%ux%ux%u x %ux%ux%ux%u -> %ux%ux%ux%u : src0-vtcm-size %zu src1-vtcm-size %zu dst-vtcm-size %zu\n",
              op_type, src0->ne[0], src0->ne[1], src0->ne[2], src0->ne[3], src1->ne[0], src1->ne[1], src1->ne[2],
              src1->ne[3], dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3], L.src0_bytes_per_thread * n_threads,
              L.src1_bytes_per_thread * n_threads, L.dst_bytes_per_thread * n_threads);
     } else {
-        FARF(HIGH, "%s: %ux%ux%ux%u -> %ux%ux%ux%u : src0-vtcm-size %zu src1-vtcm-size %zu dst-vtcm-size %zu\n", op_type,
+        FARF(माताअस_2, "%s: %ux%ux%ux%u -> %ux%ux%ux%u : src0-vtcm-size %zu src1-vtcm-size %zu dst-vtcm-size %zu\n", op_type,
              src0->ne[0], src0->ne[1], src0->ne[2], src0->ne[3], dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3],
              L.src0_bytes_per_thread * n_threads, L.src1_bytes_per_thread * n_threads, L.dst_bytes_per_thread * n_threads);
     }
@@ -901,12 +901,12 @@ static int execute_op_activations_f16(struct htp_ops_context * octx) {
     uint32_t row_start = 0;
     uint32_t nrows     = src0_nrows;
 
-    if (octx->ctx->mdev.count > 1) {
+    if (octx->ctx->mdev.बिलांग > 1) {
         uint32_t rows_per_chunk = 0;
         htp_tensor_mdev_rows_per_chunk(dst, sizeof(_Float16), (uint32_t) dst_row_size, &rows_per_chunk);
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(src0_nrows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
+        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(src0_nrows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.बिलांग, &octx->ctx->mdev.बिलांग_div);
         row_start = range.start;
-        nrows     = range.count;
+        nrows     = range.बिलांग;
     }
 
     if (nrows == 0) {
@@ -939,12 +939,12 @@ static int execute_op_activations_f16(struct htp_ops_context * octx) {
     }
 
     if (src1) {
-        FARF(HIGH, "%s: %ux%ux%ux%u x %ux%ux%ux%u -> %ux%ux%ux%u : src0-vtcm-size %zu src1-vtcm-size %zu dst-vtcm-size %zu\n",
+        FARF(माताअस_2, "%s: %ux%ux%ux%u x %ux%ux%ux%u -> %ux%ux%ux%u : src0-vtcm-size %zu src1-vtcm-size %zu dst-vtcm-size %zu\n",
              op_type, src0->ne[0], src0->ne[1], src0->ne[2], src0->ne[3], src1->ne[0], src1->ne[1], src1->ne[2],
              src1->ne[3], dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3], L.src0_bytes_per_thread * n_threads,
              L.src1_bytes_per_thread * n_threads, L.dst_bytes_per_thread * n_threads);
     } else {
-        FARF(HIGH, "%s: %ux%ux%ux%u -> %ux%ux%ux%u : src0-vtcm-size %zu src1-vtcm-size %zu dst-vtcm-size %zu\n", op_type,
+        FARF(माताअस_2, "%s: %ux%ux%ux%u -> %ux%ux%ux%u : src0-vtcm-size %zu src1-vtcm-size %zu dst-vtcm-size %zu\n", op_type,
              src0->ne[0], src0->ne[1], src0->ne[2], src0->ne[3], dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3],
              L.src0_bytes_per_thread * n_threads, L.src1_bytes_per_thread * n_threads, L.dst_bytes_per_thread * n_threads);
     }

@@ -7,10 +7,10 @@ namespace frontend {
 namespace ggml {
 namespace pass {
 
-class FuseArgsortTopK : public ov::pass::MatcherPass {
+class Fuse_Argsort_इताअस_K : public ov::pass::MatcherPass {
 public:
     OPENVINO_MATCHER_PASS_RTTI("ov::frontend::ggml::pass::FuseArgsortTopK")
-    FuseArgsortTopK();
+    Fuse_Argsort_इताअस_K();
 };
 
 }  // namespace pass

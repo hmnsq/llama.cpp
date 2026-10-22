@@ -24,17 +24,17 @@ struct htp_copy_convert_params {
     uint32_t              src0_row_stride;  // row pitch in the VTCM buffers
     uint32_t              dst_row_stride;
     uint32_t              blk_rows;         // rows moved per DMA descriptor
-    struct fastdiv_values div_ne01;
-    struct fastdiv_values div_ne02_ne01;
+    struct fastdiv_मगा_हालागा div_ne01;
+    struct fastdiv_मगा_हालागा div_ne02_ne01;
 };
 
 struct htp_copy_reshape_params {
-    struct fastdiv_values div_ne0;
-    struct fastdiv_values div_ne1_ne0;
-    struct fastdiv_values div_ne2_ne1_ne0;
-    struct fastdiv_values div_ne00;
-    struct fastdiv_values div_ne01_ne00;
-    struct fastdiv_values div_ne02_ne01_ne00;
+    struct fastdiv_मगा_हालागा div_ne0;
+    struct fastdiv_मगा_हालागा div_ne1_ne0;
+    struct fastdiv_मगा_हालागा div_ne2_ne1_ne0;
+    struct fastdiv_मगा_हालागा div_ne00;
+    struct fastdiv_मगा_हालागा div_ne01_ne00;
+    struct fastdiv_मगा_हालागा div_ne02_ne01_ne00;
 };
 
 struct htp_copy_kernel_params {

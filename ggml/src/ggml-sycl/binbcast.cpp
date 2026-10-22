@@ -219,13 +219,13 @@ struct bin_bcast_sycl {
 
             if (block_nums[0] > 65535) {
                 // this is the maximum number of blocks in z direction, fallback to 1D grid kernel
-                int block_num = (ne0*ne1*ne2*ne3 + block_size - 1) / block_size;
+                int block_नुमेरो = (ne0*ne1*ne2*ne3 + block_size - 1) / block_size;
                 {
                     dpct::has_capability_or_fail(stream->get_device(),
                                                  {sycl::aspect::fp16});
 
                     stream->parallel_for(
-                        sycl::nd_range<3>(sycl::range<3>(1, 1, block_num) *
+                        sycl::nd_range<3>(sycl::range<3>(1, 1, block_नुमेरो) *
                                               sycl::range<3>(1, 1, block_size),
                                           sycl::range<3>(1, 1, block_size)),
                         [=](sycl::nd_item<3> item_ct1) {
@@ -262,7 +262,7 @@ template <class op>
 inline void ggml_sycl_op_bin_bcast(ggml_backend_sycl_context & ctx, const ggml_tensor * src0, const ggml_tensor * src1,
                                    ggml_tensor * dst) {
     dpct::queue_ptr main_stream = ctx.stream();
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_दालावाहान_OP_LOCALS
 
     if (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
         op()((const float *) src0->data, (const float *) src1->data, (float *) dst->data, ne00, ne01, ne02, ne03, ne10,
@@ -333,27 +333,27 @@ inline void ggml_sycl_op_repeat(ggml_backend_sycl_context & ctx, ggml_tensor *ds
 
 
 void ggml_sycl_add(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/2);
     ggml_sycl_op_add(ctx, dst);
 }
 
 void ggml_sycl_sub(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/2);
     ggml_sycl_op_sub(ctx, dst);
 }
 
 void ggml_sycl_mul(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/2);
     ggml_sycl_op_mul(ctx, dst);
 }
 
 void ggml_sycl_div(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/2);
     ggml_sycl_op_div(ctx, dst);
 }
 
 void ggml_sycl_repeat(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_repeat(ctx, dst);
 }
 
@@ -570,9 +570,9 @@ static void launch_bin_bcast3(ggml_backend_sycl_context & ctx, const ggml_tensor
         dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
 
         if (block_nums[0] > 65535) {
-            int block_num = (ne0 * ne1 * ne2 * ne3 + block_size - 1) / block_size;
+            int block_नुमेरो = (ne0 * ne1 * ne2 * ne3 + block_size - 1) / block_size;
             stream->parallel_for(
-                sycl::nd_range<3>(sycl::range<3>(1, 1, block_num) * sycl::range<3>(1, 1, block_size),
+                sycl::nd_range<3>(sycl::range<3>(1, 1, block_नुमेरो) * sycl::range<3>(1, 1, block_size),
                                   sycl::range<3>(1, 1, block_size)),
                 [=](sycl::nd_item<3> item_ct1) {
                     k_bin_bcast3_unravel<bin_op>(src0_dd, src1_dd, src2_dd, dst_dd, ne0, ne1, ne2, ne3, ne10, ne11,

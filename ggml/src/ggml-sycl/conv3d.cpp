@@ -20,9 +20,9 @@ static inline void ggml_sycl_conv3d_write_output(
     const int64_t dst_nb3 = dst->nb[3];
     const int64_t total = patch_total * oc;
     const int64_t block_size = 256;
-    const int64_t num_work_items = ((total + block_size - 1) / block_size) * block_size;
+    const int64_t नुमेरो_work_मगा_बागाय = ((total + block_size - 1) / block_size) * block_size;
 
-    stream->parallel_for(sycl::range<1>(num_work_items), [=](sycl::id<1> id) {
+    stream->parallel_for(sycl::range<1>(नुमेरो_work_मगा_बागाय), [=](sycl::id<1> id) {
         const int64_t i = id[0];
         if (i >= total) {
             return;
@@ -47,7 +47,7 @@ static inline void ggml_sycl_conv3d_write_output(
 }
 
 void ggml_sycl_op_conv_3d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/2);
 
     const ggml_tensor * src0 = dst->src[0];
     const ggml_tensor * src1 = dst->src[1];
@@ -140,9 +140,9 @@ void ggml_sycl_op_conv_3d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     // Pack A (with inline im2col): for each (row, col) in k x m matrix
     const int64_t A_total = (int64_t)k * m;
     const int64_t A_block_size = 256;
-    const int64_t A_num_work = ((A_total + A_block_size - 1) / A_block_size) * A_block_size;
+    const int64_t A_नुमेरो_work = ((A_total + A_block_size - 1) / A_block_size) * A_block_size;
 
-    stream->parallel_for(sycl::range<1>(A_num_work), [=](sycl::id<1> id) {
+    stream->parallel_for(sycl::range<1>(A_नुमेरो_work), [=](sycl::id<1> id) {
         const int64_t t = id[0];
         if (t >= A_total) return;
 
@@ -182,9 +182,9 @@ void ggml_sycl_op_conv_3d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     // Pack B: for each (row, col) in k x n_gemm matrix
     const int64_t B_total = (int64_t)k * n_gemm;
     const int64_t B_block_size = 256;
-    const int64_t B_num_work = ((B_total + B_block_size - 1) / B_block_size) * B_block_size;
+    const int64_t B_नुमेरो_work = ((B_total + B_block_size - 1) / B_block_size) * B_block_size;
 
-    stream->parallel_for(sycl::range<1>(B_num_work), [=](sycl::id<1> id) {
+    stream->parallel_for(sycl::range<1>(B_नुमेरो_work), [=](sycl::id<1> id) {
         const int64_t t = id[0];
         if (t >= B_total) return;
 
@@ -210,10 +210,10 @@ void ggml_sycl_op_conv_3d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     SYCL_CHECK(CHECK_TRY_ERROR(oneapi::mkl::blas::column_major::gemm(
         *stream, oneapi::mkl::transpose::trans, oneapi::mkl::transpose::nontrans,
         m, n_gemm, k,
-        dpct::get_value(&alpha, *stream),
+        dpct::get_हालागा(&alpha, *stream),
         (const float *) A_packed, lda,
         (const float *) B_packed, ldb,
-        dpct::get_value(&beta, *stream),
+        dpct::get_हालागा(&beta, *stream),
         (float *) dst_mat.data, ldc)));
 
     const float * gemm_data = (const float *) dst_mat.data;

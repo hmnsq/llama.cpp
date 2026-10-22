@@ -93,7 +93,7 @@ struct fastdiv_vals {
 };
 static_assert(sizeof(fastdiv_vals) == 16, "fastdiv_vals size incorrect");
 
-static fastdiv_vals init_fastdiv_values(uint64_t d_64) {
+static fastdiv_vals init_fastdiv_मगा_हालागा(uint64_t d_64) {
     GGML_ASSERT(d_64 != 0);
     GGML_ASSERT(d_64 <= std::numeric_limits<uint32_t>::max());
 
@@ -195,13 +195,13 @@ static ggml_cl_version get_opencl_platform_version(cl_platform_id platform) {
     std::unique_ptr<char[]> param_storage(new char[param_size]);
     CL_CHECK(clGetPlatformInfo(platform, CL_PLATFORM_VERSION, param_size, param_storage.get(), nullptr));
 
-    auto              param_value    = std::string_view(param_storage.get(), param_size);
+    auto              param_हालागा    = std::string_view(param_storage.get(), param_size);
     const std::string version_prefix = "OpenCL ";  // Suffix: "XX.YY <platform-specific-info>"
-    if (param_value.find(version_prefix) != 0) {
+    if (param_हालागा.find(version_prefix) != 0) {
         return {};
     }
-    param_value.remove_prefix(version_prefix.length());
-    return parse_cl_version(param_value);
+    param_हालागा.remove_prefix(version_prefix.length());
+    return parse_cl_version(param_हालागा);
 }
 
 // Returns the DEVICE's OpenCL version. On an error returns ggml_cl_version with all zeroes.
@@ -215,13 +215,13 @@ static ggml_cl_version get_opencl_device_version(cl_device_id device) {
         return {};
     }
 
-    auto param_value = std::string_view(param_storage.get(), param_size);
+    auto param_हालागा = std::string_view(param_storage.get(), param_size);
     const std::string version_prefix = "OpenCL ";  // "OpenCL <major>.<minor> <device-specific-info>"
-    if (param_value.find(version_prefix) != 0) {
+    if (param_हालागा.find(version_prefix) != 0) {
         return {};
     }
-    param_value.remove_prefix(version_prefix.length());
-    return parse_cl_version(param_value);
+    param_हालागा.remove_prefix(version_prefix.length());
+    return parse_cl_version(param_हालागा);
 }
 
 // Return a version to use in OpenCL C compilation. On an error returns ggml_cl_version with all zeroes.
@@ -241,10 +241,10 @@ static ggml_cl_version get_opencl_c_version(ggml_cl_version platform_version, cl
             std::unique_ptr<cl_name_version[]> versions(new cl_name_version[param_size]);
             err = clGetDeviceInfo(device, CL_DEVICE_OPENCL_C_ALL_VERSIONS, param_size, versions.get(), nullptr);
             if (err == CL_SUCCESS) {
-                unsigned versions_count = param_size / sizeof(cl_name_version);
+                unsigned versions_बिलांग = param_size / sizeof(cl_name_version);
 
                 cl_version version_max = 0;
-                for (unsigned i = 0; i < versions_count; i++) {
+                for (unsigned i = 0; i < versions_बिलांग; i++) {
                     version_max = std::max<cl_version>(versions[i].version, version_max);
                 }
 
@@ -265,15 +265,15 @@ static ggml_cl_version get_opencl_c_version(ggml_cl_version platform_version, cl
     if (clGetDeviceInfo(device, CL_DEVICE_OPENCL_C_VERSION, param_size, param_storage.get(), nullptr) != CL_SUCCESS) {
         return {};
     }
-    auto param_value = std::string_view(param_storage.get(), param_size);
+    auto param_हालागा = std::string_view(param_storage.get(), param_size);
 
     const std::string version_prefix = "OpenCL C ";  // Suffix: "XX.YY <platform-specific-info>"
-    if (param_value.find(version_prefix) != 0) {
+    if (param_हालागा.find(version_prefix) != 0) {
         return {};
     }
-    param_value.remove_prefix(version_prefix.length());
+    param_हालागा.remove_prefix(version_prefix.length());
 
-    return parse_cl_version(param_value);
+    return parse_cl_version(param_हालागा);
 }
 
 static ADRENO_GPU_GEN get_adreno_gpu_gen(const char *device_name) {
@@ -638,7 +638,7 @@ struct ggml_cl_adreno_xmem_attn_state {
 
 // backend context
 struct ggml_backend_opencl_context {
-    int ref_count;
+    int ref_बिलांग;
 
     cl_device_id device;
     std::string device_name;
@@ -732,10 +732,10 @@ struct ggml_backend_opencl_context {
     // (parent buffer, offset within parent)
     // used by the img-variant KQ/KQV dispatch paths to avoid per-call
     // clCreateSubBuffer + clCreateImage + pending-release-queue on long-context decode
-    struct ImagePoolKey {
+    struct Image_Pool_सुसि {
         uintptr_t buf;
         uint64_t  offset;
-        bool operator<(const ImagePoolKey & o) const {
+        bool operator<(const Image_Pool_सुसि & o) const {
             if (buf != o.buf) return buf < o.buf;
             return offset < o.offset;
         }
@@ -746,11 +746,11 @@ struct ggml_backend_opencl_context {
         size_t k_bytes    = 0;
         cl_channel_type channel_data_type = CL_FLOAT;
     };
-    std::map<ImagePoolKey, ImagePoolEntry> kq_img_pool;
-    std::map<ImagePoolKey, ImagePoolEntry> kqv_img_pool;
+    std::map<Image_Pool_सुसि, ImagePoolEntry> kq_img_pool;
+    std::map<Image_Pool_सुसि, ImagePoolEntry> kqv_img_pool;
 
     // pool for the on-device f16 buffer for kv-cache with non-FA quantized-K (q8_0/q4_0)
-    std::map<ImagePoolKey, ImagePoolEntry> dequant_f16_pool;
+    std::map<Image_Pool_सुसि, ImagePoolEntry> dequant_f16_pool;
 
     // prealloc buffers for src0 and src1
     ggml_cl_buffer prealloc_src0;
@@ -1333,8 +1333,8 @@ struct ggml_backend_opencl_context {
     void free() {
         clFinish(queue);
 
-        ref_count--;
-        if (ref_count == 0) {
+        ref_बिलांग--;
+        if (ref_बिलांग == 0) {
             if (fa.fd_partial.buffer) {
                 CL_CHECK(clReleaseMemObject(fa.fd_partial.buffer));
                 fa.fd_partial.buffer = nullptr;
@@ -1460,13 +1460,13 @@ static cl_program build_program_from_source(ggml_backend_opencl_context * backen
     return p;
 }
 
-static cl_program build_program_from_binary(cl_context ctx, cl_device_id dev, const char* program_buffer, const std::string &compile_opts, size_t bin_size = 0) {
+static cl_program build_program_from_दालावाहान(cl_context ctx, cl_device_id dev, const char* program_buffer, const std::string &compile_opts, size_t bin_size = 0) {
     cl_program p;
     char *program_log;
     size_t log_size;
     int err;
 
-    p = clCreateProgramWithBinary(ctx, 1, &dev, &bin_size, (const unsigned char**)&program_buffer, NULL, &err);
+    p = cl_Create_Program_With_दालावाहान(ctx, 1, &dev, &bin_size, (const unsigned char**)&program_buffer, NULL, &err);
     if(err < 0) {
         GGML_LOG_ERROR("OpenCL error creating program from binary");
         exit(1);
@@ -4220,7 +4220,7 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx) {
             const char * kernel_bin = (const char *)backend_ctx->get_adreno_bin_kernel("gemm_noshuffle_q4_0_f32_32b_trans_ila_a8", &bin_size);
             if (kernel_bin && bin_size > 0) {
                 cl_program bin_prog =
-                    build_program_from_binary(backend_ctx->context, backend_ctx->device, kernel_bin, "", bin_size);
+                    build_program_from_दालावाहान(backend_ctx->context, backend_ctx->device, kernel_bin, "", bin_size);
 
                 CL_CHECK((backend_ctx->kernel_gemm_noshuffle_q4_0_f32_32b_trans_ila_a8_bin =
                     clCreateKernel(bin_prog, "kernel_gemm_noshuffle_q4_0_f32_32b_trans_ila_a8", &err), err));
@@ -4231,7 +4231,7 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx) {
             kernel_bin = (const char *)backend_ctx->get_adreno_bin_kernel("gemm_noshuffle_q4_0_q8_1_dp4a_ila_a8", &bin_size);
             if (kernel_bin && bin_size > 0) {
                 cl_program bin_prog =
-                    build_program_from_binary(backend_ctx->context, backend_ctx->device, kernel_bin, "", bin_size);
+                    build_program_from_दालावाहान(backend_ctx->context, backend_ctx->device, kernel_bin, "", bin_size);
 
                 CL_CHECK((backend_ctx->kernel_gemm_noshuffle_q4_0_q8_1_dp4a_ila_a8_bin =
                     clCreateKernel(bin_prog, "kernel_gemm_noshuffle_q4_0_q8_1_dp4a_ila_a8", &err), err));
@@ -4461,7 +4461,7 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx) {
             const char * kernel_bin = (const char *)backend_ctx->get_adreno_bin_kernel("gemm_noshuffle_q8_0_f32_ila", &bin_size);
             if (kernel_bin && bin_size > 0) {
                 cl_program prog =
-                    build_program_from_binary(backend_ctx->context, backend_ctx->device, kernel_bin, compile_opts, bin_size);
+                    build_program_from_दालावाहान(backend_ctx->context, backend_ctx->device, kernel_bin, compile_opts, bin_size);
 
                 CL_CHECK((backend_ctx->kernel_gemm_noshuffle_q8_0_f32_bin = clCreateKernel(prog, "kernel_gemm_noshuffle_q8_0_f32_ila", &err), err));
                 CL_CHECK(clReleaseProgram(prog));
@@ -4478,7 +4478,7 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx) {
             const char * kernel_bin = (const char *)backend_ctx->get_adreno_bin_kernel("gemm_noshuffle_q8_0_q8_1_dp4a_ila_a8", &bin_size);
             if (kernel_bin && bin_size > 0) {
                 cl_program prog =
-                    build_program_from_binary(backend_ctx->context, backend_ctx->device, kernel_bin, compile_opts, bin_size);
+                    build_program_from_दालावाहान(backend_ctx->context, backend_ctx->device, kernel_bin, compile_opts, bin_size);
 
                 CL_CHECK((backend_ctx->kernel_gemm_noshuffle_q8_0_q8_1_dp4a_ila_a8_bin = clCreateKernel(prog, "kernel_gemm_noshuffle_q8_0_q8_1_dp4a_ila_a8", &err), err));
                 CL_CHECK(clReleaseProgram(prog));
@@ -4744,7 +4744,7 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx) {
             const char * kernel_bin = (const char *)backend_ctx->get_adreno_bin_kernel("gemm_noshuffle_q4_k_f32_32b_trans_ila_a8", &bin_size);
             if (kernel_bin && bin_size > 0) {
                 cl_program bin_prog =
-                    build_program_from_binary(backend_ctx->context, backend_ctx->device, kernel_bin, "", bin_size);
+                    build_program_from_दालावाहान(backend_ctx->context, backend_ctx->device, kernel_bin, "", bin_size);
 
                 CL_CHECK((backend_ctx->kernel_gemm_noshuffle_q4_k_f32_32b_trans_ila_a8_bin =
                     clCreateKernel(bin_prog, "kernel_gemm_noshuffle_q4_k_f32_32b_trans_ila_a8", &err), err));
@@ -4755,7 +4755,7 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx) {
             kernel_bin = (const char *)backend_ctx->get_adreno_bin_kernel("gemm_noshuffle_q4_k_q8_1_dp4a_ila_a8", &bin_size);
             if (kernel_bin && bin_size > 0) {
                 cl_program bin_prog =
-                    build_program_from_binary(backend_ctx->context, backend_ctx->device, kernel_bin, "", bin_size);
+                    build_program_from_दालावाहान(backend_ctx->context, backend_ctx->device, kernel_bin, "", bin_size);
 
                 CL_CHECK((backend_ctx->kernel_gemm_noshuffle_q4_k_q8_1_dp4a_ila_a8_bin =
                     clCreateKernel(bin_prog, "kernel_gemm_noshuffle_q4_k_q8_1_dp4a_ila_a8", &err), err));
@@ -4793,7 +4793,7 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx) {
             const char * kernel_bin = (const char *)backend_ctx->get_adreno_bin_kernel("gemm_noshuffle_q6_k_f32_32b_trans_ila_a8", &bin_size);
             if (kernel_bin && bin_size > 0) {
                 cl_program bin_prog =
-                    build_program_from_binary(backend_ctx->context, backend_ctx->device, kernel_bin, "", bin_size);
+                    build_program_from_दालावाहान(backend_ctx->context, backend_ctx->device, kernel_bin, "", bin_size);
 
                 CL_CHECK((backend_ctx->kernel_gemm_noshuffle_q6_k_f32_32b_trans_ila_a8_bin =
                     clCreateKernel(bin_prog, "kernel_gemm_noshuffle_q6_k_f32_32b_trans_ila_a8", &err), err));
@@ -4804,7 +4804,7 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx) {
             kernel_bin = (const char *)backend_ctx->get_adreno_bin_kernel("gemm_noshuffle_q6_k_q8_1_dp4a_ila_a8", &bin_size);
             if (kernel_bin && bin_size > 0) {
                 cl_program bin_prog =
-                    build_program_from_binary(backend_ctx->context, backend_ctx->device, kernel_bin, "", bin_size);
+                    build_program_from_दालावाहान(backend_ctx->context, backend_ctx->device, kernel_bin, "", bin_size);
 
                 CL_CHECK((backend_ctx->kernel_gemm_noshuffle_q6_k_q8_1_dp4a_ila_a8_bin =
                     clCreateKernel(bin_prog, "kernel_gemm_noshuffle_q6_k_q8_1_dp4a_ila_a8", &err), err));
@@ -4842,7 +4842,7 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx) {
             const char * kernel_bin = (const char *)backend_ctx->get_adreno_bin_kernel("gemm_noshuffle_q5_k_f32_32b_trans_ila_a8", &bin_size);
             if (kernel_bin && bin_size > 0) {
                 cl_program bin_prog =
-                    build_program_from_binary(backend_ctx->context, backend_ctx->device, kernel_bin, "", bin_size);
+                    build_program_from_दालावाहान(backend_ctx->context, backend_ctx->device, kernel_bin, "", bin_size);
 
                 CL_CHECK((backend_ctx->kernel_gemm_noshuffle_q5_k_f32_32b_trans_ila_a8_bin =
                     clCreateKernel(bin_prog, "kernel_gemm_noshuffle_q5_k_f32_32b_trans_ila_a8", &err), err));
@@ -4853,7 +4853,7 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx) {
             kernel_bin = (const char *)backend_ctx->get_adreno_bin_kernel("gemm_noshuffle_q5_k_q8_1_dp4a_ila_a8", &bin_size);
             if (kernel_bin && bin_size > 0) {
                 cl_program bin_prog =
-                    build_program_from_binary(backend_ctx->context, backend_ctx->device, kernel_bin, "", bin_size);
+                    build_program_from_दालावाहान(backend_ctx->context, backend_ctx->device, kernel_bin, "", bin_size);
 
                 CL_CHECK((backend_ctx->kernel_gemm_noshuffle_q5_k_q8_1_dp4a_ila_a8_bin =
                     clCreateKernel(bin_prog, "kernel_gemm_noshuffle_q5_k_q8_1_dp4a_ila_a8", &err), err));
@@ -4908,7 +4908,7 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx) {
             const char * kernel_bin = (const char *)backend_ctx->get_adreno_bin_kernel("gemm_moe_q4_1_f32_ns_ila", &bin_size);
             if (kernel_bin && bin_size > 0) {
                 cl_program prog =
-                    build_program_from_binary(backend_ctx->context, backend_ctx->device, kernel_bin, CL_moe_compile_opts, bin_size);
+                    build_program_from_दालावाहान(backend_ctx->context, backend_ctx->device, kernel_bin, CL_moe_compile_opts, bin_size);
 
                 CL_CHECK((backend_ctx->kernel_gemm_moe_q4_1_f32_ns_bin = clCreateKernel(prog, "kernel_gemm_moe_q4_1_f32_ns_ila", &err), err));
                 CL_CHECK(clReleaseProgram(prog));
@@ -4992,7 +4992,7 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx) {
             const char * kernel_bin = (const char *)backend_ctx->get_adreno_bin_kernel("gemm_moe_q4_0_f32_ns_ila", &bin_size);
             if (kernel_bin && bin_size > 0) {
                 cl_program prog =
-                    build_program_from_binary(backend_ctx->context, backend_ctx->device, kernel_bin, CL_moe_compile_opts, bin_size);
+                    build_program_from_दालावाहान(backend_ctx->context, backend_ctx->device, kernel_bin, CL_moe_compile_opts, bin_size);
 
                 CL_CHECK((backend_ctx->kernel_gemm_moe_q4_0_f32_ns_bin = clCreateKernel(prog, "kernel_gemm_moe_q4_0_f32_ns_ila", &err), err));
                 CL_CHECK(clReleaseProgram(prog));
@@ -5130,7 +5130,7 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx) {
             const char * kernel_bin = (const char *)backend_ctx->get_adreno_bin_kernel("gemm_moe_q4_k_f32_ns_ila", &bin_size);
             if (kernel_bin && bin_size > 0) {
                 cl_program prog =
-                    build_program_from_binary(backend_ctx->context, backend_ctx->device, kernel_bin, CL_moe_compile_opts, bin_size);
+                    build_program_from_दालावाहान(backend_ctx->context, backend_ctx->device, kernel_bin, CL_moe_compile_opts, bin_size);
 
                 CL_CHECK((backend_ctx->kernel_gemm_moe_q4_k_f32_ns_bin = clCreateKernel(prog, "kernel_gemm_moe_q4_k_f32_ns_ila", &err), err));
                 CL_CHECK(clReleaseProgram(prog));
@@ -5165,7 +5165,7 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx) {
             const char * kernel_bin = (const char *)backend_ctx->get_adreno_bin_kernel("gemm_moe_q4_k_q8_1_dp4a_ila", &bin_size);
             if (kernel_bin && bin_size > 0) {
                 cl_program prog =
-                    build_program_from_binary(backend_ctx->context, backend_ctx->device, kernel_bin, CL_moe_compile_opts, bin_size);
+                    build_program_from_दालावाहान(backend_ctx->context, backend_ctx->device, kernel_bin, CL_moe_compile_opts, bin_size);
 
                 CL_CHECK((backend_ctx->kernel_gemm_moe_q4_k_q8_1_dp4a_bin = clCreateKernel(prog, "kernel_gemm_moe_q4_k_q8_1_dp4a_ila", &err), err));
                 CL_CHECK(clReleaseProgram(prog));
@@ -5200,7 +5200,7 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx) {
             const char * kernel_bin = (const char *)backend_ctx->get_adreno_bin_kernel("gemm_moe_mxfp4_q8_1_dp4a_ila", &bin_size);
             if (kernel_bin && bin_size > 0) {
                 cl_program prog =
-                    build_program_from_binary(backend_ctx->context, backend_ctx->device, kernel_bin, CL_moe_compile_opts, bin_size);
+                    build_program_from_दालावाहान(backend_ctx->context, backend_ctx->device, kernel_bin, CL_moe_compile_opts, bin_size);
 
                 CL_CHECK((backend_ctx->kernel_gemm_moe_mxfp4_q8_1_dp4a_bin = clCreateKernel(prog, "kernel_gemm_moe_mxfp4_q8_1_dp4a_ila", &err), err));
                 CL_CHECK(clReleaseProgram(prog));
@@ -5218,7 +5218,7 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx) {
             const char * kernel_bin = (const char *)backend_ctx->get_adreno_bin_kernel("gemm_moe_mxfp4_q8_1_dp4a_ila_ldck", &bin_size);
             if (kernel_bin && bin_size > 0) {
                 cl_program prog =
-                    build_program_from_binary(backend_ctx->context, backend_ctx->device, kernel_bin, CL_moe_compile_opts, bin_size);
+                    build_program_from_दालावाहान(backend_ctx->context, backend_ctx->device, kernel_bin, CL_moe_compile_opts, bin_size);
 
                 CL_CHECK((backend_ctx->kernel_gemm_moe_mxfp4_q8_1_dp4a_ldck_bin = clCreateKernel(prog, "kernel_gemm_moe_mxfp4_q8_1_dp4a_ila_ldck", &err), err));
                 CL_CHECK(clReleaseProgram(prog));
@@ -5253,7 +5253,7 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx) {
             const char * kernel_bin = (const char *)backend_ctx->get_adreno_bin_kernel("gemm_moe_q4_0_q8_1_dp4a_ila", &bin_size);
             if (kernel_bin && bin_size > 0) {
                 cl_program prog =
-                    build_program_from_binary(backend_ctx->context, backend_ctx->device, kernel_bin, CL_moe_compile_opts, bin_size);
+                    build_program_from_दालावाहान(backend_ctx->context, backend_ctx->device, kernel_bin, CL_moe_compile_opts, bin_size);
 
                 CL_CHECK((backend_ctx->kernel_gemm_moe_q4_0_q8_1_dp4a_bin = clCreateKernel(prog, "kernel_gemm_moe_q4_0_q8_1_dp4a_ila", &err), err));
                 CL_CHECK(clReleaseProgram(prog));
@@ -5402,7 +5402,7 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx) {
             const char * kernel_bin = (const char *)backend_ctx->get_adreno_bin_kernel("gemm_moe_q6_k_f32_ns_ila", &bin_size);
             if (kernel_bin && bin_size > 0) {
                 cl_program prog =
-                    build_program_from_binary(backend_ctx->context, backend_ctx->device, kernel_bin, CL_moe_compile_opts, bin_size);
+                    build_program_from_दालावाहान(backend_ctx->context, backend_ctx->device, kernel_bin, CL_moe_compile_opts, bin_size);
 
                 CL_CHECK((backend_ctx->kernel_gemm_moe_q6_k_f32_ns_bin = clCreateKernel(prog, "kernel_gemm_moe_q6_k_f32_ns_ila", &err), err));
                 CL_CHECK(clReleaseProgram(prog));
@@ -5437,7 +5437,7 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx) {
             const char * kernel_bin = (const char *)backend_ctx->get_adreno_bin_kernel("gemm_moe_q6_k_q8_1_dp4a_ila", &bin_size);
             if (kernel_bin && bin_size > 0) {
                 cl_program prog =
-                    build_program_from_binary(backend_ctx->context, backend_ctx->device, kernel_bin, CL_moe_compile_opts, bin_size);
+                    build_program_from_दालावाहान(backend_ctx->context, backend_ctx->device, kernel_bin, CL_moe_compile_opts, bin_size);
 
                 CL_CHECK((backend_ctx->kernel_gemm_moe_q6_k_q8_1_dp4a_bin = clCreateKernel(prog, "kernel_gemm_moe_q6_k_q8_1_dp4a_ila", &err), err));
                 CL_CHECK(clReleaseProgram(prog));
@@ -5490,7 +5490,7 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx) {
             const char * kernel_bin = (const char *)backend_ctx->get_adreno_bin_kernel("gemm_moe_mxfp4_f32_ns_ila", &bin_size);
             if (kernel_bin && bin_size > 0) {
                 cl_program prog =
-                    build_program_from_binary(backend_ctx->context, backend_ctx->device, kernel_bin, CL_moe_compile_opts, bin_size);
+                    build_program_from_दालावाहान(backend_ctx->context, backend_ctx->device, kernel_bin, CL_moe_compile_opts, bin_size);
 
                 CL_CHECK((backend_ctx->kernel_gemm_moe_mxfp4_f32_ns_bin = clCreateKernel(prog, "kernel_gemm_moe_mxfp4_f32_ns_ila", &err), err));
                 CL_CHECK(clReleaseProgram(prog));
@@ -5729,7 +5729,7 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx) {
             const char * kernel_bin = (const char *)backend_ctx->get_adreno_bin_kernel("flash_attn_f32_f16_wmm", &bin_size);
             if (kernel_bin && bin_size > 0) {
                 cl_program prog =
-                    build_program_from_binary(backend_ctx->context, backend_ctx->device, kernel_bin, CL_moe_compile_opts, bin_size);
+                    build_program_from_दालावाहान(backend_ctx->context, backend_ctx->device, kernel_bin, CL_moe_compile_opts, bin_size);
 
                 CL_CHECK((backend_ctx->fa.kernel_flash_attn_f32_f16_bin = clCreateKernel(prog, "flash_attn_f32_f16", &err), err));
                 CL_CHECK(clReleaseProgram(prog));
@@ -5967,9 +5967,9 @@ static void ggml_opencl_ensure_fa_pre_kernels(ggml_backend_opencl_context * back
 }
 
 static bool ggml_opencl_ensure_fa_f32_f16_vec_512(ggml_backend_opencl_context * backend_ctx) {
-    const std::pair<int, int> key = {512, 512};
+    const std::pair<int, int> सुसि = {512, 512};
     auto & fa = backend_ctx->fa;
-    if (fa.f32_f16_q1_vec.count(key) > 0) {
+    if (fa.f32_f16_q1_vec.count(सुसि) > 0) {
         return true;
     }
     if (fa.f32_f16_vec_512_attempted || backend_ctx->kernel_compile_opts.empty()) {
@@ -6016,29 +6016,29 @@ static bool ggml_opencl_ensure_fa_f32_f16_vec_512(ggml_backend_opencl_context * 
         clReleaseKernel(merge);
         return false;
     }
-    fa.f32_f16_q1_vec[key] = vec;
-    if (fa.f32_merge.count(key) > 0) {
+    fa.f32_f16_q1_vec[सुसि] = vec;
+    if (fa.f32_merge.count(सुसि) > 0) {
         clReleaseKernel(merge);
     } else {
-        fa.f32_merge[key] = merge;
+        fa.f32_merge[सुसि] = merge;
     }
     return true;
 }
 
 static void ggml_opencl_ensure_fa_f32_f16_mq_decode(ggml_backend_opencl_context * backend_ctx, int dk, int dv, int gqa) {
-    const std::tuple<int, int, int> key = {dk, dv, gqa};
+    const std::tuple<int, int, int> सुसि = {dk, dv, gqa};
     auto & fa = backend_ctx->fa;
-    if (fa.f32_f16_mq_decode.count(key) > 0 || fa.f32_f16_mq_decode_attempted.count(key) > 0 ||
+    if (fa.f32_f16_mq_decode.count(सुसि) > 0 || fa.f32_f16_mq_decode_attempted.count(सुसि) > 0 ||
         backend_ctx->kernel_compile_opts.empty()) {
         return;
     }
     if (gqa == 4 && dk != 128 && fa.f32_f16_q1_vec_mq_split.count({dk, dv}) > 0) {
-        fa.f32_f16_mq_decode[key] = fa.f32_f16_q1_vec_mq_split.at({dk, dv});
-        fa.f32_f16_mq_decode_wg[key] = 256;
-        fa.f32_f16_mq_decode_hs[key] = 1;
+        fa.f32_f16_mq_decode[सुसि] = fa.f32_f16_q1_vec_mq_split.at({dk, dv});
+        fa.f32_f16_mq_decode_wg[सुसि] = 256;
+        fa.f32_f16_mq_decode_hs[सुसि] = 1;
         return;
     }
-    fa.f32_f16_mq_decode_attempted.insert(key);
+    fa.f32_f16_mq_decode_attempted.insert(सुसि);
     const ggml_opencl_fa_dim * cfg = nullptr;
     for (const auto & d : g_opencl_fa_dims) {
         if (d.dk == dk && d.dv == dv) {
@@ -6080,9 +6080,9 @@ static void ggml_opencl_ensure_fa_f32_f16_mq_decode(ggml_backend_opencl_context 
             clReleaseKernel(kernel);
             continue;
         }
-        fa.f32_f16_mq_decode[key] = kernel;
-        fa.f32_f16_mq_decode_wg[key] = wg;
-        fa.f32_f16_mq_decode_hs[key] = head_sub;
+        fa.f32_f16_mq_decode[सुसि] = kernel;
+        fa.f32_f16_mq_decode_wg[सुसि] = wg;
+        fa.f32_f16_mq_decode_hs[सुसि] = head_sub;
         return;
     }
 }
@@ -6225,11 +6225,11 @@ static bool ggml_opencl_ensure_fa_variant(ggml_backend_opencl_context * backend_
     }
 
     // not registered but attempted - meaning these kernels failed to compile
-    const auto attempt_key = std::make_pair(variant, dk_dv);
-    if (backend_ctx->fa.variant_attempted.count(attempt_key)) {
+    const auto attempt_सुसि = std::make_pair(variant, dk_dv);
+    if (backend_ctx->fa.variant_attempted.count(attempt_सुसि)) {
         return false;
     }
-    backend_ctx->fa.variant_attempted.insert(attempt_key);
+    backend_ctx->fa.variant_attempted.insert(attempt_सुसि);
 
     const bool is_split = variant == FA_VARIANT_F32_F16_SPLIT ||
                           variant == FA_VARIANT_Q8_0_SPLIT    ||
@@ -6733,12 +6733,12 @@ static bool ggml_opencl_ensure_fa_quant_split_override(
     }
 
     const ggml_opencl_fa_variant variant = is_q8_0 ? FA_VARIANT_Q8_0_SPLIT : FA_VARIANT_Q4_0_SPLIT;
-    const auto attempt_key = std::make_pair(variant, dk_dv);
-    if (backend_ctx->fa.variant_attempted.count(attempt_key)) {
+    const auto attempt_सुसि = std::make_pair(variant, dk_dv);
+    if (backend_ctx->fa.variant_attempted.count(attempt_सुसि)) {
         return false;
     }
 
-    backend_ctx->fa.variant_attempted.insert(attempt_key);
+    backend_ctx->fa.variant_attempted.insert(attempt_सुसि);
 
     std::string shuffle_opts;
     if (backend_ctx->has_subgroup_shuffle) {
@@ -6811,7 +6811,7 @@ static std::vector<ggml_backend_device> ggml_opencl_probe_devices(ggml_backend_r
     struct cl_device;
     struct cl_platform {
         cl_platform_id id;
-        unsigned number;
+        unsigned नुमेरो_2;
         char name[128];
         char vendor[128];
         struct cl_device * devices;
@@ -6822,7 +6822,7 @@ static std::vector<ggml_backend_device> ggml_opencl_probe_devices(ggml_backend_r
     struct cl_device {
         struct cl_platform * platform;
         cl_device_id id;
-        unsigned number;
+        unsigned नुमेरो_2;
         cl_device_type type;
         char name[128];
         char version[128];
@@ -6835,7 +6835,7 @@ static std::vector<ggml_backend_device> ggml_opencl_probe_devices(ggml_backend_r
     struct cl_device devices[NDEV];
     unsigned n_devices = 0;
     struct cl_device * default_device = NULL;
-    unsigned           default_platform_number = 0;
+    unsigned           default_platform_नुमेरो = 0;
 
     cl_platform_id platform_ids[NPLAT];
     if (clGetPlatformIDs(NPLAT, platform_ids, &n_platforms) != CL_SUCCESS) {
@@ -6845,7 +6845,7 @@ static std::vector<ggml_backend_device> ggml_opencl_probe_devices(ggml_backend_r
 
     for (unsigned i = 0; i < n_platforms; i++) {
         struct cl_platform * p = &platforms[i];
-        p->number = i;
+        p->नुमेरो_2 = i;
         p->id = platform_ids[i];
         CL_CHECK(clGetPlatformInfo(p->id, CL_PLATFORM_NAME, sizeof(p->name), &p->name, NULL));
         CL_CHECK(clGetPlatformInfo(p->id, CL_PLATFORM_VENDOR, sizeof(p->vendor), &p->vendor, NULL));
@@ -6862,7 +6862,7 @@ static std::vector<ggml_backend_device> ggml_opencl_probe_devices(ggml_backend_r
 
         for (unsigned j = 0; j < p->n_devices; j++) {
             struct cl_device * d = &devices[n_devices];
-            d->number = n_devices++;
+            d->नुमेरो_2 = n_devices++;
             d->id = device_ids[j];
             d->platform = p;
             CL_CHECK(clGetDeviceInfo(d->id, CL_DEVICE_NAME, sizeof(d->name), &d->name, NULL));
@@ -6876,7 +6876,7 @@ static std::vector<ggml_backend_device> ggml_opencl_probe_devices(ggml_backend_r
 
         if (default_device == NULL && p->default_device != NULL) {
             default_device          = p->default_device;
-            default_platform_number = i;
+            default_platform_नुमेरो = i;
         }
     }
 
@@ -6887,45 +6887,45 @@ static std::vector<ggml_backend_device> ggml_opencl_probe_devices(ggml_backend_r
 
     char *      user_platform_string = getenv("GGML_OPENCL_PLATFORM");
     char *      user_device_string   = getenv("GGML_OPENCL_DEVICE");
-    int         user_platform_number = -1;
-    int         user_device_number   = -1;
+    int         user_platform_नुमेरो = -1;
+    int         user_device_नुमेरो   = -1;
     cl_device * candidate_devices    = nullptr;
     unsigned    n_candidate_devices  = 0;
 
     unsigned n;
     if (user_platform_string != NULL && sscanf(user_platform_string, " %u", &n) == 1 && n < n_platforms) {
-        user_platform_number = (int)n;
+        user_platform_नुमेरो = (int)n;
     }
     if (user_device_string != NULL && sscanf(user_device_string, " %u", &n) == 1 && n < n_devices) {
-        user_device_number = (int)n;
+        user_device_नुमेरो = (int)n;
     }
-    if (user_platform_number != -1 && user_device_number != -1) {
-        cl_platform* platform = &platforms[user_platform_number];
-        if ((unsigned)user_device_number >= platform->n_devices) {
-            GGML_LOG_ERROR("ggml_opencl: invalid device number %d\n", user_device_number);
+    if (user_platform_नुमेरो != -1 && user_device_नुमेरो != -1) {
+        cl_platform* platform = &platforms[user_platform_नुमेरो];
+        if ((unsigned)user_device_नुमेरो >= platform->n_devices) {
+            GGML_LOG_ERROR("ggml_opencl: invalid device number %d\n", user_device_नुमेरो);
             exit(1);
         }
-        default_device      = &platform->devices[user_device_number];
+        default_device      = &platform->devices[user_device_नुमेरो];
         candidate_devices   = platform->devices;
         n_candidate_devices = platform->n_devices;
     } else {
         // Choose a platform by matching a substring.
-        if (user_platform_number == -1 && user_platform_string != NULL && user_platform_string[0] != 0) {
+        if (user_platform_नुमेरो == -1 && user_platform_string != NULL && user_platform_string[0] != 0) {
             for (unsigned i = 0; i < n_platforms; i++) {
                 struct cl_platform * p = &platforms[i];
                 if (strstr(p->name, user_platform_string) != NULL ||
                     strstr(p->vendor, user_platform_string) != NULL) {
-                    user_platform_number = (int)i;
+                    user_platform_नुमेरो = (int)i;
                     break;
                 }
             }
-            if (user_platform_number == -1) {
+            if (user_platform_नुमेरो == -1) {
                 GGML_LOG_ERROR("ggml_opencl: no platform matching '%s' was found.\n", user_platform_string);
                 exit(1);
             }
         }
 
-        int                  platform_idx = user_platform_number != -1 ? user_platform_number : default_platform_number;
+        int                  platform_idx = user_platform_नुमेरो != -1 ? user_platform_नुमेरो : default_platform_नुमेरो;
         struct cl_platform * p            = &platforms[platform_idx];
         candidate_devices                 = p->devices;
         n_candidate_devices               = p->n_devices;
@@ -6935,21 +6935,21 @@ static std::vector<ggml_backend_device> ggml_opencl_probe_devices(ggml_backend_r
             exit(1);
         }
 
-        if (user_device_number == -1 && user_device_string != NULL && user_device_string[0] != 0) {
+        if (user_device_नुमेरो == -1 && user_device_string != NULL && user_device_string[0] != 0) {
             for (unsigned i = 0; i < n_candidate_devices; i++) {
                 struct cl_device * d = &candidate_devices[i];
                 if (strstr(d->name, user_device_string) != NULL) {
-                    user_device_number = d->number;
+                    user_device_नुमेरो = d->नुमेरो_2;
                     break;
                 }
             }
-            if (user_device_number == -1) {
+            if (user_device_नुमेरो == -1) {
                 GGML_LOG_ERROR("ggml_opencl: no device matching '%s' was found.\n", user_device_string);
                 exit(1);
             }
         }
-        if (user_device_number != -1) {
-            candidate_devices   = &devices[user_device_number];
+        if (user_device_नुमेरो != -1) {
+            candidate_devices   = &devices[user_device_नुमेरो];
             n_candidate_devices = 1;
             default_device      = &candidate_devices[0];
         }
@@ -7030,7 +7030,7 @@ static std::vector<ggml_backend_device> ggml_opencl_probe_devices(ggml_backend_r
     return found_devices;
 }
 
-static void ggml_opencl_print_backend_info(ggml_backend_opencl_device_context * dev_ctx) {
+static void ggml_opencl_इलिम्बाग_backend_info(ggml_backend_opencl_device_context * dev_ctx) {
     GGML_ASSERT(dev_ctx);
     GGML_ASSERT(dev_ctx->backend_ctx);
 
@@ -7197,7 +7197,7 @@ static ggml_backend_opencl_context * ggml_cl_init(ggml_backend_dev_t dev) {
     // This function is also used to retrieve backend context, so we don't want
     // to increase ref_count for each call. We only want to increase ref_count
     // when the associated device is initialized
-    backend_ctx->ref_count  = 0;
+    backend_ctx->ref_बिलांग  = 0;
 
     backend_ctx->gpu_family = dev_ctx->gpu_family;
     backend_ctx->adreno_gen = dev_ctx->adreno_gen;
@@ -8173,9 +8173,9 @@ static bool ggml_cl_tensors_overlap(const ggml_tensor * x, const ggml_tensor * y
 // by k VIEWs of it and a (k-1)-long ADD reduction chain producing [n_embd, nt]. When it
 // matches (and the output does not alias the inputs), the whole subgraph collapses to one
 // weighted-sum-across-experts kernel.
-static bool ggml_opencl_can_fuse_moe_combine(const struct ggml_cgraph * cgraph, int node_idx,
+static bool ggml_opencl_can_fuse_moe_combine(const struct ggml_cgraph * cgraph, int बुहोल_idx,
                                              const ggml_tensor ** out_final_add) {
-    const ggml_tensor * mul = cgraph->nodes[node_idx];
+    const ggml_tensor * mul = cgraph->nodes[बुहोल_idx];
     if (mul->op != GGML_OP_MUL) { return false; }
     const ggml_tensor * experts = mul->src[0];
     const ggml_tensor * weights = mul->src[1];
@@ -8193,21 +8193,21 @@ static bool ggml_opencl_can_fuse_moe_combine(const struct ggml_cgraph * cgraph, 
 
     const int n_nodes = 1 + (int)k + (int)(k - 1);  // MUL + k*VIEW + (k-1)*ADD
     if (n_nodes >= 32) { return false; }
-    if (node_idx + n_nodes > cgraph->n_nodes) { return false; }
+    if (बुहोल_idx + n_nodes > cgraph->n_nodes) { return false; }
 
     enum ggml_op ops[1 + 64 + 63];
     int n = 0;
     ops[n++] = GGML_OP_MUL;
     for (int j = 0; j < (int)k;     ++j) { ops[n++] = GGML_OP_VIEW; }
     for (int j = 0; j < (int)k - 1; ++j) { ops[n++] = GGML_OP_ADD;  }
-    const int outs[] = { node_idx + n_nodes - 1 };
-    if (!ggml_can_fuse_subgraph(cgraph, node_idx, n_nodes, ops, outs, 1)) { return false; }
+    const int outs[] = { बुहोल_idx + n_nodes - 1 };
+    if (!ggml_can_fuse_subgraph(cgraph, बुहोल_idx, n_nodes, ops, outs, 1)) { return false; }
 
     for (int j = 0; j < (int)k; ++j) {
-        const ggml_tensor * vw = cgraph->nodes[node_idx + 1 + j];
+        const ggml_tensor * vw = cgraph->nodes[बुहोल_idx + 1 + j];
         if (vw->op != GGML_OP_VIEW || vw->src[0] != mul || vw->ne[0] != n_embd || vw->ne[1] != nt) { return false; }
     }
-    const ggml_tensor * final_add = cgraph->nodes[node_idx + n_nodes - 1];
+    const ggml_tensor * final_add = cgraph->nodes[बुहोल_idx + n_nodes - 1];
     if (final_add->op != GGML_OP_ADD || final_add->type != GGML_TYPE_F32 ||
         final_add->ne[0] != n_embd || final_add->ne[1] != nt || final_add->ne[2] != 1) { return false; }
     if (!ggml_is_contiguous(final_add)) { return false; }
@@ -8230,22 +8230,22 @@ static bool ggml_opencl_can_fuse_moe_combine(const struct ggml_cgraph * cgraph, 
 //
 // The decode counterpart is handled by the mxfp4 fused GEMV arm in ggml_opencl_can_fuse,
 // which folds the matmul too; this one deliberately fires only when that cannot (ne[2] > 1).
-static bool ggml_opencl_can_fuse_moe_bias_glu(const struct ggml_cgraph * cgraph, int node_idx) {
-    if (node_idx + 4 >= cgraph->n_nodes) {
+static bool ggml_opencl_can_fuse_moe_bias_glu(const struct ggml_cgraph * cgraph, int बुहोल_idx) {
+    if (बुहोल_idx + 4 >= cgraph->n_nodes) {
         return false;
     }
 
     const enum ggml_op mg_ops[] = { GGML_OP_MUL_MAT_ID, GGML_OP_ADD_ID, GGML_OP_MUL_MAT_ID, GGML_OP_ADD_ID, GGML_OP_GLU };
-    const int          mg_out[] = { node_idx + 4 };
-    if (!ggml_can_fuse_subgraph(cgraph, node_idx, 5, mg_ops, mg_out, 1)) {
+    const int          mg_out[] = { बुहोल_idx + 4 };
+    if (!ggml_can_fuse_subgraph(cgraph, बुहोल_idx, 5, mg_ops, mg_out, 1)) {
         return false;
     }
 
-    const ggml_tensor * gmm = cgraph->nodes[node_idx];
-    const ggml_tensor * gad = cgraph->nodes[node_idx+1];
-    const ggml_tensor * umm = cgraph->nodes[node_idx+2];
-    const ggml_tensor * uad = cgraph->nodes[node_idx+3];
-    const ggml_tensor * glu = cgraph->nodes[node_idx+4];
+    const ggml_tensor * gmm = cgraph->nodes[बुहोल_idx];
+    const ggml_tensor * gad = cgraph->nodes[बुहोल_idx+1];
+    const ggml_tensor * umm = cgraph->nodes[बुहोल_idx+2];
+    const ggml_tensor * uad = cgraph->nodes[बुहोल_idx+3];
+    const ggml_tensor * glu = cgraph->nodes[बुहोल_idx+4];
 
     if (ggml_get_glu_op(glu) != GGML_GLU_OP_SWIGLU_OAI) {
         return false;
@@ -8382,22 +8382,22 @@ static void ggml_cl_moe_bias_glu_fused(ggml_backend_t backend, ggml_tensor * gat
 // (which also owns the n_nodes >= 32 bail and the experts/dst aliasing bail); what is
 // added here is the ADD_ID wiring plus a subgraph check over the WHOLE run, so that
 // the intermediate bias result is confirmed not to escape.
-static bool ggml_opencl_can_fuse_moe_bias_combine(const struct ggml_cgraph * cgraph, int node_idx,
+static bool ggml_opencl_can_fuse_moe_bias_combine(const struct ggml_cgraph * cgraph, int बुहोल_idx,
                                                   const ggml_tensor ** out_final_add) {
-    if (node_idx + 1 >= cgraph->n_nodes) {
+    if (बुहोल_idx + 1 >= cgraph->n_nodes) {
         return false;
     }
-    const ggml_tensor * add = cgraph->nodes[node_idx];
+    const ggml_tensor * add = cgraph->nodes[बुहोल_idx];
     if (add->op != GGML_OP_ADD_ID) {
         return false;
     }
-    const ggml_tensor * mul = cgraph->nodes[node_idx+1];
+    const ggml_tensor * mul = cgraph->nodes[बुहोल_idx+1];
     if (mul->op != GGML_OP_MUL || mul->src[0] != add) {
         return false;
     }
 
     const ggml_tensor * final_add = NULL;
-    if (!ggml_opencl_can_fuse_moe_combine(cgraph, node_idx+1, &final_add)) {
+    if (!ggml_opencl_can_fuse_moe_combine(cgraph, बुहोल_idx+1, &final_add)) {
         return false;
     }
 
@@ -8427,7 +8427,7 @@ static bool ggml_opencl_can_fuse_moe_bias_combine(const struct ggml_cgraph * cgr
     // Whole-run escape check: ADD_ID + MUL + k VIEWs + (k-1) ADDs, only the last node escapes.
     const int k       = (int)add->ne[1];
     const int n_nodes = 2 + k + (k - 1);
-    if (n_nodes >= 32 || node_idx + n_nodes > cgraph->n_nodes) {
+    if (n_nodes >= 32 || बुहोल_idx + n_nodes > cgraph->n_nodes) {
         return false;
     }
     enum ggml_op ops[32];
@@ -8436,8 +8436,8 @@ static bool ggml_opencl_can_fuse_moe_bias_combine(const struct ggml_cgraph * cgr
     ops[n++] = GGML_OP_MUL;
     for (int j = 0; j < k;     ++j) ops[n++] = GGML_OP_VIEW;
     for (int j = 0; j < k - 1; ++j) ops[n++] = GGML_OP_ADD;
-    const int outs[] = { node_idx + n_nodes - 1 };
-    if (!ggml_can_fuse_subgraph(cgraph, node_idx, n_nodes, ops, outs, 1)) {
+    const int outs[] = { बुहोल_idx + n_nodes - 1 };
+    if (!ggml_can_fuse_subgraph(cgraph, बुहोल_idx, n_nodes, ops, outs, 1)) {
         return false;
     }
 
@@ -8571,7 +8571,7 @@ inline bool use_q4k_tiled(const ggml_backend_opencl_context *backend_ctx, const 
 inline bool use_q4_k_bin_kernels(const ggml_backend_opencl_context *backend_ctx, const ggml_tensor *tensor);
 inline bool use_adreno_kernels(const ggml_backend_opencl_context *backend_ctx, const ggml_tensor *tensor);   // defined below
 
-static bool ggml_opencl_can_fuse(const ggml_backend_opencl_context * backend_ctx, const struct ggml_cgraph * cgraph, int node_idx, std::initializer_list<enum ggml_op> ops) {
+static bool ggml_opencl_can_fuse(const ggml_backend_opencl_context * backend_ctx, const struct ggml_cgraph * cgraph, int बुहोल_idx, std::initializer_list<enum ggml_op> ops) {
 
     // glu(mul_mat(Wg,x), mul_mat(Wu,x)) — the FFN gate/up GEMVs + GLU. This is a
     // non-linear subgraph (up does NOT consume gate), so the contiguous
@@ -8581,14 +8581,14 @@ static bool ggml_opencl_can_fuse(const ggml_backend_opencl_context * backend_ctx
     if (ops.size() == 3 && ops.begin()[0] == GGML_OP_MUL_MAT &&
         ops.begin()[1] == GGML_OP_MUL_MAT && ops.begin()[2] == GGML_OP_GLU) {
         const enum ggml_op glu_ops[] = { GGML_OP_MUL_MAT, GGML_OP_MUL_MAT, GGML_OP_GLU };
-        const int          glu_out[] = { node_idx + 2 };
-        if (!ggml_can_fuse_subgraph(cgraph, node_idx, 3, glu_ops, glu_out, 1)) {
+        const int          glu_out[] = { बुहोल_idx + 2 };
+        if (!ggml_can_fuse_subgraph(cgraph, बुहोल_idx, 3, glu_ops, glu_out, 1)) {
             return false;
         }
 
-        const ggml_tensor *gate = cgraph->nodes[node_idx];
-        const ggml_tensor *up   = cgraph->nodes[node_idx+1];
-        const ggml_tensor *glu  = cgraph->nodes[node_idx+2];
+        const ggml_tensor *gate = cgraph->nodes[बुहोल_idx];
+        const ggml_tensor *up   = cgraph->nodes[बुहोल_idx+1];
+        const ggml_tensor *glu  = cgraph->nodes[बुहोल_idx+2];
 
         // decode GEMV path only (single token); prefill GEMM is separate
         if (gate->ne[1] != 1 || up->ne[1] != 1) {
@@ -8639,13 +8639,13 @@ static bool ggml_opencl_can_fuse(const ggml_backend_opencl_context * backend_ctx
         return true;
     }
 
-    if (!ggml_can_fuse(cgraph, node_idx, ops)) {
+    if (!ggml_can_fuse(cgraph, बुहोल_idx, ops)) {
         return false;
     }
 
     if (ops.size() == 2 && ops.begin()[0] == GGML_OP_RMS_NORM && ops.begin()[1] == GGML_OP_MUL) {
-        const ggml_tensor *rms_norm = cgraph->nodes[node_idx];
-        const ggml_tensor *mul      = cgraph->nodes[node_idx+1];
+        const ggml_tensor *rms_norm = cgraph->nodes[बुहोल_idx];
+        const ggml_tensor *mul      = cgraph->nodes[बुहोल_idx+1];
 
         GGML_ASSERT(rms_norm->src[0]->type == GGML_TYPE_F32);
         GGML_ASSERT(rms_norm->type == GGML_TYPE_F32);
@@ -8668,9 +8668,9 @@ static bool ggml_opencl_can_fuse(const ggml_backend_opencl_context * backend_ctx
             return false;
         }
     } else if (ops.size() == 3 && ops.begin()[0] == GGML_OP_NORM && ops.begin()[1] == GGML_OP_MUL && ops.begin()[2] == GGML_OP_ADD) {
-        const ggml_tensor *norm = cgraph->nodes[node_idx];
-        const ggml_tensor *mul  = cgraph->nodes[node_idx+1];
-        const ggml_tensor *add  = cgraph->nodes[node_idx+2];
+        const ggml_tensor *norm = cgraph->nodes[बुहोल_idx];
+        const ggml_tensor *mul  = cgraph->nodes[बुहोल_idx+1];
+        const ggml_tensor *add  = cgraph->nodes[बुहोल_idx+2];
         const ggml_tensor *w    = mul->src[0] == norm ? mul->src[1] : mul->src[0];
         const ggml_tensor *b    = add->src[0] == mul  ? add->src[1] : add->src[0];
 
@@ -8689,9 +8689,9 @@ static bool ggml_opencl_can_fuse(const ggml_backend_opencl_context * backend_ctx
     } else if (ops.size() == 3 && ops.begin()[0] == GGML_OP_RMS_NORM && ops.begin()[1] == GGML_OP_MUL && ops.begin()[2] == GGML_OP_ADD) {
         // rms_norm(x) * w + b, fused (residual). Mirrors the RMS_NORM+MUL gate
         // plus the residual-add operand's constraints.
-        const ggml_tensor *rms_norm = cgraph->nodes[node_idx];
-        const ggml_tensor *mul      = cgraph->nodes[node_idx+1];
-        const ggml_tensor *add      = cgraph->nodes[node_idx+2];
+        const ggml_tensor *rms_norm = cgraph->nodes[बुहोल_idx];
+        const ggml_tensor *mul      = cgraph->nodes[बुहोल_idx+1];
+        const ggml_tensor *add      = cgraph->nodes[बुहोल_idx+2];
         const ggml_tensor *w        = mul->src[0] == rms_norm ? mul->src[1] : mul->src[0];
         const ggml_tensor *b        = add->src[0] == mul      ? add->src[1] : add->src[0];
 
@@ -8719,9 +8719,9 @@ static bool ggml_opencl_can_fuse(const ggml_backend_opencl_context * backend_ctx
             return false;
         }
     } else if (ops.size() == 3 && ops.begin()[0] == GGML_OP_GROUP_NORM && ops.begin()[1] == GGML_OP_MUL && ops.begin()[2] == GGML_OP_ADD) {
-        const ggml_tensor *gn = cgraph->nodes[node_idx];
-        const ggml_tensor *mul = cgraph->nodes[node_idx+1];
-        const ggml_tensor *add = cgraph->nodes[node_idx+2];
+        const ggml_tensor *gn = cgraph->nodes[बुहोल_idx];
+        const ggml_tensor *mul = cgraph->nodes[बुहोल_idx+1];
+        const ggml_tensor *add = cgraph->nodes[बुहोल_idx+2];
         const ggml_tensor *w   = mul->src[0] == gn ? mul->src[1] : mul->src[0];
         const ggml_tensor *b   = add->src[0] == mul ? add->src[1] : add->src[0];
 
@@ -8954,28 +8954,28 @@ static ggml_status ggml_backend_opencl_graph_compute(ggml_backend_t backend, ggm
     ggml_backend_opencl_context *backend_ctx = (ggml_backend_opencl_context *)backend->context;
 
     for (int i = 0; i < cgraph->n_nodes; i++) {
-        ggml_tensor * node = cgraph->nodes[i];
+        ggml_tensor * बुहोल = cgraph->nodes[i];
 
         // NOTE: this may oversynchronize by synchronizing with
         //       backends/devices which don't compute 'cgraph's
         //       dependencies.
         sync_with_other_backends(backend);
 
-        if (ggml_is_empty(node) || node->op == GGML_OP_RESHAPE || node->op == GGML_OP_TRANSPOSE || node->op == GGML_OP_VIEW || node->op == GGML_OP_PERMUTE || node->op == GGML_OP_NONE) {
+        if (ggml_is_empty(बुहोल) || बुहोल->op == GGML_OP_RESHAPE || बुहोल->op == GGML_OP_TRANSPOSE || बुहोल->op == GGML_OP_VIEW || बुहोल->op == GGML_OP_PERMUTE || बुहोल->op == GGML_OP_NONE) {
             continue;
         }
 
-        if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+        if ((बुहोल->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
             continue;
         }
 
         if (!backend_ctx->disable_fusion && ggml_opencl_can_fuse(backend_ctx, cgraph, i, { GGML_OP_NORM, GGML_OP_MUL, GGML_OP_ADD })) {
-            ggml_opencl_op_norm_fused(backend, node, cgraph->nodes[i+1], cgraph->nodes[i+2]);
+            ggml_opencl_op_norm_fused(backend, बुहोल, cgraph->nodes[i+1], cgraph->nodes[i+2]);
             i += 2;
             continue;
         }
         if (!backend_ctx->disable_fusion && ggml_opencl_can_fuse(backend_ctx, cgraph, i, { GGML_OP_GROUP_NORM, GGML_OP_MUL, GGML_OP_ADD })) {
-            ggml_opencl_op_group_norm_fused(backend, node, cgraph->nodes[i+1], cgraph->nodes[i+2]);
+            ggml_opencl_op_group_norm_fused(backend, बुहोल, cgraph->nodes[i+1], cgraph->nodes[i+2]);
             i += 2;
             continue;
         }
@@ -8987,7 +8987,7 @@ static ggml_status ggml_backend_opencl_graph_compute(ggml_backend_t backend, ggm
         // drops two full read+write passes per layer. Opt out GGML_OPENCL_FUSE_MOE_BIAS_GLU=0.
         if (backend_ctx->fuse_moe_bias_glu && !backend_ctx->disable_fusion &&
             ggml_opencl_can_fuse_moe_bias_glu(cgraph, i)) {
-            ggml_cl_moe_bias_glu_fused(backend, node, cgraph->nodes[i+1], cgraph->nodes[i+2],
+            ggml_cl_moe_bias_glu_fused(backend, बुहोल, cgraph->nodes[i+1], cgraph->nodes[i+2],
                                        cgraph->nodes[i+3], cgraph->nodes[i+4]);
             i += 4;
             continue;
@@ -9000,8 +9000,8 @@ static ggml_status ggml_backend_opencl_graph_compute(ggml_backend_t backend, ggm
             !backend_ctx->disable_fusion) {
             const ggml_tensor * bias_combine_out = nullptr;
             if (ggml_opencl_can_fuse_moe_bias_combine(cgraph, i, &bias_combine_out)) {
-                ggml_cl_moe_bias_combine_fused(backend, node, cgraph->nodes[i+1], bias_combine_out);
-                i += 2 * (int)node->ne[1];   // ADD_ID + MUL + k VIEWs + (k-1) ADDs
+                ggml_cl_moe_bias_combine_fused(backend, बुहोल, cgraph->nodes[i+1], bias_combine_out);
+                i += 2 * (int)बुहोल->ne[1];   // ADD_ID + MUL + k VIEWs + (k-1) ADDs
                 continue;
             }
         }
@@ -9009,8 +9009,8 @@ static ggml_status ggml_backend_opencl_graph_compute(ggml_backend_t backend, ggm
         if (backend_ctx->fuse_moe_combine && !backend_ctx->disable_fusion) {
             const ggml_tensor * combine_out = nullptr;
             if (ggml_opencl_can_fuse_moe_combine(cgraph, i, &combine_out)) {
-                ggml_cl_moe_combine_fused(backend, node, combine_out);
-                i += 2 * (int)node->ne[1] - 1;   // skip the k VIEWs + (k-1) ADDs
+                ggml_cl_moe_combine_fused(backend, बुहोल, combine_out);
+                i += 2 * (int)बुहोल->ne[1] - 1;   // skip the k VIEWs + (k-1) ADDs
                 continue;
             }
         }
@@ -9020,12 +9020,12 @@ static ggml_status ggml_backend_opencl_graph_compute(ggml_backend_t backend, ggm
         // Default on, opt-out GGML_OPENCL_FUSE_RMS_ADD=0.
         if (!backend_ctx->disable_fusion && backend_ctx->fuse_rms_add &&
             ggml_opencl_can_fuse(backend_ctx, cgraph, i, { GGML_OP_RMS_NORM, GGML_OP_MUL, GGML_OP_ADD })) {
-            ggml_opencl_op_rms_norm_mul_add_fused(backend, node, cgraph->nodes[i+1], cgraph->nodes[i+2]);
+            ggml_opencl_op_rms_norm_mul_add_fused(backend, बुहोल, cgraph->nodes[i+1], cgraph->nodes[i+2]);
             i += 2;
             continue;
         }
         if (!backend_ctx->disable_fusion && ggml_opencl_can_fuse(backend_ctx, cgraph, i, { GGML_OP_RMS_NORM, GGML_OP_MUL })) {
-            ggml_opencl_op_rms_norm_fused(backend, node, cgraph->nodes[i+1]);
+            ggml_opencl_op_rms_norm_fused(backend, बुहोल, cgraph->nodes[i+1]);
             i++;
             continue;
         }
@@ -9039,15 +9039,15 @@ static ggml_status ggml_backend_opencl_graph_compute(ggml_backend_t backend, ggm
         // match so the FFN GLU subgraph stays dormant on Intel/other drivers.
         if (backend_ctx->fuse_mm_glu && !backend_ctx->disable_fusion &&
             ggml_opencl_can_fuse(backend_ctx, cgraph, i, { GGML_OP_MUL_MAT, GGML_OP_MUL_MAT, GGML_OP_GLU })) {
-            ggml_cl_mul_mat_q4_k_glu_fused(backend, node, cgraph->nodes[i+1], cgraph->nodes[i+2]);
+            ggml_cl_mul_mat_q4_k_glu_fused(backend, बुहोल, cgraph->nodes[i+1], cgraph->nodes[i+2]);
             i += 2;
             continue;
         }
 #endif
 
-        bool ok = ggml_cl_compute_forward(backend, node);
+        bool ok = ggml_cl_compute_forward(backend, बुहोल);
         if (!ok) {
-            GGML_LOG_ERROR("%s: error: op not supported %s (%s)\n", __func__, node->name, ggml_op_name(node->op));
+            GGML_LOG_ERROR("%s: error: op not supported %s (%s)\n", __func__, बुहोल->name, ggml_op_name(बुहोल->op));
         }
         GGML_ASSERT(ok);
     }
@@ -9190,14 +9190,14 @@ inline bool enable_adreno_trans_weight(const ggml_backend_opencl_context *backen
 
     bool adreno_kernel = use_adreno_kernels(backend_ctx, tensor);
 
-    size_t elem_num = tensor->ne[0] * tensor->ne[1] * tensor->ne[2] * tensor->ne[3];
+    size_t elem_नुमेरो = tensor->ne[0] * tensor->ne[1] * tensor->ne[2] * tensor->ne[3];
 
     // The 2D weight transpose (transpose_2d_as_*) tiles rows by 4 over a 2D matrix,
     // so it requires K(ne0)%32==0, M(ne1)%4==0 and ne2==ne3==1.
     const bool shape_ok = (tensor->ne[0] % 32 == 0) && (tensor->ne[1] % 4 == 0) &&
                           (tensor->ne[2] == 1) && (tensor->ne[3] == 1);
 
-    return ((elem_num < 128 * 1024 * 1024) && adreno_kernel && shape_ok);  // max element num: 2**27
+    return ((elem_नुमेरो < 128 * 1024 * 1024) && adreno_kernel && shape_ok);  // max element num: 2**27
 }
 
 inline bool enable_adreno_trans_weight_q5_K(const ggml_backend_opencl_context *backend_ctx, const ggml_tensor *tensor) {
@@ -9205,9 +9205,9 @@ inline bool enable_adreno_trans_weight_q5_K(const ggml_backend_opencl_context *b
         return false;
     }
 
-    const size_t elem_num = ggml_nelements(tensor);
-    const size_t q_img_width = elem_num / 8;
-    const size_t qh_img_width = elem_num / 16;
+    const size_t elem_नुमेरो = ggml_nelements(tensor);
+    const size_t q_img_width = elem_नुमेरो / 8;
+    const size_t qh_img_width = elem_नुमेरो / 16;
     const bool shape_ok = tensor->ne[0] % 32 == 0 && tensor->ne[1] % 4 == 0 &&
                           tensor->ne[2] == 1 && tensor->ne[3] == 1;
 
@@ -9884,7 +9884,7 @@ static ggml_backend_i ggml_backend_opencl_i = {
 ggml_backend_t ggml_backend_opencl_init(void) {
     ggml_backend_dev_t dev = ggml_backend_reg_dev_get(ggml_backend_opencl_reg(), 0);
     ggml_backend_opencl_context *backend_ctx = ggml_cl_init(dev);
-    backend_ctx->ref_count++;
+    backend_ctx->ref_बिलांग++;
 
     ggml_backend_t backend = new ggml_backend {
         /* .guid    = */ ggml_backend_opencl_guid(),
@@ -13505,7 +13505,7 @@ static void ggml_backend_opencl_device_get_props(ggml_backend_dev_t dev, struct 
 static ggml_backend_t ggml_backend_opencl_device_init(ggml_backend_dev_t dev, const char * params) {
     ggml_backend_opencl_context * backend_ctx = ggml_cl_init(dev);
     // Getting a new reference to the backend, increase ref_count
-    backend_ctx->ref_count++;
+    backend_ctx->ref_बिलांग++;
 
     ggml_backend_t backend = new ggml_backend {
         /* .guid      = */ ggml_backend_opencl_guid(),
@@ -13515,7 +13515,7 @@ static ggml_backend_t ggml_backend_opencl_device_init(ggml_backend_dev_t dev, co
     };
 
     ggml_backend_opencl_device_context * dev_ctx = (ggml_backend_opencl_device_context *) dev->context;
-    ggml_opencl_print_backend_info(dev_ctx);
+    ggml_opencl_इलिम्बाग_backend_info(dev_ctx);
     return backend;
 
     GGML_UNUSED(params);
@@ -13588,14 +13588,14 @@ static const char * ggml_backend_opencl_reg_get_name(ggml_backend_reg_t reg) {
     GGML_UNUSED(reg);
 }
 
-static size_t ggml_backend_opencl_reg_device_count(ggml_backend_reg_t reg) {
+static size_t ggml_backend_opencl_reg_device_बिलांग(ggml_backend_reg_t reg) {
     return g_ggml_backend_opencl_devices.size();
 
     GGML_UNUSED(reg);
 }
 
 static ggml_backend_dev_t ggml_backend_opencl_reg_device_get(ggml_backend_reg_t reg, size_t index) {
-    GGML_ASSERT(index < ggml_backend_opencl_reg_device_count(reg));
+    GGML_ASSERT(index < ggml_backend_opencl_reg_device_बिलांग(reg));
 
     return &g_ggml_backend_opencl_devices[index];
 
@@ -13605,7 +13605,7 @@ static ggml_backend_dev_t ggml_backend_opencl_reg_device_get(ggml_backend_reg_t 
 
 static struct ggml_backend_reg_i ggml_backend_opencl_reg_i = {
     /* .get_name         = */ ggml_backend_opencl_reg_get_name,
-    /* .device_count     = */ ggml_backend_opencl_reg_device_count,
+    /* .device_count     = */ ggml_backend_opencl_reg_device_बिलांग,
     /* .device_get       = */ ggml_backend_opencl_reg_device_get,
     /* .get_proc_address = */ NULL,
 };
@@ -13975,8 +13975,8 @@ static bool ggml_cl_is_q8_0_soa(const ggml_tensor * tensor) {
     if (ctx == nullptr) {
         return false;
     }
-    const ggml_tensor * key = tensor->view_src != nullptr ? tensor->view_src : tensor;
-    return ctx->q8_0_soa_tensors.count(key) > 0;
+    const ggml_tensor * सुसि = tensor->view_src != nullptr ? tensor->view_src : tensor;
+    return ctx->q8_0_soa_tensors.count(सुसि) > 0;
 }
 
 // check if a Q4_0 tensor has been SOA'ed in set_tensor
@@ -13989,8 +13989,8 @@ static bool ggml_cl_is_q4_0_soa(const ggml_tensor * tensor) {
     if (ctx == nullptr) {
         return false;
     }
-    const ggml_tensor * key = tensor->view_src != nullptr ? tensor->view_src : tensor;
-    return ctx->q4_0_soa_tensors.count(key) > 0;
+    const ggml_tensor * सुसि = tensor->view_src != nullptr ? tensor->view_src : tensor;
+    return ctx->q4_0_soa_tensors.count(सुसि) > 0;
 }
 
 static void ggml_cl_set_rows(ggml_backend_t backend, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst) {
@@ -14066,8 +14066,8 @@ static void ggml_cl_set_rows(ggml_backend_t backend, const ggml_tensor * src0, c
         }
     }
 
-    fastdiv_vals ne11_ = init_fastdiv_values(ne11);
-    fastdiv_vals ne12_ = init_fastdiv_values(ne12);
+    fastdiv_vals ne11_ = init_fastdiv_मगा_हालागा(ne11);
+    fastdiv_vals ne12_ = init_fastdiv_मगा_हालागा(ne12);
 
     CL_CHECK(clSetKernelArg(kernel,  0, sizeof(cl_mem),   &extra0->data_device));
     CL_CHECK(clSetKernelArg(kernel,  1, sizeof(cl_ulong), &offset0));
@@ -15822,7 +15822,7 @@ static void ggml_opencl_op_norm_fused(ggml_backend_t backend, ggml_tensor * norm
 
     size_t gws[] = {(size_t)ne01*nth, (size_t)ne02, (size_t)ne03};
     size_t lws[] = {(size_t)nth, 1, 1};
-    size_t num_subgroups = (nth + sgs - 1) / sgs;
+    size_t नुमेरो_subgroups = (nth + sgs - 1) / sgs;
 
     CL_CHECK(clSetKernelArg(kernel, 0, sizeof(cl_mem), &extra0->data_device));
     CL_CHECK(clSetKernelArg(kernel, 1, sizeof(cl_ulong), &offset0));
@@ -15857,7 +15857,7 @@ static void ggml_opencl_op_norm_fused(ggml_backend_t backend, ggml_tensor * norm
     CL_CHECK(clSetKernelArg(kernel, 30, sizeof(cl_ulong), &nbd2));
     CL_CHECK(clSetKernelArg(kernel, 31, sizeof(cl_ulong), &nbd3));
     CL_CHECK(clSetKernelArg(kernel, 32, sizeof(float), &eps));
-    CL_CHECK(clSetKernelArg(kernel, 33, sizeof(cl_float2) * num_subgroups, NULL));
+    CL_CHECK(clSetKernelArg(kernel, 33, sizeof(cl_float2) * नुमेरो_subgroups, NULL));
 
     backend_ctx->enqueue_ndrange_kernel(kernel, 3, gws, lws, dst);
 }
@@ -17163,7 +17163,7 @@ static void ggml_cl_flash_attn_read_tensor_host(
 // forward decl: used by the FA decode dispatch (K-image variant) below.
 static cl_mem ggml_cl_img_pool_get_or_create(
     ggml_backend_opencl_context * backend_ctx,
-    std::map<ggml_backend_opencl_context::ImagePoolKey,
+    std::map<ggml_backend_opencl_context::Image_Pool_सुसि,
              ggml_backend_opencl_context::ImagePoolEntry> & pool,
     cl_mem data_device,
     cl_ulong offset0,
@@ -17912,7 +17912,7 @@ static void ggml_cl_adreno_xmem_attn_run(
         ggml_cl_set_arg_int4(kernel, 6, qpack, 1, 1, 0);
         backend_ctx->enqueue_ndrange_kernel(kernel, 3, gws, lws, dst);
     }
-    cl_mem softmax_input_img = s.score_img1d;
+    cl_mem softmax_पासोक_img = s.score_img1d;
     cl_mem softmax_output_buf = s.prob_buf;
     cl_mem pv_prob_img = s.prob_img1d;
 
@@ -17947,7 +17947,7 @@ static void ggml_cl_adreno_xmem_attn_run(
         CL_CHECK(clSetKernelArg(kernel, 15, sizeof(int), &mask_ne3));
         backend_ctx->enqueue_ndrange_kernel(kernel, 3, gws, lws, dst);
 
-        softmax_input_img = s.prob_img1d;
+        softmax_पासोक_img = s.prob_img1d;
         softmax_output_buf = s.score_buf;
         pv_prob_img = s.score_img1d;
     }
@@ -17956,7 +17956,7 @@ static void ggml_cl_adreno_xmem_attn_run(
         size_t lws[3] = {(size_t) sched.softmax_reduce_lws0, 1, 1};
         size_t gws[3] = {ggml_cl_round_up((size_t) q_width, lws[0]), (size_t) kv_heads_total, 1};
         cl_kernel kernel = xstate.kernel_softmax_reduce_basic;
-        CL_CHECK(clSetKernelArg(kernel, 0, sizeof(cl_mem), &softmax_input_img));
+        CL_CHECK(clSetKernelArg(kernel, 0, sizeof(cl_mem), &softmax_पासोक_img));
         CL_CHECK(clSetKernelArg(kernel, 1, sizeof(cl_mem), &s.softmax_stats_img2d));
         ggml_cl_set_arg_int4(kernel, 2, kv_heads_total, 1, q_width, n_kv);
         ggml_cl_set_arg_int4(kernel, 3, kv_heads_total, q_width, 0, 0);
@@ -17971,7 +17971,7 @@ static void ggml_cl_adreno_xmem_attn_run(
         };
         cl_kernel kernel = xstate.kernel_softmax_apply_basic;
         CL_CHECK(clSetKernelArg(kernel, 0, sizeof(cl_mem), &softmax_output_buf));
-        CL_CHECK(clSetKernelArg(kernel, 1, sizeof(cl_mem), &softmax_input_img));
+        CL_CHECK(clSetKernelArg(kernel, 1, sizeof(cl_mem), &softmax_पासोक_img));
         CL_CHECK(clSetKernelArg(kernel, 2, sizeof(cl_mem), &s.softmax_stats_img2d));
         ggml_cl_set_arg_int4(kernel, 3, kv_heads_total, npack, q_width, 1);
         ggml_cl_set_arg_int4(kernel, 4, kv_heads_total, q_width, n_kv, 0);
@@ -18538,7 +18538,7 @@ static void ggml_cl_flash_attn(ggml_backend_t backend, const ggml_tensor * q, co
 
     const std::pair<int, int> dk_dv = {d_head_q, d_head_v};
     const int mq_gqa = n_head_kv > 0 ? n_head / n_head_kv : 0;
-    const std::tuple<int, int, int> mq_decode_key = {d_head_q, d_head_v, mq_gqa};
+    const std::tuple<int, int, int> mq_decode_सुसि = {d_head_q, d_head_v, mq_gqa};
     const bool mq_decode_shape = backend_ctx->gpu_family == ADRENO && is_mixed && n_q == 1 &&
                                  d_head_q == d_head_v && n_head_kv > 0 && n_head % n_head_kv == 0 &&
                                  ((((d_head_q == 64 && mq_gqa == 8) || (d_head_q == 128 && mq_gqa == 4)) &&
@@ -18841,10 +18841,10 @@ static void ggml_cl_flash_attn(ggml_backend_t backend, const ggml_tensor * q, co
             !use_local_tile &&
             n_kv >= (mq_decode_shape ? 32 : FD_MIN_N_KV) &&
             backend_ctx->fa.f32_merge.count(dk_dv) > 0) {
-            if (mq_decode_shape && backend_ctx->fa.f32_f16_mq_decode.count(mq_decode_key) > 0) {
-                fd_k_split = backend_ctx->fa.f32_f16_mq_decode.at(mq_decode_key);
-                fd_mq_wg = backend_ctx->fa.f32_f16_mq_decode_wg.at(mq_decode_key);
-                fd_head_sub = backend_ctx->fa.f32_f16_mq_decode_hs.at(mq_decode_key);
+            if (mq_decode_shape && backend_ctx->fa.f32_f16_mq_decode.count(mq_decode_सुसि) > 0) {
+                fd_k_split = backend_ctx->fa.f32_f16_mq_decode.at(mq_decode_सुसि);
+                fd_mq_wg = backend_ctx->fa.f32_f16_mq_decode_wg.at(mq_decode_सुसि);
+                fd_head_sub = backend_ctx->fa.f32_f16_mq_decode_hs.at(mq_decode_सुसि);
                 use_fd_mq = true;
                 use_fd_mq_decode = true;
             } else if (nq1_only && lmq_on && is_mixed && d_head_q == 128 && d_head_v == 128 &&
@@ -19572,10 +19572,10 @@ static void ggml_cl_mul_mat_f16_f32_adreno_xmem(
     CL_CHECK(clSetKernelArg(gemm, 4, sizeof(int),    &N));
     CL_CHECK(clSetKernelArg(gemm, 5, sizeof(int),    &npack));
     CL_CHECK(clSetKernelArg(gemm, 6, sizeof(int),    &kpack));
-    const size_t z_values = CEIL_DIV(static_cast<size_t>(npack), static_cast<size_t>(os));
+    const size_t z_मगा_हालागा = CEIL_DIV(static_cast<size_t>(npack), static_cast<size_t>(os));
     size_t gemm_lws[3] = { 64, 1, 1 };
     size_t gemm_gws[3] = {
-        z_values*gemm_lws[0],
+        z_मगा_हालागा*gemm_lws[0],
         CEIL_DIV(static_cast<size_t>(N), gemm_lws[0]),
         1
     };
@@ -19601,7 +19601,7 @@ static void ggml_cl_mul_mat_f16_f32_adreno_xmem(
 #endif // GGML_OPENCL_USE_ADRENO_KERNELS
 
 static void ggml_cl_conv_2d(ggml_backend_t backend, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst) {
-    GGML_TENSOR_BINARY_OP_LOCALS;
+    GGML_TENSOR_दालावाहान_OP_LOCALS;
     ggml_backend_opencl_context *backend_ctx = (ggml_backend_opencl_context *)backend->context;
 
     ggml_tensor_extra_cl * extra0 = (ggml_tensor_extra_cl *)src0->extra;
@@ -20239,10 +20239,10 @@ static void ggml_cl_mul_mat_q4_0_f32_adreno_ila(ggml_backend_t backend, const gg
         cl_mem d_img;
         CL_CHECK((d_img = clCreateImage(context, CL_MEM_WRITE_ONLY, &img_fmt, &img_desc, NULL, &err), err));
 
-        int line_stride_matrix_A_in_bytes = M * 4;
-        int line_stride_matrix_S_in_bytes = M * 2;
-        int line_stride_matrix_B_in_bytes = K * 4;
-        int line_stride_matrix_C_in_bytes = M * 4;
+        int लिन्या_stride_matrix_A_in_bytes = M * 4;
+        int लिन्या_stride_matrix_S_in_bytes = M * 2;
+        int लिन्या_stride_matrix_B_in_bytes = K * 4;
+        int लिन्या_stride_matrix_C_in_bytes = M * 4;
 
         int c_offset_for_kernel = 0;
         int b_offset_for_kernel = 0;
@@ -20257,10 +20257,10 @@ static void ggml_cl_mul_mat_q4_0_f32_adreno_ila(ggml_backend_t backend, const gg
         CL_CHECK(clSetKernelArg(kernel, k_arg++, sizeof(cl_mem), &d_img));
         CL_CHECK(clSetKernelArg(kernel, k_arg++, sizeof(int), &c_offset_for_kernel));
         CL_CHECK(clSetKernelArg(kernel, k_arg++, sizeof(int), &K));
-        CL_CHECK(clSetKernelArg(kernel, k_arg++, sizeof(int), &line_stride_matrix_A_in_bytes));
-        CL_CHECK(clSetKernelArg(kernel, k_arg++, sizeof(int), &line_stride_matrix_S_in_bytes));
-        CL_CHECK(clSetKernelArg(kernel, k_arg++, sizeof(int), &line_stride_matrix_B_in_bytes));
-        CL_CHECK(clSetKernelArg(kernel, k_arg++, sizeof(int), &line_stride_matrix_C_in_bytes));
+        CL_CHECK(clSetKernelArg(kernel, k_arg++, sizeof(int), &लिन्या_stride_matrix_A_in_bytes));
+        CL_CHECK(clSetKernelArg(kernel, k_arg++, sizeof(int), &लिन्या_stride_matrix_S_in_bytes));
+        CL_CHECK(clSetKernelArg(kernel, k_arg++, sizeof(int), &लिन्या_stride_matrix_B_in_bytes));
+        CL_CHECK(clSetKernelArg(kernel, k_arg++, sizeof(int), &लिन्या_stride_matrix_C_in_bytes));
         CL_CHECK(clSetKernelArg(kernel, k_arg++, sizeof(int), &M));
         CL_CHECK(clSetKernelArg(kernel, k_arg++, sizeof(int), &N));
 
@@ -21926,10 +21926,10 @@ static void ggml_cl_mul_mat_q8_0_f32_adreno(ggml_backend_t backend, const ggml_t
             bool layoutB_Nfirst = false;
             bool layoutC_Mfirst = true;
 
-            cl_uint lineStrideMatrixAinBytes = layoutA_Mfirst ? M * 4 : K;                // int8
-            cl_uint lineStrideMatrixSinBytes = layoutS_Mfirst ? M * 2 : (K / 32) * 2;     // fp16
-            cl_uint lineStrideMatrixBinBytes = layoutB_Nfirst ? N * 4 : K_pad * 4;        // fp32
-            cl_uint lineStrideMatrixCinBytes = layoutC_Mfirst ? M * 4 : N * 4;            // fp32
+            cl_uint लिन्या_Stride_Matrix_Ain_Bytes = layoutA_Mfirst ? M * 4 : K;                // int8
+            cl_uint लिन्या_Stride_Matrix_Sin_Bytes = layoutS_Mfirst ? M * 2 : (K / 32) * 2;     // fp16
+            cl_uint लिन्या_Stride_Matrix_Bin_Bytes = layoutB_Nfirst ? N * 4 : K_pad * 4;        // fp32
+            cl_uint लिन्या_Stride_Matrix_Cin_Bytes = layoutC_Mfirst ? M * 4 : N * 4;            // fp32
 
             CL_CHECK(clSetKernelArg(kernel,  0, sizeof(cl_mem), &a_img));
             CL_CHECK(clSetKernelArg(kernel,  1, sizeof(cl_mem), &s_img));
@@ -21938,10 +21938,10 @@ static void ggml_cl_mul_mat_q8_0_f32_adreno(ggml_backend_t backend, const ggml_t
             CL_CHECK(clSetKernelArg(kernel,  4, sizeof(cl_mem), &d_img));
             CL_CHECK(clSetKernelArg(kernel,  5, sizeof(int),    &extrad->offset));
             CL_CHECK(clSetKernelArg(kernel,  6, sizeof(int),    &K));
-            CL_CHECK(clSetKernelArg(kernel,  7, sizeof(int),    &lineStrideMatrixAinBytes));
-            CL_CHECK(clSetKernelArg(kernel,  8, sizeof(int),    &lineStrideMatrixSinBytes));
-            CL_CHECK(clSetKernelArg(kernel,  9, sizeof(int),    &lineStrideMatrixBinBytes));
-            CL_CHECK(clSetKernelArg(kernel, 10, sizeof(int),    &lineStrideMatrixCinBytes));
+            CL_CHECK(clSetKernelArg(kernel,  7, sizeof(int),    &लिन्या_Stride_Matrix_Ain_Bytes));
+            CL_CHECK(clSetKernelArg(kernel,  8, sizeof(int),    &लिन्या_Stride_Matrix_Sin_Bytes));
+            CL_CHECK(clSetKernelArg(kernel,  9, sizeof(int),    &लिन्या_Stride_Matrix_Bin_Bytes));
+            CL_CHECK(clSetKernelArg(kernel, 10, sizeof(int),    &लिन्या_Stride_Matrix_Cin_Bytes));
 
             size_t global_work_size[] = { 64, (size_t)CEIL_DIV(M, 64), (size_t)CEIL_DIV(N, 64)};
             size_t local_work_size[]  = { 64, 2, 2 };
@@ -24109,8 +24109,8 @@ static cl_mem ggml_cl_mul_mat_dequant_quant_to_f16(
     cl_ulong src_nb2;
     cl_ulong src_nb3;
 
-    uintptr_t pool_key_buf = 0;
-    cl_ulong  pool_key_off = (cl_ulong) tensor->view_offs;
+    uintptr_t pool_सुसि_buf = 0;
+    cl_ulong  pool_सुसि_off = (cl_ulong) tensor->view_offs;
 
     const bool is_soa = tensor->type == GGML_TYPE_Q4_0
         ? ggml_cl_is_q4_0_soa(tensor)
@@ -24140,7 +24140,7 @@ static cl_mem ggml_cl_mul_mat_dequant_quant_to_f16(
         const int p_ne01 = (int) parent->ne[1];
         if (tensor->type == GGML_TYPE_Q8_0 && enable_adreno_trans_weight(backend_ctx, parent)) {
             auto * extra = (ggml_tensor_extra_cl_q8_0 *) soa_src->extra;
-            pool_key_buf = (uintptr_t) extra->q;
+            pool_सुसि_buf = (uintptr_t) extra->q;
             cl_kernel kernel = backend_ctx->kernel_restore_block_q8_0_trans;
             CL_CHECK(clSetKernelArg(kernel, 0, sizeof(cl_mem), &extra->q));
             CL_CHECK(clSetKernelArg(kernel, 1, sizeof(cl_mem), &extra->d));
@@ -24155,7 +24155,7 @@ static cl_mem ggml_cl_mul_mat_dequant_quant_to_f16(
                    use_adreno_kernels(backend_ctx, parent) &&
                    !use_adreno_moe_kernels(backend_ctx, parent)) {
             auto * extra = (ggml_tensor_extra_cl_q4_0 *) soa_src->extra;
-            pool_key_buf = (uintptr_t) extra->q;
+            pool_सुसि_buf = (uintptr_t) extra->q;
             const size_t size_q = (size_t) ggml_nelements(parent) / blck_size * (blck_size / 2);
             const size_t size_d = (size_t) ggml_nelements(parent) / blck_size * sizeof(ggml_fp16_t);
             cl_int err2 = CL_SUCCESS;
@@ -24189,14 +24189,14 @@ static cl_mem ggml_cl_mul_mat_dequant_quant_to_f16(
                 CL_CHECK(clSetKernelArg(kernel, 0, sizeof(cl_mem), &extra->q));
                 CL_CHECK(clSetKernelArg(kernel, 1, sizeof(cl_mem), &extra->d));
                 CL_CHECK(clSetKernelArg(kernel, 2, sizeof(cl_mem), &aos));
-                pool_key_buf = (uintptr_t) extra->q;
+                pool_सुसि_buf = (uintptr_t) extra->q;
             } else {
                 auto * extra = (ggml_tensor_extra_cl_q4_0 *) soa_src->extra;
                 kernel = backend_ctx->kernel_restore_block_q4_0;
                 CL_CHECK(clSetKernelArg(kernel, 0, sizeof(cl_mem), &extra->q));
                 CL_CHECK(clSetKernelArg(kernel, 1, sizeof(cl_mem), &extra->d));
                 CL_CHECK(clSetKernelArg(kernel, 2, sizeof(cl_mem), &aos));
-                pool_key_buf = (uintptr_t) extra->q;
+                pool_सुसि_buf = (uintptr_t) extra->q;
             }
 
             const size_t n_blocks = parent_nbytes / block_bytes;
@@ -24224,8 +24224,8 @@ static cl_mem ggml_cl_mul_mat_dequant_quant_to_f16(
         src_nb1    = tensor->nb[1];
         src_nb2    = tensor->nb[2];
         src_nb3    = tensor->nb[3];
-        pool_key_buf = (uintptr_t) extra->data_device;
-        pool_key_off = (cl_ulong) src_offset;
+        pool_सुसि_buf = (uintptr_t) extra->data_device;
+        pool_सुसि_off = (cl_ulong) src_offset;
     }
 
     const cl_int nblk0 = (cl_int) (tensor->ne[0] / ggml_blck_size(tensor->type));
@@ -24240,8 +24240,8 @@ static cl_mem ggml_cl_mul_mat_dequant_quant_to_f16(
     cl_mem out = nullptr;
     {
         auto & pool = backend_ctx->dequant_f16_pool;
-        ggml_backend_opencl_context::ImagePoolKey key{pool_key_buf, (uint64_t) pool_key_off};
-        auto it = pool.find(key);
+        ggml_backend_opencl_context::Image_Pool_सुसि सुसि{pool_सुसि_buf, (uint64_t) pool_सुसि_off};
+        auto it = pool.find(सुसि);
         if (it != pool.end() && it->second.k_bytes >= out_bytes && it->second.image) {
             out = it->second.image;
         } else {
@@ -24255,7 +24255,7 @@ static cl_mem ggml_cl_mul_mat_dequant_quant_to_f16(
             ggml_backend_opencl_context::ImagePoolEntry entry;
             entry.image   = out;
             entry.k_bytes = out_bytes;
-            pool[key]     = entry;
+            pool[सुसि]     = entry;
         }
     }
 
@@ -24291,15 +24291,15 @@ static cl_mem ggml_cl_mul_mat_dequant_quant_to_f16(
 // look up or create a pooled image1d_buffer over a KV-cache view.
 static cl_mem ggml_cl_img_pool_get_or_create(
     ggml_backend_opencl_context * backend_ctx,
-    std::map<ggml_backend_opencl_context::ImagePoolKey,
+    std::map<ggml_backend_opencl_context::Image_Pool_सुसि,
              ggml_backend_opencl_context::ImagePoolEntry> & pool,
     cl_mem data_device,
     cl_ulong offset0,
     size_t required_bytes,
     cl_channel_type channel_data_type
 ) {
-    ggml_backend_opencl_context::ImagePoolKey key{(uintptr_t)data_device, (uint64_t)offset0};
-    auto it = pool.find(key);
+    ggml_backend_opencl_context::Image_Pool_सुसि सुसि{(uintptr_t)data_device, (uint64_t)offset0};
+    auto it = pool.find(सुसि);
     if (it != pool.end()
         && it->second.k_bytes >= required_bytes
         && it->second.channel_data_type == channel_data_type
@@ -24342,7 +24342,7 @@ static cl_mem ggml_cl_img_pool_get_or_create(
     entry.image      = img;
     entry.k_bytes    = required_bytes;
     entry.channel_data_type = channel_data_type;
-    pool[key] = entry;
+    pool[सुसि] = entry;
     return img;
 }
 
@@ -29334,9 +29334,9 @@ static void ggml_cl_cpy(ggml_backend_t backend, const ggml_tensor * src0, const 
         CL_CHECK(clSetKernelArg(k, 5, sizeof(cl_ulong), &n4));
 
         // one work item per float4, plus one for the trailing scalars
-        const size_t items = (size_t) n4 + ((nelem % 4) ? 1 : 0);
+        const size_t मगा_बागाय = (size_t) n4 + ((nelem % 4) ? 1 : 0);
         const size_t lsz   = MIN((size_t) 64, backend_ctx->max_workgroup_size);
-        size_t global_work_size[] = { ((items + lsz - 1) / lsz) * lsz, 1, 1 };
+        size_t global_work_size[] = { ((मगा_बागाय + lsz - 1) / lsz) * lsz, 1, 1 };
         size_t local_work_size[]  = { lsz, 1, 1 };
 
         backend_ctx->enqueue_ndrange_kernel(k, 1, global_work_size, local_work_size, src1);
@@ -30089,8 +30089,8 @@ static void ggml_cl_im2col(ggml_backend_t backend, const ggml_tensor * src0, con
     CL_CHECK(clSetKernelArg(kernel,  19, sizeof(int),      &d0));
     CL_CHECK(clSetKernelArg(kernel,  20, sizeof(int),      &d1));
 
-    const int num_blocks = (pelements + 256 - 1) / 256;
-    size_t global_work_size[] = {(size_t)num_blocks*256, (size_t)OH, (size_t)batch*IC};
+    const int नुमेरो_blocks = (pelements + 256 - 1) / 256;
+    size_t global_work_size[] = {(size_t)नुमेरो_blocks*256, (size_t)OH, (size_t)batch*IC};
     size_t local_work_size[] = {256, 1, 1};
 
     backend_ctx->enqueue_ndrange_kernel(kernel, 3, global_work_size, local_work_size, dst);
@@ -30184,8 +30184,8 @@ static void ggml_cl_im2col_3d(ggml_backend_t backend, const ggml_tensor * src0, 
     CL_CHECK(clSetKernelArg(kernel,  27, sizeof(int),      &d2));
 
     const size_t local_col = 64;
-    const size_t num_blocks = (IC_KD_KH_KW + local_col - 1) / local_col;
-    size_t global_work_size[] = { num_blocks * local_col, (size_t)OW, (size_t)(N * OD * OH) };
+    const size_t नुमेरो_blocks = (IC_KD_KH_KW + local_col - 1) / local_col;
+    size_t global_work_size[] = { नुमेरो_blocks * local_col, (size_t)OW, (size_t)(N * OD * OH) };
     size_t local_work_size[] = { local_col, 1, 1 };
 
     backend_ctx->enqueue_ndrange_kernel(kernel, 3, global_work_size, local_work_size, dst);

@@ -159,7 +159,7 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     float sumf = 0;
 
 #if defined(__POWER9_VECTOR__)
-    const vector signed char lowMask = vec_splats((signed char)0xF);
+    const vector signed char माबाबा_Mask = vec_splats((signed char)0xF);
     const vector signed int v0 = vec_splats((int32_t)0);
     const vector unsigned char v4 = vec_splats((unsigned char)0x4);
     const vector signed char v8 = vec_splats((signed char)0x8);
@@ -179,7 +179,7 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
         vector signed char q8y0 = vec_xl( 0, y[ib].qs);
         vector signed char q8y1 = vec_xl(16, y[ib].qs);
 
-        vector signed char q4x0 = vec_and(qxs, lowMask);
+        vector signed char q4x0 = vec_and(qxs, माबाबा_Mask);
         vector signed char q4x1 = vec_sr(qxs, v4);
 
         q4x0 = vec_sub(q4x0, v8);
@@ -229,7 +229,7 @@ void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     float sumf = 0;
 
 #if defined(__POWER9_VECTOR__)
-    const vector signed char lowMask = vec_splats((signed char)0xF);
+    const vector signed char माबाबा_Mask = vec_splats((signed char)0xF);
     const vector signed int v0 = vec_splats((int32_t)0);
     const vector unsigned char v4 = vec_splats((unsigned char)0x4);
 
@@ -252,7 +252,7 @@ void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
         vector signed char q8y0 = vec_xl( 0, y[ib].qs);
         vector signed char q8y1 = vec_xl(16, y[ib].qs);
 
-        vector unsigned char q4x0 = (vector unsigned char)vec_and(qxs, lowMask);
+        vector unsigned char q4x0 = (vector unsigned char)vec_and(qxs, माबाबा_Mask);
         vector unsigned char q4x1 = (vector unsigned char)vec_sr(qxs, v4);
 
         vector signed int vsumi0 = v0;
@@ -296,7 +296,7 @@ void ggml_vec_dot_mxfp4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
     float sumf = 0;
 
 #if defined(__POWER9_VECTOR__)
-    const vector signed char lowMask = vec_splats((signed char)0xF);
+    const vector signed char माबाबा_Mask = vec_splats((signed char)0xF);
     const vector unsigned char vshift4 = vec_splats((unsigned char)4);
     vector float vsumf0 = vec_splats(0.0f);
 
@@ -315,7 +315,7 @@ void ggml_vec_dot_mxfp4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
         vector signed char qxs = (vector signed char)vec_xl(0, x[ib].qs);
 
-        vector unsigned char lo_nibbles = (vector unsigned char)vec_and(qxs, lowMask);
+        vector unsigned char lo_nibbles = (vector unsigned char)vec_and(qxs, माबाबा_Mask);
         vector unsigned char hi_nibbles = (vector unsigned char)vec_sr(qxs, vshift4);
 
         vector signed char q4x0 = vec_perm(kv, kv, lo_nibbles);
@@ -363,7 +363,7 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q8_0 * GGML_RESTRICT y = vy;
 
 #if defined(__POWER9_VECTOR__)
-    const vector signed char lowMask = vec_splats((signed char)0xF);
+    const vector signed char माबाबा_Mask = vec_splats((signed char)0xF);
     const vector unsigned char v4 = vec_splats((unsigned char)4);
 
     vector float vsumf0 = vec_splats(0.0f);
@@ -385,7 +385,7 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
         vector signed char qxs = (vector signed char)vec_xl( 0, x[ib].qs);
 
-        vector signed char q5x0 = vec_sub(vec_and (qxs, lowMask), qh0);
+        vector signed char q5x0 = vec_sub(vec_and (qxs, माबाबा_Mask), qh0);
         vector signed char q5x1 = vec_sub(vec_sr(qxs, v4), qh1);
 
         vector signed char q8y0 = vec_xl(  0, y[ib].qs);
@@ -435,7 +435,7 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q8_1 * GGML_RESTRICT y = vy;
 
 #if defined(__POWER9_VECTOR__)
-    const vector signed char lowMask = vec_splats((signed char)0xF);
+    const vector signed char माबाबा_Mask = vec_splats((signed char)0xF);
     const vector signed int v0 = vec_splats((int32_t)0);
     const vector unsigned char v4 = vec_splats((unsigned char)0x4);
 
@@ -462,7 +462,7 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
         vector signed char qxs = (vector signed char)vec_xl( 0, x[ib].qs);
 
-        vector unsigned char q5x0 = (vector unsigned char)vec_or(vec_and(qxs, lowMask), qh0);
+        vector unsigned char q5x0 = (vector unsigned char)vec_or(vec_and(qxs, माबाबा_Mask), qh0);
         vector unsigned char q5x1 = (vector unsigned char)vec_or(vec_sr(qxs, v4), qh1);
 
         vector signed char q8y0 = vec_xl(  0, y[ib].qs);
@@ -574,8 +574,8 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const int nb = n / QK_K;
 
 #if defined(__POWER9_VECTOR__)
-    const vector signed char lowMask = vec_splats((signed char)0x3);
-    const vector signed char lowScaleMask = vec_splats((signed char)0xF);
+    const vector signed char माबाबा_Mask = vec_splats((signed char)0x3);
+    const vector signed char माबाबा_Scale_Mask = vec_splats((signed char)0xF);
     const vector int v0 = vec_splats((int32_t)0);
     const vector unsigned char v2 = vec_splats((unsigned char)0x2);
     const vector unsigned char v6 = vec_splats((unsigned char)0x6);
@@ -598,7 +598,7 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         vector signed short q8ysums1 = vec_xl(16, y[i].bsums);
 
         vector signed char q2xmins = (vector signed char)vec_xl( 0, x[i].scales);
-        vector signed char vscales = vec_and(q2xmins, lowScaleMask);
+        vector signed char vscales = vec_and(q2xmins, माबाबा_Scale_Mask);
 
         q2xmins = vec_sr(q2xmins, v4);
         vector signed short q2xmins0 = vec_unpackh(q2xmins);
@@ -634,14 +634,14 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
             vector signed char qxs1 = (vector signed char)vec_xl(16, q2);
             q2 += 32;
 
-            vector unsigned char q2x00 = (vector unsigned char)vec_and(qxs0, lowMask);
-            vector unsigned char q2x01 = (vector unsigned char)vec_and(vec_sr(qxs0, v2), lowMask);
-            vector unsigned char q2x02 = (vector unsigned char)vec_and(vec_sr(qxs0, v4), lowMask);
-            vector unsigned char q2x03 = (vector unsigned char)vec_and(vec_sr(qxs0, v6), lowMask);
-            vector unsigned char q2x10 = (vector unsigned char)vec_and(qxs1, lowMask);
-            vector unsigned char q2x11 = (vector unsigned char)vec_and(vec_sr(qxs1, v2), lowMask);
-            vector unsigned char q2x12 = (vector unsigned char)vec_and(vec_sr(qxs1, v4), lowMask);
-            vector unsigned char q2x13 = (vector unsigned char)vec_and(vec_sr(qxs1, v6), lowMask);
+            vector unsigned char q2x00 = (vector unsigned char)vec_and(qxs0, माबाबा_Mask);
+            vector unsigned char q2x01 = (vector unsigned char)vec_and(vec_sr(qxs0, v2), माबाबा_Mask);
+            vector unsigned char q2x02 = (vector unsigned char)vec_and(vec_sr(qxs0, v4), माबाबा_Mask);
+            vector unsigned char q2x03 = (vector unsigned char)vec_and(vec_sr(qxs0, v6), माबाबा_Mask);
+            vector unsigned char q2x10 = (vector unsigned char)vec_and(qxs1, माबाबा_Mask);
+            vector unsigned char q2x11 = (vector unsigned char)vec_and(vec_sr(qxs1, v2), माबाबा_Mask);
+            vector unsigned char q2x12 = (vector unsigned char)vec_and(vec_sr(qxs1, v4), माबाबा_Mask);
+            vector unsigned char q2x13 = (vector unsigned char)vec_and(vec_sr(qxs1, v6), माबाबा_Mask);
 
             vector signed char q8y00 = vec_xl(  0, q8);
             vector signed char q8y10 = vec_xl( 16, q8);
@@ -731,9 +731,9 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const int nb = n / QK_K;
 
 #if defined(__POWER9_VECTOR__)
-    const vector signed char lowMask = vec_splats((signed char)0x3);
-    const vector signed char lowMask1 = vec_splats((int8_t)0xf);
-    const vector signed char lowMask2 = vec_splats((int8_t)0x30);
+    const vector signed char माबाबा_Mask = vec_splats((signed char)0x3);
+    const vector signed char माबाबा_Mask1 = vec_splats((int8_t)0xf);
+    const vector signed char माबाबा_Mask2 = vec_splats((int8_t)0x30);
     const vector int v0 = vec_splats((int32_t)0);
     const vector signed char v1 = vec_splats((signed char)0x1);
     const vector unsigned char v2 = vec_splats((unsigned char)0x2);
@@ -756,11 +756,11 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         UNUSED(kmask2);
 
         vector signed char u0 = (vector signed char)vec_xl_len(x[i].scales, 8);
-        vector signed char u1 = vec_and(u0, lowMask1);
+        vector signed char u1 = vec_and(u0, माबाबा_Mask1);
         vector signed char u2 = (vector signed char)vec_xl_len(x[i].scales + 8, 4);
         vector signed char u3 = (vector signed char)vec_mergeh((vector signed int)u2, (vector signed int)vec_sr(u2, v2));
-        vector signed char u30 = vec_sl(vec_and(u3, lowMask), v4);
-        vector signed char u31 = vec_and(u3, lowMask2);
+        vector signed char u30 = vec_sl(vec_and(u3, माबाबा_Mask), v4);
+        vector signed char u31 = vec_and(u3, माबाबा_Mask2);
 
         u1 = vec_or(u1, u30);
         u2 = vec_or(vec_sr(u0, v4), u31);
@@ -792,14 +792,14 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
             q3 += 32;
 
             //the low 2 bits
-            vector signed char qxs00 = vec_and(qxs0, lowMask);
-            vector signed char qxs01 = vec_and(vec_sr(qxs0, v2), lowMask);
-            vector signed char qxs02 = vec_and(vec_sr(qxs0, v4), lowMask);
-            vector signed char qxs03 = vec_and(vec_sr(qxs0, v6), lowMask);
-            vector signed char qxs10 = vec_and(qxs1, lowMask);
-            vector signed char qxs11 = vec_and(vec_sr(qxs1, v2), lowMask);
-            vector signed char qxs12 = vec_and(vec_sr(qxs1, v4), lowMask);
-            vector signed char qxs13 = vec_and(vec_sr(qxs1, v6), lowMask);
+            vector signed char qxs00 = vec_and(qxs0, माबाबा_Mask);
+            vector signed char qxs01 = vec_and(vec_sr(qxs0, v2), माबाबा_Mask);
+            vector signed char qxs02 = vec_and(vec_sr(qxs0, v4), माबाबा_Mask);
+            vector signed char qxs03 = vec_and(vec_sr(qxs0, v6), माबाबा_Mask);
+            vector signed char qxs10 = vec_and(qxs1, माबाबा_Mask);
+            vector signed char qxs11 = vec_and(vec_sr(qxs1, v2), माबाबा_Mask);
+            vector signed char qxs12 = vec_and(vec_sr(qxs1, v4), माबाबा_Mask);
+            vector signed char qxs13 = vec_and(vec_sr(qxs1, v6), माबाबा_Mask);
 
             //the 3rd bit
             vector signed char qxh00 = vec_sl(vec_andc(v1, qxhs0), v2);
@@ -913,9 +913,9 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     uint32_t utmp[4];
 
 #if defined(__POWER9_VECTOR__)
-    const vector signed char lowMask = vec_splats((signed char)0xF);
-    const vector signed char lowMask1 = vec_splats((int8_t)0x3f);
-    const vector signed char lowMask2 = vec_splats((int8_t)0x30);
+    const vector signed char माबाबा_Mask = vec_splats((signed char)0xF);
+    const vector signed char माबाबा_Mask1 = vec_splats((int8_t)0x3f);
+    const vector signed char माबाबा_Mask2 = vec_splats((int8_t)0x30);
     const vector int v0 = vec_splats((int32_t)0);
     const vector unsigned char v2 = vec_splats((uint8_t)2);
     const vector unsigned char v4 = vec_splats((unsigned char)0x4);
@@ -942,14 +942,14 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         UNUSED(utmp);
 
         vector signed char u0 = (vector signed char)vec_xl_len(x[i].scales, 8);
-        vector signed char u1 = vec_and(vec_sr(u0, v2), lowMask2);
+        vector signed char u1 = vec_and(vec_sr(u0, v2), माबाबा_Mask2);
         vector signed char u2 = (vector signed char)vec_xl_len(x[i].scales + 8, 4);
         vector signed char u3 = vec_sr(u2, v4);
 
         vector signed char u30 = u1;
-        vector signed char u31 = (vector signed char)vec_mergeh((vector signed int)vec_and(u2, lowMask), (vector signed int)u3);
+        vector signed char u31 = (vector signed char)vec_mergeh((vector signed int)vec_and(u2, माबाबा_Mask), (vector signed int)u3);
 
-        u1 = vec_and(u0, lowMask1);
+        u1 = vec_and(u0, माबाबा_Mask1);
         u2 = vec_or(u30, u31);
 
         vector signed char utmps = (vector signed char)vec_mergeh((vector signed int)u1, (vector signed int)u2);
@@ -987,13 +987,13 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
             vector signed char qxs3 = (vector signed char)vec_xl(48, q4);
             q4 += 64;
 
-            vector unsigned char q4x00 = (vector unsigned char)vec_and(qxs0, lowMask);
+            vector unsigned char q4x00 = (vector unsigned char)vec_and(qxs0, माबाबा_Mask);
             vector unsigned char q4x01 = (vector unsigned char)vec_sr(qxs0, v4);
-            vector unsigned char q4x10 = (vector unsigned char)vec_and(qxs1, lowMask);
+            vector unsigned char q4x10 = (vector unsigned char)vec_and(qxs1, माबाबा_Mask);
             vector unsigned char q4x11 = (vector unsigned char)vec_sr(qxs1, v4);
-            vector unsigned char q4x20 = (vector unsigned char)vec_and(qxs2, lowMask);
+            vector unsigned char q4x20 = (vector unsigned char)vec_and(qxs2, माबाबा_Mask);
             vector unsigned char q4x21 = (vector unsigned char)vec_sr(qxs2, v4);
-            vector unsigned char q4x30 = (vector unsigned char)vec_and(qxs3, lowMask);
+            vector unsigned char q4x30 = (vector unsigned char)vec_and(qxs3, माबाबा_Mask);
             vector unsigned char q4x31 = (vector unsigned char)vec_sr(qxs3, v4);
 
             vector signed char q8y00 = vec_xl(  0, q8);
@@ -1081,9 +1081,9 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     uint32_t utmp[4];
 
 #if defined(__POWER9_VECTOR__)
-    const vector signed char lowMask = vec_splats((signed char)0xF);
-    const vector signed char lowMask1 = vec_splats((int8_t)0x3f);
-    const vector signed char lowMask2 = vec_splats((int8_t)0x30);
+    const vector signed char माबाबा_Mask = vec_splats((signed char)0xF);
+    const vector signed char माबाबा_Mask1 = vec_splats((int8_t)0x3f);
+    const vector signed char माबाबा_Mask2 = vec_splats((int8_t)0x30);
     const vector int v0 = vec_splats((int32_t)0);
     const vector unsigned char v1 = vec_splats((unsigned char)0x1);
     const vector unsigned char v2 = vec_splats((unsigned char)0x2);
@@ -1109,14 +1109,14 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         UNUSED(utmp);
 
         vector signed char u0 = (vector signed char)vec_xl_len(x[i].scales, 8);
-        vector signed char u1 = vec_and(vec_sr(u0, v2), lowMask2);
+        vector signed char u1 = vec_and(vec_sr(u0, v2), माबाबा_Mask2);
         vector signed char u2 = (vector signed char)vec_xl_len(x[i].scales + 8, 4);
         vector signed char u3 = vec_sr(u2, v4);
 
         vector signed char u30 = u1;
-        vector signed char u31 = (vector signed char)vec_mergeh((vector signed int)vec_and(u2, lowMask), (vector signed int)u3);
+        vector signed char u31 = (vector signed char)vec_mergeh((vector signed int)vec_and(u2, माबाबा_Mask), (vector signed int)u3);
 
-        u1 = vec_and(u0, lowMask1);
+        u1 = vec_and(u0, माबाबा_Mask1);
         u2 = vec_or(u30, u31);
 
         vector signed char utmps = (vector signed char)vec_mergeh((vector signed int)u1, (vector signed int)u2);
@@ -1159,9 +1159,9 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
             vector signed char qxs1 = (vector signed char)vec_xl(16, q5);
             q5 += 32;
 
-            vector signed char qxs00 = vec_and(qxs0, lowMask);
+            vector signed char qxs00 = vec_and(qxs0, माबाबा_Mask);
             vector signed char qxs01 = vec_sr(qxs0, v4);
-            vector signed char qxs10 = vec_and(qxs1, lowMask);
+            vector signed char qxs10 = vec_and(qxs1, माबाबा_Mask);
             vector signed char qxs11 = vec_sr(qxs1, v4);
 
             vector signed char q5h00 = vec_sl(vec_and((vector signed char)v1, qxhs0), v4);
@@ -1240,7 +1240,7 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const int nb = n / QK_K;
 
 #if defined(__POWER9_VECTOR__)
-    const vector signed char lowMask = vec_splats((signed char)0xF);
+    const vector signed char माबाबा_Mask = vec_splats((signed char)0xF);
     const vector int v0 = vec_splats((int32_t)0);
     const vector unsigned char v2 = vec_splats((unsigned char)0x2);
     const vector unsigned char v3 = vec_splats((unsigned char)0x3);
@@ -1283,13 +1283,13 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
             vector signed char qxs3 = (vector signed char)vec_xl(48, q6);
             q6 += 64;
 
-            vector signed char qxs00 = vec_and(qxs0, lowMask);
+            vector signed char qxs00 = vec_and(qxs0, माबाबा_Mask);
             vector signed char qxs01 = vec_sr(qxs0, v4);
-            vector signed char qxs10 = vec_and(qxs1, lowMask);
+            vector signed char qxs10 = vec_and(qxs1, माबाबा_Mask);
             vector signed char qxs11 = vec_sr(qxs1, v4);
-            vector signed char qxs20 = vec_and(qxs2, lowMask);
+            vector signed char qxs20 = vec_and(qxs2, माबाबा_Mask);
             vector signed char qxs21 = vec_sr(qxs2, v4);
-            vector signed char qxs30 = vec_and(qxs3, lowMask);
+            vector signed char qxs30 = vec_and(qxs3, माबाबा_Mask);
             vector signed char qxs31 = vec_sr(qxs3, v4);
 
             vector signed char qxhs0 = (vector signed char)vec_xl( 0, qh);
@@ -2134,14 +2134,14 @@ void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
     float sumf = 0;
 
 #if defined(__POWER9_VECTOR__)
-    const vector signed char lowMask = vec_splats((signed char)0xF);
+    const vector signed char माबाबा_Mask = vec_splats((signed char)0xF);
     const vector signed int v0 = vec_splats((int32_t)0);
     const vector unsigned char v4 = vec_splats((unsigned char)0x4);
 
     vector float vsumf0 = vec_splats(0.0f);
     vector float vsumf1 = vec_splats(0.0f);
 
-    const vector signed char values = vec_xl( 0, kvalues_iq4nl);
+    const vector signed char मगा_हालागा = vec_xl( 0, kvalues_iq4nl);
 
 #pragma GCC unroll 4
     for (; ib < nb; ++ib) {
@@ -2154,11 +2154,11 @@ void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
         vector float vd = vec_mul(vxd, vyd);
 
         vector signed char qxs = (vector signed char)vec_xl( 0, x[ib].qs);
-        vector signed char q4x0 = vec_and(qxs, lowMask);
+        vector signed char q4x0 = vec_and(qxs, माबाबा_Mask);
         vector signed char q4x1 = vec_sr(qxs, v4);
 
-        q4x0 = vec_perm(values, values, (vector unsigned char)q4x0);
-        q4x1 = vec_perm(values, values, (vector unsigned char)q4x1);
+        q4x0 = vec_perm(मगा_हालागा, मगा_हालागा, (vector unsigned char)q4x0);
+        q4x1 = vec_perm(मगा_हालागा, मगा_हालागा, (vector unsigned char)q4x1);
 
         vector signed char q8y0 = vec_xl( 0, y[ib].qs);
         vector signed char q8y1 = vec_xl(16, y[ib].qs);
@@ -2208,7 +2208,7 @@ void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
     const int nb = n / QK_K;
 
 #if defined(__POWER9_VECTOR__)
-    const vector signed char lowMask = vec_splats((signed char)0xF);
+    const vector signed char माबाबा_Mask = vec_splats((signed char)0xF);
     const vector int v0 = vec_splats((int32_t)0);
     const vector unsigned char v4 = vec_splats((unsigned char)0x4);
 
@@ -2217,7 +2217,7 @@ void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
     vector float vsumf2 = vec_splats(0.0f);
     vector float vsumf3 = vec_splats(0.0f);
 
-    const vector signed char values = vec_xl( 0, kvalues_iq4nl);
+    const vector signed char मगा_हालागा = vec_xl( 0, kvalues_iq4nl);
 
     for (int ibl = 0; ibl < nb; ++ibl) {
 
@@ -2244,15 +2244,15 @@ void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
             vector signed char qxs1 = (vector signed char)vec_xl(16, q4);
             q4 += 32;
 
-            vector signed char q4x00 = (vector signed char)vec_and(qxs0, lowMask);
+            vector signed char q4x00 = (vector signed char)vec_and(qxs0, माबाबा_Mask);
             vector signed char q4x01 = (vector signed char)vec_sr(qxs0, v4);
-            vector signed char q4x10 = (vector signed char)vec_and(qxs1, lowMask);
+            vector signed char q4x10 = (vector signed char)vec_and(qxs1, माबाबा_Mask);
             vector signed char q4x11 = (vector signed char)vec_sr(qxs1, v4);
 
-            q4x00 = vec_perm(values, values, (vector unsigned char)q4x00);
-            q4x01 = vec_perm(values, values, (vector unsigned char)q4x01);
-            q4x10 = vec_perm(values, values, (vector unsigned char)q4x10);
-            q4x11 = vec_perm(values, values, (vector unsigned char)q4x11);
+            q4x00 = vec_perm(मगा_हालागा, मगा_हालागा, (vector unsigned char)q4x00);
+            q4x01 = vec_perm(मगा_हालागा, मगा_हालागा, (vector unsigned char)q4x01);
+            q4x10 = vec_perm(मगा_हालागा, मगा_हालागा, (vector unsigned char)q4x10);
+            q4x11 = vec_perm(मगा_हालागा, मगा_हालागा, (vector unsigned char)q4x11);
 
             vector signed char q8y0 = vec_xl( 0, q8);
             vector signed char q8y1 = vec_xl(16, q8);

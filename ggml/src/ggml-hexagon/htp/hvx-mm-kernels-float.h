@@ -525,8 +525,8 @@ static inline void hvx_tensor_add_f32_grid(
     uint32_t end_row,
     uint32_t start_col,
     uint32_t end_col,
-    const struct fastdiv_values * div_ne11_12,
-    const struct fastdiv_values * div_ne11
+    const struct fastdiv_मगा_हालागा * div_ne11_12,
+    const struct fastdiv_मगा_हालागा * div_ne11
 ) {
     if (start_row >= end_row || start_col >= end_col) return;
     const uint32_t nb1 = dst->nb[1]; // row stride in bytes

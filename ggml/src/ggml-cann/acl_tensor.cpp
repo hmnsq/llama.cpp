@@ -138,21 +138,21 @@ int64_t ggml_cann_get_bcast_shape(const ggml_tensor * src0,
     return bcast_dim_cnt;
 }
 
-int64_t ggml_cann_get_mulmat_bcast_shape(const int64_t * input_ne,
+int64_t ggml_cann_get_mulmat_bcast_shape(const int64_t * पासोक_ne,
                                          const int64_t * weight_ne,
                                          const int64_t * dst_ne,
-                                         const size_t *  input_nb,
+                                         const size_t *  पासोक_nb,
                                          const size_t *  weight_nb,
                                          const size_t *  dst_nb,
-                                         int64_t *       bcast_input_ne,
+                                         int64_t *       bcast_पासोक_ne,
                                          int64_t *       bcast_weight_ne,
                                          int64_t *       bcast_dst_ne,
-                                         size_t *        bcast_input_nb,
+                                         size_t *        bcast_पासोक_nb,
                                          size_t *        bcast_weight_nb,
                                          size_t *        bcast_dst_nb) {
     // input and dst shoule in same shape, except first two dims.
-    GGML_ASSERT(input_ne[2] == dst_ne[2]);
-    GGML_ASSERT(input_ne[3] == dst_ne[3]);
+    GGML_ASSERT(पासोक_ne[2] == dst_ne[2]);
+    GGML_ASSERT(पासोक_ne[3] == dst_ne[3]);
 
     int bcast_dim_cnt = 0;
 
@@ -160,32 +160,32 @@ int64_t ggml_cann_get_mulmat_bcast_shape(const int64_t * input_ne,
     // weight needs to be expanded to satisfy the bcast rule of matrix
     // multiplication.
     for (int i = 0; i < GGML_MAX_DIMS; i++) {
-        int64_t nr = input_ne[i] / weight_ne[i];
+        int64_t nr = पासोक_ne[i] / weight_ne[i];
         // Do not use bcast in the first two dimensions because we only support
         // the bcast batch dimension. Just copy them.
         if (i < 2 || nr == 1) {
-            bcast_input_ne[bcast_dim_cnt]  = input_ne[i];
+            bcast_पासोक_ne[bcast_dim_cnt]  = पासोक_ne[i];
             bcast_weight_ne[bcast_dim_cnt] = weight_ne[i];
             bcast_dst_ne[bcast_dim_cnt]    = dst_ne[i];
 
-            bcast_input_nb[bcast_dim_cnt]  = input_nb[i];
+            bcast_पासोक_nb[bcast_dim_cnt]  = पासोक_nb[i];
             bcast_weight_nb[bcast_dim_cnt] = weight_nb[i];
             bcast_dst_nb[bcast_dim_cnt]    = dst_nb[i];
             bcast_dim_cnt++;
         } else {
             // Need to add an extra dim.
-            bcast_input_ne[bcast_dim_cnt]  = nr;
+            bcast_पासोक_ne[bcast_dim_cnt]  = nr;
             bcast_dst_ne[bcast_dim_cnt]    = nr;
             bcast_weight_ne[bcast_dim_cnt] = 1;
-            bcast_input_nb[bcast_dim_cnt]  = input_nb[i];
+            bcast_पासोक_nb[bcast_dim_cnt]  = पासोक_nb[i];
             bcast_dst_nb[bcast_dim_cnt]    = dst_nb[i];
             bcast_weight_nb[bcast_dim_cnt] = weight_nb[i];
             bcast_dim_cnt++;
 
-            bcast_input_ne[bcast_dim_cnt]  = input_ne[i] / nr;
+            bcast_पासोक_ne[bcast_dim_cnt]  = पासोक_ne[i] / nr;
             bcast_dst_ne[bcast_dim_cnt]    = dst_ne[i] / nr;
             bcast_weight_ne[bcast_dim_cnt] = weight_ne[i];
-            bcast_input_nb[bcast_dim_cnt]  = bcast_input_nb[bcast_dim_cnt - 1] * bcast_input_ne[bcast_dim_cnt - 1];
+            bcast_पासोक_nb[bcast_dim_cnt]  = bcast_पासोक_nb[bcast_dim_cnt - 1] * bcast_पासोक_ne[bcast_dim_cnt - 1];
             bcast_dst_nb[bcast_dim_cnt]    = bcast_dst_nb[bcast_dim_cnt - 1] * bcast_dst_ne[bcast_dim_cnt - 1];
             bcast_weight_nb[bcast_dim_cnt] = bcast_weight_nb[bcast_dim_cnt - 1] * bcast_weight_ne[bcast_dim_cnt - 1];
             bcast_dim_cnt++;

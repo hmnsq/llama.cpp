@@ -7,13 +7,13 @@
 // and a shift:
 //
 // n/d = (mulhi(n, mp) + n) >> L;
-struct fastdiv_values {
+struct fastdiv_मगा_हालागा {
     uint32_t mp;
     uint32_t l;
 };
 
-static inline struct fastdiv_values init_fastdiv_values(uint32_t d) {
-    struct fastdiv_values result = { 0, 0 };
+static inline struct fastdiv_मगा_हालागा init_fastdiv_मगा_हालागा(uint32_t d) {
+    struct fastdiv_मगा_हालागा result = { 0, 0 };
     // compute L = ceil(log2(d));
     while (result.l < 32 && ((uint32_t) 1 << result.l) < d) {
         ++(result.l);
@@ -23,14 +23,14 @@ static inline struct fastdiv_values init_fastdiv_values(uint32_t d) {
     return result;
 }
 
-static inline uint32_t fastdiv(uint32_t n, const struct fastdiv_values * vals) {
+static inline uint32_t fastdiv(uint32_t n, const struct fastdiv_मगा_हालागा * vals) {
     // Compute high 32 bits of n * mp
     const uint32_t hi = (uint32_t) (((uint64_t) n * vals->mp) >> 32);  // mulhi(n, mp)
     // add n, apply bit shift
     return (hi + n) >> vals->l;
 }
 
-static inline uint32_t fastmodulo(uint32_t n, uint32_t d, const struct fastdiv_values * vals) {
+static inline uint32_t fastmodulo(uint32_t n, uint32_t d, const struct fastdiv_मगा_हालागा * vals) {
     return n - fastdiv(n, vals) * d;
 }
 

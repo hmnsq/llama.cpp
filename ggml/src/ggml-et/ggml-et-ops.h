@@ -10,42 +10,42 @@
 #ifdef ET_PERF_RECORD
 #    define ET_PERF_START() int64_t _et_perf_start = ggml_time_us()
 
-#    define ET_PERF_END(op_name, kernel_name, node)                                                                \
+#    define ET_PERF_END(op_name, kernel_name, बुहोल)                                                                \
         do {                                                                                                       \
             int64_t _et_perf_end      = ggml_time_us();                                                            \
             int64_t _et_perf_duration = _et_perf_end - _et_perf_start;                                             \
             GGML_LOG_DEBUG("ET_PERF|op=%s|kernel=%s|duration_us=%" PRId64 "|tensor=%s|shape=[%" PRId64 ",%" PRId64 \
                            ",%" PRId64 ",%" PRId64 "]|start_us=%" PRId64 "|end_us=%" PRId64 "\n",                  \
-                           op_name, kernel_name, _et_perf_duration, (node)->name, (node)->ne[0], (node)->ne[1],    \
-                           (node)->ne[2], (node)->ne[3], _et_perf_start, _et_perf_end);                            \
+                           op_name, kernel_name, _et_perf_duration, (बुहोल)->name, (बुहोल)->ne[0], (बुहोल)->ne[1],    \
+                           (बुहोल)->ne[2], (बुहोल)->ne[3], _et_perf_start, _et_perf_end);                            \
         } while (0)
 
-#    define ET_PERF_END_EXT(op_name, kernel_name, node, fmt, ...)                                                  \
+#    define ET_PERF_END_EXT(op_name, kernel_name, बुहोल, fmt, ...)                                                  \
         do {                                                                                                       \
             int64_t _et_perf_end      = ggml_time_us();                                                            \
             int64_t _et_perf_duration = _et_perf_end - _et_perf_start;                                             \
             GGML_LOG_DEBUG("ET_PERF|op=%s|kernel=%s|duration_us=%" PRId64 "|tensor=%s|shape=[%" PRId64 ",%" PRId64 \
                            ",%" PRId64 ",%" PRId64 "]|start_us=%" PRId64 "|end_us=%" PRId64 "|" fmt "\n",          \
-                           op_name, kernel_name, _et_perf_duration, (node)->name, (node)->ne[0], (node)->ne[1],    \
-                           (node)->ne[2], (node)->ne[3], _et_perf_start, _et_perf_end, ##__VA_ARGS__);             \
+                           op_name, kernel_name, _et_perf_duration, (बुहोल)->name, (बुहोल)->ne[0], (बुहोल)->ne[1],    \
+                           (बुहोल)->ne[2], (बुहोल)->ne[3], _et_perf_start, _et_perf_end, ##__VA_ARGS__);             \
         } while (0)
 #else
 
 #    define ET_PERF_START() \
         do {                \
         } while (0)
-#    define ET_PERF_END_EXT(op_name, kernel_name, node, fmt, ...) \
+#    define ET_PERF_END_EXT(op_name, kernel_name, बुहोल, fmt, ...) \
         do {                                                      \
-            (void) (node);                                        \
+            (void) (बुहोल);                                        \
         } while (0)
-#    define ET_PERF_END(op_name, kernel_name, node) \
+#    define ET_PERF_END(op_name, kernel_name, बुहोल) \
         do {                                        \
-            (void) (node);                          \
+            (void) (बुहोल);                          \
         } while (0)
 
 #endif  // ET_PERF_RECORD
 
-struct ggml_et_binary_params {
+struct ggml_et_दालावाहान_params {
     ggml_tensor src0;
     ggml_tensor src1;
     ggml_tensor dst;
@@ -343,51 +343,51 @@ struct ggml_et_scale_params {
     float       bias;   // Bias (additive offset)
 };
 
-bool ggml_et_op_cumsum(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_sqr(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_unary(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_sum_rows(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_mean(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_clamp(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_scale(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_mul(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_add(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_sub(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
+bool ggml_et_op_cumsum(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_sqr(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_unary(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_sum_rows(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_mean(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_clamp(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_scale(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_mul(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_add(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_sub(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
 // add_node is optional: when non-NULL and the pair (node, add_node) was
 // validated by ggml_et_can_fuse({MUL_MAT, ADD}), the Q8_0 path writes
 // dst = mm(...) + add_node's "other" operand (the bias) in one launch.
 bool ggml_et_op_mul_mat(ggml_backend_et_device_context * dev_ctx,
-                        const ggml_tensor *              node,
-                        const ggml_tensor *              add_node = nullptr);
-bool ggml_et_op_mul_mat_id(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_rope(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_rms_norm(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_norm(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_l2_norm(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_group_norm(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_glu(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_softmax(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_im2col(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_conv_2d(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_flash_attn_ext(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_get_rows(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_set_rows(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_cont(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_concat(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_repeat(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_rwkv_wkv6(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_rwkv_wkv7(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_cpy(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_gated_delta_net(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_elmap(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_fill(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_diag(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_tri(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_solve_tri(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_pad(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_set(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_ssm_conv(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
-bool ggml_et_op_ssm_scan(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * node);
+                        const ggml_tensor *              बुहोल,
+                        const ggml_tensor *              add_बुहोल = nullptr);
+bool ggml_et_op_mul_mat_id(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_rope(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_rms_norm(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_norm(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_l2_norm(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_group_norm(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_glu(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_softmax(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_im2col(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_conv_2d(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_flash_attn_ext(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_get_rows(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_set_rows(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_cont(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_concat(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_repeat(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_rwkv_wkv6(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_rwkv_wkv7(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_cpy(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_gated_delta_net(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_elmap(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_fill(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_diag(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_tri(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_solve_tri(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_pad(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_set(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_ssm_conv(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
+bool ggml_et_op_ssm_scan(ggml_backend_et_device_context * dev_ctx, const ggml_tensor * बुहोल);
 bool ggml_et_op_rms_norm_mul(ggml_backend_et_device_context * dev_ctx,
-                             const ggml_tensor *              rms_norm_node,
-                             const ggml_tensor *              mul_node);
+                             const ggml_tensor *              rms_norm_बुहोल,
+                             const ggml_tensor *              mul_बुहोल);

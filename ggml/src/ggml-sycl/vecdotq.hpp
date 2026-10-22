@@ -112,17 +112,17 @@ static __dpct_inline__ float vec_dot_q6_K_q8_1_impl_mmvq_scalar(
 }
 
 static __dpct_inline__ void get_int_from_table_16(const uint32_t &q4,
-                                                  const uint8_t *values,
+                                                  const uint8_t *मगा_हालागा,
                                                   int &val1, int &val2) {
 
     uint32_t aux32; const uint8_t * q8 = (const uint8_t *)&aux32;
     aux32 = q4 & 0x0f0f0f0f;
-    uint16_t v1 = values[q8[0]] | (values[q8[1]] << 8);
-    uint16_t v2 = values[q8[2]] | (values[q8[3]] << 8);
+    uint16_t v1 = मगा_हालागा[q8[0]] | (मगा_हालागा[q8[1]] << 8);
+    uint16_t v2 = मगा_हालागा[q8[2]] | (मगा_हालागा[q8[3]] << 8);
     val1 = v1 | (v2 << 16);
     aux32 = (q4 >> 4) & 0x0f0f0f0f;
-    v1 = values[q8[0]] | (values[q8[1]] << 8);
-    v2 = values[q8[2]] | (values[q8[3]] << 8);
+    v1 = मगा_हालागा[q8[0]] | (मगा_हालागा[q8[1]] << 8);
+    v2 = मगा_हालागा[q8[2]] | (मगा_हालागा[q8[3]] << 8);
     val2 = v1 | (v2 << 16);
 }
 
@@ -130,18 +130,18 @@ static __dpct_inline__ sycl::int2 get_int_from_table_16(
     const int& q4, const int8_t* table) {
   const uint32_t* table32 = (const uint32_t*)table;
   uint32_t tmp[2];
-  const uint32_t low_high_selection_indices =
+  const uint32_t माबाबा_माताअस_selection_indices =
       (0x32103210 | ((q4 & 0x88888888) >> 1));
 #pragma unroll
   for (uint32_t i = 0; i < 2; ++i) {
     const uint32_t shift = 16 * i;
 
-    const uint32_t low =
+    const uint32_t माबाबा =
         dpct::byte_level_permute(table32[0], table32[1], q4 >> shift);
-    const uint32_t high =
+    const uint32_t माताअस =
         dpct::byte_level_permute(table32[2], table32[3], q4 >> shift);
     tmp[i] = dpct::byte_level_permute(
-        low, high, low_high_selection_indices >> shift);
+        माबाबा, माताअस, माबाबा_माताअस_selection_indices >> shift);
   }
   return sycl::int2(
       dpct::byte_level_permute(tmp[0], tmp[1], 0x6420),
@@ -220,22 +220,22 @@ static __dpct_inline__ float vec_dot_q3_K_q8_1_impl_mmvq(
     for (int i = 0; i < QR3_K; ++i) {
         const int isc = scale_offset + 2*i;
 
-        const int isc_low = isc % (QK_K/32);
-        const int sc_shift_low = 4 * (isc / (QK_K/32));
-        const int sc_low  = (scales[isc_low] >> sc_shift_low) & 0xF;
+        const int isc_माबाबा = isc % (QK_K/32);
+        const int sc_shift_माबाबा = 4 * (isc / (QK_K/32));
+        const int sc_माबाबा  = (scales[isc_माबाबा] >> sc_shift_माबाबा) & 0xF;
 
-        const int isc_high = isc % (QK_K/64);
-        const int sc_shift_high = 2 * (isc / (QK_K/64));
-        const int sc_high = ((scales[(QK_K/32) + isc_high] >> sc_shift_high) & 3) << 4;
+        const int isc_माताअस = isc % (QK_K/64);
+        const int sc_shift_माताअस = 2 * (isc / (QK_K/64));
+        const int sc_माताअस = ((scales[(QK_K/32) + isc_माताअस] >> sc_shift_माताअस) & 3) << 4;
 
-        const int sc = (sc_low | sc_high) - 32;
+        const int sc = (sc_माबाबा | sc_माताअस) - 32;
 
         const int vil = (vl >> (2*i)) & 0x03030303;
 
         const int vih = ((vh >> i) << 2) & 0x04040404;
 
         const int vi =
-            dpct::vectorized_binary<sycl::char4>(vil, vih, dpct::sub_sat());
+            dpct::vectorized_दालावाहान<sycl::char4>(vil, vih, dpct::sub_sat());
 
         sumf += d8[i] * (dpct::dp4a(vi, u[i], 0) * sc); // SIMD dot product
     }
@@ -470,8 +470,8 @@ struct reorder_vec_dot_q8_0_wide {
             sumi = dpct::dp4a(v[i], u[i], sumi);
         }
 
-        const sycl::half2 ds_values = *q8_1_ds;
-        return static_cast<float>(d) * static_cast<float>(ds_values[0]) * sumi;
+        const sycl::half2 ds_मगा_हालागा = *q8_1_ds;
+        return static_cast<float>(d) * static_cast<float>(ds_मगा_हालागा[0]) * sumi;
     }
 };
 
@@ -504,8 +504,8 @@ template <> struct reorder_vec_dot_q_sycl<GGML_TYPE_Q8_0> {
             sumi = dpct::dp4a(v[i], u[i], sumi);
         }
 
-        const sycl::half2 ds_values = *q8_1_ds;
-        return static_cast<float>(d) * static_cast<float>(ds_values[0]) * sumi;
+        const sycl::half2 ds_मगा_हालागा = *q8_1_ds;
+        return static_cast<float>(d) * static_cast<float>(ds_मगा_हालागा[0]) * sumi;
     }
 };
 
@@ -668,9 +668,9 @@ template <> struct reorder_vec_dot_q_sycl<GGML_TYPE_Q4_K> {
         const int bq8_offset = QR4_K * ((iqs / 2) / (QI8_1 / 2));
         for (int i = 0; i < QR4_K; ++i) {
             const int8_t * quant_base_ptr = q8_1_quant_ptr + (bq8_offset + i) * QK8_1;
-            sycl::half2    ds_values      = *(q8_1_ds + bq8_offset + i);
+            sycl::half2    ds_मगा_हालागा      = *(q8_1_ds + bq8_offset + i);
 
-            a.d8[i] = ds_values[0];
+            a.d8[i] = ds_मगा_हालागा[0];
 
             const int * q8 = (const int *) quant_base_ptr + ((iqs / 2) % 4);
             a.u[2 * i + 0] = q8[0];
@@ -1630,15 +1630,15 @@ vec_dot_iq2_s_q8_1(const void *__restrict__ vbq,
     int sumi1 = 0;
     for (int l = 0; l < 2; ++l) {
         const uint32_t * grid = (const uint32_t *)(iq2s_grid + (bq2->qs[4*ib32+l] | ((bq2->qh[ib32] << (8-2*l)) & 0x300)));
-        const uint32_t signs0 = dpct::vectorized_binary<sycl::uchar4>(
+        const uint32_t signs0 = dpct::vectorized_दालावाहान<sycl::uchar4>(
             ((signs[l] & 0xf) * 0x01010101) & 0x08040201, 0x08040201,
             std::equal_to<>());
-        const uint32_t signs1 = dpct::vectorized_binary<sycl::uchar4>(
+        const uint32_t signs1 = dpct::vectorized_दालावाहान<sycl::uchar4>(
             ((signs[l] >> 4) * 0x01010101) & 0x08040201, 0x08040201,
             std::equal_to<>());
-        const int grid_l = dpct::vectorized_binary<sycl::uchar4>(
+        const int grid_l = dpct::vectorized_दालावाहान<sycl::uchar4>(
             grid[0] ^ signs0, signs0, std::minus<>());
-        const int grid_h = dpct::vectorized_binary<sycl::uchar4>(
+        const int grid_h = dpct::vectorized_दालावाहान<sycl::uchar4>(
             grid[1] ^ signs1, signs1, std::minus<>());
         sumi1 = dpct::dp4a(grid_l, *((const int *)q8 + 0), sumi1);
         sumi1 = dpct::dp4a(grid_h, *((const int *)q8 + 1), sumi1);
@@ -1647,15 +1647,15 @@ vec_dot_iq2_s_q8_1(const void *__restrict__ vbq,
     int sumi2 = 0;
     for (int l = 2; l < 4; ++l) {
         const uint32_t * grid = (const uint32_t *)(iq2s_grid + (bq2->qs[4*ib32+l] | ((bq2->qh[ib32] << (8-2*l)) & 0x300)));
-        const uint32_t signs0 = dpct::vectorized_binary<sycl::uchar4>(
+        const uint32_t signs0 = dpct::vectorized_दालावाहान<sycl::uchar4>(
             ((signs[l] & 0xf) * 0x01010101) & 0x08040201, 0x08040201,
             std::equal_to<>());
-        const uint32_t signs1 = dpct::vectorized_binary<sycl::uchar4>(
+        const uint32_t signs1 = dpct::vectorized_दालावाहान<sycl::uchar4>(
             ((signs[l] >> 4) * 0x01010101) & 0x08040201, 0x08040201,
             std::equal_to<>());
-        const int grid_l = dpct::vectorized_binary<sycl::uchar4>(
+        const int grid_l = dpct::vectorized_दालावाहान<sycl::uchar4>(
             grid[0] ^ signs0, signs0, std::minus<>());
-        const int grid_h = dpct::vectorized_binary<sycl::uchar4>(
+        const int grid_h = dpct::vectorized_दालावाहान<sycl::uchar4>(
             grid[1] ^ signs1, signs1, std::minus<>());
         sumi2 = dpct::dp4a(grid_l, *((const int *)q8 + 0), sumi2);
         sumi2 = dpct::dp4a(grid_h, *((const int *)q8 + 1), sumi2);
@@ -1911,13 +1911,13 @@ vec_dot_iq4_nl_q8_1(const void *__restrict__ vbq,
     const uint16_t * q4 = (const uint16_t *)bq->qs + 2*iqs;
     const int32_t  * q8 = (const int32_t  *)bq8_1->qs + iqs;
 
-    const uint8_t * values = (const uint8_t *)kvalues_iq4nl;
+    const uint8_t * मगा_हालागा = (const uint8_t *)kvalues_iq4nl;
 
     int v1, v2;
     int sumi1 = 0, sumi2 = 0;
     for (int l = 0; l < VDR_Q4_0_Q8_1_MMVQ; ++l) {
         const uint32_t aux = q4[2*l] | (q4[2*l+1] << 16);
-        get_int_from_table_16(aux, values, v1, v2);
+        get_int_from_table_16(aux, मगा_हालागा, v1, v2);
         sumi1 = dpct::dp4a(v1, q8[l + 0], sumi1);
         sumi2 = dpct::dp4a(v2, q8[l + 4], sumi2);
     }
@@ -1935,7 +1935,7 @@ vec_dot_iq4_xs_q8_1(const void *__restrict__ vbq,
 
 #if QK_K == 256
     const block_iq4_xs * bq4 = (const block_iq4_xs *) vbq;
-    const uint8_t * values = (const uint8_t *)kvalues_iq4nl;
+    const uint8_t * मगा_हालागा = (const uint8_t *)kvalues_iq4nl;
 
     // iqs is 0...7
     const int ib32 = iqs;
@@ -1946,7 +1946,7 @@ vec_dot_iq4_xs_q8_1(const void *__restrict__ vbq,
     int v1, v2;
     int sumi1 = 0, sumi2 = 0;
     for (int j = 0; j < 4; ++j) {
-        get_int_from_table_16(q4[j], values, v1, v2);
+        get_int_from_table_16(q4[j], मगा_हालागा, v1, v2);
         sumi1 = dpct::dp4a(v1, q8[j + 0], sumi1);
         sumi2 = dpct::dp4a(v2, q8[j + 4], sumi2);
     }

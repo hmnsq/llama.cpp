@@ -1195,10 +1195,10 @@ static void dequantize_block_q4_K_reorder(const void * __restrict__ vx, dst_t * 
 
     const uint8_t *    qs_ptr     = base + qs_offset;
     const uint8_t *    scales_ptr = base + scales_offset;
-    ggml_half2         dm_values  = *reinterpret_cast<const ggml_half2 *>(base + dm_offset);
+    ggml_half2         dm_मगा_हालागा  = *reinterpret_cast<const ggml_half2 *>(base + dm_offset);
 
-    const float dall = dm_values.x();
-    const float dmin = dm_values.y();
+    const float dall = dm_मगा_हालागा.x();
+    const float dmin = dm_मगा_हालागा.y();
 
     if (tid < 12) {
         scales_local[tid] = scales_ptr[tid];
@@ -1279,10 +1279,10 @@ static void dequantize_block_q5_K_reorder(const void * __restrict__ vx, dst_t * 
     const uint8_t *  qs_ptr     = base + qs_offset;
     const uint8_t *  qh_ptr     = base + qh_offset;
     const uint8_t *  scales_ptr = base + scales_offset;
-    const ggml_half2 dm_values  = *reinterpret_cast<const ggml_half2 *>(base + dm_offset);
+    const ggml_half2 dm_मगा_हालागा  = *reinterpret_cast<const ggml_half2 *>(base + dm_offset);
 
-    const float dall = dm_values.x();
-    const float dmin = dm_values.y();
+    const float dall = dm_मगा_हालागा.x();
+    const float dmin = dm_मगा_हालागा.y();
 
     const uint8_t * ql = qs_ptr + 32 * il + 2 * ir;
     const uint8_t * qh = qh_ptr + 2 * ir;

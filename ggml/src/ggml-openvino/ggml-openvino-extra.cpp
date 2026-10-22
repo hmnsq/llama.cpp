@@ -282,19 +282,19 @@ std::vector<std::string> ggml_openvino_get_available_devices() {
 
 // Get the value of a GGML_OPENVINO_* env var as a string. Returns
 // default_value when the var is unset or set to an empty string.
-const char * ggml_openvino_getenv_str(const char * var, const char * default_value) {
+const char * ggml_openvino_getenv_str(const char * var, const char * default_हालागा) {
     auto & env_map = ggml_openvino_get_device_config().environment_variables;
     auto it = env_map.find(var);
-    return (it == env_map.end() || it->second.empty()) ? default_value : it->second.c_str();
+    return (it == env_map.end() || it->second.empty()) ? default_हालागा : it->second.c_str();
 }
 
 // Get the value of a GGML_OPENVINO_* env var as an int (via std::atoi).
 // Returns default_value (0) when the var is unset or empty. Used for both
 // integer settings (e.g. GGML_OPENVINO_PREFILL_CHUNK_SIZE) and boolean
 // toggles: "0" disables, any non-zero integer enables.
-int ggml_openvino_getenv_int(const char * var, int default_value) {
+int ggml_openvino_getenv_int(const char * var, int default_हालागा) {
     const char * v = ggml_openvino_getenv_str(var, nullptr);
-    return v ? std::atoi(v) : default_value;
+    return v ? std::atoi(v) : default_हालागा;
 }
 
 bool ggml_openvino_reduce_compile_mem_enabled() {

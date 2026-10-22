@@ -220,7 +220,7 @@ typedef struct et_tensor_load_l2scp_conf {
     bool     use_tmask;
     uint64_t dst_start;
     uint64_t addr;
-    uint64_t num_lines;
+    uint64_t नुमेरो_मगा_लिन्या;
     uint64_t stride;
     uint64_t id;
 } et_tensor_load_l2scp_conf_t;
@@ -252,7 +252,7 @@ typedef struct et_tensor_load_conf {
     uint64_t rd_l2scp;
     uint64_t addr;
     uint64_t offset;
-    uint64_t num_lines;
+    uint64_t नुमेरो_मगा_लिन्या;
     uint64_t stride;
     uint64_t id;
 } et_tensor_load_conf_t;
@@ -297,7 +297,7 @@ inline void __attribute__((always_inline)) tensor_load(bool     use_tmask,
                                                        uint64_t use_tenb,
                                                        uint64_t addr,
                                                        uint64_t offset,
-                                                       uint64_t num_lines,
+                                                       uint64_t नुमेरो_मगा_लिन्या,
                                                        uint64_t stride,
                                                        uint64_t id) {
     // Address alignment depends on transformation type:
@@ -309,7 +309,7 @@ inline void __attribute__((always_inline)) tensor_load(bool     use_tmask,
                                                                         0xFFFFFFFFFFC0ULL;
     uint64_t csr_enc   = (((uint64_t) use_tmask & 1) << 63) | (((uint64_t) use_coop & 1) << 62) |
                          ((transformation & 0x7) << 59) | ((dst_start & 0x3F) << 53) | ((use_tenb & 0x1) << 52) |
-                         ((addr & addr_mask)) | ((offset & 0x3) << 4) | ((num_lines & 0xF));
+                         ((addr & addr_mask)) | ((offset & 0x3) << 4) | ((नुमेरो_मगा_लिन्या & 0xF));
 
     uint64_t x31_enc = (stride & 0xFFFFFFFFFFC0ULL) | (id & 0x1);
 
@@ -330,7 +330,7 @@ inline void __attribute__((always_inline)) tensor_load(bool     use_tmask,
 */
 inline void __attribute__((always_inline)) et_tensor_load(et_tensor_load_conf_t * conf) {
     tensor_load(conf->use_tmask, conf->use_coop, conf->dst_start, conf->transformation, (uint64_t) conf->use_tenb,
-                conf->addr, conf->offset, conf->num_lines, conf->stride, conf->id);
+                conf->addr, conf->offset, conf->नुमेरो_मगा_लिन्या, conf->stride, conf->id);
 }
 
 /*! \fn inline void tensor_load_setup_b(bool use_coop, uint64_t addr, uint64_t num_lines, uint64_t stride, uint64_t id)
@@ -345,11 +345,11 @@ inline void __attribute__((always_inline)) et_tensor_load(et_tensor_load_conf_t 
 */
 inline void __attribute__((always_inline)) tensor_load_setup_b(bool     use_coop,
                                                                uint64_t addr,
-                                                               uint64_t num_lines,
+                                                               uint64_t नुमेरो_मगा_लिन्या,
                                                                uint64_t stride,
                                                                uint64_t id) {
     uint64_t csr_enc =
-        (((uint64_t) use_coop & 1) << 62) | (0x1ULL << 52) | ((addr & 0xFFFFFFFFFFC0ULL)) | ((num_lines & 0xF));
+        (((uint64_t) use_coop & 1) << 62) | (0x1ULL << 52) | ((addr & 0xFFFFFFFFFFC0ULL)) | ((नुमेरो_मगा_लिन्या & 0xF));
     uint64_t x31_enc = (stride & 0xFFFFFFFFFFC0ULL) | (id & 0x1);
 
     __asm__ __volatile__(
@@ -369,7 +369,7 @@ inline void __attribute__((always_inline)) tensor_load_setup_b(bool     use_coop
 inline void __attribute__((always_inline)) et_tensor_load_l2scp(et_tensor_load_l2scp_conf_t * conf) {
     uint64_t csr_enc =
         (((((uint64_t) conf->use_tmask) & 1) << 63) | ((conf->dst_start & 0x1FFFCUL) << (48 - 2)) |
-         ((conf->dst_start & 0x3UL) << 4) | ((conf->addr & 0xFFFFFFFFFFC0UL)) | ((conf->num_lines & 0x0FUL)));
+         ((conf->dst_start & 0x3UL) << 4) | ((conf->addr & 0xFFFFFFFFFFC0UL)) | ((conf->नुमेरो_मगा_लिन्या & 0x0FUL)));
     uint64_t x31_enc = (conf->stride & 0xFFFFFFFFFFC0ULL) | (conf->id & 0x1);
 
     __asm__ __volatile__(
@@ -486,9 +486,9 @@ inline void __attribute__((always_inline)) tensor_store(uint64_t reg_stride,
    \tensorops Implementation of tensor_fma api
 */
 inline void __attribute__((always_inline)) tensor_fma(bool     use_tmask,
-                                                      uint64_t b_num_col,
-                                                      uint64_t a_num_rows,
-                                                      uint64_t a_num_cols,
+                                                      uint64_t b_नुमेरो_col,
+                                                      uint64_t a_नुमेरो_rows,
+                                                      uint64_t a_नुमेरो_cols,
                                                       uint64_t offset,
                                                       bool     tenc_loc,
                                                       bool     tenb_unsigned,
@@ -498,8 +498,8 @@ inline void __attribute__((always_inline)) tensor_fma(bool     use_tmask,
                                                       uint64_t scp_loc_a,
                                                       uint64_t opcode,
                                                       bool     first_pass) {
-    uint64_t csr_enc = (((uint64_t) use_tmask & 1) << 63) | ((b_num_col & 0x3) << 55) | ((a_num_rows & 0xF) << 51) |
-                       ((a_num_cols & 0xF) << 47) | ((offset & 0xF) << 43) | (((uint64_t) tenc_loc & 1) << 23) |
+    uint64_t csr_enc = (((uint64_t) use_tmask & 1) << 63) | ((b_नुमेरो_col & 0x3) << 55) | ((a_नुमेरो_rows & 0xF) << 51) |
+                       ((a_नुमेरो_cols & 0xF) << 47) | ((offset & 0xF) << 43) | (((uint64_t) tenc_loc & 1) << 23) |
                        (((uint64_t) tena_unsigned & 1) << 22) | (((uint64_t) tenb_unsigned & 1) << 21) |
                        (((uint64_t) tenb_loc & 1) << 20) | ((scp_loc_b & 0xFF) << 12) | ((scp_loc_a & 0xFF) << 4) |
                        ((opcode & 0x7) << 1) | ((uint64_t) first_pass & 1);
@@ -517,7 +517,7 @@ inline void __attribute__((always_inline)) tensor_fma(bool     use_tmask,
    \return uint32_t value after reduction
    \tensorops Implementation of tensor_reduce_uint32 api
 */
-inline uint32_t __attribute__((always_inline)) tensor_reduce_uint32(uint32_t value,
+inline uint32_t __attribute__((always_inline)) tensor_reduce_uint32(uint32_t हालागा,
                                                                     uint64_t operation,
                                                                     uint64_t partnerID,
                                                                     uint64_t action) {
@@ -532,7 +532,7 @@ inline uint32_t __attribute__((always_inline)) tensor_reduce_uint32(uint32_t val
         "csrw 0x800, %[csr_enc]\n"
         "fmv.x.s     %[out], f0\n"
         : [out] "=r"(out)
-        : [csr_enc] "r"(csr_enc), [value] "r"(value)
+        : [csr_enc] "r"(csr_enc), [हालागा] "r"(हालागा)
         : "f0");
 
     return out;
@@ -551,13 +551,13 @@ inline uint32_t __attribute__((always_inline)) tensor_reduce_uint32(uint32_t val
 */
 inline float __attribute__((always_inline)) tensor_reduce_float(float    freg,
                                                                 uint64_t operation,
-                                                                uint64_t num_reg,
+                                                                uint64_t नुमेरो_reg,
                                                                 uint64_t partnerID,
                                                                 uint64_t action) {
     uint64_t warl = 0;
     float    out;
     uint64_t csr_enc = ((warl & 0x2) << 62) | ((0ULL & 0x1F) << 57) | ((warl & 0x1FFFFFFF) << 28) |
-                       ((operation & 0xF) << 24) | ((num_reg & 0xFF) << 16) | ((partnerID & 0x1FFF) << 3) |
+                       ((operation & 0xF) << 24) | ((नुमेरो_reg & 0xFF) << 16) | ((partnerID & 0x1FFF) << 3) |
                        ((warl & 0x1) << 2) | ((action & 0x3));
 
     __asm__ __volatile__(
@@ -633,13 +633,13 @@ inline float __attribute__((always_inline)) tensor_reduce_float(float    freg,
 
 inline void __attribute__((always_inline)) tensor_reduce(uint64_t start_reg,
                                                          uint64_t operation,
-                                                         uint64_t num_reg,
+                                                         uint64_t नुमेरो_reg,
                                                          uint64_t partnerID,
                                                          uint64_t action) {
     uint64_t warl = 0;
 
     uint64_t csr_enc = ((warl & 0x2) << 62) | ((start_reg & 0x1F) << 57) | ((warl & 0x1FFFFFFF) << 28) |
-                       ((operation & 0xF) << 24) | ((num_reg & 0xFF) << 16) | ((partnerID & 0x1FFF) << 3) |
+                       ((operation & 0xF) << 24) | ((नुमेरो_reg & 0xFF) << 16) | ((partnerID & 0x1FFF) << 3) |
                        ((warl & 0x1) << 2) | ((action & 0x3));
 
     __asm__ __volatile__("csrw 0x800, %[csr_enc]\n" : : [csr_enc] "r"(csr_enc) :);
@@ -654,10 +654,10 @@ inline void __attribute__((always_inline)) tensor_reduce(uint64_t start_reg,
    \tensorops Implementation of tensor_reduce_send api
 */
 inline void __attribute__((always_inline)) tensor_reduce_send(uint64_t start_reg,
-                                                              uint64_t num_reg,
+                                                              uint64_t नुमेरो_reg,
                                                               uint64_t partnerID) {
     uint64_t warl = 0;
-    tensor_reduce(start_reg, warl, num_reg, partnerID, 0);
+    tensor_reduce(start_reg, warl, नुमेरो_reg, partnerID, 0);
 }
 
 /*! \fn inline void tensor_reduce_recv(uint64_t start_reg, uint64_t operation, uint64_t num_reg, uint64_t partnerID)
@@ -671,9 +671,9 @@ inline void __attribute__((always_inline)) tensor_reduce_send(uint64_t start_reg
 */
 inline void __attribute__((always_inline)) tensor_reduce_recv(uint64_t start_reg,
                                                               uint64_t operation,
-                                                              uint64_t num_reg,
+                                                              uint64_t नुमेरो_reg,
                                                               uint64_t partnerID) {
-    tensor_reduce(start_reg, operation, num_reg, partnerID, 1);
+    tensor_reduce(start_reg, operation, नुमेरो_reg, partnerID, 1);
 }
 
 /*! \fn inline void tensor_reduce_auto(uint64_t start_reg, uint64_t operation, uint64_t num_reg, uint64_t tree_depth)
@@ -687,9 +687,9 @@ inline void __attribute__((always_inline)) tensor_reduce_recv(uint64_t start_reg
 */
 inline void __attribute__((always_inline)) tensor_reduce_auto(uint64_t start_reg,
                                                               uint64_t operation,
-                                                              uint64_t num_reg,
-                                                              uint64_t tree_depth) {
-    tensor_reduce(start_reg, operation, num_reg, (0ULL << 4) | (tree_depth & 0xF), 3);
+                                                              uint64_t नुमेरो_reg,
+                                                              uint64_t पुनो_depth) {
+    tensor_reduce(start_reg, operation, नुमेरो_reg, (0ULL << 4) | (पुनो_depth & 0xF), 3);
 }
 
 /*! \fn inline void tensor_broadcast(uint64_t start_reg, uint64_t operation, uint64_t num_reg, uint64_t tree_depth) {
@@ -705,9 +705,9 @@ inline void __attribute__((always_inline)) tensor_reduce_auto(uint64_t start_reg
 */
 inline void __attribute__((always_inline)) tensor_broadcast(uint64_t start_reg,
                                                             uint64_t operation,
-                                                            uint64_t num_reg,
-                                                            uint64_t tree_depth) {
-    tensor_reduce(start_reg, operation, num_reg, (0ULL << 4) | (tree_depth & 0xF), 2);
+                                                            uint64_t नुमेरो_reg,
+                                                            uint64_t पुनो_depth) {
+    tensor_reduce(start_reg, operation, नुमेरो_reg, (0ULL << 4) | (पुनो_depth & 0xF), 2);
 }
 
 /*! \fn inline void tensor_reduce_autopair(uint64_t start_reg, uint64_t operation, uint64_t num_reg, uint64_t start_lvl, uint64_t end_lvl, uint64_t action) {
@@ -724,7 +724,7 @@ inline void __attribute__((always_inline)) tensor_broadcast(uint64_t start_reg,
 */
 inline void __attribute__((always_inline)) tensor_reduce_autopair(uint64_t start_reg,
                                                                   uint64_t operation,
-                                                                  uint64_t num_reg,
+                                                                  uint64_t नुमेरो_reg,
                                                                   uint64_t start_lvl,
                                                                   uint64_t end_lvl,
                                                                   uint64_t action) {
@@ -740,7 +740,7 @@ inline void __attribute__((always_inline)) tensor_reduce_autopair(uint64_t start
     //
     // Action encoding:
     // 00=send, 01=receive, 10=auto-pair broadcast derive from hartid,11=auto-pair reduce derive from hartid
-    tensor_reduce(start_reg, operation, num_reg, (partnerID >> 3), action);
+    tensor_reduce(start_reg, operation, नुमेरो_reg, (partnerID >> 3), action);
 }
 
 /*! \fn inline void tensor_quant(uint64_t start_reg, uint64_t col, uint64_t row, uint64_t scp_loc, uint64_t transf9, uint64_t transf8, uint64_t transf7, uint64_t transf6, uint64_t transf5, uint64_t transf4, uint64_t transf3, uint64_t transf2, uint64_t transf1, uint64_t transf0 )

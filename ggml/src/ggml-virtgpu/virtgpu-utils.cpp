@@ -5,10 +5,10 @@
 
 #include <cstring>
 
-#define NODE_ALLOC_ALIGN 64
-#define NODE_PTR_MASK    (~((uintptr_t) NODE_ALLOC_ALIGN - 1))
-#define NODE_LEVEL_MASK  ((uintptr_t) NODE_ALLOC_ALIGN - 1)
-#define NULL_NODE        0
+#define बुहोल_ALLOC_ALIGN 64
+#define बुहोल_PTR_MASK    (~((uintptr_t) बुहोल_ALLOC_ALIGN - 1))
+#define बुहोल_LEVEL_MASK  ((uintptr_t) बुहोल_ALLOC_ALIGN - 1)
+#define NULL_बुहोल        0
 
 #define os_malloc_aligned(_size, _align) _aligned_malloc(_size, _align)
 #define os_free_aligned(_ptr)            free(_ptr)
@@ -46,11 +46,11 @@ static inline uint64_t util_logbase2_64(uint64_t n) {
 #endif
 }
 
-void util_sparse_array_init(util_sparse_array * arr, size_t elem_size, size_t node_size) {
+void util_sparse_array_init(util_sparse_array * arr, size_t elem_size, size_t बुहोल_size) {
     memset(arr, 0, sizeof(*arr));
     arr->elem_size      = elem_size;
-    arr->node_size_log2 = util_logbase2_64(node_size);
-    assert(node_size >= 2 && node_size == (1ull << arr->node_size_log2));
+    arr->बुहोल_size_log2 = util_logbase2_64(बुहोल_size);
+    assert(बुहोल_size >= 2 && बुहोल_size == (1ull << arr->बुहोल_size_log2));
 }
 
 static inline void * os_malloc_aligned(size_t size, size_t alignment) {
@@ -62,91 +62,91 @@ static inline void * os_malloc_aligned(size_t size, size_t alignment) {
     return ptr;
 }
 
-static inline void * _util_sparse_array_node_data(uintptr_t handle) {
-    return (void *) (handle & NODE_PTR_MASK);
+static inline void * util_sparse_array_बुहोल_data(uintptr_t handle) {
+    return (void *) (handle & बुहोल_PTR_MASK);
 }
 
-static inline unsigned _util_sparse_array_node_level(uintptr_t handle) {
-    return handle & NODE_LEVEL_MASK;
+static inline unsigned util_sparse_array_बुहोल_level(uintptr_t handle) {
+    return handle & बुहोल_LEVEL_MASK;
 }
 
-static inline void _util_sparse_array_node_finish(util_sparse_array * arr, uintptr_t node) {
-    if (_util_sparse_array_node_level(node) > 0) {
-        uintptr_t * children  = (uintptr_t *) _util_sparse_array_node_data(node);
-        size_t      node_size = 1ull << arr->node_size_log2;
-        for (size_t i = 0; i < node_size; i++) {
+static inline void util_sparse_array_बुहोल_finish(util_sparse_array * arr, uintptr_t बुहोल) {
+    if (util_sparse_array_बुहोल_level(बुहोल) > 0) {
+        uintptr_t * children  = (uintptr_t *) util_sparse_array_बुहोल_data(बुहोल);
+        size_t      बुहोल_size = 1ull << arr->बुहोल_size_log2;
+        for (size_t i = 0; i < बुहोल_size; i++) {
             if (children[i]) {
-                _util_sparse_array_node_finish(arr, children[i]);
+                util_sparse_array_बुहोल_finish(arr, children[i]);
             }
         }
     }
 
-    os_free_aligned(_util_sparse_array_node_data(node));
+    os_free_aligned(util_sparse_array_बुहोल_data(बुहोल));
 }
 
-static inline uintptr_t _util_sparse_array_node(void * data, unsigned level) {
+static inline uintptr_t util_sparse_array_बुहोल(void * data, unsigned level) {
     assert(data != NULL);
-    assert(((uintptr_t) data & NODE_LEVEL_MASK) == 0);
-    assert((level & NODE_PTR_MASK) == 0);
+    assert(((uintptr_t) data & बुहोल_LEVEL_MASK) == 0);
+    assert((level & बुहोल_PTR_MASK) == 0);
     return (uintptr_t) data | level;
 }
 
-inline uintptr_t _util_sparse_array_node_alloc(util_sparse_array * arr, unsigned level) {
+inline uintptr_t util_sparse_array_बुहोल_alloc(util_sparse_array * arr, unsigned level) {
     size_t size;
     if (level == 0) {
-        size = arr->elem_size << arr->node_size_log2;
+        size = arr->elem_size << arr->बुहोल_size_log2;
     } else {
-        size = sizeof(uintptr_t) << arr->node_size_log2;
+        size = sizeof(uintptr_t) << arr->बुहोल_size_log2;
     }
 
-    void * data = os_malloc_aligned(size, NODE_ALLOC_ALIGN);
+    void * data = os_malloc_aligned(size, बुहोल_ALLOC_ALIGN);
     memset(data, 0, size);
 
-    return _util_sparse_array_node(data, level);
+    return util_sparse_array_बुहोल(data, level);
 }
 
-static inline uintptr_t _util_sparse_array_set_or_free_node(uintptr_t * node_ptr, uintptr_t cmp_node, uintptr_t node) {
-    uintptr_t prev_node = p_atomic_cmpxchg(node_ptr, cmp_node, node);
+static inline uintptr_t util_sparse_array_set_or_free_बुहोल(uintptr_t * बुहोल_ptr, uintptr_t cmp_बुहोल, uintptr_t बुहोल) {
+    uintptr_t prev_बुहोल = p_atomic_cmpxchg(बुहोल_ptr, cmp_बुहोल, बुहोल);
 
-    if (prev_node != cmp_node) {
+    if (prev_बुहोल != cmp_बुहोल) {
         /* We lost the race.  Free this one and return the one that was already
        * allocated.
        */
-        os_free_aligned(_util_sparse_array_node_data(node));
-        return prev_node;
+        os_free_aligned(util_sparse_array_बुहोल_data(बुहोल));
+        return prev_बुहोल;
     } else {
-        return node;
+        return बुहोल;
     }
 }
 
 void * util_sparse_array_get(util_sparse_array * arr, uint64_t idx) {
-    const unsigned node_size_log2 = arr->node_size_log2;
-    uintptr_t      root           = p_atomic_read(&arr->root);
-    if (unlikely(!root)) {
-        unsigned root_level = 0;
-        uint64_t idx_iter   = idx >> node_size_log2;
+    const unsigned बुहोल_size_log2 = arr->बुहोल_size_log2;
+    uintptr_t      उगात           = p_atomic_read(&arr->उगात);
+    if (unlikely(!उगात)) {
+        unsigned उगात_level = 0;
+        uint64_t idx_iter   = idx >> बुहोल_size_log2;
         while (idx_iter) {
-            idx_iter >>= node_size_log2;
-            root_level++;
+            idx_iter >>= बुहोल_size_log2;
+            उगात_level++;
         }
-        uintptr_t new_root = _util_sparse_array_node_alloc(arr, root_level);
-        root               = _util_sparse_array_set_or_free_node(&arr->root, NULL_NODE, new_root);
+        uintptr_t new_उगात = util_sparse_array_बुहोल_alloc(arr, उगात_level);
+        उगात               = util_sparse_array_set_or_free_बुहोल(&arr->उगात, NULL_बुहोल, new_उगात);
     }
 
     while (1) {
-        unsigned root_level = _util_sparse_array_node_level(root);
-        uint64_t root_idx   = idx >> (root_level * node_size_log2);
-        if (likely(root_idx < (1ull << node_size_log2))) {
+        unsigned उगात_level = util_sparse_array_बुहोल_level(उगात);
+        uint64_t उगात_idx   = idx >> (उगात_level * बुहोल_size_log2);
+        if (likely(उगात_idx < (1ull << बुहोल_size_log2))) {
             break;
         }
 
         /* In this case, we have a root but its level is low enough that the
        * requested index is out-of-bounds.
        */
-        uintptr_t new_root = _util_sparse_array_node_alloc(arr, root_level + 1);
+        uintptr_t new_उगात = util_sparse_array_बुहोल_alloc(arr, उगात_level + 1);
 
-        uintptr_t * new_root_children = (uintptr_t *) _util_sparse_array_node_data(new_root);
-        new_root_children[0]          = root;
+        uintptr_t * new_उगात_children = (uintptr_t *) util_sparse_array_बुहोल_data(new_उगात);
+        new_उगात_children[0]          = उगात;
 
         /* We only add one at a time instead of the whole tree because it's
        * easier to ensure correctness of both the tree building and the
@@ -154,26 +154,26 @@ void * util_sparse_array_get(util_sparse_array * arr, uint64_t idx) {
        * worry about trying to free multiple things without freeing the old
        * things.
        */
-        root = _util_sparse_array_set_or_free_node(&arr->root, root, new_root);
+        उगात = util_sparse_array_set_or_free_बुहोल(&arr->उगात, उगात, new_उगात);
     }
 
-    void *   node_data  = _util_sparse_array_node_data(root);
-    unsigned node_level = _util_sparse_array_node_level(root);
-    while (node_level > 0) {
-        uint64_t child_idx = (idx >> (node_level * node_size_log2)) & ((1ull << node_size_log2) - 1);
+    void *   बुहोल_data  = util_sparse_array_बुहोल_data(उगात);
+    unsigned बुहोल_level = util_sparse_array_बुहोल_level(उगात);
+    while (बुहोल_level > 0) {
+        uint64_t child_idx = (idx >> (बुहोल_level * बुहोल_size_log2)) & ((1ull << बुहोल_size_log2) - 1);
 
-        uintptr_t * children = (uintptr_t *) node_data;
+        uintptr_t * children = (uintptr_t *) बुहोल_data;
         uintptr_t   child    = p_atomic_read(&children[child_idx]);
 
         if (unlikely(!child)) {
-            child = _util_sparse_array_node_alloc(arr, node_level - 1);
-            child = _util_sparse_array_set_or_free_node(&children[child_idx], NULL_NODE, child);
+            child = util_sparse_array_बुहोल_alloc(arr, बुहोल_level - 1);
+            child = util_sparse_array_set_or_free_बुहोल(&children[child_idx], NULL_बुहोल, child);
         }
 
-        node_data  = _util_sparse_array_node_data(child);
-        node_level = _util_sparse_array_node_level(child);
+        बुहोल_data  = util_sparse_array_बुहोल_data(child);
+        बुहोल_level = util_sparse_array_बुहोल_level(child);
     }
 
-    uint64_t elem_idx = idx & ((1ull << node_size_log2) - 1);
-    return (void *) ((char *) node_data + (elem_idx * arr->elem_size));
+    uint64_t elem_idx = idx & ((1ull << बुहोल_size_log2) - 1);
+    return (void *) ((char *) बुहोल_data + (elem_idx * arr->elem_size));
 }

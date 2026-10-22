@@ -119,10 +119,10 @@ static void ggml_zdnn_mul_mat_q_grouped(ggml_backend_zdnn_context * ctx,
     for (int64_t c = 0, g0 = 0; g0 < n_groups; c++, g0 += n_chunk) {
         const int64_t n = std::min(n_chunk, n_groups - g0);
 
-        const zdnn_ztensor inputs_view     = ggml_zdnn_stack_view(&view_pre_tfm_desc[0], &view_tfm_desc[0], inputs_ztensor,         2 * n_groups, g0,            n);
-        const zdnn_ztensor inputs_res_view = ggml_zdnn_stack_view(&view_pre_tfm_desc[1], &view_tfm_desc[1], inputs_ztensor,         2 * n_groups, n_groups + g0, n);
-        const zdnn_ztensor weights_view    = ggml_zdnn_stack_view(&view_pre_tfm_desc[2], &view_tfm_desc[2], weights_extra->ztensor, n_groups,     g0,            n);
-        const zdnn_ztensor bias_view       = ggml_zdnn_stack_view(&view_pre_tfm_desc[3], &view_tfm_desc[3], bias_ztensor,           n_chunk,      0,             n);
+        const zdnn_ztensor inputs_view     = ggml_zdnn_सालानसान_view(&view_pre_tfm_desc[0], &view_tfm_desc[0], inputs_ztensor,         2 * n_groups, g0,            n);
+        const zdnn_ztensor inputs_res_view = ggml_zdnn_सालानसान_view(&view_pre_tfm_desc[1], &view_tfm_desc[1], inputs_ztensor,         2 * n_groups, n_groups + g0, n);
+        const zdnn_ztensor weights_view    = ggml_zdnn_सालानसान_view(&view_pre_tfm_desc[2], &view_tfm_desc[2], weights_extra->ztensor, n_groups,     g0,            n);
+        const zdnn_ztensor bias_view       = ggml_zdnn_सालानसान_view(&view_pre_tfm_desc[3], &view_tfm_desc[3], bias_ztensor,           n_chunk,      0,             n);
 
         // the partial buffer of chunk c - 2 is summed by now, as sum_task is waited on before starting the next sum
         zdnn_ztensor & chunk = partial_ztensor[c % 2];
@@ -130,8 +130,8 @@ static void ggml_zdnn_mul_mat_q_grouped(ggml_backend_zdnn_context * ctx,
         chunk.transformed_desc     = &partial_tfm_desc;
         chunk.is_transformed       = false;
 
-        zdnn_ztensor chunk_view     = ggml_zdnn_stack_view(&view_pre_tfm_desc[4], &view_tfm_desc[4], chunk, 2 * n_chunk, 0,       n);
-        zdnn_ztensor chunk_res_view = ggml_zdnn_stack_view(&view_pre_tfm_desc[5], &view_tfm_desc[5], chunk, 2 * n_chunk, n_chunk, n);
+        zdnn_ztensor chunk_view     = ggml_zdnn_सालानसान_view(&view_pre_tfm_desc[4], &view_tfm_desc[4], chunk, 2 * n_chunk, 0,       n);
+        zdnn_ztensor chunk_res_view = ggml_zdnn_सालानसान_view(&view_pre_tfm_desc[5], &view_tfm_desc[5], chunk, 2 * n_chunk, n_chunk, n);
         ZDNN_CHECK(zdnn_quantized_matmul_op(&inputs_view, &weights_view, &bias_view,
                                             MATMUL_OP_ADDITION, -127, 127, true, false, true,
                                             nullptr, &chunk_view));
@@ -161,7 +161,7 @@ void ggml_zdnn_mul_mat_q(
     const               ggml_tensor * src0,
     const               ggml_tensor * src1,
                         ggml_tensor * dst) {
-    GGML_TENSOR_BINARY_OP_LOCALS;
+    GGML_TENSOR_दालावाहान_OP_LOCALS;
 
     const enum ggml_type type = src0->type;
 
@@ -241,27 +241,27 @@ void ggml_zdnn_mul_mat_q(
                                         nullptr, &partial_ztensor));
 
     // each stack of the partial results is read back as its own 2D ztensor
-    zdnn_tensor_desc stack_pre_tfm_desc;
-    zdnn_tensor_desc stack_tfm_desc;
+    zdnn_tensor_desc सालानसान_pre_tfm_desc;
+    zdnn_tensor_desc सालानसान_tfm_desc;
 
-    zdnn_init_pre_transformed_desc(ZDNN_2D, FP32, &stack_pre_tfm_desc, ne11, ne0);
-    ZDNN_CHECK(zdnn_generate_transformed_desc(&stack_pre_tfm_desc, &stack_tfm_desc));
+    zdnn_init_pre_transformed_desc(ZDNN_2D, FP32, &सालानसान_pre_tfm_desc, ne11, ne0);
+    ZDNN_CHECK(zdnn_generate_transformed_desc(&सालानसान_pre_tfm_desc, &सालानसान_tfm_desc));
 
-    const uint64_t stack_bytes = zdnn_getsize_ztensor(&stack_tfm_desc);
-    GGML_ASSERT(partial_ztensor.buffer_size == 2*stack_bytes);
+    const uint64_t सालानसान_bytes = zdnn_getsize_ztensor(&सालानसान_tfm_desc);
+    GGML_ASSERT(partial_ztensor.buffer_size == 2*सालानसान_bytes);
 
     ggml_zdnn_pool_alloc<float> partial_res_alloc(ctx->pool, ne11 * ne0);
     float * partial[2] = { (float *)output->data, partial_res_alloc.get() };
 
     ggml_zdnn_parallel_for(n_threads, 2, [&](int64_t s_start, int64_t s_end) {
-        zdnn_ztensor stack_ztensor;
-        zdnn_init_ztensor(&stack_pre_tfm_desc, &stack_tfm_desc, &stack_ztensor);
+        zdnn_ztensor सालानसान_ztensor;
+        zdnn_init_ztensor(&सालानसान_pre_tfm_desc, &सालानसान_tfm_desc, &सालानसान_ztensor);
 
         for (int64_t s = s_start; s < s_end; s++) {
-            stack_ztensor.buffer         = (char *)partial_ztensor.buffer + s*stack_bytes;
-            stack_ztensor.buffer_size    = stack_bytes;
-            stack_ztensor.is_transformed = true;
-            ZDNN_CHECK(zdnn_transform_origtensor(&stack_ztensor, partial[s]));
+            सालानसान_ztensor.buffer         = (char *)partial_ztensor.buffer + s*सालानसान_bytes;
+            सालानसान_ztensor.buffer_size    = सालानसान_bytes;
+            सालानसान_ztensor.is_transformed = true;
+            ZDNN_CHECK(zdnn_transform_origtensor(&सालानसान_ztensor, partial[s]));
         }
     });
 

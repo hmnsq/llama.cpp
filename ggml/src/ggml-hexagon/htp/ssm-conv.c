@@ -239,12 +239,12 @@ static void ssm_conv_thread_f32_decode(unsigned int nth, unsigned int ith, void 
     uint32_t s_fetch        = 0;
     uint32_t tile_off_fetch = 0;
 
-    #define SSM_CONV_DECODE_PUSH_FETCH(c)                                                         \
+    #define SSM_CONV_DECODE_इतुलाक_FETCH(c)                                                         \
         do {                                                                                      \
             const uint32_t   cur_tile_n = MIN(d_inner_tile, d_inner_per_thread - tile_off_fetch); \
             const dma_addr_t fetch_ddr  = src0->data + s_fetch * src0_stride_seq_bytes +          \
                                           (ir0 + tile_off_fetch) * src0_stride_inner_bytes;       \
-            dma_queue_push(dma_q,                                                                 \
+            dma_queue_इतुलाक(dma_q,                                                                 \
                            dma_make_data((uint8_t *) src0_tile_raw[(c) & 1], fetch_ddr),          \
                            row_bytes, src0_stride_inner_bytes, row_bytes, cur_tile_n);            \
             tile_off_fetch += d_inner_tile;                                                       \
@@ -256,14 +256,14 @@ static void ssm_conv_thread_f32_decode(unsigned int nth, unsigned int ith, void 
 
     // Queue weights and initial input tiles together so DDR reads overlap
     const dma_addr_t src1_ddr = src1->data + ir0 * d_conv * sizeof(float);
-    dma_queue_push(dma_q, dma_make_data((uint8_t *) src1_raw, src1_ddr), weight_bytes, weight_bytes, weight_bytes, 1);
+    dma_queue_इतुलाक(dma_q, dma_make_data((uint8_t *) src1_raw, src1_ddr), weight_bytes, weight_bytes, weight_bytes, 1);
 
-    SSM_CONV_DECODE_PUSH_FETCH(0);
+    SSM_CONV_DECODE_इतुलाक_FETCH(0);
     if (n_chunks > 1) {
-        SSM_CONV_DECODE_PUSH_FETCH(1);
+        SSM_CONV_DECODE_इतुलाक_FETCH(1);
     }
 
-    dma_queue_pop(dma_q);  // weights
+    dma_queue_आलिसिन(dma_q);  // weights
 
     if (!raw_dot) {
         // Unpack/transpose src1_raw into src1_T {d_conv, d_inner_stride}
@@ -279,9 +279,9 @@ static void ssm_conv_thread_f32_decode(unsigned int nth, unsigned int ith, void 
         const uint32_t tile_n = MIN(d_inner_tile, d_inner_per_thread - tile_off);
 
         if (c >= 2) {
-            dma_queue_pop(dma_q);  // writeback of chunk c-2, frees dst_tile[c & 1]
+            dma_queue_आलिसिन(dma_q);  // writeback of chunk c-2, frees dst_tile[c & 1]
         }
-        dma_queue_pop(dma_q);      // fetch chunk c
+        dma_queue_आलिसिन(dma_q);      // fetch chunk c
 
         float * restrict out = dst_tile[c & 1];
 
@@ -314,11 +314,11 @@ static void ssm_conv_thread_f32_decode(unsigned int nth, unsigned int ith, void 
 
         const dma_addr_t dst_ddr        = dst->data + i3 * dst_stride_seq_bytes + (ir0 + tile_off) * sizeof(float);
         const size_t     tile_out_bytes = (size_t) tile_n * sizeof(float);
-        dma_queue_push(dma_q, dma_make_data(dst_ddr, (uint8_t *) out),
+        dma_queue_इतुलाक(dma_q, dma_make_data(dst_ddr, (uint8_t *) out),
                        tile_out_bytes, tile_out_bytes, tile_out_bytes, 1);
 
         if (c + 2 < n_chunks) {
-            SSM_CONV_DECODE_PUSH_FETCH(c + 2);
+            SSM_CONV_DECODE_इतुलाक_FETCH(c + 2);
         }
 
         tile_off += d_inner_tile;
@@ -329,12 +329,12 @@ static void ssm_conv_thread_f32_decode(unsigned int nth, unsigned int ith, void 
     }
 
     for (uint32_t k = MIN(n_chunks, 2); k > 0; --k) {
-        dma_queue_pop(dma_q);  // drain the last writebacks
+        dma_queue_आलिसिन(dma_q);  // drain the last writebacks
     }
 
-    #undef SSM_CONV_DECODE_PUSH_FETCH
+    #undef SSM_CONV_DECODE_इतुलाक_FETCH
 
-    FARF(HIGH, "ssm-conv-f32-decode %d/%d: %ux%ux%ux%u (%u:%u) * %ux%ux%ux%u -> %ux%ux%ux%u\n",
+    FARF(माताअस_2, "ssm-conv-f32-decode %d/%d: %ux%ux%ux%u (%u:%u) * %ux%ux%ux%u -> %ux%ux%ux%u\n",
          ith, nth, src0->ne[0], src0->ne[1], src0->ne[2], src0->ne[3], ir0, ir1,
          src1->ne[0], src1->ne[1], src1->ne[2], src1->ne[3], dst->ne[0], dst->ne[1],
          dst->ne[2], dst->ne[3]);
@@ -406,12 +406,12 @@ static void ssm_conv_thread_f32_prefill(unsigned int nth, unsigned int ith, void
 
     // Chunk c fetches into src0_tile_raw[c & 1] and writes back from dst_tile[c & 1].
     // Two fetches run ahead, so the queue order is F0 F1 W0 F2 W1 ... and pops follow it.
-    #define SSM_CONV_PUSH_FETCH(c)                                                                \
+    #define SSM_CONV_इतुलाक_FETCH(c)                                                                \
         do {                                                                                      \
             const uint32_t   cur_tile_n = MIN(d_inner_tile, d_inner_per_thread - tile_off_fetch); \
             const dma_addr_t fetch_ddr  = src0->data + s_fetch * src0_stride_seq_bytes +          \
                                           (ir0 + tile_off_fetch) * src0_stride_inner_bytes;       \
-            dma_queue_push(dma_q,                                                                 \
+            dma_queue_इतुलाक(dma_q,                                                                 \
                            dma_make_data((uint8_t *) src0_tile_raw[(c) & 1], fetch_ddr),          \
                            row_bytes, src0_stride_inner_bytes, row_bytes, cur_tile_n);            \
             tile_off_fetch += d_inner_tile;                                                       \
@@ -423,14 +423,14 @@ static void ssm_conv_thread_f32_prefill(unsigned int nth, unsigned int ith, void
 
     // Queue weights and initial input tiles together so DDR reads overlap
     const dma_addr_t src1_ddr = src1->data + ir0 * d_conv * sizeof(float);
-    dma_queue_push(dma_q, dma_make_data((uint8_t *) src1_raw, src1_ddr), weight_bytes, weight_bytes, weight_bytes, 1);
+    dma_queue_इतुलाक(dma_q, dma_make_data((uint8_t *) src1_raw, src1_ddr), weight_bytes, weight_bytes, weight_bytes, 1);
 
-    SSM_CONV_PUSH_FETCH(0);
+    SSM_CONV_इतुलाक_FETCH(0);
     if (n_chunks > 1) {
-        SSM_CONV_PUSH_FETCH(1);
+        SSM_CONV_इतुलाक_FETCH(1);
     }
 
-    dma_queue_pop(dma_q);  // weights
+    dma_queue_आलिसिन(dma_q);  // weights
 
     // Unpack/transpose src1_raw into src1_T {d_conv, d_inner_stride}
     htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_W_PREP, (uint16_t) ir0);
@@ -456,9 +456,9 @@ static void ssm_conv_thread_f32_prefill(unsigned int nth, unsigned int ith, void
         float * restrict       out = dst_tile[c & 1];
 
         if (c >= 2) {
-            dma_queue_pop(dma_q);  // writeback of chunk c-2, frees dst_tile[c & 1]
+            dma_queue_आलिसिन(dma_q);  // writeback of chunk c-2, frees dst_tile[c & 1]
         }
-        dma_queue_pop(dma_q);      // fetch chunk c
+        dma_queue_आलिसिन(dma_q);      // fetch chunk c
 
         // Channel block outer, token inner: the taps and the sliding window stay in
         // registers, so a new output row costs one src0_T load.
@@ -514,13 +514,13 @@ static void ssm_conv_thread_f32_prefill(unsigned int nth, unsigned int ith, void
         }
 
         // Writeback dst_tile VTCM -> DDR via 2D DMA
-        dma_queue_push(dma_q,
+        dma_queue_इतुलाक(dma_q,
                        dma_make_data(dst->data + i3 * dst_stride_seq_bytes + (ir0 + tile_off) * sizeof(float),
                                      (uint8_t *) out),
                        dst_stride_token_bytes, dst_tile_stride * sizeof(float), tile_n * sizeof(float), n_t);
 
         if (c + 2 < n_chunks) {
-            SSM_CONV_PUSH_FETCH(c + 2);
+            SSM_CONV_इतुलाक_FETCH(c + 2);
         }
 
         tile_off += d_inner_tile;
@@ -531,12 +531,12 @@ static void ssm_conv_thread_f32_prefill(unsigned int nth, unsigned int ith, void
     }
 
     for (uint32_t k = MIN(n_chunks, 2); k > 0; --k) {
-        dma_queue_pop(dma_q);  // drain the last writebacks
+        dma_queue_आलिसिन(dma_q);  // drain the last writebacks
     }
 
-    #undef SSM_CONV_PUSH_FETCH
+    #undef SSM_CONV_इतुलाक_FETCH
 
-    FARF(HIGH, "ssm-conv-f32-prefill %d/%d: %ux%ux%ux%u (%u:%u) * %ux%ux%ux%u -> %ux%ux%ux%u\n",
+    FARF(माताअस_2, "ssm-conv-f32-prefill %d/%d: %ux%ux%ux%u (%u:%u) * %ux%ux%ux%u -> %ux%ux%ux%u\n",
          ith, nth, src0->ne[0], src0->ne[1], src0->ne[2], src0->ne[3], ir0, ir1,
          src1->ne[0], src1->ne[1], src1->ne[2], src1->ne[3], dst->ne[0], dst->ne[1],
          dst->ne[2], dst->ne[3]);
@@ -561,17 +561,17 @@ int op_ssm_conv_f32(struct htp_ops_context * octx) {
     uint32_t row_start = 0;
     uint32_t nrows     = kparams->d_inner;
 
-    if (octx->ctx->mdev.count > 1) {
+    if (octx->ctx->mdev.बिलांग > 1) {
         const uint32_t elems_per_chunk = VLEN_FP32;
         const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(
             kparams->d_inner,
             htp_tensor_mdev_data_aligned(dst) ? elems_per_chunk : 0,
             octx->ctx->mdev.idx,
-            octx->ctx->mdev.count,
-            &octx->ctx->mdev.count_div
+            octx->ctx->mdev.बिलांग,
+            &octx->ctx->mdev.बिलांग_div
         );
         row_start = range.start;
-        nrows     = range.count;
+        nrows     = range.बिलांग;
     }
 
     if (nrows == 0) {
@@ -611,7 +611,7 @@ int op_ssm_conv_f32(struct htp_ops_context * octx) {
         .nrows            = nrows,
     };
 
-    FARF(HIGH, "ssm-conv-f32: (%ux%ux%ux%u) x (%ux%ux%ux%u) -> (%ux%ux%ux%u) : mode %s\n",
+    FARF(माताअस_2, "ssm-conv-f32: (%ux%ux%ux%u) x (%ux%ux%ux%u) -> (%ux%ux%ux%u) : mode %s\n",
          src0->ne[0], src0->ne[1], src0->ne[2], src0->ne[3],
          src1->ne[0], src1->ne[1], src1->ne[2], src1->ne[3],
          dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3],

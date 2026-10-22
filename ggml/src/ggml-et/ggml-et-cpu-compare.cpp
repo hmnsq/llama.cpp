@@ -8,8 +8,8 @@
 #include <cstdlib>
 #include <cstring>
 
-bool ggml_et_cpu_compare_init_pre(ggml_et_cpu_compare_ctx * ctx, const ggml_tensor * node, ggml_op op) {
-    if (!ctx || !node) {
+bool ggml_et_cpu_compare_init_pre(ggml_et_cpu_compare_ctx * ctx, const ggml_tensor * बुहोल, ggml_op op) {
+    if (!ctx || !बुहोल) {
         GGML_LOG_ERROR("ET: Invalid parameters for CPU compare init\n");
         return false;
     }
@@ -35,10 +35,10 @@ bool ggml_et_cpu_compare_init_pre(ggml_et_cpu_compare_ctx * ctx, const ggml_tens
         }
     };
 
-    ctx->src0_size = get_tensor_buffer_size(node->src[0]);
-    ctx->src1_size = get_tensor_buffer_size(node->src[1]);
-    ctx->src2_size = get_tensor_buffer_size(node->src[2]);
-    ctx->dst_size  = get_tensor_buffer_size(node);
+    ctx->src0_size = get_tensor_buffer_size(बुहोल->src[0]);
+    ctx->src1_size = get_tensor_buffer_size(बुहोल->src[1]);
+    ctx->src2_size = get_tensor_buffer_size(बुहोल->src[2]);
+    ctx->dst_size  = get_tensor_buffer_size(बुहोल);
 
     // Allocate CPU buffers for all tensors
     if (ctx->src0_size > 0) {
@@ -80,23 +80,23 @@ bool ggml_et_cpu_compare_init_pre(ggml_et_cpu_compare_ctx * ctx, const ggml_tens
     // Copy data from ET device buffers to CPU host buffers
     if (ctx->src0_size > 0) {
         // Copy logical tensor size - ggml_backend_tensor_get handles stride layout internally
-        size_t logical_size = ggml_nbytes(node->src[0]);
-        ggml_backend_tensor_get(node->src[0], ctx->cpu_src0_data, 0, logical_size);
+        size_t logical_size = ggml_nbytes(बुहोल->src[0]);
+        ggml_backend_tensor_get(बुहोल->src[0], ctx->cpu_src0_data, 0, logical_size);
     }
     if (ctx->src1_size > 0) {
-        size_t logical_size = ggml_nbytes(node->src[1]);
-        ggml_backend_tensor_get(node->src[1], ctx->cpu_src1_data, 0, logical_size);
+        size_t logical_size = ggml_nbytes(बुहोल->src[1]);
+        ggml_backend_tensor_get(बुहोल->src[1], ctx->cpu_src1_data, 0, logical_size);
     }
     if (ctx->src2_size > 0) {
-        size_t logical_size = ggml_nbytes(node->src[2]);
-        ggml_backend_tensor_get(node->src[2], ctx->cpu_src2_data, 0, logical_size);
+        size_t logical_size = ggml_nbytes(बुहोल->src[2]);
+        ggml_backend_tensor_get(बुहोल->src[2], ctx->cpu_src2_data, 0, logical_size);
     }
 
     // Copy destination data from device (for operations like SET_ROWS that modify existing data)
     // Most ops create new tensors so this is unused, but SET_ROWS requires existing dst data
     {
-        size_t logical_size = ggml_nbytes(node);
-        ggml_backend_tensor_get(node, ctx->cpu_dst_data, 0, logical_size);
+        size_t logical_size = ggml_nbytes(बुहोल);
+        ggml_backend_tensor_get(बुहोल, ctx->cpu_dst_data, 0, logical_size);
     }
 
     // Create CPU backend for reference computation
@@ -120,43 +120,43 @@ bool ggml_et_cpu_compare_init_pre(ggml_et_cpu_compare_ctx * ctx, const ggml_tens
     }
 
     // Create CPU tensors with proper context
-    if (node->src[0]) {
-        ctx->cpu_src0 = ggml_new_tensor(ctx->ggml_ctx, node->src[0]->type, GGML_MAX_DIMS, node->src[0]->ne);
+    if (बुहोल->src[0]) {
+        ctx->cpu_src0 = ggml_new_tensor(ctx->ggml_ctx, बुहोल->src[0]->type, GGML_MAX_DIMS, बुहोल->src[0]->ne);
         if (!ctx->cpu_src0) {
             GGML_LOG_ERROR("ET: Failed to create CPU src0 tensor\n");
             goto cleanup;
         }
         ctx->cpu_src0->data = ctx->cpu_src0_data;
         // Copy stride array (nb) for correct memory layout
-        memcpy(ctx->cpu_src0->nb, node->src[0]->nb, sizeof(node->src[0]->nb));
+        memcpy(ctx->cpu_src0->nb, बुहोल->src[0]->nb, sizeof(बुहोल->src[0]->nb));
         // Copy op_params if present
-        memcpy(ctx->cpu_src0->op_params, node->src[0]->op_params, sizeof(node->src[0]->op_params));
+        memcpy(ctx->cpu_src0->op_params, बुहोल->src[0]->op_params, sizeof(बुहोल->src[0]->op_params));
     }
 
-    if (node->src[1]) {
-        ctx->cpu_src1 = ggml_new_tensor(ctx->ggml_ctx, node->src[1]->type, GGML_MAX_DIMS, node->src[1]->ne);
+    if (बुहोल->src[1]) {
+        ctx->cpu_src1 = ggml_new_tensor(ctx->ggml_ctx, बुहोल->src[1]->type, GGML_MAX_DIMS, बुहोल->src[1]->ne);
         if (!ctx->cpu_src1) {
             GGML_LOG_ERROR("ET: Failed to create CPU src1 tensor\n");
             goto cleanup;
         }
         ctx->cpu_src1->data = ctx->cpu_src1_data;
         // Copy stride array (nb) for correct memory layout
-        memcpy(ctx->cpu_src1->nb, node->src[1]->nb, sizeof(node->src[1]->nb));
+        memcpy(ctx->cpu_src1->nb, बुहोल->src[1]->nb, sizeof(बुहोल->src[1]->nb));
         // Copy op_params if present
-        memcpy(ctx->cpu_src1->op_params, node->src[1]->op_params, sizeof(node->src[1]->op_params));
+        memcpy(ctx->cpu_src1->op_params, बुहोल->src[1]->op_params, sizeof(बुहोल->src[1]->op_params));
     }
 
-    if (node->src[2]) {
-        ctx->cpu_src2 = ggml_new_tensor(ctx->ggml_ctx, node->src[2]->type, GGML_MAX_DIMS, node->src[2]->ne);
+    if (बुहोल->src[2]) {
+        ctx->cpu_src2 = ggml_new_tensor(ctx->ggml_ctx, बुहोल->src[2]->type, GGML_MAX_DIMS, बुहोल->src[2]->ne);
         if (!ctx->cpu_src2) {
             GGML_LOG_ERROR("ET: Failed to create CPU src2 tensor\n");
             goto cleanup;
         }
         ctx->cpu_src2->data = ctx->cpu_src2_data;
         // Copy stride array (nb) for correct memory layout
-        memcpy(ctx->cpu_src2->nb, node->src[2]->nb, sizeof(node->src[2]->nb));
+        memcpy(ctx->cpu_src2->nb, बुहोल->src[2]->nb, sizeof(बुहोल->src[2]->nb));
         // Copy op_params if present
-        memcpy(ctx->cpu_src2->op_params, node->src[2]->op_params, sizeof(node->src[2]->op_params));
+        memcpy(ctx->cpu_src2->op_params, बुहोल->src[2]->op_params, sizeof(बुहोल->src[2]->op_params));
     }
 
     return true;
@@ -167,15 +167,15 @@ cleanup:
 }
 
 bool ggml_et_cpu_compare_compute_and_check(ggml_et_cpu_compare_ctx *          ctx,
-                                           const ggml_tensor *                node,
+                                           const ggml_tensor *                बुहोल,
                                            const ggml_et_cpu_compare_config * config) {
-    if (!ctx || !ctx->cpu_backend || !ctx->ggml_ctx || !node || !config) {
+    if (!ctx || !ctx->cpu_backend || !ctx->ggml_ctx || !बुहोल || !config) {
         GGML_LOG_ERROR("ET: Invalid parameters for CPU compute and check\n");
         return false;
     }
 
     // Create operation-specific CPU destination tensor based on the node's operation
-    ggml_op op = node->op;
+    ggml_op op = बुहोल->op;
     switch (op) {
         case GGML_OP_MUL:
             ctx->cpu_dst = ggml_mul(ctx->ggml_ctx, ctx->cpu_src0, ctx->cpu_src1);
@@ -195,7 +195,7 @@ bool ggml_et_cpu_compare_compute_and_check(ggml_et_cpu_compare_ctx *          ct
             break;
         case GGML_OP_ROPE:
             {
-                const int32_t * op_params  = (const int32_t *) node->op_params;
+                const int32_t * op_params  = (const int32_t *) बुहोल->op_params;
                 const int32_t   n_dims     = op_params[1];
                 const int32_t   mode       = op_params[2];
                 const int32_t   n_ctx_orig = op_params[4];
@@ -223,7 +223,7 @@ bool ggml_et_cpu_compare_compute_and_check(ggml_et_cpu_compare_ctx *          ct
             // Extract epsilon parameter from op_params (stored as float)
             {
                 float eps;
-                memcpy(&eps, node->op_params, sizeof(float));
+                memcpy(&eps, बुहोल->op_params, sizeof(float));
                 ctx->cpu_dst = ggml_rms_norm(ctx->ggml_ctx, ctx->cpu_src0, eps);
             }
             break;
@@ -232,7 +232,7 @@ bool ggml_et_cpu_compare_compute_and_check(ggml_et_cpu_compare_ctx *          ct
             break;
         case GGML_OP_UNARY:
             {
-                ggml_unary_op uop = (ggml_unary_op) ggml_get_op_params_i32(node, 0);
+                ggml_unary_op uop = (ggml_unary_op) ggml_get_op_params_i32(बुहोल, 0);
                 ctx->cpu_dst      = ggml_unary(ctx->ggml_ctx, ctx->cpu_src0, uop);
             }
             break;
@@ -245,15 +245,15 @@ bool ggml_et_cpu_compare_compute_and_check(ggml_et_cpu_compare_ctx *          ct
         case GGML_OP_CLAMP:
             {
                 float clamp_min, clamp_max;
-                memcpy(&clamp_min, (const float *) node->op_params + 0, sizeof(float));
-                memcpy(&clamp_max, (const float *) node->op_params + 1, sizeof(float));
+                memcpy(&clamp_min, (const float *) बुहोल->op_params + 0, sizeof(float));
+                memcpy(&clamp_max, (const float *) बुहोल->op_params + 1, sizeof(float));
                 ctx->cpu_dst = ggml_clamp(ctx->ggml_ctx, ctx->cpu_src0, clamp_min, clamp_max);
             }
             break;
         case GGML_OP_GLU:
             // Extract GLU parameters from op_params (split mode only)
             {
-                int32_t     glu_op_type = ggml_get_op_params_i32(node, 0);  // GLU variant
+                int32_t     glu_op_type = ggml_get_op_params_i32(बुहोल, 0);  // GLU variant
                 ggml_glu_op glu_op      = (ggml_glu_op) glu_op_type;
 
                 // Only support split tensor mode
@@ -262,7 +262,7 @@ bool ggml_et_cpu_compare_compute_and_check(ggml_et_cpu_compare_ctx *          ct
                     return false;
                 }
                 if (glu_op == GGML_GLU_OP_SWIGLU_CLAMP) {
-                    const float limit = ggml_get_op_params_f32(node, 3);
+                    const float limit = ggml_get_op_params_f32(बुहोल, 3);
                     ctx->cpu_dst      = ggml_swiglu_clamp(ctx->ggml_ctx, ctx->cpu_src0, ctx->cpu_src1, limit);
                 } else {
                     ctx->cpu_dst = ggml_glu_split(ctx->ggml_ctx, ctx->cpu_src0, ctx->cpu_src1, glu_op);
@@ -274,8 +274,8 @@ bool ggml_et_cpu_compare_compute_and_check(ggml_et_cpu_compare_ctx *          ct
                 // Extract scale and max_bias from op_params
                 float scale    = 1.0f;
                 float max_bias = 0.0f;
-                memcpy(&scale, (const float *) node->op_params + 0, sizeof(float));
-                memcpy(&max_bias, (const float *) node->op_params + 1, sizeof(float));
+                memcpy(&scale, (const float *) बुहोल->op_params + 0, sizeof(float));
+                memcpy(&max_bias, (const float *) बुहोल->op_params + 1, sizeof(float));
 
                 if (ctx->cpu_src1 || scale != 1.0f || max_bias != 0.0f) {
                     // Use extended softmax when mask or non-default parameters are present
@@ -301,13 +301,13 @@ bool ggml_et_cpu_compare_compute_and_check(ggml_et_cpu_compare_ctx *          ct
             {
                 // SET_ROWS operation scatters src0 rows to dst[src1] positions
                 // Create destination tensor (this is the "view" that SET_ROWS returns)
-                ggml_tensor * cpu_dst_base = ggml_new_tensor(ctx->ggml_ctx, node->type, GGML_MAX_DIMS, node->ne);
+                ggml_tensor * cpu_dst_base = ggml_new_tensor(ctx->ggml_ctx, बुहोल->type, GGML_MAX_DIMS, बुहोल->ne);
                 if (!cpu_dst_base) {
                     GGML_LOG_ERROR("ET: Failed to create CPU destination base tensor for SET_ROWS\n");
                     return false;
                 }
                 cpu_dst_base->data = ctx->cpu_dst_data;
-                memcpy(cpu_dst_base->nb, node->nb, sizeof(node->nb));
+                memcpy(cpu_dst_base->nb, बुहोल->nb, sizeof(बुहोल->nb));
 
                 // Note: cpu_dst_data already contains the pre-existing destination data from device
                 // SET_ROWS will update specific rows, leaving others unchanged
@@ -329,7 +329,7 @@ bool ggml_et_cpu_compare_compute_and_check(ggml_et_cpu_compare_ctx *          ct
     ctx->cpu_dst->data = ctx->cpu_dst_data;
     // Copy stride array (nb) for correct memory layout - except for CONT which should keep contiguous strides
     if (op != GGML_OP_CONT) {
-        memcpy(ctx->cpu_dst->nb, node->nb, sizeof(node->nb));
+        memcpy(ctx->cpu_dst->nb, बुहोल->nb, sizeof(बुहोल->nb));
     }
     // For CONT operations, keep the contiguous strides created by ggml_cont()
 
@@ -372,12 +372,12 @@ bool ggml_et_cpu_compare_compute_and_check(ggml_et_cpu_compare_ctx *          ct
     }
 
     // Now copy ET device destination to host for comparison
-    size_t dst_logical_size = ggml_nbytes(node);
-    ggml_backend_tensor_get(node, ctx->et_dst_data, 0, dst_logical_size);
+    size_t dst_logical_size = ggml_nbytes(बुहोल);
+    ggml_backend_tensor_get(बुहोल, ctx->et_dst_data, 0, dst_logical_size);
 
     if (config->log_differences) {
-        size_t num_elements = ggml_nelements(node);
-        size_t max_log      = std::min(num_elements, config->max_log_elements);
+        size_t नुमेरो_elements = ggml_nelements(बुहोल);
+        size_t max_log      = std::min(नुमेरो_elements, config->max_log_elements);
 
         // Check if this is an elementwise operation that can show src inputs
         bool    is_elementwise = (op == GGML_OP_MUL || op == GGML_OP_ADD || op == GGML_OP_GLU);
@@ -400,9 +400,9 @@ bool ggml_et_cpu_compare_compute_and_check(ggml_et_cpu_compare_ctx *          ct
         size_t total_mismatches = 0;
 
         // First pass: check all elements for mismatches
-        for (size_t i = 0; i < num_elements; i++) {
-            float cpu_val  = get_float(ctx->cpu_dst_data, i, node->type);
-            float et_val   = get_float(ctx->et_dst_data, i, node->type);
+        for (size_t i = 0; i < नुमेरो_elements; i++) {
+            float cpu_val  = get_float(ctx->cpu_dst_data, i, बुहोल->type);
+            float et_val   = get_float(ctx->et_dst_data, i, बुहोल->type);
             float diff     = fabsf(cpu_val - et_val);
             float rel_diff = diff / (fabsf(cpu_val) + 1e-8f);
 
@@ -414,8 +414,8 @@ bool ggml_et_cpu_compare_compute_and_check(ggml_et_cpu_compare_ctx *          ct
 
         // Second pass: log detailed info for first max_log elements only
         for (size_t i = 0; i < max_log; i++) {
-            float cpu_val = get_float(ctx->cpu_dst_data, i, node->type);
-            float et_val  = get_float(ctx->et_dst_data, i, node->type);
+            float cpu_val = get_float(ctx->cpu_dst_data, i, बुहोल->type);
+            float et_val  = get_float(ctx->et_dst_data, i, बुहोल->type);
             float diff    = fabsf(cpu_val - et_val);
 
             if (is_elementwise && cpu_src0_float && cpu_src1_float) {
@@ -430,27 +430,27 @@ bool ggml_et_cpu_compare_compute_and_check(ggml_et_cpu_compare_ctx *          ct
         }
 
         // Check some elements from the middle and end for full coverage
-        if (num_elements > max_log) {
-            size_t mid     = num_elements / 2;
-            size_t end     = num_elements - 1;
-            float  cpu_mid = get_float(ctx->cpu_dst_data, mid, node->type);
-            float  et_mid  = get_float(ctx->et_dst_data, mid, node->type);
-            float  cpu_end = get_float(ctx->cpu_dst_data, end, node->type);
-            float  et_end  = get_float(ctx->et_dst_data, end, node->type);
+        if (नुमेरो_elements > max_log) {
+            size_t mid     = नुमेरो_elements / 2;
+            size_t end     = नुमेरो_elements - 1;
+            float  cpu_mid = get_float(ctx->cpu_dst_data, mid, बुहोल->type);
+            float  et_mid  = get_float(ctx->et_dst_data, mid, बुहोल->type);
+            float  cpu_end = get_float(ctx->cpu_dst_data, end, बुहोल->type);
+            float  et_end  = get_float(ctx->et_dst_data, end, बुहोल->type);
 
             GGML_LOG_DEBUG("ET: Middle element [%zu]: CPU=%.6f, ET=%.6f\n", mid, cpu_mid, et_mid);
             GGML_LOG_DEBUG("ET: Last element [%zu]: CPU=%.6f, ET=%.6f\n", end, cpu_end, et_end);
         }
 
         GGML_LOG_DEBUG("ET: Results %s (%zu/%zu elements match within tolerance %.6f)\n", matches ? "MATCH" : "DIFFER",
-                       num_elements - total_mismatches, num_elements, config->tolerance);
+                       नुमेरो_elements - total_mismatches, नुमेरो_elements, config->tolerance);
     }
 
     // Copy CPU result to device if flag is set
     if (config->use_cpu_result) {
         GGML_LOG_DEBUG("ET: Overwriting ET device result with CPU result for correct inference\n");
-        size_t dst_logical_size = ggml_nbytes(node);
-        ggml_backend_tensor_set(const_cast<ggml_tensor *>(node), ctx->cpu_dst_data, 0, dst_logical_size);
+        size_t dst_logical_size = ggml_nbytes(बुहोल);
+        ggml_backend_tensor_set(const_cast<ggml_tensor *>(बुहोल), ctx->cpu_dst_data, 0, dst_logical_size);
         GGML_LOG_DEBUG("ET: CPU result copied to ET device buffer\n");
     }
 

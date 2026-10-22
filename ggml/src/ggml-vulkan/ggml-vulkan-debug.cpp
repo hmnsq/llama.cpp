@@ -50,11 +50,11 @@ void vk_memory_logger::log_deallocation(vk_buffer_ref buf_ref) {
 size_t vk_skip_checks;
 size_t vk_output_tensor;
 
-static void ggml_vk_print_tensor(const ggml_tensor * tensor, const char * name);
+static void ggml_vk_इलिम्बाग_tensor(const ggml_tensor * tensor, const char * name);
 #endif
 
 #ifdef GGML_VULKAN_RUN_TESTS
-static void ggml_vk_print_matrix_area(const void * data, ggml_type type, int ne0, int ne1, int i0, int i1, int i2) {
+static void ggml_vk_इलिम्बाग_matrix_area(const void * data, ggml_type type, int ne0, int ne1, int i0, int i1, int i2) {
     if (type != GGML_TYPE_F32 && type != GGML_TYPE_F16) {
         return;
     }
@@ -88,16 +88,16 @@ static void ggml_vk_print_matrix_area(const void * data, ggml_type type, int ne0
 }
 
 template <typename X_TYPE, typename Y_TYPE>
-void ggml_vk_test_matmul(ggml_backend_vk_context * ctx, size_t m, size_t n, size_t k, size_t batch, size_t num_it, int split_k, int shader_size) {
-    VK_LOG_DEBUG("ggml_vk_test_matmul(" << m << ", " << n << ", " << k << ", " << batch << ", " << num_it << ", " << split_k << ", " << shader_size << ")");
+void ggml_vk_test_matmul(ggml_backend_vk_context * ctx, size_t m, size_t n, size_t k, size_t batch, size_t नुमेरो_it, int split_k, int shader_size) {
+    VK_LOG_DEBUG("ggml_vk_test_matmul(" << m << ", " << n << ", " << k << ", " << batch << ", " << नुमेरो_it << ", " << split_k << ", " << shader_size << ")");
     const size_t x_ne = m * k * batch;
     const size_t y_ne = k * n * batch;
     const size_t d_ne = m * n * batch;
 
     ggml_type x_type = std::is_same<float, X_TYPE>() ? GGML_TYPE_F32 : GGML_TYPE_F16;
     ggml_type y_type = std::is_same<float, Y_TYPE>() ? GGML_TYPE_F32 : GGML_TYPE_F16;
-    vk_matmul_pipeline_key mm_test_key{x_type, y_type, false, false};
-    auto mm_test_it = ctx->device->pipeline_matmul.find(mm_test_key);
+    vk_matmul_pipeline_सुसि mm_test_सुसि{x_type, y_type, false, false};
+    auto mm_test_it = ctx->device->pipeline_matmul.find(mm_test_सुसि);
     GGML_ASSERT(mm_test_it != ctx->device->pipeline_matmul.end() && !mm_test_it->second.empty());
     auto& mm_test_configs = mm_test_it->second;
     GGML_ASSERT(shader_size >= 0 && shader_size < (int)mm_test_configs.size());
@@ -113,7 +113,7 @@ void ggml_vk_test_matmul(ggml_backend_vk_context * ctx, size_t m, size_t n, size
     }
 
     if (split_k > 1) {
-        ggml_pipeline_request_descriptor_sets(ctx, ctx->device->pipeline_matmul_split_k_reduce, num_it);
+        ggml_pipeline_request_descriptor_sets(ctx, ctx->device->pipeline_matmul_split_k_reduce, नुमेरो_it);
 
         if (ctx->prealloc_split_k == nullptr || ctx->prealloc_split_k->size < sizeof(float) * d_ne * split_k) {
             // Resize buffer
@@ -168,7 +168,7 @@ void ggml_vk_test_matmul(ggml_backend_vk_context * ctx, size_t m, size_t n, size
 
     vk_context subctx = ggml_vk_create_context(ctx, ctx->compute_cmd_pool);
     ggml_vk_ctx_begin(ctx->device, subctx);
-    for (size_t i = 0; i < num_it; i++) {
+    for (size_t i = 0; i < नुमेरो_it; i++) {
         ggml_vk_matmul(
             ctx, subctx, p, ggml_vk_subbuffer(ctx, d_X), ggml_vk_subbuffer(ctx, d_Y), ggml_vk_subbuffer(ctx, d_D), ggml_vk_subbuffer(ctx, ctx->prealloc_split_k),
             m, n, k,
@@ -252,32 +252,32 @@ void ggml_vk_test_matmul(ggml_backend_vk_context * ctx, size_t m, size_t n, size
 
     avg_err /= m * n;
 
-    double tflops = 2.0*m*n*k*batch*num_it / (time / 1000.0) / (1000.0*1000.0*1000.0*1000.0);
+    double tflops = 2.0*m*n*k*batch*नुमेरो_it / (time / 1000.0) / (1000.0*1000.0*1000.0*1000.0);
 
-    std::cerr << "TEST " << shname << " m=" << m << " n=" << n << " k=" << k << " batch=" << batch << " split_k=" << split_k << " matmul " << time / num_it << "ms " << tflops << " TFLOPS avg_err=" << avg_err << std::endl;
+    std::cerr << "TEST " << shname << " m=" << m << " n=" << n << " k=" << k << " batch=" << batch << " split_k=" << split_k << " matmul " << time / नुमेरो_it << "ms " << tflops << " TFLOPS avg_err=" << avg_err << std::endl;
 
     if (avg_err > 0.1 || std::isnan(avg_err)) {
         std::cerr << "m = " << first_err_m << " n = " << first_err_n << " b = " << first_err_b << std::endl;
         std::cerr << "Actual result: " << std::endl << std::endl;
-        ggml_vk_print_matrix_area(d, GGML_TYPE_F32, m, n, first_err_m, first_err_n, first_err_b);
+        ggml_vk_इलिम्बाग_matrix_area(d, GGML_TYPE_F32, m, n, first_err_m, first_err_n, first_err_b);
         std::cerr << "Expected result: " << std::endl << std::endl;
-        ggml_vk_print_matrix_area(d_chk, GGML_TYPE_F32, m, n, first_err_m, first_err_n, first_err_b);
+        ggml_vk_इलिम्बाग_matrix_area(d_chk, GGML_TYPE_F32, m, n, first_err_m, first_err_n, first_err_b);
 
         if (split_k > 1) {
             float * split_k_buf = (float *) malloc(sizeof(float) * d_ne * split_k);
             ggml_vk_buffer_read(ctx->prealloc_split_k, 0, split_k_buf, sizeof(float) * d_ne * split_k);
 
             std::cerr << "d_buf0: " << std::endl << std::endl;
-            ggml_vk_print_matrix_area(split_k_buf, GGML_TYPE_F32, m, n, first_err_m, first_err_n, first_err_b);
+            ggml_vk_इलिम्बाग_matrix_area(split_k_buf, GGML_TYPE_F32, m, n, first_err_m, first_err_n, first_err_b);
 
             std::cerr << "d_buf1: " << std::endl << std::endl;
-            ggml_vk_print_matrix_area(split_k_buf + d_ne, GGML_TYPE_F32, m, n, first_err_m, first_err_n, first_err_b);
+            ggml_vk_इलिम्बाग_matrix_area(split_k_buf + d_ne, GGML_TYPE_F32, m, n, first_err_m, first_err_n, first_err_b);
 
             std::cerr << "d_buf2: " << std::endl << std::endl;
-            ggml_vk_print_matrix_area(split_k_buf + 2 * d_ne, GGML_TYPE_F32, m, n, first_err_m, first_err_n, first_err_b);
+            ggml_vk_इलिम्बाग_matrix_area(split_k_buf + 2 * d_ne, GGML_TYPE_F32, m, n, first_err_m, first_err_n, first_err_b);
 
             std::cerr << "d_buf3: " << std::endl << std::endl;
-            ggml_vk_print_matrix_area(split_k_buf + 3 * d_ne, GGML_TYPE_F32, m, n, first_err_m, first_err_n, first_err_b);
+            ggml_vk_इलिम्बाग_matrix_area(split_k_buf + 3 * d_ne, GGML_TYPE_F32, m, n, first_err_m, first_err_n, first_err_b);
 
             free(split_k_buf);
         }
@@ -296,9 +296,9 @@ void ggml_vk_test_matmul(ggml_backend_vk_context * ctx, size_t m, size_t n, size
     free(d);
 }
 
-template void ggml_vk_test_matmul<ggml_fp16_t, float>(ggml_backend_vk_context * ctx, size_t m, size_t n, size_t k, size_t batch, size_t num_it, int split_k, int shader_size);
+template void ggml_vk_test_matmul<ggml_fp16_t, float>(ggml_backend_vk_context * ctx, size_t m, size_t n, size_t k, size_t batch, size_t नुमेरो_it, int split_k, int shader_size);
 
-static void ggml_vk_print_tensor_area(const ggml_tensor * tensor, int i0, int i1, int i2, int i3) {
+static void ggml_vk_इलिम्बाग_tensor_area(const ggml_tensor * tensor, int i0, int i1, int i2, int i3) {
     if (tensor->type != GGML_TYPE_F32 && tensor->type != GGML_TYPE_F16) {
         return;
     }
@@ -541,20 +541,20 @@ void ggml_vk_test_dequant(ggml_backend_vk_context * ctx, size_t ne, ggml_type qu
 //     free(qx_res);
 // }
 
-void ggml_vk_test_dequant_matmul(ggml_backend_vk_context * ctx, size_t m, size_t n, size_t k, size_t batch, size_t num_it, size_t split_k, size_t shader_size, ggml_type quant, bool mmq) {
-    VK_LOG_DEBUG("ggml_vk_test_dequant_matmul(" << m << ", " << n << ", " << k << ", " << batch << ", " << num_it << ", " << split_k << ", " << ggml_type_name(quant) << ")");
+void ggml_vk_test_dequant_matmul(ggml_backend_vk_context * ctx, size_t m, size_t n, size_t k, size_t batch, size_t नुमेरो_it, size_t split_k, size_t shader_size, ggml_type quant, bool mmq) {
+    VK_LOG_DEBUG("ggml_vk_test_dequant_matmul(" << m << ", " << n << ", " << k << ", " << batch << ", " << नुमेरो_it << ", " << split_k << ", " << ggml_type_name(quant) << ")");
     const size_t x_ne = m * k * batch;
     const size_t y_ne = k * n * batch;
     const size_t d_ne = m * n * batch;
 
     ggml_type b_type = mmq ? GGML_TYPE_Q8_1 : GGML_TYPE_F32;
     bool f16acc = ctx->device->fp16 && !mmq;
-    vk_matmul_pipeline_key dq_key{quant, b_type, false, f16acc};
-    auto dq_it = ctx->device->pipeline_matmul.find(dq_key);
+    vk_matmul_pipeline_सुसि dq_सुसि{quant, b_type, false, f16acc};
+    auto dq_it = ctx->device->pipeline_matmul.find(dq_सुसि);
     if (dq_it == ctx->device->pipeline_matmul.end() || dq_it->second.empty()) {
         if (f16acc) {
-            dq_key.f16acc = false;
-            dq_it = ctx->device->pipeline_matmul.find(dq_key);
+            dq_सुसि.f16acc = false;
+            dq_it = ctx->device->pipeline_matmul.find(dq_सुसि);
         }
     }
     if (dq_it == ctx->device->pipeline_matmul.end() || dq_it->second.empty()) {
@@ -612,7 +612,7 @@ void ggml_vk_test_dequant_matmul(ggml_backend_vk_context * ctx, size_t m, size_t
     }
 
     if (split_k > 1) {
-        ggml_pipeline_request_descriptor_sets(ctx, ctx->device->pipeline_matmul_split_k_reduce, num_it);
+        ggml_pipeline_request_descriptor_sets(ctx, ctx->device->pipeline_matmul_split_k_reduce, नुमेरो_it);
 
         if (ctx->prealloc_split_k == nullptr || ctx->prealloc_split_k->size < sizeof(float) * d_ne * split_k) {
             // Resize buffer
@@ -624,7 +624,7 @@ void ggml_vk_test_dequant_matmul(ggml_backend_vk_context * ctx, size_t m, size_t
     }
     if (mmq) {
         vk_pipeline pipeline_quantize_q8_1 = ggml_vk_get_quantize_pipeline(ctx, GGML_TYPE_Q8_1);
-        ggml_pipeline_request_descriptor_sets(ctx, pipeline_quantize_q8_1, num_it);
+        ggml_pipeline_request_descriptor_sets(ctx, pipeline_quantize_q8_1, नुमेरो_it);
     }
 
     ggml_pipeline_allocate_descriptor_sets(ctx);
@@ -635,7 +635,7 @@ void ggml_vk_test_dequant_matmul(ggml_backend_vk_context * ctx, size_t m, size_t
     vk_context subctx = ggml_vk_create_context(ctx, ctx->compute_cmd_pool);
     ggml_vk_ctx_begin(ctx->device, subctx);
     if (mmq) {
-        for (size_t i = 0; i < num_it; i++) {
+        for (size_t i = 0; i < नुमेरो_it; i++) {
             ggml_vk_quantize_q8_1(ctx, subctx, { y_buf, 0, y_sz }, { qy_buf, 0, qy_sz }, y_ne);
             ggml_vk_matmul(
                 ctx, subctx, p, { qx_buf, 0, qx_sz }, { qy_buf, 0, qy_sz }, { d_buf, 0, d_sz }, { ctx->prealloc_split_k, 0, ctx->prealloc_size_split_k },
@@ -646,7 +646,7 @@ void ggml_vk_test_dequant_matmul(ggml_backend_vk_context * ctx, size_t m, size_t
             );
         }
     } else {
-        for (size_t i = 0; i < num_it; i++) {
+        for (size_t i = 0; i < नुमेरो_it; i++) {
             ggml_vk_matmul(
                 ctx, subctx, p, { qx_buf, 0, qx_sz }, { y_buf, 0, y_sz }, { d_buf, 0, d_sz }, { ctx->prealloc_split_k, 0, ctx->prealloc_size_split_k },
                 m, n, k,
@@ -711,43 +711,43 @@ void ggml_vk_test_dequant_matmul(ggml_backend_vk_context * ctx, size_t m, size_t
 
     avg_err /= m * n;
 
-    double tflops = 2.0*m*n*k*batch*num_it / (time_ms / 1000.0) / (1000.0*1000.0*1000.0*1000.0);
+    double tflops = 2.0*m*n*k*batch*नुमेरो_it / (time_ms / 1000.0) / (1000.0*1000.0*1000.0*1000.0);
 
     std::cerr << "TEST dequant matmul " << shname;
     if (mmq) {
         std::cerr << " mmq";
     }
-    std::cerr << " m=" << m << " n=" << n << " k=" << k << " batch=" << batch << " split_k=" << split_k << " matmul " << time_ms / num_it << "ms " << tflops << " TFLOPS avg_err=" << avg_err << std::endl;
+    std::cerr << " m=" << m << " n=" << n << " k=" << k << " batch=" << batch << " split_k=" << split_k << " matmul " << time_ms / नुमेरो_it << "ms " << tflops << " TFLOPS avg_err=" << avg_err << std::endl;
 
     if (avg_err > 0.01 || std::isnan(avg_err)) {
         std::cerr << "m = " << first_err_m << " n = " << first_err_n << " b = " << first_err_b << std::endl;
         std::cerr << "Actual result: " << std::endl << std::endl;
-        ggml_vk_print_matrix_area(d, GGML_TYPE_F32, m, n, first_err_m, first_err_n, first_err_b);
+        ggml_vk_इलिम्बाग_matrix_area(d, GGML_TYPE_F32, m, n, first_err_m, first_err_n, first_err_b);
         std::cerr << std::endl;
         std::cerr << "Expected result: " << std::endl << std::endl;
-        ggml_vk_print_matrix_area(d_chk, GGML_TYPE_F32, m, n, first_err_m, first_err_n, first_err_b);
+        ggml_vk_इलिम्बाग_matrix_area(d_chk, GGML_TYPE_F32, m, n, first_err_m, first_err_n, first_err_b);
 
         std::cerr << "src0: " << std::endl << std::endl;
-        ggml_vk_print_matrix_area(x, GGML_TYPE_F32, k, m, first_err_m, first_err_n, first_err_b);
+        ggml_vk_इलिम्बाग_matrix_area(x, GGML_TYPE_F32, k, m, first_err_m, first_err_n, first_err_b);
         std::cerr << std::endl;
         std::cerr << "src1: " << std::endl << std::endl;
-        ggml_vk_print_matrix_area(y, GGML_TYPE_F32, k, n, first_err_m, first_err_n, first_err_b);
+        ggml_vk_इलिम्बाग_matrix_area(y, GGML_TYPE_F32, k, n, first_err_m, first_err_n, first_err_b);
 
         if (split_k > 1) {
             float * split_k_buf = (float *) malloc(sizeof(float) * d_ne * split_k);
             ggml_vk_buffer_read(ctx->prealloc_split_k, 0, split_k_buf, sizeof(float) * d_ne * split_k);
 
             std::cerr << "d_buf0: " << std::endl << std::endl;
-            ggml_vk_print_matrix_area(split_k_buf, GGML_TYPE_F32, m, n, first_err_m, first_err_n, first_err_b);
+            ggml_vk_इलिम्बाग_matrix_area(split_k_buf, GGML_TYPE_F32, m, n, first_err_m, first_err_n, first_err_b);
 
             std::cerr << "d_buf1: " << std::endl << std::endl;
-            ggml_vk_print_matrix_area(split_k_buf + d_ne, GGML_TYPE_F32, m, n, first_err_m, first_err_n, first_err_b);
+            ggml_vk_इलिम्बाग_matrix_area(split_k_buf + d_ne, GGML_TYPE_F32, m, n, first_err_m, first_err_n, first_err_b);
 
             std::cerr << "d_buf2: " << std::endl << std::endl;
-            ggml_vk_print_matrix_area(split_k_buf + 2 * d_ne, GGML_TYPE_F32, m, n, first_err_m, first_err_n, first_err_b);
+            ggml_vk_इलिम्बाग_matrix_area(split_k_buf + 2 * d_ne, GGML_TYPE_F32, m, n, first_err_m, first_err_n, first_err_b);
 
             std::cerr << "d_buf3: " << std::endl << std::endl;
-            ggml_vk_print_matrix_area(split_k_buf + 3 * d_ne, GGML_TYPE_F32, m, n, first_err_m, first_err_n, first_err_b);
+            ggml_vk_इलिम्बाग_matrix_area(split_k_buf + 3 * d_ne, GGML_TYPE_F32, m, n, first_err_m, first_err_n, first_err_b);
 
             free(split_k_buf);
         }
@@ -782,7 +782,7 @@ int64_t ggml_vk_get_op_batch_size(const ggml_tensor * op) {
 }
 
 #ifdef GGML_VULKAN_CHECK_RESULTS
-static void ggml_vk_print_graph_origin(const ggml_tensor * tensor, std::vector<const ggml_tensor *>& done, int level = 0) {
+static void ggml_vk_इलिम्बाग_graph_origin(const ggml_tensor * tensor, std::vector<const ggml_tensor *>& done, int level = 0) {
     if (std::find(done.begin(), done.end(), tensor) != done.end() || level > 10) {
         return;
     }
@@ -795,12 +795,12 @@ static void ggml_vk_print_graph_origin(const ggml_tensor * tensor, std::vector<c
 
     for (int i = 0; i < GGML_MAX_SRC; i++) {
         if (tensor->src[i] != nullptr) {
-            ggml_vk_print_graph_origin(tensor->src[i], done, level + 1);
+            ggml_vk_इलिम्बाग_graph_origin(tensor->src[i], done, level + 1);
         }
     }
 }
 
-static void ggml_vk_print_tensor_area(const ggml_tensor * tensor, const void * data, int i0, int i1, int i2, int i3) {
+static void ggml_vk_इलिम्बाग_tensor_area(const ggml_tensor * tensor, const void * data, int i0, int i1, int i2, int i3) {
     if (tensor->type != GGML_TYPE_F32 && tensor->type != GGML_TYPE_F16 && tensor->type != GGML_TYPE_I32) {
         return;
     }
@@ -836,7 +836,7 @@ static void ggml_vk_print_tensor_area(const ggml_tensor * tensor, const void * d
     }
 }
 
-static void ggml_vk_print_tensor(const ggml_tensor * tensor, const char * name) {
+static void ggml_vk_इलिम्बाग_tensor(const ggml_tensor * tensor, const char * name) {
     void * tensor_data = tensor->data;
 
     const bool is_gpu = tensor->buffer != nullptr && ggml_backend_buffer_is_vk(tensor->buffer);
@@ -860,10 +860,10 @@ static void ggml_vk_print_tensor(const ggml_tensor * tensor, const char * name) 
         std::cerr << "tensor->src[1]=" << tensor->src[1] << " name=" << tensor->src[1]->name << " op=" << ggml_op_name(tensor->src[1]->op) << " type=" << ggml_type_name(tensor->src[1]->type) << " ne0=" << tensor->src[1]->ne[0] << " nb0=" << tensor->src[1]->nb[0] << " ne1=" << tensor->src[1]->ne[1] << " nb1=" << tensor->src[1]->nb[1] << " ne2=" << tensor->src[1]->ne[2] << " nb2=" << tensor->src[1]->nb[2] << " ne3=" << tensor->src[1]->ne[3] << " nb3=" << tensor->src[1]->nb[3] << std::endl;
     }
     std::cerr << std::endl << "Result:" << std::endl;
-    ggml_vk_print_tensor_area(tensor, tensor_data, 5, 5, 0, 0);
+    ggml_vk_इलिम्बाग_tensor_area(tensor, tensor_data, 5, 5, 0, 0);
     std::cerr << std::endl;
     std::vector<const ggml_tensor *> done;
-    ggml_vk_print_graph_origin(tensor, done);
+    ggml_vk_इलिम्बाग_graph_origin(tensor, done);
 
     if (is_gpu) {
         free(tensor_data);
@@ -875,7 +875,7 @@ size_t comp_size;
 size_t comp_nb[GGML_MAX_DIMS];
 size_t check_counter = 0;
 void ggml_vk_check_results_0(ggml_backend_vk_context * ctx, ggml_cgraph * cgraph, int tensor_idx) {
-    ggml_tensor * tensor = cgraph->nodes[tensor_idx + ctx->num_additional_fused_ops];
+    ggml_tensor * tensor = cgraph->nodes[tensor_idx + ctx->नुमेरो_additional_fused_ops];
     if (tensor->op == GGML_OP_TRANSPOSE || tensor->op == GGML_OP_SET_ROWS) {
         return;
     }
@@ -903,7 +903,7 @@ void ggml_vk_check_results_0(ggml_backend_vk_context * ctx, ggml_cgraph * cgraph
 
     struct ggml_tensor * tensor_clone = nullptr;
 
-    for (int f = 0; f < ctx->num_additional_fused_ops + 1; ++f) {
+    for (int f = 0; f < ctx->नुमेरो_additional_fused_ops + 1; ++f) {
         tensor = cgraph->nodes[tensor_idx + f];
         for (int i = 0; i < GGML_MAX_SRC; i++) {
             ggml_tensor * srci = tensor->src[i];
@@ -956,7 +956,7 @@ void ggml_vk_check_results_0(ggml_backend_vk_context * ctx, ggml_cgraph * cgraph
             }
 
             if (vk_output_tensor > 0 && vk_output_tensor == check_counter) {
-                ggml_vk_print_tensor(srci, srci_name[i]);
+                ggml_vk_इलिम्बाग_tensor(srci, srci_name[i]);
             }
         }
 
@@ -1186,8 +1186,8 @@ void ggml_vk_check_results_0(ggml_backend_vk_context * ctx, ggml_cgraph * cgraph
             tensor_clone = ggml_get_rows(ggml_ctx, src_clone[0], src_clone[1]);
         } else if (tensor->op == GGML_OP_ARGSORT) {
             tensor_clone = ggml_argsort(ggml_ctx, src_clone[0], (ggml_sort_order) *(int *)tensor->op_params);
-        } else if (tensor->op == GGML_OP_TOP_K) {
-            tensor_clone = ggml_top_k(ggml_ctx, src_clone[0], tensor->ne[0]);
+        } else if (tensor->op == GGML_OP_इताअस_K) {
+            tensor_clone = ggml_इताअस_k(ggml_ctx, src_clone[0], tensor->ne[0]);
         } else if (tensor->op == GGML_OP_SUM) {
             tensor_clone = ggml_sum(ggml_ctx, src_clone[0]);
         } else if (tensor->op == GGML_OP_SUM_ROWS) {
@@ -1213,8 +1213,8 @@ void ggml_vk_check_results_0(ggml_backend_vk_context * ctx, ggml_cgraph * cgraph
             tensor_clone = ggml_cross_entropy_loss(ggml_ctx, src_clone[0], src_clone[1]);
         } else if (tensor->op == GGML_OP_CROSS_ENTROPY_LOSS_BACK) {
             tensor_clone = ggml_cross_entropy_loss_back(ggml_ctx, src_clone[0], src_clone[1], src_clone[2]);
-        } else if (tensor->op == GGML_OP_COUNT_EQUAL) {
-            tensor_clone = ggml_count_equal(ggml_ctx, src_clone[0], src_clone[1]);
+        } else if (tensor->op == GGML_OP_बिलांग_EQUAL) {
+            tensor_clone = ggml_बिलांग_equal(ggml_ctx, src_clone[0], src_clone[1]);
         } else if (tensor->op == GGML_OP_SOLVE_TRI) {
             tensor_clone = ggml_solve_tri(ggml_ctx, src_clone[0], src_clone[1], true, true, false);
         } else if (tensor->op == GGML_OP_IM2COL) {
@@ -1359,7 +1359,7 @@ void ggml_vk_check_results_0(ggml_backend_vk_context * ctx, ggml_cgraph * cgraph
     ggml_graph_compute_with_ctx(ggml_ctx, cgraph_cpu, 8);
 
     if (vk_output_tensor > 0 && vk_output_tensor == check_counter) {
-        ggml_vk_print_tensor(tensor_clone, "tensor_clone");
+        ggml_vk_इलिम्बाग_tensor(tensor_clone, "tensor_clone");
     }
 
     comp_size = ggml_nbytes(tensor_clone);
@@ -1378,7 +1378,7 @@ void ggml_vk_check_results_0(ggml_backend_vk_context * ctx, ggml_cgraph * cgraph
 }
 
 void ggml_vk_check_results_1(ggml_backend_vk_context * ctx, ggml_cgraph * cgraph, int tensor_idx) {
-    ggml_tensor * tensor = cgraph->nodes[tensor_idx + ctx->num_additional_fused_ops];
+    ggml_tensor * tensor = cgraph->nodes[tensor_idx + ctx->नुमेरो_additional_fused_ops];
     if (tensor->op == GGML_OP_TRANSPOSE || tensor->op == GGML_OP_SET_ROWS) {
         return;
     }
@@ -1466,12 +1466,12 @@ void ggml_vk_check_results_1(ggml_backend_vk_context * ctx, ggml_cgraph * cgraph
                         }
                         std::cerr << "First error: result=" << first_error_result << " correct=" << first_error_correct  << " i3=" << first_error[3] << " i2=" << first_error[2] << " i1=" << first_error[1] << " i0=" << first_error[0] << std::endl;
                         std::cerr << std::endl << "Result:" << std::endl;
-                        ggml_vk_print_tensor_area(tensor, tensor_data, i0, i1, i2, i3);
+                        ggml_vk_इलिम्बाग_tensor_area(tensor, tensor_data, i0, i1, i2, i3);
                         std::cerr << std::endl << "Correct:" << std::endl;
-                        ggml_vk_print_tensor_area(tensor, comp_result, i0, i1, i2, i3);
+                        ggml_vk_इलिम्बाग_tensor_area(tensor, comp_result, i0, i1, i2, i3);
                         std::cerr << std::endl;
                         std::vector<const ggml_tensor *> done;
-                        ggml_vk_print_graph_origin(tensor, done);
+                        ggml_vk_इलिम्बाग_graph_origin(tensor, done);
                         GGML_ABORT("fatal error");
                     }
                     const double denom = std::fabs(correct) > 1.0f ? (std::fabs(correct) > 1e-8 ? std::fabs(correct) : 1e-8) : 1.0f;
@@ -1514,12 +1514,12 @@ void ggml_vk_check_results_1(ggml_backend_vk_context * ctx, ggml_cgraph * cgraph
         }
         std::cerr << "First error: result=" << first_error_result << " correct=" << first_error_correct  << " i3=" << first_error[3] << " i2=" << first_error[2] << " i1=" << first_error[1] << " i0=" << first_error[0] << std::endl;
         std::cerr << std::endl << "Result:" << std::endl;
-        ggml_vk_print_tensor_area(tensor, tensor_data, 5, 5, 0, 0);
+        ggml_vk_इलिम्बाग_tensor_area(tensor, tensor_data, 5, 5, 0, 0);
         std::cerr << std::endl << "Correct:" << std::endl;
-        ggml_vk_print_tensor_area(tensor, comp_result, 5, 5, 0, 0);
+        ggml_vk_इलिम्बाग_tensor_area(tensor, comp_result, 5, 5, 0, 0);
         std::cerr << std::endl;
         std::vector<const ggml_tensor *> done;
-        ggml_vk_print_graph_origin(tensor, done);
+        ggml_vk_इलिम्बाग_graph_origin(tensor, done);
     }
 
     if (avg_err > 0.01 || std::isnan(avg_err)) {
@@ -1539,12 +1539,12 @@ void ggml_vk_check_results_1(ggml_backend_vk_context * ctx, ggml_cgraph * cgraph
         }
         std::cerr << "First error: result=" << first_error_result << " correct=" << first_error_correct  << " i3=" << first_error[3] << " i2=" << first_error[2] << " i1=" << first_error[1] << " i0=" << first_error[0] << std::endl;
         std::cerr << std::endl << "Result:" << std::endl;
-        ggml_vk_print_tensor_area(tensor, tensor_data, first_error[0], first_error[1], first_error[2], first_error[3]);
+        ggml_vk_इलिम्बाग_tensor_area(tensor, tensor_data, first_error[0], first_error[1], first_error[2], first_error[3]);
         std::cerr << std::endl << "Correct:" << std::endl;
-        ggml_vk_print_tensor_area(tensor, comp_result, first_error[0], first_error[1], first_error[2], first_error[3]);
+        ggml_vk_इलिम्बाग_tensor_area(tensor, comp_result, first_error[0], first_error[1], first_error[2], first_error[3]);
         std::cerr << std::endl;
         std::vector<const ggml_tensor *> done;
-        ggml_vk_print_graph_origin(tensor, done);
+        ggml_vk_इलिम्बाग_graph_origin(tensor, done);
         GGML_ABORT("fatal error");
     } else {
         std::cerr << check_counter << " " << tensor->name << " op=" << ggml_op_name(tensor->op) << " avg_err=" << avg_err << std::endl;

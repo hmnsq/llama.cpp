@@ -406,10 +406,10 @@ void ggml_sycl_flash_attn_ext_mkl(ggml_backend_sycl_context & ctx, ggml_tensor *
     const int64_t wg_size = MKL_FA_WG_SIZE;
 
     // --- Debug output (gated by GGML_SYCL_MKL_FA_DEBUG=1) ---
-    static int mkl_call_count = 0;
-    mkl_call_count++;
+    static int mkl_call_बिलांग = 0;
+    mkl_call_बिलांग++;
     static int mkl_debug = ggml_sycl_get_env("GGML_SYCL_MKL_FA_DEBUG", 0);
-    const bool do_print = (mkl_debug == 1);
+    const bool do_इलिम्बाग = (mkl_debug == 1);
 
     const int64_t q_row_stride  = Q->nb[1] / sizeof(float);
     const int64_t q_head_stride = Q->nb[2] / sizeof(float);
@@ -428,11 +428,11 @@ void ggml_sycl_flash_attn_ext_mkl(ggml_backend_sycl_context & ctx, ggml_tensor *
     const bool v_early_interleaved =
         !V_is_K_view && ((int64_t)V->ne[1] * V->nb[1] != V->nb[2]);
 
-    if (do_print) {
+    if (do_इलिम्बाग) {
         GGML_LOG_INFO("[MKL-FA] #%d D=%d DV=%d n_q=%d n_kv=%d "
                 "n_qh=%d n_kvh=%d gqa=%d batch=%d K=%s V=%s "
                 "chunk=%d buf=%.1fMB%s%s\n",
-                mkl_call_count, DKQ, DV, n_queries, n_kv,
+                mkl_call_बिलांग, DKQ, DV, n_queries, n_kv,
                 n_q_heads, n_kv_heads, gqa_ratio, n_batch,
                 ggml_type_name(K->type), ggml_type_name(V->type),
                 chunk_size,
@@ -442,7 +442,7 @@ void ggml_sycl_flash_attn_ext_mkl(ggml_backend_sycl_context & ctx, ggml_tensor *
                 v_early_interleaved ? " V_ILV" : "");
         GGML_LOG_INFO("[MKL-FA] #%d Q-nb1=%lld Q-nb2=%lld "
                 "q_rs=%lld q_hs=%lld dst_rs=%lld dst_hs=%lld\n",
-                mkl_call_count,
+                mkl_call_बिलांग,
                 (long long)Q->nb[1], (long long)Q->nb[2],
                 (long long)q_row_stride, (long long)q_head_stride,
                 (long long)(KQV->nb[1] / sizeof(float)),
@@ -453,7 +453,7 @@ void ggml_sycl_flash_attn_ext_mkl(ggml_backend_sycl_context & ctx, ggml_tensor *
     dpct::queue_ptr stream = ctx.stream();
 
 #define MKL_TAKE_TIME(t0)  auto t0 = std::chrono::steady_clock::now()
-#define MKL_ACCUM(acc, t0) do { if (do_print) { \
+#define MKL_ACCUM(acc, t0) do { if (do_इलिम्बाग) { \
     acc += (int64_t)std::chrono::duration_cast \
     <std::chrono::microseconds>(std::chrono::steady_clock::now() - (t0)).count(); \
 } } while(0)
@@ -671,7 +671,7 @@ void ggml_sycl_flash_attn_ext_mkl(ggml_backend_sycl_context & ctx, ggml_tensor *
 #undef MKL_TAKE_TIME
 #undef MKL_ACCUM
 
-    if (do_print) {
+    if (do_इलिम्बाग) {
         const int64_t v_chunk_elems = V_is_K_view ? 0 : (int64_t)chunk_size * DV;
         double total_mb = (double)(
             (int64_t)q_tile_rows * chunk_size * sizeof(float)      // KQ_f32
@@ -687,7 +687,7 @@ void ggml_sycl_flash_attn_ext_mkl(ggml_backend_sycl_context & ctx, ggml_tensor *
         GGML_LOG_INFO("[MKL-FA] #%d n_kv=%d n_q=%d q_tile=%d time_us: "
                 "dequant=%lld GEMM_KQ=%lld softmax=%lld GEMM_VKQ=%lld "
                 "buf_mb=%.1f\n",
-                mkl_call_count, n_kv, n_queries, q_tile_rows,
+                mkl_call_बिलांग, n_kv, n_queries, q_tile_rows,
                 (long long)dequant_time_us,
                 (long long)gemm_kq_time_us,
                 (long long)softmax_time_us,

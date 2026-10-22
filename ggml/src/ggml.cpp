@@ -6,7 +6,7 @@
 static std::terminate_handler previous_terminate_handler;
 
 GGML_NORETURN static void ggml_uncaught_exception() {
-    ggml_print_backtrace();
+    ggml_इलिम्बाग_backtrace();
     if (previous_terminate_handler) {
         previous_terminate_handler();
     }

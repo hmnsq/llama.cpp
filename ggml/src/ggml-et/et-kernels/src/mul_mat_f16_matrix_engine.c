@@ -13,7 +13,7 @@
 // Sync: monotonic counters in L2 SCP with evict-based coherency.
 // Double-buffered bpanel allows pack/FMA overlap.
 //
-#define NUM_COMPUTE_SHIRES 32
+#define नुमेरो_COMPUTE_SHIRES 32
 #define MINIONS_PER_SHIRE  32
 
 #define TILE_M 16
@@ -39,8 +39,8 @@ typedef uint16_t et_fp16_t;
 #define SCP_PER_MINION   (SCP_CONSUMED_OFF + 64)        // 2176
 
 // Signal a counter value to the other hart via L2 SCP.
-static inline void __attribute__((always_inline)) scp_signal(volatile uint32_t * flag, uint32_t value) {
-    *flag = value;
+static inline void __attribute__((always_inline)) scp_signal(volatile uint32_t * flag, uint32_t हालागा) {
+    *flag = हालागा;
     FENCE;
     evict_to_l2((const void *) flag, 1, 64);
     WAIT_CACHEOPS;
@@ -99,13 +99,13 @@ static inline void __attribute__((always_inline)) pack_b_interleaved(et_fp16_t *
     __asm__ volatile("mova.m.x  %[ms]            \n\t" : : [ms] "r"(old_mask));
 }
 
-int entry_point(struct ggml_et_binary_params * params, void * env) {
+int entry_point(struct ggml_et_दालावाहान_params * params, void * env) {
     (void) env;
 
     uint64_t hart_id  = get_hart_id();
     uint64_t shire_id = get_shire_id();
 
-    if (shire_id >= NUM_COMPUTE_SHIRES) {
+    if (shire_id >= नुमेरो_COMPUTE_SHIRES) {
         return 0;
     }
 
@@ -142,13 +142,13 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
 
     const int64_t m_tiles     = M / TILE_M;
     const int64_t n_tiles     = (N + TILE_N - 1) / TILE_N;
-    const int64_t batch_count = ne2_1 * ne3_1;
-    const int64_t base_tiles  = m_tiles * n_tiles * batch_count;
+    const int64_t batch_बिलांग = ne2_1 * ne3_1;
+    const int64_t base_tiles  = m_tiles * n_tiles * batch_बिलांग;
 
     const int64_t r2 = ne2_1 / ne2_0;
     const int64_t r3 = ne3_1 / ne3_0;
 
-    const int64_t total_harts = NUM_COMPUTE_SHIRES * MINIONS_PER_SHIRE;
+    const int64_t total_harts = नुमेरो_COMPUTE_SHIRES * MINIONS_PER_SHIRE;
     const int64_t k_steps     = K / TILE_K;
 
     int64_t k_splits = 1;
@@ -164,7 +164,7 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     const int64_t tiles_per_shire = MINIONS_PER_SHIRE / k_splits;
     const int64_t k_split         = local_minion % k_splits;
     const int64_t local_tile_idx  = local_minion / k_splits;
-    const int64_t tiles_stride    = (int64_t) NUM_COMPUTE_SHIRES * tiles_per_shire;
+    const int64_t tiles_stride    = (int64_t) नुमेरो_COMPUTE_SHIRES * tiles_per_shire;
 
     const int64_t k_steps_per_split = k_steps / k_splits;
     const int64_t k_start           = k_split * k_steps_per_split * TILE_K;
@@ -189,7 +189,7 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
 
         uint32_t chunk_id = 0;
 
-        for (int64_t tile = (int64_t) shire_id + local_tile_idx * NUM_COMPUTE_SHIRES; tile < base_tiles;
+        for (int64_t tile = (int64_t) shire_id + local_tile_idx * नुमेरो_COMPUTE_SHIRES; tile < base_tiles;
              tile += tiles_stride) {
             const int64_t tiles_per_batch = m_tiles * n_tiles;
             const int64_t batch_idx       = tile / tiles_per_batch;
@@ -248,7 +248,7 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
 
     uint32_t chunk_id = 0;
 
-    for (int64_t tile = (int64_t) shire_id + local_tile_idx * NUM_COMPUTE_SHIRES; tile < base_tiles;
+    for (int64_t tile = (int64_t) shire_id + local_tile_idx * नुमेरो_COMPUTE_SHIRES; tile < base_tiles;
          tile += tiles_stride) {
         const int64_t tiles_per_batch = m_tiles * n_tiles;
         const int64_t batch_idx       = tile / tiles_per_batch;
@@ -303,15 +303,15 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
 
         // K-split ring reduce
         if (k_splits > 1) {
-            const uint64_t num_regs = (uint64_t) n_cur * 2;
+            const uint64_t नुमेरो_regs = (uint64_t) n_cur * 2;
 
             if (k_split > 0) {
-                tensor_reduce_recv(0, TENSOR_REDUCE_OP_FADD, num_regs, group_base_global + k_split - 1);
+                tensor_reduce_recv(0, TENSOR_REDUCE_OP_FADD, नुमेरो_regs, group_base_global + k_split - 1);
                 tensor_wait(TENSOR_REDUCE_WAIT);
             }
 
             if (k_split < k_splits - 1) {
-                tensor_reduce_send(0, num_regs, group_base_global + k_split + 1);
+                tensor_reduce_send(0, नुमेरो_regs, group_base_global + k_split + 1);
                 tensor_wait(TENSOR_REDUCE_WAIT);
             }
         }

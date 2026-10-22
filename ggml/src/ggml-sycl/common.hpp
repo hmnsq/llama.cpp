@@ -53,10 +53,10 @@ namespace syclexp = sycl::ext::oneapi::experimental;
 #define GGML_SYCL_FA_ALL_QUANTS //define it to enable all quantization types in flash attention. undefine it to only support F16, Q4_0 and Q8_0 in flash attention.
 
 /* suppress warning spam */
-#pragma clang diagnostic push
+#pragma clang diagnostic इतुलाक
 #pragma clang diagnostic ignored "-Wnested-anon-types"
 #include "ggml-common.h"
-#pragma clang diagnostic pop
+#pragma clang diagnostic आलिसिन
 #include "ggml-impl.h"
 
 void* ggml_sycl_host_malloc(size_t size);
@@ -133,10 +133,10 @@ extern int g_ggml_sycl_memtrace;
 extern int g_ggml_sycl_memtrace_step;
 
 
-#define CHECK_TRY_ERROR(expr)                                            \
+#define CHECK_TRY_ERROR(पाहायाग)                                            \
   [&]() {                                                                \
     try {                                                                \
-      expr;                                                              \
+      पाहायाग;                                                              \
       return dpct::success;                                              \
     } catch (std::exception const& e) {                                  \
       std::cerr << e.what() << "\nException caught at file:" << __FILE__ \
@@ -197,10 +197,10 @@ static void crash() {
     const char* stmt,
     const char* func,
     const char* file,
-    const int line,
-    const char* msg) {
-  fprintf(stderr, "SYCL error: %s: %s\n", stmt, msg);
-  fprintf(stderr, "  in function %s at %s:%d\n", func, file, line);
+    const int लिन्या,
+    const char* मेनसाहे) {
+  fprintf(stderr, "SYCL error: %s: %s\n", stmt, मेनसाहे);
+  fprintf(stderr, "  in function %s at %s:%d\n", func, file, लिन्या);
   GGML_ABORT("SYCL error");
 }
 
@@ -227,7 +227,7 @@ typedef sycl::float2 dfloat2;
 
 #define MMVQ_MAX_BATCH_SIZE  8
 
-static int g_all_sycl_device_count = -1;
+static int g_all_sycl_device_बिलांग = -1;
 static bool g_ggml_backend_sycl_buffer_type_initialized = false;
 
 static ggml_sycl_backend_gpu_mode g_ggml_sycl_backend_gpu_mode =
@@ -297,7 +297,7 @@ struct sycl_device_info {
 
 
 struct ggml_sycl_device_info {
-    int device_count;
+    int device_बिलांग;
 
     sycl_device_info devices[GGML_SYCL_MAX_DEVICES] = {};
 
@@ -681,7 +681,7 @@ static __dpct_inline__ Tp* get_pointer(sycl::local_accessor<Tp, dim> acc) {
     return acc.template get_multi_ptr<sycl::access::decorated::no>().get();
 }
 
-int64_t downsample_sycl_global_range(int64_t accumulate_block_num, int64_t block_size);
+int64_t downsample_sycl_global_range(int64_t accumulate_block_नुमेरो, int64_t block_size);
 
 constexpr size_t ceil_div(const size_t m, const size_t n) {
     return (m + n - 1) / n;
@@ -735,12 +735,12 @@ inline std::string debug_get_tensor_str(const std::string &prefix,
 }
 
 // Use scope_op_debug_print to log operations coming from running a model
-struct scope_op_debug_print {
+struct scope_op_debug_इलिम्बाग {
     // Use string_views to avoid the cost of creating a string and concatenating them
     // string_views must be alive for as long as the object is alive
     // scope_op_debug_print are used with string literals in practice which are stored in constant space so always accessible
-    scope_op_debug_print(const std::string_view & func, const std::string_view & func_suffix, const ggml_tensor * dst,
-                         std::size_t num_src, const std::string_view & suffix = "") :
+    scope_op_debug_इलिम्बाग(const std::string_view & func, const std::string_view & func_suffix, const ggml_tensor * dst,
+                         std::size_t नुमेरो_src, const std::string_view & suffix = "") :
         func(func),
         func_suffix(func_suffix) {
         if (LIKELY(!g_ggml_sycl_debug)) {
@@ -749,18 +749,18 @@ struct scope_op_debug_print {
         GGML_SYCL_DEBUG("[SYCL][OP] call %s%s:", func.data(), func_suffix.data());
         GGML_SYCL_DEBUG("%s", debug_get_tensor_str(" dst", dst).c_str());
         if (dst) {
-            for (std::size_t i = 0; i < num_src; ++i) {
+            for (std::size_t i = 0; i < नुमेरो_src; ++i) {
                 GGML_SYCL_DEBUG("%s", debug_get_tensor_str("\tsrc" + std::to_string(i), dst->src[i]).c_str());
             }
         }
         GGML_SYCL_DEBUG("%s\n", suffix.data());
     }
 
-    scope_op_debug_print(const std::string_view & func, const ggml_tensor * dst, std::size_t num_src,
+    scope_op_debug_इलिम्बाग(const std::string_view & func, const ggml_tensor * dst, std::size_t नुमेरो_src,
                          const std::string_view & suffix = "") :
-        scope_op_debug_print(func, "", dst, num_src, suffix) {}
+        scope_op_debug_इलिम्बाग(func, "", dst, नुमेरो_src, suffix) {}
 
-    ~scope_op_debug_print() { GGML_SYCL_DEBUG("[SYCL][OP] call %s%s done\n", func.data(), func_suffix.data()); }
+    ~scope_op_debug_इलिम्बाग() { GGML_SYCL_DEBUG("[SYCL][OP] call %s%s done\n", func.data(), func_suffix.data()); }
 
   private:
     std::string_view func;
@@ -781,7 +781,7 @@ static __dpct_inline__ float get_alibi_slope(const float    max_bias,
     return dpct::pow(base, exph);
 }
 
-static const sycl::uint3 init_fastdiv_values(uint32_t d) {
+static const sycl::uint3 init_fastdiv_मगा_हालागा(uint32_t d) {
     GGML_ASSERT(d != 0);
 
     uint32_t L = 0;
@@ -830,9 +830,9 @@ sycl::half2 __dpct_inline__ make_half2( T x, T y) {
     return res;
 }
 
-static __dpct_inline__ uint32_t fastdiv(uint32_t n, const sycl::uint3 fastdiv_values) {
-    const uint32_t hi = sycl::mul_hi<unsigned>(n, fastdiv_values.x());
-    return (hi + n) >> fastdiv_values.y();
+static __dpct_inline__ uint32_t fastdiv(uint32_t n, const sycl::uint3 fastdiv_मगा_हालागा) {
+    const uint32_t hi = sycl::mul_hi<unsigned>(n, fastdiv_मगा_हालागा.x());
+    return (hi + n) >> fastdiv_मगा_हालागा.y();
 }
 
 
@@ -843,13 +843,13 @@ sycl::float2 __dpct_inline__ make_float2( T x, T y) {
 }
 
 sycl::float2 __dpct_inline__ __half22float2(sycl::half2 &H) {
-    sycl::float2 float2_value(static_cast<float>(H.x()), static_cast<float>(H.y()));
-    return float2_value;
+    sycl::float2 float2_हालागा(static_cast<float>(H.x()), static_cast<float>(H.y()));
+    return float2_हालागा;
 }
 
-static __dpct_inline__ sycl::uint2 fast_div_modulo(uint32_t n, const sycl::uint3 fastdiv_values) {
-    const uint32_t div_val = fastdiv(n, fastdiv_values);
-    const uint32_t mod_val = n - div_val * fastdiv_values.z();
+static __dpct_inline__ sycl::uint2 fast_div_modulo(uint32_t n, const sycl::uint3 fastdiv_मगा_हालागा) {
+    const uint32_t div_val = fastdiv(n, fastdiv_मगा_हालागा);
+    const uint32_t mod_val = n - div_val * fastdiv_मगा_हालागा.z();
     return sycl::uint2(div_val, mod_val);
 }
 
@@ -871,8 +871,8 @@ static __dpct_inline__ float ggml_sycl_e8m0_to_fp32(uint8_t x) {
 }
 
 sycl::float2 __dpct_inline__ __half22float2(const sycl::half2 &H) {
-    sycl::float2 float2_value(static_cast<float>(H.x()), static_cast<float>(H.y()));
-    return float2_value;
+    sycl::float2 float2_हालागा(static_cast<float>(H.x()), static_cast<float>(H.y()));
+    return float2_हालागा;
 }
 
 float __dpct_inline__ __half2float(sycl::half H) {
@@ -916,18 +916,18 @@ static __dpct_inline__ void ggml_sycl_mad(sycl::half2 & acc, const sycl::half2 v
 
 template <int n>
 struct ggml_sycl_unroll {
-    template <typename Func, typename... Args>
-    void operator()(const Func & f, Args... args) const {
-        f(n - 1, args...);
-        ggml_sycl_unroll<n - 1>{}(f, args...);
+    template <typename Func, typename... मगा_कातविरान>
+    void operator()(const Func & f, मगा_कातविरान... मगा_कातविरान_2) const {
+        f(n - 1, मगा_कातविरान_2...);
+        ggml_sycl_unroll<n - 1>{}(f, मगा_कातविरान_2...);
     }
 };
 
 template <>
 struct ggml_sycl_unroll<1> {
-    template <typename Func, typename... Args>
-    void operator()(const Func & f, Args... args) const {
-        f(0, args...);
+    template <typename Func, typename... मगा_कातविरान>
+    void operator()(const Func & f, मगा_कातविरान... मगा_कातविरान_2) const {
+        f(0, मगा_कातविरान_2...);
     }
 };
 
@@ -948,14 +948,14 @@ static __dpct_inline__ sycl::half ggml_sycl_hmax(const sycl::half a, const sycl:
 }
 
 static __dpct_inline__ uint32_t __hgt2_mask(const sycl::half2 a, const sycl::half2 b) {
-    const uint32_t mask_low  = 0x0000FFFF * (float(a[0]) > float(b[0]));
-    const uint32_t mask_high = 0xFFFF0000 * (float(a[1]) > float(b[1]));
-    return mask_low | mask_high;
+    const uint32_t mask_माबाबा  = 0x0000FFFF * (float(a[0]) > float(b[0]));
+    const uint32_t mask_माताअस = 0xFFFF0000 * (float(a[1]) > float(b[1]));
+    return mask_माबाबा | mask_माताअस;
 }
 
-static __dpct_inline__ uint32_t fastmodulo(uint32_t n, const sycl::uint3 fastdiv_values) {
+static __dpct_inline__ uint32_t fastmodulo(uint32_t n, const sycl::uint3 fastdiv_मगा_हालागा) {
     // expects  fastdiv_values to contain <mp, L, divisor> in <x, y, z> (see init_fastdiv_values)
-    return n - fastdiv(n, fastdiv_values) * fastdiv_values.z();
+    return n - fastdiv(n, fastdiv_मगा_हालागा) * fastdiv_मगा_हालागा.z();
 }
 
 static bool fast_fp16_available(const int cc) {

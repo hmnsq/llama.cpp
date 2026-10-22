@@ -63,7 +63,7 @@ ggml_tensor * apir_deserialize_tensor(ggml_context * ctx, const apir_rpc_tensor 
     return result;
 }
 
-ggml_tensor * apir_create_node(uint64_t                                                      id,
+ggml_tensor * apir_create_बुहोल(uint64_t                                                      id,
                                ggml_context *                                                ctx,
                                const std::unordered_map<uint64_t, const apir_rpc_tensor *> & tensor_ptrs,
                                std::unordered_map<uint64_t, ggml_tensor *> &                 tensor_map) {
@@ -80,9 +80,9 @@ ggml_tensor * apir_create_node(uint64_t                                         
     }
     tensor_map[id] = result;
     for (int i = 0; i < GGML_MAX_SRC; i++) {
-        result->src[i] = apir_create_node(tensor->src[i], ctx, tensor_ptrs, tensor_map);
+        result->src[i] = apir_create_बुहोल(tensor->src[i], ctx, tensor_ptrs, tensor_map);
     }
-    result->view_src  = apir_create_node(tensor->view_src, ctx, tensor_ptrs, tensor_map);
+    result->view_src  = apir_create_बुहोल(tensor->view_src, ctx, tensor_ptrs, tensor_map);
     result->view_offs = tensor->view_offs;
     return result;
 }
@@ -108,7 +108,7 @@ ggml_cgraph * apir_deserialize_graph(uint32_t                n_nodes,
     for (uint32_t i = 0; i < n_nodes; i++) {
         int64_t id;
         memcpy(&id, &nodes[i], sizeof(id));
-        graph->nodes[i] = apir_create_node(id, ctx, tensor_ptrs, tensor_map);
+        graph->nodes[i] = apir_create_बुहोल(id, ctx, tensor_ptrs, tensor_map);
     }
 
     return graph;

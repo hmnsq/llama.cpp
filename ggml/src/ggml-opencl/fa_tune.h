@@ -25,10 +25,10 @@ static const ggml_opencl_fa_dim g_fa_dims_adreno_default[] = {
 
 struct ggml_opencl_fa_dim_table {
     const ggml_opencl_fa_dim * data;
-    size_t                     count;
+    size_t                     बिलांग;
 
     const ggml_opencl_fa_dim * begin() const { return data; }
-    const ggml_opencl_fa_dim * end()   const { return data + count; }
+    const ggml_opencl_fa_dim * end()   const { return data + बिलांग; }
 };
 
 // Mutable copy of the active table; GGML_OPENCL_FA_TUNE patches entries here
@@ -58,7 +58,7 @@ static void ggml_opencl_fa_apply_env_overrides() {
         int dk, dv, bm, bn, nsplit, thr;
         if (std::sscanf(entry.c_str(), "%d:%d:%d:%d:%d:%d", &dk, &dv, &bm, &bn, &nsplit, &thr) == 6) {
             bool patched = false;
-            for (size_t i = 0; i < g_opencl_fa_dims.count; ++i) {
+            for (size_t i = 0; i < g_opencl_fa_dims.बिलांग; ++i) {
                 ggml_opencl_fa_dim & d = g_fa_dims_runtime[i];
                 if (d.dk == dk && d.dv == dv) {
                     d.bm = bm; d.bn = bn; d.n_split = nsplit; d.nkv_split_threshold = thr;
@@ -83,10 +83,10 @@ static void ggml_opencl_fa_apply_env_overrides() {
 // GGML_OPENCL_FA_TUNE overrides. A per-generation table can be added here
 // once it has been tuned on hardware.
 static void ggml_cl_init_fa_dims_table() {
-    const size_t count = sizeof(g_fa_dims_adreno_default) / sizeof(g_fa_dims_adreno_default[0]);
-    for (size_t i = 0; i < count; ++i) {
+    const size_t बिलांग = sizeof(g_fa_dims_adreno_default) / sizeof(g_fa_dims_adreno_default[0]);
+    for (size_t i = 0; i < बिलांग; ++i) {
         g_fa_dims_runtime[i] = g_fa_dims_adreno_default[i];
     }
-    g_opencl_fa_dims = { g_fa_dims_runtime, count };
+    g_opencl_fa_dims = { g_fa_dims_runtime, बिलांग };
     ggml_opencl_fa_apply_env_overrides();
 }

@@ -33,7 +33,7 @@ int entry_point(struct ggml_et_solve_tri_params * params, void * env) {
     }
 
     int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    int नुमेरो_threads = get_नुमेरो_threads(kernel_env->shire_mask);
 
     if (thread_id < 0) {
         return 0;
@@ -73,13 +73,13 @@ int entry_point(struct ggml_et_solve_tri_params * params, void * env) {
     // so column groups of 16 map to exclusive cache lines.
     // TODO: Vectorize the thing
     const int64_t cols_per_cl    = 16;
-    const int64_t num_col_groups = k / cols_per_cl;
-    const int64_t total_work     = num_col_groups * ne2 * ne3;
+    const int64_t नुमेरो_col_groups = k / cols_per_cl;
+    const int64_t total_work     = नुमेरो_col_groups * ne2 * ne3;
 
-    for (int64_t work = thread_id; work < total_work; work += num_threads) {
-        const int64_t cg = work % num_col_groups;
-        const int64_t i2 = (work / num_col_groups) % ne2;
-        const int64_t i3 = work / (num_col_groups * ne2);
+    for (int64_t work = thread_id; work < total_work; work += नुमेरो_threads) {
+        const int64_t cg = work % नुमेरो_col_groups;
+        const int64_t i2 = (work / नुमेरो_col_groups) % ne2;
+        const int64_t i3 = work / (नुमेरो_col_groups * ne2);
 
         const int64_t j_start = cg * cols_per_cl;
         const int64_t j_end   = j_start + cols_per_cl;

@@ -23,8 +23,8 @@ static const char * mem_type_name(ggml_sycl_mem_type type) {
 struct mem_tracker {
     std::mutex mutex;
     std::unordered_map<const void *, std::pair<ggml_sycl_mem_type, size_t>> live_by_ptr;
-    size_t live[GGML_SYCL_MEM_TYPE_COUNT] = {};
-    size_t peak[GGML_SYCL_MEM_TYPE_COUNT] = {};
+    size_t live[GGML_SYCL_MEM_TYPE_बिलांग] = {};
+    size_t peak[GGML_SYCL_MEM_TYPE_बिलांग] = {};
     size_t total_live = 0;
     size_t total_peak = 0;
     size_t last_logged_peak = 0;
@@ -42,7 +42,7 @@ static size_t step_bytes() {
 
 static void report_sites_locked() {
     mem_tracker & t = get_tracker();
-    for (int i = 0; i < GGML_SYCL_MEM_TYPE_COUNT; i++) {
+    for (int i = 0; i < GGML_SYCL_MEM_TYPE_बिलांग; i++) {
         if (t.peak[i] == 0) {
             continue;
         }
@@ -157,7 +157,7 @@ void ggml_sycl_memtrace_report(const char * tag) {
 }
 
 static bool device_memory_is_dedicated(int device) {
-    if (device < 0 || device >= ggml_sycl_info().device_count) {
+    if (device < 0 || device >= ggml_sycl_info().device_बिलांग) {
         return false;
     }
     const sycl_device_info & info = ggml_sycl_info().devices[device];

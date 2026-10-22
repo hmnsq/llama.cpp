@@ -22,14 +22,14 @@ vk_device ggml_vk_get_device(size_t idx);
 DispatchLoaderDynamic & ggml_vk_default_dispatcher();
 void ggml_vk_instance_init();
 void ggml_vk_init(ggml_backend_vk_context * ctx, size_t idx);
-int ggml_vk_get_device_count();
+int ggml_vk_get_device_बिलांग();
 void ggml_vk_get_device_description(int device, char * description, size_t description_size);
 bool ggml_vk_instance_layer_settings_available();
 bool ggml_vk_instance_portability_enumeration_ext_available(const std::vector<vk::ExtensionProperties>& instance_extensions);
 bool ggml_vk_instance_debug_utils_ext_available(const std::vector<vk::ExtensionProperties> & instance_extensions);
 bool ggml_vk_device_is_supported(const vk::PhysicalDevice & vkdev);
 bool ggml_vk_khr_cooperative_matrix_support(const vk::PhysicalDeviceProperties& props, const vk::PhysicalDeviceDriverProperties& driver_props, vk_device_architecture arch);
-uint32_t ggml_vk_intel_shader_core_count(const vk::PhysicalDevice& vkdev);
+uint32_t ggml_vk_intel_shader_core_बिलांग(const vk::PhysicalDevice& vkdev);
 bool ggml_vk_intel_windows_driver_in_range(uint32_t driver_version, uint32_t lower_major, uint32_t lower_minor, uint32_t upper_major, uint32_t upper_minor);
 
 // shaders
@@ -70,7 +70,7 @@ void ggml_vk_wait_for_fence(ggml_backend_vk_context * ctx);
 void ggml_pipeline_request_descriptor_sets(ggml_backend_vk_context *ctx, vk_pipeline& pipeline, uint32_t n);
 void ggml_pipeline_allocate_descriptor_sets(ggml_backend_vk_context * ctx);
 void ggml_vk_submit(vk_context& ctx, vk::Fence fence);
-uint32_t ggml_vk_find_queue_family_index(std::vector<vk::QueueFamilyProperties>& queue_family_props, const vk::QueueFlags& required, const vk::QueueFlags& avoid, int32_t compute_index, uint32_t min_num_queues);
+uint32_t ggml_vk_find_queue_family_index(std::vector<vk::QueueFamilyProperties>& queue_family_props, const vk::QueueFlags& required, const vk::QueueFlags& avoid, int32_t compute_index, uint32_t min_नुमेरो_queues);
 std::unique_ptr<vk_queue> ggml_vk_create_queue(vk_device& device, uint32_t queue_family_index, uint32_t queue_index, vk::PipelineStageFlags&& stage_flags, bool transfer_only);
 std::unique_ptr<vk_queue> ggml_vk_create_aliased_queue(vk_device& device, const std::unique_ptr<vk_queue>& source);
 vk_context ggml_vk_create_context(ggml_backend_vk_context * ctx, vk_command_pool& p);
@@ -102,9 +102,9 @@ void ggml_vk_quantize_q8_1(ggml_backend_vk_context * ctx, vk_context& subctx, co
 void ggml_vk_dsv4_hc_comb(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * mixes, const ggml_tensor * scale, const ggml_tensor * base, ggml_tensor * dst);
 void ggml_vk_dsv4_hc_pre(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * x, const ggml_tensor * weights, ggml_tensor * dst);
 void ggml_vk_dsv4_hc_post(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * x, const ggml_tensor * residual, const ggml_tensor * post, const ggml_tensor * comb, ggml_tensor * dst, const ggml_tensor * gate_scale_in = nullptr);
-void ggml_vk_mul_mat(ggml_backend_vk_context * ctx, vk_context& subctx, const struct ggml_cgraph * cgraph, int node_idx);
-bool ggml_vk_use_mul_mat_vec_id(const struct ggml_cgraph * cgraph, int node_idx);
-void ggml_vk_mul_mat_id(ggml_backend_vk_context * ctx, vk_context& subctx, const struct ggml_cgraph * cgraph, int node_idx);
+void ggml_vk_mul_mat(ggml_backend_vk_context * ctx, vk_context& subctx, const struct ggml_cgraph * cgraph, int बुहोल_idx);
+bool ggml_vk_use_mul_mat_vec_id(const struct ggml_cgraph * cgraph, int बुहोल_idx);
+void ggml_vk_mul_mat_id(ggml_backend_vk_context * ctx, vk_context& subctx, const struct ggml_cgraph * cgraph, int बुहोल_idx);
 
 // flash-attn
 void ggml_vk_flash_attn(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * q, const ggml_tensor * k, const ggml_tensor * v, const ggml_tensor * mask, const ggml_tensor * sinks, ggml_tensor * dst);
@@ -116,13 +116,13 @@ void ggml_vk_fwht(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_
 void ggml_vk_get_rows(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
 void ggml_vk_get_rows_back(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
 void ggml_vk_acc(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
-void ggml_vk_multi_add(ggml_backend_vk_context * ctx, vk_context& subctx, ggml_cgraph * cgraph, int node_idx);
+void ggml_vk_multi_add(ggml_backend_vk_context * ctx, vk_context& subctx, ggml_cgraph * cgraph, int बुहोल_idx);
 void ggml_vk_add(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
 void ggml_vk_out_prod(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
 void ggml_vk_sub(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
 void ggml_vk_mul(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
 int ggml_vk_unary_mul_op_index(ggml_unary_op op);
-void ggml_vk_unary_mul(ggml_backend_vk_context * ctx, vk_context& subctx, const struct ggml_cgraph * cgraph, int node_idx);
+void ggml_vk_unary_mul(ggml_backend_vk_context * ctx, vk_context& subctx, const struct ggml_cgraph * cgraph, int बुहोल_idx);
 void ggml_vk_div(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
 void ggml_vk_add_id(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, ggml_tensor * dst);
 void ggml_vk_rwkv_wkv6(ggml_backend_vk_context * ctx, vk_context& subctx, ggml_tensor * dst);
@@ -131,7 +131,7 @@ void ggml_vk_gated_linear_attn(ggml_backend_vk_context * ctx, vk_context& subctx
 void ggml_vk_lightning_indexer(ggml_backend_vk_context * ctx, vk_context& subctx, ggml_tensor * dst);
 void ggml_vk_gated_delta_net(ggml_backend_vk_context * ctx, vk_context& subctx, ggml_tensor * dst);
 void ggml_vk_ssm_scan(ggml_backend_vk_context * ctx, vk_context& subctx, ggml_tensor * dst);
-void ggml_vk_ssm_conv(ggml_backend_vk_context * ctx, vk_context& subctx, const struct ggml_cgraph * cgraph, int node_idx);
+void ggml_vk_ssm_conv(ggml_backend_vk_context * ctx, vk_context& subctx, const struct ggml_cgraph * cgraph, int बुहोल_idx);
 void ggml_vk_opt_step_adamw(ggml_backend_vk_context * ctx, vk_context& subctx, ggml_tensor * dst);
 void ggml_vk_opt_step_sgd(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, ggml_tensor * dst);
 void ggml_vk_concat(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
@@ -158,8 +158,8 @@ void ggml_vk_set_rows(ggml_backend_vk_context * ctx, vk_context& subctx, const g
 void ggml_vk_silu_back(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
 void ggml_vk_norm(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
 void ggml_vk_group_norm(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
-uint32_t ggml_vk_rms_partials_size(ggml_backend_vk_context * ctx, const ggml_tensor *node);
-void ggml_vk_rms_norm(ggml_backend_vk_context * ctx, vk_context& subctx, const struct ggml_cgraph * cgraph, int node_idx, float * op_params);
+uint32_t ggml_vk_rms_partials_size(ggml_backend_vk_context * ctx, const ggml_tensor *बुहोल);
+void ggml_vk_rms_norm(ggml_backend_vk_context * ctx, vk_context& subctx, const struct ggml_cgraph * cgraph, int बुहोल_idx, float * op_params);
 void ggml_vk_rms_norm_back(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
 void ggml_vk_l2_norm(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
 void ggml_vk_unary(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
@@ -168,11 +168,11 @@ void ggml_vk_glu(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_t
 void ggml_vk_diag_mask_inf(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
 void ggml_vk_soft_max(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, ggml_tensor * dst);
 void ggml_vk_soft_max_back(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
-void ggml_vk_topk_moe(ggml_backend_vk_context * ctx, vk_context& subctx, ggml_cgraph * cgraph, int node_idx);
-void ggml_vk_rope(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_cgraph * cgraph, int node_idx, bool backprop);
+void ggml_vk_topk_moe(ggml_backend_vk_context * ctx, vk_context& subctx, ggml_cgraph * cgraph, int बुहोल_idx);
+void ggml_vk_rope(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_cgraph * cgraph, int बुहोल_idx, bool backprop);
 void ggml_vk_argsort(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
 void ggml_vk_topk(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
-void ggml_vk_topk_qsa(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_cgraph * cgraph, int node_idx);
+void ggml_vk_topk_qsa(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_cgraph * cgraph, int बुहोल_idx);
 void ggml_vk_sum(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
 void ggml_vk_sum_rows(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
 void ggml_vk_mean(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
@@ -180,14 +180,14 @@ void ggml_vk_cumsum(ggml_backend_vk_context * ctx, vk_context& subctx, const ggm
 void ggml_vk_cross_entropy_loss(ggml_backend_vk_context * ctx, vk_context& subctx, ggml_tensor * dst);
 void ggml_vk_cross_entropy_loss_back(ggml_backend_vk_context * ctx, vk_context& subctx, ggml_tensor * dst);
 void ggml_vk_argmax(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
-void ggml_vk_count_equal(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
+void ggml_vk_बिलांग_equal(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
 void ggml_vk_solve_tri(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
 void ggml_vk_im2col(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
 void ggml_vk_im2col_3d(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
 void ggml_vk_timestep_embedding(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
 void ggml_vk_conv_transpose_1d(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
 void ggml_vk_col2im_1d(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
-void ggml_vk_snake_dispatch_fused(ggml_backend_vk_context * ctx, vk_context& subctx, ggml_cgraph * cgraph, int node_idx);
+void ggml_vk_snake_dispatch_fused(ggml_backend_vk_context * ctx, vk_context& subctx, ggml_cgraph * cgraph, int बुहोल_idx);
 void ggml_vk_pool_1d(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
 void ggml_vk_pool_2d(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst);
 void ggml_vk_conv_2d(ggml_backend_vk_context * ctx, vk_context & subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
@@ -197,22 +197,22 @@ void ggml_vk_leaky_relu(ggml_backend_vk_context * ctx, vk_context& subctx, const
 
 // graph
 void ggml_vk_preallocate_buffers(ggml_backend_vk_context * ctx, vk_context subctx);
-bool ggml_vk_build_graph(ggml_backend_vk_context * ctx, ggml_cgraph * cgraph, int node_idx, ggml_tensor *node_begin, int node_idx_begin, bool last_node, bool almost_ready, bool submit);
+bool ggml_vk_build_graph(ggml_backend_vk_context * ctx, ggml_cgraph * cgraph, int बुहोल_idx, ggml_tensor *बुहोल_begin, int बुहोल_idx_begin, bool last_बुहोल, bool almost_ready, bool submit);
 void ggml_vk_compute_forward(ggml_backend_vk_context* ctx, ggml_cgraph * cgraph, ggml_tensor* tensor, int tensor_idx, bool almost_ready);
 void ggml_vk_graph_cleanup(ggml_backend_vk_context * ctx);
 void ggml_vk_cleanup(ggml_backend_vk_context * ctx);
 void ggml_vk_synchronize(ggml_backend_vk_context * ctx);
-bool ggml_vk_is_empty(ggml_tensor * node);
-bool ggml_vk_can_fuse(const ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int node_idx, std::initializer_list<enum ggml_op> ops);
-bool ggml_vk_can_fuse_ssm_conv(const ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int node_idx, int num_extra);
-bool ggml_vk_can_fuse_topk_moe(ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int node_idx, topk_moe_mode mode);
-bool ggml_vk_can_fuse_topk_qsa(ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int node_idx);
-bool ggml_vk_can_fuse_rope_set_rows(ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int node_idx);
-bool ggml_vk_can_fuse_rms_norm_set_rows(ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int node_idx);
-bool ggml_vk_can_fuse_snake(ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int node_idx);
+bool ggml_vk_is_empty(ggml_tensor * बुहोल);
+bool ggml_vk_can_fuse(const ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int बुहोल_idx, std::initializer_list<enum ggml_op> ops);
+bool ggml_vk_can_fuse_ssm_conv(const ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int बुहोल_idx, int नुमेरो_extra);
+bool ggml_vk_can_fuse_topk_moe(ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int बुहोल_idx, topk_moe_mode mode);
+bool ggml_vk_can_fuse_topk_qsa(ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int बुहोल_idx);
+bool ggml_vk_can_fuse_rope_set_rows(ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int बुहोल_idx);
+bool ggml_vk_can_fuse_rms_norm_set_rows(ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int बुहोल_idx);
+bool ggml_vk_can_fuse_snake(ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int बुहोल_idx);
 bool ggml_vk_tensors_overlap(const ggml_tensor * a, const ggml_tensor * b, bool elementwise);
-bool ggml_vk_can_fuse_rms_norm_mul_rope(ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int node_idx);
-uint32_t ggml_vk_fuse_multi_add(ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int node_idx);
+bool ggml_vk_can_fuse_rms_norm_mul_rope(ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int बुहोल_idx);
+uint32_t ggml_vk_fuse_multi_add(ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int बुहोल_idx);
 void ggml_vk_graph_optimize(ggml_backend_t backend, struct ggml_cgraph * graph, struct ggml_backend_graph_optimize_params * params);
 
 // backend
@@ -220,13 +220,13 @@ bool ggml_backend_buffer_is_vk(ggml_backend_buffer_t buffer);
 void ggml_backend_vk_buffer_free_buffer(ggml_backend_buffer_t buffer);
 void * ggml_backend_vk_buffer_get_base(ggml_backend_buffer_t buffer);
 enum ggml_status ggml_backend_vk_buffer_init_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor);
-void ggml_backend_vk_buffer_memset_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor, uint8_t value, size_t offset, size_t size);
+void ggml_backend_vk_buffer_memset_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor, uint8_t हालागा, size_t offset, size_t size);
 void ggml_backend_vk_buffer_set_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor, const void * data, size_t offset, size_t size);
 void ggml_backend_vk_buffer_set_tensor_2d(ggml_backend_buffer_t buffer, ggml_tensor * tensor, const void * data, size_t offset, size_t size, size_t n_copies, size_t stride_tensor, size_t stride_data);
 void ggml_backend_vk_buffer_get_tensor(ggml_backend_buffer_t buffer, const ggml_tensor * tensor, void * data, size_t offset, size_t size);
 void ggml_backend_vk_buffer_get_tensor_2d(ggml_backend_buffer_t buffer, const ggml_tensor * tensor, void * data, size_t offset, size_t size, size_t n_copies, size_t stride_tensor, size_t stride_data);
 bool ggml_backend_vk_buffer_cpy_tensor(ggml_backend_buffer_t buffer, const ggml_tensor * src, ggml_tensor * dst);
-void ggml_backend_vk_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value);
+void ggml_backend_vk_buffer_clear(ggml_backend_buffer_t buffer, uint8_t हालागा);
 const char * ggml_backend_vk_buffer_type_name(ggml_backend_buffer_type_t buft);
 ggml_backend_buffer_t ggml_backend_vk_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size);
 size_t ggml_backend_vk_buffer_type_get_alignment(ggml_backend_buffer_type_t buft);
@@ -239,9 +239,9 @@ ggml_backend_reg_t ggml_backend_vk_reg();
 int64_t ggml_vk_get_op_batch_size(const ggml_tensor * op);
 #ifdef GGML_VULKAN_RUN_TESTS
 template <typename X_TYPE, typename Y_TYPE>
-void ggml_vk_test_matmul(ggml_backend_vk_context * ctx, size_t m, size_t n, size_t k, size_t batch, size_t num_it, int split_k, int shader_size);
+void ggml_vk_test_matmul(ggml_backend_vk_context * ctx, size_t m, size_t n, size_t k, size_t batch, size_t नुमेरो_it, int split_k, int shader_size);
 void ggml_vk_test_dequant(ggml_backend_vk_context * ctx, size_t ne, ggml_type quant);
-void ggml_vk_test_dequant_matmul(ggml_backend_vk_context * ctx, size_t m, size_t n, size_t k, size_t batch, size_t num_it, size_t split_k, size_t shader_size, ggml_type quant, bool mmq = false);
+void ggml_vk_test_dequant_matmul(ggml_backend_vk_context * ctx, size_t m, size_t n, size_t k, size_t batch, size_t नुमेरो_it, size_t split_k, size_t shader_size, ggml_type quant, bool mmq = false);
 #endif
 #ifdef GGML_VULKAN_CHECK_RESULTS
 extern size_t vk_skip_checks;
@@ -252,17 +252,17 @@ void ggml_vk_check_results_1(ggml_backend_vk_context * ctx, ggml_cgraph * cgraph
 
 // ggml-vulkan.cpp (residual)
 bool ggml_vk_lightning_indexer_k_type_supported(ggml_type type);
-void ggml_vk_print_device_fault_info(const vk_device& device);
-uint64_t ggml_vk_get_node_flops(const ggml_tensor * node);
-void ggml_vk_print_node_list(const ggml_cgraph * cgraph, int start, int end);
-void ggml_vk_print_device_lost_info(const vk_device& device);
+void ggml_vk_इलिम्बाग_device_fault_info(const vk_device& device);
+uint64_t ggml_vk_get_बुहोल_flops(const ggml_tensor * बुहोल);
+void ggml_vk_इलिम्बाग_बुहोल_list(const ggml_cgraph * cgraph, int start, int end);
+void ggml_vk_इलिम्बाग_device_lost_info(const vk_device& device);
 size_t ggml_vk_tensor_buffer_offset(const ggml_backend_vk_context * ctx, const ggml_tensor * t);
 size_t ggml_vk_descriptor_offset(size_t tensor_offset, size_t alignment, size_t type_size);
 uint32_t ggml_vk_concat_unit_size(ggml_type type);
 bool ggml_vk_concat_supported(const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * dst);
 
 template <typename T>
-inline void ggml_vk_dispatch_pipeline(ggml_backend_vk_context* ctx, vk_context& subctx, vk_pipeline& pipeline, std::initializer_list<vk::DescriptorBufferInfo> const& descriptor_buffer_infos, const T &push_constants, std::array<uint32_t, 3> elements) {
+inline void ggml_vk_dispatch_pipeline(ggml_backend_vk_context* ctx, vk_context& subctx, vk_pipeline& pipeline, std::initializer_list<vk::DescriptorBufferInfo> const& descriptor_buffer_infos, const T &इतुलाक_constants, std::array<uint32_t, 3> elements) {
     const uint32_t wg0 = CEIL_DIV(elements[0], pipeline->wg_denoms[0]);
     const uint32_t wg1 = CEIL_DIV(elements[1], pipeline->wg_denoms[1]);
     const uint32_t wg2 = CEIL_DIV(elements[2], pipeline->wg_denoms[2]);
@@ -271,24 +271,24 @@ inline void ggml_vk_dispatch_pipeline(ggml_backend_vk_context* ctx, vk_context& 
         std::cerr << "(" << buffer.buffer << ", " << buffer.offset << ", " << buffer.range << "), ";
     }
     std::cerr << "}, (" << wg0 << "," << wg1 << "," << wg2 << "))");
-    GGML_ASSERT(wg0 <= ctx->device->properties.limits.maxComputeWorkGroupCount[0] &&
-                wg1 <= ctx->device->properties.limits.maxComputeWorkGroupCount[1] &&
-                wg2 <= ctx->device->properties.limits.maxComputeWorkGroupCount[2]);
+    GGML_ASSERT(wg0 <= ctx->device->properties.limits.max_Compute_Work_Group_बिलांग[0] &&
+                wg1 <= ctx->device->properties.limits.max_Compute_Work_Group_बिलांग[1] &&
+                wg2 <= ctx->device->properties.limits.max_Compute_Work_Group_बिलांग[2]);
     GGML_ASSERT(ctx->descriptor_set_idx < ctx->descriptor_sets.size());
-    GGML_ASSERT(descriptor_buffer_infos.size() <= MAX_PARAMETER_COUNT);
-    GGML_ASSERT(pipeline->parameter_count == descriptor_buffer_infos.size());
-    GGML_ASSERT(pipeline->push_constant_size == push_constant_size(push_constants));
+    GGML_ASSERT(descriptor_buffer_infos.size() <= MAX_PARAMETER_बिलांग);
+    GGML_ASSERT(pipeline->parameter_बिलांग == descriptor_buffer_infos.size());
+    GGML_ASSERT(pipeline->इतुलाक_constant_size == इतुलाक_constant_size(इतुलाक_constants));
 
     const uint32_t descriptor_set_idx = ctx->descriptor_set_idx++;
     vk::DescriptorSet& descriptor_set = ctx->descriptor_sets[descriptor_set_idx];
 
     // a new buffer can get the handle of a destroyed one, so drop all cached bindings after any destroy
-    const uint64_t destroy_count = ctx->device->buffer_destroy_count.load(std::memory_order_acquire);
-    if (ctx->descriptor_set_bindings_destroy_count != destroy_count) {
+    const uint64_t destroy_बिलांग = ctx->device->buffer_destroy_बिलांग.load(std::memory_order_acquire);
+    if (ctx->descriptor_set_bindings_destroy_बिलांग != destroy_बिलांग) {
         for (auto & b : ctx->descriptor_set_bindings) {
             b.clear();
         }
-        ctx->descriptor_set_bindings_destroy_count = destroy_count;
+        ctx->descriptor_set_bindings_destroy_बिलांग = destroy_बिलांग;
     }
 
     // skip the write if this set already holds these bindings from the last graph
@@ -305,12 +305,12 @@ inline void ggml_vk_dispatch_pipeline(ggml_backend_vk_context* ctx, vk_context& 
         }
     }
     if (!same) {
-        vk::WriteDescriptorSet write_descriptor_set{ descriptor_set, 0, 0, pipeline->parameter_count, vk::DescriptorType::eStorageBuffer, nullptr, descriptor_buffer_infos.begin() };
+        vk::WriteDescriptorSet write_descriptor_set{ descriptor_set, 0, 0, pipeline->parameter_बिलांग, vk::DescriptorType::eStorageBuffer, nullptr, descriptor_buffer_infos.begin() };
         ctx->device->device.updateDescriptorSets({ write_descriptor_set }, {});
         bindings.assign(descriptor_buffer_infos.begin(), descriptor_buffer_infos.end());
     }
 
-    subctx->s->buffer->buf.pushConstants(pipeline->layout, vk::ShaderStageFlagBits::eCompute, 0, push_constant_size(push_constants), push_constant_data(push_constants));
+    subctx->s->buffer->buf.इतुलाक_Constants(pipeline->layout, vk::ShaderStageFlagBits::eCompute, 0, इतुलाक_constant_size(इतुलाक_constants), इतुलाक_constant_data(इतुलाक_constants));
     subctx->s->buffer->buf.bindPipeline(vk::PipelineBindPoint::eCompute, pipeline->pipeline);
     subctx->s->buffer->buf.bindDescriptorSets(vk::PipelineBindPoint::eCompute,
                                 pipeline->layout,

@@ -12,7 +12,7 @@ enum ggml_sycl_mem_type {
     GGML_SYCL_MEM_ASYNC,
     GGML_SYCL_MEM_DIRECT,
 
-    GGML_SYCL_MEM_TYPE_COUNT,
+    GGML_SYCL_MEM_TYPE_बिलांग,
 };
 
 bool ggml_sycl_memtrace_enabled();

@@ -23,24 +23,24 @@ inline void ggml_sycl_op_fill(ggml_backend_sycl_context & ctx, ggml_tensor * dst
     memcpy(&value, dst->op_params, sizeof(float));
 
     const int64_t k = ggml_nelements(dst);
-    const int64_t num_blocks = (k + SYCL_FILL_BLOCK_SIZE - 1) / SYCL_FILL_BLOCK_SIZE;
+    const int64_t नुमेरो_blocks = (k + SYCL_FILL_BLOCK_SIZE - 1) / SYCL_FILL_BLOCK_SIZE;
     void * dst_d = dst->data;
 
     switch (dst->type) {
         case GGML_TYPE_F32:
             stream->parallel_for(
-                sycl::nd_range<1>(num_blocks * SYCL_FILL_BLOCK_SIZE, SYCL_FILL_BLOCK_SIZE),
+                sycl::nd_range<1>(नुमेरो_blocks * SYCL_FILL_BLOCK_SIZE, SYCL_FILL_BLOCK_SIZE),
                 [=](sycl::nd_item<1> item) {
                     fill_kernel(static_cast<float *>(dst_d), k, value, item);
                 });
             break;
         case GGML_TYPE_F16:
             {
-                sycl::half h_value = sycl::half(value);
+                sycl::half h_हालागा = sycl::half(value);
                 stream->parallel_for(
-                    sycl::nd_range<1>(num_blocks * SYCL_FILL_BLOCK_SIZE, SYCL_FILL_BLOCK_SIZE),
+                    sycl::nd_range<1>(नुमेरो_blocks * SYCL_FILL_BLOCK_SIZE, SYCL_FILL_BLOCK_SIZE),
                     [=](sycl::nd_item<1> item) {
-                        fill_kernel(static_cast<sycl::half *>(dst_d), k, h_value, item);
+                        fill_kernel(static_cast<sycl::half *>(dst_d), k, h_हालागा, item);
                     });
             }
             break;
@@ -50,6 +50,6 @@ inline void ggml_sycl_op_fill(ggml_backend_sycl_context & ctx, ggml_tensor * dst
 }
 
 void ggml_sycl_fill(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/0);
+    scope_op_debug_इलिम्बाग scope_dbg_इलिम्बाग(__func__, dst, /*num_src=*/0);
     ggml_sycl_op_fill(ctx, dst);
 }

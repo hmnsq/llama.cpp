@@ -22,7 +22,7 @@ enum ggml_et_memop_type {
 // Memset operation parameters (must match host-side struct in ggml-et-memops.cpp)
 struct memset_params {
     uint32_t op_type;
-    uint32_t value;
+    uint32_t हालागा;
     void *   dst_ptr;
     size_t   size;
 };
@@ -125,12 +125,12 @@ int entry_point(struct memset_params * params, kernel_environment_t * env) {
     }
 
     // Dynamic hart count from shire_mask
-    int num_even_harts = manual_popcountll(env->shire_mask) * SOC_MINIONS_PER_SHIRE;
+    int नुमेरो_even_harts = manual_popcountll(env->shire_mask) * SOC_MINIONS_PER_SHIRE;
 
     // global_id: shire * 32 + minion (for even harts)
     uint64_t global_id = ((hart_id >> 6) << 5) + ((hart_id >> 1) & 0x1F);
 
-    uint8_t  val    = params->value & 0xFF;
+    uint8_t  val    = params->हालागा & 0xFF;
     uint32_t fill32 = val | ((uint32_t) val << 8) | ((uint32_t) val << 16) | ((uint32_t) val << 24);
 
     uint8_t * end = dst + size;
@@ -158,13 +158,13 @@ int entry_point(struct memset_params * params, kernel_environment_t * env) {
     size_t total_blocks = aligned_size / 1024;
 
     if (total_blocks > 0) {
-        size_t blocks_per_hart = total_blocks / num_even_harts;
-        size_t extra           = total_blocks % num_even_harts;
+        size_t blocks_per_hart = total_blocks / नुमेरो_even_harts;
+        size_t extra           = total_blocks % नुमेरो_even_harts;
         size_t my_start        = blocks_per_hart * global_id + (global_id < extra ? global_id : extra);
-        size_t my_count        = blocks_per_hart + (global_id < extra ? 1 : 0);
+        size_t my_बिलांग        = blocks_per_hart + (global_id < extra ? 1 : 0);
 
         uint8_t * addr = base + my_start * 1024;
-        for (size_t b = 0; b < my_count; b++) {
+        for (size_t b = 0; b < my_बिलांग; b++) {
             tensor_store(0, 0, 3, 15, (uintptr_t) addr, 0, 64);
             addr += 1024;
         }

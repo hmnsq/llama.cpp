@@ -22,10 +22,10 @@ struct htp_get_rows_kernel_params {
     int32_t  vtcm_size;
 
     // Fastdiv helpers
-    struct fastdiv_values div_ne10;
-    struct fastdiv_values div_ne10_ne11;
-    struct fastdiv_values div_ne02;
-    struct fastdiv_values div_ne03;
+    struct fastdiv_मगा_हालागा div_ne10;
+    struct fastdiv_मगा_हालागा div_ne10_ne11;
+    struct fastdiv_मगा_हालागा div_ne02;
+    struct fastdiv_मगा_हालागा div_ne03;
 };
 
 struct htp_get_rows_vtcm_layout {
